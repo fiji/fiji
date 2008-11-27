@@ -267,6 +267,10 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 		if (name.endsWith(".svg"))
 			return tryPlugIn("io.SVG_Reader", path);
 
+		// Johannes Schindelin: open an LSS16 (SYSLINUX) image
+		if (name.endsWith(".lss"))
+			return tryPlugIn("io.LSS16_Reader", path);
+
 		// Johannes Schindelin: handle scripts
 		if (name.endsWith(".py"))
 			return tryPlugIn("Jython.Refresh_Jython_Scripts", path);
