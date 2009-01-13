@@ -122,7 +122,7 @@ public class Fake {
 	}
 
 	protected static void discoverJython() throws IOException {
-		String pythonHome = fijiHome + "jars/jython2.2.1";
+		String pythonHome = fijiHome + "jars";
 		System.setProperty("python.home", pythonHome);
 		System.setProperty("python.cachedir.skip", "false");
 		getClassLoader(pythonHome + "/jython.jar");

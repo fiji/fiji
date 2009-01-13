@@ -210,7 +210,7 @@ jars/fiji-lib.jar <- src-plugins/fiji-lib/**/*.java
 jars/fiji-scripting.jar <- src-plugins/fiji-scripting/**/*.java
 
 CLASSPATH(plugins/Refresh_Javas.jar)=jars/fiji-scripting.jar
-CLASSPATH(plugins/Jython_Interpreter.jar)=jars/fiji-scripting.jar:jars/jython2.2.1/jython.jar
+CLASSPATH(plugins/Jython_Interpreter.jar)=jars/fiji-scripting.jar:jars/jython.jar
 plugins/Jython_Interpreter.jar <- src-plugins/Jython/*.java
 CLASSPATH(plugins/Clojure_Interpreter.jar)=jars/fiji-scripting.jar:jars/clojure.jar:jars/clojure-contrib.jar
 plugins/Clojure_Interpreter.jar <- src-plugins/Clojure/*.java
