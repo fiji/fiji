@@ -117,6 +117,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Stitching_.jar \
 	plugins/AnalyzeSkeleton_.jar \
 	plugins/Skeletonize3D_.jar \
+	plugins/TurboReg_.jar \
 	plugins/Analyze/Grid_.class \
 	plugins/Input-Output/HandleExtraFileTypes.class \
 	plugins/Stacks/Stack_Reverser.class \
