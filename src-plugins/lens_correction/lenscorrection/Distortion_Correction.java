@@ -198,7 +198,7 @@ public class Distortion_Correction implements PlugIn{
 		@Override
 		public boolean setup( final String title )
 		{
-			String source_dir = "";
+			source_dir = "";
 			while ( source_dir == "" )
 			{
 				final DirectoryChooser dc = new DirectoryChooser( "Calibration Images" );
@@ -289,6 +289,7 @@ public class Distortion_Correction implements PlugIn{
     {
     	if ( !sp.setup( "Lens Correction" ) ) return;
     	
+    	IJ.log( sp.source_dir + sp.names[ 0 ] );
     	final ImagePlus imgTmp = new Opener().openImage( sp.source_dir + sp.names[ 0 ] );
     	final int imageWidth = imgTmp.getWidth(), imageHeight=imgTmp.getHeight();
     	/** imgTmp was just needed to get width and height of the images */
