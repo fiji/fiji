@@ -95,6 +95,7 @@ public class Distortion_Correction implements PlugIn{
     NonLinearTransform nlt = new NonLinearTransform();
 	
     public void run(String arg) {
+				
 	//taken from Alberts registration plugin
 		
 	if (source_dir == ""){
@@ -201,7 +202,7 @@ public class Distortion_Correction implements PlugIn{
 			h1[count] = new double[] {(double) tmp1[0], (double) tmp1[1]};
 			h2[count] = new double[] {(double) tmp2[0], (double) tmp2[1]};
 				  
-			models[i].getAffine().getMatrix(tp[count]);				    
+			models[i].createAffine().getMatrix(tp[count]);				    
 			count++; 
 		    }
 			
@@ -352,23 +353,22 @@ public class Distortion_Correction implements PlugIn{
 	for (int i=0; i < candidates.size(); i++){
 			
 	    Vector<PointMatch> tmpInliers = new Vector<PointMatch>();
-	    //			RigidModel2D m = RigidModel2D.estimateBestModel(candidates.get(i), tmpInliers, sp.min_epsilon, sp.max_epsilon, sp.min_inlier_ratio);
-	    RigidModel2D m = null;
-	    try
-		{
-		    m = Model.filterRansac(
-					   RigidModel2D.class,
-					   candidates.get( i ),
-					   tmpInliers,
-					   1000,
-					   sp.max_epsilon,
-					   sp.min_inlier_ratio );
-		}
-	    catch ( Exception e )
-		{
-		    //IJ.error( e.getMessage() );
-		}
+			//			RigidModel2D m = RigidModel2D.estimateBestModel(candidates.get(i), tmpInliers, sp.min_epsilon, sp.max_epsilon, sp.min_inlier_ratio);
+	    
+			RigidModel2D m = new RigidModel2D();
 			
+			try{
+					m.filterRansac(
+												 candidates.get( i ),
+												 tmpInliers,
+												 1000,
+												 sp.max_epsilon,
+												 sp.min_inlier_ratio );
+					
+			}
+			catch(NotEnoughDataPointsException e){
+					System.out.println("NotEnoughDataPointsException");
+			}
 	    inliers.add(tmpInliers);
 	    models.add(m);
 
@@ -589,12 +589,8 @@ public class Distortion_Correction implements PlugIn{
 		float[] position = {(float)x,(float)y};
 		//				float[] newPosition = a.apply(position);
 		float[] newPosition = {0,0,};
-		try{
-		    newPosition = a.applyInverse(position);
-		}
-		catch(NoninvertibleModelException e){
-		    System.out.println("NoninvertibleModelException");
-		}
+		newPosition = a.applyInverse(position);
+
 		int xn = (int) newPosition[0];
 		int yn = (int) newPosition[1];
 				
@@ -777,7 +773,8 @@ public class Distortion_Correction implements PlugIn{
 			    imps.setProcessor(imps.getTitle(), imps.getProcessor().convertToFloat());
 						
 			    FloatArray2DSIFT sift = new FloatArray2DSIFT( sp.fdsize, sp.fdbins );
-			    FloatArray2D fa = ImageArrayConverter.ImageToFloatArray2D( imps.getProcessor() );
+			    FloatArray2D fa = new FloatArray2D(imps.getWidth(), imps.getHeight());
+					ImageArrayConverter.imageProcessorToFloatArray2D( imps.getProcessor(), fa);
 			    Filter.enhance( fa, 1.0f );
 						
 			    float[] initial_kernel;
@@ -836,22 +833,22 @@ public class Distortion_Correction implements PlugIn{
 			for (int i=ai2.getAndIncrement(); i < candidates.length; i = ai2.getAndIncrement()){
 	
 			    Vector<PointMatch> tmpInliers = new Vector<PointMatch>();
-			    //RigidModel2D m = RigidModel2D.estimateBestModel(candidates.get(i), tmpInliers, sp.min_epsilon, sp.max_epsilon, sp.min_inlier_ratio);
-			    RigidModel2D m = null;
-			    try
-				{
-				    m = Model.filterRansac(
-							   RigidModel2D.class,
-							   candidates[i],
-							   tmpInliers,
-							   1000,
-							   sp.max_epsilon,
-							   sp.min_inlier_ratio );
-				}
-			    catch ( Exception e )
-				{
-				    //IJ.error( e.getMessage() );
-				}
+					//			    RigidModel2D m = RigidModel2D.estimateBestModel(candidates.get(i), tmpInliers, sp.min_epsilon, sp.max_epsilon, sp.min_inlier_ratio);
+
+						RigidModel2D m = new RigidModel2D();
+						try{
+								m.filterRansac(
+															 candidates[i],
+															 tmpInliers,
+															 1000,
+															 sp.max_epsilon,
+															 sp.min_inlier_ratio );
+					
+						}
+						catch(NotEnoughDataPointsException e){
+								System.out.println("NotEnoughDataPointsException");
+						}
+						
 			    inliers[index*(numberOfImages-1)+i] = tmpInliers;
 			    models[index*(numberOfImages-1)+i] = m;
 			    //System.out.println("**** MODEL ADDED: " + (index*(numberOfImages-1)+i));
@@ -863,5 +860,6 @@ public class Distortion_Correction implements PlugIn{
 	MultiThreading.startAndJoin(threads);	
 
     }
+
 }
 	

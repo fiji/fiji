@@ -17,16 +17,18 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 **/
 
 /* ****************************************************************  *
- * Representation of a non linear transform by explicit polynomial	 *
- * kernel expansion.												 *
- * 																	 *
- * TODO:															 *
- * 	- make different kernels available								 *
- * 	- inverse transform for visualization							 *
- *  - improve image interpolation 									 *
- *  																 *
- *  Author: Verena Kaynig											 *	
- *  Kontakt: verena.kaynig@inf.ethz.ch								 *
+ * Representation of a non linear transform by explicit polynomial	 
+ * kernel expansion.												
+ * 																	
+ * TODO:														
+ * 	- make different kernels available
+ * 	- inverse transform for visualization
+ *  - improve image interpolation 				
+ *  - apply and applyInPlace should use precalculated transform?
+ *    (What about out of image range pixels?)
+ *  																
+ *  Author: Verena Kaynig						
+ *  Kontakt: verena.kaynig@inf.ethz.ch	
  *  
  * ****************************************************************  */
 
@@ -50,7 +52,7 @@ import Jama.Matrix;
 import java.io.*;
 
 
-public class NonLinearTransform{
+public class NonLinearTransform implements mpicbg.trakem2.CoordinateTransform{
 
 		private double[][] beta = null;
 		private double[] normMean = null;
@@ -112,6 +114,98 @@ public class NonLinearTransform{
 				}
 		}
 		
+
+		//implements mpicbg.trakem2
+		public void init( String data ) throws NumberFormatException{
+				final String[] fields = data.split( " " );
+				int c = 0;
+
+				dimension = Integer.parseInt(fields[c]); c++;
+				length = Integer.parseInt(fields[c]); c++;
+
+				beta = new double[length][2];
+				normMean = new double[length];
+				normVar = new double[length];
+
+				if ( fields.length == 4 + 4*length )
+						{
+								for (int i=0; i < length; i++){
+										beta[i][0] = Double.parseDouble(fields[c]); c++;
+										beta[i][1] = Double.parseDouble(fields[c]); c++;
+								}
+								
+								System.out.println("c: " + c); 
+
+								for (int i=0; i < length; i++){
+										normMean[i] = Double.parseDouble(fields[c]); c++;
+								}
+								
+								System.out.println("c: " + c); 
+
+								for (int i=0; i < length; i++){
+										normVar[i] = Double.parseDouble(fields[c]); c++;
+								}
+
+								width = Integer.parseInt(fields[c]); c++;				
+								height = Integer.parseInt(fields[c]); c++;
+								System.out.println("c: " + c); 
+								
+						}
+				else throw new NumberFormatException( "Inappropriate parameters for " + this.getClass().getCanonicalName() );
+		}
+
+
+
+		public String toXML(final String indent){
+				return new StringBuffer(indent).append("<ict_transform class=\"").append(this.getClass().getCanonicalName()).append("\" data=\"").append(toDataString()).append("\"/>").toString();
+		}
+
+		public String toDataString(){
+				String data = "";
+				data += Integer.toString(dimension) + " ";
+				data += Integer.toString(length) + " ";
+
+				for (int i=0; i < length; i++){
+						data += Double.toString(beta[i][0]) + " ";
+						data += Double.toString(beta[i][1]) + " ";
+				}
+
+				for (int i=0; i < length; i++){
+						data += Double.toString(normMean[i]) + " ";
+				}
+
+				for (int i=0; i < length; i++){
+						data += Double.toString(normVar[i]) + " ";
+				}
+				data += Integer.toString(width) + " ";
+				data += Integer.toString(height) + " ";
+
+				return data;
+
+		}
+
+		public float[] apply( float[] location ){
+
+				double[] position = {(double) location[0], (double) location[1]};
+				double[] featureVector = kernelExpand(position);
+				double[] newPosition = multiply(beta, featureVector);
+
+				float[] newLocation = new float[2];
+				newLocation[0] = (float) newPosition[0];
+				newLocation[1] = (float) newPosition[1];
+
+				return newLocation;
+		}
+
+		public void applyInPlace( float[] location ){
+				double[] position = {(double) location[0], (double) location[1]};
+				double[] featureVector = kernelExpand(position);
+				double[] newPosition = multiply(beta, featureVector);
+
+				location[0] = (float) newPosition[0];
+				location[1] = (float) newPosition[1];
+		}
+
 		void precalculateTransfom(){
 				transField = new double[width][height][2];
 				//double minX = width, minY = height, maxX = 0, maxY = 0;
