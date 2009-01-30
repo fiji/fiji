@@ -52,7 +52,7 @@ import Jama.Matrix;
 import java.io.*;
 
 
-public class NonLinearTransform implements mpicbg.trakem2.CoordinateTransform{
+public class NonLinearTransform implements mpicbg.trakem2.transform.CoordinateTransform{
 
 		private double[][] beta = null;
 		private double[] normMean = null;
