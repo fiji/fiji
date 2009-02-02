@@ -285,11 +285,12 @@ public class NonLinearTransform implements mpicbg.trakem2.transform.CoordinateTr
 		
 		}
 	
-		public void save(String filename){
+		public void save( final String filename )
+		{
 				try{
 						BufferedWriter out = new BufferedWriter(
-																										new OutputStreamWriter(
-																																					 new FileOutputStream( filename) ) );
+							new OutputStreamWriter(
+							new FileOutputStream( filename) ) );
 						try{	
 								out.write("Kerneldimension");
 								out.newLine();

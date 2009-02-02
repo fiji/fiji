@@ -43,26 +43,22 @@ import ij.IJ;
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 import ij.process.ColorProcessor;
-import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.ImagePlus;
 import ij.io.DirectoryChooser;
 import ij.io.Opener;
 import ij.io.FileSaver;
 
-import ini.trakem2.imaging.Registration;
 import mpi.fruitfly.general.MultiThreading;
 import mpicbg.models.*;
-import mpicbg.trakem2.align.Align;
-import mpicbg.trakem2.align.Align.Param;
 import mpicbg.ij.SIFT;
 import mpicbg.imagefeatures.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Formatter;
 import java.util.List;
-import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.awt.Color;
 import java.io.*;
@@ -279,11 +275,8 @@ public class Distortion_Correction implements PlugIn{
 	static final public BasicParam p = new BasicParam();
 	static final public PluginParam sp = new PluginParam();
 	
-	//FIXME: atm I am using the same model for the original and the calibrated images
-    //this is kind of sloppy but saves computation time (and mine)
-    AbstractAffineModel2D< ? >[] models;
-    
-    NonLinearTransform nlt = new NonLinearTransform();
+	NonLinearTransform nlt = new NonLinearTransform();
+	AbstractAffineModel2D< ? >[] models;
 	
     public void run(String arg)
     {
@@ -299,14 +292,14 @@ public class Distortion_Correction implements PlugIn{
     	List< Feature >[] siftFeatures = extractSIFTFeaturesThreaded( sp.numberOfImages, sp.source_dir, sp.names );
 		
 	    List< PointMatch >[] inliersTmp = new ArrayList[ sp.numberOfImages * ( sp.numberOfImages - 1 ) ];
-	    models = new AbstractAffineModel2D< ? >[ sp.numberOfImages * ( sp.numberOfImages - 1 ) ];
+	    models = new AbstractAffineModel2D[ sp.numberOfImages * ( sp.numberOfImages - 1 ) ];
 	    
 	    IJ.showStatus( "Estimating Correspondences" );
 	    for( int i = 0; i < sp.numberOfImages; ++i )
 	    {
 	    	IJ.log( "Estimating correspondences of image " + i );
 	    	IJ.showProgress( ( i + 1 ), sp.numberOfImages );
-	    	extractSIFTPointsThreaded( i, siftFeatures, inliersTmp );
+	    	extractSIFTPointsThreaded( i, siftFeatures, inliersTmp, models );
 	    }
 		
 	    int wholeCount = 0;
@@ -658,156 +651,157 @@ public class Distortion_Correction implements PlugIn{
     }
 	
     protected String correctImages()
-    {
-    	if ( !sp.applyCorrection )
-    	{
-    		sp.target_dir = System.getProperty("user.dir").replace('\\', '/') + "/distCorr_tmp/";
-    		System.out.println( "Tmp target directory: " + sp.target_dir );
-			
-    		if ( new File( sp.target_dir ).exists() )
-    		{
-    			System.out.println( "removing old tmp directory!" );
+	{
+		if ( !sp.applyCorrection )
+		{
+			sp.target_dir = System.getProperty( "user.dir" ).replace( '\\', '/' ) + "/distCorr_tmp/";
+			System.out.println( "Tmp target directory: " + sp.target_dir );
 
-    			final String[] filesToDelete = new File( sp.target_dir).list();
-    			for (int i=0; i < filesToDelete.length; i++)
-    			{
-    				System.out.println(filesToDelete[i]);
-    				boolean deleted = new File( sp.target_dir + filesToDelete[i]).delete();
-    				if (! deleted)
-    					IJ.log("Error: Could not remove temporary directory!");
-    			}
-    			new File( sp.target_dir ).delete();
-    		}			
-    		try
-    		{
-    			// Create one directory
-    			boolean success = (new File( sp.target_dir)).mkdir();
-    			if (success)
-    				new File( sp.target_dir).deleteOnExit();
-    		}
-    		catch(Exception e)
-    		{
-    			IJ.showMessage("Error! Could not create temporary directory. " + e.getMessage());
-    		}
-    	}
-    	if ( sp.target_dir == "" )
-    	{
-    		final DirectoryChooser dc = new DirectoryChooser( "Target Directory" );
-    		sp.target_dir = dc.getDirectory();
-    		if (null == sp.target_dir) return "";
-    		sp.target_dir = sp.target_dir.replace('\\', '/');
-    		if (!sp.target_dir.endsWith("/")) sp.target_dir += "/";
-    	}
-		
-    	final String[] namesTarget = new File( sp.target_dir).list(
-    			new FilenameFilter()
-    			{
-					public boolean accept(File dir, String namesTarget) {
-					    int idot = namesTarget.lastIndexOf('.');
-					    if (-1 == idot) return false;
-					    return namesTarget.contains(namesTarget.substring(idot).toLowerCase());
+			if ( new File( sp.target_dir ).exists() )
+			{
+				System.out.println( "removing old tmp directory!" );
+
+				final String[] filesToDelete = new File( sp.target_dir ).list();
+				for ( int i = 0; i < filesToDelete.length; i++ )
+				{
+					System.out.println( filesToDelete[ i ] );
+					boolean deleted = new File( sp.target_dir + filesToDelete[ i ] ).delete();
+					if ( !deleted ) IJ.log( "Error: Could not remove temporary directory!" );
+				}
+				new File( sp.target_dir ).delete();
+			}
+			try
+			{
+				// Create one directory
+				boolean success = ( new File( sp.target_dir ) ).mkdir();
+				if ( success ) new File( sp.target_dir ).deleteOnExit();
+			}
+			catch ( Exception e )
+			{
+				IJ.showMessage( "Error! Could not create temporary directory. " + e.getMessage() );
+			}
+		}
+		if ( sp.target_dir == "" )
+		{
+			final DirectoryChooser dc = new DirectoryChooser( "Target Directory" );
+			sp.target_dir = dc.getDirectory();
+			if ( null == sp.target_dir ) return "";
+			sp.target_dir = sp.target_dir.replace( '\\', '/' );
+			if ( !sp.target_dir.endsWith( "/" ) ) sp.target_dir += "/";
+		}
+
+		final String[] namesTarget = new File( sp.target_dir ).list( new FilenameFilter()
+		{
+			public boolean accept( File dir, String namesTarget )
+			{
+				int idot = namesTarget.lastIndexOf( '.' );
+				if ( -1 == idot ) return false;
+				return namesTarget.contains( namesTarget.substring( idot ).toLowerCase() );
+			}
+		} );
+
+		if ( namesTarget.length > 0 ) IJ.showMessage( "Overwrite Message", "There  are already images in that directory. These will be used for evaluation." );
+		else
+		{
+
+			IJ.showStatus( "Correcting Images" );
+
+			final Thread[] threads = MultiThreading.newThreads();
+			final AtomicInteger ai = new AtomicInteger( sp.applyCorrection ? 0 : sp.firstImageIndex );
+
+			for ( int ithread = 0; ithread < threads.length; ++ithread )
+			{
+				threads[ ithread ] = new Thread()
+				{
+					public void run()
+					{
+						setPriority( Thread.NORM_PRIORITY );
+
+						for ( int i = ai.getAndIncrement(); i < ( sp.applyCorrection ? sp.names.length : ( sp.firstImageIndex + sp.numberOfImages ) ); i = ai.getAndIncrement() )
+						{
+							IJ.log( "Correcting image " + sp.names[ i ] );
+							final ImagePlus imps = new Opener().openImage( sp.source_dir + sp.names[ i ] );
+							imps.setProcessor( imps.getTitle(), imps.getProcessor().convertToShort( false ) );
+							ImageProcessor[] transErg = nlt.transform( imps.getProcessor() );
+							imps.setProcessor( imps.getTitle(), transErg[ 0 ] );
+							if ( !sp.applyCorrection ) new File( sp.target_dir + sp.names[ i ] ).deleteOnExit();
+							new FileSaver( imps ).saveAsTiff( sp.target_dir + sp.names[ i ] );
+						}
 					}
-    			} );	
-		
-    	if (namesTarget.length > 0)
-    		IJ.showMessage("Overwrite Message", "There  are already images in that directory. These will be used for evaluation.");
-    	else
-    	{
-			
-    		IJ.showStatus("Correcting Images");
-
-    		final Thread[] threads = MultiThreading.newThreads();
-    		final AtomicInteger ai = new AtomicInteger( sp.applyCorrection ? 0 : sp.firstImageIndex );
-			
-    		for ( int ithread = 0; ithread < threads.length; ++ithread )
-    		{
-    			threads[ ithread ] = new Thread()
-    			{
-    				public void run()
-    				{ 
-    					setPriority(Thread.NORM_PRIORITY);
-
-    					for (int i = ai.getAndIncrement(); i < ( sp.applyCorrection? sp.names.length : (sp.firstImageIndex + sp.numberOfImages)); i = ai.getAndIncrement())
-    					{
-    						IJ.log("Correcting image " + sp.names[i]);
-    						final ImagePlus imps = new Opener().openImage( sp.source_dir + sp.names[i]);
-    						imps.setProcessor(imps.getTitle(), imps.getProcessor().convertToShort(false));
-    						ImageProcessor[] transErg = nlt.transform(imps.getProcessor());
-    						imps.setProcessor(imps.getTitle(),transErg[0]);
-    						if ( !sp.applyCorrection)
-    							new File( sp.target_dir + sp.names[i]).deleteOnExit();
-    						new FileSaver(imps).saveAsTiff( sp.target_dir + sp.names[i]);
-    					}
-    				}
-    			};
-    		}
-    		MultiThreading.startAndJoin(threads);
-    	}
-    	return sp.target_dir;
-    }
+				};
+			}
+			MultiThreading.startAndJoin( threads );
+		}
+		return sp.target_dir;
+	}
 	
-    double[] evaluateCorrectionXcorr(int index, String directory){
-	ImagePlus im1 = new Opener().openImage(directory + sp.names[index]);
-	im1.setProcessor(sp.names[index], im1.getProcessor().convertToShort(false));
-		
-	int count = 0;
-	ArrayList<Double> xcorrVals = new ArrayList<Double>();
-	ArrayList<Double> xcorrValsGrad = new ArrayList<Double>();
-		
-	for (int i=0; i < sp.numberOfImages; i++){
-	    if (i == index){
-		continue;
-	    }
-	    if (models[index*(sp.numberOfImages-1)+count] == null){
-		count++;
-		continue;
-	    }
-			
-	    ImagePlus newImg = new Opener().openImage(directory +  sp.names[i+sp.firstImageIndex]);
-	    newImg.setProcessor(newImg.getTitle(), newImg.getProcessor().convertToShort(false));
-			
-	    newImg.setProcessor(sp.names[i+sp.firstImageIndex], applyTransformToImageInverse(models[index*(sp.numberOfImages-1)+count], 
-										       newImg.getProcessor()));
-	    ImageProcessor testIp = im1.getProcessor().duplicate();
+    protected double[] evaluateCorrectionXcorr( int index, String directory )
+	{
+		ImagePlus im1 = new Opener().openImage( directory + sp.names[ index ] );
+		im1.setProcessor( sp.names[ index ], im1.getProcessor().convertToShort( false ) );
 
-	    // If you want to see the stitching improvement run this			
-	    //			for ( int x=0; x < testIp.getWidth(); x++){
-	    //				for (int y=0; y < testIp.getHeight(); y++){
-	    //					testIp.set(x, y, Math.abs(im1.getProcessor().get(x,y) - newImg.getProcessor().get(x,y)));
-	    //				}
-	    //			}
-			
-	    //			ImagePlus testImg = new ImagePlus(sp.names[index] + " minus " + sp.names[i], testIp);
-	    //			testImg.show();
-	    //			im1.show();
-	    //			newImg.show();
-			
-			
-	    xcorrVals.add(getXcorrBlackOut(im1.getProcessor(), newImg.getProcessor()));
-			
-	    xcorrValsGrad.add(getXcorrBlackOutGradient(im1.getProcessor(), newImg.getProcessor()));
-	    count++;
+		int count = 0;
+		ArrayList< Double > xcorrVals = new ArrayList< Double >();
+		ArrayList< Double > xcorrValsGrad = new ArrayList< Double >();
+
+		for ( int i = 0; i < sp.numberOfImages; i++ )
+		{
+			if ( i == index )
+			{
+				continue;
+			}
+			if ( models[ index * ( sp.numberOfImages - 1 ) + count ] == null )
+			{
+				count++;
+				continue;
+			}
+
+			ImagePlus newImg = new Opener().openImage( directory + sp.names[ i + sp.firstImageIndex ] );
+			newImg.setProcessor( newImg.getTitle(), newImg.getProcessor().convertToShort( false ) );
+
+			newImg.setProcessor( sp.names[ i + sp.firstImageIndex ], applyTransformToImageInverse( models[ index * ( sp.numberOfImages - 1 ) + count ], newImg.getProcessor() ) );
+			ImageProcessor testIp = im1.getProcessor().duplicate();
+
+			// If you want to see the stitching improvement run this
+			// for ( int x=0; x < testIp.getWidth(); x++){
+			// for (int y=0; y < testIp.getHeight(); y++){
+			// testIp.set(x, y, Math.abs(im1.getProcessor().get(x,y) -
+			// newImg.getProcessor().get(x,y)));
+			// }
+			// }
+
+			// ImagePlus testImg = new ImagePlus(sp.names[index] + " minus " +
+			// sp.names[i], testIp);
+			// testImg.show();
+			// im1.show();
+			// newImg.show();
+
+			xcorrVals.add( getXcorrBlackOut( im1.getProcessor(), newImg.getProcessor() ) );
+
+			xcorrValsGrad.add( getXcorrBlackOutGradient( im1.getProcessor(), newImg.getProcessor() ) );
+			count++;
+		}
+
+		Collections.sort( xcorrVals );
+		Collections.sort( xcorrValsGrad );
+
+		double[] medians = { xcorrVals.get( xcorrVals.size() / 2 ), xcorrValsGrad.get( xcorrValsGrad.size() / 2 ) };
+
+		double m1 = 0.0, m2 = 0.0;
+		for ( int i = 0; i < xcorrVals.size(); i++ )
+		{
+			m1 += xcorrVals.get( i );
+			m2 += xcorrValsGrad.get( i );
+		}
+
+		m1 /= xcorrVals.size();
+		m2 /= xcorrVals.size();
+
+		double[] means = { m1, m2 };
+
+		return means;
+		//return medians;
 	}
-		
-	Collections.sort(xcorrVals);
-	Collections.sort(xcorrValsGrad);
-		
-	double[] medians = {xcorrVals.get(xcorrVals.size() / 2), xcorrValsGrad.get(xcorrValsGrad.size()/2)};
-		
-	double m1 = 0.0, m2 = 0.0;
-	for (int i=0; i < xcorrVals.size(); i++){
-	    m1 += xcorrVals.get(i);
-	    m2 += xcorrValsGrad.get(i);
-	}
-		
-	m1 /= xcorrVals.size();
-	m2 /= xcorrVals.size();
-		
-	double[] means = {m1,m2};
-		
-	return means;
-	//return medians;
-    }
 	
     ImageProcessor applyTransformToImageInverse(
     		AbstractAffineModel2D< ? > a, ImageProcessor ip){
@@ -1028,86 +1022,105 @@ public class Distortion_Correction implements PlugIn{
 	return  siftFeatures;
     }
 	
-    protected void extractSIFTPointsThreaded(
+    static protected void extractSIFTPointsThreaded(
     		final int index,
-    		final List< Feature >[] siftFeatures, 
-    		final List< PointMatch >[] inliers )
-    {
+    		final List< Feature >[] siftFeatures,
+    		final List< PointMatch >[] inliers,
+    		final AbstractAffineModel2D< ? >[] models )
+	{
 
-	//save all matching candidates
-	final List< PointMatch >[] candidates = new List[ siftFeatures.length - 1 ];
-		
-	final Thread[] threads = MultiThreading.newThreads();
-	final AtomicInteger ai = new AtomicInteger(0); // start at second slice
-		
-	for (int ithread = 0; ithread < threads.length; ++ithread) {
-	    threads[ithread] = new Thread() {
-		    public void run() { 
-			setPriority(Thread.NORM_PRIORITY);
+		// save all matching candidates
+		final List< PointMatch >[] candidates = new List[ siftFeatures.length - 1 ];
 
-			for (int j = ai.getAndIncrement(); j < candidates.length; j = ai.getAndIncrement()) {
-			    int i = (j<index ? j : j+1);
-			    candidates[j] = FloatArray2DSIFT.createMatches(siftFeatures[index], siftFeatures[i], 1.5f, null, Float.MAX_VALUE, 0.5f);
-			}
-		    }
-		};
-	}
-	
-	MultiThreading.startAndJoin(threads);	
+		final Thread[] threads = MultiThreading.newThreads();
+		final AtomicInteger ai = new AtomicInteger( 0 ); // start at second
+															// slice
 
-	//	get rid of the outliers and save the rigid transformations to match the inliers
-		
-	final AtomicInteger ai2 = new AtomicInteger(0);
-	for (int ithread = 0; ithread < threads.length; ++ithread) {
-	    threads[ithread] = new Thread() {
-		    public void run() { 
-			setPriority(Thread.NORM_PRIORITY);
-			for (int i=ai2.getAndIncrement(); i < candidates.length; i = ai2.getAndIncrement()){
-	
-			    Vector<PointMatch> tmpInliers = new Vector<PointMatch>();
-					//			    RigidModel2D m = RigidModel2D.estimateBestModel(candidates.get(i), tmpInliers, sp.min_epsilon, sp.max_epsilon, sp.min_inlier_ratio);
-
-			    final AbstractAffineModel2D< ? > m;
-				switch ( sp.expectedModelIndex )
+		for ( int ithread = 0; ithread < threads.length; ++ithread )
+		{
+			threads[ ithread ] = new Thread()
+			{
+				public void run()
 				{
-				case 0:
-					m = new TranslationModel2D();
-					break;
-				case 1:
-					m = new RigidModel2D();
-					break;
-				case 2:
-					m = new SimilarityModel2D();
-					break;
-				case 3:
-					m = new AffineModel2D();
-					break;
-				default:
-					return;
+					setPriority( Thread.NORM_PRIORITY );
+
+					for ( int j = ai.getAndIncrement(); j < candidates.length; j = ai.getAndIncrement() )
+					{
+						int i = ( j < index ? j : j + 1 );
+						candidates[ j ] = FloatArray2DSIFT.createMatches( siftFeatures[ index ], siftFeatures[ i ], 1.5f, null, Float.MAX_VALUE, 0.5f );
+					}
 				}
-				try
+			};
+		}
+
+		MultiThreading.startAndJoin( threads );
+
+		// get rid of the outliers and save the rigid transformations to match
+		// the inliers
+
+		final AtomicInteger ai2 = new AtomicInteger( 0 );
+		for ( int ithread = 0; ithread < threads.length; ++ithread )
+		{
+			threads[ ithread ] = new Thread()
+			{
+				public void run()
 				{
-					m.filterRansac(
-						candidates[i],
-						tmpInliers,
-						1000,
-						sp.maxEpsilon,
-						sp.minInlierRatio,
-						10 );
-				}
-				catch ( NotEnoughDataPointsException e ) { e.printStackTrace(); }
+					setPriority( Thread.NORM_PRIORITY );
+					for ( int i = ai2.getAndIncrement(); i < candidates.length; i = ai2.getAndIncrement() )
+					{
+
+						List< PointMatch > tmpInliers = new ArrayList< PointMatch >();
+						// RigidModel2D m =
+						// RigidModel2D.estimateBestModel(candidates.get(i),
+						// tmpInliers, sp.min_epsilon, sp.max_epsilon,
+						// sp.min_inlier_ratio);
+
+						final AbstractAffineModel2D< ? > m;
+						switch ( sp.expectedModelIndex )
+						{
+						case 0:
+							m = new TranslationModel2D();
+							break;
+						case 1:
+							m = new RigidModel2D();
+							break;
+						case 2:
+							m = new SimilarityModel2D();
+							break;
+						case 3:
+							m = new AffineModel2D();
+							break;
+						default:
+							return;
+						}
 						
-			    inliers[index*(sp.numberOfImages-1)+i] = tmpInliers;
-			    models[index*(sp.numberOfImages-1)+i] = m;
-			    //System.out.println("**** MODEL ADDED: " + (index*(sp.numberOfImages-1)+i));
-			}
+						boolean modelFound = false;
+						try
+						{
+							modelFound = m.filterRansac( candidates[ i ], tmpInliers, 1000, sp.maxEpsilon, sp.minInlierRatio, 10 );
+						}
+						catch ( NotEnoughDataPointsException e )
+						{
+							modelFound = false;
+						}
+						
+						if ( modelFound )
+							IJ.log( "Model found:\n  " + candidates[ i ].size() + " candidates\n  " + tmpInliers.size() + " inliers\n  " + String.format( "%.2f", m.getCost() ) + "px average displacement" );
+						else
+							IJ.log( "No Model found." );
+						
+						inliers[ index * ( sp.numberOfImages - 1 ) + i ] = tmpInliers;
+						models[ index * ( sp.numberOfImages - 1 ) + i ] = m;
+						// System.out.println("**** MODEL ADDED: " +
+						// (index*(sp.numberOfImages-1)+i));
+					}
 
-		    }
-		};
+				}
+			};
+		}
+		MultiThreading.startAndJoin( threads );
+
 	}
-	MultiThreading.startAndJoin(threads);	
-
-    }
 
 }
 	
