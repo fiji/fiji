@@ -3,6 +3,7 @@
  */
 package lenscorrection;
 
+import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -117,22 +118,27 @@ final public class DistortionCorrectionTask
 		
 		/** Some data shuffling for the lens correction interface */
 		final List< Collection< PointMatch > > matches = new ArrayList< Collection< PointMatch > >();
-		final List< AbstractAffineModel2D< ? > > models = new ArrayList< AbstractAffineModel2D< ? > >();
+		final List< AffineTransform > affines = new ArrayList< AffineTransform >();
 		for ( AbstractAffineTile2D< ? >[] tilePair : tilePairs )
 		{
-			matches.add( tilePair[ 1 ].getMatches() );
-			models.add( tilePair[ 1 ].getModel() );
+			matches.add( tilePair[ 0 ].getMatches() );
+			final AffineTransform a = tilePair[ 0 ].createAffine();
+			a.preConcatenate( fixedTile.getModel().createInverseAffine() );
+			affines.add( a );
 		}
 		
 		final NonLinearTransform lensModel = Distortion_Correction.distortionCorrection(
 	    		matches,
-	    		models,
+	    		affines,
 	    		p.dimension,
 	    		p.lambda,
 	    		( int )fixedTile.getWidth(),
 	    		( int )fixedTile.getHeight() );
 		
 		IJ.log( "Lens model estimated." );
+		IJ.log( "Going to visualize the lens model ..." );
+		IJ.log( "" + p.lambda );
+		lensModel.visualizeSmall( p.lambda );
 		
 		/**
 		 * Apply the lens model to all patches in the layer.
