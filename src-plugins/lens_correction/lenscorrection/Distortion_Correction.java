@@ -86,12 +86,12 @@ public class Distortion_Correction implements PlugIn{
 		/**
 		 * Maximal allowed alignment error in px
 		 */
-		public float maxEpsilon = 100.0f;
+		public float maxEpsilon = 20.0f;
 		
 		/**
 		 * Inlier/candidates ratio
 		 */
-		public float minInlierRatio = 0.05f;
+		public float minInlierRatio = 0.2f;
 		
 		/**
 		 * Implemeted transformation models for choice
@@ -107,7 +107,13 @@ public class Distortion_Correction implements PlugIn{
 		/**
 		 * Regularization factor
 		 */
-		public double lambda = 0.0001;
+		public double lambda = 0.01;
+		
+		public BasicParam()
+		{
+			sift.fdSize = 8;
+			sift.maxOctaveSize = 1600;
+		}
 		
 		public void addFields( final GenericDialog gd )
 		{

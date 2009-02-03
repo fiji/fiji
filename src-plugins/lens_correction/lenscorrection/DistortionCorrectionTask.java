@@ -137,7 +137,6 @@ final public class DistortionCorrectionTask
 		
 		IJ.log( "Lens model estimated." );
 		IJ.log( "Going to visualize the lens model ..." );
-		IJ.log( "" + p.lambda );
 		lensModel.visualizeSmall( p.lambda );
 		
 		/**
@@ -154,5 +153,7 @@ final public class DistortionCorrectionTask
 			o.setCoordinateTransform( lensModel );
 			o.updateMipmaps();
 		}
+		
+		Display.repaint();
 	}
 }
