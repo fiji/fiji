@@ -62,6 +62,7 @@ import java.util.Formatter;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.awt.Color;
+import java.awt.geom.AffineTransform;
 import java.io.*;
 
 import org.jfree.chart.*;
@@ -135,7 +136,7 @@ public class Distortion_Correction implements PlugIn{
 			expectedModelIndex = gd.getNextChoiceIndex();
 			
 			dimension = ( int )gd.getNextNumber();
-			lambda = ( int )gd.getNextNumber();
+			lambda = ( double )gd.getNextNumber();
 			
 			return !gd.invalidNumber();
 		}
@@ -565,7 +566,7 @@ public class Distortion_Correction implements PlugIn{
     
     static public NonLinearTransform distortionCorrection(
     		final List< Collection< PointMatch > > inliers,
-    		final List< AbstractAffineModel2D< ? > > models,
+    		final List< AffineTransform > affines,
     		final int dimension,
     		final double lambda,
     		final int imageWidth,
@@ -584,8 +585,8 @@ public class Distortion_Correction implements PlugIn{
 	    {
 			if (inliers.get(i).size() > 10)
 			{
-			    double[][] points1 = new double[inliers.get(i).size()][2];
-			    double[][] points2 = new double[inliers.get(i).size()][2];
+			    final double[][] points1 = new double[inliers.get(i).size()][2];
+			    final double[][] points2 = new double[inliers.get(i).size()][2];
 				
 			    int j = 0;
 			    for ( PointMatch match : inliers.get( i ) )
@@ -601,7 +602,7 @@ public class Distortion_Correction implements PlugIn{
 					h1[count] = new double[] {(double) tmp1[0], (double) tmp1[1]};
 					h2[count] = new double[] {(double) tmp2[0], (double) tmp2[1]};
 						  
-					models.get( i ).createAffine().getMatrix( tp[ count ] );				    
+					affines.get( i ).getMatrix( tp[ count ] );				    
 					count++; 
 					
 					++j;
