@@ -56,6 +56,7 @@ import mpicbg.imagefeatures.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Formatter;
 import java.util.List;
@@ -151,6 +152,21 @@ public class Distortion_Correction implements PlugIn{
 			while ( !readFields( gd ) );
 			
 			return true;
+		}
+		
+		@Override
+		public BasicParam clone()
+		{
+			final BasicParam p = new BasicParam();
+			p.sift.set( sift );
+			p.dimension = dimension;
+			p.expectedModelIndex = expectedModelIndex;
+			p.lambda = lambda;
+			p.maxEpsilon = maxEpsilon;
+			p.minInlierRatio = minInlierRatio;
+			p.rod = rod;
+			
+			return p;
 		}
 	}
 	
@@ -548,7 +564,7 @@ public class Distortion_Correction implements PlugIn{
     }
     
     static public NonLinearTransform distortionCorrection(
-    		final List< List< PointMatch > > inliers,
+    		final List< Collection< PointMatch > > inliers,
     		final List< AbstractAffineModel2D< ? > > models,
     		final int dimension,
     		final double lambda,
@@ -556,7 +572,7 @@ public class Distortion_Correction implements PlugIn{
     		final int imageHeight )
     {
     	int wholeCount = 0;
-	    for ( List< PointMatch > l : inliers )
+	    for ( Collection< PointMatch > l : inliers )
 	    	if ( l.size() > 10 )
 	    		wholeCount += l.size();
 		  
@@ -564,26 +580,31 @@ public class Distortion_Correction implements PlugIn{
 	    final double h1[][] = new double[wholeCount][2];
 	    final double h2[][] = new double[wholeCount][2];
 	    int count = 0;
-	    for (int i=0; i < inliers.size(); i++){
-			if (inliers.get(i).size() > 10){
+	    for (int i=0; i < inliers.size(); i++)
+	    {
+			if (inliers.get(i).size() > 10)
+			{
 			    double[][] points1 = new double[inliers.get(i).size()][2];
 			    double[][] points2 = new double[inliers.get(i).size()][2];
 				
-			    for (int j=0; j < inliers.get(i).size(); j++){
-						
-				float[] tmp1 = ((PointMatch) inliers.get(i).get(j)).getP1().getL();
-				float[] tmp2 = ((PointMatch) inliers.get(i).get(j)).getP2().getL();
+			    int j = 0;
+			    for ( PointMatch match : inliers.get( i ) )
+			    {	
+			    	final float[] tmp1 = match.getP1().getL();
+			    	final float[] tmp2 = match.getP2().getL();
 				    
-				points1[j][0] = (double) tmp1[0];
-				points1[j][1] = (double) tmp1[1];
-				points2[j][0] = (double) tmp2[0];
-				points2[j][1] = (double) tmp2[1];
-					    
-				h1[count] = new double[] {(double) tmp1[0], (double) tmp1[1]};
-				h2[count] = new double[] {(double) tmp2[0], (double) tmp2[1]};
-					  
-				models.get( i ).createAffine().getMatrix(tp[count]);				    
-				count++; 
+					points1[j][0] = (double) tmp1[0];
+					points1[j][1] = (double) tmp1[1];
+					points2[j][0] = (double) tmp2[0];
+					points2[j][1] = (double) tmp2[1];
+						    
+					h1[count] = new double[] {(double) tmp1[0], (double) tmp1[1]};
+					h2[count] = new double[] {(double) tmp2[0], (double) tmp2[1]};
+						  
+					models.get( i ).createAffine().getMatrix( tp[ count ] );				    
+					count++; 
+					
+					++j;
 			    }
 			}
 	    }	
