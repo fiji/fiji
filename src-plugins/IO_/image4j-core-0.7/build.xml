@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="image4j" default="all" basedir=".">
+  <property name="src.dir" value="${basedir}/src"/>
+  <property name="build.dir" value="${basedir}/build/classes"/>  
+  <property name="dist.dir" value="${basedir}/dist"/>
+  <property name="docs.dir" value="${dist.dir}/javadoc"/>
+    
+  <target name="all" depends="clean,build,jar,docs"/>
+  
+  <target name="clean">
+    <delete dir="${build.dir}"/>
+  </target>  
+  
+  <target name="build" depends="init">
+    <javac destdir="${build.dir}" srcdir="${src.dir}">
+      
+    </javac>
+  </target>
+  
+  <target name="jar" depends="init">
+    <jar basedir="${build.dir}" file="${dist.dir}/image4j.jar">     
+    </jar>
+  </target>
+  
+  <target name="docs" depends="init">
+    <javadoc destdir="${docs.dir}" windowtitle="image4j" overview="${src.dir}/overview.html">
+      <fileset dir="${src.dir}" includes="**/*.java"/>
+    </javadoc>
+  </target>
+  
+  <target name="init">
+    <mkdir dir="${build.dir}"/>
+    <mkdir dir="${dist.dir}"/>
+    <mkdir dir="${docs.dir}"/>
+  </target>
+  
+</project>

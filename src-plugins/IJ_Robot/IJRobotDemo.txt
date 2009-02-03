@@ -1,0 +1,76 @@
+// IJRobotDemo.txt
+// G. Landini 28/June/2006
+// 23/5/07 update to use screen coordinates, added text input 
+//
+// This demo needs the drawing tool installed in setTool(16);
+// Please close all images before running this macro
+// x and y values are *screen* coordinates, not image ones. 
+
+t=50;
+showMessage("IJ_Robot Demo","Please do not move the mouse after pressing OK");
+wait(1000); // wait 1 sec. before starting
+setForegroundColor(255, 255, 255);
+setBackgroundColor(0, 0, 0);
+
+newImage("Robot_Demo", "8-bit Black", 300, 300, 1);
+setTool(16); //select pencil tool
+setLocation(5,220); 
+
+// do some drawing
+run("IJ Robot", "order=Move x_point=100 y_point=300");
+wait(t);
+run("IJ Robot", "order=Left_Down"); 
+wait(t);
+run("IJ Robot", "order=Move x_point=100 y_point=360");
+wait(t);
+run("IJ Robot", "order=Left_Up");
+wait(t);
+
+run("IJ Robot", "order=Left_Click x_point=100 y_point=285 delay=400");
+wait(t);
+
+run("IJ Robot", "order=Move x_point=150 y_point=300");
+run("IJ Robot", "order=Left_Down ");
+wait(t);
+run("IJ Robot", "order=Move x_point=180 y_point=300");
+wait(t);
+run("IJ Robot", "order=Left_Up");
+wait(t);
+
+run("IJ Robot", "order=Move x_point=165 y_point=300");
+run("IJ Robot", "order=Left_Down ");
+wait(t);
+run("IJ Robot", "order=Move x_point=165 y_point=360");
+
+wait(t);
+run("IJ Robot", "order=Move x_point=135 y_point=360");
+wait(t);
+run("IJ Robot", "order=Move x_point=135 y_point=340");
+wait(t);
+run("IJ Robot", "order=Left_Up");
+wait(t);
+
+// use text tool
+setTool(9);
+for (i=1;i<6;i++){
+setForegroundColor(i*50, i*50, i*50);
+ run("IJ Robot", "order=Left_Click x_point="+floor(60+i*25)+" y_point="+floor(360+i*25)); 
+ wait(t);
+ run("IJ Robot", "order=KeyPress keypress='IJ Robot'");
+ run("Draw");
+}
+run("Select None");
+
+setForegroundColor(255, 255, 255);
+
+
+// move a window around
+run("IJ Robot", "order=Move x_point=146 y_point=236");
+wait(t);
+run("IJ Robot", "order=Left_Down"); 
+wait(t);
+ for (i=1;i<10;i++){
+ run("IJ Robot", "order=Move x_point=246 y_point=136");
+}
+run("IJ Robot", "order=Left_Up");
+wait(t);

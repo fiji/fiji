@@ -1,0 +1,42 @@
+// "RGB Histogram"
+// Generates histograms of the red, green and blue channels
+// of an RGB image and saves them in a stack.
+
+// Requires the ImageJ 1.35b preview at
+// http://rsb.info.nih.gov/ij/ij.jar
+
+  requires("1.35b");
+  if (bitDepth!=24)
+      exit("This macro requires an RGB image");
+  setBatchMode(true);
+  id1 = getImageID();
+  setRGBWeights(1,0,0);
+  run("Histogram");
+  width=getWidth(); height=getHeight();
+  run("Copy");
+  close();
+  newImage("Histogram of "+getTitle, "8-bit", width, height, 3);
+  id2 = getImageID();
+  run("Paste");
+  setMetadata("Red");
+  selectImage(id1);
+  setRGBWeights(0,1,0);
+  run("Histogram");
+  run("Copy");
+  close();
+  selectImage(id2);
+  setSlice(2);
+  run("Paste");
+  setMetadata("Green");
+  selectImage(id1);
+  setRGBWeights(0,0,1);
+  run("Histogram");
+  run("Copy");
+  close();
+  selectImage(id2);
+  setSlice(3);
+  run("Paste");
+  setMetadata("Blue");
+  setSlice(1);
+  run("Select None");
+  setBatchMode(false);

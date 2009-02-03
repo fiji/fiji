@@ -1,0 +1,35 @@
+// Author: Gilles Carpentier, Faculte des Sciences et
+// Technologies,  Universite Paris 12 Val de Marne, France
+
+var nbMeasurement=0;
+var Mesure =newArray  (1000);
+var tablename="Table of Something";
+var table="";
+
+macro "Add Line[a]" {
+
+	table="["+ tablename + "]";
+	if (! isOpen (tablename)) {
+		run("New... ", "name="+table+" type=Table");
+		print (table, "\\Headings:number \t value \t");
+	} 
+	nbMeasurement=nbMeasurement+1;
+	print(table, "\\Clear");
+	// input a new value
+	Mesure[nbMeasurement-1] = floor (random*100);
+	for (i=0; i<(nbMeasurement); i++) {
+		print(table,  i+  "\t" + Mesure[i] + "\t");
+	}
+}
+
+macro "Remove Line [r]" {
+
+	if (isOpen (tablename)&& nbMeasurement >0) {
+	print(table, "\\Clear");
+	// remove the  value
+	Mesure[nbMeasurement-1] = 0;
+	nbMeasurement=nbMeasurement-1;
+	for (i=0; i<(nbMeasurement); i++) {
+		print(table,  i+  "\t" + Mesure[i] + "\t");
+	}
+}

@@ -1,0 +1,5 @@
+?package(fiji): needs="X11" section="Applications/Graphics" \
+  title="Fiji" command="/usr/bin/fiji" \
+  icon16x16="/usr/share/pixmaps/fiji-icon-16x16.xpm" \
+  icon32x32="/usr/share/pixmaps/fiji-icon-32x32.xpm" \
+  icon="/usr/share/pixmaps/fiji-icon-32x32.xpm"

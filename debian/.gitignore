@@ -1,0 +1,5 @@
+*.log
+fiji
+*.substvars
+*.debhelper
+files

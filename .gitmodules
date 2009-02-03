@@ -1,0 +1,48 @@
+[submodule "ImageJA"]
+	path = ImageJA
+	url = ssh://mob@repo.or.cz/srv/git/imageja.git
+[submodule "TrakEM2"]
+	path = TrakEM2
+	url = ssh://mob@repo.or.cz/srv/git/trakem2.git
+[submodule "VIB"]
+	path = VIB
+	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/VIB.git/
+[submodule "java/linux"]
+	path = java/linux
+	url = .
+[submodule "java/linux-amd64"]
+	path = java/linux-amd64
+	url = .
+[submodule "java/macosx-java3d"]
+	path = java/macosx-java3d
+	url = .
+[submodule "java/win32"]
+	path = java/win32
+	url = .
+[submodule "java/win64"]
+	path = java/win64
+	url = .
+[submodule "micromanager1.1"]
+	path = micromanager1.1
+	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/micromanager1.1/.git
+[submodule "mpicbg"]
+	path = mpicbg
+	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/mpicbg.git
+[submodule "clojure"]
+	path = clojure
+	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/clojure/
+[submodule "bio-formats"]
+	path = bio-formats
+	url = git://pacific.mpi-cbg.de/bio-formats
+[submodule "ij-plugins"]
+	path = ij-plugins
+	url = git://pacific.mpi-cbg.de/ij-plugins
+[submodule "Retrotranslator"]
+	path = Retrotranslator
+	url = git://pacific.mpi-cbg.de/Retrotranslator
+[submodule "tcljava"]
+	path = tcljava
+	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/tcljava
+[submodule "batik"]
+	path = batik
+	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/batik/.git

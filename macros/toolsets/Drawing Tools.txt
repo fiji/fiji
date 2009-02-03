@@ -1,0 +1,189 @@
+// Drawing tools
+// 
+//  This is a set of tools similar to the pencil, paintbrush and 
+//  eraser tools in NIH Image. The pencil and paintbrush draw
+//  in the current foreground color and the eraser draws in the
+//  current background color. The foreground and background
+//  colors can be set by double-clicking on the eye dropper tool. 
+//  Double-click on a tool icon to set the drawing width.
+
+
+  var pencilWidth=1, brushWidth=10, eraserWidth=15, leftClick=16, alt=8;
+  var lineWidth = 2;
+  var sprayCanWidth=75, sprayCanDotSize=1, sprayCanRate=6;
+
+  macro "Unused Tool-1 - " {}  // leave slot between text tool and magnifying glass unused
+
+
+ macro "Paintbrush Tool - C059La077 Ld098 L6859 L4a2f L2f4f L3f99 L5e9b L9b98 L6888 L5e8d L888c " {
+        getCursorLoc(x, y, z, flags);
+        if (flags&alt!=0)
+              setColorToBackgound();
+        draw(brushWidth);
+   }
+
+  macro "Pencil Tool - C059L494f L4990 L90b0 Lc1c3 L82a4 Lb58b L7c4f Lb4b4 L5a5d L6b6c L7b7b" {
+        getCursorLoc(x, y, z, flags);
+        if (flags&alt!=0)
+              setColorToBackgound();
+        draw(pencilWidth);
+   }
+
+   macro "Eraser Tool - C037R0aa4 P0a61f1aa0Pbef5f1" {
+        setColorToBackgound();
+        draw(eraserWidth);
+   }
+
+
+ //  This is a tool macro similar to the spray can tool in NIH Image.
+//  Double-click on the tool icon to set the spray width, dot size
+//  and flow rate.
+   macro 'Spray Can Tool - C037D20D22D24D41D43D62D82Da2L93b3D84Dc4L75d5L757f Ld5dfLa7d7LabdbLa9d9LacdcLa7ac' {
+         setLineWidth(sprayCanDotSize);
+         radius=sprayCanWidth/2; radius2=radius*radius;
+         start = getTime();
+         autoUpdate(false);
+         n = 5*exp(0.9*(10-sprayCanRate));
+         if (n<=5) n = 0;
+         while (true) {
+            getCursorLoc(x, y, z, flags);
+            if (flags&16==0) exit();
+            x2 = (random()-0.5)*sprayCanWidth;
+            y2 = (random()-0.5)*sprayCanWidth;
+            if (x2*x2+y2*y2<radius2) {
+                x += x2;
+                y += y2;
+                drawLine(x, y, x, y);
+                if (getTime()>start+50) {
+                    updateDisplay();
+                    start = getTime();
+                 }
+            }
+          
+            for (i=0; i<n; i++);
+        }
+   }
+
+    macro "Flood Fill Tool -C037B21P085373b75d0L4d1aL3135L4050L6166D57D77D68La5adLb6bcD09D94" {
+         setupUndo();
+        getCursorLoc(x, y, z, flags);
+        if (flags&alt!=0) setColorToBackgound();
+        floodFill(x, y);
+    }
+
+// This tool draws arrows. Double click on the
+// tool icon to set the line width. Double click
+// on the eye dropper tool to define the color.
+// Press "z" to undo.
+  var lineWidth=2;
+  macro "Arrow Tool -C037L1ee1L65e1La9e1" {
+      leftButton=16; rightButton=4; alt=8;
+      getCursorLoc(x, y, z, flags); 
+      xstart = x; ystart = y; 
+      x2=x; y2=y;
+      setOption("disablePopupMenu", true); 
+      while (flags!=0) { 
+          getCursorLoc(x, y, z, flags); 
+          if (x!=x2 || y!=y2) 
+              makeLine(xstart, ystart, x, y); 
+          x2=x; y2=y; 
+          wait(10); 
+      }
+      setOption("disablePopupMenu", false);
+       if (x!=xstart || y!=ystart)
+          drawArrow(xstart, ystart, x, y, lineWidth);
+      run("Select None");   
+  }
+  function drawArrow(x1, y1, x2, y2, lineWidth) {
+      setupUndo();
+      setLineWidth(lineWidth);
+      size = 12+12*lineWidth*0.25;
+      dx = x2-x1;
+      dy = y2-y1;
+      ra = sqrt(dx*dx + dy*dy);
+      dx /= ra;
+      dy /= ra;
+      x3 = round(x2-dx*size);
+      y3 = round(y2-dy*size);
+      r = 0.3*size;
+      x4 = round(x3+dy*r);
+      y4 = round(y3-dx*r);
+      x5 = round(x3-dy*r);
+      y5 = round(y3+dx*r);
+      drawLine(x1, y1, x2, y2);
+      if (!isKeyDown("alt")) 
+          {moveTo(x4,y4); lineTo(x2,y2); lineTo(x5,y5);}
+  }
+
+   function draw(width) {
+        leftClick=16;
+        //setupUndo(); // requires 1.32g
+        getCursorLoc(x, y, z, flags);
+        setLineWidth(width);
+        moveTo(x,y);
+        x2=-1; y2=-1;
+        while (true) {
+            getCursorLoc(x, y, z, flags);
+            if (flags&leftClick==0) exit();
+            if (x!=x2 || y!=y2)
+                lineTo(x,y);
+            x2=x; y2 =y;
+            wait(10);
+        }
+   }
+
+
+   function setColorToBackgound() {
+       savep = getPixel(0, 0);
+       makeRectangle(0, 0, 1, 1);
+       run("Clear");
+       background = getPixel(0, 0);
+       run("Select None");
+       setPixel(0, 0, savep);
+       setColor( background);
+   }
+
+  // ImageJ runs this macro when user double-clicks on the pencil tool icon
+  macro 'Pencil Tool Options' {
+      pencilWidth = getNumber("Pencil Width:", pencilWidth);
+  }
+
+  // ImageJ runs this macro when user double-clicks on the paint brush tool icon
+  macro 'Paintbrush Tool Options' {
+      brushWidth = getNumber("Brush Width:", brushWidth);
+  }
+
+  // ImageJ runs this macro when user double-clicks on the eraser tool icon
+  macro 'Eraser Tool Options' {
+      eraserWidth = getNumber("Eraser Width:", eraserWidth);
+  }
+
+ macro 'Smooth Tool Options' {
+      smoothWidth = getNumber("Smooth Width:", smoothWidth);
+  }
+
+  macro 'Spray Can Tool Options' {
+    Dialog.create("Spray Can Options");
+    Dialog.addNumber("Spray Width (pixels):", sprayCanWidth);
+    Dialog.addNumber("Dot Size (pixels):", sprayCanDotSize);
+    Dialog.addNumber("Flow Rate (1-10):", sprayCanRate);
+    Dialog.show();
+    sprayCanWidth = Dialog.getNumber();
+    sprayCanDotSize = Dialog.getNumber();
+    sprayCanRate = Dialog.getNumber();
+    if (sprayCanRate<1) sprayCanRate = 1;
+    if (sprayCanRate>10) sprayCanRate = 10;
+ }
+
+  macro 'Flood Fill Tool Options...' {
+      requires("1.34j");
+      restorePreviousTool();
+      run("Color Picker...");
+  }
+
+  macro "Arrow Tool Options" {
+      lineWidth = getNumber("Line Width:", lineWidth);
+ }
+
+
+

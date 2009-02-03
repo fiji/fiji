@@ -1,0 +1,81 @@
+20090116
+
+We are glad to announce the second release of Fiji, codenamed Luxembourg.
+
+http://pacific.mpi-cbg.de
+
+Fiji is Just ImageJ, batteries included.
+
+Fiji is an ImageJ distribution that bundles a collection of plugins, jar
+libraries and scripting languages in a consistent framework, bundling Java
+and Java3D, and is available for Windows, MacOSX and Linux.
+
+Fiji targets image registration, stitching, segmentation, feature extraction
+and 3D visualization, among others, bringing together several ImageJ-based
+projects including ImageJA, VIB, bUnwarpJ, TrakEM2, and others, kindly
+developed and distributed under open source licenses.
+
+I am sure I forgot some changes in the following list:
+
+- Many In addition to many improvements to TrakEM2, 3D Viewer, Simple Neuro
+  Tracer, bUnwarpJ, 3D Skeletonizer, ImageJA, and Stitching since our first
+  public release ("Dresden"), it brings new Java versions for Linux and
+  Linux 64-bit which should solve the infamous gray-window problem with
+  some setups.
+
+- Fiji should now start without problems, even on Windows platforms :-)
+
+- MacOSX has a ridiculously outdated Java3D by default; Fiji brings its 
+  own -- working -- version of Java3D now.
+
+- Many and improvements in the Scripting examples.
+
+- A script was added that can profile ROIs dynamically (it updates the 
+  information when you change the ROI).
+
+- A script was added that demonstrates how you can create 3D objects using 
+  Javascript.
+
+- A plugin was added that can render .svg documents, thanks to Batik.
+
+- You can drag 'n drop scripts onto the main window and they will be 
+  executed.
+
+- Likewise, if you call Fiji with a file name of a script, that script 
+  will be executed.
+
+- Many fixes to the Fiji Updater should make it actually useful :-)
+
+- The macro recorder now handles scripts correctly.
+
+- Fiji uses the port 7 by default now: this fixes the issue when you had a 
+  running ImageJ session and Fiji seemed not to start (since it wanted to 
+  reuse the ImageJ session).
+
+- Fiji will now use 64-bit Java on Leopard if possible.
+
+- If Fiji cannot reserve as much memory for Java as it wants to, it tries 
+  again with a smaller amount.
+
+- Improvements in the MRC_Leginon importer handle a wider range of images.
+
+- Plugins were added to read .ico and .icns files.
+
+- Fiji will now start even on some Linux systems with misconfigured IPv6.
+
+- When calling script refreshers, menu items will be removed for scripts 
+  that were deleted in the meantime.
+
+- Fiji can be convinced to use another Java by setting the environment 
+  variable JAVA_HOME, or with the --java-home command line option (this 
+  only works with Sun's Java for the moment, though).
+
+Fiji core developers and main contributors:
+ Ignacio Arganda, Albert Cardona, Erwin Frise, Greg Jefferis, Verena Kaynig, Mark Longair, Stephan Preibisch, Stephan Saalfeld, Johannes Schindelin, Benjamin Schmid, Cornelius Sicker, Jean-Yves Tinevez, Pavel Tomancak.
+
+We would like to thank Wayne Rasband for ImageJ, for his continuous development efforts and for his infinite patience. Thank you so much!
+
+Further thanks go to the Max-Planck-Institute of Molecular Cellular Biology
+and Genetics in Dresden, Germany, Janelia Farm in Ashburn VA, and the INI
+in Zuerich, Switzerland, for funding and hosting meetings without which
+Fiji would not exist.

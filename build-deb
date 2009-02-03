@@ -1,0 +1,19 @@
+#!/bin/bash
+
+CONTROL_TEMPLATE=debian/control.template
+CONTROL=debian/control
+
+export DISTRO=`lsb_release -is`
+
+if [ $DISTRO == "Debian" ]
+then
+    sed s/@@SUN_JAVA_PACKAGE_VERSION@@/6-07-4/ < $CONTROL_TEMPLATE > $CONTROL
+elif [ $DISTRO == "Ubuntu" ]
+then
+    sed s/@@SUN_JAVA_PACKAGE_VERSION@@/6-03-0ubuntu2/ < $CONTROL_TEMPLATE > $CONTROL
+else
+    echo Unknown distribution $DISTRO
+    exit -1
+fi
+
+dpkg-buildpackage -rfakeroot -us -uc

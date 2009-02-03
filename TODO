@@ -1,0 +1,34 @@
+A loose TODO list for Fiji
+==========================
+
+- win: verify that console window stays open when falling back to system Java
+- TrakEM2: use CommandListener to override the "File>Save" menu item
+- move Amira I/O into bio-formats already
+- make a JDK-less mirror of fiji.git
+- headless: should we activate "batch"?
+- find a way to set cwd for sed.py in VIB
+- exclude ij.jar, headless.jar and precompiled/ij.jar from netbeans project
+  (otherwise Netbeans will not use the ImageJ it compiled itself)
+- netbeans: exclude the classes found in src-plugins/ij/**/*.java from ImageJA/
+- test Bilateral Filter
+- Segmentation Editor fails
+- compile and test Java7 (has nasty bugs)
+- find out why jps shows no title for Fiji's process
+- Building "fake.jar" on Windows should warn and resort to making
+  precompiled/fake.jar directly.  Same goes for the Fiji launcher.
+- add script recorder for the new scripting languages
+- use the headless.jar trick to compile MacAdapter.source in ImageJA
+- check which Reader Plugins do not extend ImagePlus
+- extend GenericDialog to provide Help, Advanced, File button
+- GenericDialog.addTooltext()
+- add tests (test that all plugins are found, test which image types
+  they support, add regression tests, if file importers return ImagePlus)
+- install kwin in livecd
+- make 'FijiUpdater update' part of release script
+- in ImageJA: add isCanceled() method to SaveDialog (is getDirectory() == null).
+- in ImageJA: what about a file extension based construct similar to
+  HandleExtraFileTypes for save?  This would allow to work on top of custom
+  file formats seamlessly.
+- reimplement TransformJ (Stephan Preibisch)
+- look at ITK
+- backup

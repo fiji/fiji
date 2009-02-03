@@ -1,0 +1,50 @@
+fiji (0.9.3.20080807rc3) unstable; urgency=low
+
+  * Fiji should now appear in the GNOME and KDE menus under
+    the "Graphics" subsection.  Also fixed the launcher
+    script and location of the binary.
+
+ -- Mark Longair <mhl@pobox.com>  Fri, 11 Aug 2008 15:57:00 +0200
+
+fiji (0.9.2.20080807rc3) unstable; urgency=low
+
+  * Changing the version number scheme to be more sane
+
+ -- Mark Longair <mhl@pobox.com>  Fri, 08 Aug 2008 22:21:00 +0200
+
+fiji (0.9.1-Dresden-rc3) unstable; urgency=low
+
+  * This is a package of the Dresden-rc3 release.  In this version
+    I have abandoned the careful approach of the previous packages
+    and this is just a monolithic package with everything you
+    need for Fiji.  This is more in the spirit of the Fiji project,
+    but would create a lot of problems if it were to be included
+    in Debian / Ubuntu in the future.  For the moment it's more
+    important that we can just get a .deb out there for the release.
+
+ -- Mark Longair <mhl@pobox.com>  Fri, 08 Aug 2008 10:25:00 +0200
+
+fiji (0.9.0-4) unstable; urgency=low
+
+  * Fixed more packaging problems
+
+ -- Mark Longair <mhl@pobox.com>  Mon, 30 Apr 2008 10:25:00 +0200
+
+fiji (0.9.0-3) unstable; urgency=low
+
+  * Fixed various problems from the first apt-gettable version
+
+ -- Mark Longair <mhl@pobox.com>  Mon, 30 Apr 2008 09:14:00 +0200
+
+fiji (0.9.0-2) unstable; urgency=low
+
+  * Added TrakEM2 submodule and build a package
+
+ -- Mark Longair <mhl@pobox.com>  Mon, 29 Apr 2008 12:23:00 +0200
+
+fiji (0.9.0-1) unstable; urgency=low
+
+  * Initial packaging, from version-0.9.0
+
+ -- Mark Longair <mhl@pobox.com>  Mon, 28 Apr 2008 14:26:19 +0200
+

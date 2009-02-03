@@ -1,0 +1,57 @@
+<table width="100%" border="0" cellpadding="0" cellspacing="0" style="font-family: Arial, Helvetica, sans-serif">
+<tr bgcolor="#164474">
+	<td width ="100%">
+	  <center>
+        <font size="4" color="#e9e9e9"><strong>LSM Toolbox help page</strong></font> 
+      </center></td>
+</tr> 
+<tr bgcolor="#f46400">
+	<td width="100%">
+					<div align="center">
+						<font size="-2" color="#fff9ff" >&nbsp;</font></div>
+				</td>
+</tr>
+  <tr> 
+    <td width ="100%"> 
+<br> You will usually be able to start LSM Toolbox from [ImageJ/Plugins/Input-Output/] menu entry. After starting the plugin, the following panel will pop up.<br>
+<br>
+<br>
+<span style="font-weight: bold;">Opening&nbsp;lsm files</span><br>
+<img style="width: 161px; height: 26px;" src="images/openb.jpg" alt=""><br>This button will show a file open dialog.<br>
+<img src="images/opendialog.jpg" alt=""><br> You can set a lsm file extension filter at the bottom of the dialog, and a thumbnail view of the currently selected lsm file will show in the preview panel on the righthand side of the dialog. Click 'open' to select the lsm file you want to import into ImageJ.<br> If you have the latest version of the <span style="font-style: italic;">HandleExtraFileTypes</span> plugin installed, you will also be able to open lsm files from the builtin 'open' menu entry, but then you will only get the image data with calibration, but without any advanced information.<br><br>
+<br style="font-weight: bold;">
+<span style="font-weight: bold;">Getting useful informations contained in&nbsp;lsm files</span><br>
+<img style="width: 161px; height: 26px;" src="images/infosb.jpg" alt=""><br> Pressing this button with a lsm file window will bring a panel with general informations about this file.<br>
+<img src="images/fileinfos.jpg" alt=""><br>
+<br> Now, pressing the <img src="images/ibutton.jpg" alt=""> button will popup the Notes window with short and detailed notes that you might have included upon acquisition, with the AIM software.<br>
+<img src="images/notes.jpg" alt=""><br><br><br><br><br> Pressing the dump button <img src="images/disk.jpg" alt=""> will dump all these informations in a text window, so that you can easily copy/paste informations you need.<br><br> Pressing the more informations button <img src="images/plus.jpg" alt="" /> will bring a searchable tree view displaying all supported informations that LSM Toolbox was able to read from your lsm file. They contain everything you might want to remember about the microscope setup upon acquisition, filter setup, scan mode, basically everything. Look at the top toolbar in this window, you can close it, save it, print it, filter (the many) unused tree entries, and even search it.<br><br>
+<img src="images/details.jpg" alt=""><br><br>
+<span style="font-weight: bold;"><br>
+<br> Stampping data on&nbsp;images</span><br style="font-weight: bold;">
+<img style="width: 161px; height: 26px;" src="images/stampb.jpg" alt=""><br> If your lsm data was imported as a stack of images, you might want to stamp each slice of the stack with relevant data. Pressing this button will enable you to add one of three types of stamps :<br>
+<ul>
+<li>z-stamp, the depth coordinate.</li>
+<li>t-stamp, the elapsed time at the time of acquisiton of the first pixel of each slice in the stack.</li>
+<li>l-stamp, the median wavelength of the spectral &nbsp;window used in spectral acquisition mode 'META'.</li>
+</ul>
+<span style="font-weight: bold;"><br> Browsing through multidimentional lsm files</span><br style="font-weight: bold;">
+<img style="width: 161px; height: 26px;" src="images/browseb.jpg" alt=""><br> This option will help you review a multidimentional dataset. It can use either of two optional plugins, that you should install separately.<br>
+<ul>
+<li>Browse a 4D dataset with <span style="font-style: italic;">HypeVolumeViewer</span>.</li>
+<li>Browse a 4D+channels dataset with <span style="font-style: italic;">Image5D</span>.</li>
+</ul>
+<span style="font-weight: bold;"><br> Closing All open windows</span><br style="font-weight: bold;">
+<img style="width: 161px; height: 26px;" src="images/closeb.jpg" alt="" ><br> Openning lsm files with more than one channel will usually output several image windows. You can use this button to close all open ImageJ image windows.<br>
+<span style="font-weight: bold;"><br>
+<br> Converting from lsm to other formats</span><br style="font-weight: bold;">
+<img style="width: 161px; height: 26px;" src="images/batchb.jpg" alt="" ><br> With this option, you can export your lsm dataset to another format, as series of raw data images. You just have to choose a destination folder, and the file format to be used for export.<br>
+<span style="font-weight: bold;"><br>
+<br> Displaying this help page and various licence information</span><br style="font-weight: bold;">
+<img style="width: 161px; height: 26px;" src="images/helpb.jpg" alt="" ><br> You probably used this button already. You will find this help page, plus various licence related pages for the pieces of software or artwork that are used in LSM Toolbox.<br>
+<br>
+<span style="font-weight: bold;"><br> Quitting LSM Toolbox</span><br style="font-weight: bold;">
+<img style="width: 161px; height: 26px;" src="images/exitb.jpg" alt="" ><br> Terminates the LSM Toolbox.<br>
+<br>
+</div>
+</div>
+</td></tr></table>

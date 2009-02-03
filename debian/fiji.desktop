@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Encoding=UTF-8
+Name=Fiji
+GenericName=
+Comment=
+Icon=/usr/share/pixmaps/fiji-icon-32x32.xpm
+Exec=/usr/bin/fiji
+Terminal=false
+Categories=Graphics

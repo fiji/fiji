@@ -1,0 +1,11 @@
+  Macros located the the ImageJ/plugins folder, or a subfolder,
+  and with an underscore in their name, are installed in the 
+  Plugins menu, or in the submenu that corresponds to the subfolder.
+
+  Use the Plugins>Shortcuts>Install Plugin command 
+  to create keyboard shortcuts to these macros.
+
+  More information is available at:
+  <http://rsb.info.nih.gov/ij/developer/macro/macros.html>
+
+

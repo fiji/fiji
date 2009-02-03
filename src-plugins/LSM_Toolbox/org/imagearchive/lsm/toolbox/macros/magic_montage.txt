@@ -1,0 +1,275 @@
+//--version--1.1
+// Montage tools for easy montage manipulation
+// jm 
+
+var v=versionCheck();
+function versionCheck() {
+requires("1.41a");
+return 1;
+}
+
+macro "Auto Montage Action Tool - C00fF0077C0f0F9977Cf00F9077C888F0977" {
+	
+  setBatchMode(true);
+	b=bitDepth();
+  if ((b!=24)&&(nSlices==1)) 	{ exit("Stack, Composite, or RGB image required.");}
+  if ((b==24)&&(nSlices==1)) 	{ run("Make Composite"); b=8;}
+	Stack.getDimensions(width, height, channels, slices, frames);
+	getVoxelSize(xp,yp,zp,unit);
+	if (channels==1) { channels = channels* frames*slices; Stack.setDimensions(channels,1,1); }
+	id=getImageID();
+	t=getTitle();
+	if (b!=24) {
+		newImage("tempmont", "RGB", width, height,channels);
+		id2=getImageID();
+		for (i=1;i<=channels;i++) {   
+			setPasteMode("copy");
+			selectImage(id);   
+			Stack.setChannel(i);   
+			getLut(r,g,b);
+			run("Duplicate...", "title=temp"+i);   
+			setLut(r,g,b);
+			run("RGB Color");
+			run("Copy");
+			selectImage(id2);
+			setSlice(i);
+			run("Paste");
+		}   
+	}   	
+	c = floor(sqrt(nSlices+1));
+	r =c;
+	while ((r*c)<(nSlices+1)) c++;
+	run("Make Montage...", "columns="+c+" rows="+r+" scale=1 border=0"); 
+	rename (getTitle()+" of "+t);
+	setVoxelSize(xp,yp,zp,unit);
+	setBatchMode(false);
+}
+
+macro "Select Panels Tool - Cf00R0077R9077C888R9977R0977"{
+	run ("Select None");
+	setPasteMode("copy");
+	w = getWidth();
+	h = getHeight();
+	getCursorLoc(x, y, z, flags); 
+	id=getImageID();
+	t=getTitle();
+	selectImage(id);
+	xn = info(id,"xMontage");
+	yn = info(id,"yMontage");
+	if ((xn==0)||(yn==0)) {run("Set Montage Layout"); exit();}
+	xc = floor(x/(w/xn));
+	yc = floor(y/(h/yn));
+	makeRectangle(xc*(w/xn),yc*(h/yn),(w/xn),(h/yn));
+	xstart = x; ystart = y; 
+	x2=x; y2=y; 
+	x2c=xc;y2c=yc;
+	while (flags&16 !=0) { 
+		getCursorLoc(x, y, z, flags); 
+		if (x!=x2 || y!=y2) {
+			x2c = floor(x/(w/xn));
+			y2c = floor(y/(h/yn));
+            		makeRectangle(xc*(w/xn),yc*(h/yn),(w/xn)*(x2c-xc+1),(h/yn)*(y2c-yc+1));
+            		x2=x; y2=y; 
+            		wait(10); 
+		}
+	}
+	setPasteMode("add");
+}
+
+macro "Extract Selected Panels"{
+	id=getImageID();
+	t=getTitle();
+	xn = info(id,"xMontage");
+	yn = info(id,"yMontage");
+	pw = getWidth/xn;
+	ph = getHeight/yn;
+	run("Duplicate...", "title=[Extract of "+t+"]");
+	setMetadata("xMontage="+getWidth/pw+"\nyMontage="+getHeight/ph+"\n");
+}
+
+macro "Extend Montage Tool - C888R0077R0977C0b0R9077R9977"{
+	run ("Select None");
+	setPasteMode("copy");
+	w = getWidth();
+	h = getHeight();
+	getCursorLoc(x, y, z, flags); 
+	id=getImageID();
+	selectImage(id);
+	xn = info(id,"xMontage");
+	yn = info(id,"yMontage");
+	if ((xn==0)||(yn==0)) {run("Set Montage Layout"); exit();}
+	xstart = x; ystart = y; 
+	x2=x; y2=y; 
+	while (flags&16 !=0) { 
+		getCursorLoc(x, y, z, flags); 
+		if (x!=x2 || y!=y2) makeLine(xstart, ystart, x, y); 
+		x2=x; y2=y; 
+		wait(10); 
+	}
+	if (x!=xstart || y!=ystart) {
+	xext=0;yext=0;
+	if (x>w) xext=1;
+	if (y>h) yext=1;
+	if ((xext>0)||(yext>0)) {
+		run("Canvas Size...", "width="+w+xext*(w/xn)+" height="+h+yext*(h/yn)+" position=Top-Left zero");
+		setMetadata("xMontage="+xn+xext+"\nyMontage="+yn+yext+"\n");
+	}
+	}
+run("Select None");
+
+}
+
+
+macro "Montage Shuffler Tool - C888R0077R9977C03fR0977R9077"{
+	run ("Select None");
+	setPasteMode("copy");
+	w = getWidth();
+	h = getHeight();
+	getCursorLoc(x, y, z, flags); 
+	id=getImageID();
+	selectImage(id);
+	xn = info(id,"xMontage");
+	yn = info(id,"yMontage");
+	if ((xn==0)||(yn==0)) {run("Set Montage Layout"); exit();}
+	xstart = x; ystart = y; 
+	x2=x; y2=y; 
+	while (flags&16 !=0) { 
+		getCursorLoc(x, y, z, flags); 
+		if (x!=x2 || y!=y2) makeLine(xstart, ystart, x, y); 
+		x2=x; y2=y; 
+		wait(10); 
+	}
+	if (x!=xstart || y!=ystart) {
+		sc = floor(xstart/(w/xn));
+		tc = floor(x/(w/xn));
+		sr = floor(ystart/(h/yn));
+		tr = floor(y/(h/yn));
+		swap(sc,sr,tc,tr);
+	}
+}
+
+macro "Montage Sync Tool - C000L48d8L838d" {
+	w=getWidth;
+	h= getHeight;
+	getCursorLoc(x,y,z,flags);	
+	id=getImageID();
+	selectImage(id);
+	xn = info(id,"xMontage");
+	yn = info(id,"yMontage");
+	if ((xn==0)||(yn==0)) {run("Set Montage Layout"); exit();}
+	xc = floor(x/(w/xn));
+	yc = floor(y/(h/yn));
+	x0 = x-xc*w/xn;
+	y0 = y-yc*h/yn;
+	xp =newArray(xn*yn);
+	yp =newArray(xn*yn);
+	for (i=0;i<xn;i++) {
+		for (j=0;j<yn;j++) {
+			xp[j*xn+i] = x0+i*(w/xn);
+			yp[j*xn+i] = y0+j*(h/yn);
+		}
+	}
+	makeSelection("point",xp,yp);
+}
+
+macro "Set Montage Layout" {
+      Dialog.create("Set Montage Layout");
+      	Dialog.addNumber ("Width:", 2);
+      	Dialog.addNumber ("Height:", 2);
+      Dialog.show();
+      mw = Dialog.getNumber();
+      mh = Dialog.getNumber();
+      setMetadata("xMontage="+mw+"\nyMontage="+mh+"\n");
+}
+
+
+function info(id,key) {
+	selectImage(id);
+	s=split (getInfo(),"\n");
+	i=0; while ((!startsWith(s[i],key))&&(i<s.length-1))  {i++;}
+	if (startsWith(s[i],key)) {v=split(s[i],"= ");
+	if (v.length>1) return v[1];}
+	else return 0;
+}
+
+function swap (a,b,c,d) {
+	setupUndo();
+	setBatchMode(true);
+	makeRectangle(a*(w/xn),b*(h/yn),(w/xn),(h/yn));
+	run("Duplicate...", "title=tmp");
+	selectImage(id);
+	makeRectangle(c*(w/xn),d*(h/yn),(w/xn),(h/yn));
+	run("Copy");
+	makeRectangle(a*(w/xn),b*(h/yn),(w/xn),(h/yn));
+	run("Paste");
+	selectWindow("tmp");
+	run("Select All");
+	run("Copy");
+	selectImage(id);
+	makeRectangle(c*(w/xn),d*(h/yn),(w/xn),(h/yn));
+	run("Paste");
+	run("Select None");
+	setBatchMode(false);
+}
+
+
+macro "bar Action Tool - C000L060bLe6ebL09e9L08e8"{ 
+	doCommand("Scale Bar..."); 
+}
+
+macro "Magic Montage Help Action Tool - C000T3f15?"{ 
+	run("URL...", "url=http://imagejdocu.tudor.lu/Members/jmutterer/Magic_Montage/");
+}
+
+
+macro "Add Panel to Manager [F1]" {
+roiManager("Add");
+setOption("Show All",true);
+}
+
+macro "Selected panels to stack [F2]" {
+	id=getImageID();
+	t=getTitle();
+	selectImage(id);
+	roiManager("select",0);
+	getSelectionBounds(x,y,sw,sh);
+	setBatchMode(true);
+	newImage ("Extracted Panels of "+t, "RGB", sw,sh,roiManager("count"));
+	id2=getImageID();
+	setPasteMode("copy");
+	for (i=0;i<roiManager("count");i++) {
+		selectImage(id);
+		roiManager("select",i);
+		run("Copy");
+		selectImage(id2);
+		setSlice(i+1);
+		run("Paste");
+	}
+setBatchMode(false);
+}
+
+var pmCmds = newMenu("Popup Menu",
+       newArray("Copy", "Paste","-", 
+	"Brightness/Contrast...", "-", 
+	"Extract Selected Panels","-",
+	"Set Montage Layout", "Add Panel to Manager [F1]", "Selected panels to stack [F2]","-",
+	"Help..."));
+
+  macro "Popup Menu" {
+      cmd = getArgument();
+      if (cmd=="Help...") run("URL...", "url=http://imagejdocu.tudor.lu/Members/jmutterer/Magic_Montage/");
+      else {
+          run(cmd);
+	}
+  }
+
+
+var menu=newMenu( "Fix LSM XZ Scale Menu Tool",newArray("interpolate","no-interpolate"));
+
+macro "Fix LSM XZ Scale Menu Tool -C000T0710FT6710iT9710xT0f10XT6f10Z"{
+	cmd=getArgument();
+	setupUndo(); 
+	getVoxelSize(x,y,z,unit);
+	run("Size...", "width="+getWidth()+" height="+(getHeight()*(z/x))+" "+cmd);
+
+}
