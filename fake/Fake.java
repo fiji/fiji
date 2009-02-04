@@ -1096,9 +1096,7 @@ public class Fake {
 				while (tokenizer.hasMoreElements()) {
 					if (!result.equals(""))
 						result += File.pathSeparator;
-					File file =
-						new File(tokenizer.nextToken());
-					result += file.getAbsolutePath();
+					result += tokenizer.nextToken();
 				}
 				return result;
 			}
@@ -1763,7 +1761,7 @@ public class Fake {
 				new StringTokenizer(extraClassPath, ":");
 			while (tokenizer.hasMoreElements())
 				classPath += File.pathSeparator
-					+ makePath(cwd, tokenizer.nextToken());
+					+ tokenizer.nextToken();
 		}
 		if (classPath != null && !classPath.equals("")) {
 			arguments.add("-classpath");
