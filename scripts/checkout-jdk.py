@@ -18,6 +18,6 @@ if not os.path.isdir(os.path.join(jdk, '.git')):
 else:
 	print 'Updating ', jdk
 	if os.system('cd ' + jdk  \
-			+ ' && git pull origin refs/remotes/origin/' + jdk):
+			+ ' && git pull origin master'):
 		print 'Could not update ', jdk
 		sys.exit(1)
