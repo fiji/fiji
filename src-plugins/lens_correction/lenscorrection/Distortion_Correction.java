@@ -121,12 +121,12 @@ public class Distortion_Correction implements PlugIn{
 			
 			gd.addNumericField( "closest/next_closest_ratio :", rod, 2 );
 			
-			gd.addMessage( "Geometric Consensus Filter:" );
+			gd.addMessage( "Geometric Consensus Filter :" );
 			gd.addNumericField( "maximal_alignment_error :", maxEpsilon, 2, 6, "px" );
 			gd.addNumericField( "inlier_ratio :", minInlierRatio, 2 );
 			gd.addChoice( "expected_transformation :", modelStrings, modelStrings[ expectedModelIndex ] );
 			
-			gd.addMessage( "Lens Model" );
+			gd.addMessage( "Lens Model :" );
 			gd.addNumericField( "power_of_polynomial_kernel :", dimension, 0 );
 			gd.addNumericField( "lambda :", lambda, 6 );
 		}
@@ -570,8 +570,24 @@ public class Distortion_Correction implements PlugIn{
     	}
     }
     
-    static public NonLinearTransform distortionCorrection(
-    		final List< Collection< PointMatch > > inliers,
+    /**
+     * Estimates a polynomial distortion model for a set of
+     * {@linkplain PointMatch corresponding points} and returns the inverse of
+     * this model which then may be used to undo the distortion.
+     * 
+     * @param matches
+     * @param affines
+     *   a list of affines in the same order as matches that transfer a match
+     *   collection into a common image frame
+     * @param dimension the order of the polynomial model
+     * @param lambda regularization factor
+     * @param imageWidth
+     * @param imageHeight
+     * 
+     * @return a polynomial distortion model to undo the distortion
+     */
+    static public NonLinearTransform createInverseDistortionModel(
+    		final List< Collection< PointMatch > > matches,
     		final List< AffineTransform > affines,
     		final int dimension,
     		final double lambda,
@@ -579,7 +595,7 @@ public class Distortion_Correction implements PlugIn{
     		final int imageHeight )
     {
     	int wholeCount = 0;
-	    for ( Collection< PointMatch > l : inliers )
+	    for ( Collection< PointMatch > l : matches )
 	    	if ( l.size() > 10 )
 	    		wholeCount += l.size();
 		  
@@ -587,15 +603,15 @@ public class Distortion_Correction implements PlugIn{
 	    final double h1[][] = new double[wholeCount][2];
 	    final double h2[][] = new double[wholeCount][2];
 	    int count = 0;
-	    for (int i=0; i < inliers.size(); i++)
+	    for (int i=0; i < matches.size(); i++)
 	    {
-			if (inliers.get(i).size() > 10)
+			if (matches.get(i).size() > 10)
 			{
-			    final double[][] points1 = new double[inliers.get(i).size()][2];
-			    final double[][] points2 = new double[inliers.get(i).size()][2];
+			    final double[][] points1 = new double[matches.get(i).size()][2];
+			    final double[][] points2 = new double[matches.get(i).size()][2];
 				
 			    int j = 0;
-			    for ( PointMatch match : inliers.get( i ) )
+			    for ( PointMatch match : matches.get( i ) )
 			    {	
 			    	final float[] tmp1 = match.getP1().getL();
 			    	final float[] tmp2 = match.getP2().getL();
@@ -614,9 +630,12 @@ public class Distortion_Correction implements PlugIn{
 					++j;
 			    }
 			}
-	    }	
+	    }
+	    
+	    NonLinearTransform nlt = distortionCorrection(h1, h2, tp, dimension, lambda, imageWidth, imageHeight);
+	    nlt.inverseTransform( h1 );
 
-	    return distortionCorrection(h1, h2, tp, dimension, lambda, imageWidth, imageHeight);
+	    return nlt;
     }
 	
     static protected NonLinearTransform distortionCorrection(double hack1[][], double hack2[][], double transformParams[][], int dimension, double lambda, int w, int h){
