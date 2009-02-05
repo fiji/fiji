@@ -5,9 +5,16 @@ import ij
 from ij import ImageJ, Menus
 import java
 from java.lang import Class, ClassNotFoundException, System, NoClassDefFoundError
+import sys
 
 # Launch ImageJ
 ImageJ()
+
+if len(sys.argv) > 1 and sys.argv[1] == '-v':
+  for key in ij.Menus.getCommands():
+    command = ij.Menus.getCommands().get(key)
+    print key, '->', command
+  sys.exit()
 
 ok = 1
 
