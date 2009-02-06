@@ -2247,7 +2247,7 @@ public class Fake {
 						+ entry.getName());
 				return false;
 			}
-			if (entry.hashCode() != other.hashCode()) {
+			if (entry.getTime() > other.getTime()) {
 				if (verbose)
 					System.err.println(target + " is not "
 						+ "up-to-date because of "
