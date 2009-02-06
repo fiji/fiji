@@ -2021,7 +2021,7 @@ static string get_newest_subdir(string relative_path)
 			continue;
 		if (!S_ISDIR(st.st_mode))
 			continue;
-		if (is_dir_empty(relative_path + "/" + filename))
+		if (is_dir_empty(path + "/" + filename))
 			continue;
 		if (mtime < st.st_mtime) {
 			mtime = st.st_mtime;
