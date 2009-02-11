@@ -658,6 +658,8 @@ static void open_win_console(void)
 	if (initialized)
 		return;
 	initialized = 1;
+	if (!isatty(1) && !isatty(2))
+		return;
 
 	string kernel32_dll_path = string(getenv("WINDIR"))
 			+ "\\system32\\kernel32.dll";
@@ -677,13 +679,16 @@ static void open_win_console(void)
 			return; // console already opened
 	}
 
-	freopen("CONOUT$", "wt", stdout);
-	freopen("CONOUT$", "wb", stderr);
-
 	HANDLE handle = CreateFile("CONOUT$", GENERIC_WRITE, FILE_SHARE_WRITE,
 		NULL, OPEN_EXISTING, 0, NULL);
-	SetStdHandle(STD_OUTPUT_HANDLE, handle);
-	SetStdHandle(STD_ERROR_HANDLE, handle);
+	if (isatty(1)) {
+		freopen("CONOUT$", "wt", stdout);
+		SetStdHandle(STD_OUTPUT_HANDLE, handle);
+	}
+	if (isatty(2)) {
+		freopen("CONOUT$", "wb", stderr);
+		SetStdHandle(STD_ERROR_HANDLE, handle);
+	}
 }
 
 
