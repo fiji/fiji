@@ -19,6 +19,7 @@ public class Refresh_Clojure_Scripts extends RefreshScripts {
 				IJ.log("Not a clojure script or not found: " + path);
 				return;
 			}
+			if (IJ.isWindows()) path = path.replace('\\', '/');
 			Object res = Clojure_Interpreter.evaluate("(load-file \"" + path + "\")");
 			if (null != res) {
 				String s = res.toString();
