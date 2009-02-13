@@ -986,7 +986,8 @@ public class Fake {
 			void copyJarWithPluginsConfig(String source,
 					String target, File cwd,
 					String configPath) throws Exception {
-				if (upToDate(source))
+				if (upToDate(source) && upToDate(configPath,
+						target, cwd))
 					return;
 				if (jarUpToDate(source, target,
 						getVarBool("VERBOSE"))) {
