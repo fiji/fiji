@@ -220,28 +220,16 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 			}
 		}
 		/** Parsing in the context of (binding [*out* (Clojure.Clojure_Interpreter/getStdOut)] &amp; body) if this.out is not null.*/
-		String eval(String text) {
+		String eval(final String text) {
 			String res = null;
 			try {
-				boolean with_out_str = false;
 				synchronized (this) {
 					lock();
-					//this.text = "(with-out-str\n " + text.trim() + ")";
-					text = text.trim();
-					/*
-					if (text.matches("^.*\\bpr\\b.*$")
-					 || text.matches("^.*\\bprn\\b.*$")
-					 || text.matches("^.*\\bprint\\b.*$")
-					 || text.matches("^.*\\bprintln\\b.*$")
-					) {
-						with_out_str = true;
-						text = "(with-out-str\n " + text + ")";
-					}
-					*/
 					if (null != out) {
-						text = "(binding [*out* (Clojure.Clojure_Interpreter/getStdOut)]\n" + text + ")\n";
+						this.text = new StringBuffer("(binding [*out* (Clojure.Clojure_Interpreter/getStdOut)]\n").append(text).append(")\n").toString();
+					} else {
+						this.text = text;
 					}
-					this.text = text;
 					working = true;
 					unlock();
 				}
@@ -254,12 +242,8 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 					// fix result
 					res = result;
 					result = null;
-					// equivalent to wrapping the abovew with-out-str in a (prn ...)
-					// (but then of course it would not print were I can catch it)
-					if (null != res && with_out_str) {
-						res = res.substring(1, res.length() -1)
-							 .replace("\\n", "\n")
-							 .replace("\\", "");
+					if (null == res) {
+						res = "nil";
 					}
 				}
 			} catch (Exception e) {
