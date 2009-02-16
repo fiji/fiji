@@ -791,6 +791,12 @@ public class Fake {
 				return targetModified > sourceModified;
 			}
 
+			boolean upToDate(String source, String target,
+					File cwd) {
+				return upToDate(new File(cwd, source),
+					new File(cwd, target));
+			}
+
 			void make() throws FakeException {
 				if (wasAlreadyChecked)
 					return;
@@ -962,8 +968,7 @@ public class Fake {
 					String configPath)
 					throws FakeException {
 				if (configPath == null) {
-					if (upToDate(new File(cwd, source),
-							new File(cwd, target)))
+					if (upToDate(source, target, cwd))
 						return;
 					copyFile(source, target, cwd);
 				}
@@ -981,7 +986,8 @@ public class Fake {
 			void copyJarWithPluginsConfig(String source,
 					String target, File cwd,
 					String configPath) throws Exception {
-				if (upToDate(source))
+				if (upToDate(source) && upToDate(configPath,
+						target, cwd))
 					return;
 				if (jarUpToDate(source, target,
 						getVarBool("VERBOSE"))) {
