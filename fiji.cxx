@@ -1483,6 +1483,8 @@ static int start_ij(void)
 			class_path = class_path.substr(0, len - 1);
 	}
 	else {
+		if (class_path != "")
+			class_path += PATH_SEP;
 		if (headless)
 			class_path += string(fiji_dir) + "/misc/headless.jar"
 				+ PATH_SEP;
