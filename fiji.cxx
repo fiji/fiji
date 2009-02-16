@@ -1382,8 +1382,12 @@ static int start_ij(void)
 			class_path += arg + PATH_SEP;
 		else if (handle_one_option(i, "--jar-path", arg) ||
 				handle_one_option(i, "--jarpath", arg) ||
-				handle_one_option(i, "-jarpath", arg))
-			build_classpath(class_path, arg, 0);
+				handle_one_option(i, "-jarpath", arg)) {
+			string jars;
+			build_classpath(jars, arg, 0);
+			if (jars != "")
+				class_path += jars + PATH_SEP;
+		}
 		else if (handle_one_option(i, "--ext", arg)) {
 			if (ext_option != "")
 				ext_option += PATH_SEP;
@@ -1483,8 +1487,6 @@ static int start_ij(void)
 			class_path = class_path.substr(0, len - 1);
 	}
 	else {
-		if (class_path != "")
-			class_path += PATH_SEP;
 		if (headless)
 			class_path += string(fiji_dir) + "/misc/headless.jar"
 				+ PATH_SEP;
