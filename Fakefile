@@ -326,6 +326,10 @@ all-isos[] <- fiji-linux.iso fiji-linux64.iso fiji-win32.iso fiji-win64.iso \
 	fiji-macosx.iso fiji-all.iso fiji-nojre.iso
 fiji-*.iso[genisoimage -J -V Fiji -o $TARGET Fiji.app] <- app-*
 
+all-7zs[] <- fiji-linux.7z fiji-linux64.7z fiji-win32.7z fiji-win64.7z \
+	fiji-macosx.7z fiji-all.7z fiji-nojre.7z
+fiji-*.7z[scripts/make-7z.py $TARGET Fiji.app] <- app-*
+
 # Checks
 
 check[] <- check-class-versions check-launchers check-submodules
