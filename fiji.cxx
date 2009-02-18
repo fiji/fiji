@@ -1327,6 +1327,9 @@ static int start_ij(void)
 	for (int i = 1; i < main_argc; i++)
 		if (!strcmp(main_argv[i], "--") && !dashdash)
 			dashdash = count;
+		else if (dashdash && main_class &&
+				strcmp(main_class, "ij.ImageJ"))
+			main_argv[count++] = main_argv[i];
 		else if (!strcmp(main_argv[i], "--dry-run"))
 			options.debug++;
 		else if (handle_one_option(i, "--java-home", arg)) {
