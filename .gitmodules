@@ -9,19 +9,19 @@
 	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/VIB.git/
 [submodule "java/linux"]
 	path = java/linux
-	url = .
+	url = git://pacific.mpi-cbg.de/java/linux.git
 [submodule "java/linux-amd64"]
 	path = java/linux-amd64
-	url = .
+	url = git://pacific.mpi-cbg.de/java/linux-amd64.git
 [submodule "java/macosx-java3d"]
 	path = java/macosx-java3d
-	url = .
+	url = git://pacific.mpi-cbg.de/java/macosx-java3d.git
 [submodule "java/win32"]
 	path = java/win32
-	url = .
+	url = git://pacific.mpi-cbg.de/java/win32.git
 [submodule "java/win64"]
 	path = java/win64
-	url = .
+	url = git://pacific.mpi-cbg.de/java/win64.git
 [submodule "micromanager1.1"]
 	path = micromanager1.1
 	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/micromanager1.1/.git

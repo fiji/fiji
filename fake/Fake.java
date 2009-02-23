@@ -141,6 +141,17 @@ public class Fake {
 		// expandGlob(fijiHome + "plugins/**/*.jar", jars, cwd);
 		expandGlob(fijiHome + "misc/**/*.jar", jars, cwd);
 		expandGlob(fijiHome + "jars/**/*.jar", jars, cwd);
+		if (getPlatform().startsWith("win")) {
+			String[] paths =
+				split(System.getProperty("java.ext.dirs"),
+						File.pathSeparator);
+			for (int i = 0; i < paths.length; i++) {
+				if (!new File(paths[i]).exists())
+					continue;
+				expandGlob(paths[i].replace('\\', '/')
+						+ "/*.jar", jars, cwd);
+			}
+		}
 
 		return jars;
 	}
@@ -1096,9 +1107,7 @@ public class Fake {
 				while (tokenizer.hasMoreElements()) {
 					if (!result.equals(""))
 						result += File.pathSeparator;
-					File file =
-						new File(tokenizer.nextToken());
-					result += file.getAbsolutePath();
+					result += tokenizer.nextToken();
 				}
 				return result;
 			}
@@ -1763,7 +1772,7 @@ public class Fake {
 				new StringTokenizer(extraClassPath, ":");
 			while (tokenizer.hasMoreElements())
 				classPath += File.pathSeparator
-					+ makePath(cwd, tokenizer.nextToken());
+					+ tokenizer.nextToken();
 		}
 		if (classPath != null && !classPath.equals("")) {
 			arguments.add("-classpath");
