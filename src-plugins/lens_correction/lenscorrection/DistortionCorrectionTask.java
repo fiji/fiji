@@ -3,17 +3,20 @@
  */
 package lenscorrection;
 
+import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import lenscorrection.Distortion_Correction.BasicParam;
 import mpicbg.models.PointMatch;
 import mpicbg.models.Tile;
 import mpicbg.trakem2.align.AbstractAffineTile2D;
 import mpicbg.trakem2.align.Align;
+import mpicbg.trakem2.transform.CoordinateTransform;
 
 import ij.IJ;
 import ij.gui.GenericDialog;
@@ -37,6 +40,7 @@ final public class DistortionCorrectionTask
 	{
 		public int firstLayerIndex;
 		public int lastLayerIndex;
+		public boolean clearTransform = false;
 		public boolean visualize = false;
 		
 		public void addFields( final GenericDialog gd, final Selection selection )
@@ -49,9 +53,10 @@ final public class DistortionCorrectionTask
 			for ( int i = 0; i < layers.size(); ++i )
 				layerTitles[ i ] = layers.get( i ).getTitle();
 
-			gd.addChoice( "first layer :", layerTitles, selection.getLayer().getTitle() );
-			gd.addChoice( "last layer :", layerTitles, selection.getLayer().getTitle() );
-			gd.addCheckbox( "visualize distortion model", visualize );
+			gd.addChoice( "first_layer :", layerTitles, selection.getLayer().getTitle() );
+			gd.addChoice( "last_layer :", layerTitles, selection.getLayer().getTitle() );
+			gd.addCheckbox( "clear_present_transforms", clearTransform );
+			gd.addCheckbox( "visualize_distortion_model", visualize );
 		}
 		
 		@Override
@@ -66,6 +71,7 @@ final public class DistortionCorrectionTask
 				firstLayerIndex = lastLayerIndex;
 				lastLayerIndex = b;
 			}
+			clearTransform = gd.getNextBoolean();
 			visualize = gd.getNextBoolean();
 			return !gd.invalidNumber();
 		}
@@ -97,9 +103,129 @@ final public class DistortionCorrectionTask
 			p.rod = rod;
 			p.firstLayerIndex = firstLayerIndex;
 			p.lastLayerIndex = lastLayerIndex;
+			p.clearTransform = clearTransform;
 			p.visualize = visualize;
 			
 			return p;
+		}
+	}
+	
+	
+	/**
+	 * Sets a {@link CoordinateTransform} to a list of patches.
+	 */
+	final static protected class SetCoordinateTransformThread extends Thread
+	{
+		final protected List< Patch > patches;
+		final protected CoordinateTransform transform;
+		final protected AtomicInteger ai;
+		
+		public SetCoordinateTransformThread(
+				final List< Patch > patches,
+				final CoordinateTransform transform,
+				final AtomicInteger ai )
+		{
+			this.patches = patches;
+			this.transform = transform;
+			this.ai = ai;
+		}
+		
+		@Override
+		final public void run()
+		{
+			for ( int i = ai.getAndIncrement(); i < patches.size() && !isInterrupted(); i = ai.getAndIncrement() )
+			{
+				final Patch patch = patches.get( i );
+				//IJ.log( "Setting transform \"" + transform + "\" for patch \"" + patch.getTitle() + "\"." );
+				patch.setCoordinateTransform( transform );
+				patch.updateMipmaps();
+				
+				IJ.showProgress( i, patches.size() );
+			}
+		}
+	}
+	
+	final static protected void setCoordinateTransform(
+			final List< Patch > patches,
+			final CoordinateTransform transform,
+			final int numThreads )
+	{
+		final AtomicInteger ai = new AtomicInteger( 0 );
+		final List< SetCoordinateTransformThread > threads = new ArrayList< SetCoordinateTransformThread >();
+	
+		for ( int i = 0; i < numThreads; ++i )
+		{
+			final SetCoordinateTransformThread thread = new SetCoordinateTransformThread( patches, transform, ai );
+			threads.add( thread );
+			thread.start();
+		}
+		try
+		{
+			for ( final Thread thread : threads )
+				thread.join();
+		}
+		catch ( InterruptedException e )
+		{
+			IJ.log( "Setting CoordinateTransform failed.\n" + e.getMessage() + "\n" + e.getStackTrace() );
+		}
+	}
+	
+	
+	/**
+	 * Appends a {@link CoordinateTransform} to a list of patches.
+	 */
+	final static protected class AppendCoordinateTransformThread extends Thread
+	{
+		final protected List< Patch > patches;
+		final protected CoordinateTransform transform;
+		final protected AtomicInteger ai;
+		
+		public AppendCoordinateTransformThread(
+				final List< Patch > patches,
+				final CoordinateTransform transform,
+				final AtomicInteger ai )
+		{
+			this.patches = patches;
+			this.transform = transform;
+			this.ai = ai;
+		}
+		
+		@Override
+		final public void run()
+		{
+			for ( int i = ai.getAndIncrement(); i < patches.size() && !isInterrupted(); i = ai.getAndIncrement() )
+			{
+				final Patch patch = patches.get( i );
+				patch.appendCoordinateTransform( transform );
+				patch.updateMipmaps();
+				
+				IJ.showProgress( i, patches.size() );
+			}
+		}
+	}
+	
+	final static protected void appendCoordinateTransform(
+			final List< Patch > patches,
+			final CoordinateTransform transform,
+			final int numThreads )
+	{
+		final AtomicInteger ai = new AtomicInteger( 0 );
+		final List< AppendCoordinateTransformThread > threads = new ArrayList< AppendCoordinateTransformThread >();
+	
+		for ( int i = 0; i < numThreads; ++i )
+		{
+			final AppendCoordinateTransformThread thread = new AppendCoordinateTransformThread( patches, transform, ai );
+			threads.add( thread );
+			thread.start();
+		}
+		try
+		{
+			for ( final Thread thread : threads )
+				thread.join();
+		}
+		catch ( InterruptedException e )
+		{
+			IJ.log( "Appending CoordinateTransform failed.\n" + e.getMessage() + "\n" + e.getStackTrace() );
 		}
 	}
 	
@@ -149,6 +275,20 @@ final public class DistortionCorrectionTask
 		ap.minInlierRatio = p.minInlierRatio;
 		ap.rod = p.rod;
 		
+		/** Get all patches that will be affected. */
+		final List< Patch > allPatches = new ArrayList< Patch >();
+		for ( int i = p.firstLayerIndex; i <= p.lastLayerIndex; ++i )
+			for ( Displayable d : selection.getLayer().getParent().getLayer( i ).getDisplayables( Patch.class ) )
+				allPatches.add( ( Patch )d );
+		
+		/** Unset the coordinate transforms of all patches if desired. */
+		if ( p.clearTransform )
+		{
+			IJ.log( "Clearing present transforms." );
+			setCoordinateTransform( allPatches, null, Runtime.getRuntime().availableProcessors() );
+			Display.repaint();
+		}
+		
 		List< AbstractAffineTile2D< ? > > tiles = new ArrayList< AbstractAffineTile2D< ? > >();
 		List< AbstractAffineTile2D< ? > > fixedTiles = new ArrayList< AbstractAffineTile2D< ? > > ();
 		List< Patch > fixedPatches = new ArrayList< Patch >();
@@ -167,6 +307,22 @@ final public class DistortionCorrectionTask
 				 tilePairs.add( new AbstractAffineTile2D< ? >[]{ t, fixedTile } );
 		
 		Align.connectTilePairs( ap, tiles, tilePairs, Runtime.getRuntime().availableProcessors() );
+		
+		
+		/** Shift all local coordinates into the original image frame */
+		for ( final AbstractAffineTile2D< ? > tile : tiles )
+		{
+			final Rectangle box = tile.getPatch().getCoordinateTransformBoundingBox();
+			for ( final PointMatch m : tile.getMatches() )
+			{
+				final float[] l = m.getP1().getL();
+				final float[] w = m.getP1().getW();
+				l[ 0 ] += box.x;
+				l[ 1 ] += box.y;
+				w[ 0 ] = l[ 0 ];
+				w[ 1 ] = l[ 1 ];
+			}
+		}
 		
 		if ( Thread.currentThread().isInterrupted() ) return;
 		
@@ -217,19 +373,10 @@ final public class DistortionCorrectionTask
 			lensModel.visualizeSmall( p.lambda );
 		}
 		
-		for ( int i = p.firstLayerIndex; i <= p.lastLayerIndex; ++i )
-		{
-			final Layer layer = selection.getLayer().getParent().getLayer( i );
-			final List< Displayable > displayables = layer.getDisplayables( Patch.class );
-			for ( Displayable d : displayables )
-			{
-				final Patch o = ( Patch )d;
-				IJ.log( "Setting lens model for patch \"" + o.getTitle() + "\"" );
-				o.setCoordinateTransform( lensModel );
-				o.updateBucket();
-				o.updateMipmaps();
-			}
-		}
+		IJ.log( "Appending transform \"" + lensModel + "\" for all patches ..." );
+		appendCoordinateTransform( patches, lensModel, Runtime.getRuntime().availableProcessors() );
+		
+		IJ.log( "Done." );
 		
 		Display.repaint();
 	}

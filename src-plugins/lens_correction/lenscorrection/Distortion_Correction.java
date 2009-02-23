@@ -58,7 +58,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Formatter;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.awt.Color;
@@ -86,7 +85,7 @@ public class Distortion_Correction implements PlugIn{
 		/**
 		 * Maximal allowed alignment error in px
 		 */
-		public float maxEpsilon = 20.0f;
+		public float maxEpsilon = 32.0f;
 		
 		/**
 		 * Inlier/candidates ratio
@@ -113,6 +112,7 @@ public class Distortion_Correction implements PlugIn{
 		{
 			sift.fdSize = 8;
 			sift.maxOctaveSize = 1600;
+			sift.minOctaveSize = 400;
 		}
 		
 		public void addFields( final GenericDialog gd )
