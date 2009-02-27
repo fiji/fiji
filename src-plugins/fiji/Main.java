@@ -65,5 +65,7 @@ public class Main implements AWTEventListener {
 	public static void main(String[] args) {
 		Toolkit.getDefaultToolkit().addAWTEventListener(new Main(), -1);
 		ImageJ.main(args);
+		if (IJ.getInstance() != null)
+			new User_Plugins().run(null);
 	}
 }
