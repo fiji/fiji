@@ -46,7 +46,12 @@ public class User_Plugins implements PlugIn {
 	}
 
 	public void run(String arg) {
+		if ("update".equals(arg))
+			Menus.updateImageJMenus();
 		installPlugins(path, ".", menuPath);
+		/* make sure "Update Menus" runs _this_ plugin */
+		Menus.getCommands().put("Update Menus",
+			"fiji.User_Plugins(\"update\")");
 	}
 
 	public static void install() {
