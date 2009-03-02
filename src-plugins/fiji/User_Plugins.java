@@ -159,17 +159,18 @@ public class User_Plugins implements PlugIn {
 	/* TODO: sorted */
 	protected void installPlugin(String menuPath, String name,
 			String command) {
+		if (Menus.getCommands().get(name) != null) {
+			IJ.log("The user plugin " + name
+				+ " would override an existing command!");
+			return;
+		}
+
 		int croc = menuPath.lastIndexOf('>');
 		Menu menu = getMenu(menuPath);
 		MenuItem item = new MenuItem(name);
 		menu.add(item);
 		item.addActionListener(IJ.getInstance());
-		String label = makeLabel(name);
-		if (Menus.getCommands().get(label) != null)
-			IJ.log("The user plugin " + label
-				+ " would override an existing command!");
-		else
-			Menus.getCommands().put(label, command);
+		Menus.getCommands().put(name, command);
 	}
 
 	protected Menu getMenu(String menuPath) {
