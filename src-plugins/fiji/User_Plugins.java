@@ -103,7 +103,7 @@ public class User_Plugins implements PlugIn {
 				continue;
 			String[] item = new String[3];
 			item[0] = menuPath;
-			item[1] = name;
+			item[1] = makeLabel(name);
 			item[2] = name;
 			result.add(item);
 		}
@@ -129,7 +129,7 @@ public class User_Plugins implements PlugIn {
 			String[] item = new String[3];
 			item[0] = makeMenuPath(line.substring(0, comma).trim(),
 				menuPath);
-			item[1] = line.substring(quote + 1, quote2).trim();
+			item[1] = line.substring(quote + 1, quote2);
 			item[2] = line.substring(quote2 + 1).trim();
 			if (item[2].startsWith(","))
 				item[2] = item[2].substring(1).trim();
