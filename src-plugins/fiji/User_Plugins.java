@@ -48,6 +48,7 @@ public class User_Plugins implements PlugIn {
 	public void run(String arg) {
 		if ("update".equals(arg))
 			Menus.updateImageJMenus();
+		installScripts();
 		installPlugins(path, ".", menuPath);
 		/* make sure "Update Menus" runs _this_ plugin */
 		Menus.getCommands().put("Update Menus",
@@ -74,6 +75,21 @@ public class User_Plugins implements PlugIn {
 
 	public static void install() {
 		new User_Plugins().run(null);
+	}
+
+	public static void runPlugIn(String menuLabel) {
+		String className = (String)Menus.getCommands().get(menuLabel);
+		if (className != null)
+			IJ.runPlugIn(className, null);
+	}
+
+	public static void installScripts() {
+		runPlugIn("Refresh Javas");
+		String[] languages = {
+			"Jython", "JRuby", "Clojure", "BSH", "Javascript"
+		};
+		for (int i = 0; i < languages.length; i++)
+			runPlugIn("Refresh " + languages[i] + " Scripts");
 	}
 
 	public void installPlugins(String dir, String name, String menuPath) {
