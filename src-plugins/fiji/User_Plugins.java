@@ -52,6 +52,24 @@ public class User_Plugins implements PlugIn {
 		/* make sure "Update Menus" runs _this_ plugin */
 		Menus.getCommands().put("Update Menus",
 			"fiji.User_Plugins(\"update\")");
+
+		FijiClassLoader classLoader = new FijiClassLoader();
+		try {
+			classLoader.addPath(Menus.getPlugInsPath());
+		} catch (IOException e) {}
+		try {
+			classLoader.addPath(path);
+		} catch (IOException e) {}
+
+		try {
+			// IJ.setClassLoader(classLoader);
+			Class ij = Class.forName("ij.IJ");
+			java.lang.reflect.Method method =
+				ij.getDeclaredMethod("setClassLoader",
+					new Class[] { ClassLoader.class });
+			method.setAccessible(true);
+			method.invoke(null, new Object[] { classLoader });
+		} catch (Exception e) { e.printStackTrace(); }
 	}
 
 	public static void install() {
