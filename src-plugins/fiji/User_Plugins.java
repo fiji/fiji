@@ -77,7 +77,11 @@ public class User_Plugins implements PlugIn {
 			Iterator iter = plugins.iterator();
 			while (iter.hasNext()) {
 				String[] item = (String[])iter.next();
-				installPlugin(item[0], item[1], item[2]);
+				if (item[1].equals("-"))
+					getMenu(item[0]).addSeparator();
+				else
+					installPlugin(item[0], item[1],
+							item[2]);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
