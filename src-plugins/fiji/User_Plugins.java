@@ -53,6 +53,8 @@ public class User_Plugins implements PlugIn {
 		/* make sure "Update Menus" runs _this_ plugin */
 		Menus.getCommands().put("Update Menus",
 			"fiji.User_Plugins(\"update\")");
+		// make sure "Edit>Options>Memory & Threads runs Fiji's plugin
+		Menus.getCommands().put("Memory & Threads...", "fiji.Memory");
 
 		FijiClassLoader classLoader = new FijiClassLoader();
 		try {
