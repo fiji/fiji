@@ -14,6 +14,7 @@
 /fiji-*.tar.bz2
 /fiji-*.7z
 *~
+*$py.class
 /MMConfig_demo.cfg
 /MMStartup.bsh
 /mmgr_dal_*
