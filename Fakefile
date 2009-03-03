@@ -333,10 +333,7 @@ fiji-*.7z[scripts/make-7z.py $TARGET Fiji.app] <- app-*
 
 # Checks
 
-check[] <- check-class-versions check-launchers check-submodules
-
-check-class-versions[./fiji --headless --main-class=fiji.CheckClassVersions \
-	plugins/ jars/ misc/ precompiled/] <- misc/Fiji.jar
+check[] <- check-launchers check-submodules
 
 LAUNCHERS=$LAUNCHER(linux) $LAUNCHER(linux64) \
 	$LAUNCHER(win32) $LAUNCHER(win64) $LAUNCHER(macosx)
