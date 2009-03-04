@@ -121,6 +121,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Analyze/Grid_.class \
 	plugins/Input-Output/HandleExtraFileTypes.class \
 	plugins/Stacks/Stack_Reverser.class \
+	plugins/Fiji_Plugins.jar \
 	\
 	misc/Fiji.jar
 
