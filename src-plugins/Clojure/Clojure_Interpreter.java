@@ -226,7 +226,7 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 				synchronized (this) {
 					lock();
 					if (null != out) {
-						this.text = new StringBuffer("(binding [*out* (Clojure.Clojure_Interpreter/getStdOut)]\n").append(text).append(")\n").toString();
+						this.text = new StringBuffer("(binding [*out* (Clojure.Clojure_Interpreter/getStdOut)]\n").append(text).append("\n)\n").toString();
 					} else {
 						this.text = text;
 					}
