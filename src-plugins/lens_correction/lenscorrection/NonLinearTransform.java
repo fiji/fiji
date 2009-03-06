@@ -51,6 +51,8 @@ import Jama.Matrix;
 
 import java.io.*;
 
+import mpicbg.trakem2.transform.TranslationModel2D;
+
 
 public class NonLinearTransform implements mpicbg.trakem2.transform.CoordinateTransform{
 
@@ -695,5 +697,16 @@ public class NonLinearTransform implements mpicbg.trakem2.transform.CoordinateTr
 	
 		public int getHeight(){
 				return height;
+		}
+		
+		@Override
+		/**
+		 * TODO Make this more efficient
+		 */
+		final public NonLinearTransform clone()
+		{
+			final NonLinearTransform t = new NonLinearTransform();
+			t.init( toDataString() );
+			return t;
 		}
 }
