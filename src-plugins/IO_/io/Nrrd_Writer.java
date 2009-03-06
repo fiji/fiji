@@ -212,7 +212,7 @@ public class Nrrd_Writer implements PlugIn {
 			case FileInfo.GRAY16_SIGNED:
 				return "int16";	
 			case FileInfo.GRAY16_UNSIGNED:
-				return "unit16";
+				return "uint16";
 		
 			case FileInfo.COLOR8:
 			case FileInfo.GRAY8:

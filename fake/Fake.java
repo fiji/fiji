@@ -550,20 +550,23 @@ public class Fake {
 		public void setVariable(String key, String value)
 				throws FakeException {
 			int paren = key.indexOf('(');
-			String name = paren < 0 ? key : key.substring(0, paren);
+			String name = (paren < 0 ? key :
+				key.substring(0, paren)).toUpperCase();
 
 			if (key.charAt(paren + 1) == '*') {
 				setVariableWildcard(name, value);
 				return;
 			}
 
+			if (name.equals("CLASSPATH"))
+				value = prefixPaths(cwd.getName(), value, true);
+
 			value = expandVariables(value, paren < 0 ? null :
 				key.substring(paren + 1, key.length() - 1));
 
 			if (value.indexOf('*') >= 0 ||
 					value.indexOf('?') >= 0) {
-				String separator = key.equals("CLASSPATH") ||
-					key.startsWith("CLASSPATH(") ?
+				String separator = name.equals("CLASSPATH") ?
 					":" : " ";
 				List files = new ArrayList();
 				StringTokenizer tokenizer = new
@@ -788,6 +791,12 @@ public class Fake {
 				return targetModified > sourceModified;
 			}
 
+			boolean upToDate(String source, String target,
+					File cwd) {
+				return upToDate(new File(cwd, source),
+					new File(cwd, target));
+			}
+
 			void make() throws FakeException {
 				if (wasAlreadyChecked)
 					return;
@@ -959,8 +968,7 @@ public class Fake {
 					String configPath)
 					throws FakeException {
 				if (configPath == null) {
-					if (upToDate(new File(cwd, source),
-							new File(cwd, target)))
+					if (upToDate(source, target, cwd))
 						return;
 					copyFile(source, target, cwd);
 				}
@@ -978,7 +986,8 @@ public class Fake {
 			void copyJarWithPluginsConfig(String source,
 					String target, File cwd,
 					String configPath) throws Exception {
-				if (upToDate(source))
+				if (upToDate(source) && upToDate(configPath,
+						target, cwd))
 					return;
 				if (jarUpToDate(source, target,
 						getVarBool("VERBOSE"))) {
@@ -2694,6 +2703,13 @@ public class Fake {
 		return result;
 	}
 
+	public static String join(String[] list, String separator) {
+		String result = list.length > 0 ? list[0] : "";
+		for (int i = 1; i < list.length; i++)
+			result += separator + list[i];
+		return result;
+	}
+
 	public static String[] split(String string, String delimiter) {
 		if (string == null || string.equals(""))
 			return new String[0];
@@ -2712,6 +2728,21 @@ public class Fake {
 		for (int i = 0; i < result.length; i++)
 			result[i] = (String)list.get(i);
 		return result;
+	}
+
+	public String prefixPaths(String prefix, String pathList,
+			boolean skipVariables) {
+		if (pathList == null || pathList.equals("")
+				|| prefix.equals("."))
+			return pathList;
+		if (!prefix.endsWith("/"))
+			prefix += "/";
+
+		String[] paths = split(pathList, ":");
+		for (int i = 0; i < paths.length; i++)
+			if (!skipVariables || !paths[i].startsWith("$"))
+				paths[i] = prefix + paths[i];
+		return join(paths, ":");
 	}
 
 	static boolean moveFileOutOfTheWay(String file) throws FakeException {

@@ -12,7 +12,9 @@
 /fiji-*.dmg
 /fiji-*.zip
 /fiji-*.tar.bz2
+/fiji-*.7z
 *~
+*$py.class
 /MMConfig_demo.cfg
 /MMStartup.bsh
 /mmgr_dal_*
@@ -71,3 +73,5 @@
 /jars/jacl.jar
 /jars/batik.jar
 /jars/fiji-scripting.jar
+/plugins/TurboReg_.jar
+/plugins/Fiji_Plugins.jar

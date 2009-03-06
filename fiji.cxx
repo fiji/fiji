@@ -658,6 +658,8 @@ static void open_win_console(void)
 	if (initialized)
 		return;
 	initialized = 1;
+	if (!isatty(1) && !isatty(2))
+		return;
 
 	string kernel32_dll_path = string(getenv("WINDIR"))
 			+ "\\system32\\kernel32.dll";
@@ -677,13 +679,16 @@ static void open_win_console(void)
 			return; // console already opened
 	}
 
-	freopen("CONOUT$", "wt", stdout);
-	freopen("CONOUT$", "wb", stderr);
-
 	HANDLE handle = CreateFile("CONOUT$", GENERIC_WRITE, FILE_SHARE_WRITE,
 		NULL, OPEN_EXISTING, 0, NULL);
-	SetStdHandle(STD_OUTPUT_HANDLE, handle);
-	SetStdHandle(STD_ERROR_HANDLE, handle);
+	if (isatty(1)) {
+		freopen("CONOUT$", "wt", stdout);
+		SetStdHandle(STD_OUTPUT_HANDLE, handle);
+	}
+	if (isatty(2)) {
+		freopen("CONOUT$", "wb", stderr);
+		SetStdHandle(STD_ERROR_HANDLE, handle);
+	}
 }
 
 
@@ -1322,6 +1327,9 @@ static int start_ij(void)
 	for (int i = 1; i < main_argc; i++)
 		if (!strcmp(main_argv[i], "--") && !dashdash)
 			dashdash = count;
+		else if (dashdash && main_class &&
+				strcmp(main_class, "ij.ImageJ"))
+			main_argv[count++] = main_argv[i];
 		else if (!strcmp(main_argv[i], "--dry-run"))
 			options.debug++;
 		else if (handle_one_option(i, "--java-home", arg)) {
@@ -1377,8 +1385,12 @@ static int start_ij(void)
 			class_path += arg + PATH_SEP;
 		else if (handle_one_option(i, "--jar-path", arg) ||
 				handle_one_option(i, "--jarpath", arg) ||
-				handle_one_option(i, "-jarpath", arg))
-			build_classpath(class_path, arg, 0);
+				handle_one_option(i, "-jarpath", arg)) {
+			string jars;
+			build_classpath(jars, arg, 0);
+			if (jars != "")
+				class_path += jars + PATH_SEP;
+		}
 		else if (handle_one_option(i, "--ext", arg)) {
 			if (ext_option != "")
 				ext_option += PATH_SEP;
@@ -2021,7 +2033,7 @@ static string get_newest_subdir(string relative_path)
 			continue;
 		if (!S_ISDIR(st.st_mode))
 			continue;
-		if (is_dir_empty(relative_path + "/" + filename))
+		if (is_dir_empty(path + "/" + filename))
 			continue;
 		if (mtime < st.st_mtime) {
 			mtime = st.st_mtime;

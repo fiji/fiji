@@ -49,12 +49,14 @@ import levelsets.algorithm.FastMarching;
 import levelsets.algorithm.SparseFieldLevelSet;
 import levelsets.ij.StateContainer.States;
 
+import java.lang.reflect.Field;
+
 public class LevelSet implements PlugInFilter {
 	
 	
 	private int flags = DOES_16|DOES_32|DOES_8G|DOES_STACKS;
 	private static String [] shapeList = {"none"}; // not implemented yet
-	private static String [] preprocessList = {"none", "Gaussian difference"};
+	public final static String [] preprocessList = {"none", "Gaussian difference"};
 	private static String [] expansionList = {"outside", "inside"};
 	public enum preprocessChoices { none, gaussian };
 	protected ImagePlus imp;
@@ -135,32 +137,34 @@ public class LevelSet implements PlugInFilter {
 		// If no ROI found, have the additional dialog field to select mask image. 
 				
 		Roi roi = imp.getRoi();
-        if ( roi==null ) {
-        	
-        	// FastMarching needs points
-            IJ.error("Seed (points) required");
-            
-            // TODO Active contour needs contour - 
-            // 3 cases should be separate classes
-            // - FastMarching
-            // - ActiveContours with option of fast marching 
-            return;
-        }
-        
-        if ( ask_params == true ) {
-        	if ( showDialog() == false ) {
-        		return;
-        	}
-        }
-         
-        // Wrap the selected image into the ImageContainer
+			if ( roi==null ) {
+				// FastMarching needs points
+					IJ.error("Seed (points) required");
+			
+			// TODO Active contour needs contour - 
+			// 3 cases should be separate classes
+			// - FastMarching
+			// - ActiveContours with option of fast marching 
+			return;
+		}
+		
+		if ( ask_params == true ) {
+			if ( showDialog() == false ) {
+				return;
+			}
+		}
+		 
+		// Wrap the selected image into the ImageContainer
 		ic = new ImageContainer(imp);
 		
 		// Create a ImageContainer for showing the progress
-		ImageProgressContainer progressImage = new ImageProgressContainer();
-		progressImage.duplicateImages(ic);
-		progressImage.createImagePlus("Segmentation progress of " + imp.getTitle());
-		progressImage.showProgressStep();
+		ImageProgressContainer progressImage = null;
+		if (ask_params) {
+			progressImage = new ImageProgressContainer();
+			progressImage.duplicateImages(ic);
+			progressImage.createImagePlus("Segmentation progress of " + imp.getTitle());
+			progressImage.showProgressStep();
+		}
 		
 		// Create a initial state map out of the roi
 		StateContainer sc_roi = new StateContainer();
@@ -173,7 +177,7 @@ public class LevelSet implements PlugInFilter {
 		int iter;
 		
 		IJ.showStatus("Press 'Esc' to abort");
-		
+
 		// Fast marching
 		if ( fast_marching ) {
 			FastMarching fm = new FastMarching(ic, progressImage, sc_roi, true);
@@ -228,8 +232,17 @@ public class LevelSet implements PlugInFilter {
 		}
 		ImageContainer result = new ImageContainer(sc_final.getIPMask());
 		ImagePlus result_ip = result.createImagePlus("Segmentation of " + imp.getTitle());
-		result_ip.show();
+
+		result_imp = result_ip;
+
+		if (ask_params) {
+			result_ip.show();
+		}
 	}
+
+	private ImagePlus result_imp = null;
+
+	public ImagePlus getResult() { return result_imp; }
 
 	public int setup(String arg, ImagePlus imp) {
 		// TODO: check for seed == selection
@@ -247,23 +260,23 @@ public class LevelSet implements PlugInFilter {
 	}
 	
 	
-	protected boolean showDialog() {
+	public boolean showDialog() {
 		// TODO interactive selection of gray value range
 		
 		GenericDialog gd = new GenericDialog("Level Set Segmentation");
 		gd.addChoice("Preprocessing (Advection image)", preprocessList, preprocessList[0]);
-		gd.addCheckbox("Use Fast Marching", true);
-		gd.addNumericField("Grey value threshold", FastMarching.getGreyThreshold(), 0);
-		gd.addNumericField("Distance threshold", FastMarching.getDistanceThreshold(), 2);
-		gd.addCheckbox("Use Level Sets", true);
-		gd.addChoice("Shape guidance stack", shapeList, shapeList[0]);
+		gd.addCheckbox("Use_Fast_Marching", true);
+		gd.addNumericField("Grey_value threshold", FastMarching.getGreyThreshold(), 0);
+		gd.addNumericField("Distance_threshold", FastMarching.getDistanceThreshold(), 2);
+		gd.addCheckbox("Use_Level_Sets", true);
+		//gd.addChoice("Shape_guidance_stack", shapeList, shapeList[0]);
 		gd.addMessage("Level set weigths (0 = don't use)");
 		gd.addNumericField("Advection", SparseFieldLevelSet.getAdvectionWeight(), 2);
 		gd.addNumericField("Curvature", SparseFieldLevelSet.getCurvatureWeight(), 2);
 		gd.addNumericField("Grayscale", 1, 0);
-		gd.addMessage("Leve set convergence criterion (be careful!)");
+		gd.addMessage("Level set convergence criterion (be careful!)");
 		gd.addNumericField("Convergence", SparseFieldLevelSet.getConvergenceFactor(), 4);
-		gd.addChoice("Region expands to ", expansionList, expansionList[0]);
+		gd.addChoice("Region_expands_to ", expansionList, expansionList[0]);
 		gd.addMessage("");
 		gd.addMessage("Developed by Erwin Frise.\nBased on code by Arne-Michael Toersel\n");
 		
@@ -277,7 +290,7 @@ public class LevelSet implements PlugInFilter {
 		if ( preprocess_choice.contentEquals(preprocessList[1])) {
 			preprocess = preprocessChoices.gaussian;
 		}
-		String shape = gd.getNextChoice();
+		//String shape = gd.getNextChoice();
 		// this.shapeStack = WindowManager.getImage(stackIDs[((Choice)gd.getChoices().get(0)).getSelectedIndex()]);
 		
 		this.fast_marching = gd.getNextBoolean();
@@ -310,7 +323,35 @@ public class LevelSet implements PlugInFilter {
 		return true;
 
 	}
-	
+
+	public void printParameters() {
+		for (Field field : getClass().getDeclaredFields()) {
+			try {
+				field.setAccessible(true);
+				System.out.println(field.getName() + " = " + field.get(this));
+			} catch (Exception e) { e.printStackTrace(); }
+		}
+	}
+
+	/** Set the plugin to run without a GUI. */
+	public void setParameters(ImagePlus imp, String preprocessList,
+			                                 boolean fast_marching, double fm_grey, double fm_dist,
+							 boolean level_sets, double w_adv, double w_curv, double w_gray, double f_conv, boolean insideout) {
+		this.imp = imp;
+		this.fast_marching = fast_marching;
+		this.fm_grey = fm_grey;
+		this.fm_dist = fm_dist;
+		this.level_sets = level_sets;
+		this.w_adv = w_adv;
+		this.w_curv = w_curv;
+		this.w_gray = w_gray;
+		this.f_conv = f_conv;
+		this.insideout = insideout;
+
+		// Avoid dialog:
+		this.ask_params = false;
+	}
+
 	
 	public void showROI(ImagePlus ip, Roi roi, StateContainer sc_in) {
 
@@ -341,7 +382,7 @@ public class LevelSet implements PlugInFilter {
 		int px_alive=0, px_band=0, px_far=0;
 
 		ImageProgressContainer output = progress;
-		progress.showProgressStep();
+		if (ask_params) progress.showProgressStep();
 		StateContainer.States cell_state = StateContainer.States.OUTSIDE;
 		for (int z = 0; z < map.getZLength(); z++)
 		{
@@ -366,7 +407,7 @@ public class LevelSet implements PlugInFilter {
 				}
 			}
 		}
-		progress.showProgressStep();
+		if (ask_params) progress.showProgressStep();
 	}
 	
 	

@@ -65,7 +65,7 @@ public class Memory implements PlugIn {
 			dir = new File(dir).getParent();
 
 		if (IJ.isMacOSX())
-			fileName = dir + "../Contents/Info.plist";
+			fileName = dir + "/Contents/Info.plist";
 		else
 			fileName = dir + "/jvm.cfg";
 

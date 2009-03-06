@@ -29,6 +29,7 @@ Name					File					Author(s)						Contact	(2008)							License
 * Clojure Interpreter			Clojure_Interpreter.jar 		Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
 * Color Histogram 			Color_Histogram.jar			Dimiter Prodanov 					dimiterpp@gmail.com 						GPL 2
 * Color Inspector 3D 			Color_Inspector_3D.jar			Kai Uwe Barthel 					k.barthel@fhtw-berlin.de 					PD
+* Fiji_Plugins.jar 			Fiji_Plugins.jar 			Various authors 					http://pacific.mpi-cbg.de/contributors 				PD,GPL
 * Fiji as a framework																							GPL
 * ij-ImageIO 				ij-ImageIO_.jar				Jarek Sacha 						jarek@ieee.org 							LGPL
 * ImageJA				ij.jar					Johannes Schindelin, Wayne Rasband			Johannes.Schindelin@gmx.de					PD
@@ -59,9 +60,21 @@ Name					File					Author(s)						Contact	(2008)							License
 * Stack Reverser 			Stack_Reverser.class 			Anthony Padua, Daniel Barboriak 			http://rsb.info.nih.gov/ij/plugins/substack-maker.html		PD			
 * TransformJ 				TransformJ_.jar 			Erik Meijering 						meijering@imagescience.org 					Copyright © Erik Meijering. All rights reserved. See http://www.imagescience.org/meijering/software/transformj/
 * TrakEM2				TrakEM2_.jar				Albert Cardona, Rodney Douglas				acardona@ini.phys.ethz.ch					GPL
+* TurboReg				TurboReg_.jar				Philippe Thévenaz					philippe.thevenaz@epfl.ch					Citationware (see below)
 * VIB as VIB_.jar plugin bundle		VIB_.jar				J. Schindelin, Benjamin Schmid, M. Longair		bene.schmid@gmail.com						GPL
 * View5D 				View5D_.jar 				Rainer Heintzmann					heintzmannd@gmail.com						GPL 2
 * Volume Viewer / 3D Reslicer 		Volume_Viewer.jar 			Kai Uwe Barthel 					k.barthel@fhtw-berlin.de 					PD
+
+
+TurboReg (Citationware):
+
+	On Wed, 18 Feb 2009, Philippe Thévenaz wrote:
+
+	> Dear Johannes Schindelin,
+	>
+	> You have my explicit placet to include TurboReg in Fiji.
+
+	Note that this blessing is for the (re)distribution within Fiji only.
 
 
 Unresolved (TODO):
