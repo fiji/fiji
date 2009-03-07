@@ -18,7 +18,11 @@ esac
 CWD="$(dirname "$0")"
 
 case "$(uname -s)" in
-Darwin) platform=macosx; exe=;;
+Darwin)
+	case "$(uname -r)" in
+	8.*) platform=tiger;;
+	*) platform=macosx;;
+	esac; exe=;;
 Linux)
 	case "$(uname -m)" in
 		x86_64) platform=linux64;;
