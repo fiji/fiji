@@ -21,6 +21,7 @@ package bunwarpj;
  * 
  */
 
+import ij.IJ;
 import ij.ImagePlus;
 import ij.process.FloatProcessor;
 /**
@@ -90,6 +91,8 @@ public class bUnwarpJFinalAction implements Runnable
     private double  stopThreshold;
     /** level of accuracy */
     private int     accurate_mode;
+    /** image subsampling factor at highest resolution level */
+    private int maxImageSubsamplingFactor;
 
     /*....................................................................
        Public methods
@@ -108,6 +111,7 @@ public class bUnwarpJFinalAction implements Runnable
        t.setDaemon(true);
     }    
     
+    /* ------------------------------------------------------------------------ */
     /**
      * Get the thread.
      *
@@ -119,63 +123,54 @@ public class bUnwarpJFinalAction implements Runnable
        return(t);
     } /* end getThread */
 
+    /* ------------------------------------------------------------------------ */
     /**
      * Perform the registration
      */
     public void run ()
     {
+    	// Start pyramids
+    	IJ.showStatus("Starting image pyramids...");
+    	if(target.getWidth() > bUnwarpJImageModel.MAX_OUTPUT_SIZE || target.getHeight() > bUnwarpJImageModel.MAX_OUTPUT_SIZE
+    		|| source.getWidth() > bUnwarpJImageModel.MAX_OUTPUT_SIZE || source.getHeight() > bUnwarpJImageModel.MAX_OUTPUT_SIZE)
+    		IJ.log("Starting image pyramids...");
+    	
+		source.startPyramids();
+		target.startPyramids();
+		
+		// Wait for the pyramids to be done
+		dialog.joinThreads();
+		
         // Create output image (source-target)
-        int Ydimt = target.getHeight();
-        int Xdimt = target.getWidth();
-        int Xdims = source.getWidth();
-
-        final FloatProcessor fp = new FloatProcessor(Xdimt, Ydimt);
-
-        for (int i=0; i<Ydimt; i++)
-        	for (int j=0; j<Xdimt; j++)
-        		if (sourceMsk.getValue(j, i) && targetMsk.getValue(j, i))
-        			fp.putPixelValue(j, i, (target.getImage())[i*Xdimt+j]-
-        					(source.getImage())[i*Xdims+j]);
-        		else
-        		{
-        			fp.putPixelValue(j, i, 0);
-        		}
-        fp.resetMinAndMax();
-        final ImagePlus      ip1 = new ImagePlus("Output Source-Target", fp);
-        ip1.updateImage();
-        ip1.show();
-
-        // Create output image (target-source)
-        int Ydims = source.getHeight();
-
-        final FloatProcessor fp2 = new FloatProcessor(Xdims, Ydims);
-
-        for (int i=0; i<Ydims; i++)
-           for (int j=0; j<Xdims; j++)
-               if (targetMsk.getValue(j, i) && sourceMsk.getValue(j, i))
-                  fp2.putPixelValue(j, i, (source.getImage())[i*Xdims+j]-
-                                          (target.getImage())[i*Xdimt+j]);
-               else fp2.putPixelValue(j, i, 0);
-        fp2.resetMinAndMax();
-        final ImagePlus      ip2 = new ImagePlus("Output Target-Source", fp2);
-        ip2.updateImage();
-        ip2.show();
-
-        // Perform the registration
+		final ImagePlus [] output_ip = initializeOutputIPs();
+		
+        // If mono mode, reset consistency weight
+        if(this.accurate_mode == bUnwarpJDialog.MONO_MODE)
+        	this.consistencyWeight = 0.0;
+        
+        // Prepare registration parameters
         final bUnwarpJTransformation warp = new bUnwarpJTransformation(
           sourceImp, targetImp, source, target, sourcePh, targetPh,
           sourceMsk, targetMsk, sourceAffineMatrix, targetAffineMatrix,
           min_scale_deformation, max_scale_deformation,
           min_scale_image, divWeight, curlWeight, landmarkWeight, imageWeight,
           consistencyWeight, stopThreshold, outputLevel, showMarquardtOptim, accurate_mode,
-          dialog.isSaveTransformationSet(), "", "", ip1, ip2, dialog);
-
-        warp.doRegistration();
+          maxImageSubsamplingFactor, dialog.isSaveTransformationSet(), "", "", 
+          output_ip[0], output_ip[1], dialog);        
+				
+        
+        // Perform the registration
+        IJ.showStatus("Registering...");
+        if(this.accurate_mode == bUnwarpJDialog.MONO_MODE)
+        	warp.doUnidirectionalRegistration();
+        else
+        	warp.doRegistration();
 
         dialog.restoreAll();
         dialog.freeMemory();
     }
 
+    /* ------------------------------------------------------------------------ */
     /**
      * Pass parameter from <code>bUnwarpJDialog</code> to
      * <code>bUnwarpJFinalAction</code>.
@@ -202,6 +197,7 @@ public class bUnwarpJFinalAction implements Runnable
      * @param consistencyWeight weight for the deformations consistency
      * @param stopThreshold stopping threshold
      * @param accurate_mode level of accuracy
+     * @param maxImageSubsamplingFactor image subsampling factor at highest resolution level
      */
     public void setup (
        final ImagePlus sourceImp,
@@ -225,7 +221,8 @@ public class bUnwarpJFinalAction implements Runnable
        final double stopThreshold,
        final int outputLevel,
        final boolean showMarquardtOptim,
-       final int accurate_mode)
+       final int accurate_mode,
+       final int maxImageSubsamplingFactor)
     {
        this.sourceImp             = sourceImp;
        this.targetImp             = targetImp;
@@ -249,7 +246,120 @@ public class bUnwarpJFinalAction implements Runnable
        this.outputLevel           = outputLevel;
        this.showMarquardtOptim    = showMarquardtOptim;
        this.accurate_mode         = accurate_mode;
+       this.maxImageSubsamplingFactor = maxImageSubsamplingFactor;
     } /* end setup */
 
+    /* ------------------------------------------------------------------------ */
+    /**
+     *  Initialize output image plus
+     *  
+     *  @return target and source output image plus
+     */
+    public ImagePlus[] initializeOutputIPs()
+    {
+    	int Ydimt = target.getHeight();
+        int Xdimt = target.getWidth();
+        int Xdims = source.getWidth();
+        int Ydims = source.getHeight();
+        double[] tImage = target.isSubOutput() ? target.getSubImage() : target.getImage();
+        double[] sImage = source.isSubOutput() ? source.getSubImage() : source.getImage(); 
+        int sSubFactorX = 1;
+        int sSubFactorY = 1;
+        int tSubFactorX = 1;
+        int tSubFactorY = 1;
+        ImagePlus[] outputIP = new ImagePlus[2];
+        	
+        String extraTitleS = "";
+        String extraTitleT = "";
+
+        if(target.isSubOutput() || source.isSubOutput())
+        	IJ.log("Initializing output windows...");
+        
+        // If the output (difference) images are subsampled (because they were
+        // larger than the maximum size), update variables.
+        if(target.isSubOutput())
+        {        	
+        	tSubFactorX = Xdimt / target.getSubWidth();
+        	tSubFactorY = Ydimt / target.getSubHeight();
+        	extraTitleT = " (Subsampled)";
+        	Xdimt = target.getSubWidth();
+        	Ydimt = target.getSubHeight();        	          	        	       			        	
+        }
+        
+        if(source.isSubOutput())
+    	{
+    		sSubFactorX = Xdims / source.getSubWidth();
+        	sSubFactorY = Ydims / source.getSubHeight();
+        	extraTitleS = " (Subsampled)";
+    		Xdims = source.getSubWidth();
+    		Ydims = source.getSubHeight();
+    	} 
+        
+        // Float processor for the output source-target image.
+        final FloatProcessor fp = new FloatProcessor(Xdimt, Ydimt);
+        float[] f_array = (float[]) fp.getPixels();               
+                        
+        for (int i=0; i<Ydimt; i++)
+    	{
+    		final int i_offset_t = i * Xdimt; 
+    		final int i_offset_s = i * Xdims; 
+    		final int i_s_sub = i * sSubFactorY;
+    		final int i_t_sub = i * tSubFactorY;
+    		
+    		for (int j=0; j<Xdimt; j++)
+    		{
+    			    				
+    			if (sourceMsk.getValue(j * sSubFactorX, i_s_sub) && targetMsk.getValue(j * tSubFactorX, i_t_sub)
+    					&& j < Xdims && i < Ydims)
+    				f_array[j + i_offset_t] = (float) (tImage[i_offset_t + j] - sImage[i_offset_s + j]);
+    			else
+    			{
+    				f_array[j + i_offset_t] = 0;
+    			}
+
+    		}
+    	}
+    	fp.resetMinAndMax();
+
+        final ImagePlus ip1 = new ImagePlus("Output Source-Target" + extraTitleS, fp);
+        ip1.updateAndDraw();
+        ip1.show();
+        
+        outputIP[0] = ip1;
+
+        // Create output image (target-source) if necessary                        
+        
+        if(this.accurate_mode != bUnwarpJDialog.MONO_MODE)
+        {
+        	final FloatProcessor fp2 = new FloatProcessor(Xdims, Ydims);
+        	float[] f_array_2 = (float[]) fp2.getPixels();
+
+        	for (int i=0; i<Ydims; i++)
+        	{
+        		int i_offset_t = i * Xdimt; 
+        		int i_offset_s = i * Xdims; 
+        		int i_s_sub = i * sSubFactorY;
+        		int i_t_sub = i * tSubFactorY;
+        		
+        		for (int j=0; j<Xdims; j++)
+        			if (targetMsk.getValue(j * tSubFactorX, i_t_sub) && sourceMsk.getValue(j * sSubFactorX, i_s_sub)
+        					&& i < Ydimt && j < Xdimt)
+        				f_array_2[j + i_offset_s] = (float) (sImage[i_offset_s + j] - tImage[i_offset_t + j]);
+        			else 
+        				f_array_2[j + i_offset_s] = 0;
+        	}
+        	fp2.resetMinAndMax();
+        	
+        	
+        	final ImagePlus ip2 = new ImagePlus("Output Target-Source" + extraTitleT, fp2);
+        	ip2.updateAndDraw();
+        	ip2.show();
+        	outputIP[1] = ip2;
+        }
+        else
+        	outputIP[1] = null;
+        
+        return outputIP;
+    }
 
 } /* end bUnwarpJFinalAction*/

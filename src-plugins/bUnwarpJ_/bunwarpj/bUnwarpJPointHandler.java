@@ -115,7 +115,7 @@ public class bUnwarpJPointHandler extends Roi
 		pa = new bUnwarpJPointAction(imp, this, tb, dialog);
 		final ImageWindow iw = imp.getWindow();
 		final ImageCanvas ic = iw.getCanvas();
-		iw.requestFocus();
+		//iw.requestFocus();
 		iw.removeKeyListener(IJ.getInstance());
 		iw.addKeyListener(pa);
 		ic.removeMouseMotionListener(ic);
@@ -253,12 +253,12 @@ public class bUnwarpJPointHandler extends Roi
 
 	/*------------------------------------------------------------------*/
 	/**
-	 * Draw the mask.
+	 * Draw the landmarks and mask.
 	 *
 	 * @param g graphic element
 	 */
 	public void draw (final Graphics g)
-	{
+	{		
 		// Draw landmarks
 		if (started)
 		{
@@ -361,6 +361,7 @@ public class bUnwarpJPointHandler extends Roi
 				updateFullWindow = false;
 				imp.draw();
 			}
+						
 		}
 
 		// Draw mask

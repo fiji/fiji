@@ -33,6 +33,7 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Vector;
@@ -55,7 +56,7 @@ public class bUnwarpJTransformation
 	/** original flag */
 	private final boolean ORIGINAL = false;
 	/** degree of the B-splines involved in the transformation */
-	private final int transformationSplineDegree=3;
+	private final int transformationSplineDegree = 3;
 
 	// Some useful references
 	/** reference to the first output image */
@@ -188,6 +189,8 @@ public class bUnwarpJTransformation
 	private double  stopThreshold;
 	/** level of accuracy */
 	private int     accurate_mode;
+	/** image subsampling factor at highest resolution level */
+    private int maxImageSubsamplingFactor;
 	/** flag to save the transformation */
 	private boolean saveTransf;
 	/** direct transformation file name */
@@ -263,6 +266,7 @@ public class bUnwarpJTransformation
 	 * @param outputLevel flag to specify the level of resolution in the output
 	 * @param showMarquardtOptim flag to show the optimizer
 	 * @param accurate_mode level of accuracy
+	 * @param maxImageSubsamplingFactor image subsampling factor at highest resolution level
 	 * @param saveTransf flat to choose to save the transformation in a file
 	 * @param fn_tnf_1 direct transformation file name
 	 * @param fn_tnf_2 inverse transformation file name
@@ -293,6 +297,7 @@ public class bUnwarpJTransformation
 			final int outputLevel,
 			final boolean showMarquardtOptim,
 			final int accurate_mode,
+			final int maxImageSubsamplingFactor,
 			final boolean saveTransf,
 			final String fn_tnf_1,
 			final String fn_tnf_2,
@@ -321,13 +326,14 @@ public class bUnwarpJTransformation
 		this.stopThreshold         = stopThreshold;
 		this.outputLevel           = outputLevel;
 		this.showMarquardtOptim    = showMarquardtOptim;
-		this.accurate_mode         = accurate_mode;
-		this.saveTransf            = saveTransf;
-		this.fn_tnf_1              = fn_tnf_1;
-		this.fn_tnf_2              = fn_tnf_2;
-		this.output_ip_1           = output_ip_1;
-		this.output_ip_2           = output_ip_2;
-		this.dialog                = dialog;
+		this.accurate_mode         		= accurate_mode;
+		this.maxImageSubsamplingFactor 	= maxImageSubsamplingFactor;
+		this.saveTransf            		= saveTransf;
+		this.fn_tnf_1              		= fn_tnf_1;
+		this.fn_tnf_2              		= fn_tnf_2;
+		this.output_ip_1           		= output_ip_1;
+		this.output_ip_2           		= output_ip_2;
+		this.dialog                		= dialog;
 
 		this.originalSourceIP	  = this.dialog.getOriginalSourceIP();
 		this.originalTargetIP	  = this.dialog.getOriginalTargetIP();
@@ -338,20 +344,130 @@ public class bUnwarpJTransformation
 		this.targetHeight          = target.getHeight();
 	} /* end bUnwarpJTransformation */
 
+	
+	/*------------------------------------------------------------------*/
+	/**
+	 * Create an instance of bUnwarpJTransformation.
+	 *
+	 * @param sourceImp image representation for the source
+	 * @param targetImp image representation for the target
+	 * @param source source image model
+	 * @param target target image model
+	 * @param sourcePh point handler for the landmarks in the source image
+	 * @param targetPh point handler for the landmarks in the target image
+	 * @param sourceMsk source image mask
+	 * @param targetMsk target image mask
+	 * @param sourceAffineMatrix source initial affine matrix
+	 * @param targetAffineMatrix source initial affine matrix
+	 * @param min_scale_deformation minimum scale deformation
+	 * @param max_scale_deformation maximum scale deformation
+	 * @param min_scale_image minimum image scale
+	 * @param divWeight divergence weight
+	 * @param curlWeight curl weight
+	 * @param landmarkWeight landmark weight
+	 * @param imageWeight weight for image similarity
+	 * @param consistencyWeight weight for the deformations consistency
+	 * @param stopThreshold stopping threshold
+	 * @param outputLevel flag to specify the level of resolution in the output
+	 * @param showMarquardtOptim flag to show the optimizer
+	 * @param accurate_mode level of accuracy
+	 * @param maxImageSubsamplingFactor image subsampling factor at highest resolution level
+	 * @param saveTransf flat to choose to save the transformation in a file
+	 * @param fn_tnf_1 direct transformation file name
+	 * @param fn_tnf_2 inverse transformation file name
+	 * @param output_ip_1 pointer to the first output image
+	 * @param output_ip_2 pointer to the second output image
+	 * @param dialog pointer to the dialog of the bUnwarpJ interface
+	 */
+	public bUnwarpJTransformation (
+			final ImagePlus                    sourceImp,
+			final ImagePlus                    targetImp,
+			final bUnwarpJImageModel source,
+			final bUnwarpJImageModel target,
+			final bUnwarpJPointHandler sourcePh,
+			final bUnwarpJPointHandler targetPh,
+			final bUnwarpJMask sourceMsk,
+			final bUnwarpJMask targetMsk,
+			final double[][] sourceAffineMatrix,
+			final double[][] targetAffineMatrix,
+			final int min_scale_deformation,
+			final int max_scale_deformation,
+			final int min_scale_image,
+			final double divWeight,
+			final double curlWeight,
+			final double landmarkWeight,
+			final double imageWeight,
+			final double consistencyWeight,
+			final double stopThreshold,
+			final int outputLevel,
+			final boolean showMarquardtOptim,
+			final int accurate_mode,
+			final int maxImageSubsamplingFactor,
+			final boolean saveTransf,
+			final String fn_tnf_1,
+			final String fn_tnf_2,
+			final ImagePlus output_ip_1,
+			final ImagePlus output_ip_2,
+			final bUnwarpJDialog dialog,
+			final ImageProcessor originalSourceIP,
+			final ImageProcessor originalTargetIP)
+	{
+		this.sourceImp	      = sourceImp;
+		this.targetImp	      = targetImp;
+		this.source                = source;
+		this.target                = target;
+		this.sourcePh              = sourcePh;
+		this.targetPh              = targetPh;
+		this.sourceMsk             = sourceMsk;
+		this.targetMsk             = targetMsk;
+		this.sourceAffineMatrix    = sourceAffineMatrix;
+		this.targetAffineMatrix    = targetAffineMatrix;
+		this.min_scale_deformation = min_scale_deformation;
+		this.max_scale_deformation = max_scale_deformation;
+		this.min_scale_image       = min_scale_image;
+		this.divWeight             = divWeight;
+		this.curlWeight            = curlWeight;
+		this.landmarkWeight        = landmarkWeight;
+		this.imageWeight           = imageWeight;
+		this.consistencyWeight     = consistencyWeight;
+		this.stopThreshold         = stopThreshold;
+		this.outputLevel           = outputLevel;
+		this.showMarquardtOptim    = showMarquardtOptim;
+		this.accurate_mode         		= accurate_mode;
+		this.maxImageSubsamplingFactor 	= maxImageSubsamplingFactor;
+		this.saveTransf            		= saveTransf;
+		this.fn_tnf_1              		= fn_tnf_1;
+		this.fn_tnf_2              		= fn_tnf_2;
+		this.output_ip_1           		= output_ip_1;
+		this.output_ip_2           		= output_ip_2;
+		this.dialog                		= dialog;
+
+		this.originalSourceIP	  = originalSourceIP;
+		this.originalTargetIP	  = originalTargetIP;
+
+		this.sourceWidth           = source.getWidth();
+		this.sourceHeight          = source.getHeight();
+		this.targetWidth           = target.getWidth();
+		this.targetHeight          = target.getHeight();
+	} /* end bUnwarpJTransformation */
+	
 	/*------------------------------------------------------------------*/
 	/**
 	 * Registration method. It applies the consistent and elastic registration
 	 * algorithm to the selected source and target images.
 	 */
 	public void doRegistration ()
-	{
-
+	{	
 		// This function can only be applied with splines of an odd order
 
 		// Bring into consideration the image/coefficients at the smallest scale
 		source.popFromPyramid();
 		target.popFromPyramid();
 
+		// size correction factor
+		int sizeCorrectionFactor = 0; // this.targetHeight / (1024  * (int) Math.pow(2, this.maxImageSubsamplingFactor));
+		//System.out.println("Size correction factor = " + sizeCorrectionFactor);
+		
 		targetCurrentHeight = target.getCurrentHeight();
 		targetCurrentWidth  = target.getCurrentWidth();
 
@@ -365,7 +481,7 @@ public class bUnwarpJTransformation
 		sourceFactorWidth   = source.getFactorWidth();
 
 		// Ask memory for the transformation coefficients
-		intervals = (int)Math.pow(2, min_scale_deformation);
+		intervals = (int)Math.pow(2, min_scale_deformation + sizeCorrectionFactor);
 		
 		cxTargetToSource = new double[intervals+3][intervals+3];
 		cyTargetToSource = new double[intervals+3][intervals+3];
@@ -380,7 +496,6 @@ public class bUnwarpJTransformation
 		else                K = 0;
 		double [] dxTargetToSource = new double[K];
 		double [] dyTargetToSource = new double[K];
-//		computeInitialResidues(dxTargetToSource, dyTargetToSource, false);
 
 		// Compute the affine transformation FROM THE TARGET TO THE SOURCE coordinates
 		// Notice that this matrix is independent of the scale (unless it was loaded from
@@ -397,16 +512,7 @@ public class bUnwarpJTransformation
 		{
 			// NOTE: after version 1.1 the landmarks are always used to calculate
 			// an initial affine transformation (whether the landmarks weight is 0 or not).
-			
-//			if (landmarkWeight==0)
 			affineMatrix = computeAffineMatrix(false);
-//			else
-//			{
-//			affineMatrix = new double[2][3];
-//			affineMatrix[0][0] = affineMatrix[1][1]=1;
-//			affineMatrix[0][1] = affineMatrix[0][2]=0;
-//			affineMatrix[1][0] = affineMatrix[1][2]=0;
-//			}
 		}
 
 		// Incorporate the affine transformation into the spline coefficient
@@ -433,7 +539,6 @@ public class bUnwarpJTransformation
 		else                K2 = 0;
 		double [] dxSourceToTarget = new double[K2];
 		double [] dySourceToTarget = new double[K2];
-//		computeInitialResidues(dxSourceToTarget, dySourceToTarget, true);
 
 		cxSourceToTarget = new double[intervals+3][intervals+3];
 		cySourceToTarget = new double[intervals+3][intervals+3];
@@ -448,17 +553,8 @@ public class bUnwarpJTransformation
 		else
 		{
 			// NOTE: after version 1.1 the landmarks are always used to calculate
-			// an initial affine transformation (whether the landmarks weight is 0 or not).
-			
-//			if (landmarkWeight==0)
+			// an initial affine transformation (whether the landmarks weight is 0 or not).			
 			affineMatrix = computeAffineMatrix(true);
-//			else
-//			{
-//			affineMatrix = new double[2][3];
-//			affineMatrix[0][0] = affineMatrix[1][1]=1;
-//			affineMatrix[0][1] = affineMatrix[0][2]=0;
-//			affineMatrix[1][0] = affineMatrix[1][2]=0;
-//			}
 		}
 
 		// Incorporate the affine transformation into the spline coefficient
@@ -499,16 +595,12 @@ public class bUnwarpJTransformation
 				if (s>=min_scale_deformation)
 				{
 					// Number of intervals at this scale and ask for memory
-					intervals = (int) Math.pow(2,s);
+					intervals = (int) Math.pow(2, s + sizeCorrectionFactor);
 					final double[][] newcxTargetToSource = new double[intervals+3][intervals+3];
 					final double[][] newcyTargetToSource = new double[intervals+3][intervals+3];
 
 					final double[][] newcxSourceToTarget = new double[intervals+3][intervals+3];
 					final double[][] newcySourceToTarget = new double[intervals+3][intervals+3];
-
-					// Compute the residues before correcting at this scale
-//					computeScaleResidues(intervals, cxTargetToSource, cyTargetToSource, dxTargetToSource, dyTargetToSource, false);
-//					computeScaleResidues(intervals, cxSourceToTarget, cySourceToTarget, dxSourceToTarget, dySourceToTarget, true);
 
 					// Compute the coefficients at this scale
 					boolean underconstrained = true;
@@ -524,10 +616,10 @@ public class bUnwarpJTransformation
 					// Incorporate information from the previous scale
 					if (!underconstrained || (step==0 && landmarkWeight!=0))
 					{
-						for (int i=0; i<intervals+3; i++)
-							for (int j=0; j<intervals+3; j++) {
-								cxTargetToSource[i][j]+=newcxTargetToSource[i][j];
-								cyTargetToSource[i][j]+=newcyTargetToSource[i][j];
+						for (int i=0; i < intervals+3; i++)
+							for (int j=0; j < intervals+3; j++) {
+								cxTargetToSource[i][j] += newcxTargetToSource[i][j];
+								cyTargetToSource[i][j] += newcyTargetToSource[i][j];
 							}
 					}
 
@@ -544,8 +636,8 @@ public class bUnwarpJTransformation
 					// Incorporate information from the previous scale
 					if (!underconstrained || (step==0 && landmarkWeight!=0))
 					{
-						for (int i=0; i<intervals+3; i++)
-							for (int j=0; j<intervals+3; j++)
+						for (int i=0; i < intervals+3; i++)
+							for (int j=0; j < intervals+3; j++)
 							{
 								cxSourceToTarget[i][j]+= newcxSourceToTarget[i][j];
 								cySourceToTarget[i][j]+= newcySourceToTarget[i][j];
@@ -564,7 +656,7 @@ public class bUnwarpJTransformation
 			{
 			case 0:
 				// Finer details in the deformation
-				if (s<max_scale_deformation)
+				if (s < max_scale_deformation)
 				{
 					cxTargetToSource = propagateCoeffsToNextLevel(intervals, cxTargetToSource, 1);
 					cyTargetToSource = propagateCoeffsToNextLevel(intervals, cyTargetToSource, 1);
@@ -645,9 +737,43 @@ public class bUnwarpJTransformation
 
 		}// end while (state != -1).
 
+		// Adapt coefficients if necessary
+		if(this.sourceWidth > this.sourceCurrentWidth)
+		{
+			if(source.isSubOutput() || target.isSubOutput())
+				IJ.log("Adapting coefficients from " + this.sourceCurrentWidth + " to " + this.sourceWidth);
+			// Adapt the transformation to the new image size
+			double targetFactorY = (targetHeight-1) / (targetCurrentHeight-1);
+			double targetFactorX = (targetWidth-1)  / (targetCurrentWidth -1);
+			double sourceFactorY = (sourceHeight-1) / (sourceCurrentHeight-1);
+			double sourceFactorX = (sourceWidth -1) / (sourceCurrentWidth -1);
+
+			for (int i=0; i<intervals+3; i++)
+				for (int j=0; j<intervals+3; j++)
+				{
+					cxTargetToSource[i][j] *= targetFactorX;
+					cyTargetToSource[i][j] *= targetFactorY;
+					cxSourceToTarget[i][j] *= sourceFactorX;
+					cySourceToTarget[i][j] *= sourceFactorY;
+				}
+			this.targetCurrentHeight = this.targetHeight;
+			this.targetCurrentWidth  = this.targetWidth;
+			this.sourceCurrentHeight = this.sourceHeight;
+			this.sourceCurrentWidth  = this.sourceWidth;
+		}
+		
 		// Show results.
-		showTransformation(intervals, cxTargetToSource, cyTargetToSource, false);
-		showTransformation(intervals, cxSourceToTarget, cySourceToTarget, true);
+		if(source.isSubOutput())
+		{
+			IJ.log("Calculating final transformed source image");
+		}
+		showTransformationMultiThread(intervals, cxTargetToSource, cyTargetToSource, false);
+		
+		if(target.isSubOutput())
+		{
+			IJ.log("Calculating final transformed target image");			
+		}
+		showTransformationMultiThread(intervals, cxSourceToTarget, cySourceToTarget, true);
 
 		// Display final errors.		
 		if(this.outputLevel == 2)
@@ -683,6 +809,272 @@ public class bUnwarpJTransformation
 		}
 	} /* end doRegistration */
 
+	/*------------------------------------------------------------------*/
+	/**
+	 * Unidirectional registration method. It applies unidirectional
+	 * elastic registration to the selected source and target images.
+	 */
+	public void doUnidirectionalRegistration ()
+	{
+
+		// This function can only be applied with splines of an odd order
+
+		// Bring into consideration the image/coefficients at the smallest scale
+		source.popFromPyramid();
+		target.popFromPyramid();
+
+		targetCurrentHeight = target.getCurrentHeight();
+		targetCurrentWidth  = target.getCurrentWidth();
+
+		targetFactorHeight  = target.getFactorHeight();
+		targetFactorWidth   = target.getFactorWidth();
+
+		sourceCurrentHeight = source.getCurrentHeight();
+		sourceCurrentWidth  = source.getCurrentWidth();
+
+		sourceFactorHeight  = source.getFactorHeight();
+		sourceFactorWidth   = source.getFactorWidth();
+
+		// size correction factor
+		int sizeCorrectionFactor = 0; //this.targetHeight / (1024  * (int) Math.pow(2, this.maxImageSubsamplingFactor));
+		//System.out.println("Size correction factor = " + sizeCorrectionFactor);
+		
+		// Ask memory for the transformation coefficients
+		intervals = (int)Math.pow(2, min_scale_deformation + sizeCorrectionFactor);
+		
+		cxTargetToSource = new double[intervals+3][intervals+3];
+		cyTargetToSource = new double[intervals+3][intervals+3];
+
+		// Build matrices for computing the regularization
+		buildRegularizationTemporary(intervals, false);
+
+		// Ask for memory for the residues
+		final int K;
+		if (targetPh!=null) K = targetPh.getPoints().size();
+		else                K = 0;
+		double [] dxTargetToSource = new double[K];
+		double [] dyTargetToSource = new double[K];
+
+		// Compute the affine transformation FROM THE TARGET TO THE SOURCE coordinates
+		// Notice that this matrix is independent of the scale (unless it was loaded from
+		// file), but the residues are not
+		double[][] affineMatrix = null;
+		if(this.sourceAffineMatrix != null)
+		{
+			affineMatrix = this.sourceAffineMatrix;
+			// Scale translations in the matrix.
+			affineMatrix[0][2] *= this.sourceFactorWidth;
+			affineMatrix[1][2] *= this.sourceFactorHeight;
+		}
+		else
+		{
+			// NOTE: after version 1.1 the landmarks are always used to calculate
+			// an initial affine transformation (whether the landmarks weight is 0 or not).
+			
+			affineMatrix = computeAffineMatrix(false);
+
+		}
+
+		// Incorporate the affine transformation into the spline coefficient
+		for (int i= 0; i<intervals + 3; i++)
+		{
+			final double v = (double)((i - 1) * (targetCurrentHeight - 1)) / (double)intervals;
+			final double xv = affineMatrix[0][2] + affineMatrix[0][1] * v;
+			final double yv = affineMatrix[1][2] + affineMatrix[1][1] * v;
+			for (int j = 0; j < intervals + 3; j++)
+			{
+				final double u = (double)((j - 1) * (targetCurrentWidth - 1)) / (double)intervals;
+				cxTargetToSource[i][j] = xv + affineMatrix[0][0] * u;
+				cyTargetToSource[i][j] = yv + affineMatrix[1][0] * u;
+			}
+		}
+
+	
+		// Now refine with the different scales
+		int state;   // state=-1 --> Finish
+		// state= 0 --> Increase deformation detail
+		// state= 1 --> Increase image detail
+		// state= 2 --> Do nothing until the finest image scale
+		if (min_scale_deformation==max_scale_deformation) state=1;
+		else                                              state=0;
+		int s = min_scale_deformation;
+		int step = 0;
+		computeTotalWorkload();
+
+		while (state != -1)
+		{
+			int currentDepth = target.getCurrentDepth();
+
+			// Update the deformation coefficients only in states 0 and 1
+			if (state==0 || state==1)
+			{
+				// Update the deformation coefficients with the error of the landmarks
+				// The following conditional is now useless but it is there to allow
+				// easy changes like applying the landmarks only in the coarsest deformation
+				if (s>=min_scale_deformation)
+				{
+					// Number of intervals at this scale and ask for memory
+					intervals = (int) Math.pow(2, s + sizeCorrectionFactor);
+					final double[][] newcxTargetToSource = new double[intervals+3][intervals+3];
+					final double[][] newcyTargetToSource = new double[intervals+3][intervals+3];
+					
+					// Compute the coefficients at this scale
+					boolean underconstrained = true;
+					// FROM TARGET TO SOURCE.
+					if (divWeight==0 && curlWeight==0)
+						underconstrained=
+							computeCoefficientsScale(intervals, dxTargetToSource, dyTargetToSource, newcxTargetToSource, newcyTargetToSource, false);
+					else
+						underconstrained=
+							computeCoefficientsScaleWithRegularization(
+									intervals, dxTargetToSource, dyTargetToSource, newcxTargetToSource, newcyTargetToSource, false);
+
+					// Incorporate information from the previous scale
+					if (!underconstrained || (step==0 && landmarkWeight!=0))
+					{
+						for (int i=0; i<intervals+3; i++)
+							for (int j=0; j<intervals+3; j++) {
+								cxTargetToSource[i][j]+=newcxTargetToSource[i][j];
+								cyTargetToSource[i][j]+=newcyTargetToSource[i][j];
+							}
+					}
+
+				}
+
+				// Optimize deformation coefficients
+				optimizeCoeffs(intervals, stopThreshold, cxTargetToSource, cyTargetToSource);
+			}
+
+			// Prepare for next iteration
+			step++;
+			switch (state)
+			{
+			case 0:
+				// Finer details in the deformation
+				if (s<max_scale_deformation)
+				{
+					cxTargetToSource = propagateCoeffsToNextLevel(intervals, cxTargetToSource, 1);
+					cyTargetToSource = propagateCoeffsToNextLevel(intervals, cyTargetToSource, 1);
+					s++;
+					intervals*=2;
+
+					// Prepare matrices for the regularization term
+					buildRegularizationTemporary(intervals, false);
+
+					if (currentDepth>min_scale_image) state=1;
+					else                              state=0;
+				} else
+					if (currentDepth>min_scale_image) state=1;
+					else                              state=2;
+				break;
+			case 1: // Finer details in the image, go on  optimizing
+			case 2: // Finer details in the image, do not optimize
+				// Compute next state
+				if (state==1) {
+					if      (s==max_scale_deformation && currentDepth==min_scale_image) state=2;
+					else if (s==max_scale_deformation)                                  state=1;
+					else                                                                state=0;
+				} else if (state==2) {
+					if (currentDepth==0) state=-1;
+					else                 state= 2;
+				}
+
+				// Pop another image and prepare the deformation
+				if (currentDepth!=0)
+				{
+					double oldTargetCurrentHeight = targetCurrentHeight;
+					double oldTargetCurrentWidth  = targetCurrentWidth;
+
+					source.popFromPyramid();
+					target.popFromPyramid();
+
+					targetCurrentHeight = target.getCurrentHeight();
+					targetCurrentWidth  = target.getCurrentWidth();
+					targetFactorHeight = target.getFactorHeight();
+					targetFactorWidth  = target.getFactorWidth();
+
+					sourceCurrentHeight = source.getCurrentHeight();
+					sourceCurrentWidth  = source.getCurrentWidth();
+					sourceFactorHeight = source.getFactorHeight();
+					sourceFactorWidth  = source.getFactorWidth();
+
+					// Adapt the transformation to the new image size
+					double targetFactorY = (targetCurrentHeight-1) / (oldTargetCurrentHeight-1);
+					double targetFactorX = (targetCurrentWidth -1) / (oldTargetCurrentWidth -1);
+
+					for (int i=0; i<intervals+3; i++)
+						for (int j=0; j<intervals+3; j++)
+						{
+							cxTargetToSource[i][j] *= targetFactorX;
+							cyTargetToSource[i][j] *= targetFactorY;
+						}
+
+					// Prepare matrices for the regularization term
+					buildRegularizationTemporary(intervals, false);
+				}
+				break;
+			}
+
+			// In accurate_mode reduce the stopping threshold for the last iteration
+			if ((state==0 || state==1) && s==max_scale_deformation &&
+					currentDepth==min_scale_image+1 && accurate_mode==1)
+				stopThreshold /= 10;
+
+		}// end while (state != -1).
+		
+		// Adapt coefficients if necessary
+		if(this.targetWidth > this.targetCurrentWidth)
+		{
+			if(source.isSubOutput())
+				IJ.log("Adapting coefficients from " + this.sourceCurrentWidth + " to " + this.sourceWidth);
+			// Adapt the transformation to the new image size
+			double targetFactorY = (targetHeight-1) / (targetCurrentHeight-1);
+			double targetFactorX = (targetWidth-1) / (targetCurrentWidth -1);
+
+			for (int i=0; i<intervals+3; i++)
+				for (int j=0; j<intervals+3; j++)
+				{
+					cxTargetToSource[i][j] *= targetFactorX;
+					cyTargetToSource[i][j] *= targetFactorY;
+				}
+			this.targetCurrentHeight = this.targetHeight;
+			this.targetCurrentWidth  = this.targetWidth;
+			this.sourceCurrentHeight = this.sourceHeight;
+			this.sourceCurrentWidth  = this.sourceWidth;
+		}
+
+		// Show results.
+		showTransformationMultiThread(intervals, cxTargetToSource, cyTargetToSource, false);
+
+		// Display final errors.		
+		if(this.outputLevel == 2)
+		{
+			if(this.imageWeight != 0)
+			{
+				IJ.write(" Optimal direct similarity error = " + this.finalDirectSimilarityError);
+			}
+			if(this.curlWeight != 0 || this.divWeight != 0)
+			{
+				IJ.write(" Optimal direct regularization error = " + this.finalDirectRegularizationError);
+			}
+			if(this.landmarkWeight != 0)
+			{
+				IJ.write(" Optimal direct landmark error = " + this.finalDirectLandmarkError);
+			}
+			if(this.consistencyWeight != 0)
+			{
+				IJ.write(" Optimal direct consistency error = " + this.finalDirectConsistencyError);
+			}
+		}
+		
+
+		// Save transformations.
+		if (saveTransf)
+		{
+			saveTransformation(intervals, cxTargetToSource, cyTargetToSource, false);
+		}
+	} /* end doUnidirectionalRegistration */
+	
 
 	/*--------------------------------------------------------------------------*/
 	/**
@@ -1705,11 +2097,12 @@ public class bUnwarpJTransformation
 			auxTargetCurrentWidth  = this.sourceCurrentWidth;
 		}
 
-
+/*
 		// Set these coefficients to an interpolator
 		bUnwarpJImageModel swx = new bUnwarpJImageModel(cx);
 		bUnwarpJImageModel swy = new bUnwarpJImageModel(cy);
 
+		
 		// Compute the transformation mapping
 		for (int v=0; v<auxTargetCurrentHeight; v++) {
 			final double tv = (double)(v * intervals) / (double)(auxTargetCurrentHeight - 1) + 1.0F;
@@ -1722,8 +2115,78 @@ public class bUnwarpJTransformation
 				transformation_y[v][u] = swy.interpolateI();
 			}
 		}
+		
+		*/
+		
+		Thread x_thread = new Thread(new ConcurrentDeformation(cx,	auxTargetCurrentHeight, auxTargetCurrentWidth,
+			 		  								 			transformation_x, intervals));
+		
+		Thread y_thread = new Thread(new ConcurrentDeformation(cy,	auxTargetCurrentHeight, auxTargetCurrentWidth,
+		 			transformation_y, intervals));
+		
+		x_thread.start();
+		y_thread.start();
+		
+		try{
+			x_thread.join();
+			y_thread.join();
+			x_thread = null;
+			y_thread = null;
+		} catch (InterruptedException e) {
+				e.printStackTrace();					
+		}
 	}
 
+	/* ------------------------------------------------------------------------ */
+	/**
+	 *  Class to concurrently calculate the two deformation mapping tables
+	 * 	 
+	 */	
+	private class ConcurrentDeformation extends Thread
+	{
+		final double [][]c;			
+		final int auxTargetCurrentHeight;
+		final int auxTargetCurrentWidth;		
+		final double[][] transformation;
+		final int intervals;
+		
+		ConcurrentDeformation(double [][]c, 
+		 		  			  int auxTargetCurrentHeight,
+		 		  			  int auxTargetCurrentWidth,
+		 		  			  double[][] transformation,
+		 		  			  int intervals)
+		{
+			this.c = c;	
+			this.auxTargetCurrentWidth = auxTargetCurrentWidth;
+			this.auxTargetCurrentHeight = auxTargetCurrentHeight;
+			this.transformation = transformation;
+			this.intervals = intervals;
+		}
+	
+		/*------------------------------------------------------------------*/
+		/**
+		 * Run method to calculate the corresponding X or Y transformation
+		 * table.
+		 */
+		public void run() 
+		{
+			// Set these coefficients to an interpolator
+			bUnwarpJImageModel sw = new bUnwarpJImageModel(c);
+			
+			// Compute the transformation mapping
+			for (int v=0; v<auxTargetCurrentHeight; v++) 
+			{
+				final double tv = (double)(v * intervals) / (double)(auxTargetCurrentHeight - 1) + 1.0F;
+				for (int u = 0; u<auxTargetCurrentWidth; u++)
+				{
+					final double tu = (double)(u * intervals) / (double)(auxTargetCurrentWidth - 1) + 1.0F;
+					transformation[v][u] = sw.prepareForInterpolationAndInterpolateI(tu, tv, false, ORIGINAL);
+				}
+			}			
+		} /* end run */
+	} /* end ConcurrentDeformation class */
+	
+	
 	/*------------------------------------------------------------------*/
 	/**
 	 * Compute the rotation matrix.
@@ -2499,7 +2962,7 @@ public class bUnwarpJTransformation
 
 	/*--------------------------------------------------------------------------*/
 	/**
-	 * Energy function to be minimized by the optimizer.
+	 * Energy function to be minimized by the optimizer in the bidirectional case.
 	 *
 	 * @param c Input: Deformation coefficients
 	 * @param intervals Input: Number of intervals for the deformation
@@ -2565,8 +3028,7 @@ public class bUnwarpJTransformation
 		}
 
 		return f + f_consistency;
-
-		
+	
 	}
 
 	/*--------------------------------------------------------------------------*/
@@ -3538,7 +4000,7 @@ public class bUnwarpJTransformation
 
 	/*--------------------------------------------------------------------------*/
 	/**
-	 * Optimize the B-spline coefficients.
+	 * Optimize the B-spline coefficients (bidirectional method).
 	 *
 	 * @param intervals number of intervals in the deformation
 	 * @param thChangef
@@ -3546,6 +4008,7 @@ public class bUnwarpJTransformation
 	 * @param cyTargetToSource y- B-spline coefficients storing the target to source deformation
 	 * @param cxSourceToTarget x- B-spline coefficients storing the source to target deformation
 	 * @param cySourceToTarget y- B-spline coefficients storing the source to target deformation
+	 * @return energy function value
 	 */
 	private double optimizeCoeffs(
 			int intervals,
@@ -3558,6 +4021,12 @@ public class bUnwarpJTransformation
 		if (dialog!=null && dialog.isStopRegistrationSet())
 			return 0.0;
 
+		if(source.isSubOutput())
+		{
+			IJ.log(" -----\n Intervals = " + intervals + "x" + intervals);
+		    IJ.log(" Source Image Size = " + this.sourceCurrentWidth + "x" + this.sourceCurrentHeight);
+		}
+		
 		final double TINY               = FLT_EPSILON;
 		final double EPS                = 3.0e-8F;
 		final double FIRSTLAMBDA        = 1;
@@ -3818,6 +4287,273 @@ public class bUnwarpJTransformation
 		return f;
 	}
 
+	
+	/*--------------------------------------------------------------------------*/
+	/**
+	 * Optimize the B-spline coefficients (unidirectional method).
+	 *
+	 * @param intervals number of intervals in the deformation
+	 * @param thChangef
+	 * @param cxTargetToSource x- B-spline coefficients storing the target to source deformation
+	 * @param cyTargetToSource y- B-spline coefficients storing the target to source deformation
+	 * @return energy function value
+	 */
+	private double optimizeCoeffs(
+			int intervals,
+			double thChangef,
+			double [][]cxTargetToSource,
+			double [][]cyTargetToSource)
+	{
+		if(source.isSubOutput())
+		{
+			IJ.log(" -----\n Intervals = " + intervals + "x" + intervals);
+			IJ.log(" Source Image Size = " + this.sourceCurrentWidth + "x" + this.sourceCurrentHeight);
+		}
+		
+		if (dialog!=null && dialog.isStopRegistrationSet())
+			return 0.0;
+
+		final double TINY               = FLT_EPSILON;
+		final double EPS                = 3.0e-8F;
+		final double FIRSTLAMBDA        = 1;
+		final int    MAXITER_OPTIMCOEFF = 300;
+		final int    CUMULATIVE_SIZE    = 5;
+
+		int int3 = intervals + 3;
+		int halfM = int3 * int3;
+		int M = halfM * 2;
+
+		double   rescuedf, f;
+		double   []x            = new double   [M];
+		double   []rescuedx     = new double   [M];
+		double   []diffx        = new double   [M];
+		double   []rescuedgrad  = new double   [M];
+		double   []grad         = new double   [M];
+		double   []diffgrad     = new double   [M];
+		double   []Hdx          = new double   [M];
+		double   []rescuedhess  = new double   [M*M];
+		double   []hess         = new double   [M*M];
+		double   []proposedHess = new double   [M*M];
+		boolean  []optimize     = new boolean  [M];
+		int        i, j, p, iter = 1;
+		boolean    skip_update, ill_hessian;
+		double     improvementx = (double)Math.sqrt(TINY),
+		lambda = FIRSTLAMBDA, max_normx, distx, aux, gmax;
+		double     fac, fae, dgdx, dxHdx, sumdiffg, sumdiffx;
+
+		bUnwarpJCumulativeQueue lastBest=
+			new bUnwarpJCumulativeQueue(CUMULATIVE_SIZE);
+
+		for (i=0; i<M; i++) 
+			optimize[i] = true;
+
+		/* Form the vector with the current guess for the optimization */
+		for (i= 0, p=0; i < intervals + 3; i++)
+			for (j = 0; j < intervals + 3; j++, p++)
+			{
+				x[         p] = cxTargetToSource[i][j];
+				x[halfM  + p] = cyTargetToSource[i][j];
+			}
+
+		/* Prepare the precomputed weights for interpolation */
+		this.swxTargetToSource = new bUnwarpJImageModel(x, intervals+3, intervals+3, 0);
+		this.swyTargetToSource = new bUnwarpJImageModel(x, intervals+3, intervals+3, halfM);
+		this.swxTargetToSource.precomputed_prepareForInterpolation(
+				target.getCurrentHeight(), target.getCurrentWidth(), intervals);
+		this.swyTargetToSource.precomputed_prepareForInterpolation(
+				target.getCurrentHeight(), target.getCurrentWidth(), intervals);
+
+		/* First computation of the energy */
+		f = evaluateSimilarity(x, intervals, grad, false, false, false);
+
+		if (showMarquardtOptim) IJ.write("f(1)="+f);
+
+		/* Initially the hessian is the identity matrix multiplied by
+          the first function value */
+		for (i=0,p=0; i<M; i++)
+			for (j=0; j<M; j++,p++)
+				if (i==j) hess[p]=1.0F;
+				else hess[p]=0.0F;
+
+		rescuedf    = f;
+		for (i=0,p=0; i<M; i++) {
+			rescuedx[i]=x[i];
+			rescuedgrad[i]=grad[i];
+			for (j=0; j<M; j++,p++)
+				rescuedhess[p]=hess[p];
+		}
+
+		// Maximum iteration number
+		int maxiter = MAXITER_OPTIMCOEFF * (source.getCurrentDepth() + 1);
+
+		bUnwarpJProgressBar.stepProgressBar();
+
+		int last_successful_iter = 0;
+
+		boolean stop = dialog != null && dialog.isStopRegistrationSet();
+
+		while (iter < maxiter && !stop)
+		{
+			/* Compute new x ------------------------------------------------- */
+			Marquardt_it(x, optimize, grad, hess, lambda);
+
+			/* Stopping criteria --------------------------------------------- */
+			/* Compute difference with the previous iteration */
+			max_normx = improvementx = 0;
+			for (i=0; i<M; i++)
+			{
+				diffx[i] = x[i] - rescuedx[i];
+				distx = Math.abs(diffx[i]);
+				improvementx += distx*distx;
+				aux = Math.abs(rescuedx[i]) < Math.abs(x[i]) ? x[i] : rescuedx[i];
+				max_normx += aux*aux;
+			}
+
+			if (TINY < max_normx) 
+				improvementx = improvementx/max_normx;
+
+			improvementx = (double) Math.sqrt(Math.sqrt(improvementx));
+
+			/* If there is no change with respect to the old geometry then
+             finish the iterations */
+			if (improvementx < Math.sqrt(TINY)) break;
+
+			/* Estimate the new function value -------------------------------- */
+			f = evaluateSimilarity(x, intervals, grad, false, false, false);
+			iter++;
+			if (showMarquardtOptim) 
+				IJ.write("f("+iter+")="+f+" lambda="+lambda);
+			bUnwarpJProgressBar.stepProgressBar();
+
+			/* Update lambda -------------------------------------------------- */
+			if (rescuedf > f)
+			{
+				// We save the last energy terms values in order to be displayed.
+				this.finalDirectConsistencyError = this.partialDirectConsitencyError;
+				this.finalDirectSimilarityError  = this.partialDirectSimilarityError;
+				this.finalDirectRegularizationError = this.partialDirectRegularizationError;
+				this.finalDirectLandmarkError      = this.partialDirectLandmarkError;
+				
+				/* Check if the improvement is only residual */
+				lastBest.push_back(rescuedf-f);
+				if (lastBest.currentSize() == CUMULATIVE_SIZE && lastBest.getSum()/f < thChangef)
+					break;				 
+
+				/* If we have improved then estimate the hessian,
+                 update the geometry, and decrease the lambda */
+				/* Estimate the hessian ....................................... */
+				if (showMarquardtOptim) 
+					IJ.write("  Accepted");
+				if ((last_successful_iter++%10)==0 && outputLevel>-1)
+					update_current_output(x,intervals, false);
+
+				/* Estimate the difference between gradients */
+				for (i=0; i<M; i++) 
+					diffgrad[i] = grad[i]-rescuedgrad[i];
+
+				/* Multiply this difference by the current inverse of the hessian */
+				for (i=0, p=0; i<M; i++) 
+				{
+					Hdx[i] = 0.0F;
+					for (j=0; j<M; j++, p++) 
+						Hdx[i] += hess[p]*diffx[j];
+				}
+
+				/* Calculate dot products for the denominators ................ */
+				dgdx = dxHdx = sumdiffg = sumdiffx = 0.0F;
+				skip_update = true;
+				for (i=0; i<M; i++) 
+				{
+					dgdx     += diffgrad[i]*diffx[i];
+					dxHdx    += diffx[i]*Hdx[i];
+					sumdiffg += diffgrad[i]*diffgrad[i];
+					sumdiffx += diffx[i]*diffx[i];
+					if (Math.abs(grad[i])>=Math.abs(rescuedgrad[i])) gmax=Math.abs(grad[i]);
+					else                                             gmax=Math.abs(rescuedgrad[i]);
+					if (gmax!=0 && Math.abs(diffgrad[i]-Hdx[i])>Math.sqrt(EPS)*gmax)
+						skip_update=false;
+				}
+
+				/* Update hessian ............................................. */
+				/* Skip if fac not sufficiently positive */
+				if (dgdx>Math.sqrt(EPS*sumdiffg*sumdiffx) && !skip_update) 
+				{
+					fae=1.0F/dxHdx;
+					fac=1.0F/dgdx;
+
+					/* Update the hessian after BFGS formula */
+					for (i=0, p=0; i<M; i++)
+						for (j=0; j<M; j++, p++) 
+						{
+							if (i<=j) proposedHess[p]=hess[p]+
+							fac*diffgrad[i]*diffgrad[j]
+							                         -fae*(Hdx[i]*Hdx[j]);
+							else proposedHess[p]=proposedHess[j*M+i];
+						}
+
+					ill_hessian=false;
+					if (!ill_hessian) 
+					{
+						for (i=0, p=0; i<M; i++)
+							for (j=0; j<M; j++,p++)
+								hess[p]= proposedHess[p];
+					} 
+					else
+						if (showMarquardtOptim)
+							IJ.write("Hessian cannot be safely updated, ill-conditioned");
+
+				} else
+					if (showMarquardtOptim)
+						IJ.write("Hessian cannot be safely updated");
+
+				/* Update geometry and lambda ................................. */
+				rescuedf = f;
+				for (i=0, p=0; i<M; i++) 
+				{
+					rescuedx[i]=x[i];
+					rescuedgrad[i]=grad[i];
+					for (j=0; j<M; j++,p++) 
+						rescuedhess[p]=hess[p];
+				}
+				if (1e-4 < lambda) 
+					lambda = lambda/10;
+			} 
+			else 
+			{
+				/* else, if it is worse, then recover the last geometry
+             		and increase lambda, saturate lambda with FIRSTLAMBDA */
+				for (i=0,p=0; i<M; i++) 
+				{
+					x[i] = rescuedx[i];
+					grad[i] = rescuedgrad[i];
+					for (j=0; j<M; j++,p++) 
+						hess[p] = rescuedhess[p];
+				}
+				if (lambda < 1.0/TINY) 
+					lambda*=10;
+				else 
+					break;
+				if (lambda < FIRSTLAMBDA) 
+					lambda = FIRSTLAMBDA;
+			}
+
+			stop = dialog!=null && dialog.isStopRegistrationSet();
+		}
+
+		// Copy the values back to the input arrays
+		for (i= 0, p=0; i<intervals + 3; i++)
+			for (j = 0; j < intervals + 3; j++, p++)
+			{
+				cxTargetToSource[i][j] = x[      p];
+
+				cyTargetToSource[i][j] = x[halfM+p];
+			}
+
+		bUnwarpJProgressBar.skipProgressBar(maxiter-iter);
+		return f;
+	}
+	
+	
 	/*-----------------------------------------------------------------------------*/
 	/**
 	 * Propagate deformation coefficients to the next level.
@@ -4028,7 +4764,7 @@ public class bUnwarpJTransformation
 				fp.putPixelValue(u, v, transformedImage[v][u]);
 
 		// Gray scale images
-		if(!(this.dialog.getOriginalSourceIP() instanceof ColorProcessor))
+		if(!(this.originalSourceIP instanceof ColorProcessor))
 			is.addSlice("Deformation Grid",fp);
 		else // Color images
 			is.addSlice("Deformation Grid",fp.convertToRGB());
@@ -4087,7 +4823,8 @@ public class bUnwarpJTransformation
 		// Show deformation vectors
 		for (int v=0; v<auxTargetCurrentHeight; v+=stepv)
 			for (int u=0; u<auxTargetCurrentWidth; u+=stepu)
-				if (auxTargetMsk.getValue(u,v)) {
+				if (auxTargetMsk.getValue(u,v)) 
+				{
 					final double x = transformation_x[v][u];
 					final double y = transformation_y[v][u];
 					if (auxSourceMsk.getValue(x,y))
@@ -4103,7 +4840,7 @@ public class bUnwarpJTransformation
 				fp.putPixelValue(u, v, transformedImage[v][u]);
 
 		// Gray scale images
-		if(!(this.dialog.getOriginalSourceIP() instanceof ColorProcessor))
+		if(!(this.originalSourceIP instanceof ColorProcessor))
 			is.addSlice("Deformation Field",fp);
 		else // Color images
 			is.addSlice("Deformation Field",fp.convertToRGB());
@@ -4111,7 +4848,578 @@ public class bUnwarpJTransformation
 
 	/*-------------------------------------------------------------------*/
 	/**
-	 * Show the transformation.
+	 * Show the transformation (multi-thread version).
+	 *
+	 * @param intervals number of intervals in the deformation
+	 * @param cx x- deformation coefficients
+	 * @param cy y- deformation coefficients
+	 * @param bIsReverse flag to determine the transformation direction (target-source=FALSE or source-target=TRUE)
+	 */
+	private void showTransformationMultiThread(
+			final int   intervals,
+			final double [][]cx,    // Input, spline coefficients
+			final double [][]cy,
+			boolean bIsReverse)
+	{
+		bUnwarpJImageModel auxTarget = target;
+		bUnwarpJImageModel auxSource = source;
+		bUnwarpJMask auxTargetMsk = targetMsk;
+		bUnwarpJMask auxSourceMsk = sourceMsk;
+		int auxTargetWidth = this.targetWidth;
+		int auxTargetHeight = this.targetHeight;
+		ImagePlus output_ip = this.output_ip_1;
+		ImageProcessor originalIP = this.originalSourceIP;
+
+		// Change if necessary
+		if(bIsReverse)
+		{
+			auxTarget = source;
+			auxSource = target;
+			auxTargetMsk = sourceMsk;
+			auxSourceMsk = targetMsk;
+			auxTargetWidth = this.sourceWidth;
+			auxTargetHeight = this.sourceHeight;
+			output_ip = this.output_ip_2;
+			originalIP = this.originalTargetIP;
+		}
+		
+		// If we were using a sub-sampled output, we need to close 
+		// the corresponding ImagePlus in order to show the result.
+		if(auxSource.isSubOutput() && this.outputLevel != -1)
+		{			
+			output_ip.close();
+			output_ip = null;
+		}
+		
+		// Create transformation B-spline models
+		bUnwarpJImageModel swx = new bUnwarpJImageModel(cx);
+		bUnwarpJImageModel swy = new bUnwarpJImageModel(cy);
+
+		// We compute the deformation (transformation_x and transformation_y) in the fly
+
+		/* GRAY SCALE IMAGES */
+		if(!(originalIP instanceof ColorProcessor))
+		{
+			final FloatProcessor fp = new FloatProcessor(auxTargetWidth, auxTargetHeight);
+			final FloatProcessor fp_mask = new FloatProcessor(auxTargetWidth, auxTargetHeight);
+			final FloatProcessor fp_target = new FloatProcessor(auxTargetWidth, auxTargetHeight, auxTarget.getImage());
+									
+
+			// Check the number of processors in the computer 
+			int nproc = Runtime.getRuntime().availableProcessors();
+
+			// We will use threads to display parts of the output image
+			int block_height = auxTargetHeight / nproc;
+			if (auxTargetHeight % 2 != 0) 
+				block_height++;
+			
+			
+			int nThreads = nproc; /*(nproc > 1) ? (nproc / 2) : 1;
+			if (this.accurate_mode == bUnwarpJDialog.MONO_MODE)
+				nThreads *= 2;*/
+			
+						
+			Thread[] threads  = new Thread[nThreads];
+			Rectangle[] rects = new Rectangle[nThreads];
+			FloatProcessor[] fp_tile = new FloatProcessor[nThreads];
+			FloatProcessor[] fp_mask_tile = new FloatProcessor[nThreads];
+			
+			for (int i=0; i<nThreads; i++) 
+			{
+				// last block size is the rest of the window
+				int x_start = i*block_height;
+				
+				if (nThreads-1 == i) 
+					block_height = auxTargetHeight - i*block_height;
+								
+				rects[i] = new Rectangle(0, x_start, auxTargetWidth, block_height);
+				
+				//IJ.log("block = 0 " + (i*block_height) + " " + auxTargetWidth + " " + block_height );
+				
+				fp_tile[i] = new FloatProcessor(rects[i].width, rects[i].height);
+				fp_mask_tile[i] = new FloatProcessor(rects[i].width, rects[i].height);
+				
+				threads[i] = new Thread(new GrayscaleResultTileMaker(swx, swy, auxSource, 
+															auxTargetWidth, auxTargetHeight,
+															auxTargetMsk, auxSourceMsk, 
+															rects[i], fp_tile[i], fp_mask_tile[i]));
+				threads[i].start();
+			}
+			
+			for (int i=0; i<nThreads; i++) 
+			{
+				try {
+					threads[i].join();
+					threads[i] = null;
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}			
+			}
+			
+			for (int i=0; i<nThreads; i++) 
+			{
+				fp.insert(fp_tile[i], rects[i].x, rects[i].y);
+				fp_tile[i] = null;
+				fp_mask.insert(fp_mask_tile[i], rects[i].x, rects[i].y);
+				fp_mask_tile[i] = null;
+				rects[i] = null;
+			}
+								
+			fp.resetMinAndMax();
+			final ImageStack is = new ImageStack(auxTargetWidth, auxTargetHeight);
+
+			String s = bIsReverse ? new String("Target") : new String("Source");
+			is.addSlice("Registered " + s + " Image", fp);
+			if (outputLevel > -1)
+				is.addSlice("Target Image", fp_target);
+			if (outputLevel > -1)
+				is.addSlice("Warped Source Mask",fp_mask);
+
+			if (outputLevel == 2)
+			{
+				showDeformationVectors(intervals, cx, cy, is, bIsReverse);
+				showDeformationGrid(intervals, cx, cy, is, bIsReverse);
+			}
+			
+			if(output_ip == null)				
+			{
+				output_ip = new ImagePlus("Registered " + s + " Image", is);
+				output_ip.show();
+			}
+			else
+			{	
+				output_ip.setStack("Registered " + s + " Image", is);				
+			}
+			
+			output_ip.setSlice(1);
+			output_ip.getProcessor().resetMinAndMax();
+			
+			if (outputLevel > -1)
+				output_ip.updateAndRepaintWindow();
+		}
+		else /* COLOR IMAGES */
+		{
+
+			
+			// red
+			bUnwarpJImageModel sourceR = new bUnwarpJImageModel( ((ColorProcessor) originalIP).toFloat(0, null), false, 1);
+			sourceR.setPyramidDepth(0);
+			sourceR.startPyramids();
+			// green
+			bUnwarpJImageModel sourceG = new bUnwarpJImageModel( ((ColorProcessor) originalIP).toFloat(1, null), false, 1);
+			sourceG.setPyramidDepth(0);
+			sourceG.startPyramids();
+			//blue
+			bUnwarpJImageModel sourceB = new bUnwarpJImageModel( ((ColorProcessor) originalIP).toFloat(2, null), false, 1);
+			sourceB.setPyramidDepth(0);
+			sourceB.startPyramids();
+
+			// Join threads
+			try {
+				sourceR.getThread().join();
+				sourceG.getThread().join();
+				sourceB.getThread().join();
+			} catch (InterruptedException e) {
+				IJ.error("Unexpected interruption exception " + e);
+			}
+
+			// Calculate warped RGB image
+			ColorProcessor cp = new ColorProcessor(auxTargetWidth, auxTargetHeight);
+			FloatProcessor fpR 		= new FloatProcessor(auxTargetWidth, auxTargetHeight);
+			FloatProcessor fpG 		= new FloatProcessor(auxTargetWidth, auxTargetHeight);
+			FloatProcessor fpB 		= new FloatProcessor(auxTargetWidth, auxTargetHeight);
+			ColorProcessor cp_mask	= new ColorProcessor(auxTargetWidth, auxTargetHeight);			
+			
+			// Check the number of processors in the computer 
+			int nproc = Runtime.getRuntime().availableProcessors();
+
+			// We will use threads to display parts of the output image
+			int block_height = auxTargetHeight / nproc;
+			if (auxTargetHeight % 2 != 0) 
+				block_height++;
+			
+			
+			int nThreads = nproc; /*(nproc > 1) ? (nproc / 2) : 1;
+			if (this.accurate_mode == bUnwarpJDialog.MONO_MODE)
+				nThreads *= 2;*/
+			
+						
+			Thread[] threads  = new Thread[nThreads];
+			Rectangle[] rects = new Rectangle[nThreads];
+			FloatProcessor[] fpR_tile 		= new FloatProcessor[nThreads];
+			FloatProcessor[] fpG_tile 		= new FloatProcessor[nThreads];
+			FloatProcessor[] fpB_tile 		= new FloatProcessor[nThreads];
+			ColorProcessor[] cp_mask_tile 	= new ColorProcessor[nThreads];
+			
+			for (int i=0; i<nThreads; i++) 
+			{
+				// last block size is the rest of the window
+				int x_start = i*block_height;
+				
+				if (nThreads-1 == i) 
+					block_height = auxTargetHeight - i*block_height;
+								
+				rects[i] = new Rectangle(0, x_start, auxTargetWidth, block_height);
+				
+				//IJ.log("block = 0 " + (i*block_height) + " " + auxTargetWidth + " " + block_height );
+				
+				fpR_tile[i] 	= new FloatProcessor(rects[i].width, rects[i].height);
+				fpG_tile[i] 	= new FloatProcessor(rects[i].width, rects[i].height);
+				fpB_tile[i] 	= new FloatProcessor(rects[i].width, rects[i].height);
+				cp_mask_tile[i] = new ColorProcessor(rects[i].width, rects[i].height);
+				
+				threads[i] = new Thread(new ColorResultTileMaker(swx, swy, sourceR, sourceG, sourceB, 
+															auxTargetWidth, auxTargetHeight,
+															auxTargetMsk, auxSourceMsk, 
+															rects[i], fpR_tile[i],
+															fpG_tile[i],fpB_tile[i],
+															cp_mask_tile[i]));
+				threads[i].start();
+			}
+			
+			for (int i=0; i<nThreads; i++) 
+			{
+				try {
+					threads[i].join();
+					threads[i] = null;
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}			
+			}
+			
+			for (int i=0; i<nThreads; i++) 
+			{
+				fpR.insert(fpR_tile[i], rects[i].x, rects[i].y);
+				fpG.insert(fpG_tile[i], rects[i].x, rects[i].y);
+				fpB.insert(fpB_tile[i], rects[i].x, rects[i].y);
+				
+				fpR_tile[i] = null;
+				fpG_tile[i] = null;
+				fpB_tile[i] = null;
+				
+				cp_mask.insert(cp_mask_tile[i], rects[i].x, rects[i].y);
+				cp_mask_tile[i] = null;
+				rects[i] = null;
+			}
+								
+		
+			cp.setPixels(0, fpR);
+			cp.setPixels(1, fpG);
+			cp.setPixels(2, fpB);            
+			cp.resetMinAndMax();
+
+
+			final ImageStack is = new ImageStack(auxTargetWidth, auxTargetHeight);
+
+			String s = bIsReverse ? new String("Target") : new String("Source");
+			is.addSlice("Registered " + s + " Image", cp);
+			if (outputLevel > -1)
+				is.addSlice("Target Image", bIsReverse ? this.originalSourceIP : this.originalTargetIP);  		   
+			if (outputLevel > -1)
+				is.addSlice("Warped Source Mask", cp_mask);
+
+			if (outputLevel == 2)
+			{
+				showDeformationVectors(intervals, cx, cy, is, bIsReverse);
+				showDeformationGrid(intervals, cx, cy, is, bIsReverse);
+			}
+			
+			if(output_ip == null)				
+			{
+				output_ip = new ImagePlus("Registered " + s + " Image", is);
+				output_ip.show();
+			}
+			else
+			{
+				output_ip.setStack("Registered " + s + " Image", is);
+			}
+			output_ip.setSlice(1);
+			output_ip.getProcessor().resetMinAndMax();
+			if (outputLevel > -1)
+				output_ip.updateAndRepaintWindow();					
+		} // end caculate warped color image
+		
+	} /* end showTransformationMultiThread */
+
+	
+	/* ------------------------------------------------------------------------ */
+	/**
+	 *  Class to run concurrent tile windows for final results (grayscale)
+	 * 	 
+	 */	
+	private class GrayscaleResultTileMaker implements Runnable 
+	{
+		final bUnwarpJImageModel swx;
+		final bUnwarpJImageModel swy;		
+		final bUnwarpJImageModel auxSource;
+		final int auxTargetCurrentWidth;
+		final int auxTargetCurrentHeight;
+		final bUnwarpJMask auxTargetMsk;
+		final bUnwarpJMask auxSourceMsk;
+		final Rectangle rect;
+		final private FloatProcessor fp;
+		final private FloatProcessor fp_mask;
+		
+		/*------------------------------------------------------------------*/
+		/**
+		 * Grayscale result tile maker constructor
+		 * 
+		 * @param swx
+		 * @param swy
+		 * @param auxSource
+		 * @param auxTargetCurrentWidth
+		 * @param auxTargetCurrentHeight
+		 * @param auxTargetMsk
+		 * @param auxSourceMsk
+		 * @param rect
+		 * @param fp
+		 * @param fp_mask
+		 */
+		GrayscaleResultTileMaker(bUnwarpJImageModel swx, 
+		 		  bUnwarpJImageModel swy, 
+		 		  bUnwarpJImageModel auxSource,
+		 		  int auxTargetCurrentWidth,
+		 		  int auxTargetCurrentHeight,
+		 		  bUnwarpJMask auxTargetMsk,
+		 		  bUnwarpJMask auxSourceMsk,
+				  Rectangle rect, 
+				  FloatProcessor fp,
+				  FloatProcessor fp_mask)
+		{
+			this.swx = swx;
+			this.swy = swy;
+			this.auxSource = auxSource;
+			this.auxTargetCurrentWidth = auxTargetCurrentWidth;
+			this.auxTargetCurrentHeight = auxTargetCurrentHeight;
+			this.auxTargetMsk = auxTargetMsk;
+			this.auxSourceMsk = auxSourceMsk;
+			this.rect = rect;
+			this.fp = fp;
+			this.fp_mask = fp_mask;
+		}
+	
+		/*------------------------------------------------------------------*/
+		/**
+		 * Run method to update the intermediate window. Only the part defined by
+		 * the rectangle will be updated (in this thread).
+		 */
+		public void run()
+		{
+			// Compute the warped image
+			int uv = rect.y * rect.width + rect.x;
+			int auxTargetHeight = rect.y + rect.height;
+			int auxTargetWidth = rect.x + rect.width;
+			
+			
+			float [] fp_array = (float[]) fp.getPixels();
+			float [] fp_mask_array = (float[]) fp_mask.getPixels();
+			
+			for (int v_rect = 0, v=rect.y; v<auxTargetHeight; v++, v_rect++)
+			{
+				final int v_offset = v_rect * rect.width;
+				final double tv = (double)(v * intervals) / (double)(auxTargetCurrentHeight - 1) + 1.0F;
+				
+				for (int u_rect = 0, u=rect.x; u<auxTargetWidth; u++, uv++, u_rect++) 
+				{
+			
+			
+					final double tu = (double)(u * intervals) / (double)(auxTargetCurrentWidth - 1) + 1.0F;			
+					final double transformation_x_v_u = swx.prepareForInterpolationAndInterpolateI(tu, tv, false, ORIGINAL);
+					final double transformation_y_v_u = swy.prepareForInterpolationAndInterpolateI(tu, tv, false, ORIGINAL);
+									
+					if (!auxTargetMsk.getValue(u,v))
+					{
+						//fp.putPixelValue(u,v,0);
+						fp_array[u_rect + v_offset] = 0;
+						//fp_mask.putPixelValue(u,v,0);
+						fp_mask_array[u_rect + v_offset] = 0;
+					}
+					else
+					{
+						final double x = transformation_x_v_u;
+						final double y = transformation_y_v_u;
+						if (auxSourceMsk.getValue(x,y))
+						{
+							double sval = auxSource.prepareForInterpolationAndInterpolateI(x, y, false, ORIGINAL);
+							//fp.putPixelValue(u,v,sval);
+							fp_array[u_rect + v_offset] = (float) sval;
+							//fp_mask.putPixelValue(u,v,255);
+							fp_mask_array[u_rect + v_offset] = 255;
+						}
+						else
+						{
+							//fp.putPixelValue(u,v,0);
+							fp_array[u_rect + v_offset] = 0;
+							//fp_mask.putPixelValue(u,v,0);
+							fp_mask_array[u_rect + v_offset] = 0;
+						}
+					}
+				}
+			}
+		} /* end run method */
+		
+	} /* end GrayscaleResultTileMaker class */
+	
+	
+	/* ------------------------------------------------------------------------ */
+	/**
+	 *  Class to run concurrent tile windows for final results (color)
+	 * 	 
+	 */	
+	private class ColorResultTileMaker implements Runnable 
+	{
+		final bUnwarpJImageModel swx;
+		final bUnwarpJImageModel swy;		
+		final bUnwarpJImageModel sourceR;
+		final bUnwarpJImageModel sourceG;
+		final bUnwarpJImageModel sourceB;
+		final int auxTargetCurrentWidth;
+		final int auxTargetCurrentHeight;
+		final bUnwarpJMask auxTargetMsk;
+		final bUnwarpJMask auxSourceMsk;
+		final Rectangle rect;
+		final private FloatProcessor fpR;
+		final private FloatProcessor fpG;
+		final private FloatProcessor fpB;
+		final private ColorProcessor cp_mask;
+		
+		/*------------------------------------------------------------------*/
+		/**
+		 * Color result tile maker constructor
+		 * 
+		 * @param swx
+		 * @param swy
+		 * @param auxSource
+		 * @param auxTargetCurrentWidth
+		 * @param auxTargetCurrentHeight
+		 * @param auxTargetMsk
+		 * @param auxSourceMsk
+		 * @param rect
+		 * @param fpR
+		 * @param fpG
+		 * @param fpB
+		 * @param cp_mask
+		 */
+		ColorResultTileMaker(bUnwarpJImageModel swx, 
+		 		  bUnwarpJImageModel swy, 
+		 		  bUnwarpJImageModel sourceR,
+		 		  bUnwarpJImageModel sourceG,
+		 		  bUnwarpJImageModel sourceB,
+		 		  int auxTargetCurrentWidth,
+		 		  int auxTargetCurrentHeight,
+		 		  bUnwarpJMask auxTargetMsk,
+		 		  bUnwarpJMask auxSourceMsk,
+				  Rectangle rect, 
+				  FloatProcessor fpR,
+				  FloatProcessor fpG,
+				  FloatProcessor fpB,
+				  ColorProcessor cp_mask)
+		{
+			this.swx = swx;
+			this.swy = swy;
+			this.sourceR = sourceR;
+			this.sourceG = sourceG;
+			this.sourceB = sourceB;
+			this.auxTargetCurrentWidth = auxTargetCurrentWidth;
+			this.auxTargetCurrentHeight = auxTargetCurrentHeight;
+			this.auxTargetMsk = auxTargetMsk;
+			this.auxSourceMsk = auxSourceMsk;
+			this.rect = rect;
+			this.fpR = fpR;
+			this.fpG = fpG;
+			this.fpB = fpB;
+			this.cp_mask = cp_mask;
+		}
+	
+		/*------------------------------------------------------------------*/
+		/**
+		 * Run method to update the intermediate window. Only the part defined by
+		 * the rectangle will be updated (in this thread).
+		 */
+		public void run()
+		{
+			// Compute the warped image
+			int uv = rect.y * rect.width + rect.x;
+			int auxTargetHeight = rect.y + rect.height;
+			int auxTargetWidth = rect.x + rect.width;
+			
+			
+			float [] fpR_array = (float[]) fpR.getPixels();
+			float [] fpG_array = (float[]) fpG.getPixels();
+			float [] fpB_array = (float[]) fpB.getPixels();
+			
+			
+			for (int v_rect = 0, v=rect.y; v<auxTargetHeight; v++, v_rect++)
+			{
+				final int v_offset = v_rect * rect.width;
+				final double tv = (double)(v * intervals) / (double)(auxTargetCurrentHeight - 1) + 1.0F;
+				
+				for (int u_rect = 0, u=rect.x; u<auxTargetWidth; u++, uv++, u_rect++) 
+				{
+						
+					final double tu = (double)(u * intervals) / (double)(auxTargetCurrentWidth - 1) + 1.0F;			
+					final double transformation_x_v_u = swx.prepareForInterpolationAndInterpolateI(tu, tv, false, ORIGINAL);
+					final double transformation_y_v_u = swy.prepareForInterpolationAndInterpolateI(tu, tv, false, ORIGINAL);
+									
+					if (!auxTargetMsk.getValue(u,v))
+					{
+						//fpR.putPixelValue(u, v, 0);
+						fpR_array[u_rect + v_offset] = 0;
+						//fpG.putPixelValue(u, v, 0);
+						fpG_array[u_rect + v_offset] = 0;
+						//fpB.putPixelValue(u, v, 0);
+						fpB_array[u_rect + v_offset] = 0;
+						
+						cp_mask.putPixelValue(u_rect, v_rect, 0);	
+						
+					}
+					else
+					{
+						
+						final double x = transformation_x_v_u;
+						final double y = transformation_y_v_u;
+						if (auxSourceMsk.getValue(x,y))
+						{
+							//sourceR.prepareForInterpolation(x, y, ORIGINAL);
+							//fpR.putPixelValue(u, v, sourceR.interpolateI());
+							fpR_array[u_rect + v_offset] = (float) (sourceR.prepareForInterpolationAndInterpolateI(x, y, false, ORIGINAL));
+
+							//sourceG.prepareForInterpolation(x, y, ORIGINAL);
+							//fpG.putPixelValue(u, v, sourceG.interpolateI());
+							fpG_array[u_rect + v_offset] = (float) (sourceG.prepareForInterpolationAndInterpolateI(x, y, false, ORIGINAL));
+
+							//sourceB.prepareForInterpolation(x, y, ORIGINAL);
+							//fpB.putPixelValue(u, v, sourceB.interpolateI());
+							fpB_array[u_rect + v_offset] = (float) (sourceB.prepareForInterpolationAndInterpolateI(x, y, false, ORIGINAL));
+							
+							cp_mask.putPixelValue(u_rect, v_rect, 255);							
+						}
+						else
+						{
+							//fpR.putPixelValue(u, v, 0);
+							fpR_array[u_rect + v_offset] = 0;
+							//fpG.putPixelValue(u, v, 0);
+							fpG_array[u_rect + v_offset] = 0;
+							//fpB.putPixelValue(u, v, 0);
+							fpB_array[u_rect + v_offset] = 0;						
+							
+							cp_mask.putPixelValue(u_rect, v_rect, 0);
+						}
+					}
+				}
+			}
+			/*
+			(new ImagePlus("Red", fpR)).show();
+			(new ImagePlus("Green", fpG)).show();
+			(new ImagePlus("Blue", fpB)).show();*/
+			
+		} /* end run method */
+		
+	} /* end ColorResultTileMaker class */	
+	
+	/*-------------------------------------------------------------------*/
+	/**
+	 * Show the transformation (calculating entire transformation tables).
 	 *
 	 * @param intervals number of intervals in the deformation
 	 * @param cx x- deformation coefficients
@@ -4147,6 +5455,12 @@ public class bUnwarpJTransformation
 			output_ip = this.output_ip_2;
 			originalIP = this.originalTargetIP;
 		}
+		
+		if(auxSource.isSubOutput())
+		{
+			output_ip.close();
+			output_ip = new ImagePlus();		
+		}
 
 		// Ask for memory for the transformation
 		double [][] transformation_x = new double [auxTargetHeight][auxTargetWidth];
@@ -4165,20 +5479,29 @@ public class bUnwarpJTransformation
 		if(!(originalIP instanceof ColorProcessor))
 		{
 			// Compute the warped image
-			FloatProcessor fp = new FloatProcessor(auxTargetWidth, auxTargetHeight);
-			FloatProcessor fp_mask = new FloatProcessor(auxTargetWidth, auxTargetHeight);
-			FloatProcessor fp_target = new FloatProcessor(auxTargetWidth, auxTargetHeight);
+			final FloatProcessor fp = new FloatProcessor(auxTargetWidth, auxTargetHeight);
+			float[] fp_array = (float[]) fp.getPixels();
+			final FloatProcessor fp_mask = new FloatProcessor(auxTargetWidth, auxTargetHeight);
+			float[] fp_mask_array = (float[]) fp_mask.getPixels();
+			final FloatProcessor fp_target = new FloatProcessor(auxTargetWidth, auxTargetHeight);
+			float[] fp_target_array = (float[]) fp_target.getPixels();
 
 			int uv = 0;
 
 			for (int v=0; v<auxTargetHeight; v++)
+			{
+				int v_offset = v * auxTargetWidth;
 				for (int u=0; u<auxTargetWidth; u++,uv++)
 				{
-					fp_target.putPixelValue(u, v, auxTarget.getImage()[uv]);
+					//fp_target.putPixelValue(u, v, auxTarget.getImage()[uv]);
+					fp_target_array[u + v_offset] = (float) auxTarget.getImage()[uv];
+					
 					if (!auxTargetMsk.getValue(u,v))
 					{
-						fp.putPixelValue(u,v,0);
-						fp_mask.putPixelValue(u,v,0);
+						//fp.putPixelValue(u,v,0);
+						fp_array[u + v_offset] = 0;
+						//fp_mask.putPixelValue(u,v,0);
+						fp_mask_array[u + v_offset] = 0;
 					}
 					else
 					{
@@ -4188,16 +5511,21 @@ public class bUnwarpJTransformation
 						{
 							auxSource.prepareForInterpolation(x,y,ORIGINAL);
 							double sval = auxSource.interpolateI();
-							fp.putPixelValue(u,v,sval);
-							fp_mask.putPixelValue(u,v,255);
+							//fp.putPixelValue(u,v,sval);
+							fp_array[u + v_offset] = (float) sval;
+							//fp_mask.putPixelValue(u,v,255);
+							fp_mask_array[u + v_offset] = 255;
 						}
 						else
 						{
-							fp.putPixelValue(u,v,0);
-							fp_mask.putPixelValue(u,v,0);
+							//fp.putPixelValue(u,v,0);
+							fp_array[u + v_offset] = 0;
+							//fp_mask.putPixelValue(u,v,0);
+							fp_mask_array[u + v_offset] = 0;
 						}
 					}
 				}
+			}
 			fp.resetMinAndMax();
 			final ImageStack is = new ImageStack(auxTargetWidth, auxTargetHeight);
 
@@ -4223,17 +5551,17 @@ public class bUnwarpJTransformation
 		{
 			// Compute the warped image
 			// red
-			bUnwarpJImageModel sourceR = new bUnwarpJImageModel( ((ColorProcessor) originalIP).toFloat(0, null), false);
+			bUnwarpJImageModel sourceR = new bUnwarpJImageModel( ((ColorProcessor) originalIP).toFloat(0, null), false, 1);
 			sourceR.setPyramidDepth(0);
-			sourceR.getThread().start();
+			sourceR.startPyramids();
 			// green
-			bUnwarpJImageModel sourceG = new bUnwarpJImageModel( ((ColorProcessor) originalIP).toFloat(1, null), false);
+			bUnwarpJImageModel sourceG = new bUnwarpJImageModel( ((ColorProcessor) originalIP).toFloat(1, null), false, 1);
 			sourceG.setPyramidDepth(0);
-			sourceG.getThread().start();
+			sourceG.startPyramids();
 			//blue
-			bUnwarpJImageModel sourceB = new bUnwarpJImageModel( ((ColorProcessor) originalIP).toFloat(2, null), false);
+			bUnwarpJImageModel sourceB = new bUnwarpJImageModel( ((ColorProcessor) originalIP).toFloat(2, null), false, 1);
 			sourceB.setPyramidDepth(0);
-			sourceB.getThread().start();
+			sourceB.startPyramids();
 
 			// Join threads
 			try {
@@ -4247,18 +5575,29 @@ public class bUnwarpJTransformation
 			// Calculate warped RGB image
 			ColorProcessor cp = new ColorProcessor(auxTargetWidth, auxTargetHeight);
 			FloatProcessor fpR = new FloatProcessor(auxTargetWidth, auxTargetHeight);
+			float[] fpR_array = (float[]) fpR.getPixels();
 			FloatProcessor fpG = new FloatProcessor(auxTargetWidth, auxTargetHeight);
+			float[] fpG_array = (float[]) fpG.getPixels();
 			FloatProcessor fpB = new FloatProcessor(auxTargetWidth, auxTargetHeight);
-			ColorProcessor cp_mask = new ColorProcessor(auxTargetWidth, auxTargetHeight);
+			float[] fpB_array = (float[]) fpB.getPixels();
+			ColorProcessor cp_mask = new ColorProcessor(auxTargetWidth, auxTargetHeight);			
+			
 			for (int v=0; v<targetHeight; v++)
+			{
+				int v_offset = v * auxTargetWidth;
+				
 				for (int u=0; u<targetWidth; u++)
 				{
 					if (!auxTargetMsk.getValue(u,v))
 					{
-						fpR.putPixelValue(u, v, 0);
-						fpG.putPixelValue(u, v, 0);
-						fpB.putPixelValue(u, v, 0);
-						cp_mask.putPixelValue(u,v,0);
+						//fpR.putPixelValue(u, v, 0);
+						fpR_array[u + v_offset] = 0;
+						//fpG.putPixelValue(u, v, 0);
+						fpG_array[u + v_offset] = 0;
+						//fpB.putPixelValue(u, v, 0);
+						fpB_array[u + v_offset] = 0;
+						
+						cp_mask.putPixelValue(u,v,0);						
 					}
 					else 
 					{
@@ -4268,25 +5607,33 @@ public class bUnwarpJTransformation
 						if (auxSourceMsk.getValue(x,y))
 						{                	 
 							sourceR.prepareForInterpolation(x, y, ORIGINAL);
-							fpR.putPixelValue(u, v, sourceR.interpolateI());
+							//fpR.putPixelValue(u, v, sourceR.interpolateI());
+							fpR_array[u + v_offset] = (float) sourceR.interpolateI();
 
 							sourceG.prepareForInterpolation(x, y, ORIGINAL);
-							fpG.putPixelValue(u, v, sourceG.interpolateI());
+							//fpG.putPixelValue(u, v, sourceG.interpolateI());
+							fpG_array[u + v_offset] = (float) sourceG.interpolateI();
 
 							sourceB.prepareForInterpolation(x, y, ORIGINAL);
-							fpB.putPixelValue(u, v, sourceB.interpolateI());   
-
-							cp_mask.putPixelValue(u,v,255);
+							//fpB.putPixelValue(u, v, sourceB.interpolateI());
+							fpB_array[u + v_offset] = (float) sourceB.interpolateI();
+							
+							cp_mask.putPixelValue(u,v,255);							
 						}
 						else
 						{
-							fpR.putPixelValue(u, v, 0);
-							fpG.putPixelValue(u, v, 0);
-							fpB.putPixelValue(u, v, 0);
-							cp_mask.putPixelValue(u,v,0);
+							//fpR.putPixelValue(u, v, 0);
+							fpR_array[u + v_offset] = 0;
+							//fpG.putPixelValue(u, v, 0);
+							fpG_array[u + v_offset] = 0;
+							//fpB.putPixelValue(u, v, 0);
+							fpB_array[u + v_offset] = 0;						
+							
+							cp_mask.putPixelValue(u,v,0);							
 						}
 					}
 				}
+			}
 			cp.setPixels(0, fpR);
 			cp.setPixels(1, fpG);
 			cp.setPixels(2, fpB);            
@@ -4298,7 +5645,7 @@ public class bUnwarpJTransformation
 			String s = bIsReverse ? new String("Target") : new String("Source");
 			is.addSlice("Registered " + s + " Image", cp);
 			if (outputLevel > -1)
-				is.addSlice("Target Image", bIsReverse ? this.dialog.getOriginalSourceIP() : this.dialog.getOriginalTargetIP());    		   
+				is.addSlice("Target Image", bIsReverse ? this.originalSourceIP : this.originalTargetIP);    		   
 			if (outputLevel > -1)
 				is.addSlice("Warped Source Mask", cp_mask);
 
@@ -4311,10 +5658,14 @@ public class bUnwarpJTransformation
 			output_ip.setSlice(1);
 			output_ip.getProcessor().resetMinAndMax();
 			if (outputLevel > -1)
-				output_ip.updateAndRepaintWindow();
+				output_ip.updateAndRepaintWindow();					
 		} // end caculate warped color image
-	}
-
+		
+		if(auxSource.isSubOutput())
+			output_ip.show();
+		
+	}	/* end showTransformation */
+	
 	/*------------------------------------------------------------------*/
 	/*
 	 * Method to update both current outputs
@@ -4349,7 +5700,7 @@ public class bUnwarpJTransformation
 	}
 	/*------------------------------------------------------------------*/
 	/*
-	 * Method to update a current output.
+	 * Method to update a current output (multi-thread).
 	 *
 	 * @param c B-spline coefficients
 	 * @param intervals number of intervals in the deformation
@@ -4369,8 +5720,6 @@ public class bUnwarpJTransformation
 		bUnwarpJImageModel auxSource = source;
 		bUnwarpJMask auxTargetMsk = targetMsk;
 		bUnwarpJMask auxSourceMsk = sourceMsk;
-		//bUnwarpJPointHandler auxTargetPh = targetPh;
-		//bUnwarpJPointHandler auxSourcePh = sourcePh;
 		bUnwarpJImageModel swx = swxTargetToSource;
 		bUnwarpJImageModel swy = swyTargetToSource;
 		int auxTargetWidth = this.targetWidth;
@@ -4383,8 +5732,9 @@ public class bUnwarpJTransformation
 		ImagePlus output_ip = this.output_ip_1;
 		double auxFactorWidth = this.targetFactorWidth;
 		double auxFactorHeight = this.targetFactorHeight;
-		String sOutput = new String ("Output Source-Target");
-
+		double subFactorWidth = target.isSubOutput() ? (target.getWidth() / target.getSubWidth()) : 1;
+		double subFactorHeight = target.isSubOutput() ? (target.getHeight() / target.getSubHeight()) : 1;
+		
 		// Change if necessary
 		if(bIsReverse)
 		{
@@ -4392,8 +5742,6 @@ public class bUnwarpJTransformation
 			auxSource = target;
 			auxTargetMsk = sourceMsk;
 			auxSourceMsk = targetMsk;
-			//auxTargetPh = sourcePh;
-			//auxSourcePh = targetPh;
 			swx = swxSourceToTarget;
 			swy = swySourceToTarget;
 			auxTargetWidth = this.sourceWidth;
@@ -4406,51 +5754,85 @@ public class bUnwarpJTransformation
 			output_ip = this.output_ip_2;
 			auxFactorWidth = this.sourceFactorWidth;
 			auxFactorHeight = this.sourceFactorHeight;
-			sOutput = new String ("Output Target-Source");
+			subFactorWidth = source.isSubOutput() ? (source.getWidth() / source.getSubWidth()) : 1;
+			subFactorHeight = source.isSubOutput() ? (source.getHeight() / source.getSubHeight()) : 1;
 		}
 
 		swx.setCoefficients(c, cYdim, cXdim, 0);
 		swy.setCoefficients(c, cYdim, cXdim, Nk);
 
 		// Compute the deformed image
-		FloatProcessor fp = new FloatProcessor(auxTargetWidth, auxTargetHeight);
+		FloatProcessor fp = (FloatProcessor) output_ip.getProcessor();
+		
 		int uv = 0;
-		for (int v=0; v<auxTargetHeight; v++)
-			for (int u=0; u<auxTargetWidth; u++, uv++) 
-			{
-				if (auxTargetMsk.getValue(u,v)) 
-				{
-					double down_u = u*auxFactorWidth;
-					double down_v = v*auxFactorHeight;
-					final double tv = (double)(down_v * intervals)/(double)(auxTargetCurrentHeight-1) + 1.0F;
-					final double tu = (double)(down_u * intervals)/(double)(auxTargetCurrentWidth -1) + 1.0F;
-					swx.prepareForInterpolation(tu,tv,ORIGINAL);
-					double x=swx.interpolateI();
-					swy.prepareForInterpolation(tu,tv,ORIGINAL);
-					double y=swy.interpolateI();
-					double up_x=x/auxFactorWidth;
-					double up_y=y/auxFactorHeight;
-					if (auxSourceMsk.getValue(up_x,up_y)) 
-					{
-						auxSource.prepareForInterpolation(up_x, up_y, ORIGINAL);
-						fp.putPixelValue(u, v, auxTarget.getImage()[uv]-
-								auxSource.interpolateI());
-					} else
-						fp.putPixelValue(u, v, 0);
-				} else
-					fp.putPixelValue(u, v, 0);
-			}
+
+		// Check the number of processors in the computer 
+		int nproc = Runtime.getRuntime().availableProcessors();
+
+		// We will use threads to display parts of the output image
+		int block_height = auxTargetHeight / ((int)subFactorHeight * nproc);
+		if (auxTargetHeight % 2 != 0) 
+			block_height++;
+		
+		
+		int nThreads = nproc; /*(nproc > 1) ? (nproc / 2) : 1;
+		if (this.accurate_mode == bUnwarpJDialog.MONO_MODE)
+			nThreads *= 2;*/
+		
+		Thread[] threads  = new Thread[nThreads];
+		Rectangle[] rects = new Rectangle[nThreads];
+		FloatProcessor[] fp_tile = new FloatProcessor[nThreads];
+		for (int i=0; i<nThreads; i++) 
+		{
+			// Last block goes to the end of the window
+			int x_start = i * block_height;
+			if (nThreads-1 == i) 
+				block_height = auxTargetHeight / (int)subFactorWidth - i*block_height;
+			/*
+			IJ.log("block height " + block_height);
+			IJ.log("Update : 0 " + " "+ x_start  +" " + (auxTargetWidth / (int)subFactorWidth) + " " + block_height);
+			IJ.log("auxFactorWidth = " + auxFactorWidth + " auxFactorHeight = " + auxFactorHeight);
+			*/
+			rects[i] = new Rectangle(0, x_start, auxTargetWidth / (int)subFactorWidth, block_height);
+			
+			fp_tile[i] = new FloatProcessor(rects[i].width, rects[i].height);
+			
+			threads[i] = new Thread(new OutputTileMaker(swx, swy, auxSource, auxTarget,
+			 		  								auxTargetMsk, auxSourceMsk, 
+			 		  								auxFactorWidth * subFactorWidth, 
+			 		  								auxFactorHeight * subFactorHeight,
+			 		  								auxTargetCurrentHeight, auxTargetCurrentWidth,
+			 		  								rects[i], fp_tile[i]));
+			threads[i].start();
+		}
+		for (int i=0; i<nThreads; i++) 
+		{
+			try {
+				threads[i].join();
+				threads[i] = null;
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}			
+		}
+		
+		for (int i=0; i<nThreads; i++) 
+		{
+			fp.insert(fp_tile[i], rects[i].x, rects[i].y);
+			fp_tile[i] = null;
+			rects[i] = null;
+		}
+
 
 		double min_val = output_ip.getProcessor().getMin();
 		double max_val = output_ip.getProcessor().getMax();
 		fp.setMinAndMax(min_val, max_val);
-		output_ip.setProcessor(sOutput, fp);
-		output_ip.updateImage();
-
+		
+		output_ip.updateAndDraw();
+		
 		// Draw the grid on the target image ...............................
 		// Some initialization
-		int stepv = Math.min(Math.max(10, auxTargetHeight/15), 30);
-		int stepu = Math.min(Math.max(10, auxTargetWidth/15), 30);
+		int stepv = Math.min(Math.max(10, auxTargetHeight/15), 60);
+		int stepu = Math.min(Math.max(10, auxTargetWidth/15), 60);
 		final double transformedImage [][]=new double [auxSourceHeight][auxSourceWidth];
 		double grid_colour = -1e-10;
 		uv = 0;
@@ -4458,21 +5840,29 @@ public class bUnwarpJTransformation
 			for (int u=0; u<auxSourceWidth; u++,uv++)
 			{
 				transformedImage[v][u] = auxSource.getImage()[uv];
-				if (transformedImage[v][u]>grid_colour) grid_colour = transformedImage[v][u];
+				if (transformedImage[v][u]>grid_colour) 
+					grid_colour = transformedImage[v][u];
 			}
 
 		// Draw grid
 		for (int v=0; v<auxTargetHeight+stepv; v+=stepv)
 			for (int u=0; u<auxTargetWidth+stepu; u+=stepu)
 			{
+				// down_u/v are the coordinates in the current image
 				double down_u = u * auxFactorWidth;
 				double down_v = v * auxFactorHeight;
+				
+				// tv,tu are the corresponding coordinates in the interpolator 
 				final double tv = (double)(down_v * intervals) / (double)(auxTargetCurrentHeight-1) + 1.0F;
 				final double tu = (double)(down_u * intervals) / (double)(auxTargetCurrentWidth -1) + 1.0F;
+				
+				// x,y are the coordinates after the transformation
 				swx.prepareForInterpolation(tu,tv,ORIGINAL);
 				double x = swx.interpolateI();
 				swy.prepareForInterpolation(tu,tv,ORIGINAL);
 				double y = swy.interpolateI();
+				
+				// up_x, up_y are the transformed coordinates in the original image
 				double up_x = x / auxFactorWidth;
 				double up_y = y / auxFactorHeight;
 
@@ -4516,12 +5906,131 @@ public class bUnwarpJTransformation
 		for (int v=0; v<auxSourceHeight; v++)
 			for (int u=0; u<auxSourceWidth; u++)
 				fpg.putPixelValue(u,v,transformedImage[v][u]);
+		
 		min_val = auxSourceImp.getProcessor().getMin();
 		max_val = auxSourceImp.getProcessor().getMax();
 		fpg.setMinAndMax(min_val,max_val);
 		auxSourceImp.setProcessor(auxSourceImp.getTitle(),fpg);
 		auxSourceImp.updateImage();
 	}
+	
+	/* ------------------------------------------------------------------------ */
+	/**
+	 *  Class to run concurrent tile windows updaters (for intermediate results)
+	 * 	 
+	 */	
+	private class OutputTileMaker implements Runnable 
+	{
+		final bUnwarpJImageModel swx;
+		final bUnwarpJImageModel swy;		
+		final bUnwarpJImageModel auxSource;	
+		final bUnwarpJImageModel auxTarget;
+		final bUnwarpJMask auxTargetMsk;
+		final bUnwarpJMask auxSourceMsk;
+		final double auxFactorWidth;
+		final double auxFactorHeight;
+		final int auxTargetCurrentHeight;
+		final int auxTargetCurrentWidth;		
+		final Rectangle rect;
+		final private FloatProcessor fp;
+		
+		/*------------------------------------------------------------------*/
+		/**
+		 * Output tile maker constructor
+		 * 
+		 * @param swx
+		 * @param swy
+		 * @param auxSource
+		 * @param auxTarget
+		 * @param auxTargetMsk
+		 * @param auxSourceMsk
+		 * @param auxFactorWidth
+		 * @param auxFactorHeight
+		 * @param auxTargetCurrentHeight
+		 * @param auxTargetCurrentWidth
+		 * @param rect
+		 * @param fp
+		 */
+		OutputTileMaker(bUnwarpJImageModel swx, 
+		 		  bUnwarpJImageModel swy, 
+		 		  bUnwarpJImageModel auxSource,
+		 		  bUnwarpJImageModel auxTarget,
+		 		  bUnwarpJMask auxTargetMsk,
+		 		  bUnwarpJMask auxSourceMsk,
+		 		  double auxFactorWidth,
+		 		  double auxFactorHeight,
+		 		  int auxTargetCurrentHeight,
+		 		  int auxTargetCurrentWidth,	
+				  Rectangle rect, 
+				  FloatProcessor fp)
+		{
+			this.swx = swx;
+			this.swy = swy;
+			this.auxSource = auxSource;
+			this.auxTarget = auxTarget;
+			this.auxTargetMsk = auxTargetMsk;
+			this.auxSourceMsk = auxSourceMsk;
+			this.auxFactorWidth = auxFactorWidth;
+			this.auxFactorHeight = auxFactorHeight;
+			this.auxTargetCurrentWidth = auxTargetCurrentWidth;
+			this.auxTargetCurrentHeight = auxTargetCurrentHeight;
+			this.rect = rect;
+			this.fp = fp;
+		}
+	
+		/*------------------------------------------------------------------*/
+		/**
+		 * Run method to update the intermediate window. Only the part defined by
+		 * the rectangle will be updated (in this thread).
+		 */
+		public void run() 
+		{
+			int uv = rect.y * rect.width + rect.x;
+			int auxTargetHeight = rect.y + rect.height;
+			int auxTargetWidth = rect.x + rect.width;
+			
+			// Subsampling (output) factors
+			final int subFactorT = this.auxTarget.getWidth() / this.auxTarget.getSubWidth();
+			final int subFactorS = this.auxSource.getWidth() / this.auxSource.getSubWidth();
+			
+			final boolean fromSubT = (auxTarget.isSubOutput());
+			final boolean fromSubS = (auxSource.isSubOutput());
+			
+			double[]tImage = (auxTarget.isSubOutput()) ? auxTarget.getSubImage() : auxTarget.getImage();
+			float [] f_array = (float[]) fp.getPixels();
+			for (int v_rect = 0, v=rect.y; v<auxTargetHeight; v++, v_rect++)
+			{
+				final int v_offset = v_rect * rect.width;
+				
+				for (int u_rect = 0, u=rect.x; u<auxTargetWidth; u++, uv++, u_rect++) 
+				{
+					if (auxTargetMsk.getValue(u * subFactorT, v * subFactorT)) 
+					{
+						double down_u = u*auxFactorWidth;
+						double down_v = v*auxFactorHeight;
+						final double tv = (double)(down_v * intervals)/(double)(auxTargetCurrentHeight-1) + 1.0F;
+						final double tu = (double)(down_u * intervals)/(double)(auxTargetCurrentWidth -1) + 1.0F;						
+						double x = swx.prepareForInterpolationAndInterpolateI(tu, tv, fromSubT, ORIGINAL);						
+						double y = swy.prepareForInterpolationAndInterpolateI(tu, tv, fromSubT, ORIGINAL);			
+						double up_x = x/auxFactorWidth;
+						double up_y = y/auxFactorHeight;
+						if (auxSourceMsk.getValue(up_x * subFactorS, up_y * subFactorS)) 
+						{
+							double sourceValue = auxSource.prepareForInterpolationAndInterpolateI(up_x, up_y, fromSubS, ORIGINAL);										
+							//fp.putPixelValue(u_rect, v_rect, tImage[uv] - sourceValue);
+							f_array[u_rect + v_offset] = (float) (tImage[uv] - sourceValue);
+						} 
+						else
+							//fp.putPixelValue(u_rect, v_rect, 0);
+							f_array[u_rect + v_offset] = 0;
+					} else
+						//fp.putPixelValue(u_rect, v_rect, 0);
+						f_array[u_rect + v_offset] = 0;
+				}
+			}
+			
+		} /* end run */
+	} /* end OutputTileMaker class */
 
 	/*------------------------------------------------------------------*/
 	/**

@@ -40,10 +40,18 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 
 import java.awt.Choice;
+import java.awt.Component;
 import java.awt.Frame;
 import java.awt.Rectangle;
+import java.awt.Scrollbar;
+import java.awt.TextField;
 import java.awt.event.ActionEvent;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
 import java.awt.event.ItemEvent;
+import java.awt.event.WindowEvent;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Class to create the dialog for bUnwarpJ.
@@ -51,6 +59,16 @@ import java.awt.event.ItemEvent;
 public class bUnwarpJDialog extends GenericDialog
 { /* begin class bUnwarpJDialog */
 
+	/*....................................................................
+    	Public variables
+ 	....................................................................*/
+	/** fast mode constant */
+	public static int FAST_MODE = 0;
+	/** accurate mode constant */
+	public static int ACCURATE_MODE = 1;
+	/** unidirectional ("mono") mode constant */
+	public static int MONO_MODE = 2;
+	
 	/*....................................................................
        Private variables
     ....................................................................*/
@@ -122,7 +140,9 @@ public class bUnwarpJDialog extends GenericDialog
 	/** maximum scale deformation */
 	private int max_scale_deformation = 2;
 	/** mode ("Accurate" by default) */
-	private int mode = 1;
+	private int mode = bUnwarpJDialog.ACCURATE_MODE;
+	/** image subsampling factor at highest resolution level */
+	private int maxImageSubsamplingFactor = 0;
 
 	// Transformation parameters
 	/** divergence weight */
@@ -146,7 +166,7 @@ public class bUnwarpJDialog extends GenericDialog
 	/** stopping threshold */
 	private double  stopThreshold      = 1e-2;
 
-	/** consistency flag */
+	/** consistency flag (if false, unidirectional registration is done) */
 	private boolean bIsReverse = true;
 
 	/** macro flag */
@@ -156,6 +176,23 @@ public class bUnwarpJDialog extends GenericDialog
 	private Roi previousSourceRoi;
 	/** region of interest of the target image before calling the plugin */
 	private Roi previousTargetRoi;
+	
+	/** source image choice */
+	private Choice sourceChoice = null;
+	/** target image choice */
+	private Choice targetChoice = null;
+	/** minimum scale choice */
+	private Choice minScaleChoice = null;
+	/** maximum scale choice */
+	private Choice maxScaleChoice = null;
+	/** accurate mode choice */
+	private Choice modeChoice = null;
+	/** resampling text field */
+	private TextField resamplingTextField = null;
+	/** resampling scroll bar */
+	private Scrollbar resamplingSlider = null;
+	/** consistency weight text field */
+	private TextField consistencyWeightTextField = null;
 
 	/*....................................................................
        Public methods
@@ -167,7 +204,8 @@ public class bUnwarpJDialog extends GenericDialog
 	 *
 	 * @param parentWindow pointer to the parent window
 	 * @param imageList list of images from ImageJ
-	 * @param mode default registration mode (0 = Fast, 1 = Accurate)
+	 * @param mode default registration mode (0 = Fast, 1 = Accurate, 2 = Mono)
+	 * @param maxImageSubsamplingFactor subsampling factor at highest resolution level
 	 * @param min_scale_deformation default minimum scale deformation value
 	 * @param max_scale_deformation default maximum scale deformation value
 	 * @param divWeight default divergence weight
@@ -183,6 +221,7 @@ public class bUnwarpJDialog extends GenericDialog
 			final Frame parentWindow,
 			final ImagePlus[] imageList,
 			final int mode,
+			final int maxImageSubsamplingFactor,
 			final int min_scale_deformation,
 			final int max_scale_deformation,
 			final double divWeight,
@@ -197,18 +236,19 @@ public class bUnwarpJDialog extends GenericDialog
 		super("bUnwarpJ", null);
 		setModal(false);
 
-		this.imageList 				= imageList;
-		this.mode					= mode;
-		this.min_scale_deformation 	= min_scale_deformation;
-		this.max_scale_deformation 	= max_scale_deformation;
-		this.divWeight 			   	= divWeight;
-		this.curlWeight 			= curlWeight;
-		this.landmarkWeight        	= landmarkWeight;
-		this.imageWeight           	= imageWeight;
-		this.consistencyWeight     	= consistencyWeight;
-		this.stopThreshold         	= stopThreshold;
-		this.richOutput 			= richOutput;
-		this.saveTransformation		= saveTransformation;
+		this.imageList 					= imageList;
+		this.mode						= mode;
+		this.maxImageSubsamplingFactor 	= maxImageSubsamplingFactor;
+		this.min_scale_deformation 		= min_scale_deformation;
+		this.max_scale_deformation 		= max_scale_deformation;
+		this.divWeight 			   		= divWeight;
+		this.curlWeight 				= curlWeight;
+		this.landmarkWeight        		= landmarkWeight;
+		this.imageWeight           		= imageWeight;
+		this.consistencyWeight     		= consistencyWeight;
+		this.stopThreshold         		= stopThreshold;
+		this.richOutput 				= richOutput;
+		this.saveTransformation			= saveTransformation;
 
 
 		// We create a list of image titles to be used as source or target images
@@ -218,23 +258,60 @@ public class bUnwarpJDialog extends GenericDialog
 
 		// Source and target choices
 		addChoice( "Source_Image", titles, titles[sourceChoiceIndex]);
+		this.sourceChoice = (Choice) super.getChoices().lastElement();
 		addChoice( "Target_Image", titles, titles[targetChoiceIndex]);
+		this.targetChoice = (Choice) super.getChoices().lastElement();
 
 		// Registration Mode
-		String[] sRegistrationModes = { "Fast", "Accurate" };
+		String[] sRegistrationModes = { "Fast", "Accurate", "Mono" };
 		addChoice("Registration Mode", sRegistrationModes, sRegistrationModes[this.mode]);
+		this.modeChoice = (Choice) super.getChoices().lastElement();
+		
+		// Maximum image pyramid resolution
+		this.addSlider("Image_Subsample_Factor", 0, 7, this.maxImageSubsamplingFactor);
+		this.resamplingSlider = (Scrollbar) (super.getSliders().lastElement());		
+		this.resamplingSlider.addAdjustmentListener(
+				new AdjustmentListener() {
+				      public void adjustmentValueChanged(AdjustmentEvent adjustmentEvent) 
+				      {										    	  					    	  	
+				    	  	// Update resampling factor
+				    	  	bUnwarpJDialog.this.maxImageSubsamplingFactor = Integer.parseInt(resamplingTextField.getText());
+				    	  	// And image information
+				    	  	cancelSource();
+				    	  	cancelTarget();
+				    	  	createSourceImage(bIsReverse);
+				    		createTargetImage();
+				    		loadPointRoiAsLandmarks();
+				    		setSecondaryPointHandlers();
+				      }}
+				);
+		this.resamplingTextField = (TextField)(super.getNumericFields().lastElement()); 
+		this.resamplingTextField.setEnabled(false);
 
 		// Advanced Options
-		addMessage("----- Advanced Options -----");
+		addMessage("------ Advanced Options ------");
 		String[] sMinScaleDeformationChoices = { "Very Coarse", "Coarse", "Fine", "Very Fine" };
-		addChoice("Initial_Deformation :", sMinScaleDeformationChoices, sMinScaleDeformationChoices[this.min_scale_deformation]);	   
+		addChoice("Initial_Deformation :", sMinScaleDeformationChoices, sMinScaleDeformationChoices[this.min_scale_deformation]);
+		this.minScaleChoice = (Choice) super.getChoices().lastElement();
+		
 		String[] sMaxScaleDeformationChoices = { "Very Coarse", "Coarse", "Fine", "Very Fine", "Super Fine" };
 		addChoice("Final_Deformation :", sMaxScaleDeformationChoices, sMaxScaleDeformationChoices[this.max_scale_deformation]);
+		this.maxScaleChoice = (Choice) super.getChoices().lastElement();
+		
 		addNumericField("Divergence_Weight :", this.divWeight, 1);
 		addNumericField("Curl_Weight :", this.curlWeight, 1);
 		addNumericField("Landmark_Weight :", this.landmarkWeight, 1);
 		addNumericField("Image_Weight :", this.imageWeight, 1);
 		addNumericField("Consistency_Weight :", this.consistencyWeight, 1);
+		this.consistencyWeightTextField = (TextField) super.getNumericFields().lastElement();
+		
+		// If the mode is "mono" (=unidirectional), then disable consistency weight text field
+		if(this.mode == bUnwarpJDialog.MONO_MODE)
+		{
+			this.bIsReverse = false;
+			this.consistencyWeightTextField.setEnabled(false);
+		}
+		
 		addNumericField("Stop_Threshold :", this.stopThreshold, 2);
 		addCheckbox(" Verbose ", this.richOutput);
 		addCheckbox(" Save_Transformations ", this.saveTransformation);       	  
@@ -242,14 +319,14 @@ public class bUnwarpJDialog extends GenericDialog
 		// Check if it is a macro call
 		this.bMacro = Macro.getOptions() != null;
 
-		// Start concurrent image processing threads       
+		// Start source and target images (concurrent threads 
+		// need to be started later)		
 		createSourceImage(bIsReverse);
 		createTargetImage();
 		loadPointRoiAsLandmarks();
-		setSecondaryPointHandlers();	   
+		setSecondaryPointHandlers();	
 
 	} /* end bUnwarpJDialog (constructor) */
-
 
 
 	/*------------------------------------------------------------------*/
@@ -305,10 +382,21 @@ public class bUnwarpJDialog extends GenericDialog
 
 	/*------------------------------------------------------------------*/
 	/**
+	 * Actions to be taken when closing the dialog.
+	 */
+	public synchronized void windowClosing(WindowEvent e) 
+	{
+		super.windowClosing(e); 		 
+		notify();
+	} /* end windowClosing*/
+	
+	/*------------------------------------------------------------------*/
+	/**
 	 * Show main bUnwarpJ dialog
 	 * 
 	 */
-	public synchronized void showDialog() {
+	public synchronized void showDialog() 
+	{
 		super.showDialog();
 		if (Macro.getOptions() != null)
 			return;
@@ -337,13 +425,14 @@ public class bUnwarpJDialog extends GenericDialog
 		Choice originChoice = (Choice) o;
 
 
-		// Change in the source image choice (choice 0 = Source_Image)
-		if(originChoice == (Choice)super.choice.get(0))
+		// Change in the source image choice
+		if(originChoice == this.sourceChoice)
 		{
 			final int newChoiceIndex = originChoice.getSelectedIndex();
 			if (sourceChoiceIndex != newChoiceIndex)
 			{
 				stopSourceThread();
+				// If the new source image is not the previous target
 				if (targetChoiceIndex != newChoiceIndex)
 				{
 					sourceChoiceIndex = newChoiceIndex;
@@ -355,25 +444,25 @@ public class bUnwarpJDialog extends GenericDialog
 					loadPointRoiAsLandmarks();
 					setSecondaryPointHandlers();
 				}
-				else
+				else // otherwise, permute
 				{
 					stopTargetThread();
 					targetChoiceIndex = sourceChoiceIndex;
 					sourceChoiceIndex = newChoiceIndex;
-					// Target choice is the second choice in the vector
-					((Choice)super.choice.get(1)).select(targetChoiceIndex);
+					this.targetChoice.select(targetChoiceIndex);
 					permuteImages(bIsReverse);
 				}
 
 			}
 		}
-		// Change in the target image choice (Target_Image = choice 1)
-		else if(originChoice == (Choice)super.choice.get(1))
+		// Change in the target image choice
+		else if(originChoice == this.targetChoice)
 		{
 			final int newChoiceIndex = originChoice.getSelectedIndex();
 			if (targetChoiceIndex != newChoiceIndex)
 			{
 				stopTargetThread();
+				// If the new target image is not the previous source
 				if (sourceChoiceIndex != newChoiceIndex)
 				{
 					targetChoiceIndex = newChoiceIndex;
@@ -385,19 +474,30 @@ public class bUnwarpJDialog extends GenericDialog
 					loadPointRoiAsLandmarks();
 					setSecondaryPointHandlers();
 				}
-				else
+				else // otherwise, permute
 				{
 					stopSourceThread();
 					sourceChoiceIndex = targetChoiceIndex;
-					targetChoiceIndex = newChoiceIndex;
-					// Source choice is the first choice in the vector
-					((Choice)super.choice.get(0)).select(sourceChoiceIndex);
+					targetChoiceIndex = newChoiceIndex;					
+					this.sourceChoice.select(sourceChoiceIndex);
 					permuteImages(bIsReverse);
 				}
 			}
 		}
-		// Change in the minimum scale deformation choice (= choice 3)
-		else if(originChoice == (Choice)super.choice.get(3))
+		// Change in accuracy mode choice
+		else if(originChoice == this.modeChoice)
+		{
+			final int accurate_mode = originChoice.getSelectedIndex();
+			
+			// We enable or disable the consistency weight text field.
+			if(accurate_mode == bUnwarpJDialog.MONO_MODE)				
+				this.consistencyWeightTextField.setEnabled(false);
+			else
+				this.consistencyWeightTextField.setEnabled(true);
+						
+		}
+		// Change in the minimum scale deformation choice
+		else if(originChoice == this.minScaleChoice)
 		{
 			final int new_min_scale_deformation = originChoice.getSelectedIndex();
 			int new_max_scale_deformation = max_scale_deformation;
@@ -412,12 +512,12 @@ public class bUnwarpJDialog extends GenericDialog
 				restartModelThreads(bIsReverse);
 			}
 			// Update minimum scale deformation choice
-			((Choice)super.choice.get(3)).select(min_scale_deformation);
+			this.minScaleChoice.select(min_scale_deformation);
 			// Update maximum scale deformation choice
-			((Choice)super.choice.get(4)).select(max_scale_deformation);
+			this.maxScaleChoice.select(max_scale_deformation);
 		}
-		// Change in the maximum scale deformation choice (= choice 4)
-		else if(originChoice == (Choice)super.choice.get(4))
+		// Change in the maximum scale deformation choice
+		else if(originChoice == this.maxScaleChoice)
 		{
 			final int new_max_scale_deformation = originChoice.getSelectedIndex();
 			int new_min_scale_deformation = min_scale_deformation;
@@ -432,12 +532,11 @@ public class bUnwarpJDialog extends GenericDialog
 				restartModelThreads(bIsReverse);
 			}
 			// Update maximum scale deformation choice
-			((Choice)super.choice.get(4)).select(max_scale_deformation);
+			this.maxScaleChoice.select(max_scale_deformation);
 			// Update minimum scale deformation choice
-			((Choice)super.choice.get(3)).select(min_scale_deformation);
+			this.minScaleChoice.select(min_scale_deformation);
 		}
-
-
+		
 	} /* end itemStateChanged */
 	/*------------------------------------------------------------------*/
 	/**
@@ -518,35 +617,65 @@ public class bUnwarpJDialog extends GenericDialog
 	{
 		if (ph==sourcePh)
 		{
-			int Xdim=source.getWidth();
-			int Ydim=source.getHeight();
-			FloatProcessor fp=new FloatProcessor(Xdim,Ydim);
+
+			final int Xdim = this.source.getWidth();
+			final int Ydim = this.source.getHeight();
+						
+			double []source_data = new double[Xdim * Ydim];
+			bUnwarpJMiscTools.extractImage(this.sourceImp.getProcessor(), source_data);
+			
+			final FloatProcessor fp = new FloatProcessor(Xdim,Ydim);
+			float[] fp_array = (float[]) fp.getPixels();
+			
 			int ij=0;
-			double []source_data=source.getImage();
+			
+			
 			for (int i=0; i<Ydim; i++)
+			{
+				int i_offset = i * Xdim;
 				for (int j=0; j<Xdim; j++,ij++)
-					if (sourceMsk.getValue(j,i))
-						fp.putPixelValue(j,i,    source_data[ij]);
-					else fp.putPixelValue(j,i,0.5*source_data[ij]);
+				{
+					if (sourceMsk.getValue(j ,i))
+						//fp.putPixelValue(j,i,    source_data[ij]);
+						fp_array[j + i_offset] = (float) source_data[ij];
+					else 
+						//fp.putPixelValue(j,i,0.5*source_data[ij]);
+						fp_array[j + i_offset] = (float ) (0.5 * source_data[ij]);
+				}
+			}
 			fp.resetMinAndMax();
-			sourceImp.setProcessor(sourceImp.getTitle(),fp);
-			sourceImp.updateImage();
+			sourceImp.setProcessor(sourceImp.getTitle(), fp);
+			sourceImp.updateAndDraw();
+			
 		}
 		else
 		{
-			int Xdim=target.getWidth();
-			int Ydim=target.getHeight();
-			FloatProcessor fp=new FloatProcessor(Xdim,Ydim);
-			double []target_data=target.getImage();
+			final int Xdim = this.target.getWidth();
+			final int Ydim = this.target.getHeight();						
+			
+			double [] source_data = new double[Xdim * Ydim];
+			bUnwarpJMiscTools.extractImage(this.targetImp.getProcessor(), source_data);
+			
+			final FloatProcessor fp = new FloatProcessor(Xdim,Ydim);
+			float[] fp_array = (float[]) fp.getPixels();
+			
 			int ij=0;
+			
+			
 			for (int i=0; i<Ydim; i++)
+			{
+				int i_offset = i * Xdim;
 				for (int j=0; j<Xdim; j++,ij++)
 					if (targetMsk.getValue(j,i))
-						fp.putPixelValue(j,i,    target_data[ij]);
-					else fp.putPixelValue(j,i,0.5*target_data[ij]);
+						//fp.putPixelValue(j,i,    source_data[ij]);
+						fp_array[j + i_offset] = (float) source_data[ij];
+					else 
+						//fp.putPixelValue(j,i,0.5*source_data[ij]);
+						fp_array[j + i_offset] = (float ) (0.5 * source_data[ij]);
+			}
 			fp.resetMinAndMax();
-			targetImp.setProcessor(targetImp.getTitle(),fp);
-			targetImp.updateImage();
+			targetImp.setProcessor(targetImp.getTitle(), fp);
+			targetImp.updateAndDraw();
 		}
 	}
 
@@ -587,7 +716,7 @@ public class bUnwarpJDialog extends GenericDialog
 	 * Join the threads for the source and target images.
 	 */
 	public void joinThreads ()
-	{
+	{		
 		try
 		{
 			source.getThread().join();
@@ -760,7 +889,7 @@ public class bUnwarpJDialog extends GenericDialog
 		if (this.bMacro) 
 		{
 			String macroOptions = Macro.getOptions();
-			Choice thisChoice = (Choice)(choice.elementAt(0));
+			Choice thisChoice = this.sourceChoice;
 			String item = thisChoice.getSelectedItem();
 			item = Macro.getValue(macroOptions, "Source_Image", item);
 			for(int i = 0; i < this.imageList.length; i++)
@@ -770,20 +899,25 @@ public class bUnwarpJDialog extends GenericDialog
 					break;
 				}			
 		}	
+		
+		//System.out.println("Created source with maxImageSubsamplingFactor = " + maxImageSubsamplingFactor);
 
-		sourceImp = imageList[sourceChoiceIndex];
-		sourceImp.setSlice(1);
+		sourceImp = imageList[sourceChoiceIndex];	
 
 		// Save original image processor
-		this.originalSourceIP = this.sourceImp.getProcessor();
+		if(this.sourceImp.getStackSize() > 1)
+			this.originalSourceIP = this.sourceImp.getStack().getProcessor(1);
+		else
+			this.originalSourceIP = this.sourceImp.getProcessor();
 
 		// Create image model to perform registration
-		source    =
-			new bUnwarpJImageModel(sourceImp.getProcessor(), bIsReverse);
+		source = new bUnwarpJImageModel(sourceImp.getProcessor(), bIsReverse, 
+				(int) Math.pow(2, this.maxImageSubsamplingFactor));
 
 		this.computeImagePyramidDepth();
 		source.setPyramidDepth(imagePyramidDepth + min_scale_image);
-		source.getThread().start();
+		// The thread is longer started here but in startPyramids
+		//source.getThread().start();
 		sourceIc  = sourceImp.getWindow().getCanvas();
 		
 		// If it is an stack, the second slice is considered a mask
@@ -795,12 +929,10 @@ public class bUnwarpJDialog extends GenericDialog
 		else 
 		{
 			// Take the mask from the second slice			
-			sourceImp.setSlice(2);
-			sourceMsk = new bUnwarpJMask(sourceImp.getProcessor(), true);
-			sourceImp.setSlice(1);
+			sourceMsk = new bUnwarpJMask(sourceImp.getStack().getProcessor(2), true);
 		}
 		sourcePh  = new bUnwarpJPointHandler(sourceImp, tb, sourceMsk, this);
-
+				
 		tb.setSource(sourceImp, sourcePh);
 	} /* end createSourceImage */
 
@@ -813,7 +945,7 @@ public class bUnwarpJDialog extends GenericDialog
 		if (this.bMacro) 
 		{
 			String macroOptions = Macro.getOptions();
-			Choice thisChoice = (Choice)(choice.elementAt(1));
+			Choice thisChoice = this.targetChoice;
 			String item = thisChoice.getSelectedItem();
 			item = Macro.getValue(macroOptions, "Target_Image", item);
 			for(int i = 0; i < this.imageList.length; i++)
@@ -825,16 +957,21 @@ public class bUnwarpJDialog extends GenericDialog
 		}	
 
 		targetImp = imageList[targetChoiceIndex];
-		targetImp.setSlice(1);
+		
+		// Save original image processor
+		if(this.targetImp.getStackSize() > 1)
+			this.originalTargetIP = this.targetImp.getStack().getProcessor(1);
+		else
+			this.originalTargetIP = this.targetImp.getProcessor();
 
-		this.originalTargetIP = this.targetImp.getProcessor();
 
 		target    =
-			new bUnwarpJImageModel(targetImp.getProcessor(), true);
+			new bUnwarpJImageModel(targetImp.getProcessor(), true, 
+					(int) Math.pow(2, this.maxImageSubsamplingFactor));
 		
 		this.computeImagePyramidDepth();
 		target.setPyramidDepth(imagePyramidDepth + min_scale_image);
-		target.getThread().start();
+		//target.getThread().start();
 		targetIc  = targetImp.getWindow().getCanvas();
 
 		// If it is an stack, the second slice is considered a mask
@@ -846,9 +983,7 @@ public class bUnwarpJDialog extends GenericDialog
 		else 
 		{
 			// Take the mask from the second slice
-			targetImp.setSlice(2);
-			targetMsk = new bUnwarpJMask(targetImp.getProcessor(), true);
-			targetImp.setSlice(1);
+			targetMsk = new bUnwarpJMask(targetImp.getStack().getProcessor(2), true);
 		}
 		targetPh  = new bUnwarpJPointHandler(targetImp, tb, targetMsk, this);
 		tb.setTarget(targetImp, targetPh);
@@ -862,8 +997,8 @@ public class bUnwarpJDialog extends GenericDialog
 	private void loadPointRoiAsLandmarks()
 	{
 
-		Roi roiSource = this.previousSourceRoi =  sourceImp.getRoi();
-		Roi roiTarget = this.previousTargetRoi = targetImp.getRoi();
+		Roi roiSource = this.previousSourceRoi = sourceImp.getRoi();
+		Roi roiTarget = this.previousTargetRoi = targetImp.getRoi();				
 
 		if(roiSource instanceof PointRoi && roiTarget instanceof PointRoi)
 		{
@@ -899,6 +1034,9 @@ public class bUnwarpJDialog extends GenericDialog
 				sourcePh.addPoint(xSource[i] + originXSource, ySource[i] + originYSource);
 				targetPh.addPoint(xTarget[i] + originXTarget, yTarget[i] + originYTarget);
 			}
+			
+			sourceImp.setRoi(sourcePh);
+			targetImp.setRoi(targetPh);
 		}
 
 	}
@@ -940,6 +1078,11 @@ public class bUnwarpJDialog extends GenericDialog
 
 		// Swap affine matrices
 		double[][] swapMatrix = null;
+		
+		// Swap previous rois
+		Roi swapRoi = this.previousSourceRoi;
+		this.previousSourceRoi = this.previousTargetRoi;
+		this.previousTargetRoi = swapRoi;
 
 
 		if(this.sourceAffineMatrix != null)
@@ -967,13 +1110,15 @@ public class bUnwarpJDialog extends GenericDialog
 		tb.setTarget(this.targetImp, this.targetPh);
 
 		// Restart the computation with each image
-		this.source = new bUnwarpJImageModel(this.sourceImp.getProcessor(), bIsReverse);
+		this.source = new bUnwarpJImageModel(this.sourceImp.getProcessor(), bIsReverse, 
+				(int) Math.pow(2,this.maxImageSubsamplingFactor));
 		this.source.setPyramidDepth(imagePyramidDepth + min_scale_image);
-		this.source.getThread().start();
+		//this.source.getThread().start();
 
-		this.target = new bUnwarpJImageModel(this.targetImp.getProcessor(), true);
+		this.target = new bUnwarpJImageModel(this.targetImp.getProcessor(), true, 
+				(int) Math.pow(2,this.maxImageSubsamplingFactor));
 		this.target.setPyramidDepth(imagePyramidDepth + min_scale_image);
-		this.target.getThread().start();
+		//this.target.getThread().start();
 	} /* end permuteImages */
 
 	/*------------------------------------------------------------------*/
@@ -1005,14 +1150,16 @@ public class bUnwarpJDialog extends GenericDialog
 
 		// Now restart the threads
 		source    =
-			new bUnwarpJImageModel(sourceImp.getProcessor(), bIsReverse);
+			new bUnwarpJImageModel(sourceImp.getProcessor(), bIsReverse, 
+					(int) Math.pow(2,this.maxImageSubsamplingFactor));
 		source.setPyramidDepth(imagePyramidDepth + min_scale_image);
-		source.getThread().start();
+		//source.getThread().start();
 
 		target =
-			new bUnwarpJImageModel(targetImp.getProcessor(), true);
+			new bUnwarpJImageModel(targetImp.getProcessor(), true, 
+					(int) Math.pow(2,this.maxImageSubsamplingFactor));
 		target.setPyramidDepth(imagePyramidDepth + min_scale_image);
-		target.getThread().start();
+		//target.getThread().start();
 	}
 
 	/*------------------------------------------------------------------*/
@@ -1032,6 +1179,8 @@ public class bUnwarpJDialog extends GenericDialog
 	private void stopSourceThread ()
 	{
 		// Stop the source image model
+		if(source.getThread() == null)
+			return;
 		while (source.getThread().isAlive()) {
 			source.getThread().interrupt();
 		}
@@ -1045,6 +1194,8 @@ public class bUnwarpJDialog extends GenericDialog
 	private void stopTargetThread ()
 	{
 		// Stop the target image model
+		if(target.getThread() == null)
+			return;
 		while (target.getThread().isAlive()) {
 			target.getThread().interrupt();
 		}

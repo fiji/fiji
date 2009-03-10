@@ -107,6 +107,7 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 		final Button compareElasticRawTransfButton = new Button("Compare Elastic/Raw Transformations");
 		final Button compareRawButton = new Button("Compare Raw Transformations");
 		final Button convertToRawButton = new Button("Convert Transformation To Raw");
+		final Button convertToElasticButton = new Button("Convert Transformation To Elastic");
 		final Button composeElasticButton = new Button("Compose Elastic Transformations");
 		final Button composeRawButton = new Button("Compose Raw Transformations");
 		final Button composeRawElasticButton = new Button("Compose Raw and Elastic Transformations");
@@ -126,6 +127,7 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 		compareElasticRawTransfButton.addActionListener(this);
 		compareRawButton.addActionListener(this);
 		convertToRawButton.addActionListener(this);
+		convertToElasticButton.addActionListener(this);
 		composeElasticButton.addActionListener(this);
 		composeRawButton.addActionListener(this);
 		composeRawElasticButton.addActionListener(this);
@@ -146,6 +148,7 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 		add(compareElasticRawTransfButton);
 		add(compareRawButton);
 		add(convertToRawButton);
+		add(convertToElasticButton);
 		add(composeElasticButton);
 		add(composeRawButton);
 		add(composeRawElasticButton);
@@ -191,6 +194,9 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 		}
 		else if (ae.getActionCommand().equals("Convert Transformation To Raw")) {
 			saveTransformationInRaw();
+		}
+		else if (ae.getActionCommand().equals("Convert Transformation To Elastic")) {
+			saveTransformationInElastic();
 		}
 		else if (ae.getActionCommand().equals("Compose Elastic Transformations")) {
 			composeElasticTransformations();
@@ -434,7 +440,7 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 
 		String fn_tnf_raw = path_raw + filename_raw;
 
-		// We load the transformation raw file.
+		// We calculate the transformation raw table.
 		double[][] transformation_x = new double[this.targetImp.getHeight()][this.targetImp.getWidth()];
 		double[][] transformation_y = new double[this.targetImp.getHeight()][this.targetImp.getWidth()];
 
@@ -445,8 +451,54 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 
 	/*------------------------------------------------------------------*/
 	/**
+	 * Save a raw transformation in elastic (B-spline) format
+	 */
+	private void saveTransformationInElastic ()
+	{
+		// We ask the user for the elastic transformation file
+		final OpenDialog od = new OpenDialog("Load raw transformation file", "");
+		final String path = od.getDirectory();
+		final String filename = od.getFileName();
+		if ((path == null) || (filename == null)) {
+			return;
+		}
+		String fn_tnf = path+filename;
+
+		double[][] transformation_x = new double[targetImp.getHeight()][targetImp.getWidth()];
+		double[][] transformation_y = new double[targetImp.getHeight()][targetImp.getWidth()];
+
+		bUnwarpJMiscTools.loadRawTransformation(fn_tnf, transformation_x, transformation_y);
+
+		// We ask the user for the raw deformation file.
+		OpenDialog od_elastic = new OpenDialog("Saving in elastic - select elastic transformation file", "");
+		String path_elastic = od_elastic.getDirectory();
+		String filename_elastic = od_elastic.getFileName();
+		if ((path_elastic == null) || (filename_elastic == null))
+			return;
+
+		String fn_tnf_elastic = path_elastic + filename_elastic;
+
+		
+		// We ask the user for the number of intervals in the B-spline grid.
+		String sInput = JOptionPane.showInputDialog(null, "Number of intervals for B-spline grid?", "Save as B-spline coefficients", JOptionPane.QUESTION_MESSAGE);
+
+		// Read value.
+		int intervals = Integer.parseInt(sInput);
+						
+		// We calculate the B-spline transformation coefficients.
+		double [][]cx = new double[intervals+3][intervals+3];
+		double [][]cy = new double[intervals+3][intervals+3];
+
+		bUnwarpJMiscTools.convertRawTransformationToBSpline(this.targetImp, intervals, transformation_x, transformation_y, cx, cy);
+
+		bUnwarpJMiscTools.saveElasticTransformation(intervals, cx, cy, fn_tnf_elastic);
+	}	
+	
+	
+	/*------------------------------------------------------------------*/
+	/**
 	 * Compare two opposite transformations (direct and inverse)
-	 * represented by elastic B-splines through the warping index.
+	 * represented by B-splines through the warping index.
 	 */
 	private void compareOppositeElasticTransformations ()
 	{

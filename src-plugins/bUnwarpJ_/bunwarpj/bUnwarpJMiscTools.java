@@ -23,6 +23,8 @@ package bunwarpj;
 
 import ij.IJ;
 import ij.ImagePlus;
+import ij.gui.PointRoi;
+import ij.gui.Roi;
 import ij.io.OpenDialog;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
@@ -31,6 +33,7 @@ import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -98,6 +101,13 @@ public class bUnwarpJMiscTools
 		/* GRAY SCALE IMAGES */
 		if(!(sourceImp.getProcessor() instanceof ColorProcessor))
 		{
+			source.startPyramids();
+			try{
+				source.getThread().join();
+			} catch (InterruptedException e) {
+				IJ.error("Unexpected interruption exception " + e);
+			}
+			
 			FloatProcessor fp = new FloatProcessor(targetWidth, targetHeight);
 			for (int v=0; v<targetHeight; v++)
 				for (int u=0; u<targetWidth; u++)
@@ -120,17 +130,17 @@ public class bUnwarpJMiscTools
 		else /* COLOR IMAGES */
 		{        	
 			// red
-			bUnwarpJImageModel sourceR = new bUnwarpJImageModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(0, null), false);
+			bUnwarpJImageModel sourceR = new bUnwarpJImageModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(0, null), false, 1);
 			sourceR.setPyramidDepth(0);
-			sourceR.getThread().start();
+			sourceR.startPyramids();
 			// green
-			bUnwarpJImageModel sourceG = new bUnwarpJImageModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(1, null), false);
+			bUnwarpJImageModel sourceG = new bUnwarpJImageModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(1, null), false, 1);
 			sourceG.setPyramidDepth(0);
-			sourceG.getThread().start();
+			sourceG.startPyramids();
 			//blue
-			bUnwarpJImageModel sourceB = new bUnwarpJImageModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(2, null), false);
+			bUnwarpJImageModel sourceB = new bUnwarpJImageModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(2, null), false, 1);
 			sourceB.setPyramidDepth(0);
-			sourceB.getThread().start();
+			sourceB.startPyramids();
 
 			// Join threads
 			try {
@@ -324,17 +334,22 @@ public class bUnwarpJMiscTools
 		else /* COLOR IMAGES */
 		{        	
 			// red
-			bUnwarpJImageModel sourceR = new bUnwarpJImageModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(0, null), false);
+			bUnwarpJImageModel sourceR = new bUnwarpJImageModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(0, null), false, 1);
 			sourceR.setPyramidDepth(0);
-			sourceR.getThread().start();
+			//sourceR.getThread().start();
+			sourceR.startPyramids();
+			
 			// green
-			bUnwarpJImageModel sourceG = new bUnwarpJImageModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(1, null), false);
+			bUnwarpJImageModel sourceG = new bUnwarpJImageModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(1, null), false, 1);
 			sourceG.setPyramidDepth(0);
-			sourceG.getThread().start();
+			//sourceG.getThread().start();
+			sourceG.startPyramids();
+			
 			//blue
-			bUnwarpJImageModel sourceB = new bUnwarpJImageModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(2, null), false);
+			bUnwarpJImageModel sourceB = new bUnwarpJImageModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(2, null), false, 1);
 			sourceB.setPyramidDepth(0);
-			sourceB.getThread().start();
+			//sourceB.getThread().start();
+			sourceB.startPyramids();
 
 			// Join threads
 			try {
@@ -595,8 +610,143 @@ public class bUnwarpJMiscTools
 				transformation_y[v][u] = swy.interpolateI();
 			}
 		}
-	}
+	} // end convertElasticTransformationToRaw 
 
+
+	
+	/*------------------------------------------------------------------*/
+	/**
+	 * Compress the raw transformation mapping as B-spline
+	 * coefficients.
+	 *
+	 * @param targetImp target image representation
+	 * @param intervals intervals in the deformation
+	 * @param transformation_x raw transformation in x- axis 
+	 * @param transformation_y raw transformation in y- axis 
+	 * @param cx transformation x- B-spline coefficients (output)
+	 * @param cy transformation y- B-spline coefficients (output)	 
+	 */
+	public static void compressRawTransformationAsBSpline(
+			ImagePlus targetImp,
+			int intervals,
+			double [][] transformation_x,
+			double [][] transformation_y,
+			double [][] cx,
+			double [][] cy)
+	{
+
+		if(cx == null || cy == null || transformation_x == null || transformation_y == null)
+		{
+			IJ.error("Error in transformations parameters!");
+			return;
+		}
+
+		// Ask for memory for the transformation
+		bUnwarpJImageModel compressed_x = new bUnwarpJImageModel(cx, true);
+		compressed_x.setPyramidDepth(0);
+		compressed_x.startPyramids();
+		
+		bUnwarpJImageModel compressed_y = new bUnwarpJImageModel(cy, true);
+		compressed_y.setPyramidDepth(0);
+		compressed_y.startPyramids();
+
+		
+
+
+	} // end convertRawTransformationToBSpline 		
+	
+	/*------------------------------------------------------------------*/
+	/**
+	 * Convert the raw transformation mapping to B-spline
+	 * coefficients.
+	 *
+	 * @param targetImp target image representation
+	 * @param intervals intervals in the deformation
+	 * @param transformation_x raw transformation in x- axis 
+	 * @param transformation_y raw transformation in y- axis 
+	 * @param cx transformation x- B-spline coefficients (output)
+	 * @param cy transformation y- B-spline coefficients (output)	 
+	 */
+	public static void convertRawTransformationToBSpline(
+			ImagePlus targetImp,
+			int intervals,
+			double [][] transformation_x,
+			double [][] transformation_y,
+			double [][] cx,
+			double [][] cy)
+	{
+
+		if(cx == null || cy == null || transformation_x == null || transformation_y == null)
+		{
+			IJ.error("Error in transformations parameters!");
+			return;
+		}
+
+		// Ask for memory for the transformation
+		int targetCurrentHeight = targetImp.getProcessor().getHeight();
+		int targetCurrentWidth  = targetImp.getProcessor().getWidth ();
+				
+		// Incorporate the raw transformation into the spline coefficient matrix
+		for (int i= 0; i<intervals + 3; i++)
+		{
+			final double v = (double)((i - 1) * (targetCurrentHeight - 1)) / (double)intervals;
+			for (int j = 0; j < intervals + 3; j++)
+			{
+				final double u = (double)((j - 1) * (targetCurrentWidth - 1)) / (double)intervals;
+				if(v >= 0 && v < targetCurrentHeight && u < targetCurrentWidth && u >= 0)
+				{
+					final int tv = (int) v;
+					final int tu = (int) u;
+					cx[i][j] = transformation_x[tv][tu];
+					cy[i][j] = transformation_y[tv][tu];
+				}
+			}
+		}
+		
+		// Fill the border values with anti-symmetric bounding conditions
+		for (int i = 0; i < intervals+3; i++)
+			for (int j = 0; j < intervals+3; j++)
+			{
+				int iFrom = i;
+				int jFrom = j;
+				int iPivot = -1;
+				int jPivot = -1;
+
+				if(iFrom < 1)
+				{
+					iFrom = 2 * 1 - i;
+					iPivot = 1;
+					jPivot = j;
+				}
+				else if(iFrom > (intervals+1))
+				{
+					iFrom = 2 * (intervals+1) - i;
+					iPivot = intervals+1;
+					jPivot = j;
+				}
+				if(jFrom < 1)
+				{
+					jFrom = 2 * 1 - j;
+					jPivot = 1;
+					iPivot = (iPivot != -1) ? iPivot : i;
+				}
+				else if(jFrom > (intervals+1))
+				{
+					jFrom = 2 * (intervals+1) - j;
+					jPivot = intervals+1;
+					iPivot = (iPivot != -1) ? iPivot : i;
+				}
+
+				if(iPivot != -1 && jPivot != -1)
+				{
+					cx[i][j] = 2 * cx[iPivot][jPivot] - cx[iFrom][jFrom];
+					cy[i][j] = 2 * cy[iPivot][jPivot] - cy[iFrom][jFrom];
+				}
+			}
+
+
+	} // end convertRawTransformationToBSpline 	
+	
 	/*------------------------------------------------------------------*/
 	/**
 	 * Warping index for comparing elastic deformations with any kind
@@ -1056,8 +1206,8 @@ public class bUnwarpJMiscTools
 	 * Load landmarks from file.
 	 *
 	 * @param filename landmarks file name
-	 * @param sourceStack stack of source related points
-	 * @param targetStack stack of target related points
+	 * @param sourceStack stack of source related points (output)
+	 * @param targetStack stack of target related points (output)
 	 */
 	static public void loadPoints(String filename,
 			Stack <Point> sourceStack, Stack <Point> targetStack)
@@ -1146,6 +1296,64 @@ public class bUnwarpJMiscTools
 			return;
 		}
 	}
+	
+	/*------------------------------------------------------------------*/
+	/**
+	 * Load point rois in the source and target images as landmarks.
+	 * 
+	 * @param sourceImp source image plus
+	 * @param targetImp target image plus 
+	 * @param sourceStack stack of source related points (output)
+	 * @param targetStack stack of target related points (output)
+	 */
+	public static void loadPointRoiAsLandmarks(ImagePlus sourceImp,
+												 ImagePlus targetImp, 
+												 Stack <Point> sourceStack, 
+												 Stack <Point> targetStack)
+	{
+
+		Roi roiSource = sourceImp.getRoi();
+		Roi roiTarget = targetImp.getRoi();				
+
+		if(roiSource instanceof PointRoi && roiTarget instanceof PointRoi)
+		{
+			PointRoi prSource = (PointRoi) roiSource;
+			int[] xSource = prSource.getXCoordinates();
+
+			PointRoi prTarget = (PointRoi) roiTarget;
+			int[] xTarget = prTarget.getXCoordinates();
+
+			int numOfPoints = xSource.length;
+
+			// If the number of points in both images is not the same,
+			// we do nothing.
+			if(numOfPoints != xTarget.length)
+				return;
+
+			// Otherwise we load the points in order as landmarks.
+			int[] ySource = prSource.getYCoordinates();
+			int[] yTarget = prTarget.getYCoordinates();
+
+			// The coordinates from the point rois are relative to the
+			// bounding box origin.
+			Rectangle recSource = prSource.getBounds();
+			int originXSource = recSource.x;
+			int originYSource = recSource.y;
+
+			Rectangle recTarget = prTarget.getBounds();
+			int originXTarget = recTarget.x;
+			int originYTarget = recTarget.y;
+
+			for(int i = 0; i < numOfPoints; i++)
+			{
+				sourceStack.push(new Point(xSource[i] + originXSource, ySource[i] + originYSource));
+				targetStack.push(new Point(xTarget[i] + originXTarget, yTarget[i] + originYTarget));
+			}			
+		}
+
+	}
+	/* end loadPointRoiAsLandmarks */
+	
 	/*------------------------------------------------------------------*/
 	/**
 	 * Load a transformation from a file.

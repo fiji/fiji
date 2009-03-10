@@ -64,7 +64,7 @@ public class bUnwarpJMask
     /*------------------------------------------------------------------*/
     /**
      * Empty constructor, the input image is used only to take the
-     * image size it take_mask is false, otherwise, it is used as the 
+     * image size if take_mask is false, otherwise, it is used as the 
      * mask information.
      *
      * @param ip image

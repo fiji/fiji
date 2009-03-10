@@ -21,6 +21,7 @@ package bunwarpj;
  * 
  */
 
+import ij.IJ;
 import ij.process.ImageProcessor;
 
 import java.util.Stack;
@@ -37,16 +38,18 @@ public class bUnwarpJImageModel implements Runnable
 { /* begin class bUnwarpJImageModel */
 
 	// Some constants
+	/** maximum output window dimensions */
+	public static int MAX_OUTPUT_SIZE = 1024;
+	
 	/** minimum image size */
 	private static int min_image_size = 4;
+	
+	/** */
+	private ImageProcessor ip = null;
 
-
-	/*....................................................................
-       Private variables
-    ....................................................................*/
 	// Thread
 	/** thread to create the model */
-	private Thread t;
+	private Thread t = null;
 
 	// Stack for the pyramid of images/coefficients
 	/** stack of coefficients pyramid */
@@ -56,9 +59,9 @@ public class bUnwarpJImageModel implements Runnable
 
 	// Original image, image spline coefficients, and gradient
 	/** original image */
-	private double[] image;
+	private double[] image = null;
 	/** image spline coefficients */
-	private double[] coefficient;
+	private double[] coefficient = null;
 
 	// Current image (the size might be different from the original)
 	/** current image */
@@ -71,9 +74,9 @@ public class bUnwarpJImageModel implements Runnable
 	private int      currentHeight;
 
 	// Size and other information
-	/** image width */
+	/** full resolution image width */
 	private int     width;
-	/** image height */
+	/** full resolution image height */
 	private int     height;
 
 	/** pyramid depth */
@@ -88,6 +91,9 @@ public class bUnwarpJImageModel implements Runnable
 	private boolean isTarget;
 	/** flag to check if the coefficients are mirrored */
 	private boolean coefficientsAreMirrored;
+	
+	/** subsampling factor at highest image resolution level (always a power of 2) */
+	private int maxImageSubsamplingFactor = 1;
 
 	// Some variables to speedup interpolation
 	// All these information is set through prepareForInterpolation()
@@ -130,6 +136,18 @@ public class bUnwarpJImageModel implements Runnable
 	private int      widthToUse;
 	/** height of the image used for the interpolation */
 	private int      heightToUse;
+	
+	// Subsampled output image
+	/** flag for using subsampled output image */
+	private boolean bSubsampledOutput = false;
+	/** width of the subsampled output image */
+	private int subWidth = 0;
+	/** height of the subsampled output image */
+	private int subHeight = 0;
+	/** subsampled output image B-spline coefficients */
+	private double[] subCoeffs = null;
+	/** subsampled output image */
+	private double[] subImage = null;
 
 	// Some variables to speedup interpolation (precomputed)
 	// All these information is set through prepareForInterpolation()
@@ -160,29 +178,27 @@ public class bUnwarpJImageModel implements Runnable
 
 	/*------------------------------------------------------------------*/
 	/**
-	 * Converts the pixel array of the incoming ImageProcessor
-	 * object into a local double array.
+	 * Create image model for image processor: image and coefficient pyramid.
+	 * When calling this constructor, the thread is not started, to do so, 
+	 * startPyramids needs to be called.
 	 *
 	 * @param ip image in pixel array
 	 * @param isTarget enables the computation of the derivative or not
+	 * @param maxImageSubsamplingFactor subsampling factor at highest resolution level
 	 */
 	public bUnwarpJImageModel (
 			final ImageProcessor ip,
-			final boolean isTarget)
-	{
-		// Initialize thread
-		t = new Thread(this);
-		t.setDaemon(true);
-
+			final boolean isTarget,
+			final int maxImageSubsamplingFactor)
+	{	
+		this.ip = ip;
+		
 		// Get image information
 		this.isTarget = isTarget;
+		this.maxImageSubsamplingFactor = maxImageSubsamplingFactor;
 		width         = ip.getWidth();
 		height        = ip.getHeight();
 		coefficientsAreMirrored = true;
-
-		// Copy the pixel array
-		image = new double[width * height];
-		bUnwarpJMiscTools.extractImage(ip, image);
 
 		// Resize the speedup arrays
 		xIndex    = new int[4];
@@ -247,7 +263,7 @@ public class bUnwarpJImageModel implements Runnable
 		this.coefficientsAreMirrored = false;
 
 		// Copy the array of coefficients
-		coefficient=new double[height*width];
+		coefficient = new double[height*width];
 		int k=0;
 		for (int y=0; y<height; y++, k+= width)
 			System.arraycopy(c[y], 0, coefficient, k, width);
@@ -300,6 +316,40 @@ public class bUnwarpJImageModel implements Runnable
 		d2yWeight = new double[4];
 	}    
 
+	/*------------------------------------------------------------------*/
+	/**
+	 * Start coefficient and image pyramids
+	 */
+	public void startPyramids()
+	{			
+		this.subWidth = this.width;
+		this.subHeight = this.height;
+		
+		// Output window must have a maximum size
+		if(this.width > bUnwarpJImageModel.MAX_OUTPUT_SIZE 
+			|| this.height > bUnwarpJImageModel.MAX_OUTPUT_SIZE)
+		{
+			this.bSubsampledOutput = true;			
+			// Calculate subsampled dimensions
+			do{
+				this.subWidth /= 2;
+				this.subHeight /= 2;
+			}while(this.subWidth > bUnwarpJImageModel.MAX_OUTPUT_SIZE 
+					|| this.subHeight > bUnwarpJImageModel.MAX_OUTPUT_SIZE);	
+			
+			//IJ.log("subWidth =" + this.subWidth);
+		}
+		else
+			this.bSubsampledOutput = false;
+			
+		// Initialize thread
+		t = new Thread(this);
+		t.setDaemon(true);
+		// And start it
+		t.start();
+	} /* end startPyramids */
+	
+	/*------------------------------------------------------------------*/
 	/**
 	 * Clear the pyramid.
 	 */
@@ -382,6 +432,13 @@ public class bUnwarpJImageModel implements Runnable
 	 * @return the full-size image.
 	 */
 	public double[] getImage () {return image;}
+	/*------------------------------------------------------------------*/
+	/**
+	 * Get subsampled output image.
+	 *
+	 * @return the subsumpled (to show) output image.
+	 */
+	public double[] getSubImage () {return this.subImage;}
 	/*------------------------------------------------------------------*/
 	/**
 	 * Get coefficients.
@@ -791,7 +848,6 @@ public class bUnwarpJImageModel implements Runnable
 			currentImage = (double [])imgpyramid.pop();
 		} else currentImage = image;
 	}
-
 	/*------------------------------------------------------------------*/
 	/**
 	 * fromCurrent=true  --> The interpolation is prepared to be done
@@ -890,7 +946,154 @@ public class bUnwarpJImageModel implements Runnable
 		d2yWeight[2] = ey-2*t;
 		d2yWeight[3] = t;
 	} /* prepareForInterpolation */
+	
+	/*------------------------------------------------------------------*/
+	/**
+	 * Prepare for interpolation and interpolate 
+	 * 
+	 * fromSub = true --> The interpolation is done from the subsampled
+	 *                    version of the image
+	 * else:
+	 * 
+	 * fromCurrent=true  --> The interpolation is done
+	 *                       from the current image in the pyramid.
+	 * fromCurrent=false --> The interpolation is done
+	 *                       from the original image.
+	 *
+	 * @param x x- point coordinate
+	 * @param y y- point coordinate
+	 * @param fromSub flat to determine to do the interpolation from the subsampled version of the image 
+	 * @param fromCurrent flag to determine the image to do the interpolation from
+	 * 		   interpolated value
+	 */
+	public double prepareForInterpolationAndInterpolateI(
+			double x,
+			double y,
+			boolean fromSub,
+			boolean fromCurrent)
+	{
 
+		int widthToUse = 0;
+		int heightToUse = 0;
+		int[] xIndex = new int[4];
+		int[] yIndex = new int[4];
+		double[] xWeight = new double[4];
+		double[] dxWeight = new double[4];
+		double[] d2xWeight = new double[4];
+		double[] yWeight = new double[4];
+		double[] dyWeight = new double[4];
+		double[] d2yWeight = new double[4];
+		
+		if (fromSub && this.subCoeffs != null)
+		{
+			widthToUse = this.subWidth;
+			heightToUse = this.subHeight;
+		}
+		else if (fromCurrent)
+		{
+			widthToUse = currentWidth;
+			heightToUse = currentHeight;
+		}
+		else 
+		{
+			widthToUse = width;
+			heightToUse = height;
+		}
+
+		int ix=(int)x;
+		int iy=(int)y;
+
+		int twiceWidthToUse =2*widthToUse;
+		int twiceHeightToUse=2*heightToUse;
+
+		// Set X indexes
+		// p is the index of the rightmost influencing spline
+		int p = (0.0 <= x) ? (ix + 2) : (ix + 1);
+		for (int k = 0; k<4; p--, k++) {
+			if (coefficientsAreMirrored) {
+				int q = (p < 0) ? (-1 - p) : (p);
+				if (twiceWidthToUse <= q) q -= twiceWidthToUse * (q / twiceWidthToUse);
+				xIndex[k] = (widthToUse <= q) ? (twiceWidthToUse - 1 - q) : (q);
+			} else
+				xIndex[k] = (p<0 || p>=widthToUse) ? (-1):(p);
+		}
+
+		// Set Y indexes
+		p = (0.0 <= y) ? (iy + 2) : (iy + 1);
+		for (int k = 0; k<4; p--, k++) {
+			if (coefficientsAreMirrored) {
+				int q = (p < 0) ? (-1 - p) : (p);
+				if (twiceHeightToUse <= q) q -= twiceHeightToUse * (q / twiceHeightToUse);
+				yIndex[k] = (heightToUse <= q) ? (twiceHeightToUse - 1 - q) : (q);
+			} else
+				yIndex[k] = (p<0 || p>=heightToUse) ? (-1):(p);
+		}
+
+		// Compute how much the sample depart from an integer position
+		double ex = x - ((0.0 <= x) ? (ix) : (ix - 1));
+		double ey = y - ((0.0 <= y) ? (iy) : (iy - 1));
+
+		// Set X weights for the image and derivative interpolation
+		double s = 1.0F - ex;
+		dxWeight[0] = 0.5F * ex * ex;
+		xWeight[0]  = ex * dxWeight[0] / 3.0F; // Bspline03(x-ix-2)
+		dxWeight[3] = -0.5F * s * s;
+		xWeight[3]  = s * dxWeight[3] / -3.0F; // Bspline03(x-ix+1)
+		dxWeight[1] = 1.0F - 2.0F * dxWeight[0] + dxWeight[3];
+		//xWeight[1]  = 2.0F / 3.0F + (1.0F + ex) * dxWeight[3]; // Bspline03(x-ix-1);
+		xWeight[1]  = bUnwarpJMathTools.Bspline03(x-ix-1);
+		dxWeight[2] = 1.5F * ex * (ex - 4.0F/ 3.0F);
+		xWeight[2]  = 2.0F / 3.0F - (2.0F - ex) * dxWeight[0]; // Bspline03(x-ix)
+
+		d2xWeight[0] = ex;
+		d2xWeight[1] = s-2*ex;
+		d2xWeight[2] = ex-2*s;
+		d2xWeight[3] = s;
+
+		// Set Y weights for the image and derivative interpolation
+		double t = 1.0F - ey;
+		dyWeight[0] = 0.5F * ey * ey;
+		yWeight[0]  = ey * dyWeight[0] / 3.0F;
+		dyWeight[3] = -0.5F * t * t;
+		yWeight[3]  = t * dyWeight[3] / -3.0F;
+		dyWeight[1] = 1.0F - 2.0F * dyWeight[0] + dyWeight[3];
+		yWeight[1]  = 2.0F / 3.0F + (1.0F + ey) * dyWeight[3];
+		dyWeight[2] = 1.5F * ey * (ey - 4.0F/ 3.0F);
+		yWeight[2]  = 2.0F / 3.0F - (2.0F - ey) * dyWeight[0];
+
+		d2yWeight[0] = ey;
+		d2yWeight[1] = t-2*ey;
+		d2yWeight[2] = ey-2*t;
+		d2yWeight[3] = t;
+		
+		// Only SplineDegree=3 is implemented
+		double ival=0.0F;
+		for (int j = 0; j<4; j++) {
+			s=0.0F;
+			iy=yIndex[j];
+			if (iy!=-1) {
+				p = iy*widthToUse;
+				for (int i=0; i<4; i++) {
+					ix=xIndex[i];
+					if (ix!=-1)
+					{
+						if (fromSub && this.subCoeffs != null)  
+							s += xWeight[i]*this.subCoeffs[p + ix];
+						else if (fromCurrent)
+							s += xWeight[i]*currentCoefficient[p + ix];							
+						else             
+							s += xWeight[i]*coefficient[p + ix];
+					}
+				}
+				ival+=yWeight[j] * s;
+			}
+		}
+		return ival;
+	} /* prepareForInterpolation */
+
+	
+	
+	
 	/*------------------------------------------------------------------*/
 	/**
 	 * Get width of precomputed vectors.
@@ -1154,9 +1357,16 @@ public class bUnwarpJImageModel implements Runnable
 	 */
 	public void run ()
 	{
+		if(image == null && ip != null)
+		{
+			// Copy the pixel array
+			image = new double[width * height];
+			bUnwarpJMiscTools.extractImage(ip, image);
+		}
 		coefficient = getBasicFromCardinal2D();
 		buildCoefficientPyramid();
-		if (isTarget) buildImagePyramid();
+		if (isTarget || this.bSubsampledOutput) 
+			buildImagePyramid();
 	} /* end run */
 
 	/*------------------------------------------------------------------*/
@@ -1194,8 +1404,8 @@ public class bUnwarpJImageModel implements Runnable
 		int scale = 0;
 		while (currentWidth>=min_image_size && currentHeight>=min_image_size) 
 		{
-			currentWidth/=2;
-			currentHeight/=2;
+			currentWidth /= 2;
+			currentHeight /= 2;
 			scale++;
 		}
 		scale--;
@@ -1206,6 +1416,48 @@ public class bUnwarpJImageModel implements Runnable
 		this.pyramidDepth = proposedPyramidDepth;
 	} /* end setPyramidDepth */
 
+	/*------------------------------------------------------------------*/
+	/**
+	 * Get subsampled output flag
+	 * 
+	 * @return true if the output needs to be subsampled
+	 */
+	boolean isSubOutput()
+	{
+		return this.bSubsampledOutput;
+	}
+	
+	/*------------------------------------------------------------------*/
+	/**
+	 * Set subsampled output flag
+	 * 
+	 * @param b new subsampled output flag
+	 */
+	void setSubOutput(boolean b)
+	{
+		this.bSubsampledOutput = b;
+	}
+	
+	/*------------------------------------------------------------------*/
+	/**
+	 * Get subsampled output height
+	 * 
+	 * @return subsampled output height
+	 */
+	int getSubHeight()
+	{
+		return this.subHeight;
+	}
+	/*------------------------------------------------------------------*/
+	/**
+	 * Get subsampled output width
+	 * 
+	 * @return subsampled output width
+	 */
+	int getSubWidth()
+	{
+		return this.subWidth;
+	}
 
 	/*....................................................................
        Private methods
@@ -1295,22 +1547,59 @@ public class bUnwarpJImageModel implements Runnable
 		int halfWidth = width;
 		int halfHeight = height;
 		basicToCardinal2D(coefficient, fullDual, width, height, 7);
-		for (int depth = 1; ((depth <= pyramidDepth) && (!t.isInterrupted())); depth++) 
+				
+		int extraSteps = (int) Math.round(Math.log((double) this.maxImageSubsamplingFactor) / Math.log(2));
+		//System.out.println("Extra steps = " + extraSteps + " maxImageSubsamplingFactor = " + this.maxImageSubsamplingFactor);
+		 
+		// We compute the coefficients pyramid now taking into account the possible extra steps
+		// (extra steps = trick to increase B-spline coefficients when necessary)
+		for (int depth = 1; ((depth <= (pyramidDepth+extraSteps)) && (!t.isInterrupted())); depth++) 
 		{
+			IJ.showStatus("Building coefficients pyramid...");
+			IJ.showProgress((double) depth / (pyramidDepth + extraSteps));
 			fullWidth = halfWidth;
 			fullHeight = halfHeight;
 			halfWidth /= 2;
 			halfHeight /= 2;
+			
+			// If the image is too small, we push the previous version of the coefficients
+			if(fullWidth <= this.min_image_size || fullHeight <= this.min_image_size)
+			{				 
+				if(this.bSubsampledOutput)
+					IJ.log("Coefficients pyramid " + fullWidth + "x" + fullHeight);
+				cpyramid.push(fullDual);
+				cpyramid.push(new Integer(fullHeight));
+				cpyramid.push(new Integer(fullWidth));
+				halfWidth *= 2;
+				halfHeight *= 2;
+				continue;
+			}
+						
 			final double[] halfDual = getHalfDual2D(fullDual, fullWidth, fullHeight);
 			final double[] halfCoefficient = getBasicFromCardinal2D(halfDual, halfWidth, halfHeight, 7);
-			cpyramid.push(halfCoefficient);
-			cpyramid.push(new Integer(halfHeight));
-			cpyramid.push(new Integer(halfWidth));
+
+			if(depth >= extraSteps)
+			 {
+				if(this.bSubsampledOutput)
+					IJ.log("Coefficients pyramid " + halfWidth + "x" + halfHeight);
+				cpyramid.push(halfCoefficient);
+				cpyramid.push(new Integer(halfHeight));
+				cpyramid.push(new Integer(halfWidth));
+			 }
+
 			fullDual = halfDual;
-		}
+			
+			if(this.bSubsampledOutput && halfWidth == this.subWidth)
+			{
+				this.subCoeffs = halfCoefficient;
+			}
+		}		
 		smallestWidth  = halfWidth;
 		smallestHeight = halfHeight;
 		currentDepth = pyramidDepth+1;
+		
+		//if(this.bSubsampledOutput && this.subCoeffs != null)
+		//	System.out.println(" subCoeffs.length = " + this.subCoeffs.length);
 	} /* end buildCoefficientPyramid */
 
 	/*------------------------------------------------------------------*/
@@ -1325,20 +1614,78 @@ public class bUnwarpJImageModel implements Runnable
 		 int halfWidth = width;
 		 int halfHeight = height;
 		 cardinalToDual2D(image, fullDual, width, height, 3);
-		 for (int depth = 1; ((depth <= pyramidDepth) && (!t.isInterrupted())); depth++) 
-		 {
+		 
+		 int extraSteps = (int) Math.round(Math.log((double) this.maxImageSubsamplingFactor) / Math.log(2));
+		 //System.out.println("Extra steps = " + extraSteps + " maxImageSubsamplingFactor = " + this.maxImageSubsamplingFactor);
+		 
+		 for (int depth = 1; ((depth <= (pyramidDepth+extraSteps) ) && (!t.isInterrupted())); depth++) 
+		 {			 
+			 IJ.showStatus("Building image pyramid...");
+		     IJ.showProgress((double) depth / (pyramidDepth + extraSteps));
+				
 			 fullWidth = halfWidth;
-			 fullHeight = halfHeight;
+			 fullHeight = halfHeight;			 			 
+			 
 			 halfWidth /= 2;
 			 halfHeight /= 2;
+			 
+			 if(fullWidth <= this.min_image_size || fullHeight <= this.min_image_size)
+			 {				 
+				 if(this.bSubsampledOutput)
+						IJ.log(" Image pyramid " + fullWidth + "x" + fullHeight);
+				 imgpyramid.push(fullDual);
+				 imgpyramid.push(new Integer(fullHeight));
+				 imgpyramid.push(new Integer(fullWidth));
+				 halfWidth *= 2;
+				 halfHeight *= 2;
+				 continue;
+			 }
+			 
 			 final double[] halfDual = getHalfDual2D(fullDual, fullWidth, fullHeight);
 			 final double[] halfImage = new double[halfWidth * halfHeight];
 			 dualToCardinal2D(halfDual, halfImage, halfWidth, halfHeight, 3);
-			 imgpyramid.push(halfImage);
-			 imgpyramid.push(new Integer(halfHeight));
-			 imgpyramid.push(new Integer(halfWidth));
+			 
+			 if(depth >= extraSteps)
+			 {
+				 if(this.bSubsampledOutput)
+						IJ.log(" Image pyramid " + halfWidth + "x" + halfHeight);
+				 imgpyramid.push(halfImage);
+				 imgpyramid.push(new Integer(halfHeight));
+				 imgpyramid.push(new Integer(halfWidth));
+			 }
 			 fullDual = halfDual;
+			 
+			 if(this.bSubsampledOutput && halfWidth == this.subWidth)
+			 {
+				 this.subImage = halfDual;
+				 //IJ.log("sub image set");
+			 }
 		 }
+		 
+		 // If the output sub-image has not been set yet, we keep reducing the image
+		 while(halfWidth > this.subWidth)
+		 {
+			 fullWidth = halfWidth;
+			 fullHeight = halfHeight;			 			 
+			 
+			 halfWidth /= 2;
+			 halfHeight /= 2;
+			 
+			 final double[] halfDual = getHalfDual2D(fullDual, fullWidth, fullHeight);
+			 final double[] halfImage = new double[halfWidth * halfHeight];
+			 dualToCardinal2D(halfDual, halfImage, halfWidth, halfHeight, 3);
+			 
+			 fullDual = halfDual;
+			 
+			 if(this.bSubsampledOutput && halfWidth == this.subWidth)
+			 {
+				 this.subImage = halfDual;
+				 //IJ.log("sub image set");
+			 }
+		 }
+		 
+		 //System.out.println(" subImage.length = " + this.subImage.length);
+		 
 	 } /* end buildImagePyramid */
 
 	 /*------------------------------------------------------------------*/
