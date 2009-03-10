@@ -2,7 +2,7 @@ package bunwarpj;
 
 /**
  * bUnwarpJ plugin for ImageJ(C).
- * Copyright (C) 2005,2006,2007,2008 Ignacio Arganda-Carreras and Jan Kybic 
+ * Copyright (C) 2005-2009 Ignacio Arganda-Carreras and Jan Kybic 
  *
  * More information at http://biocomp.cnb.csic.es/%7Eiarganda/bUnwarpJ/
  *
@@ -4970,9 +4970,9 @@ public class bUnwarpJTransformation
 
 			String s = bIsReverse ? new String("Target") : new String("Source");
 			is.addSlice("Registered " + s + " Image", fp);
-			if (outputLevel > -1)
+			//if (outputLevel > -1)
 				is.addSlice("Target Image", fp_target);
-			if (outputLevel > -1)
+			//if (outputLevel > -1)
 				is.addSlice("Warped Source Mask",fp_mask);
 
 			if (outputLevel == 2)
@@ -5113,9 +5113,9 @@ public class bUnwarpJTransformation
 
 			String s = bIsReverse ? new String("Target") : new String("Source");
 			is.addSlice("Registered " + s + " Image", cp);
-			if (outputLevel > -1)
+			//if (outputLevel > -1)
 				is.addSlice("Target Image", bIsReverse ? this.originalSourceIP : this.originalTargetIP);  		   
-			if (outputLevel > -1)
+			//if (outputLevel > -1)
 				is.addSlice("Warped Source Mask", cp_mask);
 
 			if (outputLevel == 2)

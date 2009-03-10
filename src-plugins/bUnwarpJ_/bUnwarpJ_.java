@@ -1,7 +1,7 @@
 
 /**
  * bUnwarpJ plugin for ImageJ(C).
- * Copyright (C) 2005,2006,2007,2008 Ignacio Arganda-Carreras and Jan Kybic 
+ * Copyright (C) 2005-2009 Ignacio Arganda-Carreras and Jan Kybic 
  *
  * More information at http://biocomp.cnb.csic.es/%7Eiarganda/bUnwarpJ/
  *
@@ -22,7 +22,7 @@
 
 /**
  * ====================================================================
- *  Version: December 20th, 2008
+ *  Version: March 10th, 2009
  *  http://biocomp.cnb.csic.es/%7Eiarganda/bUnwarpJ/
  * \===================================================================
  */
@@ -76,7 +76,7 @@ import java.util.Stack;
  * <a href="http://biocomp.cnb.csic.es/~iarganda/bUnwarpJ/">
  * http://biocomp.cnb.csic.es/~iarganda/bUnwarpJ/</a>
  *
- * @version 2.0 12/20/2008
+ * @version 2.5 03/10/2009
  * @author Ignacio Arganda-Carreras <ignacio.arganda@uam.es>
  * @author Jan Kybic
  */
@@ -340,7 +340,7 @@ public class bUnwarpJ_ implements PlugIn
          saveTransf, null, null, output_ip[0], output_ip[1], dialog,
          originalSourceIP, originalTargetIP);
 
-       IJ.write("\nRegistering...\n");
+       IJ.log("\nRegistering...\n");
        
        if(mode == bUnwarpJDialog.MONO_MODE)
     	   warp.doUnidirectionalRegistration();
@@ -606,12 +606,17 @@ public class bUnwarpJ_ implements PlugIn
        else
     	   warp.doRegistration();
 
-       // Save results
+       // Save results (only the registered image, the target 
+       // and mask images are trashed)
+       output_ip_1.getStack().deleteLastSlice();
+       output_ip_1.getStack().deleteLastSlice();
        FileSaver fs = new FileSaver(output_ip_1);
        fs.saveAsTiff(fn_out_1);
        
        if((accurate_mode != bUnwarpJDialog.MONO_MODE))
        {
+    	   output_ip_2.getStack().deleteLastSlice();
+           output_ip_2.getStack().deleteLastSlice();
     	   fs = new FileSaver(output_ip_2);
     	   fs.saveAsTiff(fn_out_2);
        }
