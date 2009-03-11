@@ -2,7 +2,7 @@ package bunwarpj;
 
 /**
  * bUnwarpJ plugin for ImageJ(C).
- * Copyright (C) 2005,2006,2007,2008 Ignacio Arganda-Carreras and Jan Kybic 
+ * Copyright (C) 2005-2009 Ignacio Arganda-Carreras and Jan Kybic 
  *
  * More information at http://biocomp.cnb.csic.es/%7Eiarganda/bUnwarpJ/
  *
@@ -64,7 +64,7 @@ public class bUnwarpJMask
     /*------------------------------------------------------------------*/
     /**
      * Empty constructor, the input image is used only to take the
-     * image size it take_mask is false, otherwise, it is used as the 
+     * image size if take_mask is false, otherwise, it is used as the 
      * mask information.
      *
      * @param ip image
