@@ -5164,16 +5164,16 @@ public class bUnwarpJTransformation
 		/**
 		 * Grayscale result tile maker constructor
 		 * 
-		 * @param swx
-		 * @param swy
-		 * @param auxSource
-		 * @param auxTargetCurrentWidth
-		 * @param auxTargetCurrentHeight
-		 * @param auxTargetMsk
-		 * @param auxSourceMsk
-		 * @param rect
-		 * @param fp
-		 * @param fp_mask
+		 * @param swx B-spline interpolator for transformation in x-
+		 * @param swy B-spline interpolator for transformation in y-
+		 * @param auxSource source image
+		 * @param auxTargetCurrentWidth current target width
+		 * @param auxTargetCurrentHeight current target height
+		 * @param auxTargetMsk target mask
+		 * @param auxSourceMsk source mask
+		 * @param rect retangle with the coordinates of the output image to be updated
+		 * @param fp image processor to be updated
+		 * @param fp_mask mask processor to be updated
 		 */
 		GrayscaleResultTileMaker(bUnwarpJImageModel swx, 
 		 		  bUnwarpJImageModel swy, 
@@ -5282,23 +5282,23 @@ public class bUnwarpJTransformation
 		final private FloatProcessor fpG;
 		final private FloatProcessor fpB;
 		final private ColorProcessor cp_mask;
-		
+				
 		/*------------------------------------------------------------------*/
 		/**
 		 * Color result tile maker constructor
 		 * 
-		 * @param swx
-		 * @param swy
-		 * @param auxSource
-		 * @param auxTargetCurrentWidth
-		 * @param auxTargetCurrentHeight
-		 * @param auxTargetMsk
-		 * @param auxSourceMsk
-		 * @param rect
-		 * @param fpR
-		 * @param fpG
-		 * @param fpB
-		 * @param cp_mask
+		 * @param swx B-spline interpolator for transformation in x-
+		 * @param swy B-spline interpolator for transformation in y-
+		 * @param auxSource source image
+		 * @param auxTargetCurrentWidth current target height
+		 * @param auxTargetCurrentHeight current target height
+		 * @param auxTargetMsk target mask
+		 * @param auxSourceMsk source mask
+		 * @param rect retangle with the coordinates of the output image to be updated
+		 * @param fpR red channel processor to be updated
+		 * @param fpG green channel processor to be updated
+		 * @param fpB blue channel processor to be updated
+		 * @param cp_mask mask color processor to be updated
 		 */
 		ColorResultTileMaker(bUnwarpJImageModel swx, 
 		 		  bUnwarpJImageModel swy, 
@@ -5421,6 +5421,8 @@ public class bUnwarpJTransformation
 	/**
 	 * Show the transformation (calculating entire transformation tables).
 	 *
+	 * @deprecated
+	 * 
 	 * @param intervals number of intervals in the deformation
 	 * @param cx x- deformation coefficients
 	 * @param cy y- deformation coefficients
@@ -5938,25 +5940,25 @@ public class bUnwarpJTransformation
 		/**
 		 * Output tile maker constructor
 		 * 
-		 * @param swx
-		 * @param swy
-		 * @param auxSource
-		 * @param auxTarget
-		 * @param auxTargetMsk
-		 * @param auxSourceMsk
-		 * @param auxFactorWidth
-		 * @param auxFactorHeight
-		 * @param auxTargetCurrentHeight
-		 * @param auxTargetCurrentWidth
-		 * @param rect
-		 * @param fp
+		 * @param swx B-spline interpolator for transformation in x-
+		 * @param swy B-spline interpolator for transformation in y-
+		 * @param auxSource source image
+		 * @param auxTarget target image
+		 * @param auxSourceMsk source mask
+		 * @param auxTargetMsk target mask		 
+		 * @param auxFactorWidth width factor
+		 * @param auxFactorHeight height factor
+		 * @param auxTargetCurrentHeight current target height
+		 * @param auxTargetCurrentWidth current target width
+		 * @param rect retangle with the coordinates of the output image to be updated
+		 * @param fp processor to be updated 
 		 */
 		OutputTileMaker(bUnwarpJImageModel swx, 
 		 		  bUnwarpJImageModel swy, 
 		 		  bUnwarpJImageModel auxSource,
-		 		  bUnwarpJImageModel auxTarget,
-		 		  bUnwarpJMask auxTargetMsk,
+		 		  bUnwarpJImageModel auxTarget,		 		  
 		 		  bUnwarpJMask auxSourceMsk,
+		 		  bUnwarpJMask auxTargetMsk,
 		 		  double auxFactorWidth,
 		 		  double auxFactorHeight,
 		 		  int auxTargetCurrentHeight,
