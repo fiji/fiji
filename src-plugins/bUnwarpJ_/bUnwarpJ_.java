@@ -228,9 +228,28 @@ public class bUnwarpJ_ implements PlugIn
 
     /*------------------------------------------------------------------*/
     /**
-     * Method for images alignment with no graphical interface.
+     * Method for images alignment with no graphical interface. This 
+     * method gives as result an array of 2 ImagePlus containing the
+     * source-target and target-source results respectively. Each of them
+     * has three slices: the final deformed image, its target image and 
+     * its mask.
      *
-     * @param args arguments for the program
+     * @param targetImp input target image 
+     * @param sourceImp input source image
+     * @param targetMskIP target mask 
+     * @param sourceMskIP source mask
+     * @param mode accuracy mode (0 - Fast, 1 - Accurate, 2 - Mono)
+     * @param img_subsamp_fact image subsampling factor (from 0 to 7, representing 2^0=1 to 2^7 = 128)
+     * @param min_scale_deformation (0 - Very Coarse, 1 - Coarse, 2 - Fine, 3 - Very Fine)
+     * @param max_scale_deformation (0 - Very Coarse, 1 - Coarse, 2 - Fine, 3 - Very Fine, 4 - Super Fine)
+     * @param divWeight divergence weight
+     * @param curlWeight curl weight
+     * @param landmarkWeight landmark weight
+     * @param imageWeight image similarity weight
+     * @param consistencyWeight consistency weight
+     * @param stopThreshold stopping threshold
+     * 
+     * @return resulting ImagePlus array (with source-target and target-source results)
      */
     public static ImagePlus[] alignImagesBatch(ImagePlus targetImp,
     									 ImagePlus sourceImp,
