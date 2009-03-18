@@ -28,7 +28,12 @@ Linux)
 		x86_64) platform=linux64;;
 		*) platform=linux;;
 	esac; exe=;;
-MINGW*|CYGWIN*) platform=win32; exe=.exe;;
+MINGW*|CYGWIN*)
+	case "$PROCESSOR_ARCHITEW6432" in
+	'') platform=win32;;
+	*) platform=win64;;
+	esac
+	exe=.exe;;
 esac
 
 handle_variables () {
