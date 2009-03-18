@@ -267,15 +267,6 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 		if (name.endsWith(".svg"))
 			return tryPlugIn("io.SVG_Reader", path);
 
-		// Johannes Schindelin: open a Cellomics DIB
-		if (name.endsWith(".C01") || name.endsWith(".c01") ||
-				(buf[0] == 0x28 && buf[1] == 0 &&
-				 buf[2] == 0 && buf[3] == 0) ||
-				(buf[0] == 0 && buf[1] == 0 &&
-				 buf[2] == 0 && buf[3] == 0x10 &&
-				 buf[4] == 0x78 && buf[5] == 0x01))
-			return tryPlugIn("io.Cellomics_DIB_Reader", path);
-
 		// Johannes Schindelin: handle scripts
 		if (name.endsWith(".py"))
 			return tryPlugIn("Jython.Refresh_Jython_Scripts", path);
