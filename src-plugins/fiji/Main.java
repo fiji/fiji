@@ -62,10 +62,18 @@ public class Main implements AWTEventListener {
 		return icon;
 	}
 
-	public static void main(String[] args) {
+	public static void premain() {
 		Toolkit.getDefaultToolkit().addAWTEventListener(new Main(), -1);
-		ImageJ.main(args);
+	}
+
+	public static void postmain() {
 		if (IJ.getInstance() != null)
 			new User_Plugins().run(null);
+	}
+
+	public static void main(String[] args) {
+		premain();
+		ImageJ.main(args);
+		postmain();
 	}
 }
