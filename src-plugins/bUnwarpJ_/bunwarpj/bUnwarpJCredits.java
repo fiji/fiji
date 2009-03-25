@@ -3,7 +3,7 @@ package bunwarpj;
 
 /**
  * bUnwarpJ plugin for ImageJ(C).
- * Copyright (C) 2005,2006,2007,2008 Ignacio Arganda-Carreras and Jan Kybic 
+ * Copyright (C) 2005-2009 Ignacio Arganda-Carreras and Jan Kybic 
  *
  * More information at http://biocomp.cnb.csic.es/%7Eiarganda/bUnwarpJ/
  *
@@ -29,7 +29,7 @@ import ij.IJ;
 public class bUnwarpJCredits implements ij.plugin.PlugIn
 { /* begin class bUnwarpJCredits */
 
-	static public String version = "2.0 11-10-2008";
+	static public String version = "2.5 10-03-2009";
 
 	/*....................................................................
        Public methods
@@ -47,7 +47,9 @@ public class bUnwarpJCredits implements ij.plugin.PlugIn
 		text += "\n";
 		text += " bUnwarpJ " + bUnwarpJCredits.version + "\n";
 		text += " Consistent and elastic pairwise image registration (B-spline image and deformation representation).\n";
+		text += " \n";
 		text += " The work is based on the paper:\n";
+		text += " \n";
 		text += "\n Ignacio Arganda-Carreras, Carlos O. S. Sorzano, Roberto Marabini, Jose M. Carazo,\n" +
 		" Carlos Ortiz de Solorzano, and Jan Kybic. 'Consistent and Elastic Registration of Histological\n" +
 		" Sections using Vector-Spline Regularization'. Lecture Notes in Computer Science, Springer\n" +

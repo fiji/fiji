@@ -322,7 +322,9 @@ public abstract class AbstractInterpreter implements PlugIn {
 				});
 		DefaultFocusManager manager = new DefaultFocusManager() {
 			public void processKeyEvent(Component focusedComponent, KeyEvent ke) {
-				if (ke.getKeyCode() == KeyEvent.VK_TAB) {
+				if (focusedComponent == window &&
+						ke.getKeyCode() ==
+							KeyEvent.VK_TAB) {
 					//cancelling TAB actions on focus issues
 					return;
 				}
