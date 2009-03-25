@@ -86,6 +86,14 @@ public class KDTree {
 			(list[list.length / 2] + list[list.length / 2 - 1]) / 2;
 	}
 
+	public Node getRoot() {
+		return root;
+	}
+
+	public int getDimension() {
+		return dimension;
+	}
+
 	public String toString(Node node, String indent) {
 		if (node instanceof Leaf)
 			return indent + node.toString();
