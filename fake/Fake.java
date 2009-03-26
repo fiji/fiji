@@ -378,6 +378,7 @@ public class Fake {
 				}
 
 				String target = line.substring(0, arrow).trim();
+				target = expandVariables(target);
 				String list = line.substring(arrow + 2).trim();
 				try {
 					Rule rule = addRule(target, list);
