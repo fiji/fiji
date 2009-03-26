@@ -463,7 +463,8 @@ public class Fake {
 					new File(lastPrereq).isDirectory())
 				rule = new SubFake(target, list);
 			else if (target.endsWith(".jar")) {
-				if (prerequisites.endsWith(".jar"))
+				if (expandVariables(prerequisites, target)
+						.endsWith(".jar"))
 					rule = new CopyJar(target, list);
 				else
 					rule = new CompileJar(target, list);
