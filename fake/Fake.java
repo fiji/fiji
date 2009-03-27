@@ -2204,7 +2204,7 @@ public class Fake {
 				System.err.println("Ignore " + directory);
 			return;
 		}
-		System.err.println((tryFake ? "F" : "M") + "aking in "
+		System.err.println((tryFake ? "Build" : "Mak") + "ing in "
 			+ directory + (directory.endsWith("/") ? "" : "/"));
 
 		try {

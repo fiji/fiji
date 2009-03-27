@@ -13,3 +13,10 @@ do
 		exit 1
 	}
 done
+
+# Run the VIB JUnit tests as well
+
+./vib-junit-tests.sh || {
+	echo "Failed some of the JUnit tests in the VIB submodule"
+	exit 1
+}
