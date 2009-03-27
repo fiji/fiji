@@ -166,7 +166,7 @@ javaVersion(misc/Fiji.jar)=1.3
 misc/Fiji.jar <- src-plugins/fiji/*.java src-plugins/ij/**/*.java
 
 # These classes are common
-jars/fiji-scripting.jar <- src-plugins/common/**/*.java
+jars/fiji-scripting.jar <- src-plugins/fiji-scripting/**/*.java
 
 CLASSPATH(plugins/Jython_Interpreter.jar)=jars/fiji-scripting.jar
 plugins/Jython_Interpreter.jar <- src-plugins/Jython/*.java
