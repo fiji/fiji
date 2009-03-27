@@ -48,6 +48,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
 import java.util.Hashtable;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Iterator;
 import java.util.Collections;
@@ -77,7 +78,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 		// Save history of all open interpreters even in the case of a call to System.exit(0),
 		// which doesn't spawn windowClosing events.
 		Runtime.getRuntime().addShutdownHook(new Thread() { public void run() {
-			for (Map.Entry<Class,AbstractInterpreter> e : instances.entrySet()) {
+			for (Map.Entry<Class,AbstractInterpreter> e : new HashSet<Map.Entry<Class,AbstractInterpreter>>(instances.entrySet())) {
 				e.getValue().closingWindow();
 			}
 		}});
