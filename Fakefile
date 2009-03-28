@@ -126,6 +126,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Fiji_Plugins.jar \
 	plugins/ToAST_.jar \
 	plugins/MTrack2_.jar \
+	plugins/Statistical_Region_Merging.jar \
 	\
 	misc/Fiji.jar
 
