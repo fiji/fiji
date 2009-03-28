@@ -161,10 +161,17 @@ public class bUnwarpJFinalAction implements Runnable
         
         // Perform the registration
         IJ.showStatus("Registering...");
-        if(this.accurate_mode == bUnwarpJDialog.MONO_MODE)
+        
+        long start = System.currentTimeMillis(); // start timing
+        
+        if(this.accurate_mode == bUnwarpJDialog.MONO_MODE)        	
         	warp.doUnidirectionalRegistration();
         else
         	warp.doRegistration();
+        
+        long stop = System.currentTimeMillis(); // stop timing
+        if(outputLevel == 2)
+        	IJ.write("\nRegistration time: " + (stop - start) + "ms"); // print execution time
 
         dialog.restoreAll();
         dialog.freeMemory();
