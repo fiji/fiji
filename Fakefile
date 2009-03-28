@@ -121,6 +121,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Analyze/Grid_.class \
 	plugins/Input-Output/HandleExtraFileTypes.class \
 	plugins/Stacks/Stack_Reverser.class \
+	plugins/Bug_Submitter.jar \
 	plugins/Fiji_Plugins.jar \
 	\
 	misc/Fiji.jar
@@ -176,6 +177,8 @@ CLASSPATH(plugins/BeanShell_Interpreter.jar)=jars/fiji-scripting.jar
 plugins/BeanShell_Interpreter.jar <- src-plugins/BSH/*.java
 CLASSPATH(plugins/Javascript_.jar)=jars/fiji-scripting.jar
 plugins/Javascript_.jar <- src-plugins/Javascript/*.java
+
+plugins/Bug_Submitter.jar <- src-plugins/Bug_Submitter/*.java
 
 CLASSPATH(plugins/register_virtual_stack_slices.jar)=plugins/TrakEM2_.jar
 CLASSPATH(plugins/lens_correction.jar)=plugins/TrakEM2_.jar:plugins/mpicbg_.jar
