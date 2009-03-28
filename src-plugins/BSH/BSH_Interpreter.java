@@ -25,18 +25,10 @@ import common.AbstractInterpreter;
 
 public class BSH_Interpreter extends AbstractInterpreter {
 
-	static private boolean loaded = false;
-
 	private Interpreter interp;
 
 	synchronized public void run(String arg) {
-		if (loaded) {
-			IJ.showMessage("BSH Interpreter already started.");
-			return;
-		}
-
 		interp = new Interpreter();
-		loaded = true;
 		super.screen.append("Starting BeanShell...");
 		super.screen.append(" Ready -- have fun.\n>>>");
 		// ok create window
