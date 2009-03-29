@@ -54,8 +54,7 @@ import ij.Prefs;
 
 public class Bug_Submitter implements PlugIn {
 
-	protected String bugzillaUserName = "mark-fijibugreports@longair.net";
-	protected String bugzillaAssignee = bugzillaUserName;
+	protected String bugzillaAssignee = "mark-fijibugreports@longair.net";
 
 	public String e( String original ) {
 		try {
@@ -356,15 +355,28 @@ public class Bug_Submitter implements PlugIn {
 			c.anchor = GridBagConstraints.CENTER;
 
 			{
-				Panel p = new Panel();
-				p.setLayout( new BorderLayout() );
-				Label l = new Label("You need a Bugzilla login to report bugs:");
-				p.add( l, BorderLayout.WEST );
-				bugzillaAccountCreation = new Button( "Go to the Bugzilla account creation page" );
-				bugzillaAccountCreation.addActionListener(this);
-				p.add( bugzillaAccountCreation, BorderLayout.CENTER );
+				Panel labelsPanel = new Panel();
+				labelsPanel.setLayout( new GridBagLayout() );
+				GridBagConstraints clabels = new GridBagConstraints();
+				clabels.gridx = 0;
+				clabels.gridy = 0;
+				clabels.anchor = GridBagConstraints.LINE_START;
+				labelsPanel.add( new Label( "In order to report a bug, we ask that you create a Bugzilla account." ), clabels );
+				++ clabels.gridy;
+				labelsPanel.add( new Label( "This is so that you can follow the progress of fixing the problem by" ), clabels );
+				++ clabels.gridy;
+				clabels.insets = new Insets( 0, 0, 4, 0 );
+				labelsPanel.add( new Label( "email and enables us to ask follow-up questions if that's necessary." ), clabels );
 
-				add( p, c );
+				clabels.gridx = 1;
+				clabels.gridy = 0;
+				clabels.gridheight = 3;
+				clabels.fill = GridBagConstraints.BOTH;
+				bugzillaAccountCreation = new Button( "Visit the Bugzilla account creation page" );
+				bugzillaAccountCreation.addActionListener(this);
+				labelsPanel.add( bugzillaAccountCreation, clabels );
+
+				add( labelsPanel, c );
 				++ c.gridy;
 			}
 
@@ -396,7 +408,7 @@ public class Bug_Submitter implements PlugIn {
 
 			summary = new TextField(40);
 			summary.setText( suggestedSummary );
-			description = new TextArea(20,76);
+			description = new TextArea(16,76);
 			description.setText( suggestedDescription );
 
 			c.gridx = 0;
