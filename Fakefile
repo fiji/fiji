@@ -124,6 +124,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Stacks/Stack_Reverser.class \
 	plugins/Bug_Submitter.jar \
 	plugins/Fiji_Plugins.jar \
+	plugins/MTrack2_.jar \
 	\
 	misc/Fiji.jar
 
