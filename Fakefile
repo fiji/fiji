@@ -122,6 +122,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Input-Output/HandleExtraFileTypes.class \
 	plugins/Stacks/Stack_Reverser.class \
 	plugins/Fiji_Plugins.jar \
+	plugins/ToAST_.jar \
 	\
 	misc/Fiji.jar
 
