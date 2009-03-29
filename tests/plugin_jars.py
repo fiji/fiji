@@ -15,7 +15,7 @@ ImageJ()
 if len(sys.argv) > 1 and sys.argv[1] == '-v':
 	for key in Menus.getCommands():
 		command = Menus.getCommands().get(key)
-	print key, '->', command
+		print key, '->', command
 	sys.exit()
 
 ok = 1
