@@ -812,6 +812,21 @@ public class Fake {
 				return false;
 			}
 
+			boolean upToDateRecursive(File source, File target) {
+				if (!source.exists())
+					return true;
+				if (!source.isDirectory())
+					return upToDate(source, target);
+				String[] entries = source.list();
+				for (int i = 0; i < entries.length; i++) {
+					File file = new File(source,
+							entries[i]);
+					if (!upToDate(file, target))
+						return false;
+				}
+				return true;
+			}
+
 			void make() throws FakeException {
 				if (wasAlreadyChecked)
 					return;
@@ -1083,7 +1098,15 @@ public class Fake {
 			}
 
 			boolean checkUpToDate() {
-				return false;
+				File target = new File(this.target);
+				Iterator iter = prerequisites.iterator();
+				while (iter.hasNext()) {
+					String directory = (String)iter.next();
+					File dir = new File(directory);
+					if (!upToDateRecursive(dir, target))
+						return false;
+				}
+				return true;
 			}
 
 			void action() throws FakeException {
