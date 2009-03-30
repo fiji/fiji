@@ -788,15 +788,43 @@ public class Fake {
 			}
 
 			boolean upToDate(File source, File target) {
+				if (target.equals(source))
+					return true;
 				long targetModified = target.lastModified();
 				long sourceModified = source.lastModified();
-				return targetModified > sourceModified;
+				if (targetModified == sourceModified &&
+						compare(source, target) == 0)
+					return true;
+				if (targetModified <= sourceModified)
+					return upToDateError(source, target);
+				return true;
 			}
 
 			boolean upToDate(String source, String target,
 					File cwd) {
 				return upToDate(new File(cwd, source),
 					new File(cwd, target));
+			}
+
+			boolean upToDateError(File source, File target) {
+				verbose("" + target + " is not up-to-date "
+					+ "because " + source + " is newer.");
+				return false;
+			}
+
+			boolean upToDateRecursive(File source, File target) {
+				if (!source.exists())
+					return true;
+				if (!source.isDirectory())
+					return upToDate(source, target);
+				String[] entries = source.list();
+				for (int i = 0; i < entries.length; i++) {
+					File file = new File(source,
+							entries[i]);
+					if (!upToDate(file, target))
+						return false;
+				}
+				return true;
 			}
 
 			void make() throws FakeException {
@@ -815,6 +843,8 @@ public class Fake {
 						return;
 					System.err.println("Building " + this);
 					action();
+					if (!checkUpToDate())
+						touchFile(target);
 					// by definition, it's up-to-date now
 					upToDateStage = 2;
 				} catch (Exception e) {
@@ -1070,7 +1100,15 @@ public class Fake {
 			}
 
 			boolean checkUpToDate() {
-				return false;
+				File target = new File(this.target);
+				Iterator iter = prerequisites.iterator();
+				while (iter.hasNext()) {
+					String directory = (String)iter.next();
+					File dir = new File(directory);
+					if (!upToDateRecursive(dir, target))
+						return false;
+				}
+				return true;
 			}
 
 			void action() throws FakeException {
@@ -1466,6 +1504,14 @@ public class Fake {
 							prereq)).exists())
 						return true;
 				}
+
+				// special-case ant, since it's slow
+				if (program.startsWith("../fiji --ant") &&
+						prerequisites.size() == 0 &&
+						upToDateRecursive(cwd,
+							new File(target)))
+					return true;
+
 				return false;
 			}
 
@@ -2029,6 +2075,45 @@ public class Fake {
 			out.close();
 		} catch (IOException e) {
 			throw new FakeException("Could not copy "
+				+ source + " to " + target + ": " + e);
+		}
+	}
+
+	public static int compare(File source, File target) {
+		if (source.length() != target.length())
+			return target.length() > source.length() ? 1 : -1;
+		int result = 0;
+		try {
+			InputStream sourceIn = new FileInputStream(source);
+			InputStream targetIn = new FileInputStream(target);
+			byte[] buf1 = new byte[1<<16];
+			byte[] buf2 = new byte[1<<16];
+			while (result == 0) {
+				int len = sourceIn.read(buf1);
+				if (len < 0)
+					break;
+				int off = 0, count = 0;
+				while (len > 0 && count >= 0) {
+					count = targetIn.read(buf2, off, len);
+					off += count;
+					len -= count;
+				}
+				if (count < 0) {
+					result = 1;
+					break;
+				}
+				for (int i = 0; i < off; i++)
+					if (buf1[i] != buf2[i]) {
+						result = (buf2[i] & 0xff)
+							- (buf1[i] & 0xff);
+						break;
+					}
+			}
+			sourceIn.close();
+			targetIn.close();
+			return result;
+		} catch (IOException e) {
+			throw new RuntimeException("Could not compare "
 				+ source + " to " + target + ": " + e);
 		}
 	}
