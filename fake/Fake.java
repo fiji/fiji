@@ -788,8 +788,13 @@ public class Fake {
 			}
 
 			boolean upToDate(File source, File target) {
+				if (target.equals(source))
+					return true;
 				long targetModified = target.lastModified();
 				long sourceModified = source.lastModified();
+				if (targetModified == sourceModified &&
+						compare(source, target) == 0)
+					return true;
 				if (targetModified <= sourceModified)
 					return upToDateError(source, target);
 				return true;
@@ -2037,6 +2042,45 @@ public class Fake {
 			out.close();
 		} catch (IOException e) {
 			throw new FakeException("Could not copy "
+				+ source + " to " + target + ": " + e);
+		}
+	}
+
+	public static int compare(File source, File target) {
+		if (source.length() != target.length())
+			return target.length() > source.length() ? 1 : -1;
+		int result = 0;
+		try {
+			InputStream sourceIn = new FileInputStream(source);
+			InputStream targetIn = new FileInputStream(target);
+			byte[] buf1 = new byte[1<<16];
+			byte[] buf2 = new byte[1<<16];
+			while (result == 0) {
+				int len = sourceIn.read(buf1);
+				if (len < 0)
+					break;
+				int off = 0, count = 0;
+				while (len > 0 && count >= 0) {
+					count = targetIn.read(buf2, off, len);
+					off += count;
+					len -= count;
+				}
+				if (count < 0) {
+					result = 1;
+					break;
+				}
+				for (int i = 0; i < off; i++)
+					if (buf1[i] != buf2[i]) {
+						result = (buf2[i] & 0xff)
+							- (buf1[i] & 0xff);
+						break;
+					}
+			}
+			sourceIn.close();
+			targetIn.close();
+			return result;
+		} catch (IOException e) {
+			throw new RuntimeException("Could not compare "
 				+ source + " to " + target + ": " + e);
 		}
 	}
