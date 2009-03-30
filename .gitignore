@@ -32,6 +32,7 @@
 /plugins/Clojure_Interpreter.jar
 /plugins/JRuby_Interpreter.jar
 /plugins/BeanShell_Interpreter.jar
+/plugins/Bug_Submitter.jar
 /plugins/Javascript_.jar
 /plugins/LSM_Toolbox.jar
 /plugins/SplineDeformationGenerator_.jar
@@ -75,3 +76,6 @@
 /jars/fiji-scripting.jar
 /plugins/TurboReg_.jar
 /plugins/Fiji_Plugins.jar
+/plugins/ToAST_.jar
+/jars/junit-4.5.jar
+/plugins/MTrack2_.jar

@@ -111,19 +111,21 @@ abstract public class RefreshScripts implements PlugIn {
 		else
 			m = ensureSubMenu(subDirectory);
 
-		int n = m.getItemCount();
-		MenuItem[] items = new MenuItem[n];
-		for (int i=0; i<n; i++) {
-			items[i] = m.getItem(i);
-		}
 		String newLabel = strip(filename);
+		if (m != null) {
+			int n = m.getItemCount();
+			MenuItem[] items = new MenuItem[n];
+			for (int i=0; i<n; i++) {
+				items[i] = m.getItem(i);
+			}
+			if (!addMenuItem(m, newLabel, filename))
+				return;
+		}
+
 		String fullPath = topLevelDirectory + File.separator
 			+ (0 == subDirectory.length() ?
 				"" : subDirectory + File.separator)
 			+ filename;
-		if (!addMenuItem(m, newLabel, filename))
-			return;
-
 		String newCommand = getClass().getName() + "(\""
 			+ fullPath + "\")";
 		Menus.getCommands().put(newLabel, newCommand);
@@ -166,7 +168,11 @@ abstract public class RefreshScripts implements PlugIn {
 		boolean topMenu = true;
 
 		boolean imageJA = false;
-		if( IJ.getInstance().getTitle().indexOf("ImageJA") >= 0 )
+		ImageJ instance = IJ.getInstance();
+		if (instance == null)
+			return null;
+		if( instance != null &&
+				instance.getTitle().indexOf("ImageJA") >= 0 )
 			imageJA = true;
 
 		String separatorRegularExpression;
@@ -310,16 +316,20 @@ abstract public class RefreshScripts implements PlugIn {
 		}
 
 		MenuBar menu_bar = Menus.getMenuBar();
-		int n = menu_bar.getMenuCount();
-		for (int i=0; i<n; i++) {
-			Menu menu = menu_bar.getMenu(i);
-			if (menu.getLabel().equals("Plugins")) {
-				pluginsMenu = menu;
-				break;
+		// In headless mode, there is no menu bar
+		if (menu_bar != null) {
+			int n = menu_bar.getMenuCount();
+			for (int i=0; i<n; i++) {
+				Menu menu = menu_bar.getMenu(i);
+				if (menu.getLabel().equals("Plugins")) {
+					pluginsMenu = menu;
+					break;
+				}
 			}
 		}
 
-		removeFromMenu( pluginsMenu );
+		if (pluginsMenu != null)
+			removeFromMenu( pluginsMenu );
 		addFromDirectory( Menus.getPlugInsPath(), -1 );
 	}
 

@@ -87,6 +87,7 @@ SUBMODULE_TARGETS=\
 	plugins/ij-ImageIO_.jar \
 	jars/jacl.jar \
 	jars/batik.jar \
+	jars/junit-4.5.jar \
 
 PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Clojure_Interpreter.jar \
@@ -121,7 +122,10 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Analyze/Grid_.class \
 	plugins/Input-Output/HandleExtraFileTypes.class \
 	plugins/Stacks/Stack_Reverser.class \
+	plugins/Bug_Submitter.jar \
 	plugins/Fiji_Plugins.jar \
+	plugins/ToAST_.jar \
+	plugins/MTrack2_.jar \
 	\
 	misc/Fiji.jar
 
@@ -158,6 +162,7 @@ plugins/loci_tools.jar <- bio-formats/
 plugins/ij-ImageIO_.jar <- ij-plugins/
 jars/jacl.jar <- tcljava/
 jars/batik.jar <- batik/
+jars/junit-4.5.jar <- junit/
 
 # From source
 javaVersion(misc/Fiji.jar)=1.3
@@ -167,7 +172,7 @@ misc/Fiji.jar <- src-plugins/fiji/*.java src-plugins/ij/**/*.java
 CLASSPATH(jars/zs.jar)=jars/Jama-1.0.2.jar
 jars/zs.jar <- src-plugins/zs/**/*.java
 
-jars/fiji-scripting.jar <- src-plugins/common/**/*.java
+jars/fiji-scripting.jar <- src-plugins/fiji-scripting/**/*.java
 
 CLASSPATH(plugins/Jython_Interpreter.jar)=jars/fiji-scripting.jar
 plugins/Jython_Interpreter.jar <- src-plugins/Jython/*.java
@@ -179,6 +184,8 @@ CLASSPATH(plugins/BeanShell_Interpreter.jar)=jars/fiji-scripting.jar
 plugins/BeanShell_Interpreter.jar <- src-plugins/BSH/*.java
 CLASSPATH(plugins/Javascript_.jar)=jars/fiji-scripting.jar
 plugins/Javascript_.jar <- src-plugins/Javascript/*.java
+
+plugins/Bug_Submitter.jar <- src-plugins/Bug_Submitter/*.java
 
 CLASSPATH(plugins/register_virtual_stack_slices.jar)=plugins/TrakEM2_.jar
 CLASSPATH(plugins/lens_correction.jar)=plugins/TrakEM2_.jar:plugins/mpicbg_.jar
@@ -295,11 +302,13 @@ precompile-submodules[] <- \
 	precompiled/ij-ImageIO_.jar \
 	precompiled/jacl.jar \
 	precompiled/batik.jar \
+	precompiled/junit-4.5.jar \
 
 precompiled/ij.jar <- ij.jar
 precompiled/clojure.jar <- jars/clojure.jar
 precompiled/jacl.jar <- jars/jacl.jar
 precompiled/batik.jar <- jars/batik.jar
+precompiled/junit-4.5.jar <- jars/junit-4.5.jar
 precompiled/* <- plugins/*
 
 precompile[] <- precompile-fiji precompile-fake precompile-submodules

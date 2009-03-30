@@ -41,13 +41,15 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Stack;
 import java.util.StringTokenizer;
+
 /**
  * Different tools for the bUnwarpJ interface.
  */
 public class bUnwarpJMiscTools
 {
+	/* --------------------------------------------------------------------*/
 	/**
-	 * Apply a given splines transformation to the source (gray-scale) image.
+	 * Apply a given B-spline transformation to the source (gray-scale) image.
 	 * The source image is modified. The target image is used to know
 	 * the output size.
 	 *
@@ -194,6 +196,8 @@ public class bUnwarpJMiscTools
 	 * Apply a given splines transformation to the source (RGB color) image.
 	 * The source image is modified. The target image is used to know
 	 * the output size.
+	 * 
+	 * @deprecated
 	 *
 	 * @param sourceImp source image representation
 	 * @param targetImp target image representation
@@ -2238,6 +2242,467 @@ public class bUnwarpJMiscTools
 		final ImagePlus      ip=new ImagePlus(title, fp);
 		ip.updateImage();
 		ip.show();
+	} // end showImage
+	
+	/*------------------------------------------------------------------*/
+	/**
+	 * Adapt B-spline coefficients to a scale factor
+	 * @param xScale
+	 * @param yScale
+	 * @param intervals
+	 * @param cx
+	 * @param cy
+	 */
+	static public void adaptCoefficients(
+			double xScale,
+			double yScale,		
+			int intervals,
+			double [][]cx,
+			double [][]cy)
+	{
+		for(int i = 0; i < (intervals+3); i++)
+			for(int j = 0; j < (intervals+3); j++)
+			{
+				cx[i][j] *= xScale;
+				cy[i][j] *= yScale;
+			}
+		
+	} // end adaptCoefficients
+
+	/* --------------------------------------------------------------------*/
+	/**
+	 * Apply a given B-spline transformation to the source (gray-scale) image.
+	 * The source image is modified. The target image is used to know
+	 * the output size (Multi-thread version).
+	 *
+	 * @param sourceImp source image representation
+	 * @param targetImp target image representation
+	 * @param source source image model
+	 * @param intervals intervals in the deformation
+	 * @param cx x- B-spline coefficients
+	 * @param cy y- B-spline coefficients
+	 */
+	static public void applyTransformationToSourceMT(
+			ImagePlus sourceImp,
+			ImagePlus targetImp,
+			bUnwarpJImageModel source,
+			int intervals,
+			double [][]cx,
+			double [][]cy)
+	{
+		final int targetHeight = targetImp.getProcessor().getHeight();
+		final int targetWidth  = targetImp.getProcessor().getWidth ();
+
+		// Compute the deformation
+		// Set these coefficients to an interpolator
+		bUnwarpJImageModel swx = new bUnwarpJImageModel(cx);
+		bUnwarpJImageModel swy = new bUnwarpJImageModel(cy);
+
+
+		// Compute the warped image
+		/* GRAY SCALE IMAGES */
+		if(!(sourceImp.getProcessor() instanceof ColorProcessor))
+		{
+			source.startPyramids();
+			try{
+				source.getThread().join();
+			} catch (InterruptedException e) {
+				IJ.error("Unexpected interruption exception " + e);
+			}
+			
+			FloatProcessor fp = new FloatProcessor(targetWidth, targetHeight);
+			
+			// Check the number of processors in the computer 
+			int nproc = Runtime.getRuntime().availableProcessors();
+
+			// We will use threads to display parts of the output image
+			int block_height = targetHeight / nproc;
+			if (targetHeight % 2 != 0) 
+				block_height++;
+						
+			int nThreads = nproc; 			
+						
+			Thread[] threads  = new Thread[nThreads];
+			Rectangle[] rects = new Rectangle[nThreads];
+			FloatProcessor[] fp_tile = new FloatProcessor[nThreads];
+			
+			for (int i=0; i<nThreads; i++) 
+			{
+				// last block size is the rest of the window
+				int y_start = i*block_height;
+				
+				if (nThreads-1 == i) 
+					block_height = targetHeight - i*block_height;
+								
+				rects[i] = new Rectangle(0, y_start, targetWidth, block_height);
+								
+				fp_tile[i] = new FloatProcessor(rects[i].width, rects[i].height);
+				
+				threads[i] = new Thread(new GrayscaleApplyTransformTile(swx, swy, source, 
+															targetWidth, targetHeight, intervals,															 
+															rects[i], fp_tile[i]));
+				threads[i].start();
+			}
+			
+			for (int i=0; i<nThreads; i++) 
+			{
+				try {
+					threads[i].join();
+					threads[i] = null;
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}			
+			}
+			
+			for (int i=0; i<nThreads; i++) 
+			{
+				fp.insert(fp_tile[i], rects[i].x, rects[i].y);
+				fp_tile[i] = null;				
+				rects[i] = null;
+			}
+			fp.resetMinAndMax();
+			sourceImp.setProcessor(sourceImp.getTitle(), fp);
+			sourceImp.updateImage();
+		}
+		else /* COLOR IMAGES */
+		{        	
+			// red
+			bUnwarpJImageModel sourceR = new bUnwarpJImageModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(0, null), false, 1);
+			sourceR.setPyramidDepth(0);
+			sourceR.startPyramids();
+			// green
+			bUnwarpJImageModel sourceG = new bUnwarpJImageModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(1, null), false, 1);
+			sourceG.setPyramidDepth(0);
+			sourceG.startPyramids();
+			//blue
+			bUnwarpJImageModel sourceB = new bUnwarpJImageModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(2, null), false, 1);
+			sourceB.setPyramidDepth(0);
+			sourceB.startPyramids();
+
+			// Join threads
+			try {
+				sourceR.getThread().join();
+				sourceG.getThread().join();
+				sourceB.getThread().join();
+			} catch (InterruptedException e) {
+				IJ.error("Unexpected interruption exception " + e);
+			}
+
+			// Calculate warped RGB image
+			ColorProcessor cp = new ColorProcessor(targetWidth, targetHeight);
+			FloatProcessor fpR = new FloatProcessor(targetWidth, targetHeight);
+			FloatProcessor fpG = new FloatProcessor(targetWidth, targetHeight);
+			FloatProcessor fpB = new FloatProcessor(targetWidth, targetHeight);
+			
+			// Check the number of processors in the computer 
+			int nproc = Runtime.getRuntime().availableProcessors();
+
+			// We will use threads to display parts of the output image
+			int block_height = targetHeight / nproc;
+			if (targetHeight % 2 != 0) 
+				block_height++;
+			
+			
+			int nThreads = nproc; 
+						
+			Thread[] threads  = new Thread[nThreads];
+			Rectangle[] rects = new Rectangle[nThreads];
+			FloatProcessor[] fpR_tile 		= new FloatProcessor[nThreads];
+			FloatProcessor[] fpG_tile 		= new FloatProcessor[nThreads];
+			FloatProcessor[] fpB_tile 		= new FloatProcessor[nThreads];
+			
+			for (int i=0; i<nThreads; i++) 
+			{
+				// last block size is the rest of the window
+				int y_start = i*block_height;
+				
+				if (nThreads-1 == i) 
+					block_height = targetHeight - i*block_height;
+								
+				rects[i] = new Rectangle(0, y_start, targetWidth, block_height);
+				
+				//IJ.log("block = 0 " + (i*block_height) + " " + auxTargetWidth + " " + block_height );
+				
+				fpR_tile[i] 	= new FloatProcessor(rects[i].width, rects[i].height);
+				fpG_tile[i] 	= new FloatProcessor(rects[i].width, rects[i].height);
+				fpB_tile[i] 	= new FloatProcessor(rects[i].width, rects[i].height);
+				
+				threads[i] = new Thread(new ColorApplyTransformTile(swx, swy, sourceR, sourceG, sourceB, targetWidth,
+																	 targetHeight, intervals, rects[i], fpR, fpG, fpB));
+				threads[i].start();
+			}
+			
+			for (int i=0; i<nThreads; i++) 
+			{
+				try {
+					threads[i].join();
+					threads[i] = null;
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}			
+			}
+			
+			for (int i=0; i<nThreads; i++) 
+			{
+				fpR.insert(fpR_tile[i], rects[i].x, rects[i].y);
+				fpG.insert(fpG_tile[i], rects[i].x, rects[i].y);
+				fpB.insert(fpB_tile[i], rects[i].x, rects[i].y);
+				
+				fpR_tile[i] = null;
+				fpG_tile[i] = null;
+				fpB_tile[i] = null;
+				
+				rects[i] = null;
+			}
+								
+		
+			cp.setPixels(0, fpR);
+			cp.setPixels(1, fpG);
+			cp.setPixels(2, fpB);            
+			cp.resetMinAndMax();
+
+			sourceImp.setProcessor(sourceImp.getTitle(), cp);
+			sourceImp.updateImage();
+		}
 	}
 
+
+	/* ------------------------------------------------------------------------ */
+	/**
+	 *  Class to apply transformation to grayscale images in a concurrent way
+	 * 	 
+	 */	
+	private static class GrayscaleApplyTransformTile implements Runnable 
+	{
+		/** B-spline deformation in x */
+		final bUnwarpJImageModel swx;
+		/** B-spline deformation in y */
+		final bUnwarpJImageModel swy;
+		/** current source image */
+		final bUnwarpJImageModel source;
+		/** target current width */
+		final int targetCurrentWidth;
+		/** target current height */
+		final int targetCurrentHeight;
+		/** number of intervals between B-spline coefficients */
+		final int intervals;
+		/** area of the image to be transformed in this thread */
+		final Rectangle rect;
+		/** resulting float processor containing the transformed area */
+		final private FloatProcessor fp;
+		
+		/**
+		 * Constructor for grayscale image transform 
+		 * @param swx B-spline deformation in x
+		 * @param swy B-spline deformation in y
+		 * @param source current source image
+		 * @param targetCurrentWidth target current width 
+		 * @param targetCurrentHeight target current height
+		 * @param intervals number of intervals between B-spline coefficients
+		 * @param rect rectangle containing the area of the image to be transformed
+		 * @param fp resulting float processor (output)
+		 */
+		GrayscaleApplyTransformTile(bUnwarpJImageModel swx, 
+		 		  bUnwarpJImageModel swy, 
+		 		  bUnwarpJImageModel source,
+		 		  int targetCurrentWidth,
+		 		  int targetCurrentHeight,
+		 		  int intervals,
+				  Rectangle rect, 
+				  FloatProcessor fp)
+		{
+			this.swx = swx;
+			this.swy = swy;
+			this.source = source;
+			this.targetCurrentWidth = targetCurrentWidth;
+			this.targetCurrentHeight = targetCurrentHeight;
+			this.intervals = intervals;
+			this.rect = rect;
+			this.fp = fp;
+		}
+	
+		/*------------------------------------------------------------------*/
+		/**
+		 * Run method to update the intermediate window. Only the part defined by
+		 * the rectangle will be updated (in this thread).
+		 */
+		public void run()
+		{
+			// Compute the warped image
+			int uv = rect.y * rect.width + rect.x;
+			int auxTargetHeight = rect.y + rect.height;
+			int auxTargetWidth = rect.x + rect.width;
+			
+			
+			float [] fp_array = (float[]) fp.getPixels();
+			
+			final int sourceWidth = source.getWidth();
+			final int sourceHeight = source.getHeight();
+			
+			
+			for (int v_rect = 0, v=rect.y; v<auxTargetHeight; v++, v_rect++)
+			{
+				final int v_offset = v_rect * rect.width;
+				final double tv = (double)(v * intervals) / (double)(targetCurrentHeight - 1) + 1.0F;
+				
+				for (int u_rect = 0, u=rect.x; u<auxTargetWidth; u++, uv++, u_rect++) 
+				{
+
+					final double tu = (double)(u * intervals) / (double)(targetCurrentWidth - 1) + 1.0F;			
+					final double transformation_x_v_u = swx.prepareForInterpolationAndInterpolateI(tu, tv, false, false);
+					final double transformation_y_v_u = swy.prepareForInterpolationAndInterpolateI(tu, tv, false, false);
+									
+
+					final double x = transformation_x_v_u;
+					final double y = transformation_y_v_u;
+					
+					if (x>=0 && x<sourceWidth && y>=0 && y<sourceHeight)
+					{
+						double sval = source.prepareForInterpolationAndInterpolateI(x, y, false, false);
+						fp_array[u_rect + v_offset] = (float) sval;
+					}
+					else
+					{
+						fp_array[u_rect + v_offset] = 0;
+					}
+				
+				}
+			}
+		} // end run method 
+		
+	} // end GrayscaleApplyTransformTile class
+	
+	/* ------------------------------------------------------------------------ */
+	/**
+	 *  Class to apply transformation to color images in a concurrent way
+	 * 	 
+	 */	
+	private static class ColorApplyTransformTile implements Runnable 
+	{
+		/** B-spline deformation in x */
+		final bUnwarpJImageModel swx;
+		/** B-spline deformation in y */
+		final bUnwarpJImageModel swy;	
+		/** red channel of the source image */
+		final bUnwarpJImageModel sourceR;
+		/** green channel of the source image */
+		final bUnwarpJImageModel sourceG;
+		/** blue channel of the source image */
+		final bUnwarpJImageModel sourceB;
+		/** target current width */
+		final int targetCurrentWidth;
+		/** target current height */
+		final int targetCurrentHeight;
+		/** number of intervals between B-spline coefficients */
+		final int intervals;
+		/** area of the image to be transformed */
+		final Rectangle rect;
+		/** resulting float processor for the red channel */
+		final private FloatProcessor fpR;
+		/** resulting float processor for the green channel */
+		final private FloatProcessor fpG;
+		/** resulting float processor for the blue channel */
+		final private FloatProcessor fpB;
+		
+		/**
+		 * Constructor for color image transform 
+		 * 
+		 * @param swx B-spline deformation in x
+		 * @param swy B-spline deformation in y
+		 * @param sourceR red source image
+		 * @param sourceG green source image
+		 * @param sourceB blue source image
+		 * @param targetCurrentWidth target current width
+		 * @param targetCurrentHeight target current height
+		 * @param intervals number of intervals between B-spline coefficients
+		 * @param rect area of the image to be transformed
+		 * @param fpR red channel processor to be updated
+		 * @param fpG green channel processor to be updated
+		 * @param fpB blue channel processor to be updated
+		 */
+		ColorApplyTransformTile(bUnwarpJImageModel swx, 
+		 		  bUnwarpJImageModel swy, 
+		 		  bUnwarpJImageModel sourceR,
+		 		  bUnwarpJImageModel sourceG,
+		 		  bUnwarpJImageModel sourceB,
+		 		  int targetCurrentWidth,
+		 		  int targetCurrentHeight,
+		 		  int intervals,
+				  Rectangle rect, 
+				  FloatProcessor fpR,
+				  FloatProcessor fpG,
+				  FloatProcessor fpB)
+		{
+			this.swx = swx;
+			this.swy = swy;
+			this.sourceR = sourceR;
+			this.sourceG = sourceG;
+			this.sourceB = sourceB;
+			this.targetCurrentWidth = targetCurrentWidth;
+			this.targetCurrentHeight = targetCurrentHeight;
+			this.intervals = intervals;
+			this.rect = rect;
+			this.fpR = fpR;
+			this.fpG = fpG;
+			this.fpB = fpB;
+		}
+	
+		/*------------------------------------------------------------------*/
+		/**
+		 * Run method to update the intermediate window. Only the part defined by
+		 * the rectangle will be updated (in this thread).
+		 */
+		public void run()
+		{
+			// Compute the warped image
+			int uv = rect.y * rect.width + rect.x;
+			int auxTargetHeight = rect.y + rect.height;
+			int auxTargetWidth = rect.x + rect.width;
+			
+			
+			float [] fpR_array = (float[]) fpR.getPixels();
+			float [] fpG_array = (float[]) fpG.getPixels();
+			float [] fpB_array = (float[]) fpB.getPixels();
+			
+			
+			final int sourceWidth = sourceR.getWidth();
+			final int sourceHeight = sourceR.getHeight();
+			
+			
+			for (int v_rect = 0, v=rect.y; v<auxTargetHeight; v++, v_rect++)
+			{
+				final int v_offset = v_rect * rect.width;
+				final double tv = (double)(v * intervals) / (double)(targetCurrentHeight - 1) + 1.0F;
+				
+				for (int u_rect = 0, u=rect.x; u<auxTargetWidth; u++, uv++, u_rect++) 
+				{
+
+					final double tu = (double)(u * intervals) / (double)(targetCurrentWidth - 1) + 1.0F;			
+					final double transformation_x_v_u = swx.prepareForInterpolationAndInterpolateI(tu, tv, false, false);
+					final double transformation_y_v_u = swy.prepareForInterpolationAndInterpolateI(tu, tv, false, false);
+									
+
+					final double x = transformation_x_v_u;
+					final double y = transformation_y_v_u;
+					
+					if (x>=0 && x<sourceWidth && y>=0 && y<sourceHeight)
+					{
+						fpR_array[u_rect + v_offset] = (float) (sourceR.prepareForInterpolationAndInterpolateI(x, y, false, false));						
+						fpG_array[u_rect + v_offset] = (float) (sourceG.prepareForInterpolationAndInterpolateI(x, y, false, false));						
+						fpB_array[u_rect + v_offset] = (float) (sourceB.prepareForInterpolationAndInterpolateI(x, y, false, false));
+						
+					}
+					else
+					{
+						fpR_array[u_rect + v_offset] = 0;
+						fpG_array[u_rect + v_offset] = 0;
+						fpB_array[u_rect + v_offset] = 0;
+					}
+				
+				}
+			}
+		} // end run method 
+		
+	} // end ColorApplyTransformTile class
+	
 } /* End of MiscTools class */

@@ -14,6 +14,7 @@ Abbreviations:
 * SPL: Sun Public License
 * MPL: Mozilla Public License as specified at http://www.lowagie.com/iText/MPL-1.1.txt
 * BSD: Berkeley Software Distribution
+* BSDR: BSD-like license allowing use for research
 * EPL: Eclipse Public License (http://opensource.org/licenses/eclipse-1.0.php)
 * AL: Apache License (http://xmlgraphics.apache.org/batik/license.html)
 * ?: UNKNOWN
@@ -52,6 +53,7 @@ Name					File					Author(s)						Contact	(2008)							License
 * LOCI 					loci_tools.jar				Melissa Linkert, Curtis Rueden et al. 			ctrueden@wisc.edu 						GPL		
 * Macro Interpreter 			CLI_.jar				Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
 * Mines Java Toolkit 			edu_mines_jtk.jar 			Dave Hale 						http://www.mines.edu/~dhale/jtk/ 				CPL 1.0
+* MTrack2				MTrack2_.jar				Nico Stuurman						http://valelab.ucsf.edu/~nico/IJplugins/MTrack2.html		BSDR
 * Multiple Image Processor 		M_I_P.jar				Nathaniel Gonzalez Santiago				http://ciar.rcm.upr.edu/projects/imageprocessor/multiples/	GPL
 * PDF Viewer 				PDF_Viewer.jar				Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
 * PostgreSQL JDBC 			postgresql-8.2-506.jdbc3.jar 		http://jdbc.postgresql.org/ 				http://jdbc.postgresql.org/					BSD

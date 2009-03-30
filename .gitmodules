@@ -46,3 +46,6 @@
 [submodule "batik"]
 	path = batik
 	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/batik/.git
+[submodule "junit"]
+	path = junit
+	url = contrib@pacific.mpi-cbg.de:/srv/git/junit
