@@ -790,13 +790,21 @@ public class Fake {
 			boolean upToDate(File source, File target) {
 				long targetModified = target.lastModified();
 				long sourceModified = source.lastModified();
-				return targetModified > sourceModified;
+				if (targetModified <= sourceModified)
+					return upToDateError(source, target);
+				return true;
 			}
 
 			boolean upToDate(String source, String target,
 					File cwd) {
 				return upToDate(new File(cwd, source),
 					new File(cwd, target));
+			}
+
+			boolean upToDateError(File source, File target) {
+				verbose("" + target + " is not up-to-date "
+					+ "because " + source + " is newer.");
+				return false;
 			}
 
 			void make() throws FakeException {
