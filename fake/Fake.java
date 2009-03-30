@@ -1502,6 +1502,14 @@ public class Fake {
 							prereq)).exists())
 						return true;
 				}
+
+				// special-case ant, since it's slow
+				if (program.startsWith("../fiji --ant") &&
+						prerequisites.size() == 0 &&
+						upToDateRecursive(cwd,
+							new File(target)))
+					return true;
+
 				return false;
 			}
 
