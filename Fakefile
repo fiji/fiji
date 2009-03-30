@@ -125,7 +125,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	\
 	misc/Fiji.jar
 
-all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS third-party-plugins
+all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS third-party-plugins jars/zs.jar
 
 # The "run" rule just executes ./fiji (as long as the file "run" does not exist...)
 # It has items on the right side, because these would be passed to the executable.
@@ -164,6 +164,9 @@ javaVersion(misc/Fiji.jar)=1.3
 misc/Fiji.jar <- src-plugins/fiji/*.java src-plugins/ij/**/*.java
 
 # These classes are common
+CLASSPATH(jars/zs.jar)=jars/Jama-1.0.2.jar
+jars/zs.jar <- src-plugins/zs/**/*.java
+
 jars/fiji-scripting.jar <- src-plugins/common/**/*.java
 
 CLASSPATH(plugins/Jython_Interpreter.jar)=jars/fiji-scripting.jar
