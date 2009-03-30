@@ -843,6 +843,8 @@ public class Fake {
 						return;
 					System.err.println("Building " + this);
 					action();
+					if (!checkUpToDate())
+						touchFile(target);
 					// by definition, it's up-to-date now
 					upToDateStage = 2;
 				} catch (Exception e) {
