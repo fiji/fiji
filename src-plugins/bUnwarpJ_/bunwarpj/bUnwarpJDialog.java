@@ -368,7 +368,7 @@ public class bUnwarpJDialog extends GenericDialog
 	{
 		return this.targetMsk;
 	}   /* end getTargetMask */
-
+	
 	/*------------------------------------------------------------------*/
 	/**
 	 * Actions to be taken during the dialog.
@@ -791,8 +791,11 @@ public class bUnwarpJDialog extends GenericDialog
           fp.resetMinAndMax();
           sourceImp.setProcessor(sourceImp.getTitle(),fp);
 			 */
-			this.sourceImp.setProcessor(sourceImp.getTitle(), this.originalSourceIP);
-			sourceImp.updateImage();
+			if(this.sourceImp != null && this.sourceImp.getProcessor() != null) 	
+			{
+				this.sourceImp.setProcessor(sourceImp.getTitle(), this.originalSourceIP);
+				sourceImp.updateImage();
+			}
 		} 
 		else 
 		{
@@ -809,8 +812,11 @@ public class bUnwarpJDialog extends GenericDialog
 
           targetImp.setProcessor(targetImp.getTitle(),fp);
 			 */
-			this.targetImp.setProcessor(this.targetImp.getTitle(), this.originalTargetIP);
-			targetImp.updateImage();
+			if(this.targetImp != null && this.targetImp.getProcessor() != null) 
+			{
+				this.targetImp.setProcessor(this.targetImp.getTitle(), this.originalTargetIP);
+				targetImp.updateImage();
+			}
 		}
 	}
 

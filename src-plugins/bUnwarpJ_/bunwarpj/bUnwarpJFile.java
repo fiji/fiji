@@ -945,10 +945,11 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 		}
 
 		if(n != 0)
-			IJ.write(" Image similarity = " + (imageSimilarity / n) + ", n = " + n);
+			IJ.log(" Image similarity = " + (imageSimilarity / n) + ", n = " + n);
 		else
-			IJ.write(" Error: not a single pixel was evaluated ");
-
+			IJ.log(" Error: not a single pixel was evaluated ");
+		
+				
 	}
 
 	/*------------------------------------------------------------------*/

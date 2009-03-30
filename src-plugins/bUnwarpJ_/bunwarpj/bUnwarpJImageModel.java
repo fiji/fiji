@@ -975,14 +975,14 @@ public class bUnwarpJImageModel implements Runnable
 
 		int widthToUse = 0;
 		int heightToUse = 0;
-		int[] xIndex = new int[4];
-		int[] yIndex = new int[4];
-		double[] xWeight = new double[4];
-		double[] dxWeight = new double[4];
-		double[] d2xWeight = new double[4];
-		double[] yWeight = new double[4];
-		double[] dyWeight = new double[4];
-		double[] d2yWeight = new double[4];
+		final int[] xIndex = new int[4];
+		final int[] yIndex = new int[4];
+		final double[] xWeight = new double[4];
+		final double[] dxWeight = new double[4];
+		//double[] d2xWeight = new double[4];
+		final double[] yWeight = new double[4];
+		final double[] dyWeight = new double[4];
+		//double[] d2yWeight = new double[4];
 		
 		if (fromSub && this.subCoeffs != null)
 		{
@@ -1045,10 +1045,10 @@ public class bUnwarpJImageModel implements Runnable
 		dxWeight[2] = 1.5F * ex * (ex - 4.0F/ 3.0F);
 		xWeight[2]  = 2.0F / 3.0F - (2.0F - ex) * dxWeight[0]; // Bspline03(x-ix)
 
-		d2xWeight[0] = ex;
-		d2xWeight[1] = s-2*ex;
-		d2xWeight[2] = ex-2*s;
-		d2xWeight[3] = s;
+		//d2xWeight[0] = ex;
+		//d2xWeight[1] = s-2*ex;
+		//d2xWeight[2] = ex-2*s;
+		//d2xWeight[3] = s;
 
 		// Set Y weights for the image and derivative interpolation
 		double t = 1.0F - ey;
@@ -1061,10 +1061,10 @@ public class bUnwarpJImageModel implements Runnable
 		dyWeight[2] = 1.5F * ey * (ey - 4.0F/ 3.0F);
 		yWeight[2]  = 2.0F / 3.0F - (2.0F - ey) * dyWeight[0];
 
-		d2yWeight[0] = ey;
-		d2yWeight[1] = t-2*ey;
-		d2yWeight[2] = ey-2*t;
-		d2yWeight[3] = t;
+		//d2yWeight[0] = ey;
+		//d2yWeight[1] = t-2*ey;
+		//d2yWeight[2] = ey-2*t;
+		//d2yWeight[3] = t;
 		
 		// Only SplineDegree=3 is implemented
 		double ival=0.0F;
@@ -1089,10 +1089,190 @@ public class bUnwarpJImageModel implements Runnable
 			}
 		}
 		return ival;
-	} /* prepareForInterpolation */
+	} /* prepareForInterpolationAndInterpolateI */
 
 	
-	
+	/*------------------------------------------------------------------*/
+	/**
+	 * Prepare for interpolation and interpolate the image value and its
+	 * derivatives
+	 * 
+	 * fromSub = true --> The interpolation is done from the subsampled
+	 *                    version of the image
+	 * else:
+	 * 
+	 * fromCurrent=true  --> The interpolation is done
+	 *                       from the current image in the pyramid.
+	 * fromCurrent=false --> The interpolation is done
+	 *                       from the original image.
+	 *
+	 * @param x x- point coordinate
+	 * @param y y- point coordinate
+	 * @param D output, interpolation the X and Y derivatives of the image
+	 * @param fromSub flat to determine to do the interpolation from the subsampled version of the image 
+	 * @param fromCurrent flag to determine the image to do the interpolation from
+	 * 		   interpolated value
+	 */
+	public double prepareForInterpolationAndInterpolateIAndD(
+			double x,
+			double y,
+			double D[],
+			boolean fromSub,
+			boolean fromCurrent)
+	{
+
+		int widthToUse = 0;
+		int heightToUse = 0;
+		final int[] xIndex = new int[4];
+		final int[] yIndex = new int[4];
+		final double[] xWeight = new double[4];
+		final double[] dxWeight = new double[4];
+		//double[] d2xWeight = new double[4];
+		final double[] yWeight = new double[4];
+		final double[] dyWeight = new double[4];
+		//double[] d2yWeight = new double[4];
+		
+		if (fromSub && this.subCoeffs != null)
+		{
+			widthToUse = this.subWidth;
+			heightToUse = this.subHeight;
+		}
+		else if (fromCurrent)
+		{
+			widthToUse = currentWidth;
+			heightToUse = currentHeight;
+		}
+		else 
+		{
+			widthToUse = width;
+			heightToUse = height;
+		}
+
+		// integer x and y
+		int ix = (int)x;
+		int iy = (int)y;
+
+		int twiceWidthToUse  = 2 * widthToUse;
+		int twiceHeightToUse = 2 * heightToUse;
+
+		// Set X indexes
+		// p is the index of the rightmost influencing spline
+		int p = (0.0 <= x) ? (ix + 2) : (ix + 1);
+		for (int k = 0; k<4; p--, k++) {
+			if (coefficientsAreMirrored) {
+				int q = (p < 0) ? (-1 - p) : (p);
+				if (twiceWidthToUse <= q) q -= twiceWidthToUse * (q / twiceWidthToUse);
+				xIndex[k] = (widthToUse <= q) ? (twiceWidthToUse - 1 - q) : (q);
+			} else
+				xIndex[k] = (p<0 || p>=widthToUse) ? (-1):(p);
+		}
+
+		// Set Y indexes
+		p = (0.0 <= y) ? (iy + 2) : (iy + 1);
+		for (int k = 0; k<4; p--, k++) {
+			if (coefficientsAreMirrored) {
+				int q = (p < 0) ? (-1 - p) : (p);
+				if (twiceHeightToUse <= q) q -= twiceHeightToUse * (q / twiceHeightToUse);
+				yIndex[k] = (heightToUse <= q) ? (twiceHeightToUse - 1 - q) : (q);
+			} else
+				yIndex[k] = (p<0 || p>=heightToUse) ? (-1):(p);
+		}
+
+		// Compute how much the sample depart from an integer position
+		double ex = x - ((0.0 <= x) ? (ix) : (ix - 1));
+		double ey = y - ((0.0 <= y) ? (iy) : (iy - 1));
+
+		// Set X weights for the image and derivative interpolation
+		double s = 1.0F - ex;
+		dxWeight[0] = 0.5F * ex * ex;
+		xWeight[0]  = ex * dxWeight[0] / 3.0F; // Bspline03(x-ix-2)
+		dxWeight[3] = -0.5F * s * s;
+		xWeight[3]  = s * dxWeight[3] / -3.0F; // Bspline03(x-ix+1)
+		dxWeight[1] = 1.0F - 2.0F * dxWeight[0] + dxWeight[3];
+		//xWeight[1]  = 2.0F / 3.0F + (1.0F + ex) * dxWeight[3]; // Bspline03(x-ix-1);
+		xWeight[1]  = bUnwarpJMathTools.Bspline03(x-ix-1);
+		dxWeight[2] = 1.5F * ex * (ex - 4.0F/ 3.0F);
+		xWeight[2]  = 2.0F / 3.0F - (2.0F - ex) * dxWeight[0]; // Bspline03(x-ix)
+
+		//d2xWeight[0] = ex;
+		//d2xWeight[1] = s-2*ex;
+		//d2xWeight[2] = ex-2*s;
+		//d2xWeight[3] = s;
+
+		// Set Y weights for the image and derivative interpolation
+		double t = 1.0F - ey;
+		dyWeight[0] = 0.5F * ey * ey;
+		yWeight[0]  = ey * dyWeight[0] / 3.0F;
+		dyWeight[3] = -0.5F * t * t;
+		yWeight[3]  = t * dyWeight[3] / -3.0F;
+		dyWeight[1] = 1.0F - 2.0F * dyWeight[0] + dyWeight[3];
+		yWeight[1]  = 2.0F / 3.0F + (1.0F + ey) * dyWeight[3];
+		dyWeight[2] = 1.5F * ey * (ey - 4.0F/ 3.0F);
+		yWeight[2]  = 2.0F / 3.0F - (2.0F - ey) * dyWeight[0];
+
+		//d2yWeight[0] = ey;
+		//d2yWeight[1] = t-2*ey;
+		//d2yWeight[2] = ey-2*t;
+		//d2yWeight[3] = t;
+		
+		// Image value: Only SplineDegree=3 is implemented
+		double ival=0.0F;
+		for (int j = 0; j<4; j++) 
+		{
+			s = 0.0F;
+			iy = yIndex[j];
+			if (iy!=-1) 
+			{
+				p = iy*widthToUse;
+				for (int i=0; i<4; i++) 
+				{
+					ix = xIndex[i];
+					if (ix!=-1)
+					{
+						if (fromSub && this.subCoeffs != null)  
+							s += xWeight[i] * this.subCoeffs[p + ix];
+						else if (fromCurrent)
+							s += xWeight[i] * currentCoefficient[p + ix];							
+						else             
+							s += xWeight[i] * coefficient[p + ix];
+					}
+				}
+				ival+=yWeight[j] * s;
+			}
+		}
+		
+		// Derivatives: Only SplineDegree=3 is implemented
+		D[0] = D[1] = 0.0F;
+		for (int j = 0; j<4; j++) 
+		{
+			double sx = 0.0F, sy = 0.0F;
+			iy = yIndex[j];
+			if (iy!=-1) 
+			{
+				p = iy * widthToUse;
+				for (int i=0; i<4; i++) 
+				{
+					ix = xIndex[i];
+					if (ix!=-1) 
+					{
+						double c;
+						if (fromSub && this.subCoeffs != null)  
+							c = this.subCoeffs[p + ix];
+						else if (fromCurrent) 
+							c = currentCoefficient[p + ix];
+						else             
+							c = coefficient[p + ix];
+						sx += dxWeight[i]*c;
+						sy +=  xWeight[i]*c;
+					}
+				}
+				D[0]+= yWeight[j] * sx;
+				D[1]+=dyWeight[j] * sy;
+			}
+		}
+		
+		return ival;
+	} /* prepareForInterpolationAndInterpolateIAndD */	
 	
 	/*------------------------------------------------------------------*/
 	/**
@@ -1265,22 +1445,22 @@ public class bUnwarpJImageModel implements Runnable
 	public double precomputed_interpolateI (int u, int v)
 	{
 		// Only SplineDegree=3 is implemented
-		double ival=0.0F;
+		double ival = 0.0F;
 		for (int j = 0; j<4; j++) 
 		{
-			double s=0.0F;
-			int iy=prec_yIndex[v][j];
-			if (iy!=-1) 
+			double s = 0.0F;
+			int iy = prec_yIndex[v][j];
+			if (iy != -1) 
 			{
-				int p=iy*widthToUse;
+				int p = iy * widthToUse;
 				for (int i=0; i<4; i++) 
 				{
-					int ix=prec_xIndex[u][i];
+					int ix = prec_xIndex[u][i];
 					if (ix!=-1)
-						if (fromCurrent) s += prec_xWeight[u][i]*currentCoefficient[p + ix];
-						else             s += prec_xWeight[u][i]*coefficient[p + ix];
+						if (fromCurrent) s += prec_xWeight[u][i] * currentCoefficient[p + ix];
+						else             s += prec_xWeight[u][i] * coefficient[p + ix];
 				}
-				ival+=prec_yWeight[v][j] * s;
+				ival += prec_yWeight[v][j] * s;
 			}
 		}
 		return ival;

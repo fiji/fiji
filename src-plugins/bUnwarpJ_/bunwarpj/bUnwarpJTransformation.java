@@ -198,8 +198,6 @@ public class bUnwarpJTransformation
 	/** inverse transformation file name */
 	private String  fn_tnf_2;
 
-
-
 	// Transformation estimate
 	/** number of intervals to place B-spline coefficients */
 	private int     intervals;
@@ -1132,7 +1130,13 @@ public class bUnwarpJTransformation
 			swy.precomputed_prepareForInterpolation(
 					auxTarget.getCurrentHeight(), auxTarget.getCurrentWidth(), intervals);
 		}
-		return evaluateSimilarity(x, intervals, grad, true, false, bIsReverse);
+		//return evaluateSimilarity(x, intervals, grad, true, false, bIsReverse);
+		double f = evaluateSimilarity(x, intervals, grad, true, false, bIsReverse);
+		
+		double f2 = evaluateSimilarityMultiThread(x, intervals, grad, true, bIsReverse);
+		
+		IJ.log("f = " + f + " f2 = " + f2);
+		return f2;
 	}
 
 
@@ -1160,13 +1164,72 @@ public class bUnwarpJTransformation
 		}
 		computeDeformation(intervals, cx, cy,
 				transformation_x,transformation_y, bIsReverse);
-	}
-
-
+		
+	} // end getDeformation
 
 	/*------------------------------------------------------------------*/
 	/**
-	 * Apply the corresponding transformation to a given point.
+	 * Get the direct deformation X coefficients.
+	 *
+	 * @return coefficients array
+	 */
+	public double[][] getDirectDeformationCoefficientsX()
+	{
+		return this.cxTargetToSource;
+		
+	} // end getDirectDeformationCoefficientsX	
+	
+	/*------------------------------------------------------------------*/
+	/**
+	 * Get the direct deformation Y coefficients.
+	 *
+	 * @return coefficients array
+	 */
+	public double[][] getDirectDeformationCoefficientsY()
+	{
+		return this.cyTargetToSource;
+		
+	} // end getDirectDeformationCoefficientsY
+	
+	/*------------------------------------------------------------------*/
+	/**
+	 * Get the inverse deformation X coefficients.
+	 *
+	 * @return coefficients array
+	 */
+	public double[][] getInverseDeformationCoefficientsX()
+	{
+		return this.cxSourceToTarget;
+		
+	} // end getInverseDeformationCoefficientsX
+	
+	/*------------------------------------------------------------------*/
+	/**
+	 * Get the inverse deformation Y coefficients.
+	 *
+	 * @return coefficients array
+	 */
+	public double[][] getInverseDeformationCoefficientsY()
+	{
+		return this.cySourceToTarget;
+		
+	} // end getInverseDeformationCoefficientsY
+
+	/*------------------------------------------------------------------*/
+	/**
+	 * Get the current number of intervals between B-spline coefficients.
+	 *
+	 * @return coefficients array
+	 */
+	public int getIntervals()
+	{
+		return this.intervals;
+		
+	} // end getIntervals
+
+	/*------------------------------------------------------------------*/
+	/**
+	 * Apply the current transformation to a given point.
 	 *
 	 * @param u input, x- point coordinate
 	 * @param v input, y- point coordinate
@@ -2991,7 +3054,8 @@ public class bUnwarpJTransformation
 		}
 
 		// Source to Target evaluation (Similarity + Landmarks + Regularization)
-		double f = evaluateSimilarity(x1, intervals, auxGrad1, only_image, show_error, false);		
+		//double f = evaluateSimilarity(x1, intervals, auxGrad1, only_image, show_error, false);
+		double f = evaluateSimilarityMultiThread(x1, intervals, auxGrad1, only_image, false);
 
 		double []x2 = new double [M];
 		for(int i = halfM, p = 0; i<M; i++, p++)
@@ -3001,7 +3065,8 @@ public class bUnwarpJTransformation
 		}
 
 		// Target to Source evaluation (Similarity + Landmarks + Regularization)
-		f += evaluateSimilarity(x2, intervals, auxGrad2, only_image, show_error, true);		
+		//f += evaluateSimilarity(x2, intervals, auxGrad2, only_image, show_error, true);
+		f += evaluateSimilarityMultiThread(x2, intervals, auxGrad2, only_image, true);
 
 		// Gradient composition.
 		for(int i = 0, p = 0; i<halfM; i++, p++)
@@ -3020,7 +3085,8 @@ public class bUnwarpJTransformation
 			// Consistency gradient.
 			double []vgradcons = new double[grad.length];
 
-			f_consistency = evaluateConsistency(intervals, vgradcons);
+			//f_consistency = evaluateConsistency(intervals, vgradcons);
+			f_consistency = evaluateConsistencyMultiThread(intervals, vgradcons);
 
 			// Update gradient.
 			for(int i = 0; i < grad.length; i++)
@@ -4364,7 +4430,8 @@ public class bUnwarpJTransformation
 				target.getCurrentHeight(), target.getCurrentWidth(), intervals);
 
 		/* First computation of the energy */
-		f = evaluateSimilarity(x, intervals, grad, false, false, false);
+		//f = evaluateSimilarity(x, intervals, grad, false, false, false);
+		f = evaluateSimilarityMultiThread(x, intervals, grad, false, false);
 
 		if (showMarquardtOptim) IJ.write("f(1)="+f);
 
@@ -4419,7 +4486,9 @@ public class bUnwarpJTransformation
 			if (improvementx < Math.sqrt(TINY)) break;
 
 			/* Estimate the new function value -------------------------------- */
-			f = evaluateSimilarity(x, intervals, grad, false, false, false);
+			//f = evaluateSimilarity(x, intervals, grad, false, false, false);
+			f = evaluateSimilarityMultiThread(x, intervals, grad, false, false);
+			
 			iter++;
 			if (showMarquardtOptim) 
 				IJ.write("f("+iter+")="+f+" lambda="+lambda);
@@ -4927,12 +4996,12 @@ public class bUnwarpJTransformation
 			for (int i=0; i<nThreads; i++) 
 			{
 				// last block size is the rest of the window
-				int x_start = i*block_height;
+				int y_start = i*block_height;
 				
 				if (nThreads-1 == i) 
 					block_height = auxTargetHeight - i*block_height;
 								
-				rects[i] = new Rectangle(0, x_start, auxTargetWidth, block_height);
+				rects[i] = new Rectangle(0, y_start, auxTargetWidth, block_height);
 				
 				//IJ.log("block = 0 " + (i*block_height) + " " + auxTargetWidth + " " + block_height );
 				
@@ -5054,12 +5123,12 @@ public class bUnwarpJTransformation
 			for (int i=0; i<nThreads; i++) 
 			{
 				// last block size is the rest of the window
-				int x_start = i*block_height;
+				int y_start = i*block_height;
 				
 				if (nThreads-1 == i) 
 					block_height = auxTargetHeight - i*block_height;
 								
-				rects[i] = new Rectangle(0, x_start, auxTargetWidth, block_height);
+				rects[i] = new Rectangle(0, y_start, auxTargetWidth, block_height);
 				
 				//IJ.log("block = 0 " + (i*block_height) + " " + auxTargetWidth + " " + block_height );
 				
@@ -5240,10 +5309,7 @@ public class bUnwarpJTransformation
 						final double y = transformation_y_v_u;
 						if (auxSourceMsk.getValue(x,y))
 						{
-							double sval = auxSource.prepareForInterpolationAndInterpolateI(x, y, false, ORIGINAL);
-							//fp.putPixelValue(u,v,sval);
-							fp_array[u_rect + v_offset] = (float) sval;
-							//fp_mask.putPixelValue(u,v,255);
+							fp_array[u_rect + v_offset] = (float) auxSource.prepareForInterpolationAndInterpolateI(x, y, false, ORIGINAL);							
 							fp_mask_array[u_rect + v_offset] = 255;
 						}
 						else
@@ -5289,7 +5355,9 @@ public class bUnwarpJTransformation
 		 * 
 		 * @param swx B-spline interpolator for transformation in x-
 		 * @param swy B-spline interpolator for transformation in y-
-		 * @param auxSource source image
+		 * @param sourceR red source image
+		 * @param sourceG green source image
+		 * @param sourceB blue source image
 		 * @param auxTargetCurrentWidth current target height
 		 * @param auxTargetCurrentHeight current target height
 		 * @param auxTargetMsk target mask
@@ -5998,8 +6066,9 @@ public class bUnwarpJTransformation
 			final boolean fromSubT = (auxTarget.isSubOutput());
 			final boolean fromSubS = (auxSource.isSubOutput());
 			
-			double[]tImage = (auxTarget.isSubOutput()) ? auxTarget.getSubImage() : auxTarget.getImage();
-			float [] f_array = (float[]) fp.getPixels();
+			final double[]tImage = fromSubT ? auxTarget.getSubImage() : auxTarget.getImage();
+			final float [] f_array = (float[]) fp.getPixels();
+			
 			for (int v_rect = 0, v=rect.y; v<auxTargetHeight; v++, v_rect++)
 			{
 				final int v_offset = v_rect * rect.width;
@@ -6103,4 +6172,867 @@ public class bUnwarpJTransformation
 		return(b);
 	} /* end yWeight */
 
+	
+	/*--------------------------------------------------------------------------*/
+	/**
+	 * Evaluate the similarity between the source and the target images but also
+	 * the transformation regularization and and landmarks energy term if necessary.
+	 * Multi-threading version.
+	 *
+	 * @param c Input: Deformation coefficients
+	 * @param intervals Input: Number of intervals for the deformation
+	 * @param grad Output: Gradient of the similarity
+	 * @param only_image Input: if true, only the image term is considered and not the regularization
+	 * @param bIsReverse Input: flag to determine the transformation direction (target-source=FALSE or source-target=TRUE)
+	 * @return images similarity value
+	 */
+	
+	private double evaluateSimilarityMultiThread(
+			final double []c,
+			final int      intervals,
+			double []grad,
+			final boolean  only_image,
+			boolean bIsReverse)
+	{
+
+		// Auxiliary variables for changing from source to target and inversely
+		final bUnwarpJImageModel auxTarget = (!bIsReverse) ?  target : source;
+		final bUnwarpJImageModel auxSource = (!bIsReverse) ? source : target;
+
+		final bUnwarpJMask auxTargetMsk = (!bIsReverse) ? targetMsk : sourceMsk;
+		final bUnwarpJMask auxSourceMsk = (!bIsReverse) ? sourceMsk : targetMsk;
+
+		final bUnwarpJPointHandler auxTargetPh = (!bIsReverse) ? targetPh : sourcePh;
+		final bUnwarpJPointHandler auxSourcePh = (!bIsReverse) ? sourcePh : targetPh;
+
+		final bUnwarpJImageModel swx = (!bIsReverse) ? swxTargetToSource : swxSourceToTarget;
+		final bUnwarpJImageModel swy = (!bIsReverse) ? swyTargetToSource : swySourceToTarget;
+
+		final double auxFactorWidth = (!bIsReverse) ? this.target.getFactorWidth() : this.sourceFactorWidth;
+		final double auxFactorHeight = (!bIsReverse) ? this.target.getFactorHeight() : this.sourceFactorHeight;
+
+		final double P11[][] = (!bIsReverse) ? this.P11_TargetToSource : this.P11_SourceToTarget;
+		final double P12[][] = (!bIsReverse) ? this.P12_TargetToSource : this.P12_SourceToTarget;
+		final double P22[][] = (!bIsReverse) ? this.P22_TargetToSource : this.P12_SourceToTarget;
+
+		final int auxTargetCurrentWidth = (!bIsReverse) ? this.targetCurrentWidth : this.sourceCurrentWidth;
+		final int auxTargetCurrentHeight = (!bIsReverse) ? this.targetCurrentHeight : this.sourceCurrentHeight;
+
+
+		final int cYdim = intervals+3;
+		final int cXdim = cYdim;
+		final int Nk = cYdim * cXdim;
+		final int twiceNk = 2 * Nk;
+		
+		final double []vgradreg = new double[grad.length];
+		final double []vgradland = new double[grad.length];
+
+		// Set the transformation coefficients to the interpolator
+		swx.setCoefficients(c, cYdim, cXdim, 0);
+		swy.setCoefficients(c, cYdim, cXdim, Nk);
+
+		// Initialize gradient
+		for (int k=0; k<twiceNk; k++) 
+			vgradreg[k]=vgradland[k]=grad[k]=0.0F;
+
+		// Estimate the similarity and gradient between both images
+		double imageSimilarity = 0.0;
+		
+		//final int Ydim = auxTarget.getCurrentHeight();
+		//final int Xdim = auxTarget.getCurrentWidth();
+
+
+		// Image similarity calculated in a concurrent way
+		if(imageWeight != 0)
+		{
+			// Check the number of processors in the computer 
+			final int nproc = Runtime.getRuntime().availableProcessors();
+
+			// We will use threads to calculate the similarity of the different 
+			// parts of the target and source image
+			int block_height = auxTargetCurrentHeight / nproc;
+			if (auxTargetCurrentHeight % 2 != 0) 
+				block_height++;
+			
+			// We use as many threads as processors
+			final int nThreads = nproc; 
+			
+			Thread[] threads  = new Thread[nThreads];
+			Rectangle[] rects = new Rectangle[nThreads];
+			
+			// Every thread will provide the corresponding similarity value and
+			// gradient
+			final double [][]grad_thread = new double[nThreads][grad.length];
+			// Result array:
+			// First result is the partial image similarity and second the number of pixels
+			final double [][]result = new double[nThreads][2];
+			// Number of processed pixels (taking into account the masks)
+			int n = 0;
+			
+			for (int i=0; i<nThreads; i++) 
+			{
+				// Last block goes to the end of the window
+				int y_start = i * block_height;
+				if (nThreads-1 == i) 
+					block_height = auxTargetCurrentHeight  - i * block_height;
+				
+				// Corresponding rectangle
+				rects[i] = new Rectangle(0, y_start, auxTargetCurrentWidth, block_height);
+				
+				
+				// Create threads and start them.
+				threads[i] = new Thread(new EvaluateSimilarityTile(auxTarget, auxSource, auxTargetMsk,
+							   										auxSourceMsk, swx, swy, auxFactorWidth, auxFactorHeight,
+							   										intervals, grad_thread[i], result[i],
+							   										rects[i]));
+				threads[i].start();
+			}
+			
+			// Wait for the threads to finish
+			for (int i=0; i<nThreads; i++) 
+			{
+				try {
+					threads[i].join();
+					threads[i] = null;
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}			
+			}
+			
+			// Accumulate results
+			for (int i=0; i<nThreads; i++) 
+			{
+				imageSimilarity += result[i][0];
+				n += result[i][1];								
+			}
+			
+			// Average image similarity
+			imageSimilarity /= n;
+			// Average gradients
+			for(int i = 0; i<nThreads; i++)
+			{
+				for(int j = 0; j < grad.length; j++)
+					grad[j] += (grad_thread[i][j]/n);
+			}
+			
+		}
+		
+		
+
+		// Compute regularization term ..............................................
+		double regularization = 0.0;
+		if (!only_image)
+		{
+			for (int i=0; i<Nk; i++)
+				for (int j=0; j<Nk; j++) {
+					regularization+=c[   i]*P11[i][j]*c[   j]+// c1^t P11 c1
+					c[Nk+i]*P22[i][j]*c[Nk+j]+// c2^t P22 c2
+					c[   i]*P12[i][j]*c[Nk+j];// c1^t P12 c2
+					vgradreg[   i]+=2*P11[i][j]*c[j];         // 2 P11 c1
+					vgradreg[Nk+i]+=2*P22[i][j]*c[Nk+j];      // 2 P22 c2
+					vgradreg[   i]+=  P12[i][j]*c[Nk+j];      //   P12 c2
+					vgradreg[Nk+i]+=  P12[j][i]*c[   j];      //   P12^t c1
+				}
+			regularization*=1.0/(auxTargetCurrentHeight * auxTargetCurrentWidth);
+			for (int k=0; k<twiceNk; k++) 
+				vgradreg [k]*=1.0/(auxTargetCurrentHeight * auxTargetCurrentWidth);
+		}
+
+		// Compute landmark error and derivative ...............................
+		// Get the list of landmarks
+		double landmarkError = 0.0;
+		int K = 0;
+		if (auxTargetPh!=null) 
+			K = auxTargetPh.getPoints().size();
+		
+		if (landmarkWeight != 0)
+		{
+			Vector <Point> sourceVector = null;
+			if (auxSourcePh!=null) sourceVector = auxSourcePh.getPoints();
+			else                   sourceVector = new Vector <Point> ();
+			Vector <Point> targetVector = null;
+			if (auxTargetPh!=null) targetVector = auxTargetPh.getPoints();
+			else                   targetVector = new Vector <Point> ();
+
+			for (int kp=0; kp<K; kp++)
+			{
+				// Get the landmark coordinate in the target image
+				final Point sourcePoint = (Point)sourceVector.elementAt(kp);
+				final Point targetPoint = (Point)targetVector.elementAt(kp);
+				double u = auxFactorWidth *(double)targetPoint.x;
+				double v = auxFactorHeight*(double)targetPoint.y;
+
+				// Express it in "spline" units
+				double tu = (double)(u * intervals) / (double)(auxTargetCurrentWidth  - 1) + 1.0F;
+				double tv = (double)(v * intervals) / (double)(auxTargetCurrentHeight - 1) + 1.0F;
+
+				// Transform this coordinate to the source image
+				swx.prepareForInterpolation(tu, tv, false);
+				double x = swx.interpolateI();
+				swy.prepareForInterpolation(tu, tv, false);
+				double y = swy.interpolateI();
+
+				// Substract the result from the residual
+				double dx = auxFactorWidth  * (double)sourcePoint.x - x;
+				double dy = auxFactorHeight * (double)sourcePoint.y - y;
+
+				// Add to landmark error
+				landmarkError += dx*dx + dy*dy;
+
+				// Compute the derivative with respect to all the c coefficients
+				for (int l=0; l<4; l++)
+					for (int m=0; m<4; m++)
+					{
+						if (swx.yIndex[l]==-1 || swx.xIndex[m]==-1) continue;
+						int k=swx.yIndex[l]*cYdim+swx.xIndex[m];
+
+						// There's also a multiplication by 2 that I will do later
+						// Derivative related to X deformation
+						vgradland[k]   -=dx*swx.getWeightI(l,m);
+
+						// Derivative related to Y deformation
+						vgradland[k+Nk]-=dy*swy.getWeightI(l,m);
+					}
+			}
+		}
+
+		if (K!=0)
+		{
+			landmarkError *= landmarkWeight/K;
+			double aux = 2.0 * landmarkWeight/K;
+			// This is the 2 coming from the derivative
+			// computation that I would do at the end
+			for (int k=0; k<twiceNk; k++) 
+				vgradland[k] *= aux;
+		}
+		if (only_image) landmarkError = 0;
+		
+		
+		
+		// Finish computations .............................................................
+		// Add all gradient terms (similarity + regularization + landmarks)
+		for (int k=0; k<twiceNk; k++)
+			grad[k] += vgradreg[k] + vgradland[k];
+
+
+		if (showMarquardtOptim)
+		{
+			String s = bIsReverse ? new String("(t-s)") : new String("(s-t)");
+			if (imageWeight != 0) 
+			{
+				IJ.write("    Image          error " + s + ": " + imageSimilarity);
+				if(bIsReverse)
+					this.partialInverseSimilarityError = imageSimilarity;
+				else
+					this.partialDirectSimilarityError = imageSimilarity;
+
+			}
+			if (landmarkWeight != 0)               
+			{
+				IJ.write("    Landmark       error " + s + ": " + landmarkError);
+				if(bIsReverse)
+					this.partialInverseLandmarkError = landmarkError;
+				else
+					this.partialDirectLandmarkError = landmarkError;
+			}
+			if (divWeight != 0 || curlWeight != 0)
+			{
+				IJ.write("    Regularization error " + s + ": " + regularization);
+				if(bIsReverse)
+					this.partialInverseRegularizationError = regularization;
+				else
+					this.partialDirectRegularizationError = regularization;
+					
+			}
+		}
+		return imageSimilarity + landmarkError + regularization;
+	}
+	
+	/* ------------------------------------------------------------------------ */
+	/**
+	 *  Class to run concurrent similarity evaluation
+	 * 	 
+	 */		
+	private class EvaluateSimilarityTile implements Runnable 
+	{
+		// Fields
+		/** current target image */
+		final bUnwarpJImageModel auxTarget;
+		/** current source image */
+		final bUnwarpJImageModel auxSource;
+		/** target mask */
+		final bUnwarpJMask auxTargetMsk;
+		/** source mask */
+		final bUnwarpJMask auxSourceMsk;
+		/** B-spline deformation in x */
+		final bUnwarpJImageModel swx;
+		/** B-spline deformation in y */
+		final bUnwarpJImageModel swy;
+		/** factor width */
+		final double auxFactorWidth;
+		/** factor height */
+		final double auxFactorHeight;
+		/** number of intervals between B-spline coefficients */
+		final int intervals;
+		/** similarity gradient */
+		final double[] grad;
+		/** evaluation results: image similarity value for the current rectangle and number of pixels that have been evaluated */
+		final double[] result;
+		/** rectangle containing the area of the image to be evaluated */
+		final Rectangle rect;
+		
+		/**
+		 * Evaluate similarity tile constructor 
+		 * 
+		 * @param auxTarget current target image
+		 * @param auxSource current source image
+		 * @param auxTargetMsk target mask
+		 * @param auxSourceMsk source mask
+		 * @param swx B-spline deformation in x
+		 * @param swy B-spline deformation in y
+		 * @param auxFactorWidth factor width
+		 * @param auxFactorHeight factor height
+		 * @param intervals number of intervals between B-spline coefficients
+		 * @param grad similarity gradient (output)
+		 * @param result output results: image similarity value for the current rectangle and number of pixels that have been evaluated
+		 * @param rect rectangle containing the area of the image to be evaluated
+		 */
+		EvaluateSimilarityTile(bUnwarpJImageModel auxTarget,
+							   bUnwarpJImageModel auxSource,
+							   bUnwarpJMask auxTargetMsk,
+							   bUnwarpJMask auxSourceMsk,
+							   bUnwarpJImageModel swx,
+							   bUnwarpJImageModel swy,
+							   double auxFactorWidth,
+							   double auxFactorHeight,
+							   int intervals,
+							   double[] grad,
+							   double[] result,
+							   Rectangle rect)
+		{
+			this.auxTarget = auxTarget;
+			this.auxSource = auxSource;
+			
+			this.auxTargetMsk = auxTargetMsk;
+			this.auxSourceMsk = auxSourceMsk;
+			
+			this.swx = swx;
+			this.swy = swy;
+			
+			this.auxFactorWidth = auxFactorWidth;
+			this.auxFactorHeight = auxFactorHeight;
+					
+			this.intervals = intervals;
+			
+			this.grad = grad;
+			
+			this.result = result;
+		
+			this.rect = rect;
+		}
+
+		/*------------------------------------------------------------------*/
+		/**
+		 * Run method to evaluate the similarity of source and target images. 
+		 * Only the part defined by the rectangle will be evaluated.
+		 */
+	
+		public void run() 
+		{
+			final int cYdim = intervals+3;
+			final int cXdim = cYdim;
+			final int Nk = cYdim * cXdim;
+			final int twiceNk = 2 * Nk;
+			
+			double imageSimilarity = 0.0;
+			
+			// The rectangle marks the area of the image to be treated.
+			int uv = rect.y * rect.width + rect.x;
+			final int Ydim = rect.y + rect.height;
+			final int Xdim = rect.x + rect.width;						
+			
+			// Loop over all points in the source image (rectangle)
+			int n=0;
+			
+
+			final double []I1D = new double[2]; // Space for the first derivatives of I1
+
+			final double []targetCurrentImage = auxTarget.getCurrentImage();
+
+			for (int v=rect.y; v<Ydim; v++)
+			{										
+				for (int u=rect.x; u<Xdim; u++, uv++) 
+				{
+					// Compute image term .....................................................
+
+					// Check if this point is in the target mask
+					if (auxTargetMsk.getValue(u/auxFactorWidth, v/auxFactorHeight))
+					{
+						// Compute value in the source image
+						final double I2 = targetCurrentImage[uv];
+
+						// Compute the position of this point in the target
+						double x = swx.precomputed_interpolateI(u,v);
+						double y = swy.precomputed_interpolateI(u,v);
+
+						// Check if this point is in the source mask
+						if (auxSourceMsk.getValue(x/auxFactorWidth, y/auxFactorHeight))
+						{
+							// Compute the value of the target at that point
+							final double I1 = auxSource.prepareForInterpolationAndInterpolateIAndD(x, y, I1D, false, PYRAMID);							
+
+							final double I1dx = I1D[0], I1dy = I1D[1];
+
+							final double error = I2 - I1;
+							final double error2 = error*error;							
+							imageSimilarity += error2;
+
+							// Compute the derivative with respect to all the c coefficients
+							// Cost of the derivatives = 16*(3 mults + 2 sums)
+							// Current cost = 359 mults + 346 sums
+							for (int l=0; l<4; l++)
+								for (int m=0; m<4; m++)
+								{
+									if (swx.prec_yIndex[v][l]==-1 || swx.prec_xIndex[u][m]==-1) continue;
+
+									// Note: It's the same to take the indexes and weightI from swx than from swy
+									double weightI = swx.precomputed_getWeightI(l,m,u,v);
+
+									int k = swx.prec_yIndex[v][l] * cYdim + swx.prec_xIndex[u][m];
+
+									// Compute partial result
+									// There's also a multiplication by 2 that I will
+									// do later
+									double aux = -error * weightI;
+
+									// Derivative related to X deformation
+									grad[k]   += aux * I1dx;
+
+									// Derivative related to Y deformation
+									grad[k+Nk]+= aux * I1dy;
+								}
+							n++; // Another point has been successfully evaluated
+						}
+					}
+				}
+			}
+			
+
+			// Average the image related terms (now i do the 1/n outside)
+			if (n!=0)
+			{
+				imageSimilarity *= imageWeight;
+				double aux = imageWeight * 2.0; // This is the 2 coming from the
+												   // derivative that I would do later
+				for (int k=0; k<twiceNk; k++) 
+					grad[k] *= aux;
+			} 
+			else
+				imageSimilarity = 1/FLT_EPSILON;
+
+
+			// Set result (image similarity value for the current rectangle
+			// and number of pixels that have been evaluated)
+			this.result[0] = imageSimilarity;		
+			this.result[1] = n;			
+			
+		} // end run method
+		
+	} // end class EvaluateSimilarityTile
+
+	
+	/*--------------------------------------------------------------------------*/
+	/**
+	 * Calculate the geometric error between the source-target and target-source
+	 * deformations. The corresponding coefficients are assumed to be at swxTargetToSource,
+	 * swyTargetToSource, swxSourceToTarget and swySourceToTarget.
+	 * Multi-thread version.
+	 *
+	 * @param intervals Input: Number of intervals for the deformation
+	 * @param grad Output: Gradient of the function
+	 * 
+	 * @return geometric error between the source-target and target-source deformations.
+	 */
+
+	private double evaluateConsistencyMultiThread(
+			final int intervals,
+			double []grad)
+	{
+		// Consistency values
+		double f_direct = 0.0;
+		double f_inverse = 0.0;
+		
+		
+		// Check the number of processors in the computer 
+		final int nproc = Runtime.getRuntime().availableProcessors();
+
+		// We will use threads to calculate the similarity of the different 
+		// parts of the target and source image
+		int block_height_target = this.targetCurrentHeight / nproc;
+		if (this.targetCurrentHeight % 2 != 0) 
+			block_height_target++;
+		
+		int block_height_source = this.sourceCurrentHeight / nproc;
+		if (this.sourceCurrentHeight % 2 != 0) 
+			block_height_source++;
+		
+		// We use as many threads as processors
+		final int nThreads = nproc; 
+		
+		Thread[] threads  = new Thread[nThreads];
+		Rectangle[] rect_target = new Rectangle[nThreads];
+		Rectangle[] rect_source = new Rectangle[nThreads];
+		
+		// Every thread will provide the corresponding consistency value and
+		// gradient
+		final double [][]grad_direct = new double[nThreads][grad.length];
+		final double [][]grad_inverse = new double[nThreads][grad.length];
+		// Result array:
+		// First result is the direct partial consistency, second the number of pixels (direct),
+		// third the inverse partical consistency and fourth the number of pixels (inverse)
+		final double [][]result = new double[nThreads][4];
+		// Number of processed pixels (taking into account the masks)
+		int n_direct = 0;
+		int n_inverse = 0;
+		
+		for (int i=0; i<nThreads; i++) 
+		{
+			// Last block goes to the end of the window
+			int y_start_target = i * block_height_target;
+			int y_start_source = i * block_height_source;
+			if (nThreads-1 == i) 
+			{
+				block_height_target = this.targetCurrentHeight - i * block_height_target;
+				block_height_source = this.sourceCurrentHeight - i * block_height_source;
+			}
+			
+			// Corresponding rectangles
+			rect_target[i] = new Rectangle(0, y_start_target, this.targetCurrentHeight, block_height_target);
+			rect_source[i] = new Rectangle(0, y_start_source, this.sourceCurrentHeight, block_height_source);
+			
+			// Create threads and start them.
+			threads[i] = new Thread(new EvaluateConsistencyTile(this, grad_direct[i], grad_inverse[i], result[i],
+						   										rect_target[i], rect_source[i]));
+			threads[i].start();
+		}
+		
+		// Wait for the threads to finish
+		for (int i=0; i<nThreads; i++) 
+		{
+			try {
+				threads[i].join();
+				threads[i] = null;
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}			
+		}
+		
+		// Accumulate results
+		for (int i=0; i<nThreads; i++) 
+		{
+			f_direct += result[i][0];
+			n_direct += result[i][1];								
+			f_inverse += result[i][2];
+			n_inverse += result[i][3];
+		}
+		
+		// Average consistency
+		f_direct /= n_direct;
+		f_inverse /= n_inverse;
+		
+		// Average and combine gradients
+		for(int i = 0; i<nThreads; i++)
+		{
+			for(int j = 0; j < grad.length; j++)				
+				grad[j] += (grad_direct[i][j]/n_direct) + (grad_inverse[i][j]/n_inverse);
+		}
+		
+		
+		this.partialDirectConsitencyError = this.consistencyWeight * f_direct;
+		this.partialInverseConsitencyError = this.consistencyWeight * f_inverse;
+
+
+		double consistencyDirectError = (n_direct == 0) ? 1.0/FLT_EPSILON : (this.consistencyWeight * f_direct);
+		double consistencyInverseError = (n_inverse == 0) ? 1.0/FLT_EPSILON : (this.consistencyWeight * f_inverse);
+
+		if (showMarquardtOptim)
+		{
+			IJ.write("    Consistency Error (s-t): " + consistencyDirectError);
+			IJ.write("    Consistency Error (t-s): " + consistencyInverseError);
+		}
+
+
+		if(n_direct == 0 || n_inverse == 0)
+			return 1/FLT_EPSILON;
+		return (this.consistencyWeight * (f_direct + f_inverse));
+	}
+	
+	/* ------------------------------------------------------------------------ */
+	/**
+	 *  Class to run concurrent consistency evaluation
+	 * 	 
+	 */		
+	private class EvaluateConsistencyTile implements Runnable 
+	{
+
+		/**transformation object, it contains all the registration information  */
+		final bUnwarpJTransformation transf;
+		/** output direct gradient array */
+		final double[] grad_direct;
+		/** output inverse gradient array */
+		final double[] grad_inverse;
+		/** direct and inverse consistency error values and number of pixels (f_dir, n_dir, f_inv, n_inv) */
+		final double[] result;
+		/** rectangle marking the target area to be evaluated */
+		final Rectangle rect_target;
+		/** rectangle marking the source area to be evaluated */
+		final Rectangle rect_source;
+		
+		/**
+		 * Evaluate consistency tile constructor
+		 * 
+		 * @param transf transformation object, it contains all the registration information
+		 * @param grad_direct output direct gradient array
+		 * @param grad_inverse output inverse gradient array
+		 * @param result direct and inverse consistency error values and number of pixels (f_dir, n_dir, f_inv, n_inv)
+		 * @param rect_target rectangle marking the target area to be evaluated
+		 * @param rect_source rectangle marking the source area to be evaluated
+		 */
+		EvaluateConsistencyTile(bUnwarpJTransformation transf,
+								double[] grad_direct,
+								double[] grad_inverse,
+								double[] result,
+								Rectangle rect_target,
+								Rectangle rect_source)
+		{
+			this.transf = transf;
+			
+			this.grad_direct = grad_direct;
+			this.grad_inverse = grad_inverse;
+
+			this.result = result;
+
+			this.rect_target = rect_target;
+			this.rect_source = rect_source;
+		}
+		
+		/**
+		 * Run method to evaluate the transformation consistency between source and target images. 
+		 * Only the part defined by the rectangle will be evaluated.
+		 */
+		public void run() 
+		{
+			final int cYdim = this.transf.intervals+3;
+			final int cXdim = cYdim;
+			final int Nk = cYdim * cXdim;
+			final int twiceNk = 2 * Nk;
+
+			// Initialize gradient
+			for (int k = 0; k<this.grad_direct.length; k++)
+				this.grad_direct[k] = 0.0F;
+
+			// The target rectangle marks the area of the target image to be treated.			
+			final int YdimT = rect_target.y + rect_target.height;
+			final int XdimT = rect_target.x + rect_target.width;	
+			
+			
+			// Compute the deformation
+			// Set these coefficients to an interpolator
+			final bUnwarpJImageModel swx_direct = this.transf.swxTargetToSource; 
+			final bUnwarpJImageModel swy_direct = this.transf.swyTargetToSource;  
+
+			final bUnwarpJImageModel swx_inverse = this.transf.swxSourceToTarget; 
+			final bUnwarpJImageModel swy_inverse = this.transf.swySourceToTarget;
+
+			// *********** Compute the geometric error and gradient (DIRECT) ***********       
+			double f_direct = 0;
+			int n_direct = 0;						
+			
+			for (int v=rect_target.y; v<YdimT; v++)
+				for (int u=rect_target.x; u<XdimT; u++)
+				{
+					// Check if this point is in the target mask
+					if (this.transf.targetMsk.getValue(u/this.transf.targetFactorWidth, v/this.transf.targetFactorHeight))
+					{
+
+						final int x = (int) Math.round(swx_direct.precomputed_interpolateI(u,v));
+						final int y = (int) Math.round(swy_direct.precomputed_interpolateI(u,v));					 					
+
+						if (x>=0 && x<this.transf.sourceCurrentWidth && y>=0 && y<this.transf.sourceCurrentHeight)
+						{
+							final double x2 = swx_inverse.precomputed_interpolateI(x,y);
+							final double y2 = swy_inverse.precomputed_interpolateI(x,y);
+							double aux1 = u - x2;
+							double aux2 = v - y2;
+
+							f_direct += aux1 * aux1 + aux2 * aux2;
+
+							// Compute the derivative with respect to all the c coefficients
+							// Derivatives from direct coefficients.
+							for (int l=0; l<4; l++)
+								for (int m=0; m<4; m++)
+								{
+									if (swx_direct.prec_yIndex[v][l]==-1 || swx_direct.prec_xIndex[u][m]==-1)
+										continue;
+
+									double dddx = swx_direct.precomputed_getWeightI(l, m, u, v);
+									double dixx = swx_inverse.precomputed_getWeightDx(l, m, x, y);
+									double diyy = swy_inverse.precomputed_getWeightDy(l, m, x, y);
+
+									double weightIx = (dixx + diyy) * dddx;
+
+									double dddy = swy_direct.precomputed_getWeightI(l, m, u, v);
+									double dixy = swx_inverse.precomputed_getWeightDy(l, m, x, y);
+									double diyx = swy_inverse.precomputed_getWeightDx(l, m, x, y);
+
+									double weightIy = (diyx + dixy) * dddy;
+
+									int k = swx_direct.prec_yIndex[v][l] * cYdim + swx_direct.prec_xIndex[u][m];
+
+									// Derivative related to X deformation
+									this.grad_direct[k]        += -aux1 * weightIx;
+
+									// Derivative related to Y deformation
+									this.grad_direct[k+twiceNk]+= -aux2 * weightIy;
+								}
+
+
+							// Derivatives from inverse coefficients.
+							for (int l=0; l<4; l++)
+								for (int m=0; m<4; m++)
+								{
+									// d inverse(direct(x)) / d c_inverse
+									if (swx_inverse.prec_yIndex[y][l]==-1 || swx_inverse.prec_xIndex[x][m]==-1)
+										continue;
+
+									double weightI = swx_inverse.precomputed_getWeightI(l, m, x, y);
+
+									int k = swx_inverse.prec_yIndex[y][l] * cYdim + swx_inverse.prec_xIndex[x][m];
+
+									// Derivative related to X deformation
+									this.grad_direct[k+Nk]        += -aux1 * weightI;
+
+									// Derivative related to Y deformation
+									this.grad_direct[k+Nk+twiceNk]+= -aux2 * weightI;
+								}
+
+
+							n_direct++; // Another point has been successfully evaluated
+						}
+					}// end if mask.
+				}
+
+			if (n_direct != 0)
+			{				
+				// Average the image related terms
+				double aux = consistencyWeight * 2.0;  // This is the 2 coming from the
+				// derivative that I would do later
+				for (int k=0; k<grad_direct.length; k++)
+					grad_direct[k] *= aux;
+			}
+
+			// Inverse gradient
+			// Initialize 
+			for (int k = 0; k<this.grad_inverse.length; k++)
+				this.grad_inverse[k] = 0.0F;
+
+			// *********** Compute the geometric error and gradient (INVERSE) ***********
+			// The source rectangle marks the area of the source image to be treated.			
+			final int YdimS = rect_source.y + rect_source.height;
+			final int XdimS = rect_source.x + rect_source.width;
+			
+			double f_inverse = 0;
+			int n_inverse = 0;
+			for (int v=rect_source.y; v<YdimS; v++)
+				for (int u=rect_source.x; u<XdimS; u++)
+				{
+					// Check if this point is in the target mask
+					if (this.transf.sourceMsk.getValue(u/this.transf.sourceFactorWidth, v/this.transf.sourceFactorHeight))
+					{
+						final int x = (int) Math.round( swx_inverse.precomputed_interpolateI(u, v));
+						final int y = (int) Math.round( swy_inverse.precomputed_interpolateI(u, v));
+
+						if (x>=0 && x<this.transf.targetCurrentWidth && y>=0 && y<this.transf.targetCurrentHeight)
+						{
+							final double x2 = swx_direct.precomputed_interpolateI(x, y);
+							final double y2 = swy_direct.precomputed_interpolateI(x, y);
+							double aux1 = u - x2;
+							double aux2 = v - y2;
+
+							f_inverse += aux1 * aux1 + aux2 * aux2;
+
+							// Compute the derivative with respect to all the c coefficients
+							// Derivatives from direct coefficients.
+							for (int l=0; l<4; l++)
+								for (int m=0; m<4; m++)
+								{
+									// d direct(inverse(x)) / d c_direct
+									if (swx_direct.prec_yIndex[y][l]==-1 || swx_direct.prec_xIndex[x][m]==-1)
+										continue;
+
+									double weightI = swx_direct.precomputed_getWeightI(l, m, x, y);
+
+									int k = swx_direct.prec_yIndex[y][l] * cYdim + swx_direct.prec_xIndex[x][m];
+
+									// Derivative related to X deformation
+									this.grad_inverse[k]        += -aux1 * weightI;
+
+									// Derivative related to Y deformation
+									this.grad_inverse[k+twiceNk]+= -aux2 * weightI;
+								}
+							// Derivatives from inverse coefficients.
+							for (int l=0; l<4; l++)
+								for (int m=0; m<4; m++)
+								{
+									if (swx_inverse.prec_yIndex[v][l]==-1 || swx_inverse.prec_xIndex[u][m]==-1)
+										continue;
+
+									double diix = swx_inverse.precomputed_getWeightI(l, m, u, v);
+									double ddxx = swx_direct.precomputed_getWeightDx(l, m, x, y);
+									double ddyy = swy_direct.precomputed_getWeightDy(l, m, x, y);
+
+									double weightIx = (ddxx + ddyy) * diix;
+
+									double diiy = swy_inverse.precomputed_getWeightI(l, m, u, v);
+									double ddxy = swx_direct.precomputed_getWeightDy(l, m, x, y);
+									double ddyx = swy_direct.precomputed_getWeightDx(l, m, x, y);
+
+									double weightIy = (ddyx + ddxy) * diiy;
+
+
+									int k = swx_inverse.prec_yIndex[v][l] * cYdim + swx_inverse.prec_xIndex[u][m];
+
+									// Derivative related to X deformation
+									this.grad_inverse[k+Nk]        += -aux1 * weightIx;
+
+									// Derivative related to Y deformation
+									this.grad_inverse[k+Nk+twiceNk]+= -aux2 * weightIy;
+								}
+
+							n_inverse++; // Another point has been successfully evaluated
+						}
+					} // end if mask
+				} // end inverse geometric error calculation
+
+			if (n_inverse != 0)
+			{				
+				// Average the image related terms
+				double aux = consistencyWeight * 2.0;  // This is the 2 coming from the
+				// derivative that I would do later
+				for(int k=0; k<this.grad_inverse.length; k++)
+					this.grad_inverse[k] *= aux;
+			}
+			
+			// Save results
+			this.result[0] = f_direct;
+			this.result[1] = n_direct;
+			this.result[2] = f_inverse;
+			this.result[3] = n_inverse;
+						
+		} // end run method
+				
+		
+	}
+
+	
 } /* end class bUnwarpJTransformation */

@@ -76,7 +76,7 @@ import java.util.Stack;
  * <a href="http://biocomp.cnb.csic.es/~iarganda/bUnwarpJ/">
  * http://biocomp.cnb.csic.es/~iarganda/bUnwarpJ/</a>
  *
- * @version 2.5 03/10/2009
+ * @version 2.5 03/30/2009
  * @author Ignacio Arganda-Carreras <ignacio.arganda@uam.es>
  * @author Jan Kybic
  */
@@ -279,7 +279,8 @@ public class bUnwarpJ_ implements PlugIn
        final boolean saveTransf = false;
 
        // Create target image model
-       final bUnwarpJImageModel target = new bUnwarpJImageModel(targetImp.getProcessor(), true, 1);
+       final bUnwarpJImageModel target = new bUnwarpJImageModel(targetImp.getProcessor(), true, 
+    		   													 (int) Math.pow(2, img_subsamp_fact));
        
        target.setPyramidDepth(imagePyramidDepth+min_scale_image);
        target.startPyramids();
@@ -293,7 +294,8 @@ public class bUnwarpJ_ implements PlugIn
        // Create source image model
        boolean bIsReverse = true;         
 
-       final bUnwarpJImageModel source = new bUnwarpJImageModel(sourceImp.getProcessor(), bIsReverse, 1);
+       final bUnwarpJImageModel source = new bUnwarpJImageModel(sourceImp.getProcessor(), bIsReverse, 
+    		   													(int) Math.pow(2, img_subsamp_fact));
 
        source.setPyramidDepth(imagePyramidDepth + min_scale_image);
        source.startPyramids();
@@ -361,14 +363,219 @@ public class bUnwarpJ_ implements PlugIn
 
        IJ.log("\nRegistering...\n");
        
-       if(mode == bUnwarpJDialog.MONO_MODE)
-    	   warp.doUnidirectionalRegistration();
+       long start = System.currentTimeMillis(); // start timing
+
+       if(mode == bUnwarpJDialog.MONO_MODE)       
+    	   warp.doUnidirectionalRegistration();    	       
        else
     	   warp.doRegistration();
 
+       long stop = System.currentTimeMillis(); // stop timing
+       IJ.log("Registration time: " + (stop - start) + "ms"); // print execution time
+
        // Return results as ImagePlus
-       return output_ip;
+       return output_ip;       
        
+    } // end alignImagesBatch
+    
+    
+    /*------------------------------------------------------------------*/
+    /**
+     * Method for images alignment with no graphical interface. This 
+     * method gives as result an array of 2 ImagePlus containing the
+     * source-target and target-source results (only final transformed image).
+     *
+     * @param targetImp input target image 
+     * @param sourceImp input source image
+     * @param targetMskIP target mask 
+     * @param sourceMskIP source mask
+     * @param mode accuracy mode (0 - Fast, 1 - Accurate, 2 - Mono)
+     * @param img_subsamp_fact image subsampling factor (from 0 to 7, representing 2^0=1 to 2^7 = 128)
+     * @param min_scale_deformation (0 - Very Coarse, 1 - Coarse, 2 - Fine, 3 - Very Fine)
+     * @param max_scale_deformation (0 - Very Coarse, 1 - Coarse, 2 - Fine, 3 - Very Fine, 4 - Super Fine)
+     * @param divWeight divergence weight
+     * @param curlWeight curl weight
+     * @param landmarkWeight landmark weight
+     * @param imageWeight image similarity weight
+     * @param consistencyWeight consistency weight
+     * @param stopThreshold stopping threshold
+     * @param xScale scale factor for x axis
+     * @param yScale scale factor for y axis 
+     * 
+     * @return resulting ImagePlus array (with source-target and target-source results)
+     */
+    public static ImagePlus[] alignImagesBatch(ImagePlus targetImp,
+    									 ImagePlus sourceImp,
+    									 ImageProcessor targetMskIP,
+    									 ImageProcessor sourceMskIP,
+    									 int mode,
+    									 int img_subsamp_fact,
+    									 int min_scale_deformation,
+    									 int max_scale_deformation,
+    									 double  divWeight,
+    									 double  curlWeight,
+    									 double  landmarkWeight,
+    									 double  imageWeight,
+    									 double  consistencyWeight,
+    									 double  stopThreshold,
+    									 double xScale,
+    									 double yScale) 
+    {    	
+
+    	// Scale input images
+    	final ImageProcessor fullTargetIP = targetImp.getProcessor();
+    	fullTargetIP.setInterpolate(true);
+    	final ImageProcessor scaledTargetIP = fullTargetIP.resize((int) (xScale * targetImp.getWidth()),
+    														 (int) (yScale * targetImp.getHeight()));
+    	
+    	final ImageProcessor fullSourceIP = sourceImp.getProcessor();
+    	fullSourceIP.setInterpolate(true);
+    	final ImageProcessor scaledSourceIP = fullSourceIP.resize((int) (xScale * sourceImp.getWidth()),
+    														 (int) (yScale * sourceImp.getHeight()));
+
+    	// Produce side information
+    	final int imagePyramidDepth = max_scale_deformation - min_scale_deformation + 1;
+    	final int min_scale_image = 0;
+
+    	// output level to -1 so nothing is displayed 
+    	final int outputLevel = -1;
+
+    	final boolean showMarquardtOptim = false;       
+    	final boolean saveTransf = false;
+
+    	// Create target image model
+    	final bUnwarpJImageModel target = new bUnwarpJImageModel(scaledTargetIP, true, 
+    			(int) Math.pow(2, img_subsamp_fact));
+
+    	target.setPyramidDepth(imagePyramidDepth+min_scale_image);
+    	target.startPyramids();
+
+    	// Create target mask
+    	final bUnwarpJMask targetMsk = (targetMskIP != null) ? new bUnwarpJMask(targetMskIP, true) 
+    	: new bUnwarpJMask(targetImp.getProcessor(), false);
+
+    	bUnwarpJPointHandler targetPh = null;
+
+    	// Create source image model
+    	boolean bIsReverse = true;         
+
+    	final bUnwarpJImageModel source = new bUnwarpJImageModel(scaledSourceIP, bIsReverse, 
+    			(int) Math.pow(2, img_subsamp_fact));
+
+    	source.setPyramidDepth(imagePyramidDepth + min_scale_image);
+    	source.startPyramids();
+
+    	// Create source mask
+    	final bUnwarpJMask sourceMsk = (sourceMskIP != null) ? new bUnwarpJMask(sourceMskIP, true) 
+    	: new bUnwarpJMask(sourceImp.getProcessor(), false);
+
+    	bUnwarpJPointHandler sourcePh = null;
+
+    	// Load landmarks
+    	if (landmarkWeight != 0)
+    	{
+    		Stack<Point> sourceStack = new Stack<Point>();
+    		Stack<Point> targetStack = new Stack<Point>();
+    		bUnwarpJMiscTools.loadPointRoiAsLandmarks(sourceImp, targetImp, sourceStack, targetStack);
+
+    		sourcePh  = new bUnwarpJPointHandler(sourceImp);
+    		targetPh  = new bUnwarpJPointHandler(targetImp);
+
+    		while ((!sourceStack.empty()) && (!targetStack.empty())) 
+    		{
+    			Point sourcePoint = (Point)sourceStack.pop();
+    			Point targetPoint = (Point)targetStack.pop();
+    			sourcePh.addPoint(sourcePoint.x, sourcePoint.y);
+    			targetPh.addPoint(targetPoint.x, targetPoint.y);
+    		}
+    	}
+
+    	// Set no initial affine matrices
+    	final double[][] sourceAffineMatrix = null;
+    	final double[][] targetAffineMatrix = null;
+
+    	// Join threads
+    	try 
+    	{
+    		source.getThread().join();
+    		target.getThread().join();
+    	} 
+    	catch (InterruptedException e) 
+    	{
+    		IJ.error("Unexpected interruption exception " + e);
+    	}
+
+    	// Perform registration
+    	ImagePlus[] output_ip = new ImagePlus[2];
+    	output_ip[0] = new ImagePlus();
+    	output_ip[1] = new ImagePlus();
+
+    	// The dialog is set to null to work in batch mode
+    	final bUnwarpJDialog dialog = null;
+
+    	final ImageProcessor originalSourceIP = sourceImp.getProcessor();
+    	final ImageProcessor originalTargetIP = targetImp.getProcessor();
+
+
+    	final bUnwarpJTransformation warp = new bUnwarpJTransformation(
+    			sourceImp, targetImp, source, target, sourcePh, targetPh,
+    			sourceMsk, targetMsk, sourceAffineMatrix, targetAffineMatrix,
+    			min_scale_deformation, max_scale_deformation, min_scale_image, divWeight, 
+    			curlWeight, landmarkWeight, imageWeight, consistencyWeight, stopThreshold, 
+    			outputLevel, showMarquardtOptim, mode, img_subsamp_fact,
+    			saveTransf, null, null, output_ip[0], output_ip[1], dialog,
+    			originalSourceIP, originalTargetIP);
+
+    	IJ.log("\nRegistering...\n");
+
+    	long start = System.currentTimeMillis(); // start timing
+
+    	if(mode == bUnwarpJDialog.MONO_MODE)       
+    		warp.doUnidirectionalRegistration();    	       
+    	else
+    		warp.doRegistration();
+
+    	long stop = System.currentTimeMillis(); // stop timing
+    	IJ.log("Registration time: " + (stop - start) + "ms"); // print execution time
+
+    	// Adapt transformation to scale
+    	int intervals = warp.getIntervals();
+    	double[][] cx_direct = warp.getDirectDeformationCoefficientsX();
+    	double[][] cy_direct = warp.getDirectDeformationCoefficientsY();
+    	
+    	bUnwarpJMiscTools.adaptCoefficients(1.0/xScale, 1.0/yScale, intervals, cx_direct, cy_direct);
+    	
+    	bUnwarpJImageModel fullSource = null;
+
+    	fullSource = new bUnwarpJImageModel(fullSourceIP, false, 1);
+    	fullSource.setPyramidDepth(0);
+    	fullSource.startPyramids();
+    	
+    	bUnwarpJMiscTools.applyTransformationToSource(sourceImp, targetImp, fullSource, intervals, cx_direct, cy_direct);
+    	
+    	output_ip[0] = sourceImp;
+    	
+    	if(mode != bUnwarpJDialog.MONO_MODE)
+    	{
+    		double[][] cx_inverse = warp.getInverseDeformationCoefficientsX();
+    		double[][] cy_inverse = warp.getInverseDeformationCoefficientsY();
+    		
+    		bUnwarpJMiscTools.adaptCoefficients(1.0/xScale, 1.0/yScale, intervals, cx_inverse, cy_inverse);
+        	
+        	bUnwarpJImageModel fullTarget = null;
+
+        	fullTarget = new bUnwarpJImageModel(fullTargetIP, false, 1);
+        	fullTarget.setPyramidDepth(0);
+        	fullTarget.startPyramids();
+        	
+        	bUnwarpJMiscTools.applyTransformationToSourceMT(targetImp, sourceImp, fullTarget, intervals, cx_inverse, cy_inverse);
+        	
+        	output_ip[1] = targetImp;
+    	
+    	}
+    	// Return results as ImagePlus
+    	return output_ip;       
+
     } // end alignImagesBatch
     
     /*------------------------------------------------------------------*/
@@ -522,10 +729,10 @@ public class bUnwarpJ_ implements PlugIn
        ImagePlus targetImp;
        targetImp = opener.openImage(fn_target);
        
-       bUnwarpJImageModel target =
-          new bUnwarpJImageModel(targetImp.getProcessor(), true, 1);
+       bUnwarpJImageModel target = new bUnwarpJImageModel(targetImp.getProcessor(), true, 
+    		   												(int) Math.pow(2, max_subsamp_fact));
        
-       target.setPyramidDepth(imagePyramidDepth+min_scale_image);
+       target.setPyramidDepth(imagePyramidDepth + min_scale_image);
        target.startPyramids();
   
   
@@ -542,12 +749,11 @@ public class bUnwarpJ_ implements PlugIn
 
        ImagePlus sourceImp = opener.openImage(fn_source);   
 
-       bUnwarpJImageModel source =
-          new bUnwarpJImageModel(sourceImp.getProcessor(), bIsReverse, 1);
+       bUnwarpJImageModel source = new bUnwarpJImageModel(sourceImp.getProcessor(), bIsReverse, 
+    		   												(int) Math.pow(2, max_subsamp_fact));
 
        source.setPyramidDepth(imagePyramidDepth + min_scale_image);
        source.startPyramids();
-       //source.getThread().start();
 
        bUnwarpJMask sourceMsk = new bUnwarpJMask(sourceImp.getProcessor(), false);
 
@@ -620,10 +826,16 @@ public class bUnwarpJ_ implements PlugIn
 
        IJ.write("\nRegistering...\n");
        
+       long start = System.currentTimeMillis(); // start timing
+       
        if(accurate_mode == bUnwarpJDialog.MONO_MODE)
     	   warp.doUnidirectionalRegistration();
        else
     	   warp.doRegistration();
+       
+       long stop = System.currentTimeMillis(); // stop timing
+       IJ.write("Registration time: " + (stop - start) + "ms"); // print execution time
+
 
        // Save results (only the registered image, the target 
        // and mask images are trashed)
@@ -842,14 +1054,13 @@ public class bUnwarpJ_ implements PlugIn
            IJ.error("\nError: " + fn_source + " could not be opened\n");
        
        bUnwarpJImageModel source = new bUnwarpJImageModel(sourceImp.getProcessor(), false, 1);
-       source.setPyramidDepth(0);
-       //source.getThread().start();
+       source.setPyramidDepth(0);       
        source.startPyramids();
 
        // Load transformation
-       int intervals=bUnwarpJMiscTools.numberOfIntervalsOfTransformation(fn_tnf);
-       double [][]cx=new double[intervals+3][intervals+3];
-       double [][]cy=new double[intervals+3][intervals+3];
+       int intervals = bUnwarpJMiscTools.numberOfIntervalsOfTransformation(fn_tnf);
+       double [][]cx = new double[intervals+3][intervals+3];
+       double [][]cy = new double[intervals+3][intervals+3];
        bUnwarpJMiscTools.loadTransformation(fn_tnf, cx, cy);
 
        // Join threads
