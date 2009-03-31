@@ -790,6 +790,10 @@ public class Fake {
 			boolean upToDate(File source, File target) {
 				if (target.equals(source))
 					return true;
+				if (!source.exists())
+					return true;
+				if (!target.exists())
+					return false;
 				long targetModified = target.lastModified();
 				long sourceModified = source.lastModified();
 				if (targetModified == sourceModified &&
