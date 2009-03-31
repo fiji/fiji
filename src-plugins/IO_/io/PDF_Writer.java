@@ -24,14 +24,15 @@ public class PDF_Writer implements PlugIn {
 	static boolean canUsePrefs = false;
 
 	static boolean showName=true,			// show the name of the image
-					showSize=true,			// show the size in pixels of the image
-					scaleToFit=true,		// scale proportionately to max. page width/heigth
-					saveAllImages=false,	// save all images or just the frontmost one
-					singleImage=false,		// save one image per page or as many as possible
-					isLetter=true;			// output format is US Letter or A4
-	int spcNm=0;                            // space to be reduced from image to fit the name   // will change to 30 if singleImage=true 
+		       showSize=true,			// show the size in pixels of the image
+		       scaleToFit=true,		// scale proportionately to max. page width/heigth
+		       saveAllImages=false,	// save all images or just the frontmost one
+		       includeAllSlices=false,	// save all slices in the stacks
+		       singleImage=false,		// save one image per page or as many as possible
+		       isLetter=true;			// output format is US Letter or A4
+	int spcNm=0;                            // space to be reduced from image to fit the name   // will change to 30 if singleImage=true
 	int spcSz=0;                            // space to be reduced from image to fit the size    // not tested with US letter size
-	
+
 	public PDF_Writer() {
 		// This following trickery is necessary to outsmart the Java compiler.
 		// Since ImageJ.VERSION is final, its value would normally be inserted
@@ -47,13 +48,75 @@ public class PDF_Writer implements PlugIn {
 			showSize = Prefs.get(PREF_KEY+"showSize", true);
 			scaleToFit = Prefs.get(PREF_KEY+"scaleToFit", true);
 			saveAllImages = Prefs.get(PREF_KEY+"saveAllImages", false);
+			includeAllSlices = Prefs.get(PREF_KEY+"includeAllSlices", false);
 			singleImage = Prefs.get(PREF_KEY+"singleImage", false);
 			isLetter = Prefs.get(PREF_KEY+"isLetter", true);
 		}
 	}
 
+	boolean isFirst;
+	PdfWriter writer;
+	Document document;
+	Paragraph paragraph;
+	Image image;
+
+	protected void addImage(java.awt.Image awtImage, String printName)
+			throws DocumentException, IOException {
+		if (! isFirst) {
+			if (singleImage) {
+				document.newPage();
+			} else {
+				document.add(new Paragraph("\n"));
+				float vertPos = writer.getVerticalPosition(true);
+				PdfContentByte cb = writer.getDirectContent();
+				cb.setLineWidth(1f);
+				if (isLetter) {
+					cb.moveTo(PageSize.LETTER.left(50), vertPos);
+					cb.lineTo(PageSize.LETTER.right(50), vertPos);
+				} else {
+					cb.moveTo(PageSize.A4.left(50), vertPos);
+					cb.lineTo(PageSize.A4.right(50), vertPos);
+				}
+				cb.stroke();
+			}
+		}
+
+		if (showName) {
+			paragraph = new Paragraph(printName);
+			paragraph.setAlignment(paragraph.ALIGN_CENTER);
+			document.add(paragraph);
+			//spcNm = 40;
+		}
+
+		if (showSize) {
+			paragraph = new Paragraph(awtImage.getWidth(null)+" x "+ awtImage.getHeight(null));
+			paragraph.setAlignment(paragraph.ALIGN_CENTER);
+			document.add(paragraph);
+			//spcSz = 40;
+		}
+
+		if (singleImage) {
+			if (showName) spcNm = 40;
+			if (showSize) spcSz = 40;
+		}
+
+		image = Image.getInstance(awtImage, null);
+		//				if (scaleToFit && (awtImage.getWidth(null) > 520) || (awtImage.getHeight(null) > 720))
+		if (scaleToFit) {
+			if (isLetter)
+				image.scaleToFit(PageSize.LETTER.right(50+spcNm+spcSz), PageSize.LETTER.top(50+spcNm+spcSz));
+			else
+				image.scaleToFit(PageSize.A4.right(50+spcNm+spcSz), PageSize.A4.top(50+spcNm+spcSz));
+		}
+		image.setAlignment(image.ALIGN_CENTER);
+		document.add(image);
+
+		isFirst = false;
+	}
+
 	public void run (String arg) {
-		if (WindowManager.getCurrentImage() == null) {
+		ImagePlus image = WindowManager.getCurrentImage();
+		if (image == null) {
 			IJ.showStatus("No image is open");
 			return;
 		}
@@ -63,6 +126,7 @@ public class PDF_Writer implements PlugIn {
 		gd.addCheckbox("Show image size", showSize);
 		gd.addCheckbox("Scale to fit", scaleToFit);
 		gd.addCheckbox("Save all images", saveAllImages);
+		gd.addCheckbox("Include all slices", includeAllSlices);
 		gd.addCheckbox("One image per page", singleImage);
 		gd.addCheckbox("US Letter", isLetter);
 		gd.showDialog();
@@ -72,6 +136,7 @@ public class PDF_Writer implements PlugIn {
 		showSize = gd.getNextBoolean();
 		scaleToFit = gd.getNextBoolean();
 		saveAllImages = gd.getNextBoolean();
+		includeAllSlices = gd.getNextBoolean();
 		singleImage = gd.getNextBoolean();
 		isLetter = gd.getNextBoolean();
 
@@ -80,87 +145,45 @@ public class PDF_Writer implements PlugIn {
 			Prefs.set(PREF_KEY+"showSize", showSize);
 			Prefs.set(PREF_KEY+"scaleToFit", scaleToFit);
 			Prefs.set(PREF_KEY+"saveAllImages", saveAllImages);
+			Prefs.set(PREF_KEY+"includeAllSlices", includeAllSlices);
 			Prefs.set(PREF_KEY+"singleImage", singleImage);
 			Prefs.set(PREF_KEY+"isLetter", isLetter);
 		}
 
-        String name = IJ.getImage().getTitle();
-        SaveDialog sd = new SaveDialog("Save as PDF", name, ".pdf");
-        name = sd.getFileName();
-        String directory = sd.getDirectory();
-        String path = directory+name;
-        Document document = new Document(isLetter ? PageSize.LETTER : PageSize.A4);
+		String name = IJ.getImage().getTitle();
+		SaveDialog sd = new SaveDialog("Save as PDF", name, ".pdf");
+		name = sd.getFileName();
+		String directory = sd.getDirectory();
+		String path = directory+name;
+		document = new Document(isLetter ? PageSize.LETTER : PageSize.A4);
 		document.addCreationDate();
 		document.addTitle(name);
 
-        try {
-            PdfWriter writer = PdfWriter.getInstance(document, new FileOutputStream(path));
-            document.open();
-			Paragraph p;
-			String printName;
-			java.awt.Image awtImage;
-			Image image;
-			boolean isFirst = true;
+		try {
+			writer = PdfWriter.getInstance(document, new FileOutputStream(path));
+			document.open();
 
 			for (int idx=1; idx<=WindowManager.getWindowCount(); idx++) {
-				if (! isFirst) {
-					if (singleImage) {
-					   document.newPage();
-					} else {
-						document.add(new Paragraph("\n"));
-						float vertPos = writer.getVerticalPosition(true);
-						PdfContentByte cb = writer.getDirectContent();
-						cb.setLineWidth(1f);
-						if (isLetter) {
-							cb.moveTo(PageSize.LETTER.left(50), vertPos);
-							cb.lineTo(PageSize.LETTER.right(50), vertPos);
-						} else {
-							cb.moveTo(PageSize.A4.left(50), vertPos);
-							cb.lineTo(PageSize.A4.right(50), vertPos);
-						}
-						cb.stroke();
-					}
-				}
+				String printName;
 
 				if (saveAllImages) {
-					awtImage = WindowManager.getImage(idx).getImage();
+					image = WindowManager.getImage(idx);
 					printName = WindowManager.getImage(idx).getTitle();
-				} else {
-					awtImage = WindowManager.getCurrentImage().getImage();
+				} else
 					printName = name;
-				}
 
-				if (showName) {
-					p = new Paragraph(printName);
-					p.setAlignment(p.ALIGN_CENTER);
-					document.add(p);
-					//spcNm = 40;
+				if (includeAllSlices) {
+					ImageStack stack = image.getStack();
+					int total = stack.getSize();
+					for (int i = 1; i <= total; i++)
+						addImage(stack.getProcessor(i)
+							.createImage(),
+							printName + " (" + i
+							+ "/" + total + ")");
 				}
-			
-				if (showSize) {
-					p = new Paragraph(awtImage.getWidth(null)+" x "+ awtImage.getHeight(null));
-					p.setAlignment(p.ALIGN_CENTER);
-					document.add(p);
-					//spcSz = 40;
-				}
+				else
+					addImage(image.getImage(), printName);
 
-                if (singleImage) {
-                       if (showName) spcNm = 40;
-					   if (showSize) spcSz = 40;
-                }	   
-					   
-				image = Image.getInstance(awtImage, null);
-//				if (scaleToFit && (awtImage.getWidth(null) > 520) || (awtImage.getHeight(null) > 720))
-				if (scaleToFit) {
-					if (isLetter)
-						image.scaleToFit(PageSize.LETTER.right(50+spcNm+spcSz), PageSize.LETTER.top(50+spcNm+spcSz));
-					else
-						image.scaleToFit(PageSize.A4.right(50+spcNm+spcSz), PageSize.A4.top(50+spcNm+spcSz));
-				}
-				image.setAlignment(image.ALIGN_CENTER);
-				document.add(image);
-
-				isFirst = false;
 				if (! saveAllImages)
 					break;
 			}
