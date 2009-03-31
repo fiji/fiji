@@ -1091,15 +1091,16 @@ public class Fake {
 		}
 
 		class SubFake extends Rule {
+			String jarName;
 			String baseName;
 			String source;
 			String configPath;
 
 			SubFake(String target, List prerequisites) {
 				super(target, prerequisites);
-				baseName = new File(target).getName();
-				source = getLastPrerequisite() + baseName;
-				baseName = stripSuffix(baseName, ".jar");
+				jarName = new File(target).getName();
+				source = getLastPrerequisite() + jarName;
+				baseName = stripSuffix(jarName, ".jar");
 				configPath = getPluginsConfig();
 			}
 
@@ -1108,10 +1109,26 @@ public class Fake {
 				Iterator iter = prerequisites.iterator();
 				while (iter.hasNext()) {
 					String directory = (String)iter.next();
-					File dir = new File(directory);
-					if (!upToDateRecursive(dir, target))
+					if (!checkUpToDate(directory, target))
 						return false;
 				}
+				return true;
+			}
+
+			boolean checkUpToDate(String directory, File target) {
+				File dir = new File(directory);
+
+				if (dir.isDirectory() &&
+						dir.listFiles().length == 0) {
+					String precompiled =
+						getVar("PRECOMPILEDDIRECTORY");
+					if (precompiled == null)
+						return true;
+					File source = new File(cwd,
+						precompiled + "/" + jarName);
+					return upToDate(source, target);
+				} else if (!upToDateRecursive(dir, target))
+					return false;
 				return true;
 			}
 
