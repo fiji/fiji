@@ -823,9 +823,11 @@ public class Fake {
 					return upToDate(source, target);
 				String[] entries = source.list();
 				for (int i = 0; i < entries.length; i++) {
+					if (entries[i].startsWith("."))
+						continue;
 					File file = new File(source,
 							entries[i]);
-					if (!upToDate(file, target))
+					if (!upToDateRecursive(file, target))
 						return false;
 				}
 				return true;
