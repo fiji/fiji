@@ -1761,8 +1761,6 @@ static void set_path_to_JVM(void)
 	 * simpleJavaLauncher code.
 	 */
 
-	CFStringRef targetJVM = CFSTR("1.5"); // Minimum Java5
-
 	/* Look for the JavaVM bundle using its identifier. */
 	CFBundleRef JavaVMBundle =
 		CFBundleGetBundleWithIdentifier(CFSTR("com.apple.JavaVM"));
@@ -1785,9 +1783,18 @@ static void set_path_to_JVM(void)
 		return;
 
 	/* Append to the path the target JVM's Version. */
+	CFStringRef targetJVM = CFSTR("1.6"); // Minimum Java5
 	CFURLRef TargetJavaVM =
 		CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault,
 				JavaVMBundlerVersionsDirURL, targetJVM, true);
+
+	if (!TargetJavaVM) {
+		targetJVM = CFSTR("1.5");
+		TargetJavaVM =
+		CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault,
+				JavaVMBundlerVersionsDirURL, targetJVM, true);
+	}
+
 	CFRelease(JavaVMBundlerVersionsDirURL);
 	if (!TargetJavaVM)
 		return;
