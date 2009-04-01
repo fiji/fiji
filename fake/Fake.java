@@ -459,8 +459,7 @@ public class Fake {
 				rule = new ExecuteProgram(target, list,
 					program);
 			}
-			else if (lastPrereq != null &&
-					new File(lastPrereq).isDirectory())
+			else if (isSubmodule(lastPrereq))
 				rule = new SubFake(target, list);
 			else if (target.endsWith(".jar")) {
 				if (expandVariables(prerequisites, target)
@@ -484,6 +483,14 @@ public class Fake {
 				allPrerequisites.add(iter.next());
 
 			return rule;
+		}
+
+		boolean isSubmodule(String directory) {
+			if (directory == null)
+				return false;
+			File dir = new File(directory);
+			return dir.isDirectory() ||
+				(!dir.exists() && directory.endsWith("/"));
 		}
 
 		protected void addSpecialRule(Special rule) {
