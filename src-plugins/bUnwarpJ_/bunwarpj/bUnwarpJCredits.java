@@ -29,7 +29,7 @@ import ij.IJ;
 public class bUnwarpJCredits implements ij.plugin.PlugIn
 { /* begin class bUnwarpJCredits */
 
-	static public String version = "2.5 30-03-2009";
+	static public String version = "2.5 01-04-2009";
 
 	/*....................................................................
        Public methods

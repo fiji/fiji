@@ -553,7 +553,7 @@ public class bUnwarpJDialog extends GenericDialog
 			double [][]cy)
 	{
 		// Apply transformation
-		bUnwarpJMiscTools.applyTransformationToSource(
+		bUnwarpJMiscTools.applyTransformationToSourceMT(
 				this.sourceImp, this.targetImp, this.source, intervals, cx, cy);
 
 		// Restart the computation of the model
