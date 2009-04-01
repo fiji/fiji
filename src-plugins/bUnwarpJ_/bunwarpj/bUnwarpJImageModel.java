@@ -359,14 +359,7 @@ public class bUnwarpJImageModel implements Runnable
 		imgpyramid.removeAllElements();
 	} /* end clearPyramid */
 
-	/*------------------------------------------------------------------*/
-	/**
-	 * Get b-spline coefficients.
-	 *
-	 * @return the full-size B-spline coefficients
-	 */
-	public double[] getCoefficient () {return coefficient;}
-
+	
 	/*------------------------------------------------------------------*/
 	/**
 	 * Get current height.
@@ -441,9 +434,9 @@ public class bUnwarpJImageModel implements Runnable
 	public double[] getSubImage () {return this.subImage;}
 	/*------------------------------------------------------------------*/
 	/**
-	 * Get coefficients.
+	 * Get b-spline coefficients.
 	 *
-	 * @return B-spline coefficients.
+	 * @return the full-size B-spline coefficients
 	 */
 	public double[] getCoefficients () {return this.coefficient;}
 
@@ -1666,7 +1659,7 @@ public class bUnwarpJImageModel implements Runnable
 
 	/*------------------------------------------------------------------*/
 	/**
-	 * Passes from basic to cardinal.
+	 * Pass from basic to cardinal.
 	 *
 	 * @param basic
 	 * @param cardinal
@@ -1743,7 +1736,7 @@ public class bUnwarpJImageModel implements Runnable
 			halfHeight /= 2;
 			
 			// If the image is too small, we push the previous version of the coefficients
-			if(fullWidth <= this.min_image_size || fullHeight <= this.min_image_size)
+			if(fullWidth <= bUnwarpJImageModel.min_image_size || fullHeight <= bUnwarpJImageModel.min_image_size)
 			{				 
 				if(this.bSubsampledOutput)
 					IJ.log("Coefficients pyramid " + fullWidth + "x" + fullHeight);
@@ -1809,7 +1802,7 @@ public class bUnwarpJImageModel implements Runnable
 			 halfWidth /= 2;
 			 halfHeight /= 2;
 			 
-			 if(fullWidth <= this.min_image_size || fullHeight <= this.min_image_size)
+			 if(fullWidth <= bUnwarpJImageModel.min_image_size || fullHeight <= bUnwarpJImageModel.min_image_size)
 			 {				 
 				 if(this.bSubsampledOutput)
 						IJ.log(" Image pyramid " + fullWidth + "x" + fullHeight);
@@ -1926,8 +1919,8 @@ public class bUnwarpJImageModel implements Runnable
 	  * @param yGradient
 	  * @param width
 	  * @param height
-	  */
-	 private void coefficientToXYGradient2D (
+	  */	 
+	private void coefficientToXYGradient2D (
 			 final double[] basic,
 			 final double[] xGradient,
 			 final double[] yGradient,
@@ -2070,9 +2063,9 @@ public class bUnwarpJImageModel implements Runnable
 	 /**
 	  * Get half dual (2D).
 	  *
-	  * @param fullDual
-	  * @param fullWidth
-	  * @param fullHeight
+	  * @param fullDual full coefficients
+	  * @param fullWidth full coefficients width
+	  * @param fullHeight full coefficients height
 	  */
 	 private double[] getHalfDual2D (
 			 final double[] fullDual,

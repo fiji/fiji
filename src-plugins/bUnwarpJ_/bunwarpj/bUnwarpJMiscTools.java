@@ -1366,7 +1366,7 @@ public class bUnwarpJMiscTools
 	 * @param cx x- B-spline coefficients
 	 * @param cy y- B-spline coefficients
 	 */
-	static public void loadTransformation(String filename,
+	public static void loadTransformation(String filename,
 			final double [][]cx, final double [][]cy)
 	{
 		try {
@@ -2421,14 +2421,15 @@ public class bUnwarpJMiscTools
 								
 				rects[i] = new Rectangle(0, y_start, targetWidth, block_height);
 				
-				//IJ.log("block = 0 " + (i*block_height) + " " + auxTargetWidth + " " + block_height );
+				//IJ.log("block = 0 " + (i*block_height) + " " + targetWidth + " " + block_height );
 				
-				fpR_tile[i] 	= new FloatProcessor(rects[i].width, rects[i].height);
-				fpG_tile[i] 	= new FloatProcessor(rects[i].width, rects[i].height);
-				fpB_tile[i] 	= new FloatProcessor(rects[i].width, rects[i].height);
+				fpR_tile[i] = new FloatProcessor(rects[i].width, rects[i].height);
+				fpG_tile[i] = new FloatProcessor(rects[i].width, rects[i].height);
+				fpB_tile[i] = new FloatProcessor(rects[i].width, rects[i].height);
 				
 				threads[i] = new Thread(new ColorApplyTransformTile(swx, swy, sourceR, sourceG, sourceB, targetWidth,
-																	 targetHeight, intervals, rects[i], fpR, fpG, fpB));
+																	 targetHeight, intervals, rects[i], fpR_tile[i], 
+																	 fpG_tile[i], fpB_tile[i]));
 				threads[i].start();
 			}
 			
@@ -2444,7 +2445,7 @@ public class bUnwarpJMiscTools
 			
 			for (int i=0; i<nThreads; i++) 
 			{
-				fpR.insert(fpR_tile[i], rects[i].x, rects[i].y);
+				fpR.insert(fpR_tile[i], rects[i].x, rects[i].y);				
 				fpG.insert(fpG_tile[i], rects[i].x, rects[i].y);
 				fpB.insert(fpB_tile[i], rects[i].x, rects[i].y);
 				
@@ -2456,7 +2457,7 @@ public class bUnwarpJMiscTools
 			}
 								
 		
-			cp.setPixels(0, fpR);
+			cp.setPixels(0, fpR);			
 			cp.setPixels(1, fpG);
 			cp.setPixels(2, fpB);            
 			cp.resetMinAndMax();
@@ -2677,30 +2678,29 @@ public class bUnwarpJMiscTools
 				for (int u_rect = 0, u=rect.x; u<auxTargetWidth; u++, uv++, u_rect++) 
 				{
 
-					final double tu = (double)(u * intervals) / (double)(targetCurrentWidth - 1) + 1.0F;			
-					final double transformation_x_v_u = swx.prepareForInterpolationAndInterpolateI(tu, tv, false, false);
-					final double transformation_y_v_u = swy.prepareForInterpolationAndInterpolateI(tu, tv, false, false);
-									
-
-					final double x = transformation_x_v_u;
-					final double y = transformation_y_v_u;
+					final double tu = (double)(u * intervals) / (double)(targetCurrentWidth - 1) + 1.0F;
+					
+					final double x = swx.prepareForInterpolationAndInterpolateI(tu, tv, false, false);
+					final double y = swy.prepareForInterpolationAndInterpolateI(tu, tv, false, false);														
 					
 					if (x>=0 && x<sourceWidth && y>=0 && y<sourceHeight)
 					{
 						fpR_array[u_rect + v_offset] = (float) (sourceR.prepareForInterpolationAndInterpolateI(x, y, false, false));						
 						fpG_array[u_rect + v_offset] = (float) (sourceG.prepareForInterpolationAndInterpolateI(x, y, false, false));						
-						fpB_array[u_rect + v_offset] = (float) (sourceB.prepareForInterpolationAndInterpolateI(x, y, false, false));
-						
+						fpB_array[u_rect + v_offset] = (float) (sourceB.prepareForInterpolationAndInterpolateI(x, y, false, false));						
 					}
 					else
 					{
 						fpR_array[u_rect + v_offset] = 0;
 						fpG_array[u_rect + v_offset] = 0;
-						fpB_array[u_rect + v_offset] = 0;
+						fpB_array[u_rect + v_offset] = 0;						
 					}
 				
 				}
 			}
+			
+			
+			
 		} // end run method 
 		
 	} // end ColorApplyTransformTile class

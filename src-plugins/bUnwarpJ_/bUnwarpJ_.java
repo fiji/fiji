@@ -76,7 +76,7 @@ import java.util.Stack;
  * <a href="http://biocomp.cnb.csic.es/~iarganda/bUnwarpJ/">
  * http://biocomp.cnb.csic.es/~iarganda/bUnwarpJ/</a>
  *
- * @version 2.5 03/30/2009
+ * @version 2.5 04/01/2009
  * @author Ignacio Arganda-Carreras <ignacio.arganda@uam.es>
  * @author Jan Kybic
  */
