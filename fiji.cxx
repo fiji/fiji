@@ -1783,10 +1783,16 @@ static void set_path_to_JVM(void)
 		return;
 
 	/* Append to the path the target JVM's Version. */
-	CFStringRef targetJVM = CFSTR("1.6"); // Minimum Java5
-	CFURLRef TargetJavaVM =
+	CFURLRef TargetJavaVM = NULL;
+	CFStringRef targetJVM; // Minimum Java5
+
+	// try 1.6 only with 64-bit
+	if (sizeof(void *) > 4) {
+		targetJVM = CFSTR("1.6");
+		TargetJavaVM =
 		CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault,
 				JavaVMBundlerVersionsDirURL, targetJVM, true);
+	}
 
 	if (!TargetJavaVM) {
 		targetJVM = CFSTR("1.5");
