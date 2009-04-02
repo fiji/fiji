@@ -6,6 +6,7 @@ import ij.gui.Roi;
 
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
+import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 
@@ -35,13 +36,15 @@ public class SRM_ implements PlugInFilter {
 
 		GenericDialog gd = new GenericDialog("SRM");
 		gd.addNumericField("Q", Q, 2);
+		gd.addCheckbox("showAverages", true);
 		gd.showDialog();
 
 		if (gd.wasCanceled())
 			return;
 
 		Q = (float)gd.getNextNumber();
-		srm2D(ip).show();
+		boolean showAverages = gd.getNextBoolean();
+		srm2D(ip, showAverages).show();
 	}
 
 	final float g = 256; // number of different intensity values
@@ -99,7 +102,7 @@ public class SRM_ implements PlugInFilter {
 	 */
 	int[] nextNeighbor, neighborBucket;
 
-	protected ImagePlus srm2D(ImageProcessor ip) {
+	protected ImagePlus srm2D(ImageProcessor ip, boolean showAverages) {
 		int w = ip.getWidth(), h = ip.getHeight();
 
 		delta = 1f / (6 * w * h);
@@ -117,24 +120,33 @@ public class SRM_ implements PlugInFilter {
 		initializeRegions2D(pixel, ip.getWidth(), ip.getHeight());
 		initializeNeighbors2D(pixel, w, h);
 		mergeAllNeighbors2D(w);
-		int regionCount = consolidateRegions();
 
-		if (regionCount > 1<<8) {
-			if (regionCount > 1<<16)
-				IJ.showMessage("Found " + regionCount
-					+ " regions, which does not fit in "
-					+ " 16-bit.");
-			short[] pixel16 = new short[w * h];
-			for (int i = 0; i < pixel16.length; i++)
-				pixel16[i] = (short)regionIndex[i];
-			ip = new ShortProcessor(w, h, pixel16, null);
+		if (showAverages) {
+			for (int i = 0; i < average.length; i++)
+				average[i] = average[getRegionIndex(i)];
+			ip = new FloatProcessor(w, h, average, null);
 		}
 		else {
-			pixel = new byte[w * h];
-			for (int i = 0; i < pixel.length; i++)
-				pixel[i] = (byte)regionIndex[i];
-			ip = new ByteProcessor(w, h, pixel, null);
+			int regionCount = consolidateRegions();
+
+			if (regionCount > 1<<8) {
+				if (regionCount > 1<<16)
+					IJ.showMessage("Found " + regionCount
+						+ " regions, which does not fit"
+						+ " in 16-bit.");
+				short[] pixel16 = new short[w * h];
+				for (int i = 0; i < pixel16.length; i++)
+					pixel16[i] = (short)regionIndex[i];
+				ip = new ShortProcessor(w, h, pixel16, null);
+			}
+			else {
+				pixel = new byte[w * h];
+				for (int i = 0; i < pixel.length; i++)
+					pixel[i] = (byte)regionIndex[i];
+				ip = new ByteProcessor(w, h, pixel, null);
+			}
 		}
+
 		String title = image.getTitle() + " (SRM Q=" + Q + ")";
 		return new ImagePlus(title, ip);
 	}
