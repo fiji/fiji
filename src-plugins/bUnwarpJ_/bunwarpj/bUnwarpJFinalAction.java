@@ -164,10 +164,42 @@ public class bUnwarpJFinalAction implements Runnable
         
         long start = System.currentTimeMillis(); // start timing
         
-        if(this.accurate_mode == bUnwarpJDialog.MONO_MODE)        	
+        if(this.accurate_mode == bUnwarpJDialog.MONO_MODE)     
+        {
+        	// Do unidirectional registration
         	warp.doUnidirectionalRegistration();
+        	// Save transformation
+        	if(this.dialog.isSaveTransformationSet())
+        		warp.saveDirectTransformation();
+        	// Show results.
+    		if(source.isSubOutput())
+    		{
+    			IJ.log("Calculating final transformed source image");
+    		}
+    		warp.showDirectResults();
+    		    		
+        }
         else
+        {
+        	// Do bidirectional registration
         	warp.doRegistration();
+        	// Save transformations
+        	if(this.dialog.isSaveTransformationSet())
+        	{
+        		warp.saveDirectTransformation();
+        		warp.saveInverseTransformation();
+        	}
+        	if(source.isSubOutput())
+    		{
+    			IJ.log("Calculating final transformed source image");
+    		}
+    		warp.showDirectResults();
+        	if(target.isSubOutput())
+    		{
+    			IJ.log("Calculating final transformed target image");			
+    		}
+    		warp.showInverseResults();
+        }
         
         long stop = System.currentTimeMillis(); // stop timing
         if(outputLevel == 2)
