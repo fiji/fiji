@@ -202,22 +202,22 @@ public class bUnwarpJTransformation
 	/** number of intervals to place B-spline coefficients */
 	private int     intervals;
 	/** x- B-spline coefficients keeping the transformation from source to target */
-	private double  [][]cxSourceToTarget;
+	private double  [][]cxSourceToTarget = null;
 	/** y- B-spline coefficients keeping the transformation from source to target */
-	private double  [][]cySourceToTarget;
+	private double  [][]cySourceToTarget = null;
 	/** x- B-spline coefficients keeping the transformation from target to source */
-	private double  [][]cxTargetToSource;
+	private double  [][]cxTargetToSource = null;
 	/** y- B-spline coefficients keeping the transformation from target to source */
-	private double  [][]cyTargetToSource;
+	private double  [][]cyTargetToSource = null;
 
 	/** image model to interpolate the cxSourceToTarget coefficients */
-	private bUnwarpJImageModel swxSourceToTarget;
+	private bUnwarpJImageModel swxSourceToTarget = null;
 	/** image model to interpolate the cySourceToTarget coefficients */
-	private bUnwarpJImageModel swySourceToTarget;
+	private bUnwarpJImageModel swySourceToTarget = null;
 	/** image model to interpolate the cxTargetToSource coefficients */
-	private bUnwarpJImageModel swxTargetToSource;
+	private bUnwarpJImageModel swxTargetToSource = null;
 	/** image model to interpolate the cyTargetToSource coefficients */
-	private bUnwarpJImageModel swyTargetToSource;
+	private bUnwarpJImageModel swyTargetToSource = null;
 
 	// Regularization temporary variables
 	/** regularization P11 (source to target) matrix */
@@ -273,8 +273,8 @@ public class bUnwarpJTransformation
 	 * @param dialog pointer to the dialog of the bUnwarpJ interface
 	 */
 	public bUnwarpJTransformation (
-			final ImagePlus                    sourceImp,
-			final ImagePlus                    targetImp,
+			final ImagePlus sourceImp,
+			final ImagePlus targetImp,
 			final bUnwarpJImageModel source,
 			final bUnwarpJImageModel target,
 			final bUnwarpJPointHandler sourcePh,
@@ -759,7 +759,7 @@ public class bUnwarpJTransformation
 			this.sourceCurrentHeight = this.sourceHeight;
 			this.sourceCurrentWidth  = this.sourceWidth;
 		}
-		
+		/*
 		// Show results.
 		if(source.isSubOutput())
 		{
@@ -772,7 +772,7 @@ public class bUnwarpJTransformation
 			IJ.log("Calculating final transformed target image");			
 		}
 		showTransformationMultiThread(intervals, cxSourceToTarget, cySourceToTarget, true);
-
+*/
 		// Display final errors.		
 		if(this.outputLevel == 2)
 		{
@@ -800,11 +800,13 @@ public class bUnwarpJTransformation
 		
 
 		// Save transformations.
+		/*
 		if (saveTransf)
 		{
 			saveTransformation(intervals, cxTargetToSource, cyTargetToSource, false);
 			saveTransformation(intervals, cxSourceToTarget, cySourceToTarget, true);
 		}
+		*/
 	} /* end doRegistration */
 
 	/*------------------------------------------------------------------*/
@@ -1042,7 +1044,7 @@ public class bUnwarpJTransformation
 		}
 
 		// Show results.
-		showTransformationMultiThread(intervals, cxTargetToSource, cyTargetToSource, false);
+		//showTransformationMultiThread(intervals, cxTargetToSource, cyTargetToSource, false);
 
 		// Display final errors.		
 		if(this.outputLevel == 2)
@@ -1067,10 +1069,12 @@ public class bUnwarpJTransformation
 		
 
 		// Save transformations.
+		/*
 		if (saveTransf)
 		{
 			saveTransformation(intervals, cxTargetToSource, cyTargetToSource, false);
 		}
+		*/
 	} /* end doUnidirectionalRegistration */
 	
 
@@ -4695,7 +4699,24 @@ public class bUnwarpJTransformation
 		// Return the new set of coefficients
 		return newc;
 	}
-
+	
+	/*------------------------------------------------------------------*/
+	/**
+	 * Save source transformation. GUI mode. 
+	 */
+	public void saveDirectTransformation()
+	{
+		saveTransformation(intervals, cxTargetToSource, cyTargetToSource, false);		
+	} 
+	/*------------------------------------------------------------------*/
+	/**
+	 * Save target transformation. GUI mode. 
+	 */
+	public void saveInverseTransformation()
+	{
+		saveTransformation(intervals, cxSourceToTarget, cySourceToTarget, true);
+	}
+	
 	/*------------------------------------------------------------------*/
 	/**
 	 * Save the transformation.
@@ -4758,7 +4779,7 @@ public class bUnwarpJTransformation
 
 	/*------------------------------------------------------------------*/
 	/**
-	 * Show the deformation grid.
+	 * Compute and draw the final deformation grid.
 	 *
 	 * @param intervals number of intervals in the deformation
 	 * @param cx x- deformation coefficients
@@ -4766,7 +4787,7 @@ public class bUnwarpJTransformation
 	 * @param is image stack where we want to show the deformation grid
 	 * @param bIsReverse flag to determine the transformation direction (target-source=FALSE or source-target=TRUE)
 	 */
-	private void showDeformationGrid(
+	private void computeDeformationGrid(
 			int intervals,
 			double [][]cx,
 			double [][]cy,
@@ -4841,7 +4862,7 @@ public class bUnwarpJTransformation
 
 	/*------------------------------------------------------------------*/
 	/**
-	 * Show the deformation vectors.
+	 * Compute and draw the final deformation vectors.
 	 *
 	 * @param intervals number of intervals in the deformation
 	 * @param cx x- deformation coefficients
@@ -4849,7 +4870,7 @@ public class bUnwarpJTransformation
 	 * @param is image stack where we want to show the deformation vectors
 	 * @param bIsReverse flag to determine the transformation direction (target-source=FALSE or source-target=TRUE)
 	 */
-	private void showDeformationVectors(
+	private void computeDeformationVectors(
 			int intervals,
 			double [][]cx,
 			double [][]cy,
@@ -4914,7 +4935,24 @@ public class bUnwarpJTransformation
 		else // Color images
 			is.addSlice("Deformation Field",fp.convertToRGB());
 	}
-
+	/*-------------------------------------------------------------------*/
+	/**
+	 * Show the direct transformation results(multi-thread version).
+	 */
+	public void showDirectResults()
+	{
+		showTransformationMultiThread(intervals, cxTargetToSource, cyTargetToSource, false);
+	}
+	
+	/*-------------------------------------------------------------------*/
+	/**
+	 * Show the inverse transformation results (multi-thread version).
+	 */
+	public void showInverseResults()
+	{
+		showTransformationMultiThread(intervals, cxSourceToTarget, cySourceToTarget, true);
+	}
+	
 	/*-------------------------------------------------------------------*/
 	/**
 	 * Show the transformation (multi-thread version).
@@ -4930,13 +4968,68 @@ public class bUnwarpJTransformation
 			final double [][]cy,
 			boolean bIsReverse)
 	{
+		
+		ImagePlus output_ip = (!bIsReverse) ? this.output_ip_1 : this.output_ip_2;
+		
+		// Calculate tranformation results 
+		IJ.showStatus("Calculating result window...");
+		ImagePlus result_imp = applyTransformationMultiThread(intervals, cx, cy, bIsReverse);
+		
+		output_ip.close();
+		output_ip = result_imp;
+			
+		output_ip.show();				
+		output_ip.updateAndRepaintWindow();
+				
+	} /* end showTransformationMultiThread */
+
+	/*-------------------------------------------------------------------*/
+	/**
+	 * Get direct results window
+	 * 
+	 * @return direct registration results
+	 */
+	public ImagePlus getDirectResults()
+	{
+		return applyTransformationMultiThread(intervals, cxTargetToSource, cyTargetToSource, false);
+	}
+	
+	/*-------------------------------------------------------------------*/
+	/**
+	 * Get inverse results window
+	 * 
+	 * @return inverse registration results
+	 */
+	public ImagePlus getInverseResults()	
+	{
+		if(this.cySourceToTarget != null && this.cxSourceToTarget != null)
+			return applyTransformationMultiThread(intervals, cxSourceToTarget, cySourceToTarget, true);
+		return null;
+	}
+	
+	/*-------------------------------------------------------------------*/
+	/**
+	 * Apply the final transformation (multi-thread version).
+	 *
+	 * @param intervals number of intervals in the deformation
+	 * @param cx x- deformation coefficients
+	 * @param cy y- deformation coefficients
+	 * @param bIsReverse flag to determine the transformation direction (target-source=FALSE or source-target=TRUE)
+	 * 
+	 * @return output images (depending on the output level)
+	 */
+	private ImagePlus applyTransformationMultiThread(
+			final int   intervals,
+			final double [][]cx,    // Input, spline coefficients
+			final double [][]cy,
+			boolean bIsReverse)
+	{
 		bUnwarpJImageModel auxTarget = target;
 		bUnwarpJImageModel auxSource = source;
 		bUnwarpJMask auxTargetMsk = targetMsk;
 		bUnwarpJMask auxSourceMsk = sourceMsk;
 		int auxTargetWidth = this.targetWidth;
-		int auxTargetHeight = this.targetHeight;
-		ImagePlus output_ip = this.output_ip_1;
+		int auxTargetHeight = this.targetHeight;		
 		ImageProcessor originalIP = this.originalSourceIP;
 
 		// Change if necessary
@@ -4948,17 +5041,12 @@ public class bUnwarpJTransformation
 			auxSourceMsk = targetMsk;
 			auxTargetWidth = this.sourceWidth;
 			auxTargetHeight = this.sourceHeight;
-			output_ip = this.output_ip_2;
 			originalIP = this.originalTargetIP;
 		}
 		
-		// If we were using a sub-sampled output, we need to close 
-		// the corresponding ImagePlus in order to show the result.
-		if(auxSource.isSubOutput() && this.outputLevel != -1)
-		{			
-			output_ip.close();
-			output_ip = null;
-		}
+		ImagePlus output_ip = null;	
+		final ImageStack is = new ImageStack(auxTargetWidth, auxTargetHeight);
+		final String s = bIsReverse ? new String("Target") : new String("Source");
 		
 		// Create transformation B-spline models
 		bUnwarpJImageModel swx = new bUnwarpJImageModel(cx);
@@ -5035,36 +5123,13 @@ public class bUnwarpJTransformation
 			}
 								
 			fp.resetMinAndMax();
-			final ImageStack is = new ImageStack(auxTargetWidth, auxTargetHeight);
 
-			String s = bIsReverse ? new String("Target") : new String("Source");
+			// Add slices to result stack
 			is.addSlice("Registered " + s + " Image", fp);
 			//if (outputLevel > -1)
 				is.addSlice("Target Image", fp_target);
 			//if (outputLevel > -1)
-				is.addSlice("Warped Source Mask",fp_mask);
-
-			if (outputLevel == 2)
-			{
-				showDeformationVectors(intervals, cx, cy, is, bIsReverse);
-				showDeformationGrid(intervals, cx, cy, is, bIsReverse);
-			}
-			
-			if(output_ip == null)				
-			{
-				output_ip = new ImagePlus("Registered " + s + " Image", is);
-				output_ip.show();
-			}
-			else
-			{	
-				output_ip.setStack("Registered " + s + " Image", is);				
-			}
-			
-			output_ip.setSlice(1);
-			output_ip.getProcessor().resetMinAndMax();
-			
-			if (outputLevel > -1)
-				output_ip.updateAndRepaintWindow();
+				is.addSlice("Warped Source Mask",fp_mask);					
 		}
 		else /* COLOR IMAGES */
 		{
@@ -5175,42 +5240,31 @@ public class bUnwarpJTransformation
 			cp.setPixels(0, fpR);
 			cp.setPixels(1, fpG);
 			cp.setPixels(2, fpB);            
-			cp.resetMinAndMax();
-
-
-			final ImageStack is = new ImageStack(auxTargetWidth, auxTargetHeight);
-
-			String s = bIsReverse ? new String("Target") : new String("Source");
+			cp.resetMinAndMax();			
+			
+			// Add slices to result stack
 			is.addSlice("Registered " + s + " Image", cp);
 			//if (outputLevel > -1)
-				is.addSlice("Target Image", bIsReverse ? this.originalSourceIP : this.originalTargetIP);  		   
+			is.addSlice("Target Image", bIsReverse ? this.originalSourceIP : this.originalTargetIP);  		   
 			//if (outputLevel > -1)
-				is.addSlice("Warped Source Mask", cp_mask);
-
-			if (outputLevel == 2)
-			{
-				showDeformationVectors(intervals, cx, cy, is, bIsReverse);
-				showDeformationGrid(intervals, cx, cy, is, bIsReverse);
-			}
-			
-			if(output_ip == null)				
-			{
-				output_ip = new ImagePlus("Registered " + s + " Image", is);
-				output_ip.show();
-			}
-			else
-			{
-				output_ip.setStack("Registered " + s + " Image", is);
-			}
-			output_ip.setSlice(1);
-			output_ip.getProcessor().resetMinAndMax();
-			if (outputLevel > -1)
-				output_ip.updateAndRepaintWindow();					
+			is.addSlice("Warped Source Mask", cp_mask);			
+								
 		} // end caculate warped color image
 		
-	} /* end showTransformationMultiThread */
+		if (outputLevel == 2)
+		{
+			computeDeformationVectors(intervals, cx, cy, is, bIsReverse);
+			computeDeformationGrid(intervals, cx, cy, is, bIsReverse);
+		}
+		
+		output_ip = new ImagePlus("Registered " + s + " Image", is);
+		
+		output_ip.setSlice(1);
+		output_ip.getProcessor().resetMinAndMax();	
+		
+		return output_ip;
+	} /* end applyTransformationMultiThread */
 
-	
 	/* ------------------------------------------------------------------------ */
 	/**
 	 *  Class to run concurrent tile windows for final results (grayscale)
@@ -5608,8 +5662,8 @@ public class bUnwarpJTransformation
 
 			if (outputLevel == 2)
 			{
-				showDeformationVectors(intervals, cx, cy, is, bIsReverse);
-				showDeformationGrid(intervals, cx, cy, is, bIsReverse);
+				computeDeformationVectors(intervals, cx, cy, is, bIsReverse);
+				computeDeformationGrid(intervals, cx, cy, is, bIsReverse);
 			}
 			output_ip.setStack("Registered " + s + " Image", is);
 			output_ip.setSlice(1);
@@ -5721,8 +5775,8 @@ public class bUnwarpJTransformation
 
 			if (outputLevel == 2)
 			{
-				showDeformationVectors(intervals, cx, cy, is, bIsReverse);
-				showDeformationGrid(intervals, cx, cy, is, bIsReverse);
+				computeDeformationVectors(intervals, cx, cy, is, bIsReverse);
+				computeDeformationGrid(intervals, cx, cy, is, bIsReverse);
 			}
 			output_ip.setStack("Registered " + s + " Image", is);
 			output_ip.setSlice(1);

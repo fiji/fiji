@@ -59,6 +59,8 @@ public class bUnwarpJMiscTools
 	 * @param intervals intervals in the deformation
 	 * @param cx x- B-spline coefficients
 	 * @param cy y- B-spline coefficients
+	 * 
+	 * @deprecated
 	 */
 	static public void applyTransformationToSource(
 			ImagePlus sourceImp,
@@ -2253,7 +2255,7 @@ public class bUnwarpJMiscTools
 	 * @param cx
 	 * @param cy
 	 */
-	static public void adaptCoefficients(
+	public static void adaptCoefficients(
 			double xScale,
 			double yScale,		
 			int intervals,
@@ -2268,7 +2270,35 @@ public class bUnwarpJMiscTools
 			}
 		
 	} // end adaptCoefficients
+	
+	/* --------------------------------------------------------------------*/
+	/**
+	 * Apply a given B-spline transformation to the source (gray-scale) image.
+	 * The source image is modified. The target image is used to know
+	 * the output size (Multi-thread version).
+	 *
+	 * @param sourceImp source image representation
+	 * @param targetImp target image representation
+	 * @param intervals intervals in the deformation
+	 * @param cx x- B-spline coefficients
+	 * @param cy y- B-spline coefficients
+	 */
+	public static void applyTransformationToSourceMT(
+			ImagePlus sourceImp,
+			ImagePlus targetImp,			
+			int intervals,
+			double [][]cx,
+			double [][]cy)
+	{
+		bUnwarpJImageModel source = new bUnwarpJImageModel (sourceImp.getProcessor(), false, 1);
+		
+		ImageProcessor result_imp = applyTransformationMT(sourceImp, targetImp, source, intervals, cx, cy);
 
+		sourceImp.setProcessor(sourceImp.getTitle(), result_imp);
+		sourceImp.updateImage();
+		
+	} // end applyTransformationToSourceMT	
+	
 	/* --------------------------------------------------------------------*/
 	/**
 	 * Apply a given B-spline transformation to the source (gray-scale) image.
@@ -2282,7 +2312,37 @@ public class bUnwarpJMiscTools
 	 * @param cx x- B-spline coefficients
 	 * @param cy y- B-spline coefficients
 	 */
-	static public void applyTransformationToSourceMT(
+	public static void applyTransformationToSourceMT(
+			ImagePlus sourceImp,
+			ImagePlus targetImp,
+			bUnwarpJImageModel source,
+			int intervals,
+			double [][]cx,
+			double [][]cy)
+	{
+		ImageProcessor result_imp = applyTransformationMT(sourceImp, targetImp, source, intervals, cx, cy);
+
+		sourceImp.setProcessor(sourceImp.getTitle(), result_imp);
+		sourceImp.updateImage();
+		
+	} // end applyTransformationToSourceMT
+	
+	/* --------------------------------------------------------------------*/
+	/**
+	 * Apply a given B-spline transformation to the source (gray-scale) image.
+	 * The result image is return. The target image is used to know
+	 * the output size (Multi-thread version).
+	 *
+	 * @param sourceImp source image representation
+	 * @param targetImp target image representation
+	 * @param source source image model
+	 * @param intervals intervals in the deformation
+	 * @param cx x- B-spline coefficients
+	 * @param cy y- B-spline coefficients
+	 * 
+	 * @return result transformed image
+	 */
+	public static ImageProcessor applyTransformationMT(
 			ImagePlus sourceImp,
 			ImagePlus targetImp,
 			bUnwarpJImageModel source,
@@ -2361,8 +2421,7 @@ public class bUnwarpJMiscTools
 				rects[i] = null;
 			}
 			fp.resetMinAndMax();
-			sourceImp.setProcessor(sourceImp.getTitle(), fp);
-			sourceImp.updateImage();
+			return fp;			
 		}
 		else /* COLOR IMAGES */
 		{        	
@@ -2455,17 +2514,16 @@ public class bUnwarpJMiscTools
 				
 				rects[i] = null;
 			}
-								
-		
+										
 			cp.setPixels(0, fpR);			
 			cp.setPixels(1, fpG);
 			cp.setPixels(2, fpB);            
 			cp.resetMinAndMax();
 
-			sourceImp.setProcessor(sourceImp.getTitle(), cp);
-			sourceImp.updateImage();
+			return cp;
+			
 		}
-	}
+	} // end applyTransformationMT
 
 
 	/* ------------------------------------------------------------------------ */
