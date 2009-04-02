@@ -139,9 +139,9 @@ def add_plugin(plugin):
 		file = 'src-plugins/' + plugin
 		third_party = ''
 	if execute('git ls-files ' + file) == '':
-		action = 'Added'
+		action = 'Add'
 	else:
-		action = 'Modified'
+		action = 'Modify'
 	execute('git add ' + file)
 	f = open('.msg', 'w')
 	if plugin.endswith('.java'):
