@@ -126,6 +126,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Fiji_Plugins.jar \
 	plugins/ToAST_.jar \
 	plugins/MTrack2_.jar \
+	plugins/Time_Stamper.jar \
 	\
 	misc/Fiji.jar
 
