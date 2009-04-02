@@ -99,7 +99,6 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/IO_.jar \
 	plugins/CLI_.jar \
 	plugins/Javascript_.jar \
-	plugins/lens_correction.jar \
 	plugins/LSM_Toolbox.jar \
 	plugins/SplineDeformationGenerator_.jar \
 	plugins/level_sets.jar \
@@ -188,7 +187,6 @@ plugins/Javascript_.jar <- src-plugins/Javascript/*.java
 plugins/Bug_Submitter.jar <- src-plugins/Bug_Submitter/*.java
 
 CLASSPATH(plugins/register_virtual_stack_slices.jar)=plugins/TrakEM2_.jar
-CLASSPATH(plugins/lens_correction.jar)=plugins/TrakEM2_.jar:plugins/mpicbg_.jar
 MAINCLASS(plugins/LSM_Toolbox.jar)=org.imagearchive.lsm.toolbox.gui.AboutDialog
 plugins/LSM_Toolbox.jar <- src-plugins/LSM_Toolbox/**/*.java \
 	src-plugins/LSM_Toolbox/**/*.png \
