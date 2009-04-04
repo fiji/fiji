@@ -127,6 +127,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/MTrack2_.jar \
 	plugins/Time_Stamper.jar \
 	plugins/Statistical_Region_Merging.jar \
+	plugins/Auto_Threshold.jar \
 	\
 	misc/Fiji.jar
 
