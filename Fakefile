@@ -128,6 +128,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Time_Stamper.jar \
 	plugins/Statistical_Region_Merging.jar \
 	plugins/Refresh_Javas.jar \
+	plugins/Auto_Threshold.jar \
 	\
 	misc/Fiji.jar
 
