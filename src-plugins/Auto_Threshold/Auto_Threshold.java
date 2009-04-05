@@ -24,9 +24,10 @@ public class Auto_Threshold implements PlugIn {
 		}
 
 		 // 2 - Ask for parameters:
-		GenericDialog gd = new GenericDialog("Auto Threshold v0.1");
+		GenericDialog gd = new GenericDialog("Auto Threshold");
 //		String [] methods={"Bernsen", "Huang", "Intermodes", "IsoData",  "Li", "MaxEntropy", "MinError", "Minimum", "Moments", "Niblack", "Otsu", "Percentile", "RenyiEntropy", "Sauvola", "Shanbhag" , "Triangle", "Yen"};
-		String [] methods={"Huang", "Intermodes", "IsoData",  "Li", "MaxEntropy", "MinError", "Minimum", "Moments", "Otsu", "Percentile", "RenyiEntropy", "Shanbhag" , "Triangle", "Yen"};
+		gd.addMessage("Auto Threshold v1");
+		String [] methods={"Huang", "Intermodes", "IsoData",  "Li", "MaxEntropy",  "Minimum", "Moments", "Otsu", "Percentile", "RenyiEntropy", "Shanbhag" , "Triangle", "Yen"};
 		gd.addChoice("Method", methods, methods[0]);
 		String[] labels = new String[2];
 		boolean[] states = new boolean[2];
@@ -35,10 +36,11 @@ public class Auto_Threshold implements PlugIn {
 		labels[1]="Ignore_white"; 
 		states[1]=false;
 		gd.addCheckboxGroup(1, 2, labels, states);
-
 		gd.addCheckbox("White objects on black background",false);
 		gd.addCheckbox("SetThreshold instead of Threshold (single images)",false);
 		gd.addCheckbox("Show threshold values in log window",false);
+		if (imp.getStackSize()>1) 
+			gd.addCheckbox("Stack",false);
 
 		gd.showDialog();
 		if (gd.wasCanceled()) return;
@@ -50,6 +52,9 @@ public class Auto_Threshold implements PlugIn {
 		boolean doIwhite = gd.getNextBoolean ();
 		boolean doIset = gd.getNextBoolean ();
 		boolean doIlog = gd.getNextBoolean ();
+		boolean doIstack=false; 
+		if (imp.getStackSize()>1) 
+			doIstack = gd.getNextBoolean ();
 
 		//if (imp.getStackSize()>1) {
 		//	IJ.showMessage("Have to ask about stacks...");
@@ -57,8 +62,15 @@ public class Auto_Threshold implements PlugIn {
 
 		// 4 - Execute!
 		//long start = System.currentTimeMillis();
-		Object[] result = exec(imp, myMethod, noWhite, noBlack, doIwhite, doIset, doIlog );
-
+		if (imp.getStackSize()>1 && doIstack ) {
+			for (int k=1; k<=imp.getStackSize();k++){
+				imp.setSlice(k);
+				Object[] result = exec(imp, myMethod, noWhite, noBlack, doIwhite, doIset, doIlog );
+			}
+		}
+		else {
+			Object[] result = exec(imp, myMethod, noWhite, noBlack, doIwhite, doIset, doIlog );
+		}
 		// 5 - If all went well, show the image:
 		/* not needed here as the source image is binarised 
 		if (null != result) {
@@ -76,10 +88,11 @@ public class Auto_Threshold implements PlugIn {
 	* Does NOT show the new, image; just returns it. */
 	 public Object[] exec(ImagePlus imp, String myMethod, boolean noWhite, boolean noBlack, boolean doIwhite, boolean doIset, boolean doIlog ) {
 
+		int threshold=-1;
 		ImageProcessor ip = imp.getProcessor();
 		int xe = ip.getWidth();
 		int ye = ip.getHeight();
-		int threshold=-1;
+
 		int x, y, b=255, c=0;
 		int [] data = (ip.getHistogram());
 
@@ -89,9 +102,9 @@ public class Auto_Threshold implements PlugIn {
 		IJ.showStatus("Thresholding...");
 
 		//1 Do it
-
 		if (noBlack) data[0]=0;
 		if (noWhite) data[255]=0;
+
 
 		// Apply the selected algorithm
 
@@ -105,7 +118,7 @@ public class Auto_Threshold implements PlugIn {
 			threshold = Intermodes(data);
 		}
 		else if(myMethod.equals("IsoData")){
-			threshold = IsoData (data); // so we can ignore black/white and set the bright or dark objects
+			threshold = IsoData (data); // re-implemeted so we can ignore black/white and set the bright or dark objects
 			//IJ.showMessage("IJ "+ip.getAutoThreshold());
 		}
 		else if(myMethod.equals("Li")){
@@ -114,9 +127,9 @@ public class Auto_Threshold implements PlugIn {
 		else if(myMethod.equals("MaxEntropy")){
 			threshold = MaxEntropy(data);
 		}
-		else if(myMethod.equals("MinError")){
-			threshold = MinError(data);
-		}
+//		else if(myMethod.equals("MinError")){
+//			threshold = MinError(data);
+//		}
 		else if(myMethod.equals("Minimum")){
 			threshold = Minimum(data);
 		}
@@ -560,6 +573,8 @@ public class Auto_Threshold implements PlugIn {
 		return threshold;
 	}
 
+/*
+	// This might not be working as intended...
 	int MinError(int [] data ) {
 		// Kittler J. and Illingworth J. (1986) Minimum Error Thresholding. Pattern Recognition, 19(1): 41-47
 		// C code by M. Emre Celebi
@@ -569,12 +584,12 @@ public class Auto_Threshold implements PlugIn {
 		int threshold=-1;
 
 		double tt;
-		double J_min, J_value;	/* minimum and current values of the J (class separability) criterion */
+		double J_min, J_value;	// minimum and current values of the J (class separability) criterion 
 		int [] P1_zeros = new int[256];
 		int [] P2_zeros = new int[256];
-		double [] P1 = new double[256];/* P1 = cumulative normalized histogram and P2[i] = 1.0 - P1[i] */
+		double [] P1 = new double[256]; // P1 = cumulative normalized histogram and P2[i] = 1.0 - P1[i]
 		double [] P2 = new double[256];
-		double [] mean1 = new double[256];/* means of the two classes (background, foreground) */
+		double [] mean1 = new double[256]; // means of the two classes (background, foreground) 
 		double [] mean2 = new double[256];
 		double [] stdev1 = new double[256];
 		double [] stdev2 = new double[256];
@@ -588,7 +603,7 @@ public class Auto_Threshold implements PlugIn {
 			histo[i]=(double)data[i]/(double)nPixels;
 		}
 
-		/* recursive calculations (P1, mean1, stdev1) */
+		// recursive calculations (P1, mean1, stdev1) 
 		P1[0] = histo[0];
 		mean1[0] = 0.0;
 		stdev1[0] = 0.0;
@@ -599,7 +614,7 @@ public class Auto_Threshold implements PlugIn {
 			stdev1[i] = stdev1[i - 1] + i * i * histo[i];
 		}
 
-		/* iterative calculations (P2, mean2) */
+		/// iterative calculations (P2, mean2) 
 		for(i=0; i<256; i++) {
 			P2[i] = 1.0 - P1[i];
 			P1_zeros[i] = Math.abs(P1[i])<0.000001?1:0;
@@ -607,7 +622,7 @@ public class Auto_Threshold implements PlugIn {
 			mean2[i] = mean1[255] - mean1[i];
 		}
 
-		/* normalize mean1 & mean2 */
+		// normalize mean1 & mean2 
 		for(i = 0; i < 256; i++){
 			if(P1_zeros[i] == 0)
 				mean1[i] /= P1[i];
@@ -621,7 +636,7 @@ public class Auto_Threshold implements PlugIn {
 		J_min =Double.MAX_VALUE;
 
 		for(i = 0; i < 256; i++) {
-			/* calculate the stdev values */
+			// calculate the stdev values 
 			stdev2[i] = stdev1[255] - stdev1[i];
 
 			if(P1_zeros[i] == 0)
@@ -633,7 +648,7 @@ public class Auto_Threshold implements PlugIn {
 			stdev1[i] -= mean1[i] * mean1[i];
 			stdev2[i] -= mean2[i] * mean2[i];
 
-			/* calculate the J value */
+			// calculate the J value/
 			J_value = 1.0;
 			if(P1_zeros[i] == 0) {
 				if(Math.abs(stdev1[i])>0.000001) {
@@ -653,7 +668,7 @@ public class Auto_Threshold implements PlugIn {
 					J_value += -2.0 * P2[i] * Math.log(P2[i]);
 			}
 
-			/* minimize the J criterion */
+			// minimize the J criterion 
 			if(J_value < J_min) {
 				J_min = J_value;
 				threshold = i;
@@ -662,7 +677,7 @@ public class Auto_Threshold implements PlugIn {
 		}
 		return threshold;
 	}
-
+*/
 	int Minimum(int [] data ) {
 		// J. M. S. Prewitt and M. L. Mendelsohn, "The analysis of cell images," in
 		// Annals of the New York Academy of Sciences, vol. 128, pp. 1035-1053, 1966.
