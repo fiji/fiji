@@ -1247,8 +1247,8 @@ public class Fake {
 
 			void action() throws FakeException {
 				// check the classpath
-				String[] paths = split(getVar("CLASSPATH"),
-						File.pathSeparator);
+				String[] paths =
+					split(getVar("CLASSPATH"), ":");
 				for (int i = 0; i < paths.length; i++)
 					maybeMake((Rule)allRules.get(paths[i]));
 
