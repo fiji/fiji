@@ -120,7 +120,6 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/TurboReg_.jar \
 	plugins/Analyze/Grid_.class \
 	plugins/Input-Output/HandleExtraFileTypes.class \
-	plugins/Stacks/Stack_Reverser.class \
 	plugins/Bug_Submitter.jar \
 	plugins/Fiji_Plugins.jar \
 	plugins/ToAST_.jar \
