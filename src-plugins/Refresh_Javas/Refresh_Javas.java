@@ -6,7 +6,11 @@ import ij.Menus;
 
 import ij.io.PluginClassLoader;
 
+import ij.text.TextWindow;
+
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.PrintWriter;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -31,15 +35,13 @@ public class Refresh_Javas extends RefreshScripts {
 		String c = path;
 		if (c.endsWith(".java")) {
 			c = c.substring(0, c.length() - 5);
-			// TODO: show output in case of error, in a window
 			try {
 				if (!upToDate(path, c + ".class") &&
-						!compile(path)) {
-					IJ.error("Could not compile " + path);
+						!compile(path))
 					return;
-				}
 			} catch(Exception e) {
-				IJ.error("Error: " + e);
+				IJ.error("Could not invoke javac compiler for "
+					+ path + ": " + e);
 				return;
 			}
 		}
@@ -84,13 +86,23 @@ public class Refresh_Javas extends RefreshScripts {
 					.loadClass(className, true, true) :
 				loader.loadClass(className);
 			Class[] argsType = new Class[] {
-				arguments.getClass()
+				arguments.getClass(),
+				PrintWriter.class
 			};
 			javac = main.getMethod("compile", argsType);
 		}
+
+		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+		PrintWriter out = new PrintWriter(buffer);
 		Object result = javac.invoke(null,
-			new Object[] { arguments });
-		return result.equals(new Integer(0));
+			new Object[] { arguments, out });
+
+		if (result.equals(new Integer(0)))
+			return true;
+
+		new TextWindow("Could not compile " + path,
+				buffer.toString(), 640, 480);
+		return false;
 	}
 
 	void runPlugin(String className) {
