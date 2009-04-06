@@ -207,11 +207,7 @@ plugins/**/*.class <- src-plugins/**/*.java
 
 MAINCLASS(jars/javac.jar)=com.sun.tools.javac.Main
 JAVAVERSION(jars/javac.jar)=1.5
-jars/javac.jar <- src-plugins/com/sun/tools/javac/**/*.java \
-	src-plugins/com/sun/tools/javac/**/*.properties \
-	src-plugins/com/sun/tools/javac/**/*.JavaCompilerTool \
-	src-plugins/com/sun/source/**/*.java \
-	src-plugins/javax/**/*.java
+jars/javac.jar <- src-plugins/javac/**/*
 
 # Third party plugins
 
