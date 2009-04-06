@@ -66,14 +66,22 @@ public class Main implements AWTEventListener {
 		Toolkit.getDefaultToolkit().addAWTEventListener(new Main(), -1);
 	}
 
-	public static void postmain() {
+	public static void scanUserPlugins() {
 		if (IJ.getInstance() != null)
 			new User_Plugins().run(null);
 	}
 
+	public static void postmain() { }
+
 	public static void main(String[] args) {
 		premain();
-		ImageJ.main(args);
+		// prepend macro call to scanUserPlugins()
+		String[] newArgs = new String[args.length + 2];
+		newArgs[0] = "-eval";
+		newArgs[1] = "call('fiji.Main.scanUserPlugins');";
+		if (args.length > 0)
+			System.arraycopy(args, 0, newArgs, 2, args.length);
+		ImageJ.main(newArgs);
 		postmain();
 	}
 }
