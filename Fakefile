@@ -79,11 +79,11 @@ JAVA_HOME(macosx)=java/macosx-java3d
 
 SUBMODULE_TARGETS=\
 	ij.jar \
+	plugins/loci_tools.jar \
 	plugins/VIB_.jar \
 	plugins/TrakEM2_.jar \
 	plugins/mpicbg_.jar \
 	jars/clojure.jar \
-	plugins/loci_tools.jar \
 	plugins/ij-ImageIO_.jar \
 	jars/jacl.jar \
 	jars/batik.jar \
@@ -157,12 +157,11 @@ jdk[scripts/checkout-jdk.py $JDK] <-
 ij.jar <- jars/javac.jar ImageJA/
 CLASSPATH(plugins/VIB_.jar)=plugins/LSM_Toolbox.jar
 plugins/VIB_.jar <- plugins/LSM_Toolbox.jar VIB/
-CLASSPATH(plugins/mpicbg_.jar)=jars/imagescience.jar
 plugins/mpicbg_.jar <- mpicbg/
-CLASSPATH(plugins/TrakEM2_.jar)=plugins/VIB_.jar:plugins/mpicbg_.jar
-plugins/TrakEM2_.jar <- ij.jar plugins/VIB_.jar plugins/mpicbg_.jar TrakEM2/
 jars/clojure.jar <- clojure/
 plugins/loci_tools.jar <- bio-formats/
+CLASSPATH(plugins/TrakEM2_.jar)=plugins/VIB_.jar:plugins/mpicbg_.jar:plugins/loci_tools.jar
+plugins/TrakEM2_.jar <- ij.jar plugins/VIB_.jar plugins/mpicbg_.jar TrakEM2/
 plugins/ij-ImageIO_.jar <- ij-plugins/
 jars/jacl.jar <- tcljava/
 jars/batik.jar <- batik/
@@ -294,11 +293,11 @@ precompiled/*[scripts/copy-file.py $PRE $TARGET] <- *
 
 precompile-submodules[] <- \
 	precompiled/ij.jar \
+	precompiled/loci_tools.jar \
 	precompiled/TrakEM2_.jar \
 	precompiled/VIB_.jar \
 	precompiled/mpicbg_.jar \
 	precompiled/clojure.jar \
-	precompiled/loci_tools.jar \
 	precompiled/ij-ImageIO_.jar \
 	precompiled/jacl.jar \
 	precompiled/batik.jar \
