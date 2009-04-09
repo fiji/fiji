@@ -1,6 +1,7 @@
 A loose TODO list for Fiji
 ==========================
 
+- fake: "move out of the way" using update/ mechanism
 - win: verify that console window stays open when falling back to system Java
 - TrakEM2: use CommandListener to override the "File>Save" menu item
 - move Amira I/O into bio-formats already
