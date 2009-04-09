@@ -206,45 +206,43 @@ public abstract class AbstractInterpreter implements PlugIn {
 		scroll_prompt.setPreferredSize(new Dimension(440, 35));
 		prompt.setFont(font);
 		prompt.setLineWrap(true);
+
 		prompt.getInputMap().put(KeyStroke.getKeyStroke("DOWN"), "down");
 		prompt.getActionMap().put("down",
 				new AbstractAction("down") {
 					public void actionPerformed(ActionEvent ae) {
-						//move forward only if it is possible
-						int size = al_lines.size();
-						if (0 == size) return;
-						if (active_line < size -1) {
-							active_line++;
-						} else if (active_line == size -1) {
-							prompt.setText(""); //clear
-							return;
+						if (isCaretOnLastLine()) {
+							trySetNextPrompt();
+						} else {
+							// Move down one line within a multiline prompt
+							doArrowDown(prompt.getText());
 						}
-						prompt.setText((String)al_lines.get(active_line));
 					}
 				});
 		prompt.getInputMap().put(KeyStroke.getKeyStroke("UP"), "up");
 		prompt.getActionMap().put("up",
 				new AbstractAction("up") {
 					public void actionPerformed(ActionEvent ae) {
-						final int size = al_lines.size();
-						if (0 == size) return;
-						// Store current prompt content if not empty and is different that last stored line
-						if (size -1 == active_line) {
-							String txt = prompt.getText();
-							if (null != txt && txt.trim().length() > 0 && !txt.equals((String)al_lines.get(active_line))) {
-								al_lines.add(txt);
-								valid_lines.add(false); // because it has never been executed yet
-							}
+						if (isCaretOnFirstLine()) {
+							trySetPreviousPrompt();
+						} else {
+							// Move up one line within a multiline prompt
+							doArrowUp(prompt.getText());
 						}
-
-						if (active_line > 0) {
-							if (prompt.getText().equals("") && size -1 == active_line) {
-								active_line = size - 1;
-							} else {
-								active_line--;
-							}
-						}
-						prompt.setText((String)al_lines.get(active_line));
+					}
+				});
+		prompt.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_P, ActionEvent.CTRL_MASK), "ctrl+p");
+		prompt.getActionMap().put("ctrl+p",
+				new AbstractAction("ctrl+p") {
+					public void actionPerformed(ActionEvent ae) {
+						trySetPreviousPrompt();
+					}
+				});
+		prompt.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_N, ActionEvent.CTRL_MASK), "ctrl+n");
+		prompt.getActionMap().put("ctrl+n",
+				new AbstractAction("ctrl+n") {
+					public void actionPerformed(ActionEvent ae) {
+						trySetNextPrompt();
 					}
 				});
 		prompt.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, ActionEvent.SHIFT_MASK), "shift+down");
@@ -254,27 +252,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 						//enable to scroll within lines when the prompt consists of multiple lines.
 						String text = prompt.getText();
 						if (-1 != text.indexOf('\n')) {
-							//do normal arrow work:
-							// Caret can be from 0 to text.length() inclusive (i.e. after the last char)
-							int cp = prompt.getCaretPosition();
-							// next newline
-							int next_nl = text.indexOf('\n', cp);
-							if (-1 == next_nl) return; // can't scroll down
-							// previous newline
-							int prev_nl = text.lastIndexOf('\n', cp-1);
-							if (-1 == prev_nl) prev_nl = -1; // caret at first char of first line
-							// distance from prev_nl to caret
-							int column = cp - prev_nl;
-							// second next newline
-							int next_nl_2 = text.indexOf('\n', next_nl+1);
-							if (-1 == next_nl_2) next_nl_2 = text.length();
-							// new caret position
-							if (column > next_nl_2 - next_nl) cp = next_nl_2;
-							else cp = next_nl + column;
-							// check boundaries
-							if (cp > text.length()) cp = text.length();
-							//
-							prompt.setCaretPosition(cp);
+							doArrowDown(text);
 						}
 					}
 				});
@@ -285,23 +263,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 						//enable to scroll within lines when the prompt consists of multiple lines.
 						String text = prompt.getText();
 						if (-1 != text.indexOf('\n')) {
-							//do normal arrow work:
-							int cp = prompt.getCaretPosition();
-							// next newline
-							int next_nl = text.indexOf('\n', cp);
-							if (-1 == next_nl) next_nl = text.length(); // imaginary
-							// previous newline
-							int prev_nl = text.lastIndexOf('\n', cp -1);
-							if (-1 == prev_nl) return; // already at first row
-							// distance from prev_nl to caret
-							int column = cp - prev_nl;
-							// second previous newline
-							int prev_nl_2 = text.lastIndexOf('\n', prev_nl -1);
-							// if -1 == prev_nl_2 it's ok: means we are at second row
-							if (column > prev_nl - prev_nl_2) cp = prev_nl;
-							else cp = prev_nl_2 + column;
-							//
-							prompt.setCaretPosition(cp);
+							doArrowUp(text);
 						}
 					}
 				});
@@ -385,6 +347,112 @@ public abstract class AbstractInterpreter implements PlugIn {
 		window.setVisible(true);
 		//set the focus to the input prompt
 		prompt.requestFocus();
+	}
+
+	/** Store current prompt content if not empty and is different than current active line;
+	 *  will also set active line to last. */
+	private void tryStoreCurrentPrompt() {
+		final String txt = prompt.getText();
+		if (null != txt && txt.trim().length() > 0 && !txt.equals((String)al_lines.get(active_line))) {
+			al_lines.add(txt);
+			valid_lines.add(false); // because it has never been executed yet
+			// set active line to last, since we've added a new entry
+			active_line = al_lines.size() -1;
+		}
+	}
+
+	private void trySetPreviousPrompt() {
+		// Try to set the previous prompt text
+		final int size = al_lines.size();
+		if (0 == size) return;
+
+		tryStoreCurrentPrompt();
+
+		if (active_line > 0) {
+			if (prompt.getText().equals("") && size -1 == active_line) {
+				active_line = size - 1;
+			} else {
+				active_line--;
+			}
+		}
+		prompt.setText((String)al_lines.get(active_line));
+	}
+
+	private void trySetNextPrompt() {
+		// Try to set the next prompt text
+		int size = al_lines.size();
+		if (0 == size) return;
+
+		tryStoreCurrentPrompt();
+
+		if (active_line < size -1) {
+			active_line++;
+		} else if (active_line == size -1) {
+			prompt.setText(""); //clear
+			return;
+		}
+		final String text = (String)al_lines.get(active_line);
+		prompt.setText(text);
+		final int i_newline = text.indexOf('\n');
+		if (-1 != i_newline) prompt.setCaretPosition(i_newline);
+	}
+
+	/** Move the prompt caret down one line in a multiline prompt, if possible. */
+	private void doArrowDown(final String text) {
+		// Caret can be from 0 to text.length() inclusive (i.e. after the last char)
+		int cp = prompt.getCaretPosition();
+		// next newline
+		int next_nl = text.indexOf('\n', cp);
+		if (-1 == next_nl) return; // can't scroll down
+		// previous newline
+		int prev_nl = text.lastIndexOf('\n', cp-1);
+		if (-1 == prev_nl) prev_nl = -1; // caret at first char of first line
+		// distance from prev_nl to caret
+		int column = cp - prev_nl;
+		// second next newline
+		int next_nl_2 = text.indexOf('\n', next_nl+1);
+		if (-1 == next_nl_2) next_nl_2 = text.length();
+		// new caret position
+		if (column > next_nl_2 - next_nl) cp = next_nl_2;
+		else cp = next_nl + column;
+		// check boundaries
+		if (cp > text.length()) cp = text.length();
+		//
+		prompt.setCaretPosition(cp);
+	}
+
+	/** Move the prompt caret up one line in a multiline prompt, if possible. */
+	private void doArrowUp(final String text) {
+		int cp = prompt.getCaretPosition();
+		// next newline
+		int next_nl = text.indexOf('\n', cp);
+		if (-1 == next_nl) next_nl = text.length(); // imaginary
+		// previous newline
+		int prev_nl = text.lastIndexOf('\n', cp -1);
+		if (-1 == prev_nl) return; // already at first row
+		// distance from prev_nl to caret
+		int column = cp - prev_nl;
+		// second previous newline
+		int prev_nl_2 = text.lastIndexOf('\n', prev_nl -1);
+		// if -1 == prev_nl_2 it's ok: means we are at second row
+		if (column > prev_nl - prev_nl_2) cp = prev_nl;
+		else cp = prev_nl_2 + column;
+		//
+		prompt.setCaretPosition(cp);
+	}
+
+	private boolean isCaretOnFirstLine() {
+		final String text = prompt.getText();
+		final int i_newline = text.indexOf('\n');
+		return -1 == i_newline
+		    || prompt.getCaretPosition() <= i_newline;
+	}
+
+	private boolean isCaretOnLastLine() {
+		final String text = prompt.getText();
+		final int i_newline = text.lastIndexOf('\n');
+		return -1 == i_newline
+		    || prompt.getCaretPosition() > i_newline;
 	}
 
 	private void closingWindow() {
