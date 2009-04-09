@@ -14,4 +14,6 @@ exec ../fiji \
     distance.TestCorrelation \
     landmarks.TestLoading \
     util.TestPenalty \
-    vib.TestFastMatrix
+    vib.TestFastMatrix \
+    tracing.Test2DTracing \
+    tracing.Test3DTracing
