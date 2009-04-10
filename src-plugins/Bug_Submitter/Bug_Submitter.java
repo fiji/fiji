@@ -54,7 +54,7 @@ import ij.Prefs;
 
 public class Bug_Submitter implements PlugIn {
 
-	protected String bugzillaAssignee = "mark-fijibugreports@longair.net";
+	protected String bugzillaAssignee = "fiji-devel@googlegroups.com";
 
 	public String e( String original ) {
 		try {
