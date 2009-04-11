@@ -10,7 +10,8 @@ import ij.plugin.*;
 // 1.1  2009/Apr/08 Undo single images, fixed the stack returning to slice 1
 // 1.2  2009/Apr/11 global stack threshold, option to avoid displaying, fixed the stack returning to slice 1, fixed upper border of montage,
 // 1.3  2009/Apr/11 fixed Stack option with 'Try all' method
-                          
+// 1.4  2009/Apr/11 fixed 'ignore black' and 'ignore white' for stack histograms       
+                
 public class Auto_Threshold implements PlugIn {
         /** Ask for parameters and then execute.*/
         public void run(String arg) {
@@ -218,9 +219,6 @@ public class Auto_Threshold implements PlugIn {
 		IJ.showStatus("Thresholding...");
 
 		//1 Do it
-		if (noBlack) data[0]=0;
-		if (noWhite) data[255]=0;
-
 		if (imp.getStackSize()==1){
 			    ip.snapshot();
 			    Undo.setup(Undo.FILTER, imp);
@@ -239,8 +237,12 @@ public class Auto_Threshold implements PlugIn {
 				}
 			}
 		}
-		// Apply the selected algorithm
 
+		if (noBlack) data[0]=0;
+		if (noWhite) data[255]=0;
+
+
+		// Apply the selected algorithm
 
 //		if (myMethod.equals("Bernsen")){
 //			IJ.showMessage("Not yet...");
@@ -888,7 +890,7 @@ public class Auto_Threshold implements PlugIn {
 			total+=data[i];
 
 		for (int i=0; i<256; i++)
-			histo[i]=(double)(data[i]/total); //normalised histgram
+			histo[i]=(double)(data[i]/total); //normalised histogram
 
 		/* Calculate the first, second, and third order moments */
 		for ( int i = 0; i < 256; i++ ){
