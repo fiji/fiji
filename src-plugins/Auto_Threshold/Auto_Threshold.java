@@ -9,6 +9,7 @@ import ij.plugin.*;
 // 1.0  never released
 // 1.1  2009/Apr/08 Undo single images, fixed the stack returning to slice 1
 // 1.2  2009/Apr/11 global stack threshold, option to avoid displaying, fixed the stack returning to slice 1, fixed upper border of montage,
+// 1.3  2009/Apr/11 fixed Stack option with 'Try all' method
                           
 public class Auto_Threshold implements PlugIn {
         /** Ask for parameters and then execute.*/
@@ -29,7 +30,7 @@ public class Auto_Threshold implements PlugIn {
 		 // 2 - Ask for parameters:
 		GenericDialog gd = new GenericDialog("Auto Threshold");
 //		String [] methods={"Bernsen", "Huang", "Intermodes", "IsoData",  "Li", "MaxEntropy", "MinError", "Minimum", "Moments", "Niblack", "Otsu", "Percentile", "RenyiEntropy", "Sauvola", "Shanbhag" , "Triangle", "Yen"};
-		gd.addMessage("Auto Threshold v1.2");
+		gd.addMessage("Auto Threshold v1.3");
 		String [] methods={"Try all", "Huang", "Intermodes", "IsoData",  "Li", "MaxEntropy",  "Minimum", "Moments", "Otsu", "Percentile", "RenyiEntropy", "Shanbhag" , "Triangle", "Yen"};
 		gd.addChoice("Method", methods, methods[0]);
 		String[] labels = new String[2];
@@ -63,6 +64,8 @@ public class Auto_Threshold implements PlugIn {
 		if (stackSize>1) {
 			doIstack = gd.getNextBoolean ();
 			doIstackHistogram= gd.getNextBoolean ();
+			if (doIstackHistogram)
+				doIstack=true;
 		}
 
 		// 4 - Execute!
@@ -74,7 +77,7 @@ public class Auto_Threshold implements PlugIn {
 			int ml = methods.length;
 			ImagePlus imp2, imp3;
 			ImageStack tstack=null, stackNew;
-			if (stackSize>1){
+			if (stackSize>1 && doIstack){
 				boolean doItAnyway = true;
 				if (stackSize>25) {
 					YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(),"Auto Threshold", "You might run out of memory.\n \nDisplay "+stackSize+" slices?\n \n \'No\' will process without display and\noutput results to the log window.");
