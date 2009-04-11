@@ -6,8 +6,10 @@ import ij.plugin.*;
 // Autothreshold segmentation 
 // Following the guidelines at http://pacific.mpi-cbg.de/wiki/index.php/PlugIn_Design_Guidelines
 // ImageJ plugin by G. Landini at bham. ac. uk
-// 1.1 Undo single images, fixed the stack returning to slice 1
-
+// 1.0  never released
+// 1.1  2009/Apr/08 Undo single images, fixed the stack returning to slice 1
+// 1.2  2009/Apr/11 global stack threshold, option to avoid displaying, fixed the stack returning to slice 1, fixed upper border of montage,
+                          
 public class Auto_Threshold implements PlugIn {
         /** Ask for parameters and then execute.*/
         public void run(String arg) {
@@ -27,7 +29,7 @@ public class Auto_Threshold implements PlugIn {
 		 // 2 - Ask for parameters:
 		GenericDialog gd = new GenericDialog("Auto Threshold");
 //		String [] methods={"Bernsen", "Huang", "Intermodes", "IsoData",  "Li", "MaxEntropy", "MinError", "Minimum", "Moments", "Niblack", "Otsu", "Percentile", "RenyiEntropy", "Sauvola", "Shanbhag" , "Triangle", "Yen"};
-		gd.addMessage("Auto Threshold v1.1");
+		gd.addMessage("Auto Threshold v1.2");
 		String [] methods={"Try all", "Huang", "Intermodes", "IsoData",  "Li", "MaxEntropy",  "Minimum", "Moments", "Otsu", "Percentile", "RenyiEntropy", "Shanbhag" , "Triangle", "Yen"};
 		gd.addChoice("Method", methods, methods[0]);
 		String[] labels = new String[2];
@@ -40,9 +42,10 @@ public class Auto_Threshold implements PlugIn {
 		gd.addCheckbox("White objects on black background",true);
 		gd.addCheckbox("SetThreshold instead of Threshold (single images)",false);
 		gd.addCheckbox("Show threshold values in log window",false);
-		if (imp.getStackSize()>1) 
+		if (imp.getStackSize()>1) {
 			gd.addCheckbox("Stack",false);
-
+			gd.addCheckbox("Use_stack_histogram",false);
+		}
 		gd.showDialog();
 		if (gd.wasCanceled()) return;
  
@@ -54,76 +57,129 @@ public class Auto_Threshold implements PlugIn {
 		boolean doIset = gd.getNextBoolean ();
 		boolean doIlog = gd.getNextBoolean ();
 		boolean doIstack=false; 
+		boolean doIstackHistogram=false;
+
 		int stackSize = imp.getStackSize();
-		if (stackSize>1) 
+		if (stackSize>1) {
 			doIstack = gd.getNextBoolean ();
+			doIstackHistogram= gd.getNextBoolean ();
+		}
 
 		// 4 - Execute!
 		//long start = System.currentTimeMillis();
 		if(myMethod.equals("Try all")){
-			int ml = methods.length;
 			ImageProcessor ip = imp.getProcessor();
 			int xe = ip.getWidth();
 			int ye = ip.getHeight();
+			int ml = methods.length;
 			ImagePlus imp2, imp3;
 			ImageStack tstack=null, stackNew;
 			if (stackSize>1){
-				for (int j=1; j<=stackSize; j++){
-					imp.setSlice(j);
-					ip = imp.getProcessor();
-					tstack= new ImageStack(xe,ye);
-					for (int k=1; k<ml;k++)
-						tstack.addSlice(methods[k], ip.duplicate());
-					imp2 = new ImagePlus("Auto Threshold", tstack);
-					imp2.updateAndDraw();
-
-					for (int k=1; k<ml;k++){
-						imp2.setSlice(k);
-						//IJ.log("analyzing slice with "+methods[k]);
-						Object[] result = exec(imp2, methods[k], noWhite, noBlack, doIwhite, doIset, doIlog );
-					 }
-					CanvasResizer cr= new CanvasResizer();
-					stackNew = cr.expandStack(tstack, (xe+2), (ye+16), 1, 0);
-					imp3 = new ImagePlus("Auto Threshold", stackNew);
-					imp3.updateAndDraw();
-					MontageMaker mm= new MontageMaker();
-					mm.makeMontage( imp3, 5, 3, 1.0, 1, (ml-1), 1, 0, true);
+				boolean doItAnyway = true;
+				if (stackSize>25) {
+					YesNoCancelDialog d = new YesNoCancelDialog(IJ.getInstance(),"Auto Threshold", "You might run out of memory.\n \nDisplay "+stackSize+" slices?\n \n \'No\' will process without display and\noutput results to the log window.");
+					if (!d.yesPressed()){
+						doIlog=true; //will show in the log window
+						doItAnyway=false;
+					}
+					if (d.cancelPressed())
+						return;
 				}
-				IJ.run("Images to Stack", "method=[Copy (center)] title=Montage");
+				if (doIstackHistogram) { // global histogram
+					int j, k;
+					for (k=1; k<ml; k++){
+						tstack= new ImageStack(xe,ye);
+						for (j=1; j<=stackSize; j++){
+							imp.setSlice(j);
+							ip = imp.getProcessor();
+							tstack.addSlice(methods[k], ip.duplicate());
+						}
+						imp2 = new ImagePlus("Auto Threshold", tstack);
+						imp2.updateAndDraw();
+						//imp2.show();
+						Object[] result = exec(imp2, methods[k], noWhite, noBlack, doIwhite, doIset, doIlog, doIstackHistogram );
+						if (doItAnyway){
+							CanvasResizer cr= new CanvasResizer();
+							stackNew = cr.expandStack(tstack, (xe+2), (ye+18), 1, 1);
+							imp3 = new ImagePlus("Auto Threshold", stackNew);
+							imp3.updateAndDraw();
+							int sqrj= 1+(int)Math.floor(Math.sqrt(stackSize));
+							int sqrjp1=sqrj-1;
+							while (sqrj*sqrjp1<stackSize)
+								sqrjp1++;
+							MontageMaker mm= new MontageMaker();
+							mm.makeMontage( imp3, sqrj, sqrjp1, 1.0, 1, stackSize, 1, 0, true);
+							imp2.close();
+						}
+					}
+				}
+				else{ //slice histograms
+					for (int j=1; j<=stackSize; j++){
+						imp.setSlice(j);
+						ip = imp.getProcessor();
+						tstack= new ImageStack(xe,ye);
+						for (int k=1; k<ml;k++)
+							tstack.addSlice(methods[k], ip.duplicate());
+						imp2 = new ImagePlus("Auto Threshold", tstack);
+						imp2.updateAndDraw();
+						if (doIlog) IJ.log("Slice "+j);
+
+						for (int k=1; k<ml;k++){
+							imp2.setSlice(k);
+							Object[] result = exec(imp2, methods[k], noWhite, noBlack, doIwhite, doIset, doIlog, doIstackHistogram );
+						 }
+						if (doItAnyway){
+							CanvasResizer cr= new CanvasResizer();
+							stackNew = cr.expandStack(tstack, (xe+2), (ye+18), 1, 1);
+							imp3 = new ImagePlus("Auto Threshold", stackNew);
+							imp3.updateAndDraw();
+							MontageMaker mm= new MontageMaker();
+							mm.makeMontage( imp3, 5, 3, 1.0, 1, (ml-1), 1, 0, true);
+						}
+					}
+				}
+				imp.setSlice(1);
+				if (doItAnyway)
+					IJ.run("Images to Stack", "method=[Copy (center)] title=Montage");
 				return;
 			}
-			else {
+			else { //single image try all
 				 tstack= new ImageStack(xe,ye);
 				for (int k=1; k<ml;k++)
 					tstack.addSlice(methods[k], ip.duplicate());
-				 imp2 = new ImagePlus("Auto Threshold", tstack);
+				imp2 = new ImagePlus("Auto Threshold", tstack);
 				imp2.updateAndDraw();
 
 				for (int k=1; k<ml;k++){
 					imp2.setSlice(k);
 					//IJ.log("analyzing slice with "+methods[k]);
-					Object[] result = exec(imp2, methods[k], noWhite, noBlack, doIwhite, doIset, doIlog );
+					Object[] result = exec(imp2, methods[k], noWhite, noBlack, doIwhite, doIset, doIlog, doIstackHistogram );
 				}
 				//imp2.setSlice(1);
 				CanvasResizer cr= new CanvasResizer();
-				 stackNew = cr.expandStack(tstack, (xe+2), (ye+16), 1, 0);
-				  imp3 = new ImagePlus("Auto Threshold", stackNew);
+				stackNew = cr.expandStack(tstack, (xe+2), (ye+18), 1, 1);
+				imp3 = new ImagePlus("Auto Threshold", stackNew);
 				imp3.updateAndDraw();
 				MontageMaker mm= new MontageMaker();
 				mm.makeMontage( imp3, 5, 3, 1.0, 1, (ml-1), 1, 0, true);
 				return;
 			}
 		}
-		else {
-			if (stackSize>1 && doIstack ) {
-				for (int k=1; k<=stackSize; k++){
-					imp.setSlice(k);
-					Object[] result = exec(imp, myMethod, noWhite, noBlack, doIwhite, doIset, doIlog );
+		else { // selected a method
+			if (stackSize>1 &&( doIstack || doIstackHistogram) ) { //whole stack
+				if (doIstackHistogram) {// one global histogram
+					Object[] result = exec(imp, myMethod, noWhite, noBlack, doIwhite, doIset, doIlog, doIstackHistogram );
+				}
+				else{ // slice by slice
+					for (int k=1; k<=stackSize; k++){
+						imp.setSlice(k);
+						Object[] result = exec(imp, myMethod, noWhite, noBlack, doIwhite, doIset, doIlog, doIstackHistogram );
+					}
 				}
 				imp.setSlice(1);
 			}
-			else {
-				Object[] result = exec(imp, myMethod, noWhite, noBlack, doIwhite, doIset, doIlog );
+			else { //just one slice
+				Object[] result = exec(imp, myMethod, noWhite, noBlack, doIwhite, doIset, doIlog, doIstackHistogram );
 			}
 			// 5 - If all went well, show the image:
 			// not needed here as the source image is binarised 
@@ -136,18 +192,25 @@ public class Auto_Threshold implements PlugIn {
 	/** Execute the plugin functionality: duplicate and scale the given image.
 	* @return an Object[] array with the name and the scaled ImagePlus.
 	* Does NOT show the new, image; just returns it. */
-	 public Object[] exec(ImagePlus imp, String myMethod, boolean noWhite, boolean noBlack, boolean doIwhite, boolean doIset, boolean doIlog ) {
+	 public Object[] exec(ImagePlus imp, String myMethod, boolean noWhite, boolean noBlack, boolean doIwhite, boolean doIset, boolean doIlog , boolean doIstackHistogram ) {
+
+		// 0 - Check validity of parameters
+		if (null == imp) return null;
 
 		int threshold=-1;
 		ImageProcessor ip = imp.getProcessor();
 		int xe = ip.getWidth();
 		int ye = ip.getHeight();
 
-		int x, y, b=255, c=0;
-		int [] data = (ip.getHistogram());
+		int x, y;
+		int b=255, c=0;
+		if (doIwhite){
+			c=255;
+			b=0;
+		}
 
-		// 0 - Check validity of parameters
-		if (null == imp) return null;
+		int [] data = (ip.getHistogram());
+		int [] temp = new int [256];
 
 		IJ.showStatus("Thresholding...");
 
@@ -159,7 +222,22 @@ public class Auto_Threshold implements PlugIn {
 			    ip.snapshot();
 			    Undo.setup(Undo.FILTER, imp);
 		}
+		else if (doIstackHistogram){
+
+			//get the stack histogram into the data[] array
+			temp=data;
+			for(int i=2; i<=imp.getStackSize();i++) {
+				imp.setSlice(i);
+				ip = imp.getProcessor();
+				temp= ip.getHistogram();
+				for(int j=0; j<256; j++) {
+					data[j]+=temp[j];
+					//IJ.log(""+j+": "+ data[j]);
+				}
+			}
+		}
 		// Apply the selected algorithm
+
 
 //		if (myMethod.equals("Bernsen")){
 //			IJ.showMessage("Not yet...");
@@ -218,10 +296,6 @@ public class Auto_Threshold implements PlugIn {
 		if (doIlog) IJ.log(myMethod+": "+threshold);
 		if (threshold>-1) { 
 			//threshold it
-			if (doIwhite){
-				c=255;
-				b=0;
-			}
 			if (doIset){
 				if (doIwhite) 
 					IJ.setThreshold(threshold+1, 255);      
@@ -229,12 +303,29 @@ public class Auto_Threshold implements PlugIn {
 					IJ.setThreshold(0,threshold);
 			}
 			else{
-				for(y=0;y<ye;y++) {
-					for(x=0;x<xe;x++){
-						if(ip.getPixel(x,y)>threshold)
-							ip.putPixel(x,y,c);
-						else
-							ip.putPixel(x,y,b);
+				if( doIstackHistogram) {
+					for(int j=1; j<=imp.getStackSize(); j++) {
+						imp.setSlice(j);
+						ip=imp.getProcessor();
+						//IJ.log(""+j+": "+ data[j]);
+						for( y=0;y<ye;y++) {
+							for(x=0;x<xe;x++){
+								if(ip.getPixel(x,y)>threshold)
+									ip.putPixel(x,y,c);
+								else
+									ip.putPixel(x,y,b);
+							}
+						}
+					}//threshold all of them
+				}
+				else{
+					for( y=0;y<ye;y++) {
+						for(x=0;x<xe;x++){
+							if(ip.getPixel(x,y)>threshold)
+								ip.putPixel(x,y,c);
+							else
+								ip.putPixel(x,y,b);
+						}
 					}
 				}
 			}
