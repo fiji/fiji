@@ -353,7 +353,8 @@ public abstract class AbstractInterpreter implements PlugIn {
 	 *  will also set active line to last. */
 	private void tryStoreCurrentPrompt() {
 		final String txt = prompt.getText();
-		if (null != txt && txt.trim().length() > 0 && !txt.equals((String)al_lines.get(active_line))) {
+		if (null != txt && txt.trim().length() > 0) {
+			if (active_line < al_lines.size() && txt.equals((String)al_lines.get(active_line))) return;
 			al_lines.add(txt);
 			valid_lines.add(false); // because it has never been executed yet
 			// set active line to last, since we've added a new entry
