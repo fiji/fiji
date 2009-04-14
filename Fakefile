@@ -130,6 +130,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Auto_Threshold.jar \
 	plugins/Arrow_.jar \
 	plugins/Stack_Manipulation.jar \
+	plugins/FlowJ_.jar \
 	\
 	misc/Fiji.jar
 
