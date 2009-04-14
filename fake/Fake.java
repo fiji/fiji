@@ -45,6 +45,8 @@ import java.util.regex.Pattern;
 public class Fake {
 	protected static Method javac;
 	protected static String toolsPath;
+	protected static String fijiBuildJar;
+	protected static long mtimeFijiBuild;
 
 	public static void main(String[] args) {
 		if (runPrecompiledFakeIfNewer(args))
@@ -100,8 +102,12 @@ public class Fake {
 		fijiHome = fijiHome.substring(0, fijiHome.length() - 10);
 		int slash = fijiHome.lastIndexOf('/', fijiHome.length() - 2);
 		if (fijiHome.startsWith("jar:file:") &&
-				fijiHome.endsWith(".jar!/"))
+				fijiHome.endsWith(".jar!/")) {
+			fijiBuildJar = fijiHome.substring(9,
+					fijiHome.length() - 2);
+			mtimeFijiBuild = new File(fijiBuildJar).lastModified();
 			fijiHome = fijiHome.substring(9, slash + 1);
+		}
 		else if (fijiHome.startsWith("file:/"))
 			fijiHome = fijiHome.substring(5, slash + 1);
 		if (getPlatform().startsWith("win") && fijiHome.startsWith("/"))
@@ -209,6 +215,7 @@ public class Fake {
 
 	class Parser {
 		public final static String path = "Fakefile";
+		protected long mtimeFakefile;
 		BufferedReader reader;
 		String line;
 		int lineNumber;
@@ -226,6 +233,8 @@ public class Fake {
 			if (path == null || path.equals(""))
 				path = Parser.path;
 			try {
+				mtimeFakefile = new File(path).lastModified();
+
 				InputStream stream = new FileInputStream(path);
 				InputStreamReader input =
 					new InputStreamReader(stream);
@@ -773,6 +782,13 @@ public class Fake {
 					return false;
 				}
 				long targetModifiedTime = file.lastModified();
+				if (targetModifiedTime < mtimeFakefile)
+					return upToDateError(file,
+							new File(path));
+				if (targetModifiedTime < mtimeFijiBuild)
+					return upToDateError(file,
+							new File(fijiBuildJar));
+
 
 				nonUpToDates = new ArrayList();
 				Iterator iter = prerequisites.iterator();
