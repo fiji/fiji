@@ -254,9 +254,9 @@ public class FlowJLucas
                                         dy.convolvey(v, sgradientKernel);
                                         // Compute the difference image for t.
                                         dt.convolvez(v);
-                                        (new ImagePlus("dx", dx.getImageStack())).show();
-                                        (new ImagePlus("dy", dy.getImageStack())).show();
-                                        (new ImagePlus("dt", dt.getImageStack())).show();
+//                                        (new ImagePlus("dx", dx.getImageStack())).show();
+//                                        (new ImagePlus("dy", dy.getImageStack())).show();
+//                                        (new ImagePlus("dt", dt.getImageStack())).show();
                                         break;
                   }
         }
