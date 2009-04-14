@@ -28,7 +28,7 @@ def make_app():
 	os.makedirs('Fiji.app/images')
 	shutil.copy('images/icon.png', 'Fiji.app/images/')
 	shutil.copy('ij.jar', 'Fiji.app/')
-	for d in ['plugins', 'macros', 'jars', 'misc', 'retro']:
+	for d in ['plugins', 'macros', 'jars', 'misc', 'retro', 'luts']:
 		shutil.copytree(d, 'Fiji.app/' + d)
 	if os.path.isdir('Fiji.app/jars/jython2.2.1/cachedir'):
 		removedirs('Fiji.app/jars/jython2.2.1/cachedir')
