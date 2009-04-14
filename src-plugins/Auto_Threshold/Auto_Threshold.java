@@ -12,7 +12,8 @@ import ij.plugin.*;
 // 1.3  2009/Apr/11 fixed Stack option with 'Try all' method
 // 1.4  2009/Apr/11 fixed 'ignore black' and 'ignore white' for stack histograms       
 // 1.5  2009/Apr/12 Mean method, MinimumErrorIterative method , enahanced Triangle 
-
+// 1.6  2009/Apr/14 Reverted IsoData to a copy of IJ's code as the other version does not always return the same value as IJ
+// 1.7  2009/Apr/14 small fixes, restore histogram in Triangle if reversed
                 
 public class Auto_Threshold implements PlugIn {
         /** Ask for parameters and then execute.*/
@@ -33,8 +34,8 @@ public class Auto_Threshold implements PlugIn {
 		 // 2 - Ask for parameters:
 		GenericDialog gd = new GenericDialog("Auto Threshold");
 //		String [] methods={"Bernsen", "Huang", "Intermodes", "IsoData",  "Li", "MaxEntropy", "MinError", "Minimum", "Moments", "Niblack", "Otsu", "Percentile", "RenyiEntropy", "Sauvola", "Shanbhag" , "Triangle", "Yen"};
-		gd.addMessage("Auto Threshold v1.5");
-		String [] methods={"Try all", "Huang", "Intermodes", "IsoData",  "Li", "MaxEntropy", "Mean", "MinError(I)", "Minimum", "Moments", "Otsu", "Percentile", "RenyiEntropy", "Shanbhag" , "Triangle", "Yen"};
+		gd.addMessage("Auto Threshold v1.7");
+		String [] methods={"Try all", "Huang", "Intermodes", "IsoData",  "Li", "MaxEntropy","Mean", "MinError(I)", "Minimum", "Moments", "Otsu", "Percentile", "RenyiEntropy", "Shanbhag" , "Triangle", "Yen"};
 		gd.addChoice("Method", methods, methods[0]);
 		String[] labels = new String[2];
 		boolean[] states = new boolean[2];
@@ -280,7 +281,7 @@ public class Auto_Threshold implements PlugIn {
 			threshold = Shanbhag(data);
 		}
 		else if(myMethod.equals("Triangle")){
-			threshold = Triangle(data); // histogram might get reversed!
+			threshold = Triangle(data); 
 		}
 		else if(myMethod.equals("Yen")){
 			threshold = Yen(data);
@@ -506,7 +507,45 @@ public class Auto_Threshold implements PlugIn {
 		// is G = (L + H)/2?
 		// yes => exit
 		// no => increment G and repeat
-
+		//
+		// However the code commented below have the occasional discrepancy with IJ code.
+		// so I am reproducing the original IJ implementation for compatibility.
+		int level;
+		int maxValue = data.length - 1;
+		double result, sum1, sum2, sum3, sum4;
+		
+		int min = 0;
+		while ((data[min]==0) && (min<maxValue))
+			min++;
+		int max = maxValue;
+		while ((data[max]==0) && (max>0))
+			max--;
+		if (min>=max) {
+			level = data.length/2;
+			return level;
+		}
+		
+		int movingIndex = min;
+		int inc = Math.max(max/40, 1);
+		do {
+			sum1=sum2=sum3=sum4=0.0;
+			for (int i=min; i<=movingIndex; i++) {
+				sum1 += i*data[i];
+				sum2 += data[i];
+			}
+			for (int i=(movingIndex+1); i<=max; i++) {
+				sum3 += i*data[i];
+				sum4 += data[i];
+			}			
+			result = (sum1/sum2 + sum3/sum4)/2.0;
+			movingIndex++;
+		} while ((movingIndex+1)<=result && movingIndex<max-1);
+		
+		//.showProgress(1.0);
+		level = (int)Math.round(result);
+		return level;
+/*
+		// this should work straight away, but for some images there is a discrepancy with IJ
 		int i, l, toth, totl, h, g=0;
 		for (i = 1; i < 256; i++){
 			if (data[i] > 0){
@@ -514,7 +553,6 @@ public class Auto_Threshold implements PlugIn {
 				break;
 			}
 		}
-
 		while (true){
 			l = 0;
 			totl = 0;
@@ -528,19 +566,18 @@ public class Auto_Threshold implements PlugIn {
 				toth += data[i];
 				h += (data[i]*i);
 			}
-
 			if (totl > 0 && toth > 0){
 				l /= totl;
 				h /= toth;
-				if (g == (l + h) / 2)
+				if (g == (int) Math.round((l + h) / 2.0))
 					break;
 			}
 			g++;
-
 			if (g > 254)
 				return -1;
 		}
-		return g;
+		return g+1; // +1 to match ImageJ output, but some images are off by +1 or -1
+*/
 	}
 
 	int Li(int [] data ) {
@@ -701,7 +738,7 @@ public class Auto_Threshold implements PlugIn {
 			/* Total entropy */
 			tot_ent = ent_back + ent_obj;
 
-		// IJ.log(""+max_ent+"  "+tot_ent);
+			// IJ.log(""+max_ent+"  "+tot_ent);
 			if ( max_ent < tot_ent ) {
 				max_ent = tot_ent;
 				threshold = it;
@@ -747,25 +784,23 @@ public class Auto_Threshold implements PlugIn {
 			tau2 = (C(data, 255)-C(data, threshold)) / (A(data, 255)-A(data, threshold)) - (nu*nu);
 
 			//The terms of the quadratic equation to be solved.
-			w0 = 1/sigma2-1/tau2;
+			w0 = 1.0/sigma2-1.0/tau2;
 			w1 = mu/sigma2-nu/tau2;
 			w2 = (mu*mu)/sigma2 - (nu*nu)/tau2 + Math.log10((sigma2*(q*q))/(tau2*(p*p)));
 
 			//If the next threshold would be imaginary, return with the current one.
 			sqterm = (w1*w1)-w0*w2;
-			if (sqterm < 0.0) {
-				IJ.log("MinError(I): did not converge.");
-				return -1;
+			if (sqterm < 0) {
+				IJ.log("MinError(I): not converging. Try \'Ignore black/white\' options");
+				return threshold;
 			}
 
 			//The updated threshold is the integer part of the solution of the quadratic equation.
 			Tprev = threshold;
-			threshold =(int) Math.floor((w1+Math.sqrt(sqterm))/w0);
-
 			temp = (w1+Math.sqrt(sqterm))/w0;
 
 			if ( Double.isNaN(temp)) {
-				IJ.log ("MinError(I):NaN, Warning: MinError(I) did not converge.");
+				IJ.log ("MinError(I): NaN, not converging. Try \'Ignore black/white\' options");
 				threshold = Tprev;
 			}
 			else
@@ -1352,10 +1387,20 @@ public class Auto_Threshold implements PlugIn {
 			}
 		}
 		split--;
-		// if the histogram needs to be used for anything else, it should be reversed back!
-		// somewhere here
-		if (inverted)
+
+		if (inverted) {
+			// The histogram might be used for something else, so let's reverse it back
+			int left  = 0; 
+			int right = 255;
+			while (left < right) {
+				int temp = data[left]; 
+				data[left]  = data[right]; 
+				data[right] = temp;
+				left++;
+				right--;
+			}
 			return (255-split);
+		}
 		else
 			return split;
 	}
