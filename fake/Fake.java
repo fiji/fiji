@@ -1114,6 +1114,8 @@ public class Fake {
 			}
 
 			boolean checkUpToDate() {
+				if (!upToDate(configPath))
+					return false;
 				File target = new File(this.target);
 				Iterator iter = prerequisites.iterator();
 				while (iter.hasNext()) {
