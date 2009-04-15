@@ -1,3 +1,8 @@
+//this plugin is a merge of the Time_Stamper plugins from ImageJ and from Tony Collins' plugin collection at macbiophotonics. 
+// it aims to combine all the functionality of both plugins and refine and enhance the functionality. 
+// Dan Whhite MPI-CBG 15.04.09
+
+
 import ij.*;
 import ij.process.*;
 import ij.gui.*;
@@ -42,7 +47,7 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 		
 		if (frame==last) imp.updateAndDraw();
 	
-	
+		// decide if the time format is digital or decimal according to the plugin GUI input
 		if (!digital) s = getString(time);
 		if (digital) s = getString2(time);
 		ip.moveTo(x+maxWidth-ip.getStringWidth(s), y);
@@ -58,12 +63,16 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 				return (decimalPlaces==0?""+(int)time:IJ.d2s(time, decimalPlaces))+" "+suffix;
 		}
 
+
+
+		// makes the string containing the number for the time stamp,
+		// with hh:mm:ss.decimalPlaces format
+		// which is nice, but also really need hh:mm:ss and mm:ss.ms etc. 
+		// could use the java time/date formating stuff for that.
 		String twoDigits(int value) {
 			return (value < 10 ? "0" : "") + value;
 		}
 
-		// makes the string containing the number for the time stamp, with hh:mm format
-			// which is nice, but also really need hh:mm:ss and mm:ss
 		String getString2(double time) {
 			int hour = (int)(time / 3600);
 			time -= hour * 3600;
@@ -74,12 +83,7 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 				+ IJ.d2s(time, decimalPlaces);
 		}
 
-//	String getString(double time) {
-//		if (interval==0.0)
-//			return suffix;
-//		else
-//			return (decimalPlaces==0?""+(int)time:IJ.d2s(time, decimalPlaces))+" "+suffix;
-//	}
+
 
 
 	void showDialog(ImageProcessor ip) {
