@@ -40,7 +40,6 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 		ip.setAntialiasedText(AAtext);
 		String s = "";
 		
-		time += interval;  // increments the time by the time interval
 		if (frame==last) imp.updateAndDraw();
 	
 	
@@ -48,7 +47,7 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 		if (digital) s = getString2(time);
 		ip.moveTo(x+maxWidth-ip.getStringWidth(s), y);
 		ip.drawString(s);
-		time += interval;
+		time += interval;  // increments the time by the time interval
 	}
 
 		// makes the string containing the number for the time stamp, with specified decimal places
