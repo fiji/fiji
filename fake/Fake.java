@@ -387,7 +387,14 @@ public class Fake {
 				}
 
 				String target = line.substring(0, arrow).trim();
-				target = expandVariables(target);
+				int bracket = target.endsWith("]") ?
+					target.indexOf('[') : -1;
+				target = bracket < 0 ?
+					expandVariables(target) :
+					expandVariables(target.substring(0,
+								bracket)) +
+						target.substring(bracket);
+
 				String list = line.substring(arrow + 2).trim();
 				try {
 					Rule rule = addRule(target, list);
