@@ -1,4 +1,4 @@
-//this plugin is a merge of the Time_Stamper plugins from ImageJ and from Tony Collins' plugin collection at macbiophotonics. 
+// this plugin is a merge of the Time_Stamper plugins from ImageJ and from Tony Collins' plugin collection at macbiophotonics. 
 // it aims to combine all the functionality of both plugins and refine and enhance the functionality. 
 // Dan Whhite MPI-CBG 15.04.09
 
@@ -20,10 +20,10 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 	static double start = 0;
 	static double interval = 1;
 	static String suffix = "s";
-	static int decimalPlaces = 0;
+	static int decimalPlaces = 3;
 	boolean canceled;
 	static boolean digital = false;
-	boolean AAtext=true;
+	boolean AAtext = true;
 	int frame, first, last;
 
 	public int setup(String arg, ImagePlus imp) {
@@ -58,6 +58,8 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 	}
 
 		// makes the string containing the number for the time stamp, with specified decimal places
+		// format is decimal number with specificed no of digits after the point
+		// if specificed no. of decimal places is 0 then just return the speficied suffix
 		String getString(double time) {
 			if (interval==0.0)
 				return suffix;
@@ -99,10 +101,10 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 			if (size>80) size = 80;
 		}
 		
-//		String[] timeunitsoptions =  { "h", "m", "s"};
+//		String[] timeunitsoptions =  { "y", "d", "h", "min", "s", "ms", "μs", "ns", "ps", "fs", suffix };
 		
 		// This makes the GUI and reads user input parameters from it
-		GenericDialog gd = new GenericDialog("Time Stamper");
+		GenericDialog gd = new GenericDialog("Time Stamper Enhanced");
 		gd.addNumericField("Starting Time:", start, 2);
 		gd.addNumericField("Time Interval Between Frames:", interval, 2);
 		gd.addNumericField("X Location:", x, 0);
@@ -112,11 +114,15 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 		gd.addNumericField("First Frame:", first, 0);
 		gd.addNumericField("Last Frame:", last, 0);
 		// should change this to a choice between digital or decimal
-		gd.addCheckbox("'hh:mm' format:", digital);  // but what about mm:ss 
-		gd.addStringField("Or with a suffix      Suffix:", suffix);
-//	    gd.addChoice("Time units:", timeunitsoptions, timeunitsoptions[1]); // should be able to choose h m or s from a list?
+		gd.addCheckbox("'hh:mm:ss.ms' format:", digital);  // but what about mm:ss 
+		gd.addStringField("Or with a suffix:", suffix);
 		gd.addCheckbox("Anti-Aliased text?", true);
-		gd.showDialog();
+		
+		// should be able to choose h m or s from a list?
+	    gd.addChoice("Time units:", timeunitsoptions, timeunitsoptions[1]); 
+		
+		gd.showDialog();  // shows the dialog GUI!
+		
 		if (gd.wasCanceled())
 			{canceled = true; return;}
 		start = gd.getNextNumber();
