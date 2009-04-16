@@ -48,8 +48,10 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 		if (frame==last) imp.updateAndDraw();
 	
 		// decide if the time format is digital or decimal according to the plugin GUI input
-		if (!digital) s = getString(time);
-		if (digital) s = getString2(time);
+		if (!digital) 
+			s = getString(time);
+		else
+			s = getString2(time);
 		ip.moveTo(x+maxWidth-ip.getStringWidth(s), y);
 		ip.drawString(s);
 		time += interval;  // increments the time by the time interval
