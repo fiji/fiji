@@ -202,6 +202,7 @@ plugins/LSM_Toolbox.jar <- src-plugins/LSM_Toolbox/**/*.java \
 MAINCLASS(plugins/Interactive_3D_Surface_Plot.jar)=Interactive_3D_Surface_Plot
 CLASSPATH(plugins/Stitching_.jar)=plugins/loci_tools.jar
 
+CLASSPATH(plugins/IO_.jar)=jars/batik.jar
 plugins/*_*.jar <- src-plugins/*_*/**/*.java
 
 plugins/**/*.class <- src-plugins/**/*.java
