@@ -303,8 +303,8 @@ System.err.println("ext: " + scriptExtension);
 
 		if( arg != null && ! arg.equals("") ) {
 			String path = arg;
-			File f = new File(path);
-			if (!f.isAbsolute()) path = new StringBuffer(Menus.getPlugInsPath()).append(path).toString(); // blackslash-safe
+			if (!new File(path).isAbsolute())
+				path = new StringBuffer(Menus.getPlugInsPath()).append(path).toString(); // blackslash-safe
 			runScript(path);
 			return;
 		}
