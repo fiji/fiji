@@ -302,6 +302,8 @@ System.err.println("ext: " + scriptExtension);
 	public void run(String arg) {
 
 		if( arg != null && ! arg.equals("") ) {
+			if (!new File(arg).isAbsolute())
+				arg = Menus.getPlugInsPath() + "/" + arg;
 			runScript(arg);
 			return;
 		}
