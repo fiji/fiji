@@ -4,7 +4,7 @@
         PIV_analyser build file for Fiji
     </description>
 
-	<property name="menuLocation" value="Process>Optic Flow" />
+	<property name="menuLocation" value="Analyze>Optic Flow" />
 	<property name="menuName" value="PIV analysis" />
 	<property name="builder.name" value="Jean-Yves Tinevez" />
 
