@@ -1,9 +1,8 @@
-import java.awt.Image;
 import java.awt.Point;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
+import java.lang.ArrayIndexOutOfBoundsException;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -28,7 +27,7 @@ import ij.gui.Roi;
  * field in one plane, using imaging and image analysis. It can be seen as one
  * of the most simple pattern matching problem implementation.
  * <p>
- * See the book <cite> Raffael, M.; Willert, C. & Kompenhans, J. (2007),
+ * See the book <cite>Raffael, M.; Willert, C. & Kompenhans, J. (2007),
  * Particle Image Velocimetry: A Practical Guide (2nd ed.), Berlin:
  * Springer-Verlag, ISBN 978-3-540-72307-3 </cite>
  * <p>
@@ -174,7 +173,7 @@ import ij.gui.Roi;
  * @version 1.0
  */
 public class PIV_analyser implements PlugInFilter {
-
+	
 	/*
 	 * FIELDS
 	 */
@@ -190,6 +189,7 @@ public class PIV_analyser implements PlugInFilter {
 	/*
 	 * CONSTANTS
 	 */
+	private static final String VERSION_STR = "1.0";
 	private final static int COLOR_CIRCLE_SIZE = 128;
 
 	/*
@@ -284,11 +284,13 @@ public class PIV_analyser implements PlugInFilter {
 
 		// Prepare dialog
 		String current = imp.getTitle();
-		GenericDialog gd = new GenericDialog("PIV analysis");
+		GenericDialog gd = new GenericDialog("PIV analysis, v"+VERSION_STR);
 		gd.addMessage(current);
 		gd.addChoice("Window size (px)", WINDOW_SIZE.STR, WINDOW_SIZE.STR[3]);
 		gd.addCheckbox("Diplay color wheel", true);
-		gd.addMessage("Masking with correlation peak");
+		gd.addMessage("Sub-pixel accuracy:");
+		gd.addCheckbox("Interpolate", false);
+		gd.addMessage("Masking with correlation peak:");
 		gd.addCheckbox("Do masking", false);
 		gd.addNumericField("Masking level", 0.5, 2);
 		gd.showDialog();
@@ -302,6 +304,9 @@ public class PIV_analyser implements PlugInFilter {
 		// Show color wheel if demanded
 		if (gd.getNextBoolean()) displayColorCircle(winsize_x);
 		
+		// Interpolate max position
+		do_interpolation = gd.getNextBoolean();
+		
 		// Masking
 		do_masking = gd.getNextBoolean();
 		mask_value = gd.getNextNumber();
@@ -314,7 +319,7 @@ public class PIV_analyser implements PlugInFilter {
 		setImagePairs(buildImagePairs());
 
 		// Execute calculation
-		exec(true);
+		exec(true); // true flag enable live display
 	}
 
 	/**
@@ -333,8 +338,6 @@ public class PIV_analyser implements PlugInFilter {
 	final public ImagePlus[] exec(final boolean show_calculation) {
 		final ImageStack stack = imp.getStack();
 		final int npairs = this.getImagePairs().length;
-		final int block_width = winsize_x;
-		final int block_height = winsize_y;
 		final int image_width = stack.getWidth();
 		final int image_height = stack.getHeight();
 
@@ -388,12 +391,12 @@ public class PIV_analyser implements PlugInFilter {
 			back_imp = (FloatProcessor) stack.getProcessor(back_image).convertToFloat();
 			front_imp = (FloatProcessor) stack.getProcessor(front_image).convertToFloat();
 
-			for (x = 0; x <= image_width - block_width; x++) {
+			for (x = 0; x <= image_width - winsize_x; x++) {
 
-				for (y = 0; y <= image_height - block_height; y++) {
+				for (y = 0; y <= image_height - winsize_y; y++) {
 					
 					// skip if current point is not in roi
-					if ( (roi != null) && (!roi.contains(x, y)) ) continue;
+					if ( (roi != null) && (!roi.contains(x+winsize_x/2, y+winsize_y/2)) ) continue;
 
 					front_imp.setRoi(x, y, winsize_x, winsize_y);
 					front_block_imp = (FloatProcessor) front_imp.crop();
@@ -420,9 +423,9 @@ public class PIV_analyser implements PlugInFilter {
 
 					piv = findMax(pcm, do_interpolation);
 
-					u[x + block_width / 2][y + block_height / 2] = piv.max_x_interpolated;
-					v[x + block_width / 2][y + block_height / 2] = piv.max_y_interpolated;
-					pkh[x + block_width / 2][y + block_height / 2] = piv.peak_height;
+					u[x + winsize_x / 2][y + winsize_y / 2] = piv.max_x_interpolated;
+					v[x + winsize_x / 2][y + winsize_y / 2] = piv.max_y_interpolated;
+					pkh[x + winsize_x / 2][y + winsize_y / 2] = piv.peak_height;
 					// snr[x + block_width / 2][y + block_height / 2] = piv.snr;
 				}
 			}
@@ -435,10 +438,11 @@ public class PIV_analyser implements PlugInFilter {
 			}
 			
 			// Compute color vector
-			for (x = 0; x <= image_width - block_width; x++) {
-				for (y = 0; y <= image_height - block_height; y++){
-					color_angle[x + block_width / 2][y + block_height / 2] = colorVector(
-							u[x + block_width / 2][y + block_height / 2], v[x + block_width / 2][y + block_height / 2],
+			for (x = 0; x <= image_width - winsize_x; x++) {
+				for (y = 0; y <= image_height - winsize_y; y++){
+					color_angle[x + winsize_x / 2][y + winsize_y / 2] = colorVector(
+							u[x + winsize_x / 2][y + winsize_y / 2], 
+							v[x + winsize_x / 2][y + winsize_y / 2],
 							winsize_x / 4);
 				}
 			}
@@ -477,7 +481,8 @@ public class PIV_analyser implements PlugInFilter {
 				// snr_imp.resetDisplayRange();
 				color_imp.resetDisplayRange();
 				color_canvas = color_imp.getCanvas();
-				color_canvas.addMouseMotionListener(getColorMouseListener());
+				// Add the MouseMotionListener that "deconvolves" color
+				color_canvas.addMouseMotionListener(getColorMouseListener(winsize_x/4.0f));
 			}
 			IJ.showProgress(i, npairs);
 		}
@@ -729,12 +734,9 @@ public class PIV_analyser implements PlugInFilter {
 				int dx = x-xc;
 				int dy = y-yc;
 				double v = Math.sqrt(dx*dx+dy*dy) / COLOR_CIRCLE_SIZE * maxDisplacement;
-				double alpha = Math.toDegrees( Math.atan2(dy, dx) );
+				double alpha = -Math.toDegrees( Math.atan2(dy, dx) );
 				IJ.showStatus( String.format("Velocity: %5.1f px/frame - Direction %3.0f¼", v, alpha));
 			}});
-		
-		
-		
 	}
 	
 	
@@ -742,7 +744,17 @@ public class PIV_analyser implements PlugInFilter {
 	 * PRIVATE METHODS
 	 */
 	
-	final private static MouseMotionListener getColorMouseListener() {
+	/** 
+	 * Creates the mouse listener that will "deconvolve" the color coded 
+	 * flow vector in an orientation and magnitude. It is not very clever,
+	 * since the color was calculated from the flow vector in the method
+	 * {@link #colorVector(float, float, float) colorVector}, but it is cheaper
+	 * memory-wise than storing the 2 float arrays for each slice.
+	 * 
+	 *  @return  the mouse motion listener
+	 * 
+	 */
+	final private static MouseMotionListener getColorMouseListener(final float maxVel) {
 		return new MouseMotionListener() {
 
 			public void mouseDragged(MouseEvent e) {			}
@@ -756,31 +768,40 @@ public class PIV_analyser implements PlugInFilter {
 				final float g = (float) ( (cp >> 8) &0xff);
 				final float b = (float) ( (cp)  &0xff);
 				double alpha;
+				double magnitude;
 				if (b == 0) {
 					// alpha in [0, 2pi/3]
 					if (r>g) {
 						alpha = (Math.PI/3) * g/r;
+						magnitude = r/255 * maxVel;
 					} else {
 						alpha = (2*Math.PI/3) * (1 - 0.5*r/g) ;
+						magnitude = g/255 * maxVel;
 					}
 				} else if (r == 0) {
 					// alpha in [-2pi/3, -pi/6]
 					if (g>b) {
 						alpha = (2*Math.PI/3) * (1 + 0.5*b/g);
+						magnitude = g/255 * maxVel;
 					} else {
 						alpha = (2*Math.PI/3) * (2 - 0.5*g/b);
+						magnitude = b/255 * maxVel;
 					}
 				} else {
 					if (b>r) {
 						alpha =  (2*Math.PI/3) * (2 + 0.5*r/b);						
+						magnitude = b/255 * maxVel;
 					} else {
 						alpha =  (2*Math.PI/3) * (3 - 0.5*b/r);
+						magnitude = r/255 * maxVel;
 					}
 				}
-				// reput into normal coordinate
+				// put into normal coordinate
 				alpha = -(alpha-Math.PI/2);
 				if (alpha <- Math.PI) alpha += 2*Math.PI;
-				IJ.showStatus(String.format("Direction %4.0f¼",Math.toDegrees(alpha)));
+				
+				IJ.showStatus(String.format("Velocity: %5.1f px/frame - Direction %3.0f¼", 
+						magnitude, Math.toDegrees(alpha)));
 				
 			}
 		};
