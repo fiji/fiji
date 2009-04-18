@@ -10,12 +10,28 @@ import time
 
 from java.awt import Robot, Rectangle, Frame
 from java.awt.image import BufferedImage
+from javax.swing import SwingUtilities
+
+class PrintAll(Runnable):
+	def __init__(self, frame, g):
+		self.frame = frame
+		self.g = g
+	def run(self):
+		self.frame.printAll(self.g)
 
 def snapshot(frame, box):
 	bi = BufferedImage(box.width, box.height, BufferedImage.TYPE_INT_RGB)
 	g = bi.createGraphics()
 	g.translate(-box.x, -box.y)
-	frame.paint(g)
+	#all black! # frame.paintAll(g)
+	#only swing components! # frame.paint(g)
+	#only swing components! # frame.update(g)
+	#together, also only swing and with errors
+	##frame.update(g)
+	##frame.paint(g)
+	# locks the entire graphics machinery # frame.printAll(g)
+	# Finally, the right one:
+	SwingUtilities.invokeLater(PrintAll(frame, g))
 	return bi
 
 def run(title):
