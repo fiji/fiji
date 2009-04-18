@@ -291,7 +291,8 @@ System.err.println("ext: " + scriptExtension);
 			String label = item.getLabel();
 			String command = (String)Menus.getCommands().get(label);
 			if (command == null ||
-			    !command.startsWith(getClass().getName() + "(\"") ||
+			    !command.startsWith(getClass().getName() + "(\""
+				+ Menus.getPlugInsPath()) ||
 			    !command.endsWith(scriptExtension + "\")"))
 				continue;
 			menu.remove(i);
