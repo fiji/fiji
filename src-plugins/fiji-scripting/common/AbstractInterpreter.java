@@ -59,7 +59,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 
 	final protected JFrame window = new JFrame("Interpreter");
 	final protected JTextArea screen = new JTextArea();
-	final protected JTextArea prompt = new JTextArea(1, 60);//new JTextField(60);
+	final protected JTextArea prompt = new JTextArea(1, 62);//new JTextField(60);
 	protected int active_line = 0;
 	final protected ArrayList al_lines = new ArrayList();
 	final protected ArrayList<Boolean> valid_lines = new ArrayList<Boolean>();
@@ -211,11 +211,12 @@ public abstract class AbstractInterpreter implements PlugIn {
 		prompt.getActionMap().put("down",
 				new AbstractAction("down") {
 					public void actionPerformed(ActionEvent ae) {
-						if (isCaretOnLastLine()) {
+						int position = cursorUpDown(true);
+						if (position < 0) {
 							trySetNextPrompt();
 						} else {
 							// Move down one line within a multiline prompt
-							doArrowDown(prompt.getText());
+							prompt.setCaretPosition(position);
 						}
 					}
 				});
@@ -223,11 +224,12 @@ public abstract class AbstractInterpreter implements PlugIn {
 		prompt.getActionMap().put("up",
 				new AbstractAction("up") {
 					public void actionPerformed(ActionEvent ae) {
-						if (isCaretOnFirstLine()) {
+						int position = cursorUpDown(false);
+						if (position < 0) {
 							trySetPreviousPrompt();
 						} else {
-							// Move up one line within a multiline prompt
-							doArrowUp(prompt.getText());
+							// Move down one line within a multiline prompt
+							prompt.setCaretPosition(position);
 						}
 					}
 				});
@@ -250,10 +252,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 				new AbstractAction("shift+down") {
 					public void actionPerformed(ActionEvent ae) {
 						//enable to scroll within lines when the prompt consists of multiple lines.
-						String text = prompt.getText();
-						if (-1 != text.indexOf('\n')) {
-							doArrowDown(text);
-						}
+						doArrowDown();
 					}
 				});
 		prompt.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, ActionEvent.SHIFT_MASK), "shift+up");
@@ -261,10 +260,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 				new AbstractAction("shift+up") {
 					public void actionPerformed(ActionEvent ae) {
 						//enable to scroll within lines when the prompt consists of multiple lines.
-						String text = prompt.getText();
-						if (-1 != text.indexOf('\n')) {
-							doArrowUp(text);
-						}
+						doArrowUp();
 					}
 				});
 		prompt.getInputMap().put(KeyStroke.getKeyStroke("ENTER"), "enter");
@@ -398,62 +394,57 @@ public abstract class AbstractInterpreter implements PlugIn {
 		if (-1 != i_newline) prompt.setCaretPosition(i_newline);
 	}
 
+	/** get the position when moving one visible line forward or backward */
+	private int cursorUpDown(boolean forward) {
+		try {
+			int position = prompt.getCaretPosition();
+			int columns = prompt.getColumns();
+			int line = prompt.getLineOfOffset(position);
+			int start = prompt.getLineStartOffset(line);
+			int end = prompt.getLineEndOffset(line);
+			int column = (position - start) % columns;
+
+			int wrappedLineCount =
+				(end + columns - 1 - start) / columns;
+			int currentWrappedLine =
+				(position - start) / columns;
+
+			if (forward) {
+				if ((position - start) / columns <
+						(end - start) / columns)
+					return Math.min(position + columns,
+							end);
+
+				start = prompt.getLineStartOffset(line + 1);
+				end = prompt.getLineEndOffset(line + 1);
+				return Math.min(start + column, end);
+			}
+
+			// backward
+			if ((position - start) / columns > 0)
+				return position - columns;
+
+			start = prompt.getLineStartOffset(line - 1);
+			end = prompt.getLineEndOffset(line - 1);
+			int endColumn = (end - start) % column;
+			return end - Math.max(0, endColumn - column);
+		} catch (Exception e) {
+			return -1;
+		}
+	}
+
 	/** Move the prompt caret down one line in a multiline prompt, if possible. */
-	private void doArrowDown(final String text) {
-		// Caret can be from 0 to text.length() inclusive (i.e. after the last char)
-		int cp = prompt.getCaretPosition();
-		// next newline
-		int next_nl = text.indexOf('\n', cp);
-		if (-1 == next_nl) return; // can't scroll down
-		// previous newline
-		int prev_nl = text.lastIndexOf('\n', cp-1);
-		if (-1 == prev_nl) prev_nl = -1; // caret at first char of first line
-		// distance from prev_nl to caret
-		int column = cp - prev_nl;
-		// second next newline
-		int next_nl_2 = text.indexOf('\n', next_nl+1);
-		if (-1 == next_nl_2) next_nl_2 = text.length();
-		// new caret position
-		if (column > next_nl_2 - next_nl) cp = next_nl_2;
-		else cp = next_nl + column;
-		// check boundaries
-		if (cp > text.length()) cp = text.length();
-		//
-		prompt.setCaretPosition(cp);
+	private void doArrowDown() {
+		int position = cursorUpDown(true);
+		if (position >= 0)
+			prompt.setCaretPosition(position);
 	}
 
 	/** Move the prompt caret up one line in a multiline prompt, if possible. */
-	private void doArrowUp(final String text) {
-		int cp = prompt.getCaretPosition();
-		// next newline
-		int next_nl = text.indexOf('\n', cp);
-		if (-1 == next_nl) next_nl = text.length(); // imaginary
-		// previous newline
-		int prev_nl = text.lastIndexOf('\n', cp -1);
-		if (-1 == prev_nl) return; // already at first row
-		// distance from prev_nl to caret
-		int column = cp - prev_nl;
-		// second previous newline
-		int prev_nl_2 = text.lastIndexOf('\n', prev_nl -1);
-		// if -1 == prev_nl_2 it's ok: means we are at second row
-		if (column > prev_nl - prev_nl_2) cp = prev_nl;
-		else cp = prev_nl_2 + column;
-		//
-		prompt.setCaretPosition(cp);
-	}
-
-	private boolean isCaretOnFirstLine() {
-		final String text = prompt.getText();
-		final int i_newline = text.indexOf('\n');
-		return -1 == i_newline
-		    || prompt.getCaretPosition() <= i_newline;
-	}
-
-	private boolean isCaretOnLastLine() {
-		final String text = prompt.getText();
-		final int i_newline = text.lastIndexOf('\n');
-		return -1 == i_newline
-		    || prompt.getCaretPosition() > i_newline;
+	private void doArrowUp() {
+		int position = cursorUpDown(false);
+		if (position >= 0)
+			prompt.setCaretPosition(position);
 	}
 
 	private void closingWindow() {
