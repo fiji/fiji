@@ -2022,8 +2022,8 @@ public class Fake {
 						lastBase = null;
 				}
 				else if (lastBase != null &&
-						realName.startsWith(lastBase))
-					name = realName
+						name.startsWith(lastBase))
+					name = name
 						.substring(lastBase.length());
 
 				JarEntry entry = new JarEntry(name);
