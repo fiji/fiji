@@ -154,6 +154,13 @@ import ij.gui.Roi;
  * parts of the image, the peak height will be typically low; one can then
  * threshold the peak height image, and use it to mask the result image.
  * 
+ * <h3>Version history</h3>
+ * 
+ * <ul>
+ * <li> 1.0 - April 2009 - First public release.
+ * <li> 1.1 - April 2009 - is now interruptible
+ * </ul>
+ * 
  * <h3>License: GPL</h3>
  * <p>
  * This program is free software; you can redistribute it and/or modify it under
@@ -170,7 +177,7 @@ import ij.gui.Roi;
  * Place - Suite 330, Boston, MA 02111-1307, USA.
  * 
  * @author Jean-Yves Tinevez <tinevez@mpi-cbg.de>
- * @version 1.0
+ * @version 1.1
  */
 public class PIV_analyser implements PlugInFilter {
 	
@@ -189,7 +196,7 @@ public class PIV_analyser implements PlugInFilter {
 	/*
 	 * CONSTANTS
 	 */
-	private static final String VERSION_STR = "1.0";
+	private static final String VERSION_STR = "1.1";
 	private final static int COLOR_CIRCLE_SIZE = 128;
 
 	/*
