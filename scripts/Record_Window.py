@@ -3,14 +3,24 @@
 #
 # Take snapshots of a user-specified window over time,
 # and then make an image stack of of them all.
-# Limited by RAM for speed, this plugin is intended for short recordings.
+# 
+# In the dialog, 0 frames mean infinite recording, to be interrupted by ESC
+# pressed on the ImageJ toolbar or other frames with the same listener.
+# 
+# If not saving to file, then you are limited to RAM.
+#
+# When done, a stack or a virtual stack opens.
 
 import thread
 import time
+import sys
 
 from java.awt import Robot, Rectangle, Frame
 from java.awt.image import BufferedImage
 from javax.swing import SwingUtilities
+from java.io import File, FilenameFilter
+from java.util.concurrent import Executors
+from java.util import Arrays
 
 class PrintAll(Runnable):
 	def __init__(self, frame, g):
@@ -31,8 +41,39 @@ def snapshot(frame, box):
 	##frame.paint(g)
 	# locks the entire graphics machinery # frame.printAll(g)
 	# Finally, the right one:
-	SwingUtilities.invokeLater(PrintAll(frame, g))
+	SwingUtilities.invokeAndWait(PrintAll(frame, g))
 	return bi
+
+class Saver(Runnable):
+	def __init__(self, i, dir, bounds, borders, img, insets):
+		self.i = i
+		self.dir = dir
+		self.bounds = bounds
+		self.borders = borders
+		self.img = img
+		self.insets = insets
+	def run(self):
+		System.out.println("run")
+		# zero-pad up to 10 digits
+		bi = None
+		try:
+			title = str(self.i)
+			while len(title) < 10:
+				title = '0' + title
+			bi = BufferedImage(self.bounds.width, self.bounds.height, BufferedImage.TYPE_INT_RGB)
+			g = bi.createGraphics()
+			g.drawImage(self.borders, 0, 0, None)
+			g.drawImage(self.img, self.insets.left, self.insets.top, None)
+			FileSaver(ImagePlus(title, ColorProcessor(bi))).saveAsTiff(self.dir + title + '.tif')
+		except Exception, e:
+			print e
+			e.printStackTrace()
+		if bi is not None: bi.flush()
+		self.img.flush()
+
+class TifFilter(FilenameFilter):
+	def accept(self, dir, name):
+		return name.endswith('.tif')
 
 def run(title):
 	gd = GenericDialog('Record Window')
@@ -46,6 +87,7 @@ def run(title):
 			frames.append(f)
 			titles.append(f.getTitle())
 	gd.addChoice('Window:', titles, titles[0])
+	gd.addCheckbox("To file", False)
 	gd.showDialog()
 	if gd.wasCanceled():
 		return
@@ -53,9 +95,18 @@ def run(title):
 	interval = gd.getNextNumber() / 1000.0 # in seconds
 	frame = frames[gd.getNextChoiceIndex()]
 	delay = int(gd.getNextNumber())
+	tofile = gd.getNextBoolean()
+
+	dir = None
+	if tofile:
+		dc = DirectoryChooser("Directory to store image frames")
+		dir = dc.getDirectory()
+		if dir is None:
+			return # dialog canceled
 
 	snaps = []
 	borders = None
+	executors = Executors.newFixedThreadPool(1)
 	try:
 		while delay > 0:
 			IJ.showStatus('Starting in ' + str(delay) + 's.')
@@ -83,15 +134,30 @@ def run(title):
 		last = start
 		intervals = []
 		real_interval = 0
-		while len(snaps) < n_frames and last - start < n_frames * interval:
+		i = 1
+		fus = None
+		if tofile:
+			fus = []
+
+		# 0 n_frames means continuous acquisition
+		while 0 == n_frames or (len(snaps) < n_frames and last - start < n_frames * interval):
 			now = System.currentTimeMillis() / 1000.0   # in seconds
 			real_interval = now - last
 			if real_interval >= interval:
 				last = now
-				snaps.append(snapshot(frame, box))
+				img = snapshot(frame, box)
+				if tofile:
+					fus.append(executors.submit(Saver(i, dir, bounds, borders, img, insets))) # will flush img
+					i += 1
+				else:
+					snaps.append(img)
 				intervals.append(real_interval)
 			else:
 				time.sleep(interval / 5)
+			# interrupt capturing:
+			if IJ.escapePressed():
+				IJ.showStatus("Recording user-interrupted")
+				break
 
 		# debug:
 		#print "insets:", insets
@@ -100,17 +166,26 @@ def run(title):
 		#print "snap dimensions:", snaps[0].getWidth(), snaps[0].getHeight()
 
 		# Create stack
-		stack = ImageStack(bounds.width, bounds.height, None)
-		t = 0
-		for snap,real_interval in zip(snaps,intervals):
-			bi = BufferedImage(bounds.width, bounds.height, BufferedImage.TYPE_INT_RGB)
-			g = bi.createGraphics()
-			g.drawImage(borders, 0, 0, None)
-			g.drawImage(snap, insets.left, insets.top, None)
-			stack.addSlice(str(IJ.d2s(t, 3)), ImagePlus('', bi).getProcessor())
-			t += real_interval
-			snap.flush()
-			bi.flush()
+		stack = None;
+		if tofile:
+			for fu in snaps: fu.get() # wait on all
+			stack = VirtualStack(bounds.width, bounds.height, None, dir)
+			files = File(dir).list(TifFilter())
+			Arrays.sort(files)
+			for f in files:
+				stack.addSlice(f)
+		else:
+			stack = ImageStack(bounds.width, bounds.height, None)
+			t = 0
+			for snap,real_interval in zip(snaps,intervals):
+				bi = BufferedImage(bounds.width, bounds.height, BufferedImage.TYPE_INT_RGB)
+				g = bi.createGraphics()
+				g.drawImage(borders, 0, 0, None)
+				g.drawImage(snap, insets.left, insets.top, None)
+				stack.addSlice(str(IJ.d2s(t, 3)), ImagePlus('', bi).getProcessor())
+				t += real_interval
+				snap.flush()
+				bi.flush()
 
 		borders.flush()
 
@@ -118,10 +193,12 @@ def run(title):
 		IJ.showStatus('Done recording ' + frame.getTitle())
 	except Exception, e:
 		print "Some error ocurred:"
-		print e
+		print e.printStackTrace()
 		IJ.showStatus('')
 		if borders is not None: borders.flush()
 		for snap in snaps: snap.flush()
+	
+	executors.shutdown()
 
 thread.start_new_thread(run, ("Do it",))
 
