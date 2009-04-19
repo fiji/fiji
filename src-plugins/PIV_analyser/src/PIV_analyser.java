@@ -391,6 +391,10 @@ public class PIV_analyser implements PlugInFilter {
 			back_imp = (FloatProcessor) stack.getProcessor(back_image).convertToFloat();
 			front_imp = (FloatProcessor) stack.getProcessor(front_image).convertToFloat();
 
+			if (IJ.escapePressed()) {
+				IJ.showStatus("PIV analysis cancelled.");
+				break;
+			}
 			for (x = 0; x <= image_width - winsize_x; x++) {
 
 				for (y = 0; y <= image_height - winsize_y; y++) {
