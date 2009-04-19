@@ -49,7 +49,6 @@
 /plugins/Examples/Example_Plot.class
 /plugins/Filters/Preprocessor_Smooth.class
 /plugins/Input-Output/HandleExtraFileTypes.class
-/plugins/Stacks/Stack_Reverser.class
 /plugins/Analyze_Reader_Writer.jar
 /plugins/Color_Histogram.jar
 /plugins/Color_Inspector_3D.jar
