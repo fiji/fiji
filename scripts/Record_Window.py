@@ -77,6 +77,7 @@ class TifFilter(FilenameFilter):
 
 def run(title):
 	gd = GenericDialog('Record Window')
+	gd.addMessage("Maximum number of frames to record.\nZero means infinite, interrupt with ESC key.")
 	gd.addNumericField('Max. frames:', 50, 0)
 	gd.addNumericField('Milisecond interval:', 300, 0)
 	gd.addSlider('Start in (seconds):', 0, 20, 5)
