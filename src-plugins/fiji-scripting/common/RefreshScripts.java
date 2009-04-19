@@ -291,7 +291,8 @@ System.err.println("ext: " + scriptExtension);
 			String label = item.getLabel();
 			String command = (String)Menus.getCommands().get(label);
 			if (command == null ||
-			    !command.startsWith(getClass().getName() + "(\"") ||
+			    !command.startsWith(getClass().getName() + "(\""
+				+ Menus.getPlugInsPath()) ||
 			    !command.endsWith(scriptExtension + "\")"))
 				continue;
 			menu.remove(i);
@@ -302,7 +303,10 @@ System.err.println("ext: " + scriptExtension);
 	public void run(String arg) {
 
 		if( arg != null && ! arg.equals("") ) {
-			runScript(arg);
+			String path = arg;
+			if (!new File(path).isAbsolute())
+				path = new StringBuffer(Menus.getPlugInsPath()).append(path).toString(); // blackslash-safe
+			runScript(path);
 			return;
 		}
 
