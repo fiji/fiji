@@ -51,7 +51,7 @@ public class Refresh_Javas extends RefreshScripts {
 			while (c.startsWith(File.separator))
 				c = c.substring(1);
 		}
-		runPlugin(c);
+		runPlugin(c.replace('/', '.'));
 	}
 
 	boolean upToDate(String source, String target) {
