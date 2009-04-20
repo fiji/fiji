@@ -150,7 +150,6 @@ abstract public class RefreshScripts implements PlugIn {
 				command.startsWith("ij.plugin.Macro_Runner("))
 			return true;
 
-System.err.println("ext: " + scriptExtension);
 		if (scriptExtension.equals(".java"))
 			return true;
 
