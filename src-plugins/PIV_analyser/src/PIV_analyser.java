@@ -3,6 +3,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
 import java.lang.ArrayIndexOutOfBoundsException;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -157,8 +158,9 @@ import ij.gui.Roi;
  * <h3>Version history</h3>
  * 
  * <ul>
- * <li> 1.0 - April 2009 - First public release.
- * <li> 1.1 - April 2009 - is now interruptible
+ * <li> 1.0 - 18 April 2009 - First public release.
+ * <li> 1.1 - 19 April 2009 - is now interruptible
+ * <li> 1.2 - 20 April 2009 - is now multithreaded
  * </ul>
  * 
  * <h3>License: GPL</h3>
@@ -196,7 +198,8 @@ public class PIV_analyser implements PlugInFilter {
 	/*
 	 * CONSTANTS
 	 */
-	private static final String VERSION_STR = "1.1";
+	private static final String VERSION_STR = "1.2";
+	private static final String PLUGIN_NAME = "PIV analyser";
 	private final static int COLOR_CIRCLE_SIZE = 128;
 
 	/*
@@ -291,7 +294,7 @@ public class PIV_analyser implements PlugInFilter {
 
 		// Prepare dialog
 		String current = imp.getTitle();
-		GenericDialog gd = new GenericDialog("PIV analysis, v"+VERSION_STR);
+		GenericDialog gd = new GenericDialog(PLUGIN_NAME + " v" + VERSION_STR);
 		gd.addMessage(current);
 		gd.addChoice("Window size (px)", WINDOW_SIZE.STR, WINDOW_SIZE.STR[3]);
 		gd.addCheckbox("Diplay color wheel", true);
@@ -343,161 +346,168 @@ public class PIV_analyser implements PlugInFilter {
 	 * @see #setInterpolation(boolean) setInterpolation 
 	 */
 	final public ImagePlus[] exec(final boolean show_calculation) {
+		
 		final ImageStack stack = imp.getStack();
 		final int npairs = this.getImagePairs().length;
 		final int image_width = stack.getWidth();
 		final int image_height = stack.getHeight();
 
-		FloatProcessor front_block_imp, back_block_imp;
-		int front_image, back_image;
-		FloatProcessor back_imp, front_imp;
-		int x, y;
-
 		// Prepare results holder
-		ImageCanvas color_canvas;
 		// Stacks
-		ImageStack u_st = new ImageStack(image_width, image_height, npairs);
-		ImageStack v_st = new ImageStack(image_width, image_height, npairs);
-		ImageStack pkh_st = new ImageStack(image_width, image_height, npairs);
-		// ImageStack snr_st = new ImageStack(image_width, image_height,
-		// npairs);
-		ImageStack color_st = new ImageStack(image_width, image_height, npairs);
+		final ImageStack u_st = new ImageStack(image_width, image_height, npairs);
+		final ImageStack v_st = new ImageStack(image_width, image_height, npairs);
+		final ImageStack pkh_st = new ImageStack(image_width, image_height, npairs);
+		final ImageStack color_st = new ImageStack(image_width, image_height, npairs);
 		// ImagePlus
-		ImagePlus u_imp = imp.createImagePlus();
-		ImagePlus v_imp = imp.createImagePlus();
-		ImagePlus pkh_imp = imp.createImagePlus();
-		// ImagePlus snr_imp = imp.createImagePlus();
-		ImagePlus color_imp = imp.createImagePlus();
-		// Color processor
-		ColorProcessor color_ip;
-		// Arrays
-		float[][] u = new float[image_width][image_height];
-		float[][] v = new float[image_width][image_height];
-		float[][] pkh = new float[image_width][image_height];
-		// float[][] snr = new float[image_width][image_height];
-		int[][] color_angle = new int[image_width][image_height];
+		final ImagePlus u_imp = imp.createImagePlus();
+		final ImagePlus v_imp = imp.createImagePlus();
+		final ImagePlus pkh_imp = imp.createImagePlus();
+		final ImagePlus color_imp = imp.createImagePlus();
+		// Canvas
+		final ImageCanvas color_canvas;
 
-		FHT fft_front, fft_back, pcm;
-		PIVresult piv;
+		// Threads and atomic integer for multithreading
+		final AtomicInteger ai = new AtomicInteger(0); 
+		final Thread[] threads = newThreadArray();  
 
-		// ImageStack debug = new ImageStack(winsize_x,winsize_y);
-
-		// Copy and store the current roi
+		
+		// Copy and store the current roi used for masking
 		final Roi roi;
 		if (imp.getRoi() == null) {
 			roi = null;
 		} else {
 			roi = (Roi) imp.getRoi().clone();
 		}
+				
+		// Concurrently run as manu threads as cpu		
+		for (int ithread=0; ithread<threads.length; ithread++) {
+
+			// Generate a thread
+			threads[ithread] = new Thread() {  
+
+				int front_image, back_image;
+				FHT fft_front, fft_back, pcm;
+				PIVresult piv;
+				// ImageProcessors
+				FloatProcessor front_block_imp, back_block_imp;		
+				FloatProcessor back_imp, front_imp;
+				// Color processor
+				ColorProcessor color_ip;
+
+				// Arrays
+				float[][] u = new float[image_width][image_height];
+				float[][] v = new float[image_width][image_height];
+				float[][] pkh = new float[image_width][image_height];
+				int[][] color_angle = new int[image_width][image_height];
+				
+				public void run() {
+
+					// Loop over image pairs
+					for (int i = ai.getAndIncrement(); i < npairs; i=ai.getAndIncrement()) {
+
+
+						back_image = getImagePairs()[i][0];
+						front_image = getImagePairs()[i][1];
+						back_imp = (FloatProcessor) stack.getProcessor(back_image).convertToFloat();
+						front_imp = (FloatProcessor) stack.getProcessor(front_image).convertToFloat();
+
+						if (IJ.escapePressed()) {
+							IJ.showStatus("PIV analysis cancelled.");
+							break;
+						}
+						for (int x = 0; x <= image_width - winsize_x; x++) {
+
+							for (int y = 0; y <= image_height - winsize_y; y++) {
+
+								// skip if current point is not in roi
+								if ( (roi != null) && (!roi.contains(x+winsize_x/2, y+winsize_y/2)) ) continue;
+
+								front_imp.setRoi(x, y, winsize_x, winsize_y);
+								front_block_imp = (FloatProcessor) front_imp.crop();
+								back_imp.setRoi(x, y, winsize_x, winsize_y);
+								back_block_imp = (FloatProcessor) back_imp.crop();
+
+								// Substract mean
+								substractMean(back_block_imp);
+								substractMean(front_block_imp);
+
+								// Compute correlation matrix
+								fft_front = new FHT(front_block_imp);
+								fft_front.setShowProgress(false);
+								fft_back = new FHT(back_block_imp);
+								fft_back.setShowProgress(false);
+								fft_front.transform();
+								fft_back.transform();
+								pcm = fft_front.conjugateMultiply(fft_back);
+								pcm.setShowProgress(false);
+								pcm.inverseTransform();
+								pcm.swapQuadrants(); // centered in middle of window
+
+								piv = findMax(pcm, do_interpolation);
+
+								u[x + winsize_x / 2][y + winsize_y / 2] = piv.max_x_interpolated;
+								v[x + winsize_x / 2][y + winsize_y / 2] = piv.max_y_interpolated;
+								pkh[x + winsize_x / 2][y + winsize_y / 2] = piv.peak_height;
+							}
+						}
+
+						// Do masking 
+						if (do_masking) {
+							float max_pkh = getMax(pkh);
+							mask(u, pkh, max_pkh);
+							mask(v, pkh, max_pkh);
+						}
+
+						// Compute color vector
+						for (int x = 0; x <= image_width - winsize_x; x++) {
+							for (int y = 0; y <= image_height - winsize_y; y++){
+								color_angle[x + winsize_x / 2][y + winsize_y / 2] = colorVector(
+										u[x + winsize_x / 2][y + winsize_y / 2], 
+										v[x + winsize_x / 2][y + winsize_y / 2],
+										winsize_x / 2);
+							}
+						}
+
+						// Add to stack
+						u_st.setPixels(new FloatProcessor(u).getPixels(), i + 1);
+						v_st.setPixels(new FloatProcessor(v).getPixels(), i + 1);
+						pkh_st.setPixels(new FloatProcessor(pkh).getPixels(), i + 1);
+						// snr_st.setPixels(new FloatProcessor(snr).getPixels(), i + 1);
+						color_ip = new ColorProcessor(image_width, image_height);
+						color_ip.setIntArray(color_angle);
+						color_st.setPixels(color_ip.getPixels(), i + 1);
+
+						if (i==0) {
+							u_imp.setStack("U", u_st);
+							v_imp.setStack("V", v_st);
+							pkh_imp.setStack("Peak height", pkh_st);
+							color_imp.setStack("Flow direction", color_st);
+							// Display result container if asked
+							if (show_calculation) {
+								u_imp.show();
+								v_imp.show();
+								pkh_imp.show();
+								color_imp.show();
+							}
+
+						}
+
+						IJ.showProgress(i, npairs);
+					}
+				}
+			}; // end void run() method from Thread() class
 		
-		// Loop over image pairs
-		for (int i = 0; i < npairs; i++) {
+		} // end for loop in threads
+		
+		
+		// Initiate computation
+		startAndJoin(threads);  
 
-			back_image = getImagePairs()[i][0];
-			front_image = getImagePairs()[i][1];
-			back_imp = (FloatProcessor) stack.getProcessor(back_image).convertToFloat();
-			front_imp = (FloatProcessor) stack.getProcessor(front_image).convertToFloat();
-
-			if (IJ.escapePressed()) {
-				IJ.showStatus("PIV analysis cancelled.");
-				break;
-			}
-			for (x = 0; x <= image_width - winsize_x; x++) {
-
-				for (y = 0; y <= image_height - winsize_y; y++) {
-					
-					// skip if current point is not in roi
-					if ( (roi != null) && (!roi.contains(x+winsize_x/2, y+winsize_y/2)) ) continue;
-
-					front_imp.setRoi(x, y, winsize_x, winsize_y);
-					front_block_imp = (FloatProcessor) front_imp.crop();
-					back_imp.setRoi(x, y, winsize_x, winsize_y);
-					back_block_imp = (FloatProcessor) back_imp.crop();
-
-					// Substract mean
-					substractMean(back_block_imp);
-					substractMean(front_block_imp);
-
-					// Compute correlation matrix
-					fft_front = new FHT(front_block_imp);
-					fft_front.setShowProgress(false);
-					fft_back = new FHT(back_block_imp);
-					fft_back.setShowProgress(false);
-					fft_front.transform();
-					fft_back.transform();
-					pcm = fft_front.conjugateMultiply(fft_back);
-					pcm.setShowProgress(false);
-					pcm.inverseTransform();
-					pcm.swapQuadrants(); // centered in middle of window
-
-					// debug.addSlice("X="+x+" Y="+y, pcm);
-
-					piv = findMax(pcm, do_interpolation);
-
-					u[x + winsize_x / 2][y + winsize_y / 2] = piv.max_x_interpolated;
-					v[x + winsize_x / 2][y + winsize_y / 2] = piv.max_y_interpolated;
-					pkh[x + winsize_x / 2][y + winsize_y / 2] = piv.peak_height;
-					// snr[x + block_width / 2][y + block_height / 2] = piv.snr;
-				}
-			}
-
-			// Do masking 
-			if (do_masking) {
-				float max_pkh = getMax(pkh);
-				mask(u, pkh, max_pkh);
-				mask(v, pkh, max_pkh);
-			}
-			
-			// Compute color vector
-			for (x = 0; x <= image_width - winsize_x; x++) {
-				for (y = 0; y <= image_height - winsize_y; y++){
-					color_angle[x + winsize_x / 2][y + winsize_y / 2] = colorVector(
-							u[x + winsize_x / 2][y + winsize_y / 2], 
-							v[x + winsize_x / 2][y + winsize_y / 2],
-							winsize_x / 4);
-				}
-			}
-
-			// Add to stack
-			u_st.setPixels(new FloatProcessor(u).getPixels(), i + 1);
-			v_st.setPixels(new FloatProcessor(v).getPixels(), i + 1);
-			pkh_st.setPixels(new FloatProcessor(pkh).getPixels(), i + 1);
-			// snr_st.setPixels(new FloatProcessor(snr).getPixels(), i + 1);
-			color_ip = new ColorProcessor(image_width, image_height);
-			color_ip.setIntArray(color_angle);
-			color_st.setPixels(color_ip.getPixels(), i + 1);
-
-			if (show_calculation) {
-				imp.setSlice(i + 1);
-				if (i == 0) {
-					u_imp.setStack("U", u_st);
-					v_imp.setStack("V", v_st);
-					pkh_imp.setStack("Peak height", pkh_st);
-					// snr_imp.setStack("Signal/Noise ratio", snr_st);
-					color_imp.setStack("Flow direction", color_st);
-					u_imp.show();
-					v_imp.show();
-					pkh_imp.show();
-					// snr_imp.show();
-					color_imp.show();
-				}
-				u_imp.setSlice(i);
-				v_imp.setSlice(i);
-				pkh_imp.setSlice(i);
-				// snr_imp.setSlice(i);
-				color_imp.setSlice(i);
-				pkh_imp.resetDisplayRange();
-				u_imp.resetDisplayRange();
-				v_imp.resetDisplayRange();
-				// snr_imp.resetDisplayRange();
-				color_imp.resetDisplayRange();
-				color_canvas = color_imp.getCanvas();
-				// Add the MouseMotionListener that "deconvolves" color
-				color_canvas.addMouseMotionListener(getColorMouseListener(winsize_x/4.0f));
-			}
-			IJ.showProgress(i, npairs);
-		}
-		// new ImagePlus("DEBUG", debug).show();
+		// Add the MouseMotionListener that "deconvolves" color
+		color_canvas = color_imp.getCanvas();
+		color_canvas.addMouseMotionListener(getColorMouseListener(winsize_x/2.0f));
+		
+		// Return result as array of ImagePlus
 		return new ImagePlus[] { u_imp, v_imp, pkh_imp, color_imp };
 
 	}
@@ -755,6 +765,40 @@ public class PIV_analyser implements PlugInFilter {
 	 * PRIVATE METHODS
 	 */
 	
+	 /**
+	 * Create a Thread[] array as large as the number of processors available.
+	 * From Stephan Preibisch's Multithreading.java class. See:
+	 * http://repo.or.cz
+	 * /w/trakem2.git?a=blob;f=mpi/fruitfly/general/MultiThreading.java;hb=HEAD
+	 */
+	private Thread[] newThreadArray() {
+ 		int n_cpus = Runtime.getRuntime().availableProcessors();
+		return new Thread[n_cpus];
+	}  
+	
+	/** Start all given threads and wait on each of them until all are done. 
+	 * From Stephan Preibisch's Multithreading.java class. See: 
+	 * http://repo.or.cz/w/trakem2.git?a=blob;f=mpi/fruitfly/general/MultiThreading.java;hb=HEAD 
+	 */  
+	public static void startAndJoin(Thread[] threads)  
+	{  
+		for (int ithread = 0; ithread < threads.length; ++ithread)  
+		{  
+			threads[ithread].setPriority(Thread.NORM_PRIORITY);
+			threads[ithread].setName(PLUGIN_NAME+" thread nbr "+ithread);
+			threads[ithread].start();  
+		}  
+
+		try  
+		{     
+			for (int ithread = 0; ithread < threads.length; ++ithread)  
+				threads[ithread].join();  
+		} catch (InterruptedException ie)  
+		{  
+			throw new RuntimeException(ie);  
+		}  
+	}
+
 	/** 
 	 * Creates the mouse listener that will "deconvolve" the color coded 
 	 * flow vector in an orientation and magnitude. It is not very clever,
