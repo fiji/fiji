@@ -17,15 +17,41 @@ import ij.ImagePlus;
 import ij.process.ImageProcessor;
 import ij.process.ColorProcessor;
 
-/** This class represents an array of disk-resident images. */
+/**
+ * This class represents an array of disk-resident images.
+ * In the same folder as the images, a file 'indices' is stored, which
+ * holds the order in which the indices occur. The names of the image
+ * files are restricted to be in the format int + ".tif".
+ */
 public class WritableVirtualStack extends ImageStack {
 
+	/** The directory containing the images. */
 	private final String dir;
+
+	/** An ImageProcessor serving as template for creating new slides. */
 	private final ImageProcessor template;
+
+	/** The number of slices of this stack. */
 	private int nSlices;
+
+	/** The highest integer (regarding file names). */
 	private int highestIndex;
+
+	/** A list of integers, storing the order of the files. */
 	private List<Integer> indices;
 
+	/**
+	 * Creates a new Writable Stack, using the given directory
+	 * as a folder for the individual images.
+	 *
+	 * If the folder is empty, a new stack is created, using
+	 * a ColorProcessor of the given width and height as template.
+	 * If the given directory does not exist, it is created.
+	 *
+	 * If the given directory is not empty, and the containing
+	 * images' dimensions do not match the specified width and
+	 * height, an exception is thrown.
+	 */
 	public WritableVirtualStack(String dir, int w, int h) {
 		this.dir = dir;
 		open();
@@ -41,6 +67,15 @@ public class WritableVirtualStack extends ImageStack {
 		}
 	}
 
+	/**
+	 * Creates a new Writable Stack, using the given directory
+	 * as a folder for the individual images.
+	 *
+	 * If the folder is empty, or does not exist, an exception
+	 * is thrown, because the required image dimensions are not
+	 * specified; use WritableVirtualStack(dir, w, h) in this case).
+	 *
+	 */
 	public WritableVirtualStack(String dir) {
 		this.dir = dir;
 		open();
@@ -52,9 +87,8 @@ public class WritableVirtualStack extends ImageStack {
 	}
 
 	/**
-	 * A directory containing an image sequence (images only contain
-	 * numbers in their filename, with the ending "tif") and a file
-	 * "indices", which specifies the ordering of the images.
+	 * Initializes this WritableVirtualStack by reading the 'indices'
+	 * file of the images' directory.
 	 */
 	private void open() {
 		highestIndex = 0;
@@ -92,7 +126,24 @@ public class WritableVirtualStack extends ImageStack {
 		}
 	}
 
-	public void writeIndicesFile() {
+	/**
+	 * Returns the width of this stack.
+	 */
+	public int getWidth() {
+		return template.getWidth();
+	}
+
+	/**
+	 * Returns the height of this stack.
+	 */
+	public int getHeight() {
+		return template.getHeight();
+	}
+
+	/**
+	 * Saves the 'indices' file to the image directory.
+	 */
+	public void saveIndicesFile() {
 		File f = new File(dir, "indices");
 		PrintWriter out = null;
 		try {
@@ -106,32 +157,60 @@ public class WritableVirtualStack extends ImageStack {
 		out.close();
 	}
 
-	/** Adds an image to the end of the stack. */
+	/**
+	 * Adds a slice to the end of the stack.
+	 * @param name The name of the slice. This parameter exists only for
+	 *             compatibility reasons with ImageStack, but is not used
+	 *             here.
+	 */
 	public void addSlice(String name) {
 		addSlice(name, template.duplicate());
 	}
 
-	/** Does nothing. */
-	public void addSlice(String sliceLabel, Object pixels) {
+	/**
+	 * Adds a slice with the given pixels to the end of the stack.
+	 * @param name   The name of the slice. This parameter exists only for
+	 *               compatibility reasons with ImageStack, but is not used
+	 *               here.
+	 * @param pixels The pixel array for the new slice.
+	 */
+	public void addSlice(String name, Object pixels) {
 		ImageProcessor ip = template.duplicate();
 		ip.setPixels(pixels);
-		addSlice(sliceLabel, ip);
+		addSlice(name, ip);
 	}
 
-	/** Does nothing.. */
-	public void addSlice(String sliceLabel, ImageProcessor ip) {
-		addSlice(sliceLabel, ip, nSlices);
+	/**
+	 * Adds the given ImageProcessor as a slice to the end of the stack.
+	 * @param name The name of the slice. This parameter exists only for
+	 *             compatibility reasons with ImageStack, but is not used
+	 *             here.
+	 * @param ip   The ImageProcessor for the new slice.
+	 */
+	public void addSlice(String name, ImageProcessor ip) {
+		addSlice(name, ip, nSlices);
 	}
-	
-	/** Does noting. */
-	public void addSlice(String sliceLabel, ImageProcessor ip, int n) {
+
+	/**
+	 * Adds the given ImageProcessor as a slice at the specified
+	 * position in the stack.
+	 * @param name The name of the slice. This parameter exists only for
+	 *             compatibility reasons with ImageStack, but is not used
+	 *             here.
+	 * @param ip   The ImageProcessor for the new slice.
+	 * @param n    The position of the slice, 0 to add it at the beginning.
+	 */
+	public void addSlice(String name, ImageProcessor ip, int n) {
 		nSlices++;
 		highestIndex++;
 		indices.add(n, highestIndex);
 		IJ.save(new ImagePlus("", ip), dir + "/" + highestIndex + ".tif");
 	}
 
-	/** Deletes the specified slice, were 1<=n<=nslices. */
+	/**
+	 * Deletes the specified slice.
+	 * @param n The position of the slice to delete, were 1 <= n <= nslices.
+	 */
 	public void deleteSlice(int n) {
 		if(n < 1 || n > nSlices)
 			throw new IllegalArgumentException("Argument out of range: "+n);
@@ -146,16 +225,18 @@ public class WritableVirtualStack extends ImageStack {
 		if(index == highestIndex)
 			highestIndex--;
 	}
-	
-	/** Deletes the last slice in the stack. */
+
+	/**
+	 * Deletes the last slice in the stack.
+	 */
 	public void deleteLastSlice() {
 		if(nSlices > 0)
 			deleteSlice(nSlices);
 	}
-	   
+
 	/**
 	 * Returns the pixel array for the specified slice,
-	 * were 1<=n<=nslices.
+	 * were 1 <= n <= nslices.
 	 */
 	public Object getPixels(int n) {
 		ImageProcessor ip = getProcessor(n);
@@ -163,10 +244,13 @@ public class WritableVirtualStack extends ImageStack {
 			return ip.getPixels();
 		else
 			return null;
-	}		
-	
-	 /** Assigns a pixel array to the specified slice,
-		were 1<=n<=nslices. */
+	}
+
+	/**
+	 * Assigns a pixel array to the specified slice.
+	 * @param pixels The pixel array to be assigned.
+	 * @param n      The slice index, were 1 <= n <= nslices.
+	 */
 	public void setPixels(Object pixels, int n) {
 		ImageProcessor ip = getProcessor(n);
 		if(ip == null)
@@ -176,8 +260,9 @@ public class WritableVirtualStack extends ImageStack {
 	}
 
 	/**
-	 * Returns an ImageProcessor for the specified slice,
-	 * were 1 <= n <= nslices. Returns null if the stack is empty.
+	 * Returns an ImageProcessor for the specified slice.
+	 * @param n The slice index, where 1 <= n <= nSlices.
+	 * @return null if the stack is empty.
 	 */
 	public ImageProcessor getProcessor(int n) {
 		ImagePlus imp = IJ.openImage(dir + "/" + getFileName(n));
@@ -185,40 +270,54 @@ public class WritableVirtualStack extends ImageStack {
 			return imp.getProcessor();
 		return null;
 	 }
- 
-	/** Returns the number of slices in this stack. */
+
+	/**
+	 * Returns the number of slices in this stack.
+	 */
 	public int getSize() {
 		return nSlices;
 	}
 
-	/** Returns the label of the Nth image. */
+	/**
+	 * Returns the label of the Nth image, where 1 <= n <= nSlices.
+	 */
 	public String getSliceLabel(int n) {
 		return getFileName(n);
 	}
-	
-	/** Returns null. */
+
+	/**
+	 * Returns null.
+	 */
 	public Object[] getImageArray() {
 		return null;
 	}
 
-	/** Does nothing. */
+	/**
+	 * Does nothing.
+	 */
 	public void setSliceLabel(String label, int n) {
 	}
 
-	/** Always return true. */
+	/**
+	 * Always return true.
+	 */
 	public boolean isVirtual() {
 		return true;
 	}
 
-	/** Does nothing. */
+	/**
+	 * Does nothing.
+	 */
 	public void trim() {
 	}
-	
-	/** Returns the path to the directory containing the images. */
+
+	/**
+	 * Returns the path to the directory containing the images.
+	 */
 	public String getDirectory() {
 		return dir;
 	}
-		
+
 	/**
 	 * Returns the file name of the specified slice,
 	 * were 1 <= n <= nslices.
@@ -226,5 +325,5 @@ public class WritableVirtualStack extends ImageStack {
 	public String getFileName(int n) {
 		return indices.get(n - 1) + ".tif";
 	}
-} 
+}
 
