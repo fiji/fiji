@@ -32,7 +32,7 @@ public class Draw_Roi implements PlugInFilter {
 
 		int current = image.getCurrentSlice();
 
-		GenericDialog gd = new GenericDialog("Delete Frame");
+		GenericDialog gd = new GenericDialog("Draw Roi");
 		gd.addNumericField("Slice", current, 0);
 		gd.addNumericField("Pixels per slice", DEF_PIX_PER_SLICE, 0);
 
@@ -71,7 +71,6 @@ public class Draw_Roi implements PlugInFilter {
 		Polygon p = null;
 		switch(roi.getType()) {
 			case Roi.LINE:
-				System.out.println("Roi.LINE");
 				Line l = (Line)roi;
 				p = new Polygon();
 				p.addPoint(l.x1, l.y1);
@@ -82,14 +81,12 @@ public class Draw_Roi implements PlugInFilter {
 			case Roi.POLYGON:
 			case Roi.FREEROI:
 			case Roi.TRACED_ROI:
-				System.out.println("Roi.RECTNGLE et al.");
 				p = roi.getPolygon();
 				p.addPoint(p.xpoints[0], p.ypoints[0]);
 				break;
 			case Roi.POLYLINE:
 			case Roi.FREELINE:
 			case Roi.ANGLE:
-				System.out.println("Roi.POLYLINE et al.");
 				p = roi.getPolygon();
 				break;
 			default: throw new IllegalArgumentException(
