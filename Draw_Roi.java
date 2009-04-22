@@ -43,14 +43,11 @@ public class Draw_Roi implements PlugInFilter {
 		int slice = (int)gd.getNextNumber();
 		int speed = (int)gd.getNextNumber();
 
-		if(speed < 1)
-			speed = 1;
-
 		drawRois(image, image.getRoi(), slice, speed);
 	}
 
-	public static void drawRois(ImagePlus image, Roi roi, int slice, int speed) {
-		ImageStack stack = image.getStack();
+	public static void drawRois(ImagePlus image,
+					Roi roi, int slice, int speed) {
 		if(roi == null) {
 			IJ.error("Selection required");
 			return;
@@ -68,6 +65,9 @@ public class Draw_Roi implements PlugInFilter {
 
 	public static int drawRoi(ImagePlus image,
 				Roi roi, int slice, int speed) {
+
+		if(roi == null)
+			return 0;
 		Polygon p = null;
 		switch(roi.getType()) {
 			case Roi.LINE:
@@ -124,18 +124,14 @@ public class Draw_Roi implements PlugInFilter {
 				x_last = (int)li.x;
 				y_last = (int)li.y;
 				ip.lineTo(x_last, y_last);
-				if(speed == -1 || c % speed != 0)
+				if(speed < 1 || c % speed != 0)
 					continue;
 				stack.addSlice("", ip, slice + slicesInserted);
 				slicesInserted++;
 			}
 		}
 		// maybe the last one was not added (in case c % speed was 0)
-		if(speed == -1) {
-			stack.setPixels(ip.getPixels(), slice);
-			return 0;
-		}
-		if(c % speed != 0) {
+		if(speed < 1 || c % speed != 0) {
 			stack.addSlice("", ip, slice + slicesInserted);
 			slicesInserted++;
 		}
