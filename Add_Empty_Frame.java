@@ -42,7 +42,13 @@ public class Add_Empty_Frame implements PlugInFilter {
 		int w = imp.getWidth(), h = imp.getHeight();
 		ImageProcessor frame = stack.getProcessor(slice).
 							createProcessor(w, h);
+		frame.setValue(0);
+		frame.fill();
+
 		for(int n = 0; n < num; n++)
 			stack.addSlice("", frame, slice + n);
+
+		// causes the change from image window to stack window
+		imp.setStack(null, stack);
 	}
 }

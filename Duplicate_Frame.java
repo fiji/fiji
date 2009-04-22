@@ -44,5 +44,8 @@ public class Duplicate_Frame implements PlugInFilter {
 		ImageProcessor frame = stack.getProcessor(slice).duplicate();
 		for(int n = 0; n < num; n++)
 			stack.addSlice("", frame, slice + n);
+
+		// causes the change from image window to stack window
+		imp.setStack(null, stack);
 	}
 }
