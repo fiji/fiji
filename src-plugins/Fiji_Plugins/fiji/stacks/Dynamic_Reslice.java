@@ -1,3 +1,5 @@
+package fiji.stacks;
+
 import ij.*;
 import ij.process.*;
 import ij.gui.*;
@@ -59,7 +61,6 @@ public class Dynamic_Reslice implements PlugIn, TextListener, ItemListener,
 	private double inputZSpacing = 1.0;
 	private double outputZSpacing = 1.0;
 	private int outputSlices = 1;
-	private int stack_depth, width;
 	private boolean noRoi;
 	private boolean rgb, notFloat;
 	private Vector fields, checkboxes;
@@ -80,52 +81,56 @@ public class Dynamic_Reslice implements PlugIn, TextListener, ItemListener,
 	private double[] dy;
 
 	public void run(String arg) {
-		 imp = WindowManager.getCurrentImage();
+		 
+		imp = WindowManager.getCurrentImage();
 		 if (imp==null) {
 				IJ.noImage();
 				return;
 		 }
+		 
 		 int stackSize = imp.getStackSize();
 		 Roi roi = imp.getRoi();
 		 int roiType = roi!=null?roi.getType():0;
+		 
 		 // stack required except for ROI = none or RECT
 		 if (stackSize<2 && roi!=null && roiType!=Roi.RECTANGLE) {
 				IJ.error("Dynamic Reslice...", "Stack required");
 				return;
 		 }
-		 // permissible ROI types: none,RECT,*LINE
+		 
+		 // permissible ROI types: none,*LINE
 		 if (roi==null || (roiType!=Roi.LINE && roiType!=Roi.POLYLINE && roiType!=Roi.FREELINE)) {
 				IJ.error("Dynamic Reslice...", "Line selection required");
 				return;
 		 }
-		 if (!showDialog(imp))
-				return;
+		 
+		 // Show dialog
+		 if (!showDialog(imp))	return;
 
+		 // Get type of source window
 		 rgb = imp.getType()==ImagePlus.COLOR_RGB;
 		 notFloat = !rgb && imp.getType()!=ImagePlus.GRAY32;
 
+		 // Do reslice
 		 dest_imp = reslice(imp);
+		 if (dest_imp==null) return;
 		 
-		 if (dest_imp==null)
-				return;
-		 
+		 // Copy min & max to new result
 		 ImageProcessor ip = imp.getProcessor();
 		 double min = ip.getMin();
 		 double max = ip.getMax();
 		 if (!rgb) dest_imp.getProcessor().setMinAndMax(min, max);
-		 dest_imp.show();
-		 if (noRoi)
-				imp.killRoi();
-		else
-				imp.draw();
-		
-		stack_depth = imp.getStackSize();
-		dest_ip = dest_imp.getProcessor();
-		width = dest_ip.getWidth();
 
-		imp.getCanvas().addMouseMotionListener(this);
-		imp.getWindow().addWindowListener(this);
-		dest_imp.getWindow().addWindowListener(this);
+		 // Display window result
+		 dest_imp.show();
+		
+		 // Store image processor for results - that's the one we will have tu update
+		 dest_ip = dest_imp.getProcessor();
+
+		 // Add listeners
+		 imp.getCanvas().addMouseMotionListener(this);
+		 imp.getWindow().addWindowListener(this);
+		 dest_imp.getWindow().addWindowListener(this);
 	}
 
 	public ImagePlus reslice(ImagePlus imp) {
@@ -671,13 +676,19 @@ public class Dynamic_Reslice implements PlugIn, TextListener, ItemListener,
 			shutdown();
 		}
 
+		// Only update if the roi is large enough
 		if (imp.getRoi().getLength() < 2.0) return;
+		
+		// Re-calculate slice
 		tmp_imp = reslice(imp);		
 		tmp_ip = tmp_imp.getProcessor();
 		dest_ip = dest_imp.getProcessor();
 		
-		for (int x=0; x<width; x++) {
-			for (int y=0; y<stack_depth; y++) {
+		// Copy result into existing window
+		final int max_x = dest_ip.getWidth();
+		final int max_y = dest_ip.getHeight();
+		for (int x=0; x<max_x; x++) {
+			for (int y=0; y<max_y; y++) {
 				dest_ip.putPixel(x, y, tmp_ip.getPixel(x, y));
 			}
 		}
