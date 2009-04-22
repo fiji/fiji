@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<project name="Dynamic_Reslicer" default="install" basedir=".">
+<project name="Dynamic_Reslice" default="main-fiji" basedir=".">
 	<description>
 		Dynamic_Reslicer build file for Fiji
     </description>

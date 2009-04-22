@@ -48,7 +48,7 @@ import java.util.*;
  * @version 1.0
  * @category Image > Stacks
  */
-public class Dynamic_Reslicer implements PlugIn, TextListener, ItemListener,
+public class Dynamic_Reslice implements PlugIn, TextListener, ItemListener,
 		MouseMotionListener, WindowListener {
 
 	private static final String[] starts = {"Top", "Left", "Bottom", "Right"};
@@ -94,7 +94,7 @@ public class Dynamic_Reslicer implements PlugIn, TextListener, ItemListener,
 				return;
 		 }
 		 // permissible ROI types: none,RECT,*LINE
-		 if (roi!=null && roiType!=Roi.LINE && roiType!=Roi.POLYLINE && roiType!=Roi.FREELINE) {
+		 if (roi==null || (roiType!=Roi.LINE && roiType!=Roi.POLYLINE && roiType!=Roi.FREELINE)) {
 				IJ.error("Dynamic Reslice...", "Line selection required");
 				return;
 		 }
@@ -148,7 +148,7 @@ public class Dynamic_Reslicer implements PlugIn, TextListener, ItemListener,
 				String status = imp.getStack().isVirtual()?"":null;
 //				IJ.showStatus("Reslice...");
 				ImageProcessor ip2 = getSlice(imp, 0.0, 0.0, 0.0, 0.0, status);
-				imp2 = new ImagePlus("Reslice of "+imp.getShortTitle(), ip2);
+				imp2 = new ImagePlus("Dynamic Reslice of "+imp.getShortTitle(), ip2);
 		 }
 		 if (nointerpolate) // restore calibration
 				imp.setCalibration(origCal);
@@ -212,7 +212,7 @@ public class Dynamic_Reslicer implements PlugIn, TextListener, ItemListener,
 		String macroOptions = Macro.getOptions();
 		if (macroOptions!=null && macroOptions.indexOf("output=")!=-1)
 			Macro.setOptions(macroOptions.replaceAll("output=", "slice="));
-		 GenericDialog gd = new GenericDialog("Reslice");
+		 GenericDialog gd = new GenericDialog("Dynamic Reslice");
 		 //gd.addNumericField("Input Z Spacing ("+units+"):", cal.pixelDepth, 3);
 		 gd.addNumericField("Slice Spacing ("+units+"):", outputSpacing, 3);
 		 if (line)
@@ -350,7 +350,7 @@ public class Dynamic_Reslicer implements PlugIn, TextListener, ItemListener,
 				if (IJ.escapePressed())
 					{IJ.beep(); imp.draw(); return null;}
 		 }
-		 return new ImagePlus("Reslice of "+imp.getShortTitle(), stack2);
+		 return new ImagePlus("Dynamic Reslice of "+imp.getShortTitle(), stack2);
 	}
 
 	ImageStack createOutputStack(ImagePlus imp, ImageProcessor ip) {
