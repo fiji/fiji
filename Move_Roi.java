@@ -47,6 +47,18 @@ public class Move_Roi implements PlugInFilter {
 		moveRoi(image, image.getRoi(), dx, dy, slice, speed);
 	}
 
+	/**
+	 * Copy the given roi from the specified slice of the given image
+	 * and inserts it in consecutive frames, giving the effect of
+	 * moving the selection.
+	 * @param image The ImagePlus containing the frames
+	 * @param roi   The selection to move.
+	 * @param dx    The amount in x-direction to move.
+	 * @param dy    The amount in y-direction to move.
+	 * @param slice The starting slice.
+	 * @param speed The amount of pixels to move per slice. A value lower
+	 *              than 1 will move the roi within one frame.
+	 */
 	public static void moveRoi(ImagePlus image,
 				Roi roi, int dx, int dy, int slice, int speed) {
 
