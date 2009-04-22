@@ -684,10 +684,57 @@ public class Dynamic_Reslice implements PlugIn, TextListener, ItemListener,
 		dest_imp.updateAndDraw();
 	}
 
+	private Updater updater = new Updater();
+
+	private class Updater extends Thread {
+		long request = 0;
+
+		// Constructor autostarts thread
+		Updater() {
+			super("Dynamic Reslicer Updater");
+			setPriority(Thread.NORM_PRIORITY);
+			start();
+		}
+
+		void doUpdate() {
+			if (isInterrupted()) return;
+			synchronized (this) {
+				request++;
+				notify();
+			}
+		}
+		void quit() {
+			interrupt();
+			synchronized (this) {
+				notify();
+			}
+		}
+		public void run() {
+			while (!isInterrupted()) {
+				try {
+					final long r;
+					synchronized (this) {
+						r = request;
+					}
+					if (r > 0) update();
+					synchronized (this) {
+						if (r == request) {
+							request = 0; // reset
+							wait();
+						}
+						// else loop through to update again
+					}
+				} catch (Exception e) {}
+			}
+		}
+	}
+
 	/**
 	 * Shut down the Dynamic reslice, that is, remove itself from the listener list.
 	 */
 	public void shutdown() {
+		updater.quit();
+		updater = null;
 		imp.getCanvas().removeMouseMotionListener(this);
 		imp.getWindow().removeWindowListener(this);
 		dest_imp.getWindow().removeWindowListener(this);
@@ -700,7 +747,7 @@ public class Dynamic_Reslice implements PlugIn, TextListener, ItemListener,
 	
 	public void mouseDragged(MouseEvent e) {
 		e.consume();
-		update();
+		updater.doUpdate();
 	}
 
 	public void mouseMoved(MouseEvent e) {
