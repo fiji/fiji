@@ -219,7 +219,7 @@ public class WritableVirtualStack extends ImageStack {
 
 		int index = indices.get(n - 1);
 		File f = new File(dir, getFileName(n));
-		indices.remove(n);
+		indices.remove(n - 1);
 		f.delete();
 		nSlices--;
 		if(index == highestIndex)
