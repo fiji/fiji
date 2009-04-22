@@ -18,7 +18,11 @@ public class Move_Roi implements PlugInFilter {
 
 	private ImagePlus image;
 
+	public static final int COPY = 0;
+	public static final int CUT  = 1;
+
 	public static final int DEF_PIX_PER_SLICE = 3;
+	public static final int DEF_MODE = COPY;
 
 	public int setup(String arg, ImagePlus imp) {
 		this.image = imp;
@@ -32,6 +36,8 @@ public class Move_Roi implements PlugInFilter {
 		GenericDialog gd = new GenericDialog("Delete Frame");
 		gd.addNumericField("Slice", current, 0);
 		gd.addNumericField("Pixels per slice", DEF_PIX_PER_SLICE, 0);
+		String[] modeSt = new String[] {"Copy", "Cut"};
+		gd.addChoice("Mode", modeSt, modeSt[DEF_MODE]);
 		gd.addNumericField("dx", 0, 0);
 		gd.addNumericField("dy", 0, 0);
 
@@ -43,8 +49,9 @@ public class Move_Roi implements PlugInFilter {
 		int speed = (int)gd.getNextNumber();
 		int dx = (int)gd.getNextNumber();
 		int dy = (int)gd.getNextNumber();
+		int mode = gd.getNextChoiceIndex();
 
-		moveRoi(image, image.getRoi(), dx, dy, slice, speed);
+		moveRoi(image, image.getRoi(), dx, dy, slice, speed, mode);
 	}
 
 	/**
@@ -58,9 +65,10 @@ public class Move_Roi implements PlugInFilter {
 	 * @param slice The starting slice.
 	 * @param speed The amount of pixels to move per slice. A value lower
 	 *              than 1 will move the roi within one frame.
+	 * @param mode  Either COPY or CUT.
 	 */
 	public static void moveRoi(ImagePlus image,
-				Roi roi, int dx, int dy, int slice, int speed) {
+			Roi roi, int dx, int dy, int slice, int speed, int mode) {
 
 		if(roi == null) {
 			IJ.error("Roi required");
@@ -69,9 +77,14 @@ public class Move_Roi implements PlugInFilter {
 		ImageStack stack = image.getStack();
 		Rectangle r = roi.getBounds();
 		int dt = Math.abs(dx) > Math.abs(dy) ? Math.abs(dx) : Math.abs(dy);
-		ImageProcessor ip = stack.getProcessor(slice);
+		ImageProcessor ip = stack.getProcessor(slice).duplicate();
 		ip.setRoi(roi);
 		ImageProcessor copy = ip.crop();
+		if(mode == CUT) {
+			ip.setRoi(roi);
+			ip.setValue(0);
+			ip.fill();
+		}
 		ImageProcessor ip2 = null;
 		int inserted = 0;
 		for(int i = 0; i < dt; i++) {
