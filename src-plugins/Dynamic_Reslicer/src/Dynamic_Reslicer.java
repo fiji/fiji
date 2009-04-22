@@ -1,22 +1,55 @@
-
 import ij.*;
 import ij.process.*;
 import ij.gui.*;
 import ij.measure.*;
 import ij.plugin.PlugIn;
-import ij.plugin.filter.RGBStackSplitter;
+import ij.plugin.Slicer;
 import ij.util.Tools;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
 
-/** Implements the Image/Stacks/Reslice command. Known shortcomings: 
-	for FREELINE or POLYLINE ROI, spatial calibration is ignored: 
-	the image is sampled at constant _pixel_ increments (distance 1), so 
-	(if y/x aspect ratio != 1 in source image) one dimension in the output is not
-	homogeneous (i.e. pixelWidth not the same everywhere).
-*/
-public class Dynamic_Reslicer implements PlugIn, TextListener, ItemListener, MouseMotionListener{
+/**
+ * <h3>Dynamic reslice of a stack.</h3>
+ * 
+ * This plugin is simply a dynamic version of the Reslice command as it is in
+ * ImageJ version 1.42l, by Patrick Kelly, Harvey Karten, Wayne Rasband, Julian
+ * Cooper and Adrian Deerr. It draws an orthogonal slice through the volume
+ * represented by the stack it is applied on along its ROI, and update
+ * dynamically this slice as the ROI is displaced or deformed. As it is based on
+ * the Reslice command, it implements all of the later feature, excepting the 
+ * multi-slice output (see below).
+ * <p>
+ * Because some of the fields I needed to access were private, I completely
+ * included the source code of Slicer.java in this plugin. The modification I
+ * made to it were the following:
+ * <ul>
+ * <li>the destination ImagePlus is now a field;
+ * <li>the plugin implements the the MouseMotionListener and WindowsListener
+ * interfaces;
+ * <li>the method {@link #mouseDragged(MouseEvent)} is used to intercept ROI
+ * changes in the source ImagePlus and call the {@link #update()} method to
+ * refresh the destination ImagePlus;
+ * <li>the method {@link #windowClosing(WindowEvent)} is used to monitor for one
+ * of the source or destination window to be closed, and call
+ * {@link #shutdown()} to end this plugin activity;
+ * <li>forced the call of method {@link #doIrregularSetup(Roi)} with a non LINE
+ * ROI
+ * <li>removed the possibility to use rectangle ROIs or thick ROIs to have a
+ * stack as output;
+ * <li>removed some of the message that were directed to IJ.showstatus;
+ * </ul>
+ * That is pretty all.
+ * 
+ * <p>
+ * 
+ * @author Jean-Yves Tinevez (tinevez at mpi-cbg dot de)
+ * @see Slicer
+ * @version 1.0
+ * @category Image > Stacks
+ */
+public class Dynamic_Reslicer implements PlugIn, TextListener, ItemListener,
+		MouseMotionListener, WindowListener {
 
 	private static final String[] starts = {"Top", "Left", "Bottom", "Right"};
 	private static String startAt = starts[0];
@@ -31,8 +64,8 @@ public class Dynamic_Reslicer implements PlugIn, TextListener, ItemListener, Mou
 	private boolean rgb, notFloat;
 	private Vector fields, checkboxes;
 	private Label message;
-	private ImagePlus imp, imp2, tmp_imp;
-	private ImageProcessor ip, tmp_ip;
+	private ImagePlus imp, dest_imp, tmp_imp;
+	private ImageProcessor dest_ip, tmp_ip;
 	private double gx1, gy1, gx2, gy2, gLength;
 
 	// Variables used by getIrregularProfile and doIrregularSetup
@@ -57,38 +90,42 @@ public class Dynamic_Reslicer implements PlugIn, TextListener, ItemListener, Mou
 		 int roiType = roi!=null?roi.getType():0;
 		 // stack required except for ROI = none or RECT
 		 if (stackSize<2 && roi!=null && roiType!=Roi.RECTANGLE) {
-				IJ.error("Reslice...", "Stack required");
+				IJ.error("Dynamic Reslice...", "Stack required");
 				return;
 		 }
 		 // permissible ROI types: none,RECT,*LINE
-		 if (roi!=null && roiType!=Roi.RECTANGLE && roiType!=Roi.LINE && roiType!=Roi.POLYLINE && roiType!=Roi.FREELINE) {
-				IJ.error("Reslice...", "Line or rectangular selection required");
+		 if (roi!=null && roiType!=Roi.LINE && roiType!=Roi.POLYLINE && roiType!=Roi.FREELINE) {
+				IJ.error("Dynamic Reslice...", "Line selection required");
 				return;
 		 }
 		 if (!showDialog(imp))
 				return;
-		 long startTime = System.currentTimeMillis();
+
 		 rgb = imp.getType()==ImagePlus.COLOR_RGB;
 		 notFloat = !rgb && imp.getType()!=ImagePlus.GRAY32;
-		 imp2 = reslice(imp);
-		 if (imp2==null)
+
+		 dest_imp = reslice(imp);
+		 
+		 if (dest_imp==null)
 				return;
+		 
 		 ImageProcessor ip = imp.getProcessor();
 		 double min = ip.getMin();
 		 double max = ip.getMax();
-		 if (!rgb) imp2.getProcessor().setMinAndMax(min, max);
-		 imp2.show();
+		 if (!rgb) dest_imp.getProcessor().setMinAndMax(min, max);
+		 dest_imp.show();
 		 if (noRoi)
 				imp.killRoi();
 		else
 				imp.draw();
-		IJ.showStatus(IJ.d2s(((System.currentTimeMillis()-startTime)/1000.0),2)+" seconds");
-		
 		
 		stack_depth = imp.getStackSize();
-		width = (int) Math.sqrt( imp.getHeight()*imp.getHeight() + imp.getWidth()*imp.getWidth() );
-		ip = imp2.getProcessor();
+		dest_ip = dest_imp.getProcessor();
+		width = dest_ip.getWidth();
+
 		imp.getCanvas().addMouseMotionListener(this);
+		imp.getWindow().addWindowListener(this);
+		dest_imp.getWindow().addWindowListener(this);
 	}
 
 	public ImagePlus reslice(ImagePlus imp) {
@@ -109,7 +146,7 @@ public class Dynamic_Reslicer implements PlugIn, TextListener, ItemListener, Mou
 				imp2 = resliceRectOrLine(imp);
 		 } else {// we assert roiType==Roi.POLYLINE || roiType==Roi.FREELINE
 				String status = imp.getStack().isVirtual()?"":null;
-				IJ.showStatus("Reslice...");
+//				IJ.showStatus("Reslice...");
 				ImageProcessor ip2 = getSlice(imp, 0.0, 0.0, 0.0, 0.0, status);
 				imp2 = new ImagePlus("Reslice of "+imp.getShortTitle(), ip2);
 		 }
@@ -231,10 +268,12 @@ public class Dynamic_Reslicer implements PlugIn, TextListener, ItemListener, Mou
 
 		 Roi roi = imp.getRoi();
 		 if (roi==null) {
-				noRoi = true;
-				imp.setRoi(0, 0, imp.getWidth(), imp.getHeight());
-				roi = imp.getRoi();
+			 return null;
+//				noRoi = true;
+//				imp.setRoi(0, 0, imp.getWidth(), imp.getHeight());
+//				roi = imp.getRoi();
 		 }
+		 /*
 		 if (roi.getType()==Roi.RECTANGLE) {
 				Rectangle r = roi.getBounds();
 				if (startAt.equals(starts[0])) { // top
@@ -270,7 +309,9 @@ public class Dynamic_Reslicer implements PlugIn, TextListener, ItemListener, Mou
 					yInc = 0.0;
 					outputSlices =	(int)(r.width/outputZSpacing);
 				}
-		 } else if (roi.getType()==Roi.LINE) {
+		 } else 
+		 */
+		 if (roi.getType()==Roi.LINE) {
 				Line line = (Line)roi;
 				x1 = line.x1;
 				y1 = line.y1;
@@ -317,8 +358,8 @@ public class Dynamic_Reslicer implements PlugIn, TextListener, ItemListener, Mou
 		 int w2=ip.getWidth(), h2=ip.getHeight(), d2=outputSlices;
 		 int flags = NewImage.FILL_BLACK + NewImage.CHECK_AVAILABLE_MEMORY;
 		 ImagePlus imp2 = NewImage.createImage("temp", w2, h2, d2, bitDepth, flags);
-		 if (imp2!=null && imp2.getStackSize()==d2)
-				IJ.showStatus("Reslice... (press 'Esc' to abort)");
+//		 if (imp2!=null && imp2.getStackSize()==d2) 
+//				IJ.showStatus("Reslice... (press 'Esc' to abort)"); 		 
 		 if (imp2==null)
 				return null;
 		 else {
@@ -329,7 +370,7 @@ public class Dynamic_Reslicer implements PlugIn, TextListener, ItemListener, Mou
 	}
 
 	ImageProcessor getSlice(ImagePlus imp, double x1, double y1, double x2, double y2, String status) {
-		 Roi roi = imp.getRoi();
+		Roi roi = imp.getRoi();
 		 int roiType = roi!=null?roi.getType():0;
 		 ImageStack stack = imp.getStack();
 		 int stackSize = stack.getSize();
@@ -340,8 +381,8 @@ public class Dynamic_Reslicer implements PlugIn, TextListener, ItemListener, Mou
 		//if (rotate) vertical = !vertical;
 		 for (int i=0; i<stackSize; i++) {
 				ip = stack.getProcessor(flip?stackSize-i:i+1);
-				if (roiType==Roi.POLYLINE || roiType==Roi.FREELINE)
-					line = getIrregularProfile(roi, ip);
+				if (roiType==Roi.POLYLINE || roiType==Roi.FREELINE) {					
+					line = getIrregularProfile(roi, ip); }
 				else if (ortho)
 					line = getOrthoLine(ip, (int)x1, (int)y1, (int)x2, (int)y2, line);
 				else
@@ -388,7 +429,7 @@ public class Dynamic_Reslicer implements PlugIn, TextListener, ItemListener, Mou
 	}
 
 	float[] getIrregularProfile(Roi roi, ImageProcessor ip) {
-		 if (x==null)
+//		 if (x==null)
 				doIrregularSetup(roi);
 		 float[] values = new float[(int)length];
 		 double leftOver = 1.0;
@@ -620,27 +661,65 @@ public class Dynamic_Reslicer implements PlugIn, TextListener, ItemListener, Mou
 	 * METHODS
 	 */
 	
+	/**
+	 * Update the Dynamic reslice window when the ROI is dragged. Called by 
+	 * MousMotionListener.
+	 */
 	public void update() {
-		if (imp.getRoi() == null || imp.getRoi().getLength() < 2.0) return;
-		tmp_imp = reslice(imp);
+		if (	imp.getRoi() == null ) {
+			// Shut down dynamic reslice
+			shutdown();
+		}
+
+		if (imp.getRoi().getLength() < 2.0) return;
+		tmp_imp = reslice(imp);		
 		tmp_ip = tmp_imp.getProcessor();
-		ip = imp2.getProcessor();
+		dest_ip = dest_imp.getProcessor();
+		
 		for (int x=0; x<width; x++) {
 			for (int y=0; y<stack_depth; y++) {
-				ip.putPixel(x, y, tmp_ip.getPixel(x, y));
+				dest_ip.putPixel(x, y, tmp_ip.getPixel(x, y));
 			}
 		}
-		imp2.updateAndDraw();
+		dest_imp.updateAndDraw();
 	}
 
+	/**
+	 * Shut down the Dynamic reslice, that is, remove itself from the listener list.
+	 */
+	public void shutdown() {
+		imp.getCanvas().removeMouseMotionListener(this);
+		imp.getWindow().removeWindowListener(this);
+		dest_imp.getWindow().removeWindowListener(this);
+		IJ.showStatus("Dynamic Reslice shut down.");
+	}
 	
 	/*
 	 * EVENTS
 	 */
 	
 	public void mouseDragged(MouseEvent e) {
+		e.consume();
 		update();
 	}
 
-	public void mouseMoved(MouseEvent e) {}
+	public void mouseMoved(MouseEvent e) {
+		e.consume();
+	}
+
+	public void windowActivated(WindowEvent e) {	}
+
+	public void windowClosed(WindowEvent e) {	}
+
+	public void windowClosing(WindowEvent e) {
+		shutdown();
+	}
+
+	public void windowDeactivated(WindowEvent e) {	}
+
+	public void windowDeiconified(WindowEvent e) {	}
+
+	public void windowIconified(WindowEvent e) {	}
+
+	public void windowOpened(WindowEvent e) {}
 }

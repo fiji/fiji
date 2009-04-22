@@ -133,6 +133,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/FlowJ_.jar \
 	plugins/PIV_analyser.jar \
 	plugins/Record_Screen.jar \
+	plugins/Dynamic_Reslicer.jar \
 	\
 	misc/Fiji.jar
 
