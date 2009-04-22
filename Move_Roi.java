@@ -78,13 +78,9 @@ public class Move_Roi implements PlugInFilter {
 			int xt = r.x + Math.round((float)i * dx/dt);
 			int yt = r.y + Math.round((float)i * dy/dt);
 			ip2 = ip.duplicate();
-			ip2.snapshot();
-			roi.setLocation(xt, yt);
-			ip2.setRoi(roi);
 			ip2.copyBits(copy, xt, yt,
 					Blitter.COPY_ZERO_TRANSPARENT);
 
-			ip2.reset(ip2.getMask());
 			if(speed < 1 || i % speed != 0)
 				continue;
 			stack.addSlice("", ip2, slice + inserted);
