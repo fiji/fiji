@@ -107,7 +107,8 @@ public class KDTreeInt {
 			list = new int[medianLength];
 			Random random = new Random();
 			for (int i = 0; i < list.length; i++) {
-				Leaf leaf = (Leaf)leaves.get(random.nextInt());
+				int index = Math.abs(random.nextInt()) % list.length;
+				Leaf leaf = (Leaf)leaves.get(index);
 				list[i] = leaf.get(k);
 			}
 		}
