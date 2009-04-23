@@ -70,6 +70,11 @@ public class Refresh_Javas extends RefreshScripts {
 			NoSuchMethodException, IllegalAccessException,
 			InvocationTargetException {
 		String[] arguments = { path };
+		String classPath = getPluginsClasspath();
+		if (!classPath.equals(""))
+			arguments = new String[] {
+				"-classpath", classPath, path
+			};
 		if (javac == null) {
 			String className = "com.sun.tools.javac.Main";
 			ClassLoader loader = getClass().getClassLoader();
