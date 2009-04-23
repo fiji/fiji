@@ -72,6 +72,19 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 		
 		// This makes the actual GUI 
 		GenericDialog gd = new GenericDialog("Time Stamper Enhanced");
+		
+		// these are the fields of the GUI
+		
+		// this is a choice between digital or decimal
+		// but what about mm:ss 
+		// options are in the string array timeFormats, default is Decimal:  something.somethingelse 
+		gd.addChoice("Time format:", timeFormats, timeFormats[0]); 
+		
+		// we can choose time units from a drop down list, list defined in timeunitsoptions
+		gd.addChoice("Time units:", timeUnitsOptions, timeUnitsOptions[4]); 
+		
+		// we can set a custom suffix and use that by selecting custom siffic in the time units drop down list above
+		gd.addStringField("Custom Suffix:", customSuffix);
 		gd.addNumericField("Starting Time (in s if digital):", start, 2);
 		gd.addNumericField("Time Interval Between Frames (in s if digital):", interval, 2);
 		gd.addNumericField("X Location:", x, 0);
@@ -80,17 +93,10 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 		gd.addNumericField("Decimal Places:", decimalPlaces, 0);
 		gd.addNumericField("First Frame:", first, 0);
 		gd.addNumericField("Last Frame:", last, 0);
-		
-		// should change this to a choice between digital or decimal
-		//gd.addCheckbox("use digital 'hh:mm:ss.ms' format:", digital);  // but what about mm:ss 
-		// options are in the string array timeFormats, default is Decimal:  something.somethingelse 
-		gd.addChoice("Time format:", timeFormats, timeFormats[0]); 
-		
-		gd.addStringField("Custom Suffix:", customSuffix);
+
 		gd.addCheckbox("Anti-Aliased text?", true);
 		
-		// we can choose time units from a drop down list, list defined in timeunitsoptions
-		gd.addChoice("Time units:", timeUnitsOptions, timeUnitsOptions[4]); 
+		
 		
 		gd.showDialog();  // shows the dialog GUI!
 		
@@ -99,6 +105,9 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 			{canceled = true; return;}
 		
 		// This reads user input parameters from the GUI
+		digitalOrDecimal = gd.getNextChoice();
+		chosenSuffix = gd.getNextChoice();
+		customSuffix = gd.getNextString();
 		start = gd.getNextNumber();
  		interval = gd.getNextNumber();
  		x = (int)gd.getNextNumber();
@@ -107,17 +116,16 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 		decimalPlaces = (int)gd.getNextNumber();
 		first = (int)gd.getNextNumber();
 		last = (int)gd.getNextNumber();
-		digitalOrDecimal = gd.getNextChoice();
-		customSuffix = gd.getNextString();
 		AAtext = gd.getNextBoolean(); 
-		chosenSuffix = gd.getNextChoice();
+		
 		
 		// set the font
 		font = new Font("SansSerif", Font.PLAIN, size);
 		ip.setFont(font);
 		
 		//more font related setting stuff moved from the run method
-		// seems to work more reliable witgh this code in this method instead of in run. 
+		// seems to work more reliable with this code in this method instead of in run.
+		// But if i dont change the font size by typing in the GUI - it igneores the AA text setting!!! Why??? 
 		//ip.setFont(font); //dont need that twice?
 		ip.setColor(Toolbar.getForegroundColor());
 		ip.setAntialiasedText(AAtext);
@@ -132,13 +140,13 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
     	
 		// maxWidth is an integer == length of the decimal time stamp string in pixels
 		// for the last slice of the stack to be stamped. It is used in the run method below, 
-		// and there are comments about it there
-		// this only works for decimal not digital
+		// to prevent the time stamp running off the right edge of the image
 		// ip.getStringWidth(string) seems to return the # of pixels long a string is in x?
-		// how does it take care of font size i wonder? The font is set a few lines up from here
+		// how does it take care of font size i wonder? The font is set 
 		// using the variable size... so i guess the ip object knows how big the font is.  
-		// maxWidth = ip.getStringWidth(decimalString(start + interval*imp.getStackSize())); 
-		// but should use last not stack size, since no time stamp is made for slices after last? 
+		// used to be: maxWidth = ip.getStringWidth(decimalString(start + interval*imp.getStackSize())); 
+		// but should use last not stacksize, since no time stamp is made for slices after last?
+		// It also needs to calcualte maxWidth for both digital and decimal time formats:
 		if (digitalOrDecimal == "Decimal")
 			maxWidth = ip.getStringWidth(decimalString(start + interval*last));
 		if (digitalOrDecimal == "hh:mm:ss.ms")
@@ -221,15 +229,10 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 		// ip.moveTo(x, y);  // move to x y position for Timestamp writing 
 		
 		// this next line tries to move the time stamp right a bit to account for the max length the time stamp will be.
-		// possibly superfluous, since you maybe want the time stamp to be written at the bottom left of the ROI you drew 
-		// or from the default of x and y? So just move to x y instead. If you put it too close to the right edge, then thats
-		// pretty silly, and you need to make the font smaller to fit it there anyway. OK people are silly, so we need to still
-		// handle that.... it's nice to not have the time stamp run off the right edge of the image. 
-		// But the maxWidth calculation is only valid for decimal (not digital) time format right now. 
-		//ip.moveTo(x+maxWidth-ip.getStringWidth(timeString), y);
-		// but while this moves the string left by the amount that the last string is longer than the first string, 
-		// it doenst prevent the string running off the right end of the image if its close to it... so how about subtracting the 
-		// maxWidth from the width of the image (x dimension) only if its so close that it will run off. 
+		// it's nice to not have the time stamp run off the right edge of the image. 
+		// how about subtracting the 
+		// maxWidth from the width of the image (x dimension) only if its so close that it will run off.
+		// this seems to work now with digital and decimal time formats. 
 
 		if (maxWidth > ( ip.getWidth() - x ) )
 			ip.moveTo( (ip.getWidth() - maxWidth), y);
