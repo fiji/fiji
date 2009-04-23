@@ -23,6 +23,28 @@ public class KDTree {
 			this.left = left;
 			this.right = right;
 		}
+
+		public String toString(Node node) {
+			if (node == null)
+				return "null";
+			if (node instanceof Leaf) {
+				String result = "(" + ((Leaf)node).get(0);
+				for (int i = 1; i < dimension; i++)
+					result += ", " + ((Leaf)node).get(i);
+				return result + ")";
+			}
+			if (node instanceof NonLeaf) {
+				NonLeaf nonLeaf = (NonLeaf)node;
+				return "[" + toString(nonLeaf.left)
+					+ " |{" + nonLeaf.coordinate + "} "
+					+ toString(nonLeaf.right) + "]";
+			}
+			return node.toString();
+		}
+
+		public String toString() {
+			return toString(this);
+		}
 	}
 
 	/*
