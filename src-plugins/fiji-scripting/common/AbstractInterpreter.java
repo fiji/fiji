@@ -419,7 +419,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 
 				start = prompt.getLineStartOffset(line + 1);
 				end = prompt.getLineEndOffset(line + 1);
-				return Math.min(start + column, end);
+				return Math.min(start + column, end - 1);
 			}
 
 			// backward
@@ -429,7 +429,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 			start = prompt.getLineStartOffset(line - 1);
 			end = prompt.getLineEndOffset(line - 1);
 			int endColumn = (end - start) % columns;
-			return end - Math.max(0, endColumn - column);
+			return end - Math.max(1, endColumn - column);
 		} catch (Exception e) {
 			return -1;
 		}
