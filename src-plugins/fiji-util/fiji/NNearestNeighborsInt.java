@@ -5,22 +5,22 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
-public class NNearestNeighbors {
-	public interface Leaf extends KDTree.Leaf {
-		float distanceTo(Leaf other);
+public class NNearestNeighborsInt {
+	public interface Leaf extends KDTreeInt.Leaf {
+		int distanceTo(Leaf other);
 	}
 
-	protected KDTree kdTree;
+	protected KDTreeInt kdTree;
 
-	public NNearestNeighbors(List leaves, int dimension) {
-		kdTree = new KDTree(leaves, dimension);
+	public NNearestNeighborsInt(List leaves, int dimension) {
+		kdTree = new KDTreeInt(leaves, dimension);
 	}
 
 	// TODO: use a priority queue for larger n
 	// TODO: refactor to use a class to insert the points into
-	public Leaf[] findNNearestNeighbors(Leaf point, int n) {
+	public Leaf[] findNNearestNeighborsInt(Leaf point, int n) {
 		Leaf[] result = new Leaf[n];
-		int count = findNNearestNeighbors(point, kdTree.getRoot(), 0, 0, result);
+		int count = findNNearestNeighborsInt(point, kdTree.getRoot(), 0, 0, result);
 		if (count < result.length) {
 			Leaf[] newResult = new Leaf[count];
 			System.arraycopy(result, 0, newResult, 0, count);
@@ -31,10 +31,10 @@ public class NNearestNeighbors {
 
 	// TODO: store calculated distance in a class to avoid recalculation
 	// TODO: maybe there is a way to avoid calculating the square root?
-	public int findNNearestNeighbors(final Leaf point,
-			KDTree.Node node, int depth,
+	public int findNNearestNeighborsInt(final Leaf point,
+			KDTreeInt.Node node, int depth,
 			int gotAlready, Leaf[] result) {
-		if (node instanceof KDTree.Leaf) {
+		if (node instanceof KDTreeInt.Leaf) {
 			// TODO: urgh!  This _cries out loud_ for a class
 			Leaf leaf = (Leaf)node;
 			if (gotAlready == 0) {
@@ -52,8 +52,8 @@ public class NNearestNeighbors {
 				index = Arrays.binarySearch(result, leaf,
 					new Comparator() {
 					public int compare(Object a, Object b) {
-						float distA = point.distanceTo((Leaf)a);
-						float distB = point.distanceTo((Leaf)b);
+						int distA = point.distanceTo((Leaf)a);
+						int distB = point.distanceTo((Leaf)b);
 						return distA < distB ? -1 :
 							distA > distB ? +1 : 0;
 					}
@@ -81,18 +81,18 @@ public class NNearestNeighbors {
 		}
 
 		int k = (depth % kdTree.getDimension());
-		KDTree.NonLeaf nonLeaf = (KDTree.NonLeaf)node;
-		float projectedDistance = nonLeaf.coordinate - point.get(k);
+		KDTreeInt.NonLeaf nonLeaf = (KDTreeInt.NonLeaf)node;
+		int projectedDistance = nonLeaf.coordinate - point.get(k);
 		boolean lookRight = projectedDistance < 0;
-		gotAlready = findNNearestNeighbors(point,
+		gotAlready = findNNearestNeighborsInt(point,
 			lookRight ? nonLeaf.right : nonLeaf.left, depth + 1,
 			gotAlready, result);
 
 		// maybe there is a better one
-		float distance = point.distanceTo(result[gotAlready - 1]);
+		int distance = point.distanceTo(result[gotAlready - 1]);
 		if (gotAlready < result.length ||
 				distance > Math.abs(projectedDistance)) {
-			gotAlready = findNNearestNeighbors(point,
+			gotAlready = findNNearestNeighborsInt(point,
 				lookRight ? nonLeaf.left : nonLeaf.right,
 				depth + 1, gotAlready, result);
 		}
@@ -121,25 +121,25 @@ public class NNearestNeighbors {
 	}
 
 	static class Leaf2D implements Leaf {
-		float x, y;
+		int x, y;
 
-		public Leaf2D(float x, float y) {
+		public Leaf2D(int x, int y) {
 			this.x = x;
 			this.y = y;
 		}
 
-		public float get(int k) {
+		public int get(int k) {
 			return k == 0 ? x : y;
 		}
 
-		static float square(float x) {
+		static int square(int x) {
 			return x * x;
 		}
 
-		public float distanceTo(Leaf other) {
+		public int distanceTo(Leaf other) {
 			Leaf2D o = (Leaf2D)other;
-			float square = square(o.x - x) + square(o.y - y);
-			return (float)Math.ceil(Math.sqrt((float)square));
+			int square = square(o.x - x) + square(o.y - y);
+			return (int)Math.ceil(Math.sqrt((float)square));
 		}
 
 		public String toString() {
@@ -162,8 +162,8 @@ public class NNearestNeighbors {
 			System.out.println("point " + i + ": " + list.get(i) + ", dist: "
 				+ point.distanceTo((Leaf)list.get(i)));
 
-		NNearestNeighbors kd = new NNearestNeighbors(list, 2);
-		Leaf[] leaves = kd.findNNearestNeighbors(point, 2);
+		NNearestNeighborsInt kd = new NNearestNeighborsInt(list, 2);
+		Leaf[] leaves = kd.findNNearestNeighborsInt(point, 2);
 		for (int i = 0; i < leaves.length; i++)
 			System.out.println("neighbor " + i + ": " + leaves[i] + ", dist: "
 				+ point.distanceTo(leaves[i]));

@@ -3,39 +3,39 @@ package fiji;
 import java.util.ArrayList;
 import java.util.List;
 
-public class NearestNeighbor {
-	public interface Leaf extends KDTree.Leaf {
-		float distanceTo(Leaf other);
+public class NearestNeighborInt {
+	public interface Leaf extends KDTreeInt.Leaf {
+		int distanceTo(Leaf other);
 	}
 
-	protected KDTree kdTree;
+	protected KDTreeInt kdTree;
 
-	public NearestNeighbor(List leaves, int dimension) {
-		kdTree = new KDTree(leaves, dimension);
+	public NearestNeighborInt(List leaves, int dimension) {
+		kdTree = new KDTreeInt(leaves, dimension);
 	}
 
-	public Leaf findNearestNeighbor(Leaf point) {
-		return findNearestNeighbor(point, kdTree.getRoot(), 0);
+	public Leaf findNearestNeighborInt(Leaf point) {
+		return findNearestNeighborInt(point, kdTree.getRoot(), 0);
 	}
 
 	// TODO: store calculated distance in a class to avoid recalculation
 	// TODO: maybe there is a way to avoid calculating the square root?
-	public Leaf findNearestNeighbor(Leaf point,
-			KDTree.Node node, int depth) {
-		if (node instanceof KDTree.Leaf)
+	public Leaf findNearestNeighborInt(Leaf point,
+			KDTreeInt.Node node, int depth) {
+		if (node instanceof KDTreeInt.Leaf)
 			return (Leaf)node;
 
 		int k = (depth % kdTree.getDimension());
-		KDTree.NonLeaf nonLeaf = (KDTree.NonLeaf)node;
-		float projectedDistance = nonLeaf.coordinate - point.get(k);
+		KDTreeInt.NonLeaf nonLeaf = (KDTreeInt.NonLeaf)node;
+		int projectedDistance = nonLeaf.coordinate - point.get(k);
 		boolean lookRight = projectedDistance < 0;
-		Leaf result = findNearestNeighbor(point,
+		Leaf result = findNearestNeighborInt(point,
 			lookRight ? nonLeaf.right : nonLeaf.left, depth + 1);
 
 		// maybe there is a better one
-		float distance = point.distanceTo(result);
+		int distance = point.distanceTo(result);
 		if (distance > Math.abs(projectedDistance)) {
-			Leaf other = findNearestNeighbor(point,
+			Leaf other = findNearestNeighborInt(point,
 				lookRight ? nonLeaf.left : nonLeaf.right,
 				depth + 1);
 			if (point.distanceTo(other) < distance)
@@ -46,25 +46,25 @@ public class NearestNeighbor {
 	}
 
 	static class Leaf2D implements Leaf {
-		float x, y;
+		int x, y;
 
-		public Leaf2D(float x, float y) {
+		public Leaf2D(int x, int y) {
 			this.x = x;
 			this.y = y;
 		}
 
-		public float get(int k) {
+		public int get(int k) {
 			return k == 0 ? x : y;
 		}
 
-		static float square(float x) {
+		static int square(int x) {
 			return x * x;
 		}
 
-		public float distanceTo(Leaf other) {
+		public int distanceTo(Leaf other) {
 			Leaf2D o = (Leaf2D)other;
-			float square = square(o.x - x) + square(o.y - y);
-			return (float)Math.ceil(Math.sqrt((float)square));
+			int square = square(o.x - x) + square(o.y - y);
+			return (int)Math.ceil(Math.sqrt((float)square));
 		}
 
 		public String toString() {
@@ -81,8 +81,8 @@ public class NearestNeighbor {
 		list.add(new Leaf2D(8, 1));
 		list.add(new Leaf2D(7, 2));
 
-		NearestNeighbor kd = new NearestNeighbor(list, 2);
-		System.out.println(kd.findNearestNeighbor(new Leaf2D(10, 1)));
+		NearestNeighborInt kd = new NearestNeighborInt(list, 2);
+		System.out.println(kd.findNearestNeighborInt(new Leaf2D(10, 1)));
 	}
 
 	public static void main(String[] args) {
