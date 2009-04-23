@@ -1,3 +1,5 @@
+package fiji;
+
 import java.util.ArrayList;
 import java.util.List;
 
