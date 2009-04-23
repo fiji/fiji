@@ -1,5 +1,9 @@
 // this plugin is a merge of the Time_Stamper plugins from ImageJ and from Tony Collins' plugin collection at macbiophotonics. 
-// it aims to combine all the functionality of both plugins and refine and enhance the functionality. 
+// it aims to combine all the functionality of both plugins and refine and enhance their functionality.
+
+// It does not know about hyper stacks - multiple channels..... only works as expected for normal stacks.
+// That meeans a single channel time series stack. 
+
 // Dan White MPI-CBG 15.04.09
 
 
@@ -47,17 +51,23 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 		Rectangle roi = ip.getRoi();
 		
 		if (roi.width<ip.getWidth() || roi.height<ip.getHeight()) {
-			x = roi.x;
-			y = roi.y+roi.height;
-			size = (int) ((roi.height - 1.10526)/0.934211);	// whats up with these numbers? Seems to make font too big?
-			// make sure the font is not too big or small.... but why? Too -  small cabt read it. Too Big - ?
+			x = roi.x;  			// left of the ROI
+			y = roi.y+roi.height;  		// bottom of the ROI
+			
+			// whats up with these numbers? Seems to make font too big?
+			// well single characters fit the ROI, but if the time stamper string is long
+			// then the font is too big to fit the whole thing in!
+			size = (int) ((roi.height - 1.10526)/0.934211);	
+			// make sure the font is not too big or small.... but why? Too -  small cant read it. Too Big - ?
 			// should this use private and public and get / set methods?
+			// in any case it doesnt seem to woirk... i can set the font < 7  and it is printed that small. 
 			if (size<7) size = 7;
 			if (size>80) size = 80;
+		//else x and y are defaulted to 0
 		}
 	
 		// here is a list of SI? approved time units for a drop down list to choose from 
-		String[] timeUnitsOptions =  { "y", "d", "h", "min", "s", "ms", "µs", "ns", "ps", "fs", "as", "custom"};
+		String[] timeUnitsOptions =  { "y", "d", "h", "min", "s", "ms", "µs", "ns", "ps", "fs", "as", "Custom Suffix"};
 		String[] timeFormats = {"Decimal", "hh:mm:ss.ms"};
 		
 		// This makes the actual GUI 
@@ -76,7 +86,7 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 		// options are in the string array timeFormats, default is Decimal:  something.somethingelse 
 		gd.addChoice("Time format:", timeFormats, timeFormats[0]); 
 		
-		gd.addStringField("Customised suffix:", customSuffix);
+		gd.addStringField("Custom Suffix:", customSuffix);
 		gd.addCheckbox("Anti-Aliased text?", true);
 		
 		// we can choose time units from a drop down list, list defined in timeunitsoptions
@@ -105,6 +115,12 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 		// set the font
 		font = new Font("SansSerif", Font.PLAIN, size);
 		ip.setFont(font);
+		
+		//more font related setting stuff moved from the run method
+		// seems to work more reliable witgh this code in this method instead of in run. 
+		//ip.setFont(font); //dont need that twice?
+		ip.setColor(Toolbar.getForegroundColor());
+		ip.setAntialiasedText(AAtext);
 		
 		// initialise time with the value of the starting time
 		time = start; 
@@ -139,7 +155,7 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 		// is there a non empty string in the custom suffix box in the dialog GUI?
 		// if so use it as suffix
 	String suffix() {
-		if (chosenSuffix == "custom")
+		if (chosenSuffix == "Custom Suffix")
 			return customSuffix;
 		else return chosenSuffix;
 	}
@@ -186,10 +202,6 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 		frame++;
 		if (frame==1) showDialog(ip);
 		if (canceled || frame<first || frame>last) return;
-		ip.setFont(font);
-		ip.setColor(Toolbar.getForegroundColor());
-		ip.setAntialiasedText(AAtext);
-		
 		
 		if (frame==last) imp.updateAndDraw();
 	
