@@ -65,10 +65,10 @@ public class NNearestNeighborsInt {
 			}
 			if (index < result.length) {
 				if (gotAlready < result.length) {
-					if (index + 1 < gotAlready)
+					if (index < gotAlready)
 						System.arraycopy(result, index,
 							result, index + 1,
-							gotAlready - index - 1);
+							gotAlready - index);
 					gotAlready++;
 				}
 				else if (index + 1 < result.length)
