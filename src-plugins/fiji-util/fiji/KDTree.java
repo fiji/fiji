@@ -34,6 +34,15 @@ public class KDTree {
 	protected int dimension;
 	protected Node root;
 
+	/**
+	 * Construct a KDTree from the elements in the given list.
+	 *
+	 * The elements must implement the interface Leaf.
+	 *
+	 * The parameter 'leaves' must be a list and cannot be an iterator,
+	 * as the median needs to be calculated (or estimated, if the length
+	 * is greater than medianLength).
+	 */
 	public KDTree(List leaves, int dimension) {
 		this.dimension = dimension;
 		root = makeNode(leaves, 0);
