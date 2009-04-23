@@ -392,8 +392,6 @@ public abstract class AbstractInterpreter implements PlugIn {
 		}
 		final String text = (String)al_lines.get(active_line);
 		prompt.setText(text);
-		final int i_newline = text.indexOf('\n');
-		if (-1 != i_newline) prompt.setCaretPosition(i_newline);
 	}
 
 	/** get the position when moving one visible line forward or backward */
