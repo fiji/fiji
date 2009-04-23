@@ -41,5 +41,15 @@ public class Delete_Frame implements PlugInFilter {
 		ImageStack stack = imp.getStack();
 		for(int n = 0; n < num; n++)
 			stack.deleteSlice(slice);
+
+		/*
+		 * causes the change from image window to stack window
+		 * also:
+		 * causes update of current slice. Previously, the
+		 * current slice was not updated, so showed the wrong
+		 * image. When the user then scrolled, the wrong image
+		 * was stored to the corresponding file.
+		 */
+		imp.setStack(null, stack);
 	}
 }
