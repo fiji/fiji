@@ -213,8 +213,6 @@ public class WritableVirtualStack extends ImageStack {
 	 */
 	public void deleteSlice(int n) {
 		if(n < 1 || n > nSlices)
-			throw new IllegalArgumentException("Argument out of range: "+n);
-		if (nSlices<1)
 			return;
 
 		int index = indices.get(n - 1);
