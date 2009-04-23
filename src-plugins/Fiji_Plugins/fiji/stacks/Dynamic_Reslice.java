@@ -12,7 +12,7 @@ import java.awt.event.*;
 import java.util.*;
 
 /**
- * <h3>Dynamic reslice of a stack.</h3>
+ * <h2>Dynamic reslice of a stack.</h2>
  * 
  * This plugin is simply a dynamic version of the Reslice command as it is in
  * ImageJ version 1.42l, by Patrick Kelly, Harvey Karten, Wayne Rasband, Julian
@@ -42,6 +42,13 @@ import java.util.*;
  * <li>removed some of the message that were directed to IJ.showstatus;
  * </ul>
  * That is pretty all.
+ *
+ * <h3>Version history</h3>
+ * 
+ * <ul> 
+ * <li> 1.0 - 22 April 2009 - First working version.
+ * <li> 1.1 - 22 April 2009 - Albert Cardona added the separate thread for updating
+ * </ul>
  * 
  * <p>
  * 
@@ -50,18 +57,16 @@ import java.util.*;
  * @version 1.0
  * @category Image > Stacks
  */
-public class Dynamic_Reslice implements PlugIn, TextListener, ItemListener,
-		MouseMotionListener, WindowListener {
+public class Dynamic_Reslice implements PlugIn, MouseMotionListener, WindowListener {
 
-	private static final String[] starts = {"Top", "Left", "Bottom", "Right"};
-	private static String startAt = starts[0];
+	// private static final String[] starts = {"Top", "Left", "Bottom", "Right"};
+	// private static String startAt = starts[0];
 	private static boolean rotate;
 	private static boolean flip;
 	private static boolean nointerpolate;
 	private double inputZSpacing = 1.0;
 	private double outputZSpacing = 1.0;
-	private int outputSlices = 1;
-	private boolean noRoi;
+//	private int outputSlices = 1;
 	private boolean rgb, notFloat;
 	private Vector fields, checkboxes;
 	private Label message;
@@ -161,12 +166,15 @@ public class Dynamic_Reslice implements PlugIn, TextListener, ItemListener,
 		 // start from previous cal and swap appropriate fields
 		 boolean horizontal = false;
 		 boolean vertical = false;
-		if (roi==null || roiType==Roi.RECTANGLE) {
+
+		 /*
+		 if (roi==null || roiType==Roi.RECTANGLE) {
 			if (startAt.equals(starts[0]) || startAt.equals(starts[2]))
 				horizontal = true;
 			else
 				vertical = true;
 		} 
+		*/
 		if (roi!=null && roiType==Roi.LINE) {
 			Line l = (Line)roi;
 			horizontal  = (l.y2-l.y1)==0;
@@ -203,38 +211,41 @@ public class Dynamic_Reslice implements PlugIn, TextListener, ItemListener,
 	}
 
 	boolean showDialog(ImagePlus imp) {
-		 Calibration cal = imp.getCalibration();
-		 if (cal.pixelDepth<0.0)
-		 	cal.pixelDepth = -cal.pixelDepth;
-		 String units = cal.getUnits();
-		 if (cal.pixelWidth==0.0)
-				cal.pixelWidth = 1.0;
-		 inputZSpacing = cal.pixelDepth;
-		 double outputSpacing = cal.pixelDepth;
-		 Roi roi = imp.getRoi();
-		 boolean line = roi!=null && roi.getType()==Roi.LINE;
-		 if (line) saveLineInfo(roi);
+
+		Calibration cal = imp.getCalibration();
+		if (cal.pixelDepth<0.0) 	cal.pixelDepth = -cal.pixelDepth;
+		String units = cal.getUnits();
+		if (cal.pixelWidth==0.0) 	cal.pixelWidth = 1.0;
+		inputZSpacing = cal.pixelDepth;
+		double outputSpacing = cal.pixelDepth;
+		Roi roi = imp.getRoi();
+		boolean line = roi!=null && roi.getType()==Roi.LINE;
+		if (line) saveLineInfo(roi);
 		String macroOptions = Macro.getOptions();
 		if (macroOptions!=null && macroOptions.indexOf("output=")!=-1)
 			Macro.setOptions(macroOptions.replaceAll("output=", "slice="));
-		 GenericDialog gd = new GenericDialog("Dynamic Reslice");
-		 //gd.addNumericField("Input Z Spacing ("+units+"):", cal.pixelDepth, 3);
-		 gd.addNumericField("Slice Spacing ("+units+"):", outputSpacing, 3);
-		 if (line)
-				gd.addNumericField("Slice Count:", outputSlices, 0);
-		 else
-				gd.addChoice("Start At:", starts, startAt);
-		 gd.addCheckbox("Flip Vertically", flip);
-		 gd.addCheckbox("Rotate 90 Degrees", rotate);
-		 gd.addCheckbox("Avoid Interpolation", nointerpolate);
-		 gd.setInsets(0, 32, 10);
-		 gd.addMessage("(use 1.0 for spacings)");
-		 gd.addMessage(getSize(cal.pixelDepth,outputSpacing,outputSlices)+"				");
-		 fields = gd.getNumericFields();
-		 for (int i=0; i<fields.size(); i++)
-				((TextField)fields.elementAt(i)).addTextListener(this);
-		checkboxes = gd.getCheckboxes();
-			((Checkbox)checkboxes.elementAt(2)).addItemListener(this);
+
+		GenericDialog gd = new GenericDialog("Dynamic Reslice");
+
+		gd.addNumericField("Slice Spacing ("+units+"):", outputSpacing, 3);
+
+		/*
+		if (line)
+			gd.addNumericField("Slice Count:", outputSlices, 0);
+		else
+			gd.addChoice("Start At:", starts, startAt);
+		*/
+		gd.addCheckbox("Flip Vertically", flip);
+		gd.addCheckbox("Rotate 90 Degrees", rotate);
+		gd.addCheckbox("Avoid Interpolation", nointerpolate);
+		gd.setInsets(0, 32, 10);
+		gd.addMessage("(use 1.0 for spacings)");
+//		gd.addMessage(getSize(cal.pixelDepth,outputSpacing,outputSlices)+"				");
+		fields = gd.getNumericFields();
+//		for (int i=0; i<fields.size(); i++)
+//				((TextField)fields.elementAt(i)).addTextListener(this);
+//		checkboxes = gd.getCheckboxes();
+//			((Checkbox)checkboxes.elementAt(2)).addItemListener(this);
 		 message = (Label)gd.getMessage();
 		 gd.showDialog();
 		 if (gd.wasCanceled())
@@ -242,11 +253,13 @@ public class Dynamic_Reslice implements PlugIn, TextListener, ItemListener,
 		 //inputZSpacing = gd.getNextNumber();
 		 //if (cal.pixelDepth==0.0) cal.pixelDepth = 1.0;
 		 outputZSpacing = gd.getNextNumber()/cal.pixelWidth;
+		 /*
 		 if (line) {
 				outputSlices = (int)gd.getNextNumber();
 				imp.setRoi(roi);
 		 } else
 				startAt = gd.getNextChoice();
+				*/
 		 flip = gd.getNextBoolean();
 		 rotate = gd.getNextBoolean();
 		 nointerpolate = gd.getNextBoolean();
@@ -269,7 +282,6 @@ public class Dynamic_Reslice implements PlugIn, TextListener, ItemListener,
 		 double y2 = 0.0;
 		 double xInc = 0.0;
 		 double yInc = 0.0;
-		 noRoi = false;
 
 		 Roi roi = imp.getRoi();
 		 if (roi==null) {
@@ -316,53 +328,58 @@ public class Dynamic_Reslice implements PlugIn, TextListener, ItemListener,
 				}
 		 } else 
 		 */
-		 if (roi.getType()==Roi.LINE) {
-				Line line = (Line)roi;
-				x1 = line.x1;
-				y1 = line.y1;
-				x2 = line.x2;
-				y2 = line.y2;
-				double dx = x2 - x1;
-				double dy = y2 - y1;
-				double nrm = Math.sqrt(dx*dx + dy*dy)/outputZSpacing;
-				xInc = -(dy/nrm);
-				yInc = (dx/nrm);
-		 } else
-				return null;
+//		 if (roi.getType()==Roi.LINE) {
+		 Line line = (Line)roi;
+		 x1 = line.x1;
+		 y1 = line.y1;
+		 x2 = line.x2;
+		 y2 = line.y2;
+		 double dx = x2 - x1;
+		 double dy = y2 - y1;
+		 double nrm = Math.sqrt(dx*dx + dy*dy)/outputZSpacing;
+		 xInc = -(dy/nrm);
+		 yInc = (dx/nrm);
+//		 } else
+//				return null;
 
+		 /*
 		 if (outputSlices==0) {
 				IJ.error("Reslicer", "Output Z spacing ("+IJ.d2s(outputZSpacing,0)+" pixels) is too large.");
 				return null;
 		 }
-		 boolean virtualStack = imp.getStack().isVirtual();
-		 String status = null;
-		 ImagePlus imp2 = null;
-		 ImageStack stack2 = null;
-		 boolean isStack = imp.getStackSize()>1;
+		 */
+//		 boolean virtualStack = imp.getStack().isVirtual();
+//		 String status = null;
+//		 ImagePlus imp2 = null;
+//		 ImageStack stack2 = null;
+//		 boolean isStack = imp.getStackSize()>1;
 		 IJ.resetEscape();
-		 for (int i=0; i<outputSlices; i++)	{
-				if (virtualStack)
-					status = outputSlices>1?(i+1)+"/"+outputSlices+", ":"";
-				ImageProcessor ip = getSlice(imp, x1, y1, x2, y2, status);
+//		 for (int i=0; i<outputSlices; i++)	{
+//				if (virtualStack)
+//					status = outputSlices>1?(i+1)+"/"+outputSlices+", ":"";
+				ImageProcessor ip = getSlice(imp, x1, y1, x2, y2, null);
 				//IJ.log(i+" "+x1+" "+y1+" "+x2+" "+y2+"   "+ip);
-				if (isStack) drawLine(x1, y1, x2, y2, imp);
-				if (stack2==null) {
-					stack2 = createOutputStack(imp, ip);
-					if (stack2==null || stack2.getSize()<outputSlices) return null; // out of memory
-				}
-				stack2.setPixels(ip.getPixels(), i+1);
-				x1+=xInc; x2+=xInc; y1+=yInc; y2+=yInc;
-				if (IJ.escapePressed())
-					{IJ.beep(); imp.draw(); return null;}
-		 }
-		 return new ImagePlus("Dynamic Reslice of "+imp.getShortTitle(), stack2);
+//				if (isStack) drawLine(x1, y1, x2, y2, imp);
+//				if (stack2==null) {
+//					stack2 = createOutputStack(imp, ip);
+//					if (stack2==null || stack2.getSize()<outputSlices) return null; // out of memory
+//				}
+//				stack2.setPixels(ip.getPixels(), i+1);
+//				x1+=xInc; x2+=xInc; y1+=yInc; y2+=yInc;
+//				if (IJ.escapePressed())
+//					{IJ.beep(); imp.draw(); return null;}
+//		 }
+//				 return new ImagePlus("Dynamic Reslice of "+imp.getShortTitle(), stack2);
+				 return new ImagePlus("Dynamic Reslice of "+imp.getShortTitle(), ip);
 	}
 
+	/*
 	ImageStack createOutputStack(ImagePlus imp, ImageProcessor ip) {
 		 int bitDepth = imp.getBitDepth();
-		 int w2=ip.getWidth(), h2=ip.getHeight(), d2=outputSlices;
+		 int w2=ip.getWidth(), h2=ip.getHeight(); //, d2=outputSlices;
 		 int flags = NewImage.FILL_BLACK + NewImage.CHECK_AVAILABLE_MEMORY;
-		 ImagePlus imp2 = NewImage.createImage("temp", w2, h2, d2, bitDepth, flags);
+//		 ImagePlus imp2 = NewImage.createImage("temp", w2, h2, d2, bitDepth, flags);
+		 ImagePlus imp2 = NewImage.createImage("temp", w2, h2, 1, bitDepth, flags);
 //		 if (imp2!=null && imp2.getStackSize()==d2) 
 //				IJ.showStatus("Reslice... (press 'Esc' to abort)"); 		 
 		 if (imp2==null)
@@ -372,7 +389,7 @@ public class Dynamic_Reslice implements PlugIn, TextListener, ItemListener,
 				stack2.setColorModel(ip.getColorModel());
 				return stack2;
 		 }
-	}
+	} */
 
 	ImageProcessor getSlice(ImagePlus imp, double x1, double y1, double x2, double y2, String status) {
 		Roi roi = imp.getRoi();
@@ -572,16 +589,21 @@ public class Dynamic_Reslice implements PlugIn, TextListener, ItemListener,
 		 g.drawLine(ic.screenX((int)(x1+0.5)), ic.screenY((int)(y1+0.5)), ic.screenX((int)(x2+0.5)), ic.screenY((int)(y2+0.5)));
 	}
 
+	/*
 	public void textValueChanged(TextEvent e) {
 		updateSize();
 	}
+	*/
 
+	/*
 	public void itemStateChanged(ItemEvent e) {
 		Checkbox cb = (Checkbox)checkboxes.elementAt(2);
         nointerpolate = cb.getState();
         updateSize();
 	}
+	*/
 
+	/*
 	void updateSize() {
 		 //double inSpacing = Tools.parseDouble(((TextField)fields.elementAt(0)).getText(),0.0);
 		 double outSpacing = Tools.parseDouble(((TextField)fields.elementAt(0)).getText(),0.0);
@@ -594,7 +616,9 @@ public class Dynamic_Reslice implements PlugIn, TextListener, ItemListener,
 		 String size = getSize(inputZSpacing, outSpacing, count);
 		 message.setText(size);
 	}
+	*/
 
+	/*
 	String getSize(double inSpacing, double outSpacing, int count) {
 		 int size = getOutputStackSize(inSpacing, outSpacing, count);
 		 int mem = getAvailableMemory();
@@ -606,6 +630,7 @@ public class Dynamic_Reslice implements PlugIn, TextListener, ItemListener,
 		 else
 				return "<1MB"+available;
 	}
+	*/
 
 	void makePolygon(int count, double outSpacing) {
 		int[] x = new int[4];
@@ -654,6 +679,7 @@ public class Dynamic_Reslice implements PlugIn, TextListener, ItemListener,
 		return (int)Math.round(size/1048576.0);
 	}
 
+	/*
 	int getAvailableMemory() {
 		 long max = IJ.maxMemory();
 		 if (max==0) return -1;
@@ -661,6 +687,7 @@ public class Dynamic_Reslice implements PlugIn, TextListener, ItemListener,
 		 long available = max - inUse;
 		 return (int)((available+524288L)/1048576L);
 	}
+	*/
 
 	/*
 	 * METHODS
