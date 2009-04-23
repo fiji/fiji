@@ -213,7 +213,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 					public void actionPerformed(ActionEvent ae) {
 						int position = cursorUpDown(true);
 						if (position < 0) {
-							trySetNextPrompt(-1 - position);
+							trySetNextPrompt();
 						} else {
 							// Move down one line within a multiline prompt
 							prompt.setCaretPosition(position);
@@ -226,7 +226,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 					public void actionPerformed(ActionEvent ae) {
 						int position = cursorUpDown(false);
 						if (position < 0) {
-							trySetPreviousPrompt(-1 - position);
+							trySetPreviousPrompt();
 						} else {
 							// Move down one line within a multiline prompt
 							prompt.setCaretPosition(position);
@@ -237,14 +237,14 @@ public abstract class AbstractInterpreter implements PlugIn {
 		prompt.getActionMap().put("ctrl+p",
 				new AbstractAction("ctrl+p") {
 					public void actionPerformed(ActionEvent ae) {
-						trySetPreviousPrompt(-1);
+						trySetPreviousPrompt();
 					}
 				});
 		prompt.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_N, ActionEvent.CTRL_MASK), "ctrl+n");
 		prompt.getActionMap().put("ctrl+n",
 				new AbstractAction("ctrl+n") {
 					public void actionPerformed(ActionEvent ae) {
-						trySetNextPrompt(-1);
+						trySetNextPrompt();
 					}
 				});
 		prompt.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_DOWN, ActionEvent.SHIFT_MASK), "shift+down");
@@ -358,7 +358,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 		}
 	}
 
-	private void trySetPreviousPrompt(int column) {
+	private void trySetPreviousPrompt() {
 		// Try to set the previous prompt text
 		final int size = al_lines.size();
 		if (0 == size) return;
@@ -373,17 +373,9 @@ public abstract class AbstractInterpreter implements PlugIn {
 			}
 		}
 		prompt.setText((String)al_lines.get(active_line));
-		if (column >= 0) try {
-			int lineCount = prompt.getLineCount();
-			int start = prompt.getLineStartOffset(lineCount - 1);
-			int end = prompt.getLineEndOffset(lineCount - 1);
-			int columns = prompt.getColumns();
-			column += end - ((end - start) % columns);
-			prompt.setCaretPosition(Math.min(end, column));
-		} catch (Exception e) { /* ignore */ }
 	}
 
-	private void trySetNextPrompt(int column) {
+	private void trySetNextPrompt() {
 		// Try to set the next prompt text
 		int size = al_lines.size();
 		if (0 == size) return;
@@ -398,25 +390,19 @@ public abstract class AbstractInterpreter implements PlugIn {
 		}
 		final String text = (String)al_lines.get(active_line);
 		prompt.setText(text);
-		if (column >= 0) try {
-			int end = prompt.getLineEndOffset(0);
-			prompt.setCaretPosition(Math.min(end, column));
-			return;
-		} catch (Exception e) { /* ignore */ }
 		final int i_newline = text.indexOf('\n');
 		if (-1 != i_newline) prompt.setCaretPosition(i_newline);
 	}
 
 	/** get the position when moving one visible line forward or backward */
 	private int cursorUpDown(boolean forward) {
-		int column = 0;
 		try {
 			int position = prompt.getCaretPosition();
 			int columns = prompt.getColumns();
 			int line = prompt.getLineOfOffset(position);
 			int start = prompt.getLineStartOffset(line);
 			int end = prompt.getLineEndOffset(line);
-			column = (position - start) % columns;
+			int column = (position - start) % columns;
 
 			int wrappedLineCount =
 				(end + columns - 1 - start) / columns;
@@ -443,7 +429,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 			int endColumn = (end - start) % columns;
 			return end - Math.max(0, endColumn - column);
 		} catch (Exception e) {
-			return -1 - column;
+			return -1;
 		}
 	}
 
