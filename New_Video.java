@@ -63,7 +63,14 @@ public class New_Video implements PlugIn {
 		imp.show();
 		ImagePlus.addImageListener(new ImageListener() {
 			public void imageOpened(ImagePlus image) {}
-			public void imageUpdated(ImagePlus image) {}
+			public void imageUpdated(ImagePlus image) {
+				/*
+				 * prevent from showing 'do you want to save the
+				 * changes... . It's saved already anyway.
+				 */
+				if(imp == image)
+					imp.changes = false;
+			}
 			public void imageClosed(ImagePlus image) {
 				if(imp == image) {
 					/*
