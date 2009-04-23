@@ -59,6 +59,13 @@ public class Open_Video implements PlugIn {
 			public void imageUpdated(ImagePlus image) {}
 			public void imageClosed(ImagePlus image) {
 				if(imp == image) {
+					/*
+					 * Save the currently edited frame, in case
+					 * there was no scrolling during the last
+					 * editing.
+					 */
+					stack.setPixels(imp.getProcessor().getPixels(),
+						imp.getCurrentSlice());
 					System.out.println("Saving indices file");
 					stack.saveIndicesFile();
 				}
