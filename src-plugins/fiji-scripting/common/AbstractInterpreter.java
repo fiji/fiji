@@ -59,7 +59,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 
 	final protected JFrame window = new JFrame("Interpreter");
 	final protected JTextArea screen = new JTextArea();
-	final protected JTextArea prompt = new JTextArea(1, 62);//new JTextField(60);
+	final protected JTextArea prompt = new JTextArea(1, 60);//new JTextField(60);
 	protected int active_line = 0;
 	final protected ArrayList al_lines = new ArrayList();
 	final protected ArrayList<Boolean> valid_lines = new ArrayList<Boolean>();
@@ -204,6 +204,8 @@ public abstract class AbstractInterpreter implements PlugIn {
 		addMenuItem(popup_menu, "Save", menu_listener);
 		JScrollPane scroll_prompt = new JScrollPane(prompt);
 		scroll_prompt.setPreferredSize(new Dimension(440, 35));
+		scroll_prompt.setVerticalScrollBarPolicy(JScrollPane
+			.VERTICAL_SCROLLBAR_ALWAYS);
 		prompt.setFont(font);
 		prompt.setLineWrap(true);
 
