@@ -112,7 +112,6 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Volume_Viewer.jar \
 	plugins/IJ_Robot.jar \
 	plugins/Fiji_Updater.jar \
-	plugins/Multi_Thresholder.jar \
 	plugins/Daltonize_.jar \
 	plugins/Stitching_.jar \
 	plugins/AnalyzeSkeleton_.jar \
