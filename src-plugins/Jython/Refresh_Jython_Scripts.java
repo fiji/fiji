@@ -18,6 +18,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 You may contact Albert Cardona at albert at pensament dot net, at http://www.pensament.net/java/
 */
 import ij.IJ;
+import org.python.core.PyDictionary;
+import org.python.core.PySystemState;
 import org.python.util.PythonInterpreter;
 import common.RefreshScripts;
 
@@ -40,7 +42,10 @@ public class Refresh_Jython_Scripts extends RefreshScripts {
 	/** Run a jython script in its own separate interpreter and namespace. */
 	public void runScript(String path) {
 		try {
-			PythonInterpreter PI = new PythonInterpreter();
+			PySystemState pystate = new PySystemState();
+			pystate.setClassLoader(IJ.getClassLoader());
+			PythonInterpreter PI =
+				new PythonInterpreter(new PyDictionary(), pystate);
 			Jython_Interpreter.importAll(PI);
 			PI.execfile(path);
 		} catch (Throwable t) {
