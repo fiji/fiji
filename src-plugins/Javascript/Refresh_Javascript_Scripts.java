@@ -18,6 +18,7 @@ public class Refresh_Javascript_Scripts extends RefreshScripts {
 
 	public void runScript(String filename) {
 		Context cx = Context.enter();
+		cx.setApplicationClassLoader(IJ.getClassLoader());
 		try {
 			Scriptable scope = new ImporterTopLevel(cx);
 			if (null == Javascript_Interpreter.imports(cx, scope)) IJ.log("Importing ImageJ and java.lang.* classes failed!");
