@@ -1481,34 +1481,6 @@ static int start_ij(void)
 
 	/* For Jython 2.2.1 to work properly with .jar packages: */
 	add_option(options, "-Dpython.cachedir.skip=false", 0);
-
-	class_path = "-Djava.class.path=" + class_path;
-	if (skip_build_classpath) {
-		/* strip trailing ":" */
-		int len = class_path.length();
-		if (class_path[len - 1] == PATH_SEP[0])
-			class_path = class_path.substr(0, len - 1);
-	}
-	else {
-		if (headless)
-			class_path += string(fiji_dir) + "/misc/headless.jar"
-				+ PATH_SEP;
-		class_path += fiji_dir;
-		class_path += "/misc/Fiji.jar";
-		class_path += PATH_SEP;
-		class_path += fiji_dir;
-		class_path += "/ij.jar";
-
-		if (build_classpath(class_path,
-					string(fiji_dir) + "/plugins", 0))
-			return 1;
-		if (build_classpath(class_path, string(fiji_dir) + "/jars", 0))
-			return 1;
-	}
-	if (retrotranslator && build_classpath(class_path,
-				string(fiji_dir) + "/retro", 0))
-		return 1;
-
 	if (plugin_path.str() == "")
 		plugin_path << "-Dplugins.dir=" << fiji_dir;
 	add_option(options, plugin_path, 0);
@@ -1531,16 +1503,6 @@ static int start_ij(void)
 
 	if (is_ipv6_broken())
 		add_option(options, "-Djava.net.preferIPv4Stack=true", 0);
-
-	if (jvm_options != "")
-		add_options(options, jvm_options, 0);
-
-	if (dashdash) {
-		for (int i = 1; i < dashdash; i++)
-			add_option(options, main_argv[i], 0);
-		main_argv += dashdash - 1;
-		main_argc -= dashdash - 1;
-	}
 
 	if (!main_class) {
 		const char *first = main_argv[1];
@@ -1567,7 +1529,46 @@ static int start_ij(void)
 			main_class = "ij.ImageJ";
 	}
 
+	if (retrotranslator && build_classpath(class_path,
+				string(fiji_dir) + "/retro", 0))
+		return 1;
+
+	/* set up class path */
+	class_path = "-Djava.class.path=" + class_path;
+	if (skip_build_classpath) {
+		/* strip trailing ":" */
+		int len = class_path.length();
+		if (class_path[len - 1] == PATH_SEP[0])
+			class_path = class_path.substr(0, len - 1);
+	}
+	else {
+		if (headless)
+			class_path += string(fiji_dir) + "/misc/headless.jar"
+				+ PATH_SEP;
+		class_path += fiji_dir;
+		class_path += "/misc/Fiji.jar";
+		class_path += PATH_SEP;
+		class_path += fiji_dir;
+		class_path += "/ij.jar";
+
+		if (strcmp(main_class, "ij.ImageJ"))
+			if (build_classpath(class_path, string(fiji_dir)
+						+ "/plugins", 0))
+				return 1;
+		if (build_classpath(class_path, string(fiji_dir) + "/jars", 0))
+			return 1;
+	}
 	add_option(options, class_path, 0);
+
+	if (jvm_options != "")
+		add_options(options, jvm_options, 0);
+
+	if (dashdash) {
+		for (int i = 1; i < dashdash; i++)
+			add_option(options, main_argv[i], 0);
+		main_argv += dashdash - 1;
+		main_argc -= dashdash - 1;
+	}
 
 	if (add_class_path_option) {
 		add_option(options, "-classpath", 1);
