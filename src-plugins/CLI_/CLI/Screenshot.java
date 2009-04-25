@@ -54,7 +54,7 @@ public class Screenshot implements Runnable {
 	}
 
 	public void setOut(JTextArea jta) {
-		this.out = out;
+		this.out = jta;
 	}
 	
 	Screenshot(Component component, int seconds, String dir, String file_name) {
