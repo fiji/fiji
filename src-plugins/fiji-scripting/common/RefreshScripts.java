@@ -39,6 +39,7 @@ import java.awt.MenuItem;
 import java.awt.MenuBar;
 import java.util.ArrayList;
 import java.io.File;
+import java.io.IOException;
 import java.io.StringWriter;
 import java.io.PrintWriter;
 import java.io.BufferedReader;
@@ -70,6 +71,9 @@ import java.io.FileReader;
  *
  */
 abstract public class RefreshScripts implements PlugIn {
+	static {
+		System.setProperty("java.class.path", getPluginsClasspath());
+	}
 
 	protected String scriptExtension;
 	protected String languageName;
@@ -386,5 +390,58 @@ abstract public class RefreshScripts implements PlugIn {
                         if (null != r) try { r.close(); } catch (java.io.IOException ioe) { ioe.printStackTrace(); }
 		}
                 return sb.toString();
+        }
+
+	protected static String getPluginsClasspath() {
+		String classPath = System.getProperty("java.class.path");
+		if (classPath == null)
+			classPath = "";
+
+		// strip out all plugin .jar files
+		String pluginsPath = Menus.getPlugInsPath();
+		if (classPath.startsWith(pluginsPath)) {
+			int colon = classPath.indexOf(File.pathSeparator);
+			if (colon < 0)
+				classPath = "";
+			else
+				classPath = classPath.substring(colon + 1);
+		}
+		int i;
+		while ((i = classPath.indexOf(File.pathSeparator + pluginsPath)) > 0) {
+			int colon = classPath.indexOf(File.pathSeparator, i + 1);
+			classPath = classPath.substring(0, i)
+				+ (colon < 0 ? "" : classPath.substring(colon + 1));
+		}
+
+		try {
+			String path = discoverJars(pluginsPath);
+			if (path != null && !path.equals("")) {
+				if (!classPath.equals(""))
+					classPath += File.pathSeparator;
+				classPath += path;
+			}
+		} catch (IOException e) { }
+		return classPath;
+	}
+
+	protected static String discoverJars(String path) throws IOException {
+                File file = new File(path);
+                if (file.isDirectory()) {
+			String result = "";
+			String[] paths = file.list();
+                        for (int i = 0; i < paths.length; i++) {
+				String add = discoverJars(path
+						+ File.separator + paths[i]);
+				if (add == null || add.equals(""))
+					continue;
+				if (!result.equals(""))
+					result += File.pathSeparator;
+                                result += add;
+			}
+			return result;
+		}
+                else if (path.endsWith(".jar"))
+			return path;
+		return null;
         }
 }
