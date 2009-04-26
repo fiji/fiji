@@ -36,4 +36,8 @@ public class GreyScaleFilter implements Filter {
       
       return result;
    }
+
+   public void filter(final int width, final int height, final short[] source, final short[] target) {
+      System.arraycopy(source, 0, target, 0, target.length);
+   }
 }

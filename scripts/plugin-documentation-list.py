@@ -46,9 +46,19 @@ def findMaintainer(tree):
                     plugin_name = tree.find(".//"+__XHTML+"h1").text
                     td = tr.find(__XHTML+'td')
                     if (td.text is None) or (td.text.strip() is None):
-                        return None
+                        # Check if we have a maintainer in the shape of a link or somthing else
+                        if len(td) == 0:
+                            # It has no children, so it is empty
+                            return None
+                        else:
+                            # Find the first subelement which text is not empty
+                            for sub_td in td:
+                                if not ( (sub_td.text is None) or (sub_td.text.strip() is None) ):
+                                    return sub_td.text.strip()
+                            return 'Could not parse mainainer name.'
                     else:
-                        return td.text
+                        # We have a maintainer entered as plain text in the td tag
+                        return td.text.strip()
                 
 def prettyPrint(element):
     txt = ET.tostring(element)
@@ -60,6 +70,7 @@ def getPluginListHTMLpage():
     plugin_list_page_tree = TidyHTMLTreeBuilder.parse(urllib.urlopen(PLUGIN_LIST_URL))
     return plugin_list_page_tree
     
+
 def getPluginListTree():
     """Returns the ElementTree of the plugin hierarchy, as it is on the plugin
     list wiki page."""
@@ -119,6 +130,7 @@ def getPackageTree():
     
     return root
 
+
 def createBlamePage():
     
     # Build blame list
@@ -130,26 +142,27 @@ def createBlamePage():
     plugintree = getPluginListTree()
     plugin_els = plugintree.findall('.//plugin')
     for el in plugin_els:
-        str =  '* [[' + el.attrib['name'] + ']]'
+        plugin_str =  '* [[' + el.attrib['name'] + ']]'
         if el.attrib['has_page'] == 'no':
-            plugin_without_documentation_page.append(str)
+            plugin_without_documentation_page.append(plugin_str)
         else:
             html = getPluginHTMLpage(el)
-            mtnr = findMaintainer(html)
+            mtnr = findMaintainer(html)            
             if mtnr is None:
-                plugin_without_maintainer.append(str)
+                plugin_without_maintainer.append(plugin_str)
+
                 
     packagetree = getPackageTree()
     package_els = packagetree.findall('.//package')
     for el in package_els:
-        str =  '* [[' + el.attrib['name'] + ']]'
+        package_str =  '* [[' + el.attrib['name'] + ']]'
         if el.attrib['has_page'] == 'no':
-            package_without_documentation_page.append(str)
+            package_without_documentation_page.append(package_str)
         else:
             html = getPluginHTMLpage(el)
             mtnr = findMaintainer(html)
             if mtnr is None:
-                package_without_maintainer.append(str)
+                package_without_maintainer.append(package_str)
     
     # Output blame list
     headers = [
@@ -171,6 +184,90 @@ def createBlamePage():
         for line in lists[i]:
             print line
     
+def createMaintainerPage():
+    """Get the maintainer for each plugin and package, and generate a list of
+    maintained item per maintainer."""
+    
+    # Build maintainer dicts
+    plugin_maintainer_dict = {}
+    package_maintainer_dict = {}
+    
+    plugintree = getPluginListTree()
+    plugin_els = plugintree.findall('.//plugin')
+    for el in plugin_els:
+        plugin_str =  '* [[' + el.attrib['name'] + ']]'
+        if el.attrib['has_page'] == 'no':
+            continue
+        else:
+            html = getPluginHTMLpage(el)
+            mtnr = findMaintainer(html)            
+            if mtnr is not None:
+                mtnr = __cleanString(mtnr)
+                if plugin_maintainer_dict.has_key(mtnr):
+                    plugin_maintainer_dict[mtnr].append(plugin_str)
+                else:
+                    plugin_maintainer_dict[mtnr] = [ plugin_str ]
+                    
+                
+    packagetree = getPackageTree()
+    package_els = packagetree.findall('.//package')
+    for el in package_els:
+        package_str =  '* [[' + el.attrib['name'] + ']]'
+        if el.attrib['has_page'] == 'no':
+            continue
+        else:
+            html = getPluginHTMLpage(el)
+            mtnr = findMaintainer(html)
+            if mtnr is not None:
+                mtnr = __cleanString(mtnr)
+                if package_maintainer_dict.has_key(mtnr):
+                    package_maintainer_dict[mtnr].append(package_str)
+                else:
+                    package_maintainer_dict[mtnr] = [ package_str ]
+
+    # Output maintainer dict
+    maintainers = plugin_maintainer_dict.keys() + package_maintainer_dict.keys()
+    maintainers = __unique(maintainers)
+    
+    wiki_page = '';
+    wiki_page = wiki_page  + '{{ #switch:{{{maintainer|}}}' + 2*'\n'
+    
+    for maintainer in maintainers:
+        wiki_page = wiki_page  + '| ' + maintainer + ' = \n'
+        
+        wiki_page = wiki_page  + '\n=== Plugins ===' + 2*'\n'
+        plugins = plugin_maintainer_dict.get(maintainer,[])
+        for plugin in plugins:
+            wiki_page = wiki_page + plugin + '\n'
+
+        wiki_page = wiki_page  + '\n=== Packages ===' + 2*'\n'
+        packages = package_maintainer_dict.get(maintainer,[])
+        for package in packages:
+            wiki_page = wiki_page + package + '\n'
+            
+        wiki_page = wiki_page  + 2*'\n'
+        
+    wiki_page = wiki_page + '}}' + 2*'\n'
+    wiki_page = wiki_page + '<noinclude>' + 2*'\n' \
+                + '__NOTOC__' + 2*'\n' \
+                + 'This template automatically generate a paragraph containing ' \
+                + 'the list of plugins and packages maintained by a maintainer, as ' \
+                + 'stated in the wiki. It is automatically generated from a python ' \
+                + 'script in the Fiji development repository, that can be seen ' \
+                + '[http:////pacific.mpi-cbg.de/cgi-bin/gitweb.cgi?p=fiji.git;a=blob;f=scripts/plugin-documentation-list.py;hb=HEAD here]' \
+                + '.\n\nSyntax is the ' \
+                + 'following:' + 2*'\n' \
+                + '<pre>\n' \
+                + '== Plugins and Packages maintained by Mark Longair ==\n' \
+                + '{{ Maintainers | maintainer = Mark Longair }} \n' \
+                + '</pre>\n' \
+                + '\n' \
+                + '== Plugins and Packages maintained by Mark Longair ==\n' \
+                + '{{ Maintainers | maintainer = Mark Longair }}\n' \
+                + '<' + '\\' + 'noinclude>'
+    
+    print wiki_page
+    
 
 def getPluginHTMLpage(element):
     """Returns the raw html from the wiki page of the plugin referenced by
@@ -183,6 +280,21 @@ def getPluginHTMLpage(element):
 # -------------------------------
 #       PRIVATE FUNCTIONS
 # -------------------------------
+
+def __unique(li):
+    """Return a list made of the unique item of the given list.
+    Not order preserving"""
+    keys = {}
+    for e in li:
+        keys[e] = 1
+    return keys.keys()
+
+def __cleanString(input_str):
+    """Used to remove parenthesis and their content from maintainer strinfgs."""
+    new_str = re.sub('\(.*?\)', '', input_str)
+    new_str = new_str.replace('(','')
+    new_str = new_str.replace(')','')
+    return new_str.strip()
 
 def __join(base,url):
     join = urlparse.urljoin(base,url)
@@ -205,6 +317,7 @@ def __parseAElement(alement):
         attrib['has_page'] = 'yes'
     return attrib
     
+
 
 def __createChildElement(current_name, current_hlevel, body_elements):
     
@@ -283,6 +396,7 @@ def __createChildElement(current_name, current_hlevel, body_elements):
 #       MAIN
 # -------------------------------
 
-createBlamePage()
+#createBlamePage()
 
+createMaintainerPage()
 

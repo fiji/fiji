@@ -49,7 +49,7 @@ public class FastMarching implements StagedAlgorithm
    private PriorityQueue<BandElement> heap = null;
    
    // Constant for the exponent of the image term
-   private static double ALPHA = 0.005d;
+   private final static double ALPHA = 0.005d;
    
    // Arrival time of the last voxel added to the alive set
    private double lastFreezeTime = 0;
@@ -66,10 +66,10 @@ public class FastMarching implements StagedAlgorithm
    // Cache for BandElement objects to avoid continuous reallocation
    private BandElementCache elem_cache = null;
    // Size of that cache (number of elements)
-   private static int ELEMENT_CACHE_SIZE = 1000;
+   private final static int ELEMENT_CACHE_SIZE = 1000;
    
    // preallocate
-   int [] pixel = new int[4];
+   final int [] pixel = new int[4];
    
    /**
     * Constant for Far elements
@@ -94,16 +94,16 @@ public class FastMarching implements StagedAlgorithm
    private static final double EXTREME_GROWTH = 1000;
    
    // green coloured pixel for alive set pixel visualization
-   private static int[] ALIVE_PIXEL = new int[] {0, 255, 0, 0};
+   private static final int[] ALIVE_PIXEL = new int[] {0, 255, 0, 0};
    // red coloured pixel for trial set (band) pixel visualization
-   private static int[] BAND_PIXEL = new int[] {255, 0, 0, 0};
+   private static final int[] BAND_PIXEL = new int[] {255, 0, 0, 0};
    
    // counter for completed step output
    private int steps = 0;
    
    /** Creates a new instance of FastMarching
     */
-   public FastMarching(ImageContainer image, ImageProgressContainer img_progress, StateContainer seedContainer, boolean halt)
+   public FastMarching(final ImageContainer image, final ImageProgressContainer img_progress, final StateContainer seedContainer, final boolean halt)
    {
       /* Just reference the input data. Actual initialization is done later
        * because when this construcor is called this object is queued for later
@@ -121,7 +121,7 @@ public class FastMarching implements StagedAlgorithm
     * Sets the Grey value.
     * Works only before the initialization (i.e. the first iteration)
     */
-   public void setGreyThreshold(int t) {
+   public final void setGreyThreshold(final int t) {
 	   if ( needInit )
 		   GREYVALUE_THRESHOLD = t;
    }
@@ -130,7 +130,7 @@ public class FastMarching implements StagedAlgorithm
     * Returns the Grey value.
     * @return The AGrey value threshold
     */
-   public static int getGreyThreshold() {
+   public final static int getGreyThreshold() {
 	   return GREYVALUE_THRESHOLD;
    }
 
@@ -138,7 +138,7 @@ public class FastMarching implements StagedAlgorithm
     * Sets the distance threshold.
     * Works only before the initialization (i.e. the first iteration)
     */
-   public void setDistanceThreshold(double w) {
+   public final void setDistanceThreshold(final double w) {
 	   if ( needInit )
 		   DISTANCE_THRESHOLD = w;
    }
@@ -147,14 +147,14 @@ public class FastMarching implements StagedAlgorithm
     * Returns the distance threshold.
     * @return The distance threshold
     */
-   public static double getDistanceThreshold() {
+   public static final double getDistanceThreshold() {
 	   return DISTANCE_THRESHOLD;
    }
 
    /* Initialization - called on first call to step(). Does basically things the
     * constructor would have done.
     */
-   private boolean init()
+   private final boolean init()
    {
       // Initialize all the data structures
       map = new DeferredByteArray3D(source.getWidth(), source.getHeight(), source.getImageCount(), 5, FAR);
@@ -187,10 +187,10 @@ public class FastMarching implements StagedAlgorithm
        */       
       for (int i = 0; i< seeds.size(); i++)
       {
-         Coordinate seed = seeds.elementAt(i);
+         final Coordinate seed = seeds.elementAt(i);
          this.seed_greyvalue += probeSeedGreyValue(seed.getX(), seed.getY(), seed.getZ());
          
-         BandElement start = elem_cache.getRecycledBandElement(seed.getX(), seed.getY(), seed.getZ(), 0);
+         final BandElement start = elem_cache.getRecycledBandElement(seed.getX(), seed.getY(), seed.getZ(), 0);
          elementLUT.set(seed.getX(), seed.getY(), seed.getZ(), start);
          map.set(seed.getX(), seed.getY(), seed.getZ(), BAND);
          
@@ -209,7 +209,7 @@ public class FastMarching implements StagedAlgorithm
       
       if (img.getImageCount() > 100)
       {
-         int partsize = img.getImageCount() / 2;
+         final int partsize = img.getImageCount() / 2;
          int offset = 0;
          this.img.applyFilter(new GreyValueErosion(MorphologicalOperator.getTrueMask(5, 5)), 0, partsize - 1);
          this.img.applyFilter(new GreyValueErosion(MorphologicalOperator.getTrueMask(5, 5)), 0, partsize - 1);
@@ -230,16 +230,16 @@ public class FastMarching implements StagedAlgorithm
    }
    
    
-   private void freeze(BandElement elem)
+   private final void freeze(final BandElement elem)
    {
-      int freezeX = elem.getX();
-      int freezeY = elem.getY();
-      int freezeZ = elem.getZ();
+      final int freezeX = elem.getX();
+      final int freezeY = elem.getY();
+      final int freezeZ = elem.getZ();
       
       map.set(freezeX, freezeY, freezeZ, ALIVE);
       elementLUT.set(freezeX, freezeY, freezeZ, null);
       
-      double dist = distances.get(freezeX, freezeY, freezeZ);
+      final double dist = distances.get(freezeX, freezeY, freezeZ);
       
       if (dist > DISTANCE_STOP)
       {
@@ -292,18 +292,18 @@ public class FastMarching implements StagedAlgorithm
    }
    
    // Updates a voxel in the neighbourhood of voxel just moved to alive set
-   private void update(int x, int y, int z)
+   private final void update(final int x, final int y, final int z)
    {
-      byte cell_state = map.get(x, y, z);
+      final byte cell_state = map.get(x, y, z);
       if (cell_state == ALIVE) return;
       
-      double time = calculateArrivalTime(x, y, z);
-      double dist = calculateDistance(x, y, z);
+      final double time = calculateArrivalTime(x, y, z);
+      final double dist = calculateDistance(x, y, z);
       
       // If this voxel is already in the trial update arrival time and distance
       if (cell_state == BAND)
       {
-         BandElement elem = elementLUT.get(x, y, z);
+         final BandElement elem = elementLUT.get(x, y, z);
          
          /* updated distance and arrival time is guaranteed to be <= old
           * distance so omit a time consuming check
@@ -318,7 +318,7 @@ public class FastMarching implements StagedAlgorithm
       // If this voxel is currently in the far set add it to the trial set
       else if (cell_state == FAR)
       {
-         BandElement elem = elem_cache.getRecycledBandElement(x, y, z, time);
+         final BandElement elem = elem_cache.getRecycledBandElement(x, y, z, time);
          heap.offer(elem);
          
          map.set(x, y, z, BAND);
@@ -328,7 +328,7 @@ public class FastMarching implements StagedAlgorithm
    }
    
    // See StagedAlgorithm interface defintion for javadoc
-   public boolean step(int granularity)
+   public final boolean step(final int granularity)
    {
 	  // if something weird happened - don't even try to go any further
 	  if (invalid) {
@@ -356,7 +356,7 @@ public class FastMarching implements StagedAlgorithm
       
       for (int i = 0; i < granularity; i++)
       {
-         BandElement next = heap.poll();
+         final BandElement next = heap.poll();
          freeze(next);
          elem_cache.recycleBandElement(next);
          if (heap.isEmpty())
@@ -382,19 +382,19 @@ public class FastMarching implements StagedAlgorithm
     * FAR, BAND or ALIVE
     * @return The state map
     */
-   public DeferredByteArray3D getStateMap()
+   public final DeferredByteArray3D getStateMap()
    {
       return map;
    }
    
    
-   public StateContainer getStateContainer() {
+   public final StateContainer getStateContainer() {
 	   // If there was a serious problem, return null (we don't have any valid data anyways)
 	   if (invalid) {
 		   return null;
 	   }
 	   
-	   StateContainer sc_fm = new StateContainer();
+	   final StateContainer sc_fm = new StateContainer();
 	   sc_fm.setFastMarching(map, seed_greyvalue);
 	   return sc_fm;
    }
@@ -410,28 +410,28 @@ public class FastMarching implements StagedAlgorithm
       return this.seed_greyvalue;
    }
    
-   private double calculateArrivalTime(int x, int y, int z)
+   private final double calculateArrivalTime(final int x, final int y, final int z)
    {
       // Get neighbour with minimal arrival time in every spatial direction
-      double dist = Double.MAX_VALUE;
+      final double dist = Double.MAX_VALUE;
       
-      double xB = (x > 0 && map.get(x - 1, y, z) == ALIVE) ?
+      final double xB = (x > 0 && map.get(x - 1, y, z) == ALIVE) ?
          arrival.get(x - 1, y, z) : Double.MAX_VALUE;
-      double xF = (x + 1 < map.getXLength() && map.get(x + 1, y, z) == ALIVE) ?
+      final double xF = (x + 1 < map.getXLength() && map.get(x + 1, y, z) == ALIVE) ?
          arrival.get(x + 1, y, z) : Double.MAX_VALUE;
-      double yB = (y > 0 && map.get(x, y - 1, z) == ALIVE) ?
+      final double yB = (y > 0 && map.get(x, y - 1, z) == ALIVE) ?
          arrival.get(x, y - 1, z) : Double.MAX_VALUE;
-      double yF = (y + 1 < map.getYLength() && map.get(x, y + 1, z) == ALIVE) ?
+      final double yF = (y + 1 < map.getYLength() && map.get(x, y + 1, z) == ALIVE) ?
          arrival.get(x, y + 1, z) : Double.MAX_VALUE;
-      double zB = (z > 0 && map.get(x, y, z - 1) == ALIVE) ?
+      final double zB = (z > 0 && map.get(x, y, z - 1) == ALIVE) ?
          arrival.get(x, y , z - 1) : Double.MAX_VALUE;
-      double zF = (z + 1 < map.getZLength() && map.get(x, y, z + 1) == ALIVE) ?
+      final double zF = (z + 1 < map.getZLength() && map.get(x, y, z + 1) == ALIVE) ?
          arrival.get(x, y, z + 1) : Double.MAX_VALUE;
       
       
-      double xVal = (xB < xF) ? xB : xF;
-      double yVal = (yB < yF) ? yB : yF;
-      double zVal = (zB < zF) ? zB : zF;
+      final double xVal = (xB < xF) ? xB : xF;
+      final double yVal = (yB < yF) ? yB : yF;
+      final double zVal = (zB < zF) ? zB : zF;
       
       // Determine quadratic cooefficient.
       int quadCoeff = 0;
@@ -439,7 +439,7 @@ public class FastMarching implements StagedAlgorithm
       if (yVal < Double.MAX_VALUE) quadCoeff++;
       if (zVal < Double.MAX_VALUE) quadCoeff++;
       
-      double speed = getSpeedTerm(x, y, z);
+      final double speed = getSpeedTerm(x, y, z);
       
       /* If only one spatial  direction contributes to the quadratic
        * coefficient, than there ist a much more efficient solution - so this
@@ -485,12 +485,12 @@ public class FastMarching implements StagedAlgorithm
       }
       
       // Discriminat of the general quadratic equation
-      double discriminant = (linCoeff * linCoeff) - (4 * quadCoeff * abs);
+      final double discriminant = (linCoeff * linCoeff) - (4 * quadCoeff * abs);
       
       // Two solutions exist. Calculate the bigger one.
       if (discriminant > 0)
       {
-         double rootDiscriminant = Math.sqrt(discriminant);
+         final double rootDiscriminant = Math.sqrt(discriminant);
          solution = ((-linCoeff) + rootDiscriminant) / (2 * quadCoeff);
       }
       // No solution exists - read below
@@ -516,41 +516,41 @@ public class FastMarching implements StagedAlgorithm
    }
    
    // Calculate the distance to the nearest seedpoint using only alive waypoints
-   private double calculateDistance(int x, int y, int z)
+   private final double calculateDistance(final int x, final int y, final int z)
    {
       // Get distances of all alive neighbours
-      double xB = (x > 0 && map.get(x - 1, y, z) == ALIVE) ?
+      final double xB = (x > 0 && map.get(x - 1, y, z) == ALIVE) ?
          distances.get(x - 1, y, z) : Double.MAX_VALUE;
-      double xF = (x + 1 < map.getXLength() && map.get(x + 1, y, z) == ALIVE) ?
+      final double xF = (x + 1 < map.getXLength() && map.get(x + 1, y, z) == ALIVE) ?
          distances.get(x + 1, y, z) : Double.MAX_VALUE;
-      double yB = (y > 0 && map.get(x, y - 1, z) == ALIVE) ?
+      final double yB = (y > 0 && map.get(x, y - 1, z) == ALIVE) ?
          distances.get(x, y - 1, z) : Double.MAX_VALUE;
-      double yF = (y + 1 < map.getYLength() && map.get(x, y + 1, z) == ALIVE) ?
+      final double yF = (y + 1 < map.getYLength() && map.get(x, y + 1, z) == ALIVE) ?
          distances.get(x, y + 1, z) : Double.MAX_VALUE;
-      double zB = (z > 0 && map.get(x, y, z - 1) == ALIVE) ?
+      final double zB = (z > 0 && map.get(x, y, z - 1) == ALIVE) ?
          distances.get(x, y, z - 1) : Double.MAX_VALUE;
-      double zF = (z + 1 < map.getZLength() && map.get(x, y, z + 1) == ALIVE) ?
+      final double zF = (z + 1 < map.getZLength() && map.get(x, y, z + 1) == ALIVE) ?
          distances.get(x, y, z + 1) : Double.MAX_VALUE;
       
       // Find minimum of the distances
-      double xVal = (xB < xF) ? xB : xF;
-      double yVal = (yB < yF) ? yB : yF;
-      double zVal = (zB < zF) ? zB : zF;
+      final double xVal = (xB < xF) ? xB : xF;
+      final double yVal = (yB < yF) ? yB : yF;
+      final double zVal = (zB < zF) ? zB : zF;
       
-      double dist = Math.min(Math.min(xVal, yVal), zVal);
+      final double dist = Math.min(Math.min(xVal, yVal), zVal);
       
       // Add 1 to the smallest way of its neighbours to reach this voxel
       return (dist + 1);
    }
    
-   private double getSpeedTerm(int x, int y, int z)
+   private final double getSpeedTerm(final int x, final int y, final int z)
    {
       //      int pixelval = inImg.getPixel(x, y, z, pixel)[0];
       //      if (pixelval < seed_greyvalue - GREYVALUE_THRESHOLD
       //              || pixelval > seed_greyvalue + GREYVALUE_THRESHOLD) return 0.0000001;
       //      return Math.pow(Math.E, (-alpha) * pixel[0]);
       //      return Math.pow(Math.E, (-alpha) * gradients[x][y][z]);
-      int greyval = img.getPixel(x, y, z);
+      final int greyval = img.getPixel(x, y, z);
       int greyval_penalty = Math.abs(greyval - this.seed_greyvalue);
       if (greyval_penalty < GREYVALUE_THRESHOLD) greyval_penalty = 1;
       //greyval_penalty *= 100;
@@ -560,7 +560,7 @@ public class FastMarching implements StagedAlgorithm
    }
    
    // Visualize alive (green) and trial set (red)
-   private void visualize(boolean set_output)
+   private final void visualize(final boolean set_output)
    {
 	  // don't visualize if progress container is null
 	  if ( progress == null ) {
@@ -569,7 +569,7 @@ public class FastMarching implements StagedAlgorithm
 	  
 	  int px_alive=0, px_band=0, px_far=0;
 	  
-      ImageProgressContainer output = progress;
+      final ImageProgressContainer output = progress;
       if ( set_output == true ) {
     	  progress.duplicateImages(img);
       }
@@ -604,7 +604,7 @@ public class FastMarching implements StagedAlgorithm
    }
    
    // Derefrence large data structure to allow garbage collection
-   private void cleanup()
+   private final void cleanup()
    {
       arrival = null;
       this.gradients = null;
@@ -615,7 +615,7 @@ public class FastMarching implements StagedAlgorithm
    }
    
    // Determine mean grey value of the seed pixel and neighbourhood
-   private int probeSeedGreyValue(int x, int y, int z)
+   private final int probeSeedGreyValue(final int x, final int y, final int z)
    {
       int value = source.getPixel(x, y, z);
       int count = 1;
@@ -637,11 +637,11 @@ public class FastMarching implements StagedAlgorithm
     * maintains a closed contour of band elments around the alive set, Therefore
     * the contour is rebuild in this method.
     */
-   private void postProcessStatemap()
+   private final void postProcessStatemap()
    {
       IJ.log("Postprocessing Statemap...");
       
-      DeferredByteArray3D processed_map = new DeferredByteArray3D(map.getXLength(), map.getYLength(), map.getZLength(), map.getTileSize(), FAR);
+      final DeferredByteArray3D processed_map = new DeferredByteArray3D(map.getXLength(), map.getYLength(), map.getZLength(), map.getTileSize(), FAR);
       
       for (int i = 0; i < map.getXLength(); i++)
       {
@@ -651,15 +651,22 @@ public class FastMarching implements StagedAlgorithm
             {
                if (map.get(i, j, k) == ALIVE)
                {
+		  /* // NO NEED to compute all branches, what for?
                   boolean inside = ((i > 0 && map.get(i - 1, j, k) == ALIVE) || i == 0);
                   inside = (inside && ((i + 1 < map.getXLength() && map.get(i + 1, j, k) == ALIVE) || (i + 1) == map.getXLength()));
                   inside = (inside && ((j > 0 && map.get(i, j - 1, k) == ALIVE) || j == 0));
                   inside = (inside && ((j + 1 < map.getYLength() && map.get(i, j + 1, k) == ALIVE) || (j + 1) == map.getYLength()));
                   inside = (inside && ((k > 0 && map.get(i, j, k - 1) == ALIVE) || k == 0));
                   inside = (inside && ((k + 1 < map.getZLength() && map.get(i, j, k + 1) == ALIVE) || (k + 1) == map.getZLength()));
-                  
-                  if (inside)
-                  {
+		  */
+
+		  if ( ((i > 0 && map.get(i - 1, j, k) == ALIVE) || i == 0)
+                    && ((i + 1 < map.getXLength() && map.get(i + 1, j, k) == ALIVE) || (i + 1) == map.getXLength())
+                    && ((j > 0 && map.get(i, j - 1, k) == ALIVE) || j == 0)
+                    && ((j + 1 < map.getYLength() && map.get(i, j + 1, k) == ALIVE) || (j + 1) == map.getYLength())
+                    && ((k > 0 && map.get(i, j, k - 1) == ALIVE) || k == 0)
+                    && ((k + 1 < map.getZLength() && map.get(i, j, k + 1) == ALIVE) || (k + 1) == map.getZLength())
+		  ) {
                      processed_map.set(i, j, k, ALIVE);
                   }
                   else

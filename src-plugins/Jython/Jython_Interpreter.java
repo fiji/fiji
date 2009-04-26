@@ -51,7 +51,6 @@ public class Jython_Interpreter extends AbstractInterpreter {
 		PySystemState.initialize(System.getProperties(), System.getProperties(), new String[] { }, IJ.getClassLoader());
 		PySystemState pystate = new PySystemState();
 		pystate.setClassLoader(IJ.getClassLoader());
-		pystate.add_extdir(ij.Menus.getPlugInsPath()); // without this line, the class loader doesn't find plugin jars.
 		pi = new PythonInterpreter(new PyDictionary(), pystate);
 		//redirect stdout and stderr to the screen for the interpreter
 		pi.setOut(out);

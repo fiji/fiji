@@ -75,6 +75,10 @@ public abstract class AbstractInterpreter implements PlugIn {
 	static final protected Hashtable<Class,AbstractInterpreter> instances = new Hashtable<Class,AbstractInterpreter>();
 
 	static {
+		/* set the default class loader to ImageJ's PluginClassLoader */
+		Thread.currentThread()
+			.setContextClassLoader(IJ.getClassLoader());
+
 		// Save history of all open interpreters even in the case of a call to System.exit(0),
 		// which doesn't spawn windowClosing events.
 		Runtime.getRuntime().addShutdownHook(new Thread() { public void run() {
