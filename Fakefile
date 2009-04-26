@@ -205,6 +205,9 @@ CLASSPATH(plugins/Stitching_.jar)=plugins/loci_tools.jar
 
 plugins/Record_Screen.jar <- src-plugins/Record_Screen/ src-plugins/Record_Screen/**/*
 
+CLASSPATH(plugins/CLI_.jar)=jars/fiji-scripting.jar
+plugins/CLI_.jar <- src-plugins/CLI_/CLI/*.java
+
 CLASSPATH(plugins/IO_.jar)=jars/batik.jar
 plugins/*_*.jar <- src-plugins/*_*/**/*.java
 
