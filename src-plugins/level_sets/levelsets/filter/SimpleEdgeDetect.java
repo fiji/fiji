@@ -8,6 +8,7 @@ package levelsets.filter;
 
 import java.awt.*;
 import java.awt.image.*;
+import ij.process.ShortProcessor;
 
 /**
  *
@@ -15,7 +16,7 @@ import java.awt.image.*;
  */
 public class SimpleEdgeDetect implements Filter
 {
-   float[] edgeKernel = null;
+   final float[] edgeKernel;
    
    /** Creates a new instance of SimpleEdgeDetect */
    public SimpleEdgeDetect()
@@ -27,17 +28,24 @@ public class SimpleEdgeDetect implements Filter
       };
    }
 
-   public BufferedImage filter(BufferedImage input)
+   public final BufferedImage filter(final BufferedImage input)
    {
-      BufferedImageOp edge = new ConvolveOp(new Kernel(3, 3, edgeKernel));
+      final BufferedImageOp edge = new ConvolveOp(new Kernel(3, 3, edgeKernel));
       
-      ColorModel cm = input.getColorModel();
+      final ColorModel cm = input.getColorModel();
       
-      BufferedImage srccpy = edge.createCompatibleDestImage(input, cm);
+      final BufferedImage srccpy = edge.createCompatibleDestImage(input, cm);
       input.copyData(srccpy.getRaster());      
-      BufferedImage result = edge.createCompatibleDestImage(input, cm);
+      final BufferedImage result = edge.createCompatibleDestImage(input, cm);
 
       return edge.filter(srccpy, result);
+   }
+
+   public void filter(final int width, final int height, final short[] source, final short[] target) {
+	final ShortProcessor sp = new ShortProcessor(width, height, source, null);
+	final BufferedImage bi = filter(sp.get16BitBufferedImage());
+        final DataBufferUShort db = (DataBufferUShort)bi.getData().getDataBuffer();
+        System.arraycopy(target, 0, db.getData(), 0, target.length);
    }
    
 }

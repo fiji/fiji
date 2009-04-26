@@ -7,24 +7,24 @@ package levelsets.algorithm;
  */
 public class DeferredIntArray3D extends DeferredArray3D
 {
-   int defaultval = 0;
+   final int defaultval;
    
    /** Creates a new instance of DeferredDoubleArray3D */
-   public DeferredIntArray3D(int xdim, int ydim, int zdim, int tilesize, int defaultval)
+   public DeferredIntArray3D(final int xdim, final int ydim, final int zdim, final int tilesize, final int defaultval)
    {
       super(xdim, ydim, zdim, tilesize);
       this.defaultval = defaultval;
    }
    
-   public void set(int x, int y, int z, int value)
+   public final void set(final int x, final int y, final int z, final int value)
    {
-      int[][][] tile = (int[][][]) getTile(x, y, z, true);
+      final int[][][] tile = (int[][][]) getTile(x, y, z, true);
       tile[x % tilesize][y % tilesize][z % tilesize] = value;
    }
    
-   public int get(int x, int y, int z)
+   public final int get(final int x, final int y, final int z)
    {
-      int[][][] tile = (int[][][])getTile(x, y, z, false);
+      final int[][][] tile = (int[][][])getTile(x, y, z, false);
       
       if (tile == null)
       {
@@ -36,14 +36,14 @@ public class DeferredIntArray3D extends DeferredArray3D
       }
    }
    
-   public String getAsString(int x, int y, int z)
+   public final String getAsString(final int x, final int y, final int z)
    {
        return Integer.toString(this.get(x, y, z));
    }
    
-   protected Object createTile(int tilesize)
+   protected final Object createTile(final int tilesize)
    {
-      int[][][] tile = new int [tilesize][tilesize][tilesize];
+      final int[][][] tile = new int [tilesize][tilesize][tilesize];
       
       if (defaultval != 0)
       {

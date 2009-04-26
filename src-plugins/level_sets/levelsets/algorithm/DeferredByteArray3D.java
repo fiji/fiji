@@ -7,24 +7,24 @@ package levelsets.algorithm;
  */
 public class DeferredByteArray3D extends DeferredArray3D
 {
-   private byte defaultval = 0;
+   private final byte defaultval;
    
    /** Creates a new instance of DeferredByteArray3D */
-   public DeferredByteArray3D(int xdim, int ydim, int zdim, int tilesize, byte defaultval)
+   public DeferredByteArray3D(final int xdim, final int ydim, final int zdim, final int tilesize, final byte defaultval)
    {
       super(xdim, ydim, zdim, tilesize);
       this.defaultval = defaultval;
    }
    
-   public void set(int x, int y, int z, byte value)
+   public final void set(final int x, final int y, final int z, final byte value)
    {
-      byte[][][] tile = (byte[][][]) getTile(x, y, z, true);
+      final byte[][][] tile = (byte[][][]) getTile(x, y, z, true);
       tile[x % tilesize][y % tilesize][z % tilesize] = value;
    }
    
-   public byte get(int x, int y, int z)
+   public final byte get(final int x, final int y, final int z)
    {
-      byte[][][] tile = (byte[][][])getTile(x, y, z, false);
+      final byte[][][] tile = (byte[][][])getTile(x, y, z, false);
       
       if (tile == null)
       {
@@ -37,14 +37,14 @@ public class DeferredByteArray3D extends DeferredArray3D
       
    }
    
-   public String getAsString(int x, int y, int z)
+   public final String getAsString(final int x, final int y, final int z)
    {
        return Byte.toString(this.get(x, y, z));
    }
    
-   protected Object createTile(int tilesize)
+   protected final Object createTile(final int tilesize)
    {
-      byte[][][] tile = new byte [tilesize][tilesize][tilesize];
+      final byte[][][] tile = new byte [tilesize][tilesize][tilesize];
       
       if (defaultval != 0)
       {

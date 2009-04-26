@@ -8,8 +8,10 @@ package levelsets.filter;
 
 import java.awt.image.BufferedImage;
 import java.awt.image.Raster;
+import java.awt.image.DataBufferUShort;
 
 import levelsets.ij.ImageContainer;
+import ij.process.ShortProcessor;
 
 
 /**
@@ -58,5 +60,12 @@ public class Sobel implements Filter
 //      
 //      return cnt.getImage(0);
       return null;
+   }
+
+   public void filter(final int width, final int height, final short[] source, final short[] target) {
+	final ShortProcessor sp = new ShortProcessor(width, height, source, null);
+	final BufferedImage bi = filter(sp.get16BitBufferedImage());
+        final DataBufferUShort db = (DataBufferUShort)bi.getData().getDataBuffer();
+        System.arraycopy(target, 0, db.getData(), 0, target.length);
    }
 }
