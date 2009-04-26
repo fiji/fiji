@@ -46,13 +46,10 @@ import java.util.Date;
 import java.util.EnumMap;
 import java.util.Iterator;
 
-import levelsets.algorithm.ActiveContours;
 import levelsets.algorithm.DeferredObjectArray3D;
 import levelsets.algorithm.FastMarching;
-import levelsets.algorithm.GeodesicActiveContour;
 import levelsets.algorithm.LevelSetFactory;
 import levelsets.algorithm.LevelSetImplementation;
-import levelsets.algorithm.SparseFieldLevelSet;
 import levelsets.algorithm.LevelSetFactory.Parameter;
 import levelsets.ij.StateContainer.States;
 
@@ -63,10 +60,14 @@ public class LevelSet implements PlugInFilter {
 
 	private static String [] shapeList = {"none"}; // not implemented yet
 	private static String [] preprocessList = {"none", "Gaussian difference"};
-	private static String [] levelsetList ;
-	private static String [] expansionList = {"outside", "inside"};
-	private static int ls_choice = 0;
 	public enum preprocessChoices { none, gaussian };
+
+	private static boolean fast_marching = true, level_sets = true;
+	private static String [] levelsetList ;
+	private static int ls_choice = 0;
+	private static String [] expansionList = {"outside", "inside"};
+	private static short expansion_choice = 0;
+	static boolean insideout = false;
 
 	protected ImagePlus imp;
 	protected ImageContainer ic = null;
@@ -82,29 +83,31 @@ public class LevelSet implements PlugInFilter {
 	
 	protected preprocessChoices preprocess = preprocessChoices.none;
 	protected ImagePlus shapeStack = null;
-	protected boolean fast_marching = true, level_sets = true;
 	protected int fm_maxiter = 100000, ls_maxiter = 100;
-	boolean ask_params = true;
-	static boolean insideout = false;
+	protected boolean ask_params = true;
 	
 	// Test values
-	static String testImageFn = "/Users/erwin/Desktop/fiji_git/Dot_Blot.tif";
-	static int [] poly_rx = { 78, 78, 291 };
-	static int [] poly_ry = { 79, 150, 69 };
-	static int [] rx = { 260 };
-	static int [] ry = { 180 };
-	static boolean test_dialog = true, test_algorithm = false, test_roi = false;
+	private static String testImageFn = "/Users/erwin/Desktop/fiji_git/Dot_Blot.tif";
+	private static int [] poly_rx = { 78, 78, 291 };
+	private static int [] poly_ry = { 79, 150, 69 };
+	private static int [] rx = { 260 };
+	private static int [] ry = { 180 };
+	private static boolean test_dialog = true, test_algorithm = false, test_roi = false;
 	
 	
 	public LevelSet() {
 		// ask_params = false;
-		lf = new LevelSetFactory();
-		levelsetList = lf.getImplementationNames();  
+		if (lf == null ) {
+			lf = new LevelSetFactory();
+			levelsetList = lf.getImplementationNames();  
+			lf.resetParameters(levelsetList[ls_choice]);
+		}
 		parameters = lf.getParameters();
-		lf.resetParameters(levelsetList[ls_choice]);
 		
-		fm_grey = FastMarching.getGreyThreshold();
-		fm_dist = FastMarching.getDistanceThreshold();
+		if ( fm_grey < 0 ) {
+			fm_grey = FastMarching.getGreyThreshold();
+			fm_dist = FastMarching.getDistanceThreshold();
+		}
 
 	}
 	
@@ -275,10 +278,10 @@ public class LevelSet implements PlugInFilter {
 		
 
 		GenericDialog gd = new GenericDialog("Level Set Segmentation");
-		gd.addCheckbox("Use Fast Marching", true);
+		gd.addCheckbox("Use Fast Marching", fast_marching);
 		gd.addNumericField("Grey value threshold", fm_grey, 0);
 		gd.addNumericField("Distance threshold", fm_dist, 2);
-		gd.addCheckbox("Use Level Sets", true);
+		gd.addCheckbox("Use Level Sets", level_sets);
 		gd.addChoice("Method", levelsetList, levelsetList[0]);
 		gd.addMessage("(Not all parameters used in all methods)");
 		gd.addMessage("Level set weigths (0 = don't use)");
@@ -298,7 +301,7 @@ public class LevelSet implements PlugInFilter {
 		// gd.addChoice("Shape guidance stack", shapeList, shapeList[0]);
 		gd.addMessage("Leve set convergence criterion");
 		gd.addNumericField("Convergence", ((Double) lf.getParameterValue(Parameter.CONVERGENCE)).doubleValue(), 4);
-		gd.addChoice("Region expands to ", expansionList, expansionList[0]);
+		gd.addChoice("Region expands to ", expansionList, expansionList[expansion_choice]);
 		gd.addMessage("");
 		gd.addMessage("Developed by Erwin Frise.\nBased on code by Arne-Michael Toersel\n");
 		
@@ -336,6 +339,7 @@ public class LevelSet implements PlugInFilter {
 		String expansion = gd.getNextChoice();
 		if ( expansion.contentEquals(expansionList[1]) ) {
 			this.insideout = true;
+			this.expansion_choice = 1;
 			IJ.log("Inverse expansion");
 		}
 		
