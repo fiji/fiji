@@ -9,21 +9,21 @@ public class DeferredDoubleArray3D extends DeferredArray3D
    double defaultval = 0;
    
    /** Creates a new instance of DeferredDoubleArray3D */
-   public DeferredDoubleArray3D(int xdim, int ydim, int zdim, int tilesize, double defaultval)
+   public DeferredDoubleArray3D(final int xdim, final int ydim, final int zdim, final int tilesize, final double defaultval)
    {
       super(xdim, ydim, zdim, tilesize);
       this.defaultval = defaultval;
    }
    
-   public void set(int x, int y, int z, double value)
+   public final void set(final int x, final int y, final int z, final double value)
    {
-      double[][][] tile = (double[][][]) getTile(x, y, z, true);
+      final double[][][] tile = (double[][][]) getTile(x, y, z, true);
       tile[x % tilesize][y % tilesize][z % tilesize] = value;
    }
    
-   public double get(int x, int y, int z)
+   public final double get(final int x, final int y, final int z)
    {
-      double[][][] tile = (double[][][])getTile(x, y, z, false);
+      final double[][][] tile = (double[][][])getTile(x, y, z, false);
       
       if (tile == null)
       {
@@ -36,14 +36,14 @@ public class DeferredDoubleArray3D extends DeferredArray3D
       
    }
    
-   public String getAsString(int x, int y, int z)
+   public final String getAsString(final int x, final int y, final int z)
    {
        return Double.toString(this.get(x, y, z));
    }
    
-   protected Object createTile(int tilesize)
+   protected final Object createTile(final int tilesize)
    {
-      double[][][] tile = new double [tilesize][tilesize][tilesize];
+      final double[][][] tile = new double [tilesize][tilesize][tilesize];
       
       if (defaultval != 0)
       {

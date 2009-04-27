@@ -12,10 +12,10 @@ import java.io.IOException;
  */
 public abstract class DeferredArray3D
 {
-   private int xdim, ydim, zdim;
-   private int xtiles, ytiles, ztiles;
-   protected int tilesize = 0;
-   protected Object[] tiles = null;
+   private final int xdim, ydim, zdim;
+   private final int xtiles, ytiles, ztiles;
+   protected final int tilesize;
+   protected final Object[] tiles;
    
    /**
     * Creates a new instance of DeferredArray3D
@@ -24,7 +24,7 @@ public abstract class DeferredArray3D
     * @param zdim Size in Z direction
     * @param tilesize The tile size - length of an edge tile.
     */
-   public DeferredArray3D(int xdim, int ydim, int zdim, int tilesize)
+   public DeferredArray3D(final int xdim, final int ydim, final int zdim, final int tilesize)
    {
       this.tilesize = tilesize;
       
@@ -32,12 +32,17 @@ public abstract class DeferredArray3D
       this.ydim = ydim;
       this.zdim = zdim;
       
-      xtiles = xdim / tilesize;
+      int xtiles = xdim / tilesize;
       if (xdim % tilesize > 0) xtiles++;
-      ytiles = ydim / tilesize;
+      this.xtiles = xtiles;
+
+      int ytiles = ydim / tilesize;
       if (ydim % tilesize > 0) ytiles++;
-      ztiles = zdim / tilesize;
+      this.ytiles = ytiles;
+
+      int ztiles = zdim / tilesize;
       if (zdim % tilesize > 0) ztiles++;
+      this.ztiles = ztiles;
       
       tiles = new Object[xtiles * ytiles * ztiles];
    }
@@ -47,7 +52,7 @@ public abstract class DeferredArray3D
     * directions
     * @return The size of the tile edges
     */
-   public int getTileSize()
+   public final int getTileSize()
    {
       return tilesize;
    }
@@ -60,21 +65,21 @@ public abstract class DeferredArray3D
     * @param create Determines whether the tile should be created if it has not been allocated yet.
     * @return The tile - a three dimensional array of the proper data type
     */
-   protected Object getTile(int x, int y, int z, boolean create)
+   protected final Object getTile(final int x, final int y, final int z, final boolean create)
    {
       checkBounds(x, y, z);
       
-      int x_tile = x / tilesize;
-      int y_tile = y / tilesize;
-      int z_tile = z / tilesize;
+      final int x_tile = x / tilesize;
+      final int y_tile = y / tilesize;
+      final int z_tile = z / tilesize;
       
-      int offset = x_tile + y_tile * xtiles + z_tile * xtiles * ytiles;
+      final int offset = x_tile + y_tile * xtiles + z_tile * xtiles * ytiles;
       
-      Object tile = tiles[offset];
+      final Object tile = tiles[offset];
       if (tile == null && create == true)
       {
          tiles[offset] = createTile(tilesize);
-         tile = tiles[offset];
+         return tiles[offset];
       }
       
       return tile;
@@ -84,7 +89,7 @@ public abstract class DeferredArray3D
     * Returns the size of the whole virtual array in X direction
     * @return The size in X direction
     */
-   public int getXLength()
+   public final int getXLength()
    {
       return xdim;
    }
@@ -93,7 +98,7 @@ public abstract class DeferredArray3D
     *  Returns the size of the whole virtual array in Y direction
     * @return The size in Y direction
     */
-   public int getYLength()
+   public final int getYLength()
    {
       return ydim;
    }
@@ -102,7 +107,7 @@ public abstract class DeferredArray3D
     *  Returns the size of the whole virtual array in Z direction
     * @return The size in Z direction
     */
-   public int getZLength()
+   public final int getZLength()
    {
       return zdim;
    }
@@ -111,11 +116,11 @@ public abstract class DeferredArray3D
     * Dumps the array content into a textfile. A matrix is dumped for every Z layer.
     * @param path Path to the file to be created.
     */
-   public void dumpToFile(String path)
+   public final void dumpToFile(final String path)
    {
       try
       {
-         BufferedWriter out = new BufferedWriter(new FileWriter(new File(path)));
+         final BufferedWriter out = new BufferedWriter(new FileWriter(new File(path)));
          
          out.write(this.getXLength() + " " + this.getYLength() + " " + this.getZLength());
          out.newLine(); out.newLine();
@@ -140,7 +145,7 @@ public abstract class DeferredArray3D
       }
    }
    
-   private void checkBounds(int x, int y, int z)
+   private final void checkBounds(final int x, final int y, final int z)
    {
       if (x < 0 || x > (xdim - 1) || y < 0 || y > (ydim - 1) || z < 0 || z > (zdim - 1))
       {
@@ -154,7 +159,7 @@ public abstract class DeferredArray3D
     * @param tilesize The tile dimension
     * @return The tile - a three dimensional array of the proper data type
     */
-   protected abstract Object createTile(int tilesize);
+   protected abstract Object createTile(final int tilesize);
    
    /**
     * Returns the data at the requested position represented as a String
@@ -163,5 +168,5 @@ public abstract class DeferredArray3D
     * @param z The Z index
     * @return The data as String
     */
-   protected abstract String getAsString(int x, int y, int z);
+   protected abstract String getAsString(final int x, final int y, final int z);
 }

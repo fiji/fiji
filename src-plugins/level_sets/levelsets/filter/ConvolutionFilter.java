@@ -4,6 +4,7 @@ package levelsets.filter;
 
 import java.awt.*;
 import java.awt.image.*;
+import ij.process.ShortProcessor;
 
 /**
  * Performs a convolution operation on the input image.
@@ -48,5 +49,16 @@ public class ConvolutionFilter implements Filter
       BufferedImage result = edge.createCompatibleDestImage(input, cm);
       
       return edge.filter(srccpy, result);
+   }
+
+   /** Calls filter(BufferedImage) to do the processing. */
+   public void filter(final int width, final int height, final short[] source, final short[] target) {
+      final ShortProcessor sp = new ShortProcessor(width, height, source, null);
+      final BufferedImage bi = new BufferedImage(width, height, BufferedImage.TYPE_USHORT_GRAY);
+      final Graphics bg = bi.getGraphics();
+      bg.drawImage(sp.createImage(), 0, 0, null);
+      bg.dispose();
+      final ShortProcessor tp = new ShortProcessor(bi);
+      System.arraycopy((short[])tp.getPixels(), 0, target, 0, target.length);
    }
 }

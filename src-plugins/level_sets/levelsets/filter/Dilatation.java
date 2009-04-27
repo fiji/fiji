@@ -16,12 +16,12 @@ public class Dilatation extends MorphologicalOperator
 {
    
    /** Creates a new instance of Dilatation */
-   public Dilatation(boolean[][] mask)
+   public Dilatation(final boolean[][] mask)
    {
       super(mask);
    }
-   
-   protected void processPosition(int x, int y, WritableRaster raster, Raster in)
+
+   protected final void processPosition(final int x, final int y, final WritableRaster raster, final Raster in)
    {
       for (int i = 0; i < mask.length; i++)
       {
@@ -30,7 +30,7 @@ public class Dilatation extends MorphologicalOperator
             //if (i == center && j == center) continue;
             if (mask[i][j] == true)
             {
-               pixel = in.getPixel(i + x + 1 - center, j + y + 1 - center, pixel);
+               in.getPixel(i + x + 1 - center, j + y + 1 - center, pixel);
                if (pixel[0] > 0)
                {
                   pixel[0] = pixel[1] = pixel[2] = 255;
@@ -40,6 +40,28 @@ public class Dilatation extends MorphologicalOperator
                }
             }
          }
-      }  
+      }
    }
+
+   protected final void processPosition(final int x, final int y, final int width, final short[] source, final short[] target) { // inverse order than raster, in
+      for (int i = 0; i < mask.length; i++)
+      {
+         for (int j = 0; j < mask[0].length; j++)
+         {
+            //if (i == center && j == center) continue;
+            if (mask[i][j] == true)
+            {
+		final int pos = (i + x + 1 - center) + (j + y + 1 - center) * width;
+                //in.getPixel(i + x + 1 - center, j + y + 1 - center, pixel);
+               if (source[pos] > 0)
+               {
+                  //raster.setPixel(x, y, pixel);
+		  target[pos] = source[pos];
+                  break;
+               }
+            }
+         }
+      }
+   }
+   
 }

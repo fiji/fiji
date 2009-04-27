@@ -30,7 +30,7 @@ public class MedianFilter implements Filter
    /**
     * See Filter interface for javadoc
     */
-   public BufferedImage filter(BufferedImage image) {
+   public BufferedImage filter(final BufferedImage image) {
       BufferedImage result = new BufferedImage(
          image.getWidth(null), image.getHeight(null), image.getType());
       if (!(image instanceof WritableRenderedImage)) return null;
@@ -50,12 +50,21 @@ public class MedianFilter implements Filter
       
       return result;
    }
+
+   public void filter(final int width, final int height, final short[] source, final short[] target) {
+      int i = 0;
+      for (int line = 0; line < height; line++) {
+         for (int column = 0; column < width; column++) {
+            target[i++] = getMedianForPixel(column, line, width, height, source);
+         }
+      }
+   }
    
    /** Gets all pixels in the mask area around the center pixel designated by
     * the x/y coordinates. Trims the mask if near the image boundary. Then
     * sorts the pixel values and returns the median value.
     */
-   private int getMedianForPixel(int x, int y, Raster raster)
+   private final int getMedianForPixel(final int x, final int y, final Raster raster)
    {
       // Trim mask if needed (at the image boundary)
       int radius = maskradius;
@@ -88,5 +97,47 @@ public class MedianFilter implements Filter
       
       // Return median
       return result.intValue();
+   }
+
+   private final short getMedianForPixel(final int x, final int y, final int width, final int height, final short[] source)
+   {
+      // Trim mask if needed (at the image boundary)
+      int radius = maskradius;
+      if (x - radius  < 0) radius  = x;
+      if (y - radius  < 0) radius  = y;
+      if (x + radius  > width - 1)
+      {
+         radius  = width - 1 - x;
+      }
+      if (y + radius  > height - 1)
+      {
+         radius = height - 1 - y;
+      }
+
+      final short[] vals = new short[(2 * radius + 1) * (2 * radius + 1)];
+      
+      int k = 0;
+      // Get pixels and add to the lists of elements to be sorted
+      for (int i = x - radius ; i <= x + radius ; i++)
+      {
+         for (int j = y - radius ; j <= y + radius ; j++)
+         {  
+            //pixel = raster.getPixel(i, j, pixel);
+            //sortlist.add(new Integer(pixel[0]));
+	    vals[k++] = source[i * width + j];
+         }
+      }
+      
+      // Sort the list
+      //Collections.sort(sortlist);
+      //int index = (sortlist.size() - 1) / 2;
+      //Integer result = sortlist.get(index);      
+      //sortlist.clear();
+
+      Arrays.sort(vals);
+      
+      // Return median
+      //return result.intValue();
+      return vals[(vals.length - 1) / 2];
    }
 }

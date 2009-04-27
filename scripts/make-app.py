@@ -28,68 +28,74 @@ def make_app():
 	os.makedirs('Fiji.app/images')
 	shutil.copy('images/icon.png', 'Fiji.app/images/')
 	shutil.copy('ij.jar', 'Fiji.app/')
-	for d in ['plugins', 'macros', 'jars', 'misc', 'retro', 'luts']:
+	for d in ['plugins', 'macros', 'jars', 'misc', 'retro', 'luts', \
+			'scripts']:
 		shutil.copytree(d, 'Fiji.app/' + d)
 	if os.path.isdir('Fiji.app/jars/jython2.2.1/cachedir'):
 		removedirs('Fiji.app/jars/jython2.2.1/cachedir')
 
-def add_macosx_app():
-	if copy_jre:
-		os.system('git archive --prefix=Fiji.app/java/macosx-java3d/ ' \
-			+ 'origin/java/macosx-java3d: | ' \
-			+ 'tar xvf -')
-
-	macos='Fiji.app/Contents/MacOS/'
-	os.makedirs(macos)
-	if (host_platform == platform):
-		shutil.copy('fiji', macos + 'fiji-macosx')
-		shutil.copy('fiji-tiger', macos)
-	else:
-		shutil.copy('precompiled/fiji-macosx', macos + 'fiji-macosx')
-		shutil.copy('precompiled/fiji-tiger', macos)
-	chmod(macos + 'fiji-macosx', 0755)
-	chmod(macos + 'fiji-tiger', 0755)
-	shutil.copy('Info.plist', 'Fiji.app/Contents/')
-	images='Fiji.app/Contents/Resources/'
-	os.makedirs(images)
-	shutil.copy('images/Fiji.icns', images)
-
-def find_java_tree(platform):
+def get_java_platform(platform):
 	if platform == 'linux64':
 		platform = 'linux-amd64'
-	java = 'origin/java/' + platform
-	version = execute('git ls-tree --name-only ' + java).replace('\n', '')
-	return java + ':' + version + '/jre'
+	elif platform == 'macosx':
+		platform = 'macosx-java3d'
+	return platform
 
-def add_other_app(platform):
+def find_java_tree(platform):
+	java = 'java/' + platform
+	revision = execute('git rev-parse HEAD:' + java)
+	if platform == 'macosx-java3d':
+		return [revision.replace('\n', ''), platform]
+	tree = execute('git --git-dir=' + java + '/.git ls-tree ' + revision)
+	return [tree[12:52] + ':jre',
+		platform + '/' + tree[53:].replace('\n', '') + '/jre']
+
+def copy_java(platform):
+	java_platform = get_java_platform(platform)
+	java_tree = find_java_tree(java_platform)
+	os.system('git --git-dir=java/' + java_platform + '/.git ' \
+		+ 'archive --prefix=Fiji.app/java/' + java_tree[1] + '/ ' \
+			+ java_tree[0] + ' | ' \
+			+ 'tar xf -')
+
+def copy_platform_specific_files(platform):
 	if copy_jre:
-		java_tree = find_java_tree(platform)
-		java = java_tree.replace(':', '/').replace('origin/', '')
+		print 'Copying Java files for', platform
+		copy_java(platform)
 
-		os.system('git archive --prefix=Fiji.app/' + java + '/ ' \
-			+ java_tree + ' | ' \
-			+ 'tar xvf -')
-
-	if platform.startswith('win'):
-		exe = ".exe"
+	print 'Copying platform-specific files for', platform
+	if platform == 'macosx':
+		macos='Fiji.app/Contents/MacOS/'
+		os.makedirs(macos)
+		if (host_platform == platform):
+			shutil.copy('fiji', macos + 'fiji-macosx')
+			shutil.copy('fiji-tiger', macos)
+		else:
+			shutil.copy('precompiled/fiji-macosx',
+					macos + 'fiji-macosx')
+			shutil.copy('precompiled/fiji-tiger', macos)
+		chmod(macos + 'fiji-macosx', 0755)
+		chmod(macos + 'fiji-tiger', 0755)
+		shutil.copy('Info.plist', 'Fiji.app/Contents/')
+		images='Fiji.app/Contents/Resources/'
+		os.makedirs(images)
+		shutil.copy('images/Fiji.icns', images)
 	else:
-		exe = ''
+		if platform.startswith('win'):
+			exe = ".exe"
+		else:
+			exe = ''
 
-	binary = 'fiji-' + platform + exe
-	if (host_platform == platform):
-		shutil.copy('fiji' + exe, 'Fiji.app/' + binary)
-	else:
-		shutil.copy('precompiled/' + binary, 'Fiji.app/' + binary)
-	chmod('Fiji.app/' + binary, 0755)
+		binary = 'fiji-' + platform + exe
+		if (host_platform == platform):
+			shutil.copy('fiji' + exe, 'Fiji.app/' + binary)
+		else:
+			shutil.copy('precompiled/' + binary, 'Fiji.app/' + binary)
+		chmod('Fiji.app/' + binary, 0755)
 
 make_app()
 if platform == 'all':
 	for p in all_platforms:
-		if p == 'macosx':
-			add_macosx_app()
-		else:
-			add_other_app(p)
-elif platform == "macosx":
-	add_macosx_app()
+		copy_platform_specific_files(p)
 else:
-	add_other_app(platform)
+	copy_platform_specific_files(platform)

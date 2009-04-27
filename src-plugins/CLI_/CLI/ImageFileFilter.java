@@ -32,16 +32,9 @@ import java.io.FilenameFilter;
 
 public class ImageFileFilter implements FilenameFilter {
 	
-	String image_file_name;
-	final String ASTERISK = "*";
-	final String DOT = ".";
-	final String JPG = ".jpg";
-	final String TIF = ".tif";
-	final String PNG = ".png";
-	final String GIF = ".gif";
-	final String JPEG = ".jpeg";
-	final String TIFF = ".tiff";
-	
+	final String image_file_name;
+	static final String ASTERISK = "*";
+
 	ImageFileFilter(String image_file_name) {
 		this.image_file_name = image_file_name;
 	}
@@ -50,9 +43,13 @@ public class ImageFileFilter implements FilenameFilter {
 		image_file_name = null;
 	}
 	
-	public boolean accept(File dir, String name) {
+	public boolean accept(final File dir, final String name) {
 
-		int dot_index = name.lastIndexOf(DOT);
+		if (new File(dir.getAbsolutePath().replace('\\', '/') + "/" + name).isHidden()) {
+			return false;
+		}
+
+		final int dot_index = name.lastIndexOf('.');
 		if (-1 == dot_index) {
 			return false;
 		}
@@ -61,61 +58,31 @@ public class ImageFileFilter implements FilenameFilter {
 
 		if (null != image_file_name) {
 			// 'open name'	if file is an image and image_file_name equals name
-			if ((extension.endsWith(JPG)
-	 		  || extension.endsWith(TIF)
-	 		  || extension.endsWith(PNG)
-	 		  || extension.endsWith(GIF)
-	 		  || extension.endsWith(TIFF)
-	 		  || extension.endsWith(JPEG)
-			  ) && equal(image_file_name, name)
-			) {
+			if (equal(image_file_name, name))
+			{
 				return true;
 			}
 			// 'open *'	if file is an image and image_file_name is an ASTERISK
-			if ((extension.endsWith(JPG)
-	 		  || extension.endsWith(TIF)
-	 		  || extension.endsWith(PNG)
-	 		  || extension.endsWith(GIF)
-	 		  || extension.endsWith(TIFF)
-	 		  || extension.endsWith(JPEG)
-			  ) && equal(image_file_name, ASTERISK)
-		 	) {
+			if (equal(image_file_name, ASTERISK))
+		 	{
 				return true;
 			}
 			// 'open *name*'	if file is an image, image_file_name starts and ends with ASTERISK and name contains image_file_name
-			else if ((extension.endsWith(JPG)
-	 		  || extension.endsWith(TIF)
-	 		  || extension.endsWith(PNG)
-	 		  || extension.endsWith(GIF)
-	 		  || extension.endsWith(TIFF)
-	 		  || extension.endsWith(JPEG)
-			  ) && image_file_name.startsWith(ASTERISK)
-			    && image_file_name.endsWith(ASTERISK)
-			    && -1 != name.indexOf(image_file_name.substring(1, image_file_name.length()-1))
+			else if (image_file_name.startsWith(ASTERISK)
+			      && image_file_name.endsWith(ASTERISK)
+			      && -1 != name.indexOf(image_file_name.substring(1, image_file_name.length()-1))
 			    ) {
 				return true;
 			}
 			//'open name*' or if file is an image and starts with image_file_name and ends with ASTERISK
-			else if ((extension.endsWith(JPG)
-		 	  || extension.endsWith(TIF)
-		 	  || extension.endsWith(PNG)
-		 	  || extension.endsWith(GIF)
-		 	  || extension.endsWith(TIFF)
-		 	  || extension.endsWith(JPEG)
-			  ) && image_file_name.endsWith(ASTERISK)
-			    && name.startsWith(image_file_name.substring(0,image_file_name.length()-1))
+			else if (image_file_name.endsWith(ASTERISK)
+			      && name.startsWith(image_file_name.substring(0,image_file_name.length()-1))
 		 	) {
 				return true;
 			}
 			//'open *name'	or if file is an image and ends with image_file_name
-			else if ((extension.endsWith(JPG)
-		 	  || extension.endsWith(TIF)
-		 	  || extension.endsWith(PNG)
-		 	  || extension.endsWith(GIF)
-		 	  || extension.endsWith(TIFF)
-		 	  || extension.endsWith(JPEG)
-			  ) && image_file_name.startsWith(ASTERISK)
-			    && name.endsWith(image_file_name.substring(1)) 
+			else if (image_file_name.startsWith(ASTERISK)
+			      && name.endsWith(image_file_name.substring(1)) 
 		 	) {
 				return true;
 			}
@@ -125,19 +92,7 @@ public class ImageFileFilter implements FilenameFilter {
 			}
 			
 		} else {
-			//if file is an image
-			if (extension.endsWith(JPG)
-	 		  || extension.endsWith(TIF)
-	 		  || extension.endsWith(PNG)
-	 		  || extension.endsWith(GIF)
-	 		  || extension.endsWith(TIFF)
-	 		  || extension.endsWith(JPEG)
-			  )
-		 	{
-				return true;
-			} else {
-				return false;
-			}
+			return true;
 		}
 	}
 
