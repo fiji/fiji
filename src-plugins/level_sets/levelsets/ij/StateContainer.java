@@ -271,7 +271,7 @@ public class StateContainer {
 		// IJ.log("Got bounding rectangle with coordinates " + x_start + "/" + x_end + "/" + y_start + "/" + y_end);
 
 		if ( mask == null ) {
-			IJ.log("Rectangle, just parsing borders");
+			IJ.log("Note: ROI is rectangle, parsing borders");
 			int z = this.roi_z - 1; // TODO z is not possible with roi
             for (int y = y_start; y < y_end; y++) {
                for (int x = x_start; x < x_end; x++) {
@@ -286,7 +286,7 @@ public class StateContainer {
             }
             // IJ.log("Zero level= " + px_zero + ", Inside = " + px_inside );
 		} else {
-			IJ.log("Shape, parsing shape");
+			IJ.log("Note: ROI is shape, parsing shape");
 			int z = this.roi_z - 1;
 			for (int y = 0; y < roi_r.height; y++) {
 				for (int x = 0; x < roi_r.width; x++) {

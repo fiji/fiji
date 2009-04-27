@@ -133,7 +133,7 @@ public abstract class SparseFieldLevelSet implements StagedAlgorithm
    protected double zScale = 0;
    
    // verbosity of log output
-   int verbose = 0;
+   final int  verbose = 0;
    
    /**
     * Creates a new instance of LevelSet
@@ -232,7 +232,7 @@ public abstract class SparseFieldLevelSet implements StagedAlgorithm
       
       needInit = false;
       
-      IJ.log("Sparse field done init");
+      if ( verbose > 0 ) IJ.log("Sparse field done init");
       IJ.log("Delta t = " + DELTA_T);
       //      System.exit(0);
    }
@@ -281,7 +281,7 @@ public abstract class SparseFieldLevelSet implements StagedAlgorithm
       // No point to continue, abort and tell the user about the fact
       if ( Double.isNaN(total_change) || layers[ZERO_LAYER].size() == 0 ) {
     	  invalid = true;
-    	  IJ.error("Level Sets encountered numerical instability (i.e. the contour probably expanded to infinity) - Aborted");
+    	  IJ.error("Level Sets encountered numerical instability (i.e. the contour probably expanded to infinity or 0) - Aborted");
     	  return(false);
       }
       
@@ -295,10 +295,15 @@ public abstract class SparseFieldLevelSet implements StagedAlgorithm
 		  return; 
 	  }
 	   
-      IJ.log("Change was " + (total_change / (layers[ZERO_LAYER].size())));
-      // Just for debugging: find out details so that we can catch numerical instability
-      // IJ.log("Change splits into total change=" + total_change + ", ZERO level layers" + layers[ZERO_LAYER].size());
-      if ( verbose > 0 ) {
+	  if ( needInit == false ) {
+		  // Info is only relevant after initialization
+		  IJ.log("Iteration step: convergence = " + (total_change / num_updated) + 
+				  ", number of pixels changed = " + (total_change / (layers[ZERO_LAYER].size())));
+	  }
+      if ( verbose > 1 ) {
+          // Just for debugging: find out details so that we can catch numerical instability
+          IJ.log("Change splits into total change=" + total_change + ", ZERO level layers" + layers[ZERO_LAYER].size());
+          // Print stats 
     	  IJ.log("Stats: ");
     	  checkConsistency();
     	  //        inImg.copyData(img.getRaster());
@@ -479,7 +484,8 @@ public abstract class SparseFieldLevelSet implements StagedAlgorithm
       }
       
       // check for convergence
-      IJ.log("Debug: Convergence = " + (total_change / num_updated) + ", change=" + total_change + ", num_updated=" + num_updated);
+      if ( verbose > 0 ) 
+    	  IJ.log("Debug: Convergence = " + (total_change / num_updated) + ", change=" + total_change + ", num_updated=" + num_updated);
 //      if ((total_change / num_updated) < CONVERGENCE_FACTOR)
       if ((total_change / num_updated) < CONVERGENCE_WEIGHT)
       {
@@ -849,7 +855,7 @@ public abstract class SparseFieldLevelSet implements StagedAlgorithm
             }
          }
       }
-      IJ.log("From FastMarching: Found pixels " +px_zero+" ZERO, " +px_inside + " INSIDE,"+px_outside + " OUTSIDE");
+      IJ.log("Initiated boundary pixels: " +px_zero+" ZERO, " +px_inside + " INSIDE, "+px_outside + " OUTSIDE");
       if ( px_inside == 0 && px_zero == 0 ) {
        	  invalid = true;
        	  IJ.error("Level Sets didn't get any starting shape - Aborting");
@@ -862,7 +868,7 @@ public abstract class SparseFieldLevelSet implements StagedAlgorithm
     	  } else {
     		  this.seed_greyvalue = grey_inside / px_zero;
     	  }
-    	  IJ.log("Grey seed not set - setting to " + this.seed_greyvalue);
+    	  IJ.log("Grey seed not set - setting to mean of ROI boundary = " + this.seed_greyvalue);
       }
    }
    
@@ -910,7 +916,7 @@ public abstract class SparseFieldLevelSet implements StagedAlgorithm
    {
       for (int i = 0; i < (2 * NUM_LAYERS + 1); i++)
       {
-         IJ.log("Layer " + (i - NUM_LAYERS) + " : " + layers[i].size() +" elements");
+         if (verbose > 0) IJ.log("Layer " + (i - NUM_LAYERS) + " : " + layers[i].size() +" elements");
          final Iterator<BandElement> it = layers[i].iterator();
          while (it.hasNext())
          {
@@ -934,7 +940,7 @@ public abstract class SparseFieldLevelSet implements StagedAlgorithm
          }
       }
       
-      IJ.log("-----------------------------------------------------");
+      if (verbose > 0) IJ.log("-----------------------------------------------------");
    }
    
    protected void cleanup()

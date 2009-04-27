@@ -7,13 +7,23 @@ import levelsets.ij.StateContainer;
 
 
 /**
- * Implementation of the Geodesic active contour algorithm as described by .
+ * Implementation of the Geodesic active contour algorithm as described by 
+ * Caselles et.al. (International Journal of Computer Vision 22:61)
+ * and implemented in the in the Geodesic Active Contour class of ITK.
  * This class provides the getDeltaPhi function to the SparseFieldLevelSet:
- * deltaPhi = - DELTA_T * image_term * (advection * ADVECTION_FORCE + curvature * CURVATURE_EPSILON)
+ * deltaPhi = - DELTA_T * (advection * -gradient(g) * ADVECTION_FORCE + 
+ * 						propagation * g * PROPAGATION_WEIGHT + 
+ * 						curvature * g * CURVATURE_WEIGHT)
  * with:
- * image_term = 1 / (1 + ((gradients[x][y][z] + greyvalue_penalty) * 2))
+ * g = 1 / (1 + (gradients[x][y][z]) * 1)
  * advection, curvature from the base functions (upwind scheme and mean curvature)
  * ADVECTION_FORCE, CURVATURE_EPSILON are weights.
+ * 
+ * Geodesic active contours can find Canny-type edges in the region of interest,
+ * while also introducing a smoothing term
+ * . 
+ * This is a first effort that is not necessarily feature complete or the entirely correct. 
+ * Use with caution. 
 */
 
 
@@ -53,6 +63,7 @@ public class GeodesicActiveContour extends LevelSetImplementation {
 	protected final void init() {
 	    super.init();
 
+	    // pre-calculate the gradients and the gradient of the gradient in init()
 	    gradients = this.img.calculateGradients();
 		for (int z = 0; z < gradients[0][0].length; z++) {
 			for (int x = 1; x < gradients.length - 1; x++) {
@@ -119,9 +130,12 @@ public class GeodesicActiveContour extends LevelSetImplementation {
 		double zFdiff = 0;
 		
 		if ( grad_gradients[x][y][z] > 0 ) {
-			result = xBdiff * grad_gradients[x][y][z] + yBdiff * grad_gradients[x][y][z] + zBdiff * grad_gradients[x][y][z];
+//			result = xBdiff * grad_gradients[x][y][z] + yBdiff * grad_gradients[x][y][z] + zBdiff * grad_gradients[x][y][z];
+			// should be faster
+			result = (xBdiff  + yBdiff  + zBdiff) * grad_gradients[x][y][z];
 		} else {
-			result = xFdiff * grad_gradients[x][y][z] + yFdiff * grad_gradients[x][y][z] + zFdiff * grad_gradients[x][y][z];			
+//			result = xFdiff * grad_gradients[x][y][z] + yFdiff * grad_gradients[x][y][z] + zFdiff * grad_gradients[x][y][z];			
+			result = (xFdiff + yFdiff + zFdiff) * grad_gradients[x][y][z];			
 		}	
 		
 		return result;
@@ -227,12 +241,6 @@ public class GeodesicActiveContour extends LevelSetImplementation {
 		return curvature * deltaPhi * gradients[x][y][z];
 	}
 	
-	private final double getGradientImageTerm(int x, int y, int z)
-	{
-		return gradients[x][y][z];
-		// return (1 / (1 + ((gradients[x][y][z]) * 2)));
-	}
-
 
 	
 	   /**

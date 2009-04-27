@@ -325,7 +325,7 @@ public class ImageContainer
     */
    public final double[][][] calculateGradients()
    {
-      IJ.log("Calculating gradients");
+      // IJ.log("Calculating gradients");
       final double zScale = getzScale();
       final double[][][] gradients = new double[this.getWidth()][this.getHeight()][this.getImageCount()];
 

@@ -92,7 +92,7 @@ public class LevelSet implements PlugInFilter {
 	private static int [] poly_ry = { 79, 150, 69 };
 	private static int [] rx = { 260 };
 	private static int [] ry = { 180 };
-	private static boolean test_dialog = true, test_algorithm = false, test_roi = false;
+	private static boolean test_dialog = false, test_algorithm = false, test_roi = false;
 	
 	
 	public LevelSet() {
@@ -201,7 +201,7 @@ public class LevelSet implements PlugInFilter {
 		// Fast marching
 		if ( fast_marching ) {
 			final FastMarching fm = new FastMarching(ic, progressImage, sc_roi, true);
-			IJ.log("(" + new Date(System.currentTimeMillis()) + "): Starting Fast Marching");
+			IJ.log("Fast Marching: Starting " + new Date(System.currentTimeMillis()));
 			for ( iter = 0; iter < this.fm_maxiter; iter ++ ) {
 				if ( fm.step(this.ITER_INC) == false ) {
 					break;
@@ -211,7 +211,7 @@ public class LevelSet implements PlugInFilter {
 					return;
 				}
 			}
-			IJ.log("(" + new Date(System.currentTimeMillis()) + "): Finished Fast Marching");
+			IJ.log("Fast Marching: Finished " + new Date(System.currentTimeMillis()));
 			sc_ls = fm.getStateContainer();
 			if ( sc_ls == null ) {
 				// don't continue if something happened during Fast Marching
@@ -228,7 +228,8 @@ public class LevelSet implements PlugInFilter {
 		
 		// Level set
 		if ( level_sets ) {
-			IJ.log("(" + new Date(System.currentTimeMillis()) + "): Starting Level Set");
+			IJ.log("Level Set (" + levelsetList[ls_choice] +"): Starting " + new Date(System.currentTimeMillis()));
+			IJ.log("Note: Each iteration step is " + ITER_INC + " iterations");
 
 			LevelSetImplementation ls = lf.getImplementation(levelsetList[ls_choice], ic, progressImage, sc_ls);
 
@@ -241,7 +242,7 @@ public class LevelSet implements PlugInFilter {
 					return;
 				}
 			}
-			IJ.log("(" + new Date(System.currentTimeMillis()) + "): Finished Level Set");
+			IJ.log("Level Set: Finished " + new Date(System.currentTimeMillis()));
 			sc_final = ls.getStateContainer();
 		}
 		
@@ -335,15 +336,14 @@ public class LevelSet implements PlugInFilter {
 		}
 		
 		lf.setParameterValue(Parameter.CONVERGENCE, new Double(gd.getNextNumber()));
-		IJ.log("Convergence to " + lf.getParameterValue(Parameter.CONVERGENCE));
 		String expansion = gd.getNextChoice();
 		if ( expansion.contentEquals(expansionList[1]) ) {
 			this.insideout = true;
 			this.expansion_choice = 1;
-			IJ.log("Inverse expansion");
 		}
 		
 		if ( test_dialog ) {
+			IJ.log("Convergence to " + lf.getParameterValue(Parameter.CONVERGENCE));
 			IJ.log("Fast Marching enabled = " + fast_marching );
 			IJ.log("Fast Marching: fm_grey=" + fm_grey + " , fm_dist=" + fm_dist);
 			IJ.log("Level Sets enabled = " + level_sets );
@@ -351,6 +351,9 @@ public class LevelSet implements PlugInFilter {
 					", w_curv=" + lf.getParameterValue(Parameter.W_CURVATURE) + 
 					", w_gray=" + lf.getParameterValue(Parameter.TOL_GRAYSCALE) + 
 					", f_conv=" + lf.getParameterValue(Parameter.CONVERGENCE));
+			if ( this.insideout == true ) {
+				IJ.log("Inverse expansion");
+			}
 		}
 		
 		
