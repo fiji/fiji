@@ -38,6 +38,11 @@ clone_and_check='(test -d release-fiji ||
 	git clean -d -f &&
 	for d in $(git ls-files --stage | sed -n "s/^160.*	//p");
 	do
+		case "$d" in
+		java/*)
+			git submodule update --init $d || break
+			continue;;
+		esac
 		test -z "$(ls $d/)" || break;
 	done'
 
