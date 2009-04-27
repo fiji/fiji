@@ -20,7 +20,7 @@ import ij.process.ImageProcessor;
 
 import java.awt.image.IndexColorModel;
 
-public class Daltonize implements PlugInFilter {
+public class Simulate_Color_Blindness implements PlugInFilter {
 	ImagePlus image;
 
 	public static int NORMAL = 0;
