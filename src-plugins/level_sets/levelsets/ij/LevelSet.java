@@ -340,6 +340,9 @@ public class LevelSet implements PlugInFilter {
 		if ( expansion.contentEquals(expansionList[1]) ) {
 			this.insideout = true;
 			this.expansion_choice = 1;
+		} else {
+			this.insideout = false;
+			this.expansion_choice = 0;			
 		}
 		
 		if ( test_dialog ) {

@@ -124,10 +124,10 @@ public abstract class SparseFieldLevelSet implements StagedAlgorithm
 
    // Control constants for level set evolution equation
 	// Time step for numerical solution - should be set by derived class dependent on other params
-   protected static double DELTA_T = 1d/6d;
+   protected double DELTA_T = 1d/6d;
    // Mean change per updated pixel threshold for convergence
    protected final double CONVERGENCE_WEIGHT;
-   protected static double CONVERGENCE_FACTOR;
+   protected double CONVERGENCE_FACTOR;
    
    // Scaling factor for the slice spacing to pixel spacing ratio  
    protected double zScale = 0;
@@ -234,7 +234,6 @@ public abstract class SparseFieldLevelSet implements StagedAlgorithm
       
       if ( verbose > 0 ) IJ.log("Sparse field done init");
       IJ.log("Delta t = " + DELTA_T);
-      //      System.exit(0);
    }
    
    /**
@@ -262,7 +261,7 @@ public abstract class SparseFieldLevelSet implements StagedAlgorithm
          //convergence = true;
          if (convergence)
          {
-            IJ.log("Converged!");
+            IJ.log("Converged! Final iteration:");
             break;
          }
          
