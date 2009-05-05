@@ -8,7 +8,7 @@ package levelsets.algorithm;
 public class Coordinate
 {
    // The coordinates
-   private int x, y, z;
+   public int x, y, z;
    
    /**
     * Creates a new instance of Coordinate
