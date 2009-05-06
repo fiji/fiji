@@ -133,6 +133,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/PIV_analyser.jar \
 	plugins/Record_Screen.jar \
 	plugins/Video_Editing.jar \
+	plugins/Sync_Win.jar \
 	\
 	misc/Fiji.jar
 
@@ -210,6 +211,7 @@ CLASSPATH(plugins/CLI_.jar)=jars/fiji-scripting.jar
 plugins/CLI_.jar <- src-plugins/CLI_/CLI/*.java
 
 CLASSPATH(plugins/IO_.jar)=jars/batik.jar
+CLASSPATH(plugins/Sync_Win.jar)=plugins/Image_5D.jar
 plugins/*_*.jar <- src-plugins/*_*/**/*.java
 
 plugins/**/*.class <- src-plugins/**/*.java
