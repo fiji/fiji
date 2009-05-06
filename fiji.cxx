@@ -578,6 +578,13 @@ static const char *get_fiji_dir(const char *argv0)
 	else if (!suffixcmp(argv0, len, "/Fiji.app/Contents/MacOS"))
 		slash -= strlen("/Contents/MacOS");
 #endif
+#ifdef WIN32
+	else if (!suffixcmp(argv0, len, "/PRECOM~1") ||
+			!suffixcmp(argv0, len, "\\PRECOM~1")) {
+		slash -= strlen("/PRECOM~1");
+		run_precompiled = true;
+	}
+#endif
 
 	buffer = buffer.substr(0, slash - argv0);
 #ifdef WIN32
