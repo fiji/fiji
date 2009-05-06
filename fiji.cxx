@@ -1250,17 +1250,33 @@ static void try_with_less_memory(size_t memory_size)
 	option << "--mem=" << memory_size << "m";
 	char *memory_option = strdup(option.str().c_str());
 
-	char **new_argv = (char **)malloc((3 + main_argc_backup)
-			* sizeof(char *));
-	memcpy(new_argv, main_argv_backup, main_argc_backup * sizeof(char *));
-	new_argv[main_argc_backup] = memory_option;
-	new_argv[main_argc_backup + 1] = NULL;
+	main_argc = main_argc_backup;
+	main_argv = main_argv_backup;
+	char **new_argv = (char **)malloc((3 + main_argc) * sizeof(char *));
+	new_argv[0] = main_argv[0];
+
+	int j = 1;
+	new_argv[j++] = memory_option;
+
+	// strip out --mem options
+	bool found_dashdash = false;
+	for (int i = 1; i < main_argc; i++) {
+		if (!found_dashdash && !strcmp(main_argv_backup[i], "--"))
+			found_dashdash = true;
+		string dummy;
+		if ((!found_dashdash || !strcmp(main_class, "ij.ImageJ")) &&
+				(handle_one_option(i, "--mem", dummy) ||
+				 handle_one_option(i, "--memory", dummy)))
+			continue;
+		new_argv[j++] = main_argv[i];
+	}
+	new_argv[j] = NULL;
 
 	cerr << "Trying with a smaller heap: " << memory_option << endl;
 
 #ifdef WIN32
 	new_argv[0] = dos_path(new_argv[0]);
-	for (int k = 0; k < main_argc_backup + 1; k++)
+	for (int k = 0; k < j; k++)
 		new_argv[k] = quote_win32(new_argv[k]);
 #endif
 	execve(new_argv[0], new_argv, NULL);
@@ -1269,7 +1285,7 @@ static void try_with_less_memory(size_t memory_size)
 
 	error << "ERROR: failed to launch (errno=" << errno << ";"
 		<< strerror(errno) << "):" << endl;
-	for (int i = 0; i < main_argc_backup + 1; i++)
+	for (int i = 0; i < j; i++)
 		error << new_argv[i] << " ";
 	error << endl;
 #ifdef WIN32
