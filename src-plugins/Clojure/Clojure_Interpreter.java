@@ -20,6 +20,7 @@ import ij.IJ;
 
 import clojure.lang.RT;
 import clojure.lang.Symbol;
+import clojure.lang.Namespace;
 import clojure.lang.Compiler;
 import clojure.lang.LispReader;
 import clojure.lang.Var;
@@ -78,7 +79,7 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 				return;
 			}
 			thread.setStdOut(super.print_out);
-			super.screen.append(" Ready -- have fun.\n>>>\n");
+			super.screen.append(" Ready -- have fun.\n" + getPrompt() + "\n");
 			// ok create window
 			super.run(arg);
 			super.window.setTitle("Clojure Interpreter");
@@ -157,7 +158,7 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 		}
 		private LispThread() {
 			super("Clojure Thread");
-			setPriority(Thread.NORM_PRIORITY);
+			setPriority(Thread.NORM_PRIORITY+1); // standard from a main() is 6, and NORM_PRIORITY is only 5
 			try { setDaemon(true); } catch (Exception e) { e.printStackTrace(); }
 			start();
 			while (!go) {
@@ -226,7 +227,7 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 				synchronized (this) {
 					lock();
 					if (null != out) {
-						this.text = new StringBuffer("(binding [*out* (Clojure.Clojure_Interpreter/getStdOut)]\n").append(text).append("\n)\n").toString();
+						this.text = new StringBuffer("(clojure.core/binding [clojure.core/*out* (Clojure.Clojure_Interpreter/getStdOut)]\n").append(text).append("\n)\n").toString();
 					} else {
 						this.text = text;
 					}
@@ -275,6 +276,7 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 						}
 					} catch (Throwable t) {
 						error = t;
+						Var.pushThreadBindings(RT.map(stare, t));
 					} finally {
 						// This clause gets excuted:
 						//  - after a Throwable error
@@ -323,6 +325,8 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 			// storage for readout
 			final StringWriter sw = new StringWriter();
 
+			Object ret = null;
+
 			while (true) {
 				// read one token from the pipe
 				Object r = LispReader.read(lnpr, false, EOF, false);
@@ -330,13 +334,22 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 					break;
 				}
 				// evaluate the tokens returned by the LispReader
-				Object ret = Compiler.eval(r);
+				ret = Compiler.eval(r);
 				// print the result in a lispy way
-				if (null != ret) {
+				//if (null != ret) {
 					RT.print(ret, sw);
 					sw.write('\n');
-				}
+				//}
 			}
+			
+			// update *1, *2, *3, even if null
+			Object ob = star2.get();
+			Var.pushThreadBindings(RT.map(star3, ob));
+			ob = star1.get();
+			Var.pushThreadBindings(RT.map(star2, ob));
+			// The last returned object of whatever was executed gets set to star1
+			Var.pushThreadBindings(RT.map(star1, ret));
+
 			return sw.getBuffer();
 		}
 	}
@@ -352,5 +365,13 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 
 	protected String getLineCommentMark() {
 		return ";";
+	}
+
+	@Override
+	protected String getPrompt() {
+		Symbol s = (Symbol) ((Namespace) ns.get()).getName();
+		//String namespace = s.getNamespace();
+		//return (null != namespace && namespace.length() > 0 ? namespace + "." : "") + s.getName() + "=>";
+		return s.getName() + "=>";
 	}
 }
