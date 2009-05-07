@@ -23,7 +23,7 @@ public class Refresh_Clojure_Scripts extends RefreshScripts {
 			Object res = Clojure_Interpreter.evaluate("(load-file \"" + path + "\")");
 			if (null != res) {
 				String s = res.toString();
-				if (s.length() > 0) IJ.log(res.toString());
+				if (s.length() > 0 && !"nil".equals(s)) IJ.log(res.toString());
 			}
 			Clojure_Interpreter.destroy();
 		} catch (Throwable error) {
