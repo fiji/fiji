@@ -524,13 +524,17 @@ public abstract class AbstractInterpreter implements PlugIn {
 		}
 	}
 
+	protected String getPrompt() {
+		return ">>>";
+	}
+
 	boolean previous_line_empty = false;
 
 	protected void execute(String text, boolean store) {
 		if (null == text) return;
 		int len = text.length();
 		if (len <= 0) {
-			print(">>>");
+			println(getPrompt());
 			return;
 		}
 		// store text
@@ -569,7 +573,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 				prompt.setText(new String(tabs));
 			}
 			// print to screen
-			print("... " + fix(text));
+			println("... " + fix(text));
 			// remove tabs from line:
 			text = text.replaceAll("\\t", "");
 			len = text.length(); // refresh length
@@ -588,14 +592,14 @@ public abstract class AbstractInterpreter implements PlugIn {
 			}
 		} else {
 		*/
-			print(">>> " + text);
+			print(new StringBuilder(getPrompt()).append(' ').append(text).append('\n').toString());
 		/*
 		}
 		*/
 		try {
 			Object ob = eval(text);
 			if (null != ob) {
-				print(ob.toString());
+				println(ob.toString());
 			}
 			// if no error, mark as valid
 			valid_lines.set(valid_lines.size() -1, true);
@@ -610,8 +614,13 @@ public abstract class AbstractInterpreter implements PlugIn {
 	}
 
 	/** Prints to screen: will append a newline char to the text, and also scroll down. */
+	protected void println(String text) {
+		print(text + "\n");
+	}
+
+	/** Prints to screen and scrolls down. */
 	protected void print(String text) {
-		screen.append(text + "\n");
+		screen.append(text);
 		screen.setCaretPosition(screen.getDocument().getLength());
 	}
 
@@ -774,7 +783,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 		int istart = 0;
 		int inl = sel.indexOf('\n');
 		int len = sel.length();
-		Pattern pat = Pattern.compile("^>>> .*$");
+		Pattern pat = Pattern.compile("^" + getPrompt() + " .*$");
 
 		while (true) {
 			if (-1 == inl) inl = len -1;
