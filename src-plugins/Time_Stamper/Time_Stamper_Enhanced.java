@@ -4,7 +4,7 @@
 // It does not know about hyper stacks - multiple channels..... only works as expected for normal stacks.
 // That meeans a single channel time series stack. 
 
-// Dan White MPI-CBG 15.04.09
+// Dan White MPI-CBG , begin hacking on 15.04.09
 
 
 import ij.*;
@@ -24,6 +24,7 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 	Font font;
 	static double start = 0;
 	static double interval = 1;
+	static String timeString = "";
 	static String customSuffix = "";
 	static String chosenSuffix = "s";
 	static String suffix = chosenSuffix;
@@ -44,28 +45,41 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 		return DOES_ALL+DOES_STACKS+STACK_REQUIRED;
 	}
 
+	// run the plugin on the ip object, which is the ImageProcessor object associated with the open/selected image. 
+	public void run(ImageProcessor ip) {
+
+		// this increments frame integer by 1. If an int is declared with no value, it defaults to 0
+		frame++;
+		if (frame==1) showDialog(ip);		// if at the 1st frame of the stack, show the GUI by calling the showDialog method
+		if (canceled || frame<first || frame>last) return;
+		
+		if (frame==last) imp.updateAndDraw(); 	// Updates this image from the pixel data in its associated
+							// ImageProcessor object and then displays it
+							// if it is the last frame. Why do we need this when there is
+							// ip.drawString(timeString); below?
+	
+	
+		// position the time stamp string correctly, so it is all on the image, even for the last frames with bigger numbers. 
+		// ip.moveTo(x, y);  // move to x y position for Timestamp writing 
+		
+		// this next line tries to move the time stamp right a bit to account for the max length the time stamp will be.
+		// it's nice to not have the time stamp run off the right edge of the image. 
+		// how about subtracting the 
+		// maxWidth from the width of the image (x dimension) only if its so close that it will run off.
+		// this seems to work now with digital and decimal time formats. 
+
+		if (maxWidth > ( ip.getWidth() - x ) )
+			ip.moveTo( (ip.getWidth() - maxWidth), y);
+		else ip.moveTo(x, y);
+		
+		ip.drawString(timeString()); // draw the timestring into the image
+		time += interval;  // increments the time by the time interval
+
+	}
+
 	// make the GUI for the plugin, with fields to fill all the variables we need. 
 	void showDialog(ImageProcessor ip) {
-		// Here we work out the size of the font to use from the size of the ROI box drawn, if one was drawn
-		// and set x and y at the ROI if there is one, so time stamp is drawn there, not at default x and y. 
-		Rectangle roi = ip.getRoi();
 		
-		if (roi.width<ip.getWidth() || roi.height<ip.getHeight()) {
-			x = roi.x;  			// left of the ROI
-			y = roi.y+roi.height;  		// bottom of the ROI
-			
-			// whats up with these numbers? Seems to make font too big?
-			// well single characters fit the ROI, but if the time stamper string is long
-			// then the font is too big to fit the whole thing in!
-			size = (int) ((roi.height - 1.10526)/0.934211);	
-			// make sure the font is not too big or small.... but why? Too -  small cant read it. Too Big - ?
-			// should this use private and public and get / set methods?
-			// in any case it doesnt seem to woirk... i can set the font < 7  and it is printed that small. 
-			if (size<7) size = 7;
-			if (size>80) size = 80;
-		//else x and y are defaulted to 0
-		}
-	
 		// here is a list of SI? approved time units for a drop down list to choose from 
 		String[] timeUnitsOptions =  { "y", "d", "h", "min", "s", "ms", "µs", "ns", "ps", "fs", "as", "Custom Suffix"};
 		String[] timeFormats = {"Decimal", "hh:mm:ss.ms"};
@@ -119,21 +133,28 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 		AAtext = gd.getNextBoolean(); 
 		
 		
-		// set the font
-		font = new Font("SansSerif", Font.PLAIN, size);
-		ip.setFont(font);
+		// Here we work out the size of the font to use from the size of the ROI box drawn, if one was drawn (how does it know?)
+		// and set x and y at the ROI if there is one (how does it know?), so time stamp is drawn there, not at default x and y. 
+		Rectangle roi = ip.getRoi();
+		// set the xy time stamp drawing position for ROI is smaller than the image to bottom left of ROI
+		if (roi.width<ip.getWidth() || roi.height<ip.getHeight()) {
+			x = roi.x;  			// left of the ROI
+			y = roi.y+roi.height;  		// bottom of the ROI
+			
+			// whats up with these numbers? Are they special?
+			// single characters fit the ROI, but if the time stamper string is long
+			// then the font is too big to fit the whole thing in!
+			size = (int) (roi.height); // - 1.10526)/0.934211);	
 		
-		//more font related setting stuff moved from the run method
-		// seems to work more reliable with this code in this method instead of in run.
-		// But if i dont change the font size by typing in the GUI - it igneores the AA text setting!!! Why??? 
-		//ip.setFont(font); //dont need that twice?
-		ip.setColor(Toolbar.getForegroundColor());
-		ip.setAntialiasedText(AAtext);
-		
-		// initialise time with the value of the starting time
-		time = start; 
-		
-		// make sure the y position for is not less than the font height: size, 
+		// make sure the font is not too big or small.... but why? Too -  small cant read it. Too Big - ?
+		// should this use private and public and get / set methods?
+		// in any case it doesnt seem to work... i can set the font < 7  and it is printed that small. 
+		if (size<7) size = 7;
+		if (size>80) size = 80;
+		//else x and y are defaulted to 0 or set according to text in gui... 
+		}
+			
+		// make sure the y position is not less than the font height: size, 
 		// so the time stamp is not off the bottom of the image?
 		if (y<size)
 			y = size;
@@ -147,12 +168,26 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 		// used to be: maxWidth = ip.getStringWidth(decimalString(start + interval*imp.getStackSize())); 
 		// but should use last not stacksize, since no time stamp is made for slices after last?
 		// It also needs to calcualte maxWidth for both digital and decimal time formats:
-		if (digitalOrDecimal == "Decimal")
+		if (digitalOrDecimal.equals ("Decimal"))
 			maxWidth = ip.getStringWidth(decimalString(start + interval*last));
-		if (digitalOrDecimal == "hh:mm:ss.ms")
+		if (digitalOrDecimal.equals ("hh:mm:ss.ms"))
 			maxWidth = ip.getStringWidth(digitalString(start + interval*last));
 		//else.... catch an exception here?... need to add more ifs for more formats....
 		
+		
+		// set the font
+		font = new Font("SansSerif", Font.PLAIN, size);
+		ip.setFont(font);
+		
+		//more font related setting stuff moved from the run method
+		// seems to work more reliable with this code in this method instead of in run.
+		// But if i dont change the font size by typing in the GUI - it ignores the AA text setting!!! Why??? 
+		//ip.setFont(font); //dont need that twice?
+		ip.setColor(Toolbar.getForegroundColor());
+		ip.setAntialiasedText(AAtext);
+		
+		// initialise time with the value of the starting time
+		time = start; 
 		
 		imp.startTiming(); //What is this for?
 	}	
@@ -160,12 +195,26 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 	
 	// Here we make the strings to print into the images. 
 	
+		// decide if the time format is digital or decimal according to the plugin GUI input
+		// if it is decimal (not digital) then need to set suffix from drop down list
+		// which might be custom suffix if one is entered and selected.
+		// if it is digital, then there is no suffix as format is set hh:mm:ss.ms
+	String timeString() {
+		if (digitalOrDecimal.equals("hh:mm:ss.ms"))
+			return digitalString(time);
+		else if (digitalOrDecimal.equals("Decimal")) 
+			return decimalString(time);
+		else return ("digitalOrDecimal was not selected!");
+		// IJ.log("Error occurred: digitalOrDecimal must be hh:mm:ss.ms or Decimal, but it was not."); 
+	}
+	
 		// is there a non empty string in the custom suffix box in the dialog GUI?
 		// if so use it as suffix
 	String suffix() {
-		if (chosenSuffix == "Custom Suffix")
+		if (chosenSuffix.equals("Custom Suffix"))
 			return customSuffix;
-		else return chosenSuffix;
+		else
+			return chosenSuffix;
 	}
 	
 		// makes the string containing the number for the time stamp, 
@@ -181,7 +230,7 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 	}	
 	
 	// this method  adds a preceeding 0 to a number if it only has one digit instead of two. 
-	// Which is handy for making ));)) type format strings later. Thx Dscho.
+	// Which is handy for making 00:00 type format strings later. Thx Dscho.
 	String twoDigits(int value) {
 		return (value < 10 ? "0" : "") + value;
 	}
@@ -198,49 +247,6 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 		return twoDigits(hour) + ":" + twoDigits(minute) + ":"
 			+ (time < 10 ? "0" : "") 
 			+ IJ.d2s(time, decimalPlaces);
-	}
-
-	
-	
-
-	
-	public void run(ImageProcessor ip) {
-
-		// this increments frame integer by 1. If a int is declared with no value, it defaults to 0
-		frame++;
-		if (frame==1) showDialog(ip);
-		if (canceled || frame<first || frame>last) return;
-		
-		if (frame==last) imp.updateAndDraw();
-	
-		// decide if the time format is digital or decimal according to the plugin GUI input
-		// if it is decimal (not digital) then need to set suffix from drop down list
-		// whicvh mioght ber custom suffix if one is entered and seleted.
-		// if it is digital, then there is no suffix as format is set yy:ddd:hh:mm:ss.ms? 
-		String timeString = "";
-		if (digitalOrDecimal == "hh:mm:ss.ms") 
-			timeString = digitalString(time);
-		if (digitalOrDecimal == "Decimal") 
-			timeString = decimalString(time);
-		//else except  // should catch this exception? it can only be one of what is in the String array  timeFormats
-		
-		
-		// position the time stamp string correctly, so it is all on the image, even for the last frames with bigger numbers. 
-		// ip.moveTo(x, y);  // move to x y position for Timestamp writing 
-		
-		// this next line tries to move the time stamp right a bit to account for the max length the time stamp will be.
-		// it's nice to not have the time stamp run off the right edge of the image. 
-		// how about subtracting the 
-		// maxWidth from the width of the image (x dimension) only if its so close that it will run off.
-		// this seems to work now with digital and decimal time formats. 
-
-		if (maxWidth > ( ip.getWidth() - x ) )
-			ip.moveTo( (ip.getWidth() - maxWidth), y);
-		else ip.moveTo(x, y);
-		
-		ip.drawString(timeString); // draw the timestring into the image
-		time += interval;  // increments the time by the time interval
-
 	}
 
 	
