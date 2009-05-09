@@ -280,8 +280,7 @@ public abstract class SparseFieldLevelSet implements StagedAlgorithm
       // No point to continue, abort and tell the user about the fact
       if ( Double.isNaN(total_change) || layers[ZERO_LAYER].size() == 0 ) {
     	  invalid = true;
-    	  IJ.error("Level Sets encountered numerical instability (i.e. the contour probably expanded to infinity or 0) - Aborted");
-    	  return(false);
+    	  throw new ArithmeticException("Level Sets encountered numerical instability (i.e. the contour probably expanded to infinity or 0) - Aborted");
       }
       
       return (!convergence);
@@ -857,7 +856,7 @@ public abstract class SparseFieldLevelSet implements StagedAlgorithm
       IJ.log("Initiated boundary pixels: " +px_zero+" ZERO, " +px_inside + " INSIDE, "+px_outside + " OUTSIDE");
       if ( px_inside == 0 && px_zero == 0 ) {
        	  invalid = true;
-       	  IJ.error("Level Sets didn't get any starting shape - Aborting");
+       	  throw new IllegalArgumentException("Level Sets didn't get any starting shape - Aborting");
        }
       
       // TODO median would be better

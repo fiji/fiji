@@ -1,5 +1,6 @@
 .DS_Store
 .project
+.metadata
 /fiji.o
 /fiji
 /fiji.exe
@@ -89,3 +90,6 @@
 /plugins/Record_Screen.jar
 /plugins/Video_Editing.jar
 /jars/zs.jar
+/plugins/Sync_Win.jar
+/jars/rsyntaxtextarea.jar
+/jars/autocomplete.jar

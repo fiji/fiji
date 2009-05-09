@@ -69,12 +69,12 @@ test ! -f "$CWD"/fiji -o "$CWD"/fiji.cxx -nt "$CWD"/fiji$exe && {
 # still needed for Windows, which cannot overwrite files that are in use
 test -f "$CWD"/fiji$exe -a -f "$CWD"/fake.jar &&
 test "a$targets" != afake.jar -a "a$targets" != afiji &&
-exec "$CWD"/fiji$exe --fake "$@"
+exec "$CWD"/fiji$exe --build "$@"
 
 # fall back to precompiled
 test -f "$CWD"/precompiled/fiji-$platform$exe \
 	-a -f "$CWD"/precompiled/fake.jar &&
-exec "$CWD"/precompiled/fiji-$platform$exe --fake -- "$@"
+exec "$CWD"/precompiled/fiji-$platform$exe --build -- "$@"
 
 export SYSTEM_JAVA=java
 export SYSTEM_JAVAC=javac

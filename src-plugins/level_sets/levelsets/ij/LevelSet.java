@@ -78,7 +78,8 @@ public class LevelSet implements PlugInFilter {
 	protected int ITER_INC = 100;
 	
 	// Parameters (used and not used yet)
-	protected static double fm_grey = -1, fm_dist = -1; // Fast Marching
+	protected static double fm_dist = -1; // Fast Marching
+	protected static int fm_grey = -1; // Fast Marching
 	protected EnumMap<Parameter,String> parameters;
 	
 	protected preprocessChoices preprocess = preprocessChoices.none;
@@ -198,61 +199,70 @@ public class LevelSet implements PlugInFilter {
 		
 		IJ.showStatus("Press 'Esc' to abort");
 		
-		// Fast marching
-		if ( fast_marching ) {
-			final FastMarching fm = new FastMarching(ic, progressImage, sc_roi, true);
-			IJ.log("Fast Marching: Starting " + new Date(System.currentTimeMillis()));
-			for ( iter = 0; iter < this.fm_maxiter; iter ++ ) {
-				if ( fm.step(this.ITER_INC) == false ) {
-					break;
+		try {
+			// Fast marching
+			if ( fast_marching ) {
+				final FastMarching fm = new FastMarching(ic, progressImage, sc_roi, true, (int) fm_grey, fm_dist);
+				IJ.log("Fast Marching: Starting " + new Date(System.currentTimeMillis()));
+				for ( iter = 0; iter < this.fm_maxiter; iter ++ ) {
+					if ( fm.step(this.ITER_INC) == false ) {
+						break;
+					}
+					if (IJ.escapePressed()) {
+						IJ.log("Aborted");
+						return;
+					}
 				}
-				if (IJ.escapePressed()) {
-					IJ.log("Aborted");
+				IJ.log("Fast Marching: Finished " + new Date(System.currentTimeMillis()));
+				sc_ls = fm.getStateContainer();
+				if ( sc_ls == null ) {
+					// don't continue if something happened during Fast Marching
 					return;
 				}
+				sc_ls.setExpansionToInside(insideout);
+				sc_final = sc_ls;
 			}
-			IJ.log("Fast Marching: Finished " + new Date(System.currentTimeMillis()));
-			sc_ls = fm.getStateContainer();
-			if ( sc_ls == null ) {
-				// don't continue if something happened during Fast Marching
+			else {
+				sc_ls = sc_roi;
+				// showROI(imp, null, sc_ls);
+				// if ( sc_ls != null ) return;
+			}
+			
+			// Level set
+			if ( level_sets ) {
+				IJ.log("Level Set (" + levelsetList[ls_choice] +"): Starting " + new Date(System.currentTimeMillis()));
+				IJ.log("Note: Each iteration step is " + ITER_INC + " iterations");
+
+				LevelSetImplementation ls = lf.getImplementation(levelsetList[ls_choice], ic, progressImage, sc_ls);
+
+				for ( iter = 0; iter < this.ls_maxiter; iter ++ ) {
+					if ( ls.step(this.ITER_INC) == false ) {
+						break;
+					}
+					if (IJ.escapePressed()) {
+						IJ.log("Aborted");
+						return;
+					}
+				}
+				IJ.log("Level Set: Finished " + new Date(System.currentTimeMillis()));
+				sc_final = ls.getStateContainer();
+			}
+			
+			// Convert sc_final into binary image ImageContainer and display
+			if ( sc_final == null ) {
 				return;
 			}
-			sc_ls.setExpansionToInside(insideout);
-			sc_final = sc_ls;
-		}
-		else {
-			sc_ls = sc_roi;
-			// showROI(imp, null, sc_ls);
-			// if ( sc_ls != null ) return;
-		}
-		
-		// Level set
-		if ( level_sets ) {
-			IJ.log("Level Set (" + levelsetList[ls_choice] +"): Starting " + new Date(System.currentTimeMillis()));
-			IJ.log("Note: Each iteration step is " + ITER_INC + " iterations");
-
-			LevelSetImplementation ls = lf.getImplementation(levelsetList[ls_choice], ic, progressImage, sc_ls);
-
-			for ( iter = 0; iter < this.ls_maxiter; iter ++ ) {
-				if ( ls.step(this.ITER_INC) == false ) {
-					break;
-				}
-				if (IJ.escapePressed()) {
-					IJ.log("Aborted");
-					return;
-				}
-			}
-			IJ.log("Level Set: Finished " + new Date(System.currentTimeMillis()));
-			sc_final = ls.getStateContainer();
+			ImageContainer result = new ImageContainer(sc_final.getIPMask());
+			ImagePlus result_ip = result.createImagePlus("Segmentation of " + imp.getTitle());
+			result_ip.show();
+		} catch (IllegalArgumentException e) {
+			// Usually happens with ROI specifications
+			IJ.error(e.getMessage());
+		} catch (ArithmeticException e) {
+			// Numerical instability
+			IJ.error("Arithmetic problem: " + e.getMessage());			
 		}
 		
-		// Convert sc_final into binary image ImageContainer and display
-		if ( sc_final == null ) {
-			return;
-		}
-		ImageContainer result = new ImageContainer(sc_final.getIPMask());
-		ImagePlus result_ip = result.createImagePlus("Segmentation of " + imp.getTitle());
-		result_ip.show();
 	}
 
 	public int setup(String arg, ImagePlus imp) {
@@ -326,7 +336,7 @@ public class LevelSet implements PlugInFilter {
 		this.fast_marching = gd.getNextBoolean();
 		this.level_sets = gd.getNextBoolean();
 		
-		this.fm_grey = gd.getNextNumber();
+		this.fm_grey = (int) gd.getNextNumber();
 		this.fm_dist = gd.getNextNumber();
 		
 		for ( Iterator<Parameter> it = parameters.keySet().iterator(); it.hasNext(); ) {

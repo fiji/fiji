@@ -84,29 +84,39 @@ public class FastMarching implements StagedAlgorithm
     */
    public static final byte ALIVE = 2;
    
-   // Threshold percentage for trial points that should be freezed
-   private static double DISTANCE_THRESHOLD = 0.5; //1;
-   // Maximum distance to be travelled (pixels on a path from seedpoint)
+   // Default parameters
+   // Threshold percentage for trial points that should be frozen
+   private static double DEF_DISTANCE_THRESHOLD = 0.5; //1;
+   // Penalty threshold around mean seed grey-value
+   private static int DEF_GREYVALUE_THRESHOLD = 50;
+   // Maximum distance to be traveled (pixels on a path from seed-point)
    private static final double DISTANCE_STOP = 1000; //1;
-   // Penalty threshold around mean seed greyvalue
-   private static int GREYVALUE_THRESHOLD = 50;
    // Growth threshold for immediate abort
    private static final double EXTREME_GROWTH = 1000;
    
-   // green coloured pixel for alive set pixel visualization
+   // green colored pixel for alive set pixel visualization
    private static final int[] ALIVE_PIXEL = new int[] {0, 255, 0, 0};
-   // red coloured pixel for trial set (band) pixel visualization
+   // red colored pixel for trial set (band) pixel visualization
    private static final int[] BAND_PIXEL = new int[] {255, 0, 0, 0};
+ 
+   // Actual values used in calculations - set in constructor
+   // Threshold percentage for trial points that should be frozen
+   private final double DISTANCE_THRESHOLD; //1;
+   // Penalty threshold around mean seed grey-value
+   private final int GREYVALUE_THRESHOLD;
+
    
    // counter for completed step output
    private int steps = 0;
    
    /** Creates a new instance of FastMarching
     */
-   public FastMarching(final ImageContainer image, final ImageProgressContainer img_progress, final StateContainer seedContainer, final boolean halt)
+   public FastMarching(final ImageContainer image, final ImageProgressContainer img_progress, 
+		   final StateContainer seedContainer, final boolean halt,
+		   final int grey_thresh, final double dist_thresh )
    {
       /* Just reference the input data. Actual initialization is done later
-       * because when this construcor is called this object is queued for later
+       * because when this constructor is called this object is queued for later
        * execution so this avoids allocation of much memory to early.
        */
       this.halt = halt;
@@ -114,41 +124,27 @@ public class FastMarching implements StagedAlgorithm
       this.progress = img_progress;
       this.seeds = seedContainer.getForFastMarching();
       needInit = true;
+      
+      GREYVALUE_THRESHOLD = grey_thresh; 
+      DISTANCE_THRESHOLD = dist_thresh;
+      
    }
    
-   
+  
    /**
-    * Sets the Grey value.
-    * Works only before the initialization (i.e. the first iteration)
-    */
-   public final void setGreyThreshold(final int t) {
-	   if ( needInit )
-		   GREYVALUE_THRESHOLD = t;
-   }
-
-   /**
-    * Returns the Grey value.
-    * @return The AGrey value threshold
+    * Returns the default Grey value.
+    * @return The grey value threshold
     */
    public final static int getGreyThreshold() {
-	   return GREYVALUE_THRESHOLD;
-   }
-
-   /**
-    * Sets the distance threshold.
-    * Works only before the initialization (i.e. the first iteration)
-    */
-   public final void setDistanceThreshold(final double w) {
-	   if ( needInit )
-		   DISTANCE_THRESHOLD = w;
+	   return DEF_GREYVALUE_THRESHOLD;
    }
    
    /**
-    * Returns the distance threshold.
+    * Returns the default distance threshold.
     * @return The distance threshold
     */
    public static final double getDistanceThreshold() {
-	   return DISTANCE_THRESHOLD;
+	   return DEF_DISTANCE_THRESHOLD;
    }
 
    /* Initialization - called on first call to step(). Does basically things the
@@ -178,8 +174,7 @@ public class FastMarching implements StagedAlgorithm
     	  invalid = true;
       }
       if ( invalid ) {
-    	  IJ.error("Fast Marching needs seed points but didn't find any! Did you specify an area?");
-    	  return false;
+    	  throw new IllegalArgumentException("Fast Marching needs seed points but didn't find any! Did you specify an area?");
       }
       
       /* Add all seed points to the heap. Also determine mean grey value
