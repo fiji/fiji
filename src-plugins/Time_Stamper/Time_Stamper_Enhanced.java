@@ -20,7 +20,7 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 	static int x = 2;
 	static int y = 15;
 	static int size = 12;
-	int maxWidth;
+//	int maxWidth; // maxWidth is now a method. 
 	Font font;
 	static double start = 0;
 	static double interval = 1;
@@ -68,8 +68,8 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 		// maxWidth from the width of the image (x dimension) only if its so close that it will run off.
 		// this seems to work now with digital and decimal time formats. 
 
-		if (maxWidth > ( ip.getWidth() - x ) )
-			ip.moveTo( (ip.getWidth() - maxWidth), y);
+		if (maxWidth(ip, start, interval, last) > ( ip.getWidth() - x ) )
+			ip.moveTo( (ip.getWidth() - maxWidth(ip, start, interval, last)), y);
 		else ip.moveTo(x, y);
 		
 		ip.drawString(timeString()); // draw the timestring into the image
@@ -158,22 +158,7 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 		// so the time stamp is not off the bottom of the image?
 		if (y<size)
 			y = size;
-    	
-		// maxWidth is an integer == length of the decimal time stamp string in pixels
-		// for the last slice of the stack to be stamped. It is used in the run method below, 
-		// to prevent the time stamp running off the right edge of the image
-		// ip.getStringWidth(string) seems to return the # of pixels long a string is in x?
-		// how does it take care of font size i wonder? The font is set 
-		// using the variable size... so i guess the ip object knows how big the font is.  
-		// used to be: maxWidth = ip.getStringWidth(decimalString(start + interval*imp.getStackSize())); 
-		// but should use last not stacksize, since no time stamp is made for slices after last?
-		// It also needs to calcualte maxWidth for both digital and decimal time formats:
-		if (digitalOrDecimal.equals ("Decimal"))
-			maxWidth = ip.getStringWidth(decimalString(start + interval*last));
-		if (digitalOrDecimal.equals ("hh:mm:ss.ms"))
-			maxWidth = ip.getStringWidth(digitalString(start + interval*last));
-		//else.... catch an exception here?... need to add more ifs for more formats....
-		
+    		
 		
 		// set the font
 		font = new Font("SansSerif", Font.PLAIN, size);
@@ -199,10 +184,11 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 		// if it is decimal (not digital) then need to set suffix from drop down list
 		// which might be custom suffix if one is entered and selected.
 		// if it is digital, then there is no suffix as format is set hh:mm:ss.ms
+		
 	String timeString() {
 		if (digitalOrDecimal.equals("hh:mm:ss.ms"))
 			return digitalString(time);
-		else if (digitalOrDecimal.equals("Decimal")) 
+		else if (digitalOrDecimal.equals("Decimal"))
 			return decimalString(time);
 		else return ("digitalOrDecimal was not selected!");
 		// IJ.log("Error occurred: digitalOrDecimal must be hh:mm:ss.ms or Decimal, but it was not."); 
@@ -249,8 +235,26 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 			+ IJ.d2s(time, decimalPlaces);
 	}
 
+//moved out of run method to here.
+		// maxWidth is an integer = length of the decimal time stamp string in pixels
+		// for the last slice of the stack to be stamped. It is used in the run method below, 
+		// to prevent the time stamp running off the right edge of the image
+		// ip.getStringWidth(string) seems to return the # of pixels long a string is in x?
+		// how does it take care of font size i wonder? The font is set 
+		// using the variable size... so i guess the ip object knows how big the font is.  
+		// used to be: maxWidth = ip.getStringWidth(decimalString(start + interval*imp.getStackSize())); 
+		// but should use last not stacksize, since no time stamp is made for slices after last?
+		// It also needs to calcualte maxWidth for both digital and decimal time formats:
+	int maxWidth(ImageProcessor ip, double startTime, double intervalTime, int lastFrame) {
+		if (digitalOrDecimal.equals ("Decimal"))
+			return ip.getStringWidth(decimalString(startTime + intervalTime*lastFrame));
+		else if (digitalOrDecimal.equals ("hh:mm:ss.ms"))
+			return ip.getStringWidth(digitalString(startTime + intervalTime*lastFrame));
+		else return 1;  // IJ.log("Error occured: digitalOrDecimal was not selected!"); //+ message());
+		// IJ.log("Error occurred: digitalOrDecimal must be hh:mm:ss.ms or Decimal, but it was not."); 
+	}
 	
-
+	
 }	// thats the end of Time_Stamper_Enhanced class
 
 
