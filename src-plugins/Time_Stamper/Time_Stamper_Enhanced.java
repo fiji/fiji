@@ -7,23 +7,31 @@
 // Dan White MPI-CBG , begin hacking on 15.04.09
 
 
+
 import ij.*;
 import ij.process.*;
 import ij.gui.*;
 import java.awt.*;
+import java.awt.event.*;
 import ij.plugin.filter.*;
 
-public class Time_Stamper_Enhanced implements PlugInFilter {
+
+public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListener { //, ActionListener {
+								// http://rsb.info.nih.gov/ij/developer/api/ij/plugin/filter/ExtendedPlugInFilter.html
+								// should use extended plugin filter for preview ability and for stacks!
+								// then need more methods: setNPasses(int last-first)  thats the number of frames to stamp.
+								// showDialog method needs  another argument:  PlugInFilterRunner pfr
+								// also need Dialog listener and Action listener to listen to GUI changes? 
 	// declare the variables we are going to use in the plugin
 	ImagePlus imp;
 	double time;
 	static int x = 2;
 	static int y = 15;
-	static int size = 12;
-//	int maxWidth; // maxWidth is now a method. 
+	static int size = 12;  // default font size
+//	int maxWidth; // maxWidth is now a method returning an int
 	Font font;
-	static double start = 0;
-	static double interval = 1;
+	static double start = 2324.876;
+	static double interval = 1.678;
 	static String timeString = "";
 	static String customSuffix = "";
 	static String chosenSuffix = "s";
@@ -33,8 +41,13 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 	static String digitalOrDecimal = "decimal";
 	boolean AAtext = true;
 	int frame, first, last;  //these default to 0 as no values are given
+	//int nPasses = 1;
+	PlugInFilterRunner pfr; 	// set pfr to the default PlugInFilterRunner object - the object that runs the plugin. 
+	int flags = DOES_ALL+DOES_STACKS+STACK_REQUIRED; //a combination (bitwise OR) of the flags specified in
+							//interfaces PlugInFilter and ExtendedPlugInFilter.
+							// determines what kind of image the plugin can run on etc. 
 
-	// setup the plugin and tell imagej it needs to work on a stack
+	// setup the plugin and tell imagej it needs to work on a stack by returning the flags
 	public int setup(String arg, ImagePlus imp) {
 		this.imp = imp;
 		IJ.register(Time_Stamper_Enhanced.class);
@@ -42,52 +55,24 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 			first = 1;
 			last = imp.getStackSize();
 		}
-		return DOES_ALL+DOES_STACKS+STACK_REQUIRED;
+		return flags;
 	}
 
-	// run the plugin on the ip object, which is the ImageProcessor object associated with the open/selected image. 
-	public void run(ImageProcessor ip) {
-
-		// this increments frame integer by 1. If an int is declared with no value, it defaults to 0
-		frame++;
-		if (frame==1) showDialog(ip);		// if at the 1st frame of the stack, show the GUI by calling the showDialog method
-		if (canceled || frame<first || frame>last) return;
+	// make the GUI for the plugin, with fields to fill all the variables we need.
+	// we are using ExtendedPluginFilter, so first argument is imp not ip
+	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr) {
 		
-		if (frame==last) imp.updateAndDraw(); 	// Updates this image from the pixel data in its associated
-							// ImageProcessor object and then displays it
-							// if it is the last frame. Why do we need this when there is
-							// ip.drawString(timeString); below?
-	
-	
-		// position the time stamp string correctly, so it is all on the image, even for the last frames with bigger numbers. 
-		// ip.moveTo(x, y);  // move to x y position for Timestamp writing 
-		
-		// this next line tries to move the time stamp right a bit to account for the max length the time stamp will be.
-		// it's nice to not have the time stamp run off the right edge of the image. 
-		// how about subtracting the 
-		// maxWidth from the width of the image (x dimension) only if its so close that it will run off.
-		// this seems to work now with digital and decimal time formats. 
-
-		if (maxWidth(ip, start, interval, last) > ( ip.getWidth() - x ) )
-			ip.moveTo( (ip.getWidth() - maxWidth(ip, start, interval, last)), y);
-		else ip.moveTo(x, y);
-		
-		ip.drawString(timeString()); // draw the timestring into the image
-		time += interval;  // increments the time by the time interval
-
-	}
-
-	// make the GUI for the plugin, with fields to fill all the variables we need. 
-	void showDialog(ImageProcessor ip) {
+		//this.pfr = pfr;
 		
 		// here is a list of SI? approved time units for a drop down list to choose from 
 		String[] timeUnitsOptions =  { "y", "d", "h", "min", "s", "ms", "µs", "ns", "ps", "fs", "as", "Custom Suffix"};
 		String[] timeFormats = {"Decimal", "hh:mm:ss.ms"};
 		
-		// This makes the actual GUI 
+		// This makes the GUI object 
 		GenericDialog gd = new GenericDialog("Time Stamper Enhanced");
 		
-		// these are the fields of the GUI
+		
+			// these are the fields of the GUI
 		
 		// this is a choice between digital or decimal
 		// but what about mm:ss 
@@ -110,15 +95,27 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 
 		gd.addCheckbox("Anti-Aliased text?", true);
 		
-		
+		gd.addPreviewCheckbox(pfr); 	//adds preview checkbox - needs ExtendedPluginFilter and DialogListener?
+		gd.addDialogListener(this); 	//needed for listening to dialog field/button/checkbok changes?
 		
 		gd.showDialog();  // shows the dialog GUI!
 		
 		// handle the plugin cancel button being pressed.
-		if (gd.wasCanceled())
-			{canceled = true; return;}
+		if (gd.wasCanceled()) return DONE;
+			//{canceled = true; return DONE;} 
 		
-		// This reads user input parameters from the GUI
+		// initialise time with the value of the starting time
+		time = start; 
+		
+		imp.startTiming(); //What is this for?
+		
+		return DOES_ALL+DOES_STACKS+STACK_REQUIRED; 	// extendedpluginfilter showDialog method should
+											//return a combination (bitwise OR) of the flags specified in
+											//interfaces PlugInFilter and ExtendedPlugInFilter.
+	}	
+	
+	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e) {
+		// This reads user input parameters from the GUI and listens to changes in GUI fields
 		digitalOrDecimal = gd.getNextChoice();
 		chosenSuffix = gd.getNextChoice();
 		customSuffix = gd.getNextString();
@@ -131,34 +128,61 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 		first = (int)gd.getNextNumber();
 		last = (int)gd.getNextNumber();
 		AAtext = gd.getNextBoolean(); 
+		return true;  // or else the dialog will have the ok button inactivated!
+	}
+	
+	
+	public void setNPasses(int nPasses) { // for extended plugin filter we need to tell it the number of slices/frames it will call run method on. 
+		nPasses = (((last-first)+1)+1); // is the number of frames we will write the time stamper into finally on click ok. 
+	}	
+	
+
+
+	// run the plugin on the ip object, which is the ImageProcessor object associated with the open/selected image. 
+	public void run(ImageProcessor ip) {
+	
+		// this increments frame integer by 1. If an int is declared with no value, it defaults to 0
+		frame++;
 		
 		
-		// Here we work out the size of the font to use from the size of the ROI box drawn, if one was drawn (how does it know?)
-		// and set x and y at the ROI if there is one (how does it know?), so time stamp is drawn there, not at default x and y. 
-		Rectangle roi = ip.getRoi();
-		// set the xy time stamp drawing position for ROI is smaller than the image to bottom left of ROI
-		if (roi.width<ip.getWidth() || roi.height<ip.getHeight()) {
-			x = roi.x;  			// left of the ROI
-			y = roi.y+roi.height;  		// bottom of the ROI
-			
-			// whats up with these numbers? Are they special?
+		
+			// this stuff isnt needed in EnhancedPluginFilter because setNPasses takes care of number of frames to write in
+			// and EnhancedPluginFilter ecexutes the showDialog method before the run method, always, so doint need to call it in run. 
+		//if (frame==1) showDialog(imp, "TimeStamperEnhanced", pfr);	// if at the 1st frame of the stack, show the GUI by calling the showDialog method
+							// and set the variables according to the GUI input. 
+		if (canceled || frame<first || frame>last) return; // tell the run method when to not do anything just return  
+		
+		if (frame==last) imp.updateAndDraw(); 	// Updates this image from the pixel data in its associated
+							// ImageProcessor object and then displays it
+							// if it is the last frame. Why do we need this when there is
+							// ip.drawString(timeString); below?
+	
+		// Have moved the font size and xy loclation calculations for timestamp stuff out of the run method, into their own methods.
+		// set the font size according to ROI size, or if no ROI the GUI text input
+		setFontParams(ip);
+		setLocation(ip);
+
+
+		ip.drawString(timeString()); // draw the timestring into the image
+		//showProgress(precent done calc here); // dont really need a progress bar...
+		time += interval;  // increments the time by the time interval
+	}
+	
+	
+	void setFontParams(ImageProcessor ip) { //work out the size of the font to use from the size of the ROI box drawn, if one was drawn (how does it know?)
+		Rectangle theROI = ip.getRoi();
+		// whats up with these numbers? Are they special?
 			// single characters fit the ROI, but if the time stamper string is long
 			// then the font is too big to fit the whole thing in!
-			size = (int) (roi.height); // - 1.10526)/0.934211);	
+		//if (theROI != null)
+		size = (int) (theROI.height); // - 1.10526)/0.934211);	
 		
 		// make sure the font is not too big or small.... but why? Too -  small cant read it. Too Big - ?
 		// should this use private and public and get / set methods?
 		// in any case it doesnt seem to work... i can set the font < 7  and it is printed that small. 
 		if (size<7) size = 7;
 		if (size>80) size = 80;
-		//else x and y are defaulted to 0 or set according to text in gui... 
-		}
-			
-		// make sure the y position is not less than the font height: size, 
-		// so the time stamp is not off the bottom of the image?
-		if (y<size)
-			y = size;
-    		
+		// if no ROI, x and y are defaulted or set according to text in gui
 		
 		// set the font
 		font = new Font("SansSerif", Font.PLAIN, size);
@@ -170,13 +194,37 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 		//ip.setFont(font); //dont need that twice?
 		ip.setColor(Toolbar.getForegroundColor());
 		ip.setAntialiasedText(AAtext);
-		
-		// initialise time with the value of the starting time
-		time = start; 
-		
-		imp.startTiming(); //What is this for?
-	}	
+	}
 	
+	// position the time stamp string correctly, so it is all on the image, even for the last frames with bigger numbers. 
+	// ip.moveTo(x, y);  // move to x y position for Timestamp writing 
+		
+	// the maxwidth if statement tries to move the time stamp right a bit to account for the max length the time stamp will be.
+	// it's nice to not have the time stamp run off the right edge of the image. 
+	// how about subtracting the 
+	// maxWidth from the width of the image (x dimension) only if its so close that it will run off.
+	// this seems to work now with digital and decimal time formats. 
+	void setLocation(ImageProcessor ip) {
+	
+		// Here we  set x and y at the ROI if there is one (how does it know?), so time stamp is drawn there, not at default x and y. 
+		Rectangle roi = ip.getRoi();
+		// set the xy time stamp drawing position for ROI smaller than the image, to bottom left of ROI
+		if (roi.width<ip.getWidth() || roi.height<ip.getHeight()) {
+			x = roi.x;  			// left of the ROI
+			y = roi.y+roi.height;  		// bottom of the ROI
+		}	
+		// make sure the y position is not less than the font height: size, 
+		// so the time stamp is not off the top of the image?
+		if (y<size)
+			y = size;
+		// if timestamp is wider than (image width - ROI width) , move x in appropriately
+		if (maxWidth(ip, start, interval, last) > ( ip.getWidth() - x ) )
+			ip.moveTo( (ip.getWidth() - maxWidth(ip, start, interval, last)), y);
+		else ip.moveTo(x, y);
+	}
+	
+
+
 	
 	// Here we make the strings to print into the images. 
 	
@@ -235,7 +283,7 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 			+ IJ.d2s(time, decimalPlaces);
 	}
 
-//moved out of run method to here.
+	//moved out of run method to its own method.
 		// maxWidth is an integer = length of the decimal time stamp string in pixels
 		// for the last slice of the stack to be stamped. It is used in the run method below, 
 		// to prevent the time stamp running off the right edge of the image
@@ -250,9 +298,15 @@ public class Time_Stamper_Enhanced implements PlugInFilter {
 			return ip.getStringWidth(decimalString(startTime + intervalTime*lastFrame));
 		else if (digitalOrDecimal.equals ("hh:mm:ss.ms"))
 			return ip.getStringWidth(digitalString(startTime + intervalTime*lastFrame));
-		else return 1;  // IJ.log("Error occured: digitalOrDecimal was not selected!"); //+ message());
+		else return 0;  // IJ.log("Error occured: digitalOrDecimal was not selected!"); //+ message());
 		// IJ.log("Error occurred: digitalOrDecimal must be hh:mm:ss.ms or Decimal, but it was not."); 
 	}
+	
+	
+	//void showProgress(double percent) {   // dont really need a progress bar...
+	//	percent = (double)(frame-1)/nPasses + percent/nPasses;  //whats this for? 
+	//	IJ.showProgress(percent);
+	//}
 	
 	
 }	// thats the end of Time_Stamper_Enhanced class
