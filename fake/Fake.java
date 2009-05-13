@@ -2235,9 +2235,14 @@ public class Fake {
 		}
 
 		/* stupid, stupid Windows... */
-		if (getPlatform().startsWith("win"))
+		if (getPlatform().startsWith("win")) {
 			for (int i = 0; i < args.length; i++)
 				args[i] = quoteArg(args[i]);
+			// stupid, stupid, stupid Windows taking all my time!!!
+			if (args[0].startsWith("../"))
+				args[0] = new File(dir,
+						args[0]).getAbsolutePath();
+		}
 
 		Process proc = Runtime.getRuntime().exec(args, null, dir);
 		new StreamDumper(proc.getErrorStream(), System.err).start();
