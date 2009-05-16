@@ -1296,6 +1296,18 @@ static void try_with_less_memory(size_t memory_size)
 	exit(1);
 }
 
+bool is_building(const char *target)
+{
+	if (main_argc < 3 ||
+			(strcmp(main_argv[1], "--build") &&
+			 strcmp(main_argv[1], "--fake")))
+		return false;
+	for (int i = 2; i < main_argc; i++)
+		if (!strcmp(main_argv[i], target))
+			return true;
+	return false;
+}
+
 bool retrotranslator = false;
 
 static int start_ij(void)
@@ -1317,7 +1329,8 @@ static int start_ij(void)
 #endif
 	if (file_exists(string(fiji_dir) + "/fiji" EXE_EXTENSION) &&
 			file_is_newer(string(fiji_dir) + "/fiji.cxx",
-				string(fiji_dir) + "/fiji" EXE_EXTENSION))
+				string(fiji_dir) + "/fiji" EXE_EXTENSION) &&
+			!is_building("fiji"))
 		cerr << "Warning: your Fiji executable is not up-to-date"
 			<< endl;
 
@@ -1434,7 +1447,7 @@ static int start_ij(void)
 						fake_jar))
 				fake_jar = precompiled_fake_jar;
 			if (file_is_newer(string(fiji_dir) + "/fake/Fake.java",
-					fake_jar))
+					fake_jar) && !is_building("fake.jar"))
 				cerr << "Warning: fake.jar is not up-to-date"
 					<< endl;
 			class_path += fake_jar + PATH_SEP;
