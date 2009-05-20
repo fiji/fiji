@@ -26,21 +26,21 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 	// declare the variables we are going to use in the plugin
 	ImagePlus imp;
 	double time;
-	static int x = 2;
-	static int y = 15;
-	static int size = 12;  // default font size
+	int x = 2;
+	int y = 15;
+	int size = 12;  // default font size
 //	int maxWidth; // maxWidth is now a method returning an int
 	Font font;
-	static double start = 4.876;
-	static double interval = 1.678;
-	static String timeString = "";
-	static String customSuffix = "";
+	double start = 4.876;
+	double interval = 1.678;
+	String timeString = "";
+	String customSuffix = "";
 	static String chosenSuffix = "s";
-	static String suffix = chosenSuffix;
-	static int decimalPlaces = 3;
+	String suffix = chosenSuffix;
+	int decimalPlaces = 3;
 	boolean canceled;
-	static String digitalOrDecimal = "decimal";
-	static String lastTimeStampString = "teststring";
+	String digitalOrDecimal = "decimal";
+	String lastTimeStampString; // = "teststring";
 
 	boolean AAtext = true;
 	int frame, first, last;  //these default to 0 as no values are given
@@ -136,7 +136,8 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 	
 	
 	public void setNPasses(int nPasses) { // for extended plugin filter we need to tell it the number of slices/frames it will call run method on. 
-		nPasses = ((last-first)+1); // is the number of frames we will write the time stamper into finally on click ok. 
+		frame = first;  // nPasses is worked out by the plugin runner, and for the preview i want to ignoire it
+		time = start;  // and set the frame to first and the time to start 
 	}	
 	
 
@@ -224,8 +225,8 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		if (y<size)
 			y = size;
 		// if longest timestamp is wider than (image width - ROI width) , move x in appropriately
-		if (maxWidth(ip, lastTimeStampString) > ( ip.getWidth() - x ) )
-			ip.moveTo( (ip.getWidth() - maxWidth(ip, lastTimeStampString)), y);
+		if (maxWidth(ip, lastTimeStampString()) > ( ip.getWidth() - x ) )
+			ip.moveTo( (ip.getWidth() - maxWidth(ip, lastTimeStampString())), y);
 		else ip.moveTo(x, y);
 	}
 	
@@ -296,11 +297,11 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 	// used to be: maxWidth = ip.getStringWidth(decimalString(start + interval*imp.getStackSize())); 
 	// but should use last not stacksize, since no time stamp is made for slices after last?
 	// It also needs to calculate maxWidth for both digital and decimal time formats:
-	String lastTimeStampString(double startTime, double intervalTime, int lastFrame) {
+	String lastTimeStampString() {
 		if (digitalOrDecimal.equals ("Decimal"))
-			return decimalString(startTime + (intervalTime*lastFrame) );
+			return decimalString(start + (interval*last) );
 		else if (digitalOrDecimal.equals ("hh:mm:ss.ms"))
-			return digitalString(startTime + (intervalTime*lastFrame) );
+			return digitalString(start + (interval*last) );
 		else return "";  // IJ.log("Error occured: digitalOrDecimal was not selected!"); //+ message());
 		// IJ.log("Error occurred: digitalOrDecimal must be hh:mm:ss.ms or Decimal, but it was not."); 
 	}
