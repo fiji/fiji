@@ -1,10 +1,11 @@
-// this plugin is a merge of the Time_Stamper plugins from ImageJ and from Tony Collins' plugin collection at macbiophotonics. 
-// it aims to combine all the functionality of both plugins and refine and enhance their functionality.
+// This plugin is a merge of the Time_Stamper plugins from ImageJ and from Tony Collins' plugin collection at macbiophotonics. 
+// it aims to combine all the functionality of both plugins and refine and enhance their functionality,
+//for instance by adding the preview functionality suggested by Michael Weber.
 
 // It does not know about hyper stacks - multiple channels..... only works as expected for normal stacks.
 // That meeans a single channel time series stack. 
 
-// Dan White MPI-CBG , begin hacking on 15.04.09
+// Dan White MPI-CBG , began hacking on 15.04.09
 
 
 
@@ -30,7 +31,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 	static int size = 12;  // default font size
 //	int maxWidth; // maxWidth is now a method returning an int
 	Font font;
-	static double start = 2324.876;
+	static double start = 4.876;
 	static double interval = 1.678;
 	static String timeString = "";
 	static String customSuffix = "";
@@ -39,6 +40,8 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 	static int decimalPlaces = 3;
 	boolean canceled;
 	static String digitalOrDecimal = "decimal";
+	static String lastTimeStampString = "teststring";
+
 	boolean AAtext = true;
 	int frame, first, last;  //these default to 0 as no values are given
 	//int nPasses = 1;
@@ -62,7 +65,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 	// we are using ExtendedPluginFilter, so first argument is imp not ip
 	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr) {
 		
-		//this.pfr = pfr;
+		//this.pfr = pfr; // Not needed.... pfr is declared as a PlugInFilterRunner object with default value above
 		
 		// here is a list of SI? approved time units for a drop down list to choose from 
 		String[] timeUnitsOptions =  { "y", "d", "h", "min", "s", "ms", "µs", "ns", "ps", "fs", "as", "Custom Suffix"};
@@ -95,7 +98,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 
 		gd.addCheckbox("Anti-Aliased text?", true);
 		
-		gd.addPreviewCheckbox(pfr); 	//adds preview checkbox - needs ExtendedPluginFilter and DialogListener?
+		gd.addPreviewCheckbox(pfr); 	//adds preview checkbox - needs ExtendedPluginFilter and DialogListener!
 		gd.addDialogListener(this); 	//needed for listening to dialog field/button/checkbok changes?
 		
 		gd.showDialog();  // shows the dialog GUI!
@@ -133,12 +136,13 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 	
 	
 	public void setNPasses(int nPasses) { // for extended plugin filter we need to tell it the number of slices/frames it will call run method on. 
-		nPasses = (((last-first)+1)+1); // is the number of frames we will write the time stamper into finally on click ok. 
+		nPasses = ((last-first)+1); // is the number of frames we will write the time stamper into finally on click ok. 
 	}	
 	
 
 
 	// run the plugin on the ip object, which is the ImageProcessor object associated with the open/selected image. 
+	// but remember that showDialog method is run before this in EnhancedPluginFilter
 	public void run(ImageProcessor ip) {
 	
 		// this increments frame integer by 1. If an int is declared with no value, it defaults to 0
@@ -147,7 +151,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		
 		
 			// this stuff isnt needed in EnhancedPluginFilter because setNPasses takes care of number of frames to write in
-			// and EnhancedPluginFilter ecexutes the showDialog method before the run method, always, so doint need to call it in run. 
+			// and EnhancedPluginFilter executes the showDialog method before the run method, always, so doint need to call it in run. 
 		//if (frame==1) showDialog(imp, "TimeStamperEnhanced", pfr);	// if at the 1st frame of the stack, show the GUI by calling the showDialog method
 							// and set the variables according to the GUI input. 
 		if (canceled || frame<first || frame>last) return; // tell the run method when to not do anything just return  
@@ -164,18 +168,20 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 
 
 		ip.drawString(timeString()); // draw the timestring into the image
-		//showProgress(precent done calc here); // dont really need a progress bar...
+		//showProgress(precent done calc here); // dont really need a progress bar... but seem to get one anyway...
 		time += interval;  // increments the time by the time interval
 	}
 	
 	
-	void setFontParams(ImageProcessor ip) { //work out the size of the font to use from the size of the ROI box drawn, if one was drawn (how does it know?)
+	void setFontParams(ImageProcessor ip) { //work out the size of the font to use from the size of the ROI box drawn, 
+											//if one was drawn (how does it know?)
 		Rectangle theROI = ip.getRoi();
 		// whats up with these numbers? Are they special?
 			// single characters fit the ROI, but if the time stamper string is long
 			// then the font is too big to fit the whole thing in!
 		//if (theROI != null)
 		size = (int) (theROI.height); // - 1.10526)/0.934211);	
+		//else ????? what if there is no roi?
 		
 		// make sure the font is not too big or small.... but why? Too -  small cant read it. Too Big - ?
 		// should this use private and public and get / set methods?
@@ -191,12 +197,12 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		//more font related setting stuff moved from the run method
 		// seems to work more reliable with this code in this method instead of in run.
 		// But if i dont change the font size by typing in the GUI - it ignores the AA text setting!!! Why??? 
-		//ip.setFont(font); //dont need that twice?
 		ip.setColor(Toolbar.getForegroundColor());
 		ip.setAntialiasedText(AAtext);
 	}
 	
-	// position the time stamp string correctly, so it is all on the image, even for the last frames with bigger numbers. 
+	
+	// methos to position the time stamp string correctly, so it is all on the image, even for the last frames with bigger numbers. 
 	// ip.moveTo(x, y);  // move to x y position for Timestamp writing 
 		
 	// the maxwidth if statement tries to move the time stamp right a bit to account for the max length the time stamp will be.
@@ -217,9 +223,9 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		// so the time stamp is not off the top of the image?
 		if (y<size)
 			y = size;
-		// if timestamp is wider than (image width - ROI width) , move x in appropriately
-		if (maxWidth(ip, start, interval, last) > ( ip.getWidth() - x ) )
-			ip.moveTo( (ip.getWidth() - maxWidth(ip, start, interval, last)), y);
+		// if longest timestamp is wider than (image width - ROI width) , move x in appropriately
+		if (maxWidth(ip, lastTimeStampString) > ( ip.getWidth() - x ) )
+			ip.moveTo( (ip.getWidth() - maxWidth(ip, lastTimeStampString)), y);
 		else ip.moveTo(x, y);
 	}
 	
@@ -283,26 +289,36 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 			+ IJ.d2s(time, decimalPlaces);
 	}
 
+	// this method returns the string of the TimeStamp  for the last frame to be stamped
+	// which is for the frame with value of the last variable. 
+	// It should be the longest string the timestamp will be.
+	// we should use this in maxWidth method and for the preview of the timestamp
+	// used to be: maxWidth = ip.getStringWidth(decimalString(start + interval*imp.getStackSize())); 
+	// but should use last not stacksize, since no time stamp is made for slices after last?
+	// It also needs to calculate maxWidth for both digital and decimal time formats:
+	String lastTimeStampString(double startTime, double intervalTime, int lastFrame) {
+		if (digitalOrDecimal.equals ("Decimal"))
+			return decimalString(startTime + (intervalTime*lastFrame) );
+		else if (digitalOrDecimal.equals ("hh:mm:ss.ms"))
+			return digitalString(startTime + (intervalTime*lastFrame) );
+		else return "";  // IJ.log("Error occured: digitalOrDecimal was not selected!"); //+ message());
+		// IJ.log("Error occurred: digitalOrDecimal must be hh:mm:ss.ms or Decimal, but it was not."); 
+	}
+	
+	
 	//moved out of run method to its own method.
 		// maxWidth is an integer = length of the decimal time stamp string in pixels
 		// for the last slice of the stack to be stamped. It is used in the run method below, 
 		// to prevent the time stamp running off the right edge of the image
 		// ip.getStringWidth(string) seems to return the # of pixels long a string is in x?
 		// how does it take care of font size i wonder? The font is set 
-		// using the variable size... so i guess the ip object knows how big the font is.  
-		// used to be: maxWidth = ip.getStringWidth(decimalString(start + interval*imp.getStackSize())); 
-		// but should use last not stacksize, since no time stamp is made for slices after last?
-		// It also needs to calcualte maxWidth for both digital and decimal time formats:
-	int maxWidth(ImageProcessor ip, double startTime, double intervalTime, int lastFrame) {
-		if (digitalOrDecimal.equals ("Decimal"))
-			return ip.getStringWidth(decimalString(startTime + intervalTime*lastFrame));
-		else if (digitalOrDecimal.equals ("hh:mm:ss.ms"))
-			return ip.getStringWidth(digitalString(startTime + intervalTime*lastFrame));
-		else return 0;  // IJ.log("Error occured: digitalOrDecimal was not selected!"); //+ message());
-		// IJ.log("Error occurred: digitalOrDecimal must be hh:mm:ss.ms or Decimal, but it was not."); 
-	}
+		// using the variable size... so i guess the ip object knows how big the font is.  	
+	int maxWidth(ImageProcessor ip, String lastTimeStampString) {
+		return ip.getStringWidth(lastTimeStampString);
+	}	
+		
 	
-	
+	// to make progress bar in main imagej panel. ... looks like we get one anyway...can see with several hundred frame stack?
 	//void showProgress(double percent) {   // dont really need a progress bar...
 	//	percent = (double)(frame-1)/nPasses + percent/nPasses;  //whats this for? 
 	//	IJ.showProgress(percent);
