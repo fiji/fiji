@@ -314,8 +314,8 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 				       stare, null));
 
 			//create and move into the user namespace
-			in_ns.invoke(USER);
-			refer.invoke(CLOJURE);
+			//in_ns.invoke(USER);
+			//refer.invoke(CLOJURE);
 		}
 
 		/** Evaluates the clojure code in @param text and appends a newline char to each returned token. */
