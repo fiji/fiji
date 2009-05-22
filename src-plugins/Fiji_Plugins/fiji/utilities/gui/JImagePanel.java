@@ -1,6 +1,5 @@
 package fiji.utilities.gui;
 
-
 /*
  * This code is a modified form of the standard ImageCanvas which comes
  * with ImageJ, but modified to extend JPanel rather than Canvas.
@@ -18,13 +17,24 @@ package fiji.utilities.gui;
  * Simon Andrews 21/04/2008
  */
 
+import ij.IJ;
+import ij.ImageJ;
+import ij.ImagePlus;
+import ij.Prefs;
+
+import ij.util.Java2;
+import ij.util.Tools;
+
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Rectangle;
 
 import javax.swing.JPanel;
-
-
-import java.awt.*;
-import ij.*;
-import ij.util.*;
 
 /** This is a Canvas used to display images in a Window. */
 public class JImagePanel extends JPanel implements Cloneable {
@@ -35,16 +45,16 @@ public class JImagePanel extends JPanel implements Cloneable {
 	protected static Cursor crosshairCursor = new Cursor(Cursor.CROSSHAIR_CURSOR);
 
 	public static boolean usePointer = Prefs.usePointerCursor;
-	
+
 	protected ImagePlus imp;
 	protected boolean imageUpdated;
 	protected Rectangle srcRect;
 	protected int imageWidth, imageHeight;
-	
-    private BasicStroke listStroke;
-    private static Color showAllColor = new Color(128, 255, 255);
-    private static Color labelColor;
-		
+
+	private BasicStroke listStroke;
+	private static Color showAllColor = new Color(128, 255, 255);
+	private static Color labelColor;
+
 	protected ImageJ ij;
 	protected double magnification;
 	protected int dstWidth, dstHeight;
@@ -54,12 +64,11 @@ public class JImagePanel extends JPanel implements Cloneable {
 	protected int xSrcStart;
 	protected int ySrcStart;
 	protected int flags;
-	
+
 	private Image offScreenImage;
 	private int offScreenWidth = 0;
 	private int offScreenHeight = 0;
-	
-	
+
 	public JImagePanel(ImagePlus imp) {
 		this.imp = imp;
 		ij = IJ.getInstance();
@@ -70,10 +79,10 @@ public class JImagePanel extends JPanel implements Cloneable {
 		srcRect = new Rectangle(0, 0, imageWidth, imageHeight);
 		setDrawingSize(imageWidth, (int)(imageHeight));
 		magnification = 1.0;
- 		addKeyListener(ij);  // ImageJ handles keyboard shortcuts
+		addKeyListener(ij);  // ImageJ handles keyboard shortcuts
 		setFocusTraversalKeysEnabled(false);
 	}
-		
+
 	void updateImage(ImagePlus imp) {
 		this.imp = imp;
 		int width = imp.getWidth();
@@ -97,13 +106,13 @@ public class JImagePanel extends JPanel implements Cloneable {
 	}
 
 	public void setDrawingSize(int width, int height) {
-	    dstWidth = width;
-	    dstHeight = height;
+		dstWidth = width;
+		dstHeight = height;
 		setSize(dstWidth, dstHeight);
 	}
-		
+
 	/** ImagePlus.updateAndDraw calls this method to get paint 
-		to update the image from the ImageProcessor. */
+	  to update the image from the ImageProcessor. */
 	public void setImageUpdated() {
 		imageUpdated = true;
 	}
@@ -112,8 +121,8 @@ public class JImagePanel extends JPanel implements Cloneable {
 		paint(g);
 	}
 
-    public void paint(Graphics g) {
-    	super.paint(g);
+	public void paint(Graphics g) {
+		super.paint(g);
 		try {
 			if (imageUpdated) {
 				imageUpdated = false;
@@ -122,12 +131,12 @@ public class JImagePanel extends JPanel implements Cloneable {
 			Java2.setBilinearInterpolation(g, Prefs.interpolateScaledImages);
 			Image img = imp.getImage();
 			if (img!=null)
- 				g.drawImage(img, 0, 0, (int)(srcRect.width*magnification), (int)(srcRect.height*magnification),
-				srcRect.x, srcRect.y, srcRect.x+srcRect.width, srcRect.y+srcRect.height, null);
+				g.drawImage(img, 0, 0, (int)(srcRect.width*magnification), (int)(srcRect.height*magnification),
+						srcRect.x, srcRect.y, srcRect.x+srcRect.width, srcRect.y+srcRect.height, null);
 		}
 		catch(OutOfMemoryError e) {IJ.outOfMemory("Paint");}
-    }
-        
+	}
+
 	int getSliceNumber(String label) {
 		if (label==null) return -1;
 		int slice = -1;
@@ -135,8 +144,8 @@ public class JImagePanel extends JPanel implements Cloneable {
 			slice = (int)Tools.parseDouble(label.substring(0,4),-1);
 		return slice;
 	}
-    
-    void initGraphics(Graphics g, Color c) {
+
+	void initGraphics(Graphics g, Color c) {
 		if (labelColor==null) {
 			int red = showAllColor.getRed();
 			int green = showAllColor.getGreen();
@@ -151,8 +160,7 @@ public class JImagePanel extends JPanel implements Cloneable {
 			if (listStroke!=null) ((Graphics2D)g).setStroke(listStroke);
 		} else
 			g.setColor(showAllColor);
-    }
-    
+	}
 
 	// Use double buffer to reduce flicker when drawing complex ROIs.
 	// Author: Erik Meijering
@@ -174,30 +182,20 @@ public class JImagePanel extends JPanel implements Cloneable {
 			Image img = imp.getImage();
 			if (img!=null)
 				offScreenGraphics.drawImage(img, 0, 0, srcRectWidthMag, srcRectHeightMag,
-					srcRect.x, srcRect.y, srcRect.x+srcRect.width, srcRect.y+srcRect.height, null);
+						srcRect.x, srcRect.y, srcRect.x+srcRect.width, srcRect.y+srcRect.height, null);
 			g.drawImage(offScreenImage, 0, 0, null);
 		}
 		catch(OutOfMemoryError e) {IJ.outOfMemory("Paint");}
 	}
 
-    long firstFrame;
-    int frames, fps;
-        
-    public Dimension getPreferredSize() {
-        return new Dimension(dstWidth, dstHeight);
-    }
+	long firstFrame;
+	int frames, fps;
 
-    int count;
-    
-    /*
-    public Graphics getGraphics() {
-     	Graphics g = super.getGraphics();
-		IJ.write("getGraphics: "+count++);
-		if (IJ.altKeyDown())
-			throw new IllegalArgumentException("");
-    	return g;
-    }
-    */
+	public Dimension getPreferredSize() {
+		return new Dimension(dstWidth, dstHeight);
+	}
+
+	int count;
 
 	/** Returns the mouse event modifiers. */
 	public int getModifiers() {
@@ -205,33 +203,33 @@ public class JImagePanel extends JPanel implements Cloneable {
 	}
 
 	/** Sets the cursor based on the current tool and cursor location. */
-		
+
 	/**Converts a screen x-coordinate to an offscreen x-coordinate.*/
 	public int offScreenX(int sx) {
 		return srcRect.x + (int)(sx/magnification);
 	}
-		
+
 	/**Converts a screen y-coordinate to an offscreen y-coordinate.*/
 	public int offScreenY(int sy) {
 		return srcRect.y + (int)(sy/magnification);
 	}
-	
+
 	/**Converts a screen x-coordinate to a floating-point offscreen x-coordinate.*/
 	public double offScreenXD(int sx) {
 		return srcRect.x + sx/magnification;
 	}
-		
+
 	/**Converts a screen y-coordinate to a floating-point offscreen y-coordinate.*/
 	public double offScreenYD(int sy) {
 		return srcRect.y + sy/magnification;
 
 	}
-	
+
 	/**Converts an offscreen x-coordinate to a screen x-coordinate.*/
 	public int screenX(int ox) {
 		return  (int)((ox-srcRect.x)*magnification);
 	}
-	
+
 	/**Converts an offscreen y-coordinate to a screen y-coordinate.*/
 	public int screenY(int oy) {
 		return  (int)((oy-srcRect.y)*magnification);
@@ -241,7 +239,7 @@ public class JImagePanel extends JPanel implements Cloneable {
 	public int screenXD(double ox) {
 		return  (int)((ox-srcRect.x)*magnification);
 	}
-	
+
 	/**Converts a floating-point offscreen x-coordinate to a screen x-coordinate.*/
 	public int screenYD(double oy) {
 		return  (int)((oy-srcRect.y)*magnification);
@@ -250,11 +248,11 @@ public class JImagePanel extends JPanel implements Cloneable {
 	public double getMagnification() {
 		return magnification;
 	}
-		
+
 	public void setMagnification(double magnification) {
 		setMagnification2(magnification);
 	}
-		
+
 	void setMagnification2(double magnification) {
 		if (magnification>32.0) magnification = 32.0;
 		if (magnification<0.03125) magnification = 0.03125;
@@ -265,14 +263,12 @@ public class JImagePanel extends JPanel implements Cloneable {
 	public Rectangle getSrcRect() {
 		return srcRect;
 	}
-	
+
 	void setSrcRect(Rectangle srcRect) {
 		this.srcRect = srcRect;
 	}
-	
-	
+
 	void adjustSourceRect(double newMag, int x, int y) {
-		//IJ.log("adjustSourceRect1: "+newMag+" "+dstWidth+"  "+dstHeight);
 		int w = (int)Math.round(dstWidth/newMag);
 		if (w*newMag<dstWidth) w++;
 		int h = (int)Math.round(dstHeight/newMag);
@@ -286,7 +282,5 @@ public class JImagePanel extends JPanel implements Cloneable {
 		if (r.y+h>imageHeight) r.y = imageHeight-h;
 		srcRect = r;
 		setMagnification(newMag);
-		//IJ.log("adjustSourceRect2: "+srcRect+" "+dstWidth+"  "+dstHeight);
 	}
-	
 }
