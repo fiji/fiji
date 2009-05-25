@@ -37,6 +37,16 @@ export LH_BASE="$(pwd)"/live-helper
 test -d "$LH_BASE" ||
 die "live-helper package is not available"
 
+for d in live-helper java/linux
+do
+	if test ! -d $d/.git
+	then
+		git submodule init $d &&
+		git submodule update $d
+	fi || break
+done ||
+die "Error checking out submodules"
+
 # TODO: this depends on i386
 test -x Fiji.app/fiji-linux ||
 sh Fake.sh app-linux ||
