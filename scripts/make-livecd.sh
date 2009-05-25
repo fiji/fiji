@@ -7,6 +7,8 @@ SVG=images/fiji-logo-1.0.svg
 XPM=images/fiji.xpm.gz
 LSS16=images/fiji16.lss
 PNG16=images/fiji16.png
+PACKAGES='kdebase kdebase-bin kicker klipper kdesktop kwin konqueror \
+	kdm ksmserver konsole xinit xserver-xorg'
 
 
 # some functions
@@ -109,7 +111,8 @@ mkdir -p $LIVECD &&
 	--iso-volume "Fiji Live $(date +%Y%m%d-%H:%M)" \
 	--syslinux-splash "$FIJIROOT"$LSS16 \
 	--syslinux-timeout 5 \
-	--username fiji &&
+	--username fiji \
+	--packages "$PACKAGES" &&
  perl -pi.bak -e 's/LIVE_ENTRY=.*/LIVE_ENTRY="Start Fiji Live"/' \
 	config/binary &&
  INCLUDES=config/chroot_local-includes &&
@@ -119,15 +122,19 @@ mkdir -p $LIVECD &&
  cat > config/chroot_local-hooks/splash << EOF &&
 #!/bin/sh
 
+if test ! -s /etc/hosts
+then
+	host archive.ubuntu.com |
+	sed "s/\(.*\) has address \(.*\)/\2 \1/" > /etc/hosts
+fi
+
 apt-get update &&
-apt-get install kdebase kdebase-bin kicker klipper kdesktop kwin konqueror \
-	kdm ksmserver konsole xinit xserver-xorg ||
+apt-get install --yes --force-yes $PACKAGES ||
 exit
 
 test -f $USPLASH/usplash-fiji.so &&
 exit
 
-apt-get update &&
 apt-get install -q -y --force-yes libusplash-dev libc6-dev gcc usplash &&
 (cd $USPLASH &&
  cat > usplash-fiji.c << 2EOF &&
