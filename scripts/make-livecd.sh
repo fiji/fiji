@@ -9,6 +9,14 @@ LSS16=images/fiji16.lss
 PNG16=images/fiji16.png
 PACKAGES='kdebase kdebase-bin kicker klipper kdesktop kwin konqueror \
 	kdm ksmserver konsole xinit xserver-xorg'
+IMAGE_FILE=fiji-live.iso
+
+EXTRA_LH_CONFIG=
+test a"$1" = a--usb && {
+	shift
+	EXTRA_LH_CONFIG="$EXTRA_LH_CONFIG --binary-images usb-hdd"
+	IMAGE_FILE=fiji-usb.img
+}
 
 
 # some functions
@@ -112,7 +120,8 @@ mkdir -p $LIVECD &&
 	--syslinux-splash "$FIJIROOT"$LSS16 \
 	--syslinux-timeout 5 \
 	--username fiji \
-	--packages "$PACKAGES" &&
+	--packages "$PACKAGES" \
+	$EXTRA_LH_CONFIG &&
  perl -pi.bak -e 's/LIVE_ENTRY=.*/LIVE_ENTRY="Start Fiji Live"/' \
 	config/binary &&
  INCLUDES=config/chroot_local-includes &&
@@ -223,5 +232,5 @@ EOF
  chmod a+x $INCLUDES/etc/profile.d/fiji.sh &&
  sudo LH_BASE="$LH_BASE" PATH="$LH_BASE"/helpers:"$PATH" \
 	"$LH_BASE"/helpers/lh_build &&
- mv -f binary.iso "$FIJIROOT"fiji-live.iso) ||
+ mv -f binary.${IMAGE_FILE##*.} "$FIJIROOT"$IMAGE_FILE) ||
 die "Building LiveCD failed"
