@@ -8,7 +8,7 @@ XPM=images/fiji.xpm.gz
 LSS16=images/fiji16.lss
 PNG16=images/fiji16.png
 PACKAGES='kdebase kdebase-bin kicker klipper kdesktop kwin konqueror \
-	kdm ksmserver konsole xinit xserver-xorg'
+	kdm ksmserver knetworkmanager konsole xinit xserver-xorg'
 IMAGE_FILE=fiji-live.iso
 
 EXTRA_LH_CONFIG=
