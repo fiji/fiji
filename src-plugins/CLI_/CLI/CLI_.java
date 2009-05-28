@@ -1850,7 +1850,7 @@ public class CLI_ extends AbstractInterpreter {
 				//if selection is an image file, then open it!
 				//debug://print("user_dir: " + user_dir + "\n" + "macro: " + macro);
 				if (new ImageFileFilter().accept(new File(user_dir), macro)) {
-					macrop = "open(\"" + fixWindowsPath(new File(user_dir).getCanonicalPath()) + file_separator + macro + "\");";
+					//macrop = "open(\"" + fixWindowsPath(new File(user_dir).getCanonicalPath()) + file_separator + macro + "\");";
 					print(macrop);
 				}/* else {
 					print("debug: MACRO IS NOT AN IMAGE \n");
@@ -1861,7 +1861,7 @@ public class CLI_ extends AbstractInterpreter {
 				// TODO should mark previous lines as well if this was part of a multiline
 				valid_lines.set(valid_lines.size() -1, false);
 				//ImageJ has its own way of notifying errors
-				print("\n-->  macro not executable or canceled.");
+				print("\n-->  macro not executable or canceled.\n");
 				
 				if (!magic) {
 					int ispace = macro.indexOf(' ');

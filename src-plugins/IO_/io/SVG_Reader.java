@@ -91,11 +91,7 @@ public class SVG_Reader extends ImagePlus implements PlugIn {
 		setTitle(file.getName());
 		setImage(renderer.getOffScreen());
 
-/*
-		} catch (IOException e) {
-			IJ.error("Error reading file " + file.getAbsolutePath()
-				+ ": " + e);
-		}
-*/
+		if (arg.equals(""))
+			show();
 	}
 }
