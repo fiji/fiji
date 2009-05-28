@@ -49,9 +49,10 @@ import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.Callable;
 
-/** Requires: a directory with images, all of the same dimensions
- *  Performs: registration of one image to the next, by phase- and cross-correlation or by SIFT
- *  Outputs: the list of new images, one for slice, into a target directory as .tif files.
+/** 
+ * Requires: a directory with images, all of the same dimensions
+ * Performs: registration of one image to the next, by phase- and cross-correlation or by SIFT
+ * Outputs: the list of new images, one for slice, into a target directory as .tif files.
  */
 public class Register_Virtual_Stack_MT implements PlugIn {
 
@@ -65,7 +66,7 @@ public class Register_Virtual_Stack_MT implements PlugIn {
 
 	static final public String[] registrationModelStrings =
 			       {"Translation           -- no deformation",
-	  	                "Rigid                 -- translate + rotate",
+	  	            "Rigid                 -- translate + rotate",
 			        "Similarity            -- translate + rotate + isotropic scale",
 			        "Affine                -- free affine transform",
 			        "Elastic               -- bUnwarpJ splines",
@@ -74,6 +75,9 @@ public class Register_Virtual_Stack_MT implements PlugIn {
 	final static public String[] featuresModelStrings = new String[]{ "Translation", "Rigid", "Similarity", "Affine" };
 
 
+	/**
+	 * Plug-in run method
+	 */
 	public void run(String arg) {
 
 		GenericDialog gd = new GenericDialog("Options");
@@ -106,10 +110,13 @@ public class Register_Virtual_Stack_MT implements PlugIn {
 		exec(source_dir, target_dir, featuresModelIndex, registrationModelIndex, advanced);
 	}
 
-	/** @param source_dir Directory to read all images from, where each image is a slice in a sequence. Their names must be bit-sortable, i.e. if numbered, they must be padded with zeros.
-	 *  @param target_dir Directory to store registered slices into.
-	 *  @param registration_type 0=TRANSLATION, 1=RIGID, 2=SIMILARITY, 3=AFFINE, 4=ELASTIC, 5=MOVING_LEAST_SQUARES
-	 *  @param advanced Triggers showing parameters setup dialogs.
+	/** 
+	 * Execution method. Execute registration after setting parameters. 
+	 * 
+	 * @param source_dir Directory to read all images from, where each image is a slice in a sequence. Their names must be bit-sortable, i.e. if numbered, they must be padded with zeros.
+	 * @param target_dir Directory to store registered slices into.
+	 * @param registration_type 0=TRANSLATION, 1=RIGID, 2=SIMILARITY, 3=AFFINE, 4=ELASTIC, 5=MOVING_LEAST_SQUARES
+	 * @param advanced Triggers showing parameters setup dialogs.
 	 */
 	static public void exec(final String source_dir, final String target_dir, final int featuresModelIndex, final int registrationModelIndex, final boolean advanced) {
 		Param p = new Param();
@@ -119,6 +126,13 @@ public class Register_Virtual_Stack_MT implements PlugIn {
 		exec(source_dir, target_dir, p);
 	}
 
+	/**
+	 * Execution method. Execute registration when all parameters are set.
+	 * 
+	 * @param source_dir Directory to read all images from, where each image is a slice in a sequence. Their names must be bit-sortable, i.e. if numbered, they must be padded with zeros.
+	 * @param target_dir Directory to store registered slices into.
+	 * @param p Registration parameters
+	 */
 	static public void exec(final String source_dir, final String target_dir, final Param p) {
 		// get file listing
 		final String exts = ".tif.jpg.png.gif.tiff.jpeg.bmp.pgm";
@@ -134,6 +148,11 @@ public class Register_Virtual_Stack_MT implements PlugIn {
 		exec(source_dir, names, target_dir, p);
 	}
 
+	//-----------------------------------------------------------------------------------------
+	/**
+	 * Registration parameters class 
+	 *
+	 */
 	static public class Param
 	{	
 		final public FloatArray2DSIFT.Param sift = new FloatArray2DSIFT.Param();
@@ -160,7 +179,7 @@ public class Register_Virtual_Stack_MT implements PlugIn {
 		public int featuresModelIndex = 1;
 
 		/**
-		 * Implemeted transformation models for choice
+		 * Implemented transformation models for choice
 	 	*  0=TRANSLATION, 1=RIGID, 2=SIMILARITY, 3=AFFINE, 4=ELASTIC, 5=MOVING_LEAST_SQUARES
 		 */
 		public int registrationModelIndex = 1;
@@ -207,8 +226,17 @@ public class Register_Virtual_Stack_MT implements PlugIn {
 
 			return true;
 		}
-	}
-
+	} // end class Param
+	//-----------------------------------------------------------------------------------------
+	
+	/**
+	 * Execution method. Execute registration when all parameters are set.
+	 * 
+	 * @param source_dir Directory to read all images from, where each image is a slice in a sequence. Their names must be bit-sortable, i.e. if numbered, they must be padded with zeros.
+	 * @param sorted_file_names Array of sorted source file names.
+	 * @param target_dir Directory to store registered slices into.
+	 * @param p registration parameters
+	 */
 	static public void exec(final String source_dir, final String[] sorted_file_names, final String target_dir, final Param p) {
 		if (source_dir.equals(target_dir)) {
 			IJ.log("Source and target directories MUST be different\n or images would get overwritten.\nDid NOT register stack slices.");
@@ -219,26 +247,28 @@ public class Register_Virtual_Stack_MT implements PlugIn {
 			return;
 		}
 
+		// Select features model
 		Model< ? > featuresModel;
 		switch ( p.featuresModelIndex )
 		{
-		case 0:
-			featuresModel = new TranslationModel2D();
-			break;
-		case 1:
-			featuresModel = new RigidModel2D();
-			break;
-		case 2:
-			featuresModel = new SimilarityModel2D();
-			break;
-		case 3:
-			featuresModel = new AffineModel2D();
-			break;
-		default:
-			IJ.log("ERROR: unknown featuresModelIndex = " + p.featuresModelIndex);
-			return;
+			case 0:
+				featuresModel = new TranslationModel2D();
+				break;
+			case 1:
+				featuresModel = new RigidModel2D();
+				break;
+			case 2:
+				featuresModel = new SimilarityModel2D();
+				break;
+			case 3:
+				featuresModel = new AffineModel2D();
+				break;
+			default:
+				IJ.log("ERROR: unknown featuresModelIndex = " + p.featuresModelIndex);
+				return;
 		}
 
+		// Select registration model
 		final mpicbg.models.CoordinateTransform t;
 		switch (p.registrationModelIndex) {
 			case 0: t = new TranslationModel2D(); break;
