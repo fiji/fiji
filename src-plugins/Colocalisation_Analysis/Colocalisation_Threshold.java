@@ -16,7 +16,7 @@ import java.util.*;
 
 
 public class Colocalisation_Threshold implements PlugIn {
-	static boolean headingsSetCTC;
+	boolean headingsSetCTC;
 	private static int index1=0;
 	private static int index2=1;
 	private static int indexMask;
@@ -848,10 +848,11 @@ public class Colocalisation_Threshold implements PlugIn {
 
 				//plot16.putPixel(c, (int)255-(int)plotY2,plotmax2 );
 			}
-			new ImagePlus("Correlation Plot", plot16).show();
-			ImagePlus imp3 = WindowManager.getCurrentImage();
-			IJ.run("Enhance Contrast", "saturated=50 equalize");
-			IJ.run("Fire");
+			ImagePlus imp3 = new ImagePlus("Correlation Plot",
+					plot16);
+			imp3.show();
+			IJ.run(imp3, "Enhance Contrast", "saturated=50 equalize");
+			IJ.run(imp3, "Fire", null);
 			imp3.setTitle(fileName + " Freq. CP");
 		}
 		IJ.selectWindow("Results");
