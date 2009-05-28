@@ -7,7 +7,7 @@ import ij.gui.*;
 import ij.process.*;
 import ij.text.*;
 import ij.plugin.PlugIn;
-import java.text.DecimalFormat; 
+import java.text.DecimalFormat;
 import ij.measure.*;
 import ij.util.*;
 import java.util.*;
@@ -15,8 +15,7 @@ import java.util.*;
 
 
 
-public class Colocalisation_Threshold implements PlugIn
-{
+public class Colocalisation_Threshold implements PlugIn {
 	static boolean headingsSetCTC;
 	private static int index1=0;
 	private static int index2=1;
@@ -64,17 +63,14 @@ public class Colocalisation_Threshold implements PlugIn
 	private int rwidth, rheight, xOffset, yOffset;
 	String[] chooseROI=  { "None","Channel 1", "Channel 2",};
 
-	public void run(String arg) 
-	{
+	public void run(String arg) {
 		if (showDialog())
 			correlate(imp1, imp2);
 	}
 
-	public boolean showDialog() 
-	{
+	public boolean showDialog() {
 		int[] wList = WindowManager.getIDList();
-		if (wList==null) 
-		{
+		if (wList==null) {
 			IJ.noImage();
 			return false;
 		}
@@ -82,14 +78,14 @@ public class Colocalisation_Threshold implements PlugIn
 		String[] chooseMask=  new String[wList.length+1];
 		chooseMask[0]="<None>";
 
-		for (int i=0; i<wList.length; i++) 
-		{
+		for (int i=0; i<wList.length; i++) {
 			ImagePlus imp = WindowManager.getImage(wList[i]);
-			if (imp!=null)	
-				if (imp!=null){	titles[i] = imp.getTitle();
-					chooseMask[i+1] =imp.getTitle();}
-				else	titles[i] = "";
-		}	
+			if (imp!=null)
+				if (imp!=null) {
+					titles[i] = imp.getTitle();
+					chooseMask[i+1] =imp.getTitle();
+				} else	titles[i] = "";
+		}
 		if (index1>=titles.length)index1 = 0;
 		if (index2>=titles.length)index2 = 0;
 		if (indexMask>=titles.length)indexMask = 0;
@@ -136,8 +132,7 @@ public class Colocalisation_Threshold implements PlugIn
 		imp2 = WindowManager.getImage(wList[index2]);
 		ImageWindow winimp1= imp1.getWindow();
 		ImageWindow winimp2= imp2.getWindow();
-		if (imp1.getType()!=imp1.GRAY8&&imp1.getType()!=imp1.GRAY16&&imp2.getType()!=imp2.GRAY16 &&imp2.getType()!=imp1.GRAY8) 
-		{
+		if (imp1.getType()!=imp1.GRAY8&&imp1.getType()!=imp1.GRAY16&&imp2.getType()!=imp2.GRAY16 &&imp2.getType()!=imp1.GRAY8) {
 			IJ.showMessage("Image Correlator", "Both images must be 8-bit or 16-bit grayscale.");
 			return false;
 		}
@@ -154,105 +149,113 @@ public class Colocalisation_Threshold implements PlugIn
 
 		//IJ.showMessage("index"+rect.width);
 
-		if ((indexRoi==1)) 
-		{if(roi1==null) 
-			{useRoi=false;}
-			else
-			{if (roi1.getType()==Roi.RECTANGLE) {
-								    IJ.showMessage("Does not work with rectangular ROIs");
-								    return false;}
-								    ipmask = imp1.getMask();
-								    //if (keepROIimage) new ImagePlus("Mask",ipmask).show();
-								    rect = ip1.getRoi();
+		if ((indexRoi==1)) {
+			if (roi1==null) {
+				useRoi=false;
+			} else {
+				if (roi1.getType()==Roi.RECTANGLE) {
+					IJ.showMessage("Does not work with rectangular ROIs");
+					return false;
+				}
+				ipmask = imp1.getMask();
+				//if (keepROIimage) new ImagePlus("Mask",ipmask).show();
+				rect = ip1.getRoi();
 			}
 		}
 
-		if ((indexRoi==2))
-		{if(roi2==null) 
-			{useRoi=false;}
-			else
-			{if (roi2.getType()==Roi.RECTANGLE) {
-								    IJ.showMessage("Does not work with rectangular ROIs");
-								    return false;}
-								    ipmask = imp2.getMask();
-								    //if (keepROIimage) new ImagePlus("Mask",ipmask).show();
-								    rect = ip2.getRoi();
+		if ((indexRoi==2)) {
+			if (roi2==null) {
+				useRoi=false;
+			} else {
+				if (roi2.getType()==Roi.RECTANGLE) {
+					IJ.showMessage("Does not work with rectangular ROIs");
+					return false;
+				}
+				ipmask = imp2.getMask();
+				//if (keepROIimage) new ImagePlus("Mask",ipmask).show();
+				rect = ip2.getRoi();
 			}
 		}
 
-		if (indexRoi==0)
-		{
-			xOffset = 0;yOffset = 0; rwidth=width; rheight  =height;
-		}
-		else {	xOffset = rect.x; yOffset = rect.y; rwidth=rect.width; rheight  =rect.height;
+		if (indexRoi==0) {
+			xOffset = 0;
+			yOffset = 0;
+			rwidth=width;
+			rheight  =height;
+		} else {
+			xOffset = rect.x;
+			yOffset = rect.y;
+			rwidth=rect.width;
+			rheight  =rect.height;
 
 		}
 		//IJ.showMessage("Xoffset:"+xOffset+ " Yoffset:"+yOffset);
 
 		//if red-blue
-		if (dualChannelIndex==1)
-		{colIndex2 = 2;
-			colIndex3=1;};
+		if (dualChannelIndex==1) {
+			colIndex2 = 2;
+			colIndex3=1;
+		};
 
-			//if blue-green
-			if (dualChannelIndex==2) 
-			{colIndex1 = 1;colIndex2 =2 ;
-				colIndex3=0;}
-
-
-
-
-				boolean matchWidth=false;
-				boolean matchHeight=false;
-				boolean  matchSlice = false;
-				//if (imp1.getWidth()==imp2.getWidth()&&imp1.getWidth()==impMask.getWidth()) matchWidth = true;		
-				//if (imp1.getHeight()==imp2.getHeight()&&imp1.getHeight()==impMask.getHeight()) matchHeight = true;
-				//if (imp1.getStackSize()==imp2.getStackSize()&&imp1.getStackSize()==impMask.getStackSize()) matchSlice = true;
-
-				//if (!(matchWidth&&matchHeight&&matchSlice)) 
-				//	{IJ.showMessage("Image mismatch","Images do not match. Exiting");
-				//	return false;
-				//	}
-				if (options)
-				{
-					GenericDialog gd2 = new GenericDialog("Set Results Options");
-					gd2.addMessage("See online manual for detailed description of these values");
-					gd2.addCheckbox("Show linear regression solution",opt1a);
-					gd2.addCheckbox("Show thresholds",opt1);
-					gd2.addCheckbox("Pearson's for whole image",opt2);
-					gd2.addCheckbox("Pearson's for image above thresholds",opt3a);
-					gd2.addCheckbox("Pearson's for image below thresholds (should be ~0)",opt3b);
-					gd2.addCheckbox("Mander's original coefficients (threshold = 0)",opt4);
-					gd2.addCheckbox("Mander's using thresholds",opt5);
-					gd2.addCheckbox("Number of colocalised voxels",opt6);
-					gd2.addCheckbox("% Image volume colocalised",opt7);
-					gd2.addCheckbox("% Voxels colocalised",opt8);
-					gd2.addCheckbox("% Intensity colocalised",opt9);
-					gd2.addCheckbox("% Intensity above threshold colocalised",opt10);
-					gd2.showDialog();
-					if (gd2.wasCanceled())	return false;
+		//if blue-green
+		if (dualChannelIndex==2) {
+			colIndex1 = 1;
+			colIndex2 =2 ;
+			colIndex3=0;
+		}
 
 
-					opt1=gd2.getNextBoolean();
-					opt1a=gd2.getNextBoolean();
-					opt2=gd2.getNextBoolean();
-					opt3a=gd2.getNextBoolean();
-					opt3b=gd2.getNextBoolean();
-					opt4=gd2.getNextBoolean();
-					opt5=gd2.getNextBoolean();
-					opt6=gd2.getNextBoolean();
-					opt7=gd2.getNextBoolean();
-					opt8=gd2.getNextBoolean();
-					opt9=gd2.getNextBoolean();
-					opt10=gd2.getNextBoolean();
-					headingsSetCTC = false;
-				}
-				//IJ.showMessage(""+indexMask);
-				return true;
+
+
+		boolean matchWidth=false;
+		boolean matchHeight=false;
+		boolean  matchSlice = false;
+		//if (imp1.getWidth()==imp2.getWidth()&&imp1.getWidth()==impMask.getWidth()) matchWidth = true;
+		//if (imp1.getHeight()==imp2.getHeight()&&imp1.getHeight()==impMask.getHeight()) matchHeight = true;
+		//if (imp1.getStackSize()==imp2.getStackSize()&&imp1.getStackSize()==impMask.getStackSize()) matchSlice = true;
+
+		//if (!(matchWidth&&matchHeight&&matchSlice))
+		//	{IJ.showMessage("Image mismatch","Images do not match. Exiting");
+		//	return false;
+		//	}
+		if (options) {
+			GenericDialog gd2 = new GenericDialog("Set Results Options");
+			gd2.addMessage("See online manual for detailed description of these values");
+			gd2.addCheckbox("Show linear regression solution",opt1a);
+			gd2.addCheckbox("Show thresholds",opt1);
+			gd2.addCheckbox("Pearson's for whole image",opt2);
+			gd2.addCheckbox("Pearson's for image above thresholds",opt3a);
+			gd2.addCheckbox("Pearson's for image below thresholds (should be ~0)",opt3b);
+			gd2.addCheckbox("Mander's original coefficients (threshold = 0)",opt4);
+			gd2.addCheckbox("Mander's using thresholds",opt5);
+			gd2.addCheckbox("Number of colocalised voxels",opt6);
+			gd2.addCheckbox("% Image volume colocalised",opt7);
+			gd2.addCheckbox("% Voxels colocalised",opt8);
+			gd2.addCheckbox("% Intensity colocalised",opt9);
+			gd2.addCheckbox("% Intensity above threshold colocalised",opt10);
+			gd2.showDialog();
+			if (gd2.wasCanceled())	return false;
+
+
+			opt1=gd2.getNextBoolean();
+			opt1a=gd2.getNextBoolean();
+			opt2=gd2.getNextBoolean();
+			opt3a=gd2.getNextBoolean();
+			opt3b=gd2.getNextBoolean();
+			opt4=gd2.getNextBoolean();
+			opt5=gd2.getNextBoolean();
+			opt6=gd2.getNextBoolean();
+			opt7=gd2.getNextBoolean();
+			opt8=gd2.getNextBoolean();
+			opt9=gd2.getNextBoolean();
+			opt10=gd2.getNextBoolean();
+			headingsSetCTC = false;
+		}
+		//IJ.showMessage(""+indexMask);
+		return true;
 	}
 
-	public void correlate(ImagePlus imp1, ImagePlus imp2) 
-	{//IJ.showMessage("mask? "+useMask);
+	public void correlate(ImagePlus imp1, ImagePlus imp2) {//IJ.showMessage("mask? "+useMask);
 		String ch1fileName = imp1.getTitle();
 		String ch2fileName = imp2.getTitle();
 		//String maskName = impMask.getTitle();
@@ -261,7 +264,7 @@ public class Colocalisation_Threshold implements PlugIn
 		ImageProcessor ip2 = imp2.getProcessor();
 
 		ImageProcessor ipMask = imp1.getMask();
-		if(indexRoi>1) ipMask = imp2.getMask();
+		if (indexRoi>1) ipMask = imp2.getMask();
 
 		//	ImageStack imgMask = impMask.getStack();
 		ImageStack img1 = imp1.getStack();
@@ -311,7 +314,7 @@ public class Colocalisation_Threshold implements PlugIn
 		int N2 = 0;
 		int Nzero=0;
 		int Nch1gtT=0;
-		int Nch2gtT=0;	
+		int Nch2gtT=0;
 
 		double oldMax2=0;
 		int ch1Max=(int)ip1.getMax();
@@ -356,59 +359,66 @@ public class Colocalisation_Threshold implements PlugIn
 		Rectangle rect =ip1.getRoi();
 
 
-		if ((indexRoi==1)) 
-		{if(roi1==null) 
-			{useRoi=false;}
-			else
-			{if (roi1.getType()==Roi.RECTANGLE) {
-								    IJ.showMessage("Does not work with rectangular ROIs");
-								    return;}
-								    ipMask = imp1.getMask();
-								    //if (keepROIimage) new ImagePlus("Mask",ipmask).show();
-								    rect = ip1.getRoi();
+		if ((indexRoi==1)) {
+			if (roi1==null) {
+				useRoi=false;
+			} else {
+				if (roi1.getType()==Roi.RECTANGLE) {
+					IJ.showMessage("Does not work with rectangular ROIs");
+					return;
+				}
+				ipMask = imp1.getMask();
+				//if (keepROIimage) new ImagePlus("Mask",ipmask).show();
+				rect = ip1.getRoi();
 			}
 		}
 
-		if ((indexRoi==2))
-		{if(roi2==null) 
-			{useRoi=false;}
-			else
-			{if (roi2.getType()==Roi.RECTANGLE) {
-								    IJ.showMessage("Does not work with rectangular ROIs");
-								    return ;}
-								    ipMask = imp2.getMask();
-								    //if (keepROIimage) new ImagePlus("Mask",ipmask).show();
-								    rect = ip2.getRoi();
+		if ((indexRoi==2)) {
+			if (roi2==null) {
+				useRoi=false;
+			} else {
+				if (roi2.getType()==Roi.RECTANGLE) {
+					IJ.showMessage("Does not work with rectangular ROIs");
+					return ;
+				}
+				ipMask = imp2.getMask();
+				//if (keepROIimage) new ImagePlus("Mask",ipmask).show();
+				rect = ip2.getRoi();
 			}
 		}
-		if (useRoi==false)
-		{
-			xOffset = 0;yOffset = 0; rwidth=width; rheight  =height;
-		}
-		else {	xOffset = rect.x; yOffset = rect.y; rwidth=rect.width; rheight  =rect.height;
+		if (useRoi==false) {
+			xOffset = 0;
+			yOffset = 0;
+			rwidth=width;
+			rheight  =height;
+		} else {
+			xOffset = rect.x;
+			yOffset = rect.y;
+			rwidth=rect.width;
+			rheight  =rect.height;
 
 		}
 		//new ImagePlus("Mask",ipMask).show();
 
 		//get means
-		for (int s=1; s<=nslices; s++) 
-		{if (IJ.escapePressed()) 
-			{IJ.beep();  return;}
+		for (int s=1; s<=nslices; s++) {
+			if (IJ.escapePressed()) {
+				IJ.beep();
+				return;
+			}
 			ip1 = img1.getProcessor(s);
 			ip2 = img2.getProcessor(s);
 			//ipMask = imgMask.getProcessor(s);
 
-			for (int y=0; y<rheight; y++)
-			{
-				for (int x=0; x<rwidth; x++)
-				{mask=1;
+			for (int y=0; y<rheight; y++) {
+				for (int x=0; x<rwidth; x++) {
+					mask=1;
 					if (useRoi) mask = (int)ipMask.getPixelValue(x,y);
-					if (mask!=0)
-					{				
-						ch1 = (int)ip1.getPixel(x+xOffset,y+yOffset); 
-						ch2 = (int)ip2.getPixel(x+xOffset,y+yOffset); 
-						if(ch1>ch1ROIMax) ch1ROIMax=ch1;
-						if(ch2>ch2ROIMax) ch2ROIMax=ch2;
+					if (mask!=0) {
+						ch1 = (int)ip1.getPixel(x+xOffset,y+yOffset);
+						ch2 = (int)ip2.getPixel(x+xOffset,y+yOffset);
+						if (ch1>ch1ROIMax) ch1ROIMax=ch1;
+						if (ch2>ch2ROIMax) ch2ROIMax=ch2;
 
 						ch3 = ch1+ch2;
 						ch1Sum+=ch1;
@@ -424,27 +434,27 @@ public class Colocalisation_Threshold implements PlugIn
 		double ch3Mean = ch3Sum/N;
 		N=0;
 		//calulate variances
-		for (int s=1; s<=nslices; s++) 
-		{if (IJ.escapePressed()) 
-			{IJ.beep();  return;}
+		for (int s=1; s<=nslices; s++) {
+			if (IJ.escapePressed()) {
+				IJ.beep();
+				return;
+			}
 			ip1 = img1.getProcessor(s);
 			ip2 = img2.getProcessor(s);
 			//ipMask = imgMask.getProcessor(s);
-			for (int y=0; y<rheight; y++)
-			{
-				for (int x=0; x<rwidth; x++)
-				{mask=1;
+			for (int y=0; y<rheight; y++) {
+				for (int x=0; x<rwidth; x++) {
+					mask=1;
 					if (useRoi) mask = (int)ipMask.getPixelValue(x,y);
-					if (mask!=0)
-					{	
-						ch1 = (int)ip1.getPixel(x+xOffset,y+yOffset); 
-						ch2 = (int)ip2.getPixel(x+xOffset,y+yOffset); 
+					if (mask!=0) {
+						ch1 = (int)ip1.getPixel(x+xOffset,y+yOffset);
+						ch2 = (int)ip2.getPixel(x+xOffset,y+yOffset);
 						ch3 = ch1+ch2;
 						ch1mch1MeanSqSum+= (ch1-ch1Mean)*(ch1-ch1Mean);
-						ch2mch2MeanSqSum+= (ch2-ch2Mean)*(ch2-ch2Mean);				
-						ch3mch3MeanSqSum+=	 (ch3-ch3Mean)*(ch3-ch3Mean);	
+						ch2mch2MeanSqSum+= (ch2-ch2Mean)*(ch2-ch2Mean);
+						ch3mch3MeanSqSum+=	 (ch3-ch3Mean)*(ch3-ch3Mean);
 
-						if(ch1+ch2==0) Nzero++;
+						if (ch1+ch2==0) Nzero++;
 						//calc pearsons for original image
 						sumX = sumX+ch1;
 						sumXY = sumXY + (ch1 * ch2);
@@ -463,8 +473,8 @@ public class Colocalisation_Threshold implements PlugIn
 		double rTotal = pearsons1/(Math.sqrt(pearsons2*pearsons3));
 
 		//http://mathworld.wolfram.com/Covariance.html
-		//?2 = X2?(X)2 
-		// = E[X2]?(E[X])2 
+		//?2 = X2?(X)2
+		// = E[X2]?(E[X])2
 		//var (x+y) = var(x)+var(y)+2(covar(x,y));
 		//2(covar(x,y)) = var(x+y) - var(x)-var(y);
 
@@ -473,7 +483,7 @@ public class Colocalisation_Threshold implements PlugIn
 		double ch3Var = ch3mch3MeanSqSum/(N-1);
 		double ch1ch2covar = 0.5*(ch3Var-(ch1Var+ch2Var));
 
-		//do regression 
+		//do regression
 		//See:Dissanaike and Wang
 		// http://papers.ssrn.com/sol3/papers.cfm?abstract_id=407560
 
@@ -486,7 +496,7 @@ public class Colocalisation_Threshold implements PlugIn
 		//IJ.showStatus("Done");
 
 		boolean prevDivByZero=false;
-		double newMax=ch1Max;	
+		double newMax=ch1Max;
 		double r2Prev=0;
 		double r2Prev2 =1;
 		int iteration=1;
@@ -496,16 +506,18 @@ public class Colocalisation_Threshold implements PlugIn
 
 		//newMax=20;
 
-		while(( thresholdFound==false)&&iteration<30)
-		{if (iteration==2&&r2<0)
-			{IJ.showMessage("No positive correlations found. Ending");
+		while (( thresholdFound==false)&&iteration<30) {
+			if (iteration==2&&r2<0) {
+				IJ.showMessage("No positive correlations found. Ending");
 				IJ.showStatus("Done");
 				return;
 			}
 			ch1threshmax=Math.round(newMax);
 			ch2threshmax=Math.round(((double)ch1threshmax*(double)m)+(double)b);
-			if (IJ.escapePressed()) 
-			{IJ.beep();  return;}
+			if (IJ.escapePressed()) {
+				IJ.beep();
+				return;
+			}
 			IJ.showStatus("2/3: Calculating Threshold. i = "+iteration+" Press 'Esc' to abort");
 			//reset values
 			sumX = 0;
@@ -516,23 +528,21 @@ public class Colocalisation_Threshold implements PlugIn
 			N2 = 0;
 			N=0;
 			Nzero=0;
-			for(int s=1; s<=nslices; s++)
-			{ip1 = img1.getProcessor(s);
+			for (int s=1; s<=nslices; s++) {
+				ip1 = img1.getProcessor(s);
 				ip2 = img2.getProcessor(s);
 				//ipMask = imgMask.getProcessor(s);
 
-				for (int y=0; y<rheight; y++) 
-				{
-					for (int x=0; x<rwidth; x++) 
-					{mask=1;
+				for (int y=0; y<rheight; y++) {
+					for (int x=0; x<rwidth; x++) {
+						mask=1;
 						if (useRoi) mask = (int)ipMask.getPixelValue(x,y);
-						if (mask!=0)
-						{	
-							ch1 = (int)ip1.getPixel(x+xOffset,y+yOffset); 
-							ch2 = (int)ip2.getPixel(x+xOffset,y+yOffset); 
+						if (mask!=0) {
+							ch1 = (int)ip1.getPixel(x+xOffset,y+yOffset);
+							ch2 = (int)ip2.getPixel(x+xOffset,y+yOffset);
 
-							if((ch1<(ch1threshmax))||(ch2<(ch2threshmax)))
-							{if(ch1+ch2==0) Nzero++;
+							if ((ch1<(ch1threshmax))||(ch2<(ch2threshmax))) {
+								if (ch1+ch2==0) Nzero++;
 								//calc pearsons
 								sumX = sumX+ch1;
 								sumXY = sumXY + (ch1 * ch2);
@@ -556,35 +566,36 @@ public class Colocalisation_Threshold implements PlugIn
 
 			//IJ.write(iteration+"\t"+df2.format(ch1threshmax)+"\t"+df2.format(ch2threshmax)+"\t"+ df4.format(r2)+"\t"+ ch1BestThresh) ;
 
-			//if r is not a number then set divide by zero to be true  
+			//if r is not a number then set divide by zero to be true
 			if (((Math.sqrt(pearsons2*pearsons3))==0)||N==0)	divByZero =true;
 			else divByZero = false;
 
-			//check to see if we're getting colser to zero for r						
-			if ((bestr2*bestr2>r2*r2)) 
-			{ch1BestThresh=ch1threshmax; 
-				bestr2=r2;}
+			//check to see if we're getting colser to zero for r
+			if ((bestr2*bestr2>r2*r2)) {
+				ch1BestThresh=ch1threshmax;
+				bestr2=r2;
+			}
 
-				//if our r is close to our level of tolerance then set threshold has been found
-				if((r2<tolerance)&&(r2>-tolerance) )thresholdFound = true;
+			//if our r is close to our level of tolerance then set threshold has been found
+			if ((r2<tolerance)&&(r2>-tolerance) )thresholdFound = true;
 
-				//if we've reached ch1 =1 then we've exhausted posibilities
-				if(Math.round(ch1threshmax)==0) thresholdFound =true;
+			//if we've reached ch1 =1 then we've exhausted posibilities
+			if (Math.round(ch1threshmax)==0) thresholdFound =true;
 
-				oldMax= newMax;
-				//change threshold max
-				if (r2>=0)
-				{if ((r2>=r2Prev)&&(!divByZero))  newMax =  newMax/2;
-					if ((r2<r2Prev)||(divByZero)) newMax = newMax+(newMax/2);
-				}
-				if ((r2<0)||divByZero)
-				{newMax = newMax+(newMax/2);
-				}
-				iteration++;
+			oldMax= newMax;
+			//change threshold max
+			if (r2>=0) {
+				if ((r2>=r2Prev)&&(!divByZero))  newMax =  newMax/2;
+				if ((r2<r2Prev)||(divByZero)) newMax = newMax+(newMax/2);
+			}
+			if ((r2<0)||divByZero) {
+				newMax = newMax+(newMax/2);
+			}
+			iteration++;
 
 		}
 
-		ch1threshmax =Math.round((ch1BestThresh)); 
+		ch1threshmax =Math.round((ch1BestThresh));
 		ch2threshmax =Math.round(((double)ch1BestThresh*(double)m)+(double)b);
 		int colocInt=255;
 
@@ -615,22 +626,20 @@ public class Colocalisation_Threshold implements PlugIn
 		N=0;
 		Ncoloc=0;
 
-		int [] color  = new int [3]; 
-		for(int s=1;s<=nslices; s++)
-		{IJ.showStatus("3/3: Performing final regression. Slice = "+s +" Press 'Esc' to abort");
+		int [] color  = new int [3];
+		for (int s=1;s<=nslices; s++) {
+			IJ.showStatus("3/3: Performing final regression. Slice = "+s +" Press 'Esc' to abort");
 			ip1 = img1.getProcessor(s);
 			ip2 = img2.getProcessor(s);
 			//ipMask = imgMask.getProcessor(s);
 			//ipColoc = new ColorProcessor(rwidth,rheight);
-			for (int y=0; y<rheight; y++) 
-			{
-				for (int x=0; x<rwidth; x++) 
-				{mask=1;
+			for (int y=0; y<rheight; y++) {
+				for (int x=0; x<rwidth; x++) {
+					mask=1;
 					if (useRoi) mask = (int)ipMask.getPixelValue(x,y);
-					if (mask!=0)
-					{
-						ch1 = (int)ip1.getPixel(x+xOffset,y+yOffset); 
-						ch2 = (int)ip2.getPixel(x+xOffset,y+yOffset); 
+					if (mask!=0) {
+						ch1 = (int)ip1.getPixel(x+xOffset,y+yOffset);
+						ch2 = (int)ip2.getPixel(x+xOffset,y+yOffset);
 
 						color[colIndex1 ]=(int)ch1;
 						color[colIndex2 ]=(int)ch2;
@@ -647,28 +656,33 @@ public class Colocalisation_Threshold implements PlugIn
 						count++;
 						plot32.putPixel(scaledXvalue ,scaledYvalue, count);
 						if (count<65535) plot16.putPixel(scaledXvalue ,scaledYvalue, count);
-						if (ch1+ch2==0) Nzero++;	
-						if (ch1>0) {Nch1++; mCh2coloc = mCh2coloc+ch2;}
-						if (ch2>0) {Nch2++; mCh1coloc = mCh1coloc+ch1;}
+						if (ch1+ch2==0) Nzero++;
+						if (ch1>0) {
+							Nch1++;
+							mCh2coloc = mCh2coloc+ch2;
+						}
+						if (ch2>0) {
+							Nch2++;
+							mCh1coloc = mCh1coloc+ch1;
+						}
 
-						if ((double)ch2>=ch2threshmax)
-						{Nch2gtT++;
+						if ((double)ch2>=ch2threshmax) {
+							Nch2gtT++;
 							sumCh2gtT = sumCh2gtT+ch2;
 							colocX=colocX+ch1;
 						}
-						if ((double)ch1>=ch1threshmax)
-						{Nch1gtT++;
+						if ((double)ch1>=ch1threshmax) {
+							Nch1gtT++;
 							sumCh1gtT = sumCh1gtT+ch1;
 							colocY=colocY+ch2;
 						}
-						if(((double)ch1>ch1threshmax)&&((double)ch2>ch2threshmax))
-						{
+						if (((double)ch1>ch1threshmax)&&((double)ch2>ch2threshmax)) {
 							sumColocCh1 = sumColocCh1+ch1;
 							sumColocCh2 = sumColocCh2+ch2;
 							Ncoloc++;
-							colocInt=255;				
-							if(!colocValConst) 
-							{colocInt = (int)Math.sqrt(ch1*ch2);
+							colocInt=255;
+							if (!colocValConst) {
+								colocInt = (int)Math.sqrt(ch1*ch2);
 							}
 							color[colIndex1 ]=(int)colocInt;
 							color[colIndex2 ]=(int)colocInt;
@@ -685,7 +699,7 @@ public class Colocalisation_Threshold implements PlugIn
 							sumYY = sumYY + (ch2 *ch2);
 							sumY = sumY + ch2;
 						}
-					}						
+					}
 				}
 			}
 			//IJ.showMessage(stackColoc.getWidth()+ "  -  " + ipColoc.getWidth());
@@ -740,53 +754,53 @@ public class Colocalisation_Threshold implements PlugIn
 		str = fileName +"\t"+"ROI" + indexRoi+"\texcl.\t";
 		if (opt0) str = fileName +"\t"+str+"\tincl.\t";
 
-		if(opt2)	str+= df3.format(rTotal)+ "\t";
-		if(opt1a)	str+= df3.format(m)+ "\t "+df1.format(b)+ "\t";
-		if(opt1)	str+= IJ.d2s(ch1threshmax,0)+"\t"+IJ.d2s(ch2threshmax,0)+"\t";
-		if(opt3a) str+= df4.format(Rcoloc) +"\t";
-		if(opt3b)	str+= df3.format(bestr2)+"\t";
-		if(opt4)	 str+= df4.format(M1)+ "\t "+df4.format(M2)+"\t";
-		if(opt5)	 str+= df4.format(colocM1)+ "\t"+df4.format(colocM2)+"\t";
-		if(opt6)	 str+= Ncoloc+ "\t";
-		if(opt7)	 str+= df2.format(((double)Ncoloc*(double)100)/((double)width*(double)height*(double)nslices))+"%\t";
-		if(opt8)	 str+= df2.format(percVolCh1*100 )+ "%\t";
-		if(opt8)	 str+= df2.format(percVolCh2*100 )+ "%\t";
-		if(opt9)	 str+= df2.format(percTotCh1*100 )+ "%\t";
-		if(opt9)	 str+= df2.format(percTotCh2*100 )+ "%\t";
-		if(opt10)	 str+= df2.format(percMatCh1*100 )+ "%\t";
-		if(opt10)	 str+= df2.format(percMatCh2*100 )+ "%\t";
+		if (opt2)	str+= df3.format(rTotal)+ "\t";
+		if (opt1a)	str+= df3.format(m)+ "\t "+df1.format(b)+ "\t";
+		if (opt1)	str+= IJ.d2s(ch1threshmax,0)+"\t"+IJ.d2s(ch2threshmax,0)+"\t";
+		if (opt3a) str+= df4.format(Rcoloc) +"\t";
+		if (opt3b)	str+= df3.format(bestr2)+"\t";
+		if (opt4)	 str+= df4.format(M1)+ "\t "+df4.format(M2)+"\t";
+		if (opt5)	 str+= df4.format(colocM1)+ "\t"+df4.format(colocM2)+"\t";
+		if (opt6)	 str+= Ncoloc+ "\t";
+		if (opt7)	 str+= df2.format(((double)Ncoloc*(double)100)/((double)width*(double)height*(double)nslices))+"%\t";
+		if (opt8)	 str+= df2.format(percVolCh1*100 )+ "%\t";
+		if (opt8)	 str+= df2.format(percVolCh2*100 )+ "%\t";
+		if (opt9)	 str+= df2.format(percTotCh1*100 )+ "%\t";
+		if (opt9)	 str+= df2.format(percTotCh2*100 )+ "%\t";
+		if (opt10)	 str+= df2.format(percMatCh1*100 )+ "%\t";
+		if (opt10)	 str+= df2.format(percMatCh2*100 )+ "%\t";
 
 		String heading = "Images\tMask\tZeroZero\t";
 
-		if(opt2)	heading += "Rtotal\t";
-		if(opt1a)	heading += "m\tb\t";
-		if(opt1)	heading += "Ch1 thresh\tCh2 thresh\t";
-		if(opt3a) heading += "Rcoloc\t";
-		if(opt3b)	heading += "R<threshold\t";
-		if(opt4)	 heading += "M1\tM2\t";
-		if(opt5)	 heading += "tM1\ttM2\t";
-		if(opt6)	 heading += "Ncoloc\t";
-		if(opt7)	 heading += "%Volume\t";
-		if(opt8)	 heading += "%Ch1 Vol\t";
-		if(opt8)	 heading += "%Ch2 Vol\t";
-		if(opt9)	 heading += "%Ch1 Int\t";
-		if(opt9)	 heading += "%Ch2 Int\t";
-		if(opt10)	 heading += "%Ch1 Int > thresh\t";
-		if(opt10)	 heading += "%Ch2 Int >thresh\t";
+		if (opt2)	heading += "Rtotal\t";
+		if (opt1a)	heading += "m\tb\t";
+		if (opt1)	heading += "Ch1 thresh\tCh2 thresh\t";
+		if (opt3a) heading += "Rcoloc\t";
+		if (opt3b)	heading += "R<threshold\t";
+		if (opt4)	 heading += "M1\tM2\t";
+		if (opt5)	 heading += "tM1\ttM2\t";
+		if (opt6)	 heading += "Ncoloc\t";
+		if (opt7)	 heading += "%Volume\t";
+		if (opt8)	 heading += "%Ch1 Vol\t";
+		if (opt8)	 heading += "%Ch2 Vol\t";
+		if (opt9)	 heading += "%Ch1 Int\t";
+		if (opt9)	 heading += "%Ch2 Int\t";
+		if (opt10)	 heading += "%Ch1 Int > thresh\t";
+		if (opt10)	 heading += "%Ch2 Int >thresh\t";
 		heading+="\n";
 		//	sb.append("%Voxels colocalised\t Ch1 = "+ df2.format(percVolCh1*100 )+ "%\tCh2 = "+df2.format(percVolCh2*100)+"%\n");
 
 		//sb.append("Sum of gtT \t Ch1 = "+ df3.format(sumCh1gtT )+ "\tCh2 = "+df3.format(sumCh2gtT)+"\n");
 		//sb.append("Sum total \t Ch1 = "+ df3.format(sumXtotal )+ "\tCh2 = "+df3.format(sumYtotal)+"\n");
 		double plotY=0;
-		double plotY2=0; 
+		double plotY2=0;
 		boolean resultsOpen = IJ.isResultsWindow();
 		if (!resultsOpen) headingsSetCTC = false;
-		if ((!headingsSetCTC)){ 
+		if ((!headingsSetCTC)) {
 			IJ.setColumnHeadings(heading);
 			headingsSetCTC = true;
 			IJ.write(heading);
-		}	
+		}
 
 		IJ.write(str);
 		//new TextWindow( "mRegression: "+fileName, "\t \t \t.", sb.toString(), 420, 450);
@@ -812,18 +826,15 @@ public class Colocalisation_Threshold implements PlugIn
 		//String colocString = "channel='"+Ch1fileName + "' channel='"+Ch2fileName +"' ratio=0 threshold="+IJ.d2s(ch1threshmax,1)+" threshold="+IJ.d2s(ch2threshmax,1)+" display=255";
 
 
-		if (bShowLocalisation) 
-		{//ipColoc.resetMinAndMax();
+		if (bShowLocalisation) {//ipColoc.resetMinAndMax();
 			new ImagePlus("Colocalised pixels", stackColoc).show();
 		}
 
-		if (bScatter)
-		{
+		if (bScatter) {
 			plot16.resetMinAndMax();
-			for (int c=0; c<256; c++)
-			{
-				plotY = ((double)c*m)+b;	
-				//plotY2 = ((double)c*m2)+b2;	
+			for (int c=0; c<256; c++) {
+				plotY = ((double)c*m)+b;
+				//plotY2 = ((double)c*m2)+b2;
 				int plotmax2=(int)(plot16.getMax());
 				int plotmax = (int)(plotmax2/2);
 
