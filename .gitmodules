@@ -55,3 +55,6 @@
 [submodule "AutoComplete"]
 	path = AutoComplete
 	url = contrib@pacific.mpi-cbg.de:/srv/git/AutoComplete
+[submodule "live-helper"]
+	path = live-helper
+	url = git://git.debian.net/git/debian-live/live-helper.git

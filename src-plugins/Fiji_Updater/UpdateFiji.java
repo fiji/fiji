@@ -241,9 +241,9 @@ public class UpdateFiji implements PlugIn {
 			long modified = new File(fullPath).lastModified();
 			if (useMacPrefix && path.startsWith(macPrefix))
 				path = path.substring(macPrefix.length());
-			dates.put(path, timestamp(modified));
 			if (File.separator.equals("\\"))
 				path = path.replace("\\", "/");
+			dates.put(path, timestamp(modified));
 			digests.put(path, digest);
 		} catch (Exception e) {
 			if (e instanceof FileNotFoundException &&
@@ -329,7 +329,9 @@ public class UpdateFiji implements PlugIn {
 			if (space2 < 0)
 				continue;
 			String date = line.substring(space + 1, space2);
-			String digest = line.substring(space2 + 1);
+			int space3 = line.indexOf(' ', space2 + 1);
+			String digest = space3 < 0 ? line.substring(space2 + 1)
+				: line.substring(space2 + 1, space3);
 			dates.put(path, date);
 			digests.put(path, digest);
 		}
