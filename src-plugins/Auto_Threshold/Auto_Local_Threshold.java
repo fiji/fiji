@@ -8,7 +8,7 @@ import ij.plugin.*;
 // Following the guidelines at http://pacific.mpi-cbg.de/wiki/index.php/PlugIn_Design_Guidelines
 // ImageJ plugin by G. Landini at bham. ac. uk
 // 1.0  15/Apr/2009
-
+//1.1  01/Jun/2009
                 
 public class Auto_Local_Threshold implements PlugIn {
         /** Ask for parameters and then execute.*/
@@ -29,7 +29,7 @@ public class Auto_Local_Threshold implements PlugIn {
 		 // 2 - Ask for parameters:
 		GenericDialog gd = new GenericDialog("Auto Local Threshold");
 		String [] methods={"Try all", "Bernsen",  "Mean", "Median", "MidGrey", "Niblack", "Sauvola"};
-		gd.addMessage("Auto Local Threshold v1.0");
+		gd.addMessage("Auto Local Threshold v1.1");
 		gd.addChoice("Method", methods, methods[0]);
 		gd.addNumericField ("Radius",  15, 0);
 		gd.addMessage ("Special paramters (if different from default)");
@@ -39,6 +39,7 @@ public class Auto_Local_Threshold implements PlugIn {
 		if (imp.getStackSize()>1) {
 			gd.addCheckbox("Stack",false);
 		}
+		gd.addMessage("Thresholded result is always shown in white [255].");
 		gd.showDialog();
 		if (gd.wasCanceled()) return;
  
@@ -187,6 +188,7 @@ public class Auto_Local_Threshold implements PlugIn {
 		}
 		//IJ.showProgress((double)(255-i)/255);
 		imp.updateAndDraw();
+		imp.getProcessor().setThreshold(255, 255, ImageProcessor.NO_LUT_UPDATE);
 		// 2 - Return the threshold and the image
 		return new Object[] {imp};
 	}
