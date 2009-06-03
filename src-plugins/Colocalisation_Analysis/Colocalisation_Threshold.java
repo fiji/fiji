@@ -632,7 +632,7 @@ public class Colocalisation_Threshold implements PlugIn {
 			ip1 = img1.getProcessor(s);
 			ip2 = img2.getProcessor(s);
 			//ipMask = imgMask.getProcessor(s);
-			//ipColoc = new ColorProcessor(rwidth,rheight);
+			ipColoc = new ColorProcessor(rwidth,rheight);
 			for (int y=0; y<rheight; y++) {
 				for (int x=0; x<rwidth; x++) {
 					mask=1;
