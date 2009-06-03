@@ -255,6 +255,8 @@ public class Colocalisation_Test implements PlugIn
 	int Ng=0;
 //get stack2 histogram
 ImageStatistics stats = imp2.getStatistics();
+if (imp2.getType() == imp2.GRAY16)
+	stats.nBins = 1<<16;
 int [] histogram = new int[stats.nBins];
 
 
