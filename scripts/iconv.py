@@ -3,7 +3,11 @@ from java.nio import ByteBuffer
 from java.nio.charset import Charset
 import sys
 
-decoder = Charset.forName("ISO-8859-1").newDecoder()
+if sys.argv[1] == '-f':
+	decoder = Charset.forName(sys.argv[2]).newDecoder()
+	sys.argv[1:] = sys.argv[3:]
+else:
+	decoder = Charset.forName("ISO-8859-1").newDecoder()
 encoder = Charset.forName("UTF-8").newEncoder()
 
 def iconv(file):
