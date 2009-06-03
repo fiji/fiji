@@ -718,19 +718,19 @@ public class Colocalisation_Threshold implements PlugIn {
 		double Rcoloc= pearsons1/(Math.sqrt(pearsons2*pearsons3));
 
 		//Mander's original
-		//[i.e. E(ch1if ch2>0) ÷ E(ch1total)]
+		//[i.e. E(ch1if ch2>0) Ã· E(ch1total)]
 
 		double M1 = mCh1coloc /sumCh1total;
 		double M2 = mCh2coloc /sumCh2total;
 
 
 		//Manders using threshold
-		//[i.e. E(ch1 if ch2>ch2threshold) ÷ (Ech1total)]
+		//[i.e. E(ch1 if ch2>ch2threshold) Ã· (Ech1total)]
 		double colocM1 = (double) colocX/(double)sumCh1total;
 		double colocM2 = (double) colocY/(double)sumCh2total;
 
 		//as in Coste's paper
-		//[i.e. E(ch1>ch1threshold) ÷ E(ch1total)]
+		//[i.e. E(ch1>ch1threshold) Ã· E(ch1total)]
 
 		double colocC1 = (double)sumCh1gtT/ (double)sumCh1total;
 		double colocC2 = (double)sumCh2gtT/(double)sumCh2total;

@@ -165,7 +165,7 @@ public class Colocalisation_Test implements PlugIn
 		{
 		GenericDialog gd2 = new GenericDialog("PSF details");
 		gd2.addCheckbox("Randomize pixels in z-axis", randZ);
-		gd2.addNumericField("Pixel Size (µm)", pixelSize,3);
+		gd2.addNumericField("Pixel Size (Âµm)", pixelSize,3);
 		gd2.addNumericField("Channel 2 wavelength (nm)", ch2Lambda,0);
 		gd2.addNumericField("NA of objective", NA,2);
 		gd2.addNumericField("Iterations",iterations,0);
@@ -654,7 +654,7 @@ String Percentile = ""+(iterations-colocCount)+"/"+iterations;
 	double percICQ =  ((double)countICQ/(double)iterations)*100;
 	String Headings2 = "Image" 	
 	+"\tR(obs)"
-	+"\tR(rand) mean±sd"
+	+"\tR(rand) meanÂ±sd"
 	+"\tP-value"
 	+"\tR(rand)>R(obs)"
 	+"\tIterations"
@@ -662,7 +662,7 @@ String Percentile = ""+(iterations-colocCount)+"/"+iterations;
 	+"\tPSF width\n";
 
 	String strPSF = "na";
-	if (Costes||rBlocks) strPSF =  df3.format(psf*pixelSize*2)+ " µm ("+df0.format(psf*2)+" pix.)" ;
+	if (Costes||rBlocks) strPSF =  df3.format(psf*pixelSize*2)+ " Âµm ("+df0.format(psf*2)+" pix.)" ;
 	if ((!headingsSet2))
 		{ 
 		IJ.setColumnHeadings(Headings2);
@@ -672,7 +672,7 @@ String Percentile = ""+(iterations-colocCount)+"/"+iterations;
 	IJ.write(fileName  +
 	
 		"\t"+df3.format(r)+
-		"\t" +df3.format(r2mean) + "±"+ df3.format(r2sd)+
+		"\t" +df3.format(r2mean) + "Â±"+ df3.format(r2sd)+
 		"\t"+Percentile2+ 
 		"\t" + (Percentile )+
 		"\t" +df0.format(iterations)+
