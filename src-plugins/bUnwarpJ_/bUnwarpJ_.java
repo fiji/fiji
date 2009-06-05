@@ -76,7 +76,7 @@ import java.util.Stack;
  * <a href="http://biocomp.cnb.csic.es/~iarganda/bUnwarpJ/">
  * http://biocomp.cnb.csic.es/~iarganda/bUnwarpJ/</a>
  *
- * @version 2.5 04/01/2009
+ * @version 2.5 06/05/2009
  * @author Ignacio Arganda-Carreras <ignacio.arganda@uam.es>
  * @author Jan Kybic
  */
@@ -305,24 +305,22 @@ public class bUnwarpJ_ implements PlugIn
        
        bUnwarpJPointHandler sourcePh = null;
 
-       // Load landmarks
-       //if (landmarkWeight != 0)
-       //{
-          Stack<Point> sourceStack = new Stack<Point>();
-          Stack<Point> targetStack = new Stack<Point>();
-          bUnwarpJMiscTools.loadPointRoiAsLandmarks(sourceImp, targetImp, sourceStack, targetStack);
+       // Load points rois as landmarks if any.
+       Stack<Point> sourceStack = new Stack<Point>();
+       Stack<Point> targetStack = new Stack<Point>();
+       bUnwarpJMiscTools.loadPointRoiAsLandmarks(sourceImp, targetImp, sourceStack, targetStack);
 
-          sourcePh  = new bUnwarpJPointHandler(sourceImp);
-          targetPh  = new bUnwarpJPointHandler(targetImp);
+       sourcePh  = new bUnwarpJPointHandler(sourceImp);
+       targetPh  = new bUnwarpJPointHandler(targetImp);
 
-          while ((!sourceStack.empty()) && (!targetStack.empty())) 
-          {
-             Point sourcePoint = (Point)sourceStack.pop();
-             Point targetPoint = (Point)targetStack.pop();
-             sourcePh.addPoint(sourcePoint.x, sourcePoint.y);
-             targetPh.addPoint(targetPoint.x, targetPoint.y);
-          }
-       //}
+       while ((!sourceStack.empty()) && (!targetStack.empty())) 
+       {
+    	   Point sourcePoint = (Point)sourceStack.pop();
+    	   Point targetPoint = (Point)targetStack.pop();
+    	   sourcePh.addPoint(sourcePoint.x, sourcePoint.y);
+    	   targetPh.addPoint(targetPoint.x, targetPoint.y);
+       }
+       
        
        // Set no initial affine matrices
        final double[][] sourceAffineMatrix = null;
@@ -350,7 +348,7 @@ public class bUnwarpJ_ implements PlugIn
        final ImageProcessor originalSourceIP = sourceImp.getProcessor();
        final ImageProcessor originalTargetIP = targetImp.getProcessor();
 
-
+       // Setup registration parameters
        final bUnwarpJTransformation warp = new bUnwarpJTransformation(
          sourceImp, targetImp, source, target, sourcePh, targetPh,
          sourceMsk, targetMsk, sourceAffineMatrix, targetAffineMatrix,
@@ -364,6 +362,7 @@ public class bUnwarpJ_ implements PlugIn
        
        long start = System.currentTimeMillis(); // start timing
 
+       // Perform registration
        if(mode == bUnwarpJDialog.MONO_MODE)       
     	   warp.doUnidirectionalRegistration();    	       
        else
