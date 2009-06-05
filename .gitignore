@@ -1,3 +1,6 @@
+.DS_Store
+.project
+.metadata
 /fiji.o
 /fiji
 /fiji.exe
@@ -20,6 +23,7 @@
 /mmgr_dal_*
 /CoreLog.txt
 /chroot-*-i386
+/livecd
 /root-x86_64-pc-linux
 /jars/javac.jar
 /jars/jython2.2.1/cachedir
@@ -49,7 +53,6 @@
 /plugins/Examples/Example_Plot.class
 /plugins/Filters/Preprocessor_Smooth.class
 /plugins/Input-Output/HandleExtraFileTypes.class
-/plugins/Stacks/Stack_Reverser.class
 /plugins/Analyze_Reader_Writer.jar
 /plugins/Color_Histogram.jar
 /plugins/Color_Inspector_3D.jar
@@ -65,7 +68,6 @@
 /jars/clojure.jar
 /plugins/IJ_Robot.jar
 /plugins/Fiji_Updater.jar
-/plugins/Multi_Thresholder.jar
 /plugins/Daltonize_.jar
 /plugins/Stitching_.jar
 /plugins/AnalyzeSkeleton_.jar
@@ -84,3 +86,11 @@
 /plugins/Auto_Threshold.jar
 /plugins/Arrow_.jar
 /plugins/Stack_Manipulation.jar
+/plugins/FlowJ_.jar
+/plugins/PIV_analyser.jar
+/plugins/Record_Screen.jar
+/plugins/Video_Editing.jar
+/jars/zs.jar
+/plugins/Sync_Win.jar
+/jars/rsyntaxtextarea.jar
+/jars/autocomplete.jar

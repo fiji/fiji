@@ -21,6 +21,7 @@ public class Javascript_Interpreter extends AbstractInterpreter {
 			// Initialize inside the executer thread in parent class
 			print_out.print("Starting Javascript ...");
 			cx = Context.enter();
+			cx.setApplicationClassLoader(IJ.getClassLoader());
 			//scope = cx.initStandardObjects(null); // reuse
 			// the above, with a null arg, enables reuse of the scope in subsequent calls.
 			// But this one is better: includes importClass and importPackage js functions

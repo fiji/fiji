@@ -25,7 +25,7 @@ import ij.process.ShortProcessor;
 public class ImageProgressContainer extends ImageContainer {
 
 	protected int [][] cproc_pixels;
-	
+
 	public ImageProgressContainer() {}
 	
 	

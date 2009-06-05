@@ -153,7 +153,7 @@ for extension in [ 'config', 'Fakefile' ]:
 
 # precompile
 
-print execute('./fiji --fake ' + precompiled_target)
+print execute('./fiji --build ' + precompiled_target)
 
 # git add submodule & precompiled
 

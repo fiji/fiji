@@ -80,6 +80,7 @@ public class JarLauncher {
                                         + "' in '" + jarPath + "':");
                         e.getTargetException().printStackTrace();
                 }
-                System.exit(result == null ? 0 : result.intValue());
+		if (result != null)
+			System.exit(result.intValue());
 	}
 }

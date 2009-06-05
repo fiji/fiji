@@ -69,6 +69,7 @@ def draw(i, j, array, color):
 	IJ.run("Fill")
 	setColor(antiColor)
 	IJ.run("Draw")
+	IJ.run("Select None")
 
 def drawCoord(coord, array, color):
 	(i, j) = parseCoord(coord)

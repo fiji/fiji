@@ -18,7 +18,7 @@ public class BandElement extends Coordinate implements Comparable<BandElement>
     * @param z The Z coordinate to be set
     * @param value Arbitrary data to be set
     */
-   public BandElement(int x, int y, int z, double value)
+   public BandElement(final int x, final int y, final int z, final double value)
    {
       super(x, y, z);
       setValue(value);
@@ -28,7 +28,7 @@ public class BandElement extends Coordinate implements Comparable<BandElement>
     * Sets arbitrary data this voxel element should carry
     * @param value The data to be set
     */
-   public void setValue(double value)
+   final public void setValue(final double value)
    {
       this.value = value;
    }
@@ -37,7 +37,7 @@ public class BandElement extends Coordinate implements Comparable<BandElement>
     * Returns arbitrary data this voxel element was assigned
     * @return The data
     */
-   public double getValue()
+   final public double getValue()
    {
       return this.value;
    }
@@ -48,7 +48,7 @@ public class BandElement extends Coordinate implements Comparable<BandElement>
     * @return Returns 0 if the elements are identical by reference, -1 if this element`s value
     * is smaller than the other one`s, +1 otherwise
     */
-   public int compareTo(BandElement other)
+   final public int compareTo(final BandElement other)
    {
       if (this == other) return 0;
       else if (this.value < other.value) return -1;

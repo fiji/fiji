@@ -49,43 +49,26 @@ public class ImageContainer
    protected ImagePlus ip = null;
    protected String title = "Level set workset"; // generic title
    protected ImageProcessor [] sproc;
-   protected short [][] proc_pixels;
+   final protected short [][] proc_pixels;
    protected int width = 0;
    protected int stack_size = 0;
    protected boolean isStack = false;
    private int pixel;
    
    protected ShortProcessor lproc = null;
-   
-   /**
-    * Constructs an empty ImageContainer
-    */
-   public ImageContainer()
-   {};
+
+   public ImageContainer() {
+	   // ImageProgressContainer doesn't even use it ...
+	   proc_pixels = null;
+   }
    
    /**
     * Constructs a new ImageContainer
     * @param images An BufferdImages array
     */
-   public ImageContainer(ImagePlus ip)
+   public ImageContainer(final ImagePlus ip)
    {
-       setImages(ip);      
-   }
-   
-   public ImageContainer(ImageProcessor [] iproc)
-   {
-	   setImages(iproc);
-   }
-   
-   
-      
-   /**
-    * Replaces this ImageContainers content with the passed ImagePlus.
-    * @param images ImagePlus
-    */
-   public void setImages(ImagePlus ip)
-   {
-	  this.ip = ip; 
+      this.ip = ip; 
 	   
       stack_size = ip.getStackSize();
             
@@ -107,9 +90,8 @@ public class ImageContainer
       width = sproc[0].getWidth();
    }
    
-   
-   public void setImages(ImageProcessor [] iproc) {
-	   
+   public ImageContainer(final ImageProcessor [] iproc)
+   {
 	   stack_size = iproc.length;
 	   
 	   isStack = stack_size > 1 ? true : false;
@@ -124,9 +106,9 @@ public class ImageContainer
 	   
 	   width = sproc[0].getWidth();
    }
-
    
-   public void cloneImages(ImageProcessor [] iproc) {
+   // for deepcopy
+   private ImageContainer(final ShortProcessor [] iproc) {
    
 	   stack_size = iproc.length;
 	   
@@ -144,7 +126,7 @@ public class ImageContainer
    }
       
    
-   public ImagePlus createImagePlus(String title) {
+   public final ImagePlus createImagePlus(final String title) {
 	   
 	   if ( title != null ) {
 		   this.title = title;
@@ -156,7 +138,7 @@ public class ImageContainer
 	   }
 	   
 	   if ( isStack ) {
-		   ImageStack is = new ImageStack(this.getWidth(), this.getHeight());
+		   final ImageStack is = new ImageStack(this.getWidth(), this.getHeight());
 		   for ( int i = 0; i < stack_size; i++ ) {
 			   is.addSlice("", sproc[i]);
 		   }
@@ -170,14 +152,14 @@ public class ImageContainer
 	   return ip;
    }
    
-   public ImagePlus updateImagePlus(String title) {
+   public final ImagePlus updateImagePlus(final String title) {
 	   
 	   if ( title != null ) {
 		   this.title = title;
 	   }
 	   	   
 	   if ( isStack ) {
-		   ImageStack is = new ImageStack(this.getWidth(), this.getHeight());
+		   final ImageStack is = new ImageStack(this.getWidth(), this.getHeight());
 		   for ( int i = 0; i < stack_size; i++ ) {
 			   is.addSlice("", sproc[i]);
 		   }
@@ -202,13 +184,13 @@ public class ImageContainer
     * Returns the number of contained images
     * @return The array filled with pixel values - usually RGB(A).
     */
-   public int getImageCount() {
+   public final int getImageCount() {
 	   return stack_size;
    }
    
    
    /**
-    * Returns an paased array filled with the pixel values at the selected
+    * Returns an passed array filled with the pixel values at the selected
     * coordinates
     * @param x The X coordinate
     * @param y The Y coordinate
@@ -216,9 +198,9 @@ public class ImageContainer
     * @param pixel An array suitable to be filled with pixel values - usually RGB(A).
     * @return The array filled with the pixel values
     */
-   public int getPixel(int x, int y, int z)
+   public final int getPixel(final int x, final int y, final int z)
    {
-	   int pos = y * width + x;
+	   final int pos = y * width + x;
 	   if ( pos >= proc_pixels[0].length ) {
 		   System.out.println("Exception: x=" + x + ",y=" + y);
 		   IJ.log("Exception: x=" + x + ",y=" + y);
@@ -235,7 +217,7 @@ public class ImageContainer
     * Returns the width of the contained images
     * @return The height of the contained images
     */
-   public int getWidth()
+   public final int getWidth()
    {
       return width;
    }
@@ -244,7 +226,7 @@ public class ImageContainer
     * Returns the height of the contained images
     * @return The height of the contained images
     */
-   public int getHeight()
+   public final int getHeight()
    {
       return sproc[0].getHeight();
    }
@@ -256,7 +238,7 @@ public class ImageContainer
     * @param z The Z coordinate
     * @param pixel An array containing values for the pixel - usually RGB(A).
     */
-   public void setPixel(int x, int y, int z, int pixel)
+   public final void setPixel(final int x, final int y, final int z, final int pixel)
    {
 	   if ( isStack ) {
 		   proc_pixels[z][x * width + y] = (short) pixel;
@@ -278,15 +260,12 @@ public class ImageContainer
     * Returns a deep copy of the whole ImageContainer
     * @return The deep copy of the ImageContainer
     */
-   public ImageContainer deepCopy()
+   public final ImageContainer deepCopy()
    {
-      ImageContainer cpy = new ImageContainer();
-      cpy.cloneImages(sproc);
-      
-      return cpy;
+      return new ImageContainer(sproc);
    }
    
-   public ImageProgressContainer progressCopy()
+   public final ImageProgressContainer progressCopy()
    {
 	   return new ImageProgressContainer(this);   
    }
@@ -298,11 +277,10 @@ public class ImageContainer
     * value array. The values are scaled to grey values between 0 and 255
     * @param data The data array
     */
-   public void setData(double[][][] data)
+   public final void setData(final double[][][] data)
    {
       int min = Integer.MAX_VALUE;
       int max = Integer.MIN_VALUE;
-      int add = 0;
       
       // aquire minimum and maximum data values
       for (int i = 0; i < data.length; i++)
@@ -320,12 +298,11 @@ public class ImageContainer
       }
       
       // Offset for the minimum value (normate to zero)
-      add = -1 * min;
+      final int add = -1 * min;
       // Scale value for normation to 0-255 range 
-      double scaler = 255d / (max + add - (min + add));
+      final double scaler = 255d / (max + add - (min + add));
       
       // Transfer data to the images, scale to values between 0 and 255
-      int pixel;
       for (int z = 0; z < this.getImageCount(); z++)
       {
          
@@ -334,9 +311,8 @@ public class ImageContainer
             for (int y = 0; y < this.getHeight(); y++)
             {
                if (data[x][y][z] == Double.MAX_VALUE) continue;
-               int current = (int)Math.round(((int)(Math.abs(data[x][y][z])) + add) * scaler);
-               pixel = current;
-               this.setPixel(x, y, z, pixel);
+               //int current = (int)Math.round(((int)(Math.abs(data[x][y][z])) + add) * scaler);
+               this.setPixel(x, y, z, (int)Math.round(((int)(Math.abs(data[x][y][z])) + add) * scaler));
             }
          }
       }
@@ -347,11 +323,11 @@ public class ImageContainer
     * array.
     * @return The result array
     */
-   public double[][][] calculateGradients()
+   public final double[][][] calculateGradients()
    {
-      IJ.log("Calculating gradients");
-      double zScale = getzScale();
-      double[][][] gradients = new double[this.getWidth()][this.getHeight()][this.getImageCount()];
+      // IJ.log("Calculating gradients");
+      final double zScale = getzScale();
+      final double[][][] gradients = new double[this.getWidth()][this.getHeight()][this.getImageCount()];
 
       for (int z = 0; z < gradients[0][0].length; z++)
       {
@@ -360,17 +336,19 @@ public class ImageContainer
             for (int y = 1; y < gradients[0].length - 1; y++)
             {
                
-               double xGradient =
+               final double xGradient =
                        (this.getPixel(x + 1, y, z) - this.getPixel(x - 1, y, z)) / 2;
-               double yGradient =
+               final double yGradient =
                        (this.getPixel(x, y + 1, z) - this.getPixel(x, y - 1, z)) / 2;
-               double zGradient = 0;
+               final double zGradient;
                if ((z > 0) && (z < gradients[0][0].length - 1))
                {
                   zGradient =
                        (this.getPixel(x, y, z + 1) - this.getPixel(x, y, z - 1)) / (2 * zScale);
-               }
-               gradients[x][y][z] = Math.sqrt(xGradient * xGradient + yGradient * yGradient);
+               } else {
+		       zGradient = 0;
+	       }
+               gradients[x][y][z] = Math.sqrt(xGradient * xGradient + yGradient * yGradient + zGradient * zGradient);
             }
          }
       }
@@ -382,7 +360,7 @@ public class ImageContainer
     * Applies the passed Filter on every image in the container.
     * @param filter The filter
     */
-   public void applyFilter(Filter filter)
+   public final void applyFilter(final Filter filter)
    {
       applyFilter(filter, 0, stack_size - 1);
    }
@@ -393,7 +371,7 @@ public class ImageContainer
     * @param start The start index (zero based indices)
     * @param end The end index (zero based indices)
     */
-   public void applyFilter(Filter filter, int start, int end)
+   public final void applyFilter(final Filter filter, final int start, final int end)
    {
       IJ.log("Applying filter : " + filter.getClass().getCanonicalName() + " (on images " + start + " to " + end + ")");
       if (this.sproc == null) return;
@@ -401,22 +379,32 @@ public class ImageContainer
       for (int i = start; i <= end; i++)
       {
     	 //images[i] = filter.filter(images[i]);
-    	 BufferedImage image = ij2bufferedImage(sproc[i].createImage());
-    	 BufferedImage filtered_image = filter.filter(image);
-         sproc[i] = new ShortProcessor(filtered_image);
+    	 //final BufferedImage image = ij2bufferedImage(sproc[i].createImage());
+    	 //final BufferedImage filtered_image = filter.filter(image);
+         //sproc[i] = new ShortProcessor(filtered_image);
+
+	 // THIS HAS TO CHANGE: it creates a new ShortProcessor from a BufferedImage that is create from the createImage() of another ShortProcessor !
+	 // AND in the filter subclasses, all sorts of unholy java imaging code goes on.
+	 // sproc[i] = new ShortProcessor(filter.filter(ij2bufferedImage(sproc[i].createImage())));
+	 final short[] src_pix = (short[]) sproc[i].getPixels();
+	 final short[] pix = new short[src_pix.length];
+	 final int width = sproc[i].getWidth();
+	 final int height = sproc[i].getHeight();
+	 filter.filter(width, height, src_pix, pix);
+	 sproc[i] = new ShortProcessor(width, height, pix, null); 
       }
    }
        
-   public BufferedImage ij2bufferedImage(Image im)
+   public final BufferedImage ij2bufferedImage(final Image im)
    {
-      BufferedImage bi = new BufferedImage(im.getWidth(null),im.getHeight(null), BufferedImage.TYPE_USHORT_GRAY);
-      Graphics bg = bi.getGraphics();
+      final BufferedImage bi = new BufferedImage(im.getWidth(null),im.getHeight(null), BufferedImage.TYPE_USHORT_GRAY);
+      final Graphics bg = bi.getGraphics();
       bg.drawImage(im, 0, 0, null);
       bg.dispose();
       return bi;
    }
    
-   public double getzScale()
+   public final double getzScale()
    {
 	   return 1.0;
    }

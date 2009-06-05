@@ -578,6 +578,13 @@ static const char *get_fiji_dir(const char *argv0)
 	else if (!suffixcmp(argv0, len, "/Fiji.app/Contents/MacOS"))
 		slash -= strlen("/Contents/MacOS");
 #endif
+#ifdef WIN32
+	else if (!suffixcmp(argv0, len, "/PRECOM~1") ||
+			!suffixcmp(argv0, len, "\\PRECOM~1")) {
+		slash -= strlen("/PRECOM~1");
+		run_precompiled = true;
+	}
+#endif
 
 	buffer = buffer.substr(0, slash - argv0);
 #ifdef WIN32
@@ -1243,17 +1250,33 @@ static void try_with_less_memory(size_t memory_size)
 	option << "--mem=" << memory_size << "m";
 	char *memory_option = strdup(option.str().c_str());
 
-	char **new_argv = (char **)malloc((3 + main_argc_backup)
-			* sizeof(char *));
-	memcpy(new_argv, main_argv_backup, main_argc_backup * sizeof(char *));
-	new_argv[main_argc_backup] = memory_option;
-	new_argv[main_argc_backup + 1] = NULL;
+	main_argc = main_argc_backup;
+	main_argv = main_argv_backup;
+	char **new_argv = (char **)malloc((3 + main_argc) * sizeof(char *));
+	new_argv[0] = main_argv[0];
+
+	int j = 1;
+	new_argv[j++] = memory_option;
+
+	// strip out --mem options
+	bool found_dashdash = false;
+	for (int i = 1; i < main_argc; i++) {
+		if (!found_dashdash && !strcmp(main_argv_backup[i], "--"))
+			found_dashdash = true;
+		string dummy;
+		if ((!found_dashdash || !strcmp(main_class, "ij.ImageJ")) &&
+				(handle_one_option(i, "--mem", dummy) ||
+				 handle_one_option(i, "--memory", dummy)))
+			continue;
+		new_argv[j++] = main_argv[i];
+	}
+	new_argv[j] = NULL;
 
 	cerr << "Trying with a smaller heap: " << memory_option << endl;
 
 #ifdef WIN32
 	new_argv[0] = dos_path(new_argv[0]);
-	for (int k = 0; k < main_argc_backup + 1; k++)
+	for (int k = 0; k < j; k++)
 		new_argv[k] = quote_win32(new_argv[k]);
 #endif
 	execve(new_argv[0], new_argv, NULL);
@@ -1262,7 +1285,7 @@ static void try_with_less_memory(size_t memory_size)
 
 	error << "ERROR: failed to launch (errno=" << errno << ";"
 		<< strerror(errno) << "):" << endl;
-	for (int i = 0; i < main_argc_backup + 1; i++)
+	for (int i = 0; i < j; i++)
 		error << new_argv[i] << " ";
 	error << endl;
 #ifdef WIN32
@@ -1271,6 +1294,18 @@ static void try_with_less_memory(size_t memory_size)
 	cerr << error.str();
 #endif
 	exit(1);
+}
+
+bool is_building(const char *target)
+{
+	if (main_argc < 3 ||
+			(strcmp(main_argv[1], "--build") &&
+			 strcmp(main_argv[1], "--fake")))
+		return false;
+	for (int i = 2; i < main_argc; i++)
+		if (!strcmp(main_argv[i], target))
+			return true;
+	return false;
 }
 
 bool retrotranslator = false;
@@ -1294,7 +1329,8 @@ static int start_ij(void)
 #endif
 	if (file_exists(string(fiji_dir) + "/fiji" EXE_EXTENSION) &&
 			file_is_newer(string(fiji_dir) + "/fiji.cxx",
-				string(fiji_dir) + "/fiji" EXE_EXTENSION))
+				string(fiji_dir) + "/fiji" EXE_EXTENSION) &&
+			!is_building("fiji"))
 		cerr << "Warning: your Fiji executable is not up-to-date"
 			<< endl;
 
@@ -1411,7 +1447,7 @@ static int start_ij(void)
 						fake_jar))
 				fake_jar = precompiled_fake_jar;
 			if (file_is_newer(string(fiji_dir) + "/fake/Fake.java",
-					fake_jar))
+					fake_jar) && !is_building("fake.jar"))
 				cerr << "Warning: fake.jar is not up-to-date"
 					<< endl;
 			class_path += fake_jar + PATH_SEP;
@@ -1481,34 +1517,6 @@ static int start_ij(void)
 
 	/* For Jython 2.2.1 to work properly with .jar packages: */
 	add_option(options, "-Dpython.cachedir.skip=false", 0);
-
-	class_path = "-Djava.class.path=" + class_path;
-	if (skip_build_classpath) {
-		/* strip trailing ":" */
-		int len = class_path.length();
-		if (class_path[len - 1] == PATH_SEP[0])
-			class_path = class_path.substr(0, len - 1);
-	}
-	else {
-		if (headless)
-			class_path += string(fiji_dir) + "/misc/headless.jar"
-				+ PATH_SEP;
-		class_path += fiji_dir;
-		class_path += "/misc/Fiji.jar";
-		class_path += PATH_SEP;
-		class_path += fiji_dir;
-		class_path += "/ij.jar";
-
-		if (build_classpath(class_path,
-					string(fiji_dir) + "/plugins", 0))
-			return 1;
-		if (build_classpath(class_path, string(fiji_dir) + "/jars", 0))
-			return 1;
-	}
-	if (retrotranslator && build_classpath(class_path,
-				string(fiji_dir) + "/retro", 0))
-		return 1;
-
 	if (plugin_path.str() == "")
 		plugin_path << "-Dplugins.dir=" << fiji_dir;
 	add_option(options, plugin_path, 0);
@@ -1531,16 +1539,6 @@ static int start_ij(void)
 
 	if (is_ipv6_broken())
 		add_option(options, "-Djava.net.preferIPv4Stack=true", 0);
-
-	if (jvm_options != "")
-		add_options(options, jvm_options, 0);
-
-	if (dashdash) {
-		for (int i = 1; i < dashdash; i++)
-			add_option(options, main_argv[i], 0);
-		main_argv += dashdash - 1;
-		main_argc -= dashdash - 1;
-	}
 
 	if (!main_class) {
 		const char *first = main_argv[1];
@@ -1567,7 +1565,46 @@ static int start_ij(void)
 			main_class = "ij.ImageJ";
 	}
 
+	if (retrotranslator && build_classpath(class_path,
+				string(fiji_dir) + "/retro", 0))
+		return 1;
+
+	/* set up class path */
+	class_path = "-Djava.class.path=" + class_path;
+	if (skip_build_classpath) {
+		/* strip trailing ":" */
+		int len = class_path.length();
+		if (class_path[len - 1] == PATH_SEP[0])
+			class_path = class_path.substr(0, len - 1);
+	}
+	else {
+		if (headless)
+			class_path += string(fiji_dir) + "/misc/headless.jar"
+				+ PATH_SEP;
+		class_path += fiji_dir;
+		class_path += "/misc/Fiji.jar";
+		class_path += PATH_SEP;
+		class_path += fiji_dir;
+		class_path += "/ij.jar";
+
+		if (strcmp(main_class, "ij.ImageJ"))
+			if (build_classpath(class_path, string(fiji_dir)
+						+ "/plugins", 0))
+				return 1;
+		if (build_classpath(class_path, string(fiji_dir) + "/jars", 0))
+			return 1;
+	}
 	add_option(options, class_path, 0);
+
+	if (jvm_options != "")
+		add_options(options, jvm_options, 0);
+
+	if (dashdash) {
+		for (int i = 1; i < dashdash; i++)
+			add_option(options, main_argv[i], 0);
+		main_argv += dashdash - 1;
+		main_argc -= dashdash - 1;
+	}
 
 	if (add_class_path_option) {
 		add_option(options, "-classpath", 1);

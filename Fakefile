@@ -88,6 +88,8 @@ SUBMODULE_TARGETS=\
 	jars/jacl.jar \
 	jars/batik.jar \
 	jars/junit-4.5.jar \
+	jars/rsyntaxtextarea.jar \
+	jars/autocomplete.jar \
 
 PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Clojure_Interpreter.jar \
@@ -112,7 +114,6 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Volume_Viewer.jar \
 	plugins/IJ_Robot.jar \
 	plugins/Fiji_Updater.jar \
-	plugins/Multi_Thresholder.jar \
 	plugins/Daltonize_.jar \
 	plugins/Stitching_.jar \
 	plugins/AnalyzeSkeleton_.jar \
@@ -130,6 +131,11 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Auto_Threshold.jar \
 	plugins/Arrow_.jar \
 	plugins/Stack_Manipulation.jar \
+	plugins/FlowJ_.jar \
+	plugins/PIV_analyser.jar \
+	plugins/Record_Screen.jar \
+	plugins/Video_Editing.jar \
+	plugins/Sync_Win.jar \
 	\
 	misc/Fiji.jar
 
@@ -166,6 +172,8 @@ plugins/ij-ImageIO_.jar <- ij-plugins/
 jars/jacl.jar <- tcljava/
 jars/batik.jar <- batik/
 jars/junit-4.5.jar <- junit/
+jars/rsyntaxtextarea.jar <- RSyntaxTextArea/
+jars/autocomplete.jar <- AutoComplete/
 
 # From source
 javaVersion(misc/Fiji.jar)=1.3
@@ -201,6 +209,13 @@ plugins/LSM_Toolbox.jar <- src-plugins/LSM_Toolbox/**/*.java \
 MAINCLASS(plugins/Interactive_3D_Surface_Plot.jar)=Interactive_3D_Surface_Plot
 CLASSPATH(plugins/Stitching_.jar)=plugins/loci_tools.jar
 
+plugins/Record_Screen.jar <- src-plugins/Record_Screen/ src-plugins/Record_Screen/**/*
+
+CLASSPATH(plugins/CLI_.jar)=jars/fiji-scripting.jar
+plugins/CLI_.jar <- src-plugins/CLI_/CLI/*.java
+
+CLASSPATH(plugins/IO_.jar)=jars/batik.jar
+CLASSPATH(plugins/Sync_Win.jar)=plugins/Image_5D.jar
 plugins/*_*.jar <- src-plugins/*_*/**/*.java
 
 plugins/**/*.class <- src-plugins/**/*.java
@@ -302,12 +317,16 @@ precompile-submodules[] <- \
 	precompiled/jacl.jar \
 	precompiled/batik.jar \
 	precompiled/junit-4.5.jar \
+	precompiled/rsyntaxtextarea.jar \
+	precompiled/autocomplete.jar \
 
 precompiled/ij.jar <- ij.jar
 precompiled/clojure.jar <- jars/clojure.jar
 precompiled/jacl.jar <- jars/jacl.jar
 precompiled/batik.jar <- jars/batik.jar
 precompiled/junit-4.5.jar <- jars/junit-4.5.jar
+precompiled/rsyntaxtextarea.jar <- jars/rsyntaxtextarea.jar
+precompiled/autocomplete.jar <- jars/autocomplete.jar
 precompiled/* <- plugins/*
 
 precompile[] <- precompile-fiji precompile-fake precompile-submodules

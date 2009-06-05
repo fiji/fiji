@@ -1,0 +1,66 @@
+SyncWindows list of changes
+
+Version 1.1:
+- Optionally passes on change of slice in StackWindow (OpenStackWindow)
+  to other synchronized (Open)StackWindows. 
+- Optionally translates positions to different windows via offscreen
+  coordinates. -> correct registration at different zoom levels
+- "Update Window List" Button, not necessary to restart the plugin
+  for adding a newly opened Window.
+- Not disturbed by closing windows while plugin is running.
+- Can handle Polyline selections.
+
+Version 1.2:
+- When Sync_Windows is active, the ImageJ Statusbar shows the intensity value of the 
+  image, which contains the "main" cursor (corrects a previous bug).
+- New crosshairs Sync cursor (like it?)
+- Sync_Windows is displayed in the window list.
+
+- Sync_Measure_3D works on 16-bit images.
+- Threshold values can be typed into text fields in addition to setting them with the sliders.
+- z-Positions measured by Sync_Measure_3D are now consistent with the cursor
+  position displayed in the ImageJ window.
+- Sync_Measure_3D now measures on "Space-click". (Alt-Click and Shift-click no longer work
+  as they are used to add parts to and remove parts from ROIs)
+- The size adapts better to smaller screens.
+
+Version 1.3:
+- Sync_Measure_3D now measures on Double-click. (Space-click in v1.2 was a bad idea, because if a button in 
+the control window still has the focus, it gets "pressed" by pressing the spacebar. Also, pressing the 
+spacebar while scrolling through 16-bit image stacks resets the Min- and Max-values. 
+
+Version 1.4:
+- Works with Image5Ds (version 0.9 at least)
+
+Version 1.4.1:
+- Works with Image5Ds AND WITHOUT Image5Ds. Version 1.4 only worked, when the Image5D plugins were installed.
+
+Version 1.5:
+- Uses the new ImageListener interface to update the image list. This also works with Image5Ds when version 
+  1.1.5 or higher of Image5D is installed. Needs ij 1.37b or higher.
+- Sync_Measure_3D writes the shift values in rows for each channel at the end of the results window.
+  This makes processing of shifts in a spreadsheet program easier and enables using shift values in 
+  Boris Joffe's _StackGroom plugin for shift correction.
+- Can use the image scaling and offset values for determining cursor positions in synchronized images. This
+  only works correctly, when the images have the same length unit i.e. the difference between 10nm and 
+  10um is not recognized, but the difference between 10um and 0.01um is.
+- Frames and Channels of Image5Ds can be synchronized.
+- Corrected a compilation problem that would make Sync_Measure_3D unresponsive at the first measurement 
+  when measurements were performed in spatially calibrated images.
+v.1.5 finished 2006-04-18
+
+Version 1.6:
+- Works with Image5D v1.1.6, which sorts base Image5D classes in a package structure.
+- Fixed bug: Cropped images in synchronized windows are not eqally sized when the ROI is selected 
+	at zoom <100%. Maybe fixed by using screenXD/YD instead of screenX/Y
+- Fixed bug: For the active window of several synchronized images the position values are not updated 
+	in the statusbar. You move the cursor, but always see the same position/intensity. 
+v1.6 started 2006-05-21
+v.1.6 finished 2006-09-29
+
+Version 1.7:
+- Works with Image5D v1.2.0 (where Scrollbars for z and t have been changed).
+- Also synchronizes slices (channels, frames), when they are changed by moving the mousewheel.
+v1.7 started 2007-04-19
+v1.7 finished 2007-08-12
+

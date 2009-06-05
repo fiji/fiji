@@ -209,6 +209,60 @@ public class StateContainer {
 		return null;
 	}
 	
+	/*
+	 * Returns the x/y/z of the ROI/segmented area as Vector<Coordinate>
+	 * zero_crossing_only = true -> return only the boundary (the zero crossing)
+	 * zero_crossing_only = false -> return inside and boundary of segmented object
+	 */
+	
+	public Vector<Coordinate> getXYZ(boolean zero_crossing_only) {
+		Vector<Coordinate> xyz = new Vector<Coordinate>(100);
+		
+		if ( s_map != null ) {
+	        for (int z = 0; z < s_map[0][0].length; z++) {
+	            for (int y = 0; y < s_map[0].length; y++) {
+	               for (int x = 0; x < s_map.length; x++) {
+	             	  if ( s_map[x][y][z] == States.ZERO ) {
+	             		 xyz.add(new Coordinate(x,y,z));
+	             	  }
+	             	  else if ( s_map[x][y][z] == States.INSIDE ) {
+	             		  if ( zero_crossing_only == false ) {
+	             			  xyz.add(new Coordinate(x,y,z));
+	             		  }
+	             	  }
+	               }
+	            }
+	         }
+			 return xyz;
+		}
+		else if ( roi_map != null ) {
+			d_map = roi2dmap();
+		}
+		
+		if ( d_map != null ) {
+	        for (int z = 0; z < d_map.getZLength(); z++) {
+	            for (int y = 0; y < d_map.getYLength(); y++) {
+	               for (int x = 0; x < d_map.getXLength(); x++) {
+	             	  if ( d_map.get(x, y, z) == States.ZERO ) {
+	             		 xyz.add(new Coordinate(x,y,z));
+	             	  }
+	             	  else if ( d_map.get(x, y, z) == States.INSIDE ) {
+	             		  if ( zero_crossing_only == false ) {
+	             			  xyz.add(new Coordinate(x,y,z));
+	             		  }
+	             	  }
+	               }
+	            }
+	         }
+			 return xyz;			
+		}
+		
+		// Converting the c_map to mask is somewhat silly and thus not implemented
+		
+		return null;	
+	}
+	
+	
 	
 	// TODO Make more robust so that it works with points too
 	// Simplification but currently only used for SparseField anyway
@@ -271,7 +325,7 @@ public class StateContainer {
 		// IJ.log("Got bounding rectangle with coordinates " + x_start + "/" + x_end + "/" + y_start + "/" + y_end);
 
 		if ( mask == null ) {
-			IJ.log("Rectangle, just parsing borders");
+			IJ.log("Note: ROI is rectangle, parsing borders");
 			int z = this.roi_z - 1; // TODO z is not possible with roi
             for (int y = y_start; y < y_end; y++) {
                for (int x = x_start; x < x_end; x++) {
@@ -286,7 +340,7 @@ public class StateContainer {
             }
             // IJ.log("Zero level= " + px_zero + ", Inside = " + px_inside );
 		} else {
-			IJ.log("Shape, parsing shape");
+			IJ.log("Note: ROI is shape, parsing shape");
 			int z = this.roi_z - 1;
 			for (int y = 0; y < roi_r.height; y++) {
 				for (int x = 0; x < roi_r.width; x++) {

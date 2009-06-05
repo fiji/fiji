@@ -45,6 +45,8 @@ import java.util.regex.Pattern;
 public class Fake {
 	protected static Method javac;
 	protected static String toolsPath;
+	protected static String fijiBuildJar;
+	protected static long mtimeFijiBuild;
 
 	public static void main(String[] args) {
 		if (runPrecompiledFakeIfNewer(args))
@@ -100,8 +102,12 @@ public class Fake {
 		fijiHome = fijiHome.substring(0, fijiHome.length() - 10);
 		int slash = fijiHome.lastIndexOf('/', fijiHome.length() - 2);
 		if (fijiHome.startsWith("jar:file:") &&
-				fijiHome.endsWith(".jar!/"))
+				fijiHome.endsWith(".jar!/")) {
+			fijiBuildJar = fijiHome.substring(9,
+					fijiHome.length() - 2);
+			mtimeFijiBuild = new File(fijiBuildJar).lastModified();
 			fijiHome = fijiHome.substring(9, slash + 1);
+		}
 		else if (fijiHome.startsWith("file:/"))
 			fijiHome = fijiHome.substring(5, slash + 1);
 		if (getPlatform().startsWith("win") && fijiHome.startsWith("/"))
@@ -209,6 +215,7 @@ public class Fake {
 
 	class Parser {
 		public final static String path = "Fakefile";
+		protected long mtimeFakefile;
 		BufferedReader reader;
 		String line;
 		int lineNumber;
@@ -226,6 +233,8 @@ public class Fake {
 			if (path == null || path.equals(""))
 				path = Parser.path;
 			try {
+				mtimeFakefile = new File(path).lastModified();
+
 				InputStream stream = new FileInputStream(path);
 				InputStreamReader input =
 					new InputStreamReader(stream);
@@ -378,7 +387,14 @@ public class Fake {
 				}
 
 				String target = line.substring(0, arrow).trim();
-				target = expandVariables(target);
+				int bracket = target.endsWith("]") ?
+					target.indexOf('[') : -1;
+				target = bracket < 0 ?
+					expandVariables(target) :
+					expandVariables(target.substring(0,
+								bracket)) +
+						target.substring(bracket);
+
 				String list = line.substring(arrow + 2).trim();
 				try {
 					Rule rule = addRule(target, list);
@@ -773,6 +789,13 @@ public class Fake {
 					return false;
 				}
 				long targetModifiedTime = file.lastModified();
+				if (targetModifiedTime < mtimeFakefile)
+					return upToDateError(file,
+							new File(path));
+				if (targetModifiedTime < mtimeFijiBuild)
+					return upToDateError(file,
+							new File(fijiBuildJar));
+
 
 				nonUpToDates = new ArrayList();
 				Iterator iter = prerequisites.iterator();
@@ -1114,6 +1137,8 @@ public class Fake {
 			}
 
 			boolean checkUpToDate() {
+				if (!upToDate(configPath))
+					return false;
 				File target = new File(this.target);
 				Iterator iter = prerequisites.iterator();
 				while (iter.hasNext()) {
@@ -1997,8 +2022,8 @@ public class Fake {
 						lastBase = null;
 				}
 				else if (lastBase != null &&
-						realName.startsWith(lastBase))
-					name = realName
+						name.startsWith(lastBase))
+					name = name
 						.substring(lastBase.length());
 
 				JarEntry entry = new JarEntry(name);
@@ -2210,9 +2235,14 @@ public class Fake {
 		}
 
 		/* stupid, stupid Windows... */
-		if (getPlatform().startsWith("win"))
+		if (getPlatform().startsWith("win")) {
 			for (int i = 0; i < args.length; i++)
 				args[i] = quoteArg(args[i]);
+			// stupid, stupid, stupid Windows taking all my time!!!
+			if (args[0].startsWith("../"))
+				args[0] = new File(dir,
+						args[0]).getAbsolutePath();
+		}
 
 		Process proc = Runtime.getRuntime().exec(args, null, dir);
 		new StreamDumper(proc.getErrorStream(), System.err).start();

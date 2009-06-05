@@ -75,6 +75,10 @@ public abstract class AbstractInterpreter implements PlugIn {
 	static final protected Hashtable<Class,AbstractInterpreter> instances = new Hashtable<Class,AbstractInterpreter>();
 
 	static {
+		/* set the default class loader to ImageJ's PluginClassLoader */
+		Thread.currentThread()
+			.setContextClassLoader(IJ.getClassLoader());
+
 		// Save history of all open interpreters even in the case of a call to System.exit(0),
 		// which doesn't spawn windowClosing events.
 		Runtime.getRuntime().addShutdownHook(new Thread() { public void run() {
@@ -204,6 +208,8 @@ public abstract class AbstractInterpreter implements PlugIn {
 		addMenuItem(popup_menu, "Save", menu_listener);
 		JScrollPane scroll_prompt = new JScrollPane(prompt);
 		scroll_prompt.setPreferredSize(new Dimension(440, 35));
+		scroll_prompt.setVerticalScrollBarPolicy(JScrollPane
+			.VERTICAL_SCROLLBAR_ALWAYS);
 		prompt.setFont(font);
 		prompt.setLineWrap(true);
 
@@ -211,11 +217,12 @@ public abstract class AbstractInterpreter implements PlugIn {
 		prompt.getActionMap().put("down",
 				new AbstractAction("down") {
 					public void actionPerformed(ActionEvent ae) {
-						if (isCaretOnLastLine()) {
+						int position = cursorUpDown(true);
+						if (position < 0) {
 							trySetNextPrompt();
 						} else {
 							// Move down one line within a multiline prompt
-							doArrowDown(prompt.getText());
+							prompt.setCaretPosition(position);
 						}
 					}
 				});
@@ -223,11 +230,12 @@ public abstract class AbstractInterpreter implements PlugIn {
 		prompt.getActionMap().put("up",
 				new AbstractAction("up") {
 					public void actionPerformed(ActionEvent ae) {
-						if (isCaretOnFirstLine()) {
+						int position = cursorUpDown(false);
+						if (position < 0) {
 							trySetPreviousPrompt();
 						} else {
-							// Move up one line within a multiline prompt
-							doArrowUp(prompt.getText());
+							// Move down one line within a multiline prompt
+							prompt.setCaretPosition(position);
 						}
 					}
 				});
@@ -250,10 +258,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 				new AbstractAction("shift+down") {
 					public void actionPerformed(ActionEvent ae) {
 						//enable to scroll within lines when the prompt consists of multiple lines.
-						String text = prompt.getText();
-						if (-1 != text.indexOf('\n')) {
-							doArrowDown(text);
-						}
+						doArrowDown();
 					}
 				});
 		prompt.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, ActionEvent.SHIFT_MASK), "shift+up");
@@ -261,10 +266,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 				new AbstractAction("shift+up") {
 					public void actionPerformed(ActionEvent ae) {
 						//enable to scroll within lines when the prompt consists of multiple lines.
-						String text = prompt.getText();
-						if (-1 != text.indexOf('\n')) {
-							doArrowUp(text);
-						}
+						doArrowUp();
 					}
 				});
 		prompt.getInputMap().put(KeyStroke.getKeyStroke("ENTER"), "enter");
@@ -353,7 +355,8 @@ public abstract class AbstractInterpreter implements PlugIn {
 	 *  will also set active line to last. */
 	private void tryStoreCurrentPrompt() {
 		final String txt = prompt.getText();
-		if (null != txt && txt.trim().length() > 0 && !txt.equals((String)al_lines.get(active_line))) {
+		if (null != txt && txt.trim().length() > 0) {
+			if (active_line < al_lines.size() && txt.equals((String)al_lines.get(active_line))) return;
 			al_lines.add(txt);
 			valid_lines.add(false); // because it has never been executed yet
 			// set active line to last, since we've added a new entry
@@ -393,66 +396,59 @@ public abstract class AbstractInterpreter implements PlugIn {
 		}
 		final String text = (String)al_lines.get(active_line);
 		prompt.setText(text);
-		final int i_newline = text.indexOf('\n');
-		if (-1 != i_newline) prompt.setCaretPosition(i_newline);
+	}
+
+	/** get the position when moving one visible line forward or backward */
+	private int cursorUpDown(boolean forward) {
+		try {
+			int position = prompt.getCaretPosition();
+			int columns = prompt.getColumns();
+			int line = prompt.getLineOfOffset(position);
+			int start = prompt.getLineStartOffset(line);
+			int end = prompt.getLineEndOffset(line);
+			int column = (position - start) % columns;
+
+			int wrappedLineCount =
+				(end + columns - 1 - start) / columns;
+			int currentWrappedLine =
+				(position - start) / columns;
+
+			if (forward) {
+				if ((position - start) / columns <
+						(end - start) / columns)
+					return Math.min(position + columns,
+							end);
+
+				start = prompt.getLineStartOffset(line + 1);
+				end = prompt.getLineEndOffset(line + 1);
+				return Math.min(start + column, end - 1);
+			}
+
+			// backward
+			if ((position - start) / columns > 0)
+				return position - columns;
+
+			start = prompt.getLineStartOffset(line - 1);
+			end = prompt.getLineEndOffset(line - 1);
+			int endColumn = (end - start) % columns;
+			return end - Math.max(1, endColumn - column);
+		} catch (Exception e) {
+			return -1;
+		}
 	}
 
 	/** Move the prompt caret down one line in a multiline prompt, if possible. */
-	private void doArrowDown(final String text) {
-		// Caret can be from 0 to text.length() inclusive (i.e. after the last char)
-		int cp = prompt.getCaretPosition();
-		// next newline
-		int next_nl = text.indexOf('\n', cp);
-		if (-1 == next_nl) return; // can't scroll down
-		// previous newline
-		int prev_nl = text.lastIndexOf('\n', cp-1);
-		if (-1 == prev_nl) prev_nl = -1; // caret at first char of first line
-		// distance from prev_nl to caret
-		int column = cp - prev_nl;
-		// second next newline
-		int next_nl_2 = text.indexOf('\n', next_nl+1);
-		if (-1 == next_nl_2) next_nl_2 = text.length();
-		// new caret position
-		if (column > next_nl_2 - next_nl) cp = next_nl_2;
-		else cp = next_nl + column;
-		// check boundaries
-		if (cp > text.length()) cp = text.length();
-		//
-		prompt.setCaretPosition(cp);
+	private void doArrowDown() {
+		int position = cursorUpDown(true);
+		if (position >= 0)
+			prompt.setCaretPosition(position);
 	}
 
 	/** Move the prompt caret up one line in a multiline prompt, if possible. */
-	private void doArrowUp(final String text) {
-		int cp = prompt.getCaretPosition();
-		// next newline
-		int next_nl = text.indexOf('\n', cp);
-		if (-1 == next_nl) next_nl = text.length(); // imaginary
-		// previous newline
-		int prev_nl = text.lastIndexOf('\n', cp -1);
-		if (-1 == prev_nl) return; // already at first row
-		// distance from prev_nl to caret
-		int column = cp - prev_nl;
-		// second previous newline
-		int prev_nl_2 = text.lastIndexOf('\n', prev_nl -1);
-		// if -1 == prev_nl_2 it's ok: means we are at second row
-		if (column > prev_nl - prev_nl_2) cp = prev_nl;
-		else cp = prev_nl_2 + column;
-		//
-		prompt.setCaretPosition(cp);
-	}
-
-	private boolean isCaretOnFirstLine() {
-		final String text = prompt.getText();
-		final int i_newline = text.indexOf('\n');
-		return -1 == i_newline
-		    || prompt.getCaretPosition() <= i_newline;
-	}
-
-	private boolean isCaretOnLastLine() {
-		final String text = prompt.getText();
-		final int i_newline = text.lastIndexOf('\n');
-		return -1 == i_newline
-		    || prompt.getCaretPosition() > i_newline;
+	private void doArrowUp() {
+		int position = cursorUpDown(false);
+		if (position >= 0)
+			prompt.setCaretPosition(position);
 	}
 
 	private void closingWindow() {
@@ -528,13 +524,17 @@ public abstract class AbstractInterpreter implements PlugIn {
 		}
 	}
 
+	protected String getPrompt() {
+		return ">>>";
+	}
+
 	boolean previous_line_empty = false;
 
 	protected void execute(String text, boolean store) {
 		if (null == text) return;
 		int len = text.length();
 		if (len <= 0) {
-			print(">>>");
+			println(getPrompt());
 			return;
 		}
 		// store text
@@ -573,7 +573,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 				prompt.setText(new String(tabs));
 			}
 			// print to screen
-			print("... " + fix(text));
+			println("... " + fix(text));
 			// remove tabs from line:
 			text = text.replaceAll("\\t", "");
 			len = text.length(); // refresh length
@@ -592,14 +592,14 @@ public abstract class AbstractInterpreter implements PlugIn {
 			}
 		} else {
 		*/
-			print(">>> " + text);
+			print(new StringBuilder(getPrompt()).append(' ').append(text).append('\n').toString());
 		/*
 		}
 		*/
 		try {
 			Object ob = eval(text);
 			if (null != ob) {
-				print(ob.toString());
+				println(ob.toString());
 			}
 			// if no error, mark as valid
 			valid_lines.set(valid_lines.size() -1, true);
@@ -614,8 +614,13 @@ public abstract class AbstractInterpreter implements PlugIn {
 	}
 
 	/** Prints to screen: will append a newline char to the text, and also scroll down. */
+	protected void println(String text) {
+		print(text + "\n");
+	}
+
+	/** Prints to screen and scrolls down. */
 	protected void print(String text) {
-		screen.append(text + "\n");
+		screen.append(text);
 		screen.setCaretPosition(screen.getDocument().getLength());
 	}
 
@@ -778,7 +783,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 		int istart = 0;
 		int inl = sel.indexOf('\n');
 		int len = sel.length();
-		Pattern pat = Pattern.compile("^>>> .*$");
+		Pattern pat = Pattern.compile("^" + getPrompt() + " .*$");
 
 		while (true) {
 			if (-1 == inl) inl = len -1;

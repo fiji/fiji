@@ -2,6 +2,7 @@ package levelsets.filter;
 
 import java.awt.Image;
 import java.awt.image.*;
+import ij.process.ShortProcessor;
 
 /**
  * Adapted from the Sun Java Forums. See:
@@ -17,6 +18,13 @@ public class Canny implements Filter
       threshold2 = upperTreshold;
       setThreshold(128);
       setWidthGaussianKernel(kernelWidth);
+   }
+
+   public void filter(final int width, final int height, final short[] source, final short[] target) {
+	final ShortProcessor sp = new ShortProcessor(width, height, source, null);
+	final BufferedImage bi = filter(sp.get16BitBufferedImage());
+        final DataBufferUShort db = (DataBufferUShort)bi.getData().getDataBuffer();
+        System.arraycopy(target, 0, db.getData(), 0, target.length);
    }
    
    public BufferedImage filter(BufferedImage sourceImage)
