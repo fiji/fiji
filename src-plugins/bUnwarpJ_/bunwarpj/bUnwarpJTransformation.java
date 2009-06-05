@@ -815,8 +815,7 @@ public class bUnwarpJTransformation
 	 * elastic registration to the selected source and target images.
 	 */
 	public void doUnidirectionalRegistration ()
-	{
-
+	{		
 		// This function can only be applied with splines of an odd order
 
 		// Bring into consideration the image/coefficients at the smallest scale
@@ -833,7 +832,7 @@ public class bUnwarpJTransformation
 		sourceCurrentWidth  = source.getCurrentWidth();
 
 		sourceFactorHeight  = source.getFactorHeight();
-		sourceFactorWidth   = source.getFactorWidth();
+		sourceFactorWidth   = source.getFactorWidth();						
 
 		// size correction factor
 		int sizeCorrectionFactor = 0; //this.targetHeight / (1024  * (int) Math.pow(2, this.maxImageSubsamplingFactor));
@@ -890,6 +889,18 @@ public class bUnwarpJTransformation
 		}
 
 	
+		// Print initial coefficients
+		/*
+		System.out.println("CX --- ");
+		for (int i = 0; i < intervals+3; i ++)
+		{
+			for(int j = 0; j < intervals+3; j++)
+				System.out.print(" " + cxTargetToSource[i][j]);
+			System.out.println("");
+		}
+		*/
+		
+		
 		// Now refine with the different scales
 		int state;   // state=-1 --> Finish
 		// state= 0 --> Increase deformation detail
@@ -1135,11 +1146,11 @@ public class bUnwarpJTransformation
 					auxTarget.getCurrentHeight(), auxTarget.getCurrentWidth(), intervals);
 		}
 		//return evaluateSimilarity(x, intervals, grad, true, false, bIsReverse);
-		double f = evaluateSimilarity(x, intervals, grad, true, false, bIsReverse);
+		//double f = evaluateSimilarity(x, intervals, grad, true, false, bIsReverse);
 		
 		double f2 = evaluateSimilarityMultiThread(x, intervals, grad, true, bIsReverse);
 		
-		IJ.log("f = " + f + " f2 = " + f2);
+		//IJ.log("f = " + f + " f2 = " + f2);
 		return f2;
 	}
 
@@ -1908,7 +1919,7 @@ public class bUnwarpJTransformation
 
 	/*------------------------------------------------------------------*/
 	/**
-	 * Compute the coefficients scale.
+	 * Compute the coefficients at this scale.
 	 *
 	 * @param intervals input, number of intervals at this scale
 	 * @param dx input, x residue so far
@@ -5922,7 +5933,7 @@ public class bUnwarpJTransformation
 			fp_tile[i] = new FloatProcessor(rects[i].width, rects[i].height);
 			
 			threads[i] = new Thread(new OutputTileMaker(swx, swy, auxSource, auxTarget,
-			 		  								auxTargetMsk, auxSourceMsk, 
+			 		  								auxSourceMsk, auxTargetMsk, 
 			 		  								auxFactorWidth * subFactorWidth, 
 			 		  								auxFactorHeight * subFactorHeight,
 			 		  								auxTargetCurrentHeight, auxTargetCurrentWidth,
@@ -6606,7 +6617,7 @@ public class bUnwarpJTransformation
 			final int Xdim = rect.x + rect.width;						
 			
 			// Loop over all points in the source image (rectangle)
-			int n=0;
+			int n = 0;
 			
 
 			final double []I1D = new double[2]; // Space for the first derivatives of I1

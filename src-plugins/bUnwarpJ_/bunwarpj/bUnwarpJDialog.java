@@ -272,19 +272,12 @@ public class bUnwarpJDialog extends GenericDialog
 		this.resamplingSlider = (Scrollbar) (super.getSliders().lastElement());		
 		this.resamplingSlider.addAdjustmentListener(
 				new AdjustmentListener() {
-				      public void adjustmentValueChanged(AdjustmentEvent adjustmentEvent) 
-				      {										    	  					    	  	
-				    	  	// Update resampling factor
-				    	  	bUnwarpJDialog.this.maxImageSubsamplingFactor = Integer.parseInt(resamplingTextField.getText());
-				    	  	// And image information
-				    	  	cancelSource();
-				    	  	cancelTarget();
-				    	  	createSourceImage(bIsReverse);
-				    		createTargetImage();
-				    		loadPointRoiAsLandmarks();
-				    		setSecondaryPointHandlers();
-				      }}
-				);
+					public void adjustmentValueChanged(AdjustmentEvent adjustmentEvent) 
+					{										    	  					    	  	
+						// Update resampling factor
+						bUnwarpJDialog.this.maxImageSubsamplingFactor = Integer.parseInt(resamplingTextField.getText());						
+					}}
+		);
 		this.resamplingTextField = (TextField)(super.getNumericFields().lastElement()); 
 		this.resamplingTextField.setEnabled(false);
 
@@ -431,22 +424,23 @@ public class bUnwarpJDialog extends GenericDialog
 			final int newChoiceIndex = originChoice.getSelectedIndex();
 			if (sourceChoiceIndex != newChoiceIndex)
 			{
-				stopSourceThread();
+				//stopSourceThread();
 				// If the new source image is not the previous target
 				if (targetChoiceIndex != newChoiceIndex)
 				{
 					sourceChoiceIndex = newChoiceIndex;
+					ungrayImage(sourcePh.getPointAction());					
 					cancelSource();
 					targetPh.removePoints();
 					// Restore previous target roi
-					targetImp.setRoi(this.previousTargetRoi);
+					targetImp.setRoi(this.previousTargetRoi);					
 					createSourceImage(bIsReverse);
 					loadPointRoiAsLandmarks();
 					setSecondaryPointHandlers();
 				}
 				else // otherwise, permute
 				{
-					stopTargetThread();
+					//stopTargetThread();
 					targetChoiceIndex = sourceChoiceIndex;
 					sourceChoiceIndex = newChoiceIndex;
 					this.targetChoice.select(targetChoiceIndex);
@@ -461,22 +455,23 @@ public class bUnwarpJDialog extends GenericDialog
 			final int newChoiceIndex = originChoice.getSelectedIndex();
 			if (targetChoiceIndex != newChoiceIndex)
 			{
-				stopTargetThread();
+				//stopTargetThread();
 				// If the new target image is not the previous source
 				if (sourceChoiceIndex != newChoiceIndex)
 				{
 					targetChoiceIndex = newChoiceIndex;
+					ungrayImage(targetPh.getPointAction());
 					cancelTarget();
 					sourcePh.removePoints();
 					// Restore previous source roi
-					sourceImp.setRoi(this.previousSourceRoi);
+					sourceImp.setRoi(this.previousSourceRoi);					
 					createTargetImage();
 					loadPointRoiAsLandmarks();
 					setSecondaryPointHandlers();
 				}
 				else // otherwise, permute
 				{
-					stopSourceThread();
+					//stopSourceThread();
 					sourceChoiceIndex = targetChoiceIndex;
 					targetChoiceIndex = newChoiceIndex;					
 					this.sourceChoice.select(sourceChoiceIndex);
@@ -575,7 +570,7 @@ public class bUnwarpJDialog extends GenericDialog
 	public void applyRawTransformationToSource(
 			double [][] transformation_x,
 			double [][] transformation_y)
-	{
+	{						
 		// Apply transformation
 		bUnwarpJMiscTools.applyRawTransformationToSource(this.sourceImp, this.targetImp, this.source, transformation_x, transformation_y);
 

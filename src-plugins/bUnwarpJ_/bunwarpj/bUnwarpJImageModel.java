@@ -22,6 +22,8 @@ package bunwarpj;
  */
 
 import ij.IJ;
+import ij.ImagePlus;
+import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 
 import java.util.Stack;
@@ -1537,6 +1539,22 @@ public class bUnwarpJImageModel implements Runnable
 			bUnwarpJMiscTools.extractImage(ip, image);
 		}
 		coefficient = getBasicFromCardinal2D();
+		
+		/*
+		double[] fullDual = new double[width * height];
+		
+		basicToCardinal2D(coefficient, fullDual, width, height, 3);
+		FloatProcessor fpX 
+			= new FloatProcessor(width, height, fullDual);
+		(new ImagePlus("cardinal" , fpX )).show();
+		*/
+		
+		/*
+		System.out.println("Samples into coeffs:");
+		for(int i = 0; i < coefficient.length; i ++)
+			System.out.print(" " + coefficient[i]);
+		System.out.println("\n---");
+		*/
 		buildCoefficientPyramid();
 		if (isTarget || this.bSubsampledOutput) 
 			buildImagePyramid();
@@ -1661,11 +1679,11 @@ public class bUnwarpJImageModel implements Runnable
 	/**
 	 * Pass from basic to cardinal.
 	 *
-	 * @param basic
-	 * @param cardinal
-	 * @param width
-	 * @param height
-	 * @param degree
+	 * @param basic basic (standard B-splines) 2D array
+	 * @param cardinal cardinal (sampled signal) 2D array
+	 * @param width 2D signal width
+	 * @param height 2D signal height
+	 * @param degree B-splines degree
 	 */
 	private void basicToCardinal2D (
 			final double[] basic,
@@ -2008,7 +2026,10 @@ public class bUnwarpJImageModel implements Runnable
 
 	 /*------------------------------------------------------------------*/
 	 /**
-	  * Get basic from cardinal (2D).
+	  * Get basic from cardinal: convert the 2D image from regular samples
+	  * to standard B-spline coefficients.
+	  * 
+	  * @return array of standard B-spline coefficients
 	  */
 	 private double[] getBasicFromCardinal2D ()
 	 {
@@ -2030,12 +2051,15 @@ public class bUnwarpJImageModel implements Runnable
 
 	 /*------------------------------------------------------------------*/
 	 /**
-	  * Get basic from cardinal (2D).
+	  * Get basic from cardinal (2D): convert a 2D signal from regular 
+	  * samples to standard B-spline coefficients.
 	  *
-	  * @param cardinal
-	  * @param width
-	  * @param height
-	  * @param degree
+	  * @param cardinal sampled 2D signal
+	  * @param width signal width
+	  * @param height signal height
+	  * @param degree B-spline degree
+	  * 
+	  * @return array of standard B-spline coefficients
 	  */
 	 private double[] getBasicFromCardinal2D (
 			 final double[] cardinal,
@@ -2244,22 +2268,36 @@ public class bUnwarpJImageModel implements Runnable
 			 break;
 		 default:
 		 }
-		 if (c.length == 1) {
+		 // special case required by mirror boundaries
+		 if (c.length == 1) 
+		 {
 			 return;
 		 }
-		 for (int k = 0; (k < z.length); k++) {
+		 // compute the overall gain
+		 for (int k = 0; (k < z.length); k++) 
+		 {
 			 lambda *= (1.0 - z[k]) * (1.0 - 1.0 / z[k]);
 		 }
-		 for (int n = 0; (n < c.length); n++) {
-			 c[n] = c[n] * lambda;
+		 // apply the gain
+		 for (int n = 0; (n < c.length); n++) 
+		 {
+			 c[n] *= lambda;
 		 }
-		 for (int k = 0; (k < z.length); k++) {
+		 // loop over all poles
+		 for (int k = 0; (k < z.length); k++) 
+		 {
+			 // causal initialization
 			 c[0] = getInitialCausalCoefficientMirrorOffBounds(c, z[k], tolerance);
-			 for (int n = 1; (n < c.length); n++) {
-				 c[n] = c[n] + z[k] * c[n - 1];
+			 // causal recursion
+			 for (int n = 1; (n < c.length); n++) 
+			 {
+				 c[n] += z[k] * c[n - 1];
 			 }
+			 // anticausal initialization
 			 c[c.length - 1] = getInitialAntiCausalCoefficientMirrorOffBounds(c, z[k], tolerance);
-			 for (int n = c.length - 2; (0 <= n); n--) {
+			 // anticausal recursion
+			 for (int n = c.length - 2; (0 <= n); n--) 
+			 {
 				 c[n] = z[k] * (c[n+1] - c[n]);
 			 }
 		 }
@@ -2363,5 +2401,23 @@ public class bUnwarpJImageModel implements Runnable
 		 default:
 		 }
 	 } /* end symmetricFirMirrorOffBounds1D */
+	 
+	 /**
+	  * 
+	  * @param c
+	  * @param width
+	  * @param height
+	  */
+	 public double[] reduceCoeffsBy2(double[]c, int width, int height)
+	 {
+		 double[] fullDual = new double[width * height];
+		 int halfWidth = width / 2;
+		 int halfHeight = height / 2;
+		 basicToCardinal2D(c, fullDual, width, height, 7);		 
+		 final double[] halfDual = getHalfDual2D(fullDual, width, height);
+		 final double[] halfCoefficient = getBasicFromCardinal2D(halfDual, halfWidth, halfHeight, 7);
+		 return halfCoefficient;
+	 }
+	 
 
 } /* end class bUnwarpJImageModel */

@@ -112,7 +112,7 @@ public class Param {
 		gd.addChoice("Initial_Deformation :", sMinScaleDeformationChoices, sMinScaleDeformationChoices[0]);		
 		
 		String[] sMaxScaleDeformationChoices = { "Very Coarse", "Coarse", "Fine", "Very Fine", "Super Fine" };
-		gd.addChoice("Final_Deformation :", sMaxScaleDeformationChoices, sMaxScaleDeformationChoices[2]);
+		gd.addChoice("Final_Deformation :", sMaxScaleDeformationChoices, sMaxScaleDeformationChoices[3]);
 		
 		
 		gd.addNumericField("Divergence_Weight :", this.divWeight, 1);

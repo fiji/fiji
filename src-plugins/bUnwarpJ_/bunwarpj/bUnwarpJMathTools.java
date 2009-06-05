@@ -1,5 +1,7 @@
 package bunwarpj;
 
+import ij.IJ;
+
 /**
  * bUnwarpJ plugin for ImageJ(C).
  * Copyright (C) 2005-2009 Ignacio Arganda-Carreras and Jan Kybic 
@@ -617,4 +619,202 @@ public class bUnwarpJMathTools
        }
     }
 
+    /*------------------------------------------------------------------*/
+    /* 
+     * Extends a coefficient matrix with anti-symmetric conditions.
+     * 
+     * @param c 2D squared array of coefficients
+     * @param extra extra size (in each boundary)
+     */
+    public static double [][]antiSymmetricPadding(
+       double[][] c,
+       int extra) 
+    {
+        int oldK = c[0].length;
+        
+        int K = 2 * extra + oldK;
+        
+        double[][] newc = new double[K][K];
+        
+        // Center
+        for(int i = 0; i < oldK; i++)
+            for(int j = 0 ; j < oldK; j++)
+                newc[i + extra][j + extra] = c[i][j];    
+        
+        // Bounds
+        for (int i = 0; i < K; i++)
+          for (int j = 0; j < K; j++)
+          {
+              int iFrom = i;
+              int jFrom = j;
+              int iPivot = -1;
+              int jPivot = -1;
+              
+              if(iFrom < extra)
+              {
+                  iFrom = 2 * extra - i;
+                  iPivot = extra;
+                  jPivot = j;
+              }
+              else if(iFrom > (K-extra-1))
+              {
+                  iFrom = 2 * (K-extra-1) - i;
+                  iPivot = K-extra-1;
+                  jPivot = j;
+              }
+              if(jFrom < extra)
+              {
+                  jFrom = 2 * extra - j;
+                  jPivot = extra;
+                  iPivot = (iPivot != -1) ? iPivot : i;
+              }
+              else if(jFrom > (K-extra-1))
+              {
+                  jFrom = 2 * (K-extra-1) - j;
+                  jPivot = (K-extra-1);
+                  iPivot = (iPivot != -1) ? iPivot : i;
+              }
+              
+              if(iPivot != -1 && jPivot != -1)
+                  newc[i][j] = 2 * newc[iPivot][jPivot] - newc[iFrom][jFrom];
+          }
+        
+        return newc;
+    } // end method antiSymmetricPadding
+    
+    /*------------------------------------------------------------------*/
+    /* 
+     * Extends a coefficient matrix with anti-symmetric conditions.
+     * 
+     * @param c array of coefficients
+     * @param n width of the squared matrix (size = n X n)
+     * @param extra extra size (in each boundary)
+     */
+    public static double []antiSymmetricPadding(
+       double[] c,
+       int n,       
+       int extra) 
+    {
+        int oldK = n;
+        
+        int K = 2 * extra + oldK;
+        
+        double[] newc = new double[K * K];
+        
+        // Center
+        for(int i = 0; i < oldK; i++)
+            for(int j = 0 ; j < oldK; j++)
+                newc[ (i + extra)* K + j + extra] = c[i * n + j];    
+        
+        // Bounds
+        for (int i = 0; i < K; i++)
+          for (int j = 0; j < K; j++)
+          {
+              int iFrom = i;
+              int jFrom = j;
+              int iPivot = -1;
+              int jPivot = -1;
+              
+              if(iFrom < extra)
+              {
+                  iFrom = 2 * extra - i;
+                  iPivot = extra;
+                  jPivot = j;
+              }
+              else if(iFrom > (K-extra-1))
+              {
+                  iFrom = 2 * (K-extra-1) - i;
+                  iPivot = K-extra-1;
+                  jPivot = j;
+              }
+              if(jFrom < extra)
+              {
+                  jFrom = 2 * extra - j;
+                  jPivot = extra;
+                  iPivot = (iPivot != -1) ? iPivot : i;
+              }
+              else if(jFrom > (K-extra-1))
+              {
+                  jFrom = 2 * (K-extra-1) - j;
+                  jPivot = (K-extra-1);
+                  iPivot = (iPivot != -1) ? iPivot : i;
+              }
+              
+              if(iPivot != -1 && jPivot != -1)
+                  newc[i* K + j] = 2 * newc[iPivot * K + jPivot] - newc[iFrom * K + jFrom];
+          }
+        
+        return newc;
+    } // end method antiSymmetricPadding
+    
+
+    /*------------------------------------------------------------------*/
+    /* 
+     * Extends a coefficient matrix with anti-symmetric conditions.
+     * 
+     * @param c array of coefficients
+     * @param n width of the squared matrix (size = n X n)
+     * @param extra extra size (in each boundary)
+     */
+    public static float []antiSymmetricPadding(
+       float[] c,
+       int n,       
+       int extra) 
+    {
+        int oldK = n;
+        
+        int K = 2 * extra + oldK;
+        
+        IJ.log("K = " + K + " oldK = " + oldK);
+        
+        float[] newc = new float[K * K];
+        
+        // Center
+        for(int i = 0; i < oldK; i++)
+            for(int j = 0 ; j < oldK; j++)
+                newc[ (i + extra) * K + j + extra] = c[i * n + j];    
+        
+        // Bounds
+        for (int i = 0; i < K; i++)
+          for (int j = 0; j < K; j++)
+          {
+              int iFrom = i;
+              int jFrom = j;
+              int iPivot = -1;
+              int jPivot = -1;
+              
+              if(iFrom < extra)
+              {
+                  iFrom = 2 * extra - i;
+                  iPivot = extra;
+                  jPivot = j;
+              }
+              else if(iFrom > (K-extra-1))
+              {
+                  iFrom = 2 * (K-extra-1) - i;
+                  iPivot = K-extra-1;
+                  jPivot = j;
+              }
+              if(jFrom < extra)
+              {
+                  jFrom = 2 * extra - j;
+                  jPivot = extra;
+                  iPivot = (iPivot != -1) ? iPivot : i;
+              }
+              else if(jFrom > (K-extra-1))
+              {
+                  jFrom = 2 * (K-extra-1) - j;
+                  jPivot = (K-extra-1);
+                  iPivot = (iPivot != -1) ? iPivot : i;
+              }
+              
+              if(iPivot != -1 && jPivot != -1)
+                  newc[i* K + j] = 2 * newc[iPivot * K + jPivot] - newc[iFrom * K + jFrom];
+          }
+        
+        return newc;
+    } // end method antiSymmetricPadding
+    
+    
+    
 } /* End bUnwarpJMathTools */

@@ -111,6 +111,7 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 		final Button composeElasticButton = new Button("Compose Elastic Transformations");
 		final Button composeRawButton = new Button("Compose Raw Transformations");
 		final Button composeRawElasticButton = new Button("Compose Raw and Elastic Transformations");
+		final Button invertRawButton = new Button("Invert Raw Transformation");
 		final Button evaluateSimilarityButton = new Button("Evaluate Image Similarity");
 		final Button adaptCoeffsButton = new Button("Adapt Coefficients");
 		final Button loadSourceMaskButton = new Button("Load Source Mask");
@@ -131,6 +132,7 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 		composeElasticButton.addActionListener(this);
 		composeRawButton.addActionListener(this);
 		composeRawElasticButton.addActionListener(this);
+		invertRawButton.addActionListener(this);
 		evaluateSimilarityButton.addActionListener(this);
 		adaptCoeffsButton.addActionListener(this);
 		loadSourceMaskButton.addActionListener(this);
@@ -152,6 +154,7 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 		add(composeElasticButton);
 		add(composeRawButton);
 		add(composeRawElasticButton);
+		add(invertRawButton);
 		add(evaluateSimilarityButton);
 		add(adaptCoeffsButton);
 		add(loadSourceMaskButton);
@@ -206,6 +209,9 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 		}
 		else if (ae.getActionCommand().equals("Compose Raw and Elastic Transformations")) {
 			composeRawElasticTransformations();
+		}
+		else if (ae.getActionCommand().equals("Invert Raw Transformation")) {
+			invertRawTransformation();
 		}
 		else if (ae.getActionCommand().equals("Evaluate Image Similarity")) {
 			evaluateSimilarity();
@@ -455,7 +461,7 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 	 */
 	private void saveTransformationInElastic ()
 	{
-		// We ask the user for the elastic transformation file
+		// We ask the user for the input raw transformation file
 		final OpenDialog od = new OpenDialog("Load raw transformation file", "");
 		final String path = od.getDirectory();
 		final String filename = od.getFileName();
@@ -464,12 +470,12 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 		}
 		String fn_tnf = path+filename;
 
-		double[][] transformation_x = new double[targetImp.getHeight()][targetImp.getWidth()];
-		double[][] transformation_y = new double[targetImp.getHeight()][targetImp.getWidth()];
+		double[][] transformation_x = new double[targetImp.getHeight()] [targetImp.getWidth()];
+		double[][] transformation_y = new double[targetImp.getHeight()] [targetImp.getWidth()];
 
 		bUnwarpJMiscTools.loadRawTransformation(fn_tnf, transformation_x, transformation_y);
 
-		// We ask the user for the raw deformation file.
+		// We ask the user for the output elastic deformation file.
 		OpenDialog od_elastic = new OpenDialog("Saving in elastic - select elastic transformation file", "");
 		String path_elastic = od_elastic.getDirectory();
 		String filename_elastic = od_elastic.getFileName();
@@ -492,7 +498,49 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 		bUnwarpJMiscTools.convertRawTransformationToBSpline(this.targetImp, intervals, transformation_x, transformation_y, cx, cy);
 
 		bUnwarpJMiscTools.saveElasticTransformation(intervals, cx, cy, fn_tnf_elastic);
-	}	
+	}	// end  method saveTransformationInElastic
+
+	
+	/*------------------------------------------------------------------*/
+	/**
+	 * Invert a raw transformation
+	 */
+	private void invertRawTransformation ()
+	{
+		// We ask the user for the input raw transformation file
+		final OpenDialog od = new OpenDialog("Load raw transformation file", "");
+		final String path = od.getDirectory();
+		final String filename = od.getFileName();
+		if ((path == null) || (filename == null)) {
+			return;
+		}
+		String fn_tnf = path+filename;
+
+		double[][] transformation_x = new double[targetImp.getHeight()] [targetImp.getWidth()];
+		double[][] transformation_y = new double[targetImp.getHeight()] [targetImp.getWidth()];
+
+		bUnwarpJMiscTools.loadRawTransformation(fn_tnf, transformation_x, transformation_y);
+
+		// We ask the user for the output raw deformation file.
+		OpenDialog od_inverse = new OpenDialog("Saving in raw - select raw transformation file", "");
+		String path_inverse = od_inverse.getDirectory();
+		String filename_inverse = od_inverse.getFileName();
+		if ((path_inverse == null) || (filename_inverse == null))
+			return;
+
+		String fn_tnf_inverse = path_inverse + filename_inverse;
+
+		double[][] inv_x = new double[targetImp.getHeight()] [targetImp.getWidth()];
+		double[][] inv_y = new double[targetImp.getHeight()] [targetImp.getWidth()];
+		
+
+		bUnwarpJMiscTools.invertRawTransformation(targetImp, transformation_x, transformation_y, inv_x, inv_y);
+		
+		bUnwarpJMiscTools.saveRawTransformation(fn_tnf_inverse, targetImp.getWidth(), 
+												targetImp.getHeight(), inv_x, inv_y);
+
+		
+	}	// end  method saveTransformationInElastic
 	
 	
 	/*------------------------------------------------------------------*/

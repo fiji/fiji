@@ -176,28 +176,36 @@ public class bUnwarpJPointHandler extends Roi
 			final int x,
 			final int y)
 	{
-		if (numPoints < GAMUT) {
+		if (numPoints < GAMUT) 
+		{
 			final Point p = new Point(x, y);
 			listPoints.addElement(p);
-			if (!usedColor[currentColor]) {
+			
+			if (!usedColor[currentColor]) 
+			{
 				usedColor[currentColor] = true;
 			}
-			else {
+			else 
+			{
 				int k;
-				for (k = 0; (k < GAMUT); k++) {
+				for (k = 0; (k < GAMUT); k++) 
+				{
 					currentColor++;
 					currentColor &= GAMUT - 1;
-					if (!usedColor[currentColor]) {
+					if (!usedColor[currentColor]) 
+					{
 						break;
 					}
 				}
-				if (GAMUT <= k) {
+				if (GAMUT <= k) 
+				{
 					throw new IllegalStateException("Unexpected lack of available colors");
 				}
 			}
 			int stirredColor = 0;
 			int c = currentColor;
-			for (int k = 0; (k < (int)Math.round(Math.log((double)GAMUT) / Math.log(2.0))); k++) {
+			for (int k = 0; (k < (int)Math.round(Math.log((double)GAMUT) / Math.log(2.0))); k++) 
+			{
 				stirredColor <<= 1;
 				stirredColor |= (c & 1);
 				c >>= 1;
