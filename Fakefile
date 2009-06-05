@@ -136,6 +136,8 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Record_Screen.jar \
 	plugins/Video_Editing.jar \
 	plugins/Sync_Win.jar \
+	plugins/Gray_Morphology.jar \
+	plugins/Colocalisation_Analysis.jar \
 	\
 	misc/Fiji.jar
 
