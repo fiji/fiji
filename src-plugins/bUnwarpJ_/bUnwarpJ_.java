@@ -250,7 +250,7 @@ public class bUnwarpJ_ implements PlugIn
      * 
      * @return results transformation object
      */
-    private static bUnwarpJTransformation computeTransformationBatch(ImagePlus targetImp,
+    public static bUnwarpJTransformation computeTransformationBatch(ImagePlus targetImp,
     									 ImagePlus sourceImp,
     									 ImageProcessor targetMskIP,
     									 ImageProcessor sourceMskIP,
@@ -306,8 +306,8 @@ public class bUnwarpJ_ implements PlugIn
        bUnwarpJPointHandler sourcePh = null;
 
        // Load landmarks
-       if (landmarkWeight != 0)
-       {
+       //if (landmarkWeight != 0)
+       //{
           Stack<Point> sourceStack = new Stack<Point>();
           Stack<Point> targetStack = new Stack<Point>();
           bUnwarpJMiscTools.loadPointRoiAsLandmarks(sourceImp, targetImp, sourceStack, targetStack);
@@ -322,7 +322,7 @@ public class bUnwarpJ_ implements PlugIn
              sourcePh.addPoint(sourcePoint.x, sourcePoint.y);
              targetPh.addPoint(targetPoint.x, targetPoint.y);
           }
-       }
+       //}
        
        // Set no initial affine matrices
        final double[][] sourceAffineMatrix = null;
@@ -365,6 +365,144 @@ public class bUnwarpJ_ implements PlugIn
        long start = System.currentTimeMillis(); // start timing
 
        if(mode == bUnwarpJDialog.MONO_MODE)       
+    	   warp.doUnidirectionalRegistration();    	       
+       else
+    	   warp.doRegistration();
+
+       long stop = System.currentTimeMillis(); // stop timing
+       IJ.log("Registration time: " + (stop - start) + "ms"); // print execution time
+
+       return warp;
+       
+    } // end computeTransformationBatch    
+    
+    
+    /*------------------------------------------------------------------*/
+    /**
+     * Method for images alignment with no graphical interface. This 
+     * method gives as result a bUnwarpJTransformation object that 
+     * contains all the registration information.
+     *
+     * @param targetImp input target image 
+     * @param sourceImp input source image
+     * @param targetMskIP target mask 
+     * @param sourceMskIP source mask
+     * @param parameter registration parameters
+     * 
+     * @return results transformation object
+     */
+    public static bUnwarpJTransformation computeTransformationBatch(ImagePlus targetImp,
+    									 ImagePlus sourceImp,
+    									 ImageProcessor targetMskIP,
+    									 ImageProcessor sourceMskIP,
+    									 Param parameter) 
+    {    	
+       if(targetImp == null || sourceImp == null || parameter == null)
+       {
+    	   IJ.error("Missing parameters to compute transformation!");
+    	   return null;
+       }
+
+       // Produce side information
+       final int imagePyramidDepth = parameter.max_scale_deformation - parameter.min_scale_deformation + 1;
+       final int min_scale_image = 0;
+       
+       // output level to -1 so nothing is displayed 
+       final int outputLevel = -1;
+       
+       final boolean showMarquardtOptim = false;       
+       final boolean saveTransf = false;
+
+       // Create target image model
+       final bUnwarpJImageModel target = new bUnwarpJImageModel(targetImp.getProcessor(), true, 
+    		   													 (int) Math.pow(2, parameter.img_subsamp_fact));
+       
+       target.setPyramidDepth(imagePyramidDepth+min_scale_image);
+       target.startPyramids();
+       
+       // Create target mask
+       final bUnwarpJMask targetMsk = (targetMskIP != null) ? new bUnwarpJMask(targetMskIP, true) 
+       		  										         : new bUnwarpJMask(targetImp.getProcessor(), false);
+                    
+       bUnwarpJPointHandler targetPh = null;
+
+       // Create source image model
+       boolean bIsReverse = true;         
+
+       final bUnwarpJImageModel source = new bUnwarpJImageModel(sourceImp.getProcessor(), bIsReverse, 
+    		   													(int) Math.pow(2, parameter.img_subsamp_fact));
+
+       source.setPyramidDepth(imagePyramidDepth + min_scale_image);
+       source.startPyramids();
+       
+       // Create source mask
+       final bUnwarpJMask sourceMsk = (sourceMskIP != null) ? new bUnwarpJMask(sourceMskIP, true) 
+       														 : new bUnwarpJMask(sourceImp.getProcessor(), false);
+       
+       bUnwarpJPointHandler sourcePh = null;
+
+       // Load landmarks
+       //if (parameter.landmarkWeight != 0)
+       //{
+          Stack<Point> sourceStack = new Stack<Point>();
+          Stack<Point> targetStack = new Stack<Point>();
+          bUnwarpJMiscTools.loadPointRoiAsLandmarks(sourceImp, targetImp, sourceStack, targetStack);
+
+          sourcePh  = new bUnwarpJPointHandler(sourceImp);
+          targetPh  = new bUnwarpJPointHandler(targetImp);
+
+          while ((!sourceStack.empty()) && (!targetStack.empty())) 
+          {
+             Point sourcePoint = (Point)sourceStack.pop();
+             Point targetPoint = (Point)targetStack.pop();
+             sourcePh.addPoint(sourcePoint.x, sourcePoint.y);
+             targetPh.addPoint(targetPoint.x, targetPoint.y);
+          }
+       //}
+       
+       // Set no initial affine matrices
+       final double[][] sourceAffineMatrix = null;
+       final double[][] targetAffineMatrix = null;
+ 
+       // Join threads
+       try 
+       {
+           source.getThread().join();
+           target.getThread().join();
+       } 
+       catch (InterruptedException e) 
+       {
+           IJ.error("Unexpected interruption exception " + e);
+       }
+
+       // Perform registration
+       ImagePlus[] output_ip = new ImagePlus[2];
+       output_ip[0] = null; 
+       output_ip[1] = null; 
+       
+       // The dialog is set to null to work in batch mode
+       final bUnwarpJDialog dialog = null;
+       
+       final ImageProcessor originalSourceIP = sourceImp.getProcessor();
+       final ImageProcessor originalTargetIP = targetImp.getProcessor();
+
+
+       final bUnwarpJTransformation warp = new bUnwarpJTransformation(
+         sourceImp, targetImp, source, target, sourcePh, targetPh,
+         sourceMsk, targetMsk, sourceAffineMatrix, targetAffineMatrix,
+         parameter.min_scale_deformation, parameter.max_scale_deformation, 
+         min_scale_image, parameter.divWeight, 
+         parameter.curlWeight, parameter.landmarkWeight, parameter.imageWeight, 
+         parameter.consistencyWeight, parameter.stopThreshold, 
+         outputLevel, showMarquardtOptim, parameter.mode, parameter.img_subsamp_fact,
+         saveTransf, null, null, output_ip[0], output_ip[1], dialog,
+         originalSourceIP, originalTargetIP);
+
+       IJ.log("\nRegistering...\n");
+       
+       long start = System.currentTimeMillis(); // start timing
+
+       if(parameter.mode == bUnwarpJDialog.MONO_MODE)       
     	   warp.doUnidirectionalRegistration();    	       
        else
     	   warp.doRegistration();
@@ -434,7 +572,42 @@ public class bUnwarpJ_ implements PlugIn
        
     } // end alignImagesBatch
     
+    /*------------------------------------------------------------------*/
+    /**
+     * Method for images alignment with no graphical interface. This 
+     * method gives as result an array of 2 ImagePlus containing the
+     * source-target and target-source results respectively. Each of them
+     * has three slices: the final deformed image, its target image and 
+     * its mask.
+     *
+     * @param targetImp input target image 
+     * @param sourceImp input source image
+     * @param targetMskIP target mask 
+     * @param sourceMskIP source mask
+     * @param parameter registration parameters
+     * 
+     * @return resulting ImagePlus array (with source-target and target-source results)
+     */
+    public static ImagePlus[] alignImagesBatch(ImagePlus targetImp,
+    									 ImagePlus sourceImp,
+    									 ImageProcessor targetMskIP,
+    									 ImageProcessor sourceMskIP,
+    									 Param parameter) 
+    {    	
        
+
+    	bUnwarpJTransformation warp 
+    	= computeTransformationBatch(targetImp, sourceImp,	targetMskIP, sourceMskIP, parameter);
+
+       // Return results as ImagePlus
+       final ImagePlus[] output_ip = new ImagePlus[2];
+       output_ip[0] = warp.getDirectResults();       
+       output_ip[1] = warp.getInverseResults();
+       
+       return output_ip;       
+       
+    } // end alignImagesBatch
+    
     /*------------------------------------------------------------------*/
     /**
      * Method for images alignment with no graphical interface. This 
