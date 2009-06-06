@@ -55,7 +55,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.Callable;
 
-import bunwarpj.bUnwarpJTransformation;
+import bunwarpj.Transformation;
+import bunwarpj.bUnwarpJ_;
 import bunwarpj.trakem2.transform.CubicBSplineTransform;
 
 /** 
@@ -137,7 +138,8 @@ public class Register_Virtual_Stack_MT implements PlugIn {
 		Param p = new Param();
 		p.featuresModelIndex = featuresModelIndex;
 		p.registrationModelIndex = registrationModelIndex;
-		if (advanced) p.showDialog();
+		if (advanced && !p.showDialog())
+			return;
 		exec(source_dir, target_dir, p);
 	}
 
@@ -206,7 +208,8 @@ public class Register_Virtual_Stack_MT implements PlugIn {
          * Shows parameter dialog when "advanced options" is checked
          * @return false when dialog is canceled or 
          */
-		public boolean showDialog() {
+		public boolean showDialog() 
+		{
 			GenericDialog gd = new GenericDialog("Feature extraction");
 			gd.addMessage( "Scale Invariant Interest Point Detector:" );
 			gd.addNumericField( "initial_gaussian_blur :", sift.initialSigma, 2, 6, "px" );
@@ -229,7 +232,8 @@ public class Register_Virtual_Stack_MT implements PlugIn {
 
 			gd.showDialog();
 
-			if (gd.wasCanceled()) return false;
+			if (gd.wasCanceled()) 
+				return false;
 
 			sift.initialSigma = (float) gd.getNextNumber();
 			sift.steps = (int) gd.getNextNumber();
@@ -400,10 +404,11 @@ public class Register_Virtual_Stack_MT implements PlugIn {
 						*/
 						
 						// Perform registration
-						bUnwarpJTransformation warp 
-						  = (bunwarpj.bUnwarpJTransformation) Class.forName("bUnwarpJ_").getDeclaredMethod("computeTransformationBatch", 
+						Transformation warp = bUnwarpJ_.computeTransformationBatch(imp2, imp1, imp2mask, imp1mask, p.elastic_param);
+						
+						  /*= (bunwarpj.Transformation) Class.forName("bUnwarpJ_").getDeclaredMethod("computeTransformationBatch", 
 								  ImagePlus.class, ImagePlus.class, ImageProcessor.class, ImageProcessor.class, 
-								  bunwarpj.Param.class).invoke(null, new Object[]{imp2, imp1, imp2mask, imp1mask, p.elastic_param});
+								  bunwarpj.Param.class).invoke(null, new Object[]{imp2, imp1, imp2mask, imp1mask, p.elastic_param}); */
 						
 						// take the mask from the results
 						final ImagePlus output_ip = warp.getDirectResults();
