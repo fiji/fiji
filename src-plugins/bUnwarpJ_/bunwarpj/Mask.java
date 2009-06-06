@@ -39,8 +39,8 @@ import java.util.Vector;
  * place concurrently with user-interface events. It contains methods
  * to compute the mask pyramids.
  */
-public class bUnwarpJMask
-{ /* begin class bUnwarpJMask */
+public class Mask
+{ /* begin class Mask */
 
     /*....................................................................
        Private variables
@@ -70,7 +70,7 @@ public class bUnwarpJMask
      * @param ip image
      * @param take_mask flag to take the mask from the stack of images
      */
-    public bUnwarpJMask (final ImageProcessor ip, boolean take_mask)
+    public Mask (final ImageProcessor ip, boolean take_mask)
     {
        width  = ip.getWidth();
        height = ip.getHeight();
@@ -167,7 +167,7 @@ public class bUnwarpJMask
        for (int y = 0; (y < height); y++)
           for (int x = 0; (x < width); x++) {
              mask[k] = polygon.contains(x,y);
-             if (tool==bUnwarpJPointAction.INVERTMASK) mask[k]=!mask[k];
+             if (tool==PointAction.INVERTMASK) mask[k]=!mask[k];
              k++;
           }
     }
@@ -252,16 +252,16 @@ public class bUnwarpJMask
        for (int y = 0; (y < height); y++)
           for (int x = 0; (x < width); x++)
              if (mask[k++]) img[y][x]=1; else img[y][x]=0;
-       bUnwarpJMiscTools.showImage("Mask",img);
+       MiscTools.showImage("Mask",img);
     }
 
     /*------------------------------------------------------------------*/
     /**
      * Set the mask points.
      *
-     * @param listMaskPoints list of point composing the mask
+     * @param listMaskPoints list of points composing the mask
      */
-    public void setMaskPoints (final Vector listMaskPoints)
+    public void setMaskPoints (final Vector <Point> listMaskPoints)
     {
        int imax=listMaskPoints.size();
        for (int i=0; i<imax; i++)
@@ -286,5 +286,5 @@ public class bUnwarpJMask
 
 
 
-} /* end class bUnwarpJMask */
+} /* end class Mask */
 

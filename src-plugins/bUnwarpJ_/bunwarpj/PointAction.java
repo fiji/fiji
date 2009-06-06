@@ -23,7 +23,7 @@ package bunwarpj;
 
 
 /*====================================================================
-|   bUnwarpJPointAction
+|   PointAction
 \===================================================================*/
 import ij.IJ;
 import ij.ImagePlus;
@@ -42,9 +42,9 @@ import java.awt.event.MouseMotionListener;
 /**
  * Class for point actions in the bUnwarpJ interface.
  */
-public class bUnwarpJPointAction extends ImageCanvas implements KeyListener, MouseListener,
+public class PointAction extends ImageCanvas implements KeyListener, MouseListener,
       MouseMotionListener
-{ /* begin class bUnwarpJPointAction */
+{ /* begin class PointAction */
 
     /*....................................................................
        Public variables
@@ -65,10 +65,10 @@ public class bUnwarpJPointAction extends ImageCanvas implements KeyListener, Mou
 
     private ImagePlus            mainImp;
     private ImagePlus            secondaryImp;
-    private bUnwarpJPointHandler mainPh;
-    private bUnwarpJPointHandler secondaryPh;
-    private bUnwarpJPointToolbar tb;
-    private bUnwarpJDialog       dialog;
+    private PointHandler mainPh;
+    private PointHandler secondaryPh;
+    private PointToolbar tb;
+    private MainDialog       dialog;
     private long                mouseDownTime;
 
     /*....................................................................
@@ -77,20 +77,20 @@ public class bUnwarpJPointAction extends ImageCanvas implements KeyListener, Mou
 
     /*------------------------------------------------------------------*/
     /**
-     * Create an instance of bUnwarpJPointAction.
+     * Create an instance of PointAction.
      */
-    public bUnwarpJPointAction (
+    public PointAction (
        final ImagePlus imp,
-       final bUnwarpJPointHandler ph,
-       final bUnwarpJPointToolbar tb,
-       final bUnwarpJDialog       dialog)
+       final PointHandler ph,
+       final PointToolbar tb,
+       final MainDialog       dialog)
     {
        super(imp);
        this.mainImp = imp;
        this.mainPh = ph;
        this.tb = tb;
        this.dialog = dialog;
-    } /* end bUnwarpJPointAction (constructor) */    
+    } /* end PointAction (constructor) */    
     
     
     /*------------------------------------------------------------------*/
@@ -318,7 +318,7 @@ public class bUnwarpJPointAction extends ImageCanvas implements KeyListener, Mou
      */
     public void setSecondaryPointHandler (
        final ImagePlus secondaryImp,
-       final bUnwarpJPointHandler secondaryPh)
+       final PointHandler secondaryPh)
     {
        this.secondaryImp = secondaryImp;
        this.secondaryPh = secondaryPh;
@@ -344,7 +344,7 @@ public class bUnwarpJPointAction extends ImageCanvas implements KeyListener, Mou
        final Calibration cal = mainImp.getCalibration();
        final int[] v = mainImp.getPixel(x, y);
        final int mainImptype=mainImp.getType();
-       if (mainImptype==mainImp.GRAY8 || mainImptype==mainImp.GRAY16) {
+       if (mainImptype==ImagePlus.GRAY8 || mainImptype==ImagePlus.GRAY16) {
            final double cValue = cal.getCValue(v[0]);
            if (cValue==v[0]) {
               return(", value=" + v[0]);
@@ -352,11 +352,11 @@ public class bUnwarpJPointAction extends ImageCanvas implements KeyListener, Mou
            else {
               return(", value=" + IJ.d2s(cValue) + " (" + v[0] + ")");
            }
-       } else if (mainImptype==mainImp.GRAY32) {
+       } else if (mainImptype==ImagePlus.GRAY32) {
                 return(", value=" + Float.intBitsToFloat(v[0]));
-       } else if (mainImptype==mainImp.COLOR_256) {
+       } else if (mainImptype==ImagePlus.COLOR_256) {
            return(", index=" + v[3] + ", value=" + v[0] + "," + v[1] + "," + v[2]);
-       } else if (mainImptype == mainImp.COLOR_RGB) {
+       } else if (mainImptype == ImagePlus.COLOR_RGB) {
            return(", value=" + v[0] + "," + v[1] + "," + v[2]);
        } else {
            return("");
@@ -425,8 +425,10 @@ public class bUnwarpJPointAction extends ImageCanvas implements KeyListener, Mou
      */
     private void updateAndDraw ()
     {
-       mainImp.setRoi(mainPh);
-       secondaryImp.setRoi(secondaryPh);
+    	if(mainImp != null)
+    		mainImp.setRoi(mainPh);
+    	if(secondaryImp != null)
+    		secondaryImp.setRoi(secondaryPh);
     } /* end updateAndDraw */
 
-} /* end class bUnwarpJPointAction */
+} /* end class PointAction */
