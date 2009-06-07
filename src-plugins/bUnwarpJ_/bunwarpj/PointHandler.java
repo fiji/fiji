@@ -22,7 +22,7 @@ package bunwarpj;
  */
 
 /*====================================================================
-|   bUnwarpJPointHandler
+|   PointHandler
 \===================================================================*/
 
 import ij.IJ;
@@ -40,8 +40,8 @@ import java.util.Vector;
 /**
  * Class to deal with point handler in bUnwarpJ.
  */
-public class bUnwarpJPointHandler extends Roi
-{ /* begin class bUnwarpJPointHandler */
+public class PointHandler extends Roi
+{ /* begin class PointHandler */
 
 	/*....................................................................
        Private variables
@@ -81,13 +81,13 @@ public class bUnwarpJPointHandler extends Roi
 	/** pointer to the image representation */
 	private ImagePlus                      imp;
 	/** pointer to the point actions */
-	private bUnwarpJPointAction  pa;
+	private PointAction  pa;
 	/** pointer to the point toolbar */
-	private bUnwarpJPointToolbar tb;
+	private PointToolbar tb;
 	/** pointer to the mask */
-	private bUnwarpJMask         mask;
+	private Mask         mask;
 	/** pointer to the bUnwarpJ dialog */
-	private bUnwarpJDialog       dialog;
+	private MainDialog       dialog;
 
 	/*....................................................................
        Public methods
@@ -95,24 +95,24 @@ public class bUnwarpJPointHandler extends Roi
 
 	/*------------------------------------------------------------------*/
 	/**
-	 * Constructor with graphical capabilities, create an instance of bUnwarpJPointHandler.
+	 * Constructor with graphical capabilities, create an instance of PointHandler.
 	 *
 	 * @param imp pointer to the image
 	 * @param tb pointer to the toolbar
 	 * @param mask pointer to the mask
 	 * @param dialog pointer to the bUnwarpJ dialog
 	 */
-	public bUnwarpJPointHandler (
+	public PointHandler (
 			final ImagePlus           imp,
-			final bUnwarpJPointToolbar tb,
-			final bUnwarpJMask         mask,
-			final bUnwarpJDialog       dialog)
+			final PointToolbar tb,
+			final Mask         mask,
+			final MainDialog       dialog)
 	{
 		super(0, 0, imp.getWidth(), imp.getHeight(), imp);
 		this.imp = imp;
 		this.tb = tb;
 		this.dialog = dialog;
-		pa = new bUnwarpJPointAction(imp, this, tb, dialog);
+		pa = new PointAction(imp, this, tb, dialog);
 		final ImageWindow iw = imp.getWindow();
 		final ImageCanvas ic = iw.getCanvas();
 		//iw.requestFocus();
@@ -129,14 +129,14 @@ public class bUnwarpJPointHandler extends Roi
 
 		this.mask = mask;
 		//clearMask(); // This line was commented to allow loading masks from the second slice of a stack.
-	} /* end bUnwarpJPointHandler */
+	} /* end PointHandler */
 
 	/**
-	 * Constructor without graphical capabilities, create an instance of bUnwarpJPointHandler.
+	 * Constructor without graphical capabilities, create an instance of PointHandler.
 	 *
 	 * @param imp image
 	 */
-	public bUnwarpJPointHandler (final ImagePlus imp)
+	public PointHandler (final ImagePlus imp)
 	{
 		super(0, 0, imp.getWidth(), imp.getHeight(), imp);
 		this.imp = imp;
@@ -145,7 +145,7 @@ public class bUnwarpJPointHandler extends Roi
 		pa = null;
 		started = true;
 		mask = null;
-	} /* end bUnwarpJPointHandler */
+	} /* end PointHandler */
 
 
 
@@ -451,7 +451,7 @@ public class bUnwarpJPointHandler extends Roi
 	 *
 	 * @return point action
 	 */
-	public bUnwarpJPointAction getPointAction () {return pa;}
+	public PointAction getPointAction () {return pa;}
 
 	/*------------------------------------------------------------------*/
 	/**
@@ -539,7 +539,7 @@ public class bUnwarpJPointHandler extends Roi
 		}
 		currentPoint = numPoints - 1;
 		if (currentPoint < 0) {
-			tb.setTool(bUnwarpJPointAction.ADD_CROSS);
+			tb.setTool(PointAction.ADD_CROSS);
 		}
 	} /* end removePoint */
 
@@ -559,7 +559,7 @@ public class bUnwarpJPointHandler extends Roi
 		}
 		currentPoint = numPoints - 1;
 		if (currentPoint < 0) {
-			tb.setTool(bUnwarpJPointAction.ADD_CROSS);
+			tb.setTool(PointAction.ADD_CROSS);
 		}
 	} /* end removePoint */
 
@@ -578,7 +578,7 @@ public class bUnwarpJPointHandler extends Roi
 		currentColor = 0;
 		numPoints = 0;
 		currentPoint = -1;
-		tb.setTool(bUnwarpJPointAction.ADD_CROSS);
+		tb.setTool(PointAction.ADD_CROSS);
 		imp.setRoi(this);
 	} /* end removePoints */
 
@@ -660,7 +660,7 @@ public class bUnwarpJPointHandler extends Roi
 	 */
 	public void setSecondaryPointHandler (
 			final ImagePlus secondaryImp,
-			final bUnwarpJPointHandler secondaryPh)
+			final PointHandler secondaryPh)
 	{
 		pa.setSecondaryPointHandler(secondaryImp, secondaryPh);
 	} /* end setSecondaryPointHandler */
@@ -715,4 +715,4 @@ public class bUnwarpJPointHandler extends Roi
 		} while (++k < bound6);
 	} /* end setSpectrum */
 
-} /* end class bUnwarpJPointHandler */
+} /* end class PointHandler */

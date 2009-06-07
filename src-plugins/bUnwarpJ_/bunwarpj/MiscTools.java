@@ -45,7 +45,7 @@ import java.util.StringTokenizer;
 /**
  * Different tools for the bUnwarpJ interface.
  */
-public class bUnwarpJMiscTools
+public class MiscTools
 {
 	/* --------------------------------------------------------------------*/
 	/**
@@ -65,7 +65,7 @@ public class bUnwarpJMiscTools
 	static public void applyTransformationToSource(
 			ImagePlus sourceImp,
 			ImagePlus targetImp,
-			bUnwarpJImageModel source,
+			BSplineModel source,
 			int intervals,
 			double [][]cx,
 			double [][]cy)
@@ -81,8 +81,8 @@ public class bUnwarpJMiscTools
 
 		// Compute the deformation
 		// Set these coefficients to an interpolator
-		bUnwarpJImageModel swx = new bUnwarpJImageModel(cx);
-		bUnwarpJImageModel swy = new bUnwarpJImageModel(cy);
+		BSplineModel swx = new BSplineModel(cx);
+		BSplineModel swy = new BSplineModel(cy);
 
 		// Compute the transformation mapping
 		boolean ORIGINAL = false;
@@ -134,15 +134,15 @@ public class bUnwarpJMiscTools
 		else /* COLOR IMAGES */
 		{        	
 			// red
-			bUnwarpJImageModel sourceR = new bUnwarpJImageModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(0, null), false, 1);
+			BSplineModel sourceR = new BSplineModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(0, null), false, 1);
 			sourceR.setPyramidDepth(0);
 			sourceR.startPyramids();
 			// green
-			bUnwarpJImageModel sourceG = new bUnwarpJImageModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(1, null), false, 1);
+			BSplineModel sourceG = new BSplineModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(1, null), false, 1);
 			sourceG.setPyramidDepth(0);
 			sourceG.startPyramids();
 			//blue
-			bUnwarpJImageModel sourceB = new bUnwarpJImageModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(2, null), false, 1);
+			BSplineModel sourceB = new BSplineModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(2, null), false, 1);
 			sourceB.setPyramidDepth(0);
 			sourceB.startPyramids();
 
@@ -213,9 +213,9 @@ public class bUnwarpJMiscTools
 	static public void applyTransformationToSource(
 			ImagePlus sourceImp,
 			ImagePlus targetImp,
-			bUnwarpJImageModel sourceR,
-			bUnwarpJImageModel sourceG,
-			bUnwarpJImageModel sourceB,
+			BSplineModel sourceR,
+			BSplineModel sourceG,
+			BSplineModel sourceB,
 			int intervals,
 			double [][]cx,
 			double [][]cy)
@@ -231,8 +231,8 @@ public class bUnwarpJMiscTools
 
 		// Compute the deformation
 		// Set these coefficients to an interpolator
-		bUnwarpJImageModel swx = new bUnwarpJImageModel(cx);
-		bUnwarpJImageModel swy = new bUnwarpJImageModel(cy);
+		BSplineModel swx = new BSplineModel(cx);
+		BSplineModel swy = new BSplineModel(cy);
 
 		// Compute the transformation mapping
 		boolean ORIGINAL = false;
@@ -303,7 +303,7 @@ public class bUnwarpJMiscTools
 	static public void applyRawTransformationToSource(
 			ImagePlus sourceImp,
 			ImagePlus targetImp,
-			bUnwarpJImageModel source,
+			BSplineModel source,
 			double [][] transformation_x,
 			double [][] transformation_y)
 	{
@@ -350,19 +350,19 @@ public class bUnwarpJMiscTools
 		else /* COLOR IMAGES */
 		{        	
 			// red
-			bUnwarpJImageModel sourceR = new bUnwarpJImageModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(0, null), false, 1);
+			BSplineModel sourceR = new BSplineModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(0, null), false, 1);
 			sourceR.setPyramidDepth(0);
 			//sourceR.getThread().start();
 			sourceR.startPyramids();
 			
 			// green
-			bUnwarpJImageModel sourceG = new bUnwarpJImageModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(1, null), false, 1);
+			BSplineModel sourceG = new BSplineModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(1, null), false, 1);
 			sourceG.setPyramidDepth(0);
 			//sourceG.getThread().start();
 			sourceG.startPyramids();
 			
 			//blue
-			bUnwarpJImageModel sourceB = new bUnwarpJImageModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(2, null), false, 1);
+			BSplineModel sourceB = new BSplineModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(2, null), false, 1);
 			sourceB.setPyramidDepth(0);
 			//sourceB.getThread().start();
 			sourceB.startPyramids();
@@ -470,8 +470,8 @@ public class bUnwarpJMiscTools
 
 		// Compute the deformation
 		// Set these coefficients to an interpolator
-		bUnwarpJImageModel swx_direct = new bUnwarpJImageModel(c_direct, cYdim, cXdim, 0);
-		bUnwarpJImageModel swy_direct = new bUnwarpJImageModel(c_direct, cYdim, cXdim, Nk);
+		BSplineModel swx_direct = new BSplineModel(c_direct, cYdim, cXdim, 0);
+		BSplineModel swy_direct = new BSplineModel(c_direct, cYdim, cXdim, Nk);
 
 		// Inverse coefficients.
 		double c_inverse[] = new double[twiceNk];
@@ -482,8 +482,8 @@ public class bUnwarpJMiscTools
 				c_inverse[n + Nk] = cy_inverse[i][j];
 			}
 
-		bUnwarpJImageModel swx_inverse = new bUnwarpJImageModel(c_inverse, cYdim, cXdim, 0);
-		bUnwarpJImageModel swy_inverse = new bUnwarpJImageModel(c_inverse, cYdim, cXdim, Nk);
+		BSplineModel swx_inverse = new BSplineModel(c_inverse, cYdim, cXdim, 0);
+		BSplineModel swy_inverse = new BSplineModel(c_inverse, cYdim, cXdim, Nk);
 
 		// Compute the direct transformation mapping
 		for (int v=0; v<targetCurrentHeight; v++)
@@ -601,8 +601,8 @@ public class bUnwarpJMiscTools
 
 		// Compute the deformation
 		// Set these coefficients to an interpolator
-		bUnwarpJImageModel swx = new bUnwarpJImageModel(c, cYdim, cXdim, 0);
-		bUnwarpJImageModel swy = new bUnwarpJImageModel(c, cYdim, cXdim, Nk);
+		BSplineModel swx = new BSplineModel(c, cYdim, cXdim, 0);
+		BSplineModel swy = new BSplineModel(c, cYdim, cXdim, Nk);
 
 
 		swx.precomputed_prepareForInterpolation(
@@ -745,13 +745,13 @@ public class bUnwarpJMiscTools
 		// Padding
 			
 //		float[] x_pad_array   
-//			= bUnwarpJMathTools.antiSymmetricPadding((float[]) x_samples.getPixels(), n_bsplines-2, 1);
+//			= MathTools.antiSymmetricPadding((float[]) x_samples.getPixels(), n_bsplines-2, 1);
 //		FloatProcessor x_padd_samp = new FloatProcessor(n_bsplines, n_bsplines, x_pad_array, fpX.getColorModel());
 //		
 //		(new ImagePlus("x_padd_samp" , x_padd_samp )).show();
 //		
 //		float[] y_pad_array 
-//			= bUnwarpJMathTools.antiSymmetricPadding((float[]) y_samples.getPixels(), n_bsplines-2, 1);
+//			= MathTools.antiSymmetricPadding((float[]) y_samples.getPixels(), n_bsplines-2, 1);
 //		FloatProcessor y_padd_samp = new FloatProcessor(n_bsplines, n_bsplines, y_pad_array, fpY.getColorModel());
 		
 		
@@ -765,10 +765,10 @@ public class bUnwarpJMiscTools
 //		
 //		FloatProcessor reduced_fpY = (FloatProcessor) fpY.resize(n_bsplines, n_bsplines);
 //			
-//		bUnwarpJImageModel xModel = new bUnwarpJImageModel(reduced_fpX, false, 1);
+//		BSplineModel xModel = new BSplineModel(reduced_fpX, false, 1);
 //		xModel.startPyramids();
 //		
-//		bUnwarpJImageModel yModel = new bUnwarpJImageModel(reduced_fpY, false, 1);
+//		BSplineModel yModel = new BSplineModel(reduced_fpY, false, 1);
 //		yModel.startPyramids();
 //		
 //		// Join threads
@@ -1109,8 +1109,8 @@ public class bUnwarpJMiscTools
 
 		// Compute the deformation
 		// Set these coefficients to an interpolator
-		bUnwarpJImageModel swx_direct = new bUnwarpJImageModel(c_direct, cYdim, cXdim, 0);
-		bUnwarpJImageModel swy_direct = new bUnwarpJImageModel(c_direct, cYdim, cXdim, Nk);
+		BSplineModel swx_direct = new BSplineModel(c_direct, cYdim, cXdim, 0);
+		BSplineModel swy_direct = new BSplineModel(c_direct, cYdim, cXdim, Nk);
 
 
 		swx_direct.precomputed_prepareForInterpolation(
@@ -2042,8 +2042,8 @@ public class bUnwarpJMiscTools
 
 		// Compute the deformation
 		// Set these coefficients to an interpolator
-		bUnwarpJImageModel swx1 = new bUnwarpJImageModel(c1, cYdim, cXdim, 0);
-		bUnwarpJImageModel swy1 = new bUnwarpJImageModel(c1, cYdim, cXdim, Nk);
+		BSplineModel swx1 = new BSplineModel(c1, cYdim, cXdim, 0);
+		BSplineModel swy1 = new BSplineModel(c1, cYdim, cXdim, Nk);
 
 		// Inverse coefficients.
 		double c2[] = new double[twiceNk];
@@ -2054,8 +2054,8 @@ public class bUnwarpJMiscTools
 				c2[n + Nk] = cy2[i][j];
 			}
 
-		bUnwarpJImageModel swx2 = new bUnwarpJImageModel(c2, cYdim, cXdim, 0);
-		bUnwarpJImageModel swy2 = new bUnwarpJImageModel(c2, cYdim, cXdim, Nk);
+		BSplineModel swx2 = new BSplineModel(c2, cYdim, cXdim, 0);
+		BSplineModel swy2 = new BSplineModel(c2, cYdim, cXdim, Nk);
 
 
 		swx1.precomputed_prepareForInterpolation(
@@ -2141,8 +2141,8 @@ public class bUnwarpJMiscTools
 				c2[n + Nk] = cy2[i][j];
 			}
 
-		bUnwarpJImageModel swx2 = new bUnwarpJImageModel(c2, cYdim, cXdim, 0);
-		bUnwarpJImageModel swy2 = new bUnwarpJImageModel(c2, cYdim, cXdim, Nk);
+		BSplineModel swx2 = new BSplineModel(c2, cYdim, cXdim, 0);
+		BSplineModel swy2 = new BSplineModel(c2, cYdim, cXdim, Nk);
 
 		swx2.precomputed_prepareForInterpolation(
 				targetCurrentHeight, targetCurrentWidth, intervals);
@@ -2260,8 +2260,8 @@ public class bUnwarpJMiscTools
 
 		// Compute the deformation
 		// Set these coefficients to an interpolator
-		bUnwarpJImageModel swx1 = new bUnwarpJImageModel(c1, cYdim, cXdim, 0);
-		bUnwarpJImageModel swy1 = new bUnwarpJImageModel(c1, cYdim, cXdim, Nk);
+		BSplineModel swx1 = new BSplineModel(c1, cYdim, cXdim, 0);
+		BSplineModel swy1 = new BSplineModel(c1, cYdim, cXdim, Nk);
 
 		// Inverse coefficients.
 		double c2[] = new double[twiceNk];
@@ -2272,8 +2272,8 @@ public class bUnwarpJMiscTools
 				c2[n + Nk] = cy2[i][j];
 			}
 
-		bUnwarpJImageModel swx2 = new bUnwarpJImageModel(c2, cYdim, cXdim, 0);
-		bUnwarpJImageModel swy2 = new bUnwarpJImageModel(c2, cYdim, cXdim, Nk);
+		BSplineModel swx2 = new BSplineModel(c2, cYdim, cXdim, 0);
+		BSplineModel swy2 = new BSplineModel(c2, cYdim, cXdim, Nk);
 
 
 		swx1.precomputed_prepareForInterpolation(
@@ -2318,7 +2318,7 @@ public class bUnwarpJMiscTools
 			}
 		}
 
-		bUnwarpJMiscTools.composeRawTransformations(targetCurrentWidth, targetCurrentHeight,
+		MiscTools.composeRawTransformations(targetCurrentWidth, targetCurrentHeight,
 				transformation_x_1, transformation_y_1, transformation_x_2, transformation_y_2,
 				outputTransformation_x, outputTransformation_y);
 	}
@@ -2691,7 +2691,7 @@ public class bUnwarpJMiscTools
 			double [][]cx,
 			double [][]cy)
 	{
-		bUnwarpJImageModel source = new bUnwarpJImageModel (sourceImp.getProcessor(), false, 1);
+		BSplineModel source = new BSplineModel (sourceImp.getProcessor(), false, 1);
 		
 		ImageProcessor result_imp = applyTransformationMT(sourceImp, targetImp, source, intervals, cx, cy);
 
@@ -2716,7 +2716,7 @@ public class bUnwarpJMiscTools
 	public static void applyTransformationToSourceMT(
 			ImagePlus sourceImp,
 			ImagePlus targetImp,
-			bUnwarpJImageModel source,
+			BSplineModel source,
 			int intervals,
 			double [][]cx,
 			double [][]cy)
@@ -2746,7 +2746,7 @@ public class bUnwarpJMiscTools
 	public static ImageProcessor applyTransformationMT(
 			ImagePlus sourceImp,
 			ImagePlus targetImp,
-			bUnwarpJImageModel source,
+			BSplineModel source,
 			int intervals,
 			double [][]cx,
 			double [][]cy)
@@ -2756,8 +2756,8 @@ public class bUnwarpJMiscTools
 
 		// Compute the deformation
 		// Set these coefficients to an interpolator
-		bUnwarpJImageModel swx = new bUnwarpJImageModel(cx);
-		bUnwarpJImageModel swy = new bUnwarpJImageModel(cy);
+		BSplineModel swx = new BSplineModel(cx);
+		BSplineModel swy = new BSplineModel(cy);
 
 
 		// Compute the warped image
@@ -2827,15 +2827,15 @@ public class bUnwarpJMiscTools
 		else /* COLOR IMAGES */
 		{        	
 			// red
-			bUnwarpJImageModel sourceR = new bUnwarpJImageModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(0, null), false, 1);
+			BSplineModel sourceR = new BSplineModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(0, null), false, 1);
 			sourceR.setPyramidDepth(0);
 			sourceR.startPyramids();
 			// green
-			bUnwarpJImageModel sourceG = new bUnwarpJImageModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(1, null), false, 1);
+			BSplineModel sourceG = new BSplineModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(1, null), false, 1);
 			sourceG.setPyramidDepth(0);
 			sourceG.startPyramids();
 			//blue
-			bUnwarpJImageModel sourceB = new bUnwarpJImageModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(2, null), false, 1);
+			BSplineModel sourceB = new BSplineModel( ((ColorProcessor) (sourceImp.getProcessor())).toFloat(2, null), false, 1);
 			sourceB.setPyramidDepth(0);
 			sourceB.startPyramids();
 
@@ -2935,11 +2935,11 @@ public class bUnwarpJMiscTools
 	private static class GrayscaleApplyTransformTile implements Runnable 
 	{
 		/** B-spline deformation in x */
-		final bUnwarpJImageModel swx;
+		final BSplineModel swx;
 		/** B-spline deformation in y */
-		final bUnwarpJImageModel swy;
+		final BSplineModel swy;
 		/** current source image */
-		final bUnwarpJImageModel source;
+		final BSplineModel source;
 		/** target current width */
 		final int targetCurrentWidth;
 		/** target current height */
@@ -2962,9 +2962,9 @@ public class bUnwarpJMiscTools
 		 * @param rect rectangle containing the area of the image to be transformed
 		 * @param fp resulting float processor (output)
 		 */
-		GrayscaleApplyTransformTile(bUnwarpJImageModel swx, 
-		 		  bUnwarpJImageModel swy, 
-		 		  bUnwarpJImageModel source,
+		GrayscaleApplyTransformTile(BSplineModel swx, 
+		 		  BSplineModel swy, 
+		 		  BSplineModel source,
 		 		  int targetCurrentWidth,
 		 		  int targetCurrentHeight,
 		 		  int intervals,
@@ -3040,15 +3040,15 @@ public class bUnwarpJMiscTools
 	private static class ColorApplyTransformTile implements Runnable 
 	{
 		/** B-spline deformation in x */
-		final bUnwarpJImageModel swx;
+		final BSplineModel swx;
 		/** B-spline deformation in y */
-		final bUnwarpJImageModel swy;	
+		final BSplineModel swy;	
 		/** red channel of the source image */
-		final bUnwarpJImageModel sourceR;
+		final BSplineModel sourceR;
 		/** green channel of the source image */
-		final bUnwarpJImageModel sourceG;
+		final BSplineModel sourceG;
 		/** blue channel of the source image */
-		final bUnwarpJImageModel sourceB;
+		final BSplineModel sourceB;
 		/** target current width */
 		final int targetCurrentWidth;
 		/** target current height */
@@ -3080,11 +3080,11 @@ public class bUnwarpJMiscTools
 		 * @param fpG green channel processor to be updated
 		 * @param fpB blue channel processor to be updated
 		 */
-		ColorApplyTransformTile(bUnwarpJImageModel swx, 
-		 		  bUnwarpJImageModel swy, 
-		 		  bUnwarpJImageModel sourceR,
-		 		  bUnwarpJImageModel sourceG,
-		 		  bUnwarpJImageModel sourceB,
+		ColorApplyTransformTile(BSplineModel swx, 
+		 		  BSplineModel swy, 
+		 		  BSplineModel sourceR,
+		 		  BSplineModel sourceG,
+		 		  BSplineModel sourceB,
 		 		  int targetCurrentWidth,
 		 		  int targetCurrentHeight,
 		 		  int intervals,

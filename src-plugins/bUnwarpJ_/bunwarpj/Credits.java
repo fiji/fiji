@@ -26,10 +26,10 @@ import ij.IJ;
 /**
  * Class to show the bUnwarpJ credits
  */
-public class bUnwarpJCredits implements ij.plugin.PlugIn
-{ /* begin class bUnwarpJCredits */
+public class Credits implements ij.plugin.PlugIn
+{ /* begin class Credits */
 
-	static public String version = "2.5 01-04-2009";
+	static public String version = "2.6 06-06-2009";
 
 	/*....................................................................
        Public methods
@@ -45,7 +45,7 @@ public class bUnwarpJCredits implements ij.plugin.PlugIn
 	{
 		String text = new String("");
 		text += "\n";
-		text += " bUnwarpJ " + bUnwarpJCredits.version + "\n";
+		text += " bUnwarpJ " + Credits.version + "\n";
 		text += " Consistent and elastic pairwise image registration (B-spline image and deformation representation).\n";
 		text += " \n";
 		text += " The work is based on the paper:\n";
@@ -61,4 +61,4 @@ public class bUnwarpJCredits implements ij.plugin.PlugIn
 	}
 
 
-} /* end class bUnwarpJCredits */
+} /* end class Credits */

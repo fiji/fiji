@@ -48,10 +48,11 @@ import java.util.Vector;
 
 import javax.swing.JOptionPane;
 /**
- * Class to create a dialog to deal with the files to keep the information of bUnwarpJ.
+ * Class to create the Input/Output dialog to deal with the files 
+ * to keep the information of bUnwarpJ.
  */
-public class bUnwarpJFile extends Dialog implements ActionListener
-{ /* begin class bUnwarpJFile */
+public class IODialog extends Dialog implements ActionListener
+{ /* begin class IODialog */
 
 	/*....................................................................
        Private variables
@@ -61,11 +62,11 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 	/** Pointer to the target image representation */
 	private ImagePlus targetImp;
 	/** Point handler for the source image */
-	private bUnwarpJPointHandler sourcePh;
+	private PointHandler sourcePh;
 	/** Point handler for the target image */
-	private bUnwarpJPointHandler targetPh;
+	private PointHandler targetPh;
 	/** Dialog for bUnwarpJ interface */
-	private bUnwarpJDialog       dialog;
+	private MainDialog       dialog;
 
 	/*....................................................................
        Public methods
@@ -73,7 +74,7 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 
 	/*------------------------------------------------------------------*/
 	/**
-	 * Create a new instance of bUnwarpJFile.
+	 * Create a new instance of IODialog.
 	 *
 	 * @param parentWindow pointer to the parent window
 	 * @param sourceImp pointer to the source image representation
@@ -82,14 +83,14 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 	 * @param targetPh point handler for the source image
 	 * @param dialog dialog for bUnwarpJ interface
 	 */
-	bUnwarpJFile (
+	public IODialog (
 			final Frame parentWindow,
 			final ImagePlus sourceImp,
 			final ImagePlus targetImp,
-			final bUnwarpJPointHandler sourcePh,
-			final bUnwarpJPointHandler targetPh,
-			final bUnwarpJDialog       dialog)
-			{
+			final PointHandler sourcePh,
+			final PointHandler targetPh,
+			final MainDialog       dialog)
+	{
 		super(parentWindow, "I/O Menu", true);
 		this.sourceImp = sourceImp;
 		this.targetImp = targetImp;
@@ -162,7 +163,7 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 		add(separation2);
 		add(cancelButton);
 		pack();
-			} /* end bUnwarpJFile */    
+	} /* end IODialog */    
 
 	/*------------------------------------------------------------------*/
 	/**
@@ -259,7 +260,7 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 
 		Stack <Point> sourceStack = new Stack <Point> ();
 		Stack <Point> targetStack = new Stack <Point> ();
-		bUnwarpJMiscTools.loadPoints(path+filename,sourceStack,targetStack);
+		MiscTools.loadPoints(path+filename,sourceStack,targetStack);
 
 		sourcePh.removePoints();
 		targetPh.removePoints();
@@ -288,12 +289,12 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 
 		String fn_tnf = path+filename;
 
-		int intervals = bUnwarpJMiscTools.numberOfIntervalsOfTransformation(fn_tnf);
+		int intervals = MiscTools.numberOfIntervalsOfTransformation(fn_tnf);
 
 		double [][]cx = new double[intervals+3][intervals+3];
 		double [][]cy = new double[intervals+3][intervals+3];
 
-		bUnwarpJMiscTools.loadTransformation(fn_tnf, cx, cy);
+		MiscTools.loadTransformation(fn_tnf, cx, cy);
 
 		// Apply transformation
 		dialog.applyTransformationToSource(intervals, cx, cy);
@@ -333,7 +334,7 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 			return;
 
 		double[][] affineMatrix = new double[2][3];
-		bUnwarpJMiscTools.loadAffineMatrix(path+filename, affineMatrix);
+		MiscTools.loadAffineMatrix(path+filename, affineMatrix);
 
 		this.dialog.setSourceAffineMatrix(affineMatrix);
 	}
@@ -357,7 +358,7 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 		double [][]transformation_x = new double[this.targetImp.getHeight()][this.targetImp.getWidth()];
 		double [][]transformation_y = new double[this.targetImp.getHeight()][this.targetImp.getWidth()];
 
-		bUnwarpJMiscTools.loadRawTransformation(fn_tnf, transformation_x, transformation_y);
+		MiscTools.loadRawTransformation(fn_tnf, transformation_x, transformation_y);
 
 		// Apply transformation
 		dialog.applyRawTransformationToSource(transformation_x, transformation_y);
@@ -381,12 +382,12 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 		}
 		String fn_tnf = path+filename;
 
-		int intervals=bUnwarpJMiscTools.numberOfIntervalsOfTransformation(fn_tnf);
+		int intervals=MiscTools.numberOfIntervalsOfTransformation(fn_tnf);
 
 		double [][]cx = new double[intervals+3][intervals+3];
 		double [][]cy = new double[intervals+3][intervals+3];
 
-		bUnwarpJMiscTools.loadTransformation(fn_tnf, cx, cy);
+		MiscTools.loadTransformation(fn_tnf, cx, cy);
 
 
 		// We ask the user for the image factor
@@ -410,7 +411,7 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 			return;
 
 		String sNewFileName = path_save + filename_save;
-		bUnwarpJMiscTools.saveElasticTransformation(intervals, cx, cy, sNewFileName);
+		MiscTools.saveElasticTransformation(intervals, cx, cy, sNewFileName);
 	}
 
 
@@ -429,12 +430,12 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 		}
 		String fn_tnf = path+filename;
 
-		int intervals=bUnwarpJMiscTools.numberOfIntervalsOfTransformation(fn_tnf);
+		int intervals=MiscTools.numberOfIntervalsOfTransformation(fn_tnf);
 
 		double [][]cx = new double[intervals+3][intervals+3];
 		double [][]cy = new double[intervals+3][intervals+3];
 
-		bUnwarpJMiscTools.loadTransformation(fn_tnf, cx, cy);
+		MiscTools.loadTransformation(fn_tnf, cx, cy);
 
 
 		// We ask the user for the raw deformation file.
@@ -450,9 +451,9 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 		double[][] transformation_x = new double[this.targetImp.getHeight()][this.targetImp.getWidth()];
 		double[][] transformation_y = new double[this.targetImp.getHeight()][this.targetImp.getWidth()];
 
-		bUnwarpJMiscTools.convertElasticTransformationToRaw(this.targetImp, intervals, cx, cy, transformation_x, transformation_y);
+		MiscTools.convertElasticTransformationToRaw(this.targetImp, intervals, cx, cy, transformation_x, transformation_y);
 
-		bUnwarpJMiscTools.saveRawTransformation(fn_tnf_raw, this.targetImp.getWidth(), this.targetImp.getHeight(), transformation_x, transformation_y);
+		MiscTools.saveRawTransformation(fn_tnf_raw, this.targetImp.getWidth(), this.targetImp.getHeight(), transformation_x, transformation_y);
 	}
 
 	/*------------------------------------------------------------------*/
@@ -473,7 +474,7 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 		double[][] transformation_x = new double[targetImp.getHeight()] [targetImp.getWidth()];
 		double[][] transformation_y = new double[targetImp.getHeight()] [targetImp.getWidth()];
 
-		bUnwarpJMiscTools.loadRawTransformation(fn_tnf, transformation_x, transformation_y);
+		MiscTools.loadRawTransformation(fn_tnf, transformation_x, transformation_y);
 
 		// We ask the user for the output elastic deformation file.
 		OpenDialog od_elastic = new OpenDialog("Saving in elastic - select elastic transformation file", "");
@@ -484,23 +485,23 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 
 		String fn_tnf_elastic = path_elastic + filename_elastic;
 
-		
+
 		// We ask the user for the number of intervals in the B-spline grid.
 		String sInput = JOptionPane.showInputDialog(null, "Number of intervals for B-spline grid?", "Save as B-spline coefficients", JOptionPane.QUESTION_MESSAGE);
 
 		// Read value.
 		int intervals = Integer.parseInt(sInput);
-						
+
 		// We calculate the B-spline transformation coefficients.
 		double [][]cx = new double[intervals+3][intervals+3];
 		double [][]cy = new double[intervals+3][intervals+3];
 
-		bUnwarpJMiscTools.convertRawTransformationToBSpline(this.targetImp, intervals, transformation_x, transformation_y, cx, cy);
+		MiscTools.convertRawTransformationToBSpline(this.targetImp, intervals, transformation_x, transformation_y, cx, cy);
 
-		bUnwarpJMiscTools.saveElasticTransformation(intervals, cx, cy, fn_tnf_elastic);
+		MiscTools.saveElasticTransformation(intervals, cx, cy, fn_tnf_elastic);
 	}	// end  method saveTransformationInElastic
 
-	
+
 	/*------------------------------------------------------------------*/
 	/**
 	 * Invert a raw transformation
@@ -519,7 +520,7 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 		double[][] transformation_x = new double[targetImp.getHeight()] [targetImp.getWidth()];
 		double[][] transformation_y = new double[targetImp.getHeight()] [targetImp.getWidth()];
 
-		bUnwarpJMiscTools.loadRawTransformation(fn_tnf, transformation_x, transformation_y);
+		MiscTools.loadRawTransformation(fn_tnf, transformation_x, transformation_y);
 
 		// We ask the user for the output raw deformation file.
 		OpenDialog od_inverse = new OpenDialog("Saving in raw - select raw transformation file", "");
@@ -532,17 +533,17 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 
 		double[][] inv_x = new double[targetImp.getHeight()] [targetImp.getWidth()];
 		double[][] inv_y = new double[targetImp.getHeight()] [targetImp.getWidth()];
-		
 
-		bUnwarpJMiscTools.invertRawTransformation(targetImp, transformation_x, transformation_y, inv_x, inv_y);
-		
-		bUnwarpJMiscTools.saveRawTransformation(fn_tnf_inverse, targetImp.getWidth(), 
-												targetImp.getHeight(), inv_x, inv_y);
 
-		
+		MiscTools.invertRawTransformation(targetImp, transformation_x, transformation_y, inv_x, inv_y);
+
+		MiscTools.saveRawTransformation(fn_tnf_inverse, targetImp.getWidth(), 
+				targetImp.getHeight(), inv_x, inv_y);
+
+
 	}	// end  method saveTransformationInElastic
-	
-	
+
+
 	/*------------------------------------------------------------------*/
 	/**
 	 * Compare two opposite transformations (direct and inverse)
@@ -559,12 +560,12 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 		}
 		String fn_tnf = path+filename;
 
-		int intervals=bUnwarpJMiscTools.numberOfIntervalsOfTransformation(fn_tnf);
+		int intervals=MiscTools.numberOfIntervalsOfTransformation(fn_tnf);
 
 		double [][]cx_direct = new double[intervals+3][intervals+3];
 		double [][]cy_direct = new double[intervals+3][intervals+3];
 
-		bUnwarpJMiscTools.loadTransformation(fn_tnf, cx_direct, cy_direct);
+		MiscTools.loadTransformation(fn_tnf, cx_direct, cy_direct);
 
 
 		// We ask the user for the inverse transformation file
@@ -576,18 +577,18 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 		}
 		fn_tnf = path+filename;
 
-		intervals = bUnwarpJMiscTools.numberOfIntervalsOfTransformation(fn_tnf);
+		intervals = MiscTools.numberOfIntervalsOfTransformation(fn_tnf);
 
 		double [][]cx_inverse = new double[intervals+3][intervals+3];
 		double [][]cy_inverse = new double[intervals+3][intervals+3];
 
-		bUnwarpJMiscTools.loadTransformation(fn_tnf, cx_inverse, cy_inverse);
+		MiscTools.loadTransformation(fn_tnf, cx_inverse, cy_inverse);
 
 
 		// Now we compare both transformations through the "warping index", which is
 		// a method equivalent to our consistency measure.
 
-		double warpingIndex = bUnwarpJMiscTools.warpingIndex(this.sourceImp, this.targetImp, intervals, cx_direct, cy_direct, cx_inverse, cy_inverse);
+		double warpingIndex = MiscTools.warpingIndex(this.sourceImp, this.targetImp, intervals, cx_direct, cy_direct, cx_inverse, cy_inverse);
 
 		if(warpingIndex != -1)
 			IJ.write(" Warping index = " + warpingIndex);
@@ -613,12 +614,12 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 		}
 		String fn_tnf = path+filename;
 
-		int intervals=bUnwarpJMiscTools.numberOfIntervalsOfTransformation(fn_tnf);
+		int intervals=MiscTools.numberOfIntervalsOfTransformation(fn_tnf);
 
 		double [][]cx1 = new double[intervals+3][intervals+3];
 		double [][]cy1 = new double[intervals+3][intervals+3];
 
-		bUnwarpJMiscTools.loadTransformation(fn_tnf, cx1, cy1);
+		MiscTools.loadTransformation(fn_tnf, cx1, cy1);
 
 
 		// We ask the user for the second transformation file
@@ -630,18 +631,18 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 		}
 		fn_tnf = path+filename;
 
-		intervals = bUnwarpJMiscTools.numberOfIntervalsOfTransformation(fn_tnf);
+		intervals = MiscTools.numberOfIntervalsOfTransformation(fn_tnf);
 
 		double [][]cx2 = new double[intervals+3][intervals+3];
 		double [][]cy2 = new double[intervals+3][intervals+3];
 
-		bUnwarpJMiscTools.loadTransformation(fn_tnf, cx2, cy2);
+		MiscTools.loadTransformation(fn_tnf, cx2, cy2);
 
 		double [][] outputTransformation_x = new double[this.targetImp.getHeight()][this.targetImp.getWidth()];
 		double [][] outputTransformation_y = new double[this.targetImp.getHeight()][this.targetImp.getWidth()];
 
 		// Now we compose them and get as result a raw transformation mapping.
-		bUnwarpJMiscTools.composeElasticTransformations(this.targetImp, intervals,
+		MiscTools.composeElasticTransformations(this.targetImp, intervals,
 				cx1, cy1, cx2, cy2, outputTransformation_x, outputTransformation_y);
 
 		// We ask the user for the raw deformation file where we will save the mapping table.
@@ -653,7 +654,7 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 		}
 		String fn_tnf_raw = path + filename;
 
-		bUnwarpJMiscTools.saveRawTransformation(fn_tnf_raw, this.targetImp.getWidth(),
+		MiscTools.saveRawTransformation(fn_tnf_raw, this.targetImp.getWidth(),
 				this.targetImp.getHeight(), outputTransformation_x, outputTransformation_y);
 	}
 
@@ -678,7 +679,7 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 		double[][] transformation_x_1 = new double[targetImp.getHeight()][targetImp.getWidth()];
 		double[][] transformation_y_1 = new double[targetImp.getHeight()][targetImp.getWidth()];
 
-		bUnwarpJMiscTools.loadRawTransformation(fn_tnf, transformation_x_1, transformation_y_1);
+		MiscTools.loadRawTransformation(fn_tnf, transformation_x_1, transformation_y_1);
 
 
 		// We ask the user for the second transformation file
@@ -691,18 +692,18 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 		}
 		fn_tnf = path+filename;
 
-		int intervals = bUnwarpJMiscTools.numberOfIntervalsOfTransformation(fn_tnf);
+		int intervals = MiscTools.numberOfIntervalsOfTransformation(fn_tnf);
 
 		double [][]cx2 = new double[intervals+3][intervals+3];
 		double [][]cy2 = new double[intervals+3][intervals+3];
 
-		bUnwarpJMiscTools.loadTransformation(fn_tnf, cx2, cy2);
+		MiscTools.loadTransformation(fn_tnf, cx2, cy2);
 
 		double [][] outputTransformation_x = new double[this.targetImp.getHeight()][this.targetImp.getWidth()];
 		double [][] outputTransformation_y = new double[this.targetImp.getHeight()][this.targetImp.getWidth()];
 
 		// Now we compose them and get as result a raw transformation mapping.
-		bUnwarpJMiscTools.composeRawElasticTransformations(this.targetImp, intervals,
+		MiscTools.composeRawElasticTransformations(this.targetImp, intervals,
 				transformation_x_1, transformation_y_1, cx2, cy2, outputTransformation_x, outputTransformation_y);
 
 		// We ask the user for the raw deformation file where we will save the mapping table.
@@ -715,7 +716,7 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 		}
 		String fn_tnf_raw = path + filename;
 
-		bUnwarpJMiscTools.saveRawTransformation(fn_tnf_raw, this.targetImp.getWidth(),
+		MiscTools.saveRawTransformation(fn_tnf_raw, this.targetImp.getWidth(),
 				this.targetImp.getHeight(), outputTransformation_x, outputTransformation_y);
 	}
 
@@ -739,7 +740,7 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 		// We load the transformation raw file.
 		double[][] transformation_x_1 = new double[this.targetImp.getHeight()][this.targetImp.getWidth()];
 		double[][] transformation_y_1 = new double[this.targetImp.getHeight()][this.targetImp.getWidth()];
-		bUnwarpJMiscTools.loadRawTransformation(fn_tnf_raw, transformation_x_1, transformation_y_1);
+		MiscTools.loadRawTransformation(fn_tnf_raw, transformation_x_1, transformation_y_1);
 
 		// We ask the user for the second raw deformation file.
 		od = new OpenDialog("Composing - Load Second Raw Transformation", "");
@@ -754,13 +755,13 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 		// We load the transformation raw file.
 		double[][] transformation_x_2 = new double[this.targetImp.getHeight()][this.targetImp.getWidth()];
 		double[][] transformation_y_2 = new double[this.targetImp.getHeight()][this.targetImp.getWidth()];
-		bUnwarpJMiscTools.loadRawTransformation(fn_tnf_raw_2, transformation_x_2, transformation_y_2);
+		MiscTools.loadRawTransformation(fn_tnf_raw_2, transformation_x_2, transformation_y_2);
 
 		double [][] outputTransformation_x = new double[this.targetImp.getHeight()][this.targetImp.getWidth()];
 		double [][] outputTransformation_y = new double[this.targetImp.getHeight()][this.targetImp.getWidth()];
 
 		// Now we compose them and get as result a raw transformation mapping.
-		bUnwarpJMiscTools.composeRawTransformations(this.targetImp.getWidth(), this.targetImp.getHeight(),
+		MiscTools.composeRawTransformations(this.targetImp.getWidth(), this.targetImp.getHeight(),
 				transformation_x_1, transformation_y_1, transformation_x_2, transformation_y_2,
 				outputTransformation_x, outputTransformation_y);
 
@@ -773,7 +774,7 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 		}
 		String fn_tnf_raw_out = path + filename;
 
-		bUnwarpJMiscTools.saveRawTransformation(fn_tnf_raw_out, this.targetImp.getWidth(),
+		MiscTools.saveRawTransformation(fn_tnf_raw_out, this.targetImp.getWidth(),
 				this.targetImp.getHeight(), outputTransformation_x, outputTransformation_y);
 	}
 
@@ -794,12 +795,12 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 		}
 		String fn_tnf = path+filename;
 
-		int intervals = bUnwarpJMiscTools.numberOfIntervalsOfTransformation(fn_tnf);
+		int intervals = MiscTools.numberOfIntervalsOfTransformation(fn_tnf);
 
 		double [][]cx_direct = new double[intervals+3][intervals+3];
 		double [][]cy_direct = new double[intervals+3][intervals+3];
 
-		bUnwarpJMiscTools.loadTransformation(fn_tnf, cx_direct, cy_direct);
+		MiscTools.loadTransformation(fn_tnf, cx_direct, cy_direct);
 
 
 		// We ask the user for the raw deformation file.
@@ -815,10 +816,10 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 		// We load the transformation raw file.
 		double[][] transformation_x = new double[this.targetImp.getHeight()][this.targetImp.getWidth()];
 		double[][] transformation_y = new double[this.targetImp.getHeight()][this.targetImp.getWidth()];
-		bUnwarpJMiscTools.loadRawTransformation(fn_tnf_raw, transformation_x,
+		MiscTools.loadRawTransformation(fn_tnf_raw, transformation_x,
 				transformation_y);
 
-		double warpingIndex = bUnwarpJMiscTools.rawWarpingIndex(this.sourceImp,
+		double warpingIndex = MiscTools.rawWarpingIndex(this.sourceImp,
 				this.targetImp, intervals, cx_direct, cy_direct, transformation_x, transformation_y);
 
 		if(warpingIndex != -1)
@@ -847,7 +848,7 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 		// We load the transformation raw file.
 		double[][] transformation_x_1 = new double[this.targetImp.getHeight()][this.targetImp.getWidth()];
 		double[][] transformation_y_1 = new double[this.targetImp.getHeight()][this.targetImp.getWidth()];
-		bUnwarpJMiscTools.loadRawTransformation(fn_tnf_raw, transformation_x_1, transformation_y_1);
+		MiscTools.loadRawTransformation(fn_tnf_raw, transformation_x_1, transformation_y_1);
 
 		// We ask the user for the second raw deformation file.
 		od = new OpenDialog("Comparing - Load Second Raw Transformation", "");
@@ -862,9 +863,9 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 		// We load the transformation raw file.
 		double[][] transformation_x_2 = new double[this.targetImp.getHeight()][this.targetImp.getWidth()];
 		double[][] transformation_y_2 = new double[this.targetImp.getHeight()][this.targetImp.getWidth()];
-		bUnwarpJMiscTools.loadRawTransformation(fn_tnf_raw_2, transformation_x_2, transformation_y_2);
+		MiscTools.loadRawTransformation(fn_tnf_raw_2, transformation_x_2, transformation_y_2);
 
-		double warpingIndex = bUnwarpJMiscTools.rawWarpingIndex(this.sourceImp,
+		double warpingIndex = MiscTools.rawWarpingIndex(this.sourceImp,
 				this.targetImp, transformation_x_1, transformation_y_1, transformation_x_2, transformation_y_2);
 
 		if(warpingIndex != -1)
@@ -970,7 +971,7 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 		double imageSimilarity = 0;
 		int n = 0;
 
-		bUnwarpJMask targetMsk = this.dialog.getTargetMask();
+		Mask targetMsk = this.dialog.getTargetMask();
 
 		for (int v=0; v < this.targetImp.getHeight(); v++)
 		{
@@ -996,8 +997,8 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 			IJ.log(" Image similarity = " + (imageSimilarity / n) + ", n = " + n);
 		else
 			IJ.log(" Error: not a single pixel was evaluated ");
-		
-				
+
+
 	}
 
 	/*------------------------------------------------------------------*/
@@ -1104,5 +1105,5 @@ public class bUnwarpJFile extends Dialog implements ActionListener
 		}
 	} /* end showPoints */
 
-} /* end class bUnwarpJFile */
+} /* end class IODialog */
 

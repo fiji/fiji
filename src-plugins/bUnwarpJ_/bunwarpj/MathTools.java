@@ -24,12 +24,12 @@ import ij.IJ;
  */
 
 /*====================================================================
-|   bUnwarpJMathTools
+|   MathTools
 \===================================================================*/
 /**
  * This class has the math methods to deal with b-splines.
  */
-public class bUnwarpJMathTools
+public class MathTools
 {
     /** float epsilon */
     private static final double FLT_EPSILON = (double)Float.intBitsToFloat((int)0x33FFFFFF);
@@ -817,4 +817,4 @@ public class bUnwarpJMathTools
     
     
     
-} /* End bUnwarpJMathTools */
+} /* End MathTools */

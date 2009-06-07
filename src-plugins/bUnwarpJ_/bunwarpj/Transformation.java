@@ -22,7 +22,7 @@ package bunwarpj;
  */
 
 /*====================================================================
-|   bUnwarpJTransformation
+|   Transformation
 \===================================================================*/
 import ij.IJ;
 import ij.ImagePlus;
@@ -42,8 +42,8 @@ import java.util.Vector;
 /**
  * Class to perform the transformation for bUnwarpJ.
  */
-public class bUnwarpJTransformation
-{ /* begin class bUnwarpJTransformation */
+public class Transformation
+{ /* begin class Transformation */
 
 	/*....................................................................
        Private variables
@@ -64,7 +64,7 @@ public class bUnwarpJTransformation
 	/** reference to the second output image */
 	private ImagePlus           output_ip_2;
 	/** pointer to the dialog of the bUnwarpJ interface */
-	private bUnwarpJDialog       dialog;
+	private MainDialog       dialog;
 
 	// Images
 	/** pointer to the source image representation */
@@ -72,9 +72,9 @@ public class bUnwarpJTransformation
 	/** pointer to the target image representation */
 	private ImagePlus           targetImp;
 	/** pointer to the source image model */
-	private bUnwarpJImageModel   source;
+	private BSplineModel   source;
 	/** pointer to the target image model */
-	private bUnwarpJImageModel   target;
+	private BSplineModel   target;
 
 	// Original image processors
 	/** initial source image processor */
@@ -84,15 +84,15 @@ public class bUnwarpJTransformation
 
 	// Landmarks
 	/** pointer to the source point handler */
-	private bUnwarpJPointHandler sourcePh;
+	private PointHandler sourcePh;
 	/** pointer to the target point handler */
-	private bUnwarpJPointHandler targetPh;
+	private PointHandler targetPh;
 
 	// Masks for the images
 	/** pointer to the source mask */
-	private bUnwarpJMask sourceMsk;
+	private Mask sourceMsk;
 	/** pointer to the target mask */
-	private bUnwarpJMask targetMsk;
+	private Mask targetMsk;
 
 	// Initial Affine Matrices
 	/** initial affine matrix for the source image */
@@ -211,13 +211,13 @@ public class bUnwarpJTransformation
 	private double  [][]cyTargetToSource = null;
 
 	/** image model to interpolate the cxSourceToTarget coefficients */
-	private bUnwarpJImageModel swxSourceToTarget = null;
+	private BSplineModel swxSourceToTarget = null;
 	/** image model to interpolate the cySourceToTarget coefficients */
-	private bUnwarpJImageModel swySourceToTarget = null;
+	private BSplineModel swySourceToTarget = null;
 	/** image model to interpolate the cxTargetToSource coefficients */
-	private bUnwarpJImageModel swxTargetToSource = null;
+	private BSplineModel swxTargetToSource = null;
 	/** image model to interpolate the cyTargetToSource coefficients */
-	private bUnwarpJImageModel swyTargetToSource = null;
+	private BSplineModel swyTargetToSource = null;
 
 	// Regularization temporary variables
 	/** regularization P11 (source to target) matrix */
@@ -240,7 +240,7 @@ public class bUnwarpJTransformation
 
 	/*------------------------------------------------------------------*/
 	/**
-	 * Create an instance of bUnwarpJTransformation.
+	 * Create an instance of Transformation.
 	 *
 	 * @param sourceImp image representation for the source
 	 * @param targetImp image representation for the target
@@ -272,15 +272,15 @@ public class bUnwarpJTransformation
 	 * @param output_ip_2 pointer to the second output image
 	 * @param dialog pointer to the dialog of the bUnwarpJ interface
 	 */
-	public bUnwarpJTransformation (
+	public Transformation (
 			final ImagePlus sourceImp,
 			final ImagePlus targetImp,
-			final bUnwarpJImageModel source,
-			final bUnwarpJImageModel target,
-			final bUnwarpJPointHandler sourcePh,
-			final bUnwarpJPointHandler targetPh,
-			final bUnwarpJMask sourceMsk,
-			final bUnwarpJMask targetMsk,
+			final BSplineModel source,
+			final BSplineModel target,
+			final PointHandler sourcePh,
+			final PointHandler targetPh,
+			final Mask sourceMsk,
+			final Mask targetMsk,
 			final double[][] sourceAffineMatrix,
 			final double[][] targetAffineMatrix,
 			final int min_scale_deformation,
@@ -301,7 +301,7 @@ public class bUnwarpJTransformation
 			final String fn_tnf_2,
 			final ImagePlus output_ip_1,
 			final ImagePlus output_ip_2,
-			final bUnwarpJDialog dialog)
+			final MainDialog dialog)
 	{
 		this.sourceImp	      = sourceImp;
 		this.targetImp	      = targetImp;
@@ -340,12 +340,12 @@ public class bUnwarpJTransformation
 		this.sourceHeight          = source.getHeight();
 		this.targetWidth           = target.getWidth();
 		this.targetHeight          = target.getHeight();
-	} /* end bUnwarpJTransformation */
+	} /* end Transformation */
 
 	
 	/*------------------------------------------------------------------*/
 	/**
-	 * Create an instance of bUnwarpJTransformation.
+	 * Create an instance of Transformation.
 	 *
 	 * @param sourceImp image representation for the source
 	 * @param targetImp image representation for the target
@@ -377,15 +377,15 @@ public class bUnwarpJTransformation
 	 * @param output_ip_2 pointer to the second output image
 	 * @param dialog pointer to the dialog of the bUnwarpJ interface
 	 */
-	public bUnwarpJTransformation (
+	public Transformation (
 			final ImagePlus                    sourceImp,
 			final ImagePlus                    targetImp,
-			final bUnwarpJImageModel source,
-			final bUnwarpJImageModel target,
-			final bUnwarpJPointHandler sourcePh,
-			final bUnwarpJPointHandler targetPh,
-			final bUnwarpJMask sourceMsk,
-			final bUnwarpJMask targetMsk,
+			final BSplineModel source,
+			final BSplineModel target,
+			final PointHandler sourcePh,
+			final PointHandler targetPh,
+			final Mask sourceMsk,
+			final Mask targetMsk,
 			final double[][] sourceAffineMatrix,
 			final double[][] targetAffineMatrix,
 			final int min_scale_deformation,
@@ -406,7 +406,7 @@ public class bUnwarpJTransformation
 			final String fn_tnf_2,
 			final ImagePlus output_ip_1,
 			final ImagePlus output_ip_2,
-			final bUnwarpJDialog dialog,
+			final MainDialog dialog,
 			final ImageProcessor originalSourceIP,
 			final ImageProcessor originalTargetIP)
 	{
@@ -447,7 +447,7 @@ public class bUnwarpJTransformation
 		this.sourceHeight          = source.getHeight();
 		this.targetWidth           = target.getWidth();
 		this.targetHeight          = target.getHeight();
-	} /* end bUnwarpJTransformation */
+	} /* end Transformation */
 	
 	/*------------------------------------------------------------------*/
 	/**
@@ -1106,9 +1106,9 @@ public class bUnwarpJTransformation
 		double   []grad         = new double   [M];
 
 		// Variables to allow registering in both directions.
-		bUnwarpJImageModel auxTarget = target;
-		bUnwarpJImageModel swx = swxTargetToSource;
-		bUnwarpJImageModel swy = swyTargetToSource;
+		BSplineModel auxTarget = target;
+		BSplineModel swx = swxTargetToSource;
+		BSplineModel swy = swyTargetToSource;
 		double [][]cx = cxTargetToSource;
 		double [][]cy = cyTargetToSource;
 
@@ -1130,8 +1130,8 @@ public class bUnwarpJTransformation
 
 		if (swx==null)
 		{
-			swx = new bUnwarpJImageModel(cx);
-			swy = new bUnwarpJImageModel(cy);
+			swx = new BSplineModel(cx);
+			swy = new BSplineModel(cy);
 			swx.precomputed_prepareForInterpolation(
 					auxTarget.getCurrentHeight(), auxTarget.getCurrentWidth(), intervals);
 			swy.precomputed_prepareForInterpolation(
@@ -1255,9 +1255,9 @@ public class bUnwarpJTransformation
 	public void transform(double u, double v, double []xyF, boolean bIsReverse)
 	{
 		// Variables to allow registering in both directions.
-		bUnwarpJImageModel auxTarget = target;
-		bUnwarpJImageModel swx = swxTargetToSource;
-		bUnwarpJImageModel swy = swyTargetToSource;
+		BSplineModel auxTarget = target;
+		BSplineModel swx = swxTargetToSource;
+		BSplineModel swy = swyTargetToSource;
 
 		if(bIsReverse)
 		{
@@ -1297,7 +1297,7 @@ public class bUnwarpJTransformation
 	{
 
 		// Auxiliary variables to calculate inverse transformation
-		bUnwarpJPointHandler auxTargetPh = this.targetPh;
+		PointHandler auxTargetPh = this.targetPh;
 		double auxFactorWidth = this.targetFactorWidth;
 		double auxFactorHeight = this.targetFactorHeight;
 
@@ -1485,13 +1485,13 @@ public class bUnwarpJTransformation
 		double fact_n1=1; for (int k=2; k<=n1; k++) fact_n1*=k;
 		double sign=1;
 		for (int k=0; k<=n1+1; k++, sign*=-1)
-			c1[k]=sign*bUnwarpJMathTools.nchoosek(n1+1,k)/fact_n1;
+			c1[k]=sign*MathTools.nchoosek(n1+1,k)/fact_n1;
 
 		double []c2=new double [n2+2];
 		double fact_n2=1; for (int k=2; k<=n2; k++) fact_n2*=k;
 		sign=1;
 		for (int k=0; k<=n2+1; k++, sign*=-1)
-			c2[k]=sign*bUnwarpJMathTools.nchoosek(n2+1,k)/fact_n2;
+			c2[k]=sign*MathTools.nchoosek(n2+1,k)/fact_n2;
 
 		// Compute the integral
 		double n1_2=(double)((n1+1))/2.0;
@@ -1549,7 +1549,7 @@ public class bUnwarpJTransformation
 		double Ix0p=0;
 		for (int k=0; k<=q2; k++) 
 		{
-			double aux=bUnwarpJMathTools.nchoosek(q2,k)/(q1+k+1)*
+			double aux=MathTools.nchoosek(q2,k)/(q1+k+1)*
 			Math.pow(-s2p,q2-k);
 			IxFp+=Math.pow(xFp,q1+k+1)*aux;
 			Ix0p+=Math.pow(x0p,q1+k+1)*aux;
@@ -1700,12 +1700,12 @@ public class bUnwarpJTransformation
 		final double[] W = new double[3];
 
 		// Auxiliary variables to calculate inverse transformation
-		bUnwarpJPointHandler auxSourcePh = sourcePh;
-		bUnwarpJPointHandler auxTargetPh = targetPh;
-		bUnwarpJMask auxSourceMsk = sourceMsk;
-		bUnwarpJMask auxTargetMsk = targetMsk;
-		bUnwarpJImageModel auxSource = source;
-		bUnwarpJImageModel auxTarget = target;
+		PointHandler auxSourcePh = sourcePh;
+		PointHandler auxTargetPh = targetPh;
+		Mask auxSourceMsk = sourceMsk;
+		Mask auxTargetMsk = targetMsk;
+		BSplineModel auxSource = source;
+		BSplineModel auxTarget = target;
 		double auxFactorWidth = this.targetFactorWidth;
 		double auxFactorHeight = this.targetFactorHeight;
 
@@ -1820,7 +1820,7 @@ public class bUnwarpJTransformation
 			D[2][1] += sy;
 			D[2][2] += 1.0F;
 		}
-		bUnwarpJMathTools.singularValueDecomposition(H, W, V);
+		MathTools.singularValueDecomposition(H, W, V);
 		if ((Math.abs(W[0]) < FLT_EPSILON) || (Math.abs(W[1]) < FLT_EPSILON)
 				|| (Math.abs(W[2]) < FLT_EPSILON)) {
 			return(computeRotationMatrix(bIsReverse));
@@ -1879,8 +1879,8 @@ public class bUnwarpJTransformation
 		// Auxiliary variables to allow registering in both directions
 		double auxFactorWidth = target.getFactorWidth();
 		double auxFactorHeight = target.getFactorHeight();
-		bUnwarpJPointHandler auxSourcePh = this.sourcePh;
-		bUnwarpJPointHandler auxTargetPh = this.targetPh;
+		PointHandler auxSourcePh = this.sourcePh;
+		PointHandler auxTargetPh = this.targetPh;
 		if(bIsReverse)
 		{
 			auxFactorWidth = source.getFactorWidth();
@@ -1938,7 +1938,7 @@ public class bUnwarpJTransformation
 			boolean bIsReverse)
 	{
 
-		bUnwarpJPointHandler auxTargetPh = (bIsReverse) ? this.sourcePh : this.targetPh;
+		PointHandler auxTargetPh = (bIsReverse) ? this.sourcePh : this.targetPh;
 
 		int K=0;
 		if (auxTargetPh!=null) K = auxTargetPh.getPoints().size();
@@ -1952,7 +1952,7 @@ public class bUnwarpJTransformation
 			// "Invert" the matrix B
 			int Nunk=(intervals+3)*(intervals+3);
 			double [][] iB=new double[Nunk][K];
-			underconstrained=bUnwarpJMathTools.invertMatrixSVD(K,Nunk,B,iB);
+			underconstrained=MathTools.invertMatrixSVD(K,Nunk,B,iB);
 
 			// Now multiply iB times dx and dy respectively
 			int ij=0;
@@ -1993,7 +1993,7 @@ public class bUnwarpJTransformation
 		double P12[][] = this.P12_TargetToSource;
 		double P22[][] = this.P22_TargetToSource;
 
-		bUnwarpJPointHandler auxTargetPh = this.targetPh;
+		PointHandler auxTargetPh = this.targetPh;
 		if(bIsReverse)
 		{
 			auxTargetPh = this.sourcePh;
@@ -2077,7 +2077,7 @@ public class bUnwarpJTransformation
 			// Now solve the system
 			// Invert the matrix A
 			double [][] iA=new double[2*M2][2*M2];
-			underconstrained=bUnwarpJMathTools.invertMatrixSVD(2*M2,2*M2,A,iA);
+			underconstrained=MathTools.invertMatrixSVD(2*M2,2*M2,A,iA);
 
 			// Now multiply iB times b and distribute in cx and cy
 			int ij=0;
@@ -2114,8 +2114,8 @@ public class bUnwarpJTransformation
 		// Auxiliary variables for registering in both directions.
 		double auxFactorWidth = target.getFactorWidth();
 		double auxFactorHeight = target.getFactorHeight();
-		bUnwarpJPointHandler auxSourcePh = this.sourcePh;
-		bUnwarpJPointHandler auxTargetPh = this.targetPh;
+		PointHandler auxSourcePh = this.sourcePh;
+		PointHandler auxTargetPh = this.targetPh;
 
 		if(bIsReverse)
 		{
@@ -2177,8 +2177,8 @@ public class bUnwarpJTransformation
 
 /*
 		// Set these coefficients to an interpolator
-		bUnwarpJImageModel swx = new bUnwarpJImageModel(cx);
-		bUnwarpJImageModel swy = new bUnwarpJImageModel(cy);
+		BSplineModel swx = new BSplineModel(cx);
+		BSplineModel swy = new BSplineModel(cy);
 
 		
 		// Compute the transformation mapping
@@ -2249,7 +2249,7 @@ public class bUnwarpJTransformation
 		public void run() 
 		{
 			// Set these coefficients to an interpolator
-			bUnwarpJImageModel sw = new bUnwarpJImageModel(c);
+			BSplineModel sw = new BSplineModel(c);
 			
 			// Compute the transformation mapping
 			for (int v=0; v<auxTargetCurrentHeight; v++) 
@@ -2282,8 +2282,8 @@ public class bUnwarpJTransformation
 
 		double auxFactorWidth = this.targetFactorWidth;
 		double auxFactorHeight = this.targetFactorHeight;
-		bUnwarpJPointHandler auxSourcePh = this.sourcePh;
-		bUnwarpJPointHandler auxTargetPh = this.targetPh;
+		PointHandler auxSourcePh = this.sourcePh;
+		PointHandler auxTargetPh = this.targetPh;
 		if(bIsReverse)
 		{
 			auxFactorWidth = this.sourceFactorWidth;
@@ -2383,7 +2383,7 @@ public class bUnwarpJTransformation
 		// COSS: Watch out that this H is the transpose of the one
 		// defined in the text. That is why X=V*U^t is the inverse
 		// of the rotation matrix.
-		bUnwarpJMathTools.singularValueDecomposition(H, W, V);
+		MathTools.singularValueDecomposition(H, W, V);
 		if (((H[0][0] * H[1][1] - H[0][1] * H[1][0])
 				* (V[0][0] * V[1][1] - V[0][1] * V[1][0])) < 0.0F) {
 			if (W[0] < W[1]) {
@@ -2437,8 +2437,8 @@ public class bUnwarpJTransformation
 
 		double auxFactorWidth = target.getFactorWidth();
 		double auxFactorHeight = target.getFactorHeight();
-		bUnwarpJPointHandler auxSourcePh = this.sourcePh;
-		bUnwarpJPointHandler auxTargetPh = this.targetPh;
+		PointHandler auxSourcePh = this.sourcePh;
+		PointHandler auxTargetPh = this.targetPh;
 		int auxTargetCurrentWidth = this.targetCurrentWidth;
 		int auxTargetCurrentHeight = this.targetCurrentHeight;
 
@@ -2453,8 +2453,8 @@ public class bUnwarpJTransformation
 		}
 
 		// Set these coefficients to an interpolator
-		bUnwarpJImageModel swx = new bUnwarpJImageModel(cx);
-		bUnwarpJImageModel swy = new bUnwarpJImageModel(cy);
+		BSplineModel swx = new BSplineModel(cx);
+		BSplineModel swy = new BSplineModel(cy);
 
 		// Get the list of landmarks
 		Vector <Point> sourceVector=null;
@@ -2545,8 +2545,8 @@ public class bUnwarpJTransformation
 				break;
 			}
 		}
-		bUnwarpJProgressBar.resetProgressBar();
-		bUnwarpJProgressBar.addWorkload(workload);
+		ProgressBar.resetProgressBar();
+		ProgressBar.addWorkload(workload);
 	}
 
 	/*--------------------------------------------------------------------------*/
@@ -2559,6 +2559,7 @@ public class bUnwarpJTransformation
 	 * @param grad Output: Gradient of the function
 	 * 
 	 * @return geometric error between the source-target and target-source deformations.
+	 * @deprecated
 	 */
 
 	private double evaluateConsistency(
@@ -2577,11 +2578,11 @@ public class bUnwarpJTransformation
 
 		// Compute the deformation
 		// Set these coefficients to an interpolator
-		bUnwarpJImageModel swx_direct = this.swxTargetToSource; 
-		bUnwarpJImageModel swy_direct = this.swyTargetToSource;  
+		BSplineModel swx_direct = this.swxTargetToSource; 
+		BSplineModel swy_direct = this.swyTargetToSource;  
 
-		bUnwarpJImageModel swx_inverse = this.swxSourceToTarget; 
-		bUnwarpJImageModel swy_inverse = this.swySourceToTarget; 
+		BSplineModel swx_inverse = this.swxSourceToTarget; 
+		BSplineModel swy_inverse = this.swySourceToTarget; 
 
 		// *********** Compute the geometric error and gradient (DIRECT) ***********       
 		double f_direct = 0;
@@ -2820,11 +2821,11 @@ public class bUnwarpJTransformation
 
 		// Compute the deformation
 		// Set these coefficients to an interpolator
-		bUnwarpJImageModel swx_direct = this.swxTargetToSource; 
-		bUnwarpJImageModel swy_direct = this.swyTargetToSource;  
+		BSplineModel swx_direct = this.swxTargetToSource; 
+		BSplineModel swy_direct = this.swyTargetToSource;  
 
-		bUnwarpJImageModel swx_inverse = this.swxSourceToTarget; 
-		bUnwarpJImageModel swy_inverse = this.swySourceToTarget; 
+		BSplineModel swx_inverse = this.swxSourceToTarget; 
+		BSplineModel swy_inverse = this.swySourceToTarget; 
 
 
 		// Set the transformation coefficients to the interpolator
@@ -3124,6 +3125,8 @@ public class bUnwarpJTransformation
 	 * @param show_error Input: if true, an image is shown with the error
 	 * @param bIsReverse Input: flag to determine the transformation direction (target-source=FALSE or source-target=TRUE)
 	 * @return images similarity value
+	 * 
+	 * @deprecated
 	 */
 	private double evaluateSimilarity(
 			final double []c,
@@ -3136,17 +3139,17 @@ public class bUnwarpJTransformation
 	{
 
 		// Auxiliary variables for changing from source to target and inversely
-		bUnwarpJImageModel auxTarget = target;
-		bUnwarpJImageModel auxSource = source;
+		BSplineModel auxTarget = target;
+		BSplineModel auxSource = source;
 
-		bUnwarpJMask auxTargetMsk = targetMsk;
-		bUnwarpJMask auxSourceMsk = sourceMsk;
+		Mask auxTargetMsk = targetMsk;
+		Mask auxSourceMsk = sourceMsk;
 
-		bUnwarpJPointHandler auxTargetPh = targetPh;
-		bUnwarpJPointHandler auxSourcePh = sourcePh;
+		PointHandler auxTargetPh = targetPh;
+		PointHandler auxSourcePh = sourcePh;
 
-		bUnwarpJImageModel swx = swxTargetToSource;
-		bUnwarpJImageModel swy = swyTargetToSource;
+		BSplineModel swx = swxTargetToSource;
+		BSplineModel swy = swyTargetToSource;
 
 		double auxFactorWidth = this.target.getFactorWidth();
 		double auxFactorHeight = this.target.getFactorHeight();
@@ -3453,11 +3456,11 @@ public class bUnwarpJTransformation
 
 		if (show_error)
 		{
-			bUnwarpJMiscTools.showImage("Error",error_image);
-			bUnwarpJMiscTools.showImage("Divergence Error",div_error_image);
-			bUnwarpJMiscTools.showImage("Curl Error",curl_error_image);
-			bUnwarpJMiscTools.showImage("Laplacian Error",laplacian_error_image);
-			bUnwarpJMiscTools.showImage("Jacobian Error",jacobian_error_image);
+			MiscTools.showImage("Error",error_image);
+			MiscTools.showImage("Divergence Error",div_error_image);
+			MiscTools.showImage("Curl Error",curl_error_image);
+			MiscTools.showImage("Laplacian Error",laplacian_error_image);
+			MiscTools.showImage("Jacobian Error",jacobian_error_image);
 		}
 
 		if (showMarquardtOptim)
@@ -3521,20 +3524,20 @@ public class bUnwarpJTransformation
 	{
 
 		// Auxiliary variables for changing from source to target and inversely
-		bUnwarpJImageModel auxTarget = target;
-		bUnwarpJImageModel auxSource = source;
+		BSplineModel auxTarget = target;
+		BSplineModel auxSource = source;
 
-		bUnwarpJMask auxTargetMsk = targetMsk;
-		bUnwarpJMask auxSourceMsk = sourceMsk;
+		Mask auxTargetMsk = targetMsk;
+		Mask auxSourceMsk = sourceMsk;
 
-		bUnwarpJPointHandler auxTargetPh = targetPh;
-		bUnwarpJPointHandler auxSourcePh = sourcePh;
+		PointHandler auxTargetPh = targetPh;
+		PointHandler auxSourcePh = sourcePh;
 
-		bUnwarpJImageModel swx = swxTargetToSource;
-		bUnwarpJImageModel swy = swyTargetToSource;
+		BSplineModel swx = swxTargetToSource;
+		BSplineModel swy = swyTargetToSource;
 		
-		bUnwarpJImageModel swx_inverse = swxSourceToTarget;
-		bUnwarpJImageModel swy_inverse = swySourceToTarget;
+		BSplineModel swx_inverse = swxSourceToTarget;
+		BSplineModel swy_inverse = swySourceToTarget;
 
 		double auxFactorWidth = this.target.getFactorWidth();
 		double auxFactorHeight = this.target.getFactorHeight();
@@ -3933,11 +3936,11 @@ public class bUnwarpJTransformation
 
 		if (show_error)
 		{
-			bUnwarpJMiscTools.showImage("Error",error_image);
-			bUnwarpJMiscTools.showImage("Divergence Error",div_error_image);
-			bUnwarpJMiscTools.showImage("Curl Error",curl_error_image);
-			bUnwarpJMiscTools.showImage("Laplacian Error",laplacian_error_image);
-			bUnwarpJMiscTools.showImage("Jacobian Error",jacobian_error_image);
+			MiscTools.showImage("Error",error_image);
+			MiscTools.showImage("Divergence Error",div_error_image);
+			MiscTools.showImage("Curl Error",curl_error_image);
+			MiscTools.showImage("Laplacian Error",laplacian_error_image);
+			MiscTools.showImage("Jacobian Error",jacobian_error_image);
 		}
 
 		if (showMarquardtOptim)
@@ -4070,7 +4073,7 @@ public class bUnwarpJTransformation
 
 		// Solve he equation system
 		/* SVD u=u*w*v^t */
-		update=bUnwarpJMathTools.linearLeastSquares(u,g);
+		update=MathTools.linearLeastSquares(u,g);
 
 		/* x = x - update */
 		kr=0;
@@ -4139,8 +4142,8 @@ public class bUnwarpJTransformation
 		lambda = FIRSTLAMBDA, max_normx, distx, aux, gmax;
 		double     fac, fae, dgdx, dxHdx, sumdiffg, sumdiffx;
 
-		bUnwarpJCumulativeQueue lastBest=
-			new bUnwarpJCumulativeQueue(CUMULATIVE_SIZE);
+		CumulativeQueue lastBest=
+			new CumulativeQueue(CUMULATIVE_SIZE);
 
 		for (i=0; i<M; i++) optimize[i] = true;
 
@@ -4156,15 +4159,15 @@ public class bUnwarpJTransformation
 			}
 
 		/* Prepare the precomputed weights for interpolation */
-		this.swxTargetToSource = new bUnwarpJImageModel(x, intervals+3, intervals+3, 0);
-		this.swyTargetToSource = new bUnwarpJImageModel(x, intervals+3, intervals+3, halfM);
+		this.swxTargetToSource = new BSplineModel(x, intervals+3, intervals+3, 0);
+		this.swyTargetToSource = new BSplineModel(x, intervals+3, intervals+3, halfM);
 		this.swxTargetToSource.precomputed_prepareForInterpolation(
 				target.getCurrentHeight(), target.getCurrentWidth(), intervals);
 		this.swyTargetToSource.precomputed_prepareForInterpolation(
 				target.getCurrentHeight(), target.getCurrentWidth(), intervals);
 
-		this.swxSourceToTarget = new bUnwarpJImageModel(x, intervals+3, intervals+3, quarterM);
-		this.swySourceToTarget = new bUnwarpJImageModel(x, intervals+3, intervals+3, threeQuarterM);
+		this.swxSourceToTarget = new BSplineModel(x, intervals+3, intervals+3, quarterM);
+		this.swySourceToTarget = new BSplineModel(x, intervals+3, intervals+3, threeQuarterM);
 		this.swxSourceToTarget.precomputed_prepareForInterpolation(
 				source.getCurrentHeight(), source.getCurrentWidth(), intervals);
 		this.swySourceToTarget.precomputed_prepareForInterpolation(
@@ -4194,7 +4197,7 @@ public class bUnwarpJTransformation
 		// Maximum iteration number
 		int maxiter = MAXITER_OPTIMCOEFF * (source.getCurrentDepth() + 1);
 
-		bUnwarpJProgressBar.stepProgressBar();
+		ProgressBar.stepProgressBar();
 
 		int last_successful_iter=0;
 
@@ -4231,7 +4234,7 @@ public class bUnwarpJTransformation
 			iter++;
 			if (showMarquardtOptim) 
 				IJ.write("f("+iter+")="+f+" lambda="+lambda);
-			bUnwarpJProgressBar.stepProgressBar();
+			ProgressBar.stepProgressBar();
 
 			/* Update lambda -------------------------------------------------- */
 			if (rescuedf > f)
@@ -4364,7 +4367,7 @@ public class bUnwarpJTransformation
 				cySourceToTarget[i][j] = x[threeQuarterM+p];
 			}
 
-		bUnwarpJProgressBar.skipProgressBar(maxiter-iter);
+		ProgressBar.skipProgressBar(maxiter-iter);
 		return f;
 	}
 
@@ -4422,8 +4425,8 @@ public class bUnwarpJTransformation
 		lambda = FIRSTLAMBDA, max_normx, distx, aux, gmax;
 		double     fac, fae, dgdx, dxHdx, sumdiffg, sumdiffx;
 
-		bUnwarpJCumulativeQueue lastBest=
-			new bUnwarpJCumulativeQueue(CUMULATIVE_SIZE);
+		CumulativeQueue lastBest=
+			new CumulativeQueue(CUMULATIVE_SIZE);
 
 		for (i=0; i<M; i++) 
 			optimize[i] = true;
@@ -4437,8 +4440,8 @@ public class bUnwarpJTransformation
 			}
 
 		/* Prepare the precomputed weights for interpolation */
-		this.swxTargetToSource = new bUnwarpJImageModel(x, intervals+3, intervals+3, 0);
-		this.swyTargetToSource = new bUnwarpJImageModel(x, intervals+3, intervals+3, halfM);
+		this.swxTargetToSource = new BSplineModel(x, intervals+3, intervals+3, 0);
+		this.swyTargetToSource = new BSplineModel(x, intervals+3, intervals+3, halfM);
 		this.swxTargetToSource.precomputed_prepareForInterpolation(
 				target.getCurrentHeight(), target.getCurrentWidth(), intervals);
 		this.swyTargetToSource.precomputed_prepareForInterpolation(
@@ -4468,7 +4471,7 @@ public class bUnwarpJTransformation
 		// Maximum iteration number
 		int maxiter = MAXITER_OPTIMCOEFF * (source.getCurrentDepth() + 1);
 
-		bUnwarpJProgressBar.stepProgressBar();
+		ProgressBar.stepProgressBar();
 
 		int last_successful_iter = 0;
 
@@ -4507,7 +4510,7 @@ public class bUnwarpJTransformation
 			iter++;
 			if (showMarquardtOptim) 
 				IJ.write("f("+iter+")="+f+" lambda="+lambda);
-			bUnwarpJProgressBar.stepProgressBar();
+			ProgressBar.stepProgressBar();
 
 			/* Update lambda -------------------------------------------------- */
 			if (rescuedf > f)
@@ -4633,7 +4636,7 @@ public class bUnwarpJTransformation
 				cyTargetToSource[i][j] = x[halfM+p];
 			}
 
-		bUnwarpJProgressBar.skipProgressBar(maxiter-iter);
+		ProgressBar.skipProgressBar(maxiter-iter);
 		return f;
 	}
 	
@@ -4785,7 +4788,7 @@ public class bUnwarpJTransformation
 		// Save the file
 		if(this.dialog != null && this.dialog.isMacroCall())
 			filename += ".txt";
-		bUnwarpJMiscTools.saveElasticTransformation(intervals, cx, cy, filename);
+		MiscTools.saveElasticTransformation(intervals, cx, cy, filename);
 	}
 
 	/*------------------------------------------------------------------*/
@@ -4840,7 +4843,7 @@ public class bUnwarpJTransformation
 				if (uh<auxTargetCurrentWidth) {
 					final double xh = transformation_x[v][uh];
 					final double yh = transformation_y[v][uh];
-					bUnwarpJMiscTools.drawLine(
+					MiscTools.drawLine(
 							transformedImage,
 							(int)Math.round(x) ,(int)Math.round(y),
 							(int)Math.round(xh),(int)Math.round(yh),0);
@@ -4851,7 +4854,7 @@ public class bUnwarpJTransformation
 				if (vv<auxTargetCurrentHeight) {
 					final double xv = transformation_x[vv][u];
 					final double yv = transformation_y[vv][u];
-					bUnwarpJMiscTools.drawLine(
+					MiscTools.drawLine(
 							transformedImage,
 							(int)Math.round(x) ,(int)Math.round(y),
 							(int)Math.round(xv),(int)Math.round(yv),0);
@@ -4889,8 +4892,8 @@ public class bUnwarpJTransformation
 			boolean bIsReverse)
 	{
 		// Auxiliar variables for changing from source to target and inversely
-		bUnwarpJMask auxTargetMsk = this.targetMsk;
-		bUnwarpJMask auxSourceMsk = this.sourceMsk;
+		Mask auxTargetMsk = this.targetMsk;
+		Mask auxSourceMsk = this.sourceMsk;
 		int auxTargetCurrentHeight = this.targetCurrentHeight;
 		int auxTargetCurrentWidth = this.targetCurrentWidth;       
 
@@ -4929,7 +4932,7 @@ public class bUnwarpJTransformation
 					final double x = transformation_x[v][u];
 					final double y = transformation_y[v][u];
 					if (auxSourceMsk.getValue(x,y))
-						bUnwarpJMiscTools.drawArrow(
+						MiscTools.drawArrow(
 								transformedImage,
 								u,v,(int)Math.round(x),(int)Math.round(y),0,2);
 				}
@@ -5035,10 +5038,10 @@ public class bUnwarpJTransformation
 			final double [][]cy,
 			boolean bIsReverse)
 	{
-		bUnwarpJImageModel auxTarget = target;
-		bUnwarpJImageModel auxSource = source;
-		bUnwarpJMask auxTargetMsk = targetMsk;
-		bUnwarpJMask auxSourceMsk = sourceMsk;
+		BSplineModel auxTarget = target;
+		BSplineModel auxSource = source;
+		Mask auxTargetMsk = targetMsk;
+		Mask auxSourceMsk = sourceMsk;
 		int auxTargetWidth = this.targetWidth;
 		int auxTargetHeight = this.targetHeight;		
 		ImageProcessor originalIP = this.originalSourceIP;
@@ -5060,8 +5063,8 @@ public class bUnwarpJTransformation
 		final String s = bIsReverse ? new String("Target") : new String("Source");
 		
 		// Create transformation B-spline models
-		bUnwarpJImageModel swx = new bUnwarpJImageModel(cx);
-		bUnwarpJImageModel swy = new bUnwarpJImageModel(cy);
+		BSplineModel swx = new BSplineModel(cx);
+		BSplineModel swy = new BSplineModel(cy);
 
 		// We compute the deformation (transformation_x and transformation_y) in the fly
 
@@ -5083,7 +5086,7 @@ public class bUnwarpJTransformation
 			
 			
 			int nThreads = nproc; /*(nproc > 1) ? (nproc / 2) : 1;
-			if (this.accurate_mode == bUnwarpJDialog.MONO_MODE)
+			if (this.accurate_mode == MainDialog.MONO_MODE)
 				nThreads *= 2;*/
 			
 						
@@ -5147,15 +5150,15 @@ public class bUnwarpJTransformation
 
 			
 			// red
-			bUnwarpJImageModel sourceR = new bUnwarpJImageModel( ((ColorProcessor) originalIP).toFloat(0, null), false, 1);
+			BSplineModel sourceR = new BSplineModel( ((ColorProcessor) originalIP).toFloat(0, null), false, 1);
 			sourceR.setPyramidDepth(0);
 			sourceR.startPyramids();
 			// green
-			bUnwarpJImageModel sourceG = new bUnwarpJImageModel( ((ColorProcessor) originalIP).toFloat(1, null), false, 1);
+			BSplineModel sourceG = new BSplineModel( ((ColorProcessor) originalIP).toFloat(1, null), false, 1);
 			sourceG.setPyramidDepth(0);
 			sourceG.startPyramids();
 			//blue
-			bUnwarpJImageModel sourceB = new bUnwarpJImageModel( ((ColorProcessor) originalIP).toFloat(2, null), false, 1);
+			BSplineModel sourceB = new BSplineModel( ((ColorProcessor) originalIP).toFloat(2, null), false, 1);
 			sourceB.setPyramidDepth(0);
 			sourceB.startPyramids();
 
@@ -5185,7 +5188,7 @@ public class bUnwarpJTransformation
 			
 			
 			int nThreads = nproc; /*(nproc > 1) ? (nproc / 2) : 1;
-			if (this.accurate_mode == bUnwarpJDialog.MONO_MODE)
+			if (this.accurate_mode == MainDialog.MONO_MODE)
 				nThreads *= 2;*/
 			
 						
@@ -5283,13 +5286,13 @@ public class bUnwarpJTransformation
 	 */	
 	private class GrayscaleResultTileMaker implements Runnable 
 	{
-		final bUnwarpJImageModel swx;
-		final bUnwarpJImageModel swy;		
-		final bUnwarpJImageModel auxSource;
+		final BSplineModel swx;
+		final BSplineModel swy;		
+		final BSplineModel auxSource;
 		final int auxTargetCurrentWidth;
 		final int auxTargetCurrentHeight;
-		final bUnwarpJMask auxTargetMsk;
-		final bUnwarpJMask auxSourceMsk;
+		final Mask auxTargetMsk;
+		final Mask auxSourceMsk;
 		final Rectangle rect;
 		final private FloatProcessor fp;
 		final private FloatProcessor fp_mask;
@@ -5309,13 +5312,13 @@ public class bUnwarpJTransformation
 		 * @param fp image processor to be updated
 		 * @param fp_mask mask processor to be updated
 		 */
-		GrayscaleResultTileMaker(bUnwarpJImageModel swx, 
-		 		  bUnwarpJImageModel swy, 
-		 		  bUnwarpJImageModel auxSource,
+		GrayscaleResultTileMaker(BSplineModel swx, 
+		 		  BSplineModel swy, 
+		 		  BSplineModel auxSource,
 		 		  int auxTargetCurrentWidth,
 		 		  int auxTargetCurrentHeight,
-		 		  bUnwarpJMask auxTargetMsk,
-		 		  bUnwarpJMask auxSourceMsk,
+		 		  Mask auxTargetMsk,
+		 		  Mask auxSourceMsk,
 				  Rectangle rect, 
 				  FloatProcessor fp,
 				  FloatProcessor fp_mask)
@@ -5399,15 +5402,15 @@ public class bUnwarpJTransformation
 	 */	
 	private class ColorResultTileMaker implements Runnable 
 	{
-		final bUnwarpJImageModel swx;
-		final bUnwarpJImageModel swy;		
-		final bUnwarpJImageModel sourceR;
-		final bUnwarpJImageModel sourceG;
-		final bUnwarpJImageModel sourceB;
+		final BSplineModel swx;
+		final BSplineModel swy;		
+		final BSplineModel sourceR;
+		final BSplineModel sourceG;
+		final BSplineModel sourceB;
 		final int auxTargetCurrentWidth;
 		final int auxTargetCurrentHeight;
-		final bUnwarpJMask auxTargetMsk;
-		final bUnwarpJMask auxSourceMsk;
+		final Mask auxTargetMsk;
+		final Mask auxSourceMsk;
 		final Rectangle rect;
 		final private FloatProcessor fpR;
 		final private FloatProcessor fpG;
@@ -5433,15 +5436,15 @@ public class bUnwarpJTransformation
 		 * @param fpB blue channel processor to be updated
 		 * @param cp_mask mask color processor to be updated
 		 */
-		ColorResultTileMaker(bUnwarpJImageModel swx, 
-		 		  bUnwarpJImageModel swy, 
-		 		  bUnwarpJImageModel sourceR,
-		 		  bUnwarpJImageModel sourceG,
-		 		  bUnwarpJImageModel sourceB,
+		ColorResultTileMaker(BSplineModel swx, 
+		 		  BSplineModel swy, 
+		 		  BSplineModel sourceR,
+		 		  BSplineModel sourceG,
+		 		  BSplineModel sourceB,
 		 		  int auxTargetCurrentWidth,
 		 		  int auxTargetCurrentHeight,
-		 		  bUnwarpJMask auxTargetMsk,
-		 		  bUnwarpJMask auxSourceMsk,
+		 		  Mask auxTargetMsk,
+		 		  Mask auxSourceMsk,
 				  Rectangle rect, 
 				  FloatProcessor fpR,
 				  FloatProcessor fpG,
@@ -5569,10 +5572,10 @@ public class bUnwarpJTransformation
 	{
 		boolean show_deformation = false;
 
-		bUnwarpJImageModel auxTarget = target;
-		bUnwarpJImageModel auxSource = source;
-		bUnwarpJMask auxTargetMsk = targetMsk;
-		bUnwarpJMask auxSourceMsk = sourceMsk;
+		BSplineModel auxTarget = target;
+		BSplineModel auxSource = source;
+		Mask auxTargetMsk = targetMsk;
+		Mask auxSourceMsk = sourceMsk;
 		int auxTargetWidth = this.targetWidth;
 		int auxTargetHeight = this.targetHeight;
 		ImagePlus output_ip = this.output_ip_1;
@@ -5606,8 +5609,8 @@ public class bUnwarpJTransformation
 
 		if (show_deformation)
 		{
-			bUnwarpJMiscTools.showImage("Transf. X", transformation_x);
-			bUnwarpJMiscTools.showImage("Transf. Y", transformation_y);
+			MiscTools.showImage("Transf. X", transformation_x);
+			MiscTools.showImage("Transf. Y", transformation_y);
 		}
 
 		/* GRAY SCALE IMAGES */
@@ -5686,15 +5689,15 @@ public class bUnwarpJTransformation
 		{
 			// Compute the warped image
 			// red
-			bUnwarpJImageModel sourceR = new bUnwarpJImageModel( ((ColorProcessor) originalIP).toFloat(0, null), false, 1);
+			BSplineModel sourceR = new BSplineModel( ((ColorProcessor) originalIP).toFloat(0, null), false, 1);
 			sourceR.setPyramidDepth(0);
 			sourceR.startPyramids();
 			// green
-			bUnwarpJImageModel sourceG = new bUnwarpJImageModel( ((ColorProcessor) originalIP).toFloat(1, null), false, 1);
+			BSplineModel sourceG = new BSplineModel( ((ColorProcessor) originalIP).toFloat(1, null), false, 1);
 			sourceG.setPyramidDepth(0);
 			sourceG.startPyramids();
 			//blue
-			bUnwarpJImageModel sourceB = new bUnwarpJImageModel( ((ColorProcessor) originalIP).toFloat(2, null), false, 1);
+			BSplineModel sourceB = new BSplineModel( ((ColorProcessor) originalIP).toFloat(2, null), false, 1);
 			sourceB.setPyramidDepth(0);
 			sourceB.startPyramids();
 
@@ -5851,12 +5854,12 @@ public class bUnwarpJTransformation
 		int cXdim = cYdim;
 		int Nk = cYdim*cXdim;
 
-		bUnwarpJImageModel auxTarget = target;
-		bUnwarpJImageModel auxSource = source;
-		bUnwarpJMask auxTargetMsk = targetMsk;
-		bUnwarpJMask auxSourceMsk = sourceMsk;
-		bUnwarpJImageModel swx = swxTargetToSource;
-		bUnwarpJImageModel swy = swyTargetToSource;
+		BSplineModel auxTarget = target;
+		BSplineModel auxSource = source;
+		Mask auxTargetMsk = targetMsk;
+		Mask auxSourceMsk = sourceMsk;
+		BSplineModel swx = swxTargetToSource;
+		BSplineModel swy = swyTargetToSource;
 		int auxTargetWidth = this.targetWidth;
 		int auxTargetHeight = this.targetHeight;
 		int auxTargetCurrentWidth = this.targetCurrentWidth;
@@ -5911,7 +5914,7 @@ public class bUnwarpJTransformation
 		
 		
 		int nThreads = nproc; /*(nproc > 1) ? (nproc / 2) : 1;
-		if (this.accurate_mode == bUnwarpJDialog.MONO_MODE)
+		if (this.accurate_mode == MainDialog.MONO_MODE)
 			nThreads *= 2;*/
 		
 		Thread[] threads  = new Thread[nThreads];
@@ -6013,7 +6016,7 @@ public class bUnwarpJTransformation
 					double yh=swy.interpolateI();
 					double up_xh = xh / auxFactorWidth;
 					double up_yh = yh / auxFactorHeight;
-					bUnwarpJMiscTools.drawLine(
+					MiscTools.drawLine(
 							transformedImage,
 							(int)Math.round(up_x) ,(int)Math.round(up_y),
 							(int)Math.round(up_xh),(int)Math.round(up_yh),grid_colour);
@@ -6029,7 +6032,7 @@ public class bUnwarpJTransformation
 					swy.prepareForInterpolation(tu,tvv,ORIGINAL); double yv=swy.interpolateI();
 					double up_xv=xv / auxFactorWidth;
 					double up_yv=yv / auxFactorHeight;
-					bUnwarpJMiscTools.drawLine(
+					MiscTools.drawLine(
 							transformedImage,
 							(int)Math.round(up_x) , (int)Math.round(up_y),
 							(int)Math.round(up_xv), (int)Math.round(up_yv), grid_colour);
@@ -6056,12 +6059,12 @@ public class bUnwarpJTransformation
 	 */	
 	private class OutputTileMaker implements Runnable 
 	{
-		final bUnwarpJImageModel swx;
-		final bUnwarpJImageModel swy;		
-		final bUnwarpJImageModel auxSource;	
-		final bUnwarpJImageModel auxTarget;
-		final bUnwarpJMask auxTargetMsk;
-		final bUnwarpJMask auxSourceMsk;
+		final BSplineModel swx;
+		final BSplineModel swy;		
+		final BSplineModel auxSource;	
+		final BSplineModel auxTarget;
+		final Mask auxTargetMsk;
+		final Mask auxSourceMsk;
 		final double auxFactorWidth;
 		final double auxFactorHeight;
 		final int auxTargetCurrentHeight;
@@ -6086,12 +6089,12 @@ public class bUnwarpJTransformation
 		 * @param rect retangle with the coordinates of the output image to be updated
 		 * @param fp processor to be updated 
 		 */
-		OutputTileMaker(bUnwarpJImageModel swx, 
-		 		  bUnwarpJImageModel swy, 
-		 		  bUnwarpJImageModel auxSource,
-		 		  bUnwarpJImageModel auxTarget,		 		  
-		 		  bUnwarpJMask auxSourceMsk,
-		 		  bUnwarpJMask auxTargetMsk,
+		OutputTileMaker(BSplineModel swx, 
+		 		  BSplineModel swy, 
+		 		  BSplineModel auxSource,
+		 		  BSplineModel auxTarget,		 		  
+		 		  Mask auxSourceMsk,
+		 		  Mask auxTargetMsk,
 		 		  double auxFactorWidth,
 		 		  double auxFactorHeight,
 		 		  int auxTargetCurrentHeight,
@@ -6197,7 +6200,7 @@ public class bUnwarpJTransformation
 		final double[] b = new double[length];
 		final double interX = (double)xIntervals / (double)(auxTargetCurrentWidth - 1);
 		for (int j=j0; j<=jF; j++) {
-			b[j-j0] = bUnwarpJMathTools.Bspline03(x * interX - (double)j);
+			b[j-j0] = MathTools.Bspline03(x * interX - (double)j);
 		}
 		return(b);
 	} /* end xWeight */
@@ -6232,7 +6235,7 @@ public class bUnwarpJTransformation
 		final double[] b = new double[length];
 		final double interY = (double)yIntervals / (double)(auxTargetCurrentHeight - 1);
 		for (int i = i0; i<=iF; i++) {
-			b[i-i0] = bUnwarpJMathTools.Bspline03(y * interY - (double)i);
+			b[i-i0] = MathTools.Bspline03(y * interY - (double)i);
 		}
 		return(b);
 	} /* end yWeight */
@@ -6261,17 +6264,17 @@ public class bUnwarpJTransformation
 	{
 
 		// Auxiliary variables for changing from source to target and inversely
-		final bUnwarpJImageModel auxTarget = (!bIsReverse) ?  target : source;
-		final bUnwarpJImageModel auxSource = (!bIsReverse) ? source : target;
+		final BSplineModel auxTarget = (!bIsReverse) ?  target : source;
+		final BSplineModel auxSource = (!bIsReverse) ? source : target;
 
-		final bUnwarpJMask auxTargetMsk = (!bIsReverse) ? targetMsk : sourceMsk;
-		final bUnwarpJMask auxSourceMsk = (!bIsReverse) ? sourceMsk : targetMsk;
+		final Mask auxTargetMsk = (!bIsReverse) ? targetMsk : sourceMsk;
+		final Mask auxSourceMsk = (!bIsReverse) ? sourceMsk : targetMsk;
 
-		final bUnwarpJPointHandler auxTargetPh = (!bIsReverse) ? targetPh : sourcePh;
-		final bUnwarpJPointHandler auxSourcePh = (!bIsReverse) ? sourcePh : targetPh;
+		final PointHandler auxTargetPh = (!bIsReverse) ? targetPh : sourcePh;
+		final PointHandler auxSourcePh = (!bIsReverse) ? sourcePh : targetPh;
 
-		final bUnwarpJImageModel swx = (!bIsReverse) ? swxTargetToSource : swxSourceToTarget;
-		final bUnwarpJImageModel swy = (!bIsReverse) ? swyTargetToSource : swySourceToTarget;
+		final BSplineModel swx = (!bIsReverse) ? swxTargetToSource : swxSourceToTarget;
+		final BSplineModel swy = (!bIsReverse) ? swyTargetToSource : swySourceToTarget;
 
 		final double auxFactorWidth = (!bIsReverse) ? this.target.getFactorWidth() : this.sourceFactorWidth;
 		final double auxFactorHeight = (!bIsReverse) ? this.target.getFactorHeight() : this.sourceFactorHeight;
@@ -6522,17 +6525,17 @@ public class bUnwarpJTransformation
 	{
 		// Fields
 		/** current target image */
-		final bUnwarpJImageModel auxTarget;
+		final BSplineModel auxTarget;
 		/** current source image */
-		final bUnwarpJImageModel auxSource;
+		final BSplineModel auxSource;
 		/** target mask */
-		final bUnwarpJMask auxTargetMsk;
+		final Mask auxTargetMsk;
 		/** source mask */
-		final bUnwarpJMask auxSourceMsk;
+		final Mask auxSourceMsk;
 		/** B-spline deformation in x */
-		final bUnwarpJImageModel swx;
+		final BSplineModel swx;
 		/** B-spline deformation in y */
-		final bUnwarpJImageModel swy;
+		final BSplineModel swy;
 		/** factor width */
 		final double auxFactorWidth;
 		/** factor height */
@@ -6562,12 +6565,12 @@ public class bUnwarpJTransformation
 		 * @param result output results: image similarity value for the current rectangle and number of pixels that have been evaluated
 		 * @param rect rectangle containing the area of the image to be evaluated
 		 */
-		EvaluateSimilarityTile(bUnwarpJImageModel auxTarget,
-							   bUnwarpJImageModel auxSource,
-							   bUnwarpJMask auxTargetMsk,
-							   bUnwarpJMask auxSourceMsk,
-							   bUnwarpJImageModel swx,
-							   bUnwarpJImageModel swy,
+		EvaluateSimilarityTile(BSplineModel auxTarget,
+							   BSplineModel auxSource,
+							   Mask auxTargetMsk,
+							   Mask auxSourceMsk,
+							   BSplineModel swx,
+							   BSplineModel swy,
 							   double auxFactorWidth,
 							   double auxFactorHeight,
 							   int intervals,
@@ -6841,7 +6844,7 @@ public class bUnwarpJTransformation
 	{
 
 		/**transformation object, it contains all the registration information  */
-		final bUnwarpJTransformation transf;
+		final Transformation transf;
 		/** output direct gradient array */
 		final double[] grad_direct;
 		/** output inverse gradient array */
@@ -6863,7 +6866,7 @@ public class bUnwarpJTransformation
 		 * @param rect_target rectangle marking the target area to be evaluated
 		 * @param rect_source rectangle marking the source area to be evaluated
 		 */
-		EvaluateConsistencyTile(bUnwarpJTransformation transf,
+		EvaluateConsistencyTile(Transformation transf,
 								double[] grad_direct,
 								double[] grad_inverse,
 								double[] result,
@@ -6903,11 +6906,11 @@ public class bUnwarpJTransformation
 			
 			// Compute the deformation
 			// Set these coefficients to an interpolator
-			final bUnwarpJImageModel swx_direct = this.transf.swxTargetToSource; 
-			final bUnwarpJImageModel swy_direct = this.transf.swyTargetToSource;  
+			final BSplineModel swx_direct = this.transf.swxTargetToSource; 
+			final BSplineModel swy_direct = this.transf.swyTargetToSource;  
 
-			final bUnwarpJImageModel swx_inverse = this.transf.swxSourceToTarget; 
-			final bUnwarpJImageModel swy_inverse = this.transf.swySourceToTarget;
+			final BSplineModel swx_inverse = this.transf.swxSourceToTarget; 
+			final BSplineModel swy_inverse = this.transf.swySourceToTarget;
 
 			// *********** Compute the geometric error and gradient (DIRECT) ***********       
 			double f_direct = 0;
@@ -7100,4 +7103,4 @@ public class bUnwarpJTransformation
 	}
 
 	
-} /* end class bUnwarpJTransformation */
+} /* end class Transformation */

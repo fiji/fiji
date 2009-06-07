@@ -23,7 +23,7 @@ package bunwarpj;
  */
 
 /*====================================================================
-|   bUnwarpJDialog
+|   MainDialog
 \===================================================================*/
 
 /*------------------------------------------------------------------*/
@@ -56,8 +56,8 @@ import java.util.concurrent.Executors;
 /**
  * Class to create the dialog for bUnwarpJ.
  */
-public class bUnwarpJDialog extends GenericDialog
-{ /* begin class bUnwarpJDialog */
+public class MainDialog extends GenericDialog
+{ /* begin class MainDialog */
 
 	/*....................................................................
     	Public variables
@@ -95,15 +95,15 @@ public class bUnwarpJDialog extends GenericDialog
 
 	// Image models
 	/** Model for source image */
-	private bUnwarpJImageModel source;
+	private BSplineModel source;
 	/** Model for target image */
-	private bUnwarpJImageModel target;
+	private BSplineModel target;
 
 	// Image Masks
 	/** Mask for source image */
-	private bUnwarpJMask       sourceMsk;
+	private Mask       sourceMsk;
 	/** Mask for target image */
-	private bUnwarpJMask       targetMsk;
+	private Mask       targetMsk;
 
 	// Initial Affine Matrices
 	/** Initial affine matrix for the source image */
@@ -113,16 +113,16 @@ public class bUnwarpJDialog extends GenericDialog
 
 	// Point handlers for the landmarks
 	/** Point handlers for the landmarks in the source image */
-	private bUnwarpJPointHandler sourcePh;
+	private PointHandler sourcePh;
 	/** Point handlers for the landmarks in the target image */
-	private bUnwarpJPointHandler targetPh;
+	private PointHandler targetPh;
 
 
 	/** Boolean for clearing mask */
 	private boolean clearMask = false;
 	/** Toolbar handler */
-	private bUnwarpJPointToolbar tb
-	= new bUnwarpJPointToolbar(Toolbar.getInstance(),this);
+	private PointToolbar tb
+	= new PointToolbar(Toolbar.getInstance(),this);
 
 	// Final action
 	/** flag to see if the finalAction was launched */
@@ -140,7 +140,7 @@ public class bUnwarpJDialog extends GenericDialog
 	/** maximum scale deformation */
 	private int max_scale_deformation = 2;
 	/** mode ("Accurate" by default) */
-	private int mode = bUnwarpJDialog.ACCURATE_MODE;
+	private int mode = MainDialog.ACCURATE_MODE;
 	/** image subsampling factor at highest resolution level */
 	private int maxImageSubsamplingFactor = 0;
 
@@ -200,7 +200,7 @@ public class bUnwarpJDialog extends GenericDialog
 
 	/*------------------------------------------------------------------*/
 	/**
-	 * Create a new instance of bUnwarpJDialog.
+	 * Create a new instance of MainDialog.
 	 *
 	 * @param parentWindow pointer to the parent window
 	 * @param imageList list of images from ImageJ
@@ -217,7 +217,7 @@ public class bUnwarpJDialog extends GenericDialog
 	 * @param richOutput default verbose flag
 	 * @param saveTransformation default save transformations flag
 	 */
-	public bUnwarpJDialog (
+	public MainDialog (
 			final Frame parentWindow,
 			final ImagePlus[] imageList,
 			final int mode,
@@ -275,7 +275,7 @@ public class bUnwarpJDialog extends GenericDialog
 					public void adjustmentValueChanged(AdjustmentEvent adjustmentEvent) 
 					{										    	  					    	  	
 						// Update resampling factor
-						bUnwarpJDialog.this.maxImageSubsamplingFactor = Integer.parseInt(resamplingTextField.getText());						
+						MainDialog.this.maxImageSubsamplingFactor = Integer.parseInt(resamplingTextField.getText());						
 					}}
 		);
 		this.resamplingTextField = (TextField)(super.getNumericFields().lastElement()); 
@@ -299,7 +299,7 @@ public class bUnwarpJDialog extends GenericDialog
 		this.consistencyWeightTextField = (TextField) super.getNumericFields().lastElement();
 		
 		// If the mode is "mono" (=unidirectional), then disable consistency weight text field
-		if(this.mode == bUnwarpJDialog.MONO_MODE)
+		if(this.mode == MainDialog.MONO_MODE)
 		{
 			this.bIsReverse = false;
 			this.consistencyWeightTextField.setEnabled(false);
@@ -319,7 +319,7 @@ public class bUnwarpJDialog extends GenericDialog
 		loadPointRoiAsLandmarks();
 		setSecondaryPointHandlers();	
 
-	} /* end bUnwarpJDialog (constructor) */
+	} /* end MainDialog (constructor) */
 
 
 	/*------------------------------------------------------------------*/
@@ -348,7 +348,7 @@ public class bUnwarpJDialog extends GenericDialog
 	/**
 	 * Get source Mask.
 	 */
-	public bUnwarpJMask getSourceMask ()
+	public Mask getSourceMask ()
 	{
 		return this.sourceMsk;
 	} /* end getSourceMask */
@@ -357,7 +357,7 @@ public class bUnwarpJDialog extends GenericDialog
 	/**
 	 * Get target Mask.
 	 */
-	public bUnwarpJMask getTargetMask ()
+	public Mask getTargetMask ()
 	{
 		return this.targetMsk;
 	}   /* end getTargetMask */
@@ -485,7 +485,7 @@ public class bUnwarpJDialog extends GenericDialog
 			final int accurate_mode = originChoice.getSelectedIndex();
 			
 			// We enable or disable the consistency weight text field.
-			if(accurate_mode == bUnwarpJDialog.MONO_MODE)				
+			if(accurate_mode == MainDialog.MONO_MODE)				
 				this.consistencyWeightTextField.setEnabled(false);
 			else
 				this.consistencyWeightTextField.setEnabled(true);
@@ -548,7 +548,7 @@ public class bUnwarpJDialog extends GenericDialog
 			double [][]cy)
 	{
 		// Apply transformation
-		bUnwarpJMiscTools.applyTransformationToSourceMT(
+		MiscTools.applyTransformationToSourceMT(
 				this.sourceImp, this.targetImp, this.source, intervals, cx, cy);
 
 		// Restart the computation of the model
@@ -572,7 +572,7 @@ public class bUnwarpJDialog extends GenericDialog
 			double [][] transformation_y)
 	{						
 		// Apply transformation
-		bUnwarpJMiscTools.applyRawTransformationToSource(this.sourceImp, this.targetImp, this.source, transformation_x, transformation_y);
+		MiscTools.applyRawTransformationToSource(this.sourceImp, this.targetImp, this.source, transformation_x, transformation_y);
 
 		// Restart the computation of the model
 		cancelSource();
@@ -608,7 +608,7 @@ public class bUnwarpJDialog extends GenericDialog
 	 *
 	 * @param ph image point handler
 	 */
-	public void grayImage(final bUnwarpJPointHandler ph)
+	public void grayImage(final PointHandler ph)
 	{
 		if (ph==sourcePh)
 		{
@@ -617,7 +617,7 @@ public class bUnwarpJDialog extends GenericDialog
 			final int Ydim = this.source.getHeight();
 						
 			double []source_data = new double[Xdim * Ydim];
-			bUnwarpJMiscTools.extractImage(this.sourceImp.getProcessor(), source_data);
+			MiscTools.extractImage(this.sourceImp.getProcessor(), source_data);
 			
 			final FloatProcessor fp = new FloatProcessor(Xdim,Ydim);
 			float[] fp_array = (float[]) fp.getPixels();
@@ -649,7 +649,7 @@ public class bUnwarpJDialog extends GenericDialog
 			final int Ydim = this.target.getHeight();						
 			
 			double [] source_data = new double[Xdim * Ydim];
-			bUnwarpJMiscTools.extractImage(this.targetImp.getProcessor(), source_data);
+			MiscTools.extractImage(this.targetImp.getProcessor(), source_data);
 			
 			final FloatProcessor fp = new FloatProcessor(Xdim,Ydim);
 			float[] fp_array = (float[]) fp.getPixels();
@@ -735,7 +735,7 @@ public class bUnwarpJDialog extends GenericDialog
 		cancelTarget();
 		tb.restorePreviousToolbar();
 		Toolbar.getInstance().repaint();
-		bUnwarpJProgressBar.resetProgressBar();
+		ProgressBar.resetProgressBar();
 		Runtime.getRuntime().gc();
 	} /* end restoreAll */
 
@@ -770,7 +770,7 @@ public class bUnwarpJDialog extends GenericDialog
 	 *
 	 * @param pa point action pointer
 	 */
-	public void ungrayImage(final bUnwarpJPointAction pa)
+	public void ungrayImage(final PointAction pa)
 	{
 		if (pa == sourcePh.getPointAction()) 
 		{
@@ -912,7 +912,7 @@ public class bUnwarpJDialog extends GenericDialog
 			this.originalSourceIP = this.sourceImp.getProcessor();
 
 		// Create image model to perform registration
-		source = new bUnwarpJImageModel(sourceImp.getProcessor(), bIsReverse, 
+		source = new BSplineModel(sourceImp.getProcessor(), bIsReverse, 
 				(int) Math.pow(2, this.maxImageSubsamplingFactor));
 
 		this.computeImagePyramidDepth();
@@ -925,14 +925,14 @@ public class bUnwarpJDialog extends GenericDialog
 		if (sourceImp.getStackSize() == 1) 
 		{
 			// Create an empty mask
-			sourceMsk = new bUnwarpJMask(sourceImp.getProcessor(),false);
+			sourceMsk = new Mask(sourceImp.getProcessor(),false);
 		} 
 		else 
 		{
 			// Take the mask from the second slice			
-			sourceMsk = new bUnwarpJMask(sourceImp.getStack().getProcessor(2), true);
+			sourceMsk = new Mask(sourceImp.getStack().getProcessor(2), true);
 		}
-		sourcePh  = new bUnwarpJPointHandler(sourceImp, tb, sourceMsk, this);
+		sourcePh  = new PointHandler(sourceImp, tb, sourceMsk, this);
 				
 		tb.setSource(sourceImp, sourcePh);
 	} /* end createSourceImage */
@@ -967,7 +967,7 @@ public class bUnwarpJDialog extends GenericDialog
 
 
 		target    =
-			new bUnwarpJImageModel(targetImp.getProcessor(), true, 
+			new BSplineModel(targetImp.getProcessor(), true, 
 					(int) Math.pow(2, this.maxImageSubsamplingFactor));
 		
 		this.computeImagePyramidDepth();
@@ -979,14 +979,14 @@ public class bUnwarpJDialog extends GenericDialog
 		if (targetImp.getStackSize()==1) 
 		{
 			// Create an empty mask
-			targetMsk = new bUnwarpJMask(targetImp.getProcessor(), false);
+			targetMsk = new Mask(targetImp.getProcessor(), false);
 		} 
 		else 
 		{
 			// Take the mask from the second slice
-			targetMsk = new bUnwarpJMask(targetImp.getStack().getProcessor(2), true);
+			targetMsk = new Mask(targetImp.getStack().getProcessor(2), true);
 		}
-		targetPh  = new bUnwarpJPointHandler(targetImp, tb, targetMsk, this);
+		targetPh  = new PointHandler(targetImp, tb, targetMsk, this);
 		tb.setTarget(targetImp, targetPh);
 	} /* end createTargetImage */
 
@@ -1067,12 +1067,12 @@ public class bUnwarpJDialog extends GenericDialog
 		this.originalTargetIP = swapIP;
 
 		// Swap Mask
-		final bUnwarpJMask swapMsk = this.sourceMsk;
+		final Mask swapMsk = this.sourceMsk;
 		this.sourceMsk = this.targetMsk;
 		this.targetMsk = swapMsk;
 
 		// Swap Point Handlers
-		final bUnwarpJPointHandler swapPh = this.sourcePh;
+		final PointHandler swapPh = this.sourcePh;
 		this.sourcePh = this.targetPh;
 		this.targetPh = swapPh;
 		setSecondaryPointHandlers();
@@ -1111,12 +1111,12 @@ public class bUnwarpJDialog extends GenericDialog
 		tb.setTarget(this.targetImp, this.targetPh);
 
 		// Restart the computation with each image
-		this.source = new bUnwarpJImageModel(this.sourceImp.getProcessor(), bIsReverse, 
+		this.source = new BSplineModel(this.sourceImp.getProcessor(), bIsReverse, 
 				(int) Math.pow(2,this.maxImageSubsamplingFactor));
 		this.source.setPyramidDepth(imagePyramidDepth + min_scale_image);
 		//this.source.getThread().start();
 
-		this.target = new bUnwarpJImageModel(this.targetImp.getProcessor(), true, 
+		this.target = new BSplineModel(this.targetImp.getProcessor(), true, 
 				(int) Math.pow(2,this.maxImageSubsamplingFactor));
 		this.target.setPyramidDepth(imagePyramidDepth + min_scale_image);
 		//this.target.getThread().start();
@@ -1151,13 +1151,13 @@ public class bUnwarpJDialog extends GenericDialog
 
 		// Now restart the threads
 		source    =
-			new bUnwarpJImageModel(sourceImp.getProcessor(), bIsReverse, 
+			new BSplineModel(sourceImp.getProcessor(), bIsReverse, 
 					(int) Math.pow(2,this.maxImageSubsamplingFactor));
 		source.setPyramidDepth(imagePyramidDepth + min_scale_image);
 		//source.getThread().start();
 
 		target =
-			new bUnwarpJImageModel(targetImp.getProcessor(), true, 
+			new BSplineModel(targetImp.getProcessor(), true, 
 					(int) Math.pow(2,this.maxImageSubsamplingFactor));
 		target.setPyramidDepth(imagePyramidDepth + min_scale_image);
 		//target.getThread().start();
@@ -1185,7 +1185,6 @@ public class bUnwarpJDialog extends GenericDialog
 		while (source.getThread().isAlive()) {
 			source.getThread().interrupt();
 		}
-		source.getThread().interrupted();
 	} /* end stopSourceThread */
 
 	/*------------------------------------------------------------------*/
@@ -1199,15 +1198,14 @@ public class bUnwarpJDialog extends GenericDialog
 			return;
 		while (target.getThread().isAlive()) {
 			target.getThread().interrupt();
-		}
-		target.getThread().interrupted();
+		}		
 	} /* end stopTargetThread */
 
 	/*------------------------------------------------------------------*/
 	/**
 	 * Get source point handler.
 	 */
-	public bUnwarpJPointHandler getSourcePh() 
+	public PointHandler getSourcePh() 
 	{
 		return this.sourcePh;
 	} /* end getSourcePh */
@@ -1216,7 +1214,7 @@ public class bUnwarpJDialog extends GenericDialog
 	/**
 	 * Get target point handler.
 	 */
-	public bUnwarpJPointHandler getTargetPh() 
+	public PointHandler getTargetPh() 
 	{
 		return this.targetPh;
 	} /* end getTargetPh */
@@ -1225,7 +1223,7 @@ public class bUnwarpJDialog extends GenericDialog
 	/**
 	 * Get source point handler.
 	 */
-	public bUnwarpJMask getSourceMsk() 
+	public Mask getSourceMsk() 
 	{
 		return this.sourceMsk;
 	} /* end getSourceMsk */
@@ -1234,7 +1232,7 @@ public class bUnwarpJDialog extends GenericDialog
 	/**
 	 * Get target point handler.
 	 */
-	public bUnwarpJMask getTargetMsk() 
+	public Mask getTargetMsk() 
 	{
 		return this.targetMsk;
 	} /* end getTargetMsk */
@@ -1270,7 +1268,7 @@ public class bUnwarpJDialog extends GenericDialog
 	/**
 	 * Get target image model.
 	 */
-	public bUnwarpJImageModel getTarget() {
+	public BSplineModel getTarget() {
 		return this.target;
 	} /* end getTarget */
 
@@ -1294,7 +1292,7 @@ public class bUnwarpJDialog extends GenericDialog
 	/**
 	 * Get source image model.
 	 */
-	public bUnwarpJImageModel getSource() {
+	public BSplineModel getSource() {
 		return this.source;
 	} /* end getSource */
 
@@ -1307,4 +1305,4 @@ public class bUnwarpJDialog extends GenericDialog
 		return bMacro;
 	}
 
-} /* end class bUnwarpJDialog */
+} /* end class MainDialog */
