@@ -24,12 +24,12 @@ package bunwarpj;
 import java.util.Vector;
 
 /*====================================================================
-|   bUnwarpJCumulativeQueue
+|   CumulativeQueue
 \===================================================================*/
 /**
  * Class to create a cumulative queue in bUnwarpJ.
  */
-public class bUnwarpJCumulativeQueue extends Vector
+public class CumulativeQueue extends Vector < Double >
 {
     /** front index of the queue */
     private int ridx;
@@ -42,11 +42,11 @@ public class bUnwarpJCumulativeQueue extends Vector
 
     /*------------------------------------------------------------------*/
     /**
-     * Create a new instance of bUnwarpJCumulativeQueue.
+     * Create a new instance of CumulativeQueue.
      *
      * @param length length of the queue to be created
      */
-    public bUnwarpJCumulativeQueue(int length)
+    public CumulativeQueue(int length)
     {
         currentLength=ridx=widx=0; setSize(length);
     }
@@ -102,4 +102,4 @@ public class bUnwarpJCumulativeQueue extends Vector
            widx=0;
     }
 
-} /* end class bUnwarpJCumulativeQueue */
+} /* end class CumulativeQueue */

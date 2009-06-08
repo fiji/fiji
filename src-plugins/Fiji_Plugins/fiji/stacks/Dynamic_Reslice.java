@@ -75,7 +75,7 @@ public class Dynamic_Reslice implements PlugIn, MouseMotionListener,
 	 */
 
 	/**
-	 * Is set to true, then rotate the destination by 90¼.
+	 * Is set to true, then rotate the destination by 90Â°.
 	 */
 	private boolean rotate;
 	/**
@@ -721,7 +721,7 @@ public class Dynamic_Reslice implements PlugIn, MouseMotionListener,
 	
 	/**
 	 * Get the rotate state for this instance. If true, the result image
-	 * will be rotated 90¼.
+	 * will be rotated 90Â°.
 	 */
 	public boolean getRotate() {
 		return rotate;
@@ -729,7 +729,7 @@ public class Dynamic_Reslice implements PlugIn, MouseMotionListener,
 	
 	/**
 	 * Set the flip state for this instance. If sets to true, the result image
-	 * will be be rotated 90¼. Cannot be changed after the start() method has been
+	 * will be be rotated 90Â°. Cannot be changed after the start() method has been
 	 * called on this plugin.
 	 */
 	public void setRotate(boolean _rotate) {

@@ -1,3 +1,4 @@
+package bunwarpj;
 
 /**
  * bUnwarpJ plugin for ImageJ(C).
@@ -22,7 +23,7 @@
 
 /**
  * ====================================================================
- *  Version: March 10th, 2009
+ *  Version: June 6th, 2009
  *  http://biocomp.cnb.csic.es/%7Eiarganda/bUnwarpJ/
  * \===================================================================
  */
@@ -46,7 +47,6 @@
  * http://bigwww.epfl.ch/thevenaz/UnwarpJ/
  */
 
-import bunwarpj.*;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -63,7 +63,7 @@ import java.util.Stack;
 \===================================================================*/
 
 /**
- * Main class.
+ * Main class for image registration plugin.
  * This class is a plugin for the ImageJ interface. It allows pairwise image
  * registration combining the ideas of elastic registration based on B-spline 
  * models and consistent registration.
@@ -76,9 +76,8 @@ import java.util.Stack;
  * <a href="http://biocomp.cnb.csic.es/~iarganda/bUnwarpJ/">
  * http://biocomp.cnb.csic.es/~iarganda/bUnwarpJ/</a>
  *
- * @version 2.5 04/01/2009
+ * @version 2.6 06/06/2009
  * @author Ignacio Arganda-Carreras <ignacio.arganda@uam.es>
- * @author Jan Kybic
  */
 public class bUnwarpJ_ implements PlugIn
 { /* begin class bUnwarpJ_ */
@@ -96,7 +95,7 @@ public class bUnwarpJ_ implements PlugIn
     /** maximum scale deformation */
     private static int max_scale_deformation = 2;
     /** algorithm mode (fast, accurate or mono) */
-    private static int mode = bUnwarpJDialog.ACCURATE_MODE;
+    private static int mode = MainDialog.ACCURATE_MODE;
     /** image subsampling factor at the highest pyramid level*/
     private static int maxImageSubsamplingFactor = 0;
     
@@ -142,7 +141,7 @@ public class bUnwarpJ_ implements PlugIn
     		return;
     	}
 	
-    	final bUnwarpJDialog dialog = new bUnwarpJDialog(IJ.getInstance(), imageList, bUnwarpJ_.mode,
+    	final MainDialog dialog = new MainDialog(IJ.getInstance(), imageList, bUnwarpJ_.mode,
     			bUnwarpJ_.maxImageSubsamplingFactor, bUnwarpJ_.min_scale_deformation, 
     			bUnwarpJ_.max_scale_deformation, bUnwarpJ_.divWeight, bUnwarpJ_.curlWeight, 
     			bUnwarpJ_.landmarkWeight, bUnwarpJ_.imageWeight, bUnwarpJ_.consistencyWeight, 
@@ -197,8 +196,8 @@ public class bUnwarpJ_ implements PlugIn
            showMarquardtOptim = true;
         }                                 
         
-        bUnwarpJFinalAction finalAction =
-           new bUnwarpJFinalAction(dialog);
+        FinalAction finalAction =
+           new FinalAction(dialog);
 
         finalAction.setup(sourceImp, targetImp,
            dialog.getSource(), dialog.getTarget(), dialog.getSourcePh(), dialog.getTargetPh(),
@@ -230,7 +229,7 @@ public class bUnwarpJ_ implements PlugIn
     /*------------------------------------------------------------------*/
     /**
      * Method for images alignment with no graphical interface. This 
-     * method gives as result a bUnwarpJTransformation object that 
+     * method gives as result a Transformation object that 
      * contains all the registration information.
      *
      * @param targetImp input target image 
@@ -250,7 +249,7 @@ public class bUnwarpJ_ implements PlugIn
      * 
      * @return results transformation object
      */
-    private static bUnwarpJTransformation computeTransformationBatch(ImagePlus targetImp,
+    public static Transformation computeTransformationBatch(ImagePlus targetImp,
     									 ImagePlus sourceImp,
     									 ImageProcessor targetMskIP,
     									 ImageProcessor sourceMskIP,
@@ -278,51 +277,49 @@ public class bUnwarpJ_ implements PlugIn
        final boolean saveTransf = false;
 
        // Create target image model
-       final bUnwarpJImageModel target = new bUnwarpJImageModel(targetImp.getProcessor(), true, 
+       final BSplineModel target = new BSplineModel(targetImp.getProcessor(), true, 
     		   													 (int) Math.pow(2, img_subsamp_fact));
        
        target.setPyramidDepth(imagePyramidDepth+min_scale_image);
        target.startPyramids();
        
        // Create target mask
-       final bUnwarpJMask targetMsk = (targetMskIP != null) ? new bUnwarpJMask(targetMskIP, true) 
-       		  										         : new bUnwarpJMask(targetImp.getProcessor(), false);
+       final Mask targetMsk = (targetMskIP != null) ? new Mask(targetMskIP, true) 
+       		  										         : new Mask(targetImp.getProcessor(), false);
                     
-       bUnwarpJPointHandler targetPh = null;
+       PointHandler targetPh = null;
 
        // Create source image model
        boolean bIsReverse = true;         
 
-       final bUnwarpJImageModel source = new bUnwarpJImageModel(sourceImp.getProcessor(), bIsReverse, 
+       final BSplineModel source = new BSplineModel(sourceImp.getProcessor(), bIsReverse, 
     		   													(int) Math.pow(2, img_subsamp_fact));
 
        source.setPyramidDepth(imagePyramidDepth + min_scale_image);
        source.startPyramids();
        
        // Create source mask
-       final bUnwarpJMask sourceMsk = (sourceMskIP != null) ? new bUnwarpJMask(sourceMskIP, true) 
-       														 : new bUnwarpJMask(sourceImp.getProcessor(), false);
+       final Mask sourceMsk = (sourceMskIP != null) ? new Mask(sourceMskIP, true) 
+       														 : new Mask(sourceImp.getProcessor(), false);
        
-       bUnwarpJPointHandler sourcePh = null;
+       PointHandler sourcePh = null;
 
-       // Load landmarks
-       if (landmarkWeight != 0)
+       // Load points rois as landmarks if any.
+       Stack<Point> sourceStack = new Stack<Point>();
+       Stack<Point> targetStack = new Stack<Point>();
+       MiscTools.loadPointRoiAsLandmarks(sourceImp, targetImp, sourceStack, targetStack);
+
+       sourcePh  = new PointHandler(sourceImp);
+       targetPh  = new PointHandler(targetImp);
+
+       while ((!sourceStack.empty()) && (!targetStack.empty())) 
        {
-          Stack<Point> sourceStack = new Stack<Point>();
-          Stack<Point> targetStack = new Stack<Point>();
-          bUnwarpJMiscTools.loadPointRoiAsLandmarks(sourceImp, targetImp, sourceStack, targetStack);
-
-          sourcePh  = new bUnwarpJPointHandler(sourceImp);
-          targetPh  = new bUnwarpJPointHandler(targetImp);
-
-          while ((!sourceStack.empty()) && (!targetStack.empty())) 
-          {
-             Point sourcePoint = (Point)sourceStack.pop();
-             Point targetPoint = (Point)targetStack.pop();
-             sourcePh.addPoint(sourcePoint.x, sourcePoint.y);
-             targetPh.addPoint(targetPoint.x, targetPoint.y);
-          }
+    	   Point sourcePoint = (Point)sourceStack.pop();
+    	   Point targetPoint = (Point)targetStack.pop();
+    	   sourcePh.addPoint(sourcePoint.x, sourcePoint.y);
+    	   targetPh.addPoint(targetPoint.x, targetPoint.y);
        }
+       
        
        // Set no initial affine matrices
        final double[][] sourceAffineMatrix = null;
@@ -345,13 +342,13 @@ public class bUnwarpJ_ implements PlugIn
        output_ip[1] = null; 
        
        // The dialog is set to null to work in batch mode
-       final bUnwarpJDialog dialog = null;
+       final MainDialog dialog = null;
        
        final ImageProcessor originalSourceIP = sourceImp.getProcessor();
        final ImageProcessor originalTargetIP = targetImp.getProcessor();
 
-
-       final bUnwarpJTransformation warp = new bUnwarpJTransformation(
+       // Setup registration parameters
+       final Transformation warp = new Transformation(
          sourceImp, targetImp, source, target, sourcePh, targetPh,
          sourceMsk, targetMsk, sourceAffineMatrix, targetAffineMatrix,
          min_scale_deformation, max_scale_deformation, min_scale_image, divWeight, 
@@ -364,7 +361,146 @@ public class bUnwarpJ_ implements PlugIn
        
        long start = System.currentTimeMillis(); // start timing
 
-       if(mode == bUnwarpJDialog.MONO_MODE)       
+       // Perform registration
+       if(mode == MainDialog.MONO_MODE)       
+    	   warp.doUnidirectionalRegistration();    	       
+       else
+    	   warp.doRegistration();
+
+       long stop = System.currentTimeMillis(); // stop timing
+       IJ.log("Registration time: " + (stop - start) + "ms"); // print execution time
+
+       return warp;
+       
+    } // end computeTransformationBatch    
+    
+    
+    /*------------------------------------------------------------------*/
+    /**
+     * Method for images alignment with no graphical interface. This 
+     * method gives as result a Transformation object that 
+     * contains all the registration information.
+     *
+     * @param targetImp input target image 
+     * @param sourceImp input source image
+     * @param targetMskIP target mask 
+     * @param sourceMskIP source mask
+     * @param parameter registration parameters
+     * 
+     * @return results transformation object
+     */
+    public static Transformation computeTransformationBatch(ImagePlus targetImp,
+    									 ImagePlus sourceImp,
+    									 ImageProcessor targetMskIP,
+    									 ImageProcessor sourceMskIP,
+    									 Param parameter) 
+    {    	
+       if(targetImp == null || sourceImp == null || parameter == null)
+       {
+    	   IJ.error("Missing parameters to compute transformation!");
+    	   return null;
+       }
+
+       // Produce side information
+       final int imagePyramidDepth = parameter.max_scale_deformation - parameter.min_scale_deformation + 1;
+       final int min_scale_image = 0;
+       
+       // output level to -1 so nothing is displayed 
+       final int outputLevel = -1;
+       
+       final boolean showMarquardtOptim = false;       
+       final boolean saveTransf = false;
+
+       // Create target image model
+       final BSplineModel target = new BSplineModel(targetImp.getProcessor(), true, 
+    		   													 (int) Math.pow(2, parameter.img_subsamp_fact));
+       
+       target.setPyramidDepth(imagePyramidDepth+min_scale_image);
+       target.startPyramids();
+       
+       // Create target mask
+       final Mask targetMsk = (targetMskIP != null) ? new Mask(targetMskIP, true) 
+       		  										         : new Mask(targetImp.getProcessor(), false);
+                    
+       PointHandler targetPh = null;
+
+       // Create source image model
+       boolean bIsReverse = true;         
+
+       final BSplineModel source = new BSplineModel(sourceImp.getProcessor(), bIsReverse, 
+    		   													(int) Math.pow(2, parameter.img_subsamp_fact));
+
+       source.setPyramidDepth(imagePyramidDepth + min_scale_image);
+       source.startPyramids();
+       
+       // Create source mask
+       final Mask sourceMsk = (sourceMskIP != null) ? new Mask(sourceMskIP, true) 
+       														 : new Mask(sourceImp.getProcessor(), false);
+       
+       PointHandler sourcePh = null;
+
+       // Load landmarks
+       //if (parameter.landmarkWeight != 0)
+       //{
+          Stack<Point> sourceStack = new Stack<Point>();
+          Stack<Point> targetStack = new Stack<Point>();
+          MiscTools.loadPointRoiAsLandmarks(sourceImp, targetImp, sourceStack, targetStack);
+
+          sourcePh  = new PointHandler(sourceImp);
+          targetPh  = new PointHandler(targetImp);
+
+          while ((!sourceStack.empty()) && (!targetStack.empty())) 
+          {
+             Point sourcePoint = (Point)sourceStack.pop();
+             Point targetPoint = (Point)targetStack.pop();
+             sourcePh.addPoint(sourcePoint.x, sourcePoint.y);
+             targetPh.addPoint(targetPoint.x, targetPoint.y);
+          }
+       //}
+       
+       // Set no initial affine matrices
+       final double[][] sourceAffineMatrix = null;
+       final double[][] targetAffineMatrix = null;
+ 
+       // Join threads
+       try 
+       {
+           source.getThread().join();
+           target.getThread().join();
+       } 
+       catch (InterruptedException e) 
+       {
+           IJ.error("Unexpected interruption exception " + e);
+       }
+
+       // Perform registration
+       ImagePlus[] output_ip = new ImagePlus[2];
+       output_ip[0] = null; 
+       output_ip[1] = null; 
+       
+       // The dialog is set to null to work in batch mode
+       final MainDialog dialog = null;
+       
+       final ImageProcessor originalSourceIP = sourceImp.getProcessor();
+       final ImageProcessor originalTargetIP = targetImp.getProcessor();
+
+
+       final Transformation warp = new Transformation(
+         sourceImp, targetImp, source, target, sourcePh, targetPh,
+         sourceMsk, targetMsk, sourceAffineMatrix, targetAffineMatrix,
+         parameter.min_scale_deformation, parameter.max_scale_deformation, 
+         min_scale_image, parameter.divWeight, 
+         parameter.curlWeight, parameter.landmarkWeight, parameter.imageWeight, 
+         parameter.consistencyWeight, parameter.stopThreshold, 
+         outputLevel, showMarquardtOptim, parameter.mode, parameter.img_subsamp_fact,
+         saveTransf, null, null, output_ip[0], output_ip[1], dialog,
+         originalSourceIP, originalTargetIP);
+
+       IJ.log("\nRegistering...\n");
+       
+       long start = System.currentTimeMillis(); // start timing
+
+       if(parameter.mode == MainDialog.MONO_MODE)       
     	   warp.doUnidirectionalRegistration();    	       
        else
     	   warp.doRegistration();
@@ -418,7 +554,7 @@ public class bUnwarpJ_ implements PlugIn
     {    	
        
 
-       bUnwarpJTransformation warp 
+       Transformation warp 
        				= computeTransformationBatch(targetImp, sourceImp,	targetMskIP, sourceMskIP,
        											 mode, img_subsamp_fact, min_scale_deformation,
        											 max_scale_deformation, divWeight, curlWeight,
@@ -434,7 +570,42 @@ public class bUnwarpJ_ implements PlugIn
        
     } // end alignImagesBatch
     
+    /*------------------------------------------------------------------*/
+    /**
+     * Method for images alignment with no graphical interface. This 
+     * method gives as result an array of 2 ImagePlus containing the
+     * source-target and target-source results respectively. Each of them
+     * has three slices: the final deformed image, its target image and 
+     * its mask.
+     *
+     * @param targetImp input target image 
+     * @param sourceImp input source image
+     * @param targetMskIP target mask 
+     * @param sourceMskIP source mask
+     * @param parameter registration parameters
+     * 
+     * @return resulting ImagePlus array (with source-target and target-source results)
+     */
+    public static ImagePlus[] alignImagesBatch(ImagePlus targetImp,
+    									 ImagePlus sourceImp,
+    									 ImageProcessor targetMskIP,
+    									 ImageProcessor sourceMskIP,
+    									 Param parameter) 
+    {    	
        
+
+    	Transformation warp 
+    	= computeTransformationBatch(targetImp, sourceImp,	targetMskIP, sourceMskIP, parameter);
+
+       // Return results as ImagePlus
+       final ImagePlus[] output_ip = new ImagePlus[2];
+       output_ip[0] = warp.getDirectResults();       
+       output_ip[1] = warp.getInverseResults();
+       
+       return output_ip;       
+       
+    } // end alignImagesBatch
+    
     /*------------------------------------------------------------------*/
     /**
      * Method for images alignment with no graphical interface. This 
@@ -500,42 +671,42 @@ public class bUnwarpJ_ implements PlugIn
     	final boolean saveTransf = false;
 
     	// Create target image model
-    	final bUnwarpJImageModel target = new bUnwarpJImageModel(scaledTargetIP, true, 
+    	final BSplineModel target = new BSplineModel(scaledTargetIP, true, 
     			(int) Math.pow(2, img_subsamp_fact));
 
     	target.setPyramidDepth(imagePyramidDepth+min_scale_image);
     	target.startPyramids();
 
     	// Create target mask
-    	final bUnwarpJMask targetMsk = (targetMskIP != null) ? new bUnwarpJMask(targetMskIP, true) 
-    														 : new bUnwarpJMask(targetImp.getProcessor(), false);
+    	final Mask targetMsk = (targetMskIP != null) ? new Mask(targetMskIP, true) 
+    														 : new Mask(targetImp.getProcessor(), false);
 
-    	bUnwarpJPointHandler targetPh = null;
+    	PointHandler targetPh = null;
 
     	// Create source image model
     	boolean bIsReverse = true;         
 
-    	final bUnwarpJImageModel source = new bUnwarpJImageModel(scaledSourceIP, bIsReverse, 
+    	final BSplineModel source = new BSplineModel(scaledSourceIP, bIsReverse, 
     			(int) Math.pow(2, img_subsamp_fact));
 
     	source.setPyramidDepth(imagePyramidDepth + min_scale_image);
     	source.startPyramids();
 
     	// Create source mask
-    	final bUnwarpJMask sourceMsk = (sourceMskIP != null) ? new bUnwarpJMask(sourceMskIP, true) 
-    														 : new bUnwarpJMask(sourceImp.getProcessor(), false);
+    	final Mask sourceMsk = (sourceMskIP != null) ? new Mask(sourceMskIP, true) 
+    														 : new Mask(sourceImp.getProcessor(), false);
 
-    	bUnwarpJPointHandler sourcePh = null;
+    	PointHandler sourcePh = null;
 
     	// Load landmarks
     	if (landmarkWeight != 0)
     	{
     		Stack<Point> sourceStack = new Stack<Point>();
     		Stack<Point> targetStack = new Stack<Point>();
-    		bUnwarpJMiscTools.loadPointRoiAsLandmarks(sourceImp, targetImp, sourceStack, targetStack);
+    		MiscTools.loadPointRoiAsLandmarks(sourceImp, targetImp, sourceStack, targetStack);
 
-    		sourcePh  = new bUnwarpJPointHandler(sourceImp);
-    		targetPh  = new bUnwarpJPointHandler(targetImp);
+    		sourcePh  = new PointHandler(sourceImp);
+    		targetPh  = new PointHandler(targetImp);
 
     		while ((!sourceStack.empty()) && (!targetStack.empty())) 
     		{
@@ -567,13 +738,13 @@ public class bUnwarpJ_ implements PlugIn
     	output_ip[1] = new ImagePlus();
 
     	// The dialog is set to null to work in batch mode
-    	final bUnwarpJDialog dialog = null;
+    	final MainDialog dialog = null;
 
     	final ImageProcessor originalSourceIP = sourceImp.getProcessor();
     	final ImageProcessor originalTargetIP = targetImp.getProcessor();
 
 
-    	final bUnwarpJTransformation warp = new bUnwarpJTransformation(
+    	final Transformation warp = new Transformation(
     			sourceImp, targetImp, source, target, sourcePh, targetPh,
     			sourceMsk, targetMsk, sourceAffineMatrix, targetAffineMatrix,
     			min_scale_deformation, max_scale_deformation, min_scale_image, divWeight, 
@@ -586,7 +757,7 @@ public class bUnwarpJ_ implements PlugIn
 
     	long start = System.currentTimeMillis(); // start timing
 
-    	if(mode == bUnwarpJDialog.MONO_MODE)       
+    	if(mode == MainDialog.MONO_MODE)       
     		warp.doUnidirectionalRegistration();    	       
     	else
     		warp.doRegistration();
@@ -599,32 +770,32 @@ public class bUnwarpJ_ implements PlugIn
     	double[][] cx_direct = warp.getDirectDeformationCoefficientsX();
     	double[][] cy_direct = warp.getDirectDeformationCoefficientsY();
     	
-    	bUnwarpJMiscTools.adaptCoefficients(1.0/xScale, 1.0/yScale, intervals, cx_direct, cy_direct);
+    	MiscTools.adaptCoefficients(1.0/xScale, 1.0/yScale, intervals, cx_direct, cy_direct);
     	
-    	bUnwarpJImageModel fullSource = null;
+    	BSplineModel fullSource = null;
 
-    	fullSource = new bUnwarpJImageModel(fullSourceIP, false, 1);
+    	fullSource = new BSplineModel(fullSourceIP, false, 1);
     	fullSource.setPyramidDepth(0);
     	fullSource.startPyramids();
     	
-    	bUnwarpJMiscTools.applyTransformationToSourceMT(sourceImp, targetImp, fullSource, intervals, cx_direct, cy_direct);
+    	MiscTools.applyTransformationToSourceMT(sourceImp, targetImp, fullSource, intervals, cx_direct, cy_direct);
     	
     	output_ip[0] = sourceImp;
     	
-    	if(mode != bUnwarpJDialog.MONO_MODE)
+    	if(mode != MainDialog.MONO_MODE)
     	{
     		double[][] cx_inverse = warp.getInverseDeformationCoefficientsX();
     		double[][] cy_inverse = warp.getInverseDeformationCoefficientsY();
     		
-    		bUnwarpJMiscTools.adaptCoefficients(1.0/xScale, 1.0/yScale, intervals, cx_inverse, cy_inverse);
+    		MiscTools.adaptCoefficients(1.0/xScale, 1.0/yScale, intervals, cx_inverse, cy_inverse);
         	
-        	bUnwarpJImageModel fullTarget = null;
+        	BSplineModel fullTarget = null;
 
-        	fullTarget = new bUnwarpJImageModel(fullTargetIP, false, 1);
+        	fullTarget = new BSplineModel(fullTargetIP, false, 1);
         	fullTarget.setPyramidDepth(0);
         	fullTarget.startPyramids();
         	
-        	bUnwarpJMiscTools.applyTransformationToSourceMT(targetImp, sourceImp, fullTarget, intervals, cx_inverse, cy_inverse);
+        	MiscTools.applyTransformationToSourceMT(targetImp, sourceImp, fullTarget, intervals, cx_inverse, cy_inverse);
         	
         	output_ip[1] = targetImp;
     	
@@ -696,7 +867,7 @@ public class bUnwarpJ_ implements PlugIn
        double  curlWeight = ((Double) new Double(args[9])).doubleValue();
        double  imageWeight = ((Double) new Double(args[10])).doubleValue();
        
-       int     accurate_mode = bUnwarpJDialog.ACCURATE_MODE;
+       int     accurate_mode = MainDialog.ACCURATE_MODE;
 
        double  consistencyWeight = ((Double) new Double(args[11])).doubleValue();
 
@@ -724,7 +895,7 @@ public class bUnwarpJ_ implements PlugIn
        {
     	   if(args[14].equalsIgnoreCase("-mono"))
     	   {
-    		   accurate_mode = bUnwarpJDialog.MONO_MODE;
+    		   accurate_mode = MainDialog.MONO_MODE;
     		   fn_out_2 = "NULL (Mono mode)";
     	   }
     	   else
@@ -753,7 +924,7 @@ public class bUnwarpJ_ implements PlugIn
        IJ.write("Landmark file          : " + fn_landmark);
        IJ.write("Affine matrix file 1   : " + fn_affine_1);
        IJ.write("Affine matrix file 2   : " + fn_affine_2);
-       String sMode = (accurate_mode == bUnwarpJDialog.MONO_MODE) ? "Mono" : "Accurate";
+       String sMode = (accurate_mode == MainDialog.MONO_MODE) ? "Mono" : "Accurate";
        IJ.write("Registration mode	    : " + sMode);
 
        // Produce side information
@@ -785,7 +956,7 @@ public class bUnwarpJ_ implements PlugIn
        ImagePlus targetImp;
        targetImp = opener.openImage(fn_target);
        
-       bUnwarpJImageModel target = new bUnwarpJImageModel(targetImp.getProcessor(), true, 
+       BSplineModel target = new BSplineModel(targetImp.getProcessor(), true, 
     		   												(int) Math.pow(2, max_subsamp_fact));
        
        target.setPyramidDepth(imagePyramidDepth + min_scale_image);
@@ -793,40 +964,40 @@ public class bUnwarpJ_ implements PlugIn
   
   
        
-       bUnwarpJMask targetMsk = new bUnwarpJMask(targetImp.getProcessor(),false);
+       Mask targetMsk = new Mask(targetImp.getProcessor(),false);
        
        if (fn_target_mask.equalsIgnoreCase(new String("NULL")) == false)
            targetMsk.readFile(fn_target_mask);
        
-       bUnwarpJPointHandler targetPh = null;
+       PointHandler targetPh = null;
 
        // Open source
        boolean bIsReverse = true;
 
        ImagePlus sourceImp = opener.openImage(fn_source);   
 
-       bUnwarpJImageModel source = new bUnwarpJImageModel(sourceImp.getProcessor(), bIsReverse, 
+       BSplineModel source = new BSplineModel(sourceImp.getProcessor(), bIsReverse, 
     		   												(int) Math.pow(2, max_subsamp_fact));
 
        source.setPyramidDepth(imagePyramidDepth + min_scale_image);
        source.startPyramids();
 
-       bUnwarpJMask sourceMsk = new bUnwarpJMask(sourceImp.getProcessor(), false);
+       Mask sourceMsk = new Mask(sourceImp.getProcessor(), false);
 
        if (fn_source_mask.equalsIgnoreCase(new String("NULL")) == false)
            sourceMsk.readFile(fn_source_mask);
        
-       bUnwarpJPointHandler sourcePh=null;
+       PointHandler sourcePh=null;
 
        // Load landmarks
        if (fn_landmark.equals("") == false)
        {
           Stack<Point> sourceStack = new Stack<Point>();
           Stack<Point> targetStack = new Stack<Point>();
-          bUnwarpJMiscTools.loadPoints(fn_landmark, sourceStack, targetStack);
+          MiscTools.loadPoints(fn_landmark, sourceStack, targetStack);
 
-          sourcePh  = new bUnwarpJPointHandler(sourceImp);
-          targetPh  = new bUnwarpJPointHandler(targetImp);
+          sourcePh  = new PointHandler(sourceImp);
+          targetPh  = new PointHandler(targetImp);
 
           while ((!sourceStack.empty()) && (!targetStack.empty())) 
           {
@@ -842,13 +1013,13 @@ public class bUnwarpJ_ implements PlugIn
        if(fn_affine_1.equals("") == false && fn_affine_1.equalsIgnoreCase(new String("NULL")) == false)
        {
            sourceAffineMatrix = new double[2][3];
-           bUnwarpJMiscTools.loadAffineMatrix(fn_affine_1, sourceAffineMatrix);
+           MiscTools.loadAffineMatrix(fn_affine_1, sourceAffineMatrix);
        }
        double[][] targetAffineMatrix = null;
        if(fn_affine_2.equals("") == false && fn_affine_2.equalsIgnoreCase(new String("NULL")) == false)
        {
            targetAffineMatrix = new double[2][3];
-           bUnwarpJMiscTools.loadAffineMatrix(fn_affine_2, targetAffineMatrix);
+           MiscTools.loadAffineMatrix(fn_affine_2, targetAffineMatrix);
        }
 
        // Join threads
@@ -865,13 +1036,13 @@ public class bUnwarpJ_ implements PlugIn
        // Perform registration
        ImagePlus output_ip_1 = null; //new ImagePlus();
        ImagePlus output_ip_2 = null; //new ImagePlus();
-       bUnwarpJDialog dialog = null;
+       MainDialog dialog = null;
        
        ImageProcessor originalSourceIP = sourceImp.getProcessor();
        ImageProcessor originalTargetIP = targetImp.getProcessor();
 
 
-       final bUnwarpJTransformation warp = new bUnwarpJTransformation(
+       final Transformation warp = new Transformation(
          sourceImp, targetImp, source, target, sourcePh, targetPh,
          sourceMsk, targetMsk, sourceAffineMatrix, targetAffineMatrix,
          min_scale_deformation, max_scale_deformation, min_scale_image, divWeight, 
@@ -884,7 +1055,7 @@ public class bUnwarpJ_ implements PlugIn
        
        long start = System.currentTimeMillis(); // start timing
        
-       if(accurate_mode == bUnwarpJDialog.MONO_MODE)
+       if(accurate_mode == MainDialog.MONO_MODE)
     	   warp.doUnidirectionalRegistration();
        else
     	   warp.doRegistration();
@@ -904,7 +1075,7 @@ public class bUnwarpJ_ implements PlugIn
        FileSaver fs = new FileSaver(output_ip_1);
        fs.saveAsTiff(fn_out_1);
        
-       if((accurate_mode != bUnwarpJDialog.MONO_MODE))
+       if((accurate_mode != MainDialog.MONO_MODE))
        {
     	   output_ip_2 = warp.getInverseResults();
     	   output_ip_2.getStack().deleteLastSlice();
@@ -1115,15 +1286,15 @@ public class bUnwarpJ_ implements PlugIn
        if(sourceImp == null)
            IJ.error("\nError: " + fn_source + " could not be opened\n");
        
-       bUnwarpJImageModel source = new bUnwarpJImageModel(sourceImp.getProcessor(), false, 1);
+       BSplineModel source = new BSplineModel(sourceImp.getProcessor(), false, 1);
        source.setPyramidDepth(0);       
        source.startPyramids();
 
        // Load transformation
-       int intervals = bUnwarpJMiscTools.numberOfIntervalsOfTransformation(fn_tnf);
+       int intervals = MiscTools.numberOfIntervalsOfTransformation(fn_tnf);
        double [][]cx = new double[intervals+3][intervals+3];
        double [][]cy = new double[intervals+3][intervals+3];
-       bUnwarpJMiscTools.loadTransformation(fn_tnf, cx, cy);
+       MiscTools.loadTransformation(fn_tnf, cx, cy);
 
        // Join threads
        try {
@@ -1143,7 +1314,7 @@ public class bUnwarpJ_ implements PlugIn
            }
        
        // Save transformation
-       bUnwarpJMiscTools.saveElasticTransformation(intervals, cx, cy, fn_out);
+       MiscTools.saveElasticTransformation(intervals, cx, cy, fn_out);
        
     } /* end adaptCoefficientsCommandLine */    
     
@@ -1180,19 +1351,19 @@ public class bUnwarpJ_ implements PlugIn
        if(sourceImp == null)
            IJ.error("\nError: " + fn_source + " could not be opened\n");
    
-       bUnwarpJImageModel source = null;
+       BSplineModel source = null;
 
-       source = new bUnwarpJImageModel(sourceImp.getProcessor(), false, 1);
+       source = new BSplineModel(sourceImp.getProcessor(), false, 1);
        source.setPyramidDepth(0);
        //source.startPyramids();
        source.startPyramids();
        
 
        // Load transformation
-       int intervals=bUnwarpJMiscTools.numberOfIntervalsOfTransformation(fn_tnf);
+       int intervals=MiscTools.numberOfIntervalsOfTransformation(fn_tnf);
        double [][]cx=new double[intervals+3][intervals+3];
        double [][]cy=new double[intervals+3][intervals+3];
-       bUnwarpJMiscTools.loadTransformation(fn_tnf, cx, cy);
+       MiscTools.loadTransformation(fn_tnf, cx, cy);
 
        // Join threads
 
@@ -1204,7 +1375,7 @@ public class bUnwarpJ_ implements PlugIn
 
 
        // Apply transformation to source
-       bUnwarpJMiscTools.applyTransformationToSourceMT(
+       MiscTools.applyTransformationToSourceMT(
     		   sourceImp, targetImp, source, intervals, cx, cy);
 
        // Save results
@@ -1250,7 +1421,7 @@ public class bUnwarpJ_ implements PlugIn
        if(sourceImp == null)
            IJ.error("\nError: " + fn_source + " could not be opened\n");
        
-       bUnwarpJImageModel source = new bUnwarpJImageModel(sourceImp.getProcessor(), false, 1);
+       BSplineModel source = new BSplineModel(sourceImp.getProcessor(), false, 1);
        source.setPyramidDepth(0);
        //source.getThread().start();
        source.startPyramids();
@@ -1258,10 +1429,10 @@ public class bUnwarpJ_ implements PlugIn
        double [][]transformation_x = new double[targetImp.getHeight()][targetImp.getWidth()];
        double [][]transformation_y = new double[targetImp.getHeight()][targetImp.getWidth()];
 
-       bUnwarpJMiscTools.loadRawTransformation(fn_tnf, transformation_x, transformation_y);
+       MiscTools.loadRawTransformation(fn_tnf, transformation_x, transformation_y);
 
        // Apply transformation
-       bUnwarpJMiscTools.applyRawTransformationToSource(sourceImp, targetImp, source, transformation_x, transformation_y);
+       MiscTools.applyRawTransformationToSource(sourceImp, targetImp, source, transformation_x, transformation_y);
 
        // Save results
        FileSaver fs = new FileSaver(sourceImp);
@@ -1308,21 +1479,21 @@ public class bUnwarpJ_ implements PlugIn
            IJ.error("\nError: " + fn_source + " could not be opened\n");
        
        // First deformation.
-       int intervals = bUnwarpJMiscTools.numberOfIntervalsOfTransformation(fn_tnf_2);
+       int intervals = MiscTools.numberOfIntervalsOfTransformation(fn_tnf_2);
 
        double [][]cx_direct = new double[intervals+3][intervals+3];
        double [][]cy_direct = new double[intervals+3][intervals+3];
 
-       bUnwarpJMiscTools.loadTransformation(fn_tnf_2, cx_direct, cy_direct);      
+       MiscTools.loadTransformation(fn_tnf_2, cx_direct, cy_direct);      
 
-       intervals = bUnwarpJMiscTools.numberOfIntervalsOfTransformation(fn_tnf_1);
+       intervals = MiscTools.numberOfIntervalsOfTransformation(fn_tnf_1);
 
        double [][]cx_inverse = new double[intervals+3][intervals+3];
        double [][]cy_inverse = new double[intervals+3][intervals+3];
 
-       bUnwarpJMiscTools.loadTransformation(fn_tnf_1, cx_inverse, cy_inverse);
+       MiscTools.loadTransformation(fn_tnf_1, cx_inverse, cy_inverse);
        
-       double warpingIndex = bUnwarpJMiscTools.warpingIndex(sourceImp, targetImp, intervals, cx_direct, cy_direct, cx_inverse, cy_inverse);
+       double warpingIndex = MiscTools.warpingIndex(sourceImp, targetImp, intervals, cx_direct, cy_direct, cx_inverse, cy_inverse);
 
        if(warpingIndex != -1)
            IJ.write(" Warping index = " + warpingIndex);             
@@ -1365,20 +1536,20 @@ public class bUnwarpJ_ implements PlugIn
        if(sourceImp == null)
            IJ.error("\nError: " + fn_source + " could not be opened\n");
        
-       int intervals = bUnwarpJMiscTools.numberOfIntervalsOfTransformation(fn_tnf_elastic);
+       int intervals = MiscTools.numberOfIntervalsOfTransformation(fn_tnf_elastic);
 
        double [][]cx_direct = new double[intervals+3][intervals+3];
        double [][]cy_direct = new double[intervals+3][intervals+3];
 
-       bUnwarpJMiscTools.loadTransformation(fn_tnf_elastic, cx_direct, cy_direct);
+       MiscTools.loadTransformation(fn_tnf_elastic, cx_direct, cy_direct);
       
        // We load the transformation raw file.
        double[][] transformation_x = new double[targetImp.getHeight()][targetImp.getWidth()];
        double[][] transformation_y = new double[targetImp.getHeight()][targetImp.getWidth()];
-       bUnwarpJMiscTools.loadRawTransformation(fn_tnf_raw, transformation_x, 
+       MiscTools.loadRawTransformation(fn_tnf_raw, transformation_x, 
                transformation_y);
        
-       double warpingIndex = bUnwarpJMiscTools.rawWarpingIndex(sourceImp, targetImp, 
+       double warpingIndex = MiscTools.rawWarpingIndex(sourceImp, targetImp, 
                intervals, cx_direct, cy_direct, transformation_x, transformation_y);
 
        if(warpingIndex != -1)
@@ -1425,14 +1596,14 @@ public class bUnwarpJ_ implements PlugIn
        // We load the transformation raw file.
        double[][] transformation_x_1 = new double[targetImp.getHeight()][targetImp.getWidth()];
        double[][] transformation_y_1 = new double[targetImp.getHeight()][targetImp.getWidth()];
-       bUnwarpJMiscTools.loadRawTransformation(fn_tnf_1, transformation_x_1, transformation_y_1);
+       MiscTools.loadRawTransformation(fn_tnf_1, transformation_x_1, transformation_y_1);
        
        // We load the transformation raw file.
        double[][] transformation_x_2 = new double[targetImp.getHeight()][targetImp.getWidth()];
        double[][] transformation_y_2 = new double[targetImp.getHeight()][targetImp.getWidth()];
-       bUnwarpJMiscTools.loadRawTransformation(fn_tnf_2, transformation_x_2, transformation_y_2);
+       MiscTools.loadRawTransformation(fn_tnf_2, transformation_x_2, transformation_y_2);
        
-       double warpingIndex = bUnwarpJMiscTools.rawWarpingIndex(sourceImp, targetImp, 
+       double warpingIndex = MiscTools.rawWarpingIndex(sourceImp, targetImp, 
                transformation_x_1, transformation_y_1, transformation_x_2, transformation_y_2);
 
        if(warpingIndex != -1)
@@ -1476,21 +1647,21 @@ public class bUnwarpJ_ implements PlugIn
        if(sourceImp == null)
            IJ.error("\nError: " + fn_source + " could not be opened\n");
        
-       int intervals = bUnwarpJMiscTools.numberOfIntervalsOfTransformation(fn_tnf_elastic);
+       int intervals = MiscTools.numberOfIntervalsOfTransformation(fn_tnf_elastic);
 
        double [][]cx = new double[intervals+3][intervals+3];
        double [][]cy = new double[intervals+3][intervals+3];
 
-       bUnwarpJMiscTools.loadTransformation(fn_tnf_elastic, cx, cy);
+       MiscTools.loadTransformation(fn_tnf_elastic, cx, cy);
        
        
        // We load the transformation raw file.
        double[][] transformation_x = new double[targetImp.getHeight()][targetImp.getWidth()];
        double[][] transformation_y = new double[targetImp.getHeight()][targetImp.getWidth()];
        
-       bUnwarpJMiscTools.convertElasticTransformationToRaw(targetImp, intervals, cx, cy, transformation_x, transformation_y); 
+       MiscTools.convertElasticTransformationToRaw(targetImp, intervals, cx, cy, transformation_x, transformation_y); 
        
-       bUnwarpJMiscTools.saveRawTransformation(fn_tnf_raw, targetImp.getWidth(), targetImp.getHeight(), transformation_x, transformation_y);
+       MiscTools.saveRawTransformation(fn_tnf_raw, targetImp.getWidth(), targetImp.getHeight(), transformation_x, transformation_y);
        
     } /* end method convertToRawTransformationCommandLine */    
 
@@ -1533,22 +1704,22 @@ public class bUnwarpJ_ implements PlugIn
        // We load the first transformation raw file.
        double[][] transformation_x_1 = new double[targetImp.getHeight()][targetImp.getWidth()];
        double[][] transformation_y_1 = new double[targetImp.getHeight()][targetImp.getWidth()];
-       bUnwarpJMiscTools.loadRawTransformation(fn_tnf_raw_1, transformation_x_1, transformation_y_1);
+       MiscTools.loadRawTransformation(fn_tnf_raw_1, transformation_x_1, transformation_y_1);
               
        // We load the second transformation raw file.
        double[][] transformation_x_2 = new double[targetImp.getHeight()][targetImp.getWidth()];
        double[][] transformation_y_2 = new double[targetImp.getHeight()][targetImp.getWidth()];
-       bUnwarpJMiscTools.loadRawTransformation(fn_tnf_raw_2, transformation_x_2, transformation_y_2);
+       MiscTools.loadRawTransformation(fn_tnf_raw_2, transformation_x_2, transformation_y_2);
        
        double [][] outputTransformation_x = new double[targetImp.getHeight()][targetImp.getWidth()];
        double [][] outputTransformation_y = new double[targetImp.getHeight()][targetImp.getWidth()];
              
        // Now we compose them and get as result a raw transformation mapping.
-       bUnwarpJMiscTools.composeRawTransformations(targetImp.getWidth(), targetImp.getHeight(), 
+       MiscTools.composeRawTransformations(targetImp.getWidth(), targetImp.getHeight(), 
                transformation_x_1, transformation_y_1, transformation_x_2, transformation_y_2, 
                outputTransformation_x, outputTransformation_y);
               
-       bUnwarpJMiscTools.saveRawTransformation(fn_tnf_raw_out, targetImp.getWidth(), 
+       MiscTools.saveRawTransformation(fn_tnf_raw_out, targetImp.getWidth(), 
                targetImp.getHeight(), outputTransformation_x, outputTransformation_y);
        
     } /* end method composeRawTransformationsCommandLine */     
@@ -1589,29 +1760,29 @@ public class bUnwarpJ_ implements PlugIn
        if(sourceImp == null)
            IJ.error("\nError: " + fn_source + " could not be opened\n");
        
-       int intervals = bUnwarpJMiscTools.numberOfIntervalsOfTransformation(fn_tnf_elastic_1);
+       int intervals = MiscTools.numberOfIntervalsOfTransformation(fn_tnf_elastic_1);
 
        double [][]cx1 = new double[intervals+3][intervals+3];
        double [][]cy1 = new double[intervals+3][intervals+3];
 
-       bUnwarpJMiscTools.loadTransformation(fn_tnf_elastic_1, cx1, cy1);
+       MiscTools.loadTransformation(fn_tnf_elastic_1, cx1, cy1);
 
-       intervals = bUnwarpJMiscTools.numberOfIntervalsOfTransformation(fn_tnf_elastic_2);
+       intervals = MiscTools.numberOfIntervalsOfTransformation(fn_tnf_elastic_2);
 
        double [][]cx2 = new double[intervals+3][intervals+3];
        double [][]cy2 = new double[intervals+3][intervals+3];
 
-       bUnwarpJMiscTools.loadTransformation(fn_tnf_elastic_2, cx2, cy2);
+       MiscTools.loadTransformation(fn_tnf_elastic_2, cx2, cy2);
        
        double [][] outputTransformation_x = new double[targetImp.getHeight()][targetImp.getWidth()];
        double [][] outputTransformation_y = new double[targetImp.getHeight()][targetImp.getWidth()];
              
        // Now we compose them and get as result a raw transformation mapping.
-       bUnwarpJMiscTools.composeElasticTransformations(targetImp, intervals, 
+       MiscTools.composeElasticTransformations(targetImp, intervals, 
                cx1, cy1, cx2, cy2, outputTransformation_x, outputTransformation_y);
        
        
-       bUnwarpJMiscTools.saveRawTransformation(fn_tnf_raw, targetImp.getWidth(), 
+       MiscTools.saveRawTransformation(fn_tnf_raw, targetImp.getWidth(), 
                targetImp.getHeight(), outputTransformation_x, outputTransformation_y);       
        
     } /* end method composeElasticTransformationsCommandLine */
@@ -1655,24 +1826,24 @@ public class bUnwarpJ_ implements PlugIn
        // We load the transformation raw file.
        double[][] transformation_x_1 = new double[targetImp.getHeight()][targetImp.getWidth()];
        double[][] transformation_y_1 = new double[targetImp.getHeight()][targetImp.getWidth()];
-       bUnwarpJMiscTools.loadRawTransformation(fn_tnf_raw_in, transformation_x_1, transformation_y_1);              
+       MiscTools.loadRawTransformation(fn_tnf_raw_in, transformation_x_1, transformation_y_1);              
 
-       int intervals = bUnwarpJMiscTools.numberOfIntervalsOfTransformation(fn_tnf_elastic);
+       int intervals = MiscTools.numberOfIntervalsOfTransformation(fn_tnf_elastic);
 
        double [][]cx2 = new double[intervals+3][intervals+3];
        double [][]cy2 = new double[intervals+3][intervals+3];
 
-       bUnwarpJMiscTools.loadTransformation(fn_tnf_elastic, cx2, cy2);
+       MiscTools.loadTransformation(fn_tnf_elastic, cx2, cy2);
        
        double [][] outputTransformation_x = new double[targetImp.getHeight()][targetImp.getWidth()];
        double [][] outputTransformation_y = new double[targetImp.getHeight()][targetImp.getWidth()];
              
        // Now we compose them and get as result a raw transformation mapping.
-       bUnwarpJMiscTools.composeRawElasticTransformations(targetImp, intervals, 
+       MiscTools.composeRawElasticTransformations(targetImp, intervals, 
                transformation_x_1, transformation_y_1, cx2, cy2, outputTransformation_x, outputTransformation_y);
        
        
-       bUnwarpJMiscTools.saveRawTransformation(fn_tnf_raw_out, targetImp.getWidth(), 
+       MiscTools.saveRawTransformation(fn_tnf_raw_out, targetImp.getWidth(), 
                targetImp.getHeight(), outputTransformation_x, outputTransformation_y);       
        
     } /* end method composeRawElasticTransformationsCommandLine */

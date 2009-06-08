@@ -27,7 +27,7 @@ import ij.process.FloatProcessor;
 /**
  * Class to launch the registration in bUnwarpJ.
  */
-public class bUnwarpJFinalAction implements Runnable
+public class FinalAction implements Runnable
 {
     /*....................................................................
        Private variables
@@ -36,7 +36,7 @@ public class bUnwarpJFinalAction implements Runnable
     /** thread to run the registration method */
     private Thread t;
     /** dialog for bUnwarpJ interface */
-    private bUnwarpJDialog dialog;
+    private MainDialog dialog;
 
     // Images
     /** image representation for the source */
@@ -44,21 +44,21 @@ public class bUnwarpJFinalAction implements Runnable
     /** image representation for the target */
     private ImagePlus                      targetImp;
     /** source image model */
-    private bUnwarpJImageModel   source;
+    private BSplineModel   source;
     /** target image model */
-    private bUnwarpJImageModel   target;
+    private BSplineModel   target;
 
     // Landmarks
     /** point handler for the landmarks in the source image*/
-    private bUnwarpJPointHandler sourcePh;
+    private PointHandler sourcePh;
     /** point handler for the landmarks in the target image*/
-    private bUnwarpJPointHandler targetPh;
+    private PointHandler targetPh;
 
     // Masks for the images
     /** source image mask */
-    private bUnwarpJMask sourceMsk;
+    private Mask sourceMsk;
     /** target image mask */
-    private bUnwarpJMask targetMsk;
+    private Mask targetMsk;
 
     // Initial affine matrices
     /** source initial affine matrix */
@@ -101,10 +101,10 @@ public class bUnwarpJFinalAction implements Runnable
     /**
      * Start a thread under the control of the main event loop. This thread
      * has access to the progress bar, while methods called directly from
-     * within <code>bUnwarpJDialog</code> do not because they are
+     * within <code>MainDialog</code> do not because they are
      * under the control of its own event loop.
      */
-    public bUnwarpJFinalAction (final bUnwarpJDialog dialog)
+    public FinalAction (final MainDialog dialog)
     {
        this.dialog = dialog;
        t = new Thread(this);
@@ -115,7 +115,7 @@ public class bUnwarpJFinalAction implements Runnable
     /**
      * Get the thread.
      *
-     * @return the thread associated with this <code>bUnwarpJFinalAction</code>
+     * @return the thread associated with this <code>FinalAction</code>
      *         object
      */
     public Thread getThread ()
@@ -131,8 +131,8 @@ public class bUnwarpJFinalAction implements Runnable
     {
     	// Start pyramids
     	IJ.showStatus("Starting image pyramids...");
-    	if(target.getWidth() > bUnwarpJImageModel.MAX_OUTPUT_SIZE || target.getHeight() > bUnwarpJImageModel.MAX_OUTPUT_SIZE
-    		|| source.getWidth() > bUnwarpJImageModel.MAX_OUTPUT_SIZE || source.getHeight() > bUnwarpJImageModel.MAX_OUTPUT_SIZE)
+    	if(target.getWidth() > BSplineModel.MAX_OUTPUT_SIZE || target.getHeight() > BSplineModel.MAX_OUTPUT_SIZE
+    		|| source.getWidth() > BSplineModel.MAX_OUTPUT_SIZE || source.getHeight() > BSplineModel.MAX_OUTPUT_SIZE)
     		IJ.log("Starting image pyramids...");
     	
 		source.startPyramids();
@@ -145,11 +145,11 @@ public class bUnwarpJFinalAction implements Runnable
 		final ImagePlus [] output_ip = initializeOutputIPs();
 		
         // If mono mode, reset consistency weight
-        if(this.accurate_mode == bUnwarpJDialog.MONO_MODE)
+        if(this.accurate_mode == MainDialog.MONO_MODE)
         	this.consistencyWeight = 0.0;
         
         // Prepare registration parameters
-        final bUnwarpJTransformation warp = new bUnwarpJTransformation(
+        final Transformation warp = new Transformation(
           sourceImp, targetImp, source, target, sourcePh, targetPh,
           sourceMsk, targetMsk, sourceAffineMatrix, targetAffineMatrix,
           min_scale_deformation, max_scale_deformation,
@@ -164,7 +164,7 @@ public class bUnwarpJFinalAction implements Runnable
         
         long start = System.currentTimeMillis(); // start timing
         
-        if(this.accurate_mode == bUnwarpJDialog.MONO_MODE)     
+        if(this.accurate_mode == MainDialog.MONO_MODE)     
         {
         	// Do unidirectional registration
         	warp.doUnidirectionalRegistration();
@@ -211,8 +211,8 @@ public class bUnwarpJFinalAction implements Runnable
 
     /* ------------------------------------------------------------------------ */
     /**
-     * Pass parameter from <code>bUnwarpJDialog</code> to
-     * <code>bUnwarpJFinalAction</code>.
+     * Pass parameter from <code>MainDialog</code> to
+     * <code>FinalAction</code>.
      *
      * @param sourceImp image representation for the source
      * @param targetImp image representation for the target
@@ -241,12 +241,12 @@ public class bUnwarpJFinalAction implements Runnable
     public void setup (
        final ImagePlus sourceImp,
        final ImagePlus targetImp,
-       final bUnwarpJImageModel source,
-       final bUnwarpJImageModel target,
-       final bUnwarpJPointHandler sourcePh,
-       final bUnwarpJPointHandler targetPh,
-       final bUnwarpJMask sourceMsk,
-       final bUnwarpJMask targetMsk,
+       final BSplineModel source,
+       final BSplineModel target,
+       final PointHandler sourcePh,
+       final PointHandler targetPh,
+       final Mask sourceMsk,
+       final Mask targetMsk,
        final double[][] sourceAffineMatrix,
        final double[][] targetAffineMatrix,
        final int min_scale_deformation,
@@ -368,7 +368,7 @@ public class bUnwarpJFinalAction implements Runnable
 
         // Create output image (target-source) if necessary                        
         
-        if(this.accurate_mode != bUnwarpJDialog.MONO_MODE)
+        if(this.accurate_mode != MainDialog.MONO_MODE)
         {
         	final FloatProcessor fp2 = new FloatProcessor(Xdims, Ydims);
         	float[] f_array_2 = (float[]) fp2.getPixels();
@@ -401,4 +401,4 @@ public class bUnwarpJFinalAction implements Runnable
         return outputIP;
     }
 
-} /* end bUnwarpJFinalAction*/
+} /* end FinalAction*/

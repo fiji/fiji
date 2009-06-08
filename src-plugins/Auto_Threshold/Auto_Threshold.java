@@ -14,6 +14,7 @@ import ij.plugin.*;
 // 1.5  2009/Apr/12 Mean method, MinimumErrorIterative method , enahanced Triangle 
 // 1.6  2009/Apr/14 Reverted IsoData to a copy of IJ's code as the other version does not always return the same value as IJ
 // 1.7  2009/Apr/14 small fixes, restore histogram in Triangle if reversed
+//1.8 2009/Jun/01 Set the threshold to foreground colour
                 
 public class Auto_Threshold implements PlugIn {
         /** Ask for parameters and then execute.*/
@@ -34,7 +35,7 @@ public class Auto_Threshold implements PlugIn {
 		 // 2 - Ask for parameters:
 		GenericDialog gd = new GenericDialog("Auto Threshold");
 //		String [] methods={"Bernsen", "Huang", "Intermodes", "IsoData",  "Li", "MaxEntropy", "MinError", "Minimum", "Moments", "Niblack", "Otsu", "Percentile", "RenyiEntropy", "Sauvola", "Shanbhag" , "Triangle", "Yen"};
-		gd.addMessage("Auto Threshold v1.7");
+		gd.addMessage("Auto Threshold v1.8");
 		String [] methods={"Try all", "Huang", "Intermodes", "IsoData",  "Li", "MaxEntropy","Mean", "MinError(I)", "Minimum", "Moments", "Otsu", "Percentile", "RenyiEntropy", "Shanbhag" , "Triangle", "Yen"};
 		gd.addChoice("Method", methods, methods[0]);
 		String[] labels = new String[2];
@@ -51,6 +52,7 @@ public class Auto_Threshold implements PlugIn {
 			gd.addCheckbox("Stack",false);
 			gd.addCheckbox("Use_stack_histogram",false);
 		}
+		gd.addMessage("Thresholded result is always shown in white [255].");
 		gd.showDialog();
 		if (gd.wasCanceled()) return;
  
@@ -323,6 +325,7 @@ public class Auto_Threshold implements PlugIn {
 						}
 					}
 				}
+				imp.getProcessor().setThreshold(255, 255, ImageProcessor.NO_LUT_UPDATE);
 			}
 		}
 		//IJ.showProgress((double)(255-i)/255);

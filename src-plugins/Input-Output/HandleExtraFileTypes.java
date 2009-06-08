@@ -161,13 +161,6 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 			return tryPlugIn("QT_Movie_Opener", path);
 		}
 
-		// ZVI file handler
-		// Little-endian ZVI and Thumbs.db files start with d0 cf 11 e0
-		// so we can only look at the extension.
-		if (name.endsWith(".zvi")) {
-			return tryPlugIn("ZVI_Reader", path);
-		}
-
 		// University of North Carolina (UNC) file format handler
 		// 'magic' numbers are (int) offsets to data structures and
 		// may change in future releases.
@@ -266,6 +259,10 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 		// Johannes Schindelin: render an .svg image into an ImagePlus
 		if (name.endsWith(".svg"))
 			return tryPlugIn("io.SVG_Reader", path);
+
+		// Johannes Schindelin: open an LSS16 (SYSLINUX) image
+		if (name.endsWith(".lss"))
+			return tryPlugIn("io.LSS16_Reader", path);
 
 		// Johannes Schindelin: handle scripts
 		if (name.endsWith(".py"))
