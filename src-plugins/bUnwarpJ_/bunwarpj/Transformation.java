@@ -5805,7 +5805,7 @@ public class Transformation
 	}	/* end showTransformation */
 	
 	/*------------------------------------------------------------------*/
-	/*
+	/**
 	 * Method to update both current outputs
 	 * (source-target and target-source).
 	 *
@@ -5837,12 +5837,12 @@ public class Transformation
 		update_current_output(x2, intervals, true);
 	}
 	/*------------------------------------------------------------------*/
-	/*
+	/**
 	 * Method to update a current output (multi-thread).
 	 *
 	 * @param c B-spline coefficients
 	 * @param intervals number of intervals in the deformation
-	 * @param flag to decide the deformation direction (source-target, target-source)
+	 * @param bIsReverse flag to decide the deformation direction (source-target, target-source)
 	 */
 	private void update_current_output(
 			final double []c,

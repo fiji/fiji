@@ -28,7 +28,6 @@ import mpicbg.ij.SIFT;
 import mpicbg.ij.util.Util;
 import mpicbg.imagefeatures.*;
 import mpicbg.models.AffineModel2D;
-import mpicbg.models.IllDefinedDataPointsException;
 import mpicbg.models.Model;
 import mpicbg.models.MovingLeastSquaresTransform;
 import mpicbg.models.NotEnoughDataPointsException;
@@ -41,7 +40,6 @@ import mpicbg.models.RigidModel2D;
 import mpicbg.trakem2.transform.TransformMesh;
 import mpicbg.trakem2.transform.TransformMeshMapping;
 
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -57,10 +55,10 @@ import bunwarpj.trakem2.transform.CubicBSplineTransform;
  * Requires: a directory with images, all of the same dimensions
  * Performs: registration of one image to the next, by 6 different registration models:
  * 				- Translation (no deformation)
- * 				- Rigid (transation + rotation)
+ * 				- Rigid (translation + rotation)
  * 				- Similarity (translation + rotation + isotropic scaling)
  * 				- Affine (free affine transformation)
- * 				- Elsatic (consistent elastic deformations by B-splines)
+ * 				- Elastic (consistent elastic deformations by B-splines)
  * 				- Moving least squares (maximal warping)
  * Outputs: the list of new images, one for slice, into a target directory as .tif files.
  */
@@ -68,17 +66,19 @@ public class Register_Virtual_Stack_MT implements PlugIn
 {
 
 	// Registration types
-	static public final int TRANSLATION = 0;
-	static public final int RIGID = 1;
-	static public final int SIMILARITY = 2;
-	static public final int AFFINE = 3;
-	static public final int ELASTIC = 4;
-	static public final int MOVING_LEAST_SQUARES = 5;
+	static public final int TRANSLATION 			= 0;
+	static public final int RIGID 					= 1;
+	static public final int SIMILARITY 				= 2;
+	static public final int AFFINE 					= 3;
+	static public final int ELASTIC 				= 4;
+	static public final int MOVING_LEAST_SQUARES 	= 5;
 	
 	public static int featuresModelIndex = 1;
 	public static int registrationModelIndex = 1;
 	public static String currentDirectory = (OpenDialog.getLastDirectory() == null) ? 
 					 OpenDialog.getDefaultDirectory() : OpenDialog.getLastDirectory();
+	public static boolean advanced = false;
+					 
 
 	static final public String[] registrationModelStrings =
 			       {"Translation          -- no deformation                      ",
@@ -100,7 +100,8 @@ public class Register_Virtual_Stack_MT implements PlugIn
 
 		gd.addChoice("Feature extraction model: ", featuresModelStrings, featuresModelStrings[featuresModelIndex]);
 		gd.addChoice("Registration model: ", registrationModelStrings, registrationModelStrings[registrationModelIndex]);
-		gd.addCheckbox("Advanced setup", false);
+		gd.addCheckbox("Advanced setup", advanced);	
+		
 		gd.showDialog();
 		
 		// Exit when canceled
@@ -109,7 +110,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 				
 		featuresModelIndex = gd.getNextChoiceIndex();
 		registrationModelIndex = gd.getNextChoiceIndex();
-		final boolean advanced = gd.getNextBoolean();
+		advanced = gd.getNextBoolean();
 
 		// Choose source image folder
 		JFileChooser chooser = new JFileChooser();
@@ -230,7 +231,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		final public FloatArray2DSIFT.Param sift = new FloatArray2DSIFT.Param();
 		
 		/**
-		 * Closest/next closest neighbour distance ratio
+		 * Closest/next closest neighbor distance ratio
 		 */
 		public float rod = 0.92f;
 		
@@ -374,51 +375,55 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			ImagePlus imp1mask = new ImagePlus();
 			ImagePlus imp2mask = new ImagePlus();
 			
-			
+			// Common bounds to create common frame for all images
 			final Rectangle commonBounds = new Rectangle(0, 0, imp2.getWidth(), imp2.getHeight());
-			final List<Rectangle> bounds = new ArrayList<Rectangle>();
-			bounds.add(new Rectangle(0, 0, imp2.getWidth(), imp2.getHeight()));
+			// List of bounds in the forward registration
+			final List<Rectangle> boundsFor = new ArrayList<Rectangle>();
+			boundsFor.add(new Rectangle(0, 0, imp2.getWidth(), imp2.getHeight()));
 			
 			// Save the first image, untouched:
 			exe.submit(saveImage(imp2, makeTargetPath(target_dir, sorted_file_names[referenceIndex])));
 
 			// For each image, extract features, register with previous one and save the transformed image.
 			
-			// FORWARD REGISTRATION
-			
+			// Forward registration (from reference image to the end of the sequence)			
 			for (int i=referenceIndex+1; i<sorted_file_names.length; i++) 
 			{
+				// Shift images
 				imp1 = imp2;
 				imp1mask = imp2mask;
+				// Create empty mask for second image
 				imp2mask = new ImagePlus();
 				imp2 = IJ.openImage(source_dir + sorted_file_names[i]);
-				
+				// Register
 				if(!register( imp1, imp2, imp1mask, imp2mask, i, sorted_file_names,
-						  source_dir, target_dir, exe, p, t, commonBounds, bounds, referenceIndex))
+						  source_dir, target_dir, exe, p, t, commonBounds, boundsFor, referenceIndex))
 					return;
 			}
 			
-			// BACKWARD REGISTRATION
+			// Backward registration (from reference image to the beginning of the sequence)
 			imp2 = IJ.openImage(source_dir + sorted_file_names[referenceIndex]);
 			final List<Rectangle> boundsBack = new ArrayList<Rectangle>();
 			boundsBack.add(new Rectangle(0, 0, imp2.getWidth(), imp2.getHeight()));
 			
 			for (int i = referenceIndex-1; i >= 0; i--) 
 			{
+				// Shift images
 				imp1 = imp2;
 				imp1mask = imp2mask;
+				// Create empty mask for second image
 				imp2mask = new ImagePlus();
 				imp2 = IJ.openImage(source_dir + sorted_file_names[i]);
-				
+				// Register
 				if(!register( imp1, imp2, imp1mask, imp2mask, i, sorted_file_names,
 						  source_dir, target_dir, exe, p, t, commonBounds, boundsBack, referenceIndex))
 					return;
 			}
 			
 			// Adjust Forward bounds
-			for ( int i = 0; i < bounds.size(); ++i )
+			for ( int i = 0; i < boundsFor.size(); ++i )
 			{
-				final Rectangle b = bounds.get(i);
+				final Rectangle b = boundsFor.get(i);
 				b.x = -commonBounds.x + b.x;
 				b.y = -commonBounds.y + b.y;
 			}
@@ -435,7 +440,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			final Future[] jobs = new Future[sorted_file_names.length];
 			for (int j = 0, i=referenceIndex; i<sorted_file_names.length; i++, j++) 
 			{
-				final Rectangle b = bounds.get(j);
+				final Rectangle b = boundsFor.get(j);
 				jobs[i] = exe.submit(resizeAndSaveImage(makeTargetPath(target_dir, sorted_file_names[i]), b.x, b.y, commonBounds.width, commonBounds.height));
 			}
 			
@@ -457,13 +462,13 @@ public class Register_Virtual_Stack_MT implements PlugIn
 				stack.addSlice(filename);
 			}
 
-			// Show
+			// Show registered stack
 			new ImagePlus("Registered " + new File(source_dir).getName(), stack).show();
 
 			IJ.showStatus("Done!");
 
 		} catch (Exception e) {
-			IJ.log("ERROR: " + e);
+			IJ.error("ERROR: " + e);
 			e.printStackTrace();
 		} finally {
 			IJ.showProgress(1);
@@ -471,9 +476,16 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		}
 	} // end method exec
 
-	/** 
-	 * Returns the file name of the saved image, or null if there was an error. 
-	 * */
+	/**
+	 * Resize an image to a new size and save it 
+	 * 
+	 * @param path saving path
+	 * @param x x- image origin (offset)
+	 * @param y y- image origin (offset)
+	 * @param width final image width
+	 * @param height final image height
+	 * @return file name of the saved image, or null if there was an error
+	 */
 	static private Callable<String> resizeAndSaveImage(final String path, final int x, final int y, final int width, final int height) 
 	{
 		return new Callable<String>() {
@@ -486,7 +498,8 @@ public class Register_Virtual_Stack_MT implements PlugIn
 					}
 					final ImageProcessor ip = imp.getProcessor().createProcessor(width, height);
 					// Color images are white by default: fill with black
-					if (imp.getType() == ImagePlus.COLOR_RGB) {
+					if (imp.getType() == ImagePlus.COLOR_RGB) 
+					{
 						ip.setRoi(0, 0, width, height);
 						ip.setValue(0);
 						ip.fill();
@@ -505,15 +518,31 @@ public class Register_Virtual_Stack_MT implements PlugIn
 				}
 			}
 		};
-	}
+	} // end resizeAndSaveImage method
 
-	static private String makeTargetPath(final String dir, final String name) {
+	/**
+	 * Make target (output) path
+	 * 
+	 * @param dir output directory
+	 * @param name output name
+	 * @return complete path for the target image
+	 */
+	static private String makeTargetPath(final String dir, final String name) 
+	{
 		String filepath = dir + name;
-		if (! name.toLowerCase().matches("^.*ti[f]{1,2}$")) filepath += ".tif";
+		if (! name.toLowerCase().matches("^.*ti[f]{1,2}$")) 
+			filepath += ".tif";
 		return filepath;
 	}
 
 
+	/**
+	 * Generate object to concurrently extract features
+	 * 
+	 * @param p feature extraction parameters
+	 * @param ip input image
+	 * @return callable object to execute feature extraction
+	 */
 	static private Callable<ArrayList<Feature>> extractFeatures(final Param p, final ImageProcessor ip) {
 		return new Callable<ArrayList<Feature>>() {
 			public ArrayList<Feature> call() {
@@ -524,7 +553,15 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		};
 	}
 
-	static private Callable<Boolean> saveImage(final ImagePlus imp, final String path) {
+	/**
+	 * Generate object to concurrently save an image
+	 * 
+	 * @param imp image to save
+	 * @param path output path
+	 * @return callable object to execute the saving
+	 */
+	static private Callable<Boolean> saveImage(final ImagePlus imp, final String path) 
+	{
 		return new Callable<Boolean>() {
 			public Boolean call() {
 				try {
@@ -538,22 +575,24 @@ public class Register_Virtual_Stack_MT implements PlugIn
 	}
 	
 	/**
+	 * Register two images with corresponding masks and 
+	 * following the features and registration models.
 	 * 
-	 * @param imp1
-	 * @param imp2
-	 * @param imp1mask
-	 * @param imp2mask
-	 * @param i
-	 * @param sorted_file_names
-	 * @param source_dir
-	 * @param target_dir
-	 * @param exe
-	 * @param p
-	 * @param t
-	 * @param commonBounds
-	 * @param bounds
-	 * @param referenceIndex
-	 * @return
+	 * @param imp1 target image
+	 * @param imp2 source image
+	 * @param imp1mask target mask
+	 * @param imp2mask source mask
+	 * @param i index in the loop of images (just to show information)
+	 * @param sorted_file_names array of sorted source file names
+	 * @param source_dir source directory
+	 * @param target_dir target (output) directory
+	 * @param exe executor service to save the images
+	 * @param p registration parameters
+	 * @param t coordinate transform
+	 * @param commonBounds current common bounds of the registration space
+	 * @param bounds list of bounds for the already registered images
+	 * @param referenceIndex index of the reference image
+	 * @return false if there is an error, true otherwise
 	 * @throws Exception
 	 */
 	public static boolean register(
@@ -572,20 +611,15 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			List<Rectangle> bounds,
 			final int referenceIndex) throws Exception
 	{
-		
+		// Extract SIFT features
 		IJ.showStatus("Registering slice " + (i+1) + "/" + sorted_file_names.length);		
 		Future<ArrayList<Feature>> fu1 = exe.submit(extractFeatures(p, imp1.getProcessor()));
 		Future<ArrayList<Feature>> fu2 = exe.submit(extractFeatures(p, imp2.getProcessor()));
 		ArrayList<Feature> fs1 = fu1.get();
 		ArrayList<Feature> fs2 = fu2.get();
-
-		/*
-		IJ.log("features for imp1: " + fs1.size());
-		IJ.log("features for imp2: " + fs2.size());
-		*/
 		
 		final List< PointMatch > candidates = new ArrayList< PointMatch >();
-		FeatureTransform.matchFeatures( fs1, fs2, candidates, p.rod );
+		FeatureTransform.matchFeatures( fs2, fs1, candidates, p.rod );
 
 		final List< PointMatch > inliers = new ArrayList< PointMatch >();
 
@@ -606,10 +640,11 @@ public class Register_Virtual_Stack_MT implements PlugIn
 				featuresModel = new AffineModel2D();
 				break;
 			default:
-				IJ.log("ERROR: unknown featuresModelIndex = " + p.featuresModelIndex);
+				IJ.error("ERROR: unknown featuresModelIndex = " + p.featuresModelIndex);
 				return false;
 		}
 			
+		// Filter candidates into inliers
 		try {
 			featuresModel.filterRansac(
 					candidates,
@@ -617,25 +652,23 @@ public class Register_Virtual_Stack_MT implements PlugIn
 					1000,
 					p.maxEpsilon,
 					p.minInlierRatio );
-		} catch ( NotEnoughDataPointsException e ) {
-			IJ.log("No features model found for file " + i + ": " + sorted_file_names[i]);
+		} 
+		catch ( NotEnoughDataPointsException e ) 
+		{
+			IJ.error("No features model found for file " + i + ": " + sorted_file_names[i]);
 			return false;
 		}
-		
-		/*
-		IJ.log("inliers = " +inliers.size() + " candidates = " + candidates.size());
-		IJ.log("imp1: " + imp1);
-		IJ.log("imp2: " + imp2);
-		 */
+	
 		// Generate registered image, put it into imp2 and save it
-		switch (p.registrationModelIndex) {
-			case 0:
-			case 1:
-			case 2:
-			case 3:
+		switch (p.registrationModelIndex) 
+		{
+			case Register_Virtual_Stack_MT.TRANSLATION:
+			case Register_Virtual_Stack_MT.SIMILARITY:
+			case Register_Virtual_Stack_MT.RIGID:
+			case Register_Virtual_Stack_MT.AFFINE:
 				((Model<?>)t).fit(inliers);
 				break;
-			case 4:
+			case Register_Virtual_Stack_MT.ELASTIC:
 				// set inliers as a PointRoi, and set masks
 				//call_bUnwarpJ(...);
 				//imp1.show();
@@ -645,26 +678,22 @@ public class Register_Virtual_Stack_MT implements PlugIn
 				PointMatch.sourcePoints( inliers, sourcePoints );
 				PointMatch.targetPoints( inliers, targetPoints );
 				
-				imp1.setRoi( Util.pointsToPointRoi(sourcePoints) );
-				imp2.setRoi( Util.pointsToPointRoi(targetPoints) );
+				imp2.setRoi( Util.pointsToPointRoi(sourcePoints) );
+				imp1.setRoi( Util.pointsToPointRoi(targetPoints) );
 				
-				/*
-				imp1.show();
-				ImagePlus aux = new ImagePlus("source", imp2.getProcessor().duplicate());
-				aux.setRoi( Util.pointsToPointRoi(targetPoints) );
-				aux.show();
-				if(imp1mask != null) new ImagePlus("mask", imp1mask).show();
-				*/
+				
+				//imp1.show();
+				//ImagePlus aux = new ImagePlus("source", imp2.getProcessor().duplicate());
+				//aux.setRoi( Util.pointsToPointRoi(targetPoints) );
+				//aux.show();
+				//if(imp1mask != null) new ImagePlus("mask", imp1mask).show();
+				
 				
 				// Perform registration
 				ImageProcessor mask1 = imp1mask.getProcessor() == null ? null : imp1mask.getProcessor();
 				ImageProcessor mask2 = imp2mask.getProcessor() == null ? null : imp2mask.getProcessor();
 				
 				Transformation warp = bUnwarpJ_.computeTransformationBatch(imp2, imp1, mask2, mask1, p.elastic_param);
-				
-				  /*= (bunwarpj.Transformation) Class.forName("bUnwarpJ_").getDeclaredMethod("computeTransformationBatch", 
-						  ImagePlus.class, ImagePlus.class, ImageProcessor.class, ImageProcessor.class, 
-						  bunwarpj.Param.class).invoke(null, new Object[]{imp2, imp1, imp2mask, imp1mask, p.elastic_param}); */
 				
 				// take the mask from the results
 				//final ImagePlus output_ip = warp.getDirectResults();
@@ -676,26 +705,28 @@ public class Register_Virtual_Stack_MT implements PlugIn
 				t = new CubicBSplineTransform(warp.getIntervals(), warp.getDirectDeformationCoefficientsX(), warp.getDirectDeformationCoefficientsY(),
                 		imp2.getWidth(), imp2.getHeight());
 				break;
-			case 5:
+			case Register_Virtual_Stack_MT.MOVING_LEAST_SQUARES:
 				((MovingLeastSquaresTransform)t).setModel(AffineModel2D.class);
 				((MovingLeastSquaresTransform)t).setAlpha(1); // smoothness
 				((MovingLeastSquaresTransform)t).setMatches(inliers);
 				break;
 		}
 
+		// Calculate transform mesh
 		TransformMesh mesh = new TransformMesh(t, 32, imp2.getWidth(), imp2.getHeight());
 		TransformMeshMapping mapping = new TransformMeshMapping(mesh);
 		
-		// Create interpolated mask
-		imp2mask.setProcessor(imp2mask.getTitle(), new ByteProcessor(imp2.getWidth(), imp2.getHeight()));
-		imp2mask.getProcessor().setValue(255);
-		imp2mask.getProcessor().fill();
-		imp2mask.setProcessor(imp2mask.getTitle(), mapping.createMappedImageInterpolated(imp2mask.getProcessor() ) );
-		
-		// Create interpolated image with black background
+		// Create interpolated mask (only for elastic registration)
+		if(p.registrationModelIndex == Register_Virtual_Stack_MT.ELASTIC)
+		{
+			imp2mask.setProcessor(imp2mask.getTitle(), new ByteProcessor(imp2.getWidth(), imp2.getHeight()));
+			imp2mask.getProcessor().setValue(255);
+			imp2mask.getProcessor().fill();
+			imp2mask.setProcessor(imp2mask.getTitle(), mapping.createMappedImageInterpolated(imp2mask.getProcessor() ) );
+		}
+		// Create interpolated deformed image with black background
 		imp2.getProcessor().setValue(0);
 		imp2.setProcessor(imp2.getTitle(), mapping.createMappedImageInterpolated(imp2.getProcessor()));						
-
 
 		// Accumulate bounding boxes, so in the end they can be reopened and re-saved with an enlarged canvas.
 		final Rectangle currentBounds = mesh.getBoundingBox();
@@ -714,9 +745,8 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		if(currentBounds.y + currentBounds.height > commonBounds.y + commonBounds.height)
 			commonBounds.height = currentBounds.y + currentBounds.height - commonBounds.y;
 		
-		exe.submit(saveImage(imp2, makeTargetPath(target_dir, sorted_file_names[i])));
-
-		IJ.showProgress(i / (float)sorted_file_names.length);
+		// Save target image
+		exe.submit(saveImage(imp2, makeTargetPath(target_dir, sorted_file_names[i])));		
 		return true;
 	} //end method register
 	
