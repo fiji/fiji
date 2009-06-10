@@ -61,6 +61,7 @@ public class ScriptRunner {
 	static public boolean runBSH(final String path, final Map<String,Object> vars) {
 		try {
 			Interpreter bsh = new Interpreter();
+			bsh.setClassLoader(IJ.getClassLoader());
 			if (null != vars) {
 				for (final Map.Entry<String,Object> e : vars.entrySet()) {
 					bsh.set(e.getKey(), e.getValue());
