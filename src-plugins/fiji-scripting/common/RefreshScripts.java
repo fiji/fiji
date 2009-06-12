@@ -72,7 +72,9 @@ import java.io.FileReader;
  */
 abstract public class RefreshScripts implements PlugIn {
 	static {
-		System.setProperty("java.class.path", getPluginsClasspath());
+		if (IJ.getInstance() != null)
+			System.setProperty("java.class.path",
+					getPluginsClasspath());
 	}
 
 	protected String scriptExtension;
