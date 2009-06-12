@@ -350,15 +350,10 @@ abstract public class RefreshScripts implements PlugIn {
 
 	/** Converts 'My_python_script.py' to 'My python script'*/
 	private String strip(String file_name) {
-		StringBuffer name = new StringBuffer(file_name);
-		int i_extension = file_name.indexOf(scriptExtension);
-		//don't cut the extension if the .py is some internal part of the name
-		if (-1 != i_extension && ((file_name.length()-scriptExtension.length()) == i_extension)) {
-			//cut extension
-			name.setLength(i_extension);
-		}
-		String result = name.toString();
-		return result.replace('_',' ');
+		if (file_name.endsWith(scriptExtension))
+			file_name = file_name.substring(0,
+				file_name.length() - scriptExtension.length());
+		return file_name.replace('_',' ');
 	}
 
 	/** Run the script in a new thread. */
