@@ -49,10 +49,6 @@
 /plugins/VIB_.jar
 /plugins/TrakEM2_.jar
 /plugins/mpicbg_.jar
-/plugins/Analyze/Grid_.class
-/plugins/Examples/Example_Plot.class
-/plugins/Filters/Preprocessor_Smooth.class
-/plugins/Input-Output/HandleExtraFileTypes.class
 /plugins/Analyze_Reader_Writer.jar
 /plugins/Color_Histogram.jar
 /plugins/Color_Inspector_3D.jar

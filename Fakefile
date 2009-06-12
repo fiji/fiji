@@ -119,8 +119,6 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/AnalyzeSkeleton_.jar \
 	plugins/Skeletonize3D_.jar \
 	plugins/TurboReg_.jar \
-	plugins/Analyze/Grid_.class \
-	plugins/Input-Output/HandleExtraFileTypes.class \
 	plugins/Bug_Submitter.jar \
 	plugins/Fiji_Plugins.jar \
 	plugins/ToAST_.jar \
@@ -220,8 +218,6 @@ plugins/CLI_.jar <- src-plugins/CLI_/CLI/*.java
 CLASSPATH(plugins/IO_.jar)=jars/batik.jar
 CLASSPATH(plugins/Sync_Win.jar)=plugins/Image_5D.jar
 plugins/*_*.jar <- src-plugins/*_*/**/*.java
-
-plugins/**/*.class <- src-plugins/**/*.java
 
 MAINCLASS(jars/javac.jar)=com.sun.tools.javac.Main
 JAVAVERSION(jars/javac.jar)=1.5
