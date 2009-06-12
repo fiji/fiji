@@ -874,6 +874,41 @@ int build_classpath(string &result, string jar_directory, int no_error) {
 	return 0;
 }
 
+static string set_property(JNIEnv *env, const char *key, const char *value)
+{
+	static jclass system_class = NULL;
+	static jmethodID set_property_method = NULL;
+
+	if (!system_class) {
+		system_class = env->FindClass("java/lang/System");
+		if (!system_class)
+			return "";
+	}
+
+	if (!set_property_method) {
+		set_property_method = env->GetStaticMethodID(system_class,
+				"setProperty",
+				"(Ljava/lang/String;Ljava/lang/String;)"
+				"Ljava/lang/String;");
+		if (!set_property_method)
+			return "";
+	}
+
+	jstring result =
+		(jstring)env->CallStaticObjectMethod(system_class,
+				set_property_method,
+				env->NewStringUTF(key),
+				env->NewStringUTF(value));
+	string previous;
+	if (result) {
+		const char *chars = env->GetStringUTFChars(result, NULL);
+		previous = string(chars);
+		env->ReleaseStringUTFChars(result, chars);
+	}
+
+	return previous;
+}
+
 struct string_array {
 	char **list;
 	int nr, alloc;
@@ -1700,7 +1735,20 @@ static int start_ij(void)
 	for (int i = 1; i < main_argc; i++)
 		add_option(options, main_argv[i], 1);
 
+	const char *properties[] = {
+		"fiji.dir", fiji_dir,
+		"fiji.defaultLibPath", JAVA_LIB_PATH,
+		NULL
+	};
+
 	if (options.debug) {
+		for (int i = 0; properties[i]; i += 2) {
+			stringstream property;
+			property << "-D" << properties[i]
+				<< "=" << properties[i + 1];
+			add_option(options, property, 0);
+		}
+
 		show_commandline(options);
 		exit(0);
 	}
@@ -1734,6 +1782,9 @@ static int start_ij(void)
 		jclass instance;
 		jmethodID method;
 		jobjectArray args;
+
+		for (int i = 0; properties[i]; i += 2)
+			set_property(env, properties[i], properties[i + 1]);
 
 		string slashed(main_class);
 		replace(slashed.begin(), slashed.end(), '.', '/');
@@ -1770,6 +1821,13 @@ static int start_ij(void)
 		append_icon_path(icon_option);
 		add_option(options, icon_option, 0);
 #endif
+
+		for (int i = 0; properties[i]; i += 2) {
+			stringstream property;
+			property << "-D" << properties[i]
+				<< "=" << properties[i + 1];
+			add_option(options, property, 0);
+		}
 
 		/* fall back to system-wide Java */
 		add_option(options, main_class, 0);
