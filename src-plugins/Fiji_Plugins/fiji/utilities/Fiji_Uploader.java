@@ -63,18 +63,11 @@ public class Fiji_Uploader implements PlugIn {
 			HostKey hostKey = new HostKey(host, hostKeyType,
 				getHostKeyBytes());
 			jsch.getHostKeyRepository().add(hostKey, null);
-{HostKey[] keys = jsch.getHostKeyRepository().getHostKey();
-for (int i = 0; i < keys.length; i++) System.err.println("key " + i + ": " +
-keys[i].getKey());}
 
 			Session session = jsch.getSession(user, host, 22);
 			session.setPassword(pwd);
-			session.setUserInfo(new FijiUserInfo());
 			session.connect();
 
-HostKey[] keys = jsch.getHostKeyRepository().getHostKey();
-for (int i = 0; i < keys.length; i++) System.err.println("key " + i + ": " +
-keys[i].getKey());
 			// exec 'scp -t file' remotely
 			String path = file.getName().replace(' ', '_');
 			String command = "scp -p -t incoming/" + path;
@@ -154,7 +147,6 @@ keys[i].getKey());
 		return b;
 	}
 
-public static void main(String[] args) { new Fiji_Uploader().getHostKeyBytes(); }
 	byte[] getHostKeyBytes() {
 		byte[] result = new byte[hostKey.length() / 3];
 		for (int i = 0; i < result.length; i++)
@@ -171,15 +163,5 @@ public static void main(String[] args) { new Fiji_Uploader().getHostKeyBytes(); 
 		if (c >= 'A' && c <= 'F')
 			return c - 'A' + 10;
 		throw new RuntimeException("Illegal hex character: " + c);
-	}
-
-	static class FijiUserInfo implements UserInfo {
-		public String getPassphrase() { throw new RuntimeException("pass"); }
-		public String getPassword() { throw new RuntimeException("pass"); }
-		public boolean promptPassword(String message) { return true; }
-		public boolean promptPassphrase(String message) { return true; }
-		public boolean promptYesNo(String message) { IJ.log(message); return
-true; }
-		public void showMessage(String message) { IJ.log(message); }
 	}
 }
