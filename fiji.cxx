@@ -91,6 +91,12 @@ static win_cout fake_cout;
 string absolute_java_home;
 static const char *relative_java_home = JAVA_HOME;
 static const char *library_path = JAVA_LIB_PATH;
+static const char *default_main_class = "fiji.Main";
+
+static bool is_default_main_class(const char *name)
+{
+	return !strcmp(name, default_main_class) || !strcmp(name, "ij.ImageJ");
+}
 
 /* Dynamic library loading stuff */
 
@@ -1299,7 +1305,7 @@ static void try_with_less_memory(size_t memory_size)
 		if (!found_dashdash && !strcmp(main_argv_backup[i], "--"))
 			found_dashdash = true;
 		string dummy;
-		if ((!found_dashdash || !strcmp(main_class, "ij.ImageJ")) &&
+		if ((!found_dashdash || is_default_main_class(main_class)) &&
 				(handle_one_option(i, "--mem", dummy) ||
 				 handle_one_option(i, "--memory", dummy)))
 			continue;
@@ -1407,7 +1413,7 @@ static int start_ij(void)
 		if (!strcmp(main_argv[i], "--") && !dashdash)
 			dashdash = count;
 		else if (dashdash && main_class &&
-				strcmp(main_class, "ij.ImageJ"))
+				!is_default_main_class(main_class))
 			main_argv[count++] = main_argv[i];
 		else if (!strcmp(main_argv[i], "--dry-run"))
 			options.debug++;
@@ -1605,7 +1611,7 @@ static int start_ij(void)
 			main_argc--;
 		}
 		else
-			main_class = "ij.ImageJ";
+			main_class = default_main_class;
 	}
 
 	if (retrotranslator && build_classpath(class_path,
@@ -1630,7 +1636,7 @@ static int start_ij(void)
 		class_path += fiji_dir;
 		class_path += "/ij.jar";
 
-		if (!strcmp(main_class, "ij.ImageJ"))
+		if (is_default_main_class(main_class))
 			update_files();
 		else
 			if (build_classpath(class_path, string(fiji_dir)
@@ -1659,20 +1665,17 @@ static int start_ij(void)
 	if (!strcmp(main_class, "org.apache.tools.ant.Main"))
 		add_java_home_to_path();
 
-	if (!strcmp(main_class, "ij.ImageJ")) {
+	if (is_default_main_class(main_class)) {
 		if (allow_multiple)
 			add_option(options, "-port0", 1);
 		else
 			add_option(options, "-port7", 1);
 
-		stringstream icon_option;
-		icon_option << "-icon=" << fiji_dir << "/images/icon.png";
-		add_option(options, icon_option, 1);
-		add_option(options, "-title=Fiji", 1);
+		update_files();
 	}
 
 	/* handle "--headless script.ijm" gracefully */
-	if (headless && !strcmp(main_class, "ij.ImageJ")) {
+	if (headless && is_default_main_class(main_class)) {
 		if (main_argc < 2) {
 			cerr << "--headless without a parameter?" << endl;
 			if (!options.debug)
