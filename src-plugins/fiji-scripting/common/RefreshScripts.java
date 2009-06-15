@@ -392,24 +392,22 @@ abstract public class RefreshScripts implements PlugIn {
 	protected static String getPluginsClasspath() {
 		String classPath = System.getProperty("java.class.path");
 		if (classPath == null)
-			classPath = "";
+			return "";
 
-		// strip out all plugin .jar files
+		// strip out all plugin .jar files (to keep classPath short)
 		String pluginsPath = Menus.getPlugInsPath();
-		if (classPath.startsWith(pluginsPath)) {
-			int colon = classPath.indexOf(File.pathSeparator);
-			if (colon < 0)
-				classPath = "";
-			else
-				classPath = classPath.substring(colon + 1);
-		}
-		int i;
-		while ((i = classPath.indexOf(File.pathSeparator + pluginsPath)) > 0) {
-			int colon = classPath.indexOf(File.pathSeparator, i + 1);
-			classPath = classPath.substring(0, i)
-				+ (colon < 0 ? "" : classPath.substring(colon + 1));
+		for (int i = 0; i >= 0; i =
+				classPath.indexOf(File.pathSeparator, i + 1)) {
+			while (classPath.substring(i).startsWith(pluginsPath)) {
+				int j = classPath.indexOf(File.pathSeparator,
+					i + 1);
+				classPath = classPath.substring(0, i)
+					+ (j < 0 ? "" :
+						classPath.substring(j + 1));
+			}
 		}
 
+		// append the plugin .jar files
 		try {
 			String path = discoverJars(pluginsPath);
 			if (path != null && !path.equals("")) {
