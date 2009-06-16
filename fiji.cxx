@@ -1783,6 +1783,24 @@ static void append_icon_path(string &str)
 		str += "/images/Fiji.icns";
 }
 
+#include <sys/types.h>
+#include <sys/sysctl.h>
+#include <mach/machine.h>
+#include <unistd.h>
+#include <sys/param.h>
+#include <string.h>
+
+static int is_intel(void)
+{
+	int mib[2] = { CTL_HW, HW_MACHINE };
+	char result[128];
+	size_t len = sizeof(result);;
+
+	if (sysctl(mib, 2, result, &len, NULL, 0) < 0)
+		return 0;
+	return !strcmp(result, "i386");
+}
+
 static void set_path_to_JVM(void)
 {
 	/*
@@ -1824,7 +1842,7 @@ static void set_path_to_JVM(void)
 	CFStringRef targetJVM; // Minimum Java5
 
 	// try 1.6 only with 64-bit
-	if (sizeof(void *) > 4) {
+	if (is_intel() && sizeof(void *) > 4) {
 		targetJVM = CFSTR("1.6");
 		TargetJavaVM =
 		CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault,
@@ -1977,14 +1995,6 @@ static int start_ij_macosx(void)
 }
 #define start_ij start_ij_macosx
 
-#include <sys/types.h>
-#include <sys/sysctl.h>
-#include <mach/machine.h>
-#include <unistd.h>
-#include <sys/param.h>
-#include <sys/sysctl.h>
-#include <string.h>
-
 /*
  * Them stupid Apple software designers -- in their infinite wisdom -- added
  * 64-bit support to Tiger without really supporting it.
@@ -2023,7 +2033,7 @@ static int launch_32bit_on_tiger(int argc, char **argv)
 {
 	const char *match, *replace;
 
-	if (is_leopard()) {
+	if (is_intel() && is_leopard()) {
 		match = "-tiger";
 		replace = "-macosx";
 	}
