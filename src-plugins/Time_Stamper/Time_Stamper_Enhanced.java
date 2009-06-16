@@ -18,22 +18,27 @@ import ij.plugin.filter.*;
 
 
 public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListener { //, ActionListener {
-								// http://rsb.info.nih.gov/ij/developer/api/ij/plugin/filter/ExtendedPlugInFilter.html
-								// should use extended plugin filter for preview ability and for stacks!
-								// then need more methods: setNPasses(int last-first)  thats the number of frames to stamp.
-								// showDialog method needs  another argument:  PlugInFilterRunner pfr
-								// also need Dialog listener and Action listener to listen to GUI changes? 
+					// http://rsb.info.nih.gov/ij/developer/api/ij/plugin/filter/ExtendedPlugInFilter.html
+					// should use extended plugin filter for preview ability and for stacks!
+					// then need more methods: setNPasses(int last-first)  thats the number of frames to stamp.
+					// showDialog method needs  another argument:  PlugInFilterRunner pfr
+					// also need Dialog listener and Action listener to listen to GUI changes? 
 	// declare the variables we are going to use in the plugin
+	// note to self - static variables are things that should never change and always be the same no matter what instance of the object is alive.
+	// class member variables that need to change during execution should not be static!
+	// Static can be used to remember last used values,
+	// so next time the plugin is run, it remembers the value it used last time. 
 	ImagePlus imp;
-	double time;
 	int x = 2;
 	int y = 15;
 	int size = 12;  // default font size
 //	int maxWidth; // maxWidth is now a method returning an int
 	Font font;
-	double start = 4.876;
-	double interval = 1.678;
-	String timeString = "";
+	double time;
+	double start = 4.877;
+	double interval = 1.679;
+	double lastTime;
+	String timeString;
 	String customSuffix = "";
 	static String chosenSuffix = "s";
 	String suffix = chosenSuffix;
@@ -74,11 +79,10 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		// This makes the GUI object 
 		GenericDialog gd = new GenericDialog("Time Stamper Enhanced");
 		
-		
 			// these are the fields of the GUI
 		
 		// this is a choice between digital or decimal
-		// but what about mm:ss 
+		// but what about mm:ss???
 		// options are in the string array timeFormats, default is Decimal:  something.somethingelse 
 		gd.addChoice("Time format:", timeFormats, timeFormats[0]); 
 		
@@ -98,6 +102,8 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 
 		gd.addCheckbox("Anti-Aliased text?", true);
 		
+		gd.addMessage("Some informative message here");
+		
 		gd.addPreviewCheckbox(pfr); 	//adds preview checkbox - needs ExtendedPluginFilter and DialogListener!
 		gd.addDialogListener(this); 	//needed for listening to dialog field/button/checkbok changes?
 		
@@ -113,8 +119,8 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		imp.startTiming(); //What is this for?
 		
 		return DOES_ALL+DOES_STACKS+STACK_REQUIRED; 	// extendedpluginfilter showDialog method should
-											//return a combination (bitwise OR) of the flags specified in
-											//interfaces PlugInFilter and ExtendedPlugInFilter.
+								//return a combination (bitwise OR) of the flags specified in
+								//interfaces PlugInFilter and ExtendedPlugInFilter.
 	}	
 	
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e) {
@@ -135,12 +141,16 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 	}
 	
 	
-	public void setNPasses(int nPasses) { // for extended plugin filter we need to tell it the number of slices/frames it will call run method on. 
-		frame = first;  // nPasses is worked out by the plugin runner, and for the preview i want to ignoire it
-		time = start;  // and set the frame to first and the time to start 
+	public void setNPasses(int nPasses) {	// this is part of the preview functionality 
+						// Informs the filter of the number of calls of run(ip) that will follow. 
+						// nPasses is worked out by the plugin runner.
+		frame = first;   // But for the preview i want to 
+		time = lastTime();  // set the frame to last and the time to lastTime,
+				// so the preview does not increment time when clicking the preview box causes run method execution.
+				// and i see the longest time stamp that will be made when i do a preview, so i can make sure its where
+				// i wanted it 
 	}	
 	
-
 
 	// run the plugin on the ip object, which is the ImageProcessor object associated with the open/selected image. 
 	// but remember that showDialog method is run before this in EnhancedPluginFilter
@@ -149,15 +159,13 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		// this increments frame integer by 1. If an int is declared with no value, it defaults to 0
 		frame++;
 		
-		
-		
 			// this stuff isnt needed in EnhancedPluginFilter because setNPasses takes care of number of frames to write in
-			// and EnhancedPluginFilter executes the showDialog method before the run method, always, so doint need to call it in run. 
+			// and EnhancedPluginFilter executes the showDialog method before the run method, always, so don't need to call it in run. 
 		//if (frame==1) showDialog(imp, "TimeStamperEnhanced", pfr);	// if at the 1st frame of the stack, show the GUI by calling the showDialog method
 							// and set the variables according to the GUI input. 
 		if (canceled || frame<first || frame>last) return; // tell the run method when to not do anything just return  
 		
-		if (frame==last) imp.updateAndDraw(); 	// Updates this image from the pixel data in its associated
+		if (frame==(last+1)) imp.updateAndDraw(); 	// Updates this image from the pixel data in its associated
 							// ImageProcessor object and then displays it
 							// if it is the last frame. Why do we need this when there is
 							// ip.drawString(timeString); below?
@@ -180,9 +188,16 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		// whats up with these numbers? Are they special?
 			// single characters fit the ROI, but if the time stamper string is long
 			// then the font is too big to fit the whole thing in!
-		//if (theROI != null)
-		size = (int) (theROI.height); // - 1.10526)/0.934211);	
-		//else ????? what if there is no roi?
+		
+		// need to see if we should use the ROI height to set the fornt size or read it from the plugin gui 
+		// if (theROI != null)  doesnt work as if there is no ROI set, the ROI is the size fo the image! There is always an ROI!
+		// So we can say, if there is no ROI set , its the same size as the image, and if that is the case,
+		// we should then use the size as read from the GUI.
+		
+		if ( theROI.height != ip.getHeight() && theROI.width != ip.getWidth() ) // if the ROI is the same size as the image leave size as it was set by the gui
+			size = (int) (theROI.height); // - 1.10526)/0.934211);	     // if there is an ROI not the same size as the image then set size to its height.       
+		
+		
 		
 		// make sure the font is not too big or small.... but why? Too -  small cant read it. Too Big - ?
 		// should this use private and public and get / set methods?
@@ -299,13 +314,16 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 	// It also needs to calculate maxWidth for both digital and decimal time formats:
 	String lastTimeStampString() {
 		if (digitalOrDecimal.equals ("Decimal"))
-			return decimalString(start + (interval*last) );
+			return decimalString(lastTime());
 		else if (digitalOrDecimal.equals ("hh:mm:ss.ms"))
-			return digitalString(start + (interval*last) );
+			return digitalString(lastTime());
 		else return "";  // IJ.log("Error occured: digitalOrDecimal was not selected!"); //+ message());
 		// IJ.log("Error occurred: digitalOrDecimal must be hh:mm:ss.ms or Decimal, but it was not."); 
 	}
 	
+	double lastTime() {
+		return start + (interval*(last-first)); 	// is the last time for which a time stamp will be made
+	}
 	
 	//moved out of run method to its own method.
 		// maxWidth is an integer = length of the decimal time stamp string in pixels
