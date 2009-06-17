@@ -100,11 +100,12 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		gd.addNumericField("First Frame:", first, 0);
 		gd.addNumericField("Last Frame:", last, 0);
 
-		gd.addCheckbox("Anti-Aliased text?", true);
-		
-		gd.addMessage("Some informative message here");
+		gd.addCheckbox("Anti-Aliased text for font size 12 or smaller?", true);  //AA only works for font size 12 or smaller!
 		
 		gd.addPreviewCheckbox(pfr); 	//adds preview checkbox - needs ExtendedPluginFilter and DialogListener!
+		
+		gd.addMessage("Time Stamper plugin for Fiji is just ImageJ, maintained by dan@chalkie.org.uk");
+		
 		gd.addDialogListener(this); 	//needed for listening to dialog field/button/checkbok changes?
 		
 		gd.showDialog();  // shows the dialog GUI!
@@ -144,8 +145,8 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 	public void setNPasses(int nPasses) {	// this is part of the preview functionality 
 						// Informs the filter of the number of calls of run(ip) that will follow. 
 						// nPasses is worked out by the plugin runner.
-		frame = first;   // But for the preview i want to 
-		time = lastTime();  // set the frame to last and the time to lastTime,
+		//frame = first;   // dont need this
+		time = lastTime();  // set the time to lastTime, when doing the preview run,
 				// so the preview does not increment time when clicking the preview box causes run method execution.
 				// and i see the longest time stamp that will be made when i do a preview, so i can make sure its where
 				// i wanted it 
@@ -159,16 +160,20 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		// this increments frame integer by 1. If an int is declared with no value, it defaults to 0
 		frame++;
 		
-			// this stuff isnt needed in EnhancedPluginFilter because setNPasses takes care of number of frames to write in
+		if (frame==(last+1)) imp.updateAndDraw(); 	// Updates this image from the pixel data in its associated
+							// ImageProcessor object and then displays it
+							// if it is the last frame plus 1. Why do we need this when there is
+							// ip.drawString(timeString); below?
+		
+			// the following line isnt needed in EnhancedPluginFilter because setNPasses takes care of number of frames to write in
 			// and EnhancedPluginFilter executes the showDialog method before the run method, always, so don't need to call it in run. 
 		//if (frame==1) showDialog(imp, "TimeStamperEnhanced", pfr);	// if at the 1st frame of the stack, show the GUI by calling the showDialog method
 							// and set the variables according to the GUI input. 
-		if (canceled || frame<first || frame>last) return; // tell the run method when to not do anything just return  
 		
-		if (frame==(last+1)) imp.updateAndDraw(); 	// Updates this image from the pixel data in its associated
-							// ImageProcessor object and then displays it
-							// if it is the last frame. Why do we need this when there is
-							// ip.drawString(timeString); below?
+		if (canceled || frame<first || frame>last) return; // tell the run method when to not do anything just return  
+								// Here there is a bug: with the new use of enhanced plugin filter,
+								// using preview on, the first time stamp is placed in frame first-1 not first...
+								// and the last time stamp in last-1. With preview off it works as expected. 
 	
 		// Have moved the font size and xy loclation calculations for timestamp stuff out of the run method, into their own methods.
 		// set the font size according to ROI size, or if no ROI the GUI text input
