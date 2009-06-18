@@ -247,6 +247,26 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 			}
 		} catch (Exception e) {
 		}
+		// Greg Jefferis added Torsten Rohlfing binary file handler
+		// ----------------------------------------------
+		// Check if the file ends in .bin or in the case
+		// of the gzip compressed version .bin.gz
+		if (name.toLowerCase().endsWith(".bin") || 
+		    name.toLowerCase().endsWith(".bin.gz") ) {
+			// Since those filenames are not particularly specific, do a bit more checking
+			// These files come in pairs as follows:
+			// T1_SABB4flip01_warp_m0g40c4e1e-1x16r3/image.bin.gz
+			// T1_SABB4flip01_warp_m0g40c4e1e-1x16r3.study/images
+			String dirWithoutSeparator=directory;
+			if(directory.endsWith(File.separator)){
+			    dirWithoutSeparator=directory.substring(0,directory.length()-1);
+			}
+			File studyDir = new File(dirWithoutSeparator+".study");
+
+			if(studyDir.isDirectory())
+    			// Ok we've identified the file type - now load it
+    			return tryPlugIn("io.TorstenRaw_GZ_Reader",path);			    
+		}	
 
 		// Johannes Schindelin: open one or more images in a .ico file
 		if (name.endsWith(".ico"))
