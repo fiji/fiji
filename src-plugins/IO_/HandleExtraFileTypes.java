@@ -88,7 +88,7 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 		// ------------------------------------------
 		// These make 12345 if you read them as the right kind of short
 		// and should have this value in every Biorad PIC file
-		if (buf[54]==57 && buf[55]==48) {
+		if (name.endsWith(".pic.gz") || buf[54]==57 && buf[55]==48) {
 			return tryPlugIn("Biorad_Reader", path);
 		}
 		// GJ: added Gatan Digital Micrograph DM3 handler
