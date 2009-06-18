@@ -19,6 +19,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
@@ -101,6 +102,7 @@ public class User_Plugins implements PlugIn {
 				menuPath = menuPath + ">" + name;
 			dir = file.getPath();
 			String[] list = file.list();
+			Arrays.sort(list);
 			for (int i = 0; i < list.length; i++)
 				installPlugins(dir, list[i], menuPath);
 		}
