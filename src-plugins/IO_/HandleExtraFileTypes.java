@@ -42,9 +42,11 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 			return; // failed to load file or plugin has opened and displayed it
 		}
 		ImageStack stack = imp.getStack();
+		// fetch the title from the stack (falling back to the fileName)
+		String title=imp.getTitle().equals("")?fileName:imp.getTitle();
 		// set the stack of this HandleExtraFileTypes object
 		// to that attached to the ImagePlus object returned by openImage()
-		setStack(fileName, stack);
+		setStack(title, stack);
 		// copy over the calibration info since it doesn't come with the ImageProcessor
 		setCalibration(imp.getCalibration());
 		// also copy the Show Info field over if it exists
