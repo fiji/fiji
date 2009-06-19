@@ -6,6 +6,7 @@
 #include <iostream>
 #include <string.h>
 using std::cerr;
+using std::cout;
 using std::endl;
 using std::ostream;
 
@@ -60,6 +61,24 @@ class win_cerr
 
 static win_cerr fake_cerr;
 #define cerr fake_cerr
+
+class win_cout
+{
+	public:
+		template<class T>
+		ostream& operator<<(T t) {
+			open_win_console();
+			return cout << t;
+		}
+
+		ostream& operator<<(std::ostream &(*manip)(std::ostream &s)) {
+			open_win_console();
+			return cout << manip;
+		}
+};
+
+static win_cout fake_cout;
+#define cout fake_cout
 
 #else
 #define PATH_SEP ":"
@@ -1066,13 +1085,13 @@ static char *quote_win32(char *option)
 
 static void show_commandline(struct options& options)
 {
-	cerr << "java";
+	cout << "java";
 	for (int j = 0; j < options.java_options.nr; j++)
-		cerr << " " << quote_if_necessary(options.java_options.list[j]);
-	cerr << " " << main_class;
+		cout << " " << quote_if_necessary(options.java_options.list[j]);
+	cout << " " << main_class;
 	for (int j = 0; j < options.ij_options.nr; j++)
-		cerr << " " << quote_if_necessary(options.ij_options.list[j]);
-	cerr << endl;
+		cout << " " << quote_if_necessary(options.ij_options.list[j]);
+	cout << endl;
 }
 
 bool file_is_newer(string path, string than)
@@ -1481,11 +1500,11 @@ static int start_ij(void)
 		else if (handle_one_option(i, "--fiji-dir", arg))
 			fiji_dir = strdup(arg.c_str());
 		else if (!strcmp("--print-fiji-dir", main_argv[i])) {
-			cerr << fiji_dir << endl;
+			cout << fiji_dir << endl;
 			exit(0);
 		}
 		else if (!strcmp("--print-java-home", main_argv[i])) {
-			cerr << get_java_home() << endl;
+			cout << get_java_home() << endl;
 			exit(0);
 		}
 		else if (!strcmp("--help", main_argv[i]) ||
