@@ -655,8 +655,14 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		} 
 		catch ( NotEnoughDataPointsException e ) 
 		{
-			IJ.error("No features model found for file " + i + ": " + sorted_file_names[i]);
-			return false;
+			IJ.log("No features model found for file " + i + ": " + sorted_file_names[i]);
+			// If the feature extraction does not find correspondences, then
+			// only the elastic registration can be performed
+			if(p.registrationModelIndex != Register_Virtual_Stack_MT.ELASTIC)
+			{
+				IJ.error("No features model found for file " + i + ": " + sorted_file_names[i]);
+				return false;
+			}
 		}
 	
 		// Generate registered image, put it into imp2 and save it
@@ -675,12 +681,14 @@ public class Register_Virtual_Stack_MT implements PlugIn
 				//imp2.show();
 				final List< Point > sourcePoints = new ArrayList<Point>();
 				final List< Point > targetPoints = new ArrayList<Point>();
-				PointMatch.sourcePoints( inliers, sourcePoints );
-				PointMatch.targetPoints( inliers, targetPoints );
-				
-				imp2.setRoi( Util.pointsToPointRoi(sourcePoints) );
-				imp1.setRoi( Util.pointsToPointRoi(targetPoints) );
-				
+				if(inliers.size() != 0)
+				{
+					PointMatch.sourcePoints( inliers, sourcePoints );
+					PointMatch.targetPoints( inliers, targetPoints );
+					
+					imp2.setRoi( Util.pointsToPointRoi(sourcePoints) );
+					imp1.setRoi( Util.pointsToPointRoi(targetPoints) );
+				}
 				
 				//imp1.show();
 				//ImagePlus aux = new ImagePlus("source", imp2.getProcessor().duplicate());
