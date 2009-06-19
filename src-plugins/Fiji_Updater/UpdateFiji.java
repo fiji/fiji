@@ -83,6 +83,15 @@ public class UpdateFiji implements PlugIn {
 
 		String path = stripSuffix(stripSuffix(Menus.getPlugInsPath(),
 					File.separator), "plugins");
+		File ij_jar = new File(path, "ij.jar");
+		if (ij_jar.exists() && !ij_jar.canWrite() &&
+				!IJ.showMessageWithCancel("Fiji Updater",
+					"Your ij.jar seems to be unwritable.\n"
+					+ "Probably you need to run Fiji Update"
+					+ " as administrator.\n"
+					+ "Do you still want to continue?"))
+			return;
+
 		initialize(path);
 		try {
 			update(new URL(url));
