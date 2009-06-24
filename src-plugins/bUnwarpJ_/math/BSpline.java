@@ -119,6 +119,9 @@ public class BSpline
 		   integ = integAS(integ);
 		}  
 		
+		// geometric transformation and resampling
+		double [] resize = resampling(integ, nxIn, nxOut, scale, n1, n+n1+1);
+		
 		return null;
 	} // end method resize1D
 
