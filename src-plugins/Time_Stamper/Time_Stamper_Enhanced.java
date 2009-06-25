@@ -92,7 +92,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		// we can set a custom suffix and use that by selecting custom siffic in the time units drop down list above
 		gd.addStringField("Custom Suffix:", customSuffix);
 		gd.addNumericField("Starting Time (in s if digital):", start, 2);
-		gd.addNumericField("Time Interval Between Frames (in s if digital):", interval, 2);
+		gd.addNumericField("Time Interval Between Frames (in s if digital):", interval, 3);
 		gd.addNumericField("X Location:", x, 0);
 		gd.addNumericField("Y Location:", y, 0);
 		gd.addNumericField("Font Size:", size, 0);
@@ -104,7 +104,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		
 		gd.addPreviewCheckbox(pfr); 	//adds preview checkbox - needs ExtendedPluginFilter and DialogListener!
 		
-		gd.addMessage("Time Stamper plugin for Fiji is just ImageJ, maintained by dan@chalkie.org.uk");
+		gd.addMessage("Time Stamper plugin for Fiji (is just ImageJ - batteries included), maintained by Dan White MPI-CBG dan(at)chalkie.org.uk");
 		
 		gd.addDialogListener(this); 	//needed for listening to dialog field/button/checkbok changes?
 		
@@ -149,29 +149,31 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		time = lastTime();  // set the time to lastTime, when doing the preview run,
 				// so the preview does not increment time when clicking the preview box causes run method execution.
 				// and i see the longest time stamp that will be made when i do a preview, so i can make sure its where
-				// i wanted it 
+				// i wanted it.
+				//that works, but now the time stamper counts up from time = lastTime value not from  time = (start + (first*interval))
+				// when making the time stamps for the whole stack...
 	}	
 	
 
 	// run the plugin on the ip object, which is the ImageProcessor object associated with the open/selected image. 
-	// but remember that showDialog method is run before this in EnhancedPluginFilter
+	// but remember that showDialog method is run before this in ExtendedPluginFilter
 	public void run(ImageProcessor ip) {
 	
 		// this increments frame integer by 1. If an int is declared with no value, it defaults to 0
 		frame++;
 		
-		if (frame==(last+1)) imp.updateAndDraw(); 	// Updates this image from the pixel data in its associated
+		if (frame==last) imp.updateAndDraw(); 	// Updates this image from the pixel data in its associated
 							// ImageProcessor object and then displays it
-							// if it is the last frame plus 1. Why do we need this when there is
+							// if it is the last frame. Why do we need this when there is
 							// ip.drawString(timeString); below?
 		
-			// the following line isnt needed in EnhancedPluginFilter because setNPasses takes care of number of frames to write in
-			// and EnhancedPluginFilter executes the showDialog method before the run method, always, so don't need to call it in run. 
+			// the following line isnt needed in ExtendedPluginFilter because setNPasses takes care of number of frames to write in
+			// and ExtendedPluginFilter executes the showDialog method before the run method, always, so don't need to call it in run. 
 		//if (frame==1) showDialog(imp, "TimeStamperEnhanced", pfr);	// if at the 1st frame of the stack, show the GUI by calling the showDialog method
 							// and set the variables according to the GUI input. 
 		
 		if (canceled || frame<first || frame>last) return; // tell the run method when to not do anything just return  
-								// Here there is a bug: with the new use of enhanced plugin filter,
+								// Here there is a bug: with the new use of ExtendedPluginFilter,
 								// using preview on, the first time stamp is placed in frame first-1 not first...
 								// and the last time stamp in last-1. With preview off it works as expected. 
 	
