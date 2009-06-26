@@ -381,14 +381,12 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			final List<Rectangle> boundsFor = new ArrayList<Rectangle>();
 			boundsFor.add(new Rectangle(0, 0, imp2.getWidth(), imp2.getHeight()));
 			
-			// Save the first image, untouched:
+			// Save the reference image, untouched:
 			exe.submit(saveImage(imp2, makeTargetPath(target_dir, sorted_file_names[referenceIndex])));
 
-			// For each image, extract features, register with previous one and save the transformed image.
-			
 			// Forward registration (from reference image to the end of the sequence)			
 			for (int i=referenceIndex+1; i<sorted_file_names.length; i++) 
-			{
+			{												
 				// Shift images
 				imp1 = imp2;
 				imp1mask = imp2mask;
@@ -398,7 +396,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 				// Register
 				if(!register( imp1, imp2, imp1mask, imp2mask, i, sorted_file_names,
 						  source_dir, target_dir, exe, p, t, commonBounds, boundsFor, referenceIndex))
-					return;
+					return;		
 			}
 			
 			// Backward registration (from reference image to the beginning of the sequence)
@@ -407,7 +405,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			boundsBack.add(new Rectangle(0, 0, imp2.getWidth(), imp2.getHeight()));
 			
 			for (int i = referenceIndex-1; i >= 0; i--) 
-			{
+			{				
 				// Shift images
 				imp1 = imp2;
 				imp1mask = imp2mask;
@@ -417,7 +415,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 				// Register
 				if(!register( imp1, imp2, imp1mask, imp2mask, i, sorted_file_names,
 						  source_dir, target_dir, exe, p, t, commonBounds, boundsBack, referenceIndex))
-					return;
+					return;												
 			}
 			
 			// Adjust Forward bounds
@@ -611,8 +609,10 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			List<Rectangle> bounds,
 			final int referenceIndex) throws Exception
 	{
-		// Extract SIFT features
+		// Update progress bar
 		IJ.showStatus("Registering slice " + (i+1) + "/" + sorted_file_names.length);		
+		
+		// Extract SIFT features				
 		Future<ArrayList<Feature>> fu1 = exe.submit(extractFeatures(p, imp1.getProcessor()));
 		Future<ArrayList<Feature>> fu2 = exe.submit(extractFeatures(p, imp2.getProcessor()));
 		ArrayList<Feature> fs1 = fu1.get();
@@ -655,8 +655,14 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		} 
 		catch ( NotEnoughDataPointsException e ) 
 		{
-			IJ.error("No features model found for file " + i + ": " + sorted_file_names[i]);
-			return false;
+			IJ.log("No features model found for file " + i + ": " + sorted_file_names[i]);
+			// If the feature extraction does not find correspondences, then
+			// only the elastic registration can be performed
+			if(p.registrationModelIndex != Register_Virtual_Stack_MT.ELASTIC)
+			{
+				IJ.error("No features model found for file " + i + ": " + sorted_file_names[i]);
+				return false;
+			}
 		}
 	
 		// Generate registered image, put it into imp2 and save it
@@ -675,12 +681,14 @@ public class Register_Virtual_Stack_MT implements PlugIn
 				//imp2.show();
 				final List< Point > sourcePoints = new ArrayList<Point>();
 				final List< Point > targetPoints = new ArrayList<Point>();
-				PointMatch.sourcePoints( inliers, sourcePoints );
-				PointMatch.targetPoints( inliers, targetPoints );
-				
-				imp2.setRoi( Util.pointsToPointRoi(sourcePoints) );
-				imp1.setRoi( Util.pointsToPointRoi(targetPoints) );
-				
+				if(inliers.size() != 0)
+				{
+					PointMatch.sourcePoints( inliers, sourcePoints );
+					PointMatch.targetPoints( inliers, targetPoints );
+					
+					imp2.setRoi( Util.pointsToPointRoi(sourcePoints) );
+					imp1.setRoi( Util.pointsToPointRoi(targetPoints) );
+				}
 				
 				//imp1.show();
 				//ImagePlus aux = new ImagePlus("source", imp2.getProcessor().duplicate());

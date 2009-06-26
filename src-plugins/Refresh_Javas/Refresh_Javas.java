@@ -49,7 +49,7 @@ public class Refresh_Javas extends RefreshScripts {
 		if (!pluginsPath.endsWith(File.separator))
 			pluginsPath += File.separator;
 		if (c.startsWith(pluginsPath)) {
-			c = c.substring(pluginsPath.length() + 1);
+			c = c.substring(pluginsPath.length());
 			while (c.startsWith(File.separator))
 				c = c.substring(1);
 		}

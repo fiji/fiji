@@ -42,9 +42,11 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 			return; // failed to load file or plugin has opened and displayed it
 		}
 		ImageStack stack = imp.getStack();
+		// fetch the title from the stack (falling back to the fileName)
+		String title=imp.getTitle().equals("")?fileName:imp.getTitle();
 		// set the stack of this HandleExtraFileTypes object
 		// to that attached to the ImagePlus object returned by openImage()
-		setStack(fileName, stack);
+		setStack(title, stack);
 		// copy over the calibration info since it doesn't come with the ImageProcessor
 		setCalibration(imp.getCalibration());
 		// also copy the Show Info field over if it exists
@@ -88,7 +90,7 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 		// ------------------------------------------
 		// These make 12345 if you read them as the right kind of short
 		// and should have this value in every Biorad PIC file
-		if (buf[54]==57 && buf[55]==48) {
+		if (name.endsWith(".pic.gz") || buf[54]==57 && buf[55]==48) {
 			return tryPlugIn("Biorad_Reader", path);
 		}
 		// GJ: added Gatan Digital Micrograph DM3 handler
@@ -247,6 +249,26 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 			}
 		} catch (Exception e) {
 		}
+		// Greg Jefferis added Torsten Rohlfing binary file handler
+		// ----------------------------------------------
+		// Check if the file ends in .bin or in the case
+		// of the gzip compressed version .bin.gz
+		if (name.toLowerCase().endsWith(".bin") || 
+		    name.toLowerCase().endsWith(".bin.gz") ) {
+			// Since those filenames are not particularly specific, do a bit more checking
+			// These files come in pairs as follows:
+			// T1_SABB4flip01_warp_m0g40c4e1e-1x16r3/image.bin.gz
+			// T1_SABB4flip01_warp_m0g40c4e1e-1x16r3.study/images
+			String dirWithoutSeparator=directory;
+			if(directory.endsWith(File.separator)){
+			    dirWithoutSeparator=directory.substring(0,directory.length()-1);
+			}
+			File studyDir = new File(dirWithoutSeparator+".study");
+
+			if(studyDir.isDirectory())
+    			// Ok we've identified the file type - now load it
+    			return tryPlugIn("io.TorstenRaw_GZ_Reader",path);			    
+		}	
 
 		// Johannes Schindelin: open one or more images in a .ico file
 		if (name.endsWith(".ico"))

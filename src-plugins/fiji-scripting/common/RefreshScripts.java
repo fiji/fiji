@@ -33,11 +33,15 @@ import ij.IJ;
 import ij.ImageJ;
 import ij.Menus;
 import ij.plugin.PlugIn;
+
 import java.awt.Menu;
 import java.awt.PopupMenu;
 import java.awt.MenuItem;
 import java.awt.MenuBar;
+
 import java.util.ArrayList;
+import java.util.Arrays;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
@@ -264,6 +268,7 @@ abstract public class RefreshScripts implements PlugIn {
 			if (maxDepth >= 0 && depth >= maxDepth)
 				return;
 			String [] entries = f.list();
+			Arrays.sort(entries);
 			for( int i = 0; i < entries.length; ++i )
 				if( ! (entries[i].equals(".")||entries[i].equals("..")) ) {
 					String newSubPath = subPath;
@@ -424,6 +429,7 @@ abstract public class RefreshScripts implements PlugIn {
                 if (file.isDirectory()) {
 			String result = "";
 			String[] paths = file.list();
+			Arrays.sort(paths);
                         for (int i = 0; i < paths.length; i++) {
 				String add = discoverJars(path
 						+ File.separator + paths[i]);
