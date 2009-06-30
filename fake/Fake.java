@@ -1866,6 +1866,8 @@ public class Fake {
 			boolean showDeprecation, String extraClassPath)
 			throws FakeException {
 		List arguments = new ArrayList();
+		arguments.add("-encoding");
+		arguments.add("UTF8");
 		if (debug)
 			arguments.add("-g");
 		if (javaVersion != null && !javaVersion.equals("")) {
