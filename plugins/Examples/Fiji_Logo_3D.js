@@ -75,4 +75,5 @@ addCuboid(mesh, 6, 2, 0, 7, 4, 1);
  */
 var universe = new Image3DUniverse();
 universe.addMesh(mesh, blue, "Fiji", 0);
+universe.rotateX(Math.PI);
 universe.show();
