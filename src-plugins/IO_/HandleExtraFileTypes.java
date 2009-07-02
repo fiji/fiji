@@ -170,20 +170,6 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 			return tryPlugIn("UNC_Reader", path);
 		}
 
-		//  Leica SP confocal .lei file handler
-		if (name.endsWith(".lei")) {
-			int dotIndex = name.lastIndexOf(".");
-			if (dotIndex>=0)
-				name = name.substring(0, dotIndex);
-			path = directory+name+".txt";
-			File f = new File(path);
-			if (!f.exists()) {
-				IJ.error("Cannot find the Leica information file: "+path);
-				return null;
-			}
-			return tryPlugIn("Leica_TIFF_sequence", path);
-		} 
-
 		// Amira file handler 
 		// http://wbgn013.biozentrum.uni-wuerzburg.de/ImageJ/amira-io.html
 		if (buf[0]==0x23 && buf[1]==0x20 && buf[2]==0x41
