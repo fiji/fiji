@@ -1622,7 +1622,9 @@ static int start_ij(void)
 		class_path += fiji_dir;
 		class_path += "/ij.jar";
 
-		if (strcmp(main_class, "ij.ImageJ"))
+		if (!strcmp(main_class, "ij.ImageJ"))
+			update_files();
+		else
 			if (build_classpath(class_path, string(fiji_dir)
 						+ "/plugins", 0))
 				return 1;
@@ -1655,7 +1657,6 @@ static int start_ij(void)
 		else
 			add_option(options, "-port7", 1);
 
-		update_files();
 		stringstream icon_option;
 		icon_option << "-icon=" << fiji_dir << "/images/icon.png";
 		add_option(options, icon_option, 1);
