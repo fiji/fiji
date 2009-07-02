@@ -1122,6 +1122,13 @@ bool handle_one_option(int &i, const char *option, string &arg)
 	return false;
 }
 
+static bool is_file_empty(string path)
+{
+	struct stat st;
+
+	return !stat(path.c_str(), &st) && !st.st_size;
+}
+
 static bool update_files(string relative_path)
 {
 	string absolute_path = string(fiji_dir) + "/update" + relative_path;
@@ -1142,6 +1149,15 @@ static bool update_files(string relative_path)
 		string source = absolute_path + "/" + filename;
 		string target = string(fiji_dir) + relative_path
 			+ "/" + filename;
+
+		if (is_file_empty(source)) {
+			if (unlink(source.c_str()))
+				cerr << "Could not remove " << source << endl;
+			if (unlink(target.c_str()))
+				cerr << "Could not remove " << target << endl;
+			continue;
+		}
+
 #ifdef WIN32
 		if (file_exists(target.c_str()) && unlink(target.c_str())) {
 			cerr << "Could not remove old version of " << target
