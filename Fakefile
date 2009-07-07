@@ -137,6 +137,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Gray_Morphology.jar \
 	plugins/Colocalisation_Analysis.jar \
 	plugins/LocalThickness_.jar \
+	plugins/Object_Counter3D.jar \
 	\
 	misc/Fiji.jar
 
