@@ -122,8 +122,275 @@ public class BSpline
 		// geometric transformation and resampling
 		double [] resize = resampling(integ, nxIn, nxOut, scale, n1, n+n1+1);
 		
-		return null;
+		//(n1+1)-centered finite differences
+		double [] fd = null;
+		if (n1 == -1)
+		    fd=resize;		
+		else if (n1 == 0)
+		    fd = finDiffAS(resize);
+		else if (n1 == 1)
+		{
+			fd=finDiffSA(resize);
+		    fd=finDiffAS(fd);
+		}
+		else if (n1==2)
+		{
+		    fd=finDiffAS(resize);
+		    fd=finDiffSA(fd);
+		    fd=finDiffAS(fd);
+		}
+		else if (n1==3)
+		{
+		    fd=finDiffSA(resize);
+		    fd=finDiffAS(fd);
+		    fd=finDiffSA(fd);
+		    fd=finDiffAS(fd);
+		}  
+		
+		//Recover the output size and add the mean
+		final int n11 = n1+1;
+		final int val1 = (n11*0.5 == (int) Math.floor(n11*0.5)) ? (int) (n11*0.5) : (int) Math.floor(n11*0.5)+1;
+		final int val2 = (int) Math.floor(n11*0.5);
+				
+		double[] fdShort = new double[nxOut];
+		
+		for(int i = 0 ; i < nxOut ; i ++)
+			fdShort[i] = fd[val1 + i] + med;		
+		//fdShort = [fdShort(1+val2:nxOut) fdShort(val2:-1:1)];		
+
+		// postfiltering - q=a^(-1)
+		double[] coefFull = null;
+		if ( (n1+n2+1) < 2 )
+		    coefFull = fdShort;
+		else    
+		{
+			double[] pole = tableOfPoles(n1+n2+1);		    
+		    double tolerance = 1e-11;
+		    coefFull=convertToInterpCoef(fdShort, pole, tolerance);
+		} 
+		
+		// from coef to samples
+		if (coefOrSamples==true)
+		{
+		    if (n2 < 2)
+		        out = coefFull;
+		    else
+		    {
+		        double [] samples = tableOfSamples(n2);
+		        out = convertToSamples(coefFull, samples);  
+		    } 
+		}
+		
+		return out;
 	} // end method resize1D
+
+	// --------------------------------------------------------------
+	/**
+	 * Convert the spline coefficients to samples
+	 * 
+	 * @param coef input coefficients values
+	 * @param samples output samples
+	 * @return 
+	 */
+	public static double[] convertToSamples(double[] coef, double[] samples) 
+	{
+		final int NbCoef = coef.length;
+		final int kn = 2*NbCoef-2;
+		
+		double[] out = new double[NbCoef];
+
+		for (int k = 0; k < NbCoef; k++)
+		{
+		    double yaux = coef[k] * samples[0];
+		    for (int i = 1; i < samples.length-1; i ++)
+		    {
+		        int k1 = k-i;
+		        int k2 = k+i;
+		        if (k1 < 0)
+		        {
+		            k1 = -k1;
+		            if (k1 >= NbCoef)
+		                k1 = kn-k1;
+		                
+		        }
+		        if (k2 >= NbCoef)
+		        {
+		            k2 = 2*(NbCoef-1)-k2;
+		            if (k2 >= NbCoef)
+		                k2 = kn-k2;
+		                
+		        }    
+		        yaux = yaux + coef[k1] + coef[k2] * samples[i];
+		    }    
+		    out[k] = yaux;
+		
+		}
+		
+		return out;
+	} // end method convertToSamples
+
+	// --------------------------------------------------------------
+	/**
+	 * Finite Difference. Symmetric input boundary conditions. Anti-symmetric
+	 * output boundary conditions.
+	 * 
+	 * @param c input signal
+	 * @return output signal
+	 */
+	private static double[] finDiffSA(double[] c) 
+	{
+		int N = c.length;
+		double[] y = new double[N];
+		for(int i = 0; i < N-1; i++)
+			y[i] = c[i] - c[i+1];
+		y[N-1] = c[N-1] - c[N-2];
+		
+		for(int i = 0; i < N; i++)
+			y[i] *= -1;
+		
+		return y;
+	} // end method finDiffSA
+
+	// --------------------------------------------------------------
+	/**
+	 * Finite Difference. Anti-symmetric input boundary conditions. Symmetric
+	 * output boundary conditions.
+	 * 
+	 * @param c input signal
+	 * @return output signal
+	 */
+	public static double[] finDiffAS(double[] c) 
+	{
+		int N = c.length;
+		double[] y = new double[N];
+		for (int i = 0; i < N-1; i ++)
+		    y[i+1] = c[i+1] - c [i];
+		
+		y[0]=2*c[0];
+		
+		return y;
+	} // end method finDiffAS
+
+	// --------------------------------------------------------------
+	/**
+	 * Geometric transform and resampling
+	 * 
+	 * @param input input signal
+	 * @param nInput length of the input signal
+	 * @param nOut length of the resize signal
+	 * @param scale expansion/reduction
+	 * @param n1 degree of the analysis spline
+	 * @param nt (n+n1+1)
+	 * @return re-sampled signal
+	 */
+	public static double[] resampling(double[] input, int nInput, int nOut,
+			double scale, int n1, int nt) 
+	{
+		final boolean even = ( (n1+1)*0.5 == Math.floor((n1+1)*0.5) ) ? true : false;
+		
+		int m = factorial(nt);
+		double[] temp = new double[nt + 1];
+		
+		final int val1 = (int) (even ? (n1+1)*0.5 : (int) Math.floor((n1+1)*0.5)+1);
+		double newx0 = even ? (nt+1)*0.5-val1/scale : 0.5*(1/scale-1) + (nt+1)*0.5-val1/scale;
+		
+		final double aa = Math.pow(scale, n1+1);
+		final double val2 = Math.floor((n1+1)*0.5);
+		
+		double[] out = new double[ nOut+n1+1 ];
+		
+		for(int k = -val1; k < (nOut + val2); k++)
+		{
+			final int val = (int) Math.ceil(-(nt+1) + newx0);
+			
+			for (int s = 0; s <= nt; s++)
+				temp[s] = Math.pow(-newx0+(nt+1)+val+s, nt)/m;
+			
+			for (int s = 0; s <= nt; s++)
+				for(int l = nt+1; l > 0; l--)
+					temp[l] -= temp[l-1];
+			
+			if(even)
+			{
+				 for(int i = 0; i <= nt; i++)
+				 {
+	                if (i + val < 0)
+	                    out[k+val1] += input[-i-val]*temp[i];
+	                else
+	                {
+	                    if (i+val > nInput-1)
+	                        out[k+val1] += input[2*(nInput-1)-i-val]*temp[i];
+	                    else
+	                    	out[k+val1] += input[i+val] * temp[i];
+	                }
+				 }
+	
+			}
+			else
+			{
+				for(int i = 0; i <= nt; i++)
+				{
+					if (i+val < 0) 
+						out[k+val1] -= input[-i-val]*temp[i];
+					else
+						if (i+val > nInput-1) 
+							out[k+val1] -= input[2*(nInput-1)-i-val]*temp[i];
+						else
+							out[k+val1] += input[i+val]*temp[i];
+				}
+			}
+			
+			newx0 += 1/scale;
+		}
+		
+		for(int i = 0; i < out.length; i++)
+			out[i] *= aa;
+		
+		return out;
+	}// end method resampling
+
+	//-----------------------------------------------------------------------------
+	/**
+	 * Factorial
+	 * @param n
+	 * @return n factorial
+	 */
+	public static int factorial(int n) 
+	{
+		int fact = 0;
+		switch(n)
+		{
+			case 0:
+				fact = 1;
+				break;
+			case 1:  
+				fact = 1;
+				break;
+			case 2:
+				fact = 2;
+				break;
+			case 3:
+				fact = 6;
+				break;
+			case 4:
+				fact = 24;
+				break;
+			case 5:
+				fact = 120;
+				break;
+			case 6:
+				fact = 720;
+				break;
+			case 7:
+				fact = 5040;
+				break;
+			default:
+				fact = 1;
+				for (int i=0 ; i < n; i++)
+					fact *= i;
+		}
+		return fact;
+	} // end factorial
 
 	// --------------------------------------------------------------
 	/**
@@ -347,5 +614,64 @@ public class BSpline
 		
 		return pole;
 	}// end method tableOfPoles
+	
+	// --------------------------------------------------------------
+	/**
+	 * Recover the B-spline samples values from a lookup table 
+	 *  
+	 * @param splineDegree degree of the spline
+	 * @return Value of the samples
+	 */
+	public static double[] tableOfSamples(int splineDegree) 
+	{		
+		double[] samples = null;
+		switch (splineDegree)
+		{		
+			case 0:
+			case 1:
+				samples = null;
+				break;
+			case 2:
+				samples = new double[2];
+				samples[0] = 6/8;
+				samples[1] = 1/8;
+				break;
+			case 3:
+				samples = new double[2];
+				samples[0] = 4/6;
+				samples[1] = 1/6;
+				break;
+			case 4:
+				samples = new double[3];
+				samples[0] = 230/384;
+				samples[1] = 76/384;
+				samples[2] = 1/384;
+				break;
+			case 5:
+				samples = new double[3];
+				samples[0] = 66/120;
+		        samples[1] = 26/120;
+		        samples[2] = 1/120;
+				break;
+			case 6:
+				samples = new double[4];
+				samples[0] = 23548/46080;
+		        samples[1] = 10543/46080;
+		        samples[2] = 722/46080;
+		        samples[3] = 1/46080;
+				break;
+			case 7:
+				samples = new double[4];
+				samples[0] = 2416/5040;
+		        samples[1] = 1191/5040;
+		        samples[2] = 120/5040;
+		        samples[3] = 1/5040;
+				break;
+			default:
+				IJ.error("Invalid spline degree");
+		}
+		
+		return samples;
+	}// end method tableOfSamples
 	
 } // end class BSpline
