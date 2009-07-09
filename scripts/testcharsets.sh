@@ -28,4 +28,9 @@ do
 	fi
 done
 
-echo "$ALL"
+if test -t 1
+then
+	echo "$ALL" | less -S
+else
+	echo "$ALL"
+fi
