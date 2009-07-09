@@ -17,19 +17,12 @@ do
 	reencoded="$(LC_ALL=C echo "$string" |
 		iconv -f $charset -t utf-8 2>/dev/null )" ||
 	continue
+	reencoded="$(echo "$reencoded" | tr -d '[]()$^&*?/\\')"
+	charset="$(echo "$charset" | tr -d '/')"
 	if echo "$ALL" | grep -e "^$reencoded " > /dev/null
 	then
 		ALL="$(echo "$ALL" |
-			while read other rest
-			do
-				if test "$other" = "$reencoded"
-				then
-					test -z "$show_all" ||
-					echo "$other $rest, $charset"
-				else
-					echo "$other $rest"
-				fi
-			done)"
+			sed "s/$reencoded .*/&, $charset/")"
 	else
 		ALL="$ALL$LF$reencoded $charset"
 	fi
