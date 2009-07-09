@@ -648,14 +648,14 @@ class FlowJCanvas extends ImageCanvas
                         FlowJError fe = (FlowJError) display;
                         alphaField.setText("exp: " + IJ.d2s(fe.xExpected(x, y), 1) + ", " + IJ.d2s(fe.yExpected(x, y), 1));
                         rLabel.setText("act: " + IJ.d2s(fe.flow.getX(x, y), 1) + ", " + IJ.d2s(fe.flow.getY(x, y), 1));
-                        posLabel.setText(x + ", " + y + ": psi = " + fe.psi(x, y)+"บ");
+                        posLabel.setText(x + ", " + y + ": psi = " + fe.psi(x, y)+"ยบ");
                 }
                 else if (display instanceof FlowJFlow)
                 {
                         FlowJFlow flow = (FlowJFlow) display;
                         if (flow.full(x, y))
                         {
-                                alphaField.setText("" + IJ.d2s(flow.getAlphaDeg(x, y), 2)+"บ");
+                                alphaField.setText("" + IJ.d2s(flow.getAlphaDeg(x, y), 2)+"ยบ");
                                 rLabel.setText("" + IJ.d2s(flow.getMagnitude(x, y), 2)+"pxs/frame");
                                 sLabel.setText("(" + flow.calibratedMagnitudeString(flow.getMagnitude(x,y), 2)+")");
                                 posLabel.setText(x + ", " + y);
@@ -682,7 +682,7 @@ class FlowJCanvas extends ImageCanvas
                 {
                         FlowJFlow flow = (FlowJFlow) display;
                         int s = flow.average(imp.getRoi());
-                        alphaField.setText("avg orientation: " + IJ.d2s(flow.averageAlpha(), 2)+"บ");
+                        alphaField.setText("avg orientation: " + IJ.d2s(flow.averageAlpha(), 2)+"ยบ");
                         rLabel.setText("avg speed: " + IJ.d2s(flow.averageMagnitude(), 2)+"pxs/frame");
                         sLabel.setText("(" + flow.calibratedMagnitudeString(flow.averageMagnitude(), 2)+")");
                         posLabel.setText("surface: " + s + "pxs");
@@ -690,7 +690,7 @@ class FlowJCanvas extends ImageCanvas
                 else if (display instanceof FlowJError && imp.getRoi() instanceof Roi)
                 {
                         FlowJError fe = (FlowJError) display;
-                        alphaField.setText("avg psi: " + IJ.d2s(((FlowJError) display).average(imp.getRoi()), 2)+"บ");
+                        alphaField.setText("avg psi: " + IJ.d2s(((FlowJError) display).average(imp.getRoi()), 2)+"ยบ");
                         rLabel.setText("");
                         posLabel.setText("");
                 }
