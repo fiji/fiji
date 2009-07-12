@@ -63,11 +63,12 @@ def copy_platform_specific_files(platform):
 		print 'Copying Java files for', platform
 		copy_java(platform)
 
-	print 'Copying platform-specific files for', platform
+	print 'Copying platform-specific files for', platform, \
+		'(host platform=' + host_platform + ')'
 	if platform == 'macosx':
 		macos='Fiji.app/Contents/MacOS/'
 		os.makedirs(macos)
-		if (host_platform == platform):
+		if (host_platform == "osx10.5"):
 			shutil.copy('fiji', macos + 'fiji-macosx')
 			shutil.copy('fiji-tiger', macos)
 		else:
