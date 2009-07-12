@@ -33,11 +33,15 @@ import ij.IJ;
 import ij.ImageJ;
 import ij.Menus;
 import ij.plugin.PlugIn;
+
 import java.awt.Menu;
 import java.awt.PopupMenu;
 import java.awt.MenuItem;
 import java.awt.MenuBar;
+
 import java.util.ArrayList;
+import java.util.Arrays;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
@@ -72,7 +76,9 @@ import java.io.FileReader;
  */
 abstract public class RefreshScripts implements PlugIn {
 	static {
-		System.setProperty("java.class.path", getPluginsClasspath());
+		if (IJ.getInstance() != null)
+			System.setProperty("java.class.path",
+					getPluginsClasspath());
 	}
 
 	protected String scriptExtension;
@@ -262,6 +268,7 @@ abstract public class RefreshScripts implements PlugIn {
 			if (maxDepth >= 0 && depth >= maxDepth)
 				return;
 			String [] entries = f.list();
+			Arrays.sort(entries);
 			for( int i = 0; i < entries.length; ++i )
 				if( ! (entries[i].equals(".")||entries[i].equals("..")) ) {
 					String newSubPath = subPath;
@@ -350,15 +357,10 @@ abstract public class RefreshScripts implements PlugIn {
 
 	/** Converts 'My_python_script.py' to 'My python script'*/
 	private String strip(String file_name) {
-		StringBuffer name = new StringBuffer(file_name);
-		int i_extension = file_name.indexOf(scriptExtension);
-		//don't cut the extension if the .py is some internal part of the name
-		if (-1 != i_extension && ((file_name.length()-scriptExtension.length()) == i_extension)) {
-			//cut extension
-			name.setLength(i_extension);
-		}
-		String result = name.toString();
-		return result.replace('_',' ');
+		if (file_name.endsWith(scriptExtension))
+			file_name = file_name.substring(0,
+				file_name.length() - scriptExtension.length());
+		return file_name.replace('_',' ');
 	}
 
 	/** Run the script in a new thread. */
@@ -395,24 +397,22 @@ abstract public class RefreshScripts implements PlugIn {
 	protected static String getPluginsClasspath() {
 		String classPath = System.getProperty("java.class.path");
 		if (classPath == null)
-			classPath = "";
+			return "";
 
-		// strip out all plugin .jar files
+		// strip out all plugin .jar files (to keep classPath short)
 		String pluginsPath = Menus.getPlugInsPath();
-		if (classPath.startsWith(pluginsPath)) {
-			int colon = classPath.indexOf(File.pathSeparator);
-			if (colon < 0)
-				classPath = "";
-			else
-				classPath = classPath.substring(colon + 1);
-		}
-		int i;
-		while ((i = classPath.indexOf(File.pathSeparator + pluginsPath)) > 0) {
-			int colon = classPath.indexOf(File.pathSeparator, i + 1);
-			classPath = classPath.substring(0, i)
-				+ (colon < 0 ? "" : classPath.substring(colon + 1));
+		for (int i = 0; i >= 0; i =
+				classPath.indexOf(File.pathSeparator, i + 1)) {
+			while (classPath.substring(i).startsWith(pluginsPath)) {
+				int j = classPath.indexOf(File.pathSeparator,
+					i + 1);
+				classPath = classPath.substring(0, i)
+					+ (j < 0 ? "" :
+						classPath.substring(j + 1));
+			}
 		}
 
+		// append the plugin .jar files
 		try {
 			String path = discoverJars(pluginsPath);
 			if (path != null && !path.equals("")) {
@@ -429,6 +429,7 @@ abstract public class RefreshScripts implements PlugIn {
                 if (file.isDirectory()) {
 			String result = "";
 			String[] paths = file.list();
+			Arrays.sort(paths);
                         for (int i = 0; i < paths.length; i++) {
 				String add = discoverJars(path
 						+ File.separator + paths[i]);

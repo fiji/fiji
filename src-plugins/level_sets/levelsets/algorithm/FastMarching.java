@@ -105,15 +105,24 @@ public class FastMarching implements StagedAlgorithm
    // Penalty threshold around mean seed grey-value
    private final int GREYVALUE_THRESHOLD;
 
+   private boolean apply_grey_value_erosion = true;
    
    // counter for completed step output
    private int steps = 0;
    
+   public FastMarching(final ImageContainer image, final ImageProgressContainer img_progress, 
+		   final StateContainer seedContainer, final boolean halt,
+		   final int grey_thresh, final double dist_thresh )
+   {
+	   this(image, img_progress, seedContainer, halt, grey_thresh, dist_thresh, true);
+   }
+
    /** Creates a new instance of FastMarching
     */
    public FastMarching(final ImageContainer image, final ImageProgressContainer img_progress, 
 		   final StateContainer seedContainer, final boolean halt,
-		   final int grey_thresh, final double dist_thresh )
+		   final int grey_thresh, final double dist_thresh,
+		   final boolean apply_grey_value_erosion)
    {
       /* Just reference the input data. Actual initialization is done later
        * because when this constructor is called this object is queued for later
@@ -123,6 +132,7 @@ public class FastMarching implements StagedAlgorithm
       this.source = image;
       this.progress = img_progress;
       this.seeds = seedContainer.getForFastMarching();
+      this.apply_grey_value_erosion = apply_grey_value_erosion;
       needInit = true;
       
       GREYVALUE_THRESHOLD = grey_thresh; 
@@ -201,20 +211,23 @@ public class FastMarching implements StagedAlgorithm
       gradients = this.source.calculateGradients();
       
       //this.img.applyFilter(new MedianFilter(2));
-      
-      if (img.getImageCount() > 100)
-      {
-         final int partsize = img.getImageCount() / 2;
-         int offset = 0;
-         this.img.applyFilter(new GreyValueErosion(MorphologicalOperator.getTrueMask(5, 5)), 0, partsize - 1);
-         this.img.applyFilter(new GreyValueErosion(MorphologicalOperator.getTrueMask(5, 5)), 0, partsize - 1);
-         offset += partsize;
-         this.img.applyFilter(new GreyValueErosion(MorphologicalOperator.getTrueMask(5, 5)), offset, offset + partsize - 1);
-      }
-      else
-      {
-//         this.img.applyFilter(new GreyValueErosion(MorphologicalOperator.getTrueMask(5, 5)));
-         this.img.applyFilter(new GreyValueErosion(MorphologicalOperator.getTrueMask(5, 5)));
+
+      if (apply_grey_value_erosion) {
+	      
+	      if (img.getImageCount() > 100)
+	      {
+		 final int partsize = img.getImageCount() / 2;
+		 int offset = 0;
+		 this.img.applyFilter(new GreyValueErosion(MorphologicalOperator.getTrueMask(5, 5)), 0, partsize - 1);
+		 this.img.applyFilter(new GreyValueErosion(MorphologicalOperator.getTrueMask(5, 5)), 0, partsize - 1);
+		 offset += partsize;
+		 this.img.applyFilter(new GreyValueErosion(MorphologicalOperator.getTrueMask(5, 5)), offset, offset + partsize - 1);
+	      }
+	      else
+	      {
+	//         this.img.applyFilter(new GreyValueErosion(MorphologicalOperator.getTrueMask(5, 5)));
+		 this.img.applyFilter(new GreyValueErosion(MorphologicalOperator.getTrueMask(5, 5)));
+	      }
       }
       
       IJ.log("Fast Marching done init");

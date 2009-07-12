@@ -1,0 +1,50 @@
+import ij.IJ;
+import ij.Menus;
+
+import ij.plugin.PlugIn;
+
+import ij.gui.GenericDialog;
+
+import java.util.Hashtable;
+import java.util.Collections;
+import java.util.ArrayList;
+import java.util.Iterator;
+
+import java.awt.TextField;
+import java.awt.event.TextListener;
+import java.awt.event.TextEvent;
+import java.awt.Color;
+ 
+keys = new ArrayList();
+keys.addAll(Menus.getCommands().keySet());
+Collections.sort(keys);
+ 
+// gui
+GenericDialog gd = new GenericDialog("Launcher");
+gd.addStringField("Command: ", "");
+final TextField prompt = (TextField)gd.getStringFields().get(0);
+prompt.setForeground(Color.red);
+
+prompt.addTextListener(new TextListener() {
+	public void textValueChanged(TextEvent e) {
+		String text = prompt.getText();
+		// if a command matches, redo color to black
+		for (Iterator it = keys.iterator(); it.hasNext(); ) {
+			String command = (String)it.next();
+			if (command.equals(text)) {
+				prompt.setForeground(Color.black);
+				return;
+			}
+		}
+		// no command found, set to red:
+		prompt.setForeground(Color.red);
+	}
+});
+
+gd.showDialog();
+if (gd.wasCanceled()) return;
+
+String command = gd.getNextString();
+
+// execute!
+IJ.doCommand(command);

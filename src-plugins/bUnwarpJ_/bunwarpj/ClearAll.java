@@ -22,7 +22,7 @@ package bunwarpj;
  */
 
 /*====================================================================
-|   bUnwarpJClearAll
+|   ClearAll
 \===================================================================*/
 
 /*------------------------------------------------------------------*/
@@ -40,21 +40,17 @@ import java.awt.event.ActionListener;
 /**
  * Class to clear all the processes and actions in bUnwarpJ.
  */
-public class bUnwarpJClearAll extends Dialog implements ActionListener
-{ /* begin class bUnwarpJClearAll */
+public class ClearAll extends Dialog implements ActionListener
+{ /* begin class ClearAll */
 
     /*....................................................................
        Private variables
     ....................................................................*/
 
-    /** image plus for source image */
-    private ImagePlus sourceImp;
-    /** image plus for target image */
-    private ImagePlus targetImp;
     /** point handler for source image */
-    private bUnwarpJPointHandler sourcePh;
+    private PointHandler sourcePh;
     /** point handler for target image */
-    private bUnwarpJPointHandler targetPh;
+    private PointHandler targetPh;
 
     /*....................................................................
        Public methods
@@ -62,24 +58,18 @@ public class bUnwarpJClearAll extends Dialog implements ActionListener
 
     /*------------------------------------------------------------------*/
     /**
-     * Create a new instance of bUnwarpJClearAll.
+     * Create a new instance of ClearAll.
      *
      * @param parentWindow pointer to the parent window
-     * @param sourceImp source image representation
-     * @param targetImp target image representation
      * @param sourcePh point handler for the source image
      * @param targetPh point handler for the source image
      */
-    bUnwarpJClearAll (
+    ClearAll (
        final Frame parentWindow,
-       final ImagePlus sourceImp,
-       final ImagePlus targetImp,
-       final bUnwarpJPointHandler sourcePh,
-       final bUnwarpJPointHandler targetPh)
+       final PointHandler sourcePh,
+       final PointHandler targetPh)
     {
        super(parentWindow, "Removing Points", true);
-       this.sourceImp = sourceImp;
-       this.targetImp = targetImp;
        this.sourcePh = sourcePh;
        this.targetPh = targetPh;
        setLayout(new GridLayout(0, 1));
@@ -94,7 +84,7 @@ public class bUnwarpJClearAll extends Dialog implements ActionListener
        add(separation2);
        add(cancelButton);
        pack();
-    } /* end bUnwarpJClearAll */    
+    } /* end ClearAll */    
     
     /*------------------------------------------------------------------*/
     /**
@@ -123,5 +113,5 @@ public class bUnwarpJClearAll extends Dialog implements ActionListener
        return(new Insets(0, 20, 20, 20));
     } /* end getInsets */
 
-} /* end class bUnwarpJClearAll */
+} /* end class ClearAll */
 

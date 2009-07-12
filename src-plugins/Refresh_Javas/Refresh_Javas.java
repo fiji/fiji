@@ -49,7 +49,7 @@ public class Refresh_Javas extends RefreshScripts {
 		if (!pluginsPath.endsWith(File.separator))
 			pluginsPath += File.separator;
 		if (c.startsWith(pluginsPath)) {
-			c = c.substring(pluginsPath.length() + 1);
+			c = c.substring(pluginsPath.length());
 			while (c.startsWith(File.separator))
 				c = c.substring(1);
 		}
@@ -80,11 +80,7 @@ public class Refresh_Javas extends RefreshScripts {
 		if (javac == null) {
 			String className = "com.sun.tools.javac.Main";
 			ClassLoader loader = getClass().getClassLoader();
-			Class main =
-				(loader instanceof PluginClassLoader) ?
-				((PluginClassLoader)loader)
-					.loadClass(className, true, true) :
-				loader.loadClass(className);
+			Class main = loader.loadClass(className);
 			Class[] argsType = new Class[] {
 				arguments.getClass(),
 				PrintWriter.class

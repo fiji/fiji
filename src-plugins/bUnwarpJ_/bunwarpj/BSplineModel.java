@@ -27,15 +27,15 @@ import ij.process.ImageProcessor;
 import java.util.Stack;
 
 /*====================================================================
-|   bUnwarpJImageModel
+|   BSplineModel
 \===================================================================*/
 
 /*------------------------------------------------------------------*/
 /**
  * Class for representing the images and the deformations by cubic B-splines
  */
-public class bUnwarpJImageModel implements Runnable
-{ /* begin class bUnwarpJImageModel */
+public class BSplineModel implements Runnable
+{ /* begin class BSplineModel */
 
 	// Some constants
 	/** maximum output window dimensions */
@@ -186,7 +186,7 @@ public class bUnwarpJImageModel implements Runnable
 	 * @param isTarget enables the computation of the derivative or not
 	 * @param maxImageSubsamplingFactor subsampling factor at highest resolution level
 	 */
-	public bUnwarpJImageModel (
+	public BSplineModel (
 			final ImageProcessor ip,
 			final boolean isTarget,
 			final int maxImageSubsamplingFactor)
@@ -217,7 +217,7 @@ public class bUnwarpJImageModel implements Runnable
 	 * @param img image in a double array
 	 * @param isTarget enables the computation of the derivative or not
 	 */
-	public bUnwarpJImageModel (
+	public BSplineModel (
 			final double [][]img,
 			final boolean isTarget)
 	{
@@ -255,7 +255,7 @@ public class bUnwarpJImageModel implements Runnable
 	 *
 	 * @param c Set of B-spline coefficients
 	 */
-	public bUnwarpJImageModel (final double [][]c)
+	public BSplineModel (final double [][]c)
 	{
 		// Get the size of the input array
 		this.currentHeight      = height      = c.length;
@@ -290,7 +290,7 @@ public class bUnwarpJImageModel implements Runnable
 	 * @param Xdim X-dimension of the set of coefficients
 	 * @param offset Offset of the beginning of the array with respect to the origin of c
 	 */
-	public bUnwarpJImageModel (
+	public BSplineModel (
 			final double []c,
 			final int Ydim,
 			final int Xdim,
@@ -326,16 +326,16 @@ public class bUnwarpJImageModel implements Runnable
 		this.subHeight = this.height;
 		
 		// Output window must have a maximum size
-		if(this.width > bUnwarpJImageModel.MAX_OUTPUT_SIZE 
-			|| this.height > bUnwarpJImageModel.MAX_OUTPUT_SIZE)
+		if(this.width > BSplineModel.MAX_OUTPUT_SIZE 
+			|| this.height > BSplineModel.MAX_OUTPUT_SIZE)
 		{
 			this.bSubsampledOutput = true;			
 			// Calculate subsampled dimensions
 			do{
 				this.subWidth /= 2;
 				this.subHeight /= 2;
-			}while(this.subWidth > bUnwarpJImageModel.MAX_OUTPUT_SIZE 
-					|| this.subHeight > bUnwarpJImageModel.MAX_OUTPUT_SIZE);	
+			}while(this.subWidth > BSplineModel.MAX_OUTPUT_SIZE 
+					|| this.subHeight > BSplineModel.MAX_OUTPUT_SIZE);	
 			
 			//IJ.log("subWidth =" + this.subWidth);
 		}
@@ -561,7 +561,7 @@ public class bUnwarpJImageModel implements Runnable
 	 *    double [][]c;
 	 *
 	 *    // Set these coefficients to an interpolator
-	 *    bUnwarpJImageModel sw = new bUnwarpJImageModel(c);
+	 *    BSplineModel sw = new BSplineModel(c);
 	 *
 	 *    // Compute the transformation mapping
 	 *    for (int v=0; v<ImageHeight; v++) {
@@ -914,7 +914,7 @@ public class bUnwarpJImageModel implements Runnable
 		xWeight[3]  = s * dxWeight[3] / -3.0F; // Bspline03(x-ix+1)
 		dxWeight[1] = 1.0F - 2.0F * dxWeight[0] + dxWeight[3];
 		//xWeight[1]  = 2.0F / 3.0F + (1.0F + ex) * dxWeight[3]; // Bspline03(x-ix-1);
-		xWeight[1]  = bUnwarpJMathTools.Bspline03(x-ix-1);
+		xWeight[1]  = MathTools.Bspline03(x-ix-1);
 		dxWeight[2] = 1.5F * ex * (ex - 4.0F/ 3.0F);
 		xWeight[2]  = 2.0F / 3.0F - (2.0F - ex) * dxWeight[0]; // Bspline03(x-ix)
 
@@ -1034,7 +1034,7 @@ public class bUnwarpJImageModel implements Runnable
 		xWeight[3]  = s * dxWeight[3] / -3.0F; // Bspline03(x-ix+1)
 		dxWeight[1] = 1.0F - 2.0F * dxWeight[0] + dxWeight[3];
 		//xWeight[1]  = 2.0F / 3.0F + (1.0F + ex) * dxWeight[3]; // Bspline03(x-ix-1);
-		xWeight[1]  = bUnwarpJMathTools.Bspline03(x-ix-1);
+		xWeight[1]  = MathTools.Bspline03(x-ix-1);
 		dxWeight[2] = 1.5F * ex * (ex - 4.0F/ 3.0F);
 		xWeight[2]  = 2.0F / 3.0F - (2.0F - ex) * dxWeight[0]; // Bspline03(x-ix)
 
@@ -1183,7 +1183,7 @@ public class bUnwarpJImageModel implements Runnable
 		xWeight[3]  = s * dxWeight[3] / -3.0F; // Bspline03(x-ix+1)
 		dxWeight[1] = 1.0F - 2.0F * dxWeight[0] + dxWeight[3];
 		//xWeight[1]  = 2.0F / 3.0F + (1.0F + ex) * dxWeight[3]; // Bspline03(x-ix-1);
-		xWeight[1]  = bUnwarpJMathTools.Bspline03(x-ix-1);
+		xWeight[1]  = MathTools.Bspline03(x-ix-1);
 		dxWeight[2] = 1.5F * ex * (ex - 4.0F/ 3.0F);
 		xWeight[2]  = 2.0F / 3.0F - (2.0F - ex) * dxWeight[0]; // Bspline03(x-ix)
 
@@ -1534,9 +1534,25 @@ public class bUnwarpJImageModel implements Runnable
 		{
 			// Copy the pixel array
 			image = new double[width * height];
-			bUnwarpJMiscTools.extractImage(ip, image);
+			MiscTools.extractImage(ip, image);
 		}
 		coefficient = getBasicFromCardinal2D();
+		
+		/*
+		double[] fullDual = new double[width * height];
+		
+		basicToCardinal2D(coefficient, fullDual, width, height, 3);
+		FloatProcessor fpX 
+			= new FloatProcessor(width, height, fullDual);
+		(new ImagePlus("cardinal" , fpX )).show();
+		*/
+		
+		/*
+		System.out.println("Samples into coeffs:");
+		for(int i = 0; i < coefficient.length; i ++)
+			System.out.print(" " + coefficient[i]);
+		System.out.println("\n---");
+		*/
 		buildCoefficientPyramid();
 		if (isTarget || this.bSubsampledOutput) 
 			buildImagePyramid();
@@ -1661,11 +1677,11 @@ public class bUnwarpJImageModel implements Runnable
 	/**
 	 * Pass from basic to cardinal.
 	 *
-	 * @param basic
-	 * @param cardinal
-	 * @param width
-	 * @param height
-	 * @param degree
+	 * @param basic basic (standard B-splines) 2D array
+	 * @param cardinal cardinal (sampled signal) 2D array
+	 * @param width 2D signal width
+	 * @param height 2D signal height
+	 * @param degree B-splines degree
 	 */
 	private void basicToCardinal2D (
 			final double[] basic,
@@ -1736,7 +1752,7 @@ public class bUnwarpJImageModel implements Runnable
 			halfHeight /= 2;
 			
 			// If the image is too small, we push the previous version of the coefficients
-			if(fullWidth <= bUnwarpJImageModel.min_image_size || fullHeight <= bUnwarpJImageModel.min_image_size)
+			if(fullWidth <= BSplineModel.min_image_size || fullHeight <= BSplineModel.min_image_size)
 			{				 
 				if(this.bSubsampledOutput)
 					IJ.log("Coefficients pyramid " + fullWidth + "x" + fullHeight);
@@ -1802,7 +1818,7 @@ public class bUnwarpJImageModel implements Runnable
 			 halfWidth /= 2;
 			 halfHeight /= 2;
 			 
-			 if(fullWidth <= bUnwarpJImageModel.min_image_size || fullHeight <= bUnwarpJImageModel.min_image_size)
+			 if(fullWidth <= BSplineModel.min_image_size || fullHeight <= BSplineModel.min_image_size)
 			 {				 
 				 if(this.bSubsampledOutput)
 						IJ.log(" Image pyramid " + fullWidth + "x" + fullHeight);
@@ -2008,7 +2024,10 @@ public class bUnwarpJImageModel implements Runnable
 
 	 /*------------------------------------------------------------------*/
 	 /**
-	  * Get basic from cardinal (2D).
+	  * Get basic from cardinal: convert the 2D image from regular samples
+	  * to standard B-spline coefficients.
+	  * 
+	  * @return array of standard B-spline coefficients
 	  */
 	 private double[] getBasicFromCardinal2D ()
 	 {
@@ -2030,12 +2049,15 @@ public class bUnwarpJImageModel implements Runnable
 
 	 /*------------------------------------------------------------------*/
 	 /**
-	  * Get basic from cardinal (2D).
+	  * Get basic from cardinal (2D): convert a 2D signal from regular 
+	  * samples to standard B-spline coefficients.
 	  *
-	  * @param cardinal
-	  * @param width
-	  * @param height
-	  * @param degree
+	  * @param cardinal sampled 2D signal
+	  * @param width signal width
+	  * @param height signal height
+	  * @param degree B-spline degree
+	  * 
+	  * @return array of standard B-spline coefficients
 	  */
 	 private double[] getBasicFromCardinal2D (
 			 final double[] cardinal,
@@ -2244,22 +2266,36 @@ public class bUnwarpJImageModel implements Runnable
 			 break;
 		 default:
 		 }
-		 if (c.length == 1) {
+		 // special case required by mirror boundaries
+		 if (c.length == 1) 
+		 {
 			 return;
 		 }
-		 for (int k = 0; (k < z.length); k++) {
+		 // compute the overall gain
+		 for (int k = 0; (k < z.length); k++) 
+		 {
 			 lambda *= (1.0 - z[k]) * (1.0 - 1.0 / z[k]);
 		 }
-		 for (int n = 0; (n < c.length); n++) {
-			 c[n] = c[n] * lambda;
+		 // apply the gain
+		 for (int n = 0; (n < c.length); n++) 
+		 {
+			 c[n] *= lambda;
 		 }
-		 for (int k = 0; (k < z.length); k++) {
+		 // loop over all poles
+		 for (int k = 0; (k < z.length); k++) 
+		 {
+			 // causal initialization
 			 c[0] = getInitialCausalCoefficientMirrorOffBounds(c, z[k], tolerance);
-			 for (int n = 1; (n < c.length); n++) {
-				 c[n] = c[n] + z[k] * c[n - 1];
+			 // causal recursion
+			 for (int n = 1; (n < c.length); n++) 
+			 {
+				 c[n] += z[k] * c[n - 1];
 			 }
+			 // anticausal initialization
 			 c[c.length - 1] = getInitialAntiCausalCoefficientMirrorOffBounds(c, z[k], tolerance);
-			 for (int n = c.length - 2; (0 <= n); n--) {
+			 // anticausal recursion
+			 for (int n = c.length - 2; (0 <= n); n--) 
+			 {
 				 c[n] = z[k] * (c[n+1] - c[n]);
 			 }
 		 }
@@ -2363,5 +2399,23 @@ public class bUnwarpJImageModel implements Runnable
 		 default:
 		 }
 	 } /* end symmetricFirMirrorOffBounds1D */
+	 
+	 /**
+	  * 
+	  * @param c
+	  * @param width
+	  * @param height
+	  */
+	 public double[] reduceCoeffsBy2(double[]c, int width, int height)
+	 {
+		 double[] fullDual = new double[width * height];
+		 int halfWidth = width / 2;
+		 int halfHeight = height / 2;
+		 basicToCardinal2D(c, fullDual, width, height, 7);		 
+		 final double[] halfDual = getHalfDual2D(fullDual, width, height);
+		 final double[] halfCoefficient = getBasicFromCardinal2D(halfDual, halfWidth, halfHeight, 7);
+		 return halfCoefficient;
+	 }
+	 
 
-} /* end class bUnwarpJImageModel */
+} /* end class BSplineModel */

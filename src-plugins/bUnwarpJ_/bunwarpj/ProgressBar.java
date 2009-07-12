@@ -25,15 +25,15 @@ import ij.IJ;
 
 
 /*====================================================================
-|   bUnwarpJProgressBar
+|   ProgressBar
 \===================================================================*/
 
 /**
  * This class implements the interactions when dealing with ImageJ's
  * progress bar.
  */
-public class bUnwarpJProgressBar
-{ /* begin class bUnwarpJProgressBar */
+public class ProgressBar
+{ /* begin class ProgressBar */
 
     /*....................................................................
        Private variables
@@ -116,5 +116,5 @@ public class bUnwarpJProgressBar
        completed -= batch;
     } /* end workloadDone */
 
-} /* end class bUnwarpJProgressBar */
+} /* end class ProgressBar */
 

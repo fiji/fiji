@@ -6,6 +6,7 @@
 #include <iostream>
 #include <string.h>
 using std::cerr;
+using std::cout;
 using std::endl;
 using std::ostream;
 
@@ -60,6 +61,24 @@ class win_cerr
 
 static win_cerr fake_cerr;
 #define cerr fake_cerr
+
+class win_cout
+{
+	public:
+		template<class T>
+		ostream& operator<<(T t) {
+			open_win_console();
+			return cout << t;
+		}
+
+		ostream& operator<<(std::ostream &(*manip)(std::ostream &s)) {
+			open_win_console();
+			return cout << manip;
+		}
+};
+
+static win_cout fake_cout;
+#define cout fake_cout
 
 #else
 #define PATH_SEP ":"
@@ -1066,13 +1085,13 @@ static char *quote_win32(char *option)
 
 static void show_commandline(struct options& options)
 {
-	cerr << "java";
+	cout << "java";
 	for (int j = 0; j < options.java_options.nr; j++)
-		cerr << " " << quote_if_necessary(options.java_options.list[j]);
-	cerr << " " << main_class;
+		cout << " " << quote_if_necessary(options.java_options.list[j]);
+	cout << " " << main_class;
 	for (int j = 0; j < options.ij_options.nr; j++)
-		cerr << " " << quote_if_necessary(options.ij_options.list[j]);
-	cerr << endl;
+		cout << " " << quote_if_necessary(options.ij_options.list[j]);
+	cout << endl;
 }
 
 bool file_is_newer(string path, string than)
@@ -1103,6 +1122,13 @@ bool handle_one_option(int &i, const char *option, string &arg)
 	return false;
 }
 
+static bool is_file_empty(string path)
+{
+	struct stat st;
+
+	return !stat(path.c_str(), &st) && !st.st_size;
+}
+
 static bool update_files(string relative_path)
 {
 	string absolute_path = string(fiji_dir) + "/update" + relative_path;
@@ -1123,6 +1149,15 @@ static bool update_files(string relative_path)
 		string source = absolute_path + "/" + filename;
 		string target = string(fiji_dir) + relative_path
 			+ "/" + filename;
+
+		if (is_file_empty(source)) {
+			if (unlink(source.c_str()))
+				cerr << "Could not remove " << source << endl;
+			if (unlink(target.c_str()))
+				cerr << "Could not remove " << target << endl;
+			continue;
+		}
+
 #ifdef WIN32
 		if (file_exists(target.c_str()) && unlink(target.c_str())) {
 			cerr << "Could not remove old version of " << target
@@ -1481,11 +1516,11 @@ static int start_ij(void)
 		else if (handle_one_option(i, "--fiji-dir", arg))
 			fiji_dir = strdup(arg.c_str());
 		else if (!strcmp("--print-fiji-dir", main_argv[i])) {
-			cerr << fiji_dir << endl;
+			cout << fiji_dir << endl;
 			exit(0);
 		}
 		else if (!strcmp("--print-java-home", main_argv[i])) {
-			cerr << get_java_home() << endl;
+			cout << get_java_home() << endl;
 			exit(0);
 		}
 		else if (!strcmp("--help", main_argv[i]) ||
@@ -1587,7 +1622,9 @@ static int start_ij(void)
 		class_path += fiji_dir;
 		class_path += "/ij.jar";
 
-		if (strcmp(main_class, "ij.ImageJ"))
+		if (!strcmp(main_class, "ij.ImageJ"))
+			update_files();
+		else
 			if (build_classpath(class_path, string(fiji_dir)
 						+ "/plugins", 0))
 				return 1;
@@ -1620,7 +1657,6 @@ static int start_ij(void)
 		else
 			add_option(options, "-port7", 1);
 
-		update_files();
 		stringstream icon_option;
 		icon_option << "-icon=" << fiji_dir << "/images/icon.png";
 		add_option(options, icon_option, 1);
@@ -1783,6 +1819,24 @@ static void append_icon_path(string &str)
 		str += "/images/Fiji.icns";
 }
 
+#include <sys/types.h>
+#include <sys/sysctl.h>
+#include <mach/machine.h>
+#include <unistd.h>
+#include <sys/param.h>
+#include <string.h>
+
+static int is_intel(void)
+{
+	int mib[2] = { CTL_HW, HW_MACHINE };
+	char result[128];
+	size_t len = sizeof(result);;
+
+	if (sysctl(mib, 2, result, &len, NULL, 0) < 0)
+		return 0;
+	return !strcmp(result, "i386");
+}
+
 static void set_path_to_JVM(void)
 {
 	/*
@@ -1824,7 +1878,7 @@ static void set_path_to_JVM(void)
 	CFStringRef targetJVM; // Minimum Java5
 
 	// try 1.6 only with 64-bit
-	if (sizeof(void *) > 4) {
+	if (is_intel() && sizeof(void *) > 4) {
 		targetJVM = CFSTR("1.6");
 		TargetJavaVM =
 		CFURLCreateCopyAppendingPathComponent(kCFAllocatorDefault,
@@ -1977,14 +2031,6 @@ static int start_ij_macosx(void)
 }
 #define start_ij start_ij_macosx
 
-#include <sys/types.h>
-#include <sys/sysctl.h>
-#include <mach/machine.h>
-#include <unistd.h>
-#include <sys/param.h>
-#include <sys/sysctl.h>
-#include <string.h>
-
 /*
  * Them stupid Apple software designers -- in their infinite wisdom -- added
  * 64-bit support to Tiger without really supporting it.
@@ -2023,7 +2069,7 @@ static int launch_32bit_on_tiger(int argc, char **argv)
 {
 	const char *match, *replace;
 
-	if (is_leopard()) {
+	if (is_intel() && is_leopard()) {
 		match = "-tiger";
 		replace = "-macosx";
 	}

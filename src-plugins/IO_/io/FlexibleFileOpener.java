@@ -71,7 +71,7 @@ class FlexibleFileOpener extends FileOpener {
 		
 		if(gunzipMode==GZIP){
 			boolean lessThan138s = IJ.getVersion().compareTo("1.38s")<0;
-			if(lessThan138s || !fi.fileName.toLowerCase().endsWith(".gz")) return new GZIPInputStream(is);
+			if(lessThan138s || !fi.fileName.toLowerCase().endsWith(".gz")) return new GZIPInputStream(is,50000);
 			else return is;
 		}
 		
