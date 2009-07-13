@@ -148,7 +148,7 @@ macro "AutoRun" {
         return menu;
     }
     function getLutList() {
-        lutdir = getDirectory("startup")+"luts"+File.separator;
+        lutdir = getDirectory("luts");
         list = newArray("No LUTs in /ImageJ/luts");
         if (!File.exists(lutdir))
              return list;
