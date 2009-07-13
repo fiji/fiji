@@ -1376,11 +1376,19 @@ static int start_ij(void)
 #ifdef MACOSX
 	// When double-clicked => exactly 1 empty string argument
 	if (main_argc == 2 && !*main_argv[1])
+	{
 		/*
 		 * Reset main_argc so that ImageJ won't try to open
 		 * that empty argument as a file (the root directory).
 		 */
 		main_argc=1;
+		/*
+		 * Additionally, change directory to the fiji dir to emulate
+		 * the behavior of the regular ImageJ application which does
+		 * not start up in the filesystem root.
+		 */
+		chdir(fiji_dir);
+	}
 
 	string value;
 	if (!get_fiji_bundle_variable("heap", value) ||
