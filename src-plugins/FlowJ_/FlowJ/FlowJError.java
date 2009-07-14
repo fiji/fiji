@@ -360,7 +360,7 @@ public class FlowJError
 		g.drawRect(frame.x, frame.y, frame.width, frame.height);
 			for (int i = 0; i < binNr; i++)
 			g.drawLine(i*xScale + XMARGIN, YMARGIN + HEIGHT, i*xScale + XMARGIN, YMARGIN + HEIGHT - ((int)(binPsi[i]* scaling)));
-		g.drawString("" + 180 + "บ", 0, YMARGIN);
+		g.drawString("" + 180 + "ยบ", 0, YMARGIN);
 		int y = YMARGIN + HEIGHT + 20;
 		g.drawString("0.0", (int) (xScale * 0) + XMARGIN, y);
 		g.drawString("1.0", (int) (xScale * 1 / binWidth) + XMARGIN, y);
@@ -369,12 +369,12 @@ public class FlowJError
 		g.drawString("4.0", (int) (xScale * 4 / binWidth) + XMARGIN, y);
 		g.drawString("5.0", (int) (xScale * 5 / binWidth) + XMARGIN, y);
 		y += 20;
-		g.drawString("(" + IJ.d2s(binPsi[(int) (0 / binWidth)], 2) + "บ)", (int) (xScale * 0 / binWidth) + XMARGIN, y);
-		g.drawString("(" + IJ.d2s(binPsi[(int) (1 / binWidth)], 2) + "บ)", (int) (xScale * 1 / binWidth) + XMARGIN, y);
-		g.drawString("(" + IJ.d2s(binPsi[(int) (2 / binWidth)], 2) + "บ)", (int) (xScale * 2 / binWidth) + XMARGIN, y);
-		g.drawString("(" + IJ.d2s(binPsi[(int) (3 / binWidth)], 2) + "บ)", (int) (xScale * 3 / binWidth) + XMARGIN, y);
-		g.drawString("(" + IJ.d2s(binPsi[(int) (4 / binWidth)], 2) + "บ)", (int) (xScale * 4 / binWidth) + XMARGIN, y);
-		g.drawString("(" + IJ.d2s(binPsi[(int) (5 / binWidth)], 2) + "บ)", (int) (xScale * 5 / binWidth) + XMARGIN, y);
+		g.drawString("(" + IJ.d2s(binPsi[(int) (0 / binWidth)], 2) + "ยบ)", (int) (xScale * 0 / binWidth) + XMARGIN, y);
+		g.drawString("(" + IJ.d2s(binPsi[(int) (1 / binWidth)], 2) + "ยบ)", (int) (xScale * 1 / binWidth) + XMARGIN, y);
+		g.drawString("(" + IJ.d2s(binPsi[(int) (2 / binWidth)], 2) + "ยบ)", (int) (xScale * 2 / binWidth) + XMARGIN, y);
+		g.drawString("(" + IJ.d2s(binPsi[(int) (3 / binWidth)], 2) + "ยบ)", (int) (xScale * 3 / binWidth) + XMARGIN, y);
+		g.drawString("(" + IJ.d2s(binPsi[(int) (4 / binWidth)], 2) + "ยบ)", (int) (xScale * 4 / binWidth) + XMARGIN, y);
+		g.drawString("(" + IJ.d2s(binPsi[(int) (5 / binWidth)], 2) + "ยบ)", (int) (xScale * 5 / binWidth) + XMARGIN, y);
 	 }
 	 public void clipboard(PrintWriter pw)
 	 /* Copy the error statistics to the clipboard in MS Excel readable format. */

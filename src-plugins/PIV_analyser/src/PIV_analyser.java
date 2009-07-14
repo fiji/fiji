@@ -62,7 +62,7 @@ import ij.gui.Roi;
  * Here are two examples of its first applications in Biology:
  * <ul>
  * <li>comparing flows in a drosophila embryo during gastrulation in control
- * situations and after photo-ablation - <cite>Supatto, W.; DŽbarre, D. &
+ * situations and after photo-ablation - <cite>Supatto, W.; DÃ©barre, D. &
  * Moulia, B. et al. (2005), "In vivo modulation of morphogenetic movements in
  * Drosophila embryos with femtosecond laser pulses", PNAS 102: 1047-1052, PMID
  * 15657140</cite>
@@ -756,7 +756,7 @@ public class PIV_analyser implements PlugInFilter {
 				int dy = y-yc;
 				double v = Math.sqrt(dx*dx+dy*dy) / COLOR_CIRCLE_SIZE * maxDisplacement;
 				double alpha = -Math.toDegrees( Math.atan2(dy, dx) );
-				IJ.showStatus( String.format("Velocity: %5.1f px/frame - Direction %3.0f¼", v, alpha));
+				IJ.showStatus( String.format("Velocity: %5.1f px/frame - Direction %3.0fÂº", v, alpha));
 			}});
 	}
 	
@@ -855,7 +855,7 @@ public class PIV_analyser implements PlugInFilter {
 				alpha = -(alpha-Math.PI/2);
 				if (alpha <- Math.PI) alpha += 2*Math.PI;
 				
-				IJ.showStatus(String.format("Velocity: %5.1f px/frame - Direction %3.0f¼", 
+				IJ.showStatus(String.format("Velocity: %5.1f px/frame - Direction %3.0fÂº", 
 						magnitude, Math.toDegrees(alpha)));
 				
 			}
