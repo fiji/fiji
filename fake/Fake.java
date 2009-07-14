@@ -1782,7 +1782,8 @@ public class Fake {
 		}
 		byte[] buffer = readFile(makePath(cwd, java));
 		if (buffer == null) {
-			System.err.println("Warning: " + java
+			if (!java.endsWith("/package-info.class"))
+				System.err.println("Warning: " + java
 					+ " does not exist.  Skipping...");
 			return;
 		}
