@@ -1477,11 +1477,15 @@ public class Fake {
 			void link(String target, List objects)
 					throws FakeException {
 				File file = new File(target);
-				moveFileOutOfTheWay(file);
+				try {
+					moveFileOutOfTheWay(file);
+				} catch(FakeException e) {
+					file = moveToUpdateDirectory(file);
+				}
 				List arguments = new ArrayList();
 				arguments.add(linkCPlusPlus ? "g++" : "gcc");
 				arguments.add("-o");
-				arguments.add(target);
+				arguments.add(file.getAbsolutePath());
 				addFlags("LDFLAGS", target, arguments);
 				arguments.addAll(objects);
 				addFlags("LIBS", target, arguments);
@@ -1974,9 +1978,13 @@ public class Fake {
 			 * results in a crash.
 			 */
 			String origPath = null;
-			if (moveFileOutOfTheWay(path)) {
-				origPath = path;
-				path += ".new";
+			try {
+				if (moveFileOutOfTheWay(path)) {
+					origPath = path;
+					path += ".new";
+				}
+			} catch (FakeException e) {
+				path = moveToUpdateDirectory(path);
 			}
 
 			OutputStream out = new FileOutputStream(path);
@@ -2908,6 +2916,22 @@ public class Fake {
 			return true;
 		throw new FakeException("Could not move " + file
 				+ " out of the way");
+	}
+
+	static String moveToUpdateDirectory(String path) throws FakeException {
+		return new File(path).getAbsolutePath();
+	}
+
+	static File moveToUpdateDirectory(File file) throws FakeException {
+		String absolute = file.getAbsolutePath().replace('\\', '/');
+		if (!absolute.startsWith(fijiHome))
+			throw new FakeException("The file " + file
+					+ " could not be deleted!");
+		int len = fijiHome.length();
+		File result = new File(absolute.substring(0, len)
+			+ "update/" + absolute.substring(len));
+		result.getParentFile().mkdirs();
+		return result;
 	}
 
 
