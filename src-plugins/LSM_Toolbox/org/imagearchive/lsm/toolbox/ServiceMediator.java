@@ -6,43 +6,53 @@ import org.imagearchive.lsm.toolbox.gui.InfoFrame;
 
 public class ServiceMediator {
 
-	private MasterModel masterModel;
+	private static MasterModel masterModel;
 
-	private ControlPanelFrame controlPanelFrame;
+	private static ControlPanelFrame controlPanelFrame;
 
-	private InfoFrame infoFrame;
+	private static InfoFrame infoFrame;
 
-	private DetailsFrame detailsFrame;
+	private static DetailsFrame detailsFrame;
+
+	private static Reader reader;
 
 	public MasterModel getMasterModel() {
 		return masterModel;
 	}
 
 	public void registerMasterModel(MasterModel masterModel) {
-		this.masterModel = masterModel;
+		ServiceMediator.masterModel = masterModel;
 	}
 
-	public void registerControlPanelFrame(ControlPanelFrame controlPanelFrame) {
-		this.controlPanelFrame = controlPanelFrame;
+	public static void registerReader(Reader reader) {
+		ServiceMediator.reader = reader;
 	}
 
-	public void registerInfoFrame(InfoFrame infoFrame) {
-		this.infoFrame = infoFrame;
+	public static void registerControlPanelFrame(ControlPanelFrame controlPanelFrame) {
+		ServiceMediator.controlPanelFrame = controlPanelFrame;
 	}
 
-	public void registerDetailsFrame(DetailsFrame detailsFrame) {
-		this.detailsFrame = detailsFrame;
+	public static void registerInfoFrame(InfoFrame infoFrame) {
+		ServiceMediator.infoFrame = infoFrame;
 	}
 
-	public ControlPanelFrame getControlPanelFrame() {
+	public static void registerDetailsFrame(DetailsFrame detailsFrame) {
+		ServiceMediator.detailsFrame = detailsFrame;
+	}
+
+	public static ControlPanelFrame getControlPanelFrame() {
 		return controlPanelFrame;
 	}
 
-	public InfoFrame getInfoFrame() {
+	public static InfoFrame getInfoFrame() {
 		return infoFrame;
 	}
 
-	public DetailsFrame getDetailsFrame() {
+	public static DetailsFrame getDetailsFrame() {
 		return detailsFrame;
+	}
+
+	public static Reader getReader() {
+		return reader;
 	}
 }

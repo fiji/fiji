@@ -9,13 +9,13 @@ class TreeTableModel extends AbstractTableModel {
 
 	private String[] columnNames = { "Tag", "Property" };
 
-	private LinkedHashMap dataMap = null;
+	private LinkedHashMap<String, Object> dataMap = null;
 
 	private Object[][] data = null;
 
 	private boolean filtered = false;
 
-	public TreeTableModel(LinkedHashMap dataMap) {
+	public TreeTableModel(LinkedHashMap<String, Object> dataMap) {
 		this.dataMap = dataMap;
 		setData(dataMap);
 	}
@@ -50,10 +50,10 @@ class TreeTableModel extends AbstractTableModel {
 		fireTableCellUpdated(row, col);
 	}
 
-	public void setData(LinkedHashMap dataMap) {
+	public void setData(LinkedHashMap<String, Object> dataMap) {
 		if (dataMap != null) {
 			if (filtered) dataMap = getFilteredMap(dataMap);
-			Iterator iterator = dataMap.keySet().iterator();
+			Iterator<String> iterator = dataMap.keySet().iterator();
 			String tag;
 			data = new Object[dataMap.size()][2];
 			for (int i = 0; iterator.hasNext(); i++) {
@@ -66,9 +66,9 @@ class TreeTableModel extends AbstractTableModel {
 		fireTableDataChanged();
 	}
 
-	public LinkedHashMap getFilteredMap(LinkedHashMap dataMap) {
-		LinkedHashMap filteredMap = new LinkedHashMap();
-		Iterator iterator = dataMap.keySet().iterator();
+	public LinkedHashMap<String, Object> getFilteredMap(LinkedHashMap<String, Object> dataMap) {
+		LinkedHashMap<String, Object> filteredMap = new LinkedHashMap<String, Object>();
+		Iterator<String> iterator = dataMap.keySet().iterator();
 		String tag;
 		data = new Object[dataMap.size()][2];
 		for (int i = 0; iterator.hasNext(); i++) {

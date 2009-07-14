@@ -1,5 +1,7 @@
 package org.imagearchive.lsm.toolbox.gui;
 
+import ij.ImagePlus;
+import ij.WindowManager;
 import ij.text.TextWindow;
 
 import java.awt.BorderLayout;
@@ -13,6 +15,8 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowFocusListener;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Iterator;
@@ -42,13 +46,15 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
+import org.imagearchive.lsm.reader.info.ImageDirectory;
+import org.imagearchive.lsm.reader.info.LSMFileInfo;
+import org.imagearchive.lsm.toolbox.DomXmlExporter;
 import org.imagearchive.lsm.toolbox.MasterModel;
-import org.imagearchive.lsm.toolbox.MasterModelAdapter;
-import org.imagearchive.lsm.toolbox.MasterModelEvent;
-import org.imagearchive.lsm.toolbox.info.CZ_LSMInfo;
+import org.imagearchive.lsm.toolbox.Reader;
+import org.imagearchive.lsm.toolbox.ServiceMediator;
+import org.imagearchive.lsm.toolbox.info.CZLSMInfoExtended;
 import org.imagearchive.lsm.toolbox.info.scaninfo.Recording;
 import org.imagearchive.lsm.toolbox.info.scaninfo.ScanInfo;
-import org.w3c.dom.Node;
 
 public class DetailsFrame extends JFrame {
 
@@ -71,6 +77,8 @@ public class DetailsFrame extends JFrame {
 	private JButton exitButton;
 
 	private JButton dumpButton;
+
+	private JButton xmlButton;
 
 	private JToggleButton filterButton;
 
@@ -98,10 +106,13 @@ public class DetailsFrame extends JFrame {
 
 	private Point searchCoordinates;
 
+	private LSMFileInfo lsm = null;
+
 	public DetailsFrame(MasterModel masterModel) throws HeadlessException {
 		super();
 		this.masterModel = masterModel;
 		initializeGUI();
+		ServiceMediator.registerDetailsFrame(this);
 	}
 
 	public void initializeGUI() {
@@ -141,6 +152,11 @@ public class DetailsFrame extends JFrame {
 				"images/dump.png")));
 		dumpButton
 				.setToolTipText("Dump data to textwindow, saving to text file is possible");
+		xmlButton = new JButton(new ImageIcon(getClass().getResource(
+		"images/xml.png")));
+		xmlButton
+		.setToolTipText("Dump xml data to textwindow, saving to text file is possible");
+
 		searchTF = new JTextField("");
 		detailsTreePopupMenu = new JPopupMenu();
 		expandAllItem = new JMenuItem("Expand all", new ImageIcon(getClass()
@@ -160,6 +176,7 @@ public class DetailsFrame extends JFrame {
 
 		toolBar.add(exitButton);
 		toolBar.add(dumpButton);
+		toolBar.add(xmlButton);
 		toolBar.add(filterButton);
 		toolBar.add(new JSeparator());
 		toolBar.add(new JLabel("  Search: "));
@@ -169,8 +186,8 @@ public class DetailsFrame extends JFrame {
 		getContentPane().setLayout(new BorderLayout());
 		getContentPane().add(toolBar, BorderLayout.NORTH);
 		getContentPane().add(splitPane, BorderLayout.CENTER);
-		filterCBItem.setSelected(true);
-		filterButton.setSelected(true);
+		//filterCBItem.setSelected(true);
+		//filterButton.setSelected(true);
 		pack();
 		centerWindow();
 		setListeners();
@@ -178,9 +195,24 @@ public class DetailsFrame extends JFrame {
 
 	public void setListeners() {
 
+		addWindowFocusListener(new WindowFocusListener(){
+			public void windowGainedFocus(WindowEvent e) {
+				updateTreeAndLabels();
+			}
+
+			public void windowLostFocus(WindowEvent e) {
+			}
+		});
+
 		dumpButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				dumpData();
+			}
+		});
+
+		xmlButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				dumpXmlData();
 			}
 		});
 
@@ -201,16 +233,6 @@ public class DetailsFrame extends JFrame {
 				if (e.isPopupTrigger()) {
 					detailsTreePopupMenu.show((JComponent) e.getSource(), e
 							.getX(), e.getY());
-				}
-			}
-		});
-
-		masterModel.addMasterModelListener(new MasterModelAdapter() {
-			public void LSMFileInfoChanged(MasterModelEvent evt) {
-				if (masterModel.getLsmFileInfo() != null) {
-					setTitle(title + " - "
-							+ masterModel.getLsmFileInfo().fileName);
-					updateTreeAndLabels();
 				}
 			}
 		});
@@ -270,7 +292,7 @@ public class DetailsFrame extends JFrame {
 					if (nodeInfo == null)
 						return;
 					if (nodeInfo instanceof LinkedHashMap) {
-						LinkedHashMap info = (LinkedHashMap) nodeInfo;
+						LinkedHashMap<String, Object> info = (LinkedHashMap<String, Object>)nodeInfo;
 						((TreeTableModel) table.getModel()).setData(info);
 					}
 				} else
@@ -278,9 +300,12 @@ public class DetailsFrame extends JFrame {
 			}
 		});
 
+		updateTreeAndLabels();
 	}
 
-	public DefaultMutableTreeNode findNode(String string, Enumeration nodes,
+
+
+	public DefaultMutableTreeNode findNode(String string, Enumeration<DefaultMutableTreeNode> nodes,
 			DefaultMutableTreeNode last) {
 		DefaultMutableTreeNode result = null;
 		DefaultMutableTreeNode node = null;
@@ -289,14 +314,14 @@ public class DetailsFrame extends JFrame {
 		if (last != null) {
 			if (last instanceof InfoNode) {
 				InfoNode info = (InfoNode) last;
-				LinkedHashMap dataMap = (LinkedHashMap) info.data;
+				LinkedHashMap<String, Object> dataMap = (LinkedHashMap<String, Object>) info.data;
 				if (filterCBItem.isSelected())
 					dataMap = getFilteredMap(dataMap);
-				Iterator iterator = dataMap.keySet().iterator();
+				Iterator<String> iterator = dataMap.keySet().iterator();
 				String tag;
 				data = new Object[dataMap.size()][2];
 				for (int i = 0; iterator.hasNext(); i++) {
-					tag = (String) iterator.next();
+					tag = iterator.next();
 					data[i][0] = tag;
 					data[i][1] = dataMap.get(tag);
 
@@ -344,7 +369,7 @@ public class DetailsFrame extends JFrame {
 			}
 		}
 		if (result == null)
-			new JOptionPane()
+			JOptionPane
 					.showMessageDialog(
 							this,
 							"End of metadata reached. I could not find any tags, properties or values. The next search will start from the beginning.",
@@ -352,28 +377,18 @@ public class DetailsFrame extends JFrame {
 		return result;
 	}
 
-	public LinkedHashMap getFilteredMap(LinkedHashMap dataMap) {
-		LinkedHashMap filteredMap = new LinkedHashMap();
-		Iterator iterator = dataMap.keySet().iterator();
+	public LinkedHashMap<String, Object> getFilteredMap(LinkedHashMap<String, Object> dataMap) {
+		LinkedHashMap<String, Object> filteredMap = new LinkedHashMap<String, Object>();
+		Iterator<String> iterator = dataMap.keySet().iterator();
 		String tag;
-		Object[][] data = new Object[dataMap.size()][2];
 		for (int i = 0; iterator.hasNext(); i++) {
-			tag = (String) iterator.next();
+			tag = iterator.next();
 			if (tag.indexOf("<UNKNOWN@") == -1)
 				filteredMap.put(tag, dataMap.get(tag));
 		}
 		return filteredMap;
 	}
 
-	public void setMetadata(Node root) {
-		/*
-		 * if (root != null) { detailsModel = new DOMtoTreeModelAdapter();
-		 * detailsModel.setRoot(root); table.clearSelection();
-		 * table.setModel(new DefaultTableModel());
-		 * detailsTree.setModel(detailsModel); detailsTree.clearSelection();
-		 * detailsTree.collapseRow(1); displayMetadata(root); }
-		 */
-	}
 
 	public void expandAll() {
 		int row = 0;
@@ -391,33 +406,52 @@ public class DetailsFrame extends JFrame {
 		}
 	}
 
-	private void updateTreeAndLabels() {
-		detailsTree.clearSelection();
-		table.clearSelection();
-		collapseAll();
-		if (filterCBItem.isSelected())
-			updateFilteredTree(true);
-		else
-			updateFilteredTree(false);
+	public void updateTreeAndLabels() {
+		ImagePlus imp = WindowManager.getCurrentImage();
+		if (imp == null) return;
+		Reader reader = ServiceMediator.getReader();
+		reader.updateMetadata(imp);
+		if (imp.getOriginalFileInfo() instanceof LSMFileInfo) {
+			lsm = (LSMFileInfo) imp.getOriginalFileInfo();
+			setTitle(title + " - " + lsm.fileName);
+			detailsTree.clearSelection();
+			table.clearSelection();
+			collapseAll();
+			if (filterCBItem.isSelected())
+				updateFilteredTree(true);
+			else
+				updateFilteredTree(false);
+		}
+
 	}
 
 	public void dumpData() {
 		String header = new String("Data dump");
-		new TextWindow("SCANINFO DUMP", header,getTreeAsStringBuffer().toString(), 250, 400);
+		new TextWindow("SCANINFO DUMP", header, getTreeAsStringBuffer()
+				.toString(), 250, 400);
+	}
+
+	protected void dumpXmlData() {
+		if (lsm == null) return;
+		ImageDirectory imDir = (ImageDirectory) lsm.imageDirectories.get(0);
+		CZLSMInfoExtended cz = (CZLSMInfoExtended) imDir.TIF_CZ_LSMINFO;
+		new TextWindow("XML SCANINFO DUMP", new DomXmlExporter().buildTree(cz,filterButton.isSelected()), 250, 400);
 	}
 
 	public void updateFilteredTree(boolean filter) {
+
 		((DefaultMutableTreeNode) detailsTree.getModel().getRoot())
 				.removeAllChildren();
-		CZ_LSMInfo cz = masterModel.getCz();
+		ImageDirectory imDir = (ImageDirectory) lsm.imageDirectories.get(0);
+		CZLSMInfoExtended cz = (CZLSMInfoExtended) imDir.TIF_CZ_LSMINFO;
 		InfoNode czNode = new InfoNode("CarlZeiss", convertCZ(cz));
 		((DefaultMutableTreeNode) treemodel.getRoot()).add(czNode);
 		if (cz.scanInfo == null)
 			return;
 		ScanInfo scanInfo = cz.scanInfo;
-		ArrayList recordings = scanInfo.recordings;
+		ArrayList<Recording> recordings = scanInfo.recordings;
 		for (int i = 0; i < recordings.size(); i++) {
-			Recording recording = (Recording) recordings.get(i);
+			Recording recording = recordings.get(i);
 			InfoNode recordingsNode = new InfoNode("Recordings",
 					recording.records);
 
@@ -426,7 +460,7 @@ public class DetailsFrame extends JFrame {
 						"Lasers");
 
 				for (int j = 0; j < recording.lasers.length; j++) {
-					LinkedHashMap map = recording.lasers[j].records;
+					LinkedHashMap<String, Object> map = recording.lasers[j].records;
 					Object o = map.get("LASER_ACQUIRE");
 					if (!filter || (o == null)
 							|| (o != null & o.toString().equals("-1")))
@@ -434,7 +468,6 @@ public class DetailsFrame extends JFrame {
 								recording.lasers[j].records));
 				}
 				recordingsNode.add(lasersNode);
-
 			}
 			if (recording.tracks != null) {
 				DefaultMutableTreeNode tracksNode = new DefaultMutableTreeNode(
@@ -448,7 +481,7 @@ public class DetailsFrame extends JFrame {
 							DefaultMutableTreeNode detectionChannelsNode = new DefaultMutableTreeNode(
 									"DetectionChannels");
 							for (int k = 0; k < recording.tracks[j].detectionChannels.length; k++) {
-								LinkedHashMap map = recording.tracks[j].detectionChannels[k].records;
+								LinkedHashMap<String, Object> map = recording.tracks[j].detectionChannels[k].records;
 								Object o = map.get("ACQUIRE");
 								if (!filter
 										|| (o == null)
@@ -467,7 +500,7 @@ public class DetailsFrame extends JFrame {
 							DefaultMutableTreeNode illuminationChannelsNode = new DefaultMutableTreeNode(
 									"IlluminationChannels");
 							for (int k = 0; k < recording.tracks[j].illuminationChannels.length; k++) {
-								LinkedHashMap map = recording.tracks[j].illuminationChannels[k].records;
+								LinkedHashMap<String, Object> map = recording.tracks[j].illuminationChannels[k].records;
 								Object o = map.get("ACQUIRE");
 								if (!filter
 										|| (o == null)
@@ -492,7 +525,6 @@ public class DetailsFrame extends JFrame {
 										"Beamsplitter " + k,
 										recording.tracks[j].beamSplitters[k].records);
 								beamSplittersNode.add(bsNode);
-
 							}
 							trackNode.add(beamSplittersNode);
 						}
@@ -502,7 +534,7 @@ public class DetailsFrame extends JFrame {
 							DefaultMutableTreeNode dataChannelsNode = new DefaultMutableTreeNode(
 									"DataChannels");
 							for (int k = 0; k < recording.tracks[j].dataChannels.length; k++) {
-								LinkedHashMap map = recording.tracks[j].dataChannels[k].records;
+								LinkedHashMap<String, Object> map = recording.tracks[j].dataChannels[k].records;
 								Object o = map.get("ACQUIRE");
 								if (!filter
 										|| (o == null)
@@ -512,7 +544,6 @@ public class DetailsFrame extends JFrame {
 											.add(new InfoNode(
 													"DataChannel " + k,
 													recording.tracks[j].dataChannels[k].records));
-
 							}
 							trackNode.add(dataChannelsNode);
 						}
@@ -521,7 +552,6 @@ public class DetailsFrame extends JFrame {
 				}
 				if (tracksNode.getChildCount() > 0)
 					recordingsNode.add(tracksNode);
-
 			}
 
 			if (recording.markers != null) {
@@ -533,7 +563,6 @@ public class DetailsFrame extends JFrame {
 							recording.markers[j].records));
 				}
 				recordingsNode.add(markersNode);
-
 			}
 			if (recording.timers != null) {
 				DefaultMutableTreeNode timersNode = new DefaultMutableTreeNode(
@@ -544,7 +573,6 @@ public class DetailsFrame extends JFrame {
 							recording.timers[j].records));
 				}
 				recordingsNode.add(timersNode);
-
 			}
 
 			((DefaultMutableTreeNode) treemodel.getRoot()).add(recordingsNode);
@@ -570,22 +598,23 @@ public class DetailsFrame extends JFrame {
 	}
 
 	private StringBuffer getTreeAsStringBuffer() {
-		CZ_LSMInfo cz = masterModel.getCz();
+		ImageDirectory imDir = (ImageDirectory) lsm.imageDirectories.get(0);
+		CZLSMInfoExtended cz = (CZLSMInfoExtended) imDir.TIF_CZ_LSMINFO;
 		StringBuffer sb = new StringBuffer();
+
 		sb.append("CarlZeiss\t\n");
 		sb.append(getRecordAsString(convertCZ(cz)));
 
 		ScanInfo scanInfo = cz.scanInfo;
-		ArrayList recordings = scanInfo.recordings;
+		ArrayList<Recording> recordings = scanInfo.recordings;
 		for (int i = 0; i < recordings.size(); i++) {
-			Recording recording = (Recording) recordings.get(i);
+			Recording recording = recordings.get(i);
 			sb.append("Recording " + i + "\t\n");
 			sb.append(getRecordAsString(recording.records));
 			if (recording.lasers != null) {
 				for (int j = 0; j < recording.lasers.length; j++) {
 					sb.append("Laser " + j + "\t\n");
 					sb.append(getRecordAsString(recording.lasers[j].records));
-
 				}
 			}
 			if (recording.tracks != null) {
@@ -635,10 +664,10 @@ public class DetailsFrame extends JFrame {
 		return sb;
 	}
 
-	private StringBuffer getRecordAsString(LinkedHashMap hm) {
+	private StringBuffer getRecordAsString(LinkedHashMap<String,Object> hm) {
 		StringBuffer sb = new StringBuffer();
 		if (hm != null) {
-			Iterator iterator = hm.keySet().iterator();
+			Iterator<String> iterator = hm.keySet().iterator();
 			for (int i = 0; iterator.hasNext(); i++) {
 				String tag = (String) iterator.next();
 				sb.append(tag + ":\t" + hm.get(tag) + "\n");
@@ -647,8 +676,8 @@ public class DetailsFrame extends JFrame {
 		return sb;
 	}
 
-	private LinkedHashMap convertCZ(CZ_LSMInfo cz) {
-		LinkedHashMap map = new LinkedHashMap();
+	public static LinkedHashMap<String, Object> convertCZ(CZLSMInfoExtended cz) {
+		LinkedHashMap<String, Object> map = new LinkedHashMap<String, Object>();
 		map.put("DimensionX", new Long(cz.DimensionX));
 		map.put("DimensionY", new Long(cz.DimensionY));
 		map.put("DimensionZ", new Long(cz.DimensionZ));
