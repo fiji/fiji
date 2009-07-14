@@ -31,7 +31,7 @@
  * call("LSM_Toolbox.open","file=path_to_file")
  *
  * __________________________________________________________________________
- * (C) 2003-2008 Patrick Pirrotte, Jérôme Mutterer
+ * (C) 2003-2008 Patrick Pirrotte, JÃ©rÃ´me Mutterer
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
