@@ -116,6 +116,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Fiji_Updater.jar \
 	plugins/Daltonize_.jar \
 	plugins/Stitching_.jar \
+	plugins/LSM_Reader.jar \
 	plugins/AnalyzeSkeleton_.jar \
 	plugins/Skeletonize3D_.jar \
 	plugins/TurboReg_.jar \
@@ -203,10 +204,11 @@ plugins/Bug_Submitter.jar <- src-plugins/Bug_Submitter/*.java
 
 CLASSPATH(plugins/register_virtual_stack_slices.jar)=plugins/TrakEM2_.jar:plugins/mpicbg_.jar:plugins/bUnwarpJ_.jar
 MAINCLASS(plugins/LSM_Toolbox.jar)=org.imagearchive.lsm.toolbox.gui.AboutDialog
-plugins/LSM_Toolbox.jar <- src-plugins/LSM_Toolbox/**/*.java \
+plugins/LSM_Toolbox.jar <- plugins/LSM_Reader.jar/ \
+	src-plugins/LSM_Toolbox/**/*.java \
 	src-plugins/LSM_Toolbox/**/*.png \
 	src-plugins/LSM_Toolbox/**/*.jpg \
-	src-plugins/LSM_Toolbox/**/*.html \
+	src-plugins/LSM_Toolbox/**/*.htm \
 	src-plugins/LSM_Toolbox/**/*.txt
 MAINCLASS(plugins/Interactive_3D_Surface_Plot.jar)=Interactive_3D_Surface_Plot
 CLASSPATH(plugins/Stitching_.jar)=plugins/loci_tools.jar
