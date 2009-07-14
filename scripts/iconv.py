@@ -6,6 +6,10 @@ import sys
 if sys.argv[1] == '-f':
 	decoder = Charset.forName(sys.argv[2]).newDecoder()
 	sys.argv[1:] = sys.argv[3:]
+elif sys.argv[1] == '-l':
+	for name in Charset.availableCharsets().keySet():
+		print name
+	sys.exit(0)
 else:
 	decoder = Charset.forName("ISO-8859-1").newDecoder()
 encoder = Charset.forName("UTF-8").newEncoder()

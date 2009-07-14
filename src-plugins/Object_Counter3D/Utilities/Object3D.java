@@ -3,7 +3,7 @@
  *
  * Created on 7 novembre 2007, 11:54
  *
- * Copyright (C) 2007 Fabrice P. CordeliÃ¨res
+ * Copyright (C) 2007 Fabrice P. Cordelières
  *  
  * License:
  * This program is free software; you can redistribute it and/or modify
@@ -29,7 +29,7 @@ import java.util.*;
 
 /**
  *
- * @author Fabrice P. CordeliÃ¨res, fabrice.cordelieres@gmail.com
+ * @author Fabrice P. Cordelières, fabrice.cordelieres@gmail.com
  * @version 1.0, 7/11/07
  */
 public class Object3D {
@@ -75,7 +75,7 @@ public class Object3D {
     /**True calibrated surface measurement*/
     public float surf_cal;
     
-     /**Coordinates of the centroÃ¯d (centroid[0:x, 1:y, 2:z]*/
+     /**Coordinates of the centroïd (centroid[0:x, 1:y, 2:z]*/
     public float[] centroid;
     
     /**Coordinates of the centre of mass (c_mass[0:x, 1:y, 2:z]*/

@@ -114,7 +114,7 @@ public class SVDC extends Object {
 
 
 *This method decomposes a n by p
-*matrix X into a product UDV´ where ...
+*matrix X into a product UDVÂ´ where ...
 *For details, see the comments in the code.
 *This method is a translation from FORTRAN to Java
 *of the LINPACK subroutine DSVDC.

@@ -1,7 +1,7 @@
 /*
  * Dilatation.java
  *
- * Created on 19. März 2005, 16:28
+ * Created on 19. MÃ¤rz 2005, 16:28
  */
 
 package levelsets.filter;

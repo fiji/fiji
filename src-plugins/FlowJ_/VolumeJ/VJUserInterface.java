@@ -176,7 +176,7 @@ implements ActionListener, ClipboardOwner, ItemListener, KeyListener
 		renderCine = new Button("Render Cine-mode");
 		renderCine.addActionListener(this);
 		buttons.add(renderCine);
-		renderStereo = new Button("Render stereo pair (\u0394="+IJ.d2s(VJRenderViewStereo.stereoDifference,1)+"บ)");
+		renderStereo = new Button("Render stereo pair (\u0394="+IJ.d2s(VJRenderViewStereo.stereoDifference,1)+"ยบ)");
 		renderStereo.addActionListener(this);
 		buttons.add(renderStereo);
 		renderStop = new Button("Stop renderer");
@@ -244,7 +244,7 @@ implements ActionListener, ClipboardOwner, ItemListener, KeyListener
 		params1.setLayout(new GridLayout(0, 2));
 
 		String [] sxyz = { ""+xrot, ""+yrot, ""+zrot };
-		rotField = createXYZField(params1, "Rotation(บ):", sxyz, 1);
+		rotField = createXYZField(params1, "Rotation(ยบ):", sxyz, 1);
 		scaleField = createTextField(params1, "Scaling:", ""+scale, 1);
 		if (iList.length > 0)
 		{
@@ -257,8 +257,8 @@ implements ActionListener, ClipboardOwner, ItemListener, KeyListener
 
 		String [] sinterpolation = { "nearest neighbor", "trilinear" };
 		interpolationChoice = createChoice(params1, "Interpolation", sinterpolation, 1);
-		cineNField = createTextField(params1, "Cine total rotation(บ):", "360", 1);
-		cineField = createTextField(params1, "Cine frame increment(บ):", "10", 1);
+		cineNField = createTextField(params1, "Cine total rotation(ยบ):", "360", 1);
+		cineField = createTextField(params1, "Cine frame increment(ยบ):", "10", 1);
 		String [] sAxis = { "x", "y", "z" };
 		axisChoice = createChoice(params1, "Cine rotation axis", sAxis, 1);
 		String [] slight = { ""+lightx, ""+lighty, ""+lightz };

@@ -1,7 +1,7 @@
 /*
  * SimpleEdgeDetect.java
  *
- * Created on 14. März 2005, 15:01
+ * Created on 14. MÃ¤rz 2005, 15:01
  */
 
 package levelsets.filter;
