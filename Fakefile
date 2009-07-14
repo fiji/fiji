@@ -179,7 +179,7 @@ jars/rsyntaxtextarea.jar <- RSyntaxTextArea/
 jars/autocomplete.jar <- AutoComplete/
 
 # From source
-javaVersion(misc/Fiji.jar)=1.3
+javaVersion(misc/Fiji.jar)=1.5
 mainClass(misc/Fiji.jar)=fiji.Main
 misc/Fiji.jar <- src-plugins/fiji/*.java icon.png[images/icon.png]
 
