@@ -37,8 +37,8 @@ import ij.process.ShortProcessor;
  * http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:analyzeskeleton:start
  *
  *
- * @version 1.0 05/27/2009
- * @author Ignacio Arganda-Carreras <ignacio.arganda@uam.es>
+ * @version 1.0 06/19/2009
+ * @author Ignacio Arganda-Carreras <ignacio.arganda@gmail.com>
  *
  */
 public class AnalyzeSkeleton_ implements PlugInFilter

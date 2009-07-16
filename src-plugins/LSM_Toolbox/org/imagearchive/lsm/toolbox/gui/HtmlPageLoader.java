@@ -22,12 +22,13 @@ public class HtmlPageLoader extends Thread {
 		c.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
 		for (int i = 0; i < pages.length; i++) {
 			try {
+				System.err.println("Trying to load"+(String)pages[i][1]);
 				URL source = getClass().getResource((String)pages[i][1]);
 				((JEditorPane)pages[i][0]).setPage(source);
-				
 			} catch (Exception e) {
 				JOptionPane.showMessageDialog(c, "Could not load page. Jar must be corrupted",
 						"Warning", JOptionPane.WARNING_MESSAGE);
+				System.err.println(e.getMessage());
 			}
 		}
 		((JEditorPane)pages[0][0]).validate();

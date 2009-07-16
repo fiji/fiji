@@ -1,43 +1,19 @@
 package org.imagearchive.lsm.toolbox.info;
 
-import org.imagearchive.lsm.toolbox.EventList;
+import org.imagearchive.lsm.reader.info.CZLSMInfo;
 import org.imagearchive.lsm.toolbox.info.scaninfo.ScanInfo;
 
-public class CZ_LSMInfo {
+public class CZLSMInfoExtended extends CZLSMInfo{
 
 	public long MagicNumber = 0;
 
 	public long StructureSize = 0;
-
-	public long DimensionX = 0;
-
-	public long DimensionY = 0;
-
-	public long DimensionZ = 0;
-
-	public long DimensionChannels = 0;
-
-	public long DimensionTime = 0;
-
-	public long IntensityDataType = 0;
-
-	public long ThumbnailX = 0;
-
-	public long ThumbnailY = 0;
-
-	public double VoxelSizeX = 0;
-
-	public double VoxelSizeY = 0;
-
-	public double VoxelSizeZ = 0;
 
 	public double OriginX = 0;
 
 	public double OriginY = 0;
 
 	public double OriginZ = 0;
-
-	public int ScanType = 0;
 
 	public int SpectralScan = 0;
 
@@ -49,15 +25,7 @@ public class CZ_LSMInfo {
 
 	public long OffsetOutputLut = 0;
 
-	public long OffsetChannelColors = 0;
-
-	public ChannelNamesAndColors channelNamesAndColors;
-
 	public double TimeIntervall = 0;
-
-	public long OffsetChannelDataTypes = 0;
-	
-	public int[] OffsetChannelDataTypesValues;
 
 	public long OffsetScanInformation = 0;
 
@@ -102,13 +70,13 @@ public class CZ_LSMInfo {
 	public long[] Reserved;
 
 	public TimeStamps timeStamps;
-	
+
 	public ChannelWavelengthRange channelWavelength; // lambda stamps
-	
+
 	public EventList eventList;
-	
+
 	public ScanInfo scanInfo;
-		
+
 	public String toString() {
 		return new String("DimensionX:  " + DimensionX + "\n" +
 				"DimensionY:  "+ DimensionY + "\n" +

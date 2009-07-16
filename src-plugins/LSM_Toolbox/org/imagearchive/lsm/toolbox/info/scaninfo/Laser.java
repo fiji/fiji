@@ -2,14 +2,14 @@ package org.imagearchive.lsm.toolbox.info.scaninfo;
 
 import java.util.LinkedHashMap;
 
-public class Laser {
+public class Laser{
 
-    public LinkedHashMap records = new LinkedHashMap();
-    
+    public LinkedHashMap<String, Object> records = new LinkedHashMap<String, Object>();
+
     public Object[][] data = {
-            { new Long(0x050000001), "A", "LASER_NAME" },
-            { new Long(0x050000002), "L", "LASER_ACQUIRE" },
-            { new Long(0x050000003), "L", "LASER_POWER" } };
+            { new Long(0x050000001), DataType.STRING, "LASER_NAME" },
+            { new Long(0x050000002), DataType.LONG, "LASER_ACQUIRE" },
+            { new Long(0x050000003), DataType.DOUBLE, "LASER_POWER" } }; //in the description it's a Long
 
     public static boolean isLasers(long tagEntry) {//805306368
         if (tagEntry == 0x030000000)

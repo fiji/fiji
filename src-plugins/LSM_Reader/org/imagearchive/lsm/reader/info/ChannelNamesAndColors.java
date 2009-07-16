@@ -1,6 +1,7 @@
-package org.imagearchive.lsm.toolbox.info;
+package org.imagearchive.lsm.reader.info;
+
 public class ChannelNamesAndColors {
-	
+
 	public long BlockSize = 0;
 
 	public long NumberColors = 0;
@@ -16,7 +17,7 @@ public class ChannelNamesAndColors {
 	public long[] Reserved;
 
 	public int[] Colors;
-	
+
 	public String[] ChannelNames;
-	
+
 }
