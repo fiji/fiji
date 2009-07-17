@@ -21,9 +21,9 @@ import java.util.List;
 
 import javax.swing.SwingUtilities;
 
+import org.imagearchive.lsm.reader.info.LSMFileInfo;
 import org.imagearchive.lsm.toolbox.MasterModel;
 import org.imagearchive.lsm.toolbox.Reader;
-import org.imagearchive.lsm.toolbox.info.LsmFileInfo;
 
 /*     Requires Java 2, v1.3.1. Based on the Drag_And_Drop plugin by Eric Kischell (keesh@ieee.org). */
 public class CPDragAndDrop implements DropTargetListener {
@@ -70,11 +70,11 @@ public class CPDragAndDrop implements DropTargetListener {
 									return;
 								imp.setPosition(1, 1, 1);
 								imp.show();
-								iwc = imp.getWindow();
-								final LsmFileInfo lsm = (LsmFileInfo) iwc
+								/*iwc = imp.getWindow();
+								final LSMFileInfo lsm = (LSMFileInfo) iwc
 										.getImagePlus().getOriginalFileInfo();
 								iwc.addFocusListener(new FocusListener() {
-									final LsmFileInfo lsmfi = lsm;
+									final LSMFileInfo lsmfi = lsm;
 
 									public void focusGained(FocusEvent e) {
 										masterModel.setLSMFI(lsmfi);
@@ -83,11 +83,11 @@ public class CPDragAndDrop implements DropTargetListener {
 									public void focusLost(FocusEvent e) {
 
 									}
-								});
-								masterModel.setLSMFI(lsm);
+								});*/
+								/*masterModel.setLSMFI(lsm);
 								cp.setLSMinfoText(masterModel.getInfo());
 								cp.infoFrame.updateInfoFrame(masterModel
-										.getInfo());
+										.getInfo());*/
 							} catch (OutOfMemoryError e) {
 								IJ.outOfMemory("Could not load lsm image.");
 							}

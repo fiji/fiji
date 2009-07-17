@@ -25,8 +25,6 @@ import java.awt.SystemColor;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.ColorModel;
@@ -34,7 +32,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -45,13 +42,12 @@ import javax.swing.JPopupMenu;
 import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 
+import org.imagearchive.lsm.reader.info.ImageDirectory;
+import org.imagearchive.lsm.reader.info.LSMFileInfo;
 import org.imagearchive.lsm.toolbox.MasterModel;
-import org.imagearchive.lsm.toolbox.MasterModelAdapter;
-import org.imagearchive.lsm.toolbox.MasterModelEvent;
 import org.imagearchive.lsm.toolbox.Reader;
-import org.imagearchive.lsm.toolbox.info.CZ_LSMInfo;
-import org.imagearchive.lsm.toolbox.info.ImageDirectory;
-import org.imagearchive.lsm.toolbox.info.LsmFileInfo;
+import org.imagearchive.lsm.toolbox.ServiceMediator;
+import org.imagearchive.lsm.toolbox.info.CZLSMInfoExtended;
 import org.imagearchive.lsm.toolbox.info.scaninfo.Recording;
 
 public class ControlPanelFrame extends JFrame {
@@ -131,8 +127,6 @@ public class ControlPanelFrame extends JFrame {
 
 	private JMenuItem mergeItem = new JMenuItem("Merge images");
 
-	private ButtonGroup bg = new ButtonGroup();
-
 	public String[] LSMinfoText = new String[22];
 
 	public long timestamps_count;
@@ -155,11 +149,11 @@ public class ControlPanelFrame extends JFrame {
 	public ControlPanelFrame(MasterModel masterModel) throws HeadlessException {
 		super();
 		this.masterModel = masterModel;
-		masterModel.setControlPanelFrame(this);
+		ServiceMediator.registerControlPanelFrame(this);
 	}
 
 	public void initializeGUI() {
-		setTitle("LSM Toolbox");
+		setTitle("LSM Toolbox " + MasterModel.VERSION);
 		setResizable(false);
 		addExitListener(exitButton, this);
 		addShowHideInfolistener(showInfoButton, this);
@@ -242,7 +236,7 @@ public class ControlPanelFrame extends JFrame {
 		});
 
 		initInfoFrame();
-		masterModel.addMasterModelListener(new MasterModelAdapter() {
+		/*masterModel.addMasterModelListener(new MasterModelAdapter() {
 			public void LSMFileInfoChanged(MasterModelEvent evt) {
 				updateShowInfo();
 				if (masterModel.getCz().DimensionTime <= 1)
@@ -261,6 +255,7 @@ public class ControlPanelFrame extends JFrame {
 				pack();
 			}
 		});
+		*/
 		new CPDragAndDrop(masterModel, this);
 		invalidate();
 		pack();
@@ -268,22 +263,6 @@ public class ControlPanelFrame extends JFrame {
 		baseFrameYlocation = (int) ((ScreenY / 2) - (this.getHeight()));
 		setLocation(baseFrameXlocation, baseFrameYlocation);
 		setVisible(true);
-		updateShowInfo();
-
-	}
-
-	private void updateShowInfo() {
-		int ids[] = WindowManager.getIDList();
-		if (ids != null) {
-			for (int i = 0; i < ids.length; i++) {
-				ImagePlus imp = WindowManager.getImage(ids[0]);
-				if (imp.getOriginalFileInfo() instanceof LsmFileInfo)
-					showInfoButton.setEnabled(true);
-				else {
-					showInfoButton.setEnabled(false);
-				}
-			}
-		}
 	}
 
 	private void closeFrames() {
@@ -322,8 +301,6 @@ public class ControlPanelFrame extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				final Reader reader = new Reader(masterModel);
 				SwingUtilities.invokeLater(new Runnable() {
-					ImageWindow iwc = null;
-
 					public void run() {
 						try {
 							IJ.showStatus("Loading image");
@@ -333,29 +310,11 @@ public class ControlPanelFrame extends JFrame {
 								return;
 							imp.setPosition(1, 1, 1);
 							imp.show();
-							iwc = imp.getWindow();
-							final LsmFileInfo lsm = (LsmFileInfo) iwc
-									.getImagePlus().getOriginalFileInfo();
-							iwc.addFocusListener(new FocusListener() {
-								final LsmFileInfo lsmfi = lsm;
-
-								public void focusGained(FocusEvent e) {
-									masterModel.setLSMFI(lsmfi);
-								}
-
-								public void focusLost(FocusEvent e) {
-
-								}
-							});
-							masterModel.setLSMFI(lsm);
-							setLSMinfoText(masterModel.getInfo());
-							infoFrame.updateInfoFrame(LSMinfoText);
 						} catch (OutOfMemoryError e) {
 							IJ.outOfMemory("Could not load lsm image.");
 						}
 					}
 				});
-
 			}
 		});
 	}
@@ -402,7 +361,6 @@ public class ControlPanelFrame extends JFrame {
 			final JFrame parent) {
 		button.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				infoFrame.updateInfoFrame(LSMinfoText);
 				if (infoFrame.isShowing() == false)
 					infoFrame.setVisible(true);
 				else
@@ -466,15 +424,17 @@ public class ControlPanelFrame extends JFrame {
 						return;
 					}
 					String choice = gd.getNextChoice();
+					Reader reader = ServiceMediator.getReader();
 					for (int i = 0; i < imageVals.length; i++) {
 						ImagePlus imp = WindowManager.getImage(imageVals[i]);
-						LsmFileInfo openLSM = (LsmFileInfo) imp
+						reader.updateMetadata(imp);
+						LSMFileInfo openLSM = (LSMFileInfo) imp
 								.getOriginalFileInfo();
-						CZ_LSMInfo cz = (CZ_LSMInfo) ((ImageDirectory) openLSM.imageDirectories
+						CZLSMInfoExtended cz = (CZLSMInfoExtended) ((ImageDirectory) openLSM.imageDirectories
 								.get(0)).TIF_CZ_LSMINFO;
 						Recording r = (Recording) cz.scanInfo.recordings.get(0);
 						double planeSpacing = ((Double) r.records
-								.get("PLANE SPACING")).doubleValue();
+								.get("PLANE_SPACING")).doubleValue();
 						if (choice.equals("Dump to textfile")) {
 							String twstr = new String("");
 							double ps = 0;
@@ -488,7 +448,7 @@ public class ControlPanelFrame extends JFrame {
 									400);
 
 						} else {
-							applyZSTAMP(imp, (LsmFileInfo) imp
+							applyZSTAMP(imp, (LSMFileInfo) imp
 									.getOriginalFileInfo());
 						}
 					}
@@ -523,23 +483,25 @@ public class ControlPanelFrame extends JFrame {
 						return;
 					}
 					String choice = gd.getNextChoice();
+					Reader reader = ServiceMediator.getReader();
 					for (int i = 0; i < imageVals.length; i++) {
 						ImagePlus imp = WindowManager.getImage(imageVals[i]);
-						LsmFileInfo openLSM = (LsmFileInfo) imp
+						reader.updateMetadata(imp);
+						LSMFileInfo openLSM = (LSMFileInfo) imp
 								.getOriginalFileInfo();
-						CZ_LSMInfo cz = (CZ_LSMInfo) ((ImageDirectory) openLSM.imageDirectories
+						CZLSMInfoExtended cz = (CZLSMInfoExtended) ((ImageDirectory) openLSM.imageDirectories
 								.get(0)).TIF_CZ_LSMINFO;
 						if (choice.equals("Dump to textfile")) {
 							String twstr = new String("");
 							for (int k = 0; k < cz.timeStamps.NumberTimeStamps; k++)
 								twstr = twstr
 										+ Double
-												.toString(masterModel.getCz().timeStamps.TimeStamps[k])
+												.toString(cz.timeStamps.TimeStamps[k])
 										+ "\n";
 							new TextWindow("Timestamps", "Timestamps", twstr,
 									200, 400);
 						} else {
-							applyTSTAMP(imp, (LsmFileInfo) imp
+							applyTSTAMP(imp, (LSMFileInfo) imp
 									.getOriginalFileInfo());
 						}
 					}
@@ -574,11 +536,13 @@ public class ControlPanelFrame extends JFrame {
 						return;
 					}
 					String choice = gd.getNextChoice();
+					Reader reader = ServiceMediator.getReader();
 					for (int i = 0; i < imageVals.length; i++) {
 						ImagePlus imp = WindowManager.getImage(imageVals[i]);
-						LsmFileInfo openLSM = (LsmFileInfo) imp
+						reader.updateMetadata(imp);
+						LSMFileInfo openLSM = (LSMFileInfo) imp
 								.getOriginalFileInfo();
-						CZ_LSMInfo cz = (CZ_LSMInfo) ((ImageDirectory) openLSM.imageDirectories
+						CZLSMInfoExtended cz = (CZLSMInfoExtended) ((ImageDirectory) openLSM.imageDirectories
 								.get(0)).TIF_CZ_LSMINFO;
 
 						if (cz.SpectralScan != 1) {
@@ -599,7 +563,7 @@ public class ControlPanelFrame extends JFrame {
 									twstr, 200, 400);
 
 						} else {
-							applyLSTAMP(imp, (LsmFileInfo) imp
+							applyLSTAMP(imp, (LSMFileInfo) imp
 									.getOriginalFileInfo());
 						}
 					}
@@ -623,21 +587,16 @@ public class ControlPanelFrame extends JFrame {
 								JOptionPane.ERROR_MESSAGE);
 						return;
 					}
-
+					final Reader reader = ServiceMediator.getReader();
 					SwingUtilities.invokeLater(new Runnable() {
 						public void run() {
 							try {
 								for (int i = 0; i < imageVals.length; i++) {
-									LsmFileInfo openLSM = (LsmFileInfo) ((ImagePlus) WindowManager
-											.getImage(imageVals[i]))
-											.getOriginalFileInfo();
-									CZ_LSMInfo cz = (CZ_LSMInfo) ((ImageDirectory) openLSM.imageDirectories
+									ImagePlus imp = WindowManager.getImage(imageVals[i]);
+									reader.updateMetadata(imp);
+									LSMFileInfo openLSM = (LSMFileInfo) imp.getOriginalFileInfo();
+									CZLSMInfoExtended cz = (CZLSMInfoExtended) ((ImageDirectory) openLSM.imageDirectories
 											.get(0)).TIF_CZ_LSMINFO;
-									Reader reader = new Reader(masterModel);
-									ImagePlus imp = reader
-											.open(openLSM.directory,
-													openLSM.fileName, true,
-													true, false);
 									Class i5Dc = null;
 									if (imp == null || imp.getStackSize() == 0) {
 										IJ.error("Could not open file.");
@@ -712,6 +671,14 @@ public class ControlPanelFrame extends JFrame {
 														new Class[] {
 																int.class,
 																ColorModel.class });
+
+										Method i5DsetFileInfo = o
+										.getClass()
+										.getMethod(
+												"setFileInfo",
+												new Class[] {
+														FileInfo.class});
+
 										int position = 1;
 										for (int t = 0; t < cz.DimensionTime; t++) {
 											for (int z = 0; z < cz.DimensionZ; z++) {
@@ -730,11 +697,6 @@ public class ControlPanelFrame extends JFrame {
 																					z),
 																			new Integer(
 																					t) });
-													/*
-													 * imp .setSlice(t ((int)
-													 * cz.DimensionZ * 1) + z *
-													 * 1 + 1);
-													 */
 													imp.setSlice(position++);
 													i5DsetPixels
 															.invoke(
@@ -761,24 +723,16 @@ public class ControlPanelFrame extends JFrame {
 												new Object[] { imp
 														.getCalibration()
 														.copy() });
-										final LsmFileInfo lsm = openLSM;
+										i5DsetFileInfo.invoke(o,
+												new Object[] { (LSMFileInfo)imp
+														.getOriginalFileInfo()});
 										i5Dshow.invoke(o, new Object[] {});
 										((ImageWindow) i5DgetWindow.invoke(o,
 												new Object[] {}))
-												.addFocusListener(new FocusListener() {
-													final LsmFileInfo lsmfi = lsm;
+												.addWindowFocusListener(new ImageFocusListener());
 
-													public void focusGained(
-															FocusEvent e) {
-														masterModel
-																.setLSMFI(lsmfi);
-													}
-
-													public void focusLost(
-															FocusEvent e) {
-													}
-												});
-
+										ServiceMediator.getInfoFrame().updateInfoFrame();
+										ServiceMediator.getDetailsFrame().updateTreeAndLabels();
 									} catch (IllegalArgumentException ex) {
 										ex.printStackTrace();
 									} catch (InstantiationException ex) {
@@ -822,14 +776,16 @@ public class ControlPanelFrame extends JFrame {
 								JOptionPane.ERROR_MESSAGE);
 						return;
 					}
+					Reader reader  = ServiceMediator.getReader();
 					for (int i = 0; i < imageVals.length; i++) {
-						FileInfo fi = WindowManager.getImage(imageVals[i])
-								.getOriginalFileInfo();
-						if (fi != null && fi instanceof LsmFileInfo) {
-							LsmFileInfo lsm = (LsmFileInfo) fi;
-							CZ_LSMInfo cz = (CZ_LSMInfo) ((ImageDirectory) lsm.imageDirectories
+						ImagePlus imp = WindowManager.getImage(imageVals[i]);
+						reader.updateMetadata(imp);
+						FileInfo fi = imp.getOriginalFileInfo();
+						if (fi != null && fi instanceof LSMFileInfo) {
+							LSMFileInfo lsm = (LSMFileInfo) fi;
+							CZLSMInfoExtended cz = (CZLSMInfoExtended) ((ImageDirectory) lsm.imageDirectories
 									.get(0)).TIF_CZ_LSMINFO;
-							System.err.println("dimz:" + cz.DimensionZ);
+							//System.err.println("dimz:" + cz.DimensionZ);
 							// if (cz.DimensionZ/imageVals.length)
 							// long depth = (long) (cz.DimensionZ /
 							// imageVals.length);
@@ -872,7 +828,7 @@ public class ControlPanelFrame extends JFrame {
 		LSMinfoText = str;
 	}
 
-	public void applyZSTAMP(ImagePlus imp, LsmFileInfo lfi) {
+	public void applyZSTAMP(ImagePlus imp, LSMFileInfo lfi) {
 		int x = 2;
 		int y = 40;
 		double ps = 0;
@@ -885,11 +841,11 @@ public class ControlPanelFrame extends JFrame {
 			y = roi.y + roi.height;
 		}
 		Color c = Toolbar.getForegroundColor();
-		CZ_LSMInfo cz = (CZ_LSMInfo) ((ImageDirectory) lfi.imageDirectories
+		CZLSMInfoExtended cz = (CZLSMInfoExtended) ((ImageDirectory) lfi.imageDirectories
 				.get(0)).TIF_CZ_LSMINFO;
 		if (cz.DimensionZ != 1) {
 			Recording r = (Recording) cz.scanInfo.recordings.get(0);
-			double planeSpacing = ((Double) r.records.get("PLANE SPACING"))
+			double planeSpacing = ((Double) r.records.get("PLANE_SPACING"))
 					.doubleValue();
 			int stackPosition = 1;
 			for (int i = 1; i <= cz.DimensionTime; i++) {
@@ -918,7 +874,7 @@ public class ControlPanelFrame extends JFrame {
 		imp.updateAndRepaintWindow();
 	}
 
-	public void applyTSTAMP(ImagePlus imp, LsmFileInfo lfi) {
+	public void applyTSTAMP(ImagePlus imp, LSMFileInfo lfi) {
 		int x = 2;
 		int y = 20;
 
@@ -931,7 +887,7 @@ public class ControlPanelFrame extends JFrame {
 			y = roi.y + roi.height;
 		}
 		Color c = Toolbar.getForegroundColor();
-		CZ_LSMInfo cz = (CZ_LSMInfo) ((ImageDirectory) lfi.imageDirectories
+		CZLSMInfoExtended cz = (CZLSMInfoExtended) ((ImageDirectory) lfi.imageDirectories
 				.get(0)).TIF_CZ_LSMINFO;
 		if (cz.DimensionTime > 1) {
 			int stackPosition = 1;
@@ -958,7 +914,7 @@ public class ControlPanelFrame extends JFrame {
 		imp.updateAndRepaintWindow();
 	}
 
-	public void applyLSTAMP(ImagePlus imp, LsmFileInfo lfi) {
+	public void applyLSTAMP(ImagePlus imp, LSMFileInfo lfi) {
 		int x = 2;
 		int y = 60;
 		ImageProcessor ip = imp.getProcessor();
@@ -967,7 +923,7 @@ public class ControlPanelFrame extends JFrame {
 			x = roi.x;
 			y = roi.y + roi.height;
 		}
-		CZ_LSMInfo cz = (CZ_LSMInfo) ((ImageDirectory) lfi.imageDirectories
+		CZLSMInfoExtended cz = (CZLSMInfoExtended) ((ImageDirectory) lfi.imageDirectories
 				.get(0)).TIF_CZ_LSMINFO;
 		ImageStack stack = imp.getStack();
 		Font font = new Font("SansSerif", Font.PLAIN, 20);
@@ -994,9 +950,6 @@ public class ControlPanelFrame extends JFrame {
 					}
 				}
 			}
-		}
-		for (int slice = 1; slice <= stack.getSize(); slice++) {
-
 		}
 		imp.updateAndRepaintWindow();
 	}

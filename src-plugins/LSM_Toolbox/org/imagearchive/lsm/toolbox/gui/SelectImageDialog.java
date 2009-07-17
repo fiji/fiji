@@ -22,10 +22,10 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.ListSelectionModel;
 
+import org.imagearchive.lsm.reader.info.ImageDirectory;
+import org.imagearchive.lsm.reader.info.LSMFileInfo;
 import org.imagearchive.lsm.toolbox.MasterModel;
-import org.imagearchive.lsm.toolbox.info.CZ_LSMInfo;
-import org.imagearchive.lsm.toolbox.info.ImageDirectory;
-import org.imagearchive.lsm.toolbox.info.LsmFileInfo;
+import org.imagearchive.lsm.toolbox.info.CZLSMInfoExtended;
 
 public class SelectImageDialog extends JDialog {
 
@@ -35,9 +35,9 @@ public class SelectImageDialog extends JDialog {
 
 	private MasterModel masterModel;
 
-	private Vector fileInfos;
+	private Vector<ListBoxImage> fileInfos;
 
-	private Vector images;
+	private Vector<String> images;
 
 	private String label = "Please select:";
 
@@ -126,8 +126,8 @@ public class SelectImageDialog extends JDialog {
 
 	private void fillList(byte filter) {
 		int[] imagesIDs = WindowManager.getIDList();
-		images = new Vector();
-		fileInfos = new Vector();
+		images = new Vector<String>();
+		fileInfos = new Vector<ListBoxImage>();
 		if (imagesIDs == null)
 			return;
 		for (int i = 0; i < imagesIDs.length; i++) {
@@ -135,9 +135,9 @@ public class SelectImageDialog extends JDialog {
 				FileInfo fi = WindowManager.getImage(imagesIDs[i])
 						.getOriginalFileInfo();
 				boolean add = false;
-				if (fi != null && fi instanceof LsmFileInfo) {
-					LsmFileInfo lsm = (LsmFileInfo) fi;
-					CZ_LSMInfo cz = (CZ_LSMInfo) ((ImageDirectory) lsm.imageDirectories
+				if (fi != null && fi instanceof LSMFileInfo) {
+					LSMFileInfo lsm = (LSMFileInfo) fi;
+					CZLSMInfoExtended cz = (CZLSMInfoExtended) ((ImageDirectory)lsm.imageDirectories
 							.get(0)).TIF_CZ_LSMINFO;
 					if (filter == MasterModel.TIME)
 						if (cz.DimensionTime > 1)

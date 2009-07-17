@@ -38,6 +38,7 @@
 /plugins/BeanShell_Interpreter.jar
 /plugins/Bug_Submitter.jar
 /plugins/Javascript_.jar
+/plugins/LSM_Reader.jar
 /plugins/LSM_Toolbox.jar
 /plugins/SplineDeformationGenerator_.jar
 /plugins/bUnwarpJ_.jar
