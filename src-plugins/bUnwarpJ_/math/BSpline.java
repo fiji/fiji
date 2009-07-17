@@ -4,7 +4,7 @@ import ij.IJ;
 
 /**
  * BSpline library.
- * Copyright (C) 2009 Ignacio Arganda-Carreras and Arrate Munoz-Barrutia 
+ * 2009 Ignacio Arganda-Carreras and Arrate Munoz-Barrutia 
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -22,7 +22,9 @@ import ij.IJ;
  */
 
 /**
+ * This class implements basic operations to work with cubic B-splines.
  * 
+ * @author Ignacio Arganda-Carreras - ignacio.arganda@gmail.com 
  */
 public class BSpline 
 {
@@ -111,7 +113,7 @@ public class BSpline
 		   integ = integAS(integ);
 		   integSA(integ, integ);
 		}
-		if (n1==3)
+		if (n1 == 3)
 		{
 		   med = integSA(input, integ);
 		   integ = integAS(integ);
@@ -158,7 +160,7 @@ public class BSpline
 			fdShort[i] = fd[val1 + i] + med;		
 		//fdShort = [fdShort(1+val2:nxOut) fdShort(val2:-1:1)];		
 
-		// postfiltering - q=a^(-1)
+		// post-filtering - q=a^(-1)
 		double[] coefFull = null;
 		if ( (n1+n2+1) < 2 )
 		    coefFull = fdShort;
@@ -169,7 +171,7 @@ public class BSpline
 		    coefFull=convertToInterpCoef(fdShort, pole, tolerance);
 		} 
 		
-		// from coef to samples
+		// from coeficients to samples
 		if (coefOrSamples==true)
 		{
 		    if (n2 < 2)
