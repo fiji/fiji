@@ -1738,6 +1738,7 @@ static int start_ij(void)
 	const char *properties[] = {
 		"fiji.dir", fiji_dir,
 		"fiji.defaultLibPath", JAVA_LIB_PATH,
+		"fiji.executable", main_argv0,
 		NULL
 	};
 
