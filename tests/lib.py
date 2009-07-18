@@ -7,9 +7,13 @@ from fiji import Main
 
 from ij import IJ, ImageJ
 
+from jarray import zeros
+
 from java.awt import Button, Container, Dialog, Frame, Toolkit
 
 from java.awt.event import ActionEvent, MouseEvent
+
+from java.lang import Runtime, System, Thread
 
 from threading import Lock
 
@@ -99,3 +103,26 @@ def quitIJ():
 	global currentWindow
 	IJ.getInstance().quit()
 	currentWindow = None
+
+class OutputThread(Thread):
+	def __init__(self, input, output):
+		self.buffer = zeros(65536, 'b')
+		self.input = input
+		self.output = output
+
+	def run(self):
+		while True:
+			count = self.input.read(self.buffer)
+			if count < 0:
+				return
+			self.output.write(self.buffer, 0, count)
+
+def launchFiji(args, workingDir = None):
+	args.insert(0, System.getProperty('fiji.executable'))
+	try:
+		process = Runtime.getRuntime().exec(args, None, workingDir)
+		OutputThread(process.getInputStream(), System.out).start()
+		OutputThread(process.getErrorStream(), System.err).start()
+		return process.waitFor()
+	except:
+		return -1
