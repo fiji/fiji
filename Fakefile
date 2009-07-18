@@ -228,6 +228,9 @@ MAINCLASS(jars/javac.jar)=com.sun.tools.javac.Main
 JAVAVERSION(jars/javac.jar)=1.5
 jars/javac.jar <- src-plugins/javac/**/*
 
+MAINCLASS(jars/test-fiji.jar)=fiji.Tests
+jars/test-fiji.jar <- src-plugins/test-fiji/**/*.java
+
 # Third party plugins
 
 # TODO: compile ij-ImageIO_ as submodule
