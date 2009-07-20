@@ -72,17 +72,8 @@ import ij.plugin.frame.Editor;
 public class Tutorial_Maker implements PlugIn {
 	protected String name;
 
-	protected final static String URL = "http://localhost/wiki/";
+	protected final static String URL = "http://pacific.mpi-cbg.de/wiki/";
 	protected String login, password;
-
-	public static void main(String[] args) {
-		MediaWikiClient client = new MediaWikiClient(URL + "index.php");
-		client.logIn("Schindelin", "test");
-		if (!client.isLoggedIn())
-			System.err.println("Not logged in");
-		System.err.println(client.uploadOrPreviewPage("Hello2", "= Hello =\ntest [[Image:test123.jpg]] [[Image:Hello-1.jpg]]", "test", true));
-		client.logOut();
-	}
 
 	public void run(String arg) {
 		GenericDialog gd = new GenericDialog("Tutorial Maker");
