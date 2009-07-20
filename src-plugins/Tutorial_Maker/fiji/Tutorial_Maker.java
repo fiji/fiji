@@ -34,6 +34,7 @@ import java.awt.MenuItem;
 import java.awt.Rectangle;
 import java.awt.Robot;
 import java.awt.TextArea;
+import java.awt.TextField;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -42,12 +43,21 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
+import java.io.File;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 
 import ij.gui.GenericDialog;
 
+import ij.io.FileInfo;
+
+import ij.plugin.BrowserLauncher;
+import ij.plugin.JpegWriter;
 import ij.plugin.PlugIn;
 
 import ij.plugin.frame.Editor;
@@ -55,9 +65,11 @@ import ij.plugin.frame.Editor;
 public class Tutorial_Maker implements PlugIn {
 	protected String name;
 
+	protected final static String URL = "http://localhost/wiki/";
+	protected String login, password;
+
 	public static void main(String[] args) {
-		MediaWikiClient client =
-			new MediaWikiClient("http://localhost/wiki/index.php");
+		MediaWikiClient client = new MediaWikiClient(URL + "index.php");
 		client.logIn("Schindelin", "test");
 		System.err.println(client.isLoggedIn());
 		client.uploadPage("Hello", "= Hello =", "test");
@@ -118,7 +130,122 @@ public class Tutorial_Maker implements PlugIn {
 	}
 
 	protected void upload() {
-		IJ.error("TODO!");
+		IJ.showStatus("Uploading " + name + "...");
+		IJ.showProgress(0, 1);
+		List<String> images = getImages();
+		try {
+			saveOrUploadImages(null, images);
+		} catch (RuntimeException e) {
+			IJ.showProgress(1, 1);
+			IJ.error(e.getMessage());
+			return;
+		}
+
+		MediaWikiClient client = new MediaWikiClient(URL + "index.php");
+
+		if (login != null && password != null)
+			client.logIn(login, password);
+		while (!client.isLoggedIn()) {
+			GenericDialog gd = new GenericDialog("Wiki Login");
+			gd.addStringField("Login", "", 20);
+			gd.addStringField("Password", "", 20);
+			((TextField)gd.getStringFields().lastElement())
+				.setEchoChar('*');
+			gd.showDialog();
+			if (gd.wasCanceled())
+				return;
+
+			login = gd.getNextString();
+			password = gd.getNextString();
+			client.logIn(login, password);
+		}
+
+		try {
+			saveOrUploadImages(client, images);
+		} catch (RuntimeException e) {
+			IJ.showProgress(1, 1);
+			IJ.error(e.getMessage());
+			return;
+		}
+
+		client.uploadPage(name, editor.getText(), "Add " + name);
+
+		client.logOut();
+
+		IJ.showStatus("Uploading " + name + " finished.");
+		IJ.showProgress(1, 1);
+
+		new BrowserLauncher().run(URL + "index.php?title= " + name);
+		editor.dispose();
+
+	}
+
+	protected List<String> getImages() {
+		List<String> result = new ArrayList<String>();
+		String text = editor.getText();
+		int image = 0;
+		for (;;) {
+			image = text.indexOf("[[Image:", image);
+			if (image < 0)
+				return result;
+			image = image + 8;
+			int bracket = text.indexOf("]]", image);
+			int pipe = text.indexOf('|', image);
+			if (bracket < 0 || (pipe >= 0 && pipe < bracket))
+				bracket = pipe;
+			if (bracket < 0)
+				return result;
+			result.add(text.substring(image, bracket));
+			image = bracket + 1;
+		}
+	}
+
+	protected void saveOrUploadImages(MediaWikiClient client,
+			List<String> images) {
+		int i = 0, total = images.size() * 2 + 1;
+		for (String image : images) {
+			ImagePlus imp = WindowManager.getImage(image);
+			if (imp == null)
+				throw new RuntimeException("There is no image "
+					+ image);
+			FileInfo info = imp.getOriginalFileInfo();
+			if (info == null) {
+				info = new FileInfo();
+				info.width = imp.getWidth();
+				info.height = imp.getHeight();
+				info.directory = IJ.getDirectory("temp");
+				info.fileName = image;
+				imp.changes = true;
+				imp.setFileInfo(info);
+			}
+			if (info.directory == null) {
+				info.directory = IJ.getDirectory("temp");
+				imp.changes = true;
+			}
+			if (info.fileName == null) {
+				info.fileName = image;
+				imp.changes = true;
+			}
+			if (imp.changes) {
+				JpegWriter.save(imp,
+					info.directory + "/" + info.fileName,
+					JpegWriter.DEFAULT_QUALITY);
+				imp.changes = false;
+			}
+			if (client != null) {
+				if (!client.uploadFile(image, "Upload " + image
+							+ " for " + name,
+							new File(info.directory,
+								info.fileName)))
+					throw new RuntimeException("Uploading "
+							+ image + " failed");
+				IJ.showStatus("Uploading " + image + "...");
+				IJ.showProgress(++i + total / 2, total);
+			}
+			else
+				// TODO check if it is already there
+				IJ.showProgress(++i, total);
+		}
 	}
 
 	protected Frame snapshotFrame;
@@ -175,6 +302,7 @@ public class Tutorial_Maker implements PlugIn {
 			thread = new Thread() {
 				public void run() {
 					delayedSnap();
+					button.setLabel(originalLabel);
 				}
 			};
 			thread.start();
@@ -243,10 +371,10 @@ public class Tutorial_Maker implements PlugIn {
 				String name = getSnapshotName();
 				ImagePlus imp = new ImagePlus(name, image);
 				imp.show();
-				imp.getWindow().toBack();
+				// better not: imp.getWindow().toBack();
 
 				/* insert into editor */
-				editor.append("[Image:" + name + "]\n");
+				editor.append("[[Image:" + name + "]]\n");
 				/* TODO: add listeners to track renames? */
 			}
 		} catch (AWTException e) { /* ignore */ }
