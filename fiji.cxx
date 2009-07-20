@@ -1351,7 +1351,8 @@ static int start_ij(void)
 		ext_option = get_java_home() + "/Home/lib/ext:"
 			"/Library/Java/Extensions:"
 			"/System/Library/Java/Extensions:"
-			"/System/Library/Frameworks/JavaVM.framework";
+			"/System/Library/Frameworks/JavaVM.framework/"
+				"Home/lib/ext";
 	if (!get_fiji_bundle_variable("allowMultiple", value))
 		allow_multiple = parse_bool(value);
 	get_fiji_bundle_variable("JVMOptions", jvm_options);
