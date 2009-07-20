@@ -120,6 +120,12 @@ public class MediaWikiClient {
 				Pattern.DOTALL);
 	public boolean uploadPage(String title,
 			String contents, String comment) {
+		return uploadOrPreviewPage(title, contents, comment, false)
+			!= null;
+	}
+
+	public String uploadOrPreviewPage(String title, String contents,
+			String comment, boolean previewOnly) {
 		try {
 			String[] getVars = {
 				"title", title,
@@ -129,23 +135,26 @@ public class MediaWikiClient {
 			Matcher matcher =
 				editFormPattern.matcher(response);
 			if (!matcher.matches())
-				return false;
+				return null;
 			getVars = new String[] {
 				"title", title,
 					"action", "submit"
 			};
 			String[] postVars = new String[] {
+				"wpSave", "Save page",
 				"wpTextbox1", contents,
-					"wpSummary", comment,
-					"wpEdittime", matcher.group(1),
-					"wpEditToken", matcher.group(2),
-					"wpAutoSummary", matcher.group(3),
-					"wpSave", "Save page"
+				"wpSummary", comment,
+				"wpEdittime", matcher.group(1),
+				"wpEditToken", matcher.group(2),
+				"wpAutoSummary", matcher.group(3)
 			};
-			response = sendRequest(getVars, postVars);
-			return true;
-		} catch (IOException e) { }
-		return false;
+			if (previewOnly) {
+				postVars[0] = "wpPreview";
+				postVars[1] = "Show preview";
+			}
+			return sendRequest(getVars, postVars);
+		} catch (IOException e) { e.printStackTrace(); }
+		return null;
 	}
 
 	public boolean uploadFile(String fileName, String summary,
