@@ -187,9 +187,14 @@ public class MediaWikiClient {
 		try {
 			String response = sendRequest(getVars,
 					postVars, fileVars, false);
-			if (response.indexOf("Full resolution") < 0)
+			boolean success = response.indexOf("<h2>Successful "
+					+ "upload</h2>") > 0 ||
+				response.indexOf("No higher resolution "
+					+ "available.") > 0 ||
+				response.indexOf("Full resolution") > 0;
+			if (!success)
 				System.err.println("Failed: " + response);
-			return response.indexOf("Full resolution") > 0;
+			return success;
 		} catch (IOException e) { e.printStackTrace(); }
 		return false;
 	}
