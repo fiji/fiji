@@ -54,6 +54,7 @@ import java.util.regex.Pattern;
 
 import ij.IJ;
 import ij.ImagePlus;
+import ij.Prefs;
 import ij.WindowManager;
 
 import ij.gui.GenericDialog;
@@ -176,7 +177,9 @@ public class Tutorial_Maker implements PlugIn {
 			client.logIn(login, password);
 		while (!client.isLoggedIn()) {
 			GenericDialog gd = new GenericDialog(title);
-			gd.addStringField("Login", "", 20);
+			if (login == null)
+				login = Prefs.get("fiji.wiki.user", "");
+			gd.addStringField("Login", login, 20);
 			gd.addStringField("Password", "", 20);
 			((TextField)gd.getStringFields().lastElement())
 				.setEchoChar('*');
@@ -185,6 +188,7 @@ public class Tutorial_Maker implements PlugIn {
 				return false;
 
 			login = gd.getNextString();
+			Prefs.set("fiji.wiki.user", login);
 			password = gd.getNextString();
 			client.logIn(login, password);
 		}
