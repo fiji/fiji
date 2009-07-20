@@ -86,13 +86,6 @@ public class Tutorial_Maker implements PlugIn {
 	protected void addEditor() {
 		editor = new Editor(25, 120, 14, Editor.MENU_BAR);
 
-		MenuBar menuBar = editor.getMenuBar();
-		for (int i = menuBar.getMenuCount() - 1; i >= 0; i--) {
-			String label = menuBar.getMenu(i).getLabel();
-			if (label.equals("Macros") || label.equals("Debug"))
-				menuBar.remove(i);
-		}
-
 		Menu menu = new Menu("Wiki");
 		MenuItem upload = new MenuItem("Upload");
 		upload.addActionListener(new ActionListener() {
@@ -115,6 +108,13 @@ public class Tutorial_Maker implements PlugIn {
 
 		editor.create("Edit Wiki - " + name, "== " + name + " ==\n\n");
 		editor.getTextArea().setCaretPosition(Integer.MAX_VALUE);
+
+		MenuBar menuBar = editor.getMenuBar();
+		for (int i = menuBar.getMenuCount() - 1; i >= 0; i--) {
+			String label = menuBar.getMenu(i).getLabel();
+			if (label.equals("Macros") || label.equals("Debug"))
+				menuBar.remove(i);
+		}
 	}
 
 	protected void upload() {
