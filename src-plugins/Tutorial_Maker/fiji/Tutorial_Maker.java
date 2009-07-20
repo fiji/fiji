@@ -129,6 +129,16 @@ public class Tutorial_Maker implements PlugIn {
 		});
 		menu.add(preview);
 
+		final MenuItem toBackToggle = new MenuItem();
+		toBackToggleSetLabel(toBackToggle);
+		toBackToggle.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				putSnapshotsToBack = !putSnapshotsToBack;
+				toBackToggleSetLabel(toBackToggle);
+			}
+		});
+		menu.add(toBackToggle);
+
 		editor.getMenuBar().add(menu);
 
 		editor.addWindowListener(new WindowAdapter() {
@@ -147,6 +157,14 @@ public class Tutorial_Maker implements PlugIn {
 			if (label.equals("Macros") || label.equals("Debug"))
 				menuBar.remove(i);
 		}
+	}
+
+	protected boolean putSnapshotsToBack = true;
+
+	protected void toBackToggleSetLabel(MenuItem item) {
+		item.setLabel(putSnapshotsToBack ?
+			"Leave snapshots in the foreground" :
+			"Put snapshots into the background");
 	}
 
 	protected void upload() {
@@ -470,7 +488,8 @@ public class Tutorial_Maker implements PlugIn {
 				String name = getSnapshotName();
 				ImagePlus imp = new ImagePlus(name, image);
 				imp.show();
-				// better not: imp.getWindow().toBack();
+				if (putSnapshotsToBack)
+					imp.getWindow().toBack();
 
 				/* insert into editor */
 				editor.append("[[Image:" + name + "]]\n");
