@@ -44,9 +44,13 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import java.util.regex.Pattern;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -71,10 +75,9 @@ public class Tutorial_Maker implements PlugIn {
 	public static void main(String[] args) {
 		MediaWikiClient client = new MediaWikiClient(URL + "index.php");
 		client.logIn("Schindelin", "test");
-		System.err.println(client.isLoggedIn());
-		client.uploadPage("Hello", "= Hello =", "test");
-		client.uploadFile("b123.png", "hehe",
-				new java.io.File("fiji.png"));
+		if (!client.isLoggedIn())
+			System.err.println("Not logged in");
+		System.err.println(client.uploadOrPreviewPage("Hello2", "= Hello =\ntest [[Image:test123.jpg]] [[Image:Hello-1.jpg]]", "test", true));
 		client.logOut();
 	}
 
@@ -105,9 +108,15 @@ public class Tutorial_Maker implements PlugIn {
 				upload();
 			}
 		});
-		// TODO: preview (using bliki?)
-
 		menu.add(upload);
+		MenuItem preview = new MenuItem("Preview");
+		preview.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				preview();
+			}
+		});
+		menu.add(preview);
+
 		editor.getMenuBar().add(menu);
 
 		editor.addWindowListener(new WindowAdapter() {
@@ -133,40 +142,16 @@ public class Tutorial_Maker implements PlugIn {
 		IJ.showStatus("Uploading " + name + "...");
 		IJ.showProgress(0, 1);
 		List<String> images = getImages();
-		try {
-			saveOrUploadImages(null, images);
-		} catch (RuntimeException e) {
-			IJ.showProgress(1, 1);
-			IJ.error(e.getMessage());
+		if (!saveOrUploadImages(null, images))
 			return;
-		}
 
 		MediaWikiClient client = new MediaWikiClient(URL + "index.php");
 
-		if (login != null && password != null)
-			client.logIn(login, password);
-		while (!client.isLoggedIn()) {
-			GenericDialog gd = new GenericDialog("Wiki Login");
-			gd.addStringField("Login", "", 20);
-			gd.addStringField("Password", "", 20);
-			((TextField)gd.getStringFields().lastElement())
-				.setEchoChar('*');
-			gd.showDialog();
-			if (gd.wasCanceled())
-				return;
-
-			login = gd.getNextString();
-			password = gd.getNextString();
-			client.logIn(login, password);
-		}
-
-		try {
-			saveOrUploadImages(client, images);
-		} catch (RuntimeException e) {
-			IJ.showProgress(1, 1);
-			IJ.error(e.getMessage());
+		if (!login(client, "Wiki Login"))
 			return;
-		}
+
+		if (!saveOrUploadImages(client, images))
+			return;
 
 		client.uploadPage(name, editor.getText(), "Add " + name);
 
@@ -178,6 +163,101 @@ public class Tutorial_Maker implements PlugIn {
 		new BrowserLauncher().run(URL + "index.php?title= " + name);
 		editor.dispose();
 
+	}
+
+	protected boolean login(MediaWikiClient client, String title) {
+		if (login != null && password != null)
+			client.logIn(login, password);
+		while (!client.isLoggedIn()) {
+			GenericDialog gd = new GenericDialog(title);
+			gd.addStringField("Login", "", 20);
+			gd.addStringField("Password", "", 20);
+			((TextField)gd.getStringFields().lastElement())
+				.setEchoChar('*');
+			gd.showDialog();
+			if (gd.wasCanceled())
+				return false;
+
+			login = gd.getNextString();
+			password = gd.getNextString();
+			client.logIn(login, password);
+		}
+		return true;
+	}
+
+	protected void preview() {
+		IJ.showStatus("Previewing " + name + "...");
+		IJ.showProgress(0, 2);
+
+		List<String> images = getImages();
+		if (!saveOrUploadImages(null, images))
+			return;
+
+		MediaWikiClient client = new MediaWikiClient(URL + "index.php");
+
+		if (!login(client, "Wiki Login (Preview)"))
+			return;
+		String html = client.uploadOrPreviewPage(name, editor.getText(),
+				"Add " + name, true);
+		client.logOut();
+
+		IJ.showStatus("Preparing " + name + " for preview...");
+		IJ.showProgress(1, 2);
+
+		int start = html.indexOf("<div class='previewnote'>");
+		start = html.indexOf("</div>", start) + 6;
+		int end = html.indexOf("<div id='toolbar'>");
+		html = "<html>\n<head>\n<title>Preview of " + name
+			+ "</title>\n</head>\n<body>\n"
+			+ html.substring(start, end)
+			+ "</body>\n</html>\n";
+		Pattern imagePattern = Pattern.compile("<a href=[^>]*DestFile=",
+				Pattern.DOTALL);
+		String[] parts = imagePattern.split(html);
+
+		html = parts[0];
+		for (int i = 1; i < parts.length; i++) {
+			int quote = parts[i].indexOf('"', 1);
+			int endTag = parts[i].indexOf("</a>", quote + 1);
+
+			String image = parts[i].substring(0, quote);
+			ImagePlus imp = WindowManager.getImage(image);
+			if (imp == null && Character
+					.isUpperCase(image.charAt(0))) {
+				image = image.substring(0, 1).toLowerCase()
+					+ image.substring(1);
+				imp = WindowManager.getImage(image);
+			}
+
+			if (imp == null)
+				html += "&lt;img src=" + image + "&gt;";
+			else {
+				FileInfo info = imp.getOriginalFileInfo();
+				File file = new File(info.directory,
+						info.fileName);
+				try {
+					html += "<img src=\""
+						+ file.toURL() + "\">";
+				} catch (Exception e) { e.printStackTrace(); }
+			}
+
+			html += parts[i].substring(endTag + 4);
+		}
+
+		try {
+			File file = File.createTempFile("preview", ".html");
+			FileOutputStream out = new FileOutputStream(file);
+			out.write(html.getBytes());
+			out.close();
+
+			new BrowserLauncher().run(file.toURL().toString());
+
+			IJ.showStatus("Browsing " + name);
+			IJ.showProgress(2, 2);
+		} catch (IOException e) {
+			e.printStackTrace();
+			error(e.getMessage());
+		}
 	}
 
 	protected List<String> getImages() {
@@ -200,14 +280,19 @@ public class Tutorial_Maker implements PlugIn {
 		}
 	}
 
-	protected void saveOrUploadImages(MediaWikiClient client,
+	protected boolean error(String message) {
+		IJ.showProgress(1, 1);
+		IJ.error(message);
+		return false;
+	}
+
+	protected boolean saveOrUploadImages(MediaWikiClient client,
 			List<String> images) {
 		int i = 0, total = images.size() * 2 + 1;
 		for (String image : images) {
 			ImagePlus imp = WindowManager.getImage(image);
 			if (imp == null)
-				throw new RuntimeException("There is no image "
-					+ image);
+				return error("There is no image " + image);
 			FileInfo info = imp.getOriginalFileInfo();
 			if (info == null) {
 				info = new FileInfo();
@@ -237,7 +322,7 @@ public class Tutorial_Maker implements PlugIn {
 							+ " for " + name,
 							new File(info.directory,
 								info.fileName)))
-					throw new RuntimeException("Uploading "
+					return error("Uploading "
 							+ image + " failed");
 				IJ.showStatus("Uploading " + image + "...");
 				IJ.showProgress(++i + total / 2, total);
@@ -246,6 +331,7 @@ public class Tutorial_Maker implements PlugIn {
 				// TODO check if it is already there
 				IJ.showProgress(++i, total);
 		}
+		return true;
 	}
 
 	protected Frame snapshotFrame;
