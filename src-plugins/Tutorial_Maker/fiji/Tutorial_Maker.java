@@ -85,7 +85,7 @@ public class Tutorial_Maker implements PlugIn {
 		name = gd.getNextString();
 		if (name.isEmpty())
 			return;
-		name = capitalize(name);
+		name = capitalize(name).replace(' ', '_');
 
 		showSnapshotFrame();
 		addEditor();
