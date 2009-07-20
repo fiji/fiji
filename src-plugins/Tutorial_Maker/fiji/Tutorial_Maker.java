@@ -91,9 +91,15 @@ public class Tutorial_Maker implements PlugIn {
 		name = gd.getNextString();
 		if (name.isEmpty())
 			return;
+		name = capitalize(name);
 
 		showSnapshotFrame();
 		addEditor();
+	}
+
+	protected static String capitalize(String string) {
+		return string.substring(0, 1).toUpperCase()
+			+ string.substring(1);
 	}
 
 	protected Editor editor;
@@ -224,8 +230,7 @@ public class Tutorial_Maker implements PlugIn {
 			ImagePlus imp = WindowManager.getImage(image);
 			if (imp == null && Character
 					.isUpperCase(image.charAt(0))) {
-				image = image.substring(0, 1).toLowerCase()
-					+ image.substring(1);
+				image = capitalize(image);
 				imp = WindowManager.getImage(image);
 			}
 
