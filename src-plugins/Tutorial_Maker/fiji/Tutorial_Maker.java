@@ -141,8 +141,7 @@ public class Tutorial_Maker implements PlugIn {
 		editor.getMenuBar().add(menu);
 
 		editor.addWindowListener(new WindowAdapter() {
-			public void windowClosed() {
-				// TODO: this seems not to be called.  Why?
+			public void windowClosed(WindowEvent e) {
 				if (snapshotFrame != null)
 					snapshotFrame.dispose();
 			}
