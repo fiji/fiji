@@ -38,6 +38,8 @@ import java.awt.TextField;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
@@ -108,15 +110,27 @@ public class Tutorial_Maker implements PlugIn {
 	protected void addEditor() {
 		editor = new Editor(25, 120, 14, Editor.MENU_BAR);
 
+		editor.getTextArea().addKeyListener(new KeyAdapter() {
+			public void keyPressed(KeyEvent e) {
+				if ((e.getModifiers() & e.CTRL_MASK) == 0)
+					return;
+				switch (e.getKeyCode()) {
+				case KeyEvent.VK_U: upload(); break;
+				case KeyEvent.VK_R: preview(); break;
+				}
+			}
+		});
+
+		String ctrl = IJ.isMacintosh()?"  Cmd ":"  Ctrl+";
 		Menu menu = new Menu("Wiki");
-		MenuItem upload = new MenuItem("Upload");
+		MenuItem upload = new MenuItem("Upload" + ctrl + "U");
 		upload.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				upload();
 			}
 		});
 		menu.add(upload);
-		MenuItem preview = new MenuItem("Preview");
+		MenuItem preview = new MenuItem("Preview" + ctrl + "R");
 		preview.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				preview();
