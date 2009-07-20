@@ -156,7 +156,7 @@ public class MediaWikiClient {
 			in.read(buffer);
 			in.close();
 			return uploadFile(fileName, summary, buffer);
-		} catch (IOException e) { }
+		} catch (IOException e) { e.printStackTrace(); }
 		return false;
 	}
 
@@ -166,6 +166,7 @@ public class MediaWikiClient {
 			"title", "Special:Upload"
 		};
 		String[] postVars = {
+			"wpIgnoreWarning", "1",
 			"wpSourceType", "file",
 			"wpDestFile", fileName,
 			"wpUploadDescription", summary,
@@ -177,8 +178,10 @@ public class MediaWikiClient {
 		try {
 			String response = sendRequest(getVars,
 					postVars, fileVars, false);
+			if (response.indexOf("Full resolution") < 0)
+				System.err.println("Failed: " + response);
 			return response.indexOf("Full resolution") > 0;
-		} catch (IOException e) { }
+		} catch (IOException e) { e.printStackTrace(); }
 		return false;
 	}
 
