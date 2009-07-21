@@ -167,8 +167,9 @@ public class Tutorial_Maker implements PlugIn {
 			}
 		});
 
-		editor.create("Edit Wiki - " + name, "== " + name + " ==\n\n");
-		editor.getTextArea().setCaretPosition(Integer.MAX_VALUE);
+		editor.create("Edit Wiki - " + name, "== " + name + " ==\n\n"
+			+ "[[Category:Tutorials]]");
+		editor.getTextArea().setCaretPosition(0);
 
 		MenuBar menuBar = editor.getMenuBar();
 		for (int i = menuBar.getMenuCount() - 1; i >= 0; i--) {
