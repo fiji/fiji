@@ -139,6 +139,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Colocalisation_Analysis.jar \
 	plugins/LocalThickness_.jar \
 	plugins/Object_Counter3D.jar \
+	plugins/Tutorial_Maker.jar \
 	\
 	misc/Fiji.jar
 
