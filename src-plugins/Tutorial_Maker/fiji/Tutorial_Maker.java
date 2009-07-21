@@ -265,6 +265,9 @@ public class Tutorial_Maker implements PlugIn {
 		IJ.showStatus("Preparing " + name + " for preview...");
 		IJ.showProgress(1, 2);
 
+		html = html.replaceAll("<img[^>]*src=\"(?=/wiki/)",
+				"$0" + URL.substring(0, URL.length() - 6));
+
 		int start = html.indexOf("<div class='previewnote'>");
 		start = html.indexOf("</div>", start) + 6;
 		int end = html.indexOf("<div id='toolbar'>");
