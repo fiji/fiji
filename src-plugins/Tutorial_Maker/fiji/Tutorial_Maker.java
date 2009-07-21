@@ -175,7 +175,7 @@ public class Tutorial_Maker implements PlugIn {
 			}
 		});
 
-		String text = "== " + name + " ==\n\n";
+		String text = "== " + name.replace('_', ' ') + " ==\n\n";
 		String category = "\n[[Category:Tutorials]]";
 		editor.create("Edit Wiki - " + name, text + category);
 		editor.getTextArea().setCaretPosition(text.length());
