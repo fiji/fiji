@@ -119,6 +119,7 @@ public class Tutorial_Maker implements PlugIn {
 				switch (e.getKeyCode()) {
 				case KeyEvent.VK_U: upload(); break;
 				case KeyEvent.VK_R: preview(); break;
+				case KeyEvent.VK_I: renameImage(); break;
 				}
 			}
 		});
@@ -150,7 +151,8 @@ public class Tutorial_Maker implements PlugIn {
 		});
 		menu.add(toBackToggle);
 
-		MenuItem renameImage = new MenuItem("Rename Image");
+		MenuItem renameImage =
+			new MenuItem("Rename Image" + ctrl + "I");
 		renameImage.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				renameImage();
