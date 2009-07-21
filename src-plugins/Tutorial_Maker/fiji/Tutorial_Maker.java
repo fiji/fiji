@@ -56,6 +56,7 @@ import java.util.regex.Pattern;
 
 import ij.IJ;
 import ij.ImagePlus;
+import ij.Menus;
 import ij.Prefs;
 import ij.WindowManager;
 
@@ -76,6 +77,13 @@ public class Tutorial_Maker implements PlugIn {
 	protected String login, password;
 
 	public void run(String arg) {
+		if (arg.equals("rename")) {
+			rename();
+			return;
+		}
+		else
+			interceptRenames();
+
 		GenericDialog gd = new GenericDialog("Tutorial Maker");
 		gd.addStringField("Tutorial_title", "", 20);
 		gd.showDialog();
@@ -141,10 +149,13 @@ public class Tutorial_Maker implements PlugIn {
 
 		editor.getMenuBar().add(menu);
 
+		editors.add(editor);
+
 		editor.addWindowListener(new WindowAdapter() {
 			public void windowClosed(WindowEvent e) {
 				if (snapshotFrame != null)
 					snapshotFrame.dispose();
+				editors.remove(this);
 			}
 		});
 
@@ -365,6 +376,45 @@ public class Tutorial_Maker implements PlugIn {
 		return true;
 	}
 
+	protected static List<Editor> editors = new ArrayList<Editor>();
+
+	protected static String originalRename, originalRenameArg;
+
+	protected void interceptRenames() {
+		if (originalRename != null)
+			return;
+
+		originalRename = (String)Menus.getCommands().get("Rename...");
+		if (originalRename.endsWith("\")")) {
+			int paren = originalRename.lastIndexOf("(\"");
+			originalRenameArg = originalRename.substring(paren + 2,
+				originalRename.length() - 2);
+			originalRename = originalRename.substring(0, paren);
+		}
+		else
+			originalRenameArg = "";
+
+		Menus.getCommands().put("Rename...", getClass().getName()
+			+ "(\"rename\")");
+	}
+
+	protected void rename() {
+		String oldTitle = WindowManager.getCurrentImage().getTitle();
+		IJ.runPlugIn(originalRename, originalRenameArg);
+		String newTitle = WindowManager.getCurrentImage().getTitle();
+		if (oldTitle.equals(newTitle))
+			return;
+		for (Editor editor : editors) {
+			String text = editor.getText();
+			String transformed = text.replaceAll("\\[\\[Image:"
+					+ oldTitle.replaceAll("\\.", "\\\\.")
+					+ "(?=[]|])",
+				"[[Image:" + newTitle);
+			if (!text.equals(transformed))
+				editor.getTextArea().setText(transformed);
+		}
+	}
+
 	protected Frame snapshotFrame;
 
 	public void showSnapshotFrame() {
@@ -493,7 +543,6 @@ public class Tutorial_Maker implements PlugIn {
 
 				/* insert into editor */
 				editor.append("[[Image:" + name + "]]\n");
-				/* TODO: add listeners to track renames? */
 			}
 		} catch (AWTException e) { /* ignore */ }
 	}
