@@ -25,6 +25,7 @@ package fiji;
 
 import java.awt.AWTException;
 import java.awt.Button;
+import java.awt.Choice;
 import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.Image;
@@ -38,6 +39,8 @@ import java.awt.TextField;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -438,7 +441,17 @@ public class Tutorial_Maker implements PlugIn {
 		String[] list = images.toArray(new String[0]);
 		GenericDialog gd = new GenericDialog("Rename Image");
 		gd.addChoice("image", list, list[0]);
-		gd.addStringField("new_title", "", 20);
+		gd.addStringField("new_title", list[0], 20);
+
+		final TextField textField =
+			(TextField)gd.getStringFields().lastElement();
+		final Choice choice = (Choice)gd.getChoices().lastElement();
+		choice.addItemListener(new ItemListener() {
+			public void itemStateChanged(ItemEvent e) {
+				textField.setText(choice.getSelectedItem());
+			}
+		});
+
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return;
