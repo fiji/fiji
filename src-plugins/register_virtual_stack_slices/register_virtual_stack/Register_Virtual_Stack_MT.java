@@ -249,36 +249,36 @@ public class Register_Virtual_Stack_MT implements PlugIn
 	 * Registration parameters class 
 	 *
 	 */
-	static public class Param
+	public static class Param
 	{	
-		final public FloatArray2DSIFT.Param sift = new FloatArray2DSIFT.Param();
+		public final FloatArray2DSIFT.Param sift = new FloatArray2DSIFT.Param();
 		
 		/**
 		 * Closest/next closest neighbor distance ratio
 		 */
-		public float rod = 0.92f;
+		public static float rod = 0.92f;
 		
 		/**
 		 * Maximal allowed alignment error in px
 		 */
-		public float maxEpsilon = 25.0f;
+		public static float maxEpsilon = 25.0f;
 		
 		/**
 		 * Inlier/candidates ratio
 		 */
-		public float minInlierRatio = 0.05f;
+		public static float minInlierRatio = 0.05f;
 		
 		/**
 		 * Implemented transformation models for choice
 	 	 *  0=TRANSLATION, 1=RIGID, 2=SIMILARITY, 3=AFFINE
 		 */
-		public int featuresModelIndex = Register_Virtual_Stack_MT.RIGID;
+		public static int featuresModelIndex = Register_Virtual_Stack_MT.RIGID;
 
 		/**
 		 * Implemented transformation models for choice
 	 	*  0=TRANSLATION, 1=RIGID, 2=SIMILARITY, 3=AFFINE, 4=ELASTIC, 5=MOVING_LEAST_SQUARES
 		 */
-		public int registrationModelIndex = Register_Virtual_Stack_MT.RIGID;
+		public static int registrationModelIndex = Register_Virtual_Stack_MT.RIGID;
                 
 		/** bUnwarpJ parameters for consistent elastic registration */
         public bunwarpj.Param elastic_param = new bunwarpj.Param();

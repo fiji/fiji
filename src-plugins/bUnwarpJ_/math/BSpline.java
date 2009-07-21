@@ -152,7 +152,8 @@ public class BSpline
 		//Recover the output size and add the mean
 		final int n11 = n1+1;
 		final int val1 = (n11*0.5 == (int) Math.floor(n11*0.5)) ? (int) (n11*0.5) : (int) Math.floor(n11*0.5)+1;
-		final int val2 = (int) Math.floor(n11*0.5);
+		
+		//final int val2 = (int) Math.floor(n11*0.5);
 				
 		double[] fdShort = new double[nxOut];
 		
