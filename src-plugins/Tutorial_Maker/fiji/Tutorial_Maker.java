@@ -352,6 +352,16 @@ public class Tutorial_Maker implements PlugIn {
 			ImagePlus imp = WindowManager.getImage(image);
 			if (imp == null)
 				return error("There is no image " + image);
+			if (image.indexOf(' ') >= 0) {
+				String newTitle = image.replace(' ', '_');
+				if (!IJ.showMessageWithCancel("Rename Image",
+						"Image title '" + image
+						+ "' contains spaces; fix?"))
+					return error("Aborted");
+				imp.setTitle(newTitle);
+				rename(image, newTitle);
+				images.set(i, newTitle);
+			}
 			FileInfo info = imp.getOriginalFileInfo();
 			if (info == null) {
 				info = new FileInfo();
