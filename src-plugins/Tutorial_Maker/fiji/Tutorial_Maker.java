@@ -51,6 +51,9 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+
+import java.net.URL;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -374,6 +377,11 @@ public class Tutorial_Maker implements PlugIn {
 				imp.changes = false;
 			}
 			if (client != null) {
+				if (wikiHasImage(image))
+					switch (imageExistsDialog(image)) {
+					case 1: return error("Aborted");
+					case 2: continue;
+					}
 				if (!client.uploadFile(image, "Upload " + image
 							+ " for " + name,
 							new File(info.directory,
@@ -388,6 +396,41 @@ public class Tutorial_Maker implements PlugIn {
 				IJ.showProgress(++i, total);
 		}
 		return true;
+	}
+
+	protected boolean wikiHasImage(String image) {
+		try {
+			URL url = new URL(URL
+					+ "index.php?title=Image:" + image);
+			InputStream input = url.openStream();
+			byte[] buffer = new byte[65536];
+			if (input.read(buffer) < 0) {
+				input.close();
+				return false;
+			}
+			input.close();
+			return new String(buffer).indexOf("No file "
+					+ "by this name exists") < 0;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	protected int imageExistsDialog(String image) {
+		GenericDialog gd = new GenericDialog("Image exists");
+		gd.addMessage("The image '" + image + "' exists already on "
+			+ "the Wiki");
+		String[] choice = {
+			"Upload '" + image + "' anyway",
+			"Abort",
+			"Skip uploading '" + image + "'"
+		};
+		gd.addChoice("action", choice, choice[0]);
+		gd.showDialog();
+		if (gd.wasCanceled())
+			return 1;
+		return gd.getNextChoiceIndex();
 	}
 
 	protected static List<Editor> editors = new ArrayList<Editor>();
