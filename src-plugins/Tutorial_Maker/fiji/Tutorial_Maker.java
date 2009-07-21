@@ -175,9 +175,10 @@ public class Tutorial_Maker implements PlugIn {
 			}
 		});
 
-		editor.create("Edit Wiki - " + name, "== " + name + " ==\n\n"
-			+ "[[Category:Tutorials]]");
-		editor.getTextArea().setCaretPosition(0);
+		String text = "== " + name + " ==\n\n";
+		String category = "\n[[Category:Tutorials]]";
+		editor.create("Edit Wiki - " + name, text + category);
+		editor.getTextArea().setCaretPosition(text.length());
 
 		MenuBar menuBar = editor.getMenuBar();
 		for (int i = menuBar.getMenuCount() - 1; i >= 0; i--) {
@@ -652,7 +653,9 @@ public class Tutorial_Maker implements PlugIn {
 					imp.getWindow().toBack();
 
 				/* insert into editor */
-				editor.append("[[Image:" + name + "]]\n");
+				TextArea area = editor.getTextArea();
+				area.insert("[[Image:" + name + "]]\n",
+						area.getCaretPosition());
 			}
 		} catch (AWTException e) { /* ignore */ }
 	}
