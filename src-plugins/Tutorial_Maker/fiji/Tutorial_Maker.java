@@ -147,6 +147,14 @@ public class Tutorial_Maker implements PlugIn {
 		});
 		menu.add(toBackToggle);
 
+		MenuItem renameImage = new MenuItem("Rename Image");
+		renameImage.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				renameImage();
+			}
+		});
+		menu.add(renameImage);
+
 		editor.getMenuBar().add(menu);
 
 		editors.add(editor);
@@ -402,6 +410,10 @@ public class Tutorial_Maker implements PlugIn {
 		String oldTitle = WindowManager.getCurrentImage().getTitle();
 		IJ.runPlugIn(originalRename, originalRenameArg);
 		String newTitle = WindowManager.getCurrentImage().getTitle();
+		rename(oldTitle, newTitle);
+	}
+
+	protected void rename(String oldTitle, String newTitle) {
 		if (oldTitle.equals(newTitle))
 			return;
 		for (Editor editor : editors) {
@@ -413,6 +425,35 @@ public class Tutorial_Maker implements PlugIn {
 			if (!text.equals(transformed))
 				editor.getTextArea().setText(transformed);
 		}
+	}
+
+	protected void renameImage() {
+		List<String> images = getImages();
+		if (images.size() == 0) {
+			IJ.error("The text refers to no image");
+			return;
+		}
+
+		String[] list = images.toArray(new String[0]);
+		GenericDialog gd = new GenericDialog("Rename Image");
+		gd.addChoice("image", list, list[0]);
+		gd.addStringField("new_title", "", 20);
+		gd.showDialog();
+		if (gd.wasCanceled())
+			return;
+
+		String oldTitle = gd.getNextChoice();
+		String newTitle = gd.getNextString();
+		if (newTitle.isEmpty())
+			return;
+
+		ImagePlus image = WindowManager.getImage(oldTitle);
+		if (image == null) {
+			IJ.error("No such image: " + oldTitle);
+			return;
+		}
+		image.setTitle(newTitle);
+		rename(oldTitle, newTitle);
 	}
 
 	protected Frame snapshotFrame;
