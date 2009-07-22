@@ -379,16 +379,16 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		Model< ? > featuresModel;
 		switch ( p.featuresModelIndex )
 		{
-			case 0:
+			case Register_Virtual_Stack_MT.TRANSLATION:
 				featuresModel = new TranslationModel2D();
 				break;
-			case 1:
+			case Register_Virtual_Stack_MT.RIGID:
 				featuresModel = new RigidModel2D();
 				break;
-			case 2:
+			case Register_Virtual_Stack_MT.SIMILARITY:
 				featuresModel = new SimilarityModel2D();
 				break;
-			case 3:
+			case Register_Virtual_Stack_MT.AFFINE:
 				featuresModel = new AffineModel2D();
 				break;
 			default:
@@ -813,12 +813,12 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		mpicbg.models.CoordinateTransform t;
 		switch (p.registrationModelIndex) 
 		{
-			case 0: t = new TranslationModel2D(); break;
-			case 1: t = new RigidModel2D(); break;
-			case 2: t = new SimilarityModel2D(); break;
-			case 3: t = new AffineModel2D(); break;
-			case 4: t = new CubicBSplineTransform(); break;
-			case 5: t = new MovingLeastSquaresTransform(); break;
+			case Register_Virtual_Stack_MT.TRANSLATION: t = new TranslationModel2D(); break;
+			case Register_Virtual_Stack_MT.RIGID: t = new RigidModel2D(); break;
+			case Register_Virtual_Stack_MT.SIMILARITY: t = new SimilarityModel2D(); break;
+			case Register_Virtual_Stack_MT.AFFINE: t = new AffineModel2D(); break;
+			case Register_Virtual_Stack_MT.ELASTIC: t = new CubicBSplineTransform(); break;
+			case Register_Virtual_Stack_MT.MOVING_LEAST_SQUARES: t = new MovingLeastSquaresTransform(); break;
 			default:
 				IJ.log("ERROR: unknown registrationModelIndex = " + p.registrationModelIndex);
 				return;
@@ -1130,16 +1130,16 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		Model< ? > featuresModel;
 		switch ( p.featuresModelIndex )
 		{
-			case 0:
+			case Register_Virtual_Stack_MT.TRANSLATION:
 				featuresModel = new TranslationModel2D();
 				break;
-			case 1:
+			case Register_Virtual_Stack_MT.RIGID:
 				featuresModel = new RigidModel2D();
 				break;
-			case 2:
+			case Register_Virtual_Stack_MT.SIMILARITY:
 				featuresModel = new SimilarityModel2D();
 				break;
-			case 3:
+			case Register_Virtual_Stack_MT.AFFINE:
 				featuresModel = new AffineModel2D();
 				break;
 			default:
@@ -1274,8 +1274,8 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		switch (p.registrationModelIndex) 
 		{
 			case Register_Virtual_Stack_MT.TRANSLATION: t = new TranslationModel2D(); break;
-			case Register_Virtual_Stack_MT.SIMILARITY: t = new RigidModel2D(); break;
-			case Register_Virtual_Stack_MT.RIGID: t = new SimilarityModel2D(); break;
+			case Register_Virtual_Stack_MT.RIGID: t = new RigidModel2D(); break;
+			case Register_Virtual_Stack_MT.SIMILARITY: t = new SimilarityModel2D(); break;
 			case Register_Virtual_Stack_MT.AFFINE: t = new AffineModel2D(); break;
 			case Register_Virtual_Stack_MT.ELASTIC: t = new CubicBSplineTransform(); break;
 			case Register_Virtual_Stack_MT.MOVING_LEAST_SQUARES: t = new MovingLeastSquaresTransform(); break;
@@ -1342,6 +1342,21 @@ public class Register_Virtual_Stack_MT implements PlugIn
 					+ b.getTranslateY() );
 			*/
 			((AffineModel2D)t).set( b );
+			
+		}		
+		else if( t instanceof SimilarityModel2D )
+		{
+			AffineTransform a = ((SimilarityModel2D)t).createAffine();
+
+			
+			AffineTransform b = new AffineTransform(	a.getScaleX() *0.95 + 0.05, 
+					a.getShearY(), // *0.95 + 0.05, 
+					a.getShearX(),// *0.95 + 0.05, 
+					a.getScaleY() *0.95 + 0.05, 
+					a.getTranslateX()        , 
+					a.getTranslateY()         );
+
+			((SimilarityModel2D)t).set( (float) b.getScaleX(), (float) b.getShearY(), (float) b.getTranslateX(), (float) b.getTranslateY() );
 			
 		}		
 	}// end method regularize
