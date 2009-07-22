@@ -42,13 +42,15 @@ public class ZLibAnalyzer {
 				len += len2;
 			}
 			for (int i = 0; i < len - 1; i++)
-				if (buffer[i] == 0x78 && buffer[i + 1] == 0x01) {
+				if (buffer[i] == 0x78 &&
+						(buffer[i + 1] == 0x01 ||
+						 buffer[i + 1] == (byte)0x9c)) {
 					if (--nth > 0)
 						continue;
 					System.err.println("Found stream @ "
 						+ (offset + i));
 					input.reset();
-					input.skip(i);
+					input.skip(offset + i);
 					return copy(new ZInputStream(input),
 							out, buffer);
 				}
@@ -69,7 +71,7 @@ public class ZLibAnalyzer {
 				for (nth = -nth; ; nth++) try {
 					inflate(args[0], nth, System.out);
 					break;
-				} catch (Exception e) { }
+				} catch (Exception e) { e.printStackTrace(); }
 			else
 				inflate(args[0], nth, System.out);
 		} catch (Exception e) {
