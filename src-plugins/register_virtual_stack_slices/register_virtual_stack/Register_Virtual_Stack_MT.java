@@ -19,6 +19,7 @@ import ij.io.OpenDialog;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.awt.Color;
 import java.awt.Rectangle;
@@ -402,42 +403,39 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		// Set first transform to Identity
 		transform[0] = new RigidModel2D();
 		
-		// FIRST LOOP (calculate correspondences and first rigid solution)
-		ImagePlus imp2 = IJ.openImage(source_dir + sorted_file_names[0]);
-		
-		// Extract SIFT features of first image
-		Future<ArrayList<Feature>> fu2 = exe.submit(extractFeatures(p, imp2.getProcessor()));
+		// FIRST LOOP (calculate correspondences and first RIGID solution)
+		final ArrayList<Feature>[] fs = new ArrayList[sorted_file_names.length];
+		Future<ArrayList<Feature>> fu[] = new Future[sorted_file_names.length];
 		try{
-			ArrayList<Feature> fs1 = null;
-			ArrayList<Feature> fs2 = fu2.get();
-
+			// Extract features for all images
+			for (int i=0; i<sorted_file_names.length; i++) 
+			{
+				IJ.showStatus("Extracting features from slices...");
+				final ImagePlus imp = IJ.openImage(source_dir + sorted_file_names[i]);
+				fu[i] = exe.submit(extractFeatures(p, imp.getProcessor()));
+				
+			}
+			// join
+			for (int i=0; i<sorted_file_names.length; i++) 	
+			{
+				IJ.showStatus("Extracting features " + (i+1) + "/" + sorted_file_names.length);
+				IJ.showProgress((double) (i+1) / sorted_file_names.length);
+				fs[i] = fu[i].get();
+			}
+			
+			// Match features				
+			Future<ArrayList<PointMatch>>[] fpm = new Future[sorted_file_names.length-1];
 			// Loop over the sequence to select correspondences by pairs			
 			for (int i=1; i<sorted_file_names.length; i++) 
 			{							
-				IJ.showStatus("Registering slice " + (i+1) + "/" + sorted_file_names.length);
+				IJ.showStatus("Matching features...");							
 				
-				// Shift images
-				imp2 = IJ.openImage(source_dir + sorted_file_names[i]);
-				fs1 = fs2;
-
-				// Extract SIFT features of current image			
-				fu2 = exe.submit(extractFeatures(p, imp2.getProcessor()));			
-				fs2 = fu2.get();
-				
-				// Match features (create candidates)
-				final List< PointMatch > candidates = new ArrayList< PointMatch >();
-				FeatureTransform.matchFeatures( fs2, fs1, candidates, p.rod );
-
-				inliers[i-1] = new ArrayList< PointMatch >();								
+				// Match features (create candidates)											
 					
-				// Filter candidates into inliers
+				// Filter candidates into inliers (concurrent way)
 				try {
-					featuresModel.filterRansac(
-							candidates,
-							inliers[i-1],
-							1000,
-							p.maxEpsilon,
-							p.minInlierRatio );
+					fpm[i-1] = exe.submit(matchFeatures(p, fs[i], fs[i-1], featuresModel));
+					
 				} 
 				catch ( NotEnoughDataPointsException e ) 
 				{
@@ -450,6 +448,20 @@ public class Register_Virtual_Stack_MT implements PlugIn
 						return;
 					}
 				}
+			}
+			// join
+			for (int i=1; i<sorted_file_names.length; i++) 			
+			{
+				IJ.showStatus("Matching features " + (i+1) + "/" + sorted_file_names.length);
+				IJ.showProgress((double) (i+1) / sorted_file_names.length);
+				inliers[i-1] = fpm[i-1].get();
+			}
+			
+			// Rigidly register
+			for (int i=1; i<sorted_file_names.length; i++) 			
+			{
+				IJ.showStatus("Registering slice " + (i+1) + "/" + sorted_file_names.length);
+				IJ.showProgress((double) (i+1) / sorted_file_names.length);
 				
 				// First approach with a RIGID transform
 				RigidModel2D initialModel = new RigidModel2D();
@@ -459,44 +471,16 @@ public class Register_Virtual_Stack_MT implements PlugIn
 				// Assign initial model
 				transform[i] = initialModel;
 
-			}
-			
-		
+			}				
 		
 			//  we apply transform to the points in the last image
 			PointMatch.apply(inliers[inliers.length-1] , transform[transform.length-1]);
-			/*
-			for (int i=0; i<sorted_file_names.length-1; i++) 
-			{
-				for(int j = 0; j < inliers[i].size(); j++)
-					inliers[i].get(j).apply(transform[i+1]);
-			}
-			*/
 			
-			// List of transforms for every slice
-			/*
-			CoordinateTransformList[] transformList = new CoordinateTransformList[sorted_file_names.length];
-			for (int i=0; i<sorted_file_names.length; i++)
-			{
-				transformList[i] = new CoordinateTransformList();
-				transformList[i].add(transform[i]);
-			}
-			*/
 			
 			// Relax points
+			IJ.showStatus("Relaxing inliers...");
 			relax(inliers, transform, p);
 
-			/*
-			CoordinateTransformList[] transformList2 = new CoordinateTransformList[sorted_file_names.length];
-			transformList2[0] = new CoordinateTransformList();
-			transformList[0].add(transform[0]);
-			
-			for (int i=1; i<sorted_file_names.length; i++)
-			{
-				transformList2[i] = new CoordinateTransformList();
-				transformList2[i].add(transformList[i].get(100));
-			}
-			*/
 			
 			// Create final images.
 			IJ.showStatus("Calculating final images...");
@@ -511,8 +495,10 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			e.printStackTrace();
 		} finally {
 			IJ.showProgress(1);
+			IJ.showStatus("Done!");
 			exe.shutdownNow();
 		}
+		
 		
 		
 	} // end method exec (non-shrinking)
@@ -554,6 +540,11 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			CoordinateTransform[] transform, 
 			Param p) 
 	{
+		// TODO: Elastic registration not implemented yet
+		if(p.registrationModelIndex == Register_Virtual_Stack_MT.ELASTIC)
+			return true;
+			
+		
 		// Display mean distance
 		int n_iterations = 0;
 		float[] mean_distance = new float[MAX_ITER+1];		
@@ -1012,7 +1003,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 	 * @param ip input image
 	 * @return callable object to execute feature extraction
 	 */
-	static private Callable<ArrayList<Feature>> extractFeatures(final Param p, final ImageProcessor ip) {
+	private static  Callable<ArrayList<Feature>> extractFeatures(final Param p, final ImageProcessor ip) {
 		return new Callable<ArrayList<Feature>>() {
 			public ArrayList<Feature> call() {
 				final ArrayList<Feature> fs = new ArrayList<Feature>();
@@ -1030,7 +1021,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 	 * @param path output path
 	 * @return callable object to execute the saving
 	 */
-	static private Callable<Boolean> saveImage(final ImagePlus imp, final String path) 
+	private static Callable<Boolean> saveImage(final ImagePlus imp, final String path) 
 	{
 		return new Callable<Boolean>() {
 			public Boolean call() {
@@ -1042,6 +1033,45 @@ public class Register_Virtual_Stack_MT implements PlugIn
 				}
 			}
 		};
+	}
+	
+	//-----------------------------------------------------------------------------------------	
+	/**
+	 * Match features into inliers in a concurrent way
+	 * 
+	 * @param p
+	 * @param fs2
+	 * @param fs1
+	 * @param featuresModel
+	 * @return
+	 * @throws Exception
+	 */
+	private static Callable<ArrayList<PointMatch>> matchFeatures(
+			final Param p, 
+			final Collection<Feature> fs2, 
+			final Collection<Feature> fs1, 
+			final Model<?> featuresModel ) throws Exception
+	{
+		return new Callable<ArrayList<PointMatch>>(){
+			public ArrayList<PointMatch> call() throws Exception{
+				// Match features (create candidates)
+				final List< PointMatch > candidates = new ArrayList< PointMatch >();
+				FeatureTransform.matchFeatures( fs2, fs1, candidates, Param.rod );
+
+				final ArrayList<PointMatch> inliers = new ArrayList< PointMatch >();								
+
+				// Filter candidates into inliers
+
+				featuresModel.filterRansac(
+						candidates,
+						inliers,
+						1000,
+						Param.maxEpsilon,
+						Param.minInlierRatio );
+				return inliers;
+			}
+		};
+		
 	}
 	
 	//-----------------------------------------------------------------------------------------
