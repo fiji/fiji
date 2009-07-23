@@ -133,9 +133,15 @@ public class Main implements AWTEventListener {
 		Toolkit.getDefaultToolkit().addAWTEventListener(new Main(), -1);
 	}
 
-	public static void scanUserPlugins() {
-		if (IJ.getInstance() != null)
+	/*
+	 * This method will be called after ImageJ was set up, but before the
+	 * command line arguments are parsed.
+	 */
+	public static void setup() {
+		if (IJ.getInstance() != null) {
 			new User_Plugins().run(null);
+			SampleImageLoader.install();
+		}
 	}
 
 	public static void postmain() { }
@@ -145,7 +151,7 @@ public class Main implements AWTEventListener {
 		// prepend macro call to scanUserPlugins()
 		String[] newArgs = new String[args.length + 2];
 		newArgs[0] = "-eval";
-		newArgs[1] = "call('fiji.Main.scanUserPlugins');";
+		newArgs[1] = "call('fiji.Main.setup');";
 		if (args.length > 0)
 			System.arraycopy(args, 0, newArgs, 2, args.length);
 		ImageJ.main(newArgs);

@@ -211,11 +211,15 @@ public class User_Plugins implements PlugIn {
 		Menus.getCommands().put(name, command);
 	}
 
-	protected Menu getMenu(String menuPath) {
+	protected static Menu getMenu(String menuPath) {
 		return (Menu)getMenuItem(Menus.getMenuBar(), menuPath, true);
 	}
 
-	protected MenuItem getMenuItem(MenuContainer container,
+	public static MenuItem getMenuItem(String menuPath) {
+		return getMenuItem(Menus.getMenuBar(), menuPath, false);
+	}
+
+	public static MenuItem getMenuItem(MenuContainer container,
 			String menuPath, boolean createIfNecessary) {
 		String name;
 		MenuBar menuBar = (container instanceof MenuBar) ?
@@ -246,7 +250,7 @@ public class User_Plugins implements PlugIn {
 	 * Get the item with the given name either from the menuBar, or if
 	 * that is null, from the menu.
 	 */
-	protected MenuItem getMenuItem(MenuBar menuBar, Menu menu,
+	protected static MenuItem getMenuItem(MenuBar menuBar, Menu menu,
 			String name, boolean createIfNecessary) {
 		if (menuBar != null && name.equals("Help")) {
 			menu = menuBar.getHelpMenu();
