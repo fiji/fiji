@@ -9,6 +9,7 @@
 /fiji-macosx.dmg
 /tests/plugins
 /jvm.cfg
+/samples/
 *.swp
 /IJ_Prefs.txt
 /Fiji.app
