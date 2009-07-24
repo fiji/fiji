@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.List;
 import java.awt.Color;
 import java.awt.Rectangle;
+import java.awt.TextField;
 import java.awt.geom.AffineTransform;
 import java.io.File;
 import java.io.FilenameFilter;
@@ -87,7 +88,16 @@ public class Register_Virtual_Stack_MT implements PlugIn
 	public static boolean advanced = false;
 	
 	public static boolean non_shrinkage = false;
-					 
+	
+	// Regularization 
+	public static double tweakScale = 0.95;
+	public static double tweakShear = 0.95;
+	public static double tweakIso = 0.95;	
+	public static boolean displayRelaxGraph = false;
+	
+	// Image centers
+	private static double[] centerX = null;
+	private static double[] centerY = null;
 
 	public static final String[] registrationModelStrings =
 			       {"Translation          -- no deformation                      ",
@@ -98,7 +108,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			        "Moving least squares -- maximal warping                     "};
 
 	public final static String[] featuresModelStrings = new String[]{ "Translation", "Rigid", "Similarity", "Affine" };
-	public static final float STOP_THRESHOLD = 0.001f;
+	public static final float STOP_THRESHOLD = 0.01f;
 	public static final int MAX_ITER = 1000;
 
 	//---------------------------------------------------------------------------------
@@ -127,7 +137,10 @@ public class Register_Virtual_Stack_MT implements PlugIn
 
 		// Choose source image folder
 		JFileChooser chooser = new JFileChooser();
-		chooser.setCurrentDirectory(new java.io.File(currentDirectory));
+		if(currentDirectory != null)
+			chooser.setCurrentDirectory(new java.io.File(currentDirectory));
+		else
+			chooser.setCurrentDirectory(new java.io.File("."));
 	    chooser.setDialogTitle("Choose directory with Source images");
 	    chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 	    chooser.setAcceptAllFileFilterUsed(false);
@@ -165,7 +178,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		}
 
 		// Execute registration
-		exec(source_dir, target_dir, referenceName, featuresModelIndex, registrationModelIndex, advanced);
+		exec(source_dir, target_dir, referenceName, featuresModelIndex, registrationModelIndex, advanced, non_shrinkage);
 	}
 	//-----------------------------------------------------------------------------------
 	/** 
@@ -177,6 +190,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 	 * @param featuresModelIndex Index of the features extraction model (0=TRANSLATION, 1=RIGID, 2=SIMILARITY, 3=AFFINE)
 	 * @param registrationModelIndex Index of the registration model (0=TRANSLATION, 1=RIGID, 2=SIMILARITY, 3=AFFINE, 4=ELASTIC, 5=MOVING_LEAST_SQUARES)
 	 * @param advanced Triggers showing parameters setup dialogs.
+	 * @param non_shrink Triggers showing non-shrinking dialog (if advanced options are selected as well) and execution
 	 */
 	static public void exec(
 			final String source_dir, 
@@ -184,15 +198,18 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			final String referenceName,
 			final int featuresModelIndex, 
 			final int registrationModelIndex, 
-			final boolean advanced) 
+			final boolean advanced,
+			final boolean non_shrink) 
 	{
 		Param p = new Param();
-		p.featuresModelIndex = featuresModelIndex;
-		p.registrationModelIndex = registrationModelIndex;
+		Param.featuresModelIndex = featuresModelIndex;
+		Param.registrationModelIndex = registrationModelIndex;
 		// Show parameter dialogs when advanced option is checked
 		if (advanced && !p.showDialog())
 			return;
-		exec(source_dir, target_dir, referenceName, p);
+		if (non_shrink && advanced && !showRegularizationDialog(p))
+			return;
+		exec(source_dir, target_dir, referenceName, p, non_shrink);
 	}
 
 	//-----------------------------------------------------------------------------------
@@ -203,8 +220,9 @@ public class Register_Virtual_Stack_MT implements PlugIn
 	 * @param target_dir Directory to store registered slices into.
 	 * @param referenceName File name of the reference image
 	 * @param p Registration parameters
+	 * @param non_shrink non shrinking mode flag
 	 */
-	static public void exec(final String source_dir, final String target_dir, final String referenceName, final Param p) 
+	public static void exec(final String source_dir, final String target_dir, final String referenceName, final Param p, final boolean non_shrink) 
 	{
 		// get file listing
 		final String exts = ".tif.jpg.png.gif.tiff.jpeg.bmp.pgm";
@@ -219,7 +237,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		});
 		Arrays.sort(names);
 				
-		if(non_shrinkage)
+		if(non_shrink)
 		{
 			exec(source_dir, names, target_dir, p);
 			return;
@@ -282,7 +300,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		public static int registrationModelIndex = Register_Virtual_Stack_MT.RIGID;
                 
 		/** bUnwarpJ parameters for consistent elastic registration */
-        public bunwarpj.Param elastic_param = new bunwarpj.Param();
+        public bunwarpj.Param elastic_param = new bunwarpj.Param();        
         
         //---------------------------------------------------------------------------------
         /**
@@ -300,7 +318,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			gd.addNumericField( "maximum_image_size :", sift.maxOctaveSize, 0, 6, "px" );
 			
 			gd.addMessage( "Feature Descriptor:" );
-			gd.addNumericField( "feature_descriptor_size :", sift.fdSize, 0 );
+			gd.addNumericField( "feature_descriptor_size :", 8, 0 );
 			gd.addNumericField( "feature_descriptor_orientation_bins :", sift.fdBins, 0 );
 			gd.addNumericField( "closest/next_closest_ratio :", rod, 2 );
 			
@@ -366,9 +384,9 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			return;
 		}
 		// Check if the registration model is known
-		if (p.registrationModelIndex < TRANSLATION || p.registrationModelIndex > MOVING_LEAST_SQUARES) 
+		if (Param.registrationModelIndex < TRANSLATION || Param.registrationModelIndex > MOVING_LEAST_SQUARES) 
 		{
-			IJ.error("Don't know how to process registration type " + p.registrationModelIndex);
+			IJ.error("Don't know how to process registration type " + Param.registrationModelIndex);
 			return;
 		}
 		
@@ -377,7 +395,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		
 		// Select features model to select the correspondences in every image
 		Model< ? > featuresModel;
-		switch ( p.featuresModelIndex )
+		switch ( Param.featuresModelIndex )
 		{
 			case Register_Virtual_Stack_MT.TRANSLATION:
 				featuresModel = new TranslationModel2D();
@@ -392,13 +410,16 @@ public class Register_Virtual_Stack_MT implements PlugIn
 				featuresModel = new AffineModel2D();
 				break;
 			default:
-				IJ.error("ERROR: unknown featuresModelIndex = " + p.featuresModelIndex);
+				IJ.error("ERROR: unknown featuresModelIndex = " + Param.featuresModelIndex);
 				return;
 		}		
 		
 		// Array of inliers for every image with the consecutive one
 		final List< PointMatch >[] inliers = new ArrayList [sorted_file_names.length-1];
 		CoordinateTransform[] transform = new CoordinateTransform [sorted_file_names.length];
+		// Initialize arrays of image center coordinates
+		centerX = new double[sorted_file_names.length];
+		centerY = new double[sorted_file_names.length];
 		
 		// Set first transform to Identity
 		transform[0] = new RigidModel2D();
@@ -412,10 +433,14 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			{
 				IJ.showStatus("Extracting features from slices...");
 				final ImagePlus imp = IJ.openImage(source_dir + sorted_file_names[i]);
+				// Store image center coordinates
+				centerX[i] = imp.getWidth() / 2;
+				centerY[i] = imp.getHeight() / 2;
+				// Submit job to extract features
 				fu[i] = exe.submit(extractFeatures(p, imp.getProcessor()));
 				
 			}
-			// join
+			// Join threads of feature extraction
 			for (int i=0; i<sorted_file_names.length; i++) 	
 			{
 				IJ.showStatus("Extracting features " + (i+1) + "/" + sorted_file_names.length);
@@ -442,14 +467,14 @@ public class Register_Virtual_Stack_MT implements PlugIn
 					IJ.log("No features model found for file " + i + ": " + sorted_file_names[i]);
 					// If the feature extraction does not find correspondences, then
 					// only the elastic registration can be performed
-					if(p.registrationModelIndex != Register_Virtual_Stack_MT.ELASTIC)
+					if(Param.registrationModelIndex != Register_Virtual_Stack_MT.ELASTIC)
 					{
 						IJ.error("No features model found for file " + i + ": " + sorted_file_names[i]);
 						return;
 					}
 				}
 			}
-			// join
+			// Join threads of feature matching
 			for (int i=1; i<sorted_file_names.length; i++) 			
 			{
 				IJ.showStatus("Matching features " + (i+1) + "/" + sorted_file_names.length);
@@ -541,9 +566,10 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			Param p) 
 	{
 		// TODO: Elastic registration not implemented yet
-		if(p.registrationModelIndex == Register_Virtual_Stack_MT.ELASTIC)
+		if(Param.registrationModelIndex == Register_Virtual_Stack_MT.ELASTIC)
 			return true;
 			
+		final boolean display = displayRelaxGraph;
 		
 		// Display mean distance
 		int n_iterations = 0;
@@ -551,7 +577,8 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		for(int iSlice = 0; iSlice < inliers.length; iSlice++)
 			mean_distance[0] += PointMatch.meanDistance(inliers[iSlice]);
 		
-		IJ.log("Initial: Mean distance = " + mean_distance[0] / inliers.length);
+		if(display)
+			IJ.log("Initial: Mean distance = " + mean_distance[0] / inliers.length);
 						
 		for(int n = 0; n < MAX_ITER; n++)				
 		{							
@@ -564,7 +591,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			try{
 				// Fit inliers given the registration model
 				fitInliers(p, t, firstMatches);
-				regularize(t);
+				regularize(t, 0);
 				
 				// Update inliers (P1 of current slice and P2 in next slice)				
 				inliers[0] = applyPreviousTransform(inliers[0], t);
@@ -597,7 +624,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 				try{
 					// Fit inliers given the registration model
 					fitInliers(p, t, combined_inliers);
-					regularize(t);
+					regularize(t, iSlice+1);
 					
 					// Update inliers (P1 of current slice and P2 in next slice)
 					PointMatch.apply(inliers[iSlice], t);
@@ -619,25 +646,28 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			for(int iSlice = 0; iSlice < inliers.length; iSlice++)
 				mean_distance[n+1] += PointMatch.meanDistance(inliers[iSlice]);
 			
-			IJ.log(n+": Mean distance = " + mean_distance[n+1] / inliers.length);
+			if(display)
+				IJ.log(n+": Mean distance = " + mean_distance[n+1] / inliers.length);
 			
 			if(Math.abs(mean_distance[n+1] - mean_distance[n]) < STOP_THRESHOLD)
 				break;
 			
 		}
 		
-		// Plot mean distance		
-		float[] x_label = new float[n_iterations+1];
-		for(int i = 0; i < x_label.length; i++)
-			x_label[i] = (float) i;
-		float[] distance = new float[n_iterations+1];
-		for(int i = 0; i < distance.length; i++)
-			distance[i] = mean_distance[i];
-		
-		Plot pl = new Plot("Mean distance", "iterations", "MSE", x_label, distance);
-		pl.setColor(Color.MAGENTA);
-		pl.show();
-		
+		if(display)
+		{
+			// Plot mean distance		
+			float[] x_label = new float[n_iterations+1];
+			for(int i = 0; i < x_label.length; i++)
+				x_label[i] = (float) i;
+			float[] distance = new float[n_iterations+1];
+			for(int i = 0; i < distance.length; i++)
+				distance[i] = mean_distance[i];
+
+			Plot pl = new Plot("Mean distance", "iterations", "MSE", x_label, distance);
+			pl.setColor(Color.MAGENTA);
+			pl.show();
+		}
 		
 		return true;
 	}
@@ -803,15 +833,15 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			return;
 		}
 		// Check if the registration model is known
-		if (p.registrationModelIndex < TRANSLATION || p.registrationModelIndex > MOVING_LEAST_SQUARES) 
+		if (Param.registrationModelIndex < TRANSLATION || Param.registrationModelIndex > MOVING_LEAST_SQUARES) 
 		{
-			IJ.error("Don't know how to process registration type " + p.registrationModelIndex);
+			IJ.error("Don't know how to process registration type " + Param.registrationModelIndex);
 			return;
 		}
 		
 		// Select coordinate transform based on the registration model
 		mpicbg.models.CoordinateTransform t;
-		switch (p.registrationModelIndex) 
+		switch (Param.registrationModelIndex) 
 		{
 			case Register_Virtual_Stack_MT.TRANSLATION: t = new TranslationModel2D(); break;
 			case Register_Virtual_Stack_MT.RIGID: t = new RigidModel2D(); break;
@@ -820,7 +850,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			case Register_Virtual_Stack_MT.ELASTIC: t = new CubicBSplineTransform(); break;
 			case Register_Virtual_Stack_MT.MOVING_LEAST_SQUARES: t = new MovingLeastSquaresTransform(); break;
 			default:
-				IJ.log("ERROR: unknown registrationModelIndex = " + p.registrationModelIndex);
+				IJ.log("ERROR: unknown registrationModelIndex = " + Param.registrationModelIndex);
 				return;
 		}
 
@@ -1122,13 +1152,13 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		ArrayList<Feature> fs2 = fu2.get();
 		
 		final List< PointMatch > candidates = new ArrayList< PointMatch >();
-		FeatureTransform.matchFeatures( fs2, fs1, candidates, p.rod );
+		FeatureTransform.matchFeatures( fs2, fs1, candidates, Param.rod );
 
 		final List< PointMatch > inliers = new ArrayList< PointMatch >();
 
 		// Select features model
 		Model< ? > featuresModel;
-		switch ( p.featuresModelIndex )
+		switch ( Param.featuresModelIndex )
 		{
 			case Register_Virtual_Stack_MT.TRANSLATION:
 				featuresModel = new TranslationModel2D();
@@ -1143,7 +1173,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 				featuresModel = new AffineModel2D();
 				break;
 			default:
-				IJ.error("ERROR: unknown featuresModelIndex = " + p.featuresModelIndex);
+				IJ.error("ERROR: unknown featuresModelIndex = " + Param.featuresModelIndex);
 				return false;
 		}
 			
@@ -1153,15 +1183,15 @@ public class Register_Virtual_Stack_MT implements PlugIn
 					candidates,
 					inliers,
 					1000,
-					p.maxEpsilon,
-					p.minInlierRatio );
+					Param.maxEpsilon,
+					Param.minInlierRatio );
 		} 
 		catch ( NotEnoughDataPointsException e ) 
 		{
 			IJ.log("No features model found for file " + i + ": " + sorted_file_names[i]);
 			// If the feature extraction does not find correspondences, then
 			// only the elastic registration can be performed
-			if(p.registrationModelIndex != Register_Virtual_Stack_MT.ELASTIC)
+			if(Param.registrationModelIndex != Register_Virtual_Stack_MT.ELASTIC)
 			{
 				IJ.error("No features model found for file " + i + ": " + sorted_file_names[i]);
 				return false;
@@ -1169,7 +1199,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		}
 	
 		// Generate registered image, put it into imp2 and save it
-		switch (p.registrationModelIndex) 
+		switch (Param.registrationModelIndex) 
 		{
 			case Register_Virtual_Stack_MT.TRANSLATION:
 			case Register_Virtual_Stack_MT.SIMILARITY:
@@ -1228,7 +1258,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		TransformMeshMapping mapping = new TransformMeshMapping(mesh);
 		
 		// Create interpolated mask (only for elastic registration)
-		if(p.registrationModelIndex == Register_Virtual_Stack_MT.ELASTIC)
+		if(Param.registrationModelIndex == Register_Virtual_Stack_MT.ELASTIC)
 		{
 			imp2mask.setProcessor(imp2mask.getTitle(), new ByteProcessor(imp2.getWidth(), imp2.getHeight()));
 			imp2mask.getProcessor().setValue(255);
@@ -1271,7 +1301,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 	public static CoordinateTransform getCoordinateTransform(Param p)
 	{
 		CoordinateTransform t;
-		switch (p.registrationModelIndex) 
+		switch (Param.registrationModelIndex) 
 		{
 			case Register_Virtual_Stack_MT.TRANSLATION: t = new TranslationModel2D(); break;
 			case Register_Virtual_Stack_MT.RIGID: t = new RigidModel2D(); break;
@@ -1280,7 +1310,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			case Register_Virtual_Stack_MT.ELASTIC: t = new CubicBSplineTransform(); break;
 			case Register_Virtual_Stack_MT.MOVING_LEAST_SQUARES: t = new MovingLeastSquaresTransform(); break;
 			default:
-				IJ.log("ERROR: unknown registrationModelIndex = " + p.registrationModelIndex);
+				IJ.log("ERROR: unknown registrationModelIndex = " + Param.registrationModelIndex);
 				return null;
 		}
 		return t;
@@ -1296,7 +1326,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 	 */
 	public static void fitInliers(Param p, CoordinateTransform t, List< PointMatch > inliers) throws Exception
 	{
-		switch (p.registrationModelIndex) 
+		switch (Param.registrationModelIndex) 
 		{
 			case Register_Virtual_Stack_MT.TRANSLATION:
 			case Register_Virtual_Stack_MT.SIMILARITY:
@@ -1318,48 +1348,174 @@ public class Register_Virtual_Stack_MT implements PlugIn
 	 * Regularize coordinate transform
 	 * 
 	 * @param t coordinate transform
+	 * @param index slice index
 	 */
-	public static void regularize(CoordinateTransform t)
+	public static void regularize(CoordinateTransform t, int index)
 	{
-		if( t instanceof AffineModel2D )
+		if( t instanceof AffineModel2D || t instanceof SimilarityModel2D )
 		{
-			AffineTransform a = ((AffineModel2D)t).createAffine();
+			final AffineTransform a = (t instanceof AffineModel2D) ? ((AffineModel2D)t).createAffine() : ((SimilarityModel2D)t).createAffine();
+			
+			// Move to the center of the image
+			a.translate(centerX[index], centerY[index]);
+			
 			/*
 			IJ.log(" A: " + a.getScaleX() + " " + a.getShearY() + " " + a.getShearX()
 					+ " " + a.getScaleY() + " " + a.getTranslateX() + " " + 
 					+ a.getTranslateY() );
 					*/
 			
-			AffineTransform b = new AffineTransform(	a.getScaleX() *0.95 + 0.05, 
-					a.getShearY(), // *0.95 + 0.05, 
-					a.getShearX(),// *0.95 + 0.05, 
-					a.getScaleY() *0.95 + 0.05, 
-					a.getTranslateX()        , 
-					a.getTranslateY()         );
-			/*
-			IJ.log(" B: " + b.getScaleX() + " " + b.getShearY() + " " + b.getShearX()
-					+ " " + b.getScaleY() + " " + b.getTranslateX() + " " + 
-					+ b.getTranslateY() );
-			*/
-			((AffineModel2D)t).set( b );
-			
-		}		
-		else if( t instanceof SimilarityModel2D )
-		{
-			AffineTransform a = ((SimilarityModel2D)t).createAffine();
+			// retrieves scaling, shearing, rotation and translation from an affine
+			// transformation matrix A (which has translation values in the right column)
+			// by Daniel Berger for MIT-BCS Seung, April 19 2009
 
-			
-			AffineTransform b = new AffineTransform(	a.getScaleX() *0.95 + 0.05, 
-					a.getShearY(), // *0.95 + 0.05, 
-					a.getShearX(),// *0.95 + 0.05, 
-					a.getScaleY() *0.95 + 0.05, 
-					a.getTranslateX()        , 
-					a.getTranslateY()         );
+			// We assume that sheary=0
+			// scalex=sqrt(A(1,1)*A(1,1)+A(2,1)*A(2,1));
+			final double a11 = a.getScaleX();
+			final double a21 = a.getShearY();
+			final double scaleX = Math.sqrt( a11 * a11 + a21 * a21 );
+			// rotang=atan2(A(2,1)/scalex,A(1,1)/scalex);
+			final double rotang = Math.atan2( a21/scaleX, a11/scaleX);
 
-			((SimilarityModel2D)t).set( (float) b.getScaleX(), (float) b.getShearY(), (float) b.getTranslateX(), (float) b.getTranslateY() );
+			// R=[[cos(-rotang) -sin(-rotang)];[sin(-rotang) cos(-rotang)]];
 			
+			// rotate back shearx and scaley
+			//v=R*[A(1,2) A(2,2)]';
+			final double a12 = a.getShearX();
+			final double a22 = a.getScaleY();
+			final double shearX = Math.cos(-rotang) * a12 - Math.sin(-rotang) * a22;
+			final double scaleY = Math.sin(-rotang) * a12 + Math.cos(-rotang) * a22;
+
+			// rotate back translation
+			// v=R*[A(1,3) A(2,3)]';
+			final double transX = Math.cos(-rotang) * a.getTranslateX() - Math.sin(-rotang) * a.getTranslateY();
+			final double transY = Math.sin(-rotang) * a.getTranslateX() + Math.cos(-rotang) * a.getTranslateY();
+			
+			// TWEAK		
+			
+			final double new_shearX = shearX * (1.0 - tweakShear); 
+			//final double new_shearY = 0; // shearY * (1.0 - tweakShear);
+			
+			final double avgScale = (scaleX + scaleY)/2;
+		    final double aspectRatio = scaleX / scaleY;
+		    final double regAvgScale = avgScale * (1.0 - tweakScale) + 1.0  * tweakScale;
+		    final double regAspectRatio = aspectRatio * (1.0 - tweakIso) + 1.0 * tweakIso;
+		    
+		    //IJ.log("avgScale = " + avgScale + " aspectRatio = " + aspectRatio + " regAvgScale = " + regAvgScale + " regAspectRatio = " + regAspectRatio);
+		    
+		    final double new_scaleY = (2.0 * regAvgScale) / (regAspectRatio + 1.0);
+		    final double new_scaleX = regAspectRatio * new_scaleY;
+			
+			final AffineTransform b = makeAffineMatrix(new_scaleX, new_scaleY, new_shearX, 0, rotang, transX, transY);
+									
+		    //IJ.log("new_scaleX = " + new_scaleX + " new_scaleY = " + new_scaleY + " new_shearX = " + new_shearX + " new_shearY = " + new_shearY);		    		    		    
+			
+			// Move back the center
+			b.translate(-centerX[index], -centerY[index]);
+			
+			if(t instanceof AffineModel2D)
+				((AffineModel2D)t).set( b );
+			else
+				((SimilarityModel2D)t).set( (float) b.getScaleX(), (float) b.getShearY(), (float) b.getTranslateX(), (float) b.getTranslateY() );			
 		}		
+		
+										
 	}// end method regularize
 	
+	//---------------------------------------------------------------------------------
+	/**
+	 * Makes an affine transformation matrix from the given scale, shear,
+	 * rotation and translation values
+     * if you want a uniquely retrievable matrix, give sheary=0
+     * 
+	 * @param scalex scaling in x
+	 * @param scaley scaling in y
+	 * @param shearx shearing in x
+	 * @param sheary shearing in y
+	 * @param rotang angle of rotation (in radians)
+	 * @param transx translation in x
+	 * @param transy translation in y
+	 * @return affine transformation matrix
+	 */
+	public static AffineTransform makeAffineMatrix(
+			final double scalex, 
+			final double scaley, 
+			final double shearx, 
+			final double sheary, 
+			final double rotang, 
+			final double transx, 
+			final double transy)
+	{
+		/*
+		%makes an affine transformation matrix from the given scale, shear,
+		%rotation and translation values
+		%if you want a uniquely retrievable matrix, give sheary=0
+		%by Daniel Berger for MIT-BCS Seung, April 19 2009
+
+		A=[[scalex shearx transx];[sheary scaley transy];[0 0 1]];
+		A=[[cos(rotang) -sin(rotang) 0];[sin(rotang) cos(rotang) 0];[0 0 1]] * A;
+		*/
+		
+		final double m00 = Math.cos(rotang) * scalex - Math.sin(rotang) * sheary;
+		final double m01 = Math.cos(rotang) * shearx - Math.sin(rotang) * scaley;
+		final double m02 = Math.cos(rotang) * transx - Math.sin(rotang) * transy;
+		
+		final double m10 = Math.sin(rotang) * scalex + Math.cos(rotang) * sheary;
+		final double m11 = Math.sin(rotang) * shearx + Math.cos(rotang) * scaley;
+		final double m12 = Math.sin(rotang) * transx + Math.cos(rotang) * transy;
+		
+		return new AffineTransform( m00,  m10,  m01,  m11,  m02,  m12);		
+	}
+	
+	//---------------------------------------------------------------------------------
+    /**
+     * Shows regularization dialog when "Shrinkage constrain" is checked.
+     * 
+     * @param p registration parameters
+     * @return false when dialog is canceled or true when it is not
+     */
+	public static boolean showRegularizationDialog(Param p) 
+	{
+		// Feature extraction parameters
+		GenericDialog gd = new GenericDialog("Shrinkage regularization");
+		
+		// If the registration model is SIMILARITY, then display isostropy weight = 1.0
+		if(Param.registrationModelIndex == Register_Virtual_Stack_MT.SIMILARITY)
+			tweakIso = 1.0;
+		
+		gd.addNumericField( "shear :", tweakShear, 2 );
+		gd.addNumericField( "scale :", tweakScale, 2);
+		gd.addNumericField( "isotropy :", tweakIso, 2 );
+		
+		TextField isotropyTextField = (TextField) gd.getNumericFields().lastElement();
+		
+		// If the registration model is SIMILARITY, then disable the isotropy text field
+		if(Param.registrationModelIndex == Register_Virtual_Stack_MT.SIMILARITY)
+			isotropyTextField.setEnabled(false);
+		else
+			isotropyTextField.setEnabled(true);
+		
+		
+		gd.addMessage( "Values between 0 and 1 are expected" );
+		gd.addMessage( "(the closest to 1, the closest to rigid)" );
+
+		gd.addCheckbox("Display_relaxation_graph", displayRelaxGraph);
+
+		gd.showDialog();
+
+		// Exit when canceled
+		if (gd.wasCanceled()) 
+			return false;
+		
+		tweakShear = (double) gd.getNextNumber();
+		tweakScale = (double) gd.getNextNumber();		
+		tweakIso = (double) gd.getNextNumber();
+		displayRelaxGraph = gd.getNextBoolean();
+
+
+		return true;
+	}
+	
+
 	
 }// end Register_Virtual_Stack_MT class
