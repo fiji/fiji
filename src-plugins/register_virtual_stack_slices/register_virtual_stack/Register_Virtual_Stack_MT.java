@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Random;
 import java.awt.Color;
 import java.awt.Rectangle;
 import java.awt.TextField;
@@ -98,6 +99,9 @@ public class Register_Virtual_Stack_MT implements PlugIn
 	// Image centers
 	private static double[] centerX = null;
 	private static double[] centerY = null;
+	
+	// Post-processing flag
+	public static boolean postprocess = true;
 
 	public static final String[] registrationModelStrings =
 			       {"Translation          -- no deformation                      ",
@@ -426,7 +430,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		
 		// FIRST LOOP (calculate correspondences and first RIGID solution)
 		final ArrayList<Feature>[] fs = new ArrayList[sorted_file_names.length];
-		Future<ArrayList<Feature>> fu[] = new Future[sorted_file_names.length];
+		final Future<ArrayList<Feature>> fu[] = new Future[sorted_file_names.length];
 		try{
 			// Extract features for all images
 			for (int i=0; i<sorted_file_names.length; i++) 
@@ -449,7 +453,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			}
 			
 			// Match features				
-			Future<ArrayList<PointMatch>>[] fpm = new Future[sorted_file_names.length-1];
+			final Future<ArrayList<PointMatch>>[] fpm = new Future[sorted_file_names.length-1];
 			// Loop over the sequence to select correspondences by pairs			
 			for (int i=1; i<sorted_file_names.length; i++) 
 			{							
@@ -504,8 +508,17 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			
 			// Relax points
 			IJ.showStatus("Relaxing inliers...");
-			relax(inliers, transform, p);
+			if( !relax(inliers, transform, p))
+			{
+				IJ.log("Error when relaxing inliers!");
+				return;
+			}
 
+			// Post-processing
+			if( postprocess )
+			{
+				postProcessTransforms(transform);
+			}
 			
 			// Create final images.
 			IJ.showStatus("Calculating final images...");
@@ -528,6 +541,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		
 	} // end method exec (non-shrinking)
 
+	
 	//-----------------------------------------------------------------------------------------
 	/**
 	 * Apply a transformation to the second point (P2) of a list of Point matches
@@ -579,80 +593,111 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		
 		if(display)
 			IJ.log("Initial: Mean distance = " + mean_distance[0] / inliers.length);
+		
+		
+		// Array to keep order of relaxation
+		int[] index = new int[inliers.length+1];
+		for(int i = 0; i < index.length; i++)
+			index[i] = i;
 						
 		for(int n = 0; n < MAX_ITER; n++)				
 		{							
 			n_iterations++;		
 			
-			// First matches (we flip the matches in order to transform the first image too)
-			CoordinateTransform t = getCoordinateTransform(p);
-			ArrayList<PointMatch> firstMatches = new ArrayList <PointMatch>();
-			PointMatch.flip(inliers[0], firstMatches);
-			try{
-				// Fit inliers given the registration model
-				fitInliers(p, t, firstMatches);
-				regularize(t, 0);
-				
-				// Update inliers (P1 of current slice and P2 in next slice)				
-				inliers[0] = applyPreviousTransform(inliers[0], t);
-				
-				// Update list of transforms
-				transform[0] = t;										
-			}
-			catch(Exception e)
-			{
-				e.printStackTrace();
-				IJ.error("Error when relaxing first matches...");
-				return false;
-			}
+			// Randomize order of relaxation
+			randomize(index);
 			
-			// Rest of matches
-			for(int iSlice = 0; iSlice < inliers.length; iSlice++)
+			/*
+			String s = new String("index order = [");
+			for(int j = 0; j < index.length; j++)
+				s += " " + index[j];
+			s+= "]";
+			IJ.log(s);
+			*/
+			
+			for(int j = 0; j < index.length; j++)
 			{
-				// Create list of combined inliers (each image with the previous and the next one). 
-				List<PointMatch> combined_inliers = new ArrayList<PointMatch>(inliers[iSlice]);
-				if(iSlice < inliers.length-1)
-				{
-					ArrayList<PointMatch> flippedMatches = new ArrayList <PointMatch>();
-					PointMatch.flip(inliers[iSlice+1], flippedMatches);
-					for(final PointMatch match : flippedMatches )
-						combined_inliers.add(match);
-				}					
+				final int iSlice = index[j];
+												
+				CoordinateTransform t = getCoordinateTransform(p);
 				
-				t = getCoordinateTransform(p);
-								
-				try{
-					// Fit inliers given the registration model
-					fitInliers(p, t, combined_inliers);
-					regularize(t, iSlice+1);
-					
-					// Update inliers (P1 of current slice and P2 in next slice)
-					PointMatch.apply(inliers[iSlice], t);
-					if(iSlice < inliers.length-1)
-						inliers[iSlice+1] = applyPreviousTransform(inliers[iSlice+1], t);
-					
-					// Update list of transforms
-					transform[iSlice+1] = t;										
-				}
-				catch(Exception e)
+				// First slice is treated in a special way
+				if(iSlice == 0)
 				{
-					e.printStackTrace();
-					IJ.error("Error when relaxing...");
-					return false;
+					// First matches (we flip the matches in order to transform the first image too)
+
+					ArrayList<PointMatch> firstMatches = new ArrayList <PointMatch>();
+					PointMatch.flip(inliers[0], firstMatches);
+					try{
+						// Fit inliers given the registration model
+						fitInliers(p, t, firstMatches);
+						regularize(t, 0);
+
+						// Update inliers (P1 of current slice and P2 in next slice)				
+						inliers[0] = applyPreviousTransform(inliers[0], t);
+
+						// Update list of transforms
+						transform[0] = t;										
+					}
+					catch(Exception e)
+					{
+						e.printStackTrace();
+						IJ.error("Error when relaxing first matches...");
+						return false;
+					}
 				}
-			}
-		
+				else
+				{
+					// Rest of matches				
+					// Create list of combined inliers (each image with the previous and the next one). 
+					List<PointMatch> combined_inliers = new ArrayList<PointMatch>(inliers[iSlice-1]);
+					// if not last slice
+					if(iSlice-1 < inliers.length-1)
+					{
+						// Combine matches with next slice
+						ArrayList<PointMatch> flippedMatches = new ArrayList <PointMatch>();
+						PointMatch.flip(inliers[iSlice], flippedMatches);
+						for(final PointMatch match : flippedMatches )
+							combined_inliers.add(match);
+					}					
+
+					t = getCoordinateTransform(p);
+
+					try{
+						// Fit inliers given the registration model
+						fitInliers(p, t, combined_inliers);
+						regularize(t, iSlice);
+
+						// Update inliers (P1 of current slice and P2 in next slice)
+						PointMatch.apply(inliers[iSlice-1], t);
+						if(iSlice-1 < inliers.length-1)
+							inliers[iSlice] = applyPreviousTransform(inliers[iSlice], t);
+
+						// Update list of transforms
+						transform[iSlice] = t;										
+					}
+					catch(Exception e)
+					{
+						e.printStackTrace();
+						IJ.error("Error when relaxing...");
+						return false;
+					}
+				
+				}
+			} // end for random indexes
+			
 			mean_distance[n+1] = 0;		
-			for(int iSlice = 0; iSlice < inliers.length; iSlice++)
-				mean_distance[n+1] += PointMatch.meanDistance(inliers[iSlice]);
-			
+			for(int k = 0; k < inliers.length; k++)
+				mean_distance[n+1] += PointMatch.meanDistance(inliers[k]);
+
 			if(display)
 				IJ.log(n+": Mean distance = " + mean_distance[n+1] / inliers.length);
-			
+
 			if(Math.abs(mean_distance[n+1] - mean_distance[n]) < STOP_THRESHOLD)
 				break;
+
 			
-		}
+		} // end for iterations (n)
 		
 		if(display)
 		{
@@ -670,8 +715,31 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		}
 		
 		return true;
-	}
-
+	} // end method relax
+	
+	//-----------------------------------------------------------------------------------------	
+	/**
+	 * Randomize array of integers
+	 * 
+	 * @param index array of integers to randomize
+	 */
+	public static void randomize(final int[] array) 
+	{
+		Random generator = new Random();
+		
+		final int n = array.length;
+		
+		for(int i = 0; i < n; i ++)
+		{
+			final int randomIndex1 = generator.nextInt( n );
+			final int randomIndex2 = generator.nextInt( n );
+			// Swap values
+			final int aux = array[randomIndex1];
+			array[randomIndex1] = array[randomIndex2];
+			array[randomIndex2] = aux;
+		}
+		
+	}// end method randomize
 	//-----------------------------------------------------------------------------------------	
 	/** 
 	 * Create final target images  
@@ -1465,7 +1533,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		final double m12 = Math.sin(rotang) * transx + Math.cos(rotang) * transy;
 		
 		return new AffineTransform( m00,  m10,  m01,  m11,  m02,  m12);		
-	}
+	} // end method makeAffineMatrix
 	
 	//---------------------------------------------------------------------------------
     /**
@@ -1514,8 +1582,89 @@ public class Register_Virtual_Stack_MT implements PlugIn
 
 
 		return true;
-	}
+	} // end method showRegularizationDialog
 	
 
+	//-----------------------------------------------------------------------------------------
+	/**
+	 * Correct transforms from global scaling or rotation
+	 * 
+	 * @param transform array of transforms
+	 */
+	public static void postProcessTransforms(CoordinateTransform[] transform) 
+	{
+		double avgAngle = 0;
+		double avgScale = 0;
+		
+		// Calculate average scaling and angle.
+		for(int i = 0; i < transform.length; i++)
+		{
+			final CoordinateTransform t = transform[i];
+			
+			if( t instanceof AffineModel2D || t instanceof SimilarityModel2D )
+			{
+				final AffineTransform a = (t instanceof AffineModel2D) ? ((AffineModel2D)t).createAffine() : ((SimilarityModel2D)t).createAffine();
+				
+				// Move to the center of the image
+				//a.translate(centerX[i], centerY[i]);
+								
+				// We assume that sheary=0
+				// scalex=sqrt(A(1,1)*A(1,1)+A(2,1)*A(2,1));
+				final double a11 = a.getScaleX();
+				final double a21 = a.getShearY();
+				final double scaleX = Math.sqrt( a11 * a11 + a21 * a21 );
+				// rotang=atan2(A(2,1)/scalex,A(1,1)/scalex);
+				final double rotang = Math.atan2( a21/scaleX, a11/scaleX);
+
+				// R=[[cos(-rotang) -sin(-rotang)];[sin(-rotang) cos(-rotang)]];
+				
+				// rotate back shearx and scaley
+				//v=R*[A(1,2) A(2,2)]';
+				final double a12 = a.getShearX();
+				final double a22 = a.getScaleY();
+				final double scaleY = Math.sin(-rotang) * a12 + Math.cos(-rotang) * a22;
+				
+				avgScale += (scaleX + scaleY) / 2.0;
+				avgAngle += rotang;							
+			}					
+		}
+		
+		avgScale /= transform.length;
+		avgAngle /= transform.length;
+		
+		//IJ.log("average scaling = " + avgScale + " average rotation = " + avgAngle);
+		
+		AffineTransform correctionMatrix = new AffineTransform( Math.cos(-avgAngle) / avgScale,
+																Math.sin(-avgAngle) / avgScale,
+															   -Math.sin(-avgAngle) / avgScale,
+															    Math.cos(-avgAngle) / avgScale,
+															    0,0							    );
+		
+		// Correct from average scaling and rotation
+		for(int i = 0; i < transform.length; i++)
+		{
+			if( transform[i] instanceof AffineModel2D || transform[i] instanceof SimilarityModel2D )
+			{
+				final AffineTransform a = (transform[i] instanceof AffineModel2D) ? 
+										((AffineModel2D)transform[i]).createAffine() : 
+										((SimilarityModel2D)transform[i]).createAffine();
+				
+				final AffineTransform b = new AffineTransform(a);
+				b.concatenate(correctionMatrix);
+						
+				
+			    // Move back the center
+				//b.translate(-centerX[i], -centerY[i]);
+
+				if(transform[i] instanceof AffineModel2D)
+					((AffineModel2D)transform[i]).set( b );
+				else
+					((SimilarityModel2D)transform[i]).set( (float) b.getScaleX(), (float) b.getShearY(), (float) b.getTranslateX(), (float) b.getTranslateY() );
+				
+			}
+		}
+		
+	} // end method postProcessTransform
+	
 	
 }// end Register_Virtual_Stack_MT class
