@@ -9,6 +9,7 @@
 /fiji-macosx.dmg
 /tests/plugins
 /jvm.cfg
+/samples/
 *.swp
 /IJ_Prefs.txt
 /Fiji.app
@@ -96,3 +97,4 @@
 /plugins/LocalThickness_.jar
 /plugins/Object_Counter3D.jar
 /plugins/Tutorial_Maker.jar
+/jars/test-fiji.jar
