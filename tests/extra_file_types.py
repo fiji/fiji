@@ -23,7 +23,7 @@ def checkClassName(name):
     except ClassNotFoundException:
       return 0
 
-path = System.getProperty('plugins.dir') + '/' + "src-plugins/Input-Output/"
+path = System.getProperty('fiji.dir') + '/' + "src-plugins/IO_/"
 print "path: ", path
 f = open(path + "HandleExtraFileTypes.java")
 

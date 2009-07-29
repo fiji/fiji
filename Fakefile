@@ -180,8 +180,9 @@ jars/rsyntaxtextarea.jar <- RSyntaxTextArea/
 jars/autocomplete.jar <- AutoComplete/
 
 # From source
-javaVersion(misc/Fiji.jar)=1.3
-misc/Fiji.jar <- src-plugins/fiji/*.java src-plugins/ij/**/*.java
+javaVersion(misc/Fiji.jar)=1.5
+mainClass(misc/Fiji.jar)=fiji.Main
+misc/Fiji.jar <- src-plugins/fiji/*.java icon.png[images/icon.png]
 
 # These classes are common
 CLASSPATH(jars/zs.jar)=jars/Jama-1.0.2.jar
@@ -227,6 +228,9 @@ plugins/*_*.jar <- src-plugins/*_*/**/*.java
 MAINCLASS(jars/javac.jar)=com.sun.tools.javac.Main
 JAVAVERSION(jars/javac.jar)=1.5
 jars/javac.jar <- src-plugins/javac/**/*
+
+MAINCLASS(jars/test-fiji.jar)=fiji.Tests
+jars/test-fiji.jar <- src-plugins/test-fiji/**/*.java
 
 # Third party plugins
 

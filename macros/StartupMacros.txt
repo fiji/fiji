@@ -51,14 +51,7 @@ UseHEFT();
 
 // Generate the Jython menu listing of .py files as plugins
 // and same for JRuby .rb and Cloure .clj
-macro "AutoRun" {
-  run("Refresh Jython Scripts");
-  run("Refresh JRuby Scripts");
-  run("Refresh Clojure Scripts");
-  run("Refresh BSH Scripts");
-  run("Refresh Javascript Scripts");
-  run("Refresh Javas");
-}
+//macro "AutoRun" {}
   
 
   var pmCmds = newMenu("Popup Menu",

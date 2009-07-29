@@ -1,10 +1,12 @@
-package ij.plugin;
+package fiji;
 
 import ij.IJ;
 import ij.Menus;
 import ij.Prefs;
 
 import ij.gui.GenericDialog;
+
+import ij.plugin.PlugIn;
 
 import java.io.File;
 import java.io.FileInputStream;
