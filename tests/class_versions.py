@@ -2,4 +2,11 @@
 
 from fiji import CheckClassVersions
 
-CheckClassVersions().main(['plugins/', 'jars/', 'misc/', 'precompiled/'])
+from java.lang import System
+
+fiji_dir = System.getProperty('fiji.dir') + '/'
+
+dirs = ['plugins/', 'jars/', 'misc/', 'precompiled/']
+dirs = [fiji_dir + dir for dir in dirs]
+
+CheckClassVersions().main(dirs)
