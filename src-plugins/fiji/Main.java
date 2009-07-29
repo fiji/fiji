@@ -16,6 +16,8 @@ import java.awt.image.ImageProducer;
 import java.awt.event.AWTEventListener;
 import java.awt.event.WindowEvent;
 
+import java.lang.reflect.Method;
+
 import java.net.URL;
 
 import java.util.HashMap;
@@ -113,6 +115,17 @@ public class Main implements AWTEventListener {
 		}
 	}
 
+	/* Unfortunately, we have to support Java 1.5 because of MacOSX... */
+	protected static Method setIconImage;
+	static {
+		try {
+			Class window = Class.forName("java.awt.Window");
+			Class image = Class.forName("java.awt.Image");
+			setIconImage = window.getMethod("setIconImage",
+				new Class[] { image });
+		} catch (Exception e) { /* ignore, this is Java < 1.6 */ }
+	}
+
 	public Image setIcon(Window window) {
 		URL url = null;
 		if (icon == null) try {
@@ -124,8 +137,9 @@ public class Main implements AWTEventListener {
 			e.printStackTrace();
 			return null;
 		}
-		if (window != null)
-			window.setIconImage(icon);
+		if (window != null && setIconImage != null) try {
+			setIconImage.invoke(window, icon);
+		} catch (Exception e) { e.printStackTrace(); }
 		return icon;
 	}
 
