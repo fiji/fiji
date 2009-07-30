@@ -30,6 +30,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 
+import fiji.utilities.GenericDialogPlus;
+
 import stitching.CommonFunctions;
 import stitching.GridLayout;
 import stitching.ImageInformation;
@@ -41,6 +43,7 @@ import ij.ImagePlus;
 import ij.plugin.*;
 import ij.gui.*;
 
+
 /**
  * @author Stephan
  *
@@ -48,8 +51,13 @@ import ij.gui.*;
 public class Stitch_Image_Grid implements PlugIn
 {
 	private String myURL = "http://fly.mpi-cbg.de/~preibisch/contact.html";
-	
+	/*public static String[] arrangement = {"First X forward, then Y forward", "First Y forward, then X forward", 
+		                                  "First X backward then Y forward", "First Y forward, then X backward",
+		                                  "First X forward then Y backward", "First Y backward, then X forward",
+		                                  "First X backward then Y backward", "First Y backward, then X backward"}; 
+	*/
 	public static int gridSizeXStatic = 3, gridSizeYStatic = 3;
+	//public static String arrangmentStatic = arrangement[0];
 	public static double overlapStatic = 20;
 	public static String directoryStatic = "";
 	public static String fileNamesStatic = "TiledConfocal_{ii}.lsm";
@@ -66,16 +74,19 @@ public class Stitch_Image_Grid implements PlugIn
 	public static double thresholdDisplacementRelativeStatic = 2.5;
 	public static double thresholdDisplacementAbsoluteStatic = 3.5;
 	public static boolean previewOnlyStatic = false;
+	public static boolean computeOverlapStatic = true;
 	
 	public void run(String arg0)
 	{
-		GenericDialog gd = new GenericDialog("Stitch Image Grid");
+		GenericDialogPlus gd = new GenericDialogPlus("Stitch Image Grid");
 		GridLayout gridLayout = new GridLayout();
 		
 		gd.addNumericField("grid_size_x", gridSizeXStatic, 0);
 		gd.addNumericField("grid_size_y", gridSizeYStatic, 0);
+		//gd.addChoice("order_of_storage", arrangement, arrangmentStatic );
+		
 		gd.addSlider("overlap [%]", 0, 100, overlapStatic);
-		gd.addStringField("directory", directoryStatic, 50);
+		gd.addDirectoryField("directory", directoryStatic, 50);
 		gd.addStringField("file_names", fileNamesStatic, 50);
 		gd.addChoice("rgb_order", rgbTypes, rgbOrderStatic);
 		gd.addStringField("Output_file_name", tileConfStatic, 50);
@@ -90,6 +101,7 @@ public class Stitch_Image_Grid implements PlugIn
 		gd.addNumericField("max/avg_displacement_threshold", thresholdDisplacementRelativeStatic, 2);		
 		gd.addNumericField("absolute_displacement_threshold", thresholdDisplacementAbsoluteStatic, 2);		
 		gd.addCheckbox("create_only_preview", previewOnlyStatic);
+		gd.addCheckbox("compute_overlap (otherwise use the coordinates given in the layout file)", computeOverlapStatic );
 		gd.addMessage("");
 		gd.addMessage("This Plugin is developed by Stephan Preibisch\n" + myURL);
 
@@ -103,9 +115,12 @@ public class Stitch_Image_Grid implements PlugIn
 		gridLayout.sizeY = (int)Math.round(gd.getNextNumber());
 		gridSizeXStatic = gridLayout.sizeX;
 		gridSizeYStatic = gridLayout.sizeY;
+
+		//gridLayout.arrangement = gd.getNextChoice();
+		//arrangmentStatic = gridLayout.arrangement;
 		
 		double overlap = gd.getNextNumber()/100;
-		overlapStatic = overlap;
+		overlapStatic = overlap*100;
 		
 		String directory = gd.getNextString();
 		directoryStatic = directory;
@@ -151,6 +166,9 @@ public class Stitch_Image_Grid implements PlugIn
 		
 		boolean previewOnly = gd.getNextBoolean();
 		previewOnlyStatic = previewOnly;
+		
+		boolean computeOverlap = gd.getNextBoolean();
+		computeOverlapStatic = computeOverlap;
 
 		// find how to parse
 		String replaceX = "{", replaceY = "{", replaceI = "{";
@@ -208,7 +226,8 @@ public class Stitch_Image_Grid implements PlugIn
 		gridLayout.handleRGB = handleRGB;
 		gridLayout.imageInformationList = new ArrayList<ImageInformation>();
 		
-		PrintWriter out = openFileWrite(directory + output);
+		String fileName = directory + output;
+		PrintWriter out = openFileWrite( fileName );
 				
         int imgX = 0, imgY = 0;
         int i = 0;
@@ -290,8 +309,13 @@ public class Stitch_Image_Grid implements PlugIn
             	iI.imp = null;
             	iI.offset[0] = xoffset;
             	iI.offset[1] = yoffset;
+            	iI.position[0] = xoffset;
+            	iI.position[1] = yoffset;
             	if (dim == 3)
+            	{
             		iI.offset[2] = zoffset;
+            		iI.position[2] = zoffset;
+            	}
             	gridLayout.imageInformationList.add(iI);
             	
             	i++;
@@ -304,7 +328,7 @@ public class Stitch_Image_Grid implements PlugIn
     		return;
 
     	Stitch_Image_Collection smc = new Stitch_Image_Collection();
-    	smc.work(gridLayout, previewOnly);
+    	smc.work(gridLayout, previewOnly, computeOverlap, fileName);
 	}
 	
 	private String getLeadingZeros(int zeros, int number)
@@ -317,7 +341,7 @@ public class Stitch_Image_Grid implements PlugIn
 		return output;
 	}
 	
-	private static PrintWriter openFileWrite(String fileName)
+	public static PrintWriter openFileWrite(String fileName)
 	{
 	  PrintWriter outputFile;
 	  try
