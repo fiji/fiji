@@ -31,6 +31,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 
+import fiji.utilities.GenericDialogPlus;
+
 import stitching.CommonFunctions;
 import stitching.GridLayout;
 import stitching.ImageInformation;
@@ -62,10 +64,12 @@ public class Stitch_Image_Directory implements PlugIn
 	
 	public void run(String arg0)
 	{
-		GenericDialog gd = new GenericDialog("Stitch Directory with Images (unknown configuration)");
+		GenericDialogPlus gd = new GenericDialogPlus("Stitch Directory with Images (unknown configuration)");
 		GridLayout gridLayout = new GridLayout();
 		
-		gd.addStringField("image_directory", imageDirectoryStatic, 50);
+		//gd.addStringField("image_directory", imageDirectoryStatic, 50);
+		gd.addDirectoryField("image_directory", imageDirectoryStatic, 50);
+		
 		gd.addStringField("output_file_name", tileConfStatic, 50);		
 		gd.addChoice("rgb_order", rgbTypes, rgbOrderStatic);
 		gd.addChoice("channels_for_registration", colorList, handleRGBStatic);
@@ -147,7 +151,8 @@ public class Stitch_Image_Directory implements PlugIn
 		gridLayout.handleRGB = handleRGB;
 		gridLayout.imageInformationList = new ArrayList<ImageInformation>();
 		
-		PrintWriter out = openFileWrite( (new File(imageDir, output)).getPath() );
+		String fileName = (new File(imageDir, output)).getPath();
+		PrintWriter out = openFileWrite( fileName );
 		
         int i = 0;
     	int dim = 0;
@@ -203,8 +208,13 @@ public class Stitch_Image_Directory implements PlugIn
         	iI.imp = null;
         	iI.offset[0] = 0;
         	iI.offset[1] = 0;
+        	iI.position[0] = 0;
+        	iI.position[1] = 0;
         	if (dim == 3)
+        	{
         		iI.offset[2] = 0;
+        		iI.position[2] = 0;
+        	}
         	gridLayout.imageInformationList.add(iI);
         	
         	i++;
@@ -214,7 +224,7 @@ public class Stitch_Image_Directory implements PlugIn
     		out.close();
     	
     	Stitch_Image_Collection smc = new Stitch_Image_Collection();
-    	smc.work(gridLayout, false);
+    	smc.work(gridLayout, false, true, fileName);
 	}
 	
 	private static PrintWriter openFileWrite(String fileName)

@@ -26,7 +26,7 @@ public class GridLayout
 {
 	public ArrayList<ImageInformation> imageInformationList;
 	public int sizeX, sizeY, dim;
-	public String fusionMethod, handleRGB, rgbOrder;
+	public String fusionMethod, handleRGB, rgbOrder, arrangement;
 	public double alpha = 1.5;
 	public double thresholdR = 0.3;
 	public double thresholdDisplacementRelative = 2.5;

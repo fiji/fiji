@@ -32,6 +32,7 @@ public class ImageInformation extends Tile implements Comparable<ImageInformatio
 		
 		offset = new float[dim];
 		size = new float[dim];
+		position = new float[dim];
 		this.id = id;
 		this.dim = dim;
 	}

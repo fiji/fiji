@@ -31,6 +31,7 @@ import static stitching.CommonFunctions.getPixelMinRGB;
 import java.awt.Rectangle;
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.PrintWriter;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -38,7 +39,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import ij.gui.GenericDialog;
+import fiji.utilities.GenericDialogPlus;
+
 import ij.gui.MultiLineLabel;
 import ij.measure.Calibration;
 import ij.plugin.PlugIn;
@@ -71,6 +73,7 @@ public class Stitch_Image_Collection implements PlugIn
 	public String rgbOrder;
 	
 	public static String fileNameStatic = "TileConfiguration.txt";
+	public static boolean computeOverlapStatic = true;
 	public static String handleRGBStatic = colorList[colorList.length - 1];
 	public static String rgbOrderStatic = rgbTypes[0];	
 	public static String fusionMethodStatic = methodListCollection[LIN_BLEND];
@@ -83,9 +86,11 @@ public class Stitch_Image_Collection implements PlugIn
 	
 	public void run(String arg0)
 	{
-		GenericDialog gd = new GenericDialog("Stitch Image Collection");
+		GenericDialogPlus gd = new GenericDialogPlus("Stitch Image Collection");
 		
-		gd.addStringField("Layout file", fileNameStatic, 50);
+		//gd.addStringField("Layout file", fileNameStatic, 50);
+		gd.addFileField("Layout file", fileNameStatic, 50);		
+		gd.addCheckbox("compute_overlap (otherwise use the coordinates given in the layout file)", computeOverlapStatic );
 		gd.addChoice("Channels_for_Registration", colorList, handleRGBStatic);
 		gd.addChoice("rgb_order", rgbTypes, rgbOrderStatic);
 		gd.addChoice("Fusion_Method", methodListCollection, methodListCollection[LIN_BLEND]);
@@ -105,7 +110,10 @@ public class Stitch_Image_Collection implements PlugIn
 
 		String fileName = gd.getNextString();
 		fileNameStatic = fileName;
-		
+
+		boolean computeOverlap = gd.getNextBoolean();
+		computeOverlapStatic = computeOverlap;
+
 		String handleRGB = gd.getNextChoice();
 		handleRGBStatic = handleRGB;
 		
@@ -130,17 +138,17 @@ public class Stitch_Image_Collection implements PlugIn
 		boolean previewOnly = gd.getNextBoolean();
 		previewOnlyStatic = previewOnly;
 		
-		work(fileName, previewOnly, fusionMethod, handleRGB);		
+		work(fileName, previewOnly, computeOverlap, fusionMethod, handleRGB);		
 	}
 	
-	public void work(String fileName, boolean createPreview, String fusionMethod, String handleRGB)
+	public void work(String fileName, boolean createPreview, boolean computeOverlap, String fusionMethod, String handleRGB)
 	{
 		// read the layout file
 		ArrayList<ImageInformation> imageInformationList = readLayoutFile(fileName);		
-		work(imageInformationList, createPreview, fusionMethod, handleRGB);
+		work(imageInformationList, createPreview, computeOverlap, fusionMethod, handleRGB, fileName);
 	}
 	
-	public void work(GridLayout gridLayout, boolean createPreview)
+	public void work( GridLayout gridLayout, boolean createPreview, boolean computeOverlap, String fileName )
 	{
 		this.alpha = gridLayout.alpha;
 		this.thresholdR = gridLayout.thresholdR;
@@ -149,10 +157,10 @@ public class Stitch_Image_Collection implements PlugIn
 		this.dim = gridLayout.dim;
 		this.rgbOrder = gridLayout.rgbOrder;
 		
-		work(gridLayout.imageInformationList, createPreview, gridLayout.fusionMethod, gridLayout.handleRGB);
+		work(gridLayout.imageInformationList, createPreview, computeOverlap, gridLayout.fusionMethod, gridLayout.handleRGB, fileName);
 	}
 	
-	public void work(ArrayList<ImageInformation> imageInformationList, boolean createPreview, String fusionMethod, String handleRGB)
+	public void work(ArrayList<ImageInformation> imageInformationList, boolean createPreview, boolean computeOverlap, String fusionMethod, String handleRGB, String fileName)
 	{		
 		IJ.log("(" + new Date(System.currentTimeMillis()) + "): Stitching the following files:");
 		for (ImageInformation iI : imageInformationList)
@@ -164,20 +172,35 @@ public class Stitch_Image_Collection implements PlugIn
 		// ask if we should start like this
 		if (createPreview)
 			return;
+				
+		// this will store the final output configuration
+		ArrayList<ImageInformation> newImageInformationList;
 		
-		// compute all phase correlations
-		computePhaseCorrelations(overlappingTiles, handleRGB);
-		
-		// compute the model
-		ArrayList<ImageInformation> newImageInformationList = optimize(overlappingTiles);
+		if ( computeOverlap )
+		{
+			// compute all phase correlations
+			computePhaseCorrelations(overlappingTiles, handleRGB);
+			
+			// compute the model
+			newImageInformationList = optimize(overlappingTiles);
+		}
+		else
+		{
+			newImageInformationList = imageInformationList;
+		}
 		
 		// output the final positions
 		IJ.log("(" + new Date(System.currentTimeMillis()) + "): Final image positions in the fused image:");
 		for (ImageInformation i: newImageInformationList)
+		{
 			if (dim == 3)
-				IJ.log("Tile " + i.id + " (" + i.imageName + "): " + i.position[0] + " " + i.position[1] + " " + i.position[2]);
+				IJ.log("Tile " + i.id + " (" + i.imageName + "): " + i.position[0] + ", " + i.position[1] + ", " + i.position[2]);
 			else
-				IJ.log("Tile " + i.id + " (" + i.imageName + "): " + i.position[0] + " " + i.position[1]);
+				IJ.log("Tile " + i.id + " (" + i.imageName + "): " + i.position[0] + ", " + i.position[1]);
+		}
+		
+		// write the new tile configuration
+		writeOutputConfiguration( fileName, newImageInformationList );
 		
 		// getMax and set minimum coordinates to 0,0,0
 		float[] max = getAndApplyMinMax(newImageInformationList, dim);		
@@ -190,6 +213,40 @@ public class Stitch_Image_Collection implements PlugIn
 		ImagePlus fused = fuseImages(newImageInformationList, max, "Stitched Image", fusionMethod, rgbOrder, dim, alpha);
 		fused.show();
 		IJ.log("(" + new Date(System.currentTimeMillis()) + "): Finished Stitching.");
+	}
+	
+	protected void writeOutputConfiguration( String fileName, ArrayList<ImageInformation> imageInformationList )
+	{
+		try
+		{
+			String outputfileName;
+			
+			if ( fileName.endsWith( ".registered"))
+				outputfileName = fileName;
+			else
+				outputfileName = fileName + ".registered";
+			
+			PrintWriter out = Stitch_Image_Grid.openFileWrite( outputfileName );
+
+			out.println("# Define the number of dimensions we are working on");
+	        out.println("dim = " + dim);
+	        out.println("");
+	        out.println("# Define the image coordinates");
+
+	        for ( ImageInformation iI : imageInformationList )
+	        {	        		        	
+		        if (dim == 3)
+	    			out.println(iI.imageName + "; ; (" + iI.position[0] + ", " + iI.position[1] + ", " + iI.position[2] + ")");
+	    		else
+	    			out.println(iI.imageName + "; ; (" + iI.position[0] + ", " + iI.position[1] + ")");
+	        }
+
+			out.close();
+		}
+		catch (Exception e)
+		{
+			IJ.log("Cannot write registered configuration file: " + e );
+		}
 	}
 	
 	public static ImagePlus fuseImages(final ArrayList<ImageInformation> imageInformationList, final float[] max, final String name, final String fusionMethod, 
@@ -950,7 +1007,7 @@ public class Stitch_Image_Collection implements PlugIn
 				double avgError = tc.getAvgError();
 				double maxError = tc.getMaxError();				
 				
-				if (avgError*thresholdDisplacementRelative < maxError || avgError > thresholdDisplacementAbsolute)
+				if ( (avgError*thresholdDisplacementRelative < maxError && maxError > 0.75) || avgError > thresholdDisplacementAbsolute)
 				{
 					IJ.log("maxError more than " + thresholdDisplacementRelative + " times bigger than avgerror.");
 					Tile worstTile = tc.getWorstError();
@@ -1398,6 +1455,7 @@ public class Stitch_Image_Collection implements PlugIn
 							try
 							{
 								imageInformation.offset[i] = Float.parseFloat(points[i].trim()); 
+								imageInformation.position[i] = imageInformation.offset[i]; 
 							}
 							catch (NumberFormatException e)
 							{

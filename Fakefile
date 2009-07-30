@@ -181,8 +181,9 @@ jars/rsyntaxtextarea.jar <- RSyntaxTextArea/
 jars/autocomplete.jar <- AutoComplete/
 
 # From source
-javaVersion(misc/Fiji.jar)=1.3
-misc/Fiji.jar <- src-plugins/fiji/*.java src-plugins/ij/**/*.java
+javaVersion(misc/Fiji.jar)=1.5
+mainClass(misc/Fiji.jar)=fiji.Main
+misc/Fiji.jar <- src-plugins/fiji/*.java icon.png[images/icon.png]
 
 # These classes are common
 CLASSPATH(jars/zs.jar)=jars/Jama-1.0.2.jar
@@ -213,7 +214,7 @@ plugins/LSM_Toolbox.jar <- plugins/LSM_Reader.jar/ \
 	src-plugins/LSM_Toolbox/**/*.htm \
 	src-plugins/LSM_Toolbox/**/*.txt
 MAINCLASS(plugins/Interactive_3D_Surface_Plot.jar)=Interactive_3D_Surface_Plot
-CLASSPATH(plugins/Stitching_.jar)=plugins/loci_tools.jar
+CLASSPATH(plugins/Stitching_.jar)=plugins/loci_tools.jar:plugins/Fiji_Plugins.jar
 CLASSPATH(plugins/Fiji_Plugins.jar)=jars/jsch-0.1.37.jar
 
 plugins/Record_Screen.jar <- src-plugins/Record_Screen/ src-plugins/Record_Screen/**/*
@@ -228,6 +229,9 @@ plugins/*_*.jar <- src-plugins/*_*/**/*.java
 MAINCLASS(jars/javac.jar)=com.sun.tools.javac.Main
 JAVAVERSION(jars/javac.jar)=1.5
 jars/javac.jar <- src-plugins/javac/**/*
+
+MAINCLASS(jars/test-fiji.jar)=fiji.Tests
+jars/test-fiji.jar <- src-plugins/test-fiji/**/*.java
 
 # Third party plugins
 
