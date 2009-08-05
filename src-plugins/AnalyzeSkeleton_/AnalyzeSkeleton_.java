@@ -878,91 +878,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 				if(! isVisited(pi))
 					fusionNeighborJunction(pi, this.listOfSingleJunctions[iTree]);
 			}
-		}
-		
-		/*
-		for (int iTree = 0; iTree < this.numOfTrees; iTree++)
-		{
-			// Visit list of junction voxels
-			for(int i = 0; i < this.numberOfJunctionVoxels[iTree]; i ++)
-			{
-				int[] pi = this.junctionVoxelTree[iTree].get(i);
-				//IJ.log("pi = (" + pi[0] + ", " + pi[1] + ", " + pi[2] + ")");
-				boolean grouped = false;
-
-				for(int j = 0; j < this.listOfSingleJunctions[iTree].size(); j++)
-				{
-					ArrayList <int[]> groupOfJunctions = this.listOfSingleJunctions[iTree].get(j);
-					for(int k = 0; k < groupOfJunctions.size(); k++)
-					{
-						int[] pk = groupOfJunctions.get(k);				
-
-						// If two junction voxels are neighbors, we group them
-						// in the same list
-						if(isNeighbor(pi, pk))
-						{
-							//IJ.log("pi neighbor of pi = (" + pk[0] + ", " + pk[1] + ", " + pk[2] + ")");
-							groupOfJunctions.add(pi);
-							grouped = true;
-							break;
-						}
-
-					}
-
-					if(grouped)
-						break;					
-				}
-
-				if(!grouped)
-				{
-					ArrayList <int[]> newGroup = new ArrayList<int[]>();
-					newGroup.add(pi);
-					this.listOfSingleJunctions[iTree].add(newGroup);
-				}
-				
-			}// end for every junction voxel in the tree
-			
-			
-			// Fusion groups with neighbor voxels
-			boolean fusioned = false;
-			
-			do
-			{
-				fusioned = false;
-				//IJ.log(" this.listOfSingleJunctions[iTree].size() = " + this.listOfSingleJunctions[iTree].size());
-				
-				for(int i =0 ; i < this.listOfSingleJunctions[iTree].size()-1; i++)
-				{
-					ArrayList <int[]> g1 = this.listOfSingleJunctions[iTree].get(i);
-					for(int j = i+1; j < this.listOfSingleJunctions[iTree].size(); j++)
-					{
-						ArrayList <int[]> g2 = this.listOfSingleJunctions[iTree].get(j);
-						if(checkNeighborGroups(g1, g2))
-						{
-							fusioned = true;
-							ArrayList<int[]> newGroup = new ArrayList<int[]>();
-							for(int k = 0; k < g1.size(); k ++)
-								newGroup.add(g1.get(k));
-							for(int k = 0; k < g2.size(); k ++)
-								newGroup.add(g2.get(k));
-							//IJ.log("remove i = " + i);
-							this.listOfSingleJunctions[iTree].remove(i);
-							//IJ.log("remove j = " + j);
-							this.listOfSingleJunctions[iTree].remove(j-1);
-							
-							this.listOfSingleJunctions[iTree].add(newGroup);
-							break;
-						}
-					}
-					if(fusioned)
-						break;
-				}
-				
-			}while(fusioned);
-			
-		}// end for every tree
-		
-		*/
+		}		
 				
 		// Count number of single junctions for every tree in the image
 		for (int iTree = 0; iTree < this.numOfTrees; iTree++)
@@ -1205,7 +1121,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 				}
 		
 		return unvisitedNeighbor;
-	}/* end getNextUnvisitedVoxel */
+	}// end getNextUnvisitedJunctionVoxel 
 
 	/* -----------------------------------------------------------------------*/
 	/**
