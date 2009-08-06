@@ -37,7 +37,7 @@ import ij.process.ShortProcessor;
  * http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:analyzeskeleton:start
  *
  *
- * @version 1.0 08/05/2009
+ * @version 1.0 08/06/2009
  * @author Ignacio Arganda-Carreras <ignacio.arganda@gmail.com>
  *
  */
@@ -421,6 +421,8 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		// Visit branches starting at end points
 		for(int i = 0; i < this.numberOfEndPoints[iTree]; i++)
 		{			
+			//IJ.log("visit from end points");
+			
 			final int[] endPointCoord = this.endPointsTree[iTree].get(i);
 			
 			// Skip when visited
@@ -445,6 +447,9 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 			
 			// increase number of branches
 			this.numberOfBranches[iTree]++;
+			
+			//IJ.log("increased number of branches, length = " + length);
+			
 			branchLength += length;				
 			
 			// update maximum branch length
@@ -459,8 +464,11 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	
 		// Now visit branches starting at junctions
 		for(int i = 0; i < this.numberOfJunctionVoxels[iTree]; i++)
-		{
-			final int[] junctionCoord = this.junctionVoxelTree[iTree].get(i);					
+		{			
+		
+			final int[] junctionCoord = this.junctionVoxelTree[iTree].get(i);
+			
+			//IJ.log("visit from junction " + junctionCoord[0] + ", " + junctionCoord[1] + ", " + junctionCoord[2]);
 			
 			// Mark junction as visited
 			setVisited(junctionCoord, true);
@@ -469,24 +477,33 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 			
 			while(nextPoint != null)
 			{
-				branchLength += calculateDistance(junctionCoord, nextPoint);								
-								
-				double length = visitBranch(nextPoint, iTree);
-				
-				branchLength += length;
-				
-				// Increase number of branches
-				if(length != 0)
+				// Do not count adjacent junctions
+				if( !isJunction(nextPoint))
 				{
-					this.numberOfBranches[iTree]++;
-					// update maximum branch length
-					if(length > this.maximumBranchLength[iTree])
+					// Calculate distance from junction to that point
+					double length = calculateDistance(junctionCoord, nextPoint);								
+					// Visit branch
+					length += visitBranch(nextPoint, iTree);
+
+					// Increase total length of branches
+					branchLength += length;
+
+					// Increase number of branches
+					if(length != 0)
 					{
-						this.maximumBranchLength[iTree] = length;
-						this.initialPoint[iTree] = junctionCoord;
-						this.finalPoint[iTree] = this.auxPoint;
+						this.numberOfBranches[iTree]++;
+						//IJ.log("increased number of branches, length = " + length);
+						// update maximum branch length
+						if(length > this.maximumBranchLength[iTree])
+						{
+							this.maximumBranchLength[iTree] = length;
+							this.initialPoint[iTree] = junctionCoord;
+							this.finalPoint[iTree] = this.auxPoint;
+						}
 					}
 				}
+				else
+					setVisited(nextPoint, true);
 				
 				nextPoint = getNextUnvisitedVoxel(junctionCoord);
 			}					
@@ -495,7 +512,11 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		// Finally visit branches starting at slabs (special case for circular trees)
 		if(this.startingSlabTree[iTree].size() == 1)
 		{
+			//IJ.log("visit from slabs");
+			
 			final int[] startCoord = this.startingSlabTree[iTree].get(0);					
+			
+			this.numberOfSlabs[iTree]++;
 			
 			// visit branch until finding visited voxel.
 			final double length = visitBranch(startCoord, iTree);
