@@ -97,7 +97,6 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/BeanShell_Interpreter.jar \
 	plugins/bUnwarpJ_.jar \
 	plugins/register_virtual_stack_slices.jar \
-	plugins/Machine_learning.jar \
 	plugins/registration_3d.jar \
 	plugins/IO_.jar \
 	plugins/CLI_.jar \
