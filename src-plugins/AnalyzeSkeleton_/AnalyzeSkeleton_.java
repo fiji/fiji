@@ -37,7 +37,7 @@ import ij.process.ShortProcessor;
  * http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:analyzeskeleton:start
  *
  *
- * @version 1.0 08/06/2009
+ * @version 1.0 08/10/2009
  * @author Ignacio Arganda-Carreras <ignacio.arganda@gmail.com>
  *
  */
@@ -214,6 +214,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		{
 			this.endPointsTree[0] = this.listOfEndPoints;
 			this.junctionVoxelTree[0] = this.listOfJunctionVoxels;
+			this.startingSlabTree[0] = this.listOfStartingSlabVoxels;
 		}
 		
 		// Visit skeleton and measure distances.
