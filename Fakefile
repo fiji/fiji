@@ -222,6 +222,9 @@ CLASSPATH(plugins/CLI_.jar)=jars/fiji-scripting.jar
 plugins/CLI_.jar <- src-plugins/CLI_/CLI/*.java
 
 CLASSPATH(plugins/IO_.jar)=jars/batik.jar
+plugins/IO_.jar <- src-plugins/IO_/**/*.java \
+	io/df3_scene.pov[src-plugins/IO_/io/df3/df3_scene.pov]
+
 CLASSPATH(plugins/Sync_Win.jar)=plugins/Image_5D.jar
 plugins/*_*.jar <- src-plugins/*_*/**/*.java
 
