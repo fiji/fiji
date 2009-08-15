@@ -1,3 +1,5 @@
+package fiji.scripting.java;
+
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;

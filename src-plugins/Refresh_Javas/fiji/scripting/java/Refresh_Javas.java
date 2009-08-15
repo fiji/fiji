@@ -1,3 +1,5 @@
+package fiji.scripting.java;
+
 import common.RefreshScripts;
 
 import ij.IJ;
