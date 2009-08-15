@@ -1,3 +1,4 @@
+package fiji.pluginManager.logic;
 import ij.IJ;
 import ij.Menus;
 
@@ -46,12 +47,13 @@ import java.util.TreeMap;
 
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import fiji.pluginManager.utilities.PluginData;
 
-public class UpdateFiji implements PlugIn {
+public class UpdateFiji implements PlugIn { //legacy code & utility class?
 	Map dates, digests;
 	String fijiPath;
 	String currentDate;
-	boolean hasGUI = false;
+	public boolean hasGUI = false;
 	boolean forServer = false;
 
 	public static final String defaultURL =
@@ -66,7 +68,7 @@ public class UpdateFiji implements PlugIn {
 	public UpdateFiji() {
 		dates = new TreeMap();
 		digests = new TreeMap();
-		currentDate = timestamp(Calendar.getInstance());
+		currentDate = PluginData.timestamp(Calendar.getInstance());
 	}
 
 	public void run(String arg) {
@@ -80,16 +82,18 @@ public class UpdateFiji implements PlugIn {
 				return;
 			url = gd.getNextString();
 		}
+		exec(url);
+	}
 
-		String path = stripSuffix(stripSuffix(Menus.getPlugInsPath(),
-					File.separator), "plugins");
+	public void exec(String url) {
+		String path = PluginData.getFijiRootPath();
 		File ij_jar = new File(path, "ij.jar");
 		if (ij_jar.exists() && !ij_jar.canWrite() &&
 				!IJ.showMessageWithCancel("Fiji Updater",
-					"Your ij.jar seems to be unwritable.\n"
-					+ "Probably you need to run Fiji Update"
-					+ " as administrator.\n"
-					+ "Do you still want to continue?"))
+						"Your ij.jar seems to be unwritable.\n"
+						+ "Probably you need to run Fiji Update"
+						+ " as administrator.\n"
+						+ "Do you still want to continue?"))
 			return;
 
 		initialize(path);
@@ -121,113 +125,6 @@ public class UpdateFiji implements PlugIn {
 		return path;
 	}
 
-	public static String timestamp(Calendar date) {
-		DecimalFormat format = new DecimalFormat("00");
-		int month = date.get(Calendar.MONTH) + 1;
-		int day = date.get(Calendar.DAY_OF_MONTH);
-		int hour = date.get(Calendar.HOUR_OF_DAY);
-		int minute = date.get(Calendar.MINUTE);
-		int second = date.get(Calendar.SECOND);
-		return "" + date.get(Calendar.YEAR) +
-			format.format(month) + format.format(day) +
-			format.format(hour) + format.format(minute) +
-			format.format(second);
-	}
-
-	public static String timestamp(long millis) {
-		Calendar date = Calendar.getInstance();
-		date.setTimeInMillis(millis);
-		return timestamp(date);
-	}
-
-	public static String stripSuffix(String string, String suffix) {
-		if (!string.endsWith(suffix))
-			return string;
-		return string.substring(0, string.length() - suffix.length());
-	}
-
-	public static String getPlatform() {
-		boolean is64bit =
-			System.getProperty("os.arch", "").indexOf("64") >= 0;
-		String osName = System.getProperty("os.name", "<unknown>");
-		if (osName.equals("Linux"))
-			return "linux" + (is64bit ? "64" : "");
-		if (osName.equals("Mac OS X"))
-			return "macosx";
-		if (osName.startsWith("Windows"))
-			return "win" + (is64bit ? "64" : "32") + ".exe";
-		System.err.println("Unknown platform: " + osName);
-		return osName;
-	}
-
-	private class JarEntryComparator implements Comparator {
-		public int compare(Object o1, Object o2) {
-			String name1 = ((JarEntry)o1).getName();
-			String name2 = ((JarEntry)o2).getName();
-			return name1.compareTo(name2);
-		}
-
-		public boolean equals(Object o1, Object o2) {
-			String name1 = ((JarEntry)o1).getName();
-			String name2 = ((JarEntry)o2).getName();
-			return name1.equals(name2);
-		}
-	}
-
-	public static MessageDigest getDigest()
-			throws NoSuchAlgorithmException {
-		return MessageDigest.getInstance("SHA-1");
-	}
-
-	public void updateDigest(InputStream input, MessageDigest digest)
-			throws IOException {
-		byte[] buffer = new byte[65536];
-		DigestInputStream digestStream =
-			new DigestInputStream(input, digest);
-		while (digestStream.read(buffer) >= 0)
-			; /* do nothing */
-		digestStream.close();
-	}
-
-	public final static char[] hex = {
-		'0', '1', '2', '3', '4', '5', '6', '7',
-		'8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
-	};
-
-	public static String toHex(byte[] bytes) {
-		char[] buffer = new char[bytes.length * 2];
-		for (int i = 0; i < bytes.length; i++) {
-			buffer[i * 2] = hex[(bytes[i] & 0xf0) >> 4];
-			buffer[i * 2 + 1] = hex[bytes[i] & 0xf];
-		}
-		return new String(buffer);
-	}
-
-	public String getJarDigest(String path)
-			throws FileNotFoundException, IOException {
-		MessageDigest digest = null;
-		try {
-			digest = getDigest();
-		} catch (NoSuchAlgorithmException e) {
-			throw new RuntimeException(e);
-		}
-
-		JarFile jar = new JarFile(path);
-		List list = new ArrayList();
-		Enumeration entries = jar.entries();
-		while (entries.hasMoreElements())
-			list.add(entries.nextElement());
-		Collections.sort(list, new JarEntryComparator());
-
-		Iterator iter = list.iterator();
-		while (iter.hasNext()) {
-			JarEntry entry = (JarEntry)iter.next();
-			digest.update(entry.getName().getBytes("ASCII"));
-			updateDigest(jar.getInputStream(entry), digest);
-		}
-		return toHex(digest.digest());
-	}
-
 	public String prefix(String path) {
 		return fijiPath + File.separator
 			+ (forServer && path.startsWith("fiji-") ?
@@ -235,27 +132,16 @@ public class UpdateFiji implements PlugIn {
 			+ path;
 	}
 
-	public String getDigest(String path, String fullPath)
-			throws NoSuchAlgorithmException, FileNotFoundException,
-				IOException, UnsupportedEncodingException {
-		if (path.endsWith(".jar"))
-			return getJarDigest(fullPath);
-		MessageDigest digest = getDigest();
-		digest.update(path.getBytes("ASCII"));
-		updateDigest(new FileInputStream(fullPath), digest);
-		return toHex(digest.digest());
-	}
-
 	public void initializeFile(String path) {
 		try {
 			String fullPath = prefix(path);
-			String digest = getDigest(path, fullPath);
+			String digest = PluginData.getDigest(path, fullPath);
 			long modified = new File(fullPath).lastModified();
 			if (useMacPrefix && path.startsWith(macPrefix))
 				path = path.substring(macPrefix.length());
 			if (File.separator.equals("\\"))
 				path = path.replace("\\", "/");
-			dates.put(path, timestamp(modified));
+			dates.put(path, PluginData.timestamp(modified));
 			digests.put(path, digest);
 		} catch (Exception e) {
 			if (e instanceof FileNotFoundException &&
@@ -293,7 +179,7 @@ public class UpdateFiji implements PlugIn {
 		List queue = new ArrayList();
 
 		if (only == null || only.length == 0) {
-			String platform = getPlatform();
+			String platform = PluginData.getPlatform();
 			if (platform.equals("macosx")) {
 				String macLauncher = macPrefix + "fiji-macosx";
 				if (new File(prefix(macLauncher)).exists())
@@ -380,7 +266,7 @@ public class UpdateFiji implements PlugIn {
 
 			/* launcher is platform-specific */
 			if (name.startsWith("fiji-")) {
-				String platform = getPlatform();
+				String platform = PluginData.getPlatform();
 				if (!name.equals("fiji-" + platform) &&
 						(!platform.equals("macosx") ||
 						!name.startsWith("fiji-tiger")))
@@ -450,11 +336,11 @@ public class UpdateFiji implements PlugIn {
 					"-" + remote.dates.get(name), fullPath);
 				String digest =
 					(String)remote.digests.get(name);
-				String realDigest = getDigest(name, fullPath);
+				String realDigest = PluginData.getDigest(name, fullPath);
 				if (!realDigest.equals(digest))
 					throw new Exception("wrong checksum: "
 						+ digest + " != " + realDigest);
-				if (name.startsWith("fiji-") && !getPlatform()
+				if (name.startsWith("fiji-") && !PluginData.getPlatform()
 						.startsWith("win"))
 					Runtime.getRuntime().exec(new String[] {
 						"chmod", "0755", fullPath});
