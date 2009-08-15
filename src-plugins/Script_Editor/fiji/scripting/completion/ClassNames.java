@@ -25,6 +25,7 @@ import java.util.zip.ZipFile;
 import org.fife.ui.autocomplete.CompletionProvider;
 import org.fife.ui.autocomplete.BasicCompletion;
 import org.fife.ui.autocomplete.FunctionCompletion;
+import org.fife.ui.rsyntaxtextarea.RSyntaxDocument;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 
 /****This class generates and prints the
@@ -124,8 +125,8 @@ public class ClassNames {
 			return false;
 	}
 
-	private ArrayList<String> getPackageNamesImported(RSyntaxTextArea textArea, String language) {
-		importStatementsParser.objCompletionPackages((RSyntaxDocument)textArea.getDocument(), language);
+	private ArrayList<String> getPackageNamesImported(RSyntaxDocument document, String language) {
+		importStatementsParser.objCompletionPackages(document, language);
 		return(importStatementsParser.getPackageNames());
 	}
 
@@ -142,7 +143,7 @@ public class ClassNames {
 	public void setClassCompletions(Package root, RSyntaxTextArea textArea, String language) {
 		String text = defaultProvider.getEnteredText(textArea);
 		if (!(text == "" || text == null)) {
-			packageNames = getPackageNamesImported(textArea, language);
+			packageNames = getPackageNamesImported((RSyntaxDocument)textArea.getDocument(), language);
 			if (!(isDotInEnteredText(text))) {
 				Package completionSet = findPrefixedSet(root, text);
 				completionSet.addAll(getImportedClassCompletions(root, text));
