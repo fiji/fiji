@@ -1,6 +1,7 @@
 .DS_Store
 .project
 .metadata
+/make-targets
 /fiji.o
 /fiji
 /fiji.exe
