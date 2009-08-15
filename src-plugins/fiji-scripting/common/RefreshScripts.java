@@ -364,7 +364,7 @@ abstract public class RefreshScripts implements PlugIn {
 	}
 
 	/** Run the script in a new thread. */
-	abstract protected void runScript(String filename);
+	abstract public void runScript(String filename);
 
 	static public void printError(Throwable t) {
 		final StringWriter w = new StringWriter();
