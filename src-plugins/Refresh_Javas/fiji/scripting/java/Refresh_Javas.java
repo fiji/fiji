@@ -77,7 +77,7 @@ public class Refresh_Javas extends RefreshScripts {
 		String classPath = getPluginsClasspath();
 		if (!classPath.equals(""))
 			arguments = new String[] {
-				"-classpath", classPath, path
+				"-g", "-classpath", classPath, path
 			};
 		if (javac == null) {
 			String className = "com.sun.tools.javac.Main";
