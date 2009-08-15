@@ -140,6 +140,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/LocalThickness_.jar \
 	plugins/Object_Counter3D.jar \
 	plugins/Tutorial_Maker.jar \
+	plugins/Script_Editor.jar \
 	\
 	misc/Fiji.jar
 
@@ -226,6 +227,13 @@ plugins/IO_.jar <- src-plugins/IO_/**/*.java \
 	io/df3_scene.pov[src-plugins/IO_/io/df3/df3_scene.pov]
 
 CLASSPATH(plugins/Sync_Win.jar)=plugins/Image_5D.jar
+MAINCLASS(plugins/Script_Editor.jar)=fiji.scripting.Script_Editor
+CLASSPATH(plugins/Script_Editor.jar)=jars/rsyntaxtextarea.jar:jars/autocomplete.jar:plugins/Clojure_Interpreter.jar:plugins/JRuby_Interpreter.jar:plugins/Javascript_.jar:plugins/Jython_Interpreter.jar:plugins/Refresh_Javas.jar:plugins/BeanShell_Interpreter.jar:jars/fiji-scripting.jar:$JAVA_HOME/../lib/tools.jar
+plugins/Script_Editor.jar <- src-plugins/Script_Editor/**/*.java  \
+							icon.png[images/icon.png] \
+							var.png[images/var.png]    \
+							funtion.png[images/function.png]
+
 plugins/*_*.jar <- src-plugins/*_*/**/*.java
 
 MAINCLASS(jars/javac.jar)=com.sun.tools.javac.Main
@@ -391,3 +399,9 @@ check-*[./scripts/up-to-date-check.py * precompiled/*_.jar] <-
 MAINCLASS(fake.jar)=Fake
 JAVAVERSION(fake.jar)=1.3
 fake.jar <- fake/Fake.java
+
+# Script_Editor_Stub.jar (to include MainClassForDebugging in the classpath)
+
+MAINCLASS(jars/Script_Editor_Stub.jar)=stub.MainClassForDebugging
+CLASSPATH(jars/Script_Editor_Stub.jar)=ij.jar
+jars/Script_Editor_Stub.jar <- stub/MainClassForDebugging.java
