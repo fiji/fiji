@@ -143,6 +143,7 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 		src.getPlugin().fail();
 		System.out.println("Could not update " + src.getPlugin().getFilename() +
 				": " + e.getLocalizedMessage());
+		currentlyDownloading = null;
 	}
 
 	public boolean successfulChangesMade() {
