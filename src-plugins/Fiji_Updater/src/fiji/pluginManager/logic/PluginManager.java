@@ -62,7 +62,7 @@ public class PluginManager extends PluginData implements PlugIn, Observer {
 
 		} catch (Error e) {
 			//Interface side: This should handle presentation side of exceptions
-			IJ.showMessage("Error", "Failed to load Plugin Manager:\n" + e.getLocalizedMessage());
+			IJ.showMessage("Error", "Failed to load Plugin Manager:\n" + e.getMessage());
 		} catch (IOException e) {
 			try {
 				new File(PluginData.getFijiRootPath() + PluginManager.XML_COMPRESSED).deleteOnExit();

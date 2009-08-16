@@ -19,7 +19,8 @@ public class XMLFileErrorHandler implements ErrorHandler {
 
 	private void throwError(SAXParseException e) {
 		throw new Error(e.getLocalizedMessage() +
-				"\n\nPublic ID: " + e.getPublicId() + ", System ID: " + e.getSystemId() +
+				"\n\nPublic ID: " + (e.getPublicId() == null ? "None" : e.getPublicId()) +
+				", System ID: " + (e.getPublicId() == null ? "None" : e.getPublicId()) +
 				",\nLine number: " + e.getLineNumber() + ", Column number: " + e.getColumnNumber());
 	}
 }
