@@ -556,13 +556,18 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 	// TODO: do not require saving
 	public void runSavedScript() {
 		String ext = getExtension(file.getName());
-		RefreshScripts interpreter =
+		final RefreshScripts interpreter =
 		        Languages.getInstance().get(ext).interpreter;
 		if (interpreter == null)
 			IJ.error("There is no interpreter for " + ext
 			         + " files!");
-		else
-			interpreter.runScript(file.getPath());
+		else {
+			new Thread() {
+				public void run() {
+					interpreter.runScript(file.getPath());
+				}
+			}.start();
+		}
 	}
 
 	// TODO: saveChangeDialog() should check fileChanged itself
