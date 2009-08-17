@@ -105,7 +105,7 @@ public class UpdateFiji implements PlugIn { //legacy code & utility class?
 	}
 
 	public String getDefaultFijiPath() {
-		String name = "/UpdateFiji.class";
+		String name = "/fiji/pluginManager/logic/UpdateFiji.class";
 		URL url = getClass().getResource(name);
 		String path = URLDecoder.decode(url.toString());
 		path = path.substring(0, path.length() - name.length());
