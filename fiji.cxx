@@ -401,9 +401,9 @@ static size_t mystrlcpy(char *dest, const char *src, size_t size)
 
 char *last_slash(const char *path)
 {
-	char *slash = strrchr(path, '/');
+	char *slash = (char *)strrchr(path, '/');
 #ifdef WIN32
-	char *backslash = strrchr(path, '\\');
+	char *backslash = (char *)strrchr(path, '\\');
 
 	if (backslash && slash < backslash)
 		slash = backslash;
