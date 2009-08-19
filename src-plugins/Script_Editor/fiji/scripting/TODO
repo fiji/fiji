@@ -1,0 +1,49 @@
+- If I save a file with Ctrl-S (maybe the issue is not really the
+  Ctrl-S), the '*' indicating that the file is unsaved does not go away.
+
+- When I save the file to plugins/ and want to run the file, the
+  _complete_ absolute path is converted to a class name, in this case it
+  looks like this (which is wrong):
+
+        .home.schindel.fiji.plugins.New_Plugin
+
+  Of course, it should be
+
+        New_Plugin
+
+- There has to be a way to run the scripts without saving them (for
+  Java, this probably means to save to a temporary directory, compile,
+  and using the FijiClassLoader to load and execute the class, so that
+  the current PluginClassLoader is unaffected.
+
+- Debugging really must be grayed out if the language does not support
+  it (or if tools.jar was not found, see my recent commit to that
+  extent).
+
+- if there are images on which the plugin wants to work, they have to be
+  transported to the other virtual machine.  Mark them with the "(Debugging)"
+  suffix, like the main window.
+
+- Enable to set breakpoints via the Breakpoints menu and F9 (IIRC).
+
+- when debugging finished, give the user a chance to save resulting images
+  or some such before closing the debuggee.
+
+- when called with
+
+	fiji -eval 'run("Script Editor", "open=<relative path>");'
+
+  it does not work; further, it opens _two_ editor windows.
+
+- make Ctrl-R another shortcut for running, because people might be used to that
+  by ImageJ's macro editor (and likewise F5 for the Visual Studio fans).
+
+- finally(!) check the source rather than the menu label when determining which
+  action to take.
+
+- make the whole new document/switch documents/save document stuff sane, i.e.
+  refactor it into functions (so that the '*' simply _cannot_ be forgotten).
+
+- saveChangeDialog() is kinda pointless.  It's not enough to just ask.
+
+- remove all those System.stderr/stdout messages.
