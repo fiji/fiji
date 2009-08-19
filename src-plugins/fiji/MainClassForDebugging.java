@@ -5,53 +5,47 @@ import ij.ImageJ;
 import ij.Menus;
 
 import java.io.File;
+import java.io.IOException;
 
 public class MainClassForDebugging {
 	static int foo;
 	static String className;
 
 	public static void main(String args[]) {
+		ImageJ ij = null;
 		if (IJ.getInstance() == null) {
-			ImageJ ij = new ImageJ();
+			ij = new ImageJ();
 			ij.setTitle("Fiji (Debugging)");
 		}
-		String path = "";
-		int i;
-		for (i = 0; i < args.length - 1; i++)
-			path += args[i] + " ";
-		path += args[i];
-		className = findClassName(path);
 		try {
+			className = findClassName(join(args));
 			IJ.runPlugIn(className, "");
 		} catch(Exception e) { e.printStackTrace(); }
-		IJ.getInstance().dispose();
+		if (ij != null)
+			ij.dispose();
 
 	}
 
-	public static String findClassName(String path) {
-		String c1 = path;
+	public static String join(String[] args) {
+		if (args.length == 0)
+			return "";
+		String result = args[0];
+		for (int i = 1; i < args.length; i++)
+			result += " " + args[i];
+		return result;
+	}
+
+	public static String findClassName(String path) throws IOException {
 		if (path.endsWith(".java"))
 			path = path.substring(0, path.length() - 5);
-		String pluginsPath = Menus.getPlugInsPath();
-		File f1 = new File(pluginsPath);
-		if (!pluginsPath.endsWith(File.separator))
-			pluginsPath += File.separator;
-		boolean check = false;
-		for (;;) {
-			int lastSlash = c1.lastIndexOf(File.separator);
-			if (lastSlash < 0)
-				break;
-			if (new File(c1).equals(f1)) {
-				check = true;
-				break;
-			}
-			c1 = c1.substring(0, lastSlash);
-		}
-		if (check) {
-			path = path.substring(c1.length());
-			while (path.startsWith(File.separator))
-				path = path.substring(1);
-		}
-		return path.replace('/', '.') ;
+		File pluginsPath =
+			new File(Menus.getPlugInsPath()).getCanonicalFile();
+		File file = new File(path).getCanonicalFile();
+		path = file.getName();
+		while ((file = file.getParentFile()) != null &&
+				file.compareTo(pluginsPath) != 0)
+{
+			path = file.getName() + "." + path;
+		return path;
 	}
 }
