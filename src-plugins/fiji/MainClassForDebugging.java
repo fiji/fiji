@@ -11,8 +11,10 @@ public class MainClassForDebugging {
 	static String className;
 
 	public static void main(String args[]) {
-		if (IJ.getInstance() == null)
-			new ImageJ();
+		if (IJ.getInstance() == null) {
+			ImageJ ij = new ImageJ();
+			ij.setTitle("Fiji (Debugging)");
+		}
 		String path = "";
 		int i;
 		for (i = 0; i < args.length - 1; i++)
