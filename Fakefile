@@ -228,7 +228,12 @@ plugins/IO_.jar <- src-plugins/IO_/**/*.java \
 
 CLASSPATH(plugins/Sync_Win.jar)=plugins/Image_5D.jar
 MAINCLASS(plugins/Script_Editor.jar)=fiji.scripting.Script_Editor
-CLASSPATH(plugins/Script_Editor.jar)=jars/rsyntaxtextarea.jar:jars/autocomplete.jar:plugins/Clojure_Interpreter.jar:plugins/JRuby_Interpreter.jar:plugins/Javascript_.jar:plugins/Jython_Interpreter.jar:plugins/Refresh_Javas.jar:plugins/BeanShell_Interpreter.jar:jars/fiji-scripting.jar:$JAVA_HOME/../lib/tools.jar
+CLASSPATH(plugins/Script_Editor.jar)=jars/rsyntaxtextarea.jar:\
+jars/autocomplete.jar:plugins/Clojure_Interpreter.jar:\
+plugins/JRuby_Interpreter.jar:plugins/Javascript_.jar:\
+plugins/Jython_Interpreter.jar:plugins/Refresh_Javas.jar:\
+plugins/BeanShell_Interpreter.jar:jars/fiji-scripting.jar:\
+misc/Fiji.jar:$JAVA_HOME/../lib/tools.jar
 plugins/Script_Editor.jar <- src-plugins/Script_Editor/**/*.java  \
 							icon.png[images/icon.png] \
 							var.png[images/var.png]    \
