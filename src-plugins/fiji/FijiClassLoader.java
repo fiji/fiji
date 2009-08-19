@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.net.MalformedURLException;
 
 import java.util.ArrayList;
@@ -21,6 +22,7 @@ public class FijiClassLoader extends ClassLoader {
 	List filesNames;
 	List filesObjects;
 	Map cache;
+	List<ClassLoader> fallBacks;
 
 	public FijiClassLoader() {
 		super(Thread.currentThread().getContextClassLoader());
@@ -28,6 +30,7 @@ public class FijiClassLoader extends ClassLoader {
 		filesNames = new ArrayList(10);
 		filesObjects = new ArrayList(10);
 		cache = new HashMap();
+		fallBacks = new ArrayList<ClassLoader>();
 	}
 
 	public FijiClassLoader(String path) throws IOException {
@@ -53,6 +56,14 @@ public class FijiClassLoader extends ClassLoader {
 			filesNames.add(path);
 			filesObjects.add(jar);
 		}
+	}
+
+	public void addFallBack(ClassLoader loader) {
+		fallBacks.add(loader);
+	}
+
+	public void removeFallBack(ClassLoader loader) {
+		fallBacks.remove(loader);
 	}
 
 	public URL getResource(String name) {
@@ -143,19 +154,21 @@ public class FijiClassLoader extends ClassLoader {
 		String path = name.replace('.', '/') + ".class";
 		try {
 			InputStream input = getResourceAsStream(path, !true);
-			if (input == null)
-				throw new ClassNotFoundException(name);
-			byte[] buffer = readStream(input);
-			input.close();
-			result = defineClass(name,
-					buffer, 0, buffer.length);
-			cache.put(name, result);
-			return result;
-		} catch (IOException e) {
-			result = forceReload ?
-				super.loadClass(name, resolve) : null;
-			return result;
+			if (input != null) {
+				byte[] buffer = readStream(input);
+				input.close();
+				result = defineClass(name,
+						buffer, 0, buffer.length);
+				cache.put(name, result);
+				return result;
+			}
+		} catch (IOException e) { e.printStackTrace(); }
+		for (ClassLoader fallBack : fallBacks) {
+			result = fallBack.loadClass(name);
+			if (result != null)
+				return result;
 		}
+		return super.loadClass(name, resolve);
 	}
 
 	static byte[] readStream(InputStream input) throws IOException {
