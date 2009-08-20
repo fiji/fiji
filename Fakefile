@@ -183,7 +183,7 @@ jars/autocomplete.jar <- AutoComplete/
 # From source
 javaVersion(misc/Fiji.jar)=1.5
 mainClass(misc/Fiji.jar)=fiji.Main
-misc/Fiji.jar <- src-plugins/fiji/*.java icon.png[images/icon.png]
+misc/Fiji.jar <- src-plugins/Fiji/fiji/*.java icon.png[images/icon.png]
 
 # These classes are common
 CLASSPATH(jars/zs.jar)=jars/Jama-1.0.2.jar
