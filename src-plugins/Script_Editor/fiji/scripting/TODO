@@ -47,3 +47,5 @@
 - saveChangeDialog() is kinda pointless.  It's not enough to just ask.
 
 - remove all those System.stderr/stdout messages.
+
+- Integrate Fiji Build much better.
