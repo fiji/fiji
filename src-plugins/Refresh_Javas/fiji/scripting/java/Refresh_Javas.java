@@ -47,14 +47,15 @@ public class Refresh_Javas extends RefreshScripts {
 				return;
 			}
 		}
-		String pluginsPath = Menus.getPlugInsPath();
-		if (!pluginsPath.endsWith(File.separator))
-			pluginsPath += File.separator;
-		if (c.startsWith(pluginsPath)) {
-			c = c.substring(pluginsPath.length());
-			while (c.startsWith(File.separator))
-				c = c.substring(1);
-		}
+		try {
+			File plugins = new File(Menus.getPlugInsPath())
+				.getCanonicalFile();
+			File file = new File(c).getCanonicalFile();
+			c = file.getName();
+			while ((file = file.getParentFile()) != null &&
+					!file.equals(plugins))
+				c = file.getName() + "." + c;
+		} catch (Exception e) { e.printStackTrace(); }
 		runPlugin(c.replace('/', '.'));
 	}
 
