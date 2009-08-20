@@ -99,3 +99,6 @@ Not-quite show-stoppers:
 
 - beganUpload() method does funny commands at the beginning.  It should
   definitely not need to "chmod u-w" db.xml.gz!
+
+- make the list sortable by clicking on the column titles (second click
+  sorts descending).
