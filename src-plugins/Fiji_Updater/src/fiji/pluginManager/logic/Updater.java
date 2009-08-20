@@ -21,18 +21,23 @@ import fiji.pluginManager.utilities.Compressor;
 import fiji.pluginManager.utilities.PluginData;
 
 /*
- * This class is responsible for writing updates to server, upon given the updated
- * plugin records (Map of plugins to all versions).
+ * This class is responsible for writing updates to server, upon given the
+ * updated plugin records (Map of plugins to all versions).
  *
  * 1st Step: Generates the updated records (newPluginRecords & filesToUpload)
- * 2nd Step: Login details _must_ be authenticated before below steps can proceed
- * 3rd Step: Write and validate XML file, and write current.txt contents too
+ * 2nd Step: Login details _must_ be authenticated before below steps can
+ *           proceed
+ * 3rd Step: Write and validate XML file, and write current.txt
+ *           contents too
  * 4th Step: Upload XML, text and plugin file(s) to server
  *
  * Note: Plugins are uploaded differently
- * - Non-Fiji plugins & new versions of Fiji Plugins will have files AND details uploaded
- * - Uninstalled & up-to-date plugins will ONLY have their details uploaded (i.e.: XML file)
- * - Updater's FileUploader does NOT upload the DTD file. It assumes the DTD file is up to date.
+ * - Non-Fiji plugins & new versions of Fiji Plugins will have files AND
+ *   details uploaded
+ * - Uninstalled & up-to-date plugins will ONLY have their details uploaded
+ *   (i.e.: XML file)
+ * - Updater's FileUploader does NOT upload the DTD file. It assumes the DTD
+ *   file is up to date.
  */
 public class Updater {
 	private FileUploader fileUploader;
