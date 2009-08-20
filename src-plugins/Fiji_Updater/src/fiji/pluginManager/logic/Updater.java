@@ -1,24 +1,31 @@
 package fiji.pluginManager.logic;
+
+import com.jcraft.jsch.JSchException;
+
+import fiji.pluginManager.logic.FileUploader.SourceFile;
+import fiji.pluginManager.logic.FileUploader.UploadListener;
+
+import fiji.pluginManager.utilities.Compressor;
+import fiji.pluginManager.utilities.PluginData;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.sax.TransformerHandler;
+
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
-import com.jcraft.jsch.JSchException;
-import fiji.pluginManager.logic.FileUploader.SourceFile;
-import fiji.pluginManager.logic.FileUploader.UploadListener;
-import fiji.pluginManager.utilities.Compressor;
-import fiji.pluginManager.utilities.PluginData;
 
 /*
  * This class is responsible for writing updates to server, upon given the
