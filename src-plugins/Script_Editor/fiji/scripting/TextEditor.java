@@ -414,19 +414,14 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 			if (file != null) {
 				fileChanged = false;
 				setFileName(file);
-				// TODO: urgh. no member variable; close
 				fin = new FileInputStream(file);
 				BufferedReader din = new BufferedReader(new InputStreamReader(fin));
-				String s = "";
-				textArea.setText("");
-				while (true) {
-					s = din.readLine();
-					if (s == null) {
-						break;
-					}
-					// TODO: use StringBuilder instead!!!
-					textArea.append(s + "\n");
-				}
+				StringBuilder text = new StringBuilder();
+				String line;
+				while ((line = din.readLine()) != null)
+					text.append(line).append("\n");
+				textArea.setText(text.toString());
+				fin.close();
 			} else {
 				// TODO: unify error handling.  Don't mix JOptionPane with IJ.error as if we had no clue what we want
 				JOptionPane.showMessageDialog(this, "The file name " + file.getName() + " not found.");
