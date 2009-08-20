@@ -65,15 +65,22 @@ public class Updater {
 	protected PluginData util;
 
 	public Updater(PluginManager pluginManager) {
-		util = pluginManager;
+		this(pluginManager, pluginManager.pluginCollection,
+			pluginManager.xmlFileReader,
+			pluginManager.getXMLLastModified());
+	}
 
-		pluginCollection = pluginManager.pluginCollection;
+	public Updater(PluginData util, PluginCollection pluginCollection,
+			XMLFileReader xmlFileReader, long xmlLastModified) {
+		this.util = util;
+
+		this.pluginCollection = pluginCollection;
 		changesList = pluginCollection.getToUpload();
 		changesList.resetChangeStatuses();
 		dependencyAnalyzer = new DependencyAnalyzer();
-		xmlFileReader = pluginManager.xmlFileReader;
+		this.xmlFileReader = xmlFileReader;
 
-		xmlLastModified = pluginManager.getXMLLastModified();
+		this.xmlLastModified = xmlLastModified;
 		savePaths = new String[relativePaths.length];
 		for (int i = 0; i < savePaths.length; i++)
 			savePaths[i] = util.prefix(relativePaths[i]);
