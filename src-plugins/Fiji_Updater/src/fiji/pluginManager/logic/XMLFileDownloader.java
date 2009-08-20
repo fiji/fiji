@@ -58,8 +58,6 @@ public class XMLFileDownloader extends PluginDataObservable implements Downloade
 			Prefs.set(PluginManager.PREFS_XMLDATE, "" + xmlLastModified);
 			addToDownload(xml_url, PluginManager.XML_COMPRESSED);
 		}
-		addToDownload(PluginManager.MAIN_URL + PluginManager.DTD_FILENAME,
-				PluginManager.DTD_FILENAME);
 
 		//Start downloading the required files
 		Downloader downloader = new Downloader(sources.iterator());

@@ -41,8 +41,6 @@ Show-stoppers:
 
   Think for example if a dependency is fixed.
 
-- No plugins.dtd.  This is hurting my pl<Tab> completion.
-
 - The dependency list should be editable so that the developer can
   correct mistakes (not all are "at-least" dependencies) and add
   additional dependencies.

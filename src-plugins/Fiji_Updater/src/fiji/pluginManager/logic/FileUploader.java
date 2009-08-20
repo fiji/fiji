@@ -73,10 +73,6 @@ public class FileUploader {
 
 	//Steps to accomplish entire upload task
 	public synchronized void beganUpload(long xmlLastModified, List<SourceFile> sources) throws IOException, JSchException {
-		//Set db.xml.gz to read-only
-		//TODO
-		setCommand("chmod u+w " + uploadDir + PluginManager.DTD_FILENAME);
-		setCommand("chmod u-w " + uploadDir + PluginManager.XML_COMPRESSED);
 		//Prepare for uploading of files
 		String uploadFilesCommand = "scp -p -t -r " + uploadDir;
 		setCommand(uploadFilesCommand);

@@ -43,8 +43,6 @@ import org.xml.sax.helpers.AttributesImpl;
  *   details uploaded
  * - Uninstalled & up-to-date plugins will ONLY have their details uploaded
  *   (i.e.: XML file)
- * - Updater's FileUploader does NOT upload the DTD file. It assumes the DTD
- *   file is up to date.
  */
 public class Updater {
 	private FileUploader fileUploader;
