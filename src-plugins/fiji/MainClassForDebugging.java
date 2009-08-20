@@ -44,7 +44,6 @@ public class MainClassForDebugging {
 		path = file.getName();
 		while ((file = file.getParentFile()) != null &&
 				file.compareTo(pluginsPath) != 0)
-{
 			path = file.getName() + "." + path;
 		return path;
 	}
