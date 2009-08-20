@@ -7,6 +7,7 @@ import ij.Macro;
 
 import ij.plugin.PlugIn;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -79,10 +80,19 @@ public class Script_Editor implements PlugIn {
 			FijiClassLoader loader =
 				(FijiClassLoader)IJ.getClassLoader();
 
-			String baseURL = gitwebURL + getPlatform() + ".git";
-			URL url = new URL(baseURL + ";a=blob_plain;f="
-				+ getNewestJavaSubdirectory(baseURL)
-				+ "/lib/tools.jar");
+			File tools_jar =
+				new File(System.getProperty("java.home")
+				+ "/../lib/tools.jar");
+			URL url;
+			if (tools_jar.exists())
+				url = tools_jar.toURL();
+			else {
+				String baseURL = gitwebURL + getPlatform()
+					+ ".git";
+				url = new URL(baseURL + ";a=blob_plain;f="
+					+ getNewestJavaSubdirectory(baseURL)
+					+ "/lib/tools.jar");
+			}
 			URL[] urls = new URL[] { url };
 			loader.addFallBack(new URLClassLoader(urls));
 			return;
