@@ -76,6 +76,10 @@ public class ClassNames {
 					addToTree(splitZipEntryForClassName(name), root, 0);
 				}
 			} catch (Exception e) {
+				if (path.endsWith("/sunrsasign.jar"))
+					return;
+				System.err.println("Exception while processing "
+					+ path);
 				e.printStackTrace();
 			}
 	}
