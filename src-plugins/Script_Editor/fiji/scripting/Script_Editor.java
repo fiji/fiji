@@ -19,12 +19,11 @@ public class Script_Editor implements PlugIn {
 
 	public void run(String path) {
 		addToolsJarToClassPath();
-		String a = Macro.getOptions();
-		try {
-			new TextEditor(Macro.getValue(a, "path", null));
-		} catch (Exception e) {
-			new TextEditor("");
-		}
+		if (path == null || path.equals(""))
+			path = Macro.getValue(Macro.getOptions(), "path", null);
+		if (path == null)
+			path = Macro.getValue(Macro.getOptions(), "open", null);
+		new TextEditor(path);
 	}
 
 	final private static String gitwebURL =
