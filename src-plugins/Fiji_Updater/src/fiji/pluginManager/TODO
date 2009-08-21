@@ -66,6 +66,9 @@ Show-stoppers:
   to include previous version hashes, too, so that people _can_ update
   without a hassle.
 
+- The current time of the server _must_ be used for new timestamps!!!
+  Otherwise, we risk clock skew!!!
+
 Not-quite show-stoppers:
 
 - "Update it" would probably be better named "Upload", to make it clear
