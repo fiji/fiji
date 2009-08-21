@@ -8,6 +8,8 @@ import fiji.pluginManager.logic.FileUploader.UploadListener;
 import fiji.pluginManager.utilities.Compressor;
 import fiji.pluginManager.utilities.PluginData;
 
+import ij.IJ;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -89,11 +91,10 @@ public class Updater {
 
 	public synchronized boolean setLogin(String username, String password) {
 		try {
-			fileUploader = new FileUploader(username, password);
-			System.out.println("User " + username + " logged in successfully.");
+			fileUploader = new SSHFileUploader(username, password);
 			return true;
 		} catch (JSchException e) {
-			System.out.println("Failed to login. Username or password incorrect.");
+			IJ.error("Failed to login");
 			return false;
 		}
 	}
@@ -155,7 +156,7 @@ public class Updater {
 		filesToUpload.add(0, new UpdateSource(savePaths[0], relativePaths[0], "C0644"));
 		//Text file for old Fiji Updater, writable for all uploaders
 		filesToUpload.add(new UpdateSource(savePaths[1], relativePaths[1], "C0664"));
-		fileUploader.beganUpload(xmlLastModified, filesToUpload);
+		fileUploader.upload(xmlLastModified, filesToUpload);
 
 		//No errors thrown, implies successful upload, so just remove temporary files
 		new File(backupXMLPath).delete();
