@@ -113,3 +113,8 @@ Not-quite show-stoppers:
   Downloader classes.  But it is not really necessary to have that many
   classes play together, either.  There should be a single Downloader which
   is observable.
+
+- as plugins should be copied into /var/www/update/ as read-only files, make
+  sure that only those are copied that have not changed.
+
+- it was part of the project plan to provide automated tests.  Add some.
