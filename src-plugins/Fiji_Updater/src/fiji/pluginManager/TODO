@@ -107,3 +107,9 @@ Not-quite show-stoppers:
 - instead of having a data model for the XML file, and a different one for
   Java, use the XML one in Java, too: we should _not_ create a complete
   PluginObject for every single previous version!
+
+- it is totally unclear what is the purpose and intended collaboration of
+  the UpdateTracker, FileDownload, SourceFile, PluginDownload, Installer and
+  Downloader classes.  But it is not really necessary to have that many
+  classes play together, either.  There should be a single Downloader which
+  is observable.
