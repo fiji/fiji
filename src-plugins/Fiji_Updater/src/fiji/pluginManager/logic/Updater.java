@@ -70,6 +70,7 @@ public class Updater {
 		this(pluginManager, pluginManager.pluginCollection,
 			pluginManager.xmlFileReader,
 			pluginManager.getXMLLastModified());
+		changesList.resetChangeStatuses();
 	}
 
 	public Updater(PluginData util, PluginCollection pluginCollection,
@@ -78,7 +79,6 @@ public class Updater {
 
 		this.pluginCollection = pluginCollection;
 		changesList = pluginCollection.getToUpload();
-		changesList.resetChangeStatuses();
 		dependencyAnalyzer = new DependencyAnalyzer();
 		this.xmlFileReader = xmlFileReader;
 
@@ -87,6 +87,10 @@ public class Updater {
 		for (int i = 0; i < savePaths.length; i++)
 			savePaths[i] = util.prefix(relativePaths[i]);
 		backupXMLPath = util.prefix(PluginManager.XML_BACKUP);
+	}
+
+	public void setUploader(FileUploader uploader) {
+		fileUploader = uploader;
 	}
 
 	public synchronized boolean setLogin(String username, String password) {
@@ -147,7 +151,8 @@ public class Updater {
 
 	public synchronized void uploadFilesToServer(UploadListener uploadListener) throws Exception  {
 		System.out.println("********** Upload Process begins **********");
-		fileUploader.addListener(uploadListener);
+		if (uploadListener != null)
+			fileUploader.addListener(uploadListener);
 
 		generateAndValidateXML();
 		saveXMLFile();
