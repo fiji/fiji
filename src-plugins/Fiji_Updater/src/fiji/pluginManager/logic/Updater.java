@@ -115,7 +115,7 @@ public class Updater {
 				PluginCollection versions = (PluginCollection)newPluginRecords.get(filename);
 				PluginObject latest = versions.getLatestPlugin();
 				//if either an existing version, or timestamp is older than recorded version
-				if (latest.getmd5Sum().equals(pluginToUpload.getmd5Sum()) ||
+				if (latest.getChecksum().equals(pluginToUpload.getChecksum()) ||
 						latest.getTimestamp().compareTo(pluginToUpload.getTimestamp()) >= 0) {
 					//Just update details
 					latest.setPluginDetails(pluginToUpload.getPluginDetails());
@@ -192,7 +192,7 @@ public class Updater {
 			PluginCollection versions = (PluginCollection)newPluginRecords.get(filename);
 			PluginObject latestPlugin = versions.getLatestPlugin();
 			txtPrintStream.println(latestPlugin.getFilename() + " " +
-				latestPlugin.getTimestamp() + " " + latestPlugin.getmd5Sum());
+				latestPlugin.getTimestamp() + " " + latestPlugin.getChecksum());
 		}
 		txtPrintStream.close();
 	}
@@ -227,7 +227,7 @@ public class Updater {
 				//tag "version" for the latest version
 				attrib.clear();
 				attrib.addAttribute("", "", "timestamp", "CDATA", latest.getTimestamp());
-				attrib.addAttribute("", "", "checksum", "CDATA", latest.getmd5Sum());
+				attrib.addAttribute("", "", "checksum", "CDATA", latest.getChecksum());
 				attrib.addAttribute("", "", "filesize", "CDATA", "" + latest.getFilesize());
 				handler.startElement("", "", "version", attrib);
 				if (latest.getPluginDetails().getDescription() != null)
@@ -256,7 +256,7 @@ public class Updater {
 					//tag "previous-version"
 					attrib.clear();
 					attrib.addAttribute("", "", "timestamp", "CDATA", version.getTimestamp());
-					attrib.addAttribute("", "", "checksum", "CDATA", version.getmd5Sum());
+					attrib.addAttribute("", "", "checksum", "CDATA", version.getChecksum());
 					handler.startElement("", "", "previous-version", attrib);
 					handler.endElement("", "", "previous-version");
 				}

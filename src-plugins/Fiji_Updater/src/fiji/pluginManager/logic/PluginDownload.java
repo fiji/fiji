@@ -28,8 +28,8 @@ public class PluginDownload implements FileDownload {
 
 	public String getRecordedDigest() {
 		if (plugin.toUpdate())
-			return plugin.getNewMd5Sum();
-		return plugin.getmd5Sum();
+			return plugin.getNewChecksum();
+		return plugin.getChecksum();
 	}
 
 	public String getRecordedTimestamp() {

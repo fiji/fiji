@@ -24,7 +24,7 @@ import java.util.Arrays;
  * Class functionality:
  * Extend from it if you need to
  * - Calculate timestamps of files
- * - Calculate the Md5 sums of files
+ * - Calculate the checksums of files
  * - Get the absolute path (prefix()) of Fiji main directory
  * - Copy a file over to a particular location
  * - Get details of the Operating System Fiji application is on

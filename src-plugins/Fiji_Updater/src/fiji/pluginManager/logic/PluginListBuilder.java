@@ -24,12 +24,12 @@ import org.xml.sax.SAXException;
  * PluginListBuilder's overall role is to be in charge of building of a plugin list
  * for interface usage.
  *
- * 1st step: Get information of local plugins (Md5 sums and version)
- * 2nd step: Given XML file, get information of latest Fiji plugins (Md5 sums and version)
+ * 1st step: Get information of local plugins (checksums and version)
+ * 2nd step: Given XML file, get information of latest Fiji plugins (checksums and version)
  * 3rd step: Build up list of "PluginObject" using both local and updates
  *
- * digests and dates hold Md5 sums and versions of local plugins respectively
- * latestDigests and latestDates hold Md5 sums and versions of latest Fiji plugins
+ * digests and dates hold checksums and versions of local plugins respectively
+ * latestDigests and latestDates hold checksums and versions of latest Fiji plugins
  */
 public class PluginListBuilder extends PluginDataObservable {
 	private final String[] pluginDirectories = {"plugins", "jars", "retro", "misc"};
@@ -67,7 +67,7 @@ public class PluginListBuilder extends PluginDataObservable {
 	private void buildLocalPluginData() throws ParserConfigurationException, SAXException, IOException {
 		List<String> queue = generatePluginNamelist();
 
-		//To calculate the Md5 sums on the local side
+		//To calculate the checksums on the local side
 		Iterator<String> iter = queue.iterator();
 		currentlyLoaded = 0;
 		totalToLoad = queue.size();
@@ -76,7 +76,7 @@ public class PluginListBuilder extends PluginDataObservable {
 			String outputDigest = util.getDigestFromFile(outputFilename);
 			digests.put(outputFilename, outputDigest);
 
-			//null indicate XML records does not have such plugin filename and md5 sums
+			//null indicate XML records does not have such plugin filename and checksums
 			String outputDate = xmlFileReader.getTimestampFromRecords(outputFilename,
 					outputDigest);
 			dates.put(outputFilename, outputDate);
