@@ -3,8 +3,9 @@ package fiji.pluginManager.logic;
 import fiji.pluginManager.util.Downloader.FileDownload;
 
 /*
- * This class' role is to provide download details of a given Plugin for the Downloader
- * utility class to refer to - Through implementing the required SourceFile interface.
+ * This class' role is to provide download details of a given Plugin for the
+ * Downloader utility class to refer to by implementing the required
+ * SourceFile interface.
  */
 public class PluginDownload implements FileDownload {
 	private String destination;
@@ -13,7 +14,7 @@ public class PluginDownload implements FileDownload {
 
 	public PluginDownload(PluginObject plugin, String url, String destination) {
 		if (plugin == null || url == null || destination == null)
-			throw new Error("PluginDownload constructor parameters cannot be null");
+			throw new RuntimeException("null parameters!");
 		this.destination = destination;
 		this.url = url;
 		this.plugin = plugin;
@@ -35,11 +36,11 @@ public class PluginDownload implements FileDownload {
 		return plugin.getTimestamp();
 	}
 
-	public String getDestination() { //implemented by SourceFile
+	public String getDestination() {
 		return destination;
 	}
 
-	public String getURL() { //implemented by SourceFile
+	public String getURL() {
 		return url;
 	}
 }

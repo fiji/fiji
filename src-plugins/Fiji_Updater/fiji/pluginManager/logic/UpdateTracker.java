@@ -17,8 +17,9 @@ import java.util.List;
 /*
  * UpdateTracker.java is for normal users in managing their plugins.
  *
- * This class' main role is to download selected files, as well as indicate those that
- * are marked for deletion. It is able to track the number of bytes downloaded.
+ * This class' main role is to download selected files, as well as indicate
+ * those that are marked for deletion. It is able to track the number of bytes
+ * downloaded.
  */
 public class UpdateTracker implements Runnable, Downloader.DownloadListener {
 	private volatile Thread downloadThread;
@@ -151,6 +152,7 @@ public class UpdateTracker implements Runnable, Downloader.DownloadListener {
 		currentBytesSoFar = bytesSoFar;
 	}
 
+	// TODO: stop altogether when a download failed
 	public void fileFailed(FileDownload source, Exception e) {
 		resolveDownloadError((PluginDownload)source, e);
 	}
