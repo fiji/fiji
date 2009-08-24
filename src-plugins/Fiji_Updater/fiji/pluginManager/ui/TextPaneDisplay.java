@@ -1,29 +1,35 @@
 package fiji.pluginManager.ui;
+
 import ij.plugin.BrowserLauncher;
+
+import fiji.pluginManager.logic.Dependency;
+import fiji.pluginManager.logic.PluginCollection;
+import fiji.pluginManager.logic.PluginObject;
+import fiji.pluginManager.logic.UpdateTracker;
+
 import java.awt.Color;
 import java.awt.Cursor;
+
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionAdapter;
 import java.awt.event.MouseMotionListener;
+
 import java.util.Iterator;
 import java.util.List;
+
 import javax.swing.JTextPane;
+
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
-import fiji.pluginManager.logic.Dependency;
-import fiji.pluginManager.logic.UpdateTracker;
-import fiji.pluginManager.logic.PluginCollection;
-import fiji.pluginManager.logic.PluginObject;
 
 public class TextPaneDisplay extends JTextPane {
-	private AttributeSet italic;
-	private AttributeSet bold;
-	private AttributeSet normal;
-	private AttributeSet title;
+	private AttributeSet bold, italic, normal, title;
 	private final String LINK_ATTRIBUTE = "URLSOURCE";
 
 	public TextPaneDisplay() {
@@ -32,11 +38,11 @@ public class TextPaneDisplay extends JTextPane {
 		normal =  getStyle(Color.black, false, false, "Verdana", 12);
 		title = getStyle(Color.black, false, false, "Impact", 18);
 
-		final JTextPane textPane = this;
-		addMouseListener(new MouseListener() {
+		addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
 				try {
-					AttributeSet as = getAttributes(textPane, e);
+					// TODO: this is messy!  make this an own method and call it
+					AttributeSet as = getAttributes(TextPaneDisplay.this, e);
 					//execute the url if it exists
 					String url = (String)as.getAttribute(LINK_ATTRIBUTE);
 					if (url != null)
@@ -45,35 +51,27 @@ public class TextPaneDisplay extends JTextPane {
 					ex.printStackTrace();
 				}
 			}
-
-			public void mouseEntered(MouseEvent e) { }
-
-			public void mouseExited(MouseEvent e) { }
-
-			public void mousePressed(MouseEvent e) { }
-
-			public void mouseReleased(MouseEvent e) { }
 		});
-		addMouseMotionListener(new MouseMotionListener() {
+		addMouseMotionListener(new MouseMotionAdapter() {
 			public void mouseMoved(MouseEvent e) {
-				if (getAttributes(textPane, e).getAttribute(LINK_ATTRIBUTE) != null)
-					textPane.setCursor(new Cursor(Cursor.HAND_CURSOR));
+				if (getAttributes(TextPaneDisplay.this, e).getAttribute(LINK_ATTRIBUTE) != null)
+					TextPaneDisplay.this.setCursor(new Cursor(Cursor.HAND_CURSOR));
 				else
-					textPane.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+					TextPaneDisplay.this.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
 			}
-
-			public void mouseDragged(MouseEvent e) { }
 		});
-		setEditable(false);
+		setEditable(false); // TODO: if this prevents copy-n-paste, that's not good.
 	}
 
 	private AttributeSet getAttributes(JTextPane textPane, MouseEvent e) { //mouse event use
 		StyledDocument document = textPane.getStyledDocument();
+		// TODO: fix funny indentation
 		return document.getCharacterElement(
 				textPane.viewToModel(e.getPoint())).getAttributes();
 	}
 
 	private AttributeSet getLinkElement(String url) {
+		// TODO: Verdana?  Java is platform-independent, if this introduces a platform dependency, it needs to be thrown out, quickly!
 		SimpleAttributeSet style = (SimpleAttributeSet)
 			getStyle(Color.blue, false, false, "Verdana", 12);
 		style.addAttribute(LINK_ATTRIBUTE, url);
@@ -96,7 +94,8 @@ public class TextPaneDisplay extends JTextPane {
 		try {
 			document.insertString(document.getLength(), text, set);
 		} catch (BadLocationException e) {
-			throw new RuntimeException(e); //This is an internal error
+			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 	}
 
@@ -121,7 +120,7 @@ public class TextPaneDisplay extends JTextPane {
 	}
 
 	//appends list of dependencies to existing text
-	public void insertDependenciesList(Iterable<Dependency> list) {
+	public void dependencies(Iterable<Dependency> list) {
 		StringBuilder text = new StringBuilder();
 		for (Dependency dependency : list)
 			text.append((text.length() > 0 ? ",\n" : "")
@@ -130,23 +129,41 @@ public class TextPaneDisplay extends JTextPane {
 		normal("\n" + (text.length() > 0 ? text.toString() : "None"));
 	}
 
-	//appends plugin description to existing text
-	public void insertDescription(String description) {
-		if (description == null || description.trim().equals("")) {
-			normal("\nNo description available.");
-		} else {
-			normal("\n" + description);
-		}
+	public void description(String description) {
+		if (description == null || description.trim().equals(""))
+			description = "No description available.";
+		normal("\n" + description);
 	}
 
-	public void insertAuthors(Iterable<String> authors) {
+	public String join(Iterable<String> list, String delimiter) {
+		if (list == null)
+			return "";
+		boolean first = true;
+		StringBuilder result = new StringBuilder();
+		for (String item : list) {
+			if (first)
+				first = false;
+			else
+				result.append(delimiter);
+			result.append(item);
+		}
+		return result.toString();
+	}
+
+	public String join(Iterable<String> list, String delimiter,
+			String defaultString) {
+		String result = join(list, delimiter);
+		return result.equals("") ? defaultString : result;
+	}
+
+	public void authors(Iterable<String> authors) {
 		StringBuilder text = new StringBuilder();
 		for (String author : authors)
 			text.append((text.length() > 0 ? ", " : "") + author);
 		normal(text.length() > 0 ? text.toString() : "Not specified");
 	}
 
-	public void insertLinks(Iterable<String> links) {
+	public void links(Iterable<String> links) {
 		for (String link : links) {
 			normal("\n- ");
 			link(link);
@@ -154,25 +171,24 @@ public class TextPaneDisplay extends JTextPane {
 	}
 
 	//appends list of plugin names to existing text
-	public void insertPluginNamelist(String title, PluginCollection myList) {
+	public void pluginNamelist(String title, PluginCollection myList) {
 		title(title);
 		for (PluginObject plugin : myList)
 			normal("\n" + plugin.getFilename());
 	}
 
 	//appends list of plugin names and each of their descriptions to existing text
-	public void insertPluginDescriptions(String title, PluginCollection myList) {
+	public void pluginDescriptions(String title, PluginCollection myList) {
 		title(title);
-		insertBlankLine();
+		blankLine();
 		for (PluginObject plugin : myList) {
 			bold(plugin.getFilename());
-			insertDescription(plugin.description);
-			insertBlankLine();
+			description(plugin.description);
+			blankLine();
 		}
 	}
 
-	//inserts blank new line
-	public void insertBlankLine() {
+	public void blankLine() {
 		normal("\n\n");
 	}
 
@@ -184,35 +200,35 @@ public class TextPaneDisplay extends JTextPane {
 		if (plugin.isUpdateable())
 			italic("\n(Update is available)");
 		if (plugin.isFiji() && plugin.newChecksum != null) {
-			insertBlankLine();
+			blankLine();
 			bold("Warning: ");
 			italic("This version is not in Fiji's records.");
 		}
-		insertBlankLine();
+		blankLine();
 		bold("Date: ");
 		normal("" + plugin.current.timestamp);
-		insertBlankLine();
+		blankLine();
 		bold("Author(s): ");
-		insertAuthors(plugin.getAuthors());
-		insertBlankLine();
+		authors(plugin.getAuthors());
+		blankLine();
 		bold("Description");
-		insertDescription(plugin.getDescription());
-		insertBlankLine();
+		description(plugin.getDescription());
+		blankLine();
 		bold("Reference Link(s):");
-		insertLinks(plugin.getLinks());
-		insertBlankLine();
+		links(plugin.getLinks());
+		blankLine();
 		bold("Dependency");
-		insertDependenciesList(plugin.getDependencies());
-		insertBlankLine();
+		dependencies(plugin.getDependencies());
+		blankLine();
 		bold("Checksum");
 		normal("\n" + plugin.getChecksum());
-		insertBlankLine();
+		blankLine();
 		bold("Is Fiji Plugin: ");
 		normal(plugin.isFiji() ? "Yes" : "No");
 		if (plugin.newChecksum != null) {
-			insertBlankLine();
+			blankLine();
 			title("Locally modified:");
-			insertBlankLine();
+			blankLine();
 			bold("New Checksum");
 			normal(plugin.newChecksum + "\n");
 			bold("Timestamp: ");
