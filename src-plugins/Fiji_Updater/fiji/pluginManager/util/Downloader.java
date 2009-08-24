@@ -1,113 +1,154 @@
 package fiji.pluginManager.util;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
 import java.net.URLConnection;
 import java.net.URL;
 
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 
 /*
  * Direct responsibility: Download a list of files given their respective URLs to their
  * respective destinations. Updates its download status to its Observer as well.
  */
-public class Downloader {
-	private int downloadedBytes;
-	private int downloadSize;
-	private URLConnection connection;
-	private List<DownloadListener> listeners;
-	private InputStream in;
-	private OutputStream out;
-	private Iterator<FileDownload> sourceFiles;
-	private FileDownload currentSource;
-	private boolean cancelled; //stop download entirely
+public class Downloader extends Observable {
+	protected int downloadedBytes, totalBytes;
+	protected long lastModified;
+	protected FileDownload current;
 
-	public Downloader(Iterator<FileDownload> sourceFiles) {
-		this.sourceFiles = sourceFiles;
-		listeners = new ArrayList<DownloadListener>();
+	protected String error;
+	protected boolean cancelled, complete;
+
+	public Downloader() { }
+
+	public Downloader(Observer observer) {
+		addObserver(observer);
 	}
 
 	public synchronized void cancel() {
 		cancelled = true;
 	}
 
-	public synchronized void start() {
-		while (sourceFiles.hasNext() && !cancelled) {
-			currentSource = sourceFiles.next();
-			try {
-				//Start connection
-				connection = new URL(currentSource.getURL()).openConnection();
-				connection.setUseCaches(false);
-				downloadedBytes = 0; //start with nothing downloaded
-				downloadSize = connection.getContentLength();
-				if (downloadSize < 0)
-					throw new Exception("Content Length is not known");
-				notifyListenersUpdate(); //first notification starts from 0
+	public synchronized void start(Iterable<FileDownload> files) {
+		cancelled = false;
+		error = null;
 
-				new File(currentSource.getDestination()).getParentFile().mkdirs();
-				in = connection.getInputStream();
-				out = new FileOutputStream(currentSource.getDestination());
+		downloadedBytes = totalBytes = 0;
+		for (FileDownload file : files)
+			totalBytes += file.getFilesize();
 
-				//Start actual downloading and writing to file
-				byte[] buffer = new byte[65536];
-				int count;
-				while ((count = in.read(buffer)) >= 0 && !cancelled) {
-					out.write(buffer, 0, count);
-					downloadedBytes += count;
-					notifyListenersUpdate();
-				}
-				//end connection once download done
-				in.close();
-				out.close();
-				notifyListenersCompletion();
-
-			} catch (FileNotFoundException e1) {
-				notifyListenersError(e1);
-			} catch (IOException e2) {
-				notifyListenersError(e2);
-			} catch (Exception e3) {
-				notifyListenersError(e3);
+		try {
+			for (FileDownload current : files) {
+				this.current = current;
+				if (cancelled)
+					return;
+				downloadCurrent();
 			}
+		} catch (Exception error) {
+			error(error.getMessage());
 		}
 	}
 
-	private void notifyListenersUpdate() {
-		for (DownloadListener listener : listeners) {
-			listener.update(currentSource, downloadedBytes, downloadSize);
+	public static Iterator<FileDownload>
+			iterator(final FileDownload justOne) {
+		return new Iterator<FileDownload>() {
+			boolean isFirst = true;
+
+			public boolean hasNext() { return isFirst; }
+
+			public FileDownload next() {
+				isFirst = false;
+				return justOne;
+			}
+
+			public void remove() {
+				throw new UnsupportedOperationException();
+			}
+		};
+	}
+
+	public synchronized void start(final FileDownload justOne) {
+		start(new Iterable<FileDownload>() {
+			public Iterator<FileDownload> iterator() {
+				return Downloader.iterator(justOne);
+			}
+		});
+	}
+
+	protected synchronized void downloadCurrent() throws Exception {
+		complete = false;
+		URLConnection connection =
+			new URL(current.getURL()).openConnection();
+		connection.setUseCaches(false);
+		lastModified = connection.getLastModified();
+
+		String destination = current.getDestination();
+		new File(destination).getParentFile().mkdirs();
+		InputStream in = connection.getInputStream();
+		OutputStream out = new FileOutputStream(destination);
+
+		byte[] buffer = new byte[65536];
+		for (;;) {
+			if (cancelled)
+				break;
+			int count = in.read(buffer);
+			if (count < 0)
+				break;
+			out.write(buffer, 0, count);
+			downloadedBytes += count;
+			setChanged();
+			notifyObservers();
 		}
+		complete = true;
+		setChanged();
+		notifyObservers();
+		in.close();
+		out.close();
 	}
 
-	private void notifyListenersCompletion() {
-		for (DownloadListener listener : listeners) {
-			listener.fileComplete(currentSource);
-		}
+	protected void error(String message) {
+		new File(current.getDestination()).delete();
+		error = message;
+		setChanged();
+		notifyObservers();
 	}
 
-	private void notifyListenersError(Exception e) {
-		for (DownloadListener listener : listeners) {
-			listener.fileFailed(currentSource, e);
-		}
+	public boolean hasError() {
+		return error != null;
 	}
 
-	public synchronized void addListener(DownloadListener listener) {
-		listeners.add(listener);
+	public String getError() {
+		return error;
 	}
 
-	public interface DownloadListener {
-		public void update(FileDownload source, int bytesSoFar, int bytesTotal);
-		public void fileComplete(FileDownload source);
-		public void fileFailed(FileDownload source, Exception e);
+	public boolean isFileComplete() {
+		return complete;
+	}
+
+	public FileDownload getCurrent() {
+		return current;
+	}
+
+	public int getDownloadedBytes() {
+		return downloadedBytes;
+	}
+
+	public int getTotalBytes() {
+		return totalBytes;
+	}
+
+	public long getLastModified() {
+		return lastModified;
 	}
 
 	public interface FileDownload {
 		public String getDestination();
 		public String getURL();
+		public long getFilesize();
 	}
 }

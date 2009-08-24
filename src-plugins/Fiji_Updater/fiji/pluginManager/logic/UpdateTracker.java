@@ -13,6 +13,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 
 /*
  * UpdateTracker.java is for normal users in managing their plugins.
@@ -21,28 +23,16 @@ import java.util.List;
  * those that are marked for deletion. It is able to track the number of bytes
  * downloaded.
  */
-public class UpdateTracker implements Runnable, Downloader.DownloadListener {
+public class UpdateTracker implements Runnable, Observer {
 	private volatile Thread downloadThread;
 	private volatile Downloader downloader;
-	private List<FileDownload> downloaderList;
+	private List<FileDownload> downloadList;
 
 	public PluginCollection plugins;
-	public PluginObject currentlyDownloading;
-	// TODO: unify in ProgressListener interface
-	private int totalBytes;
-	private int completedBytesTotal;
-	private int currentBytesSoFar;
+	public PluginObject currentPlugin;
 
 	public UpdateTracker(PluginCollection plugins) {
 		this.plugins = plugins;
-	}
-
-	public int getBytesDownloaded() {
-		return (completedBytesTotal + currentBytesSoFar); //return progress
-	}
-
-	public int getBytesTotal() {
-		return totalBytes;
 	}
 
 	public boolean isDownloading() {
@@ -56,7 +46,7 @@ public class UpdateTracker implements Runnable, Downloader.DownloadListener {
 		downloadThread.start();
 	}
 
-	public synchronized void stopDownload() {
+	public synchronized void stop() {
 		downloadThread = null;
 		downloader.cancel();
 	}
@@ -71,7 +61,7 @@ public class UpdateTracker implements Runnable, Downloader.DownloadListener {
 			return;
 		}
 
-		downloaderList = new ArrayList<FileDownload>();
+		downloadList = new ArrayList<FileDownload>();
 		for (PluginObject plugin : plugins.toInstallOrUpdate()) {
 			String name = plugin.filename;
 			String saveTo = Util.prefixUpdate(name);
@@ -83,78 +73,64 @@ public class UpdateTracker implements Runnable, Downloader.DownloadListener {
 
 			String downloadURL = PluginManager.MAIN_URL + name
 				+ "-" + plugin.getTimestamp();
-			PluginDownload src = new PluginDownload(plugin,
-					downloadURL, saveTo);
-			downloaderList.add(src);
-
-			totalBytes += src.getFileSize();
+			PluginDownload file =
+				new PluginDownload(plugin, downloadURL, saveTo);
+			downloadList.add(file);
 		}
 
-		downloader = new Downloader(downloaderList.iterator());
-		downloader.addListener(this);
-		downloader.start();
+		downloader = new Downloader();
+		downloader.addObserver(this);
+		try {
+			downloader.start(downloadList);
+		} catch (RuntimeException e) {
+			// TODO: remove current file, tell user
+		}
+		downloadThread = null;
 	}
 
-	private void resolveDownloadError(PluginDownload src, Exception e) {
-		//try to delete the file
+	public void update(Observable observable, Object arg) {
+		if (downloader.hasError())
+			throw new RuntimeException("Failed!");
+
+		PluginDownload file = (PluginDownload)downloader.getCurrent();
+		String fileName = file.getDestination();
+		IJ.showStatus("Downloading " + fileName + "...");
+		IJ.showProgress(downloader.getDownloadedBytes(),
+			downloader.getTotalBytes());
+		if (!downloader.isFileComplete())
+			return;
+
+		long size = file.getFilesize();
+		long actualSize = Util.getFilesize(fileName);
+		if (size != actualSize)
+			throw new RuntimeException("Incorrect file size for "
+				+ fileName + ": " + actualSize
+				+ " (expected " + size + ")");
+
 		try {
-			new File(src.getDestination()).delete();
-		} catch (Exception e1) { }
-		src.getPlugin().fail();
-		System.out.println("Could not update " + src.getPlugin().getFilename() +
-				": " + e.getLocalizedMessage());
-		currentlyDownloading = null;
-	}
-
-	//Listener receives notification that download for file has finished
-	public void fileComplete(FileDownload source) {
-		PluginDownload src = (PluginDownload)source;
-		currentlyDownloading = src.getPlugin();
-		String filename = currentlyDownloading.getFilename();
-
-		try {
-			//Check filesize
-			long recordedSize = src.getFileSize();
-			long actualFilesize = Util.getFilesize(src.getDestination());
-			if (recordedSize != actualFilesize)
-				throw new Exception("Recorded filesize of " + filename + " is " +
-						recordedSize + ". It is not equal to actual filesize of " +
-						actualFilesize + ".");
-
-			// verify checksum
-			String recordedDigest = src.getDigest();
-			String actualDigest = Util.getDigest(filename, src.getDestination());
-			if (!recordedDigest.equals(actualDigest))
-				throw new Exception("Wrong checksum for " + filename +
-						": Recorded Checksum " + recordedDigest + " != Actual Checksum " +
-						actualDigest);
-
-			//This involves non-Windows launcher only
-			if (Util.isLauncher(filename) && !Util.platform.startsWith("win"))
-				Runtime.getRuntime().exec(new String[] {
-					"chmod", "0755", source.getDestination()});
-
-			currentlyDownloading.success();
-			System.out.println(currentlyDownloading.getFilename() + " finished download.");
-			currentlyDownloading = null;
-
+			String digest = file.getDigest();
+			String actualDigest = Util.getDigest(fileName);
+			if (!digest.equals(actualDigest))
+				throw new RuntimeException("Incorrect checksum "
+						+ "for " + fileName + ": "
+						+ actualDigest
+						+ " (expected " + digest + ")");
 		} catch (Exception e) {
-			resolveDownloadError(src, e);
-			currentlyDownloading = null;
+			e.printStackTrace();
+			throw new RuntimeException("Could not verify checksum "
+				+ "for " + fileName);
 		}
-		completedBytesTotal += currentBytesSoFar;
-		currentBytesSoFar = 0;
-	}
 
-	public void update(FileDownload source, int bytesSoFar, int bytesTotal) {
-		PluginDownload src = (PluginDownload)source;
-		currentlyDownloading = src.getPlugin();
-		currentBytesSoFar = bytesSoFar;
-	}
-
-	// TODO: stop altogether when a download failed
-	public void fileFailed(FileDownload source, Exception e) {
-		resolveDownloadError((PluginDownload)source, e);
+		if (Util.isLauncher(fileName) &&
+				!Util.platform.startsWith("win")) try {
+			Runtime.getRuntime().exec(new String[] {
+				"chmod", "0755", file.getDestination()
+			});
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new RuntimeException("Could not mark "
+				+ fileName + " as executable");
+		}
 	}
 
 	public static void touch(String target) throws IOException {

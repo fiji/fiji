@@ -24,7 +24,7 @@ public class PluginDownload implements FileDownload {
 		return plugin;
 	}
 
-	public long getFileSize() {
+	public long getFilesize() {
 		return plugin.filesize;
 	}
 

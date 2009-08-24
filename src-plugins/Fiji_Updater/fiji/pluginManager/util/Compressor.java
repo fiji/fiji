@@ -1,7 +1,5 @@
 package fiji.pluginManager.util;
 
-import fiji.pluginManager.logic.PluginManager;
-
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -18,7 +16,7 @@ import java.util.zip.GZIPOutputStream;
  */
 public class Compressor {
 	//Decompress a file
-	public static byte[] getDecompressedData(InputStream in) throws IOException {
+	public static byte[] decompress(InputStream in) throws IOException {
 		GZIPInputStream gzipInputStream = new GZIPInputStream(in);
 		ByteArrayOutputStream bout = new ByteArrayOutputStream(65536);
 		int data;
@@ -60,21 +58,5 @@ public class Compressor {
 		System.arraycopy(buffer, 0, newBuffer, 0,
 				Math.min(newLength, buffer.length));
 		return newBuffer;
-	}
-
-	//Testing
-	public static void main(String args[]) throws IOException {
-		//test compression
-		InputStream inStream = new FileInputStream(PluginManager.XML_FILENAME);
-		OutputStream outStream = new FileOutputStream(PluginManager.XML_COMPRESSED);
-		Compressor.compressAndSave(Compressor.readStream(inStream), outStream);
-
-		//test uncompress
-		byte[] data = Compressor.getDecompressedData(new FileInputStream(
-				PluginManager.XML_COMPRESSED));
-		OutputStream writer = new FileOutputStream(PluginManager.XML_FILENAME);
-		writer.write(data);
-		writer.flush();
-		writer.close();
 	}
 }

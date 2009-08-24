@@ -91,7 +91,7 @@ class Installer extends JFrame {
 					"Stop?",
 					JOptionPane.YES_NO_OPTION,
 					JOptionPane.WARNING_MESSAGE) == JOptionPane.YES_OPTION) {
-				updateTracker.stopDownload();
+				updateTracker.stop();
 			} else
 				return;
 		}
