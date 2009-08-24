@@ -27,7 +27,7 @@ class Installer extends JFrame {
 	private Timer timer;
 	private JButton btnClose;
 	private JProgressBar progressBar;
-	private JTextPane txtProgressDetails;
+	private TextPaneDisplay progressDetails;
 	private UpdateTracker updateTracker;
 
 	//Download Window opened from Plugin Manager UI
@@ -54,8 +54,8 @@ class Installer extends JFrame {
 		panel.add(Box.createRigidArea(new Dimension(0,15)));
 
 		/* Create textpane to hold the information */
-		txtProgressDetails = new TextPaneDisplay();
-		SwingTools.getTextScrollPane(txtProgressDetails, 555, 200, panel);
+		progressDetails = new TextPaneDisplay();
+		SwingTools.getTextScrollPane(progressDetails, 555, 200, panel);
 		panel.add(Box.createRigidArea(new Dimension(0,15)));
 
 		/* Button to cancel progressing task (Or press done when complete) */
@@ -75,11 +75,12 @@ class Installer extends JFrame {
 		getContentPane().add(panel, BorderLayout.CENTER);
 	}
 
+	// TODO: a singleton is not really needed
 	public void setInstaller(UpdateTracker updateTracker) {
 		if (this.updateTracker != null) throw new Error("Installer object already exists.");
 		else {
 			this.updateTracker = updateTracker;
-			updateTracker.start(); //download
+			updateTracker.start();
 		}
 	}
 
