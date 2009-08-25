@@ -20,10 +20,13 @@ public class Script_Editor implements PlugIn {
 
 	public void run(String path) {
 		addToolsJarToClassPath();
-		if (path == null || path.equals(""))
-			path = Macro.getValue(Macro.getOptions(), "path", null);
-		if (path == null)
-			path = Macro.getValue(Macro.getOptions(), "open", null);
+		String options = Macro.getOptions();
+		if (options != null) {
+			if (path == null || path.equals(""))
+				path = Macro.getValue(options, "path", null);
+			if (path == null)
+				path = Macro.getValue(options, "open", null);
+		}
 		new TextEditor(path);
 	}
 
