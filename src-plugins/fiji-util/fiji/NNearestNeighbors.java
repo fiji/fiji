@@ -82,6 +82,12 @@ public class NNearestNeighbors {
 
 		int k = (depth % kdTree.getDimension());
 		KDTree.NonLeaf nonLeaf = (KDTree.NonLeaf)node;
+		if (nonLeaf.right == null)
+			return findNNearestNeighbors(point, nonLeaf.left,
+				depth + 1, gotAlready, result);
+		if (nonLeaf.left == null)
+			return findNNearestNeighbors(point, nonLeaf.right,
+				depth + 1, gotAlready, result);
 		float projectedDistance = nonLeaf.coordinate - point.get(k);
 		boolean lookRight = projectedDistance < 0;
 		gotAlready = findNNearestNeighbors(point,
