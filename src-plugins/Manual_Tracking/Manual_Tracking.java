@@ -1,5 +1,5 @@
 /*Manual tracking v2.0, 15/06/05
-    Fabrice P Cordelières, fabrice.cordelieres at curie.u-psud.fr
+    Fabrice P CordeliÃ¨res, fabrice.cordelieres at curie.u-psud.fr
 New features:
 2D centring correction added
 Directionality check added
@@ -181,7 +181,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
     //Results tables------------------------------------------------------------
     ResultsTable rt; //2D results table
     ResultsTable rtmp; // Temporary results table
-    String[] head={"Track n°","Slice n°","X","Y","Distance","Velocity","Pixel Value"}; //2D results table's headings
+    String[] head={"Track nÂ°","Slice nÂ°","X","Y","Distance","Velocity","Pixel Value"}; //2D results table's headings
     ResultsTable rt3D; //3D results table
     
     //Load Previous Track File related variables--------------------------------
@@ -192,7 +192,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
     
     //Retrieve z coordinates dialog box & variables-----------------------------
     String[] CentringArray={"No centring correction", "Barycentre in signal box", "Max intensity in signal box"}; //List of options in the centring correction choicelist
-    int Centring; //3D centring option n°
+    int Centring; //3D centring option nÂ°
     int sglBoxx; //Width of the signal box
     int sglBoxy; //Height of the signal box
     int sglBoxz; //Depth of the signal box
@@ -200,7 +200,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
     int bkgdBoxy; //Height of the background box
     int bkgdBoxz; //Depth of the background box
     String[] QuantificationArray={"No background correction", "Bkgd box centred on sgl box", "Bkgd box on top left" , "Bkgd box on top right" , "Bkgd box on bottom left", "Bkgd box on bottom right"}; //List of options in the quantification settings choicelist
-    int Quantification; //3D quantification option n°
+    int Quantification; //3D quantification option nÂ°
     boolean DoQuantification; //True if the Do quantification checkbox is checked
     boolean DoBleachCorr; //True if the Do bleaching correction checkbox is checked
     boolean DoVRML; //True if the Export 3D+t data as a VRML file checkbox is checked
@@ -259,7 +259,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
     int xOld; //Variable to store previous x coordinate read from the 3D results table
     int yOld; //Variable to store previous y coordinate read from the 3D results table
     int zOld; //Variable to store previous z coordinate read from the 3D results table
-    int [][] VRMLarray; //1st dimension: line n° from the 3D results table; 2nd dimension: 0-Tag (track n°/color); 1-time; 2-x, 3-y; 4-z
+    int [][] VRMLarray; //1st dimension: line nÂ° from the 3D results table; 2nd dimension: 0-Tag (track nÂ°/color); 1-time; 2-x, 3-y; 4-z
     int vrmlCount; //Number of tracks modulo 6: will define the color applied to the track
     double DistOfView; //Distance between the object and the camera in the VRML view
     double minTime; //Minimum timepoint where a track is started
@@ -307,7 +307,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
         panel.add(butEnd);
         
         //***
-        butDel = new Button("Delete track n°");
+        butDel = new Button("Delete track nÂ°");
         butDel.addActionListener(this);
         panel.add(butDel);
         trackdel = new Choice();
@@ -494,9 +494,9 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
         panel.add(calxyfield);
         choicecalxy = new Choice();
         choicecalxy.add("nm");
-        choicecalxy.add("µm");
+        choicecalxy.add("Âµm");
         choicecalxy.add("unit");
-        choicecalxy.select("µm");
+        choicecalxy.select("Âµm");
         panel.add(choicecalxy);
         
         //***
@@ -686,8 +686,8 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
             canvas.removeMouseListener(this);
             islistening=false;
             int tracktodelete= (int) Tools.parseDouble(trackdel.getItem(trackdel.getSelectedIndex()));
-            gd = new GenericDialog("Delete Track n°" + tracktodelete);
-            gd.addMessage("Do you want to \n" + "delete track n°" + tracktodelete + " ?");
+            gd = new GenericDialog("Delete Track nÂ°" + tracktodelete);
+            gd.addMessage("Do you want to \n" + "delete track nÂ°" + tracktodelete + " ?");
             gd.showDialog();
             if (gd.wasCanceled()) return;
             
@@ -723,7 +723,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
             for (i=1;i<(rt.getValue(0,rt.getCounter()-1))+1;i++){
                 trackdel.add(""+i);
             }
-            IJ.showStatus("Track n°"+tracktodelete +" Deleted !");
+            IJ.showStatus("Track nÂ°"+tracktodelete +" Deleted !");
             Nbtrack=((int) rt.getValue(0,rt.getCounter()-1))+1;
         }
         
@@ -1000,7 +1000,7 @@ public class Manual_Tracking extends PlugInFrame implements ActionListener, Item
                 VRMLarray=new int[rt.getCounter()][5];
             }
             
-            String[] head3D={"Track n°","Timepoint ("+choicecalt.getItem(choicecalt.getSelectedIndex())+")","X","Y","Z","Distance","Velocity","Quantif sgl","Nb voxels sgl ("+(sglBoxx*2+1)+"x"+(sglBoxy*2+1)+"x"+(sglBoxz*2+1)+" px)","Quantif bkgd","Nb voxels bkgd ("+(bkgdBoxx*2+1)+"x"+(bkgdBoxy*2+1)+"x"+(bkgdBoxz*2+1)+" px)","Sgl bkgd corr","Sgl bkgd bleach corr","Quantif ttl"};
+            String[] head3D={"Track nÂ°","Timepoint ("+choicecalt.getItem(choicecalt.getSelectedIndex())+")","X","Y","Z","Distance","Velocity","Quantif sgl","Nb voxels sgl ("+(sglBoxx*2+1)+"x"+(sglBoxy*2+1)+"x"+(sglBoxz*2+1)+" px)","Quantif bkgd","Nb voxels bkgd ("+(bkgdBoxx*2+1)+"x"+(bkgdBoxy*2+1)+"x"+(bkgdBoxz*2+1)+" px)","Sgl bkgd corr","Sgl bkgd bleach corr","Quantif ttl"};
             
             for (i=0; i<head3D.length; i++) rt3D.setHeading(i,head3D[i]);
             
