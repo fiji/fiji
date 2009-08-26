@@ -141,6 +141,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Object_Counter3D.jar \
 	plugins/Tutorial_Maker.jar \
 	plugins/Script_Editor.jar \
+	plugins/Manual_Tracking.jar \
 	\
 	misc/Fiji.jar
 
