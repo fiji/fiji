@@ -1,4 +1,4 @@
-package fiji.utilities;
+package fiji.util;
 
 /*
  * A plugin to facilitate uploading files to the Fiji dropbox.

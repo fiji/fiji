@@ -1,4 +1,4 @@
-package fiji.utilities;
+package fiji.util;
 
 import ij.ImagePlus;
 

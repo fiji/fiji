@@ -1,4 +1,4 @@
-package fiji.utilities.gui;
+package fiji.util.gui;
 
 /*
  * This code is a modified form of the standard ImageCanvas which comes
