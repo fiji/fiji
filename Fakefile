@@ -193,8 +193,6 @@ jars/zs.jar <- src-plugins/zs/**/*.java
 # These classes are common to the scripting plugins
 jars/fiji-scripting.jar <- src-plugins/fiji-scripting/**/*.java
 
-jars/fiji-util.jar <- src-plugins/fiji-util/**/*.java
-
 CLASSPATH(plugins/Refresh_Javas.jar)=jars/fiji-scripting.jar
 CLASSPATH(plugins/Jython_Interpreter.jar)=jars/fiji-scripting.jar:jars/jython2.2.1/jython.jar
 plugins/Jython_Interpreter.jar <- src-plugins/Jython/*.java

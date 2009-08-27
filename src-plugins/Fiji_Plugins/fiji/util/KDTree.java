@@ -1,24 +1,24 @@
-package fiji;
+package fiji.util;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
-public class KDTreeInt {
+public class KDTree {
 	public interface Node { }
 
 	public interface Leaf extends Node {
 		/* get the k'th component of the vector */
-		int get(int k);
+		float get(int k);
 	}
 
 	protected class NonLeaf implements Node {
 		/* the axis of 'coordinate' is the depth modulo the dimension */
-		int coordinate;
+		float coordinate;
 		Node left, right;
 
-		public NonLeaf(int coordinate, Node left, Node right) {
+		public NonLeaf(float coordinate, Node left, Node right) {
 			this.coordinate = coordinate;
 			this.left = left;
 			this.right = right;
@@ -33,10 +33,12 @@ public class KDTreeInt {
 					result += ", " + ((Leaf)node).get(i);
 				return result + ")";
 			}
-			if (node instanceof NonLeaf)
-				return "[" + toString(((NonLeaf)node).left)
-					+ " |{" + coordinate + "} "
-					+ toString(((NonLeaf)node).right) + "]";
+			if (node instanceof NonLeaf) {
+				NonLeaf nonLeaf = (NonLeaf)node;
+				return "[" + toString(nonLeaf.left)
+					+ " |{" + nonLeaf.coordinate + "} "
+					+ toString(nonLeaf.right) + "]";
+			}
 			return node.toString();
 		}
 
@@ -55,7 +57,7 @@ public class KDTreeInt {
 	protected Node root;
 
 	/**
-	 * Construct a KDTreeInt from the elements in the given list.
+	 * Construct a KDTree from the elements in the given list.
 	 *
 	 * The elements must implement the interface Leaf.
 	 *
@@ -63,7 +65,7 @@ public class KDTreeInt {
 	 * as the median needs to be calculated (or estimated, if the length
 	 * is greater than medianLength).
 	 */
-	public KDTreeInt(List leaves, int dimension) {
+	public KDTree(List leaves, int dimension) {
 		this.dimension = dimension;
 		root = makeNode(leaves, 0);
 	}
@@ -78,7 +80,7 @@ public class KDTreeInt {
 			return (Leaf)leaves.get(0);
 
 		int k = (depth % dimension);
-		int median = median(leaves, k);
+		float median = median(leaves, k);
 
 		List left = new ArrayList();
 		List right = new ArrayList();
@@ -94,17 +96,17 @@ public class KDTreeInt {
 			makeNode(right, depth + 1));
 	}
 
-	protected int median(List leaves, int k) {
-		int[] list;
+	protected float median(List leaves, int k) {
+		float[] list;
 		if (leaves.size() <= medianLength) {
-			list = new int[leaves.size()];
+			list = new float[leaves.size()];
 			for (int i = 0; i < list.length; i++) {
 				Leaf leaf = (Leaf)leaves.get(i);
 				list[i] = leaf.get(k);
 			}
 		}
 		else {
-			list = new int[medianLength];
+			list = new float[medianLength];
 			Random random = new Random();
 			for (int i = 0; i < list.length; i++) {
 				int index = Math.abs(random.nextInt()) % list.length;
@@ -142,14 +144,14 @@ public class KDTreeInt {
 	// tests
 
 	static class Leaf2D implements Leaf {
-		int x, y;
+		float x, y;
 
-		public Leaf2D(int x, int y) {
+		public Leaf2D(float x, float y) {
 			this.x = x;
 			this.y = y;
 		}
 
-		public int get(int k) {
+		public float get(int k) {
 			return k == 0 ? x : y;
 		}
 
@@ -167,7 +169,7 @@ public class KDTreeInt {
 		list.add(new Leaf2D(8, 1));
 		list.add(new Leaf2D(7, 2));
 
-		KDTreeInt kd = new KDTreeInt(list, 2);
+		KDTree kd = new KDTree(list, 2);
 		System.out.println(kd);
 	}
 
