@@ -62,6 +62,7 @@ public class AreaCalculations {
 		}
 	}
 
+	/** Compute the perimeter of the path or multiple paths in @param path. */
 	public static double circumference(PathIterator path) {
 		return new Circumference().calculate(path);
 	}
@@ -79,6 +80,7 @@ public class AreaCalculations {
 		}
 	}
 
+	/** Compute the surface area of the path or multuple paths in @param path; returns a positive value for counter-clockwise paths, and negative for clockwise paths. Considers holes as holes; i.e. will do the right operation. */
 	public static double area(PathIterator path) {
 		return new Area().calculate(path);
 	}
