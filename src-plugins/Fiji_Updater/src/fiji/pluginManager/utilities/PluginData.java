@@ -1,15 +1,20 @@
 package fiji.pluginManager.utilities;
+
 import ij.Menus;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+
 import java.text.DecimalFormat;
+
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -30,7 +35,7 @@ import java.util.Arrays;
  * - Copy a file over to a particular location
  * - Get details of the Operating System Fiji application is on
  */
-public abstract class PluginData {
+public class PluginData {
 	private final String macPrefix = "Contents/MacOS/";
 	private boolean useMacPrefix;
 	private String fijiPath;
