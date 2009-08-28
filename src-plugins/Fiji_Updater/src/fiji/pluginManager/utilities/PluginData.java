@@ -1,7 +1,5 @@
 package fiji.pluginManager.utilities;
 
-import ij.Menus;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -30,7 +28,7 @@ import java.util.Arrays;
  * Class functionality:
  * Extend from it if you need to
  * - Calculate timestamps of files
- * - Calculate the Md5 sums of files
+ * - Calculate the checksums of files
  * - Get the absolute path (prefix()) of Fiji main directory
  * - Copy a file over to a particular location
  * - Get details of the Operating System Fiji application is on
@@ -64,8 +62,7 @@ public class PluginData {
 	}
 
 	public static String getFijiRootPath() {
-		return stripSuffix(stripSuffix(Menus.getPlugInsPath(),
-				File.separator), "plugins");
+		return System.getProperty("fiji.dir") + File.separator;
 	}
 
 	public static String stripSuffix(String string, String suffix) {

@@ -270,7 +270,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	public PluginObject getPluginFromDigest(String filename, String digest) {
 		for (PluginObject plugin : this)
 			if (plugin.getFilename().equals(filename) &&
-					plugin.getmd5Sum().equals(digest))
+					plugin.getChecksum().equals(digest))
 				return plugin;
 		return null;
 	}

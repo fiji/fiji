@@ -6,9 +6,9 @@ import java.util.Map;
 
 public class PluginObject {
 	private String strFilename; //Main identifier
-	private String md5Sum; //Used for comparison: Determine if update needed
+	private String checksum; //Used for comparison: Determine if update needed
 	private String timestamp; //Version of plugin file ("Unique within each filename")
-	private String newMd5Sum; //if any
+	private String newChecksum; //if any
 	private String newTimestamp; //if any
 	private PluginDetails pluginDetails;
 	private long filesize;
@@ -16,7 +16,7 @@ public class PluginObject {
 
 	//Status of its record in database
 	private boolean fiji; //name in records or not
-	private boolean recorded; //its md5 sum in records or not
+	private boolean recorded; //its checksum in records or not
 	private boolean readOnly; //physical file (local side) read-only?
 
 	public static enum Action {
@@ -75,10 +75,10 @@ public class PluginObject {
 	public static enum ChangeStatus { NONE, SUCCESS, FAIL };
 	private ChangeStatus changedStatus = ChangeStatus.NONE;
 
-	public PluginObject(String strFilename, String md5Sum, String timestamp, Status status,
+	public PluginObject(String strFilename, String checksum, String timestamp, Status status,
 			boolean fiji, boolean recorded) {
 		this.strFilename = strFilename;
-		this.md5Sum = md5Sum;
+		this.checksum = checksum;
 		this.timestamp = timestamp;
 		this.status = status;
 		this.fiji = fiji;
@@ -87,9 +87,9 @@ public class PluginObject {
 		setNoAction();
 	}
 
-	public void setUpdateDetails(String newMd5Sum, String newTimestamp) {
+	public void setUpdateDetails(String newChecksum, String newTimestamp) {
 		status = Status.UPDATEABLE; //set status, if not done so already
-		this.newMd5Sum = newMd5Sum;
+		this.newChecksum = newChecksum;
 		this.newTimestamp = newTimestamp;
 	}
 
@@ -155,12 +155,12 @@ public class PluginObject {
 		return strFilename;
 	}
 
-	public String getmd5Sum() {
-		return md5Sum;
+	public String getChecksum() {
+		return checksum;
 	}
 
-	public String getNewMd5Sum() {
-		return newMd5Sum;
+	public String getNewChecksum() {
+		return newChecksum;
 	}
 
 	public String getTimestamp() {
