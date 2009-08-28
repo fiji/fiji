@@ -25,9 +25,15 @@ public class XMLFileDownloader extends PluginDataObservable implements Downloade
 	private long xmlLastModified;
 	private byte[] data;
 	private PluginData util;
+	private String url;
 
 	public XMLFileDownloader(PluginData util) {
+		this(util, PluginManager.MAIN_URL);
+	}
+
+	public XMLFileDownloader(PluginData util, String url) {
 		this.util = util;
+		this.url = url;
 	}
 
 	public void startDownload() throws IOException {
@@ -42,7 +48,7 @@ public class XMLFileDownloader extends PluginDataObservable implements Downloade
 			dateRecorded = 0;
 		}
 		//From server, record modified date of XML for uploading purposes (Check lock conflict)
-		String xml_url = PluginManager.MAIN_URL + PluginManager.XML_COMPRESSED;
+		String xml_url = url + PluginManager.XML_COMPRESSED;
 		try {
 			URLConnection myConnection = new URL(xml_url).openConnection();
 			myConnection.setUseCaches(false);
@@ -58,8 +64,6 @@ public class XMLFileDownloader extends PluginDataObservable implements Downloade
 			Prefs.set(PluginManager.PREFS_XMLDATE, "" + xmlLastModified);
 			addToDownload(xml_url, PluginManager.XML_COMPRESSED);
 		}
-		addToDownload(PluginManager.MAIN_URL + PluginManager.DTD_FILENAME,
-				PluginManager.DTD_FILENAME);
 
 		//Start downloading the required files
 		Downloader downloader = new Downloader(sources.iterator());

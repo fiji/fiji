@@ -41,8 +41,6 @@ Show-stoppers:
 
   Think for example if a dependency is fixed.
 
-- No plugins.dtd.  This is hurting my pl<Tab> completion.
-
 - The dependency list should be editable so that the developer can
   correct mistakes (not all are "at-least" dependencies) and add
   additional dependencies.
@@ -67,6 +65,9 @@ Show-stoppers:
   serious bug regarding the lookup tables in Fiji Dresden 2009), we need
   to include previous version hashes, too, so that people _can_ update
   without a hassle.
+
+- The current time of the server _must_ be used for new timestamps!!!
+  Otherwise, we risk clock skew!!!
 
 Not-quite show-stoppers:
 
@@ -102,3 +103,18 @@ Not-quite show-stoppers:
 
 - make the list sortable by clicking on the column titles (second click
   sorts descending).
+
+- instead of having a data model for the XML file, and a different one for
+  Java, use the XML one in Java, too: we should _not_ create a complete
+  PluginObject for every single previous version!
+
+- it is totally unclear what is the purpose and intended collaboration of
+  the UpdateTracker, FileDownload, SourceFile, PluginDownload, Installer and
+  Downloader classes.  But it is not really necessary to have that many
+  classes play together, either.  There should be a single Downloader which
+  is observable.
+
+- as plugins should be copied into /var/www/update/ as read-only files, make
+  sure that only those are copied that have not changed.
+
+- it was part of the project plan to provide automated tests.  Add some.

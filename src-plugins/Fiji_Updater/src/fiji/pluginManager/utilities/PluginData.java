@@ -1,15 +1,18 @@
 package fiji.pluginManager.utilities;
-import ij.Menus;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+
 import java.text.DecimalFormat;
+
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -25,12 +28,12 @@ import java.util.Arrays;
  * Class functionality:
  * Extend from it if you need to
  * - Calculate timestamps of files
- * - Calculate the Md5 sums of files
+ * - Calculate the checksums of files
  * - Get the absolute path (prefix()) of Fiji main directory
  * - Copy a file over to a particular location
  * - Get details of the Operating System Fiji application is on
  */
-public abstract class PluginData {
+public class PluginData {
 	private final String macPrefix = "Contents/MacOS/";
 	private boolean useMacPrefix;
 	private String fijiPath;
@@ -59,8 +62,7 @@ public abstract class PluginData {
 	}
 
 	public static String getFijiRootPath() {
-		return stripSuffix(stripSuffix(Menus.getPlugInsPath(),
-				File.separator), "plugins");
+		return System.getProperty("fiji.dir") + File.separator;
 	}
 
 	public static String stripSuffix(String string, String suffix) {

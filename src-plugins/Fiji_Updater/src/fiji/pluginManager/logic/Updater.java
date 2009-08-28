@@ -1,38 +1,50 @@
 package fiji.pluginManager.logic;
+
+import com.jcraft.jsch.JSchException;
+
+import fiji.pluginManager.logic.FileUploader.SourceFile;
+import fiji.pluginManager.logic.FileUploader.UploadListener;
+
+import fiji.pluginManager.utilities.Compressor;
+import fiji.pluginManager.utilities.PluginData;
+
+import ij.IJ;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.sax.TransformerHandler;
+
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
-import com.jcraft.jsch.JSchException;
-import fiji.pluginManager.logic.FileUploader.SourceFile;
-import fiji.pluginManager.logic.FileUploader.UploadListener;
-import fiji.pluginManager.utilities.Compressor;
-import fiji.pluginManager.utilities.PluginData;
 
 /*
- * This class is responsible for writing updates to server, upon given the updated
- * plugin records (Map of plugins to all versions).
+ * This class is responsible for writing updates to server, upon given the
+ * updated plugin records (Map of plugins to all versions).
  *
  * 1st Step: Generates the updated records (newPluginRecords & filesToUpload)
- * 2nd Step: Login details _must_ be authenticated before below steps can proceed
- * 3rd Step: Write and validate XML file, and write current.txt contents too
+ * 2nd Step: Login details _must_ be authenticated before below steps can
+ *           proceed
+ * 3rd Step: Write and validate XML file, and write current.txt
+ *           contents too
  * 4th Step: Upload XML, text and plugin file(s) to server
  *
  * Note: Plugins are uploaded differently
- * - Non-Fiji plugins & new versions of Fiji Plugins will have files AND details uploaded
- * - Uninstalled & up-to-date plugins will ONLY have their details uploaded (i.e.: XML file)
- * - Updater's FileUploader does NOT upload the DTD file. It assumes the DTD file is up to date.
+ * - Non-Fiji plugins & new versions of Fiji Plugins will have files AND
+ *   details uploaded
+ * - Uninstalled & up-to-date plugins will ONLY have their details uploaded
+ *   (i.e.: XML file)
  */
 public class Updater {
 	private FileUploader fileUploader;
@@ -55,28 +67,38 @@ public class Updater {
 	protected PluginData util;
 
 	public Updater(PluginManager pluginManager) {
-		util = pluginManager;
-
-		pluginCollection = pluginManager.pluginCollection;
-		changesList = pluginCollection.getToUpload();
+		this(pluginManager, pluginManager.pluginCollection,
+			pluginManager.xmlFileReader,
+			pluginManager.getXMLLastModified());
 		changesList.resetChangeStatuses();
-		dependencyAnalyzer = new DependencyAnalyzer();
-		xmlFileReader = pluginManager.xmlFileReader;
+	}
 
-		xmlLastModified = pluginManager.getXMLLastModified();
+	public Updater(PluginData util, PluginCollection pluginCollection,
+			XMLFileReader xmlFileReader, long xmlLastModified) {
+		this.util = util;
+
+		this.pluginCollection = pluginCollection;
+		changesList = pluginCollection.getToUpload();
+		dependencyAnalyzer = new DependencyAnalyzer();
+		this.xmlFileReader = xmlFileReader;
+
+		this.xmlLastModified = xmlLastModified;
 		savePaths = new String[relativePaths.length];
 		for (int i = 0; i < savePaths.length; i++)
 			savePaths[i] = util.prefix(relativePaths[i]);
 		backupXMLPath = util.prefix(PluginManager.XML_BACKUP);
 	}
 
+	public void setUploader(FileUploader uploader) {
+		fileUploader = uploader;
+	}
+
 	public synchronized boolean setLogin(String username, String password) {
 		try {
-			fileUploader = new FileUploader(username, password);
-			System.out.println("User " + username + " logged in successfully.");
+			fileUploader = new SSHFileUploader(username, password);
 			return true;
 		} catch (JSchException e) {
-			System.out.println("Failed to login. Username or password incorrect.");
+			IJ.error("Failed to login");
 			return false;
 		}
 	}
@@ -93,7 +115,7 @@ public class Updater {
 				PluginCollection versions = (PluginCollection)newPluginRecords.get(filename);
 				PluginObject latest = versions.getLatestPlugin();
 				//if either an existing version, or timestamp is older than recorded version
-				if (latest.getmd5Sum().equals(pluginToUpload.getmd5Sum()) ||
+				if (latest.getChecksum().equals(pluginToUpload.getChecksum()) ||
 						latest.getTimestamp().compareTo(pluginToUpload.getTimestamp()) >= 0) {
 					//Just update details
 					latest.setPluginDetails(pluginToUpload.getPluginDetails());
@@ -129,7 +151,8 @@ public class Updater {
 
 	public synchronized void uploadFilesToServer(UploadListener uploadListener) throws Exception  {
 		System.out.println("********** Upload Process begins **********");
-		fileUploader.addListener(uploadListener);
+		if (uploadListener != null)
+			fileUploader.addListener(uploadListener);
 
 		generateAndValidateXML();
 		saveXMLFile();
@@ -138,7 +161,7 @@ public class Updater {
 		filesToUpload.add(0, new UpdateSource(savePaths[0], relativePaths[0], "C0644"));
 		//Text file for old Fiji Updater, writable for all uploaders
 		filesToUpload.add(new UpdateSource(savePaths[1], relativePaths[1], "C0664"));
-		fileUploader.beganUpload(xmlLastModified, filesToUpload);
+		fileUploader.upload(xmlLastModified, filesToUpload);
 
 		//No errors thrown, implies successful upload, so just remove temporary files
 		new File(backupXMLPath).delete();
@@ -169,7 +192,7 @@ public class Updater {
 			PluginCollection versions = (PluginCollection)newPluginRecords.get(filename);
 			PluginObject latestPlugin = versions.getLatestPlugin();
 			txtPrintStream.println(latestPlugin.getFilename() + " " +
-				latestPlugin.getTimestamp() + " " + latestPlugin.getmd5Sum());
+				latestPlugin.getTimestamp() + " " + latestPlugin.getChecksum());
 		}
 		txtPrintStream.close();
 	}
@@ -204,7 +227,7 @@ public class Updater {
 				//tag "version" for the latest version
 				attrib.clear();
 				attrib.addAttribute("", "", "timestamp", "CDATA", latest.getTimestamp());
-				attrib.addAttribute("", "", "checksum", "CDATA", latest.getmd5Sum());
+				attrib.addAttribute("", "", "checksum", "CDATA", latest.getChecksum());
 				attrib.addAttribute("", "", "filesize", "CDATA", "" + latest.getFilesize());
 				handler.startElement("", "", "version", attrib);
 				if (latest.getPluginDetails().getDescription() != null)
@@ -233,7 +256,7 @@ public class Updater {
 					//tag "previous-version"
 					attrib.clear();
 					attrib.addAttribute("", "", "timestamp", "CDATA", version.getTimestamp());
-					attrib.addAttribute("", "", "checksum", "CDATA", version.getmd5Sum());
+					attrib.addAttribute("", "", "checksum", "CDATA", version.getChecksum());
 					handler.startElement("", "", "previous-version", attrib);
 					handler.endElement("", "", "previous-version");
 				}

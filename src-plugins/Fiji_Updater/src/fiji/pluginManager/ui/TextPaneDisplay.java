@@ -210,8 +210,8 @@ public class TextPaneDisplay extends JTextPane {
 		bold("Dependency");
 		insertDependenciesList(plugin.getDependencies());
 		insertBlankLine();
-		bold("Md5 Sum");
-		normal("\n" + plugin.getmd5Sum());
+		bold("Checksum");
+		normal("\n" + plugin.getChecksum());
 		insertBlankLine();
 		bold("Is Fiji Plugin: ");
 		normal(plugin.isFijiPlugin() ? "Yes" : "No");
@@ -219,8 +219,8 @@ public class TextPaneDisplay extends JTextPane {
 			insertBlankLine();
 			title("Update Details");
 			insertBlankLine();
-			bold("New Md5 Sum");
-			normal("\n" + plugin.getNewMd5Sum());
+			bold("New Checksum");
+			normal("\n" + plugin.getNewChecksum());
 			insertBlankLine();
 			bold("Released: ");
 			normal(plugin.getNewTimestamp());

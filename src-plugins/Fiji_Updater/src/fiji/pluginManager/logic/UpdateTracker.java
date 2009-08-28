@@ -166,12 +166,12 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 						recordedSize + ". It is not equal to actual filesize of " +
 						actualFilesize + ".");
 
-			//Check Md5 sum
+			// verify checksum
 			String recordedDigest = src.getRecordedDigest();
 			String actualDigest = getDigest(filename, src.getDestination());
 			if (!recordedDigest.equals(actualDigest))
 				throw new Exception("Wrong checksum for " + filename +
-						": Recorded Md5 sum " + recordedDigest + " != Actual Md5 sum " +
+						": Recorded Checksum " + recordedDigest + " != Actual Checksum " +
 						actualDigest);
 
 			//This involves non-Windows launcher only

@@ -1,7 +1,6 @@
 package fiji.pluginManager.utilities;
 import ij.IJ;
 import ij.ImageJ;
-import ij.Menus;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,8 +21,7 @@ public class Class2JarFileMap extends HashMap<String, String> {
 	}
 
 	private String getFijiDirectory() {
-		return PluginData.stripSuffix(PluginData.stripSuffix(Menus.getPlugInsPath(),
-				File.separator), File.separator + "plugins").replace('\\', '/');
+		return System.getProperty("fiji.dir").replace('\\', '/');
 	}
 
 	private void addDirectory(String directory) {
