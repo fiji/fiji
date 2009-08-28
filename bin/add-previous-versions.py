@@ -1,54 +1,96 @@
 #!/usr/bin/python
 
-import UpdateFiji
+from fiji.pluginManager.utilities import PluginData
 import os
 import re
+import sys
 
 prefix = '/var/www/update/'
-xml = 'db.xml.gz'
+xmlPath = prefix + 'db.xml.gz'
 
 pattern = re.compile('^(.*)-([0-9]{14})$')
-updater = UpdateFiji()
+updater = PluginData()
 
-def getDigests(dir):
-	result = []
+def addRecord(result, path):
+	match = pattern.match(path)
+	if match == None:
+		return
+	sys.stderr.write("\rAdding record for " + path + '... ')
+	sha1 = updater.getDigest(match.group(1), prefix + path)
+	size = os.stat(prefix + path).st_size
+	if match.group(1) in result:
+		result[match.group(1)][match.group(2)] = [sha1, size]
+	else:
+		result[match.group(1)] = dict({match.group(2): [sha1, size]})
+
+def getDigests(result, dir):
 	names = os.listdir(prefix + dir)
+	names.sort()
 	for name in names:
 		if dir == '':
-			prefixed = name
+			path = name
 		else:
-			prefixed = dir + '/' + name
-		path = prefix + prefixed
-		if os.path.isdir(path):
-			result.extend(getDigests(prefixed))
+			path = dir + '/' + name
+		prefixed = prefix + path
+		if os.path.isdir(prefixed):
+			getDigests(result, path)
 			continue
-		match = pattern.match(prefixed)
-		if match == None:
-			continue
-		sha1 = updater.getDigest(match.group(1), path)
-		result.append([match.group(1), match.group(2), sha1])
+		addRecord(result, path)
 
-	return result
-
-def getXML(path):
+def readXML(path):
 	return ''.join(os.popen('gunzip < ' + path).readlines())
 
-def insertRecord(xml, record):
-	if xml.find(record[2]) >= 0:
-		return xml # already in there
-	off = xml.find('<plugin filename="' + record[0] + '">')
-	previous = "\n        <previous-version timestamp=\"" \
-		+ record[1] + '" checksum="' + record[2] + '"/>'
+def writeXML(path, xml):
+	f = os.popen('gzip -9 > ' + path, 'w')
+	f.write(xml)
+	f.close()
+
+def insertRecord(xml, plugin, record):
+	pluginTag = '<plugin filename="' + plugin + "\">\n"
+	off = xml.find(pluginTag)
 	if off < 0:
 		off = xml.rfind('</plugin>')
-		xml = xml[:off] + "</plugin>\n    <plugin filename=\"" \
-			+ record[0] + "\">" + previous + "\n    " + xml[off:]
-		return xml
-	endoff = xml.find('</plugin>', off)
-	eol = xml.rfind("\n", 0, endoff)
-	return xml[:eol] + previous + xml[eol:]
+		insert = "</plugin>\n    " + pluginTag
+		xml = xml[:off] + insert + '    ' + xml[off:]
+		off = off + len(insert)
+		endOff = off
+		versionBody = None
+	else:
+		off = off + len(pluginTag)
+		versionOff = xml.find('<version ', off)
+		bodyOff = xml.find(">\n", versionOff) + 2
+		if xml[bodyOff - 3] == '/':
+			versionBody = None
+			bodyEndOff = bodyOff
+		else:
+			bodyEndOff = xml.find("        </version>\n", bodyOff)
+			versionBody = xml[bodyOff:bodyEndOff]
+		endOff = xml.find('    </plugin>', bodyEndOff)
+	dates = record.keys()
+	dates.sort()
+	dates.reverse()
+	insert = None
+	for date in dates:
+		metadata = record[date]
+		if insert == None:
+			insert = '        <version timestamp="' + date \
+				+ '" checksum="' + metadata[0] \
+				+ '" filesize="' + str(metadata[1]) + '\"'
+			if versionBody == None:
+				insert = insert + "/>\n"
+			else:
+				insert = insert + ">\n" + versionBody \
+					 + "        </version>\n"
+		else:
+			insert = insert \
+				+ '        <previous-version timestamp="' \
+				+ date + '" checksum="' + metadata[0] + "\"/>\n"
+	xml = xml[:off] + insert + xml[endOff:]
+	return xml
 
-xml = getXML(xml)
-for record in getDigests(''):
-	xml = insertRecord(xml, record)
-print xml
+xml = readXML(xmlPath)
+digests = dict()
+getDigests(digests, '')
+for plugin in digests.keys():
+	xml = insertRecord(xml, plugin, digests[plugin])
+writeXML(xmlPath, xml)
