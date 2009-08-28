@@ -769,7 +769,10 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 								this.auxFinalVertex = findPointVertex(this.junctionVertex[iTree], this.auxPoint);
 								if(this.auxPoint == null)
 								{
-									IJ.error("Point "+ aux + " has not neighbor end junction!");
+									//IJ.error("Point "+ aux + " has not neighbor end junction!");
+									// Inner loop
+									this.auxFinalVertex = initialVertex;
+									this.auxPoint = aux;
 								}
 								length += calculateDistance(this.auxPoint, aux);
 							}
