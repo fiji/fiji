@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.measure.ResultsTable;
 import ij.plugin.filter.PlugInFilter;
@@ -42,7 +43,7 @@ import ij.process.ShortProcessor;
  * http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:analyzeskeleton:start
  *
  *
- * @version 1.0 08/29/2009
+ * @version 1.0 08/31/2009
  * @author Ignacio Arganda-Carreras <ignacio.arganda@gmail.com>
  *
  */
@@ -143,10 +144,21 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	private Vertex auxFinalVertex = null;
 		
 	/** prune cycle options */
-	public static final String[] pruneCyclesModes = {"none", "shortest branch"};
-	/** prune cycle options index */
-	public static int pruneIndex = 0;
+	public static final String[] pruneCyclesModes = {"none", "shortest branch", "lowest pixel intensity"};
+	/** no pruning mode index */
+	public static final int NONE = 0;
+	/** shortest branch pruning mode index */
+	public static final int SHORTEST_BRANCH = 1;
+	/** lowest pixel intensity pruning mode index */
+	public static final int LOWEST_INTENSITY = 2;
 	
+	/** original grayscale image (for lowest pixel intensity pruning mode) */
+	private ImageStack originalImage = null;
+	
+	/** prune cycle options index */
+	public static int pruneIndex = AnalyzeSkeleton_.NONE;
+	
+	/** debugging flag */
 	private final boolean debug = false;
 	
 	
@@ -169,7 +181,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		}
 
 		return DOES_8G; 
-	} /* end setup */
+	} // end method setup 
 	
 	/* -----------------------------------------------------------------------*/
 	/**
@@ -191,10 +203,44 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		
 		switch(pruneIndex)
 		{
-			case 0:
+			// No pruning
+			case AnalyzeSkeleton_.NONE:
 				this.bPruneCycles = false;
 				break;
-			case 1:
+			// Pruning cycles by shortest branch
+			case AnalyzeSkeleton_.SHORTEST_BRANCH:
+				this.bPruneCycles = true;
+				break;
+			// Pruning cycles by lowest pixel intensity
+			case AnalyzeSkeleton_.LOWEST_INTENSITY:
+				// Select original image between the open images
+				int[] ids = WindowManager.getIDList();
+				if ( ids == null || ids.length < 1 )
+				{
+					IJ.showMessage( "You should have at least one image open." );
+					return;
+				}
+				
+				String[] titles = new String[ ids.length ];
+				for ( int i = 0; i < ids.length; ++i )
+				{
+					titles[ i ] = ( WindowManager.getImage( ids[ i ] ) ).getTitle();
+				}
+				
+				final GenericDialog gd2 = new GenericDialog( "Image selection" );
+				
+				gd2.addMessage( "Select original grayscale image:" );
+				final String current = WindowManager.getCurrentImage().getTitle();
+				gd2.addChoice( "original_image", titles, current );
+				
+				gd2.showDialog();
+				
+				if (gd2.wasCanceled()) 
+					return;
+				
+				// Get original stack
+				this.originalImage = WindowManager.getImage( ids[ gd2.getNextChoiceIndex() ] ).getStack();
+				
 				this.bPruneCycles = true;
 				break;
 			default:
@@ -215,7 +261,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		// Prune cycles if necessary
 		if(bPruneCycles)
 		{
-			if(pruneCycles(this.inputImage))
+			if(pruneCycles(this.inputImage, this.originalImage, AnalyzeSkeleton_.pruneIndex))
 			{
 				// initialize visit flags
 				resetVisited();
@@ -297,10 +343,12 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	// -----------------------------------------------------------------------
 	/**
 	 * Prune cycles from tagged image and update it
-	 * @param inputImage input image
+	 * @param inputImage input skeleton image
+	 * @param originalImage original gray-scale image
+	 * @param pruning mode (SHORTEST_BRANCH, LOWEST_INTENSITY)
 	 * @return true if the input image was pruned or false if there were no cycles
 	 */
-	private boolean pruneCycles(ImageStack inputImage) 
+	private boolean pruneCycles(ImageStack inputImage, final ImageStack originalImage, final int pruningMode) 
 	{
 		boolean pruned = false;
 		
@@ -348,19 +396,28 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 						{
 							// Extract predecessor
 							final Edge pre = backtrackVertex.getPredecessor();
-							// Update shortest loop edge
-							if(pre.getSlabs().size() < minEdge.getSlabs().size())
+							// Update shortest loop edge if necessary
+							if(pruningMode == AnalyzeSkeleton_.SHORTEST_BRANCH && 
+									pre.getSlabs().size() < minEdge.getSlabs().size())
 								minEdge = pre;
 							// Add to loop edge list
 							loopEdges.add(pre);
 							// Extract predecessor
 							backtrackVertex = pre.getV1().equals(backtrackVertex) ? pre.getV2() : pre.getV1(); 
 						}
-
-						// Remove middle slab from the shortest loop edge
-						Point removeCoords = minEdge.getSlabs().get(minEdge.getSlabs().size()/2);
-						setPixel(inputImage, removeCoords,(byte) 0);
-					}
+						
+						// Prune cycle
+						if(pruningMode == AnalyzeSkeleton_.SHORTEST_BRANCH)
+						{
+							// Remove middle slab from the shortest loop edge
+							Point removeCoords = minEdge.getSlabs().get(minEdge.getSlabs().size()/2);
+							setPixel(inputImage, removeCoords,(byte) 0);
+						}
+						else if (pruningMode == AnalyzeSkeleton_.LOWEST_INTENSITY)
+						{
+							cutLowestIntensityBranch(loopEdges, inputImage, originalImage);
+						}
+					}// endfor backEdges
 
 					pruned = true;
 				}
@@ -369,6 +426,61 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		
 		return pruned;		
 	}// end method pruneCycles
+
+	// -----------------------------------------------------------------------
+	/**
+	 * Cut the a list of edge in the lowest pixel intensity voxel
+	 * 
+	 * @param loopEdges list of edges to be analyze
+	 * @param inputImage2 input skeleton image
+	 */
+	private void cutLowestIntensityBranch(
+			final ArrayList<Edge> loopEdges,
+			ImageStack inputImage2,
+			ImageStack originalGrayImage) 
+	{
+		Point lowestIntensityVoxel = loopEdges.get(0).getV1().getPoints().get(0);
+		
+		double lowestIntensityValue = getAverageNeighborhoodValue(originalGrayImage, lowestIntensityVoxel);
+		
+		for(final Edge e : loopEdges)
+		{
+			// Check slab points
+			for(final Point p : e.getSlabs())
+			{
+				final double avg = getAverageNeighborhoodValue(originalGrayImage, p);
+				if(avg < lowestIntensityValue)
+				{
+					lowestIntensityValue = avg;
+					lowestIntensityVoxel = p;
+				}
+			}
+			// Check vertices
+			for(final Point p : e.getV1().getPoints())
+			{
+				final double avg = getAverageNeighborhoodValue(originalGrayImage, p);
+				if(avg < lowestIntensityValue)
+				{
+					lowestIntensityValue = avg;
+					lowestIntensityVoxel = p;
+				}
+			}
+			for(final Point p : e.getV2().getPoints())
+			{
+				final double avg = getAverageNeighborhoodValue(originalGrayImage, p);
+				if(avg < lowestIntensityValue)
+				{
+					lowestIntensityValue = avg;
+					lowestIntensityVoxel = p;
+				}
+			}
+		}
+		
+		// Cut loop in the lowest intensity pixel value position
+		if(debug)
+			IJ.log("Cut loop at coordinates: " + lowestIntensityVoxel);
+		setPixel(inputImage2, lowestIntensityVoxel,(byte) 0);
+	}
 
 	// -----------------------------------------------------------------------
 	/**
@@ -390,7 +502,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		//IJ.resetMinAndMax();
 		tagIP.resetDisplayRange();
 		tagIP.updateAndDraw();
-	}
+	} // end method displayTagImage
 	
 	// -----------------------------------------------------------------------
 	/**
@@ -462,7 +574,8 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 			this.listOfSingleJunctions[i] = new ArrayList < ArrayList <Point> > ();
 		}
 		this.junctionVertex  = new Vertex[this.numOfTrees][];
-	}
+	}// end method initializeTrees
+	
 	// -----------------------------------------------------------------------
 	/**
 	 * Show results table
@@ -507,9 +620,9 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 			IJ.log(sb.toString());
 		}
 		rt.show("Results");
-	}
+	}// end method showResults
 
-	/* -----------------------------------------------------------------------*/
+	// -----------------------------------------------------------------------
 	/**
 	 * Visit skeleton from end points and register measures.
 	 * 
@@ -674,8 +787,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 				continue;
 			}
 			
-			// Add branch to graph
-			
+			// Add branch to graph			
 			if(debug)
 				IJ.log("adding branch from " + v1.getPoints().get(0) + " to " + this.auxFinalVertex.getPoints().get(0));
 			this.graph[iTree].addVertex(this.auxFinalVertex);
@@ -1706,7 +1818,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		}
 		
 		return outputImage;
-	}/* end tagImage */
+	}// end method tagImage 
 
 	/* -----------------------------------------------------------------------*/
 	/**
@@ -1728,10 +1840,42 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 				n++;
 		// We return n-1 because neighborhood includes the actual voxel.
 		return (n-1);			
+	}// end method getNumberOfNeighbors
+	
+	// -----------------------------------------------------------------------
+	/**
+	 * Get average neighborhood pixel value of a given point
+	 * 
+	 * @param image input image
+	 * @param p image coordinates
+	 */
+	private double getAverageNeighborhoodValue(ImageStack image, Point p)
+	{
+		byte[] neighborhood = getNeighborhood(image, p.x, p.y, p.z);
+		
+		double avg = 0;
+		for(int i = 0; i < neighborhood.length; i++)
+			avg += neighborhood[i];
+		if(neighborhood.length > 0)
+			return avg / neighborhood.length;
+		else
+			return 0;
+	}// end method getAverageNeighborhoodValue
+	
+	// -----------------------------------------------------------------------
+	/**
+	 * Get neighborhood of a pixel in a 3D image (0 border conditions) 
+	 * 
+	 * @param image 3D image (ImageStack)
+	 * @param p 3D point coordinates
+	 * @return corresponding 27-pixels neighborhood (0 if out of image)
+	 */
+	private byte[] getNeighborhood(ImageStack image, Point p)
+	{
+		return getNeighborhood(image, p.x, p.y, p.z);
 	}
 	
-	
-	/* -----------------------------------------------------------------------*/
+	// -----------------------------------------------------------------------
 	/**
 	 * Get neighborhood of a pixel in a 3D image (0 border conditions) 
 	 * 
