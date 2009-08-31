@@ -512,15 +512,28 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		
 		double lowestIntensityValue = Double.MAX_VALUE;
 		
+		Point cutPoint = null;
+		
 		for(final Edge e : loopEdges)
 		{
 			// Calculate average intensity of the edge neighborhood
+			double min_val = Double.MAX_VALUE;
+			Point darkestPoint = null;
+							
 			double edgeIntensity = 0;
 			double n_vox = 0;
+			
 			// Check slab points
 			for(final Point p : e.getSlabs())
 			{
-				edgeIntensity += getAverageNeighborhoodValue(originalGrayImage, p);
+				final double avg = getAverageNeighborhoodValue(originalGrayImage, p);
+				// Keep track of the darkest point of the edge
+				if(avg < min_val)
+				{
+					min_val = avg;
+					darkestPoint = p;
+				}
+				edgeIntensity += avg;
 				n_vox++;
 			}
 			// Check vertices
@@ -543,13 +556,14 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 			{
 				lowestIntensityEdge = e;
 				lowestIntensityValue = edgeIntensity;
+				cutPoint = darkestPoint;
 			}
 		}
 		
 		// Cut loop in the lowest intensity branch medium position
 		Point removeCoords = null;
 		if (lowestIntensityEdge.getSlabs().size() > 0)
-			removeCoords = lowestIntensityEdge.getSlabs().get(lowestIntensityEdge.getSlabs().size()/2);
+			removeCoords = cutPoint;
 		else 
 			removeCoords = lowestIntensityEdge.getV1().getPoints().get(0);
 		
