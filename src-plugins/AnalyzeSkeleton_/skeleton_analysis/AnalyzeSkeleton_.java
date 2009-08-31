@@ -144,13 +144,18 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	private Vertex auxFinalVertex = null;
 		
 	/** prune cycle options */
-	public static final String[] pruneCyclesModes = {"none", "shortest branch", "lowest pixel intensity"};
+	public static final String[] pruneCyclesModes = {"none", 
+													 "shortest branch", 
+													 "lowest intensity voxel", 
+													 "lowest intensity branch"};
 	/** no pruning mode index */
 	public static final int NONE = 0;
 	/** shortest branch pruning mode index */
 	public static final int SHORTEST_BRANCH = 1;
 	/** lowest pixel intensity pruning mode index */
-	public static final int LOWEST_INTENSITY = 2;
+	public static final int LOWEST_INTENSITY_VOXEL = 2;
+	/** lowest intensity branch pruning mode index */
+	public static final int LOWEST_INTENSITY_BRANCH = 3;
 	
 	/** original grayscale image (for lowest pixel intensity pruning mode) */
 	private ImageStack originalImage = null;
@@ -212,7 +217,8 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 				this.bPruneCycles = true;
 				break;
 			// Pruning cycles by lowest pixel intensity
-			case AnalyzeSkeleton_.LOWEST_INTENSITY:
+			case AnalyzeSkeleton_.LOWEST_INTENSITY_VOXEL:
+			case AnalyzeSkeleton_.LOWEST_INTENSITY_BRANCH:
 				// Select original image between the open images
 				int[] ids = WindowManager.getIDList();
 				if ( ids == null || ids.length < 1 )
@@ -345,7 +351,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	 * Prune cycles from tagged image and update it
 	 * @param inputImage input skeleton image
 	 * @param originalImage original gray-scale image
-	 * @param pruning mode (SHORTEST_BRANCH, LOWEST_INTENSITY)
+	 * @param pruning mode (SHORTEST_BRANCH, LOWEST_INTENSITY_VOXEL)
 	 * @return true if the input image was pruned or false if there were no cycles
 	 */
 	private boolean pruneCycles(ImageStack inputImage, final ImageStack originalImage, final int pruningMode) 
@@ -410,10 +416,18 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 						if(pruningMode == AnalyzeSkeleton_.SHORTEST_BRANCH)
 						{
 							// Remove middle slab from the shortest loop edge
-							Point removeCoords = minEdge.getSlabs().get(minEdge.getSlabs().size()/2);
+							Point removeCoords = null;
+							if(minEdge.getSlabs().size() > 0)
+								minEdge.getSlabs().get(minEdge.getSlabs().size()/2);
+							else 
+								removeCoords = minEdge.getV1().getPoints().get(0);
 							setPixel(inputImage, removeCoords,(byte) 0);
 						}
-						else if (pruningMode == AnalyzeSkeleton_.LOWEST_INTENSITY)
+						else if (pruningMode == AnalyzeSkeleton_.LOWEST_INTENSITY_VOXEL)
+						{
+							removeLowestIntensityVoxel(loopEdges, inputImage, originalImage);
+						}
+						else if(pruningMode == AnalyzeSkeleton_.LOWEST_INTENSITY_BRANCH)
 						{
 							cutLowestIntensityBranch(loopEdges, inputImage, originalImage);
 						}
@@ -429,19 +443,19 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 
 	// -----------------------------------------------------------------------
 	/**
-	 * Cut the a list of edge in the lowest pixel intensity voxel
+	 * Cut the a list of edges in the lowest pixel intensity voxel
 	 * 
-	 * @param loopEdges list of edges to be analyze
+	 * @param loopEdges list of edges to be analyzed
 	 * @param inputImage2 input skeleton image
 	 */
-	private void cutLowestIntensityBranch(
+	private void removeLowestIntensityVoxel(
 			final ArrayList<Edge> loopEdges,
 			ImageStack inputImage2,
 			ImageStack originalGrayImage) 
 	{
-		Point lowestIntensityVoxel = loopEdges.get(0).getV1().getPoints().get(0);
+		Point lowestIntensityVoxel = null;
 		
-		double lowestIntensityValue = getAverageNeighborhoodValue(originalGrayImage, lowestIntensityVoxel);
+		double lowestIntensityValue = Double.MAX_VALUE;
 		
 		for(final Edge e : loopEdges)
 		{
@@ -480,7 +494,70 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		if(debug)
 			IJ.log("Cut loop at coordinates: " + lowestIntensityVoxel);
 		setPixel(inputImage2, lowestIntensityVoxel,(byte) 0);
-	}
+	}//end method removeLowestIntensityVoxel
+	
+	// -----------------------------------------------------------------------
+	/**
+	 * Cut the a list of edges in the lowest pixel intensity branch
+	 * 
+	 * @param loopEdges list of edges to be analyzed
+	 * @param inputImage2 input skeleton image
+	 */
+	private void cutLowestIntensityBranch(
+			final ArrayList<Edge> loopEdges,
+			ImageStack inputImage2,
+			ImageStack originalGrayImage) 
+	{
+		Edge lowestIntensityEdge = null;
+		
+		double lowestIntensityValue = Double.MAX_VALUE;
+		
+		for(final Edge e : loopEdges)
+		{
+			// Calculate average intensity of the edge neighborhood
+			double edgeIntensity = 0;
+			double n_vox = 0;
+			// Check slab points
+			for(final Point p : e.getSlabs())
+			{
+				edgeIntensity += getAverageNeighborhoodValue(originalGrayImage, p);
+				n_vox++;
+			}
+			// Check vertices
+			for(final Point p : e.getV1().getPoints())
+			{
+				edgeIntensity += getAverageNeighborhoodValue(originalGrayImage, p);
+				n_vox++;
+			}
+			for(final Point p : e.getV2().getPoints())
+			{
+				edgeIntensity += getAverageNeighborhoodValue(originalGrayImage, p);
+				n_vox++;
+			}
+			
+			if(n_vox != 0)
+				edgeIntensity /= n_vox;
+			
+			// Keep track of the lowest intensity edge
+			if(edgeIntensity < lowestIntensityValue)
+			{
+				lowestIntensityEdge = e;
+				lowestIntensityValue = edgeIntensity;
+			}
+		}
+		
+		// Cut loop in the lowest intensity branch medium position
+		Point removeCoords = null;
+		if (lowestIntensityEdge.getSlabs().size() > 0)
+			removeCoords = lowestIntensityEdge.getSlabs().get(lowestIntensityEdge.getSlabs().size()/2);
+		else 
+			removeCoords = lowestIntensityEdge.getV1().getPoints().get(0);
+		
+		if(debug)
+			IJ.log("Cut loop at coordinates: " + removeCoords);
+		setPixel(inputImage2, removeCoords,(byte) 0);
+		
+	}// end method cutLowestIntensityBranch
 
 	// -----------------------------------------------------------------------
 	/**
