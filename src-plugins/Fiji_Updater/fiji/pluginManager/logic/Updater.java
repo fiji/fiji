@@ -5,8 +5,8 @@ import com.jcraft.jsch.JSchException;
 import fiji.pluginManager.logic.FileUploader.SourceFile;
 import fiji.pluginManager.logic.FileUploader.UploadListener;
 
-import fiji.pluginManager.utilities.Compressor;
-import fiji.pluginManager.utilities.PluginData;
+import fiji.pluginManager.util.Compressor;
+import fiji.pluginManager.util.PluginData;
 
 import ij.IJ;
 

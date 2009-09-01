@@ -8,9 +8,9 @@ import java.util.Map;
 
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import fiji.pluginManager.utilities.Class2JarFileMap;
-import fiji.pluginManager.utilities.Compressor;
-import fiji.pluginManager.utilities.PluginData;
+import fiji.pluginManager.util.Class2JarFileMap;
+import fiji.pluginManager.util.Compressor;
+import fiji.pluginManager.util.PluginData;
 
 /*
  * This class generates a list of dependencies for a given plugin. The dependencies are

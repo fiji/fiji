@@ -1,4 +1,7 @@
 package fiji.pluginManager.logic;
+
+import fiji.pluginManager.util.PluginData;
+
 import ij.IJ;
 
 import ij.gui.GenericDialog;
@@ -46,7 +49,6 @@ import java.util.TreeMap;
 
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import fiji.pluginManager.utilities.PluginData;
 
 public class UpdateFiji implements PlugIn { //legacy code & utility class?
 	Map dates, digests;

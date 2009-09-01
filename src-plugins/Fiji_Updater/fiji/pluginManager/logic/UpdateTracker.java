@@ -6,9 +6,9 @@ import java.util.List;
 import java.io.File;
 import java.io.IOException;
 
-import fiji.pluginManager.utilities.Downloader;
-import fiji.pluginManager.utilities.PluginData;
-import fiji.pluginManager.utilities.Downloader.FileDownload;
+import fiji.pluginManager.util.Downloader;
+import fiji.pluginManager.util.PluginData;
+import fiji.pluginManager.util.Downloader.FileDownload;
 
 /*
  * UpdateTracker.java is for normal users in managing their plugins.

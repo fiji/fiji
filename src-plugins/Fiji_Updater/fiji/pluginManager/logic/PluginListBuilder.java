@@ -2,7 +2,7 @@ package fiji.pluginManager.logic;
 
 import fiji.pluginManager.logic.PluginObject.Status;
 
-import fiji.pluginManager.utilities.PluginData;
+import fiji.pluginManager.util.PluginData;
 
 import ij.IJ;
 

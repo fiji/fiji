@@ -1,4 +1,5 @@
-package fiji.pluginManager.utilities;
+package fiji.pluginManager.util;
+
 import ij.IJ;
 import ij.ImageJ;
 

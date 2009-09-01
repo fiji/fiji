@@ -1,13 +1,16 @@
-package fiji.pluginManager.utilities;
+package fiji.pluginManager.util;
+
+import fiji.pluginManager.logic.PluginManager;
+
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
-import fiji.pluginManager.logic.PluginManager;
 
 /*
  * Main role is to compress/decompress file data.

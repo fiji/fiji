@@ -1,4 +1,4 @@
-package fiji.pluginManager.utilities;
+package fiji.pluginManager.util;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -20,9 +20,10 @@ import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Arrays;
+
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.Arrays;
 
 /*
  * Class functionality:

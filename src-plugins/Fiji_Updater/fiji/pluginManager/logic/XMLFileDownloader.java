@@ -1,9 +1,9 @@
 package fiji.pluginManager.logic;
 
-import fiji.pluginManager.utilities.Downloader;
-import fiji.pluginManager.utilities.Compressor;
-import fiji.pluginManager.utilities.Downloader.FileDownload;
-import fiji.pluginManager.utilities.PluginData;
+import fiji.pluginManager.util.Downloader;
+import fiji.pluginManager.util.Compressor;
+import fiji.pluginManager.util.Downloader.FileDownload;
+import fiji.pluginManager.util.PluginData;
 
 import ij.Prefs;
 
