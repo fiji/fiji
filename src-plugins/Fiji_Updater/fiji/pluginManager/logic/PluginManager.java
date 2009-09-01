@@ -117,7 +117,7 @@ public class PluginManager extends PluginData implements PlugIn, Observer {
 				}
 
 			} else if (subject == pluginListBuilder) {
-				IJ.showStatus("Loading " + pluginListBuilder.getTaskname() + "...");
+				IJ.showStatus("Checksum " + pluginListBuilder.getTaskname() + "...");
 				IJ.showProgress(pluginListBuilder.getCurrentlyLoaded(),
 						pluginListBuilder.getTotalToLoad());
 
