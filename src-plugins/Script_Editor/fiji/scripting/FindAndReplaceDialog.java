@@ -47,7 +47,7 @@ public class FindAndReplaceDialog extends JDialog implements ActionListener {
 	JButton findNextButton, replaceButton, replaceAllButton, cancelButton;
 
 	public FindAndReplaceDialog(TextEditor editor, RSyntaxTextArea textArea, boolean isReplace) {
-
+		super(editor);
 		this.textArea = textArea;
 		orientation = ComponentOrientation.getOrientation(getLocale());
 		ifReplace = isReplace;
@@ -114,7 +114,6 @@ public class FindAndReplaceDialog extends JDialog implements ActionListener {
 		temp.add(contentPane, BorderLayout.NORTH);
 		setContentPane(temp);
 		getRootPane().setDefaultButton(findNextButton);
-		setIconImage(editor.getIconImage());
 		setTitle(ifReplace ? "Replace" : "Find");
 		setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		applyComponentOrientation(orientation);
