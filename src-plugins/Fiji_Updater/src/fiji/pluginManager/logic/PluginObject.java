@@ -134,6 +134,10 @@ public class PluginObject {
 				Action.NOT_INSTALLED : Action.INSTALLED);
 	}
 
+	public void setAction(String action) {
+		setAction(getAction(action));
+	}
+
 	public void setAction(Action action) {
 		if ((action == Action.REMOVE && !isRemovable()) ||
 				(action == Action.NOT_INSTALLED &&
