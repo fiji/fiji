@@ -164,7 +164,7 @@ JDK(linux64)=java/linux-amd64
 JDK(macosx)=java/macosx-java3d
 
 # Call the Jython script to ensure that the JDK is checked out (from Git)
-jdk[scripts/checkout-jdk.py $JDK] <-
+jdk[bin/checkout-jdk.py $JDK] <-
 
 # From submodules
 ij.jar <- jars/javac.jar ImageJA/
@@ -311,10 +311,10 @@ fiji-panther <- fiji.cxx
 all-cross[] <- cross-win32 cross-win64 cross-linux
 # cross-tiger does not work yet
 
-cross-win64[scripts/cross-compiler.py win64 $CXXFLAGS(win64)] <- fiji.cxx
-cross-tiger[scripts/chrooted-cross-compiler.sh tiger \
+cross-win64[bin/cross-compiler.py win64 $CXXFLAGS(win64)] <- fiji.cxx
+cross-tiger[bin/chrooted-cross-compiler.sh tiger \
 	$CXXFLAGS(macosx) $LIBS(macosx)] <- fiji.cxx
-cross-*[scripts/chrooted-cross-compiler.sh * \
+cross-*[bin/chrooted-cross-compiler.sh * \
 	$CXXFLAGS(*) $LIBS(*)] <- fiji.cxx
 
 # Precompiled stuff
@@ -326,12 +326,12 @@ LAUNCHER(osx10.4)=precompiled/fiji-macosx
 LAUNCHER(osx10.5)=precompiled/fiji-macosx precompiled/fiji-tiger
 precompile-fiji[] <- $LAUNCHER
 
-precompiled/fiji-tiger[scripts/copy-file.py $PRE $TARGET] <- fiji-tiger
+precompiled/fiji-tiger[bin/copy-file.py $PRE $TARGET] <- fiji-tiger
 # this rule only matches precompiled/fiji-$PLATFORM
-precompiled/fiji-*[scripts/copy-file.py $PRE $TARGET] <- fiji
+precompiled/fiji-*[bin/copy-file.py $PRE $TARGET] <- fiji
 
 precompile-fake[] <- precompiled/fake.jar
-precompiled/*[scripts/copy-file.py $PRE $TARGET] <- *
+precompiled/*[bin/copy-file.py $PRE $TARGET] <- *
 
 precompile-submodules[] <- \
 	precompiled/ij.jar \
@@ -362,23 +362,23 @@ precompile[] <- precompile-fiji precompile-fake precompile-submodules
 
 all-apps[] <- app-macosx app-linux app-linux64 app-win32 app-win64
 MACOSX_TIGER_LAUNCHER(macosx)=fiji-tiger
-app-*[scripts/make-app.py * $PLATFORM] <- all $MACOSX_TIGER_LAUNCHER
+app-*[bin/make-app.py * $PLATFORM] <- all $MACOSX_TIGER_LAUNCHER
 
-app-all[scripts/make-app.py all $PLATFORM] <- all
-app-nojre[scripts/make-app.py nojre $PLATFORM] <- all
+app-all[bin/make-app.py all $PLATFORM] <- all
+app-nojre[bin/make-app.py nojre $PLATFORM] <- all
 
 all-dmgs[] <- fiji-macosx.dmg
-fiji-*.dmg[scripts/make-dmg.py] <- app-* Fiji.app
+fiji-*.dmg[bin/make-dmg.py] <- app-* Fiji.app
 dmg[] <- fiji-macosx.dmg
 
 all-tars[] <- fiji-linux.tar.bz2 fiji-linux64.tar.bz2 \
 	fiji-all.tar.bz2 fiji-nojre.tar.bz2
-fiji-*.tar.bz2[scripts/make-tar.py $TARGET Fiji.app] <- app-* Fiji.app
+fiji-*.tar.bz2[bin/make-tar.py $TARGET Fiji.app] <- app-* Fiji.app
 tar[] <- fiji-$PLATFORM.tar.bz2
 
 all-zips[] <- fiji-linux.zip fiji-linux64.zip fiji-win32.zip fiji-win64.zip \
 	fiji-all.zip fiji-nojre.zip
-fiji-*.zip[scripts/make-zip.py $TARGET Fiji.app] <- app-* Fiji.app
+fiji-*.zip[bin/make-zip.py $TARGET Fiji.app] <- app-* Fiji.app
 zip[] <- fiji-$PLATFORM.zip
 
 all-isos[] <- fiji-linux.iso fiji-linux64.iso fiji-win32.iso fiji-win64.iso \
@@ -387,7 +387,7 @@ fiji-*.iso[genisoimage -J -V Fiji -o $TARGET Fiji.app] <- app-*
 
 all-7zs[] <- fiji-linux.7z fiji-linux64.7z fiji-win32.7z fiji-win64.7z \
 	fiji-macosx.7z fiji-all.7z fiji-nojre.7z
-fiji-*.7z[scripts/make-7z.py $TARGET Fiji.app] <- app-*
+fiji-*.7z[bin/make-7z.py $TARGET Fiji.app] <- app-*
 
 # Checks
 
@@ -395,12 +395,12 @@ check[] <- check-launchers check-submodules
 
 LAUNCHERS=$LAUNCHER(linux) $LAUNCHER(linux64) \
 	$LAUNCHER(win32) $LAUNCHER(win64) $LAUNCHER(macosx)
-check-launchers[./scripts/up-to-date-check.py fiji.cxx $LAUNCHERS] <-
+check-launchers[bin/up-to-date-check.py fiji.cxx $LAUNCHERS] <-
 
 check-submodules[] <- check-ij check-VIB check-TrakEM2 check-mpicbg
 
-check-ij[./scripts/up-to-date-check.py ImageJA precompiled/ij.jar] <-
-check-*[./scripts/up-to-date-check.py * precompiled/*_.jar] <-
+check-ij[bin/up-to-date-check.py ImageJA precompiled/ij.jar] <-
+check-*[bin/up-to-date-check.py * precompiled/*_.jar] <-
 
 # Fake itself
 
