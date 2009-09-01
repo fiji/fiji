@@ -251,4 +251,28 @@ public class PluginObject {
 	public boolean changeNotDone() {
 		return changedStatus == ChangeStatus.NONE;
 	}
+
+	/**
+	 * For displaying purposes, it is nice to have a plugin object whose
+	 * toString() method shows either the filename or the action.
+	 */
+	public class LabeledPlugin {
+		String label;
+
+		LabeledPlugin(String label) {
+			this.label = label;
+		}
+
+		public String toString() {
+			return label;
+		}
+	}
+
+	public LabeledPlugin getLabeledPlugin(int column) {
+		switch (column) {
+		case 0: return new LabeledPlugin(getFilename());
+		case 1: return new LabeledPlugin(getAction().getLabel());
+		}
+		return null;
+	}
 }

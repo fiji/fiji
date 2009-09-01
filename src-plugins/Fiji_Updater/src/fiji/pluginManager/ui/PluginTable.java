@@ -151,15 +151,8 @@ public class PluginTable extends JTable {
 			return plugins.size();
 		}
 
-		public Object getValueAt(int rowIndex, int columnIndex) {
-			PluginObject plugin = plugins.get(rowIndex);
-			switch (columnIndex) {
-				case 0:
-					return plugin.getFilename();
-				case 1:
-					return plugin.getAction().getLabel();
-			}
-			throw new Error("Column out of range");
+		public Object getValueAt(int row, int column) {
+			return plugins.get(row).getLabeledPlugin(column);
 		}
 
 		public boolean isCellEditable(int rowIndex, int columnIndex) {
