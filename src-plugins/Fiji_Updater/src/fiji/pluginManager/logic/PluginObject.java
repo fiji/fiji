@@ -267,6 +267,10 @@ public class PluginObject {
 			this.label = label;
 		}
 
+		public PluginObject getPlugin() {
+			return PluginObject.this;
+		}
+
 		public String toString() {
 			return label;
 		}

@@ -40,12 +40,9 @@ public class PluginTable extends JTable {
 
 			//Called when a row is selected
 			public void valueChanged(ListSelectionEvent event) {
-				int viewRow = getSelectedRow();
-				if (viewRow >= 0) {
-					int modelRow = convertRowIndexToModel(viewRow);
-					PluginObject plugin = pluginTableModel.getEntry(modelRow);
-					mainUserInterface.displayPluginDetails(plugin);
-				}
+				int row = getSelectedRow();
+				if (row >= 0)
+					mainUserInterface.displayPluginDetails(getPlugin(row));
 			}
 
 		});
@@ -64,10 +61,8 @@ public class PluginTable extends JTable {
 				// let the default renderer prepare the component for us
 				Component comp = super.getTableCellRendererComponent(table, value,
 						isSelected, hasFocus, row, column);
-				int modelRow = table.convertRowIndexToModel(row);
-				PluginObject plugin = pluginTableModel.getEntry(modelRow);
-
-				comp.setFont(comp.getFont().deriveFont(plugin.actionSpecified() ? Font.BOLD : Font.PLAIN));
+				PluginObject plugin = getPlugin(row);
+				comp.setFont(comp.getFont().deriveFont(plugin.actionSpecified() ? Font.BOLD : Font.PLAIN)); // TODO!!! this is not a good design.  There _must_ be a _single_ method that knows what to do depending on a plugin's state!
 
 				return comp;
 			}
@@ -102,7 +97,7 @@ public class PluginTable extends JTable {
 	}
 
 	public TableCellEditor getCellEditor(int row, int col) {
-		PluginObject plugin = getPluginFromRow(row);
+		PluginObject plugin = getPlugin(row);
 
 		//As we follow PluginTableModel, 1st column is filename
 		if (col == 0)
@@ -111,9 +106,8 @@ public class PluginTable extends JTable {
 		return new DefaultCellEditor(new JComboBox(labels));
 	}
 
-	public PluginObject getPluginFromRow(int viewRow) {
-		int modelRow = convertRowIndexToModel(viewRow);
-		return pluginTableModel.getEntry(modelRow);
+	public PluginObject getPlugin(int row) {
+		return ((PluginObject.LabeledPlugin)getValueAt(row, 0)).getPlugin();
 	}
 
 	class PluginTableModel extends AbstractTableModel {
@@ -159,10 +153,9 @@ public class PluginTable extends JTable {
 			return columnIndex == 1;
 		}
 
-		public void setValueAt(Object value, int rowIndex, int columnIndex) {
-			if (columnIndex == 1) {
-				PluginObject plugin = plugins.get(rowIndex);
-				plugin.setAction(plugin.getAction((String)value));
+		public void setValueAt(Object value, int row, int column) {
+			if (column == 1) {
+				getPlugin(row).setAction((String)value);
 				fireTableChanged(new TableModelEvent(this));
 			}
 		}
