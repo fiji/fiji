@@ -55,9 +55,14 @@ public class Class2JarFileMap extends HashMap<String, String> {
 	}
 
 	private void addClass(String className, String jar) {
-		if (containsKey(className))
-			IJ.log("Warning: class " + className + " was found both"
-				+ " in " + get(className) + " and in " + jar);
+		if (containsKey(className)) {
+			if (!className.startsWith("com.sun.medialib.codec.") &&
+					!className.startsWith("org.mozilla."))
+				IJ.log("Warning: class " + className
+						+ " was found both"
+						+ " in " + get(className)
+						+ " and in " + jar);
+		}
 		else
 			put(className, jar);
 	}
