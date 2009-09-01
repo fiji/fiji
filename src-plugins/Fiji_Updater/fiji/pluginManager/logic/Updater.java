@@ -104,7 +104,6 @@ public class Updater {
 	}
 
 	public synchronized void generateNewPluginRecords() throws IOException {
-		//Checking list for Fiji plugins - Either new versions or changes to existing ones
 		filesToUpload = new ArrayList<SourceFile>();
 		newPluginRecords = xmlFileReader.getAllPluginRecords();
 		Iterator<String> filenames = newPluginRecords.keySet().iterator();

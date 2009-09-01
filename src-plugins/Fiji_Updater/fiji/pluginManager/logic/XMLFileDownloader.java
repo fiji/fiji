@@ -36,7 +36,7 @@ public class XMLFileDownloader extends PluginDataObservable implements Downloade
 		this.url = url;
 	}
 
-	public void startDownload() throws IOException {
+	public void start() throws IOException {
 		sources = new ArrayList<FileDownload>();
 
 		//Get last recorded date of XML file's modification
