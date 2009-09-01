@@ -111,8 +111,7 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 			} else if (plugin.isUpdateable()) {
 				date = plugin.getNewTimestamp();
 			}
-			String downloadURL = PluginManager.TEMP_DOWNLOADURL + name + "-" + date;
-			//String downloadURL = PluginManager.MAIN_URL + name + "-" + date; //TODO
+			String downloadURL = PluginManager.MAIN_URL + name + "-" + date;
 			PluginDownload src = new PluginDownload(plugin, downloadURL, saveToPath);
 			downloaderList.add(src);
 

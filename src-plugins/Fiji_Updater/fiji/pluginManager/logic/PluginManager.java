@@ -23,9 +23,7 @@ import javax.swing.JOptionPane;
  * required list of PluginObjects that interface will use for display.
  */
 public class PluginManager extends PluginData implements PlugIn, Observer {
-	//For downloading/upload files
-	public static final String TEMP_DOWNLOADURL = "http://pacific.mpi-cbg.de/update/"; //TODO: Remove
-	public static final String MAIN_URL = "http://pacific.mpi-cbg.de/uploads/incoming/";
+	public static final String MAIN_URL = "http://pacific.mpi-cbg.de/uploads/incoming/plugins/";
 	//public static final String MAIN_URL = "http://pacific.mpi-cbg.de/update/"; //TODO
 	public static final String TXT_FILENAME = "current.txt";
 	public static final String XML_LOCK = "db.xml.gz.lock";
