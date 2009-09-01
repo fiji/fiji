@@ -103,17 +103,19 @@ public class Updater {
 		}
 	}
 
+	// TODO: why is the digest not computed here?????
+	// TODO: the PluginObject class _must_ know about its previous versions!!!!!
 	public synchronized void generateNewPluginRecords() throws IOException {
 		filesToUpload = new ArrayList<SourceFile>();
 		newPluginRecords = xmlFileReader.getAllPluginRecords();
-		Iterator<String> filenames = newPluginRecords.keySet().iterator();
-		while (filenames.hasNext()) {
-			String filename = filenames.next();
+		// TODO: there should be one, and only one plugin collection.  All that should need changing is the status!!! (And using filters to traverse the plugins, not copying everything around.  Copying is ugly and awful.)
+		for (String filename : newPluginRecords.keySet()) {
 			PluginObject pluginToUpload = ((PluginCollection)changesList).getPlugin(filename);
 			if (pluginToUpload != null) {
 				PluginCollection versions = (PluginCollection)newPluginRecords.get(filename);
 				PluginObject latest = versions.getLatestPlugin();
 				//if either an existing version, or timestamp is older than recorded version
+				// TODO: fix borked logic.  We want to be able to update details only, too!
 				if (latest.getChecksum().equals(pluginToUpload.getChecksum()) ||
 						latest.getTimestamp().compareTo(pluginToUpload.getTimestamp()) >= 0) {
 					//Just update details
