@@ -52,7 +52,7 @@ public class PluginDetails {
 		List<String> list = new ArrayList<String>();
 		for (String value : array) {
 			value = value.replace("\r", "").replace("\n", "").trim();
-			if (!value.isEmpty())
+			if (!"".equals(value))
 				list.add(value);
 		}
 		return list;

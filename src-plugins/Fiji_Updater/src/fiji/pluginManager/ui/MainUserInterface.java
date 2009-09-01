@@ -210,7 +210,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 	//Whenever search text or ComboBox has been changed
 	private void changeListingListener() {
 		viewList = pluginManager.pluginCollection;
-		if (!txtSearch.getText().trim().isEmpty())
+		if (!"".equals(txtSearch.getText().trim()))
 			viewList = pluginManager.pluginCollection.getMatchingText(txtSearch.getText().trim());
 
 		int index = comboBoxViewingOptions.getSelectedIndex();
