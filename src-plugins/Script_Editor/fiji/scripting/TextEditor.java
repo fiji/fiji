@@ -558,6 +558,9 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 			         + " files!");
 		else {
 			new Thread() {
+
+				{ setPriority(Thread.NORM_PRIORITY); }
+
 				public void run() {
 					interpreter.runScript(file.getPath());
 				}
