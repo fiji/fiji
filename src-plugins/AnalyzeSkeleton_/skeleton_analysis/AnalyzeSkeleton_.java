@@ -2,13 +2,12 @@ package skeleton_analysis;
 
 import java.util.ArrayList;
 
-
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
+import ij.measure.Calibration;
 import ij.measure.ResultsTable;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ByteProcessor;
@@ -43,7 +42,7 @@ import ij.process.ShortProcessor;
  * http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:analyzeskeleton:start
  *
  *
- * @version 1.0 08/31/2009
+ * @version 1.0 09/01/2009
  * @author Ignacio Arganda-Carreras <ignacio.arganda@gmail.com>
  *
  */
@@ -163,6 +162,13 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	/** prune cycle options index */
 	public static int pruneIndex = AnalyzeSkeleton_.NONE;
 	
+	/** x- neighborhood offset */
+	private int x_offset = 1;
+	/** y- neighborhood offset */
+	private int y_offset = 1;
+	/** z- neighborhood offset */
+	private int z_offset = 1;
+	
 	/** debugging flag */
 	private final boolean debug = false;
 	
@@ -245,7 +251,10 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 					return;
 				
 				// Get original stack
-				this.originalImage = WindowManager.getImage( ids[ gd2.getNextChoiceIndex() ] ).getStack();
+				final ImagePlus origIP = WindowManager.getImage( ids[ gd2.getNextChoiceIndex() ] );
+				// calculate neighborhood size given the calibration
+				calculateNeighborhoodOffsets(origIP.getCalibration());
+				this.originalImage = origIP.getStack();
 				
 				this.bPruneCycles = true;
 				break;
@@ -291,6 +300,35 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		
 	} // end run method
 	
+	// ---------------------------------------------------------------------------
+	/**
+	 * Calculate the neighborhood size based on the calibration of the image 
+	 * @param calibration image calibration
+	 */
+	private void calculateNeighborhoodOffsets(Calibration calibration) 
+	{
+		double max = calibration.pixelDepth;
+		if(calibration.pixelHeight > max)
+			max = calibration.pixelHeight;
+		if(calibration.pixelWidth > max)
+			max = calibration.pixelWidth;
+
+		this.x_offset = ((int) Math.round(max / calibration.pixelWidth) > 1) ? 
+							(int) Math.round(max / calibration.pixelWidth) : 1;
+		this.y_offset = ((int) Math.round(max / calibration.pixelHeight) > 1) ? 
+							(int) Math.round(max / calibration.pixelHeight) : 1;
+		this.z_offset = ((int) Math.round(max / calibration.pixelDepth) > 1) ? 
+							(int) Math.round(max / calibration.pixelDepth) : 1;
+				
+		if(debug)
+		{
+			IJ.log("x_offset = " + this.x_offset);
+			IJ.log("y_offset = " + this.y_offset);
+			IJ.log("z_offset = " + this.z_offset);
+		}
+																					
+	}// end method calculateNeighborhoodOffsets
+
 	// ---------------------------------------------------------------------------
 	/**
 	 * Process skeleton: tag image, mark trees and visit
@@ -349,6 +387,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	// -----------------------------------------------------------------------
 	/**
 	 * Prune cycles from tagged image and update it
+	 * 
 	 * @param inputImage input skeleton image
 	 * @param originalImage original gray-scale image
 	 * @param pruning mode (SHORTEST_BRANCH, LOWEST_INTENSITY_VOXEL)
@@ -462,7 +501,8 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 			// Check slab points
 			for(final Point p : e.getSlabs())
 			{
-				final double avg = getAverageNeighborhoodValue(originalGrayImage, p);
+				final double avg = getAverageNeighborhoodValue(originalGrayImage, p,
+						this.x_offset, this.y_offset, this.z_offset);
 				if(avg < lowestIntensityValue)
 				{
 					lowestIntensityValue = avg;
@@ -472,7 +512,8 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 			// Check vertices
 			for(final Point p : e.getV1().getPoints())
 			{
-				final double avg = getAverageNeighborhoodValue(originalGrayImage, p);
+				final double avg = getAverageNeighborhoodValue(originalGrayImage, p,
+						this.x_offset, this.y_offset, this.z_offset);
 				if(avg < lowestIntensityValue)
 				{
 					lowestIntensityValue = avg;
@@ -481,7 +522,8 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 			}
 			for(final Point p : e.getV2().getPoints())
 			{
-				final double avg = getAverageNeighborhoodValue(originalGrayImage, p);
+				final double avg = getAverageNeighborhoodValue(originalGrayImage, p,
+						this.x_offset, this.y_offset, this.z_offset);
 				if(avg < lowestIntensityValue)
 				{
 					lowestIntensityValue = avg;
@@ -526,8 +568,9 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 			// Check slab points
 			for(final Point p : e.getSlabs())
 			{
-				final double avg = getAverageNeighborhoodValue(originalGrayImage, p);
-				// Keep track of the darkest point of the edge
+				final double avg = getAverageNeighborhoodValue(originalGrayImage, p,
+						this.x_offset, this.y_offset, this.z_offset);
+				// Keep track of the darkest slab point of the edge
 				if(avg < min_val)
 				{
 					min_val = avg;
@@ -539,18 +582,24 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 			// Check vertices
 			for(final Point p : e.getV1().getPoints())
 			{
-				edgeIntensity += getAverageNeighborhoodValue(originalGrayImage, p);
+				edgeIntensity += getAverageNeighborhoodValue(originalGrayImage, p,
+						this.x_offset, this.y_offset, this.z_offset);
 				n_vox++;
 			}
 			for(final Point p : e.getV2().getPoints())
 			{
-				edgeIntensity += getAverageNeighborhoodValue(originalGrayImage, p);
+				edgeIntensity += getAverageNeighborhoodValue(originalGrayImage, p,
+						this.x_offset, this.y_offset, this.z_offset);
 				n_vox++;
 			}
 			
 			if(n_vox != 0)
 				edgeIntensity /= n_vox;
-			
+			if(debug)
+			{
+				IJ.log("Loop edge between " + e.getV1().getPoints().get(0) + " and " + e.getV2().getPoints().get(0) + ":");
+				IJ.log("avg edge intensity = " + edgeIntensity + " darkest slab point = " + darkestPoint.toString());
+			}
 			// Keep track of the lowest intensity edge
 			if(edgeIntensity < lowestIntensityValue)
 			{
@@ -673,9 +722,9 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	 */
 	private void showResults() 
 	{
-		ResultsTable rt = new ResultsTable();
+		final ResultsTable rt = new ResultsTable();
 		
-		String[] head = {"Skeleton", "# Branches","# Junctions", "# End-point voxels",
+		final String[] head = {"Skeleton", "# Branches","# Junctions", "# End-point voxels",
 						 "# Junction voxels","# Slab voxels","Average Branch Length", 
 						 "# Triple points", "Maximum Branch Length"};
 		
@@ -695,9 +744,10 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 			rt.addValue(7, this.numberOfTriplePoints[i]);
 			rt.addValue(8, this.maximumBranchLength[i]);
 
-			if (0 == i % 100) rt.show("Results");
+			if (0 == i % 100) 
+				rt.show("Results");
 			
-			StringBuilder sb = new StringBuilder();
+			final StringBuilder sb = new StringBuilder();
 
 			sb.append("--- Skeleton #").append(i+1).append(" ---\n")
 			  	.append("Coordinates of the largest branch:\n")
@@ -1935,23 +1985,76 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	
 	// -----------------------------------------------------------------------
 	/**
-	 * Get average neighborhood pixel value of a given point
+	 * Get average 3x3x3 neighborhood pixel value of a given point
 	 * 
 	 * @param image input image
 	 * @param p image coordinates
 	 */
 	private double getAverageNeighborhoodValue(ImageStack image, Point p)
 	{
-		byte[] neighborhood = getNeighborhood(image, p.x, p.y, p.z);
+		byte[] neighborhood = getNeighborhood(image, p);
 		
 		double avg = 0;
 		for(int i = 0; i < neighborhood.length; i++)
-			avg += neighborhood[i];
+			avg += (double) (neighborhood[i] & 0xFF);
 		if(neighborhood.length > 0)
-			return avg / neighborhood.length;
+			return avg / (double) neighborhood.length;
 		else
 			return 0;
 	}// end method getAverageNeighborhoodValue
+
+	// -----------------------------------------------------------------------
+	/**
+	 * Get average neighborhood pixel value of a given point
+	 * 
+	 * @param image input image
+	 * @param p image coordinates
+	 */
+	public static double getAverageNeighborhoodValue(
+			final ImageStack image, 
+			final Point p,
+			final int x_offset,
+			final int y_offset,
+			final int z_offset)
+	{
+		byte[] neighborhood = getNeighborhood(image, p, x_offset, y_offset, z_offset);
+		
+		double avg = 0;
+		for(int i = 0; i < neighborhood.length; i++)
+			avg += (double) (neighborhood[i] & 0xFF);
+		if(neighborhood.length > 0)
+			return avg / (double) neighborhood.length;
+		else
+			return 0;
+	}// end method getAverageNeighborhoodValue
+	
+	
+	// -----------------------------------------------------------------------
+	/**
+	 * Get neighborhood of a pixel in a 3D image (0 border conditions) 
+	 * 
+	 * @param image 3D image (ImageStack)
+	 * @param p point coordinates
+	 * @param x_offset x- neighborhood offset
+	 * @param y_offset y- neighborhood offset
+	 * @param z_offset z- neighborhood offset
+	 * @return corresponding neighborhood (0 if out of image)
+	 */
+	public static byte[] getNeighborhood(
+			final ImageStack image, 
+			final Point p, 
+			final int x_offset, 
+			final int y_offset, 
+			final int z_offset)
+	{
+		final byte[] neighborhood = new byte[(2*x_offset+1) * (2*y_offset+1) * (2*z_offset+1)];
+		
+		for(int l= 0, k = p.z - x_offset; k < p.z + z_offset; k++)
+			for(int j = p.y - y_offset; j < p.y + y_offset; j++)
+				for(int i = p.x - x_offset; i < p.x + x_offset; i++, l++)							
+					neighborhood[l] = getPixel(image, i,   j,   k);				
+		return neighborhood;
+	} // end getNeighborhood 
 	
 	// -----------------------------------------------------------------------
 	/**
@@ -1965,7 +2068,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	{
 		return getNeighborhood(image, p.x, p.y, p.z);
 	}
-	
+			
 	// -----------------------------------------------------------------------
 	/**
 	 * Get neighborhood of a pixel in a 3D image (0 border conditions) 
@@ -2017,9 +2120,10 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		neighborhood[26] = getPixel(image, x+1, y+1, z+1);
 		
 		return neighborhood;
-	} /* end getNeighborhood */
+	} // end getNeighborhood 
 	
-	/* -----------------------------------------------------------------------*/
+	
+	// -----------------------------------------------------------------------
 	/**
 	 * Get pixel in 3D image (0 border conditions) 
 	 * 
@@ -2029,12 +2133,15 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	 * @param z z- coordinate (in image stacks the indexes start at 1)
 	 * @return corresponding pixel (0 if out of image)
 	 */
-	private byte getPixel(ImageStack image, int x, int y, int z)
+	public static byte getPixel(final ImageStack image, final int x, final int y, final int z)
 	{
-		if(x >= 0 && x < this.width && y >= 0 && y < this.height && z >= 0 && z < this.depth)
-			return ((byte[]) image.getPixels(z + 1))[x + y * this.width];
+		final int width = image.getWidth();
+		final int height = image.getHeight();
+		final int depth = image.getSize();
+		if(x >= 0 && x < width && y >= 0 && y < height && z >= 0 && z < depth)
+			return ((byte[]) image.getPixels(z + 1))[x + y * width];
 		else return 0;
-	} /* end getPixel */
+	} // end getPixel 
 	
 	
 	/* -----------------------------------------------------------------------*/
