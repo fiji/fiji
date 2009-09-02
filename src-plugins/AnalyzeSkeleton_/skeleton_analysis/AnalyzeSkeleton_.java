@@ -457,7 +457,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 							// Remove middle slab from the shortest loop edge
 							Point removeCoords = null;
 							if(minEdge.getSlabs().size() > 0)
-								minEdge.getSlabs().get(minEdge.getSlabs().size()/2);
+								removeCoords = minEdge.getSlabs().get(minEdge.getSlabs().size()/2);
 							else 
 								removeCoords = minEdge.getV1().getPoints().get(0);
 							setPixel(inputImage, removeCoords,(byte) 0);
