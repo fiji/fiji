@@ -49,7 +49,7 @@ public class Class2JarFileMap extends HashMap<String, String> {
 			String name =
 				((JarEntry)entries.nextElement()).getName();
 			if (name.endsWith(".class"))
-				addClass(PluginData.stripSuffix(name,
+				addClass(Util.stripSuffix(name,
 					".class").replace('/', '.'), jar);
 		}
 	}

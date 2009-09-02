@@ -1,10 +1,17 @@
 package fiji.pluginManager.ui;
 
+import fiji.pluginManager.logic.PluginCollection;
+import fiji.pluginManager.logic.PluginObject;
+
+import fiji.pluginManager.util.Util;
+
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
+
 import java.util.Iterator;
 import java.util.List;
+
 import javax.swing.DefaultCellEditor;
 import javax.swing.JComboBox;
 import javax.swing.JTable;
@@ -17,8 +24,6 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableColumn;
-import fiji.pluginManager.logic.PluginCollection;
-import fiji.pluginManager.logic.PluginObject;
 
 /*
  * This class' role is to be in charge of how the Table should be displayed
@@ -102,7 +107,7 @@ public class PluginTable extends JTable {
 		//As we follow PluginTableModel, 1st column is filename
 		if (col == 0)
 			return super.getCellEditor(row,col);
-		String[] labels = plugin.getStatus().getActionLabels(mainUserInterface.isDeveloper());
+		String[] labels = plugin.getStatus().getActionLabels(Util.isDeveloper);
 		return new DefaultCellEditor(new JComboBox(labels));
 	}
 

@@ -8,8 +8,8 @@ import java.util.Iterator;
 import java.util.List;
 
 import fiji.pluginManager.util.Downloader;
-import fiji.pluginManager.util.PluginData;
 import fiji.pluginManager.util.Downloader.FileDownload;
+import fiji.pluginManager.util.Util;
 
 /*
  * UpdateTracker.java is for normal users in managing their plugins.
@@ -17,7 +17,7 @@ import fiji.pluginManager.util.Downloader.FileDownload;
  * This class' main role is to download selected files, as well as indicate those that
  * are marked for deletion. It is able to track the number of bytes downloaded.
  */
-public class UpdateTracker extends PluginData implements Runnable, Downloader.DownloadListener {
+public class UpdateTracker implements Runnable, Downloader.DownloadListener {
 	private volatile Thread downloadThread;
 	private volatile Downloader downloader;
 	private List<FileDownload> downloaderList;
@@ -55,18 +55,18 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 			String filename = plugin.getFilename();
 			try {
 				//checking status of existing file
-				File file = new File(prefix(filename));
+				File file = new File(Util.prefix(filename));
 				if (!file.canWrite()) //if unable to override existing file
 					plugin.fail();
 				else {
-					if (!isFijiLauncher(filename)) {
+					if (!Util.isLauncher(filename)) {
 						//If it's a normal plugin, write a 0-byte file
-						String pluginPath = getSaveToLocation(PluginManager.UPDATE_DIRECTORY, filename);
+						String pluginPath = Util.prefix(PluginManager.UPDATE_DIRECTORY, filename);
 						new File(pluginPath).getParentFile().mkdirs();
 						new File(pluginPath).createNewFile();
 					} else {
 						//If it's a launcher (?!), try removing
-						file.renameTo(new File(prefix(filename + ".old")));
+						file.renameTo(new File(Util.prefix(filename + ".old")));
 					}
 					plugin.success();
 				}
@@ -97,9 +97,10 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 		for (PluginObject plugin : changeList.getToAddOrUpdate()) {
 			//For each selected plugin, get target path to save to
 			String name = plugin.getFilename();
-			String saveToPath = getSaveToLocation(PluginManager.UPDATE_DIRECTORY, name);
-			if (isFijiLauncher(name)) { //if downloading launcher, overwrite instead
-				saveToPath = prefix((getUseMacPrefix() ? getMacPrefix() : "") + name);
+			String saveToPath = Util.prefix(PluginManager.UPDATE_DIRECTORY, name);
+			if (Util.isLauncher(name)) { //if downloading launcher, overwrite instead
+				// TODO: make useMacPrefix much, much easier to use
+				saveToPath = Util.prefix((Util.useMacPrefix ? Util.macPrefix : "") + name);
 				File orig = new File(saveToPath);
 				orig.renameTo(new File(saveToPath + ".old")); //Save backup copy of older version
 			}
@@ -126,7 +127,7 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 		if (thisThread != downloadThread) {
 			//if cancelled, remove any unfinished downloads
 			for (PluginObject plugin : changeList.getNoSuccessfulChanges()) {
-				String fullPath = getSaveToLocation(PluginManager.UPDATE_DIRECTORY, plugin.getFilename());
+				String fullPath = Util.prefix(PluginManager.UPDATE_DIRECTORY, plugin.getFilename());
 				try {
 					new File(fullPath).delete(); //delete file, if it exists
 				} catch (Exception e2) { }
@@ -160,7 +161,7 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 		try {
 			//Check filesize
 			long recordedSize = src.getRecordedFileSize();
-			long actualFilesize = getFilesizeFromFile(src.getDestination());
+			long actualFilesize = Util.getFilesize(src.getDestination());
 			if (recordedSize != actualFilesize)
 				throw new Exception("Recorded filesize of " + filename + " is " +
 						recordedSize + ". It is not equal to actual filesize of " +
@@ -168,14 +169,14 @@ public class UpdateTracker extends PluginData implements Runnable, Downloader.Do
 
 			// verify checksum
 			String recordedDigest = src.getRecordedDigest();
-			String actualDigest = getDigest(filename, src.getDestination());
+			String actualDigest = Util.getDigest(filename, src.getDestination());
 			if (!recordedDigest.equals(actualDigest))
 				throw new Exception("Wrong checksum for " + filename +
 						": Recorded Checksum " + recordedDigest + " != Actual Checksum " +
 						actualDigest);
 
 			//This involves non-Windows launcher only
-			if (isFijiLauncher(filename) && !platform.startsWith("win"))
+			if (Util.isLauncher(filename) && !Util.platform.startsWith("win"))
 				Runtime.getRuntime().exec(new String[] {
 					"chmod", "0755", source.getDestination()});
 

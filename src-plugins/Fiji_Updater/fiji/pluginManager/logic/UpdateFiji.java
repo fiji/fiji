@@ -1,6 +1,6 @@
 package fiji.pluginManager.logic;
 
-import fiji.pluginManager.util.PluginData;
+import fiji.pluginManager.util.Util;
 
 import ij.IJ;
 
@@ -69,7 +69,7 @@ public class UpdateFiji implements PlugIn { //legacy code & utility class?
 	public UpdateFiji() {
 		dates = new TreeMap();
 		digests = new TreeMap();
-		currentDate = PluginData.timestamp(Calendar.getInstance());
+		currentDate = Util.timestamp(Calendar.getInstance());
 	}
 
 	public void run(String arg) {
@@ -87,7 +87,7 @@ public class UpdateFiji implements PlugIn { //legacy code & utility class?
 	}
 
 	public void exec(String url) {
-		String path = PluginData.getFijiRootPath();
+		String path = Util.fijiRoot;
 		File ij_jar = new File(path, "ij.jar");
 		if (ij_jar.exists() && !ij_jar.canWrite() &&
 				!IJ.showMessageWithCancel("Fiji Updater",
@@ -136,13 +136,13 @@ public class UpdateFiji implements PlugIn { //legacy code & utility class?
 	public void initializeFile(String path) {
 		try {
 			String fullPath = prefix(path);
-			String digest = PluginData.getDigest(path, fullPath);
+			String digest = Util.getDigest(path, fullPath);
 			long modified = new File(fullPath).lastModified();
 			if (useMacPrefix && path.startsWith(macPrefix))
 				path = path.substring(macPrefix.length());
 			if (File.separator.equals("\\"))
 				path = path.replace("\\", "/");
-			dates.put(path, PluginData.timestamp(modified));
+			dates.put(path, Util.timestamp(modified));
 			digests.put(path, digest);
 		} catch (Exception e) {
 			if (e instanceof FileNotFoundException &&
@@ -180,7 +180,7 @@ public class UpdateFiji implements PlugIn { //legacy code & utility class?
 		List queue = new ArrayList();
 
 		if (only == null || only.length == 0) {
-			String platform = PluginData.getPlatform();
+			String platform = Util.getPlatform();
 			if (platform.equals("macosx")) {
 				String macLauncher = macPrefix + "fiji-macosx";
 				if (new File(prefix(macLauncher)).exists())
@@ -267,7 +267,7 @@ public class UpdateFiji implements PlugIn { //legacy code & utility class?
 
 			/* launcher is platform-specific */
 			if (name.startsWith("fiji-")) {
-				String platform = PluginData.getPlatform();
+				String platform = Util.getPlatform();
 				if (!name.equals("fiji-" + platform) &&
 						(!platform.equals("macosx") ||
 						!name.startsWith("fiji-tiger")))
@@ -337,11 +337,11 @@ public class UpdateFiji implements PlugIn { //legacy code & utility class?
 					"-" + remote.dates.get(name), fullPath);
 				String digest =
 					(String)remote.digests.get(name);
-				String realDigest = PluginData.getDigest(name, fullPath);
+				String realDigest = Util.getDigest(name, fullPath);
 				if (!realDigest.equals(digest))
 					throw new Exception("wrong checksum: "
 						+ digest + " != " + realDigest);
-				if (name.startsWith("fiji-") && !PluginData.getPlatform()
+				if (name.startsWith("fiji-") && !Util.getPlatform()
 						.startsWith("win"))
 					Runtime.getRuntime().exec(new String[] {
 						"chmod", "0755", fullPath});

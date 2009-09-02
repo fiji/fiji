@@ -7,7 +7,7 @@ import fiji.pluginManager.logic.FileUploader.UploadListener;
 
 import fiji.pluginManager.util.Compressor;
 import fiji.pluginManager.util.DependencyAnalyzer;
-import fiji.pluginManager.util.PluginData;
+import fiji.pluginManager.util.Util;
 
 import ij.IJ;
 
@@ -65,19 +65,16 @@ public class Updater {
 	public PluginCollection changesList;
 	private DependencyAnalyzer dependencyAnalyzer;
 	protected PluginCollection pluginCollection;
-	protected PluginData util;
 
 	public Updater(PluginManager pluginManager) {
-		this(pluginManager, pluginManager.pluginCollection,
+		this(pluginManager.pluginCollection,
 			pluginManager.xmlFileReader,
 			pluginManager.getXMLLastModified());
 		changesList.resetChangeStatuses();
 	}
 
-	public Updater(PluginData util, PluginCollection pluginCollection,
+	public Updater(PluginCollection pluginCollection,
 			XMLFileReader xmlFileReader, long xmlLastModified) {
-		this.util = util;
-
 		this.pluginCollection = pluginCollection;
 		changesList = pluginCollection.getToUpload();
 		dependencyAnalyzer = new DependencyAnalyzer();
@@ -86,8 +83,8 @@ public class Updater {
 		this.xmlLastModified = xmlLastModified;
 		savePaths = new String[relativePaths.length];
 		for (int i = 0; i < savePaths.length; i++)
-			savePaths[i] = util.prefix(relativePaths[i]);
-		backupXMLPath = util.prefix(PluginManager.XML_BACKUP);
+			savePaths[i] = Util.prefix(relativePaths[i]);
+		backupXMLPath = Util.prefix(PluginManager.XML_BACKUP);
 	}
 
 	public void setUploader(FileUploader uploader) {
@@ -123,7 +120,7 @@ public class Updater {
 					latest.setPluginDetails(pluginToUpload.getPluginDetails());
 				} else {
 					//Newer version which does not exist in records yet, thus requires upload
-					String absolutePath = util.prefix(pluginToUpload.getFilename());
+					String absolutePath = Util.prefix(pluginToUpload.getFilename());
 					pluginToUpload.setDependency(dependencyAnalyzer.getDependentJarsForFile(absolutePath), pluginCollection);
 					pluginToUpload.setFilesize(new File(absolutePath).length());
 					filesToUpload.add(new UpdateSource(absolutePath, pluginToUpload, "C0644"));
@@ -138,7 +135,7 @@ public class Updater {
 			String name = pluginToUpload.getFilename();
 			PluginCollection pluginVersions = newPluginRecords.get(name);
 			if (pluginVersions == null) { //non-Fiji plugin doesn't exist in records yet
-				String absolutePath = util.prefix(name);
+				String absolutePath = Util.prefix(name);
 				pluginToUpload.setDependency(dependencyAnalyzer.getDependentJarsForFile(absolutePath), pluginCollection);
 				pluginToUpload.setFilesize(new File(absolutePath).length());
 				filesToUpload.add(new UpdateSource(absolutePath, pluginToUpload, "C0644"));

@@ -2,7 +2,7 @@ package fiji.pluginManager.logic;
 
 import fiji.pluginManager.ui.MainUserInterface;
 
-import fiji.pluginManager.util.PluginData;
+import fiji.pluginManager.util.Util;
 
 import ij.IJ;
 
@@ -22,7 +22,7 @@ import javax.swing.JOptionPane;
  * Facade, Business logic, and overall-in-charge of providing the main user interface the
  * required list of PluginObjects that interface will use for display.
  */
-public class PluginManager extends PluginData implements PlugIn, Observer {
+public class PluginManager implements PlugIn, Observer {
 	public static final String MAIN_URL = "http://pacific.mpi-cbg.de/uploads/incoming/plugins/";
 	//public static final String MAIN_URL = "http://pacific.mpi-cbg.de/update/"; //TODO
 	public static final String TXT_FILENAME = "current.txt";
@@ -51,7 +51,7 @@ public class PluginManager extends PluginData implements PlugIn, Observer {
 	public void run(String arg) {
 		try {
 			IJ.showStatus("Starting up Plugin Manager...");
-			xmlFileDownloader = new XMLFileDownloader(this);
+			xmlFileDownloader = new XMLFileDownloader();
 			xmlFileDownloader.addObserver(this);
 			xmlFileDownloader.start();
 		} catch (Error e) {
@@ -59,8 +59,7 @@ public class PluginManager extends PluginData implements PlugIn, Observer {
 			IJ.error("Error: " + e);
 		} catch (IOException e) {
 			try {
-				new File(PluginData.getFijiRootPath()
-						+ PluginManager.XML_COMPRESSED)
+				new File(Util.prefix(PluginManager.XML_COMPRESSED))
 					.deleteOnExit();
 				IJ.error("Download/checksum failed: " + e);
 				UpdateFiji updateFiji = new UpdateFiji();
@@ -89,7 +88,7 @@ public class PluginManager extends PluginData implements PlugIn, Observer {
 					xmlFileReader = new XMLFileReader(
 							new ByteArrayInputStream(xmlFileDownloader.getXMLFileData()));
 
-					pluginListBuilder = new PluginListBuilder(xmlFileReader, this);
+					pluginListBuilder = new PluginListBuilder(xmlFileReader);
 					pluginListBuilder.addObserver(this);
 					pluginListBuilder.buildFullPluginList();
 				}

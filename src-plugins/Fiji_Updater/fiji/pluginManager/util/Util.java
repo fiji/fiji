@@ -13,12 +13,9 @@ import java.security.NoSuchAlgorithmException;
 
 import java.text.DecimalFormat;
 
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Enumeration;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Arrays;
 
@@ -34,50 +31,41 @@ import java.util.jar.JarFile;
  * - Copy a file over to a particular location
  * - Get details of the Operating System Fiji application is on
  */
-public class PluginData {
-	private final String macPrefix = "Contents/MacOS/";
-	private boolean useMacPrefix;
-	private String fijiPath;
-	protected String[] launchers = {
-			"fiji-linux", "fiji-linux64",
-			"fiji-macosx", "fiji-tiger",
-			"fiji-win32.exe", "fiji-win64.exe"
-	};
-	protected String platform;
+public class Util {
+	public final static boolean useMacPrefix;
+	public final static String macPrefix = "Contents/MacOS/";
 
-	//default (For developers, local files' path may be different), only crucial for uploading purposes
-	private boolean isDeveloper = false;
+	public final static String fijiRoot, platform;
+	public final static boolean isDeveloper;
+	public final static String[] platforms, launchers;
 
-	public PluginData() {
-		fijiPath = getFijiRootPath();
+	static {
+		fijiRoot = System.getProperty("fiji.dir") + File.separator; 
 		isDeveloper = fileExists("fiji.cxx");
-		platform = getPlatform(); //gets the platform string value
+		platform = getPlatform();
 
-		//useMacPrefix initially is false, set to true if macLauncher exist
-		useMacPrefix = false;
 		String macLauncher = macPrefix + "fiji-macosx";
-		if (platform.equals("macosx") && new File(prefix(macLauncher)).exists())
-			useMacPrefix = true;
+		useMacPrefix = platform.equals("macosx") &&
+			fileExists(macLauncher);
 
-		Arrays.sort(launchers);
+		String[] list = {
+			"linux", "linux64", "macosx", "tiger", "win32", "win64"
+		};
+
+		Arrays.sort(list);
+		platforms = list.clone();
+		for (int i = 0; i < list.length; i++)
+			list[i] = "fiji-" + list[i] +
+				(list[i].startsWith("win") ? ".exe" : "");
+		launchers = list.clone();
 	}
 
-	public static String getFijiRootPath() {
-		return System.getProperty("fiji.dir") + File.separator;
-	}
+	private Util() {} // make sure this class is not instantiated
 
 	public static String stripSuffix(String string, String suffix) {
 		if (!string.endsWith(suffix))
 			return string;
 		return string.substring(0, string.length() - suffix.length());
-	}
-
-	public boolean isDeveloper() {
-		return isDeveloper;
-	}
-
-	public String getMacPrefix() {
-		return macPrefix;
 	}
 
 	public static String getPlatform() {
@@ -94,14 +82,10 @@ public class PluginData {
 		return osName;
 	}
 
-	public boolean getUseMacPrefix() {
-		return useMacPrefix;
-	}
-
 	//get digest of the file as according to fullPath
 	public static String getDigest(String path, String fullPath)
-	throws NoSuchAlgorithmException, FileNotFoundException,
-	IOException, UnsupportedEncodingException {
+			throws NoSuchAlgorithmException, FileNotFoundException,
+			IOException, UnsupportedEncodingException {
 		if (path.endsWith(".jar"))
 			return getJarDigest(fullPath);
 		MessageDigest digest = getDigest();
@@ -110,7 +94,8 @@ public class PluginData {
 		return toHex(digest.digest());
 	}
 
-	public static MessageDigest getDigest() throws NoSuchAlgorithmException {
+	public static MessageDigest getDigest()
+			throws NoSuchAlgorithmException {
 		return MessageDigest.getInstance("SHA-1");
 	}
 
@@ -148,15 +133,10 @@ public class PluginData {
 		}
 
 		JarFile jar = new JarFile(path);
-		List list = new ArrayList();
-		Enumeration entries = jar.entries();
-		while (entries.hasMoreElements())
-			list.add(entries.nextElement());
+		List<JarEntry> list = Collections.list(jar.entries());
 		Collections.sort(list, new JarEntryComparator());
 
-		Iterator iter = list.iterator();
-		while (iter.hasNext()) {
-			JarEntry entry = (JarEntry)iter.next();
+		for (JarEntry entry : list) {
 			digest.update(entry.getName().getBytes("ASCII"));
 			updateDigest(jar.getInputStream(entry), digest);
 		}
@@ -178,11 +158,11 @@ public class PluginData {
 	}
 
 	//Gets the location of specified file when inside of saveDirectory
-	protected String getSaveToLocation(String saveDirectory, String filename) {
+	public static String prefix(String saveDirectory, String filename) {
 		return prefix(saveDirectory + File.separator + filename);
 	}
 
-	public String getTimestampFromFile(String filename) {
+	public static String getTimestamp(String filename) {
 		String fullPath = prefix(filename);
 		long modified = new File(fullPath).lastModified();
 		return timestamp(modified);
@@ -207,60 +187,41 @@ public class PluginData {
 			format.format(second);
 	}
 
-	public long getFilesizeFromFile(String filename) {
-		return new File(filename).length();
+	public static long getFilesize(String filename) {
+		return new File(prefix(filename)).length();
 	}
 
-	public String getDigestFromFile(String filename) {
+	public static String getDigest(String filename) {
 		try {
 			return getDigest(filename, prefix(filename));
 		} catch (Exception e) {
-			throw new Error("Could not get digest: " + prefix(filename) + " (" + e + ")");
+			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
 	}
 
-	public String prefix(String path) {
-		return fijiPath + (isDeveloper && path.startsWith("fiji-") ?
+	public static String prefix(String path) {
+		if (useMacPrefix && path.startsWith(macPrefix))
+			path = path.substring(macPrefix.length());
+		if (File.separator.equals("\\"))
+			path = path.replace("\\", "/");
+		return fijiRoot + (isDeveloper && isLauncher(path) ?
 				"precompiled/" : "") + path;
 	}
 
-	public String initializeFilename(String filename) {
-		if (getUseMacPrefix() && filename.startsWith(getMacPrefix()))
-			filename = filename.substring(getMacPrefix().length());
-		if (File.separator.equals("\\"))
-			filename = filename.replace("\\", "/");
-		return filename;
-	}
-
-	public boolean fileExists(String filename) {
+	public static boolean fileExists(String filename) {
 		return new File(prefix(filename)).exists();
 	}
 
-	public String[] getLaunchers() {
-		return launchers;
+	public static boolean isLauncher(String filename) {
+		return Arrays.binarySearch(launchers, filename) >= 0;
 	}
 
-	public boolean isFijiLauncher(String filename) {
-		if (Arrays.binarySearch(launchers, filename) >= 0)
-			return true;
-		return false;
-	}
+	public static String[] getLaunchers() {
+		if (platform.equals("macosx"))
+			return new String[] { "fiji-macosx", "fiji-tiger" };
 
-	public String[] getRelevantLaunchers() {
 		int index = Arrays.binarySearch(launchers, "fiji-" + platform);
-		if (index < 0)
-			throw new Error("Failed to get Fiji launcher.");
-
-		String[] relevantLaunchers = new String[1];
-		//some platform may have more than 1 launcher
-		if (platform.equals("macosx")) {
-			relevantLaunchers = new String[2];
-			relevantLaunchers[0] = launchers[index];
-			relevantLaunchers[1] = "fiji-tiger";
-		} else { //otherwise it is only 1 default launcher
-			relevantLaunchers[0] = launchers[index];
-		}
-		Arrays.sort(relevantLaunchers);
-		return relevantLaunchers;
+		return new String[] { launchers[index] };
 	}
 }

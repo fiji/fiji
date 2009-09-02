@@ -1,8 +1,19 @@
 package fiji.pluginManager.ui;
+
+import fiji.pluginManager.logic.DependencyBuilder;
+import fiji.pluginManager.logic.UpdateTracker;
+import fiji.pluginManager.logic.PluginCollection;
+import fiji.pluginManager.logic.PluginManager;
+import fiji.pluginManager.logic.PluginObject;
+
+import fiji.pluginManager.util.Util;
+
 import ij.IJ;
+
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -19,11 +30,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import fiji.pluginManager.logic.DependencyBuilder;
-import fiji.pluginManager.logic.UpdateTracker;
-import fiji.pluginManager.logic.PluginCollection;
-import fiji.pluginManager.logic.PluginManager;
-import fiji.pluginManager.logic.PluginObject;
 
 /*
  * Main User Interface, where the user chooses his options...
@@ -137,7 +143,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		JPanel rightPanel = SwingTools.createBoxLayoutPanel(BoxLayout.Y_AXIS);
 
 		rightPanel.add(Box.createVerticalGlue());
-		if (pluginManager.isDeveloper()) {
+		if (Util.isDeveloper) {
 			JPanel editButtonPanel = SwingTools.createBoxLayoutPanel(BoxLayout.X_AXIS);
 			editButtonPanel.add(Box.createHorizontalGlue());
 			btnEditDetails = SwingTools.createButton("Edit Details",
@@ -179,7 +185,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		btnStart.setEnabled(false);
 
 		//includes button to upload to server if is a Developer using
-		if (pluginManager.isDeveloper()) {
+		if (Util.isDeveloper) {
 			bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
 			btnUpload = SwingTools.createButton("Upload to server",
 					"Upload selected plugins to server", new ActionListener() {
@@ -312,7 +318,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 			((TextPaneDisplay)txtPluginDetails).showPluginDetails(currentPlugin);
 
 		//Enable/Disable edit button depending on Action of selected plugin
-		if (pluginManager.isDeveloper()) //This button only exists if is a Developer
+		if (Util.isDeveloper) //This button only exists if is a Developer
 			btnEditDetails.setEnabled(currentPlugin.toUpload());
 	}
 
@@ -331,19 +337,19 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 				removeCount += 1;
 			} else if (myPlugin.toUpdate()) {
 				updateCount += 1;
-			} else if (pluginManager.isDeveloper() &&
+			} else if (Util.isDeveloper &&
 					myPlugin.toUpload()) {
 				uploadCount += 1;
 			}
 		}
 		String txtAction = "Total: " + size + ", To install: " + installCount +
 		", To remove: " + removeCount + ", To update: " + updateCount;
-		if (pluginManager.isDeveloper())
+		if (Util.isDeveloper)
 			txtAction += ", To upload: " + uploadCount;
 		lblPluginSummary.setText(txtAction);
 
 		//Refresh plugin details and status
-		if (pluginManager.isDeveloper() && btnEditDetails != null) {
+		if (Util.isDeveloper && btnEditDetails != null) {
 			if (currentPlugin != null)
 				displayPluginDetails(currentPlugin);
 			else
@@ -364,9 +370,5 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 	private void enableIfActions(JButton button, int size) {
 		if (button != null)
 			button.setEnabled(size > 0);
-	}
-
-	public boolean isDeveloper() {
-		return pluginManager.isDeveloper();
 	}
 }

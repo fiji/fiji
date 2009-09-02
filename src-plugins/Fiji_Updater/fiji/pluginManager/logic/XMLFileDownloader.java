@@ -3,7 +3,7 @@ package fiji.pluginManager.logic;
 import fiji.pluginManager.util.Downloader;
 import fiji.pluginManager.util.Compressor;
 import fiji.pluginManager.util.Downloader.FileDownload;
-import fiji.pluginManager.util.PluginData;
+import fiji.pluginManager.util.Util;
 
 import ij.Prefs;
 
@@ -24,15 +24,13 @@ public class XMLFileDownloader extends PluginDataObservable implements Downloade
 	private List<FileDownload> sources;
 	private long xmlLastModified;
 	private byte[] data;
-	private PluginData util;
 	private String url;
 
-	public XMLFileDownloader(PluginData util) {
-		this(util, PluginManager.MAIN_URL);
+	public XMLFileDownloader() {
+		this(PluginManager.MAIN_URL);
 	}
 
-	public XMLFileDownloader(PluginData util, String url) {
-		this.util = util;
+	public XMLFileDownloader(String url) {
 		this.url = url;
 	}
 
@@ -59,7 +57,7 @@ public class XMLFileDownloader extends PluginDataObservable implements Downloade
 
 		//Download XML file either when it has been modified again, or if local version does not exist
 		if (dateRecorded != xmlLastModified ||
-				!new File(util.prefix(PluginManager.XML_COMPRESSED)).exists()) {
+				!new File(Util.prefix(PluginManager.XML_COMPRESSED)).exists()) {
 			//Record new last modified date of XML, and then select to download XML
 			Prefs.set(PluginManager.PREFS_XMLDATE, "" + xmlLastModified);
 			addToDownload(xml_url, PluginManager.XML_COMPRESSED);
@@ -71,7 +69,7 @@ public class XMLFileDownloader extends PluginDataObservable implements Downloade
 		downloader.startDownload();
 
 		//Uncompress the XML file
-		String compressedFileLocation = util.prefix(PluginManager.XML_COMPRESSED);
+		String compressedFileLocation = Util.prefix(PluginManager.XML_COMPRESSED);
 		data = Compressor.getDecompressedData(
 				new FileInputStream(compressedFileLocation));
 
@@ -90,7 +88,7 @@ public class XMLFileDownloader extends PluginDataObservable implements Downloade
 
 	private void addToDownload(String url, String filename) {
 		System.out.println("To download: " + filename);
-		sources.add(new InformationSource(filename, url, util.prefix(filename)));
+		sources.add(new InformationSource(filename, url, Util.prefix(filename)));
 	}
 
 	private class InformationSource implements FileDownload {
