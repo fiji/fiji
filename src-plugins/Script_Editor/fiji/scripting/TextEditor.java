@@ -45,10 +45,15 @@ import java.io.InputStreamReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.awt.image.BufferedImage;
+import java.util.Vector;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Date;
 import ij.io.OpenDialog;
 import ij.io.SaveDialog;
 import ij.IJ;
 import ij.Prefs;
+import ij.gui.GenericDialog;
 import javax.imageio.ImageIO;
 import org.fife.ui.rtextarea.Gutter;
 import org.fife.ui.rtextarea.RTextScrollPane;
@@ -81,7 +86,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 	RSyntaxTextArea textArea;
 	JTextArea screen = new JTextArea();
 	Document doc;
-	JMenuItem new1, open, save, saveas, compileAndRun, debug, quit, undo, redo, cut, copy, paste, find, replace, selectAll, autocomplete, resume, terminate;
+	JMenuItem new1, open, save, saveas, compileAndRun, debug, quit, undo, redo, cut, copy, paste, find, replace, selectAll, autocomplete, resume, terminate, kill;
 	JRadioButtonMenuItem[] lang = new JRadioButtonMenuItem[8];
 	FileInputStream fin;
 	// TODO: fix (enableReplace(boolean))
@@ -213,6 +218,8 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		run.addSeparator();
 		addToMenu(run, debug, "Start Debugging", 0, KeyEvent.VK_F11, 0);
 		mbar.add(run);
+		run.addSeparator();
+		addToMenu(run, kill, "Kill running script...", 1, 0, 0);
 
 		JMenu breakpoints = new JMenu("Breakpoints");
 		addToMenu(breakpoints, resume, "Resume", 1, 0, 0);
@@ -284,8 +291,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 			else
 				createNewDocument();
 		}
-
-		if (command.equals("Open...")) {
+		else if (command.equals("Open...")) {
 			// TODO: handle == 0 by returning!
 			if (handleUnsavedChanges() != 0) {
 				OpenDialog dialog = new OpenDialog("Open..", "");
@@ -305,18 +311,20 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 			}
 		}
 
-		if (command.equals("Save")) {
+		else if (command.equals("Save")) {
 			save();
 		}
-		if (command.equals("Save as..."))  {
+		else if (command.equals("Save as..."))  {
 			// TODO: fix "funny" naming
 			saveasaction();
 		}
-		if (command.equals("Compile and Run")) {
+		else if (command.equals("Compile and Run")) {
 			// TODO: s/Script//
 			runScript();
 		}
-		if (command.equals("Start Debugging")) {
+		else if (command.equals("Kill running script...")) {
+			chooseTaskToKill();
+		} else if (command.equals("Start Debugging")) {
 			BreakpointManager manager = new BreakpointManager(gutter, textArea, iconGroup);
 			debugging = new StartDebugging(file.getPath(), manager.findBreakpointsLineNumber());
 
@@ -325,30 +333,30 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 				// TODO: at least use printStackTrace()
 			} catch (Exception e) {}
 		}
-		if (command.equals("Quit")) {
+		else if (command.equals("Quit")) {
 			processWindowEvent( new WindowEvent(this, WindowEvent.WINDOW_CLOSING) );
 		}
 
-		if (command.equals("Cut")) {
+		else if (command.equals("Cut")) {
 			textArea.cut();
 		}
-		if (command.equals("Copy")) {
+		else if (command.equals("Copy")) {
 			textArea.copy();
 		}
-		if (command.equals("Paste")) {
+		else if (command.equals("Paste")) {
 			textArea.paste();
 		}
-		if (command.equals("Undo")) {
+		else if (command.equals("Undo")) {
 			textArea.undoLastAction();
 		}
-		if (command.equals("Redo")) {
+		else if (command.equals("Redo")) {
 			textArea.redoLastAction();
 		}
-		if (command.equals("Find...")) {
+		else if (command.equals("Find...")) {
 
 			setFindAndReplace(false);
 		}
-		if (command.equals("Find and Replace...")) {						//here should the code to close all other dialog boxes
+		else if (command.equals("Find and Replace...")) {						//here should the code to close all other dialog boxes
 			try {
 				setFindAndReplace(true);
 
@@ -358,12 +366,12 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		}
 
 
-		if (command.equals("Select All")) {
+		else if (command.equals("Select All")) {
 			textArea.setCaretPosition(0);
 			textArea.moveCaretPosition(textArea.getDocument().getLength());
 		}
 
-		if (command.equals("Autocomplete")) {
+		else if (command.equals("Autocomplete")) {
 			try {
 				autocomp.doCompletion();
 			} catch (Exception e) {}
@@ -371,11 +379,11 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 
 		//setting actionPerformed for language menu
 		// TODO: handle "None"
-		if (command.startsWith("."))
+		else if (command.startsWith("."))
 			setLanguageByExtension(command);
-		if (command.equals("Resume"))
+		else if (command.equals("Resume"))
 			debugging.resumeVM();
-		if (command.equals("Terminate")) { }
+		else if (command.equals("Terminate")) { }
 
 	}
 
@@ -548,6 +556,124 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		runSavedScript();
 	}
 
+	/** Using a Vector to benefit from all its methods being synchronzed. */
+	private Vector<Executer> executing_tasks = new Vector<Executer>();
+
+	/** Generic Thread that keeps a starting time stamp,
+	 *  sets the priority to normal and starts itself. */
+	private abstract class Executer extends ThreadGroup {
+		Executer() {
+			super("Script Editor Run :: " + new Date().toString());
+			// Store itself for later
+			executing_tasks.add(this);
+			// Fork a task, as a part of this ThreadGroup
+			new Thread(this, getName()) {
+				{
+					setPriority(Thread.NORM_PRIORITY);
+					start();
+				}
+				public void run() {
+					try {
+						execute();
+					} catch (Throwable t) {
+						t.printStackTrace();
+					} finally {
+						executing_tasks.remove(Executer.this);
+					}
+				}
+			};
+		}
+		
+		/** The method to extend, that will do the actual work. */
+		abstract void execute();
+
+		/** Fetch a list of all threads from all thread subgroups, recursively. */
+		List<Thread> getAllThreads() {
+			ArrayList<Thread> threads = new ArrayList<Thread>();
+			ThreadGroup[] tgs = new ThreadGroup[activeGroupCount() * 2 + 100];
+			this.enumerate(tgs);
+			for (ThreadGroup tg : tgs) {
+				if (null == tg) continue;
+				Thread[] ts = new Thread[tg.activeCount() * 2 + 100];
+				tg.enumerate(ts);
+				for (Thread t : ts) {
+					if (null == t) continue;
+					threads.add(t);
+				}
+			}
+			return threads;
+		}
+
+		/** Totally destroy/stop all threads in this and all recursive thread subgroups. Will remove itself from the executing_tasks list. */
+		void obliterate() {
+			for (Thread thread : getAllThreads()) {
+				try {
+					thread.interrupt();
+					Thread.yield(); // give it a chance
+					thread.stop();
+				} catch (Throwable t) {
+					t.printStackTrace();
+				}
+			}
+			executing_tasks.remove(this);
+		}
+	}
+
+	/** Query the list of running scripts and provide a dialog to choose one and kill it. */
+	public void chooseTaskToKill() {
+		
+		if (0 == executing_tasks.size()) {
+			IJ.log("\nNo tasks running!\n");
+			return;
+		}
+
+		final Executer[] executers = (Executer[]) executing_tasks.toArray(new Executer[0]);
+		if (0 == executers.length) {
+			IJ.log("\nNo tasks to kill\n");
+			return;
+		}
+		String[] names = new String[executers.length];
+		for (int i=0; i<executers.length; i++) {
+			names[i] = executers[i].getName();
+		}
+
+		GenericDialog gd = new GenericDialog("Kill");
+		gd.addChoice("Running scripts: ", names, names[names.length - 1]);
+		gd.addCheckbox("Kill all", false);
+		gd.showDialog();
+		if (gd.wasCanceled()) {
+			return;
+		}
+		ArrayList<Executer> deaders = new ArrayList<Executer>();
+		if (gd.getNextBoolean()) {
+			// kill all
+			for (Executer ex : executers)
+				deaders.add(ex);
+		} else {
+			deaders.add(executers[gd.getNextChoiceIndex()]);
+		}
+
+		for (final Executer ex : deaders) {
+			// Graceful attempt:
+			ex.interrupt();
+			// Give it 3 seconds. Then, stop it.
+			final long onset = System.currentTimeMillis();
+			new Thread() {
+				{ setPriority(Thread.NORM_PRIORITY); }
+				public void run() {
+					while (true) {
+						if (System.currentTimeMillis() - onset > 3000) break;
+						try {
+							Thread.sleep(100);
+						} catch (InterruptedException ie) {}
+					}
+					ex.obliterate();
+				}
+			}.start();
+		}
+	}
+
+
 	// TODO: do not require saving
 	public void runSavedScript() {
 		String ext = getExtension(file.getName());
@@ -557,14 +683,11 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 			IJ.error("There is no interpreter for " + ext
 			         + " files!");
 		else {
-			new Thread() {
-
-				{ setPriority(Thread.NORM_PRIORITY); }
-
-				public void run() {
+			new TextEditor.Executer() {
+				public void execute() {
 					interpreter.runScript(file.getPath());
 				}
-			}.start();
+			};
 		}
 	}
 
