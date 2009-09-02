@@ -73,7 +73,6 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 	// TODO: clean up unnecessary variables
 	boolean fileChanged = false;
 	boolean isFileUnnamed = true;
-	String title = "";
 	String language = new String();
 	InputMethodListener l;
 	File file, f;
@@ -252,33 +251,27 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		doc.addDocumentListener(this);
 	}
 
-	public int handleUnsavedChanges() {
-		if (fileChanged == true) {
-			// TODO: saveChangeDialog() is useless outside of this function; merge the code
-			// TODO: use switch()
-			int val = saveChangeDialog();
-			if (val == JOptionPane.CANCEL_OPTION) {
-				return 0;
-			} else if (val == JOptionPane.YES_OPTION) {
-				if (save() != JFileChooser.APPROVE_OPTION)
-					return 0;
-			} else if (val != JOptionPane.NO_OPTION) {
-				return 0;
-			}
+	public boolean handleUnsavedChanges() {
+		if (!fileChanged)
+			return true;
+
+		switch (JOptionPane.showConfirmDialog(this,
+				"Do you want to save changes?")) {
+		case JOptionPane.NO_OPTION:
+			return true;
+		case JOptionPane.YES_OPTION:
+			if (save())
+				return true;
 		}
-		return 1;
-	}
 
-	public int saveChangeDialog() {
-		return(JOptionPane.showConfirmDialog(this, "Do you want to save changes??"));
+		return false;
 	}
-
 
 	public void actionPerformed(ActionEvent ae) {
 		String command = ae.getActionCommand();
 		// TODO: NO!!!!
 		if (command.equals("New")) {
-			if (handleUnsavedChanges() == 0)
+			if (!handleUnsavedChanges())
 				return;
 			// TODO: NO!!!!
 			else
@@ -286,36 +279,23 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		}
 
 		if (command.equals("Open...")) {
-			// TODO: handle == 0 by returning!
-			if (handleUnsavedChanges() != 0) {
-				OpenDialog dialog = new OpenDialog("Open..", "");
-				String directory = dialog.getDirectory();
-				String name = dialog.getFileName();
-				String path = "";
-				if (name != null) {
-					path = directory + name;
-					boolean fullPath = path.startsWith("/") || path.startsWith("\\") || path.indexOf(":\\") == 1 || path.startsWith("http://");
-					if (!fullPath) {
-						String workingDir = OpenDialog.getDefaultDirectory();
-						if (workingDir != null)
-							path = workingDir + path;
-					}
-					open(path);
-				}
-			}
+			if (!handleUnsavedChanges())
+				return;
+
+			OpenDialog dialog = new OpenDialog("Open..", "");
+			String name = dialog.getFileName();
+			if (name != null)
+				open(dialog.getDirectory() + name);
+			return;
 		}
 
-		if (command.equals("Save")) {
+		if (command.equals("Save"))
 			save();
-		}
-		if (command.equals("Save as..."))  {
-			// TODO: fix "funny" naming
-			saveasaction();
-		}
-		if (command.equals("Compile and Run")) {
+		if (command.equals("Save as..."))
+			saveAs();
+		if (command.equals("Compile and Run"))
 			// TODO: s/Script//
 			runScript();
-		}
 		if (command.equals("Start Debugging")) {
 			BreakpointManager manager = new BreakpointManager(gutter, textArea, iconGroup);
 			debugging = new StartDebugging(file.getPath(), manager.findBreakpointsLineNumber());
@@ -325,35 +305,27 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 				// TODO: at least use printStackTrace()
 			} catch (Exception e) {}
 		}
-		if (command.equals("Quit")) {
+		if (command.equals("Quit"))
 			processWindowEvent( new WindowEvent(this, WindowEvent.WINDOW_CLOSING) );
-		}
 
-		if (command.equals("Cut")) {
+		if (command.equals("Cut"))
 			textArea.cut();
-		}
-		if (command.equals("Copy")) {
+		if (command.equals("Copy"))
 			textArea.copy();
-		}
-		if (command.equals("Paste")) {
+		if (command.equals("Paste"))
 			textArea.paste();
-		}
-		if (command.equals("Undo")) {
+		if (command.equals("Undo"))
 			textArea.undoLastAction();
-		}
-		if (command.equals("Redo")) {
+		if (command.equals("Redo"))
 			textArea.redoLastAction();
-		}
-		if (command.equals("Find...")) {
-
+		if (command.equals("Find..."))
 			setFindAndReplace(false);
-		}
 		if (command.equals("Find and Replace...")) {						//here should the code to close all other dialog boxes
 			try {
 				setFindAndReplace(true);
 
 			} catch (Exception e) {
-				e.printStackTrace();
+				e.printStackTrace(); // TODO: huh?
 			}
 		}
 
@@ -441,16 +413,14 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 
 	}
 
-	public int saveasaction() {
-		SaveDialog sd = new SaveDialog("Save as ", "new", "");
+	public boolean saveAs() {
+		SaveDialog sd = new SaveDialog("Save as ", "New_", "");
 		String name = sd.getFileName();
-		if (name != null) {
-			String path = sd.getDirectory() + name;
-			return(saveAs(path, checkForReplace(sd.getDirectory(), name)));
+		if (name == null)
+			return false;
 
-		} else {
-			return -1;
-		}
+		String path = sd.getDirectory() + name;
+		return saveAs(path, checkForReplace(sd.getDirectory(), name));
 	}
 
 	// TODO: this is racy at best
@@ -463,43 +433,43 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		saveAs(path, true);
 	}
 
-	public int saveAs(String path, boolean ifReplaceFile) {
+	public boolean saveAs(String path, boolean askBeforeReplacing) {
 		file = new File(path);
-		try {
-			if (ifReplaceFile) {
-				int val = JOptionPane.showConfirmDialog(this, "Do you want to replace " + file.getName() + "??", "Do you want to replace " + file.getName() + "??", JOptionPane.YES_NO_OPTION);
-				if (val != JOptionPane.YES_OPTION)
-					return -1;
-			}
-			writeToFile(file);
-			setFileName(file);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return JFileChooser.APPROVE_OPTION;
+		if (file.exists() && !askBeforeReplacing &&
+				JOptionPane.showConfirmDialog(this,
+					"Do you want to replace " + path + "?",
+					"Replace " + path + "?",
+					JOptionPane.YES_NO_OPTION)
+				!= JOptionPane.YES_OPTION)
+			return false;
+		if (!write(file))
+			return false;
+		setFileName(file);
+		return true;
 	}
 
-	public int save() {
-		if (isFileUnnamed) {
-			return(saveasaction());
-		} else {
-			writeToFile(file);
-			setTitle();
-			return JFileChooser.APPROVE_OPTION;
-		}
+	public boolean save() {
+		if (isFileUnnamed) // TODO: this should be "file == null"
+			return saveAs();
+		if (!write(file))
+			return false;
+		setTitle();
+		return true;
 	}
 
-
-	public void writeToFile(File file) {
+	public boolean write(File file) {
 		try {
-			// TODO: get a grip on the style to use
+			BufferedWriter outFile =
+				new BufferedWriter(new FileWriter(file));
+			outFile.write(textArea.getText());
+			outFile.close();
 			fileChanged = false;
-			BufferedWriter outFile = new BufferedWriter( new FileWriter( file ) );
-			outFile.write( textArea.getText( ) ); //put in textfile
-			outFile.flush( ); // redundant, done by close()
-			outFile.close( );
-			// TODO: at least printStackTrace
-		} catch (Exception e) {}
+			return true;
+		} catch (IOException e) {
+			IJ.error("Could not save " + file.getName());
+			e.printStackTrace();
+			return false;
+		}
 	}
 
 	public static String getExtension(String fileName) {
@@ -535,16 +505,8 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 	}
 
 	public void runScript() {
-		if (fileChanged || isFileUnnamed) {
-			int val = JOptionPane.showConfirmDialog(this, "You must save the changes before running.Do you want to save changes??", "Select an Option", JOptionPane.YES_NO_OPTION);
-			if (val != JOptionPane.YES_OPTION)
-				return;
-			else {
-				int temp = save();
-				if (temp != JFileChooser.APPROVE_OPTION)
-					return;
-			}
-		}
+		if (!handleUnsavedChanges())
+			return;
 		runSavedScript();
 	}
 
@@ -553,34 +515,22 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		String ext = getExtension(file.getName());
 		final RefreshScripts interpreter =
 		        Languages.getInstance().get(ext).interpreter;
-		if (interpreter == null)
+		if (interpreter == null) {
 			IJ.error("There is no interpreter for " + ext
 			         + " files!");
-		else {
-			new Thread() {
-				public void run() {
-					interpreter.runScript(file.getPath());
-				}
-			}.start();
+			return;
 		}
+		new Thread() {
+			public void run() {
+				interpreter.runScript(file.getPath());
+			}
+		}.start();
 	}
 
-	// TODO: saveChangeDialog() should check fileChanged itself
 	public void windowClosing(WindowEvent e) {
-
-		if (fileChanged) {
-			int val = saveChangeDialog();
-			if (val == JOptionPane.CANCEL_OPTION) {
-				setVisible(true);
-				return;
-			}
-			if (val == JOptionPane.YES_OPTION) {
-				if (save() != JFileChooser.APPROVE_OPTION) {
-					return;
-				}
-			}
-		}
-		this.dispose();
+		if (!handleUnsavedChanges())
+			return;
+		dispose();
 
 	}
 
