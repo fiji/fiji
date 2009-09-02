@@ -85,7 +85,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 	RSyntaxTextArea textArea;
 	JTextArea screen = new JTextArea();
 	Document doc;
-	JMenuItem new1, open, save, saveas, compileAndRun, debug, quit, undo, redo, cut, copy, paste, find, replace, selectAll, autocomplete, resume, terminate, kill;
+	JMenuItem new_file, open, save, saveas, compileAndRun, debug, quit, undo, redo, cut, copy, paste, find, replace, selectAll, autocomplete, resume, terminate, kill;
 	JRadioButtonMenuItem[] lang = new JRadioButtonMenuItem[8];
 	FileInputStream fin;
 	// TODO: fix (enableReplace(boolean))
@@ -142,57 +142,43 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		addWindowListener(this);
 		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 
-		/*********** Creating the menu options in the text editor ****************/
-
 		JMenuBar mbar = new JMenuBar();
-		// TODO: is this not too early?
 		setJMenuBar(mbar);
 
-		/*******  creating the menu for the File option **********/
 		JMenu file = new JMenu("File");
 		file.setMnemonic(KeyEvent.VK_F);
-		// TODO: this cannot work, new1 must be assigned
-		addToMenu(file, new1, "New", 0, KeyEvent.VK_N, ActionEvent.CTRL_MASK);
-		addToMenu(file, open, "Open...", 0, KeyEvent.VK_O, ActionEvent.CTRL_MASK);
-		addToMenu(file, save, "Save", 0, KeyEvent.VK_S, ActionEvent.CTRL_MASK);
-		addToMenu(file, save, "Save as...", 1, 0, 0);
+		new_file = addToMenu(file, "New", 0, KeyEvent.VK_N, ActionEvent.CTRL_MASK);
+		open = addToMenu(file, "Open...", 0, KeyEvent.VK_O, ActionEvent.CTRL_MASK);
+		save = addToMenu(file, "Save", 0, KeyEvent.VK_S, ActionEvent.CTRL_MASK);
+		saveas = addToMenu(file, "Save as...", 1, 0, 0);
 		file.addSeparator();
-		addToMenu(file, quit, "Quit", 0, KeyEvent.VK_X, ActionEvent.ALT_MASK);
+		quit = addToMenu(file, "Quit", 0, KeyEvent.VK_X, ActionEvent.ALT_MASK);
 
 		mbar.add(file);
 
-		/********The file menu part ended here  ***************/
-
-		/*********The Edit menu part starts here ***************/
-
 		JMenu edit = new JMenu("Edit");
-		addToMenu(edit, undo, "Undo", 0, KeyEvent.VK_Z, ActionEvent.CTRL_MASK);
-		addToMenu(edit, redo, "Redo", 0, KeyEvent.VK_Y, ActionEvent.CTRL_MASK);
+		undo = addToMenu(edit, "Undo", 0, KeyEvent.VK_Z, ActionEvent.CTRL_MASK);
+		redo = addToMenu(edit, "Redo", 0, KeyEvent.VK_Y, ActionEvent.CTRL_MASK);
 		edit.addSeparator();
-		addToMenu(edit, cut, "Cut", 0, KeyEvent.VK_X, ActionEvent.CTRL_MASK);
-		addToMenu(edit, copy, "Copy", 0, KeyEvent.VK_C, ActionEvent.CTRL_MASK);
-		addToMenu(edit, paste, "Paste", 0, KeyEvent.VK_V, ActionEvent.CTRL_MASK);
+		cut = addToMenu(edit, "Cut", 0, KeyEvent.VK_X, ActionEvent.CTRL_MASK);
+		copy = addToMenu(edit, "Copy", 0, KeyEvent.VK_C, ActionEvent.CTRL_MASK);
+		paste = addToMenu(edit, "Paste", 0, KeyEvent.VK_V, ActionEvent.CTRL_MASK);
 		edit.addSeparator();
-		addToMenu(edit, find, "Find...", 0, KeyEvent.VK_F, ActionEvent.CTRL_MASK);
-		addToMenu(edit, replace, "Find and Replace...", 0, KeyEvent.VK_H, ActionEvent.CTRL_MASK);
+		find = addToMenu(edit, "Find...", 0, KeyEvent.VK_F, ActionEvent.CTRL_MASK);
+		replace = addToMenu(edit, "Find and Replace...", 0, KeyEvent.VK_H, ActionEvent.CTRL_MASK);
 		edit.addSeparator();
 		// TODO: this belongs higher, no?
-		addToMenu(edit, selectAll, "Select All", 0, KeyEvent.VK_A, ActionEvent.CTRL_MASK);
+		selectAll = addToMenu(edit, "Select All", 0, KeyEvent.VK_A, ActionEvent.CTRL_MASK);
 		mbar.add(edit);
 
-		/******** The Edit menu part ends here *****************/
-
-		// TODO: remove useless comments
-		/********The options menu part starts here**************/
 		// TODO: add accelerator keys for the menus, too
 		JMenu options = new JMenu("Options");
 		// TODO: CTRL, ALT
-		addToMenu(options, autocomplete, "Autocomplete", 0, KeyEvent.VK_SPACE, ActionEvent.CTRL_MASK);
+		autocomplete = addToMenu(options, "Autocomplete", 0, KeyEvent.VK_SPACE, ActionEvent.CTRL_MASK);
 		options.addSeparator();
 
 		mbar.add(options);
 
-		/*********The Language parts starts here********************/
 		JMenu languages = new JMenu("Language");
 		ButtonGroup group = new ButtonGroup();
 		for (Languages.Language language :
@@ -213,25 +199,25 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 
 		JMenu run = new JMenu("Run");
 		// TODO: allow outside-of-plugins/ sources
-		addToMenu(run, compileAndRun, "Compile and Run", 0, KeyEvent.VK_F11, ActionEvent.CTRL_MASK);
+
+		compileAndRun = addToMenu(run, "Compile and Run", 0, KeyEvent.VK_F11, ActionEvent.CTRL_MASK);
 		run.addSeparator();
-		addToMenu(run, debug, "Start Debugging", 0, KeyEvent.VK_F11, 0);
+		debug = addToMenu(run, "Start Debugging", 0, KeyEvent.VK_F11, 0);
 		mbar.add(run);
+
 		run.addSeparator();
-		addToMenu(run, kill, "Kill running script...", 1, 0, 0);
+
+		kill = addToMenu(run, "Kill running script...", 1, 0, 0);
+		kill.setEnabled(executing_tasks.size() > 0);
 
 		JMenu breakpoints = new JMenu("Breakpoints");
-		addToMenu(breakpoints, resume, "Resume", 1, 0, 0);
-		addToMenu(breakpoints, terminate, "Terminate", 1, 0, 0);
+		resume = addToMenu(breakpoints, "Resume", 1, 0, 0);
+		terminate = addToMenu(breakpoints, "Terminate", 1, 0, 0);
 		mbar.add(breakpoints);
-
-
-
-
-		/*********** The menu part ended here    ********************/
 
 		pack();
 		getToolkit().setDynamicLayout(true);            //added to accomodate the autocomplete part
+
 		// TODO: is this needed?
 		setLocationRelativeTo(null);
 		setVisible(true);
@@ -239,12 +225,13 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 			open(path1);
 	}
 
-	public void addToMenu(JMenu menu, JMenuItem menuitem, String menuEntry, int keyEvent, int keyevent, int actionevent) {
-		menuitem = new JMenuItem(menuEntry);
-		menu.add(menuitem);
+	public JMenuItem addToMenu(JMenu menu, String menuEntry, int keyEvent, int keyevent, int actionevent) {
+		JMenuItem item = new JMenuItem(menuEntry);
+		menu.add(item);
 		if (keyEvent == 0) // == 0?  Not != 0?
-			menuitem.setAccelerator(KeyStroke.getKeyStroke(keyevent, actionevent));
-		menuitem.addActionListener(this);
+			item.setAccelerator(KeyStroke.getKeyStroke(keyevent, actionevent));
+		item.addActionListener(this);
+		return item;
 	}
 
 	public void createNewDocument() {
@@ -275,17 +262,16 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 	}
 
 	public void actionPerformed(ActionEvent ae) {
-		String command = ae.getActionCommand();
-		// TODO: NO!!!!
-		if (command.equals("New")) {
+		final Object source = ae.getSource();
+		final String command = ae.getActionCommand();
+		if (source == new_file) {
 			if (!handleUnsavedChanges())
 				return;
 			// TODO: NO!!!!
 			else
 				createNewDocument();
 		}
-
-		if (command.equals("Open...")) {
+		else if (source == open) {
 			if (!handleUnsavedChanges())
 				return;
 
@@ -295,67 +281,64 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 				open(dialog.getDirectory() + name);
 			return;
 		}
-
-		else if (command.equals("Save"))
+		else if (source == save)
 			save();
-		else if (command.equals("Save as..."))
+		else if (source == saveas)
 			saveAs();
-		else if (command.equals("Compile and Run"))
+		else if (source == compileAndRun)
 			// TODO: s/Script//
 			runScript();
-		else if (command.equals("Start Debugging")) {
+		else if (source == debug) {
 			BreakpointManager manager = new BreakpointManager(gutter, textArea, iconGroup);
 			debugging = new StartDebugging(file.getPath(), manager.findBreakpointsLineNumber());
 
 			try {
 				System.out.println(debugging.startDebugging().exitValue());
-				// TODO: at least use printStackTrace()
-			} catch (Exception e) {}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
-		else if (command.equals("Kill running script..."))
+		else if (source == kill)
 			chooseTaskToKill();
-		else if (command.equals("Quit"))
+		else if (source == quit)
 			processWindowEvent( new WindowEvent(this, WindowEvent.WINDOW_CLOSING) );
-		else if (command.equals("Cut"))
+		else if (source == cut)
 			textArea.cut();
-		else if (command.equals("Copy"))
+		else if (source == copy)
 			textArea.copy();
-		else if (command.equals("Paste"))
+		else if (source == paste)
 			textArea.paste();
-		else if (command.equals("Undo"))
+		else if (source == undo)
 			textArea.undoLastAction();
-		else if (command.equals("Redo"))
+		else if (source == redo)
 			textArea.redoLastAction();
-		else if (command.equals("Find..."))
+		else if (source == find)
 			setFindAndReplace(false);
-		else if (command.equals("Find and Replace...")) {						//here should the code to close all other dialog boxes
+		else if (source == replace) {
 			try {
 				setFindAndReplace(true);
-
 			} catch (Exception e) {
 				e.printStackTrace(); // TODO: huh?
 			}
 		}
-
-
-		else if (command.equals("Select All")) {
+		else if (source == selectAll) {
 			textArea.setCaretPosition(0);
 			textArea.moveCaretPosition(textArea.getDocument().getLength());
 		}
-
-		else if (command.equals("Autocomplete")) {
+		else if (source == autocomplete) {
 			try {
 				autocomp.doCompletion();
 			} catch (Exception e) {}
 		}
-
 		//setting actionPerformed for language menu
 		// TODO: handle "None"
 		else if (command.startsWith("."))
 			setLanguageByExtension(command);
-		else if (command.equals("Resume"))
+		else if (source == resume)
 			debugging.resumeVM();
-		else if (command.equals("Terminate")) { }
+		else if (source == terminate) {
+			// TODO not implemented
+		}
 
 	}
 
