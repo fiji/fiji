@@ -229,9 +229,8 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		// TODO: is this needed?
 		setLocationRelativeTo(null);
 		setVisible(true);
-		if (!(path1.equals("") || path1 == null)) {
+		if (path1 != null && !path1.equals(""))
 			open(path1);
-		}
 	}
 
 	public void addToMenu(JMenu menu, JMenuItem menuitem, String menuEntry, int keyEvent, int keyevent, int actionevent) {
