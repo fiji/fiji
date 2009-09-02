@@ -95,7 +95,6 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 
 	public TextEditor(String path1) {
 		JPanel cp = new JPanel(new BorderLayout());
-		title = "Text Editor for Fiji";
 		textArea = new RSyntaxTextArea();
 		textArea.addInputMethodListener(l);
 		textArea.addCaretListener(this);
@@ -135,7 +134,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		panel.setResizeWeight(350.0 / 430.0);
 		setContentPane(panel);
 		// TODO: Unnamed
-		setTitle(title);
+		setTitle();
 		addWindowListener(this);
 		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 
@@ -247,9 +246,10 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		//TODO: Hmm.
 		doc.removeDocumentListener(this);
 		textArea.setText("");
-		setTitle("TextEditor for Fiji");
+		file = null;
 		isFileUnnamed = true;
 		fileChanged = false;
+		setTitle();
 		doc.addDocumentListener(this);
 	}
 
@@ -485,7 +485,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 			return(saveasaction());
 		} else {
 			writeToFile(file);
-			setTitleName();
+			setTitle();
 			return JFileChooser.APPROVE_OPTION;
 		}
 	}
@@ -525,16 +525,13 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 
 	public void setFileName(File file) {
 		isFileUnnamed = false;
-		setTitleName();
+		setTitle();
 		setLanguageByExtension(getExtension(file.getName()));
 	}
 
-	private void setTitleName() {
-		String fileName=file.getName();
-		if(!fileChanged)
-			title=fileName;
-		else
-			title="*"+fileName;
+	private void setTitle() {
+		String fileName = file == null ? "New_" : file.getName();
+		String title = (fileChanged ? "*" : "") + fileName;
 		setTitle(title);
 	}
 
@@ -606,7 +603,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 	// TODO: rename into "markDirty"
 	private void updateStatusOnChange() {
 		fileChanged = true;
-		setTitleName();
+		setTitle();
 	}
 
 	private CompletionProvider createCompletionProvider() {
