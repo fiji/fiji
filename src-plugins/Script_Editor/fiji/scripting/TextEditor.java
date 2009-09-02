@@ -465,9 +465,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 	}
 
 	public int saveAs(String path, boolean ifReplaceFile) {
-
 		file = new File(path);
-
 		try {
 			if (ifReplaceFile) {
 				int val = JOptionPane.showConfirmDialog(this, "Do you want to replace " + file.getName() + "??", "Do you want to replace " + file.getName() + "??", JOptionPane.YES_NO_OPTION);
@@ -483,17 +481,15 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 	}
 
 	public int save() {
-
 		if (isFileUnnamed) {
 			return(saveasaction());
 		} else {
 			writeToFile(file);
-			// TODO: handle more elegantly
-			if (fileChanged)
-				setTitle(getTitle().substring(1));
+			setTitleName();
 			return JFileChooser.APPROVE_OPTION;
 		}
 	}
+
 
 	public void writeToFile(File file) {
 		try {
@@ -529,9 +525,17 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 
 	public void setFileName(File file) {
 		isFileUnnamed = false;
-		title = file.getName();
+		setTitleName();
+		setLanguageByExtension(getExtension(file.getName()));
+	}
+
+	private void setTitleName() {
+		String fileName=file.getName();
+		if(!fileChanged)
+			title=fileName;
+		else
+			title="*"+fileName;
 		setTitle(title);
-		setLanguageByExtension(getExtension(title));
 	}
 
 	public void runScript() {
@@ -601,9 +605,8 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 
 	// TODO: rename into "markDirty"
 	private void updateStatusOnChange() {
-		if (!fileChanged)
-			setTitle("*" + getTitle());
 		fileChanged = true;
+		setTitleName();
 	}
 
 	private CompletionProvider createCompletionProvider() {
