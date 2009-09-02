@@ -26,6 +26,12 @@ public class Script_Editor implements PlugIn {
 				path = Macro.getValue(options, "path", null);
 			if (path == null)
 				path = Macro.getValue(options, "open", null);
+			if (path == null && options.indexOf('=') < 0) {
+				path = options;
+				if (path.endsWith(" "))
+					path = path.substring(0,
+							path.length() - 1);
+			}
 		}
 		new TextEditor(path);
 	}

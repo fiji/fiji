@@ -1269,6 +1269,8 @@ static void /* no-return */ usage(void)
 		<< "\tdo not reuse existing ImageJ instance" << endl
 		<< "--plugins <dir>" << endl
 		<< "\tuse <dir> to discover plugins" << endl
+		<< "--run <plugin> [<arg>]" << endl
+		<< "\trun <plugin> in ImageJ, optionally with arguments" << endl
 		<< endl
 		<< "Options to run programs other than ImageJ:" << endl
 		<< "--jdb" << endl
@@ -1479,6 +1481,14 @@ static int start_ij(void)
 			allow_multiple = true;
 		else if (handle_one_option(i, "--plugins", arg))
 			plugin_path << "-Dplugins.dir=" << arg;
+		else if (handle_one_option(i, "--run", arg)) {
+			replace(arg.begin(), arg.end(), '_', ' ');
+			if (i + 1 < main_argc && main_argv[i + 1][0] != '-')
+				arg += string("\", \"") + main_argv[++i];
+			add_option(options, "-eval", 1);
+			arg = string("run(\"") + arg + "\");";
+			add_option(options, arg, 1);
+		}
 		else if (handle_one_option(i, "--heap", arg) ||
 				handle_one_option(i, "--mem", arg) ||
 				handle_one_option(i, "--memory", arg))
