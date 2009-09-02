@@ -515,12 +515,16 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		String ext = getExtension(file.getName());
 		final RefreshScripts interpreter =
 		        Languages.getInstance().get(ext).interpreter;
+
 		if (interpreter == null) {
 			IJ.error("There is no interpreter for " + ext
 			         + " files!");
 			return;
 		}
+
 		new Thread() {
+			{ setPriority(Thread.NORM_PRIORITY); }
+
 			public void run() {
 				interpreter.runScript(file.getPath());
 			}
