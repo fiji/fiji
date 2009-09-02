@@ -20,16 +20,22 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.xml.sax.SAXException;
 
+// TODO: this class is misnomed!
+// TODO: there is no need for maps for all the metadata; those metadata should
+// be put into the PluginObjects!
+
 /*
- * PluginListBuilder's overall role is to be in charge of building of a plugin list
- * for interface usage.
+ * PluginListBuilder's overall role is to be in charge of building of a plugin
+ * list for interface usage.
  *
  * 1st step: Get information of local plugins (checksums and version)
- * 2nd step: Given XML file, get information of latest Fiji plugins (checksums and version)
+ * 2nd step: Given XML file, get information of latest Fiji plugins (checksums
+ * and version)
  * 3rd step: Build up list of "PluginObject" using both local and updates
  *
  * digests and dates hold checksums and versions of local plugins respectively
- * latestDigests and latestDates hold checksums and versions of latest Fiji plugins
+ * latestDigests and latestDates hold checksums and versions of latest Fiji
+ * plugins
  */
 public class PluginListBuilder extends PluginDataObservable {
 	private final String[] pluginDirectories = {"plugins", "jars", "retro", "misc"};

@@ -1,6 +1,9 @@
-package fiji.pluginManager.logic;
-import java.io.IOException;
+package fiji.pluginManager.util;
 
+import java.io.IOException;
+import java.io.InputStream;
+
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -8,49 +11,45 @@ import java.util.Map;
 
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import fiji.pluginManager.util.Class2JarFileMap;
-import fiji.pluginManager.util.Compressor;
-import fiji.pluginManager.util.PluginData;
 
 /*
- * This class generates a list of dependencies for a given plugin. The dependencies are
- * based on the existing plugins in the user's Fiji directories.
+ * This class generates a list of dependencies for a given plugin. The
+ * dependencies are based on the existing plugins in the user's Fiji
+ * directories.
  *
- * It uses the static class ByteCodeAnalyzer to analyze every single class file in the given
- * JAR file, which will determine the classes relied on ==> And in turn their JAR files,
- * i.e.: The dependencies themselves
+ * It uses the static class ByteCodeAnalyzer to analyze every single class file
+ * in the given JAR file, which will determine the classes relied on ==> And in
+ * turn their JAR files, i.e.: The dependencies themselves
  */
-public class DependencyAnalyzer extends PluginData {
+public class DependencyAnalyzer {
 	private Class2JarFileMap map;
 
 	public DependencyAnalyzer() {
 		map = new Class2JarFileMap();
 	}
 
-	public Iterable<String> getDependentJarsForFile(String filename) throws IOException {
+	public Iterable<String> getDependentJarsForFile(String filename)
+			throws IOException {
 		if (!filename.endsWith(".jar"))
-			return null; //only .jar files can have dependencies anyway
+			return null;
 
-		Map<String, Object> result = new LinkedHashMap<String, Object>();
+		Map<String, Object> result =
+			new LinkedHashMap<String, Object>();
 
-		JarFile jarfile = new JarFile(prefix(filename));
-		Enumeration<JarEntry> fileEnum = jarfile.entries();
-		//For each file in the selected jar file
-		while (fileEnum.hasMoreElements()) {
-			JarEntry file = fileEnum.nextElement();
-
+		final JarFile jar = new JarFile(filename);
+		for (JarEntry file : Collections.list(jar.entries())) {
 			if (!file.getName().endsWith(".class"))
-				continue; //Read only class files inside the selected jar file
+				continue;
 
-			//Analyze each class file for dependent classes
-			ByteCodeAnalyzer analyzer = new ByteCodeAnalyzer(
-					Compressor.readStream(jarfile.getInputStream(file)));
+			InputStream input = jar.getInputStream(file);
+			byte[] code = Compressor.readStream(input);
+			ByteCodeAnalyzer analyzer = new ByteCodeAnalyzer(code);
 
 			for (String name : analyzer) {
 				String otherJar = map.get(name);
-				if (otherJar == null || otherJar.equals(filename) || result.containsKey(filename))
-					continue;
-				result.put(name, (Object)null);
+				if (otherJar != null &&
+						!otherJar.equals(filename))
+					result.put(name, (Object)null);
 			}
 		}
 		return result.keySet();

@@ -1,13 +1,17 @@
 package fiji.pluginManager.logic;
+
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.List;
 
+// TODO: this class has to be simplified dramatically.
+
 /*
  * Determine the dependencies of the plugin through ADD and REMOVE scenarios.
- * The dependencies are determined based on the assumption that the user has already
- * selected the plugins he/she wanted to add or remove and indicated to take action.
+ * The dependencies are determined based on the assumption that the user has
+ * already selected the plugins he/she wanted to add or remove and indicated to
+ * take action.
  */
 public class DependencyBuilder {
 	private PluginCollection pluginList; //current states of all plugins
@@ -50,6 +54,7 @@ public class DependencyBuilder {
 			uninstallDependentsMap.put(myPlugin, toRemoveList);
 		}
 
+		// TODO: there is no need at all to have more than one plugin collection.
 		//Combines all the dependencies for individual plugins into one list
 		toInstallList = new PluginCollection();
 		toUpdateList = new PluginCollection();

@@ -6,8 +6,13 @@ import java.util.Map;
 
 public class PluginObject {
 	private String strFilename; //Main identifier
+
+	// TODO: put these two into a class, and finally add the previous-versions to _this_ class!!!
 	private String checksum; //Used for comparison: Determine if update needed
 	private String timestamp; //Version of plugin file ("Unique within each filename")
+
+	// TODO: finally add platform
+
 	private String newChecksum; //if any
 	private String newTimestamp; //if any
 	private PluginDetails pluginDetails;

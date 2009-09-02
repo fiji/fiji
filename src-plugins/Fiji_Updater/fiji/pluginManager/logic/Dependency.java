@@ -2,8 +2,9 @@ package fiji.pluginManager.logic;
 
 public class Dependency {
 	private String filename;
-	private String timestamp;
+	private String timestamp; // TODO: long?
 	private String relation = null;
+	// TODO: strings?  This cries out loud to be turned into an enum
 	public static final String RELATION_AT_LEAST = "at-least";
 	public static final String RELATION_AT_MOST = "at-most";
 	public static final String RELATION_EXACT = "exact";
