@@ -152,7 +152,7 @@ public class ClassNames {
 			}
 
 			else {
-				String[] dotSeparatedTextParts = text.split("\\.");
+				dotSeparatedTextParts = text.split("\\.");
 				classStartCompletions(text, dotSeparatedTextParts);
 				setObjectNameCompletions(language, text, textArea);
 				boolean isClassBeforeDot = false;
