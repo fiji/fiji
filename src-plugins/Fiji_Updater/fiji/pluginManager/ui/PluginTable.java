@@ -2,6 +2,7 @@ package fiji.pluginManager.ui;
 
 import fiji.pluginManager.logic.PluginCollection;
 import fiji.pluginManager.logic.PluginObject;
+import fiji.pluginManager.logic.PluginObject.Action;
 
 import fiji.pluginManager.util.Util;
 
@@ -110,7 +111,7 @@ public class PluginTable extends JTable {
 		//As we follow PluginTableModel, 1st column is filename
 		if (col == 0)
 			return super.getCellEditor(row,col);
-		PluginObject.Action[] actions = plugin.getStatus().getActions();
+		Action[] actions = plugin.getStatus().getActions();
 		return new DefaultCellEditor(new JComboBox(actions));
 	}
 
@@ -163,9 +164,7 @@ public class PluginTable extends JTable {
 
 		public void setValueAt(Object value, int row, int column) {
 			if (column == 1) {
-				PluginObject.Action action =
-					(PluginObject.Action)value;
-				getPlugin(row).setAction(action);
+				getPlugin(row).setAction((Action)value);
 				fireTableChanged(new TableModelEvent(this));
 			}
 		}

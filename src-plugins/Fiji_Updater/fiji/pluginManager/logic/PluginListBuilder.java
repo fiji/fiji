@@ -92,7 +92,7 @@ public class PluginListBuilder extends PluginDataObservable {
 			plugin.setLocalVersion(checksum, timestamp);
 		else
 			plugins.add(new PluginObject(path, checksum,
-				timestamp, PluginObject.Status.NOT_FIJI));
+				timestamp, Status.NOT_FIJI));
 		counter += Util.getFilesize(realPath);
 	}
 
