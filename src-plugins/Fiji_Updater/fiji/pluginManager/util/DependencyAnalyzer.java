@@ -1,5 +1,6 @@
 package fiji.pluginManager.util;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -30,7 +31,7 @@ public class DependencyAnalyzer {
 
 	public Iterable<String> getDependencies(String filename)
 			throws IOException {
-		if (!filename.endsWith(".jar"))
+		if (!filename.endsWith(".jar") || !new File(filename).exists())
 			return null;
 
 		Map<String, Object> result =

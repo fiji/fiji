@@ -4,8 +4,10 @@ import fiji.pluginManager.logic.FileUploader.SourceFile;
 
 import fiji.pluginManager.util.Util;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -52,6 +54,10 @@ public class UpdateSource implements SourceFile {
 	}
 
 	public InputStream getInputStream() throws IOException {
-		return new FileInputStream(sourceFilename);
+		try {
+			return new FileInputStream(sourceFilename);
+		} catch (FileNotFoundException e) {
+			return new ByteArrayInputStream(new byte[0]);
+		}
 	}
 }

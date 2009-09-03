@@ -207,20 +207,28 @@ public class PluginObject {
 	}
 
 	private void markForUpload() {
-		if (isFiji()) {
-			if (newChecksum == null ||
+		// TODO: make sure that the uploader takes server's timestamp
+		if (!isFiji()) {
+			status = Status.INSTALLED;
+			newChecksum = current.checksum;
+			newTimestamp = current.timestamp;
+		}
+		else {
+			if (status == Status.NOT_INSTALLED) {
+				// an "upload" means "remove from the updater" here
+				try {
+					newChecksum = Util.getDigest(filename, null);
+				} catch (Exception e) { e.printStackTrace(); }
+				newTimestamp = 0;
+				filesize = 0;
+			}
+			else if (newChecksum == null ||
 					newChecksum.equals(current.checksum))
 				throw new Error("Plugin " + filename
 						+ " is already uploaded");
 			addPreviousVersion(current.checksum, current.timestamp);
 			current.checksum = newChecksum;
 			current.timestamp = newTimestamp;
-			newChecksum = null;
-		}
-		else {
-			status = Status.INSTALLED;
-			newChecksum = current.checksum;
-			newTimestamp = current.timestamp;
 		}
 
 		PluginCollection plugins = PluginCollection.getInstance();

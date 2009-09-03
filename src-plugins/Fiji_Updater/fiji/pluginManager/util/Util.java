@@ -90,7 +90,8 @@ public class Util {
 			return getJarDigest(fullPath);
 		MessageDigest digest = getDigest();
 		digest.update(path.getBytes("ASCII"));
-		updateDigest(new FileInputStream(fullPath), digest);
+		if (fullPath != null)
+			updateDigest(new FileInputStream(fullPath), digest);
 		return toHex(digest.digest());
 	}
 
@@ -132,13 +133,15 @@ public class Util {
 			throw new RuntimeException(e);
 		}
 
-		JarFile jar = new JarFile(path);
-		List<JarEntry> list = Collections.list(jar.entries());
-		Collections.sort(list, new JarEntryComparator());
+		if (path != null) {
+			JarFile jar = new JarFile(path);
+			List<JarEntry> list = Collections.list(jar.entries());
+			Collections.sort(list, new JarEntryComparator());
 
-		for (JarEntry entry : list) {
-			digest.update(entry.getName().getBytes("ASCII"));
-			updateDigest(jar.getInputStream(entry), digest);
+			for (JarEntry entry : list) {
+				digest.update(entry.getName().getBytes("ASCII"));
+				updateDigest(jar.getInputStream(entry), digest);
+			}
 		}
 		return toHex(digest.digest());
 	}
