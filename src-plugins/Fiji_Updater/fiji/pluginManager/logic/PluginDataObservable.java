@@ -10,36 +10,38 @@ import java.util.Observable;
  */
 public class PluginDataObservable extends Observable {
 	protected String taskname; //Generic title of the current task, namely a filename
-	protected int currentlyLoaded;
-	protected int totalToLoad;
-	protected boolean allTasksComplete;
+	protected int counter, total;
 
 	public String getTaskname() {
 		return taskname;
 	}
 
-	public int getCurrentlyLoaded() {
-		return currentlyLoaded;
+	public int getCounter() {
+		return counter;
 	}
 
-	public int getTotalToLoad() {
-		return totalToLoad;
+	public int getTotal() {
+		return total;
 	}
 
-	public boolean allTasksComplete() {
-		return allTasksComplete;
+	public boolean isDone() {
+		return counter >= total;
 	}
 
-	protected void changeStatus(String taskname, int currentlyLoaded, int totalToLoad) {
+	protected void progress(String taskname) {
+		progress(taskname, counter + 1, total);
+	}
+
+	protected void progress(String taskname, int counter, int total) {
 		this.taskname = taskname;
-		this.currentlyLoaded = currentlyLoaded;
-		this.totalToLoad = totalToLoad;
+		this.counter = counter;
+		this.total = total;
 		setChanged();
 		notifyObservers();
 	}
 
-	protected void setStatusComplete() {
-		allTasksComplete = true;
+	protected void done() {
+		counter = total;
 		setChanged();
 		notifyObservers();
 	}

@@ -76,33 +76,7 @@ class Installer extends JFrame {
 		if (this.updateTracker != null) throw new Error("Installer object already exists.");
 		else {
 			this.updateTracker = updateTracker;
-			updateTracker.markToDelete(); //uninstall
-			updateTracker.startDownload(); //download
-			timer = new Timer();
-			timer.schedule(new DownloadStatus(), 0, 100); //status refreshes every 100 ms
-		}
-	}
-
-	private void setFrameDisplay() {
-		int totalBytes = updateTracker.getBytesTotal();
-		int downloadedBytes = updateTracker.getBytesDownloaded();
-		if (updateTracker.isDownloading()) {
-			btnClose.setText("Cancel");
-			btnClose.setToolTipText("Stop downloads and return");
-			setPercentageComplete(downloadedBytes, totalBytes);
-		} else {
-			btnClose.setText("Done");
-			btnClose.setToolTipText("Close Window");
-			setPercentageComplete(1,1);
-		}
-		((TextPaneDisplay)txtProgressDetails).showDownloadProgress(updateTracker);
-	}
-
-	private class DownloadStatus extends TimerTask {
-		public void run() {
-			if (updateTracker.isDownloading() == false)
-				timer.cancel(); //Not downloading anything, no progress to refresh
-			setFrameDisplay();
+			updateTracker.start(); //download
 		}
 	}
 
@@ -119,10 +93,7 @@ class Installer extends JFrame {
 				return;
 		}
 
-		if (updateTracker != null && updateTracker.successfulChangesMade())
-			mainUserInterface.exitWithRestartFijiMessage();
-		else
-			mainUserInterface.backToPluginManager();
+		mainUserInterface.exitWithRestartFijiMessage();
 	}
 
 	private void setPercentageComplete(int downloaded, int total) {

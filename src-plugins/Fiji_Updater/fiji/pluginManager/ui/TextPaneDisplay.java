@@ -121,13 +121,12 @@ public class TextPaneDisplay extends JTextPane {
 	}
 
 	//appends list of dependencies to existing text
-	public void insertDependenciesList(List<Dependency> list) {
+	public void insertDependenciesList(Iterable<Dependency> list) {
 		StringBuilder text = new StringBuilder();
-		if (list != null)
-			for (Dependency dependency : list)
-				text.append((text.length() > 0 ? ",\n" : "")
-					+ dependency.getFilename() + " ("
-					+ dependency.getTimestamp() + ")");
+		for (Dependency dependency : list)
+			text.append((text.length() > 0 ? ",\n" : "")
+					+ dependency.filename + " ("
+					+ dependency.timestamp + ")");
 		normal("\n" + (text.length() > 0 ? text.toString() : "None"));
 	}
 
@@ -140,22 +139,17 @@ public class TextPaneDisplay extends JTextPane {
 		}
 	}
 
-	public void insertAuthors(List<String> authors) {
+	public void insertAuthors(Iterable<String> authors) {
 		StringBuilder text = new StringBuilder();
-		if (authors != null)
-			for (String author : authors)
-				text.append((text.length() > 0 ? ", " : "") + author);
+		for (String author : authors)
+			text.append((text.length() > 0 ? ", " : "") + author);
 		normal(text.length() > 0 ? text.toString() : "Not specified");
 	}
 
-	public void insertLinks(List<String> links) {
-		if (links != null && links.size() > 0)
-			for (String link : links) {
-				normal("\n-");
-				link(link);
-			}
-		else {
-			normal("\nNone.");
+	public void insertLinks(Iterable<String> links) {
+		for (String link : links) {
+			normal("\n- ");
+			link(link);
 		}
 	}
 
@@ -172,7 +166,7 @@ public class TextPaneDisplay extends JTextPane {
 		insertBlankLine();
 		for (PluginObject plugin : myList) {
 			bold(plugin.getFilename());
-			insertDescription(plugin.getPluginDetails().getDescription());
+			insertDescription(plugin.description);
 			insertBlankLine();
 		}
 	}
@@ -189,23 +183,23 @@ public class TextPaneDisplay extends JTextPane {
 		title(plugin.getFilename());
 		if (plugin.isUpdateable())
 			italic("\n(Update is available)");
-		if (plugin.isFijiPlugin() && !plugin.isInRecords()) {
+		if (plugin.isFiji() && plugin.newChecksum != null) {
 			insertBlankLine();
 			bold("Warning: ");
 			italic("This version is not in Fiji's records.");
 		}
 		insertBlankLine();
 		bold("Date: ");
-		normal(plugin.getTimestamp());
+		normal("" + plugin.current.timestamp);
 		insertBlankLine();
 		bold("Author(s): ");
-		insertAuthors(plugin.getPluginDetails().getAuthors());
+		insertAuthors(plugin.getAuthors());
 		insertBlankLine();
 		bold("Description");
-		insertDescription(plugin.getPluginDetails().getDescription());
+		insertDescription(plugin.getDescription());
 		insertBlankLine();
 		bold("Reference Link(s):");
-		insertLinks(plugin.getPluginDetails().getLinks());
+		insertLinks(plugin.getLinks());
 		insertBlankLine();
 		bold("Dependency");
 		insertDependenciesList(plugin.getDependencies());
@@ -214,77 +208,22 @@ public class TextPaneDisplay extends JTextPane {
 		normal("\n" + plugin.getChecksum());
 		insertBlankLine();
 		bold("Is Fiji Plugin: ");
-		normal(plugin.isFijiPlugin() ? "Yes" : "No");
-		if (plugin.isUpdateable()) {
+		normal(plugin.isFiji() ? "Yes" : "No");
+		if (plugin.newChecksum != null) {
 			insertBlankLine();
-			title("Update Details");
+			title("Locally modified:");
 			insertBlankLine();
 			bold("New Checksum");
-			normal("\n" + plugin.getNewChecksum());
-			insertBlankLine();
-			bold("Released: ");
-			normal(plugin.getNewTimestamp());
+			normal(plugin.newChecksum + "\n");
+			bold("Timestamp: ");
+			normal("" + plugin.newTimestamp);
 		}
 
 		//ensure first line of text is always shown (i.e.: scrolled to top)
 		scrollToTop();
 	}
 
-	public void showDownloadProgress(UpdateTracker updateTracker) {
-		Iterator<PluginObject> iterDownloaded = updateTracker.changeList.getSuccessfulDownloads().iterator();
-		int downloadedSize = 0;
-		Iterator<PluginObject> iterFailedDownloads = updateTracker.changeList.getFailedDownloads().iterator();
-		int failedDownloads = 0;
-		Iterator<PluginObject> iterMarkedUninstall = updateTracker.changeList.getSuccessfulRemoves().iterator();
-		int markedUninstallSize = 0;
-		Iterator<PluginObject> iterFailedUninstalls = updateTracker.changeList.getFailedRemovals().iterator();
-		int failedUninstalls = 0;
-
-		PluginObject currentlyDownloading = updateTracker.currentlyDownloading;
-		boolean stillDownloading = updateTracker.isDownloading();
-		String strCurrentStatus = "";
-
-		while (iterFailedUninstalls.hasNext()) {
-			strCurrentStatus += "Failed to mark " + iterFailedUninstalls.next().getFilename() + " for uninstalling.\n";
-			failedUninstalls++;
-		}
-		while (iterMarkedUninstall.hasNext()) {
-			strCurrentStatus += "Marked " + iterMarkedUninstall.next().getFilename() + " for uninstalling.\n";
-			markedUninstallSize++;
-		}
-		while (iterDownloaded.hasNext()) {
-			strCurrentStatus += "Finished downloading " + iterDownloaded.next().getFilename() + "\n";
-			downloadedSize++;
-		}
-		while (iterFailedDownloads.hasNext()) {
-			strCurrentStatus += iterFailedDownloads.next().getFilename() + " failed to download.\n";
-			failedDownloads++;
-		}
-		if (currentlyDownloading != null)
-			strCurrentStatus += "Now downloading " + currentlyDownloading.getFilename() + "\n";
-
-		//if no more download tasks, results can be displayed
-		if (stillDownloading == false) {
-			//Display overall results
-			if (markedUninstallSize > 0) {
-				int totalSize = markedUninstallSize + failedUninstalls;
-				strCurrentStatus += markedUninstallSize + " of " + totalSize +
-				" plugins successfully marked for removal.\n";
-			} else if (failedUninstalls > 0) {
-				strCurrentStatus += "Marking for deletion(s) failed.\n";
-			} //else if uninstall lists' sizes are 0, ignore
-
-			if (downloadedSize > 0) {
-				int totalSize = downloadedSize + failedDownloads;
-				strCurrentStatus += downloadedSize + " of " + totalSize +
-				" download tasks completed.\n";
-			} else if (failedDownloads > 0) {
-				strCurrentStatus += "Download(s) failed.\n";
-			} //else if download lists' sizes are 0, ignore
-		}
-		setText(strCurrentStatus);
-	}
-
+	// TODO: no.  I said a million times that this is wrong.
 	public void scrollToTop() {
 		setSelectionStart(0);
 		setSelectionEnd(0);

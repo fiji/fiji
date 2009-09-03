@@ -23,19 +23,15 @@ public class PluginDownload implements FileDownload {
 		return plugin;
 	}
 
-	public long getRecordedFileSize() {
-		return plugin.getFilesize(); //always return the latest version's size
+	public long getFileSize() {
+		return plugin.filesize;
 	}
 
-	public String getRecordedDigest() {
-		if (plugin.toUpdate())
-			return plugin.getNewChecksum();
+	public String getDigest() {
 		return plugin.getChecksum();
 	}
 
-	public String getRecordedTimestamp() {
-		if (plugin.toUpdate())
-			return plugin.getNewTimestamp();
+	public long getTimestamp() {
 		return plugin.getTimestamp();
 	}
 

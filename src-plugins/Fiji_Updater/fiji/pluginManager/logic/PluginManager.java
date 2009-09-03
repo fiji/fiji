@@ -54,10 +54,19 @@ public class PluginManager implements PlugIn, Observer {
 			xmlFileDownloader = new XMLFileDownloader();
 			xmlFileDownloader.addObserver(this);
 			xmlFileDownloader.start();
+
+			xmlLastModified = xmlFileDownloader.getXMLLastModified();
+			xmlFileReader = new XMLFileReader(new ByteArrayInputStream(xmlFileDownloader.getXMLFileData()));
+
+			pluginListBuilder = new PluginListBuilder(xmlFileReader.getPlugins());
+			pluginListBuilder.addObserver(this);
+			pluginListBuilder.updateFromLocal();
 		} catch (Error e) {
+			e.printStackTrace();
 			//Interface side: This should handle presentation side of exceptions
 			IJ.error("Error: " + e);
-		} catch (IOException e) {
+		} catch (Exception e) {
+			e.printStackTrace();
 			try {
 				new File(Util.prefix(PluginManager.XML_COMPRESSED))
 					.deleteOnExit();
@@ -80,27 +89,19 @@ public class PluginManager implements PlugIn, Observer {
 		try {
 			if (subject == xmlFileDownloader) {
 				IJ.showStatus("Downloading " + xmlFileDownloader.getTaskname() + "...");
-				IJ.showProgress(xmlFileDownloader.getCurrentlyLoaded(),
-						xmlFileDownloader.getTotalToLoad());
-				//After required files are downloaded, read and retrieve them
-				if (xmlFileDownloader.allTasksComplete()) {
-					xmlLastModified = xmlFileDownloader.getXMLLastModified();
-					xmlFileReader = new XMLFileReader(
-							new ByteArrayInputStream(xmlFileDownloader.getXMLFileData()));
-
-					pluginListBuilder = new PluginListBuilder(xmlFileReader);
-					pluginListBuilder.addObserver(this);
-					pluginListBuilder.buildFullPluginList();
-				}
+				IJ.showProgress(xmlFileDownloader.getCounter(),
+						xmlFileDownloader.getTotal());
 			} else if (subject == pluginListBuilder) {
-				IJ.showStatus("Checksum " + pluginListBuilder.getTaskname() + "...");
-				IJ.showProgress(pluginListBuilder.getCurrentlyLoaded(),
-						pluginListBuilder.getTotalToLoad());
+				IJ.showStatus("Checksumming "
+					+ pluginListBuilder.getTaskname()
+					+ "...");
+				IJ.showProgress(pluginListBuilder.getCounter(),
+						pluginListBuilder.getTotal());
 
 				//After plugin list is built successfully, retrieve it and show main interface
-				if (pluginListBuilder.allTasksComplete()) {
+				if (pluginListBuilder.isDone()) {
 					IJ.showStatus("");
-					pluginCollection = pluginListBuilder.pluginCollection;
+					pluginCollection = pluginListBuilder.plugins;
 
 					MainUserInterface mainUserInterface = new MainUserInterface(this);
 					mainUserInterface.setVisible(true);
@@ -108,6 +109,7 @@ public class PluginManager implements PlugIn, Observer {
 
 			}
 		} catch (Throwable e) {
+			e.printStackTrace();
 			throw new Error(e.getLocalizedMessage());
 		}
 	}

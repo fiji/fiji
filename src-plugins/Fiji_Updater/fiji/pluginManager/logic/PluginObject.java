@@ -1,32 +1,30 @@
 package fiji.pluginManager.logic;
+
+import fiji.pluginManager.util.Util;
+
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 public class PluginObject {
-	private String strFilename; //Main identifier
+	public class Version {
+		public String checksum;
+		public long timestamp;
 
-	// TODO: put these two into a class, and finally add the previous-versions to _this_ class!!!
-	private String checksum; //Used for comparison: Determine if update needed
-	private String timestamp; //Version of plugin file ("Unique within each filename")
-
-	// TODO: finally add platform
-
-	private String newChecksum; //if any
-	private String newTimestamp; //if any
-	private PluginDetails pluginDetails;
-	private long filesize;
-	private List<Dependency> dependency; //Dependency object: filename and timestamp
-
-	//Status of its record in database
-	private boolean fiji; //name in records or not
-	private boolean recorded; //its checksum in records or not
-	private boolean readOnly; //physical file (local side) read-only?
+		Version(String checksum, long timestamp) {
+			this.checksum = checksum;
+			this.timestamp = timestamp;
+		}
+	}
 
 	public static enum Action {
+		NOT_FIJI ("Not in Fiji"),
 		NOT_INSTALLED ("Not installed"),
-		INSTALLED ("Installed"),
+		INSTALLED ("Up-to-date"),
+		UPDATEABLE ("Update available"),
+		MODIFIED ("Locally modified"),
 		REMOVE ("Remove it"),
 		INSTALL ("Install it"),
 		UPDATE ("Update it"),
@@ -36,92 +34,156 @@ public class PluginObject {
 		Action(String label) {
 			this.label = label;
 		}
-		public String getLabel() {
+
+		public String toString() {
 			return label;
+		}
+
+		public static Action forLabel(String label) {
+			for (Action action : Action.values())
+				if (action.label.equals(label))
+					return action;
+			return null;
 		}
 	};
 
 	public static enum Status {
 		NOT_INSTALLED (new Action[] { Action.NOT_INSTALLED, Action.INSTALL }),
 		INSTALLED (new Action[] { Action.INSTALLED, Action.REMOVE }),
-		UPDATEABLE (new Action[] { Action.INSTALLED, Action.REMOVE, Action.UPDATE });
+		UPDATEABLE (new Action[] { Action.UPDATEABLE, Action.REMOVE, Action.UPDATE }),
+		MODIFIED (new Action[] { Action.MODIFIED, Action.REMOVE, Action.UPDATE }),
+		NOT_FIJI (new Action[] { Action.NOT_FIJI });
 
-		private String[] labels, develLabels;
+		private Action[] actions;
 		Status(Action[] actions) {
-			labels = new String[actions.length];
-			for (int i = 0; i < labels.length; i++)
-				labels[i] = actions[i].getLabel();
-
-			develLabels = new String[actions.length + 1];
-			System.arraycopy(labels, 0,
-					develLabels, 0, labels.length);
-			develLabels[labels.length] = Action.UPLOAD.getLabel();
+			if (Util.isDeveloper) {
+				this.actions = new Action[actions.length + 1];
+				System.arraycopy(actions, 0, this.actions, 0,
+						actions.length);
+				this.actions[actions.length] = Action.UPLOAD;
+			}
+			else
+				this.actions = actions;
 		}
 
-		public String[] getActionLabels(boolean isDeveloper) {
-			return isDeveloper ? develLabels : labels;
+		public Action[] getActions() {
+			return actions;
+		}
+
+		public boolean isValid(Action action) {
+			for (Action a : actions)
+				if (a.equals(action))
+					return true;
+			return false;
+		}
+
+		public Action getNoAction() {
+			return actions[0];
 		}
 	};
-	private Status status;
 
+	private Status status;
 	private Action action;
 
-	private static Map<String, Action> actionMap;
-	static {
-		actionMap = new HashMap<String, Action>();
-		for (Action action : Action.values())
-			actionMap.put(action.getLabel(), action);
-	}
-	public static Action getAction(String label) {
-		return actionMap.get(label);
-	}
-
 	//State to indicate whether Plugin removed/downloaded successfully
-	public static enum ChangeStatus { NONE, SUCCESS, FAIL };
-	private ChangeStatus changedStatus = ChangeStatus.NONE;
+	public static enum ChangeStatus { NONE, SUCCESS, FAIL }; // TODO: remove
 
-	public PluginObject(String strFilename, String checksum, String timestamp, Status status,
-			boolean fiji, boolean recorded) {
-		this.strFilename = strFilename;
-		this.checksum = checksum;
-		this.timestamp = timestamp;
+	ChangeStatus changedStatus = ChangeStatus.NONE;
+	public String filename, description, newChecksum;
+	public Version current;
+	public Map<Version, Object> previous;
+	public long filesize, newTimestamp;
+
+	// TODO: finally add platform
+
+	// These are LinkedHashMaps to retain the order of the entries
+	public Map<Dependency, Object> dependencies;
+	public Map<String, Object> links, authors;
+
+	public PluginObject(String filename, String checksum, long timestamp,
+			Status status) {
+		this.filename = filename;
+		current = new Version(checksum, timestamp);
+		previous = new LinkedHashMap<Version, Object>();
 		this.status = status;
-		this.fiji = fiji;
-		this.recorded = recorded;
-		pluginDetails = new PluginDetails(); //default: no information, empty
+		dependencies = new LinkedHashMap<Dependency, Object>();
+		authors = new LinkedHashMap<String, Object>();
+		links = new LinkedHashMap<String, Object>();
 		setNoAction();
 	}
 
-	public void setUpdateDetails(String newChecksum, String newTimestamp) {
-		status = Status.UPDATEABLE; //set status, if not done so already
-		this.newChecksum = newChecksum;
-		this.newTimestamp = newTimestamp;
+	public boolean hasPreviousVersion(String checksum) {
+		if (current.checksum.equals(checksum))
+			return true;
+		for (Version version : previous.keySet())
+			if (version.checksum.equals(checksum))
+				return true;
+		return false;
 	}
 
-	public void setPluginDetails(PluginDetails pluginDetails) {
-		this.pluginDetails = pluginDetails;
-	}
-
-	public void setDependency(List<Dependency> dependency) {
-		this.dependency = dependency;
-	}
-
-	public void setDependency(Iterable<String> dependencies, PluginCollection allPlugins) {
-		dependency = new ArrayList<Dependency>();
-		if (dependencies == null)
+	public void setLocalVersion(String checksum, long timestamp) {
+		if (checksum.equals(current.checksum)) {
+			status = Status.INSTALLED;
+			setNoAction();
 			return;
-		for (String file : dependencies) {
-			//Only add if JAR file is in Fiji records
-			PluginObject other = allPlugins.getPlugin(file);
-			if (other != null)
-				dependency.add(new Dependency(file, other.getTimestamp(), "at-least"));
 		}
+		status = hasPreviousVersion(checksum) ?
+			Status.UPDATEABLE : Status.MODIFIED;
+		setNoAction();
+		newChecksum = checksum;
+		newTimestamp = timestamp;
 	}
 
-	public void setFilesize(long filesize) {
-		this.filesize = filesize;
+	public void markForUpload() {
+		if (newChecksum == null || newChecksum.equals(current.checksum))
+			return;
+		setAction(Action.UPLOAD);
+		addPreviousVersion(current.checksum, current.timestamp);
+		current.checksum = newChecksum;
+		current.timestamp = newTimestamp;
+		newChecksum = null;
 	}
 
+	public String getDescription() {
+		return description;
+	}
+
+	// TODO: allow editing those via GUI
+	// TODO: the dependencies should be added via a method of PluginCollection, which creates the DependencyAnalyzer itself
+	public void addDependency(String filename, long timestamp,
+			String relation) {
+		addDependency(new Dependency(filename, timestamp, relation));
+	}
+
+	public void addDependency(Dependency dependency) {
+		dependencies.put(dependency, (Object)null);
+	}
+
+	public void addLink(String link) {
+		links.put(link, (Object)null);
+	}
+
+	public Iterable<String> getLinks() {
+		return links.keySet();
+	}
+
+	public void addAuthor(String author) {
+		authors.put(author, (Object)null);
+	}
+
+	public Iterable<String> getAuthors() {
+		return authors.keySet();
+	}
+
+	public Iterable<Version> getPrevious() {
+		return previous.keySet();
+	}
+
+	public void addPreviousVersion(String checksum, long timestamp) {
+		previous.put(new Version(checksum, timestamp), (Object)null);
+	}
+
+	// TODO: ChangeStatus?  That name sounds too long.  How about Status? and is it really needed to begin with?
 	public void setChangeStatus(ChangeStatus status) {
 		this.changedStatus = status;
 	}
@@ -135,61 +197,36 @@ public class PluginObject {
 	}
 
 	public void setNoAction() {
-		action = (status == Status.NOT_INSTALLED ?
-				Action.NOT_INSTALLED : Action.INSTALLED);
+		action = status.getNoAction();
 	}
 
 	public void setAction(String action) {
-		setAction(getAction(action));
+		setAction(Action.forLabel(action));
 	}
 
 	public void setAction(Action action) {
-		if ((action == Action.REMOVE && !isRemovable()) ||
-				(action == Action.NOT_INSTALLED &&
-				 status != Status.NOT_INSTALLED) ||
-				(action == Action.INSTALLED &&
-				 status == Status.NOT_INSTALLED) ||
-				(action == Action.UPDATE && !isUpdateable()) ||
-				(action == Action.INSTALL && !isInstallable()))
+		if (!status.isValid(action))
 			throw new Error("Invalid action requested for plugin "
-					+ strFilename + "(" + action + ", " + status + ")");
+					+ filename + "(" + action
+					+ ", " + status + ")");
 		this.action = action;
 	}
 
-	public void setIsReadOnly(boolean readOnly) {
-		this.readOnly = readOnly;
-	}
-
 	public String getFilename() {
-		return strFilename;
+		return filename;
 	}
 
 	public String getChecksum() {
-		return checksum;
+		return action == Action.UPLOAD ? newChecksum : current.checksum;
 	}
 
-	public String getNewChecksum() {
-		return newChecksum;
+	public long getTimestamp() {
+		return action == Action.UPLOAD ?
+			newTimestamp : current.timestamp;
 	}
 
-	public String getTimestamp() {
-		return timestamp;
-	}
-
-	public String getNewTimestamp() {
-		return newTimestamp;
-	}
-
-	public PluginDetails getPluginDetails() {
-		return pluginDetails;
-	}
-
-	public long getFilesize() {
-		return filesize;
-	}
-
-	public List<Dependency> getDependencies() {
-		return dependency;
+	public Iterable<Dependency> getDependencies() {
+		return dependencies.keySet();
 	}
 
 	public Status getStatus() {
@@ -221,6 +258,7 @@ public class PluginObject {
 			action != Action.INSTALLED;
 	}
 
+	// TODO: why that redundancy?  We set Action.UPDATE only if it is updateable anyway!  Besides, use getAction(). DRY, DRY, DRY!
 	public boolean toUpdate() {
 		return isUpdateable() && action == Action.UPDATE;
 	}
@@ -237,16 +275,8 @@ public class PluginObject {
 		return action == Action.UPLOAD;
 	}
 
-	public boolean isFijiPlugin() {
-		return fiji;
-	}
-
-	public boolean isInRecords() {
-		return recorded;
-	}
-
-	public boolean isReadOnly() {
-		return readOnly;
+	public boolean isFiji() {
+		return status != Status.NOT_FIJI;
 	}
 
 	public boolean changeSucceeded() {
@@ -284,7 +314,7 @@ public class PluginObject {
 	public LabeledPlugin getLabeledPlugin(int column) {
 		switch (column) {
 		case 0: return new LabeledPlugin(getFilename());
-		case 1: return new LabeledPlugin(getAction().getLabel());
+		case 1: return new LabeledPlugin(getAction().toString());
 		}
 		return null;
 	}

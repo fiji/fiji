@@ -1,15 +1,18 @@
 package fiji.pluginManager.logic;
 
+import fiji.pluginManager.util.Downloader;
+import fiji.pluginManager.util.Downloader.FileDownload;
+import fiji.pluginManager.util.Util;
+
+import ij.IJ;
+
 import java.io.File;
 import java.io.IOException;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
-
-import fiji.pluginManager.util.Downloader;
-import fiji.pluginManager.util.Downloader.FileDownload;
-import fiji.pluginManager.util.Util;
 
 /*
  * UpdateTracker.java is for normal users in managing their plugins.
@@ -22,19 +25,15 @@ public class UpdateTracker implements Runnable, Downloader.DownloadListener {
 	private volatile Downloader downloader;
 	private List<FileDownload> downloaderList;
 
-	//Keeping track of status
-	public PluginCollection changeList; //list of plugins specified to uninstall/download
+	public PluginCollection plugins;
 	public PluginObject currentlyDownloading;
+	// TODO: unify in ProgressListener interface
 	private int totalBytes;
-	private int completedBytesTotal; //bytes downloaded so far of all completed files
-	private int currentBytesSoFar; //bytes downloaded so far of current file
-	private boolean isDownloading;
+	private int completedBytesTotal;
+	private int currentBytesSoFar;
 
-	public UpdateTracker(PluginCollection pluginList) {
-		//For downloading files, it is the same whether or not user is a developer
-		super();
-		changeList = pluginList.getNonUploadActions();
-		changeList.resetChangeStatuses();
+	public UpdateTracker(PluginCollection plugins) {
+		this.plugins = plugins;
 	}
 
 	public int getBytesDownloaded() {
@@ -46,94 +45,53 @@ public class UpdateTracker implements Runnable, Downloader.DownloadListener {
 	}
 
 	public boolean isDownloading() {
-		return isDownloading;
+		return downloadThread != null;
 	}
 
-	//start processing on contents of Delete List (Mark them for deletion)
-	public void markToDelete() {
-		for (PluginObject plugin : changeList.getToUninstall()) {
-			String filename = plugin.getFilename();
-			try {
-				//checking status of existing file
-				File file = new File(Util.prefix(filename));
-				if (!file.canWrite()) //if unable to override existing file
-					plugin.fail();
-				else {
-					if (!Util.isLauncher(filename)) {
-						//If it's a normal plugin, write a 0-byte file
-						String pluginPath = Util.prefix(PluginManager.UPDATE_DIRECTORY, filename);
-						new File(pluginPath).getParentFile().mkdirs();
-						new File(pluginPath).createNewFile();
-					} else {
-						//If it's a launcher (?!), try removing
-						file.renameTo(new File(Util.prefix(filename + ".old")));
-					}
-					plugin.success();
-				}
-			} catch (IOException e) {
-				plugin.fail();
-			}
-		}
-	}
-
-	//start processing on contents of updateList
-	public void startDownload() {
-		isDownloading = true;
+	public synchronized void start() {
+		if (downloadThread != null)
+			downloader.cancel();
 		downloadThread = new Thread(this);
 		downloadThread.start();
 	}
 
-	//stop download
-	public void stopDownload() {
-		//thread will check if downloadThread is null, and stop action where necessary
+	public synchronized void stopDownload() {
 		downloadThread = null;
-		downloader.cancelDownload();
+		downloader.cancel();
 	}
 
-	//Marking files for removal assumed finished here, thus begin download tasks
 	public void run() {
-		Thread thisThread = Thread.currentThread();
+		// mark for removal
+		for (PluginObject plugin : plugins.toUninstall()) try {
+			touch(Util.prefixUpdate(plugin.filename));
+		} catch (IOException e) {
+			e.printStackTrace();
+			IJ.error("Could not mark '" + plugin + "' for removal");
+			return;
+		}
+
 		downloaderList = new ArrayList<FileDownload>();
-		for (PluginObject plugin : changeList.getToAddOrUpdate()) {
-			//For each selected plugin, get target path to save to
-			String name = plugin.getFilename();
-			String saveToPath = Util.prefix(PluginManager.UPDATE_DIRECTORY, name);
-			if (Util.isLauncher(name)) { //if downloading launcher, overwrite instead
-				// TODO: make useMacPrefix much, much easier to use
-				saveToPath = Util.prefix((Util.useMacPrefix ? Util.macPrefix : "") + name);
-				File orig = new File(saveToPath);
-				orig.renameTo(new File(saveToPath + ".old")); //Save backup copy of older version
+		for (PluginObject plugin : plugins.toInstallOrUpdate()) {
+			String name = plugin.filename;
+			String saveTo = Util.prefixUpdate(name);
+			if (Util.isLauncher(name)) {
+				saveTo = Util.prefix(name);
+				File orig = new File(saveTo);
+				orig.renameTo(new File(saveTo + ".old"));
 			}
 
-			//For each selected plugin, get download URL
-			String date = null;
-			if (plugin.isInstallable()) {
-				date = plugin.getTimestamp();
-			} else if (plugin.isUpdateable()) {
-				date = plugin.getNewTimestamp();
-			}
-			String downloadURL = PluginManager.MAIN_URL + name + "-" + date;
-			PluginDownload src = new PluginDownload(plugin, downloadURL, saveToPath);
+			String downloadURL = PluginManager.MAIN_URL + name
+				+ "-" + plugin.getTimestamp();
+			PluginDownload src = new PluginDownload(plugin,
+					downloadURL, saveTo);
 			downloaderList.add(src);
 
-			//Gets the total size of the downloads
-			totalBytes += src.getRecordedFileSize();
+			totalBytes += src.getFileSize();
 		}
 
 		downloader = new Downloader(downloaderList.iterator());
 		downloader.addListener(this);
-		downloader.startDownload(); //nothing happens if downloaderList is empty
-
-		if (thisThread != downloadThread) {
-			//if cancelled, remove any unfinished downloads
-			for (PluginObject plugin : changeList.getNoSuccessfulChanges()) {
-				String fullPath = Util.prefix(PluginManager.UPDATE_DIRECTORY, plugin.getFilename());
-				try {
-					new File(fullPath).delete(); //delete file, if it exists
-				} catch (Exception e2) { }
-			}
-		}
-		isDownloading = false;
+		downloader.start();
 	}
 
 	private void resolveDownloadError(PluginDownload src, Exception e) {
@@ -147,11 +105,6 @@ public class UpdateTracker implements Runnable, Downloader.DownloadListener {
 		currentlyDownloading = null;
 	}
 
-	public boolean successfulChangesMade() {
-		Iterator<PluginObject> iterator = changeList.getChangeSucceeded().iterator();
-		return iterator.hasNext();
-	}
-
 	//Listener receives notification that download for file has finished
 	public void fileComplete(FileDownload source) {
 		PluginDownload src = (PluginDownload)source;
@@ -160,7 +113,7 @@ public class UpdateTracker implements Runnable, Downloader.DownloadListener {
 
 		try {
 			//Check filesize
-			long recordedSize = src.getRecordedFileSize();
+			long recordedSize = src.getFileSize();
 			long actualFilesize = Util.getFilesize(src.getDestination());
 			if (recordedSize != actualFilesize)
 				throw new Exception("Recorded filesize of " + filename + " is " +
@@ -168,7 +121,7 @@ public class UpdateTracker implements Runnable, Downloader.DownloadListener {
 						actualFilesize + ".");
 
 			// verify checksum
-			String recordedDigest = src.getRecordedDigest();
+			String recordedDigest = src.getDigest();
 			String actualDigest = Util.getDigest(filename, src.getDestination());
 			if (!recordedDigest.equals(actualDigest))
 				throw new Exception("Wrong checksum for " + filename +
@@ -201,4 +154,9 @@ public class UpdateTracker implements Runnable, Downloader.DownloadListener {
 	public void fileFailed(FileDownload source, Exception e) {
 		resolveDownloadError((PluginDownload)source, e);
 	}
+
+	public static void touch(String target) throws IOException {
+                long now = new Date().getTime();
+                new File(target).setLastModified(now);
+        }
 }

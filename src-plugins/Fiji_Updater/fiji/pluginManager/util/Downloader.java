@@ -34,11 +34,11 @@ public class Downloader {
 		listeners = new ArrayList<DownloadListener>();
 	}
 
-	public synchronized void cancelDownload() {
+	public synchronized void cancel() {
 		cancelled = true;
 	}
 
-	public synchronized void startDownload() {
+	public synchronized void start() {
 		while (sourceFiles.hasNext() && !cancelled) {
 			currentSource = sourceFiles.next();
 			try {

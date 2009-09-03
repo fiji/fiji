@@ -3,6 +3,7 @@ package fiji.pluginManager.logic;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -12,9 +13,12 @@ import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
+
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
+
+// TODO: rename into XMLFileWriter
 
 public class XMLFileHandler {
 	private TransformerHandler handler;
@@ -27,13 +31,13 @@ public class XMLFileHandler {
 		+ "<!ELEMENT version (description?, dependency*, link*, author*)>\n"
 		+ "<!ELEMENT previous-version EMPTY>\n"
 		+ "<!ELEMENT description (#PCDATA)>\n"
-		+ "<!ELEMENT dependency (filename, date, relation?)>\n"
-		+ "<!ELEMENT filename (#PCDATA)>\n"
-		+ "<!ELEMENT date (#PCDATA)>\n"
-		+ "<!ELEMENT relation (#PCDATA)>\n"
+		+ "<!ELEMENT dependency EMPTY>\n"
 		+ "<!ELEMENT link (#PCDATA)>\n"
 		+ "<!ELEMENT author (#PCDATA)>\n"
 		+ "<!ATTLIST plugin filename CDATA #REQUIRED>\n"
+		+ "<!ATTLIST dependency filename CDATA #REQUIRED>\n"
+		+ "<!ATTLIST dependency timestamp CDATA #IMPLIED>\n"
+		+ "<!ATTLIST dependency relation CDATA #IMPLIED>\n"
 		+ "<!ATTLIST version timestamp CDATA #REQUIRED>\n"
 		+ "<!ATTLIST version checksum CDATA #REQUIRED>\n"
 		+ "<!ATTLIST version filesize CDATA #REQUIRED>\n"

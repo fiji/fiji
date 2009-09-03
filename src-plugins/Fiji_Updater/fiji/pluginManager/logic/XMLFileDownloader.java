@@ -66,14 +66,14 @@ public class XMLFileDownloader extends PluginDataObservable implements Downloade
 		//Start downloading the required files
 		Downloader downloader = new Downloader(sources.iterator());
 		downloader.addListener(this);
-		downloader.startDownload();
+		downloader.start();
 
 		//Uncompress the XML file
 		String compressedFileLocation = Util.prefix(PluginManager.XML_COMPRESSED);
 		data = Compressor.getDecompressedData(
 				new FileInputStream(compressedFileLocation));
 
-		setStatusComplete(); //indicate to observer there's no more tasks
+		done(); //indicate to observer there's no more tasks
 	}
 
 	//should be called only after all tasks in class are done
@@ -119,7 +119,7 @@ public class XMLFileDownloader extends PluginDataObservable implements Downloade
 
 	public void update(FileDownload source, int bytesSoFar, int bytesTotal) {
 		InformationSource src = (InformationSource)source;
-		changeStatus(src.getFilename(), bytesSoFar, bytesTotal);
+		progress(src.getFilename(), bytesSoFar, bytesTotal);
 	}
 
 	public void fileFailed(FileDownload source, Exception e) {

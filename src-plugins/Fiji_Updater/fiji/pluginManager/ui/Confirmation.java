@@ -98,117 +98,14 @@ public class Confirmation extends JFrame {
 	}
 
 	private void startActualChanges() {
-		//indicate the actions as reference for Downloader (Installer) to refer to
-		dependencyBuilder.toInstallList.setToInstall();
-		dependencyBuilder.toUpdateList.setToUpdate();
-		dependencyBuilder.toRemoveList.setToRemove();
-		dependencyBuilder = null;
+		if (dependencyBuilder.conflicts())
+			return;
+		// TODO: bah!  Confirmation now serves as a controller?  Messy!
 		mainUserInterface.openDownloader();
 	}
 
 	private void backToframeManager() {
+		// TODO: bah!  Confirmation now serves as a controller?  Messy!
 		mainUserInterface.backToPluginManager();
-	}
-
-	public void displayInformation(DependencyBuilder dependencyBuilder) {
-		this.dependencyBuilder = dependencyBuilder;
-
-		// ********** Display of plugins listed by user **********
-		PluginCollection installs = dependencyBuilder.toInstallList.getToInstall();
-		PluginCollection updates = dependencyBuilder.toUpdateList.getToUpdate();
-		PluginCollection removals = dependencyBuilder.toRemoveList.getToUninstall();
-
-		// Actual display of information, textpane explicitly set by user to take action
-		TextPaneDisplay txtPluginList = (TextPaneDisplay) this.txtPluginList;
-		if (installs.size() > 0)
-			txtPluginList.insertPluginDescriptions("Install", installs);
-		if (updates.size() > 0)
-			txtPluginList.insertPluginDescriptions("Update", updates);
-		if (removals.size() > 0)
-			txtPluginList.insertPluginDescriptions("Remove", removals);
-		txtPluginList.scrollToTop();
-		// ********** End display of plugins listed by user **********
-
-		// ********** Display of involved plugins which are not listed by user **********
-		//Objective is to show user only information that was previously invisible
-		PluginCollection additionalInstalls = dependencyBuilder.toInstallList.getUnlistedForInstall();
-		PluginCollection addtionalUpdates = dependencyBuilder.toUpdateList.getUnlistedForUpdate();
-		PluginCollection addtionalRemovals = dependencyBuilder.toRemoveList.getUnlistedForUninstall();
-
-		// textpane listing additional plugins to add/remove
-		TextPaneDisplay txtAdditionalList = (TextPaneDisplay) this.txtAdditionalList;
-		if (additionalInstalls.size() > 0)
-			txtAdditionalList.insertPluginNamelist("To Install", additionalInstalls);
-		if (addtionalUpdates.size() > 0) {
-			if (additionalInstalls.size() > 0)
-				txtAdditionalList.insertBlankLine();
-			txtAdditionalList.insertPluginNamelist("To Update", addtionalUpdates);
-		}
-		if (addtionalRemovals.size() > 0) {
-			if (additionalInstalls.size() > 0 || addtionalUpdates.size() > 0)
-				txtAdditionalList.insertBlankLine();
-			txtAdditionalList.insertPluginNamelist("To Remove", addtionalRemovals);
-		}
-		if (additionalInstalls.size() == 0 && addtionalUpdates.size() == 0
-				&& addtionalRemovals.size() == 0)
-			txtAdditionalList.setText("None.");
-		txtAdditionalList.scrollToTop();
-		// ********** End display of involved plugins which are not listed by user **********
-
-		// ********** Display of conflicts (if any) **********
-		//Compile a list of plugin names that conflicts with uninstalling (if any)
-		Map<PluginObject,PluginCollection> installDependenciesMap = dependencyBuilder.installDependenciesMap;
-		Map<PluginObject,PluginCollection> updateDependenciesMap = dependencyBuilder.updateDependenciesMap;
-		Map<PluginObject,PluginCollection> uninstallDependentsMap = dependencyBuilder.uninstallDependentsMap;
-
-		List<String[]> installConflicts = new ArrayList<String[]>();
-		List<String[]> updateConflicts = new ArrayList<String[]>();
-		Iterator<PluginObject> iterInstall = installDependenciesMap.keySet().iterator();
-		while (iterInstall.hasNext()) {
-			PluginObject pluginAdd = iterInstall.next();
-			PluginCollection pluginInstallList = installDependenciesMap.get(pluginAdd);
-			PluginCollection pluginUpdateList = updateDependenciesMap.get(pluginAdd);
-			Iterator<PluginObject> iterUninstall = uninstallDependentsMap.keySet().iterator();
-			while (iterUninstall.hasNext()) {
-				PluginObject pluginUninstall = iterUninstall.next();
-				PluginCollection pluginUninstallList = uninstallDependentsMap.get(pluginUninstall);
-
-				if (dependencyBuilder.conflicts(pluginInstallList, pluginUpdateList, pluginUninstallList)) {
-					String installName = pluginAdd.getFilename();
-					String uninstallName = pluginUninstall.getFilename();
-					String[] arrNames = {installName, uninstallName};
-					if (pluginAdd.isUpdateable()) {
-						updateConflicts.add(arrNames);
-					} else {
-						installConflicts.add(arrNames);
-					}
-				}
-			}
-		}
-
-		// conflicts list textpane
-		TextPaneDisplay txtConflictsList = (TextPaneDisplay) this.txtConflictsList;
-		for (String[] names : installConflicts)
-			txtConflictsList.normal("Installing " + names[0]
-					+ " would conflict with uninstalling " + names[1] + "\n");
-		for (String[] names : updateConflicts)
-			txtConflictsList.normal("Updating " + names[0]
-					+ " would conflict with uninstalling " + names[1] + "\n");
-		txtConflictsList.scrollToTop();
-		// ********** End display of conflicts (if any) **********
-
-		// enable download button if no conflicts recorded
-		if (installConflicts.size() == 0 && updateConflicts.size() == 0) {
-			txtConflictsList.normal("None.");
-			btnDownload.setEnabled(true);
-			lblStatus.setText(msgConflictNone);
-			lblStatus.setForeground(Color.GREEN);
-		} else {
-			// otherwise, prevent user from clicking to download
-			btnDownload.setEnabled(false);
-			lblStatus.setText(msgConflictExists);
-			lblStatus.setForeground(Color.RED);
-		}
-
 	}
 }

@@ -95,17 +95,15 @@ public class SwingTools {
 	}
 
 	public static JScrollPane getTextScrollPane(JTextPane textPane, int width, int height,
-			List<String> contentList, DocumentListener listener, JPanel addTo) {
+			Iterable<String> contentList, DocumentListener listener, JPanel addTo) {
 		textPane.getDocument().addDocumentListener(listener);
 		JScrollPane scrollpane = SwingTools.getTextScrollPane(textPane, width, height, addTo);
-		if (contentList != null && contentList.size() > 0) {
-			String contents = "";
-			for (String value : contentList)
-				contents += value + "\n";
-			textPane.setText(contents);
-			textPane.setSelectionStart(0);
-			textPane.setSelectionEnd(0);
-		}
+		String contents = "";
+		for (String value : contentList)
+			contents += value + "\n";
+		textPane.setText(contents);
+		textPane.setSelectionStart(0);
+		textPane.setSelectionEnd(0);
 		return scrollpane;
 	}
 

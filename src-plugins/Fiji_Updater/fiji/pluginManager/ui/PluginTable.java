@@ -93,10 +93,13 @@ public class PluginTable extends JTable {
 	}
 
 	//Set up table model, to be called each time display list is to be changed
+	public void setupTableModel(Iterable<PluginObject> plugins) {
+		setupTableModel(PluginCollection.clone(plugins));
+	}
+
 	public void setupTableModel(PluginCollection plugins) {
 		setModel(pluginTableModel = new PluginTableModel(plugins));
 		getModel().addTableModelListener(this);
-		getModel().addTableModelListener(mainUserInterface); //listen for changes (tableChanged(TableModelEvent e))
 		setColumnWidths(250, 100);
 		pluginTableModel.fireTableChanged(new TableModelEvent(pluginTableModel));
 	}
@@ -107,8 +110,8 @@ public class PluginTable extends JTable {
 		//As we follow PluginTableModel, 1st column is filename
 		if (col == 0)
 			return super.getCellEditor(row,col);
-		String[] labels = plugin.getStatus().getActionLabels(Util.isDeveloper);
-		return new DefaultCellEditor(new JComboBox(labels));
+		PluginObject.Action[] actions = plugin.getStatus().getActions();
+		return new DefaultCellEditor(new JComboBox(actions));
 	}
 
 	public PluginObject getPlugin(int row) {
@@ -160,7 +163,9 @@ public class PluginTable extends JTable {
 
 		public void setValueAt(Object value, int row, int column) {
 			if (column == 1) {
-				getPlugin(row).setAction((String)value);
+				PluginObject.Action action =
+					(PluginObject.Action)value;
+				getPlugin(row).setAction(action);
 				fireTableChanged(new TableModelEvent(this));
 			}
 		}

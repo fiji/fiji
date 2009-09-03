@@ -53,15 +53,15 @@ public class DetailsEditor extends JFrame {
 		SwingTools.createLabelPanel("For multiple authors or links, separate each using a new line.", uiPanel);
 		SwingTools.createLabelPanel("Authors(s):", uiPanel);
 		SwingTools.getTextScrollPane(txtEdits[0], 450, 120,
-				selectedPlugin.getPluginDetails().getAuthors(), changeListener, uiPanel);
+				selectedPlugin.getAuthors(), changeListener, uiPanel);
 
 		SwingTools.createLabelPanel("Description:", uiPanel);
 		SwingTools.getTextScrollPane(txtEdits[1], 450, 200,
-				selectedPlugin.getPluginDetails().getDescription(), changeListener, uiPanel);
+				selectedPlugin.getDescription(), changeListener, uiPanel);
 
 		SwingTools.createLabelPanel("Link(s):", uiPanel);
 		SwingTools.getTextScrollPane(txtEdits[2], 450, 120,
-				selectedPlugin.getPluginDetails().getLinks(), changeListener, uiPanel);
+				selectedPlugin.getLinks(), changeListener, uiPanel);
 
 		textChanged = false;
 
@@ -104,9 +104,11 @@ public class DetailsEditor extends JFrame {
 	}
 
 	private void saveText() {
-		selectedPlugin.getPluginDetails().setDescription(txtEdits[1].getText().trim());
-		selectedPlugin.getPluginDetails().setLinks(txtEdits[2].getText().trim().split("\n"));
-		selectedPlugin.getPluginDetails().setAuthors(txtEdits[0].getText().trim().split("\n"));
+		selectedPlugin.description = txtEdits[1].getText().trim();
+		for (String link : txtEdits[2].getText().trim().split("\n"))
+			selectedPlugin.addLink(link);
+		for (String author : txtEdits[0].getText().trim().split("\n"))
+			selectedPlugin.addAuthor(author);
 		mainUserInterface.displayPluginDetails(selectedPlugin);
 		textChanged = false;
 	}

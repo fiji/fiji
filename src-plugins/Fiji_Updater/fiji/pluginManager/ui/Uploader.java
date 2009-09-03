@@ -72,7 +72,7 @@ public class Uploader implements UploadListener, Runnable {
 			Prefs.set(PluginManager.PREFS_USER, username);
 			mainUserInterface.setVisible(false); //this UI not needed for upload
 			updater.generateNewPluginRecords();
-			updater.uploadFilesToServer(this);
+			updater.upload(this);
 
 		} catch (Throwable e) {
 			error_message = e.getLocalizedMessage();

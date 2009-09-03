@@ -162,10 +162,10 @@ public class Util {
 		return prefix(saveDirectory + File.separator + filename);
 	}
 
-	public static String getTimestamp(String filename) {
+	public static long getTimestamp(String filename) {
 		String fullPath = prefix(filename);
 		long modified = new File(fullPath).lastModified();
-		return timestamp(modified);
+		return Long.parseLong(timestamp(modified));
 	}
 
 	public static String timestamp(long millis) {
@@ -207,6 +207,10 @@ public class Util {
 			path = path.replace("\\", "/");
 		return fijiRoot + (isDeveloper && isLauncher(path) ?
 				"precompiled/" : "") + path;
+	}
+
+	public static String prefixUpdate(String path) {
+		return prefix("update/" + path);
 	}
 
 	public static boolean fileExists(String filename) {

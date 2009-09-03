@@ -4,25 +4,16 @@ import fiji.pluginManager.logic.PluginObject.Status;
 
 import fiji.pluginManager.util.Util;
 
-import ij.IJ;
-
 import java.io.File;
 import java.io.IOException;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.xml.sax.SAXException;
+import java.util.Set;
 
 // TODO: this class is misnomed!
-// TODO: there is no need for maps for all the metadata; those metadata should
-// be put into the PluginObjects!
+// TODO: this should be merged into PluginCollection
 
 /*
  * PluginListBuilder's overall role is to be in charge of building of a plugin
@@ -38,172 +29,98 @@ import org.xml.sax.SAXException;
  * plugins
  */
 public class PluginListBuilder extends PluginDataObservable {
-	private final String[] pluginDirectories = {"plugins", "jars", "retro", "misc"};
-	public PluginCollection pluginCollection; //info available after list is built
-	private Map<String, String> digests;
-	private Map<String, String> dates;
-	private Map<String, String> latestDates;
-	private Map<String, String> latestDigests;
-	private XMLFileReader xmlFileReader;
+	protected PluginCollection plugins;
 
-	public PluginListBuilder(XMLFileReader xmlFileReader) {
-		if (xmlFileReader == null) throw new Error("XMLFileReader object is null");
-		this.xmlFileReader = xmlFileReader;
-
-		//initialize storage
-		dates = new TreeMap<String, String>();
-		digests = new TreeMap<String, String>();
-		latestDates = new TreeMap<String, String>();
-		latestDigests = new TreeMap<String, String>();
-		pluginCollection = new PluginCollection();
+	public PluginListBuilder(PluginCollection plugins) {
+		this.plugins = plugins;
 	}
 
-	public void buildFullPluginList() throws ParserConfigurationException, IOException, SAXException {
-		//Generates information of plugins on local side (digests, dates)
-		buildLocalPluginData();
-		//Generates information of latest plugins on remote side
-		xmlFileReader.getLatestDigestsAndDates(latestDigests, latestDates);
-		//Builds up a list of PluginObjects, of both local and remote
-		generatePluginList();
-	}
-
-	//To get data of plugins on the local side
-	private void buildLocalPluginData() throws ParserConfigurationException, SAXException, IOException {
-		List<String> queue = generatePluginNamelist();
-
-		//To calculate the checksums on the local side
-		currentlyLoaded = 0;
-		totalToLoad = queue.size();
-		for (String fileName : queue) {
-			String digest = Util.getDigest(fileName);
-			digests.put(fileName, digest);
-
-			//null indicate XML records does not have such plugin filename and checksums
-			String date = xmlFileReader.getTimestampFromRecords(fileName,
-					digest);
-			dates.put(fileName, date);
-
-			changeStatus(fileName, ++currentlyLoaded, totalToLoad);
+	static class StringPair {
+		String path, realPath;
+		StringPair(String path, String realPath) {
+			this.path = path;
+			this.realPath = realPath;
 		}
 	}
 
-	private List<String> generatePluginNamelist() {
-		List<String> queue = new ArrayList<String>();
+	protected List<StringPair> queue;
 
-		//Add Fiji launchers if they exist
-		if (Util.isDeveloper) {
-			for (String launcher : Util.launchers) //From precompiled
-				addFileIfExists(launcher, queue);
-		} else //Only relevant launcher(s) added
+	public void queueDir(String[] dirs, String[] extensions) {
+		Set<String> set = new HashSet<String>();
+		for (String extension : extensions)
+			set.add(extension);
+		for (String dir : dirs)
+			queueDir(dir, set);
+	}
+
+	public void queueDir(String dir, Set<String> extensions) {
+		for (String item : new File(Util.prefix(dir)).list()) {
+			String path = dir + "/" + item;
+			File file = new File(Util.prefix(path));
+			if (file.isDirectory()) {
+				if (!item.equals(".") && !item.equals(".."))
+					queueDir(path, extensions);
+				continue;
+			}
+			int dot = item.lastIndexOf('.');
+			if (dot < 0 || !extensions.contains(item.substring(dot)))
+				continue;
+			queue(path);
+		}
+	}
+
+	protected void queue(String path) {
+		queue(path, path);
+	}
+
+	protected void queue(String path, String realPath) {
+		queue.add(new StringPair(path, realPath));
+	}
+
+	protected void handle(StringPair pair) {
+		String path = pair.path;
+		String realPath = pair.realPath;
+		progress(path);
+
+		String checksum = "INVALID";
+		try {
+			checksum = Util.getDigest(path, realPath);
+		} catch (Exception e) { e.printStackTrace(); }
+		long timestamp = Util.getTimestamp(realPath);
+		PluginObject plugin = plugins.getPlugin(path);
+		if (plugin != null)
+			plugin.setLocalVersion(checksum, timestamp);
+		else
+			plugins.add(new PluginObject(path, checksum,
+				timestamp, PluginObject.Status.NOT_FIJI));
+	}
+
+	public void updateFromLocal() {
+		queue = new ArrayList<StringPair>();
+
+		if (Util.isDeveloper)
+			for (String launcher : Util.launchers)
+				queue(launcher, "precompiled/" + launcher);
+		else
 			for (String launcher : Util.getLaunchers())
-				addFileIfExists((Util.useMacPrefix ?
-					Util.macPrefix : "") + launcher, queue);
+				queue(launcher, Util.prefix(launcher));
 
-		//Gather filenames of all local plugins
-		addFileIfExists("ij.jar", queue);
-		for (String directory : pluginDirectories) {
-			File dir = new File(Util.prefix(directory));
-			if (!dir.isDirectory())
-				throw new Error("Plugin Directory " + directory + " does not exist!");
-			else
-				queueDirectory(queue, directory);
-		}
+		queue("ij.jar");
 
-		return queue;
-	}
+		queueDir(new String[] { "jars", "retro", "misc" },
+				new String[] { ".jar", ".class" });
+		queueDir(new String[] { "plugins" },
+				new String[] { ".jar", ".class",
+					".py", ".rb", ".clj", ".js", ".bsh",
+					".txt", ".ijm" });
+		queueDir(new String[] { "macros" },
+				new String[] { ".txt", ".ijm" });
+		queueDir(new String[] { "luts" }, new String[] { ".lut" });
 
-	private void addFileIfExists(String filename, List<String> queue) {
-		if (Util.fileExists(filename))
-			queue.add(filename);
-	}
-
-	//recursively looks into a directory and adds the relevant file
-	private void queueDirectory(List<String> queue, String path) {
-		File dir = new File(Util.prefix(path));
-		if (!dir.isDirectory())
-			return;
-		String[] list = dir.list();
-		for (int i = 0; i < list.length; i++)
-			if (list[i].equals(".") || list[i].equals(".."))
-				continue;
-			else if (list[i].endsWith(".jar")) {
-				//Ignore any empty files (Indicates the plugin is uninstalled)
-				if (new File(Util.prefix(path + File.separator + list[i])).length() > 0)
-					queue.add(path + File.separator + list[i]);
-			} else
-				queueDirectory(queue,
-					path + File.separator + list[i]);
-	}
-
-	private void generatePluginList() {
-		//Converts data gathered into lists of PluginObject, ready for UI classes usage
-		Iterator<String> iterLatest = latestDigests.keySet().iterator();
-		while (iterLatest.hasNext()) {
-			String pluginName = iterLatest.next();
-			// TODO: use platform!!!
-			if (!Util.isDeveloper && Util.isLauncher(pluginName)) {
-				if (Arrays.binarySearch(Util.getLaunchers(), pluginName) < 0)
-					continue; //don't list if not relevant (platform-specific)
-			}
-			String digest = digests.get(pluginName);
-			String remoteDigest = latestDigests.get(pluginName);
-			String date = dates.get(pluginName);
-			String remoteDate = latestDates.get(pluginName);
-			PluginObject myPlugin = null;
-
-			//null implies that although Fiji plugin, version indicates it does not exist in records
-			boolean isRecorded = true;
-			if (date == null) {
-				date = Util.getTimestamp(pluginName);
-				isRecorded = false;
-			}
-
-			if (digest != null && remoteDigest.equals(digest)) { //if latest version installed
-				myPlugin = new PluginObject(pluginName, digest, date,
-						Status.INSTALLED, true, true);
-			} else if (digest == null) { //if new file (Not installed yet)
-				myPlugin = new PluginObject(pluginName, remoteDigest, remoteDate,
-						Status.NOT_INSTALLED, true, true);
-			} else { //if its installed but can be updated
-				myPlugin = new PluginObject(pluginName, digest, date,
-						Status.UPDATEABLE, true, isRecorded);
-				//set latest update details
-				myPlugin.setUpdateDetails(remoteDigest, remoteDate);
-			}
-			//Plugin shall only contains the latest version's details
-			PluginDetails details = xmlFileReader.getPluginDetailsFrom(pluginName);
-			myPlugin.setPluginDetails(new PluginDetails(details.getDescription(), details.getLinks(),
-					details.getAuthors()));
-			myPlugin.setDependency(xmlFileReader.getDependenciesFrom(pluginName));
-			myPlugin.setFilesize(xmlFileReader.getFilesizeFrom(pluginName));
-
-			pluginCollection.add(myPlugin);
-		}
-
-		//To capture non-Fiji plugins
-		Iterator<String> iterCurrent = digests.keySet().iterator();
-		while (iterCurrent.hasNext()) {
-			String name = iterCurrent.next();
-			//If it is not a Fiji plugin (Not found in list of up-to-date versions)
-			if (!latestDigests.containsKey(name)) {
-				String digest = digests.get(name);
-				String date = Util.getTimestamp(name);
-				//implies third-party plugin, no description nor dependency information available
-				PluginObject myPlugin = new PluginObject(name, digest, date,
-						Status.INSTALLED, false, false);
-				myPlugin.setFilesize(Util.getFilesize(Util.prefix(myPlugin.getFilename())));
-				pluginCollection.add(myPlugin);
-			}
-		}
-
-		for (PluginObject plugin : pluginCollection) {
-			File file = new File(Util.prefix(plugin.getFilename()));
-			if (!file.exists() || file.canWrite())
-				continue;
-			plugin.setIsReadOnly(true);
-			IJ.log(plugin.getFilename() + " is read-only file.");
-		} //Still remains in pluginCollection for dependency reference purposes
-
-		setStatusComplete(); //indicate to observer there's no more tasks
+		total = queue.size();
+		counter = -1;
+		for (StringPair pair : queue)
+			handle(pair);
+		done();
 	}
 }

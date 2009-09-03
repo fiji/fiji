@@ -48,52 +48,35 @@ import org.xml.sax.helpers.AttributesImpl;
  *   (i.e.: XML file)
  */
 public class Updater {
-	private FileUploader fileUploader;
-	private String[] relativePaths = { //@ Fiji root
-			PluginManager.XML_LOCK,
-			PluginManager.TXT_FILENAME
-	};
-	private String[] savePaths; //paths for getting the required files to upload
-	private String backupXMLPath;
-	private long xmlLastModified; //Use for lock conflict check
-	private TransformerHandler handler; //tool for writing of XML contents
+	protected long xmlLastModified;
+	protected FileUploader uploader;
 
-	//accessible information after uploading tasks are done
-	private XMLFileReader xmlFileReader;
-	public Map<String, PluginCollection> newPluginRecords;
-	private ArrayList<SourceFile> filesToUpload; //list of plugin files to be uploaded
-	public PluginCollection changesList;
-	private DependencyAnalyzer dependencyAnalyzer;
-	protected PluginCollection pluginCollection;
+	protected DependencyAnalyzer dependencyAnalyzer;
+	protected PluginCollection plugins;
 
 	public Updater(PluginManager pluginManager) {
 		this(pluginManager.pluginCollection,
-			pluginManager.xmlFileReader,
 			pluginManager.getXMLLastModified());
-		changesList.resetChangeStatuses();
 	}
 
-	public Updater(PluginCollection pluginCollection,
-			XMLFileReader xmlFileReader, long xmlLastModified) {
-		this.pluginCollection = pluginCollection;
-		changesList = pluginCollection.getToUpload();
-		dependencyAnalyzer = new DependencyAnalyzer();
-		this.xmlFileReader = xmlFileReader;
+	public Updater(PluginCollection plugins, long xmlLastModified) {
+		this.plugins = plugins;
 
+		// TODO: dependencies should be _added_ by _PluginCollection_!
+		dependencyAnalyzer = new DependencyAnalyzer();
+
+		// TODO: use lastModified() of lock file as timestamp for new
+		// plugins
 		this.xmlLastModified = xmlLastModified;
-		savePaths = new String[relativePaths.length];
-		for (int i = 0; i < savePaths.length; i++)
-			savePaths[i] = Util.prefix(relativePaths[i]);
-		backupXMLPath = Util.prefix(PluginManager.XML_BACKUP);
 	}
 
 	public void setUploader(FileUploader uploader) {
-		fileUploader = uploader;
+		this.uploader = uploader;
 	}
 
 	public synchronized boolean setLogin(String username, String password) {
 		try {
-			fileUploader = new SSHFileUploader(username, password);
+			uploader = new SSHFileUploader(username, password);
 			return true;
 		} catch (JSchException e) {
 			IJ.error("Failed to login");
@@ -101,189 +84,152 @@ public class Updater {
 		}
 	}
 
-	// TODO: why is the digest not computed here?????
-	// TODO: the PluginObject class _must_ know about its previous versions!!!!!
-	public synchronized void generateNewPluginRecords() throws IOException {
-		filesToUpload = new ArrayList<SourceFile>();
-		newPluginRecords = xmlFileReader.getAllPluginRecords();
-		// TODO: there should be one, and only one plugin collection.  All that should need changing is the status!!! (And using filters to traverse the plugins, not copying everything around.  Copying is ugly and awful.)
-		for (String filename : newPluginRecords.keySet()) {
-			PluginObject pluginToUpload = ((PluginCollection)changesList).getPlugin(filename);
-			if (pluginToUpload != null) {
-				PluginCollection versions = (PluginCollection)newPluginRecords.get(filename);
-				PluginObject latest = versions.getLatestPlugin();
-				//if either an existing version, or timestamp is older than recorded version
-				// TODO: fix borked logic.  We want to be able to update details only, too!
-				if (latest.getChecksum().equals(pluginToUpload.getChecksum()) ||
-						latest.getTimestamp().compareTo(pluginToUpload.getTimestamp()) >= 0) {
-					//Just update details
-					latest.setPluginDetails(pluginToUpload.getPluginDetails());
-				} else {
-					//Newer version which does not exist in records yet, thus requires upload
-					String absolutePath = Util.prefix(pluginToUpload.getFilename());
-					pluginToUpload.setDependency(dependencyAnalyzer.getDependentJarsForFile(absolutePath), pluginCollection);
-					pluginToUpload.setFilesize(new File(absolutePath).length());
-					filesToUpload.add(new UpdateSource(absolutePath, pluginToUpload, "C0644"));
-					//Add to existing records
-					versions.add(pluginToUpload);
-
-				}
-			}
-		}
-		//Checking list for non-Fiji plugins to add to new records
-		for (PluginObject pluginToUpload : changesList) {
-			String name = pluginToUpload.getFilename();
-			PluginCollection pluginVersions = newPluginRecords.get(name);
-			if (pluginVersions == null) { //non-Fiji plugin doesn't exist in records yet
-				String absolutePath = Util.prefix(name);
-				pluginToUpload.setDependency(dependencyAnalyzer.getDependentJarsForFile(absolutePath), pluginCollection);
-				pluginToUpload.setFilesize(new File(absolutePath).length());
-				filesToUpload.add(new UpdateSource(absolutePath, pluginToUpload, "C0644"));
-				//therefore add it as a Fiji Plugin
-				PluginCollection newPluginRecord = new PluginCollection();
-				newPluginRecord.add(pluginToUpload);
-				newPluginRecords.put(name, newPluginRecord);
-			}
-		}
+	public synchronized void generateNewPluginRecords()
+			throws IOException {
+		for (PluginObject plugin : plugins.toUpload())
+			// TODO: compute the digest here?????
+			// TODO: when marking for update, put the
+			// formerly current version into
+			// previous-versions
+			plugin.markForUpload();
 	}
 
-	public synchronized void uploadFilesToServer(UploadListener uploadListener) throws Exception  {
-		System.out.println("********** Upload Process begins **********");
+	public void upload(UploadListener uploadListener)
+			throws Exception  {
 		if (uploadListener != null)
-			fileUploader.addListener(uploadListener);
+			uploader.addListener(uploadListener);
 
-		generateAndValidateXML();
-		saveXMLFile();
-		saveTextFile();
-		//_Lock_ file, writable for none but current uploader
-		filesToUpload.add(0, new UpdateSource(savePaths[0], relativePaths[0], "C0644"));
-		//Text file for old Fiji Updater, writable for all uploaders
-		filesToUpload.add(new UpdateSource(savePaths[1], relativePaths[1], "C0664"));
-		fileUploader.upload(xmlLastModified, filesToUpload);
+		String backup = Util.prefix(PluginManager.XML_BACKUP);
+		String compressed = Util.prefix(PluginManager.XML_COMPRESSED);
+		String txt = Util.prefix(PluginManager.TXT_FILENAME);
+		generateAndValidateXML(backup);
+		// TODO: only save _compressed_ backup, and not as db.bak!
+		compress(backup, compressed);
+		// TODO: do no save text file at all!
+		saveTextFile(txt);
 
-		//No errors thrown, implies successful upload, so just remove temporary files
-		new File(backupXMLPath).delete();
-		for (String path : savePaths)
-			new File(path).delete();
+		// TODO: rename "UpdateSource" to "Transferable", reuse!
+		List<SourceFile> files = new ArrayList<SourceFile>();
+		files.add(new UpdateSource(compressed, PluginManager.XML_LOCK,
+					"C0444"));
+		files.add(new UpdateSource(txt, PluginManager.TXT_FILENAME,
+					"C0644"));
+		for (PluginObject plugin : plugins.toUpload())
+			files.add(new UpdateSource(plugin));
+		uploader.upload(xmlLastModified, files);
 
-		System.out.println("********** Upload Process ended **********");
+		// No errors thrown -> just remove temporary files
+		new File(backup).delete();
+		new File(Util.prefix(PluginManager.TXT_FILENAME)).delete();
 	}
 
-	//assumed validation is done
-	private void saveXMLFile() throws IOException {
-		//Compress and save using given path
-		FileOutputStream xmlOutputStream = new FileOutputStream(savePaths[0]); //to compress to
-		FileInputStream xmlInputStream = new FileInputStream(backupXMLPath); //to get data from
-		Compressor.compressAndSave(Compressor.readStream(xmlInputStream), xmlOutputStream);
-		xmlOutputStream.close();
-		xmlInputStream.close();
+	protected void compress(String uncompressed, String compressed)
+			throws IOException {
+		FileOutputStream out = new FileOutputStream(compressed);
+		FileInputStream in = new FileInputStream(uncompressed);
+		Compressor.compressAndSave(Compressor.readStream(in), out);
+		out.close();
+		in.close();
 	}
 
-	//pluginRecords consist of key of Plugin names, each maps to lists of different versions
-	private void saveTextFile() throws FileNotFoundException {
-		PrintStream txtPrintStream = new PrintStream(savePaths[1]); //Writing to current.txt
-
-		//start writing
-		Iterator<String> pluginNamelist = newPluginRecords.keySet().iterator();
-		while (pluginNamelist.hasNext()) {
-			String filename = pluginNamelist.next();
-			PluginCollection versions = (PluginCollection)newPluginRecords.get(filename);
-			PluginObject latestPlugin = versions.getLatestPlugin();
-			txtPrintStream.println(latestPlugin.getFilename() + " " +
-				latestPlugin.getTimestamp() + " " + latestPlugin.getChecksum());
-		}
-		txtPrintStream.close();
+	protected void saveTextFile(String path) throws FileNotFoundException {
+		PrintStream out = new PrintStream(path);
+		for (PluginObject plugin : plugins)
+			out.println(plugin.getFilename() + " "
+					+ plugin.getTimestamp() + " "
+					+ plugin.getChecksum());
+		out.close();
 	}
 
-	//pluginRecords consist of key of Plugin names, each maps to lists of different versions
-	private void generateAndValidateXML() throws SAXException,
-	TransformerConfigurationException, IOException, ParserConfigurationException {
-		//Prepare XML writing
-		FileOutputStream xmlOutputStream = new FileOutputStream(backupXMLPath);
-		XMLFileHandler xmlHandler = new XMLFileHandler(xmlOutputStream);
+	// TODO: this _must_ go to XMLFileWriter (together with the validating stuff)
+	protected TransformerHandler handler;
+	protected void generateAndValidateXML(String path) throws SAXException,
+			TransformerConfigurationException, IOException,
+			ParserConfigurationException {
+		FileOutputStream out = new FileOutputStream(path);
+		XMLFileHandler xmlHandler = new XMLFileHandler(out);
 		handler = xmlHandler.getXMLHandler();
 
-		//Start actual writing
 		handler.startDocument();
-		AttributesImpl attrib = new AttributesImpl();
-		handler.startElement("", "", "pluginRecords", attrib);
-		Iterator<String> pluginNamelist = newPluginRecords.keySet().iterator();
-		while (pluginNamelist.hasNext()) {
-			String filenameAttribute = pluginNamelist.next();
+		AttributesImpl attr = new AttributesImpl();
+		handler.startElement("", "", "pluginRecords", attr);
+		for (PluginObject plugin : plugins) {
+			attr.clear();
+			setAttribute(attr, "filename", plugin.filename);
+			handler.startElement("", "", "plugin", attr);
 
-			//latest version have the tag "version", others given the tag "previous-version"
-			PluginCollection versions = (PluginCollection)newPluginRecords.get(filenameAttribute);
-			PluginObject latest = versions.getLatestPlugin();
-			PluginCollection otherVersions = new PluginCollection();
-			for (PluginObject version : versions)
-				if (version != latest)
-					otherVersions.add(version);
+			attr.clear();
+			setAttribute(attr, "checksum", plugin.getChecksum());
+			setAttribute(attr, "timestamp", plugin.getTimestamp());
+			setAttribute(attr, "filesize", plugin.filesize);
+			handler.startElement("", "", "version", attr);
+			if (plugin.description != null)
+				writeSimpleTag("description",
+						plugin.description);
 
-			attrib.clear();
-			attrib.addAttribute("", "", "filename", "CDATA", filenameAttribute);
-			handler.startElement("", "", "plugin", attrib);
-				//tag "version" for the latest version
-				attrib.clear();
-				attrib.addAttribute("", "", "timestamp", "CDATA", latest.getTimestamp());
-				attrib.addAttribute("", "", "checksum", "CDATA", latest.getChecksum());
-				attrib.addAttribute("", "", "filesize", "CDATA", "" + latest.getFilesize());
-				handler.startElement("", "", "version", attrib);
-				if (latest.getPluginDetails().getDescription() != null)
-					writeSimpleTag("description", attrib, latest.getPluginDetails().getDescription());
+			for (Dependency dependency : plugin.getDependencies()) {
+				attr.clear();
+				setAttribute(attr, "filename",
+						dependency.filename);
+				setAttribute(attr, "timestamp",
+						dependency.timestamp);
+				setAttribute(attr, "relation",
+						dependency.relation.toString());
+				writeSimpleTag("dependency", null, attr);
+			}
 
-				//Write dependencies if any
-				if (latest.getDependencies() != null && latest.getDependencies().size() > 0) {
-					List<Dependency> dependencies = latest.getDependencies();
-					for (Dependency dependency : dependencies) {
-						attrib.clear();
-						handler.startElement("", "", "dependency", attrib);
-						writeSimpleTag("filename", attrib, dependency.getFilename());
-						writeSimpleTag("date", attrib, dependency.getTimestamp());
-						if (dependency.getRelation() != null)
-							writeSimpleTag("relation", attrib, dependency.getRelation());
-						handler.endElement("", "", "dependency");
-					}
-				}
-				//write <link> and <author> tags if any
-				writeMultipleSimpleTags("link", attrib, latest.getPluginDetails().getLinks());
-				writeMultipleSimpleTags("author", attrib, latest.getPluginDetails().getAuthors());
-				handler.endElement("", "", "version");
+			writeSimpleTags("link", plugin.getLinks());
+			writeSimpleTags("author", plugin.getAuthors());
+			handler.endElement("", "", "version");
 
-				//As for the rest of the plugin's history record...
-				for (PluginObject version : otherVersions) {
-					//tag "previous-version"
-					attrib.clear();
-					attrib.addAttribute("", "", "timestamp", "CDATA", version.getTimestamp());
-					attrib.addAttribute("", "", "checksum", "CDATA", version.getChecksum());
-					handler.startElement("", "", "previous-version", attrib);
-					handler.endElement("", "", "previous-version");
-				}
+			for (PluginObject.Version version :
+					plugin.getPrevious()) {
+				attr.clear();
+				setAttribute(attr, "timestamp",
+						version.timestamp);
+				setAttribute(attr, "checksum",
+						version.checksum);
+				writeSimpleTag("previous-version", null, attr);
+			}
 			handler.endElement("", "", "plugin");
 		}
 		handler.endElement("", "", "pluginRecords");
 		handler.endDocument();
-		xmlOutputStream.close();
-		System.out.println("XML contents written, checking for validation");
+		out.close();
 
-		//Validate XML contents (Reading the saved XML file)
-		FileInputStream xmlInputStream = new FileInputStream(backupXMLPath);
-		xmlHandler.validateXMLContents(xmlInputStream);
-		xmlInputStream.close();
-		System.out.println("XML contents validated");
+		FileInputStream in = new FileInputStream(path);
+		xmlHandler.validateXMLContents(in);
+		in.close();
 	}
 
-	private void writeMultipleSimpleTags(String tagName, AttributesImpl attrib, List<String> values)
-	throws SAXException {
-		if (values != null && values.size() > 0)
-			for (String value : values)
-				writeSimpleTag(tagName, attrib, value);
+	protected void setAttribute(AttributesImpl attributes,
+			String key, long value) {
+		setAttribute(attributes, key, "" + value);
 	}
 
-	private void writeSimpleTag(String tagName, AttributesImpl attrib, String value)
-	throws SAXException {
-		attrib.clear();
-		handler.startElement("", "", tagName, attrib);
-		handler.characters(value.toCharArray(), 0, value.length());
+	protected void setAttribute(AttributesImpl attributes,
+			String key, String value) {
+		attributes.addAttribute("", "", key, "CDATA", value);
+	}
+
+	protected void writeSimpleTags(String tagName, Iterable<String> values)
+			throws SAXException {
+		for (String value : values)
+			writeSimpleTag(tagName, value);
+	}
+
+	protected void writeSimpleTag(String tagName, String value)
+			throws SAXException {
+		writeSimpleTag(tagName, value, new AttributesImpl());
+	}
+
+	protected void writeSimpleTag(String tagName, String value,
+				AttributesImpl attributes)
+			throws SAXException {
+		handler.startElement("", "", tagName, attributes);
+		if (value != null)
+			handler.characters(value.toCharArray(),
+					0, value.length());
 		handler.endElement("", "", tagName);
 	}
 }

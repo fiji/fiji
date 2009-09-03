@@ -14,6 +14,8 @@ import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import java.io.File;
+
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -36,7 +38,6 @@ import javax.swing.event.TableModelListener;
  */
 public class MainUserInterface extends JFrame implements TableModelListener {
 	private PluginManager pluginManager;
-	private PluginCollection viewList;
 
 	//User Interface elements
 	private JFrame loadedFrame;
@@ -58,19 +59,21 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		this.pluginManager = pluginManager;
 
 		//Pulls required information from pluginManager
-		viewList = pluginManager.pluginCollection; //initially, view all
-		PluginCollection readOnlyList = pluginManager.pluginCollection.getReadOnly();
-		if (readOnlyList.size() > 0) {
-			StringBuilder namelist = new StringBuilder();
-			for (int i = 0; i < readOnlyList.size(); i++) {
-				if (i != 0 && i % 3 == 0)
-					namelist.append("\n");
-				namelist.append((namelist.length() > 0 ? ", " : "") +
-						readOnlyList.get(i).getFilename());
-			}
-			IJ.showMessage("Read-Only Plugins", "WARNING: The following plugin files are set to read-only, " +
-					"you are advised to quit Fiji and set to writable:\n" + namelist.toString());
+		String list = null;
+		for (PluginObject plugin : pluginManager.pluginCollection) {
+			File file = new File(Util.prefix(plugin.getFilename()));
+			if (file.canWrite())
+				continue;
+			if (list == null)
+				list = plugin.getFilename();
+			else
+				list += ", " + plugin.getFilename();
 		}
+		if (list != null)
+			IJ.showMessage("Read-only Plugins",
+					"WARNING: The following plugin files "
+					+ "are set to read-only: '"
+					+ list + "'");
 		setUpUserInterface();
 		pack();
 	}
@@ -130,7 +133,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		lblSummaryPanel.add(Box.createHorizontalGlue());
 
 		//Create the plugin table and set up its scrollpane
-		table = new PluginTable(viewList, this);
+		table = new PluginTable(pluginManager.pluginCollection, this);
 		JScrollPane pluginListScrollpane = new JScrollPane(table);
 		pluginListScrollpane.getViewport().setBackground(table.getBackground());
 
@@ -209,34 +212,40 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		getContentPane().add(topPanel);
 		getContentPane().add(bottomPanel);
 
+		table.getModel().addTableModelListener(this);
+
 		//initial selection
 		table.changeSelection(0, 0, false, false);
 	}
 
 	//Whenever search text or ComboBox has been changed
 	private void changeListingListener() {
-		viewList = pluginManager.pluginCollection;
+		Iterable<PluginObject> view = pluginManager.pluginCollection;
+		// TODO: filter afterwards
 		if (!"".equals(txtSearch.getText().trim()))
-			viewList = pluginManager.pluginCollection.getMatchingText(txtSearch.getText().trim());
+			view = pluginManager.pluginCollection.getMatchingText(txtSearch.getText().trim());
 
 		int index = comboBoxViewingOptions.getSelectedIndex();
-		if (index == 1)
-			viewList = viewList.getStatusesFullyUpdated();
+		// TODO: OUCH!
+/*		if (index == 1)
+			view = pluginManager.pluginCollection.statusesFullyUpdated();
 		else if (index == 2)
-			viewList = viewList.getStatusesUninstalled();
+			view = pluginManager.pluginCollection.statusesUninstalled();
 		else if (index == 3)
-			viewList = viewList.getStatusesInstalled();
+			view = pluginManager.pluginCollection.statusesInstalled();
 		else if (index == 4)
-			viewList = viewList.getStatusesUpdateable();
-		else if (index == 5)
-			viewList = viewList.getFijiPlugins();
+			view = pluginManager.pluginCollection.statusesUpdateable();
+		else */ if (index == 5)
+			view = pluginManager.pluginCollection.fijiPlugins();
 		else if (index == 6)
-			viewList = viewList.getNonFiji();
+			view = pluginManager.pluginCollection.nonFiji();
 
 		//Directly update the table for display
-		table.setupTableModel(viewList);
+		table.setupTableModel(view);
+		table.getModel().addTableModelListener(this);
 	}
 
+	// TODO: why should this function need to know that it is triggered by a click?  That is so totally unnecessary.
 	private void clickToUploadRecords() {
 		//There's no frame interface for Uploader, makes disabling pointless, thus set invisible
 		Uploader uploader = new Uploader(this);
@@ -253,21 +262,21 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 	private void clickToBeginOperations() {
 		loadedFrame = new Confirmation(this);
 		Confirmation confirmation = (Confirmation)loadedFrame;
-		confirmation.displayInformation(new DependencyBuilder(pluginManager.pluginCollection));
+		// TODO: confirmation.displayInformation(new DependencyBuilder(pluginManager.pluginCollection));
 		showFrame();
 		setEnabled(false);
 	}
 
 	private void clickToQuitPluginManager() {
 		//if there exists plugins where actions have been specified by user
-		if (pluginManager.pluginCollection.getActionsSpecified().size() > 0) {
-			if (JOptionPane.showConfirmDialog(this,
-					"You have specified changes. Are you sure you want to quit?",
+		if (pluginManager.pluginCollection.hasChanges() &&
+				JOptionPane.showConfirmDialog(this,
+					"You have specified changes. Are you "
+					+ "sure you want to quit?",
 					"Quit?", JOptionPane.YES_NO_OPTION,
-					JOptionPane.WARNING_MESSAGE) == JOptionPane.NO_OPTION) {
-				return;
-			}
-		}
+					JOptionPane.WARNING_MESSAGE) !=
+				JOptionPane.YES_OPTION)
+			return;
 		dispose();
 	}
 
@@ -360,15 +369,14 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 	}
 
 	private void enableIfAnyUpload(JButton button) {
-		enableIfActions(button, pluginManager.pluginCollection.getToUpload().size());
+		enableIfActions(button, pluginManager.pluginCollection.hasUpload());
 	}
 
 	private void enableIfAnyChange(JButton button) {
-		enableIfActions(button, pluginManager.pluginCollection.getNonUploadActions().size());
+		enableIfActions(button, pluginManager.pluginCollection.hasChanges());
 	}
 
-	private void enableIfActions(JButton button, int size) {
-		if (button != null)
-			button.setEnabled(size > 0);
+	private void enableIfActions(JButton button, boolean flag) {
+		button.setEnabled(flag);
 	}
 }
