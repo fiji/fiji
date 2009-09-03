@@ -43,7 +43,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 	private JFrame loadedFrame;
 	private String[] arrViewingOptions;
 	private JTextField txtSearch;
-	private JComboBox comboBoxViewingOptions;
+	private JComboBox viewOptions;
 	private PluginTable table;
 	private JLabel lblPluginSummary;
 	private JTextPane txtPluginDetails;
@@ -112,14 +112,14 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 				"View Fiji plugins only",
 				"View Non-Fiji plugins only"
 		};
-		comboBoxViewingOptions = new JComboBox(arrViewingOptions);
-		comboBoxViewingOptions.addActionListener(new ActionListener() {
+		viewOptions = new JComboBox(arrViewingOptions);
+		viewOptions.addActionListener(new ActionListener() {
 
 			public void actionPerformed(ActionEvent e) {
 				changeListingListener();
 			}
 		});
-		SwingTools.createLabelledComponent("View Options:", comboBoxViewingOptions, leftPanel);
+		SwingTools.createLabelledComponent("View Options:", viewOptions, leftPanel);
 		leftPanel.add(Box.createRigidArea(new Dimension(0,10)));
 
 		//Create labels to annotate table
@@ -220,25 +220,29 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 
 	//Whenever search text or ComboBox has been changed
 	private void changeListingListener() {
-		Iterable<PluginObject> view = pluginManager.pluginCollection;
-		// TODO: filter afterwards
-		if (!"".equals(txtSearch.getText().trim()))
-			view = pluginManager.pluginCollection.getMatchingText(txtSearch.getText().trim());
+		PluginCollection plugins = pluginManager.pluginCollection;
+		Iterable<PluginObject> view;
 
-		int index = comboBoxViewingOptions.getSelectedIndex();
 		// TODO: OUCH!
-/*		if (index == 1)
-			view = pluginManager.pluginCollection.statusesFullyUpdated();
+		int index = viewOptions.getSelectedIndex();
+		if (index == 1)
+			view = plugins.installed();
 		else if (index == 2)
-			view = pluginManager.pluginCollection.statusesUninstalled();
+			view = plugins.uninstalled();
 		else if (index == 3)
-			view = pluginManager.pluginCollection.statusesInstalled();
+			view = plugins.upToDate();
 		else if (index == 4)
-			view = pluginManager.pluginCollection.statusesUpdateable();
-		else */ if (index == 5)
-			view = pluginManager.pluginCollection.fijiPlugins();
+			view = plugins.updateable();
+		else if (index == 5)
+			view = plugins.fijiPlugins();
 		else if (index == 6)
-			view = pluginManager.pluginCollection.nonFiji();
+			view = plugins.nonFiji();
+		else
+			view = plugins;
+
+		String search = txtSearch.getText().trim();
+		if (!search.equals(""))
+			view = PluginCollection.filter(search, view);
 
 		//Directly update the table for display
 		table.setupTableModel(view);

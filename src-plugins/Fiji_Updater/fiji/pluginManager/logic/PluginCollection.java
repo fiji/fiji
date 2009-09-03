@@ -1,5 +1,8 @@
 package fiji.pluginManager.logic;
 
+import fiji.pluginManager.logic.PluginObject.Action;
+import fiji.pluginManager.logic.PluginObject.Status;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -9,10 +12,6 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		boolean matches(PluginObject plugin);
 	}
 
-	public Iterable<PluginObject> getMatchingText(String searchText) {
-		return getList(new TextFilter(searchText));
-	}
-
 	public static PluginCollection clone(Iterable<PluginObject> iterable) {
 		PluginCollection result = new PluginCollection();
 		for (PluginObject plugin : iterable)
@@ -20,97 +19,69 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		return result;
 	}
 
-	private static class TextFilter implements Filter {
-		String text;
-
-		public TextFilter(String text) {
-			this.text = text.trim().toLowerCase();
-		}
-
-		//determining whether search text fits description/title
-		public boolean matches(PluginObject plugin) {
-			String lcFilename = plugin.getFilename().trim().toLowerCase();
-			String description = plugin.description;
-			Iterable<String> links = plugin.getLinks();
-			Iterable<String> authors = plugin.getAuthors();
-			if (lcFilename.indexOf(text) >= 0)
-				return true;
-			if (description != null && description.indexOf(text) >= 0)
-				return true;
-			if (links != null)
-				for (String link : links)
-					if (link.toLowerCase().indexOf(text) >= 0) return true;
-			if (authors != null)
-				for (String author : authors)
-					if (author.toLowerCase().indexOf(text) >= 0) return true;
-			return false;
-		}
-	}
-
 	public Iterable<PluginObject> toUpload() {
-		return getList(new Filter() {
-			public boolean matches(PluginObject plugin) {
-				return plugin.toUpload();
-			}
-		});
+		return filter(Action.UPLOAD);
 	}
 
 	public Iterable<PluginObject> toUninstall() {
-		return getList(new Filter() {
-			public boolean matches(PluginObject plugin) {
-				return plugin.toRemove();
-			}
-		});
+		return filter(Action.REMOVE);
 	}
 
 	public Iterable<PluginObject> toUpdate() {
-		return getList(new Filter() {
-			public boolean matches(PluginObject plugin) {
-				return plugin.toUpdate();
-			}
-		});
+		return filter(Action.UPDATE);
+	}
+
+	public Iterable<PluginObject> upToDate() {
+		return filter(Action.INSTALLED);
 	}
 
 	public Iterable<PluginObject> toInstall() {
-		return getList(new Filter() {
-			public boolean matches(PluginObject plugin) {
-				return plugin.toInstall();
-			}
-		});
+		return filter(Action.INSTALL);
 	}
 
 	public Iterable<PluginObject> toInstallOrUpdate() {
-		return getList(new Filter() {
+		return filter(new Filter() {
 			public boolean matches(PluginObject plugin) {
-				return (plugin.toInstall() || plugin.toUpdate());
+				return plugin.getAction() == Action.INSTALL ||
+					plugin.getAction() == Action.UPDATE;
 			}
 		});
+	}
+
+	public Iterable<PluginObject> uninstalled() {
+		return filter(Status.NOT_INSTALLED);
+	}
+
+	public Iterable<PluginObject> installed() {
+		return filter(Status.INSTALLED);
+	}
+
+	public Iterable<PluginObject> updateable() {
+		return filter(Status.UPDATEABLE);
+	}
+
+	public Iterable<PluginObject> modified() {
+		return filter(Status.MODIFIED);
 	}
 
 	public Iterable<PluginObject> fijiPlugins() {
-		return getList(new Filter() {
-			public boolean matches(PluginObject plugin) {
-				return plugin.isFiji();
-			}
-		});
+		return filterOut(Status.NOT_FIJI);
 	}
 
 	public Iterable<PluginObject> nonFiji() {
-		return getList(new Filter() {
-			public boolean matches(PluginObject plugin) {
-				return !plugin.isFiji();
-			}
-		});
+		return filter(Status.NOT_FIJI);
 	}
 
-	public class FilteredIterator implements Iterator<PluginObject> {
+	public static class FilteredIterator implements Iterator<PluginObject> {
 		Filter filter;
+		boolean opposite;
 		Iterator<PluginObject> iterator;
 		PluginObject next;
 
-		FilteredIterator(Filter filter) {
+		FilteredIterator(Filter filter,
+				Iterable<PluginObject> plugins) {
 			this.filter = filter;
-			iterator = PluginCollection.this.iterator();
+			iterator = plugins.iterator();
 			findNext();
 		}
 
@@ -138,12 +109,52 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		}
 	}
 
-	protected Iterable<PluginObject> getList(final Filter filter) {
+	public static Iterable<PluginObject> filter(final Filter filter,
+			final Iterable<PluginObject> plugins) {
 		return new Iterable<PluginObject>() {
 			public Iterator<PluginObject> iterator() {
-				return new FilteredIterator(filter);
+				return new FilteredIterator(filter, plugins);
 			}
 		};
+	}
+
+	public static Iterable<PluginObject> filter(final String search,
+			final Iterable<PluginObject> plugins) {
+		final String keyword = search.trim().toLowerCase();
+		return filter(new Filter() {
+			public boolean matches(PluginObject plugin) {
+				return plugin.getFilename().trim().toLowerCase()
+					.indexOf(keyword) >= 0;
+			}
+		}, plugins);
+	}
+
+	public Iterable<PluginObject> filter(final Filter filter) {
+		return filter(filter, this);
+	}
+
+	public Iterable<PluginObject> filter(final Status status) {
+		return filter(new Filter() {
+			public boolean matches(PluginObject plugin) {
+				return plugin.getStatus() == status;
+			}
+		}, this);
+	}
+
+	public Iterable<PluginObject> filterOut(final Status status) {
+		return filter(new Filter() {
+			public boolean matches(PluginObject plugin) {
+				return plugin.getStatus() != status;
+			}
+		}, this);
+	}
+
+	public Iterable<PluginObject> filter(final Action action) {
+		return filter(new Filter() {
+			public boolean matches(PluginObject plugin) {
+				return plugin.getAction() == action;
+			}
+		}, this);
 	}
 
 	public PluginObject getPlugin(String filename) {
@@ -186,33 +197,8 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 	public boolean hasUpload() {
 		for (PluginObject plugin : this)
-			if (plugin.getAction() == PluginObject.Action.UPLOAD)
+			if (plugin.getAction() == Action.UPLOAD)
 				return true;
 		return false;
-	}
-
-	//forces action for every plugin in the list to "install"
-	public void setToInstall() {
-		for (PluginObject plugin : this)
-			if (plugin.isRemovableOnly() || plugin.isUpdateable())
-				plugin.setNoAction();
-			else
-				plugin.setAction(PluginObject.Action.INSTALL);
-	}
-
-	//forces action for every update-able plugin in the list to be "update"
-	public void setToUpdate() {
-		for (PluginObject plugin : this)
-			if (plugin.isUpdateable())
-				plugin.setAction(PluginObject.Action.UPDATE);
-	}
-
-	//forces action for every plugin in the list to be "uninstall"
-	public void setToRemove() {
-		for (PluginObject plugin : this)
-			if (plugin.isInstallable())
-				plugin.setNoAction();
-			else if (plugin.isRemovableOnly() || plugin.isUpdateable())
-				plugin.setAction(PluginObject.Action.REMOVE);
 	}
 }
