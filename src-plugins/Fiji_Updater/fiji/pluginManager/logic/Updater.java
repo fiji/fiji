@@ -87,7 +87,7 @@ public class Updater {
 			// TODO: when marking for update, put the
 			// formerly current version into
 			// previous-versions
-			plugin.markForUpload();
+			plugin.setAction(PluginObject.Action.UPLOAD);
 	}
 
 	public void upload(UploadListener uploadListener)

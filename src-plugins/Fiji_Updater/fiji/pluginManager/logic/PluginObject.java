@@ -52,7 +52,7 @@ public class PluginObject {
 		INSTALLED (new Action[] { Action.INSTALLED, Action.REMOVE }),
 		UPDATEABLE (new Action[] { Action.UPDATEABLE, Action.REMOVE, Action.UPDATE }),
 		MODIFIED (new Action[] { Action.MODIFIED, Action.REMOVE, Action.UPDATE }),
-		NOT_FIJI (new Action[] { Action.NOT_FIJI });
+		NOT_FIJI (new Action[] { Action.NOT_FIJI, Action.REMOVE });
 
 		private Action[] actions;
 		Status(Action[] actions) {
@@ -134,16 +134,6 @@ public class PluginObject {
 		newTimestamp = timestamp;
 	}
 
-	public void markForUpload() {
-		if (newChecksum == null || newChecksum.equals(current.checksum))
-			return;
-		setAction(Action.UPLOAD);
-		addPreviousVersion(current.checksum, current.timestamp);
-		current.checksum = newChecksum;
-		current.timestamp = newTimestamp;
-		newChecksum = null;
-	}
-
 	public String getDescription() {
 		return description;
 	}
@@ -209,7 +199,22 @@ public class PluginObject {
 			throw new Error("Invalid action requested for plugin "
 					+ filename + "(" + action
 					+ ", " + status + ")");
+		if (action == Action.UPLOAD)
+			markForUpload();
 		this.action = action;
+	}
+
+	private void markForUpload() {
+		if (isFiji()) {
+			if (newChecksum == null ||
+					newChecksum.equals(current.checksum))
+				throw new Error("Plugin " + filename
+						+ " is already uploaded");
+			addPreviousVersion(current.checksum, current.timestamp);
+			current.checksum = newChecksum;
+			current.timestamp = newTimestamp;
+			newChecksum = null;
+		}
 	}
 
 	public String getFilename() {
