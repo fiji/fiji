@@ -3,18 +3,29 @@
 # This is a small library of function which should make testing Fiji/ImageJ
 # much easier.
 
+from fiji import Main
+
 from ij import IJ, ImageJ
 
-from java.awt import Frame, Toolkit
+from jarray import zeros
 
-from java.awt.event import AWTEventListener
+from java.awt import Button, Container, Dialog, Frame, Toolkit
+
+from java.awt.event import ActionEvent, MouseEvent
+
+from java.lang import Runtime, System, Thread
 
 from threading import Lock
 
 import sys
 
+currentWindow = None
 def startIJ():
-	ImageJ().exitWhenQuitting(True)
+	Main.premain()
+	global currentWindow
+	currentWindow = ImageJ()
+	currentWindow.exitWhenQuitting(True)
+	Main.postmain()
 
 def catchIJErrors(function):
 	try:
@@ -33,26 +44,85 @@ def test(function):
 		print 'Failed:', function
 		sys.exit(1)
 
-def waitForFrame(title):
-	all = Frame.getFrames()
-	for i in range(0, len(all)):
-		if all[i].getTitle() == title:
-			return
+def waitForWindow(title):
+	global currentWindow
+	currentWindow = Main.waitForWindow(title)
+	return currentWindow
 
-	class Listener(AWTEventListener):
-		lock = Lock()
-		lock.acquire();
-		def eventDispatched(self, event):
-			source = event.getSource()
-			if isinstance(source, Frame) and \
-					source.getTitle() == title:
-				self.lock.release()
+def getMenuEntry(menuBar, path):
+	if menuBar == None:
+		global currentWindow
+		menuBar = currentWindow.getMenuBar()
+	if isinstance(path, str):
+		path = path.split('>')
+	try:
+		menu = None
+		for i in range(0, menuBar.getMenuCount()):
+			if path[0] == menuBar.getMenu(i).getLabel():
+				menu = menuBar.getMenu(i)
+				break
+		for j in range(1, len(path)):
+			entry = None
+			for i in range(0, menu.getItemCount()):
+				if path[j] == menu.getItem(i).getLabel():
+					entry = menu.getItem(i)
+					break
+			menu = entry
+		return menu
+	except:
+		return None
 
-	listener = Listener()
-	Toolkit.getDefaultToolkit().addAWTEventListener(listener, -1)
-	listener.lock.acquire()
-	listener.lock.release()
-	Toolkit.getDefaultToolkit().removeAWTEventListener(listener)
+def dispatchActionEvent(component):
+	event = ActionEvent(component, ActionEvent.ACTION_PERFORMED, \
+		component.getLabel(), MouseEvent.BUTTON1)
+	component.dispatchEvent(event)
+
+def clickMenuItem(path):
+	menuEntry = getMenuEntry(None, path)
+	dispatchActionEvent(menuEntry)
+
+def getButton(container, label):
+	if container == None:
+		global currentWindow
+		container = currentWindow
+	components = container.getComponents()
+	for i in range(0, len(components)):
+		if isinstance(components[i], Container):
+			result = getButton(components[i], label)
+			if result != None:
+				return result
+		elif isinstance(components[i], Button) and \
+				components[i].getLabel() == label:
+			return components[i]
+
+def clickButton(label):
+	button = getButton(None, label)
+	dispatchActionEvent(button)
 
 def quitIJ():
+	global currentWindow
 	IJ.getInstance().quit()
+	currentWindow = None
+
+class OutputThread(Thread):
+	def __init__(self, input, output):
+		self.buffer = zeros(65536, 'b')
+		self.input = input
+		self.output = output
+
+	def run(self):
+		while True:
+			count = self.input.read(self.buffer)
+			if count < 0:
+				return
+			self.output.write(self.buffer, 0, count)
+
+def launchFiji(args, workingDir = None):
+	args.insert(0, System.getProperty('fiji.executable'))
+	try:
+		process = Runtime.getRuntime().exec(args, None, workingDir)
+		OutputThread(process.getInputStream(), System.out).start()
+		OutputThread(process.getErrorStream(), System.err).start()
+		return process.waitFor()
+	except:
+		return -1

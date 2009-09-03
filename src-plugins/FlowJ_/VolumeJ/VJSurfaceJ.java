@@ -110,7 +110,7 @@ implements ActionListener, ClipboardOwner, ItemListener, KeyListener
 
 		// Create the other items in the VJ window.
 		String [] sxyz = { ""+xrot, ""+yrot, ""+zrot };
-		rotField = createXYZField(params1, "Rotate:(บ)", sxyz, 1);
+		rotField = createXYZField(params1, "Rotate:(ยบ)", sxyz, 1);
 		scaleField = createTextField(params1, "Scale:", ""+scale, 1);
 		if (iList.length > 0)
 		{
@@ -125,8 +125,8 @@ implements ActionListener, ClipboardOwner, ItemListener, KeyListener
                 lutChoice = createChoice(params1, "Index LUT type", sluts, 0);
 		String [] sinterpolation = { "nearest neighbor", "trilinear" };
 		interpolationChoice = createChoice(params1, "Interpolation:", sinterpolation, 1);
-		cineNField = createTextField(params1, "Cine total rotation(บ):", "360", 1);
-		cineField = createTextField(params1, "Cine frame increment(บ):", "10", 1);
+		cineNField = createTextField(params1, "Cine total rotation(ยบ):", "360", 1);
+		cineField = createTextField(params1, "Cine frame increment(ยบ):", "10", 1);
 		String [] sAxis = { "x", "y", "z" };
 		axisChoice = createChoice(params1, "Cine rotation axis", sAxis, 1);
 		sigmaField = createTextField(params1, "Gaussian smoothing:", ""+sigma, 1);

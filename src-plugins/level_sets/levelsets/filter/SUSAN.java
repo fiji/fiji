@@ -1,7 +1,7 @@
 /*
  * SUSAN.java
  *
- * Created on 17. März 2005, 19:36
+ * Created on 17. MÃ¤rz 2005, 19:36
  */
 
 package levelsets.filter;

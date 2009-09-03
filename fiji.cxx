@@ -91,6 +91,12 @@ static win_cout fake_cout;
 string absolute_java_home;
 static const char *relative_java_home = JAVA_HOME;
 static const char *library_path = JAVA_LIB_PATH;
+static const char *default_main_class = "fiji.Main";
+
+static bool is_default_main_class(const char *name)
+{
+	return !strcmp(name, default_main_class) || !strcmp(name, "ij.ImageJ");
+}
 
 /* Dynamic library loading stuff */
 
@@ -868,6 +874,41 @@ int build_classpath(string &result, string jar_directory, int no_error) {
 	return 0;
 }
 
+static string set_property(JNIEnv *env, const char *key, const char *value)
+{
+	static jclass system_class = NULL;
+	static jmethodID set_property_method = NULL;
+
+	if (!system_class) {
+		system_class = env->FindClass("java/lang/System");
+		if (!system_class)
+			return "";
+	}
+
+	if (!set_property_method) {
+		set_property_method = env->GetStaticMethodID(system_class,
+				"setProperty",
+				"(Ljava/lang/String;Ljava/lang/String;)"
+				"Ljava/lang/String;");
+		if (!set_property_method)
+			return "";
+	}
+
+	jstring result =
+		(jstring)env->CallStaticObjectMethod(system_class,
+				set_property_method,
+				env->NewStringUTF(key),
+				env->NewStringUTF(value));
+	string previous;
+	if (result) {
+		const char *chars = env->GetStringUTFChars(result, NULL);
+		previous = string(chars);
+		env->ReleaseStringUTFChars(result, chars);
+	}
+
+	return previous;
+}
+
 struct string_array {
 	char **list;
 	int nr, alloc;
@@ -1228,6 +1269,8 @@ static void /* no-return */ usage(void)
 		<< "\tdo not reuse existing ImageJ instance" << endl
 		<< "--plugins <dir>" << endl
 		<< "\tuse <dir> to discover plugins" << endl
+		<< "--run <plugin> [<arg>]" << endl
+		<< "\trun <plugin> in ImageJ, optionally with arguments" << endl
 		<< endl
 		<< "Options to run programs other than ImageJ:" << endl
 		<< "--jdb" << endl
@@ -1299,7 +1342,7 @@ static void try_with_less_memory(size_t memory_size)
 		if (!found_dashdash && !strcmp(main_argv_backup[i], "--"))
 			found_dashdash = true;
 		string dummy;
-		if ((!found_dashdash || !strcmp(main_class, "ij.ImageJ")) &&
+		if ((!found_dashdash || is_default_main_class(main_class)) &&
 				(handle_one_option(i, "--mem", dummy) ||
 				 handle_one_option(i, "--memory", dummy)))
 			continue;
@@ -1374,6 +1417,22 @@ static int start_ij(void)
 	memset(&options, 0, sizeof(options));
 
 #ifdef MACOSX
+	// When double-clicked => exactly 1 empty string argument
+	if (main_argc == 2 && !*main_argv[1])
+	{
+		/*
+		 * Reset main_argc so that ImageJ won't try to open
+		 * that empty argument as a file (the root directory).
+		 */
+		main_argc=1;
+		/*
+		 * Additionally, change directory to the fiji dir to emulate
+		 * the behavior of the regular ImageJ application which does
+		 * not start up in the filesystem root.
+		 */
+		chdir(fiji_dir);
+	}
+
 	string value;
 	if (!get_fiji_bundle_variable("heap", value) ||
 			!get_fiji_bundle_variable("mem", value) ||
@@ -1386,7 +1445,8 @@ static int start_ij(void)
 		ext_option = get_java_home() + "/Home/lib/ext:"
 			"/Library/Java/Extensions:"
 			"/System/Library/Java/Extensions:"
-			"/System/Library/Frameworks/JavaVM.framework";
+			"/System/Library/Frameworks/JavaVM.framework/"
+				"Home/lib/ext";
 	if (!get_fiji_bundle_variable("allowMultiple", value))
 		allow_multiple = parse_bool(value);
 	get_fiji_bundle_variable("JVMOptions", jvm_options);
@@ -1399,7 +1459,7 @@ static int start_ij(void)
 		if (!strcmp(main_argv[i], "--") && !dashdash)
 			dashdash = count;
 		else if (dashdash && main_class &&
-				strcmp(main_class, "ij.ImageJ"))
+				!is_default_main_class(main_class))
 			main_argv[count++] = main_argv[i];
 		else if (!strcmp(main_argv[i], "--dry-run"))
 			options.debug++;
@@ -1421,6 +1481,14 @@ static int start_ij(void)
 			allow_multiple = true;
 		else if (handle_one_option(i, "--plugins", arg))
 			plugin_path << "-Dplugins.dir=" << arg;
+		else if (handle_one_option(i, "--run", arg)) {
+			replace(arg.begin(), arg.end(), '_', ' ');
+			if (i + 1 < main_argc && main_argv[i + 1][0] != '-')
+				arg += string("\", \"") + main_argv[++i];
+			add_option(options, "-eval", 1);
+			arg = string("run(\"") + arg + "\");";
+			add_option(options, arg, 1);
+		}
 		else if (handle_one_option(i, "--heap", arg) ||
 				handle_one_option(i, "--mem", arg) ||
 				handle_one_option(i, "--memory", arg))
@@ -1597,7 +1665,7 @@ static int start_ij(void)
 			main_argc--;
 		}
 		else
-			main_class = "ij.ImageJ";
+			main_class = default_main_class;
 	}
 
 	if (retrotranslator && build_classpath(class_path,
@@ -1622,7 +1690,7 @@ static int start_ij(void)
 		class_path += fiji_dir;
 		class_path += "/ij.jar";
 
-		if (!strcmp(main_class, "ij.ImageJ"))
+		if (is_default_main_class(main_class))
 			update_files();
 		else
 			if (build_classpath(class_path, string(fiji_dir)
@@ -1651,20 +1719,17 @@ static int start_ij(void)
 	if (!strcmp(main_class, "org.apache.tools.ant.Main"))
 		add_java_home_to_path();
 
-	if (!strcmp(main_class, "ij.ImageJ")) {
+	if (is_default_main_class(main_class)) {
 		if (allow_multiple)
 			add_option(options, "-port0", 1);
 		else
 			add_option(options, "-port7", 1);
 
-		stringstream icon_option;
-		icon_option << "-icon=" << fiji_dir << "/images/icon.png";
-		add_option(options, icon_option, 1);
-		add_option(options, "-title=Fiji", 1);
+		update_files();
 	}
 
 	/* handle "--headless script.ijm" gracefully */
-	if (headless && !strcmp(main_class, "ij.ImageJ")) {
+	if (headless && is_default_main_class(main_class)) {
 		if (main_argc < 2) {
 			cerr << "--headless without a parameter?" << endl;
 			if (!options.debug)
@@ -1689,7 +1754,21 @@ static int start_ij(void)
 	for (int i = 1; i < main_argc; i++)
 		add_option(options, main_argv[i], 1);
 
+	const char *properties[] = {
+		"fiji.dir", fiji_dir,
+		"fiji.defaultLibPath", JAVA_LIB_PATH,
+		"fiji.executable", main_argv0,
+		NULL
+	};
+
 	if (options.debug) {
+		for (int i = 0; properties[i]; i += 2) {
+			stringstream property;
+			property << "-D" << properties[i]
+				<< "=" << properties[i + 1];
+			add_option(options, property, 0);
+		}
+
 		show_commandline(options);
 		exit(0);
 	}
@@ -1723,6 +1802,9 @@ static int start_ij(void)
 		jclass instance;
 		jmethodID method;
 		jobjectArray args;
+
+		for (int i = 0; properties[i]; i += 2)
+			set_property(env, properties[i], properties[i + 1]);
 
 		string slashed(main_class);
 		replace(slashed.begin(), slashed.end(), '.', '/');
@@ -1759,6 +1841,13 @@ static int start_ij(void)
 		append_icon_path(icon_option);
 		add_option(options, icon_option, 0);
 #endif
+
+		for (int i = 0; properties[i]; i += 2) {
+			stringstream property;
+			property << "-D" << properties[i]
+				<< "=" << properties[i + 1];
+			add_option(options, property, 0);
+		}
 
 		/* fall back to system-wide Java */
 		add_option(options, main_class, 0);

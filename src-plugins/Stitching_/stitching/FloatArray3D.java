@@ -23,9 +23,9 @@ package stitching;
 public class FloatArray3D extends FloatArray
 {
 	// public float data[] = null;
-	public int width = 0;
-	public int height = 0;
-	public int depth = 0;
+	final public int width;
+	final public int height;
+	final public int depth;
 
 	public FloatArray3D(float[] data, int width, int height, int depth)
 	{

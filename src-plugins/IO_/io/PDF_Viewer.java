@@ -122,9 +122,9 @@ public class PDF_Viewer extends ImagePlus implements PlugIn {
 		try {
 			decoder = new PdfDecoder();
 			decoder.setDefaultDisplayFont("SansSerif");
-			decoder.setPageParameters(scale, 1);
 			if (path.startsWith("http://")) decoder.openPdfFileFromURL(path);
 			else decoder.openPdfFile(path);
+			decoder.setPageParameters(scale, 1);
 			String msg = decoder.getPageFailureMessage();
 			if (null != msg && !msg.equals("")) {
 				IJ.log(msg);

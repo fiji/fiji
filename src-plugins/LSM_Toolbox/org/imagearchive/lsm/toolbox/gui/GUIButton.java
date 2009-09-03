@@ -1,14 +1,13 @@
 package org.imagearchive.lsm.toolbox.gui;
 
 import java.awt.Font;
-import java.awt.Insets;
 import java.awt.SystemColor;
 
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 
 public class GUIButton extends JButton {
-    
+
     public GUIButton(String buttonText, String tooltipText) {
         Font font = new Font(null);
         float fontsize = 11;
@@ -19,7 +18,7 @@ public class GUIButton extends JButton {
         this.setForeground(SystemColor.windowText);
         this.setToolTipText(tooltipText);
     }
-    
+
     public GUIButton(String buttonText, String imageResource,String tooltipText) {
         Font font = new Font(null);
         float fontsize = 11;
@@ -32,6 +31,6 @@ public class GUIButton extends JButton {
         this.setForeground(SystemColor.windowText);
         this.setToolTipText(tooltipText);
     }
-    
-   
+
+
 }

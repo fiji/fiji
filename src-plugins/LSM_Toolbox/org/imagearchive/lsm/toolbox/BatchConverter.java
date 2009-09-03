@@ -16,9 +16,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 
-import org.imagearchive.lsm.toolbox.info.CZ_LSMInfo;
-import org.imagearchive.lsm.toolbox.info.ImageDirectory;
-import org.imagearchive.lsm.toolbox.info.LsmFileInfo;
+import org.imagearchive.lsm.reader.info.CZLSMInfo;
+import org.imagearchive.lsm.reader.info.ImageDirectory;
+import org.imagearchive.lsm.reader.info.LSMFileInfo;
 
 /*******************************************************************************
  * Batch Converter Class - Adapted from Wayne Rasband's Batch Converter plug-in.
@@ -38,11 +38,13 @@ public class BatchConverter {
 		String finalDir = "";
 		File f = new File(file);
 
-		ImagePlus imp = new Reader(masterModel).open(f.getParent(),
-				f.getName(), false, verbose, false);
+		/*ImagePlus imp = new Reader(masterModel).open(f.getParent(),
+				f.getName(), verbose, false);*/
+		org.imagearchive.lsm.reader.Reader r = new org.imagearchive.lsm.reader.Reader();
+		ImagePlus imp = r.open(f.getParent(), f.getName(), false, false);
 		if (imp != null && imp.getStackSize() > 0) {
-			LsmFileInfo lsm = (LsmFileInfo) imp.getOriginalFileInfo();
-			CZ_LSMInfo cz = ((ImageDirectory) lsm.imageDirectories.get(0)).TIF_CZ_LSMINFO;
+			LSMFileInfo lsm = (LSMFileInfo) imp.getOriginalFileInfo();
+			CZLSMInfo cz = (CZLSMInfo)((ImageDirectory)lsm.imageDirectories.get(0)).TIF_CZ_LSMINFO;
 			if (sepDir) {
 				finalDir = outputDir + System.getProperty("file.separator")
 						+ f.getName();
@@ -79,7 +81,7 @@ public class BatchConverter {
 		try {
 			br = new BufferedReader(new FileReader(fileName));
 			String row = null;
-			
+
 			while ((row = br.readLine()) != null) {
 				String[] arr = row.split("\t");
 				String inputFile = arr[0];
@@ -89,7 +91,6 @@ public class BatchConverter {
 				boolean verbose = false, createSepDir = false;
 				if (!(arr[3].equals("0"))) verbose = true;
 				if (!(arr[4].equals("0"))) createSepDir = true;
-				System.err.println(inputFile+" "+outputDir+" "+format+" "+verbose+createSepDir);
 				IJ.showStatus("Conversion started");
 				IJ.showStatus("Converting "+new File(inputFile).getName());
 				convertFile(inputFile,outputDir,format,verbose,createSepDir);

@@ -4,12 +4,12 @@ import java.util.LinkedHashMap;
 
 public class BeamSplitter {
 
-    public LinkedHashMap records = new LinkedHashMap();
+	public LinkedHashMap<String, Object> records = new LinkedHashMap<String, Object>();
 
 	public Object[][] data = {
-            { new Long(0x0B0000001), "A", "FILTER_SET" },
-			{ new Long(0x0B0000002), "A", "FILTER" },
-            { new Long(0x0B0000003), "A", "BS_NAME" }
+            { new Long(0x0B0000001), DataType.STRING, "FILTER_SET" },
+			{ new Long(0x0B0000002), DataType.STRING, "FILTER" },
+            { new Long(0x0B0000003), DataType.STRING, "BS_NAME" }
             };
 
 	public static boolean isBeamSplitters(long tagEntry) {

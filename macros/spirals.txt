@@ -1,0 +1,49 @@
+/*
+ * Pretty cool optical illusion involving color spirals
+ *
+ * The green and the blue are actually the very same color;
+ * Just call Analyze>Color Inspector 3D, select
+ * Segmentation>Segmented: Original & White and move the
+ * "Depth" slider up and down...
+ */
+w = h = 512;
+cx = w / 2;
+cy = h / 2;
+count1 = 8;
+count2 = 8 * 8;
+factor = 2 * PI / w;
+
+green = blue = (0 << 16) | (190 << 8) | 150;
+pink = (250 << 16) | (20 << 8) | 160;
+orange = (200 << 16) | (200 << 8) | 100;
+
+function modulo(x, base) {
+	return x - base * floor(x / base);
+}
+
+function getBand(angle, count) {
+	return modulo(floor(count + angle * count / 2 / PI), count / 2);
+}
+
+newImage("Untitled", "RGB Black", w, h, 1);
+for (j = 0; j < h; j++)
+	for (i = 0; i < w; i++) {
+		dx = i - cx;
+		dy = j - cy;
+		r = sqrt(dx * dx + dy * dy);
+		angle = atan2(dy, dx);
+		band = getBand(r * factor - angle, count1);
+		band2 = getBand(r * factor + angle, count2);
+		if ((band2 % 2) == 0) {
+			if (band == 0)
+				color = green;
+			else
+				color = pink;
+		} else {
+			if (band == 2)
+				color = blue;
+			else
+				color = orange;
+		}
+		setPixel(i, j, color);
+	}

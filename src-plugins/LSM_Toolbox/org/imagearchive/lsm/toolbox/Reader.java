@@ -1,24 +1,14 @@
 package org.imagearchive.lsm.toolbox;
 
-import ij.CompositeImage;
 import ij.IJ;
 import ij.ImagePlus;
-import ij.ImageStack;
-import ij.LookUpTable;
-import ij.io.FileInfo;
-import ij.io.ImageReader;
 import ij.io.OpenDialog;
 import ij.io.RandomAccessStream;
-import ij.measure.Calibration;
 import ij.text.TextWindow;
 
-import java.awt.Color;
-import java.awt.image.ColorModel;
-import java.awt.image.IndexColorModel;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -26,16 +16,17 @@ import java.util.Vector;
 
 import javax.swing.JFileChooser;
 
+import org.imagearchive.lsm.reader.info.ChannelNamesAndColors;
+import org.imagearchive.lsm.reader.info.ImageDirectory;
+import org.imagearchive.lsm.reader.info.LSMFileInfo;
 import org.imagearchive.lsm.toolbox.gui.AllKnownFilter;
 import org.imagearchive.lsm.toolbox.gui.BatchFilter;
 import org.imagearchive.lsm.toolbox.gui.ImageFilter;
 import org.imagearchive.lsm.toolbox.gui.ImagePreview;
-import org.imagearchive.lsm.toolbox.info.CZ_LSMInfo;
-import org.imagearchive.lsm.toolbox.info.ChannelNamesAndColors;
+import org.imagearchive.lsm.toolbox.info.CZLSMInfoExtended;
 import org.imagearchive.lsm.toolbox.info.ChannelWavelengthRange;
 import org.imagearchive.lsm.toolbox.info.Event;
-import org.imagearchive.lsm.toolbox.info.ImageDirectory;
-import org.imagearchive.lsm.toolbox.info.LsmFileInfo;
+import org.imagearchive.lsm.toolbox.info.EventList;
 import org.imagearchive.lsm.toolbox.info.TimeStamps;
 import org.imagearchive.lsm.toolbox.info.scaninfo.BeamSplitter;
 import org.imagearchive.lsm.toolbox.info.scaninfo.DataChannel;
@@ -71,11 +62,11 @@ public class Reader {
 			fc.setAcceptAllFileFilterUsed(false);
 			fc.setAccessory(new ImagePreview(masterModel, fc));
 			fc.setName("Open Zeiss LSM image");
-			String dds = OpenDialog.getDefaultDirectory();
-			if (dds != null) {
-				File dd = new File(dds);
-				if (dd != null && dd.isDirectory())
-					fc.setCurrentDirectory(dd);
+			String directory = OpenDialog.getDefaultDirectory();
+			if (directory != null) {
+				File directoryHandler = new File(directory);
+				if (directoryHandler != null && directoryHandler.isDirectory())
+					fc.setCurrentDirectory(directoryHandler);
 			}
 			int returnVal = fc.showOpenDialog(null);
 			if (returnVal == JFileChooser.APPROVE_OPTION) {
@@ -93,65 +84,24 @@ public class Reader {
 		} else
 			file = new File(arg);
 		if (file != null) {
-			imp = open(file.getParent(), file.getName(), true, verbose, false);
+			imp = open(file.getParent(), file.getName(), verbose, false);
+			updateMetadata(imp);
+			LSMFileInfo openLSM = (LSMFileInfo) imp.getOriginalFileInfo();
+			//printImDirData(openLSM);
 			OpenDialog.setDefaultDirectory(file.getParent());
 		}
 		return imp;
 	}
 
-	private void showEventList(LsmFileInfo info) {
-		ArrayList imDirs = info.imageDirectories;
-		ImageDirectory imDir = (ImageDirectory) imDirs.get(0);
-		CZ_LSMInfo cz = imDir.TIF_CZ_LSMINFO;
-		EventList events = cz.eventList;
-		if (events != null) {
-			String header = new String(
-					"Time (sec) \tEvent Type \tEvent Description");
-			TextWindow tw = new TextWindow("Time Events for " + info.fileName,
-					header, null, 400, 200);
-			tw.append(events.Description);
-		}
-	}
-
 	public ImagePlus open(String directory, String filename,
-			boolean showInfoFrames, boolean verbose, boolean thumb) {
+			boolean verbose, boolean thumb) {
 		ImagePlus imp = null;
-		RandomAccessFile file;
-		LsmFileInfo lsm;
-		try {
-			file = new RandomAccessFile(new File(directory, filename), "r");
-			RandomAccessStream stream = new RandomAccessStream(file);
-			lsm = new LsmFileInfo(masterModel);
-			lsm.fileName = filename;
-			lsm.directory = directory;
-			if (isLSMfile(stream)) {
-				// read first image directory
-				ImageDirectory imDir = readImageDirectoy(stream, 8, thumb);
-				lsm.imageDirectories.add(imDir);
-				int i = 0;
-				while (imDir.OFFSET_NEXT_DIRECTORY != 0) {
-					imDir = readImageDirectoy(stream,
-							imDir.OFFSET_NEXT_DIRECTORY, thumb);
-					lsm.imageDirectories.add(imDir);
-					i++;
-				}
-				// printImDirData(lsm);
-				imp = open(stream, lsm, verbose, thumb);
-				stream.close();
-				if (showInfoFrames)
-					showEventList(lsm);
-			} else
-				IJ.error("Not a valid lsm file");
-		} catch (FileNotFoundException e) {
-			IJ.error("File not found");
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		org.imagearchive.lsm.reader.Reader r = new org.imagearchive.lsm.reader.Reader();
+		imp = r.open(directory,filename, false,false);
 		return imp;
 	}
 
-	private void printImDirData(LsmFileInfo lsmFi) {
+	private void printImDirData(LSMFileInfo lsmFi) {
 		for (int i = 0; i < lsmFi.imageDirectories.size(); i++) {
 			System.err.println("Imdir " + i);
 			System.err.println("=============\n");
@@ -169,6 +119,48 @@ public class Reader {
 
 	}
 
+	public void readMetadata(RandomAccessStream stream, ImagePlus imp) {
+		if (imp.getOriginalFileInfo() instanceof LSMFileInfo) {
+			LSMFileInfo lsm = (LSMFileInfo) imp.getOriginalFileInfo();
+			if (lsm.fullyRead == true)
+				return;
+			ImageDirectory imDir = (ImageDirectory) lsm.imageDirectories.get(0);
+			if (imDir == null)
+				return;
+			long offset = imDir.TIF_CZ_LSMINFO_OFFSET;
+			imDir.TIF_CZ_LSMINFO = getCZ_LSMINFO(stream, offset, false);
+			lsm.imageDirectories.set(0, imDir);
+			imp.setFileInfo(lsm);
+		}
+	}
+
+	public void updateMetadata(ImagePlus imp) {
+		if (imp == null) return;
+		if (imp.getOriginalFileInfo() instanceof LSMFileInfo) {
+			LSMFileInfo lsm = (LSMFileInfo) imp.getOriginalFileInfo();
+			if (lsm.fullyRead == true)
+				return;
+			RandomAccessFile file;
+			try {
+				file = new RandomAccessFile(new File(lsm.directory
+						+ System.getProperty("file.separator") + lsm.fileName),
+						"r");
+				RandomAccessStream stream = new RandomAccessStream(file);
+				ImageDirectory imDir = (ImageDirectory) lsm.imageDirectories
+						.get(0);
+				if (imDir == null)
+					return;
+				long offset = imDir.TIF_CZ_LSMINFO_OFFSET;
+				imDir.TIF_CZ_LSMINFO = getCZ_LSMINFO(stream, offset, false);
+				lsm.fullyRead = true;
+				lsm.imageDirectories.set(0, imDir);
+				imp.setFileInfo(lsm);
+			} catch (FileNotFoundException e) {
+				IJ.error("Could not update metadata.");
+			}
+		}
+	}
+
 	public boolean isLSMfile(RandomAccessStream stream) {
 		boolean identifier = false;
 		long ID = 0;
@@ -183,167 +175,9 @@ public class Reader {
 		return identifier;
 	}
 
-	private long getTagCount(RandomAccessStream stream, long position) {
-		long tags = 0;
-		try {
-			stream.seek((int) position);
-			tags = ReaderToolkit.swap(stream.readShort());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return tags;
-	}
-
-	private ImageDirectory readImageDirectoy(RandomAccessStream stream,
-			long startPosition, boolean thumb) {
-		ImageDirectory imDir = new ImageDirectory();
-		long tags = getTagCount(stream, startPosition);
-		byte[] tag;
-
-		int tagtype = 0;
-		int MASK = 0x00ff;
-		long MASK2 = 0x000000ff;
-		long currentTagPosition = 0;
-		// needed because sometimes offset do not fit in
-		// the imDir structure and are placed elsewhere
-		long stripOffset = 0, stripByteOffset = 0;
-
-		for (int i = 0; i < tags; i++) {
-			currentTagPosition = startPosition + 2 + i * 12;
-			tag = readTag(stream, (int) currentTagPosition);
-			tagtype = ((tag[1] & MASK) << 8) | ((tag[0] & MASK) << 0);
-
-			switch (tagtype) {
-			case 254:
-				imDir.TIF_NEWSUBFILETYPE = ((tag[11] & MASK2) << 24)
-						| ((tag[10] & MASK2) << 16) | ((tag[9] & MASK2) << 8)
-						| (tag[8] & MASK2);
-				break;
-			case 256:
-				imDir.TIF_IMAGEWIDTH = ((tag[11] & MASK2) << 24)
-						| ((tag[10] & MASK2) << 16) | ((tag[9] & MASK2) << 8)
-						| (tag[8] & MASK2);
-				break;
-			case 257:
-				imDir.TIF_IMAGELENGTH = ((tag[11] & MASK2) << 24)
-						| ((tag[10] & MASK2) << 16) | ((tag[9] & MASK2) << 8)
-						| (tag[8] & MASK2);
-				break;
-			case 258:
-				imDir.TIF_BITSPERSAMPLE_LENGTH = ((tag[7] & MASK2) << 24)
-						| ((tag[6] & MASK2) << 16) | ((tag[5] & MASK2) << 8)
-						| (tag[4] & MASK2);
-				imDir.TIF_BITSPERSAMPLE_CHANNEL[0] = ((tag[8] & MASK2) << 0);
-				imDir.TIF_BITSPERSAMPLE_CHANNEL[1] = ((tag[9] & MASK2) << 0);
-				imDir.TIF_BITSPERSAMPLE_CHANNEL[2] = ((tag[10] & MASK2) << 0);
-				break;
-			case 259:
-				imDir.TIF_COMPRESSION = ((tag[8] & MASK2) << 0);
-				break;
-			case 262:
-				imDir.TIF_PHOTOMETRICINTERPRETATION = ((tag[8] & MASK2) << 0);
-				break;
-			case 273:
-				imDir.TIF_STRIPOFFSETS_LENGTH = ((tag[7] & MASK2) << 24)
-						| ((tag[6] & MASK2) << 16) | ((tag[5] & MASK2) << 8)
-						| (tag[4] & MASK2);
-				stripOffset = ((tag[11] & MASK2) << 24)
-						| ((tag[10] & MASK2) << 16) | ((tag[9] & MASK2) << 8)
-						| (tag[8] & MASK2);
-				break;
-			case 277:
-				imDir.TIF_SAMPLESPERPIXEL = ((tag[8] & MASK2) << 0);
-				break;
-			case 279:
-				imDir.TIF_STRIPBYTECOUNTS_LENGTH = ((tag[7] & MASK2) << 24)
-						| ((tag[6] & MASK2) << 16) | ((tag[5] & MASK2) << 8)
-						| (tag[4] & MASK2);
-				stripByteOffset = ((tag[11] & MASK2) << 24)
-						| ((tag[10] & MASK2) << 16) | ((tag[9] & MASK2) << 8)
-						| (tag[8] & MASK2);
-				break;
-			case 317:
-				imDir.TIF_PREDICTOR = ((tag[8] & MASK2) << 0);
-				break;
-			case 320:
-				imDir.TIF_COLORMAP = readColorMap(stream);
-				break;
-			case 34412:
-				imDir.TIF_CZ_LSMINFO_OFFSET = ((tag[11] & MASK2) << 24)
-						| ((tag[10] & MASK2) << 16) | ((tag[9] & MASK2) << 8)
-						| (tag[8] & MASK2);
-				break;
-			default:
-				break;
-			}
-		}
-		imDir.TIF_STRIPOFFSETS = new long[(int) imDir.TIF_STRIPOFFSETS_LENGTH];
-		if (imDir.TIF_STRIPOFFSETS_LENGTH == 1)
-			imDir.TIF_STRIPOFFSETS[0] = stripOffset;
-		else
-			imDir.TIF_STRIPOFFSETS = getIntTable(stream, stripOffset,
-					(int) imDir.TIF_STRIPOFFSETS_LENGTH);
-		imDir.TIF_STRIPBYTECOUNTS = new long[(int) imDir.TIF_STRIPBYTECOUNTS_LENGTH];
-		if (imDir.TIF_STRIPBYTECOUNTS_LENGTH == 1)
-			imDir.TIF_STRIPBYTECOUNTS[0] = stripByteOffset;
-		else
-			imDir.TIF_STRIPBYTECOUNTS = getIntTable(stream, stripByteOffset,
-					(int) imDir.TIF_STRIPBYTECOUNTS_LENGTH);
-
-		try {
-			stream.seek((int) (currentTagPosition + 12));
-			int offset_next_directory = ReaderToolkit.swap(stream.readInt());
-			imDir.OFFSET_NEXT_DIRECTORY = offset_next_directory;
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		if (imDir.TIF_CZ_LSMINFO_OFFSET != 0) {
-			imDir.TIF_CZ_LSMINFO = getCZ_LSMINFO(stream,
-					imDir.TIF_CZ_LSMINFO_OFFSET, thumb);
-		}
-		return imDir;
-	}
-
-	private byte[][] readColorMap(RandomAccessStream stream) {
-		byte[][] buffer = new byte[3][256];
-		try {
-			for (int i = 0; i < 3; i++)
-				for (int j = 0; j < 256; j++)
-					buffer[i][j] = (byte) ReaderToolkit.swap(stream.readInt());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return buffer;
-	}
-
-	private byte[] readTag(RandomAccessStream stream, int position) {
-		byte[] tag = new byte[12];
-		try {
-			stream.seek(position);
-			stream.readFully(tag);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return tag;
-	}
-
-	private long[] getIntTable(RandomAccessStream stream, long position,
-			int count) {
-		long[] offsets = new long[count];
-		try {
-			stream.seek((int) position);
-			for (int i = 0; i < count; i++)
-				offsets[i] = ReaderToolkit.swap(stream.readInt());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return offsets;
-	}
-
-	private CZ_LSMInfo getCZ_LSMINFO(RandomAccessStream stream, long position,
-			boolean thumb) {
-		CZ_LSMInfo cz = new CZ_LSMInfo();
+	private CZLSMInfoExtended getCZ_LSMINFO(RandomAccessStream stream,
+			long position, boolean thumb) {
+		CZLSMInfoExtended cz = new CZLSMInfoExtended();
 		try {
 			if (position == 0)
 				return cz;
@@ -425,7 +259,7 @@ public class Reader {
 				cz.timeStamps = getTimeStamps(stream, cz.OffsetTimeStamps);
 				if ((cz.ScanType == 3) || (cz.ScanType == 4)
 						|| (cz.ScanType == 5) || (cz.ScanType == 6)
-						|| (cz.ScanType == 9)) {
+						|| (cz.ScanType == 9) || (cz.ScanType == 10)){
 					if (cz.OffsetEventList != 0)
 						cz.eventList = getEventList(stream, cz.OffsetEventList,
 								cz.timeStamps.FirstTimeStamp);
@@ -647,7 +481,7 @@ public class Reader {
 		ScanInfoTag tag = new ScanInfoTag();
 		if (IJ.debugMode)
 			IJ.log("Lasers");
-		Vector v = new Vector();
+		Vector<Laser> v = new Vector<Laser>();
 		while (tag.entry != 0x0FFFFFFFF) {
 			tag = getScanInfoTag(stream);
 			if (Laser.isLaser(tag.entry)) {
@@ -671,7 +505,7 @@ public class Reader {
 
 	private IlluminationChannel[] getIlluminationBlock(RandomAccessStream stream) {
 		ScanInfoTag tag = new ScanInfoTag();
-		Vector vdc = new Vector();
+		Vector<IlluminationChannel> vdc = new Vector<IlluminationChannel>();
 		while (tag.entry != 0x0FFFFFFFF) {
 			tag = getScanInfoTag(stream);
 
@@ -693,7 +527,7 @@ public class Reader {
 
 	private Track[] getTrackBlock(RandomAccessStream stream) {
 		ScanInfoTag tag = new ScanInfoTag();
-		Vector v = new Vector();
+		Vector<Track> v = new Vector<Track>();
 		int tracksnum = 0;
 		while (tag.entry != 0x0FFFFFFFF) {
 			tag = getScanInfoTag(stream);
@@ -737,7 +571,7 @@ public class Reader {
 	private DetectionChannel[] getDetectionChannelBlock(
 			RandomAccessStream stream) {
 		ScanInfoTag tag = new ScanInfoTag();
-		Vector vdc = new Vector();
+		Vector<DetectionChannel> vdc = new Vector<DetectionChannel>();
 		while (tag.entry != 0x0FFFFFFFF) {
 			tag = getScanInfoTag(stream);
 			if (DetectionChannel.isDetectionChannel(tag.entry)) {
@@ -759,7 +593,7 @@ public class Reader {
 
 	private BeamSplitter[] getBeamSplitterBlock(RandomAccessStream stream) {
 		ScanInfoTag tag = new ScanInfoTag();
-		Vector vdc = new Vector();
+		Vector<BeamSplitter> vdc = new Vector<BeamSplitter>();
 		while (tag.entry != 0x0FFFFFFFF) {
 			tag = getScanInfoTag(stream);
 			if (BeamSplitter.isBeamSplitter(tag.entry)) {
@@ -778,7 +612,7 @@ public class Reader {
 
 	private Marker[] getMarkerBlock(RandomAccessStream stream) {
 		ScanInfoTag tag = new ScanInfoTag();
-		Vector v = new Vector();
+		Vector<Marker> v = new Vector<Marker>();
 		while (tag.entry != 0x0FFFFFFFF) {
 			tag = getScanInfoTag(stream);
 			if (Marker.isMarker(tag.entry)) {
@@ -796,7 +630,7 @@ public class Reader {
 
 	private Timer[] getTimerBlock(RandomAccessStream stream) {
 		ScanInfoTag tag = new ScanInfoTag();
-		Vector v = new Vector();
+		Vector<Timer> v = new Vector<Timer>();
 		while (tag.entry != 0x0FFFFFFFF) {
 			tag = getScanInfoTag(stream);
 			if (Timer.isTimer(tag.entry)) {
@@ -815,7 +649,7 @@ public class Reader {
 
 	private DataChannel[] getDataChannelBlock(RandomAccessStream stream) {
 		ScanInfoTag tag = new ScanInfoTag();
-		Vector vdc = new Vector();
+		Vector<DataChannel> vdc = new Vector<DataChannel>();
 
 		while (tag.entry != 0x0FFFFFFFF) {
 			tag = getScanInfoTag(stream);
@@ -834,8 +668,8 @@ public class Reader {
 		return (DataChannel[]) vdc.toArray(new DataChannel[vdc.size()]);
 	}
 
-	private LinkedHashMap getRecords(RandomAccessStream stream,
-			ScanInfoTag tag, Object[][] data, LinkedHashMap lhm) {
+	private LinkedHashMap<String, Object> getRecords(RandomAccessStream stream,
+			ScanInfoTag tag, Object[][] data, LinkedHashMap<String, Object> lhm) {
 		try {
 			String value = "";
 			long l = 0;
@@ -905,249 +739,6 @@ public class Reader {
 		return sit;
 	}
 
-	public ImagePlus open(RandomAccessStream stream, LsmFileInfo lsmFi,
-			boolean verbose, boolean thumb) {
-		ImageDirectory firstImDir = (ImageDirectory) lsmFi.imageDirectories
-				.get(0);
-		if (firstImDir == null) {
-			if (verbose)
-				IJ.error("LSM ImageDir null.");
-			return null;
-		} // should not be if it is a true LSM file
-
-		CZ_LSMInfo cz = firstImDir.TIF_CZ_LSMINFO;
-		if (cz == null) {
-			if (verbose)
-				IJ.error("LSM ImageDir null.");
-			return null;
-		} // should not be, first Directory should have a CZ...
-
-		ImagePlus imp = null;
-		switch (cz.ScanType) {
-		case 0:
-			imp = readStack(stream, lsmFi, cz, thumb);
-			return imp;
-		case 1:
-			imp = readStack(stream, lsmFi, cz, thumb);
-			return imp;
-		case 2:
-			imp = readStack(stream, lsmFi, cz, thumb);
-			return imp;
-		case 3:
-			imp = readStack(stream, lsmFi, cz, thumb);
-			return imp;
-		case 4:
-			imp = readStack(stream, lsmFi, cz, thumb);
-			return imp;
-		case 5:
-			imp = readStack(stream, lsmFi, cz, thumb);
-			return imp;
-		case 6:
-			imp = readStack(stream, lsmFi, cz, thumb);
-			return imp;
-		default:
-			if (verbose)
-				IJ.error("Unsupported LSM scantype: " + cz.ScanType);
-			break;
-		}
-		return imp;
-	}
-
-	private ImagePlus readStack(RandomAccessStream stream, LsmFileInfo lsmFi,
-			CZ_LSMInfo cz, boolean thumb) {
-		ImageDirectory firstImDir = (ImageDirectory) lsmFi.imageDirectories
-				.get(0);
-		lsmFi.url = "";
-		lsmFi.fileFormat = FileInfo.TIFF;
-		lsmFi.pixelDepth = cz.VoxelSizeZ * 1000000;
-		lsmFi.pixelHeight = cz.VoxelSizeY * 1000000;
-		lsmFi.pixelWidth = cz.VoxelSizeX * 1000000;
-		lsmFi.unit = MasterModel.micrometer;
-		lsmFi.valueUnit = MasterModel.micrometer;
-		lsmFi.nImages = 1;
-		lsmFi.intelByteOrder = true;
-
-		ImageStack st = null;
-		int datatype = (int) cz.IntensityDataType;
-		if (datatype == 0)
-			datatype = cz.OffsetChannelDataTypesValues[0];
-		switch (datatype) {
-		case 1:
-			lsmFi.fileType = FileInfo.GRAY8;
-			break;
-		case 2:
-			lsmFi.fileType = FileInfo.GRAY16_UNSIGNED;
-			break;
-		case 5:
-			lsmFi.fileType = FileInfo.GRAY32_FLOAT;
-			break;
-		default:
-			lsmFi.fileType = FileInfo.GRAY8;
-			break;
-		}
-		ColorModel cm = null;
-
-		if (lsmFi.fileType == FileInfo.COLOR8 && lsmFi.lutSize > 0)
-			cm = new IndexColorModel(8, lsmFi.lutSize, lsmFi.reds,
-					lsmFi.greens, lsmFi.blues);
-		else
-			cm = LookUpTable.createGrayscaleColorModel(lsmFi.whiteIsZero);
-
-		if (!thumb)
-			st = new ImageStack((int) firstImDir.TIF_IMAGEWIDTH,
-					(int) firstImDir.TIF_IMAGELENGTH, cm);
-		else
-			st = new ImageStack((int) cz.ThumbnailX, (int) cz.ThumbnailY, cm);
-
-		firstImDir = null;
-		ImageReader reader = null;
-		int flength = 0;
-		lsmFi.stripOffsets = new int[1];
-		lsmFi.stripLengths = new int[1];
-		for (int imageCounter = 0; imageCounter < lsmFi.imageDirectories.size(); imageCounter++) {
-			ImageDirectory imDir = (ImageDirectory) lsmFi.imageDirectories
-					.get(imageCounter);
-			for (int i = 0; i < imDir.TIF_STRIPBYTECOUNTS.length; i++)
-
-				if (imDir.TIF_COMPRESSION == 5) {
-					lsmFi.compression = FileInfo.LZW;
-					flength = (int) new File(lsmFi.directory
-							+ System.getProperty("file.separator")
-							+ lsmFi.fileName).length();
-					if (imDir.TIF_PREDICTOR == 2)
-						lsmFi.compression = FileInfo.LZW_WITH_DIFFERENCING;
-				} else
-					lsmFi.compression = 0;
-
-			if (!thumb && imDir.TIF_NEWSUBFILETYPE == 0) {
-				lsmFi.width = (int) imDir.TIF_IMAGEWIDTH;
-				lsmFi.height = (int) imDir.TIF_IMAGELENGTH;
-				Object pixels;
-				for (int channelCount = 0; channelCount < (int) (cz.DimensionChannels); channelCount++) {
-					datatype = (int) cz.IntensityDataType;
-					if (datatype == 0)
-						datatype = cz.OffsetChannelDataTypesValues[channelCount];
-					switch (datatype) {
-					case 1:
-						lsmFi.fileType = FileInfo.GRAY8;
-						break;
-					case 2:
-						lsmFi.fileType = FileInfo.GRAY16_UNSIGNED;
-						break;
-					case 5:
-						lsmFi.fileType = FileInfo.GRAY32_FLOAT;
-						break;
-					default:
-						lsmFi.fileType = FileInfo.GRAY8;
-						break;
-					}
-					lsmFi.stripLengths[0] = (int) imDir.TIF_STRIPBYTECOUNTS[channelCount];
-					lsmFi.stripOffsets[0] = (int) imDir.TIF_STRIPOFFSETS[channelCount];
-					reader = new ImageReader(lsmFi);
-					if (channelCount < imDir.TIF_STRIPOFFSETS_LENGTH) {
-
-						if (lsmFi.stripLengths[0] + lsmFi.stripOffsets[0] > flength) {
-							lsmFi.stripLengths[0] = flength
-									- lsmFi.stripOffsets[0];
-						}
-						try {
-							stream.seek(lsmFi.stripOffsets[0]);
-						} catch (IOException e) {
-
-							e.printStackTrace();
-						}
-						pixels = reader.readPixels((InputStream) stream);
-						st.addSlice("", pixels);
-					}
-				}
-			} else if (thumb && imDir.TIF_NEWSUBFILETYPE == 1) {
-				// ONLY IF THUMBS
-				lsmFi.width = (int) imDir.TIF_IMAGEWIDTH;
-				lsmFi.height = (int) imDir.TIF_IMAGELENGTH;
-				lsmFi.fileType = FileInfo.COLOR8;
-				reader = new ImageReader(lsmFi);
-				Object pixels;
-			/*	byte[][] b = imDir.TIF_COLORMAP;
-				lsmFi.reds = b[0];
-				lsmFi.greens = b[1];
-				lsmFi.blues = b[2];*/
-				int channels = (int) (cz.DimensionChannels);
-				channels = 1; // only read the first channel for the thumbs.
-								// --> speed!
-				for (int channelCount = 0; channelCount < channels; channelCount++) {
-					lsmFi.stripLengths[0] = (int) imDir.TIF_STRIPBYTECOUNTS[channelCount];
-					lsmFi.stripOffsets[0] = (int) imDir.TIF_STRIPOFFSETS[channelCount];
-					if (channelCount < imDir.TIF_STRIPOFFSETS_LENGTH) {
-						try {
-							stream.seek(lsmFi.stripOffsets[0]);
-						} catch (IOException e) {
-
-							e.printStackTrace();
-						}
-						pixels = reader.readPixels((InputStream) stream);
-						st.addSlice("", pixels);
-					}
-				}
-				// break out of for loop, speed
-				// imageCounter = lsmFi.imageDirectories.size();
-			}
-		}
-		IJ.showProgress(1.0);
-		ImagePlus imp = new ImagePlus(lsmFi.fileName, st);
-		imp.setDimensions((int) cz.DimensionChannels, (int) cz.DimensionZ,
-				(int) cz.DimensionTime);
-		if (cz.DimensionChannels >= 2
-				&& (imp.getStackSize() % cz.DimensionChannels) == 0) {
-			imp = new CompositeImage(imp, CompositeImage.COLOR);
-		}
-		imp.setFileInfo(lsmFi);
-		Calibration cal = new Calibration();
-		cal.setUnit(lsmFi.unit);
-		cal.pixelDepth = lsmFi.pixelDepth;
-		cal.pixelHeight = lsmFi.pixelHeight;
-		cal.pixelWidth = lsmFi.pixelWidth;
-		imp.setCalibration(cal);
-		Color[] color = new Color[2];
-		color[0] = new Color(0, 0, 0);
-		if (!thumb) {
-			for (int channel = 0; channel < (int) cz.DimensionChannels; channel++) {
-				int r = (int) (cz.channelNamesAndColors.Colors[channel] & 255);
-				int g = (int) ((cz.channelNamesAndColors.Colors[channel] >> 8) & 255);
-				int b = (int) ((cz.channelNamesAndColors.Colors[channel] >> 16) & 255);
-				color[1] = new Color(r, g, b);
-				if (r == 0 && g == 0 && b == 0)
-					color[1] = Color.white;
-				if (!thumb)
-					ReaderToolkit.applyColors(imp, channel, color, 2);
-			}
-		}
-		if (thumb){
-			color[1] = Color.white;
-			ReaderToolkit.applyColors(imp, 1, color, 2);
-			//ReaderToolkit.showLut(imp, 1, lsmFi, true);
-		}
-		if (imp.getOriginalFileInfo().fileType == FileInfo.GRAY16_UNSIGNED) {
-			double min = imp.getProcessor().getMin();
-			double max = imp.getProcessor().getMax();
-			imp.getProcessor().setMinAndMax(min, max);
-		}
-
-		int stackPosition = 1;
-		for (int i = 1; i <= cz.DimensionTime; i++)
-			for (int j = 1; j <= cz.DimensionZ; j++)
-				for (int k = 1; k <= cz.DimensionChannels; k++) {
-					// imp.setPosition(k, j, i);
-					// int stackPosition = imp.getCurrentSlice();
-					if (stackPosition <= imp.getStackSize()) {
-						String label = cz.channelNamesAndColors.ChannelNames[k - 1];
-						st.setSliceLabel(label, stackPosition++);
-					}
-				}
-		// setInfo(imp, lsmFi);
-		// imp.show();
-		return imp;
-	}
-
 	/** ******************************************************************************************* */
 	private class ScanInfoTag {
 		public long entry = 0;
@@ -1157,27 +748,4 @@ public class Reader {
 		public long size = 0;
 	}
 
-	public CZ_LSMInfo readCz(File f) {
-		RandomAccessFile file;
-		LsmFileInfo lsm;
-		try {
-			file = new RandomAccessFile(f, "r");
-			RandomAccessStream stream = new RandomAccessStream(file);
-			lsm = new LsmFileInfo(masterModel);
-			lsm.fileName = f.getName();
-			lsm.directory = f.getParent();
-			if (isLSMfile(stream)) {
-				ImageDirectory imDir = readImageDirectoy(stream, 8, false);
-				file.close();
-				return imDir.TIF_CZ_LSMINFO;
-			} else {
-				IJ.error("Not an LSM file.");
-				file.close();
-				return null;
-			}
-		} catch (IOException e) {
-			IJ.error("IOException when trying to read "+f);
-			return null;
-		}
-	}
 }

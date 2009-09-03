@@ -1,6 +1,7 @@
 .DS_Store
 .project
 .metadata
+/make-targets
 /fiji.o
 /fiji
 /fiji.exe
@@ -9,6 +10,7 @@
 /fiji-macosx.dmg
 /tests/plugins
 /jvm.cfg
+/samples/
 *.swp
 /IJ_Prefs.txt
 /Fiji.app
@@ -38,6 +40,7 @@
 /plugins/BeanShell_Interpreter.jar
 /plugins/Bug_Submitter.jar
 /plugins/Javascript_.jar
+/plugins/LSM_Reader.jar
 /plugins/LSM_Toolbox.jar
 /plugins/SplineDeformationGenerator_.jar
 /plugins/bUnwarpJ_.jar
@@ -94,3 +97,8 @@
 /plugins/Colocalisation_Analysis.jar
 /plugins/LocalThickness_.jar
 /plugins/Object_Counter3D.jar
+/plugins/Tutorial_Maker.jar
+/jars/test-fiji.jar
+/plugins/Manual_Tracking.jar
+/plugins/Calculator_Plus.jar
+/plugins/Script_Editor.jar

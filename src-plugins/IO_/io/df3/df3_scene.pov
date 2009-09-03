@@ -25,11 +25,13 @@ light_source
 {
 	500 * < 1.0, 1.0, 0.0 >
 	rgb < 1.0, 0, 0 >
-}light_source
+}
+light_source
 {
 	500 * < 0, -1.0, 0.0 >
 	rgb < 0, 0, 0.25 >
-}
+}
+
 box
 {
 	0.0, 1.0
