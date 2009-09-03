@@ -204,12 +204,12 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		JMenu run = new JMenu("Run");
 		// TODO: allow outside-of-plugins/ sources
 
-		compileAndRun = addToMenu(run, "Compile and Run", 0, KeyEvent.VK_F11, ActionEvent.CTRL_MASK);
+		compileAndRun = addToMenu(run, "Compile and Run", 0, KeyEvent.VK_F11, 0);
 
 		runtext = addToMenu(run, "Run", 0, KeyEvent.VK_F12, 0);
 
 		run.addSeparator();
-		debug = addToMenu(run, "Start Debugging", 0, KeyEvent.VK_F11, 0);
+		debug = addToMenu(run, "Start Debugging", 0, KeyEvent.VK_F11, ActionEvent.CTRL_MASK);
 		mbar.add(run);
 
 		run.addSeparator();
