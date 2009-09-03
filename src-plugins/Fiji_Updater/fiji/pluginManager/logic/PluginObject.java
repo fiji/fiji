@@ -48,15 +48,15 @@ public class PluginObject {
 	};
 
 	public static enum Status {
-		NOT_INSTALLED (new Action[] { Action.NOT_INSTALLED, Action.INSTALL }),
-		INSTALLED (new Action[] { Action.INSTALLED, Action.REMOVE }),
-		UPDATEABLE (new Action[] { Action.UPDATEABLE, Action.REMOVE, Action.UPDATE }),
-		MODIFIED (new Action[] { Action.MODIFIED, Action.REMOVE, Action.UPDATE }),
-		NOT_FIJI (new Action[] { Action.NOT_FIJI, Action.REMOVE });
+		NOT_INSTALLED (new Action[] { Action.NOT_INSTALLED, Action.INSTALL }, Util.isDeveloper),
+		INSTALLED (new Action[] { Action.INSTALLED, Action.REMOVE }, false),
+		UPDATEABLE (new Action[] { Action.UPDATEABLE, Action.REMOVE, Action.UPDATE }, Util.isDeveloper),
+		MODIFIED (new Action[] { Action.MODIFIED, Action.REMOVE, Action.UPDATE }, Util.isDeveloper),
+		NOT_FIJI (new Action[] { Action.NOT_FIJI, Action.REMOVE }, Util.isDeveloper);
 
 		private Action[] actions;
-		Status(Action[] actions) {
-			if (Util.isDeveloper) {
+		Status(Action[] actions, boolean allowUpload) {
+			if (allowUpload) {
 				this.actions = new Action[actions.length + 1];
 				System.arraycopy(actions, 0, this.actions, 0,
 						actions.length);
