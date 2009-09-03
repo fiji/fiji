@@ -1,11 +1,20 @@
 package fiji.pluginManager.ui;
+
 import ij.IJ;
 import ij.Prefs;
+
 import ij.gui.GenericDialog;
+
+import java.awt.Component;
 import java.awt.TextField;
+
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+
 import fiji.pluginManager.logic.PluginManager;
 import fiji.pluginManager.logic.UpdateSource;
 import fiji.pluginManager.logic.Updater;
+
 import fiji.pluginManager.logic.FileUploader.SourceFile;
 import fiji.pluginManager.logic.FileUploader.UploadListener;
 
@@ -52,9 +61,20 @@ public class Uploader implements UploadListener, Runnable {
 			do {
 				//Dialog to enter username and password
 				GenericDialog gd = new GenericDialog("Login");
-				gd.addStringField("Username", Prefs.get(PluginManager.PREFS_USER, ""), 20);
+				String user = Prefs.get(PluginManager.PREFS_USER, "");
+				gd.addStringField("Username", user, 20);
 				gd.addStringField("Password", "", 20);
-				((TextField)gd.getStringFields().lastElement()).setEchoChar('*');
+				final TextField pwd = ((TextField)gd.getStringFields().lastElement());
+				pwd.setEchoChar('*');
+				if (!user.equals(""))
+					((TextField)gd.getStringFields().firstElement())
+							.addFocusListener(new FocusAdapter() {
+						public void focusGained(FocusEvent e) {
+							pwd.requestFocus();
+							((Component)e.getSource()).removeFocusListener(this);
+						}
+					});
+
 				gd.showDialog();
 				if (gd.wasCanceled()) {
 					mainUserInterface.backToPluginManager();
