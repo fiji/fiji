@@ -13,19 +13,24 @@ import java.awt.image.*;
 public class Animated_Gif_Reader implements PlugIn {
 	public void run(String arg) {
 		String name;
-		if (arg == null) {
+		if (arg == null || arg.equals("")) {
 			OpenDialog od =
 				new OpenDialog("Animated Gif Reader", null);
 			name = od.getFileName();
-			if (name==null)
+			if (name == null)
 				return;
-			String dir = od.getDirectory();
+			arg = od.getDirectory() + name;
 		}
 		else
 			name = arg.substring(arg.lastIndexOf('/') + 1);
 		GifDecoder d = new GifDecoder();
 		int status = d.read(arg);
 		int n = d.getFrameCount();
+		if (n == 0) {
+			IJ.error("It appears that " + arg
+					+ " does not contain any frames");
+			return;
+		}
 		ImageStack stack = null;
 		for (int i=0; i < n; i++) {
 			ImageProcessor frame = d.getFrame(i);
