@@ -51,7 +51,6 @@ public class Updater {
 	protected long xmlLastModified;
 	protected FileUploader uploader;
 
-	protected DependencyAnalyzer dependencyAnalyzer;
 	protected PluginCollection plugins;
 
 	public Updater(PluginManager pluginManager) {
@@ -61,9 +60,6 @@ public class Updater {
 
 	public Updater(PluginCollection plugins, long xmlLastModified) {
 		this.plugins = plugins;
-
-		// TODO: dependencies should be _added_ by _PluginCollection_!
-		dependencyAnalyzer = new DependencyAnalyzer();
 
 		// TODO: use lastModified() of lock file as timestamp for new
 		// plugins
