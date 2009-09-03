@@ -3,11 +3,25 @@ package fiji.pluginManager.logic;
 import fiji.pluginManager.logic.PluginObject.Action;
 import fiji.pluginManager.logic.PluginObject.Status;
 
+import fiji.pluginManager.util.DependencyAnalyzer;
+
+import java.io.IOException;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 public class PluginCollection extends ArrayList<PluginObject> {
+	protected PluginCollection() { }
+	protected static PluginCollection instance;
+	public static PluginCollection getInstance() {
+		if (instance == null)
+			instance = new PluginCollection();
+		return instance;
+	}
+
+	static DependencyAnalyzer dependencyAnalyzer;
+
 	interface Filter {
 		boolean matches(PluginObject plugin);
 	}
@@ -185,6 +199,62 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	public void resetChangeStatuses() {
 		for (PluginObject plugin : this)
 			plugin.setChangeStatus(PluginObject.ChangeStatus.NONE);
+	}
+
+	protected class Dependencies implements Iterator<Dependency> {
+		Iterator<String> iterator;
+		Dependency current;
+		Dependencies(Iterable<String> dependencies) {
+			if (dependencies == null)
+				return;
+			iterator = dependencies.iterator();
+			findNext();
+		}
+
+		public boolean hasNext() {
+			return current != null;
+		}
+
+		public Dependency next() {
+			Dependency result = current;
+			findNext();
+			return result;
+		}
+
+		public void remove() {
+			throw new UnsupportedOperationException();
+		}
+
+		protected void findNext() {
+			while (iterator.hasNext()) {
+				PluginObject plugin =
+					getPlugin(iterator.next());
+				if (plugin == null)
+					continue;
+				current = new Dependency(plugin.getFilename(),
+					plugin.getTimestamp(), "at-least");
+				return;
+			}
+			current = null;
+		}
+	}
+
+	public Iterable<Dependency> analyzeDependencies(PluginObject plugin) {
+		try {
+			if (dependencyAnalyzer == null)
+				dependencyAnalyzer = new DependencyAnalyzer();
+			final Iterable<String> dependencies = dependencyAnalyzer
+				.getDependencies(plugin.getFilename());
+
+			return new Iterable<Dependency>() {
+				public Iterator<Dependency> iterator() {
+					return new Dependencies(dependencies);
+				}
+			};
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 	public boolean hasChanges() {

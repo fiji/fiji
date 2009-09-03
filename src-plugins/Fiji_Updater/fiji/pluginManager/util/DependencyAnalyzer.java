@@ -28,7 +28,7 @@ public class DependencyAnalyzer {
 		map = new Class2JarFileMap();
 	}
 
-	public Iterable<String> getDependentJarsForFile(String filename)
+	public Iterable<String> getDependencies(String filename)
 			throws IOException {
 		if (!filename.endsWith(".jar"))
 			return null;

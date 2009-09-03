@@ -57,12 +57,8 @@ public class XMLFileReader extends DefaultHandler {
 		xr.parse(inputSource);
 	}
 
-	public PluginCollection getPlugins() {
-		return plugins;
-	}
-
 	public void startDocument () {
-		plugins = new PluginCollection();
+		plugins = PluginCollection.getInstance();
 		body = "";
 	}
 

@@ -32,14 +32,7 @@ import org.xml.sax.helpers.AttributesImpl;
 
 /*
  * This class is responsible for writing updates to server, upon given the
- * updated plugin records (Map of plugins to all versions).
- *
- * 1st Step: Generates the updated records (newPluginRecords & filesToUpload)
- * 2nd Step: Login details _must_ be authenticated before below steps can
- *           proceed
- * 3rd Step: Write and validate XML file, and write current.txt
- *           contents too
- * 4th Step: Upload XML, text and plugin file(s) to server
+ * updated plugin records.
  *
  * Note: Plugins are uploaded differently
  * - Non-Fiji plugins & new versions of Fiji Plugins will have files AND
@@ -80,16 +73,6 @@ public class Updater {
 		}
 	}
 
-	public synchronized void generateNewPluginRecords()
-			throws IOException {
-		for (PluginObject plugin : plugins.toUpload())
-			// TODO: compute the digest here?????
-			// TODO: when marking for update, put the
-			// formerly current version into
-			// previous-versions
-			plugin.setAction(PluginObject.Action.UPLOAD);
-	}
-
 	public void upload(UploadListener uploadListener)
 			throws Exception  {
 		if (uploadListener != null)
@@ -128,6 +111,7 @@ public class Updater {
 		in.close();
 	}
 
+	// TODO: in-memory only, please
 	protected void saveTextFile(String path) throws FileNotFoundException {
 		PrintStream out = new PrintStream(path);
 		for (PluginObject plugin : plugins)

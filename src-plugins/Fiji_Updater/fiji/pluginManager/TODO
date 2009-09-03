@@ -45,12 +45,6 @@ Show-stoppers:
   correct mistakes (not all are "at-least" dependencies) and add
   additional dependencies.
 
-- Instead of rewriting the dependency list (possibly losing vital
-  dependencies, such as "that file needs to be deleted when this file is
-  installed"), the dependency analyzer should only add dependencies that
-  are not yet in the list, and only just after a plugin was marked as
-  "Update it".
-
 - We need to add macros/ and scripts/ (the latter possibly needs to be
   split into bin/ and scripts/, because we have many scripts that are
   only interesting to developers, from the command line, so they should

@@ -70,8 +70,7 @@ public class Uploader implements UploadListener, Runnable {
 			} while (!updater.setLogin(username, password));
 
 			Prefs.set(PluginManager.PREFS_USER, username);
-			mainUserInterface.setVisible(false); //this UI not needed for upload
-			updater.generateNewPluginRecords();
+			mainUserInterface.setVisible(false);
 			updater.upload(this);
 
 		} catch (Throwable e) {

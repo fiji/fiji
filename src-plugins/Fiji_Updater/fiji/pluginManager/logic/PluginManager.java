@@ -49,6 +49,7 @@ public class PluginManager implements PlugIn, Observer {
 	public XMLFileReader xmlFileReader;
 
 	public void run(String arg) {
+		PluginCollection plugins = PluginCollection.getInstance();
 		try {
 			IJ.showStatus("Starting up Plugin Manager...");
 			xmlFileDownloader = new XMLFileDownloader();
@@ -58,7 +59,7 @@ public class PluginManager implements PlugIn, Observer {
 			xmlLastModified = xmlFileDownloader.getXMLLastModified();
 			xmlFileReader = new XMLFileReader(new ByteArrayInputStream(xmlFileDownloader.getXMLFileData()));
 
-			pluginListBuilder = new PluginListBuilder(xmlFileReader.getPlugins());
+			pluginListBuilder = new PluginListBuilder(plugins);
 			pluginListBuilder.addObserver(this);
 			pluginListBuilder.updateFromLocal();
 		} catch (Error e) {

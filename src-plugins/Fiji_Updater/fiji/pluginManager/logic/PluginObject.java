@@ -215,6 +215,10 @@ public class PluginObject {
 			current.timestamp = newTimestamp;
 			newChecksum = null;
 		}
+
+		PluginCollection plugins = PluginCollection.getInstance();
+		for (Dependency dependency : plugins.analyzeDependencies(this))
+				addDependency(dependency);
 	}
 
 	public String getFilename() {
