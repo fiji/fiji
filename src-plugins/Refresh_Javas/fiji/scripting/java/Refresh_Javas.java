@@ -13,6 +13,7 @@ import ij.text.TextWindow;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.PrintWriter;
+import java.io.InputStream;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -30,6 +31,11 @@ public class Refresh_Javas extends RefreshScripts {
 		setLanguageProperties(".java", "Java");
 		setVerbose(false);
 		super.run(arg);
+	}
+
+	public void runScript(InputStream istream) {
+		// TODO
+		IJ.log("Refresh_Javas cannot work with streams at the moment.");
 	}
 
 	/** Compile and run an ImageJ plugin */

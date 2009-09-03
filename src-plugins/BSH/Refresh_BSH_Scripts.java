@@ -4,6 +4,10 @@ import common.RefreshScripts;
 import java.io.File;
 import java.io.FileReader;
 import java.io.BufferedReader;
+import java.io.BufferedInputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.FileInputStream;
 import bsh.Interpreter;
 import ij.IJ;
 
@@ -22,7 +26,17 @@ public class Refresh_BSH_Scripts extends RefreshScripts {
 				IJ.log("Not a BSH script or not found: " + path);
 				return;
 			}
-			new Interpreter().eval(new BufferedReader(new FileReader(path)));
+			// The stream will be closed by runScript(InputStream)
+			runScript(new BufferedInputStream(new FileInputStream(new File(path))));
+		} catch (Throwable error) {
+			printError(error);
+		}
+	}
+
+	/** Will consume and close the stream. */
+	public void runScript(InputStream istream) {
+		try {
+			new Interpreter().eval(new InputStreamReader(istream));
 		} catch (Throwable error) {
 			printError(error);
 		}

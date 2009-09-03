@@ -48,6 +48,10 @@ import java.io.StringWriter;
 import java.io.PrintWriter;
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.InputStream;
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
 
 /**
  *  This class looks through the plugins directory for files with a
@@ -364,6 +368,9 @@ abstract public class RefreshScripts implements PlugIn {
 	}
 
 	/** Run the script in a new thread. */
+	abstract public void runScript(InputStream istream);
+
+	/** Run the script in a new thread. */
 	abstract public void runScript(String filename);
 
 	static public void printError(Throwable t) {
@@ -374,12 +381,24 @@ abstract public class RefreshScripts implements PlugIn {
 		IJ.log(w.toString());
 	}
 
+	// TODO rename to readText
         static public final String openTextFile(final String path) {
                 if (null == path || !new File(path).exists()) return null;
+		try {
+			// Stream will be closed in overloaded method:
+                        return openTextFile(new BufferedInputStream(new FileInputStream(path)));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	/** Will consume and close the stream. */
+        static public final String openTextFile(final InputStream istream) {
                 final StringBuffer sb = new StringBuffer();
 		BufferedReader r = null;
                 try {
-                        r = new BufferedReader(new FileReader(path));
+                        r = new BufferedReader(new InputStreamReader(istream));
                         while (true) {
                                 String s = r.readLine();
                                 if (null == s) break;
