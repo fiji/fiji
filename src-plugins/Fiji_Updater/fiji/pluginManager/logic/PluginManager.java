@@ -25,12 +25,14 @@ import javax.swing.JOptionPane;
 public class PluginManager implements PlugIn, Observer {
 	public static final String MAIN_URL = "http://pacific.mpi-cbg.de/uploads/incoming/plugins/";
 	//public static final String MAIN_URL = "http://pacific.mpi-cbg.de/update/"; //TODO
+
 	public static final String TXT_FILENAME = "current.txt";
 	public static final String XML_LOCK = "db.xml.gz.lock";
 	public static final String XML_COMPRESSED = "db.xml.gz";
 	public static final String XML_FILENAME = "db.xml";
 	public static final String XML_BACKUP = "db.bak";
-	public static final String UPDATE_DIRECTORY = "update";
+	//public static final String UPDATE_DIRECTORY = "/update/";
+	public static final String UPDATE_DIRECTORY = "/incoming/plugins/";
 
 	// Key names for ij.Prefs for saved values ("cookies")
 	// Note: ij.Prefs is only saved during shutdown of Fiji

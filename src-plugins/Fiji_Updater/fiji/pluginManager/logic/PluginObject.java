@@ -109,6 +109,8 @@ public class PluginObject {
 		dependencies = new LinkedHashMap<Dependency, Object>();
 		authors = new LinkedHashMap<String, Object>();
 		links = new LinkedHashMap<String, Object>();
+		if (status == Status.NOT_FIJI)
+			filesize = Util.getFilesize(filename);
 		setNoAction();
 	}
 
@@ -214,6 +216,11 @@ public class PluginObject {
 			current.checksum = newChecksum;
 			current.timestamp = newTimestamp;
 			newChecksum = null;
+		}
+		else {
+			status = Status.INSTALLED;
+			newChecksum = current.checksum;
+			newTimestamp = current.timestamp;
 		}
 
 		PluginCollection plugins = PluginCollection.getInstance();

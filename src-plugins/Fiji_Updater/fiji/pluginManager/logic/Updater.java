@@ -44,16 +44,11 @@ public class Updater {
 	protected long xmlLastModified;
 	protected FileUploader uploader;
 
-	protected PluginCollection plugins;
-
 	public Updater(PluginManager pluginManager) {
-		this(pluginManager.pluginCollection,
-			pluginManager.getXMLLastModified());
+		this(pluginManager.getXMLLastModified());
 	}
 
-	public Updater(PluginCollection plugins, long xmlLastModified) {
-		this.plugins = plugins;
-
+	public Updater(long xmlLastModified) {
 		// TODO: use lastModified() of lock file as timestamp for new
 		// plugins
 		this.xmlLastModified = xmlLastModified;
@@ -65,7 +60,8 @@ public class Updater {
 
 	public synchronized boolean setLogin(String username, String password) {
 		try {
-			uploader = new SSHFileUploader(username, password);
+			uploader = new SSHFileUploader(username, password,
+				PluginManager.UPDATE_DIRECTORY);
 			return true;
 		} catch (JSchException e) {
 			IJ.error("Failed to login");
@@ -89,11 +85,12 @@ public class Updater {
 
 		// TODO: rename "UpdateSource" to "Transferable", reuse!
 		List<SourceFile> files = new ArrayList<SourceFile>();
-		files.add(new UpdateSource(compressed, PluginManager.XML_LOCK,
-					"C0444"));
-		files.add(new UpdateSource(txt, PluginManager.TXT_FILENAME,
-					"C0644"));
-		for (PluginObject plugin : plugins.toUpload())
+		files.add(new UpdateSource(compressed,
+					PluginManager.XML_LOCK, "C0444"));
+		files.add(new UpdateSource(txt,
+					PluginManager.TXT_FILENAME, "C0644"));
+		for (PluginObject plugin :
+				PluginCollection.getInstance().toUpload())
 			files.add(new UpdateSource(plugin));
 		uploader.upload(xmlLastModified, files);
 
@@ -114,7 +111,8 @@ public class Updater {
 	// TODO: in-memory only, please
 	protected void saveTextFile(String path) throws FileNotFoundException {
 		PrintStream out = new PrintStream(path);
-		for (PluginObject plugin : plugins)
+		for (PluginObject plugin :
+				PluginCollection.getInstance().fijiPlugins())
 			out.println(plugin.getFilename() + " "
 					+ plugin.getTimestamp() + " "
 					+ plugin.getChecksum());
@@ -133,7 +131,8 @@ public class Updater {
 		handler.startDocument();
 		AttributesImpl attr = new AttributesImpl();
 		handler.startElement("", "", "pluginRecords", attr);
-		for (PluginObject plugin : plugins) {
+		for (PluginObject plugin :
+				PluginCollection.getInstance().fijiPlugins()) {
 			attr.clear();
 			setAttribute(attr, "filename", plugin.filename);
 			handler.startElement("", "", "plugin", attr);

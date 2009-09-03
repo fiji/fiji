@@ -30,18 +30,16 @@ public class Uploader implements UploadListener, Runnable {
 	}
 
 	public synchronized void update(SourceFile source, long bytesSoFar, long bytesTotal) {
-		UpdateSource updateSource = (UpdateSource)source;
-		IJ.showStatus("Uploading " + updateSource.getFilename() + "...");
+		if (source != null)
+			IJ.showStatus("Uploading "
+					+ source.getFilename() + "...");
 		IJ.showProgress((int)bytesSoFar, (int)bytesTotal);
 	}
 
 	public synchronized void uploadFileComplete(SourceFile source) {
-		UpdateSource updateSource = (UpdateSource)source;
-		System.out.println("File " + updateSource.getFilename() + " uploaded.");
 	}
 
 	public synchronized void uploadProcessComplete() {
-		System.out.println("Upload process was a success!");
 	}
 
 	public void run() {
@@ -74,6 +72,7 @@ public class Uploader implements UploadListener, Runnable {
 			updater.upload(this);
 
 		} catch (Throwable e) {
+			e.printStackTrace();
 			error_message = e.getLocalizedMessage();
 		}
 

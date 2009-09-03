@@ -50,8 +50,9 @@ public class SSHFileUploader extends FileUploader {
 	private OutputStream out;
 	private InputStream in;
 
-	public SSHFileUploader(String username, String password) throws JSchException {
-		super("/incoming/");
+	public SSHFileUploader(String username, String password,
+			String uploadDirectory) throws JSchException {
+		super(uploadDirectory);
 
 		JSch jsch = new JSch();
 		HostKey hostKeyObject = new HostKey(host, hostKeyType,
@@ -84,6 +85,7 @@ public class SSHFileUploader extends FileUploader {
 		uploadFiles(sources);
 
 		//Unlock process
+		// TODO: avoid blind assumptions!!!
 		String cmd1 = "chmod u+w " + uploadDir + PluginManager.XML_COMPRESSED;
 		String cmd2 = "mv " + uploadDir + PluginManager.XML_LOCK + " " +
 		uploadDir + PluginManager.XML_COMPRESSED;
