@@ -62,6 +62,15 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		});
 	}
 
+	public Iterable<PluginObject> uploadable() {
+		return filter(new Filter() {
+			public boolean matches(PluginObject plugin) {
+				return plugin.getStatus()
+				.isValid(Action.UPLOAD);
+			}
+		});
+	}
+
 	public Iterable<PluginObject> uninstalled() {
 		return filter(Status.NOT_INSTALLED);
 	}
