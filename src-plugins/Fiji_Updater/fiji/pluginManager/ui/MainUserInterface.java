@@ -193,7 +193,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 			btnUpload = SwingTools.createButton("Upload to server",
 					"Upload selected plugins to server", new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					clickToUploadRecords();
+					upload();
 				}
 			}, bottomPanel);
 		}
@@ -249,14 +249,14 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		table.getModel().addTableModelListener(this);
 	}
 
-	// TODO: why should this function need to know that it is triggered by a click?  That is so totally unnecessary.
-	private void clickToUploadRecords() {
+	private void upload() {
 		//There's no frame interface for Uploader, makes disabling pointless, thus set invisible
 		Uploader uploader = new Uploader(this);
 		setEnabled(false);
 		uploader.setUploadInformationAndStart(pluginManager);
 	}
 
+	// TODO: why should this function need to know that it is triggered by a click?  That is so totally unnecessary.
 	private void clickToEditDescriptions() {
 		loadedFrame = new DetailsEditor(this, currentPlugin);
 		showFrame();
