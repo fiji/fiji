@@ -123,10 +123,7 @@ public class ClassNames {
 
 
 	private boolean isDotInEnteredText(String text) {
-		if(text.lastIndexOf(".")>0)
-			return true;
-		else
-			return false;
+		return text.lastIndexOf('.') > 0;
 	}
 
 	private ArrayList<String> getPackageNamesImported(RSyntaxDocument document, String language) {
