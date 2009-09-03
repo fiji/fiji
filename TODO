@@ -14,7 +14,6 @@ A loose TODO list for Fiji
 - test Bilateral Filter
 - Segmentation Editor fails
 - compile and test Java7 (has nasty bugs)
-- find out why jps shows no title for Fiji's process
 - Building "fake.jar" on Windows should warn and resort to making
   precompiled/fake.jar directly.  Same goes for the Fiji launcher.
 - add script recorder for the new scripting languages
