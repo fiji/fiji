@@ -103,6 +103,7 @@ public class Uploader implements UploadListener, Runnable {
 					"You need to restart Plugin Manager again."); //exit if failure
 		} else {
 			IJ.showStatus(""); //exit if successful
+			IJ.showProgress(1, 1);
 			mainUserInterface.exitWithRestartMessage("Updated",
 					"Files successfully uploaded to server!\n\n"
 					+ "You need to restart Plugin Manager for changes to take effect.");
