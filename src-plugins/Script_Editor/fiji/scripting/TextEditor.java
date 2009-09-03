@@ -267,9 +267,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		if (source == new_file) {
 			if (!handleUnsavedChanges())
 				return;
-			// TODO: NO!!!!
-			else
-				createNewDocument();
+			createNewDocument();
 		}
 		else if (source == open) {
 			if (!handleUnsavedChanges())
