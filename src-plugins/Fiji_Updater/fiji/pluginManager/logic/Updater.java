@@ -152,7 +152,9 @@ public class Updater {
 						dependency.filename);
 				setAttribute(attr, "timestamp",
 						dependency.timestamp);
-				setAttribute(attr, "relation",
+				if (dependency.relation !=
+						Dependency.Relation.AT_LEAST)
+					setAttribute(attr, "relation",
 						dependency.relation.toString());
 				writeSimpleTag("dependency", null, attr);
 			}
