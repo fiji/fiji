@@ -80,7 +80,7 @@ public class PluginListBuilder extends PluginDataObservable {
 	protected void handle(StringPair pair) {
 		String path = pair.path;
 		String realPath = pair.realPath;
-		progress(path);
+		progress(path, counter, total);
 
 		String checksum = "INVALID";
 		try {
@@ -93,6 +93,7 @@ public class PluginListBuilder extends PluginDataObservable {
 		else
 			plugins.add(new PluginObject(path, checksum,
 				timestamp, PluginObject.Status.NOT_FIJI));
+		counter += Util.getFilesize(realPath);
 	}
 
 	public void updateFromLocal() {
@@ -117,8 +118,10 @@ public class PluginListBuilder extends PluginDataObservable {
 				new String[] { ".txt", ".ijm" });
 		queueDir(new String[] { "luts" }, new String[] { ".lut" });
 
-		total = queue.size();
-		counter = -1;
+		total = 0;
+		for (StringPair pair : queue)
+			total += Util.getFilesize(pair.realPath);
+		counter = 0;
 		for (StringPair pair : queue)
 			handle(pair);
 		done();
