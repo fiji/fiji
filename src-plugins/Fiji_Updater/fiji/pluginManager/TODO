@@ -17,10 +17,6 @@ Show-stoppers:
   that entry must be new.  The user might be interested in installing
   this.
 
-- Regex bug: the search field: when typing IO, it lists any that match
-  and I and a O, not the string IO.  If you fix this, please be careful
-  to keep it case-insensitive as it is now.
-
 - Usability bug: the install/remove it/upload it combo box: it takes a normal
   user minutes, plus assistance from people who know, to realize where to click
   with the mouse to make the box reveal itself.
@@ -28,11 +24,6 @@ Show-stoppers:
   My suggestion: make the combobox always visible, so the pulldown
   arrow is visible and self-evident.  Synaptic, Ubuntu's default package
   manager, is an example of a self-evident package marking system.
-
-- Additionally, have different labels for the different states in which there
-  is nothing to do:
-
-	Up-to-date, Updateable, Modified, Unknown
 
 - Usability bug: the "Edit details" button is only active when uploading a
   plugin.  I'd rather have the Edit Details button on at all times (or let the
@@ -44,16 +35,6 @@ Show-stoppers:
 - The dependency list should be editable so that the developer can
   correct mistakes (not all are "at-least" dependencies) and add
   additional dependencies.
-
-- We need to add macros/ and scripts/ (the latter possibly needs to be
-  split into bin/ and scripts/, because we have many scripts that are
-  only interesting to developers, from the command line, so they should
-  _never_ end up in the Updater) and file extensions .py, .rb, .clj, .js,
-  .bsh, .txt, .ijm and .class, too.
-
-- The db.xml.gz has to be updated to reflect the former versions of the
-  files (I wrote a script to help that, but you seem not to have pulled
-  it).
 
 - For the files like StartupMacros.txt (which we _need_, as there is a
   serious bug regarding the lookup tables in Fiji Dresden 2009), we need
