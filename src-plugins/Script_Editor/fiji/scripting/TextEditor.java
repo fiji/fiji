@@ -44,6 +44,9 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+import java.io.PrintWriter;
 import java.awt.image.BufferedImage;
 import java.util.Vector;
 import java.util.List;
@@ -85,8 +88,9 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 	RSyntaxTextArea textArea;
 	JTextArea screen = new JTextArea();
 	Document doc;
-	JMenuItem new_file, open, save, saveas, compileAndRun, debug, quit, undo, redo, cut, copy, paste, find, replace, selectAll, autocomplete, resume, terminate, kill;
+	JMenuItem new_file, open, save, saveas, compileAndRun, debug, quit, undo, redo, cut, copy, paste, find, replace, selectAll, autocomplete, resume, terminate, kill, runtext;
 	JRadioButtonMenuItem[] lang = new JRadioButtonMenuItem[8];
+	ButtonGroup group;
 	FileInputStream fin;
 	// TODO: fix (enableReplace(boolean))
 	FindAndReplaceDialog replaceDialog;
@@ -180,7 +184,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		mbar.add(options);
 
 		JMenu languages = new JMenu("Language");
-		ButtonGroup group = new ButtonGroup();
+		group = new ButtonGroup();
 		for (Languages.Language language :
 		                Languages.getInstance().languages) {
 			JRadioButtonMenuItem item =
@@ -200,9 +204,12 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		JMenu run = new JMenu("Run");
 		// TODO: allow outside-of-plugins/ sources
 
-		compileAndRun = addToMenu(run, "Compile and Run", 0, KeyEvent.VK_F11, ActionEvent.CTRL_MASK);
+		compileAndRun = addToMenu(run, "Compile and Run", 0, KeyEvent.VK_F11, 0);
+
+		runtext = addToMenu(run, "Run", 0, KeyEvent.VK_F12, 0);
+
 		run.addSeparator();
-		debug = addToMenu(run, "Start Debugging", 0, KeyEvent.VK_F11, 0);
+		debug = addToMenu(run, "Start Debugging", 0, KeyEvent.VK_F11, ActionEvent.CTRL_MASK);
 		mbar.add(run);
 
 		run.addSeparator();
@@ -298,6 +305,8 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		}
 		else if (source == kill)
 			chooseTaskToKill();
+		else if (source == runtext)
+			runText();
 		else if (source == quit)
 			processWindowEvent( new WindowEvent(this, WindowEvent.WINDOW_CLOSING) );
 		else if (source == cut)
@@ -616,6 +625,45 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		}
 	}
 
+	/** Run the text in the textArea without compiling it, only if it's not java. */
+	public void runText() {
+
+		final String lang_ext = group.getSelection().getActionCommand();
+		if (".java".equals(lang_ext)) {
+			runScript();
+			return;
+		} else if ("".equals(lang_ext)) {
+			JOptionPane.showMessageDialog(this, "Select a language first!");
+			// TODO guess the language, if possible.
+			return;
+		}
+
+		textArea.setEditable(false);
+		try {
+			final PipedInputStream pi = new PipedInputStream(4096);
+			final PipedOutputStream po = new PipedOutputStream(pi);
+
+			final RefreshScripts interpreter = Languages.getInstance().get(lang_ext).interpreter;
+
+			// Start reading, should block until writing starts
+			new TextEditor.Executer() {
+				public void execute() {
+					interpreter.runScript(pi);
+				}
+			};
+
+			// Now write to it:
+			textArea.write(new PrintWriter(po));
+			// ... and trigger full reading from PipedInputStream by flushing and closing it:
+			po.flush();
+			po.close();
+
+		} catch (Throwable t) {
+			t.printStackTrace();
+		} finally {
+			textArea.setEditable(true);
+		}
+	}
 
 	// TODO: do not require saving
 	public void runSavedScript() {
