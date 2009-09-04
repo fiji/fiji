@@ -179,14 +179,9 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 			return tryPlugIn("AmiraMeshReader_", path);
 		} 
 
-		// Deltavision file handler
-		// Open DV files generated on Applied Precision DeltaVision systems
-		if (name.endsWith(".dv") || name.endsWith(".r3d")) {
-			return tryPlugIn("Deltavision_Opener", path);
-		}
-
 		// Albert Cardona: read .mrc files (little endian). Documentation at: http://ami.scripps.edu/prtl_data/mrc_specification.htm . The parsing of the header is a bare minimum of what could be done.
-		if (name.endsWith(".mrc")) {
+		if (name.endsWith(".mrc") || name.endsWith(".rec") ||
+				name.endsWith(".st")) {
 			return tryPlugIn("io.Open_MRC_Leginon", path);
 		}
 

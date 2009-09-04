@@ -30,7 +30,9 @@ import ij.ImagePlus;
 import ij.process.*;
 import ij.gui.Roi;
 
+import java.awt.Checkbox;
 import java.awt.Choice;
+import java.awt.Component;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -50,10 +52,11 @@ public class Stitching_2D implements PlugIn
 	public static String methodStatic = methodList[1];
 	public static String handleRGB1Static = colorList[colorList.length - 1];
 	public static String handleRGB2Static = colorList[colorList.length - 1];
-	public static boolean fuseImagesStatic = true, windowingStatic = true;
+	public static boolean fuseImagesStatic = true, windowingStatic = true, computeOverlap = true;
 	public static int checkPeaksStatic = 5;
 	public static double alphaStatic = 1.5;
-
+	public static int xOffset = 0, yOffset = 0;
+	
 	public String method = methodList[1];
 	public String handleRGB1= colorList[colorList.length - 1];
 	public String handleRGB2= colorList[colorList.length - 1];
@@ -71,6 +74,9 @@ public class Stitching_2D implements PlugIn
 	public CrossCorrelationResult2D[] getCrossCorrelationResults() { return result; }
 	public CrossCorrelationResult2D getCrossCorrelationResult() { return result[0].clone(); }
 	
+
+	// a macro can call to only fuse two images given a certain shift
+	public Point2D translation = null;
 
 	public void run(String args)
 	{
@@ -125,11 +131,21 @@ public class Stitching_2D implements PlugIn
 		gd.addChoice("Fusion method", methodList, methodStatic);
 		gd.addNumericField("Fusion alpha", alphaStatic, 2);		
 		gd.addStringField("Fused image name: ", "Fused_" + nostackList[0] + "_" + nostackList[1]);
+		gd.addCheckbox("compute_overlap", computeOverlap);
+		gd.addNumericField("x", xOffset, 0);
+		gd.addNumericField("y", yOffset, 0);
 		gd.addMessage("");
 		gd.addMessage("This Plugin is developed by Stephan Preibisch\n" + myURL);
 
 		MultiLineLabel text = (MultiLineLabel) gd.getMessage();
 		addHyperLinkListener(text, myURL);
+		
+		Component[] c3 = new Component[] { (Component) gd.getNumericFields().get(2),
+										   (Component) gd.getNumericFields().get(3) };
+
+		Stitching_3D.addInverseEnablerListener((Checkbox) gd.getCheckboxes().get(2), c3, null);
+		((Component) gd.getNumericFields().get(2)).setEnabled(false);
+		((Component) gd.getNumericFields().get(3)).setEnabled(false);
 
 		gd.showDialog();
 
@@ -148,6 +164,9 @@ public class Stitching_2D implements PlugIn
 		methodStatic = gd.getNextChoice();
 		alphaStatic = gd.getNextNumber();
 		this.fusedImageName = gd.getNextString();
+		computeOverlap = gd.getNextBoolean();
+		xOffset = (int)Math.round( gd.getNextNumber() );
+		yOffset = (int)Math.round( gd.getNextNumber() );
 
 		method = methodStatic;
 		handleRGB1= handleRGB1Static;
@@ -156,6 +175,11 @@ public class Stitching_2D implements PlugIn
 		windowing = windowingStatic;
 		checkPeaks = checkPeaksStatic;
 		alpha = alphaStatic;
+		
+		if ( !computeOverlap )
+			this.translation = new Point2D( xOffset, yOffset );
+		else
+			this.translation = null;
 		
 		//
 		// determine wheater a macro called it which limits in determining name
@@ -249,7 +273,7 @@ public class Stitching_2D implements PlugIn
 
 	public void work(FloatArray2D inputImage1, FloatArray2D inputImage2)
 	{
-		FloatArray2D img1, img2, fft1, fft2;
+		FloatArray2D img1 = null, img2 = null, fft1, fft2;
 		ImagePlus imp1, imp2;
 
 		Point2D img1Dim = new Point2D(0, 0), img2Dim = new Point2D(0, 0), // (incl. possible ext!!!)
@@ -274,8 +298,12 @@ public class Stitching_2D implements PlugIn
 				return;
 
 			// apply ROIs if they are there and save dimensions of original images and size increases
-			img1 = applyROI(imp1, img1Dim, ext1Dim, handleRGB1, windowing);
-			img2 = applyROI(imp2, img2Dim, ext2Dim, handleRGB2, windowing);
+			// images and size increases
+			if (this.translation == null)
+			{
+				img1 = applyROI(imp1, img1Dim, ext1Dim, handleRGB1, windowing);
+				img2 = applyROI(imp2, img2Dim, ext2Dim, handleRGB2, windowing);
+			}
 		}
 		else
 		{
@@ -291,47 +319,55 @@ public class Stitching_2D implements PlugIn
 			img2Dim.y = img2.height;
 		}
 
-		// apply windowing
-		if (windowing)
+		if (this.translation == null)
 		{
-			exponentialWindow(img1);
-			exponentialWindow(img2);
+
+			// apply windowing
+			if (windowing)
+			{
+				exponentialWindow(img1);
+				exponentialWindow(img2);
+			}
+	
+			// zero pad images to fft-able size
+			FloatArray2D[] zeropadded = zeroPadImages(img1, img2);
+			img1 = zeropadded[0];
+			img2 = zeropadded[1];
+	
+			/*
+			   FloatArrayToImagePlus(img1, "1", 0, 0).show();
+			   FloatArrayToImagePlus(img2, "2", 0, 0).show();
+			 */
+	
+			// save dimensions of zeropadded image
+			maxDim = new Point2D(img1.width, img1.height);
+	
+			// compute FFT's
+			fft1 = computeFFT(img1);
+			fft2 = computeFFT(img2);
+	
+			// do the phase correlation
+			FloatArray2D invPCM = computePhaseCorrelationMatrix(fft1, fft2, maxDim.x);
+			//FloatArrayToImagePlus(invPCM, "invpcm", 0, 0).show();
+	
+			// find the peaks
+			ArrayList<Point2D> peaks = findPeaks(invPCM, img1Dim, img2Dim, ext1Dim, ext2Dim, checkPeaks);
+	
+			// get the original images
+			img1 = applyROI(imp1, img1Dim, ext1Dim, handleRGB1, false /*no windowing of course*/);
+			img2 = applyROI(imp2, img2Dim, ext2Dim, handleRGB2, false /*no windowing of course*/);
+	
+			// test peaks
+			result = testCrossCorrelation(invPCM, peaks, img1, img2);
+	
+			// get shift of images relative to each other
+			shift = getImageOffset(result[0], imp1, imp2);
 		}
-
-		// zero pad images to fft-able size
-		FloatArray2D[] zeropadded = zeroPadImages(img1, img2);
-		img1 = zeropadded[0];
-		img2 = zeropadded[1];
-
-		/*
-		   FloatArrayToImagePlus(img1, "1", 0, 0).show();
-		   FloatArrayToImagePlus(img2, "2", 0, 0).show();
-		 */
-
-		// save dimensions of zeropadded image
-		maxDim = new Point2D(img1.width, img1.height);
-
-		// compute FFT's
-		fft1 = computeFFT(img1);
-		fft2 = computeFFT(img2);
-
-		// do the phase correlation
-		FloatArray2D invPCM = computePhaseCorrelationMatrix(fft1, fft2, maxDim.x);
-		//FloatArrayToImagePlus(invPCM, "invpcm", 0, 0).show();
-
-		// find the peaks
-		ArrayList<Point2D> peaks = findPeaks(invPCM, img1Dim, img2Dim, ext1Dim, ext2Dim, checkPeaks);
-
-		// get the original images
-		img1 = applyROI(imp1, img1Dim, ext1Dim, handleRGB1, false /*no windowing of course*/);
-		img2 = applyROI(imp2, img2Dim, ext2Dim, handleRGB2, false /*no windowing of course*/);
-
-		// test peaks
-		result = testCrossCorrelation(invPCM, peaks, img1, img2);
-
-		// get shift of images relative to each other
-		shift = getImageOffset(result[0], imp1, imp2);
-
+		else
+		{
+			shift = translation;
+		}
+		
 		if (fuseImages)
 		{
 			// merge if wanted
@@ -343,7 +379,11 @@ public class Stitching_2D implements PlugIn
 		{
 			IJ.log("Translation Parameters:");
 			IJ.log("(second stack relative to first stack)");
-			IJ.log("x= " + shift.x + " y= " + shift.y + " R= " + result[0].R);
+			
+			if ( this.translation == null )
+				IJ.log("x= " + shift.x + " y= " + shift.y + " R= " + result[0].R);
+			else
+				IJ.log("x= " + shift.x + " y= " + shift.y);
 		}
 	}
 

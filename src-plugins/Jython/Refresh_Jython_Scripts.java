@@ -22,6 +22,10 @@ import org.python.core.PyDictionary;
 import org.python.core.PySystemState;
 import org.python.util.PythonInterpreter;
 import common.RefreshScripts;
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.File;
+import java.io.InputStream;
 
 /**
  * 	1 - looks for python script files under the ImageJ/plugins/jython folder
@@ -42,14 +46,33 @@ public class Refresh_Jython_Scripts extends RefreshScripts {
 	/** Run a jython script in its own separate interpreter and namespace. */
 	public void runScript(String path) {
 		try {
+			// runScript(InputStream) will close the stream
+			runScript(new BufferedInputStream(new FileInputStream(new File(path))));
+		} catch (Throwable t) {
+			printError(t);
+		}
+	}
+
+	/** Will consume and close the stream. */
+	public void runScript(InputStream istream) {
+		try {
 			PySystemState pystate = new PySystemState();
 			pystate.setClassLoader(IJ.getClassLoader());
 			PythonInterpreter PI =
 				new PythonInterpreter(new PyDictionary(), pystate);
+			PI.setOut(this.out);
+			PI.setErr(this.err);
 			Jython_Interpreter.importAll(PI);
-			PI.execfile(path);
+			PI.execfile(istream);
 		} catch (Throwable t) {
 			printError(t);
+		} finally {
+			try {
+				istream.close();
+			} catch (Exception e) {
+				System.out.println("Jython runScript could not close the stream!");
+				e.printStackTrace();
+			}
 		}
 	}
 }

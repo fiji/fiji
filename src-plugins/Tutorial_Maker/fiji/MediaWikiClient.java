@@ -236,7 +236,7 @@ public class MediaWikiClient {
 		if (!getSessionKey) {
 			String cookie = "";
 			for (String key : cookies.keySet())
-				cookie += (cookie.isEmpty() ? "" : "; ")
+				cookie += (cookie.length() == 0 ? "" : "; ")
 					+ key + "=" + cookies.get(key);
 			conn.setRequestProperty("Cookie", cookie);
 		}

@@ -97,7 +97,7 @@ public class Tutorial_Maker implements PlugIn {
 			return;
 
 		name = gd.getNextString();
-		if (name.isEmpty())
+		if (name.length() == 0)
 			return;
 		name = capitalize(name).replace(' ', '_');
 
@@ -525,7 +525,7 @@ public class Tutorial_Maker implements PlugIn {
 
 		String oldTitle = gd.getNextChoice();
 		String newTitle = gd.getNextString();
-		if (newTitle.isEmpty())
+		if (newTitle.length() == 0)
 			return;
 
 		ImagePlus image = WindowManager.getImage(oldTitle);
