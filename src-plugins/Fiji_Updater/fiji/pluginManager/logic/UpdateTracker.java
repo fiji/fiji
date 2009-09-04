@@ -120,19 +120,23 @@ public class UpdateTracker implements Runnable, Observer {
 				+ " (expected " + size + ")");
 
 		PluginObject plugin = file.getPlugin();
-		String digest = file.getDigest();
+		String digest = file.getDigest(), actualDigest;
 		try {
-			String actualDigest = Util.getDigest(fileName);
-			if (!digest.equals(actualDigest))
-				throw new RuntimeException("Incorrect checksum "
-						+ "for " + fileName + ": "
-						+ actualDigest
-						+ " (expected " + digest + ")");
+			IJ.showStatus("Verifying " + plugin.getFilename()
+				+ "...");
+			actualDigest = Util.getDigest(plugin.getFilename(),
+					fileName);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("Could not verify checksum "
 				+ "for " + fileName);
 		}
+
+		if (!digest.equals(actualDigest))
+			throw new RuntimeException("Incorrect checksum "
+					+ "for " + fileName + ":\n"
+					+ actualDigest
+					+ "\n(expected " + digest + ")");
 
 		plugin.setLocalVersion(digest, plugin.getTimestamp());
 		plugin.setStatus(PluginObject.Status.INSTALLED);

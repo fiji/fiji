@@ -204,6 +204,8 @@ public class Util {
 	}
 
 	public static String prefix(String path) {
+		if (new File(path).isAbsolute())
+			return path;
 		if (useMacPrefix && path.startsWith(macPrefix))
 			path = path.substring(macPrefix.length());
 		if (File.separator.equals("\\"))
