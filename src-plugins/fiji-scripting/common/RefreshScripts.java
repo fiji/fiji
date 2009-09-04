@@ -49,6 +49,7 @@ import java.io.PrintWriter;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
@@ -87,6 +88,15 @@ abstract public class RefreshScripts implements PlugIn {
 
 	protected String scriptExtension;
 	protected String languageName;
+
+	/** Default values: the system's. */
+	protected OutputStream out = System.out,
+		               err = System.err;
+
+	public void setOutputStreams(OutputStream out, OutputStream err) {
+		if (null != out) this.out = out;
+		if (null != err) this.err = err;
+	}
 
 	public void setLanguageProperties( String scriptExtension, String languageName ) {
 		this.scriptExtension = scriptExtension;
