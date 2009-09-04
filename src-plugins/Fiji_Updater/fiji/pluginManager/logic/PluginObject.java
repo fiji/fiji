@@ -206,6 +206,11 @@ public class PluginObject {
 		this.action = action;
 	}
 
+	public void setStatus(Status status) {
+		this.status = status;
+		setNoAction();
+	}
+
 	private void markForUpload() {
 		// TODO: make sure that the uploader takes server's timestamp
 		if (!isFiji()) {

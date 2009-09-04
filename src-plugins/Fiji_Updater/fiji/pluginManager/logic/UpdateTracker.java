@@ -114,8 +114,9 @@ public class UpdateTracker implements Runnable, Observer {
 				+ fileName + ": " + actualSize
 				+ " (expected " + size + ")");
 
+		PluginObject plugin = file.getPlugin();
+		String digest = file.getDigest();
 		try {
-			String digest = file.getDigest();
 			String actualDigest = Util.getDigest(fileName);
 			if (!digest.equals(actualDigest))
 				throw new RuntimeException("Incorrect checksum "
@@ -127,6 +128,9 @@ public class UpdateTracker implements Runnable, Observer {
 			throw new RuntimeException("Could not verify checksum "
 				+ "for " + fileName);
 		}
+
+		plugin.setLocalVersion(digest, plugin.getTimestamp());
+		plugin.setStatus(PluginObject.Status.INSTALLED);
 
 		if (Util.isLauncher(fileName) &&
 				!Util.platform.startsWith("win")) try {
