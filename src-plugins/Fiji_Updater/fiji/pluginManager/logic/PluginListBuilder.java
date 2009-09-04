@@ -69,6 +69,11 @@ public class PluginListBuilder extends PluginDataObservable {
 		}
 	}
 
+	protected void queueIfExists(String path) {
+		if (new File(Util.prefix(path)).exists())
+			queue(path);
+	}
+
 	protected void queue(String path) {
 		queue(path, path);
 	}
@@ -79,7 +84,7 @@ public class PluginListBuilder extends PluginDataObservable {
 
 	protected void handle(StringPair pair) {
 		String path = pair.path;
-		String realPath = pair.realPath;
+		String realPath = Util.prefix(pair.realPath);
 		progress(path, counter, total);
 
 		String checksum = "INVALID";
@@ -99,12 +104,9 @@ public class PluginListBuilder extends PluginDataObservable {
 	public void updateFromLocal() {
 		queue = new ArrayList<StringPair>();
 
-		if (Util.isDeveloper)
-			for (String launcher : Util.launchers)
-				queue(launcher, "precompiled/" + launcher);
-		else
-			for (String launcher : Util.getLaunchers())
-				queue(launcher, Util.prefix(launcher));
+		for (String launcher : Util.isDeveloper ?
+					Util.launchers : Util.getLaunchers())
+				queueIfExists(launcher);
 
 		queue("ij.jar");
 
