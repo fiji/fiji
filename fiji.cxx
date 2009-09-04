@@ -1724,6 +1724,7 @@ static int start_ij(void)
 			add_option(options, "-port0", 1);
 		else
 			add_option(options, "-port7", 1);
+		add_option(options, "-Dsun.java.command=Fiji", 0);
 
 		update_files();
 	}

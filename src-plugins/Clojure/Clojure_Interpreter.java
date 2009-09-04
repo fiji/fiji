@@ -38,6 +38,10 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.PrintWriter;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.InputStream;
+import java.io.Reader;
 
 import common.AbstractInterpreter;
 
@@ -126,14 +130,23 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 	/** Calls eval(text) on the LispThread, which is then not destroyed. See the Refresh_Clojure_Scripts for an example.
 	* Parses in the context of (binding [*out* (Clojure.Clojure_Interpreter/getStdOut)] &amp; body) if the PrintWriter out is not null.*/ // Overrides super method
 	static public Object evaluate(final String text) throws Throwable {
+		return evaluate(new StringReader(new StringBuilder("(binding [*out* (Clojure.Clojure_Interpreter/getStdOut)]\n").append(text).append("\n)\n").toString())); // Needs newline char in front of parenthesis to ensure there isn't a comment at the end of the text.
+	}
+
+	static public Object evaluate(final InputStream istream) throws Throwable {
+		return evaluate(new BufferedReader(new InputStreamReader(istream)));
+	}
+
+	static public Object evaluate(final Reader input_reader) throws Throwable {
 		LispThread thread = LispThread.getInstance();
-		Object ret = thread.eval(text);
+		Object ret = thread.eval(input_reader);
 		thread.throwError();
 		return ret;
 	}
 
 	static public PrintWriter getStdOut() {
-		return LispThread.getStdOut();
+		PrintWriter out = LispThread.getStdOut();
+		return null == out ? new PrintWriter(System.out) : out;
 	}
 
 	/** Complicated Thread setup just to be able to initialize and cleanup within the context of the same Thread, as required by Clojure. All Clojure scripts will evaluate within the context of this singleton class. */
@@ -142,7 +155,7 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 		static private LispThread instance = null;
 		static private PrintWriter out = null;
 		private boolean go = false;
-		private String text = null;
+		private Reader input_reader = null;
 		private String result = null;
 		private Throwable error = null;
 		private boolean working = false;
@@ -221,16 +234,12 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 			}
 		}
 		/** Parsing in the context of (binding [*out* (Clojure.Clojure_Interpreter/getStdOut)] &amp; body) if this.out is not null.*/
-		String eval(final String text) {
+		String eval(final Reader input_reader) {
 			String res = null;
 			try {
 				synchronized (this) {
 					lock();
-					if (null != out) {
-						this.text = new StringBuffer("(clojure.core/binding [clojure.core/*out* (Clojure.Clojure_Interpreter/getStdOut)]\n").append(text).append("\n)\n").toString();
-					} else {
-						this.text = text;
-					}
+					this.input_reader = input_reader;
 					working = true;
 					unlock();
 				}
@@ -259,20 +268,20 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 					StringBuffer sb = null;
 					try {
 						RUN.wait();
-						if (null == text) {
+						if (null == input_reader) {
 							continue; // goes to 'finally' clause
 						}
 
 						synchronized (this) {
 							lock();
-							sb = parse(text);
+							sb = parse(input_reader);
 							if (null == sb) result = null;
 							else {
 								// remove last newline char, since it will be added again
 								if (sb.length() > 0) sb.setLength(sb.length()-1);
 								result = sb.toString();
 							}
-							text = null;
+							input_reader = null;
 						}
 					} catch (Throwable t) {
 						error = t;
@@ -318,10 +327,10 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 			//refer.invoke(CLOJURE);
 		}
 
-		/** Evaluates the clojure code in @param text and appends a newline char to each returned token. */
-		static private StringBuffer parse(final String text) throws Throwable {
+		/** Evaluates the clojure code in the reader and appends a newline char to each returned token. */
+		static private StringBuffer parse(final Reader ireader) throws Throwable {
 			// prepare input for parser
-			final LineNumberingPushbackReader lnpr = new LineNumberingPushbackReader(new StringReader(text));
+			final LineNumberingPushbackReader lnpr = new LineNumberingPushbackReader(ireader);
 			// storage for readout
 			final StringWriter sw = new StringWriter();
 
@@ -349,6 +358,13 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 			Var.pushThreadBindings(RT.map(star2, ob));
 			// The last returned object of whatever was executed gets set to star1
 			Var.pushThreadBindings(RT.map(star1, ret));
+
+			// In case it was not closed:
+			try {
+				ireader.close();
+			} catch (Exception ioe) {
+				ioe.printStackTrace();
+			}
 
 			return sw.getBuffer();
 		}

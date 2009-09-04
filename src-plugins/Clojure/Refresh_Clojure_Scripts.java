@@ -2,6 +2,7 @@ package Clojure;
 
 import common.RefreshScripts;
 import java.io.File;
+import java.io.InputStream;
 import ij.IJ;
 
 public class Refresh_Clojure_Scripts extends RefreshScripts {
@@ -21,6 +22,20 @@ public class Refresh_Clojure_Scripts extends RefreshScripts {
 			}
 			if (IJ.isWindows()) path = path.replace('\\', '/');
 			Object res = Clojure_Interpreter.evaluate("(load-file \"" + path + "\")");
+			if (null != res) {
+				String s = res.toString();
+				if (s.length() > 0 && !"nil".equals(s)) IJ.log(res.toString());
+			}
+			Clojure_Interpreter.destroy();
+		} catch (Throwable error) {
+			printError(error);
+		}
+	}
+
+	/** Will consume and close the stream. */
+	public void runScript(final InputStream istream) {
+		try {
+			Object res = Clojure_Interpreter.evaluate(istream);
 			if (null != res) {
 				String s = res.toString();
 				if (s.length() > 0 && !"nil".equals(s)) IJ.log(res.toString());

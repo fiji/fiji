@@ -18,23 +18,37 @@ public class Refresh_JRuby_Scripts extends RefreshScripts {
 	}
 
 	public void runScript(String filename) {
-		PrintStream outPS=new PrintStream(System.out);
-		System.out.println("Starting JRuby in runScript()...");
-		Ruby rubyRuntime = Ruby.newInstance(System.in,outPS,outPS);
-		System.out.println("Done.");
-		rubyRuntime.evalScriptlet(JRuby_Interpreter.getStartupScript());
-
-		FileInputStream fis=null;
 		try {
-			fis = new FileInputStream(filename);
+			// runScript(InputStream) will close the stream
+			runScript(new FileInputStream(filename));
 		} catch( IOException e ) {
 			throw new RuntimeException("Couldn't open the script: "+filename);
 		}
+	}
+
+	/** Will consume and close the stream. */
+	public void runScript(InputStream istream) {
+		runScript(istream, "");
+	}
+
+	/** Will consume and close the stream. */
+	public void runScript(InputStream istream, String filename) {
+		System.out.println("Starting JRuby in runScript()...");
+		Ruby rubyRuntime = Ruby.newInstance(System.in, new PrintStream(super.out), new PrintStream(super.err));
+		System.out.println("Done.");
+		rubyRuntime.evalScriptlet(JRuby_Interpreter.getStartupScript());
 
 		try {
-			rubyRuntime.runFromMain(fis,filename);
+			rubyRuntime.runFromMain(istream, filename);
 		} catch( Throwable t ) {
 			printError(t);
+		} finally {
+			try {
+				istream.close();
+			} catch (Exception e) {
+				System.out.println("JRuby runScript could not close the stream!");
+				e.printStackTrace();
+			}
 		}
 
 		// Undesirably this throws an exception, so just let the 
