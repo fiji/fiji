@@ -12,6 +12,8 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import fiji.pluginManager.logic.PluginObject;
 
+// TODO: this should not be a frame, but a JPanel, and it should automatically
+// update the plugin details, activating the "Upload" button.
 public class DetailsEditor extends JFrame {
 	private DocumentListener changeListener;
 	private MainUserInterface mainUserInterface;

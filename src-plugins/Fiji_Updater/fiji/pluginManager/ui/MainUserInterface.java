@@ -295,6 +295,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 	public void download() {
 		final UpdateTracker tracker = new UpdateTracker();
 		final Downloader downloader = tracker.getDownloader();
+		// TODO: make observer class standalone
 		downloader.addObserver(new Observer() {
 			public void update(Observable observable, Object arg) {
 				IJ.showStatus("Downloading " + downloader
@@ -375,6 +376,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 				btnEditDetails.setEnabled(false);
 		}
 		enableIfAnyChange(btnStart);
+		// TODO: "Upload" is activated by default!"
 		enableIfAnyUpload(btnUpload);
 	}
 
