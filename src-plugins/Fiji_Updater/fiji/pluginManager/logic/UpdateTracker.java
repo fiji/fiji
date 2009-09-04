@@ -90,14 +90,19 @@ public class UpdateTracker implements Runnable, Observer {
 		try {
 			downloader.start(downloadList);
 		} catch (RuntimeException e) {
-			// TODO: remove current file, tell user
+			e.printStackTrace();
+			IJ.error(e.getMessage());
+			IJ.showProgress(1, 1);
+			IJ.showStatus("Download failed");
+			// TODO: remove current file
 		}
 		downloadThread = null;
 	}
 
 	public void update(Observable observable, Object arg) {
 		if (downloader.hasError())
-			throw new RuntimeException("Failed!");
+			throw new RuntimeException("Failed! "
+					+ downloader.getError());
 
 		PluginDownload file = (PluginDownload)downloader.getCurrent();
 		String fileName = file.getDestination();
