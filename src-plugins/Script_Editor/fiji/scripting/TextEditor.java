@@ -47,6 +47,8 @@ import java.io.IOException;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.PrintWriter;
+import java.io.OutputStream;
+import java.io.LineNumberReader;
 import java.awt.image.BufferedImage;
 import java.util.Vector;
 import java.util.List;
@@ -640,15 +642,59 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 
 		textArea.setEditable(false);
 		try {
+			final RefreshScripts interpreter = Languages.getInstance().get(lang_ext).interpreter;
+
+
+			// Pipe JTextArea textArea current text into the runScript:
 			final PipedInputStream pi = new PipedInputStream(4096);
 			final PipedOutputStream po = new PipedOutputStream(pi);
-
-			final RefreshScripts interpreter = Languages.getInstance().get(lang_ext).interpreter;
 
 			// Start reading, should block until writing starts
 			new TextEditor.Executer() {
 				public void execute() {
+
+					// Output to the screen: create an OutputStream that ends up appending to the screen JTextArea.
+					PipedInputStream in = new PipedInputStream(); // default size: 1024
+					PipedOutputStream out = null;
+					try {
+						out = new PipedOutputStream(in);
+						interpreter.setOutputStreams( out, out );
+					} catch (Exception e) {
+						IJ.log("Could not connect stdout!");
+						e.printStackTrace();
+						return;
+					}
+
+					final BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+
+					Thread out_thread = new Thread() {
+						{
+							setPriority(Thread.NORM_PRIORITY);
+							try { setDaemon(true); } catch (Exception e) { e.printStackTrace(); }
+							start();
+						}
+						public void run() {
+							while (!isInterrupted()) {
+								try {
+									// Will block until it can print a full line:
+									screen.append(new StringBuilder(reader.readLine()).append('\n').toString());
+									// Scroll to the end
+									screen.setCaretPosition(screen.getDocument().getLength());
+								} catch (Exception e) {
+									break;
+								}
+							}
+						}
+					};
+
 					interpreter.runScript(pi);
+
+					try {
+						out.flush(); // write output to JTextArea screen
+						out.close();
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 				}
 			};
 
@@ -688,7 +734,6 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		if (!handleUnsavedChanges())
 			return;
 		dispose();
-
 	}
 
 	//next function is for the InputMethodEvent changes
