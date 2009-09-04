@@ -66,7 +66,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		String list = null;
 		for (PluginObject plugin : pluginManager.pluginCollection) {
 			File file = new File(Util.prefix(plugin.getFilename()));
-			if (file.canWrite())
+			if (!file.exists() || file.canWrite())
 				continue;
 			if (list == null)
 				list = plugin.getFilename();
