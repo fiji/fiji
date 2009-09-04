@@ -101,7 +101,7 @@ public class Confirmation extends JFrame {
 		if (dependencyBuilder.conflicts())
 			return;
 		// TODO: bah!  Confirmation now serves as a controller?  Messy!
-		mainUserInterface.openDownloader();
+		mainUserInterface.download();
 	}
 
 	private void backToframeManager() {

@@ -23,6 +23,9 @@ import java.util.Observer;
  * those that are marked for deletion. It is able to track the number of bytes
  * downloaded.
  */
+// TODO: this should extend Downloader, and not implement Runnable (it must
+// be run in a thread, alright, but that is the duty of the caller, who wants
+// to be able to cancel the download!).
 public class UpdateTracker implements Runnable, Observer {
 	private volatile Thread downloadThread;
 	private volatile Downloader downloader;
@@ -31,8 +34,14 @@ public class UpdateTracker implements Runnable, Observer {
 	public PluginCollection plugins;
 	public PluginObject currentPlugin;
 
-	public UpdateTracker(PluginCollection plugins) {
-		this.plugins = plugins;
+	public UpdateTracker() {
+		this.plugins = PluginCollection.getInstance();
+		downloader = new Downloader();
+		downloader.addObserver(this);
+	}
+
+	public Downloader getDownloader() {
+		return downloader;
 	}
 
 	public boolean isDownloading() {
@@ -78,8 +87,6 @@ public class UpdateTracker implements Runnable, Observer {
 			downloadList.add(file);
 		}
 
-		downloader = new Downloader();
-		downloader.addObserver(this);
 		try {
 			downloader.start(downloadList);
 		} catch (RuntimeException e) {

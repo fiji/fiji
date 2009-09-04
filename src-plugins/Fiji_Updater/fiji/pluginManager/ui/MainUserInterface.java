@@ -6,6 +6,7 @@ import fiji.pluginManager.logic.PluginCollection;
 import fiji.pluginManager.logic.PluginManager;
 import fiji.pluginManager.logic.PluginObject;
 
+import fiji.pluginManager.util.Downloader;
 import fiji.pluginManager.util.Util;
 
 import ij.IJ;
@@ -15,6 +16,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import java.io.File;
+
+import java.util.Observable;
+import java.util.Observer;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -264,11 +268,8 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 	}
 
 	private void clickToBeginOperations() {
-		loadedFrame = new Confirmation(this);
-		Confirmation confirmation = (Confirmation)loadedFrame;
-		// TODO: confirmation.displayInformation(new DependencyBuilder(pluginManager.pluginCollection));
-		showFrame();
-		setEnabled(false);
+		// TODO: check conflicts
+		download();
 	}
 
 	private void clickToQuitPluginManager() {
@@ -291,13 +292,18 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		}
 	}
 
-	public void openDownloader() {
-		backToPluginManager();
-		loadedFrame = new Installer(this);
-		showFrame();
-		Installer installer = (Installer)loadedFrame;
-		installer.setInstaller(new UpdateTracker(pluginManager.pluginCollection));
-		setEnabled(false);
+	public void download() {
+		final UpdateTracker tracker = new UpdateTracker();
+		final Downloader downloader = tracker.getDownloader();
+		downloader.addObserver(new Observer() {
+			public void update(Observable observable, Object arg) {
+				IJ.showStatus("Downloading " + downloader
+					.getCurrent().getDestination() + "...");
+				IJ.showProgress(downloader.getDownloadedBytes(),
+					downloader.getTotalBytes());
+			}
+		});
+		tracker.start();
 	}
 
 	public void backToPluginManager() {

@@ -13,8 +13,9 @@ import java.util.Observable;
 import java.util.Observer;
 
 /*
- * Direct responsibility: Download a list of files given their respective URLs to their
- * respective destinations. Updates its download status to its Observer as well.
+ * Direct responsibility: Download a list of files given their respective URLs
+ * to their respective destinations. Updates its download status to its
+ * Observer as well.
  */
 public class Downloader extends Observable {
 	protected int downloadedBytes, totalBytes;
