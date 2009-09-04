@@ -8,6 +8,7 @@ import java.io.BufferedInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.FileInputStream;
+import java.io.PrintStream;
 import bsh.Interpreter;
 import ij.IJ;
 
@@ -36,7 +37,10 @@ public class Refresh_BSH_Scripts extends RefreshScripts {
 	/** Will consume and close the stream. */
 	public void runScript(InputStream istream) {
 		try {
-			new Interpreter().eval(new InputStreamReader(istream));
+			Interpreter interpreter = new Interpreter();
+			interpreter.setOut(new PrintStream(out));
+			interpreter.setErr(new PrintStream(err));
+			interpreter.eval(new InputStreamReader(istream));
 		} catch (Throwable error) {
 			printError(error);
 		}

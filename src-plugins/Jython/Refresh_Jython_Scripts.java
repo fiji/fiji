@@ -60,6 +60,8 @@ public class Refresh_Jython_Scripts extends RefreshScripts {
 			pystate.setClassLoader(IJ.getClassLoader());
 			PythonInterpreter PI =
 				new PythonInterpreter(new PyDictionary(), pystate);
+			PI.setOut(this.out);
+			PI.setErr(this.err);
 			Jython_Interpreter.importAll(PI);
 			PI.execfile(istream);
 		} catch (Throwable t) {
