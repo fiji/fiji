@@ -18,7 +18,7 @@ import java.util.Observer;
  * Observer as well.
  */
 public class Downloader extends Observable {
-	protected int downloadedBytes, totalBytes;
+	protected int count, total;
 	protected long lastModified;
 	protected FileDownload current;
 
@@ -39,9 +39,9 @@ public class Downloader extends Observable {
 		cancelled = false;
 		error = null;
 
-		downloadedBytes = totalBytes = 0;
+		count = total = 0;
 		for (FileDownload file : files)
-			totalBytes += file.getFilesize();
+			total += file.getFilesize();
 
 		try {
 			for (FileDownload current : files) {
@@ -51,7 +51,8 @@ public class Downloader extends Observable {
 				downloadCurrent();
 			}
 		} catch (Exception error) {
-			error(error.getMessage());
+			error.printStackTrace();
+			error(error.toString());
 		}
 	}
 
@@ -101,15 +102,15 @@ public class Downloader extends Observable {
 			if (count < 0)
 				break;
 			out.write(buffer, 0, count);
-			downloadedBytes += count;
+			count += count;
 			setChanged();
 			notifyObservers();
 		}
+		in.close();
+		out.close();
 		complete = true;
 		setChanged();
 		notifyObservers();
-		in.close();
-		out.close();
 	}
 
 	protected void error(String message) {
@@ -131,16 +132,20 @@ public class Downloader extends Observable {
 		return complete;
 	}
 
+	public boolean isComplete() {
+		return count == total;
+	}
+
 	public FileDownload getCurrent() {
 		return current;
 	}
 
 	public int getDownloadedBytes() {
-		return downloadedBytes;
+		return count;
 	}
 
 	public int getTotalBytes() {
-		return totalBytes;
+		return total;
 	}
 
 	public long getLastModified() {

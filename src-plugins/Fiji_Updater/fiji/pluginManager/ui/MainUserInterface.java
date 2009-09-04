@@ -293,18 +293,8 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 	}
 
 	public void download() {
-		final UpdateTracker tracker = new UpdateTracker();
-		final Downloader downloader = tracker.getDownloader();
-		// TODO: make observer class standalone
-		downloader.addObserver(new Observer() {
-			public void update(Observable observable, Object arg) {
-				IJ.showStatus("Downloading " + downloader
-					.getCurrent().getDestination() + "...");
-				IJ.showProgress(downloader.getDownloadedBytes(),
-					downloader.getTotalBytes());
-			}
-		});
-		tracker.start();
+		// TODO: make a progress interface & class
+		new UpdateTracker().start();
 	}
 
 	public void backToPluginManager() {

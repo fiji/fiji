@@ -151,6 +151,9 @@ public class UpdateTracker implements Runnable, Observer {
 			throw new RuntimeException("Could not mark "
 				+ fileName + " as executable");
 		}
+
+		IJ.showProgress(1, 1);
+		IJ.showStatus("Installation complete");
 	}
 
 	public static void touch(String target) throws IOException {
