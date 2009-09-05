@@ -30,7 +30,6 @@ import java.util.Set;
  * plugins
  */
 public class PluginListBuilder {
-	// TODO: refactor Progress to util.Progress
 	protected Progress progress;
 	int counter, total;
 

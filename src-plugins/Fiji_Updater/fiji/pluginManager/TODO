@@ -49,23 +49,15 @@ Show-stoppers:
 
 Not-quite show-stoppers:
 
-- "Update it" would probably be better named "Upload", to make it clear
-  what is updated.
-
 - If the developer tries to upload a version that has already be marked
   as a previous version, ask her loudly if she is sure.
 
-- We need an action that records that a file is to be deleted.  This
-  needs to be presented as an option when the file is in the database,
-  but not in the current installation.  The label of that action escapes
-  me, though: what would be a sensible label?
+- When a plugin is not installed, the menu item "Upload It" would be more
+  aptly names "Remove from Updater".
 
 - The actions should be editable by keyboard shortcuts.  Likewise,
   "Escape" should exit, asking if the user is sure when actions where
   selected but not launched.
-
-- Last time I looked, the "ui" package was in dear need of
-  simplification.
 
 - The list of plugins included in the file should be shown, too.  We can
   use fiji.User_Plugins' parsePluginsConfig() method, probably after
@@ -76,23 +68,7 @@ Not-quite show-stoppers:
   Editor" to belong into the categories "segmentation" and
   "interactive".
 
-- beganUpload() method does funny commands at the beginning.  It should
-  definitely not need to "chmod u-w" db.xml.gz!
-
 - make the list sortable by clicking on the column titles (second click
   sorts descending).
-
-- instead of having a data model for the XML file, and a different one for
-  Java, use the XML one in Java, too: we should _not_ create a complete
-  PluginObject for every single previous version!
-
-- it is totally unclear what is the purpose and intended collaboration of
-  the UpdateTracker, FileDownload, SourceFile, PluginDownload, Installer and
-  Downloader classes.  But it is not really necessary to have that many
-  classes play together, either.  There should be a single Downloader which
-  is observable.
-
-- as plugins should be copied into /var/www/update/ as read-only files, make
-  sure that only those are copied that have not changed.
 
 - it was part of the project plan to provide automated tests.  Add some.
