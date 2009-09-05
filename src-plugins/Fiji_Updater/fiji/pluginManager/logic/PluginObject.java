@@ -84,11 +84,6 @@ public class PluginObject {
 
 	private Status status;
 	private Action action;
-
-	//State to indicate whether Plugin removed/downloaded successfully
-	public static enum ChangeStatus { NONE, SUCCESS, FAIL }; // TODO: remove
-
-	ChangeStatus changedStatus = ChangeStatus.NONE;
 	public String filename, description, newChecksum;
 	public Version current;
 	public Map<Version, Object> previous;
@@ -173,19 +168,6 @@ public class PluginObject {
 
 	public void addPreviousVersion(String checksum, long timestamp) {
 		previous.put(new Version(checksum, timestamp), (Object)null);
-	}
-
-	// TODO: ChangeStatus?  That name sounds too long.  How about Status? and is it really needed to begin with?
-	public void setChangeStatus(ChangeStatus status) {
-		this.changedStatus = status;
-	}
-
-	public void success() {
-		setChangeStatus(ChangeStatus.SUCCESS);
-	}
-
-	public void fail() {
-		setChangeStatus(ChangeStatus.FAIL);
 	}
 
 	public void setNoAction() {
@@ -306,18 +288,6 @@ public class PluginObject {
 
 	public boolean isFiji() {
 		return status != Status.NOT_FIJI;
-	}
-
-	public boolean changeSucceeded() {
-		return changedStatus == ChangeStatus.SUCCESS;
-	}
-
-	public boolean changeFailed() {
-		return changedStatus == ChangeStatus.FAIL;
-	}
-
-	public boolean changeNotDone() {
-		return changedStatus == ChangeStatus.NONE;
 	}
 
 	/**

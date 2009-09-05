@@ -204,12 +204,6 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		return null;
 	}
 
-	// TODO: remove.  ChangeStatus should never be set or read.
-	public void resetChangeStatuses() {
-		for (PluginObject plugin : this)
-			plugin.setChangeStatus(PluginObject.ChangeStatus.NONE);
-	}
-
 	protected class Dependencies implements Iterator<Dependency> {
 		Iterator<String> iterator;
 		Dependency current;
