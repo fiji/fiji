@@ -5,7 +5,6 @@ import ij.plugin.BrowserLauncher;
 import fiji.pluginManager.logic.Dependency;
 import fiji.pluginManager.logic.PluginCollection;
 import fiji.pluginManager.logic.PluginObject;
-import fiji.pluginManager.logic.UpdateTracker;
 
 import java.awt.Color;
 import java.awt.Cursor;

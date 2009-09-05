@@ -1,5 +1,6 @@
 package fiji.pluginManager.logic;
 
+import fiji.pluginManager.ui.IJProgress;
 import fiji.pluginManager.ui.MainUserInterface;
 
 import fiji.pluginManager.util.Util;
@@ -12,17 +13,18 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 
-import java.util.Observable;
-import java.util.Observer;
-
 import javax.swing.JOptionPane;
 
+import javax.xml.parsers.ParserConfigurationException;
+
+// TODO: scrap useless comment, rename package to fiji.updater and rename this
+// class to "Main" or "Updater".
 /*
  * Start up class of Plugin Manager Application:
  * Facade, Business logic, and overall-in-charge of providing the main user interface the
  * required list of PluginObjects that interface will use for display.
  */
-public class PluginManager implements PlugIn, Observer {
+public class PluginManager implements PlugIn {
 	public static final String MAIN_URL = "http://pacific.mpi-cbg.de/uploads/incoming/plugins/";
 	//public static final String MAIN_URL = "http://pacific.mpi-cbg.de/update/"; //TODO
 
@@ -39,81 +41,57 @@ public class PluginManager implements PlugIn, Observer {
 	public static final String PREFS_XMLDATE = "fiji.updater.xmlDate";
 	public static final String PREFS_USER = "fiji.updater.login";
 
-	// Track when was file modified (Lock conflict purposes)
-	private long xmlLastModified;
-
-	//PluginObjects for output at User Interface
-	public PluginCollection pluginCollection;
-
-	//Used for generating Plugin information
-	private XMLFileDownloader xmlFileDownloader;
-	private PluginListBuilder pluginListBuilder;
-	public XMLFileReader xmlFileReader;
+	// Track when db.xml.gz was modified (Lock conflict purposes)
+	private long lastModified;
 
 	public void run(String arg) {
-		PluginCollection plugins = PluginCollection.getInstance();
+		// TODO: this should not be a thread
+		new Thread() {
+			public void run() {
+				openPluginManager();
+			}
+		}.start();
+	}
+
+	// TODO: move more functionality into this class; the ui should be the ui only!!!
+	public void openPluginManager() {
+		// TODO: use ProgressPane in main window
+		IJProgress progress = new IJProgress();
+		progress.setTitle("Starting up Plugin Manager...");
+
+		XMLFileDownloader downloader = new XMLFileDownloader();
+		downloader.addProgress(progress);
 		try {
-			IJ.showStatus("Starting up Plugin Manager...");
-			xmlFileDownloader = new XMLFileDownloader();
-			xmlFileDownloader.addObserver(this);
-			xmlFileDownloader.start();
-
-			xmlLastModified = xmlFileDownloader.getXMLLastModified();
-			xmlFileReader = new XMLFileReader(new ByteArrayInputStream(xmlFileDownloader.getXMLFileData()));
-
-			pluginListBuilder = new PluginListBuilder(plugins);
-			pluginListBuilder.addObserver(this);
-			pluginListBuilder.updateFromLocal();
-		} catch (Error e) {
-			e.printStackTrace();
-			//Interface side: This should handle presentation side of exceptions
-			IJ.error("Error: " + e);
+			downloader.start();
+			lastModified = downloader.getXMLLastModified();
+			// TODO: it is a parser, not a reader.  And it should
+			// be a static method.
+			new XMLFileReader(downloader.getInputStream());
 		} catch (Exception e) {
 			e.printStackTrace();
-			try {
-				new File(Util.prefix(PluginManager.XML_COMPRESSED))
+			new File(Util.prefix(PluginManager.XML_COMPRESSED))
 					.deleteOnExit();
-				IJ.error("Download/checksum failed: " + e);
-				UpdateFiji updateFiji = new UpdateFiji();
-				updateFiji.hasGUI = true;
-				updateFiji.exec(UpdateFiji.defaultURL);
-			} catch (SecurityException se) {
-				IJ.error("Security exception: " + se);
-			}
+			IJ.error("Download/checksum failed: " + e);
+			fallBackToOldUpdater();
+			return;
 		}
+
+		PluginListBuilder pluginListBuilder =
+			new PluginListBuilder(progress);
+		pluginListBuilder.updateFromLocal();
+		IJ.showStatus("");
+
+		MainUserInterface main = new MainUserInterface(lastModified);
+		main.setVisible(true);
 	}
 
-	public long getXMLLastModified() {
-		return xmlLastModified;
-	}
-
-	//Show progress of startup at IJ bar, directs what actions to take after task is complete.
-	public void update(Observable subject, Object arg) {
+	protected void fallBackToOldUpdater() {
 		try {
-			if (subject == xmlFileDownloader) {
-				IJ.showStatus("Downloading " + xmlFileDownloader.getTaskname() + "...");
-				IJ.showProgress(xmlFileDownloader.getCounter(),
-						xmlFileDownloader.getTotal());
-			} else if (subject == pluginListBuilder) {
-				IJ.showStatus("Checksumming "
-					+ pluginListBuilder.getTaskname()
-					+ "...");
-				IJ.showProgress(pluginListBuilder.getCounter(),
-						pluginListBuilder.getTotal());
-
-				//After plugin list is built successfully, retrieve it and show main interface
-				if (pluginListBuilder.isDone()) {
-					IJ.showStatus("");
-					pluginCollection = pluginListBuilder.plugins;
-
-					MainUserInterface mainUserInterface = new MainUserInterface(this);
-					mainUserInterface.setVisible(true);
-				}
-
-			}
-		} catch (Throwable e) {
-			e.printStackTrace();
-			throw new Error(e.getLocalizedMessage());
+			UpdateFiji updateFiji = new UpdateFiji();
+			updateFiji.hasGUI = true;
+			updateFiji.exec(UpdateFiji.defaultURL);
+		} catch (SecurityException se) {
+			IJ.error("Security exception: " + se);
 		}
 	}
 }

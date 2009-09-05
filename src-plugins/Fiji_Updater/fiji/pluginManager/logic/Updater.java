@@ -44,10 +44,6 @@ public class Updater {
 	protected long xmlLastModified;
 	protected FileUploader uploader;
 
-	public Updater(PluginManager pluginManager) {
-		this(pluginManager.getXMLLastModified());
-	}
-
 	public Updater(long xmlLastModified) {
 		// TODO: use lastModified() of lock file as timestamp for new
 		// plugins

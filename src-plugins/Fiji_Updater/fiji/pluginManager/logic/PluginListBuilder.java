@@ -2,6 +2,7 @@ package fiji.pluginManager.logic;
 
 import fiji.pluginManager.logic.PluginObject.Status;
 
+import fiji.pluginManager.util.Progress;
 import fiji.pluginManager.util.Util;
 
 import java.io.File;
@@ -28,11 +29,14 @@ import java.util.Set;
  * latestDigests and latestDates hold checksums and versions of latest Fiji
  * plugins
  */
-public class PluginListBuilder extends PluginDataObservable {
-	protected PluginCollection plugins;
+public class PluginListBuilder {
+	// TODO: refactor Progress to util.Progress
+	protected Progress progress;
+	int counter, total;
 
-	public PluginListBuilder(PluginCollection plugins) {
-		this.plugins = plugins;
+	public PluginListBuilder(Progress progress) {
+		this.progress = progress;
+		progress.setTitle("Checksumming");
 	}
 
 	static class StringPair {
@@ -85,20 +89,24 @@ public class PluginListBuilder extends PluginDataObservable {
 	protected void handle(StringPair pair) {
 		String path = pair.path;
 		String realPath = Util.prefix(pair.realPath);
-		progress(path, counter, total);
+		progress.addItem(path);
 
 		String checksum = "INVALID";
 		try {
 			checksum = Util.getDigest(path, realPath);
 		} catch (Exception e) { e.printStackTrace(); }
 		long timestamp = Util.getTimestamp(realPath);
+
+		PluginCollection plugins = PluginCollection.getInstance();
 		PluginObject plugin = plugins.getPlugin(path);
 		if (plugin != null)
 			plugin.setLocalVersion(checksum, timestamp);
 		else
 			plugins.add(new PluginObject(path, checksum,
 				timestamp, Status.NOT_FIJI));
-		counter += Util.getFilesize(realPath);
+		counter += (int)Util.getFilesize(realPath);
+		progress.setItemCount(1, 1);
+		progress.setCount(counter, total);
 	}
 
 	public void updateFromLocal() {
@@ -126,6 +134,5 @@ public class PluginListBuilder extends PluginDataObservable {
 		counter = 0;
 		for (StringPair pair : queue)
 			handle(pair);
-		done();
 	}
 }

@@ -19,11 +19,15 @@ import fiji.pluginManager.logic.FileUploader.SourceFile;
 import fiji.pluginManager.logic.FileUploader.UploadListener;
 
 /*
- * The "interface" for uploading plugins (Consists of IJ progress bar & IJ GenericDialog).
+ * The "interface" for uploading plugins (Consists of IJ progress bar & IJ
+ * GenericDialog).
  */
+// TODO: "Updater" should be named "Uploader", and this class should be partly
+// merged into MainUserInterface (which should be renamed to "Main"), and
+// partly refactored into "class SSHLogin".
+// TODO: use new progress interface
 public class Uploader implements UploadListener, Runnable {
 	private volatile MainUserInterface mainUserInterface;
-	private volatile PluginManager pluginManager;
 	private volatile Updater updater;
 	private Thread uploadThread;
 
@@ -32,8 +36,9 @@ public class Uploader implements UploadListener, Runnable {
 	}
 
 	//Ask for login details and then began upload process
-	public synchronized void setUploadInformationAndStart(PluginManager pluginManager) {
-		this.pluginManager = pluginManager;
+	public void setUploadInformationAndStart(long xmlLastModified) {
+		updater = new Updater(xmlLastModified);
+		// TODO: caller needs to thread, not callee
 		uploadThread = new Thread(this);
 		uploadThread.start();
 	}
@@ -57,7 +62,6 @@ public class Uploader implements UploadListener, Runnable {
 		try {
 			String username = "";
 			String password = "";
-			updater = new Updater(pluginManager);
 			do {
 				//Dialog to enter username and password
 				GenericDialog gd = new GenericDialog("Login");

@@ -1,9 +1,8 @@
 package fiji.pluginManager.ui;
 
 import fiji.pluginManager.logic.DependencyBuilder;
-import fiji.pluginManager.logic.UpdateTracker;
+import fiji.pluginManager.logic.Installer;
 import fiji.pluginManager.logic.PluginCollection;
-import fiji.pluginManager.logic.PluginManager;
 import fiji.pluginManager.logic.PluginObject;
 
 import fiji.pluginManager.util.Downloader;
@@ -37,13 +36,15 @@ import javax.swing.event.DocumentListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 
-/*
- * Main User Interface, where the user chooses his options...
- */
+// TODO: add a method that blocks the user interface
+// TODO: add a ProgressPane
+// TODO: while the ProgressPane is showing, prevent the window from closing
+// without a nagging question (and call cancel's actionPerformed if user wants
+// to abort)
 public class MainUserInterface extends JFrame implements TableModelListener {
-	private PluginManager pluginManager;
+	PluginCollection plugins;
+	long xmlLastModified;
 
-	//User Interface elements
 	private JFrame loadedFrame;
 	private String[] arrViewingOptions;
 	private JTextField txtSearch;
@@ -55,16 +56,17 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 	private JButton btnStart;
 
 	//For developers
+	// TODO: no more Hungarian notation
 	private JButton btnUpload;
 	private JButton btnEditDetails;
 
-	public MainUserInterface(PluginManager pluginManager) {
+	public MainUserInterface(long xmlLastModified) {
 		super("Plugin Manager");
-		this.pluginManager = pluginManager;
 
-		//Pulls required information from pluginManager
+		plugins = PluginCollection.getInstance();
+
 		String list = null;
-		for (PluginObject plugin : pluginManager.pluginCollection) {
+		for (PluginObject plugin : plugins) {
 			File file = new File(Util.prefix(plugin.getFilename()));
 			if (!file.exists() || file.canWrite())
 				continue;
@@ -137,7 +139,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		lblSummaryPanel.add(Box.createHorizontalGlue());
 
 		//Create the plugin table and set up its scrollpane
-		table = new PluginTable(pluginManager.pluginCollection, this);
+		table = new PluginTable(plugins, this);
 		JScrollPane pluginListScrollpane = new JScrollPane(table);
 		pluginListScrollpane.getViewport().setBackground(table.getBackground());
 
@@ -224,7 +226,6 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 
 	//Whenever search text or ComboBox has been changed
 	private void changeListingListener() {
-		PluginCollection plugins = pluginManager.pluginCollection;
 		Iterable<PluginObject> view;
 
 		// TODO: OUCH!
@@ -257,7 +258,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		//There's no frame interface for Uploader, makes disabling pointless, thus set invisible
 		Uploader uploader = new Uploader(this);
 		setEnabled(false);
-		uploader.setUploadInformationAndStart(pluginManager);
+		uploader.setUploadInformationAndStart(xmlLastModified);
 	}
 
 	// TODO: why should this function need to know that it is triggered by a click?  That is so totally unnecessary.
@@ -274,7 +275,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 
 	private void clickToQuitPluginManager() {
 		//if there exists plugins where actions have been specified by user
-		if (pluginManager.pluginCollection.hasChanges() &&
+		if (plugins.hasChanges() &&
 				JOptionPane.showConfirmDialog(this,
 					"You have specified changes. Are you "
 					+ "sure you want to quit?",
@@ -293,8 +294,20 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 	}
 
 	public void download() {
-		// TODO: make a progress interface & class
-		new UpdateTracker().start();
+		new Thread() {
+			public void run() {
+				// TODO: use ProgressPane
+				// TODO: handle Cancel
+				Installer installer =
+					new Installer(new IJProgress());
+				try {
+					installer.start();
+				} catch (Exception e) {
+					// TODO: make error() method
+					IJ.error("Installer failed: " + e);
+				}
+			}
+		}.start();
 	}
 
 	public void backToPluginManager() {
@@ -333,14 +346,14 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 	}
 
 	public void tableChanged(TableModelEvent e) {
-		int size = pluginManager.pluginCollection.size();
+		int size = plugins.size();
 		int installCount = 0;
 		int removeCount = 0;
 		int updateCount = 0;
 		int uploadCount = 0;
 
 		//Refresh count information
-		for (PluginObject myPlugin : pluginManager.pluginCollection) {
+		for (PluginObject myPlugin : plugins) {
 			if (myPlugin.toInstall()) {
 				installCount += 1;
 			} else if (myPlugin.toRemove()) {
@@ -371,11 +384,11 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 	}
 
 	private void enableIfAnyUpload(JButton button) {
-		enableIfActions(button, pluginManager.pluginCollection.hasUpload());
+		enableIfActions(button, plugins.hasUpload());
 	}
 
 	private void enableIfAnyChange(JButton button) {
-		enableIfActions(button, pluginManager.pluginCollection.hasChanges());
+		enableIfActions(button, plugins.hasChanges());
 	}
 
 	private void enableIfActions(JButton button, boolean flag) {
