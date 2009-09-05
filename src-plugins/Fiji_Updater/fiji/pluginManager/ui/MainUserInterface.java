@@ -1,6 +1,5 @@
 package fiji.pluginManager.ui;
 
-import fiji.pluginManager.logic.DependencyBuilder;
 import fiji.pluginManager.logic.Installer;
 import fiji.pluginManager.logic.PluginCollection;
 import fiji.pluginManager.logic.PluginObject;
