@@ -217,7 +217,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		run.addSeparator();
 
 		kill = addToMenu(run, "Kill running script...", 1, 0, 0);
-		kill.setEnabled(executing_tasks.size() > 0);
+		kill.setEnabled(false);
 
 		JMenu breakpoints = new JMenu("Breakpoints");
 		resume = addToMenu(breakpoints, "Resume", 1, 0, 0);
@@ -520,6 +520,8 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 			super("Script Editor Run :: " + new Date().toString());
 			// Store itself for later
 			executing_tasks.add(this);
+			// Enable kill menu
+			kill.setEnabled(true);
 			// Fork a task, as a part of this ThreadGroup
 			new Thread(this, getName()) {
 				{
@@ -533,6 +535,8 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 						t.printStackTrace();
 					} finally {
 						executing_tasks.remove(Executer.this);
+						// Leave kill menu item enabled if other tasks are running
+						kill.setEnabled(executing_tasks.size() > 0);
 					}
 				}
 			};

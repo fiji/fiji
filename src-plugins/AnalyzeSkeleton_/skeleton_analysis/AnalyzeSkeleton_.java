@@ -15,7 +15,7 @@ import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 
 /**
- * AnalyzeSkeleton_ plugin for ImageJ(C).
+ * AnalyzeSkeleton_ plugin for ImageJ(C) and Fiji.
  * Copyright (C) 2008,2009 Ignacio Arganda-Carreras 
  *
  * This program is free software; you can redistribute it and/or
@@ -34,15 +34,15 @@ import ij.process.ShortProcessor;
  */
 
 /**
- * Main class.
- * This class is a plugin for the ImageJ interface for analyzing
+ * Main class of the ImageJ/Fiji plugin for skeleton analysis.
+ * This class is a plugin for the ImageJ and Fiji interfaces for analyzing
  * 2D/3D skeleton images.
  * <p>
- * For more information, visit the AnalyzeSkeleton_ homepage:
- * http://imagejdocu.tudor.lu/doku.php?id=plugin:analysis:analyzeskeleton:start
+ * For more detailed information, visit the AnalyzeSkeleton home page:
+ * <A target="_blank" href="http://pacific.mpi-cbg.de/wiki/index.php/AnalyzeSkeleton">http://pacific.mpi-cbg.de/wiki/index.php/AnalyzeSkeleton</A>
  *
  *
- * @version 1.0 09/01/2009
+ * @version 1.0 09/05/2009
  * @author Ignacio Arganda-Carreras <ignacio.arganda@gmail.com>
  *
  */
@@ -170,7 +170,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	private int z_offset = 1;
 	
 	/** debugging flag */
-	private final boolean debug = false;
+	private static final boolean debug = false;
 	
 	
 	/* -----------------------------------------------------------------------*/
@@ -302,7 +302,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	
 	// ---------------------------------------------------------------------------
 	/**
-	 * Calculate the neighborhood size based on the calibration of the image 
+	 * Calculate the neighborhood size based on the calibration of the image.
 	 * @param calibration image calibration
 	 */
 	private void calculateNeighborhoodOffsets(Calibration calibration) 
@@ -331,7 +331,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 
 	// ---------------------------------------------------------------------------
 	/**
-	 * Process skeleton: tag image, mark trees and visit
+	 * Process skeleton: tag image, mark trees and visit.
 	 * 
 	 * @param inputImage2 input skeleton image to process
 	 */
@@ -386,14 +386,17 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 
 	// -----------------------------------------------------------------------
 	/**
-	 * Prune cycles from tagged image and update it
+	 * Prune cycles from tagged image and update it.
 	 * 
 	 * @param inputImage input skeleton image
 	 * @param originalImage original gray-scale image
-	 * @param pruning mode (SHORTEST_BRANCH, LOWEST_INTENSITY_VOXEL)
+	 * @param pruningMode (SHORTEST_BRANCH, LOWEST_INTENSITY_VOXEL, LOWEST_INTENSITY_BRANCH)
 	 * @return true if the input image was pruned or false if there were no cycles
 	 */
-	private boolean pruneCycles(ImageStack inputImage, final ImageStack originalImage, final int pruningMode) 
+	private boolean pruneCycles(
+			ImageStack inputImage, 
+			final ImageStack originalImage, 
+			final int pruningMode) 
 	{
 		boolean pruned = false;
 		
@@ -482,10 +485,12 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 
 	// -----------------------------------------------------------------------
 	/**
-	 * Cut the a list of edges in the lowest pixel intensity voxel
+	 * Cut the a list of edges in the lowest pixel intensity voxel (calculated
+	 * from the original -grayscale- image).
 	 * 
 	 * @param loopEdges list of edges to be analyzed
 	 * @param inputImage2 input skeleton image
+	 * @param originalGrayImage original gray image
 	 */
 	private void removeLowestIntensityVoxel(
 			final ArrayList<Edge> loopEdges,
@@ -540,7 +545,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	
 	// -----------------------------------------------------------------------
 	/**
-	 * Cut the a list of edges in the lowest pixel intensity branch
+	 * Cut the a list of edges in the lowest pixel intensity branch.
 	 * 
 	 * @param loopEdges list of edges to be analyzed
 	 * @param inputImage2 input skeleton image
@@ -624,7 +629,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 
 	// -----------------------------------------------------------------------
 	/**
-	 * Display tag image on a new window
+	 * Display tag image on a new window.
 	 * 
 	 * @param taggedImage tag image to be diplayed
 	 */
@@ -646,8 +651,8 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	
 	// -----------------------------------------------------------------------
 	/**
-	 * Divide end point, junction and special (starting) slab voxels in the 
-	 * corresponding tree lists
+	 * Divide the end point, junction and special (starting) slab voxels in the 
+	 * corresponding tree lists.
 	 * 
 	 *  @param treeIS tree image
 	 */
@@ -685,7 +690,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 
 	// -----------------------------------------------------------------------
 	/**
-	 * Ask memory for trees
+	 * Ask memory for trees.
 	 */
 	private void initializeTrees()
 	{
@@ -718,7 +723,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	
 	// -----------------------------------------------------------------------
 	/**
-	 * Show results table
+	 * Show results table.
 	 */
 	private void showResults() 
 	{
@@ -851,9 +856,10 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	
 	/* -----------------------------------------------------------------------*/
 	/**
-	 * Visit skeleton from end points and register measures.
+	 * Visit skeleton starting at end-points, junctions and slab of circular 
+	 * skeletons, and record measurements.
 	 * 
-	 * @param taggedImage
+	 * @param taggedImage tag skeleton image
 	 * @param treeImage skeleton image with tree classification
 	 * @param currentTree number of the tree to be visited
 	 */
@@ -882,9 +888,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 			IJ.log(" Analyzing tree number " + currentTree);
 		// length of branches
 		double branchLength = 0;
-		
-		
-		
+						
 		this.maximumBranchLength[iTree] = 0;		
 		this.numberOfSlabs[iTree] = 0;
 	
@@ -1263,9 +1267,9 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	} /* end markTrees */
 
 	
-	/* --------------------------------------------------------------*/
+	// --------------------------------------------------------------
 	/**
-	 * Visit tree marking the voxels with a reference tree color
+	 * Visit tree marking the voxels with a reference tree color.
 	 * 
 	 * @param startingPoint starting tree point
 	 * @param outputImage 3D image to visit
@@ -1328,9 +1332,9 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		return numOfVoxels;
 	} // end method visitTree
 
-	/* -----------------------------------------------------------------------*/
+	// -----------------------------------------------------------------------
 	/**
-	 * Visit a branch and calculate length
+	 * Visit a branch and calculate length.
 	 * 
 	 * @param startingPoint starting coordinates
 	 * @return branch length
@@ -1379,11 +1383,11 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		this.auxPoint = previousPoint;
 		
 		return length;
-	} /* end visitBranch*/
+	}// end visitBranch
 
-	/* -----------------------------------------------------------------------*/
+	// -----------------------------------------------------------------------
 	/**
-	 * Visit a branch and calculate length in a specifc tree
+	 * Visit a branch and calculate length in a specific tree
 	 * 
 	 * @param startingPoint starting coordinates
 	 * @param iTree tree index
@@ -1463,11 +1467,12 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		
 		//IJ.log("finalPoint = (" + nextPoint.x + ", " + nextPoint.y + ", " + nextPoint.z + ")");
 		return length;
-	} /* end visitBranch*/	
+	} // end visitBranch	
 	
 	// -----------------------------------------------------------------------
 	/**
-	 * Find vertex in an array give a vertex point
+	 * Find vertex in an array given a specific vertex point.
+	 * 
 	 * @param vertex array of search
 	 * @param p vertex point
 	 * @return vertex containing that point
@@ -1487,9 +1492,9 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		return null;
 	}
 	
-	/* -----------------------------------------------------------------------*/
+	// -----------------------------------------------------------------------
 	/**
-	 * Calculate distance between two points in 3D
+	 * Calculate distance between two points in 3D.
 	 * 
 	 * @param point1 first point coordinates
 	 * @param point2 second point coordinates
@@ -1502,7 +1507,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 				          + Math.pow( (point1.z - point2.z) * this.imRef.getCalibration().pixelDepth, 2));
 	}
 
-	/* -----------------------------------------------------------------------*/
+	// -----------------------------------------------------------------------
 	/**
 	 * Calculate number of junction skipping neighbor junction voxels
 	 * 
@@ -1552,7 +1557,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 
 	// -----------------------------------------------------------------------
 	/**
-	 * Reset visit variable and set it to false
+	 * Reset visit variable and set it to false.
 	 */
 	private void resetVisited()
 	{
@@ -1569,9 +1574,10 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	
 	// -----------------------------------------------------------------------
 	/**
+	 * Fusion neighbor junctions voxels into the same list.
 	 * 
-	 * @param startingPoint
-	 * @param singleJunctionsList
+	 * @param startingPoint starting junction voxel
+	 * @param singleJunctionsList list of single junctions
 	 */
 	private void fusionNeighborJunction(Point startingPoint,
 			ArrayList<ArrayList<Point>> singleJunctionsList) 
@@ -1620,11 +1626,12 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		// Add group to the single junction list
 		singleJunctionsList.add(newGroup);
 		
-	}
+	}// end method fusionNeighborJunction
 
 	// -----------------------------------------------------------------------
 	/**
-	 *  Check if two groups of voxels are neighbors
+	 *  Check if two groups of voxels are neighbors.
+	 *  
 	 * @param g1 first group
 	 * @param g2 second group
 	 * 
@@ -1686,7 +1693,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 
 	/* -----------------------------------------------------------------------*/
 	/**
-	 * Calculate if two points are neighbors
+	 * Calculate if two points are neighbors.
 	 * 
 	 * @param point1 first point
 	 * @param point2 second point
@@ -1701,7 +1708,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 
 	/* -----------------------------------------------------------------------*/
 	/**
-	 * Check if the point is slab
+	 * Check if the point is slab.
 	 *  
 	 * @param point actual point
 	 * @return true if the point has slab status
@@ -1713,7 +1720,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 
 	/* -----------------------------------------------------------------------*/
 	/**
-	 * Check if the point is a junction
+	 * Check if the point is a junction.
 	 *  
 	 * @param point actual point
 	 * @return true if the point has slab status
@@ -1725,7 +1732,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	
 	/* -----------------------------------------------------------------------*/
 	/**
-	 * Check if the point is an end point
+	 * Check if the point is an end point.
 	 *  
 	 * @param point actual point
 	 * @return true if the point has slab status
@@ -1737,7 +1744,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	
 	/* -----------------------------------------------------------------------*/
 	/**
-	 * Check if the point is a junction
+	 * Check if the point is a junction.
 	 *  
 	 * @param x x- voxel coordinate
 	 * @param y y- voxel coordinate
@@ -1751,7 +1758,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	
 	/* -----------------------------------------------------------------------*/
 	/**
-	 * Get next unvisited neighbor voxel 
+	 * Get next unvisited neighbor voxel.
 	 * 
 	 * @param point starting point
 	 * @return unvisited neighbor or null if all neighbors are visited
@@ -1778,11 +1785,11 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 				}
 		
 		return unvisitedNeighbor;
-	}/* end getNextUnvisitedVoxel */
+	}// end getNextUnvisitedVoxel
 	
 	/* -----------------------------------------------------------------------*/
 	/**
-	 * Get next unvisited junction neighbor voxel 
+	 * Get next unvisited junction neighbor voxel.
 	 * 
 	 * @param point starting point
 	 * @return unvisited neighbor or null if all neighbors are visited
@@ -1812,7 +1819,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		return unvisitedNeighbor;
 	}// end getNextUnvisitedJunctionVoxel 
 
-	/* -----------------------------------------------------------------------*/
+	// -----------------------------------------------------------------------
 	/**
 	 * Get next visited junction neighbor voxel excluding the ones belonging
 	 * to a give vertex
@@ -1849,7 +1856,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		return finalNeighbor;
 	}// end getNextUnvisitedJunctionVoxel 	
 	
-	/* -----------------------------------------------------------------------*/
+	// -----------------------------------------------------------------------
 	/**
 	 * Check if a voxel is visited taking into account the borders. 
 	 * Out of range voxels are considered as visited. 
@@ -1882,7 +1889,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 
 	/* -----------------------------------------------------------------------*/
 	/**
-	 * Set value in the visited flags matrix
+	 * Set value in the visited flags matrix.
 	 * 
 	 * @param x x- voxel coordinate
 	 * @param y y- voxel coordinate
@@ -1897,7 +1904,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 
 	/* -----------------------------------------------------------------------*/
 	/**
-	 * Set value in the visited flags matrix
+	 * Set value in the visited flags matrix.
 	 * 
 	 * @param point voxel coordinates
 	 * @param b visited flag value
@@ -1913,7 +1920,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 
 	/* -----------------------------------------------------------------------*/
 	/**
-	 * Tag skeleton dividing the voxels between end points, junctions and slab,
+	 * Tag skeleton dividing the voxels between end points, junctions and slabs.
 	 *  
 	 * @param inputImage2 skeleton image to be tagged
 	 * @return tagged skeleton image
@@ -1963,7 +1970,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 
 	/* -----------------------------------------------------------------------*/
 	/**
-	 * Get number of neighbors of a voxel in a 3D image (0 border conditions) 
+	 * Get number of neighbors of a voxel in a 3D image (0 border conditions).
 	 * 
 	 * @param image 3D image (ImageStack)
 	 * @param x x- coordinate
@@ -2005,7 +2012,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 
 	// -----------------------------------------------------------------------
 	/**
-	 * Get average neighborhood pixel value of a given point
+	 * Get average neighborhood pixel value of a given point.
 	 * 
 	 * @param image input image
 	 * @param p image coordinates
@@ -2031,7 +2038,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	
 	// -----------------------------------------------------------------------
 	/**
-	 * Get neighborhood of a pixel in a 3D image (0 border conditions) 
+	 * Get neighborhood of a pixel in a 3D image (0 border conditions).
 	 * 
 	 * @param image 3D image (ImageStack)
 	 * @param p point coordinates
@@ -2058,7 +2065,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	
 	// -----------------------------------------------------------------------
 	/**
-	 * Get neighborhood of a pixel in a 3D image (0 border conditions) 
+	 * Get neighborhood of a pixel in a 3D image (0 border conditions).
 	 * 
 	 * @param image 3D image (ImageStack)
 	 * @param p 3D point coordinates
@@ -2071,7 +2078,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 			
 	// -----------------------------------------------------------------------
 	/**
-	 * Get neighborhood of a pixel in a 3D image (0 border conditions) 
+	 * Get neighborhood of a pixel in a 3D image (0 border conditions).
 	 * 
 	 * @param image 3D image (ImageStack)
 	 * @param x x- coordinate
@@ -2146,7 +2153,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	
 	/* -----------------------------------------------------------------------*/
 	/**
-	 * Get pixel in 3D image (0 border conditions) 
+	 * Get pixel in 3D image (0 border conditions).
 	 * 
 	 * @param image 3D image
 	 * @param x x- coordinate
@@ -2163,7 +2170,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 
 	/* -----------------------------------------------------------------------*/
 	/**
-	 * Get pixel in 3D image (0 border conditions) 
+	 * Get pixel in 3D image (0 border conditions).
 	 * 
 	 * @param image 3D image
 	 * @param point point to be evaluated
@@ -2176,7 +2183,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	
 	/* -----------------------------------------------------------------------*/
 	/**
-	 * Get pixel in 3D image (0 border conditions) 
+	 * Get pixel in 3D image (0 border conditions).
 	 * 
 	 * @param image 3D image
 	 * @param point point to be evaluated
@@ -2189,7 +2196,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	
 	/* -----------------------------------------------------------------------*/
 	/**
-	 * Set pixel in 3D image 
+	 * Set pixel in 3D image.
 	 * 
 	 * @param image 3D image
 	 * @param p point coordinates
@@ -2203,7 +2210,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	
 	/* -----------------------------------------------------------------------*/
 	/**
-	 * Set pixel in 3D image 
+	 * Set pixel in 3D image.
 	 * 
 	 * @param image 3D image
 	 * @param x x- coordinate
@@ -2219,7 +2226,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 
 	/* -----------------------------------------------------------------------*/
 	/**
-	 * Set pixel in 3D (short) image 
+	 * Set pixel in 3D (short) image.
 	 * 
 	 * @param image 3D image
 	 * @param x x- coordinate
@@ -2249,4 +2256,4 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	
 
 
-}
+}// end class AnalyzeSkeleton_

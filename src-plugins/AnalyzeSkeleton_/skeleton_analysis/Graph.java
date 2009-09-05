@@ -25,7 +25,8 @@ import java.util.Stack;
  */
 
 /**
- * This class represents a graph to allow visiting the skeleton in an efficient way
+ * This class represents an undirected graph to allow 
+ * visiting the skeleton in an efficient way
  */
 public class Graph 
 {
@@ -39,7 +40,7 @@ public class Graph
 	
 	// --------------------------------------------------------------------------
 	/**
-	 * Empty constructor
+	 * Empty constructor.
 	 */
 	public Graph()
 	{
@@ -49,7 +50,7 @@ public class Graph
 	
 	// --------------------------------------------------------------------------
 	/**
-	 * Add edge to the graph
+	 * Add edge to the graph.
 	 * @param e edge to be added
 	 * @return false if the edge could not be added, true otherwise
 	 */
@@ -71,7 +72,7 @@ public class Graph
 	
 	// --------------------------------------------------------------------------
 	/**
-	 * Add vertex to the graph
+	 * Add vertex to the graph.
 	 * @param v vertex to be added
 	 * @return false if the vertex could not be added, true otherwise
 	 */
@@ -87,7 +88,7 @@ public class Graph
 	}// end method addVertex
 	// --------------------------------------------------------------------------
 	/**
-	 * Get list of vertices in the graph
+	 * Get list of vertices in the graph.
 	 * @return list of vertices in the graph
 	 */
 	public ArrayList<Vertex> getVertices()
@@ -96,7 +97,7 @@ public class Graph
 	}
 	// --------------------------------------------------------------------------
 	/**
-	 * Get list of edges in the graph
+	 * Get list of edges in the graph.
 	 * @return list of edges in the graph
 	 */
 	public ArrayList<Edge> getEdges()
@@ -106,7 +107,7 @@ public class Graph
 	
 	// --------------------------------------------------------------------------
 	/**
-	 * Set root vertex
+	 * Set root vertex.
 	 */
 	void setRoot(Vertex v)
 	{
@@ -114,7 +115,7 @@ public class Graph
 	}
 	// --------------------------------------------------------------------------
 	/**
-	 * Depth first search method to detect cycles in the graph
+	 * Depth first search method to detect cycles in the graph.
 	 * 
 	 * @return list of BACK edges
 	 */
@@ -143,7 +144,7 @@ public class Graph
 				//IJ.log(" Visiting vertex " + u.getPoints().get(0));
 				
 				// If the vertex has not been visited yet, then
-				// the edge from the precessor to this vertex
+				// the edge from the predecessor to this vertex
 				// is mark as TREE
 				if(u.getPredecessor() != null)
 					u.getPredecessor().setType(Edge.TREE);
