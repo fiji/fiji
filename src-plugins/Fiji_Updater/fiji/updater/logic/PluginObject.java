@@ -136,7 +136,6 @@ public class PluginObject {
 	}
 
 	// TODO: allow editing those via GUI
-	// TODO: the dependencies should be added via a method of PluginCollection, which creates the DependencyAnalyzer itself
 	public void addDependency(String filename, long timestamp,
 			String relation) {
 		addDependency(new Dependency(filename, timestamp, relation));
@@ -194,7 +193,6 @@ public class PluginObject {
 	}
 
 	private void markForUpload() {
-		// TODO: make sure that the uploader takes server's timestamp
 		if (!isFiji()) {
 			status = Status.INSTALLED;
 			newChecksum = current.checksum;

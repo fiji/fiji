@@ -67,8 +67,8 @@ public class SSHFileUploader extends FileUploader {
 	}
 
 	//Steps to accomplish entire upload task
-	public synchronized void upload(long xmlLastModified,
-			List<SourceFile> sources) throws IOException {
+	public synchronized void upload(List<SourceFile> sources)
+			throws IOException {
 		setTitle("Uploading");
 
 		String uploadFilesCommand = "scp -p -t -r " + uploadDir;
@@ -76,9 +76,6 @@ public class SSHFileUploader extends FileUploader {
 		if (checkAck(in) != 0) {
 			throw new IOException("Failed to set command " + uploadFilesCommand);
 		}
-
-		if (!verifyXMLFileDidNotChange(xmlLastModified))
-			throw new IOException("Conflict: XML file has been modified since it was last downloaded.");
 
 		uploadFiles(sources);
 
@@ -93,14 +90,6 @@ public class SSHFileUploader extends FileUploader {
 
 		out.close();
 		channel.disconnect();
-	}
-
-	private boolean verifyXMLFileDidNotChange(long xmlLastModified) throws IOException {
-		//Use lastModified header field to identify
-		URLConnection uc = new URL(Updater.MAIN_URL
-				+ Updater.XML_COMPRESSED).openConnection();
-		uc.setUseCaches(false);
-		return xmlLastModified == uc.getLastModified();
 	}
 
 	private void uploadFiles(List<SourceFile> sources) throws IOException {

@@ -20,9 +20,9 @@ import java.io.InputStream;
 // a single "Transfer" class extending Progressable.
 // TODO: this class should be merged into Uploader.
 public class UploadableFile implements SourceFile {
-	private String permissions;
-	private String sourceFilename, filename;
-	private long filesize;
+	PluginObject plugin;
+	String permissions, sourceFilename, filename;
+	long filesize;
 
 	public UploadableFile(String target) {
 		this(Util.prefix(target), target);
@@ -31,6 +31,7 @@ public class UploadableFile implements SourceFile {
 	public UploadableFile(PluginObject plugin) {
 		this(Util.prefix(plugin.getFilename()),
 			plugin.getFilename() + "-" + plugin.getTimestamp());
+		this.plugin = plugin;
 	}
 
 
@@ -44,8 +45,14 @@ public class UploadableFile implements SourceFile {
 		this.sourceFilename = source;
 		this.filename = target;
 		this.permissions = permissions;
-		filesize = new File(source).length();
+		File file = new File(source);
+		filesize = file.exists() ? file.length() : 0;
 	}
+
+	void updateFilesize() {
+		filesize = new File(sourceFilename).length();
+	}
+
 	//********** Implemented methods for SourceFile **********
 	public long getFilesize() {
 		return filesize;

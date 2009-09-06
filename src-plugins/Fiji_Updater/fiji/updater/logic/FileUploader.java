@@ -44,15 +44,15 @@ public class FileUploader extends Progressable {
 		this.uploadDir = uploadDir;
 	}
 
-	protected void calculateTotalSize(List<SourceFile> sources) {
+	public void calculateTotalSize(List<SourceFile> sources) {
 		total = 0;
 		for (SourceFile source : sources)
 			total += (int)source.getFilesize();
 	}
 
 	//Steps to accomplish entire upload task
-	public synchronized void upload(long xmlLastModified,
-			List<SourceFile> sources) throws IOException {
+	public synchronized void upload(List<SourceFile> sources)
+			throws IOException {
 		setTitle("Uploading");
 
 		calculateTotalSize(sources);
@@ -69,23 +69,6 @@ public class FileUploader extends Progressable {
 			if (!dir.exists())
 				dir.mkdirs();
 			OutputStream out = new FileOutputStream(file);
-
-			// The first file is special; it is the lock file
-			if (lock == null) {
-				lock = file;
-				if (!lock.setReadOnly())
-					throw new IOException("Could not mark "
-						+ source.getFilename()
-						+ " read-only!");
-				if (xmlLastModified != db.lastModified()) {
-					// TODO: SSHFileUploader must delete the lock here, too
-					lock.delete();
-					throw new IOException("Conflict: "
-						+ db.getName()
-						+ " has been modified");
-				}
-			}
-
 			InputStream in = source.getInputStream();
 			int currentCount = 0;
 			int currentTotal = (int)source.getFilesize();
