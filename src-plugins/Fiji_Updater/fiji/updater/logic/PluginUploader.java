@@ -40,11 +40,11 @@ import org.xml.sax.helpers.AttributesImpl;
  * - Uninstalled & up-to-date plugins will ONLY have their details uploaded
  *   (i.e.: XML file)
  */
-public class Updater {
+public class PluginUploader {
 	protected long xmlLastModified;
 	protected FileUploader uploader;
 
-	public Updater(long xmlLastModified) {
+	public PluginUploader(long xmlLastModified) {
 		// TODO: use lastModified() of lock file as timestamp for new
 		// plugins
 		this.xmlLastModified = xmlLastModified;
@@ -78,13 +78,13 @@ public class Updater {
 
 		// TODO: rename "UpdateSource" to "Transferable", reuse!
 		List<SourceFile> files = new ArrayList<SourceFile>();
-		files.add(new UpdateSource(compressed,
+		files.add(new UploadableFile(compressed,
 					PluginManager.XML_LOCK, "C0444"));
-		files.add(new UpdateSource(txt,
+		files.add(new UploadableFile(txt,
 					PluginManager.TXT_FILENAME, "C0644"));
 		for (PluginObject plugin :
 				PluginCollection.getInstance().toUpload())
-			files.add(new UpdateSource(plugin));
+			files.add(new UploadableFile(plugin));
 		uploader.upload(xmlLastModified, files);
 
 		// No errors thrown -> just remove temporary files

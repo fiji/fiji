@@ -4,7 +4,7 @@ import fiji.updater.logic.Installer;
 import fiji.updater.logic.PluginCollection;
 import fiji.updater.logic.PluginManager;
 import fiji.updater.logic.PluginObject;
-import fiji.updater.logic.Updater;
+import fiji.updater.logic.PluginUploader;
 
 import fiji.updater.util.Downloader;
 import fiji.updater.util.Util;
@@ -397,19 +397,19 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 	}
 
 	protected void upload() {
-		Updater updater = new Updater(xmlLastModified);
+		PluginUploader uploader = new PluginUploader(xmlLastModified);
 
 		try {
-			if (!interactiveSshLogin(updater))
+			if (!interactiveSshLogin(uploader))
 				return;
-			updater.upload(new IJProgress());
+			uploader.upload(new IJProgress());
 		} catch (Throwable e) {
 			e.printStackTrace();
 			IJ.error("Upload failed: " + e);
 		}
 	}
 
-	protected boolean interactiveSshLogin(Updater updater) {
+	protected boolean interactiveSshLogin(PluginUploader uploader) {
 		String username = Prefs.get(PluginManager.PREFS_USER, "");
 		String password = "";
 		do {
@@ -439,7 +439,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 			username = gd.getNextString();
 			password = gd.getNextString();
 
-		} while (!updater.setLogin(username, password));
+		} while (!uploader.setLogin(username, password));
 
 		Prefs.set(PluginManager.PREFS_USER, username);
 		return true;

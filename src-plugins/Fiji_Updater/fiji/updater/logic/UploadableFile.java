@@ -11,29 +11,35 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
+// TODO: Replace this comment by something helpful.
 /*
  * Implementation of class containing information for FileUploader to use
  */
-public class UpdateSource implements SourceFile {
+// TODO: unify "FileUploader.SourceFile" and "Downloader.FileDownload" into
+// a single "Transferable", and refactor Downloader and FileUploader into
+// a single "Transfer" class extending Progressable.
+// TODO: this class should be merged into Uploader.
+public class UploadableFile implements SourceFile {
 	private String permissions;
 	private String sourceFilename, filename;
 	private long filesize;
 
-	public UpdateSource(String target) {
+	public UploadableFile(String target) {
 		this(Util.prefix(target), target);
 	}
 
-	public UpdateSource(PluginObject plugin) {
+	public UploadableFile(PluginObject plugin) {
 		this(Util.prefix(plugin.getFilename()),
 			plugin.getFilename() + "-" + plugin.getTimestamp());
 	}
 
 
-	public UpdateSource(String source, String target) {
+	public UploadableFile(String source, String target) {
 		this(source, target, "C0644");
 	}
 
-	public UpdateSource(String source, String target, String permissions) {
+	public UploadableFile(String source, String target,
+			String permissions) {
 		// TODO: fix naming
 		this.sourceFilename = source;
 		this.filename = target;
