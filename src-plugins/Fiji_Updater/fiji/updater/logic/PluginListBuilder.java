@@ -3,6 +3,7 @@ package fiji.updater.logic;
 import fiji.updater.logic.PluginObject.Status;
 
 import fiji.updater.util.Progress;
+import fiji.updater.util.Progressable;
 import fiji.updater.util.Util;
 
 import java.io.File;
@@ -29,13 +30,12 @@ import java.util.Set;
  * latestDigests and latestDates hold checksums and versions of latest Fiji
  * plugins
  */
-public class PluginListBuilder {
-	protected Progress progress;
+public class PluginListBuilder extends Progressable {
 	int counter, total;
 
 	public PluginListBuilder(Progress progress) {
-		this.progress = progress;
-		progress.setTitle("Checksumming");
+		addProgress(progress);
+		setTitle("Checksumming");
 	}
 
 	static class StringPair {
@@ -88,7 +88,7 @@ public class PluginListBuilder {
 	protected void handle(StringPair pair) {
 		String path = pair.path;
 		String realPath = Util.prefix(pair.realPath);
-		progress.addItem(path);
+		addItem(path);
 
 		String checksum = "INVALID";
 		try {
@@ -104,8 +104,8 @@ public class PluginListBuilder {
 			plugins.add(new PluginObject(path, checksum,
 				timestamp, Status.NOT_FIJI));
 		counter += (int)Util.getFilesize(realPath);
-		progress.setItemCount(1, 1);
-		progress.setCount(counter, total);
+		setItemCount(1, 1);
+		setCount(counter, total);
 	}
 
 	public void updateFromLocal() {

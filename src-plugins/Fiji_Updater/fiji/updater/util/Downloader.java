@@ -18,29 +18,18 @@ import java.util.List;
  * to their respective destinations. Updates its download status to its
  * Observer as well.
  */
-public class Downloader {
+public class Downloader extends Progressable {
 	protected int count, total, itemCount, itemTotal;
 	protected long lastModified;
-	protected List<Progress> progress;
 
 	protected String error;
 	protected boolean cancelled;
 
-	public Downloader() {
-		progress = new ArrayList<Progress>();
-	}
+	public Downloader() { }
 
 	public Downloader(Progress progress) {
 		this();
 		addProgress(progress);
-	}
-
-	public void addProgress(Progress progress) {
-		this.progress.add(progress);
-	}
-
-	public void removeProgress(Progress progress) {
-		this.progress.remove(progress);
 	}
 
 	public synchronized void cancel() {
@@ -83,8 +72,7 @@ public class Downloader {
 			itemTotal++;
 		}
 
-		for (Progress progress : this.progress)
-			progress.setTitle("Downloading...");
+		setTitle("Downloading...");
 
 		for (FileDownload current : files) {
 			if (cancelled)
@@ -104,8 +92,7 @@ public class Downloader {
 			currentTotal = (int)current.getFilesize();
 
 		String destination = current.getDestination();
-		for (Progress progress : this.progress)
-			progress.addItem(current);
+		addItem(current);
 
 		new File(destination).getParentFile().mkdirs();
 		InputStream in = connection.getInputStream();
@@ -127,12 +114,8 @@ public class Downloader {
 			out.write(buffer, 0, count);
 			currentCount += count;
 			this.count += count;
-			for (Progress progress : this.progress) {
-				progress.setCount(this.count, total);
-				progress.setItemCount(currentCount,
-						currentTotal);
-			}
-
+			setCount(this.count, total);
+			setItemCount(currentCount, currentTotal);
 		}
 		in.close();
 		out.close();
