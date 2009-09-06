@@ -91,6 +91,8 @@ public class FileUploader extends Progressable {
 			backup.delete();
 		db.renameTo(backup);
 		lock.renameTo(db);
+
+		done();
 	}
 
 	public interface SourceFile {

@@ -4,7 +4,6 @@ import fiji.updater.util.Progress;
 
 import ij.IJ;
 
-// TODO: extend to ProgressPanel
 public class IJProgress implements Progress {
 	String title;
 
@@ -23,4 +22,9 @@ public class IJProgress implements Progress {
 	}
 
 	public void setItemCount(int count, int total) {}
+
+	public void done() {
+		IJ.showStatus(this.title + " finished!");
+		IJ.showProgress(1, 1);
+	}
 }

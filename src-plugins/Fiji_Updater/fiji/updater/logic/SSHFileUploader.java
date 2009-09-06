@@ -145,6 +145,8 @@ public class SSHFileUploader extends FileUploader {
 		while (!prefix.equals("")) {
 			prefix = cdUp(prefix);
 		}
+
+		done();
 	}
 
 	private String cdUp(String directory) throws IOException {

@@ -94,6 +94,7 @@ public class Installer extends Downloader {
 
 		public void setTitle(String title) {}
 		public void setCount(int count, int total) {}
+		public void done() {}
 	}
 
 

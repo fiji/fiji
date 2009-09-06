@@ -54,9 +54,10 @@ public class Downloader extends Progressable {
 
 		for (FileDownload current : files) {
 			if (cancelled)
-				return;
+				break;
 			download(current);
 		}
+		done();
 	}
 
 	protected synchronized void download(FileDownload current)

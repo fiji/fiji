@@ -133,5 +133,6 @@ public class PluginListBuilder extends Progressable {
 		counter = 0;
 		for (StringPair pair : queue)
 			handle(pair);
+		done();
 	}
 }

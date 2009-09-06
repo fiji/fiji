@@ -165,6 +165,7 @@ public class PluginUploader {
 		public void setTitle(String string) {}
 		public void setCount(int count, int total) {}
 		public void setItemCount(int count, int total) {}
+		public void done() {}
 	}
 
 	protected void verifyTimestamp() {
