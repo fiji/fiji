@@ -36,31 +36,9 @@ public class Downloader extends Progressable {
 		cancelled = true;
 	}
 
-	// TODO: refactor as OneItemIterable
-	public static<T> Iterator<T> fakeIterator(final T justOne) {
-		return new Iterator<T>() {
-			boolean isFirst = true;
-
-			public boolean hasNext() { return isFirst; }
-
-			public T next() {
-				isFirst = false;
-				return justOne;
-			}
-
-			public void remove() {
-				throw new UnsupportedOperationException();
-			}
-		};
-	}
-
 	public synchronized void start(final FileDownload justOne)
 			throws IOException {
-		start(new Iterable<FileDownload>() {
-			public Iterator<FileDownload> iterator() {
-				return Downloader.fakeIterator(justOne);
-			}
-		});
+		start(new OneItemIterable<FileDownload>(justOne));
 	}
 
 	public void start(Iterable<FileDownload> files) throws IOException {
