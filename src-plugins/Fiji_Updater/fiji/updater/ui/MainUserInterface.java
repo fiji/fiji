@@ -254,10 +254,8 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 	}
 
 	private void upload() {
-		//There's no frame interface for Uploader, makes disabling pointless, thus set invisible
 		Uploader uploader = new Uploader(this);
-		setEnabled(false);
-		uploader.setUploadInformationAndStart(xmlLastModified);
+		uploader.start(xmlLastModified, new IJProgress());
 	}
 
 	// TODO: why should this function need to know that it is triggered by a click?  That is so totally unnecessary.

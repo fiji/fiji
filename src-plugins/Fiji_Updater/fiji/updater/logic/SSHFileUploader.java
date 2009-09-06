@@ -65,23 +65,19 @@ public class SSHFileUploader extends FileUploader {
 	}
 
 	//Steps to accomplish entire upload task
-	public synchronized void upload(long xmlLastModified, List<SourceFile> sources) throws IOException {
-		//Prepare for uploading of files
+	public synchronized void upload(long xmlLastModified,
+			List<SourceFile> sources) throws IOException {
+		setTitle("Uploading");
+
 		String uploadFilesCommand = "scp -p -t -r " + uploadDir;
 		setCommand(uploadFilesCommand);
-		if(checkAck(in) != 0) { //Error check
+		if (checkAck(in) != 0) {
 			throw new IOException("Failed to set command " + uploadFilesCommand);
 		}
-		System.out.println("Acknowledgement done, prepared to upload file(s)");
 
-		//Verify that XML file did not change since last downloaded
-		System.out.println("Checking if XML file has been modified since last download...");
-		if (!verifyXMLFileDidNotChange(xmlLastModified)) {
+		if (!verifyXMLFileDidNotChange(xmlLastModified))
 			throw new IOException("Conflict: XML file has been modified since it was last downloaded.");
-		}
-		System.out.println("XML file was not modified since last download, clear!");
 
-		//Start actual upload (First one should be XML lock file)
 		uploadFiles(sources);
 
 		//Unlock process
@@ -91,33 +87,10 @@ public class SSHFileUploader extends FileUploader {
 		uploadDir + PluginManager.XML_COMPRESSED;
 
 		setCommand(cmd1);
-		System.out.println("Command ran: " + cmd1);
-
 		setCommand(cmd2);
-		System.out.println("Command ran: " + cmd2);
 
 		out.close();
 		channel.disconnect();
-		notifyListenersCompletionAll();
-	}
-
-	private void setCommand(String command) throws IOException {
-		if (out != null) {
-			out.close();
-			channel.disconnect();
-		}
-		try {
-			channel = session.openChannel("exec");
-			((ChannelExec)channel).setCommand(command);
-
-			// get I/O streams for remote scp
-			out = channel.getOutputStream();
-			in = channel.getInputStream();
-			channel.connect();
-		} catch (JSchException e) {
-			e.printStackTrace();
-			throw new IOException(e.getMessage());
-		}
 	}
 
 	private boolean verifyXMLFileDidNotChange(long xmlLastModified) throws IOException {
@@ -128,27 +101,23 @@ public class SSHFileUploader extends FileUploader {
 	}
 
 	private void uploadFiles(List<SourceFile> sources) throws IOException {
-		setupTotalSize(sources);
-		uploadedBytes = 0;
+		calculateTotalSize(sources);
+		int count = 0;
 
 		String prefix = "";
 		byte[] buf = new byte[16384];
 		for (SourceFile source : sources) {
-			String target = source.getFilename();
+			addItem(source);
 
-			// maybe need to leave directory
-			while (!target.startsWith(prefix)) {
+			String target = source.getFilename();
+			while (!target.startsWith(prefix))
 				prefix = cdUp(prefix);
-			}
 
 			// maybe need to enter directory
 			int slash = target.lastIndexOf('/');
 			String directory = target.substring(0, slash + 1);
 			cdInto(directory.substring(prefix.length()));
 			prefix = directory;
-
-			currentUpload = source;
-			notifyListenersUpdate();
 
 			// notification that file is about to be written
 			String command = source.getPermissions() + " "
@@ -160,27 +129,30 @@ public class SSHFileUploader extends FileUploader {
 
 			// send contents of file
 			InputStream input = source.getInputStream();
+			int currentCount = 0;
+			int currentTotal = (int)source.getFilesize();
 			for (;;) {
 				int len = input.read(buf, 0, buf.length);
 				if (len <= 0)
 					break;
 				out.write(buf, 0, len);
-				uploadedBytes += len;
-				notifyListenersUpdate();
+				currentCount += len;
+				setItemCount(currentCount, currentTotal);
+				setCount(count + currentCount, total);
 			}
 			input.close();
+			count += currentCount;
 
 			// send '\0'
 			buf[0] = 0;
 			out.write(buf, 0, 1);
 			out.flush();
 			checkAckUploadError();
-			notifyListenersFileComplete();
 		}
+
 		while (!prefix.equals("")) {
 			prefix = cdUp(prefix);
 		}
-		notifyListenersCompletionAll();
 	}
 
 	private String cdUp(String directory) throws IOException {
@@ -204,6 +176,25 @@ public class SSHFileUploader extends FileUploader {
 			if (slash < 0)
 				return;
 			directory = directory.substring(slash + 1);
+		}
+	}
+
+	private void setCommand(String command) throws IOException {
+		if (out != null) {
+			out.close();
+			channel.disconnect();
+		}
+		try {
+			channel = session.openChannel("exec");
+			((ChannelExec)channel).setCommand(command);
+
+			// get I/O streams for remote scp
+			out = channel.getOutputStream();
+			in = channel.getInputStream();
+			channel.connect();
+		} catch (JSchException e) {
+			e.printStackTrace();
+			throw new IOException(e.getMessage());
 		}
 	}
 

@@ -1,5 +1,8 @@
 package fiji.updater.logic;
 
+import fiji.updater.util.Progress;
+import fiji.updater.util.Progressable;
+
 import ij.IJ;
 
 import java.io.File;
@@ -27,14 +30,9 @@ import java.util.List;
  * 4.) Upload plugin files and current.txt
  * 5.) If all goes well, force rename db.xml.gz.lock to db.xml.gz
  */
-public class FileUploader {
+public class FileUploader extends Progressable {
 	protected final String uploadDir;
-	protected List<UploadListener> listeners;
-	protected SourceFile currentUpload;
-	protected long uploadedBytes;
-	protected long uploadSize;
-	protected OutputStream out;
-	protected InputStream in;
+	int total;
 
 	public FileUploader() {
 		this("/var/www/update/");
@@ -42,30 +40,33 @@ public class FileUploader {
 
 	public FileUploader(String uploadDir) {
 		this.uploadDir = uploadDir;
-		listeners = new ArrayList<UploadListener>();
 	}
 
-	protected void setupTotalSize(List<SourceFile> sources) {
-		uploadSize = 0;
+	protected void calculateTotalSize(List<SourceFile> sources) {
+		total = 0;
 		for (SourceFile source : sources)
-			uploadSize += source.getFilesize();
+			total += (int)source.getFilesize();
 	}
 
 	//Steps to accomplish entire upload task
 	public synchronized void upload(long xmlLastModified,
 			List<SourceFile> sources) throws IOException {
-		setupTotalSize(sources);
+		setTitle("Uploading");
+
+		calculateTotalSize(sources);
+		int count = 0;
 
 		File lock = null;
 		File db = new File(uploadDir + PluginManager.XML_COMPRESSED);
 		byte[] buffer = new byte[65536];
 		for (SourceFile source : sources) {
-			currentUpload = source;
+			addItem(source);
+
 			File file = new File(uploadDir + source.getFilename());
 			File dir = file.getParentFile();
 			if (!dir.exists())
 				dir.mkdirs();
-			out = new FileOutputStream(file);
+			OutputStream out = new FileOutputStream(file);
 
 			// The first file is special; it is the lock file
 			if (lock == null) {
@@ -83,18 +84,21 @@ public class FileUploader {
 				}
 			}
 
-			in = source.getInputStream();
+			InputStream in = source.getInputStream();
+			int currentCount = 0;
+			int currentTotal = (int)source.getFilesize();
 			for (;;) {
-				int count = in.read(buffer);
-				if (count < 0)
+				int read = in.read(buffer);
+				if (read < 0)
 					break;
-				out.write(buffer, 0, count);
-				uploadedBytes += count;
-				notifyListenersUpdate();
+				out.write(buffer, 0, read);
+				currentCount += read;
+				setItemCount(currentCount, currentTotal);
+				setCount(count + currentCount, total);
 			}
 			in.close();
 			out.close();
-			notifyListenersFileComplete();
+			count += currentCount;
 		}
 
 		File backup = new File(db.getAbsolutePath() + ".old");
@@ -102,32 +106,6 @@ public class FileUploader {
 			backup.delete();
 		db.renameTo(backup);
 		lock.renameTo(db);
-		notifyListenersCompletionAll();
-	}
-
-	protected void notifyListenersUpdate() {
-		for (UploadListener listener : listeners)
-			listener.update(currentUpload, uploadedBytes, uploadSize);
-	}
-
-	protected void notifyListenersCompletionAll() {
-		for (UploadListener listener : listeners)
-			listener.uploadProcessComplete();
-	}
-
-	protected void notifyListenersFileComplete() {
-		for (UploadListener listener : listeners)
-			listener.uploadFileComplete(currentUpload);
-	}
-
-	public synchronized void addListener(UploadListener listener) {
-		listeners.add(listener);
-	}
-
-	public interface UploadListener {
-		public void update(SourceFile source, long bytesSoFar, long bytesTotal);
-		public void uploadFileComplete(SourceFile source);
-		public void uploadProcessComplete();
 	}
 
 	public interface SourceFile {

@@ -3,10 +3,10 @@ package fiji.updater.logic;
 import com.jcraft.jsch.JSchException;
 
 import fiji.updater.logic.FileUploader.SourceFile;
-import fiji.updater.logic.FileUploader.UploadListener;
 
 import fiji.updater.util.Compressor;
 import fiji.updater.util.DependencyAnalyzer;
+import fiji.updater.util.Progress;
 import fiji.updater.util.Util;
 
 import ij.IJ;
@@ -65,11 +65,8 @@ public class Updater {
 		}
 	}
 
-	public void upload(UploadListener uploadListener)
-			throws Exception  {
-		if (uploadListener != null)
-			uploader.addListener(uploadListener);
-
+	public void upload(Progress progress) throws Exception  {
+		uploader.addProgress(progress);
 		String backup = Util.prefix(PluginManager.XML_BACKUP);
 		String compressed = Util.prefix(PluginManager.XML_COMPRESSED);
 		String txt = Util.prefix(PluginManager.TXT_FILENAME);
