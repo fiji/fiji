@@ -1,4 +1,9 @@
-package fiji.updater.logic;
+package fiji.updater;
+
+import fiji.updater.logic.PluginListBuilder;
+import fiji.updater.logic.UpdateFiji;
+import fiji.updater.logic.XMLFileDownloader;
+import fiji.updater.logic.XMLFileReader;
 
 import fiji.updater.ui.IJProgress;
 import fiji.updater.ui.MainUserInterface;
@@ -18,7 +23,7 @@ import javax.swing.JOptionPane;
 import javax.xml.parsers.ParserConfigurationException;
 
 // TODO: rename this class to "Updater".
-public class PluginManager implements PlugIn {
+public class Updater implements PlugIn {
 	public static final String MAIN_URL = "http://pacific.mpi-cbg.de/uploads/incoming/plugins/";
 	//public static final String MAIN_URL = "http://pacific.mpi-cbg.de/update/"; //TODO
 
@@ -42,13 +47,13 @@ public class PluginManager implements PlugIn {
 		// TODO: this should not be a thread
 		new Thread() {
 			public void run() {
-				openPluginManager();
+				openUpdater();
 			}
 		}.start();
 	}
 
 	// TODO: move more functionality into this class; the ui should be the ui only!!!
-	public void openPluginManager() {
+	public void openUpdater() {
 		// TODO: use ProgressPane in main window
 		IJProgress progress = new IJProgress();
 		progress.setTitle("Starting up Plugin Manager...");
@@ -63,7 +68,7 @@ public class PluginManager implements PlugIn {
 			new XMLFileReader(downloader.getInputStream());
 		} catch (Exception e) {
 			e.printStackTrace();
-			new File(Util.prefix(PluginManager.XML_COMPRESSED))
+			new File(Util.prefix(XML_COMPRESSED))
 					.deleteOnExit();
 			IJ.error("Download/checksum failed: " + e);
 			fallBackToOldUpdater();
@@ -81,6 +86,7 @@ public class PluginManager implements PlugIn {
 
 	protected void fallBackToOldUpdater() {
 		try {
+			// TODO: replace by special mode of the Plugin Manager
 			UpdateFiji updateFiji = new UpdateFiji();
 			updateFiji.hasGUI = true;
 			updateFiji.exec(UpdateFiji.defaultURL);

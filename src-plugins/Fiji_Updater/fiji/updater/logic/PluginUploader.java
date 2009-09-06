@@ -2,6 +2,8 @@ package fiji.updater.logic;
 
 import com.jcraft.jsch.JSchException;
 
+import fiji.updater.Updater;
+
 import fiji.updater.logic.FileUploader.SourceFile;
 
 import fiji.updater.util.Compressor;
@@ -57,7 +59,7 @@ public class PluginUploader {
 	public synchronized boolean setLogin(String username, String password) {
 		try {
 			uploader = new SSHFileUploader(username, password,
-				PluginManager.UPDATE_DIRECTORY);
+				Updater.UPDATE_DIRECTORY);
 			return true;
 		} catch (JSchException e) {
 			IJ.error("Failed to login");
@@ -67,9 +69,9 @@ public class PluginUploader {
 
 	public void upload(Progress progress) throws Exception  {
 		uploader.addProgress(progress);
-		String backup = Util.prefix(PluginManager.XML_BACKUP);
-		String compressed = Util.prefix(PluginManager.XML_COMPRESSED);
-		String txt = Util.prefix(PluginManager.TXT_FILENAME);
+		String backup = Util.prefix(Updater.XML_BACKUP);
+		String compressed = Util.prefix(Updater.XML_COMPRESSED);
+		String txt = Util.prefix(Updater.TXT_FILENAME);
 		generateAndValidateXML(backup);
 		// TODO: only save _compressed_ backup, and not as db.bak!
 		compress(backup, compressed);
@@ -79,9 +81,9 @@ public class PluginUploader {
 		// TODO: rename "UpdateSource" to "Transferable", reuse!
 		List<SourceFile> files = new ArrayList<SourceFile>();
 		files.add(new UploadableFile(compressed,
-					PluginManager.XML_LOCK, "C0444"));
+					Updater.XML_LOCK, "C0444"));
 		files.add(new UploadableFile(txt,
-					PluginManager.TXT_FILENAME, "C0644"));
+					Updater.TXT_FILENAME, "C0644"));
 		for (PluginObject plugin :
 				PluginCollection.getInstance().toUpload())
 			files.add(new UploadableFile(plugin));
@@ -89,7 +91,7 @@ public class PluginUploader {
 
 		// No errors thrown -> just remove temporary files
 		new File(backup).delete();
-		new File(Util.prefix(PluginManager.TXT_FILENAME)).delete();
+		new File(Util.prefix(Updater.TXT_FILENAME)).delete();
 	}
 
 	protected void compress(String uncompressed, String compressed)

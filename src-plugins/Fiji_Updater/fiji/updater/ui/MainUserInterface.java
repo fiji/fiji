@@ -1,8 +1,9 @@
 package fiji.updater.ui;
 
+import fiji.updater.Updater;
+
 import fiji.updater.logic.Installer;
 import fiji.updater.logic.PluginCollection;
-import fiji.updater.logic.PluginManager;
 import fiji.updater.logic.PluginObject;
 import fiji.updater.logic.PluginUploader;
 
@@ -217,7 +218,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		SwingTools.createButton("Cancel",
 				"Exit Plugin Manager without applying changes", new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				clickToQuitPluginManager();
+				clickToQuitUpdater();
 			}
 		}, bottomPanel);
 		//======== End: BOTTOM PANEL ========
@@ -264,6 +265,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 
 	// TODO: why should this function need to know that it is triggered by a click?  That is so totally unnecessary.
 	private void clickToEditDescriptions() {
+		// TODO: embed this, rather than having an extra editor
 		loadedFrame = new DetailsEditor(this, currentPlugin);
 		showFrame();
 		setEnabled(false);
@@ -274,7 +276,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		download();
 	}
 
-	private void clickToQuitPluginManager() {
+	private void clickToQuitUpdater() {
 		//if there exists plugins where actions have been specified by user
 		if (plugins.hasChanges() &&
 				JOptionPane.showConfirmDialog(this,
@@ -309,12 +311,6 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 				}
 			}
 		}.start();
-	}
-
-	public void backToPluginManager() {
-		removeLoadedFrameIfExists();
-		setEnabled(true);
-		setVisible(true);
 	}
 
 	public void exitWithRestartFijiMessage() {
@@ -410,7 +406,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 	}
 
 	protected boolean interactiveSshLogin(PluginUploader uploader) {
-		String username = Prefs.get(PluginManager.PREFS_USER, "");
+		String username = Prefs.get(Updater.PREFS_USER, "");
 		String password = "";
 		do {
 			//Dialog to enter username and password
@@ -441,7 +437,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 
 		} while (!uploader.setLogin(username, password));
 
-		Prefs.set(PluginManager.PREFS_USER, username);
+		Prefs.set(Updater.PREFS_USER, username);
 		return true;
 	}
 

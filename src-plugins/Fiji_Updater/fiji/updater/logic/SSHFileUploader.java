@@ -7,6 +7,8 @@ import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 
+import fiji.updater.Updater;
+
 import ij.IJ;
 
 import java.io.IOException;
@@ -82,9 +84,9 @@ public class SSHFileUploader extends FileUploader {
 
 		//Unlock process
 		// TODO: avoid blind assumptions!!!
-		String cmd1 = "chmod u+w " + uploadDir + PluginManager.XML_COMPRESSED;
-		String cmd2 = "mv " + uploadDir + PluginManager.XML_LOCK + " " +
-		uploadDir + PluginManager.XML_COMPRESSED;
+		String cmd1 = "chmod u+w " + uploadDir + Updater.XML_COMPRESSED;
+		String cmd2 = "mv " + uploadDir + Updater.XML_LOCK + " " +
+		uploadDir + Updater.XML_COMPRESSED;
 
 		setCommand(cmd1);
 		setCommand(cmd2);
@@ -95,7 +97,8 @@ public class SSHFileUploader extends FileUploader {
 
 	private boolean verifyXMLFileDidNotChange(long xmlLastModified) throws IOException {
 		//Use lastModified header field to identify
-		URLConnection uc = new URL(PluginManager.MAIN_URL + PluginManager.XML_COMPRESSED).openConnection();
+		URLConnection uc = new URL(Updater.MAIN_URL
+				+ Updater.XML_COMPRESSED).openConnection();
 		uc.setUseCaches(false);
 		return xmlLastModified == uc.getLastModified();
 	}

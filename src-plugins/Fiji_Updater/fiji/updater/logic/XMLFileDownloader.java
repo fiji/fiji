@@ -1,5 +1,7 @@
 package fiji.updater.logic;
 
+import fiji.updater.Updater;
+
 import fiji.updater.util.Downloader;
 import fiji.updater.util.Compressor;
 import fiji.updater.util.Downloader.FileDownload;
@@ -27,12 +29,12 @@ public class XMLFileDownloader extends Downloader {
 	protected String destination, url;
 
 	public XMLFileDownloader() {
-		this(PluginManager.MAIN_URL);
+		this(Updater.MAIN_URL);
 	}
 
 	public XMLFileDownloader(String urlPrefix) {
-		url = urlPrefix + PluginManager.XML_COMPRESSED;
-		destination = Util.prefix(PluginManager.XML_COMPRESSED);
+		url = urlPrefix + Updater.XML_COMPRESSED;
+		destination = Util.prefix(Updater.XML_COMPRESSED);
 	}
 
 	class LastModifiedSetter implements Progress {
@@ -65,7 +67,7 @@ public class XMLFileDownloader extends Downloader {
 			}
 		});
 		data = Compressor.decompress(new FileInputStream(destination));
-		Prefs.set(PluginManager.PREFS_XMLDATE, "" + xmlLastModified);
+		Prefs.set(Updater.PREFS_XMLDATE, "" + xmlLastModified);
 	}
 
 	public InputStream getInputStream() {

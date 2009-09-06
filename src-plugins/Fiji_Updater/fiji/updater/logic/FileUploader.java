@@ -1,5 +1,7 @@
 package fiji.updater.logic;
 
+import fiji.updater.Updater;
+
 import fiji.updater.util.Progress;
 import fiji.updater.util.Progressable;
 
@@ -57,7 +59,7 @@ public class FileUploader extends Progressable {
 		int count = 0;
 
 		File lock = null;
-		File db = new File(uploadDir + PluginManager.XML_COMPRESSED);
+		File db = new File(uploadDir + Updater.XML_COMPRESSED);
 		byte[] buffer = new byte[65536];
 		for (SourceFile source : sources) {
 			addItem(source);

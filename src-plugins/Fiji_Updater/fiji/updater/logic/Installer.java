@@ -1,5 +1,7 @@
 package fiji.updater.logic;
 
+import fiji.updater.Updater;
+
 import fiji.updater.util.Downloader;
 import fiji.updater.util.Downloader.FileDownload;
 import fiji.updater.util.Progress;
@@ -69,7 +71,7 @@ public class Installer extends Downloader {
 				orig.renameTo(new File(saveTo + ".old"));
 			}
 
-			String url = PluginManager.MAIN_URL + name
+			String url = Updater.MAIN_URL + name
 				+ "-" + plugin.getTimestamp();
 			Download file = new Download(plugin, url, saveTo);
 			list.add(file);

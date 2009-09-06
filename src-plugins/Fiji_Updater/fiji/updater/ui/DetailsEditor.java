@@ -1,6 +1,10 @@
 package fiji.updater.ui;
+
+import fiji.updater.logic.PluginObject;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -10,7 +14,6 @@ import javax.swing.JPanel;
 import javax.swing.JTextPane;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import fiji.updater.logic.PluginObject;
 
 // TODO: this should not be a frame, but a JPanel, and it should automatically
 // update the plugin details, activating the "Upload" button.
@@ -81,7 +84,7 @@ public class DetailsEditor extends JFrame {
 		//Button to cancel and return to Plugin Manager
 		SwingTools.createButton("Close", "Exit Description Editor", new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				backToPluginManager();
+				closeFrame();
 			}
 		}, buttonPanel);
 		uiPanel.add(buttonPanel);
@@ -89,7 +92,7 @@ public class DetailsEditor extends JFrame {
 		getContentPane().add(uiPanel);
 	}
 
-	private void backToPluginManager() {
+	private void closeFrame() {
 		if (textChanged) {
 			int option = JOptionPane.showConfirmDialog(this,
 					"Description has changed.\n\nSave it before exiting Editor?",
@@ -102,7 +105,7 @@ public class DetailsEditor extends JFrame {
 				saveText();
 			} //else ("No"), just exit
 		}
-		mainUserInterface.backToPluginManager();
+		dispose();
 	}
 
 	private void saveText() {
