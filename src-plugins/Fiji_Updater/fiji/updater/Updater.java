@@ -22,7 +22,6 @@ import javax.swing.JOptionPane;
 
 import javax.xml.parsers.ParserConfigurationException;
 
-// TODO: rename this class to "Updater".
 public class Updater implements PlugIn {
 	public static final String MAIN_URL = "http://pacific.mpi-cbg.de/uploads/incoming/plugins/";
 	//public static final String MAIN_URL = "http://pacific.mpi-cbg.de/update/"; //TODO
@@ -43,17 +42,8 @@ public class Updater implements PlugIn {
 	// Track when db.xml.gz was modified (Lock conflict purposes)
 	private long lastModified;
 
-	public void run(String arg) {
-		// TODO: this should not be a thread
-		new Thread() {
-			public void run() {
-				openUpdater();
-			}
-		}.start();
-	}
-
 	// TODO: move more functionality into this class; the ui should be the ui only!!!
-	public void openUpdater() {
+	public void run(String arg) {
 		// TODO: use ProgressPane in main window
 		IJProgress progress = new IJProgress();
 		progress.setTitle("Starting up Plugin Manager...");
