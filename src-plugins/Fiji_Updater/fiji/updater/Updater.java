@@ -23,7 +23,7 @@ import javax.swing.JOptionPane;
 import javax.xml.parsers.ParserConfigurationException;
 
 public class Updater implements PlugIn {
-	public static final String MAIN_URL = "http://pacific.mpi-cbg.de/uploads/incoming/plugins/";
+	public static String MAIN_URL = "http://pacific.mpi-cbg.de/uploads/incoming/plugins/";
 	//public static final String MAIN_URL = "http://pacific.mpi-cbg.de/update/"; //TODO
 
 	public static final String TXT_FILENAME = "current.txt";
