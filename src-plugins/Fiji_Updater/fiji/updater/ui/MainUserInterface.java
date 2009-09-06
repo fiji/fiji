@@ -2,16 +2,25 @@ package fiji.updater.ui;
 
 import fiji.updater.logic.Installer;
 import fiji.updater.logic.PluginCollection;
+import fiji.updater.logic.PluginManager;
 import fiji.updater.logic.PluginObject;
+import fiji.updater.logic.Updater;
 
 import fiji.updater.util.Downloader;
 import fiji.updater.util.Util;
 
 import ij.IJ;
+import ij.Prefs;
+
+import ij.gui.GenericDialog;
 
 import java.awt.Dimension;
+import java.awt.TextField;
+
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 
 import java.io.File;
 
@@ -253,11 +262,6 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 		table.getModel().addTableModelListener(this);
 	}
 
-	private void upload() {
-		Uploader uploader = new Uploader(this);
-		uploader.start(xmlLastModified, new IJProgress());
-	}
-
 	// TODO: why should this function need to know that it is triggered by a click?  That is so totally unnecessary.
 	private void clickToEditDescriptions() {
 		loadedFrame = new DetailsEditor(this, currentPlugin);
@@ -391,4 +395,54 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 	private void enableIfActions(JButton button, boolean flag) {
 		button.setEnabled(flag);
 	}
+
+	protected void upload() {
+		Updater updater = new Updater(xmlLastModified);
+
+		try {
+			if (!interactiveSshLogin(updater))
+				return;
+			updater.upload(new IJProgress());
+		} catch (Throwable e) {
+			e.printStackTrace();
+			IJ.error("Upload failed: " + e);
+		}
+	}
+
+	protected boolean interactiveSshLogin(Updater updater) {
+		String username = Prefs.get(PluginManager.PREFS_USER, "");
+		String password = "";
+		do {
+			//Dialog to enter username and password
+			GenericDialog gd = new GenericDialog("Login");
+			gd.addStringField("Username", username, 20);
+			gd.addStringField("Password", "", 20);
+
+			final TextField user =
+				(TextField)gd.getStringFields().firstElement();
+			final TextField pwd =
+				(TextField)gd.getStringFields().lastElement();
+			pwd.setEchoChar('*');
+			if (!username.equals(""))
+				user.addFocusListener(new FocusAdapter() {
+					public void focusGained(FocusEvent e) {
+						pwd.requestFocus();
+						user.removeFocusListener(this);
+					}
+				});
+
+			gd.showDialog();
+			if (gd.wasCanceled())
+				return false; //return back to user interface
+
+			//Get the required login information
+			username = gd.getNextString();
+			password = gd.getNextString();
+
+		} while (!updater.setLogin(username, password));
+
+		Prefs.set(PluginManager.PREFS_USER, username);
+		return true;
+	}
+
 }
