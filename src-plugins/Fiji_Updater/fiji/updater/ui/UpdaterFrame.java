@@ -8,6 +8,8 @@ import fiji.updater.logic.PluginObject;
 import fiji.updater.logic.PluginUploader;
 
 import fiji.updater.util.Downloader;
+import fiji.updater.util.Canceled;
+import fiji.updater.util.Progress;
 import fiji.updater.util.Util;
 
 import ij.IJ;
@@ -24,6 +26,7 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 
 import java.io.File;
+import java.io.IOException;
 
 import java.util.Observable;
 import java.util.Observer;
@@ -73,6 +76,10 @@ public class UpdaterFrame extends JFrame implements TableModelListener {
 		setUpUserInterface();
 		pack();
 		setVisible(true);
+	}
+
+	public Progress getProgress(String title) {
+		return new ProgressDialog(this, title);
 	}
 
 	private void setUpUserInterface() {
@@ -252,7 +259,11 @@ public class UpdaterFrame extends JFrame implements TableModelListener {
 
 	private void clickToBeginOperations() {
 		// TODO: check conflicts
-		download();
+		new Thread() {
+			public void run() {
+				download();
+			}
+		}.start();
 	}
 
 	private void clickToQuitUpdater() {
@@ -276,20 +287,18 @@ public class UpdaterFrame extends JFrame implements TableModelListener {
 	}
 
 	public void download() {
-		new Thread() {
-			public void run() {
-				// TODO: use ProgressPane
-				// TODO: handle Cancel
-				Installer installer =
-					new Installer(new IJProgress());
-				try {
-					installer.start();
-				} catch (Exception e) {
-					// TODO: make error() method
-					IJ.error("Installer failed: " + e);
-				}
-			}
-		}.start();
+		Installer installer =
+			new Installer(getProgress("Installing..."));
+		try {
+			installer.start();
+		} catch (Canceled e) {
+			// TODO: remove "update/" directory
+			IJ.error("Canceled");
+		} catch (IOException e) {
+			// TODO: remove "update/" directory
+			// TODO: make error() method
+			IJ.error("Installer failed: " + e);
+		}
 	}
 
 	public void exitWithRestartFijiMessage() {
@@ -398,7 +407,10 @@ public class UpdaterFrame extends JFrame implements TableModelListener {
 		try {
 			if (!interactiveSshLogin(uploader))
 				return;
-			uploader.upload(new IJProgress());
+			uploader.upload(getProgress("Uploading..."));
+		} catch (Canceled e) {
+			// TODO: teach uploader to remove the lock file
+			IJ.error("Canceled");
 		} catch (Throwable e) {
 			e.printStackTrace();
 			IJ.error("Upload failed: " + e);

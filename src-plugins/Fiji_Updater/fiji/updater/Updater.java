@@ -5,9 +5,10 @@ import fiji.updater.logic.UpdateFiji;
 import fiji.updater.logic.XMLFileDownloader;
 import fiji.updater.logic.XMLFileReader;
 
-import fiji.updater.ui.IJProgress;
 import fiji.updater.ui.UpdaterFrame;
 
+import fiji.updater.util.Canceled;
+import fiji.updater.util.Progress;
 import fiji.updater.util.Util;
 
 import ij.IJ;
@@ -23,41 +24,40 @@ import javax.swing.JOptionPane;
 import javax.xml.parsers.ParserConfigurationException;
 
 public class Updater implements PlugIn {
-	public static String MAIN_URL = "http://pacific.mpi-cbg.de/uploads/incoming/plugins/";
 	//public static final String MAIN_URL = "http://pacific.mpi-cbg.de/update/"; //TODO
+	public static String MAIN_URL = "http://pacific.mpi-cbg.de/uploads/incoming/plugins/";
+	//public static final String UPDATE_DIRECTORY = "/update/";
+	public static final String UPDATE_DIRECTORY = "/incoming/plugins/";
 
 	public static final String TXT_FILENAME = "current.txt";
 	public static final String XML_LOCK = "db.xml.gz.lock";
 	public static final String XML_COMPRESSED = "db.xml.gz";
 	public static final String XML_FILENAME = "db.xml";
 	public static final String XML_BACKUP = "db.bak";
-	//public static final String UPDATE_DIRECTORY = "/update/";
-	public static final String UPDATE_DIRECTORY = "/incoming/plugins/";
 
 	// Key names for ij.Prefs for saved values ("cookies")
 	// Note: ij.Prefs is only saved during shutdown of Fiji
 	public static final String PREFS_XMLDATE = "fiji.updater.xmlDate";
 	public static final String PREFS_USER = "fiji.updater.login";
 
-	// Track when db.xml.gz was modified (Lock conflict purposes)
-	private long lastModified;
-
 	// TODO: move more functionality into this class; the ui should be the ui only!!!
 	public void run(String arg) {
-		UpdaterFrame main = new UpdaterFrame();
+		final UpdaterFrame main = new UpdaterFrame();
 
 		// TODO: use ProgressPane in main window
-		IJProgress progress = new IJProgress();
-		progress.setTitle("Starting up Plugin Manager...");
+		Progress progress = main.getProgress("Starting up...");
 
 		XMLFileDownloader downloader = new XMLFileDownloader();
 		downloader.addProgress(progress);
 		try {
 			downloader.start();
-			lastModified = downloader.getXMLLastModified();
 			// TODO: it is a parser, not a reader.  And it should
 			// be a static method.
 			new XMLFileReader(downloader.getInputStream());
+		} catch (Canceled e) {
+			main.dispose();
+			IJ.error("Canceled");
+			return;
 		} catch (Exception e) {
 			e.printStackTrace();
 			new File(Util.prefix(XML_COMPRESSED))
@@ -67,11 +67,18 @@ public class Updater implements PlugIn {
 			return;
 		}
 
+		progress = main.getProgress("Matching with local files...");
 		PluginListBuilder pluginListBuilder =
 			new PluginListBuilder(progress);
-		pluginListBuilder.updateFromLocal();
+		try {
+			pluginListBuilder.updateFromLocal();
+		} catch (Canceled e) {
+			main.dispose();
+			IJ.error("Canceled");
+			return;
+		}
 
-		main.setLastModified(lastModified);
+		main.setLastModified(downloader.getXMLLastModified());
 		main.updatePluginsTable();
 	}
 
