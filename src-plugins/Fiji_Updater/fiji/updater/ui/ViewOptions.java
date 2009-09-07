@@ -13,7 +13,8 @@ public class ViewOptions extends JComboBox {
 		UPTODATE("up-to-date plugins only"),
 		UPDATEABLE("update-able plugins only"),
 		FIJI("Fiji plugins only"),
-		OTHERS("Non-Fiji plugins only");
+		OTHERS("non-Fiji plugins only"),
+		CHANGES("changes");
 
 		String label;
 		Option(String label) {
@@ -38,6 +39,7 @@ public class ViewOptions extends JComboBox {
 			case UPDATEABLE: return plugins.updateable();
 			case FIJI: return plugins.fijiPlugins();
 			case OTHERS: return plugins.nonFiji();
+			case CHANGES: return plugins.changes();
 			default: return plugins;
 		}
 	}

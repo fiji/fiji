@@ -95,6 +95,15 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		return filter(Status.NOT_FIJI);
 	}
 
+	public Iterable<PluginObject> changes() {
+		return filter(new Filter() {
+			public boolean matches(PluginObject plugin) {
+				return plugin.getAction() !=
+					plugin.getStatus().getActions()[0];
+			}
+		});
+	}
+
 	public static class FilteredIterator implements Iterator<PluginObject> {
 		Filter filter;
 		boolean opposite;
