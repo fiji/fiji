@@ -110,10 +110,8 @@ public class Installer extends Downloader {
 		PluginObject plugin = download.plugin;
 		String digest = download.plugin.getChecksum(), actualDigest;
 		try {
-			addItem(plugin.getFilename() + " (check)...");
 			actualDigest = Util.getDigest(plugin.getFilename(),
 					fileName);
-			setItemCount(1, 1);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("Could not verify checksum "
