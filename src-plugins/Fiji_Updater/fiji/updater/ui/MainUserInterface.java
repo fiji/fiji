@@ -45,11 +45,6 @@ import javax.swing.event.DocumentListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 
-// TODO: add a method that blocks the user interface
-// TODO: add a ProgressPane
-// TODO: while the ProgressPane is showing, prevent the window from closing
-// without a nagging question (and call cancel's actionPerformed if user wants
-// to abort)
 public class MainUserInterface extends JFrame implements TableModelListener {
 	PluginCollection plugins;
 	long xmlLastModified;
