@@ -71,4 +71,7 @@ Not-quite show-stoppers:
 - make the list sortable by clicking on the column titles (second click
   sorts descending).
 
+- if the user has locally-modified files (which are therefore not to be updated
+  by default), show a warning message.
+
 - it was part of the project plan to provide automated tests.  Add some.
