@@ -5,6 +5,8 @@ import fiji.updater.Updater;
 import fiji.updater.logic.Installer;
 import fiji.updater.logic.PluginCollection;
 import fiji.updater.logic.PluginObject;
+import fiji.updater.logic.PluginObject.Action;
+import fiji.updater.logic.PluginObject.Status;
 import fiji.updater.logic.PluginUploader;
 
 import fiji.updater.util.Downloader;
@@ -28,8 +30,8 @@ import java.awt.event.FocusEvent;
 import java.io.File;
 import java.io.IOException;
 
-import java.util.Observable;
-import java.util.Observer;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -43,12 +45,16 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
+
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
-public class UpdaterFrame extends JFrame implements TableModelListener {
+public class UpdaterFrame extends JFrame
+		implements TableModelListener, ListSelectionListener {
 	PluginCollection plugins;
 	long xmlLastModified;
 
@@ -135,7 +141,8 @@ public class UpdaterFrame extends JFrame implements TableModelListener {
 		lblSummaryPanel.add(Box.createHorizontalGlue());
 
 		//Create the plugin table and set up its scrollpane
-		table = new PluginTable(plugins, this);
+		table = new PluginTable(plugins);
+		table.getSelectionModel().addListSelectionListener(this);
 		JScrollPane pluginListScrollpane = new JScrollPane(table);
 		pluginListScrollpane.getViewport().setBackground(table.getBackground());
 
@@ -145,7 +152,14 @@ public class UpdaterFrame extends JFrame implements TableModelListener {
 		//======== End: LEFT PANEL ========
 
 		//======== Start: RIGHT PANEL ========
+		// TODO: do we really want to win the "Who can make the longest function names?" contest?
 		JPanel rightPanel = SwingTools.createBoxLayoutPanel(BoxLayout.Y_AXIS);
+		JPanel buttons = SwingTools.createBoxLayoutPanel(BoxLayout.X_AXIS);
+		buttons.add(new PluginAction("Keep as-is", null));
+		buttons.add(new PluginAction("Install", Action.INSTALL,
+			"Update", Action.UPDATE));
+		buttons.add(new PluginAction("Remove", Action.REMOVE));
+		rightPanel.add(buttons);
 
 		rightPanel.add(Box.createVerticalGlue());
 		if (Util.isDeveloper) {
@@ -220,6 +234,70 @@ public class UpdaterFrame extends JFrame implements TableModelListener {
 		table.changeSelection(0, 0, false, false);
 	}
 
+	public void valueChanged(ListSelectionEvent event) {
+		table.requestFocusInWindow();
+		setCurrentPlugin(table.getSelectedPlugin());
+	}
+
+	List<PluginAction> pluginActions = new ArrayList<PluginAction>();
+
+	class PluginAction extends JButton implements ActionListener {
+		String label, otherLabel;
+		Action action, otherAction;
+
+		PluginAction(String label, Action action) {
+			this(label, action, null, null);
+		}
+
+		PluginAction(String label, Action action,
+				String otherLabel, Action otherAction) {
+			super(label);
+			this.label = label;
+			this.action = action;
+			this.otherLabel = otherLabel;
+			this.otherAction = otherAction;
+			addActionListener(this);
+			pluginActions.add(this);
+		}
+
+		public void actionPerformed(ActionEvent e) {
+			if (currentPlugin == null)
+				return;
+			if (table.isEditing())
+				table.editingCanceled(null);
+			if (action == null)
+				currentPlugin.setNoAction();
+			else
+				currentPlugin.setAction(action);
+			/* table.getModel().setValueAt(currentPlugin.getAction(),
+				table.getSelectedRow(), 1); */
+			table.firePluginChanged(currentPlugin);
+		}
+
+		public void enableIfValid() {
+			boolean enable = false;
+
+			if (currentPlugin != null) {
+				Status status = currentPlugin.getStatus();
+				if (action == null)
+					enable = true;
+				else if (status.isValid(action))
+					enable = true;
+				else if (status.isValid(otherAction)) {
+					String dummy = label;
+					label = otherLabel;
+					otherLabel = dummy;
+					Action dummyAction = action;
+					action = otherAction;
+					otherAction = dummyAction;
+					setLabel(label);
+					enable = true;
+				}
+			}
+			setEnabled(enable);
+		}
+	}
+
 	public void updatePluginsTable() {
 		Iterable<PluginObject> view;
 
@@ -245,8 +323,7 @@ public class UpdaterFrame extends JFrame implements TableModelListener {
 			view = PluginCollection.filter(search, view);
 
 		//Directly update the table for display
-		table.setupTableModel(view);
-		table.getModel().addTableModelListener(this);
+		table.setPlugins(view);
 	}
 
 	// TODO: why should this function need to know that it is triggered by a click?  That is so totally unnecessary.
@@ -321,53 +398,47 @@ public class UpdaterFrame extends JFrame implements TableModelListener {
 		}
 	}
 
-	public void displayPluginDetails(PluginObject plugin) {
+	public void setCurrentPlugin(PluginObject plugin) {
 		currentPlugin = plugin;
 		if (txtPluginDetails != null)
 			((TextPaneDisplay)txtPluginDetails).showPluginDetails(plugin);
 
-		//Enable/Disable edit button depending on Action of selected plugin
-		if (Util.isDeveloper)
-			btnEditDetails.setEnabled(plugin != null &&
-				plugin.toUpload());
+		for (PluginAction button : pluginActions)
+			button.enableIfValid();
+
+		btnStart.setEnabled(plugins.hasChanges());
+
+		// TODO: "Upload" is activated by default!"
+		if (Util.isDeveloper) {
+			btnEditDetails.setEnabled(plugin != null);
+			btnUpload.setEnabled(plugins.hasUpload());
+		}
 	}
 
 	public void tableChanged(TableModelEvent e) {
 		int size = plugins.size();
-		int installCount = 0;
-		int removeCount = 0;
-		int updateCount = 0;
-		int uploadCount = 0;
+		int install = 0;
+		int remove = 0;
+		int update = 0;
+		int upload = 0;
 
 		//Refresh count information
-		for (PluginObject myPlugin : plugins) {
-			if (myPlugin.toInstall()) {
-				installCount += 1;
-			} else if (myPlugin.toRemove()) {
-				removeCount += 1;
-			} else if (myPlugin.toUpdate()) {
-				updateCount += 1;
-			} else if (Util.isDeveloper &&
-					myPlugin.toUpload()) {
-				uploadCount += 1;
-			}
-		}
-		String txtAction = "Total: " + size + ", To install: " + installCount +
-		", To remove: " + removeCount + ", To update: " + updateCount;
+		for (PluginObject myPlugin : plugins)
+			if (myPlugin.toInstall())
+				install += 1;
+			else if (myPlugin.toRemove())
+				remove += 1;
+			else if (myPlugin.toUpdate())
+				update += 1;
+			else if (myPlugin.toUpload())
+				upload += 1;
+		String text = "Total: " + size + ", To install: " + install
+			+ ", To remove: " + remove + ", To update: " + update;
 		if (Util.isDeveloper)
-			txtAction += ", To upload: " + uploadCount;
-		lblPluginSummary.setText(txtAction);
+			text += ", To upload: " + upload;
+		lblPluginSummary.setText(text);
 
-		//Refresh plugin details and status
-		if (Util.isDeveloper && btnEditDetails != null) {
-			if (currentPlugin != null)
-				displayPluginDetails(currentPlugin);
-			else
-				btnEditDetails.setEnabled(false);
-		}
-		enableIfAnyChange(btnStart);
-		// TODO: "Upload" is activated by default!"
-		enableIfAnyUpload(btnUpload);
+		setCurrentPlugin(currentPlugin);
 	}
 
 	private void enableIfAnyUpload(JButton button) {

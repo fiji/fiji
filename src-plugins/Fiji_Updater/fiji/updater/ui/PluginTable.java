@@ -18,8 +18,6 @@ import javax.swing.JComboBox;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 
@@ -33,53 +31,41 @@ import javax.swing.table.TableColumn;
  */
 public class PluginTable extends JTable {
 	private PluginTableModel pluginTableModel;
-	private UpdaterFrame updaterFrame;
 
-	public PluginTable(PluginCollection pluginList, UpdaterFrame updaterFrame) {
-		this.updaterFrame = updaterFrame;
-		setupTable(pluginList);
-	}
-
-	public void setupTable(PluginCollection pluginList) {
-		//default display: All plugins shown
-		setupTableModel(pluginList);
-		setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-
-			//Called when a row is selected
-			public void valueChanged(ListSelectionEvent event) {
-				int row = getSelectedRow();
-				updaterFrame.displayPluginDetails(getPlugin(row));
-			}
-
-		});
-
+	public PluginTable(PluginCollection plugins) {
 		//Set appearance of table
 		setShowGrid(false);
 		setIntercellSpacing(new Dimension(0,0));
 		setAutoResizeMode(PluginTable.AUTO_RESIZE_ALL_COLUMNS);
 		setRequestFocusEnabled(false);
-		setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
-
-			// method to over-ride - returns cell renderer component
-			public Component getTableCellRendererComponent(JTable table, Object value,
-					boolean isSelected, boolean hasFocus, int row, int column) {
-
-				// let the default renderer prepare the component for us
-				Component comp = super.getTableCellRendererComponent(table, value,
-						isSelected, hasFocus, row, column);
-				PluginObject plugin = getPlugin(row);
-				comp.setFont(comp.getFont().deriveFont(plugin.actionSpecified() ? Font.BOLD : Font.PLAIN)); // TODO!!! this is not a good design.  There _must_ be a _single_ method that knows what to do depending on a plugin's state!
-
-				return comp;
-			}
-		});
 
 		//set up the table properties and other settings
+		setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		setCellSelectionEnabled(true);
 		setColumnSelectionAllowed(false);
 		setRowSelectionAllowed(true);
-		requestFocusInWindow();
+
+		pluginTableModel = new PluginTableModel(plugins);
+		setModel(pluginTableModel);
+		getModel().addTableModelListener(this);
+		setColumnWidths(250, 100);
+
+		setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+			public Component getTableCellRendererComponent(
+					JTable table, Object value,
+					boolean isSelected, boolean hasFocus,
+					int row, int column) {
+				Component comp = super
+					.getTableCellRendererComponent(table,
+						value, isSelected, hasFocus,
+						row, column);
+				PluginObject plugin = getPlugin(row);
+				comp.setFont(comp.getFont()
+					.deriveFont(plugin.actionSpecified() ?
+						Font.BOLD : Font.PLAIN));
+				return comp;
+			}
+		});
 	}
 
 	private void setColumnWidths(int col1Width, int col2Width) {
@@ -94,16 +80,8 @@ public class PluginTable extends JTable {
 		col2.setResizable(true);
 	}
 
-	//Set up table model, to be called each time display list is to be changed
-	public void setupTableModel(Iterable<PluginObject> plugins) {
-		setupTableModel(PluginCollection.clone(plugins));
-	}
-
-	public void setupTableModel(PluginCollection plugins) {
-		setModel(pluginTableModel = new PluginTableModel(plugins));
-		getModel().addTableModelListener(this);
-		setColumnWidths(250, 100);
-		pluginTableModel.fireTableChanged(new TableModelEvent(pluginTableModel));
+	public void setPlugins(Iterable<PluginObject> plugins) {
+		pluginTableModel.setPlugins(plugins);
 	}
 
 	public TableCellEditor getCellEditor(int row, int col) {
@@ -122,11 +100,24 @@ public class PluginTable extends JTable {
 		return plugin == null ? null : plugin.getPlugin();
 	}
 
+	public PluginObject getSelectedPlugin() {
+		return getPlugin(getSelectedRow());
+	}
+
 	class PluginTableModel extends AbstractTableModel {
 		private PluginCollection plugins;
 
 		public PluginTableModel(PluginCollection plugins) {
 			this.plugins = plugins;
+		}
+
+		public void setPlugins(Iterable<PluginObject> plugins) {
+			setPlugins(PluginCollection.clone(plugins));
+		}
+
+		public void setPlugins(PluginCollection plugins) {
+			this.plugins = plugins;
+			fireTableChanged(new TableModelEvent(pluginTableModel));
 		}
 
 		public int getColumnCount() {
@@ -170,8 +161,28 @@ public class PluginTable extends JTable {
 		public void setValueAt(Object value, int row, int column) {
 			if (column == 1) {
 				getPlugin(row).setAction((Action)value);
-				fireTableChanged(new TableModelEvent(this));
+				fireRowChanged(row);
 			}
 		}
+
+		public void fireRowChanged(int row) {
+			fireTableRowsUpdated(row, row);
+		}
+
+		public void firePluginChanged(PluginObject plugin) {
+			// the table may be sorted, and we need the model's row
+			int counter = 0;
+			for (PluginObject p : plugins)
+				if (p == plugin) {
+					fireRowChanged(counter);
+					return;
+				}
+				else
+					counter++;
+		}
+	}
+
+	public void firePluginChanged(PluginObject plugin) {
+		pluginTableModel.firePluginChanged(plugin);
 	}
 }

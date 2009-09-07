@@ -114,7 +114,7 @@ public class DetailsEditor extends JFrame {
 			selectedPlugin.addLink(link);
 		for (String author : txtEdits[0].getText().trim().split("\n"))
 			selectedPlugin.addAuthor(author);
-		updaterFrame.displayPluginDetails(selectedPlugin);
+		updaterFrame.setCurrentPlugin(selectedPlugin);
 		textChanged = false;
 	}
 }
