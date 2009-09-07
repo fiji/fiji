@@ -26,6 +26,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 import java.io.File;
 import java.io.IOException;
@@ -79,17 +81,12 @@ public class UpdaterFrame extends JFrame
 
 		plugins = PluginCollection.getInstance();
 
-		setUpUserInterface();
-		pack();
-		setVisible(true);
-	}
-
-	public Progress getProgress(String title) {
-		return new ProgressDialog(this, title);
-	}
-
-	private void setUpUserInterface() {
-		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent e) {
+				quit();
+			}
+		});
 
 		//======== Start: LEFT PANEL ========
 		JPanel leftPanel = SwingTools.createBoxLayoutPanel(BoxLayout.Y_AXIS);
@@ -216,12 +213,12 @@ public class UpdaterFrame extends JFrame
 		bottomPanel.add(Box.createHorizontalGlue());
 
 		//Button to quit Plugin Manager
-		SwingTools.createButton("Cancel",
-				"Exit Plugin Manager without applying changes", new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				clickToQuitUpdater();
-			}
-		}, bottomPanel);
+		SwingTools.createButton("Cancel", "Exit Plugin Manager",
+			new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					quit();
+				}
+			}, bottomPanel);
 		//======== End: BOTTOM PANEL ========
 
 		getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
@@ -230,8 +227,12 @@ public class UpdaterFrame extends JFrame
 
 		table.getModel().addTableModelListener(this);
 
-		//initial selection
-		table.changeSelection(0, 0, false, false);
+		pack();
+		setVisible(true);
+	}
+
+	public Progress getProgress(String title) {
+		return new ProgressDialog(this, title);
 	}
 
 	public void valueChanged(ListSelectionEvent event) {
@@ -343,8 +344,7 @@ public class UpdaterFrame extends JFrame
 		}.start();
 	}
 
-	private void clickToQuitUpdater() {
-		//if there exists plugins where actions have been specified by user
+	private void quit() {
 		if (plugins.hasChanges() &&
 				JOptionPane.showConfirmDialog(this,
 					"You have specified changes. Are you "

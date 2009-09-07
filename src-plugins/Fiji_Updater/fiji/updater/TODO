@@ -44,9 +44,6 @@ Show-stoppers:
 - The current time of the server _must_ be used for new timestamps!!!
   Otherwise, we risk clock skew!!!
 
-- If the user marks changes and clicks on the little X in the window bar,
-  the plugin manager just closes without asking "Are you sure?"!!!
-
 Not-quite show-stoppers:
 
 - If the developer tries to upload a version that has already be marked
