@@ -156,27 +156,42 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	}
 
 	public Iterable<PluginObject> filter(final Status status) {
+		return filter(status, this);
+	}
+
+	public static Iterable<PluginObject> filter(final Status status,
+			final Iterable<PluginObject> plugins) {
 		return filter(new Filter() {
 			public boolean matches(PluginObject plugin) {
 				return plugin.getStatus() == status;
 			}
-		}, this);
+		}, plugins);
 	}
 
 	public Iterable<PluginObject> filterOut(final Status status) {
+		return filterOut(status, this);
+	}
+
+	public static Iterable<PluginObject> filterOut(final Status status,
+			final Iterable<PluginObject> plugins) {
 		return filter(new Filter() {
 			public boolean matches(PluginObject plugin) {
 				return plugin.getStatus() != status;
 			}
-		}, this);
+		}, plugins);
 	}
 
 	public Iterable<PluginObject> filter(final Action action) {
+		return filter(action, this);
+	}
+
+	public static Iterable<PluginObject> filter(final Action action,
+			final Iterable<PluginObject> plugins) {
 		return filter(new Filter() {
 			public boolean matches(PluginObject plugin) {
 				return plugin.getAction() == action;
 			}
-		}, this);
+		}, plugins);
 	}
 
 	public PluginObject getPlugin(String filename) {
