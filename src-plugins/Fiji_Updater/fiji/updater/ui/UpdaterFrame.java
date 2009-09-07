@@ -55,6 +55,7 @@ public class UpdaterFrame extends JFrame implements TableModelListener {
 	private JComboBox viewOptions;
 	private PluginTable table;
 	private JLabel lblPluginSummary;
+	// TODO: this _is_ a TextPaneDisplay.  (Oh, and rename it to PluginDetails)
 	private JTextPane txtPluginDetails;
 	private PluginObject currentPlugin;
 	private JButton btnStart;
@@ -64,28 +65,14 @@ public class UpdaterFrame extends JFrame implements TableModelListener {
 	private JButton btnUpload;
 	private JButton btnEditDetails;
 
-	public UpdaterFrame(long xmlLastModified) {
+	public UpdaterFrame() {
 		super("Plugin Manager");
 
 		plugins = PluginCollection.getInstance();
 
-		String list = null;
-		for (PluginObject plugin : plugins) {
-			File file = new File(Util.prefix(plugin.getFilename()));
-			if (!file.exists() || file.canWrite())
-				continue;
-			if (list == null)
-				list = plugin.getFilename();
-			else
-				list += ", " + plugin.getFilename();
-		}
-		if (list != null)
-			IJ.showMessage("Read-only Plugins",
-					"WARNING: The following plugin files "
-					+ "are set to read-only: '"
-					+ list + "'");
 		setUpUserInterface();
 		pack();
+		setVisible(true);
 	}
 
 	private void setUpUserInterface() {
@@ -93,20 +80,19 @@ public class UpdaterFrame extends JFrame implements TableModelListener {
 
 		//======== Start: LEFT PANEL ========
 		JPanel leftPanel = SwingTools.createBoxLayoutPanel(BoxLayout.Y_AXIS);
-		//Create text search
 		txtSearch = new JTextField();
 		txtSearch.getDocument().addDocumentListener(new DocumentListener() {
 
 			public void changedUpdate(DocumentEvent e) {
-				changeListingListener();
+				updatePluginsTable();
 			}
 
 			public void removeUpdate(DocumentEvent e) {
-				changeListingListener();
+				updatePluginsTable();
 			}
 
 			public void insertUpdate(DocumentEvent e) {
-				changeListingListener();
+				updatePluginsTable();
 			}
 		});
 		SwingTools.createLabelledComponent("Search:", txtSearch, leftPanel);
@@ -124,9 +110,8 @@ public class UpdaterFrame extends JFrame implements TableModelListener {
 		};
 		viewOptions = new JComboBox(arrViewingOptions);
 		viewOptions.addActionListener(new ActionListener() {
-
 			public void actionPerformed(ActionEvent e) {
-				changeListingListener();
+				updatePluginsTable();
 			}
 		});
 		SwingTools.createLabelledComponent("View Options:", viewOptions, leftPanel);
@@ -228,8 +213,7 @@ public class UpdaterFrame extends JFrame implements TableModelListener {
 		table.changeSelection(0, 0, false, false);
 	}
 
-	//Whenever search text or ComboBox has been changed
-	private void changeListingListener() {
+	public void updatePluginsTable() {
 		Iterable<PluginObject> view;
 
 		// TODO: OUCH!
@@ -327,14 +311,15 @@ public class UpdaterFrame extends JFrame implements TableModelListener {
 		}
 	}
 
-	public void displayPluginDetails(PluginObject currentPlugin) {
-		this.currentPlugin = currentPlugin;
+	public void displayPluginDetails(PluginObject plugin) {
+		currentPlugin = plugin;
 		if (txtPluginDetails != null)
-			((TextPaneDisplay)txtPluginDetails).showPluginDetails(currentPlugin);
+			((TextPaneDisplay)txtPluginDetails).showPluginDetails(plugin);
 
 		//Enable/Disable edit button depending on Action of selected plugin
-		if (Util.isDeveloper) //This button only exists if is a Developer
-			btnEditDetails.setEnabled(currentPlugin.toUpload());
+		if (Util.isDeveloper)
+			btnEditDetails.setEnabled(plugin != null &&
+				plugin.toUpload());
 	}
 
 	public void tableChanged(TableModelEvent e) {
@@ -385,6 +370,26 @@ public class UpdaterFrame extends JFrame implements TableModelListener {
 
 	private void enableIfActions(JButton button, boolean flag) {
 		button.setEnabled(flag);
+	}
+
+	public void setLastModified(long lastModified) {
+		xmlLastModified = lastModified;
+
+		String list = null;
+		for (PluginObject plugin : plugins) {
+			File file = new File(Util.prefix(plugin.getFilename()));
+			if (!file.exists() || file.canWrite())
+				continue;
+			if (list == null)
+				list = plugin.getFilename();
+			else
+				list += ", " + plugin.getFilename();
+		}
+		if (list != null)
+			IJ.showMessage("Read-only Plugins",
+					"WARNING: The following plugin files "
+					+ "are set to read-only: '"
+					+ list + "'");
 	}
 
 	protected void upload() {

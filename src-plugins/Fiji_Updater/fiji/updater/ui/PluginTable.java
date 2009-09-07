@@ -49,8 +49,7 @@ public class PluginTable extends JTable {
 			//Called when a row is selected
 			public void valueChanged(ListSelectionEvent event) {
 				int row = getSelectedRow();
-				if (row >= 0)
-					updaterFrame.displayPluginDetails(getPlugin(row));
+				updaterFrame.displayPluginDetails(getPlugin(row));
 			}
 
 		});
@@ -118,7 +117,9 @@ public class PluginTable extends JTable {
 	}
 
 	public PluginObject getPlugin(int row) {
-		return ((PluginObject.LabeledPlugin)getValueAt(row, 0)).getPlugin();
+		PluginObject.LabeledPlugin plugin =
+			(PluginObject.LabeledPlugin)getValueAt(row, 0);
+		return plugin == null ? null : plugin.getPlugin();
 	}
 
 	class PluginTableModel extends AbstractTableModel {
@@ -157,6 +158,8 @@ public class PluginTable extends JTable {
 		}
 
 		public Object getValueAt(int row, int column) {
+			if (row < 0 || row >= plugins.size())
+				return null;
 			return plugins.get(row).getLabeledPlugin(column);
 		}
 

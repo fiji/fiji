@@ -44,6 +44,8 @@ public class Updater implements PlugIn {
 
 	// TODO: move more functionality into this class; the ui should be the ui only!!!
 	public void run(String arg) {
+		UpdaterFrame main = new UpdaterFrame();
+
 		// TODO: use ProgressPane in main window
 		IJProgress progress = new IJProgress();
 		progress.setTitle("Starting up Plugin Manager...");
@@ -68,11 +70,9 @@ public class Updater implements PlugIn {
 		PluginListBuilder pluginListBuilder =
 			new PluginListBuilder(progress);
 		pluginListBuilder.updateFromLocal();
-		IJ.showStatus("");
 
-		// TODO: move earlier, make progress here
-		UpdaterFrame main = new UpdaterFrame(lastModified);
-		main.setVisible(true);
+		main.setLastModified(lastModified);
+		main.updatePluginsTable();
 	}
 
 	protected void fallBackToOldUpdater() {
