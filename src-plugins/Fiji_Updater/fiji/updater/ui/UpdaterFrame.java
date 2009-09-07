@@ -45,7 +45,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 
-public class MainUserInterface extends JFrame implements TableModelListener {
+public class UpdaterFrame extends JFrame implements TableModelListener {
 	PluginCollection plugins;
 	long xmlLastModified;
 
@@ -64,7 +64,7 @@ public class MainUserInterface extends JFrame implements TableModelListener {
 	private JButton btnUpload;
 	private JButton btnEditDetails;
 
-	public MainUserInterface(long xmlLastModified) {
+	public UpdaterFrame(long xmlLastModified) {
 		super("Plugin Manager");
 
 		plugins = PluginCollection.getInstance();

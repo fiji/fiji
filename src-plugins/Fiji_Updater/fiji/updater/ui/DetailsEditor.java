@@ -19,14 +19,14 @@ import javax.swing.event.DocumentListener;
 // update the plugin details, activating the "Upload" button.
 public class DetailsEditor extends JFrame {
 	private DocumentListener changeListener;
-	private MainUserInterface mainUserInterface;
+	private UpdaterFrame updaterFrame;
 	private PluginObject selectedPlugin;
 	private JTextPane[] txtEdits; //0: Authors, 1: Description, 2: Links
 	private boolean textChanged;
 
-	public DetailsEditor(MainUserInterface mainUserInterface, PluginObject selectedPlugin) {
+	public DetailsEditor(UpdaterFrame frame, PluginObject selectedPlugin) {
 		super("Description Editor: " + selectedPlugin.getFilename());
-		this.mainUserInterface = mainUserInterface;
+		updaterFrame = frame;
 		this.selectedPlugin = selectedPlugin;
 		setUpUserInterface();
 		pack();
@@ -114,7 +114,7 @@ public class DetailsEditor extends JFrame {
 			selectedPlugin.addLink(link);
 		for (String author : txtEdits[0].getText().trim().split("\n"))
 			selectedPlugin.addAuthor(author);
-		mainUserInterface.displayPluginDetails(selectedPlugin);
+		updaterFrame.displayPluginDetails(selectedPlugin);
 		textChanged = false;
 	}
 }

@@ -33,10 +33,10 @@ import javax.swing.table.TableColumn;
  */
 public class PluginTable extends JTable {
 	private PluginTableModel pluginTableModel;
-	private MainUserInterface mainUserInterface;
+	private UpdaterFrame updaterFrame;
 
-	public PluginTable(PluginCollection pluginList, MainUserInterface mainUserInterface) {
-		this.mainUserInterface = mainUserInterface;
+	public PluginTable(PluginCollection pluginList, UpdaterFrame updaterFrame) {
+		this.updaterFrame = updaterFrame;
 		setupTable(pluginList);
 	}
 
@@ -50,7 +50,7 @@ public class PluginTable extends JTable {
 			public void valueChanged(ListSelectionEvent event) {
 				int row = getSelectedRow();
 				if (row >= 0)
-					mainUserInterface.displayPluginDetails(getPlugin(row));
+					updaterFrame.displayPluginDetails(getPlugin(row));
 			}
 
 		});

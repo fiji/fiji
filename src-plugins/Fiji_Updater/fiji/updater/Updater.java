@@ -6,7 +6,7 @@ import fiji.updater.logic.XMLFileDownloader;
 import fiji.updater.logic.XMLFileReader;
 
 import fiji.updater.ui.IJProgress;
-import fiji.updater.ui.MainUserInterface;
+import fiji.updater.ui.UpdaterFrame;
 
 import fiji.updater.util.Util;
 
@@ -70,7 +70,8 @@ public class Updater implements PlugIn {
 		pluginListBuilder.updateFromLocal();
 		IJ.showStatus("");
 
-		MainUserInterface main = new MainUserInterface(lastModified);
+		// TODO: move earlier, make progress here
+		UpdaterFrame main = new UpdaterFrame(lastModified);
 		main.setVisible(true);
 	}
 
