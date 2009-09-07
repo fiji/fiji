@@ -291,6 +291,7 @@ public class UpdaterFrame extends JFrame implements TableModelListener {
 			new Installer(getProgress("Installing..."));
 		try {
 			installer.start();
+			updatePluginsTable();
 		} catch (Canceled e) {
 			// TODO: remove "update/" directory
 			IJ.error("Canceled");
@@ -408,6 +409,8 @@ public class UpdaterFrame extends JFrame implements TableModelListener {
 			if (!interactiveSshLogin(uploader))
 				return;
 			uploader.upload(getProgress("Uploading..."));
+			// TODO: download list instead
+			IJ.showMessage("You need to restart this plugin now");
 		} catch (Canceled e) {
 			// TODO: teach uploader to remove the lock file
 			IJ.error("Canceled");
