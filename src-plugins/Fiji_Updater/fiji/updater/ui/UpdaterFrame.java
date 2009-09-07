@@ -61,9 +61,8 @@ public class UpdaterFrame extends JFrame
 	long xmlLastModified;
 
 	private JFrame loadedFrame;
-	private String[] arrViewingOptions;
 	private JTextField txtSearch;
-	private JComboBox viewOptions;
+	private ViewOptions viewOptions;
 	private PluginTable table;
 	private JLabel lblPluginSummary;
 	// TODO: this _is_ a TextPaneDisplay.  (Oh, and rename it to PluginDetails)
@@ -108,22 +107,13 @@ public class UpdaterFrame extends JFrame
 		SwingTools.createLabelledComponent("Search:", txtSearch, leftPanel);
 		leftPanel.add(Box.createRigidArea(new Dimension(0,10)));
 
-		//Create combo box of options
-		arrViewingOptions = new String[] {
-				"View all plugins",
-				"View installed plugins only",
-				"View uninstalled plugins only",
-				"View up-to-date plugins only",
-				"View update-able plugins only",
-				"View Fiji plugins only",
-				"View Non-Fiji plugins only"
-		};
-		viewOptions = new JComboBox(arrViewingOptions);
+		viewOptions = new ViewOptions();
 		viewOptions.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				updatePluginsTable();
 			}
 		});
+	
 		SwingTools.createLabelledComponent("View Options:", viewOptions, leftPanel);
 		leftPanel.add(Box.createRigidArea(new Dimension(0,10)));
 
@@ -303,24 +293,7 @@ public class UpdaterFrame extends JFrame
 	}
 
 	public void updatePluginsTable() {
-		Iterable<PluginObject> view;
-
-		// TODO: OUCH!
-		int index = viewOptions.getSelectedIndex();
-		if (index == 1)
-			view = plugins.installed();
-		else if (index == 2)
-			view = plugins.uninstalled();
-		else if (index == 3)
-			view = plugins.upToDate();
-		else if (index == 4)
-			view = plugins.updateable();
-		else if (index == 5)
-			view = plugins.fijiPlugins();
-		else if (index == 6)
-			view = plugins.nonFiji();
-		else
-			view = plugins;
+		Iterable<PluginObject> view = viewOptions.getView();
 
 		String search = txtSearch.getText().trim();
 		if (!search.equals(""))
