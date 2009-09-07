@@ -151,12 +151,6 @@ public class UpdaterFrame extends JFrame
 		//======== Start: RIGHT PANEL ========
 		// TODO: do we really want to win the "Who can make the longest function names?" contest?
 		JPanel rightPanel = SwingTools.createBoxLayoutPanel(BoxLayout.Y_AXIS);
-		JPanel buttons = SwingTools.createBoxLayoutPanel(BoxLayout.X_AXIS);
-		buttons.add(new PluginAction("Keep as-is", null));
-		buttons.add(new PluginAction("Install", Action.INSTALL,
-			"Update", Action.UPDATE));
-		buttons.add(new PluginAction("Remove", Action.REMOVE));
-		rightPanel.add(buttons);
 
 		rightPanel.add(Box.createVerticalGlue());
 		if (Util.isDeveloper) {
@@ -190,6 +184,14 @@ public class UpdaterFrame extends JFrame
 		//======== Start: BOTTOM PANEL ========
 		JPanel bottomPanel = SwingTools.createBoxLayoutPanel(BoxLayout.X_AXIS);
 		bottomPanel.setBorder(BorderFactory.createEmptyBorder(5, 15, 15, 15));
+		bottomPanel.add(new PluginAction("Keep as-is", null));
+		bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
+		bottomPanel.add(new PluginAction("Install", Action.INSTALL,
+			"Update", Action.UPDATE));
+		bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
+		bottomPanel.add(new PluginAction("Remove", Action.REMOVE));
+
+		bottomPanel.add(Box.createHorizontalGlue());
 
 		//Button to start actions
 		btnStart = SwingTools.createButton("Apply changes",
@@ -209,10 +211,10 @@ public class UpdaterFrame extends JFrame
 					upload();
 				}
 			}, bottomPanel);
+			btnUpload.setEnabled(false);
 		}
-		bottomPanel.add(Box.createHorizontalGlue());
 
-		//Button to quit Plugin Manager
+		bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
 		SwingTools.createButton("Cancel", "Exit Plugin Manager",
 			new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
@@ -221,7 +223,8 @@ public class UpdaterFrame extends JFrame
 			}, bottomPanel);
 		//======== End: BOTTOM PANEL ========
 
-		getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
+		getContentPane().setLayout(new BoxLayout(getContentPane(),
+					BoxLayout.Y_AXIS));
 		getContentPane().add(topPanel);
 		getContentPane().add(bottomPanel);
 
