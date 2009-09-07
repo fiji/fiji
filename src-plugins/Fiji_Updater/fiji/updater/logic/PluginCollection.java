@@ -75,7 +75,8 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	}
 
 	public Iterable<PluginObject> installed() {
-		return filter(Status.INSTALLED);
+		return filterOut(Status.NOT_FIJI,
+			filterOut(Status.NOT_INSTALLED));
 	}
 
 	public Iterable<PluginObject> updateable() {
