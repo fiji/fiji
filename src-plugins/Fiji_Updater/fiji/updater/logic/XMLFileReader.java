@@ -1,5 +1,9 @@
 package fiji.updater.logic;
 
+import fiji.updater.Updater;
+
+import ij.Prefs;
+
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -25,14 +29,16 @@ import org.xml.sax.helpers.DefaultHandler;
 public class XMLFileReader extends DefaultHandler {
 	private PluginCollection plugins;
 
+	// every plugin newer than this was not seen by the user yet
+	protected long newTimestamp;
+
 	// currently parsed
 	private PluginObject current;
 	private String currentTag, body;
 
-	public XMLFileReader(String fileLocation)
-			throws ParserConfigurationException, IOException,
-			       SAXException {
-		initialize(new InputSource(fileLocation));
+	public XMLFileReader(String path) throws ParserConfigurationException,
+			IOException, SAXException {
+		initialize(new InputSource(path));
 	}
 
 	public XMLFileReader(InputStream in)
@@ -44,6 +50,8 @@ public class XMLFileReader extends DefaultHandler {
 	private void initialize(InputSource inputSource)
 			throws ParserConfigurationException, SAXException,
 			       IOException {
+		newTimestamp =
+			Long.parseLong(Prefs.get(Updater.PREFS_XMLDATE, "0"));
 		SAXParserFactory factory = SAXParserFactory.newInstance();
 		factory.setNamespaceAware(true);
 
@@ -105,6 +113,8 @@ public class XMLFileReader extends DefaultHandler {
 		else if (tagName.equals("link"))
 			current.addLink(body);
 		else if (tagName.equals("plugin")) {
+			if (current.isNewerThan(newTimestamp))
+				current.setStatus(PluginObject.Status.NEW);
 			plugins.add(current);
 			current = null;
 		}

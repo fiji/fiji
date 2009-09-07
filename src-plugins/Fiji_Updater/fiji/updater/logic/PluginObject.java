@@ -11,6 +11,8 @@ import java.util.Map;
 public class PluginObject {
 	public class Version {
 		public String checksum;
+		// This timestamp is not a Unix epoch!
+		// Instead, it is Long.parseLong(Util.timestamp(epoch))
 		public long timestamp;
 
 		Version(String checksum, long timestamp) {
@@ -20,11 +22,15 @@ public class PluginObject {
 	}
 
 	public static enum Action {
+		// no changes
 		NOT_FIJI ("Not in Fiji"),
 		NOT_INSTALLED ("Not installed"),
 		INSTALLED ("Up-to-date"),
 		UPDATEABLE ("Update available"),
 		MODIFIED ("Locally modified"),
+		NEW ("New plugin"),
+
+		// changes
 		REMOVE ("Remove it"),
 		INSTALL ("Install it"),
 		UPDATE ("Update it"),
@@ -52,7 +58,8 @@ public class PluginObject {
 		INSTALLED (new Action[] { Action.INSTALLED, Action.REMOVE }, false),
 		UPDATEABLE (new Action[] { Action.UPDATEABLE, Action.REMOVE, Action.UPDATE }, Util.isDeveloper),
 		MODIFIED (new Action[] { Action.MODIFIED, Action.REMOVE, Action.UPDATE }, Util.isDeveloper),
-		NOT_FIJI (new Action[] { Action.NOT_FIJI, Action.REMOVE }, Util.isDeveloper);
+		NOT_FIJI (new Action[] { Action.NOT_FIJI, Action.REMOVE }, Util.isDeveloper),
+		NEW (new Action[] { Action.NEW, Action.INSTALL}, false);
 
 		private Action[] actions;
 		Status(Action[] actions, boolean allowUpload) {
@@ -116,6 +123,15 @@ public class PluginObject {
 			if (version.checksum.equals(checksum))
 				return true;
 		return false;
+	}
+
+	public boolean isNewerThan(long timestamp) {
+		if (current.timestamp <= timestamp)
+			return false;
+		for (Version version : previous.keySet())
+			if (version.timestamp <= timestamp)
+				return false;
+		return true;
 	}
 
 	public void setLocalVersion(String checksum, long timestamp) {
