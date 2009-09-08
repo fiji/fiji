@@ -1,8 +1,14 @@
 package fiji.updater.ui;
+
 import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.Dimension;
+
 import java.awt.event.ActionListener;
+
 import java.util.List;
+
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -13,67 +19,72 @@ import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextPane;
 import javax.swing.SwingConstants;
+
 import javax.swing.event.DocumentListener;
 
-//Specialized functions to ease repetitive creation of Swing components
+// Helper functions to instantiated Swing components
 public class SwingTools {
-	//Created a tabbed pane with a single tab that contains a single component
-	public static JTabbedPane getSingleTabbedPane(JTextPane textpane, String title, String tooltip,
-			int width, int height, JPanel addTo) {
-		JPanel tabPane = new JPanel();
-		tabPane.setLayout(new BorderLayout());
-		tabPane.add(getTextScrollPane(textpane, width, height, null), BorderLayout.CENTER);
+	public static JTabbedPane tab(Component component,
+			String title, String tooltip,
+			int width, int height, Container addTo) {
+		JPanel tab = new JPanel();
+		tab.add(scrollPane(component, width, height, null));
 
-		JTabbedPane tabbedPane = new JTabbedPane();
-		tabbedPane.addTab(title, null, tabPane, tooltip);
-		tabbedPane.setPreferredSize(new Dimension(width,height));
+		JTabbedPane tabbed = new JTabbedPane();
+		tabbed.addTab(title, null, tab, tooltip);
+		tabbed.setPreferredSize(new Dimension(width,height));
 		if (addTo != null)
-			addTo.add(tabbedPane);
-		return tabbedPane;
+			addTo.add(tabbed);
+		return tabbed;
 	}
 
-	//Creates a JScrollPane for the given textpane of specified width and height
-	public static JScrollPane getTextScrollPane(JTextPane textPane, int width, int height, JPanel addTo) {
-		textPane.setPreferredSize(new Dimension(width, height));
-		JScrollPane scrollpane = new JScrollPane(textPane);
-		scrollpane.getViewport().setBackground(textPane.getBackground());
-		scrollpane.setPreferredSize(new Dimension(width, height));
+	public static JScrollPane scrollPane(Component component,
+			int width, int height, Container addTo) {
+		JScrollPane scroll = new JScrollPane(component);
+		scroll.getViewport().setBackground(component.getBackground());
+		scroll.setPreferredSize(new Dimension(width, height));
 		if (addTo != null)
-			addTo.add(scrollpane);
-
-		return scrollpane;
+			addTo.add(scroll);
+		return scroll;
 	}
 
-	//Creates a JPanel with a label that sticks to the left
-	public static JPanel createLabelPanel(String text, JPanel addTo) {
+	public static JPanel label(String text, Container addTo) {
 		JLabel label = new JLabel(text, SwingConstants.LEFT);
-		JPanel lblPanel = createBoxLayoutPanel(BoxLayout.X_AXIS);
-		lblPanel.add(label);
-		lblPanel.add(Box.createHorizontalGlue());
+		JPanel panel = horizontalPanel();
+		panel.add(label);
+		panel.add(Box.createHorizontalGlue());
 		if (addTo != null)
-			addTo.add(lblPanel);
-
-		return lblPanel;
+			addTo.add(panel);
+		return panel;
 	}
 
-	public static JPanel createBoxLayoutPanel(int alignment) {
+	public static JPanel boxLayoutPanel(int alignment) {
 		JPanel panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, alignment));
 		return panel;
 	}
 
-	public static JButton createButton(String buttonTitle, String toolTipText,
-			ActionListener listener, JPanel addTo) {
-		JButton btn = new JButton(buttonTitle);
-		btn.setToolTipText(toolTipText);
-		btn.addActionListener(listener);
-		if (addTo != null)
-			addTo.add(btn);
-		return btn;
+	public static JPanel horizontalPanel() {
+		return boxLayoutPanel(BoxLayout.X_AXIS);
 	}
 
-	public static JPanel createLabelledComponent(String text, JComponent component, JPanel addTo) {
-		JPanel panel = SwingTools.createBoxLayoutPanel(BoxLayout.X_AXIS);
+	public static JPanel verticalPanel() {
+		return boxLayoutPanel(BoxLayout.Y_AXIS);
+	}
+
+	public static JButton button(String title, String toolTip,
+			ActionListener listener, Container addTo) {
+		JButton button = new JButton(title);
+		button.setToolTipText(toolTip);
+		button.addActionListener(listener);
+		if (addTo != null)
+			addTo.add(button);
+		return button;
+	}
+
+	public static JPanel labelComponent(String text, JComponent component,
+			Container addTo) {
+		JPanel panel = horizontalPanel();
 		JLabel label = new JLabel(text, SwingConstants.LEFT);
 		panel.add(label);
 		panel.add(Box.createRigidArea(new Dimension(10,0)));
@@ -83,28 +94,26 @@ public class SwingTools {
 		return panel;
 	}
 
-	public static JScrollPane getTextScrollPane(JTextPane textPane, int width, int height, String contents,
-			DocumentListener listener, JPanel addTo) {
-		textPane.getDocument().addDocumentListener(listener);
-		JScrollPane scrollpane = SwingTools.getTextScrollPane(textPane, width, height, addTo);
-		if (contents != null)
-			textPane.setText(contents);
-		textPane.setSelectionStart(0);
-		textPane.setSelectionEnd(0);
-		return scrollpane;
+	public static JTextPane scrolledText(int width, int height,
+			String text, DocumentListener listener,
+			Container addTo) {
+		JTextPane component = new JTextPane();
+		component.getDocument().addDocumentListener(listener);
+		if (text != null)
+			component.setText(text);
+		component.setSelectionStart(0);
+		component.setSelectionEnd(0);
+		scrollPane(component, width, height, addTo);
+		return component;
 	}
 
-	public static JScrollPane getTextScrollPane(JTextPane textPane, int width, int height,
-			Iterable<String> contentList, DocumentListener listener, JPanel addTo) {
-		textPane.getDocument().addDocumentListener(listener);
-		JScrollPane scrollpane = SwingTools.getTextScrollPane(textPane, width, height, addTo);
-		String contents = "";
-		for (String value : contentList)
-			contents += value + "\n";
-		textPane.setText(contents);
-		textPane.setSelectionStart(0);
-		textPane.setSelectionEnd(0);
-		return scrollpane;
+	public static JTextPane scrolledText(int width, int height,
+			Iterable<String> list, DocumentListener listener,
+			Container addTo) {
+		StringBuilder builder = new StringBuilder();
+		for (String text : list)
+			builder.append(text + "\n");
+		return scrolledText(width, height, builder.toString(),
+				listener, addTo);
 	}
-
 }

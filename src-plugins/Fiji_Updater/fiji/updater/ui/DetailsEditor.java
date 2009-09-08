@@ -35,7 +35,7 @@ public class DetailsEditor extends JFrame {
 	private void setUpUserInterface() {
 		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
-		JPanel uiPanel = SwingTools.createBoxLayoutPanel(BoxLayout.Y_AXIS);
+		JPanel uiPanel = SwingTools.verticalPanel();
 		uiPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 		changeListener = new DocumentListener() {
 			public void changedUpdate(DocumentEvent e) {
@@ -52,29 +52,31 @@ public class DetailsEditor extends JFrame {
 		};
 
 		txtEdits = new JTextPane[3];
-		for (int i = 0; i < txtEdits.length; i++)
-			txtEdits[i] = new JTextPane();
 
-		SwingTools.createLabelPanel("For multiple authors or links, separate each using a new line.", uiPanel);
-		SwingTools.createLabelPanel("Authors(s):", uiPanel);
-		SwingTools.getTextScrollPane(txtEdits[0], 450, 120,
-				selectedPlugin.getAuthors(), changeListener, uiPanel);
+		SwingTools.label("For multiple authors or links, separate each "
+			+ "using a new line.", uiPanel);
+		SwingTools.label("Authors(s):", uiPanel);
+		txtEdits[0] = SwingTools.scrolledText(450, 120,
+				selectedPlugin.getAuthors(),
+				changeListener, uiPanel);
 
-		SwingTools.createLabelPanel("Description:", uiPanel);
-		SwingTools.getTextScrollPane(txtEdits[1], 450, 200,
-				selectedPlugin.getDescription(), changeListener, uiPanel);
+		SwingTools.label("Description:", uiPanel);
+		txtEdits[1] = SwingTools.scrolledText(450, 200,
+				selectedPlugin.getDescription(),
+				changeListener, uiPanel);
 
-		SwingTools.createLabelPanel("Link(s):", uiPanel);
-		SwingTools.getTextScrollPane(txtEdits[2], 450, 120,
-				selectedPlugin.getLinks(), changeListener, uiPanel);
+		SwingTools.label("Link(s):", uiPanel);
+		txtEdits[2] = SwingTools.scrolledText(450, 120,
+				selectedPlugin.getLinks(),
+				changeListener, uiPanel);
 
 		textChanged = false;
 
-		JPanel buttonPanel = SwingTools.createBoxLayoutPanel(BoxLayout.X_AXIS);
+		JPanel buttonPanel = SwingTools.horizontalPanel();
 		buttonPanel.setBorder(BorderFactory.createEmptyBorder(15, 0, 0, 0));
 
 		//Button to save description
-		SwingTools.createButton("Save", "Save Description", new ActionListener() {
+		SwingTools.button("Save", "Save Description", new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				saveText();
 			}
@@ -82,7 +84,7 @@ public class DetailsEditor extends JFrame {
 		buttonPanel.add(Box.createHorizontalGlue());
 
 		//Button to cancel and return to Plugin Manager
-		SwingTools.createButton("Close", "Exit Description Editor", new ActionListener() {
+		SwingTools.button("Close", "Exit Description Editor", new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				closeFrame();
 			}

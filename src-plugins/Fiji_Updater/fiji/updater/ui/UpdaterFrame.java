@@ -86,7 +86,7 @@ public class UpdaterFrame extends JFrame
 		});
 
 		//======== Start: LEFT PANEL ========
-		JPanel leftPanel = SwingTools.createBoxLayoutPanel(BoxLayout.Y_AXIS);
+		JPanel leftPanel = SwingTools.verticalPanel();
 		txtSearch = new JTextField();
 		txtSearch.getDocument().addDocumentListener(new DocumentListener() {
 
@@ -102,7 +102,7 @@ public class UpdaterFrame extends JFrame
 				updatePluginsTable();
 			}
 		});
-		SwingTools.createLabelledComponent("Search:", txtSearch, leftPanel);
+		SwingTools.labelComponent("Search:", txtSearch, leftPanel);
 		leftPanel.add(Box.createRigidArea(new Dimension(0,10)));
 
 		viewOptions = new ViewOptions();
@@ -112,16 +112,16 @@ public class UpdaterFrame extends JFrame
 			}
 		});
 	
-		SwingTools.createLabelledComponent("View Options:", viewOptions, leftPanel);
+		SwingTools.labelComponent("View Options:", viewOptions, leftPanel);
 		leftPanel.add(Box.createRigidArea(new Dimension(0,10)));
 
 		//Create labels to annotate table
-		SwingTools.createLabelPanel("Please choose what you want to install/uninstall:", leftPanel);
+		SwingTools.label("Please choose what you want to install/uninstall:", leftPanel);
 		leftPanel.add(Box.createRigidArea(new Dimension(0,5)));
 
 		//Label text for plugin summaries
 		lblPluginSummary = new JLabel();
-		JPanel lblSummaryPanel = SwingTools.createBoxLayoutPanel(BoxLayout.X_AXIS);
+		JPanel lblSummaryPanel = SwingTools.horizontalPanel();
 		lblSummaryPanel.add(lblPluginSummary);
 		lblSummaryPanel.add(Box.createHorizontalGlue());
 
@@ -138,13 +138,13 @@ public class UpdaterFrame extends JFrame
 
 		//======== Start: RIGHT PANEL ========
 		// TODO: do we really want to win the "Who can make the longest function names?" contest?
-		JPanel rightPanel = SwingTools.createBoxLayoutPanel(BoxLayout.Y_AXIS);
+		JPanel rightPanel = SwingTools.verticalPanel();
 
 		rightPanel.add(Box.createVerticalGlue());
 		if (Util.isDeveloper) {
-			JPanel editButtonPanel = SwingTools.createBoxLayoutPanel(BoxLayout.X_AXIS);
+			JPanel editButtonPanel = SwingTools.horizontalPanel();
 			editButtonPanel.add(Box.createHorizontalGlue());
-			btnEditDetails = SwingTools.createButton("Edit Details",
+			btnEditDetails = SwingTools.button("Edit Details",
 					"Edit selected plugin's details", new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					clickToEditDescriptions();
@@ -155,14 +155,15 @@ public class UpdaterFrame extends JFrame
 		}
 
 		pluginDetails = new PluginDetails();
-		SwingTools.getSingleTabbedPane(pluginDetails,
-				"Details", "Individual Plugin information",
+		SwingTools.tab(pluginDetails, "Details",
+				"Individual Plugin information",
 				350, 315, rightPanel);
+		// TODO: put this into SwingTools, too
 		rightPanel.add(Box.createRigidArea(new Dimension(0,25)));
 		//======== End: RIGHT PANEL ========
 
 		//======== Start: TOP PANEL (LEFT + RIGHT) ========
-		JPanel topPanel = SwingTools.createBoxLayoutPanel(BoxLayout.X_AXIS);
+		JPanel topPanel = SwingTools.horizontalPanel();
 		topPanel.add(leftPanel);
 		topPanel.add(Box.createRigidArea(new Dimension(15,0)));
 		topPanel.add(rightPanel);
@@ -170,7 +171,7 @@ public class UpdaterFrame extends JFrame
 		//======== End: TOP PANEL (LEFT + RIGHT) ========
 
 		//======== Start: BOTTOM PANEL ========
-		JPanel bottomPanel = SwingTools.createBoxLayoutPanel(BoxLayout.X_AXIS);
+		JPanel bottomPanel = SwingTools.horizontalPanel();
 		bottomPanel.setBorder(BorderFactory.createEmptyBorder(5, 15, 15, 15));
 		bottomPanel.add(new PluginAction("Keep as-is", null));
 		bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
@@ -182,7 +183,7 @@ public class UpdaterFrame extends JFrame
 		bottomPanel.add(Box.createHorizontalGlue());
 
 		//Button to start actions
-		btnStart = SwingTools.createButton("Apply changes",
+		btnStart = SwingTools.button("Apply changes",
 				"Start installing/uninstalling plugins", new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				clickToBeginOperations();
@@ -193,7 +194,7 @@ public class UpdaterFrame extends JFrame
 		//includes button to upload to server if is a Developer using
 		if (Util.isDeveloper) {
 			bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
-			btnUpload = SwingTools.createButton("Upload to server",
+			btnUpload = SwingTools.button("Upload to server",
 					"Upload selected plugins to server", new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					upload();
@@ -203,7 +204,7 @@ public class UpdaterFrame extends JFrame
 		}
 
 		bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
-		SwingTools.createButton("Cancel", "Exit Plugin Manager",
+		SwingTools.button("Cancel", "Exit Plugin Manager",
 			new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					quit();
