@@ -65,8 +65,7 @@ public class UpdaterFrame extends JFrame
 	private ViewOptions viewOptions;
 	private PluginTable table;
 	private JLabel lblPluginSummary;
-	// TODO: rename to PluginDetails
-	private TextPaneDisplay pluginDetails;
+	private PluginDetails pluginDetails;
 	private JButton btnStart;
 
 	//For developers
@@ -155,7 +154,7 @@ public class UpdaterFrame extends JFrame
 			rightPanel.add(editButtonPanel);
 		}
 
-		pluginDetails = new TextPaneDisplay();
+		pluginDetails = new PluginDetails();
 		SwingTools.getSingleTabbedPane(pluginDetails,
 				"Details", "Individual Plugin information",
 				350, 315, rightPanel);

@@ -27,11 +27,11 @@ import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
-public class TextPaneDisplay extends JTextPane {
+public class PluginDetails extends JTextPane {
 	private AttributeSet bold, italic, normal, title;
 	private final String LINK_ATTRIBUTE = "URLSOURCE";
 
-	public TextPaneDisplay() {
+	public PluginDetails() {
 		italic = getStyle(Color.black, true, false, "Verdana", 12);
 		bold = getStyle(Color.black, false, true, "Verdana", 12);
 		normal =  getStyle(Color.black, false, false, "Verdana", 12);
@@ -41,7 +41,7 @@ public class TextPaneDisplay extends JTextPane {
 			public void mouseClicked(MouseEvent e) {
 				try {
 					// TODO: this is messy!  make this an own method and call it
-					AttributeSet as = getAttributes(TextPaneDisplay.this, e);
+					AttributeSet as = getAttributes(PluginDetails.this, e);
 					//execute the url if it exists
 					String url = (String)as.getAttribute(LINK_ATTRIBUTE);
 					if (url != null)
@@ -53,10 +53,10 @@ public class TextPaneDisplay extends JTextPane {
 		});
 		addMouseMotionListener(new MouseMotionAdapter() {
 			public void mouseMoved(MouseEvent e) {
-				if (getAttributes(TextPaneDisplay.this, e).getAttribute(LINK_ATTRIBUTE) != null)
-					TextPaneDisplay.this.setCursor(new Cursor(Cursor.HAND_CURSOR));
+				if (getAttributes(PluginDetails.this, e).getAttribute(LINK_ATTRIBUTE) != null)
+					PluginDetails.this.setCursor(new Cursor(Cursor.HAND_CURSOR));
 				else
-					TextPaneDisplay.this.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+					PluginDetails.this.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
 			}
 		});
 		setEditable(false); // TODO: if this prevents copy-n-paste, that's not good.
