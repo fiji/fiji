@@ -174,7 +174,7 @@ public class PluginDetails extends JTextPane {
 
 	public void links(Iterable<String> links) {
 		for (String link : links) {
-			normal("\n- ");
+			normal("\n");
 			link(link);
 		}
 	}
