@@ -79,7 +79,7 @@ public class PluginDetails extends JTextPane {
 		setCursor(getLinkAt(p) == null ? defaultCursor : hand);
 	}
 
-	private AttributeSet getLinkElement(String url) {
+	private AttributeSet getLinkAttribute(String url) {
 		// TODO: Verdana?  Java is platform-independent, if this introduces a platform dependency, it needs to be thrown out, quickly!
 		SimpleAttributeSet style =
 			getStyle(Color.blue, false, false, "Verdana", 12);
@@ -109,7 +109,7 @@ public class PluginDetails extends JTextPane {
 	}
 
 	public void link(String url) {
-		styled(url, getLinkElement(url));
+		styled(url, getLinkAttribute(url));
 	}
 
 	public void italic(String text) {
