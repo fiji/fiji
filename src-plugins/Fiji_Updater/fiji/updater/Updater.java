@@ -40,7 +40,6 @@ public class Updater implements PlugIn {
 	public static final String PREFS_XMLDATE = "fiji.updater.xmlDate";
 	public static final String PREFS_USER = "fiji.updater.login";
 
-	// TODO: move more functionality into this class; the ui should be the ui only!!!
 	public void run(String arg) {
 		final UpdaterFrame main = new UpdaterFrame();
 

@@ -294,6 +294,8 @@ public class UpdaterFrame extends JFrame
 
 	public void updatePluginsTable() {
 		Iterable<PluginObject> view = viewOptions.getView();
+		// TODO: maybe we want to remember what was selected?
+		table.clearSelection();
 
 		String search = txtSearch.getText().trim();
 		if (!search.equals(""))
