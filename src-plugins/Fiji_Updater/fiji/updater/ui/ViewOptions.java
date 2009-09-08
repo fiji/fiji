@@ -14,7 +14,8 @@ public class ViewOptions extends JComboBox {
 		UPDATEABLE("update-able plugins only"),
 		FIJI("Fiji plugins only"),
 		OTHERS("non-Fiji plugins only"),
-		CHANGES("changes");
+		CHANGES("changes"),
+		SELECTED("selected");
 
 		String label;
 		Option(String label) {
@@ -28,9 +29,10 @@ public class ViewOptions extends JComboBox {
 
 	public ViewOptions() {
 		super(Option.values());
+		setMaximumRowCount(15);
 	}
 
-	public Iterable<PluginObject> getView() {
+	public Iterable<PluginObject> getView(PluginTable table) {
 		PluginCollection plugins = PluginCollection.getInstance();
 		switch ((Option)getSelectedItem()) {
 			case INSTALLED: return plugins.installed();
@@ -40,6 +42,7 @@ public class ViewOptions extends JComboBox {
 			case FIJI: return plugins.fijiPlugins();
 			case OTHERS: return plugins.nonFiji();
 			case CHANGES: return plugins.changes();
+			case SELECTED: return table.getSelectedPlugins();
 			default: return plugins;
 		}
 	}

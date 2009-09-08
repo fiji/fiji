@@ -293,7 +293,7 @@ public class UpdaterFrame extends JFrame
 	}
 
 	public void updatePluginsTable() {
-		Iterable<PluginObject> view = viewOptions.getView();
+		Iterable<PluginObject> view = viewOptions.getView(table);
 		// TODO: maybe we want to remember what was selected?
 		table.clearSelection();
 
