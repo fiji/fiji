@@ -191,12 +191,9 @@ public class TextPaneDisplay extends JTextPane {
 		normal("\n\n");
 	}
 
-	//rewrite the entire textpane with details of a plugin
 	public void showPluginDetails(PluginObject plugin) {
-		setText("");
-		if (plugin == null)
-			return;
-
+		if (!getText().equals(""))
+			blankLine();
 		//Display plugin data, text with different formatting
 		title(plugin.getFilename());
 		if (plugin.isUpdateable())

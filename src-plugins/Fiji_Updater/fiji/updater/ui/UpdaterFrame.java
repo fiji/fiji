@@ -65,9 +65,8 @@ public class UpdaterFrame extends JFrame
 	private ViewOptions viewOptions;
 	private PluginTable table;
 	private JLabel lblPluginSummary;
-	// TODO: this _is_ a TextPaneDisplay.  (Oh, and rename it to PluginDetails)
-	private JTextPane txtPluginDetails;
-	private PluginObject currentPlugin;
+	// TODO: rename to PluginDetails
+	private TextPaneDisplay pluginDetails;
 	private JButton btnStart;
 
 	//For developers
@@ -156,10 +155,10 @@ public class UpdaterFrame extends JFrame
 			rightPanel.add(editButtonPanel);
 		}
 
-		//Create textpane to hold the information and its container tabbed pane
-		txtPluginDetails = new TextPaneDisplay();
-		SwingTools.getSingleTabbedPane(txtPluginDetails,
-				"Details", "Individual Plugin information", 350, 315, rightPanel);
+		pluginDetails = new TextPaneDisplay();
+		SwingTools.getSingleTabbedPane(pluginDetails,
+				"Details", "Individual Plugin information",
+				350, 315, rightPanel);
 		rightPanel.add(Box.createRigidArea(new Dimension(0,25)));
 		//======== End: RIGHT PANEL ========
 
@@ -230,7 +229,7 @@ public class UpdaterFrame extends JFrame
 
 	public void valueChanged(ListSelectionEvent event) {
 		table.requestFocusInWindow();
-		setCurrentPlugin(table.getSelectedPlugin());
+		pluginsChanged();
 	}
 
 	List<PluginAction> pluginActions = new ArrayList<PluginAction>();
@@ -255,40 +254,41 @@ public class UpdaterFrame extends JFrame
 		}
 
 		public void actionPerformed(ActionEvent e) {
-			if (currentPlugin == null)
-				return;
 			if (table.isEditing())
 				table.editingCanceled(null);
-			if (action == null)
-				currentPlugin.setNoAction();
-			else
-				currentPlugin.setAction(action);
-			/* table.getModel().setValueAt(currentPlugin.getAction(),
-				table.getSelectedRow(), 1); */
-			table.firePluginChanged(currentPlugin);
+			for (PluginObject plugin : table.getSelectedPlugins()) {
+				if (action == null)
+					plugin.setNoAction();
+				else {
+					Status status = plugin.getStatus();
+					if (status.isValid(action))
+						plugin.setAction(action);
+					else if (status.isValid(otherAction))
+						plugin.setAction(otherAction);
+					else
+						continue;
+				}
+				table.firePluginChanged(plugin);
+			}
 		}
 
 		public void enableIfValid() {
-			boolean enable = false;
+			boolean enable = false, enableOther = false;
 
-			if (currentPlugin != null) {
-				Status status = currentPlugin.getStatus();
+			for (PluginObject plugin : table.getSelectedPlugins()) {
+				Status status = plugin.getStatus();
 				if (action == null)
 					enable = true;
 				else if (status.isValid(action))
 					enable = true;
-				else if (status.isValid(otherAction)) {
-					String dummy = label;
-					label = otherLabel;
-					otherLabel = dummy;
-					Action dummyAction = action;
-					action = otherAction;
-					otherAction = dummyAction;
-					setLabel(label);
-					enable = true;
-				}
+				else if (status.isValid(otherAction))
+					enableOther = true;
+				if (enable && enableOther)
+					break;
 			}
-			setEnabled(enable);
+			setLabel(!enableOther ? label :
+				(enable ? label + "/" : "") + otherLabel);
+			setEnabled(enable || enableOther);
 		}
 	}
 
@@ -305,10 +305,21 @@ public class UpdaterFrame extends JFrame
 		table.setPlugins(view);
 	}
 
+	// TODO: once the editor is embedded, this can go
+	private PluginObject getSingleSelectedPlugin() {
+		int[] rows = table.getSelectedRows();
+		return rows.length != 1 ? null : table.getPlugin(rows[0]);
+	}
+
 	// TODO: why should this function need to know that it is triggered by a click?  That is so totally unnecessary.
 	private void clickToEditDescriptions() {
 		// TODO: embed this, rather than having an extra editor
-		loadedFrame = new DetailsEditor(this, currentPlugin);
+		PluginObject plugin = getSingleSelectedPlugin();
+		if (plugin == null) {
+			IJ.error("Cannot edit multiple items at once");
+			return;
+		}
+		loadedFrame = new DetailsEditor(this, plugin);
 		showFrame();
 		setEnabled(false);
 	}
@@ -376,10 +387,11 @@ public class UpdaterFrame extends JFrame
 		}
 	}
 
-	public void setCurrentPlugin(PluginObject plugin) {
-		currentPlugin = plugin;
-		if (txtPluginDetails != null)
-			((TextPaneDisplay)txtPluginDetails).showPluginDetails(plugin);
+	public void pluginsChanged() {
+		// TODO: once this is editable, make sure changes are committed
+		pluginDetails.setText("");
+		for (PluginObject plugin : table.getSelectedPlugins())
+			pluginDetails.showPluginDetails(plugin);
 
 		for (PluginAction button : pluginActions)
 			button.enableIfValid();
@@ -388,7 +400,8 @@ public class UpdaterFrame extends JFrame
 
 		// TODO: "Upload" is activated by default!"
 		if (Util.isDeveloper) {
-			btnEditDetails.setEnabled(plugin != null);
+			btnEditDetails.setEnabled(getSingleSelectedPlugin()
+					!= null);
 			btnUpload.setEnabled(plugins.hasUpload());
 		}
 	}
@@ -416,7 +429,7 @@ public class UpdaterFrame extends JFrame
 			text += ", To upload: " + upload;
 		lblPluginSummary.setText(text);
 
-		setCurrentPlugin(currentPlugin);
+		pluginsChanged();
 	}
 
 	private void enableIfAnyUpload(JButton button) {

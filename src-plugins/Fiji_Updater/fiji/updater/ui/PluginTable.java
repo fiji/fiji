@@ -10,6 +10,7 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -40,7 +41,7 @@ public class PluginTable extends JTable {
 		setRequestFocusEnabled(false);
 
 		//set up the table properties and other settings
-		setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		setCellSelectionEnabled(true);
 		setColumnSelectionAllowed(false);
 		setRowSelectionAllowed(true);
@@ -100,8 +101,12 @@ public class PluginTable extends JTable {
 		return plugin == null ? null : plugin.getPlugin();
 	}
 
-	public PluginObject getSelectedPlugin() {
-		return getPlugin(getSelectedRow());
+	public Iterable<PluginObject> getSelectedPlugins() {
+		int[] rows = getSelectedRows();
+		PluginObject[] result = new PluginObject[rows.length];
+		for (int i = 0; i < rows.length; i++)
+			result[i] = getPlugin(rows[i]);
+		return Arrays.asList(result);
 	}
 
 	class PluginTableModel extends AbstractTableModel {
