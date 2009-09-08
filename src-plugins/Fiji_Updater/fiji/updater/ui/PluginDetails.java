@@ -1,5 +1,7 @@
 package fiji.updater.ui;
 
+import ij.IJ;
+
 import ij.plugin.BrowserLauncher;
 
 import fiji.updater.logic.Dependency;
@@ -8,6 +10,7 @@ import fiji.updater.logic.PluginObject;
 
 import java.awt.Color;
 import java.awt.Cursor;
+import java.awt.Point;
 
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseAdapter;
@@ -23,61 +26,68 @@ import javax.swing.JTextPane;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
+import javax.swing.text.Element;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
 public class PluginDetails extends JTextPane {
-	private AttributeSet bold, italic, normal, title;
-	private final String LINK_ATTRIBUTE = "URLSOURCE";
+	private final static AttributeSet bold, italic, normal, title;
+	private final static Cursor hand, defaultCursor;
+	private final static String LINK_ATTRIBUTE = "URL";
 
-	public PluginDetails() {
+	static {
 		italic = getStyle(Color.black, true, false, "Verdana", 12);
 		bold = getStyle(Color.black, false, true, "Verdana", 12);
 		normal =  getStyle(Color.black, false, false, "Verdana", 12);
 		title = getStyle(Color.black, false, false, "Impact", 18);
 
+		hand = new Cursor(Cursor.HAND_CURSOR);
+		defaultCursor = new Cursor(Cursor.DEFAULT_CURSOR);
+	}
+
+	public PluginDetails() {
 		addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
+				String url = getLinkAt(e.getPoint());
 				try {
-					// TODO: this is messy!  make this an own method and call it
-					AttributeSet as = getAttributes(PluginDetails.this, e);
-					//execute the url if it exists
-					String url = (String)as.getAttribute(LINK_ATTRIBUTE);
 					if (url != null)
 						BrowserLauncher.openURL(url);
-				} catch(Exception ex) {
-					ex.printStackTrace();
+				} catch(Exception exception) {
+					exception.printStackTrace();
+					IJ.error("Could not open " + url + ": "
+						+ exception.getMessage());
 				}
 			}
 		});
 		addMouseMotionListener(new MouseMotionAdapter() {
 			public void mouseMoved(MouseEvent e) {
-				if (getAttributes(PluginDetails.this, e).getAttribute(LINK_ATTRIBUTE) != null)
-					PluginDetails.this.setCursor(new Cursor(Cursor.HAND_CURSOR));
-				else
-					PluginDetails.this.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+				setCursor(e.getPoint());
 			}
 		});
+
 		setEditable(false); // TODO: if this prevents copy-n-paste, that's not good.
 	}
 
-	private AttributeSet getAttributes(JTextPane textPane, MouseEvent e) { //mouse event use
-		StyledDocument document = textPane.getStyledDocument();
-		// TODO: fix funny indentation
-		return document.getCharacterElement(
-				textPane.viewToModel(e.getPoint())).getAttributes();
+	private String getLinkAt(Point p) {
+		StyledDocument document = getStyledDocument();
+		Element e = document.getCharacterElement(viewToModel(p));
+		return (String)e.getAttributes().getAttribute(LINK_ATTRIBUTE);
+	}
+
+	protected void setCursor(Point p) {
+		setCursor(getLinkAt(p) == null ? defaultCursor : hand);
 	}
 
 	private AttributeSet getLinkElement(String url) {
 		// TODO: Verdana?  Java is platform-independent, if this introduces a platform dependency, it needs to be thrown out, quickly!
-		SimpleAttributeSet style = (SimpleAttributeSet)
+		SimpleAttributeSet style =
 			getStyle(Color.blue, false, false, "Verdana", 12);
 		style.addAttribute(LINK_ATTRIBUTE, url);
 		return style;
 	}
 
-	public static AttributeSet getStyle(Color color, boolean italic,
+	public static SimpleAttributeSet getStyle(Color color, boolean italic,
 			boolean bold, String fontName, int fontSize) {
 		SimpleAttributeSet style = new SimpleAttributeSet();
 		StyleConstants.setForeground(style, color);
