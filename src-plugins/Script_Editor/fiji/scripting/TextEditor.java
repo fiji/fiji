@@ -97,7 +97,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 	// TODO: fix (enableReplace(boolean))
 	FindAndReplaceDialog replaceDialog;
 	AutoCompletion autocomp;
-	// TODO: probably language can go
+	Languages.Language currentLanguage;
 	ClassCompletionProvider provider;
 	StartDebugging debugging;
 	Gutter gutter;
@@ -143,8 +143,6 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		panel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
 		panel.setResizeWeight(350.0 / 430.0);
 		setContentPane(panel);
-		// TODO: Unnamed
-		setTitle();
 		addWindowListener(this);
 		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 
@@ -228,6 +226,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		getToolkit().setDynamicLayout(true);            //added to accomodate the autocomplete part
 
 		setLanguage(null);
+		setTitle();
 
 		setLocationRelativeTo(null); // center on screen
 		setVisible(true);
@@ -407,7 +406,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 	}
 
 	public boolean saveAs() {
-		SaveDialog sd = new SaveDialog("Save as ", "New_", "");
+		SaveDialog sd = new SaveDialog("Save as ", getFileName() , "");
 		String name = sd.getFileName();
 		if (name == null)
 			return false;
@@ -478,6 +477,22 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		if (language == null)
 			language = Languages.get("");
 
+		if (file != null) {
+			String name = file.getName();
+			if (!name.endsWith(language.extension) &&
+					currentLanguage != null) {
+				String ext = currentLanguage.extension;
+				if (name.endsWith(ext))
+					name = name.substring(0, name.length()
+							- ext.length());
+				file = new File(file.getParentFile(),
+						name + language.extension);
+				fileChanged = true;
+			}
+		}
+		currentLanguage = language;
+		setTitle();
+
 		if (!language.item.isSelected())
 			language.item.setSelected(true);
 
@@ -503,9 +518,13 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		setLanguageByExtension(getExtension(file.getName()));
 	}
 
+	protected String getFileName() {
+		return file == null ?
+			"New_" + currentLanguage.extension : file.getName();
+	}
+
 	private void setTitle() {
-		String fileName = file == null ? "New_" : file.getName();
-		String title = (fileChanged ? "*" : "") + fileName;
+		String title = (fileChanged ? "*" : "") + getFileName();
 		setTitle(title);
 	}
 
