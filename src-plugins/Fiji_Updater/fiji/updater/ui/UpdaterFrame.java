@@ -204,7 +204,7 @@ public class UpdaterFrame extends JFrame
 		}
 
 		bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
-		SwingTools.button("Cancel", "Exit Plugin Manager",
+		SwingTools.button("Close", "Exit Plugin Manager",
 			new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					quit();
