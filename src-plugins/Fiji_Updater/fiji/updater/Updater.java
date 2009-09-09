@@ -19,6 +19,8 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 
+import java.net.UnknownHostException;
+
 import javax.swing.JOptionPane;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -61,7 +63,13 @@ public class Updater implements PlugIn {
 			e.printStackTrace();
 			new File(Util.prefix(XML_COMPRESSED))
 					.deleteOnExit();
-			IJ.error("Download/checksum failed: " + e);
+			String message;
+			if (e instanceof UnknownHostException)
+				message = "Failed to lookup host "
+					+ e.getMessage();
+			else
+				message = "Download/checksum failed: " + e;
+			IJ.error(message);
 			fallBackToOldUpdater();
 			return;
 		}
