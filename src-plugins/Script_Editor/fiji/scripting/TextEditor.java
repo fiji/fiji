@@ -203,7 +203,6 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 			languages.add(item);
 			language.item = item;
 		}
-		Languages.get("").item.setSelected(true);
 		mbar.add(languages);
 
 		JMenu run = new JMenu("Run");
@@ -228,8 +227,9 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		pack();
 		getToolkit().setDynamicLayout(true);            //added to accomodate the autocomplete part
 
-		// TODO: is this needed?
-		setLocationRelativeTo(null);
+		setLanguage(null);
+
+		setLocationRelativeTo(null); // center on screen
 		setVisible(true);
 		if (path1 != null && !path1.equals(""))
 			open(path1);
@@ -477,6 +477,14 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 	protected void setLanguage(Languages.Language language) {
 		if (language == null)
 			language = Languages.get("");
+
+		if (!language.item.isSelected())
+			language.item.setSelected(true);
+
+		compileAndRun.setLabel(language.isCompileable() ?
+			"Compile and Run" : "Run");
+		compileAndRun.setEnabled(language.isRunnable());
+		debug.setEnabled(language.isDebuggable());
 
 		provider.setProviderLanguage(language.menuLabel);
 
