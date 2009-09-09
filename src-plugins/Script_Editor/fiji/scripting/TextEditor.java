@@ -187,20 +187,23 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 
 		JMenu languages = new JMenu("Language");
 		group = new ButtonGroup();
-		for (Languages.Language language :
+		for (final Languages.Language language :
 		                Languages.getInstance().languages) {
 			JRadioButtonMenuItem item =
 			        new JRadioButtonMenuItem(language.menuLabel);
 			if (language.shortCut != 0)
 				item.setMnemonic(language.shortCut);
-			item.addActionListener(this);
-			item.setActionCommand(language.extension);
+			item.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					setLanguage(language);
+				}
+			});
 
 			group.add(item);
 			languages.add(item);
 			language.item = item;
 		}
-		Languages.getInstance().get("").item.setSelected(true);
+		Languages.get("").item.setSelected(true);
 		mbar.add(languages);
 
 		JMenu run = new JMenu("Run");
@@ -270,7 +273,6 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 
 	public void actionPerformed(ActionEvent ae) {
 		final Object source = ae.getSource();
-		final String command = ae.getActionCommand();
 		if (source == new_file) {
 			if (!handleUnsavedChanges())
 				return;
@@ -334,10 +336,6 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 				autocomp.doCompletion();
 			} catch (Exception e) {}
 		}
-		//setting actionPerformed for language menu
-		// TODO: handle "None"
-		else if (command.startsWith("."))
-			setLanguageByExtension(command);
 		else if (source == resume)
 			debugging.resumeVM();
 		else if (source == terminate) {
@@ -473,18 +471,22 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 	}
 
 	private void setLanguageByExtension(String extension) {
-		Languages.Language info = Languages.getInstance().get(extension);
+		setLanguage(Languages.get(extension));
+	}
+
+	protected void setLanguage(Languages.Language language) {
+		if (language == null)
+			language = Languages.get("");
+
+		provider.setProviderLanguage(language.menuLabel);
 
 		// TODO: these should go to upstream RSyntaxTextArea
-		if (extension.equals(".clj"))
+		if (language.syntaxStyle != null)
+			textArea.setSyntaxEditingStyle(language.syntaxStyle);
+		else if (language.extension.equals(".clj"))
 			getDocument().setSyntaxStyle(new ClojureTokenMaker());
-		else if (extension.equals(".m"))
+		else if (language.extension.equals(".m"))
 			getDocument().setSyntaxStyle(new MatlabTokenMaker());
-		else
-			textArea.setSyntaxEditingStyle(info.syntaxStyle);
-		provider.setProviderLanguage(info.menuLabel);
-
-		info.item.setSelected(true);
 	}
 
 	public void setFileName(File file) {

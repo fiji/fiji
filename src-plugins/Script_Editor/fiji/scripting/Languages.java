@@ -50,9 +50,10 @@ public class Languages {
 		return get("");
 	}
 
-	public Language get(String extension) {
-		Language result = map.get(extension);
-		return result == null ? map.get("") : result;
+	public static Language get(String extension) {
+		Languages languages = getInstance();
+		return languages.map.get(languages.map.containsKey(extension) ?
+			extension : "");
 	}
 
 	public String getSyntaxStyle(String extension) {
