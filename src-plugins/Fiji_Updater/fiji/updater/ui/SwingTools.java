@@ -28,7 +28,9 @@ public class SwingTools {
 			String title, String tooltip,
 			int width, int height, Container addTo) {
 		JPanel tab = new JPanel();
-		tab.add(scrollPane(component, width, height, null));
+		tab.setLayout(new BorderLayout());
+		tab.add(scrollPane(component, width, height, null),
+				BorderLayout.CENTER);
 
 		JTabbedPane tabbed = new JTabbedPane();
 		tabbed.addTab(title, null, tab, tooltip);
