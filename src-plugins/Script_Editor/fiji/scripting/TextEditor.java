@@ -652,23 +652,24 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 	/** Run the text in the textArea without compiling it, only if it's not java. */
 	public void runText() {
 
-		final String lang_ext = group.getSelection().getActionCommand();
-		if (".java".equals(lang_ext)) {
+		if (currentLanguage.isCompileable()) {
 			if (handleUnsavedChanges())
 				runScript();
 			return;
-		} else if ("".equals(lang_ext)) {
-			JOptionPane.showMessageDialog(this, "Select a language first!");
+		}
+		if (!currentLanguage.isRunnable()) {
+			JOptionPane.showMessageDialog(this,
+					"Select a language first!");
 			// TODO guess the language, if possible.
 			return;
 		}
 
 		textArea.setEditable(false);
 		try {
-			final RefreshScripts interpreter = Languages.getInstance().get(lang_ext).interpreter;
+			final RefreshScripts interpreter =
+				currentLanguage.interpreter;
 
-
-			// Pipe JTextArea textArea current text into the runScript:
+			// Pipe current text into the runScript:
 			final PipedInputStream pi = new PipedInputStream(4096);
 			final PipedOutputStream po = new PipedOutputStream(pi);
 
@@ -676,15 +677,16 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 			new TextEditor.Executer() {
 				public void execute() {
 
-					// Output to the screen: create an OutputStream that ends up appending to the screen JTextArea.
-					PipedInputStream in = new PipedInputStream(); // default size: 1024
+					// Output to the screen:
+					PipedInputStream in =
+						new PipedInputStream();
 					PipedOutputStream out = null;
 					try {
 						out = new PipedOutputStream(in);
 						interpreter.setOutputStreams( out, out );
 					} catch (Exception e) {
-						IJ.log("Could not connect stdout!");
 						e.printStackTrace();
+						IJ.log("Could not connect stdout!");
 						return;
 					}
 
