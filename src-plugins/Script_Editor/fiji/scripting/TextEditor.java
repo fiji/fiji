@@ -90,7 +90,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 	RSyntaxTextArea textArea;
 	JTextArea screen = new JTextArea();
 	Document doc;
-	JMenuItem new_file, open, save, saveas, compileAndRun, debug, quit, undo, redo, cut, copy, paste, find, replace, selectAll, autocomplete, resume, terminate, kill, runtext;
+	JMenuItem new_file, open, save, saveas, compileAndRun, debug, quit, undo, redo, cut, copy, paste, find, replace, selectAll, autocomplete, resume, terminate, kill;
 	JRadioButtonMenuItem[] lang = new JRadioButtonMenuItem[8];
 	ButtonGroup group;
 	FileInputStream fin;
@@ -208,8 +208,6 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 
 		compileAndRun = addToMenu(run, "Compile and Run", 0, KeyEvent.VK_F11, 0);
 
-		runtext = addToMenu(run, "Run", 0, KeyEvent.VK_F12, 0);
-
 		run.addSeparator();
 		debug = addToMenu(run, "Start Debugging", 0, KeyEvent.VK_F11, ActionEvent.CTRL_MASK);
 		mbar.add(run);
@@ -293,8 +291,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		else if (source == saveas)
 			saveAs();
 		else if (source == compileAndRun)
-			// TODO: s/Script//
-			runScript();
+			runText();
 		else if (source == debug) {
 			BreakpointManager manager = new BreakpointManager(gutter, textArea, iconGroup);
 			debugging = new StartDebugging(file.getPath(), manager.findBreakpointsLineNumber());
@@ -307,8 +304,6 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		}
 		else if (source == kill)
 			chooseTaskToKill();
-		else if (source == runtext)
-			runText();
 		else if (source == quit)
 			processWindowEvent( new WindowEvent(this, WindowEvent.WINDOW_CLOSING) );
 		else if (source == cut)
@@ -504,12 +499,6 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		setTitle(title);
 	}
 
-	public void runScript() {
-		if (!handleUnsavedChanges())
-			return;
-		runSavedScript();
-	}
-
 	/** Using a Vector to benefit from all its methods being synchronzed. */
 	private Vector<Executer> executing_tasks = new Vector<Executer>();
 
@@ -636,7 +625,8 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 
 		final String lang_ext = group.getSelection().getActionCommand();
 		if (".java".equals(lang_ext)) {
-			runScript();
+			if (handleUnsavedChanges())
+				runScript();
 			return;
 		} else if ("".equals(lang_ext)) {
 			JOptionPane.showMessageDialog(this, "Select a language first!");
@@ -715,8 +705,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		}
 	}
 
-	// TODO: do not require saving
-	public void runSavedScript() {
+	public void runScript() {
 		String ext = getExtension(file.getName());
 		final RefreshScripts interpreter =
 		        Languages.getInstance().get(ext).interpreter;
