@@ -640,9 +640,8 @@ public abstract class AbstractInterpreter implements PlugIn {
 
 	/** Enable tab chars in the prompt. */
 	protected String fix(String text) {
-		String t = text.replaceAll("\\\\n", "\n");
-		t = t.replaceAll("\\\\t", "\t");
-		return t;
+		return text.replaceAll("\\\\n", "\n")
+			   .replaceAll("\\\\t", "\t");
 	}
 
 	/** Insert a tab in the prompt (in replacement for Component focus)*/
