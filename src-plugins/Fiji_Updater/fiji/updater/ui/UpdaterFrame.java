@@ -361,10 +361,12 @@ public class UpdaterFrame extends JFrame
 		} catch (Canceled e) {
 			// TODO: remove "update/" directory
 			IJ.error("Canceled");
+			installer.done();
 		} catch (IOException e) {
 			// TODO: remove "update/" directory
 			// TODO: make error() method
 			IJ.error("Installer failed: " + e);
+			installer.done();
 		}
 	}
 

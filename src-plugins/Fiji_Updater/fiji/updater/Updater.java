@@ -56,6 +56,7 @@ public class Updater implements PlugIn {
 			// be a static method.
 			new XMLFileReader(downloader.getInputStream());
 		} catch (Canceled e) {
+			downloader.done();
 			main.dispose();
 			IJ.error("Canceled");
 			return;
@@ -63,6 +64,8 @@ public class Updater implements PlugIn {
 			e.printStackTrace();
 			new File(Util.prefix(XML_COMPRESSED))
 					.deleteOnExit();
+			downloader.done();
+			main.dispose();
 			String message;
 			if (e instanceof UnknownHostException)
 				message = "Failed to lookup host "
@@ -80,6 +83,7 @@ public class Updater implements PlugIn {
 		try {
 			pluginListBuilder.updateFromLocal();
 		} catch (Canceled e) {
+			pluginListBuilder.done();
 			main.dispose();
 			IJ.error("Canceled");
 			return;
