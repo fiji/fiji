@@ -361,13 +361,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 			return false;
 
 		String path = sd.getDirectory() + name;
-		return saveAs(path, checkForReplace(sd.getDirectory(), name));
-	}
-
-	// TODO: this is racy at best
-	public boolean checkForReplace(String directory, String name) {
-		return(new File(directory, name).exists());
-
+		return saveAs(path, true);
 	}
 
 	public void saveAs(String path) {
