@@ -337,29 +337,21 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 	public void open(String path) {
 		try {
 			file = new File(path);
+			FileInputStream fin = new FileInputStream(file);
+			BufferedReader din = new BufferedReader(new InputStreamReader(fin));
+			StringBuilder text = new StringBuilder();
+			String line;
+			while ((line = din.readLine()) != null)
+				text.append(line).append("\n");
+			textArea.setText(text.toString());
+			fin.close();
+			fileChanged = false;
+			setFileName(file);
+			return;
 		} catch (Exception e) {
-			System.out.println("problem in opening");
+			e.printStackTrace();
 		}
-		try {
-			if (file != null) {
-				FileInputStream fin = new FileInputStream(file);
-				BufferedReader din = new BufferedReader(new InputStreamReader(fin));
-				StringBuilder text = new StringBuilder();
-				String line;
-				while ((line = din.readLine()) != null)
-					text.append(line).append("\n");
-				textArea.setText(text.toString());
-				fin.close();
-				fileChanged = false;
-				setFileName(file);
-			} else {
-				// TODO: unify error handling.  Don't mix JOptionPane with IJ.error as if we had no clue what we want
-				JOptionPane.showMessageDialog(this, "The file name " + file.getName() + " not found.");
-			}
-
-		} catch (Exception ex) {
-			ex.printStackTrace();
-		}
+		error("The file '" + path + "' was not found.");
 	}
 
 	public boolean saveAs() {
@@ -607,15 +599,13 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 
 	/** Run the text in the textArea without compiling it, only if it's not java. */
 	public void runText() {
-
 		if (currentLanguage.isCompileable()) {
 			if (handleUnsavedChanges())
 				runScript();
 			return;
 		}
 		if (!currentLanguage.isRunnable()) {
-			JOptionPane.showMessageDialog(this,
-					"Select a language first!");
+			error("Select a language first!");
 			// TODO guess the language, if possible.
 			return;
 		}
@@ -729,6 +719,10 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 	}
 	public void removeUpdate(DocumentEvent e) {
 		updateStatusOnChange();
+	}
+
+	protected void error(String message) {
+		JOptionPane.showMessageDialog(this, message);
 	}
 
 	// TODO: rename into "markDirty"
