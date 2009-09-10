@@ -105,8 +105,6 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		textArea = new RSyntaxTextArea();
 		textArea.addInputMethodListener(l);
 		textArea.addCaretListener(this);
-		// TODO: is this necessary?
-		textArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_NONE);
 		provider = new ClassCompletionProvider(new DefaultProvider(),
 				textArea, null);
 		autocomp = new AutoCompletion(provider);
