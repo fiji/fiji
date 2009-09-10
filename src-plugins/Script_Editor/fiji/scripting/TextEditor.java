@@ -82,10 +82,8 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 
 	// TODO: clean up unnecessary variables
 	boolean fileChanged = false;
-	String language = new String();
 	InputMethodListener l;
 	File file, f;
-	CompletionProvider provider1;
 	RSyntaxTextArea textArea;
 	JTextArea screen = new JTextArea();
 	Document doc;
@@ -109,12 +107,10 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		textArea.addCaretListener(this);
 		// TODO: is this necessary?
 		textArea.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_NONE);
-		// TODO: much better naming required
-		// TODO: remove unnecessary curly brackets
-		if (provider1 == null) {
-			provider1 = createCompletionProvider();
-		}
-		autocomp = new AutoCompletion(provider1);
+		provider = new ClassCompletionProvider(new DefaultProvider(),
+				textArea, null);
+		autocomp = new AutoCompletion(provider);
+
 		// TODO: is this really needed?
 		autocomp.setListCellRenderer(new CCellRenderer());
 		autocomp.setShowDescWindow(true);
@@ -780,13 +776,6 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 	private void updateStatusOnChange() {
 		fileChanged = true;
 		setTitle();
-	}
-
-	private CompletionProvider createCompletionProvider() {
-		// TODO: why the member variable?
-		provider = new ClassCompletionProvider(new DefaultProvider(), textArea, language);
-		return provider;
-
 	}
 
 	// TODO: use an anonymous WindowAdapter, MouseAdapter, etc instead
