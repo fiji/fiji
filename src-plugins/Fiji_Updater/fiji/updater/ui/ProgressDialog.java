@@ -5,7 +5,7 @@ import fiji.updater.util.Progress;
 
 import java.awt.Container;
 import java.awt.Dimension;
-import java.awt.Window;
+import java.awt.Frame;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -30,11 +30,11 @@ public class ProgressDialog extends JDialog implements Progress {
 	String title;
 	boolean canceled;
 
-	public ProgressDialog(Window owner) {
-		this(null, null);
+	public ProgressDialog(Frame owner) {
+		this(owner, null);
 	}
 
-	public ProgressDialog(Window owner, String title) {
+	public ProgressDialog(Frame owner, String title) {
 		super(owner);
 
 		Container root = getContentPane();
