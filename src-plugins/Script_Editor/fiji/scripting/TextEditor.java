@@ -151,15 +151,13 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 		undo = addToMenu(edit, "Undo", 0, KeyEvent.VK_Z, ActionEvent.CTRL_MASK);
 		redo = addToMenu(edit, "Redo", 0, KeyEvent.VK_Y, ActionEvent.CTRL_MASK);
 		edit.addSeparator();
+		selectAll = addToMenu(edit, "Select All", 0, KeyEvent.VK_A, ActionEvent.CTRL_MASK);
 		cut = addToMenu(edit, "Cut", 0, KeyEvent.VK_X, ActionEvent.CTRL_MASK);
 		copy = addToMenu(edit, "Copy", 0, KeyEvent.VK_C, ActionEvent.CTRL_MASK);
 		paste = addToMenu(edit, "Paste", 0, KeyEvent.VK_V, ActionEvent.CTRL_MASK);
 		edit.addSeparator();
 		find = addToMenu(edit, "Find...", 0, KeyEvent.VK_F, ActionEvent.CTRL_MASK);
 		replace = addToMenu(edit, "Find and Replace...", 0, KeyEvent.VK_H, ActionEvent.CTRL_MASK);
-		edit.addSeparator();
-		// TODO: this belongs higher, no?
-		selectAll = addToMenu(edit, "Select All", 0, KeyEvent.VK_A, ActionEvent.CTRL_MASK);
 		mbar.add(edit);
 
 		JMenu options = new JMenu("Options");
