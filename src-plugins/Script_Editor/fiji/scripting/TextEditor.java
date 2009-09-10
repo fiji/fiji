@@ -82,7 +82,6 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 
 	// TODO: clean up unnecessary variables
 	boolean fileChanged = false;
-	boolean isFileUnnamed = true;
 	String language = new String();
 	InputMethodListener l;
 	File file, f;
@@ -252,7 +251,6 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		doc.removeDocumentListener(this);
 		textArea.setText("");
 		file = null;
-		isFileUnnamed = true;
 		fileChanged = false;
 		setTitle();
 		doc.addDocumentListener(this);
@@ -445,7 +443,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 	}
 
 	public boolean save() {
-		if (isFileUnnamed) // TODO: this should be "file == null"
+		if (file == null)
 			return saveAs();
 		if (!write(file))
 			return false;
@@ -517,7 +515,6 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 	}
 
 	public void setFileName(File file) {
-		isFileUnnamed = false;
 		setTitle();
 		setLanguageByExtension(getExtension(file.getName()));
 	}
