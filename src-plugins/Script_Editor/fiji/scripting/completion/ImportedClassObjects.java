@@ -1,6 +1,6 @@
 package fiji.scripting.completion;
 
-// TODO: what does this class do?  Better name?
+// TODO: what does this class do?  Better name?  Or unnecessary?
 public class ImportedClassObjects implements Comparable {
 
 	String name;
@@ -15,14 +15,12 @@ public class ImportedClassObjects implements Comparable {
 		isImported = imported;
 	}
 
-	// TODO: use this();
 	public ImportedClassObjects(String itsname, String classname) {
-		name = itsname;
-		className = classname;
+		this(itsname, classname,  null, false);
 	}
 
 	public ImportedClassObjects(String itsname) {
-		name = itsname;
+		this(itsname, null);
 	}
 
 	public void setClassName(String classname) {
