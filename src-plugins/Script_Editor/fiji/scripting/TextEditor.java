@@ -670,7 +670,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 				currentLanguage.interpreter;
 
 			// Pipe current text into the runScript:
-			final PipedInputStream pi = new PipedInputStream(4096);
+			final PipedInputStream pi = new PipedInputStream();
 			final PipedOutputStream po = new PipedOutputStream(pi);
 
 			// Start reading, should block until writing starts
