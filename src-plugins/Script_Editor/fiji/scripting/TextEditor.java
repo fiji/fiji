@@ -161,6 +161,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		mbar.add(file);
 
 		JMenu edit = new JMenu("Edit");
+		edit.setMnemonic(KeyEvent.VK_E);
 		undo = addToMenu(edit, "Undo", 0, KeyEvent.VK_Z, ActionEvent.CTRL_MASK);
 		redo = addToMenu(edit, "Redo", 0, KeyEvent.VK_Y, ActionEvent.CTRL_MASK);
 		edit.addSeparator();
@@ -175,8 +176,8 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		selectAll = addToMenu(edit, "Select All", 0, KeyEvent.VK_A, ActionEvent.CTRL_MASK);
 		mbar.add(edit);
 
-		// TODO: add accelerator keys for the menus, too
 		JMenu options = new JMenu("Options");
+		options.setMnemonic(KeyEvent.VK_O);
 		// TODO: CTRL, ALT
 		autocomplete = addToMenu(options, "Autocomplete", 0, KeyEvent.VK_SPACE, ActionEvent.CTRL_MASK);
 		options.addSeparator();
@@ -184,6 +185,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		mbar.add(options);
 
 		JMenu languages = new JMenu("Language");
+		languages.setMnemonic(KeyEvent.VK_L);
 		group = new ButtonGroup();
 		for (final Languages.Language language :
 		                Languages.getInstance().languages) {
@@ -204,6 +206,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		mbar.add(languages);
 
 		JMenu run = new JMenu("Run");
+		run.setMnemonic(KeyEvent.VK_R);
 		// TODO: allow outside-of-plugins/ sources
 
 		compileAndRun = addToMenu(run, "Compile and Run", 0, KeyEvent.VK_F11, 0);
@@ -218,6 +221,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		kill.setEnabled(false);
 
 		JMenu breakpoints = new JMenu("Breakpoints");
+		breakpoints.setMnemonic(KeyEvent.VK_B);
 		resume = addToMenu(breakpoints, "Resume", 1, 0, 0);
 		terminate = addToMenu(breakpoints, "Terminate", 1, 0, 0);
 		mbar.add(breakpoints);
