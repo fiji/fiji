@@ -8,9 +8,7 @@ import java.awt.GridBagLayout;
 
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
-import java.awt.event.KeyListener;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
 import javax.swing.BorderFactory;
@@ -92,6 +90,18 @@ public class FindAndReplaceDialog extends JDialog implements ActionListener {
 
 		setTitle(replace ? "Replace" : "Find");
 		setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+
+		KeyAdapter listener = new KeyAdapter() {
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == e.VK_ESCAPE)
+					dispose();
+			}
+		};
+		for (Component component : getContentPane().getComponents())
+			component.addKeyListener(listener);
+		searchField.addKeyListener(listener);
+		if (replaceField != null)
+			replaceField.addKeyListener(listener);
 	}
 
 	private JTextField createField(String name, Container container,
