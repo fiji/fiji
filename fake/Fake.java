@@ -1156,7 +1156,7 @@ public class Fake {
 			boolean checkUpToDate(String directory, File target) {
 				File dir = new File(directory);
 
-				if (dir.isDirectory() &&
+				if (!dir.exists() || (dir.isDirectory()) &&
 						dir.listFiles().length == 0) {
 					String precompiled =
 						getVar("PRECOMPILEDDIRECTORY");
