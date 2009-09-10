@@ -78,20 +78,17 @@ import fiji.scripting.completion.ClassCompletionProvider;
 import fiji.scripting.completion.DefaultProvider;
 
 
-class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeListener, MouseMotionListener, MouseListener, CaretListener, InputMethodListener, DocumentListener, WindowListener {
-
-	// TODO: clean up unnecessary variables
+class TextEditor extends JFrame implements ActionListener, ItemListener,
+		ChangeListener, MouseMotionListener, MouseListener,
+		CaretListener, InputMethodListener, DocumentListener,
+		WindowListener {
 	boolean fileChanged = false;
-	InputMethodListener l;
-	File file, f;
+	File file;
 	RSyntaxTextArea textArea;
 	JTextArea screen = new JTextArea();
-	Document doc;
-	JMenuItem new_file, open, save, saveas, compileAndRun, debug, quit, undo, redo, cut, copy, paste, find, replace, selectAll, autocomplete, resume, terminate, kill;
-	JRadioButtonMenuItem[] lang = new JRadioButtonMenuItem[8];
-	ButtonGroup group;
-	FileInputStream fin;
-	// TODO: fix (enableReplace(boolean))
+	JMenuItem new_file, open, save, saveas, compileAndRun, debug, quit,
+		  undo, redo, cut, copy, paste, find, replace, selectAll,
+		  autocomplete, resume, terminate, kill;
 	FindAndReplaceDialog replaceDialog;
 	AutoCompletion autocomp;
 	Languages.Language currentLanguage;
@@ -103,22 +100,18 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 	public TextEditor(String path1) {
 		JPanel cp = new JPanel(new BorderLayout());
 		textArea = new RSyntaxTextArea();
-		textArea.addInputMethodListener(l);
 		textArea.addCaretListener(this);
 		provider = new ClassCompletionProvider(new DefaultProvider(),
 				textArea, null);
 		autocomp = new AutoCompletion(provider);
 
-		// TODO: is this really needed?
 		autocomp.setListCellRenderer(new CCellRenderer());
 		autocomp.setShowDescWindow(true);
 		autocomp.setParameterAssistanceEnabled(true);
 		autocomp.install(textArea);
 		textArea.setToolTipSupplier((ToolTipSupplier)provider);
 		ToolTipManager.sharedInstance().registerComponent(textArea);
-		// TODO: do we need doc?
-		doc = textArea.getDocument();
-		doc.addDocumentListener(this);
+		textArea.getDocument().addDocumentListener(this);
 		RTextScrollPane sp = new RTextScrollPane(textArea);
 		sp.setPreferredSize(new Dimension(600, 350));
 		sp.setIconRowHeaderEnabled(true);
@@ -179,7 +172,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 
 		JMenu languages = new JMenu("Language");
 		languages.setMnemonic(KeyEvent.VK_L);
-		group = new ButtonGroup();
+		ButtonGroup group = new ButtonGroup();
 		for (final Languages.Language language :
 		                Languages.getInstance().languages) {
 			JRadioButtonMenuItem item =
@@ -241,13 +234,10 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 	}
 
 	public void createNewDocument() {
-		//TODO: Hmm.
-		doc.removeDocumentListener(this);
 		textArea.setText("");
 		file = null;
 		fileChanged = false;
 		setTitle();
-		doc.addDocumentListener(this);
 	}
 
 	public boolean handleUnsavedChanges() {
@@ -367,13 +357,9 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 		} catch (Exception e) {
 			System.out.println("problem in opening");
 		}
-		// TODO: Why?
-		doc.removeDocumentListener(this);
 		try {
 			if (file != null) {
-				fileChanged = false;
-				setFileName(file);
-				fin = new FileInputStream(file);
+				FileInputStream fin = new FileInputStream(file);
 				BufferedReader din = new BufferedReader(new InputStreamReader(fin));
 				StringBuilder text = new StringBuilder();
 				String line;
@@ -381,6 +367,8 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 					text.append(line).append("\n");
 				textArea.setText(text.toString());
 				fin.close();
+				fileChanged = false;
+				setFileName(file);
 			} else {
 				// TODO: unify error handling.  Don't mix JOptionPane with IJ.error as if we had no clue what we want
 				JOptionPane.showMessageDialog(this, "The file name " + file.getName() + " not found.");
@@ -388,17 +376,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener, ChangeL
 
 		} catch (Exception ex) {
 			ex.printStackTrace();
-		} finally {
-			if (null != fin) {
-				try {
-					fin.close();
-				} catch (Exception e2) {
-					e2.printStackTrace();
-				}
-			}
-			doc.addDocumentListener(this);
 		}
-
 	}
 
 	public boolean saveAs() {
