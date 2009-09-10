@@ -138,11 +138,11 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Gray_Morphology.jar \
 	plugins/Colocalisation_Analysis.jar \
 	plugins/LocalThickness_.jar \
-	plugins/Object_Counter3D.jar \
 	plugins/Tutorial_Maker.jar \
 	plugins/Script_Editor.jar \
 	plugins/Manual_Tracking.jar \
 	plugins/Calculator_Plus.jar \
+	plugins/3D_Objects_Counter.jar \
 	\
 	misc/Fiji.jar
 
