@@ -89,7 +89,6 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 	JMenuItem new_file, open, save, saveas, compileAndRun, debug, quit,
 		  undo, redo, cut, copy, paste, find, replace, selectAll,
 		  autocomplete, resume, terminate, kill;
-	FindAndReplaceDialog replaceDialog;
 	AutoCompletion autocomp;
 	Languages.Language currentLanguage;
 	ClassCompletionProvider provider;
@@ -162,7 +161,6 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 
 		JMenu options = new JMenu("Options");
 		options.setMnemonic(KeyEvent.VK_O);
-		// TODO: CTRL, ALT
 		autocomplete = addToMenu(options, "Autocomplete", 0, KeyEvent.VK_SPACE, ActionEvent.CTRL_MASK);
 		options.addSeparator();
 
@@ -302,14 +300,9 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 		else if (source == redo)
 			textArea.redoLastAction();
 		else if (source == find)
-			setFindAndReplace(false);
-		else if (source == replace) {
-			try {
-				setFindAndReplace(true);
-			} catch (Exception e) {
-				e.printStackTrace(); // TODO: huh?
-			}
-		}
+			findOrReplace(false);
+		else if (source == replace)
+			findOrReplace(true);
 		else if (source == selectAll) {
 			textArea.setCaretPosition(0);
 			textArea.moveCaretPosition(textArea.getDocument().getLength());
@@ -331,22 +324,14 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 		return (RSyntaxDocument)textArea.getDocument();
 	}
 
-	// TODO: nonono.
-	public void setFindAndReplace(boolean ifReplace) {
-		if (replaceDialog != null) {						//here should the code to close all other dialog boxes
-			if (replaceDialog.isReplace() != ifReplace) {
-				replaceDialog.dispose();
-				replaceDialog = null;
-			}
-		}
-		if (replaceDialog == null) {
-			replaceDialog = new FindAndReplaceDialog(this, textArea, ifReplace);
-			replaceDialog.setResizable(true);
-			replaceDialog.pack();
-			replaceDialog.setLocationRelativeTo(this);
-		}
-		replaceDialog.show();
-		replaceDialog.toFront();
+	public void findOrReplace(boolean replace) {
+		FindAndReplaceDialog dialog =
+			new FindAndReplaceDialog(this, textArea, replace);
+		dialog.setResizable(true);
+		dialog.pack();
+		dialog.setLocationRelativeTo(this);
+		dialog.show();
+		dialog.toFront();
 	}
 
 	public void open(String path) {
