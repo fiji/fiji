@@ -468,8 +468,9 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 			"New_" + currentLanguage.extension : file.getName();
 	}
 
-	private void setTitle() {
-		String title = (fileChanged ? "*" : "") + getFileName();
+	private synchronized void setTitle() {
+		String title = (fileChanged ? "*" : "") + getFileName()
+			+ (executingTasks.isEmpty() ? "" : " (Running)");
 		setTitle(title);
 	}
 
@@ -483,6 +484,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 			super("Script Editor Run :: " + new Date().toString());
 			// Store itself for later
 			executingTasks.add(this);
+			setTitle();
 			// Enable kill menu
 			kill.setEnabled(true);
 			// Fork a task, as a part of this ThreadGroup
@@ -500,6 +502,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 						executingTasks.remove(Executer.this);
 						// Leave kill menu item enabled if other tasks are running
 						kill.setEnabled(executingTasks.size() > 0);
+						setTitle();
 					}
 				}
 			};
@@ -537,6 +540,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 				}
 			}
 			executingTasks.remove(this);
+			setTitle();
 		}
 	}
 
