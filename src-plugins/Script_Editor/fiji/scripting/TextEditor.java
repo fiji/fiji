@@ -39,7 +39,7 @@ import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -254,6 +254,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 
 	public void createNewDocument() {
 		textArea.setText("");
+		textArea.discardAllEdits();
 		file = null;
 		fileChanged = false;
 		setTitle();
@@ -355,14 +356,9 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 	public void open(String path) {
 		try {
 			file = new File(path);
-			FileInputStream fin = new FileInputStream(file);
-			BufferedReader din = new BufferedReader(new InputStreamReader(fin));
-			StringBuilder text = new StringBuilder();
-			String line;
-			while ((line = din.readLine()) != null)
-				text.append(line).append("\n");
-			textArea.setText(text.toString());
-			fin.close();
+			textArea.read(new BufferedReader(new FileReader(file)),
+				null);
+			textArea.discardAllEdits();
 			fileChanged = false;
 			setFileName(file);
 			return;
