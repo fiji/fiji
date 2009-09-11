@@ -253,11 +253,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 	}
 
 	public void createNewDocument() {
-		textArea.setText("");
-		textArea.discardAllEdits();
-		file = null;
-		fileChanged = false;
-		setTitle();
+		open(null);
 	}
 
 	public boolean handleUnsavedChanges() {
@@ -354,18 +350,22 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 	}
 
 	public void open(String path) {
-		try {
+		if (path == null) {
+			file = null;
+			textArea.setText("");
+		}
+		else try {
 			file = new File(path);
 			textArea.read(new BufferedReader(new FileReader(file)),
 				null);
-			textArea.discardAllEdits();
-			fileChanged = false;
-			setFileName(file);
-			return;
 		} catch (Exception e) {
 			e.printStackTrace();
+			error("The file '" + path + "' was not found.");
+			return;
 		}
-		error("The file '" + path + "' was not found.");
+		textArea.discardAllEdits();
+		fileChanged = false;
+		setFileName(file);
 	}
 
 	public boolean saveAs() {
@@ -471,7 +471,8 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 
 	public void setFileName(File file) {
 		setTitle();
-		setLanguageByExtension(getExtension(file.getName()));
+		if (file != null)
+			setLanguageByExtension(getExtension(file.getName()));
 	}
 
 	protected String getFileName() {
