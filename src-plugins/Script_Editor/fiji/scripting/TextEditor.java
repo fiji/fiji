@@ -107,6 +107,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 	AutoCompletion autocomp;
 	Languages.Language currentLanguage;
 	ClassCompletionProvider provider;
+	FindAndReplaceDialog findDialog;
 	StartDebugging debugging;
 	Gutter gutter;
 	IconGroup iconGroup;
@@ -230,6 +231,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 
 		pack();
 		getToolkit().setDynamicLayout(true);            //added to accomodate the autocomplete part
+		findDialog = new FindAndReplaceDialog(this, textArea);
 
 		setLanguage(null);
 		setTitle();
@@ -347,13 +349,8 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 	}
 
 	public void findOrReplace(boolean replace) {
-		FindAndReplaceDialog dialog =
-			new FindAndReplaceDialog(this, textArea, replace);
-		dialog.setResizable(true);
-		dialog.pack();
-		dialog.setLocationRelativeTo(this);
-		dialog.show();
-		dialog.toFront();
+		findDialog.setLocationRelativeTo(this);
+		findDialog.show(replace);
 	}
 
 	public void open(String path) {
