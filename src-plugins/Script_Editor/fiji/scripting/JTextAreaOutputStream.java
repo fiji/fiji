@@ -5,6 +5,8 @@ import java.io.OutputStream;
 
 import javax.swing.JTextArea;
 
+import javax.swing.text.BadLocationException;
+
 public class JTextAreaOutputStream extends OutputStream {
 	JTextArea textArea;
 
@@ -25,6 +27,11 @@ public class JTextAreaOutputStream extends OutputStream {
 	}
 
 	public synchronized void write(String string) {
+		int lineCount = textArea.getLineCount();
+		if (lineCount > 1000) try {
+			textArea.replaceRange("", 0,
+				textArea.getLineEndOffset(lineCount - 1000));
+		} catch (BadLocationException e) { e.printStackTrace(); }
 		textArea.append(string);
 		textArea.setCaretPosition(textArea.getDocument().getLength());
 	}
