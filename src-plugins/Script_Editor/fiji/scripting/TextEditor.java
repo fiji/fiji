@@ -161,7 +161,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 		save = addToMenu(file, "Save", 0, KeyEvent.VK_S, ctrl);
 		saveas = addToMenu(file, "Save as...", 1, 0, 0);
 		file.addSeparator();
-		quit = addToMenu(file, "Quit", 0, KeyEvent.VK_X, ActionEvent.ALT_MASK);
+		quit = addToMenu(file, "Close Editor", 0, KeyEvent.VK_W, ctrl);
 
 		mbar.add(file);
 
