@@ -1,13 +1,13 @@
 #!/usr/bin/python
 
 import sys
-from java.lang import Class
+from java.lang import ClassLoader
 
+classLoader = ClassLoader.getSystemClassLoader()
 for c in sys.argv[1:]:
-	slashes = c.replace('.', '/')
+	slashed = c.replace('.', '/') + '.class'
 	try:
-		instance = Class.forName(c.replace('/', '.'))
-		jar = instance.getResource('/' + slashes + '.class').toString()
+		jar = classLoader.getResource(slashed).toString()
 		if jar.startswith('jar:file:'):
 			jar = jar[9:]
 		exclamation = jar.find('!/')

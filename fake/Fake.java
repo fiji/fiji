@@ -667,7 +667,8 @@ public class Fake {
 			while (iter.hasNext()) {
 				String key = (String)iter.next();
 				int paren = key.indexOf('(');
-				if (paren < 0 || !key.endsWith(")"))
+				if (paren < 0 || !key.endsWith(")") ||
+						key.startsWith("ENVOVERRIDES("))
 					continue;
 				String name = key.substring(paren + 1,
 						key.length() - 1);
@@ -689,9 +690,12 @@ public class Fake {
 
 		public String getVariable(String key,
 				String subkey, String subkey2) {
-			key = key.toUpperCase();
 			String res = null;
-			if (subkey != null)
+			if ("true".equals(variables.get("ENVOVERRIDES("
+							+ key + ")")))
+				res = System.getenv(key);
+			key = key.toUpperCase();
+			if (subkey != null && res == null)
 				res = (String)variables.get(key
 						+ "(" + subkey + ")");
 			if (subkey2 != null && res == null)
@@ -1152,7 +1156,7 @@ public class Fake {
 			boolean checkUpToDate(String directory, File target) {
 				File dir = new File(directory);
 
-				if (dir.isDirectory() &&
+				if (!dir.exists() || (dir.isDirectory()) &&
 						dir.listFiles().length == 0) {
 					String precompiled =
 						getVar("PRECOMPILEDDIRECTORY");

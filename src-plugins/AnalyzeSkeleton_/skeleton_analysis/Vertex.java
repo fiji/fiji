@@ -20,23 +20,26 @@ import java.util.ArrayList;
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  * 
  */
-
+/**
+ * This class represents a vertex or node in a graph.
+ */
 public class Vertex 
 {
+	/** list of points belonging to the vertex */
 	private ArrayList<Point> points = null;
-	
+	/** list of projecting edges from this vertex */
 	private ArrayList<Edge> branches = null;
-	
+	/** visit status (for depth-first search, DFS) */
 	private boolean visited = false;
-	
+	/** previously visited edge in DFS */
 	private Edge precedessor = null;
-	
+	/** DFS visit order */
 	private int visitOrder = -1;
 	
 	
 	// --------------------------------------------------------------------------
 	/**
-	 * 
+	 * Create empty vertex.
 	 */
 	public Vertex()
 	{
@@ -46,8 +49,8 @@ public class Vertex
 	
 	// --------------------------------------------------------------------------
 	/**
-	 * 
-	 * @param p
+	 * Add point to the vertex.
+	 * @param p input point
 	 */
 	public void addPoint(Point p)
 	{
@@ -55,9 +58,9 @@ public class Vertex
 	}
 	// --------------------------------------------------------------------------
 	/**
-	 * 
-	 * @param p
-	 * @return
+	 * Check if a point belongs to the vertex list of points.
+	 * @param p input points
+	 * @return true if the point is in the vertex point list
 	 */
 	public boolean isVertexPoint(Point p)
 	{
@@ -67,8 +70,8 @@ public class Vertex
 	}
 	// --------------------------------------------------------------------------
 	/**
-	 * 
-	 * @return
+	 * Convert list of points to String.
+	 * @return printable version of the list of points
 	 */
 	public String pointsToString()
 	{
@@ -80,8 +83,8 @@ public class Vertex
 	}
 	// --------------------------------------------------------------------------
 	/**
-	 * 
-	 * @return
+	 * Get list of points.
+	 * @return list of points
 	 */
 	public ArrayList < Point > getPoints()
 	{
@@ -89,7 +92,7 @@ public class Vertex
 	}
 	// --------------------------------------------------------------------------
 	/**
-	 * Add a new branch to the vertex
+	 * Add a new branch to the vertex.
 	 * 
 	 * @param e neighbor edge
 	 */
@@ -100,7 +103,7 @@ public class Vertex
 	
 	// --------------------------------------------------------------------------
 	/**
-	 * Get branch list
+	 * Get branch list.
 	 * 
 	 * @return list of branch vertices
 	 */
@@ -110,7 +113,7 @@ public class Vertex
 	}
 	// --------------------------------------------------------------------------
 	/**
-	 * Set vertex as visited or not
+	 * Set vertex as visited or not.
 	 * 
 	 * @param b boolean flag 
 	 */
@@ -121,7 +124,7 @@ public class Vertex
 
 	// --------------------------------------------------------------------------
 	/**
-	 * Set vertex as visited or not
+	 * Set vertex as visited or not.
 	 * 
 	 * @param b boolean flag 
 	 */
@@ -130,22 +133,34 @@ public class Vertex
 		this.visited = b;
 		this.visitOrder = visitOrder;
 	}	
-	
+	/**
+	 * Check visit status.
+	 * @return true if the vertex was already visited (DFS)
+	 */
 	public boolean isVisited()
 	{
 		return this.visited;
 	}
-	
+	/**
+	 * Set predecessor (for DFS).
+	 * @param pred predecessor edge in DFS visit.
+	 */
 	public void setPredecessor(Edge pred)
 	{
 		this.precedessor = pred;
 	}
-	
+	/**
+	 * Get predecessor edge.
+	 * @return predecessor edge.
+	 */
 	public Edge getPredecessor()
 	{
 		return this.precedessor;
 	}
-	
+	/**
+	 * Get DFS visit order.
+	 * @return visit order
+	 */
 	public int getVisitOrder()
 	{
 		return this.visitOrder;

@@ -47,3 +47,7 @@ Nice-to-haves:
   the current PluginClassLoader is unaffected.
 
 - Integrate Fiji Build much better.
+
+- Identify unused imports (and add an option to remove them).
+
+- Identify non-explicit imports and add an option to make them explicit.

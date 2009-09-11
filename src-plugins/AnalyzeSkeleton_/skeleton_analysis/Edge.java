@@ -2,7 +2,6 @@ package skeleton_analysis;
 
 import java.util.ArrayList;
 
-
 /**
  * AnalyzeSkeleton_ plugin for ImageJ(C).
  * Copyright (C) 2008,2009 Ignacio Arganda-Carreras 
@@ -22,50 +21,85 @@ import java.util.ArrayList;
  * 
  */
 
+/**
+ * This class represents the edge between two vertices in an undirected graph.
+ */
 public class Edge
 {
+	/** "tree" edge classification constant for Depth-first search (DFS) */
 	public final static int TREE = 0;
+	/** "back" edge classification constant for Depth-first search (DFS) */
 	public final static int BACK = 1;
+	/** not yet defined edge classification constant for Depth-first search (DFS) */
 	public final static int UNDEFINED = -1;
 	
+	/** DFS classification */
 	private int type = Edge.UNDEFINED;
 	
+	/** vertex at one extreme of the edge */
 	private Vertex v1 = null;
+	/** vertex at the other extreme of the edge */
 	private Vertex v2 = null;
+	/** list of slab voxels belonging to this edge */
 	private ArrayList <Point> slabs = null;
 
+	/**
+	 * Create an edge of specific vertices and list of slab voxels.
+	 * @param v1 first vertex
+	 * @param v2 second vertex
+	 * @param slabs list of slab voxels
+	 */
 	public Edge(Vertex v1, Vertex v2, ArrayList<Point> slabs)
 	{
 		this.v1 = v1;
 		this.v2 = v2;
 		this.slabs = slabs;		
 	}
-	
+	/**
+	 * Get first vertex. 
+	 * @return first vertex of the edge
+	 */
 	public Vertex getV1()
 	{
 		return this.v1;
 	}
-	
+	/**
+	 * Get second vertex.
+	 * @return second vertex of the edge
+	 */
 	public Vertex getV2()
 	{
 		return this.v2;
 	}
-	
+	/**
+	 * Get list of slab voxels belonging to the edge.
+	 * @return list of slab voxels
+	 */
 	public ArrayList<Point> getSlabs()
 	{
 		return this.slabs;
 	}
-	
+	/**
+	 * Set DFS type (BACK or TREE)
+	 * @param type DFS classification (BACK or TREE)
+	 */
 	public void setType(int type)
 	{
 		this.type = type;
 	}
-	
+	/**
+	 * Get DFS edge type
+	 * @return DFS classification type
+	 */
 	public int getType()
 	{
 		return this.type;
 	}
-	
+	/**
+	 * Get opposite vertex from a given one.
+	 * @param v input vertex
+	 * @return opposite vertex in the edge
+	 */
 	public Vertex getOppositeVertex(Vertex v)
 	{
 		if(this.v1.equals(v))
@@ -76,4 +110,4 @@ public class Edge
 			return null;
 	}
 
-}
+}// end class Edge

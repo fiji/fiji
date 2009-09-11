@@ -19,15 +19,21 @@ package skeleton_analysis;
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  * 
  */
-
+/**
+ * This class represents a 3D point or position on a 3D image. Therefore, the 
+ * coordinates are integer.
+ */
 public class Point 
 {
+	/** x- coordinate */	
 	public int x = 0;
+	/** y- coordinate */
 	public int y = 0;
+	/** z- coordinate */
 	public int z = 0;
 	
 	/**
-	 * Point constructor
+	 * Create point from integer coordinates.
 	 * 
 	 * @param x x- coordinate
 	 * @param y y- coordinate
@@ -41,16 +47,16 @@ public class Point
 	}
 	
 	/**
-	 * Convert point to string
+	 * Convert point to string.
 	 */
 	public String toString(){
 		return new String("(" + this.x + ", " + this.y + ", " + this.z + ")");
 	}
 	
 	/**
-	 * Override equals method to compare points
-	 * @param o
-	 * @return
+	 * Override equals method to compare points.
+	 * @param o input object
+	 * @return true if the input object is equal to this Point
 	 */
 	public boolean equals(Object o)
 	{
