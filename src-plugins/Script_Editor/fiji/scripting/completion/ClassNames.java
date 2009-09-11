@@ -76,7 +76,7 @@ public class ClassNames {
 					addToTree(splitZipEntryForClassName(name), root, 0);
 				}
 			} catch (Exception e) {
-				if (path.endsWith("/sunrsasign.jar"))
+				if (path.endsWith("/sunrsasign.jar") || path.endsWith("/jsfd.jar"))
 					return;
 				System.err.println("Exception while processing "
 					+ path);

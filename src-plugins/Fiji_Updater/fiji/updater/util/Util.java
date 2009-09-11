@@ -41,12 +41,12 @@ public class Util {
 
 	static {
 		fijiRoot = System.getProperty("fiji.dir") + File.separator; 
-		isDeveloper = fileExists("fiji.cxx");
+		isDeveloper = new File(fijiRoot + "/fiji.cxx").exists();
 		platform = getPlatform();
 
 		String macLauncher = macPrefix + "fiji-macosx";
 		useMacPrefix = platform.equals("macosx") &&
-			fileExists(macLauncher);
+			new File(fijiRoot + "/" + macLauncher).exists();
 
 		String[] list = {
 			"linux", "linux64", "macosx", "tiger", "win32", "win64"

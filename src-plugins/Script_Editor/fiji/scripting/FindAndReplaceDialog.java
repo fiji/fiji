@@ -28,20 +28,17 @@ import org.fife.ui.rtextarea.SearchEngine;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 
 public class FindAndReplaceDialog extends JDialog implements ActionListener {
-	enum Mode { FIND, REPLACE };
-	Mode mode;
 	RSyntaxTextArea textArea;
 
-	JTextField searchField;
-	JTextField replaceField;
+	JTextField searchField, replaceField;
+	JLabel replaceLabel;
 	JCheckBox matchCase, wholeWord, markAll, regex, forward;
 	JButton findNext, replace, replaceAll, cancel;
 
-	public FindAndReplaceDialog(TextEditor editor, RSyntaxTextArea textArea,
-			boolean replace) {
+	public FindAndReplaceDialog(TextEditor editor,
+			RSyntaxTextArea textArea) {
 		super(editor);
 		this.textArea = textArea;
-		mode = replace ? Mode.REPLACE : Mode.FIND;
 
 		Container root = getContentPane();
 		root.setLayout(new GridBagLayout());
@@ -55,9 +52,8 @@ public class FindAndReplaceDialog extends JDialog implements ActionListener {
 		c.ipadx = c.ipady = 1;
 		c.fill = c.HORIZONTAL;
 		c.anchor = c.LINE_START;
-		searchField = createField("Find Next", text, c);
-		if (replace)
-			replaceField = createField("Replace with", text, c);
+		searchField = createField("Find Next", text, c, null);
+		replaceField = createField("Replace with", text, c, this);
 
 		c.gridwidth = 4; c.gridheight = c.gridy;
 		c.gridx = c.gridy = 0;
@@ -79,16 +75,14 @@ public class FindAndReplaceDialog extends JDialog implements ActionListener {
 
 		c.gridx = 4; c.gridy = 0;
 		findNext = createButton("Find Next", root, c);
-		if (replace) {
-			this.replace = createButton("Replace", root, c);
-			replaceAll = createButton("Replace All", root, c);
-		}
+		replace = createButton("Replace", root, c);
+		replaceAll = createButton("Replace All", root, c);
 		cancel = createButton("Cancel", root, c);
+		setResizable(true);
 		pack();
 
 		getRootPane().setDefaultButton(findNext);
 
-		setTitle(replace ? "Replace" : "Find");
 		setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 
 		KeyAdapter listener = new KeyAdapter() {
@@ -97,17 +91,32 @@ public class FindAndReplaceDialog extends JDialog implements ActionListener {
 					dispose();
 			}
 		};
+		// TODO: handle via actionmap
 		for (Component component : getContentPane().getComponents())
 			component.addKeyListener(listener);
 		searchField.addKeyListener(listener);
-		if (replaceField != null)
-			replaceField.addKeyListener(listener);
+		replaceField.addKeyListener(listener);
+	}
+
+	public void show(boolean replace) {
+		setTitle(replace ? "Replace" : "Find");
+		replaceLabel.setEnabled(replace);
+		replaceField.setEnabled(replace);
+		replaceField.setBackground(replace ?
+			searchField.getBackground() :
+			getRootPane().getBackground());
+		this.replace.setEnabled(replace);
+		replaceAll.setEnabled(replace);
+		show();
 	}
 
 	private JTextField createField(String name, Container container,
-			GridBagConstraints c) {
+			GridBagConstraints c,
+			FindAndReplaceDialog replaceDialog) {
 		c.weightx = 0.001;
 		JLabel label = new JLabel(name);
+		if (replaceDialog != null)
+			replaceDialog.replaceLabel = label;
 		container.add(label, c);
 		c.gridx++;
 		c.weightx = 1;
@@ -180,7 +189,7 @@ public class FindAndReplaceDialog extends JDialog implements ActionListener {
 	}
 
 	public boolean isReplace() {
-		return mode == Mode.REPLACE;
+		return replace.isEnabled();
 	}
 
 }
