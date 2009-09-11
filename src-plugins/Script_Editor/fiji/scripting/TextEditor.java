@@ -1,5 +1,7 @@
 package fiji.scripting;
 
+import java.util.concurrent.ThreadPoolExecutor;
+
 import com.sun.jdi.connect.VMStartException;
 
 import common.RefreshScripts;
@@ -110,7 +112,6 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 	StartDebugging debugging;
 	Gutter gutter;
 	IconGroup iconGroup;
-	OutputStream output;
 
 	public TextEditor(String path1) {
 		JPanel cp = new JPanel(new BorderLayout());
@@ -238,8 +239,6 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 		setVisible(true);
 		if (path1 != null && !path1.equals(""))
 			open(path1);
-
-		output = new JTextAreaOutputStream(screen);
 	}
 
 	public JMenuItem addToMenu(JMenu menu, String menuEntry, int keyEvent, int keyevent, int actionevent) {
@@ -499,6 +498,11 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 	/** Generic Thread that keeps a starting time stamp,
 	 *  sets the priority to normal and starts itself. */
 	private abstract class Executer extends ThreadGroup {
+		JTextAreaOutputStream output;
+		Executer(JTextAreaOutputStream output) {
+			this();
+			this.output = output;
+		}
 		Executer() {
 			super("Script Editor Run :: " + new Date().toString());
 			// Store itself for later
@@ -515,10 +519,23 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 				public void run() {
 					try {
 						execute();
+						// Wait until any children threads die:
+						while (Executer.this.activeCount() > 1) {
+							if (isInterrupted()) break;
+							try {
+								Thread.sleep(500);
+							} catch (InterruptedException ie) {}
+						}
 					} catch (Throwable t) {
 						t.printStackTrace();
 					} finally {
 						executingTasks.remove(Executer.this);
+						try {
+							if (null != output)
+								output.shutdown();
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
 						// Leave kill menu item enabled if other tasks are running
 						kill.setEnabled(executingTasks.size() > 0);
 						setTitle();
@@ -549,6 +566,13 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 
 		/** Totally destroy/stop all threads in this and all recursive thread subgroups. Will remove itself from the executingTasks list. */
 		void obliterate() {
+			try {
+				// Stop printing to the screen
+				if (null != output)
+					output.shutdownNow();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 			for (Thread thread : getAllThreads()) {
 				try {
 					thread.interrupt();
@@ -621,6 +645,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 		}
 
 		textArea.setEditable(false);
+		final JTextAreaOutputStream output = new JTextAreaOutputStream(screen);
 		try {
 			final RefreshScripts interpreter =
 				currentLanguage.interpreter;
@@ -629,7 +654,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 			// Pipe current text into the runScript:
 			final PipedInputStream pi = new PipedInputStream();
 			final PipedOutputStream po = new PipedOutputStream(pi);
-			new TextEditor.Executer() {
+			new TextEditor.Executer(output) {
 				public void execute() {
 					interpreter.runScript(pi);
 				}
@@ -655,7 +680,10 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 			return;
 		}
 
-		new TextEditor.Executer() {
+		JTextAreaOutputStream output = new JTextAreaOutputStream(screen);
+		interpreter.setOutputStreams(output, output);
+
+		new TextEditor.Executer(new JTextAreaOutputStream(screen)) {
 			public void execute() {
 				interpreter.runScript(file.getPath());
 			}
