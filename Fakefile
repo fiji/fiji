@@ -74,6 +74,7 @@ JAVA_HOME(linux64)=java/linux-amd64/jdk1.6.0_13/jre
 JAVA_HOME(win32)=java/win32/jdk1.6.0_03/jre
 JAVA_HOME(win64)=java/win64/jdk1.6.0_04/jre
 JAVA_HOME(macosx)=java/macosx-java3d
+ENVOVERRIDES(JAVA_HOME)=true
 
 # the main target
 
@@ -138,11 +139,11 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Gray_Morphology.jar \
 	plugins/Colocalisation_Analysis.jar \
 	plugins/LocalThickness_.jar \
-	plugins/Object_Counter3D.jar \
 	plugins/Tutorial_Maker.jar \
 	plugins/Script_Editor.jar \
 	plugins/Manual_Tracking.jar \
 	plugins/Calculator_Plus.jar \
+	plugins/3D_Objects_Counter.jar \
 	\
 	misc/Fiji.jar
 

@@ -83,6 +83,8 @@ public class ConstructorParser {
 		}
 	}
 
+	// TODO: langs is not intuitive at all.  If there is a feature set,
+	// we need to use booleans, maybe wrapped into a class "LangFeatures"
 	public void setExplicitObjectSet(String langs, int line) {
 		Token token = doc.getTokenListForLine(line);
 		boolean found = false;

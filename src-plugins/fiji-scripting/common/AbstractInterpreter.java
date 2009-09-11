@@ -76,8 +76,9 @@ public abstract class AbstractInterpreter implements PlugIn {
 
 	static {
 		/* set the default class loader to ImageJ's PluginClassLoader */
-		Thread.currentThread()
-			.setContextClassLoader(IJ.getClassLoader());
+		if (IJ.getInstance() != null)
+			Thread.currentThread()
+				.setContextClassLoader(IJ.getClassLoader());
 
 		// Save history of all open interpreters even in the case of a call to System.exit(0),
 		// which doesn't spawn windowClosing events.

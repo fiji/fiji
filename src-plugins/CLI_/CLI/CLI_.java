@@ -171,7 +171,7 @@ public class CLI_ extends AbstractInterpreter {
 		setTitle("ImageJ Terminal v1.07");
 		super.run(arg);
 
-		print("-->  Welcome. Type   help   in the text field below.\n");
+		println("-->  Welcome. Type   help   in the text field below.\n");
 		//set current_root_dir value
 		if (IJ.isWindows()) {
 			current_root_dir = user_dir.substring(0,2); //just the 'c:' or 'd:' etc
@@ -279,7 +279,7 @@ public class CLI_ extends AbstractInterpreter {
 
 			return null;
 		}catch(Exception e) {
-			print("Some error ocurred: " + e + "\n" + new TraceError(e));
+			println("Some error ocurred: " + e + "\n" + new TraceError(e));
 			//reset macro
 			macro = "\n";
 			return null;
@@ -333,7 +333,7 @@ public class CLI_ extends AbstractInterpreter {
 		String[] files = f_the_dir.list(new CustomFileFilter(file_part+"*"));
 		if (null != files && files.length > 1) {
 			//print options to screen
-			print("-->  Possible files in " + f_the_dir.getName() + " folder:");
+			println("-->  Possible files in " + f_the_dir.getName() + " folder:");
 			for (int i=0; i<files.length; i++) {
 				File f = new File(the_dir + file_separator + files[i]);
 				screen.append("\n-->  " + files[i]);
@@ -341,7 +341,7 @@ public class CLI_ extends AbstractInterpreter {
 					screen.append("/");
 				}
 			}
-			print("");
+			println("");
 
 			String expanded = getMaxExpanded(file_part, files);
 
@@ -413,7 +413,7 @@ public class CLI_ extends AbstractInterpreter {
 				for (int i=0; i< possibles.size(); i++) {
 					screen.append("\n-->    " + (String)possibles.get(i));
 				}
-				print("");
+				println("");
 			}
 			}catch(Exception e) { IJ.write("Error! " + new TraceError(e));}
 		}
@@ -542,7 +542,7 @@ public class CLI_ extends AbstractInterpreter {
 
 		if (temp.length() > 3 && equal("open", temp.substring(0, 4))) { //was: "open " and 0, 5
 			if (4 == temp.length()) {
-				print("-->  Usage:  open <file_name>\n-->    Asterisks allowed:  open *name | *name* | *name\n-->    and multiple files:  open file1 file2");
+				println("-->  Usage:  open <file_name>\n-->    Asterisks allowed:  open *name | *name* | *name\n-->    and multiple files:  open file1 file2");
 				return "";
 			}
 			StringTokenizer stsp;
@@ -592,7 +592,7 @@ public class CLI_ extends AbstractInterpreter {
 				}
 
 				if (0 == image_file.length) {
-					print("\n--> No such file/s.");
+					println("\n--> No such file/s.");
 				} else {
 					for (int i=0; i<image_file.length; i++) {
 						if (not_first) txt += l;
@@ -745,7 +745,7 @@ public class CLI_ extends AbstractInterpreter {
 				p = input_line.indexOf('\"', p+1);
 			}
 			if (0 != num_quotes%2.0) {
-				print("\n-->  Wrong number of quotes!");
+				println("\n-->  Wrong number of quotes!");
 				return true; //this terminates it, the entered macro line is no longer taken into account
 			}
 			
@@ -836,7 +836,7 @@ public class CLI_ extends AbstractInterpreter {
 		if (equal(command, "cd")) {
 			//check for the existence of arguments!
 			if (1 == al.size()) {
-				print("\n-->  Usage:  cd <directory_name>");
+				println("\n-->  Usage:  cd <directory_name>");
 				return true;
 			}
 			String dir = (String)al.get(1);
@@ -851,12 +851,12 @@ public class CLI_ extends AbstractInterpreter {
 				//check whether we are at top directory already
 				if (IJ.isWindows()) {
 					if (equal(dir, current_root_dir + file_separator)) {
-						print("\n-->  Such directory doesn't make sense.");
+						println("\n-->  Such directory doesn't make sense.");
 						return true;
 					}
 				} else {
 					if (equal(dir, current_root_dir)) {
-						print("\n-->  Such directory doesn't make sense.");
+						println("\n-->  Such directory doesn't make sense.");
 						return true;
 					}
 				}
@@ -868,10 +868,10 @@ public class CLI_ extends AbstractInterpreter {
 					new_dir += "/";
 				}
 			} else if (IJ.isWindows() && 4 < dir.length() && dir.startsWith(current_root_dir + file_separator + "..")) { 
-				print("\n-->  Such directory doesn't make sense.");
+				println("\n-->  Such directory doesn't make sense.");
 				return true;
 			} else if (2 < dir.length() && dir.startsWith(current_root_dir + "..")) { //for unix-like systems and also weird windows entries
-				print("\n-->  Such directory doesn't make sense.");
+				println("\n-->  Such directory doesn't make sense.");
 				return true;
 			} else if (-1 != dir.indexOf("..")) {
 				String target_dir = null;
@@ -907,7 +907,7 @@ public class CLI_ extends AbstractInterpreter {
 			if (f_new_dir.exists() && f_new_dir.isDirectory()) {
 				user_dir = new_dir;
 			} else {
-				print("\n-->  No such directory.");
+				println("\n-->  No such directory.");
 				return true;
 			}
 			//update current_root_dir value
@@ -923,20 +923,20 @@ public class CLI_ extends AbstractInterpreter {
 			if (-1 == user_dir.lastIndexOf('/')) {
 				dir_name += "/";
 			}
-			print("\n-->  changed directory to: " + dir_name);
+			println("\n-->  changed directory to: " + dir_name);
 			
 			return true;
 		}
 
 		//2 - pwd : PRINT CURRENT DIRECTORY
 		else if (equal(command, "pwd")) {
-			print("\n-->  current directory:");
+			println("\n-->  current directory:");
 			String dir_name = user_dir;
 			//fix unix-like current_root_dir, which is of zero length
 			if (-1 == user_dir.lastIndexOf('/')) {
 				dir_name += "/";
 			}
-			print("--> " + dir_name);
+			println("--> " + dir_name);
 			return true;
 		}
 
@@ -951,7 +951,7 @@ public class CLI_ extends AbstractInterpreter {
 				image_name = f.list(new ImageFileFilter());
 			}
 			if (0 < image_name.length) {
-				print("-->  Images in "+ user_dir + " :");
+				println("-->  Images in "+ user_dir + " :");
 				char space = ' ';
 				for (int im=0; im<image_name.length; im++) {
 					StringBuffer data = new StringBuffer();
@@ -966,13 +966,13 @@ public class CLI_ extends AbstractInterpreter {
 			} else {
 				screen.append(l + "-->  No [such] images in " + user_dir);
 			}
-			print("");
+			println("");
 			return true;
 		}
 
 		// 4 - lsd : LIST DIRECTORIES
 		else if (equal(command, "lsd")) {
-			print("-->  Directories in " + user_dir + " :");
+			println("-->  Directories in " + user_dir + " :");
 			File f = new File(user_dir);
 			File[] all;
 			if (2 == al.size()) {
@@ -990,7 +990,7 @@ public class CLI_ extends AbstractInterpreter {
 			if (no_dirs) {
 				screen.append("\n-->  There are no [such] directories in " + user_dir);
 			}
-			print("");
+			println("");
 			return true;
 		}
 
@@ -1000,7 +1000,7 @@ public class CLI_ extends AbstractInterpreter {
 			if (-1 == user_dir.lastIndexOf('/')) {
 				dir += "/";
 			}
-			print("-->  Files in " + dir + " :");
+			println("-->  Files in " + dir + " :");
 			File f = new File(dir);
 			String[] file_name;
 			if (2 == al.size()) {
@@ -1009,7 +1009,7 @@ public class CLI_ extends AbstractInterpreter {
 				file_name = f.list();
 			}
 			if (0 == file_name.length) {
-				print("-->  No [such] file/s.");
+				println("-->  No [such] file/s.");
 				return true;
 			}
 			String slash = "/";
@@ -1033,29 +1033,29 @@ public class CLI_ extends AbstractInterpreter {
 				}
 				screen.append(data.toString());
 			}
-			print("");
+			println("");
 			return true;
 		}
 
 		//6 - record : record macro
 		else if (equal(command, "record")) {
 			if (1 == al.size()) {
-				print("-->  A name must be provided: 'record macroname'");
+				println("-->  A name must be provided: 'record macroname'");
 				return true; //true to prevent 'record' being sent to the interpreter //false;
 			}
 			MacroRecord.setRecording(true);
 			String macro_name = (String)al.get(1);
 			MacroRecord.makeNew(macro_name);
-			print("-->  Recording to: " + macro_name);
+			println("-->  Recording to: " + macro_name);
 			return true;
 		}
 		//7 - stop : stop recording macro
 		else if (equal(command, "stop")) {
 			if (MacroRecord.isRecording()) {
 				MacroRecord.setRecording(false);
-				print("\n-->  Finished recording.");
+				println("\n-->  Finished recording.");
 			} else {
-				print("\n-->  Nothing is being recorded.");
+				println("\n-->  Nothing is being recorded.");
 			}
 			return true;
 		}
@@ -1070,20 +1070,20 @@ public class CLI_ extends AbstractInterpreter {
 				the_macro = MacroRecord.getCode((String)al.get(1));
 			}
 			if (the_macro != null) {
-				print("\n-->  Executing" + ((al.size()>1)?" " + MacroRecord.autoCompleteName((String)al.get(1)):MacroRecord.getCurrentName()) + ".");
-				print(the_macro);
+				println("\n-->  Executing" + ((al.size()>1)?" " + MacroRecord.autoCompleteName((String)al.get(1)):MacroRecord.getCurrentName()) + ".");
+				println(the_macro);
 				execMacro(the_macro);
 			} else if (1 < al.size()) {
 				String[] the_macro2 = new String[2];
 				if ((the_macro2 = findMacro((String)al.get(1))) != null) {
-					print("-->  Executing " + the_macro2[0]);
-					print(the_macro2[1]);
+					println("-->  Executing " + the_macro2[0]);
+					println(the_macro2[1]);
 					execMacro(the_macro2[1]);
 				} else {
-					print("\n-->  No such macro: " + (String)al.get(1));
+					println("\n-->  No such macro: " + (String)al.get(1));
 				}
 			} else {
-				print("n-->  No macros recorded.");
+				println("n-->  No macros recorded.");
 			}
 			return true;
 		}
@@ -1091,25 +1091,25 @@ public class CLI_ extends AbstractInterpreter {
 		else if (equal(command, "list")) {
 			String[] macro_name = MacroRecord.getList();
 			if (0 == macro_name.length) {
-				print("\n-->  Zero recorded macros.");
+				println("\n-->  Zero recorded macros.");
 				return true;
 			}
-			print("\n-->  Recorded macros:");
+			println("\n-->  Recorded macros:");
 			for (int i=0; i<macro_name.length; i++) {
-				print("\n-->  \t" + macro_name[i]);
+				println("\n-->  \t" + macro_name[i]);
 			}
-			print("\n");
+			println("\n");
 			return true;
 		}
 		//10 - save recorded macro
 		else if(equal(command, "save")) {
 			if (1 == al.size()) {
-				print("\n-->  A macro name must be specified.");
+				println("\n-->  A macro name must be specified.");
 				return true;
 			}
 			MacroRecord mcr = MacroRecord.find((String)al.get(1));
 			if (null == mcr) {
-				print("\n-->  No recorded macro named " + (String)al.get(1));
+				println("\n-->  No recorded macro named " + (String)al.get(1));
 				return true;
 			}
 			String macro_code = mcr.getCodeForSystem();
@@ -1119,7 +1119,7 @@ public class CLI_ extends AbstractInterpreter {
 		//11 - rm : remove file
 		else if (equal(command, "rm")) {
 			if (1 == al.size()) {
-				print("\n-->  Usage:  rm <file_name>\n-->    No asterisks allowed.");
+				println("\n-->  Usage:  rm <file_name>\n-->    No asterisks allowed.");
 				return true;
 			}
 
@@ -1128,7 +1128,7 @@ public class CLI_ extends AbstractInterpreter {
 			if (!trashcan.exists()) {
 				boolean check = trashcan.mkdir();
 				if (!check) {
-					print("\n-->  Trash Can does not exist and could not be created.");
+					println("\n-->  Trash Can does not exist and could not be created.");
 				}
 				//sleep  1/10 of a second to let the system create the dir before using it
 				try {
@@ -1137,14 +1137,14 @@ public class CLI_ extends AbstractInterpreter {
 			}
 			
 			if (1 == al.size()) {
-				print("\n-->  rm : A file name must be specified.");
+				println("\n-->  rm : A file name must be specified.");
 				return true;
 			}
 			String file_name = (String)al.get(1);
 			
 			//wild cards not allowed
 			if (-1 != file_name.indexOf('*')) {
-				print("\n--> Wild cards '*' not allowed in rm command.");
+				println("\n--> Wild cards '*' not allowed in rm command.");
 				return true;
 			}
 			
@@ -1164,7 +1164,7 @@ public class CLI_ extends AbstractInterpreter {
 							if (equal(list[0], ".") && equal(list[1], "..")) {
 							//dir is empty. Ok to delete
 							} else {
-								print("\n-->  " + file_name + " is a non-empty directory! Deleting stopped");
+								println("\n-->  " + file_name + " is a non-empty directory! Deleting stopped");
 								return true;
 							}
 						}
@@ -1181,19 +1181,19 @@ public class CLI_ extends AbstractInterpreter {
 					i++;
 				}
 				if (f.renameTo(file_trashed)) {
-					print("\n-->  " + file_name.substring(file_name.lastIndexOf(file_separator)+1) + " successfully moved to the trash can.");
+					println("\n-->  " + file_name.substring(file_name.lastIndexOf(file_separator)+1) + " successfully moved to the trash can.");
 				} else {
-					print("\n-->  " + file_name.substring(file_name.lastIndexOf(file_separator)) + " could NOT be trashed.");
+					println("\n-->  " + file_name.substring(file_name.lastIndexOf(file_separator)) + " could NOT be trashed.");
 				}
 			} else {
-				print("\n-->  " + file_name + " does not exist!");
+				println("\n-->  " + file_name + " does not exist!");
 			}
 			return true;
 		}
 		//12 - mkdir : make new directory
 		else if (equal(command, "mkdir")) {
 			if (1 == al.size()) {
-				print("\n-->  Usage : mkdir <new_dir_name>");
+				println("\n-->  Usage : mkdir <new_dir_name>");
 				return true;
 			}
 			File f;
@@ -1205,12 +1205,12 @@ public class CLI_ extends AbstractInterpreter {
 				f = new File(dir_name);
 			}
 			if (f.exists()) {
-				print("\n-->  Directory " + dir_name + " already exists!");
+				println("\n-->  Directory " + dir_name + " already exists!");
 			} else {
 				if (f.mkdir()) {
-					print("\n-->  Directory " + dir_name + " sucessfully created");
+					println("\n-->  Directory " + dir_name + " sucessfully created");
 				} else {
-					print("\n-->  Could NOT create the directory!");
+					println("\n-->  Could NOT create the directory!");
 				}
 			}
 			
@@ -1220,7 +1220,7 @@ public class CLI_ extends AbstractInterpreter {
 		//13 - magic : toggle capitalizing words inside the first pair of " " inside a command
 		else if (equal(command, "magic")) {
 			magic = !magic;
-			print("\n-->  magic is " + (magic?"ON":"OFF"));
+			println("\n-->  magic is " + (magic?"ON":"OFF"));
 			return true;
 		}
 
@@ -1232,7 +1232,7 @@ public class CLI_ extends AbstractInterpreter {
 				return true;
 			}
 			if (equal((String)al.get(1), "-l") && 2 == al.size()) {
-				print("\n--> Line number not specified!");
+				println("\n--> Line number not specified!");
 				return true;
 			}
 			if (equal((String)al.get(1), "-l")) {
@@ -1240,26 +1240,26 @@ public class CLI_ extends AbstractInterpreter {
 				try {
 					int line = Integer.parseInt((String)al.get(2));
 					if (MacroRecord.eraseLineFromCurrent(line)) {
-						print("\n-->  line " + line + " erased.");
+						println("\n-->  line " + line + " erased.");
 					} else {
-						print("\n--> line " + line + " out of range.\n");
+						println("\n--> line " + line + " out of range.\n");
 					}
 				}catch(Exception e) {
-					print("\n--> Supplied argument is not a valid number.\n");
+					println("\n--> Supplied argument is not a valid number.\n");
 				}
 			} else {
 				try {
 					int num_lines = Integer.parseInt((String)al.get(1));
 					int erased_lines = MacroRecord.eraseLinesFromCurrent(num_lines);
 					if (-1 == erased_lines) {
-						print("\n-->  All lines erased.");
+						println("\n-->  All lines erased.");
 					} else if (-2 == erased_lines) {
-						print("\n-->  No recorded macro to edit.");
+						println("\n-->  No recorded macro to edit.");
 					} else {
-						print("\n-->  " + erased_lines + " lines erased.");
+						println("\n-->  " + erased_lines + " lines erased.");
 					}
 				}catch(Exception e) {
-					print("\n--> Supplied argument is not a valid number.");
+					println("\n--> Supplied argument is not a valid number.");
 				}
 			}
 			return true;
@@ -1272,15 +1272,15 @@ public class CLI_ extends AbstractInterpreter {
 				//activate = MacroRecord.setActive(null);
 				String[] list = MacroRecord.getList();
 				if (list.length == 0) {
-					print("\n-->  No recorded macro.");
+					println("\n-->  No recorded macro.");
 				} else {
-					print("\n-->  Front macro is " + MacroRecord.getCurrentName() + " and it is " + ((MacroRecord.isRecording())?"":"not") + " being edited.");
+					println("\n-->  Front macro is " + MacroRecord.getCurrentName() + " and it is " + ((MacroRecord.isRecording())?"":"not") + " being edited.");
 				}
 			} else {
 				activate = MacroRecord.setActive((String)al.get(1));
 			}
 			if (activate) {
-				print("\n-->  Now recording on: " + (String)al.get(1) + l);
+				println("\n-->  Now recording on: " + (String)al.get(1) + l);
 			}
 			return true;
 		}
@@ -1295,65 +1295,65 @@ public class CLI_ extends AbstractInterpreter {
 			}
 				
 			if (null != mc) {
-				print("\n-->  Macro : " + mc.getName());
-				print("\n" + mc.getCode());
+				println("\n-->  Macro : " + mc.getName());
+				println("\n" + mc.getCode());
 			} else if (1 < al.size()) {
 				//show a macro from the ImageJ/macros/ folder
 				String[] a_macro = null;
 				if ((a_macro = findMacro((String)al.get(1))) != null) {
-					print("\n-->  Macro : " + a_macro[0]);
-					print(a_macro[1]);
+					println("\n-->  Macro : " + a_macro[0]);
+					println(a_macro[1]);
 				} else {
-					print("\n-->  No such macro: " + (String)al.get(1));
+					println("\n-->  No such macro: " + (String)al.get(1));
 				}
 			} else {
-				print("\n-->  No macro recorded or no such macro.");
+				println("\n-->  No macro recorded or no such macro.");
 			}
 			return true;
 		}
 
 		//17 - help : print list of commands and some examples
 		else if (equal(command, "help")) {
-			print("\n-->  Command line interface for ImageJ");
-			print("-->  -- Albert Cardona 2004 --");
-			print("-->  Just type in any ImageJ macro code and it will be executed after pushing intro.");
-			print("-->  Multiline macro commands can be typed by adding an ending \\");
-			print("-->  Unix-like basic shell functions available.");
-			print("-->  TAB key expands file names and macro functions names.");
-			print("-->  UP and DOWN arrows bring back entered commands.");
-			print("-->  Mouse selecting text brings contextual menu.");
-			print("-->  \n-->  Macro Commands:");
-			print("-->    record <macro_name> : start recording a macro.");
-			print("-->    stop : stop the recording.");
-			print("-->    view [<macro_name>] : print the macro code from macro macro_name without executing it, or from the front macro.\n-->       An attempt will be made to match uncompleted names\n-->       from the recorded list, the current directory, and the ImageJ macros directory.");
-			print("-->    list : list all recorded macros.");
-			print("-->    save <macro_name>: save recorded macro to a file.");
-			print("-->    exec [<macro_name>] : execute a recorded macro macro_name, or the front macro.\n-->       An attempt will be made to match uncompleted names\n-->       from the recorded list, the current directory, and the ImageJ macros directory.");
-			print("-->    front [<macro_name>] : start editing macro macro_name, or just print who is the front macro.");
-			print("-->    erase [-l line_number]|[num_lines] : erase line line_number or erase num_lines starting from the end, or just the last line.");
-			print("-->    toggle_edit : enable/disable direct screen editing.");
-			print("-->    magic : toggle magic ON/OFF. When on, the program attempts to guess several things \n-->       and transform the input. Example: dc invert  -> doCommand(\"Invert\") ,\n-->       or makeRectangle 10,10,30,40 -> makeRectangle(10,10,30,40)");
-			print("-->    doc [<url>]: show ImageJ website macro documentation pages, or a given url.");
-			print("-->  \n-->  Shell-like Commands:");
-			print("-->    open <image_file/s>|<directory> : open an image file or a list of space-separated image names or paths.\n-->      Accepts wildcard (*) at start, end, or both.\n-->      Will print the correct macro code to open the image.\n-->      Alternatively, it will open as a stack all images in the specified directory.\n-->      Without arguments, opens current directory images as a stack.");
-			print("-->    ls [<file_name>]: list all files in working directory.");
-			print("-->    lsi [<file_name>]: list images in working directory.");
-			print("-->    lsd [<file_name>]: list directories in the working directory.");
-			print("-->    pwd : print working directory.");
-			print("-->    cd <directory> : change directory.");
-			print("-->    rm <file_name> : move file_name to the trash can located at this plugin folder.");
-			print("-->    empty_trash : empty the CLI Trash Can.");
-			print("-->    clear : clear screen.");
-			print("-->    screenshot [window_name [target_file_name [delay_in_seconds]]] : idem.");
-			print("-->    show [directory [file [time]]]: slide show on current or specified directory,\n-->      of files <file> (accepts *) and every <time> (in seconds).");
-			print("-->  \n-->  Contextual Menu:");
-			print("-->    Select any piece of text from the screen.\n-->    Lines starting with '-->  ' will be ignored,\n-->    as well as the starting '> ' and ending '\\' characters.");
-			print("-->      Execute Selection : idem");
-			print("-->      Record : make a new macro from selection.");
-			print("-->      Copy : copy selection to system paste buffer.");
-			print("-->      Save Selection : open file dialog to save selection as a macro text file.");
-			print("-->      Save & Exec Selection : idem.");
-			print("-->  ");
+			println("\n-->  Command line interface for ImageJ");
+			println("-->  -- Albert Cardona 2004 --");
+			println("-->  Just type in any ImageJ macro code and it will be executed after pushing intro.");
+			println("-->  Multiline macro commands can be typed by adding an ending \\");
+			println("-->  Unix-like basic shell functions available.");
+			println("-->  TAB key expands file names and macro functions names.");
+			println("-->  UP and DOWN arrows bring back entered commands.");
+			println("-->  Mouse selecting text brings contextual menu.");
+			println("-->  \n-->  Macro Commands:");
+			println("-->    record <macro_name> : start recording a macro.");
+			println("-->    stop : stop the recording.");
+			println("-->    view [<macro_name>] : print the macro code from macro macro_name without executing it, or from the front macro.\n-->       An attempt will be made to match uncompleted names\n-->       from the recorded list, the current directory, and the ImageJ macros directory.");
+			println("-->    list : list all recorded macros.");
+			println("-->    save <macro_name>: save recorded macro to a file.");
+			println("-->    exec [<macro_name>] : execute a recorded macro macro_name, or the front macro.\n-->       An attempt will be made to match uncompleted names\n-->       from the recorded list, the current directory, and the ImageJ macros directory.");
+			println("-->    front [<macro_name>] : start editing macro macro_name, or just print who is the front macro.");
+			println("-->    erase [-l line_number]|[num_lines] : erase line line_number or erase num_lines starting from the end, or just the last line.");
+			println("-->    toggle_edit : enable/disable direct screen editing.");
+			println("-->    magic : toggle magic ON/OFF. When on, the program attempts to guess several things \n-->       and transform the input. Example: dc invert  -> doCommand(\"Invert\") ,\n-->       or makeRectangle 10,10,30,40 -> makeRectangle(10,10,30,40)");
+			println("-->    doc [<url>]: show ImageJ website macro documentation pages, or a given url.");
+			println("-->  \n-->  Shell-like Commands:");
+			println("-->    open <image_file/s>|<directory> : open an image file or a list of space-separated image names or paths.\n-->      Accepts wildcard (*) at start, end, or both.\n-->      Will print the correct macro code to open the image.\n-->      Alternatively, it will open as a stack all images in the specified directory.\n-->      Without arguments, opens current directory images as a stack.");
+			println("-->    ls [<file_name>]: list all files in working directory.");
+			println("-->    lsi [<file_name>]: list images in working directory.");
+			println("-->    lsd [<file_name>]: list directories in the working directory.");
+			println("-->    pwd : print working directory.");
+			println("-->    cd <directory> : change directory.");
+			println("-->    rm <file_name> : move file_name to the trash can located at this plugin folder.");
+			println("-->    empty_trash : empty the CLI Trash Can.");
+			println("-->    clear : clear screen.");
+			println("-->    screenshot [window_name [target_file_name [delay_in_seconds]]] : idem.");
+			println("-->    show [directory [file [time]]]: slide show on current or specified directory,\n-->      of files <file> (accepts *) and every <time> (in seconds).");
+			println("-->  \n-->  Contextual Menu:");
+			println("-->    Select any piece of text from the screen.\n-->    Lines starting with '-->  ' will be ignored,\n-->    as well as the starting '> ' and ending '\\' characters.");
+			println("-->      Execute Selection : idem");
+			println("-->      Record : make a new macro from selection.");
+			println("-->      Copy : copy selection to system paste buffer.");
+			println("-->      Save Selection : open file dialog to save selection as a macro text file.");
+			println("-->      Save & Exec Selection : idem.");
+			println("-->  ");
 			
 			return true;
 		}
@@ -1370,14 +1370,14 @@ public class CLI_ extends AbstractInterpreter {
 					check = f[i].delete();
 				}
 				if (false == check) {
-					print("\n-->  Could not delete file " + file_name);
+					println("\n-->  Could not delete file " + file_name);
 					failed++;
 				}
 			}
 			if (failed == 0) {
-				print("\n-->  Trash can successfully emptied.");
+				println("\n-->  Trash can successfully emptied.");
 			} else {
-				print("\n-->  Some files may have not been deleted.");
+				println("\n-->  Some files may have not been deleted.");
 			}
 
 			return true;
@@ -1403,14 +1403,14 @@ public class CLI_ extends AbstractInterpreter {
 				if (null != frame) {
 					s = new Screenshot(frame, 0, user_dir, null);
 				} else {
-					print("\n-->  No such window: " + (String)al.get(1));
+					println("\n-->  No such window: " + (String)al.get(1));
 				}
 			} else if (3 == al.size()) {
 				java.awt.Frame frame = WindowManager.getFrame((String)al.get(1));
 				if (null != frame) {
 					s = new Screenshot(frame, 0, user_dir, (String)al.get(2));
 				} else {
-					print("\n-->  No such window: " + (String)al.get(1));
+					println("\n-->  No such window: " + (String)al.get(1));
 				}
 			} else if (4 == al.size()) {
 				java.awt.Frame frame = WindowManager.getFrame((String)al.get(1));
@@ -1418,16 +1418,16 @@ public class CLI_ extends AbstractInterpreter {
 					try {
 						s = new Screenshot(frame, Integer.parseInt((String)al.get(3)), user_dir, (String)al.get(2));
 					}catch(NumberFormatException nfe) {
-						print("\n-->  Wrong number format for seconds. Stopping.");
+						println("\n-->  Wrong number format for seconds. Stopping.");
 					}
 				} else {
-					print("\n-->  No such window: " + (String)al.get(1));
+					println("\n-->  No such window: " + (String)al.get(1));
 				}
 				
 			}
 			s.setOut(screen); //doesn't work?
 			new Thread(s).start();
-			print(s.getReport());
+			println(s.getReport());
 
 			return true;
 		}
@@ -1452,12 +1452,12 @@ public class CLI_ extends AbstractInterpreter {
 				//prepare the new_file_name
 				String new_file_name = fixDir((String)al.get(2));
 				if (null == new_file_name) {
-					print("\n-->  Incorrect target file_name or dir. File/s not moved.");
+					println("\n-->  Incorrect target file_name or dir. File/s not moved.");
 					return true;
 				}
 				//asterisks not allowed in new_file_name
 				if (-1 != new_file_name.indexOf('*')) {
-					print("\n-->  No wildcards allowed in target file_name or dir");
+					println("\n-->  No wildcards allowed in target file_name or dir");
 					return true;
 				}
 				File new_file = new File(new_file_name);
@@ -1470,7 +1470,7 @@ public class CLI_ extends AbstractInterpreter {
 				
 				//check whether there's any file to move
 				if (0 == file_names.length) {
-					print("\n-->  No such file/s: \n-->  " + file_name);
+					println("\n-->  No such file/s: \n-->  " + file_name);
 					return true;
 				}
 				
@@ -1482,14 +1482,14 @@ public class CLI_ extends AbstractInterpreter {
 						File target_file = new File(target_file_name);
 						if (target_file.exists()) {
 							//prevent overwriting or error
-							print("\n-->  A file named \n-->  " + target_file.getName() + "\n-->  already exists in target directory \n-->  " + new_file_name);
+							println("\n-->  A file named \n-->  " + target_file.getName() + "\n-->  already exists in target directory \n-->  " + new_file_name);
 							continue;
 						}
 						boolean check = source_file.renameTo(target_file);
 						if (check) {
-							print("\n-->  File successfully moved to:\n-->  " + target_file_name);
+							println("\n-->  File successfully moved to:\n-->  " + target_file_name);
 						} else {
-							print("\n-->  Could not move the file \n-->  "+ target_file_name  + "\n-->       into directory " + new_file_name);
+							println("\n-->  Could not move the file \n-->  "+ target_file_name  + "\n-->       into directory " + new_file_name);
 						}
 
 					}
@@ -1497,23 +1497,23 @@ public class CLI_ extends AbstractInterpreter {
 					//attempt to rename the single file
 					if (new_file.exists()) {
 						//prevent overwriting
-						print("\n-->  A file named " + new_file.getName() + " already exists!\n-->  Not moving the file " + file_names[0]);
+						println("\n-->  A file named " + new_file.getName() + " already exists!\n-->  Not moving the file " + file_names[0]);
 						return true;
 					} else {
 						//attempt to move the file
 						File source_file = new File(files_dir + file_separator + file_names[0]);
 						boolean check = source_file.renameTo(new_file);
 						if (check) {
-							print("\n-->  File successfully moved to:\n-->  " + new_file_name);
+							println("\n-->  File successfully moved to:\n-->  " + new_file_name);
 						} else {
-							print("\n-->  Could not move the file \n-->  "+ file_names[0]  + "\n--> to file " + new_file_name);
+							println("\n-->  Could not move the file \n-->  "+ file_names[0]  + "\n--> to file " + new_file_name);
 						}
 					}
 				}
 				return true;
 
 			} else {
-				print("\n-->  Usage: mv <file_name> <dir | new_file_name>");
+				println("\n-->  Usage: mv <file_name> <dir | new_file_name>");
 				return true;
 			}
 			}catch(Exception e) {
@@ -1528,7 +1528,7 @@ public class CLI_ extends AbstractInterpreter {
 			if (al.size() == 2) {
 				url = (String)al.get(1);
 			}
-			print("\n-->  Opening " + url);
+			println("\n-->  Opening " + url);
 				
 			try {
 				JEditorPane jep = new JEditorPane(url);
@@ -1543,7 +1543,7 @@ public class CLI_ extends AbstractInterpreter {
 				f.pack();
 				f.show();
 			}catch(Exception ioe) {
-				print("\n-->  Dictionary could not be found at url:\n-->  " + url);
+				println("\n-->  Dictionary could not be found at url:\n-->  " + url);
 			}
 			return true;
 		}
@@ -1560,7 +1560,7 @@ public class CLI_ extends AbstractInterpreter {
 				return false;
 			}
 			OpenDirectory od = new OpenDirectory(dir_path, OpenDirectory.STACK);
-			print("\n-->  " + od.getMessage());
+			println("\n-->  " + od.getMessage());
 			return true;
 		}
 		//24 - toggle_edit : enable direct editing of the screen
@@ -1568,7 +1568,7 @@ public class CLI_ extends AbstractInterpreter {
 		else if (equal(command, "toggle_edit")) {
 			if (enable_direct_editing) {
 				enable_direct_editing = false;
-				print("\n-->  Direct screen edition disabled.");
+				println("\n-->  Direct screen edition disabled.");
 			} else {
 				enable_direct_editing = true;
 				screen.append("\n-->  Direct screen edition enabled.");
@@ -1595,7 +1595,7 @@ public class CLI_ extends AbstractInterpreter {
 				}
 				the_macro += "\")\n";
 			}
-			print(the_macro);
+			println(the_macro);
 			execMacro(the_macro);
 			return true;
 		}
@@ -1638,7 +1638,7 @@ public class CLI_ extends AbstractInterpreter {
 			//if (IJ.isWindows()) {
 				if (equal(user_dir, current_root_dir)) { //TODO: test
 				//if (equal(dir, current_root_dir + file_separator))
-					print("\n-->  Such directory doesn't make sense.");
+					println("\n-->  Such directory doesn't make sense.");
 					return null;
 				}
 			//} else {
@@ -1657,10 +1657,10 @@ public class CLI_ extends AbstractInterpreter {
 			}
 			//IJ.write("fix1: " + fixed_dir);
 		} else if (IJ.isWindows() && 4 < dir.length() && dir.startsWith(current_root_dir + file_separator+ "..")) { 
-			print("\n-->  Such directory doesn't make sense.");
+			println("\n-->  Such directory doesn't make sense.");
 			return null;
 		} else if (2 < dir.length() && dir.startsWith(current_root_dir + "..")) { //for unix-like systems
-			print("\n-->  Such directory doesn't make sense.");
+			println("\n-->  Such directory doesn't make sense.");
 			return null;
 		} else if (-1 != dir.indexOf("..")) {
 			//repair all instances of ".." in the string 'dir'
@@ -1755,7 +1755,7 @@ public class CLI_ extends AbstractInterpreter {
 					macro[0] = names[i];
 					macro[1] = readFile(f_dir_macros_canonical_path + file_separator + names[i]);
 				}catch(Exception e) {
-					print("\n-->  Macro file " + name + " or similar could not be found or read in directory " + f_dir_macros.getName());
+					println("\n-->  Macro file " + name + " or similar could not be found or read in directory " + f_dir_macros.getName());
 				}
 			//finish here:
 			return macro;
@@ -1804,7 +1804,7 @@ public class CLI_ extends AbstractInterpreter {
 				}
 				if (null != macro_name) {
 					new MacroRecord(macro_name, macro);
-					print("\n-->  Recorded new macro as " + macro_name);
+					println("\n-->  Recorded new macro as " + macro_name);
 				}
 			}
 			else if (equal(action, "Copy")) {
@@ -1848,12 +1848,12 @@ public class CLI_ extends AbstractInterpreter {
 		if (0 != macro.length()) {
 			try {
 				//if selection is an image file, then open it!
-				//debug://print("user_dir: " + user_dir + "\n" + "macro: " + macro);
+				//debug://println("user_dir: " + user_dir + "\n" + "macro: " + macro);
 				if (new ImageFileFilter().accept(new File(user_dir), macro)) {
 					//macrop = "open(\"" + fixWindowsPath(new File(user_dir).getCanonicalPath()) + file_separator + macro + "\");";
-					print(macrop);
+					println(macrop);
 				}/* else {
-					print("debug: MACRO IS NOT AN IMAGE \n");
+					println("debug: MACRO IS NOT AN IMAGE \n");
 				}*/
 				new Interpreter().run(macrop);
 			}catch(Exception e) {
@@ -1861,12 +1861,12 @@ public class CLI_ extends AbstractInterpreter {
 				// TODO should mark previous lines as well if this was part of a multiline
 				valid_lines.set(valid_lines.size() -1, false);
 				//ImageJ has its own way of notifying errors
-				print("\n-->  macro not executable or canceled.\n");
+				println("\n-->  macro not executable or canceled.\n");
 				
 				if (!magic) {
 					int ispace = macro.indexOf(' ');
 					if (-1 != ispace || ispace < macro.indexOf('(')) {
-						print("\n-->    Try to toggle magic ON by typing:  magic");
+						println("\n-->    Try to toggle magic ON by typing:  magic");
 					}
 				}
 				allow_print = false;
@@ -1887,9 +1887,9 @@ public class CLI_ extends AbstractInterpreter {
 		}
 		boolean check = saveFile(file_path, macro);
 		if (check) {
-			print("\n-->  Macro saved as " + file_path);
+			println("\n-->  Macro saved as " + file_path);
 		} else {
-			print("\n-->  Macro NOT saved.");
+			println("\n-->  Macro NOT saved.");
 		}
 		screen.setCaretPosition(screen.getText().length());
 	}
@@ -1932,7 +1932,7 @@ public class CLI_ extends AbstractInterpreter {
 			try {
 				one_line = br.readLine();
 			}catch(Exception e) {
-				print("\n-->  Error when reading file " + file_path);
+				println("\n-->  Error when reading file " + file_path);
 			}
 			if (one_line != null) {
 				macro_code.add(one_line + l);
@@ -1941,7 +1941,7 @@ public class CLI_ extends AbstractInterpreter {
 		try {
 			br.close();
 		}catch(Exception e) {
-			print("\n-->  Error when closing reading buffer for " + file_path);
+			println("\n-->  Error when closing reading buffer for " + file_path);
 		}
 
 		//pass the macro to the MacroRecord
