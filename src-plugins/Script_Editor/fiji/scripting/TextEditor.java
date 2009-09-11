@@ -56,7 +56,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import ij.io.OpenDialog;
 import ij.io.SaveDialog;
-import ij.IJ;
 import ij.Prefs;
 import ij.gui.GenericDialog;
 import javax.imageio.ImageIO;
@@ -405,7 +404,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 			fileChanged = false;
 			return true;
 		} catch (IOException e) {
-			IJ.error("Could not save " + file.getName());
+			error("Could not save " + file.getName());
 			e.printStackTrace();
 			return false;
 		}
@@ -638,7 +637,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 		        Languages.getInstance().get(ext).interpreter;
 
 		if (interpreter == null) {
-			IJ.error("There is no interpreter for " + ext
+			error("There is no interpreter for " + ext
 			         + " files!");
 			return;
 		}
