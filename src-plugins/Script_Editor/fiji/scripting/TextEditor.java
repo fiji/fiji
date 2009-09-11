@@ -474,7 +474,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 	}
 
 	/** Using a Vector to benefit from all its methods being synchronzed. */
-	private Vector<Executer> executing_tasks = new Vector<Executer>();
+	private ArrayList<Executer> executingTasks = new ArrayList<Executer>();
 
 	/** Generic Thread that keeps a starting time stamp,
 	 *  sets the priority to normal and starts itself. */
@@ -482,7 +482,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 		Executer() {
 			super("Script Editor Run :: " + new Date().toString());
 			// Store itself for later
-			executing_tasks.add(this);
+			executingTasks.add(this);
 			// Enable kill menu
 			kill.setEnabled(true);
 			// Fork a task, as a part of this ThreadGroup
@@ -497,9 +497,9 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 					} catch (Throwable t) {
 						t.printStackTrace();
 					} finally {
-						executing_tasks.remove(Executer.this);
+						executingTasks.remove(Executer.this);
 						// Leave kill menu item enabled if other tasks are running
-						kill.setEnabled(executing_tasks.size() > 0);
+						kill.setEnabled(executingTasks.size() > 0);
 					}
 				}
 			};
@@ -525,7 +525,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 			return threads;
 		}
 
-		/** Totally destroy/stop all threads in this and all recursive thread subgroups. Will remove itself from the executing_tasks list. */
+		/** Totally destroy/stop all threads in this and all recursive thread subgroups. Will remove itself from the executingTasks list. */
 		void obliterate() {
 			for (Thread thread : getAllThreads()) {
 				try {
@@ -536,62 +536,52 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 					t.printStackTrace();
 				}
 			}
-			executing_tasks.remove(this);
+			executingTasks.remove(this);
 		}
 	}
 
 	/** Query the list of running scripts and provide a dialog to choose one and kill it. */
 	public void chooseTaskToKill() {
-		
-		if (0 == executing_tasks.size()) {
-			IJ.log("\nNo tasks running!\n");
+		Executer[] executers =
+			executingTasks.toArray(new Executer[0]);
+		if (0 == executers.length) {
+			error("\nNo tasks running!\n");
 			return;
 		}
 
-		final Executer[] executers = (Executer[]) executing_tasks.toArray(new Executer[0]);
-		if (0 == executers.length) {
-			IJ.log("\nNo tasks to kill\n");
-			return;
-		}
 		String[] names = new String[executers.length];
-		for (int i=0; i<executers.length; i++) {
+		for (int i = 0; i < names.length; i++)
 			names[i] = executers[i].getName();
-		}
 
 		GenericDialog gd = new GenericDialog("Kill");
-		gd.addChoice("Running scripts: ", names, names[names.length - 1]);
+		gd.addChoice("Running scripts: ",
+				names, names[names.length - 1]);
 		gd.addCheckbox("Kill all", false);
 		gd.showDialog();
-		if (gd.wasCanceled()) {
+		if (gd.wasCanceled())
 			return;
-		}
-		ArrayList<Executer> deaders = new ArrayList<Executer>();
-		if (gd.getNextBoolean()) {
-			// kill all
-			for (Executer ex : executers)
-				deaders.add(ex);
-		} else {
-			deaders.add(executers[gd.getNextChoiceIndex()]);
-		}
 
-		for (final Executer ex : deaders) {
-			// Graceful attempt:
-			ex.interrupt();
-			// Give it 3 seconds. Then, stop it.
-			final long onset = System.currentTimeMillis();
-			new Thread() {
-				{ setPriority(Thread.NORM_PRIORITY); }
-				public void run() {
-					while (true) {
-						if (System.currentTimeMillis() - onset > 3000) break;
-						try {
-							Thread.sleep(100);
-						} catch (InterruptedException ie) {}
-					}
-					ex.obliterate();
-				}
-			}.start();
-		}
+		Executer[] deaders = gd.getNextBoolean() ? executers :
+			new Executer[] { executers[gd.getNextChoiceIndex()] };
+		for (final Executer executer : deaders)
+			kill(executer);
+	}
+
+	protected void kill(final Executer executer) {
+		// Graceful attempt:
+		executer.interrupt();
+		// Give it 3 seconds. Then, stop it.
+		final long now = System.currentTimeMillis();
+		new Thread() {
+			{ setPriority(Thread.NORM_PRIORITY); }
+			public void run() {
+				while (System.currentTimeMillis() - now < 3000)
+					try {
+						Thread.sleep(100);
+					} catch (InterruptedException e) {}
+				executer.obliterate();
+			}
+		}.start();
 	}
 
 	/** Run the text in the textArea without compiling it, only if it's not java. */
