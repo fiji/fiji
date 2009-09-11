@@ -1,81 +1,97 @@
 package fiji.scripting;
 
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
-import javax.swing.JRadioButtonMenuItem;
-import javax.swing.ButtonGroup;
-import javax.swing.JFrame;
-import javax.swing.JTextArea;
-import javax.swing.JPanel;
-import javax.swing.JFileChooser;
-import javax.swing.JScrollPane;
-import javax.swing.JSplitPane;
-import javax.swing.JMenuBar;
-import javax.swing.BorderFactory;
-import javax.swing.KeyStroke;
-import javax.swing.ToolTipManager;
-import javax.swing.JOptionPane;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.BorderLayout;
-import java.awt.event.WindowEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.ActionEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.InputMethodEvent;
-import java.awt.event.ItemEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemListener;
-import java.awt.event.MouseMotionListener;
-import java.awt.event.MouseListener;
-import java.awt.event.InputMethodListener;
-import java.awt.event.WindowListener;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.CaretListener;
-import javax.swing.event.DocumentListener;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.CaretEvent;
-import javax.swing.text.Document;
-import java.io.File;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
-import java.io.PrintWriter;
-import java.io.OutputStream;
-import java.io.LineNumberReader;
-import java.awt.image.BufferedImage;
-import java.util.Vector;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Date;
-import ij.io.OpenDialog;
-import ij.io.SaveDialog;
-import ij.Prefs;
-import ij.gui.GenericDialog;
-import javax.imageio.ImageIO;
-import org.fife.ui.rtextarea.Gutter;
-import org.fife.ui.rtextarea.RTextScrollPane;
-import org.fife.ui.rtextarea.ToolTipSupplier;
-import org.fife.ui.rtextarea.IconGroup;
-import org.fife.ui.rsyntaxtextarea.RSyntaxDocument;
-import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
-import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
-import org.fife.ui.autocomplete.AutoCompletion;
-import org.fife.ui.autocomplete.BasicCompletion;
-import org.fife.ui.autocomplete.CompletionProvider;
-import org.fife.ui.autocomplete.DefaultCompletionProvider;
-import common.RefreshScripts;
 import com.sun.jdi.connect.VMStartException;
+
+import common.RefreshScripts;
 
 import fiji.scripting.completion.ClassCompletionProvider;
 import fiji.scripting.completion.DefaultProvider;
 
+import ij.IJ;
+import ij.Prefs;
+
+import ij.gui.GenericDialog;
+
+import ij.io.OpenDialog;
+import ij.io.SaveDialog;
+
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Font;
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.InputMethodEvent;
+import java.awt.event.InputMethodListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+
+import java.awt.image.BufferedImage;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.LineNumberReader;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+import java.io.PrintWriter;
+import java.io.OutputStream;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Vector;
+
+import javax.imageio.ImageIO;
+
+import javax.swing.BorderFactory;
+import javax.swing.ButtonGroup;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JRadioButtonMenuItem;
+import javax.swing.JTextArea;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.KeyStroke;
+import javax.swing.ToolTipManager;
+
+import javax.swing.event.CaretEvent;
+import javax.swing.event.CaretListener;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.event.ChangeEvent;
+
+import javax.swing.text.Document;
+
+import org.fife.ui.autocomplete.AutoCompletion;
+import org.fife.ui.autocomplete.BasicCompletion;
+import org.fife.ui.autocomplete.CompletionProvider;
+import org.fife.ui.autocomplete.DefaultCompletionProvider;
+
+import org.fife.ui.rtextarea.Gutter;
+import org.fife.ui.rtextarea.IconGroup;
+import org.fife.ui.rtextarea.RTextScrollPane;
+import org.fife.ui.rtextarea.ToolTipSupplier;
+
+import org.fife.ui.rsyntaxtextarea.RSyntaxDocument;
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
+import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 
 class TextEditor extends JFrame implements ActionListener, ItemListener,
 		ChangeListener, MouseMotionListener, MouseListener,
@@ -132,14 +148,17 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 		addWindowListener(this);
 		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 
+		// TODO: is the Apple key META?
+		int ctrl = IJ.isMacintosh() ?
+			ActionEvent.META_MASK : ActionEvent.CTRL_MASK;
 		JMenuBar mbar = new JMenuBar();
 		setJMenuBar(mbar);
 
 		JMenu file = new JMenu("File");
 		file.setMnemonic(KeyEvent.VK_F);
-		new_file = addToMenu(file, "New", 0, KeyEvent.VK_N, ActionEvent.CTRL_MASK);
-		open = addToMenu(file, "Open...", 0, KeyEvent.VK_O, ActionEvent.CTRL_MASK);
-		save = addToMenu(file, "Save", 0, KeyEvent.VK_S, ActionEvent.CTRL_MASK);
+		new_file = addToMenu(file, "New", 0, KeyEvent.VK_N, ctrl);
+		open = addToMenu(file, "Open...", 0, KeyEvent.VK_O, ctrl);
+		save = addToMenu(file, "Save", 0, KeyEvent.VK_S, ctrl);
 		saveas = addToMenu(file, "Save as...", 1, 0, 0);
 		file.addSeparator();
 		quit = addToMenu(file, "Quit", 0, KeyEvent.VK_X, ActionEvent.ALT_MASK);
@@ -148,21 +167,21 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 
 		JMenu edit = new JMenu("Edit");
 		edit.setMnemonic(KeyEvent.VK_E);
-		undo = addToMenu(edit, "Undo", 0, KeyEvent.VK_Z, ActionEvent.CTRL_MASK);
-		redo = addToMenu(edit, "Redo", 0, KeyEvent.VK_Y, ActionEvent.CTRL_MASK);
+		undo = addToMenu(edit, "Undo", 0, KeyEvent.VK_Z, ctrl);
+		redo = addToMenu(edit, "Redo", 0, KeyEvent.VK_Y, ctrl);
 		edit.addSeparator();
-		selectAll = addToMenu(edit, "Select All", 0, KeyEvent.VK_A, ActionEvent.CTRL_MASK);
-		cut = addToMenu(edit, "Cut", 0, KeyEvent.VK_X, ActionEvent.CTRL_MASK);
-		copy = addToMenu(edit, "Copy", 0, KeyEvent.VK_C, ActionEvent.CTRL_MASK);
-		paste = addToMenu(edit, "Paste", 0, KeyEvent.VK_V, ActionEvent.CTRL_MASK);
+		selectAll = addToMenu(edit, "Select All", 0, KeyEvent.VK_A, ctrl);
+		cut = addToMenu(edit, "Cut", 0, KeyEvent.VK_X, ctrl);
+		copy = addToMenu(edit, "Copy", 0, KeyEvent.VK_C, ctrl);
+		paste = addToMenu(edit, "Paste", 0, KeyEvent.VK_V, ctrl);
 		edit.addSeparator();
-		find = addToMenu(edit, "Find...", 0, KeyEvent.VK_F, ActionEvent.CTRL_MASK);
-		replace = addToMenu(edit, "Find and Replace...", 0, KeyEvent.VK_H, ActionEvent.CTRL_MASK);
+		find = addToMenu(edit, "Find...", 0, KeyEvent.VK_F, ctrl);
+		replace = addToMenu(edit, "Find and Replace...", 0, KeyEvent.VK_H, ctrl);
 		mbar.add(edit);
 
 		JMenu options = new JMenu("Options");
 		options.setMnemonic(KeyEvent.VK_O);
-		autocomplete = addToMenu(options, "Autocomplete", 0, KeyEvent.VK_SPACE, ActionEvent.CTRL_MASK);
+		autocomplete = addToMenu(options, "Autocomplete", 0, KeyEvent.VK_SPACE, ctrl);
 		options.addSeparator();
 
 		mbar.add(options);
@@ -195,7 +214,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 		compileAndRun = addToMenu(run, "Compile and Run", 0, KeyEvent.VK_F11, 0);
 
 		run.addSeparator();
-		debug = addToMenu(run, "Start Debugging", 0, KeyEvent.VK_F11, ActionEvent.CTRL_MASK);
+		debug = addToMenu(run, "Start Debugging", 0, KeyEvent.VK_F11, ctrl);
 		mbar.add(run);
 
 		run.addSeparator();
