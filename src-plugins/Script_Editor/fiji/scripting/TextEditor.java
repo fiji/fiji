@@ -85,7 +85,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 	boolean fileChanged = false;
 	File file;
 	RSyntaxTextArea textArea;
-	JTextArea screen = new JTextArea();
+	JTextArea screen;
 	JMenuItem new_file, open, save, saveas, compileAndRun, debug, quit,
 		  undo, redo, cut, copy, paste, find, replace, selectAll,
 		  autocomplete, resume, terminate, kill;
@@ -95,6 +95,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 	StartDebugging debugging;
 	Gutter gutter;
 	IconGroup iconGroup;
+	OutputStream output;
 
 	public TextEditor(String path1) {
 		JPanel cp = new JPanel(new BorderLayout());
@@ -118,6 +119,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 		iconGroup = new IconGroup("bullets", "images/", null, "png", null);
 		gutter.setBookmarkIcon(iconGroup.getIcon("var"));
 		gutter.setBookmarkingEnabled(true);
+		screen = new JTextArea();
 		screen.setEditable(false);
 		screen.setLineWrap(true);
 		Font font = new Font("Courier", Font.PLAIN, 12);
@@ -218,6 +220,8 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 		setVisible(true);
 		if (path1 != null && !path1.equals(""))
 			open(path1);
+
+		output = new JTextAreaOutputStream(screen);
 	}
 
 	public JMenuItem addToMenu(JMenu menu, String menuEntry, int keyEvent, int keyevent, int actionevent) {
@@ -608,67 +612,19 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 		try {
 			final RefreshScripts interpreter =
 				currentLanguage.interpreter;
+			interpreter.setOutputStreams(output, output);
 
 			// Pipe current text into the runScript:
 			final PipedInputStream pi = new PipedInputStream();
 			final PipedOutputStream po = new PipedOutputStream(pi);
-
-			// Start reading, should block until writing starts
 			new TextEditor.Executer() {
 				public void execute() {
-
-					// Output to the screen:
-					PipedInputStream in =
-						new PipedInputStream();
-					PipedOutputStream out = null;
-					try {
-						out = new PipedOutputStream(in);
-						interpreter.setOutputStreams( out, out );
-					} catch (Exception e) {
-						e.printStackTrace();
-						IJ.log("Could not connect stdout!");
-						return;
-					}
-
-					final BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-
-					Thread out_thread = new Thread() {
-						{
-							setPriority(Thread.NORM_PRIORITY);
-							try { setDaemon(true); } catch (Exception e) { e.printStackTrace(); }
-							start();
-						}
-						public void run() {
-							while (!isInterrupted()) {
-								try {
-									// Will block until it can print a full line:
-									screen.append(new StringBuilder(reader.readLine()).append('\n').toString());
-									// Scroll to the end
-									screen.setCaretPosition(screen.getDocument().getLength());
-								} catch (Exception e) {
-									break;
-								}
-							}
-						}
-					};
-
 					interpreter.runScript(pi);
-
-					try {
-						out.flush(); // write output to JTextArea screen
-						out.close();
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
 				}
 			};
-
-			// Now write to it:
 			textArea.write(new PrintWriter(po));
-			// ... and trigger full reading from PipedInputStream by flushing and closing it:
 			po.flush();
 			po.close();
-
 		} catch (Throwable t) {
 			t.printStackTrace();
 		} finally {
