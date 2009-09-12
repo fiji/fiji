@@ -90,20 +90,22 @@ public class Checksummer extends Progressable {
 		String realPath = Util.prefix(pair.realPath);
 		addItem(path);
 
-		String checksum = "INVALID";
-		try {
+		String checksum = null;
+		long timestamp = 0;
+		if (new File(path).exists()) try {
 			checksum = Util.getDigest(path, realPath);
+			timestamp = Util.getTimestamp(realPath);
 		} catch (Exception e) { e.printStackTrace(); }
-		long timestamp = Util.getTimestamp(realPath);
 
 		PluginCollection plugins = PluginCollection.getInstance();
 		PluginObject plugin = plugins.getPlugin(path);
-		if (plugin != null)
-			plugin.setLocalVersion(checksum, timestamp);
-		else
+		if (plugin == null)
 			plugins.add(new PluginObject(path, checksum,
 				timestamp, Status.NOT_FIJI));
-		counter += (int)Util.getFilesize(realPath);
+		else if (checksum != null) {
+			plugin.setLocalVersion(checksum, timestamp);
+			counter += (int)Util.getFilesize(realPath);
+		}
 		setItemCount(1, 1);
 		setCount(counter, total);
 	}
