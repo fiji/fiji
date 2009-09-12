@@ -1,7 +1,7 @@
 #!/bin/sh
 ''''exec "$(dirname "$0")"/../fiji --jython "$0" "$@" # (call again with fiji)'''
 
-from fiji.pluginManager.utilities import PluginData
+from fiji.updater.util import Util
 import os
 import re
 import sys
@@ -10,14 +10,13 @@ prefix = '/var/www/update/'
 xmlPath = prefix + 'db.xml.gz'
 
 pattern = re.compile('^(.*)-([0-9]{14})$')
-updater = PluginData()
 
 def addRecord(result, path):
 	match = pattern.match(path)
 	if match == None:
 		return
 	sys.stderr.write("\rAdding record for " + path + '... ')
-	sha1 = updater.getDigest(match.group(1), prefix + path)
+	sha1 = Util.getDigest(match.group(1), prefix + path)
 	size = os.stat(prefix + path).st_size
 	if match.group(1) in result:
 		result[match.group(1)][match.group(2)] = [sha1, size]
