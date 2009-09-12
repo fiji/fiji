@@ -14,11 +14,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-// TODO: this class is misnomed!
-// TODO: this should be merged into PluginCollection
-
 /*
- * PluginListBuilder's overall role is to be in charge of building of a plugin
+ * Checksummer's overall role is to be in charge of building of a plugin
  * list for interface usage.
  *
  * 1st step: Get information of local plugins (checksums and version)
@@ -30,10 +27,10 @@ import java.util.Set;
  * latestDigests and latestDates hold checksums and versions of latest Fiji
  * plugins
  */
-public class PluginListBuilder extends Progressable {
+public class Checksummer extends Progressable {
 	int counter, total;
 
-	public PluginListBuilder(Progress progress) {
+	public Checksummer(Progress progress) {
 		addProgress(progress);
 		setTitle("Checksumming");
 	}

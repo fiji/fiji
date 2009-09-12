@@ -1,6 +1,6 @@
 package fiji.updater;
 
-import fiji.updater.logic.PluginListBuilder;
+import fiji.updater.logic.Checksummer;
 import fiji.updater.logic.UpdateFiji;
 import fiji.updater.logic.XMLFileDownloader;
 import fiji.updater.logic.XMLFileReader;
@@ -78,12 +78,11 @@ public class Updater implements PlugIn {
 		}
 
 		progress = main.getProgress("Matching with local files...");
-		PluginListBuilder pluginListBuilder =
-			new PluginListBuilder(progress);
+		Checksummer checksummer = new Checksummer(progress);
 		try {
-			pluginListBuilder.updateFromLocal();
+			checksummer.updateFromLocal();
 		} catch (Canceled e) {
-			pluginListBuilder.done();
+			checksummer.done();
 			main.dispose();
 			IJ.error("Canceled");
 			return;
