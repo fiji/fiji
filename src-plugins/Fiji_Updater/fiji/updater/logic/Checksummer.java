@@ -99,9 +99,13 @@ public class Checksummer extends Progressable {
 
 		PluginCollection plugins = PluginCollection.getInstance();
 		PluginObject plugin = plugins.getPlugin(path);
-		if (plugin == null)
+		if (plugin == null) {
+			if (checksum == null)
+				throw new RuntimeException("Tried to remove "
+					+ path + ", which is not known to Fiji");
 			plugins.add(new PluginObject(path, checksum,
 				timestamp, Status.NOT_FIJI));
+		}
 		else if (checksum != null) {
 			plugin.setLocalVersion(checksum, timestamp);
 			counter += (int)Util.getFilesize(realPath);
