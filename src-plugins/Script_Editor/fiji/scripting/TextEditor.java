@@ -100,7 +100,6 @@ public class TextEditor extends JFrame implements ActionListener, ItemListener,
 		ChangeListener, MouseMotionListener, MouseListener,
 		CaretListener, InputMethodListener, DocumentListener,
 		WindowListener {
-	boolean fileChanged = false;
 	File file;
 	RSyntaxTextArea textArea;
 	JTextArea screen;
@@ -115,9 +114,24 @@ public class TextEditor extends JFrame implements ActionListener, ItemListener,
 	Gutter gutter;
 	IconGroup iconGroup;
 
+	int modifyCount;
+	boolean undoInProgress, redoInProgress;
+
 	public TextEditor(String path1) {
 		JPanel cp = new JPanel(new BorderLayout());
-		textArea = new RSyntaxTextArea();
+		textArea = new RSyntaxTextArea() {
+			public void undoLastAction() {
+				undoInProgress = true;
+				super.undoLastAction();
+				undoInProgress = false;
+			}
+
+			public void redoLastAction() {
+				redoInProgress = true;
+				super.redoLastAction();
+				redoInProgress = false;
+			}
+		};
 		textArea.addCaretListener(this);
 		provider = new ClassCompletionProvider(new DefaultProvider(),
 				textArea, null);
@@ -255,7 +269,7 @@ public class TextEditor extends JFrame implements ActionListener, ItemListener,
 	}
 
 	public boolean handleUnsavedChanges() {
-		if (!fileChanged)
+		if (!fileChanged())
 			return true;
 
 		switch (JOptionPane.showConfirmDialog(this,
@@ -362,7 +376,7 @@ public class TextEditor extends JFrame implements ActionListener, ItemListener,
 			return;
 		}
 		textArea.discardAllEdits();
-		fileChanged = false;
+		modifyCount = 0;
 		setFileName(file);
 	}
 
@@ -410,7 +424,7 @@ public class TextEditor extends JFrame implements ActionListener, ItemListener,
 				new BufferedWriter(new FileWriter(file));
 			outFile.write(textArea.getText());
 			outFile.close();
-			fileChanged = false;
+			modifyCount = 0;
 			return true;
 		} catch (IOException e) {
 			error("Could not save " + file.getName());
@@ -442,7 +456,7 @@ public class TextEditor extends JFrame implements ActionListener, ItemListener,
 							- ext.length());
 				file = new File(file.getParentFile(),
 						name + language.extension);
-				fileChanged = true;
+				modifyCount = Integer.MIN_VALUE;
 			}
 		}
 		currentLanguage = language;
@@ -479,7 +493,7 @@ public class TextEditor extends JFrame implements ActionListener, ItemListener,
 	}
 
 	private synchronized void setTitle() {
-		String title = (fileChanged ? "*" : "") + getFileName()
+		String title = (fileChanged() ? "*" : "") + getFileName()
 			+ (executingTasks.isEmpty() ? "" : " (Running)");
 		setTitle(title);
 	}
@@ -689,28 +703,38 @@ public class TextEditor extends JFrame implements ActionListener, ItemListener,
 	}
 
 	//next function is for the InputMethodEvent changes
-	public void inputMethodTextChanged(InputMethodEvent event) {
-		updateStatusOnChange();
-	}
-	public void caretPositionChanged(InputMethodEvent event) {
-		updateStatusOnChange();
+	public void inputMethodTextChanged(InputMethodEvent event) { }
+	public void caretPositionChanged(InputMethodEvent event) { }
+
+	public boolean fileChanged() {
+		return modifyCount != 0;
 	}
 
 	public void insertUpdate(DocumentEvent e) {
-		updateStatusOnChange();
+		modified();
 	}
+
 	public void removeUpdate(DocumentEvent e) {
-		updateStatusOnChange();
+		modified();
+	}
+
+	// triggered only by syntax highlighting
+	public void changedUpdate(DocumentEvent e) { }
+
+	protected void modified() {
+		boolean update = modifyCount == 0;
+		if (undoInProgress)
+			modifyCount--;
+		else if (redoInProgress || modifyCount >= 0)
+			modifyCount++;
+		else // not possible to get back to clean state
+			modifyCount = Integer.MIN_VALUE;
+		if (update || modifyCount == 0)
+			setTitle();
 	}
 
 	protected void error(String message) {
 		JOptionPane.showMessageDialog(this, message);
-	}
-
-	// TODO: rename into "markDirty"
-	private void updateStatusOnChange() {
-		fileChanged = true;
-		setTitle();
 	}
 
 	// TODO: use an anonymous WindowAdapter, MouseAdapter, etc instead
@@ -729,7 +753,6 @@ public class TextEditor extends JFrame implements ActionListener, ItemListener,
 	public void mouseReleased(MouseEvent me) {}
 	public void mousePressed(MouseEvent me) {}
 	public void caretUpdate(CaretEvent ce) {}
-	public void changedUpdate(DocumentEvent e) {}
 	public void windowActivated(WindowEvent e) {}
 }
 // TODO: check all files for whitespace issues
