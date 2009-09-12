@@ -14,12 +14,9 @@ public class ClassMethod implements Comparable {
 		onlyName = name.substring(lastDotBeforeBracket + 1);
 		String[] spaceSeparated = name.split(" ");
 		returnType = spaceSeparated[spaceSeparated.length-2];
-		if (spaceSeparated[0].equals("public")) {
-			isPublic = true;
-		}
-		if (spaceSeparated[1].equals("static") || spaceSeparated[2].equals("static")) {
-			isStatic = true;
-		}
+		isPublic = spaceSeparated[0].equals("public");
+		isStatic = spaceSeparated[1].equals("static")
+			|| spaceSeparated[2].equals("static");
 	}
 
 	public ClassMethod(String onlyName, boolean isOnlyName) {
