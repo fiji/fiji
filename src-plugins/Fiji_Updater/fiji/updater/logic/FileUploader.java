@@ -71,6 +71,12 @@ public class FileUploader extends Progressable {
 				dir.mkdirs();
 			OutputStream out = new FileOutputStream(file);
 			InputStream in = source.getInputStream();
+			/*
+			 * To get the timestamp of db.xml.gz.lock which
+			 * determines its contents, the addItem() call
+			 * must be _exactly_ here.
+			 */
+			addItem(source);
 			int currentCount = 0;
 			int currentTotal = (int)source.getFilesize();
 			for (;;) {
