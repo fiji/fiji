@@ -44,13 +44,6 @@ public class PluginObject {
 		public String toString() {
 			return label;
 		}
-
-		public static Action forLabel(String label) {
-			for (Action action : Action.values())
-				if (action.label.equals(label))
-					return action;
-			return null;
-		}
 	};
 
 	public static enum Status {
@@ -187,10 +180,6 @@ public class PluginObject {
 
 	public void setNoAction() {
 		action = status.getNoAction();
-	}
-
-	public void setAction(String action) {
-		setAction(Action.forLabel(action));
 	}
 
 	public void setAction(Action action) {
