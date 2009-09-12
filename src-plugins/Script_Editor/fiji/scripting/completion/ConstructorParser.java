@@ -49,17 +49,16 @@ public class ConstructorParser {
 					}
 				}
 
-				if (language.equals("Python") || language.equals("Matlab")) {
+				else if (language.equals("Python") || language.equals("Matlab")) {
 					if (token.getNextToken().type != 0) {
 						if (token.getNextToken().getLexeme().equals("(")) {
 							setObjectSetIfImported(prevToPrev, prev, token);
 							setExplicitObjectSet("PM", i);
-
 						}
 					}
 				}
 
-				if (language.equals("Ruby")) {
+				else if (language.equals("Ruby")) {
 					if (token.getNextToken().getNextToken().type != 0) {
 						if (token.getNextToken().getNextToken().getLexeme().equals("new")) {
 							setObjectSetIfImported(prevToPrev, prev, token);
@@ -69,16 +68,10 @@ public class ConstructorParser {
 						break;
 				}
 
-
-
-
-				if (!token.isWhitespace()) {
+				else if (!token.isWhitespace()) {
 					prevToPrev = prev;
 					prev = token;
 				}
-
-
-
 			}
 		}
 	}
