@@ -183,6 +183,16 @@ public class ConstructorParser {
 	}
 
 	public void setObjectSetIfImported(Token prevToPrev, Token prev, Token classNameToken) {
+		if (null == prev) {
+			System.out.println("prev is null");
+			return;
+		} else if (null == prev.getLexeme()) {
+			System.out.println("prev is: " + prev + " but prev.getLexeme() is null.");
+			return;
+		} else {
+			System.out.println("prev: " + prev + "  prev.getLexeme(): " + prev.getLexeme());
+		}
+
 		if (prev.getLexeme().equals("=")) {
 			if (prevToPrev.type == 15) {
 				String temp = classNameToken.getLexeme();

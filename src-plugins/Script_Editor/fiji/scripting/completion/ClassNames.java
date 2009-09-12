@@ -202,7 +202,7 @@ public class ClassNames {
 			Item itemForSecondLastPart = firstMatchingClassForTextPart(tempPackage, index-tempIndex);
 			if (itemForSecondLastPart instanceof ClassName) {
 				if (itemForSecondLastPart.getName().equals(dotSeparatedTextParts[index-tempIndex])) {
-					loadMethodNames((ClassName)itemForSecondLastPart);
+					loadMethodAndFieldNames((ClassName)itemForSecondLastPart);
 					defaultProvider.addCompletions(createFunctionCompletion(((ClassName)itemForSecondLastPart).methodNames, true));
 				}
 			} else {
@@ -214,7 +214,7 @@ public class ClassNames {
 
 	private void doClassStartCompletions(Package tempPackage, int index1) {
 		ClassName name = (ClassName)firstMatchingClassForTextPart(tempPackage, index1);
-		loadMethodNames(name);
+		loadMethodAndFieldNames(name);
 		generateClassRelatedCompletions(name, dotSeparatedTextParts);
 	}
 
@@ -239,7 +239,7 @@ public class ClassNames {
 		if (classItemBeforeDot.size() > 0) {
 			if (classItemBeforeDot.first().getName().equals(classParts[0])) {
 				ClassName className = (ClassName)classItemBeforeDot.first();
-				loadMethodNames(className);
+				loadMethodAndFieldNames(className);
 
 				if (isDotAtLast(text)) {
 					defaultProvider.addCompletions(createFunctionCompletion(className.methodNames, true));
@@ -251,18 +251,17 @@ public class ClassNames {
 	}
 
 
-	public void loadMethodNames(ClassName tempPackage) {
+	public void loadMethodAndFieldNames(ClassName tempPackage) {
 		if (tempPackage.methodNames.size() <= 0) {
-			String fullname = tempPackage.getCompleteName();
+			String fullName = tempPackage.getCompleteName();
 			try {
-				try {
-					Class clazz = getClass().getClassLoader().loadClass(fullname);
-					tempPackage.setMethodNames(clazz.getMethods());
-					Field[] field = clazz.getFields();
-				} catch (java.lang.Error e) {
-					e.printStackTrace();
-				}
+				Class clazz = getClass().getClassLoader().loadClass(fullName);
+				tempPackage.setMethodNames(clazz.getMethods());
+				tempPackage.setFieldNames(clazz.getFields());
+			} catch (ClassNotFoundException cnfe) {
+				System.out.println("Class not found: " + fullName);
 			} catch (Exception e) {
+				System.out.println("An error ocurred for " + fullName);
 				e.printStackTrace();
 			}
 		}
