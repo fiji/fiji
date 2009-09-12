@@ -96,7 +96,7 @@ import org.fife.ui.rsyntaxtextarea.RSyntaxDocument;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 
-class TextEditor extends JFrame implements ActionListener, ItemListener,
+public class TextEditor extends JFrame implements ActionListener, ItemListener,
 		ChangeListener, MouseMotionListener, MouseListener,
 		CaretListener, InputMethodListener, DocumentListener,
 		WindowListener {
@@ -237,7 +237,6 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 		setTitle();
 
 		setLocationRelativeTo(null); // center on screen
-		setVisible(true);
 		if (path1 != null && !path1.equals(""))
 			open(path1);
 	}

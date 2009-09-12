@@ -33,7 +33,7 @@ public class Script_Editor implements PlugIn {
 							path.length() - 1);
 			}
 		}
-		new TextEditor(path);
+		new TextEditor(path).setVisible(true);
 	}
 
 	final private static String gitwebURL =
