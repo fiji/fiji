@@ -35,7 +35,10 @@ public class PluginObject {
 		UNINSTALL ("Uninstall it"),
 		INSTALL ("Install it"),
 		UPDATE ("Update it"),
-		UPLOAD ("Upload it");
+
+		// developer-only changes
+		UPLOAD ("Upload it"),
+		REMOVE ("Remove it");
 
 		private String label;
 		Action(String label) {
@@ -48,7 +51,7 @@ public class PluginObject {
 	};
 
 	public static enum Status {
-		NOT_INSTALLED (new Action[] { Action.NOT_INSTALLED, Action.INSTALL }, Action.UPLOAD),
+		NOT_INSTALLED (new Action[] { Action.NOT_INSTALLED, Action.INSTALL }, Action.REMOVE),
 		INSTALLED (new Action[] { Action.INSTALLED, Action.UNINSTALL }),
 		UPDATEABLE (new Action[] { Action.UPDATEABLE, Action.UNINSTALL, Action.UPDATE }, Action.UPLOAD),
 		MODIFIED (new Action[] { Action.MODIFIED, Action.UNINSTALL, Action.UPDATE }, Action.UPLOAD),

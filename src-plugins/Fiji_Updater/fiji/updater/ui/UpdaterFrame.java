@@ -406,7 +406,8 @@ public class UpdaterFrame extends JFrame
 		if (Util.isDeveloper) {
 			btnEditDetails.setEnabled(getSingleSelectedPlugin()
 					!= null);
-			btnUpload.setEnabled(plugins.hasUpload());
+			// TODO: has to change when details editor is embedded
+			btnUpload.setEnabled(plugins.hasUploadOrRemove());
 		}
 	}
 
@@ -433,18 +434,6 @@ public class UpdaterFrame extends JFrame
 		lblPluginSummary.setText(text);
 
 		pluginsChanged();
-	}
-
-	private void enableIfAnyUpload(JButton button) {
-		enableIfActions(button, plugins.hasUpload());
-	}
-
-	private void enableIfAnyChange(JButton button) {
-		enableIfActions(button, plugins.hasChanges());
-	}
-
-	private void enableIfActions(JButton button, boolean flag) {
-		button.setEnabled(flag);
 	}
 
 	public void setLastModified(long lastModified) {

@@ -34,6 +34,10 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		return result;
 	}
 
+	public Iterable<PluginObject> toUploadOrRemove() {
+		return filter(or(is(Action.UPLOAD), is(Action.REMOVE)));
+	}
+
 	public Iterable<PluginObject> toUpload() {
 		return filter(is(Action.UPLOAD));
 	}
@@ -311,9 +315,10 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		return false;
 	}
 
-	public boolean hasUpload() {
+	public boolean hasUploadOrRemove() {
 		for (PluginObject plugin : this)
-			if (plugin.getAction() == Action.UPLOAD)
+			if (plugin.getAction() == Action.UPLOAD ||
+					plugin.getAction() == Action.REMOVE)
 				return true;
 		return false;
 	}
