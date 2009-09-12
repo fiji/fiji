@@ -143,7 +143,7 @@ public class ClassNames {
 
 	public void setClassCompletions(Package root, RSyntaxTextArea textArea, String language) {
 		String text = defaultProvider.getEnteredText(textArea);
-		if (!(text == "" || text == null)) {
+		if (!(0 == text.length() || null == text)) {
 			packageNames = getPackageNamesImported((RSyntaxDocument)textArea.getDocument(), language);
 			if (!(isDotInEnteredText(text))) {
 				Package completionSet = findPrefixedSet(root, text);
