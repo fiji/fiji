@@ -59,6 +59,12 @@ public class PluginCollection extends ArrayList<PluginObject> {
 					Action.UPDATE}));
 	}
 
+	public Iterable<PluginObject> notHidden() {
+		// TODO: (Util.isDeveloper || plugin.platform == null ||
+		// plugin.platform.equals(Util.platform))
+		return filter(not(is(Status.OBSOLETE_UNINSTALLED)));
+	}
+
 	public Iterable<PluginObject> uninstalled() {
 		return filter(is(Status.NOT_INSTALLED));
 	}

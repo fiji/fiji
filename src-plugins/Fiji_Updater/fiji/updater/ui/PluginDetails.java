@@ -214,8 +214,12 @@ public class PluginDetails extends JTextPane {
 			italic("This version is not in Fiji's records.");
 		}
 		blankLine();
-		bold("Date: ");
-		normal("" + plugin.current.timestamp);
+		if (plugin.current == null)
+			bold("No current version");
+		else {
+			bold("Date: ");
+			normal("" + plugin.current.timestamp);
+		}
 		blankLine();
 		bold("Author(s): ");
 		authors(plugin.getAuthors());

@@ -27,7 +27,7 @@ public class XMLFileHandler {
 	private final static String dtd =
 		"<!DOCTYPE pluginRecords [\n"
 		+ "<!ELEMENT pluginRecords (plugin*)>\n"
-		+ "<!ELEMENT plugin (version, previous-version*)>\n"
+		+ "<!ELEMENT plugin (version?, previous-version*)>\n"
 		+ "<!ELEMENT version (description?, dependency*, link*, author*)>\n"
 		+ "<!ELEMENT previous-version EMPTY>\n"
 		+ "<!ELEMENT description (#PCDATA)>\n"

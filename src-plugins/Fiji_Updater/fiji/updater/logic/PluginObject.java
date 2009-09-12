@@ -29,6 +29,7 @@ public class PluginObject {
 		UPDATEABLE ("Update available"),
 		MODIFIED ("Locally modified"),
 		NEW ("New plugin"),
+		OBSOLETE ("Obsolete"),
 
 		// changes
 		REMOVE ("Remove it"),
@@ -52,7 +53,10 @@ public class PluginObject {
 		UPDATEABLE (new Action[] { Action.UPDATEABLE, Action.REMOVE, Action.UPDATE }),
 		MODIFIED (new Action[] { Action.MODIFIED, Action.REMOVE, Action.UPDATE }),
 		NOT_FIJI (new Action[] { Action.NOT_FIJI, Action.REMOVE }),
-		NEW (new Action[] { Action.NEW, Action.INSTALL}, false);
+		NEW (new Action[] { Action.NEW, Action.INSTALL}, false),
+		OBSOLETE_UNINSTALLED (new Action[] { Action.OBSOLETE }, false),
+		OBSOLETE (new Action[] { Action.OBSOLETE, Action.REMOVE }),
+		OBSOLETE_MODIFIED (new Action[] { Action.MODIFIED, Action.REMOVE });
 
 		private Action[] actions;
 
@@ -103,7 +107,8 @@ public class PluginObject {
 	public PluginObject(String filename, String checksum, long timestamp,
 			Status status) {
 		this.filename = filename;
-		current = new Version(checksum, timestamp);
+		if (checksum != null)
+			current = new Version(checksum, timestamp);
 		previous = new LinkedHashMap<Version, Object>();
 		this.status = status;
 		dependencies = new LinkedHashMap<Dependency, Object>();
@@ -115,7 +120,7 @@ public class PluginObject {
 	}
 
 	public boolean hasPreviousVersion(String checksum) {
-		if (current.checksum.equals(checksum))
+		if (current != null && current.checksum.equals(checksum))
 			return true;
 		for (Version version : previous.keySet())
 			if (version.checksum.equals(checksum))
@@ -124,7 +129,7 @@ public class PluginObject {
 	}
 
 	public boolean isNewerThan(long timestamp) {
-		if (current.timestamp <= timestamp)
+		if (current != null && current.timestamp <= timestamp)
 			return false;
 		for (Version version : previous.keySet())
 			if (version.timestamp <= timestamp)
@@ -132,14 +137,23 @@ public class PluginObject {
 		return true;
 	}
 
+	void setVersion(String checksum, long timestamp) {
+		if (current != null)
+			previous.put(current, (Object)null);
+		current = new Version(checksum, timestamp);
+	}
+
 	public void setLocalVersion(String checksum, long timestamp) {
-		if (checksum.equals(current.checksum)) {
+		if (current != null && checksum.equals(current.checksum)) {
 			status = Status.INSTALLED;
 			setNoAction();
 			return;
 		}
 		status = hasPreviousVersion(checksum) ?
-			Status.UPDATEABLE : Status.MODIFIED;
+			(current == null ?
+			 Status.OBSOLETE : Status.UPDATEABLE) :
+			(current == null ?
+			 Status.OBSOLETE_MODIFIED : Status.MODIFIED);
 		setNoAction();
 		newChecksum = checksum;
 		newTimestamp = timestamp;
@@ -209,6 +223,10 @@ public class PluginObject {
 			newTimestamp = current.timestamp;
 		}
 		else {
+			// for re-uploads of intermittently obsolete ones
+			if (current == null)
+				current = new Version(null, 0);
+
 			if (status == Status.NOT_INSTALLED) {
 				// an "upload" means "remove from the updater" here
 				try {
@@ -236,12 +254,13 @@ public class PluginObject {
 	}
 
 	public String getChecksum() {
-		return action == Action.UPLOAD ? newChecksum : current.checksum;
+		return action == Action.UPLOAD ? newChecksum :
+			current == null ? null : current.checksum;
 	}
 
 	public long getTimestamp() {
 		return action == Action.UPLOAD ?
-			newTimestamp : current.timestamp;
+			newTimestamp : current == null ? 0 : current.timestamp;
 	}
 
 	public Iterable<Dependency> getDependencies() {

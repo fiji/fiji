@@ -1,5 +1,7 @@
 package fiji.updater.logic;
 
+import fiji.updater.logic.PluginObject.Status;
+
 import fiji.updater.Updater;
 
 import ij.Prefs;
@@ -81,13 +83,13 @@ public class XMLFileReader extends DefaultHandler {
 
 		if (currentTag.equals("plugin"))
 			current = new PluginObject(atts.getValue("filename"),
-				"", 0, PluginObject.Status.NOT_INSTALLED);
+				"", 0, Status.NOT_INSTALLED);
 		else if (currentTag.equals("previous-version"))
 			current.addPreviousVersion(atts.getValue("checksum"),
 				getLong(atts, "timestamp"));
 		else if (currentTag.equals("version")) {
-			current.current.checksum = atts.getValue("checksum");
-			current.current.timestamp = getLong(atts, "timestamp");
+			current.setVersion(atts.getValue("checksum"),
+					getLong(atts, "timestamp"));
 			current.filesize = getLong(atts, "filesize");
 		}
 		else if (currentTag.equals("dependency")) {
@@ -113,8 +115,10 @@ public class XMLFileReader extends DefaultHandler {
 		else if (tagName.equals("link"))
 			current.addLink(body);
 		else if (tagName.equals("plugin")) {
-			if (current.isNewerThan(newTimestamp))
-				current.setStatus(PluginObject.Status.NEW);
+			if (current.current == null)
+				current.setStatus(Status.OBSOLETE_UNINSTALLED);
+			else if (current.isNewerThan(newTimestamp))
+				current.setStatus(Status.NEW);
 			plugins.add(current);
 			current = null;
 		}

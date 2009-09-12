@@ -43,7 +43,7 @@ public class ViewOptions extends JComboBox {
 			case OTHERS: return plugins.nonFiji();
 			case CHANGES: return plugins.changes();
 			case SELECTED: return table.getSelectedPlugins();
-			default: return plugins;
+			default: return plugins.notHidden();
 		}
 	}
 }
