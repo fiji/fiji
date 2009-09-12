@@ -8,11 +8,11 @@ public class ClassMethod implements Comparable {
 	boolean isStatic = false;
 	boolean isPublic;
 
-	public ClassMethod(String name) {
-		String[] bracketSeparated = name.split("\\(");
+	public ClassMethod(String fullName) {
+		String[] bracketSeparated = fullName.split("\\(");
 		int lastDotBeforeBracket = bracketSeparated[0].lastIndexOf(".");
-		onlyName = name.substring(lastDotBeforeBracket + 1);
-		String[] spaceSeparated = name.split(" ");
+		onlyName = fullName.substring(lastDotBeforeBracket + 1);
+		String[] spaceSeparated = fullName.split(" ");
 		returnType = spaceSeparated[spaceSeparated.length-2];
 		isPublic = spaceSeparated[0].equals("public");
 		isStatic = spaceSeparated[1].equals("static")
