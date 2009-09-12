@@ -2,6 +2,7 @@ package fiji.scripting.completion;
 
 import java.lang.Comparable;
 import java.util.TreeSet;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 public class ClassName implements Item, Comparable {
@@ -34,9 +35,13 @@ public class ClassName implements Item, Comparable {
 
 	public void setMethodNames(Method[] methods) {
 		for (Method m : methods) {
-			String fullName = m.toString();
-			methodNames.add(new ClassMethod(fullName));
+			// toString() and not getName(), to get the complete, class-qualified name
+			methodNames.add(new ClassMethod(m.toString()));
 		}
+	}
+	public void setFieldNames(Field[] fields) {
+		for (Field f : fields)
+			methodNames.add(new ClassMethod(f.toString()));
 	}
 }
 
