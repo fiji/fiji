@@ -39,7 +39,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	}
 
 	public Iterable<PluginObject> toUninstall() {
-		return filter(is(Action.REMOVE));
+		return filter(is(Action.UNINSTALL));
 	}
 
 	public Iterable<PluginObject> toUpdate() {

@@ -32,7 +32,7 @@ public class PluginObject {
 		OBSOLETE ("Obsolete"),
 
 		// changes
-		REMOVE ("Remove it"),
+		UNINSTALL ("Uninstall it"),
 		INSTALL ("Install it"),
 		UPDATE ("Update it"),
 		UPLOAD ("Upload it");
@@ -48,28 +48,28 @@ public class PluginObject {
 	};
 
 	public static enum Status {
-		NOT_INSTALLED (new Action[] { Action.NOT_INSTALLED, Action.INSTALL }),
-		INSTALLED (new Action[] { Action.INSTALLED, Action.REMOVE }, false),
-		UPDATEABLE (new Action[] { Action.UPDATEABLE, Action.REMOVE, Action.UPDATE }),
-		MODIFIED (new Action[] { Action.MODIFIED, Action.REMOVE, Action.UPDATE }),
-		NOT_FIJI (new Action[] { Action.NOT_FIJI, Action.REMOVE }),
-		NEW (new Action[] { Action.NEW, Action.INSTALL}, false),
-		OBSOLETE_UNINSTALLED (new Action[] { Action.OBSOLETE }, false),
-		OBSOLETE (new Action[] { Action.OBSOLETE, Action.REMOVE }),
-		OBSOLETE_MODIFIED (new Action[] { Action.MODIFIED, Action.REMOVE });
+		NOT_INSTALLED (new Action[] { Action.NOT_INSTALLED, Action.INSTALL }, Action.UPLOAD),
+		INSTALLED (new Action[] { Action.INSTALLED, Action.UNINSTALL }),
+		UPDATEABLE (new Action[] { Action.UPDATEABLE, Action.UNINSTALL, Action.UPDATE }, Action.UPLOAD),
+		MODIFIED (new Action[] { Action.MODIFIED, Action.UNINSTALL, Action.UPDATE }, Action.UPLOAD),
+		NOT_FIJI (new Action[] { Action.NOT_FIJI, Action.UNINSTALL }, Action.UPLOAD),
+		NEW (new Action[] { Action.NEW, Action.INSTALL}),
+		OBSOLETE_UNINSTALLED (new Action[] { Action.OBSOLETE }),
+		OBSOLETE (new Action[] { Action.OBSOLETE, Action.UNINSTALL }, Action.UPLOAD),
+		OBSOLETE_MODIFIED (new Action[] { Action.MODIFIED, Action.UNINSTALL }, Action.UPLOAD);
 
 		private Action[] actions;
 
 		Status(Action[] actions) {
-			this(actions, Util.isDeveloper);
+			this(actions, null);
 		}
 
-		Status(Action[] actions, boolean allowUpload) {
-			if (allowUpload) {
+		Status(Action[] actions, Action developerAction) {
+			if (developerAction != null && Util.isDeveloper) {
 				this.actions = new Action[actions.length + 1];
 				System.arraycopy(actions, 0, this.actions, 0,
 						actions.length);
-				this.actions[actions.length] = Action.UPLOAD;
+				this.actions[actions.length] = developerAction;
 			}
 			else
 				this.actions = actions;
@@ -283,11 +283,11 @@ public class PluginObject {
 		return status == Status.UPDATEABLE;
 	}
 
-	public boolean isRemovableOnly() {
+	public boolean isUninstallableOnly() {
 		return status == Status.INSTALLED;
 	}
 
-	public boolean isRemovable() {
+	public boolean isUninstallable() {
 		return status == Status.INSTALLED || status == Status.UPDATEABLE;
 	}
 
@@ -301,8 +301,8 @@ public class PluginObject {
 		return isUpdateable() && action == Action.UPDATE;
 	}
 
-	public boolean toRemove() {
-		return isRemovable() && action == Action.REMOVE;
+	public boolean toUninstall() {
+		return isUninstallable() && action == Action.UNINSTALL;
 	}
 
 	public boolean toInstall() {

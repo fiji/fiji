@@ -176,9 +176,10 @@ public class UpdaterFrame extends JFrame
 		bottomPanel.add(new PluginAction("Keep as-is", null));
 		bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
 		bottomPanel.add(new PluginAction("Install", Action.INSTALL,
-			"Update", Action.UPDATE));
+					"Update", Action.UPDATE));
 		bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
-		bottomPanel.add(new PluginAction("Remove", Action.REMOVE));
+		bottomPanel.add(new PluginAction("Uninstall",
+					Action.UNINSTALL));
 
 		bottomPanel.add(Box.createHorizontalGlue());
 
@@ -371,6 +372,7 @@ public class UpdaterFrame extends JFrame
 	}
 
 	public void exitWithRestartFijiMessage() {
+		// TODO: remove once the details editor is inline
 		removeLoadedFrameIfExists();
 		IJ.showMessage("Restart Fiji", "You must restart Fiji application for the Plugin status changes to take effect.");
 		dispose();
@@ -410,23 +412,22 @@ public class UpdaterFrame extends JFrame
 
 	public void tableChanged(TableModelEvent e) {
 		int size = plugins.size();
-		int install = 0;
-		int remove = 0;
-		int update = 0;
-		int upload = 0;
+		int install = 0, uninstall = 0, update = 0, upload = 0;
 
 		//Refresh count information
+		// TODO: show total size (and dependencies' total size)
 		for (PluginObject myPlugin : plugins)
 			if (myPlugin.toInstall())
 				install += 1;
-			else if (myPlugin.toRemove())
-				remove += 1;
+			else if (myPlugin.toUninstall())
+				uninstall += 1;
 			else if (myPlugin.toUpdate())
 				update += 1;
 			else if (myPlugin.toUpload())
 				upload += 1;
 		String text = "Total: " + size + ", To install: " + install
-			+ ", To remove: " + remove + ", To update: " + update;
+			+ ", To uninstall: " + uninstall
+			+ ", To update: " + update;
 		if (Util.isDeveloper)
 			text += ", To upload: " + upload;
 		lblPluginSummary.setText(text);
