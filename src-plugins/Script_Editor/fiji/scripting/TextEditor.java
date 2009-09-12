@@ -20,6 +20,7 @@ import ij.io.SaveDialog;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Toolkit;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -150,9 +151,7 @@ class TextEditor extends JFrame implements ActionListener, ItemListener,
 		addWindowListener(this);
 		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 
-		// TODO: is the Apple key META?
-		int ctrl = IJ.isMacintosh() ?
-			ActionEvent.META_MASK : ActionEvent.CTRL_MASK;
+		int ctrl = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
 		JMenuBar mbar = new JMenuBar();
 		setJMenuBar(mbar);
 
