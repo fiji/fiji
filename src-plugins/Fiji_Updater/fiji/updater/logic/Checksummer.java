@@ -105,6 +105,25 @@ public class Checksummer extends Progressable {
 		setCount(counter, total);
 	}
 
+	protected void handleQueue() {
+		total = 0;
+		for (StringPair pair : queue)
+			total += Util.getFilesize(pair.realPath);
+		counter = 0;
+		for (StringPair pair : queue)
+			handle(pair);
+		done();
+	}
+
+	public void updateFromLocal(List<String> files) {
+		if (!Util.isDeveloper)
+			throw new RuntimeException("Must be developer");
+		queue = new ArrayList<StringPair>();
+		for (String file : files)
+			queue(file);
+		handleQueue();
+	}
+
 	public void updateFromLocal() {
 		queue = new ArrayList<StringPair>();
 
@@ -124,12 +143,6 @@ public class Checksummer extends Progressable {
 				new String[] { ".txt", ".ijm" });
 		queueDir(new String[] { "luts" }, new String[] { ".lut" });
 
-		total = 0;
-		for (StringPair pair : queue)
-			total += Util.getFilesize(pair.realPath);
-		counter = 0;
-		for (StringPair pair : queue)
-			handle(pair);
-		done();
+		handleQueue();
 	}
 }
