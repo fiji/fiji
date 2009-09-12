@@ -24,16 +24,9 @@ import java.awt.Toolkit;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.InputMethodEvent;
-import java.awt.event.InputMethodListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
+import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
 
 import java.awt.image.BufferedImage;
 
@@ -73,12 +66,8 @@ import javax.swing.JSplitPane;
 import javax.swing.KeyStroke;
 import javax.swing.ToolTipManager;
 
-import javax.swing.event.CaretEvent;
-import javax.swing.event.CaretListener;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.event.ChangeEvent;
 
 import javax.swing.text.Document;
 
@@ -96,10 +85,8 @@ import org.fife.ui.rsyntaxtextarea.RSyntaxDocument;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 
-public class TextEditor extends JFrame implements ActionListener, ItemListener,
-		ChangeListener, MouseMotionListener, MouseListener,
-		CaretListener, InputMethodListener, DocumentListener,
-		WindowListener {
+public class TextEditor extends JFrame implements ActionListener,
+		DocumentListener {
 	File file;
 	RSyntaxTextArea textArea;
 	JTextArea screen;
@@ -132,7 +119,6 @@ public class TextEditor extends JFrame implements ActionListener, ItemListener,
 				redoInProgress = false;
 			}
 		};
-		textArea.addCaretListener(this);
 		provider = new ClassCompletionProvider(new DefaultProvider(),
 				textArea, null);
 		autocomp = new AutoCompletion(provider);
@@ -162,8 +148,6 @@ public class TextEditor extends JFrame implements ActionListener, ItemListener,
 		panel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
 		panel.setResizeWeight(350.0 / 430.0);
 		setContentPane(panel);
-		addWindowListener(this);
-		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 
 		int ctrl = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
 		JMenuBar mbar = new JMenuBar();
@@ -253,6 +237,15 @@ public class TextEditor extends JFrame implements ActionListener, ItemListener,
 		setLocationRelativeTo(null); // center on screen
 		if (path1 != null && !path1.equals(""))
 			open(path1);
+
+		addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent e) {
+				if (!handleUnsavedChanges())
+					return;
+				dispose();
+			}
+		});
+		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 	}
 
 	public JMenuItem addToMenu(JMenu menu, String menuEntry, int keyEvent, int keyevent, int actionevent) {
@@ -696,16 +689,6 @@ public class TextEditor extends JFrame implements ActionListener, ItemListener,
 		};
 	}
 
-	public void windowClosing(WindowEvent e) {
-		if (!handleUnsavedChanges())
-			return;
-		dispose();
-	}
-
-	//next function is for the InputMethodEvent changes
-	public void inputMethodTextChanged(InputMethodEvent event) { }
-	public void caretPositionChanged(InputMethodEvent event) { }
-
 	public boolean fileChanged() {
 		return modifyCount != 0;
 	}
@@ -736,23 +719,5 @@ public class TextEditor extends JFrame implements ActionListener, ItemListener,
 	protected void error(String message) {
 		JOptionPane.showMessageDialog(this, message);
 	}
-
-	// TODO: use an anonymous WindowAdapter, MouseAdapter, etc instead
-	public void windowClosed(WindowEvent e) {}
-	public void windowDeactivated(WindowEvent e) {}
-	public void windowDeiconified(WindowEvent e) {}
-	public void windowIconified(WindowEvent e) {}
-	public void windowOpened(WindowEvent e) {}
-	public void itemStateChanged(ItemEvent ie) {}
-	public void stateChanged(ChangeEvent e) {}
-	public void mouseMoved(MouseEvent me) {}
-	public void mouseClicked(MouseEvent me) {}
-	public void mouseEntered(MouseEvent me) {}
-	public void mouseExited(MouseEvent me) {}
-	public void mouseDragged(MouseEvent me) {}
-	public void mouseReleased(MouseEvent me) {}
-	public void mousePressed(MouseEvent me) {}
-	public void caretUpdate(CaretEvent ce) {}
-	public void windowActivated(WindowEvent e) {}
 }
 // TODO: check all files for whitespace issues
