@@ -1,3 +1,6 @@
+#!/bin/sh
+''''exec "$(dirname "$0")"/../fiji --jython "$0" "$@" # (call again with fiji)'''
+
 from xml.dom.minidom import parseString
 import re
 from elementtidy import TidyHTMLTreeBuilder

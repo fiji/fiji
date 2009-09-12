@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 # This is a small library of function which should make testing Fiji/ImageJ
 # much easier.
 

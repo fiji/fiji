@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/bin/sh
+''''exec "$(dirname "$0")"/../fiji --jython "$0" "$@" # (call again with fiji)'''
 
 # Test whether any menu items contain pointers to non-existent classes which
 # likely indicate a missconfiguration of a plugins.config file in a .jar plugin.

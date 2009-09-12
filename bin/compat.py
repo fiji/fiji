@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 import os
 
 # Jython does not support removedirs and symlink.
