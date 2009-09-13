@@ -1,8 +1,10 @@
 package fiji.updater.logic;
 
+import fiji.updater.Updater;
+
 import fiji.updater.logic.PluginObject.Status;
 
-import fiji.updater.Updater;
+import fiji.updater.util.Util;
 
 import ij.Prefs;
 
@@ -52,8 +54,10 @@ public class XMLFileReader extends DefaultHandler {
 	private void initialize(InputSource inputSource)
 			throws ParserConfigurationException, SAXException,
 			       IOException {
-		newTimestamp =
-			Long.parseLong(Prefs.get(Updater.PREFS_XMLDATE, "0"));
+		// PREFS_XMLDATE is a Unix epoch, we need a timestamp
+		newTimestamp = Long.parseLong(Util.timestamp(
+			Long.parseLong(Prefs.get(Updater.PREFS_XMLDATE, "0"))));
+
 		SAXParserFactory factory = SAXParserFactory.newInstance();
 		factory.setNamespaceAware(true);
 
