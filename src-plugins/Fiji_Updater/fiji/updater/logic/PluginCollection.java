@@ -78,8 +78,9 @@ public class PluginCollection extends ArrayList<PluginObject> {
 						Status.NOT_INSTALLED})));
 	}
 
-	public Iterable<PluginObject> modified() {
-		return filter(is(Status.MODIFIED));
+	public Iterable<PluginObject> locallyModified() {
+		return filter(oneOf(new Status[] {Status.MODIFIED,
+					Status.OBSOLETE_MODIFIED}));
 	}
 
 	public Iterable<PluginObject> fijiPlugins() {

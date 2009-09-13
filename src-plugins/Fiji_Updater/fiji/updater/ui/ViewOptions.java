@@ -12,8 +12,9 @@ public class ViewOptions extends JComboBox {
 		ALL("all plugins"),
 		INSTALLED("installed plugins only"),
 		UNINSTALLED("uninstalled plugins only"),
-		UPTODATE("up-to-date plugins only"),
-		UPDATEABLE("update-able plugins only"),
+		UPTODATE("only up-to-date plugins"),
+		UPDATEABLE("updateable plugins only"),
+		LOCALLY_MODIFIED("locally modified plugins only"),
 		FIJI("Fiji plugins only"),
 		OTHERS("non-Fiji plugins only"),
 		CHANGES("changes"),
@@ -41,6 +42,7 @@ public class ViewOptions extends JComboBox {
 			case UNINSTALLED: return plugins.uninstalled();
 			case UPTODATE: return plugins.upToDate();
 			case UPDATEABLE: return plugins.shownByDefault();
+			case LOCALLY_MODIFIED: return plugins.locallyModified();
 			case FIJI: return plugins.fijiPlugins();
 			case OTHERS: return plugins.nonFiji();
 			case CHANGES: return plugins.changes();
