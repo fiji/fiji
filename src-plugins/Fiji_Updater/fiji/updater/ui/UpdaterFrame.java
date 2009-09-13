@@ -58,7 +58,7 @@ import javax.swing.event.ListSelectionListener;
 public class UpdaterFrame extends JFrame
 		implements TableModelListener, ListSelectionListener {
 	PluginCollection plugins;
-	long xmlLastModified;
+	protected long xmlLastModified;
 
 	private JFrame loadedFrame;
 	private JTextField txtSearch;
@@ -436,6 +436,11 @@ public class UpdaterFrame extends JFrame
 		pluginsChanged();
 	}
 
+	public long getLastModified() {
+		return xmlLastModified;
+	}
+
+	// setLastModified() is guaranteed to be called after Checksummer ran
 	public void setLastModified(long lastModified) {
 		xmlLastModified = lastModified;
 
@@ -509,5 +514,4 @@ public class UpdaterFrame extends JFrame
 		Prefs.set(Updater.PREFS_USER, username);
 		return true;
 	}
-
 }
