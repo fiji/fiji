@@ -74,7 +74,7 @@ public class UpdaterFrame extends JFrame
 	private JButton btnEditDetails;
 
 	public UpdaterFrame() {
-		super("Plugin Manager");
+		super("Fiji Updater");
 
 		plugins = PluginCollection.getInstance();
 
