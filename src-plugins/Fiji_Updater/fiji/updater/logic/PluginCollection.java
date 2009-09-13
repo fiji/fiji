@@ -8,7 +8,9 @@ import fiji.updater.util.DependencyAnalyzer;
 import java.io.IOException;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 
 public class PluginCollection extends ArrayList<PluginObject> {
 	protected PluginCollection() { }
@@ -33,32 +35,53 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	}
 
 	public Iterable<PluginObject> toUpload() {
-		return filter(Action.UPLOAD);
+		return filter(is(Action.UPLOAD));
 	}
 
 	public Iterable<PluginObject> toUninstall() {
-		return filter(Action.REMOVE);
+		return filter(is(Action.REMOVE));
 	}
 
 	public Iterable<PluginObject> toUpdate() {
-		return filter(Action.UPDATE);
+		return filter(is(Action.UPDATE));
 	}
 
 	public Iterable<PluginObject> upToDate() {
-		return filter(Action.INSTALLED);
+		return filter(is(Action.INSTALLED));
 	}
 
 	public Iterable<PluginObject> toInstall() {
-		return filter(Action.INSTALL);
+		return filter(is(Action.INSTALL));
 	}
 
 	public Iterable<PluginObject> toInstallOrUpdate() {
-		return filter(new Filter() {
-			public boolean matches(PluginObject plugin) {
-				return plugin.getAction() == Action.INSTALL ||
-					plugin.getAction() == Action.UPDATE;
-			}
-		});
+		return filter(oneOf(new Action[] {Action.INSTALL,
+					Action.UPDATE}));
+	}
+
+	public Iterable<PluginObject> uninstalled() {
+		return filter(is(Status.NOT_INSTALLED));
+	}
+
+	public Iterable<PluginObject> installed() {
+		return filter(not(oneOf(new Status[] {Status.NOT_FIJI,
+						Status.NOT_INSTALLED})));
+	}
+
+	public Iterable<PluginObject> updateable() {
+		return filter(is(Status.UPDATEABLE));
+	}
+
+	public Iterable<PluginObject> modified() {
+		return filter(is(Status.MODIFIED));
+	}
+
+	public Iterable<PluginObject> fijiPlugins() {
+		return filter(not(is(Status.NOT_FIJI)));
+	}
+
+	public Iterable<PluginObject> nonFiji() {
+		return filter(is(Status.NOT_FIJI));
 	}
 
 	public Iterable<PluginObject> uploadable() {
@@ -68,31 +91,6 @@ public class PluginCollection extends ArrayList<PluginObject> {
 				.isValid(Action.UPLOAD);
 			}
 		});
-	}
-
-	public Iterable<PluginObject> uninstalled() {
-		return filter(Status.NOT_INSTALLED);
-	}
-
-	public Iterable<PluginObject> installed() {
-		return filterOut(Status.NOT_FIJI,
-			filterOut(Status.NOT_INSTALLED));
-	}
-
-	public Iterable<PluginObject> updateable() {
-		return filter(Status.UPDATEABLE);
-	}
-
-	public Iterable<PluginObject> modified() {
-		return filter(Status.MODIFIED);
-	}
-
-	public Iterable<PluginObject> fijiPlugins() {
-		return filterOut(Status.NOT_FIJI);
-	}
-
-	public Iterable<PluginObject> nonFiji() {
-		return filter(Status.NOT_FIJI);
 	}
 
 	public Iterable<PluginObject> changes() {
@@ -161,47 +159,62 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		}, plugins);
 	}
 
-	public Iterable<PluginObject> filter(final Filter filter) {
-		return filter(filter, this);
-	}
-
-	public Iterable<PluginObject> filter(final Status status) {
-		return filter(status, this);
-	}
-
-	public static Iterable<PluginObject> filter(final Status status,
-			final Iterable<PluginObject> plugins) {
-		return filter(new Filter() {
-			public boolean matches(PluginObject plugin) {
-				return plugin.getStatus() == status;
-			}
-		}, plugins);
-	}
-
-	public Iterable<PluginObject> filterOut(final Status status) {
-		return filterOut(status, this);
-	}
-
-	public static Iterable<PluginObject> filterOut(final Status status,
-			final Iterable<PluginObject> plugins) {
-		return filter(new Filter() {
-			public boolean matches(PluginObject plugin) {
-				return plugin.getStatus() != status;
-			}
-		}, plugins);
-	}
-
-	public Iterable<PluginObject> filter(final Action action) {
-		return filter(action, this);
-	}
-
-	public static Iterable<PluginObject> filter(final Action action,
-			final Iterable<PluginObject> plugins) {
-		return filter(new Filter() {
+	public Filter is(final Action action) {
+		return new Filter() {
 			public boolean matches(PluginObject plugin) {
 				return plugin.getAction() == action;
 			}
-		}, plugins);
+		};
+	}
+
+	public Filter oneOf(final Action[] actions) {
+		final Set<Action> oneOf = new HashSet<Action>();
+		for (Action action : actions)
+			oneOf.add(action);
+		return new Filter() {
+			public boolean matches(PluginObject plugin) {
+				return oneOf.contains(plugin.getAction());
+			}
+		};
+	}
+
+	public Filter is(final Status status) {
+		return new Filter() {
+			public boolean matches(PluginObject plugin) {
+				return plugin.getStatus() == status;
+			}
+		};
+	}
+
+	public Filter oneOf(final Status[] states) {
+		final Set<Status> oneOf = new HashSet<Status>();
+		for (Status status : states)
+			oneOf.add(status);
+		return new Filter() {
+			public boolean matches(PluginObject plugin) {
+				return oneOf.contains(plugin.getStatus());
+			}
+		};
+	}
+
+	public Filter not(final Filter filter) {
+		return new Filter() {
+			public boolean matches(PluginObject plugin) {
+				return !filter.matches(plugin);
+			}
+		};
+	}
+
+	public Filter or(final Filter a, final Filter b) {
+		return new Filter() {
+			public boolean matches(PluginObject plugin) {
+				return a.matches(plugin) || b.matches(plugin);
+			}
+		};
+	}
+
+	public Iterable<PluginObject> filter(final Filter filter) {
+		return filter(filter, this);
 	}
 
 	public PluginObject getPlugin(String filename) {
