@@ -39,6 +39,7 @@ public class PluginObject {
 		UNINSTALL ("Uninstall it"),
 		INSTALL ("Install it"),
 		UPDATE ("Update it"),
+		// TODO: FORCE_UPDATE
 
 		// developer-only changes
 		UPLOAD ("Upload it"),
@@ -290,6 +291,10 @@ public class PluginObject {
 
 	public boolean isUninstallable() {
 		return status == Status.INSTALLED || status == Status.UPDATEABLE;
+	}
+
+	public boolean isLocallyModified() {
+		return status.getNoAction() == Action.MODIFIED;
 	}
 
 	public boolean actionSpecified() {

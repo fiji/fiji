@@ -1,6 +1,7 @@
 package fiji.updater.logic;
 
 public class Dependency {
+	// TODO: OVERRIDES
         public enum Relation { AT_LEAST, AT_MOST, EXACT };
 
         public static Relation getRelation(String label) {
@@ -19,5 +20,9 @@ public class Dependency {
 		this.filename = filename;
 		this.timestamp = timestamp;
 		this.relation = relation;
+	}
+
+	public String toString() {
+		return filename;
 	}
 }
