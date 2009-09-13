@@ -2,7 +2,11 @@ package fiji.updater.logic;
 
 import fiji.updater.util.Util;
 
+import java.io.File;
+import java.io.IOException;
+
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -321,6 +325,29 @@ public class PluginObject {
 			 (status.isValid(Action.UPDATE) ||
 			  status.isValid(Action.UNINSTALL)));
 	}
+
+	public void stageForUninstall() throws IOException {
+		if (action != Action.UNINSTALL)
+			throw new RuntimeException(filename + " was not marked "
+				+ "for uninstall");
+		touch(Util.prefixUpdate(filename));
+		if (status != Status.NOT_FIJI)
+			setStatus(Status.NOT_INSTALLED);
+	}
+
+	public static void touch(String target) throws IOException {
+		File file = new File(target);
+		if (file.exists()) {
+			long now = new Date().getTime();
+			file.setLastModified(now);
+		}
+		else {
+			File parent = file.getParentFile();
+			if (!parent.exists())
+				parent.mkdirs();
+			file.createNewFile();
+		}
+        }
 
 	/**
 	 * For displaying purposes, it is nice to have a plugin object whose
