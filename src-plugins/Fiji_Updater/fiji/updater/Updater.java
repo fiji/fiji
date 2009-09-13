@@ -10,6 +10,8 @@ import fiji.updater.logic.XMLFileReader;
 import fiji.updater.ui.UpdaterFrame;
 import fiji.updater.ui.ViewOptions;
 
+import fiji.updater.ui.ViewOptions.Option;
+
 import fiji.updater.util.Canceled;
 import fiji.updater.util.Progress;
 import fiji.updater.util.Util;
@@ -90,8 +92,15 @@ public class Updater implements PlugIn {
 		}
 
 		if ("update".equals(arg)) {
-			PluginCollection.getInstance().markForUpdate(false);
-			main.setViewOption(ViewOptions.Option.UPDATEABLE);
+			PluginCollection plugins =
+				PluginCollection.getInstance();
+			plugins.markForUpdate(false);
+			if (plugins.hasChanges())
+				main.setViewOption(Option.UPDATEABLE);
+			else if (plugins.hasForcableUpdates())
+				main.warn("There are locally modified files!");
+			else
+				main.info("Your Fiji is up to date!");
 		}
 
 		main.setLastModified(downloader.getXMLLastModified());

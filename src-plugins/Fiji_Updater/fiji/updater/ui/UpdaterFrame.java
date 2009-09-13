@@ -523,4 +523,19 @@ public class UpdaterFrame extends JFrame
 		Prefs.set(Updater.PREFS_USER, username);
 		return true;
 	}
+
+	public void error(String message) {
+		JOptionPane.showMessageDialog(this, message, "Error",
+				JOptionPane.ERROR_MESSAGE);
+	}
+
+	public void warn(String message) {
+		JOptionPane.showMessageDialog(this, message, "Warning",
+				JOptionPane.WARNING_MESSAGE);
+	}
+
+	public void info(String message) {
+		JOptionPane.showMessageDialog(this, message, "Information",
+				JOptionPane.INFORMATION_MESSAGE);
+	}
 }
