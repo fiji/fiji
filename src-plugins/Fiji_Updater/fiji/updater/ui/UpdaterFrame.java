@@ -334,7 +334,7 @@ public class UpdaterFrame extends JFrame
 		// TODO: check conflicts
 		new Thread() {
 			public void run() {
-				download();
+				install();
 			}
 		}.start();
 	}
@@ -358,7 +358,7 @@ public class UpdaterFrame extends JFrame
 		}
 	}
 
-	public void download() {
+	public void install() {
 		Installer installer =
 			new Installer(getProgress("Installing..."));
 		try {
