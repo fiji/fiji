@@ -1,6 +1,8 @@
 package skeleton_analysis;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -42,7 +44,7 @@ import ij.process.ShortProcessor;
  * <A target="_blank" href="http://pacific.mpi-cbg.de/wiki/index.php/AnalyzeSkeleton">http://pacific.mpi-cbg.de/wiki/index.php/AnalyzeSkeleton</A>
  *
  *
- * @version 1.0 09/05/2009
+ * @version 1.0 09/13/2009
  * @author Ignacio Arganda-Carreras <ignacio.arganda@gmail.com>
  *
  */
@@ -123,10 +125,6 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	
 	/** auxiliary temporary point */
 	private Point auxPoint = null;
-	/** largest branch coordinates initial point */
-	private Point[] initialPoint = null;
-	/** largest branch coordinates final point */
-	private Point[] finalPoint = null;
 	
 	/** number of trees (skeletons) in the image */
 	private int numOfTrees = 0;
@@ -169,6 +167,9 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	/** z- neighborhood offset */
 	private int z_offset = 1;
 	
+	/** boolean flag to display extra information in result tables */
+	public static boolean verbose = false;
+	
 	/** debugging flag */
 	private static final boolean debug = false;
 	
@@ -205,12 +206,14 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		GenericDialog gd = new GenericDialog("Analyze Skeleton");
 		gd.addChoice("Prune cycle method: ", AnalyzeSkeleton_.pruneCyclesModes, 
 										AnalyzeSkeleton_.pruneCyclesModes[pruneIndex]);
+		gd.addCheckbox("Show detailed info", AnalyzeSkeleton_.verbose);
 		gd.showDialog();
 		
 		// Exit when canceled
 		if (gd.wasCanceled()) 
 			return;
 		pruneIndex = gd.getNextChoiceIndex();
+		AnalyzeSkeleton_.verbose = gd.getNextBoolean();
 		
 		switch(pruneIndex)
 		{
@@ -515,6 +518,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 				}
 			}
 			// Check vertices
+			/*
 			for(final Point p : e.getV1().getPoints())
 			{
 				final double avg = getAverageNeighborhoodValue(originalGrayImage, p,
@@ -535,6 +539,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 					lowestIntensityVoxel = p;
 				}
 			}
+			*/
 		}
 		
 		// Cut loop in the lowest intensity pixel value position
@@ -619,7 +624,11 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		if (lowestIntensityEdge.getSlabs().size() > 0)
 			removeCoords = cutPoint;
 		else 
+		{
+			IJ.error("Lowest intensity branch without slabs?!: vertex " 
+					+ lowestIntensityEdge.getV1().getPoints().get(0));
 			removeCoords = lowestIntensityEdge.getV1().getPoints().get(0);
+		}
 		
 		if(debug)
 			IJ.log("Cut loop at coordinates: " + removeCoords);
@@ -702,8 +711,6 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		this.numberOfTriplePoints = new int[this.numOfTrees];
 		this.averageBranchLength = new double[this.numOfTrees];
 		this.maximumBranchLength = new double[this.numOfTrees];
-		this.initialPoint = new Point[this.numOfTrees];
-		this.finalPoint = new Point[this.numOfTrees];
 		this.endPointsTree = new ArrayList[this.numOfTrees];		
 		this.junctionVoxelTree = new ArrayList[this.numOfTrees];
 		this.startingSlabTree = new ArrayList[this.numOfTrees];
@@ -751,21 +758,61 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 
 			if (0 == i % 100) 
 				rt.show("Results");
-			
-			final StringBuilder sb = new StringBuilder();
-
-			sb.append("--- Skeleton #").append(i+1).append(" ---\n")
-			  	.append("Coordinates of the largest branch:\n")
-				.append("Initial point: (").append(this.initialPoint[i].x * this.imRef.getCalibration().pixelWidth).append( ", ") 
-				.append(this.initialPoint[i].y * this.imRef.getCalibration().pixelHeight).append( ", ")
-				.append(this.initialPoint[i].z * this.imRef.getCalibration().pixelDepth).append(")\n")
-				.append("Final point: (").append(this.finalPoint[i].x * this.imRef.getCalibration().pixelWidth).append(", ") 
-				.append(this.finalPoint[i].y * this.imRef.getCalibration().pixelHeight).append(", ")
-				.append(this.finalPoint[i].z * this.imRef.getCalibration().pixelDepth).append( ")\n" )
-				.append("Euclidean distance: ").append( this.calculateDistance(this.initialPoint[i], this.finalPoint[i]));
-			IJ.log(sb.toString());
 		}
 		rt.show("Results");
+		
+		// Extra information
+		if(AnalyzeSkeleton_.verbose)
+		{
+			// New results table
+			final ResultsTable extra_rt = new ResultsTable();
+			
+			final String[] extra_head = {"Branch", "Skeleton ID", 
+							"Branch length","V1 x", "V1 y",
+							"V1 z","V2 x","V2 y", "V2 z", "Euclidean distance"};
+			
+			for (int i = 0; i < extra_head.length; i++)
+				extra_rt.setHeading(i,extra_head[i]);	
+			// Edge comparator (by branch length)
+			Comparator<Edge> comp = new Comparator<Edge>(){
+				public int compare(Edge o1, Edge o2)
+				{
+					final double diff = o1.getLength() - o2.getLength(); 
+					if(diff < 0)
+						return 1;
+					else if(diff == 0)
+						return 0;
+					else
+						return -1;
+				}
+				public boolean equals(Object o)
+				{
+					return false;
+				}
+			};
+			// Display branch information for each tree
+			for(int i = 0 ; i < this.numOfTrees; i++)
+			{
+				final ArrayList<Edge> listEdges = this.graph[i].getEdges();
+				// Sort branches by length
+				Collections.sort(listEdges, comp);
+				for(final Edge e : listEdges)
+				{
+					extra_rt.incrementCounter();
+					extra_rt.addValue(1, i+1);
+					extra_rt.addValue(2, e.getLength());
+					extra_rt.addValue(3, e.getV1().getPoints().get(0).x * this.imRef.getCalibration().pixelWidth);
+					extra_rt.addValue(4, e.getV1().getPoints().get(0).y * this.imRef.getCalibration().pixelHeight);
+					extra_rt.addValue(5, e.getV1().getPoints().get(0).z * this.imRef.getCalibration().pixelDepth);
+					extra_rt.addValue(6, e.getV2().getPoints().get(0).x * this.imRef.getCalibration().pixelWidth);
+					extra_rt.addValue(7, e.getV2().getPoints().get(0).y * this.imRef.getCalibration().pixelHeight);
+					extra_rt.addValue(8, e.getV2().getPoints().get(0).z * this.imRef.getCalibration().pixelDepth);
+					extra_rt.addValue(9, this.calculateDistance(e.getV1().getPoints().get(0), e.getV2().getPoints().get(0)));
+				}								
+			}
+			extra_rt.show("Branch information");
+		}
+		
 	}// end method showResults
 
 	// -----------------------------------------------------------------------
@@ -928,7 +975,6 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 			{
 				if(debug)
 					IJ.log("set initial point to final point");
-				this.initialPoint[iTree] = this.finalPoint[iTree] = endPointCoord;
 				continue;
 			}
 			
@@ -936,7 +982,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 			if(debug)
 				IJ.log("adding branch from " + v1.getPoints().get(0) + " to " + this.auxFinalVertex.getPoints().get(0));
 			this.graph[iTree].addVertex(this.auxFinalVertex);
-			this.graph[iTree].addEdge(new Edge(v1, this.auxFinalVertex, this.slabList));
+			this.graph[iTree].addEdge(new Edge(v1, this.auxFinalVertex, this.slabList, length));
 			
 			// increase number of branches
 			this.numberOfBranches[iTree]++;
@@ -950,8 +996,6 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 			if(length > this.maximumBranchLength[iTree])
 			{
 				this.maximumBranchLength[iTree] = length;
-				this.initialPoint[iTree] = endPointCoord;
-				this.finalPoint[iTree] = this.auxPoint;
 			}
 		}
 		
@@ -1040,8 +1084,6 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 							if(length > this.maximumBranchLength[iTree])
 							{
 								this.maximumBranchLength[iTree] = length;
-								this.initialPoint[iTree] = junctionCoord;
-								this.finalPoint[iTree] = this.auxPoint;
 							}
 
 							// Create graph branch
@@ -1049,7 +1091,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 							// Add branch to graph
 							if(debug)
 								IJ.log("adding branch from " + initialVertex.getPoints().get(0) + " to " + this.auxFinalVertex.getPoints().get(0));
-							this.graph[iTree].addEdge(new Edge(initialVertex, this.auxFinalVertex, this.slabList));												
+							this.graph[iTree].addEdge(new Edge(initialVertex, this.auxFinalVertex, this.slabList, length));												
 						}
 					}
 					else
@@ -1065,11 +1107,17 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		
 		// Finally visit branches starting at slabs (special case for circular trees)
 		if(this.startingSlabTree[iTree].size() == 1)
-		{
+		{			
 			if(debug)
 				IJ.log("visit from slabs");
+					
+			final Point startCoord = this.startingSlabTree[iTree].get(0);
 			
-			final Point startCoord = this.startingSlabTree[iTree].get(0);					
+			// Create circular graph (only one vertex)
+			final Vertex v1 = new Vertex();
+			v1.addPoint(startCoord);			
+			this.graph[iTree].addVertex(v1);
+			
 			
 			this.slabList = new ArrayList<Point>();
 			this.slabList.add(startCoord);
@@ -1089,10 +1137,11 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 				if(length > this.maximumBranchLength[iTree])
 				{
 					this.maximumBranchLength[iTree] = length;
-					this.initialPoint[iTree] = startCoord;
-					this.finalPoint[iTree] = this.auxPoint;
 				}
 			}
+			
+			// Create circular edge
+			this.graph[iTree].addEdge(new Edge(v1, v1, this.slabList, length));
 		}						
 
 		if(debug)
