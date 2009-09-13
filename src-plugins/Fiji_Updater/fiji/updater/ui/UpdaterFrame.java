@@ -362,7 +362,11 @@ public class UpdaterFrame extends JFrame
 		Installer installer =
 			new Installer(getProgress("Installing..."));
 		try {
+			PluginCollection uninstalled = PluginCollection
+				.clone(plugins.toUninstall());
 			installer.start();
+			for (PluginObject plugin : uninstalled)
+				table.firePluginChanged(plugin);
 			updatePluginsTable();
 		} catch (Canceled e) {
 			// TODO: remove "update/" directory
