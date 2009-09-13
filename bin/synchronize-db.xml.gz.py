@@ -7,6 +7,7 @@ import re
 import sys
 
 prefix = '/var/www/update/'
+currentTXTPath = prefix + 'current.txt'
 xmlPath = prefix + 'db.xml.gz'
 
 pattern = re.compile('^(.*)-([0-9]{14})$')
@@ -36,6 +37,12 @@ def getDigests(result, dir):
 			getDigests(result, path)
 			continue
 		addRecord(result, path)
+
+def readCurrentTXT(path):
+	f = open(path)
+	result = [line.split(' ')[0] for line in f.readlines()]
+	f.close()
+	return result
 
 def readXML(path):
 	return ''.join(os.popen('gunzip < ' + path).readlines())
@@ -70,6 +77,8 @@ def insertRecord(xml, plugin, record):
 	dates.sort()
 	dates.reverse()
 	insert = None
+	if not plugin in currentTXT:
+		insert = ''
 	for date in dates:
 		metadata = record[date]
 		if insert == None:
@@ -88,6 +97,7 @@ def insertRecord(xml, plugin, record):
 	xml = xml[:off] + insert + xml[endOff:]
 	return xml
 
+currentTXT = readCurrentTXT(currentTXTPath)
 xml = readXML(xmlPath)
 digests = dict()
 getDigests(digests, '')
