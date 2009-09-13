@@ -220,6 +220,7 @@ plugins/LSM_Toolbox.jar <- plugins/LSM_Reader.jar/ \
 MAINCLASS(plugins/Interactive_3D_Surface_Plot.jar)=Interactive_3D_Surface_Plot
 CLASSPATH(plugins/Stitching_.jar)=plugins/loci_tools.jar:plugins/Fiji_Plugins.jar
 CLASSPATH(plugins/Fiji_Plugins.jar)=jars/jsch-0.1.37.jar
+CLASSPATH(plugins/Fiji_Updater.jar)=jars/jsch-0.1.37.jar:misc/Fiji.jar
 
 plugins/Record_Screen.jar <- src-plugins/Record_Screen/ src-plugins/Record_Screen/**/*
 
