@@ -314,6 +314,14 @@ public class PluginObject {
 		return status != Status.NOT_FIJI;
 	}
 
+	public boolean isUpdateable(boolean evenForcedUpdates) {
+		return status == Status.UPDATEABLE ||
+			status == Status.OBSOLETE ||
+			(evenForcedUpdates &&
+			 (status.isValid(Action.UPDATE) ||
+			  status.isValid(Action.UNINSTALL)));
+	}
+
 	/**
 	 * For displaying purposes, it is nice to have a plugin object whose
 	 * toString() method shows either the filename or the action.

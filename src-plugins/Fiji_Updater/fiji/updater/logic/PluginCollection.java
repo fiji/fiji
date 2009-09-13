@@ -322,4 +322,26 @@ public class PluginCollection extends ArrayList<PluginObject> {
 				return true;
 		return false;
 	}
+
+	public Iterable<PluginObject> updateable(final boolean evenForcedOnes) {
+		return filter(new Filter() {
+			public boolean matches(PluginObject plugin) {
+				return plugin.isUpdateable(evenForcedOnes);
+			}
+		});
+	}
+
+	public void markForUpdate(boolean evenForcedUpdates) {
+		for (PluginObject plugin : updateable(evenForcedUpdates))
+			plugin.setAction(plugin.getStatus()
+				.isValid(Action.UPDATE) ?
+				Action.UPDATE : Action.UNINSTALL);
+	}
+
+	public boolean hasForcableUpdates() {
+		for (PluginObject plugin : updateable(true))
+			if (!plugin.isUpdateable(false))
+				return true;
+		return false;
+	}
 }
