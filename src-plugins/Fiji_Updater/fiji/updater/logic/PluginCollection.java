@@ -187,6 +187,15 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		};
 	}
 
+	public Filter isNoAction() {
+		return new Filter() {
+			public boolean matches(PluginObject plugin) {
+				return plugin.getAction() ==
+					plugin.getStatus().getNoAction();
+			}
+		};
+	}
+
 	public Filter oneOf(final Action[] actions) {
 		final Set<Action> oneOf = new HashSet<Action>();
 		for (Action action : actions)
@@ -317,18 +326,24 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		}
 	}
 
-	public boolean hasChanges() {
+	public boolean has(final Filter filter) {
 		for (PluginObject plugin : this)
-			if (plugin.getAction() !=
-					plugin.getStatus().getActions()[0])
+			if (filter.matches(plugin))
 				return true;
 		return false;
 	}
 
+	public boolean hasChanges() {
+		return has(not(isNoAction()));
+	}
+
 	public boolean hasUploadOrRemove() {
-		for (PluginObject plugin : this)
-			if (plugin.getAction() == Action.UPLOAD ||
-					plugin.getAction() == Action.REMOVE)
+		return has(oneOf(new Action[] {Action.UPLOAD, Action.REMOVE}));
+	}
+
+	public boolean hasForcableUpdates() {
+		for (PluginObject plugin : updateable(true))
+			if (!plugin.isUpdateable(false))
 				return true;
 		return false;
 	}
@@ -346,12 +361,5 @@ public class PluginCollection extends ArrayList<PluginObject> {
 			plugin.setAction(plugin.getStatus()
 				.isValid(Action.UPDATE) ?
 				Action.UPDATE : Action.UNINSTALL);
-	}
-
-	public boolean hasForcableUpdates() {
-		for (PluginObject plugin : updateable(true))
-			if (!plugin.isUpdateable(false))
-				return true;
-		return false;
 	}
 }
