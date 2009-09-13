@@ -293,6 +293,11 @@ public class UpdaterFrame extends JFrame
 		}
 	}
 
+	public void setViewOption(ViewOptions.Option option) {
+		viewOptions.setSelectedItem(option);
+		updatePluginsTable();
+	}
+
 	public void updatePluginsTable() {
 		Iterable<PluginObject> view = viewOptions.getView(table);
 		// TODO: maybe we want to remember what was selected?

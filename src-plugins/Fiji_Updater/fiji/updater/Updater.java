@@ -3,11 +3,12 @@ package fiji.updater;
 import fiji.Main;
 
 import fiji.updater.logic.Checksummer;
-import fiji.updater.logic.UpdateFiji;
+import fiji.updater.logic.PluginCollection;
 import fiji.updater.logic.XMLFileDownloader;
 import fiji.updater.logic.XMLFileReader;
 
 import fiji.updater.ui.UpdaterFrame;
+import fiji.updater.ui.ViewOptions;
 
 import fiji.updater.util.Canceled;
 import fiji.updater.util.Progress;
@@ -76,7 +77,6 @@ public class Updater implements PlugIn {
 			else
 				message = "Download/checksum failed: " + e;
 			IJ.error(message);
-			fallBackToOldUpdater();
 			return;
 		}
 
@@ -91,18 +91,12 @@ public class Updater implements PlugIn {
 			return;
 		}
 
+		if ("update".equals(arg)) {
+			PluginCollection.getInstance().markForUpdate(false);
+			main.setViewOption(ViewOptions.Option.UPDATEABLE);
+		}
+
 		main.setLastModified(downloader.getXMLLastModified());
 		main.updatePluginsTable();
-	}
-
-	protected void fallBackToOldUpdater() {
-		try {
-			// TODO: replace by special mode of the Plugin Manager
-			UpdateFiji updateFiji = new UpdateFiji();
-			updateFiji.hasGUI = true;
-			updateFiji.exec(UpdateFiji.defaultURL);
-		} catch (SecurityException se) {
-			IJ.error("Security exception: " + se);
-		}
 	}
 }

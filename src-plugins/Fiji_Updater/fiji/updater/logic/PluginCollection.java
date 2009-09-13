@@ -78,10 +78,6 @@ public class PluginCollection extends ArrayList<PluginObject> {
 						Status.NOT_INSTALLED})));
 	}
 
-	public Iterable<PluginObject> updateable() {
-		return filter(is(Status.UPDATEABLE));
-	}
-
 	public Iterable<PluginObject> modified() {
 		return filter(is(Status.MODIFIED));
 	}
@@ -93,6 +89,19 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	public Iterable<PluginObject> nonFiji() {
 		return filter(is(Status.NOT_FIJI));
 	}
+
+	public Iterable<PluginObject> shownByDefault() {
+		/*
+		 * Let's not show the NOT_INSTALLED ones, as the user chose not
+		 * to have them.
+		 */
+		Status[] oneOf = {
+			Status.UPDATEABLE, Status.NEW,
+			Status.OBSOLETE, Status.OBSOLETE_MODIFIED
+		};
+		return filter(oneOf(oneOf));
+	}
+
 
 	public Iterable<PluginObject> uploadable() {
 		return filter(new Filter() {

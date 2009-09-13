@@ -3,10 +3,12 @@ package fiji.updater.ui;
 import fiji.updater.logic.PluginCollection;
 import fiji.updater.logic.PluginObject;
 
+import fiji.updater.logic.PluginObject.Status;
+
 import javax.swing.JComboBox;
 
 public class ViewOptions extends JComboBox {
-	static enum Option {
+	public static enum Option {
 		ALL("all plugins"),
 		INSTALLED("installed plugins only"),
 		UNINSTALLED("uninstalled plugins only"),
@@ -38,7 +40,7 @@ public class ViewOptions extends JComboBox {
 			case INSTALLED: return plugins.installed();
 			case UNINSTALLED: return plugins.uninstalled();
 			case UPTODATE: return plugins.upToDate();
-			case UPDATEABLE: return plugins.updateable();
+			case UPDATEABLE: return plugins.shownByDefault();
 			case FIJI: return plugins.fijiPlugins();
 			case OTHERS: return plugins.nonFiji();
 			case CHANGES: return plugins.changes();

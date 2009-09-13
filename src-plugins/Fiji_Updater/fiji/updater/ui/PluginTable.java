@@ -2,10 +2,13 @@ package fiji.updater.ui;
 
 import fiji.updater.logic.PluginCollection;
 import fiji.updater.logic.PluginObject;
+
 import fiji.updater.logic.PluginObject.Action;
+import fiji.updater.logic.PluginObject.Status;
 
 import fiji.updater.util.Util;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -64,6 +67,9 @@ public class PluginTable extends JTable {
 				comp.setFont(comp.getFont()
 					.deriveFont(plugin.actionSpecified() ?
 						Font.BOLD : Font.PLAIN));
+				comp.setForeground(plugin.getStatus() ==
+					Status.OBSOLETE_MODIFIED ?
+					Color.red : Color.black);
 				return comp;
 			}
 		});

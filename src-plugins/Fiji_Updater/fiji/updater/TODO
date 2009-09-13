@@ -14,9 +14,6 @@ Show-stoppers:
 
 - Put only 'Fiji_Updater' into current.txt
 
-- We need to have a mode which preselects every updateable plugin as
-  "Update".  This will be the new "Update Fiji".
-
 - Add a context menu to trigger actions
 
 - Usability bug: the "Edit details" button is only active when uploading a
