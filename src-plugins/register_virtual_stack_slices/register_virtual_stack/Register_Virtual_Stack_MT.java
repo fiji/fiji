@@ -593,8 +593,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		for(int iSlice = 0; iSlice < inliers.length; iSlice++)
 			mean_distance[0] += PointMatch.meanDistance(inliers[iSlice]);
 		
-		if(display)
-			IJ.log("Initial: Mean distance = " + mean_distance[0] / inliers.length);
+		mean_distance[0] /= inliers.length;
 		
 		
 		// Array to keep order of relaxation
@@ -692,8 +691,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			for(int k = 0; k < inliers.length; k++)
 				mean_distance[n+1] += PointMatch.meanDistance(inliers[k]);
 
-			if(display)
-				IJ.log(n+": Mean distance = " + mean_distance[n+1] / inliers.length);
+			mean_distance[n+1] /= inliers.length;						
 
 			if(Math.abs(mean_distance[n+1] - mean_distance[n]) < STOP_THRESHOLD)
 				break;
