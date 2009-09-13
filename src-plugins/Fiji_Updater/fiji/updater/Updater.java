@@ -1,5 +1,7 @@
 package fiji.updater;
 
+import fiji.Main;
+
 import fiji.updater.logic.Checksummer;
 import fiji.updater.logic.UpdateFiji;
 import fiji.updater.logic.XMLFileDownloader;
@@ -44,6 +46,7 @@ public class Updater implements PlugIn {
 
 	public void run(String arg) {
 		final UpdaterFrame main = new UpdaterFrame();
+		new Main().setIcon(main);
 
 		// TODO: use ProgressPane in main window
 		Progress progress = main.getProgress("Starting up...");
