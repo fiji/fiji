@@ -187,7 +187,7 @@ public class UpdaterFrame extends JFrame
 		btnStart = SwingTools.button("Apply changes",
 				"Start installing/uninstalling plugins", new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				clickToBeginOperations();
+				applyChanges();
 			}
 		}, bottomPanel);
 		btnStart.setEnabled(false);
@@ -330,7 +330,7 @@ public class UpdaterFrame extends JFrame
 		setEnabled(false);
 	}
 
-	private void clickToBeginOperations() {
+	public void applyChanges() {
 		// TODO: check conflicts
 		new Thread() {
 			public void run() {
