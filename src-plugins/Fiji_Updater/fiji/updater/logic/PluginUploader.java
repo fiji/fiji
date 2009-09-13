@@ -209,31 +209,36 @@ public class PluginUploader {
 			setAttribute(attr, "filename", plugin.filename);
 			handler.startElement("", "", "plugin", attr);
 
-			attr.clear();
-			setAttribute(attr, "checksum", plugin.getChecksum());
-			setAttribute(attr, "timestamp", plugin.getTimestamp());
-			setAttribute(attr, "filesize", plugin.filesize);
-			handler.startElement("", "", "version", attr);
-			if (plugin.description != null)
-				writeSimpleTag("description",
-						plugin.description);
-
-			for (Dependency dependency : plugin.getDependencies()) {
+			if (plugin.current != null) {
 				attr.clear();
-				setAttribute(attr, "filename",
-						dependency.filename);
+				setAttribute(attr, "checksum",
+						plugin.getChecksum());
 				setAttribute(attr, "timestamp",
-						dependency.timestamp);
-				if (dependency.relation !=
-						Dependency.Relation.AT_LEAST)
-					setAttribute(attr, "relation",
-						dependency.relation.toString());
-				writeSimpleTag("dependency", null, attr);
-			}
+						plugin.getTimestamp());
+				setAttribute(attr, "filesize", plugin.filesize);
+				handler.startElement("", "", "version", attr);
+				if (plugin.description != null)
+					writeSimpleTag("description",
+							plugin.description);
 
-			writeSimpleTags("link", plugin.getLinks());
-			writeSimpleTags("author", plugin.getAuthors());
-			handler.endElement("", "", "version");
+				for (Dependency dependency :
+						plugin.getDependencies()) {
+					attr.clear();
+					setAttribute(attr, "filename",
+							dependency.filename);
+					setAttribute(attr, "timestamp",
+							dependency.timestamp);
+					if (dependency.relation !=
+							Dependency.Relation.AT_LEAST)
+						setAttribute(attr, "relation",
+							dependency.relation.toString());
+					writeSimpleTag("dependency", null, attr);
+				}
+
+				writeSimpleTags("link", plugin.getLinks());
+				writeSimpleTags("author", plugin.getAuthors());
+				handler.endElement("", "", "version");
+			}
 
 			for (PluginObject.Version version :
 					plugin.getPrevious()) {

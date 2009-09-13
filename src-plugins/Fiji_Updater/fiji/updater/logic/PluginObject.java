@@ -211,6 +211,8 @@ public class PluginObject {
 					+ ", " + status + ")");
 		if (action == Action.UPLOAD)
 			markForUpload();
+		else if (action == Action.REMOVE)
+			markForRemoval();
 		this.action = action;
 	}
 
@@ -226,30 +228,22 @@ public class PluginObject {
 			newTimestamp = current.timestamp;
 		}
 		else {
-			// for re-uploads of intermittently obsolete ones
-			if (current == null)
-				current = new Version(null, 0);
-
-			if (status == Status.NOT_INSTALLED) {
-				// an "upload" means "remove from the updater" here
-				try {
-					newChecksum = Util.getDigest(filename, null);
-				} catch (Exception e) { e.printStackTrace(); }
-				newTimestamp = 0;
-				filesize = 0;
-			}
-			else if (newChecksum == null ||
+			if (newChecksum == null ||
 					newChecksum.equals(current.checksum))
 				throw new Error("Plugin " + filename
 						+ " is already uploaded");
-			addPreviousVersion(current.checksum, current.timestamp);
-			current.checksum = newChecksum;
-			current.timestamp = newTimestamp;
+			setVersion(newChecksum, newTimestamp);
 		}
 
 		PluginCollection plugins = PluginCollection.getInstance();
 		for (Dependency dependency : plugins.analyzeDependencies(this))
 				addDependency(dependency);
+	}
+
+	protected void markForRemoval() {
+		// TODO: check dependencies (but not here; _after_ all marking)
+		addPreviousVersion(current.checksum, current.timestamp);
+		current = null;
 	}
 
 	public String getFilename() {

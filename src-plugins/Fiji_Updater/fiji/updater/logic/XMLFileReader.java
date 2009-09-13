@@ -83,7 +83,7 @@ public class XMLFileReader extends DefaultHandler {
 
 		if (currentTag.equals("plugin"))
 			current = new PluginObject(atts.getValue("filename"),
-				"", 0, Status.NOT_INSTALLED);
+				null, 0, Status.NOT_INSTALLED);
 		else if (currentTag.equals("previous-version"))
 			current.addPreviousVersion(atts.getValue("checksum"),
 				getLong(atts, "timestamp"));
