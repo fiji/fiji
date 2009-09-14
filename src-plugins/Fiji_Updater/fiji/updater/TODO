@@ -31,6 +31,13 @@ Show-stoppers:
   correct mistakes (not all are "at-least" dependencies) and add
   additional dependencies.
 
+- Dependencies are _borked_ for the moment.
+
+- There _must_ be an "OVERRIDE" depenendency type.
+
+- Scrap the "AT-LEAST", "AT-MOST" and "EXACTLY" modes.  Either a dependency
+  overrides, or it requires the newest version.  That's it.
+
 - For the files like StartupMacros.txt (which we _need_, as there is a
   serious bug regarding the lookup tables in Fiji Dresden 2009), we need
   to include previous version hashes, too, so that people _can_ update
