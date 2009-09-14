@@ -1,5 +1,9 @@
 Show-stoppers:
 
+- Conflict dialog!!!
+
+- previous versions from all .zip and .dmg files in /var/www/download/!!!
+
 - Let's have a checkbox in the Fiji Updater that says "automatically check
   for updates".  This should be grayed out if, say, plugins/Fiji_Updater.jar
   is not writable, or misc/Fiji.jar is not new enough.
