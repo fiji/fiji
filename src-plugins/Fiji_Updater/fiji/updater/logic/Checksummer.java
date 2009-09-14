@@ -92,7 +92,7 @@ public class Checksummer extends Progressable {
 
 		String checksum = null;
 		long timestamp = 0;
-		if (new File(path).exists()) try {
+		if (new File(realPath).exists()) try {
 			checksum = Util.getDigest(path, realPath);
 			timestamp = Util.getTimestamp(realPath);
 		} catch (Exception e) { e.printStackTrace(); }
