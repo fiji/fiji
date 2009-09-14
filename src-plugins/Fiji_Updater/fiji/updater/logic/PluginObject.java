@@ -266,6 +266,7 @@ public class PluginObject {
 	protected void markForRemoval() {
 		// TODO: check dependencies (but not here; _after_ all marking)
 		addPreviousVersion(current.checksum, current.timestamp);
+		setStatus(Status.OBSOLETE);
 		current = null;
 	}
 
