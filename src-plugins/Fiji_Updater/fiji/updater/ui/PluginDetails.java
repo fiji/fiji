@@ -8,6 +8,8 @@ import fiji.updater.logic.Dependency;
 import fiji.updater.logic.PluginCollection;
 import fiji.updater.logic.PluginObject;
 
+import fiji.updater.util.Util;
+
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Point;
@@ -200,6 +202,9 @@ public class PluginDetails extends JTextPane {
 		}
 		description(plugin.getDescription());
 		list("Author", false, plugin.getAuthors(), ", ");
+		if (Util.isDeveloper)
+			list("Platform", false, plugin.getPlatforms(), ", ");
+		list("Category", false, plugin.getCategories(), ", ");
 		list("Link", true, plugin.getLinks(), "\n");
 		list("Dependency", false, plugin.getDependencies(), ",\n");
 

@@ -109,8 +109,8 @@ public class PluginObject {
 	// TODO: finally add platform
 
 	// These are LinkedHashMaps to retain the order of the entries
-	public Map<Dependency, Object> dependencies;
-	public Map<String, Object> links, authors;
+	protected Map<Dependency, Object> dependencies;
+	protected Map<String, Object> links, authors, platforms, categories;
 
 	public PluginObject(String filename, String checksum, long timestamp,
 			Status status) {
@@ -121,6 +121,8 @@ public class PluginObject {
 		this.status = status;
 		dependencies = new LinkedHashMap<Dependency, Object>();
 		authors = new LinkedHashMap<String, Object>();
+		platforms = new LinkedHashMap<String, Object>();
+		categories = new LinkedHashMap<String, Object>();
 		links = new LinkedHashMap<String, Object>();
 		if (status == Status.NOT_FIJI)
 			filesize = Util.getFilesize(filename);
@@ -195,6 +197,22 @@ public class PluginObject {
 
 	public Iterable<String> getAuthors() {
 		return authors.keySet();
+	}
+
+	public void addPlatform(String platform) {
+		platforms.put(platform, (Object)null);
+	}
+
+	public Iterable<String> getPlatforms() {
+		return platforms.keySet();
+	}
+
+	public void addCategory(String category) {
+		categories.put(category, (Object)null);
+	}
+
+	public Iterable<String> getCategories() {
+		return categories.keySet();
 	}
 
 	public Iterable<Version> getPrevious() {

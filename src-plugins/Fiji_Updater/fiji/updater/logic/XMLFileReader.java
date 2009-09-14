@@ -116,6 +116,10 @@ public class XMLFileReader extends DefaultHandler {
 			current.description = body;
 		else if (tagName.equals("author"))
 			current.addAuthor(body);
+		else if (tagName.equals("platform"))
+			current.addPlatform(body);
+		else if (tagName.equals("category"))
+			current.addCategory(body);
 		else if (tagName.equals("link"))
 			current.addLink(body);
 		else if (tagName.equals("plugin")) {

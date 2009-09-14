@@ -33,12 +33,14 @@ public class XMLFileWriter {
 		"<!DOCTYPE pluginRecords [\n"
 		+ "<!ELEMENT pluginRecords (plugin*)>\n"
 		+ "<!ELEMENT plugin (version?, previous-version*)>\n"
-		+ "<!ELEMENT version (description?, dependency*, link*, author*)>\n"
+		+ "<!ELEMENT version (description?, dependency*, link*, author*, platform*, category*)>\n"
 		+ "<!ELEMENT previous-version EMPTY>\n"
 		+ "<!ELEMENT description (#PCDATA)>\n"
 		+ "<!ELEMENT dependency EMPTY>\n"
 		+ "<!ELEMENT link (#PCDATA)>\n"
 		+ "<!ELEMENT author (#PCDATA)>\n"
+		+ "<!ELEMENT platform (#PCDATA)>\n"
+		+ "<!ELEMENT category (#PCDATA)>\n"
 		+ "<!ATTLIST plugin filename CDATA #REQUIRED>\n"
 		+ "<!ATTLIST dependency filename CDATA #REQUIRED>\n"
 		+ "<!ATTLIST dependency timestamp CDATA #IMPLIED>\n"
@@ -101,6 +103,10 @@ public class XMLFileWriter {
 
 				writeSimpleTags("link", plugin.getLinks());
 				writeSimpleTags("author", plugin.getAuthors());
+				writeSimpleTags("platform",
+						plugin.getPlatforms());
+				writeSimpleTags("category",
+						plugin.getCategories());
 				handler.endElement("", "", "version");
 			}
                         for (PluginObject.Version version :

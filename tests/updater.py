@@ -105,11 +105,32 @@ remove(macros + 'deleted-modified.ijm')
 
 rename(macros + 'obsolete.ijm', macros + 'obsoleted.ijm')
 
+# mark updateable.ijm with a platform
+f = popen('gzip -d < ' + tmpWebRoot + 'db.xml.gz', 'r')
+xml = ''.join(f.readlines())
+f.close()
+
+from re import DOTALL, compile, sub
+pattern = compile('(<plugin filename="macros/updateable.ijm.*?<version .*?)/>',
+		DOTALL)
+xml = sub(pattern, '\\1><platform>fakePlatform</platform></version>', xml)
+
+f = popen('gzip -9 > ' + tmpWebRoot + 'db.xml.gz', 'w')
+f.write(xml)
+f.close()
+
 if launchProgram(['./fiji', '-Dpython.cachedir.skip=true', '--',
 		'--jython', fijiDir + 'bin/update-fiji.py',
 		'--upload-to', tmpWebRoot] + uploadables, tmpRoot) != 0:
 	exit(1)
 
+# verify that the platform is preserved
+f = popen('gzip -d < ' + tmpWebRoot + 'db.xml.gz', 'r')
+xml = ''.join(f.readlines())
+f.close()
+
+if xml.find('fakePlatform') < 0:
+	die('Platform was not preserved!')
 
 remove(macros + 'updateable.ijm')
 rename(macros + 'outoftheway.ijm', macros + 'updateable.ijm')
