@@ -111,9 +111,16 @@ xml = ''.join(f.readlines())
 f.close()
 
 from re import DOTALL, compile, sub
-pattern = compile('(<plugin filename="macros/updateable.ijm.*?<version .*?)/>',
-		DOTALL)
-xml = sub(pattern, '\\1><platform>fakePlatform</platform></version>', xml)
+from fiji.updater.util import Util
+xml = sub('(</pluginRecords>)',
+		'<plugin filename="thisPlatform">' \
+		+ '<version checksum="bogus"><platform>' \
+		+ Util.platform \
+		+ '</platform></version></plugin>' \
+		+ '<plugin filename="otherPlatform">' \
+		+ '<version checksum="bogus"><platform>' \
+		+ 'bogus' \
+		+ '</platform></version></plugin>\\1', xml)
 
 f = popen('gzip -9 > ' + tmpWebRoot + 'db.xml.gz', 'w')
 f.write(xml)
@@ -124,14 +131,6 @@ if launchProgram(['./fiji', '-Dpython.cachedir.skip=true', '--',
 		'--upload-to', tmpWebRoot] + uploadables, tmpRoot) != 0:
 	exit(1)
 
-# verify that the platform is preserved
-f = popen('gzip -d < ' + tmpWebRoot + 'db.xml.gz', 'r')
-xml = ''.join(f.readlines())
-f.close()
-
-if xml.find('fakePlatform') < 0:
-	die('Platform was not preserved!')
-
 remove(macros + 'updateable.ijm')
 rename(macros + 'outoftheway.ijm', macros + 'updateable.ijm')
 
@@ -140,6 +139,9 @@ f.write('modified by the user')
 f.close()
 
 rename(macros + 'obsoleted.ijm', macros + 'obsolete.ijm')
+
+# pretend to be a user again
+remove(tmpRoot + 'fiji.cxx')
 
 # install a test script
 action = tmpRoot + 'plugins/Test_Fiji_Updater.py'
@@ -178,7 +180,9 @@ expect = {
 	'jars/fiji-scripting.jar' : Status.NOT_FIJI,
 	'jars/jython2.2.1/jython.jar' : Status.NOT_FIJI,
 	'plugins/Jython_Interpreter.jar' : Status.NOT_FIJI,
-	'plugins/Test_Fiji_Updater.py' : Status.NOT_FIJI
+	'plugins/Test_Fiji_Updater.py' : Status.NOT_FIJI,
+	'thisPlatform' : Status.NOT_INSTALLED,
+	'otherPlatform' : Status.NOT_INSTALLED
 }
 
 from fiji.updater.logic import PluginCollection
@@ -235,6 +239,21 @@ for plugin in updateables:
 	if shownByDefault.getPlugin(plugin) != None:
 		print 'Updateable', plugin, 'still shown'
 		errorCount += 1
+
+# test that platform was preserved
+for plugin in ['thisPlatform', 'otherPlatform']:
+	if sum([1 for p in plugins.getPlugin(plugin).getPlatforms()]) == 0:
+		print 'Platform not preserved for', plugin
+		errorCount += 1
+
+# verify that only those with the correct platform are shown
+notHidden = PluginCollection.clone(plugins.notHidden())
+if notHidden.getPlugin('thisPlatform') == None:
+	print 'File with correct platform not shown!'
+	errorCount += 1
+if notHidden.getPlugin('otherPlatform') != None:
+	print 'File with wrong platform not hidden!'
+	errorCount += 1
 
 if errorCount > 0:
 	print 'The plugin list is:'

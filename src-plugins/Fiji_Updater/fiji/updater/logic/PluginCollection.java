@@ -5,6 +5,8 @@ import fiji.updater.logic.PluginObject.Status;
 
 import fiji.updater.util.DependencyAnalyzer;
 
+import fiji.updater.util.Util;
+
 import java.io.IOException;
 
 import java.util.ArrayList;
@@ -64,9 +66,8 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	}
 
 	public Iterable<PluginObject> notHidden() {
-		// TODO: (Util.isDeveloper || plugin.platform == null ||
-		// plugin.platform.equals(Util.platform))
-		return filter(not(is(Status.OBSOLETE_UNINSTALLED)));
+		return filter(and(not(is(Status.OBSOLETE_UNINSTALLED)),
+				 doesPlatformMatch()));
 	}
 
 	public Iterable<PluginObject> uninstalled() {
@@ -179,6 +180,31 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		}, plugins);
 	}
 
+	public Filter yes() {
+		return new Filter() {
+			public boolean matches(PluginObject plugin) {
+				return true;
+			}
+		};
+	}
+
+	public Filter doesPlatformMatch() {
+		// If we're a developer or no platform was specified, return yes
+		if (Util.isDeveloper)
+			return yes();
+		return new Filter() {
+			public boolean matches(PluginObject plugin) {
+				boolean result = true;
+				for (String platform : plugin.getPlatforms())
+					if (platform.equals(Util.platform))
+						return true;
+					else
+						result = false;
+				return result;
+			}
+		};
+	}
+
 	public Filter is(final Action action) {
 		return new Filter() {
 			public boolean matches(PluginObject plugin) {
@@ -238,6 +264,14 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		return new Filter() {
 			public boolean matches(PluginObject plugin) {
 				return a.matches(plugin) || b.matches(plugin);
+			}
+		};
+	}
+
+	public Filter and(final Filter a, final Filter b) {
+		return new Filter() {
+			public boolean matches(PluginObject plugin) {
+				return a.matches(plugin) && b.matches(plugin);
 			}
 		};
 	}
