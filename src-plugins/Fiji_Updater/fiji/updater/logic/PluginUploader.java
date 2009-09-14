@@ -132,9 +132,11 @@ public class PluginUploader {
 		PrintStream out = new PrintStream(path);
 		for (PluginObject plugin :
 				PluginCollection.getInstance().fijiPlugins())
-			out.println(plugin.getFilename() + " "
-					+ plugin.getTimestamp() + " "
-					+ plugin.getChecksum());
+			if (!plugin.isObsolete() &&
+					plugin.platforms.size() == 0)
+				out.println(plugin.getFilename() + " "
+						+ plugin.getTimestamp() + " "
+						+ plugin.getChecksum());
 		out.close();
 	}
 

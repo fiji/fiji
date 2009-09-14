@@ -131,6 +131,13 @@ if launchProgram(['./fiji', '-Dpython.cachedir.skip=true', '--',
 		'--upload-to', tmpWebRoot] + uploadables, tmpRoot) != 0:
 	exit(1)
 
+f = open(tmpWebRoot + 'current.txt', 'r')
+txt = ''.join(f.readlines())
+f.close()
+
+if txt.find('obsolete') >= 0:
+	die('Obsolete files were added to current.txt')
+
 remove(macros + 'updateable.ijm')
 rename(macros + 'outoftheway.ijm', macros + 'updateable.ijm')
 
