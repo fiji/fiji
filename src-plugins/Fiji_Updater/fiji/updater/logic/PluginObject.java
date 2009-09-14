@@ -337,6 +337,16 @@ public class PluginObject {
 		return action == Action.UPLOAD;
 	}
 
+	public boolean isObsolete() {
+		switch (status) {
+		case OBSOLETE:
+		case OBSOLETE_MODIFIED:
+		case OBSOLETE_UNINSTALLED:
+			return true;
+		}
+		return false;
+	}
+
 	public boolean isFiji() {
 		return status != Status.NOT_FIJI;
 	}
@@ -355,7 +365,8 @@ public class PluginObject {
 				+ "for uninstall");
 		touch(Util.prefixUpdate(filename));
 		if (status != Status.NOT_FIJI)
-			setStatus(Status.NOT_INSTALLED);
+			setStatus(isObsolete() ? Status.OBSOLETE_UNINSTALLED
+					: Status.NOT_INSTALLED);
 	}
 
 	public static void touch(String target) throws IOException {

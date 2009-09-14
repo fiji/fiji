@@ -255,6 +255,10 @@ if notHidden.getPlugin('otherPlatform') != None:
 	print 'File with wrong platform not hidden!'
 	errorCount += 1
 
+# verify that the uninstalled obsolete plugin is no longer shown
+if notHidden.getPlugin('macros/obsolete.ijm') != None:
+	print 'Obsolete file which was uninstalled is not hidden!'
+	errorCount += 1
 if errorCount > 0:
 	print 'The plugin list is:'
 	for plugin in plugins:
