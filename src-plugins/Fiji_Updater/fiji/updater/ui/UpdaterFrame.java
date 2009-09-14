@@ -270,6 +270,7 @@ public class UpdaterFrame extends JFrame
 						continue;
 				}
 				table.firePluginChanged(plugin);
+				pluginsChanged();
 			}
 		}
 
@@ -418,30 +419,53 @@ public class UpdaterFrame extends JFrame
 			// TODO: has to change when details editor is embedded
 			btnUpload.setEnabled(plugins.hasUploadOrRemove());
 		}
+
+		int size = plugins.size();
+		int install = 0, uninstall = 0, upload = 0;
+		long bytesToDownload = 0, bytesToUpload = 0;
+
+		// TODO: show dependencies' total size
+		for (PluginObject plugin : plugins)
+			switch (plugin.getAction()) {
+			case INSTALL:
+			case UPDATE:
+				install++;
+				bytesToDownload += plugin.filesize;
+				break;
+			case UNINSTALL:
+				uninstall++;
+				break;
+			case UPLOAD:
+				upload++;
+				bytesToUpload += plugin.filesize;
+				break;
+			}
+		String text = "Total: " + size + ", install/update: " + install
+			+ ", uninstall: " + uninstall
+			+ ", download size: " + sizeToString(bytesToDownload);
+		if (Util.isDeveloper)
+			text += ", upload: " + upload + ", upload size: "
+				+ sizeToString(bytesToUpload);
+		lblPluginSummary.setText(text);
+
+	}
+
+	protected final static String[] units = {"B", "kB", "MB", "GB", "TB"};
+	public static String sizeToString(long size) {
+		int i;
+		for (i = 1; i < units.length && size >= 1l<<(10 * i); i++)
+			; // do nothing
+		if (--i == 0)
+			return "" + size + units[i];
+		// round
+		size *= 100;
+		size >>= (10 * i);
+		size += 5;
+		size /= 10;
+		return "" + (size / 10) + "." + (size % 10) + units[i];
 	}
 
 	public void tableChanged(TableModelEvent e) {
-		int size = plugins.size();
-		int install = 0, uninstall = 0, update = 0, upload = 0;
-
-		//Refresh count information
-		// TODO: show total size (and dependencies' total size)
-		for (PluginObject myPlugin : plugins)
-			if (myPlugin.toInstall())
-				install += 1;
-			else if (myPlugin.toUninstall())
-				uninstall += 1;
-			else if (myPlugin.toUpdate())
-				update += 1;
-			else if (myPlugin.toUpload())
-				upload += 1;
-		String text = "Total: " + size + ", To install: " + install
-			+ ", To uninstall: " + uninstall
-			+ ", To update: " + update;
-		if (Util.isDeveloper)
-			text += ", To upload: " + upload;
-		lblPluginSummary.setText(text);
-
 		pluginsChanged();
 	}
 

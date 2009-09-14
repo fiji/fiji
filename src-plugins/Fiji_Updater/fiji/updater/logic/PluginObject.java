@@ -297,19 +297,15 @@ public class PluginObject {
 	}
 
 	public boolean isInstallable() {
-		return status == Status.NOT_INSTALLED;
+		return status.isValid(Action.INSTALL);
 	}
 
 	public boolean isUpdateable() {
-		return status == Status.UPDATEABLE;
-	}
-
-	public boolean isUninstallableOnly() {
-		return status == Status.INSTALLED;
+		return status.isValid(Action.UPDATE);
 	}
 
 	public boolean isUninstallable() {
-		return status == Status.INSTALLED || status == Status.UPDATEABLE;
+		return status.isValid(Action.UNINSTALL);
 	}
 
 	public boolean isLocallyModified() {
@@ -323,15 +319,15 @@ public class PluginObject {
 
 	// TODO: why that redundancy?  We set Action.UPDATE only if it is updateable anyway!  Besides, use getAction(). DRY, DRY, DRY!
 	public boolean toUpdate() {
-		return isUpdateable() && action == Action.UPDATE;
+		return action == Action.UPDATE;
 	}
 
 	public boolean toUninstall() {
-		return isUninstallable() && action == Action.UNINSTALL;
+		return action == Action.UNINSTALL;
 	}
 
 	public boolean toInstall() {
-		return isInstallable() && action == Action.INSTALL;
+		return action == Action.INSTALL;
 	}
 
 	public boolean toUpload() {
