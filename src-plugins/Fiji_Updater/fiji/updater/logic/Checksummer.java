@@ -44,6 +44,7 @@ public class Checksummer extends Progressable {
 	}
 
 	protected List<StringPair> queue;
+	protected String fijiRoot;
 
 	public void queueDir(String[] dirs, String[] extensions) {
 		Set<String> set = new HashSet<String>();
@@ -54,12 +55,12 @@ public class Checksummer extends Progressable {
 	}
 
 	public void queueDir(String dir, Set<String> extensions) {
-		File file = new File(Util.prefix(dir));
+		File file = new File(prefix(dir));
 		if (!file.exists())
 			return;
 		for (String item : file.list()) {
 			String path = dir + "/" + item;
-			file = new File(Util.prefix(path));
+			file = new File(prefix(path));
 			if (file.isDirectory()) {
 				if (!item.equals(".") && !item.equals(".."))
 					queueDir(path, extensions);
@@ -68,17 +69,22 @@ public class Checksummer extends Progressable {
 			int dot = item.lastIndexOf('.');
 			if (dot < 0 || !extensions.contains(item.substring(dot)))
 				continue;
-			queue(path);
+			queue(path, file.getAbsolutePath());
 		}
 	}
 
 	protected void queueIfExists(String path) {
-		if (new File(Util.prefix(path)).exists())
-			queue(path);
+		String realPath = prefix(path);
+		if (new File(realPath).exists())
+			queue(path, realPath);
 	}
 
 	protected void queue(String path) {
-		queue(path, path);
+		queue(path, prefix(path));
+	}
+
+	protected String prefix(String path) {
+		return fijiRoot == null ? Util.prefix(path) : fijiRoot + path;
 	}
 
 	protected void queue(String path, String realPath) {
@@ -103,8 +109,15 @@ public class Checksummer extends Progressable {
 			if (checksum == null)
 				throw new RuntimeException("Tried to remove "
 					+ path + ", which is not known to Fiji");
-			plugins.add(new PluginObject(path, checksum,
-				timestamp, Status.NOT_FIJI));
+			if (fijiRoot == null)
+				plugin = new PluginObject(path, checksum,
+						timestamp, Status.NOT_FIJI);
+			else {
+				plugin = new PluginObject(path, null, 0,
+						Status.OBSOLETE);
+				plugin.addPreviousVersion(checksum, timestamp);
+			}
+			plugins.add(plugin);
 		}
 		else if (checksum != null) {
 			plugin.setLocalVersion(checksum, timestamp);
@@ -131,6 +144,17 @@ public class Checksummer extends Progressable {
 		for (String file : files)
 			queue(file);
 		handleQueue();
+	}
+
+	public void updateFromPreviousInstallation(String fijiRoot) {
+		if (!Util.isDeveloper)
+			throw new RuntimeException("Must be developer");
+		this.fijiRoot = new File(fijiRoot).getAbsolutePath() + "/";
+		updateFromLocal();
+		for (PluginObject plugin : PluginCollection.getInstance())
+			if (plugin.isLocallyModified())
+				plugin.addPreviousVersion(plugin.newChecksum,
+						plugin.newTimestamp);
 	}
 
 	public void updateFromLocal() {
