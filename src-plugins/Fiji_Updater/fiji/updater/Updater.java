@@ -31,9 +31,8 @@ import javax.swing.JOptionPane;
 import javax.xml.parsers.ParserConfigurationException;
 
 public class Updater implements PlugIn {
-	public static final String MAIN_URL =
-		"http://pacific.mpi-cbg.de/update/";
-	public static final String UPDATE_DIRECTORY = "/update/";
+	public static String MAIN_URL = "http://pacific.mpi-cbg.de/update/";
+	public static String UPDATE_DIRECTORY = "/update/";
 
 	public static final String TXT_FILENAME = "current.txt";
 	public static final String XML_LOCK = "db.xml.gz.lock";
