@@ -1,5 +1,7 @@
 package fiji.scripting;
 
+import ij.WindowManager;
+
 import java.util.concurrent.ThreadPoolExecutor;
 
 import com.sun.jdi.connect.VMStartException;
@@ -105,6 +107,8 @@ public class TextEditor extends JFrame implements ActionListener,
 	boolean undoInProgress, redoInProgress;
 
 	public TextEditor(String path1) {
+		super("Script Editor");
+		WindowManager.addWindow(this);
 		JPanel cp = new JPanel(new BorderLayout());
 		textArea = new RSyntaxTextArea() {
 			public void undoLastAction() {
@@ -242,6 +246,7 @@ public class TextEditor extends JFrame implements ActionListener,
 			public void windowClosing(WindowEvent e) {
 				if (!handleUnsavedChanges())
 					return;
+				WindowManager.removeWindow(TextEditor.this);
 				dispose();
 			}
 		});
