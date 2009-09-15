@@ -199,6 +199,15 @@ public class Fake {
 			}
 
 			all.make();
+
+			/*
+			 * By definition, everything is up-to-date now, but for
+			 * performance, we set the mtimes so that we do not need
+			 * to run our clever .jar checking again (which is
+			 * quite expensive performance-wise, even if not as
+			 * expensive as compiling everything again.
+			 */
+			all.setUpToDate();
 		}
 		catch (FakeException e) {
 			System.err.println(e);
@@ -885,9 +894,6 @@ public class Fake {
 						return;
 					System.err.println("Building " + this);
 					action();
-					if (!checkUpToDate())
-						touchFile(target);
-					// by definition, it's up-to-date now
 					upToDateStage = 2;
 				} catch (Exception e) {
 					if (!(e instanceof FakeException))
@@ -896,6 +902,19 @@ public class Fake {
 					error(e.getMessage());
 				}
 				wasAlreadyInvoked = false;
+			}
+
+			void setUpToDate() throws IOException {
+				Iterator iter = prerequisites.iterator();
+				while (iter.hasNext()) {
+					Rule rule =
+						getRule((String)iter.next());
+					if (rule != null)
+						rule.setUpToDate();
+				}
+
+				if (!checkUpToDate())
+					touchFile(target);
 			}
 
 			protected void clean(boolean dry_run) {
