@@ -71,7 +71,7 @@ precompiledDirectory=precompiled/
 
 JAVA_HOME(linux)=java/linux/jdk1.6.0_10/jre
 JAVA_HOME(linux64)=java/linux-amd64/jdk1.6.0_13/jre
-JAVA_HOME(win32)=java/win32/jdk1.6.0_03/jre
+JAVA_HOME(win32)=java/win32/jdk1.6.0_16/jre
 JAVA_HOME(win64)=java/win64/jdk1.6.0_04/jre
 JAVA_HOME(macosx)=java/macosx-java3d
 ENVOVERRIDES(JAVA_HOME)=true
