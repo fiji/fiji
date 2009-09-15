@@ -40,12 +40,17 @@ else:
 	checksummer.updateFromLocal(files)
 	plugins = [plugins.getPlugin(file) for file in files]
 	# TODO: add dependencies
-for plugin in plugins:
+
+# mark for update
+def markForUpdate(plugin):
 	for action in [Action.UPLOAD, Action.REMOVE]:
 		if plugin.getStatus().isValid(action):
 			plugin.setAction(action)
-			break
-	if plugin.getAction() == plugin.getStatus().getNoAction():
+			return True
+	return False
+
+for plugin in plugins:
+	if not markForUpdate(plugin):
 		print 'Leaving', plugin.getFilename(), 'alone:', \
 			plugin.getStatus(), plugin.getAction()
 
