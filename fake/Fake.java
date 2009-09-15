@@ -835,7 +835,7 @@ public class Fake {
 				if (targetModified == sourceModified &&
 						compare(source, target) == 0)
 					return true;
-				if (targetModified <= sourceModified)
+				if (targetModified < sourceModified)
 					return upToDateError(source, target);
 				return true;
 			}
