@@ -38,8 +38,12 @@ case "$1" in
 	;;
 *)
 	test -d nightly-build ||
-	git clone . nightly-build
+	git clone . nightly-build &&
 	cd nightly-build &&
+	if test -z "$(find java -maxdepth 3 -type f)"
+	then
+		export JAVA_HOME=$(../fiji --print-java-home)
+	fi &&
 	git fetch .. "$1" &&
 	compile FETCH_HEAD
 	;;
