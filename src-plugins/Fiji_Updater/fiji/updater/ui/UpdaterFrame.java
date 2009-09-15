@@ -367,6 +367,7 @@ public class UpdaterFrame extends JFrame
 			for (PluginObject plugin : uninstalled)
 				table.firePluginChanged(plugin);
 			updatePluginsTable();
+			info("Updated successfully.  Please restart Fiji!");
 		} catch (Canceled e) {
 			// TODO: remove "update/" directory
 			IJ.error("Canceled");
@@ -377,18 +378,6 @@ public class UpdaterFrame extends JFrame
 			IJ.error("Installer failed: " + e);
 			installer.done();
 		}
-	}
-
-	public void exitWithRestartFijiMessage() {
-		// TODO: remove once the details editor is inline
-		removeLoadedFrameIfExists();
-		IJ.showMessage("Restart Fiji", "You must restart Fiji application for the Plugin status changes to take effect.");
-		dispose();
-	}
-
-	public void exitWithRestartMessage(String title, String message) {
-		IJ.showMessage(title, message);
-		dispose();
 	}
 
 	private void removeLoadedFrameIfExists() {
