@@ -30,6 +30,8 @@ case "$1" in
 	}
 	;;
 *)
+	test -d nightly-build ||
+	git clone . nightly-build
 	cd nightly-build &&
 	git fetch .. "$1" &&
 	compile FETCH_HEAD
