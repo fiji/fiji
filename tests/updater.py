@@ -114,13 +114,11 @@ from re import DOTALL, compile, sub
 from fiji.updater.util import Util
 xml = sub('(</pluginRecords>)',
 		'<plugin filename="thisPlatform">' \
-		+ '<version checksum="bogus"><platform>' \
-		+ Util.platform \
-		+ '</platform></version></plugin>' \
+		+ '<platform>' + Util.platform + '</platform>' \
+		+ '<version checksum="bogus"/></plugin>' \
 		+ '<plugin filename="otherPlatform">' \
-		+ '<version checksum="bogus"><platform>' \
-		+ 'bogus' \
-		+ '</platform></version></plugin>\\1', xml)
+		+ '<platform>bogus</platform>' \
+		+ '<version checksum="bogus"/></plugin>\\1', xml)
 
 f = popen('gzip -9 > ' + tmpWebRoot + 'db.xml.gz', 'w')
 f.write(xml)
