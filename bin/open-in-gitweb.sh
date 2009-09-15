@@ -55,11 +55,14 @@ do
 	if test -f "$arg"
 	then
 		(cd "$(dirname "$arg")" &&
+		HEAD=$(git rev-parse --symbolic-full-name HEAD) &&
 		arg=$(git ls-files --full-name "${arg##*/}") &&
 		url=$(get_url) &&
-		firefox "$url;a=blob;f=$arg;hb=HEAD$linenumber")
+		firefox "$url;a=blob;f=$arg;hb=$HEAD$linenumber")
 	else
+		HEAD=$(git rev-parse --symbolic-full-name HEAD) &&
+		arg=$(git rev-parse --verify "$arg") &&
 		url=$(get_url) &&
-		firefox "$url;a=commitdiff;h=$arg"
+		firefox "$url;a=commitdiff;h=$arg;hb=$HEAD"
 	fi || break
 done
