@@ -239,6 +239,15 @@ public class PluginObject {
 		this.action = action;
 	}
 
+	public boolean setFirstValidAction(Action[] actions) {
+		for (Action action : actions)
+			if (status.isValid(action)) {
+				setAction(action);
+				return true;
+			}
+		return false;
+	}
+
 	public void setStatus(Status status) {
 		this.status = status;
 		setNoAction();

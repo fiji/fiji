@@ -392,8 +392,8 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 	public void markForUpdate(boolean evenForcedUpdates) {
 		for (PluginObject plugin : updateable(evenForcedUpdates))
-			plugin.setAction(plugin.getStatus()
-				.isValid(Action.UPDATE) ?
-				Action.UPDATE : Action.UNINSTALL);
+			plugin.setFirstValidAction(new Action[] {
+					Action.UPDATE, Action.UNINSTALL
+			});
 	}
 }

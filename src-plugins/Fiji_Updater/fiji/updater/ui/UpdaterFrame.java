@@ -259,18 +259,17 @@ public class UpdaterFrame extends JFrame
 			for (PluginObject plugin : table.getSelectedPlugins()) {
 				if (action == null)
 					plugin.setNoAction();
-				else {
-					Status status = plugin.getStatus();
-					if (status.isValid(action))
-						plugin.setAction(action);
-					else if (status.isValid(otherAction))
-						plugin.setAction(otherAction);
-					else
-						continue;
-				}
+				else if (!setAction(plugin))
+					continue;
 				table.firePluginChanged(plugin);
 				pluginsChanged();
 			}
+		}
+
+		protected boolean setAction(PluginObject plugin) {
+			return plugin.setFirstValidAction(new Action[] {
+					action, otherAction
+			});
 		}
 
 		public void enableIfValid() {
