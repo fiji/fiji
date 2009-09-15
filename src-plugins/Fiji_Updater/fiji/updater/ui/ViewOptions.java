@@ -36,7 +36,8 @@ public class ViewOptions extends JComboBox {
 	}
 
 	public Iterable<PluginObject> getView(PluginTable table) {
-		PluginCollection plugins = PluginCollection.getInstance();
+		PluginCollection plugins = PluginCollection
+			.clone(PluginCollection.getInstance().notHidden());
 		switch ((Option)getSelectedItem()) {
 			case INSTALLED: return plugins.installed();
 			case UNINSTALLED: return plugins.uninstalled();
@@ -47,7 +48,7 @@ public class ViewOptions extends JComboBox {
 			case OTHERS: return plugins.nonFiji();
 			case CHANGES: return plugins.changes();
 			case SELECTED: return table.getSelectedPlugins();
-			default: return plugins.notHidden();
+			default: return plugins;
 		}
 	}
 }
