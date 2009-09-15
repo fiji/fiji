@@ -15,6 +15,13 @@ compile () {
 
 case "$1" in
 '')
+	case "$(basename "$(cd "$(dirname "$0")"/.. && pwd)")" in
+	nightly-build) ;; # okay
+	*)
+		exec "$0" HEAD
+		;;
+	esac
+
 	cd "$(dirname "$0")"/..
 
 	EMAIL=fiji-devel@googlegroups.com
