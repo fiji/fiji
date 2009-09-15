@@ -9,7 +9,7 @@ from fiji.updater.logic import Checksummer, FileUploader, \
 	PluginCollection, PluginObject, PluginUploader, \
 	XMLFileDownloader, XMLFileReader
 from fiji.updater.logic.PluginObject import Action
-from fiji.updater.util import Progress, Util
+from fiji.updater.util import StderrProgress, Util
 from java.io import ByteArrayInputStream
 from java.util import Calendar, Observer
 
@@ -24,27 +24,7 @@ downloader = XMLFileDownloader()
 downloader.start()
 reader = XMLFileReader(downloader.getInputStream())
 
-class ConsoleProgress(Progress):
-	end = '\033[K\r'
-	def setTitle(self, title):
-		self.label = title
-
-	def setCount(self, count, total):
-		stderr.write(self.label + ' ' \
-			+ str(count) + '/' + str(total) + self.end)
-
-	def addItem(self, item):
-		self.item = str(item)
-		stderr.write(self.label + ' (' + self.item + ') ' + self.end)
-
-	def setItemCount(self, count, total):
-		stderr.write(self.label + ' (' + self.item + ') [' \
-			+ str(count) + '/' + str(total) + ']' + self.end)
-
-	def done(self):
-		stderr.write('\nDone\n')
-
-progress = ConsoleProgress()
+progress = StderrProgress()
 checksummer = Checksummer(progress)
 if len(argv) == 1:
 	checksummer.updateFromLocal()
