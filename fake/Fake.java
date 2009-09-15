@@ -706,7 +706,7 @@ public class Fake {
 			String res = null;
 			if ("true".equals(variables.get("ENVOVERRIDES("
 							+ key + ")")))
-				res = stripPrefix(System.getenv(key), fijiHome);
+				res = stripFijiHome(System.getenv(key));
 			key = key.toUpperCase();
 			if (subkey != null && res == null)
 				res = (String)variables.get(key
@@ -2871,6 +2871,13 @@ public class Fake {
 
 	public static String join(List list) {
 		return join(list, " ");
+	}
+
+	public static String stripFijiHome(String string) {
+		String slashes = string.replace('\\', '/');
+		if (slashes.startsWith(fijiHome))
+			return stripPrefix(slashes, fijiHome);
+		return string;
 	}
 
 	public static String stripPrefix(String string, String prefix) {
