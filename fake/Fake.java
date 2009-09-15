@@ -285,6 +285,10 @@ public class Fake {
 				void action() { cleanAll(true); }
 			});
 
+			addSpecialRule(new Special("dry-run") {
+				void action() { check(); }
+			});
+
 			addSpecialRule(new Special("check") {
 				void action() { check(); }
 			});
