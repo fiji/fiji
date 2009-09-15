@@ -125,6 +125,8 @@ public class Checksummer extends Progressable {
 		}
 		else if (checksum != null) {
 			plugin.setLocalVersion(checksum, timestamp);
+			if (plugin.getStatus() == Status.OBSOLETE_UNINSTALLED)
+				plugin.setStatus(Status.OBSOLETE);
 			counter += (int)Util.getFilesize(realPath);
 		}
 		setItemCount(1, 1);
