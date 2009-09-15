@@ -221,7 +221,6 @@ public class UpdaterFrame extends JFrame
 		table.getModel().addTableModelListener(this);
 
 		pack();
-		setVisible(true);
 	}
 
 	public Progress getProgress(String title) {

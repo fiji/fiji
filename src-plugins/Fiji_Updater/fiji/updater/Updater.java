@@ -1,5 +1,9 @@
 package fiji.updater;
 
+import ij.IJ;
+
+import ij.plugin.PlugIn;
+
 import fiji.Main;
 
 import fiji.updater.logic.Checksummer;
@@ -15,10 +19,6 @@ import fiji.updater.ui.ViewOptions.Option;
 import fiji.updater.util.Canceled;
 import fiji.updater.util.Progress;
 import fiji.updater.util.Util;
-
-import ij.IJ;
-
-import ij.plugin.PlugIn;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -48,6 +48,8 @@ public class Updater implements PlugIn {
 	public void run(String arg) {
 		final UpdaterFrame main = new UpdaterFrame();
 		new Main().setIcon(main);
+		main.setLocationRelativeTo(IJ.getInstance());
+		main.setVisible(true);
 
 		Progress progress = main.getProgress("Starting up...");
 
