@@ -101,7 +101,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 			Status.UPDATEABLE, Status.NEW,
 			Status.OBSOLETE, Status.OBSOLETE_MODIFIED
 		};
-		return filter(oneOf(oneOf));
+		return filter(or(oneOf(oneOf), is(Action.INSTALL)));
 	}
 
 
@@ -393,7 +393,12 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	public void markForUpdate(boolean evenForcedUpdates) {
 		for (PluginObject plugin : updateable(evenForcedUpdates))
 			plugin.setFirstValidAction(new Action[] {
-					Action.UPDATE, Action.UNINSTALL
+				Action.UPDATE, Action.UNINSTALL, Action.INSTALL
 			});
+		for (String name : Util.getLaunchers()) {
+			PluginObject launcher = getPlugin(name);
+			if (launcher.getStatus() == Status.NOT_INSTALLED)
+				launcher.setAction(Action.INSTALL);
+		}
 	}
 }

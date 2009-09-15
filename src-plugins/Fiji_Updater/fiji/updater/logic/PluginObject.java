@@ -359,11 +359,13 @@ public class PluginObject {
 	}
 
 	public boolean isUpdateable(boolean evenForcedUpdates) {
-		return status == Status.UPDATEABLE ||
+		return action == Action.UPDATE ||
+			action == Action.INSTALL ||
+			status == Status.UPDATEABLE ||
 			status == Status.OBSOLETE ||
 			(evenForcedUpdates &&
 			 (status.isValid(Action.UPDATE) ||
-			  status.isValid(Action.UNINSTALL)));
+			  status == Status.OBSOLETE_MODIFIED));
 	}
 
 	public void stageForUninstall() throws IOException {
