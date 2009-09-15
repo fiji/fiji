@@ -934,23 +934,24 @@ public class Fake {
 				System.err.println(message);
 			}
 
+			public Rule getRule(String prereq) {
+				if (prereq.endsWith(".jar/"))
+					prereq = stripSuffix(prereq, "/");
+				return (Rule)allRules.get(prereq);
+			}
+
 			public void makePrerequisites() throws FakeException {
 				Iterator iter = prerequisites.iterator();
 				while (iter.hasNext()) {
 					String prereq = (String)iter.next();
-
-					if (prereq.endsWith(".jar/"))
-						prereq = stripSuffix(prereq,
-								"/");
-					if (!allRules.containsKey(prereq)) {
+					Rule rule = getRule(prereq);
+					if (rule == null) {
 						if (this instanceof All)
 							error("Unknown target: "
 								+ prereq);
 						else
 							continue;
 					}
-
-					Rule rule = (Rule)allRules.get(prereq);
 					rule.make();
 				}
 			}
