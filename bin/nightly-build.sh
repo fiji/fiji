@@ -2,7 +2,7 @@
 
 compile () {
 	git reset --hard $1 &&
-	git clean -q -x -f &&
+	git clean -q -x -d -f &&
 	find * -type d |
 	while read dir
 	do
