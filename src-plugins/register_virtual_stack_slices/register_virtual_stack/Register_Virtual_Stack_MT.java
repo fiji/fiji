@@ -78,6 +78,9 @@ import bunwarpj.trakem2.transform.CubicBSplineTransform;
  * For a detailed documentation, please visit the plugin website at:
  * <p>
  * <A target="_blank" href="http://pacific.mpi-cbg.de/wiki/Register_Virtual_Stack_Slices">http://pacific.mpi-cbg.de/wiki/Register_Virtual_Stack_Slices</A>
+ * 
+ * @version 09/15/2009
+ * @author Ignacio Arganda-Carreras (ignacio.arganda@gmail.com), Stephan Saalfeld and Albert Cardona
  */
 public class Register_Virtual_Stack_MT implements PlugIn 
 {
