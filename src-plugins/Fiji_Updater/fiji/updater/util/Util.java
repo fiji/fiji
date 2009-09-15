@@ -73,6 +73,12 @@ public class Util {
 		return string.substring(0, string.length() - suffix.length());
 	}
 
+	public static String stripPrefix(String string, String prefix) {
+		if (!string.startsWith(prefix))
+			return string;
+		return string.substring(prefix.length());
+	}
+
 	public static String getPlatform() {
 		boolean is64bit =
 			System.getProperty("os.arch", "").indexOf("64") >= 0;
@@ -228,7 +234,8 @@ public class Util {
 	}
 
 	public static boolean isLauncher(String filename) {
-		return Arrays.binarySearch(launchers, filename) >= 0;
+		return Arrays.binarySearch(launchers,
+				stripPrefix(filename, fijiRoot)) >= 0;
 	}
 
 	public static String[] getLaunchers() {
