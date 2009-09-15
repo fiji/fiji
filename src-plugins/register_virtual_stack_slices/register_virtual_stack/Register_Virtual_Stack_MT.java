@@ -60,49 +60,76 @@ import bunwarpj.bUnwarpJ_;
 import bunwarpj.trakem2.transform.CubicBSplineTransform;
 
 /** 
- * Requires: a directory with images, all of the same dimensions
- * Performs: registration of one image to the next, by 6 different registration models:
- * 				- Translation (no deformation)
- * 				- Rigid (translation + rotation)
- * 				- Similarity (translation + rotation + isotropic scaling)
- * 				- Affine (free affine transformation)
- * 				- Elastic (consistent elastic deformations by B-splines)
- * 				- Moving least squares (maximal warping)
- * Outputs: the list of new images, one for slice, into a target directory as .tif files.
+ * Fiji plugin to register sequences of images in a concurrent (multi-threaded) way.
+ * <p>
+ * <b>Requires</b>: a directory with images, of any size and type (8, 16, 32-bit gray-scale or RGB color)
+ * <p>
+ * <b>Performs</b>: registration of a sequence of images, by 6 different registration models:
+ * <ul>
+ * 				<li> Translation (no deformation)</li>
+ * 				<li> Rigid (translation + rotation)</li>
+ * 				<li> Similarity (translation + rotation + isotropic scaling)</li>
+ * 				<li> Affine (free affine transformation)</li>
+ * 				<li> Elastic (consistent elastic deformations by B-splines)</li>
+ * 				<li> Moving least squares (maximal warping)</li>
+ * </ul>
+ * <b>Outputs</b>: the list of new images, one for slice, into a target directory as .tif files.
+ * <p>
+ * For a detailed documentation, please visit the plugin website at:
+ * <p>
+ * <A target="_blank" href="http://pacific.mpi-cbg.de/wiki/Register_Virtual_Stack_Slices">http://pacific.mpi-cbg.de/wiki/Register_Virtual_Stack_Slices</A>
  */
 public class Register_Virtual_Stack_MT implements PlugIn 
 {
 
 	// Registration types
+	/** translation registration model id */
 	public static final int TRANSLATION 			= 0;
+	/** rigid-body registration model id */
 	public static final int RIGID 					= 1;
+	/** rigid-body + isotropic scaing registration model id */
 	public static final int SIMILARITY 				= 2;
+	/** affine registration model id */
 	public static final int AFFINE 					= 3;
+	/** elastic registration model id */
 	public static final int ELASTIC 				= 4;
+	/** maximal warping registration model id */
 	public static final int MOVING_LEAST_SQUARES 	= 5;
 	
+	/** index of the features model checkbox */
 	public static int featuresModelIndex = 1;
+	/** index of the registration model checkbox */
 	public static int registrationModelIndex = 1;
+	/** working directory path */
 	public static String currentDirectory = (OpenDialog.getLastDirectory() == null) ? 
 					 OpenDialog.getDefaultDirectory() : OpenDialog.getLastDirectory();
 					 
+	/** advance options flag */
 	public static boolean advanced = false;
-	
+	/** shrinkage constraint flag */
 	public static boolean non_shrinkage = false;
 	
 	// Regularization 
+	/** scaling regularization parameter [0.0-1.0] */
 	public static double tweakScale = 0.95;
+	/** shear regularization parameter [0.0-1.0] */
 	public static double tweakShear = 0.95;
-	public static double tweakIso = 0.95;	
+	/** isotropy (aspect ratio) regularization parameter [0.0-1.0] */
+	public static double tweakIso = 0.95;
+	
+	/** display relaxation graph flag */
 	public static boolean displayRelaxGraph = false;
 	
 	// Image centers
+	/** array of x- coordinate image centers */ 
 	private static double[] centerX = null;
+	/** array of y- coordinate image centers */
 	private static double[] centerY = null;
 	
-	// Post-processing flag
+	/** post-processing flag */
 	public static boolean postprocess = true;
 
+	/** registration model string labels */
 	public static final String[] registrationModelStrings =
 			       {"Translation          -- no deformation                      ",
 	  	            "Rigid                -- translate + rotate                  ",
@@ -111,13 +138,18 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			        "Elastic              -- bUnwarpJ splines                    ",
 			        "Moving least squares -- maximal warping                     "};
 
+	/** feature model string labels */
 	public final static String[] featuresModelStrings = new String[]{ "Translation", "Rigid", "Similarity", "Affine" };
+	/** relaxation threshold (if the difference between last two iterations is below this threshold, the relaxation stops */
 	public static final float STOP_THRESHOLD = 0.01f;
+	/** maximum number of iterations in the relaxation loop */
 	public static final int MAX_ITER = 1000;
 
 	//---------------------------------------------------------------------------------
 	/**
 	 * Plug-in run method
+	 * 
+	 * @param arg plugin arguments
 	 */
 	public void run(String arg) 
 	{
@@ -190,7 +222,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 	 * 
 	 * @param source_dir Directory to read all images from, where each image is a slice in a sequence. Their names must be bit-sortable, i.e. if numbered, they must be padded with zeros.
 	 * @param target_dir Directory to store registered slices into.
-	 * @param refrenceName File name of the reference image
+	 * @param referenceName File name of the reference image
 	 * @param featuresModelIndex Index of the features extraction model (0=TRANSLATION, 1=RIGID, 2=SIMILARITY, 3=AFFINE)
 	 * @param registrationModelIndex Index of the registration model (0=TRANSLATION, 1=RIGID, 2=SIMILARITY, 3=AFFINE, 4=ELASTIC, 5=MOVING_LEAST_SQUARES)
 	 * @param advanced Triggers showing parameters setup dialogs.
@@ -226,7 +258,12 @@ public class Register_Virtual_Stack_MT implements PlugIn
 	 * @param p Registration parameters
 	 * @param non_shrink non shrinking mode flag
 	 */
-	public static void exec(final String source_dir, final String target_dir, final String referenceName, final Param p, final boolean non_shrink) 
+	public static void exec(
+			final String source_dir, 
+			final String target_dir, 
+			final String referenceName, 
+			final Param p, 
+			final boolean non_shrink) 
 	{
 		// get file listing
 		final String exts = ".tif.jpg.png.gif.tiff.jpeg.bmp.pgm";
@@ -269,20 +306,21 @@ public class Register_Virtual_Stack_MT implements PlugIn
 	
 	//-----------------------------------------------------------------------------------------
 	/**
-	 * Registration parameters class 
+	 * Registration parameters class. It stores SIFT and bUnwarpJ registration parameters. 
 	 *
 	 */
 	public static class Param
 	{	
+		/** SIFT parameters */
 		public final FloatArray2DSIFT.Param sift = new FloatArray2DSIFT.Param();
 		
 		/**
-		 * Closest/next closest neighbor distance ratio
+		 * Closest/next neighbor distance ratio
 		 */
 		public static float rod = 0.92f;
 		
 		/**
-		 * Maximal allowed alignment error in px
+		 * Maximal allowed alignment error in pixels
 		 */
 		public static float maxEpsilon = 25.0f;
 		
@@ -309,7 +347,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
         //---------------------------------------------------------------------------------
         /**
          * Shows parameter dialog when "advanced options" is checked
-         * @return false when dialog is canceled or 
+         * @return false when dialog is canceled or true when is not
          */
 		public boolean showDialog() 
 		{
@@ -497,7 +535,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 				// First approach with a RIGID transform
 				RigidModel2D initialModel = new RigidModel2D();
 				// We apply first the previous transform to the points in the previous image
-				inliers[i-1] = applyPreviousTransform(inliers[i-1], transform[i-1]);
+				inliers[i-1] = applyTransformReverse(inliers[i-1], transform[i-1]);
 				initialModel.fit(inliers[i-1]);
 				// Assign initial model
 				transform[i] = initialModel;
@@ -548,12 +586,12 @@ public class Register_Virtual_Stack_MT implements PlugIn
 	/**
 	 * Apply a transformation to the second point (P2) of a list of Point matches
 	 * 
-	 * @param list
-	 * @param t
+	 * @param list list of point matches
+	 * @param t transformation to be applied
 	 * 
-	 * @return new list of point matches
+	 * @return new list of point matches (after the transformation)
 	 */
-	public static List<PointMatch> applyPreviousTransform(
+	public static List<PointMatch> applyTransformReverse(
 			List<PointMatch> list,
 			CoordinateTransform t) 
 	{
@@ -635,7 +673,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 						regularize(t, 0);
 
 						// Update inliers (P1 of current slice and P2 in next slice)				
-						inliers[0] = applyPreviousTransform(inliers[0], t);
+						inliers[0] = applyTransformReverse(inliers[0], t);
 
 						// Update list of transforms
 						transform[0] = t;										
@@ -672,7 +710,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 						// Update inliers (P1 of current slice and P2 in next slice)
 						PointMatch.apply(inliers[iSlice-1], t);
 						if(iSlice-1 < inliers.length-1)
-							inliers[iSlice] = applyPreviousTransform(inliers[iSlice], t);
+							inliers[iSlice] = applyTransformReverse(inliers[iSlice], t);
 
 						// Update list of transforms
 						transform[iSlice] = t;										
@@ -721,7 +759,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 	/**
 	 * Randomize array of integers
 	 * 
-	 * @param index array of integers to randomize
+	 * @param array array of integers to randomize
 	 */
 	public static void randomize(final int[] array) 
 	{
@@ -786,13 +824,9 @@ public class Register_Virtual_Stack_MT implements PlugIn
 
 			// Accumulate bounding boxes, so in the end they can be reopened and re-saved with an enlarged canvas.
 			final Rectangle currentBounds = mesh.getBoundingBox();			
-			bounds.add(currentBounds);
-			
-			
-			
+			bounds.add(currentBounds);									
 			
 			//IJ.log(i + ": current bounding box = [" + currentBounds.x + " " + currentBounds.y + " " + currentBounds.width + " " + currentBounds.height + "]");
-
 			
 			// Update common bounds
 			int commonLastX = commonBounds.x + commonBounds.width;
@@ -1137,12 +1171,12 @@ public class Register_Virtual_Stack_MT implements PlugIn
 	/**
 	 * Match features into inliers in a concurrent way
 	 * 
-	 * @param p
-	 * @param fs2
-	 * @param fs1
-	 * @param featuresModel
-	 * @return
-	 * @throws Exception
+	 * @param p registration parameters
+	 * @param fs2 collection of features to match
+	 * @param fs1 collection of features to match
+	 * @param featuresModel features model 
+	 * @return list of matched features
+	 * @throws Exception if not enough points
 	 */
 	private static Callable<ArrayList<PointMatch>> matchFeatures(
 			final Param p, 
@@ -1170,7 +1204,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			}
 		};
 		
-	}
+	}// end method matchFeatures
 	
 	//-----------------------------------------------------------------------------------------
 	/**
@@ -1192,7 +1226,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 	 * @param bounds list of bounds for the already registered images
 	 * @param referenceIndex index of the reference image
 	 * @return false if there is an error, true otherwise
-	 * @throws Exception
+	 * @throws Exception if something fails
 	 */
 	public static boolean register(
 			ImagePlus imp1, 
@@ -1390,7 +1424,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 	 * @param p registration parameters
 	 * @param t coordinate transform
 	 * @param inliers point matches
-	 * @throws Exception 
+	 * @throws Exception if something fails
 	 */
 	public static void fitInliers(Param p, CoordinateTransform t, List< PointMatch > inliers) throws Exception
 	{
