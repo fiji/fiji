@@ -2,8 +2,6 @@ Show-stoppers:
 
 - Conflict dialog!!!
 
-- previous versions from all .zip and .dmg files in /var/www/download/!!!
-
 - Let's have a checkbox in the Fiji Updater that says "automatically check
   for updates".  This should be grayed out if, say, plugins/Fiji_Updater.jar
   is not writable, or misc/Fiji.jar is not new enough.
@@ -20,28 +18,12 @@ Show-stoppers:
 
 - Add a context menu to trigger actions
 
-- Usability bug: the "Edit details" button is only active when uploading a
-  plugin.  I'd rather have the Edit Details button on at all times (or let the
-  field be editable at all times); if the developer chooses to just edit the
-  details without updating the file, that should be perfectly fine.
-
-  Think for example if a dependency is fixed.
-
-- The dependency list should be editable so that the developer can
-  correct mistakes (not all are "at-least" dependencies) and add
-  additional dependencies.
-
 - Dependencies are _borked_ for the moment.
 
 - There _must_ be an "OVERRIDE" depenendency type.
 
 - Scrap the "AT-LEAST", "AT-MOST" and "EXACTLY" modes.  Either a dependency
   overrides, or it requires the newest version.  That's it.
-
-- For the files like StartupMacros.txt (which we _need_, as there is a
-  serious bug regarding the lookup tables in Fiji Dresden 2009), we need
-  to include previous version hashes, too, so that people _can_ update
-  without a hassle.
 
 Not-quite show-stoppers:
 
@@ -64,5 +46,15 @@ Not-quite show-stoppers:
 - make the list sortable by clicking on the column titles (second click
   sorts descending).
 
-- if the user has locally-modified files (which are therefore not to be updated
-  by default), show a warning message.
+- Usability bug: the "Edit details" button is only active when uploading a
+  plugin.  I'd rather have the Edit Details button on at all times (or let the
+  field be editable at all times); if the developer chooses to just edit the
+  details without updating the file, that should be perfectly fine.
+
+  Think for example if a dependency is fixed.
+
+- The dependency list should be editable so that the developer can
+  correct mistakes (not all are "at-least" dependencies) and add
+  additional dependencies.
+
+
