@@ -26,12 +26,17 @@ test $# = 0 && set HEAD
 
 for arg
 do
+	linenumber=$(expr "$arg" : '.*\(:[0-9][0-9]*\)')
+	test -z "$linenumber" || {
+		arg=${arg%$linenumber}
+		linenumber=\#l${linenumber#:}
+	}
 	if test -f "$arg"
 	then
 		(cd "$(dirname "$arg")" &&
 		arg=$(git ls-files --full-name "${arg##*/}") &&
 		project=$(get_project) &&
-		firefox "$url$project;a=blob;f=$arg;hb=HEAD")
+		firefox "$url$project;a=blob;f=$arg;hb=HEAD$linenumber")
 	else
 		project=$(get_project) &&
 		firefox "$url$project;a=commitdiff;h=$arg"
