@@ -1,27 +1,48 @@
 #!/bin/sh
 
-get_project () {
-	project=$(git config remote.origin.url) || exit
-	project=${project%/}
-	case "$project" in
-	*/.git)
-		project=${project%/.git}
-		project=${project##*/}/.git
+get_url () {
+	url=$(git config remote.origin.url)
+	if test -z "$url"
+	then
+		remote=$(git config branch.master.remote) &&
+		url=$(git config remote.$remote.url) &&
+		test ! -z "$url"
+	fi || {
+		echo "Remote 'origin' not found: $(pwd)" >&2
+		exit 1
+	}
+
+	case $url in
+	repo.or.cz:*)
+		echo "http://repo.or.cz/w/${url#*repo.or.cz:/srv/git/}?"
 		;;
-	*.git)
-		project=${project##*/}
+	ssh://repo.or.cz/*)
+		echo "http://repo.or.cz/w/${url#*repo.or.cz/srv/git/}?"
 		;;
 	*)
-		project=${project##*/}/.git
+		project=${url%/}
+		case "$project" in
+		*/.git)
+			project=${project%/.git}
+			project=${project##*/}/.git
+			;;
+		*.git)
+			project=${project##*/}
+			;;
+		*)
+			project=${project##*/}/.git
+			;;
+		esac
+
+		case $project in
+		imageja.git) project=ImageJA.git;;
+		esac
+
+		echo "http://pacific.mpi-cbg.de/cgi-bin/gitweb.cgi?p=$project"
 		;;
-	esac
-	case $project in
-	imageja.git) echo ImageJA.git;;
-	*) echo $project;;
 	esac
 }
 
-url="http://pacific.mpi-cbg.de/cgi-bin/gitweb.cgi?p="
 test $# = 0 && set HEAD
 
 for arg
@@ -35,10 +56,10 @@ do
 	then
 		(cd "$(dirname "$arg")" &&
 		arg=$(git ls-files --full-name "${arg##*/}") &&
-		project=$(get_project) &&
-		firefox "$url$project;a=blob;f=$arg;hb=HEAD$linenumber")
+		url=$(get_url) &&
+		firefox "$url;a=blob;f=$arg;hb=HEAD$linenumber")
 	else
-		project=$(get_project) &&
-		firefox "$url$project;a=commitdiff;h=$arg"
+		url=$(get_url) &&
+		firefox "$url;a=commitdiff;h=$arg"
 	fi || break
 done
