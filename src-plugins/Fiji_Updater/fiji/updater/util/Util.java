@@ -40,7 +40,12 @@ public class Util {
 	public final static String[] platforms, launchers;
 
 	static {
-		fijiRoot = System.getProperty("fiji.dir") + File.separator; 
+		String property = System.getProperty("fiji.dir");
+		fijiRoot = property != null ? property + File.separator :
+			new Util().getClass().getResource("Util.class")
+			.toString().replace("jar:file:", "")
+			.replace("plugins/Fiji_Updater.jar!/"
+				+ "fiji/updater/util/Util.class", "");
 		isDeveloper = new File(fijiRoot + "/fiji.cxx").exists();
 		platform = getPlatform();
 
