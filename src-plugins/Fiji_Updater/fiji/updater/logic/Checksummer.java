@@ -14,6 +14,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import java.util.zip.ZipException;
+
 /*
  * Checksummer's overall role is to be in charge of building of a plugin
  * list for interface usage.
@@ -101,6 +103,8 @@ public class Checksummer extends Progressable {
 		if (new File(realPath).exists()) try {
 			checksum = Util.getDigest(path, realPath);
 			timestamp = Util.getTimestamp(realPath);
+		} catch (ZipException e) {
+			System.err.println("Problem digesting " + realPath);
 		} catch (Exception e) { e.printStackTrace(); }
 
 		PluginCollection plugins = PluginCollection.getInstance();
