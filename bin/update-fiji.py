@@ -19,6 +19,13 @@ if argv[1] == '--upload-to':
 else:
 	updateDirectory = '/var/www/update/'
 
+def stripPrecompiled(string):
+	if string.startswith('precompiled/'):
+		return string[12:]
+	return string
+
+files = [stripPrecompiled(file) for file in argv[1:]]
+
 Updater.MAIN_URL = 'file:' + updateDirectory
 downloader = XMLFileDownloader()
 downloader.start()
@@ -26,18 +33,12 @@ reader = XMLFileReader(downloader.getInputStream())
 
 progress = StderrProgress()
 checksummer = Checksummer(progress)
-if len(argv) == 1:
+plugins = PluginCollection.getInstance()
+if len(files) == 0:
 	checksummer.updateFromLocal()
 else:
-	checksummer.updateFromLocal(argv[1:])
-
-# mark as update
-collection = PluginCollection.getInstance()
-now = Util.timestamp(Calendar.getInstance())
-if len(argv) == 1:
-	plugins = collection
-else:
-	plugins = [collection.getPlugin(file) for file in argv[1:]]
+	checksummer.updateFromLocal(files)
+	plugins = [plugins.getPlugin(file) for file in files]
 	# TODO: add dependencies
 for plugin in plugins:
 	for action in [Action.UPLOAD, Action.REMOVE]:
