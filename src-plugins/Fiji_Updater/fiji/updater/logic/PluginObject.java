@@ -354,6 +354,10 @@ public class PluginObject {
 		return false;
 	}
 
+	public boolean isForPlatform(String platform) {
+		return platforms.containsKey(platform);
+	}
+
 	public boolean isFiji() {
 		return status != Status.NOT_FIJI;
 	}

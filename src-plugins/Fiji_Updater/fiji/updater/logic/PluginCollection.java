@@ -194,13 +194,8 @@ public class PluginCollection extends ArrayList<PluginObject> {
 			return yes();
 		return new Filter() {
 			public boolean matches(PluginObject plugin) {
-				boolean result = true;
-				for (String platform : plugin.getPlatforms())
-					if (platform.equals(Util.platform))
-						return true;
-					else
-						result = false;
-				return result;
+				return plugin.platforms.size() == 0 ||
+					plugin.isForPlatform(Util.platform);
 			}
 		};
 	}
