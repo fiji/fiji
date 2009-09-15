@@ -24,6 +24,11 @@ if argv[1].endswith('.tar.bz2'):
 	system('tar -C ' + tmpDirectory + ' --strip-components 1 -xvf ' \
 		+ argv[1])
 	argv[1] = tmpDirectory
+elif argv[1].endswith('.zip'):
+	tmpDirectory = mktemp()
+	mkdir(tmpDirectory)
+	system('unzip ' + argv[1] + ' -d ' + tmpDirectory)
+	argv[1] = tmpDirectory + '/Fiji.app/'
 
 dbPath = getProperty('fiji.dir') + '/db.xml.gz'
 reader = XMLFileReader(GZIPInputStream(FileInputStream(dbPath)))
