@@ -52,6 +52,7 @@ import java.util.Vector;
 
 import javax.imageio.ImageIO;
 
+import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JFileChooser;
@@ -214,10 +215,19 @@ public class TextEditor extends JFrame implements ActionListener,
 		run.setMnemonic(KeyEvent.VK_R);
 		// TODO: allow outside-of-plugins/ sources
 
-		compileAndRun = addToMenu(run, "Compile and Run", KeyEvent.VK_F11, ctrl);
+		compileAndRun = addToMenu(run, "Compile and Run",
+				KeyEvent.VK_R, ctrl);
 
 		run.addSeparator();
-		debug = addToMenu(run, "Start Debugging", KeyEvent.VK_F11, ctrl);
+		debug = addToMenu(run, "Start Debugging", KeyEvent.VK_D, ctrl);
+
+		// for Eclipse and MS Visual Studio lovers
+		addAccelerator(compileAndRun, KeyEvent.VK_F11, 0);
+		addAccelerator(compileAndRun, KeyEvent.VK_F5, 0);
+		addAccelerator(debug, KeyEvent.VK_F11, ctrl);
+		addAccelerator(debug, KeyEvent.VK_F5,
+				ActionEvent.SHIFT_MASK);
+
 		mbar.add(run);
 
 		run.addSeparator();
@@ -264,6 +274,24 @@ public class TextEditor extends JFrame implements ActionListener,
 		return item;
 	}
 
+	public void addAccelerator(final JMenuItem component,
+			int key, int modifiers) {
+		textArea.getInputMap().put(KeyStroke.getKeyStroke(key,
+					modifiers), component);
+		if (textArea.getActionMap().get(component) != null)
+			return;
+		textArea.getActionMap().put(component,
+				new AbstractAction() {
+			public void actionPerformed(ActionEvent e) {
+				if (!component.isEnabled())
+					return;
+				ActionEvent event = new ActionEvent(component,
+					0, "Accelerator");
+				TextEditor.this.actionPerformed(event);
+			}
+		});
+	}
+
 	public void createNewDocument() {
 		open(null);
 	}
@@ -308,6 +336,11 @@ public class TextEditor extends JFrame implements ActionListener,
 		else if (source == compileAndRun)
 			runText();
 		else if (source == debug) {
+			if (currentLanguage == null ||
+					!currentLanguage.isDebuggable()) {
+				error("No debug support for this language");
+				return;
+			}
 			BreakpointManager manager = new BreakpointManager(gutter, textArea, iconGroup);
 			debugging = new StartDebugging(file.getPath(), manager.findBreakpointsLineNumber());
 
