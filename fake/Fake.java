@@ -797,9 +797,7 @@ public class Fake {
 					return upToDateError(file,
 							new File(path));
 				if (targetModifiedTime < mtimeFijiBuild)
-					return upToDateError(file,
-							new File(fijiBuildJar));
-
+					return upToDateError(new File(fijiBuildJar), file);
 
 				nonUpToDates = new ArrayList();
 				Iterator iter = prerequisites.iterator();
