@@ -20,11 +20,6 @@ Show-stoppers:
 
 - Dependencies are _borked_ for the moment.
 
-- There _must_ be an "OVERRIDE" depenendency type.
-
-- Scrap the "AT-LEAST", "AT-MOST" and "EXACTLY" modes.  Either a dependency
-  overrides, or it requires the newest version.  That's it.
-
 Not-quite show-stoppers:
 
 - If the developer tries to upload a version that has already be marked

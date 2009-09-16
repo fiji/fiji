@@ -44,7 +44,7 @@ public class XMLFileWriter {
 		+ "<!ATTLIST plugin filename CDATA #REQUIRED>\n"
 		+ "<!ATTLIST dependency filename CDATA #REQUIRED>\n"
 		+ "<!ATTLIST dependency timestamp CDATA #IMPLIED>\n"
-		+ "<!ATTLIST dependency relation CDATA #IMPLIED>\n"
+		+ "<!ATTLIST dependency overrides CDATA #IMPLIED>\n"
 		+ "<!ATTLIST version timestamp CDATA #REQUIRED>\n"
 		+ "<!ATTLIST version checksum CDATA #REQUIRED>\n"
 		+ "<!ATTLIST version filesize CDATA #REQUIRED>\n"
@@ -96,10 +96,9 @@ public class XMLFileWriter {
 							dependency.filename);
 					setAttribute(attr, "timestamp",
 							dependency.timestamp);
-					if (dependency.relation !=
-							Dependency.Relation.AT_LEAST)
-						setAttribute(attr, "relation",
-							dependency.relation.toString());
+					if (dependency.overrides)
+						setAttribute(attr,
+							"overrides", "true");
 					writeSimpleTag("dependency", null, attr);
 				}
 

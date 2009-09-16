@@ -330,7 +330,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 				if (plugin == null)
 					continue;
 				current = new Dependency(plugin.getFilename(),
-					plugin.getTimestamp(), "at-least");
+					plugin.getTimestamp(), false);
 				return;
 			}
 			current = null;

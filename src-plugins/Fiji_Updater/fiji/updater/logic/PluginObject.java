@@ -175,8 +175,8 @@ public class PluginObject {
 
 	// TODO: allow editing those via GUI
 	public void addDependency(String filename, long timestamp,
-			String relation) {
-		addDependency(new Dependency(filename, timestamp, relation));
+			boolean overrides) {
+		addDependency(new Dependency(filename, timestamp, overrides));
 	}
 
 	public void addDependency(Dependency dependency) {
