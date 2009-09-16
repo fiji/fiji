@@ -392,6 +392,8 @@ public class PluginCollection extends ArrayList<PluginObject> {
 			});
 		for (String name : Util.getLaunchers()) {
 			PluginObject launcher = getPlugin(name);
+			if (launcher == null)
+				continue; // the regression test triggers this
 			if (launcher.getStatus() == Status.NOT_INSTALLED)
 				launcher.setAction(Action.INSTALL);
 		}
