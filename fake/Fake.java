@@ -199,6 +199,15 @@ public class Fake {
 			}
 
 			all.make();
+
+			/*
+			 * By definition, everything is up-to-date now, but for
+			 * performance, we set the mtimes so that we do not need
+			 * to run our clever .jar checking again (which is
+			 * quite expensive performance-wise, even if not as
+			 * expensive as compiling everything again.
+			 */
+			all.setUpToDate();
 		}
 		catch (FakeException e) {
 			System.err.println(e);
@@ -283,6 +292,10 @@ public class Fake {
 
 			addSpecialRule(new Special("clean-dry-run") {
 				void action() { cleanAll(true); }
+			});
+
+			addSpecialRule(new Special("dry-run") {
+				void action() { check(); }
 			});
 
 			addSpecialRule(new Special("check") {
@@ -693,7 +706,7 @@ public class Fake {
 			String res = null;
 			if ("true".equals(variables.get("ENVOVERRIDES("
 							+ key + ")")))
-				res = System.getenv(key);
+				res = stripFijiHome(System.getenv(key));
 			key = key.toUpperCase();
 			if (subkey != null && res == null)
 				res = (String)variables.get(key
@@ -797,9 +810,7 @@ public class Fake {
 					return upToDateError(file,
 							new File(path));
 				if (targetModifiedTime < mtimeFijiBuild)
-					return upToDateError(file,
-							new File(fijiBuildJar));
-
+					return upToDateError(new File(fijiBuildJar), file);
 
 				nonUpToDates = new ArrayList();
 				Iterator iter = prerequisites.iterator();
@@ -833,7 +844,7 @@ public class Fake {
 				if (targetModified == sourceModified &&
 						compare(source, target) == 0)
 					return true;
-				if (targetModified <= sourceModified)
+				if (targetModified < sourceModified)
 					return upToDateError(source, target);
 				return true;
 			}
@@ -883,9 +894,6 @@ public class Fake {
 						return;
 					System.err.println("Building " + this);
 					action();
-					if (!checkUpToDate())
-						touchFile(target);
-					// by definition, it's up-to-date now
 					upToDateStage = 2;
 				} catch (Exception e) {
 					if (!(e instanceof FakeException))
@@ -894,6 +902,19 @@ public class Fake {
 					error(e.getMessage());
 				}
 				wasAlreadyInvoked = false;
+			}
+
+			void setUpToDate() throws IOException {
+				Iterator iter = prerequisites.iterator();
+				while (iter.hasNext()) {
+					Rule rule =
+						getRule((String)iter.next());
+					if (rule != null)
+						rule.setUpToDate();
+				}
+
+				if (!checkUpToDate())
+					touchFile(target);
 			}
 
 			protected void clean(boolean dry_run) {
@@ -932,23 +953,24 @@ public class Fake {
 				System.err.println(message);
 			}
 
+			public Rule getRule(String prereq) {
+				if (prereq.endsWith(".jar/"))
+					prereq = stripSuffix(prereq, "/");
+				return (Rule)allRules.get(prereq);
+			}
+
 			public void makePrerequisites() throws FakeException {
 				Iterator iter = prerequisites.iterator();
 				while (iter.hasNext()) {
 					String prereq = (String)iter.next();
-
-					if (prereq.endsWith(".jar/"))
-						prereq = stripSuffix(prereq,
-								"/");
-					if (!allRules.containsKey(prereq)) {
+					Rule rule = getRule(prereq);
+					if (rule == null) {
 						if (this instanceof All)
 							error("Unknown target: "
 								+ prereq);
 						else
 							continue;
 					}
-
-					Rule rule = (Rule)allRules.get(prereq);
 					rule.make();
 				}
 			}
@@ -2849,6 +2871,19 @@ public class Fake {
 
 	public static String join(List list) {
 		return join(list, " ");
+	}
+
+	public static String stripFijiHome(String string) {
+		String slashes = string.replace('\\', '/');
+		if (slashes.startsWith(fijiHome))
+			return stripPrefix(slashes, fijiHome);
+		return string;
+	}
+
+	public static String stripPrefix(String string, String prefix) {
+		if (!string.startsWith(prefix))
+			return string;
+		return string.substring(prefix.length());
 	}
 
 	public static String stripSuffix(String string, String suffix) {

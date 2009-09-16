@@ -1696,8 +1696,7 @@ static int start_ij(void)
 			if (build_classpath(class_path, string(fiji_dir)
 						+ "/plugins", 0))
 				return 1;
-		if (build_classpath(class_path, string(fiji_dir) + "/jars", 0))
-			return 1;
+		build_classpath(class_path, string(fiji_dir) + "/jars", 0);
 	}
 	add_option(options, class_path, 0);
 

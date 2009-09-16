@@ -90,7 +90,7 @@ public class Main implements AWTEventListener {
 
 	public static Window getWindow(String title) {
 		for (Window window : all.keySet())
-			if (getTitle(window).equals(title))
+			if (window != null && getTitle(window).equals(title))
 				return window;
 		return null;
 	}

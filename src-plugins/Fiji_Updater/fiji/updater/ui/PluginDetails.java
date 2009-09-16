@@ -8,9 +8,12 @@ import fiji.updater.logic.Dependency;
 import fiji.updater.logic.PluginCollection;
 import fiji.updater.logic.PluginObject;
 
+import fiji.updater.util.Util;
+
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Point;
+import java.awt.Rectangle;
 
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseAdapter;
@@ -18,7 +21,7 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionAdapter;
 import java.awt.event.MouseMotionListener;
 
-import java.util.Iterator;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JTextPane;
@@ -128,129 +131,84 @@ public class PluginDetails extends JTextPane {
 		styled(text, title);
 	}
 
-	//appends list of dependencies to existing text
-	public void dependencies(Iterable<Dependency> list) {
-		StringBuilder text = new StringBuilder();
-		for (Dependency dependency : list)
-			text.append((text.length() > 0 ? ",\n" : "")
-					+ dependency.filename + " ("
-					+ dependency.timestamp + ")");
-		normal("\n" + (text.length() > 0 ? text.toString() : "None"));
-	}
-
 	public void description(String description) {
 		if (description == null || description.trim().equals(""))
-			description = "No description available.";
-		normal("\n" + description);
-	}
-
-	public String join(Iterable<String> list, String delimiter) {
-		if (list == null)
-			return "";
-		boolean first = true;
-		StringBuilder result = new StringBuilder();
-		for (String item : list) {
-			if (first)
-				first = false;
-			else
-				result.append(delimiter);
-			result.append(item);
-		}
-		return result.toString();
-	}
-
-	public String join(Iterable<String> list, String delimiter,
-			String defaultString) {
-		String result = join(list, delimiter);
-		return result.equals("") ? defaultString : result;
-	}
-
-	public void authors(Iterable<String> authors) {
-		StringBuilder text = new StringBuilder();
-		for (String author : authors)
-			text.append((text.length() > 0 ? ", " : "") + author);
-		normal(text.length() > 0 ? text.toString() : "Not specified");
-	}
-
-	public void links(Iterable<String> links) {
-		for (String link : links) {
-			normal("\n");
-			link(link);
-		}
-	}
-
-	//appends list of plugin names to existing text
-	public void pluginNamelist(String title, PluginCollection myList) {
-		title(title);
-		for (PluginObject plugin : myList)
-			normal("\n" + plugin.getFilename());
-	}
-
-	//appends list of plugin names and each of their descriptions to existing text
-	public void pluginDescriptions(String title, PluginCollection myList) {
-		title(title);
+			return;
 		blankLine();
-		for (PluginObject plugin : myList) {
-			bold(plugin.getFilename());
-			description(plugin.description);
-			blankLine();
+		bold("Description:\n");
+		normal(description);
+	}
+
+	public void list(String label, boolean showLinks,
+			Iterable items, String delim) {
+		List list = new ArrayList();
+		for (Object object : items)
+			list.add(object);
+
+		if (list.size() == 0)
+			return;
+
+		blankLine();
+		if (list.size() > 1 && label.endsWith("y"))
+			label = label.substring(0, label.length() - 1) + "ie";
+		bold(label + (list.size() > 1 ? "s" : "") + ":\n");
+		String delimiter = "";
+		for (Object object : list) {
+			normal(delimiter);
+			delimiter = delim;
+			if (showLinks)
+				link(object.toString());
+			else
+				normal(object.toString());
 		}
+		normal("\n");
 	}
 
 	public void blankLine() {
 		normal("\n\n");
 	}
 
+	final String[] months = { "Zero",
+		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+	};
+
+	String prettyPrintTimestamp(long timestamp) {
+		String t = "" + timestamp;
+		return t.substring(6, 8) + " "
+			+ months[Integer.parseInt(t.substring(4, 6))] + " "
+			+ t.substring(0, 4);
+	}
+
 	public void showPluginDetails(PluginObject plugin) {
 		if (!getText().equals(""))
 			blankLine();
-		//Display plugin data, text with different formatting
 		title(plugin.getFilename());
 		if (plugin.isUpdateable())
-			italic("\n(Update is available)");
-		if (plugin.isFiji() && plugin.newChecksum != null) {
+			italic("\n(Update available)");
+		else if (!plugin.isFiji())
+			italic("(Not in Fiji)");
+		if (plugin.isLocallyModified()) {
 			blankLine();
 			bold("Warning: ");
-			italic("This version is not in Fiji's records.");
+			italic("This file was locally modified.");
 		}
 		blankLine();
-		bold("Date: ");
-		normal("" + plugin.current.timestamp);
-		blankLine();
-		bold("Author(s): ");
-		authors(plugin.getAuthors());
-		blankLine();
-		bold("Description");
+		if (plugin.current == null)
+			bold("This file is no longer needed by Fiji");
+		else {
+			bold("Release date:\n");
+			normal(prettyPrintTimestamp(plugin.current.timestamp));
+		}
 		description(plugin.getDescription());
-		blankLine();
-		bold("Reference Link(s):");
-		links(plugin.getLinks());
-		blankLine();
-		bold("Dependency");
-		dependencies(plugin.getDependencies());
-		blankLine();
-		bold("Checksum");
-		normal("\n" + plugin.getChecksum());
-		blankLine();
-		bold("Is Fiji Plugin: ");
-		normal(plugin.isFiji() ? "Yes" : "No");
-		if (plugin.newChecksum != null) {
-			blankLine();
-			title("Locally modified:");
-			blankLine();
-			bold("New Checksum");
-			normal(plugin.newChecksum + "\n");
-			bold("Timestamp: ");
-			normal("" + plugin.newTimestamp);
-		}
+		list("Author", false, plugin.getAuthors(), ", ");
+		if (Util.isDeveloper)
+			list("Platform", false, plugin.getPlatforms(), ", ");
+		list("Category", false, plugin.getCategories(), ", ");
+		list("Link", true, plugin.getLinks(), "\n");
+		list("Dependency", false, plugin.getDependencies(), ",\n");
 
-		//ensure first line of text is always shown (i.e.: scrolled to top)
-		scrollToTop();
-	}
-
-	// TODO: no.  I said a million times that this is wrong.
-	public void scrollToTop() {
-		setSelectionStart(0);
-		setSelectionEnd(0);
+		// scroll to top
+		scrollRectToVisible(new Rectangle(0, 0, 1, 1));
 	}
 }

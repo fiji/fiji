@@ -40,7 +40,12 @@ public class Util {
 	public final static String[] platforms, launchers;
 
 	static {
-		fijiRoot = System.getProperty("fiji.dir") + File.separator; 
+		String property = System.getProperty("fiji.dir");
+		fijiRoot = property != null ? property + File.separator :
+			new Util().getClass().getResource("Util.class")
+			.toString().replace("jar:file:", "")
+			.replace("plugins/Fiji_Updater.jar!/"
+				+ "fiji/updater/util/Util.class", "");
 		isDeveloper = new File(fijiRoot + "/fiji.cxx").exists();
 		platform = getPlatform();
 
@@ -66,6 +71,12 @@ public class Util {
 		if (!string.endsWith(suffix))
 			return string;
 		return string.substring(0, string.length() - suffix.length());
+	}
+
+	public static String stripPrefix(String string, String prefix) {
+		if (!string.startsWith(prefix))
+			return string;
+		return string.substring(prefix.length());
 	}
 
 	public static String getPlatform() {
@@ -223,7 +234,8 @@ public class Util {
 	}
 
 	public static boolean isLauncher(String filename) {
-		return Arrays.binarySearch(launchers, filename) >= 0;
+		return Arrays.binarySearch(launchers,
+				stripPrefix(filename, fijiRoot)) >= 0;
 	}
 
 	public static String[] getLaunchers() {

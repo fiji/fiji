@@ -69,9 +69,9 @@ ignoreMissingFakefiles=true
 # When a submodule could not be made, fall back to copying from this directory
 precompiledDirectory=precompiled/
 
-JAVA_HOME(linux)=java/linux/jdk1.6.0_10/jre
-JAVA_HOME(linux64)=java/linux-amd64/jdk1.6.0_13/jre
-JAVA_HOME(win32)=java/win32/jdk1.6.0_03/jre
+JAVA_HOME(linux)=java/linux/jdk1.6.0_16/jre
+JAVA_HOME(linux64)=java/linux-amd64/jdk1.6.0_16/jre
+JAVA_HOME(win32)=java/win32/jdk1.6.0_16/jre
 JAVA_HOME(win64)=java/win64/jdk1.6.0_04/jre
 JAVA_HOME(macosx)=java/macosx-java3d
 ENVOVERRIDES(JAVA_HOME)=true
@@ -220,6 +220,7 @@ plugins/LSM_Toolbox.jar <- plugins/LSM_Reader.jar/ \
 MAINCLASS(plugins/Interactive_3D_Surface_Plot.jar)=Interactive_3D_Surface_Plot
 CLASSPATH(plugins/Stitching_.jar)=plugins/loci_tools.jar:plugins/Fiji_Plugins.jar
 CLASSPATH(plugins/Fiji_Plugins.jar)=jars/jsch-0.1.37.jar
+CLASSPATH(plugins/Fiji_Updater.jar)=jars/jsch-0.1.37.jar:misc/Fiji.jar
 
 plugins/Record_Screen.jar <- src-plugins/Record_Screen/ src-plugins/Record_Screen/**/*
 

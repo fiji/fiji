@@ -11,7 +11,6 @@ import java.io.File;
 import java.io.IOException;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -54,7 +53,7 @@ public class Installer extends Downloader {
 
 		// mark for removal
 		for (PluginObject plugin : plugins.toUninstall()) try {
-			touch(Util.prefixUpdate(plugin.filename));
+			plugin.stageForUninstall();
 		} catch (IOException e) {
 			e.printStackTrace();
 			throw new RuntimeException("Could not mark '"
@@ -138,9 +137,4 @@ public class Installer extends Downloader {
 				+ fileName + " as executable");
 		}
 	}
-
-	public static void touch(String target) throws IOException {
-                long now = new Date().getTime();
-                new File(target).setLastModified(now);
-        }
 }

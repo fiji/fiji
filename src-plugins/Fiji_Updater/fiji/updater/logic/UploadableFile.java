@@ -73,4 +73,8 @@ public class UploadableFile implements SourceFile {
 			return new ByteArrayInputStream(new byte[0]);
 		}
 	}
+
+	public String toString() {
+		return filename;
+	}
 }

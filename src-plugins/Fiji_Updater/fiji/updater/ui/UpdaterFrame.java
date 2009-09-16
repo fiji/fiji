@@ -58,7 +58,7 @@ import javax.swing.event.ListSelectionListener;
 public class UpdaterFrame extends JFrame
 		implements TableModelListener, ListSelectionListener {
 	PluginCollection plugins;
-	long xmlLastModified;
+	protected long xmlLastModified;
 
 	private JFrame loadedFrame;
 	private JTextField txtSearch;
@@ -74,7 +74,7 @@ public class UpdaterFrame extends JFrame
 	private JButton btnEditDetails;
 
 	public UpdaterFrame() {
-		super("Plugin Manager");
+		super("Fiji Updater");
 
 		plugins = PluginCollection.getInstance();
 
@@ -176,9 +176,10 @@ public class UpdaterFrame extends JFrame
 		bottomPanel.add(new PluginAction("Keep as-is", null));
 		bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
 		bottomPanel.add(new PluginAction("Install", Action.INSTALL,
-			"Update", Action.UPDATE));
+					"Update", Action.UPDATE));
 		bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
-		bottomPanel.add(new PluginAction("Remove", Action.REMOVE));
+		bottomPanel.add(new PluginAction("Uninstall",
+					Action.UNINSTALL));
 
 		bottomPanel.add(Box.createHorizontalGlue());
 
@@ -186,7 +187,7 @@ public class UpdaterFrame extends JFrame
 		btnStart = SwingTools.button("Apply changes",
 				"Start installing/uninstalling plugins", new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				clickToBeginOperations();
+				applyChanges();
 			}
 		}, bottomPanel);
 		btnStart.setEnabled(false);
@@ -220,7 +221,6 @@ public class UpdaterFrame extends JFrame
 		table.getModel().addTableModelListener(this);
 
 		pack();
-		setVisible(true);
 	}
 
 	public Progress getProgress(String title) {
@@ -259,17 +259,17 @@ public class UpdaterFrame extends JFrame
 			for (PluginObject plugin : table.getSelectedPlugins()) {
 				if (action == null)
 					plugin.setNoAction();
-				else {
-					Status status = plugin.getStatus();
-					if (status.isValid(action))
-						plugin.setAction(action);
-					else if (status.isValid(otherAction))
-						plugin.setAction(otherAction);
-					else
-						continue;
-				}
+				else if (!setAction(plugin))
+					continue;
 				table.firePluginChanged(plugin);
+				pluginsChanged();
 			}
+		}
+
+		protected boolean setAction(PluginObject plugin) {
+			return plugin.setFirstValidAction(new Action[] {
+					action, otherAction
+			});
 		}
 
 		public void enableIfValid() {
@@ -290,6 +290,11 @@ public class UpdaterFrame extends JFrame
 				(enable ? label + "/" : "") + otherLabel);
 			setEnabled(enable || enableOther);
 		}
+	}
+
+	public void setViewOption(ViewOptions.Option option) {
+		viewOptions.setSelectedItem(option);
+		updatePluginsTable();
 	}
 
 	public void updatePluginsTable() {
@@ -324,11 +329,11 @@ public class UpdaterFrame extends JFrame
 		setEnabled(false);
 	}
 
-	private void clickToBeginOperations() {
+	public void applyChanges() {
 		// TODO: check conflicts
 		new Thread() {
 			public void run() {
-				download();
+				install();
 			}
 		}.start();
 	}
@@ -352,12 +357,17 @@ public class UpdaterFrame extends JFrame
 		}
 	}
 
-	public void download() {
+	public void install() {
 		Installer installer =
 			new Installer(getProgress("Installing..."));
 		try {
+			PluginCollection uninstalled = PluginCollection
+				.clone(plugins.toUninstall());
 			installer.start();
+			for (PluginObject plugin : uninstalled)
+				table.firePluginChanged(plugin);
 			updatePluginsTable();
+			info("Updated successfully.  Please restart Fiji!");
 		} catch (Canceled e) {
 			// TODO: remove "update/" directory
 			IJ.error("Canceled");
@@ -368,17 +378,6 @@ public class UpdaterFrame extends JFrame
 			IJ.error("Installer failed: " + e);
 			installer.done();
 		}
-	}
-
-	public void exitWithRestartFijiMessage() {
-		removeLoadedFrameIfExists();
-		IJ.showMessage("Restart Fiji", "You must restart Fiji application for the Plugin status changes to take effect.");
-		dispose();
-	}
-
-	public void exitWithRestartMessage(String title, String message) {
-		IJ.showMessage(title, message);
-		dispose();
 	}
 
 	private void removeLoadedFrameIfExists() {
@@ -404,48 +403,64 @@ public class UpdaterFrame extends JFrame
 		if (Util.isDeveloper) {
 			btnEditDetails.setEnabled(getSingleSelectedPlugin()
 					!= null);
-			btnUpload.setEnabled(plugins.hasUpload());
+			// TODO: has to change when details editor is embedded
+			btnUpload.setEnabled(plugins.hasUploadOrRemove());
 		}
+
+		int size = plugins.size();
+		int install = 0, uninstall = 0, upload = 0;
+		long bytesToDownload = 0, bytesToUpload = 0;
+
+		// TODO: show dependencies' total size
+		for (PluginObject plugin : plugins)
+			switch (plugin.getAction()) {
+			case INSTALL:
+			case UPDATE:
+				install++;
+				bytesToDownload += plugin.filesize;
+				break;
+			case UNINSTALL:
+				uninstall++;
+				break;
+			case UPLOAD:
+				upload++;
+				bytesToUpload += plugin.filesize;
+				break;
+			}
+		String text = "Total: " + size + ", install/update: " + install
+			+ ", uninstall: " + uninstall
+			+ ", download size: " + sizeToString(bytesToDownload);
+		if (Util.isDeveloper)
+			text += ", upload: " + upload + ", upload size: "
+				+ sizeToString(bytesToUpload);
+		lblPluginSummary.setText(text);
+
+	}
+
+	protected final static String[] units = {"B", "kB", "MB", "GB", "TB"};
+	public static String sizeToString(long size) {
+		int i;
+		for (i = 1; i < units.length && size >= 1l<<(10 * i); i++)
+			; // do nothing
+		if (--i == 0)
+			return "" + size + units[i];
+		// round
+		size *= 100;
+		size >>= (10 * i);
+		size += 5;
+		size /= 10;
+		return "" + (size / 10) + "." + (size % 10) + units[i];
 	}
 
 	public void tableChanged(TableModelEvent e) {
-		int size = plugins.size();
-		int install = 0;
-		int remove = 0;
-		int update = 0;
-		int upload = 0;
-
-		//Refresh count information
-		for (PluginObject myPlugin : plugins)
-			if (myPlugin.toInstall())
-				install += 1;
-			else if (myPlugin.toRemove())
-				remove += 1;
-			else if (myPlugin.toUpdate())
-				update += 1;
-			else if (myPlugin.toUpload())
-				upload += 1;
-		String text = "Total: " + size + ", To install: " + install
-			+ ", To remove: " + remove + ", To update: " + update;
-		if (Util.isDeveloper)
-			text += ", To upload: " + upload;
-		lblPluginSummary.setText(text);
-
 		pluginsChanged();
 	}
 
-	private void enableIfAnyUpload(JButton button) {
-		enableIfActions(button, plugins.hasUpload());
+	public long getLastModified() {
+		return xmlLastModified;
 	}
 
-	private void enableIfAnyChange(JButton button) {
-		enableIfActions(button, plugins.hasChanges());
-	}
-
-	private void enableIfActions(JButton button, boolean flag) {
-		button.setEnabled(flag);
-	}
-
+	// setLastModified() is guaranteed to be called after Checksummer ran
 	public void setLastModified(long lastModified) {
 		xmlLastModified = lastModified;
 
@@ -520,4 +535,18 @@ public class UpdaterFrame extends JFrame
 		return true;
 	}
 
+	public void error(String message) {
+		JOptionPane.showMessageDialog(this, message, "Error",
+				JOptionPane.ERROR_MESSAGE);
+	}
+
+	public void warn(String message) {
+		JOptionPane.showMessageDialog(this, message, "Warning",
+				JOptionPane.WARNING_MESSAGE);
+	}
+
+	public void info(String message) {
+		JOptionPane.showMessageDialog(this, message, "Information",
+				JOptionPane.INFORMATION_MESSAGE);
+	}
 }

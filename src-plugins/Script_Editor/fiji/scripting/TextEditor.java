@@ -1,5 +1,7 @@
 package fiji.scripting;
 
+import ij.WindowManager;
+
 import java.util.concurrent.ThreadPoolExecutor;
 
 import com.sun.jdi.connect.VMStartException;
@@ -50,6 +52,7 @@ import java.util.Vector;
 
 import javax.imageio.ImageIO;
 
+import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JFileChooser;
@@ -105,6 +108,8 @@ public class TextEditor extends JFrame implements ActionListener,
 	boolean undoInProgress, redoInProgress;
 
 	public TextEditor(String path1) {
+		super("Script Editor");
+		WindowManager.addWindow(this);
 		JPanel cp = new JPanel(new BorderLayout());
 		textArea = new RSyntaxTextArea() {
 			public void undoLastAction() {
@@ -155,32 +160,32 @@ public class TextEditor extends JFrame implements ActionListener,
 
 		JMenu file = new JMenu("File");
 		file.setMnemonic(KeyEvent.VK_F);
-		new_file = addToMenu(file, "New", 0, KeyEvent.VK_N, ctrl);
-		open = addToMenu(file, "Open...", 0, KeyEvent.VK_O, ctrl);
-		save = addToMenu(file, "Save", 0, KeyEvent.VK_S, ctrl);
-		saveas = addToMenu(file, "Save as...", 1, 0, 0);
+		new_file = addToMenu(file, "New",  KeyEvent.VK_N, ctrl);
+		open = addToMenu(file, "Open...",  KeyEvent.VK_O, ctrl);
+		save = addToMenu(file, "Save", KeyEvent.VK_S, ctrl);
+		saveas = addToMenu(file, "Save as...", 0, 0);
 		file.addSeparator();
-		quit = addToMenu(file, "Close Editor", 0, KeyEvent.VK_W, ctrl);
+		quit = addToMenu(file, "Close Editor", KeyEvent.VK_W, ctrl);
 
 		mbar.add(file);
 
 		JMenu edit = new JMenu("Edit");
 		edit.setMnemonic(KeyEvent.VK_E);
-		undo = addToMenu(edit, "Undo", 0, KeyEvent.VK_Z, ctrl);
-		redo = addToMenu(edit, "Redo", 0, KeyEvent.VK_Y, ctrl);
+		undo = addToMenu(edit, "Undo", KeyEvent.VK_Z, ctrl);
+		redo = addToMenu(edit, "Redo", KeyEvent.VK_Y, ctrl);
 		edit.addSeparator();
-		selectAll = addToMenu(edit, "Select All", 0, KeyEvent.VK_A, ctrl);
-		cut = addToMenu(edit, "Cut", 0, KeyEvent.VK_X, ctrl);
-		copy = addToMenu(edit, "Copy", 0, KeyEvent.VK_C, ctrl);
-		paste = addToMenu(edit, "Paste", 0, KeyEvent.VK_V, ctrl);
+		selectAll = addToMenu(edit, "Select All", KeyEvent.VK_A, ctrl);
+		cut = addToMenu(edit, "Cut", KeyEvent.VK_X, ctrl);
+		copy = addToMenu(edit, "Copy", KeyEvent.VK_C, ctrl);
+		paste = addToMenu(edit, "Paste", KeyEvent.VK_V, ctrl);
 		edit.addSeparator();
-		find = addToMenu(edit, "Find...", 0, KeyEvent.VK_F, ctrl);
-		replace = addToMenu(edit, "Find and Replace...", 0, KeyEvent.VK_H, ctrl);
+		find = addToMenu(edit, "Find...", KeyEvent.VK_F, ctrl);
+		replace = addToMenu(edit, "Find and Replace...", KeyEvent.VK_H, ctrl);
 		mbar.add(edit);
 
 		JMenu options = new JMenu("Options");
 		options.setMnemonic(KeyEvent.VK_O);
-		autocomplete = addToMenu(options, "Autocomplete", 0, KeyEvent.VK_SPACE, ctrl);
+		autocomplete = addToMenu(options, "Autocomplete", KeyEvent.VK_SPACE, ctrl);
 		options.addSeparator();
 
 		mbar.add(options);
@@ -210,21 +215,30 @@ public class TextEditor extends JFrame implements ActionListener,
 		run.setMnemonic(KeyEvent.VK_R);
 		// TODO: allow outside-of-plugins/ sources
 
-		compileAndRun = addToMenu(run, "Compile and Run", 0, KeyEvent.VK_F11, 0);
+		compileAndRun = addToMenu(run, "Compile and Run",
+				KeyEvent.VK_R, ctrl);
 
 		run.addSeparator();
-		debug = addToMenu(run, "Start Debugging", 0, KeyEvent.VK_F11, ctrl);
+		debug = addToMenu(run, "Start Debugging", KeyEvent.VK_D, ctrl);
+
+		// for Eclipse and MS Visual Studio lovers
+		addAccelerator(compileAndRun, KeyEvent.VK_F11, 0);
+		addAccelerator(compileAndRun, KeyEvent.VK_F5, 0);
+		addAccelerator(debug, KeyEvent.VK_F11, ctrl);
+		addAccelerator(debug, KeyEvent.VK_F5,
+				ActionEvent.SHIFT_MASK);
+
 		mbar.add(run);
 
 		run.addSeparator();
 
-		kill = addToMenu(run, "Kill running script...", 1, 0, 0);
+		kill = addToMenu(run, "Kill running script...", 0, 0);
 		kill.setEnabled(false);
 
 		JMenu breakpoints = new JMenu("Breakpoints");
 		breakpoints.setMnemonic(KeyEvent.VK_B);
-		resume = addToMenu(breakpoints, "Resume", 1, 0, 0);
-		terminate = addToMenu(breakpoints, "Terminate", 1, 0, 0);
+		resume = addToMenu(breakpoints, "Resume", 0, 0);
+		terminate = addToMenu(breakpoints, "Terminate", 0, 0);
 		mbar.add(breakpoints);
 
 		pack();
@@ -242,19 +256,40 @@ public class TextEditor extends JFrame implements ActionListener,
 			public void windowClosing(WindowEvent e) {
 				if (!handleUnsavedChanges())
 					return;
+				WindowManager.removeWindow(TextEditor.this);
 				dispose();
 			}
 		});
 		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 	}
 
-	public JMenuItem addToMenu(JMenu menu, String menuEntry, int keyEvent, int keyevent, int actionevent) {
+	public JMenuItem addToMenu(JMenu menu, String menuEntry,
+			int key, int modifiers) {
 		JMenuItem item = new JMenuItem(menuEntry);
 		menu.add(item);
-		if (keyEvent == 0) // == 0?  Not != 0?
-			item.setAccelerator(KeyStroke.getKeyStroke(keyevent, actionevent));
+		if (key != 0)
+			item.setAccelerator(KeyStroke.getKeyStroke(key,
+						modifiers));
 		item.addActionListener(this);
 		return item;
+	}
+
+	public void addAccelerator(final JMenuItem component,
+			int key, int modifiers) {
+		textArea.getInputMap().put(KeyStroke.getKeyStroke(key,
+					modifiers), component);
+		if (textArea.getActionMap().get(component) != null)
+			return;
+		textArea.getActionMap().put(component,
+				new AbstractAction() {
+			public void actionPerformed(ActionEvent e) {
+				if (!component.isEnabled())
+					return;
+				ActionEvent event = new ActionEvent(component,
+					0, "Accelerator");
+				TextEditor.this.actionPerformed(event);
+			}
+		});
 	}
 
 	public void createNewDocument() {
@@ -301,6 +336,11 @@ public class TextEditor extends JFrame implements ActionListener,
 		else if (source == compileAndRun)
 			runText();
 		else if (source == debug) {
+			if (currentLanguage == null ||
+					!currentLanguage.isDebuggable()) {
+				error("No debug support for this language");
+				return;
+			}
 			BreakpointManager manager = new BreakpointManager(gutter, textArea, iconGroup);
 			debugging = new StartDebugging(file.getPath(), manager.findBreakpointsLineNumber());
 
