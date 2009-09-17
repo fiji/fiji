@@ -174,6 +174,11 @@ public class PluginObject {
 	}
 
 	// TODO: allow editing those via GUI
+	public void addDependency(String filename) {
+		// TODO: the timestamp should not be changed unnecessarily
+		addDependency(filename, Util.getTimestamp(filename), false);
+	}
+
 	public void addDependency(String filename, long timestamp,
 			boolean overrides) {
 		addDependency(new Dependency(filename, timestamp, overrides));
@@ -269,7 +274,8 @@ public class PluginObject {
 		filesize = Util.getFilesize(filename);
 
 		PluginCollection plugins = PluginCollection.getInstance();
-		for (Dependency dependency : plugins.analyzeDependencies(this))
+		// TODO: complain if not Fiji (and offer to add them)
+		for (String dependency : plugins.analyzeDependencies(this))
 				addDependency(dependency);
 	}
 
