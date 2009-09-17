@@ -50,7 +50,7 @@ public class DependencyAnalyzer {
 				String otherJar = map.get(name);
 				if (otherJar != null &&
 						!otherJar.equals(filename))
-					result.put(name, (Object)null);
+					result.put(otherJar, (Object)null);
 			}
 		}
 		return result.keySet();
