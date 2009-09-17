@@ -10,8 +10,10 @@ import fiji.updater.util.Util;
 import java.io.IOException;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 public class PluginCollection extends ArrayList<PluginObject> {
@@ -361,5 +363,50 @@ public class PluginCollection extends ArrayList<PluginObject> {
 			if (launcher.getStatus() == Status.NOT_INSTALLED)
 				launcher.setAction(Action.INSTALL);
 		}
+	}
+
+	public static class DependencyMap
+			extends HashMap<PluginObject, PluginCollection> {
+		// returns true when the map did not have the dependency before
+		boolean add(PluginObject dependency, PluginObject dependencee) {
+			if (containsKey(dependency)) {
+				get(dependency).add(dependencee);
+				return false;
+			}
+			PluginCollection list = new PluginCollection();
+			list.add(dependencee);
+			put(dependency, list);
+			return true;
+		}
+	}
+
+	// TODO: for developers, there should be a consistency check:
+	// no dependencies on non-Fiji plugins, no circular dependencies,
+	// and no overring circular dependencies.
+	void addDependencies(PluginObject plugin, DependencyMap map,
+			boolean overriding) {
+		for (Dependency dependency : plugin.getDependencies()) {
+			PluginObject other = getPlugin(dependency.filename);
+			if (other == null || overriding != dependency.overrides)
+				continue;
+			if (dependency.overrides) {
+				if (other.willNotBeInstalled())
+					continue;
+			}
+			else if (!other.willBeUpdateable())
+				continue;
+			if (!map.add(other, plugin))
+				continue;
+			// overriding dependencies are not recursive
+			if (!overriding)
+				addDependencies(other, map, overriding);
+		}
+	}
+
+	public DependencyMap getDependencies(boolean overridingOnes) {
+		DependencyMap result = new DependencyMap();
+		for (PluginObject plugin : toInstallOrUpdate())
+			addDependencies(plugin, result, overridingOnes);
+		return result;
 	}
 }

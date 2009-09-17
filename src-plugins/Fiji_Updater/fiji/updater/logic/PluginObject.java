@@ -369,6 +369,37 @@ public class PluginObject {
 		return status != Status.NOT_FIJI;
 	}
 
+	/* This returns true if the user marked the plugin for uninstall, too */
+	public boolean willNotBeInstalled() {
+		switch (action) {
+		case NOT_INSTALLED: case NEW: case OBSOLETE: case UNINSTALL:
+		case REMOVE:
+			return true;
+		case NOT_FIJI: case INSTALLED: case UPDATEABLE: case MODIFIED:
+		case INSTALL: case UPDATE: case UPLOAD:
+			return false;
+		default:
+			throw new RuntimeException("Unhandled action: "
+					+ action);
+		}
+	}
+
+	/* This returns true if the user marked the plugin for uninstall, too */
+	public boolean willBeUpdateable() {
+		switch (action) {
+		case NOT_INSTALLED: case NEW: case OBSOLETE: case UNINSTALL:
+		case REMOVE: case NOT_FIJI: case INSTALLED: case INSTALL:
+		case UPDATE: case UPLOAD:
+			return false;
+		case UPDATEABLE: case MODIFIED:
+			return true;
+		default:
+			throw new RuntimeException("Unhandled action: "
+					+ action);
+		}
+	}
+
+	// TODO: this needs a better name; something like wantsAction()
 	public boolean isUpdateable(boolean evenForcedUpdates) {
 		return action == Action.UPDATE ||
 			action == Action.INSTALL ||
