@@ -16,6 +16,7 @@ import fiji.updater.util.Util;
 
 import ij.IJ;
 import ij.Prefs;
+import ij.WindowManager;
 
 import ij.gui.GenericDialog;
 
@@ -221,6 +222,11 @@ public class UpdaterFrame extends JFrame
 		table.getModel().addTableModelListener(this);
 
 		pack();
+	}
+
+	public void dispose() {
+		WindowManager.removeWindow(this);
+		super.dispose();
 	}
 
 	public Progress getProgress(String title) {
