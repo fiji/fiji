@@ -82,6 +82,11 @@ public class Nrrd_Writer implements PlugIn {
 		if (arg == null || arg.equals("")) {
 			name = imp.getTitle();
 		}
+
+		if(IJ.altKeyDown()){
+			if(IJ.debugMode) IJ.log("Setting gzip encoding");
+			try {setNrrdEncoding("gzip");} catch (IOException e) {}	
+		}
 		
 		SaveDialog sd = new SaveDialog(plugInName+"...", name, ".nrrd");
 		String file = sd.getFileName();
@@ -122,6 +127,9 @@ public class Nrrd_Writer implements PlugIn {
 		FileOutputStream out = new FileOutputStream(new File(fi.directory, fi.fileName));
 		// First write out the full header
 		Writer bw = new BufferedWriter(new OutputStreamWriter(out));
+		// Note, right now this is the only way compression that is implemented
+		if(nrrdEncoding.equals("gzip"))
+			fi.compression=NrrdFileInfo.GZIP;
 		// Blank line terminates header
 		bw.write(makeHeader(fi,cal)+"\n");
 		// Flush rather than close
