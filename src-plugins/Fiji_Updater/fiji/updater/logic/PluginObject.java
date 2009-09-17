@@ -175,7 +175,9 @@ public class PluginObject {
 
 	// TODO: allow editing those via GUI
 	public void addDependency(String filename) {
-		// TODO: the timestamp should not be changed unnecessarily
+		// the timestamp should not be changed unnecessarily
+		if (dependencies.containsKey(filename))
+			return;
 		addDependency(filename, Util.getTimestamp(filename), false);
 	}
 
