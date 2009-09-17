@@ -10,8 +10,10 @@ import java.io.File;
 import java.io.IOException;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import java.util.zip.ZipException;
@@ -163,7 +165,40 @@ public class Checksummer extends Progressable {
 						plugin.newTimestamp);
 	}
 
-	public void updateFromLocal() {
+	public static final String[][] directories = {
+		{ "jars", "retro", "misc" }, { ".jar", ".class" },
+		{ "plugins" }, { ".jar", ".class", ".txt", ".ijm",
+			".py", ".rb", ".clj", ".js", ".bsh" },
+		{ "macros" }, { ".txt", ".ijm" },
+		{ "luts" }, { ".lut" }
+	};
+
+	static final Map<String, Set<String>> extensions;
+
+	static {
+		extensions = new HashMap<String, Set<String>>();
+		for (int i = 0; i < directories.length; i += 2) {
+			Set<String> set = new HashSet<String>();
+			for (String extension : directories[i + 1])
+				set.add(extension);
+			for (String dir : directories[i + 1])
+				extensions.put(dir, set);
+		}
+	}
+
+	public static boolean isCandidate(String path) {
+		path = path.replace('\\', '/'); // Microsoft time toll
+		int slash = path.indexOf('/');
+		if (slash < 0)
+			return path.equals("ij.jar") || path.equals("fake.jar")
+				|| Util.isLauncher(path);
+		Set<String> exts = extensions.get(path.substring(0, slash));
+		int dot = path.lastIndexOf('.');
+		return exts == null || dot < 0 ?
+			false : exts.contains(path.substring(dot));
+	}
+
+	protected void initializeQueue() {
 		queue = new ArrayList<StringPair>();
 
 		for (String launcher : Util.isDeveloper ?
@@ -172,16 +207,12 @@ public class Checksummer extends Progressable {
 
 		queue("ij.jar");
 
-		queueDir(new String[] { "jars", "retro", "misc" },
-				new String[] { ".jar", ".class" });
-		queueDir(new String[] { "plugins" },
-				new String[] { ".jar", ".class",
-					".py", ".rb", ".clj", ".js", ".bsh",
-					".txt", ".ijm" });
-		queueDir(new String[] { "macros" },
-				new String[] { ".txt", ".ijm" });
-		queueDir(new String[] { "luts" }, new String[] { ".lut" });
+		for (int i = 0; i < directories.length; i += 2)
+			queueDir(directories[i], directories[i + 1]);
+	}
 
+	public void updateFromLocal() {
+		initializeQueue();
 		handleQueue();
 	}
 }
