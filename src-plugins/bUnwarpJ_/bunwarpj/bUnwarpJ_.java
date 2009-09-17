@@ -23,24 +23,10 @@ package bunwarpj;
 
 /**
  * ====================================================================
- *  Version: June 6th, 2009
+ *  Version: September 17th, 2009
  *  http://biocomp.cnb.csic.es/%7Eiarganda/bUnwarpJ/
  * \===================================================================
  */
-
-/**====================================================================
- * Ignacio Arganda-Carreras
- * Escuela Politecnica Superior
- * Laboratorio B-408     
- * Universidad Autonoma de Madrid
- * Ctra. de Colmenar Viejo, Km. 15
- * Madrid 28049,  Spain
- *
- * Phone: (+34) 91 497 2260
- * E-mail: Ignacio.Arganda@uam.es
- * Web: http://www.ii.uam.es/~iarganda
- *\===================================================================*/
-
 
 /**
  * Old version (UnwarpJ) information: 
@@ -63,8 +49,9 @@ import java.util.Stack;
 \===================================================================*/
 
 /**
- * Main class for image registration plugin.
- * This class is a plugin for the ImageJ interface. It allows pairwise image
+ * Main class for the image registration plugin for ImageJ/Fiji.
+ * <p>
+ * This class is a plugin for the ImageJ/Fiji interface. It allows pairwise image
  * registration combining the ideas of elastic registration based on B-spline 
  * models and consistent registration.
  *
@@ -73,11 +60,11 @@ import java.util.Stack;
  * of the previous UnwarpJ project by Carlos Oscar Sanchez Sorzano.
  * <p>
  * For more information visit the main site 
- * <a href="http://biocomp.cnb.csic.es/~iarganda/bUnwarpJ/">
+ * <A target="_blank" href="http://biocomp.cnb.csic.es/~iarganda/bUnwarpJ/">
  * http://biocomp.cnb.csic.es/~iarganda/bUnwarpJ/</a>
  *
- * @version 2.6 06/06/2009
- * @author Ignacio Arganda-Carreras <ignacio.arganda@uam.es>
+ * @version 2.6 09/17/2009
+ * @author Ignacio Arganda-Carreras <ignacio.arganda@gmail.com>
  */
 public class bUnwarpJ_ implements PlugIn
 { /* begin class bUnwarpJ_ */
