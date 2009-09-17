@@ -109,7 +109,7 @@ public class PluginObject {
 	// TODO: finally add platform
 
 	// These are LinkedHashMaps to retain the order of the entries
-	protected Map<Dependency, Object> dependencies;
+	protected Map<String, Dependency> dependencies;
 	protected Map<String, Object> links, authors, platforms, categories;
 
 	public PluginObject(String filename, String checksum, long timestamp,
@@ -119,7 +119,7 @@ public class PluginObject {
 			current = new Version(checksum, timestamp);
 		previous = new LinkedHashMap<Version, Object>();
 		this.status = status;
-		dependencies = new LinkedHashMap<Dependency, Object>();
+		dependencies = new LinkedHashMap<String, Dependency>();
 		authors = new LinkedHashMap<String, Object>();
 		platforms = new LinkedHashMap<String, Object>();
 		categories = new LinkedHashMap<String, Object>();
@@ -175,9 +175,6 @@ public class PluginObject {
 
 	// TODO: allow editing those via GUI
 	public void addDependency(String filename) {
-		// the timestamp should not be changed unnecessarily
-		if (dependencies.containsKey(filename))
-			return;
 		addDependency(filename, Util.getTimestamp(filename), false);
 	}
 
@@ -187,7 +184,10 @@ public class PluginObject {
 	}
 
 	public void addDependency(Dependency dependency) {
-		dependencies.put(dependency, (Object)null);
+		// the timestamp should not be changed unnecessarily
+		if (dependencies.containsKey(dependency.filename))
+			return;
+		dependencies.put(dependency.filename, dependency);
 	}
 
 	public void addLink(String link) {
@@ -303,7 +303,7 @@ public class PluginObject {
 	}
 
 	public Iterable<Dependency> getDependencies() {
-		return dependencies.keySet();
+		return dependencies.values();
 	}
 
 	public Status getStatus() {
