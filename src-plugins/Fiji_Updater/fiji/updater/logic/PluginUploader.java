@@ -7,7 +7,6 @@ import fiji.updater.Updater;
 import fiji.updater.logic.FileUploader.SourceFile;
 
 import fiji.updater.util.Compressor;
-import fiji.updater.util.DependencyAnalyzer;
 import fiji.updater.util.Progress;
 import fiji.updater.util.Util;
 
