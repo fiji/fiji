@@ -17,6 +17,12 @@ public class Class2JarFileMap extends HashMap<String, String> {
 
 	public Class2JarFileMap() {
 		fijiDirectory = getFijiDirectory();
+		try {
+			addJar("ij.jar");
+			addJar("misc/Fiji.jar");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		addDirectory("plugins");
 		addDirectory("jars");
 	}
