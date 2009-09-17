@@ -323,8 +323,7 @@ public class PluginObject {
 	}
 
 	public boolean actionSpecified() {
-		return action != Action.NOT_INSTALLED &&
-			action != Action.INSTALLED;
+		return action != status.getNoAction();
 	}
 
 	// TODO: why that redundancy?  We set Action.UPDATE only if it is updateable anyway!  Besides, use getAction(). DRY, DRY, DRY!
