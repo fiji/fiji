@@ -312,7 +312,10 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	}
 
 	public void updateDependencies(PluginObject plugin) {
-		for (String dependency : analyzeDependencies(plugin))
+		Iterable<String> dependencies = analyzeDependencies(plugin);
+		if (dependencies == null)
+			return;
+		for (String dependency : dependencies)
 			plugin.addDependency(dependency);
 	}
 
