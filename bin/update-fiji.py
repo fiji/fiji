@@ -50,7 +50,10 @@ else:
 		implied = []
 		for file in check:
 			plugin = plugins.getPlugin(file)
-			for dependency in plugins.analyzeDependencies(plugin):
+			dependencies = plugins.analyzeDependencies(plugin)
+			if dependencies == None:
+				continue
+			for dependency in dependencies:
 				if not dependency in files + needUpload:
 					implied.append(dependency)
 		if len(implied) == 0:

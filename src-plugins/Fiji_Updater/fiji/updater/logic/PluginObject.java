@@ -281,8 +281,11 @@ public class PluginObject {
 
 		PluginCollection plugins = PluginCollection.getInstance();
 		// TODO: complain if not Fiji (and offer to add them)
-		for (String dependency : plugins.analyzeDependencies(this))
-				addDependency(dependency);
+		Iterable<String> dependencies =
+			plugins.analyzeDependencies(this);
+		if (dependencies != null)
+			for (String dependency : dependencies)
+					addDependency(dependency);
 	}
 
 	protected void markForRemoval() {
