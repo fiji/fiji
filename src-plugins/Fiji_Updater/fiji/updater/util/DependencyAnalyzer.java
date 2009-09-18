@@ -38,6 +38,7 @@ public class DependencyAnalyzer {
 			new LinkedHashMap<String, Object>();
 
 		final JarFile jar = new JarFile(filename);
+		filename = Util.stripPrefix(filename, Util.fijiRoot);
 		for (JarEntry file : Collections.list(jar.entries())) {
 			if (!file.getName().endsWith(".class"))
 				continue;
