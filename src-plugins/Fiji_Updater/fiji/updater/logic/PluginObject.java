@@ -266,6 +266,10 @@ public class PluginObject {
 			newChecksum = current.checksum;
 			newTimestamp = current.timestamp;
 		}
+		else if (status == Status.OBSOLETE) {
+			status = Status.INSTALLED;
+			setVersion(newChecksum, newTimestamp);
+		}
 		else {
 			if (newChecksum == null ||
 					newChecksum.equals(current.checksum))

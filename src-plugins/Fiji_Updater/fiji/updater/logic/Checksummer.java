@@ -122,6 +122,9 @@ public class Checksummer extends Progressable {
 				plugin = new PluginObject(path, null, 0,
 						Status.OBSOLETE);
 				plugin.addPreviousVersion(checksum, timestamp);
+				// for re-upload
+				plugin.newChecksum = checksum;
+				plugin.newTimestamp = timestamp;
 			}
 			plugins.add(plugin);
 		}
