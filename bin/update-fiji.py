@@ -2,7 +2,7 @@
 ''''exec "$(dirname "$0")"/../fiji --jython "$0" "$@" # (call again with fiji)'''
 
 from os import listdir, path
-from sys import argv, stderr
+from sys import argv, exit, stderr
 
 from fiji.updater import Updater
 from fiji.updater.logic import Checksummer, FileUploader, \
@@ -37,9 +37,44 @@ plugins = PluginCollection.getInstance()
 if len(files) == 0:
 	checksummer.updateFromLocal()
 else:
+	if files[0] == '--auto':
+		automatic = True
+		files = files[1:]
+	else:
+		automatic = False
 	checksummer.updateFromLocal(files)
-	plugins = [plugins.getPlugin(file) for file in files]
-	# TODO: add dependencies
+	# check dependencies
+	check = files
+	needUpload = []
+	while len(check) > 0:
+		implied = []
+		for file in check:
+			plugin = plugins.getPlugin(file)
+			for dependency in plugins.analyzeDependencies(plugin):
+				if not dependency in files + needUpload:
+					implied.append(dependency)
+		if len(implied) == 0:
+			break
+		checksummer.updateFromLocal(implied)
+		stillImplied = []
+		for file in implied:
+			plugin = plugins.getPlugin(file)
+			if plugin.getStatus().isValid(Action.UPLOAD):
+				stillImplied.append(file)
+		needUpload.extend(stillImplied)
+		check = stillImplied
+
+	if len(needUpload) > 0 and not automatic:
+		print
+		print 'ERROR: These files would need to be uploaded, too:'
+		print
+		print ', '.join(needUpload)
+		print
+		print 'Run with --auto to make it so'
+		print
+		exit(1)
+
+	plugins = [plugins.getPlugin(file) for file in files + needUpload]
 
 # mark for update
 def markForUpdate(plugin):
