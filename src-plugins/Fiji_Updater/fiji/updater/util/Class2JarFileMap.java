@@ -53,7 +53,19 @@ public class Class2JarFileMap extends HashMap<String, String> {
 		}
 	}
 
+	/*
+	 * batik.jar contains these, for backwards compatibility, but we
+	 * do not want to have batik.jar as a dependency for every XML
+	 * handling plugin...
+	 */
+	private boolean ignore(String name) {
+		return name.startsWith("org.xml.") ||
+			name.startsWith("javax.xml.");
+	}
+
 	private void addClass(String className, String jar) {
+		if (ignore(className))
+			return;
 		if (containsKey(className)) {
 			if (!className.startsWith("com.sun.medialib.codec.") &&
 					!className.startsWith("org.mozilla."))
