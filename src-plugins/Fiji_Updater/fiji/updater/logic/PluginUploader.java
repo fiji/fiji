@@ -130,12 +130,10 @@ public class PluginUploader {
 	protected void saveTextFile(String path) throws FileNotFoundException {
 		PrintStream out = new PrintStream(path);
 		for (PluginObject plugin :
-				PluginCollection.getInstance().fijiPlugins())
-			if (!plugin.isObsolete() &&
-					plugin.platforms.size() == 0)
-				out.println(plugin.getFilename() + " "
-						+ plugin.getTimestamp() + " "
-						+ plugin.getChecksum());
+				PluginCollection.getInstance().forCurrentTXT())
+			out.println(plugin.getFilename() + " "
+					+ plugin.getTimestamp() + " "
+					+ plugin.getChecksum());
 		out.close();
 	}
 

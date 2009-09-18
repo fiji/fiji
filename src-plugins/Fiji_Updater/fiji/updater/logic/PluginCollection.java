@@ -90,6 +90,18 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		return filter(not(is(Status.NOT_FIJI)));
 	}
 
+	public Iterable<PluginObject> forCurrentTXT() {
+		return filter(and(not(oneOf(new Status[] {
+				Status.NOT_FIJI, Status.OBSOLETE,
+				Status.OBSOLETE_MODIFIED,
+				Status.OBSOLETE_UNINSTALLED
+			})), startsWith(new String[] {
+				/* the old updater will only checksum these! */
+				"fiji-", "ij.jar",
+				"plugins/", "jars/", "retro/", "misc/"
+			})));
+	}
+
 	public Iterable<PluginObject> nonFiji() {
 		return filter(is(Status.NOT_FIJI));
 	}
@@ -245,6 +257,25 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		return new Filter() {
 			public boolean matches(PluginObject plugin) {
 				return oneOf.contains(plugin.getStatus());
+			}
+		};
+	}
+
+	public Filter startsWith(final String prefix) {
+		return new Filter() {
+			public boolean matches(PluginObject plugin) {
+				return plugin.filename.startsWith(prefix);
+			}
+		};
+	}
+
+	public Filter startsWith(final String[] prefixes) {
+		return new Filter() {
+			public boolean matches(PluginObject plugin) {
+				for (String prefix : prefixes)
+					if (plugin.filename.startsWith(prefix))
+						return true;
+				return false;
 			}
 		};
 	}
