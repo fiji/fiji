@@ -70,6 +70,7 @@ public class Jython_Interpreter extends AbstractInterpreter {
 		super.prompt.setEnabled(true);
 		super.prompt.requestFocus();
 		print_out.println("... done.");
+		print_out.flush();
 	}
 
 	/** Evaluate python code. */
