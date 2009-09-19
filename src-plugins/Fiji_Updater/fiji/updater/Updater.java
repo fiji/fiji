@@ -47,6 +47,7 @@ public class Updater implements PlugIn {
 	public void run(String arg) {
 		final UpdaterFrame main = new UpdaterFrame();
 		main.setLocationRelativeTo(IJ.getInstance());
+		main.setEasyMode(true);
 		main.setVisible(true);
 		WindowManager.addWindow(main);
 

@@ -21,6 +21,8 @@ import ij.WindowManager;
 
 import ij.gui.GenericDialog;
 
+import java.awt.Container;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.TextField;
 
@@ -68,7 +70,8 @@ public class UpdaterFrame extends JFrame
 	private PluginTable table;
 	private JLabel lblPluginSummary;
 	private PluginDetails pluginDetails;
-	private JButton btnStart;
+	private JButton apply, cancel, easy;
+	boolean easyMode;
 
 	//For developers
 	// TODO: no more Hungarian notation
@@ -192,13 +195,13 @@ public class UpdaterFrame extends JFrame
 		bottomPanel.add(Box.createHorizontalGlue());
 
 		//Button to start actions
-		btnStart = SwingTools.button("Apply changes",
+		apply = SwingTools.button("Apply changes",
 				"Start installing/uninstalling plugins", new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				applyChanges();
 			}
 		}, bottomPanel);
-		btnStart.setEnabled(false);
+		apply.setEnabled(false);
 
 		//includes button to upload to server if is a Developer using
 		if (Util.isDeveloper) {
@@ -213,7 +216,16 @@ public class UpdaterFrame extends JFrame
 		}
 
 		bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
-		SwingTools.button("Close", "Exit Plugin Manager",
+		easy = SwingTools.button("Toggle easy mode",
+			"Toggle between easy and verbose mode",
+			new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					toggleEasyMode();
+				}
+			}, bottomPanel);
+
+		bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
+		cancel = SwingTools.button("Close", "Exit Plugin Manager",
 			new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					quit();
@@ -365,6 +377,31 @@ public class UpdaterFrame extends JFrame
 		dispose();
 	}
 
+	void setEasyMode(Container container) {
+		for (Component child : container.getComponents()) {
+			if ((child instanceof Container) &&
+					child != table.getParent().getParent())
+				setEasyMode((Container)child);
+			child.setVisible(!easyMode);
+		}
+	}
+
+	public void setEasyMode(boolean easyMode) {
+		this.easyMode = easyMode;
+		setEasyMode(getContentPane());
+		Component[] exempt = { table, easy, apply, cancel };
+		for (Component child : exempt)
+			for (; child != getContentPane();
+					child = child.getParent())
+				child.setVisible(true);
+		if (isVisible())
+			repaint();
+	}
+
+	public void toggleEasyMode() {
+		setEasyMode(!easyMode);
+	}
+
 	private void showFrame() {
 		if (loadedFrame != null) {
 			loadedFrame.setVisible(true);
@@ -412,7 +449,7 @@ public class UpdaterFrame extends JFrame
 		for (PluginAction button : pluginActions)
 			button.enableIfValid();
 
-		btnStart.setEnabled(plugins.hasChanges());
+		apply.setEnabled(plugins.hasChanges());
 
 		// TODO: "Upload" is activated by default!"
 		if (Util.isDeveloper) {
