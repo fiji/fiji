@@ -50,8 +50,9 @@ public class Updater implements PlugIn {
 		main.setVisible(true);
 		WindowManager.addWindow(main);
 
+		PluginCollection plugins = PluginCollection.getInstance();
+		plugins.removeAll(plugins);
 		Progress progress = main.getProgress("Starting up...");
-
 		XMLFileDownloader downloader = new XMLFileDownloader();
 		downloader.addProgress(progress);
 		try {
@@ -92,8 +93,6 @@ public class Updater implements PlugIn {
 		}
 
 		if ("update".equals(arg)) {
-			PluginCollection plugins =
-				PluginCollection.getInstance();
 			plugins.markForUpdate(false);
 			if (plugins.hasChanges())
 				main.setViewOption(Option.UPDATEABLE);
