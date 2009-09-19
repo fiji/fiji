@@ -392,13 +392,13 @@ public class PluginObject {
 	}
 
 	/* This returns true if the user marked the plugin for uninstall, too */
-	public boolean willBeUpdateable() {
+	public boolean willBeUpToDate() {
 		switch (action) {
-		case NOT_INSTALLED: case NEW: case OBSOLETE: case UNINSTALL:
-		case REMOVE: case NOT_FIJI: case INSTALLED: case INSTALL:
-		case UPDATE: case UPLOAD:
+		case OBSOLETE: case REMOVE: case NOT_INSTALLED: case NEW:
+		case UPDATEABLE: case MODIFIED: case UNINSTALL:
 			return false;
-		case UPDATEABLE: case MODIFIED:
+		case INSTALLED: case INSTALL: case UPDATE: case UPLOAD:
+		case NOT_FIJI:
 			return true;
 		default:
 			throw new RuntimeException("Unhandled action: "

@@ -426,7 +426,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 				if (other.willNotBeInstalled())
 					continue;
 			}
-			else if (!other.willBeUpdateable())
+			else if (other.willBeUpToDate())
 				continue;
 			if (!map.add(other, plugin))
 				continue;
