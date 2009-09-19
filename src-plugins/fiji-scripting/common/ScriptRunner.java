@@ -30,6 +30,7 @@ public class ScriptRunner {
 			methods.put("bsh", ScriptRunner.class.getDeclaredMethod("runBSH", String.class, Map.class));
 			methods.put("js", ScriptRunner.class.getDeclaredMethod("runJS", String.class, Map.class));
 			methods.put("py", ScriptRunner.class.getDeclaredMethod("runPY", String.class, Map.class));
+			// FAILS // methods.put("clj", ScriptRunner.class.getDeclaredMethod("runCLJ", String.class, Map.class));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -129,4 +130,16 @@ public class ScriptRunner {
 		}
 		return true;
 	}
+
+	/* // FAILS to find the class ... ?
+	static public boolean runCLJ(final String path, final Map<String,Object> vars) {
+		try {
+			Class c = Class.forName("Clojure.Refresh_Clojure_Scripts");
+			return Boolean.TRUE.equals(c.getDeclaredMethod("runScript", new Class[]{String.class, Map.class}).invoke(c.newInstance(), new Object[]{path, vars}));
+		} catch (Throwable t) {
+			t.printStackTrace();
+			return false;
+		}
+	}
+	*/
 }
