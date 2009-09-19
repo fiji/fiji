@@ -8,7 +8,7 @@ import ij.IJ;
 public class Refresh_Clojure_Scripts extends RefreshScripts {
 
 	public void run(String arg) {
-		setLanguageProperties(".clj","Clojure");
+		setLanguageProperties(".clj", "Clojure");
 		setVerbose(false);
 		super.run(arg);
 	}
@@ -21,12 +21,16 @@ public class Refresh_Clojure_Scripts extends RefreshScripts {
 				return;
 			}
 			if (IJ.isWindows()) path = path.replace('\\', '/');
-			Object res = Clojure_Interpreter.evaluate("(load-file \"" + path + "\")");
+			Clojure_Interpreter ci = new Clojure_Interpreter();
+			ci.init();
+			Object res = ci.evaluate("(load-file \"" + path + "\")");
 			if (null != res) {
-				String s = res.toString();
-				if (s.length() > 0 && !"nil".equals(s)) IJ.log(res.toString());
+				String s = res.toString().trim();
+				if (s.length() > 0 && !"nil".equals(s)) {
+					IJ.log(s);
+				}
 			}
-			Clojure_Interpreter.destroy();
+			ci.destroy();
 		} catch (Throwable error) {
 			printError(error);
 		}
@@ -35,12 +39,16 @@ public class Refresh_Clojure_Scripts extends RefreshScripts {
 	/** Will consume and close the stream. */
 	public void runScript(final InputStream istream) {
 		try {
-			Object res = Clojure_Interpreter.evaluate(istream);
+			Clojure_Interpreter ci = new Clojure_Interpreter();
+			ci.init();
+			Object res = ci.evaluate(istream);
 			if (null != res) {
-				String s = res.toString();
-				if (s.length() > 0 && !"nil".equals(s)) IJ.log(res.toString());
+				String s = res.toString().trim();
+				if (s.length() > 0 && !"nil".equals(s)) {
+					IJ.log(s);
+				}
 			}
-			Clojure_Interpreter.destroy();
+			ci.destroy();
 		} catch (Throwable error) {
 			printError(error);
 		}
