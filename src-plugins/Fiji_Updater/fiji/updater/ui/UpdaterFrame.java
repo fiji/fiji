@@ -148,7 +148,6 @@ public class UpdaterFrame extends JFrame
 		//======== End: LEFT PANEL ========
 
 		//======== Start: RIGHT PANEL ========
-		// TODO: do we really want to win the "Who can make the longest function names?" contest?
 		JPanel rightPanel = SwingTools.verticalPanel();
 
 		rightPanel.add(Box.createVerticalGlue());
@@ -452,7 +451,6 @@ public class UpdaterFrame extends JFrame
 		apply.setEnabled(plugins.hasChanges());
 		cancel.setLabel(plugins.hasChanges() ? "Cancel" : "Close");
 
-		// TODO: "Upload" is activated by default!"
 		if (Util.isDeveloper) {
 			btnEditDetails.setEnabled(getSingleSelectedPlugin()
 					!= null);
@@ -464,7 +462,6 @@ public class UpdaterFrame extends JFrame
 		int install = 0, uninstall = 0, upload = 0;
 		long bytesToDownload = 0, bytesToUpload = 0;
 
-		// TODO: show dependencies' total size
 		for (PluginObject plugin : plugins)
 			switch (plugin.getAction()) {
 			case INSTALL:
