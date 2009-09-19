@@ -1,5 +1,7 @@
 #!/bin/sh
 
+BROWSER=${BROWSER:-firefox}
+
 get_url () {
 	url=$(git config remote.origin.url)
 	if test -z "$url"
@@ -58,11 +60,11 @@ do
 		HEAD=$(git rev-parse --symbolic-full-name HEAD) &&
 		arg=$(git ls-files --full-name "${arg##*/}") &&
 		url=$(get_url) &&
-		firefox "$url;a=blob;f=$arg;hb=$HEAD$linenumber")
+		$BROWSER "$url;a=blob;f=$arg;hb=$HEAD$linenumber")
 	else
 		HEAD=$(git rev-parse --symbolic-full-name HEAD) &&
 		arg=$(git rev-parse --verify "$arg") &&
 		url=$(get_url) &&
-		firefox "$url;a=commitdiff;h=$arg;hb=$HEAD"
+		$BROWSER "$url;a=commitdiff;h=$arg;hb=$HEAD"
 	fi || break
 done
