@@ -3,6 +3,7 @@ package Clojure;
 import common.RefreshScripts;
 import java.io.File;
 import java.io.InputStream;
+import java.util.Map;
 import ij.IJ;
 
 public class Refresh_Clojure_Scripts extends RefreshScripts {
@@ -13,16 +14,22 @@ public class Refresh_Clojure_Scripts extends RefreshScripts {
 		super.run(arg);
 	}
 
-	/** Runs the script at path in the general namespace and interpreter on this JVM, which means the script may change the values of variables and functions in other scripts and in the Clojure interpreter. */
 	public void runScript(String path) {
+		runScript(path, null);
+	}
+
+	public boolean runScript(String path, Map<String,Object> vars) {
 		try {
 			if (!path.endsWith(".clj") || !new File(path).exists()) {
 				IJ.log("Not a clojure script or not found: " + path);
-				return;
+				return false;
 			}
 			if (IJ.isWindows()) path = path.replace('\\', '/');
 			Clojure_Interpreter ci = new Clojure_Interpreter();
 			ci.init();
+			if (null != vars) {
+				ci.pushThreadBindings(vars);
+			}
 			Object res = ci.evaluate("(load-file \"" + path + "\")");
 			if (null != res) {
 				String s = res.toString().trim();
@@ -31,8 +38,10 @@ public class Refresh_Clojure_Scripts extends RefreshScripts {
 				}
 			}
 			ci.destroy();
+			return true;
 		} catch (Throwable error) {
 			printError(error);
+			return false;
 		}
 	}
 

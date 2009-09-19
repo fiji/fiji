@@ -46,6 +46,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
+import java.util.Map;
 
 import common.AbstractInterpreter;
 
@@ -159,6 +160,46 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 		}
 		ev.throwError(); // to be printed by super class wherever appropriate
 		return ret;
+	}
+
+	/** Executes the Callable @param c wrapped in a try/catch to avoid any restart of the clojure thread,
+	 *  and returns the result of the execution. */
+	public Object submit(final Callable c) {
+		// Initialize the worker Thread with a few bindings
+		try {
+			return exec.submit(new Callable() {
+				public Object call() {
+					try {
+						return c.call();
+					} catch (Throwable t) {
+						t.printStackTrace();
+						return null;
+					}
+				}
+			}).get(); // wait until done
+		} catch (Throwable t) {
+			t.printStackTrace();
+		}
+		return null;
+	}
+
+	public boolean pushThreadBindings(Map<String,Object> vars) throws Exception {
+		return pushThreadBindings("clojure.core", vars);
+	}
+	public boolean pushThreadBindings(final String namespace, final Map<String,Object> vars) throws Exception {
+		return null != submit(new Callable() {
+			public Object call() {
+				try {
+					for (Map.Entry<String,Object> e : vars.entrySet()) {
+						Var.pushThreadBindings(RT.map(RT.var(namespace, e.getKey()), e.getValue()));
+					}
+					return namespace; // to return something != null
+				} catch (Throwable t) {
+					t.printStackTrace();
+				}
+				return null;
+			}
+		});
 	}
 
 	public boolean init() {
