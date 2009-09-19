@@ -4,6 +4,9 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.GridBagLayout;
+import java.awt.GridBagConstraints;
+import java.awt.Insets;
 
 import java.awt.event.ActionListener;
 
@@ -93,6 +96,37 @@ public class SwingTools {
 		panel.add(component);
 		if (addTo != null)
 			addTo.add(panel);
+		return panel;
+	}
+
+	/** Uses a GridBagLayout to prevent odd resizing behaviours. */
+	public static JPanel labelComponentRigid(String text, JComponent component) {
+		JPanel panel = new JPanel();
+		GridBagLayout gb = new GridBagLayout();
+		panel.setLayout(gb);
+		GridBagConstraints c = new GridBagConstraints(0, 0,  // x, y
+				                              1, 3,  // rows, cols
+							      0, 0,  // weightx, weighty
+							      GridBagConstraints.WEST, // anchor
+							      GridBagConstraints.NONE, // fill
+							      new Insets(0,0,0,0),
+							      0, 0); // ipadx, ipady
+		JLabel label = new JLabel(text, SwingConstants.LEFT);
+		gb.setConstraints(label, c);
+		panel.add(label);
+
+		Component box = Box.createRigidArea(new Dimension(10,0));
+		c.gridx = 1;
+		gb.setConstraints(box, c);
+		panel.add(box);
+
+		c.gridx = 2;
+		c.weightx = 1;
+		c.gridwidth = GridBagConstraints.REMAINDER;
+		c.fill = GridBagConstraints.HORIZONTAL;
+		gb.setConstraints(component, c);
+		panel.add(component);
+
 		return panel;
 	}
 
