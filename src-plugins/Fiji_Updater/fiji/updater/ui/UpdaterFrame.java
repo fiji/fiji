@@ -337,7 +337,9 @@ public class UpdaterFrame extends JFrame
 	}
 
 	public void applyChanges() {
-		// TODO: check conflicts
+		ResolveDependencies resolver = new ResolveDependencies(this);
+		if (!resolver.resolve())
+			return;
 		new Thread() {
 			public void run() {
 				install();
