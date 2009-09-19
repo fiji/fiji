@@ -459,6 +459,69 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		});
 	}
 
+	String checkForCircularDependency(PluginObject plugin,
+			Set<PluginObject> seen) {
+		if (seen.contains(plugin))
+			return "";
+		String result = checkForCircularDependency(plugin, seen,
+				new HashSet<PluginObject>());
+		if (result == null)
+			return "";
+
+		// Display only the circular dependency
+		int last = result.lastIndexOf(' ');
+		int off = result.lastIndexOf(result.substring(last), last - 1);
+		return "Circular dependency detected: "
+			+ result.substring(off + 1) + "\n";
+	}
+
+	String checkForCircularDependency(PluginObject plugin,
+			Set<PluginObject> seen,
+			Set<PluginObject> chain) {
+		if (seen.contains(plugin))
+			return null;
+		for (String dependency : plugin.dependencies.keySet()) {
+			PluginObject dep = getPlugin(dependency);
+			if (dep == null)
+				continue;
+			if (chain.contains(dep))
+				return " " + dependency;
+			chain.add(dep);
+			String result =
+				checkForCircularDependency(dep, seen, chain);
+			seen.add(dep);
+			if (result != null)
+				return " " + dependency + " ->" + result;
+			chain.remove(dep);
+		}
+		return null;
+	}
+
+	/* returns null if consistent, error string when not */
+	public String checkConsistency() {
+		StringBuilder result = new StringBuilder();
+		Set<PluginObject> circularChecked = new HashSet<PluginObject>();
+		for (PluginObject plugin : this) {
+			result.append(checkForCircularDependency(plugin,
+					circularChecked));
+			// only non-obsolete components can have dependencies
+			Set<String> deps = plugin.dependencies.keySet();
+			if (deps.size() > 0 && plugin.isObsolete())
+				result.append("Obsolete plugin " + plugin
+					+ "has dependencies: "
+					+ Util.join(", ", deps) + "!\n");
+			for (String dependency : deps) {
+				PluginObject dep = getPlugin(dependency);
+				if (dep == null || dep.current == null)
+					result.append("The plugin " + plugin
+						+ " has the obsolete/non-Fiji "
+						+ "dependency "
+						+ dependency + "!\n");
+			}
+		}
+		return result.length() > 0 ? result.toString() : null;
+	}
+
 	public String toString() {
 		return Util.join(", ", this);
 	}
