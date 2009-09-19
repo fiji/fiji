@@ -124,6 +124,7 @@ public class TextEditor extends JFrame implements ActionListener,
 				redoInProgress = false;
 			}
 		};
+		textArea.setTabSize(8);
 		provider = new ClassCompletionProvider(new DefaultProvider(),
 				textArea, null);
 		autocomp = new AutoCompletion(provider);
