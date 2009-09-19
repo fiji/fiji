@@ -31,11 +31,12 @@ package levelsets.ij;
 
 import ij.IJ;
 import ij.ImagePlus;
+import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.gui.PointRoi;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
-import ij.plugin.filter.PlugInFilter;
+import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
 
 import java.awt.Checkbox;
@@ -53,10 +54,8 @@ import levelsets.algorithm.LevelSetImplementation;
 import levelsets.algorithm.LevelSetFactory.Parameter;
 import levelsets.ij.StateContainer.States;
 
-public class LevelSet implements PlugInFilter {
+public class LevelSet implements PlugIn {
 	
-	
-	private int flags = DOES_16|DOES_32|DOES_8G|DOES_STACKS;
 
 	private static String [] shapeList = {"none"}; // not implemented yet
 	private static String [] preprocessList = {"none", "Gaussian difference"};
@@ -147,38 +146,30 @@ public class LevelSet implements PlugInFilter {
 			ls_filter.showROI(testIP, new PolygonRoi(poly_rx, poly_ry, poly_rx.length, PolygonRoi.POLYGON), null);
 		}		
 		if ( test_algorithm ) {
-			ls_filter.setup("", testIP);
-			ls_filter.run(testIP.getProcessor());
+			ls_filter.imp = testIP;
+			ls_filter.run("");
 		}
 		
 	}
 	
 
-	public void run(ImageProcessor ip) {
+	public void run(ImagePlus imp) {
 		
 		// TODO Would make sense to offer starting points as mask in separate image. 
 		// If no ROI found, have the additional dialog field to select mask image. 
-				
+
 		Roi roi = imp.getRoi();
-        if ( roi==null ) {
-        	
-        	// FastMarching needs points
-            IJ.error("Seed (points) required");
-            
-            // TODO Active contour needs contour - 
-            // 3 cases should be separate classes
-            // - FastMarching
-            // - ActiveContours with option of fast marching 
-            return;
-        }
-        
-        if ( ask_params == true ) {
-        	if ( showDialog() == false ) {
-        		return;
+        	if ( roi==null ) {
+        		// FastMarching needs points
+
+			// TODO Active contour needs contour - 
+			// 3 cases should be separate classes
+			// - FastMarching
+			// - ActiveContours with option of fast marching 
+			return;
         	}
-        }
-         
-        // Wrap the selected image into the ImageContainer
+        
+        	// Wrap the selected image into the ImageContainer
 		ic = new ImageContainer(imp);
 		
 		// Create a ImageContainer for showing the progress
@@ -189,6 +180,7 @@ public class LevelSet implements PlugInFilter {
 		
 		// Create a initial state map out of the roi
 		StateContainer sc_roi = new StateContainer();
+		System.out.println("current slice: " + imp.getCurrentSlice());
 		sc_roi.setROI(roi, ic.getWidth(), ic.getHeight(), ic.getImageCount(), imp.getCurrentSlice());
 		sc_roi.setExpansionToInside(insideout);
 		
@@ -265,11 +257,29 @@ public class LevelSet implements PlugInFilter {
 		
 	}
 
-	public int setup(String arg, ImagePlus imp) {
+	public void run(String arg) {
 		// TODO: check for seed == selection
 		
-		this.imp = imp;
-		
+		if (null == imp) {
+			imp = WindowManager.getCurrentImage();
+			if (null == imp) {
+				IJ.showMessage("Level Sets needs an image with a ROI in it!");
+				return;
+			}
+		}
+
+		Roi roi = imp.getRoi();
+		if (null == roi) {
+			IJ.error("Seed (points) required");
+			return;
+		}
+
+		if ( ask_params == true ) {
+			if ( showDialog() == false ) {
+				return;
+			}
+		}
+
 		// if never called before set the parameters to meaningful defaults from the class
 		// otherwise keep them at previous values
 		
@@ -280,7 +290,7 @@ public class LevelSet implements PlugInFilter {
 		}
 
 		
-		return flags;
+		run(imp);
 	}
 	
 	

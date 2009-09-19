@@ -31,11 +31,17 @@ public class ImageProgressContainer extends ImageContainer {
 	
 	public ImageProgressContainer(ImageContainer cont) {		
 		duplicateImages(cont.sproc);
+		if (null != this.ip && null != cont.ip) {
+			this.ip.setSlice(cont.ip.getCurrentSlice());
+		}
 	}
 	
 	
 	public void duplicateImages( ImageContainer cont ) {
-		duplicateImages(cont.sproc);		
+		duplicateImages(cont.sproc);
+		if (null != this.ip && null != cont.ip) {
+			this.ip.setSlice(cont.ip.getCurrentSlice());
+		}
 	}
 	
 	public void duplicateImages(ImageProcessor [] iproc) {

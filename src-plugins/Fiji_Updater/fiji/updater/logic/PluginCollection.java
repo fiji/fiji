@@ -97,11 +97,12 @@ public class PluginCollection extends ArrayList<PluginObject> {
 				Status.NOT_FIJI, Status.OBSOLETE,
 				Status.OBSOLETE_MODIFIED,
 				Status.OBSOLETE_UNINSTALLED
-			})), startsWith(new String[] {
-				/* the old updater will only checksum these! */
-				"fiji-", "ij.jar",
-				"plugins/", "jars/", "retro/", "misc/"
-			})));
+			/* the old updater will only checksum these! */
+			})), or(startsWith("fiji-"),
+				and(startsWith(new String[] {
+					"ij.jar", "plugins/", "jars/",
+					"retro/", "misc/"
+					}), endsWith(".jar")))));
 	}
 
 	public Iterable<PluginObject> nonFiji() {
@@ -278,6 +279,14 @@ public class PluginCollection extends ArrayList<PluginObject> {
 					if (plugin.filename.startsWith(prefix))
 						return true;
 				return false;
+			}
+		};
+	}
+
+	public Filter endsWith(final String suffix) {
+		return new Filter() {
+			public boolean matches(PluginObject plugin) {
+				return plugin.filename.endsWith(suffix);
 			}
 		};
 	}
