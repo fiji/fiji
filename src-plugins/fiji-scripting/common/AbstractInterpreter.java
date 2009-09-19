@@ -68,22 +68,14 @@ public abstract class AbstractInterpreter implements PlugIn {
 	protected int active_line = 0;
 	final protected ArrayList al_lines = new ArrayList();
 	final protected ArrayList<Boolean> valid_lines = new ArrayList<Boolean>();
-	final private PipedOutputStream pout = new PipedOutputStream();
+	private PipedOutputStream pout = null;
 	private BufferedReader readin = null;
-	final protected BufferedOutputStream out = new BufferedOutputStream(pout);
-	final protected PrintWriter print_out = new PrintWriter(out);
-	Thread reader;
+	protected BufferedOutputStream out = null;
+	protected PrintWriter print_out = null;
+	Thread reader, writer;
 	protected JPopupMenu popup_menu;
 	String last_dir = ij.Menus.getPlugInsPath();//ij.Prefs.getString(ij.Prefs.DIR_IMAGE);
 	protected ExecuteCode runner;
-
-	protected AbstractInterpreter() {
-		try {
-			readin = new BufferedReader(new InputStreamReader(new PipedInputStream(pout)));
-		} catch (Exception ioe) {
-			ioe.printStackTrace();
-		}
-	}
 
 	static final protected Hashtable<Class,AbstractInterpreter> instances = new Hashtable<Class,AbstractInterpreter>();
 
@@ -142,11 +134,25 @@ public abstract class AbstractInterpreter implements PlugIn {
 			active_line = 0;
 		}
 
-		// make GUI
-		makeGUI();
+		runner = new ExecuteCode();
+
+		// Wait until runner is alive (then piped streams will exist)
+		while (!runner.isAlive() || null == pout) {
+			try {
+				Thread.sleep(50);
+			} catch (InterruptedException ie) {}
+		}
+
 		// start thread to write stdout and stderr to the screen
 		reader = new Thread("out_reader") {
 			public void run() {
+				{
+					try {
+						readin = new BufferedReader(new InputStreamReader(new PipedInputStream(pout)));
+					} catch (Exception ioe) {
+						ioe.printStackTrace();
+					}
+				}
 				setPriority(Thread.NORM_PRIORITY);
 				while (!isInterrupted()) {
 					try {
@@ -170,7 +176,9 @@ public abstract class AbstractInterpreter implements PlugIn {
 			}
 		};
 		reader.start();
-		runner = new ExecuteCode();
+
+		// make GUI
+		makeGUI();
 	}
 
 	protected void makeGUI() {
@@ -486,12 +494,6 @@ public abstract class AbstractInterpreter implements PlugIn {
 		runner.quit();
 		Thread.yield();
 		reader.interrupt();
-		try {
-			out.flush();
-			out.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
 	}
 
 	void addMenuItem(JPopupMenu menu, String label, ActionListener listener) {
@@ -527,6 +529,13 @@ public abstract class AbstractInterpreter implements PlugIn {
 			synchronized (this) { notify(); }
 		}
 		public void run() {
+			try {
+				pout = new PipedOutputStream();
+				out = new BufferedOutputStream(pout);
+				print_out = new PrintWriter(out);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 			AbstractInterpreter.this.threadStarting();
 			while (go) {
 				if (isInterrupted()) return;
@@ -553,6 +562,10 @@ public abstract class AbstractInterpreter implements PlugIn {
 				 }
 			}
 			AbstractInterpreter.this.threadQuitting();
+			try {
+				print_out.flush();
+				print_out.close();
+			} catch (Exception e) {}
 		}
 	}
 

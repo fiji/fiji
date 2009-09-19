@@ -75,16 +75,16 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 
 	@Override
 	public void run(String arg) {
-		super.screen.append("Starting Clojure...");
+		// Create window, threads, streams:
+		super.window.setTitle("Clojure Interpreter");
+		super.run(arg);
+		// 
+		print("Starting Clojure...");
 		if (!init()) {
 			p("Some error ocurred!");
 			return;
 		}
-		super.screen.append(" Ready -- have fun.\n" + getPrompt() + "\n");
-
-		// ok create window
-		super.run(arg);
-		super.window.setTitle("Clojure Interpreter");
+		println(" Ready -- have fun.\n" + getPrompt() + "\n");
 
 		// Add crude support for closing parenthesis with control+)
 		prompt.addKeyListener(new KeyListener() {

@@ -28,18 +28,15 @@ public class BSH_Interpreter extends AbstractInterpreter {
 	private Interpreter interp;
 
 	synchronized public void run(String arg) {
-		interp = new Interpreter();
-		super.screen.append("Starting BeanShell...");
-		super.screen.append(" Ready -- have fun.\n>>>");
-		// ok create window
-		super.run(arg);
 		super.window.setTitle("BeanShell Interpreter");
+		super.run(arg);
+		interp = new Interpreter();
+		print("Starting BeanShell...");
+		println(" Ready -- have fun.\n>>>");
 	}
 
-	/** Evaluate clojure code. */
 	protected Object eval(final String text) throws Throwable {
-		Object ret = interp.eval(text);
-		return ret;
+		return interp.eval(text);
 	}
 
 	protected String getLineCommentMark() {
