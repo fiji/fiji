@@ -120,19 +120,6 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 	public void destroy() {
 		// Tell the worker Thread to forget all
 		if (exec.isShutdown()) return;
-		try {
-			exec.submit(new Runnable() {
-				public void run() {
-					try {
-						Var.popThreadBindings();
-					} catch (Throwable t) {
-						t.printStackTrace();
-					}
-				}
-			}).get(); // wait until completed
-		} catch (Throwable t) {
-			t.printStackTrace();
-		}
 		exec.shutdownNow();
 	}
 
@@ -156,7 +143,7 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 		try {
 			ret = exec.submit(ev).get();
 		} catch (Throwable t) {
-			t.printStackTrace();
+			if (!Thread.currentThread().isInterrupted()) t.printStackTrace();
 		}
 		ev.throwError(); // to be printed by super class wherever appropriate
 		return ret;
@@ -239,7 +226,7 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 	}
 
 	/** Create an instance of Evaluator for every chunk of code you want evaluated. */
-	static private final class Evaluator implements Callable<String> {
+	private final class Evaluator implements Callable<String> {
 		private Reader input_reader;
 		private Throwable t = null;
 		Evaluator(Reader input_reader) {
@@ -266,7 +253,9 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 
 			Object ret = null;
 
-			while (true) {
+			final Thread thread = Thread.currentThread();
+
+			while (!thread.isInterrupted()) {
 				// read one token from the pipe
 				Object r = LispReader.read(lnpr, false, EOF, false);
 				if (EOF == r) {
@@ -277,6 +266,12 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 				// print the result in a lispy way
 				RT.print(ret, sw);
 				sw.write('\n');
+			}
+
+			if (thread.isInterrupted()) {
+				// cleanup:
+				Var.popThreadBindings();
+				return null;
 			}
 
 			// update *1, *2, *3, even if null
