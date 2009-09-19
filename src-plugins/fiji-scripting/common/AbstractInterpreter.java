@@ -47,6 +47,7 @@ import java.io.PipedInputStream;
 import java.io.InputStreamReader;
 import java.io.File;
 import java.io.Writer;
+import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
@@ -154,8 +155,16 @@ public abstract class AbstractInterpreter implements PlugIn {
 						if (!window.isVisible()) continue;
 						screen.append(s);
 						screen.setCaretPosition(screen.getDocument().getLength());
-					} catch (Exception e) {
-						e.printStackTrace();
+					} catch (IOException ioe) {
+						// Write end dead
+						p("Out reader quit reading.");
+						return;
+					} catch (Throwable e) {
+						if (!isInterrupted() && window.isVisible()) e.printStackTrace();
+						else {
+							p("Out reader terminated.");
+							return;
+						}
 					}
 				}
 			}
@@ -474,8 +483,14 @@ public abstract class AbstractInterpreter implements PlugIn {
 		saveHistory();
 		//
 		AbstractInterpreter.this.windowClosing();
-		runner.quit();
 		reader.interrupt();
+		runner.quit();
+		try {
+			out.flush();
+			out.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	void addMenuItem(JPopupMenu menu, String label, ActionListener listener) {
@@ -496,6 +511,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 		}
 		public void quit() {
 			go = false;
+			interrupt();
 			synchronized (this) { notify(); }
 		}
 		public void execute(String text) {
@@ -512,13 +528,16 @@ public abstract class AbstractInterpreter implements PlugIn {
 		public void run() {
 			AbstractInterpreter.this.threadStarting();
 			while (go) {
+				if (isInterrupted()) return;
 				try {
 					synchronized (this) { wait(); }
 					if (!go) return;
 					AbstractInterpreter.this.execute(text, store);
-				 } catch (Exception e) {
-					 e.printStackTrace();
-				 } finally {
+				} catch (InterruptedException ie) {
+					return; 
+				} catch (Exception e) {
+					e.printStackTrace();
+				} finally {
 					if (!go) return; // this statement is reached when returning from the middle of the try/catch!
 					window.setVisible(true);
 					if (store) {
@@ -617,6 +636,8 @@ public abstract class AbstractInterpreter implements PlugIn {
 			valid_lines.set(valid_lines.size() -1, true);
 		} catch (Throwable e) {
 			e.printStackTrace(print_out);
+			print_out.write('\n');
+			print_out.flush();
 		} finally {
 			//remove tabs from prompt
 			prompt.setText("");
