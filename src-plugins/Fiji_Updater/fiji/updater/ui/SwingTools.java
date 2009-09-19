@@ -5,10 +5,12 @@ import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import java.util.List;
 
+import javax.swing.AbstractAction;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -18,6 +20,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextPane;
+import javax.swing.KeyStroke;
 import javax.swing.SwingConstants;
 
 import javax.swing.event.DocumentListener;
@@ -118,4 +121,29 @@ public class SwingTools {
 		return scrolledText(width, height, builder.toString(),
 				listener, addTo);
 	}
+
+	/**
+	 * Add a keyboard accelerator to a container.
+	 *
+	 * This method adds a keystroke to the input map of a container that
+	 * sends an action event with the given source to the given listener.
+	 */
+        public static void addAccelerator(final Component source,
+			final JComponent container,
+			final ActionListener listener, int key, int modifiers) {
+                container.getInputMap(container.WHEN_IN_FOCUSED_WINDOW)
+			.put(KeyStroke.getKeyStroke(key, modifiers), source);
+                if (container.getActionMap().get(source) != null)
+                        return;
+                container.getActionMap().put(source,
+                                new AbstractAction() {
+                        public void actionPerformed(ActionEvent e) {
+                                if (!source.isEnabled())
+                                        return;
+                                ActionEvent event = new ActionEvent(source,
+                                        0, "Accelerator");
+                                listener.actionPerformed(event);
+                        }
+                });
+        }
 }
