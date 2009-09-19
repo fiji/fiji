@@ -41,6 +41,10 @@ import java.io.PrintWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
+import java.io.BufferedReader;
+import java.io.PipedOutputStream;
+import java.io.PipedInputStream;
+import java.io.InputStreamReader;
 import java.io.File;
 import java.io.Writer;
 import java.io.OutputStreamWriter;
@@ -63,14 +67,22 @@ public abstract class AbstractInterpreter implements PlugIn {
 	protected int active_line = 0;
 	final protected ArrayList al_lines = new ArrayList();
 	final protected ArrayList<Boolean> valid_lines = new ArrayList<Boolean>();
-	final protected ByteArrayOutputStream byte_out = new ByteArrayOutputStream();
-	final protected BufferedOutputStream out = new BufferedOutputStream(byte_out);
+	final private PipedOutputStream pout = new PipedOutputStream();
+	private BufferedReader readin = null;
+	final protected BufferedOutputStream out = new BufferedOutputStream(pout);
 	final protected PrintWriter print_out = new PrintWriter(out);
 	Thread reader;
-	boolean reader_run = true;
 	protected JPopupMenu popup_menu;
 	String last_dir = ij.Menus.getPlugInsPath();//ij.Prefs.getString(ij.Prefs.DIR_IMAGE);
 	protected ExecuteCode runner;
+
+	protected AbstractInterpreter() {
+		try {
+			readin = new BufferedReader(new InputStreamReader(new PipedInputStream(pout)));
+		} catch (Exception ioe) {
+			ioe.printStackTrace();
+		}
+	}
 
 	static final protected Hashtable<Class,AbstractInterpreter> instances = new Hashtable<Class,AbstractInterpreter>();
 
@@ -135,17 +147,16 @@ public abstract class AbstractInterpreter implements PlugIn {
 		reader = new Thread("out_reader") {
 			public void run() {
 				setPriority(Thread.NORM_PRIORITY);
-				while(reader_run) {
-					print_out.flush();
-					String output = byte_out.toString(); // this should go with proper encoding 8859_1 or whatever is called
-					if (output.length() > 0) {
-						screen.append(output + "\n");
-						screen.setCaretPosition(screen.getDocument().getLength());
-						byte_out.reset();
-					}
+				while (!isInterrupted()) {
 					try {
-						sleep(500);
-					} catch (InterruptedException ie) {}
+						// Will block until it can print a full line:
+						String s = new StringBuilder(readin.readLine()).append('\n').toString();
+						if (!window.isVisible()) continue;
+						screen.append(s);
+						screen.setCaretPosition(screen.getDocument().getLength());
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
 				}
 			}
 		};
@@ -464,7 +475,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 		//
 		AbstractInterpreter.this.windowClosing();
 		runner.quit();
-		reader_run = false;
+		reader.interrupt();
 	}
 
 	void addMenuItem(JPopupMenu menu, String label, ActionListener listener) {
