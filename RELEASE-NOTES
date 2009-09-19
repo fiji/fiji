@@ -1,81 +1,109 @@
-20090116
+Date: Wed, 29 Apr 2009 19:19:19 +0200 (CEST)
+From: Johannes Schindelin <johannes.schindelin@gmx.de>
 
-We are glad to announce the second release of Fiji, codenamed Luxembourg.
+I proudly announce a new Fiji version (nick-named dee-dee-oh-nine).  It 
+got its name from the latest two-week brainstorm hosted by the 
+Max-Planck-Institute of Molecular Cell Biology and Genetics in Dresden, 
+Germany.  A list of the user-visible changes in this release:
 
-http://pacific.mpi-cbg.de
+- lots of bug fixes (thanks to all!)
+- the scripting interpreters remember the previous commands (thanks to 
+  Albert Cardona): just use Cursor Up/Down to find out.
+- we have a NRRD reader/writer now (thanks to Greg Jefferis)
+- added the Turbo Reg plugin (thanks Philippe Thevenaz)
+- Fiji Wiki is linked to in the Help menu (thanks Gabriel Landini)
+- Lens Correction is a part of TrakEM2 now (thanks Stephan Saalfeld and 
+  Verena Kaynig)
+- added the Radial Reslice plugin (thanks Julian Cooper and Albert 
+  Cardona)
+- added Name Landmarks and Register plugin (thanks Mark Longair)
+- updated bUnwarpJ (thanks Ignacio Arganda Carreras)
+- the bundled ImageJA now uses a method to discover a running instance 
+  that is safe in a multi-user environment
+- updated Bio#Formats (thanks Melissa Linkert and Curtis Rueden)
+- added the Help>Report a Bug plugin (thanks Mark Longair)
+- added the MTrack2 plugin (thanks Nico Stuurman)
+- added the ToAST plugin (thanks Misha Kudryashev)
+- Java 1.6 is used on 64-bit MacOSX, when possible
+- added the Statistical Region Merging plugin
+- the PDF writer can now save all slices of image stacks, instead of only 
+  the current one
+- updated the AnalyzeSkeleton plugin (thanks Ignacio Arganda Carreras)
+- added the Time Stamper plugin (thanks Daniel James White)
+- added the Auto Threshold plugin (thanks Gabriel Landini)
+- if you drop a .java file into the plugins/ directory and call 
+  Plugins>Scripting>Refresh Javas, it will be added to the Plugins menu 
+  and be compiled transparently upon being called.
+- added scripting examples showing how to interact with the mouse and add 
+  Java listeners written in the scripting language
+- added the Arrow plugin
+- added the Stack Manipulation plugin (thanks Jean-Yves Tinevez)
+- added the FlowJ plugin (thanks Michael Abramoff and Jean-Yves Tinevez)
+- added the Edit LUT as Text script, allowing you to manipulate the 
+  numerical values of the color lookup table
+- added the Auto Local Threshold plugin (thanks Gabriel Landini)
+- added the PIV analyser plugin, for optical flow analysis (thanks 
+  Jean-Yves Tinevez)
+- updated TrakEM2 to version 0.7a (read: lots and lots and lots of bug 
+  fixes as well as enhancements, thanks Albert Cardona and Stephan 
+  Saalfeld)
+- renamed our 'Fill holes' plugin to 'Fill ROI holes' (thanks Gabriel 
+  Landini)
+- added Record Desktop and Record Window commands to record screen movies 
+  from either the whole desktop or a single (Java) window into a stack, 
+  optionally a VirtualStack to overcome memory problems (thanks Albert 
+  Cardona)
+- lots of bug fixes and enhancements to the 3D Viewer plugin (thanks 
+  Benjamin Schmid and Mark Longair)
+- lots of bug fixes and enhancements to the Simple Neurite Tracer plugin, 
+  as well as tighter integration with the 3D Viewer (thanks Mark Longair)
+- lots of bug fixes to the Segmentation Editor plugin (thanks Mark Longair 
+  and Greg Jefferis)
+- added the Show Color Surfaces plugin to show 8#bit color stacks as 
+  colored surfaces in the 3D Viewer (thanks Mark Longair)
+- the 3D Viewer's 4D option can now load hyperstacks (thanks Benjamin 
+  Schmid)
+- the 3D Viewer can do free#hand recordings again, as well as convenience 
+  key bindings (thanks Benjamin Schmid)
+- the Lasso/Blow Tool can optionally track dark lines, and actually 
+  respects the space/color ratio now
+- lots of changes only relevant for developers (thanks to all!)
+- FlowJ was integrated (thanks Jean-Yves Tinevez),
+- The PIV Analyser (an optic flow technique) plugin was donated by 
+  Jean-Yves Tinevez,
+- Refresh Javas is actually called on startup, so that you really can just 
+  drop .java files into plugins/ and they will be compiled and run 
+  automagically,
+- a Clojure example was fixed so it runs with our current Clojure version,
+- two Javascript examples for accessing TrakEM2 were fixed (thanks to 
+  Albert Cardona),
+- the Fiji running on MacOSX can act as a drag 'n drop target now,
+- the Dynamic Reslice plugin was contributed by Jean-Yves Tinevez and 
+  Albert Cardona,
+- AbstractInterpreters cursor up/down behavior was fixed (hopefully for 
+  good now...),
+- the Multi Thresholder plugin was removed, as we have something better in 
+  the form of Auto Threshold and Auto Local Threshold (thanks Jean-Yves 
+  Tinevez and Gabriel Landini),
+- Jean-Yves Tinevez performed a massive task in getting plugin 
+  descriptions as well as maintainer information onto our Wiki; if you 
+  have not put yourself as maintainer of your own plugins, please do so 
+  now,
+- a rather massive bug was fixed with Help>Update Menus; modified plugins 
+  were not loaded anew, but the old versions were retained in memory,
+- Erwin Frise made some modifications to the Level Set plugin: it 
+  remembers previously set parameters, and is substantially faster now,
+- Albert Cardona updated TrakEM2 to version 0.7c,
+- Plugins>Scripting>Macro Interpreter uses our AbstractInterpreter 
+  framework now (thanks to Albert Cardona), with command line history and 
+  all,
+- Gabriel Landini pointed out that our Daltonize plugin is misnamed: it 
+  simulates color blindness, rather than trying to compensate for it.
+- ImageJA no longer opens a port, requiring user consent on Windows.
+- Mark Longair and Benjamin Schmid contributed the Shape Based Average 
+  plugin based on a paper by Torsten Rohlfing.
+- Benjamin Schmid added some tools to edit videos.
 
-Fiji is Just ImageJ, batteries included.
-
-Fiji is an ImageJ distribution that bundles a collection of plugins, jar
-libraries and scripting languages in a consistent framework, bundling Java
-and Java3D, and is available for Windows, MacOSX and Linux.
-
-Fiji targets image registration, stitching, segmentation, feature extraction
-and 3D visualization, among others, bringing together several ImageJ-based
-projects including ImageJA, VIB, bUnwarpJ, TrakEM2, and others, kindly
-developed and distributed under open source licenses.
-
-I am sure I forgot some changes in the following list:
-
-- Many In addition to many improvements to TrakEM2, 3D Viewer, Simple Neuro
-  Tracer, bUnwarpJ, 3D Skeletonizer, ImageJA, and Stitching since our first
-  public release ("Dresden"), it brings new Java versions for Linux and
-  Linux 64-bit which should solve the infamous gray-window problem with
-  some setups.
-
-- Fiji should now start without problems, even on Windows platforms :-)
-
-- MacOSX has a ridiculously outdated Java3D by default; Fiji brings its 
-  own -- working -- version of Java3D now.
-
-- Many and improvements in the Scripting examples.
-
-- A script was added that can profile ROIs dynamically (it updates the 
-  information when you change the ROI).
-
-- A script was added that demonstrates how you can create 3D objects using 
-  Javascript.
-
-- A plugin was added that can render .svg documents, thanks to Batik.
-
-- You can drag 'n drop scripts onto the main window and they will be 
-  executed.
-
-- Likewise, if you call Fiji with a file name of a script, that script 
-  will be executed.
-
-- Many fixes to the Fiji Updater should make it actually useful :-)
-
-- The macro recorder now handles scripts correctly.
-
-- Fiji uses the port 7 by default now: this fixes the issue when you had a 
-  running ImageJ session and Fiji seemed not to start (since it wanted to 
-  reuse the ImageJ session).
-
-- Fiji will now use 64-bit Java on Leopard if possible.
-
-- If Fiji cannot reserve as much memory for Java as it wants to, it tries 
-  again with a smaller amount.
-
-- Improvements in the MRC_Leginon importer handle a wider range of images.
-
-- Plugins were added to read .ico and .icns files.
-
-- Fiji will now start even on some Linux systems with misconfigured IPv6.
-
-- When calling script refreshers, menu items will be removed for scripts 
-  that were deleted in the meantime.
-
-- Fiji can be convinced to use another Java by setting the environment 
-  variable JAVA_HOME, or with the --java-home command line option (this 
-  only works with Sun's Java for the moment, though).
-
-Fiji core developers and main contributors:
- Ignacio Arganda, Albert Cardona, Erwin Frise, Greg Jefferis, Verena Kaynig, Mark Longair, Stephan Preibisch, Stephan Saalfeld, Johannes Schindelin, Benjamin Schmid, Cornelius Sicker, Jean-Yves Tinevez, Pavel Tomancak.
-
-We would like to thank Wayne Rasband for ImageJ, for his continuous development efforts and for his infinite patience. Thank you so much!
-
-Further thanks go to the Max-Planck-Institute of Molecular Cellular Biology
-and Genetics in Dresden, Germany, Janelia Farm in Ashburn VA, and the INI
-in Zuerich, Switzerland, for funding and hosting meetings without which
-Fiji would not exist.
+Let me take the opportunity to thank all the contributors (and of course, 
+that also means the many, many people who reported bugs and verified the 
+fixes)!
