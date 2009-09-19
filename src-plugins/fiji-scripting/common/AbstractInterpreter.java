@@ -483,8 +483,9 @@ public abstract class AbstractInterpreter implements PlugIn {
 		saveHistory();
 		//
 		AbstractInterpreter.this.windowClosing();
-		reader.interrupt();
 		runner.quit();
+		Thread.yield();
+		reader.interrupt();
 		try {
 			out.flush();
 			out.close();
@@ -636,9 +637,9 @@ public abstract class AbstractInterpreter implements PlugIn {
 			valid_lines.set(valid_lines.size() -1, true);
 		} catch (Throwable e) {
 			e.printStackTrace(print_out);
+		} finally {
 			print_out.write('\n');
 			print_out.flush();
-		} finally {
 			//remove tabs from prompt
 			prompt.setText("");
 			// reset tab expansion
