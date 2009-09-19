@@ -266,7 +266,7 @@ public class PluginObject {
 			newChecksum = current.checksum;
 			newTimestamp = current.timestamp;
 		}
-		else if (status == Status.OBSOLETE) {
+		else if (isObsolete()) {
 			status = Status.INSTALLED;
 			setVersion(newChecksum, newTimestamp);
 		}
