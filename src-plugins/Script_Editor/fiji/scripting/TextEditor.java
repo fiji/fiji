@@ -1,9 +1,5 @@
 package fiji.scripting;
 
-import ij.WindowManager;
-
-import java.util.concurrent.ThreadPoolExecutor;
-
 import com.sun.jdi.connect.VMStartException;
 
 import common.RefreshScripts;
@@ -13,6 +9,7 @@ import fiji.scripting.completion.DefaultProvider;
 
 import ij.IJ;
 import ij.Prefs;
+import ij.WindowManager;
 
 import ij.gui.GenericDialog;
 
@@ -50,6 +47,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Vector;
 
+import java.util.concurrent.ThreadPoolExecutor;
+
 import javax.imageio.ImageIO;
 
 import javax.swing.AbstractAction;
@@ -72,6 +71,8 @@ import javax.swing.ToolTipManager;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultEditorKit;
 import javax.swing.text.Document;
 
 import org.fife.ui.autocomplete.AutoCompletion;
@@ -81,7 +82,9 @@ import org.fife.ui.autocomplete.DefaultCompletionProvider;
 
 import org.fife.ui.rtextarea.Gutter;
 import org.fife.ui.rtextarea.IconGroup;
+import org.fife.ui.rtextarea.RTextArea;
 import org.fife.ui.rtextarea.RTextScrollPane;
+import org.fife.ui.rtextarea.RecordableTextAction;
 import org.fife.ui.rtextarea.ToolTipSupplier;
 
 import org.fife.ui.rsyntaxtextarea.RSyntaxDocument;
@@ -125,6 +128,14 @@ public class TextEditor extends JFrame implements ActionListener,
 			}
 		};
 		textArea.setTabSize(8);
+		textArea.getActionMap().put(DefaultEditorKit
+			.nextWordAction, wordMovement(+1, false));
+		textArea.getActionMap().put(DefaultEditorKit
+			.selectionNextWordAction, wordMovement(+1, true));
+		textArea.getActionMap().put(DefaultEditorKit
+			.previousWordAction, wordMovement(-1, false));
+		textArea.getActionMap().put(DefaultEditorKit
+			.selectionPreviousWordAction, wordMovement(-1, true));
 		provider = new ClassCompletionProvider(new DefaultProvider(),
 				textArea, null);
 		autocomp = new AutoCompletion(provider);
@@ -726,6 +737,46 @@ public class TextEditor extends JFrame implements ActionListener,
 		new TextEditor.Executer(new JTextAreaOutputStream(screen)) {
 			public void execute() {
 				interpreter.runScript(file.getPath());
+			}
+		};
+	}
+
+	RecordableTextAction wordMovement(final int direction,
+			final boolean select) {
+		final String id = "WORD_MOVEMENT_" + select + direction;
+		return new RecordableTextAction(id) {
+			public void actionPerformedImpl(ActionEvent e,
+					RTextArea textArea) {
+				int pos = textArea.getCaretPosition();
+				int end = direction < 0 ? 0 :
+					textArea.getDocument().getLength();
+				while (pos != end && !isWordChar(textArea, pos))
+					pos += direction;
+				while (pos != end && isWordChar(textArea, pos))
+					pos += direction;
+				if (select)
+					textArea.moveCaretPosition(pos);
+				else
+					textArea.setCaretPosition(pos);
+			}
+
+			public String getMacroID() {
+				return id;
+			}
+
+			boolean isWordChar(RTextArea textArea, int pos) {
+				try {
+					char c = textArea.getText(pos
+						+ (direction < 0 ? -1 : 0), 1)
+						.charAt(0);
+					return c > 0x7f ||
+						(c >= 'A' && c <= 'Z') ||
+						(c >= 'a' && c <= 'z') ||
+						(c >= '0' && c <= '9') ||
+						c == '_';
+				} catch (BadLocationException e) {
+					return false;
+				}
 			}
 		};
 	}
