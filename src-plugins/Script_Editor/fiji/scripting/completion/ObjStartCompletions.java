@@ -1,6 +1,5 @@
 package fiji.scripting.completion;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 import java.util.ArrayList;
@@ -40,53 +39,38 @@ public class ObjStartCompletions {
 		if (text.charAt(text.length() - 1) == '.') {
 			dotAtLast = true;
 		}
-		String subtext = text.substring(text.indexOf('.') + 1);
-
 		// TODO: avoid expensive re-calculations
 		if (text.lastIndexOf(".") == text.indexOf(".") && text.indexOf(".") > 0) {
 			String objname = text.substring(0, text.indexOf("."));
 			// TODO: why the cast?
 			TreeSet<ImportedClassObjects> set = (TreeSet<ImportedClassObjects>)objectSet.tailSet(new ImportedClassObjects(objname, ""));
 			TreeSet<ClassMethod> methodSet = new TreeSet<ClassMethod>();
-			TreeSet<ClassField> fieldSet = new TreeSet<ClassField>();
 			for (ImportedClassObjects object : set) {
 				if (object.name.equals(objname)) {
 					String fullname = object.getCompleteClassName();
 					try {
-						Class clazz = getClass().getClassLoader().loadClass(fullname);
-						for (Method m : clazz.getMethods()) {
-							String fullMethodName = m.toString();
-							methodSet.add(new ClassMethod(fullMethodName));
+						try {
+							Class clazz = getClass().getClassLoader().loadClass(fullname);
+							Method[] methods = clazz.getMethods();
+							for (Method m : methods) {
+								String fullMethodName = m.toString();
+								methodSet.add(new ClassMethod(fullMethodName));
+							}
+						} catch (java.lang.Error e) {
+							e.printStackTrace();
 						}
-						for (Field f : clazz.getFields()) {
-							String fullFieldName = f.toString(); // something line "public boolean ij.ImagePlus.changes"
-							fieldSet.add(new ClassField(fullFieldName));
-						}
-					} catch (ClassNotFoundException cnfe) {
-						System.out.println("Class not found: " + fullname);
-					} catch (java.lang.Error e) {
-						System.out.println("An error ocurred for " + fullname);
+					} catch (Exception e) {
 						e.printStackTrace();
 					}
 					ArrayList listOfCompletions = new ArrayList();
 					if (!dotAtLast) {
-						methodSet = (TreeSet<ClassMethod>)methodSet.tailSet(new ClassMethod(text.substring(text.indexOf('.') + 1), true));
+						methodSet = (TreeSet<ClassMethod>)methodSet.tailSet(new ClassMethod(text.substring(text.indexOf(".") + 1), true));
 					}
 					for (ClassMethod method : methodSet) {
-						if ((!dotAtLast) && (!method.onlyName.startsWith(subtext)))
+						if ((!dotAtLast) && (!method.onlyName.startsWith(text.substring(text.indexOf(".") + 1))))
 							break;
 						if ((!method.isStatic) && method.isPublic) {
 							listOfCompletions.add(new FunctionCompletion(defaultProvider, method.onlyName, method.returnType));    //currently basiccompletion can be changed to functioncompletion
-						}
-					}
-					if (!dotAtLast) {
-						fieldSet = (TreeSet<ClassField>)fieldSet.tailSet(new ClassField(text.substring(text.indexOf('.') + 1), true));
-					}
-					for (ClassField field : fieldSet) {
-						if ((!dotAtLast) && (!field.onlyName.startsWith(subtext)))
-							break;
-						if ((!field.isStatic) && field.isPublic) {
-							listOfCompletions.add(new FunctionCompletion(defaultProvider, field.onlyName, ""));
 						}
 					}
 					defaultProvider.addCompletions(listOfCompletions);
