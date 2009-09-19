@@ -21,6 +21,7 @@ import java.net.URL;
 import java.net.URLDecoder;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
@@ -1773,6 +1774,7 @@ public class Fake {
 
 		String[] names = parentDirectory.list(new GlobFilter(pattern,
 					newerThan));
+		Arrays.sort(names);
 
 		for (int i = 0; i < names.length; i++) {
 			String path = parentPath + names[i];
