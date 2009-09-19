@@ -24,6 +24,9 @@ import ij.gui.GenericDialog;
 import java.awt.Container;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.GridBagLayout;
+import java.awt.GridBagConstraints;
+import java.awt.Insets;
 import java.awt.TextField;
 
 import java.awt.event.ActionEvent;
@@ -93,7 +96,17 @@ public class UpdaterFrame extends JFrame
 		});
 
 		//======== Start: LEFT PANEL ========
-		JPanel leftPanel = SwingTools.verticalPanel();
+		JPanel leftPanel = new JPanel();
+		GridBagLayout gb = new GridBagLayout();
+		leftPanel.setLayout(gb);
+		GridBagConstraints c = new GridBagConstraints(0, 0,  // x, y
+				                              9, 1,  // rows, cols
+							      0, 0,  // weightx, weighty
+							      GridBagConstraints.NORTHWEST, // anchor
+							      GridBagConstraints.HORIZONTAL, // fill
+							      new Insets(0,0,0,0),
+							      0, 0); // ipadx, ipady
+
 		txtSearch = new JTextField();
 		txtSearch.getDocument().addDocumentListener(new DocumentListener() {
 
@@ -109,12 +122,14 @@ public class UpdaterFrame extends JFrame
 				updatePluginsTable();
 			}
 		});
-		JPanel searchPanel = SwingTools.labelComponent("Search:", txtSearch, leftPanel);
-		Dimension max_dim = new Dimension(100000,25);
-		Dimension pref_dim = new Dimension(500,20);
-		searchPanel.setPreferredSize(pref_dim);
-		searchPanel.setMaximumSize(max_dim);
-		leftPanel.add(Box.createRigidArea(new Dimension(0,10)));
+		JPanel searchPanel = SwingTools.labelComponentRigid("Search:", txtSearch);
+		gb.setConstraints(searchPanel, c);
+		leftPanel.add(searchPanel);
+
+		Component box = Box.createRigidArea(new Dimension(0,10));
+		c.gridy = 1;
+		gb.setConstraints(box, c);
+		leftPanel.add(box);
 
 		viewOptions = new ViewOptions();
 		viewOptions.addActionListener(new ActionListener() {
@@ -123,14 +138,26 @@ public class UpdaterFrame extends JFrame
 			}
 		});
 	
-		JPanel viewOptionsPanel = SwingTools.labelComponent("View Options:", viewOptions, leftPanel);
-		viewOptionsPanel.setPreferredSize(pref_dim);
-		viewOptionsPanel.setMaximumSize(max_dim);
-		leftPanel.add(Box.createRigidArea(new Dimension(0,10)));
+		JPanel viewOptionsPanel = SwingTools.labelComponentRigid("View Options:", viewOptions);
+		c.gridy = 2;
+		gb.setConstraints(viewOptionsPanel, c); 
+		leftPanel.add(viewOptionsPanel);
+
+		box = Box.createRigidArea(new Dimension(0,10));
+		c.gridy = 3;
+		gb.setConstraints(box, c);
+		leftPanel.add(box);
 
 		//Create labels to annotate table
-		SwingTools.label("Please choose what you want to install/uninstall:", leftPanel);
-		leftPanel.add(Box.createRigidArea(new Dimension(0,5)));
+		JPanel chooseLabel = SwingTools.label("Please choose what you want to install/uninstall:", null);
+		c.gridy = 4;
+		gb.setConstraints(chooseLabel, c);
+		leftPanel.add(chooseLabel);
+
+		box = Box.createRigidArea(new Dimension(0,5));
+		c.gridy = 5;
+		gb.setConstraints(box, c);
+		leftPanel.add(box);
 
 		//Label text for plugin summaries
 		lblPluginSummary = new JLabel();
@@ -144,9 +171,25 @@ public class UpdaterFrame extends JFrame
 		JScrollPane pluginListScrollpane = new JScrollPane(table);
 		pluginListScrollpane.getViewport().setBackground(table.getBackground());
 
+		c.gridy = 6;
+		c.weightx = 1;
+		c.weighty = 1;
+		c.fill = GridBagConstraints.BOTH;
+		gb.setConstraints(pluginListScrollpane, c);
 		leftPanel.add(pluginListScrollpane);
-		leftPanel.add(Box.createRigidArea(new Dimension(0,5)));
+
+		box = Box.createRigidArea(new Dimension(0,5));
+		c.gridy = 7;
+		c.weightx = 0;
+		c.weighty = 0;
+		c.fill = GridBagConstraints.HORIZONTAL;
+		gb.setConstraints(box, c);
+		leftPanel.add(box);
+
+		c.gridy = 8;
+		gb.setConstraints(lblSummaryPanel, c);
 		leftPanel.add(lblSummaryPanel);
+
 		//======== End: LEFT PANEL ========
 
 		//======== Start: RIGHT PANEL ========
