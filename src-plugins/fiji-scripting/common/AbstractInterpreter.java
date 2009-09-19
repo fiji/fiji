@@ -65,7 +65,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 	final protected ArrayList<Boolean> valid_lines = new ArrayList<Boolean>();
 	final protected ByteArrayOutputStream byte_out = new ByteArrayOutputStream();
 	final protected BufferedOutputStream out = new BufferedOutputStream(byte_out);
-    final protected PrintWriter print_out = new PrintWriter(out);
+	final protected PrintWriter print_out = new PrintWriter(out);
 	Thread reader;
 	boolean reader_run = true;
 	protected JPopupMenu popup_menu;
@@ -783,14 +783,15 @@ public abstract class AbstractInterpreter implements PlugIn {
 		int istart = 0;
 		int inl = sel.indexOf('\n');
 		int len = sel.length();
-		Pattern pat = Pattern.compile("^" + getPrompt() + " .*$");
+		String sprompt = getPrompt();
+		Pattern pat = Pattern.compile("^" + sprompt + " .*$");
 
 		while (true) {
 			if (-1 == inl) inl = len -1;
 			// process line:
 			String line = sel.substring(istart, inl+1);
 			if (pat.matcher(line).matches()) {
-				line = line.substring(5);
+				line = line.substring(sprompt.length() + 1); // + 1 to reach the first char after the space after the prompt text.
 			}
 			sb.append(line);
 			// quit if possible
