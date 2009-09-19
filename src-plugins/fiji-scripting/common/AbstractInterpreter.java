@@ -41,8 +41,13 @@ import java.io.PrintWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
+import java.io.BufferedReader;
+import java.io.PipedOutputStream;
+import java.io.PipedInputStream;
+import java.io.InputStreamReader;
 import java.io.File;
 import java.io.Writer;
+import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
@@ -63,11 +68,11 @@ public abstract class AbstractInterpreter implements PlugIn {
 	protected int active_line = 0;
 	final protected ArrayList al_lines = new ArrayList();
 	final protected ArrayList<Boolean> valid_lines = new ArrayList<Boolean>();
-	final protected ByteArrayOutputStream byte_out = new ByteArrayOutputStream();
-	final protected BufferedOutputStream out = new BufferedOutputStream(byte_out);
-    final protected PrintWriter print_out = new PrintWriter(out);
-	Thread reader;
-	boolean reader_run = true;
+	private PipedOutputStream pout = null;
+	private BufferedReader readin = null;
+	protected BufferedOutputStream out = null;
+	protected PrintWriter print_out = null;
+	Thread reader, writer;
 	protected JPopupMenu popup_menu;
 	String last_dir = ij.Menus.getPlugInsPath();//ij.Prefs.getString(ij.Prefs.DIR_IMAGE);
 	protected ExecuteCode runner;
@@ -129,28 +134,51 @@ public abstract class AbstractInterpreter implements PlugIn {
 			active_line = 0;
 		}
 
-		// make GUI
-		makeGUI();
+		runner = new ExecuteCode();
+
+		// Wait until runner is alive (then piped streams will exist)
+		while (!runner.isAlive() || null == pout) {
+			try {
+				Thread.sleep(50);
+			} catch (InterruptedException ie) {}
+		}
+
 		// start thread to write stdout and stderr to the screen
 		reader = new Thread("out_reader") {
 			public void run() {
-				setPriority(Thread.NORM_PRIORITY);
-				while(reader_run) {
-					print_out.flush();
-					String output = byte_out.toString(); // this should go with proper encoding 8859_1 or whatever is called
-					if (output.length() > 0) {
-						screen.append(output + "\n");
-						screen.setCaretPosition(screen.getDocument().getLength());
-						byte_out.reset();
-					}
+				{
 					try {
-						sleep(500);
-					} catch (InterruptedException ie) {}
+						readin = new BufferedReader(new InputStreamReader(new PipedInputStream(pout)));
+					} catch (Exception ioe) {
+						ioe.printStackTrace();
+					}
+				}
+				setPriority(Thread.NORM_PRIORITY);
+				while (!isInterrupted()) {
+					try {
+						// Will block until it can print a full line:
+						String s = new StringBuilder(readin.readLine()).append('\n').toString();
+						if (!window.isVisible()) continue;
+						screen.append(s);
+						screen.setCaretPosition(screen.getDocument().getLength());
+					} catch (IOException ioe) {
+						// Write end dead
+						p("Out reader quit reading.");
+						return;
+					} catch (Throwable e) {
+						if (!isInterrupted() && window.isVisible()) e.printStackTrace();
+						else {
+							p("Out reader terminated.");
+							return;
+						}
+					}
 				}
 			}
 		};
 		reader.start();
-		runner = new ExecuteCode();
+
+		// make GUI
+		makeGUI();
 	}
 
 	protected void makeGUI() {
@@ -464,7 +492,8 @@ public abstract class AbstractInterpreter implements PlugIn {
 		//
 		AbstractInterpreter.this.windowClosing();
 		runner.quit();
-		reader_run = false;
+		Thread.yield();
+		reader.interrupt();
 	}
 
 	void addMenuItem(JPopupMenu menu, String label, ActionListener listener) {
@@ -485,6 +514,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 		}
 		public void quit() {
 			go = false;
+			interrupt();
 			synchronized (this) { notify(); }
 		}
 		public void execute(String text) {
@@ -499,15 +529,25 @@ public abstract class AbstractInterpreter implements PlugIn {
 			synchronized (this) { notify(); }
 		}
 		public void run() {
+			try {
+				pout = new PipedOutputStream();
+				out = new BufferedOutputStream(pout);
+				print_out = new PrintWriter(out);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 			AbstractInterpreter.this.threadStarting();
 			while (go) {
+				if (isInterrupted()) return;
 				try {
 					synchronized (this) { wait(); }
 					if (!go) return;
 					AbstractInterpreter.this.execute(text, store);
-				 } catch (Exception e) {
-					 e.printStackTrace();
-				 } finally {
+				} catch (InterruptedException ie) {
+					return; 
+				} catch (Exception e) {
+					e.printStackTrace();
+				} finally {
 					if (!go) return; // this statement is reached when returning from the middle of the try/catch!
 					window.setVisible(true);
 					if (store) {
@@ -522,6 +562,10 @@ public abstract class AbstractInterpreter implements PlugIn {
 				 }
 			}
 			AbstractInterpreter.this.threadQuitting();
+			try {
+				print_out.flush();
+				print_out.close();
+			} catch (Exception e) {}
 		}
 	}
 
@@ -607,6 +651,8 @@ public abstract class AbstractInterpreter implements PlugIn {
 		} catch (Throwable e) {
 			e.printStackTrace(print_out);
 		} finally {
+			print_out.write('\n');
+			print_out.flush();
 			//remove tabs from prompt
 			prompt.setText("");
 			// reset tab expansion
@@ -783,14 +829,15 @@ public abstract class AbstractInterpreter implements PlugIn {
 		int istart = 0;
 		int inl = sel.indexOf('\n');
 		int len = sel.length();
-		Pattern pat = Pattern.compile("^" + getPrompt() + " .*$");
+		String sprompt = getPrompt();
+		Pattern pat = Pattern.compile("^" + sprompt + " .*$");
 
 		while (true) {
 			if (-1 == inl) inl = len -1;
 			// process line:
 			String line = sel.substring(istart, inl+1);
 			if (pat.matcher(line).matches()) {
-				line = line.substring(5);
+				line = line.substring(sprompt.length() + 1); // + 1 to reach the first char after the space after the prompt text.
 			}
 			sb.append(line);
 			// quit if possible

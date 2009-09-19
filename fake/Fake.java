@@ -176,8 +176,6 @@ public class Fake {
 		try {
 			Parser parser = new Parser();
 
-			parser.setVariable("FIJIHOME", fijiHome);
-
 			// filter out variable definitions
 			int firstArg = 0;
 			while (firstArg < args.length &&
@@ -277,6 +275,8 @@ public class Fake {
 			}
 
 			setVariable("platform", getPlatform());
+
+			setVariable("FIJIHOME", fijiHome);
 
 			addSpecialRule(new Special("show-rules") {
 				void action() { showMap(allRules, false); }

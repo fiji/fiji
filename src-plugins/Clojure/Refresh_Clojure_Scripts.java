@@ -3,44 +3,61 @@ package Clojure;
 import common.RefreshScripts;
 import java.io.File;
 import java.io.InputStream;
+import java.util.Map;
 import ij.IJ;
 
 public class Refresh_Clojure_Scripts extends RefreshScripts {
 
 	public void run(String arg) {
-		setLanguageProperties(".clj","Clojure");
+		setLanguageProperties(".clj", "Clojure");
 		setVerbose(false);
 		super.run(arg);
 	}
 
-	/** Runs the script at path in the general namespace and interpreter on this JVM, which means the script may change the values of variables and functions in other scripts and in the Clojure interpreter. */
 	public void runScript(String path) {
+		runScript(path, null);
+	}
+
+	public boolean runScript(String path, Map<String,Object> vars) {
 		try {
 			if (!path.endsWith(".clj") || !new File(path).exists()) {
 				IJ.log("Not a clojure script or not found: " + path);
-				return;
+				return false;
 			}
 			if (IJ.isWindows()) path = path.replace('\\', '/');
-			Object res = Clojure_Interpreter.evaluate("(load-file \"" + path + "\")");
-			if (null != res) {
-				String s = res.toString();
-				if (s.length() > 0 && !"nil".equals(s)) IJ.log(res.toString());
+			Clojure_Interpreter ci = new Clojure_Interpreter();
+			ci.init();
+			if (null != vars) {
+				ci.pushThreadBindings(vars);
 			}
-			Clojure_Interpreter.destroy();
+			Object res = ci.evaluate("(load-file \"" + path + "\")");
+			if (null != res) {
+				String s = res.toString().trim();
+				if (s.length() > 0 && !"nil".equals(s)) {
+					IJ.log(s);
+				}
+			}
+			ci.destroy();
+			return true;
 		} catch (Throwable error) {
 			printError(error);
+			return false;
 		}
 	}
 
 	/** Will consume and close the stream. */
 	public void runScript(final InputStream istream) {
 		try {
-			Object res = Clojure_Interpreter.evaluate(istream);
+			Clojure_Interpreter ci = new Clojure_Interpreter();
+			ci.init();
+			Object res = ci.evaluate(istream);
 			if (null != res) {
-				String s = res.toString();
-				if (s.length() > 0 && !"nil".equals(s)) IJ.log(res.toString());
+				String s = res.toString().trim();
+				if (s.length() > 0 && !"nil".equals(s)) {
+					IJ.log(s);
+				}
 			}
-			Clojure_Interpreter.destroy();
+			ci.destroy();
 		} catch (Throwable error) {
 			printError(error);
 		}

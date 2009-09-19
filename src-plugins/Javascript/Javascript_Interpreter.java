@@ -19,15 +19,15 @@ public class Javascript_Interpreter extends AbstractInterpreter {
 	protected void threadStarting() {
 		try {
 			// Initialize inside the executer thread in parent class
-			print_out.print("Starting Javascript ...");
+			print("Starting Javascript ...");
 			cx = Context.enter();
 			cx.setApplicationClassLoader(IJ.getClassLoader());
 			//scope = cx.initStandardObjects(null); // reuse
 			// the above, with a null arg, enables reuse of the scope in subsequent calls.
 			// But this one is better: includes importClass and importPackage js functions
 			scope = new ImporterTopLevel(cx);
-			print_out.println(" done.");
-			if (null != imports(cx, scope)) print_out.println("All ImageJ and java.lang.* classes imported.");
+			println(" done.");
+			if (null != imports(cx, scope)) println("All ImageJ and java.lang.* classes imported.");
 			createBuiltInFunctions();
 		} catch (Throwable t) {
 			t.printStackTrace(print_out);
@@ -46,7 +46,7 @@ public class Javascript_Interpreter extends AbstractInterpreter {
 
 		if (fns.length() > 0) {
 			fns.setLength(fns.length()-1); // remove last comma
-			print_out.println("Created built-in functions: "+ fns);
+			println("Created built-in functions: "+ fns);
 		}
 	}
 
@@ -57,8 +57,8 @@ public class Javascript_Interpreter extends AbstractInterpreter {
 	}
 
 	public void run( String ignored ) {
-		super.run(ignored);
 		setTitle("Javascript Interpreter");
+		super.run(ignored);
 	}
 
 	protected void windowClosing() {}
