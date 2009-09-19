@@ -19,8 +19,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 
-import javax.swing.AbstractAction;
-import javax.swing.KeyStroke;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JPanel;
@@ -78,9 +76,12 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 		setLocationRelativeTo(owner);
 
 		int ctrl = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
-		addAccelerator(cancel, KeyEvent.VK_ESCAPE, 0);
-		addAccelerator(cancel, KeyEvent.VK_W, ctrl);
-		addAccelerator(ok, KeyEvent.VK_ENTER, 0);
+		SwingTools.addAccelerator(cancel, rootPanel, this,
+				KeyEvent.VK_ESCAPE, 0);
+		SwingTools.addAccelerator(cancel, rootPanel, this,
+				KeyEvent.VK_W, ctrl);
+		SwingTools.addAccelerator(ok, rootPanel, this,
+				KeyEvent.VK_ENTER, 0);
 
 		ignore = new HashSet<PluginObject>();
 	}
@@ -270,22 +271,4 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 		panel.select(end - 1, end - 1);
 		panel.setParagraphAttributes(indented, true);
 	}
-
-        public void addAccelerator(final JButton button,
-                        int key, int modifiers) {
-                rootPanel.getInputMap(rootPanel.WHEN_IN_FOCUSED_WINDOW)
-			.put(KeyStroke.getKeyStroke(key, modifiers), button);
-                if (rootPanel.getActionMap().get(button) != null)
-                        return;
-                rootPanel.getActionMap().put(button,
-                                new AbstractAction() {
-                        public void actionPerformed(ActionEvent e) {
-                                if (!button.isEnabled())
-                                        return;
-                                ActionEvent event = new ActionEvent(button,
-                                        0, "Accelerator");
-                                ResolveDependencies.this.actionPerformed(event);
-                        }
-                });
-        }
 }

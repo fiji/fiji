@@ -21,6 +21,7 @@ import ij.WindowManager;
 
 import ij.gui.GenericDialog;
 
+import java.awt.Container;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridBagLayout;
@@ -32,6 +33,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
@@ -46,6 +48,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -72,7 +75,8 @@ public class UpdaterFrame extends JFrame
 	private PluginTable table;
 	private JLabel lblPluginSummary;
 	private PluginDetails pluginDetails;
-	private JButton btnStart;
+	private JButton apply, cancel, easy;
+	boolean easyMode;
 
 	//For developers
 	// TODO: no more Hungarian notation
@@ -189,7 +193,6 @@ public class UpdaterFrame extends JFrame
 		//======== End: LEFT PANEL ========
 
 		//======== Start: RIGHT PANEL ========
-		// TODO: do we really want to win the "Who can make the longest function names?" contest?
 		JPanel rightPanel = SwingTools.verticalPanel();
 
 		rightPanel.add(Box.createVerticalGlue());
@@ -236,13 +239,13 @@ public class UpdaterFrame extends JFrame
 		bottomPanel.add(Box.createHorizontalGlue());
 
 		//Button to start actions
-		btnStart = SwingTools.button("Apply changes",
+		apply = SwingTools.button("Apply changes",
 				"Start installing/uninstalling plugins", new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				applyChanges();
 			}
 		}, bottomPanel);
-		btnStart.setEnabled(false);
+		apply.setEnabled(false);
 
 		//includes button to upload to server if is a Developer using
 		if (Util.isDeveloper) {
@@ -257,7 +260,16 @@ public class UpdaterFrame extends JFrame
 		}
 
 		bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
-		SwingTools.button("Close", "Exit Plugin Manager",
+		easy = SwingTools.button("Toggle easy mode",
+			"Toggle between easy and verbose mode",
+			new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					toggleEasyMode();
+				}
+			}, bottomPanel);
+
+		bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
+		cancel = SwingTools.button("Close", "Exit Plugin Manager",
 			new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					quit();
@@ -273,6 +285,10 @@ public class UpdaterFrame extends JFrame
 		table.getModel().addTableModelListener(this);
 
 		pack();
+
+		SwingTools.addAccelerator(cancel, (JComponent)getContentPane(),
+				cancel.getActionListeners()[0],
+				KeyEvent.VK_ESCAPE, 0);
 	}
 
 	public void dispose() {
@@ -409,6 +425,31 @@ public class UpdaterFrame extends JFrame
 		dispose();
 	}
 
+	void setEasyMode(Container container) {
+		for (Component child : container.getComponents()) {
+			if ((child instanceof Container) &&
+					child != table.getParent().getParent())
+				setEasyMode((Container)child);
+			child.setVisible(!easyMode);
+		}
+	}
+
+	public void setEasyMode(boolean easyMode) {
+		this.easyMode = easyMode;
+		setEasyMode(getContentPane());
+		Component[] exempt = { table, easy, apply, cancel };
+		for (Component child : exempt)
+			for (; child != getContentPane();
+					child = child.getParent())
+				child.setVisible(true);
+		if (isVisible())
+			repaint();
+	}
+
+	public void toggleEasyMode() {
+		setEasyMode(!easyMode);
+	}
+
 	private void showFrame() {
 		if (loadedFrame != null) {
 			loadedFrame.setVisible(true);
@@ -456,9 +497,9 @@ public class UpdaterFrame extends JFrame
 		for (PluginAction button : pluginActions)
 			button.enableIfValid();
 
-		btnStart.setEnabled(plugins.hasChanges());
+		apply.setEnabled(plugins.hasChanges());
+		cancel.setLabel(plugins.hasChanges() ? "Cancel" : "Close");
 
-		// TODO: "Upload" is activated by default!"
 		if (Util.isDeveloper) {
 			btnEditDetails.setEnabled(getSingleSelectedPlugin()
 					!= null);
@@ -470,7 +511,6 @@ public class UpdaterFrame extends JFrame
 		int install = 0, uninstall = 0, upload = 0;
 		long bytesToDownload = 0, bytesToUpload = 0;
 
-		// TODO: show dependencies' total size
 		for (PluginObject plugin : plugins)
 			switch (plugin.getAction()) {
 			case INSTALL:
