@@ -323,8 +323,8 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 				       stare, null));
 
 			//create and move into the user namespace
-			//in_ns.invoke(USER);
-			//refer.invoke(CLOJURE);
+			in_ns.invoke(USER);
+			refer.invoke(CLOJURE);
 		}
 
 		/** Evaluates the clojure code in the reader and appends a newline char to each returned token. */
@@ -385,9 +385,12 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 
 	@Override
 	protected String getPrompt() {
+		Var ns = RT.var("clojure.core", "*ns*");
 		Symbol s = (Symbol) ((Namespace) ns.get()).getName();
 		//String namespace = s.getNamespace();
 		//return (null != namespace && namespace.length() > 0 ? namespace + "." : "") + s.getName() + "=>";
-		return s.getName() + "=>";
+		String p = s.getName() + "=>";
+		System.out.println(p);
+		return p;
 	}
 }
