@@ -245,4 +245,12 @@ public class Util {
 		int index = Arrays.binarySearch(launchers, "fiji-" + platform);
 		return new String[] { launchers[index] };
 	}
+
+	public static<T> String join(String delimiter, Iterable<T> list) {
+		StringBuilder builder = new StringBuilder();
+		for (T object : list)
+			builder.append((builder.length() > 0 ? ", " : "")
+				+ object.toString());
+		return builder.toString();
+	}
 }

@@ -458,4 +458,8 @@ public class PluginCollection extends ArrayList<PluginObject> {
 			}
 		});
 	}
+
+	public String toString() {
+		return Util.join(", ", this);
+	}
 }

@@ -441,6 +441,14 @@ public class PluginObject {
 		}
         }
 
+	public String toDebug() {
+		return filename + "(" + status + ", " + action + ")";
+	}
+
+	public String toString() {
+		return filename;
+	}
+
 	/**
 	 * For displaying purposes, it is nice to have a plugin object whose
 	 * toString() method shows either the filename or the action.
