@@ -450,6 +450,7 @@ public class UpdaterFrame extends JFrame
 			button.enableIfValid();
 
 		apply.setEnabled(plugins.hasChanges());
+		cancel.setLabel(plugins.hasChanges() ? "Cancel" : "Close");
 
 		// TODO: "Upload" is activated by default!"
 		if (Util.isDeveloper) {
