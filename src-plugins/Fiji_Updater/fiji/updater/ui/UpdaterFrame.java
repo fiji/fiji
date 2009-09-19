@@ -442,6 +442,7 @@ public class UpdaterFrame extends JFrame
 			for (; child != getContentPane();
 					child = child.getParent())
 				child.setVisible(true);
+		easy.setLabel(easyMode ? "Advanced mode" : "Easy mode");
 		if (isVisible())
 			repaint();
 	}
