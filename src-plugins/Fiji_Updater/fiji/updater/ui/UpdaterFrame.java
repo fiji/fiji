@@ -104,7 +104,11 @@ public class UpdaterFrame extends JFrame
 				updatePluginsTable();
 			}
 		});
-		SwingTools.labelComponent("Search:", txtSearch, leftPanel);
+		JPanel searchPanel = SwingTools.labelComponent("Search:", txtSearch, leftPanel);
+		Dimension max_dim = new Dimension(100000,25);
+		Dimension pref_dim = new Dimension(500,20);
+		searchPanel.setPreferredSize(pref_dim);
+		searchPanel.setMaximumSize(max_dim);
 		leftPanel.add(Box.createRigidArea(new Dimension(0,10)));
 
 		viewOptions = new ViewOptions();
@@ -114,7 +118,9 @@ public class UpdaterFrame extends JFrame
 			}
 		});
 	
-		SwingTools.labelComponent("View Options:", viewOptions, leftPanel);
+		JPanel viewOptionsPanel = SwingTools.labelComponent("View Options:", viewOptions, leftPanel);
+		viewOptionsPanel.setPreferredSize(pref_dim);
+		viewOptionsPanel.setMaximumSize(max_dim);
 		leftPanel.add(Box.createRigidArea(new Dimension(0,10)));
 
 		//Create labels to annotate table
