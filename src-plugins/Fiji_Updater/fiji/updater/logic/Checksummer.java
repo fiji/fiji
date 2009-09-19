@@ -172,6 +172,7 @@ public class Checksummer extends Progressable {
 		{ "jars", "retro", "misc" }, { ".jar", ".class" },
 		{ "plugins" }, { ".jar", ".class", ".txt", ".ijm",
 			".py", ".rb", ".clj", ".js", ".bsh" },
+		{ "scripts" }, { ".py", ".rb", ".clj", ".js", ".bsh" },
 		{ "macros" }, { ".txt", ".ijm" },
 		{ "luts" }, { ".lut" }
 	};
