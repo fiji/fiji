@@ -100,11 +100,10 @@ public class Updater implements PlugIn {
 
 		if ("update".equals(arg)) {
 			plugins.markForUpdate(false);
-			if (plugins.hasChanges())
-				main.setViewOption(Option.UPDATEABLE);
-			else if (plugins.hasForcableUpdates())
+			main.setViewOption(Option.UPDATEABLE);
+			if (plugins.hasForcableUpdates())
 				main.warn("There are locally modified files!");
-			else
+			else if (!plugins.hasChanges())
 				main.info("Your Fiji is up to date!");
 		}
 
