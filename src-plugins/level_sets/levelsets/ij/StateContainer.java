@@ -286,7 +286,7 @@ public class StateContainer {
 				int [] yp = roi_p.getYCoordinates();
 				
 				for ( int i = 0; i < roi_p.getNCoordinates(); i++ ) {
-					c_map.add(new Coordinate(roi_r.x + xp[i], roi_r.y+yp[i], 0));
+					c_map.add(new Coordinate(roi_r.x + xp[i], roi_r.y+yp[i], roi_z -1));
 				}
 			
 				return c_map;
@@ -327,18 +327,18 @@ public class StateContainer {
 		if ( mask == null ) {
 			IJ.log("Note: ROI is rectangle, parsing borders");
 			int z = this.roi_z - 1; // TODO z is not possible with roi
-            for (int y = y_start; y < y_end; y++) {
-               for (int x = x_start; x < x_end; x++) {
-            	   if ( x == x_start || y == y_start || x == x_end - 1 || y == y_end - 1 ) {
-            		   d_map.set(x, y, z, States.ZERO);
-            		   px_zero++;
-            	   } else {
-            		   d_map.set(x, y, z, inside);
-            		   px_inside++;
-            	   }
-               }
-            }
-            // IJ.log("Zero level= " + px_zero + ", Inside = " + px_inside );
+			for (int y = y_start; y < y_end; y++) {
+				for (int x = x_start; x < x_end; x++) {
+					if ( x == x_start || y == y_start || x == x_end - 1 || y == y_end - 1 ) {
+						d_map.set(x, y, z, States.ZERO);
+						px_zero++;
+					} else {
+						d_map.set(x, y, z, inside);
+						px_inside++;
+					}
+				}
+			}
+            		// IJ.log("Zero level= " + px_zero + ", Inside = " + px_inside );
 		} else {
 			IJ.log("Note: ROI is shape, parsing shape");
 			int z = this.roi_z - 1;
