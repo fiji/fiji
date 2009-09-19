@@ -143,12 +143,14 @@ public class ImageContainer
 			   is.addSlice("", sproc[i]);
 		   }
 		   
+		   int slice = null != ip ? ip.getCurrentSlice() : 1;
 		   ip = new ImagePlus(this.title, is);
 //		   ip.setStack("", is);
+	   	   ip.setSlice(slice);
 	   } else {
 		   ip = new ImagePlus(this.title, sproc[0]);
 	   }
-	   
+
 	   return ip;
    }
    
