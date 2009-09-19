@@ -35,6 +35,7 @@ import javax.swing.table.TableColumn;
  */
 public class PluginTable extends JTable {
 	private PluginTableModel pluginTableModel;
+	protected Font plain, bold;
 
 	public PluginTable(PluginCollection plugins) {
 		//Set appearance of table
@@ -63,16 +64,30 @@ public class PluginTable extends JTable {
 					.getTableCellRendererComponent(table,
 						value, isSelected, hasFocus,
 						row, column);
-				PluginObject plugin = getPlugin(row);
-				comp.setFont(comp.getFont()
-					.deriveFont(plugin.actionSpecified() ?
-						Font.BOLD : Font.PLAIN));
-				comp.setForeground(plugin.getStatus() ==
-					Status.OBSOLETE_MODIFIED ?
-					Color.red : Color.black);
+				setStyle(comp, row, column);
 				return comp;
 			}
 		});
+	}
+
+	/*
+	 * This sets the font to bold when the user selected an action for
+	 * this plugin, or when it is locally modified.
+	 *
+	 * It also warns loudly when the plugin is obsolete, but locally
+	 * modified.
+	 */
+	protected void setStyle(Component comp, int row, int column) {
+		if (plain == null) {
+			plain = comp.getFont();
+			bold = plain.deriveFont(Font.BOLD);
+		}
+		PluginObject plugin = getPlugin(row);
+		comp.setFont(plugin.actionSpecified() ||
+				plugin.isLocallyModified() ? bold : plain);
+		comp.setForeground(plugin.getStatus() ==
+				Status.OBSOLETE_MODIFIED ?
+				Color.red : Color.black);
 	}
 
 	private void setColumnWidths(int col1Width, int col2Width) {

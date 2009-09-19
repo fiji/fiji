@@ -2874,6 +2874,8 @@ public class Fake {
 	}
 
 	public static String stripFijiHome(String string) {
+		if (string == null)
+			return string;
 		String slashes = string.replace('\\', '/');
 		if (slashes.startsWith(fijiHome))
 			return stripPrefix(slashes, fijiHome);

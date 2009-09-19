@@ -82,6 +82,11 @@ public class Nrrd_Writer implements PlugIn {
 		if (arg == null || arg.equals("")) {
 			name = imp.getTitle();
 		}
+
+		if(IJ.altKeyDown()){
+			if(IJ.debugMode) IJ.log("Setting gzip encoding");
+			try {setNrrdEncoding("gzip");} catch (IOException e) {}	
+		}
 		
 		SaveDialog sd = new SaveDialog(plugInName+"...", name, ".nrrd");
 		String file = sd.getFileName();
@@ -122,6 +127,9 @@ public class Nrrd_Writer implements PlugIn {
 		FileOutputStream out = new FileOutputStream(new File(fi.directory, fi.fileName));
 		// First write out the full header
 		Writer bw = new BufferedWriter(new OutputStreamWriter(out));
+		// Note, right now this is the only way compression that is implemented
+		if(nrrdEncoding.equals("gzip"))
+			fi.compression=NrrdFileInfo.GZIP;
 		// Blank line terminates header
 		bw.write(makeHeader(fi,cal)+"\n");
 		// Flush rather than close
@@ -181,22 +189,30 @@ public class Nrrd_Writer implements PlugIn {
 		
 		out.write("dimension: "+dimension+"\n");
 		out.write(dimmedLine("sizes",dimension,fi.width+"",fi.height+"",fi.nImages+""));
-		if(cal!=null)
-			out.write(dimmedLine("spacings",dimension,cal.pixelWidth+"",cal.pixelHeight+"",cal.pixelDepth+""));		
+		if(cal!=null){
+		    out.write("space dimension: "+dimension+"\n");
+			out.write(dimmedLine("space directions",dimension,
+					"("+cal.pixelWidth+",0,0)","(0,"+cal.pixelHeight+",0)","(0,0,"+cal.pixelDepth+")"));
+		}
 		// GJ: It's my understanding that ImageJ operates on a 'node' basis
 		// See http://teem.sourceforge.net/nrrd/format.html#centers
-		out.write(dimmedLine("centers",dimension,defaultNrrdCentering,defaultNrrdCentering,"node"));		
+		// Hmm, not sure about this and we can just ignore the issue and set the pixel widths
+		// (and origin if required)
+		// out.write(dimmedLine("centers",dimension,defaultNrrdCentering,defaultNrrdCentering,"node"));
 		String units;
 		if(cal!=null) units=cal.getUnit();
 		else units=fi.unit;
 		if(units.equals("µm")) units="microns";
-		if(!units.equals("")) out.write(dimmedQuotedLine("units",dimension,units,units,units));		
+		if(units.equals("micron")) units="microns";
+		if(!units.equals("")) out.write(dimmedQuotedLine("space units",dimension,units,units,units));
 
 		// Only write axis mins if origin info has at least one non-zero
 		// element
 		if(cal!=null && (cal.xOrigin!=0 || cal.yOrigin!=0 || cal.zOrigin!=0) ) {
-			out.write(dimmedLine("axis mins",dimension,(cal.xOrigin*cal.pixelWidth)+"",
-								 (cal.yOrigin*cal.pixelHeight)+"",(cal.zOrigin*cal.pixelDepth)+""));
+			out.write("space origin: "+
+			    "("+(cal.xOrigin*cal.pixelWidth)+","
+				 +(cal.yOrigin*cal.pixelHeight)+","
+				 +(cal.zOrigin*cal.pixelDepth)+")\n");
 		}
 		return out.toString();
 	}

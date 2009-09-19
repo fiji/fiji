@@ -98,10 +98,10 @@ public class XMLFileReader extends DefaultHandler {
 		}
 		else if (currentTag.equals("dependency")) {
 			String timestamp = atts.getValue("timestamp");
-			String relation = atts.getValue("relation");
+			String overrides = atts.getValue("overrides");
 			current.addDependency(atts.getValue("filename"),
 				getLong(atts, "timestamp"),
-				relation == null ? "at-least" : relation);
+				overrides != null && overrides.equals("true"));
 		}
 	}
 

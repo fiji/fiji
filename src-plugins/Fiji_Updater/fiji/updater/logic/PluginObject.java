@@ -109,7 +109,7 @@ public class PluginObject {
 	// TODO: finally add platform
 
 	// These are LinkedHashMaps to retain the order of the entries
-	protected Map<Dependency, Object> dependencies;
+	protected Map<String, Dependency> dependencies;
 	protected Map<String, Object> links, authors, platforms, categories;
 
 	public PluginObject(String filename, String checksum, long timestamp,
@@ -119,7 +119,7 @@ public class PluginObject {
 			current = new Version(checksum, timestamp);
 		previous = new LinkedHashMap<Version, Object>();
 		this.status = status;
-		dependencies = new LinkedHashMap<Dependency, Object>();
+		dependencies = new LinkedHashMap<String, Dependency>();
 		authors = new LinkedHashMap<String, Object>();
 		platforms = new LinkedHashMap<String, Object>();
 		categories = new LinkedHashMap<String, Object>();
@@ -174,13 +174,20 @@ public class PluginObject {
 	}
 
 	// TODO: allow editing those via GUI
+	public void addDependency(String filename) {
+		addDependency(filename, Util.getTimestamp(filename), false);
+	}
+
 	public void addDependency(String filename, long timestamp,
-			String relation) {
-		addDependency(new Dependency(filename, timestamp, relation));
+			boolean overrides) {
+		addDependency(new Dependency(filename, timestamp, overrides));
 	}
 
 	public void addDependency(Dependency dependency) {
-		dependencies.put(dependency, (Object)null);
+		// the timestamp should not be changed unnecessarily
+		if (dependencies.containsKey(dependency.filename))
+			return;
+		dependencies.put(dependency.filename, dependency);
 	}
 
 	public void addLink(String link) {
@@ -259,6 +266,10 @@ public class PluginObject {
 			newChecksum = current.checksum;
 			newTimestamp = current.timestamp;
 		}
+		else if (isObsolete()) {
+			status = Status.INSTALLED;
+			setVersion(newChecksum, newTimestamp);
+		}
 		else {
 			if (newChecksum == null ||
 					newChecksum.equals(current.checksum))
@@ -269,8 +280,12 @@ public class PluginObject {
 		filesize = Util.getFilesize(filename);
 
 		PluginCollection plugins = PluginCollection.getInstance();
-		for (Dependency dependency : plugins.analyzeDependencies(this))
-				addDependency(dependency);
+		// TODO: complain if not Fiji (and offer to add them)
+		Iterable<String> dependencies =
+			plugins.analyzeDependencies(this);
+		if (dependencies != null)
+			for (String dependency : dependencies)
+					addDependency(dependency);
 	}
 
 	protected void markForRemoval() {
@@ -295,7 +310,7 @@ public class PluginObject {
 	}
 
 	public Iterable<Dependency> getDependencies() {
-		return dependencies.keySet();
+		return dependencies.values();
 	}
 
 	public Status getStatus() {
@@ -323,8 +338,7 @@ public class PluginObject {
 	}
 
 	public boolean actionSpecified() {
-		return action != Action.NOT_INSTALLED &&
-			action != Action.INSTALLED;
+		return action != status.getNoAction();
 	}
 
 	// TODO: why that redundancy?  We set Action.UPDATE only if it is updateable anyway!  Besides, use getAction(). DRY, DRY, DRY!
@@ -362,6 +376,37 @@ public class PluginObject {
 		return status != Status.NOT_FIJI;
 	}
 
+	/* This returns true if the user marked the plugin for uninstall, too */
+	public boolean willNotBeInstalled() {
+		switch (action) {
+		case NOT_INSTALLED: case NEW: case OBSOLETE: case UNINSTALL:
+		case REMOVE:
+			return true;
+		case NOT_FIJI: case INSTALLED: case UPDATEABLE: case MODIFIED:
+		case INSTALL: case UPDATE: case UPLOAD:
+			return false;
+		default:
+			throw new RuntimeException("Unhandled action: "
+					+ action);
+		}
+	}
+
+	/* This returns true if the user marked the plugin for uninstall, too */
+	public boolean willBeUpdateable() {
+		switch (action) {
+		case NOT_INSTALLED: case NEW: case OBSOLETE: case UNINSTALL:
+		case REMOVE: case NOT_FIJI: case INSTALLED: case INSTALL:
+		case UPDATE: case UPLOAD:
+			return false;
+		case UPDATEABLE: case MODIFIED:
+			return true;
+		default:
+			throw new RuntimeException("Unhandled action: "
+					+ action);
+		}
+	}
+
+	// TODO: this needs a better name; something like wantsAction()
 	public boolean isUpdateable(boolean evenForcedUpdates) {
 		return action == Action.UPDATE ||
 			action == Action.INSTALL ||

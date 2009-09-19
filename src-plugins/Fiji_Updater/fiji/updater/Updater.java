@@ -1,6 +1,7 @@
 package fiji.updater;
 
 import ij.IJ;
+import ij.WindowManager;
 
 import ij.plugin.PlugIn;
 
@@ -47,6 +48,7 @@ public class Updater implements PlugIn {
 		final UpdaterFrame main = new UpdaterFrame();
 		main.setLocationRelativeTo(IJ.getInstance());
 		main.setVisible(true);
+		WindowManager.addWindow(main);
 
 		Progress progress = main.getProgress("Starting up...");
 

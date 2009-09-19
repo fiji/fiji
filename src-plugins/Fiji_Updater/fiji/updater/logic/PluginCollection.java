@@ -10,8 +10,10 @@ import fiji.updater.util.Util;
 import java.io.IOException;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 public class PluginCollection extends ArrayList<PluginObject> {
@@ -86,6 +88,18 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 	public Iterable<PluginObject> fijiPlugins() {
 		return filter(not(is(Status.NOT_FIJI)));
+	}
+
+	public Iterable<PluginObject> forCurrentTXT() {
+		return filter(and(not(oneOf(new Status[] {
+				Status.NOT_FIJI, Status.OBSOLETE,
+				Status.OBSOLETE_MODIFIED,
+				Status.OBSOLETE_UNINSTALLED
+			})), startsWith(new String[] {
+				/* the old updater will only checksum these! */
+				"fiji-", "ij.jar",
+				"plugins/", "jars/", "retro/", "misc/"
+			})));
 	}
 
 	public Iterable<PluginObject> nonFiji() {
@@ -247,6 +261,25 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		};
 	}
 
+	public Filter startsWith(final String prefix) {
+		return new Filter() {
+			public boolean matches(PluginObject plugin) {
+				return plugin.filename.startsWith(prefix);
+			}
+		};
+	}
+
+	public Filter startsWith(final String[] prefixes) {
+		return new Filter() {
+			public boolean matches(PluginObject plugin) {
+				for (String prefix : prefixes)
+					if (plugin.filename.startsWith(prefix))
+						return true;
+				return false;
+			}
+		};
+	}
+
 	public Filter not(final Filter filter) {
 		return new Filter() {
 			public boolean matches(PluginObject plugin) {
@@ -299,60 +332,24 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		return null;
 	}
 
-	protected class Dependencies implements Iterator<Dependency> {
-		Iterator<String> iterator;
-		Dependency current;
-		Dependencies(Iterable<String> dependencies) {
-			if (dependencies == null)
-				return;
-			iterator = dependencies.iterator();
-			findNext();
-		}
-
-		public boolean hasNext() {
-			return current != null;
-		}
-
-		public Dependency next() {
-			Dependency result = current;
-			findNext();
-			return result;
-		}
-
-		public void remove() {
-			throw new UnsupportedOperationException();
-		}
-
-		protected void findNext() {
-			while (iterator.hasNext()) {
-				PluginObject plugin =
-					getPlugin(iterator.next());
-				if (plugin == null)
-					continue;
-				current = new Dependency(plugin.getFilename(),
-					plugin.getTimestamp(), "at-least");
-				return;
-			}
-			current = null;
-		}
-	}
-
-	public Iterable<Dependency> analyzeDependencies(PluginObject plugin) {
+	public Iterable<String> analyzeDependencies(PluginObject plugin) {
 		try {
 			if (dependencyAnalyzer == null)
 				dependencyAnalyzer = new DependencyAnalyzer();
-			final Iterable<String> dependencies = dependencyAnalyzer
-				.getDependencies(plugin.getFilename());
-
-			return new Iterable<Dependency>() {
-				public Iterator<Dependency> iterator() {
-					return new Dependencies(dependencies);
-				}
-			};
+			String path = Util.prefix(plugin.getFilename());
+			return dependencyAnalyzer.getDependencies(path);
 		} catch (IOException e) {
 			e.printStackTrace();
 			return null;
 		}
+	}
+
+	public void updateDependencies(PluginObject plugin) {
+		Iterable<String> dependencies = analyzeDependencies(plugin);
+		if (dependencies == null)
+			return;
+		for (String dependency : dependencies)
+			plugin.addDependency(dependency);
 	}
 
 	public boolean has(final Filter filter) {
@@ -392,8 +389,55 @@ public class PluginCollection extends ArrayList<PluginObject> {
 			});
 		for (String name : Util.getLaunchers()) {
 			PluginObject launcher = getPlugin(name);
+			if (launcher == null)
+				continue; // the regression test triggers this
 			if (launcher.getStatus() == Status.NOT_INSTALLED)
 				launcher.setAction(Action.INSTALL);
 		}
+	}
+
+	public static class DependencyMap
+			extends HashMap<PluginObject, PluginCollection> {
+		// returns true when the map did not have the dependency before
+		boolean add(PluginObject dependency, PluginObject dependencee) {
+			if (containsKey(dependency)) {
+				get(dependency).add(dependencee);
+				return false;
+			}
+			PluginCollection list = new PluginCollection();
+			list.add(dependencee);
+			put(dependency, list);
+			return true;
+		}
+	}
+
+	// TODO: for developers, there should be a consistency check:
+	// no dependencies on non-Fiji plugins, no circular dependencies,
+	// and no overring circular dependencies.
+	void addDependencies(PluginObject plugin, DependencyMap map,
+			boolean overriding) {
+		for (Dependency dependency : plugin.getDependencies()) {
+			PluginObject other = getPlugin(dependency.filename);
+			if (other == null || overriding != dependency.overrides)
+				continue;
+			if (dependency.overrides) {
+				if (other.willNotBeInstalled())
+					continue;
+			}
+			else if (!other.willBeUpdateable())
+				continue;
+			if (!map.add(other, plugin))
+				continue;
+			// overriding dependencies are not recursive
+			if (!overriding)
+				addDependencies(other, map, overriding);
+		}
+	}
+
+	public DependencyMap getDependencies(boolean overridingOnes) {
+		DependencyMap result = new DependencyMap();
+		for (PluginObject plugin : toInstallOrUpdate())
+			addDependencies(plugin, result, overridingOnes);
+		return result;
 	}
 }

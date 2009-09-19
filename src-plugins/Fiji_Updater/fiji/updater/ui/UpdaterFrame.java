@@ -4,6 +4,7 @@ import fiji.updater.Updater;
 
 import fiji.updater.logic.Installer;
 import fiji.updater.logic.PluginCollection;
+import fiji.updater.logic.PluginCollection.DependencyMap;
 import fiji.updater.logic.PluginObject;
 import fiji.updater.logic.PluginObject.Action;
 import fiji.updater.logic.PluginObject.Status;
@@ -16,6 +17,7 @@ import fiji.updater.util.Util;
 
 import ij.IJ;
 import ij.Prefs;
+import ij.WindowManager;
 
 import ij.gui.GenericDialog;
 
@@ -223,6 +225,11 @@ public class UpdaterFrame extends JFrame
 		pack();
 	}
 
+	public void dispose() {
+		WindowManager.removeWindow(this);
+		super.dispose();
+	}
+
 	public Progress getProgress(String title) {
 		return new ProgressDialog(this, title);
 	}
@@ -427,9 +434,20 @@ public class UpdaterFrame extends JFrame
 				bytesToUpload += plugin.filesize;
 				break;
 			}
-		String text = "Total: " + size + ", install/update: " + install
-			+ ", uninstall: " + uninstall
-			+ ", download size: " + sizeToString(bytesToDownload);
+		int implicated = 0;
+		DependencyMap map = plugins.getDependencies(true);
+		for (PluginObject plugin : map.keySet()) {
+			implicated++;
+			bytesToUpload += plugin.filesize;
+		}
+		String text = "";
+		if (install > 0)
+			text += " install/update: " + install
+				+ (implicated > 0 ? "+" + implicated : "")
+				+ " download size: "
+				+ sizeToString(bytesToDownload);
+		if (uninstall > 0)
+			text += " uninstall: " + uninstall;
 		if (Util.isDeveloper)
 			text += ", upload: " + upload + ", upload size: "
 				+ sizeToString(bytesToUpload);
