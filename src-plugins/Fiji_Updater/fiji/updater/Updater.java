@@ -44,6 +44,8 @@ public class Updater implements PlugIn {
 	public static final String PREFS_XMLDATE = "fiji.updater.xmlDate";
 	public static final String PREFS_USER = "fiji.updater.login";
 
+	public static boolean debug;
+
 	public void run(String arg) {
 		final UpdaterFrame main = new UpdaterFrame();
 		main.setLocationRelativeTo(IJ.getInstance());
@@ -85,7 +87,10 @@ public class Updater implements PlugIn {
 		progress = main.getProgress("Matching with local files...");
 		Checksummer checksummer = new Checksummer(progress);
 		try {
-			checksummer.updateFromLocal();
+			if (debug)
+				checksummer.done();
+			else
+				checksummer.updateFromLocal();
 		} catch (Canceled e) {
 			checksummer.done();
 			main.dispose();
