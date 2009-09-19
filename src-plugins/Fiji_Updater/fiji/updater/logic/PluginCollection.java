@@ -10,6 +10,8 @@ import fiji.updater.util.Util;
 import java.io.IOException;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -439,5 +441,21 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		for (PluginObject plugin : toInstallOrUpdate())
 			addDependencies(plugin, result, overridingOnes);
 		return result;
+	}
+
+	public void sort() {
+		// first letters in this order: 'f', 'i', 'p', 's', 'm', 'j'
+		Collections.sort(this, new Comparator<PluginObject>() {
+			public int compare(PluginObject a, PluginObject b) {
+				int result = firstChar(a) - firstChar(b);
+				return result != 0 ? result :
+					a.filename.compareTo(b.filename);
+			}
+
+			int firstChar(PluginObject plugin) {
+				char c = plugin.filename.charAt(0);
+				return "fips".indexOf(c) < 0 ? 0x200 - c : c;
+			}
+		});
 	}
 }
