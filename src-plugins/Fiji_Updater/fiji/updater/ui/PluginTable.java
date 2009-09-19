@@ -186,7 +186,9 @@ public class PluginTable extends JTable {
 
 		public void setValueAt(Object value, int row, int column) {
 			if (column == 1) {
-				getPlugin(row).setAction((Action)value);
+				Action action = (Action)value;
+				if (getPlugin(row).getStatus().isValid(action))
+					getPlugin(row).setAction(action);
 				fireRowChanged(row);
 			}
 		}
