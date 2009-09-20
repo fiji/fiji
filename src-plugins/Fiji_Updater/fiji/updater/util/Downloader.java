@@ -98,7 +98,7 @@ public class Downloader extends Progressable {
 		}
 		in.close();
 		out.close();
-		// TODO: add itemDone(), use it in VerifyFiles
+		itemDone(current);
 	}
 
 	public long getLastModified() {

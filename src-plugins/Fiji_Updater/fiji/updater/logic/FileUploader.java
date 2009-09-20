@@ -91,6 +91,7 @@ public class FileUploader extends Progressable {
 			in.close();
 			out.close();
 			count += currentCount;
+			itemDone(source);
 		}
 
 		File backup = new File(db.getAbsolutePath() + ".old");

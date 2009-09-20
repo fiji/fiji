@@ -140,6 +140,7 @@ public class SSHFileUploader extends FileUploader {
 			out.write(buf, 0, 1);
 			out.flush();
 			checkAckUploadError();
+			itemDone(source);
 		}
 
 		while (!prefix.equals("")) {

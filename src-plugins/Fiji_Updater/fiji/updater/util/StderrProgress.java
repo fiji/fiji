@@ -24,6 +24,10 @@ public class StderrProgress implements Progress {
 			+ count + "/" + total + "]" + end);
 	}
 
+	public void itemDone(Object item) {
+		System.err.print(item.toString() + " done" + end);
+	}
+
 	public void done() {
 		System.err.println("Done: " + label + end);
 	}

@@ -143,6 +143,12 @@ public class ProgressDialog extends JDialog implements Progress {
 		repaint();
 	}
 
+	public void itemDone(Object item) {
+		if (canceled)
+			throw new Canceled();
+		latestDetail.setValue(latestDetail.getMaximum());
+	}
+
 	public void done() {
 		if (latestDetail != null)
 			latestDetail.setValue(latestDetail.getMaximum());

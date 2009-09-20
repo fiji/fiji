@@ -134,7 +134,7 @@ public class Checksummer extends Progressable {
 				plugin.setStatus(Status.OBSOLETE);
 			counter += (int)Util.getFilesize(realPath);
 		}
-		setItemCount(1, 1);
+		itemDone(path);
 		setCount(counter, total);
 	}
 

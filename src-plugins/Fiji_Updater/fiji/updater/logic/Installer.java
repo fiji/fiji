@@ -82,17 +82,14 @@ public class Installer extends Downloader {
 	class VerifyFiles implements Progress {
 		Download current;
 
-		public void addItem(Object item) {
-			current = (Download)item;
-		}
-
-		public void setItemCount(int count, int total) {
-			if (count == total)
+		public void itemDone(Object item) {
 				verify(current);
 		}
 
 		public void setTitle(String title) {}
 		public void setCount(int count, int total) {}
+		public void addItem(Object item) {}
+		public void setItemCount(int count, int total) {}
 		public void done() {}
 	}
 
