@@ -1,5 +1,6 @@
 package fiji.updater.ui;
 
+import fiji.updater.logic.Dependency;
 import fiji.updater.logic.PluginCollection;
 import fiji.updater.logic.PluginCollection.DependencyMap;
 import fiji.updater.logic.PluginObject;
@@ -39,11 +40,16 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 	DependencyMap toInstall, toUninstall;
 	Collection<PluginObject> automatic, ignore;
 	int conflicts;
-	boolean wasCanceled;
+	boolean forUpload, wasCanceled;
 
 	public ResolveDependencies(Frame owner) {
+		this(owner, false);
+	}
+
+	public ResolveDependencies(Frame owner, boolean forUpload) {
 		super(owner, "Resolve dependencies");
 
+		this.forUpload = forUpload;
 		plugins = PluginCollection.getInstance();
 
 		rootPanel = SwingTools.verticalPanel();
@@ -121,10 +127,26 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 		conflicts = 0;
 		panel.setText("");
 
+		automatic = new ArrayList<PluginObject>();
+		if (forUpload)
+			listUploadIssues();
+		else
+			listUpdateIssues();
+
+		enableOKIfValid();
+		if (panel.isVisible()) {
+			if (panel.getStyledDocument().getLength() == 0)
+				addText("No more issues to be resolved!",
+						italic);
+			panel.setCaretPosition(0);
+			panel.repaint();
+		}
+	}
+
+	void listUpdateIssues() {
 		toInstall = plugins.getDependencies(false);
 		toUninstall = plugins.getDependencies(true);
 
-		automatic = new ArrayList<PluginObject>();
 		for (PluginObject plugin : toInstall.keySet())
 			if (toUninstall.get(plugin) != null)
 				bothInstallAndUninstall(plugin);
@@ -144,15 +166,6 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 			newText("These components will be updated/"
 					+ "installed automatically: \n\n");
 			addList(automatic);
-		}
-
-		enableOKIfValid();
-		if (panel.isVisible()) {
-			if (panel.getStyledDocument().getLength() == 0)
-				addText("No more issues to be resolved!",
-						italic);
-			panel.setCaretPosition(0);
-			panel.repaint();
 		}
 	}
 
@@ -198,6 +211,57 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 		boolean toInstall = plugin.getStatus().isValid(Action.INSTALL);
 		addButton((toInstall ? "Install" : "Update") + " " + plugin,
 			plugin, toInstall ? Action.INSTALL : Action.UPDATE);
+	}
+
+	void listUploadIssues() {
+		toInstall = new PluginCollection.DependencyMap();
+		for (PluginObject plugin : plugins.toUpload())
+			for (Dependency dependency : plugin.getDependencies()) {
+				PluginObject dep =
+					plugins.getPlugin(dependency.filename);
+				if (dep == null || ignore.contains(dep))
+					continue;
+				if (dep.isInstallable() || !dep.isFiji() ||
+					dep.isObsolete() ||
+					(dep.getStatus().isValid(Action.UPLOAD)
+					 && dep.getAction() != Action.UPLOAD))
+					toInstall.add(dep, plugin);
+			}
+		for (PluginObject plugin : toInstall.keySet())
+			needUpload(plugin);
+	}
+
+	void needUpload(final PluginObject plugin) {
+		boolean notFiji = !plugin.isFiji();
+		boolean notInstalled = plugin.isInstallable();
+		boolean obsolete = plugin.isObsolete();
+		final PluginCollection reasons = toInstall.get(plugin);
+		newText("Warning: ", notFiji || obsolete ? red : normal);
+		addText(plugin.getFilename(), bold);
+		addText(" is " + (notFiji ? "not a Fiji component yet" :
+			(notInstalled ? "not installed locally" :
+			(obsolete ? "marked obsolete" : "locally modified")))
+			+ " but a dependency of\n\n");
+		addList(reasons);
+		addText("\n    ");
+		if (!notFiji && !obsolete) {
+			addIgnoreButton("Do not upload " + plugin, plugin);
+			addText("    ");
+		}
+		if (!notInstalled) {
+			addButton("Upload " + plugin
+					+ (obsolete ? " again" : ""),
+					plugin, Action.UPLOAD);
+			addText("    ");
+		}
+		addButton("Break the dependency", new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				for (PluginObject other : reasons)
+					other.removeDependency(plugin
+						.getFilename());
+				listIssues();
+			}
+		});
 	}
 
 	void addIgnoreButton(String label, final PluginObject plugin) {

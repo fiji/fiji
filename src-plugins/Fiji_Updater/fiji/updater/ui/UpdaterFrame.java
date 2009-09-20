@@ -593,6 +593,17 @@ public class UpdaterFrame extends JFrame
 	}
 
 	protected void upload() {
+		ResolveDependencies resolver =
+			new ResolveDependencies(this, true);
+		if (!resolver.resolve())
+			return;
+
+		String errors = plugins.checkConsistency();
+		if (errors != null) {
+			error(errors);
+			return;
+		}
+
 		PluginUploader uploader = new PluginUploader(xmlLastModified);
 
 		try {

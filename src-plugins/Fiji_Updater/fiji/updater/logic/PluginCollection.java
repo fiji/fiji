@@ -410,7 +410,8 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	public static class DependencyMap
 			extends HashMap<PluginObject, PluginCollection> {
 		// returns true when the map did not have the dependency before
-		boolean add(PluginObject dependency, PluginObject dependencee) {
+		public boolean add(PluginObject dependency,
+				PluginObject dependencee) {
 			if (containsKey(dependency)) {
 				get(dependency).add(dependencee);
 				return false;

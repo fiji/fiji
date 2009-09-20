@@ -190,6 +190,10 @@ public class PluginObject {
 		dependencies.put(dependency.filename, dependency);
 	}
 
+	public void removeDependency(String other) {
+		dependencies.remove(other);
+	}
+
 	public void addLink(String link) {
 		links.put(link, (Object)null);
 	}
