@@ -134,7 +134,7 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 			listUpdateIssues();
 
 		enableOKIfValid();
-		if (panel.isVisible()) {
+		if (isShowing()) {
 			if (panel.getStyledDocument().getLength() == 0)
 				addText("No more issues to be resolved!",
 						italic);
