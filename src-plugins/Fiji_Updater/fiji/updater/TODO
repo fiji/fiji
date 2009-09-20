@@ -48,4 +48,4 @@ Not-quite show-stoppers:
   correct mistakes (not all are "at-least" dependencies) and add
   additional dependencies.
 
-
+- Allow per-platform dependencies.
