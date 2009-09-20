@@ -31,6 +31,7 @@ package levelsets.ij;
 
 import ij.IJ;
 import ij.ImagePlus;
+import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.gui.PointRoi;
@@ -244,9 +245,14 @@ public class LevelSet implements PlugIn {
 			if ( sc_final == null ) {
 				return;
 			}
-			ImageContainer result = new ImageContainer(sc_final.getIPMask());
-			ImagePlus result_ip = result.createImagePlus("Segmentation of " + imp.getTitle());
-			result_ip.show();
+			ImageStack stack = new ImageStack(imp.getWidth(), imp.getHeight());
+			for (ImageProcessor bp : sc_final.getIPMask()) {
+				stack.addSlice(null, bp);
+			}
+			ImagePlus seg = imp.createImagePlus();
+			seg.setStack("Segmentation of " + imp.getTitle(), stack);
+			seg.show();
+			seg.setSlice(imp.getCurrentSlice());
 		} catch (IllegalArgumentException e) {
 			// Usually happens with ROI specifications
 			IJ.error(e.getMessage());
