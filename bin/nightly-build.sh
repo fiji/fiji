@@ -49,6 +49,9 @@ case "$1" in
 	EMAIL=fiji-devel@googlegroups.com
 	TMPFILE=.git/build.$$.out
 
+	# make sure that JAVA_HOME is set to Java5
+	export JAVA_HOME="$(ls -d "$(pwd)"/java/*/jdk1.5*)"
+
 	(git fetch origin &&
 	 compile origin/master) > $TMPFILE 2>&1  &&
 	rm $TMPFILE || {
