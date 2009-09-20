@@ -253,7 +253,11 @@ public class UpdaterFrame extends JFrame
 			btnUpload = SwingTools.button("Upload to server",
 					"Upload selected plugins to server", new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					upload();
+					new Thread() {
+						public void run() {
+							upload();
+						}
+					}.start();
 				}
 			}, bottomPanel);
 			btnUpload.setEnabled(false);
