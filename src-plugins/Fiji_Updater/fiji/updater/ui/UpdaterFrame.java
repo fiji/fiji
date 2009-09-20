@@ -614,8 +614,12 @@ public class UpdaterFrame extends JFrame
 			if (!interactiveSshLogin(uploader))
 				return;
 			uploader.upload(getProgress("Uploading..."));
-			// TODO: download list instead
-			IJ.showMessage("You need to restart this plugin now");
+			for (PluginObject plugin : plugins.toUploadOrRemove())
+				if (plugin.getAction() == Action.UPLOAD)
+					plugin.setStatus(Status.INSTALLED);
+				else
+					plugin.setStatus(Status.NOT_INSTALLED);
+			updatePluginsTable();
 		} catch (Canceled e) {
 			// TODO: teach uploader to remove the lock file
 			IJ.error("Canceled");
