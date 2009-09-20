@@ -80,10 +80,8 @@ public class Installer extends Downloader {
 	}
 
 	class VerifyFiles implements Progress {
-		Download current;
-
 		public void itemDone(Object item) {
-				verify(current);
+				verify((Download)item);
 		}
 
 		public void setTitle(String title) {}
