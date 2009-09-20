@@ -23,6 +23,19 @@ compile () {
 }
 
 case "$1" in
+--stdout)
+	case "$(basename "$(cd "$(dirname "$0")"/.. && pwd)")" in
+	nightly-build) ;; # okay
+	*)
+		echo "Refusing to run outside nightly-build/" >&2
+		exit 1
+		;;
+	esac
+
+	cd "$(dirname "$0")"/..
+
+	compile ${2:-HEAD}
+	;;
 '')
 	case "$(basename "$(cd "$(dirname "$0")"/.. && pwd)")" in
 	nightly-build) ;; # okay
