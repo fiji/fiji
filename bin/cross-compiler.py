@@ -15,15 +15,17 @@ if sys.argv[1] != 'win64':
 	sys.exit(1)
 
 root = 'root-x86_64-pc-linux/'
-cxx = root + 'bin/x86_64-pc-mingw32-g++'
-strip = root + 'bin/x86_64-pc-mingw32-strip'
-windres = root + 'bin/x86_64-pc-mingw32-windres'
+cxx = root + 'bin/x86_64-w64-mingw32-g++'
+strip = root + 'bin/x86_64-w64-mingw32-strip'
+windres = root + 'bin/x86_64-w64-mingw32-windres'
 target = 'precompiled/fiji-win64.exe'
 
 if not os.path.exists(cxx):
-	url = 'http://heanet.dl.sourceforge.net/sourceforge/mingw-w64/'
-	file = 'mingw-w64-bin_x86-64-linux_20080721.tar.bz2'
-	filename = urllib.urlretrieve(url + file)[0]
+	url = 'http://dfn.dl.sourceforge.net/project/mingw-w64/'
+	url += 'Toolchains%20targetting%20Win64/Automated%20Builds/'
+	file = 'mingw-w64-bin_x86_64-linux_20090920.tar.bz2'
+	execute('curl -o ' + file + ' ' + url + file )
+	filename = file
 	if filename is None:
 		print "You need to install the mingw64 cross compiler into", cxx
 		sys.exit(1)
