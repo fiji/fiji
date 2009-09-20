@@ -7,7 +7,7 @@ import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 
 import java.awt.Rectangle;
-import java.util.Vector;
+import java.util.ArrayList;
 
 import levelsets.algorithm.Coordinate;
 import levelsets.algorithm.DeferredByteArray3D;
@@ -46,8 +46,8 @@ public class StateContainer {
 	DeferredObjectArray3D<States> d_map = null;
 	// Full array containing the state map
 	States [][][] s_map = null;
-	// Vector holding bounding box coordinates
-	Vector<Coordinate> c_map = null;
+	// ArrayList holding bounding box coordinates
+	ArrayList<Coordinate> c_map = null;
 	// ROI
 	Roi roi_map = null;
 	
@@ -148,7 +148,7 @@ public class StateContainer {
 	}
 
 	
-	public Vector<Coordinate> getForFastMarching() {
+	public ArrayList<Coordinate> getForFastMarching() {
 		
 		return roi2points();
 		
@@ -210,13 +210,13 @@ public class StateContainer {
 	}
 	
 	/*
-	 * Returns the x/y/z of the ROI/segmented area as Vector<Coordinate>
+	 * Returns the x/y/z of the ROI/segmented area as ArrayList<Coordinate>
 	 * zero_crossing_only = true -> return only the boundary (the zero crossing)
 	 * zero_crossing_only = false -> return inside and boundary of segmented object
 	 */
 	
-	public Vector<Coordinate> getXYZ(boolean zero_crossing_only) {
-		Vector<Coordinate> xyz = new Vector<Coordinate>(100);
+	public ArrayList<Coordinate> getXYZ(boolean zero_crossing_only) {
+		ArrayList<Coordinate> xyz = new ArrayList<Coordinate>(100);
 		
 		if ( s_map != null ) {
 	        for (int z = 0; z < s_map[0][0].length; z++) {
@@ -270,14 +270,14 @@ public class StateContainer {
 		return avg_grey;
 	}
 	
-	protected Vector<Coordinate> roi2points() {
+	protected ArrayList<Coordinate> roi2points() {
 		
 		if ( c_map != null ) {
 			return c_map;
 		}
 		else if ( roi_map != null ) {
 			
-			c_map = new Vector<Coordinate>(10);
+			c_map = new ArrayList<Coordinate>(10);
 			
 			if ( roi_map instanceof PolygonRoi ) {
 				PolygonRoi roi_p = (PolygonRoi) roi_map;
