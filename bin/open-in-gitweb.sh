@@ -1,6 +1,15 @@
 #!/bin/sh
 
-BROWSER=${BROWSER:-firefox}
+test ! -z "$BROWSER" || {
+	for BROWSER in xdg-open start open
+	do
+		$BROWSER --help > /dev/null 2>&1
+		test $? != 127 && break
+	done || {
+		echo "No suitable browser found" >&2
+		exit 1
+	}
+}
 
 get_url () {
 	url=$(git config remote.origin.url)
