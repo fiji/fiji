@@ -177,6 +177,9 @@ abstract public class RefreshScripts implements PlugIn {
 		if (scriptExtension.equals(".java"))
 			return true;
 
+		if (command.startsWith(getClass().getName() + "("))
+			return true;
+
 		IJ.log("The script " + filename + " would override "
 			+ "an existing menu entry; skipping");
 
