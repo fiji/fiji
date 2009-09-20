@@ -2,7 +2,16 @@
 
 compile () {
 	git reset --hard $1 &&
+	# make sure that the cross compilers are not removed
+	for d in root-x86_64-pc-linux chroot-dapper-i386 livecd
+	do
+		test ! -d $d ||
+		git update-index --add --cacheinfo \
+			160000 1234567890123456789012345678901234567890 $d ||
+		break
+	done &&
 	git clean -q -x -d -f &&
+	git reset &&
 	find * -type d |
 	while read dir
 	do
