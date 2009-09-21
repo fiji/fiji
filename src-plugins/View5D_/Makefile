@@ -4,11 +4,11 @@
 #	UNIX-makefile
 
 S     = src
-T	= view5DApplet view5DImageJ 
+T	= view5D 
 
 SRCS =	$(S)/View5D_.java 
 
-JAVAC	= javac 
+JAVAC	= javac -target 1.1 -source 1.2 -deprecation 
 MV	= cp
 RM	= rm -f 
 
@@ -21,10 +21,7 @@ all	: $(T)
 clean:
 	 $(RM) $(T) *.class;
 
-view5DApplet :  $(S)/View5D_.java 
-	./javacApplet
-
-view5DImageJ :  $(S)/View5D_.java 
+view5D :  $(S)/View5D_.java 
 	./javacImageJ
 
 
