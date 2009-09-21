@@ -72,6 +72,52 @@ build_rest='
 		git commit -s -a -m "'"$COMMIT_MESSAGE"'"
 	 fi) >&2
 '
+errorcount=0
+verify_archive () {
+	platformfiles="$(case $1 in
+	*.tar.*) tar tvf $1;;
+	*.zip) unzip -v $1;;
+	*.7z) 7z l $1;;
+	*) echo "Error: unknown archive type $1" >&2
+	esac |
+	grep -e fiji- -e rt.jar |
+	grep -ve Archive -e Listing -e fiji-scripting |
+	sed -e 's/^.*Fiji.app\///' -e 's/\(java\/[^\/]*\).*/\1/' |
+	sort | uniq | tr '\012' ' ')"
+	if test a"$2" != a"$platformfiles"
+	then
+		echo "Archive $1 has"
+		echo "  $platformfiles"
+		echo "but was supposed to have"
+		echo "  $2"
+		errorcount=$(($errorcount+1))
+	fi
+}
+
+verify_archives () {
+	for a in fiji-$1.tar.bz2 fiji-$1.zip fiji-$1.7z \
+		fiji-$1-*.tar.bz2 fiji-$1-*.zip fiji-$1-*.7z
+	do
+		test ! -f $a || verify_archive $a "$2"
+	done
+}
+
+copy_files () {
+	mkdir -p $TARGET_DIRECTORY &&
+	date=$(date +%Y%m%d) &&
+	for f in fiji-*
+	do
+		mv $f $TARGET_DIRECTORY/${f%%.*}-$date.${f#*.} || break
+	done
+}
+
+case "$2" in
+--copy-files)
+	cd $HOME/$NIGHTLY_BUILD &&
+	copy_files
+	exit
+	;;
+esac
 
 git diff-files --ignore-submodules --quiet &&
 git diff-index --cached --quiet HEAD || {
@@ -122,14 +168,37 @@ then
 	git commit -s -a -m "$COMMIT_MESSAGE"
 fi &&
 git tag -m "Fiji $RELEASE" Fiji-$RELEASE &&
-git push /srv/git/fiji.git master Fiji-$RELEASE &&
+git push /srv/git/fiji.git master Fiji-$RELEASE || exit
+
+echo "Verifying"
+cd $HOME/$NIGHTLY_BUILD
+for a in linux linux64 win32 win64 macosx
+do
+	launcher="fiji-$a"
+	java="java/$a"
+	case $a in
+	macosx) launcher="Contents/MacOS/fiji-macosx Contents/MacOS/fiji-tiger";
+		java=java/macosx-java3d;;
+	linux64)
+		java=java/linux-amd64;;
+	win*)
+		launcher="$launcher.exe";;
+	esac
+	verify_archives $a "$launcher $java "
+done
+
+verify_archives nojre "Contents/MacOS/fiji-macosx Contents/MacOS/fiji-tiger fiji-linux fiji-linux64 fiji-win32.exe fiji-win64.exe "
+
+verify_archives all "Contents/MacOS/fiji-macosx Contents/MacOS/fiji-tiger fiji-linux fiji-linux64 fiji-win32.exe fiji-win64.exe java/linux java/linux-amd64 java/macosx-java3d java/win32 java/win64 "
+
+if test $errorcount -gt 0
+then
+	echo "There were errors: $errorcount"
+	echo "You might want to fix them and then run $0 $1 --copy-files"
+	exit 1
+fi
 
 echo "Uploading" &&
 (cd $HOME/$NIGHTLY_BUILD &&
  scp macosx10.5:$NIGHTLY_BUILD/fiji-macosx.dmg ./ &&
- mkdir -p $TARGET_DIRECTORY &&
- date=$(date +%Y%m%d) &&
- for f in fiji-*
- do
-	mv $f $TARGET_DIRECTORY/${f%%.*}-$date.${f#*.} || break
- done)
+ copy_files)
