@@ -11,14 +11,12 @@ compile () {
 		break
 	done &&
 	git clean -q -x -d -f &&
-	git reset &&
-	find * -type d |
-	while read dir
+	# remove empty directories
+	for d in $(git ls-files --other --directory)
 	do
-		test ! -z "$(ls "$dir")" ||
-		rm -r "$dir" ||
-		break
+		rm -r $d || break
 	done &&
+	git reset &&
 	./Build.sh
 }
 
