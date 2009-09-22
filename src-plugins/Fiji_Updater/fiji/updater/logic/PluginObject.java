@@ -377,6 +377,10 @@ public class PluginObject {
 		return platforms.containsKey(platform);
 	}
 
+	public boolean isForThisPlatform() {
+		return platforms.size() == 0 || isForPlatform(Util.platform);
+	}
+
 	public boolean isFiji() {
 		return status != Status.NOT_FIJI;
 	}

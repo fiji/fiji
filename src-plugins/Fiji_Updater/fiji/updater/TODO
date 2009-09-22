@@ -12,8 +12,6 @@ Show-stoppers:
   the user that updates are available (maybe a new tool button in the Fiji
   window?)
 
-- Put only 'Fiji_Updater' into current.txt
-
 - Add a context menu to trigger actions
 
 Not-quite show-stoppers:
@@ -47,5 +45,3 @@ Not-quite show-stoppers:
 - The dependency list should be editable so that the developer can
   correct mistakes (not all are "at-least" dependencies) and add
   additional dependencies.
-
-- Allow per-platform dependencies.
