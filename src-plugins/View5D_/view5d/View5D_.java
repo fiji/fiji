@@ -380,7 +380,6 @@ public class View5D_ extends PlugInFrame implements PlugIn, WindowListener {
                 add("North", myLabel);
 		mypan.CheckScrollBar();
                 setMenuBar(mypan.MyMenu);
-                setVisible(true);
                 
 		pack();
 		GUI.center(this);
