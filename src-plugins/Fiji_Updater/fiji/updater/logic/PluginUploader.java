@@ -148,7 +148,7 @@ public class PluginUploader {
 	 *   harm
 	 */
 	class VerifyTimestamp implements Progress {
-		public void itemDone(Object item) {
+		public void addItem(Object item) {
 			if (item != files.get(0))
 				return;
 			verifyTimestamp();
@@ -156,7 +156,7 @@ public class PluginUploader {
 
 		public void setTitle(String string) {}
 		public void setCount(int count, int total) {}
-		public void addItem(Object item) {}
+		public void itemDone(Object item) {}
 		public void setItemCount(int count, int total) {}
 		public void done() {}
 	}
