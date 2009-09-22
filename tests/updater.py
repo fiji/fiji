@@ -160,6 +160,7 @@ from fiji.updater import Updater
 
 updater = Updater()
 updater.MAIN_URL = 'file:''' + tmpWebRoot + ''''
+updater.testRun = True
 updater.run('update')
 
 from fiji import Main
