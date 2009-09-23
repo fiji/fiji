@@ -57,10 +57,9 @@ do
 done ||
 die "Error checking out submodules"
 
-# TODO: this depends on i386
-test -x Fiji.app/fiji-linux ||
-sh Fake.sh app-linux ||
-die "Could not make Fiji for Linux/i386"
+test -x Fiji.app/fiji-linux64 ||
+sh Fake.sh app-all ||
+die "Could not make Fiji for all platforms"
 
 # make the logos
 
