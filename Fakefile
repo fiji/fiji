@@ -69,11 +69,12 @@ ignoreMissingFakefiles=true
 # When a submodule could not be made, fall back to copying from this directory
 precompiledDirectory=precompiled/
 
-JAVA_HOME(linux)=java/linux/jdk1.6.0_16/jre
-JAVA_HOME(linux64)=java/linux-amd64/jdk1.6.0_16/jre
-JAVA_HOME(win32)=java/win32/jdk1.6.0_16/jre
-JAVA_HOME(win64)=java/win64/jdk1.6.0_04/jre
-JAVA_HOME(macosx)=java/macosx-java3d
+FIJI_JAVA_HOME(linux)=java/linux/jdk1.6.0_16/jre
+FIJI_JAVA_HOME(linux64)=java/linux-amd64/jdk1.6.0_16/jre
+FIJI_JAVA_HOME(win32)=java/win32/jdk1.6.0_16/jre
+FIJI_JAVA_HOME(win64)=java/win64/jdk1.6.0_04/jre
+FIJI_JAVA_HOME(macosx)=java/macosx-java3d
+JAVA_HOME=$FIJI_JAVA_HOME
 ENVOVERRIDES(JAVA_HOME)=true
 
 # the main target
@@ -278,7 +279,7 @@ JAVA_LIB_PATH(macosx)=
 # The variables CFLAGS, CXXFLAGS, LDFLAGS and LIBS will be used for compiling
 # C and C++ programs.
 CXXFLAGS(*)=-Wall -Iincludes \
-	-DJAVA_HOME='"$JAVA_HOME"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH"'
+	-DJAVA_HOME='"$FIJI_JAVA_HOME"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH"'
 WINOPTS=-mwindows -mno-cygwin -DMINGW32
 CXXFLAGS(win32)=$CXXFLAGS $WINOPTS
 CXXFLAGS(win64)=$CXXFLAGS $WINOPTS
