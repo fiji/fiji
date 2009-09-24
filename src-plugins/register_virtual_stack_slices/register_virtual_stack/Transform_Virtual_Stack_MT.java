@@ -13,6 +13,7 @@ import java.util.concurrent.Executors;
 import javax.swing.JFileChooser;
 
 import mpicbg.trakem2.transform.CoordinateTransform;
+import mpicbg.trakem2.transform.CoordinateTransformList;
 
 import ij.IJ;
 import ij.io.OpenDialog;
@@ -165,7 +166,7 @@ public class Transform_Virtual_Stack_MT implements PlugIn
 	 */
 	public CoordinateTransform readCoordinateTransform(String filename) 
 	{
-		
+		final CoordinateTransformList<CoordinateTransform> ctl = new CoordinateTransformList<CoordinateTransform>();
 		try 
 		{
 			final FileReader fr = new FileReader(filename);
@@ -174,16 +175,20 @@ public class Transform_Virtual_Stack_MT implements PlugIn
 			while ((line = br.readLine()) != null) 
 			{
 				int index = -1;
-				if( (index = line.indexOf("=")) != -1)
+				if( (index = line.indexOf("class=")) != -1)
 				{
+					// skip "class"
+					index+= 5;
+					// read coordinate transform class name
 					final int index2 = line.indexOf("\"", index+2); 
 					final String ct_class = line.substring(index+2, index2);
 					final CoordinateTransform ct = (CoordinateTransform) Class.forName(ct_class).newInstance();
+					// read coordinate transform info
 					final int index3 = line.indexOf("=", index2+1);
 					final int index4 = line.indexOf("\"", index3+2); 
 					final String data = line.substring(index3+2, index4);
 					ct.init(data);
-					return ct;
+					ctl.add(ct);
 				}
 			}
 		
@@ -206,7 +211,7 @@ public class Transform_Virtual_Stack_MT implements PlugIn
 			IJ.error("Class not found exception" + e);
 			
 		}
-		return null;
+		return ctl;
 	}
 
 }// end class Register_Virtual_Stack_MT
