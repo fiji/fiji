@@ -159,7 +159,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 	/**
 	 * Plug-in run method
 	 * 
-	 * @param arg plugin arguments
+	 * @param arg plug-in arguments
 	 */
 	public void run(String arg) 
 	{
@@ -213,7 +213,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		if (!target_dir.endsWith("/")) target_dir += "/";
 		
 		// Select folder to save the transformation files if
-		// the "Save transforms" checkbox was checked.
+		// the "Save transforms" check-box was checked.
 		String save_dir = null;
 		if(save_transforms)
 		{
@@ -1030,12 +1030,24 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		CoordinateTransform t;
 		switch (Param.registrationModelIndex) 
 		{
-			case Register_Virtual_Stack_MT.TRANSLATION: t = new TranslationModel2D(); break;
-			case Register_Virtual_Stack_MT.RIGID: t = new RigidModel2D(); break;
-			case Register_Virtual_Stack_MT.SIMILARITY: t = new SimilarityModel2D(); break;
-			case Register_Virtual_Stack_MT.AFFINE: t = new AffineModel2D(); break;
-			case Register_Virtual_Stack_MT.ELASTIC: t = new CubicBSplineTransform(); break;
-			case Register_Virtual_Stack_MT.MOVING_LEAST_SQUARES: t = new MovingLeastSquaresTransform(); break;
+			case Register_Virtual_Stack_MT.TRANSLATION: 
+				t = new TranslationModel2D(); 
+				break;
+			case Register_Virtual_Stack_MT.RIGID: 
+				t = new RigidModel2D(); 
+				break;
+			case Register_Virtual_Stack_MT.SIMILARITY: 
+				t = new SimilarityModel2D(); 
+				break;
+			case Register_Virtual_Stack_MT.AFFINE: 
+				t = new AffineModel2D(); 
+				break;
+			case Register_Virtual_Stack_MT.ELASTIC: 
+				t = new CubicBSplineTransform(); 
+				break;
+			case Register_Virtual_Stack_MT.MOVING_LEAST_SQUARES: 
+				t = new MovingLeastSquaresTransform(); 
+				break;
 			default:
 				IJ.log("ERROR: unknown registrationModelIndex = " + Param.registrationModelIndex);
 				return;
