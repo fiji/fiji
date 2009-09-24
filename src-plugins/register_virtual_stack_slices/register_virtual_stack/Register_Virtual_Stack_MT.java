@@ -1025,34 +1025,8 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			IJ.error("Don't know how to process registration type " + Param.registrationModelIndex);
 			return;
 		}
-		
-		// Select coordinate transform based on the registration model
-		CoordinateTransform t;
-		switch (Param.registrationModelIndex) 
-		{
-			case Register_Virtual_Stack_MT.TRANSLATION: 
-				t = new TranslationModel2D(); 
-				break;
-			case Register_Virtual_Stack_MT.RIGID: 
-				t = new RigidModel2D(); 
-				break;
-			case Register_Virtual_Stack_MT.SIMILARITY: 
-				t = new SimilarityModel2D(); 
-				break;
-			case Register_Virtual_Stack_MT.AFFINE: 
-				t = new AffineModel2D(); 
-				break;
-			case Register_Virtual_Stack_MT.ELASTIC: 
-				t = new CubicBSplineTransform(); 
-				break;
-			case Register_Virtual_Stack_MT.MOVING_LEAST_SQUARES: 
-				t = new MovingLeastSquaresTransform(); 
-				break;
-			default:
-				IJ.log("ERROR: unknown registrationModelIndex = " + Param.registrationModelIndex);
-				return;
-		}
-
+				
+		// Executor service to produce concurrent threads
 		final ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
 		try {			
@@ -1086,6 +1060,8 @@ public class Register_Virtual_Stack_MT implements PlugIn
 				imp2mask = new ImagePlus();
 				imp2 = IJ.openImage(source_dir + sorted_file_names[i]);
 				// Register
+				// Select coordinate transform based on the registration model
+				final CoordinateTransform t = getCoordinateTransform(p);	
 				if(!register( imp1, imp2, imp1mask, imp2mask, i, sorted_file_names,
 						  source_dir, target_dir, exe, p, t, commonBounds, boundsFor, referenceIndex))
 					return;		
@@ -1109,6 +1085,8 @@ public class Register_Virtual_Stack_MT implements PlugIn
 				imp2mask = new ImagePlus();
 				imp2 = IJ.openImage(source_dir + sorted_file_names[i]);
 				// Register
+				// Select coordinate transform based on the registration model
+				final CoordinateTransform t = getCoordinateTransform(p);	
 				if(!register( imp1, imp2, imp1mask, imp2mask, i, sorted_file_names,
 						  source_dir, target_dir, exe, p, t, commonBounds, boundsBack, referenceIndex))
 					return;		
@@ -1148,9 +1126,11 @@ public class Register_Virtual_Stack_MT implements PlugIn
 
 			// Join all and create VirtualStack
 			final VirtualStack stack = new VirtualStack(commonBounds.width, commonBounds.height, null, target_dir);
-			for (final Future<String> job : jobs) {
+			for (final Future<String> job : jobs) 
+			{
 				String filename = job.get();
-				if (null == filename) {
+				if (null == filename) 
+				{
 					IJ.log("Image failed: " + filename);
 					return;
 				}
