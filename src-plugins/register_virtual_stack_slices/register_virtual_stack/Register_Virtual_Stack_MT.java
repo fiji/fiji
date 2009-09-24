@@ -45,6 +45,7 @@ import mpicbg.models.PointMatch;
 
 import mpicbg.trakem2.transform.AffineModel2D;
 import mpicbg.trakem2.transform.CoordinateTransform;
+import mpicbg.trakem2.transform.CoordinateTransformList;
 import mpicbg.trakem2.transform.MovingLeastSquaresTransform;
 import mpicbg.trakem2.transform.RigidModel2D;
 import mpicbg.trakem2.transform.SimilarityModel2D;
@@ -335,7 +336,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			return;
 		}
 		
-		IJ.log("Reference index = " + referenceIndex);
+		//IJ.log("Reference index = " + referenceIndex);
 
 		// Execute registration with sorted source file names and reference image index
 		exec(source_dir, names, referenceIndex, target_dir, save_dir, p);
@@ -866,32 +867,29 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			//IJ.log(i + ": current bounding box = [" + currentBounds.x + " " + currentBounds.y + " " + currentBounds.width + " " + currentBounds.height + "]");
 			
 			// Update common bounds
-			int commonLastX = commonBounds.x + commonBounds.width;
-			int commonLastY = commonBounds.y + commonBounds.height;
-			
-			final int currentLastX = currentBounds.x + currentBounds.width;
-			final int currentLastY = currentBounds.y + currentBounds.height;
+			int min_x = commonBounds.x;
+			int min_y = commonBounds.y;
+			int max_x = commonBounds.x + commonBounds.width;
+			int max_y = commonBounds.y + commonBounds.height;
 			
 			if(currentBounds.x < commonBounds.x)
-				commonBounds.x = currentBounds.x;
+				min_x = currentBounds.x;
 			if(currentBounds.y < commonBounds.y)
-				commonBounds.y = currentBounds.y;			
+				min_y = currentBounds.y;
+			if(currentBounds.x + currentBounds.width > max_x)
+				max_x = currentBounds.x + currentBounds.width;
+			if(currentBounds.y + currentBounds.height > max_y)
+				max_y = currentBounds.y + currentBounds.height;
 			
-			if(commonLastX < currentLastX)			
-				commonLastX = currentLastX;
-				
+			commonBounds.x = min_x;
+			commonBounds.y = min_y;
+			commonBounds.width = max_x - min_x;
+			commonBounds.height = max_y - min_y;
 			
-			if(commonLastY < currentLastY)			
-				commonLastY = currentLastY;
-				
-			commonBounds.width = commonLastX - commonBounds.x;
-			commonBounds.height = commonLastY - commonBounds.y;
 			
-			/*
-			IJ.log("currentLastX = " + currentLastX + " currentLastY = " + currentLastY);
-			IJ.log("commonLastX = " + commonLastX + " commonLastY = " + commonLastY);
-			IJ.log("common bounding box = [" + commonBounds.x + " " + commonBounds.y + " " + commonBounds.width + " " + commonBounds.height + "]");
-			*/
+			
+			//IJ.log("common bounding box = [" + commonBounds.x + " " + commonBounds.y + " " + commonBounds.width + " " + commonBounds.height + "]");
+			
 			
 			// Save target image
 			exe.submit(saveImage(imp2, makeTargetPath(target_dir, sorted_file_names[i])));	
@@ -1040,6 +1038,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			
 			// Common bounds to create common frame for all images
 			final Rectangle commonBounds = new Rectangle(0, 0, imp2.getWidth(), imp2.getHeight());
+			
 			// List of bounds in the forward registration
 			final List<Rectangle> boundsFor = new ArrayList<Rectangle>();
 			boundsFor.add(new Rectangle(0, 0, imp2.getWidth(), imp2.getHeight()));
@@ -1059,12 +1058,14 @@ public class Register_Virtual_Stack_MT implements PlugIn
 				// Create empty mask for second image
 				imp2mask = new ImagePlus();
 				imp2 = IJ.openImage(source_dir + sorted_file_names[i]);
-				// Register
+				
 				// Select coordinate transform based on the registration model
 				final CoordinateTransform t = getCoordinateTransform(p);	
+				// Register
 				if(!register( imp1, imp2, imp1mask, imp2mask, i, sorted_file_names,
 						  source_dir, target_dir, exe, p, t, commonBounds, boundsFor, referenceIndex))
 					return;		
+				// Store transform
 				transform[i] = t;
 			}
 			
@@ -1073,6 +1074,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			
 			// Backward registration (from reference image to the beginning of the sequence)
 			imp2 = IJ.openImage(source_dir + sorted_file_names[referenceIndex]);
+			// Backward bounds
 			final List<Rectangle> boundsBack = new ArrayList<Rectangle>();
 			boundsBack.add(new Rectangle(0, 0, imp2.getWidth(), imp2.getHeight()));
 			
@@ -1084,43 +1086,90 @@ public class Register_Virtual_Stack_MT implements PlugIn
 				// Create empty mask for second image
 				imp2mask = new ImagePlus();
 				imp2 = IJ.openImage(source_dir + sorted_file_names[i]);
-				// Register
+				
 				// Select coordinate transform based on the registration model
 				final CoordinateTransform t = getCoordinateTransform(p);	
+				// Register
 				if(!register( imp1, imp2, imp1mask, imp2mask, i, sorted_file_names,
 						  source_dir, target_dir, exe, p, t, commonBounds, boundsBack, referenceIndex))
 					return;		
+				// Store transform
 				transform[i] = t;
 			}
+			
+			// Adjust transforms to the right position.
+			// Since the transforms are relative to the previous image, we have 
+			// the images to translate them to the origin of the previous image. 
+			for(int i = 1, j = referenceIndex+1 ; i < boundsFor.size(); i++, j++)
+			{
+				final Rectangle b = boundsFor.get(i-1);
+				// Copy coordinate transform with corresponding translation
+				final CoordinateTransformList<CoordinateTransform> ctl = new CoordinateTransformList<CoordinateTransform>();
+				ctl.add(transform[j]);
+				
+				
+				final TranslationModel2D tr = new TranslationModel2D();
+				tr.set(b.x, b.y);
+				ctl.add(tr);
+				
+				transform[j] = ctl;				
+			}
+			for(int i = 1, j = referenceIndex-1 ; i < boundsBack.size(); i++, j--)
+			{
+				final Rectangle b = boundsBack.get(i-1);
+				// Copy coordinate transform with corresponding translation
+				final CoordinateTransformList<CoordinateTransform> ctl = new CoordinateTransformList<CoordinateTransform>();
+				ctl.add(transform[j]);
+				
+				
+				final TranslationModel2D tr = new TranslationModel2D();
+				tr.set(b.x, b.y);
+				ctl.add(tr);
+				
+				transform[j] = ctl;	
+			}
+			
 			
 			// Adjust Forward bounds
 			for ( int i = 0; i < boundsFor.size(); ++i )
 			{
 				final Rectangle b = boundsFor.get(i);
-				b.x = -commonBounds.x + b.x;
-				b.y = -commonBounds.y + b.y;
+				b.x -= commonBounds.x;
+				b.y -= commonBounds.y;
 			}
 			
 			// Adjust Backward bounds
 			for ( int i = 0; i < boundsBack.size(); ++i )
 			{
 				final Rectangle b = boundsBack.get(i);
-				b.x = -commonBounds.x + b.x;
-				b.y = -commonBounds.y + b.y;
+				b.x -= commonBounds.x;
+				b.y -= commonBounds.y;
 			}
-
+			
+			//IJ.log("Common bounds = " + commonBounds.x + " " + commonBounds.y + " " + commonBounds.width + " " + commonBounds.height);
+			
 			// Reopen all target images and repaint them on an enlarged canvas
-			final Future[] jobs = new Future[sorted_file_names.length];
+			final Future[] jobs = new Future[sorted_file_names.length];						
+			
 			for (int j = 0, i=referenceIndex; i<sorted_file_names.length; i++, j++) 
 			{
-				final Rectangle b = boundsFor.get(j);
-				jobs[i] = exe.submit(resizeAndSaveImage(makeTargetPath(target_dir, sorted_file_names[i]), b.x, b.y, commonBounds.width, commonBounds.height));
+				final Rectangle b = boundsFor.get(j);								
+				
+				//IJ.log(i+": " + b.x + " " + b.y);
+				
+				// Resize and save;
+				jobs[i] = exe.submit(resizeAndSaveImage(makeTargetPath(target_dir, sorted_file_names[i]), b.x, b.y, commonBounds.width, commonBounds.height));				
 			}
+			
+			
 			
 			for (int j=1, i=referenceIndex-1; i>=0; i--, j++) 
 			{
 				final Rectangle b = boundsBack.get(j);
-				jobs[i] = exe.submit(resizeAndSaveImage(makeTargetPath(target_dir, sorted_file_names[i]), b.x, b.y, commonBounds.width, commonBounds.height));
+				
+				//IJ.log(i+": " + b.x + " " + b.y);												
+				// Resize and save
+				jobs[i] = exe.submit(resizeAndSaveImage(makeTargetPath(target_dir, sorted_file_names[i]), b.x, b.y, commonBounds.width, commonBounds.height));								
 			}
 			
 
@@ -1201,6 +1250,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			}
 		};
 	} // end resizeAndSaveImage method
+	
 	//-----------------------------------------------------------------------------------------
 	/**
 	 * Save transform into a file
@@ -1509,15 +1559,27 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		currentBounds.y += previousBounds.y;
 		bounds.add(currentBounds);
 		
+		//IJ.log(i + ": current bounding box = [" + currentBounds.x + " " + currentBounds.y + " " + currentBounds.width + " " + currentBounds.height + "]");
+		
 		// Update common bounds
+		int min_x = commonBounds.x;
+		int min_y = commonBounds.y;
+		int max_x = commonBounds.x + commonBounds.width;
+		int max_y = commonBounds.y + commonBounds.height;
+		
 		if(currentBounds.x < commonBounds.x)
-			commonBounds.x = currentBounds.x;
+			min_x = currentBounds.x;
 		if(currentBounds.y < commonBounds.y)
-			commonBounds.y = currentBounds.y;
-		if(currentBounds.x + currentBounds.width > commonBounds.x + commonBounds.width)
-			commonBounds.width = currentBounds.x + currentBounds.width - commonBounds.x;
-		if(currentBounds.y + currentBounds.height > commonBounds.y + commonBounds.height)
-			commonBounds.height = currentBounds.y + currentBounds.height - commonBounds.y;
+			min_y = currentBounds.y;
+		if(currentBounds.x + currentBounds.width > max_x)
+			max_x = currentBounds.x + currentBounds.width;
+		if(currentBounds.y + currentBounds.height > max_y)
+			max_y = currentBounds.y + currentBounds.height;
+		
+		commonBounds.x = min_x;
+		commonBounds.y = min_y;
+		commonBounds.width = max_x - min_x;
+		commonBounds.height = max_y - min_y;
 		
 		// Save target image
 		exe.submit(saveImage(imp2, makeTargetPath(target_dir, sorted_file_names[i])));		
