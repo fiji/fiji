@@ -20,6 +20,7 @@
 /fiji-*.7z
 *~
 *$py.class
+/nightly-build/
 /MMConfig_demo.cfg
 /MMStartup.bsh
 /mmgr_dal_*

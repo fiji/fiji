@@ -1,12 +1,12 @@
 package fiji;
 
-import com.jcraft.jzlib.ZInputStream;
-
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+
+import java.util.zip.InflaterInputStream;
 
 public class ZLibAnalyzer {
 	public static int copy(InputStream input, PrintStream out, byte[] buf)
@@ -51,7 +51,8 @@ public class ZLibAnalyzer {
 						+ (offset + i));
 					input.reset();
 					input.skip(offset + i);
-					return copy(new ZInputStream(input),
+					return copy(
+						new InflaterInputStream(input),
 							out, buffer);
 				}
 			offset += len;

@@ -211,8 +211,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 			return yes();
 		return new Filter() {
 			public boolean matches(PluginObject plugin) {
-				return plugin.platforms.size() == 0 ||
-					plugin.isForPlatform(Util.platform);
+				return plugin.isForThisPlatform();
 			}
 		};
 	}
@@ -388,7 +387,8 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	public Iterable<PluginObject> updateable(final boolean evenForcedOnes) {
 		return filter(new Filter() {
 			public boolean matches(PluginObject plugin) {
-				return plugin.isUpdateable(evenForcedOnes);
+				return plugin.isUpdateable(evenForcedOnes) &&
+					plugin.isForThisPlatform();
 			}
 		});
 	}
@@ -430,7 +430,8 @@ public class PluginCollection extends ArrayList<PluginObject> {
 			boolean overriding) {
 		for (Dependency dependency : plugin.getDependencies()) {
 			PluginObject other = getPlugin(dependency.filename);
-			if (other == null || overriding != dependency.overrides)
+			if (other == null || overriding != dependency.overrides
+					|| !other.isForThisPlatform())
 				continue;
 			if (dependency.overrides) {
 				if (other.willNotBeInstalled())

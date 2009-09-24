@@ -7,7 +7,7 @@ mv /tmp/*.class .
 jar -cf View5D.jar *.class ij 
 cp View5D.jar /usr/local/KhorosInstall/goodies/data/display/
 cp View5D.jar /tmp/
-# cp View5D.jar /usr/local/matlab/java/jar/toolbox/View5D.jar
+cp View5D.jar /usr/local/matlab/java/jar/toolbox/View5D.jar
 cp View5D.jar /usr/local/dip/toolbox/dipimage/private/View5D.jar
 # cp View5D.jar /windows/C/Program\ Files/matlab/R2006a/java/jar/toolbox/
 # cp View5D.jar /windows/C/Program\ Files/matlab/R2006b/java/jar/toolbox/

@@ -177,24 +177,24 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 		addText(plugin.getFilename(), bold);
 		addText(" is required by\n\n");
 		addList(toInstall.get(plugin));
-		addText("\nbut obsoleted by\n\n");
+		addText("\nbut made obsolete by\n\n");
 		addList(toUninstall.get(plugin));
 		addText("\n    ");
 		addIgnoreButton("Ignore this issue", plugin);
 		addText("    ");
-		addButton("Not update " + reasons, reasons, null);
+		addButton("Do not update " + reasons, reasons, null);
 	}
 
 	void needUninstall(PluginObject plugin) {
 		PluginCollection reasons = toUninstall.get(plugin);
 		newText("Conflict: ", red);
 		addText(plugin.getFilename(), bold);
-		addText(" is locally modified, but made obsolete by\n\n");
+		addText(" is locally modified but made obsolete by\n\n");
 		addList(reasons);
 		addText("\n    ");
 		addButton("Uninstall " + plugin, plugin, Action.UNINSTALL);
 		addText("    ");
-		addButton("Not update " + reasons, reasons, null);
+		addButton("Do not update " + reasons, reasons, null);
 	}
 
 	void locallyModified(PluginObject plugin) {
@@ -202,8 +202,8 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 			return;
 		newText("Warning: ");
 		addText(plugin.getFilename(), bold);
-		addText(" is locally modified, but possibly required at"
-			+ " a newer version by\n\n");
+		addText(" is locally modified and Fiji cannot determine its "
+			+ "status. A newer version might be required by\n\n");
 		addList(toInstall.get(plugin));
 		addText("\n    ");
 		addIgnoreButton("Keep the local version", plugin);
@@ -239,7 +239,7 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 		newText("Warning: ", notFiji || obsolete ? red : normal);
 		addText(plugin.getFilename(), bold);
 		addText(" is " + (notFiji ? "not a Fiji component yet" :
-			(notInstalled ? "not installed locally" :
+			(notInstalled ? "not installed" :
 			(obsolete ? "marked obsolete" : "locally modified")))
 			+ " but a dependency of\n\n");
 		addList(reasons);

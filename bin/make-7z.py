@@ -17,3 +17,4 @@ if not archive.endswith('.7z'):
 	archive = archive + '.7z'
 
 execute('7z a -m0=lzma -mx=9 -md=64M ' + archive + ' ' + folder)
+execute('chmod a+r ' + archive)

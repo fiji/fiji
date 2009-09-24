@@ -23,62 +23,182 @@ case "$RELEASE" in
 	exit 1
 esac
 
+HEAD="$2"
+HEAD=$(git rev-parse ${HEAD:-HEAD})
+
 TARGET_DIRECTORY=/var/www/downloads/$RELEASE
+NIGHTLY_BUILD=fiji/nightly-build
+TMP_HEAD=refs/heads/tmp
 
-cd $HOME
+clone='
+	cd $HOME &&
+	test -d '$NIGHTLY_BUILD' ||
+	git clone git://pacific.mpi-cbg.de/fiji.git '$NIGHTLY_BUILD
 
-clone_and_check='(test -d release-fiji ||
-	git clone git://pacific.mpi-cbg.de/fiji.git release-fiji) &&
-	cd release-fiji &&
-	git diff-files &&
-	git diff-index HEAD &&
-	git checkout -f master &&
-	git fetch origin &&
-	git reset --hard origin/master &&
-	git clean -d -f &&
-	for d in $(git ls-files --stage | sed -n "s/^160.*	//p");
-	do
+checkout_and_build='
+	cd $HOME/'$NIGHTLY_BUILD' &&
+	(git checkout -f master &&
+	 git reset --hard '$TMP_HEAD' &&
+	 for d in $(git ls-files --stage | sed -n "s/^160.*	//p");
+	 do
 		case "$d" in
 		java/*)
-			git submodule update --init $d || break
-			continue;;
-		esac
+			git submodule update --init $d &&
+			continue ||
+			break;;
+		esac &&
 		test -z "$(ls $d/)" || break;
-	done'
+	 done &&
+	 ./bin/nightly-build.sh --stdout) >&2 &&
+	./bin/calculate-checksums.py
+'
 
 COMMIT_MESSAGE="Precompile Fiji and Fake for $RELEASE"
 
-ssh macosx10.5 "$clone_and_check &&
-	(test ! -z \"\$(git rev-parse --verify mactmp-$RELEASE 2>/dev/null)\" ||
-	 (./Build.sh precompile-fiji precompile-fake dmg &&
-	  git checkout -b mactmp-$RELEASE &&
-	  (git commit -a -s -m \"$COMMIT_MESSAGE\" ||
-	   true)))" &&
+build_dmg='
+	(cd $HOME/'$NIGHTLY_BUILD' &&
+	 ./Build.sh precompile-fiji precompile-fake dmg &&
+	 if ! git diff-files -q --exit-code --ignore-submodules
+	 then
+		git commit -s -a -m "'"$COMMIT_MESSAGE"'"
+	 fi) >&2
+'
 
-eval "$clone_and_check" &&
-! git rev-parse --verify refs/tags/Fiji-$RELEASE &&
-git pull macosx10.5:release-fiji mactmp-$RELEASE &&
-./Build.sh all-cross precompile-fiji all-tars all-zips &&
-if test "$COMMIT_MESSAGE" = "$(git log -1 --pretty=format:%s HEAD)"
+build_rest='
+	(cd $HOME/'$NIGHTLY_BUILD' &&
+	 ./Build.sh all-cross precompile-fiji all-tars all-zips all-7zs &&
+	 if ! git diff-files -q --exit-code --ignore-submodules
+	 then
+		git commit -s -a -m "'"$COMMIT_MESSAGE"'"
+	 fi) >&2
+'
+errorcount=0
+verify_archive () {
+	platformfiles="$(case $1 in
+	*.tar.*) tar tvf $1;;
+	*.zip) unzip -v $1;;
+	*.7z) 7z l $1;;
+	*) echo "Error: unknown archive type $1" >&2
+	esac |
+	grep -e fiji- -e rt.jar |
+	grep -ve Archive -e Listing -e fiji-scripting |
+	sed -e 's/^.*Fiji.app\///' -e 's/\(java\/[^\/]*\).*/\1/' |
+	sort | uniq | tr '\012' ' ')"
+	if test a"$2" != a"$platformfiles"
+	then
+		echo "Archive $1 has"
+		echo "  $platformfiles"
+		echo "but was supposed to have"
+		echo "  $2"
+		errorcount=$(($errorcount+1))
+	fi
+}
+
+verify_archives () {
+	for a in fiji-$1.tar.bz2 fiji-$1.zip fiji-$1.7z \
+		fiji-$1-*.tar.bz2 fiji-$1-*.zip fiji-$1-*.7z
+	do
+		test ! -f $a || verify_archive $a "$2"
+	done
+}
+
+copy_files () {
+	mkdir -p $TARGET_DIRECTORY &&
+	date=$(date +%Y%m%d) &&
+	for f in fiji-*
+	do
+		mv $f $TARGET_DIRECTORY/${f%%.*}-$date.${f#*.} || break
+	done
+}
+
+case "$2" in
+--copy-files)
+	cd $HOME/$NIGHTLY_BUILD &&
+	copy_files
+	exit
+	;;
+esac
+
+git diff-files --ignore-submodules --quiet &&
+git diff-index --cached --quiet HEAD || {
+	echo "There are uncommitted changes!" >&2
+	exit 1
+}
+
+git rev-parse --verify refs/tags/Fiji-$RELEASE 2>/dev/null && {
+	echo "Tag Fiji-$RELEASE already exists!" >&2
+	exit 1
+}
+
+echo "Building for MacOSX" &&
+if ! git push macosx10.5:$NIGHTLY_BUILD +$HEAD:$TMP_HEAD
 then
-	GIT_EDITOR=: git commit --amend -a
-else
-	git commit -a -s -m "$COMMIT_MESSAGE" || true
+	ssh macosx10.5 "$clone" &&
+	git push macosx10.5:$NIGHTLY_BUILD +$HEAD:$TMP_HEAD
 fi &&
-git tag Fiji-$RELEASE &&
-git push /srv/git/fiji.git master Fiji-$RELEASE &&
-mkdir -p $TARGET_DIRECTORY &&
-mv *.tar.bz2 *.zip $TARGET_DIRECTORY &&
-cd $TARGET_DIRECTORY &&
-scp macosx10.5:release-fiji/fiji-macosx.dmg ./ &&
-for i in *
+macsums="$(ssh macosx10.5 "$checkout_and_build")" &&
+ssh macosx10.5 "$build_dmg" &&
+
+echo "Building for non-MacOSX" &&
+git fetch macosx10.5:$NIGHTLY_BUILD master && # for fiji-macosx.7z
+if ! git push $HOME/$NIGHTLY_BUILD +FETCH_HEAD:$TMP_HEAD
+then
+	(eval $clone) &&
+	git push $HOME/$NIGHTLY_BUILD +FETCH_HEAD:$TMP_HEAD
+fi &&
+thissums="$(sh -c "$checkout_and_build")" &&
+sh -c "$build_rest" &&
+
+if test "$macsums" != "$thissums"
+then
+	echo "The build results are different!"
+	echo "$macsums" > .git/macsums
+	echo "$thissums" > .git/thissums
+	git diff --no-index .git/macsums .git/thissums
+	exit 1
+fi &&
+
+echo "Tagging" &&
+git fetch macosx10.5:$NIGHTLY_BUILD master &&
+git read-tree -u -m FETCH_HEAD &&
+git fetch $HOME/$NIGHTLY_BUILD master &&
+git read-tree -u -m FETCH_HEAD &&
+if ! git diff-index --cached --quiet HEAD
+then
+	git commit -s -a -m "$COMMIT_MESSAGE"
+fi &&
+git tag -m "Fiji $RELEASE" Fiji-$RELEASE &&
+git push /srv/git/fiji.git master Fiji-$RELEASE || exit
+
+echo "Verifying"
+cd $HOME/$NIGHTLY_BUILD
+for a in linux linux64 win32 win64 macosx
 do
-	date=$(date +%Y%m%d)
-	case $i in
-	*-$date.*)
-	;;
-	*)
-		mv $i $(echo $i | sed "s/\\./-$date&/")
-	;;
+	launcher="fiji-$a"
+	java="java/$a"
+	case $a in
+	macosx) launcher="Contents/MacOS/fiji-macosx Contents/MacOS/fiji-tiger";
+		java=java/macosx-java3d;;
+	linux64)
+		java=java/linux-amd64;;
+	win*)
+		launcher="$launcher.exe";;
 	esac
+	verify_archives $a "$launcher $java "
 done
+
+verify_archives nojre "Contents/MacOS/fiji-macosx Contents/MacOS/fiji-tiger fiji-linux fiji-linux64 fiji-win32.exe fiji-win64.exe "
+
+verify_archives all "Contents/MacOS/fiji-macosx Contents/MacOS/fiji-tiger fiji-linux fiji-linux64 fiji-win32.exe fiji-win64.exe java/linux java/linux-amd64 java/macosx-java3d java/win32 java/win64 "
+
+if test $errorcount -gt 0
+then
+	echo "There were errors: $errorcount"
+	echo "You might want to fix them and then run $0 $1 --copy-files"
+	exit 1
+fi
+
+echo "Uploading" &&
+(cd $HOME/$NIGHTLY_BUILD &&
+ scp macosx10.5:$NIGHTLY_BUILD/fiji-macosx.dmg ./ &&
+ copy_files)

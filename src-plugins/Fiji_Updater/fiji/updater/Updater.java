@@ -31,7 +31,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 public class Updater implements PlugIn {
 	public static String MAIN_URL = "http://pacific.mpi-cbg.de/update/";
-	public static String UPDATE_DIRECTORY = "/update/";
+	public static String UPDATE_DIRECTORY = "/var/www/update/";
 
 	public static final String TXT_FILENAME = "current.txt";
 	public static final String XML_LOCK = "db.xml.gz.lock";
@@ -44,7 +44,7 @@ public class Updater implements PlugIn {
 	public static final String PREFS_XMLDATE = "fiji.updater.xmlDate";
 	public static final String PREFS_USER = "fiji.updater.login";
 
-	public static boolean debug;
+	public static boolean debug, testRun;
 
 	public void run(String arg) {
 		final UpdaterFrame main = new UpdaterFrame();
@@ -101,7 +101,13 @@ public class Updater implements PlugIn {
 		if ("update".equals(arg)) {
 			plugins.markForUpdate(false);
 			main.setViewOption(Option.UPDATEABLE);
-			if (plugins.hasForcableUpdates())
+			if (testRun)
+				System.err.println("forceable updates: "
+					+ Util.join(", ",
+						plugins.updateable(true))
+					+ ", changes: "
+					+ Util.join(", ", plugins.changes()));
+			else if (plugins.hasForcableUpdates())
 				main.warn("There are locally modified files!");
 			else if (!plugins.hasChanges())
 				main.info("Your Fiji is up to date!");

@@ -99,8 +99,6 @@ public class SSHFileUploader extends FileUploader {
 		String prefix = "";
 		byte[] buf = new byte[16384];
 		for (SourceFile source : sources) {
-			addItem(source);
-
 			String target = source.getFilename();
 			while (!target.startsWith(prefix))
 				prefix = cdUp(prefix);
@@ -118,6 +116,12 @@ public class SSHFileUploader extends FileUploader {
 			out.write(command.getBytes());
 			out.flush();
 			checkAckUploadError();
+
+			/*
+			 * Make sure that the file is there; this is critical
+			 * to get the server timestamp from db.xml.gz.lock.
+			 */
+			addItem(source);
 
 			// send contents of file
 			InputStream input = source.getInputStream();

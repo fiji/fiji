@@ -36,8 +36,9 @@ f.write('''<?xml version="1.0" encoding="UTF-8"?>
 f.close()
 
 # populate webroot
-uploadables = ['misc/Fiji.jar', 'plugins/Fiji_Updater.jar',
-	'jars/jsch-0.1.37.jar', 'plugins/Arrow_.jar']
+uploadables = ['ij.jar', 'misc/Fiji.jar', 'plugins/Fiji_Updater.jar',
+	'jars/jsch-0.1.37.jar', 'jars/jzlib-1.0.7.jar',
+	'plugins/Arrow_.jar', 'jars/javac.jar']
 if launchProgram(['./fiji','-Dpython.cachedir.skip=true', '--',
 		'--jython', 'bin/update-fiji.py',
 		'--upload-to', tmpWebRoot] + uploadables, fijiDir) != 0:
@@ -55,7 +56,8 @@ if len(uploadables) + len(extra) != sum([len(listdir(tmpWebRoot + dir)) for
 
 # populate with minimal Fiji; reuse Java
 for file in ['fiji', 'ij.jar', 'misc/Fiji.jar', 'plugins/Fiji_Updater.jar',
-		'jars/jsch-0.1.37.jar',
+		'jars/jsch-0.1.37.jar', 'jars/jzlib-1.0.7.jar',
+		'jars/javac.jar',
 		'jars/fiji-scripting.jar', 'jars/jython2.2.1/jython.jar',
 		'plugins/Jython_Interpreter.jar']:
 	source = fijiDir + file
@@ -158,6 +160,7 @@ from fiji.updater import Updater
 
 updater = Updater()
 updater.MAIN_URL = 'file:''' + tmpWebRoot + ''''
+updater.testRun = True
 updater.run('update')
 
 from fiji import Main
@@ -177,11 +180,13 @@ expect = {
 	'misc/Fiji.jar' : Status.INSTALLED,
 	'plugins/Fiji_Updater.jar' : Status.INSTALLED,
 	'jars/jsch-0.1.37.jar' : Status.INSTALLED,
+	'jars/jzlib-1.0.7.jar' : Status.INSTALLED,
 	'plugins/Arrow_.jar' : Status.NOT_INSTALLED,
 	'macros/updateable.ijm' : Status.UPDATEABLE,
 	'macros/deleted-modified.ijm' : Status.OBSOLETE_MODIFIED,
 	'macros/obsolete.ijm' : Status.OBSOLETE,
-	'ij.jar' : Status.NOT_FIJI,
+	'ij.jar' : Status.INSTALLED,
+	'jars/javac.jar' : Status.INSTALLED,
 	'jars/fiji-scripting.jar' : Status.NOT_FIJI,
 	'jars/jython2.2.1/jython.jar' : Status.NOT_FIJI,
 	'plugins/Jython_Interpreter.jar' : Status.NOT_FIJI,
