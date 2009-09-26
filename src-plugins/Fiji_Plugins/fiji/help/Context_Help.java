@@ -30,6 +30,7 @@ public class Context_Help implements KeyListener, PlugIn {
                         setActionsToHelp();
                 else {
                         resetActions();
+			IJ.showStatus("Opening help for " + arg + "...");
                         new BrowserLauncher().run(url + arg.replace(' ', '_'));
                 }
         }
@@ -62,6 +63,7 @@ public class Context_Help implements KeyListener, PlugIn {
                 ij.setCursor(helpCursor);
 
                 ij.addKeyListener(this);
+		IJ.showStatus("Click on a menu entry for context help");
         }
 
         public void resetActions() {
@@ -79,8 +81,10 @@ public class Context_Help implements KeyListener, PlugIn {
         }
 
         public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == e.VK_ESCAPE)
+                if (e.getKeyCode() == e.VK_ESCAPE) {
                         resetActions();
+			IJ.showStatus("Context help aborted");
+		}
         }
 
         public void keyTyped(KeyEvent e) {}
