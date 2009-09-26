@@ -152,7 +152,6 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 	/** Executes the Callable @param c wrapped in a try/catch to avoid any restart of the clojure thread,
 	 *  and returns the result of the execution. */
 	public Object submit(final Callable c) {
-		// Initialize the worker Thread with a few bindings
 		try {
 			return exec.submit(new Callable() {
 				public Object call() {
@@ -190,11 +189,16 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 	}
 
 	public boolean init() {
-		// Initialize the worker Thread with a few bindings
+		// Initialize the worker Thread with a few bindings and the ImageJ's class loader
 		try {
 			exec.submit(new Runnable() {
 				public void run() {
 					try {
+						ClassLoader cl = ij.IJ.getClassLoader();
+						if (null != cl) {
+							Thread.currentThread().setContextClassLoader(cl);
+						}
+
 						Var.pushThreadBindings(
 							RT.map(ns, ns.get(),
 							       warn_on_reflection, warn_on_reflection.get(),
