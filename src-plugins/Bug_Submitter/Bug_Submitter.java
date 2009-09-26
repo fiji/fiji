@@ -47,10 +47,24 @@ import java.util.HashMap;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
-import java.awt.*;
-import java.awt.event.*;
-
 import ij.Prefs;
+
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JButton;
+import javax.swing.JTextField;
+import javax.swing.JPasswordField;
+import javax.swing.JTextArea;
+import javax.swing.JPanel;
+
+import java.awt.event.ActionListener;
+import java.awt.event.WindowListener;
+import java.awt.event.ActionEvent;
+import java.awt.event.WindowEvent;
+
+import java.awt.GridBagLayout;
+import java.awt.GridBagConstraints;
+import java.awt.Insets;
 
 public class Bug_Submitter implements PlugIn {
 
@@ -319,17 +333,17 @@ public class Bug_Submitter implements PlugIn {
 		}
 	}
 
-	class NewBugDialog extends Dialog implements ActionListener, WindowListener {
+	class NewBugDialog extends JDialog implements ActionListener, WindowListener {
 
-		Button bugzillaAccountCreation;
-		Button submitReport;
-		Button cancel;
+		JButton bugzillaAccountCreation;
+		JButton submitReport;
+		JButton cancel;
 
-		TextField username;
-		TextField password;
+		JTextField username;
+		JPasswordField password;
 
-		TextField summary;
-		TextArea description;
+		JTextField summary;
+		JTextArea description;
 
 		boolean askedToSubmit = false;
 		boolean alreadyDisposed = false;
@@ -355,24 +369,24 @@ public class Bug_Submitter implements PlugIn {
 			c.anchor = GridBagConstraints.CENTER;
 
 			{
-				Panel labelsPanel = new Panel();
+				JPanel labelsPanel = new JPanel();
 				labelsPanel.setLayout( new GridBagLayout() );
 				GridBagConstraints clabels = new GridBagConstraints();
 				clabels.gridx = 0;
 				clabels.gridy = 0;
 				clabels.anchor = GridBagConstraints.LINE_START;
-				labelsPanel.add( new Label( "In order to report a bug, we ask that you create a Bugzilla account." ), clabels );
+				labelsPanel.add( new JLabel( "In order to report a bug, we ask that you create a Bugzilla account." ), clabels );
 				++ clabels.gridy;
-				labelsPanel.add( new Label( "This is so that you can follow the progress of fixing the problem by" ), clabels );
+				labelsPanel.add( new JLabel( "This is so that you can follow the progress of fixing the problem by" ), clabels );
 				++ clabels.gridy;
 				clabels.insets = new Insets( 0, 0, 4, 0 );
-				labelsPanel.add( new Label( "email and enables us to ask follow-up questions if that's necessary." ), clabels );
+				labelsPanel.add( new JLabel( "email and enables us to ask follow-up questions if that's necessary." ), clabels );
 
 				clabels.gridx = 1;
 				clabels.gridy = 0;
 				clabels.gridheight = 3;
 				clabels.fill = GridBagConstraints.BOTH;
-				bugzillaAccountCreation = new Button( "Visit the Bugzilla account creation page" );
+				bugzillaAccountCreation = new JButton( "Visit the Bugzilla account creation page" );
 				bugzillaAccountCreation.addActionListener(this);
 				labelsPanel.add( bugzillaAccountCreation, clabels );
 
@@ -380,24 +394,24 @@ public class Bug_Submitter implements PlugIn {
 				++ c.gridy;
 			}
 
-			username = new TextField(20);
+			username = new JTextField(20);
 			username.setText( suggestedUsername );
-			password = new TextField(20);
+			password = new JPasswordField(20);
 			password.setEchoChar('*');
 
 			{
-				Panel p = new Panel();
+				JPanel p = new JPanel();
 				p.setLayout( new GridBagLayout() );
 
 				GridBagConstraints cl = new GridBagConstraints();
 
 				cl.gridx = 0; cl.gridy = 0; cl.anchor = GridBagConstraints.LINE_END;
-				p.add( new Label("Bugzilla username (your email address):"), cl );
+				p.add( new JLabel("Bugzilla username (your email address):"), cl );
 				cl.gridx = 1; cl.gridy = 0; cl.anchor = GridBagConstraints.LINE_START;
 				p.add( username, cl );
 
 				cl.gridx = 0; cl.gridy = 1; cl.anchor = GridBagConstraints.LINE_END;
-				p.add( new Label("Bugzilla password:"), cl );
+				p.add( new JLabel("Bugzilla password:"), cl );
 				cl.gridx = 1; cl.gridy = 1; cl.anchor = GridBagConstraints.LINE_START;
 				p.add( password, cl );
 
@@ -406,14 +420,14 @@ public class Bug_Submitter implements PlugIn {
 				++ c.gridy;
 			}
 
-			summary = new TextField(40);
+			summary = new JTextField(40);
 			summary.setText( suggestedSummary );
-			description = new TextArea(16,76);
+			description = new JTextArea(16,76);
 			description.setText( suggestedDescription );
 
 			c.gridx = 0;
 			c.gridwidth = 1;
-			add( new Label("Summary of the bug:"), c );
+			add( new JLabel("Summary of the bug:"), c );
 
 			c.gridx = 1;
 			c.fill = GridBagConstraints.HORIZONTAL;
@@ -424,20 +438,20 @@ public class Bug_Submitter implements PlugIn {
 			c.gridwidth = 2;
 			c.fill = GridBagConstraints.NONE;
 			c.anchor = GridBagConstraints.LINE_START;
-			add( new Label("A full description of the bug:"), c );
+			add( new JLabel("A full description of the bug:"), c );
 			++c.gridy;
 
 			add( description, c );
 			++c.gridy;
 
 			{
-				Panel p = new Panel();
+				JPanel p = new JPanel();
 
-				submitReport = new Button( "Submit Bug Report" );
+				submitReport = new JButton( "Submit Bug Report" );
 				submitReport.addActionListener( this );
 				p.add( submitReport );
 
-				cancel = new Button( "Cancel" );
+				cancel = new JButton( "Cancel" );
 				cancel.addActionListener( this );
 				p.add( cancel );
 
