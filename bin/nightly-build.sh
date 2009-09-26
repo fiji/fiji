@@ -1,6 +1,10 @@
 #!/bin/sh
 
 compile () {
+	# make sure that JAVA_HOME is set to Java5
+	JAVA5_HOME="$(ls -d "$(pwd)"/java/*/jdk1.5* 2>/dev/null)" &&
+	export JAVA_HOME="$JAVA5_HOME"
+
 	git reset --hard $1 &&
 	# make sure that the cross compilers are not removed
 	for d in root-x86_64-pc-linux chroot-dapper-i386 livecd
@@ -20,35 +24,9 @@ compile () {
 	./Build.sh
 }
 
-case "$1" in
---stdout)
-	case "$(basename "$(cd "$(dirname "$0")"/.. && pwd)")" in
-	nightly-build) ;; # okay
-	*)
-		echo "Refusing to run outside nightly-build/" >&2
-		exit 1
-		;;
-	esac
-
-	cd "$(dirname "$0")"/..
-
-	compile ${2:-HEAD}
-	;;
-'')
-	case "$(basename "$(cd "$(dirname "$0")"/.. && pwd)")" in
-	nightly-build) ;; # okay
-	*)
-		exec "$0" HEAD
-		;;
-	esac
-
-	cd "$(dirname "$0")"/..
-
+nightly_build () {
 	EMAIL=fiji-devel@googlegroups.com
 	TMPFILE=.git/build.$$.out
-
-	# make sure that JAVA_HOME is set to Java5
-	export JAVA_HOME="$(ls -d "$(pwd)"/java/*/jdk1.5*)"
 
 	(git fetch origin &&
 	 compile origin/master) > $TMPFILE 2>&1  &&
@@ -58,6 +36,54 @@ case "$1" in
 			$EMAIL < $TMPFILE
 		echo Failed: see $TMPFILE
 	}
+}
+
+
+case "$1" in
+--stdout)
+	case "$(basename "$(cd "$(dirname "$0")"/.. && pwd)")" in
+	nightly-build)
+		cd "$(dirname "$0")"/..
+		;; # okay
+	*)
+		echo "Refusing to run outside nightly-build/" >&2
+		exit 1
+		;;
+	esac &&
+	compile ${2:-HEAD}
+	;;
+--full)
+	case "$(basename "$(cd "$(dirname "$0")"/.. && pwd)")" in
+	full-nightly-build)
+		cd "$(dirname "$0")"/.. &&
+		git fetch origin master &&
+		git submodule update &&
+		nightly_build
+		;; # okay
+	*)
+		if test ! -d full-nightly-build
+		then
+			git clone . full-nightly-build
+		fi &&
+		HEAD=${2:-$(git rev-parse --symbolic-full-name HEAD)}
+		cd full-nightly-build &&
+		git fetch .. "$HEAD" &&
+		git submodule update --init &&
+		compile FETCH_HEAD
+		;;
+	esac
+	;;
+'')
+	case "$(basename "$(cd "$(dirname "$0")"/.. && pwd)")" in
+	nightly-build)
+		cd "$(dirname "$0")"/..
+		;; # okay
+	*)
+		exec "$0" HEAD
+		;;
+	esac
+
+	nightly_build
 	;;
 *)
 	test -d nightly-build ||
