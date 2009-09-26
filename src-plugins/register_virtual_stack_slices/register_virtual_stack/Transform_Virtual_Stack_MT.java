@@ -1,5 +1,10 @@
 package register_virtual_stack;
 
+/** 
+ * Albert Cardona, Ignacio Arganda-Carreras and Stephan Saalfeld 2009. 
+ * This work released under the terms of the General Public License in its latest edition. 
+ * */
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -19,6 +24,26 @@ import ij.IJ;
 import ij.io.OpenDialog;
 import ij.plugin.PlugIn;
 
+/** 
+ * Fiji plugin to transform sequences of images in a concurrent (multi-thread) way.
+ * <p>
+ * <b>Requires</b>: 
+ * <ul>
+ * 		<li>Source folder: a directory with images, of any size and type (8, 16, 32-bit gray-scale or RGB color)</li>
+ * 		<li>Transform folder: a directory with the transform files (from a <a target="_blank" href="http://pacific.mpi-cbg.de/wiki/Register_Virtual_Stack_Slices">Register_Virtual_Stack_Slices</a> execution). </li>
+ * </ul>
+ * <p>
+ * <b>Performs</b>: transformation of the sequence of images by applying the transform files.
+ * <p>
+ * <b>Outputs</b>: the list of new images, one for slice, into a output directory as .tif files.
+ * <p>
+ * For a detailed documentation, please visit the plugin website at:
+ * <p>
+ * <A target="_blank" href="http://pacific.mpi-cbg.de/wiki/Transform_Virtual_Stack_Slices">http://pacific.mpi-cbg.de/wiki/Transform_Virtual_Stack_Slices</A>
+ * 
+ * @version 09/26/2009
+ * @author Ignacio Arganda-Carreras (ignacio.arganda@gmail.com), Stephan Saalfeld and Albert Cardona
+ */
 public class Transform_Virtual_Stack_MT implements PlugIn 
 {
 
