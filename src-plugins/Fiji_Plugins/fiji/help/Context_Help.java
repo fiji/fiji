@@ -31,7 +31,8 @@ public class Context_Help implements KeyListener, PlugIn {
                 else {
                         resetActions();
 			IJ.showStatus("Opening help for " + arg + "...");
-                        new BrowserLauncher().run(url + arg.replace(' ', '_'));
+                        new BrowserLauncher().run(url + arg.replace(' ', '_')
+				+ "?menuentry=yes");
                 }
         }
 
