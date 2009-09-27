@@ -1212,6 +1212,7 @@ static bool update_files(string relative_path)
 			exit(1);
 		}
 	}
+	closedir(directory);
 	rmdir(absolute_path.c_str());
 	return true;
 }
