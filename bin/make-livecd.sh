@@ -240,5 +240,15 @@ EOF
  chmod a+x $INCLUDES/etc/profile.d/fiji.sh &&
  sudo LH_BASE="$LH_BASE" PATH="$LH_BASE"/helpers:"$PATH" \
 	"$LH_BASE"/helpers/lh_build &&
- mv -f binary.${IMAGE_FILE##*.} "$FIJIROOT"$IMAGE_FILE) ||
+ mv -f binary.${IMAGE_FILE##*.} "$FIJIROOT"$IMAGE_FILE) &&
+ sudo chown "$USER" "$FIJIROOT"$IMAGE_FILE &&
+ case "$IMAGE_FILE" in
+ fiji-usb.img)
+	# Make sure that the partition is readable on MacOSX:
+	# It does not like partition type 83(Linux), but then it really should
+	# be partition type 6(FAT16)...
+	printf "t\n6\nw\nq\n" |
+	fdisk "$FIJIROOT"$IMAGE_FILE
+	;;
+ esac ||
 die "Building LiveCD failed"
