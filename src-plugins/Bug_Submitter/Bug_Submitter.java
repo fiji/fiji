@@ -57,6 +57,7 @@ import javax.swing.JPasswordField;
 import javax.swing.JTextArea;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JCheckBox;
 
 import java.awt.event.ActionListener;
 import java.awt.event.WindowListener;
@@ -81,6 +82,29 @@ public class Bug_Submitter implements PlugIn {
 			IJ.error("UnsupportedEncodingException (!): "+e);
 			return null;
 		}
+	}
+
+	/* We warn the user that saving their password between
+	   sessions is insecure, and only rot13 the password for
+	   storing in the ImageJ preferences file so that someone
+	   glancing over your shoulder while you're editing the file
+	   is less likely to be able to read your password.  There's
+	   no pretence here that this actually adds any meaningful
+	   security. */
+
+	public static String rot13(String s) {
+		int n = s.length();
+		char [] originalChars = s.toCharArray();
+		char [] newChars = new char[n];
+		for( int i = 0; i < n; ++i ) {
+			char c = originalChars[i];
+			if( (c >= 'a' && c <= 'm') || (c >= 'A' && c <= 'M') )
+				c += 13;
+			else if( (c >= 'n' && c <= 'z') || (c >= 'N' && c <= 'Z') )
+				c -= 13;
+			newChars[i] = c;
+		}
+		return new String(newChars);
 	}
 
 	final String bugzillaBaseURI = "http://pacific.mpi-cbg.de/cgi-bin/bugzilla/";
@@ -344,6 +368,7 @@ public class Bug_Submitter implements PlugIn {
 
 		JTextField username;
 		JPasswordField password;
+		JCheckBox rememberPassword;
 
 		JTextField summary;
 		JTextArea description;
@@ -352,6 +377,7 @@ public class Bug_Submitter implements PlugIn {
 		boolean alreadyDisposed = false;
 
 		public NewBugDialog( String suggestedUsername,
+				     String suggestedPassword,
 				     String suggestedSummary,
 				     String suggestedDescription ) {
 
@@ -409,6 +435,9 @@ public class Bug_Submitter implements PlugIn {
 			username.setText( suggestedUsername );
 			password = new JPasswordField(20);
 			password.setEchoChar('*');
+			if( suggestedPassword != null )
+				password.setText( suggestedPassword );
+			rememberPassword = new JCheckBox("",suggestedPassword != null);
 
 			{
 				JPanel p = new JPanel();
@@ -425,6 +454,11 @@ public class Bug_Submitter implements PlugIn {
 				p.add( new JLabel("Bugzilla password: "), cl );
 				cl.gridx = 1; cl.gridy = 1; cl.anchor = GridBagConstraints.LINE_START;
 				p.add( password, cl );
+
+				cl.gridx = 0; cl.gridy = 2; cl.anchor = GridBagConstraints.LINE_END;
+				p.add( new JLabel("Remember password (insecure): "), cl );
+				cl.gridx = 1; cl.gridy = 2; cl.anchor = GridBagConstraints.LINE_START;
+				p.add( rememberPassword, cl );
 
 				c.anchor = GridBagConstraints.LINE_START;
 				++ c.gridy;
@@ -525,6 +559,7 @@ public class Bug_Submitter implements PlugIn {
 	}
 
 	String usernamePreferenceKey = "Bug_Submitter.username";
+	String passwordPreferenceKey = "Bug_Submitter.password";
 
 	public void run( String ignore ) {
 
@@ -534,21 +569,32 @@ public class Bug_Submitter implements PlugIn {
 			"\nInformation about your version of Java - "+
 			"this information is useful for the Fiji developers:\n"+
 			getUsefulSystemInformation();
-		String username = Prefs.get(usernamePreferenceKey,"");
+		String suggestedUsername = Prefs.get(usernamePreferenceKey,"");
+		String suggestedPassword = Prefs.get(passwordPreferenceKey,null);
+		if( suggestedPassword == null || suggestedPassword.length() == 0 )
+			suggestedPassword = null;
+		else
+			suggestedPassword = rot13( suggestedPassword );
 
 		while( true ) {
 
-			NewBugDialog dialog = new NewBugDialog( username, summary, description );
+			NewBugDialog dialog = new NewBugDialog( suggestedUsername, suggestedPassword, summary, description );
 			dialog.show();
 
 			if( ! dialog.askedToSubmit )
 				return;
 
-			username = dialog.username.getText().trim();
+			String username = dialog.username.getText().trim();
 			Prefs.set( usernamePreferenceKey, username );
 			Prefs.savePreferences();
 
 			String password = dialog.password.getText();
+			if( dialog.rememberPassword.isSelected() )
+				Prefs.set( passwordPreferenceKey, rot13(password) );
+			else
+				Prefs.set( passwordPreferenceKey, "" );
+			Prefs.savePreferences();
+
 			summary = dialog.summary.getText().trim();
 			description = dialog.description.getText().trim();
 
