@@ -566,8 +566,8 @@ public class Bug_Submitter implements PlugIn {
 				IJ.error("The login failed: your username or password may be incorrect.");
 				break;
 			case OTHER_FAILURE:
-				new TextWindow( "Login Reply Page", result.authenticationResultPage, 30, 10 );
-				new TextWindow( "Submission Reply Page", result.submissionResultPage, 30, 10 );
+				new TextWindow( "Login Reply Page", result.authenticationResultPage, 640, 480 );
+				new TextWindow( "Submission Reply Page", result.submissionResultPage, 640, 480 );
 				IJ.error("Sorry - there was an unknown error while submitting your bug.\n"+
 					 "Please submit this as a bug manually, including the text from\nthe two windows which were just created.");
 				break;
