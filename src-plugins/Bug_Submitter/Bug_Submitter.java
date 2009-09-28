@@ -56,6 +56,7 @@ import javax.swing.JTextField;
 import javax.swing.JPasswordField;
 import javax.swing.JTextArea;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 
 import java.awt.event.ActionListener;
 import java.awt.event.WindowListener;
@@ -65,6 +66,7 @@ import java.awt.event.WindowEvent;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
+import java.awt.Container;
 
 public class Bug_Submitter implements PlugIn {
 
@@ -356,6 +358,8 @@ public class Bug_Submitter implements PlugIn {
 			       "Bug Report Form",
 			       true );
 
+			Container contentPane = getContentPane();
+
 			addWindowListener( this );
 
 			setLayout(new GridBagLayout());
@@ -390,7 +394,7 @@ public class Bug_Submitter implements PlugIn {
 				bugzillaAccountCreation.addActionListener(this);
 				labelsPanel.add( bugzillaAccountCreation, clabels );
 
-				add( labelsPanel, c );
+				contentPane.add( labelsPanel, c );
 				++ c.gridy;
 			}
 
@@ -416,7 +420,7 @@ public class Bug_Submitter implements PlugIn {
 				p.add( password, cl );
 
 				c.anchor = GridBagConstraints.LINE_START;
-				add( p, c );
+				contentPane.add( p, c );
 				++ c.gridy;
 			}
 
@@ -427,21 +431,24 @@ public class Bug_Submitter implements PlugIn {
 
 			c.gridx = 0;
 			c.gridwidth = 1;
-			add( new JLabel("Summary of the bug:"), c );
+			contentPane.add( new JLabel("Summary of the bug:"), c );
 
 			c.gridx = 1;
 			c.fill = GridBagConstraints.HORIZONTAL;
-			add( summary, c );
+			contentPane.add( summary, c );
 			++c.gridy;
 
 			c.gridx = 0;
 			c.gridwidth = 2;
 			c.fill = GridBagConstraints.NONE;
 			c.anchor = GridBagConstraints.LINE_START;
-			add( new JLabel("A full description of the bug:"), c );
+
+			contentPane.add( new JLabel("A full description of the bug:"), c );
 			++c.gridy;
 
-			add( description, c );
+			JScrollPane scrollPane = new JScrollPane(description);
+
+			contentPane.add( scrollPane, c );
 			++c.gridy;
 
 			{
@@ -457,7 +464,7 @@ public class Bug_Submitter implements PlugIn {
 
 				c.anchor = GridBagConstraints.CENTER;
 				c.gridwidth = 2;
-				add( p, c );
+				contentPane.add( p, c );
 			}
 
 			pack();
