@@ -427,6 +427,8 @@ public class Bug_Submitter implements PlugIn {
 			summary = new JTextField(40);
 			summary.setText( suggestedSummary );
 			description = new JTextArea(16,76);
+			description.setLineWrap(true);
+			description.setWrapStyleWord(true);
 			description.setText( suggestedDescription );
 
 			c.gridx = 0;
