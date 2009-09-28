@@ -41,7 +41,6 @@ public class Updater implements PlugIn {
 
 	// Key names for ij.Prefs for saved values
 	// Note: ij.Prefs is only saved during shutdown of Fiji
-	public static final String PREFS_XMLDATE = "fiji.updater.xmlDate";
 	public static final String PREFS_USER = "fiji.updater.login";
 
 	public static boolean debug, testRun;
