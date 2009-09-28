@@ -107,6 +107,39 @@ public class Bug_Submitter implements PlugIn {
 		String submissionResultPage;
 	}
 
+	public String getUsefulSystemInformation() {
+		String [] interestingProperties = {
+			"os.arch",
+			"os.name",
+			"os.version",
+			"java.version",
+			"java.vendor",
+			"java.runtime.name",
+			"java.runtime.version",
+			"java.vm.name",
+			"java.vm.version",
+			"java.vm.vendor",
+			"java.vm.info",
+			"java.awt.graphicsenv",
+			"java.specification.name",
+			"java.specification.version",
+			"sun.cpu.endian",
+			"sun.desktop",
+			"file.separator" };
+
+		StringBuffer result = new StringBuffer();
+		for( String k : interestingProperties ) {
+			result.append("  ");
+			result.append(k);
+			result.append(" => ");
+			String value = System.getProperty(k);
+			result.append(value == null ? "null" : value);
+			result.append("\n");
+		}
+
+		return result.toString();
+	}
+
 	/** If the bug is submitted successfully, the URL for the bug
 	    is returned in a String.  In the case of any error, null
 	    is returned. */
@@ -181,58 +214,6 @@ public class Bug_Submitter implements PlugIn {
 							     submissionReply.toString() );
 			}
 
-			// Now we make the actual request.
-			String [] interestingProperties = {
-				"os.arch",
-				"os.name",
-				"os.version",
-				"java.version",
-				"java.vendor",
-				"java.runtime.name",
-				"java.runtime.version",
-				"java.vm.name",
-				"java.vm.version",
-				"java.vm.vendor",
-				"java.vm.info",
-				"java.awt.graphicsenv",
-				"java.specification.name",
-				"java.specification.version",
-				"sun.cpu.endian",
-				"sun.desktop",
-				"file.separator" };
-
-			StringBuffer completeBugText = new StringBuffer();
-			completeBugText.append("Useful Java System Properties:\n");
-			for( String k : interestingProperties ) {
-				completeBugText.append("  ");
-				completeBugText.append(k);
-				completeBugText.append(" => ");
-				String value = System.getProperty(k);
-				completeBugText.append(value == null ? "null" : value);
-				completeBugText.append("\n");
-			}
-			completeBugText.append("\nBug Report Text:\n\n");
-			completeBugText.append(bugText);
-
-			String osParameterValue = null;
-			String platformParameterValue = null;
-
-			String osName = System.getProperty("os.name");
-
-			if( linuxPattern.matcher(osName).matches() ) {
-				osParameterValue = "Linux";
-				platformParameterValue = "PC";
-			} else if( windowsPattern.matcher(osName).matches() ) {
-				osParameterValue = "Windows";
-				platformParameterValue = "PC";
-			} else if( macPattern.matcher(osName).matches() ) {
-				osParameterValue = "Mac OS";
-				platformParameterValue = "Macintosh";
-			} else {
-				osParameterValue = "Other";
-				platformParameterValue = "Other";
-			}
-
 			String ccString = "";
 			if( submitterEmail != null && submitterEmail.trim().length() > 0 )
 				ccString = "&cc="+e(submitterEmail.trim());
@@ -257,6 +238,25 @@ public class Bug_Submitter implements PlugIn {
 			}
 			connection.setRequestProperty( "Cookie", cookieValueToSend );
 
+			String osParameterValue = null;
+			String platformParameterValue = null;
+
+			String osName = System.getProperty("os.name");
+
+			if( linuxPattern.matcher(osName).matches() ) {
+				osParameterValue = "Linux";
+				platformParameterValue = "PC";
+			} else if( windowsPattern.matcher(osName).matches() ) {
+				osParameterValue = "Windows";
+				platformParameterValue = "PC";
+			} else if( macPattern.matcher(osName).matches() ) {
+				osParameterValue = "Mac OS";
+				platformParameterValue = "Macintosh";
+			} else {
+				osParameterValue = "Other";
+				platformParameterValue = "Other";
+			}
+
 			ps = new PrintStream(connection.getOutputStream());
 			ps.println("product=Fiji"+
 				   "&component="+e(bugComponent)+
@@ -271,7 +271,7 @@ public class Bug_Submitter implements PlugIn {
 				   "&assigned_to="+e(bugzillaAssignee)+
 				   ccString+
 				   "&short_desc="+e(bugSubject)+
-				   "&comment="+e(completeBugText.toString())+
+				   "&comment="+e(bugText)+
 				   "&commentprivacy=0"+
 				   "&dependson="+
 				   "&blocked="+
@@ -514,7 +514,11 @@ public class Bug_Submitter implements PlugIn {
 	public void run( String ignore ) {
 
 		String summary = "[Your summary of the problem or bug.]";
-		String description = "[A full description of the problem or bug and how to reproduce it.]";
+		String description = "[Enter details of the problem or "+
+			"bug and how to reproduce it here.]\n\n"+
+			"\nInformation about my version of Java:\n"+
+			"(This information is useful for developers.)\n"+
+			getUsefulSystemInformation();
 		String username = Prefs.get(usernamePreferenceKey,"");
 
 		while( true ) {
