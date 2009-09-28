@@ -569,14 +569,15 @@ public class Bug_Submitter implements PlugIn {
 			"\nInformation about your version of Java - "+
 			"this information is useful for the Fiji developers:\n"+
 			getUsefulSystemInformation();
-		String suggestedUsername = Prefs.get(usernamePreferenceKey,"");
-		String suggestedPassword = Prefs.get(passwordPreferenceKey,null);
-		if( suggestedPassword == null || suggestedPassword.length() == 0 )
-			suggestedPassword = null;
-		else
-			suggestedPassword = rot13( suggestedPassword );
 
 		while( true ) {
+
+			String suggestedUsername = Prefs.get(usernamePreferenceKey,"");
+			String suggestedPassword = Prefs.get(passwordPreferenceKey,null);
+			if( suggestedPassword == null || suggestedPassword.length() == 0 )
+				suggestedPassword = null;
+			else
+				suggestedPassword = rot13( suggestedPassword );
 
 			NewBugDialog dialog = new NewBugDialog( suggestedUsername, suggestedPassword, summary, description );
 			dialog.show();
