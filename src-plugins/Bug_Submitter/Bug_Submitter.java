@@ -72,6 +72,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowEvent;
+import java.awt.event.KeyEvent;
 
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
@@ -383,6 +384,24 @@ public class Bug_Submitter implements PlugIn {
 		JTextArea description;
 		UndoManager undo;
 
+		private class JTextAreaTabFocus extends JTextArea {
+			public JTextAreaTabFocus( int rows, int columns ) {
+				super( rows, columns );
+			}
+			protected void processComponentKeyEvent( KeyEvent e ) {
+				if( e.getID() == KeyEvent.KEY_PRESSED &&
+				    e.getKeyCode() == KeyEvent.VK_TAB ) {
+					e.consume();
+					if (e.isShiftDown())
+						transferFocusBackward();
+					else
+						transferFocus();
+				} else {
+					super.processComponentKeyEvent( e );
+				}
+			}
+		}
+
 		// This example is derived from:
 		//   http://java.sun.com/docs/books/tutorial/uiswing/components/generaltext.html#undo
 		protected class SimpleEditListener implements UndoableEditListener {
@@ -512,7 +531,7 @@ public class Bug_Submitter implements PlugIn {
 
 			summary = new JTextField(30);
 			summary.setText( suggestedSummary );
-			description = new JTextArea(16,42);
+			description = new JTextAreaTabFocus(16,42);
 			description.setLineWrap(true);
 			description.setWrapStyleWord(true);
 			description.setText( suggestedDescription );
