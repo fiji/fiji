@@ -55,6 +55,7 @@ import javax.swing.JButton;
 import javax.swing.JTextField;
 import javax.swing.JPasswordField;
 import javax.swing.JTextArea;
+import javax.swing.text.JTextComponent;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JCheckBox;
@@ -70,7 +71,9 @@ import javax.swing.undo.CannotRedoException;
 
 import java.awt.event.ActionListener;
 import java.awt.event.WindowListener;
+import java.awt.event.FocusListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.FocusEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.KeyEvent;
 
@@ -384,6 +387,28 @@ public class Bug_Submitter implements PlugIn {
 		JTextArea description;
 		UndoManager undo;
 
+		private class HighlightingFocusListener implements FocusListener {
+			String stringToHighlight;
+			boolean notYetFocussed = true;
+			JTextComponent textComponent;
+			public HighlightingFocusListener( String stringToHighlight, JTextComponent textComponent ) {
+				this.stringToHighlight = stringToHighlight;
+				this.textComponent = textComponent;
+			}
+			public void focusGained(FocusEvent e) {
+				if( notYetFocussed ) {
+					String text = textComponent.getText();
+					int startIndex = text.indexOf( stringToHighlight );
+					if( startIndex >= 0 ) {
+						textComponent.setSelectionStart(startIndex);
+						textComponent.setSelectionEnd(startIndex+stringToHighlight.length());
+					}
+					notYetFocussed = false;
+				}
+			}
+			public void focusLost(FocusEvent e) { }
+		}
+
 		private class JTextAreaTabFocus extends JTextArea {
 			public JTextAreaTabFocus( int rows, int columns ) {
 				super( rows, columns );
@@ -531,6 +556,9 @@ public class Bug_Submitter implements PlugIn {
 
 			summary = new JTextField(30);
 			summary.setText( suggestedSummary );
+			summary.addFocusListener( new HighlightingFocusListener(
+							      dummyBugTextSummary,
+							      summary) );
 			description = new JTextAreaTabFocus(16,42);
 			description.setLineWrap(true);
 			description.setWrapStyleWord(true);
@@ -544,6 +572,10 @@ public class Bug_Submitter implements PlugIn {
 			InputMap inputMap = description.getInputMap();
 			inputMap.put(KeyStroke.getKeyStroke("control Z"), "Undo");
 			inputMap.put(KeyStroke.getKeyStroke("control Y"), "Redo");
+
+			description.addFocusListener( new HighlightingFocusListener(
+							      dummyBugTextDescription,
+							      description) );
 
 			{
 				JPanel summaryPanel = new JPanel();
@@ -634,11 +666,14 @@ public class Bug_Submitter implements PlugIn {
 	String usernamePreferenceKey = "Bug_Submitter.username";
 	String passwordPreferenceKey = "Bug_Submitter.password";
 
+	final String dummyBugTextSummary = "[Your summary of the problem or bug.]";
+	final String dummyBugTextDescription = "[Enter details of the problem or "+
+			"bug and how to reproduce it here.]";
+
 	public void run( String ignore ) {
 
-		String summary = "[Your summary of the problem or bug.]";
-		String description = "[Enter details of the problem or "+
-			"bug and how to reproduce it here.]\n\n"+
+		String summary = dummyBugTextSummary;
+		String description = dummyBugTextDescription+"\n"+
 			"\nInformation about your version of Java - "+
 			"this information is useful for the Fiji developers:\n"+
 			getUsefulSystemInformation();
