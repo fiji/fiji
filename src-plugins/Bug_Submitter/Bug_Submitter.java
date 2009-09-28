@@ -503,6 +503,8 @@ public class Bug_Submitter implements PlugIn {
 
 			c.gridx = 0;
 			c.gridy = 0;
+			c.weightx = 1;
+			c.weighty = 0;
 			c.insets = new Insets( 5, 3, 5, 3 );
 			c.fill = GridBagConstraints.HORIZONTAL;
 			c.anchor = GridBagConstraints.CENTER;
@@ -612,7 +614,11 @@ public class Bug_Submitter implements PlugIn {
 			JScrollPane scrollPane = new JScrollPane(description);
 
 			++ c.gridy;
+			c.fill = GridBagConstraints.BOTH;
+			c.weighty = 1;
 			contentPane.add( scrollPane, c );
+			c.fill = GridBagConstraints.HORIZONTAL;
+			c.weighty = 0;
 
 			{
 				JPanel p = new JPanel();
