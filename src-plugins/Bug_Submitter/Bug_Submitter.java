@@ -58,6 +58,15 @@ import javax.swing.JTextArea;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JCheckBox;
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
+import javax.swing.KeyStroke;
+import javax.swing.undo.UndoManager;
+import javax.swing.event.UndoableEditListener;
+import javax.swing.event.UndoableEditEvent;
+import javax.swing.undo.CannotUndoException;
+import javax.swing.undo.CannotRedoException;
 
 import java.awt.event.ActionListener;
 import java.awt.event.WindowListener;
@@ -372,6 +381,42 @@ public class Bug_Submitter implements PlugIn {
 
 		JTextField summary;
 		JTextArea description;
+		UndoManager undo;
+
+		// This example is derived from:
+		//   http://java.sun.com/docs/books/tutorial/uiswing/components/generaltext.html#undo
+		protected class SimpleEditListener implements UndoableEditListener {
+			public void undoableEditHappened(UndoableEditEvent e) {
+				undo.addEdit(e.getEdit());
+			}
+		}
+
+		// More "Programming with Google" from:
+		//   http://www.exampledepot.com/egs/javax.swing.undo/UndoText.html
+
+		protected class UndoAction extends AbstractAction {
+			public UndoAction() {
+				super("Undo");
+			}
+			public void actionPerformed(ActionEvent evt) {
+				try {
+					if( undo.canUndo() )
+						undo.undo();
+				} catch (CannotUndoException e) { }
+			}
+		}
+
+		protected class RedoAction extends AbstractAction {
+			public RedoAction() {
+				super("Redo");
+			}
+			public void actionPerformed(ActionEvent evt) {
+				try {
+					if( undo.canRedo() )
+						undo.redo();
+				} catch (CannotRedoException e) { }
+			}
+		}
 
 		boolean askedToSubmit = false;
 		boolean alreadyDisposed = false;
@@ -471,6 +516,15 @@ public class Bug_Submitter implements PlugIn {
 			description.setLineWrap(true);
 			description.setWrapStyleWord(true);
 			description.setText( suggestedDescription );
+			undo = new UndoManager();
+			description.getDocument().addUndoableEditListener(
+				new SimpleEditListener() );
+			ActionMap actionMap = description.getActionMap();
+			actionMap.put("Undo",new UndoAction());
+			actionMap.put("Redo",new RedoAction());
+			InputMap inputMap = description.getInputMap();
+			inputMap.put(KeyStroke.getKeyStroke("control Z"), "Undo");
+			inputMap.put(KeyStroke.getKeyStroke("control Y"), "Redo");
 
 			{
 				JPanel summaryPanel = new JPanel();
