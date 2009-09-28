@@ -24,9 +24,9 @@
 package Bug_Submitter;
 
 import ij.IJ;
+import ij.WindowManager;
 import ij.plugin.PlugIn;
 import ij.text.TextWindow;
-
 import ij.plugin.BrowserLauncher;
 
 import java.net.URL;
@@ -49,7 +49,7 @@ import java.util.regex.Matcher;
 
 import ij.Prefs;
 
-import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JButton;
 import javax.swing.JTextField;
@@ -373,7 +373,7 @@ public class Bug_Submitter implements PlugIn {
 		}
 	}
 
-	class NewBugDialog extends JDialog implements ActionListener, WindowListener {
+	class NewBugDialog extends JFrame implements ActionListener, WindowListener {
 
 		JButton bugzillaAccountCreation;
 		JButton submitReport;
@@ -465,14 +465,33 @@ public class Bug_Submitter implements PlugIn {
 		boolean askedToSubmit = false;
 		boolean alreadyDisposed = false;
 
+		public void setVisible(boolean visible) {
+			if (visible)
+				WindowManager.addWindow(this);
+			super.setVisible(visible);
+		}
+
+		public synchronized void show() {
+			WindowManager.addWindow(this);
+			super.show();
+			try {
+				wait();
+			} catch (InterruptedException e) { }
+		}
+
+		public synchronized void dispose() {
+			WindowManager.removeWindow(this);
+			notify();
+			super.dispose();
+	        }
+
+
 		public NewBugDialog( String suggestedUsername,
 				     String suggestedPassword,
 				     String suggestedSummary,
 				     String suggestedDescription ) {
 
-			super( IJ.getInstance(),
-			       "Bug Report Form",
-			       true );
+			super( "Bug Report Form" );
 
 			Container contentPane = getContentPane();
 
