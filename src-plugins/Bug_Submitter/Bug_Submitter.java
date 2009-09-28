@@ -52,6 +52,7 @@ import ij.Prefs;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JTextField;
 import javax.swing.JPasswordField;
 import javax.swing.JTextArea;
@@ -77,11 +78,13 @@ import java.awt.event.FocusEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.KeyEvent;
 
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
-import java.awt.Container;
-import java.awt.BorderLayout;
+import java.awt.Toolkit;
 
 public class Bug_Submitter implements PlugIn {
 
@@ -639,7 +642,10 @@ public class Bug_Submitter implements PlugIn {
 			// Call pack twice to workaround:
 			//   http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4446522
 			pack();
-			pack();
+
+			addAccelerator(cancel, (JComponent)contentPane, this,
+				KeyEvent.VK_W, Toolkit.getDefaultToolkit()
+					.getMenuShortcutKeyMask());
 		}
 
 		public void resetForm() {
@@ -763,4 +769,29 @@ public class Bug_Submitter implements PlugIn {
 			}
 		}
 	}
+
+	/**
+	 * Add a keyboard accelerator to a container.
+	 *
+	 * This method adds a keystroke to the input map of a container that
+	 * sends an action event with the given source to the given listener.
+	 */
+        public static void addAccelerator(final Component source,
+			final JComponent container,
+			final ActionListener listener, int key, int modifiers) {
+                container.getInputMap(container.WHEN_IN_FOCUSED_WINDOW)
+			.put(KeyStroke.getKeyStroke(key, modifiers), source);
+                if (container.getActionMap().get(source) != null)
+                        return;
+                container.getActionMap().put(source,
+                                new AbstractAction() {
+                        public void actionPerformed(ActionEvent e) {
+                                if (!source.isEnabled())
+                                        return;
+                                ActionEvent event = new ActionEvent(source,
+                                        0, "Accelerator");
+                                listener.actionPerformed(event);
+                        }
+                });
+        }
 }
