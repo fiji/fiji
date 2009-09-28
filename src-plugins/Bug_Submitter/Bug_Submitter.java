@@ -67,6 +67,7 @@ import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import java.awt.Container;
+import java.awt.BorderLayout;
 
 public class Bug_Submitter implements PlugIn {
 
@@ -366,36 +367,42 @@ public class Bug_Submitter implements PlugIn {
 
 			GridBagConstraints c = new GridBagConstraints();
 
-			c.gridwidth = 2;
 			c.gridx = 0;
 			c.gridy = 0;
-			c.insets = new Insets( 3, 3, 3, 3 );
+			c.insets = new Insets( 5, 3, 5, 3 );
+			c.fill = GridBagConstraints.HORIZONTAL;
 			c.anchor = GridBagConstraints.CENTER;
 
 			{
 				JPanel labelsPanel = new JPanel();
 				labelsPanel.setLayout( new GridBagLayout() );
-				GridBagConstraints clabels = new GridBagConstraints();
-				clabels.gridx = 0;
-				clabels.gridy = 0;
-				clabels.anchor = GridBagConstraints.LINE_START;
-				labelsPanel.add( new JLabel( "In order to report a bug, we ask that you create a Bugzilla account." ), clabels );
-				++ clabels.gridy;
-				labelsPanel.add( new JLabel( "This is so that you can follow the progress of fixing the problem by" ), clabels );
-				++ clabels.gridy;
-				clabels.insets = new Insets( 0, 0, 4, 0 );
-				labelsPanel.add( new JLabel( "email and enables us to ask follow-up questions if that's necessary." ), clabels );
 
-				clabels.gridx = 1;
-				clabels.gridy = 0;
-				clabels.gridheight = 3;
-				clabels.fill = GridBagConstraints.BOTH;
+				JTextArea instructions = new JTextArea(3,30);
+				instructions.setEditable(false);
+				instructions.setCursor(null);
+				instructions.setOpaque(false);
+				instructions.setFocusable(false);
+				instructions.setLineWrap(true);
+				instructions.setWrapStyleWord(true);
+
+				instructions.setText(
+					"In order to report a bug, we ask that you create a Bugzilla account. "+
+					" This is so that you can follow the progress of fixing the problem by"+
+					" email and enables us to ask follow-up questions if that's necessary.");
+
 				bugzillaAccountCreation = new JButton( "Visit the Bugzilla account creation page" );
 				bugzillaAccountCreation.addActionListener(this);
+
+				GridBagConstraints clabels = new GridBagConstraints();
+				clabels.fill = GridBagConstraints.BOTH;
+				clabels.gridx = 0;
+				clabels.gridy = 0;
+				labelsPanel.add( instructions, clabels );
+				clabels.gridx = 1;
+				clabels.gridy = 0;
 				labelsPanel.add( bugzillaAccountCreation, clabels );
 
 				contentPane.add( labelsPanel, c );
-				++ c.gridy;
 			}
 
 			username = new JTextField(20);
@@ -410,48 +417,44 @@ public class Bug_Submitter implements PlugIn {
 				GridBagConstraints cl = new GridBagConstraints();
 
 				cl.gridx = 0; cl.gridy = 0; cl.anchor = GridBagConstraints.LINE_END;
-				p.add( new JLabel("Bugzilla username (your email address):"), cl );
+				p.add( new JLabel("Bugzilla username (your email address): "), cl );
 				cl.gridx = 1; cl.gridy = 0; cl.anchor = GridBagConstraints.LINE_START;
 				p.add( username, cl );
 
 				cl.gridx = 0; cl.gridy = 1; cl.anchor = GridBagConstraints.LINE_END;
-				p.add( new JLabel("Bugzilla password:"), cl );
+				p.add( new JLabel("Bugzilla password: "), cl );
 				cl.gridx = 1; cl.gridy = 1; cl.anchor = GridBagConstraints.LINE_START;
 				p.add( password, cl );
 
 				c.anchor = GridBagConstraints.LINE_START;
-				contentPane.add( p, c );
 				++ c.gridy;
+				contentPane.add( p, c );
 			}
 
-			summary = new JTextField(40);
+			summary = new JTextField(30);
 			summary.setText( suggestedSummary );
-			description = new JTextArea(16,76);
+			description = new JTextArea(16,42);
 			description.setLineWrap(true);
 			description.setWrapStyleWord(true);
 			description.setText( suggestedDescription );
 
-			c.gridx = 0;
-			c.gridwidth = 1;
-			contentPane.add( new JLabel("Summary of the bug:"), c );
+			{
+				JPanel summaryPanel = new JPanel();
+				summaryPanel.setLayout( new BorderLayout() );
+				summaryPanel.add( new JLabel("Summary of the bug: "), BorderLayout.WEST );
+				summaryPanel.add( summary, BorderLayout.CENTER );
+				++ c.gridy;
+				c.anchor = GridBagConstraints.LINE_START;
+				contentPane.add( summaryPanel, c );
+			}
 
-			c.gridx = 1;
-			c.fill = GridBagConstraints.HORIZONTAL;
-			contentPane.add( summary, c );
-			++c.gridy;
-
-			c.gridx = 0;
-			c.gridwidth = 2;
-			c.fill = GridBagConstraints.NONE;
-			c.anchor = GridBagConstraints.LINE_START;
-
+			++ c.gridy;
 			contentPane.add( new JLabel("A full description of the bug:"), c );
-			++c.gridy;
 
 			JScrollPane scrollPane = new JScrollPane(description);
 
+			++ c.gridy;
 			contentPane.add( scrollPane, c );
-			++c.gridy;
 
 			{
 				JPanel p = new JPanel();
@@ -465,10 +468,13 @@ public class Bug_Submitter implements PlugIn {
 				p.add( cancel );
 
 				c.anchor = GridBagConstraints.CENTER;
-				c.gridwidth = 2;
+				++ c.gridy;
 				contentPane.add( p, c );
 			}
 
+			// Call pack twice to workaround:
+			//   http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4446522
+			pack();
 			pack();
 		}
 
@@ -525,8 +531,8 @@ public class Bug_Submitter implements PlugIn {
 		String summary = "[Your summary of the problem or bug.]";
 		String description = "[Enter details of the problem or "+
 			"bug and how to reproduce it here.]\n\n"+
-			"\nInformation about my version of Java:\n"+
-			"(This information is useful for developers.)\n"+
+			"\nInformation about your version of Java - "+
+			"this information is useful for the Fiji developers:\n"+
 			getUsefulSystemInformation();
 		String username = Prefs.get(usernamePreferenceKey,"");
 
