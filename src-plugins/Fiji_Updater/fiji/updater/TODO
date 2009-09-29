@@ -1,17 +1,5 @@
 Show-stoppers:
 
-- Let's have a checkbox in the Fiji Updater that says "automatically check
-  for updates".  This should be grayed out if, say, plugins/Fiji_Updater.jar
-  is not writable, or misc/Fiji.jar is not new enough.
-
-  misc/Fiji.jar needs to have an updated fiji.Main that calls the "cheap mode"
-  of the Fiji Updater: it first checks whether plugins/Fiji_Updater.jar is
-  writable, and if so, tries to get the timestamp of db.xml.gz, compares it to
-  the stored one in the preferences (defaulting to a to-be-created
-  fiji.launcher.timestamp plus one hour), and if the timestamp is newer, tells
-  the user that updates are available (maybe a new tool button in the Fiji
-  window?)
-
 - Add a context menu to trigger actions
 
 Not-quite show-stoppers:
