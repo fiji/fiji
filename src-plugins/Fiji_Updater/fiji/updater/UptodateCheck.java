@@ -37,6 +37,8 @@ public class UptodateCheck implements PlugIn {
 					result, "Up-to-date check",
 					JOptionPane.INFORMATION_MESSAGE);
 		}
+		else if ("config".equals(arg) && !isBatchMode())
+			config();
 	}
 
 	public String checkOrShowDialog() {
@@ -152,6 +154,37 @@ public class UptodateCheck implements PlugIn {
 			break;
 		case JOptionPane.CLOSED_OPTION:
 			// do nothing
+		}
+	}
+
+	public static void config() {
+		if (!"true".equals(System.getProperty("fiji.main"
+				+ ".checksUpdaterAtStartup"))) {
+			JOptionPane.showMessageDialog(IJ.getInstance(),
+				"You need to update misc/Fiji_.jar first!",
+				"Fiji error", JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+
+		String latestNag = Prefs.get(latestReminderKey, null);
+		boolean enabled = latestNag == null || latestNag.equals("") ?
+			true : (Long.parseLong(latestNag) != Long.MAX_VALUE);
+		Object[] options = {
+			"Check at startup",
+			"Do not check at startup"
+		};
+		switch (JOptionPane.showOptionDialog(IJ.getInstance(),
+				"Fiji Updater startup options:",
+				"Configure Fiji Updater",
+				JOptionPane.YES_NO_OPTION,
+				JOptionPane.QUESTION_MESSAGE,
+				null, options, options[enabled ? 0 : 1])) {
+		case 0:
+			Prefs.set(latestReminderKey, "");
+			break;
+		case 1:
+			Prefs.set(latestReminderKey, "" + Long.MAX_VALUE);
+			break;
 		}
 	}
 }
