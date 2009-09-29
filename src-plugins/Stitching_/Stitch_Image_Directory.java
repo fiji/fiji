@@ -153,20 +153,27 @@ public class Stitch_Image_Directory implements PlugIn
 		
 		String fileName = (new File(imageDir, output)).getPath();
 		PrintWriter out = openFileWrite( fileName );
-		
+
+		boolean seenFirst = false;
         int i = 0;
     	int dim = 0;
 
     	for ( String file : files )
     	{
-        	if (i == 0)
-        	{
+    		if ( file.contains("TileConfiguration.txt") )
+    			continue;
+    		
+        	if (!seenFirst)
+        	{        		
         		ImagePlus imp = CommonFunctions.loadImage( dir.getPath(), file, gridLayout.rgbOrder );
+        		
         		if (imp == null)
         		{
-        			IJ.error("Cannot open first file: '" + (new File(dir.getPath(), file)).getPath() + "' - Quitting.");
-        			return;
+        			IJ.log("Cannot read: " + file + ", trying next one...");
+        			continue;
         		}
+        		
+        		seenFirst = true;
         		
         		if (imp.getStackSize() > 1)
         			gridLayout.dim = 3;
