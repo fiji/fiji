@@ -1,19 +1,19 @@
 #!/bin/sh
 
-case "$(uname -s)" in
-MINGW*)
-	dirname () {
-		case "$1" in
-		*\\*|*/*)
-			echo "$1" | sed 's/[\\\/][^\\\/]*$//'
-			;;
-		*)
-			echo .
-			;;
-		esac
-	}
-	;;
-esac
+
+dirname () {
+	case "$1" in
+	*/*)
+		echo ${1%/*}
+		;;
+	*\\*)
+		echo ${1%\\*}
+		;;
+	*)
+		echo .
+		;;
+	esac
+}
 
 CWD="$(dirname "$0")"
 
