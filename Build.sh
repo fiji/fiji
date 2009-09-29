@@ -36,6 +36,38 @@ MINGW*|CYGWIN*)
 	exe=.exe;;
 esac
 
+test -z "$JAVA_HOME" &&
+JAVA_HOME="$("$CWD"/precompiled/fiji-"$platform" --print-java-home)"
+
+# need to clone java submodule
+test -f "$JAVA_HOME/lib/tools.jar" || test -f "$JAVA_HOME/../lib/tools.jar" || {
+	echo "No JDK found; cloning it"
+	JAVA_SUBMODULE=java/"$(case "$platform" in
+		macosx|tiger)
+			echo macosx-java3d
+			;;
+		linux64)
+			echo linux-amd64
+			;;
+		*)
+			echo "$platform"
+			;;
+		esac)"
+	git submodule init "$JAVA_SUBMODULE" && (
+		URL="$(git config submodule."$JAVA_SUBMODULE".url)" &&
+		mkdir -p "$JAVA_SUBMODULE" &&
+		cd "$JAVA_SUBMODULE" &&
+		git init &&
+		git remote add -t master origin "$URL" &&
+		git fetch --depth 1 &&
+		git reset --hard origin/master
+	) &&
+	git submodule update "$JAVA_SUBMODULE" || {
+		echo "Could not clone JDK" >&2
+		exit 1
+	}
+}
+
 handle_variables () {
 	case "$1" in
 	--strip) strip_variables=t; shift;;
