@@ -172,7 +172,11 @@ public class Main implements AWTEventListener {
 		if (IJ.getInstance() != null) {
 			new User_Plugins().run(null);
 			SampleImageLoader.install();
-			runUpdater();
+			new Thread() {
+				public void run() {
+					runUpdater();
+				}
+			}.start();
 		}
 	}
 
