@@ -43,13 +43,13 @@ JAVA_HOME="$("$CWD"/precompiled/fiji-"$platform" --print-java-home)"
 test -f "$JAVA_HOME/lib/tools.jar" || test -f "$JAVA_HOME/../lib/tools.jar" || {
 	echo "No JDK found; cloning it"
 	JAVA_SUBMODULE=java/"$(case "$platform" in
-		macosx|tiger)
+		(macosx|tiger)
 			echo macosx-java3d
 			;;
-		linux64)
+		(linux64)
 			echo linux-amd64
 			;;
-		*)
+		(*)
 			echo "$platform"
 			;;
 		esac)"
