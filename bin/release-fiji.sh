@@ -12,6 +12,8 @@
 
 # Then, everything is tagged, and put into the download directory.
 
+test a"$1" = a--copy-files && set "$2" "$1"
+
 RELEASE="$1"
 test -z "$RELEASE" && {
 	echo "Need a release"
