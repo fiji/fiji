@@ -29,6 +29,7 @@ HEAD=$(git rev-parse ${HEAD:-HEAD})
 TARGET_DIRECTORY=/var/www/downloads/$RELEASE
 NIGHTLY_BUILD=fiji/nightly-build
 TMP_HEAD=refs/heads/tmp
+COMMIT_MESSAGE="Precompile Fiji and Fake for $RELEASE"
 
 clone='
 	cd $HOME &&
@@ -49,19 +50,17 @@ checkout_and_build='
 		esac &&
 		test -z "$(ls $d/)" || break;
 	 done &&
-	 ./bin/nightly-build.sh --stdout) >&2 &&
+	 ./bin/nightly-build.sh --stdout &&
+	 case "$(uname -s)" in
+	 Darwin)
+		./Build.sh precompile-fiji precompile-fake dmg &&
+		if ! git diff-files -q --exit-code --ignore-submodules
+		then
+			git commit -s -a -m "'"$COMMIT_MESSAGE"'"
+		fi
+		;;
+	 esac) >&2 &&
 	./bin/calculate-checksums.py
-'
-
-COMMIT_MESSAGE="Precompile Fiji and Fake for $RELEASE"
-
-build_dmg='
-	(cd $HOME/'$NIGHTLY_BUILD' &&
-	 ./Build.sh precompile-fiji precompile-fake dmg &&
-	 if ! git diff-files -q --exit-code --ignore-submodules
-	 then
-		git commit -s -a -m "'"$COMMIT_MESSAGE"'"
-	 fi) >&2
 '
 
 build_rest='
@@ -137,7 +136,6 @@ then
 	git push macosx10.5:$NIGHTLY_BUILD +$HEAD:$TMP_HEAD
 fi &&
 macsums="$(ssh macosx10.5 "$checkout_and_build")" &&
-ssh macosx10.5 "$build_dmg" &&
 
 echo "Building for non-MacOSX" &&
 git fetch macosx10.5:$NIGHTLY_BUILD master && # for fiji-macosx.7z
