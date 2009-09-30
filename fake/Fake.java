@@ -895,7 +895,12 @@ public class Fake {
 						return;
 					System.err.println("Building " + this);
 					action();
-					upToDateStage = 2;
+					if (new File(target).exists())
+						upToDateStage = 2;
+					else {
+						upToDateStage = 0;
+						wasAlreadyChecked = false;
+					}
 				} catch (Exception e) {
 					if (!(e instanceof FakeException))
 						e.printStackTrace();
