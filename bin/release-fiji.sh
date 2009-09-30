@@ -154,7 +154,7 @@ then
 	echo "$thissums" > .git/thissums
 	git diff --no-index .git/macsums .git/thissums
 	exit 1
-fi &&
+fi || exit
 
 echo "Verifying"
 cd $HOME/$NIGHTLY_BUILD
