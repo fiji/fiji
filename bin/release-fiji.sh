@@ -81,7 +81,9 @@ build_rest='
 		git commit -s -a -m "'"$COMMIT_MESSAGE"'"
 	 fi &&
 	 echo "Live images" &&
+	 sudo rm -rf livecd &&
 	 ./bin/make-livecd.sh &&
+	 sudo rm -rf livecd &&
 	 ./bin/make-livecd.sh --usb &&
 	 ./Build.sh all-tars all-zips all-7zs) >&2
 '
