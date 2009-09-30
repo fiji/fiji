@@ -75,11 +75,15 @@ checkout_and_build='
 
 build_rest='
 	(cd $HOME/'$NIGHTLY_BUILD' &&
-	 ./Build.sh all-cross precompile-fiji all-tars all-zips all-7zs &&
+	 ./Build.sh all-cross precompile-fiji &&
 	 if ! git diff-files -q --exit-code --ignore-submodules
 	 then
 		git commit -s -a -m "'"$COMMIT_MESSAGE"'"
-	 fi) >&2
+	 fi &&
+	 echo "Live images" &&
+	 ./bin/make-livecd.sh &&
+	 ./bin/make-livecd.sh --usb &&
+	 ./Build.sh all-tars all-zips all-7zs) >&2
 '
 errorcount=0
 verify_archive () {
@@ -139,6 +143,8 @@ git rev-parse --verify refs/tags/Fiji-$RELEASE 2>/dev/null && {
 	exit 1
 }
 
+echo "Enter password for live CD procedure" &&
+sudo echo Okay &&
 echo "Building for MacOSX" &&
 if ! git push macosx10.5:$NIGHTLY_BUILD +$HEAD:$TMP_HEAD
 then
@@ -147,6 +153,7 @@ then
 fi &&
 macsums="$(ssh macosx10.5 "$checkout_and_build")" &&
 
+sudo -v &&
 echo "Building for non-MacOSX" &&
 git fetch macosx10.5:$NIGHTLY_BUILD master && # for fiji-macosx.7z
 if ! git push $HOME/$NIGHTLY_BUILD +FETCH_HEAD:$TMP_HEAD
@@ -164,6 +171,7 @@ then
 	git diff --no-index .git/macsums .git/thissums
 	exit 1
 fi &&
+sudo -v &&
 sh -c "$build_rest" || exit
 
 echo "Verifying"
@@ -193,11 +201,6 @@ then
 	echo "You might want to fix them and then run $0 $1 --copy-files"
 	exit 1
 fi
-
-echo "Live images" &&
-(cd $HOME/$NIGHTLY_BUILD &&
- ./bin/make-livecd.sh &&
- ./bin/make-livecd.sh --usb) || exit
 
 echo "Uploading" &&
 (cd $HOME/$NIGHTLY_BUILD &&
