@@ -145,7 +145,6 @@ then
 	git push $HOME/$NIGHTLY_BUILD +FETCH_HEAD:$TMP_HEAD
 fi &&
 thissums="$(sh -c "$checkout_and_build")" &&
-sh -c "$build_rest" &&
 
 if test "$macsums" != "$thissums"
 then
@@ -154,7 +153,8 @@ then
 	echo "$thissums" > .git/thissums
 	git diff --no-index .git/macsums .git/thissums
 	exit 1
-fi || exit
+fi &&
+sh -c "$build_rest" || exit
 
 echo "Verifying"
 cd $HOME/$NIGHTLY_BUILD
