@@ -51,6 +51,14 @@ checkout_and_build='
 		test -z "$(ls $d/)" || break;
 	 done &&
 	 ./bin/nightly-build.sh --stdout &&
+	 echo "Work around a Heisenbug" &&
+	 unzip plugins/loci_tools.jar META-INF/MANIFEST.MF &&
+	 if head -n 2 < META-INF/MANIFEST.MF | grep Created-By:
+	 then
+		sed -i -ne "2{h;n;G}" -e p META-INF/MANIFEST.MF &&
+		zip plugins/loci_tools.jar META-INF/MANIFEST.MF
+	 fi &&
+	 rm -r META-INF &&
 	 case "$(uname -s)" in
 	 Darwin)
 		./Build.sh precompile-fiji precompile-fake dmg &&
