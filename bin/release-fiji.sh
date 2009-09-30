@@ -158,18 +158,6 @@ then
 	exit 1
 fi &&
 
-echo "Tagging" &&
-git fetch macosx10.5:$NIGHTLY_BUILD master &&
-git read-tree -u -m FETCH_HEAD &&
-git fetch $HOME/$NIGHTLY_BUILD master &&
-git read-tree -u -m FETCH_HEAD &&
-if ! git diff-index --cached --quiet HEAD
-then
-	git commit -s -a -m "$COMMIT_MESSAGE"
-fi &&
-git tag -m "Fiji $RELEASE" Fiji-$RELEASE &&
-git push /srv/git/fiji.git master Fiji-$RELEASE || exit
-
 echo "Verifying"
 cd $HOME/$NIGHTLY_BUILD
 for a in linux linux64 win32 win64 macosx
@@ -198,7 +186,39 @@ then
 	exit 1
 fi
 
+echo "Live images" &&
+(cd $HOME/$NIGHTLY_BUILD &&
+ ./bin/make-livecd.sh &&
+ ./bin/make-livecd.sh --usb) || exit
+
 echo "Uploading" &&
 (cd $HOME/$NIGHTLY_BUILD &&
  scp macosx10.5:$NIGHTLY_BUILD/fiji-macosx.dmg ./ &&
- copy_files)
+ copy_files) || exit
+
+cat << EOF
+
+All files have been built and uploaded to
+
+	http://pacific.mpi-cbg.de/downloads/$RELEASE/
+
+Please test, and if anything is wrong, hit Ctrl-C.
+If everything is okay, hit Enter to tag and upload to the Updater.
+[Waiting for Enter or Ctrl-C...]
+EOF
+read dummy
+
+echo "Tagging" &&
+git fetch macosx10.5:$NIGHTLY_BUILD master &&
+git read-tree -u -m FETCH_HEAD &&
+git fetch $HOME/$NIGHTLY_BUILD master &&
+git read-tree -u -m FETCH_HEAD &&
+if ! git diff-index --cached --quiet HEAD
+then
+	git commit -s -a -m "$COMMIT_MESSAGE"
+fi &&
+git tag -m "Fiji $RELEASE" Fiji-$RELEASE &&
+git push /srv/git/fiji.git Fiji-$RELEASE &&
+(cd $HOME/$NIGHTLY_BUILD &&
+ ./bin/update-fiji.py) || exit
+
