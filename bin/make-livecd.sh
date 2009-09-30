@@ -248,7 +248,7 @@ EOF
 	# It does not like partition type 83(Linux), but then it really should
 	# be partition type 6(FAT16)...
 	printf "t\n6\nw\nq\n" |
-	fdisk "$FIJIROOT"$IMAGE_FILE
+	fdisk "$FIJIROOT"$IMAGE_FILE || true
 	;;
  esac ||
 die "Building LiveCD failed"
