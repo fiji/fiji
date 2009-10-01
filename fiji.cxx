@@ -1278,6 +1278,8 @@ static void /* no-return */ usage(void)
 		<< "\tuse <dir> to discover plugins" << endl
 		<< "--run <plugin> [<arg>]" << endl
 		<< "\trun <plugin> in ImageJ, optionally with arguments" << endl
+		<< "--edit <file>" << endl
+		<< "\tedit the given file in the script editor" << endl
 		<< endl
 		<< "Options to run programs other than ImageJ:" << endl
 		<< "--jdb" << endl
@@ -1496,6 +1498,16 @@ static int start_ij(void)
 			arg = string("run(\"") + arg + "\");";
 			add_option(options, arg, 1);
 		}
+		else if (handle_one_option(i, "--edit", arg))
+			for (;;) {
+				add_option(options, "-eval", 1);
+				arg = string("run(\"Script Editor\", \"")
+					+ arg + "\");";
+				add_option(options, arg, 1);
+				if (i + 1 >= main_argc)
+					break;
+				arg = main_argv[++i];
+			}
 		else if (handle_one_option(i, "--heap", arg) ||
 				handle_one_option(i, "--mem", arg) ||
 				handle_one_option(i, "--memory", arg))
