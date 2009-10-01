@@ -222,7 +222,8 @@ public class Util {
 		if (File.separator.equals("\\"))
 			path = path.replace("\\", "/");
 		return fijiRoot + (isDeveloper && isLauncher(path) ?
-				"precompiled/" : "") + path;
+				(useMacPrefix ? macPrefix : "precompiled/") :
+				"") + path;
 	}
 
 	public static String prefixUpdate(String path) {
