@@ -2194,6 +2194,15 @@ static int launch_32bit_on_tiger(int argc, char **argv)
 	if (offset < 0 || strcmp(argv[0] + offset, match))
 		return 0; /* suffix not found, no replacement */
 
+	if (strlen(replace) > strlen(match)) {
+		char *buffer = (char *)malloc(offset + strlen(replace) + 1);
+		if (!buffer) {
+			cerr << "Could not allocate new argv[0]" << endl;
+			exit(1);
+		}
+		memcpy(buffer, argv[0], offset);
+		argv[0] = buffer;
+	}
 	strcpy(argv[0] + offset, replace);
 	execv(argv[0], argv);
 	fprintf(stderr, "Could not execute %s: %d(%s)\n",

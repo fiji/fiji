@@ -1,109 +1,113 @@
-Date: Wed, 29 Apr 2009 19:19:19 +0200 (CEST)
+Date: Wed, 30 Sep 2009 22:32:17 +0200 (CEST)
 From: Johannes Schindelin <johannes.schindelin@gmx.de>
 
-I proudly announce a new Fiji version (nick-named dee-dee-oh-nine).  It 
-got its name from the latest two-week brainstorm hosted by the 
-Max-Planck-Institute of Molecular Cell Biology and Genetics in Dresden, 
-Germany.  A list of the user-visible changes in this release:
+I proudly announce a new Fiji version nick-named Plzen.  It was named after
+the city in which we had a very successful image processing school, where we
+tested a few of the shiny new components which are the goodies of this
+release.  The two most prominent new features are
+
+- the new and shiny Fiji Updater.  The updater knows whether your files are
+  up-to-date, obsolete or locally modified.  It will check at startup whether
+  there are updates available, and if so, offer you to run the updater.  You
+  can also choose to be reminded later, or not ever again.
+
+- the Script Editor.  Just call File>New>Script, select a language and start
+  writing a script.  The editor has syntax highlighting and you can run the
+  script without even saving it.
+
+  For an introduction to the power of scripting, see e.g.
+  http://pacific.mpi-cbg.de/wiki/index.php/Javascript_Scripting
+
+Other changes include:
 
 - lots of bug fixes (thanks to all!)
-- the scripting interpreters remember the previous commands (thanks to 
-  Albert Cardona): just use Cursor Up/Down to find out.
-- we have a NRRD reader/writer now (thanks to Greg Jefferis)
-- added the Turbo Reg plugin (thanks Philippe Thevenaz)
-- Fiji Wiki is linked to in the Help menu (thanks Gabriel Landini)
-- Lens Correction is a part of TrakEM2 now (thanks Stephan Saalfeld and 
-  Verena Kaynig)
-- added the Radial Reslice plugin (thanks Julian Cooper and Albert 
-  Cardona)
-- added Name Landmarks and Register plugin (thanks Mark Longair)
-- updated bUnwarpJ (thanks Ignacio Arganda Carreras)
-- the bundled ImageJA now uses a method to discover a running instance 
-  that is safe in a multi-user environment
-- updated Bio#Formats (thanks Melissa Linkert and Curtis Rueden)
-- added the Help>Report a Bug plugin (thanks Mark Longair)
-- added the MTrack2 plugin (thanks Nico Stuurman)
-- added the ToAST plugin (thanks Misha Kudryashev)
-- Java 1.6 is used on 64-bit MacOSX, when possible
-- added the Statistical Region Merging plugin
-- the PDF writer can now save all slices of image stacks, instead of only 
-  the current one
-- updated the AnalyzeSkeleton plugin (thanks Ignacio Arganda Carreras)
-- added the Time Stamper plugin (thanks Daniel James White)
-- added the Auto Threshold plugin (thanks Gabriel Landini)
-- if you drop a .java file into the plugins/ directory and call 
-  Plugins>Scripting>Refresh Javas, it will be added to the Plugins menu 
-  and be compiled transparently upon being called.
-- added scripting examples showing how to interact with the mouse and add 
-  Java listeners written in the scripting language
-- added the Arrow plugin
-- added the Stack Manipulation plugin (thanks Jean-Yves Tinevez)
-- added the FlowJ plugin (thanks Michael Abramoff and Jean-Yves Tinevez)
-- added the Edit LUT as Text script, allowing you to manipulate the 
-  numerical values of the color lookup table
-- added the Auto Local Threshold plugin (thanks Gabriel Landini)
-- added the PIV analyser plugin, for optical flow analysis (thanks 
-  Jean-Yves Tinevez)
-- updated TrakEM2 to version 0.7a (read: lots and lots and lots of bug 
-  fixes as well as enhancements, thanks Albert Cardona and Stephan 
-  Saalfeld)
-- renamed our 'Fill holes' plugin to 'Fill ROI holes' (thanks Gabriel 
-  Landini)
-- added Record Desktop and Record Window commands to record screen movies 
-  from either the whole desktop or a single (Java) window into a stack, 
-  optionally a VirtualStack to overcome memory problems (thanks Albert 
-  Cardona)
-- lots of bug fixes and enhancements to the 3D Viewer plugin (thanks 
-  Benjamin Schmid and Mark Longair)
-- lots of bug fixes and enhancements to the Simple Neurite Tracer plugin, 
-  as well as tighter integration with the 3D Viewer (thanks Mark Longair)
-- lots of bug fixes to the Segmentation Editor plugin (thanks Mark Longair 
-  and Greg Jefferis)
-- added the Show Color Surfaces plugin to show 8#bit color stacks as 
-  colored surfaces in the 3D Viewer (thanks Mark Longair)
-- the 3D Viewer's 4D option can now load hyperstacks (thanks Benjamin 
-  Schmid)
-- the 3D Viewer can do free#hand recordings again, as well as convenience 
-  key bindings (thanks Benjamin Schmid)
-- the Lasso/Blow Tool can optionally track dark lines, and actually 
-  respects the space/color ratio now
-- lots of changes only relevant for developers (thanks to all!)
-- FlowJ was integrated (thanks Jean-Yves Tinevez),
-- The PIV Analyser (an optic flow technique) plugin was donated by 
-  Jean-Yves Tinevez,
-- Refresh Javas is actually called on startup, so that you really can just 
-  drop .java files into plugins/ and they will be compiled and run 
-  automagically,
-- a Clojure example was fixed so it runs with our current Clojure version,
-- two Javascript examples for accessing TrakEM2 were fixed (thanks to 
-  Albert Cardona),
-- the Fiji running on MacOSX can act as a drag 'n drop target now,
-- the Dynamic Reslice plugin was contributed by Jean-Yves Tinevez and 
-  Albert Cardona,
-- AbstractInterpreters cursor up/down behavior was fixed (hopefully for 
-  good now...),
-- the Multi Thresholder plugin was removed, as we have something better in 
-  the form of Auto Threshold and Auto Local Threshold (thanks Jean-Yves 
-  Tinevez and Gabriel Landini),
-- Jean-Yves Tinevez performed a massive task in getting plugin 
-  descriptions as well as maintainer information onto our Wiki; if you 
-  have not put yourself as maintainer of your own plugins, please do so 
-  now,
-- a rather massive bug was fixed with Help>Update Menus; modified plugins 
-  were not loaded anew, but the old versions were retained in memory,
-- Erwin Frise made some modifications to the Level Set plugin: it 
-  remembers previously set parameters, and is substantially faster now,
-- Albert Cardona updated TrakEM2 to version 0.7c,
-- Plugins>Scripting>Macro Interpreter uses our AbstractInterpreter 
-  framework now (thanks to Albert Cardona), with command line history and 
-  all,
-- Gabriel Landini pointed out that our Daltonize plugin is misnamed: it 
-  simulates color blindness, rather than trying to compensate for it.
-- ImageJA no longer opens a port, requiring user consent on Windows.
-- Mark Longair and Benjamin Schmid contributed the Shape Based Average 
-  plugin based on a paper by Torsten Rohlfing.
-- Benjamin Schmid added some tools to edit videos.
+- many, many improvements in the Register Virtual Stack Slices plugin (thanks
+  to Ignacio Arganda Carreras and Albert Cardona)
+- a metric ton of improvements in TrakEM2 (thanks Stephan Saalfeld and Albert)
+- substantial work has been performed on the Level Sets plugin (thanks to
+  Erwin Frise and Albert)
+- on Windows, a possible infinite loop upon startup was fixed
+- the Sync Win plugin was added
+- we ship a new Clojure version now, and support for this language was
+  enhanced (thanks to Albert)
+- our Stack Manipulation collection now has Bob Dougherty's Stack_Sorter
+  (thanks to Bob, Jean-Yves Tinevez and Christophe Leterrier), Interleave
+  and Deinterleave (thanks to Tony Collins and Jean-Yves), and Grouped
+  ZProjector (thanks Jean-Yves)
+- we have a circle fitter which can recognize a single circle, even if there
+  are fluctuations in the signal
+- a lot of encodings were fixed (you should no longer get funny little squares
+  in place of non-ASCII characters)
+- for better integration with the Swing library, we have a JImagePanel that
+  can show a single ImagePlus (thanks to the FocalPoint developers!)
+- we can read/write .xpm and .lss16 files now
+- you can download a LiveCD image and an image you can put on a USB stick now
+- lots and lots of improvements in the AnalyzeSkeleton plugin (thanks to
+  Ignacio)
+- we now bundle the Gray Morphology and several Colocalisation plugins, too
+- Bio-Formats was updated to include the new AmiraMesh reader (thanks to
+  Gregory Jefferis)
+- changes in the bUnwarpJ plugin (amongst other enhancements) allow tighter
+  integration with the Register Virtual Stack plugin (thanks Ignacio)
+- the Level Sets plugin is now available inside TrakEM2, too
+- if you have problems with a particular file format, you can send it to us
+  using Help>Upload Sample Image
+- on MacOSX/PowerPC64, Fiji does not try to launch a 64-bit Java (because Apple
+  does not provide any 64-bit Java for PowerPC)
+- scripts are sorted alphabetically before they are added to menus (for
+  consistency between different computers)
+- loading compressed NRRD images via network is much faster now (thanks Greg!)
+- thanks to Bob Dougherty, we bundle the Local Thickness plugin, too
+- compressed BioRad images are read correctly now (thanks Greg)
+- fixed rendering in the SIFT Align plugin (thanks to Stephan Saalfeld and
+  Gabriel Landini)
+- upgraded the 3D Object Counter plugin (thanks to Fabrice Cordelières and
+  Daniel James White)
+- when launched on MacOSX by double-clicking the icon (or by running from the
+  Dock), the current directory is set to Fiji's application directory (thanks
+  Greg and Christophe)
+- upgraded the LSM Toolbox/Reader to version 0.4f (thanks Mark Longair, Greg
+  Patrick Pirotte and Jerôme Mutterer)
+- on MacOSX, the Lookup Tables from the luts/ directory are finally visible.
+- Help>Update Menus handles not only .jar and .class plugins, but
+  plugin scripts, too
+- we have File>New>Fiji Tutorial, which makes it a breeze to write tutorials
+  with screen shots for the Fiji Wiki
+- on MacOSX, the default Java extensions were not available by mistake
+- sample images can be stored in the samples/ subdirectory, allowing for
+  completely off-line File>Open Sample>?
+- the Stitching plugin now has a file and directory chooser (thanks to Stephan
+  Preibisch)
+- .lei and .dv files are opened with Bio-Formats now
+- .rec and .st files are opened using our MRC reader, too
+- updated the Java runtime environments on Windows and Linux to Java6u16
+- we ship the Manual Tracking plugin now, too (thanks to Fabrice Cordelières)
+- we ship the Calculator Plus plugin now, too (thanks to Daniel Hornung and
+  Gabriel)
+- the command line option "--run" can be used to tell Fiji to run a given
+  plugin right away
+- Fiji is built with Java5 every night to ensure that it continues to work on
+  32-bit MacOSX prior to 10.6.
+- the Macro Interpreter outputs the help correctly again (thanks Gabriel)
+- added two lookup tables, "thermal" and "glasbey" (thanks to Michael Doube
+  and Gabriel)
+- the Help>Report a Bug plugin is much more user-friendly now (thanks Mark)
+- updated View5D, fixed interaction with Bio-Formats (thanks to Simon Kidd)
+- when JAVA_HOME is set to a bogus location Fiji ignores it now (thanks Albert)
+- avoid mistaking .jar files inside .rsrc/ directories for real .jar files,
+  working around a MacOSX quirk (thanks to Maté Biro)
+- ImageJ was updated to version 1.43g
+- the Command Launcher (Ctrl-L in the Fiji window) was converted to Swing,
+  and sports a fuzzy matching, and an option to show more information such
+  as which .jar file that plugin is contained in, for a much-improved
+  user-experience (thanks Mark)
+- ImageJ now opens websites in the preferred browser on Linux
+- cropping an image marks it as modified now
+- Plugins>Install Plugin... can install .jar files now (provided you have
+  permission to write to Fiji's plugins/ directory)
 
-Let me take the opportunity to thank all the contributors (and of course, 
-that also means the many, many people who reported bugs and verified the 
-fixes)!
+The list is so long because we did not get the opportunity to meet and get
+a new release done in July, as we all hoped.
+
+A big thanks goes to all the contributors and users, especially those who
+helped us find and fix bugs!
