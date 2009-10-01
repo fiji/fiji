@@ -432,6 +432,11 @@ public class TextEditor extends JFrame implements ActionListener,
 		}
 		else try {
 			file = new File(path);
+			if (!file.exists()) {
+				modifyCount = Integer.MIN_VALUE;
+				setFileName(file);
+				return;
+			}
 			textArea.read(new BufferedReader(new FileReader(file)),
 				null);
 		} catch (Exception e) {
