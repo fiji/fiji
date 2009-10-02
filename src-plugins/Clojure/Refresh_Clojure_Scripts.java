@@ -3,7 +3,9 @@ package Clojure;
 import common.RefreshScripts;
 import java.io.File;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.util.Map;
+import java.util.HashMap;
 import ij.IJ;
 
 public class Refresh_Clojure_Scripts extends RefreshScripts {
@@ -27,14 +29,18 @@ public class Refresh_Clojure_Scripts extends RefreshScripts {
 			if (IJ.isWindows()) path = path.replace('\\', '/');
 			Clojure_Interpreter ci = new Clojure_Interpreter();
 			ci.init();
-			if (null != vars) {
-				ci.pushThreadBindings(vars);
+			if (null == vars) {
+				vars = new HashMap<String,Object>();
 			}
-			Object res = ci.evaluate("(load-file \"" + path + "\")");
+			// Redirect output to whatever it was set to with super.setOutputStreams
+			PrintWriter pout = new PrintWriter(super.out);
+			vars.put("*out*", pout);
+			ci.pushThreadBindings(vars); // into clojure.core namespace
+			Object res = ci.evaluate(new StringBuilder("(load-file \"").append(path).append("\")").toString());
 			if (null != res) {
 				String s = res.toString().trim();
 				if (s.length() > 0 && !"nil".equals(s)) {
-					IJ.log(s);
+					IJ.log(s); // Not using pout.print(s); pout.flush(); because it will print all the declarations, and it's annoying.
 				}
 			}
 			ci.destroy();
@@ -50,6 +56,13 @@ public class Refresh_Clojure_Scripts extends RefreshScripts {
 		try {
 			Clojure_Interpreter ci = new Clojure_Interpreter();
 			ci.init();
+
+			// Redirect output to whatever it was set to with super.setOutputStreams
+			HashMap<String,Object> vars = new HashMap<String,Object>();
+			PrintWriter pout = new PrintWriter(super.out);
+			vars.put("*out*", pout);
+			ci.pushThreadBindings(vars); // into clojure.core namespace
+
 			Object res = ci.evaluate(istream);
 			if (null != res) {
 				String s = res.toString().trim();
