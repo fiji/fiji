@@ -550,12 +550,9 @@ public class TextEditor extends JFrame implements ActionListener,
 	 *  sets the priority to normal and starts itself. */
 	private abstract class Executer extends ThreadGroup {
 		JTextAreaOutputStream output;
-		Executer(JTextAreaOutputStream output) {
-			this();
-			this.output = output;
-		}
-		Executer() {
+		Executer(final JTextAreaOutputStream output) {
 			super("Script Editor Run :: " + new Date().toString());
+			this.output = output;
 			// Store itself for later
 			executingTasks.add(this);
 			setTitle();
