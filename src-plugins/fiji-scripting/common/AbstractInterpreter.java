@@ -74,7 +74,14 @@ public abstract class AbstractInterpreter implements PlugIn {
 	protected PrintWriter print_out = null;
 	Thread reader, writer;
 	protected JPopupMenu popup_menu;
-	String last_dir = ij.Menus.getPlugInsPath();//ij.Prefs.getString(ij.Prefs.DIR_IMAGE);
+	String last_dir = System.getProperty("user.dir");
+	{
+		try {
+			last_dir = ij.Menus.getPlugInsPath();//ij.Prefs.getString(ij.Prefs.DIR_IMAGE);
+		} catch (Exception e) {
+			System.out.println("Could not retrieve Menus.getPlugInsPath()");
+		}
+	}
 	protected ExecuteCode runner;
 
 	static final protected Hashtable<Class,AbstractInterpreter> instances = new Hashtable<Class,AbstractInterpreter>();
