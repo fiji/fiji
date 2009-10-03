@@ -57,10 +57,9 @@ do
 done ||
 die "Error checking out submodules"
 
-# TODO: this depends on i386
-test -x Fiji.app/fiji-linux ||
-sh Fake.sh app-linux ||
-die "Could not make Fiji for Linux/i386"
+test -x Fiji.app/fiji-linux64 ||
+sh Fake.sh app-all ||
+die "Could not make Fiji for all platforms"
 
 # make the logos
 
@@ -97,12 +96,12 @@ die "Could not make $XPM"
 
 mkdir -p $LIVECD &&
 (cd $LIVECD &&
- for i in dev/pts proc sys
+ for i in dev/pts proc sys binary.tmp
  do
 	sudo umount chroot/$i || true
  done &&
  sudo rm -rf binary* cache/stages_bootstrap/ chroot/ .stage/ .lock \
-	config/chroot_local* &&
+	config/chroot_local* config/binary_local* &&
  "$LH_BASE"/helpers/lh_config --mode ubuntu \
 	-p minimal \
 	-a i386 \
@@ -190,14 +189,23 @@ EOF
  cat > $INCLUDES/usr/X11/Xsession.d/91-fiji << EOF &&
 #!/bin/sh
 
-/usr/local/fiji/fiji-linux
+/usr/bin/fiji
 EOF
- FIJITARGET=/usr/local/fiji &&
- mkdir -p $INCLUDES$FIJITARGET &&
+ FIJITARGET=config/binary_local-includes/Fiji.app &&
+ CHROOTED_FIJITARGET=/cdrom/Fiji.app &&
+ mkdir -p $FIJITARGET &&
  (cd "$FIJIROOT"Fiji.app && tar cvf - .) |
-	(cd $INCLUDES$FIJITARGET && sudo tar xvf -) &&
+	(cd $FIJITARGET && sudo tar xvf -) &&
  mkdir -p $INCLUDES/usr/bin &&
- sudo ln -s ../local/fiji/fiji-linux $INCLUDES/usr/bin/fiji &&
+ cat > $INCLUDES/usr/bin/fiji << EOF &&
+#!/bin/sh
+
+case "\$(uname -m)" in
+x86_64) exec $CHROOTED_FIJITARGET/fiji-linux64 "\$@";;
+*) exec $CHROOTED_FIJITARGET/fiji-linux "\$@";;
+esac
+EOF
+ chmod a+x $INCLUDES/usr/bin/fiji &&
  mkdir -p $INCLUDES/usr/share/applications &&
  cat > $INCLUDES/usr/share/applications/Fiji.desktop << EOF &&
 [Desktop Entry]
@@ -206,7 +214,7 @@ Encoding=UTF-8
 Name=Fiji
 GenericName=
 Comment=
-Icon=$FIJITARGET/images/icon.png
+Icon=$CHROOTED_FIJITARGET/images/icon.png
 Exec=/usr/bin/fiji
 Terminal=false
 Categories=Graphics
@@ -215,7 +223,7 @@ EOF
  cat > $INCLUDES/etc/profile.d/fiji.sh << \EOF &&
 test -d $HOME/.kde/Autostart || {
 	mkdir -p $HOME/.kde/Autostart &&
-	ln -s /usr/local/fiji/fiji-linux $HOME/.kde/Autostart/fiji &&
+	ln -s /usr/bin/fiji $HOME/.kde/Autostart/fiji &&
 
 	# work around a QEmu Cirrus emulation bug
 	if dmesg | grep -q "QEMU DVD-ROM"
@@ -232,5 +240,15 @@ EOF
  chmod a+x $INCLUDES/etc/profile.d/fiji.sh &&
  sudo LH_BASE="$LH_BASE" PATH="$LH_BASE"/helpers:"$PATH" \
 	"$LH_BASE"/helpers/lh_build &&
- mv -f binary.${IMAGE_FILE##*.} "$FIJIROOT"$IMAGE_FILE) ||
+ mv -f binary.${IMAGE_FILE##*.} "$FIJIROOT"$IMAGE_FILE) &&
+ sudo chown "$USER" "$FIJIROOT"$IMAGE_FILE &&
+ case "$IMAGE_FILE" in
+ fiji-usb.img)
+	# Make sure that the partition is readable on MacOSX:
+	# It does not like partition type 83(Linux), but then it really should
+	# be partition type 6(FAT16)...
+	printf "t\n6\nw\nq\n" |
+	fdisk "$FIJIROOT"$IMAGE_FILE || true
+	;;
+ esac ||
 die "Building LiveCD failed"

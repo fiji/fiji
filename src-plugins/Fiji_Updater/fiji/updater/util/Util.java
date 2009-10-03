@@ -88,7 +88,7 @@ public class Util {
 		if (osName.equals("Mac OS X"))
 			return "macosx";
 		if (osName.startsWith("Windows"))
-			return "win" + (is64bit ? "64" : "32") + ".exe";
+			return "win" + (is64bit ? "64" : "32");
 		System.err.println("Unknown platform: " + osName);
 		return osName;
 	}
@@ -222,7 +222,8 @@ public class Util {
 		if (File.separator.equals("\\"))
 			path = path.replace("\\", "/");
 		return fijiRoot + (isDeveloper && isLauncher(path) ?
-				"precompiled/" : "") + path;
+				(useMacPrefix ? macPrefix : "precompiled/") :
+				"") + path;
 	}
 
 	public static String prefixUpdate(String path) {
@@ -243,6 +244,8 @@ public class Util {
 			return new String[] { "fiji-macosx", "fiji-tiger" };
 
 		int index = Arrays.binarySearch(launchers, "fiji-" + platform);
+		if (index < 0)
+			index = -1 - index;
 		return new String[] { launchers[index] };
 	}
 

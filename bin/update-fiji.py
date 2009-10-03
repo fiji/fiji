@@ -13,7 +13,7 @@ from fiji.updater.util import StderrProgress, Util
 from java.io import ByteArrayInputStream
 from java.util import Calendar, Observer
 
-if argv[1] == '--upload-to':
+if len(argv) > 1 and argv[1] == '--upload-to':
 	updateDirectory = argv[2]
 	argv[1:3] = []
 else:

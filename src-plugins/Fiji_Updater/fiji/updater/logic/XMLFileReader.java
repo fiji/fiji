@@ -8,6 +8,7 @@ import fiji.updater.util.Util;
 
 import ij.Prefs;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -54,9 +55,10 @@ public class XMLFileReader extends DefaultHandler {
 	private void initialize(InputSource inputSource)
 			throws ParserConfigurationException, SAXException,
 			       IOException {
-		// PREFS_XMLDATE is a Unix epoch, we need a timestamp
-		newTimestamp = Long.parseLong(Util.timestamp(
-			Long.parseLong(Prefs.get(Updater.PREFS_XMLDATE, "0"))));
+		File dbXml = new File(Util.prefix(Updater.XML_COMPRESSED));
+		newTimestamp = !dbXml.exists() ? 0 :
+			// lastModified is a Unix epoch, we need a timestamp
+			Long.parseLong(Util.timestamp(dbXml.lastModified()));
 
 		SAXParserFactory factory = SAXParserFactory.newInstance();
 		factory.setNamespaceAware(true);

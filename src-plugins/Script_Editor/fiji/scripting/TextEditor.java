@@ -98,7 +98,7 @@ public class TextEditor extends JFrame implements ActionListener,
 	JTextArea screen;
 	JMenuItem new_file, open, save, saveas, compileAndRun, debug, quit,
 		  undo, redo, cut, copy, paste, find, replace, selectAll,
-		  autocomplete, resume, terminate, kill;
+		  autocomplete, resume, terminate, kill, gotoLine;
 	AutoCompletion autocomp;
 	Languages.Language currentLanguage;
 	ClassCompletionProvider provider;
@@ -193,6 +193,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		edit.addSeparator();
 		find = addToMenu(edit, "Find...", KeyEvent.VK_F, ctrl);
 		replace = addToMenu(edit, "Find and Replace...", KeyEvent.VK_H, ctrl);
+		gotoLine = addToMenu(edit, "Goto line...", KeyEvent.VK_G, ctrl);
 		mbar.add(edit);
 
 		JMenu options = new JMenu("Options");
@@ -380,6 +381,8 @@ public class TextEditor extends JFrame implements ActionListener,
 			findOrReplace(false);
 		else if (source == replace)
 			findOrReplace(true);
+		else if (source == gotoLine)
+			gotoLine();
 		else if (source == selectAll) {
 			textArea.setCaretPosition(0);
 			textArea.moveCaretPosition(textArea.getDocument().getLength());
@@ -406,6 +409,22 @@ public class TextEditor extends JFrame implements ActionListener,
 		findDialog.show(replace);
 	}
 
+	public void gotoLine() {
+		String line = JOptionPane.showInputDialog(this, "Line:",
+			"Goto line...", JOptionPane.QUESTION_MESSAGE);
+		try {
+			gotoLine(Integer.parseInt(line));
+		} catch (BadLocationException e) {
+			error("Line number out of range: " + line);
+		} catch (NumberFormatException e) {
+			error("Invalid line number: " + line);
+		}
+	}
+
+	public void gotoLine(int line) throws BadLocationException {
+		textArea.moveCaretPosition(textArea.getLineStartOffset(line-1));
+	}
+
 	public void open(String path) {
 		if (path == null) {
 			file = null;
@@ -413,6 +432,11 @@ public class TextEditor extends JFrame implements ActionListener,
 		}
 		else try {
 			file = new File(path);
+			if (!file.exists()) {
+				modifyCount = Integer.MIN_VALUE;
+				setFileName(file);
+				return;
+			}
 			textArea.read(new BufferedReader(new FileReader(file)),
 				null);
 		} catch (Exception e) {

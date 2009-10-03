@@ -79,6 +79,7 @@ import bunwarpj.trakem2.transform.CubicBSplineTransform;
  * 				<li> Elastic (consistent elastic deformations by B-splines)</li>
  * 				<li> Moving least squares (maximal warping)</li>
  * </ul>
+ * <p>
  * <b>Outputs</b>: the list of new images, one for slice, into a target directory as .tif files.
  * <p>
  * For a detailed documentation, please visit the plugin website at:

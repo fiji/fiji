@@ -69,7 +69,7 @@ public class XMLFileDownloader extends Downloader {
 			}
 		});
 		data = Compressor.decompress(new FileInputStream(destination));
-		Prefs.set(Updater.PREFS_XMLDATE, "" + xmlLastModified);
+		new File(destination).setLastModified(xmlLastModified);
 	}
 
 	public InputStream getInputStream() {

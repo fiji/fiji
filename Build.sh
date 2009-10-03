@@ -1,40 +1,64 @@
 #!/bin/sh
 
-case "$(uname -s)" in
-MINGW*)
-	dirname () {
-		case "$1" in
-		*\\*|*/*)
-			echo "$1" | sed 's/[\\\/][^\\\/]*$//'
-			;;
-		*)
-			echo .
-			;;
-		esac
-	}
-	;;
-esac
+
+dirname () {
+	case "$1" in
+	*/*)
+		echo ${1%/*}
+		;;
+	*\\*)
+		echo ${1%\\*}
+		;;
+	*)
+		echo .
+		;;
+	esac
+}
 
 CWD="$(dirname "$0")"
 
 case "$(uname -s)" in
 Darwin)
+	java_submodule=macosx-java3d
 	case "$(uname -r)" in
 	8.*) platform=tiger;;
 	*) platform=macosx;;
 	esac; exe=;;
 Linux)
 	case "$(uname -m)" in
-		x86_64) platform=linux64;;
-		*) platform=linux;;
+		x86_64) platform=linux64; java_submodule=linux-amd64;;
+		*) platform=linux; java_submodule=$platform;;
 	esac; exe=;;
 MINGW*|CYGWIN*)
 	case "$PROCESSOR_ARCHITEW6432" in
-	'') platform=win32;;
-	*) platform=win64;;
+	'') platform=win32; java_submodule=$platform;;
+	*) platform=win64; java_submodule=$platform;;
 	esac
 	exe=.exe;;
 esac
+
+test -z "$JAVA_HOME" &&
+JAVA_HOME="$("$CWD"/precompiled/fiji-"$platform" --print-java-home)"
+
+# need to clone java submodule
+test -f "$JAVA_HOME/lib/tools.jar" || test -f "$JAVA_HOME/../lib/tools.jar" ||
+test -f "$JAVA_HOME"/Home/lib/ext/vecmath.jar || {
+	echo "No JDK found; cloning it"
+	JAVA_SUBMODULE=java/$java_submodule
+	git submodule init "$JAVA_SUBMODULE" && (
+		URL="$(git config submodule."$JAVA_SUBMODULE".url)" &&
+		mkdir -p "$JAVA_SUBMODULE" &&
+		cd "$JAVA_SUBMODULE" &&
+		git init &&
+		git remote add -t master origin "$URL" &&
+		git fetch --depth 1 &&
+		git reset --hard origin/master
+	) &&
+	git submodule update "$JAVA_SUBMODULE" || {
+		echo "Could not clone JDK" >&2
+		exit 1
+	}
+}
 
 handle_variables () {
 	case "$1" in

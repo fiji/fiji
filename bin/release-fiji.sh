@@ -12,6 +12,8 @@
 
 # Then, everything is tagged, and put into the download directory.
 
+test a"$1" = a--copy-files && set "$2" "$1"
+
 RELEASE="$1"
 test -z "$RELEASE" && {
 	echo "Need a release"
@@ -29,6 +31,7 @@ HEAD=$(git rev-parse ${HEAD:-HEAD})
 TARGET_DIRECTORY=/var/www/downloads/$RELEASE
 NIGHTLY_BUILD=fiji/nightly-build
 TMP_HEAD=refs/heads/tmp
+COMMIT_MESSAGE="Precompile Fiji and Fake for $RELEASE"
 
 clone='
 	cd $HOME &&
@@ -49,28 +52,40 @@ checkout_and_build='
 		esac &&
 		test -z "$(ls $d/)" || break;
 	 done &&
-	 ./bin/nightly-build.sh --stdout) >&2 &&
-	./bin/calculate-checksums.py
-'
-
-COMMIT_MESSAGE="Precompile Fiji and Fake for $RELEASE"
-
-build_dmg='
-	(cd $HOME/'$NIGHTLY_BUILD' &&
-	 ./Build.sh precompile-fiji precompile-fake dmg &&
-	 if ! git diff-files -q --exit-code --ignore-submodules
+	 ./bin/nightly-build.sh --stdout &&
+	 echo "Work around a Heisenbug" &&
+	 unzip plugins/loci_tools.jar META-INF/MANIFEST.MF &&
+	 if head -n 2 < META-INF/MANIFEST.MF | grep Created-By:
 	 then
-		git commit -s -a -m "'"$COMMIT_MESSAGE"'"
-	 fi) >&2
+		sed -i -ne "2{h;n;G}" -e p META-INF/MANIFEST.MF &&
+		zip plugins/loci_tools.jar META-INF/MANIFEST.MF
+	 fi &&
+	 rm -r META-INF &&
+	 case "$(uname -s)" in
+	 Darwin)
+		./Build.sh precompile-fiji precompile-fake dmg &&
+		if ! git diff-files -q --exit-code --ignore-submodules
+		then
+			git commit -s -a -m "'"$COMMIT_MESSAGE"'"
+		fi
+		;;
+	 esac) >&2 &&
+	./bin/calculate-checksums.py
 '
 
 build_rest='
 	(cd $HOME/'$NIGHTLY_BUILD' &&
-	 ./Build.sh all-cross precompile-fiji all-tars all-zips all-7zs &&
+	 ./Build.sh all-cross precompile-fiji &&
 	 if ! git diff-files -q --exit-code --ignore-submodules
 	 then
 		git commit -s -a -m "'"$COMMIT_MESSAGE"'"
-	 fi) >&2
+	 fi &&
+	 echo "Live images" &&
+	 sudo rm -rf livecd &&
+	 ./bin/make-livecd.sh &&
+	 sudo rm -rf livecd &&
+	 ./bin/make-livecd.sh --usb &&
+	 ./Build.sh all-tars all-zips all-7zs) >&2
 '
 errorcount=0
 verify_archive () {
@@ -130,6 +145,8 @@ git rev-parse --verify refs/tags/Fiji-$RELEASE 2>/dev/null && {
 	exit 1
 }
 
+echo "Enter password for live CD procedure" &&
+sudo echo Okay &&
 echo "Building for MacOSX" &&
 if ! git push macosx10.5:$NIGHTLY_BUILD +$HEAD:$TMP_HEAD
 then
@@ -137,8 +154,8 @@ then
 	git push macosx10.5:$NIGHTLY_BUILD +$HEAD:$TMP_HEAD
 fi &&
 macsums="$(ssh macosx10.5 "$checkout_and_build")" &&
-ssh macosx10.5 "$build_dmg" &&
 
+sudo -v &&
 echo "Building for non-MacOSX" &&
 git fetch macosx10.5:$NIGHTLY_BUILD master && # for fiji-macosx.7z
 if ! git push $HOME/$NIGHTLY_BUILD +FETCH_HEAD:$TMP_HEAD
@@ -147,7 +164,6 @@ then
 	git push $HOME/$NIGHTLY_BUILD +FETCH_HEAD:$TMP_HEAD
 fi &&
 thissums="$(sh -c "$checkout_and_build")" &&
-sh -c "$build_rest" &&
 
 if test "$macsums" != "$thissums"
 then
@@ -157,18 +173,8 @@ then
 	git diff --no-index .git/macsums .git/thissums
 	exit 1
 fi &&
-
-echo "Tagging" &&
-git fetch macosx10.5:$NIGHTLY_BUILD master &&
-git read-tree -u -m FETCH_HEAD &&
-git fetch $HOME/$NIGHTLY_BUILD master &&
-git read-tree -u -m FETCH_HEAD &&
-if ! git diff-index --cached --quiet HEAD
-then
-	git commit -s -a -m "$COMMIT_MESSAGE"
-fi &&
-git tag -m "Fiji $RELEASE" Fiji-$RELEASE &&
-git push /srv/git/fiji.git master Fiji-$RELEASE || exit
+sudo -v &&
+sh -c "$build_rest" || exit
 
 echo "Verifying"
 cd $HOME/$NIGHTLY_BUILD
@@ -201,4 +207,31 @@ fi
 echo "Uploading" &&
 (cd $HOME/$NIGHTLY_BUILD &&
  scp macosx10.5:$NIGHTLY_BUILD/fiji-macosx.dmg ./ &&
- copy_files)
+ copy_files) || exit
+
+cat << EOF
+
+All files have been built and uploaded to
+
+	http://pacific.mpi-cbg.de/downloads/$RELEASE/
+
+Please test, and if anything is wrong, hit Ctrl-C.
+If everything is okay, hit Enter to tag and upload to the Updater.
+[Waiting for Enter or Ctrl-C...]
+EOF
+read dummy
+
+echo "Tagging" &&
+git fetch macosx10.5:$NIGHTLY_BUILD master &&
+git read-tree -u -m FETCH_HEAD &&
+git fetch $HOME/$NIGHTLY_BUILD master &&
+git read-tree -u -m FETCH_HEAD &&
+if ! git diff-index --cached --quiet HEAD
+then
+	git commit -s -a -m "$COMMIT_MESSAGE"
+fi &&
+git tag -m "Fiji $RELEASE" Fiji-$RELEASE &&
+git push /srv/git/fiji.git Fiji-$RELEASE &&
+(cd $HOME/$NIGHTLY_BUILD &&
+ ./bin/update-fiji.py) || exit
+

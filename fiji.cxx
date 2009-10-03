@@ -360,17 +360,23 @@ int main_argc, main_argc_backup;
 const char *main_class;
 bool run_precompiled = false;
 
+static bool dir_exists(string directory);
+
 static string get_java_home(void)
 {
 	if (absolute_java_home != "")
 		return absolute_java_home;
 	const char *env = getenv("JAVA_HOME");
-	if (env)
-		return env;
+	if (env) {
+		if (dir_exists(string(env)))
+			return env;
+		else {
+			cerr << "Ignoring invalid JAVA_HOME: " << env << endl;
+			unsetenv("JAVA_HOME");
+		}
+	}
 	return string(fiji_dir) + "/" + relative_java_home;
 }
-
-static bool dir_exists(string directory);
 
 static string get_jre_home(void)
 {
@@ -1212,6 +1218,7 @@ static bool update_files(string relative_path)
 			exit(1);
 		}
 	}
+	closedir(directory);
 	rmdir(absolute_path.c_str());
 	return true;
 }
@@ -1271,6 +1278,8 @@ static void /* no-return */ usage(void)
 		<< "\tuse <dir> to discover plugins" << endl
 		<< "--run <plugin> [<arg>]" << endl
 		<< "\trun <plugin> in ImageJ, optionally with arguments" << endl
+		<< "--edit <file>" << endl
+		<< "\tedit the given file in the script editor" << endl
 		<< endl
 		<< "Options to run programs other than ImageJ:" << endl
 		<< "--jdb" << endl
@@ -1489,6 +1498,16 @@ static int start_ij(void)
 			arg = string("run(\"") + arg + "\");";
 			add_option(options, arg, 1);
 		}
+		else if (handle_one_option(i, "--edit", arg))
+			for (;;) {
+				add_option(options, "-eval", 1);
+				arg = string("run(\"Script Editor\", \"")
+					+ arg + "\");";
+				add_option(options, arg, 1);
+				if (i + 1 >= main_argc)
+					break;
+				arg = main_argv[++i];
+			}
 		else if (handle_one_option(i, "--heap", arg) ||
 				handle_one_option(i, "--mem", arg) ||
 				handle_one_option(i, "--memory", arg))
@@ -2175,6 +2194,15 @@ static int launch_32bit_on_tiger(int argc, char **argv)
 	if (offset < 0 || strcmp(argv[0] + offset, match))
 		return 0; /* suffix not found, no replacement */
 
+	if (strlen(replace) > strlen(match)) {
+		char *buffer = (char *)malloc(offset + strlen(replace) + 1);
+		if (!buffer) {
+			cerr << "Could not allocate new argv[0]" << endl;
+			exit(1);
+		}
+		memcpy(buffer, argv[0], offset);
+		argv[0] = buffer;
+	}
 	strcpy(argv[0] + offset, replace);
 	execv(argv[0], argv);
 	fprintf(stderr, "Could not execute %s: %d(%s)\n",

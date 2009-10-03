@@ -280,6 +280,8 @@ abstract public class RefreshScripts implements PlugIn {
 	// This is just for recursion; call the addFromDirectory(String,int)
 	// method instead
 	private void addFromDirectory( String topLevelDirectory, String subPath, int depth, int maxDepth ) {
+		if (subPath.equals(".rsrc") || subPath.endsWith("/.rsrc"))
+			return;
 		File f = new File(topLevelDirectory + File.separator + subPath );
 		if (f.isDirectory() ) {
 			if (maxDepth >= 0 && depth >= maxDepth)
@@ -457,6 +459,8 @@ abstract public class RefreshScripts implements PlugIn {
 	}
 
 	protected static String discoverJars(String path) throws IOException {
+		if (path.equals(".rsrc") || path.endsWith("/.rsrc"))
+			return "";
                 File file = new File(path);
                 if (file.isDirectory()) {
 			String result = "";
