@@ -59,7 +59,7 @@ public class UptodateCheck implements PlugIn {
 			return "No network connection available!";
 		localLastModified = getLocalLastModified();
 		if (isDbXmlGzUpToDate(localLastModified)) {
-			Prefs.set(latestReminderKey, "");
+			setLatestNag(-1);
 			return "Up-to-date";
 		}
 		return null;
@@ -147,10 +147,10 @@ public class UptodateCheck implements PlugIn {
 			new Updater().run("update");
 			break;
 		case 1:
-			Prefs.set(latestReminderKey, "" + Long.MAX_VALUE);
+			setLatestNag(Long.MAX_VALUE);
 			break;
 		case 2:
-			Prefs.set(latestReminderKey, "" + now());
+			setLatestNag(now());
 			break;
 		case JOptionPane.CLOSED_OPTION:
 			// do nothing
@@ -180,11 +180,16 @@ public class UptodateCheck implements PlugIn {
 				JOptionPane.QUESTION_MESSAGE,
 				null, options, options[enabled ? 0 : 1])) {
 		case 0:
-			Prefs.set(latestReminderKey, "");
+			setLatestNag(-1);
 			break;
 		case 1:
-			Prefs.set(latestReminderKey, "" + Long.MAX_VALUE);
+			setLatestNag(Long.MAX_VALUE);
 			break;
 		}
+	}
+
+	public static void setLatestNag(long ticks) {
+		Prefs.set(latestReminderKey, ticks < 0 ? "" : ("" + ticks));
+		Prefs.savePreferences();
 	}
 }
