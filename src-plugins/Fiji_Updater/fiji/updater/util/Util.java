@@ -221,9 +221,9 @@ public class Util {
 			path = path.substring(macPrefix.length());
 		if (File.separator.equals("\\"))
 			path = path.replace("\\", "/");
-		return fijiRoot + (isDeveloper && isLauncher(path) ?
-				(useMacPrefix ? macPrefix : "precompiled/") :
-				"") + path;
+		return fijiRoot + (isLauncher(path) ?
+				(isDeveloper ? "precompiled/" :
+				 (useMacPrefix ? macPrefix : "")) : "") + path;
 	}
 
 	public static String prefixUpdate(String path) {
