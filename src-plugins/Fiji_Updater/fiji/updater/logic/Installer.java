@@ -70,7 +70,7 @@ public class Installer extends Downloader {
 				orig.renameTo(new File(saveTo + ".old"));
 			}
 
-			String url = Updater.MAIN_URL + name
+			String url = Updater.MAIN_URL + name.replace(" ", "%20")
 				+ "-" + plugin.getTimestamp();
 			Download file = new Download(plugin, url, saveTo);
 			list.add(file);
