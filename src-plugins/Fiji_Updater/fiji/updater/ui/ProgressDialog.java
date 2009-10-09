@@ -101,6 +101,11 @@ public class ProgressDialog extends JDialog implements Progress {
 		canceled = true;
 	}
 
+	protected void checkIfCanceled() {
+		if (canceled)
+			throw new Canceled();
+	}
+
 	public void setTitle(String title) {
 		this.title = title;
 		progress.setStringPainted(true);
@@ -108,8 +113,7 @@ public class ProgressDialog extends JDialog implements Progress {
 	}
 
 	protected void setTitle() {
-		if (canceled)
-			throw new Canceled();
+		checkIfCanceled();
 		if (detailsScrollPane.isVisible() || latestDetail == null)
 			progress.setString(title);
 		else
@@ -119,16 +123,14 @@ public class ProgressDialog extends JDialog implements Progress {
 	}
 
 	public void setCount(int count, int total) {
-		if (canceled)
-			throw new Canceled();
+		checkIfCanceled();
 		progress.setMaximum(total);
 		progress.setValue(count);
 		repaint();
 	}
 
 	public void addItem(Object item) {
-		if (canceled)
-			throw new Canceled();
+		checkIfCanceled();
 		details.addDetail(item.toString());
 		setTitle();
 		validate();
@@ -136,16 +138,14 @@ public class ProgressDialog extends JDialog implements Progress {
 	}
 
 	public void setItemCount(int count, int total) {
-		if (canceled)
-			throw new Canceled();
+		checkIfCanceled();
 		latestDetail.setMaximum(total);
 		latestDetail.setValue(count);
 		repaint();
 	}
 
 	public void itemDone(Object item) {
-		if (canceled)
-			throw new Canceled();
+		checkIfCanceled();
 		latestDetail.setValue(latestDetail.getMaximum());
 	}
 
