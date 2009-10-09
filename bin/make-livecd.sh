@@ -57,7 +57,7 @@ do
 done ||
 die "Error checking out submodules"
 
-test -x Fiji.app/fiji-linux64 ||
+test -x Fiji.app/fiji-linux64 && test -f Fiji.app/fiji-win64.exe ||
 sh Fake.sh app-all ||
 die "Could not make Fiji for all platforms"
 
