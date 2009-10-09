@@ -4,6 +4,7 @@ import fiji.updater.Updater;
 
 import fiji.updater.util.Progress;
 import fiji.updater.util.Progressable;
+import fiji.updater.util.Util;
 
 import ij.IJ;
 
@@ -19,6 +20,7 @@ import java.net.URL;
 import java.net.URLConnection;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /*
@@ -35,6 +37,7 @@ import java.util.List;
 public class FileUploader extends Progressable {
 	protected final String uploadDir;
 	int total;
+	long timestamp;
 
 	public FileUploader() {
 		this("/var/www/update/");
@@ -53,6 +56,8 @@ public class FileUploader extends Progressable {
 	//Steps to accomplish entire upload task
 	public synchronized void upload(List<SourceFile> sources)
 			throws IOException {
+		long now = new Date().getTime();
+		timestamp = Long.parseLong(Util.timestamp(now));
 		setTitle("Uploading");
 
 		calculateTotalSize(sources);

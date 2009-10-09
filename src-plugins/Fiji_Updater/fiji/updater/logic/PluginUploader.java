@@ -40,8 +40,8 @@ import java.util.Map;
 public class PluginUploader {
 	protected FileUploader uploader;
 
-	// for checking a race: if somebody else updated in the meantime,
-	// complain.
+	// checking race condition:
+	// if somebody else updated in the meantime, complain loudly.
 	protected long xmlLastModified;
 	List<SourceFile> files;
 	String backup, compressed, text;
@@ -69,7 +69,6 @@ public class PluginUploader {
 		}
 	}
 
-	// TODO: verify that the uploader takes server's timestamp
 	public void upload(Progress progress) throws Exception  {
 		uploader.addProgress(progress);
 		uploader.addProgress(new VerifyTimestamp());
@@ -91,10 +90,8 @@ public class PluginUploader {
 		new File(Util.prefix(Updater.TXT_FILENAME)).delete();
 	}
 
-	protected void updateUploadTimestamp(long lockLastModified)
+	protected void updateUploadTimestamp(long timestamp)
 			throws Exception {
-		long timestamp =
-			Long.parseLong(Util.timestamp(lockLastModified));
 		for (SourceFile f : files) {
 			if (!(f instanceof UploadableFile))
 				continue;
@@ -154,7 +151,16 @@ public class PluginUploader {
 			verifyTimestamp();
 		}
 
-		public void setTitle(String string) {}
+		public void setTitle(String string) {
+			try {
+				updateUploadTimestamp(uploader.timestamp);
+			} catch (Exception e) {
+				e.printStackTrace();
+				throw new RuntimeException("Could not update "
+					+ "the timestamps in db.xml.gz");
+			}
+		}
+
 		public void setCount(int count, int total) {}
 		public void itemDone(Object item) {}
 		public void setItemCount(int count, int total) {}
@@ -171,12 +177,6 @@ public class PluginUploader {
 			if (xmlLastModified != lastModified)
 				throw new RuntimeException("db.xml.gz was "
 					+ "changed in the meantime");
-
-			connection = new URL(Updater.MAIN_URL
-					+ Updater.XML_LOCK).openConnection();
-			lastModified = connection.getLastModified();
-			connection.getInputStream().close();
-			updateUploadTimestamp(lastModified);
 		} catch (Exception e) {
 			e.printStackTrace();
 			throw new RuntimeException("Could not verify the "
