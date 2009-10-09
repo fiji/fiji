@@ -403,7 +403,6 @@ public class UpdaterFrame extends JFrame
 		}
 		loadedFrame = new DetailsEditor(this, plugin);
 		showFrame();
-		setEnabled(false);
 	}
 
 	public void applyChanges() {
