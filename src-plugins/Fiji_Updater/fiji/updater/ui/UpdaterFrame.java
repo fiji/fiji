@@ -494,9 +494,12 @@ public class UpdaterFrame extends JFrame
 
 	public void pluginsChanged() {
 		// TODO: once this is editable, make sure changes are committed
-		pluginDetails.setText("");
+		pluginDetails.reset();
 		for (PluginObject plugin : table.getSelectedPlugins())
 			pluginDetails.showPluginDetails(plugin);
+		if (Util.isDeveloper &&
+				pluginDetails.getDocument().getLength() > 0)
+			pluginDetails.setEditableForDevelopers();
 
 		for (PluginAction button : pluginActions)
 			button.enableIfValid();

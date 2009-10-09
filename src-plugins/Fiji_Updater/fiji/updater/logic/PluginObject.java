@@ -222,6 +222,45 @@ public class PluginObject {
 		categories.put(category, (Object)null);
 	}
 
+	public void replaceList(String tag, String[] list) {
+		if (tag.equals("Dependency")) {
+			long now = Long.parseLong(Util.timestamp(new Date()
+						.getTime()));
+			Dependency[] newList = new Dependency[list.length];
+			for (int i = 0; i < list.length; i++) {
+				boolean obsoleted = false;
+				String item = list[i].trim();
+				if (item.startsWith("obsoletes ")) {
+					item = item.substring(10);
+					obsoleted = true;
+				}
+				Dependency dep = dependencies.get(item);
+				if (dep == null)
+					dep = new Dependency(item,
+							now, obsoleted);
+				else if (dep.overrides != obsoleted) {
+					dep.timestamp = now;
+					dep.overrides = obsoleted;
+				}
+				newList[i] = dep;
+			}
+			dependencies.clear();
+			for (Dependency dep : newList)
+				addDependency(dep);
+			return;
+		}
+
+		Map<String, Object> map =
+			tag.equals("Link") ? links :
+			tag.equals("Author") ? authors :
+			tag.equals("Platform") ? platforms :
+			tag.equals("Category") ? categories :
+			null;
+		map.clear();
+		for (String string : list)
+			map.put(string.trim(), (Object)null);
+	}
+
 	public Iterable<String> getCategories() {
 		return categories.keySet();
 	}
