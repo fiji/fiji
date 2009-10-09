@@ -9,6 +9,8 @@ import com.jcraft.jsch.Session;
 
 import fiji.updater.Updater;
 
+import fiji.updater.util.Canceled;
+
 import ij.IJ;
 
 import java.io.IOException;
@@ -79,7 +81,14 @@ public class SSHFileUploader extends FileUploader {
 			throw new IOException("Failed to set command " + uploadFilesCommand);
 		}
 
-		uploadFiles(sources);
+		try {
+			uploadFiles(sources);
+		} catch (Canceled cancel) {
+			setCommand("rm " + uploadDir + Updater.XML_LOCK);
+			out.close();
+			channel.disconnect();
+			throw cancel;
+		}
 
 		//Unlock process
 		// TODO: avoid blind assumptions!!!
