@@ -1403,7 +1403,7 @@ static int start_ij(void)
 	struct options options;
 	JavaVMInitArgs args;
 	JNIEnv *env;
-	string class_path, ext_option, jvm_options, arg;
+	string class_path, ext_option, jvm_options, default_arguments, arg;
 	stringstream plugin_path;
 	int dashdash = 0;
 	bool allow_multiple = false, skip_build_classpath = false;
@@ -1459,6 +1459,7 @@ static int start_ij(void)
 	if (!get_fiji_bundle_variable("allowMultiple", value))
 		allow_multiple = parse_bool(value);
 	get_fiji_bundle_variable("JVMOptions", jvm_options);
+	get_fiji_bundle_variable("DefaultArguments", default_arguments);
 #else
 	read_file_as_string(string(fiji_dir) + "/jvm.cfg", jvm_options);
 #endif
@@ -1721,6 +1722,8 @@ static int start_ij(void)
 
 	if (jvm_options != "")
 		add_options(options, jvm_options, 0);
+	if (default_arguments != "")
+		add_options(options, default_arguments, 1);
 
 	if (dashdash) {
 		for (int i = 1; i < dashdash; i++)
