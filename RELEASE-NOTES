@@ -1,9 +1,9 @@
-Date: Wed, 30 Sep 2009 22:32:17 +0200 (CEST)
+Date: Wed, 14 Oct 2009 23:43:17 +0200 (CEST)
 From: Johannes Schindelin <johannes.schindelin@gmx.de>
 
-I proudly announce a new Fiji version nick-named Plzen.  It was named after
-the city in which we had a very successful image processing school, where we
-tested a few of the shiny new components which are the goodies of this
+It is a great pleasure to announce a new Fiji version nick-named Plzen.  It was
+named after the city in which we had a very successful image processing school,
+where we tested a few of the shiny new components which are the goodies of this
 release.  The two most prominent new features are
 
 - the new and shiny Fiji Updater.  The updater knows whether your files are
@@ -66,7 +66,7 @@ Other changes include:
 - when launched on MacOSX by double-clicking the icon (or by running from the
   Dock), the current directory is set to Fiji's application directory (thanks
   Greg and Christophe)
-- upgraded the LSM Toolbox/Reader to version 0.4f (thanks Mark Longair, Greg
+- upgraded the LSM Toolbox/Reader to version 0.4f (thanks Mark Longair, Greg,
   Patrick Pirotte and Jerôme Mutterer)
 - on MacOSX, the Lookup Tables from the luts/ directory are finally visible.
 - Help>Update Menus handles not only .jar and .class plugins, but
@@ -96,7 +96,7 @@ Other changes include:
 - when JAVA_HOME is set to a bogus location Fiji ignores it now (thanks Albert)
 - avoid mistaking .jar files inside .rsrc/ directories for real .jar files,
   working around a MacOSX quirk (thanks to Maté Biro)
-- ImageJ was updated to version 1.43g
+- ImageJ was updated to version 1.43h
 - the Command Launcher (Ctrl-L in the Fiji window) was converted to Swing,
   and sports a fuzzy matching, and an option to show more information such
   as which .jar file that plugin is contained in, for a much-improved
