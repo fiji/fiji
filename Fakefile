@@ -377,8 +377,12 @@ app-all[bin/make-app.py all $PLATFORM] <- all
 app-nojre[bin/make-app.py nojre $PLATFORM] <- all
 
 all-dmgs[] <- fiji-macosx.dmg
-fiji-*.dmg[bin/make-dmg.py] <- app-* Fiji.app
+fiji-*.dmg[bin/make-dmg.py] <- app-* Fiji.app \
+	resources/install-fiji.jpg
 dmg[] <- fiji-macosx.dmg
+
+resources/install-fiji.jpg[./fiji bin/generate-finder-background.py] <- \
+	bin/generate-finder-background.py
 
 all-tars[] <- fiji-linux.tar.bz2 fiji-linux64.tar.bz2 \
 	fiji-all.tar.bz2 fiji-nojre.tar.bz2
