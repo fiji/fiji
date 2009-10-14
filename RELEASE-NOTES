@@ -105,6 +105,10 @@ Other changes include:
 - cropping an image marks it as modified now
 - Plugins>Install Plugin... can install .jar files now (provided you have
   permission to write to Fiji's plugins/ directory)
+- On MacOSX, the .dmg opens with a background image instructing the user
+  how to install Fiji by dragging it to the Applications folder
+- allow scripting of Bio-Formats again
+- allow the script interpreters to run in headless mode
 
 The list is so long because we did not get the opportunity to meet and get
 a new release done in July, as we all hoped.
