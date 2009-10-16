@@ -124,7 +124,7 @@ public class Reader {
 	private long getTagCount(RandomAccessStream stream, long position) {
 		long tags = 0;
 		try {
-			stream.seek(position);
+			stream.seek((int) position);
 			tags = swap(stream.readShort());
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -185,7 +185,7 @@ public class Reader {
 				imDir.TIF_STRIPOFFSETS_LENGTH = ((tag[7] & MASK2) << 24)
 						| ((tag[6] & MASK2) << 16) | ((tag[5] & MASK2) << 8)
 						| (tag[4] & MASK2);
-				stripOffset = (((tag[11] & MASK2) << 24) & 0xffffffffl)
+				stripOffset = ((tag[11] & MASK2) << 24)
 						| ((tag[10] & MASK2) << 16) | ((tag[9] & MASK2) << 8)
 						| (tag[8] & MASK2);
 				break;
@@ -226,8 +226,8 @@ public class Reader {
 					(int) imDir.TIF_STRIPBYTECOUNTS_LENGTH);
 
 		try {
-			stream.seek((currentTagPosition + 12));
-			long offset_next_directory = swap(stream.readInt()) & 0xffffffff;
+			stream.seek((int) (currentTagPosition + 12));
+			int offset_next_directory = swap(stream.readInt());
 			imDir.OFFSET_NEXT_DIRECTORY = offset_next_directory;
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -240,7 +240,7 @@ public class Reader {
 		return imDir;
 	}
 
-	private byte[] readTag(RandomAccessStream stream, long position) {
+	private byte[] readTag(RandomAccessStream stream, int position) {
 		byte[] tag = new byte[12];
 		try {
 			stream.seek(position);
@@ -255,9 +255,9 @@ public class Reader {
 			int count) {
 		long[] offsets = new long[count];
 		try {
-			stream.seek(position);
+			stream.seek((int) position);
 			for (int i = 0; i < count; i++)
-				offsets[i] = swap(stream.readInt()) & 0xffffffffl;
+				offsets[i] = swap(stream.readInt());
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -270,7 +270,7 @@ public class Reader {
 		try {
 			if (position == 0)
 				return cz;
-			stream.seek(position + 8);
+			stream.seek((int) position + 8);
 			cz.DimensionX = swap(stream.readInt());
 			cz.DimensionY = swap(stream.readInt());
 			cz.DimensionZ = swap(stream.readInt());
@@ -288,11 +288,11 @@ public class Reader {
 			cz.VoxelSizeY = swap(stream.readDouble());
 			cz.VoxelSizeZ = swap(stream.readDouble());
 
-			stream.seek(position + 88);
+			stream.seek((int) position + 88);
 			cz.ScanType = swap(stream.readShort());
-			stream.seek(position + 108);
+			stream.seek((int) position + 108);
 			cz.OffsetChannelColors = swap(stream.readInt());
-			stream.seek(position + 120);
+			stream.seek((int) position + 120);
 			cz.OffsetChannelDataTypes = swap(stream.readInt());
 
 			if (cz.OffsetChannelDataTypes != 0) {
@@ -314,7 +314,7 @@ public class Reader {
 			long position, long channelCount) {
 		int[] OffsetChannelDataTypesValues = new int[(int) channelCount];
 		try {
-			stream.seek(position);
+			stream.seek((int) position);
 
 			for (int i = 0; i < channelCount; i++) {
 				OffsetChannelDataTypesValues[i] = swap(stream.readInt());
@@ -329,7 +329,7 @@ public class Reader {
 			RandomAccessStream stream, long position, long channelCount) {
 		ChannelNamesAndColors channelNamesAndColors = new ChannelNamesAndColors();
 		try {
-			stream.seek(position);
+			stream.seek((int) position);
 			channelNamesAndColors.BlockSize = swap(stream.readInt());
 			channelNamesAndColors.NumberColors = swap(stream.readInt());
 			channelNamesAndColors.NumberNames = swap(stream.readInt());
@@ -337,8 +337,8 @@ public class Reader {
 			channelNamesAndColors.NamesOffset = swap(stream.readInt());
 			channelNamesAndColors.Mono = swap(stream.readInt());
 			// reserved 4 words
-			stream.seek(channelNamesAndColors.NamesOffset
-					+ position);
+			stream.seek((int) channelNamesAndColors.NamesOffset
+					+ (int) position);
 			channelNamesAndColors.ChannelNames = new String[(int) channelCount];
 			// long Namesize = channelNamesAndColors.BlockSize-
 			// channelNamesAndColors.NamesOffset;
@@ -347,8 +347,8 @@ public class Reader {
 				channelNamesAndColors.ChannelNames[j] = readSizedNULLASCII(
 						stream, size);
 			}
-			stream.seek(channelNamesAndColors.ColorsOffset
-					+ position);
+			stream.seek((int) channelNamesAndColors.ColorsOffset
+					+ (int) position);
 			channelNamesAndColors.Colors = new int[(int) (channelNamesAndColors.NumberColors)];
 
 			for (int j = 0; j < (int) (channelNamesAndColors.NumberColors); j++) {
@@ -362,7 +362,7 @@ public class Reader {
 	}
 
 	public static String readSizedNULLASCII(RandomAccessStream stream, long s) {
-		long offset = 0;
+		int offset = 0;
 		String tempstr = new String("");
 		int in = 0;
 		char ch;
@@ -588,9 +588,9 @@ public class Reader {
 
 		firstImDir = null;
 		ImageReader reader = null;
-		long flength = 0;
-		lsmFi.stripOffsets = new long[1];
-		lsmFi.stripLengths = new long[1];
+		int flength = 0;
+		lsmFi.stripOffsets = new int[1];
+		lsmFi.stripLengths = new int[1];
 		for (int imageCounter = 0; imageCounter < lsmFi.imageDirectories.size(); imageCounter++) {
 			ImageDirectory imDir = (ImageDirectory) lsmFi.imageDirectories
 					.get(imageCounter);
@@ -598,7 +598,7 @@ public class Reader {
 
 				if (imDir.TIF_COMPRESSION == 5) {
 					lsmFi.compression = FileInfo.LZW;
-					flength = new File(lsmFi.directory
+					flength = (int) new File(lsmFi.directory
 							+ System.getProperty("file.separator")
 							+ lsmFi.fileName).length();
 					if (imDir.TIF_PREDICTOR == 2)
@@ -631,8 +631,8 @@ public class Reader {
 						lsmFi.fileType = FileInfo.GRAY8;
 						break;
 					}
-					lsmFi.stripLengths[0] = imDir.TIF_STRIPBYTECOUNTS[channelCount];
-					lsmFi.stripOffsets[0] = imDir.TIF_STRIPOFFSETS[channelCount];
+					lsmFi.stripLengths[0] = (int) imDir.TIF_STRIPBYTECOUNTS[channelCount];
+					lsmFi.stripOffsets[0] = (int) imDir.TIF_STRIPOFFSETS[channelCount];
 					reader = new ImageReader(lsmFi);
 					if (channelCount < imDir.TIF_STRIPOFFSETS_LENGTH) {
 
@@ -661,8 +661,8 @@ public class Reader {
 				channels = 1; // only read the first channel for the thumbs.
 				// speed!
 				for (int channelCount = 0; channelCount < channels; channelCount++) {
-					lsmFi.stripLengths[0] = imDir.TIF_STRIPBYTECOUNTS[channelCount];
-					lsmFi.stripOffsets[0] = imDir.TIF_STRIPOFFSETS[channelCount];
+					lsmFi.stripLengths[0] = (int) imDir.TIF_STRIPBYTECOUNTS[channelCount];
+					lsmFi.stripOffsets[0] = (int) imDir.TIF_STRIPOFFSETS[channelCount];
 					if (channelCount < imDir.TIF_STRIPOFFSETS_LENGTH) {
 						try {
 							stream.seek(lsmFi.stripOffsets[0]);
