@@ -40,7 +40,6 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 
 import java.awt.Choice;
-import java.awt.Component;
 import java.awt.Frame;
 import java.awt.Rectangle;
 import java.awt.Scrollbar;
@@ -50,11 +49,10 @@ import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.WindowEvent;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 /**
  * Class to create the dialog for bUnwarpJ.
+ * It extends GenericDialog to allow the user interacting with the other windows.
  */
 public class MainDialog extends GenericDialog
 { /* begin class MainDialog */
@@ -74,36 +72,36 @@ public class MainDialog extends GenericDialog
     ....................................................................*/
 
 	/** List of available images in ImageJ */
-	private ImagePlus[] imageList;
+	private ImagePlus[] imageList = null;
 
 	// Image representations (canvas and ImagePlus)
 	/** Canvas of the source image */
-	private ImageCanvas sourceIc;
+	private ImageCanvas sourceIc = null;
 	/** Canvas of the target image */
-	private ImageCanvas targetIc;
+	private ImageCanvas targetIc = null;
 	/** Image representation for source image */
-	private ImagePlus sourceImp;
+	private ImagePlus sourceImp = null;
 	/** Image representation for target image */
-	private ImagePlus targetImp;
+	private ImagePlus targetImp = null;
 
 	// Original image processors
 	/** initial source image processor */
-	private ImageProcessor originalSourceIP;
+	private ImageProcessor originalSourceIP = null;
 	/** initial target image processor */
-	private ImageProcessor originalTargetIP;
+	private ImageProcessor originalTargetIP = null;
 
 
 	// Image models
 	/** Model for source image */
-	private BSplineModel source;
+	private BSplineModel source = null;
 	/** Model for target image */
-	private BSplineModel target;
+	private BSplineModel target = null;
 
 	// Image Masks
 	/** Mask for source image */
-	private Mask       sourceMsk;
+	private Mask sourceMsk = null;
 	/** Mask for target image */
-	private Mask       targetMsk;
+	private Mask targetMsk = null;
 
 	// Initial Affine Matrices
 	/** Initial affine matrix for the source image */
@@ -113,16 +111,15 @@ public class MainDialog extends GenericDialog
 
 	// Point handlers for the landmarks
 	/** Point handlers for the landmarks in the source image */
-	private PointHandler sourcePh;
+	private PointHandler sourcePh = null;
 	/** Point handlers for the landmarks in the target image */
-	private PointHandler targetPh;
+	private PointHandler targetPh = null;
 
 
 	/** Boolean for clearing mask */
 	private boolean clearMask = false;
 	/** Toolbar handler */
-	private PointToolbar tb
-	= new PointToolbar(Toolbar.getInstance(),this);
+	private PointToolbar tb = new PointToolbar(Toolbar.getInstance(),this);
 
 	// Final action
 	/** flag to see if the finalAction was launched */
@@ -274,8 +271,13 @@ public class MainDialog extends GenericDialog
 				new AdjustmentListener() {
 					public void adjustmentValueChanged(AdjustmentEvent adjustmentEvent) 
 					{										    	  					    	  	
-						// Update resampling factor
-						MainDialog.this.maxImageSubsamplingFactor = Integer.parseInt(resamplingTextField.getText());						
+						// Update re-sampling factor
+						MainDialog.this.maxImageSubsamplingFactor = Integer.parseInt(resamplingTextField.getText());
+						// and update source and target
+						source.setSubsamplingFactor(MainDialog.this.maxImageSubsamplingFactor);
+						target.setSubsamplingFactor(MainDialog.this.maxImageSubsamplingFactor);
+						
+						//IJ.log("updated re-sampling factor to " + resamplingTextField.getText());
 					}}
 		);
 		this.resamplingTextField = (TextField)(super.getNumericFields().lastElement()); 
@@ -424,23 +426,25 @@ public class MainDialog extends GenericDialog
 			final int newChoiceIndex = originChoice.getSelectedIndex();
 			if (sourceChoiceIndex != newChoiceIndex)
 			{
-				//stopSourceThread();
 				// If the new source image is not the previous target
 				if (targetChoiceIndex != newChoiceIndex)
 				{
 					sourceChoiceIndex = newChoiceIndex;
 					ungrayImage(sourcePh.getPointAction());					
 					cancelSource();
+					createSourceImage(bIsReverse);
+					
+					ungrayImage(targetPh.getPointAction());
 					targetPh.removePoints();
+					
 					// Restore previous target roi
 					targetImp.setRoi(this.previousTargetRoi);					
-					createSourceImage(bIsReverse);
+					
 					loadPointRoiAsLandmarks();
 					setSecondaryPointHandlers();
 				}
 				else // otherwise, permute
 				{
-					//stopTargetThread();
 					targetChoiceIndex = sourceChoiceIndex;
 					sourceChoiceIndex = newChoiceIndex;
 					this.targetChoice.select(targetChoiceIndex);
@@ -462,10 +466,12 @@ public class MainDialog extends GenericDialog
 					targetChoiceIndex = newChoiceIndex;
 					ungrayImage(targetPh.getPointAction());
 					cancelTarget();
+					createTargetImage();
+					
+					ungrayImage(this.sourcePh.getPointAction());
 					sourcePh.removePoints();
 					// Restore previous source roi
-					sourceImp.setRoi(this.previousSourceRoi);					
-					createTargetImage();
+					sourceImp.setRoi(this.previousSourceRoi);										
 					loadPointRoiAsLandmarks();
 					setSecondaryPointHandlers();
 				}
@@ -772,7 +778,7 @@ public class MainDialog extends GenericDialog
 	 */
 	public void ungrayImage(final PointAction pa)
 	{
-		if (pa == sourcePh.getPointAction()) 
+		if (sourcePh != null && pa == sourcePh.getPointAction()) 
 		{
 			/*
           int Xdim=source.getWidth();
@@ -789,7 +795,8 @@ public class MainDialog extends GenericDialog
 			if(this.sourceImp != null && this.sourceImp.getProcessor() != null) 	
 			{
 				this.sourceImp.setProcessor(sourceImp.getTitle(), this.originalSourceIP);
-				sourceImp.updateImage();
+				this.sourceImp.updateImage();
+				//new ImagePlus("original source", this.originalSourceIP).show();
 			}
 		} 
 		else 
@@ -811,6 +818,7 @@ public class MainDialog extends GenericDialog
 			{
 				this.targetImp.setProcessor(this.targetImp.getTitle(), this.originalTargetIP);
 				targetImp.updateImage();
+				//new ImagePlus("original target", this.originalSourceIP).show();
 			}
 		}
 	}
@@ -881,7 +889,8 @@ public class MainDialog extends GenericDialog
 
 	/*------------------------------------------------------------------*/
 	/**
-	 * Create the source image.
+	 * Create the source image, i.e. initialize the B-spline model for the
+	 * source image. The resolution pyramid is not started here, but in startPyramids. 
 	 *
 	 * @param bIsReverse determines the transformation direction (source-target=TRUE or target-source=FALSE)
 	 */
@@ -932,10 +941,10 @@ public class MainDialog extends GenericDialog
 			// Take the mask from the second slice			
 			sourceMsk = new Mask(sourceImp.getStack().getProcessor(2), true);
 		}
-		sourcePh  = new PointHandler(sourceImp, tb, sourceMsk, this);
+		sourcePh = new PointHandler(sourceImp, tb, sourceMsk, this);
 				
 		tb.setSource(sourceImp, sourcePh);
-	} /* end createSourceImage */
+	} // end createSourceImage
 
 	/*------------------------------------------------------------------*/
 	/**
@@ -966,28 +975,28 @@ public class MainDialog extends GenericDialog
 			this.originalTargetIP = this.targetImp.getProcessor();
 
 
-		target    =
+		this.target    =
 			new BSplineModel(targetImp.getProcessor(), true, 
 					(int) Math.pow(2, this.maxImageSubsamplingFactor));
 		
 		this.computeImagePyramidDepth();
-		target.setPyramidDepth(imagePyramidDepth + min_scale_image);
+		this.target.setPyramidDepth(imagePyramidDepth + min_scale_image);
 		//target.getThread().start();
-		targetIc  = targetImp.getWindow().getCanvas();
+		this.targetIc  = targetImp.getWindow().getCanvas();
 
 		// If it is an stack, the second slice is considered a mask
 		if (targetImp.getStackSize()==1) 
 		{
 			// Create an empty mask
-			targetMsk = new Mask(targetImp.getProcessor(), false);
+			this.targetMsk = new Mask(targetImp.getProcessor(), false);
 		} 
 		else 
 		{
 			// Take the mask from the second slice
-			targetMsk = new Mask(targetImp.getStack().getProcessor(2), true);
+			this.targetMsk = new Mask(targetImp.getStack().getProcessor(2), true);
 		}
-		targetPh  = new PointHandler(targetImp, tb, targetMsk, this);
-		tb.setTarget(targetImp, targetPh);
+		this.targetPh = new PointHandler(targetImp, tb, targetMsk, this);
+		this.tb.setTarget(targetImp, targetPh);
 	} /* end createTargetImage */
 
 

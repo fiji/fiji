@@ -32,7 +32,13 @@ import java.util.Stack;
 
 /*------------------------------------------------------------------*/
 /**
- * Class for representing the images and the deformations by cubic B-splines
+ * Class for representing the images and the deformations by cubic B-splines:
+ * <ul>
+ * 		<li>Both, images and deformations, are stored in multi-resolution pyramids.</li>
+ * 		<li>The pyramids are not calculated in the constructors but in the method <code>startPyramids</code></ly>
+ * 		<li>For images, even if they are set to be scaled, the original image information is stored.</li>
+ * 		<li>The information corresponding to the output window size is also stored at any time.</li>
+ * </ul>
  */
 public class BSplineModel implements Runnable
 { /* begin class BSplineModel */
@@ -44,7 +50,7 @@ public class BSplineModel implements Runnable
 	/** minimum image size */
 	private static int min_image_size = 4;
 	
-	/** */
+	/** image information (after corresponding scaling) */
 	private ImageProcessor ip = null;
 
 	// Thread
@@ -58,13 +64,15 @@ public class BSplineModel implements Runnable
 	private final Stack imgpyramid = new Stack();
 
 	// Original image, image spline coefficients, and gradient
-	/** original image */
+	/** original image, full-size without scaling */
+	private double[] original_image = null;
+	/** working image at maximum resolution (after scaling) */
 	private double[] image = null;
 	/** image spline coefficients */
 	private double[] coefficient = null;
 
 	// Current image (the size might be different from the original)
-	/** current image */
+	/** current image (at the current resolution level) */
 	private double[] currentImage;
 	/** current image spline coefficients */
 	private double[] currentCoefficient;
@@ -74,12 +82,12 @@ public class BSplineModel implements Runnable
 	private int      currentHeight;
 
 	// Size and other information
-	/** full resolution image width */
+	/** working image width (after scaling) */
 	private int     width;
-	/** full resolution image height */
+	/** working image height (after scaling) */
 	private int     height;
 
-	/** pyramid depth */
+	/** resolution pyramid depth */
 	private int     pyramidDepth;
 	/** current pyramid depth*/
 	private int     currentDepth;
@@ -92,17 +100,17 @@ public class BSplineModel implements Runnable
 	/** flag to check if the coefficients are mirrored */
 	private boolean coefficientsAreMirrored;
 	
-	/** subsampling factor at highest image resolution level (always a power of 2) */
+	/** sub-sampling factor at highest image resolution level (always a power of 2) */
 	private int maxImageSubsamplingFactor = 1;
 
 	// Some variables to speedup interpolation
 	// All these information is set through prepareForInterpolation()
 
-	// Point to interpolate
+	// Point to interpolate	
 	/** x component of the point to interpolate */
-	private double   x;
+	//private double   x;
 	/** y component of the point to interpolate */
-	private double   y;
+	//private double   y;
 
 	// Indexes related
 	/** x index */
@@ -172,11 +180,16 @@ public class BSplineModel implements Runnable
 	/** precomputed y component of the weight of second derivative spline */
 	private double   prec_d2yWeight[][];
 
+	/** original image width (at full-resolution, without scaling) */
+	private int originalWidth = 0;
+	/** original image height (at full-resolution, without scaling) */
+	private int originalHeight = 0;
+
 	/*....................................................................
        Public methods
     ....................................................................*/
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Create image model for image processor: image and coefficient pyramid.
 	 * When calling this constructor, the thread is not started, to do so, 
@@ -209,8 +222,9 @@ public class BSplineModel implements Runnable
 		dyWeight  = new double[4];
 		d2xWeight = new double[4];
 		d2yWeight = new double[4];
-	} /* end bUnwarpJImage */
+	} // end BSplineModel
 
+	//------------------------------------------------------------------
 	/**
 	 * The same as before, but take the image from an array.
 	 *
@@ -233,11 +247,15 @@ public class BSplineModel implements Runnable
 
 		// Copy the pixel array
 		int k = 0;
-		image = new double[width * height];
+		this.image = new double[width * height];
 		for (int y = 0; (y < height); y++)
 			for (int x = 0; (x < width); x++, k++)
-				image[k] = img[y][x];
+				this.image[k] = img[y][x];
 
+		this.original_image = this.image;
+		this.originalWidth = this.width;
+		this.originalHeight = this.height;
+		
 		// Resize the speedup arrays
 		xIndex    = new int[4];
 		yIndex    = new int[4];
@@ -247,9 +265,9 @@ public class BSplineModel implements Runnable
 		dyWeight  = new double[4];
 		d2xWeight = new double[4];
 		d2yWeight = new double[4];
-	} /* end bUnwarpJImage */
+	} /* end BSplineModel */
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Initialize the model from a set of coefficients.
 	 *
@@ -277,9 +295,9 @@ public class BSplineModel implements Runnable
 		dyWeight  = new double[4];
 		d2xWeight = new double[4];
 		d2yWeight = new double[4];
-	}
+	} // end BSplineModel
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Initialize the model from a set of coefficients.
 	 * The same as the previous function but now the coefficients
@@ -314,9 +332,9 @@ public class BSplineModel implements Runnable
 		dyWeight  = new double[4];
 		d2xWeight = new double[4];
 		d2yWeight = new double[4];
-	}    
+	}// end BSplineModel    
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Start coefficient and image pyramids
 	 */
@@ -347,9 +365,9 @@ public class BSplineModel implements Runnable
 		t.setDaemon(true);
 		// And start it
 		t.start();
-	} /* end startPyramids */
+	} // end startPyramids
 	
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Clear the pyramid.
 	 */
@@ -360,7 +378,7 @@ public class BSplineModel implements Runnable
 	} /* end clearPyramid */
 
 	
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Get current height.
 	 *
@@ -368,7 +386,7 @@ public class BSplineModel implements Runnable
 	 */
 	public int getCurrentHeight() {return currentHeight;}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Get current image.
 	 *
@@ -376,7 +394,7 @@ public class BSplineModel implements Runnable
 	 */
 	public double[] getCurrentImage() {return currentImage;}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Get current width.
 	 *
@@ -384,7 +402,7 @@ public class BSplineModel implements Runnable
 	 */
 	public int getCurrentWidth () {return currentWidth;}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Get factor height.
 	 *
@@ -393,7 +411,7 @@ public class BSplineModel implements Runnable
 	 */
 	public double getFactorHeight () {return (double)currentHeight/height;}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Get fact or width.
 	 *
@@ -402,7 +420,7 @@ public class BSplineModel implements Runnable
 	 */
 	public double getFactorWidth () {return (double)currentWidth/width;}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Get current depth.
 	 *
@@ -410,7 +428,7 @@ public class BSplineModel implements Runnable
 	 */
 	public int getCurrentDepth() {return currentDepth;}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Get height.
 	 *
@@ -418,21 +436,46 @@ public class BSplineModel implements Runnable
 	 */
 	public int getHeight () {return(height);}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
-	 * Get image.
+	 * Get image (at the maximum resolution size determined by the scaling).
 	 *
-	 * @return the full-size image.
+	 * @return the less scaled image.
 	 */
 	public double[] getImage () {return image;}
-	/*------------------------------------------------------------------*/
+	
+	//------------------------------------------------------------------
+	/**
+	 * Get original image.
+	 *
+	 * @return the original full-size image.
+	 */
+	public double[] getOriginalImage () {return original_image;}
+	
+
+	//------------------------------------------------------------------
+	/**
+	 * Get original image width.
+	 *
+	 * @return the original full-size image width.
+	 */
+	public int getOriginalImageWidth () {return originalWidth;}
+	//------------------------------------------------------------------
+	/**
+	 * Get original image height.
+	 *
+	 * @return the original full-size image height.
+	 */
+	public int getOriginalImageHeight () {return originalHeight;}
+	
+	//------------------------------------------------------------------
 	/**
 	 * Get subsampled output image.
 	 *
 	 * @return the subsumpled (to show) output image.
 	 */
 	public double[] getSubImage () {return this.subImage;}
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Get b-spline coefficients.
 	 *
@@ -440,7 +483,7 @@ public class BSplineModel implements Runnable
 	 */
 	public double[] getCoefficients () {return this.coefficient;}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Get the pixel value from the image pyramid.
 	 *
@@ -455,7 +498,7 @@ public class BSplineModel implements Runnable
 		return currentImage[y*currentWidth+x];
 	}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Get pyramid depth.
 	 *
@@ -465,7 +508,7 @@ public class BSplineModel implements Runnable
 	 */
 	public int getPyramidDepth () {return(pyramidDepth);}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Get smallest height.
 	 *
@@ -473,7 +516,7 @@ public class BSplineModel implements Runnable
 	 */
 	public int getSmallestHeight () {return(smallestHeight);}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Get smallest width.
 	 *
@@ -481,7 +524,7 @@ public class BSplineModel implements Runnable
 	 */
 	public int getSmallestWidth () {return(smallestWidth);}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Get thread.
 	 *
@@ -489,7 +532,7 @@ public class BSplineModel implements Runnable
 	 */
 	public Thread getThread () {return(t);}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Get width.
 	 *
@@ -497,7 +540,7 @@ public class BSplineModel implements Runnable
 	 */
 	public int getWidth () {return(width);}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Get weight dx.
 	 *
@@ -506,7 +549,7 @@ public class BSplineModel implements Runnable
 	 */
 	public double getWeightDx(int l, int m) {return yWeight[l]*dxWeight[m];}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Get weight dxdx.
 	 *
@@ -515,7 +558,7 @@ public class BSplineModel implements Runnable
 	 */
 	public double getWeightDxDx(int l, int m) {return yWeight[l]*d2xWeight[m];}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Get weight dxdy.
 	 *
@@ -524,7 +567,7 @@ public class BSplineModel implements Runnable
 	 */
 	public double getWeightDxDy(int l, int m) {return dyWeight[l]*dxWeight[m];}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Get weight dy.
 	 *
@@ -533,7 +576,7 @@ public class BSplineModel implements Runnable
 	 */
 	public double getWeightDy(int l, int m) {return dyWeight[l]*xWeight[m];}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Get weight dydy.
 	 *
@@ -542,7 +585,7 @@ public class BSplineModel implements Runnable
 	 */
 	public double getWeightDyDy(int l, int m) {return d2yWeight[l]*xWeight[m];}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Get image coefficient weight.
 	 *
@@ -551,7 +594,7 @@ public class BSplineModel implements Runnable
 	 */
 	public double getWeightI(int l, int m) {return yWeight[l]*xWeight[m];}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * There are two types of interpolation routines. Those that use
 	 * precomputed weights and those that don't.
@@ -572,8 +615,8 @@ public class BSplineModel implements Runnable
 	 *          interpolated_val[v][u] = sw.interpolateI();
 	 *       }
 	 */
-	/*------------------------------------------------------------------*/
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
+	//------------------------------------------------------------------
 	/**
 	 * Interpolate the X and Y derivatives of the image at a
 	 * given point.
@@ -605,7 +648,7 @@ public class BSplineModel implements Runnable
 		}
 	} /* end Interpolate D */
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Interpolate the XY, XX and YY derivatives of the image at a
 	 * given point.
@@ -639,7 +682,7 @@ public class BSplineModel implements Runnable
 		}
 	} /* end Interpolate dxdy, dxdx and dydy */
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Interpolate the X derivative of the image at a given point.
 	 *
@@ -665,7 +708,7 @@ public class BSplineModel implements Runnable
 		return ival;
 	} /* end Interpolate Dx */
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Interpolate the X derivative of the image at a given point.
 	 *
@@ -692,7 +735,7 @@ public class BSplineModel implements Runnable
 		return ival;
 	} /* end Interpolate DxDx */
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Interpolate the X derivative of the image at a given point.
 	 *
@@ -718,7 +761,7 @@ public class BSplineModel implements Runnable
 		return ival;
 	} /* end Interpolate DxDy */
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Interpolate the Y derivative of the image at a given point.
 	 *
@@ -745,7 +788,7 @@ public class BSplineModel implements Runnable
 		return ival;
 	} /* end Interpolate Dy */
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Interpolate the X derivative of the image at a given point.
 	 *
@@ -772,7 +815,7 @@ public class BSplineModel implements Runnable
 		return ival;
 	} /* end Interpolate DyDy */
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Interpolate the image at a given point.
 	 *
@@ -799,7 +842,7 @@ public class BSplineModel implements Runnable
 		return ival;
 	} /* end Interpolate Image */
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Check if the coefficients pyramid is empty.
 	 *
@@ -808,7 +851,7 @@ public class BSplineModel implements Runnable
 	 */
 	public boolean isFinest() {return cpyramid.isEmpty();}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Pop one element from the coefficients and image pyramids.
 	 */
@@ -841,7 +884,7 @@ public class BSplineModel implements Runnable
 			currentImage = (double [])imgpyramid.pop();
 		} else currentImage = image;
 	}
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * fromCurrent=true  --> The interpolation is prepared to be done
 	 *                       from the current image in the pyramid.
@@ -858,8 +901,8 @@ public class BSplineModel implements Runnable
 			boolean fromCurrent)
 	{
 		// Remind this point for interpolation
-		this.x = x;
-		this.y = y;
+		//this.x = x;
+		//this.y = y;
 		this.fromCurrent = fromCurrent;
 
 		if (fromCurrent)
@@ -940,7 +983,7 @@ public class BSplineModel implements Runnable
 		d2yWeight[3] = t;
 	} /* prepareForInterpolation */
 	
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Prepare for interpolation and interpolate 
 	 * 
@@ -1085,7 +1128,7 @@ public class BSplineModel implements Runnable
 	} /* prepareForInterpolationAndInterpolateI */
 
 	
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Prepare for interpolation and interpolate the image value and its
 	 * derivatives
@@ -1267,7 +1310,7 @@ public class BSplineModel implements Runnable
 		return ival;
 	} /* prepareForInterpolationAndInterpolateIAndD */	
 	
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Get width of precomputed vectors.
 	 *
@@ -1275,7 +1318,7 @@ public class BSplineModel implements Runnable
 	 */
 	public int precomputed_getWidth() {return prec_yWeight.length;}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Get precomputed weight dx.
 	 *
@@ -1289,7 +1332,7 @@ public class BSplineModel implements Runnable
 	public double precomputed_getWeightDx(int l, int m, int u, int v)
 	{return prec_yWeight[v][l]*prec_dxWeight[u][m];}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Get precomputed weight dxdx
 	 * 
@@ -1303,7 +1346,7 @@ public class BSplineModel implements Runnable
 	public double precomputed_getWeightDxDx(int l, int m, int u, int v)
 	{return prec_yWeight[v][l]*prec_d2xWeight[u][m];}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Get precomputed weight dxdy
 	 * 
@@ -1317,7 +1360,7 @@ public class BSplineModel implements Runnable
 	public double precomputed_getWeightDxDy(int l, int m, int u, int v)
 	{return prec_dyWeight[v][l]*prec_dxWeight[u][m];}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Get precomputed weight dy
 	 * 
@@ -1331,7 +1374,7 @@ public class BSplineModel implements Runnable
 	public double precomputed_getWeightDy(int l, int m, int u, int v)
 	{return prec_dyWeight[v][l]*prec_xWeight[u][m];}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Get precomputed weight dydy
 	 * 
@@ -1345,7 +1388,7 @@ public class BSplineModel implements Runnable
 	public double precomputed_getWeightDyDy(int l, int m, int u, int v)
 	{return prec_d2yWeight[v][l]*prec_xWeight[u][m];}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Get precomputed weight of coefficient l,m 
 	 * @param l
@@ -1358,7 +1401,7 @@ public class BSplineModel implements Runnable
 	public double precomputed_getWeightI(int l, int m, int u, int v)
 	{return prec_yWeight[v][l]*prec_xWeight[u][m];}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Interpolate the X and Y derivatives of the image at a
 	 * given point.
@@ -1392,7 +1435,7 @@ public class BSplineModel implements Runnable
 		}
 	} /* end Interpolate D */
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Interpolate the XY, XX and YY derivatives of the image at a
 	 * given point.
@@ -1427,7 +1470,7 @@ public class BSplineModel implements Runnable
 		}
 	} /* end Interpolate dxdy, dxdx and dydy */
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Interpolate the image (or deformation) at a given point using 
 	 * the precomputed weights.
@@ -1459,7 +1502,7 @@ public class BSplineModel implements Runnable
 		return ival;
 	} /* end Interpolate Image */
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Prepare precomputations for a given image size. It calls
 	 * prepareForInterpolation with ORIGINAL flag.
@@ -1522,9 +1565,9 @@ public class BSplineModel implements Runnable
 		}
 	}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
-	 * Start the image precomputations. The computation of the B-spline
+	 * Start the image pre-computations. The computation of the B-spline
 	 * coefficients of the full-size image is not interruptible; all other
 	 * methods are.
 	 */
@@ -1532,9 +1575,32 @@ public class BSplineModel implements Runnable
 	{
 		if(image == null && ip != null)
 		{
-			// Copy the pixel array
-			image = new double[width * height];
-			MiscTools.extractImage(ip, image);
+			// Original image
+			this.original_image = new double[width * height];
+			this.originalHeight = this.height;
+			this.originalWidth = this.width;
+			
+			MiscTools.extractImage(ip, this.original_image);
+			
+			// Copy the pixel array and scale if necessary
+			if(this.maxImageSubsamplingFactor != 0)
+			{
+				final float scaleFactor = (float) (1.0f / this.maxImageSubsamplingFactor);
+				this.ip = MiscTools.scale(ip, scaleFactor);
+				this.width = ip.getWidth();
+				this.height = ip.getHeight();				
+			}
+			this.image = new double[width * height];
+			MiscTools.extractImage(ip, this.image);
+						
+			
+			// update sub-sampled output version information if necessary
+			if(this.width <= this.subWidth)
+			{
+				this.subWidth = this.width;
+				this.subHeight = this.height;
+				this.subImage = this.image;
+			}
 		}
 		coefficient = getBasicFromCardinal2D();
 		
@@ -1556,9 +1622,9 @@ public class BSplineModel implements Runnable
 		buildCoefficientPyramid();
 		if (isTarget || this.bSubsampledOutput) 
 			buildImagePyramid();
-	} /* end run */
+	} // end run 
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Set spline coefficients. Copy coefficients to the model array.
 	 *
@@ -1577,7 +1643,7 @@ public class BSplineModel implements Runnable
 		System.arraycopy(c, offset, coefficient, 0, Ydim*Xdim);
 	}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Sets the depth up to which the pyramids should be computed.
 	 *
@@ -1605,7 +1671,7 @@ public class BSplineModel implements Runnable
 		this.pyramidDepth = proposedPyramidDepth;
 	} /* end setPyramidDepth */
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Get subsampled output flag
 	 * 
@@ -1616,7 +1682,7 @@ public class BSplineModel implements Runnable
 		return this.bSubsampledOutput;
 	}
 	
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Set subsampled output flag
 	 * 
@@ -1627,7 +1693,7 @@ public class BSplineModel implements Runnable
 		this.bSubsampledOutput = b;
 	}
 	
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Get subsampled output height
 	 * 
@@ -1637,7 +1703,7 @@ public class BSplineModel implements Runnable
 	{
 		return this.subHeight;
 	}
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Get subsampled output width
 	 * 
@@ -1652,7 +1718,7 @@ public class BSplineModel implements Runnable
        Private methods
     ....................................................................*/
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 *
 	 * @param h
@@ -1673,7 +1739,7 @@ public class BSplineModel implements Runnable
 		} else s[0] = 0.0;
 	} /* end antiSymmetricFirMirrorOffBounds1D */
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Pass from basic to cardinal.
 	 *
@@ -1724,7 +1790,7 @@ public class BSplineModel implements Runnable
 		}
 	} /* end basicToCardinal2D */
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Build the coefficients pyramid.
 	 */
@@ -1735,17 +1801,14 @@ public class BSplineModel implements Runnable
 		double[] fullDual = new double[width * height];
 		int halfWidth = width;
 		int halfHeight = height;
-		basicToCardinal2D(coefficient, fullDual, width, height, 7);
-				
-		int extraSteps = (int) Math.round(Math.log((double) this.maxImageSubsamplingFactor) / Math.log(2));
-		//System.out.println("Extra steps = " + extraSteps + " maxImageSubsamplingFactor = " + this.maxImageSubsamplingFactor);
+		basicToCardinal2D(coefficient, fullDual, width, height, 7);						
 		 
 		// We compute the coefficients pyramid now taking into account the possible extra steps
 		// (extra steps = trick to increase B-spline coefficients when necessary)
-		for (int depth = 1; ((depth <= (pyramidDepth+extraSteps)) && (!t.isInterrupted())); depth++) 
+		for (int depth = 1; ((depth <= pyramidDepth) && (!t.isInterrupted())); depth++) 
 		{
 			IJ.showStatus("Building coefficients pyramid...");
-			IJ.showProgress((double) depth / (pyramidDepth + extraSteps));
+			IJ.showProgress((double) depth / pyramidDepth );
 			fullWidth = halfWidth;
 			fullHeight = halfHeight;
 			halfWidth /= 2;
@@ -1764,20 +1827,22 @@ public class BSplineModel implements Runnable
 				continue;
 			}
 						
+			// Otherwise, we reduce the coefficients by 2
 			final double[] halfDual = getHalfDual2D(fullDual, fullWidth, fullHeight);
 			final double[] halfCoefficient = getBasicFromCardinal2D(halfDual, halfWidth, halfHeight, 7);
 
-			if(depth >= extraSteps)
-			 {
-				if(this.bSubsampledOutput)
-					IJ.log("Coefficients pyramid " + halfWidth + "x" + halfHeight);
-				cpyramid.push(halfCoefficient);
-				cpyramid.push(new Integer(halfHeight));
-				cpyramid.push(new Integer(halfWidth));
-			 }
+			
+			if(this.bSubsampledOutput)
+				IJ.log("Coefficients pyramid " + halfWidth + "x" + halfHeight);
+			cpyramid.push(halfCoefficient);
+			cpyramid.push(new Integer(halfHeight));
+			cpyramid.push(new Integer(halfWidth));
+			
 
 			fullDual = halfDual;
 			
+			// We store the coefficients of the corresponding subsampled
+			// output if it exists.
 			if(this.bSubsampledOutput && halfWidth == this.subWidth)
 			{
 				this.subCoeffs = halfCoefficient;
@@ -1791,7 +1856,7 @@ public class BSplineModel implements Runnable
 		//	System.out.println(" subCoeffs.length = " + this.subCoeffs.length);
 	} /* end buildCoefficientPyramid */
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Build the image pyramid.
 	 */
@@ -1803,14 +1868,12 @@ public class BSplineModel implements Runnable
 		 int halfWidth = width;
 		 int halfHeight = height;
 		 cardinalToDual2D(image, fullDual, width, height, 3);
+		 		 		 
 		 
-		 int extraSteps = (int) Math.round(Math.log((double) this.maxImageSubsamplingFactor) / Math.log(2));
-		 //System.out.println("Extra steps = " + extraSteps + " maxImageSubsamplingFactor = " + this.maxImageSubsamplingFactor);
-		 
-		 for (int depth = 1; ((depth <= (pyramidDepth+extraSteps) ) && (!t.isInterrupted())); depth++) 
+		 for (int depth = 1; depth <= pyramidDepth  && !t.isInterrupted(); depth++) 
 		 {			 
 			 IJ.showStatus("Building image pyramid...");
-		     IJ.showProgress((double) depth / (pyramidDepth + extraSteps));
+		     IJ.showProgress((double) depth / pyramidDepth);
 				
 			 fullWidth = halfWidth;
 			 fullHeight = halfHeight;			 			 
@@ -1834,14 +1897,13 @@ public class BSplineModel implements Runnable
 			 final double[] halfImage = new double[halfWidth * halfHeight];
 			 dualToCardinal2D(halfDual, halfImage, halfWidth, halfHeight, 3);
 			 
-			 if(depth >= extraSteps)
-			 {
-				 if(this.bSubsampledOutput)
-						IJ.log(" Image pyramid " + halfWidth + "x" + halfHeight);
-				 imgpyramid.push(halfImage);
-				 imgpyramid.push(new Integer(halfHeight));
-				 imgpyramid.push(new Integer(halfWidth));
-			 }
+			
+			 if(this.bSubsampledOutput)
+				 IJ.log(" Image pyramid " + halfWidth + "x" + halfHeight);
+			 imgpyramid.push(halfImage);
+			 imgpyramid.push(new Integer(halfHeight));
+			 imgpyramid.push(new Integer(halfWidth));
+			 
 			 fullDual = halfDual;
 			 
 			 if(this.bSubsampledOutput && halfWidth == this.subWidth)
@@ -1865,7 +1927,7 @@ public class BSplineModel implements Runnable
 			 dualToCardinal2D(halfDual, halfImage, halfWidth, halfHeight, 3);
 			 
 			 fullDual = halfDual;
-			 
+			 // We store the image version that matches the sub-sampled output (if necessary)
 			 if(this.bSubsampledOutput && halfWidth == this.subWidth)
 			 {
 				 this.subImage = halfDual;
@@ -1877,7 +1939,7 @@ public class BSplineModel implements Runnable
 		 
 	 } /* end buildImagePyramid */
 
-	 /*------------------------------------------------------------------*/
+	 //------------------------------------------------------------------
 	 /**
 	  * Passes from cardinal to dual (2D).
 	  *
@@ -1898,7 +1960,7 @@ public class BSplineModel implements Runnable
 				 dual, width, height, 2 * degree + 1);
 	 } /* end cardinalToDual2D */
 
-	 /*------------------------------------------------------------------*/
+	 //------------------------------------------------------------------
 	 /**
 	  * Pass coefficients to gradient (1D).
 	  *
@@ -1912,7 +1974,7 @@ public class BSplineModel implements Runnable
 		 System.arraycopy(s, 0, c, 0, s.length);
 	 } /* end coefficientToGradient1D */
 
-	 /*------------------------------------------------------------------*/
+	 //------------------------------------------------------------------
 	 /**
 	  * Pass coefficients to samples.
 	  *
@@ -1926,7 +1988,7 @@ public class BSplineModel implements Runnable
 		 System.arraycopy(s, 0, c, 0, s.length);
 	 } /* end coefficientToSamples1D */
 
-	 /*------------------------------------------------------------------*/
+	 //------------------------------------------------------------------
 	 /**
 	  * Pass coefficients to x,y gradient 2D
 	  * 
@@ -1964,7 +2026,7 @@ public class BSplineModel implements Runnable
 		 }
 	 } /* end coefficientToXYGradient2D */
 
-	 /*------------------------------------------------------------------*/
+	 //------------------------------------------------------------------
 	 /**
 	  * Pass from dual to cardinal (2D).
 	  *
@@ -1985,7 +2047,7 @@ public class BSplineModel implements Runnable
 				 cardinal, width, height, degree);
 	 } /* end dualToCardinal2D */
 
-	 /*------------------------------------------------------------------*/
+	 //------------------------------------------------------------------
 	 /**
 	  * Extract a column from the array.
 	  *
@@ -2004,7 +2066,7 @@ public class BSplineModel implements Runnable
 			 column[i] = (double)array[x];
 	 } /* end extractColumn */
 
-	 /*------------------------------------------------------------------*/
+	 //------------------------------------------------------------------
 	 /**
 	  * Extract a row from the array .
 	  *
@@ -2022,7 +2084,7 @@ public class BSplineModel implements Runnable
 			 row[i] = (double)array[y++];
 	 } /* end extractRow */
 
-	 /*------------------------------------------------------------------*/
+	 //------------------------------------------------------------------
 	 /**
 	  * Get basic from cardinal: convert the 2D image from regular samples
 	  * to standard B-spline coefficients.
@@ -2047,7 +2109,7 @@ public class BSplineModel implements Runnable
 		 return(basic);
 	 } /* end getBasicFromCardinal2D */
 
-	 /*------------------------------------------------------------------*/
+	 //------------------------------------------------------------------
 	 /**
 	  * Get basic from cardinal (2D): convert a 2D signal from regular 
 	  * samples to standard B-spline coefficients.
@@ -2081,7 +2143,7 @@ public class BSplineModel implements Runnable
 		 return(basic);
 	 } /* end getBasicFromCardinal2D */
 
-	 /*------------------------------------------------------------------*/
+	 //------------------------------------------------------------------
 	 /**
 	  * Get half dual (2D).
 	  *
@@ -2115,7 +2177,7 @@ public class BSplineModel implements Runnable
 		 return(halfDual);
 	 } /* end getHalfDual2D */
 
-	 /*------------------------------------------------------------------*/
+	 //------------------------------------------------------------------
 	 /**
 	  * Get initial anti-causal coefficients mirror of bounds.
 	  *
@@ -2131,7 +2193,7 @@ public class BSplineModel implements Runnable
 		 return(z * c[c.length - 1] / (z - 1.0));
 	 } /* end getInitialAntiCausalCoefficientMirrorOffBounds */
 
-	 /*------------------------------------------------------------------*/
+	 //------------------------------------------------------------------
 	 /**
 	  * Get initial causal coefficients mirror of bounds.
 	  *
@@ -2161,7 +2223,7 @@ public class BSplineModel implements Runnable
 		 return(sum / (1.0 - Math.pow(z, 2 * c.length)));
 	 } /* end getInitialCausalCoefficientMirrorOffBounds */
 
-	 /*------------------------------------------------------------------*/
+	 //------------------------------------------------------------------
 	 /**
 	  * Put a column in the array.
 	  *
@@ -2180,7 +2242,7 @@ public class BSplineModel implements Runnable
 			 array[x] = (double)column[i];
 	 } /* end putColumn */
 
-	 /*------------------------------------------------------------------*/
+	 //------------------------------------------------------------------
 	 /**
 	  * Put a row in the array.
 	  *
@@ -2198,7 +2260,7 @@ public class BSplineModel implements Runnable
 			 array[y++] = (double)row[i];
 	 } /* end putRow */
 
-	 /*------------------------------------------------------------------*/
+	 //------------------------------------------------------------------
 	 /**
 	  * Reduce dual (1D).
 	  *
@@ -2238,7 +2300,7 @@ public class BSplineModel implements Runnable
 		 }
 	 } /* end reduceDual1D */
 
-	 /*------------------------------------------------------------------*/
+	 //------------------------------------------------------------------
 	 /**
 	  * Samples to interpolation coefficient (1D).
 	  *
@@ -2301,7 +2363,7 @@ public class BSplineModel implements Runnable
 		 }
 	 } /* end samplesToInterpolationCoefficient1D */
 
-	 /*------------------------------------------------------------------*/
+	 //------------------------------------------------------------------
 	 /**
 	  * Symmetric FIR filter with mirror off bounds (1D) conditions.
 	  *
@@ -2400,8 +2462,9 @@ public class BSplineModel implements Runnable
 		 }
 	 } /* end symmetricFirMirrorOffBounds1D */
 	 
+ 	//------------------------------------------------------------------
 	 /**
-	  * 
+	  * Reduce coefficients by a factor of 2 (beta)
 	  * @param c
 	  * @param width
 	  * @param height
@@ -2415,6 +2478,17 @@ public class BSplineModel implements Runnable
 		 final double[] halfDual = getHalfDual2D(fullDual, width, height);
 		 final double[] halfCoefficient = getBasicFromCardinal2D(halfDual, halfWidth, halfHeight, 7);
 		 return halfCoefficient;
+	 }
+	 
+	 //------------------------------------------------------------------
+	 /**
+	  * Set maximum sub-sampling factor
+	  * 
+	  * @param maxImageSubsamplingFactor
+	  */
+	 public void setSubsamplingFactor(int maxImageSubsamplingFactor) 
+	 {
+		 this.maxImageSubsamplingFactor = maxImageSubsamplingFactor;		
 	 }
 	 
 
