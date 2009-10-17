@@ -274,8 +274,8 @@ public class MainDialog extends GenericDialog
 						// Update re-sampling factor
 						MainDialog.this.maxImageSubsamplingFactor = Integer.parseInt(resamplingTextField.getText());
 						// and update source and target
-						source.setSubsamplingFactor(MainDialog.this.maxImageSubsamplingFactor);
-						target.setSubsamplingFactor(MainDialog.this.maxImageSubsamplingFactor);
+						source.setSubsamplingFactor((int) Math.pow(2, MainDialog.this.maxImageSubsamplingFactor));
+						target.setSubsamplingFactor((int) Math.pow(2, MainDialog.this.maxImageSubsamplingFactor));
 						
 						//IJ.log("updated re-sampling factor to " + resamplingTextField.getText());
 					}}
