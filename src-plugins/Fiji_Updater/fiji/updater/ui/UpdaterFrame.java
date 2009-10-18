@@ -81,6 +81,7 @@ public class UpdaterFrame extends JFrame
 	//For developers
 	// TODO: no more Hungarian notation
 	private JButton btnUpload;
+	boolean canUpload;
 
 	public UpdaterFrame() {
 		super("Fiji Updater");
@@ -196,7 +197,7 @@ public class UpdaterFrame extends JFrame
 
 		rightPanel.add(Box.createVerticalGlue());
 
-		pluginDetails = new PluginDetails();
+		pluginDetails = new PluginDetails(this);
 		SwingTools.tab(pluginDetails, "Details",
 				"Individual Plugin information",
 				350, 315, rightPanel);
@@ -484,7 +485,7 @@ public class UpdaterFrame extends JFrame
 
 		if (Util.isDeveloper)
 			// TODO: has to change when details editor is embedded
-			btnUpload.setEnabled(plugins.hasUploadOrRemove());
+			enableUploadOrNot();
 
 		int size = plugins.size();
 		int install = 0, uninstall = 0, upload = 0;
@@ -570,6 +571,15 @@ public class UpdaterFrame extends JFrame
 					+ list + "'");
 	}
 
+	void markUploadable() {
+		canUpload = true;
+		enableUploadOrNot();
+	}
+
+	void enableUploadOrNot() {
+		btnUpload.setEnabled(canUpload || plugins.hasUploadOrRemove());
+	}
+
 	protected void upload() {
 		ResolveDependencies resolver =
 			new ResolveDependencies(this, true);
@@ -594,6 +604,8 @@ public class UpdaterFrame extends JFrame
 				else
 					plugin.setStatus(Status.NOT_INSTALLED);
 			updatePluginsTable();
+			canUpload = false;
+			enableUploadOrNot();
 		} catch (Canceled e) {
 			// TODO: teach uploader to remove the lock file
 			IJ.error("Canceled");

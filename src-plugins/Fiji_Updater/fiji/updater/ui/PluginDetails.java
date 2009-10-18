@@ -48,6 +48,7 @@ public class PluginDetails extends JTextPane implements UndoableEditListener {
 	private final static String LINK_ATTRIBUTE = "URL";
 	SortedMap<Position, EditableRegion> editables;
 	Position dummySpace;
+	UpdaterFrame updaterFrame;
 
 	static {
 		italic = getStyle(Color.black, true, false, "Verdana", 12);
@@ -59,7 +60,8 @@ public class PluginDetails extends JTextPane implements UndoableEditListener {
 		defaultCursor = new Cursor(Cursor.DEFAULT_CURSOR);
 	}
 
-	public PluginDetails() {
+	public PluginDetails(UpdaterFrame updaterFrame) {
+		this.updaterFrame = updaterFrame;
 		addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
 				String url = getLinkAt(e.getPoint());
@@ -339,7 +341,11 @@ public class PluginDetails extends JTextPane implements UndoableEditListener {
 	// Do not process key events when on bold parts of the text
 	// or when not developer
 	public void undoableEditHappened(UndoableEditEvent e) {
-		if (isEditable() && !handleEdit())
-			e.getEdit().undo();
+		if (isEditable()) {
+			if (!handleEdit())
+				e.getEdit().undo();
+			else
+				updaterFrame.markUploadable();
+		}
 	}
 }
