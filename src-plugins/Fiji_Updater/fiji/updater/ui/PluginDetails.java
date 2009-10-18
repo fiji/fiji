@@ -200,8 +200,6 @@ public class PluginDetails extends JTextPane implements UndoableEditListener {
 			else
 				normal(object.toString());
 		}
-		if (list.size() > 0)
-			normal("\n");
 		addEditableRegion(offset, label, plugin);
 	}
 
