@@ -57,6 +57,7 @@ case "$1" in
 	full-nightly-build)
 		cd "$(dirname "$0")"/.. &&
 		git fetch origin master &&
+		git reset --hard origin/master &&
 		git submodule update &&
 		nightly_build
 		;; # okay
@@ -68,6 +69,7 @@ case "$1" in
 		HEAD=${2:-$(git rev-parse --symbolic-full-name HEAD)}
 		cd full-nightly-build &&
 		git fetch .. "$HEAD" &&
+		git reset --hard FETCH_HEAD &&
 		git submodule update --init &&
 		compile FETCH_HEAD
 		;;
