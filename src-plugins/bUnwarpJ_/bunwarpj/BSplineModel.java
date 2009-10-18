@@ -33,9 +33,10 @@ import java.util.Stack;
 /*------------------------------------------------------------------*/
 /**
  * Class for representing the images and the deformations by cubic B-splines:
+ * <p>
  * <ul>
  * 		<li>Both, images and deformations, are stored in multi-resolution pyramids.</li>
- * 		<li>The pyramids are not calculated in the constructors but in the method <code>startPyramids</code></ly>
+ * 		<li>The pyramids are not calculated in the constructors but in the method <code>startPyramids</code>.</li>
  * 		<li>For images, even if they are set to be scaled, the original image information is stored.</li>
  * 		<li>The information corresponding to the output window size is also stored at any time.</li>
  * </ul>
