@@ -81,7 +81,6 @@ public class UpdaterFrame extends JFrame
 	//For developers
 	// TODO: no more Hungarian notation
 	private JButton btnUpload;
-	private JButton btnEditDetails;
 
 	public UpdaterFrame() {
 		super("Fiji Updater");
@@ -196,18 +195,6 @@ public class UpdaterFrame extends JFrame
 		JPanel rightPanel = SwingTools.verticalPanel();
 
 		rightPanel.add(Box.createVerticalGlue());
-		if (Util.isDeveloper) {
-			JPanel editButtonPanel = SwingTools.horizontalPanel();
-			editButtonPanel.add(Box.createHorizontalGlue());
-			btnEditDetails = SwingTools.button("Edit Details",
-					"Edit selected plugin's details", new ActionListener() {
-				public void actionPerformed(ActionEvent e) {
-					clickToEditDescriptions();
-				}
-			}, editButtonPanel);
-			btnEditDetails.setEnabled(false);
-			rightPanel.add(editButtonPanel);
-		}
 
 		pluginDetails = new PluginDetails();
 		SwingTools.tab(pluginDetails, "Details",
@@ -393,18 +380,6 @@ public class UpdaterFrame extends JFrame
 		return rows.length != 1 ? null : table.getPlugin(rows[0]);
 	}
 
-	// TODO: why should this function need to know that it is triggered by a click?  That is so totally unnecessary.
-	private void clickToEditDescriptions() {
-		// TODO: embed this, rather than having an extra editor
-		PluginObject plugin = getSingleSelectedPlugin();
-		if (plugin == null) {
-			IJ.error("Cannot edit multiple items at once");
-			return;
-		}
-		loadedFrame = new DetailsEditor(this, plugin);
-		showFrame();
-	}
-
 	public void applyChanges() {
 		ResolveDependencies resolver = new ResolveDependencies(this);
 		if (!resolver.resolve())
@@ -507,12 +482,9 @@ public class UpdaterFrame extends JFrame
 		apply.setEnabled(plugins.hasChanges());
 		cancel.setLabel(plugins.hasChanges() ? "Cancel" : "Close");
 
-		if (Util.isDeveloper) {
-			btnEditDetails.setEnabled(getSingleSelectedPlugin()
-					!= null);
+		if (Util.isDeveloper)
 			// TODO: has to change when details editor is embedded
 			btnUpload.setEnabled(plugins.hasUploadOrRemove());
-		}
 
 		int size = plugins.size();
 		int install = 0, uninstall = 0, upload = 0;
