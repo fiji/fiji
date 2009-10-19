@@ -43,6 +43,7 @@ public class PluginUploader {
 	// checking race condition:
 	// if somebody else updated in the meantime, complain loudly.
 	protected long xmlLastModified;
+	public long newLastModified;
 	List<SourceFile> files;
 	String backup, compressed, text;
 
@@ -88,6 +89,7 @@ public class PluginUploader {
 		// No errors thrown -> just remove temporary files
 		new File(backup).delete();
 		new File(Util.prefix(Updater.TXT_FILENAME)).delete();
+		newLastModified = getCurrentLastModified();
 	}
 
 	protected void updateUploadTimestamp(long timestamp)
@@ -167,20 +169,24 @@ public class PluginUploader {
 		public void done() {}
 	}
 
-	protected void verifyTimestamp() {
+	protected long getCurrentLastModified() {
 		try {
 			URLConnection connection = new URL(Updater.MAIN_URL
 				+ Updater.XML_COMPRESSED).openConnection();
 			connection.setUseCaches(false);
 			long lastModified = connection.getLastModified();
 			connection.getInputStream().close();
-			if (xmlLastModified != lastModified)
-				throw new RuntimeException("db.xml.gz was "
-					+ "changed in the meantime");
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw new RuntimeException("Could not verify the "
-				+ "timestamp of db.xml.gz");
+			return lastModified;
 		}
+		catch (Exception e) {
+			e.printStackTrace();
+			return 0;
+		}
+	}
+
+	protected void verifyTimestamp() {
+		if (xmlLastModified != getCurrentLastModified())
+			throw new RuntimeException("db.xml.gz was "
+				+ "changed in the meantime");
 	}
 }

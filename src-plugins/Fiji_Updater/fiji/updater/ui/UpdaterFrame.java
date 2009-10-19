@@ -605,6 +605,7 @@ public class UpdaterFrame extends JFrame
 					plugin.setStatus(Status.NOT_INSTALLED);
 			updatePluginsTable();
 			canUpload = false;
+			xmlLastModified = uploader.newLastModified;
 			enableUploadOrNot();
 		} catch (Canceled e) {
 			// TODO: teach uploader to remove the lock file
