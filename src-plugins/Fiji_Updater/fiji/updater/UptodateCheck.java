@@ -11,6 +11,7 @@ import ij.plugin.PlugIn;
 
 import java.io.File;
 
+import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
@@ -117,6 +118,9 @@ public class UptodateCheck implements PlugIn {
 		try {
 			URLConnection connection = new URL(Updater.MAIN_URL
 				+ Updater.XML_COMPRESSED).openConnection();
+			if (connection instanceof HttpURLConnection)
+				((HttpURLConnection)connection)
+					.setRequestMethod("HEAD");
 			connection.setUseCaches(false);
 			long lastModified = connection.getLastModified();
 			connection.getInputStream().close();

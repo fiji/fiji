@@ -26,6 +26,7 @@ import ij.ImagePlus;
 import ij.gui.PointRoi;
 import ij.gui.Roi;
 import ij.io.OpenDialog;
+import ij.plugin.filter.GaussianBlur;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
@@ -553,7 +554,7 @@ public class MiscTools
 			warpingIndex = -1;
 		return warpingIndex;
 	}
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Calculate the raw transformation mapping from B-spline
 	 * coefficients.
@@ -631,7 +632,7 @@ public class MiscTools
 
 
 	
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Convert the raw transformation mapping to B-spline
 	 * coefficients.
@@ -1054,7 +1055,7 @@ public class MiscTools
 	
 	
 	
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Warping index for comparing elastic deformations with any kind
 	 * of deformation (both transformations having same direction).
@@ -1170,7 +1171,7 @@ public class MiscTools
 			warpingIndex = -1;
 		return warpingIndex;
 	}
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Warping index for comparing two raw deformations (both 
 	 * transformations having same direction).
@@ -1237,7 +1238,7 @@ public class MiscTools
 			warpingIndex = -1;
 		return warpingIndex;
 	}
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 
 	/**
 	 * Draw an arrow between two points.
@@ -1316,7 +1317,7 @@ public class MiscTools
 		}
 	}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Draw a line between two points.
 	 * Bresenham's algorithm.
@@ -1436,7 +1437,7 @@ public class MiscTools
 		}
 	}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Put the image from an ImageProcessor into a double array.
 	 *
@@ -1477,7 +1478,7 @@ public class MiscTools
 				image[p] = pixels[p];    	  
 		}
 	}
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Put the image from an ImageProcessor into a double[][].
 	 *
@@ -1508,7 +1509,7 @@ public class MiscTools
 		}
 	}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Load landmarks from file.
 	 *
@@ -1604,7 +1605,7 @@ public class MiscTools
 		}
 	}
 	
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Load point rois in the source and target images as landmarks.
 	 * 
@@ -1661,7 +1662,7 @@ public class MiscTools
 	}
 	/* end loadPointRoiAsLandmarks */
 	
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Load a transformation from a file.
 	 *
@@ -1742,7 +1743,7 @@ public class MiscTools
 		}
 	}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Load a raw transformation from a file.
 	 *
@@ -1843,7 +1844,7 @@ public class MiscTools
 		}
 	} // end method loadRawTransformation
 	
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Load a raw transformation from a file.
 	 *
@@ -1944,7 +1945,7 @@ public class MiscTools
 		}
 	} // end method loadRawTransformation
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Load an affine matrix from a file.
 	 *
@@ -1997,7 +1998,7 @@ public class MiscTools
 	}    /* end loadAffineMatrix */
 
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Compose two elastic deformations into a raw deformation.
 	 *
@@ -2099,7 +2100,7 @@ public class MiscTools
 
 	}  /* end method composeElasticTransformations */
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Compose a raw deformation and an elastic deformation into a raw deformation.
 	 *
@@ -2210,7 +2211,7 @@ public class MiscTools
 
 	}  /* end method composeRawElasticTransformations */
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Compose two elastic deformations into a raw deformation at pixel level.
 	 *
@@ -2323,7 +2324,7 @@ public class MiscTools
 				outputTransformation_x, outputTransformation_y);
 	}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Compose two raw transformations (Bilinear interpolation)
 	 *
@@ -2394,7 +2395,7 @@ public class MiscTools
 			}
 	}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Save the elastic transformation.
 	 *
@@ -2448,7 +2449,7 @@ public class MiscTools
 		}
 	}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Save a raw transformation
 	 *
@@ -2519,7 +2520,7 @@ public class MiscTools
 		}
 	}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Read the number of intervals of a transformation from a file.
 	 *
@@ -2559,7 +2560,7 @@ public class MiscTools
 		}
 	}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Plot a point in a canvas.
 	 *
@@ -2575,7 +2576,7 @@ public class MiscTools
 		canvas[y][x]=color;
 	}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Print a matrix in the command line.
 	 *
@@ -2597,7 +2598,7 @@ public class MiscTools
 		}
 	}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Show an image in a new bUnwarpJ window.
 	 *
@@ -2623,7 +2624,7 @@ public class MiscTools
 		ip.show();
 	}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Show an image in a new bUnwarpJ window.
 	 *
@@ -2647,7 +2648,7 @@ public class MiscTools
 		ip.show();
 	} // end showImage
 	
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Adapt B-spline coefficients to a scale factor
 	 * @param xScale
@@ -2981,7 +2982,7 @@ public class MiscTools
 			this.fp = fp;
 		}
 	
-		/*------------------------------------------------------------------*/
+		//------------------------------------------------------------------
 		/**
 		 * Run method to update the intermediate window. Only the part defined by
 		 * the rectangle will be updated (in this thread).
@@ -3107,7 +3108,7 @@ public class MiscTools
 			this.fpB = fpB;
 		}
 	
-		/*------------------------------------------------------------------*/
+		//------------------------------------------------------------------
 		/**
 		 * Run method to update the intermediate window. Only the part defined by
 		 * the rectangle will be updated (in this thread).
@@ -3163,5 +3164,69 @@ public class MiscTools
 		} // end run method 
 		
 	} // end ColorApplyTransformTile class
+
+	//------------------------------------------------------------------
+	/**
+	 * Smooth with a Gaussian kernel that represents downsampling at a given
+	 * scale factor and sourceSigma.
+	 */
+	final static public void smoothForScale(
+		final ImageProcessor source,
+		final float scale,
+		final float sourceSigma,
+		final float targetSigma )
+	{
+		if ( scale >= 1.0f ) return;
+		float s = targetSigma / scale;
+		float sigma = ( float )Math.sqrt( s * s - sourceSigma * sourceSigma );
+		new GaussianBlur().blurGaussian( source, sigma, sigma, 0.01 );
+	}
+
+	//------------------------------------------------------------------
+	/**
+	 * Create a downsampled ImageProcessor.
+	 * 
+	 * @param source the source image
+	 * @param scale scaling factor
+	 * @param sourceSigma the Gaussian at which the source was sampled (guess 0.5 if you do not know)
+	 * @param targetSigma the Gaussian at which the target will be sampled
+	 * 
+	 * @return a new {@link FloatProcessor}
+	 */
+	final static public ImageProcessor createDownsampled(
+			final ImageProcessor source,
+			final float scale,
+			final float sourceSigma,
+			final float targetSigma )
+	{
+		final int ow = source.getWidth();
+		final int oh = source.getHeight();
+		final int w = Math.round( ow * scale );
+		final int h = Math.round( oh * scale );
+		
+		final ImageProcessor temp = source.duplicate();
+		if ( scale >= 1.0f ) return temp;
+			
+		smoothForScale( temp, scale, sourceSigma, targetSigma );
+		
+		return temp.resize( w, h );
+	}
+	
+	//------------------------------------------------------------------
+	/**
+	 * Scale an image with good quality in both up and down direction
+	 */
+	final static public ImageProcessor scale(
+			final ImageProcessor source,
+			final float scale )
+	{
+		if ( scale == 1.0f ) return source.duplicate();
+		else if ( scale < 1.0f ) return createDownsampled( source, scale, 0.5f, 0.5f );
+		else
+		{
+			source.setInterpolationMethod( ImageProcessor.BILINEAR );
+			return source.resize( Math.round( scale * source.getWidth() ) );
+		}
+	}
 	
 } /* End of MiscTools class */

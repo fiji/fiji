@@ -1,7 +1,7 @@
 package bunwarpj;
 
 /**
- * bUnwarpJ plugin for ImageJ(C).
+ * bUnwarpJ plugin for ImageJ and Fiji.
  * Copyright (C) 2005-2009 Ignacio Arganda-Carreras and Jan Kybic 
  *
  * More information at http://biocomp.cnb.csic.es/%7Eiarganda/bUnwarpJ/
@@ -38,7 +38,8 @@ import java.awt.Point;
 import java.util.Vector;
 
 /**
- * Class to deal with point handler in bUnwarpJ.
+ * Class to deal with handle points in bUnwarpJ: here we have the methods
+ * to paint the landmarks and the masks.
  */
 public class PointHandler extends Roi
 { /* begin class PointHandler */
@@ -51,7 +52,6 @@ public class PointHandler extends Roi
 	private static final int CROSS_HALFSIZE = 5;
 
 	// Colors
-	//private final Vector <Integer>  listColors     = new Vector <Integer> (0, 16);
 	private final Vector <Color> listColors = new Vector <Color>();
 	
 	// List of crosses
@@ -71,15 +71,15 @@ public class PointHandler extends Roi
 
 	// Some useful references
 	/** pointer to the image representation */
-	private ImagePlus                      imp;
+	private ImagePlus imp = null;
 	/** pointer to the point actions */
-	private PointAction  pa;
+	private PointAction  pa = null;
 	/** pointer to the point toolbar */
-	private PointToolbar tb;
+	private PointToolbar tb = null;
 	/** pointer to the mask */
-	private Mask         mask;
-	/** pointer to the bUnwarpJ dialog */
-	private MainDialog       dialog;
+	private Mask mask = null;
+	/** pointer to the main bUnwarpJ dialog */
+	private MainDialog dialog = null;
 	/** hue for assigning new color ([0.0-1.0]) */
 	private float hue = 0f;
 	/** saturation for assigning new color ([0.5-1.0]) */
@@ -99,16 +99,16 @@ public class PointHandler extends Roi
 	 * @param dialog pointer to the bUnwarpJ dialog
 	 */
 	public PointHandler (
-			final ImagePlus           imp,
+			final ImagePlus imp,
 			final PointToolbar tb,
-			final Mask         mask,
-			final MainDialog       dialog)
+			final Mask mask,
+			final MainDialog dialog)
 	{
 		super(0, 0, imp.getWidth(), imp.getHeight(), imp);
 		this.imp = imp;
 		this.tb = tb;
 		this.dialog = dialog;
-		pa = new PointAction(imp, this, tb, dialog);
+		this.pa = new PointAction(imp, this, tb, dialog);
 		final ImageWindow iw = imp.getWindow();
 		final ImageCanvas ic = iw.getCanvas();
 		//iw.requestFocus();
@@ -186,52 +186,7 @@ public class PointHandler extends Roi
 		listColors.addElement(c);
 		currentPoint = numPoints;
 		numPoints++;
-		
-		/*
-		if (numPoints < GAMUT) 
-		{
-			final Point p = new Point(x, y);
-			listPoints.addElement(p);
-			
-			if (!usedColor[currentColor]) 
-			{
-				usedColor[currentColor] = true;
-			}
-			else 
-			{
-				int k;
-				for (k = 0; (k < GAMUT); k++) 
-				{
-					currentColor++;
-					currentColor &= GAMUT - 1;
-					if (!usedColor[currentColor]) 
-					{
-						break;
-					}
-				}
-				if (GAMUT <= k) 
-				{
-					throw new IllegalStateException("Unexpected lack of available colors");
-				}
-			}
-			int stirredColor = 0;
-			int c = currentColor;
-			for (int k = 0; (k < (int)Math.round(Math.log((double)GAMUT) / Math.log(2.0))); k++) 
-			{
-				stirredColor <<= 1;
-				stirredColor |= (c & 1);
-				c >>= 1;
-			}
-			listColors.addElement(new Integer(stirredColor));
-			currentColor++;
-			currentColor &= GAMUT - 1;
-			currentPoint = numPoints;
-			numPoints++;
-		}
-		else {
-			IJ.error("Maximum number of points reached");
-		}
-		*/
+
 	} // end addPoint
 
 	/*------------------------------------------------------------------*/

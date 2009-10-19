@@ -1,7 +1,7 @@
 package bunwarpj;
 
 /**
- * bUnwarpJ plugin for ImageJ(C).
+ * bUnwarpJ plugin for ImageJ/Fiji.
  * Copyright (C) 2005-2009 Ignacio Arganda-Carreras and Jan Kybic 
  *
  * More information at http://biocomp.cnb.csic.es/%7Eiarganda/bUnwarpJ/
@@ -26,6 +26,8 @@ import ij.ImagePlus;
 import ij.process.FloatProcessor;
 /**
  * Class to launch the registration in bUnwarpJ.
+ * This is the class called from the main plugin class after
+ * recollecting the registration parameters from the main dialog.
  */
 public class FinalAction implements Runnable
 {
@@ -121,7 +123,7 @@ public class FinalAction implements Runnable
     public Thread getThread ()
     {
        return(t);
-    } /* end getThread */
+    } // end getThread 
 
     /* ------------------------------------------------------------------------ */
     /**
@@ -148,14 +150,15 @@ public class FinalAction implements Runnable
         if(this.accurate_mode == MainDialog.MONO_MODE)
         	this.consistencyWeight = 0.0;
         
+        //IJ.log("FinalAction: maxImageSubsamplingFactor = " + maxImageSubsamplingFactor);
+        
         // Prepare registration parameters
         final Transformation warp = new Transformation(
           sourceImp, targetImp, source, target, sourcePh, targetPh,
           sourceMsk, targetMsk, sourceAffineMatrix, targetAffineMatrix,
           min_scale_deformation, max_scale_deformation,
           min_scale_image, divWeight, curlWeight, landmarkWeight, imageWeight,
-          consistencyWeight, stopThreshold, outputLevel, showMarquardtOptim, accurate_mode,
-          maxImageSubsamplingFactor, dialog.isSaveTransformationSet(), "", "", 
+          consistencyWeight, stopThreshold, outputLevel, showMarquardtOptim, accurate_mode, "", "", 
           output_ip[0], output_ip[1], dialog);        
 				
         
