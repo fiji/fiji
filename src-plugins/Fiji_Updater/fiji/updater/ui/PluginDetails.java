@@ -206,6 +206,15 @@ public class PluginDetails extends JTextPane implements UndoableEditListener {
 	}
 
 	public void blankLine() {
+		int offset = getCaretPosition();
+		try {
+			if (offset > 1 && getText(offset - 2, 2)
+					.equals("\n ")) {
+				normal("\n");
+				return;
+			}
+		}
+		catch (BadLocationException e) { e.printStackTrace(); }
 		normal("\n\n");
 	}
 
