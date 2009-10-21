@@ -399,11 +399,11 @@ static size_t mystrlcpy(char *dest, const char *src, size_t size)
 	return ret;
 }
 
-char *last_slash(const char *path)
+const char *last_slash(const char *path)
 {
-	char *slash = strrchr(path, '/');
+	const char *slash = strrchr(path, '/');
 #ifdef WIN32
-	char *backslash = strrchr(path, '\\');
+	const char *backslash = strrchr(path, '\\');
 
 	if (backslash && slash < backslash)
 		slash = backslash;
@@ -431,9 +431,9 @@ static const char *make_absolute_path(const char *path)
 
 	while (depth--) {
 		if (stat(buf, &st) || !S_ISDIR(st.st_mode)) {
-			char *slash = last_slash(buf);
+			const char *slash = last_slash(buf);
 			if (slash) {
-				*slash = '\0';
+				buf[slash-buf] = '\0';
 				last_elem = strdup(slash + 1);
 			} else {
 				last_elem = strdup(buf);
