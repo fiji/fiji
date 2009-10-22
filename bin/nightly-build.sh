@@ -57,7 +57,7 @@ case "$1" in
 	full-nightly-build)
 		cd "$(dirname "$0")"/.. &&
 		git fetch origin master &&
-		git reset --hard origin/master &&
+		git reset --hard FETCH_HEAD &&
 		git submodule update &&
 		nightly_build
 		;; # okay
