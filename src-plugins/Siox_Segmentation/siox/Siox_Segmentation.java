@@ -98,7 +98,7 @@ public static void main(String[] args) {
 		public SegmentationGUI(ImagePlus imp) 
 		{
 			
-			this.setTitle("SIOX Sementation ");
+			this.setTitle("SIOX Segmentation ");
 			// Image panel
 			JImagePanelPlus image_panel = new JImagePanelPlus(imp);
 			
