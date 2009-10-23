@@ -45,7 +45,7 @@ import java.util.Vector;
  * <ul>
  * 	<li>It stores the information about the bidirectional or unidirectional registration.</li>
  * 	<li>It produces the registration results and the corresponding output if called from dialog.</li>
- * 	<li>The main registration methods are <code>doRegistration</code> (bidirectional) and <code>doUnidirectionalRegistration</code> (unidirectional).</li>
+ * 	<li>The main registration methods are <code>doBidirectionalRegistration</code> (bidirectional) and <code>doUnidirectionalRegistration</code> (unidirectional).</li>
  * 	<li>The intermediate states of the registration are displayed in separate windows (depending on the value of <code>outputLevel</code>.</li>
  * </ul>
  */
@@ -373,8 +373,8 @@ public class Transformation
 	 * @param dialog pointer to the dialog of the bUnwarpJ interface
 	 */
 	public Transformation (
-			final ImagePlus                    sourceImp,
-			final ImagePlus                    targetImp,
+			final ImagePlus sourceImp,
+			final ImagePlus targetImp,
 			final BSplineModel source,
 			final BSplineModel target,
 			final PointHandler sourcePh,
@@ -750,20 +750,7 @@ public class Transformation
 			this.sourceCurrentHeight = this.originalSourceIP.getHeight();
 			this.sourceCurrentWidth  = this.originalSourceIP.getWidth();
 		}
-		/*
-		// Show results.
-		if(source.isSubOutput())
-		{
-			IJ.log("Calculating final transformed source image");
-		}
-		showTransformationMultiThread(intervals, cxTargetToSource, cyTargetToSource, false);
-		
-		if(target.isSubOutput())
-		{
-			IJ.log("Calculating final transformed target image");			
-		}
-		showTransformationMultiThread(intervals, cxSourceToTarget, cySourceToTarget, true);
-*/
+
 		// Display final errors.		
 		if(this.outputLevel == 2)
 		{
@@ -789,16 +776,7 @@ public class Transformation
 			}
 		}
 		
-
-		// Save transformations.
-		/*
-		if (saveTransf)
-		{
-			saveTransformation(intervals, cxTargetToSource, cyTargetToSource, false);
-			saveTransformation(intervals, cxSourceToTarget, cySourceToTarget, true);
-		}
-		*/
-	} /* end doRegistration */
+	} /* end doBidirectionalRegistration */
 
 	//------------------------------------------------------------------
 	/**
@@ -2460,12 +2438,12 @@ public class Transformation
 
 	/*--------------------------------------------------------------------------*/
 	/**
-	 * This code is an excerpt from doRegistration() to compute the exact
+	 * This code is an excerpt from doBidirectionalRegistration() to compute the exact
 	 * number of steps.
 	 */
 	private void computeTotalWorkload()
 	{
-		// This code is an excerpt from doRegistration() to compute the exact
+		// This code is an excerpt from doBidirectionalRegistration() to compute the exact
 		// number of steps
 
 		// Now refine with the different scales
