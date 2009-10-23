@@ -83,9 +83,9 @@ public class BSplineModel implements Runnable
 	private int      currentHeight;
 
 	// Size and other information
-	/** working image width (after scaling) */
+	/** working image/coefficients width (after scaling) */
 	private int     width;
-	/** working image height (after scaling) */
+	/** working image/coefficients height (after scaling) */
 	private int     height;
 
 	/** resolution pyramid depth */
@@ -196,9 +196,9 @@ public class BSplineModel implements Runnable
 	 * When calling this constructor, the thread is not started, to do so, 
 	 * startPyramids needs to be called.
 	 *
-	 * @param ip image in pixel array
+	 * @param ip image pointer (ImageProcessor)
 	 * @param isTarget enables the computation of the derivative or not
-	 * @param maxImageSubsamplingFactor subsampling factor at highest resolution level
+	 * @param maxImageSubsamplingFactor sub-sampling factor at highest resolution level
 	 */
 	public BSplineModel (
 			final ImageProcessor ip,
@@ -266,11 +266,11 @@ public class BSplineModel implements Runnable
 		dyWeight  = new double[4];
 		d2xWeight = new double[4];
 		d2yWeight = new double[4];
-	} /* end BSplineModel */
+	} // end BSplineModel
 
 	//------------------------------------------------------------------
 	/**
-	 * Initialize the model from a set of coefficients.
+	 * Initialize the B-spline model from a set of coefficients.
 	 *
 	 * @param c Set of B-spline coefficients
 	 */
@@ -300,7 +300,7 @@ public class BSplineModel implements Runnable
 
 	//------------------------------------------------------------------
 	/**
-	 * Initialize the model from a set of coefficients.
+	 * Initialize the B-spline model from a set of coefficients.
 	 * The same as the previous function but now the coefficients
 	 * are in a single row.
 	 *
