@@ -28,8 +28,8 @@ nightly_build () {
 	EMAIL=fiji-devel@googlegroups.com
 	TMPFILE=.git/build.$$.out
 
-	(git fetch origin &&
-	 compile origin/master) > $TMPFILE 2>&1  &&
+	(git fetch origin master &&
+	 compile FETCH_HEAD) > $TMPFILE 2>&1  &&
 	rm $TMPFILE || {
 		mail -s "Fiji nightly build failed" \
 			-a "Content-Type: text/plain; charset=UTF-8" \
