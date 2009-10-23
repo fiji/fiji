@@ -83,39 +83,6 @@ public static void main(String[] args) {
 		
 	}// end run method
 	
-	//-----------------------------------------------------------------
-	/**
-	 * Segmentation Graphical User Interface
-	 * 
-	 * @author Ignacio Arganda-Carreras (ignacio.arganda at gmail.com)
-	 *
-	 */
-	private class SegmentationGUI extends JFrame
-	{
-		
-		
-		
-		public SegmentationGUI(ImagePlus imp) 
-		{
-			
-			this.setTitle("SIOX Segmentation ");
-			// Image panel
-			JImagePanelPlus image_panel = new JImagePanelPlus(imp);
-			
-			// Control panel
-			ControlJPanel control_panel = new ControlJPanel();						
-			
-			JPanel all = new JPanel();
-			BoxLayout box = new BoxLayout(all, BoxLayout.X_AXIS);
-			all.setLayout(box);
-	  	    all.add(image_panel);
-	  	    all.add(control_panel);
-	  	    
-	  	    this.getContentPane().add(all);
-			
- 	      	this.pack();
- 	      	this.setVisible(true);
-		}
-	}
+	
 
 }// end class Siox_Segmentation
