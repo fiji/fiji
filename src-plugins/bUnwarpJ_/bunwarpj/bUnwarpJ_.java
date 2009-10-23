@@ -192,7 +192,7 @@ public class bUnwarpJ_ implements PlugIn
            dialog.getSourceAffineMatrix(), dialog.getTargetAffineMatrix(),
            min_scale_deformation, max_scale_deformation,
            min_scale_image, divWeight, curlWeight, landmarkWeight, imageWeight,
-           consistencyWeight, stopThreshold, outputLevel, showMarquardtOptim, mode, maxImageSubsamplingFactor);
+           consistencyWeight, stopThreshold, outputLevel, showMarquardtOptim, mode);
 
         dialog.setFinalActionLaunched(true);
         dialog.setToolbarAllUp();
@@ -351,7 +351,7 @@ public class bUnwarpJ_ implements PlugIn
        if(mode == MainDialog.MONO_MODE)       
     	   warp.doUnidirectionalRegistration();    	       
        else
-    	   warp.doRegistration();
+    	   warp.doBidirectionalRegistration();
 
        long stop = System.currentTimeMillis(); // stop timing
        IJ.log("Registration time: " + (stop - start) + "ms"); // print execution time
@@ -488,7 +488,7 @@ public class bUnwarpJ_ implements PlugIn
        if(parameter.mode == MainDialog.MONO_MODE)       
     	   warp.doUnidirectionalRegistration();    	       
        else
-    	   warp.doRegistration();
+    	   warp.doBidirectionalRegistration();
 
        long stop = System.currentTimeMillis(); // stop timing
        IJ.log("Registration time: " + (stop - start) + "ms"); // print execution time
@@ -744,7 +744,7 @@ public class bUnwarpJ_ implements PlugIn
     	if(mode == MainDialog.MONO_MODE)       
     		warp.doUnidirectionalRegistration();    	       
     	else
-    		warp.doRegistration();
+    		warp.doBidirectionalRegistration();
 
     	long stop = System.currentTimeMillis(); // stop timing
     	IJ.log("Registration time: " + (stop - start) + "ms"); // print execution time
@@ -1041,7 +1041,7 @@ public class bUnwarpJ_ implements PlugIn
        if(accurate_mode == MainDialog.MONO_MODE)
     	   warp.doUnidirectionalRegistration();
        else
-    	   warp.doRegistration();
+    	   warp.doBidirectionalRegistration();
        
        long stop = System.currentTimeMillis(); // stop timing
        IJ.write("Registration time: " + (stop - start) + "ms"); // print execution time
