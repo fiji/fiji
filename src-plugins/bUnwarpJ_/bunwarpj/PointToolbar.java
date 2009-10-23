@@ -50,6 +50,10 @@ public class PointToolbar extends Canvas implements MouseListener
        Private variables
     ....................................................................*/
 
+	/**
+	 * Generated serial version UID
+	 */
+	private static final long serialVersionUID = 4280253125939921252L;
 	/** number of tools */
 	private static final int NUM_TOOLS = 19;
 	/** size of toolbar */
