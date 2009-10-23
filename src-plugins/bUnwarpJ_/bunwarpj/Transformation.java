@@ -58,9 +58,9 @@ public class Transformation
 
 	/** float epsilon */
 	private final double FLT_EPSILON = (double)Float.intBitsToFloat((int)0x33FFFFFF);
-	/** pyramid flag */
+	/** pyramid flag to indicate the image information is taken from the pyramid */
 	private final boolean PYRAMID  = true;
-	/** original flag */
+	/** original flag to indicate the image information is taken from the original image */
 	private final boolean ORIGINAL = false;
 	/** degree of the B-splines involved in the transformation */
 	private final int transformationSplineDegree = 3;
@@ -445,7 +445,7 @@ public class Transformation
 	 * Registration method. It applies the consistent and elastic registration
 	 * algorithm to the selected source and target images.
 	 */
-	public void doRegistration ()
+	public void doBidirectionalRegistration ()
 	{	
 		// This function can only be applied with splines of an odd order
 
@@ -6249,9 +6249,9 @@ public class Transformation
 	
 	private double evaluateSimilarityMultiThread(
 			final double []c,
-			final int      intervals,
+			final int intervals,
 			double []grad,
-			final boolean  only_image,
+			final boolean only_image,
 			boolean bIsReverse)
 	{
 
