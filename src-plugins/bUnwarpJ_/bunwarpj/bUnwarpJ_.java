@@ -192,7 +192,7 @@ public class bUnwarpJ_ implements PlugIn
            dialog.getSourceAffineMatrix(), dialog.getTargetAffineMatrix(),
            min_scale_deformation, max_scale_deformation,
            min_scale_image, divWeight, curlWeight, landmarkWeight, imageWeight,
-           consistencyWeight, stopThreshold, outputLevel, showMarquardtOptim, mode, maxImageSubsamplingFactor);
+           consistencyWeight, stopThreshold, outputLevel, showMarquardtOptim, mode);
 
         dialog.setFinalActionLaunched(true);
         dialog.setToolbarAllUp();
@@ -244,15 +244,13 @@ public class bUnwarpJ_ implements PlugIn
     									 int img_subsamp_fact,
     									 int min_scale_deformation,
     									 int max_scale_deformation,
-    									 double  divWeight,
-    									 double  curlWeight,
-    									 double  landmarkWeight,
-    									 double  imageWeight,
-    									 double  consistencyWeight,
-    									 double  stopThreshold) 
-    {    	
-       
-
+    									 double divWeight,
+    									 double curlWeight,
+    									 double landmarkWeight,
+    									 double imageWeight,
+    									 double consistencyWeight,
+    									 double stopThreshold) 
+    {    	       
        // Produce side information
        final int imagePyramidDepth = max_scale_deformation - min_scale_deformation + 1;
        final int min_scale_image = 0;
@@ -261,7 +259,6 @@ public class bUnwarpJ_ implements PlugIn
        final int outputLevel = -1;
        
        final boolean showMarquardtOptim = false;       
-       final boolean saveTransf = false;
 
        // Create target image model
        final BSplineModel target = new BSplineModel(targetImp.getProcessor(), true, 
@@ -351,7 +348,7 @@ public class bUnwarpJ_ implements PlugIn
        if(mode == MainDialog.MONO_MODE)       
     	   warp.doUnidirectionalRegistration();    	       
        else
-    	   warp.doRegistration();
+    	   warp.doBidirectionalRegistration();
 
        long stop = System.currentTimeMillis(); // stop timing
        IJ.log("Registration time: " + (stop - start) + "ms"); // print execution time
@@ -395,7 +392,6 @@ public class bUnwarpJ_ implements PlugIn
        final int outputLevel = -1;
        
        final boolean showMarquardtOptim = false;       
-       final boolean saveTransf = false;
 
        // Create target image model
        final BSplineModel target = new BSplineModel(targetImp.getProcessor(), true, 
@@ -488,7 +484,7 @@ public class bUnwarpJ_ implements PlugIn
        if(parameter.mode == MainDialog.MONO_MODE)       
     	   warp.doUnidirectionalRegistration();    	       
        else
-    	   warp.doRegistration();
+    	   warp.doBidirectionalRegistration();
 
        long stop = System.currentTimeMillis(); // stop timing
        IJ.log("Registration time: " + (stop - start) + "ms"); // print execution time
@@ -496,6 +492,9 @@ public class bUnwarpJ_ implements PlugIn
        return warp;
        
     } // end computeTransformationBatch    
+    
+
+    
     
     /*------------------------------------------------------------------*/
     /**
@@ -580,7 +579,8 @@ public class bUnwarpJ_ implements PlugIn
        
 
     	Transformation warp 
-    	= computeTransformationBatch(targetImp, sourceImp,	targetMskIP, sourceMskIP, parameter);
+    		= computeTransformationBatch(targetImp, sourceImp,	targetMskIP, 
+    													sourceMskIP, parameter);
 
        // Return results as ImagePlus
        final ImagePlus[] output_ip = new ImagePlus[2];
@@ -744,7 +744,7 @@ public class bUnwarpJ_ implements PlugIn
     	if(mode == MainDialog.MONO_MODE)       
     		warp.doUnidirectionalRegistration();    	       
     	else
-    		warp.doRegistration();
+    		warp.doBidirectionalRegistration();
 
     	long stop = System.currentTimeMillis(); // stop timing
     	IJ.log("Registration time: " + (stop - start) + "ms"); // print execution time
@@ -1041,7 +1041,7 @@ public class bUnwarpJ_ implements PlugIn
        if(accurate_mode == MainDialog.MONO_MODE)
     	   warp.doUnidirectionalRegistration();
        else
-    	   warp.doRegistration();
+    	   warp.doBidirectionalRegistration();
        
        long stop = System.currentTimeMillis(); // stop timing
        IJ.write("Registration time: " + (stop - start) + "ms"); // print execution time

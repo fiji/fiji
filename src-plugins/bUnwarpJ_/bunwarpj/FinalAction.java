@@ -93,8 +93,6 @@ public class FinalAction implements Runnable
     private double  stopThreshold;
     /** level of accuracy */
     private int     accurate_mode;
-    /** image subsampling factor at highest resolution level */
-    private int maxImageSubsamplingFactor;
 
     /*....................................................................
        Public methods
@@ -185,7 +183,7 @@ public class FinalAction implements Runnable
         else
         {
         	// Do bidirectional registration
-        	warp.doRegistration();
+        	warp.doBidirectionalRegistration();
         	// Save transformations
         	if(this.dialog.isSaveTransformationSet())
         	{
@@ -239,7 +237,6 @@ public class FinalAction implements Runnable
      * @param consistencyWeight weight for the deformations consistency
      * @param stopThreshold stopping threshold
      * @param accurate_mode level of accuracy
-     * @param maxImageSubsamplingFactor image subsampling factor at highest resolution level
      */
     public void setup (
        final ImagePlus sourceImp,
@@ -263,8 +260,7 @@ public class FinalAction implements Runnable
        final double stopThreshold,
        final int outputLevel,
        final boolean showMarquardtOptim,
-       final int accurate_mode,
-       final int maxImageSubsamplingFactor)
+       final int accurate_mode)
     {
        this.sourceImp             = sourceImp;
        this.targetImp             = targetImp;
@@ -288,7 +284,6 @@ public class FinalAction implements Runnable
        this.outputLevel           = outputLevel;
        this.showMarquardtOptim    = showMarquardtOptim;
        this.accurate_mode         = accurate_mode;
-       this.maxImageSubsamplingFactor = maxImageSubsamplingFactor;
     } /* end setup */
 
     /* ------------------------------------------------------------------------ */

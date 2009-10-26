@@ -48,6 +48,11 @@ public class PointHandler extends Roi
        Private variables
     ....................................................................*/
 
+	/**
+	 * Serial version UID
+	 */
+	private static final long serialVersionUID = 4829296689557078996L;
+
 	/** constant to keep half of the cross size */
 	private static final int CROSS_HALFSIZE = 5;
 
@@ -143,6 +148,23 @@ public class PointHandler extends Roi
 	} /* end PointHandler */
 
 
+	/**
+	 * Constructor without graphical capabilities, create an instance of PointHandler.
+	 *
+	 * @param width image width
+	 * @param height image height
+	 */
+	public PointHandler (final int width, final int height)
+	{
+		super(0, 0, width, height);
+		this.imp = null;
+		tb = null;
+		dialog = null;
+		pa = null;
+		started = true;
+		mask = null;
+	} /* end PointHandler */
+	
 
 	/*------------------------------------------------------------------*/
 	/**
@@ -451,14 +473,18 @@ public class PointHandler extends Roi
 	 */
 	public void killListeners ()
 	{
-		final ImageWindow iw = imp.getWindow();
-		final ImageCanvas ic = iw.getCanvas();
-		ic.removeKeyListener(pa);
-		ic.removeMouseListener(pa);
-		ic.removeMouseMotionListener(pa);
-		ic.addMouseMotionListener(ic);
-		ic.addMouseListener(ic);
-		ic.addKeyListener(IJ.getInstance());
+		if(imp != null)
+		{
+			final ImageWindow iw = imp.getWindow();
+			final ImageCanvas ic = iw.getCanvas();
+		
+			ic.removeKeyListener(pa);
+			ic.removeMouseListener(pa);
+			ic.removeMouseMotionListener(pa);
+			ic.addMouseMotionListener(ic);
+			ic.addMouseListener(ic);
+			ic.addKeyListener(IJ.getInstance());
+		}
 	} /* end killListeners */
 
 	/*------------------------------------------------------------------*/

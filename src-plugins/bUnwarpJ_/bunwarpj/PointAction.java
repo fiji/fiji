@@ -51,6 +51,10 @@ public class PointAction extends ImageCanvas implements KeyListener, MouseListen
        Public variables
     ....................................................................*/
 	
+	/**
+	 * Generated serial version UID
+	 */
+	private static final long serialVersionUID = -8141177836023328859L;
 	/**constant to identify the add cross tool */
 	public static final int ADD_CROSS    = 0;
 	/**constant to identify the move cross tool */

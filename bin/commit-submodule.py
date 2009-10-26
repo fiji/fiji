@@ -94,8 +94,8 @@ if url.startswith('git://'):
 print 'Making sure that the submodule has no uncommitted changes'
 git_base='git --git-dir=' + submodule + '.git --work-tree=' + submodule
 if os.system(git_base + ' update-index --refresh') != 0 or \
-	os.system(git_base + '.git diff-files --quiet') != 0 or \
-	os.system(git_base + '.git diff-index --cached --quiet HEAD') != 0:
+	os.system(git_base + ' diff-files --quiet') != 0 or \
+	os.system(git_base + ' diff-index --cached --quiet HEAD') != 0:
 	print 'Submodule ' + submodule + ' contains uncommitted changes'
 	sys.exit(1)
 print 'Making sure that the submodule is pushed:', \

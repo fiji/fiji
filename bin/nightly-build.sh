@@ -28,8 +28,8 @@ nightly_build () {
 	EMAIL=fiji-devel@googlegroups.com
 	TMPFILE=.git/build.$$.out
 
-	(git fetch origin &&
-	 compile origin/master) > $TMPFILE 2>&1  &&
+	(git fetch origin master &&
+	 compile FETCH_HEAD) > $TMPFILE 2>&1  &&
 	rm $TMPFILE || {
 		mail -s "Fiji nightly build failed" \
 			-a "Content-Type: text/plain; charset=UTF-8" \
@@ -57,9 +57,20 @@ case "$1" in
 	full-nightly-build)
 		cd "$(dirname "$0")"/.. &&
 		git fetch origin master &&
-		git reset --hard origin/master &&
+		git reset --hard FETCH_HEAD &&
 		git submodule update &&
-		nightly_build
+		nightly_build &&
+		if test -d /var/www/update
+		then
+			find -name \*.java |
+			grep -ve ij-plugins/Sun_JAI_Sample_IO_Source_Code \
+				-e ij-plugins/Quickvol |
+			./fiji --jar-path $(./fiji --print-java-home)/../lib/ \
+				--main-class=com.sun.tools.javadoc.Main \
+				-d /var/www/javadoc
+				@/dev/stdin > javadoc.out 2>&1 ||
+			(echo "JavaDoc failed"; false)
+		fi
 		;; # okay
 	*)
 		if test ! -d full-nightly-build
