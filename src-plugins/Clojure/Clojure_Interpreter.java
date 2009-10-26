@@ -42,6 +42,11 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.InputStream;
 import java.io.Reader;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
+import java.util.Map;
 
 import common.AbstractInterpreter;
 
@@ -62,281 +67,199 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 	static final Var star2 = RT.var("clojure.core", "*2");
 	static final Var star3 = RT.var("clojure.core", "*3");
 	static final Var stare = RT.var("clojure.core", "*e");
+	static final Var out = RT.var("clojure.core", "*out*");
 
 	static final Object EOF = new Object();
 
-	static private boolean loaded = false;
+	final private ExecutorService exec = Executors.newFixedThreadPool(1);
 
+	@Override
 	public void run(String arg) {
-		// synchronized with the destroy() method
-		synchronized (EOF) {
-			if (loaded) {
-				IJ.showMessage("You can only have one instance of the Clojure interpreter running.");
-				return;
-			}
+		// Create window, threads, streams:
+		super.window.setTitle("Clojure Interpreter");
+		super.run(arg);
+		// 
+		print("Starting Clojure...");
+		if (!init()) {
+			p("Some error ocurred!");
+			return;
+		}
+		println(" Ready -- have fun.\n" + getPrompt() + "\n");
 
-			loaded = true;
-			super.screen.append("Starting Clojure...");
-			final LispThread thread = LispThread.getInstance();
-			if (!thread.ready()) {
-				p("Some error ocurred.");
-				return;
-			}
-			thread.setStdOut(super.print_out);
-			super.screen.append(" Ready -- have fun.\n" + getPrompt() + "\n");
-			// ok create window
-			super.run(arg);
-			super.window.setTitle("Clojure Interpreter");
-
-			// Add crude support for closing parenthesis with control+)
-			prompt.addKeyListener(new KeyListener() {
-				public void keyPressed(KeyEvent ke) {
-					if (')' == ke.getKeyChar() && ke.isControlDown()) {
-						String text = prompt.getText();
-						int b = 0;
-						for (int i=text.length()-1; i>-1; i--) {
-							switch (text.charAt(i)) {
-								case '(': b++; break;
-								case ')': b--; break;
-							}
-						}
-						if (b > 0) {
-							StringBuffer sb = new StringBuffer(text);
-							for (int i=0; i<b; i++) sb.append(')');
-							prompt.setText(sb.toString());
-						} else if (b < 0) {
-							IJ.log("There are " + Math.abs(b) + " more closing parentheses than opening ones!");
+		// Add crude support for closing parenthesis with control+)
+		prompt.addKeyListener(new KeyListener() {
+			public void keyPressed(KeyEvent ke) {
+				if (')' == ke.getKeyChar() && ke.isControlDown()) {
+					String text = prompt.getText();
+					int b = 0;
+					for (int i=text.length()-1; i>-1; i--) {
+						switch (text.charAt(i)) {
+							case '(': b++; break;
+							case ')': b--; break;
 						}
 					}
+					if (b > 0) {
+						StringBuffer sb = new StringBuffer(text);
+						for (int i=0; i<b; i++) sb.append(')');
+						prompt.setText(sb.toString());
+					} else if (b < 0) {
+						IJ.log("There are " + Math.abs(b) + " more closing parentheses than opening ones!");
+					}
 				}
-				public void keyTyped(KeyEvent ke) {}
-				public void keyReleased(KeyEvent ke) {}
-			});
-		}
+			}
+			public void keyTyped(KeyEvent ke) {}
+			public void keyReleased(KeyEvent ke) {}
+		});
 	}
 
-	/** Override super. */
+	@Override
 	protected void windowClosing() {
-		LispThread instance = LispThread.getInstance();
-		//if (null != instance) instance.quit(); // CAN'T QUIT, there may be other threads running it.
-		loaded = false;
+		destroy();
 	}
 
-	/** Evaluate clojure code. Calls static method evaluate(text). */ // overrides super
+	public void destroy() {
+		// Tell the worker Thread to forget all
+		if (exec.isShutdown()) return;
+		exec.shutdownNow();
+	}
+
+	/** Evaluate clojure code. */
+	@Override
 	protected Object eval(final String text) throws Throwable {
 		return evaluate(text);
 	}
 
-	/** Calls eval(text) on the LispThread, which is then not destroyed. See the Refresh_Clojure_Scripts for an example.
-	* Parses in the context of (binding [*out* (Clojure.Clojure_Interpreter/getStdOut)] &amp; body) if the PrintWriter out is not null.*/ // Overrides super method
-	static public Object evaluate(final String text) throws Throwable {
-		return evaluate(new StringReader(new StringBuilder("(binding [*out* (Clojure.Clojure_Interpreter/getStdOut)]\n").append(text).append("\n)\n").toString())); // Needs newline char in front of parenthesis to ensure there isn't a comment at the end of the text.
+	public Object evaluate(final String text) throws Throwable {
+		return evaluate(new StringReader(text));
 	}
 
-	static public Object evaluate(final InputStream istream) throws Throwable {
+	public Object evaluate(final InputStream istream) throws Throwable {
 		return evaluate(new BufferedReader(new InputStreamReader(istream)));
 	}
 
-	static public Object evaluate(final Reader input_reader) throws Throwable {
-		LispThread thread = LispThread.getInstance();
-		Object ret = thread.eval(input_reader);
-		thread.throwError();
+	public Object evaluate(final Reader input_reader) throws Throwable {
+		Evaluator ev = new Evaluator(input_reader);
+		String ret = null;
+		try {
+			ret = exec.submit(ev).get();
+		} catch (Throwable t) {
+			if (!Thread.currentThread().isInterrupted()) t.printStackTrace();
+		}
+		ev.throwError(); // to be printed by super class wherever appropriate
 		return ret;
 	}
 
-	static public PrintWriter getStdOut() {
-		PrintWriter out = LispThread.getStdOut();
-		return null == out ? new PrintWriter(System.out) : out;
+	/** Executes the Callable @param c wrapped in a try/catch to avoid any restart of the clojure thread,
+	 *  and returns the result of the execution. */
+	public Object submit(final Callable c) {
+		try {
+			return exec.submit(new Callable() {
+				public Object call() {
+					try {
+						return c.call();
+					} catch (Throwable t) {
+						t.printStackTrace();
+						return null;
+					}
+				}
+			}).get(); // wait until done
+		} catch (Throwable t) {
+			t.printStackTrace();
+		}
+		return null;
 	}
 
-	/** Complicated Thread setup just to be able to initialize and cleanup within the context of the same Thread, as required by Clojure. All Clojure scripts will evaluate within the context of this singleton class. */
-	static private class LispThread extends Thread {
-
-		static private LispThread instance = null;
-		static private PrintWriter out = null;
-		private boolean go = false;
-		private Reader input_reader = null;
-		private String result = null;
-		private Throwable error = null;
-		private boolean working = false;
-		private final Object RUN = new Object();
-		private boolean locked = false;
-		private final void lock() {
-			while (locked) try { this.wait(); } catch (InterruptedException ie) {}
-			locked = true;
-		}
-		private final void unlock() {
-			locked = false;
-			this.notifyAll();
-		}
-		private LispThread() {
-			super("Clojure Thread");
-			setPriority(Thread.NORM_PRIORITY+1); // standard from a main() is 6, and NORM_PRIORITY is only 5
-			try { setDaemon(true); } catch (Exception e) { e.printStackTrace(); }
-			start();
-			while (!go) {
-				try { Thread.sleep(100); } catch (InterruptedException ie) {}
-			}
-		}
-
-		static public LispThread getInstance() {
-			if (null == instance) instance = new LispThread();
-			return instance;
-		}
-		static public void setStdOut(PrintWriter out_) {
-			out = out_;
-		}
-		static public PrintWriter getStdOut() {
-			return out;
-		}
-
-		boolean ready() {
-			boolean b = false;
-			synchronized (this) {
-				lock();
-				try { b = isAlive(); } catch (Throwable e) { e.printStackTrace(); }
-				unlock();
-			}
-			return b;
-		}
-		void throwError() throws Throwable {
-			Throwable t = null;
-			synchronized (this) {
-				lock();
-				t = error;
-				error = null;
-				unlock();
-			}
-			if (null != t) throw t;
-		}
-		private void setup() {
-			synchronized (this) {
-				lock();
+	public boolean pushThreadBindings(Map<String,Object> vars) throws Exception {
+		return pushThreadBindings("clojure.core", vars);
+	}
+	public boolean pushThreadBindings(final String namespace, final Map<String,Object> vars) throws Exception {
+		return null != submit(new Callable() {
+			public Object call() {
 				try {
-					init();
-				} catch (Throwable e) {
-					e.printStackTrace();
-				}
-				// Outside try{}catch for it must always be true on start, so the thread can start, notify and die on error.
-				go = true;
-				unlock();
-			}
-		}
-		void quit() {
-			go = false;
-			synchronized (this) {
-				instance = null;
-				out = null;
-				unlock();
-			}
-			synchronized (RUN) {
-				RUN.notifyAll();
-			}
-		}
-		/** Parsing in the context of (binding [*out* (Clojure.Clojure_Interpreter/getStdOut)] &amp; body) if this.out is not null.*/
-		String eval(final Reader input_reader) {
-			String res = null;
-			try {
-				synchronized (this) {
-					lock();
-					this.input_reader = input_reader;
-					working = true;
-					unlock();
-				}
-				Thread.yield();
-				synchronized (RUN) {
-					// start parsing iteration in the thread
-					RUN.notifyAll();
-					// wait until done
-					while (working) try { RUN.wait(); } catch (InterruptedException ie) {}
-					// fix result
-					res = result;
-					result = null;
-					if (null == res) {
-						res = "nil";
+					for (Map.Entry<String,Object> e : vars.entrySet()) {
+						Var.pushThreadBindings(RT.map(RT.var(namespace, e.getKey()), e.getValue()));
 					}
+					return namespace; // to return something != null
+				} catch (Throwable t) {
+					t.printStackTrace();
 				}
-			} catch (Exception e) {
-				e.printStackTrace();
+				return null;
 			}
-			return res;
-		}
-		public void run() {
-			setup();
-			while (go) {
-				synchronized (RUN) {
-					StringBuffer sb = null;
+		});
+	}
+
+	public boolean init() {
+		// Initialize the worker Thread with a few bindings and the ImageJ's class loader
+		try {
+			exec.submit(new Runnable() {
+				public void run() {
 					try {
-						RUN.wait();
-						if (null == input_reader) {
-							continue; // goes to 'finally' clause
+						ClassLoader cl = ij.IJ.getClassLoader();
+						if (null != cl) {
+							Thread.currentThread().setContextClassLoader(cl);
 						}
 
-						synchronized (this) {
-							lock();
-							sb = parse(input_reader);
-							if (null == sb) result = null;
-							else {
-								// remove last newline char, since it will be added again
-								if (sb.length() > 0) sb.setLength(sb.length()-1);
-								result = sb.toString();
-							}
-							input_reader = null;
-						}
+						Var.pushThreadBindings(
+							RT.map(ns, ns.get(),
+							       warn_on_reflection, warn_on_reflection.get(),
+							       print_meta, print_meta.get(),
+							       print_length, print_length.get(),
+							       print_level, print_level.get(),
+							       compile_path, "classes",
+							       star1, null,
+							       star2, null,
+							       star3, null,
+							       stare, null,
+							       out, null == Clojure_Interpreter.super.print_out ?
+							                           out.get() : Clojure_Interpreter.super.print_out));
+
+						//create and move into the user namespace
+						in_ns.invoke(USER);
+						refer.invoke(CLOJURE);
 					} catch (Throwable t) {
-						error = t;
-						Var.pushThreadBindings(RT.map(stare, t));
-					} finally {
-						// This clause gets excuted:
-						//  - after a Throwable error
-						//  - after calling continue and break ... inside the try { } catch, if they affect stuff outside the block
-						//  - after a return call within the try { catch } block !!
-						working = false;
-						synchronized (this) { unlock(); }
-						RUN.notifyAll();
+						IJ.log("Could not initialize variables for the clojure worker thread!");
+						t.printStackTrace();
 					}
 				}
+			}).get(); // wait until done
+			return true;
+		} catch (Throwable t) {
+			t.printStackTrace();
+		}
+		return false;
+	}
+
+	/** Create an instance of Evaluator for every chunk of code you want evaluated. */
+	private final class Evaluator implements Callable<String> {
+		private Reader input_reader;
+		private Throwable t = null;
+		Evaluator(Reader input_reader) {
+			this.input_reader = input_reader;
+		}
+
+		/** Returns the result of execution, in text for for printing. */
+		public String call() {
+			StringBuffer sb = null;
+			try {
+				sb = parse();
+			} catch (Throwable t) {
+				this.t = t;
+				Var.pushThreadBindings(RT.map(stare, t));
 			}
-			cleanup();
-			loaded = false;
-		}
-		private void cleanup() {
-			Var.popThreadBindings();
-		}
-		private void init() throws Throwable {
-			// Copying nearly literally from the clojure.lang.Repl class by Rich Hickey
-			// RT.init();
-
-			//*ns* must be thread-bound for in-ns to work
-			//thread-bind *warn-on-reflection* so it can be set!
-			//must have corresponding popThreadBindings in finally clause
-			Var.pushThreadBindings(
-				RT.map(ns, ns.get(),
-				       warn_on_reflection, warn_on_reflection.get(),
-				       print_meta, print_meta.get(),
-				       print_length, print_length.get(),
-				       print_level, print_level.get(),
-				       compile_path, "classes",
-				       star1, null,
-				       star2, null,
-				       star3, null,
-				       stare, null));
-
-			//create and move into the user namespace
-			//in_ns.invoke(USER);
-			//refer.invoke(CLOJURE);
+			return null == sb ? "nil" : sb.toString();
 		}
 
-		/** Evaluates the clojure code in the reader and appends a newline char to each returned token. */
-		static private StringBuffer parse(final Reader ireader) throws Throwable {
+		private StringBuffer parse() throws Throwable {
 			// prepare input for parser
-			final LineNumberingPushbackReader lnpr = new LineNumberingPushbackReader(ireader);
+			final LineNumberingPushbackReader lnpr = new LineNumberingPushbackReader(input_reader);
 			// storage for readout
 			final StringWriter sw = new StringWriter();
 
 			Object ret = null;
 
-			while (true) {
+			final Thread thread = Thread.currentThread();
+
+			while (!thread.isInterrupted()) {
 				// read one token from the pipe
 				Object r = LispReader.read(lnpr, false, EOF, false);
 				if (EOF == r) {
@@ -345,12 +268,16 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 				// evaluate the tokens returned by the LispReader
 				ret = Compiler.eval(r);
 				// print the result in a lispy way
-				//if (null != ret) {
-					RT.print(ret, sw);
-					sw.write('\n');
-				//}
+				RT.print(ret, sw);
+				sw.write('\n');
 			}
-			
+
+			if (thread.isInterrupted()) {
+				// cleanup:
+				Var.popThreadBindings();
+				return null;
+			}
+
 			// update *1, *2, *3, even if null
 			Object ob = star2.get();
 			Var.pushThreadBindings(RT.map(star3, ob));
@@ -361,33 +288,43 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 
 			// In case it was not closed:
 			try {
-				ireader.close();
-			} catch (Exception ioe) {
+				input_reader.close();
+			} catch (Throwable ioe) {
 				ioe.printStackTrace();
 			}
 
 			return sw.getBuffer();
 		}
-	}
 
-	/** Will destroy the thread and cleanup if the interpreter is not loaded. */
-	static protected void destroy() {
-		// synchronized with the run(String arg) method
-		synchronized (EOF) {
-			LispThread thread = LispThread.getInstance();
-			if (!loaded && null != thread) thread.quit();
+		void throwError() throws Throwable {
+			if (null != this.t) throw this.t;
 		}
 	}
 
+	@Override
 	protected String getLineCommentMark() {
 		return ";";
 	}
 
 	@Override
 	protected String getPrompt() {
-		Symbol s = (Symbol) ((Namespace) ns.get()).getName();
-		//String namespace = s.getNamespace();
-		//return (null != namespace && namespace.length() > 0 ? namespace + "." : "") + s.getName() + "=>";
-		return s.getName() + "=>";
+		// Fetch the *ns* from the executor thread-local variable:
+		try {
+			return exec.submit(new Callable<String>() {
+				public String call() {
+					try {
+						Var ns = RT.var("clojure.core", "*ns*");
+						Symbol s = (Symbol) ((Namespace) ns.get()).getName();
+						return s.getName() + "=>";
+					} catch (Throwable t) {
+						t.printStackTrace();
+					}
+					return Clojure_Interpreter.super.getPrompt();
+				}
+			}).get();
+		} catch (Throwable t) {
+			t.printStackTrace();
+		}
+		return super.getPrompt();
 	}
 }

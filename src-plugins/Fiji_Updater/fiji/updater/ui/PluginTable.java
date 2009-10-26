@@ -2,17 +2,22 @@ package fiji.updater.ui;
 
 import fiji.updater.logic.PluginCollection;
 import fiji.updater.logic.PluginObject;
+
 import fiji.updater.logic.PluginObject.Action;
+import fiji.updater.logic.PluginObject.Status;
 
 import fiji.updater.util.Util;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.DefaultCellEditor;
 import javax.swing.JComboBox;
@@ -32,6 +37,7 @@ import javax.swing.table.TableColumn;
  */
 public class PluginTable extends JTable {
 	private PluginTableModel pluginTableModel;
+	protected Font plain, bold;
 
 	public PluginTable(PluginCollection plugins) {
 		//Set appearance of table
@@ -60,13 +66,30 @@ public class PluginTable extends JTable {
 					.getTableCellRendererComponent(table,
 						value, isSelected, hasFocus,
 						row, column);
-				PluginObject plugin = getPlugin(row);
-				comp.setFont(comp.getFont()
-					.deriveFont(plugin.actionSpecified() ?
-						Font.BOLD : Font.PLAIN));
+				setStyle(comp, row, column);
 				return comp;
 			}
 		});
+	}
+
+	/*
+	 * This sets the font to bold when the user selected an action for
+	 * this plugin, or when it is locally modified.
+	 *
+	 * It also warns loudly when the plugin is obsolete, but locally
+	 * modified.
+	 */
+	protected void setStyle(Component comp, int row, int column) {
+		if (plain == null) {
+			plain = comp.getFont();
+			bold = plain.deriveFont(Font.BOLD);
+		}
+		PluginObject plugin = getPlugin(row);
+		comp.setFont(plugin.actionSpecified() ||
+				plugin.isLocallyModified() ? bold : plain);
+		comp.setForeground(plugin.getStatus() ==
+				Status.OBSOLETE_MODIFIED ?
+				Color.red : Color.black);
 	}
 
 	private void setColumnWidths(int col1Width, int col2Width) {
@@ -111,6 +134,7 @@ public class PluginTable extends JTable {
 
 	class PluginTableModel extends AbstractTableModel {
 		private PluginCollection plugins;
+		Map<PluginObject, Integer> pluginToRow;
 
 		public PluginTableModel(PluginCollection plugins) {
 			this.plugins = plugins;
@@ -122,6 +146,7 @@ public class PluginTable extends JTable {
 
 		public void setPlugins(PluginCollection plugins) {
 			this.plugins = plugins;
+			pluginToRow = null;
 			fireTableChanged(new TableModelEvent(pluginTableModel));
 		}
 
@@ -165,7 +190,9 @@ public class PluginTable extends JTable {
 
 		public void setValueAt(Object value, int row, int column) {
 			if (column == 1) {
-				getPlugin(row).setAction((Action)value);
+				Action action = (Action)value;
+				if (getPlugin(row).getStatus().isValid(action))
+					getPlugin(row).setAction(action);
 				fireRowChanged(row);
 			}
 		}
@@ -175,15 +202,17 @@ public class PluginTable extends JTable {
 		}
 
 		public void firePluginChanged(PluginObject plugin) {
+			if (pluginToRow == null) {
+				pluginToRow =
+					new HashMap<PluginObject, Integer>();
 			// the table may be sorted, and we need the model's row
-			int counter = 0;
-			for (PluginObject p : plugins)
-				if (p == plugin) {
-					fireRowChanged(counter);
-					return;
-				}
-				else
-					counter++;
+				int i = 0;
+				for (PluginObject p : plugins)
+					pluginToRow.put(p, new Integer(i++));
+			}
+			Integer row = pluginToRow.get(plugin);
+			if (row != null)
+				fireRowChanged(row.intValue());
 		}
 	}
 

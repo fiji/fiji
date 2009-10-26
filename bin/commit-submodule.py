@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/bin/sh
+''''exec "$(dirname "$0")"/../fiji --jython "$0" "$@" # (call again with fiji)'''
 
 import os
 import sys
@@ -89,6 +90,13 @@ url = execute('git --git-dir=' + submodule + '.git config remote.origin.url')
 if url.startswith('git://'):
 	print 'The origin\'s URL of', submodule, \
 		'must be a pushable (i.e. not start with git://)'
+	sys.exit(1)
+print 'Making sure that the submodule has no uncommitted changes'
+git_base='git --git-dir=' + submodule + '.git --work-tree=' + submodule
+if os.system(git_base + ' update-index --refresh') != 0 or \
+	os.system(git_base + ' diff-files --quiet') != 0 or \
+	os.system(git_base + ' diff-index --cached --quiet HEAD') != 0:
+	print 'Submodule ' + submodule + ' contains uncommitted changes'
 	sys.exit(1)
 print 'Making sure that the submodule is pushed:', \
 	execute('git --git-dir=' + submodule + '.git push origin HEAD')

@@ -11,7 +11,6 @@ import java.io.File;
 import java.io.IOException;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -54,7 +53,7 @@ public class Installer extends Downloader {
 
 		// mark for removal
 		for (PluginObject plugin : plugins.toUninstall()) try {
-			touch(Util.prefixUpdate(plugin.filename));
+			plugin.stageForUninstall();
 		} catch (IOException e) {
 			e.printStackTrace();
 			throw new RuntimeException("Could not mark '"
@@ -71,7 +70,7 @@ public class Installer extends Downloader {
 				orig.renameTo(new File(saveTo + ".old"));
 			}
 
-			String url = Updater.MAIN_URL + name
+			String url = Updater.MAIN_URL + name.replace(" ", "%20")
 				+ "-" + plugin.getTimestamp();
 			Download file = new Download(plugin, url, saveTo);
 			list.add(file);
@@ -81,19 +80,14 @@ public class Installer extends Downloader {
 	}
 
 	class VerifyFiles implements Progress {
-		Download current;
-
-		public void addItem(Object item) {
-			current = (Download)item;
-		}
-
-		public void setItemCount(int count, int total) {
-			if (count == total)
-				verify(current);
+		public void itemDone(Object item) {
+				verify((Download)item);
 		}
 
 		public void setTitle(String title) {}
 		public void setCount(int count, int total) {}
+		public void addItem(Object item) {}
+		public void setItemCount(int count, int total) {}
 		public void done() {}
 	}
 
@@ -138,9 +132,4 @@ public class Installer extends Downloader {
 				+ fileName + " as executable");
 		}
 	}
-
-	public static void touch(String target) throws IOException {
-                long now = new Date().getTime();
-                new File(target).setLastModified(now);
-        }
 }

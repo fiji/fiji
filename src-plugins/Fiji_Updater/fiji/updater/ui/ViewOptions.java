@@ -3,15 +3,18 @@ package fiji.updater.ui;
 import fiji.updater.logic.PluginCollection;
 import fiji.updater.logic.PluginObject;
 
+import fiji.updater.logic.PluginObject.Status;
+
 import javax.swing.JComboBox;
 
 public class ViewOptions extends JComboBox {
-	static enum Option {
+	public static enum Option {
 		ALL("all plugins"),
 		INSTALLED("installed plugins only"),
 		UNINSTALLED("uninstalled plugins only"),
-		UPTODATE("up-to-date plugins only"),
-		UPDATEABLE("update-able plugins only"),
+		UPTODATE("only up-to-date plugins"),
+		UPDATEABLE("updateable plugins only"),
+		LOCALLY_MODIFIED("locally modified plugins only"),
 		FIJI("Fiji plugins only"),
 		OTHERS("non-Fiji plugins only"),
 		CHANGES("changes"),
@@ -33,12 +36,15 @@ public class ViewOptions extends JComboBox {
 	}
 
 	public Iterable<PluginObject> getView(PluginTable table) {
-		PluginCollection plugins = PluginCollection.getInstance();
+		PluginCollection plugins = PluginCollection
+			.clone(PluginCollection.getInstance().notHidden());
+		plugins.sort();
 		switch ((Option)getSelectedItem()) {
 			case INSTALLED: return plugins.installed();
 			case UNINSTALLED: return plugins.uninstalled();
 			case UPTODATE: return plugins.upToDate();
-			case UPDATEABLE: return plugins.updateable();
+			case UPDATEABLE: return plugins.shownByDefault();
+			case LOCALLY_MODIFIED: return plugins.locallyModified();
 			case FIJI: return plugins.fijiPlugins();
 			case OTHERS: return plugins.nonFiji();
 			case CHANGES: return plugins.changes();

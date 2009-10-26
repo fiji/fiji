@@ -1,3 +1,5 @@
+/Mac-Finder-DSStore-0.94
+/db.xml.gz
 .DS_Store
 .project
 .metadata
@@ -20,6 +22,7 @@
 /fiji-*.7z
 *~
 *$py.class
+/nightly-build/
 /MMConfig_demo.cfg
 /MMStartup.bsh
 /mmgr_dal_*
@@ -102,3 +105,4 @@
 /plugins/Calculator_Plus.jar
 /plugins/Script_Editor.jar
 /plugins/3D_Objects_Counter.jar
+/jars/clojure-contrib.jar

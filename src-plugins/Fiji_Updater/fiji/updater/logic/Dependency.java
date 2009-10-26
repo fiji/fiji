@@ -1,23 +1,17 @@
 package fiji.updater.logic;
 
 public class Dependency {
-        public enum Relation { AT_LEAST, AT_MOST, EXACT };
-
-        public static Relation getRelation(String label) {
-                return Relation.valueOf(label.toUpperCase().replace('-', '_'));
-        }
-
 	public String filename;
 	public long timestamp;
-	public Relation relation;
+	public boolean overrides;
 
-	public Dependency(String filename, long timestamp, String relation) {
-		this(filename, timestamp, getRelation(relation));
-	}
-
-	public Dependency(String filename, long timestamp, Relation relation) {
+	public Dependency(String filename, long timestamp, boolean overrides) {
 		this.filename = filename;
 		this.timestamp = timestamp;
-		this.relation = relation;
+		this.overrides = overrides;
+	}
+
+	public String toString() {
+		return filename;
 	}
 }

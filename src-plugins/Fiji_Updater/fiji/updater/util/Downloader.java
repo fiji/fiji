@@ -98,6 +98,7 @@ public class Downloader extends Progressable {
 		}
 		in.close();
 		out.close();
+		itemDone(current);
 	}
 
 	public long getLastModified() {

@@ -42,18 +42,26 @@ public class Edge
 	private Vertex v2 = null;
 	/** list of slab voxels belonging to this edge */
 	private ArrayList <Point> slabs = null;
+	/** length of the edge */
+	private double length = 0;
 
 	/**
 	 * Create an edge of specific vertices and list of slab voxels.
 	 * @param v1 first vertex
 	 * @param v2 second vertex
 	 * @param slabs list of slab voxels
+	 * @param length calibrated edge length
 	 */
-	public Edge(Vertex v1, Vertex v2, ArrayList<Point> slabs)
+	public Edge(
+			Vertex v1, 
+			Vertex v2, 
+			ArrayList<Point> slabs,
+			double length)
 	{
 		this.v1 = v1;
 		this.v2 = v2;
-		this.slabs = slabs;		
+		this.slabs = slabs;
+		this.length = length;
 	}
 	/**
 	 * Get first vertex. 
@@ -109,5 +117,23 @@ public class Edge
 		else 
 			return null;
 	}
+	
+	/**
+	 * Set edge length
+	 * @param length calibrated edge length
+	 */
+	public void setLength(double length)
+	{
+		this.length = length;
+	}
 
+	/**
+	 * Get edge length
+	 * @return calibrated edge length
+	 */
+	public double getLength()
+	{
+		return this.length;
+	}
+	
 }// end class Edge

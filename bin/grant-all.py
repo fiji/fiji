@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/bin/sh
+''''exec "$(dirname "$0")"/../fiji --jython "$0" "$@" # (call again with fiji)'''
 
 # This script replaces all .policy files in a given directory structure
 # with files that grant all

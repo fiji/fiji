@@ -27,6 +27,7 @@ public class KeywordsCompletion {
 	                "persistence", "return", "switch", "try", "while"
 	                                              };
 
+	// TODO this list is EXTREMELY incomplete
 	public static final String[] clojureKeywords = {"class", "cond", "def", "defmacro", "defn", "do", "fn", "if", "instance?", "let", "loop", "monitor-enter", "monitor-exit", "new",
 	                "recur", "set!", "the-var", "thisfn", "throw", "try-finally"
 	                                               };

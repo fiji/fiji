@@ -2,8 +2,13 @@ package fiji.updater.logic;
 
 import fiji.updater.Updater;
 
+import fiji.updater.logic.PluginObject.Status;
+
+import fiji.updater.util.Util;
+
 import ij.Prefs;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -50,8 +55,11 @@ public class XMLFileReader extends DefaultHandler {
 	private void initialize(InputSource inputSource)
 			throws ParserConfigurationException, SAXException,
 			       IOException {
-		newTimestamp =
-			Long.parseLong(Prefs.get(Updater.PREFS_XMLDATE, "0"));
+		File dbXml = new File(Util.prefix(Updater.XML_COMPRESSED));
+		newTimestamp = !dbXml.exists() ? 0 :
+			// lastModified is a Unix epoch, we need a timestamp
+			Long.parseLong(Util.timestamp(dbXml.lastModified()));
+
 		SAXParserFactory factory = SAXParserFactory.newInstance();
 		factory.setNamespaceAware(true);
 
@@ -81,21 +89,21 @@ public class XMLFileReader extends DefaultHandler {
 
 		if (currentTag.equals("plugin"))
 			current = new PluginObject(atts.getValue("filename"),
-				"", 0, PluginObject.Status.NOT_INSTALLED);
+				null, 0, Status.NOT_INSTALLED);
 		else if (currentTag.equals("previous-version"))
 			current.addPreviousVersion(atts.getValue("checksum"),
 				getLong(atts, "timestamp"));
 		else if (currentTag.equals("version")) {
-			current.current.checksum = atts.getValue("checksum");
-			current.current.timestamp = getLong(atts, "timestamp");
+			current.setVersion(atts.getValue("checksum"),
+					getLong(atts, "timestamp"));
 			current.filesize = getLong(atts, "filesize");
 		}
 		else if (currentTag.equals("dependency")) {
 			String timestamp = atts.getValue("timestamp");
-			String relation = atts.getValue("relation");
+			String overrides = atts.getValue("overrides");
 			current.addDependency(atts.getValue("filename"),
 				getLong(atts, "timestamp"),
-				relation == null ? "at-least" : relation);
+				overrides != null && overrides.equals("true"));
 		}
 	}
 
@@ -110,11 +118,17 @@ public class XMLFileReader extends DefaultHandler {
 			current.description = body;
 		else if (tagName.equals("author"))
 			current.addAuthor(body);
+		else if (tagName.equals("platform"))
+			current.addPlatform(body);
+		else if (tagName.equals("category"))
+			current.addCategory(body);
 		else if (tagName.equals("link"))
 			current.addLink(body);
 		else if (tagName.equals("plugin")) {
-			if (current.isNewerThan(newTimestamp))
-				current.setStatus(PluginObject.Status.NEW);
+			if (current.current == null)
+				current.setStatus(Status.OBSOLETE_UNINSTALLED);
+			else if (current.isNewerThan(newTimestamp))
+				current.setStatus(Status.NEW);
 			plugins.add(current);
 			current = null;
 		}

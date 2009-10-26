@@ -1,23 +1,16 @@
-#!/usr/bin/python
-
 # This is a small library of function which should make testing Fiji/ImageJ
 # much easier.
 
-from fiji import Main
-
-from ij import IJ, ImageJ
-
 from jarray import zeros
-
-from java.awt import Button, Container, Dialog, Frame, Toolkit
-
-from java.awt.event import ActionEvent, MouseEvent
-
-from java.lang import Runtime, System, Thread
-
 from threading import Lock
+from sys import exit
 
-import sys
+from fiji import Main
+from ij import IJ, ImageJ
+from java.awt import Button, Container, Dialog, Frame, Toolkit
+from java.awt.event import ActionEvent, MouseEvent
+from java.io import File
+from java.lang import Runtime, System, Thread
 
 currentWindow = None
 def startIJ():
@@ -42,7 +35,7 @@ def test(function):
 	result = catchIJErrors(function)
 	if not result == None:
 		print 'Failed:', function
-		sys.exit(1)
+		exit(1)
 
 def waitForWindow(title):
 	global currentWindow
@@ -117,12 +110,21 @@ class OutputThread(Thread):
 				return
 			self.output.write(self.buffer, 0, count)
 
+def launchProgramNoWait(args, workingDir = None):
+	if workingDir != None and not isinstance(workingDir, File):
+		workingDir = File(workingDir)
+	process = Runtime.getRuntime().exec(args, None, workingDir)
+	OutputThread(process.getInputStream(), System.out).start()
+	OutputThread(process.getErrorStream(), System.err).start()
+	return process
+
+def launchProgram(args, workingDir = None):
+	process = launchProgramNoWait(args, workingDir)
+	return process.waitFor()
+
 def launchFiji(args, workingDir = None):
 	args.insert(0, System.getProperty('fiji.executable'))
 	try:
-		process = Runtime.getRuntime().exec(args, None, workingDir)
-		OutputThread(process.getInputStream(), System.out).start()
-		OutputThread(process.getErrorStream(), System.err).start()
-		return process.waitFor()
+		launchProgram(args, workingDir)
 	except:
 		return -1

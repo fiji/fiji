@@ -28,10 +28,12 @@ public class JRuby_Interpreter extends AbstractInterpreter {
 		}
 		super.run(ignored);
 		setTitle("JRuby Interpreter");
-		print_out.println("Starting JRuby ...");
+		print("Starting JRuby ...");
+		prompt.setEnabled(false);
 		PrintStream stream = new PrintStream(out);
 		rubyRuntime = Ruby.newInstance(System.in,stream,stream);
-		print_out.println("Done.");
+		println(" done.");
+		prompt.setEnabled(true);
 
 		rubyRuntime.evalScriptlet(getStartupScript());
 	}

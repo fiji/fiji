@@ -4,6 +4,7 @@ import fiji.updater.Updater;
 
 import fiji.updater.util.Progress;
 import fiji.updater.util.Progressable;
+import fiji.updater.util.Util;
 
 import ij.IJ;
 
@@ -19,6 +20,7 @@ import java.net.URL;
 import java.net.URLConnection;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 /*
@@ -35,6 +37,7 @@ import java.util.List;
 public class FileUploader extends Progressable {
 	protected final String uploadDir;
 	int total;
+	long timestamp;
 
 	public FileUploader() {
 		this("/var/www/update/");
@@ -53,6 +56,8 @@ public class FileUploader extends Progressable {
 	//Steps to accomplish entire upload task
 	public synchronized void upload(List<SourceFile> sources)
 			throws IOException {
+		long now = new Date().getTime();
+		timestamp = Long.parseLong(Util.timestamp(now));
 		setTitle("Uploading");
 
 		calculateTotalSize(sources);
@@ -62,14 +67,21 @@ public class FileUploader extends Progressable {
 		File db = new File(uploadDir + Updater.XML_COMPRESSED);
 		byte[] buffer = new byte[65536];
 		for (SourceFile source : sources) {
-			addItem(source);
-
 			File file = new File(uploadDir + source.getFilename());
+			/* The first file must be the lock */
+			if (lock == null)
+				lock = file;
 			File dir = file.getParentFile();
 			if (!dir.exists())
 				dir.mkdirs();
 			OutputStream out = new FileOutputStream(file);
 			InputStream in = source.getInputStream();
+			/*
+			 * To get the timestamp of db.xml.gz.lock which
+			 * determines its contents, the addItem() call
+			 * must be _exactly_ here.
+			 */
+			addItem(source);
 			int currentCount = 0;
 			int currentTotal = (int)source.getFilesize();
 			for (;;) {
@@ -84,6 +96,7 @@ public class FileUploader extends Progressable {
 			in.close();
 			out.close();
 			count += currentCount;
+			itemDone(source);
 		}
 
 		File backup = new File(db.getAbsolutePath() + ".old");

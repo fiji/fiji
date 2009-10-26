@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/bin/sh
+''''exec "$(dirname "$0")"/../fiji --jython "$0" "$@" # (call again with fiji)'''
 
 import os
 import re
@@ -33,8 +34,10 @@ hdiutil('create ' + dmg + ' -srcfolder ' + app \
 	+ ' -fs HFS+ -format UDRW -volname Fiji -ov')
 folder=get_folder(dmg)
 print "folder: ", folder
-for d in ['plugins', 'macros']:
-	symlink('Fiji.app/' + d, folder + '/' + d)
+os.system('cp resources/install-fiji.jpg "' + folder + '"/.background.jpg')
+symlink('/Applications', folder + '/Applications')
+execute('perl bin/generate-finder-dsstore.perl')
+# to edit the background image/icon positions: raw_input('Press Enter...')
 eject(dmg)
 
 os.rename(dmg, dmg + '.tmp')

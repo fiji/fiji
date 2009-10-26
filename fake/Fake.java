@@ -21,6 +21,7 @@ import java.net.URL;
 import java.net.URLDecoder;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
@@ -176,8 +177,6 @@ public class Fake {
 		try {
 			Parser parser = new Parser();
 
-			parser.setVariable("FIJIHOME", fijiHome);
-
 			// filter out variable definitions
 			int firstArg = 0;
 			while (firstArg < args.length &&
@@ -199,6 +198,15 @@ public class Fake {
 			}
 
 			all.make();
+
+			/*
+			 * By definition, everything is up-to-date now, but for
+			 * performance, we set the mtimes so that we do not need
+			 * to run our clever .jar checking again (which is
+			 * quite expensive performance-wise, even if not as
+			 * expensive as compiling everything again.
+			 */
+			all.setUpToDate();
 		}
 		catch (FakeException e) {
 			System.err.println(e);
@@ -269,6 +277,8 @@ public class Fake {
 
 			setVariable("platform", getPlatform());
 
+			setVariable("FIJIHOME", fijiHome);
+
 			addSpecialRule(new Special("show-rules") {
 				void action() { showMap(allRules, false); }
 			});
@@ -283,6 +293,10 @@ public class Fake {
 
 			addSpecialRule(new Special("clean-dry-run") {
 				void action() { cleanAll(true); }
+			});
+
+			addSpecialRule(new Special("dry-run") {
+				void action() { check(); }
 			});
 
 			addSpecialRule(new Special("check") {
@@ -693,7 +707,7 @@ public class Fake {
 			String res = null;
 			if ("true".equals(variables.get("ENVOVERRIDES("
 							+ key + ")")))
-				res = System.getenv(key);
+				res = stripFijiHome(System.getenv(key));
 			key = key.toUpperCase();
 			if (subkey != null && res == null)
 				res = (String)variables.get(key
@@ -797,9 +811,7 @@ public class Fake {
 					return upToDateError(file,
 							new File(path));
 				if (targetModifiedTime < mtimeFijiBuild)
-					return upToDateError(file,
-							new File(fijiBuildJar));
-
+					return upToDateError(new File(fijiBuildJar), file);
 
 				nonUpToDates = new ArrayList();
 				Iterator iter = prerequisites.iterator();
@@ -833,7 +845,7 @@ public class Fake {
 				if (targetModified == sourceModified &&
 						compare(source, target) == 0)
 					return true;
-				if (targetModified <= sourceModified)
+				if (targetModified < sourceModified)
 					return upToDateError(source, target);
 				return true;
 			}
@@ -883,10 +895,12 @@ public class Fake {
 						return;
 					System.err.println("Building " + this);
 					action();
-					if (!checkUpToDate())
-						touchFile(target);
-					// by definition, it's up-to-date now
-					upToDateStage = 2;
+					if (new File(target).exists())
+						upToDateStage = 2;
+					else {
+						upToDateStage = 0;
+						wasAlreadyChecked = false;
+					}
 				} catch (Exception e) {
 					if (!(e instanceof FakeException))
 						e.printStackTrace();
@@ -894,6 +908,19 @@ public class Fake {
 					error(e.getMessage());
 				}
 				wasAlreadyInvoked = false;
+			}
+
+			void setUpToDate() throws IOException {
+				Iterator iter = prerequisites.iterator();
+				while (iter.hasNext()) {
+					Rule rule =
+						getRule((String)iter.next());
+					if (rule != null)
+						rule.setUpToDate();
+				}
+
+				if (!checkUpToDate())
+					touchFile(target);
 			}
 
 			protected void clean(boolean dry_run) {
@@ -932,23 +959,24 @@ public class Fake {
 				System.err.println(message);
 			}
 
+			public Rule getRule(String prereq) {
+				if (prereq.endsWith(".jar/"))
+					prereq = stripSuffix(prereq, "/");
+				return (Rule)allRules.get(prereq);
+			}
+
 			public void makePrerequisites() throws FakeException {
 				Iterator iter = prerequisites.iterator();
 				while (iter.hasNext()) {
 					String prereq = (String)iter.next();
-
-					if (prereq.endsWith(".jar/"))
-						prereq = stripSuffix(prereq,
-								"/");
-					if (!allRules.containsKey(prereq)) {
+					Rule rule = getRule(prereq);
+					if (rule == null) {
 						if (this instanceof All)
 							error("Unknown target: "
 								+ prereq);
 						else
 							continue;
 					}
-
-					Rule rule = (Rule)allRules.get(prereq);
 					rule.make();
 				}
 			}
@@ -1751,6 +1779,7 @@ public class Fake {
 
 		String[] names = parentDirectory.list(new GlobFilter(pattern,
 					newerThan));
+		Arrays.sort(names);
 
 		for (int i = 0; i < names.length; i++) {
 			String path = parentPath + names[i];
@@ -2849,6 +2878,21 @@ public class Fake {
 
 	public static String join(List list) {
 		return join(list, " ");
+	}
+
+	public static String stripFijiHome(String string) {
+		if (string == null)
+			return string;
+		String slashes = string.replace('\\', '/');
+		if (slashes.startsWith(fijiHome))
+			return stripPrefix(slashes, fijiHome);
+		return string;
+	}
+
+	public static String stripPrefix(String string, String prefix) {
+		if (!string.startsWith(prefix))
+			return string;
+		return string.substring(prefix.length());
 	}
 
 	public static String stripSuffix(String string, String suffix) {

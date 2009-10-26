@@ -45,6 +45,7 @@ public class XMLFileDownloader extends Downloader {
 		public void setTitle(String title) {}
 		public void setCount(int count, int total) {}
 		public void setItemCount(int count, int total) {}
+		public void itemDone(Object item) {}
 		public void done() {}
 	}
 			
@@ -68,7 +69,7 @@ public class XMLFileDownloader extends Downloader {
 			}
 		});
 		data = Compressor.decompress(new FileInputStream(destination));
-		Prefs.set(Updater.PREFS_XMLDATE, "" + xmlLastModified);
+		new File(destination).setLastModified(xmlLastModified);
 	}
 
 	public InputStream getInputStream() {

@@ -7,4 +7,4 @@ batik.jar <- batik-1.8pre/lib/batik-all.jar/ \
 	lib/xml-apis.jar/ lib/xml-apis-ext.jar/ lib/js.jar/
 batik-1.8pre/lib/batik-all.jar[../fiji --ant all-jar] <-
 
-grantAll[../scripts/grant-all.py batik/resources] <-
+grantAll[../bin/grant-all.py batik/resources] <-

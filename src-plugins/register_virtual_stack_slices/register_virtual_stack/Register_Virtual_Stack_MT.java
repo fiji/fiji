@@ -27,25 +27,31 @@ import java.awt.Rectangle;
 import java.awt.TextField;
 import java.awt.geom.AffineTransform;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.FilenameFilter;
 
 import mpicbg.ij.FeatureTransform;
 import mpicbg.ij.SIFT;
 import mpicbg.ij.util.Util;
 import mpicbg.imagefeatures.*;
-import mpicbg.models.AffineModel2D;
-import mpicbg.models.CoordinateTransform;
+
+
 import mpicbg.models.Model;
-import mpicbg.models.MovingLeastSquaresTransform;
 import mpicbg.models.NotEnoughDataPointsException;
 import mpicbg.models.Point;
 import mpicbg.models.PointMatch;
-import mpicbg.models.TranslationModel2D;
-import mpicbg.models.SimilarityModel2D;
-import mpicbg.models.RigidModel2D;
 
+
+
+import mpicbg.trakem2.transform.AffineModel2D;
+import mpicbg.trakem2.transform.CoordinateTransform;
+import mpicbg.trakem2.transform.CoordinateTransformList;
+import mpicbg.trakem2.transform.MovingLeastSquaresTransform;
+import mpicbg.trakem2.transform.RigidModel2D;
+import mpicbg.trakem2.transform.SimilarityModel2D;
 import mpicbg.trakem2.transform.TransformMesh;
 import mpicbg.trakem2.transform.TransformMeshMapping;
+import mpicbg.trakem2.transform.TranslationModel2D;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -60,49 +66,82 @@ import bunwarpj.bUnwarpJ_;
 import bunwarpj.trakem2.transform.CubicBSplineTransform;
 
 /** 
- * Requires: a directory with images, all of the same dimensions
- * Performs: registration of one image to the next, by 6 different registration models:
- * 				- Translation (no deformation)
- * 				- Rigid (translation + rotation)
- * 				- Similarity (translation + rotation + isotropic scaling)
- * 				- Affine (free affine transformation)
- * 				- Elastic (consistent elastic deformations by B-splines)
- * 				- Moving least squares (maximal warping)
- * Outputs: the list of new images, one for slice, into a target directory as .tif files.
+ * Fiji plugin to register sequences of images in a concurrent (multi-thread) way.
+ * <p>
+ * <b>Requires</b>: a directory with images, of any size and type (8, 16, 32-bit gray-scale or RGB color)
+ * <p>
+ * <b>Performs</b>: registration of a sequence of images, by 6 different registration models:
+ * <ul>
+ * 				<li> Translation (no deformation)</li>
+ * 				<li> Rigid (translation + rotation)</li>
+ * 				<li> Similarity (translation + rotation + isotropic scaling)</li>
+ * 				<li> Affine (free affine transformation)</li>
+ * 				<li> Elastic (consistent elastic deformations by B-splines)</li>
+ * 				<li> Moving least squares (maximal warping)</li>
+ * </ul>
+ * <p>
+ * <b>Outputs</b>: the list of new images, one for slice, into a target directory as .tif files.
+ * <p>
+ * For a detailed documentation, please visit the plugin website at:
+ * <p>
+ * <A target="_blank" href="http://pacific.mpi-cbg.de/wiki/Register_Virtual_Stack_Slices">http://pacific.mpi-cbg.de/wiki/Register_Virtual_Stack_Slices</A>
+ * 
+ * @version 09/23/2009
+ * @author Ignacio Arganda-Carreras (ignacio.arganda@gmail.com), Stephan Saalfeld and Albert Cardona
  */
 public class Register_Virtual_Stack_MT implements PlugIn 
 {
 
 	// Registration types
+	/** translation registration model id */
 	public static final int TRANSLATION 			= 0;
+	/** rigid-body registration model id */
 	public static final int RIGID 					= 1;
+	/** rigid-body + isotropic scaling registration model id */
 	public static final int SIMILARITY 				= 2;
+	/** affine registration model id */
 	public static final int AFFINE 					= 3;
+	/** elastic registration model id */
 	public static final int ELASTIC 				= 4;
+	/** maximal warping registration model id */
 	public static final int MOVING_LEAST_SQUARES 	= 5;
 	
-	public static int featuresModelIndex = 1;
-	public static int registrationModelIndex = 1;
+	/** index of the features model check-box */
+	public static int featuresModelIndex = Register_Virtual_Stack_MT.RIGID;
+	/** index of the registration model check-box */
+	public static int registrationModelIndex = Register_Virtual_Stack_MT.RIGID;
+	/** working directory path */
 	public static String currentDirectory = (OpenDialog.getLastDirectory() == null) ? 
 					 OpenDialog.getDefaultDirectory() : OpenDialog.getLastDirectory();
 					 
+	/** advance options flag */
 	public static boolean advanced = false;
-	
+	/** shrinkage constraint flag */
 	public static boolean non_shrinkage = false;
+	/** save transformation flag */
+	public static boolean save_transforms = false;
 	
 	// Regularization 
+	/** scaling regularization parameter [0.0-1.0] */
 	public static double tweakScale = 0.95;
+	/** shear regularization parameter [0.0-1.0] */
 	public static double tweakShear = 0.95;
-	public static double tweakIso = 0.95;	
+	/** isotropy (aspect ratio) regularization parameter [0.0-1.0] */
+	public static double tweakIso = 0.95;
+	
+	/** display relaxation graph flag */
 	public static boolean displayRelaxGraph = false;
 	
 	// Image centers
+	/** array of x- coordinate image centers */ 
 	private static double[] centerX = null;
+	/** array of y- coordinate image centers */
 	private static double[] centerY = null;
 	
-	// Post-processing flag
+	/** post-processing flag */
 	public static boolean postprocess = true;
 
+	/** registration model string labels */
 	public static final String[] registrationModelStrings =
 			       {"Translation          -- no deformation                      ",
 	  	            "Rigid                -- translate + rotate                  ",
@@ -111,13 +150,18 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			        "Elastic              -- bUnwarpJ splines                    ",
 			        "Moving least squares -- maximal warping                     "};
 
+	/** feature model string labels */
 	public final static String[] featuresModelStrings = new String[]{ "Translation", "Rigid", "Similarity", "Affine" };
+	/** relaxation threshold (if the difference between last two iterations is below this threshold, the relaxation stops */
 	public static final float STOP_THRESHOLD = 0.01f;
+	/** maximum number of iterations in the relaxation loop */
 	public static final int MAX_ITER = 1000;
 
 	//---------------------------------------------------------------------------------
 	/**
 	 * Plug-in run method
+	 * 
+	 * @param arg plug-in arguments
 	 */
 	public void run(String arg) 
 	{
@@ -127,6 +171,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		gd.addChoice("Registration model: ", registrationModelStrings, registrationModelStrings[registrationModelIndex]);
 		gd.addCheckbox("Advanced setup", advanced);	
 		gd.addCheckbox("Shrinkage constrain", non_shrinkage);
+		gd.addCheckbox("Save transforms", save_transforms);
 		
 		gd.showDialog();
 		
@@ -138,6 +183,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		registrationModelIndex = gd.getNextChoiceIndex();
 		advanced = gd.getNextBoolean();
 		non_shrinkage = gd.getNextBoolean();
+		save_transforms = gd.getNextBoolean();
 
 		// Choose source image folder
 		JFileChooser chooser = new JFileChooser();
@@ -158,7 +204,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		if (!source_dir.endsWith("/")) source_dir += "/";
 
 		// Choose target folder to save images into
-		chooser.setDialogTitle("Choose Output folder");
+		chooser.setDialogTitle("Choose directory to store Output images");
 		if (chooser.showOpenDialog(gd) != JFileChooser.APPROVE_OPTION)
 	    	return;
 		
@@ -168,7 +214,25 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		target_dir = target_dir.replace('\\', '/');
 		if (!target_dir.endsWith("/")) target_dir += "/";
 		
-		String referenceName = null;
+		// Select folder to save the transformation files if
+		// the "Save transforms" check-box was checked.
+		String save_dir = null;
+		if(save_transforms)
+		{
+			// Choose target folder to save images into
+			chooser.setDialogTitle("Choose directory to store Transform files");
+			if (chooser.showOpenDialog(gd) != JFileChooser.APPROVE_OPTION)
+		    	return;
+			
+			save_dir = chooser.getSelectedFile().toString();
+			if (null == save_dir) 
+				return;
+			save_dir = save_dir.replace('\\', '/');
+			if (!save_dir.endsWith("/")) save_dir += "/";
+		}
+		
+		// Select reference
+		String referenceName = null;						
 		if(non_shrinkage == false)
 		{		
 			// Choose reference image
@@ -181,8 +245,9 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			referenceName = chooser.getSelectedFile().getName();
 		}
 
+
 		// Execute registration
-		exec(source_dir, target_dir, referenceName, featuresModelIndex, registrationModelIndex, advanced, non_shrinkage);
+		exec(source_dir, target_dir, save_dir, referenceName, featuresModelIndex, registrationModelIndex, advanced, non_shrinkage);
 	}
 	//-----------------------------------------------------------------------------------
 	/** 
@@ -190,15 +255,17 @@ public class Register_Virtual_Stack_MT implements PlugIn
 	 * 
 	 * @param source_dir Directory to read all images from, where each image is a slice in a sequence. Their names must be bit-sortable, i.e. if numbered, they must be padded with zeros.
 	 * @param target_dir Directory to store registered slices into.
-	 * @param refrenceName File name of the reference image
+	 * @param save_dir Directory to store transform files into.
+	 * @param referenceName File name of the reference image.
 	 * @param featuresModelIndex Index of the features extraction model (0=TRANSLATION, 1=RIGID, 2=SIMILARITY, 3=AFFINE)
 	 * @param registrationModelIndex Index of the registration model (0=TRANSLATION, 1=RIGID, 2=SIMILARITY, 3=AFFINE, 4=ELASTIC, 5=MOVING_LEAST_SQUARES)
-	 * @param advanced Triggers showing parameters setup dialogs.
+	 * @param advanced Triggers showing parameters setup dialogs
 	 * @param non_shrink Triggers showing non-shrinking dialog (if advanced options are selected as well) and execution
 	 */
 	static public void exec(
 			final String source_dir, 
 			final String target_dir,
+			final String save_dir,
 			final String referenceName,
 			final int featuresModelIndex, 
 			final int registrationModelIndex, 
@@ -213,20 +280,27 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			return;
 		if (non_shrink && advanced && !showRegularizationDialog(p))
 			return;
-		exec(source_dir, target_dir, referenceName, p, non_shrink);
+		exec(source_dir, target_dir, save_dir, referenceName, p, non_shrink);
 	}
 
 	//-----------------------------------------------------------------------------------
 	/**
-	 * Execution method. Execute registration when all parameters are set.
+	 * Execute registration when all parameters are set.
 	 * 
 	 * @param source_dir Directory to read all images from, where each image is a slice in a sequence. Their names must be bit-sortable, i.e. if numbered, they must be padded with zeros.
 	 * @param target_dir Directory to store registered slices into.
-	 * @param referenceName File name of the reference image
+	 * @param save_dir Directory to store transform files into.
+	 * @param referenceName File name of the reference image (if necessary, for non-shrinkage mode, it can be null)
 	 * @param p Registration parameters
 	 * @param non_shrink non shrinking mode flag
 	 */
-	public static void exec(final String source_dir, final String target_dir, final String referenceName, final Param p, final boolean non_shrink) 
+	public static void exec(
+			final String source_dir, 
+			final String target_dir, 
+			final String save_dir,
+			final String referenceName, 
+			final Param p, 
+			final boolean non_shrink) 
 	{
 		// get file listing
 		final String exts = ".tif.jpg.png.gif.tiff.jpeg.bmp.pgm";
@@ -243,7 +317,9 @@ public class Register_Virtual_Stack_MT implements PlugIn
 				
 		if(non_shrink)
 		{
-			exec(source_dir, names, target_dir, p);
+			// Execute registration with shrinkage constrain,
+			// so no reference is needed
+			exec(source_dir, names, target_dir, save_dir, p);
 			return;
 		}
 		
@@ -261,28 +337,29 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			return;
 		}
 		
-		IJ.log("Reference index = " + referenceIndex);
+		//IJ.log("Reference index = " + referenceIndex);
 
 		// Execute registration with sorted source file names and reference image index
-		exec(source_dir, names, referenceIndex, target_dir, p);
+		exec(source_dir, names, referenceIndex, target_dir, save_dir, p);
 	}
 	
 	//-----------------------------------------------------------------------------------------
 	/**
-	 * Registration parameters class 
+	 * Registration parameters class. It stores SIFT and bUnwarpJ registration parameters. 
 	 *
 	 */
 	public static class Param
 	{	
+		/** SIFT parameters */
 		public final FloatArray2DSIFT.Param sift = new FloatArray2DSIFT.Param();
 		
 		/**
-		 * Closest/next closest neighbor distance ratio
+		 * Closest/next neighbor distance ratio
 		 */
 		public static float rod = 0.92f;
 		
 		/**
-		 * Maximal allowed alignment error in px
+		 * Maximal allowed alignment error in pixels
 		 */
 		public static float maxEpsilon = 25.0f;
 		
@@ -309,7 +386,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
         //---------------------------------------------------------------------------------
         /**
          * Shows parameter dialog when "advanced options" is checked
-         * @return false when dialog is canceled or 
+         * @return false when dialog is canceled or true when is not
          */
 		public boolean showDialog() 
 		{
@@ -373,12 +450,14 @@ public class Register_Virtual_Stack_MT implements PlugIn
 	 * @param source_dir Directory to read all images from, where each image is a slice in a sequence. Their names must be bit-sortable, i.e. if numbered, they must be padded with zeros.
 	 * @param sorted_file_names Array of sorted source file names.
 	 * @param target_dir Directory to store registered slices into.
+	 * @param save_dir Directory to store transform files into.
 	 * @param p registration parameters
 	 */
 	public static void exec(
 			final String source_dir, 
 			final String[] sorted_file_names,
 			final String target_dir, 
+			final String save_dir,
 			final Param p) 
 	{		
 		// Check if source and output directories are different
@@ -484,6 +563,8 @@ public class Register_Virtual_Stack_MT implements PlugIn
 				IJ.showStatus("Matching features " + (i+1) + "/" + sorted_file_names.length);
 				IJ.showProgress((double) (i+1) / sorted_file_names.length);
 				inliers[i-1] = fpm[i-1].get();
+				if(inliers[i-1].size() < 2)
+					IJ.log("Error: not model found for images " + sorted_file_names[i-1] + " and " + sorted_file_names[i] );
 			}
 			
 			// Rigidly register
@@ -495,7 +576,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 				// First approach with a RIGID transform
 				RigidModel2D initialModel = new RigidModel2D();
 				// We apply first the previous transform to the points in the previous image
-				inliers[i-1] = applyPreviousTransform(inliers[i-1], transform[i-1]);
+				inliers[i-1] = applyTransformReverse(inliers[i-1], transform[i-1]);
 				initialModel.fit(inliers[i-1]);
 				// Assign initial model
 				transform[i] = initialModel;
@@ -522,7 +603,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			
 			// Create final images.
 			IJ.showStatus("Calculating final images...");
-			if(createResults(source_dir, sorted_file_names, target_dir, exe, transform) == false)
+			if(createResults(source_dir, sorted_file_names, target_dir, save_dir, exe, transform) == false)
 			{
 				IJ.log("Error when creating target images");
 				return;
@@ -546,12 +627,12 @@ public class Register_Virtual_Stack_MT implements PlugIn
 	/**
 	 * Apply a transformation to the second point (P2) of a list of Point matches
 	 * 
-	 * @param list
-	 * @param t
+	 * @param list list of point matches
+	 * @param t transformation to be applied
 	 * 
-	 * @return new list of point matches
+	 * @return new list of point matches (after the transformation)
 	 */
-	public static List<PointMatch> applyPreviousTransform(
+	public static List<PointMatch> applyTransformReverse(
 			List<PointMatch> list,
 			CoordinateTransform t) 
 	{
@@ -591,8 +672,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		for(int iSlice = 0; iSlice < inliers.length; iSlice++)
 			mean_distance[0] += PointMatch.meanDistance(inliers[iSlice]);
 		
-		if(display)
-			IJ.log("Initial: Mean distance = " + mean_distance[0] / inliers.length);
+		mean_distance[0] /= inliers.length;
 		
 		
 		// Array to keep order of relaxation
@@ -634,7 +714,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 						regularize(t, 0);
 
 						// Update inliers (P1 of current slice and P2 in next slice)				
-						inliers[0] = applyPreviousTransform(inliers[0], t);
+						inliers[0] = applyTransformReverse(inliers[0], t);
 
 						// Update list of transforms
 						transform[0] = t;										
@@ -671,7 +751,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 						// Update inliers (P1 of current slice and P2 in next slice)
 						PointMatch.apply(inliers[iSlice-1], t);
 						if(iSlice-1 < inliers.length-1)
-							inliers[iSlice] = applyPreviousTransform(inliers[iSlice], t);
+							inliers[iSlice] = applyTransformReverse(inliers[iSlice], t);
 
 						// Update list of transforms
 						transform[iSlice] = t;										
@@ -690,8 +770,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			for(int k = 0; k < inliers.length; k++)
 				mean_distance[n+1] += PointMatch.meanDistance(inliers[k]);
 
-			if(display)
-				IJ.log(n+": Mean distance = " + mean_distance[n+1] / inliers.length);
+			mean_distance[n+1] /= inliers.length;						
 
 			if(Math.abs(mean_distance[n+1] - mean_distance[n]) < STOP_THRESHOLD)
 				break;
@@ -721,7 +800,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 	/**
 	 * Randomize array of integers
 	 * 
-	 * @param index array of integers to randomize
+	 * @param array array of integers to randomize
 	 */
 	public static void randomize(final int[] array) 
 	{
@@ -740,6 +819,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		}
 		
 	}// end method randomize
+	
 	//-----------------------------------------------------------------------------------------	
 	/** 
 	 * Create final target images  
@@ -747,14 +827,16 @@ public class Register_Virtual_Stack_MT implements PlugIn
 	 * @param source_dir Directory to read all images from, where each image is a slice in a sequence. Their names must be bit-sortable, i.e. if numbered, they must be padded with zeros.
 	 * @param sorted_file_names Array of sorted source file names.
 	 * @param target_dir Directory to store registered slices into.
-	 * @param exe executor service to save the images
-	 * @param transform array of transforms for every source image (including the first one)
+	 * @param save_dir Directory to store transform files into (null if transformations are not saved).
+	 * @param exe executor service to save the images.
+	 * @param transform array of transforms for every source image (including the first one).
 	 * @return true or false in case of proper result or error
 	 */
 	public static boolean createResults(
 			final String source_dir, 
 			final String[] sorted_file_names,
 			final String target_dir,
+			final String save_dir,
 			final ExecutorService exe,
 			final CoordinateTransform[] transform) 
 	{
@@ -765,12 +847,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		final Rectangle commonBounds = new Rectangle(0, 0, imp2.getWidth(), imp2.getHeight());
 		// List of bounds in the forward registration
 		final List<Rectangle> bounds = new ArrayList<Rectangle>();
-		
-		//bounds.add(new Rectangle(0, 0, imp2.getWidth(), imp2.getHeight()));
-		
-		// Save the reference image, untouched:
-		//exe.submit(saveImage(imp2, makeTargetPath(target_dir, sorted_file_names[0])));
-
+			
 		// Apply transform	
 		for (int i=0; i<sorted_file_names.length; i++) 
 		{				
@@ -786,41 +863,34 @@ public class Register_Virtual_Stack_MT implements PlugIn
 
 			// Accumulate bounding boxes, so in the end they can be reopened and re-saved with an enlarged canvas.
 			final Rectangle currentBounds = mesh.getBoundingBox();			
-			bounds.add(currentBounds);
-			
-			
-			
+			bounds.add(currentBounds);									
 			
 			//IJ.log(i + ": current bounding box = [" + currentBounds.x + " " + currentBounds.y + " " + currentBounds.width + " " + currentBounds.height + "]");
-
 			
 			// Update common bounds
-			int commonLastX = commonBounds.x + commonBounds.width;
-			int commonLastY = commonBounds.y + commonBounds.height;
-			
-			final int currentLastX = currentBounds.x + currentBounds.width;
-			final int currentLastY = currentBounds.y + currentBounds.height;
+			int min_x = commonBounds.x;
+			int min_y = commonBounds.y;
+			int max_x = commonBounds.x + commonBounds.width;
+			int max_y = commonBounds.y + commonBounds.height;
 			
 			if(currentBounds.x < commonBounds.x)
-				commonBounds.x = currentBounds.x;
+				min_x = currentBounds.x;
 			if(currentBounds.y < commonBounds.y)
-				commonBounds.y = currentBounds.y;			
+				min_y = currentBounds.y;
+			if(currentBounds.x + currentBounds.width > max_x)
+				max_x = currentBounds.x + currentBounds.width;
+			if(currentBounds.y + currentBounds.height > max_y)
+				max_y = currentBounds.y + currentBounds.height;
 			
-			if(commonLastX < currentLastX)			
-				commonLastX = currentLastX;
-				
+			commonBounds.x = min_x;
+			commonBounds.y = min_y;
+			commonBounds.width = max_x - min_x;
+			commonBounds.height = max_y - min_y;
 			
-			if(commonLastY < currentLastY)			
-				commonLastY = currentLastY;
-				
-			commonBounds.width = commonLastX - commonBounds.x;
-			commonBounds.height = commonLastY - commonBounds.y;
 			
-			/*
-			IJ.log("currentLastX = " + currentLastX + " currentLastY = " + currentLastY);
-			IJ.log("commonLastX = " + commonLastX + " commonLastY = " + commonLastY);
-			IJ.log("common bounding box = [" + commonBounds.x + " " + commonBounds.y + " " + commonBounds.width + " " + commonBounds.height + "]");
-			*/
+			
+			//IJ.log("common bounding box = [" + commonBounds.x + " " + commonBounds.y + " " + commonBounds.width + " " + commonBounds.height + "]");
+			
 			
 			// Save target image
 			exe.submit(saveImage(imp2, makeTargetPath(target_dir, sorted_file_names[i])));	
@@ -870,6 +940,12 @@ public class Register_Virtual_Stack_MT implements PlugIn
 
 		// Show registered stack
 		new ImagePlus("Registered " + new File(source_dir).getName(), stack).show();
+		
+		// Save transforms
+		if(save_dir != null)
+		{
+			saveTransforms(transform, save_dir, sorted_file_names, exe);			
+		}
 
 		IJ.showStatus("Done!");
 		
@@ -877,21 +953,63 @@ public class Register_Virtual_Stack_MT implements PlugIn
 	}
 	
 	//-----------------------------------------------------------------------------------------
+	/**
+	 * Save transforms into XML files.
+	 * @param transform array of transforms.
+	 * @param save_dir directory to save transforms into.
+	 * @param sorted_file_names array of sorted file image names.
+	 * @param exe executor service to run everything concurrently.
+	 * @return true if every file is save correctly, false otherwise.
+	 */
+	private static boolean saveTransforms(CoordinateTransform[] transform,
+			String save_dir, String[] sorted_file_names, ExecutorService exe) 
+	{
+		
+		final Future[] jobs = new Future[transform.length];
+		
+		for(int i = 0; i < transform.length; i ++)
+		{
+			jobs[i] = exe.submit(saveTransform(makeTransformPath(save_dir, sorted_file_names[i]), transform[i]) ); 
+		}
+		// Join
+		for (final Future<String> job : jobs) {
+			String filename = null;
+			try {
+				filename = job.get();
+			} catch (InterruptedException e) {
+				IJ.error("Interruption exception!");
+				e.printStackTrace();
+				return false;
+			} catch (ExecutionException e) {
+				IJ.error("Execution exception!");
+				e.printStackTrace();
+				return false;
+			}
+			if (null == filename) {
+				IJ.log("Not able to save file: " + filename);
+				return false;
+			}
+		}
+		return true;
+	}
 	
+	//-----------------------------------------------------------------------------------------	
 	/**
 	 * Execution method. Execute registration when all parameters are set.
 	 * 
 	 * @param source_dir Directory to read all images from, where each image is a slice in a sequence. Their names must be bit-sortable, i.e. if numbered, they must be padded with zeros.
 	 * @param sorted_file_names Array of sorted source file names.
-	 * @param referenceIndex index of the reference image in the array of sorted source images
+	 * @param referenceIndex index of the reference image in the array of sorted source images.
 	 * @param target_dir Directory to store registered slices into.
-	 * @param p registration parameters
+	 * @param save_dir Directory to store transform files into.
+	 * @param p registration parameters.
 	 */
 	static public void exec(
 			final String source_dir, 
 			final String[] sorted_file_names,
 			final int referenceIndex,
 			final String target_dir, 
+			final String save_dir,
 			final Param p) 
 	{
 		// Check if source and output directories are different
@@ -906,22 +1024,8 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			IJ.error("Don't know how to process registration type " + Param.registrationModelIndex);
 			return;
 		}
-		
-		// Select coordinate transform based on the registration model
-		mpicbg.models.CoordinateTransform t;
-		switch (Param.registrationModelIndex) 
-		{
-			case Register_Virtual_Stack_MT.TRANSLATION: t = new TranslationModel2D(); break;
-			case Register_Virtual_Stack_MT.RIGID: t = new RigidModel2D(); break;
-			case Register_Virtual_Stack_MT.SIMILARITY: t = new SimilarityModel2D(); break;
-			case Register_Virtual_Stack_MT.AFFINE: t = new AffineModel2D(); break;
-			case Register_Virtual_Stack_MT.ELASTIC: t = new CubicBSplineTransform(); break;
-			case Register_Virtual_Stack_MT.MOVING_LEAST_SQUARES: t = new MovingLeastSquaresTransform(); break;
-			default:
-				IJ.log("ERROR: unknown registrationModelIndex = " + Param.registrationModelIndex);
-				return;
-		}
-
+				
+		// Executor service to produce concurrent threads
 		final ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
 		try {			
@@ -935,6 +1039,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			
 			// Common bounds to create common frame for all images
 			final Rectangle commonBounds = new Rectangle(0, 0, imp2.getWidth(), imp2.getHeight());
+			
 			// List of bounds in the forward registration
 			final List<Rectangle> boundsFor = new ArrayList<Rectangle>();
 			boundsFor.add(new Rectangle(0, 0, imp2.getWidth(), imp2.getHeight()));
@@ -942,6 +1047,9 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			// Save the reference image, untouched:
 			exe.submit(saveImage(imp2, makeTargetPath(target_dir, sorted_file_names[referenceIndex])));
 
+			// Array of resulting coordinate transforms
+			CoordinateTransform[] transform = new CoordinateTransform[sorted_file_names.length];
+			
 			// Forward registration (from reference image to the end of the sequence)			
 			for (int i=referenceIndex+1; i<sorted_file_names.length; i++) 
 			{												
@@ -951,14 +1059,23 @@ public class Register_Virtual_Stack_MT implements PlugIn
 				// Create empty mask for second image
 				imp2mask = new ImagePlus();
 				imp2 = IJ.openImage(source_dir + sorted_file_names[i]);
+				
+				// Select coordinate transform based on the registration model
+				final CoordinateTransform t = getCoordinateTransform(p);	
 				// Register
 				if(!register( imp1, imp2, imp1mask, imp2mask, i, sorted_file_names,
 						  source_dir, target_dir, exe, p, t, commonBounds, boundsFor, referenceIndex))
 					return;		
+				// Store transform
+				transform[i] = t;
 			}
+			
+			// Reference
+			transform[referenceIndex] = new AffineModel2D();
 			
 			// Backward registration (from reference image to the beginning of the sequence)
 			imp2 = IJ.openImage(source_dir + sorted_file_names[referenceIndex]);
+			// Backward bounds
 			final List<Rectangle> boundsBack = new ArrayList<Rectangle>();
 			boundsBack.add(new Rectangle(0, 0, imp2.getWidth(), imp2.getHeight()));
 			
@@ -970,52 +1087,110 @@ public class Register_Virtual_Stack_MT implements PlugIn
 				// Create empty mask for second image
 				imp2mask = new ImagePlus();
 				imp2 = IJ.openImage(source_dir + sorted_file_names[i]);
+				
+				// Select coordinate transform based on the registration model
+				final CoordinateTransform t = getCoordinateTransform(p);	
 				// Register
 				if(!register( imp1, imp2, imp1mask, imp2mask, i, sorted_file_names,
 						  source_dir, target_dir, exe, p, t, commonBounds, boundsBack, referenceIndex))
-					return;												
+					return;		
+				// Store transform
+				transform[i] = t;
 			}
+			
+			// Adjust transforms to the right position.
+			// Since the transforms are relative to the previous image, we have 
+			// the images to translate them to the origin of the previous image. 
+			for(int i = 1, j = referenceIndex+1 ; i < boundsFor.size(); i++, j++)
+			{
+				final Rectangle b = boundsFor.get(i-1);
+				// Copy coordinate transform with corresponding translation
+				final CoordinateTransformList<CoordinateTransform> ctl = new CoordinateTransformList<CoordinateTransform>();
+				ctl.add(transform[j]);
+				
+				
+				final TranslationModel2D tr = new TranslationModel2D();
+				tr.set(b.x, b.y);
+				ctl.add(tr);
+				
+				transform[j] = ctl;				
+			}
+			for(int i = 1, j = referenceIndex-1 ; i < boundsBack.size(); i++, j--)
+			{
+				final Rectangle b = boundsBack.get(i-1);
+				// Copy coordinate transform with corresponding translation
+				final CoordinateTransformList<CoordinateTransform> ctl = new CoordinateTransformList<CoordinateTransform>();
+				ctl.add(transform[j]);
+				
+				
+				final TranslationModel2D tr = new TranslationModel2D();
+				tr.set(b.x, b.y);
+				ctl.add(tr);
+				
+				transform[j] = ctl;	
+			}
+			
 			
 			// Adjust Forward bounds
 			for ( int i = 0; i < boundsFor.size(); ++i )
 			{
 				final Rectangle b = boundsFor.get(i);
-				b.x = -commonBounds.x + b.x;
-				b.y = -commonBounds.y + b.y;
+				b.x -= commonBounds.x;
+				b.y -= commonBounds.y;
 			}
 			
 			// Adjust Backward bounds
 			for ( int i = 0; i < boundsBack.size(); ++i )
 			{
 				final Rectangle b = boundsBack.get(i);
-				b.x = -commonBounds.x + b.x;
-				b.y = -commonBounds.y + b.y;
+				b.x -= commonBounds.x;
+				b.y -= commonBounds.y;
 			}
-
+			
+			//IJ.log("Common bounds = " + commonBounds.x + " " + commonBounds.y + " " + commonBounds.width + " " + commonBounds.height);
+			
 			// Reopen all target images and repaint them on an enlarged canvas
-			final Future[] jobs = new Future[sorted_file_names.length];
+			final Future[] jobs = new Future[sorted_file_names.length];						
+			
 			for (int j = 0, i=referenceIndex; i<sorted_file_names.length; i++, j++) 
 			{
-				final Rectangle b = boundsFor.get(j);
-				jobs[i] = exe.submit(resizeAndSaveImage(makeTargetPath(target_dir, sorted_file_names[i]), b.x, b.y, commonBounds.width, commonBounds.height));
+				final Rectangle b = boundsFor.get(j);								
+				
+				//IJ.log(i+": " + b.x + " " + b.y);
+				
+				// Resize and save;
+				jobs[i] = exe.submit(resizeAndSaveImage(makeTargetPath(target_dir, sorted_file_names[i]), b.x, b.y, commonBounds.width, commonBounds.height));				
 			}
+			
+			
 			
 			for (int j=1, i=referenceIndex-1; i>=0; i--, j++) 
 			{
 				final Rectangle b = boundsBack.get(j);
-				jobs[i] = exe.submit(resizeAndSaveImage(makeTargetPath(target_dir, sorted_file_names[i]), b.x, b.y, commonBounds.width, commonBounds.height));
+				
+				//IJ.log(i+": " + b.x + " " + b.y);												
+				// Resize and save
+				jobs[i] = exe.submit(resizeAndSaveImage(makeTargetPath(target_dir, sorted_file_names[i]), b.x, b.y, commonBounds.width, commonBounds.height));								
 			}
 			
 
 			// Join all and create VirtualStack
 			final VirtualStack stack = new VirtualStack(commonBounds.width, commonBounds.height, null, target_dir);
-			for (final Future<String> job : jobs) {
+			for (final Future<String> job : jobs) 
+			{
 				String filename = job.get();
-				if (null == filename) {
+				if (null == filename) 
+				{
 					IJ.log("Image failed: " + filename);
 					return;
 				}
 				stack.addSlice(filename);
+			}
+			
+			// Save transforms
+			if(save_dir != null)
+			{
+				saveTransforms(transform, save_dir, sorted_file_names, exe);			
 			}
 
 			// Show registered stack
@@ -1076,14 +1251,39 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			}
 		};
 	} // end resizeAndSaveImage method
-
+	
 	//-----------------------------------------------------------------------------------------
 	/**
-	 * Make target (output) path
+	 * Save transform into a file
 	 * 
-	 * @param dir output directory
-	 * @param name output name
-	 * @return complete path for the target image
+	 * @param path saving path and file name
+	 * @param t coordinate transform to save
+	 * @return file name of the saved file, or null if there was an error
+	 */
+	static private Callable<String> saveTransform(final String path, final CoordinateTransform t) 
+	{
+		return new Callable<String>() {
+			public String call() {
+				try {
+					final FileWriter fw = new FileWriter(path);
+					fw.write(t.toXML(""));
+					fw.close();
+					return new File(path).getName();
+				} catch (Exception e) {
+					e.printStackTrace();					
+					return null;
+				}
+			}
+		};
+	} // end resizeAndSaveImage method
+	//-----------------------------------------------------------------------------------------
+	/**
+	 * Make target (output) path by adding the output directory and the file name.
+	 * File names are forced to have ".tif" extension.
+	 * 
+	 * @param dir output directory.
+	 * @param name output file name.
+	 * @return complete path for the target image.
 	 */
 	static private String makeTargetPath(final String dir, final String name) 
 	{
@@ -1091,6 +1291,22 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		if (! name.toLowerCase().matches("^.*ti[f]{1,2}$")) 
 			filepath += ".tif";
 		return filepath;
+	}	
+	
+	//-----------------------------------------------------------------------------------------
+	/**
+	 * Make transform file path.
+	 * File names are forced to have ".xml" extension.
+	 * 
+	 * @param dir output directory.
+	 * @param name output file name.
+	 * @return complete path for the transform file.
+	 */
+	static private String makeTransformPath(final String dir, final String name) 
+	{
+		final int i = name.lastIndexOf(".");
+		final String no_ext = name.substring(0, i+1);
+		return dir + no_ext + "xml";		
 	}	
 
 	//-----------------------------------------------------------------------------------------
@@ -1137,12 +1353,12 @@ public class Register_Virtual_Stack_MT implements PlugIn
 	/**
 	 * Match features into inliers in a concurrent way
 	 * 
-	 * @param p
-	 * @param fs2
-	 * @param fs1
-	 * @param featuresModel
-	 * @return
-	 * @throws Exception
+	 * @param p registration parameters
+	 * @param fs2 collection of features to match
+	 * @param fs1 collection of features to match
+	 * @param featuresModel features model 
+	 * @return list of matched features
+	 * @throws Exception if not enough points
 	 */
 	private static Callable<ArrayList<PointMatch>> matchFeatures(
 			final Param p, 
@@ -1170,7 +1386,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			}
 		};
 		
-	}
+	}// end method matchFeatures
 	
 	//-----------------------------------------------------------------------------------------
 	/**
@@ -1192,7 +1408,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 	 * @param bounds list of bounds for the already registered images
 	 * @param referenceIndex index of the reference image
 	 * @return false if there is an error, true otherwise
-	 * @throws Exception
+	 * @throws Exception if something fails
 	 */
 	public static boolean register(
 			ImagePlus imp1, 
@@ -1205,7 +1421,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			final String target_dir,
 			final ExecutorService exe,
 			final Param p,
-			mpicbg.models.CoordinateTransform t,
+			CoordinateTransform t,
 			Rectangle commonBounds,
 			List<Rectangle> bounds,
 			final int referenceIndex) throws Exception
@@ -1311,7 +1527,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 				
 				
 				// Store result in a Cubic B-Spline transform
-				t = new CubicBSplineTransform(warp.getIntervals(), warp.getDirectDeformationCoefficientsX(), warp.getDirectDeformationCoefficientsY(),
+				((CubicBSplineTransform) t).set(warp.getIntervals(), warp.getDirectDeformationCoefficientsX(), warp.getDirectDeformationCoefficientsY(),
                 		imp2.getWidth(), imp2.getHeight());
 				break;
 			case Register_Virtual_Stack_MT.MOVING_LEAST_SQUARES:
@@ -1344,15 +1560,27 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		currentBounds.y += previousBounds.y;
 		bounds.add(currentBounds);
 		
+		//IJ.log(i + ": current bounding box = [" + currentBounds.x + " " + currentBounds.y + " " + currentBounds.width + " " + currentBounds.height + "]");
+		
 		// Update common bounds
+		int min_x = commonBounds.x;
+		int min_y = commonBounds.y;
+		int max_x = commonBounds.x + commonBounds.width;
+		int max_y = commonBounds.y + commonBounds.height;
+		
 		if(currentBounds.x < commonBounds.x)
-			commonBounds.x = currentBounds.x;
+			min_x = currentBounds.x;
 		if(currentBounds.y < commonBounds.y)
-			commonBounds.y = currentBounds.y;
-		if(currentBounds.x + currentBounds.width > commonBounds.x + commonBounds.width)
-			commonBounds.width = currentBounds.x + currentBounds.width - commonBounds.x;
-		if(currentBounds.y + currentBounds.height > commonBounds.y + commonBounds.height)
-			commonBounds.height = currentBounds.y + currentBounds.height - commonBounds.y;
+			min_y = currentBounds.y;
+		if(currentBounds.x + currentBounds.width > max_x)
+			max_x = currentBounds.x + currentBounds.width;
+		if(currentBounds.y + currentBounds.height > max_y)
+			max_y = currentBounds.y + currentBounds.height;
+		
+		commonBounds.x = min_x;
+		commonBounds.y = min_y;
+		commonBounds.width = max_x - min_x;
+		commonBounds.height = max_y - min_y;
 		
 		// Save target image
 		exe.submit(saveImage(imp2, makeTargetPath(target_dir, sorted_file_names[i])));		
@@ -1390,7 +1618,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 	 * @param p registration parameters
 	 * @param t coordinate transform
 	 * @param inliers point matches
-	 * @throws Exception 
+	 * @throws Exception if something fails
 	 */
 	public static void fitInliers(Param p, CoordinateTransform t, List< PointMatch > inliers) throws Exception
 	{

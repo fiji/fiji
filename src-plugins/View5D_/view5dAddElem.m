@@ -1,3 +1,10 @@
+% view5dAddElem(aviewer, dataToDisplay) : Adds another element with data into an existing viewer
+% This element can be of any datatype and the viewer will be able to overlay several datatypes.
+% 
+% Example:
+% myviewer=view5d(readim);
+% view5dAddElem(myviewer,dip_image(readim('orka'),'uint16'));
+%
 function view5dAddElem(aviewer, in)
 sz = imsize(in);
 sz(6)=1;

@@ -1,8 +1,8 @@
 package bunwarpj;
 
 /**
- * bUnwarpJ plugin for ImageJ(C).
- * Copyright (C) 2005,2006,2007,2008 Ignacio Arganda-Carreras and Jan Kybic 
+ * bUnwarpJ plugin for ImageJ/Fiji.
+ * Copyright (C) 2005-2009 Ignacio Arganda-Carreras and Jan Kybic 
  *
  * More information at http://biocomp.cnb.csic.es/%7Eiarganda/bUnwarpJ/
  *
@@ -31,11 +31,15 @@ import java.util.Vector;
  */
 public class CumulativeQueue extends Vector < Double >
 {
-    /** front index of the queue */
+    /**
+	 * Generated serial version UID
+	 */
+	private static final long serialVersionUID = -1862591645420274411L;
+	/** front index of the queue */
     private int ridx;
     /** rear index of the queue */
     private int widx;
-    /** current lenght of the queue */
+    /** current length of the queue */
     private int currentLength;
     /** queue sum */
     private double sum;

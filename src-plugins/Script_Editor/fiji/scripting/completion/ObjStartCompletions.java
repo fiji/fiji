@@ -17,15 +17,14 @@ public class ObjStartCompletions {
 	TreeSet<ImportedClassObjects> objectSet = new TreeSet<ImportedClassObjects>();
 	ClassNames names;
 	// TODO: why not parser?
-	ConstructorParser parser1;
-	// TODO: huh?
-	String language = new String();
+	ConstructorParser parser;
+	String language;
 
 	public ObjStartCompletions(ClassNames name, String lang, ArrayList pNames) {
 		names = name;
 		language = lang;
 		this.packageNames = pNames;
-		parser1 = new ConstructorParser(name, lang);
+		parser = new ConstructorParser(name, lang);
 	}
 
 	// TODO: RSyntaxTextArea or RSyntaxDocument?
@@ -33,9 +32,9 @@ public class ObjStartCompletions {
 	public void setObjects(RSyntaxTextArea textArea, String text, DefaultProvider defaultProvider) {
 
 		//System.out.println("The first package element "+packageNames.get(0));
-		parser1.setPackageNames(packageNames);
-		parser1.findConstructorObjects(textArea);
-		objectSet = parser1.getObjectSet();
+		parser.setPackageNames(packageNames);
+		parser.findConstructorObjects(textArea);
+		objectSet = parser.getObjectSet();
 		boolean dotAtLast = false;
 		if (text.charAt(text.length() - 1) == '.') {
 			dotAtLast = true;

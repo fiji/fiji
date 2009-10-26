@@ -1,3 +1,6 @@
+#!/bin/sh
+''''exec "$(dirname "$0")"/../fiji --jython "$0" "$@" # (call again with fiji)'''
+
 from com.lowagie.text.pdf import PdfReader, PdfName, PdfNumber, PdfStamper
 from java.io import FileOutputStream
 import sys

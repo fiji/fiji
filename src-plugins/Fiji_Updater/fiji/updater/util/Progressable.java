@@ -42,6 +42,11 @@ public class Progressable implements Progress {
 			progress.setItemCount(count, total);
 	}
 
+	public void itemDone(Object item) {
+		for (Progress progress : this.progress)
+			progress.itemDone(item);
+	}
+
 	public void done() {
 		for (Progress progress : this.progress)
 			progress.done();

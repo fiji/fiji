@@ -40,13 +40,18 @@ public class Util {
 	public final static String[] platforms, launchers;
 
 	static {
-		fijiRoot = System.getProperty("fiji.dir") + File.separator; 
-		isDeveloper = fileExists("fiji.cxx");
+		String property = System.getProperty("fiji.dir");
+		fijiRoot = property != null ? property + File.separator :
+			new Util().getClass().getResource("Util.class")
+			.toString().replace("jar:file:", "")
+			.replace("plugins/Fiji_Updater.jar!/"
+				+ "fiji/updater/util/Util.class", "");
+		isDeveloper = new File(fijiRoot + "/fiji.cxx").exists();
 		platform = getPlatform();
 
 		String macLauncher = macPrefix + "fiji-macosx";
 		useMacPrefix = platform.equals("macosx") &&
-			fileExists(macLauncher);
+			new File(fijiRoot + "/" + macLauncher).exists();
 
 		String[] list = {
 			"linux", "linux64", "macosx", "tiger", "win32", "win64"
@@ -68,6 +73,12 @@ public class Util {
 		return string.substring(0, string.length() - suffix.length());
 	}
 
+	public static String stripPrefix(String string, String prefix) {
+		if (!string.startsWith(prefix))
+			return string;
+		return string.substring(prefix.length());
+	}
+
 	public static String getPlatform() {
 		boolean is64bit =
 			System.getProperty("os.arch", "").indexOf("64") >= 0;
@@ -77,7 +88,7 @@ public class Util {
 		if (osName.equals("Mac OS X"))
 			return "macosx";
 		if (osName.startsWith("Windows"))
-			return "win" + (is64bit ? "64" : "32") + ".exe";
+			return "win" + (is64bit ? "64" : "32");
 		System.err.println("Unknown platform: " + osName);
 		return osName;
 	}
@@ -210,8 +221,9 @@ public class Util {
 			path = path.substring(macPrefix.length());
 		if (File.separator.equals("\\"))
 			path = path.replace("\\", "/");
-		return fijiRoot + (isDeveloper && isLauncher(path) ?
-				"precompiled/" : "") + path;
+		return fijiRoot + (isLauncher(path) ?
+				(isDeveloper ? "precompiled/" :
+				 (useMacPrefix ? macPrefix : "")) : "") + path;
 	}
 
 	public static String prefixUpdate(String path) {
@@ -223,7 +235,8 @@ public class Util {
 	}
 
 	public static boolean isLauncher(String filename) {
-		return Arrays.binarySearch(launchers, filename) >= 0;
+		return Arrays.binarySearch(launchers,
+				stripPrefix(filename, fijiRoot)) >= 0;
 	}
 
 	public static String[] getLaunchers() {
@@ -231,6 +244,16 @@ public class Util {
 			return new String[] { "fiji-macosx", "fiji-tiger" };
 
 		int index = Arrays.binarySearch(launchers, "fiji-" + platform);
+		if (index < 0)
+			index = -1 - index;
 		return new String[] { launchers[index] };
+	}
+
+	public static<T> String join(String delimiter, Iterable<T> list) {
+		StringBuilder builder = new StringBuilder();
+		for (T object : list)
+			builder.append((builder.length() > 0 ? ", " : "")
+				+ object.toString());
+		return builder.toString();
 	}
 }

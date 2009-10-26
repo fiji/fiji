@@ -2,7 +2,11 @@ package fiji.updater.logic;
 
 import fiji.updater.util.Util;
 
+import java.io.File;
+import java.io.IOException;
+
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -29,12 +33,17 @@ public class PluginObject {
 		UPDATEABLE ("Update available"),
 		MODIFIED ("Locally modified"),
 		NEW ("New plugin"),
+		OBSOLETE ("Obsolete"),
 
 		// changes
-		REMOVE ("Remove it"),
+		UNINSTALL ("Uninstall it"),
 		INSTALL ("Install it"),
 		UPDATE ("Update it"),
-		UPLOAD ("Upload it");
+		// TODO: FORCE_UPDATE
+
+		// developer-only changes
+		UPLOAD ("Upload it"),
+		REMOVE ("Remove it");
 
 		private String label;
 		Action(String label) {
@@ -44,30 +53,31 @@ public class PluginObject {
 		public String toString() {
 			return label;
 		}
-
-		public static Action forLabel(String label) {
-			for (Action action : Action.values())
-				if (action.label.equals(label))
-					return action;
-			return null;
-		}
 	};
 
 	public static enum Status {
-		NOT_INSTALLED (new Action[] { Action.NOT_INSTALLED, Action.INSTALL }, Util.isDeveloper),
-		INSTALLED (new Action[] { Action.INSTALLED, Action.REMOVE }, false),
-		UPDATEABLE (new Action[] { Action.UPDATEABLE, Action.REMOVE, Action.UPDATE }, Util.isDeveloper),
-		MODIFIED (new Action[] { Action.MODIFIED, Action.REMOVE, Action.UPDATE }, Util.isDeveloper),
-		NOT_FIJI (new Action[] { Action.NOT_FIJI, Action.REMOVE }, Util.isDeveloper),
-		NEW (new Action[] { Action.NEW, Action.INSTALL}, false);
+		NOT_INSTALLED (new Action[] { Action.NOT_INSTALLED, Action.INSTALL }, Action.REMOVE),
+		INSTALLED (new Action[] { Action.INSTALLED, Action.UNINSTALL }),
+		UPDATEABLE (new Action[] { Action.UPDATEABLE, Action.UNINSTALL, Action.UPDATE }, Action.UPLOAD),
+		MODIFIED (new Action[] { Action.MODIFIED, Action.UNINSTALL, Action.UPDATE }, Action.UPLOAD),
+		NOT_FIJI (new Action[] { Action.NOT_FIJI, Action.UNINSTALL }, Action.UPLOAD),
+		NEW (new Action[] { Action.NEW, Action.INSTALL}),
+		OBSOLETE_UNINSTALLED (new Action[] { Action.OBSOLETE }),
+		OBSOLETE (new Action[] { Action.OBSOLETE, Action.UNINSTALL }, Action.UPLOAD),
+		OBSOLETE_MODIFIED (new Action[] { Action.MODIFIED, Action.UNINSTALL }, Action.UPLOAD);
 
 		private Action[] actions;
-		Status(Action[] actions, boolean allowUpload) {
-			if (allowUpload) {
+
+		Status(Action[] actions) {
+			this(actions, null);
+		}
+
+		Status(Action[] actions, Action developerAction) {
+			if (developerAction != null && Util.isDeveloper) {
 				this.actions = new Action[actions.length + 1];
 				System.arraycopy(actions, 0, this.actions, 0,
 						actions.length);
-				this.actions[actions.length] = Action.UPLOAD;
+				this.actions[actions.length] = developerAction;
 			}
 			else
 				this.actions = actions;
@@ -99,17 +109,20 @@ public class PluginObject {
 	// TODO: finally add platform
 
 	// These are LinkedHashMaps to retain the order of the entries
-	public Map<Dependency, Object> dependencies;
-	public Map<String, Object> links, authors;
+	protected Map<String, Dependency> dependencies;
+	protected Map<String, Object> links, authors, platforms, categories;
 
 	public PluginObject(String filename, String checksum, long timestamp,
 			Status status) {
 		this.filename = filename;
-		current = new Version(checksum, timestamp);
+		if (checksum != null)
+			current = new Version(checksum, timestamp);
 		previous = new LinkedHashMap<Version, Object>();
 		this.status = status;
-		dependencies = new LinkedHashMap<Dependency, Object>();
+		dependencies = new LinkedHashMap<String, Dependency>();
 		authors = new LinkedHashMap<String, Object>();
+		platforms = new LinkedHashMap<String, Object>();
+		categories = new LinkedHashMap<String, Object>();
 		links = new LinkedHashMap<String, Object>();
 		if (status == Status.NOT_FIJI)
 			filesize = Util.getFilesize(filename);
@@ -117,7 +130,7 @@ public class PluginObject {
 	}
 
 	public boolean hasPreviousVersion(String checksum) {
-		if (current.checksum.equals(checksum))
+		if (current != null && current.checksum.equals(checksum))
 			return true;
 		for (Version version : previous.keySet())
 			if (version.checksum.equals(checksum))
@@ -126,7 +139,7 @@ public class PluginObject {
 	}
 
 	public boolean isNewerThan(long timestamp) {
-		if (current.timestamp <= timestamp)
+		if (current != null && current.timestamp <= timestamp)
 			return false;
 		for (Version version : previous.keySet())
 			if (version.timestamp <= timestamp)
@@ -134,14 +147,23 @@ public class PluginObject {
 		return true;
 	}
 
+	void setVersion(String checksum, long timestamp) {
+		if (current != null)
+			previous.put(current, (Object)null);
+		current = new Version(checksum, timestamp);
+	}
+
 	public void setLocalVersion(String checksum, long timestamp) {
-		if (checksum.equals(current.checksum)) {
+		if (current != null && checksum.equals(current.checksum)) {
 			status = Status.INSTALLED;
 			setNoAction();
 			return;
 		}
 		status = hasPreviousVersion(checksum) ?
-			Status.UPDATEABLE : Status.MODIFIED;
+			(current == null ?
+			 Status.OBSOLETE : Status.UPDATEABLE) :
+			(current == null ?
+			 Status.OBSOLETE_MODIFIED : Status.MODIFIED);
 		setNoAction();
 		newChecksum = checksum;
 		newTimestamp = timestamp;
@@ -152,13 +174,24 @@ public class PluginObject {
 	}
 
 	// TODO: allow editing those via GUI
+	public void addDependency(String filename) {
+		addDependency(filename, Util.getTimestamp(filename), false);
+	}
+
 	public void addDependency(String filename, long timestamp,
-			String relation) {
-		addDependency(new Dependency(filename, timestamp, relation));
+			boolean overrides) {
+		addDependency(new Dependency(filename, timestamp, overrides));
 	}
 
 	public void addDependency(Dependency dependency) {
-		dependencies.put(dependency, (Object)null);
+		// the timestamp should not be changed unnecessarily
+		if (dependencies.containsKey(dependency.filename))
+			return;
+		dependencies.put(dependency.filename, dependency);
+	}
+
+	public void removeDependency(String other) {
+		dependencies.remove(other);
 	}
 
 	public void addLink(String link) {
@@ -177,6 +210,61 @@ public class PluginObject {
 		return authors.keySet();
 	}
 
+	public void addPlatform(String platform) {
+		platforms.put(platform, (Object)null);
+	}
+
+	public Iterable<String> getPlatforms() {
+		return platforms.keySet();
+	}
+
+	public void addCategory(String category) {
+		categories.put(category, (Object)null);
+	}
+
+	public void replaceList(String tag, String[] list) {
+		if (tag.equals("Dependency")) {
+			long now = Long.parseLong(Util.timestamp(new Date()
+						.getTime()));
+			Dependency[] newList = new Dependency[list.length];
+			for (int i = 0; i < list.length; i++) {
+				boolean obsoleted = false;
+				String item = list[i].trim();
+				if (item.startsWith("obsoletes ")) {
+					item = item.substring(10);
+					obsoleted = true;
+				}
+				Dependency dep = dependencies.get(item);
+				if (dep == null)
+					dep = new Dependency(item,
+							now, obsoleted);
+				else if (dep.overrides != obsoleted) {
+					dep.timestamp = now;
+					dep.overrides = obsoleted;
+				}
+				newList[i] = dep;
+			}
+			dependencies.clear();
+			for (Dependency dep : newList)
+				addDependency(dep);
+			return;
+		}
+
+		Map<String, Object> map =
+			tag.equals("Link") ? links :
+			tag.equals("Author") ? authors :
+			tag.equals("Platform") ? platforms :
+			tag.equals("Category") ? categories :
+			null;
+		map.clear();
+		for (String string : list)
+			map.put(string.trim(), (Object)null);
+	}
+
+	public Iterable<String> getCategories() {
+		return categories.keySet();
+	}
+
 	public Iterable<Version> getPrevious() {
 		return previous.keySet();
 	}
@@ -189,10 +277,6 @@ public class PluginObject {
 		action = status.getNoAction();
 	}
 
-	public void setAction(String action) {
-		setAction(Action.forLabel(action));
-	}
-
 	public void setAction(Action action) {
 		if (!status.isValid(action))
 			throw new Error("Invalid action requested for plugin "
@@ -200,7 +284,18 @@ public class PluginObject {
 					+ ", " + status + ")");
 		if (action == Action.UPLOAD)
 			markForUpload();
+		else if (action == Action.REMOVE)
+			markForRemoval();
 		this.action = action;
+	}
+
+	public boolean setFirstValidAction(Action[] actions) {
+		for (Action action : actions)
+			if (status.isValid(action)) {
+				setAction(action);
+				return true;
+			}
+		return false;
 	}
 
 	public void setStatus(Status status) {
@@ -214,27 +309,34 @@ public class PluginObject {
 			newChecksum = current.checksum;
 			newTimestamp = current.timestamp;
 		}
+		else if (isObsolete() || status == Status.UPDATEABLE) {
+			/* force re-upload */
+			status = Status.INSTALLED;
+			setVersion(newChecksum, newTimestamp);
+		}
 		else {
-			if (status == Status.NOT_INSTALLED) {
-				// an "upload" means "remove from the updater" here
-				try {
-					newChecksum = Util.getDigest(filename, null);
-				} catch (Exception e) { e.printStackTrace(); }
-				newTimestamp = 0;
-				filesize = 0;
-			}
-			else if (newChecksum == null ||
+			if (newChecksum == null ||
 					newChecksum.equals(current.checksum))
 				throw new Error("Plugin " + filename
 						+ " is already uploaded");
-			addPreviousVersion(current.checksum, current.timestamp);
-			current.checksum = newChecksum;
-			current.timestamp = newTimestamp;
+			setVersion(newChecksum, newTimestamp);
 		}
+		filesize = Util.getFilesize(filename);
 
 		PluginCollection plugins = PluginCollection.getInstance();
-		for (Dependency dependency : plugins.analyzeDependencies(this))
-				addDependency(dependency);
+		// TODO: complain if not Fiji (and offer to add them)
+		Iterable<String> dependencies =
+			plugins.analyzeDependencies(this);
+		if (dependencies != null)
+			for (String dependency : dependencies)
+					addDependency(dependency);
+	}
+
+	protected void markForRemoval() {
+		// TODO: check dependencies (but not here; _after_ all marking)
+		addPreviousVersion(current.checksum, current.timestamp);
+		setStatus(Status.OBSOLETE);
+		current = null;
 	}
 
 	public String getFilename() {
@@ -242,16 +344,17 @@ public class PluginObject {
 	}
 
 	public String getChecksum() {
-		return action == Action.UPLOAD ? newChecksum : current.checksum;
+		return action == Action.UPLOAD ? newChecksum :
+			current == null ? null : current.checksum;
 	}
 
 	public long getTimestamp() {
 		return action == Action.UPLOAD ?
-			newTimestamp : current.timestamp;
+			newTimestamp : current == null ? 0 : current.timestamp;
 	}
 
 	public Iterable<Dependency> getDependencies() {
-		return dependencies.keySet();
+		return dependencies.values();
 	}
 
 	public Status getStatus() {
@@ -263,45 +366,135 @@ public class PluginObject {
 	}
 
 	public boolean isInstallable() {
-		return status == Status.NOT_INSTALLED;
+		return status.isValid(Action.INSTALL);
 	}
 
 	public boolean isUpdateable() {
-		return status == Status.UPDATEABLE;
+		return status.isValid(Action.UPDATE);
 	}
 
-	public boolean isRemovableOnly() {
-		return status == Status.INSTALLED;
+	public boolean isUninstallable() {
+		return status.isValid(Action.UNINSTALL);
 	}
 
-	public boolean isRemovable() {
-		return status == Status.INSTALLED || status == Status.UPDATEABLE;
+	public boolean isLocallyModified() {
+		return status.getNoAction() == Action.MODIFIED;
 	}
 
 	public boolean actionSpecified() {
-		return action != Action.NOT_INSTALLED &&
-			action != Action.INSTALLED;
+		return action != status.getNoAction();
 	}
 
 	// TODO: why that redundancy?  We set Action.UPDATE only if it is updateable anyway!  Besides, use getAction(). DRY, DRY, DRY!
 	public boolean toUpdate() {
-		return isUpdateable() && action == Action.UPDATE;
+		return action == Action.UPDATE;
 	}
 
-	public boolean toRemove() {
-		return isRemovable() && action == Action.REMOVE;
+	public boolean toUninstall() {
+		return action == Action.UNINSTALL;
 	}
 
 	public boolean toInstall() {
-		return isInstallable() && action == Action.INSTALL;
+		return action == Action.INSTALL;
 	}
 
 	public boolean toUpload() {
 		return action == Action.UPLOAD;
 	}
 
+	public boolean isObsolete() {
+		switch (status) {
+		case OBSOLETE:
+		case OBSOLETE_MODIFIED:
+		case OBSOLETE_UNINSTALLED:
+			return true;
+		}
+		return false;
+	}
+
+	public boolean isForPlatform(String platform) {
+		return platforms.containsKey(platform);
+	}
+
+	public boolean isForThisPlatform() {
+		return platforms.size() == 0 || isForPlatform(Util.platform);
+	}
+
 	public boolean isFiji() {
 		return status != Status.NOT_FIJI;
+	}
+
+	/* This returns true if the user marked the plugin for uninstall, too */
+	public boolean willNotBeInstalled() {
+		switch (action) {
+		case NOT_INSTALLED: case NEW: case OBSOLETE: case UNINSTALL:
+		case REMOVE:
+			return true;
+		case NOT_FIJI: case INSTALLED: case UPDATEABLE: case MODIFIED:
+		case INSTALL: case UPDATE: case UPLOAD:
+			return false;
+		default:
+			throw new RuntimeException("Unhandled action: "
+					+ action);
+		}
+	}
+
+	/* This returns true if the user marked the plugin for uninstall, too */
+	public boolean willBeUpToDate() {
+		switch (action) {
+		case OBSOLETE: case REMOVE: case NOT_INSTALLED: case NEW:
+		case UPDATEABLE: case MODIFIED: case UNINSTALL:
+			return false;
+		case INSTALLED: case INSTALL: case UPDATE: case UPLOAD:
+		case NOT_FIJI:
+			return true;
+		default:
+			throw new RuntimeException("Unhandled action: "
+					+ action);
+		}
+	}
+
+	// TODO: this needs a better name; something like wantsAction()
+	public boolean isUpdateable(boolean evenForcedUpdates) {
+		return action == Action.UPDATE ||
+			action == Action.INSTALL ||
+			status == Status.UPDATEABLE ||
+			status == Status.OBSOLETE ||
+			(evenForcedUpdates &&
+			 (status.isValid(Action.UPDATE) ||
+			  status == Status.OBSOLETE_MODIFIED));
+	}
+
+	public void stageForUninstall() throws IOException {
+		if (action != Action.UNINSTALL)
+			throw new RuntimeException(filename + " was not marked "
+				+ "for uninstall");
+		touch(Util.prefixUpdate(filename));
+		if (status != Status.NOT_FIJI)
+			setStatus(isObsolete() ? Status.OBSOLETE_UNINSTALLED
+					: Status.NOT_INSTALLED);
+	}
+
+	public static void touch(String target) throws IOException {
+		File file = new File(target);
+		if (file.exists()) {
+			long now = new Date().getTime();
+			file.setLastModified(now);
+		}
+		else {
+			File parent = file.getParentFile();
+			if (!parent.exists())
+				parent.mkdirs();
+			file.createNewFile();
+		}
+        }
+
+	public String toDebug() {
+		return filename + "(" + status + ", " + action + ")";
+	}
+
+	public String toString() {
+		return filename;
 	}
 
 	/**

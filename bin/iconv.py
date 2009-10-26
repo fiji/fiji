@@ -1,3 +1,6 @@
+#!/bin/sh
+''''exec "$(dirname "$0")"/../fiji --jython "$0" "$@" # (call again with fiji)'''
+
 from java.io import File, FileInputStream, FileOutputStream
 from java.nio import ByteBuffer
 from java.nio.charset import Charset

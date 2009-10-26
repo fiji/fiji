@@ -139,7 +139,6 @@ public class ClassCompletionProvider extends CompletionProviderBase
 		KeywordsCompletion.completeKeywords(defaultProvider, language, defaultProvider.getEnteredText(textArea));
 		names.setClassCompletions(topLevel, textArea, language);
 		return defaultProvider;
-
 	}
 
 	public void setProviderLanguage(String lang) {

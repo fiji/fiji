@@ -3,7 +3,7 @@ package bunwarpj;
 import ij.IJ;
 
 /**
- * bUnwarpJ plugin for ImageJ(C).
+ * bUnwarpJ plugin for ImageJ and Fiji.
  * Copyright (C) 2005-2009 Ignacio Arganda-Carreras and Jan Kybic 
  *
  * More information at http://biocomp.cnb.csic.es/%7Eiarganda/bUnwarpJ/
@@ -27,7 +27,7 @@ import ij.IJ;
 |   MathTools
 \===================================================================*/
 /**
- * This class has the math methods to deal with b-splines.
+ * This class has the math methods to deal with b-splines and images.
  */
 public class MathTools
 {
@@ -187,6 +187,8 @@ public class MathTools
        final double[][] A,
        final double[] b)
     {
+    	if (A == null || A.length == 0)
+    		return null;
        final int lines = A.length;
        final int columns = A[0].length;
        final double[][] Q = new double[lines][columns];

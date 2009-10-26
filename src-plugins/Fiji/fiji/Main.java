@@ -3,6 +3,8 @@ package fiji;
 import ij.IJ;
 import ij.ImageJ;
 
+import ij.plugin.PlugIn;
+
 import java.awt.AWTEvent;
 import java.awt.Component;
 import java.awt.Dialog;
@@ -90,7 +92,7 @@ public class Main implements AWTEventListener {
 
 	public static Window getWindow(String title) {
 		for (Window window : all.keySet())
-			if (getTitle(window).equals(title))
+			if (window != null && getTitle(window).equals(title))
 				return window;
 		return null;
 	}
@@ -143,6 +145,21 @@ public class Main implements AWTEventListener {
 		return icon;
 	}
 
+	public static void runUpdater() {
+		System.setProperty("fiji.main.checksUpdaterAtStartup", "true");
+		try {
+			Class updater = IJ.getClassLoader()
+				.loadClass("fiji.updater.UptodateCheck");
+			if (updater != null) {
+				PlugIn plugin = (PlugIn)updater.newInstance();
+				plugin.run("quick");
+			}
+		}
+		catch (ClassNotFoundException e) { }
+		catch (InstantiationException e) { }
+		catch (IllegalAccessException e) { }
+	}
+
 	public static void premain() {
 		Toolkit.getDefaultToolkit().addAWTEventListener(new Main(), -1);
 	}
@@ -155,6 +172,11 @@ public class Main implements AWTEventListener {
 		if (IJ.getInstance() != null) {
 			new User_Plugins().run(null);
 			SampleImageLoader.install();
+			new Thread() {
+				public void run() {
+					runUpdater();
+				}
+			}.start();
 		}
 	}
 

@@ -8,9 +8,12 @@ import fiji.updater.logic.Dependency;
 import fiji.updater.logic.PluginCollection;
 import fiji.updater.logic.PluginObject;
 
+import fiji.updater.util.Util;
+
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Point;
+import java.awt.Rectangle;
 
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseAdapter;
@@ -18,23 +21,34 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionAdapter;
 import java.awt.event.MouseMotionListener;
 
-import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import javax.swing.JTextPane;
+
+import javax.swing.event.UndoableEditEvent;
+import javax.swing.event.UndoableEditListener;
 
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.Element;
+import javax.swing.text.Position;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.swing.text.StyledDocument;
 
-public class PluginDetails extends JTextPane {
+public class PluginDetails extends JTextPane implements UndoableEditListener {
 	private final static AttributeSet bold, italic, normal, title;
 	private final static Cursor hand, defaultCursor;
 	private final static String LINK_ATTRIBUTE = "URL";
+	SortedMap<Position, EditableRegion> editables;
+	Position dummySpace;
+	UpdaterFrame updaterFrame;
 
 	static {
 		italic = getStyle(Color.black, true, false, "Verdana", 12);
@@ -46,7 +60,8 @@ public class PluginDetails extends JTextPane {
 		defaultCursor = new Cursor(Cursor.DEFAULT_CURSOR);
 	}
 
-	public PluginDetails() {
+	public PluginDetails(UpdaterFrame updaterFrame) {
+		this.updaterFrame = updaterFrame;
 		addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
 				String url = getLinkAt(e.getPoint());
@@ -66,7 +81,33 @@ public class PluginDetails extends JTextPane {
 			}
 		});
 
-		setEditable(false); // TODO: if this prevents copy-n-paste, that's not good.
+		reset();
+		if (Util.isDeveloper)
+			getDocument().addUndoableEditListener(this);
+	}
+
+	public void reset() {
+		setEditable(false);
+		setText("");
+		Comparator<Position> comparator = new Comparator<Position>() {
+			public int compare(Position p1, Position p2) {
+				return p1.getOffset() - p2.getOffset();
+			}
+
+			public boolean equals(Comparator<Position> comparator) {
+				return false;
+			}
+		};
+
+		editables = new TreeMap<Position, EditableRegion>(comparator);
+		dummySpace = null;
+	}
+
+	public void setEditableForDevelopers() {
+		if (!Util.isDeveloper)
+			return;
+		removeDummySpace();
+		setEditable(true);
 	}
 
 	private String getLinkAt(Point p) {
@@ -128,129 +169,192 @@ public class PluginDetails extends JTextPane {
 		styled(text, title);
 	}
 
-	//appends list of dependencies to existing text
-	public void dependencies(Iterable<Dependency> list) {
-		StringBuilder text = new StringBuilder();
-		for (Dependency dependency : list)
-			text.append((text.length() > 0 ? ",\n" : "")
-					+ dependency.filename + " ("
-					+ dependency.timestamp + ")");
-		normal("\n" + (text.length() > 0 ? text.toString() : "None"));
-	}
-
-	public void description(String description) {
+	public void description(String description, PluginObject plugin) {
 		if (description == null || description.trim().equals(""))
-			description = "No description available.";
-		normal("\n" + description);
-	}
-
-	public String join(Iterable<String> list, String delimiter) {
-		if (list == null)
-			return "";
-		boolean first = true;
-		StringBuilder result = new StringBuilder();
-		for (String item : list) {
-			if (first)
-				first = false;
-			else
-				result.append(delimiter);
-			result.append(item);
-		}
-		return result.toString();
-	}
-
-	public String join(Iterable<String> list, String delimiter,
-			String defaultString) {
-		String result = join(list, delimiter);
-		return result.equals("") ? defaultString : result;
-	}
-
-	public void authors(Iterable<String> authors) {
-		StringBuilder text = new StringBuilder();
-		for (String author : authors)
-			text.append((text.length() > 0 ? ", " : "") + author);
-		normal(text.length() > 0 ? text.toString() : "Not specified");
-	}
-
-	public void links(Iterable<String> links) {
-		for (String link : links) {
-			normal("\n");
-			link(link);
-		}
-	}
-
-	//appends list of plugin names to existing text
-	public void pluginNamelist(String title, PluginCollection myList) {
-		title(title);
-		for (PluginObject plugin : myList)
-			normal("\n" + plugin.getFilename());
-	}
-
-	//appends list of plugin names and each of their descriptions to existing text
-	public void pluginDescriptions(String title, PluginCollection myList) {
-		title(title);
+			return;
 		blankLine();
-		for (PluginObject plugin : myList) {
-			bold(plugin.getFilename());
-			description(plugin.description);
-			blankLine();
+		bold("Description:\n");
+		int offset = getCaretPosition();
+		normal(description);
+		addEditableRegion(offset, "Description", plugin);
+	}
+
+	public void list(String label, boolean showLinks,
+			Iterable items, String delim, PluginObject plugin) {
+		List list = new ArrayList();
+		for (Object object : items)
+			list.add(object);
+
+		if (!Util.isDeveloper && list.size() == 0)
+			return;
+
+		blankLine();
+		if (list.size() > 1 && label.endsWith("y"))
+			label = label.substring(0, label.length() - 1) + "ie";
+		bold(label + (list.size() > 1 ? "s" : "") + ":\n");
+		int offset = getCaretPosition();
+		String delimiter = "";
+		for (Object object : list) {
+			normal(delimiter);
+			delimiter = delim;
+			if (showLinks)
+				link(object.toString());
+			else
+				normal(object.toString());
 		}
+		addEditableRegion(offset, label, plugin);
 	}
 
 	public void blankLine() {
+		int offset = getCaretPosition();
+		try {
+			if (offset > 1 && getText(offset - 2, 2)
+					.equals("\n ")) {
+				normal("\n");
+				return;
+			}
+		}
+		catch (BadLocationException e) { e.printStackTrace(); }
 		normal("\n\n");
+	}
+
+	final String[] months = { "Zero",
+		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
+		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+	};
+
+	String prettyPrintTimestamp(long timestamp) {
+		String t = "" + timestamp;
+		return t.substring(6, 8) + " "
+			+ months[Integer.parseInt(t.substring(4, 6))] + " "
+			+ t.substring(0, 4);
 	}
 
 	public void showPluginDetails(PluginObject plugin) {
 		if (!getText().equals(""))
 			blankLine();
-		//Display plugin data, text with different formatting
 		title(plugin.getFilename());
 		if (plugin.isUpdateable())
-			italic("\n(Update is available)");
-		if (plugin.isFiji() && plugin.newChecksum != null) {
+			italic("\n(Update available)");
+		else if (!plugin.isFiji())
+			italic("(Not in Fiji)");
+		if (plugin.isLocallyModified()) {
 			blankLine();
 			bold("Warning: ");
-			italic("This version is not in Fiji's records.");
+			italic("This file was locally modified.");
 		}
 		blankLine();
-		bold("Date: ");
-		normal("" + plugin.current.timestamp);
-		blankLine();
-		bold("Author(s): ");
-		authors(plugin.getAuthors());
-		blankLine();
-		bold("Description");
-		description(plugin.getDescription());
-		blankLine();
-		bold("Reference Link(s):");
-		links(plugin.getLinks());
-		blankLine();
-		bold("Dependency");
-		dependencies(plugin.getDependencies());
-		blankLine();
-		bold("Checksum");
-		normal("\n" + plugin.getChecksum());
-		blankLine();
-		bold("Is Fiji Plugin: ");
-		normal(plugin.isFiji() ? "Yes" : "No");
-		if (plugin.newChecksum != null) {
-			blankLine();
-			title("Locally modified:");
-			blankLine();
-			bold("New Checksum");
-			normal(plugin.newChecksum + "\n");
-			bold("Timestamp: ");
-			normal("" + plugin.newTimestamp);
+		if (plugin.current == null)
+			bold("This file is no longer needed by Fiji");
+		else {
+			bold("Release date:\n");
+			normal(prettyPrintTimestamp(plugin.current.timestamp));
 		}
+		description(plugin.getDescription(), plugin);
+		list("Author", false, plugin.getAuthors(), ", ", plugin);
+		if (Util.isDeveloper)
+			list("Platform", false, plugin.getPlatforms(), ", ",
+				plugin);
+		list("Category", false, plugin.getCategories(), ", ", plugin);
+		list("Link", true, plugin.getLinks(), "\n", plugin);
+		list("Dependency", false, plugin.getDependencies(), ",\n",
+				plugin);
 
-		//ensure first line of text is always shown (i.e.: scrolled to top)
-		scrollToTop();
+		// scroll to top
+		scrollRectToVisible(new Rectangle(0, 0, 1, 1));
 	}
 
-	// TODO: no.  I said a million times that this is wrong.
-	public void scrollToTop() {
-		setSelectionStart(0);
-		setSelectionEnd(0);
+	class EditableRegion implements Comparable<EditableRegion> {
+		PluginObject plugin;
+		String tag;
+		Position start, end;
+
+		public EditableRegion(PluginObject plugin, String tag,
+				Position start, Position end) {
+			this.plugin = plugin;
+			this.tag = tag;
+			this.start = start;
+			this.end = end;
+		}
+
+		public int compareTo(EditableRegion other) {
+			return start.getOffset() - other.start.getOffset();
+		}
+
+		public String toString() {
+			return "EditableRegion(" + tag
+				+ ":" + start.getOffset()
+				+ "-" + (end == null ? "null" : end.getOffset())
+				+ ")";
+		}
+	}
+
+	void addEditableRegion(int startOffset, String tag,
+			PluginObject plugin) {
+		int endOffset = getCaretPosition();
+		try {
+			// make sure end position does not move further
+			normal(" ");
+			Position start, end;
+			start = getDocument().createPosition(startOffset - 1);
+			end = getDocument().createPosition(endOffset);
+
+			editables.put(start,
+				new EditableRegion(plugin, tag, start, end));
+			removeDummySpace();
+			dummySpace = end;
+		}
+		catch (BadLocationException e) { e.printStackTrace(); }
+	}
+
+	void removeDummySpace() {
+		if (dummySpace != null) try {
+			getDocument().remove(dummySpace.getOffset(), 1);
+			dummySpace = null;
+		}
+		catch (BadLocationException e) { e.printStackTrace(); }
+	}
+
+	boolean handleEdit() {
+		EditableRegion editable;
+		try {
+			int offset = getCaretPosition();
+			Position current =
+				getDocument().createPosition(offset);
+			Position last = editables.headMap(current).lastKey();
+			editable = editables.get(last);
+			if (offset > editable.start.getOffset() &&
+					offset > editable.end.getOffset())
+				return false;
+		}
+		catch(NoSuchElementException e) { return false; }
+		catch(BadLocationException e) { return false; }
+
+		int start = editable.start.getOffset() + 1;
+		int end = editable.end.getOffset();
+
+		String text;
+		try { text = getDocument().getText(start, end + 1 - start); }
+		catch (BadLocationException e) { return false; }
+
+		if (editable.tag.equals("Description")) {
+			editable.plugin.description = text;
+			return true;
+		}
+		String[] list = text.split(editable.tag.equals("Link") ?
+				"\n" : ",");
+		editable.plugin.replaceList(editable.tag, list);
+		return true;
+	}
+
+	// Do not process key events when on bold parts of the text
+	// or when not developer
+	public void undoableEditHappened(UndoableEditEvent e) {
+		if (isEditable()) {
+			if (!handleEdit())
+				e.getEdit().undo();
+			else
+				updaterFrame.markUploadable();
+		}
 	}
 }
