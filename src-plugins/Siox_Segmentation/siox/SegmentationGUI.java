@@ -19,15 +19,24 @@
 
 package siox;
 
+import java.awt.Color;
 import java.awt.Panel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Arrays;
 
+import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
 import ij.gui.Roi;
+import ij.process.ColorProcessor;
+import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
 
 import javax.swing.BoxLayout;
+import javax.swing.JRadioButton;
+
+import org.siox.SioxSegmentator;
 
 //-----------------------------------------------------------------
 /**
@@ -41,8 +50,13 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 
 	/** Generated serial version UID */
 	private static final long serialVersionUID = -326288432966353440L;
+	
+	private SioxSegmentator siox;
+	private JRadioButton lastButton;
 	protected Roi foreground, background;
 	protected ControlJPanel control_panel;
+	ImageProcessor ip;
+	
 	
 	//-----------------------------------------------------------------
 	/**
@@ -55,7 +69,11 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 		super(imp);
 		
 		// Take snapshot of initial pixels
-		imp.getProcessor().snapshot();
+		ip = imp.getProcessor();
+		ip.snapshot();
+		
+		// Create segmentator object
+		siox = new SioxSegmentator(imp.getWidth(), imp.getHeight(), null);
 		
 		this.setTitle("SIOX Segmentation ");
 		// Image panel
@@ -65,7 +83,9 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 		// Control panel
 		control_panel = new ControlJPanel(imp);
 		control_panel.bgJRadioButton.addActionListener(this);
+		lastButton = control_panel.fgJRadioButton;
 		control_panel.fgJRadioButton.addActionListener(this);
+		control_panel.segmentateJButton.addActionListener(this);
 		
 		Panel all = new Panel();
 		BoxLayout box = new BoxLayout(all, BoxLayout.X_AXIS);
@@ -80,42 +100,141 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 	    	   
 	}
 
-	Roi setNewRoi(Roi newRoi, boolean isBackground) 
+
+	
+	@Override
+	public synchronized void actionPerformed(ActionEvent e) 
 	{
+		if (e.getSource() == control_panel.bgJRadioButton && lastButton != control_panel.bgJRadioButton) {
+			foreground = setNewRoi(background, true);
+			lastButton = control_panel.bgJRadioButton;
+		}
+		else if (e.getSource() == control_panel.fgJRadioButton && lastButton != control_panel.fgJRadioButton) {
+			background = setNewRoi(foreground, false);
+			lastButton = control_panel.fgJRadioButton;
+		}
+		else if (e.getSource() == control_panel.segmentateJButton) {
+			segmentate();
+		}
+
+	}
+
+	/**
+	 * Paint ROIs in the current image.
+	 * @param newRoi
+	 * @param isBackground
+	 * @return
+	 */
+	synchronized Roi setNewRoi(Roi newRoi, boolean isBackground) 
+	{
+		Color paintColor = isBackground ? Color.GREEN : Color.RED;
 		Roi oldRoi = imp.getRoi();
 		if (newRoi == null)
 			imp.killRoi();
 		else
 			imp.setRoi(newRoi);
 		// Paint old ROI
+		ip.reset();
 		if(oldRoi != null)
-		{
-			imp.getProcessor().reset();
-			final int[] pix = (int[]) imp.getProcessor().getPixels();		
-			for(int l = 0, i = 0; i < imp.getHeight(); i++)
-				for(int j = 0; j < imp.getWidth(); j++, l++)
-					if(oldRoi.contains(j, i))
-					{
-						pix[l] = 0;
-					}
+		{						
+			ColorProcessor cp = new ColorProcessor(imp.getWidth(), imp.getHeight(), (int[]) ip.getPixels());
+			cp.setColor(paintColor);
+			cp.fill(oldRoi);
 		}
 		imp.changes = true;
 		imp.updateAndDraw();
 		return oldRoi;
 	}
 	
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		// TODO Auto-generated method stub
-		if (e.getSource() == control_panel.bgJRadioButton) {
-			foreground = setNewRoi(background, true);
+	/**
+	 * Segmentate image based on the current foreground and background ROIs
+	 */
+	private synchronized void segmentate() 
+	{
+
+		//ColorProcessor cp2 = new ColorProcessor(imp.getWidth(), imp.getHeight(), (int[])ip.getSnapshotPixels());		new ImagePlus("test", cp2).show();
+
+		if (control_panel.bgJRadioButton.isSelected())
+			background = imp.getRoi();
+		else
+			foreground = imp.getRoi();
+
+		if (foreground == null) {
+			IJ.error("Siox Segmentation", "ERROR: no foreground selected!");
+			return;
 		}
-		else if (e.getSource() == control_panel.fgJRadioButton) {
-			background = setNewRoi(foreground, false);
+		
+		/*
+		// Reset		
+		ip.reset();
+		imp.changes = true;
+		imp.updateAndDraw();
+		*/
+		
+		// Create confidence matrix and initialize to unknown region of confidence
+		final FloatProcessor confMatrix = new FloatProcessor(imp.getWidth(), imp.getHeight());
+		final float[] imgData = (float[])confMatrix.getPixels();
+		confMatrix.add( SioxSegmentator.UNKNOWN_REGION_CONFIDENCE );
+		
+		// Set foreground ROI
+		if(foreground != null)
+		{
+			confMatrix.setValue(SioxSegmentator.CERTAIN_FOREGROUND_CONFIDENCE);
+			confMatrix.fill(foreground);
 		}
-		else if (e.getSource() == control_panel.segmentateJButton) {
-			//segmentate();
+		
+		// Set background ROI
+		if(background != null)
+		{
+			confMatrix.setValue(SioxSegmentator.CERTAIN_BACKGROUND_CONFIDENCE);
+			confMatrix.fill(background);
 		}
+		else {
+			// crappy: select border pixels which are not foreground as background if no background was specified.
+			int w = imp.getWidth(), h = imp.getHeight();
+			for (int i = 0; i < w; i++) {
+				if (imgData[i] < 0.8f)
+					imgData[i] = 0;
+				if (imgData[i + w * (h - 1)] < 0.8f)
+					imgData[i + w * (h - 1)] = 0;
+			}
+			for (int i = 0; i < h; i++) {
+				if (imgData[w * i] < 0.8f)
+					imgData[w * i] = 0;
+				if (imgData[w - 1 + w * i] < 0.8f)
+					imgData[w - 1 + w * i] = 0;
+			}
+		}
+		
+		// Call SIOX segmentation method
+		int[] pixels = (int[]) ip.getSnapshotPixels();
+		if(pixels != null)
+			pixels = Arrays.copyOf(pixels, pixels.length);
+		else
+			pixels = (int[]) ip.getPixels();
+		
+		//new ImagePlus("confMat", confMatrix).show();
+		
+		final int smoothes = control_panel.smoothness.getValue();
+				
+		boolean success = siox.segmentate(pixels, imgData, smoothes, control_panel.multipart.isSelected()?4:0);
+		//IJ.log(" smoothness = " +  control_panel.smoothness.getValue() + " " + control_panel.multipart.isSelected());
+		
+		if(!success)		
+			IJ.error("Siox Segmentation", "The segmentation failed!");
+		
+										
+		ip.reset();
+		imp.changes = true;
+		imp.updateAndDraw();
+		
+		new ImagePlus("result", confMatrix).show();
+		
+		ip.snapshot();
+	
+		//new ImagePlus("test", new ColorProcessor(imp.getWidth(), imp.getHeight(), pixels)).show();
+		//new ImagePlus("test", new ColorProcessor(imp.getWidth(), imp.getHeight(), (int[]) ip.getSnapshotPixels())).show();
+
 	}
 	
 
