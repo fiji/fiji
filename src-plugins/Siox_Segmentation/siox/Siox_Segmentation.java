@@ -1,5 +1,5 @@
 /**
- * Siox_Segmentation plug-in for ImageJ(C) and Fiji.
+ * Siox_Segmentation plug-in for ImageJ and Fiji.
  * Copyright (C) 2009 Ignacio Arganda-Carreras 
  *
  * This program is free software; you can redistribute it and/or
@@ -18,15 +18,6 @@
  */
 
 package siox;
-
-
-import java.awt.BorderLayout;
-
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
-import javax.swing.JRadioButton;
 
 
 import ij.IJ;
