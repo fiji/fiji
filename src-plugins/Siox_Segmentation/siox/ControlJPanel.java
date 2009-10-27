@@ -18,19 +18,13 @@
  */
 package siox;
 
-import ij.IJ;
 import ij.ImagePlus;
 
 import java.awt.BorderLayout;
-import java.awt.Cursor;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
-import java.awt.Toolkit;
-import java.awt.event.ActionEvent;
 
-import javax.swing.AbstractAction;
-import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -50,8 +44,8 @@ public class ControlJPanel extends JPanel
 	final JButton segmentateJButton = new JButton("Segmentate");
 	final JRadioButton fgJRadioButton = new JRadioButton("Foreground");
 	final JRadioButton bgJRadioButton = new JRadioButton("Background");
-	private final JCheckBox multipart = new JCheckBox("Allow multiple foreground components", false);
-	private final JSlider smoothness = new JSlider(0, 10, 6);
+	final JSlider smoothness = new JSlider(0, 10, 6);
+	final JCheckBox multipart=new JCheckBox("Allow multiple foreground components", false);
 	private final JLabel smoothJLabel = new JLabel("Smoothing:");
 	
 	/** Denotes selection region of interest done but not yet applied. */
@@ -66,8 +60,6 @@ public class ControlJPanel extends JPanel
 	/** One of the status constants, denotes current processing step. */
 	private int status = FG_ADDED_STATUS;
 	
-	/** component containing image */
-	private ScrollDisplay scrollDisplay;
 	
 	//-----------------------------------------------------------------
 	/**
@@ -76,9 +68,7 @@ public class ControlJPanel extends JPanel
 	public ControlJPanel(ImagePlus imp)
 	{
 		super(new BorderLayout());
-				
-		this.scrollDisplay = new ScrollDisplay(imp);
-		
+						
 		final JPanel controlsBox=new JPanel(new GridBagLayout());
 		
 		segJPanel.setBorder(BorderFactory.createTitledBorder("1. Initial Segmentation"));
@@ -109,8 +99,7 @@ public class ControlJPanel extends JPanel
 		segJPanel.add(segmentateJButton, segGc);
 		
 		
-		controlsBox.add(segJPanel, getGbc(0, 1, 1, false, true));
-		
+		controlsBox.add(segJPanel, getGbc(0, 1, 1, false, true));		
 
 		add(controlsBox, BorderLayout.EAST);
 		
@@ -151,7 +140,6 @@ public class ControlJPanel extends JPanel
 		final boolean addPhase = (status==ROI_DEFINED_STATUS) || (status==FG_ADDED_STATUS);
 		
 		smoothness.setEnabled(addPhase);
-		multipart.setEnabled(addPhase);
 		smoothJLabel.setEnabled(addPhase);
 		fgOrBgJLabel.setEnabled(addPhase);
 		fgJRadioButton.setEnabled(addPhase);
