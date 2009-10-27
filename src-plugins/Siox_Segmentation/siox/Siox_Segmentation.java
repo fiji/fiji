@@ -23,7 +23,8 @@ package siox;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
-import ij.plugin.PlugIn;
+import ij.plugin.filter.PlugInFilter;
+import ij.process.ImageProcessor;
 
 /**
  * Fiji plugin to run SIOX: Simple Input Object Segmentation.
@@ -31,48 +32,53 @@ import ij.plugin.PlugIn;
  * @author Ignacio Arganda-Carreras (ignacio.arganda at gmail.com)
  *
  */
-public class Siox_Segmentation implements PlugIn
+public class Siox_Segmentation implements PlugInFilter
 {
 	/** input image to be segmented */
 	private ImagePlus inputImage = null;
 	/** segmentation gui */
 	private SegmentationGUI gui = null;
-	
+
 public static void main(String[] args) {
 	ij.ImageJ.main(args);
-	IJ.run("Clown (14K)");
-	new Siox_Segmentation().run(null);
+	IJ.run("Leaf (36K)");
+	
+	Siox_Segmentation s = new Siox_Segmentation();
+	s.setup(null, WindowManager.getCurrentImage());
+	s.run(null);
 }
-	//-----------------------------------------------------------------
-	/**
-	 * Main plugin method.
-	 * 
-	 * @param arg plugin arguments
-	 * @Override 
-	 */
-	public void run(String arg) 
+
+
+
+	@Override
+	public void run(ImageProcessor ip) 
 	{
-		// Get current image
-		this.inputImage  = WindowManager.getCurrentImage();
-		if (null == inputImage) 
-		{
-			this.inputImage = IJ.openImage();
-			if (null == this.inputImage) 
-				return; // user canceled open dialog
-		}
-		// Check if it is a color image
-		if(this.inputImage.getType() != ImagePlus.COLOR_RGB)
-		{
-			IJ.error("Siox Segmentation only works on RGB color images, please convert.");
-			return;
-		}
 		
 		// Create gui
 		this.gui = new SegmentationGUI(this.inputImage);
-		// Hide input image window
-		//this.inputImage.getWindow().setVisible(false);
 		
-	}// end run method
+	}
+
+	@Override
+	public int setup(String arg, ImagePlus imp) 
+	{
+		this.inputImage = imp;
+		
+		if ("about".equals(arg)) 
+		{
+			showAbout();
+			return DONE;
+		}
+
+		return DOES_RGB; 
+	}
+
+	private void showAbout() {
+		IJ.showMessage(
+				"About Siox Segmentation...",
+				"This plug-in filter segmentates color images based on SIOX: Simple Interactive Object Extraction\n");
+		
+	}
 	
 	
 
