@@ -1,10 +1,36 @@
+/**
+ * Siox_Segmentation plug-in for ImageJ and Fiji.
+ * Copyright (C) 2009 Ignacio Arganda-Carreras 
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation (http://www.gnu.org/licenses/gpl.txt )
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * 
+ */
 package siox;
 
+import ij.IJ;
+import ij.ImagePlus;
+
 import java.awt.BorderLayout;
+import java.awt.Cursor;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.Toolkit;
+import java.awt.event.ActionEvent;
 
+import javax.swing.AbstractAction;
+import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
@@ -16,32 +42,42 @@ import javax.swing.JSlider;
 
 public class ControlJPanel extends JPanel
 {
+	/** Generated serial version UID */
+	private static final long serialVersionUID = -1037100741242680537L;
 	// GUI components
 	private final JPanel segJPanel=new JPanel(new GridBagLayout());
 	private final JLabel fgOrBgJLabel=new JLabel("Add Known ");
-	private final JButton segmentateJButton = new JButton("Segmentate");
-	private final JRadioButton fgJRadioButton = new JRadioButton("Foreground");
-	private final JRadioButton bgJRadioButton = new JRadioButton("Background");
-	private final JCheckBox multipart=new JCheckBox("Allow multiple foreground components", false);
-	private final JSlider smoothness=new JSlider(0, 10, 6);
-	private final JLabel smoothJLabel=new JLabel("Smoothing:");
+	final JButton segmentateJButton = new JButton("Segmentate");
+	final JRadioButton fgJRadioButton = new JRadioButton("Foreground");
+	final JRadioButton bgJRadioButton = new JRadioButton("Background");
+	private final JCheckBox multipart = new JCheckBox("Allow multiple foreground components", false);
+	private final JSlider smoothness = new JSlider(0, 10, 6);
+	private final JLabel smoothJLabel = new JLabel("Smoothing:");
 	
+	/** Denotes selection region of interest done but not yet applied. */
+	private final static int ROI_CANDIDATE_STATUS = 3;	
 	/** Denotes region of interest defined. Next foreground is to be added. */
 	private final static int ROI_DEFINED_STATUS = 4;
-	/** Denotes some fg being added. More fg/bg can be added or segmentation started. */
+	/** Denotes some foreground being added. More foreground/background can be added or segmentation started. */
 	private final static int FG_ADDED_STATUS = 5;
 	/** Denotes basic segmentation finished.  Allows detail refinement. */
 	private final static int SEGMENTATED_STATUS = 6;
 	
 	/** One of the status constants, denotes current processing step. */
-	private int status = ROI_DEFINED_STATUS;
+	private int status = FG_ADDED_STATUS;
 	
+	/** component containing image */
+	private ScrollDisplay scrollDisplay;
+	
+	//-----------------------------------------------------------------
 	/**
 	 * Constructs a control panel for interactive SIOX segmentation on given image.
 	 */
-	public ControlJPanel()
+	public ControlJPanel(ImagePlus imp)
 	{
 		super(new BorderLayout());
+				
+		this.scrollDisplay = new ScrollDisplay(imp);
 		
 		final JPanel controlsBox=new JPanel(new GridBagLayout());
 		
@@ -120,7 +156,7 @@ public class ControlJPanel extends JPanel
 		fgOrBgJLabel.setEnabled(addPhase);
 		fgJRadioButton.setEnabled(addPhase);
 		
-		// force fg selection when where no fg is defined yet:
+		// force foreground selection when where no foreground is defined yet:
 		bgJRadioButton.setEnabled(status == FG_ADDED_STATUS);
 		if (!bgJRadioButton.isEnabled()) 
 		{
@@ -130,4 +166,7 @@ public class ControlJPanel extends JPanel
 
 	}// end updateComponentEnabling method
 	
-}
+
+	
+	
+}// end class ControlJPanel
