@@ -105,6 +105,13 @@ public class FileUploader extends Progressable {
 		db.renameTo(backup);
 		lock.renameTo(db);
 
+		try {
+			Runtime.getRuntime().exec(new String[] {
+				"chmod", "0664",
+				uploadDir + Updater.TXT_FILENAME
+			});
+		} catch (Exception e) {}
+
 		done();
 	}
 

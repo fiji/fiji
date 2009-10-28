@@ -79,7 +79,7 @@ public class PluginUploader {
 		files.add(new UploadableFile(compressed,
 					Updater.XML_LOCK, "C0444"));
 		files.add(new UploadableFile(text,
-					Updater.TXT_FILENAME, "C0644"));
+					Updater.TXT_FILENAME, "C0664"));
 		for (PluginObject plugin :
 				PluginCollection.getInstance().toUpload())
 			files.add(new UploadableFile(plugin));
