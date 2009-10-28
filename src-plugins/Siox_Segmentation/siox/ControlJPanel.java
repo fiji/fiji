@@ -46,7 +46,8 @@ public class ControlJPanel extends JPanel
 	final JRadioButton bgJRadioButton = new JRadioButton("Background");
 	final JSlider smoothness = new JSlider(0, 10, 6);
 	final JCheckBox multipart=new JCheckBox("Allow multiple foreground components", false);
-	private final JLabel smoothJLabel = new JLabel("Smoothing:");
+	final JLabel smoothJLabel = new JLabel("Smoothing:");
+	final JButton resetJButton=new JButton("Reset");
 	
 	/** Denotes selection region of interest done but not yet applied. */
 	private final static int ROI_CANDIDATE_STATUS = 3;	
@@ -99,7 +100,15 @@ public class ControlJPanel extends JPanel
 		segJPanel.add(segmentateJButton, segGc);
 		
 		
-		controlsBox.add(segJPanel, getGbc(0, 1, 1, false, true));		
+		final JPanel resetJPanel = new JPanel(new GridBagLayout());
+		final String resetTooltip = "Reset display image";
+		resetJButton.setToolTipText(resetTooltip);
+		final GridBagConstraints resetGc = getGbc(0, 3, 3, false, false);
+		resetGc.anchor = GridBagConstraints.CENTER;
+		resetJPanel.add(resetJButton, resetGc);
+		
+		controlsBox.add(segJPanel, getGbc(0, 0, 1, false, true));		
+		controlsBox.add(resetJPanel, getGbc(0, 1, 1, false, true));
 
 		add(controlsBox, BorderLayout.EAST);
 		
