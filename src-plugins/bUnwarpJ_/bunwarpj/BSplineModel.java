@@ -227,6 +227,42 @@ public class BSplineModel implements Runnable
 
 	//------------------------------------------------------------------
 	/**
+	 * Create image model without image pixel information (for landmark only 
+	 * registration): empty image and full coefficient pyramid.
+	 * When calling this constructor, the thread is not started, to do so, 
+	 * startPyramids needs to be called.
+	 *
+	 * @param width image width 
+	 * @param height image height
+	 * @param maxImageSubsamplingFactor sub-sampling factor at highest resolution level
+	 */
+	public BSplineModel (
+			final int width,
+			final int height,
+			final int maxImageSubsamplingFactor)
+	{	
+		this.ip = null;
+		
+		// Get image information
+		this.isTarget = false;
+		this.maxImageSubsamplingFactor = maxImageSubsamplingFactor;
+		this.width = this.originalWidth = width;
+		this.height = this.originalHeight = height;
+		coefficientsAreMirrored = true;
+
+		// Resize the speedup arrays
+		xIndex    = new int[4];
+		yIndex    = new int[4];
+		xWeight   = new double[4];
+		yWeight   = new double[4];
+		dxWeight  = new double[4];
+		dyWeight  = new double[4];
+		d2xWeight = new double[4];
+		d2yWeight = new double[4];
+	} // end BSplineModel	
+	
+	//------------------------------------------------------------------
+	/**
 	 * The same as before, but take the image from an array.
 	 *
 	 * @param img image in a double array
@@ -1605,22 +1641,11 @@ public class BSplineModel implements Runnable
 		}
 		coefficient = getBasicFromCardinal2D();
 		
-		/*
-		double[] fullDual = new double[width * height];
+		if(coefficient != null)
+			buildCoefficientPyramid();
+		else 
+			buildEmptyCoefficientPyramid();
 		
-		basicToCardinal2D(coefficient, fullDual, width, height, 3);
-		FloatProcessor fpX 
-			= new FloatProcessor(width, height, fullDual);
-		(new ImagePlus("cardinal" , fpX )).show();
-		*/
-		
-		/*
-		System.out.println("Samples into coeffs:");
-		for(int i = 0; i < coefficient.length; i ++)
-			System.out.print(" " + coefficient[i]);
-		System.out.println("\n---");
-		*/
-		buildCoefficientPyramid();
 		if (isTarget || this.bSubsampledOutput) 
 			buildImagePyramid();
 	} // end run 
@@ -1804,8 +1829,7 @@ public class BSplineModel implements Runnable
 		int halfHeight = height;
 		basicToCardinal2D(coefficient, fullDual, width, height, 7);						
 		 
-		// We compute the coefficients pyramid now taking into account the possible extra steps
-		// (extra steps = trick to increase B-spline coefficients when necessary)
+		// We compute the coefficients pyramid 
 		for (int depth = 1; ((depth <= pyramidDepth) && (!t.isInterrupted())); depth++) 
 		{
 			IJ.showStatus("Building coefficients pyramid...");
@@ -1857,6 +1881,66 @@ public class BSplineModel implements Runnable
 		//	System.out.println(" subCoeffs.length = " + this.subCoeffs.length);
 	} /* end buildCoefficientPyramid */
 
+		//------------------------------------------------------------------
+		/**
+		 * Build an empty coefficient pyramid (for only-landmark registration).
+		 */
+		 private void buildEmptyCoefficientPyramid ()
+		{
+			int fullWidth;
+			int fullHeight;
+
+			int halfWidth = width;
+			int halfHeight = height;						
+			final double[] fullDual = new double[]{};
+			final double[] halfCoefficient = new double[]{};
+			
+			// We compute the coefficients pyramid 
+			for (int depth = 1; ((depth <= pyramidDepth) && (!t.isInterrupted())); depth++) 
+			{
+				IJ.showStatus("Building coefficients pyramid...");
+				IJ.showProgress((double) depth / pyramidDepth );
+				fullWidth = halfWidth;
+				fullHeight = halfHeight;
+				halfWidth /= 2;
+				halfHeight /= 2;
+				
+				// If the image is too small, we push the previous version of the coefficients
+				if(fullWidth <= BSplineModel.min_image_size || fullHeight <= BSplineModel.min_image_size)
+				{				 
+					if(this.bSubsampledOutput)
+						IJ.log("Coefficients pyramid " + fullWidth + "x" + fullHeight);
+					
+					cpyramid.push(fullDual);
+					cpyramid.push(new Integer(fullHeight));
+					cpyramid.push(new Integer(fullWidth));
+					halfWidth *= 2;
+					halfHeight *= 2;
+					continue;
+				}
+							
+				// Otherwise, we reduce the coefficients by 2			
+				if(this.bSubsampledOutput)
+					IJ.log("Coefficients pyramid " + halfWidth + "x" + halfHeight);
+				cpyramid.push(halfCoefficient);
+				cpyramid.push(new Integer(halfHeight));
+				cpyramid.push(new Integer(halfWidth));
+								
+				// We store the coefficients of the corresponding subsampled
+				// output if it exists.
+				if(this.bSubsampledOutput && halfWidth == this.subWidth)
+				{
+					this.subCoeffs = halfCoefficient;
+				}
+			}		
+			smallestWidth  = halfWidth;
+			smallestHeight = halfHeight;
+			currentDepth = pyramidDepth+1;
+			
+			//if(this.bSubsampledOutput && this.subCoeffs != null)
+			//	System.out.println(" subCoeffs.length = " + this.subCoeffs.length);
+		} /* end buildCoefficientPyramid */	 
+	 
 	//------------------------------------------------------------------
 	/**
 	 * Build the image pyramid.
@@ -2094,6 +2178,9 @@ public class BSplineModel implements Runnable
 	  */
 	 private double[] getBasicFromCardinal2D ()
 	 {
+		 if(this.image == null)
+			 return null;
+		 
 		 final double[] basic = new double[width * height];
 		 final double[] hLine = new double[width];
 		 final double[] vLine = new double[height];
