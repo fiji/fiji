@@ -727,15 +727,15 @@ public class Transformation
 		}// end while (state != -1).
 
 		// Adapt coefficients if necessary
-		if(this.originalSourceIP.getWidth() > this.sourceCurrentWidth)
+		if(source.getOriginalImageWidth() > this.sourceCurrentWidth)
 		{
 			if(source.isSubOutput() || target.isSubOutput())
-				IJ.log("Adapting coefficients from " + this.sourceCurrentWidth + " to " + this.originalSourceIP.getWidth());
+				IJ.log("Adapting coefficients from " + this.sourceCurrentWidth + " to " + source.getOriginalImageWidth());
 			// Adapt the transformation to the new image size
-			double targetFactorY = (this.originalTargetIP.getHeight() - 1) / (targetCurrentHeight-1);
-			double targetFactorX = (this.originalTargetIP.getWidth()  - 1) / (targetCurrentWidth -1);
-			double sourceFactorY = (this.originalSourceIP.getHeight() - 1) / (sourceCurrentHeight-1);
-			double sourceFactorX = (this.originalSourceIP.getWidth()  - 1) / (sourceCurrentWidth -1);
+			double targetFactorY = (target.getOriginalImageHeight() - 1) / (targetCurrentHeight-1);
+			double targetFactorX = (target.getOriginalImageWidth()  - 1) / (targetCurrentWidth -1);
+			double sourceFactorY = (source.getOriginalImageHeight() - 1) / (sourceCurrentHeight-1);
+			double sourceFactorX = (source.getOriginalImageWidth()  - 1) / (sourceCurrentWidth -1);
 
 			for (int i=0; i<intervals+3; i++)
 				for (int j=0; j<intervals+3; j++)
@@ -745,10 +745,10 @@ public class Transformation
 					cxSourceToTarget[i][j] *= sourceFactorX;
 					cySourceToTarget[i][j] *= sourceFactorY;
 				}
-			this.targetCurrentHeight = this.originalTargetIP.getHeight();
-			this.targetCurrentWidth  = this.originalTargetIP.getWidth();
-			this.sourceCurrentHeight = this.originalSourceIP.getHeight();
-			this.sourceCurrentWidth  = this.originalSourceIP.getWidth();
+			this.targetCurrentHeight = target.getOriginalImageHeight();
+			this.targetCurrentWidth  = target.getOriginalImageWidth();
+			this.sourceCurrentHeight = source.getOriginalImageHeight();
+			this.sourceCurrentWidth  = source.getOriginalImageWidth();
 		}
 
 		// Display final errors.		
@@ -1003,14 +1003,13 @@ public class Transformation
 		}// end while (state != -1).
 		
 		// Adapt coefficients if necessary
-		// Adapt coefficients if necessary
-		if(this.originalTargetIP.getWidth() > this.targetCurrentWidth)
+		if(source.getOriginalImageWidth() > this.targetCurrentWidth)
 		{
 			if(source.isSubOutput() || target.isSubOutput())
 				IJ.log("Adapting coefficients from " + this.sourceCurrentWidth + " to " + this.originalSourceIP.getWidth());
 			// Adapt the transformation to the new image size
-			double targetFactorY = (this.originalTargetIP.getHeight() - 1) / (targetCurrentHeight-1);
-			double targetFactorX = (this.originalTargetIP.getWidth()  - 1) / (targetCurrentWidth -1);
+			double targetFactorY = (target.getOriginalImageHeight() - 1) / (targetCurrentHeight-1);
+			double targetFactorX = (target.getOriginalImageWidth()  - 1) / (targetCurrentWidth -1);
 
 			for (int i=0; i<intervals+3; i++)
 				for (int j=0; j<intervals+3; j++)
@@ -1018,10 +1017,10 @@ public class Transformation
 					cxTargetToSource[i][j] *= targetFactorX;
 					cyTargetToSource[i][j] *= targetFactorY;					
 				}
-			this.targetCurrentHeight = this.originalTargetIP.getHeight();
-			this.targetCurrentWidth  = this.originalTargetIP.getWidth();
-			this.sourceCurrentHeight = this.originalSourceIP.getHeight();
-			this.sourceCurrentWidth  = this.originalSourceIP.getWidth();
+			this.targetCurrentHeight = target.getOriginalImageHeight();
+			this.targetCurrentWidth  = target.getOriginalImageWidth();
+			this.sourceCurrentHeight = source.getOriginalImageHeight();
+			this.sourceCurrentWidth  = source.getOriginalImageWidth();
 		}
 
 		// Display final errors.		
@@ -4400,7 +4399,7 @@ public class Transformation
 		this.swyTargetToSource.precomputed_prepareForInterpolation(
 				target.getCurrentHeight(), target.getCurrentWidth(), intervals);
 
-		/* First computation of the energy */
+		// First computation of the energy (similarity + landmarks + regularization)
 		//f = evaluateSimilarity(x, intervals, grad, false, false, false);
 		f = evaluateSimilarityMultiThread(x, intervals, grad, false, false);
 
