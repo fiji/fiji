@@ -149,13 +149,14 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			        "Affine               -- free affine transform               ",
 			        "Elastic              -- bUnwarpJ splines                    ",
 			        "Moving least squares -- maximal warping                     "};
+	
 
 	/** feature model string labels */
 	public final static String[] featuresModelStrings = new String[]{ "Translation", "Rigid", "Similarity", "Affine" };
 	/** relaxation threshold (if the difference between last two iterations is below this threshold, the relaxation stops */
 	public static final float STOP_THRESHOLD = 0.01f;
 	/** maximum number of iterations in the relaxation loop */
-	public static final int MAX_ITER = 1000;
+	public static final int MAX_ITER = 1;
 
 	//---------------------------------------------------------------------------------
 	/**
@@ -661,8 +662,8 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			Param p) 
 	{
 		// TODO: Elastic registration not implemented yet
-		if(Param.registrationModelIndex == Register_Virtual_Stack_MT.ELASTIC)
-			return true;
+		//if(Param.registrationModelIndex == Register_Virtual_Stack_MT.ELASTIC)
+			//return true;
 			
 		final boolean display = displayRelaxGraph;
 		
@@ -700,6 +701,11 @@ public class Register_Virtual_Stack_MT implements PlugIn
 				final int iSlice = index[j];
 												
 				CoordinateTransform t = getCoordinateTransform(p);
+				if(t instanceof CubicBSplineTransform)
+				{
+					( (CubicBSplineTransform) t ).set(p.elastic_param, (int)centerX[j]*2, (int)centerY[j]*2,
+							(int)centerX[j]*2, (int)centerY[j]*2);
+				}
 				
 				// First slice is treated in a special way
 				if(iSlice == 0)
@@ -741,7 +747,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 							combined_inliers.add(match);
 					}					
 
-					t = getCoordinateTransform(p);
+					//t = getCoordinateTransform(p);
 
 					try{
 						// Fit inliers given the registration model
@@ -1628,8 +1634,9 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			case Register_Virtual_Stack_MT.SIMILARITY:
 			case Register_Virtual_Stack_MT.RIGID:
 			case Register_Virtual_Stack_MT.AFFINE:
+			case Register_Virtual_Stack_MT.ELASTIC:
 				((Model<?>)t).fit(inliers);							
-				break;		
+				break;													
 			case Register_Virtual_Stack_MT.MOVING_LEAST_SQUARES:
 				((MovingLeastSquaresTransform)t).setModel(AffineModel2D.class);
 				((MovingLeastSquaresTransform)t).setAlpha(1); // smoothness
