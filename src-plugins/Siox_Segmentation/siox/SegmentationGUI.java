@@ -29,6 +29,7 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
 import ij.gui.Roi;
+import ij.process.Blitter;
 import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
@@ -56,6 +57,7 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 	protected Roi foreground, background;
 	protected ControlJPanel control_panel;
 	ImageProcessor ip;
+	ImageProcessor original_image;
 	
 	
 	//-----------------------------------------------------------------
@@ -70,10 +72,9 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 		
 		// Take snapshot of initial pixels
 		ip = imp.getProcessor();
+		original_image = ip.duplicate();
 		ip.snapshot();
 		
-		// Create segmentator object
-		siox = new SioxSegmentator(imp.getWidth(), imp.getHeight(), null);
 		
 		this.setTitle("SIOX Segmentation ");
 		// Image panel
@@ -86,6 +87,7 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 		lastButton = control_panel.fgJRadioButton;
 		control_panel.fgJRadioButton.addActionListener(this);
 		control_panel.segmentateJButton.addActionListener(this);
+		control_panel.resetJButton.addActionListener(this);
 		
 		Panel all = new Panel();
 		BoxLayout box = new BoxLayout(all, BoxLayout.X_AXIS);
@@ -116,8 +118,20 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 		else if (e.getSource() == control_panel.segmentateJButton) {
 			segmentate();
 		}
+		else if (e.getSource() == control_panel.resetJButton) {
+			reset();
+		}
 
 	}
+
+	private void reset() {
+		ip.reset();
+		ip.snapshot();
+		imp.changes = true;
+		imp.updateAndDraw();		
+	}
+
+
 
 	/**
 	 * Paint ROIs in the current image.
@@ -208,15 +222,16 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 		
 		// Call SIOX segmentation method
 		int[] pixels = (int[]) ip.getSnapshotPixels();
-		if(pixels != null)
+		if (pixels != null)
 			pixels = Arrays.copyOf(pixels, pixels.length);
 		else
-			pixels = (int[]) ip.getPixels();
+			pixels =(int[]) original_image.getPixels();
 		
 		//new ImagePlus("confMat", confMatrix).show();
 		
 		final int smoothes = control_panel.smoothness.getValue();
 				
+		siox = new SioxSegmentator(imp.getWidth(), imp.getHeight(), null);
 		boolean success = siox.segmentate(pixels, imgData, smoothes, control_panel.multipart.isSelected()?4:0);
 		//IJ.log(" smoothness = " +  control_panel.smoothness.getValue() + " " + control_panel.multipart.isSelected());
 		
@@ -225,12 +240,20 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 		
 										
 		ip.reset();
+		
+		final ImagePlus result = new ImagePlus("result", confMatrix.convertToRGB());
+		//result.show();
+		IJ.run(result, "Divide...", "value=255.000");
+		//IJ.run("Image Calculator...", "image1="+imp.getTitle()+" operation=Multiply image2="+result.getTitle());
+		ip.copyBits(result.getProcessor(), 0, 0, Blitter.MULTIPLY);
+		
 		imp.changes = true;
 		imp.updateAndDraw();
+									
 		
-		new ImagePlus("result", confMatrix).show();
+		//result.show();
 		
-		ip.snapshot();
+		//ip.snapshot();
 	
 		//new ImagePlus("test", new ColorProcessor(imp.getWidth(), imp.getHeight(), pixels)).show();
 		//new ImagePlus("test", new ColorProcessor(imp.getWidth(), imp.getHeight(), (int[]) ip.getSnapshotPixels())).show();
