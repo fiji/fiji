@@ -32,6 +32,7 @@ import ij.process.ShortProcessor;
 import java.awt.Point;
 import java.awt.Polygon;
 import java.awt.Rectangle;
+import java.util.Arrays;
 import java.util.Vector;
 
 /**
@@ -63,7 +64,7 @@ public class Mask
 
     /*------------------------------------------------------------------*/
     /**
-     * Empty constructor, the input image is used only to take the
+     * Constructor, the input image is used only to take the
      * image size if take_mask is false, otherwise, it is used as the 
      * mask information.
      *
@@ -119,6 +120,21 @@ public class Mask
        }
     } 
   
+    /*------------------------------------------------------------------*/
+    /**
+     * Create mask of specific size (all pixels set to true) 
+     *
+     * @param width mask width
+     * @param height mask height
+     */
+    public Mask (final int width, final int height)
+    {
+       this.width  = width;
+       this.height = height;
+       mask = new boolean[width * height];
+       Arrays.fill(mask, true);
+    } 
+    
     /**
      * Bounding box for the mask.
      * An array is returned with the convention [x0,y0,xF,yF]. This array
