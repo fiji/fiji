@@ -1,10 +1,8 @@
 package ij.gui;
 
 import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Rectangle;
 import java.awt.Shape;
-import java.awt.geom.AffineTransform;
+
 
 /**
  * Wrapper to extract the java.awt.Shape from a ShapeRoi
@@ -22,9 +20,6 @@ public class ShapeRoiHelper extends ShapeRoi {
 	public static Shape getShape(ShapeRoi roi) { return roi.getShape(); }
 
 	public static Shape getShape(ShapeRoi roi, Graphics g, int x, int y, double magnification) {
-		final AffineTransform transform = (((Graphics2D)g).getDeviceConfiguration()).getDefaultTransform();
-		final Rectangle r = roi.getBounds();
-		transform.setTransform(magnification, 0.0, 0.0, magnification, x - r.x * magnification, y - r.y * magnification);
-		return transform.createTransformedShape(roi.getShape());
+		return roi.getShape();
 	}
 }
