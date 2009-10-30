@@ -1,5 +1,6 @@
 package fiji.util.gui;
 
+import java.awt.Composite;
 import java.awt.Graphics;
 import java.awt.Rectangle;
 import java.util.ArrayList;
@@ -40,7 +41,8 @@ public class OverlayedImageCanvas extends ImageCanvas {
 			overlay.paint(g, src.x, src.y, magnification);
 	}
 
-	public interface Overlay {
+	public interface Overlay {				
+		public void setComposite (Composite composite);				
 		void paint(Graphics g, int x, int y, double magnification);
 	}
 }
