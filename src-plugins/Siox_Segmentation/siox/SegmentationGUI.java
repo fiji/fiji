@@ -1,6 +1,6 @@
 /**
  * Siox_Segmentation plug-in for ImageJ and Fiji.
- * Copyright (C) 2009 Ignacio Arganda-Carreras 
+ * Copyright (C) 2009 Ignacio Arganda-Carreras, Johannes Schindelin, Stephan Saalfeld 
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -30,6 +30,8 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
 import ij.gui.Roi;
+import ij.process.Blitter;
+import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 
@@ -50,6 +52,9 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 
 	/** Generated serial version UID */
 	private static final long serialVersionUID = -326288432966353440L;
+	
+	/** Confidence matrix */
+	FloatProcessor confMatrix = null;
 	
 	private SioxSegmentator siox;
 	private JRadioButton lastButton;
@@ -87,6 +92,8 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 		foreground_overlay.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f ));
 		background_overlay.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f ));
 		
+		result_overlay.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.75f ));
+		
 		
 		
 		// Take snapshot of initial pixels
@@ -102,8 +109,9 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 		control_panel.bgJRadioButton.addActionListener(this);
 		lastButton = control_panel.fgJRadioButton;
 		control_panel.fgJRadioButton.addActionListener(this);
-		control_panel.segmentateJButton.addActionListener(this);
+		control_panel.segmentJButton.addActionListener(this);
 		control_panel.resetJButton.addActionListener(this);
+		control_panel.createResultJButton.addActionListener(this);
 		
 		Panel all = new Panel();
 		BoxLayout box = new BoxLayout(all, BoxLayout.X_AXIS);
@@ -131,20 +139,42 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 			background = setNewRoi(foreground, false);
 			lastButton = control_panel.fgJRadioButton;
 		}
-		else if (e.getSource() == control_panel.segmentateJButton) {
-			segmentate();
+		else if (e.getSource() == control_panel.segmentJButton) {
+			segment();
 		}
 		else if (e.getSource() == control_panel.resetJButton) {
 			reset();
 		}
+		else if (e.getSource() == control_panel.createResultJButton) {
+			createBinaryResult();
+		}
 
 	}
 
-	private void reset() {
+	private void createBinaryResult() 
+	{
+		if (null != confMatrix)
+		{
+			final ByteProcessor result = (ByteProcessor) confMatrix.convertToByte(false);
+			result.setMinAndMax(0, 1);
+			new ImagePlus("result", result).show();
+		}
+		
+		
+	}
+
+
+
+	/**
+	 * Reset overlays
+	 */
+	private void reset() 
+	{
 		background_overlay.setRoi(null);
 		foreground_overlay.setRoi(null);
 		result_overlay.setImage(null);
-		imp.changes = true;
+		confMatrix = null;
+		imp.changes = true;		
 		imp.updateAndDraw();		
 	}
 
@@ -178,9 +208,9 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 	}
 	
 	/**
-	 * Segmentate image based on the current foreground and background ROIs
+	 * Segment image based on the current foreground and background ROIs
 	 */
-	private synchronized void segmentate() 
+	private synchronized void segment() 
 	{
 
 		//ColorProcessor cp2 = new ColorProcessor(imp.getWidth(), imp.getHeight(), (int[])ip.getSnapshotPixels());		new ImagePlus("test", cp2).show();
@@ -197,7 +227,7 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 		
 	
 		// Create confidence matrix and initialize to unknown region of confidence
-		final FloatProcessor confMatrix = new FloatProcessor(imp.getWidth(), imp.getHeight());
+		confMatrix = new FloatProcessor(imp.getWidth(), imp.getHeight());
 		final float[] imgData = (float[])confMatrix.getPixels();
 		confMatrix.add( SioxSegmentator.UNKNOWN_REGION_CONFIDENCE );
 		
@@ -215,7 +245,7 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 			confMatrix.fill(background);
 		}
 		else {
-			// crappy: select border pixels which are not foreground as background if no background was specified.
+			// Workaround: select border pixels which are not foreground as background if no background was specified.
 			int w = imp.getWidth(), h = imp.getHeight();
 			for (int i = 0; i < w; i++) {
 				if (imgData[i] < 0.8f)
@@ -233,26 +263,23 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 		
 		// Call SIOX segmentation method
 		int[] pixels = (int[]) ip.getPixels();
-		
-		
+				
 		final int smoothes = control_panel.smoothness.getValue();
 				
 		siox = new SioxSegmentator(imp.getWidth(), imp.getHeight(), null);
 		boolean success = siox.segmentate(pixels, imgData, smoothes, control_panel.multipart.isSelected()?4:0);
 		
 		if(!success)		
-			IJ.error("Siox Segmentation", "The segmentation failed!");
-		
-										
-	
-		//final ImagePlus result = new ImagePlus("result", confMatrix.convertToRGB());
-		//result.show();
-
+			IJ.error("Siox Segmentation", "The segmentation failed!");										
 		
 		background_overlay.setRoi(null);
 		foreground_overlay.setRoi(null);
 		
-		result_overlay.setImage(confMatrix.convertToRGB());
+		ImageProcessor cp = confMatrix.convertToRGB();
+		cp.multiply(1.0/255.0);
+		cp.copyBits(ip, 0, 0, Blitter.MULTIPLY);
+		
+		result_overlay.setImage(cp);
 		
 		imp.changes = true;
 		imp.updateAndDraw();
