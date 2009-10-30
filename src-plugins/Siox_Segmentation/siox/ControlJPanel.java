@@ -41,22 +41,19 @@ public class ControlJPanel extends JPanel
 	// GUI components
 	private final JPanel segJPanel=new JPanel(new GridBagLayout());
 	private final JLabel fgOrBgJLabel=new JLabel("Add Known ");
-	final JButton segmentateJButton = new JButton("Segmentate");
+	final JButton segmentJButton = new JButton("Segment");
 	final JRadioButton fgJRadioButton = new JRadioButton("Foreground");
 	final JRadioButton bgJRadioButton = new JRadioButton("Background");
 	final JSlider smoothness = new JSlider(0, 10, 6);
 	final JCheckBox multipart=new JCheckBox("Allow multiple foreground components", false);
 	final JLabel smoothJLabel = new JLabel("Smoothing:");
 	final JButton resetJButton=new JButton("Reset");
+	final JButton createResultJButton=new JButton("Create result");
 	
-	/** Denotes selection region of interest done but not yet applied. */
-	private final static int ROI_CANDIDATE_STATUS = 3;	
 	/** Denotes region of interest defined. Next foreground is to be added. */
 	private final static int ROI_DEFINED_STATUS = 4;
 	/** Denotes some foreground being added. More foreground/background can be added or segmentation started. */
 	private final static int FG_ADDED_STATUS = 5;
-	/** Denotes basic segmentation finished.  Allows detail refinement. */
-	private final static int SEGMENTATED_STATUS = 6;
 	
 	/** One of the status constants, denotes current processing step. */
 	private int status = FG_ADDED_STATUS;
@@ -97,15 +94,14 @@ public class ControlJPanel extends JPanel
 		segJPanel.add(smoothness, getGbc(1, 2, 2, false, true));
 		final GridBagConstraints segGc = getGbc(0, 3, 3, false, false);
 		segGc.anchor = GridBagConstraints.CENTER;
-		segJPanel.add(segmentateJButton, segGc);
+		segJPanel.add(segmentJButton, segGc);
 		
 		
 		final JPanel resetJPanel = new JPanel(new GridBagLayout());
 		final String resetTooltip = "Reset display image";
-		resetJButton.setToolTipText(resetTooltip);
-		final GridBagConstraints resetGc = getGbc(0, 3, 3, false, false);
-		resetGc.anchor = GridBagConstraints.CENTER;
-		resetJPanel.add(resetJButton, resetGc);
+		resetJButton.setToolTipText(resetTooltip);		
+		resetJPanel.add(resetJButton, getGbc(0, 0, 1, false, false));				
+		resetJPanel.add(createResultJButton, getGbc(1, 0, 1, false, false));
 		
 		controlsBox.add(segJPanel, getGbc(0, 0, 1, false, true));		
 		controlsBox.add(resetJPanel, getGbc(0, 1, 1, false, true));
