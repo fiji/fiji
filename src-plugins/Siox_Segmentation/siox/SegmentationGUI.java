@@ -19,12 +19,14 @@
 
 package siox;
 
+import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Panel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
 
+import fiji.util.gui.OverlayedImageCanvas;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
@@ -55,6 +57,7 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 	private SioxSegmentator siox;
 	private JRadioButton lastButton;
 	protected Roi foreground, background;
+	protected RoiOverlay foreground_overlay, background_overlay;
 	protected ControlJPanel control_panel;
 	ImageProcessor ip;
 	ImageProcessor original_image;
@@ -70,16 +73,31 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 	{
 		super(imp);
 		
+		ic = new OverlayedImageCanvas(imp);
+		foreground_overlay = new RoiOverlay();
+		background_overlay = new RoiOverlay();
+		
+		((OverlayedImageCanvas)ic).addOverlay(foreground_overlay);
+		((OverlayedImageCanvas)ic).addOverlay(background_overlay);
+		
+		foreground_overlay.setColor(Color.GREEN);
+		background_overlay.setColor(Color.RED);
+		
+		foreground_overlay.setComposite(AlphaComposite.getInstance(AlphaComposite.XOR));
+		background_overlay.setComposite(AlphaComposite.getInstance(AlphaComposite.XOR));
+		
+		
+		
 		// Take snapshot of initial pixels
 		ip = imp.getProcessor();
-		original_image = ip.duplicate();
-		ip.snapshot();
+		//original_image = ip.duplicate();
+		//ip.snapshot();
 		
 		
 		this.setTitle("SIOX Segmentation ");
 		// Image panel
 		Panel image_panel = new Panel();
-		image_panel.add(this.getCanvas());
+		image_panel.add(ic);
 		
 		// Control panel
 		control_panel = new ControlJPanel(imp);
@@ -125,8 +143,8 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 	}
 
 	private void reset() {
-		ip.reset();
-		ip.snapshot();
+		//ip.reset();
+		//ip.snapshot();
 		imp.changes = true;
 		imp.updateAndDraw();		
 	}
@@ -141,20 +159,26 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 	 */
 	synchronized Roi setNewRoi(Roi newRoi, boolean isBackground) 
 	{
-		Color paintColor = isBackground ? Color.GREEN : Color.RED;
+		final RoiOverlay overlay_to_paint = isBackground ? background_overlay : foreground_overlay;
+		final RoiOverlay overlay_to_clear = isBackground ? foreground_overlay : background_overlay;
+		
 		Roi oldRoi = imp.getRoi();
 		if (newRoi == null)
 			imp.killRoi();
 		else
 			imp.setRoi(newRoi);
 		// Paint old ROI
-		ip.reset();
+		//ip.reset();
 		if(oldRoi != null)
-		{						
-			ColorProcessor cp = new ColorProcessor(imp.getWidth(), imp.getHeight(), (int[]) ip.getPixels());
-			cp.setColor(paintColor);
-			cp.fill(oldRoi);
+		{		
+			overlay_to_paint.setRoi(oldRoi);
+			//ColorProcessor cp = new ColorProcessor(imp.getWidth(), imp.getHeight(), (int[]) ip.getPixels());
+			//cp.setColor(paintColor);
+			//cp.fill(oldRoi);
 		}
+		
+		overlay_to_clear.setRoi(newRoi);
+		
 		imp.changes = true;
 		imp.updateAndDraw();
 		return oldRoi;
@@ -239,7 +263,7 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 			IJ.error("Siox Segmentation", "The segmentation failed!");
 		
 										
-		ip.reset();
+		//ip.reset();
 		
 		final ImagePlus result = new ImagePlus("result", confMatrix.convertToRGB());
 		//result.show();
