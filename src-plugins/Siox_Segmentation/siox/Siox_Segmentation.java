@@ -1,6 +1,6 @@
 /**
  * Siox_Segmentation plug-in for ImageJ and Fiji.
- * Copyright (C) 2009 Ignacio Arganda-Carreras 
+ * Copyright (C) 2009 Ignacio Arganda-Carreras, Johannes Schindelin, Stephan Saalfeld 
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -36,8 +36,6 @@ public class Siox_Segmentation implements PlugInFilter
 {
 	/** input image to be segmented */
 	private ImagePlus inputImage = null;
-	/** segmentation gui */
-	private SegmentationGUI gui = null;
 
 public static void main(String[] args) {
 	ij.ImageJ.main(args);
@@ -53,9 +51,7 @@ public static void main(String[] args) {
 	@Override
 	public void run(ImageProcessor ip) 
 	{
-		
-		// Create gui
-		this.gui = new SegmentationGUI(this.inputImage);
+		new SegmentationGUI(this.inputImage);
 		
 	}
 
