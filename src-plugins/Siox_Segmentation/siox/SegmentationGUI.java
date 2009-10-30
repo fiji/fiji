@@ -24,15 +24,12 @@ import java.awt.Color;
 import java.awt.Panel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Arrays;
 
 import fiji.util.gui.OverlayedImageCanvas;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
 import ij.gui.Roi;
-import ij.process.Blitter;
-import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 
@@ -58,6 +55,7 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 	private JRadioButton lastButton;
 	protected Roi foreground, background;
 	protected RoiOverlay foreground_overlay, background_overlay;
+	protected ImageOverlay result_overlay;
 	protected ControlJPanel control_panel;
 	ImageProcessor ip;
 	ImageProcessor original_image;
@@ -71,29 +69,29 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 	 */
 	public SegmentationGUI(ImagePlus imp) 
 	{
-		super(imp);
+		super(imp, new OverlayedImageCanvas(imp) );
 		
-		ic = new OverlayedImageCanvas(imp);
+		 
 		foreground_overlay = new RoiOverlay();
 		background_overlay = new RoiOverlay();
 		
+		result_overlay = new ImageOverlay();
+		
 		((OverlayedImageCanvas)ic).addOverlay(foreground_overlay);
 		((OverlayedImageCanvas)ic).addOverlay(background_overlay);
+		((OverlayedImageCanvas)ic).addOverlay(result_overlay);
 		
 		foreground_overlay.setColor(Color.GREEN);
 		background_overlay.setColor(Color.RED);
 		
-		foreground_overlay.setComposite(AlphaComposite.getInstance(AlphaComposite.XOR));
-		background_overlay.setComposite(AlphaComposite.getInstance(AlphaComposite.XOR));
+		foreground_overlay.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f ));
+		background_overlay.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f ));
 		
 		
 		
 		// Take snapshot of initial pixels
 		ip = imp.getProcessor();
-		//original_image = ip.duplicate();
-		//ip.snapshot();
-		
-		
+			
 		this.setTitle("SIOX Segmentation ");
 		// Image panel
 		Panel image_panel = new Panel();
@@ -143,8 +141,9 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 	}
 
 	private void reset() {
-		//ip.reset();
-		//ip.snapshot();
+		background_overlay.setRoi(null);
+		foreground_overlay.setRoi(null);
+		result_overlay.setImage(null);
 		imp.changes = true;
 		imp.updateAndDraw();		
 	}
@@ -159,8 +158,8 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 	 */
 	synchronized Roi setNewRoi(Roi newRoi, boolean isBackground) 
 	{
-		final RoiOverlay overlay_to_paint = isBackground ? background_overlay : foreground_overlay;
-		final RoiOverlay overlay_to_clear = isBackground ? foreground_overlay : background_overlay;
+		final RoiOverlay overlay_to_clear = isBackground ? background_overlay : foreground_overlay;
+		final RoiOverlay overlay_to_paint = isBackground ? foreground_overlay : background_overlay;
 		
 		Roi oldRoi = imp.getRoi();
 		if (newRoi == null)
@@ -169,15 +168,9 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 			imp.setRoi(newRoi);
 		// Paint old ROI
 		//ip.reset();
-		if(oldRoi != null)
-		{		
-			overlay_to_paint.setRoi(oldRoi);
-			//ColorProcessor cp = new ColorProcessor(imp.getWidth(), imp.getHeight(), (int[]) ip.getPixels());
-			//cp.setColor(paintColor);
-			//cp.fill(oldRoi);
-		}
 		
-		overlay_to_clear.setRoi(newRoi);
+		overlay_to_paint.setRoi(oldRoi);		
+		overlay_to_clear.setRoi(null);
 		
 		imp.changes = true;
 		imp.updateAndDraw();
@@ -202,13 +195,7 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 			return;
 		}
 		
-		/*
-		// Reset		
-		ip.reset();
-		imp.changes = true;
-		imp.updateAndDraw();
-		*/
-		
+	
 		// Create confidence matrix and initialize to unknown region of confidence
 		final FloatProcessor confMatrix = new FloatProcessor(imp.getWidth(), imp.getHeight());
 		final float[] imgData = (float[])confMatrix.getPixels();
@@ -245,42 +232,31 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 		}
 		
 		// Call SIOX segmentation method
-		int[] pixels = (int[]) ip.getSnapshotPixels();
-		if (pixels != null)
-			pixels = Arrays.copyOf(pixels, pixels.length);
-		else
-			pixels =(int[]) original_image.getPixels();
+		int[] pixels = (int[]) ip.getPixels();
 		
-		//new ImagePlus("confMat", confMatrix).show();
 		
 		final int smoothes = control_panel.smoothness.getValue();
 				
 		siox = new SioxSegmentator(imp.getWidth(), imp.getHeight(), null);
 		boolean success = siox.segmentate(pixels, imgData, smoothes, control_panel.multipart.isSelected()?4:0);
-		//IJ.log(" smoothness = " +  control_panel.smoothness.getValue() + " " + control_panel.multipart.isSelected());
 		
 		if(!success)		
 			IJ.error("Siox Segmentation", "The segmentation failed!");
 		
 										
-		//ip.reset();
-		
-		final ImagePlus result = new ImagePlus("result", confMatrix.convertToRGB());
+	
+		//final ImagePlus result = new ImagePlus("result", confMatrix.convertToRGB());
 		//result.show();
-		IJ.run(result, "Divide...", "value=255.000");
-		//IJ.run("Image Calculator...", "image1="+imp.getTitle()+" operation=Multiply image2="+result.getTitle());
-		ip.copyBits(result.getProcessor(), 0, 0, Blitter.MULTIPLY);
+
+		
+		background_overlay.setRoi(null);
+		foreground_overlay.setRoi(null);
+		
+		result_overlay.setImage(confMatrix.convertToRGB());
 		
 		imp.changes = true;
 		imp.updateAndDraw();
 									
-		
-		//result.show();
-		
-		//ip.snapshot();
-	
-		//new ImagePlus("test", new ColorProcessor(imp.getWidth(), imp.getHeight(), pixels)).show();
-		//new ImagePlus("test", new ColorProcessor(imp.getWidth(), imp.getHeight(), (int[]) ip.getSnapshotPixels())).show();
 
 	}
 	
