@@ -23,7 +23,7 @@ package bunwarpj;
 
 /**
  * ====================================================================
- *  Version: October 17th, 2009
+ *  Version: November 2nd, 2009
  *  http://biocomp.cnb.csic.es/%7Eiarganda/bUnwarpJ/
  * \===================================================================
  */
@@ -63,7 +63,7 @@ import java.util.Stack;
  * <A target="_blank" href="http://biocomp.cnb.csic.es/~iarganda/bUnwarpJ/">
  * http://biocomp.cnb.csic.es/~iarganda/bUnwarpJ/</a>
  *
- * @version 2.6 10/17/2009
+ * @version 2.6 11/02/2009
  * @author Ignacio Arganda-Carreras (ignacio.arganda@gmail.com)
  */
 public class bUnwarpJ_ implements PlugIn
