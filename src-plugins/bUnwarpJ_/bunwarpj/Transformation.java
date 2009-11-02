@@ -776,7 +776,7 @@ public class Transformation
 			}
 		}
 		
-	} /* end doBidirectionalRegistration */
+	} // end doBidirectionalRegistration
 
 	//------------------------------------------------------------------
 	/**
@@ -843,6 +843,11 @@ public class Transformation
 
 		}
 
+		/*
+		IJ.log("\nAffine matrix = [" + affineMatrix[0][0] + " " + affineMatrix[0][1] 
+		                            + " " + affineMatrix[0][2] + " " + affineMatrix[1][0] 
+		                            + " " + affineMatrix[1][1] + " " + affineMatrix[1][2] + "]\n" );
+		*/
 		// Incorporate the affine transformation into the spline coefficient
 		for (int i= 0; i<intervals + 3; i++)
 		{
@@ -920,9 +925,12 @@ public class Transformation
 					}
 
 				}
-
+						
 				// Optimize deformation coefficients
 				optimizeCoeffs(intervals, stopThreshold, cxTargetToSource, cyTargetToSource);
+				
+				
+				
 			}
 
 			// Prepare for next iteration
@@ -1684,7 +1692,7 @@ public class Transformation
 		else                   targetVector = new Vector <Point>();
 
 		int removeLastPoint = 0;
-
+					
 		int n = targetVector.size();
 		switch (n)
 		{
