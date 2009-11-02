@@ -49,6 +49,12 @@ public class Param {
 	public double  consistencyWeight = 10;
 	/** stopping threshold */
 	public double  stopThreshold = 0.01;
+	/** available registration modes */
+	protected final String[] sRegistrationModes = { "Fast", "Accurate", "Mono" };
+	/** minimum scale deformation choices */
+	protected final String[] sMinScaleDeformationChoices = { "Very Coarse", "Coarse", "Fine", "Very Fine" };
+	/** maximum scale deformation choices */
+	protected String[] sMaxScaleDeformationChoices = { "Very Coarse", "Coarse", "Fine", "Very Fine", "Super Fine" };
 	
 	/**
 	 * Empty constructor
@@ -86,6 +92,7 @@ public class Param {
 		this.max_scale_deformation = max_scale_deformation;
 		this.divWeight = divWeight;
 		this.curlWeight = curlWeight;
+		this.landmarkWeight = landmarkWeight;
 		this.imageWeight = imageWeight;
 		this.consistencyWeight = consistencyWeight;
 		this.stopThreshold = stopThreshold;		
@@ -99,8 +106,7 @@ public class Param {
 	public boolean showDialog()
 	{
 		GenericDialog gd = new GenericDialog("Elastic Registration");
-		// Registration Mode
-		String[] sRegistrationModes = { "Fast", "Accurate", "Mono" };
+		
 		gd.addChoice("Registration Mode", sRegistrationModes, sRegistrationModes[2]);
 		
 		// Maximum image pyramid resolution
@@ -108,12 +114,10 @@ public class Param {
 		
 		// Advanced Options
 		gd.addMessage("------ Advanced Options ------");
-		String[] sMinScaleDeformationChoices = { "Very Coarse", "Coarse", "Fine", "Very Fine" };
+		
 		gd.addChoice("Initial_Deformation :", sMinScaleDeformationChoices, sMinScaleDeformationChoices[0]);		
-		
-		String[] sMaxScaleDeformationChoices = { "Very Coarse", "Coarse", "Fine", "Very Fine", "Super Fine" };
-		gd.addChoice("Final_Deformation :", sMaxScaleDeformationChoices, sMaxScaleDeformationChoices[2]);
-		
+				
+		gd.addChoice("Final_Deformation :", sMaxScaleDeformationChoices, sMaxScaleDeformationChoices[2]);		
 		
 		gd.addNumericField("Divergence_Weight :", this.divWeight, 1);
 		gd.addNumericField("Curl_Weight :", this.curlWeight, 1);
@@ -148,5 +152,23 @@ public class Param {
 				
 		return true;
 	} // end method showDialog
+	
+	/**
+	 * Print parameters into a String
+	 */
+	public String toString()
+	{
+		return new String("Registration mode: " + sRegistrationModes[mode] + "\n" + 
+						  "Image Sub-sampling factor:  " + img_subsamp_fact + " => " + Math.pow(2.0,img_subsamp_fact) + "\n" +
+						  "Minimum scale factor = " + sMinScaleDeformationChoices[min_scale_deformation] + "\n" + 
+						  "Maximum scale factor = " + sMaxScaleDeformationChoices[max_scale_deformation] + "\n" + 
+						  "Divergence weight = " + divWeight + "\n" + 
+						  "Curl weight = " + curlWeight + "\n" +
+						  "Landmark weight = " + landmarkWeight + "\n" +
+						  "Image weight = " + imageWeight + "\n" +
+						  "Consistency weight = " + consistencyWeight + "\n" +
+						  "Stopping threshold = " + stopThreshold);
+	}
+	
 	
 } // end class Param
