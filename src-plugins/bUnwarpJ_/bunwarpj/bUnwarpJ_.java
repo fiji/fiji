@@ -23,7 +23,7 @@ package bunwarpj;
 
 /**
  * ====================================================================
- *  Version: October 17th, 2009
+ *  Version: November 2nd, 2009
  *  http://biocomp.cnb.csic.es/%7Eiarganda/bUnwarpJ/
  * \===================================================================
  */
@@ -63,7 +63,7 @@ import java.util.Stack;
  * <A target="_blank" href="http://biocomp.cnb.csic.es/~iarganda/bUnwarpJ/">
  * http://biocomp.cnb.csic.es/~iarganda/bUnwarpJ/</a>
  *
- * @version 2.6 10/17/2009
+ * @version 2.6 11/02/2009
  * @author Ignacio Arganda-Carreras (ignacio.arganda@gmail.com)
  */
 public class bUnwarpJ_ implements PlugIn
@@ -500,10 +500,12 @@ public class bUnwarpJ_ implements PlugIn
      * method gives as result a Transformation object that 
      * contains all the registration information.
      *
-     * @param targetImp input target image 
-     * @param sourceImp input source image
-     * @param targetMskIP target mask 
-     * @param sourceMskIP source mask
+     * @param sourceWidth
+     * @param sourceHeight
+     * @param targetWidth 
+     * @param targetHeight
+     * @param sourcePoints
+     * @param targetPoints
      * @param parameter registration parameters
      * 
      * @return results transformation object
@@ -523,6 +525,9 @@ public class bUnwarpJ_ implements PlugIn
     	   return null;
        }
 
+
+       //IJ.log("Registration parameters:\n" + parameter.toString());
+       
        // Produce side information
        final int imagePyramidDepth = parameter.max_scale_deformation - parameter.min_scale_deformation + 1;
        final int min_scale_image = 0;
@@ -778,7 +783,6 @@ public class bUnwarpJ_ implements PlugIn
     	final int outputLevel = -1;
 
     	final boolean showMarquardtOptim = false;       
-    	final boolean saveTransf = false;
 
     	// Create target image model
     	final BSplineModel target = new BSplineModel(scaledTargetIP, true, 
@@ -1042,7 +1046,6 @@ public class bUnwarpJ_ implements PlugIn
        double  stopThreshold = 1e-2;  // originally -2
        int     outputLevel = -1;
        boolean showMarquardtOptim = false;       
-       boolean saveTransf = true;
 
        // First transformation file name.
        String fn_tnf_1 = "";

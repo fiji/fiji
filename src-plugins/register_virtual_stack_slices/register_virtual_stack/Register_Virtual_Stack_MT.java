@@ -86,7 +86,7 @@ import bunwarpj.trakem2.transform.CubicBSplineTransform;
  * <p>
  * <A target="_blank" href="http://pacific.mpi-cbg.de/wiki/Register_Virtual_Stack_Slices">http://pacific.mpi-cbg.de/wiki/Register_Virtual_Stack_Slices</A>
  * 
- * @version 09/23/2009
+ * @version 11/02/2009
  * @author Ignacio Arganda-Carreras (ignacio.arganda@gmail.com), Stephan Saalfeld and Albert Cardona
  */
 public class Register_Virtual_Stack_MT implements PlugIn 
@@ -156,7 +156,8 @@ public class Register_Virtual_Stack_MT implements PlugIn
 	/** relaxation threshold (if the difference between last two iterations is below this threshold, the relaxation stops */
 	public static final float STOP_THRESHOLD = 0.01f;
 	/** maximum number of iterations in the relaxation loop */
-	public static final int MAX_ITER = 1;
+	public static final int MAX_ITER = 300;
+
 
 	//---------------------------------------------------------------------------------
 	/**
@@ -276,6 +277,16 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		Param p = new Param();
 		Param.featuresModelIndex = featuresModelIndex;
 		Param.registrationModelIndex = registrationModelIndex;
+		
+		if(non_shrink)
+		{
+			p.elastic_param.divWeight = 0.1;
+			p.elastic_param.curlWeight = 0.1;
+			p.elastic_param.landmarkWeight = 1.0;
+			p.elastic_param.consistencyWeight = 0.0;
+			p.elastic_param.imageWeight = 0.0;			
+		}
+		
 		// Show parameter dialogs when advanced option is checked
 		if (advanced && !p.showDialog())
 			return;
@@ -435,7 +446,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
                       
 			// Show bUnwarpJ parameters if elastic registration
 			if (registrationModelIndex == Register_Virtual_Stack_MT.ELASTIC)
-			{				
+			{								
 				if (!this.elastic_param.showDialog())
 					return false;
 			}
@@ -659,12 +670,9 @@ public class Register_Virtual_Stack_MT implements PlugIn
 	public static boolean relax(
 			List<PointMatch>[] inliers,
 			CoordinateTransform[] transform, 
-			Param p) 
-	{
-		// TODO: Elastic registration not implemented yet
-		//if(Param.registrationModelIndex == Register_Virtual_Stack_MT.ELASTIC)
-			//return true;
-			
+			Param p) 			
+	{			
+
 		final boolean display = displayRelaxGraph;
 		
 		// Display mean distance
@@ -683,7 +691,9 @@ public class Register_Virtual_Stack_MT implements PlugIn
 						
 		for(int n = 0; n < MAX_ITER; n++)				
 		{							
-			n_iterations++;		
+			n_iterations++;
+			
+			//IJ.log("Relax iteration " + n_iterations);
 			
 			// Randomize order of relaxation
 			randomize(index);
@@ -855,6 +865,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		final List<Rectangle> bounds = new ArrayList<Rectangle>();
 			
 		// Apply transform	
+		final Future<Boolean>[] save_job = new Future[sorted_file_names.length];
 		for (int i=0; i<sorted_file_names.length; i++) 
 		{				
 			// Open next image
@@ -866,6 +877,8 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			// Create interpolated deformed image with black background
 			imp2.getProcessor().setValue(0);
 			imp2.setProcessor(imp2.getTitle(), mapping.createMappedImageInterpolated(imp2.getProcessor()));						
+			
+			//imp2.show();
 
 			// Accumulate bounding boxes, so in the end they can be reopened and re-saved with an enlarged canvas.
 			final Rectangle currentBounds = mesh.getBoundingBox();			
@@ -899,7 +912,31 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			
 			
 			// Save target image
-			exe.submit(saveImage(imp2, makeTargetPath(target_dir, sorted_file_names[i])));	
+			save_job[i] = exe.submit(saveImage(imp2, makeTargetPath(target_dir, sorted_file_names[i])));	
+		}
+		
+		// Wait for the intermediate output files to be saved
+		for (int i=0; i<sorted_file_names.length; i++) 
+		{
+			Boolean saved_file = null;
+			try{
+				saved_file = save_job[i].get();
+			} catch (InterruptedException e) {
+				IJ.error("Interruption exception!");
+				e.printStackTrace();
+				return false;
+			} catch (ExecutionException e) {
+				IJ.error("Execution exception!");
+				e.printStackTrace();
+				return false;
+			}
+			
+			if( saved_file.booleanValue() == false)
+			{
+				IJ.log("Error while saving: " +  makeTargetPath(target_dir, sorted_file_names[i]));
+				return false;
+			}
+			
 		}
 		
 		
@@ -914,7 +951,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		}
 
 		// Reopen all target images and repaint them on an enlarged canvas
-		final Future[] jobs = new Future[sorted_file_names.length];
+		final Future<String>[] jobs = new Future[sorted_file_names.length];
 		for (int j = 0, i=0; i<sorted_file_names.length; i++, j++) 
 		{
 			final Rectangle b = bounds.get(j);
@@ -1787,17 +1824,26 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			tweakIso = 1.0;
 		
 		gd.addNumericField( "shear :", tweakShear, 2 );
-		gd.addNumericField( "scale :", tweakScale, 2);
-		gd.addNumericField( "isotropy :", tweakIso, 2 );
+		final TextField shearTextField = (TextField) gd.getNumericFields().lastElement();
 		
-		TextField isotropyTextField = (TextField) gd.getNumericFields().lastElement();
+		gd.addNumericField( "scale :", tweakScale, 2);
+		final TextField scaleTextField = (TextField) gd.getNumericFields().lastElement();
+		
+		gd.addNumericField( "isotropy :", tweakIso, 2 );		
+		final TextField isotropyTextField = (TextField) gd.getNumericFields().lastElement();
 		
 		// If the registration model is SIMILARITY, then disable the isotropy text field
-		if(Param.registrationModelIndex == Register_Virtual_Stack_MT.SIMILARITY)
+		if( Param.registrationModelIndex == Register_Virtual_Stack_MT.SIMILARITY )
 			isotropyTextField.setEnabled(false);
+		else if (Param.registrationModelIndex == Register_Virtual_Stack_MT.ELASTIC)
+		{
+			shearTextField.setEnabled(false);
+			scaleTextField.setEnabled(false);
+			isotropyTextField.setEnabled(false);			
+			
+		}
 		else
-			isotropyTextField.setEnabled(true);
-		
+			isotropyTextField.setEnabled(true);						
 		
 		gd.addMessage( "Values between 0 and 1 are expected" );
 		gd.addMessage( "(the closest to 1, the closest to rigid)" );

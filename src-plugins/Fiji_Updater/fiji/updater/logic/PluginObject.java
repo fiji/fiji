@@ -282,10 +282,6 @@ public class PluginObject {
 			throw new Error("Invalid action requested for plugin "
 					+ filename + "(" + action
 					+ ", " + status + ")");
-		if (action == Action.UPLOAD)
-			markForUpload();
-		else if (action == Action.REMOVE)
-			markForRemoval();
 		this.action = action;
 	}
 
@@ -303,7 +299,7 @@ public class PluginObject {
 		setNoAction();
 	}
 
-	private void markForUpload() {
+	public void markUploaded() {
 		if (!isFiji()) {
 			status = Status.INSTALLED;
 			newChecksum = current.checksum;
@@ -324,7 +320,6 @@ public class PluginObject {
 		filesize = Util.getFilesize(filename);
 
 		PluginCollection plugins = PluginCollection.getInstance();
-		// TODO: complain if not Fiji (and offer to add them)
 		Iterable<String> dependencies =
 			plugins.analyzeDependencies(this);
 		if (dependencies != null)
@@ -332,7 +327,7 @@ public class PluginObject {
 					addDependency(dependency);
 	}
 
-	protected void markForRemoval() {
+	public void markRemoved() {
 		// TODO: check dependencies (but not here; _after_ all marking)
 		addPreviousVersion(current.checksum, current.timestamp);
 		setStatus(Status.OBSOLETE);

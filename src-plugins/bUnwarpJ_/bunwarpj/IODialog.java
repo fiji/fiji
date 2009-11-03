@@ -57,6 +57,9 @@ public class IODialog extends Dialog implements ActionListener
 	/*....................................................................
        Private variables
     ....................................................................*/
+	
+	/** Generated serial version UID */
+	private static final long serialVersionUID = 2016840469406208859L;
 	/** Pointer to the source image representation */
 	private ImagePlus sourceImp;
 	/** Pointer to the target image representation */

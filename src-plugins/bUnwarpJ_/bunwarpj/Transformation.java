@@ -776,7 +776,7 @@ public class Transformation
 			}
 		}
 		
-	} /* end doBidirectionalRegistration */
+	} // end doBidirectionalRegistration
 
 	//------------------------------------------------------------------
 	/**
@@ -855,20 +855,7 @@ public class Transformation
 				cxTargetToSource[i][j] = xv + affineMatrix[0][0] * u;
 				cyTargetToSource[i][j] = yv + affineMatrix[1][0] * u;
 			}
-		}
-
-	
-		// Print initial coefficients
-		/*
-		System.out.println("CX --- ");
-		for (int i = 0; i < intervals+3; i ++)
-		{
-			for(int j = 0; j < intervals+3; j++)
-				System.out.print(" " + cxTargetToSource[i][j]);
-			System.out.println("");
-		}
-		*/
-		
+		}		
 		
 		// Now refine with the different scales
 		int state;   // state=-1 --> Finish
@@ -920,9 +907,12 @@ public class Transformation
 					}
 
 				}
-
+						
 				// Optimize deformation coefficients
 				optimizeCoeffs(intervals, stopThreshold, cxTargetToSource, cyTargetToSource);
+				
+				
+				
 			}
 
 			// Prepare for next iteration
@@ -1684,7 +1674,7 @@ public class Transformation
 		else                   targetVector = new Vector <Point>();
 
 		int removeLastPoint = 0;
-
+					
 		int n = targetVector.size();
 		switch (n)
 		{
@@ -5018,15 +5008,30 @@ public class Transformation
 		BSplineModel swx = new BSplineModel(cx);
 		BSplineModel swy = new BSplineModel(cy);
 
-		// We compute the deformation (transformation_x and transformation_y) in the fly
+		// We compute the deformation (transformation_x and transformation_y) on the fly
 
 		/* GRAY SCALE IMAGES */
 		if(!(originalIP instanceof ColorProcessor))
 		{
 			final FloatProcessor fp = new FloatProcessor(auxTargetWidth, auxTargetHeight);
 			final FloatProcessor fp_mask = new FloatProcessor(auxTargetWidth, auxTargetHeight);
-			final FloatProcessor fp_target = new FloatProcessor(auxTargetWidth, auxTargetHeight, auxTarget.getImage());
-									
+			final FloatProcessor fp_target = new FloatProcessor(auxTargetWidth, auxTargetHeight, auxTarget.getOriginalImage());
+			
+			
+			// take original processor if necessary
+			if(auxSource.getOriginalImageWidth() > auxSource.getWidth())
+			{
+				auxSource = new BSplineModel( originalIP, false, 1);
+				auxSource.setPyramidDepth(0);
+				auxSource.startPyramids();			
+
+				// Join thread
+				try {
+					auxSource.getThread().join();				
+				} catch (InterruptedException e) {
+					IJ.error("Unexpected interruption exception " + e);
+				}
+			}
 
 			// Check the number of processors in the computer 
 			int nproc = Runtime.getRuntime().availableProcessors();
@@ -5098,9 +5103,7 @@ public class Transformation
 				is.addSlice("Warped Source Mask",fp_mask);					
 		}
 		else /* COLOR IMAGES */
-		{
-
-			
+		{			
 			// red
 			BSplineModel sourceR = new BSplineModel( ((ColorProcessor) originalIP).toFloat(0, null), false, 1);
 			sourceR.setPyramidDepth(0);
