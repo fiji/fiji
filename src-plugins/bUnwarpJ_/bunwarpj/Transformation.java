@@ -727,15 +727,15 @@ public class Transformation
 		}// end while (state != -1).
 
 		// Adapt coefficients if necessary
-		if(this.originalSourceIP.getWidth() > this.sourceCurrentWidth)
+		if(source.getOriginalImageWidth() > this.sourceCurrentWidth)
 		{
 			if(source.isSubOutput() || target.isSubOutput())
-				IJ.log("Adapting coefficients from " + this.sourceCurrentWidth + " to " + this.originalSourceIP.getWidth());
+				IJ.log("Adapting coefficients from " + this.sourceCurrentWidth + " to " + source.getOriginalImageWidth());
 			// Adapt the transformation to the new image size
-			double targetFactorY = (this.originalTargetIP.getHeight() - 1) / (targetCurrentHeight-1);
-			double targetFactorX = (this.originalTargetIP.getWidth()  - 1) / (targetCurrentWidth -1);
-			double sourceFactorY = (this.originalSourceIP.getHeight() - 1) / (sourceCurrentHeight-1);
-			double sourceFactorX = (this.originalSourceIP.getWidth()  - 1) / (sourceCurrentWidth -1);
+			double targetFactorY = (target.getOriginalImageHeight() - 1) / (targetCurrentHeight-1);
+			double targetFactorX = (target.getOriginalImageWidth()  - 1) / (targetCurrentWidth -1);
+			double sourceFactorY = (source.getOriginalImageHeight() - 1) / (sourceCurrentHeight-1);
+			double sourceFactorX = (source.getOriginalImageWidth()  - 1) / (sourceCurrentWidth -1);
 
 			for (int i=0; i<intervals+3; i++)
 				for (int j=0; j<intervals+3; j++)
@@ -745,10 +745,10 @@ public class Transformation
 					cxSourceToTarget[i][j] *= sourceFactorX;
 					cySourceToTarget[i][j] *= sourceFactorY;
 				}
-			this.targetCurrentHeight = this.originalTargetIP.getHeight();
-			this.targetCurrentWidth  = this.originalTargetIP.getWidth();
-			this.sourceCurrentHeight = this.originalSourceIP.getHeight();
-			this.sourceCurrentWidth  = this.originalSourceIP.getWidth();
+			this.targetCurrentHeight = target.getOriginalImageHeight();
+			this.targetCurrentWidth  = target.getOriginalImageWidth();
+			this.sourceCurrentHeight = source.getOriginalImageHeight();
+			this.sourceCurrentWidth  = source.getOriginalImageWidth();
 		}
 
 		// Display final errors.		
@@ -776,7 +776,7 @@ public class Transformation
 			}
 		}
 		
-	} /* end doBidirectionalRegistration */
+	} // end doBidirectionalRegistration
 
 	//------------------------------------------------------------------
 	/**
@@ -855,20 +855,7 @@ public class Transformation
 				cxTargetToSource[i][j] = xv + affineMatrix[0][0] * u;
 				cyTargetToSource[i][j] = yv + affineMatrix[1][0] * u;
 			}
-		}
-
-	
-		// Print initial coefficients
-		/*
-		System.out.println("CX --- ");
-		for (int i = 0; i < intervals+3; i ++)
-		{
-			for(int j = 0; j < intervals+3; j++)
-				System.out.print(" " + cxTargetToSource[i][j]);
-			System.out.println("");
-		}
-		*/
-		
+		}		
 		
 		// Now refine with the different scales
 		int state;   // state=-1 --> Finish
@@ -920,9 +907,12 @@ public class Transformation
 					}
 
 				}
-
+						
 				// Optimize deformation coefficients
 				optimizeCoeffs(intervals, stopThreshold, cxTargetToSource, cyTargetToSource);
+				
+				
+				
 			}
 
 			// Prepare for next iteration
@@ -1003,14 +993,13 @@ public class Transformation
 		}// end while (state != -1).
 		
 		// Adapt coefficients if necessary
-		// Adapt coefficients if necessary
-		if(this.originalTargetIP.getWidth() > this.targetCurrentWidth)
+		if(source.getOriginalImageWidth() > this.targetCurrentWidth)
 		{
 			if(source.isSubOutput() || target.isSubOutput())
 				IJ.log("Adapting coefficients from " + this.sourceCurrentWidth + " to " + this.originalSourceIP.getWidth());
 			// Adapt the transformation to the new image size
-			double targetFactorY = (this.originalTargetIP.getHeight() - 1) / (targetCurrentHeight-1);
-			double targetFactorX = (this.originalTargetIP.getWidth()  - 1) / (targetCurrentWidth -1);
+			double targetFactorY = (target.getOriginalImageHeight() - 1) / (targetCurrentHeight-1);
+			double targetFactorX = (target.getOriginalImageWidth()  - 1) / (targetCurrentWidth -1);
 
 			for (int i=0; i<intervals+3; i++)
 				for (int j=0; j<intervals+3; j++)
@@ -1018,10 +1007,10 @@ public class Transformation
 					cxTargetToSource[i][j] *= targetFactorX;
 					cyTargetToSource[i][j] *= targetFactorY;					
 				}
-			this.targetCurrentHeight = this.originalTargetIP.getHeight();
-			this.targetCurrentWidth  = this.originalTargetIP.getWidth();
-			this.sourceCurrentHeight = this.originalSourceIP.getHeight();
-			this.sourceCurrentWidth  = this.originalSourceIP.getWidth();
+			this.targetCurrentHeight = target.getOriginalImageHeight();
+			this.targetCurrentWidth  = target.getOriginalImageWidth();
+			this.sourceCurrentHeight = source.getOriginalImageHeight();
+			this.sourceCurrentWidth  = source.getOriginalImageWidth();
 		}
 
 		// Display final errors.		
@@ -1685,7 +1674,7 @@ public class Transformation
 		else                   targetVector = new Vector <Point>();
 
 		int removeLastPoint = 0;
-
+					
 		int n = targetVector.size();
 		switch (n)
 		{
@@ -4400,7 +4389,7 @@ public class Transformation
 		this.swyTargetToSource.precomputed_prepareForInterpolation(
 				target.getCurrentHeight(), target.getCurrentWidth(), intervals);
 
-		/* First computation of the energy */
+		// First computation of the energy (similarity + landmarks + regularization)
 		//f = evaluateSimilarity(x, intervals, grad, false, false, false);
 		f = evaluateSimilarityMultiThread(x, intervals, grad, false, false);
 
@@ -5019,15 +5008,30 @@ public class Transformation
 		BSplineModel swx = new BSplineModel(cx);
 		BSplineModel swy = new BSplineModel(cy);
 
-		// We compute the deformation (transformation_x and transformation_y) in the fly
+		// We compute the deformation (transformation_x and transformation_y) on the fly
 
 		/* GRAY SCALE IMAGES */
 		if(!(originalIP instanceof ColorProcessor))
 		{
 			final FloatProcessor fp = new FloatProcessor(auxTargetWidth, auxTargetHeight);
 			final FloatProcessor fp_mask = new FloatProcessor(auxTargetWidth, auxTargetHeight);
-			final FloatProcessor fp_target = new FloatProcessor(auxTargetWidth, auxTargetHeight, auxTarget.getImage());
-									
+			final FloatProcessor fp_target = new FloatProcessor(auxTargetWidth, auxTargetHeight, auxTarget.getOriginalImage());
+			
+			
+			// take original processor if necessary
+			if(auxSource.getOriginalImageWidth() > auxSource.getWidth())
+			{
+				auxSource = new BSplineModel( originalIP, false, 1);
+				auxSource.setPyramidDepth(0);
+				auxSource.startPyramids();			
+
+				// Join thread
+				try {
+					auxSource.getThread().join();				
+				} catch (InterruptedException e) {
+					IJ.error("Unexpected interruption exception " + e);
+				}
+			}
 
 			// Check the number of processors in the computer 
 			int nproc = Runtime.getRuntime().availableProcessors();
@@ -5099,9 +5103,7 @@ public class Transformation
 				is.addSlice("Warped Source Mask",fp_mask);					
 		}
 		else /* COLOR IMAGES */
-		{
-
-			
+		{			
 			// red
 			BSplineModel sourceR = new BSplineModel( ((ColorProcessor) originalIP).toFloat(0, null), false, 1);
 			sourceR.setPyramidDepth(0);

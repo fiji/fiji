@@ -57,6 +57,7 @@ import java.awt.event.WindowEvent;
 public class MainDialog extends GenericDialog
 { /* begin class MainDialog */
 
+
 	/*....................................................................
     	Public variables
  	....................................................................*/
@@ -71,6 +72,9 @@ public class MainDialog extends GenericDialog
        Private variables
     ....................................................................*/
 
+	/** Generated serial version UID */
+	private static final long serialVersionUID = 8828022405402308341L;
+	
 	/** List of available images in ImageJ */
 	private ImagePlus[] imageList = null;
 

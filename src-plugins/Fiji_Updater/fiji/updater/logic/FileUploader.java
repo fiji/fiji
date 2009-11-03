@@ -54,8 +54,8 @@ public class FileUploader extends Progressable {
 	}
 
 	//Steps to accomplish entire upload task
-	public synchronized void upload(List<SourceFile> sources)
-			throws IOException {
+	public synchronized void upload(List<SourceFile> sources,
+			List<String> locks) throws IOException {
 		long now = new Date().getTime();
 		timestamp = Long.parseLong(Util.timestamp(now));
 		setTitle("Uploading");
@@ -63,14 +63,9 @@ public class FileUploader extends Progressable {
 		calculateTotalSize(sources);
 		int count = 0;
 
-		File lock = null;
-		File db = new File(uploadDir + Updater.XML_COMPRESSED);
 		byte[] buffer = new byte[65536];
 		for (SourceFile source : sources) {
 			File file = new File(uploadDir + source.getFilename());
-			/* The first file must be the lock */
-			if (lock == null)
-				lock = file;
 			File dir = file.getParentFile();
 			if (!dir.exists())
 				dir.mkdirs();
@@ -99,11 +94,15 @@ public class FileUploader extends Progressable {
 			itemDone(source);
 		}
 
-		File backup = new File(db.getAbsolutePath() + ".old");
-		if (backup.exists())
-			backup.delete();
-		db.renameTo(backup);
-		lock.renameTo(db);
+		for (String lock : locks) {
+			File file = new File(uploadDir + lock);
+			File lockFile = new File(uploadDir + lock + ".lock");
+			File backup = new File(uploadDir + lock + ".old");
+			if (backup.exists())
+				backup.delete();
+			file.renameTo(backup);
+			lockFile.renameTo(file);
+		}
 
 		done();
 	}

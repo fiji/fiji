@@ -599,10 +599,14 @@ public class UpdaterFrame extends JFrame
 				return;
 			uploader.upload(getProgress("Uploading..."));
 			for (PluginObject plugin : plugins.toUploadOrRemove())
-				if (plugin.getAction() == Action.UPLOAD)
+				if (plugin.getAction() == Action.UPLOAD) {
+					plugin.markUploaded();
 					plugin.setStatus(Status.INSTALLED);
-				else
+				}
+				else {
+					plugin.markRemoved();
 					plugin.setStatus(Status.NOT_INSTALLED);
+				}
 			updatePluginsTable();
 			canUpload = false;
 			xmlLastModified = uploader.newLastModified;

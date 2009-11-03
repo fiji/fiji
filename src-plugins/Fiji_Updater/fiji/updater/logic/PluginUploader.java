@@ -76,15 +76,21 @@ public class PluginUploader {
 
 		// TODO: rename "UpdateSource" to "Transferable", reuse!
 		files = new ArrayList<SourceFile>();
+		List<String> locks = new ArrayList<String>();
 		files.add(new UploadableFile(compressed,
 					Updater.XML_LOCK, "C0444"));
-		files.add(new UploadableFile(text,
-					Updater.TXT_FILENAME, "C0644"));
 		for (PluginObject plugin :
 				PluginCollection.getInstance().toUpload())
 			files.add(new UploadableFile(plugin));
 
-		uploader.upload(files);
+		files.add(new UploadableFile(text,
+			Updater.TXT_FILENAME + ".lock", "C0644"));
+
+		locks.add(Updater.TXT_FILENAME);
+		// must be last lock
+		locks.add(Updater.XML_COMPRESSED);
+
+		uploader.upload(files, locks);
 
 		// No errors thrown -> just remove temporary files
 		new File(backup).delete();

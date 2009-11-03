@@ -23,7 +23,7 @@ package bunwarpj;
 
 /**
  * ====================================================================
- *  Version: October 17th, 2009
+ *  Version: November 2nd, 2009
  *  http://biocomp.cnb.csic.es/%7Eiarganda/bUnwarpJ/
  * \===================================================================
  */
@@ -63,7 +63,7 @@ import java.util.Stack;
  * <A target="_blank" href="http://biocomp.cnb.csic.es/~iarganda/bUnwarpJ/">
  * http://biocomp.cnb.csic.es/~iarganda/bUnwarpJ/</a>
  *
- * @version 2.6 10/17/2009
+ * @version 2.6 11/02/2009
  * @author Ignacio Arganda-Carreras (ignacio.arganda@gmail.com)
  */
 public class bUnwarpJ_ implements PlugIn
@@ -112,7 +112,7 @@ public class bUnwarpJ_ implements PlugIn
        Public methods
     ....................................................................*/
 
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to lunch the plugin.
      *
@@ -213,7 +213,7 @@ public class bUnwarpJ_ implements PlugIn
     } /* end run */
 
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method for images alignment with no graphical interface. This 
      * method gives as result a Transformation object that 
@@ -358,7 +358,7 @@ public class bUnwarpJ_ implements PlugIn
     } // end computeTransformationBatch    
     
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method for images alignment with no graphical interface. This 
      * method gives as result a Transformation object that 
@@ -494,9 +494,139 @@ public class bUnwarpJ_ implements PlugIn
     } // end computeTransformationBatch    
     
 
+    //------------------------------------------------------------------
+    /**
+     * Method for images alignment with no graphical interface. This 
+     * method gives as result a Transformation object that 
+     * contains all the registration information.
+     *
+     * @param sourceWidth
+     * @param sourceHeight
+     * @param targetWidth 
+     * @param targetHeight
+     * @param sourcePoints
+     * @param targetPoints
+     * @param parameter registration parameters
+     * 
+     * @return results transformation object
+     */
+    public static Transformation computeTransformationBatch(
+    									int sourceWidth,
+    									int sourceHeight,
+    									int targetWidth,
+    									int targetHeight,
+    									Stack<Point> sourcePoints,
+    									Stack<Point> targetPoints,
+    									Param parameter) 
+    {    	
+       if(sourcePoints == null || targetPoints == null || parameter == null)
+       {
+    	   IJ.error("Missing parameters to compute transformation!");
+    	   return null;
+       }
+
+
+       //IJ.log("Registration parameters:\n" + parameter.toString());
+       
+       // Produce side information
+       final int imagePyramidDepth = parameter.max_scale_deformation - parameter.min_scale_deformation + 1;
+       final int min_scale_image = 0;
+       
+       // output level to -1 so nothing is displayed 
+       final int outputLevel = -1;
+       
+       final boolean showMarquardtOptim = false;       
+
+       // Create target image model
+       final BSplineModel target = new BSplineModel(targetWidth, targetHeight, (int) Math.pow(2, parameter.img_subsamp_fact));
+       
+       target.setPyramidDepth(imagePyramidDepth+min_scale_image);
+       target.startPyramids();
+       
+       // Create target mask
+       final Mask targetMsk = new Mask(targetWidth, targetHeight);                           
+
+       // Create source image model
+       final BSplineModel source = new BSplineModel(sourceWidth, sourceHeight, (int) Math.pow(2, parameter.img_subsamp_fact));
+
+       source.setPyramidDepth(imagePyramidDepth + min_scale_image);
+       source.startPyramids();
+       
+       // Create source mask
+       final Mask sourceMsk = new Mask (sourceWidth, sourceHeight);
+          
+
+       // Set landmarks
+       PointHandler sourcePh  = new PointHandler(sourceWidth, sourceHeight);
+       PointHandler targetPh  = new PointHandler(targetWidth, targetHeight);
+
+       while ((!sourcePoints.empty()) && (!targetPoints.empty())) 
+       {
+    	   Point sourcePoint = (Point)sourcePoints.pop();
+    	   Point targetPoint = (Point)targetPoints.pop();
+    	   sourcePh.addPoint(sourcePoint.x, sourcePoint.y);
+    	   targetPh.addPoint(targetPoint.x, targetPoint.y);
+       }
+
+       
+       // Set no initial affine matrices
+       final double[][] sourceAffineMatrix = null;
+       final double[][] targetAffineMatrix = null;
+ 
+       // Join threads
+       try 
+       {
+           source.getThread().join();
+           target.getThread().join();
+       } 
+       catch (InterruptedException e) 
+       {
+           IJ.error("Unexpected interruption exception " + e);
+       }
+
+       // Perform registration
+       ImagePlus[] output_ip = new ImagePlus[2];
+       output_ip[0] = null; 
+       output_ip[1] = null; 
+       
+       // The dialog is set to null to work in batch mode
+       final MainDialog dialog = null;
+       
+       final ImageProcessor originalSourceIP = null;
+       final ImageProcessor originalTargetIP = null;
+
+       // Set transformation parameters
+       final Transformation warp = new Transformation(
+         null, null, source, target, sourcePh, targetPh,
+         sourceMsk, targetMsk, sourceAffineMatrix, targetAffineMatrix,
+         parameter.min_scale_deformation, parameter.max_scale_deformation, 
+         min_scale_image, parameter.divWeight, 
+         parameter.curlWeight, parameter.landmarkWeight, parameter.imageWeight, 
+         parameter.consistencyWeight, parameter.stopThreshold, 
+         outputLevel, showMarquardtOptim, parameter.mode, null, null, output_ip[0], output_ip[1], dialog,
+         originalSourceIP, originalTargetIP);
+
+       IJ.log("\nRegistering...\n");
+       
+       long start = System.currentTimeMillis(); // start timing
+       
+       // Register
+       if(parameter.mode == MainDialog.MONO_MODE)       
+    	   warp.doUnidirectionalRegistration();    	       
+       else
+    	   warp.doBidirectionalRegistration();
+
+       long stop = System.currentTimeMillis(); // stop timing
+       IJ.log("Registration time: " + (stop - start) + "ms"); // print execution time
+
+       return warp;
+       
+    } // end computeTransformationBatch  
     
     
-    /*------------------------------------------------------------------*/
+    
+    
+    //------------------------------------------------------------------
     /**
      * Method for images alignment with no graphical interface. This 
      * method gives as result an array of 2 ImagePlus containing the
@@ -554,7 +684,7 @@ public class bUnwarpJ_ implements PlugIn
        
     } // end alignImagesBatch
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method for images alignment with no graphical interface. This 
      * method gives as result an array of 2 ImagePlus containing the
@@ -591,7 +721,7 @@ public class bUnwarpJ_ implements PlugIn
        
     } // end alignImagesBatch
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method for images alignment with no graphical interface. This 
      * method gives as result an array of 2 ImagePlus containing the
@@ -653,7 +783,6 @@ public class bUnwarpJ_ implements PlugIn
     	final int outputLevel = -1;
 
     	final boolean showMarquardtOptim = false;       
-    	final boolean saveTransf = false;
 
     	// Create target image model
     	final BSplineModel target = new BSplineModel(scaledTargetIP, true, 
@@ -789,7 +918,7 @@ public class bUnwarpJ_ implements PlugIn
 
     } // end alignImagesBatch
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Main method for bUnwarpJ (command line).
      *
@@ -826,7 +955,7 @@ public class bUnwarpJ_ implements PlugIn
        Private methods
     ....................................................................*/
 
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method for images alignment with no graphical interface.
      *
@@ -917,7 +1046,6 @@ public class bUnwarpJ_ implements PlugIn
        double  stopThreshold = 1e-2;  // originally -2
        int     outputLevel = -1;
        boolean showMarquardtOptim = false;       
-       boolean saveTransf = true;
 
        // First transformation file name.
        String fn_tnf_1 = "";
@@ -1070,7 +1198,7 @@ public class bUnwarpJ_ implements PlugIn
        
     } // end alignImagesCommandLine
 
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Create a list with the open images in ImageJ that bUnwarpJ can
      * process.
@@ -1102,7 +1230,7 @@ public class bUnwarpJ_ implements PlugIn
        return(imageList);
     } /* end createImageList */
 
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to write the syntax of the program in the command line.
      */
@@ -1232,7 +1360,7 @@ public class bUnwarpJ_ implements PlugIn
        IJ.write("   bUnwarpj_ -adapt_transform target.jpg source.jpg input_transformation.txt output_transformation.txt 2");
     } /* end dumpSyntax */
 
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to adapt coefficients to new image size. The factor between
      * the old and the new image size is expected to be a power of 2, positive
@@ -1301,7 +1429,7 @@ public class bUnwarpJ_ implements PlugIn
        
     } /* end adaptCoefficientsCommandLine */    
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to transform an image given an elastic deformation.
      *
@@ -1371,7 +1499,7 @@ public class bUnwarpJ_ implements PlugIn
        
     } /* end elasticTransformIMageCommandLine */
 
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to transform an image given an raw deformation.
      *
@@ -1427,7 +1555,7 @@ public class bUnwarpJ_ implements PlugIn
        
     } /* end rawTransformImageCommandLine */    
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to compare two opposite elastic deformations through the 
      * warping index.
@@ -1485,7 +1613,7 @@ public class bUnwarpJ_ implements PlugIn
        
     } /* end method compareElasticTransformationsCommandLine */
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to compare an elastic deformation with a raw deformation
      * through the warping index (both transformations having same direction).
@@ -1542,7 +1670,7 @@ public class bUnwarpJ_ implements PlugIn
        
     } /* end method compareElasticRawTransformationCommandLine */    
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to compare two raw deformations through the warping index
      * (both transformations having same direction).
@@ -1596,7 +1724,7 @@ public class bUnwarpJ_ implements PlugIn
        
     } /* end method compareRawTransformationsCommandLine */
 
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to convert an elastic deformations into raw format.
      *
@@ -1648,7 +1776,7 @@ public class bUnwarpJ_ implements PlugIn
        
     } /* end method convertToRawTransformationCommandLine */    
 
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to compose two raw deformations.
      *
@@ -1707,7 +1835,7 @@ public class bUnwarpJ_ implements PlugIn
        
     } /* end method composeRawTransformationsCommandLine */     
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to compose two elastic deformations.
      *
@@ -1770,7 +1898,7 @@ public class bUnwarpJ_ implements PlugIn
        
     } /* end method composeElasticTransformationsCommandLine */
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to compose a raw deformation with an elastic deformation.
      *
@@ -1831,7 +1959,7 @@ public class bUnwarpJ_ implements PlugIn
        
     } /* end method composeRawElasticTransformationsCommandLine */
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to transform the source image given an elastic deformation.
      * To be called by the macro language instruction "call":
@@ -1861,7 +1989,7 @@ public class bUnwarpJ_ implements PlugIn
     }
     /* end elasticTransformImageMacro */
 
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to transform the source image given an raw deformation.
      * To be called by the macro language instruction "call":
@@ -1891,7 +2019,7 @@ public class bUnwarpJ_ implements PlugIn
     }
     /* end rawTransformImageMacro */    
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to compare two opposite elastic transformations by warping index.
      * To be called by the macro language instruction "call":
@@ -1921,7 +2049,7 @@ public class bUnwarpJ_ implements PlugIn
     }
     /* end compareElasticTransformationsMacro */ 
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to compare an elastic and a raw transformations by warping index.
      * To be called by the macro language instruction "call":
@@ -1951,7 +2079,7 @@ public class bUnwarpJ_ implements PlugIn
     }
     /* end compareElasticRawTransformationsMacro */ 
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to compare two raw transformations by warping index.
      * To be called by the macro language instruction "call":
@@ -1981,7 +2109,7 @@ public class bUnwarpJ_ implements PlugIn
     }
     /* end compareRawTransformationsMacro */     
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to convert an elastic deformation into raw format.
      * To be called by the macro language instruction "call":
@@ -2011,7 +2139,7 @@ public class bUnwarpJ_ implements PlugIn
     }
     /* end convertToRawTransformationsMacro */ 
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to compose two elastic transformations.
      * To be called by the macro language instruction "call":
@@ -2044,7 +2172,7 @@ public class bUnwarpJ_ implements PlugIn
     }
     /* end composeElasticTransformationsMacro */     
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to compose two raw transformations.
      * To be called by the macro language instruction "call":
@@ -2077,7 +2205,7 @@ public class bUnwarpJ_ implements PlugIn
     }
     /* end composeRawTransformationsMacro */    
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to compose a raw transformation with an elastic transformation.
      * To be called by the macro language instruction "call":
@@ -2110,7 +2238,7 @@ public class bUnwarpJ_ implements PlugIn
     }
     /* end composeRawElasticTransformationsMacro */     
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to adapt an elastic transformation given a new image size.
      * To be called by the macro language instruction "call":

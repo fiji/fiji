@@ -69,8 +69,8 @@ public class SSHFileUploader extends FileUploader {
 	}
 
 	//Steps to accomplish entire upload task
-	public synchronized void upload(List<SourceFile> sources)
-			throws IOException {
+	public synchronized void upload(List<SourceFile> sources,
+			List<String> locks) throws IOException {
 		setCommand("date +%Y%m%d%H%M%S");
 		timestamp = readNumber(in);
 		setTitle("Uploading");
@@ -91,13 +91,9 @@ public class SSHFileUploader extends FileUploader {
 		}
 
 		//Unlock process
-		// TODO: avoid blind assumptions!!!
-		String cmd1 = "chmod u+w " + uploadDir + Updater.XML_COMPRESSED;
-		String cmd2 = "mv " + uploadDir + Updater.XML_LOCK + " " +
-		uploadDir + Updater.XML_COMPRESSED;
-
-		setCommand(cmd1);
-		setCommand(cmd2);
+		for (String lock : locks)
+			setCommand("mv " + uploadDir + lock + ".lock " +
+				uploadDir + lock);
 
 		out.close();
 		channel.disconnect();

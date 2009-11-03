@@ -170,7 +170,8 @@ public class PluginDetails extends JTextPane implements UndoableEditListener {
 	}
 
 	public void description(String description, PluginObject plugin) {
-		if (description == null || description.trim().equals(""))
+		if (!Util.isDeveloper && (description == null ||
+					description.trim().equals("")))
 			return;
 		blankLine();
 		bold("Description:\n");
