@@ -730,7 +730,7 @@ public class Transformation
 		if(source.getOriginalImageWidth() > this.sourceCurrentWidth)
 		{
 			if(source.isSubOutput() || target.isSubOutput())
-				IJ.log("Adapting coefficients from " + this.sourceCurrentWidth + " to " + source.getOriginalImageWidth());
+				IJ.log("Adapting coefficients from " + this.sourceCurrentWidth + " to " + source.getOriginalImageWidth() +"...");
 			// Adapt the transformation to the new image size
 			double targetFactorY = (target.getOriginalImageHeight() - 1) / (targetCurrentHeight-1);
 			double targetFactorX = (target.getOriginalImageWidth()  - 1) / (targetCurrentWidth -1);
@@ -839,10 +839,12 @@ public class Transformation
 			// NOTE: after version 1.1 the landmarks are always used to calculate
 			// an initial affine transformation (whether the landmarks weight is 0 or not).
 			
-			affineMatrix = computeAffineMatrix(false);
-
+			affineMatrix = computeAffineMatrix(false);			
 		}
 
+		//MiscTools.printMatrix("source affine matrix", affineMatrix);
+		
+		
 		// Incorporate the affine transformation into the spline coefficient
 		for (int i= 0; i<intervals + 3; i++)
 		{
@@ -996,7 +998,7 @@ public class Transformation
 		if(source.getOriginalImageWidth() > this.targetCurrentWidth)
 		{
 			if(source.isSubOutput() || target.isSubOutput())
-				IJ.log("Adapting coefficients from " + this.sourceCurrentWidth + " to " + this.originalSourceIP.getWidth());
+				IJ.log("Adapting coefficients from " + this.sourceCurrentWidth + " to " + this.originalSourceIP.getWidth() + "...");
 			// Adapt the transformation to the new image size
 			double targetFactorY = (target.getOriginalImageHeight() - 1) / (targetCurrentHeight-1);
 			double targetFactorX = (target.getOriginalImageWidth()  - 1) / (targetCurrentWidth -1);
