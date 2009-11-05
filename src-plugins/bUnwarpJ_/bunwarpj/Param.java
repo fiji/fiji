@@ -115,9 +115,9 @@ public class Param {
 		// Advanced Options
 		gd.addMessage("------ Advanced Options ------");
 		
-		gd.addChoice("Initial_Deformation :", sMinScaleDeformationChoices, sMinScaleDeformationChoices[0]);		
+		gd.addChoice("Initial_Deformation :", sMinScaleDeformationChoices, sMinScaleDeformationChoices[this.min_scale_deformation]);		
 				
-		gd.addChoice("Final_Deformation :", sMaxScaleDeformationChoices, sMaxScaleDeformationChoices[2]);		
+		gd.addChoice("Final_Deformation :", sMaxScaleDeformationChoices, sMaxScaleDeformationChoices[this.max_scale_deformation]);		
 		
 		gd.addNumericField("Divergence_Weight :", this.divWeight, 1);
 		gd.addNumericField("Curl_Weight :", this.curlWeight, 1);

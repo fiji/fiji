@@ -42,6 +42,7 @@ import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
 
 import java.awt.Point;
+import java.awt.geom.AffineTransform;
 import java.util.Stack;
 
 /*====================================================================
@@ -351,7 +352,7 @@ public class bUnwarpJ_ implements PlugIn
     	   warp.doBidirectionalRegistration();
 
        long stop = System.currentTimeMillis(); // stop timing
-       IJ.log("Registration time: " + (stop - start) + "ms"); // print execution time
+       IJ.log("bUnwarpJ is done! Registration time: " + (stop - start) + "ms"); // print execution time
 
        return warp;
        
@@ -384,6 +385,8 @@ public class bUnwarpJ_ implements PlugIn
     	   return null;
        }
 
+       //IJ.log("--- bUnwarpJ parameters ---\n" + parameter.toString() + "\n");
+       
        // Produce side information
        final int imagePyramidDepth = parameter.max_scale_deformation - parameter.min_scale_deformation + 1;
        final int min_scale_image = 0;
@@ -487,13 +490,165 @@ public class bUnwarpJ_ implements PlugIn
     	   warp.doBidirectionalRegistration();
 
        long stop = System.currentTimeMillis(); // stop timing
-       IJ.log("Registration time: " + (stop - start) + "ms"); // print execution time
+       IJ.log("bUnwarpJ is done! Registration time: " + (stop - start) + "ms"); // print execution time
 
        return warp;
        
     } // end computeTransformationBatch    
     
 
+    //------------------------------------------------------------------
+    /**
+     * Method for images alignment with no graphical interface. This 
+     * method gives as result a Transformation object that 
+     * contains all the registration information.
+     *
+     * @param targetImp input target image 
+     * @param sourceImp input source image
+     * @param targetMskIP target mask 
+     * @param sourceMskIP source mask
+     * @param targetAffineTransf initial target affine transform
+     * @param sourceAffineTransf initial source affine transform
+     * @param parameter registration parameters
+     * 
+     * @return results transformation object
+     */
+    public static Transformation computeTransformationBatch(ImagePlus targetImp,
+    									 ImagePlus sourceImp,
+    									 ImageProcessor targetMskIP,
+    									 ImageProcessor sourceMskIP,
+    									 AffineTransform targetAffineTransf,
+    									 AffineTransform sourceAffineTransf,
+    									 Param parameter) 
+    {    	
+       if(targetImp == null || sourceImp == null || parameter == null)
+       {
+    	   IJ.error("Missing parameters to compute transformation!");
+    	   return null;
+       }
+
+       // Produce side information
+       final int imagePyramidDepth = parameter.max_scale_deformation - parameter.min_scale_deformation + 1;
+       final int min_scale_image = 0;
+       
+       // output level to -1 so nothing is displayed 
+       final int outputLevel = -1;
+       
+       final boolean showMarquardtOptim = false;       
+
+       // Create target image model
+       final BSplineModel target = new BSplineModel(targetImp.getProcessor(), true, 
+    		   													 (int) Math.pow(2, parameter.img_subsamp_fact));
+       
+       target.setPyramidDepth(imagePyramidDepth+min_scale_image);
+       target.startPyramids();
+       
+       // Create target mask
+       final Mask targetMsk = (targetMskIP != null) ? new Mask(targetMskIP, true) 
+       		  										         : new Mask(targetImp.getProcessor(), false);
+                    
+       PointHandler targetPh = null;
+
+       // Create source image model
+       boolean bIsReverse = true;         
+
+       final BSplineModel source = new BSplineModel(sourceImp.getProcessor(), bIsReverse, 
+    		   													(int) Math.pow(2, parameter.img_subsamp_fact));
+
+       source.setPyramidDepth(imagePyramidDepth + min_scale_image);
+       source.startPyramids();
+       
+       // Create source mask
+       final Mask sourceMsk = (sourceMskIP != null) ? new Mask(sourceMskIP, true) 
+       														 : new Mask(sourceImp.getProcessor(), false);
+       
+       PointHandler sourcePh = null;
+
+       Stack<Point> sourceStack = new Stack<Point>();
+       Stack<Point> targetStack = new Stack<Point>();
+       MiscTools.loadPointRoiAsLandmarks(sourceImp, targetImp, sourceStack, targetStack);
+
+       sourcePh  = new PointHandler(sourceImp);
+       targetPh  = new PointHandler(targetImp);
+
+       while ((!sourceStack.empty()) && (!targetStack.empty())) 
+       {
+    	   Point sourcePoint = (Point)sourceStack.pop();
+    	   Point targetPoint = (Point)targetStack.pop();
+    	   sourcePh.addPoint(sourcePoint.x, sourcePoint.y);
+    	   targetPh.addPoint(targetPoint.x, targetPoint.y);
+       }
+
+ 
+       // Join threads
+       try 
+       {
+           source.getThread().join();
+           target.getThread().join();
+       } 
+       catch (InterruptedException e) 
+       {
+           IJ.error("Unexpected interruption exception " + e);
+       }
+
+       // Perform registration
+       ImagePlus[] output_ip = new ImagePlus[2];
+       output_ip[0] = null; 
+       output_ip[1] = null; 
+       
+       // The dialog is set to null to work in batch mode
+       final MainDialog dialog = null;
+       
+       final ImageProcessor originalSourceIP = sourceImp.getProcessor();
+       final ImageProcessor originalTargetIP = targetImp.getProcessor();
+
+       
+       final double[][] targetAffineMatrix;
+       final double[][] sourceAffineMatrix;
+       
+       if(sourceAffineTransf != null && targetAffineTransf != null)
+       {
+    	   final double[] flatMat = new double [6];
+    	   sourceAffineTransf.getMatrix(flatMat);
+    	   sourceAffineMatrix = new double[][]{ {flatMat[0], flatMat[2], flatMat[4] },  {flatMat[1], flatMat[3], flatMat[5]} };
+    	   //IJ.log("Source Matrix = " + flatMat[0] + " " +  flatMat[2] + " " +  flatMat[4] + " " +  flatMat[1] + " "  + flatMat[3] + " " +  flatMat[5]);
+    	   targetAffineTransf.getMatrix(flatMat);
+    	   //IJ.log("Target Matrix = " + flatMat[0] + " " +  flatMat[2] + " " +  flatMat[4] + " " +  flatMat[1] + " "  + flatMat[3] + " " +  flatMat[5]);
+    	   targetAffineMatrix = new double[][]{ {flatMat[0], flatMat[2], flatMat[4] },  {flatMat[1], flatMat[3], flatMat[5]} };
+       }
+       else
+       {
+    	   sourceAffineMatrix = null;
+    	   targetAffineMatrix = null;
+       }
+       
+       final Transformation warp = new Transformation(
+         sourceImp, targetImp, source, target, sourcePh, targetPh,
+         sourceMsk, targetMsk, sourceAffineMatrix, targetAffineMatrix,
+         parameter.min_scale_deformation, parameter.max_scale_deformation, 
+         min_scale_image, parameter.divWeight, 
+         parameter.curlWeight, parameter.landmarkWeight, parameter.imageWeight, 
+         parameter.consistencyWeight, parameter.stopThreshold, 
+         outputLevel, showMarquardtOptim, parameter.mode,null, null, output_ip[0], output_ip[1], dialog,
+         originalSourceIP, originalTargetIP);
+
+       IJ.log("\nRegistering...\n");
+       
+       long start = System.currentTimeMillis(); // start timing
+
+       if(parameter.mode == MainDialog.MONO_MODE)       
+    	   warp.doUnidirectionalRegistration();    	       
+       else
+    	   warp.doBidirectionalRegistration();
+
+       long stop = System.currentTimeMillis(); // stop timing
+       IJ.log("bUnwarpJ is done! Registration time: " + (stop - start) + "ms"); // print execution time
+
+       return warp;
+       
+    } // end computeTransformationBatch   
+    
+    
     //------------------------------------------------------------------
     /**
      * Method for images alignment with no graphical interface. This 
@@ -617,7 +772,7 @@ public class bUnwarpJ_ implements PlugIn
     	   warp.doBidirectionalRegistration();
 
        long stop = System.currentTimeMillis(); // stop timing
-       IJ.log("Registration time: " + (stop - start) + "ms"); // print execution time
+       IJ.log("bUnwarpJ is done! Registration time: " + (stop - start) + "ms"); // print execution time
 
        return warp;
        
@@ -876,7 +1031,7 @@ public class bUnwarpJ_ implements PlugIn
     		warp.doBidirectionalRegistration();
 
     	long stop = System.currentTimeMillis(); // stop timing
-    	IJ.log("Registration time: " + (stop - start) + "ms"); // print execution time
+    	IJ.log("bUnwarpJ is done! Registration time: " + (stop - start) + "ms"); // print execution time
 
     	// Adapt transformation to scale
     	int intervals = warp.getIntervals();
