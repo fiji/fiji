@@ -317,7 +317,6 @@ public class PluginObject {
 						+ " is already uploaded");
 			setVersion(newChecksum, newTimestamp);
 		}
-		filesize = Util.getFilesize(filename);
 
 		PluginCollection plugins = PluginCollection.getInstance();
 		Iterable<String> dependencies =
