@@ -1,6 +1,6 @@
 /**
  * Siox_Segmentation plug-in for ImageJ and Fiji.
- * Copyright (C) 2009 Ignacio Arganda-Carreras 
+ * 2009 Ignacio Arganda-Carreras, Johannes Schindelin, Stephan Saalfeld 
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,16 +16,19 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  * 
  */
+
 package siox;
 
 import ij.ImagePlus;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -33,30 +36,56 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JSlider;
+import javax.swing.UIManager;
+import javax.swing.border.TitledBorder;
 
+import org.siox.SioxSegmentator;
+/**
+ * This class implements the interactive buttons for the Siox segmentation GUI.
+ *  
+ * @author Ignacio Arganda-Carreras, Johannes Schindelin, Stephan Saalfeld
+ *
+ */
 public class ControlJPanel extends JPanel
 {
 	/** Generated serial version UID */
 	private static final long serialVersionUID = -1037100741242680537L;
 	// GUI components
-	private final JPanel segJPanel=new JPanel(new GridBagLayout());
-	private final JLabel fgOrBgJLabel=new JLabel("Add Known ");
+	final JPanel segJPanel=new JPanel(new GridBagLayout());
+	final JPanel drbJPanel=new JPanel(new GridBagLayout());
+	final JPanel resetJPanel = new JPanel(new GridBagLayout());
+	
+	final JLabel fgOrBgJLabel=new JLabel("Add Known ");
 	final JButton segmentJButton = new JButton("Segment");
+	
 	final JRadioButton fgJRadioButton = new JRadioButton("Foreground");
 	final JRadioButton bgJRadioButton = new JRadioButton("Background");
+	
 	final JSlider smoothness = new JSlider(0, 10, 6);
+	
 	final JCheckBox multipart=new JCheckBox("Allow multiple foreground components", false);
 	final JLabel smoothJLabel = new JLabel("Smoothing:");
-	final JButton resetJButton=new JButton("Reset");
-	final JButton createResultJButton=new JButton("Create result");
+	
+	final JRadioButton addJRadioButton=	new JRadioButton(SioxSegmentator.ADD_EDGE);
+	final JRadioButton subJRadioButton=new JRadioButton(SioxSegmentator.SUB_EDGE);
+	final JButton refineJButton = new JButton("Refine");
+	
+	
+	final JSlider addThreshold=new JSlider(0, 100, 100);
+	final JSlider subThreshold=new JSlider(0, 100, 0);
+	
+	final JButton resetJButton=new JButton("Reset");	
+	final JButton createMaskJButton=new JButton("Create mask");
 	
 	/** Denotes region of interest defined. Next foreground is to be added. */
-	private final static int ROI_DEFINED_STATUS = 4;
+	final static int ROI_DEFINED_STATUS = 4;
 	/** Denotes some foreground being added. More foreground/background can be added or segmentation started. */
-	private final static int FG_ADDED_STATUS = 5;
+	final static int FG_ADDED_STATUS = 5;
+	/** Denotes basic segmentation finished.  Allows detail refinement. */
+	final static int SEGMENTATED_STATUS = 6;
 	
 	/** One of the status constants, denotes current processing step. */
-	private int status = FG_ADDED_STATUS;
+	int status = FG_ADDED_STATUS;
 	
 	
 	//-----------------------------------------------------------------
@@ -70,6 +99,7 @@ public class ControlJPanel extends JPanel
 		final JPanel controlsBox=new JPanel(new GridBagLayout());
 		
 		segJPanel.setBorder(BorderFactory.createTitledBorder("1. Initial Segmentation"));
+		drbJPanel.setBorder(BorderFactory.createTitledBorder("2. Detail Refinement Brush"));
 		
 		final ButtonGroup fgOrBgButtonGroup=new ButtonGroup();
 		fgOrBgButtonGroup.add(fgJRadioButton);
@@ -97,14 +127,34 @@ public class ControlJPanel extends JPanel
 		segJPanel.add(segmentJButton, segGc);
 		
 		
-		final JPanel resetJPanel = new JPanel(new GridBagLayout());
+		final String drbTooltip=
+			"Additive or Subtractive Alpha Brush to Improve Edges or Highly Detailed Regions.";
+		addJRadioButton.setToolTipText(drbTooltip);
+		subJRadioButton.setToolTipText(drbTooltip);
+		subJRadioButton.setSelected(true);
+		addThreshold.setToolTipText("Threshold Defining Subpixel Granularity for Additive Refinement Brush.");
+		subThreshold.setToolTipText("Threshold Defining Subpixel Granularity for Substractive Refinement Brush.");
+		addThreshold.setPaintTicks(true);
+		addThreshold.setMinorTickSpacing(5);
+		addThreshold.putClientProperty("JSlider.isFilled", Boolean.TRUE);
+		subThreshold.setPaintTicks(true);
+		subThreshold.setMinorTickSpacing(5);
+		subThreshold.putClientProperty("JSlider.isFilled", Boolean.TRUE);
+		drbJPanel.add(subJRadioButton, getGbc(0, 1, 1, false, false));
+		drbJPanel.add(subThreshold, getGbc(1, 1, 2, false, true));
+		drbJPanel.add(addJRadioButton, getGbc(0, 2, 1, false, false));
+		drbJPanel.add(addThreshold, getGbc(1, 2, 2, false, true));
+		drbJPanel.add(Box.createVerticalStrut(6), getGbc(0, 3, 1, false, false)); 
+		drbJPanel.add(refineJButton, segGc);
+				
 		final String resetTooltip = "Reset display image";
 		resetJButton.setToolTipText(resetTooltip);		
 		resetJPanel.add(resetJButton, getGbc(0, 0, 1, false, false));				
-		resetJPanel.add(createResultJButton, getGbc(1, 0, 1, false, false));
+		resetJPanel.add(createMaskJButton, getGbc(1, 0, 1, false, false));
 		
-		controlsBox.add(segJPanel, getGbc(0, 0, 1, false, true));		
-		controlsBox.add(resetJPanel, getGbc(0, 1, 1, false, true));
+		controlsBox.add(segJPanel, getGbc(0, 0, 1, false, true));
+		controlsBox.add(drbJPanel, getGbc(0, 1, 1, false, true));
+		controlsBox.add(resetJPanel, getGbc(0, 2, 1, false, true));
 
 		add(controlsBox, BorderLayout.EAST);
 		
@@ -139,15 +189,21 @@ public class ControlJPanel extends JPanel
 	
 	
 	/** Enables/disables GUI components according to current status. */
-	private void updateComponentEnabling()
+	void updateComponentEnabling()
 	{
+		final Color onColor = UIManager.getColor("TitledBorder.titleColor");
+		final Color offColor = UIManager.getColor("Label.disabledForeground");
+		
 		// panel for the SIOX segmentation step:
 		final boolean addPhase = (status==ROI_DEFINED_STATUS) || (status==FG_ADDED_STATUS);
+		((TitledBorder) segJPanel.getBorder()).setTitleColor(addPhase ? onColor : offColor);		
 		
 		smoothness.setEnabled(addPhase);
 		smoothJLabel.setEnabled(addPhase);
 		fgOrBgJLabel.setEnabled(addPhase);
 		fgJRadioButton.setEnabled(addPhase);
+		multipart.setEnabled(addPhase);
+		segmentJButton.setEnabled(addPhase);
 		
 		// force foreground selection when where no foreground is defined yet:
 		bgJRadioButton.setEnabled(status == FG_ADDED_STATUS);
@@ -156,6 +212,17 @@ public class ControlJPanel extends JPanel
 			fgJRadioButton.setSelected(true);
 		}
 		segJPanel.repaint(); // update new border title color on screen
+		
+		// panel for the detail refinement step:
+		final boolean drbPhase = (status == SEGMENTATED_STATUS);
+		((TitledBorder) drbJPanel.getBorder()).setTitleColor(drbPhase? onColor : offColor);
+		addJRadioButton.setEnabled(drbPhase);
+		subJRadioButton.setEnabled(drbPhase);
+		refineJButton.setEnabled(drbPhase);
+		addThreshold.setEnabled(drbPhase && addJRadioButton.isSelected());
+		subThreshold.setEnabled(drbPhase && subJRadioButton.isSelected());
+		drbJPanel.repaint(); // update new border title color on screen
+		
 
 	}// end updateComponentEnabling method
 	
