@@ -1,6 +1,6 @@
 /**
  * Siox_Segmentation plug-in for ImageJ and Fiji.
- * Copyright (C) 2009 Ignacio Arganda-Carreras, Johannes Schindelin, Stephan Saalfeld 
+ * 2009 Ignacio Arganda-Carreras, Johannes Schindelin, Stephan Saalfeld 
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -34,6 +34,13 @@ import java.awt.geom.AffineTransform;
 
 import fiji.util.gui.OverlayedImageCanvas.Overlay;
 
+/**
+ * This class implements an overlay based on the image ROI.
+ * The overlay paints the ROI with a specific color and composite mode.
+ *  
+ * @author Ignacio Arganda-Carreras, Johannes Schindelin, Stephan Saalfeld
+ *
+ */
 public class RoiOverlay implements Overlay {
 	Roi roi = null;
 	Color color = Roi.getColor();
@@ -52,21 +59,26 @@ public class RoiOverlay implements Overlay {
 	public void paint(Graphics g, int x, int y, double magnification) {
 		if ( null == this.roi )
 			return;
+		// Set ROI image to null to avoid repainting
+		roi.setImage(null);
 		Shape shape = ShapeRoiHelper.getShape(new ShapeRoi(roi));
 		final Rectangle roiBox = roi.getBounds();
 		final Graphics2D g2d = (Graphics2D)g;
-		final AffineTransform orig = g2d.getTransform();
+		final AffineTransform originalTransform = g2d.getTransform();
 		final AffineTransform at = new AffineTransform();
 		at.scale( magnification, magnification );
 		at.translate( roiBox.x - x, roiBox.y - y );
-		at.concatenate( orig );
+		at.concatenate( originalTransform );
 		
 		g2d.setTransform( at );
+		final Composite originalComposite = g2d.getComposite();
 		g2d.setComposite( this.composite );
 		g2d.setColor( this.color );
+				
 		g2d.fill(shape);
 		
-		g2d.setTransform( orig );
+		g2d.setTransform( originalTransform );
+		g2d.setComposite(originalComposite);
 	}
 	
 	public void setRoi(Roi roi)
@@ -79,5 +91,9 @@ public class RoiOverlay implements Overlay {
 	
 	public void setColor(Color color)
 	{this.color = color;}
+	
+	public String toString() {
+		return "RoiOverlay(" + roi + ")";
+	}
 	
 }
