@@ -215,7 +215,7 @@ plugins/Bug_Submitter.jar <- src-plugins/Bug_Submitter/*.java
 
 CLASSPATH(plugins/register_virtual_stack_slices.jar)=plugins/TrakEM2_.jar:plugins/mpicbg_.jar:plugins/bUnwarpJ_.jar
 
-CLASSPATH(plugins/Siox_Segmentation.jar)=plugins/Fiji_Plugins.jar:jars/sioxapi.jar
+CLASSPATH(plugins/Siox_Segmentation.jar)=ij.jar:plugins/Fiji_Plugins.jar
 
 CLASSPATH(plugins/LSM_Toolbox.jar)=plugins/LSM_Reader.jar
 MAINCLASS(plugins/LSM_Toolbox.jar)=org.imagearchive.lsm.toolbox.gui.AboutDialog
