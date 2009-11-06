@@ -1,6 +1,6 @@
 /**
  * Siox_Segmentation plug-in for ImageJ and Fiji.
- * Copyright (C) 2009 Ignacio Arganda-Carreras, Johannes Schindelin, Stephan Saalfeld 
+ * 2009 Ignacio Arganda-Carreras, Johannes Schindelin, Stephan Saalfeld 
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,6 +16,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  * 
  */
+
 package siox;
 
 import ij.process.ImageProcessor;
@@ -27,7 +28,13 @@ import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
 
 import fiji.util.gui.OverlayedImageCanvas.Overlay;
-
+/**
+ * This class implements an overlay based on an image.
+ * The overlay paints the image with a specific composite mode.
+ *  
+ * @author Ignacio Arganda-Carreras, Johannes Schindelin, Stephan Saalfeld
+ *
+ */
 public class ImageOverlay implements Overlay{
 
 	ImageProcessor imp = null;
@@ -43,27 +50,39 @@ public class ImageOverlay implements Overlay{
 	public void paint(Graphics g, int x, int y, double magnification) {
 		if ( null == this.imp )
 			return;
-		
-		Graphics2D g2d = (Graphics2D)g;		
-		
-		final AffineTransform orig = g2d.getTransform();
+						
+		Graphics2D g2d = (Graphics2D)g;						
+				
+		final AffineTransform originalTransform = g2d.getTransform();
 		final AffineTransform at = new AffineTransform();
 		at.scale( magnification, magnification );
 		at.translate( - x, - y );
-		at.concatenate( orig );
+		at.concatenate( originalTransform );
 		
 		g2d.setTransform( at );
 		
 				
+		final Composite originalComposite = g2d.getComposite();
 		g2d.setComposite(composite);
 		g2d.drawImage(imp.getBufferedImage(), null, null);	
 		
-		g2d.setTransform( orig );
+		g2d.setTransform( originalTransform );
+		g2d.setComposite(originalComposite);
 	}
 	
+	/**
+	 * Set composite mode
+	 * 
+	 * @param composite composite mode
+	 */
 	public void setComposite (Composite composite)
 	{this.composite = composite;}
 	
+	/**
+	 * Set image processor to be painted in the overlay
+	 * 
+	 * @param imp input image
+	 */
 	public void setImage ( ImageProcessor imp)
 	{this.imp = imp;}
 
