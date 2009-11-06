@@ -1,6 +1,6 @@
 /**
  * Siox_Segmentation plug-in for ImageJ and Fiji.
- * Copyright (C) 2009 Ignacio Arganda-Carreras, Johannes Schindelin, Stephan Saalfeld 
+ * 2009 Ignacio Arganda-Carreras, Johannes Schindelin, Stephan Saalfeld 
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -16,6 +16,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  * 
  */
+
 
 package siox;
 
@@ -37,6 +38,7 @@ public class Siox_Segmentation implements PlugInFilter
 	/** input image to be segmented */
 	private ImagePlus inputImage = null;
 
+	
 public static void main(String[] args) {
 	ij.ImageJ.main(args);
 	IJ.run("Leaf (36K)");
