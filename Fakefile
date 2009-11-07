@@ -196,6 +196,8 @@ misc/Fiji.jar <- src-plugins/Fiji/fiji/*.java icon.png[images/icon.png]
 CLASSPATH(jars/zs.jar)=jars/Jama-1.0.2.jar
 jars/zs.jar <- src-plugins/zs/**/*.java
 
+jars/fiji-lib.jar <- src-plugins/fiji-lib/**/*.java
+
 # These classes are common to the scripting plugins
 jars/fiji-scripting.jar <- src-plugins/fiji-scripting/**/*.java
 
@@ -215,7 +217,7 @@ plugins/Bug_Submitter.jar <- src-plugins/Bug_Submitter/*.java
 
 CLASSPATH(plugins/register_virtual_stack_slices.jar)=plugins/TrakEM2_.jar:plugins/mpicbg_.jar:plugins/bUnwarpJ_.jar
 
-CLASSPATH(plugins/Siox_Segmentation.jar)=ij.jar:plugins/Fiji_Plugins.jar
+CLASSPATH(plugins/Siox_Segmentation.jar)=jars/fiji-lib.jar
 
 CLASSPATH(plugins/LSM_Toolbox.jar)=plugins/LSM_Reader.jar
 MAINCLASS(plugins/LSM_Toolbox.jar)=org.imagearchive.lsm.toolbox.gui.AboutDialog
