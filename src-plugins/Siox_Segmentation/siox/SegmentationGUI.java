@@ -26,6 +26,7 @@ import java.awt.Panel;
 import java.awt.Shape;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 
 import fiji.util.gui.OverlayedImageCanvas;
@@ -73,9 +74,7 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 	
 	final Composite transparency050 = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.50f );	
 	final Composite transparency075 = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.75f );
-	final Composite transparency100 = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.00f );
-	final Composite clear100 = AlphaComposite.getInstance(AlphaComposite.CLEAR, 1.00f );
-	
+	final Composite transparency100 = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.00f );		
 	
 	//-----------------------------------------------------------------
 	/**
@@ -148,17 +147,19 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 		else if (e.getSource() == controlPanel.segmentJButton) {
 			segment();
 		}
-		else if (e.getSource() == controlPanel.addJRadioButton) {
+		else if (e.getSource() == controlPanel.addJRadioButton && lastButton != controlPanel.addJRadioButton) {
 			controlPanel.subJRadioButton.setSelected(false);
+			lastButton = controlPanel.addJRadioButton;
 			controlPanel.updateComponentEnabling();
 			roiOverlay.setColor(Color.RED);
-			subRoi = setNewRoi(addRoi, roiOverlay);			
+			subRoi = setNewRoi(addRoi, roiOverlay);						
 		}
-		else if (e.getSource() == controlPanel.subJRadioButton) {
+		else if (e.getSource() == controlPanel.subJRadioButton && lastButton != controlPanel.subJRadioButton) {
 			controlPanel.addJRadioButton.setSelected(false);
+			lastButton = controlPanel.subJRadioButton;
 			controlPanel.updateComponentEnabling();
 			roiOverlay.setColor(Color.GREEN);
-			addRoi = setNewRoi(subRoi, roiOverlay);
+			addRoi = setNewRoi(subRoi, roiOverlay);			
 		}
 		else if (e.getSource() == controlPanel.refineJButton) {
 			refine();
@@ -261,14 +262,20 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 		{			
 			final float alpha = controlPanel.addThreshold.getValue() / 100.0f;
 			final Shape shape = ShapeRoiHelper.getShape(new ShapeRoi(addRoi));
+			final AffineTransform trans = new AffineTransform();
+			trans.translate(addRoi.getBounds().getX(), addRoi.getBounds().getY());
 			final Area area = new Area(shape);
+			area.transform(trans);
 			siox.subpixelRefine(area, SioxSegmentator.ADD_EDGE, alpha, (float[]) confMatrix.getPixels());
 		}
 		if (null != subRoi )
 		{			
 			final float alpha = controlPanel.subThreshold.getValue() / 100.0f;
 			final Shape shape = ShapeRoiHelper.getShape(new ShapeRoi(subRoi));
+			final AffineTransform trans = new AffineTransform();
+			trans.translate(subRoi.getBounds().getX(), subRoi.getBounds().getY());
 			final Area area = new Area(shape);
+			area.transform(trans);
 			siox.subpixelRefine(area, SioxSegmentator.SUB_EDGE, alpha, (float[]) confMatrix.getPixels());
 		}
 		
