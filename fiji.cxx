@@ -1596,8 +1596,11 @@ static int start_ij(void)
 			else
 				cerr << main_argv[i] << "!\n";
 		}
-		else if (!strcmp(main_argv[i], "--ant"))
+		else if (!strcmp(main_argv[i], "--ant")) {
 			main_class = "org.apache.tools.ant.Main";
+			class_path += get_jre_home()
+				+ "/../lib/tools.jar" PATH_SEP;
+		}
 		else if (!strcmp(main_argv[i], "--retrotranslator") ||
 				!strcmp(main_argv[i], "--retro"))
 			retrotranslator = true;
