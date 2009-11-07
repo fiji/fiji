@@ -85,7 +85,10 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 	public SegmentationGUI(ImagePlus imp) 
 	{
 		super(imp, new OverlayedImageCanvas(imp) );
-				 
+				
+		while(ic.getWidth() > 800 && ic.getHeight() > 600)
+			IJ.run(imp, "Out","");
+		
 		roiOverlay = new RoiOverlay();		
 		resultOverlay = new ImageOverlay();
 				
@@ -99,10 +102,11 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 		// Take snapshot of initial pixels
 		ip = imp.getProcessor();
 			
-		this.setTitle("SIOX Segmentation ");
+		this.setTitle("SIOX Segmentation");
 		// Image panel
-		Panel image_panel = new Panel();
-		image_panel.add(ic);
+		Panel imagePanel = new Panel();		
+		imagePanel.add(ic);
+
 		
 		// Control panel
 		controlPanel = new ControlJPanel(imp);
@@ -114,21 +118,21 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 		controlPanel.createMaskJButton.addActionListener(this);
 		controlPanel.addJRadioButton.addActionListener(this);
 		controlPanel.subJRadioButton.addActionListener(this);
-		controlPanel.refineJButton.addActionListener(this);
+		controlPanel.refineJButton.addActionListener(this);		
 		
 		Panel all = new Panel();
 		BoxLayout box = new BoxLayout(all, BoxLayout.X_AXIS);
 		all.setLayout(box);
-  	    all.add(image_panel);
+  	    all.add(imagePanel);
   	    all.add(controlPanel);
   	    
-  	    add(all);
+  	    add(all);  	      	    
 		
-	    this.pack();
+	    this.pack();	    	    	    
 	    this.setVisible(true);
 	    	   
 	}
-
+    
 
 	
 	@Override
@@ -278,9 +282,7 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 			area.transform(trans);
 			siox.subpixelRefine(area, SioxSegmentator.SUB_EDGE, alpha, (float[]) confMatrix.getPixels());
 		}
-		
-		//new ImagePlus ("Conf matrix ", confMatrix).show();
-		
+				
 		updateResult();
 	}
 	
