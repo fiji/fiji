@@ -272,7 +272,7 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 			siox.subpixelRefine(area, SioxSegmentator.SUB_EDGE, alpha, (float[]) confMatrix.getPixels());
 		}
 		
-		new ImagePlus ("Conf matrix ", confMatrix).show();
+		//new ImagePlus ("Conf matrix ", confMatrix).show();
 		
 		updateResult();
 	}
