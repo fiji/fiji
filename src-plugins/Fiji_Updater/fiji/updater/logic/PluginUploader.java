@@ -107,7 +107,8 @@ public class PluginUploader {
 			PluginObject plugin = file.plugin;
 			if (plugin == null)
 				continue;
-			file.filesize = Util.getFilesize(plugin.filename);
+			plugin.filesize = file.filesize =
+				Util.getFilesize(plugin.filename);
 			file.plugin.newTimestamp = timestamp;
 			file.filename = plugin.filename + "-" + timestamp;
 		}
