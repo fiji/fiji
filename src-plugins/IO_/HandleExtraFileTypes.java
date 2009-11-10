@@ -267,6 +267,8 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 			return tryPlugIn("Javascript.Refresh_Javascript_Scripts", path);
 		if (name.endsWith(".clj"))
 			return tryPlugIn("Clojure.Refresh_Clojure_Scripts", path);
+		if (name.endsWith(".bs") || name.endsWith(".bsh"))
+			return tryPlugIn("BSH.Refresh_BSH_Scripts", path);
 
 		// ****************** MODIFY HERE ******************
 		// do what ever you have to do to recognise your own file type
