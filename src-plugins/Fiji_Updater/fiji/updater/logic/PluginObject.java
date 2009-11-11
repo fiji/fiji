@@ -282,6 +282,15 @@ public class PluginObject {
 			throw new Error("Invalid action requested for plugin "
 					+ filename + "(" + action
 					+ ", " + status + ")");
+		if (action == Action.UPLOAD) {
+			PluginCollection plugins =
+				PluginCollection.getInstance();
+			Iterable<String> dependencies =
+				plugins.analyzeDependencies(this);
+			if (dependencies != null)
+				for (String dependency : dependencies)
+					addDependency(dependency);
+		}
 		this.action = action;
 	}
 
@@ -317,13 +326,6 @@ public class PluginObject {
 						+ " is already uploaded");
 			setVersion(newChecksum, newTimestamp);
 		}
-
-		PluginCollection plugins = PluginCollection.getInstance();
-		Iterable<String> dependencies =
-			plugins.analyzeDependencies(this);
-		if (dependencies != null)
-			for (String dependency : dependencies)
-					addDependency(dependency);
 	}
 
 	public void markRemoved() {
