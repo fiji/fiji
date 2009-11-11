@@ -339,12 +339,14 @@ public class PluginObject {
 
 	public String getChecksum() {
 		return action == Action.UPLOAD ? newChecksum :
-			current == null ? null : current.checksum;
+			action == Action.REMOVE || current == null ?
+			null : current.checksum;
 	}
 
 	public long getTimestamp() {
-		return action == Action.UPLOAD ?
-			newTimestamp : current == null ? 0 : current.timestamp;
+		return action == Action.UPLOAD ? newTimestamp :
+			action == Action.REMOVE || current == null ?
+			0 : current.timestamp;
 	}
 
 	public Iterable<Dependency> getDependencies() {
