@@ -119,7 +119,7 @@ public class PluginUploader {
 		((UploadableFile)files.get(0)).updateFilesize();
 		// TODO: do no save text file at all!
 		saveTextFile(text);
-		((UploadableFile)files.get(1)).updateFilesize();
+		((UploadableFile)files.get(files.size() - 1)).updateFilesize();
 
 		uploader.calculateTotalSize(files);
 	}
