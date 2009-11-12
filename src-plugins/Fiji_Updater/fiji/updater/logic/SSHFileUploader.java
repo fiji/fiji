@@ -234,6 +234,7 @@ public class SSHFileUploader extends FileUploader {
 		//          -1
 		if (b == 0)
 			return b;
+		new Exception("checkAck returns " + b).printStackTrace();
 		if (b == -1)
 			return b;
 
