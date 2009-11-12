@@ -111,6 +111,8 @@ public class PluginUploader {
 				Util.getFilesize(plugin.filename);
 			file.plugin.newTimestamp = timestamp;
 			file.filename = plugin.filename + "-" + timestamp;
+			if (plugin.getStatus() == PluginObject.Status.NOT_FIJI)
+				plugin.setStatus(PluginObject.Status.INSTALLED);
 		}
 
 		XMLFileWriter.writeAndValidate(backup);
