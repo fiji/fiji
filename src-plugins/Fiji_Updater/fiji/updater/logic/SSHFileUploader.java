@@ -173,7 +173,7 @@ public class SSHFileUploader extends FileUploader {
 			int slash = directory.indexOf('/');
 			String name = (slash < 0 ?  directory :
 					directory.substring(0, slash));
-			String command = "D0755 0 " + name + "\n";
+			String command = "D2775 0 " + name + "\n";
 			out.write(command.getBytes());
 			out.flush();
 			if (checkAck(in) != 0)
