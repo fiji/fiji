@@ -67,7 +67,10 @@ public class Installer extends Downloader {
 			if (Util.isLauncher(name)) {
 				saveTo = Util.prefix(name);
 				File orig = new File(saveTo);
-				orig.renameTo(new File(saveTo + ".old"));
+				File old = new File(saveTo + ".old");
+				if (old.exists())
+					old.delete();
+				orig.renameTo(old);
 			}
 
 			String url = Updater.MAIN_URL + name.replace(" ", "%20")
