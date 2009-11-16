@@ -48,7 +48,6 @@ public class SSHFileUploader extends FileUploader {
 
 	private Session session;
 	private Channel channel;
-	private SourceFile currentUpload;
 	private long uploadedBytes;
 	private long uploadSize;
 	private OutputStream out;
@@ -122,7 +121,7 @@ public class SSHFileUploader extends FileUploader {
 				+ target.substring(slash + 1) + "\n";
 			out.write(command.getBytes());
 			out.flush();
-			checkAckUploadError();
+			checkAckUploadError(target);
 
 			/*
 			 * Make sure that the file is there; this is critical
@@ -150,7 +149,7 @@ public class SSHFileUploader extends FileUploader {
 			buf[0] = 0;
 			out.write(buf, 0, 1);
 			out.flush();
-			checkAckUploadError();
+			checkAckUploadError(target);
 			itemDone(source);
 		}
 
@@ -164,7 +163,7 @@ public class SSHFileUploader extends FileUploader {
 	private String cdUp(String directory) throws IOException {
 		out.write("E\n".getBytes());
 		out.flush();
-		checkAckUploadError();
+		checkAckUploadError(directory);
 		int slash = directory.lastIndexOf('/', directory.length() - 2);
 		return directory.substring(0, slash + 1);
 	}
@@ -174,7 +173,7 @@ public class SSHFileUploader extends FileUploader {
 			int slash = directory.indexOf('/');
 			String name = (slash < 0 ?  directory :
 					directory.substring(0, slash));
-			String command = "D0755 0 " + name + "\n";
+			String command = "D2775 0 " + name + "\n";
 			out.write(command.getBytes());
 			out.flush();
 			if (checkAck(in) != 0)
@@ -205,10 +204,9 @@ public class SSHFileUploader extends FileUploader {
 		}
 	}
 
-	private void checkAckUploadError() throws IOException {
+	private void checkAckUploadError(String target) throws IOException {
 		if (checkAck(in) != 0)
-			throw new IOException("Failed to upload " +
-				currentUpload.getFilename());
+			throw new IOException("Failed to upload " + target);
 	}
 
 	public void disconnectSession() throws IOException {
@@ -236,6 +234,7 @@ public class SSHFileUploader extends FileUploader {
 		//          -1
 		if (b == 0)
 			return b;
+		new Exception("checkAck returns " + b).printStackTrace();
 		if (b == -1)
 			return b;
 
