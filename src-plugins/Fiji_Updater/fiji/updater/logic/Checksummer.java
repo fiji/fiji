@@ -50,6 +50,16 @@ public class Checksummer extends Progressable {
 	protected List<StringPair> queue;
 	protected String fijiRoot;
 
+	/* follows symlinks */
+	protected boolean exists(File file) {
+		try {
+			return file.getCanonicalFile().exists();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return false;
+	}
+
 	public void queueDir(String[] dirs, String[] extensions) {
 		Set<String> set = new HashSet<String>();
 		for (String extension : extensions)
@@ -60,7 +70,7 @@ public class Checksummer extends Progressable {
 
 	public void queueDir(String dir, Set<String> extensions) {
 		File file = new File(prefix(dir));
-		if (!file.exists())
+		if (!exists(file))
 			return;
 		for (String item : file.list()) {
 			String path = dir + "/" + item;
@@ -73,13 +83,14 @@ public class Checksummer extends Progressable {
 			int dot = item.lastIndexOf('.');
 			if (dot < 0 || !extensions.contains(item.substring(dot)))
 				continue;
-			queue(path, file.getAbsolutePath());
+			if (exists(file))
+				queue(path, file.getAbsolutePath());
 		}
 	}
 
 	protected void queueIfExists(String path) {
 		String realPath = prefix(path);
-		if (new File(realPath).exists())
+		if (exists(new File(realPath)))
 			queue(path, realPath);
 	}
 
