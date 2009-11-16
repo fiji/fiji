@@ -24,7 +24,7 @@ import java.util.Observer;
  * and related).
  */
 public class XMLFileDownloader extends Downloader {
-	protected long xmlLastModified;
+	protected long xmlLastModified, previousLastModified;
 	protected byte[] data;
 	protected String destination, url;
 
@@ -35,6 +35,12 @@ public class XMLFileDownloader extends Downloader {
 	public XMLFileDownloader(String urlPrefix) {
 		url = urlPrefix + Updater.XML_COMPRESSED;
 		destination = Util.prefix(Updater.XML_COMPRESSED);
+		try {
+			previousLastModified =
+				new File(destination).lastModified();
+		} catch (Exception e) {
+			previousLastModified = 0;
+		}
 	}
 
 	class LastModifiedSetter implements Progress {
@@ -78,5 +84,9 @@ public class XMLFileDownloader extends Downloader {
 
 	public long getXMLLastModified() {
 		return xmlLastModified;
+	}
+
+	public long getPreviousLastModified() {
+		return previousLastModified;
 	}
 }
