@@ -129,8 +129,10 @@ public class XMLFileReader extends DefaultHandler {
 		else if (tagName.equals("plugin")) {
 			if (current.current == null)
 				current.setStatus(Status.OBSOLETE_UNINSTALLED);
-			else if (current.isNewerThan(newTimestamp))
+			else if (current.isNewerThan(newTimestamp)) {
 				current.setStatus(Status.NEW);
+				current.setAction(PluginObject.Action.INSTALL);
+			}
 			plugins.add(current);
 			current = null;
 		}
