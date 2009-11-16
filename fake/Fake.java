@@ -538,12 +538,35 @@ public class Fake {
 
 		protected Map variables = new HashMap();
 
+		public int getClosingParenthesis(String value, int offset) {
+			char closing;
+			switch (value.charAt(offset)) {
+			case '(': closing = ')'; break;
+			case '[': closing = ']'; break;
+			case '{': closing = '}'; break;
+			default: return -1;
+			}
+			while (++offset < value.length())
+				if (value.charAt(offset) == closing)
+					return offset;
+			return -1;
+		}
+
 		public int getVariableNameEnd(String value, int offset) {
-			int end = offset;
-			while (end < value.length() &&
-					isVarChar(value.charAt(end)))
-				end++;
-			return end;
+			while (offset < value.length()) {
+				char c = value.charAt(offset);
+				if (c == '(') {
+					int end = getClosingParenthesis(value,
+						offset);
+					if (end < 0)
+						return offset;
+					return end + 1;
+				}
+				if (!isVarChar(value.charAt(offset)))
+					return offset;
+				offset++;
+			}
+			return offset;
 		}
 
 		/*
@@ -672,8 +695,7 @@ public class Fake {
 
 		public boolean isVarChar(char c) {
 			return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
-				|| (c >= '0' && c <= '9') || c == '_'
-				|| c == '(' || c == ')' || c == '.';
+				|| (c >= '0' && c <= '9') || c == '_';
 		}
 
 		public void checkVariableNames() throws FakeException {
