@@ -69,6 +69,8 @@ ignoreMissingFakefiles=true
 # When a submodule could not be made, fall back to copying from this directory
 precompiledDirectory=precompiled/
 
+buildDir=build/
+
 FIJI_JAVA_HOME(linux)=java/linux/jdk1.6.0_16/jre
 FIJI_JAVA_HOME(linux64)=java/linux-amd64/jdk1.6.0_16/jre
 FIJI_JAVA_HOME(win32)=java/win32/jdk1.6.0_16/jre
