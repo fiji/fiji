@@ -29,7 +29,7 @@ files = [stripPrecompiled(file) for file in argv[1:]]
 Updater.MAIN_URL = 'file:' + updateDirectory
 downloader = XMLFileDownloader()
 downloader.start()
-reader = XMLFileReader(downloader.getInputStream())
+reader = XMLFileReader(downloader.getInputStream(), 0)
 
 progress = StderrProgress()
 checksummer = Checksummer(progress)
