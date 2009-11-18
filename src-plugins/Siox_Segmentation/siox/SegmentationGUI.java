@@ -185,7 +185,7 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 		if (null != confMatrix)
 		{
 			final ByteProcessor result = (ByteProcessor) confMatrix.convertToByte(false);
-			result.setMinAndMax(0, 1);
+			result.multiply(255);
 			new ImagePlus("Mask", result).show();
 		}
 				
