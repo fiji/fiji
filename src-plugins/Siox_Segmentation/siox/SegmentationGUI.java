@@ -32,6 +32,7 @@ import java.awt.geom.Area;
 import fiji.util.gui.OverlayedImageCanvas;
 import ij.IJ;
 import ij.ImagePlus;
+import ij.Prefs;
 import ij.gui.ImageWindow;
 import ij.gui.Roi;
 import ij.gui.ShapeRoi;
@@ -186,6 +187,9 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 		{
 			final ByteProcessor result = (ByteProcessor) confMatrix.convertToByte(false);
 			result.multiply(255);
+			// Set background color based on the Process > Binary > Options 
+			if(!Prefs.blackBackground)
+				result.invert();
 			new ImagePlus("Mask", result).show();
 		}
 				
