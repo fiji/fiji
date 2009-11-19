@@ -135,7 +135,7 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
     
 
 	
-	@Override
+	//@Override
 	public synchronized void actionPerformed(ActionEvent e) 
 	{
 		if (e.getSource() == controlPanel.bgJRadioButton && lastButton != controlPanel.bgJRadioButton) {

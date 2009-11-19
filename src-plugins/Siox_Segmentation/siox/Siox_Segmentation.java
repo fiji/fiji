@@ -50,14 +50,14 @@ public static void main(String[] args) {
 
 
 
-	@Override
+	//@Override
 	public void run(ImageProcessor ip) 
 	{
 		new SegmentationGUI(this.inputImage);
 		
 	}
 
-	@Override
+	//@Override
 	public int setup(String arg, ImagePlus imp) 
 	{
 		this.inputImage = imp;
