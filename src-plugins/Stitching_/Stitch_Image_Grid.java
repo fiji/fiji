@@ -75,6 +75,7 @@ public class Stitch_Image_Grid implements PlugIn
 	public static double thresholdDisplacementAbsoluteStatic = 3.5;
 	public static boolean previewOnlyStatic = false;
 	public static boolean computeOverlapStatic = true;
+	private static boolean computeOverlap;
 	
 	public void run(String arg0)
 	{
@@ -169,7 +170,43 @@ public class Stitch_Image_Grid implements PlugIn
 		
 		boolean computeOverlap = gd.getNextBoolean();
 		computeOverlapStatic = computeOverlap;
+		
+		stitchImageGrid(filenames, directory, gridLayout, handleRGB, 
+				fusionMethod, output, overlap, startX, startY, startI, 
+				writeOnlyOutput, previewOnly);
 
+	}
+	
+	/**
+	 * Stitch grid of 2D images
+	 *  
+	 * @param filenames file name format (for example: "TiledConfocal_{ii}.lsm")
+	 * @param directory input directory
+	 * @param gridLayout grid layout information
+	 * @param handleRGB RGB mode (@see stitching.CommonFunctions.colorList)
+	 * @param fusionMethod fusion method (@see stitching.CommonFunctions.methodListCollection)
+	 * @param outputFileName output file name (for example: "TileConfiguration.txt")
+	 * @param overlap percentage of overlap
+	 * @param startX starting X value
+	 * @param startY starting Y value
+	 * @param startI starting I value
+	 * @param writeOnlyOutput "Save Only Tile Configuration" option
+	 * @param previewOnly "create only preview" option
+	 */
+	public static void stitchImageGrid(
+			String filenames, 
+			String directory, 
+			GridLayout gridLayout, 
+			String handleRGB, 
+			String fusionMethod, 
+			String outputFileName, 
+			double overlap, 
+			int startX, 
+			int startY, 
+			int startI, 
+			boolean writeOnlyOutput, 
+			boolean previewOnly)
+	{
 		// find how to parse
 		String replaceX = "{", replaceY = "{", replaceI = "{";
 		int numXValues = 0, numYValues = 0, numIValues = 0;
@@ -226,7 +263,7 @@ public class Stitch_Image_Grid implements PlugIn
 		gridLayout.handleRGB = handleRGB;
 		gridLayout.imageInformationList = new ArrayList<ImageInformation>();
 		
-		String fileName = directory + output;
+		String fileName = directory + outputFileName;
 		PrintWriter out = openFileWrite( fileName );
 				
         int imgX = 0, imgY = 0;
@@ -331,7 +368,7 @@ public class Stitch_Image_Grid implements PlugIn
     	smc.work(gridLayout, previewOnly, computeOverlap, fileName);
 	}
 	
-	private String getLeadingZeros(int zeros, int number)
+	private static String getLeadingZeros(int zeros, int number)
 	{
 		String output = "" + number;
 		
