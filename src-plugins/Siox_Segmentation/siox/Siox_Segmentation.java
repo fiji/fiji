@@ -28,7 +28,7 @@ import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
 
 /**
- * Fiji plugin to run SIOX: Simple Input Object Extraction.
+ * Fiji plugin to run SIOX: Simple Interactive Object Extraction.
  * 
  * @author Ignacio Arganda-Carreras (ignacio.arganda at gmail.com)
  *
