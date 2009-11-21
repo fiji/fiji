@@ -149,6 +149,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Manual_Tracking.jar \
 	plugins/Calculator_Plus.jar \
 	plugins/3D_Objects_Counter.jar \
+	plugins/IsoData_Classifier.jar \
 	\
 	misc/Fiji.jar
 
