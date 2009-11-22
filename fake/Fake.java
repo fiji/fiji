@@ -53,7 +53,7 @@ public class Fake {
 	public static void main(String[] args) {
 		if (runPrecompiledFakeIfNewer(args))
 			return;
-		new Fake().make(args);
+		new Fake().make(null, null, args);
 	}
 
 	public static boolean runPrecompiledFakeIfNewer(String[] args) {
@@ -174,9 +174,10 @@ public class Fake {
 		return classPath;
 	}
 
-	public void make(String[] args) {
+	/* input defaults to reading the Fakefile, cwd to "." */
+	public void make(InputStream input, File cwd, String[] args) {
 		try {
-			Parser parser = new Parser();
+			Parser parser = new Parser(input, cwd);
 
 			// filter out variable definitions
 			int firstArg = 0;
@@ -235,25 +236,27 @@ public class Fake {
 		protected Rule allRule;
 
 		public Parser() throws FakeException {
-			this(null);
+			this(null, null);
 		}
 
-		public Parser(String path) throws FakeException {
-			if (path == null || path.equals(""))
-				path = Parser.path;
-			try {
-				mtimeFakefile = new File(path).lastModified();
+		public Parser(String path) throws FakeException, IOException {
+			this(new FileInputStream(path == null ||
+				path.equals("") ? Parser.path : path), null);
+			mtimeFakefile = new File(path).lastModified();
+		}
 
-				InputStream stream = new FileInputStream(path);
-				InputStreamReader input =
-					new InputStreamReader(stream);
-				reader = new BufferedReader(input);
+		public Parser(InputStream stream, File cwd)
+				throws FakeException {
+			if (stream == null) try {
+				stream = new FileInputStream(path);
 			} catch (IOException e) {
-				error("Could not read file: " + path);
+				error("File read error: " + e + ": " + path);
 			}
+			InputStreamReader input = new InputStreamReader(stream);
+			reader = new BufferedReader(input);
 
 			lineNumber = 0;
-			cwd = new File(".");
+			this.cwd = cwd != null ? cwd : new File(".");
 
 			if (allPlatforms == null) {
 				allPlatforms = new HashSet();
