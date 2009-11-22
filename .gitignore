@@ -34,7 +34,6 @@
 /jars/javac.jar
 /jars/jython2.2.1/cachedir
 /tmp.ijm
-/fake/Fake*.class
 /fake.jar
 /ij.jar
 /misc/Fiji.jar
