@@ -6,6 +6,11 @@ import ij.ImagePlus;
 import ij.Macro;
 import ij.WindowManager;
 
+import ij.plugin.PlugIn;
+
+import ij.plugin.filter.PlugInFilter;
+import ij.plugin.filter.PlugInFilterRunner;
+
 import ij.text.TextWindow;
 
 import ij.util.Tools;
@@ -33,10 +38,19 @@ public class PlugInExecutor {
 	}
 
 	public void run(String plugin) {
+		run(plugin, "");
+	}
+
+	public void run(String plugin, String arg) {
 		try {
-			ImageJ ij = IJ.getInstance();
 			IJ.resetEscape();
-			if (ij!=null) ij.runUserPlugIn(plugin, plugin, "", true);
+			ClassLoader classLoader = getClassLoader();
+			Class clazz = classLoader.loadClass(plugin);
+			Object object = clazz.newInstance();
+			if (object instanceof PlugIn)
+                                ((PlugIn)object).run(arg);
+                        else if (object instanceof PlugInFilter)
+                                new PlugInFilterRunner(object, plugin, arg);
 		} catch(Throwable e) {
 			IJ.showStatus("");
 			IJ.showProgress(1.0);
@@ -54,5 +68,9 @@ public class PlugInExecutor {
 				s = Tools.fixNewLines(s);
 			new TextWindow("Exception", s, 350, 250);
 		}
+	}
+
+	ClassLoader getClassLoader() {
+		return IJ.getClassLoader();
 	}
 }
