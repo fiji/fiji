@@ -18,6 +18,9 @@ import ij.util.Tools;
 import java.io.CharArrayWriter;
 import java.io.PrintWriter;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+
 /*
  * This class should have been public instead of being hidden in
  * ij/plugin/Compiler.java.
@@ -51,6 +54,8 @@ public class PlugInExecutor {
                                 ((PlugIn)object).run(arg);
                         else if (object instanceof PlugInFilter)
                                 new PlugInFilterRunner(object, plugin, arg);
+			else
+				runMain(object, arg);
 		} catch(Throwable e) {
 			IJ.showStatus("");
 			IJ.showProgress(1.0);
@@ -72,5 +77,13 @@ public class PlugInExecutor {
 
 	ClassLoader getClassLoader() {
 		return IJ.getClassLoader();
+	}
+
+	void runMain(Object object, String arg) throws IllegalAccessException,
+			InvocationTargetException, NoSuchMethodException {
+		String[] args = new String[] { arg };
+		Method main = object.getClass().getMethod("main",
+				new Class[] { args.getClass() });
+		main.invoke(object, (Object)args);
 	}
 }
