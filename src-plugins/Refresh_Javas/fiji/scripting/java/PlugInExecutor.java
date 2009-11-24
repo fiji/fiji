@@ -16,16 +16,40 @@ import ij.text.TextWindow;
 import ij.util.Tools;
 
 import java.io.CharArrayWriter;
+import java.io.File;
 import java.io.PrintWriter;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 
 /*
  * This class should have been public instead of being hidden in
  * ij/plugin/Compiler.java.
  */
 public class PlugInExecutor {
+	ClassLoader classLoader;
+
+	public PlugInExecutor() {}
+
+	/*
+	 * We cannot use ImageJ's class loader as delegate class loader,
+	 * as we possibly want to _override_ classes from the plugins/
+	 * directory.
+	 */
+	public PlugInExecutor(String classPath) throws MalformedURLException {
+		this(classPath.split(File.pathSeparator));
+	}
+
+	public PlugInExecutor(String[] paths) throws MalformedURLException {
+		URL[] urls = new URL[paths.length];
+		for (int i = 0; i < urls.length; i++)
+			urls[i] = new File(paths[i]).toURI().toURL();
+		classLoader = new URLClassLoader(urls);
+	}
 
 	/** Create a new object that runs the specified plugin
 		in a separate thread. */
@@ -76,7 +100,9 @@ public class PlugInExecutor {
 	}
 
 	ClassLoader getClassLoader() {
-		return IJ.getClassLoader();
+		if (classLoader == null)
+			classLoader = IJ.getClassLoader();
+		return classLoader;
 	}
 
 	void runMain(Object object, String arg) throws IllegalAccessException,

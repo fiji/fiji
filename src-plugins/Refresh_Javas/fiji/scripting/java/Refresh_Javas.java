@@ -10,13 +10,19 @@ import ij.io.PluginClassLoader;
 
 import ij.text.TextWindow;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.PrintWriter;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+
+import java.net.MalformedURLException;
 
 /**
  * This plugin looks for Java sources in plugins/ and turns them into
@@ -61,8 +67,12 @@ public class Refresh_Javas extends RefreshScripts {
 			while ((file = file.getParentFile()) != null &&
 					!file.equals(plugins))
 				c = file.getName() + "." + c;
+			if (file == null) {
+				runOutOfTreePlugin(path);
+				return;
+			}
+			runPlugin(c.replace('/', '.'));
 		} catch (Exception e) { e.printStackTrace(); }
-		runPlugin(c.replace('/', '.'));
 	}
 
 	boolean upToDate(String source, String target) {
@@ -112,5 +122,81 @@ public class Refresh_Javas extends RefreshScripts {
 
 	void runPlugin(String className) {
 		new PlugInExecutor().run(className);
+	}
+
+	void runOutOfTreePlugin(String path) throws IOException,
+			MalformedURLException {
+		String className = new File(path).getName();
+		if (className.endsWith(".java"))
+			className = className.substring(0,
+					className.length() - 5);
+
+		String packageName = null;
+		try {
+			packageName = getPackageName(path);
+		} catch (IOException e) {
+			IJ.error("Could not read " + path);
+			return;
+		}
+		String classPath = getPluginsClasspath();
+		File directory = new File(path).getCanonicalFile()
+			.getParentFile();
+		if (packageName != null) {
+			int dot = -1;
+			do {
+				className = directory.getName()
+					+ "." + className;
+				directory = directory.getParentFile();
+				dot = packageName.indexOf('.', dot + 1);
+			} while (dot > 0);
+		}
+		if (classPath == null || classPath.equals(""))
+			classPath = directory.getPath();
+		else
+			// make sure classes from this directory are found first
+			classPath = directory.getPath()
+				+ File.pathSeparator + classPath;
+
+		new PlugInExecutor(classPath).run(className);
+	}
+
+	String getPackageName(String path) throws IOException {
+		InputStream in = new FileInputStream(path);
+		InputStreamReader streamReader = new InputStreamReader(in);
+		BufferedReader reader = new BufferedReader(streamReader);
+
+		boolean multiLineComment = false;
+		String line;
+		while ((line = reader.readLine()) != null) {
+			if (multiLineComment) {
+				int endOfComment = line.indexOf("*/");
+				if (endOfComment < 0)
+					continue;
+				line = line.substring(endOfComment + 2);
+				multiLineComment = false;
+			}
+			line = line.trim();
+			while (line.startsWith("/*")) {
+				int endOfComment = line.indexOf("*/", 2);
+				if (endOfComment < 0) {
+					multiLineComment = true;
+					break;
+				}
+				line = line.substring(endOfComment + 2).trim();
+			}
+			if (multiLineComment)
+				continue;
+			if (line.startsWith("package ")) {
+				int endOfPackage = line.indexOf(';');
+				if (endOfPackage < 0)
+					break;
+				in.close();
+				return line.substring(8, endOfPackage);
+			}
+			if (!line.equals("") && !line.startsWith("//"))
+				break;
+		}
+		in.close();
+		return null;
 	}
 }
