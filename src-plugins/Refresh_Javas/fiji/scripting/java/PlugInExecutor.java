@@ -17,14 +17,14 @@ import java.io.PrintWriter;
  * This class should have been public instead of being hidden in
  * ij/plugin/Compiler.java.
  */
-public class PlugInExecuter {
+public class PlugInExecutor {
 
 	/** Create a new object that runs the specified plugin
 		in a separate thread. */
 	public void runThreaded(final String plugin) {
 		Thread thread = new Thread() {
 			public void run() {
-				PlugInExecuter.this.run(plugin);
+				PlugInExecutor.this.run(plugin);
 			}
 		};
 		thread.setPriority(Math.max(thread.getPriority()-2,

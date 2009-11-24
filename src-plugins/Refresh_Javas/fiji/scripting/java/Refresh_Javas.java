@@ -111,6 +111,6 @@ public class Refresh_Javas extends RefreshScripts {
 	}
 
 	void runPlugin(String className) {
-		new PlugInExecuter().run(className);
+		new PlugInExecutor().run(className);
 	}
 }
