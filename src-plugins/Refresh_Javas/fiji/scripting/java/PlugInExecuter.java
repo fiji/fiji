@@ -17,21 +17,22 @@ import java.io.PrintWriter;
  * This class should have been public instead of being hidden in
  * ij/plugin/Compiler.java.
  */
-public class PlugInExecuter implements Runnable {
-
-	private String plugin;
-	private Thread thread;
+public class PlugInExecuter {
 
 	/** Create a new object that runs the specified plugin
 		in a separate thread. */
-	PlugInExecuter(String plugin) {
-		this.plugin = plugin;
-		thread = new Thread(this, plugin);
-		thread.setPriority(Math.max(thread.getPriority()-2, Thread.MIN_PRIORITY));
+	public void runThreaded(final String plugin) {
+		Thread thread = new Thread() {
+			public void run() {
+				PlugInExecuter.this.run(plugin);
+			}
+		};
+		thread.setPriority(Math.max(thread.getPriority()-2,
+					Thread.MIN_PRIORITY));
 		thread.start();
 	}
 
-	public void run() {
+	public void run(String plugin) {
 		try {
 			ImageJ ij = IJ.getInstance();
 			IJ.resetEscape();
@@ -42,7 +43,8 @@ public class PlugInExecuter implements Runnable {
 			ImagePlus imp = WindowManager.getCurrentImage();
 			if (imp!=null) imp.unlock();
 			String msg = e.getMessage();
-			if (e instanceof RuntimeException && msg!=null && e.getMessage().equals(Macro.MACRO_CANCELED))
+			if (e instanceof RuntimeException && msg!=null &&
+					msg.equals(Macro.MACRO_CANCELED))
 				return;
 			CharArrayWriter caw = new CharArrayWriter();
 			PrintWriter pw = new PrintWriter(caw);
@@ -53,5 +55,4 @@ public class PlugInExecuter implements Runnable {
 			new TextWindow("Exception", s, 350, 250);
 		}
 	}
-
 }
