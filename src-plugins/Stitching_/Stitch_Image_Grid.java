@@ -75,7 +75,6 @@ public class Stitch_Image_Grid implements PlugIn
 	public static double thresholdDisplacementAbsoluteStatic = 3.5;
 	public static boolean previewOnlyStatic = false;
 	public static boolean computeOverlapStatic = true;
-	private static boolean computeOverlap;
 	
 	public void run(String arg0)
 	{
