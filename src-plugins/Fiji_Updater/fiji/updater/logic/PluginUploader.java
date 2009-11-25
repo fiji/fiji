@@ -109,10 +109,13 @@ public class PluginUploader {
 				continue;
 			plugin.filesize = file.filesize =
 				Util.getFilesize(plugin.filename);
-			file.plugin.newTimestamp = timestamp;
+			plugin.newTimestamp = timestamp;
 			file.filename = plugin.filename + "-" + timestamp;
-			if (plugin.getStatus() == PluginObject.Status.NOT_FIJI)
+			if (plugin.getStatus() ==
+					PluginObject.Status.NOT_FIJI) {
 				plugin.setStatus(PluginObject.Status.INSTALLED);
+				plugin.current.timestamp = timestamp;
+			}
 		}
 
 		XMLFileWriter.writeAndValidate(backup);

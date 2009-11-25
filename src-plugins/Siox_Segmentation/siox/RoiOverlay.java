@@ -55,7 +55,7 @@ public class RoiOverlay implements Overlay {
 		setColor( color );
 	}
 	
-	@Override
+	//@Override
 	public void paint(Graphics g, int x, int y, double magnification) {
 		if ( null == this.roi )
 			return;
