@@ -4,15 +4,25 @@ import ij.WindowManager;
 import ij.gui.ImageCanvas;
 import ij.gui.ShapeRoi;
 
-import java.awt.BasicStroke;
 import java.awt.event.MouseEvent;
 import java.awt.geom.GeneralPath;
-import java.awt.geom.Point2D;
 
 public class Test_Arrow extends AbstractTool {
 	
+	/**
+	 * How close we have to be from control points to frag them.
+	 */
+	private final static double DRAG_TOLERANCE = 3.0;
+	
 	private GeneralPath arrow;
+	/**
+	 * End and start point coordinates of the arrow.
+	 */
 	private double start_X, start_Y, end_X, end_Y;
+	/**
+	 * To monitor how much we drag for user interaction.
+	 */
+	private double start_drag_X, start_drag_Y;
 	/**
 	 * Double array that contains the coordinates in pixels of the arrow points.
 	 */
@@ -31,8 +41,7 @@ public class Test_Arrow extends AbstractTool {
 	private double base = 20.0;
 	private ImagePlus imp;
 	private ImageCanvas canvas;
-	
-	private enum InteractionStatus { NO_ARROW, FREE, DRAGGING_ARROW_HEAD, };
+	private enum InteractionStatus { NO_ARROW, FREE, DRAGGING_ARROW_HEAD, DRAGGING_ARROW_BASE, DRAGGING_LINE};
 	private InteractionStatus status;
 	
 	
@@ -62,10 +71,17 @@ public class Test_Arrow extends AbstractTool {
 			start_Y = y;
 			status = InteractionStatus.FREE;
 			} else {
-				double dist_to_line = distanceToLine(x, y);
-				double dist_to_arrowhead = distanceToArrow(x, y);
-				if (dist_to_arrowhead < 0) {
+				final double dist_to_line = distanceToLine(x, y);
+				final double dist_to_arrowhead = distanceToArrowHead(x, y);
+				final double dist_to_arrowbase = distanceToArrowBase(x, y);
+				if (dist_to_arrowhead < DRAG_TOLERANCE) {
 					status = InteractionStatus.DRAGGING_ARROW_HEAD;
+				} else if (dist_to_arrowbase < DRAG_TOLERANCE) {
+					status = InteractionStatus.DRAGGING_ARROW_BASE;
+				} else if (dist_to_line < DRAG_TOLERANCE) {
+					status = InteractionStatus.DRAGGING_LINE;
+					start_drag_X = x;
+					start_drag_Y = y;
 				} else {
 					status = InteractionStatus.FREE;
 					start_X = x;          
@@ -76,24 +92,59 @@ public class Test_Arrow extends AbstractTool {
 	
 
 	public void handleMouseDrag(MouseEvent e) {
+		final double x = canvas.offScreenXD(e.getX());
+		final double y = canvas.offScreenYD(e.getY());
 		switch (status) {
 		case DRAGGING_ARROW_HEAD:
 		case FREE:
-			end_X = canvas.offScreenXD(e.getX());        
-			end_Y = canvas.offScreenYD(e.getY());
+			end_X = x;        
+			end_Y = y;
+			break;
+		case DRAGGING_ARROW_BASE:
+			start_X =x;
+			start_Y = y;
+			break;
+		case DRAGGING_LINE:
+			final double dx = x-start_drag_X;
+			final double dy = y-start_drag_Y;
+			start_X += dx;
+			start_Y += dy;
+			end_X += dx;
+			end_Y += dy;
+			start_drag_X = x;
+			start_drag_Y = y;
+			break;
 		}
 		calculatePoints();
 		makePath();	
 		imp.setRoi(new ShapeRoi(arrow));
+		IJ.showStatus(String.format("Dist to line: %.1f - Dist to head: %.1f - status: %s", 
+				distanceToLine(x, y), distanceToArrowHead(x, y), status));		// DEBUG
 	}
 	
 	public void handleMouseMove(MouseEvent e) {
-		double x = canvas.offScreenXD(e.getX());
-		double y = canvas.offScreenYD(e.getY());
-		IJ.showStatus(String.format("Dist to line: %.1f - Dist to head: %.1f", 
-				distanceToLine(x, y), distanceToArrow(x, y)));		
+		final double x = canvas.offScreenXD(e.getX());
+		final double y = canvas.offScreenYD(e.getY());
+		IJ.showStatus(String.format("Dist to line: %.1f - Dist to head: %.1f - status: %s", 
+				distanceToLine(x, y), distanceToArrowHead(x, y), status));		// DEBUG
+	}
+	
+	public void handleMouseRelease(MouseEvent e) {
+		final double x = canvas.offScreenXD(e.getX());
+		final double y = canvas.offScreenYD(e.getY());
+		if  ( (Math.abs(start_X-x)< 1e-2) && (Math.abs(start_Y-y)< 1e-2) ) {
+			// Released close to start: erase arrow
+			arrow = new GeneralPath();
+			imp.setRoi(new ShapeRoi(arrow));
+			status = InteractionStatus.NO_ARROW;
+		} else {
+			status = InteractionStatus.FREE;
+		}
 	}
 
+	/*
+	 * PRIVATE METHODS
+	 */
 	
 	/**
 	 * Computes the coordinates of the arrow point, and updates the field points with them.
@@ -131,60 +182,45 @@ public class Test_Arrow extends AbstractTool {
 		arrow.lineTo(points[2*1], points[2*1+1]); 	// back to the head back
 	}
 	
-	double distanceToLine(double x, double y) {
-		// calculate normal vector
-		double normX = end_X - start_X;
-		double normY = end_Y - start_Y;
-		double l = Math.sqrt(normX * normX + normY * normY);
-		if (l > 0) {
-			normX /= l;
-			normY /= l;
+	/**
+	 * Measure the distance to the line between coordinates start_X, start_Y and end_X, end_Y.
+	 * If x, y is not in the space defined by the line segment, Inf is returned.
+	 */
+	private double distanceToLine(final double x, final double y) {
+		final double Ax = x-start_X;
+		final double Ay = y-start_Y;
+		final double Bx = x-end_X;
+		final double By = y-end_Y;
+		final double Lx = end_X-start_X;
+		final double Ly = end_Y-start_Y;
+		final double al = Ax*Lx + Ay*Ly;
+		final double bl = Bx*Lx + By*Ly;
+		if ( (al<0) || (bl>0) ) {
+			return Double.POSITIVE_INFINITY; // we are not within the segment space
 		}
-
-		// scalar product between p - p1 and the normal vector
-		double distance = (x - start_X) * normX
-			+ (y - start_Y) * normY;
-		// scalar product between the point projected onto the 
-		// arrow and the arrow vector
-		double factor = (x - start_X - distance * normX) * -normX
-			+ (y - start_Y - distance * normY) * normY;
-		if (factor < 0) {
-			double diffX = start_X - x;
-			double diffY = start_Y - y;
-			return Math.sqrt(diffX * diffX + diffY * diffY);
-		}
-		if (factor > 1) {
-			double diffX = end_X - x;
-			double diffY = end_Y - y;
-			return Math.sqrt(diffX * diffX + diffY * diffY);
-		}
-		return Math.abs(distance);
+		final double a_square = Ax*Ax+Ay*Ay;
+		final double b_square = Bx*Bx+By*By;
+		final double l = Math.sqrt(Lx*Lx+Ly*Ly);
+		final double h = Math.sqrt( a_square - al*al/l/l) + Math.sqrt( b_square - bl*bl/l/l);
+		return h/2;
 	}
 	
 	/**
-	 * Returns a negative distance when inside the approximated head
-	 * @param x
-	 * @param y
-	 * @return
+	 * Returns the distance to the arrow head
 	 */
-	double distanceToArrow(double x, double y) {
-		double arrowX = end_X - start_X;
-		double arrowY = end_Y - start_Y;
-		double l = Math.sqrt(arrowX * arrowX + arrowY * arrowY);
-
-		// calculate the center of the arrow head
-		double headX = end_X, headY = end_Y;
-		if (l > 0) {
-			headX -= arrowX * length / l;
-			headY -= arrowY * length / l;
-		}
-
-		// calculate the distance to the arrow head
-		double diffX = x - headX, diffY = y - headY;
-		double distance = Math.sqrt(diffX * diffX + diffY * diffY)	- length;
-
-		// compare to the line distance
-		return Math.min(distance, distanceToLine(x, y));
+	private double distanceToArrowHead(final double x, final double y) {
+		final double dx = x-end_X;
+		final double dy = y-end_Y;
+		return Math.sqrt(dx*dx+dy*dy);
+	}	
+	
+	/**
+	 * Returns the distance to the arrow base
+	 */
+	private double distanceToArrowBase(final double x, final double y) {
+		final double dx = x-start_X;
+		final double dy = y-start_Y;
+		return Math.sqrt(dx*dx+dy*dy);
 	}
 
 
