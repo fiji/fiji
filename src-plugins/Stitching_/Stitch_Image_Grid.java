@@ -75,7 +75,6 @@ public class Stitch_Image_Grid implements PlugIn
 	public static double thresholdDisplacementAbsoluteStatic = 3.5;
 	public static boolean previewOnlyStatic = false;
 	public static boolean computeOverlapStatic = true;
-	private static boolean computeOverlap;
 	
 	public void run(String arg0)
 	{
@@ -173,7 +172,7 @@ public class Stitch_Image_Grid implements PlugIn
 		
 		stitchImageGrid(filenames, directory, gridLayout, handleRGB, 
 				fusionMethod, output, overlap, startX, startY, startI, 
-				writeOnlyOutput, previewOnly);
+				writeOnlyOutput, previewOnly, computeOverlap);
 
 	}
 	
@@ -192,6 +191,7 @@ public class Stitch_Image_Grid implements PlugIn
 	 * @param startI starting I value
 	 * @param writeOnlyOutput "Save Only Tile Configuration" option
 	 * @param previewOnly "create only preview" option
+	 * @param computeOverlap "compute overlap" option
 	 */
 	public static void stitchImageGrid(
 			String filenames, 
@@ -205,7 +205,8 @@ public class Stitch_Image_Grid implements PlugIn
 			int startY, 
 			int startI, 
 			boolean writeOnlyOutput, 
-			boolean previewOnly)
+			boolean previewOnly,
+			boolean computeOverlap)
 	{
 		// find how to parse
 		String replaceX = "{", replaceY = "{", replaceI = "{";
