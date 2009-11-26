@@ -100,28 +100,28 @@ public abstract class AbstractTool implements ImageListener, MouseListener,
 			IJ.showStatus("unregistered " + getToolName() + " Tool");
 			return;
 		}
-		if (toolbar.getToolId() != toolID)
+		if (Toolbar.getToolId() != toolID)
 			return;
 		handleMousePress(e);
 	}
 
 	public void mouseReleased(MouseEvent e) {
-		if (toolbar.getToolId() == toolID)
+		if (Toolbar.getToolId() == toolID)
 			handleMouseRelease(e);
 	}
 
 	public void mouseDragged(MouseEvent e) {
-		if (toolbar.getToolId() == toolID)
+		if (Toolbar.getToolId() == toolID)
 			handleMouseDrag(e);
 	}
 
 	public void mouseMoved(MouseEvent e) {
-		if (toolbar.getToolId() == toolID)
+		if (Toolbar.getToolId() == toolID)
 			handleMouseMove(e);
 	}
 
 	public void mouseClicked(MouseEvent e) {
-		if (toolbar.getToolId() == toolID)
+		if (Toolbar.getToolId() == toolID)
 			handleMouseClick(e);
 	}
 
