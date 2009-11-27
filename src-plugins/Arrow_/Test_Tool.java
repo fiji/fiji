@@ -25,4 +25,12 @@ public class Test_Tool extends AbstractTool {
 	public void handleMouseDrag(MouseEvent e) {
 		IJ.showStatus("moved to " + e.getX() + ", " + e.getY());
 	}
+
+	@Override
+	public boolean hasOptionDialog() {
+		return false;
+	}
+
+	@Override
+	public void showOptionDialog() {	}
 }
