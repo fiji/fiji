@@ -180,7 +180,7 @@ public class Stitch_Image_Grid implements PlugIn
 	 * Stitch grid of 2D images
 	 *  
 	 * @param filenames file name format (for example: "TiledConfocal_{ii}.lsm")
-	 * @param directory input directory
+	 * @param inputDirectory input directory
 	 * @param gridLayout grid layout information
 	 * @param handleRGB RGB mode (@see stitching.CommonFunctions.colorList)
 	 * @param fusionMethod fusion method (@see stitching.CommonFunctions.methodListCollection)
@@ -193,9 +193,9 @@ public class Stitch_Image_Grid implements PlugIn
 	 * @param previewOnly "create only preview" option
 	 * @param computeOverlap "compute overlap" option
 	 */
-	public static void stitchImageGrid(
+	public static ImagePlus stitchImageGrid(
 			String filenames, 
-			String directory, 
+			String inputDirectory, 
 			GridLayout gridLayout, 
 			String handleRGB, 
 			String fusionMethod, 
@@ -255,16 +255,16 @@ public class Stitch_Image_Grid implements PlugIn
 		}
 		
 		// write the output file
-		directory = directory.replace('\\', '/');
-		directory = directory.trim();
-		if (directory.length() > 0 && !directory.endsWith("/"))
-			directory = directory + "/";
+		inputDirectory = inputDirectory.replace('\\', '/');
+		inputDirectory = inputDirectory.trim();
+		if (inputDirectory.length() > 0 && !inputDirectory.endsWith("/"))
+			inputDirectory = inputDirectory + "/";
 		
 		gridLayout.fusionMethod = fusionMethod;
 		gridLayout.handleRGB = handleRGB;
 		gridLayout.imageInformationList = new ArrayList<ImageInformation>();
 		
-		String fileName = directory + outputFileName;
+		String fileName = inputDirectory + outputFileName;
 		PrintWriter out = openFileWrite( fileName );
 				
         int imgX = 0, imgY = 0;
@@ -291,11 +291,11 @@ public class Stitch_Image_Grid implements PlugIn
             	
             	if (i == 0)
             	{
-            		ImagePlus imp = CommonFunctions.loadImage(directory, file, gridLayout.rgbOrder);
+            		ImagePlus imp = CommonFunctions.loadImage(inputDirectory, file, gridLayout.rgbOrder);
             		if (imp == null)
             		{
-            			IJ.error("Cannot open first file: '" + directory + file + "' - Quitting.");
-            			return;
+            			IJ.error("Cannot open first file: '" + inputDirectory + file + "' - Quitting.");
+            			return null;
             		}
             		if (imp.getStackSize() > 1)
             			gridLayout.dim = 3;
@@ -331,9 +331,9 @@ public class Stitch_Image_Grid implements PlugIn
             	if (out != null)
             	{
             		if (dim == 3)
-            			out.println(directory + file + "; ; (" + xoffset + ", " + yoffset + ", " + zoffset + ")");
+            			out.println(inputDirectory + file + "; ; (" + xoffset + ", " + yoffset + ", " + zoffset + ")");
             		else
-            			out.println(directory + file + "; ; (" + xoffset + ", " + yoffset + ")");
+            			out.println(inputDirectory + file + "; ; (" + xoffset + ", " + yoffset + ")");
             	}            	
             	
             	ImageInformation iI;
@@ -343,7 +343,7 @@ public class Stitch_Image_Grid implements PlugIn
             	else
             		iI = new ImageInformation(2, i, new TranslationModel2D());
             	
-            	iI.imageName = directory + file;
+            	iI.imageName = inputDirectory + file;
             	iI.imp = null;
             	iI.offset[0] = xoffset;
             	iI.offset[1] = yoffset;
@@ -363,13 +363,13 @@ public class Stitch_Image_Grid implements PlugIn
     		out.close();
     	
     	if (writeOnlyOutput)
-    		return;
+    		return null;
 
     	Stitch_Image_Collection smc = new Stitch_Image_Collection();
-    	smc.work(gridLayout, previewOnly, computeOverlap, fileName);
+    	return smc.work(gridLayout, previewOnly, computeOverlap, fileName);
 	}
 	
-	private static String getLeadingZeros(int zeros, int number)
+	public static String getLeadingZeros(int zeros, int number)
 	{
 		String output = "" + number;
 		
