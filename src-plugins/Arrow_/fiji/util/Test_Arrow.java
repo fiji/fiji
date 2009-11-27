@@ -1,3 +1,5 @@
+package fiji.util;
+
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -7,12 +9,14 @@ import ij.gui.ShapeRoi;
 import java.awt.event.MouseEvent;
 import java.awt.geom.GeneralPath;
 
-public class Test_Arrow extends AbstractTool {
+import javax.swing.SwingUtilities;
+
+public class Test_Arrow extends fiji.util.AbstractTool {
 	
 	/**
-	 * How close we have to be from control points to frag them.
+	 * How close we have to be from control points to drag them.
 	 */
-	private final static double DRAG_TOLERANCE = 3.0;
+	private final static double DRAG_TOLERANCE = 5.0;
 	
 	private GeneralPath arrow;
 	/**
@@ -28,7 +32,7 @@ public class Test_Arrow extends AbstractTool {
 	 */
 	private double[] points = new double[2*5];
 	/**
-	 * Length of the arrow head, in pixels. Could be set by user/
+	 * Length of the arrow head, in pixels. Could be set by user.
 	 */
 	private double length = 10.0;
 	/**
@@ -52,7 +56,7 @@ public class Test_Arrow extends AbstractTool {
 		arrow = new GeneralPath();
 		status = InteractionStatus.NO_ARROW;
 		if (toolID >= 0)
-			IJ.showStatus("selected " + getToolName() + " Tool(" + toolID + ")");
+			IJ.showStatus("selected " + getToolName() + " Tool(" + toolID + ")"); // DEBUG
 	}
 
 	public String getToolName() {
@@ -132,7 +136,7 @@ public class Test_Arrow extends AbstractTool {
 	public void handleMouseRelease(MouseEvent e) {
 		final double x = canvas.offScreenXD(e.getX());
 		final double y = canvas.offScreenYD(e.getY());
-		if  ( (Math.abs(start_X-x)< 1e-2) && (Math.abs(start_Y-y)< 1e-2) ) {
+		if  ( (status != InteractionStatus.DRAGGING_ARROW_BASE) && (Math.abs(start_X-x)< 1e-2) && (Math.abs(start_Y-y)< 1e-2) ) {
 			// Released close to start: erase arrow
 			arrow = new GeneralPath();
 			imp.setRoi(new ShapeRoi(arrow));
@@ -141,6 +145,28 @@ public class Test_Arrow extends AbstractTool {
 			status = InteractionStatus.FREE;
 		}
 	}
+	
+	/*
+	 * OPTION PANEL
+	 */
+	
+	@Override
+	public boolean hasOptionDialog() {
+		return true;
+	}
+
+	@Override
+	public void showOptionDialog() {
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				ArrowOptionPanel inst = new ArrowOptionPanel();
+				inst.setLocationRelativeTo(null);
+				inst.setVisible(true);
+			}
+		});
+		
+	}
+
 
 	/*
 	 * PRIVATE METHODS

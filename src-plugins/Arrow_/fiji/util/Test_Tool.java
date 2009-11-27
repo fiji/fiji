@@ -1,3 +1,4 @@
+package fiji.util;
 import ij.IJ;
 
 import java.awt.event.MouseEvent;

@@ -1,3 +1,4 @@
+package fiji.util;
 import ij.IJ;
 import ij.ImageListener;
 import ij.ImagePlus;
