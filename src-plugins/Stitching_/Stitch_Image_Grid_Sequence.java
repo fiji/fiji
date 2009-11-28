@@ -234,6 +234,9 @@ public class Stitch_Image_Grid_Sequence implements PlugIn
 			IJ.log("Saved");
 			
 			startI += gridSize;
+			
+			// Iteratively close fused images to avoid unnecessarily filling the screen 
+			fusedImage.close();
 		}
 		
 	}
