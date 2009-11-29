@@ -148,7 +148,7 @@ public class Stitch_Image_Collection implements PlugIn
 		work(imageInformationList, createPreview, computeOverlap, fusionMethod, handleRGB, fileName);
 	}
 	
-	public void work( GridLayout gridLayout, boolean createPreview, boolean computeOverlap, String fileName )
+	public ImagePlus work( GridLayout gridLayout, boolean createPreview, boolean computeOverlap, String fileName )
 	{
 		this.alpha = gridLayout.alpha;
 		this.thresholdR = gridLayout.thresholdR;
@@ -157,10 +157,10 @@ public class Stitch_Image_Collection implements PlugIn
 		this.dim = gridLayout.dim;
 		this.rgbOrder = gridLayout.rgbOrder;
 		
-		work(gridLayout.imageInformationList, createPreview, computeOverlap, gridLayout.fusionMethod, gridLayout.handleRGB, fileName);
+		return work(gridLayout.imageInformationList, createPreview, computeOverlap, gridLayout.fusionMethod, gridLayout.handleRGB, fileName);
 	}
 	
-	public void work(ArrayList<ImageInformation> imageInformationList, boolean createPreview, boolean computeOverlap, String fusionMethod, String handleRGB, String fileName)
+	public ImagePlus work(ArrayList<ImageInformation> imageInformationList, boolean createPreview, boolean computeOverlap, String fusionMethod, String handleRGB, String fileName)
 	{		
 		IJ.log("(" + new Date(System.currentTimeMillis()) + "): Stitching the following files:");
 		for (ImageInformation iI : imageInformationList)
@@ -171,7 +171,7 @@ public class Stitch_Image_Collection implements PlugIn
 				
 		// ask if we should start like this
 		if (createPreview)
-			return;
+			return null;
 				
 		// this will store the final output configuration
 		ArrayList<ImageInformation> newImageInformationList;
@@ -213,6 +213,7 @@ public class Stitch_Image_Collection implements PlugIn
 		ImagePlus fused = fuseImages(newImageInformationList, max, "Stitched Image", fusionMethod, rgbOrder, dim, alpha);
 		fused.show();
 		IJ.log("(" + new Date(System.currentTimeMillis()) + "): Finished Stitching.");
+		return fused;
 	}
 	
 	protected void writeOutputConfiguration( String fileName, ArrayList<ImageInformation> imageInformationList )
