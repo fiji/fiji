@@ -17,42 +17,55 @@ import java.awt.geom.Rectangle2D;
  * @author Jean-Yves Tinevez 
  *
  */
-public enum Arrow implements Shape {
-	DELTA 	( 	10, 	20, 	90),
-	THICK   ( 	10, 	20,		120),
-	THIN 	( 	10, 	30,		30),
-	CIRCLE  ( 	10, 	Double.NaN, Double.NaN);
+public class Arrow implements Shape {
+	
+	public static enum ArrowStyle {
+	DELTA 	,
+	THICK   ,
+	THIN 	,
+	CIRCLE  ;
+	}
 	
 	private GeneralPath path = new GeneralPath();
 	private Point2D start, end;
-	/**
-	 * Length of the arrow head, in pixels.
-	 */
+	/** Style of the arrow	 */
+	private ArrowStyle style;
+	/** Length of the arrow head, in pixels. */
 	private double length;
-	/**
-	 * Tip angle (in degrees) of the arrow head.
-	 */
-	private double tip;
-	/**
-	 * Base angle (in degrees) of the arrow head.
-	 */
-	private double base;
-
+	/** Points coordinates for DELTA, THICK and THIN styles.  */
 	private double[] points = new double[2*5];
 
 	/*
-	 * CONSTRUCTOR
+	 * CONSTRUCTORS
 	 */
 	
-	private Arrow(double _length, double _tip, double _base) {
+	public Arrow() {
+		this(ArrowStyle.DELTA);
+	}
+	
+	public Arrow(ArrowStyle _style) {
+		this(_style, 10.0);
+	}
+	
+	public Arrow(ArrowStyle _style, double _length) {
+		style = _style;
 		length  = _length;
-		tip = Math.toRadians(_tip); // We store in radians
-		base = Math.toRadians(_base);
+	}
+	
+	/*
+	 * PUBLIC METHODS
+	 */
+	
+	/**
+	 * Return a new Arrow object, with identical properties that of the caller.
+	 */
+	public Arrow clone() {
+		Arrow new_arrow = new Arrow(style, length);
+		new_arrow.setStartPoint(start);
+		new_arrow.setEndPoint(end);
+		return new_arrow;
 	}
 		
-	
-	
-
 	/*
 	 * SETTERS AND GETTERS
 	 */
@@ -62,6 +75,10 @@ public enum Arrow implements Shape {
 	public void setEndPoint(Point2D end) {		this.end = end; 	}
 	public Point2D getEndPoint() { 		return end; 	}
 	public void setLength(double _length) { this.length = _length; }
+	public double getLength() { return length; }
+	public ArrowStyle getStyle() { return style; }
+	public void setStyle(ArrowStyle _style) { this.style = _style; }
+	
 	
 	/*
 	 * PRIVATE METHODS
@@ -70,7 +87,7 @@ public enum Arrow implements Shape {
 	private Shape getPath() {
 		path.reset();
 		if ( (start != null) || ( end != null) ) {
-			switch (this) {
+			switch (style) {
 			case DELTA:
 			case THICK:
 			case THIN:
@@ -97,22 +114,32 @@ public enum Arrow implements Shape {
 	 * Computes the coordinates of the arrow point, and updates the field points with them.
 	 */
 	private void calculatePoints() {
+		double tip = 0.0;
+		double base;
 		// Start and end point
 		points[0] = start.getX();
 		points[1] = start.getY();
 		points[2*3] = end.getX();
 		points[2*3+1] = end.getY();
 		final double alpha = Math.atan2(points[2*3+1] - points[1], points[2*3] - points[0]);
-		double SL = 0;
-		// P1 = P3 - length*alpha
-		switch (this) {
+		double SL = 0.0;
+		switch (style) {
 		case DELTA:
+			tip = Math.toRadians(20.0);
+			base = Math.toRadians(90.0);
+			points[1*2]   = points[2*3]   - length*Math.cos(alpha);
+			points[1*2+1] = points[2*3+1] - length*Math.sin(alpha);
+			SL = length * Math.sin(base) / Math.sin(base+tip);;
+			break;
 		case THICK:
+			tip = Math.toRadians(20);
+			base = Math.toRadians(120);
 			points[1*2]   = points[2*3]   - length*Math.cos(alpha);
 			points[1*2+1] = points[2*3+1] - length*Math.sin(alpha);
 			SL = length * Math.sin(base) / Math.sin(base+tip);;
 			break;
 		case THIN:
+			tip = Math.toRadians(30);
 			points[1*2]   = points[2*3];
 			points[1*2+1] = points[2*3+1];
 			SL = length;
@@ -137,18 +164,7 @@ public enum Arrow implements Shape {
 		path.lineTo(points[2 * 1], points[2 * 1 + 1]); // back to the head back
 	}
 	
-	/*
-	 * STATIC METHODS
-	 */
 	
-	public static String[] getStyleStrings() {
-		final Arrow[] styles = Arrow.values();
-		String[] list = new String[styles.length];
-		for (int i = 0; i < list.length; i++) {	list[i] = styles[i].name();	}
-		return list;
-	}
-
-
 	/*
 	 * SHAPE METHODS
 	 */

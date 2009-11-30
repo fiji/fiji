@@ -6,13 +6,15 @@ import ij.WindowManager;
 import ij.gui.ImageCanvas;
 import ij.gui.ShapeRoi;
 
+import java.awt.BasicStroke;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
-import java.awt.geom.GeneralPath;
 import java.awt.geom.Point2D;
 
 import javax.swing.SwingUtilities;
 
-public class Test_Arrow extends fiji.util.AbstractTool {
+public class Test_Arrow extends fiji.util.AbstractTool implements ActionListener {
 	
 	/**
 	 * How close we have to be from control points to drag them.
@@ -20,6 +22,8 @@ public class Test_Arrow extends fiji.util.AbstractTool {
 	private final static double DRAG_TOLERANCE = 5.0;
 	
 	private Arrow arrow;
+	private BasicStroke stroke = new BasicStroke(1.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
+	private ShapeRoi roi;
 	/**
 	 * End and start point coordinates of the arrow.
 	 */
@@ -39,7 +43,7 @@ public class Test_Arrow extends fiji.util.AbstractTool {
 		super.run(arg);
 		imp = WindowManager.getCurrentImage();
 		canvas = imp.getCanvas();
-		arrow = Arrow.DELTA;
+		arrow = new Arrow();
 		status = InteractionStatus.NO_ARROW;
 		if (toolID >= 0)
 			IJ.showStatus("selected " + getToolName() + " Tool(" + toolID + ")"); // DEBUG
@@ -107,7 +111,7 @@ public class Test_Arrow extends fiji.util.AbstractTool {
 		}
 		arrow.setStartPoint(new Point2D.Double(start_X,start_Y));
 		arrow.setEndPoint(new Point2D.Double(end_X,end_Y));
-		imp.setRoi(new ShapeRoi(arrow));
+		paint();
 		IJ.showStatus(String.format("Dist to line: %.1f - Dist to head: %.1f - status: %s", 
 				distanceToLine(x, y), distanceToArrowHead(x, y), status));		// DEBUG
 	}
@@ -124,7 +128,7 @@ public class Test_Arrow extends fiji.util.AbstractTool {
 		final double y = canvas.offScreenYD(e.getY());
 		if  ( (status != InteractionStatus.DRAGGING_ARROW_BASE) && (Math.abs(start_X-x)< 1e-2) && (Math.abs(start_Y-y)< 1e-2) ) {
 			// Released close to start: erase arrow
-			imp.restoreRoi();
+			imp.killRoi();
 			status = InteractionStatus.NO_ARROW;
 		} else {
 			status = InteractionStatus.FREE;
@@ -142,14 +146,29 @@ public class Test_Arrow extends fiji.util.AbstractTool {
 
 	@Override
 	public void showOptionDialog() {
+		final ActionListener current_instance = this;
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
-				ArrowOptionPanel inst = new ArrowOptionPanel();
+				ArrowOptionPanel inst;
+				if (status == InteractionStatus.NO_ARROW) {
+					inst = new ArrowOptionPanel();
+				} else {
+					inst = new ArrowOptionPanel(arrow, stroke);
+				}
 				inst.setLocationRelativeTo(null);
 				inst.setVisible(true);
+				inst.addActionListener(current_instance);
 			}
 		});
 		
+	}
+		
+	public void actionPerformed(ActionEvent e) {
+		ArrowOptionPanel panel = (ArrowOptionPanel) e.getSource();
+		arrow.setLength(panel.getLength());
+		arrow.setStyle(panel.getStyle());
+		stroke = panel.getStroke();
+		paint();
 	}
 
 
@@ -157,6 +176,16 @@ public class Test_Arrow extends fiji.util.AbstractTool {
 	 * PRIVATE METHODS
 	 */
 	
+	/**
+	 * Paint the arrow roi.
+	 */
+	private void paint() {
+		if (status != InteractionStatus.NO_ARROW) {
+			roi = new ShapeRoi(arrow);
+			roi.setStroke(stroke);
+			imp.setRoi(roi);
+		}
+	}
 	
 	/**
 	 * Measure the distance to the line between coordinates start_X, start_Y and end_X, end_Y.
@@ -198,6 +227,8 @@ public class Test_Arrow extends fiji.util.AbstractTool {
 		final double dy = y-start_Y;
 		return Math.sqrt(dx*dx+dy*dy);
 	}
+
+
 
 
 }

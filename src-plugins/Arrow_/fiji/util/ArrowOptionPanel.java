@@ -1,13 +1,20 @@
 package fiji.util;
+
+import java.awt.AWTEvent;
+import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Canvas;
+import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.geom.Point2D;
-import javax.swing.BorderFactory;
 
+import javax.swing.BorderFactory;
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JCheckBox;
@@ -21,21 +28,9 @@ import javax.swing.WindowConstants;
 import javax.swing.border.BevelBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.EventListenerList;
 
 
-
-/**
-* This code was edited or generated using CloudGarden's Jigloo
-* SWT/Swing GUI Builder, which is free for non-commercial
-* use. If Jigloo is being used commercially (ie, by a corporation,
-* company or business for any purpose whatever) then you
-* should purchase a license for each developer using Jigloo.
-* Please visit www.cloudgarden.com for details.
-* Use of Jigloo implies acceptance of these licensing terms.
-* A COMMERCIAL LICENSE HAS NOT BEEN PURCHASED FOR
-* THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
-* LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
-*/
 public class ArrowOptionPanel extends javax.swing.JFrame {
 
 	private static final long serialVersionUID = 1;
@@ -47,6 +42,9 @@ public class ArrowOptionPanel extends javax.swing.JFrame {
 			e.printStackTrace();
 		}
 	}
+    /** A list of event listeners for this component. */
+    private  EventListenerList listenerList = new EventListenerList();
+    private boolean firingActionEvent = false;
 
 	private JPanel jPanelMain;
 	private JLabel jLabelArrowThickness;
@@ -61,6 +59,9 @@ public class ArrowOptionPanel extends javax.swing.JFrame {
 	private JComboBox jComboBoxHeadStyle;
 	private JLabel jLabelHeadStyle;
 
+	private static BasicStroke stroke;
+	private static Arrow arrow;
+	
 	/*
 	 * INNER CLASSES
 	 */
@@ -71,20 +72,25 @@ public class ArrowOptionPanel extends javax.swing.JFrame {
 	private class ArrowExampleCanvas extends Canvas {
 		private static final long serialVersionUID = 1L;
 		Point2D start, end;
-		Arrow arrow;
 		public void paint(Graphics g) {
 			super.paint(g);
 			start 	= new Point2D.Double(jPanelDrawArea.getWidth()*0.25, jPanelDrawArea.getHeight()/2.0);
 			end 	= new Point2D.Double(jPanelDrawArea.getWidth()*0.75, jPanelDrawArea.getHeight()/2.0);
-			arrow = (Arrow) jComboBoxHeadStyle.getSelectedItem();
+			arrow = new Arrow((Arrow.ArrowStyle) jComboBoxHeadStyle.getSelectedItem());
 			arrow.setStartPoint(start);
 			arrow.setEndPoint(end);
 			try {
 				final double length = Double.parseDouble(jTextFieldHeadLength.getText() );
+				final float width = Float.parseFloat(jTextFieldArrowThickness.getText());
 				arrow.setLength(length);				
+				stroke = new BasicStroke(width, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
+				Graphics2D g2 = (Graphics2D) g;
+				g2.setStroke(stroke);
+				g2.draw(arrow);
+				if (jCheckBoxFillArrow.isSelected()) {	g2.fill(arrow);		}
+				// Fire a property change
+				fireActionEvent();
 			} catch (NumberFormatException nfe) { }
-			Graphics2D g2 = (Graphics2D) g;
-			g2.draw(arrow.getPath());
 		}
 		
 	}
@@ -96,7 +102,6 @@ public class ArrowOptionPanel extends javax.swing.JFrame {
 	private class SliderChangeListener implements ChangeListener {
 		private JTextField text_field;
 		public SliderChangeListener(JTextField _text_field) {
-			super();
 			this.text_field = _text_field;
 		}
 		public void stateChanged(ChangeEvent e) {
@@ -113,7 +118,6 @@ public class ArrowOptionPanel extends javax.swing.JFrame {
 	private class TextFieldActionListener implements ActionListener {
 		private JSlider slider;
 		public TextFieldActionListener(JSlider _slider) {
-			super();
 			this.slider = _slider;
 		}
 		public void actionPerformed(ActionEvent e) {
@@ -129,19 +133,54 @@ public class ArrowOptionPanel extends javax.swing.JFrame {
 		
 	}
 	
+	/**
+	 * MouseWheellistener that will listen to mouse scroll over a slider and update the slider value
+	 * accordingly.
+	 */
+	private class SliderMouseWheelListener implements MouseWheelListener {
+		private JSlider slider;
+		public SliderMouseWheelListener(JSlider _slider) {
+			this.slider = _slider;
+		}
+				public void mouseWheelMoved(MouseWheelEvent e) {
+			int steps = e.getWheelRotation();
+			slider.setValue(slider.getValue()+steps);
+		}
+	}
+		
 	/*
-	 * PUBLIC METHODS
+	 * CONSTRUCTOR
 	 */
 	
 	/**
-	* Auto-generated main method to display this JFrame
-	*/
-	public static void main(String[] args) {
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				ArrowOptionPanel inst = new ArrowOptionPanel();
-				inst.setLocationRelativeTo(null);
-				inst.setVisible(true);
+	 * Instantiates the config panel with using settings from arguments. 
+	 */
+	public ArrowOptionPanel(Arrow _arrow, BasicStroke _stroke) {
+		super();
+		initGUI();
+		stroke = _stroke;
+		arrow = _arrow;
+		jComboBoxHeadStyle.setSelectedItem(arrow.getStyle());
+		jTextFieldArrowThickness.setText(String.format("%.0f", stroke.getLineWidth()));
+		jSliderArrowThickness.setValue((int) stroke.getLineWidth());
+		jTextFieldHeadLength.setText(String.format("%.0f", arrow.getLength()));
+		jSliderHeadLength.setValue((int) arrow.getLength() );
+		
+		ActionListener al = new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				canvasDrawingArea.paint(canvasDrawingArea.getGraphics());
+			} 
+		};
+		jComboBoxHeadStyle.addActionListener(al);
+		jTextFieldArrowThickness.addActionListener(new TextFieldActionListener(jSliderArrowThickness));
+		jTextFieldHeadLength.addActionListener(new TextFieldActionListener(jSliderHeadLength));
+		jSliderArrowThickness.addChangeListener(new SliderChangeListener(jTextFieldArrowThickness));
+		jSliderArrowThickness.addMouseWheelListener(new SliderMouseWheelListener(jSliderArrowThickness));
+		jSliderHeadLength.addChangeListener(new SliderChangeListener(jTextFieldHeadLength));
+		jSliderHeadLength.addMouseWheelListener(new SliderMouseWheelListener(jSliderHeadLength));
+		jCheckBoxFillArrow.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				canvasDrawingArea.paint(canvasDrawingArea.getGraphics());
 			}
 		});
 	}
@@ -159,9 +198,67 @@ public class ArrowOptionPanel extends javax.swing.JFrame {
 		jTextFieldArrowThickness.addActionListener(new TextFieldActionListener(jSliderArrowThickness));
 		jTextFieldHeadLength.addActionListener(new TextFieldActionListener(jSliderHeadLength));
 		jSliderArrowThickness.addChangeListener(new SliderChangeListener(jTextFieldArrowThickness));
+		jSliderArrowThickness.addMouseWheelListener(new SliderMouseWheelListener(jSliderArrowThickness));
 		jSliderHeadLength.addChangeListener(new SliderChangeListener(jTextFieldHeadLength));
+		jSliderHeadLength.addMouseWheelListener(new SliderMouseWheelListener(jSliderHeadLength));
+		jCheckBoxFillArrow.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				canvasDrawingArea.paint(canvasDrawingArea.getGraphics());
+			}
+		});
 	}
 	
+	/*
+	 * PUBLIC METHODS
+	 */
+	
+
+	/**
+	* Auto-generated main method to display this JFrame
+	*/
+	public static void main(String[] args) {
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				ArrowOptionPanel inst = new ArrowOptionPanel();
+				inst.setLocationRelativeTo(null);
+				inst.setVisible(true);
+			}
+		});
+	}
+	
+	public void addActionListener(ActionListener l) {
+		listenerList.add(ActionListener.class,l);
+	}
+	
+    /** Removes an <code>ActionListener</code>.
+    *
+    * @param l  the <code>ActionListener</code> to remove
+    */
+   public void removeActionListener(ActionListener l) {
+	    listenerList.remove(ActionListener.class, l);
+   }
+
+   /**
+    * Returns an array of all the <code>ActionListener</code>s added
+    * to this JComboBox with addActionListener().
+    *
+    * @return all of the <code>ActionListener</code>s added or an empty
+    *         array if no listeners have been added
+    * @since 1.4
+    */
+   public ActionListener[] getActionListeners() {
+       return (ActionListener[])listenerList.getListeners(
+               ActionListener.class);
+   }
+   
+  
+   /*
+    * GETTERS AND SETTERS
+    */
+   
+   public BasicStroke getStroke() {	   return stroke;   }
+   public double getLength() { return arrow.getLength(); }
+   public Arrow.ArrowStyle getStyle() { return arrow.getStyle(); }   
 	
 	/*
 	 * PRIVATE METHODS
@@ -189,7 +286,7 @@ public class ArrowOptionPanel extends javax.swing.JFrame {
 				}
 				{
 					ComboBoxModel jComboBoxHeadStyleModel = 
-						new DefaultComboBoxModel( Arrow.values() );
+						new DefaultComboBoxModel( Arrow.ArrowStyle.values() );
 					jComboBoxHeadStyle = new JComboBox();
 					jPanelMain.add(jComboBoxHeadStyle);
 					jComboBoxHeadStyle.setModel(jComboBoxHeadStyleModel);
@@ -271,6 +368,43 @@ public class ArrowOptionPanel extends javax.swing.JFrame {
 			this.setSize(280, 180);
 		} catch (Exception e) {
 			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Notifies all listeners that have registered interest for
+	 * notification on this event type.
+	 *  
+	 * @see EventListenerList
+	 */
+	private void fireActionEvent() {
+		if (!firingActionEvent) {
+			// Set flag to ensure that an infinite loop is not created
+			firingActionEvent = true;
+			ActionEvent e = null;
+			// Guaranteed to return a non-null array
+			Object[] listeners = listenerList.getListenerList();
+			long mostRecentEventTime = EventQueue.getMostRecentEventTime();
+			int modifiers = 0;
+			AWTEvent currentEvent = EventQueue.getCurrentEvent();
+			if (currentEvent instanceof InputEvent) {
+				modifiers = ((InputEvent)currentEvent).getModifiers();
+			} else if (currentEvent instanceof ActionEvent) {
+				modifiers = ((ActionEvent)currentEvent).getModifiers();
+			}
+			// Process the listeners last to first, notifying
+			// those that are interested in this event
+			for ( int i = listeners.length-2; i>=0; i-=2 ) {
+				if ( listeners[i]==ActionListener.class ) {
+					// Lazily create the event:
+					if ( e == null )
+						e = new ActionEvent(this,ActionEvent.ACTION_PERFORMED,
+								"arrowPropertyChanged",
+								mostRecentEventTime, modifiers);
+					((ActionListener)listeners[i+1]).actionPerformed(e);
+				}
+			}
+			firingActionEvent = false;
 		}
 	}
 
