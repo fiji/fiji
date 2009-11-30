@@ -5,6 +5,7 @@ package register_virtual_stack;
  * This work released under the terms of the General Public License in its latest edition. 
  * */
 
+import fiji.util.GenericDialogPlus;
 import ij.IJ;
 import ij.gui.GenericDialog;
 import ij.gui.Plot;
@@ -86,7 +87,7 @@ import bunwarpj.trakem2.transform.CubicBSplineTransform;
  * <p>
  * <A target="_blank" href="http://pacific.mpi-cbg.de/wiki/Register_Virtual_Stack_Slices">http://pacific.mpi-cbg.de/wiki/Register_Virtual_Stack_Slices</A>
  * 
- * @version 11/02/2009
+ * @version 11/30/2009
  * @author Ignacio Arganda-Carreras (ignacio.arganda@gmail.com), Stephan Saalfeld and Albert Cardona
  */
 public class Register_Virtual_Stack_MT implements PlugIn 
@@ -120,6 +121,11 @@ public class Register_Virtual_Stack_MT implements PlugIn
 	public static boolean non_shrinkage = false;
 	/** save transformation flag */
 	public static boolean save_transforms = false;
+	
+	/** source directory **/
+	public static String sourceDirectory="";
+	/** output directory **/
+	public static String outputDirectory="";
 	
 	// Regularization 
 	/** scaling regularization parameter [0.0-1.0] */
@@ -167,8 +173,10 @@ public class Register_Virtual_Stack_MT implements PlugIn
 	 */
 	public void run(String arg) 
 	{
-		GenericDialog gd = new GenericDialog("Register Virtual Stack");
+		GenericDialogPlus gd = new GenericDialogPlus("Register Virtual Stack");
 
+		gd.addDirectoryField("Source directory", sourceDirectory, 50);
+		gd.addDirectoryField("Output directory", outputDirectory, 50);
 		gd.addChoice("Feature extraction model: ", featuresModelStrings, featuresModelStrings[featuresModelIndex]);
 		gd.addChoice("Registration model: ", registrationModelStrings, registrationModelStrings[registrationModelIndex]);
 		gd.addCheckbox("Advanced setup", advanced);	
@@ -181,36 +189,21 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		if (gd.wasCanceled()) 
 			return;
 				
+		sourceDirectory = gd.getNextString();
+		outputDirectory = gd.getNextString();
 		featuresModelIndex = gd.getNextChoiceIndex();
 		registrationModelIndex = gd.getNextChoiceIndex();
 		advanced = gd.getNextBoolean();
 		non_shrinkage = gd.getNextBoolean();
 		save_transforms = gd.getNextBoolean();
 
-		// Choose source image folder
-		JFileChooser chooser = new JFileChooser();
-		if(currentDirectory != null)
-			chooser.setCurrentDirectory(new java.io.File(currentDirectory));
-		else
-			chooser.setCurrentDirectory(new java.io.File("."));
-	    chooser.setDialogTitle("Choose directory with Source images");
-	    chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-	    chooser.setAcceptAllFileFilterUsed(false);
-	    if (chooser.showOpenDialog(gd) != JFileChooser.APPROVE_OPTION)
-	    	return;
-	     		
-		String source_dir = chooser.getSelectedFile().toString();
+		String source_dir = sourceDirectory;
 		if (null == source_dir) 
 			return;
 		source_dir = source_dir.replace('\\', '/');
 		if (!source_dir.endsWith("/")) source_dir += "/";
-
-		// Choose target folder to save images into
-		chooser.setDialogTitle("Choose directory to store Output images");
-		if (chooser.showOpenDialog(gd) != JFileChooser.APPROVE_OPTION)
-	    	return;
 		
-		String target_dir = chooser.getSelectedFile().toString();
+		String target_dir = outputDirectory;
 		if (null == target_dir) 
 			return;
 		target_dir = target_dir.replace('\\', '/');
@@ -222,6 +215,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		if(save_transforms)
 		{
 			// Choose target folder to save images into
+			JFileChooser chooser = new JFileChooser(); 
 			chooser.setDialogTitle("Choose directory to store Transform files");
 			if (chooser.showOpenDialog(gd) != JFileChooser.APPROVE_OPTION)
 		    	return;
@@ -237,6 +231,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		String referenceName = null;						
 		if(non_shrinkage == false)
 		{		
+			JFileChooser chooser = new JFileChooser(); 
 			// Choose reference image
 			chooser.setDialogTitle("Choose reference image");
 			chooser.setCurrentDirectory(new java.io.File(source_dir));
@@ -290,7 +285,9 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		// Show parameter dialogs when advanced option is checked
 		if (advanced && !p.showDialog())
 			return;
-		if (non_shrink && advanced && !showRegularizationDialog(p))
+		if (non_shrink && advanced 
+				&& Param.registrationModelIndex != Register_Virtual_Stack_MT.TRANSLATION 
+				&& !showRegularizationDialog(p))
 			return;
 		exec(source_dir, target_dir, save_dir, referenceName, p, non_shrink);
 	}
