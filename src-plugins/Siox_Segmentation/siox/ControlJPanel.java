@@ -79,8 +79,6 @@ public class ControlJPanel extends JPanel
 	final JButton resetJButton=new JButton("Reset");	
 	final JButton createMaskJButton=new JButton("Create mask");
 	
-	/** Denotes region of interest defined. Next foreground is to be added. */
-	final static int ROI_DEFINED_STATUS = 4;
 	/** Denotes some foreground being added. More foreground/background can be added or segmentation started. */
 	final static int FG_ADDED_STATUS = 5;
 	/** Denotes basic segmentation finished.  Allows detail refinement. */
@@ -210,7 +208,7 @@ public class ControlJPanel extends JPanel
 		final Color offColor = UIManager.getColor("Label.disabledForeground");
 		
 		// panel for the SIOX segmentation step:
-		final boolean addPhase = (status==ROI_DEFINED_STATUS) || (status==FG_ADDED_STATUS);
+		final boolean addPhase = status==FG_ADDED_STATUS;
 		((TitledBorder) segJPanel.getBorder()).setTitleColor(addPhase ? onColor : offColor);		
 		
 		smoothness.setEnabled(addPhase);
@@ -219,13 +217,7 @@ public class ControlJPanel extends JPanel
 		fgJRadioButton.setEnabled(addPhase);
 		multipart.setEnabled(addPhase);
 		segmentJButton.setEnabled(addPhase);
-		
-		// force foreground selection when where no foreground is defined yet:
-		bgJRadioButton.setEnabled(status == FG_ADDED_STATUS);
-		if (!bgJRadioButton.isEnabled()) 
-		{
-			fgJRadioButton.setSelected(true);
-		}
+				
 		segJPanel.repaint(); // update new border title color on screen
 		
 		// panel for the detail refinement step:

@@ -129,9 +129,8 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
   	    
   	    add(all);  	      	      	   
 		
-	    this.pack();	    	    	    
-	    this.setVisible(true);
-	    	   
+	    this.pack();	 	    
+	    this.setVisible(true);    	   
 	}
     
 
@@ -147,7 +146,7 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 		else if (e.getSource() == controlPanel.fgJRadioButton && lastButton != controlPanel.fgJRadioButton) {
 			roiOverlay.setColor(Color.RED);
 			backgroundRoi = setNewRoi(foregroundRoi, roiOverlay);		
-			lastButton = controlPanel.fgJRadioButton;
+			lastButton = controlPanel.fgJRadioButton;			
 		}
 		else if (e.getSource() == controlPanel.segmentJButton) {
 			segment();
@@ -203,10 +202,9 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 		confMatrix = null;
 		
 		// Set initial status
-		controlPanel.status = foregroundRoi != null ? 
-				ControlJPanel.FG_ADDED_STATUS : ControlJPanel.ROI_DEFINED_STATUS;
-		controlPanel.updateComponentEnabling();		
-		lastButton = controlPanel.fgJRadioButton;
+		controlPanel.status = ControlJPanel.FG_ADDED_STATUS;			
+		lastButton = controlPanel.fgJRadioButton.isSelected() ? 
+				controlPanel.fgJRadioButton : controlPanel.bgJRadioButton;
 		roiOverlay.setColor(Color.RED);
 		roiOverlay.setComposite( transparency050 );
 		
@@ -218,6 +216,8 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 			imp.setRoi(foregroundRoi);
 			roiOverlay.setRoi(backgroundRoi);
 		}
+		
+		controlPanel.updateComponentEnabling();
 		
 		imp.changes = true;		
 		imp.updateAndDraw();		
@@ -380,7 +380,5 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 		imp.changes = true;
 		imp.updateAndDraw();		
 	}
-	
-
 	
 }// end class SegmentationGUI
