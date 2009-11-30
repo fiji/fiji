@@ -215,8 +215,10 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		if(save_transforms)
 		{
 			// Choose target folder to save images into
-			JFileChooser chooser = new JFileChooser(); 
+			JFileChooser chooser = new JFileChooser(); 			
 			chooser.setDialogTitle("Choose directory to store Transform files");
+			chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+			chooser.setAcceptAllFileFilterUsed(true);
 			if (chooser.showOpenDialog(gd) != JFileChooser.APPROVE_OPTION)
 		    	return;
 			
