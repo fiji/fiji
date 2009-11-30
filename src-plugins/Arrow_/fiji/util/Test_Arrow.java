@@ -8,6 +8,7 @@ import ij.gui.ShapeRoi;
 
 import java.awt.event.MouseEvent;
 import java.awt.geom.GeneralPath;
+import java.awt.geom.Point2D;
 
 import javax.swing.SwingUtilities;
 
@@ -18,7 +19,7 @@ public class Test_Arrow extends fiji.util.AbstractTool {
 	 */
 	private final static double DRAG_TOLERANCE = 5.0;
 	
-	private GeneralPath arrow;
+	private Arrow arrow;
 	/**
 	 * End and start point coordinates of the arrow.
 	 */
@@ -27,22 +28,7 @@ public class Test_Arrow extends fiji.util.AbstractTool {
 	 * To monitor how much we drag for user interaction.
 	 */
 	private double start_drag_X, start_drag_Y;
-	/**
-	 * Double array that contains the coordinates in pixels of the arrow points.
-	 */
-	private double[] points = new double[2*5];
-	/**
-	 * Length of the arrow head, in pixels. Could be set by user.
-	 */
-	private double length = 10.0;
-	/**
-	 * Tip angle (in degrees) of the arrow head.
-	 */
-	private double tip = 60.0;
-	/**
-	 * Base angle (in degrees) of the arrow head.
-	 */
-	private double base = 20.0;
+
 	private ImagePlus imp;
 	private ImageCanvas canvas;
 	private enum InteractionStatus { NO_ARROW, FREE, DRAGGING_ARROW_HEAD, DRAGGING_ARROW_BASE, DRAGGING_LINE};
@@ -53,7 +39,7 @@ public class Test_Arrow extends fiji.util.AbstractTool {
 		super.run(arg);
 		imp = WindowManager.getCurrentImage();
 		canvas = imp.getCanvas();
-		arrow = new GeneralPath();
+		arrow = Arrow.DELTA;
 		status = InteractionStatus.NO_ARROW;
 		if (toolID >= 0)
 			IJ.showStatus("selected " + getToolName() + " Tool(" + toolID + ")"); // DEBUG
@@ -119,8 +105,8 @@ public class Test_Arrow extends fiji.util.AbstractTool {
 			start_drag_Y = y;
 			break;
 		}
-		calculatePoints();
-		makePath();	
+		arrow.setStartPoint(new Point2D.Double(start_X,start_Y));
+		arrow.setEndPoint(new Point2D.Double(end_X,end_Y));
 		imp.setRoi(new ShapeRoi(arrow));
 		IJ.showStatus(String.format("Dist to line: %.1f - Dist to head: %.1f - status: %s", 
 				distanceToLine(x, y), distanceToArrowHead(x, y), status));		// DEBUG
@@ -138,8 +124,7 @@ public class Test_Arrow extends fiji.util.AbstractTool {
 		final double y = canvas.offScreenYD(e.getY());
 		if  ( (status != InteractionStatus.DRAGGING_ARROW_BASE) && (Math.abs(start_X-x)< 1e-2) && (Math.abs(start_Y-y)< 1e-2) ) {
 			// Released close to start: erase arrow
-			arrow = new GeneralPath();
-			imp.setRoi(new ShapeRoi(arrow));
+			imp.restoreRoi();
 			status = InteractionStatus.NO_ARROW;
 		} else {
 			status = InteractionStatus.FREE;
@@ -172,41 +157,6 @@ public class Test_Arrow extends fiji.util.AbstractTool {
 	 * PRIVATE METHODS
 	 */
 	
-	/**
-	 * Computes the coordinates of the arrow point, and updates the field points with them.
-	 */
-	private void calculatePoints() {
-		// Start and end point
-		points[0] = start_X;
-		points[1] = start_Y;
-		points[2*3] = end_X;
-		points[2*3+1] = end_Y;
-		// P1 = P3 - length*alpha
-		double alpha = Math.atan2(points[2*3+1] - points[1], points[2*3] - points[0]);
-		points[1*2]   = points[2*3]   - length*Math.cos(alpha);
-		points[1*2+1] = points[2*3+1] - length*Math.sin(alpha);
-		// SL (sideLength) = length*cos(tip) + length * sin(tip) * cos(base-tip) / sin(base-tip) 
-		double SL = length*Math.cos(tip) + length*Math.sin(tip) * Math.cos(base-tip) / Math.sin(base-tip);
-		// P2 = P3 - SL*alpha+tip
-		points[2*2]   = points[2*3]   - SL*Math.cos(alpha+tip);
-		points[2*2+1] = points[2*3+1] - SL*Math.sin(alpha+tip);
-		// P4 = P3 - SL*alpha-tip
-		points[2*4]   = points[2*3]   - SL*Math.cos(alpha-tip);
-		points[2*4+1] = points[2*3+1] - SL*Math.sin(alpha-tip);		
-	}
-	
-	/**
-	 * Generate the path for the arrow, from the field points.
-	 */
-	private void makePath() {
-		arrow.reset();
-		arrow.moveTo(points[0], points[1]);    		// tail
-		arrow.lineTo(points[2*1], points[2*1+1]);   // head back
-		arrow.lineTo(points[2*2], points[2*2+1]);   // left point
-		arrow.lineTo(points[2*3], points[2*3+1]); 	// head tip
-		arrow.lineTo(points[2*4], points[2*4+1]);	// right point
-		arrow.lineTo(points[2*1], points[2*1+1]); 	// back to the head back
-	}
 	
 	/**
 	 * Measure the distance to the line between coordinates start_X, start_Y and end_X, end_Y.
