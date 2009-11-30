@@ -127,7 +127,7 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
   	    all.add(imagePanel);
   	    all.add(controlPanel);
   	    
-  	    add(all);  	      	    
+  	    add(all);  	      	      	   
 		
 	    this.pack();	    	    	    
 	    this.setVisible(true);
@@ -152,19 +152,15 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 		else if (e.getSource() == controlPanel.segmentJButton) {
 			segment();
 		}
-		else if (e.getSource() == controlPanel.addJRadioButton && lastButton != controlPanel.addJRadioButton) {
-			controlPanel.subJRadioButton.setSelected(false);
-			lastButton = controlPanel.addJRadioButton;
-			controlPanel.updateComponentEnabling();
+		else if (e.getSource() == controlPanel.addJRadioButton && lastButton != controlPanel.addJRadioButton) {			
 			roiOverlay.setColor(Color.RED);
-			subRoi = setNewRoi(addRoi, roiOverlay);						
+			subRoi = setNewRoi(addRoi, roiOverlay);
+			lastButton = controlPanel.addJRadioButton;
 		}
-		else if (e.getSource() == controlPanel.subJRadioButton && lastButton != controlPanel.subJRadioButton) {
-			controlPanel.addJRadioButton.setSelected(false);
-			lastButton = controlPanel.subJRadioButton;
-			controlPanel.updateComponentEnabling();
+		else if (e.getSource() == controlPanel.subJRadioButton && lastButton != controlPanel.subJRadioButton) {			
 			roiOverlay.setColor(Color.GREEN);
-			addRoi = setNewRoi(subRoi, roiOverlay);			
+			addRoi = setNewRoi(subRoi, roiOverlay);
+			lastButton = controlPanel.subJRadioButton;
 		}
 		else if (e.getSource() == controlPanel.refineJButton) {
 			refine();
@@ -174,8 +170,8 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 		}
 		else if (e.getSource() == controlPanel.createMaskJButton) {
 			createBinaryMask();
-		}
-
+		}		
+			
 	}
 
 	/**
@@ -360,6 +356,11 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 		controlPanel.updateComponentEnabling();
 		
 		roiOverlay.setComposite( transparency100 );
+		
+		// Set up next panel components
+		controlPanel.subJRadioButton.setSelected(true);
+		controlPanel.addJRadioButton.setSelected(false);
+		lastButton = controlPanel.subJRadioButton; 
 	}
 
 

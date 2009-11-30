@@ -26,6 +26,8 @@ import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -125,13 +127,26 @@ public class ControlJPanel extends JPanel
 		final GridBagConstraints segGc = getGbc(0, 3, 3, false, false);
 		segGc.anchor = GridBagConstraints.CENTER;
 		segJPanel.add(segmentJButton, segGc);
-		
-		
+						
+		final ButtonGroup drbButtonGroup=new ButtonGroup();
+		drbButtonGroup.add(addJRadioButton);
+		drbButtonGroup.add(subJRadioButton);
+		final ActionListener drbModeListener = new ActionListener()
+		  {
+			  public void actionPerformed(ActionEvent e)
+			  {
+				  addThreshold.setEnabled(addJRadioButton.isSelected());
+				  subThreshold.setEnabled(subJRadioButton.isSelected());
+			  }
+		  };
+		addJRadioButton.addActionListener(drbModeListener);
+		subJRadioButton.addActionListener(drbModeListener);
+		subJRadioButton.setSelected(true);		
 		final String drbTooltip=
 			"Additive or Subtractive Alpha Brush to Improve Edges or Highly Detailed Regions.";
 		addJRadioButton.setToolTipText(drbTooltip);
 		subJRadioButton.setToolTipText(drbTooltip);
-		subJRadioButton.setSelected(true);
+		
 		addThreshold.setToolTipText("Threshold Defining Subpixel Granularity for Additive Refinement Brush.");
 		subThreshold.setToolTipText("Threshold Defining Subpixel Granularity for Substractive Refinement Brush.");
 		addThreshold.setPaintTicks(true);
@@ -147,7 +162,7 @@ public class ControlJPanel extends JPanel
 		drbJPanel.add(Box.createVerticalStrut(6), getGbc(0, 3, 1, false, false)); 
 		drbJPanel.add(refineJButton, segGc);
 				
-		final String resetTooltip = "Reset display image";
+		final String resetTooltip = "Reset displayed image";
 		resetJButton.setToolTipText(resetTooltip);		
 		resetJPanel.add(resetJButton, getGbc(0, 0, 1, false, false));				
 		resetJPanel.add(createMaskJButton, getGbc(1, 0, 1, false, false));
@@ -218,6 +233,8 @@ public class ControlJPanel extends JPanel
 		((TitledBorder) drbJPanel.getBorder()).setTitleColor(drbPhase? onColor : offColor);
 		addJRadioButton.setEnabled(drbPhase);
 		subJRadioButton.setEnabled(drbPhase);
+		if(addJRadioButton.isEnabled() == false)
+			subJRadioButton.setSelected(true);
 		refineJButton.setEnabled(drbPhase);
 		addThreshold.setEnabled(drbPhase && addJRadioButton.isSelected());
 		subThreshold.setEnabled(drbPhase && subJRadioButton.isSelected());
