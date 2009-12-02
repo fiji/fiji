@@ -259,6 +259,7 @@ public class Stitch_Image_Collection implements PlugIn
 		else if (fusionMethod.equals("Linear Blending")) type = LIN_BLEND;
 		else if (fusionMethod.equals("Max. Intensity")) type = MAX;
 		else if (fusionMethod.equals("Red-Cyan Overlay") && imageInformationList.size() == 2) type = RED_CYAN;
+		else if (fusionMethod.equals("None")) type = CommonFunctions.NONE;
 		else type = AVG; // fusionMethod.equals("Average")
 		
 		if (type == AVG)
@@ -271,6 +272,8 @@ public class Stitch_Image_Collection implements PlugIn
 			IJ.log("Linear Blending Fusion started.");
 		else if (type == RED_CYAN)
 			IJ.log("Red-Cyan Fusion started.");
+		else if (type == CommonFunctions.NONE)
+			IJ.log("Overlapping (non fusion) started.");
 
 		final int imageType = imageInformationList.get(0).imageType; 
 		final int imgW = Math.round(max[0]);
@@ -308,7 +311,7 @@ public class Stitch_Image_Collection implements PlugIn
 		}
 		catch (Exception e){};
 	
-		if (type == MAX || type == RED_CYAN)
+		if (type == CommonFunctions.NONE || type == MAX || type == RED_CYAN)
 		{
 			int count = 0;
 			final int dimension = dim;
@@ -376,12 +379,17 @@ public class Stitch_Image_Collection implements PlugIn
 									for (int i = 0; i < pixelrgbSRC.length; i++)
 										pixelrgbimg[i] = Math.max(pixelrgbSRC[i], pixelrgbimg[i]);										
 								}
-								else
+								else if(type == RED_CYAN)
 								{
 									if (count == 0)
 										pixelrgbimg[0] = (pixelrgbSRC[0] + pixelrgbSRC[1] + pixelrgbSRC[2])/3;
 									else if (count == 1)
 										pixelrgbimg[1] = pixelrgbimg[2] = (pixelrgbSRC[0] + pixelrgbSRC[1] + pixelrgbSRC[2])/3;
+								}
+								else if(type == CommonFunctions.NONE)
+								{
+									for (int i = 0; i < pixelrgbSRC.length; i++)
+										pixelrgbimg[i] = pixelrgbSRC[i];	
 								}
 								
 								fusedIp.putPixel(x + Math.round(iI.position[0]), y + Math.round(iI.position[1]), pixelrgbimg);																
@@ -414,7 +422,7 @@ public class Stitch_Image_Collection implements PlugIn
 											minmax[0] = pixel;
 									}
 								}
-								else
+								else if(type == RED_CYAN)
 								{
 									// get pixel value from target image
 									fusedIp.getPixel(x + Math.round(iI.position[0]), y + Math.round(iI.position[1]), pixelrgbimg);
@@ -445,6 +453,9 @@ public class Stitch_Image_Collection implements PlugIn
 									
 									fusedIp.putPixel(x + Math.round(iI.position[0]), y + Math.round(iI.position[1]), pixelrgbimg);
 								}
+								else if(type == CommonFunctions.NONE)								 
+									fusedIp.putPixelValue(x + Math.round(iI.position[0]), y + Math.round(iI.position[1]), pixel);
+									
 								
 							}
 							
@@ -1000,6 +1011,20 @@ public class Stitch_Image_Collection implements PlugIn
 			IJ.log("Tile size: " + tiles.size());
 			tc = new TileConfiguration();
 			tc.addTiles( tiles );
+			
+			// trash everything but the largest graph			
+			final ArrayList< ArrayList< Tile > > graphs = Tile.identifyConnectedGraphs( tiles );
+			IJ.log("Number of tile graphs = " + graphs.size());
+			
+			ArrayList< Tile > largestGraph = new ArrayList< Tile >();
+			for ( final ArrayList< Tile > graph : graphs )
+				if ( graph.size() > largestGraph.size() )
+					largestGraph = graph;
+			for ( final ArrayList< Tile > graph : graphs )
+				if ( graph != largestGraph )
+					tiles.removeAll( graph );						
+			
+			
 			tc.fixTile( tiles.get( 0 ) );
 			try
 			{
