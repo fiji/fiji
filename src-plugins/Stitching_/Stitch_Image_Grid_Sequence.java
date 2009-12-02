@@ -1,3 +1,21 @@
+/**
+ * Stitching_ plugin for ImageJ and Fiji.
+ * 
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation (http://www.gnu.org/licenses/gpl.txt )
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * 
+ */
+
 import static stitching.CommonFunctions.LIN_BLEND;
 import static stitching.CommonFunctions.addHyperLinkListener;
 import static stitching.CommonFunctions.colorList;
@@ -11,10 +29,14 @@ import ij.gui.MultiLineLabel;
 import ij.io.FileSaver;
 import ij.plugin.PlugIn;
 
-
+/**
+ * Plugin class to stitch a sequence of grid of images (fixed X/Y configuration)
+ * 
+ * @author Ignacio Arganda-Carreras <iarganda@mit.edu>
+ */
 public class Stitch_Image_Grid_Sequence implements PlugIn
 {
-	private String myURL = "http://bioweb.cnb.csic.es/~iarganda/index_EN.html";
+	private String myURL = "http://pacific.mpi-cbg.de/Stitching_2D/3D";
 
 	public static int gridSizeXStatic = 3, gridSizeYStatic = 3, gridSizeZStatic = 3;
 
@@ -83,9 +105,6 @@ public class Stitch_Image_Grid_Sequence implements PlugIn
 		gridSizeYStatic = gridLayout.sizeY;
 		
 		gridSizeZStatic = (int)Math.round(gd.getNextNumber());
-
-		//gridLayout.arrangement = gd.getNextChoice();
-		//arrangmentStatic = gridLayout.arrangement;
 		
 		double overlap = gd.getNextNumber()/100;
 		overlapStatic = overlap*100;
@@ -188,7 +207,7 @@ public class Stitch_Image_Grid_Sequence implements PlugIn
 			boolean previewOnly, 
 			boolean computeOverlap) 
 	{
-//		 find how to parse
+		// find how to parse
 		String replaceZ = "{";
 		int numZValues = 0;
 		
@@ -238,6 +257,8 @@ public class Stitch_Image_Grid_Sequence implements PlugIn
 			// Iteratively close fused images to avoid unnecessarily filling the screen 
 			fusedImage.close();
 		}
+		
+		IJ.showMessage("Image grid sequence stitching is done!");
 		
 	}
 
