@@ -58,8 +58,7 @@ public abstract class AbstractTool implements ImageListener, MouseListener,
 			return;
 		}
 
-		toolID = toolbar.addTool(getToolName() + " - "
-			+ getToolIcon());
+		toolID = toolbar.addTool(getToolName() + " - "	+ getToolIcon());
 		if (toolID < 0) {
 			IJ.error("Could not register tool");
 			return;

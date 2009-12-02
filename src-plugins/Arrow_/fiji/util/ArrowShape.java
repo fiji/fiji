@@ -17,7 +17,7 @@ import java.awt.geom.Rectangle2D;
  * @author Jean-Yves Tinevez 
  *
  */
-public class Arrow implements Shape {
+public class ArrowShape implements Shape {
 	
 	public static enum ArrowStyle {
 	DELTA 	,
@@ -39,15 +39,15 @@ public class Arrow implements Shape {
 	 * CONSTRUCTORS
 	 */
 	
-	public Arrow() {
+	public ArrowShape() {
 		this(ArrowStyle.DELTA);
 	}
 	
-	public Arrow(ArrowStyle _style) {
+	public ArrowShape(ArrowStyle _style) {
 		this(_style, 10.0);
 	}
 	
-	public Arrow(ArrowStyle _style, double _length) {
+	public ArrowShape(ArrowStyle _style, double _length) {
 		style = _style;
 		length  = _length;
 	}
@@ -59,11 +59,16 @@ public class Arrow implements Shape {
 	/**
 	 * Return a new Arrow object, with identical properties that of the caller.
 	 */
-	public Arrow clone() {
-		Arrow new_arrow = new Arrow(style, length);
+	public ArrowShape clone() {
+		ArrowShape new_arrow = new ArrowShape(style, length);
 		new_arrow.setStartPoint(start);
 		new_arrow.setEndPoint(end);
 		return new_arrow;
+	}
+	
+	public String toString() {
+		return String.format("ArrowShape: start=(%.1f,%.1f), end=(%.1f,%.1f), style=%s, length=%.0f", 
+				start.getX(), start.getY(), end.getX(), end.getY(), style, length);
 	}
 		
 	/*
@@ -158,10 +163,19 @@ public class Arrow implements Shape {
 	private void getPathFromPoints() {
 		path.moveTo(points[0], points[1]); // tail
 		path.lineTo(points[2 * 1], points[2 * 1 + 1]); // head back
-		path.lineTo(points[2 * 2], points[2 * 2 + 1]); // left point
+		if (style == ArrowStyle.THIN) {
+			path.moveTo(points[2 * 2], points[2 * 2 + 1]);
+		} else {			
+			path.lineTo(points[2 * 2], points[2 * 2 + 1]); // left point
+		}
 		path.lineTo(points[2 * 3], points[2 * 3 + 1]); // head tip
 		path.lineTo(points[2 * 4], points[2 * 4 + 1]); // right point
-		path.lineTo(points[2 * 1], points[2 * 1 + 1]); // back to the head back
+		if (style != ArrowStyle.THIN) {			
+			path.lineTo(points[2 * 1], points[2 * 1 + 1]); // back to the head back
+		} else {
+			path.lineTo(points[2 * 1], points[2 * 1 + 1]); // back to the head back
+			path.lineTo(points[2 * 1], points[2 * 1 + 1]); // back to the head back
+		}
 	}
 	
 	

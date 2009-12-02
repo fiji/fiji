@@ -7,11 +7,14 @@ import java.awt.Canvas;
 import java.awt.EventQueue;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.Shape;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.awt.geom.Area;
 import java.awt.geom.Point2D;
 
 import javax.swing.BorderFactory;
@@ -60,7 +63,7 @@ public class ArrowOptionPanel extends javax.swing.JFrame {
 	private JLabel jLabelHeadStyle;
 
 	private static BasicStroke stroke;
-	private static Arrow arrow;
+	private static ArrowShape arrow;
 	
 	/*
 	 * INNER CLASSES
@@ -76,18 +79,25 @@ public class ArrowOptionPanel extends javax.swing.JFrame {
 			super.paint(g);
 			start 	= new Point2D.Double(jPanelDrawArea.getWidth()*0.25, jPanelDrawArea.getHeight()/2.0);
 			end 	= new Point2D.Double(jPanelDrawArea.getWidth()*0.75, jPanelDrawArea.getHeight()/2.0);
-			arrow = new Arrow((Arrow.ArrowStyle) jComboBoxHeadStyle.getSelectedItem());
+			arrow = new ArrowShape((ArrowShape.ArrowStyle) jComboBoxHeadStyle.getSelectedItem());
 			arrow.setStartPoint(start);
 			arrow.setEndPoint(end);
 			try {
-				final double length = Double.parseDouble(jTextFieldHeadLength.getText() );
+				final double length = Double.parseDouble(jTextFieldHeadLength.getText());
 				final float width = Float.parseFloat(jTextFieldArrowThickness.getText());
 				arrow.setLength(length);				
-				stroke = new BasicStroke(width, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
+				stroke = new BasicStroke(width, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
 				Graphics2D g2 = (Graphics2D) g;
-				g2.setStroke(stroke);
-				g2.draw(arrow);
-				if (jCheckBoxFillArrow.isSelected()) {	g2.fill(arrow);		}
+				g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, // Anti-alias!
+				        RenderingHints.VALUE_ANTIALIAS_ON);
+//				g2.setStroke(stroke);
+//				g2.draw(arrow);
+				Shape shape = stroke.createStrokedShape(arrow);
+				Area area = new Area(shape); // this will get us the thick outline
+				area.add(new Area(arrow)); // to fill inside
+				g2.draw(area);
+//				if (jCheckBoxFillArrow.isSelected()) {	g2.fill(arrow);		}
+				if (jCheckBoxFillArrow.isSelected()) {	g2.fill(area);		}
 				// Fire a property change
 				fireActionEvent();
 			} catch (NumberFormatException nfe) { }
@@ -155,7 +165,7 @@ public class ArrowOptionPanel extends javax.swing.JFrame {
 	/**
 	 * Instantiates the config panel with using settings from arguments. 
 	 */
-	public ArrowOptionPanel(Arrow _arrow, BasicStroke _stroke) {
+	public ArrowOptionPanel(ArrowShape _arrow, BasicStroke _stroke) {
 		super();
 		initGUI();
 		stroke = _stroke;
@@ -258,7 +268,7 @@ public class ArrowOptionPanel extends javax.swing.JFrame {
    
    public BasicStroke getStroke() {	   return stroke;   }
    public double getLength() { return arrow.getLength(); }
-   public Arrow.ArrowStyle getStyle() { return arrow.getStyle(); }   
+   public ArrowShape.ArrowStyle getStyle() { return arrow.getStyle(); }   
 	
 	/*
 	 * PRIVATE METHODS
@@ -286,7 +296,7 @@ public class ArrowOptionPanel extends javax.swing.JFrame {
 				}
 				{
 					ComboBoxModel jComboBoxHeadStyleModel = 
-						new DefaultComboBoxModel( Arrow.ArrowStyle.values() );
+						new DefaultComboBoxModel( ArrowShape.ArrowStyle.values() );
 					jComboBoxHeadStyle = new JComboBox();
 					jPanelMain.add(jComboBoxHeadStyle);
 					jComboBoxHeadStyle.setModel(jComboBoxHeadStyleModel);

@@ -4,9 +4,15 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.ImageCanvas;
+import ij.gui.ImageWindow;
+import ij.gui.Roi;
 import ij.gui.ShapeRoi;
 
 import java.awt.BasicStroke;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.Shape;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -14,16 +20,16 @@ import java.awt.geom.Point2D;
 
 import javax.swing.SwingUtilities;
 
-public class Test_Arrow extends fiji.util.AbstractTool implements ActionListener {
+public class ArrowTool extends fiji.util.AbstractTool implements ActionListener {
 	
+	
+	private ArrowShape arrow;
+	private BasicStroke stroke = new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
+	private ShapeRoi roi;
 	/**
 	 * How close we have to be from control points to drag them.
 	 */
-	private final static double DRAG_TOLERANCE = 5.0;
-	
-	private Arrow arrow;
-	private BasicStroke stroke = new BasicStroke(1.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND);
-	private ShapeRoi roi;
+	private double drag_tolerance;
 	/**
 	 * End and start point coordinates of the arrow.
 	 */
@@ -38,26 +44,84 @@ public class Test_Arrow extends fiji.util.AbstractTool implements ActionListener
 	private enum InteractionStatus { NO_ARROW, FREE, DRAGGING_ARROW_HEAD, DRAGGING_ARROW_BASE, DRAGGING_LINE};
 	private InteractionStatus status;
 	
+	/*
+	 * INNER CLASS
+	 */
+	
+	private class ArrowShapeRoi extends ShapeRoi {
+		private static final long serialVersionUID = 1L;
+		private ArrowShape arrow;
+		private BasicStroke stroke;
+		public ArrowShapeRoi(ArrowShape _arrow, BasicStroke _stroke) {
+			super(_arrow);
+			Shape out_lineshape = _stroke.createStrokedShape(_arrow);
+			this.or(new ShapeRoi(out_lineshape));
+			arrow = _arrow;
+			stroke = _stroke;
+		}
+		/**
+		 * Overrides the {@link ShapeRoi#draw(Graphics)} of ShapeRoi so that we can have
+		 * anti-aliased drawing. 
+		 */
+		public void draw(Graphics g) {
+			Graphics2D g2 = (Graphics2D) g;
+			g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+			super.draw(g2);
+		}
+		public ArrowShape getArrow() { return arrow; }
+		public BasicStroke getStroke() { return stroke; }
+	}
+	
+	/*
+	 * RUN METHODS
+	 */
 	
 	public void run(String arg) {
 		super.run(arg);
 		imp = WindowManager.getCurrentImage();
 		canvas = imp.getCanvas();
-		arrow = new Arrow();
+		arrow = new ArrowShape();
+		drag_tolerance = arrow.getLength();
 		status = InteractionStatus.NO_ARROW;
 		if (toolID >= 0)
 			IJ.showStatus("selected " + getToolName() + " Tool(" + toolID + ")"); // DEBUG
 	}
 
+	/*
+	 * PUBLIC METHODS
+	 */
+	
 	public String getToolName() {
-		return "Test_Arrow";
+		return "Arrow tool";
 	}
 
 	public String getToolIcon() {
-		return "CbooP51b1f5fbbf5f1b15510T5c10X";
+		return "C000P11aa8ceec8aa";
 	}
 
 	public void handleMousePress(MouseEvent e) {
+		ImageCanvas source = (ImageCanvas) e.getSource();
+		if (source != canvas) {
+			// We changed image window. Update fields accordingly
+			ImageWindow window = (ImageWindow) source.getParent();
+			imp = window.getImagePlus();
+			canvas = source;
+			Roi current_roi = imp.getRoi();
+			if ( (current_roi == null) || !(current_roi instanceof ArrowShapeRoi)) {
+				status = InteractionStatus.NO_ARROW;
+			}
+			else {
+				ArrowShapeRoi arrow_roi = (ArrowShapeRoi) current_roi;
+				arrow = arrow_roi.getArrow();
+				System.out.println("Got the arrow back: "+arrow.toString()); // DEBUG
+				stroke = arrow_roi.getStroke();
+				start_X = arrow.getStartPoint().getX();
+				start_Y = arrow.getStartPoint().getY();
+				end_X = arrow.getEndPoint().getX();
+				end_Y = arrow.getEndPoint().getY();
+				status = InteractionStatus.FREE;
+			}
+		}
 		double x = canvas.offScreenXD(e.getX());
 		double y = canvas.offScreenYD(e.getY());
 		if (status == InteractionStatus.NO_ARROW) {
@@ -68,11 +132,12 @@ public class Test_Arrow extends fiji.util.AbstractTool implements ActionListener
 				final double dist_to_line = distanceToLine(x, y);
 				final double dist_to_arrowhead = distanceToArrowHead(x, y);
 				final double dist_to_arrowbase = distanceToArrowBase(x, y);
-				if (dist_to_arrowhead < DRAG_TOLERANCE) {
+				System.out.println(String.format("Dist. head: %.1f - base: %.1f - line: %.1f", dist_to_arrowhead, dist_to_arrowbase, dist_to_line)); // DEBUG
+				if (dist_to_arrowhead < drag_tolerance) {
 					status = InteractionStatus.DRAGGING_ARROW_HEAD;
-				} else if (dist_to_arrowbase < DRAG_TOLERANCE) {
+				} else if (dist_to_arrowbase < drag_tolerance) {
 					status = InteractionStatus.DRAGGING_ARROW_BASE;
-				} else if (dist_to_line < DRAG_TOLERANCE) {
+				} else if (dist_to_line < drag_tolerance) {
 					status = InteractionStatus.DRAGGING_LINE;
 					start_drag_X = x;
 					start_drag_Y = y;
@@ -115,14 +180,11 @@ public class Test_Arrow extends fiji.util.AbstractTool implements ActionListener
 		IJ.showStatus(String.format("Dist to line: %.1f - Dist to head: %.1f - status: %s", 
 				distanceToLine(x, y), distanceToArrowHead(x, y), status));		// DEBUG
 	}
-	
-	public void handleMouseMove(MouseEvent e) {
-		final double x = canvas.offScreenXD(e.getX());
-		final double y = canvas.offScreenYD(e.getY());
-		IJ.showStatus(String.format("Dist to line: %.1f - Dist to head: %.1f - status: %s", 
-				distanceToLine(x, y), distanceToArrowHead(x, y), status));		// DEBUG
-	}
-	
+		
+	/**
+	 * If the mouse is released near the base AND if we are not dragging the base, then we want
+	 * to delete the tool. 
+	 */
 	public void handleMouseRelease(MouseEvent e) {
 		final double x = canvas.offScreenXD(e.getX());
 		final double y = canvas.offScreenYD(e.getY());
@@ -163,8 +225,13 @@ public class Test_Arrow extends fiji.util.AbstractTool implements ActionListener
 		
 	}
 		
+	/**
+	 * Is called when the user change a property using the option panel. We update the 
+	 * arrow fields, and let the {@link #paint()} method draw it.
+	 */
 	public void actionPerformed(ActionEvent e) {
 		ArrowOptionPanel panel = (ArrowOptionPanel) e.getSource();
+		drag_tolerance = panel.getLength() / 2.0;
 		arrow.setLength(panel.getLength());
 		arrow.setStyle(panel.getStyle());
 		stroke = panel.getStroke();
@@ -181,8 +248,7 @@ public class Test_Arrow extends fiji.util.AbstractTool implements ActionListener
 	 */
 	private void paint() {
 		if (status != InteractionStatus.NO_ARROW) {
-			roi = new ShapeRoi(arrow);
-			roi.setStroke(stroke);
+			roi = new ArrowShapeRoi(arrow, stroke);
 			imp.setRoi(roi);
 		}
 	}
