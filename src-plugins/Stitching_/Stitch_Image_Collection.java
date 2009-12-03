@@ -1015,15 +1015,17 @@ public class Stitch_Image_Collection implements PlugIn
 			// trash everything but the largest graph			
 			final ArrayList< ArrayList< Tile > > graphs = Tile.identifyConnectedGraphs( tiles );
 			IJ.log("Number of tile graphs = " + graphs.size());
-			
+			/*
 			ArrayList< Tile > largestGraph = new ArrayList< Tile >();
 			for ( final ArrayList< Tile > graph : graphs )
 				if ( graph.size() > largestGraph.size() )
 					largestGraph = graph;
 			for ( final ArrayList< Tile > graph : graphs )
 				if ( graph != largestGraph )
-					tiles.removeAll( graph );						
-			
+					tiles.removeAll( graph );
+			*/						
+			for ( final ArrayList< Tile > graph : graphs )
+				   tc.fixTile( graph.get( 0 ) );
 			
 			tc.fixTile( tiles.get( 0 ) );
 			try
