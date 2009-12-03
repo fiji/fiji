@@ -185,7 +185,7 @@ public abstract class AbstractTool implements ImageListener, MouseListener,
 	public abstract String getToolIcon();
 	
 	/*
-	 * DEAL WITH TOOLBAR
+	 * DEAL WITH OPTION PANEL
 	 */
 	
 	/**

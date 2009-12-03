@@ -1,6 +1,5 @@
 package fiji.util;
 
-import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.ImageCanvas;
@@ -25,7 +24,6 @@ public class ArrowTool extends fiji.util.AbstractTool implements ActionListener 
 	
 	private ArrowShape arrow;
 	private BasicStroke stroke = new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
-	private ShapeRoi roi;
 	/**
 	 * How close we have to be from control points to drag them.
 	 */
@@ -83,8 +81,6 @@ public class ArrowTool extends fiji.util.AbstractTool implements ActionListener 
 		arrow = new ArrowShape();
 		drag_tolerance = arrow.getLength();
 		status = InteractionStatus.NO_ARROW;
-		if (toolID >= 0)
-			IJ.showStatus("selected " + getToolName() + " Tool(" + toolID + ")"); // DEBUG
 	}
 
 	/*
@@ -92,7 +88,7 @@ public class ArrowTool extends fiji.util.AbstractTool implements ActionListener 
 	 */
 	
 	public String getToolName() {
-		return "Arrow tool";
+		return "Arrow";
 	}
 
 	public String getToolIcon() {
@@ -109,11 +105,9 @@ public class ArrowTool extends fiji.util.AbstractTool implements ActionListener 
 			Roi current_roi = imp.getRoi();
 			if ( (current_roi == null) || !(current_roi instanceof ArrowShapeRoi)) {
 				status = InteractionStatus.NO_ARROW;
-			}
-			else {
+			} else {
 				ArrowShapeRoi arrow_roi = (ArrowShapeRoi) current_roi;
-				arrow = arrow_roi.getArrow();
-				System.out.println("Got the arrow back: "+arrow.toString()); // DEBUG
+				arrow = arrow_roi.getArrow(); // for some reason, this does not work and we get back the old arrow
 				stroke = arrow_roi.getStroke();
 				start_X = arrow.getStartPoint().getX();
 				start_Y = arrow.getStartPoint().getY();
@@ -132,7 +126,6 @@ public class ArrowTool extends fiji.util.AbstractTool implements ActionListener 
 				final double dist_to_line = distanceToLine(x, y);
 				final double dist_to_arrowhead = distanceToArrowHead(x, y);
 				final double dist_to_arrowbase = distanceToArrowBase(x, y);
-				System.out.println(String.format("Dist. head: %.1f - base: %.1f - line: %.1f", dist_to_arrowhead, dist_to_arrowbase, dist_to_line)); // DEBUG
 				if (dist_to_arrowhead < drag_tolerance) {
 					status = InteractionStatus.DRAGGING_ARROW_HEAD;
 				} else if (dist_to_arrowbase < drag_tolerance) {
@@ -177,8 +170,6 @@ public class ArrowTool extends fiji.util.AbstractTool implements ActionListener 
 		arrow.setStartPoint(new Point2D.Double(start_X,start_Y));
 		arrow.setEndPoint(new Point2D.Double(end_X,end_Y));
 		paint();
-		IJ.showStatus(String.format("Dist to line: %.1f - Dist to head: %.1f - status: %s", 
-				distanceToLine(x, y), distanceToArrowHead(x, y), status));		// DEBUG
 	}
 		
 	/**
@@ -248,7 +239,7 @@ public class ArrowTool extends fiji.util.AbstractTool implements ActionListener 
 	 */
 	private void paint() {
 		if (status != InteractionStatus.NO_ARROW) {
-			roi = new ArrowShapeRoi(arrow, stroke);
+			ArrowShapeRoi roi = new ArrowShapeRoi(arrow, stroke);
 			imp.setRoi(roi);
 		}
 	}
