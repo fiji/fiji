@@ -105,9 +105,10 @@ public class ArrowTool extends fiji.util.AbstractTool implements ActionListener 
 			Roi current_roi = imp.getRoi();
 			if ( (current_roi == null) || !(current_roi instanceof ArrowShapeRoi)) {
 				status = InteractionStatus.NO_ARROW;
+				arrow = new ArrowShape();
 			} else {
 				ArrowShapeRoi arrow_roi = (ArrowShapeRoi) current_roi;
-				arrow = arrow_roi.getArrow(); // for some reason, this does not work and we get back the old arrow
+				arrow = arrow_roi.getArrow();
 				stroke = arrow_roi.getStroke();
 				start_X = arrow.getStartPoint().getX();
 				start_Y = arrow.getStartPoint().getY();
