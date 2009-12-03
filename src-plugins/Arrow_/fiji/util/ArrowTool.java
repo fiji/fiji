@@ -165,11 +165,33 @@ public class ArrowTool extends fiji.util.AbstractTool implements ActionListener 
 	public void handleMouseDrag(MouseEvent e) {
 		final double x = canvas.offScreenXD(e.getX());
 		final double y = canvas.offScreenYD(e.getY());
+		int modifiers = e.getModifiersEx();
 		switch (status) {
 		case DRAGGING_ARROW_HEAD:
 		case FREE:
-			end_X = x;        
-			end_Y = y;
+			if ( (modifiers & MouseEvent.SHIFT_DOWN_MASK) == MouseEvent.SHIFT_DOWN_MASK) {
+				// Shift pressed, constrained move
+				final double alpha = Math.atan2(y-start_Y, x-start_X);
+				if ( (alpha<Math.PI/8 && alpha>=-Math.PI/8) || (alpha>=7*Math.PI/8 || alpha<-7*Math.PI/8) ) {
+					end_X = x;
+					end_Y = start_Y;
+				} else if ( (alpha>=Math.PI/8 && alpha<3*Math.PI/8) || (alpha<-5*Math.PI/8 && alpha>=-7*Math.PI/8) ) {
+					final double proj = (x-start_X + y-start_Y);
+					end_X = start_X + proj/2 ; 
+					end_Y = start_Y + proj/2;
+				} else if ( (alpha>=3*Math.PI/8 && alpha<5*Math.PI/8) || (alpha<-3*Math.PI/8 && alpha>=-5*Math.PI/8) ) {
+					end_X = start_X;
+					end_Y = y;
+				} else { //if ( (alpha>=5*Math.PI/8 && alpha<7*Math.PI/8) || (alpha<-Math.PI/8 && alpha>=-3*Math.PI/8) ) {
+					final double proj = (-x+start_X + y-start_Y);
+					end_X = start_X - proj/2 ; 
+					end_Y = start_Y + proj/2;
+				}
+			} else {
+				// Free
+				end_X = x;        
+				end_Y = y;
+			}
 			break;
 		case DRAGGING_ARROW_BASE:
 			start_X =x;
