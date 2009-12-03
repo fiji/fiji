@@ -4,8 +4,10 @@ import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
+import ij.gui.Line;
 import ij.gui.Roi;
 import ij.gui.ShapeRoi;
+import ij.process.ImageProcessor;
 
 import java.awt.BasicStroke;
 import java.awt.Graphics;
@@ -71,16 +73,32 @@ public class ArrowTool extends fiji.util.AbstractTool implements ActionListener 
 	}
 	
 	/*
-	 * RUN METHODS
+	 * RUN METHOD
 	 */
 	
 	public void run(String arg) {
-		super.run(arg);
 		imp = WindowManager.getCurrentImage();
-		canvas = imp.getCanvas();
 		arrow = new ArrowShape();
-		drag_tolerance = arrow.getLength();
-		status = InteractionStatus.NO_ARROW;
+		Roi roi = imp.getRoi();
+		if ( (roi!= null) && (roi instanceof Line)) {
+			/* Legacy method: if there is a line when this plugin is called, then we directly draw 
+			 * an arrow, so as to comply with the previous Arrow_.java class that might be used 
+			 * in existing macros.
+			 * See http://rsb.info.nih.gov/ij/plugins/download/Arrow_.java			 */
+			Line line = (Line)roi;
+			arrow.setStartPoint(new Point2D.Double(line.x1d, line.y1d) );
+			arrow.setEndPoint(new Point2D.Double(line.x2d, line.y2d) );
+			ShapeRoi arrow_roi = new ShapeRoi(arrow);
+			ImageProcessor ip = imp.getProcessor();
+			ip.fill(arrow_roi);
+			ip.draw(arrow_roi);
+		} else {
+			/* Other wise we start the interactive mode */
+			super.run(arg);
+			canvas = imp.getCanvas();
+			drag_tolerance = arrow.getLength();
+			status = InteractionStatus.NO_ARROW;
+		}
 	}
 
 	/*
