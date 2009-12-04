@@ -30,7 +30,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 
-import fiji.utilities.GenericDialogPlus;
+import fiji.util.GenericDialogPlus;
 
 import stitching.CommonFunctions;
 import stitching.GridLayout;
