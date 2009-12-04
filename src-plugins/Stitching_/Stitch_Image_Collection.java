@@ -39,7 +39,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import fiji.util.GenericDialogPlus;
+import fiji.utilities.GenericDialogPlus;
 
 import ij.gui.MultiLineLabel;
 import ij.measure.Calibration;
@@ -1126,6 +1126,7 @@ public class Stitch_Image_Collection implements PlugIn
 				stitch.imp1 = imp1;
 				stitch.imp2 = imp2;
 				stitch.doLogging = false;
+				stitch.computeOverlap = true;
 				
 				try
 				{
@@ -1155,6 +1156,7 @@ public class Stitch_Image_Collection implements PlugIn
 				stitch.imp1 = imp1;
 				stitch.imp2 = imp2;
 				stitch.doLogging = false;
+				stitch.computeOverlap = true;
 				
 				try
 				{
