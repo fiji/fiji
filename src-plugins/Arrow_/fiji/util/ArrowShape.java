@@ -33,7 +33,7 @@ public class ArrowShape implements Shape {
 	/** Length of the arrow head, in pixels. */
 	private double length;
 	/** Points coordinates for DELTA, THICK and THIN styles.  */
-	private double[] points = new double[2*5];
+	private float[] points = new float[2*5];
 
 	/*
 	 * CONSTRUCTORS
@@ -122,25 +122,25 @@ public class ArrowShape implements Shape {
 		double tip = 0.0;
 		double base;
 		// Start and end point
-		points[0] = start.getX();
-		points[1] = start.getY();
-		points[2*3] = end.getX();
-		points[2*3+1] = end.getY();
+		points[0] = (float) start.getX();
+		points[1] = (float) start.getY();
+		points[2*3] = (float) end.getX();
+		points[2*3+1] = (float) end.getY();
 		final double alpha = Math.atan2(points[2*3+1] - points[1], points[2*3] - points[0]);
 		double SL = 0.0;
 		switch (style) {
 		case DELTA:
 			tip = Math.toRadians(20.0);
 			base = Math.toRadians(90.0);
-			points[1*2]   = points[2*3]   - length*Math.cos(alpha);
-			points[1*2+1] = points[2*3+1] - length*Math.sin(alpha);
+			points[1*2]   = (float) (points[2*3]   - length*Math.cos(alpha));
+			points[1*2+1] = (float) (points[2*3+1] - length*Math.sin(alpha));
 			SL = length * Math.sin(base) / Math.sin(base+tip);;
 			break;
 		case THICK:
 			tip = Math.toRadians(20);
 			base = Math.toRadians(120);
-			points[1*2]   = points[2*3]   - length*Math.cos(alpha);
-			points[1*2+1] = points[2*3+1] - length*Math.sin(alpha);
+			points[1*2]   = (float) (points[2*3]   - length*Math.cos(alpha));
+			points[1*2+1] = (float) (points[2*3+1] - length*Math.sin(alpha));
 			SL = length * Math.sin(base) / Math.sin(base+tip);;
 			break;
 		case THIN:
@@ -150,11 +150,11 @@ public class ArrowShape implements Shape {
 			SL = length;
 		}
 		// P2 = P3 - SL*alpha+tip
-		points[2*2]   = points[2*3]   - SL*Math.cos(alpha+tip);
-		points[2*2+1] = points[2*3+1] - SL*Math.sin(alpha+tip);
+		points[2*2]   = (float) (points[2*3]   - SL*Math.cos(alpha+tip));
+		points[2*2+1] = (float) (points[2*3+1] - SL*Math.sin(alpha+tip));
 		// P4 = P3 - SL*alpha-tip
-		points[2*4]   = points[2*3]   - SL*Math.cos(alpha-tip);
-		points[2*4+1] = points[2*3+1] - SL*Math.sin(alpha-tip);		
+		points[2*4]   = (float) (points[2*3]   - SL*Math.cos(alpha-tip));
+		points[2*4+1] = (float) (points[2*3+1] - SL*Math.sin(alpha-tip));		
 	}
 	
 	/**
