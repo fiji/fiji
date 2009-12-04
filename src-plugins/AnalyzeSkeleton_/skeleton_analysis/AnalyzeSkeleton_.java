@@ -93,6 +93,8 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	private int[] numberOfJunctions = null;
 	/** number of triple points in every tree */
 	private int[] numberOfTriplePoints = null;
+	/** number of quadruple points in every tree */
+	private int[] numberOfQuadruplePoints = null;
 	/** list of end points in every tree */
 	private ArrayList <Point> endPointsTree [] = null;
 	/** list of junction voxels in every tree */
@@ -293,7 +295,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		
 		
 		// Calculate triple points (junctions with exactly 3 branches)
-		calculateTriplePoints();
+		calculateTripleAndQuadruplePoints();
 		
 		if(debug)
 			IJ.log("num of skeletons = " + this.numOfTrees);
@@ -709,6 +711,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		this.numberOfJunctions = new int[this.numOfTrees];
 		this.numberOfSlabs = new int[this.numOfTrees];
 		this.numberOfTriplePoints = new int[this.numOfTrees];
+		this.numberOfQuadruplePoints = new int[this.numOfTrees];
 		this.averageBranchLength = new double[this.numOfTrees];
 		this.maximumBranchLength = new double[this.numOfTrees];
 		this.endPointsTree = new ArrayList[this.numOfTrees];		
@@ -738,7 +741,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		
 		final String[] head = {"Skeleton", "# Branches","# Junctions", "# End-point voxels",
 						 "# Junction voxels","# Slab voxels","Average Branch Length", 
-						 "# Triple points", "Maximum Branch Length"};
+						 "# Triple points", "# Quadruple points", "Maximum Branch Length"};
 		
 		for (int i = 0; i < head.length; i++)
 			rt.setHeading(i,head[i]);	
@@ -754,7 +757,8 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 			rt.addValue(5, this.numberOfSlabs[i]);
 			rt.addValue(6, this.averageBranchLength[i]);
 			rt.addValue(7, this.numberOfTriplePoints[i]);
-			rt.addValue(8, this.maximumBranchLength[i]);
+			rt.addValue(8, this.numberOfQuadruplePoints[i]);
+			rt.addValue(9, this.maximumBranchLength[i]);
 
 			if (0 == i % 100) 
 				rt.show("Results");
@@ -1704,10 +1708,10 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	
 	// -----------------------------------------------------------------------
 	/**
-	 * Calculate number of triple points in the skeleton. Triple points are
-	 * junctions with exactly 3 branches.
+	 * Calculate number of triple and quadruple points in the skeleton. Triple and 
+	 * quadruple points are junctions with exactly 3 and 4 branches respectively.
 	 */
-	private void calculateTriplePoints() 
+	private void calculateTripleAndQuadruplePoints() 
 	{
 		for (int iTree = 0; iTree < this.numOfTrees; iTree++)
 		{			
@@ -1717,27 +1721,29 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 
 				ArrayList <Point> groupOfJunctions = this.listOfSingleJunctions[iTree].get(i);
 
-				// Count the number of slab neighbors of every voxel in the group
-				int nSlab = 0;
+				// Count the number of slab and end-points neighbors of every voxel in the group
+				int nBranch = 0;
 				for(int j = 0; j < groupOfJunctions.size(); j++)
 				{
 					Point pj = groupOfJunctions.get(j);
 
-					// Get neighbors and check the slabs
+					// Get neighbors and check the slabs or end-points
 					byte[] neighborhood = this.getNeighborhood(this.taggedImage, pj.x, pj.y, pj.z);
 					for(int k = 0; k < 27; k++)
-						if (neighborhood[k] == AnalyzeSkeleton_.SLAB)
-							nSlab++;
+						if (neighborhood[k] == AnalyzeSkeleton_.SLAB 
+							|| neighborhood[k] == AnalyzeSkeleton_.END_POINT)
+							nBranch++;
 				}
-				// If the junction has only 3 slab neighbors, then it is a triple point
-				if (nSlab == 3)	
+				// If the junction has only 3 slab/end-point neighbors, then it is a triple point
+				if (nBranch == 3)	
 					this.numberOfTriplePoints[iTree] ++;
-
+				else if(nBranch == 4) // quadruple point if 4
+					this.numberOfQuadruplePoints[iTree] ++;
 			}		
 				
 		}
 		
-	}// end calculateTriplePoints
+	}// end calculateTripleAndQuadruplePoints
 	
 
 	/* -----------------------------------------------------------------------*/
