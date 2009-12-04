@@ -44,7 +44,7 @@ import ij.process.ShortProcessor;
  * <A target="_blank" href="http://pacific.mpi-cbg.de/wiki/index.php/AnalyzeSkeleton">http://pacific.mpi-cbg.de/wiki/index.php/AnalyzeSkeleton</A>
  *
  *
- * @version 1.0 09/13/2009
+ * @version 1.0 12/04/2009
  * @author Ignacio Arganda-Carreras <ignacio.arganda@gmail.com>
  *
  */
