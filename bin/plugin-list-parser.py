@@ -1,10 +1,20 @@
-#!/bin/sh
-''''exec "$(dirname "$0")"/../fiji --jython "$0" "$@" # (call again with fiji)'''
-
 import os, stat, types
 import zipfile
 import sys
-from xml.etree.cElementTree import *
+from elementtree.ElementTree import *
+#from xml.etree.cElementTree import *
+
+
+"""
+This script parses the plugins folder content, and try to build a list 
+of Fiji plugins from it, formatted to be pasted in MediaWiki. 
+
+It fetches information on menu item position and files called by
+parsing jars and the staged-plugins.
+
+J.Y. Tinevez - 2009
+"""
+
 
 def walktree(top = ".", depthfirst = True):
     """Walk the directory tree, starting from top. Credit to Noah Spurrier and Doug Fort."""
@@ -25,7 +35,7 @@ def walktree(top = ".", depthfirst = True):
 
 def branchTree(branch, list):
     """Add a list of element whose tag are given in a list to the given ElementTree element.
-    If a sub-element with the same taf exists, it is not created, but walked through, so as
+    If a sub-element with the same tag exists, it is not created, but walked through, so as
     to avoid duplicate branches.
     Returns the element leaf."""
     # Remove all empty strings elements
@@ -34,17 +44,31 @@ def branchTree(branch, list):
             list.remove('')
         except ValueError:
             break
-    cumulative_list = [reduce(lambda x,y: x + ' > ' + y, list[:n+1]) for n in range(len(list))]
+    # Tags don't like white space
+    new_list = []
+    for l in list:
+      new_list.append(l.replace(' ',''))
+    unique_tag = [reduce(lambda x,y: x + '>' + y, new_list[:n+1]) for n in range(len(new_list))] 
+    menu_path = [reduce(lambda x,y: x + ' > ' + y, list[:n+1]) for n in range(len(list))] 
 
     current_branch = branch
-    for el in cumulative_list:
+    for el in unique_tag:
         if len(el) < 2:
             # The string item is too small, skip it
             continue
+        # print(' ')
+        # print('Trying to find "' + el + '" in "' + current_branch.tag + '"')
+        # print('Content of ' + current_branch.tag)
+        # for i in current_branch:
+        #  print('\t"' + i.tag +'"') 
         new_branch = current_branch.find(el)
         if new_branch is None:
+        #    print('Not found')
             # sub-element does not exist, create it
             new_branch = SubElement(current_branch, el)
+            new_branch.set('tittle_string', menu_path[unique_tag.index(el)])
+        #else:
+        #    print('Found')
         current_branch = new_branch
     return current_branch
 
@@ -155,16 +179,19 @@ def createPluginsTree(fiji_folder):
 
 def outputNode(node, level=0):
     title_tag = (2+level)*'='
-    title_string = (4-level)*'\n' + title_tag + ' ' + node.tag + ' ' + title_tag + '\n'
+    title_string = (4-level)*'\n' + title_tag + ' ' + node.get('tittle_string','Plugins') + ' ' + title_tag + '\n'
+    # title_string = (4-level)*'\n' + title_tag + ' ' + node.tag + ' ' + title_tag + '\n'
     # Echo section title
-    print title_string
+    print(title_string)
     # Echo content
     keys = node.attrib.keys()
     for key in keys:
-        plugin_line = '* ' + '[[' + key + ']]' + ' - file ' + "<tt>" + node.attrib[key]['file'] + "</tt>"
-        if node.attrib[key]['package'] != '':
-            plugin_line += ' in package ' + "'''[[" + node.attrib[key]['package'] +"]]'''"
-        plugin_line += "  -- ''" + node.attrib[key]['type'] + "''"
+        if key == 'tittle_string':  # Skip the tittle
+          continue
+        plugin_line = '* ' + '[[' + key + ']]' + ' - file ' + "<tt>" + node.get(key,'{}').get('file','#') + "</tt>"
+        if node.get('package','#') != '#':
+            plugin_line += ' in package ' + "'''[[" + node.get(key,{}).get('package','#') +"]]'''"
+        plugin_line += "  -- ''" + node.get(key,{}).get('type','#') + "''"
         
         print plugin_line 
     # Recursive into children
