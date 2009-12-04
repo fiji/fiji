@@ -21,6 +21,49 @@ import java.awt.geom.Point2D;
 
 import javax.swing.SwingUtilities;
 
+/**
+ *	<h2>ArrowTool plugin</h2>
+ *
+ * This plugin aims at being a convenient interactive tool for drawing arrow shape on ImageJ 
+ * windows. It was made trying to copy the behavior of existing ROI tools in ImageJ.
+ * 
+ * <h3>Usage in ImageJ</h3>
+ * Run the plugin. A tool icon appear in ImageJ toolbar. When this icon is selected, drag the mouse
+ * with left button to draw non-destructively a ROI arrow. To draw pixels on the image, use the classical 
+ * <i>draw</i> command (shortcut 'd') to draw the outline of the arrow, and the <i>fill</i> command 
+ * (shortcut 'f') to draw its interior.
+ * <p>
+ * Clicking and dragging near the arrow base or head drags them individually. Clicking and dragging near
+ * the line drags the whole arrow. 
+ * <p>
+ * Hold the SHIFT key to constrain the arrow direction to multiples of PI/4.
+ * <p>
+ * Double-click on the toolbar icon to display an option panel, on which the arrow head length, the
+ * line thickness and the arrow style can be changed.
+ * <p>
+ * For backward compatibility  with the previous <code>Arrow_.java</code>, if there is a {@link Line} ROI
+ * on the image when this plugin is called, we  draw an arrow non-interactively.
+ * See {@link http://rsb.info.nih.gov/ij/plugins/download/Arrow_.java}.		
+ * 
+ * <h3>Code and classes</h3>
+ * 
+ * Four classes are at play:
+ * <ul>
+ * <li> {@link ArrowTool} is the plugin class, that controls the arrow shape and position and deals with
+ * user interactions.
+ * <li> It inherits from {@link AbstractTool}, which is an abstract tool aimed at standardizing future 
+ * ROI tools. It has the mechanisms to register the tool to windows and to the toolbar.
+ * <li> {@link ArrowShape} is the arrow class that has the mechanism to draw the arrow, according to a 
+ * given style, head length, ... For convenience, it is wrapped in {@link ArrowShapeRoi} that extends
+ * {@link ShapeRoi}.
+ * <li> {@link ArrowOptionPanel} is the option panel displayed when the toolbar icon is double-clicked. 
+ * </ul> 
+ * 
+ * 
+ * @author Jean-Yves Tinevez & Johannes Schindelin
+ * Nov-Dec 2009
+ * @version 1.0 - 3 Dec 2009
+ */
 public class ArrowTool extends fiji.util.AbstractTool implements ActionListener {
 	
 	
