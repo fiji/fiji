@@ -10,6 +10,7 @@ import ij.gui.ShapeRoi;
 import ij.process.ImageProcessor;
 
 import java.awt.BasicStroke;
+import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -17,6 +18,8 @@ import java.awt.Shape;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.awt.geom.Point2D;
 
 import javax.swing.SwingUtilities;
@@ -271,6 +274,54 @@ public class ArrowTool extends fiji.util.AbstractTool implements ActionListener 
 			status = InteractionStatus.FREE;
 		}
 	}
+	
+	/**
+	 * SHIFT key + MouseWheelEvent are used to change the arrow field.
+	 */
+	public void handleMouseWheelMove(MouseWheelEvent e) {
+		final double x = canvas.offScreenXD(e.getX());
+		final double y = canvas.offScreenYD(e.getY());
+		final double dist_to_line = distanceToLine(x, y);
+		final double dist_to_arrowhead = distanceToArrowHead(x, y);
+		final double dist_to_arrowbase = distanceToArrowBase(x, y);
+		
+		/* For this to execute, we must have shift pressed AND be close to the arrow.
+		 * Otherwise, we pass the event to the other MouseWheelListeners.		 */
+		if ( !e.isShiftDown() && 
+				( (dist_to_arrowhead < drag_tolerance) || (dist_to_arrowbase < drag_tolerance) ||  (dist_to_line < drag_tolerance) ) )  {			
+			final MouseWheelListener[] listeners =  ((Component) e.getSource()).getParent().getMouseWheelListeners();
+			for (MouseWheelListener listener : listeners) {	listener.mouseWheelMoved(e);}
+			return;
+		}
+
+		if ( e.isControlDown() )  {	
+			if ( (dist_to_arrowhead < drag_tolerance) || (dist_to_arrowbase < drag_tolerance) ||  (dist_to_line < drag_tolerance) ) {
+				// CTRL SHIFT: we change the style
+				final ArrowShape.ArrowStyle style = arrow.getStyle();
+				int style_index = style.ordinal();
+				style_index += e.getWheelRotation();
+				while (style_index < 0) { style_index += ArrowShape.ArrowStyle.values().length; }
+				while (style_index > ArrowShape.ArrowStyle.values().length-1) { style_index -= ArrowShape.ArrowStyle.values().length; }
+				arrow.setStyle(ArrowShape.ArrowStyle.values()[style_index]);
+				paint();
+			}
+		} else { 
+			// otherwise fields
+			if (dist_to_arrowhead < drag_tolerance) {
+				// Near the arrow head, we change the arrow length
+				arrow.setLength(Math.max(0,arrow.getLength() + e.getWheelRotation()) );
+				paint();
+				e.consume();
+			} else if ( (dist_to_arrowbase < drag_tolerance) ||  (dist_to_line < drag_tolerance) ) {
+				// Near the arrow, we change its thickness
+				stroke = new BasicStroke( Math.max(0, stroke.getLineWidth()+e.getWheelRotation()),
+						BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
+				paint();
+			} 
+		}
+	}
+
+	
 	
 	/*
 	 * OPTION PANEL
