@@ -123,9 +123,13 @@ public class ArrowTool extends fiji.util.AbstractTool implements ActionListener 
 	 */
 	
 	public void run(String arg) {
-		imp = WindowManager.getCurrentImage();
 		arrow = new ArrowShape();
-		Roi roi = imp.getRoi();
+		imp = WindowManager.getCurrentImage();
+		Roi roi = null;
+		if (imp != null) { 
+			roi = imp.getRoi(); 
+			canvas = imp.getCanvas();
+		}
 		if ( (roi!= null) && (roi instanceof Line)) {
 			/* Legacy method: if there is a line when this plugin is called, then we directly draw 
 			 * an arrow, so as to comply with the previous Arrow_.java class that might be used 
@@ -141,7 +145,6 @@ public class ArrowTool extends fiji.util.AbstractTool implements ActionListener 
 		} else {
 			/* Other wise we start the interactive mode */
 			super.run(arg);
-			canvas = imp.getCanvas();
 			drag_tolerance = arrow.getLength();
 			status = InteractionStatus.NO_ARROW;
 		}
@@ -287,8 +290,7 @@ public class ArrowTool extends fiji.util.AbstractTool implements ActionListener 
 		
 		/* For this to execute, we must have shift pressed AND be close to the arrow.
 		 * Otherwise, we pass the event to the other MouseWheelListeners.		 */
-		if ( !e.isShiftDown() && 
-				( (dist_to_arrowhead < drag_tolerance) || (dist_to_arrowbase < drag_tolerance) ||  (dist_to_line < drag_tolerance) ) )  {			
+		if ( !e.isShiftDown() ) { 			
 			final MouseWheelListener[] listeners =  ((Component) e.getSource()).getParent().getMouseWheelListeners();
 			for (MouseWheelListener listener : listeners) {	listener.mouseWheelMoved(e);}
 			return;
@@ -320,7 +322,6 @@ public class ArrowTool extends fiji.util.AbstractTool implements ActionListener 
 			} 
 		}
 	}
-
 	
 	
 	/*
