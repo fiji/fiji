@@ -1,17 +1,12 @@
-Show stoppers (this needs to be done _before_ the first public release):
+- Find should have a default action on Enter (and likewise Find and Replace).
+
+- When "Find" does not find anything, it should ask whether it should look
+  from the beginning, and if it does not find anything (or if the user
+  cancels) _not_ jump at all.
+
+- When some text is selected and "Find" is called, default to that string.
 
 - Enable to set breakpoints via the Breakpoints menu and F9 (IIRC).
-
-- when called with
-
-	fiji -eval 'run("Script Editor", "open=<relative path>");'
-
-  and the given file does not exist, it opens _two_ editor windows.
-
-- make Ctrl-R another shortcut for running, because people might be used to that
-  by ImageJ's macro editor (and likewise F5 for the Visual Studio fans).
-
-Not-quite show-stoppers:
 
 - if there are images on which the plugin wants to work, they have to be
   transported to the other virtual machine.  Mark them with the "(Debugging)"
@@ -19,8 +14,6 @@ Not-quite show-stoppers:
 
 - when debugging finished, give the user a chance to save resulting images
   or some such before closing the debuggee.
-
-Nice-to-haves:
 
 - Integrate Fiji Build much better.
 
