@@ -1264,7 +1264,8 @@ public class Fake {
 					getVarPath("TOOLSPATH", directory),
 					getVarPath("CLASSPATH", directory),
 					getVar("PLUGINSCONFIGDIRECTORY")
-						+ "/" + baseName + ".Fakefile");
+						+ "/" + baseName + ".Fakefile",
+					jarName);
 			}
 
 			String getVarPath(String variable, String subkey) {
@@ -2487,7 +2488,8 @@ public class Fake {
 
 	protected void fakeOrMake(File cwd, String directory, boolean verbose,
 			boolean ignoreMissingFakefiles, String toolsPath,
-			String classPath, String fallBackFakefile)
+			String classPath, String fallBackFakefile,
+			String defaultTarget)
 			throws FakeException {
 		String[] files = new File(directory).list();
 		if (files == null || files.length == 0)
@@ -2523,6 +2525,12 @@ public class Fake {
 							classPath);
 				parser.cwd = new File(cwd, directory);
 				Parser.Rule all = parser.parseRules(null);
+				if (defaultTarget != null) {
+					Parser.Rule rule =
+						all.getRule(defaultTarget);
+					if (rule != null)
+						all = rule;
+				}
 				all.make();
 			} else
 				// Try "make"
