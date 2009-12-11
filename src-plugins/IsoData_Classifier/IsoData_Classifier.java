@@ -1,5 +1,6 @@
 import ij.IJ;
 import ij.ImagePlus;
+import ij.ImageStack;
 
 import ij.gui.GenericDialog;
 
@@ -24,19 +25,29 @@ public class IsoData_Classifier implements PlugInFilter {
 	public void run(ImageProcessor ip) {
 		GenericDialog gd = new GenericDialog("How many classes?");
 		gd.addNumericField("number_of_classes", 3, 0);
+		if (image.getStackSize() > 1)
+			gd.addCheckbox("use_stack_histogram", false);
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return;
 		int n = (int)gd.getNextNumber();
-		int[] histogram = ip.getHistogram();
-		if (n < 2 || n > histogram.length) {
-			IJ.error("Need between 2 and " + histogram.length
-					+ " classes!");
-			return;
+		boolean useStackHistogram = image.getStackSize() > 1 ?
+			gd.getNextBoolean() : false;
+
+		ImageStack stack = image.getStack();
+		int[] classes = null;
+		if (useStackHistogram && stack.getSize() > 1) {
+			int[] histogram = stack.getProcessor(1).getHistogram();
+			for (int i = 2; i <= stack.getSize(); i++) {
+				int[] h = stack.getProcessor(i).getHistogram();
+				for (int j = 0; j < h.length; j++)
+					histogram[j] += h[j];
+			}
+			classes = isoData(histogram, n);
 		}
 
-		int[] classes = isoData(histogram, n);
-		mapPixels(classes, ip.getPixels());
+		for (int i = 1; i <= stack.getSize(); i++)
+			mapPixels(classes, stack.getProcessor(i), n);
 	}
 
 	int[] isoData(int[] histogram, int n) {
@@ -61,6 +72,12 @@ public class IsoData_Classifier implements PlugInFilter {
 		}
 
 		return result;
+	}
+
+	void mapPixels(int[] classes, ImageProcessor ip, int n) {
+		if (classes == null)
+			classes = isoData(ip.getHistogram(), n);
+		mapPixels(classes, ip.getPixels());
 	}
 
 	void mapPixels(int[] classes, Object pixels) {

@@ -205,7 +205,9 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 		controlPanel.status = ControlJPanel.FG_ADDED_STATUS;			
 		lastButton = controlPanel.fgJRadioButton.isSelected() ? 
 				controlPanel.fgJRadioButton : controlPanel.bgJRadioButton;
-		roiOverlay.setColor(Color.RED);
+		 
+		roiOverlay.setColor( controlPanel.fgJRadioButton.isSelected() ? Color.RED : Color.GREEN);
+		 
 		roiOverlay.setComposite( transparency050 );
 		
 		if (controlPanel.bgJRadioButton.isSelected()) {

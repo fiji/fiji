@@ -422,7 +422,7 @@ public class TextEditor extends JFrame implements ActionListener,
 	}
 
 	public void gotoLine(int line) throws BadLocationException {
-		textArea.moveCaretPosition(textArea.getLineStartOffset(line-1));
+		textArea.setCaretPosition(textArea.getLineStartOffset(line-1));
 	}
 
 	public void open(String path) {

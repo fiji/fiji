@@ -215,6 +215,7 @@ public class ControlJPanel extends JPanel
 		smoothJLabel.setEnabled(addPhase);
 		fgOrBgJLabel.setEnabled(addPhase);
 		fgJRadioButton.setEnabled(addPhase);
+		bgJRadioButton.setEnabled(addPhase);
 		multipart.setEnabled(addPhase);
 		segmentJButton.setEnabled(addPhase);
 				

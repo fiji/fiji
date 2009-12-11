@@ -163,6 +163,7 @@ public class ArrowShape implements Shape {
 	private void getPathFromPoints() {
 		path.moveTo(points[0], points[1]); // tail
 		path.lineTo(points[2 * 1], points[2 * 1 + 1]); // head back
+		path.moveTo(points[2 * 1], points[2 * 1 + 1]); // head back
 		if (style == ArrowStyle.THIN) {
 			path.moveTo(points[2 * 2], points[2 * 2 + 1]);
 		} else {			
@@ -170,12 +171,7 @@ public class ArrowShape implements Shape {
 		}
 		path.lineTo(points[2 * 3], points[2 * 3 + 1]); // head tip
 		path.lineTo(points[2 * 4], points[2 * 4 + 1]); // right point
-		if (style != ArrowStyle.THIN) {			
-			path.lineTo(points[2 * 1], points[2 * 1 + 1]); // back to the head back
-		} else {
-			path.lineTo(points[2 * 1], points[2 * 1 + 1]); // back to the head back
-			path.lineTo(points[2 * 1], points[2 * 1 + 1]); // back to the head back
-		}
+		path.lineTo(points[2 * 1], points[2 * 1 + 1]); // back to the head back
 	}
 	
 	

@@ -13,8 +13,10 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 
-public abstract class AbstractTool implements ImageListener, MouseListener,
+public abstract class AbstractTool implements ImageListener, MouseListener, MouseWheelListener,
 		 MouseMotionListener, PlugIn {
 	
 	Toolbar toolbar;
@@ -99,8 +101,15 @@ public abstract class AbstractTool implements ImageListener, MouseListener,
 			handleMouseClick(e);
 	}
 
+	public void mouseWheelMoved(MouseWheelEvent e) {
+		if (Toolbar.getToolId() == toolID)
+			handleMouseWheelMove(e);
+	}
+
 	public void mouseEntered(MouseEvent e) {}
 	public void mouseExited(MouseEvent e) {}
+	
+	
 
 	public void imageOpened(ImagePlus image) {
 		registerTool(image);
@@ -135,6 +144,7 @@ public abstract class AbstractTool implements ImageListener, MouseListener,
 			return;
 		canvas.addMouseListener(this);
 		canvas.addMouseMotionListener(this);
+		canvas.addMouseWheelListener(this);
 	}
 
 	void unregisterTool() {
@@ -154,6 +164,7 @@ public abstract class AbstractTool implements ImageListener, MouseListener,
 			return;
 		canvas.removeMouseListener(this);
 		canvas.removeMouseMotionListener(this);
+		canvas.getParent().removeMouseWheelListener(this);
 	}
 
 
@@ -166,7 +177,7 @@ public abstract class AbstractTool implements ImageListener, MouseListener,
 	protected void handleMouseRelease(MouseEvent e) {}
 	protected void handleMouseDrag(MouseEvent e) {}
 	protected void handleMouseMove(MouseEvent e) {}
-
+	protected void handleMouseWheelMove(MouseWheelEvent e) {}
 	
 	/*
 	 * ABSTRACT METHODS
