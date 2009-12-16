@@ -107,9 +107,15 @@ public class PluginUploader {
 			PluginObject plugin = file.plugin;
 			if (plugin == null)
 				continue;
-			file.filesize = Util.getFilesize(plugin.filename);
-			file.plugin.newTimestamp = timestamp;
+			plugin.filesize = file.filesize =
+				Util.getFilesize(plugin.filename);
+			plugin.newTimestamp = timestamp;
 			file.filename = plugin.filename + "-" + timestamp;
+			if (plugin.getStatus() ==
+					PluginObject.Status.NOT_FIJI) {
+				plugin.setStatus(PluginObject.Status.INSTALLED);
+				plugin.current.timestamp = timestamp;
+			}
 		}
 
 		XMLFileWriter.writeAndValidate(backup);
@@ -118,7 +124,7 @@ public class PluginUploader {
 		((UploadableFile)files.get(0)).updateFilesize();
 		// TODO: do no save text file at all!
 		saveTextFile(text);
-		((UploadableFile)files.get(1)).updateFilesize();
+		((UploadableFile)files.get(files.size() - 1)).updateFilesize();
 
 		uploader.calculateTotalSize(files);
 	}

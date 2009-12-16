@@ -445,8 +445,13 @@ public class UpdaterFrame extends JFrame
 				.clone(plugins.toUninstall());
 			installer.start();
 			for (PluginObject plugin : uninstalled)
-				table.firePluginChanged(plugin);
+				if (!plugin.isFiji())
+					PluginCollection.getInstance()
+						.remove(plugin);
+				else
+					plugin.setStatus(Status.NOT_INSTALLED);
 			updatePluginsTable();
+			pluginsChanged();
 			info("Updated successfully.  Please restart Fiji!");
 		} catch (Canceled e) {
 			// TODO: remove "update/" directory

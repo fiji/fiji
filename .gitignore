@@ -3,6 +3,7 @@
 .DS_Store
 .project
 .metadata
+/build/
 /make-targets
 /fiji.o
 /fiji
@@ -33,7 +34,6 @@
 /jars/javac.jar
 /jars/jython2.2.1/cachedir
 /tmp.ijm
-/fake/Fake*.class
 /fake.jar
 /ij.jar
 /misc/Fiji.jar
@@ -107,3 +107,5 @@
 /plugins/3D_Objects_Counter.jar
 /jars/clojure-contrib.jar
 /jars/weka.jar
+/plugins/IsoData_Classifier.jar
+/plugins/RATS_.jar

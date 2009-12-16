@@ -85,6 +85,8 @@ public class PluginTable extends JTable {
 			bold = plain.deriveFont(Font.BOLD);
 		}
 		PluginObject plugin = getPlugin(row);
+		if (plugin == null)
+			return;
 		comp.setFont(plugin.actionSpecified() ||
 				plugin.isLocallyModified() ? bold : plain);
 		comp.setForeground(plugin.getStatus() ==

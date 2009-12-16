@@ -221,7 +221,9 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 					plugins.getPlugin(dependency.filename);
 				if (dep == null || ignore.contains(dep))
 					continue;
-				if (dep.isInstallable() || !dep.isFiji() ||
+				if (dep.isInstallable() ||
+					(!dep.isFiji() &&
+					 dep.getAction() != Action.UPLOAD) ||
 					dep.isObsolete() ||
 					(dep.getStatus().isValid(Action.UPLOAD)
 					 && dep.getAction() != Action.UPLOAD))

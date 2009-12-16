@@ -26,6 +26,8 @@ import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -77,8 +79,6 @@ public class ControlJPanel extends JPanel
 	final JButton resetJButton=new JButton("Reset");	
 	final JButton createMaskJButton=new JButton("Create mask");
 	
-	/** Denotes region of interest defined. Next foreground is to be added. */
-	final static int ROI_DEFINED_STATUS = 4;
 	/** Denotes some foreground being added. More foreground/background can be added or segmentation started. */
 	final static int FG_ADDED_STATUS = 5;
 	/** Denotes basic segmentation finished.  Allows detail refinement. */
@@ -125,13 +125,26 @@ public class ControlJPanel extends JPanel
 		final GridBagConstraints segGc = getGbc(0, 3, 3, false, false);
 		segGc.anchor = GridBagConstraints.CENTER;
 		segJPanel.add(segmentJButton, segGc);
-		
-		
+						
+		final ButtonGroup drbButtonGroup=new ButtonGroup();
+		drbButtonGroup.add(addJRadioButton);
+		drbButtonGroup.add(subJRadioButton);
+		final ActionListener drbModeListener = new ActionListener()
+		  {
+			  public void actionPerformed(ActionEvent e)
+			  {
+				  addThreshold.setEnabled(addJRadioButton.isSelected());
+				  subThreshold.setEnabled(subJRadioButton.isSelected());
+			  }
+		  };
+		addJRadioButton.addActionListener(drbModeListener);
+		subJRadioButton.addActionListener(drbModeListener);
+		subJRadioButton.setSelected(true);		
 		final String drbTooltip=
 			"Additive or Subtractive Alpha Brush to Improve Edges or Highly Detailed Regions.";
 		addJRadioButton.setToolTipText(drbTooltip);
 		subJRadioButton.setToolTipText(drbTooltip);
-		subJRadioButton.setSelected(true);
+		
 		addThreshold.setToolTipText("Threshold Defining Subpixel Granularity for Additive Refinement Brush.");
 		subThreshold.setToolTipText("Threshold Defining Subpixel Granularity for Substractive Refinement Brush.");
 		addThreshold.setPaintTicks(true);
@@ -147,7 +160,7 @@ public class ControlJPanel extends JPanel
 		drbJPanel.add(Box.createVerticalStrut(6), getGbc(0, 3, 1, false, false)); 
 		drbJPanel.add(refineJButton, segGc);
 				
-		final String resetTooltip = "Reset display image";
+		final String resetTooltip = "Reset displayed image";
 		resetJButton.setToolTipText(resetTooltip);		
 		resetJPanel.add(resetJButton, getGbc(0, 0, 1, false, false));				
 		resetJPanel.add(createMaskJButton, getGbc(1, 0, 1, false, false));
@@ -195,22 +208,17 @@ public class ControlJPanel extends JPanel
 		final Color offColor = UIManager.getColor("Label.disabledForeground");
 		
 		// panel for the SIOX segmentation step:
-		final boolean addPhase = (status==ROI_DEFINED_STATUS) || (status==FG_ADDED_STATUS);
+		final boolean addPhase = status==FG_ADDED_STATUS;
 		((TitledBorder) segJPanel.getBorder()).setTitleColor(addPhase ? onColor : offColor);		
 		
 		smoothness.setEnabled(addPhase);
 		smoothJLabel.setEnabled(addPhase);
 		fgOrBgJLabel.setEnabled(addPhase);
 		fgJRadioButton.setEnabled(addPhase);
+		bgJRadioButton.setEnabled(addPhase);
 		multipart.setEnabled(addPhase);
 		segmentJButton.setEnabled(addPhase);
-		
-		// force foreground selection when where no foreground is defined yet:
-		bgJRadioButton.setEnabled(status == FG_ADDED_STATUS);
-		if (!bgJRadioButton.isEnabled()) 
-		{
-			fgJRadioButton.setSelected(true);
-		}
+				
 		segJPanel.repaint(); // update new border title color on screen
 		
 		// panel for the detail refinement step:
@@ -218,6 +226,8 @@ public class ControlJPanel extends JPanel
 		((TitledBorder) drbJPanel.getBorder()).setTitleColor(drbPhase? onColor : offColor);
 		addJRadioButton.setEnabled(drbPhase);
 		subJRadioButton.setEnabled(drbPhase);
+		if(addJRadioButton.isEnabled() == false)
+			subJRadioButton.setSelected(true);
 		refineJButton.setEnabled(drbPhase);
 		addThreshold.setEnabled(drbPhase && addJRadioButton.isSelected());
 		subThreshold.setEnabled(drbPhase && subJRadioButton.isSelected());

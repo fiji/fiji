@@ -28,7 +28,7 @@ import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
 
 /**
- * Fiji plugin to run SIOX: Simple Input Object Segmentation.
+ * Fiji plugin to run SIOX: Simple Interactive Object Extraction.
  * 
  * @author Ignacio Arganda-Carreras (ignacio.arganda at gmail.com)
  *
@@ -50,14 +50,14 @@ public static void main(String[] args) {
 
 
 
-	@Override
+	//@Override
 	public void run(ImageProcessor ip) 
 	{
 		new SegmentationGUI(this.inputImage);
 		
 	}
 
-	@Override
+	//@Override
 	public int setup(String arg, ImagePlus imp) 
 	{
 		this.inputImage = imp;
