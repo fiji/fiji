@@ -27,7 +27,7 @@ import ij.util.*;
   *
   * Plugin Version:
   * 2009-01-08
-  * 2009-12-11 BTT small fix to verbose (defaults to false now) option
+  * 2009-12-11 BTT small fix to verbose (defaults to false now) option and title for mask
   * 
   * The following has been information is copied directly from the header
   * of Wilkinson's rats.c.
@@ -165,7 +165,7 @@ public class RATS_ implements PlugInFilter {
    if (bVerbose) tock("  Resize:");
    
    this.threshIp = new FloatProcessor(thresh);
-   String title = imp.getTitle()+"-mask";
+   String title = imp.getShortTitle()+"-mask";
    ImagePlus resultImp = new ImagePlus(title, threshIp.convertToByte(true));
    resultImp.show();
   }
@@ -390,5 +390,5 @@ public class RATS_ implements PlugInFilter {
      IJ.log(message + " " + elapsedTime + " ms"); 
      return elapsedTime;
   }  
- 
+
 }//class
