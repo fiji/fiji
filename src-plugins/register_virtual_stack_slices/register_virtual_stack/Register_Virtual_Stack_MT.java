@@ -526,12 +526,14 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			for (int i=0; i<sorted_file_names.length; i++) 
 			{
 				IJ.showStatus("Extracting features from slices...");
-				final ImagePlus imp = IJ.openImage(source_dir + sorted_file_names[i]);
+				//final ImagePlus imp = IJ.openImage(source_dir + sorted_file_names[i]);
+				
 				// Store image center coordinates
-				centerX[i] = imp.getWidth() / 2;
-				centerY[i] = imp.getHeight() / 2;
+				//centerX[i] = imp.getWidth() / 2;
+				//centerY[i] = imp.getHeight() / 2;
 				// Submit job to extract features
-				fu[i] = exe.submit(extractFeatures(p, imp.getProcessor()));
+				//fu[i] = exe.submit(extractFeatures(p, imp.getProcessor()));
+				fu[i] = exe.submit(extractFeatures(p, source_dir + sorted_file_names[i], i));
 				
 			}
 			// Join threads of feature extraction
@@ -1282,9 +1284,11 @@ public class Register_Virtual_Stack_MT implements PlugIn
 					imp.flush();
 					final ImagePlus big = new ImagePlus(imp.getTitle(), ip);
 					big.setCalibration(imp.getCalibration());
+					imp.close();
 					if (! new FileSaver(big).saveAsTiff(path)) {
 						return null;
 					}
+					big.close();
 					return new File(path).getName();
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -1357,7 +1361,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 	 * 
 	 * @param p feature extraction parameters
 	 * @param ip input image
-	 * @return callable object to execute feature extraction
+	 * @return list of extracted features
 	 */
 	private static  Callable<ArrayList<Feature>> extractFeatures(final Param p, final ImageProcessor ip) {
 		return new Callable<ArrayList<Feature>>() {
@@ -1368,6 +1372,32 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			}
 		};
 	}
+
+
+	//-----------------------------------------------------------------------------------------
+	/**
+	 * Generate object to concurrently extract features
+	 * 
+	 * @param p feature extraction parameters
+	 * @param ip input image
+	 * @return list of extracted features
+	 */
+	private static  Callable<ArrayList<Feature>> extractFeatures(final Param p, final String path, final int index) {
+		return new Callable<ArrayList<Feature>>() {
+			public ArrayList<Feature> call() 
+			{
+				final ImagePlus imp = IJ.openImage(path);
+				centerX[index] = imp.getWidth() / 2;
+				centerY[index] = imp.getHeight() / 2;
+				final ArrayList<Feature> fs = new ArrayList<Feature>();
+				new SIFT( new FloatArray2DSIFT( p.sift ) ).extractFeatures(imp.getProcessor(), fs);
+				imp.changes = false;
+				imp.close();
+				return fs;
+			}
+		};
+	}
+	
 	
 	//-----------------------------------------------------------------------------------------
 	/**
@@ -1375,7 +1405,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 	 * 
 	 * @param imp image to save
 	 * @param path output path
-	 * @return callable object to execute the saving
+	 * @return true if the image was saved correctly
 	 */
 	private static Callable<Boolean> saveImage(final ImagePlus imp, final String path) 
 	{
