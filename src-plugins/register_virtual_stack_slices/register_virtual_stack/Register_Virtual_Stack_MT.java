@@ -542,6 +542,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 				IJ.showStatus("Extracting features " + (i+1) + "/" + sorted_file_names.length);
 				IJ.showProgress((double) (i+1) / sorted_file_names.length);
 				fs[i] = fu[i].get();
+				fu[i] = null;
 			}
 			
 			// Match features				
@@ -576,9 +577,11 @@ public class Register_Virtual_Stack_MT implements PlugIn
 				IJ.showStatus("Matching features " + (i+1) + "/" + sorted_file_names.length);
 				IJ.showProgress((double) (i+1) / sorted_file_names.length);
 				inliers[i-1] = fpm[i-1].get();
+				fs[i-1].clear();
 				if(inliers[i-1].size() < 2)
 					IJ.log("Error: not model found for images " + sorted_file_names[i-1] + " and " + sorted_file_names[i] );
 			}
+			fs[sorted_file_names.length-1].clear();
 			
 			// Rigidly register
 			for (int i=1; i<sorted_file_names.length; i++) 			
@@ -608,6 +611,10 @@ public class Register_Virtual_Stack_MT implements PlugIn
 				return;
 			}
 
+			// Clear inliers
+			for(int i = 0; i < inliers.length; i++)
+				inliers[i].clear();
+			
 			// Post-processing
 			if( postprocess )
 			{
@@ -629,9 +636,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			IJ.showProgress(1);
 			IJ.showStatus("Done!");
 			exe.shutdownNow();
-		}
-		
-		
+		}			
 		
 	} // end method exec (non-shrinking)
 
