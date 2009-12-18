@@ -952,6 +952,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		}
 
 		// Reopen all target images and repaint them on an enlarged canvas
+		IJ.showStatus("Resizing images...");
 		final Future<String>[] jobs = new Future[sorted_file_names.length];
 		for (int j = 0, i=0; i<sorted_file_names.length; i++, j++) 
 		{
@@ -1280,15 +1281,14 @@ public class Register_Virtual_Stack_MT implements PlugIn
 						ip.setValue(0);
 						ip.fill();
 					}
-					ip.insert(imp.getProcessor(), x, y);
-					imp.flush();
+					ip.insert(imp.getProcessor(), x, y);					
 					final ImagePlus big = new ImagePlus(imp.getTitle(), ip);
 					big.setCalibration(imp.getCalibration());
-					imp.close();
+					flush(imp);
 					if (! new FileSaver(big).saveAsTiff(path)) {
 						return null;
 					}
-					big.close();
+					flush(big);
 					return new File(path).getName();
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -1391,8 +1391,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 				centerY[index] = imp.getHeight() / 2;
 				final ArrayList<Feature> fs = new ArrayList<Feature>();
 				new SIFT( new FloatArray2DSIFT( p.sift ) ).extractFeatures(imp.getProcessor(), fs);
-				imp.changes = false;
-				imp.close();
+				flush(imp);
 				return fs;
 			}
 		};
@@ -1976,5 +1975,17 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		
 	} // end method postProcessTransform
 	
+
+
+		  
+	public static void flush(ImagePlus imp) 
+	{
+		if (null == imp) return;
+		imp.flush();
+		if (null != imp.getProcessor() && null != imp.getProcessor().getPixels()) 
+		{
+			imp.getProcessor().setPixels(null);
+		}
+	}
 	
 }// end Register_Virtual_Stack_MT class
