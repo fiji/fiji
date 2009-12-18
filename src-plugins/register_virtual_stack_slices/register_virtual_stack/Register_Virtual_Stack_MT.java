@@ -537,6 +537,9 @@ public class Register_Virtual_Stack_MT implements PlugIn
 				fu[i] = exe.submit(extractFeatures(p, source_dir + sorted_file_names[i], i));
 				
 			}
+
+			System.gc();
+
 			// Join threads of feature extraction
 			for (int i=0; i<sorted_file_names.length; i++) 	
 			{
@@ -587,6 +590,8 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			fs[sorted_file_names.length-1].clear();
 
 			fs = null;
+
+			System.gc();
 			
 			// Rigidly register
 			for (int i=1; i<sorted_file_names.length; i++) 			
@@ -845,7 +850,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			final int aux = array[randomIndex1];
 			array[randomIndex1] = array[randomIndex2];
 			array[randomIndex2] = aux;
-		}
+		}			
 		
 	}// end method randomize
 	
@@ -878,7 +883,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		final List<Rectangle> bounds = new ArrayList<Rectangle>();
 			
 		// Apply transform	
-		Future<Boolean>[] save_job = new Future[sorted_file_names.length];
+		ArrayList<Future<Boolean>> save_job = new ArrayList <Future<Boolean>>();
 		for (int i=0; i<sorted_file_names.length; i++) 
 		{
 			// Open next image
@@ -925,16 +930,22 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			
 			
 			// Save target image
-			save_job[i] = exe.submit(saveImage(imp2, makeTargetPath(target_dir, sorted_file_names[i])));	
+			save_job.add( exe.submit(saveImage(imp2, makeTargetPath(target_dir, sorted_file_names[i]))) );	
+			imp2 = null;
+			System.gc();
 		}
-		
+				
+
 		// Wait for the intermediate output files to be saved
-		for (int i=0; i<sorted_file_names.length; i++) 
+		int ind = 0;
+		for (Iterator<Future<Boolean>> it = save_job.iterator(); it.hasNext(); )
 		{
+			ind++;
 			Boolean saved_file = null;
 			try{
-				saved_file = save_job[i].get();
-				save_job[i] = null;
+				saved_file = it.next().get();
+				it.remove(); // so list doesn't build up anywhere with Callable-s that have been called already.				
+				System.gc();
 			} catch (InterruptedException e) {
 				IJ.error("Interruption exception!");
 				e.printStackTrace();
@@ -947,7 +958,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			
 			if( saved_file.booleanValue() == false)
 			{
-				IJ.log("Error while saving: " +  makeTargetPath(target_dir, sorted_file_names[i]));
+				IJ.log("Error while saving: " +  makeTargetPath(target_dir, sorted_file_names[ind]));
 				return false;
 			}
 			
@@ -978,11 +989,12 @@ public class Register_Virtual_Stack_MT implements PlugIn
 
 		// Join all and create VirtualStack
 		final VirtualStack stack = new VirtualStack(commonBounds.width, commonBounds.height, null, target_dir);
-		for (Iterator<Future<String>> it = names.iterator(); it.hasNext(); ) {
+		for (Iterator<Future<String>> it1 = names.iterator(); it1.hasNext(); ) {
 			String filename = null;
 			try {
-				filename = it.next().get();
-				it.remove(); // so list doesn't build up anywhere with Callable-s that have been called already.
+				filename = it1.next().get();
+				it1.remove(); // so list doesn't build up anywhere with Callable-s that have been called already.
+				System.gc();
 			} catch (InterruptedException e) {
 				IJ.error("Interruption exception!");
 				e.printStackTrace();
@@ -1285,7 +1297,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 	{
 		return new Callable<String>() {
 			public String call() {
-				try {
+				try {					
 					ImagePlus imp = IJ.openImage(path);
 					if (null == imp) {
 						IJ.log("Could not open target image at " + path);
@@ -1310,6 +1322,9 @@ public class Register_Virtual_Stack_MT implements PlugIn
 					}
 					flush(big);
 					big = null;
+					
+					System.gc();
+					
 					return new File(path).getName();
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -1407,12 +1422,17 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		return new Callable<ArrayList<Feature>>() {
 			public ArrayList<Feature> call() 
 			{
-				final ImagePlus imp = IJ.openImage(path);
+				
+				ImagePlus imp = IJ.openImage(path);
 				centerX[index] = imp.getWidth() / 2;
 				centerY[index] = imp.getHeight() / 2;
-				final ArrayList<Feature> fs = new ArrayList<Feature>();
+				ArrayList<Feature> fs = new ArrayList<Feature>();
 				new SIFT( new FloatArray2DSIFT( p.sift ) ).extractFeatures(imp.getProcessor(), fs);
 				flush(imp);
+				imp = null;
+
+				System.gc();
+				
 				return fs;
 			}
 		};
