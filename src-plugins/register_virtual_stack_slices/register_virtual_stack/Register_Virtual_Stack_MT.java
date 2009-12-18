@@ -21,6 +21,7 @@ import ij.io.OpenDialog;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
 import java.awt.Color;
@@ -509,7 +510,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		}		
 		
 		// Array of inliers for every image with the consecutive one
-		final List< PointMatch >[] inliers = new ArrayList [sorted_file_names.length-1];
+		List< PointMatch >[] inliers = new ArrayList [sorted_file_names.length-1];
 		CoordinateTransform[] transform = new CoordinateTransform [sorted_file_names.length];
 		// Initialize arrays of image center coordinates
 		centerX = new double[sorted_file_names.length];
@@ -519,8 +520,8 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		transform[0] = new RigidModel2D();
 		
 		// FIRST LOOP (calculate correspondences and first RIGID solution)
-		final ArrayList<Feature>[] fs = new ArrayList[sorted_file_names.length];
-		final Future<ArrayList<Feature>> fu[] = new Future[sorted_file_names.length];
+		ArrayList<Feature>[] fs = new ArrayList[sorted_file_names.length];
+		Future<ArrayList<Feature>> fu[] = new Future[sorted_file_names.length];
 		try{
 			// Extract features for all images
 			for (int i=0; i<sorted_file_names.length; i++) 
@@ -544,6 +545,8 @@ public class Register_Virtual_Stack_MT implements PlugIn
 				fs[i] = fu[i].get();
 				fu[i] = null;
 			}
+
+			fu = null;
 			
 			// Match features				
 			final Future<ArrayList<PointMatch>>[] fpm = new Future[sorted_file_names.length-1];
@@ -582,6 +585,8 @@ public class Register_Virtual_Stack_MT implements PlugIn
 					IJ.log("Error: not model found for images " + sorted_file_names[i-1] + " and " + sorted_file_names[i] );
 			}
 			fs[sorted_file_names.length-1].clear();
+
+			fs = null;
 			
 			// Rigidly register
 			for (int i=1; i<sorted_file_names.length; i++) 			
@@ -614,6 +619,8 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			// Clear inliers
 			for(int i = 0; i < inliers.length; i++)
 				inliers[i].clear();
+
+			inliers = null;
 			
 			// Post-processing
 			if( postprocess )
@@ -623,7 +630,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			
 			// Create final images.
 			IJ.showStatus("Calculating final images...");
-			if(createResults(source_dir, sorted_file_names, target_dir, save_dir, exe, transform) == false)
+			if( !createResults(source_dir, sorted_file_names, target_dir, save_dir, exe, transform) )
 			{
 				IJ.log("Error when creating target images");
 				return;
@@ -863,19 +870,19 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			final CoordinateTransform[] transform) 
 	{
 		
-		ImagePlus imp2 = IJ.openImage(source_dir + sorted_file_names[0]);
+		ImagePlus first = IJ.openImage(source_dir + sorted_file_names[0]);
 		
 		// Common bounds to create common frame for all images
-		final Rectangle commonBounds = new Rectangle(0, 0, imp2.getWidth(), imp2.getHeight());
+		final Rectangle commonBounds = new Rectangle(0, 0, first.getWidth(), first.getHeight());
 		// List of bounds in the forward registration
 		final List<Rectangle> bounds = new ArrayList<Rectangle>();
 			
 		// Apply transform	
-		final Future<Boolean>[] save_job = new Future[sorted_file_names.length];
+		Future<Boolean>[] save_job = new Future[sorted_file_names.length];
 		for (int i=0; i<sorted_file_names.length; i++) 
-		{				
+		{
 			// Open next image
-			imp2 = IJ.openImage(source_dir + sorted_file_names[i]);
+			ImagePlus imp2 = 0 == i ? first : IJ.openImage(source_dir + sorted_file_names[i]);
 			// Calculate transform mesh
 			TransformMesh mesh = new TransformMesh(transform[i], 32, imp2.getWidth(), imp2.getHeight());
 			TransformMeshMapping mapping = new TransformMeshMapping(mesh);
@@ -927,6 +934,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			Boolean saved_file = null;
 			try{
 				saved_file = save_job[i].get();
+				save_job[i] = null;
 			} catch (InterruptedException e) {
 				IJ.error("Interruption exception!");
 				e.printStackTrace();
@@ -944,6 +952,8 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			}
 			
 		}
+
+		save_job = null;
 		
 		
 		//IJ.log("\nFinal common bounding box = [" + commonBounds.x + " " + commonBounds.y + " " + commonBounds.width + " " + commonBounds.height + "]");
@@ -958,20 +968,21 @@ public class Register_Virtual_Stack_MT implements PlugIn
 
 		// Reopen all target images and repaint them on an enlarged canvas
 		IJ.showStatus("Resizing images...");
-		final Future<String>[] jobs = new Future[sorted_file_names.length];
+		ArrayList<Future<String>> names = new ArrayList<Future<String>>();
 		for (int j = 0, i=0; i<sorted_file_names.length; i++, j++) 
 		{
 			final Rectangle b = bounds.get(j);
-			jobs[i] = exe.submit(resizeAndSaveImage(makeTargetPath(target_dir, sorted_file_names[i]), b.x, b.y, commonBounds.width, commonBounds.height));
+			names.add(exe.submit(resizeAndSaveImage(makeTargetPath(target_dir, sorted_file_names[i]), b.x, b.y, commonBounds.width, commonBounds.height)));
 		}
 		
 
 		// Join all and create VirtualStack
 		final VirtualStack stack = new VirtualStack(commonBounds.width, commonBounds.height, null, target_dir);
-		for (final Future<String> job : jobs) {
+		for (Iterator<Future<String>> it = names.iterator(); it.hasNext(); ) {
 			String filename = null;
 			try {
-				filename = job.get();
+				filename = it.next().get();
+				it.remove(); // so list doesn't build up anywhere with Callable-s that have been called already.
 			} catch (InterruptedException e) {
 				IJ.error("Interruption exception!");
 				e.printStackTrace();
@@ -987,6 +998,8 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			}
 			stack.addSlice(filename);
 		}
+
+		names.clear();
 
 		// Show registered stack
 		new ImagePlus("Registered " + new File(source_dir).getName(), stack).show();
@@ -1273,12 +1286,12 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		return new Callable<String>() {
 			public String call() {
 				try {
-					final ImagePlus imp = IJ.openImage(path);
+					ImagePlus imp = IJ.openImage(path);
 					if (null == imp) {
 						IJ.log("Could not open target image at " + path);
 						return null;
 					}
-					final ImageProcessor ip = imp.getProcessor().createProcessor(width, height);
+					ImageProcessor ip = imp.getProcessor().createProcessor(width, height);
 					// Color images are white by default: fill with black
 					if (imp.getType() == ImagePlus.COLOR_RGB) 
 					{
@@ -1287,13 +1300,16 @@ public class Register_Virtual_Stack_MT implements PlugIn
 						ip.fill();
 					}
 					ip.insert(imp.getProcessor(), x, y);					
-					final ImagePlus big = new ImagePlus(imp.getTitle(), ip);
+					ImagePlus big = new ImagePlus(imp.getTitle(), ip);
 					big.setCalibration(imp.getCalibration());
 					flush(imp);
+					imp = null;
+					ip = null;
 					if (! new FileSaver(big).saveAsTiff(path)) {
 						return null;
 					}
 					flush(big);
+					big = null;
 					return new File(path).getName();
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -1326,7 +1342,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 				}
 			}
 		};
-	} // end resizeAndSaveImage method
+	} // end saveTransform method
 	//-----------------------------------------------------------------------------------------
 	/**
 	 * Make target (output) path by adding the output directory and the file name.
