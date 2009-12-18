@@ -43,10 +43,11 @@ for i in range(0, menu.getItemCount()):
 			continue
 
 		print 'Download', name
-		filename = urllib.urlretrieve(url)[0]
 		if not isdir(samples):
 			makedirs(samples)
-		rename(filename, target)
+		filename = urllib.urlretrieve(url, target)[0]
+		if filename != target:
+			rename(filename, target)
 	else:
 		print 'Skipping unknown command', command, 'for label', label
 
