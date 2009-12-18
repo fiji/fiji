@@ -875,7 +875,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			final CoordinateTransform[] transform) 
 	{
 		
-		ImagePlus first = IJ.openImage(source_dir + sorted_file_names[0]);
+		final ImagePlus first = IJ.openImage(source_dir + sorted_file_names[0]);
 		
 		// Common bounds to create common frame for all images
 		final Rectangle commonBounds = new Rectangle(0, 0, first.getWidth(), first.getHeight());
@@ -884,57 +884,62 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			
 		// Apply transform	
 		ArrayList<Future<Boolean>> save_job = new ArrayList <Future<Boolean>>();
-		for (int i=0; i<sorted_file_names.length; i++) 
+		for (int k=0; k<sorted_file_names.length; k++) 
 		{
-			// Open next image
-			ImagePlus imp2 = 0 == i ? first : IJ.openImage(source_dir + sorted_file_names[i]);
-			// Calculate transform mesh
-			TransformMesh mesh = new TransformMesh(transform[i], 32, imp2.getWidth(), imp2.getHeight());
-			TransformMeshMapping mapping = new TransformMeshMapping(mesh);
-						
-			// Create interpolated deformed image with black background
-			imp2.getProcessor().setValue(0);
-			imp2.setProcessor(imp2.getTitle(), mapping.createMappedImageInterpolated(imp2.getProcessor()));						
-			
-			//imp2.show();
+			if (1 == k && null != first) {
+				flush(first);
+			}
 
-			// Accumulate bounding boxes, so in the end they can be reopened and re-saved with an enlarged canvas.
-			final Rectangle currentBounds = mesh.getBoundingBox();			
-			bounds.add(currentBounds);									
-			
-			//IJ.log(i + ": current bounding box = [" + currentBounds.x + " " + currentBounds.y + " " + currentBounds.width + " " + currentBounds.height + "]");
-			
-			// Update common bounds
-			int min_x = commonBounds.x;
-			int min_y = commonBounds.y;
-			int max_x = commonBounds.x + commonBounds.width;
-			int max_y = commonBounds.y + commonBounds.height;
-			
-			if(currentBounds.x < commonBounds.x)
-				min_x = currentBounds.x;
-			if(currentBounds.y < commonBounds.y)
-				min_y = currentBounds.y;
-			if(currentBounds.x + currentBounds.width > max_x)
-				max_x = currentBounds.x + currentBounds.width;
-			if(currentBounds.y + currentBounds.height > max_y)
-				max_y = currentBounds.y + currentBounds.height;
-			
-			commonBounds.x = min_x;
-			commonBounds.y = min_y;
-			commonBounds.width = max_x - min_x;
-			commonBounds.height = max_y - min_y;
-			
-			
-			
-			//IJ.log("common bounding box = [" + commonBounds.x + " " + commonBounds.y + " " + commonBounds.width + " " + commonBounds.height + "]");
-			
-			
-			// Save target image
-			save_job.add( exe.submit(saveImage(imp2, makeTargetPath(target_dir, sorted_file_names[i]))) );	
-			imp2 = null;
-			System.gc();
+			final int i = k;
+
+			save_job.add(exe.submit(new Callable<Boolean>() {
+				public Boolean call() {
+					// Open next image
+					ImagePlus imp2 = 0 == i ? first : IJ.openImage(source_dir + sorted_file_names[i]);
+					// Calculate transform mesh
+					TransformMesh mesh = new TransformMesh(transform[i], 32, imp2.getWidth(), imp2.getHeight());
+					TransformMeshMapping mapping = new TransformMeshMapping(mesh);
+								
+					// Create interpolated deformed image with black background
+					imp2.getProcessor().setValue(0);
+					imp2.setProcessor(imp2.getTitle(), mapping.createMappedImageInterpolated(imp2.getProcessor()));						
+					
+					//imp2.show();
+
+					// Accumulate bounding boxes, so in the end they can be reopened and re-saved with an enlarged canvas.
+					final Rectangle currentBounds = mesh.getBoundingBox();			
+					bounds.add(currentBounds);									
+					
+					//IJ.log(i + ": current bounding box = [" + currentBounds.x + " " + currentBounds.y + " " + currentBounds.width + " " + currentBounds.height + "]");
+					
+					// Update common bounds
+					int min_x = commonBounds.x;
+					int min_y = commonBounds.y;
+					int max_x = commonBounds.x + commonBounds.width;
+					int max_y = commonBounds.y + commonBounds.height;
+					
+					if(currentBounds.x < commonBounds.x)
+						min_x = currentBounds.x;
+					if(currentBounds.y < commonBounds.y)
+						min_y = currentBounds.y;
+					if(currentBounds.x + currentBounds.width > max_x)
+						max_x = currentBounds.x + currentBounds.width;
+					if(currentBounds.y + currentBounds.height > max_y)
+						max_y = currentBounds.y + currentBounds.height;
+					
+					commonBounds.x = min_x;
+					commonBounds.y = min_y;
+					commonBounds.width = max_x - min_x;
+					commonBounds.height = max_y - min_y;
+					
+					//IJ.log("common bounding box = [" + commonBounds.x + " " + commonBounds.y + " " + commonBounds.width + " " + commonBounds.height + "]");
+					
+					// Save target image
+					return new FileSaver(imp2).saveAsTiff(makeTargetPath(target_dir, sorted_file_names[i]));
+				}
+			}));
 		}
-				
+
 
 		// Wait for the intermediate output files to be saved
 		int ind = 0;
