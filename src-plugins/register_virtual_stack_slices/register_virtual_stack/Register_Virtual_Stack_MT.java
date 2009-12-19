@@ -879,6 +879,9 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		
 		// Common bounds to create common frame for all images
 		final Rectangle commonBounds = new Rectangle(0, 0, first.getWidth(), first.getHeight());
+
+		flush(first);
+
 		// List of bounds in the forward registration
 		final List<Rectangle> bounds = new ArrayList<Rectangle>();
 			
@@ -886,16 +889,12 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		ArrayList<Future<Boolean>> save_job = new ArrayList <Future<Boolean>>();
 		for (int k=0; k<sorted_file_names.length; k++) 
 		{
-			if (1 == k && null != first) {
-				flush(first);
-			}
-
 			final int i = k;
 
 			save_job.add(exe.submit(new Callable<Boolean>() {
 				public Boolean call() {
 					// Open next image
-					ImagePlus imp2 = 0 == i ? first : IJ.openImage(source_dir + sorted_file_names[i]);
+					ImagePlus imp2 = IJ.openImage(source_dir + sorted_file_names[i]);
 					// Calculate transform mesh
 					TransformMesh mesh = new TransformMesh(transform[i], 32, imp2.getWidth(), imp2.getHeight());
 					TransformMeshMapping mapping = new TransformMeshMapping(mesh);
