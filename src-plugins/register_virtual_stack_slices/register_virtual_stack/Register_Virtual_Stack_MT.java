@@ -527,15 +527,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			for (int i=0; i<sorted_file_names.length; i++) 
 			{
 				IJ.showStatus("Extracting features from slices...");
-				//final ImagePlus imp = IJ.openImage(source_dir + sorted_file_names[i]);
-				
-				// Store image center coordinates
-				//centerX[i] = imp.getWidth() / 2;
-				//centerY[i] = imp.getHeight() / 2;
-				// Submit job to extract features
-				//fu[i] = exe.submit(extractFeatures(p, imp.getProcessor()));
-				fu[i] = exe.submit(extractFeatures(p, source_dir + sorted_file_names[i], i));
-				
+				fu[i] = exe.submit(extractFeatures(p, source_dir + sorted_file_names[i], i));			
 			}
 
 			System.gc();
@@ -599,11 +591,17 @@ public class Register_Virtual_Stack_MT implements PlugIn
 				IJ.showStatus("Registering slice " + (i+1) + "/" + sorted_file_names.length);
 				IJ.showProgress((double) (i+1) / sorted_file_names.length);
 				
-				// First approach with a RIGID transform
-				RigidModel2D initialModel = new RigidModel2D();
+				// First approach with a RIGID transform (unless it is TRANSLATION)
+				CoordinateTransform initialModel = (Param.registrationModelIndex == Register_Virtual_Stack_MT.TRANSLATION ) ? 
+								  new TranslationModel2D()			
+								: new RigidModel2D();
 				// We apply first the previous transform to the points in the previous image
 				inliers[i-1] = applyTransformReverse(inliers[i-1], transform[i-1]);
-				initialModel.fit(inliers[i-1]);
+				if (Param.registrationModelIndex == Register_Virtual_Stack_MT.TRANSLATION) 
+					((TranslationModel2D) initialModel).fit(inliers[i-1]);
+				else 
+					((RigidModel2D) initialModel).fit(inliers[i-1]);
+				
 				// Assign initial model
 				transform[i] = initialModel;
 
@@ -612,27 +610,28 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			//  we apply transform to the points in the last image
 			PointMatch.apply(inliers[inliers.length-1] , transform[transform.length-1]);
 			
-			
-			// Relax points
-			IJ.showStatus("Relaxing inliers...");
-			if( !relax(inliers, transform, p))
+			if (Param.registrationModelIndex != Register_Virtual_Stack_MT.TRANSLATION )
 			{
-				IJ.log("Error when relaxing inliers!");
-				return;
-			}
+				// Relax points
+				IJ.showStatus("Relaxing inliers...");
+				if( !relax(inliers, transform, p) )
+				{
+					IJ.log("Error when relaxing inliers!");
+					return;
+				}
 
-			// Clear inliers
-			for(int i = 0; i < inliers.length; i++)
-				inliers[i].clear();
+				// Clear inliers
+				for(int i = 0; i < inliers.length; i++)
+					inliers[i].clear();
 
-			inliers = null;
-			
-			// Post-processing
-			if( postprocess )
-			{
-				postProcessTransforms(transform);
+				inliers = null;
+
+				// Post-processing
+				if( postprocess )
+				{
+					postProcessTransforms(transform);
+				}
 			}
-			
 			// Create final images.
 			IJ.showStatus("Calculating final images...");
 			if( !createResults(source_dir, sorted_file_names, target_dir, save_dir, exe, transform) )
@@ -883,60 +882,13 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		flush(first);
 
 		// List of bounds in the forward registration
-		final List<Rectangle> bounds = new ArrayList<Rectangle>();
+		final Rectangle bounds[] = new Rectangle[sorted_file_names.length];
 			
 		// Apply transform	
 		ArrayList<Future<Boolean>> save_job = new ArrayList <Future<Boolean>>();
-		for (int k=0; k<sorted_file_names.length; k++) 
+		for (int i=0; i<sorted_file_names.length; i++) 
 		{
-			final int i = k;
-
-			save_job.add(exe.submit(new Callable<Boolean>() {
-				public Boolean call() {
-					// Open next image
-					ImagePlus imp2 = IJ.openImage(source_dir + sorted_file_names[i]);
-					// Calculate transform mesh
-					TransformMesh mesh = new TransformMesh(transform[i], 32, imp2.getWidth(), imp2.getHeight());
-					TransformMeshMapping mapping = new TransformMeshMapping(mesh);
-								
-					// Create interpolated deformed image with black background
-					imp2.getProcessor().setValue(0);
-					imp2.setProcessor(imp2.getTitle(), mapping.createMappedImageInterpolated(imp2.getProcessor()));						
-					
-					//imp2.show();
-
-					// Accumulate bounding boxes, so in the end they can be reopened and re-saved with an enlarged canvas.
-					final Rectangle currentBounds = mesh.getBoundingBox();			
-					bounds.add(currentBounds);									
-					
-					//IJ.log(i + ": current bounding box = [" + currentBounds.x + " " + currentBounds.y + " " + currentBounds.width + " " + currentBounds.height + "]");
-					
-					// Update common bounds
-					int min_x = commonBounds.x;
-					int min_y = commonBounds.y;
-					int max_x = commonBounds.x + commonBounds.width;
-					int max_y = commonBounds.y + commonBounds.height;
-					
-					if(currentBounds.x < commonBounds.x)
-						min_x = currentBounds.x;
-					if(currentBounds.y < commonBounds.y)
-						min_y = currentBounds.y;
-					if(currentBounds.x + currentBounds.width > max_x)
-						max_x = currentBounds.x + currentBounds.width;
-					if(currentBounds.y + currentBounds.height > max_y)
-						max_y = currentBounds.y + currentBounds.height;
-					
-					commonBounds.x = min_x;
-					commonBounds.y = min_y;
-					commonBounds.width = max_x - min_x;
-					commonBounds.height = max_y - min_y;
-					
-					//IJ.log("common bounding box = [" + commonBounds.x + " " + commonBounds.y + " " + commonBounds.width + " " + commonBounds.height + "]");
-					
-					// Save target image
-					return new FileSaver(imp2).saveAsTiff(makeTargetPath(target_dir, sorted_file_names[i]));
-				}
-			}));
+			save_job.add(exe.submit(applyTransformAndSave(source_dir, sorted_file_names[i], target_dir, transform[i], bounds, i)));
 		}
 
 
@@ -947,6 +899,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			ind++;
 			Boolean saved_file = null;
 			try{
+				IJ.showStatus("Applying transform " + (ind+1) + "/" + sorted_file_names.length);
 				saved_file = it.next().get();
 				it.remove(); // so list doesn't build up anywhere with Callable-s that have been called already.				
 				System.gc();
@@ -970,13 +923,37 @@ public class Register_Virtual_Stack_MT implements PlugIn
 
 		save_job = null;
 		
+		for (int k=0; k<sorted_file_names.length; k++) 
+		{
+			// Update common bounds
+			int min_x = commonBounds.x;
+			int min_y = commonBounds.y;
+			int max_x = commonBounds.x + commonBounds.width;
+			int max_y = commonBounds.y + commonBounds.height;
+			
+			if(bounds[k].x < commonBounds.x)
+				min_x = bounds[k].x;
+			if(bounds[k].y < commonBounds.y)
+				min_y = bounds[k].y;
+			if(bounds[k].x + bounds[k].width > max_x)
+				max_x = bounds[k].x + bounds[k].width;
+			if(bounds[k].y + bounds[k].height > max_y)
+				max_y = bounds[k].y + bounds[k].height;
+			
+			commonBounds.x = min_x;
+			commonBounds.y = min_y;
+			commonBounds.width = max_x - min_x;
+			commonBounds.height = max_y - min_y;
+		}
+		
+		
 		
 		//IJ.log("\nFinal common bounding box = [" + commonBounds.x + " " + commonBounds.y + " " + commonBounds.width + " " + commonBounds.height + "]");
 		
 		// Adjust Forward bounds
-		for ( int i = 0; i < bounds.size(); ++i )
+		for ( int i = 0; i < bounds.length; ++i )
 		{
-			final Rectangle b = bounds.get(i);
+			final Rectangle b = bounds[i];
 			b.x -= commonBounds.x;
 			b.y -= commonBounds.y;
 		}
@@ -984,18 +961,20 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		// Reopen all target images and repaint them on an enlarged canvas
 		IJ.showStatus("Resizing images...");
 		ArrayList<Future<String>> names = new ArrayList<Future<String>>();
-		for (int j = 0, i=0; i<sorted_file_names.length; i++, j++) 
+		for (int i=0; i<sorted_file_names.length; i++) 
 		{
-			final Rectangle b = bounds.get(j);
+			final Rectangle b = bounds[i];
 			names.add(exe.submit(resizeAndSaveImage(makeTargetPath(target_dir, sorted_file_names[i]), b.x, b.y, commonBounds.width, commonBounds.height)));
 		}
 		
 
 		// Join all and create VirtualStack
 		final VirtualStack stack = new VirtualStack(commonBounds.width, commonBounds.height, null, target_dir);
-		for (Iterator<Future<String>> it1 = names.iterator(); it1.hasNext(); ) {
+		ind = 0;
+		for (Iterator<Future<String>> it1 = names.iterator(); it1.hasNext(); ind++) {
 			String filename = null;
 			try {
+				IJ.showStatus("Resizing image " + (ind+1) + "/" + sorted_file_names.length);
 				filename = it1.next().get();
 				it1.remove(); // so list doesn't build up anywhere with Callable-s that have been called already.
 				System.gc();
@@ -1461,6 +1440,43 @@ public class Register_Virtual_Stack_MT implements PlugIn
 					e.printStackTrace();
 					return false;
 				}
+			}
+		};
+	}
+	
+	//-----------------------------------------------------------------------------------------
+	/**
+	 * Concurrently apply a transform and save the resulting image
+	 * 
+	 */
+	private static Callable<Boolean> applyTransformAndSave(
+			final String source_dir, 
+			final String file_name, 
+			final String target_dir, 
+			final CoordinateTransform transform,
+			final Rectangle[] bounds,
+			final int i) 
+	{
+		return new Callable<Boolean>() {
+			public Boolean call() {
+				// Open next image
+				final ImagePlus imp2 = IJ.openImage(source_dir + file_name);
+				// Calculate transform mesh
+				TransformMesh mesh = new TransformMesh(transform, 32, imp2.getWidth(), imp2.getHeight());
+				TransformMeshMapping mapping = new TransformMeshMapping(mesh);
+							
+				// Create interpolated deformed image with black background
+				imp2.getProcessor().setValue(0);
+				imp2.setProcessor(imp2.getTitle(), mapping.createMappedImageInterpolated(imp2.getProcessor()));						
+				
+				//imp2.show();
+
+				// Accumulate bounding boxes, so in the end they can be reopened and re-saved with an enlarged canvas.
+				final Rectangle currentBounds = mesh.getBoundingBox();			
+				bounds[i] = currentBounds;									
+				
+				// Save target image
+				return new FileSaver(imp2).saveAsTiff(makeTargetPath(target_dir, file_name));
 			}
 		};
 	}
