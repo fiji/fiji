@@ -237,6 +237,9 @@ public class Stitch_Image_Grid_Sequence implements PlugIn
 				Stitch_Image_Grid.stitchImageGrid(file, inputDirectory, gridLayout, handleRGB, fusionMethod, 
 					outTileConfName, overlap, startX, startY, startI, writeOnlyOutput, previewOnly, computeOverlap);
 			
+			if (fusedImage == null)
+				return;
+			
 			final String outputFusedPath = outputDirectory + System.getProperty("file.separator") + fusedImage.getTitle() 
 								+ "_" + Stitch_Image_Grid.getLeadingZeros(numZValues, zs) + ".tif"; 
 			IJ.log("Saving " + outputFusedPath +  " ... ");

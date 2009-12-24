@@ -183,6 +183,9 @@ public class Stitch_Image_Collection implements PlugIn
 			
 			// compute the model
 			newImageInformationList = optimize(overlappingTiles);
+			
+			if(newImageInformationList == null)
+				return null;
 		}
 		else
 		{
@@ -1009,25 +1012,65 @@ public class Stitch_Image_Collection implements PlugIn
 				}
 			}
 			IJ.log("Tile size: " + tiles.size());
-			tc = new TileConfiguration();
-			tc.addTiles( tiles );
+			
+			if(tiles.size() == 0)
+			{
+				IJ.error("No correlated tiles found!");
+				return null;
+			}						
 			
 			// trash everything but the largest graph			
 			final ArrayList< ArrayList< Tile > > graphs = Tile.identifyConnectedGraphs( tiles );
 			IJ.log("Number of tile graphs = " + graphs.size());
+			
 			/*
+			for ( final ArrayList< Tile > graph : graphs )
+			{
+				IJ.log("graph size = " + graph.size());
+				if ( graph.size() < 30 )
+				{
+					tiles.removeAll( graph );
+					IJ.log("-removed");
+				}
+				else
+				{
+					IJ.log("-kept");
+					tc.fixTile( graph.get( 0 ) );
+				}
+			}
+			
+			*/
 			ArrayList< Tile > largestGraph = new ArrayList< Tile >();
 			for ( final ArrayList< Tile > graph : graphs )
+			{
+				
 				if ( graph.size() > largestGraph.size() )
+				{
 					largestGraph = graph;
+				}
+				
+				//IJ.log("graph size = " + graph.size());
+			}
+			
 			for ( final ArrayList< Tile > graph : graphs )
 				if ( graph != largestGraph )
+				{
 					tiles.removeAll( graph );
-			*/						
+					//IJ.log(" Removed graph of size " + graph.size());
+				}
+			/*
 			for ( final ArrayList< Tile > graph : graphs )
 				   tc.fixTile( graph.get( 0 ) );
+			*/
 			
-			tc.fixTile( tiles.get( 0 ) );
+			
+			tc = new TileConfiguration();
+			tc.addTiles( tiles );
+			tc.fixTile( tiles.get( 0 ) );						
+			
+			//IJ.log(" tiles size =" + tiles.size());
+			//IJ.log(" tc.getTiles() size =" + tc.getTiles().size());
+			
 			try
 			{
 				tc.optimize( 10, 10000, 200 );
@@ -1064,7 +1107,7 @@ public class Stitch_Image_Collection implements PlugIn
 		while(redo);
 		
 		
-		// create a list of imageinformations containing their positions			
+		// create a list of image informations containing their positions			
 		ArrayList<ImageInformation> imageInformationList = new ArrayList<ImageInformation>();
 		for ( Tile t : tc.getTiles() )
 		{
@@ -1078,9 +1121,17 @@ public class Stitch_Image_Collection implements PlugIn
 		Collections.sort(imageInformationList);
 		
 		
+		IJ.log(" image information list size =" + imageInformationList.size());
+		
 		return imageInformationList;
 	}
 	
+	/**
+	 * Compute phase correlation between overlapping tiles
+	 * 
+	 * @param overlappingTiles list of overlapping tiles
+	 * @param handleRGB RGB mode (@see stitching.CommonFunctions.colorList)
+	 */
 	private void computePhaseCorrelations(final ArrayList<OverlapProperties> overlappingTiles, String handleRGB)
 	{
 		for (final OverlapProperties o : overlappingTiles)
@@ -1120,8 +1171,8 @@ public class Stitch_Image_Collection implements PlugIn
 				stitch.fusedImageName = "Fused " + imp1.getTitle() + " " + imp2.getTitle();
 				stitch.fuseImages = false;
 				stitch.handleRGB1 = handleRGB;
-				stitch.handleRGB2 = handleRGB;
-				stitch.imgStack1 = imp1.getTitle();
+				stitch.handleRGB2 = handleRGB;				
+				stitch.imgStack1 = imp1.getTitle();				
 				stitch.imgStack2 = imp2.getTitle();
 				stitch.imp1 = imp1;
 				stitch.imp2 = imp2;
@@ -1153,8 +1204,18 @@ public class Stitch_Image_Collection implements PlugIn
 				stitch.handleRGB2 = handleRGB;
 				stitch.image1 = imp1.getTitle();
 				stitch.image2 = imp2.getTitle();
+				
+				//final ImagePlus imp1b =  new ImagePlus("Imp1 B", imp1.getProcessor().duplicate());
+				final ImageProcessor ip1 = imp1.getProcessor().duplicate();
+				IJ.run(imp1, "Enhance Contrast", "saturated=0.1 normalize");				
 				stitch.imp1 = imp1;
+				
+				//final ImagePlus imp2b = new ImagePlus("Imp2 B", imp2.getProcessor().duplicate());
+				
+				final ImageProcessor ip2 = imp2.getProcessor().duplicate();
+				IJ.run(imp2, "Enhance Contrast", "saturated=0.1 normalize");				
 				stitch.imp2 = imp2;
+				
 				stitch.doLogging = false;
 				stitch.computeOverlap = true;
 				
@@ -1170,6 +1231,9 @@ public class Stitch_Image_Collection implements PlugIn
 					o.R = -1;
 					o.translation2D = new Point2D(0, 0);
 				}
+				
+				imp1.setProcessor(imp1.getTitle(), ip1);
+				imp2.setProcessor(imp2.getTitle(), ip2);
 								
 				IJ.log(o.i1.id + " overlaps " + o.i2.id + ": " + o.R + " translation: " + o.translation2D);
 			}
