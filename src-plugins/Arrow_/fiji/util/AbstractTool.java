@@ -62,8 +62,11 @@ public abstract class AbstractTool implements ImageListener, MouseListener, Mous
 
 		toolID = toolbar.addTool(getToolName() + " - "	+ getToolIcon());
 		if (toolID < 0) {
-			IJ.error("Could not register tool");
-			return;
+			toolID = toolbar.getToolId(getToolName());
+			if (toolID < 0) {
+				IJ.error("Could not register tool");
+				return;
+			}
 		}
 		toolbar.setTool(toolID);
 		registerTool();
@@ -122,10 +125,10 @@ public abstract class AbstractTool implements ImageListener, MouseListener, Mous
 	public void imageUpdated(ImagePlus image) { }
 	
 	/*
-	 * DEFAULT VISIBILITY METHODS
+	 * PROTECTED METHODS
 	 */
 
-	void registerTool() {
+	protected void registerTool() {
 		int[] ids = WindowManager.getIDList();
 		if (ids != null)
 			for (int id : ids)
@@ -133,13 +136,13 @@ public abstract class AbstractTool implements ImageListener, MouseListener, Mous
 		ImagePlus.addImageListener(this);
 	}
 
-	void registerTool(ImagePlus image) {
+	protected void registerTool(ImagePlus image) {
 		if (image == null)
 			return;
 		registerTool(image.getCanvas());
 	}
 
-	void registerTool(ImageCanvas canvas) {
+	protected void registerTool(ImageCanvas canvas) {
 		if (canvas == null)
 			return;
 		canvas.addMouseListener(this);
@@ -147,30 +150,25 @@ public abstract class AbstractTool implements ImageListener, MouseListener, Mous
 		canvas.addMouseWheelListener(this);
 	}
 
-	void unregisterTool() {
+	protected void unregisterTool() {
 		for (int id : WindowManager.getIDList())
 			unregisterTool(WindowManager.getImage(id));
 		ImagePlus.removeImageListener(this);
 	}
 
-	void unregisterTool(ImagePlus image) {
+	protected void unregisterTool(ImagePlus image) {
 		if (image == null)
 			return;
 		unregisterTool(image.getCanvas());
 	}
 
-	void unregisterTool(ImageCanvas canvas) {
+	protected void unregisterTool(ImageCanvas canvas) {
 		if (canvas == null)
 			return;
 		canvas.removeMouseListener(this);
 		canvas.removeMouseMotionListener(this);
 		canvas.getParent().removeMouseWheelListener(this);
 	}
-
-
-	/*
-	 * PROTECTED METHODS
-	 */
 
 	protected void handleMouseClick(MouseEvent e) {}
 	protected void handleMousePress(MouseEvent e) {}
