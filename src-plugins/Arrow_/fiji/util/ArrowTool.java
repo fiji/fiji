@@ -1,5 +1,6 @@
 package fiji.util;
 
+
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.ImageCanvas;
@@ -67,7 +68,7 @@ import javax.swing.SwingUtilities;
  * Nov-Dec 2009
  * @version 1.0 - 3 Dec 2009
  */
-public class ArrowTool extends fiji.util.AbstractTool implements ActionListener {
+public class ArrowTool extends AbstractTool implements ActionListener {
 	
 	
 	private ArrowShape arrow;
@@ -358,7 +359,6 @@ public class ArrowTool extends fiji.util.AbstractTool implements ActionListener 
 	 */
 	public void actionPerformed(ActionEvent e) {
 		ArrowOptionPanel panel = (ArrowOptionPanel) e.getSource();
-		drag_tolerance = panel.getLength() / 2.0;
 		arrow.setLength(panel.getLength());
 		arrow.setStyle(panel.getStyle());
 		stroke = panel.getStroke();
@@ -377,6 +377,8 @@ public class ArrowTool extends fiji.util.AbstractTool implements ActionListener 
 		if (status != InteractionStatus.NO_ARROW) {
 			ArrowShapeRoi roi = new ArrowShapeRoi(arrow, stroke);
 			imp.setRoi(roi);
+			drag_tolerance = 0.5 * Math.max(arrow.getLength(), stroke.getLineWidth());
+
 		}
 	}
 	
