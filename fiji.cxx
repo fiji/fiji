@@ -1650,7 +1650,7 @@ static int start_ij(void)
 		add_option(options, ext_option, 0);
 	}
 
-	/* For Jython 2.2.1 to work properly with .jar packages: */
+	/* For Jython to work properly with .jar packages: */
 	add_option(options, "-Dpython.cachedir.skip=false", 0);
 	if (plugin_path.str() == "")
 		plugin_path << "-Dplugins.dir=" << fiji_dir;

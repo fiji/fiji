@@ -97,6 +97,7 @@ SUBMODULE_TARGETS=\
 	jars/rsyntaxtextarea.jar \
 	jars/autocomplete.jar \
 	jars/weka.jar \
+	jars/jython.jar \
 
 PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Clojure_Interpreter.jar \
@@ -194,6 +195,7 @@ jars/junit-4.5.jar <- junit/
 jars/rsyntaxtextarea.jar <- RSyntaxTextArea/
 jars/autocomplete.jar <- AutoComplete/
 jars/weka.jar <- weka/
+jars/jython.jar <- jython/
 
 # From source
 javaVersion(misc/Fiji.jar)=1.5
@@ -210,7 +212,7 @@ jars/fiji-lib.jar <- src-plugins/fiji-lib/**/*.java
 jars/fiji-scripting.jar <- src-plugins/fiji-scripting/**/*.java
 
 CLASSPATH(plugins/Refresh_Javas.jar)=jars/fiji-scripting.jar
-CLASSPATH(plugins/Jython_Interpreter.jar)=jars/fiji-scripting.jar:jars/jython2.2.1/jython.jar
+CLASSPATH(plugins/Jython_Interpreter.jar)=jars/fiji-scripting.jar:jars/jython.jar
 plugins/Jython_Interpreter.jar <- src-plugins/Jython/*.java
 CLASSPATH(plugins/Clojure_Interpreter.jar)=jars/fiji-scripting.jar:jars/clojure.jar:jars/clojure-contrib.jar
 plugins/Clojure_Interpreter.jar <- src-plugins/Clojure/*.java
@@ -368,6 +370,7 @@ precompile-submodules[] <- \
 	precompiled/rsyntaxtextarea.jar \
 	precompiled/autocomplete.jar \
 	precompiled/weka.jar \
+	precompiled/jython.jar \
 
 precompiled/ij.jar <- ij.jar
 precompiled/clojure.jar <- jars/clojure.jar
@@ -378,6 +381,7 @@ precompiled/junit-4.5.jar <- jars/junit-4.5.jar
 precompiled/rsyntaxtextarea.jar <- jars/rsyntaxtextarea.jar
 precompiled/autocomplete.jar <- jars/autocomplete.jar
 precompiled/weka.jar <- jars/weka.jar
+precompiled/jython.jar <- jars/jython.jar
 precompiled/* <- plugins/*
 
 precompile[] <- precompile-fiji precompile-fake precompile-submodules
