@@ -67,7 +67,7 @@ case "$1" in
 				-e ij-plugins/Quickvol |
 			./fiji --jar-path $(./fiji --print-java-home)/../lib/ \
 				--main-class=com.sun.tools.javadoc.Main \
-				-d /var/www/javadoc
+				-d /var/www/javadoc \
 				@/dev/stdin > javadoc.out 2>&1 ||
 			(echo "JavaDoc failed"; false)
 		fi

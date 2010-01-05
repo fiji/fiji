@@ -61,3 +61,9 @@
 [submodule "clojure-contrib"]
 	path = clojure-contrib
 	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/clojure-contrib/
+[submodule "weka"]
+	path = weka
+	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/weka/
+[submodule "jython"]
+	path = jython
+	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/jython/.git

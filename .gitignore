@@ -32,7 +32,7 @@
 /livecd
 /root-x86_64-pc-linux
 /jars/javac.jar
-/jars/jython2.2.1/cachedir
+/jars/cachedir
 /tmp.ijm
 /fake.jar
 /ij.jar
@@ -106,4 +106,7 @@
 /plugins/Script_Editor.jar
 /plugins/3D_Objects_Counter.jar
 /jars/clojure-contrib.jar
+/jars/weka.jar
 /plugins/IsoData_Classifier.jar
+/plugins/RATS_.jar
+/jars/jython.jar

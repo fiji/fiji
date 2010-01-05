@@ -85,6 +85,7 @@ SUBMODULE_TARGETS=\
 	ij.jar \
 	plugins/loci_tools.jar \
 	plugins/VIB_.jar \
+	jars/VectorString.jar \
 	plugins/TrakEM2_.jar \
 	plugins/mpicbg_.jar \
 	jars/clojure.jar \
@@ -95,6 +96,8 @@ SUBMODULE_TARGETS=\
 	jars/junit-4.5.jar \
 	jars/rsyntaxtextarea.jar \
 	jars/autocomplete.jar \
+	jars/weka.jar \
+	jars/jython.jar \
 
 PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Clojure_Interpreter.jar \
@@ -150,6 +153,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Calculator_Plus.jar \
 	plugins/3D_Objects_Counter.jar \
 	plugins/IsoData_Classifier.jar \
+	plugins/RATS_.jar \
 	\
 	misc/Fiji.jar
 
@@ -181,14 +185,17 @@ plugins/mpicbg_.jar <- mpicbg/
 jars/clojure.jar <- clojure/
 jars/clojure-contrib.jar <- jars/clojure.jar clojure-contrib/
 plugins/loci_tools.jar <- bio-formats/
+jars/VectorString.jar <- TrakEM2/
 CLASSPATH(plugins/TrakEM2_.jar)=plugins/VIB_.jar:plugins/mpicbg_.jar:plugins/loci_tools.jar:plugins/bUnwarpJ_.jar:plugins/level_sets.jar:plugins/Fiji_Plugins.jar
-plugins/TrakEM2_.jar <- ij.jar plugins/VIB_.jar plugins/mpicbg_.jar plugins/bUnwarpJ_.jar plugins/level_sets.jar plugins/Fiji_Plugins.jar TrakEM2/
+plugins/TrakEM2_.jar <- ij.jar plugins/VIB_.jar plugins/mpicbg_.jar plugins/bUnwarpJ_.jar plugins/level_sets.jar plugins/Fiji_Plugins.jar jars/VectorString.jar TrakEM2/
 plugins/ij-ImageIO_.jar <- ij-plugins/
 jars/jacl.jar <- tcljava/
 jars/batik.jar <- batik/
 jars/junit-4.5.jar <- junit/
 jars/rsyntaxtextarea.jar <- RSyntaxTextArea/
 jars/autocomplete.jar <- AutoComplete/
+jars/weka.jar <- weka/
+jars/jython.jar <- jython/
 
 # From source
 javaVersion(misc/Fiji.jar)=1.5
@@ -205,7 +212,7 @@ jars/fiji-lib.jar <- src-plugins/fiji-lib/**/*.java
 jars/fiji-scripting.jar <- src-plugins/fiji-scripting/**/*.java
 
 CLASSPATH(plugins/Refresh_Javas.jar)=jars/fiji-scripting.jar
-CLASSPATH(plugins/Jython_Interpreter.jar)=jars/fiji-scripting.jar:jars/jython2.2.1/jython.jar
+CLASSPATH(plugins/Jython_Interpreter.jar)=jars/fiji-scripting.jar:jars/jython.jar
 plugins/Jython_Interpreter.jar <- src-plugins/Jython/*.java
 CLASSPATH(plugins/Clojure_Interpreter.jar)=jars/fiji-scripting.jar:jars/clojure.jar:jars/clojure-contrib.jar
 plugins/Clojure_Interpreter.jar <- src-plugins/Clojure/*.java
@@ -218,7 +225,7 @@ plugins/Javascript_.jar <- src-plugins/Javascript/*.java
 
 plugins/Bug_Submitter.jar <- src-plugins/Bug_Submitter/*.java
 
-CLASSPATH(plugins/register_virtual_stack_slices.jar)=plugins/TrakEM2_.jar:plugins/mpicbg_.jar:plugins/bUnwarpJ_.jar
+CLASSPATH(plugins/register_virtual_stack_slices.jar)=plugins/TrakEM2_.jar:plugins/mpicbg_.jar:plugins/bUnwarpJ_.jar:plugins/Fiji_Plugins.jar
 
 CLASSPATH(plugins/Siox_Segmentation.jar)=jars/fiji-lib.jar
 
@@ -362,6 +369,8 @@ precompile-submodules[] <- \
 	precompiled/junit-4.5.jar \
 	precompiled/rsyntaxtextarea.jar \
 	precompiled/autocomplete.jar \
+	precompiled/weka.jar \
+	precompiled/jython.jar \
 
 precompiled/ij.jar <- ij.jar
 precompiled/clojure.jar <- jars/clojure.jar
@@ -371,6 +380,8 @@ precompiled/batik.jar <- jars/batik.jar
 precompiled/junit-4.5.jar <- jars/junit-4.5.jar
 precompiled/rsyntaxtextarea.jar <- jars/rsyntaxtextarea.jar
 precompiled/autocomplete.jar <- jars/autocomplete.jar
+precompiled/weka.jar <- jars/weka.jar
+precompiled/jython.jar <- jars/jython.jar
 precompiled/* <- plugins/*
 
 precompile[] <- precompile-fiji precompile-fake precompile-submodules

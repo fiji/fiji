@@ -52,17 +52,18 @@ public class Stitching_2D implements PlugIn
 	public static String methodStatic = methodList[1];
 	public static String handleRGB1Static = colorList[colorList.length - 1];
 	public static String handleRGB2Static = colorList[colorList.length - 1];
-	public static boolean fuseImagesStatic = true, windowingStatic = true, computeOverlap = true;
+	public static boolean fuseImagesStatic = true, windowingStatic = true, computeOverlapStatic = true;
 	public static int checkPeaksStatic = 5;
 	public static double alphaStatic = 1.5;
-	public static int xOffset = 0, yOffset = 0;
+	public static int xOffsetStatic = 0, yOffsetStatic = 0;
 	
 	public String method = methodList[1];
 	public String handleRGB1= colorList[colorList.length - 1];
 	public String handleRGB2= colorList[colorList.length - 1];
-	public boolean fuseImages= true, windowing = true;
+	public boolean fuseImages= true, windowing = true, computeOverlap = true;
 	public int checkPeaks= 5;
 	public double alpha= 1.5;
+	public int xOffset = 0, yOffset = 0;
 	
 	public boolean doLogging = true;
 	public ImagePlus imp1 = null, imp2 = null;
@@ -76,7 +77,7 @@ public class Stitching_2D implements PlugIn
 	
 
 	// a macro can call to only fuse two images given a certain shift
-	public Point2D translation = null;
+	private Point2D translation = null;
 
 	public void run(String args)
 	{
@@ -131,22 +132,15 @@ public class Stitching_2D implements PlugIn
 		gd.addChoice("Fusion method", methodList, methodStatic);
 		gd.addNumericField("Fusion alpha", alphaStatic, 2);		
 		gd.addStringField("Fused image name: ", "Fused_" + nostackList[0] + "_" + nostackList[1]);
-		gd.addCheckbox("compute_overlap", computeOverlap);
-		gd.addNumericField("x", xOffset, 0);
-		gd.addNumericField("y", yOffset, 0);
+		gd.addCheckbox("compute_overlap", computeOverlapStatic );
+		gd.addNumericField("x", xOffset, xOffsetStatic);
+		gd.addNumericField("y", yOffset, yOffsetStatic);
 		gd.addMessage("");
 		gd.addMessage("This Plugin is developed by Stephan Preibisch\n" + myURL);
 
 		MultiLineLabel text = (MultiLineLabel) gd.getMessage();
 		addHyperLinkListener(text, myURL);
 		
-		Component[] c3 = new Component[] { (Component) gd.getNumericFields().get(2),
-										   (Component) gd.getNumericFields().get(3) };
-
-		Stitching_3D.addInverseEnablerListener((Checkbox) gd.getCheckboxes().get(2), c3, null);
-		((Component) gd.getNumericFields().get(2)).setEnabled(false);
-		((Component) gd.getNumericFields().get(3)).setEnabled(false);
-
 		gd.showDialog();
 
 		if (gd.wasCanceled())
@@ -164,9 +158,9 @@ public class Stitching_2D implements PlugIn
 		methodStatic = gd.getNextChoice();
 		alphaStatic = gd.getNextNumber();
 		this.fusedImageName = gd.getNextString();
-		computeOverlap = gd.getNextBoolean();
-		xOffset = (int)Math.round( gd.getNextNumber() );
-		yOffset = (int)Math.round( gd.getNextNumber() );
+		computeOverlapStatic = gd.getNextBoolean();
+		xOffsetStatic = (int)Math.round( gd.getNextNumber() );
+		yOffsetStatic = (int)Math.round( gd.getNextNumber() );
 
 		method = methodStatic;
 		handleRGB1= handleRGB1Static;
@@ -175,6 +169,10 @@ public class Stitching_2D implements PlugIn
 		windowing = windowingStatic;
 		checkPeaks = checkPeaksStatic;
 		alpha = alphaStatic;
+		computeOverlap = computeOverlapStatic;
+		xOffset = xOffsetStatic;
+		yOffset = yOffsetStatic;
+		
 		
 		if ( !computeOverlap )
 			this.translation = new Point2D( xOffset, yOffset );

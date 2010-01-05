@@ -122,10 +122,13 @@ public class Fake {
 	}
 
 	protected static void discoverJython() throws IOException {
-		String pythonHome = fijiHome + "jars/jython2.2.1";
+		String pythonHome = fijiHome + "jars";
 		System.setProperty("python.home", pythonHome);
 		System.setProperty("python.cachedir.skip", "false");
-		getClassLoader(pythonHome + "/jython.jar");
+		String jythonJar = pythonHome + "/jython.jar";
+		if (!new File(jythonJar).exists())
+			jythonJar = fijiHome + "/precompiled/jython.jar";
+		getClassLoader(jythonJar);
 	}
 
 	protected static void discoverJavac() throws IOException {
@@ -1264,7 +1267,8 @@ public class Fake {
 					getVarPath("TOOLSPATH", directory),
 					getVarPath("CLASSPATH", directory),
 					getVar("PLUGINSCONFIGDIRECTORY")
-						+ "/" + baseName + ".Fakefile");
+						+ "/" + baseName + ".Fakefile",
+					jarName);
 			}
 
 			String getVarPath(String variable, String subkey) {
@@ -2487,7 +2491,8 @@ public class Fake {
 
 	protected void fakeOrMake(File cwd, String directory, boolean verbose,
 			boolean ignoreMissingFakefiles, String toolsPath,
-			String classPath, String fallBackFakefile)
+			String classPath, String fallBackFakefile,
+			String defaultTarget)
 			throws FakeException {
 		String[] files = new File(directory).list();
 		if (files == null || files.length == 0)
@@ -2523,6 +2528,12 @@ public class Fake {
 							classPath);
 				parser.cwd = new File(cwd, directory);
 				Parser.Rule all = parser.parseRules(null);
+				if (defaultTarget != null) {
+					Parser.Rule rule =
+						all.getRule(defaultTarget);
+					if (rule != null)
+						all = rule;
+				}
 				all.make();
 			} else
 				// Try "make"
