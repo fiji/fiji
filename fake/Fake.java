@@ -125,7 +125,10 @@ public class Fake {
 		String pythonHome = fijiHome + "jars";
 		System.setProperty("python.home", pythonHome);
 		System.setProperty("python.cachedir.skip", "false");
-		getClassLoader(pythonHome + "/jython.jar");
+		String jythonJar = pythonHome + "/jython.jar";
+		if (!new File(jythonJar).exists())
+			jythonJar = fijiHome + "/precompiled/jython.jar";
+		getClassLoader(jythonJar);
 	}
 
 	protected static void discoverJavac() throws IOException {
