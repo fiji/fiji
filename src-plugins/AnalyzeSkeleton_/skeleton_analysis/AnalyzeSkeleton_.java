@@ -172,9 +172,11 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	/** boolean flag to display extra information in result tables */
 	public static boolean verbose = false;
 	
+	/** silent run flag, to distinguish between GUI and plugin calls */
+	protected boolean silent = false;
+
 	/** debugging flag */
 	private static final boolean debug = false;
-	
 	
 	/* -----------------------------------------------------------------------*/
 	/**
@@ -217,6 +219,8 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		pruneIndex = gd.getNextChoiceIndex();
 		AnalyzeSkeleton_.verbose = gd.getNextBoolean();
 		
+		// pre-checking if another image is needed and also setting bPruneCycles
+		ImagePlus origIP = null;
 		switch(pruneIndex)
 		{
 			// No pruning
@@ -256,17 +260,60 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 					return;
 				
 				// Get original stack
-				final ImagePlus origIP = WindowManager.getImage( ids[ gd2.getNextChoiceIndex() ] );
-				// calculate neighborhood size given the calibration
-				calculateNeighborhoodOffsets(origIP.getCalibration());
-				this.originalImage = origIP.getStack();
-				
+				origIP = WindowManager.getImage( ids[ gd2.getNextChoiceIndex() ] );
+
 				this.bPruneCycles = true;
 				break;
 			default:
 		}
-		
-		
+
+		// now we have all the information that's needed for running the plugin
+		// as if it was called from somewhere else
+		run(pruneIndex, origIP, false, verbose);
+
+		if(debug)
+			IJ.log("num of skeletons = " + this.numOfTrees);
+
+		// Show results table
+		showResults();
+
+	} // end run method
+
+	/**
+	 * This method is intended for non-interactively using this plugin.
+	 * <p>
+	 * @param pruneIndex The pruneIndex, as asked by the initial gui dialog.
+	 */
+	public SkeletonResult run(int pruneIndex,
+							  ImagePlus origIP,
+							  boolean silent,
+							  boolean verbose)
+	{
+		this.pruneIndex = pruneIndex;
+		this.silent = silent;
+		this.verbose = verbose;
+
+		switch(pruneIndex)
+		{
+			// No pruning
+			case AnalyzeSkeleton_.NONE:
+				this.bPruneCycles = false;
+				break;
+			// Pruning cycles by shortest branch
+			case AnalyzeSkeleton_.SHORTEST_BRANCH:
+				this.bPruneCycles = true;
+				break;
+			// Pruning cycles by lowest pixel intensity
+			case AnalyzeSkeleton_.LOWEST_INTENSITY_VOXEL:
+			case AnalyzeSkeleton_.LOWEST_INTENSITY_BRANCH:
+				// calculate neighborhood size given the calibration
+				calculateNeighborhoodOffsets(origIP.getCalibration());
+				this.originalImage = origIP.getStack();
+				this.bPruneCycles = true;
+				break;
+			default:
+		}
+
 		this.width = this.imRef.getWidth();
 		this.height = this.imRef.getHeight();
 		this.depth = this.imRef.getStackSize();
@@ -275,8 +322,8 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		// initialize visit flags
 		resetVisited();
 		
-		// Tag skeleton, differentiate trees and visit them				
-		processSkeleton(this.inputImage);				
+		// Tag skeleton, differentiate trees and visit them
+		processSkeleton(this.inputImage);
 		
 		// Prune cycles if necessary
 		if(bPruneCycles)
@@ -287,24 +334,28 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 				resetVisited();
 				// Recalculate analysis over the new image
 				bPruneCycles = false;
-				processSkeleton(this.inputImage);						
+				processSkeleton(this.inputImage);
 			}
-			else
-				displayTagImage(this.taggedImage);
 		}
-		
 		
 		// Calculate triple points (junctions with exactly 3 branches)
 		calculateTripleAndQuadruplePoints();
 		
-		if(debug)
-			IJ.log("num of skeletons = " + this.numOfTrees);
-		
-		// Show results table
-		showResults();
-		
-	} // end run method
-	
+		// Return the analysis results
+		return assembleResults();
+	}
+
+	/**
+	 * A simpler standalone running method, for analyzation without pruning
+	 * or showing images.
+	 * <p>
+	 * This one just calls run(AnalyzeSkeleton_.NONE, null, true, false)
+	 */
+	public SkeletonResult run()
+	{
+		return run(NONE, null, true, false);
+	}
+
 	// ---------------------------------------------------------------------------
 	/**
 	 * Calculate the neighborhood size based on the calibration of the image.
@@ -356,7 +407,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		this.taggedImage = tagImage(inputImage2);		
 		
 		// Show tags image.
-		if(!bPruneCycles)
+		if(!bPruneCycles && !silent)
 		{
 			displayTagImage(taggedImage);
 		}
@@ -818,6 +869,37 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		}
 		
 	}// end method showResults
+
+	/**
+	 * Returns the analysis results in a SkeletonResult object.
+	 * <p>
+	 *
+	 * @return The results of the skeleton analysis.
+	 */
+	protected SkeletonResult assembleResults()
+	{
+		SkeletonResult result = new SkeletonResult(numOfTrees);
+		result.setBranches(numberOfBranches);
+		result.setJunctions(numberOfJunctions);
+		result.setEndPoints(numberOfEndPoints);
+		result.setJunctionVoxels(numberOfJunctionVoxels);
+		result.setSlabs(numberOfSlabs);
+		result.setAverageBranchLength(averageBranchLength);
+		result.setTriples(numberOfTriplePoints);
+		result.setQuadruples(numberOfQuadruplePoints);
+		result.setMaximumBranchLength(maximumBranchLength);
+
+		result.setListOfEndPoints(listOfEndPoints);
+		result.setListOfJunctionVoxels(listOfJunctionVoxels);
+		result.setListOfSlabVoxels(listOfSlabVoxels);
+		result.setListOfStartingSlabVoxels(listOfStartingSlabVoxels);
+
+		result.setGraph(graph);
+
+		result.calculateNumberOfVoxels();
+
+		return result;
+	}
 
 	// -----------------------------------------------------------------------
 	/**
