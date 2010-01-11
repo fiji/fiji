@@ -17,6 +17,8 @@ import java.util.concurrent.Executors;
 
 import javax.swing.JFileChooser;
 
+import fiji.util.GenericDialogPlus;
+
 import mpicbg.trakem2.transform.CoordinateTransform;
 import mpicbg.trakem2.transform.CoordinateTransformList;
 
@@ -41,15 +43,17 @@ import ij.plugin.PlugIn;
  * <p>
  * <A target="_blank" href="http://pacific.mpi-cbg.de/wiki/Transform_Virtual_Stack_Slices">http://pacific.mpi-cbg.de/wiki/Transform_Virtual_Stack_Slices</A>
  * 
- * @version 09/26/2009
+ * @version 11/30/2009
  * @author Ignacio Arganda-Carreras (ignacio.arganda@gmail.com), Stephan Saalfeld and Albert Cardona
  */
 public class Transform_Virtual_Stack_MT implements PlugIn 
-{
-
-	/** working directory path */
-	public static String currentDirectory = (OpenDialog.getLastDirectory() == null) ? 
-			OpenDialog.getDefaultDirectory() : OpenDialog.getLastDirectory();
+{		
+	/** source directory **/
+	public static String sourceDirectory="";
+	/** output directory **/
+	public static String outputDirectory="";
+	/** transforms directory **/
+	public static String transformsDirectory="";
 
 	//---------------------------------------------------------------------------------
 	/**
@@ -59,42 +63,37 @@ public class Transform_Virtual_Stack_MT implements PlugIn
 	 */
 	public void run(String arg) 
 	{
-		// Choose source image folder
-		JFileChooser chooser = new JFileChooser();
-		if(currentDirectory != null)
-			chooser.setCurrentDirectory(new java.io.File(currentDirectory));
-		else
-			chooser.setCurrentDirectory(new java.io.File("."));
-		chooser.setDialogTitle("Choose directory with Source images");
-		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-		chooser.setAcceptAllFileFilterUsed(false);
-		if (chooser.showOpenDialog(null) != JFileChooser.APPROVE_OPTION)
-			return;
+		GenericDialogPlus gd = new GenericDialogPlus("Transform Virtual Stack");
 
-		String source_dir = chooser.getSelectedFile().toString();
+		gd.addDirectoryField("Source directory", sourceDirectory, 50);
+		gd.addDirectoryField("Output directory", outputDirectory, 50);
+		gd.addDirectoryField("Transforms directory", transformsDirectory, 50);
+		
+		gd.showDialog();
+		
+		// Exit when canceled
+		if (gd.wasCanceled()) 
+			return;
+		
+		sourceDirectory = gd.getNextString();
+		outputDirectory = gd.getNextString();
+		transformsDirectory = gd.getNextString();
+				
+
+		String source_dir = sourceDirectory;
 		if (null == source_dir) 
 			return;
 		source_dir = source_dir.replace('\\', '/');
 		if (!source_dir.endsWith("/")) source_dir += "/";
+		
 
-		// Choose target folder to save images into
-		chooser.setDialogTitle("Choose directory to store Output images");
-		if (chooser.showOpenDialog(null) != JFileChooser.APPROVE_OPTION)
-			return;
-
-		String target_dir = chooser.getSelectedFile().toString();
+		String target_dir = outputDirectory;
 		if (null == target_dir) 
 			return;
 		target_dir = target_dir.replace('\\', '/');
-		if (!target_dir.endsWith("/")) target_dir += "/";
+		if (!target_dir.endsWith("/")) target_dir += "/";		
 
-
-		// Choose input folder where transform files are stored
-		chooser.setDialogTitle("Choose directory with Transform files");
-		if (chooser.showOpenDialog(null) != JFileChooser.APPROVE_OPTION)
-			return;
-
-		String transf_dir = chooser.getSelectedFile().toString();
+		String transf_dir = transformsDirectory;
 		if (null == transf_dir) 
 			return;
 		transf_dir = transf_dir.replace('\\', '/');

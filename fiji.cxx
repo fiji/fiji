@@ -1605,8 +1605,11 @@ static int start_ij(void)
 			else
 				cerr << main_argv[i] << "!\n";
 		}
-		else if (!strcmp(main_argv[i], "--ant"))
+		else if (!strcmp(main_argv[i], "--ant")) {
 			main_class = "org.apache.tools.ant.Main";
+			class_path += get_jre_home()
+				+ "/../lib/tools.jar" PATH_SEP;
+		}
 		else if (!strcmp(main_argv[i], "--retrotranslator") ||
 				!strcmp(main_argv[i], "--retro"))
 			retrotranslator = true;
@@ -1647,7 +1650,7 @@ static int start_ij(void)
 		add_option(options, ext_option, 0);
 	}
 
-	/* For Jython 2.2.1 to work properly with .jar packages: */
+	/* For Jython to work properly with .jar packages: */
 	add_option(options, "-Dpython.cachedir.skip=false", 0);
 	if (plugin_path.str() == "")
 		plugin_path << "-Dplugins.dir=" << fiji_dir;

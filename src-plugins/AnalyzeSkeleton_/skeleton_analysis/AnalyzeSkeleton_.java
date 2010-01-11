@@ -44,7 +44,7 @@ import ij.process.ShortProcessor;
  * <A target="_blank" href="http://pacific.mpi-cbg.de/wiki/index.php/AnalyzeSkeleton">http://pacific.mpi-cbg.de/wiki/index.php/AnalyzeSkeleton</A>
  *
  *
- * @version 1.0 09/13/2009
+ * @version 1.0 12/04/2009
  * @author Ignacio Arganda-Carreras <ignacio.arganda@gmail.com>
  *
  */
@@ -93,6 +93,8 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	private int[] numberOfJunctions = null;
 	/** number of triple points in every tree */
 	private int[] numberOfTriplePoints = null;
+	/** number of quadruple points in every tree */
+	private int[] numberOfQuadruplePoints = null;
 	/** list of end points in every tree */
 	private ArrayList <Point> endPointsTree [] = null;
 	/** list of junction voxels in every tree */
@@ -170,9 +172,11 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	/** boolean flag to display extra information in result tables */
 	public static boolean verbose = false;
 	
+	/** silent run flag, to distinguish between GUI and plugin calls */
+	protected boolean silent = false;
+
 	/** debugging flag */
 	private static final boolean debug = false;
-	
 	
 	/* -----------------------------------------------------------------------*/
 	/**
@@ -215,6 +219,8 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		pruneIndex = gd.getNextChoiceIndex();
 		AnalyzeSkeleton_.verbose = gd.getNextBoolean();
 		
+		// pre-checking if another image is needed and also setting bPruneCycles
+		ImagePlus origIP = null;
 		switch(pruneIndex)
 		{
 			// No pruning
@@ -254,17 +260,60 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 					return;
 				
 				// Get original stack
-				final ImagePlus origIP = WindowManager.getImage( ids[ gd2.getNextChoiceIndex() ] );
-				// calculate neighborhood size given the calibration
-				calculateNeighborhoodOffsets(origIP.getCalibration());
-				this.originalImage = origIP.getStack();
-				
+				origIP = WindowManager.getImage( ids[ gd2.getNextChoiceIndex() ] );
+
 				this.bPruneCycles = true;
 				break;
 			default:
 		}
-		
-		
+
+		// now we have all the information that's needed for running the plugin
+		// as if it was called from somewhere else
+		run(pruneIndex, origIP, false, verbose);
+
+		if(debug)
+			IJ.log("num of skeletons = " + this.numOfTrees);
+
+		// Show results table
+		showResults();
+
+	} // end run method
+
+	/**
+	 * This method is intended for non-interactively using this plugin.
+	 * <p>
+	 * @param pruneIndex The pruneIndex, as asked by the initial gui dialog.
+	 */
+	public SkeletonResult run(int pruneIndex,
+							  ImagePlus origIP,
+							  boolean silent,
+							  boolean verbose)
+	{
+		this.pruneIndex = pruneIndex;
+		this.silent = silent;
+		this.verbose = verbose;
+
+		switch(pruneIndex)
+		{
+			// No pruning
+			case AnalyzeSkeleton_.NONE:
+				this.bPruneCycles = false;
+				break;
+			// Pruning cycles by shortest branch
+			case AnalyzeSkeleton_.SHORTEST_BRANCH:
+				this.bPruneCycles = true;
+				break;
+			// Pruning cycles by lowest pixel intensity
+			case AnalyzeSkeleton_.LOWEST_INTENSITY_VOXEL:
+			case AnalyzeSkeleton_.LOWEST_INTENSITY_BRANCH:
+				// calculate neighborhood size given the calibration
+				calculateNeighborhoodOffsets(origIP.getCalibration());
+				this.originalImage = origIP.getStack();
+				this.bPruneCycles = true;
+				break;
+			default:
+		}
+
 		this.width = this.imRef.getWidth();
 		this.height = this.imRef.getHeight();
 		this.depth = this.imRef.getStackSize();
@@ -273,8 +322,8 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		// initialize visit flags
 		resetVisited();
 		
-		// Tag skeleton, differentiate trees and visit them				
-		processSkeleton(this.inputImage);				
+		// Tag skeleton, differentiate trees and visit them
+		processSkeleton(this.inputImage);
 		
 		// Prune cycles if necessary
 		if(bPruneCycles)
@@ -285,24 +334,28 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 				resetVisited();
 				// Recalculate analysis over the new image
 				bPruneCycles = false;
-				processSkeleton(this.inputImage);						
+				processSkeleton(this.inputImage);
 			}
-			else
-				displayTagImage(this.taggedImage);
 		}
 		
-		
 		// Calculate triple points (junctions with exactly 3 branches)
-		calculateTriplePoints();
+		calculateTripleAndQuadruplePoints();
 		
-		if(debug)
-			IJ.log("num of skeletons = " + this.numOfTrees);
-		
-		// Show results table
-		showResults();
-		
-	} // end run method
-	
+		// Return the analysis results
+		return assembleResults();
+	}
+
+	/**
+	 * A simpler standalone running method, for analyzation without pruning
+	 * or showing images.
+	 * <p>
+	 * This one just calls run(AnalyzeSkeleton_.NONE, null, true, false)
+	 */
+	public SkeletonResult run()
+	{
+		return run(NONE, null, true, false);
+	}
+
 	// ---------------------------------------------------------------------------
 	/**
 	 * Calculate the neighborhood size based on the calibration of the image.
@@ -354,7 +407,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		this.taggedImage = tagImage(inputImage2);		
 		
 		// Show tags image.
-		if(!bPruneCycles)
+		if(!bPruneCycles && !silent)
 		{
 			displayTagImage(taggedImage);
 		}
@@ -709,6 +762,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		this.numberOfJunctions = new int[this.numOfTrees];
 		this.numberOfSlabs = new int[this.numOfTrees];
 		this.numberOfTriplePoints = new int[this.numOfTrees];
+		this.numberOfQuadruplePoints = new int[this.numOfTrees];
 		this.averageBranchLength = new double[this.numOfTrees];
 		this.maximumBranchLength = new double[this.numOfTrees];
 		this.endPointsTree = new ArrayList[this.numOfTrees];		
@@ -738,7 +792,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		
 		final String[] head = {"Skeleton", "# Branches","# Junctions", "# End-point voxels",
 						 "# Junction voxels","# Slab voxels","Average Branch Length", 
-						 "# Triple points", "Maximum Branch Length"};
+						 "# Triple points", "# Quadruple points", "Maximum Branch Length"};
 		
 		for (int i = 0; i < head.length; i++)
 			rt.setHeading(i,head[i]);	
@@ -754,7 +808,8 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 			rt.addValue(5, this.numberOfSlabs[i]);
 			rt.addValue(6, this.averageBranchLength[i]);
 			rt.addValue(7, this.numberOfTriplePoints[i]);
-			rt.addValue(8, this.maximumBranchLength[i]);
+			rt.addValue(8, this.numberOfQuadruplePoints[i]);
+			rt.addValue(9, this.maximumBranchLength[i]);
 
 			if (0 == i % 100) 
 				rt.show("Results");
@@ -814,6 +869,37 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		}
 		
 	}// end method showResults
+
+	/**
+	 * Returns the analysis results in a SkeletonResult object.
+	 * <p>
+	 *
+	 * @return The results of the skeleton analysis.
+	 */
+	protected SkeletonResult assembleResults()
+	{
+		SkeletonResult result = new SkeletonResult(numOfTrees);
+		result.setBranches(numberOfBranches);
+		result.setJunctions(numberOfJunctions);
+		result.setEndPoints(numberOfEndPoints);
+		result.setJunctionVoxels(numberOfJunctionVoxels);
+		result.setSlabs(numberOfSlabs);
+		result.setAverageBranchLength(averageBranchLength);
+		result.setTriples(numberOfTriplePoints);
+		result.setQuadruples(numberOfQuadruplePoints);
+		result.setMaximumBranchLength(maximumBranchLength);
+
+		result.setListOfEndPoints(listOfEndPoints);
+		result.setListOfJunctionVoxels(listOfJunctionVoxels);
+		result.setListOfSlabVoxels(listOfSlabVoxels);
+		result.setListOfStartingSlabVoxels(listOfStartingSlabVoxels);
+
+		result.setGraph(graph);
+
+		result.calculateNumberOfVoxels();
+
+		return result;
+	}
 
 	// -----------------------------------------------------------------------
 	/**
@@ -1704,10 +1790,10 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	
 	// -----------------------------------------------------------------------
 	/**
-	 * Calculate number of triple points in the skeleton. Triple points are
-	 * junctions with exactly 3 branches.
+	 * Calculate number of triple and quadruple points in the skeleton. Triple and 
+	 * quadruple points are junctions with exactly 3 and 4 branches respectively.
 	 */
-	private void calculateTriplePoints() 
+	private void calculateTripleAndQuadruplePoints() 
 	{
 		for (int iTree = 0; iTree < this.numOfTrees; iTree++)
 		{			
@@ -1717,27 +1803,29 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 
 				ArrayList <Point> groupOfJunctions = this.listOfSingleJunctions[iTree].get(i);
 
-				// Count the number of slab neighbors of every voxel in the group
-				int nSlab = 0;
+				// Count the number of slab and end-points neighbors of every voxel in the group
+				int nBranch = 0;
 				for(int j = 0; j < groupOfJunctions.size(); j++)
 				{
 					Point pj = groupOfJunctions.get(j);
 
-					// Get neighbors and check the slabs
+					// Get neighbors and check the slabs or end-points
 					byte[] neighborhood = this.getNeighborhood(this.taggedImage, pj.x, pj.y, pj.z);
 					for(int k = 0; k < 27; k++)
-						if (neighborhood[k] == AnalyzeSkeleton_.SLAB)
-							nSlab++;
+						if (neighborhood[k] == AnalyzeSkeleton_.SLAB 
+							|| neighborhood[k] == AnalyzeSkeleton_.END_POINT)
+							nBranch++;
 				}
-				// If the junction has only 3 slab neighbors, then it is a triple point
-				if (nSlab == 3)	
+				// If the junction has only 3 slab/end-point neighbors, then it is a triple point
+				if (nBranch == 3)	
 					this.numberOfTriplePoints[iTree] ++;
-
+				else if(nBranch == 4) // quadruple point if 4
+					this.numberOfQuadruplePoints[iTree] ++;
 			}		
 				
 		}
 		
-	}// end calculateTriplePoints
+	}// end calculateTripleAndQuadruplePoints
 	
 
 	/* -----------------------------------------------------------------------*/

@@ -34,6 +34,8 @@ def make_app():
 		shutil.copytree(d, 'Fiji.app/' + d)
 	if os.path.isdir('Fiji.app/jars/jython2.2.1/cachedir'):
 		removedirs('Fiji.app/jars/jython2.2.1/cachedir')
+	if os.path.isdir('Fiji.app/jars/cachedir'):
+		removedirs('Fiji.app/jars/cachedir')
 
 def get_java_platform(platform):
 	if platform == 'linux64':
