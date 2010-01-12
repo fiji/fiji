@@ -18,7 +18,7 @@ import ij.process.ShortProcessor;
 
 /**
  * AnalyzeSkeleton_ plugin for ImageJ(C) and Fiji.
- * Copyright (C) 2008,2009 Ignacio Arganda-Carreras 
+ * Copyright (C) 2008-2010 Ignacio Arganda-Carreras 
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -44,8 +44,8 @@ import ij.process.ShortProcessor;
  * <A target="_blank" href="http://pacific.mpi-cbg.de/wiki/index.php/AnalyzeSkeleton">http://pacific.mpi-cbg.de/wiki/index.php/AnalyzeSkeleton</A>
  *
  *
- * @version 1.0 12/04/2009
- * @author Ignacio Arganda-Carreras <ignacio.arganda@gmail.com>
+ * @version 01/12/2010
+ * @author Ignacio Arganda-Carreras <iarganda@mit.edu>
  *
  */
 public class AnalyzeSkeleton_ implements PlugInFilter
@@ -289,9 +289,9 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 							  boolean silent,
 							  boolean verbose)
 	{
-		this.pruneIndex = pruneIndex;
+		AnalyzeSkeleton_.pruneIndex = pruneIndex;
 		this.silent = silent;
-		this.verbose = verbose;
+		AnalyzeSkeleton_.verbose = verbose;
 
 		switch(pruneIndex)
 		{
@@ -411,8 +411,10 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		{
 			displayTagImage(taggedImage);
 		}
+		
 		// Mark trees
 		ImageStack treeIS = markTrees(taggedImage);
+		
 		
 		// Ask memory for every tree
 		initializeTrees();
@@ -794,7 +796,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 						 "# Junction voxels","# Slab voxels","Average Branch Length", 
 						 "# Triple points", "# Quadruple points", "Maximum Branch Length"};
 		
-		for (int i = 0; i < head.length; i++)
+		for (int i = 1; i < head.length; i++)
 			rt.setHeading(i,head[i]);	
 		
 		for(int i = 0 ; i < this.numOfTrees; i++)
@@ -826,7 +828,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 							"Branch length","V1 x", "V1 y",
 							"V1 z","V2 x","V2 y", "V2 z", "Euclidean distance"};
 			
-			for (int i = 0; i < extra_head.length; i++)
+			for (int i = 1; i < extra_head.length; i++)
 				extra_rt.setHeading(i,extra_head[i]);	
 			// Edge comparator (by branch length)
 			Comparator<Edge> comp = new Comparator<Edge>(){
@@ -1148,6 +1150,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 							
 							// If the final point is a slab, then we add the path to the
 							// neighbor junction voxel not belonging to the initial vertex
+							// (unless it is a self loop)
 							if(isSlab(this.auxPoint))
 							{
 								final Point aux = this.auxPoint;
@@ -1275,6 +1278,8 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	 */
 	private ImageStack markTrees(ImageStack taggedImage) 
 	{
+		if(debug)
+			IJ.log("=== Mark Trees ===");
 		// Create output image
 		ImageStack outputImage = new ImageStack(this.width, this.height, taggedImage.getColorModel());	
 		for (int z = 0; z < depth; z++)
@@ -1303,7 +1308,9 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 				return null;
 			}
 		
-			// else, visit the entire tree.
+			if(debug)
+				IJ.log("-- Visit tree from end-point:");
+			// Visit the entire tree.			
 			int numOfVoxelsInTree = visitTree(endPointCoord, outputImage, color);
 			
 			// increase number of trees			
@@ -1327,6 +1334,9 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 				return null;
 			}
 		
+			if(debug)
+				IJ.log("-- Visit tree from junction:");
+			
 			// else, visit branch until next junction or end point.
 			int length = visitTree(junctionCoord, outputImage, color);
 						
@@ -1358,6 +1368,9 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 					return null;
 				}
 			
+				if(debug)
+					IJ.log("-- Visit tree from slab:");
+				
 				// else, visit branch until next junction or end point.
 				int length = visitTree(p, outputImage, color);
 							
@@ -1377,20 +1390,21 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		//System.out.println("Number of trees = " + this.numOfTrees);
 
 		// Show tree image.
-		/*
-		ImagePlus treesIP = new ImagePlus("Trees skeleton", outputImage);
-		treesIP.show();
-		
-		// Set same calibration as the input image
-		treesIP.setCalibration(this.imRef.getCalibration());
-		
-		// We apply the Fire LUT and reset the min and max to be between 0-255.
-		IJ.run("Fire");
-		
-		//IJ.resetMinAndMax();
-		treesIP.resetDisplayRange();
-		treesIP.updateAndDraw();
-		*/
+		if(debug)
+		{
+			ImagePlus treesIP = new ImagePlus("Trees skeleton", outputImage);
+			treesIP.show();
+			
+			// Set same calibration as the input image
+			treesIP.setCalibration(this.imRef.getCalibration());
+			
+			// We apply the Fire LUT and reset the min and max to be between 0-255.
+			IJ.run("Fire");
+			
+			//IJ.resetMinAndMax();
+			treesIP.resetDisplayRange();
+			treesIP.updateAndDraw();
+		}
 		
 		// Reset visited variable
 		resetVisited();
@@ -1416,7 +1430,8 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	{					
 		int numOfVoxels = 0;
 		
-		//IJ.log("visiting " + startingPoint + " color = " + color);
+		if(debug)
+			IJ.log("visiting " + startingPoint + " color = " + color);
 		
 		if(isVisited(startingPoint))	
 			return 0;				
@@ -1427,6 +1442,10 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		
 		ArrayList <Point> toRevisit = new ArrayList <Point>();
 		
+		// Add starting point to revisit list if it is a junction
+		if(isJunction(startingPoint))
+			toRevisit.add(startingPoint);
+		
 		Point nextPoint = getNextUnvisitedVoxel(startingPoint);
 		
 		while(nextPoint != null || toRevisit.size() != 0)
@@ -1436,8 +1455,8 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 				if(!isVisited(nextPoint))
 				{
 					numOfVoxels++;
-					
-					//IJ.log("visiting " + nextPoint+ " color = " + color);
+					if(debug)
+						IJ.log("visiting " + nextPoint+ " color = " + color);
 					
 					// Set color and visit flat
 					this.setPixel(outputImage, nextPoint.x, nextPoint.y, nextPoint.z, color);
@@ -1454,7 +1473,8 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 			else // revisit list
 			{				
 				nextPoint = toRevisit.get(0);
-				//IJ.log("visiting " + nextPoint+ " color = " + color);
+				if(debug)
+					IJ.log("visiting " + nextPoint+ " color = " + color);
 												
 				// Calculate next point to visit
 				nextPoint = getNextUnvisitedVoxel(nextPoint);
@@ -1623,7 +1643,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 				return vertex[j];
 			}
 		if(debug)
-			IJ.log("point " + p + " was not found in vertex list!");
+			IJ.log("point " + p + " was not found in vertex list! (vertex.length= " + vertex.length +")");
 		return null;
 	}
 	
