@@ -1,3 +1,5 @@
+package Skeletonize3D_;
+
 /**
  * Skeletonize3D plugin for ImageJ(C).
  * Copyright (C) 2008 Ignacio Arganda-Carreras 

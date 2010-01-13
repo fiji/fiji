@@ -944,7 +944,7 @@ public class Fake {
 				while (iter.hasNext()) {
 					Rule rule =
 						getRule((String)iter.next());
-					if (rule != null)
+					if (rule != null && rule != this)
 						rule.setUpToDate();
 				}
 
