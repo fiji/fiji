@@ -978,6 +978,7 @@ static jobjectArray prepare_ij_options(JNIEnv *env, struct string_array& array)
 
 	if (!(jstr = env->NewStringUTF(array.nr ? array.list[0] : ""))) {
 fail:
+		env->ExceptionDescribe();
 		cerr << "Failed to create ImageJ option array" << endl;
 		exit(1);
 	}
@@ -1846,10 +1847,12 @@ static int start_ij(void)
 		string slashed(main_class);
 		replace(slashed.begin(), slashed.end(), '.', '/');
 		if (!(instance = env->FindClass(slashed.c_str()))) {
+			env->ExceptionDescribe();
 			cerr << "Could not find " << main_class << endl;
 			exit(1);
 		} else if (!(method = env->GetStaticMethodID(instance,
 				"main", "([Ljava/lang/String;)V"))) {
+			env->ExceptionDescribe();
 			cerr << "Could not find main method" << endl;
 			exit(1);
 		}
