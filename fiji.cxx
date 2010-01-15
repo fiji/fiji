@@ -610,6 +610,9 @@ int path_list_contains(const char *list, const char *path)
  *
  * Unfortunately, ld.so only looks at LD_LIBRARY_PATH at startup, so we
  * have to reexec after setting that variable.
+ *
+ * See also line 140ff of
+ * http://hg.openjdk.java.net/jdk6/jdk6/hotspot/file/14f7b2425c86/src/os/solaris/launcher/java_md.c
  */
 static void maybe_reexec_with_correct_lib_path(void)
 {
@@ -627,6 +630,7 @@ static void maybe_reexec_with_correct_lib_path(void)
 	if (original)
 		lib_path = string(original) + PATH_SEP + lib_path;
 	setenv_or_exit("LD_LIBRARY_PATH", lib_path.c_str(), 1);
+	cerr << "Re-executing with correct library lookup path" << endl;
 	execv(main_argv[0], main_argv);
 #endif
 }
