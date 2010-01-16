@@ -418,7 +418,11 @@ public class TextEditor extends JFrame implements ActionListener,
 			reflectDirStructInMenu(menuEntries, subMenu, res, resPath);
 		} else {
 			// res in now the file name and resPath is the path to it
-			JMenuItem item = new JMenuItem(res);
+			String name = res.replace("_", " ");
+			int dot = res.lastIndexOf(".");
+			if (dot >= 0)
+				name = name.substring(0, dot);
+			JMenuItem item = new JMenuItem(name);
 			menu.add(item);
 
 			final String resource = templateFolder + resPath + res;
