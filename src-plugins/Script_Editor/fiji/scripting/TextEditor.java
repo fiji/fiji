@@ -396,10 +396,13 @@ public class TextEditor extends JFrame implements ActionListener,
 			// remember the current level
 			resPath = resPath + name + "/";
 
-			JMenu subMenu = new JMenu(name);
-			menuEntries.put(resPath, subMenu);
-			menu.add(subMenu);
-
+			// create a new sub menu if not already there
+			JMenu subMenu = menuEntries.get(resPath);
+			if (subMenu == null) {
+				subMenu = new JMenu(name);
+				menuEntries.put(resPath, subMenu);
+				menu.add(subMenu);
+			}
 			// recursively go througn the path
 			reflectDirStructInMenu(menuEntries, subMenu, res, resPath);
 		} else {
