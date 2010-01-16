@@ -16,6 +16,8 @@ import ij.gui.GenericDialog;
 import ij.io.OpenDialog;
 import ij.io.SaveDialog;
 
+import java.net.URL;
+
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -46,8 +48,17 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Vector;
+import java.util.Enumeration;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Dictionary;
+import java.util.Hashtable;
 
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.jar.JarFile;
+import java.util.jar.JarEntry;
+
+import java.net.URLDecoder;
 
 import javax.imageio.ImageIO;
 
@@ -106,6 +117,8 @@ public class TextEditor extends JFrame implements ActionListener,
 	StartDebugging debugging;
 	Gutter gutter;
 	IconGroup iconGroup;
+
+	Set<String> templatePaths;
 
 	int modifyCount;
 	boolean undoInProgress, redoInProgress;
@@ -166,6 +179,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		panel.setResizeWeight(350.0 / 430.0);
 		setContentPane(panel);
 
+		// Initialize menu
 		int ctrl = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
 		JMenuBar mbar = new JMenuBar();
 		setJMenuBar(mbar);
@@ -223,6 +237,12 @@ public class TextEditor extends JFrame implements ActionListener,
 			language.item = item;
 		}
 		mbar.add(languages);
+
+		JMenu templates = new JMenu("Templates");
+		templates.setMnemonic(KeyEvent.VK_T);
+		setupTemplatePaths();
+		populateTemplateMenu(templates);
+		mbar.add(templates);
 
 		JMenu run = new JMenu("Run");
 		run.setMnemonic(KeyEvent.VK_R);
@@ -304,6 +324,91 @@ public class TextEditor extends JFrame implements ActionListener,
 			}
 		});
 	}
+
+	/**
+	 * Initializes a member set with paths leading to templates.
+	 */
+	private void setupTemplatePaths() {
+		templatePaths = new HashSet<String>(); //avoid duplicates in case it is a subdirectory
+		String path = "templates/";
+
+		String me = Script_Editor.class.getName().replace(".", "/")+".class";
+		URL dirURL = Script_Editor.class.getClassLoader().getResource(me);
+
+		// check if the resource has been found inside the jar
+		if (dirURL == null || dirURL.getProtocol() != "jar") {
+			return;
+		}
+
+		// modified version of http://www.uofr.net/~greg/java/get-resource-listing.html
+		String jarPath = dirURL.getPath().substring(5, dirURL.getPath().indexOf("!")); //strip out only the JAR file
+
+		try {
+			JarFile jar = new JarFile(URLDecoder.decode(jarPath, "UTF-8"));
+			Enumeration<JarEntry> entries = jar.entries(); //gives ALL entries in jar
+
+			while(entries.hasMoreElements()) {
+				String name = entries.nextElement().getName();
+				if (name.startsWith(path)) { //filter according to the path
+					String entry = name.substring(path.length());
+					templatePaths.add(entry);
+				}
+			}
+		}
+		catch (java.io.UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+		catch (java.io.IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Populates the given menu with template files available in the
+	 * templates folder. The folder structure is reflected within the sub menus.
+	 */
+	private void populateTemplateMenu(JMenu menu) {
+		menu.removeAll();
+
+		// use a dictionary for keeping track of created menu items
+		Dictionary<String, JMenu> menuEntries = new Hashtable<String, JMenu>();
+
+		for (String t : templatePaths) {
+			reflectDirStructInMenu(menuEntries, menu, t, "");
+		}
+
+		// add a „none“ item if no template was found
+		if (menu.getItemCount() == 0) {
+			JMenuItem none_item = new JMenuItem("(none)");
+			none_item.setEnabled(false);
+			menu.add(none_item);
+		}
+	}
+
+	public void reflectDirStructInMenu(Dictionary<String, JMenu> menuEntries,
+			 JMenu menu, String res, String resPath) {
+		int checkSubdir = res.indexOf("/");
+		if (checkSubdir >= 0) {
+			// if it is a subdirectory, get the directory name
+			String name = res.substring(0, checkSubdir);
+			res = res.substring(checkSubdir + 1); // cut off the slash for next level
+
+			// remember the current level
+			resPath = resPath + name + "/";
+
+			JMenu subMenu = new JMenu(name);
+			menuEntries.put(resPath, subMenu);
+			menu.add(subMenu);
+
+			// recursively go througn the path
+			reflectDirStructInMenu(menuEntries, subMenu, res, resPath);
+		} else {
+			// res in now the file name and resPath is the path to it
+			JMenuItem item = new JMenuItem(res);
+			menu.add(item);
+		}
+	}
+
 
 	public void createNewDocument() {
 		open(null);
