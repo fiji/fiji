@@ -580,6 +580,61 @@ static char *dos_path(const char *path)
 }
 #endif
 
+static string get_parent_directory(string path)
+{
+	size_t slash = path.find_last_of("/\\");
+	if (slash == 0 || slash == path.npos)
+		return string("/");
+	return path.substr(0, slash);
+}
+
+int path_list_contains(const char *list, const char *path)
+{
+	size_t len = strlen(path);
+	const char *p = list;
+	while (p && *p) {
+		if (!strncmp(p, path, len) &&
+				(p[len] == PATH_SEP[0] || !p[len]))
+			return 1;
+		p = strchr(p, PATH_SEP[0]);
+		if (!p)
+			break;
+		p++;
+	}
+	return 0;
+}
+
+/*
+ * On Linux, JDK5 does not find the library path with libmlib_image.so,
+ * so we have to add that explicitely to the LD_LIBRARY_PATH.
+ *
+ * Unfortunately, ld.so only looks at LD_LIBRARY_PATH at startup, so we
+ * have to reexec after setting that variable.
+ *
+ * See also line 140ff of
+ * http://hg.openjdk.java.net/jdk6/jdk6/hotspot/file/14f7b2425c86/src/os/solaris/launcher/java_md.c
+ */
+static void maybe_reexec_with_correct_lib_path(void)
+{
+#ifdef linux
+	string path = get_jre_home() + "/" + library_path;
+	string lib_path = get_parent_directory(get_parent_directory(path));
+	// Is this JDK6?
+	if (dir_exists(lib_path + "/jli"))
+		return;
+
+	const char *original = getenv("LD_LIBRARY_PATH");
+	if (original && path_list_contains(original, lib_path.c_str()))
+		return;
+
+	if (original)
+		lib_path = string(original) + PATH_SEP + lib_path;
+	setenv_or_exit("LD_LIBRARY_PATH", lib_path.c_str(), 1);
+	cerr << "Re-executing with correct library lookup path" << endl;
+	execv(main_argv[0], main_argv);
+#endif
+}
+
 static const char *get_fiji_dir(const char *argv0)
 {
 	static string buffer;
@@ -978,6 +1033,7 @@ static jobjectArray prepare_ij_options(JNIEnv *env, struct string_array& array)
 
 	if (!(jstr = env->NewStringUTF(array.nr ? array.list[0] : ""))) {
 fail:
+		env->ExceptionDescribe();
 		cerr << "Failed to create ImageJ option array" << endl;
 		exit(1);
 	}
@@ -1703,6 +1759,8 @@ static int start_ij(void)
 			main_class = default_main_class;
 	}
 
+	maybe_reexec_with_correct_lib_path();
+
 	if (retrotranslator && build_classpath(class_path,
 				string(fiji_dir) + "/retro", 0))
 		return 1;
@@ -1846,10 +1904,12 @@ static int start_ij(void)
 		string slashed(main_class);
 		replace(slashed.begin(), slashed.end(), '.', '/');
 		if (!(instance = env->FindClass(slashed.c_str()))) {
+			env->ExceptionDescribe();
 			cerr << "Could not find " << main_class << endl;
 			exit(1);
 		} else if (!(method = env->GetStaticMethodID(instance,
 				"main", "([Ljava/lang/String;)V"))) {
+			env->ExceptionDescribe();
 			cerr << "Could not find main method" << endl;
 			exit(1);
 		}
