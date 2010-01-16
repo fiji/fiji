@@ -43,6 +43,7 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.PrintWriter;
 import java.io.OutputStream;
+import java.io.InputStream;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -118,6 +119,7 @@ public class TextEditor extends JFrame implements ActionListener,
 	Gutter gutter;
 	IconGroup iconGroup;
 
+	String templateFolder = "templates/";
 	Set<String> templatePaths;
 
 	int modifyCount;
@@ -326,14 +328,19 @@ public class TextEditor extends JFrame implements ActionListener,
 	}
 
 	/**
+	 * Gets the base path of the resources contained in this jar.
+	 */
+	private String getResourceBase() {
+		return Script_Editor.class.getName().replace(".", "/")+".class";
+	}
+
+	/**
 	 * Initializes a member set with paths leading to templates.
 	 */
 	private void setupTemplatePaths() {
 		templatePaths = new HashSet<String>(); //avoid duplicates in case it is a subdirectory
-		String path = "templates/";
 
-		String me = Script_Editor.class.getName().replace(".", "/")+".class";
-		URL dirURL = Script_Editor.class.getClassLoader().getResource(me);
+		URL dirURL = Script_Editor.class.getClassLoader().getResource( getResourceBase() );
 
 		// check if the resource has been found inside the jar
 		if (dirURL == null || dirURL.getProtocol() != "jar") {
@@ -349,8 +356,8 @@ public class TextEditor extends JFrame implements ActionListener,
 
 			while(entries.hasMoreElements()) {
 				String name = entries.nextElement().getName();
-				if (name.startsWith(path)) { //filter according to the path
-					String entry = name.substring(path.length());
+				if (name.startsWith(templateFolder)) { //filter according to the path
+					String entry = name.substring(templateFolder.length());
 					templatePaths.add(entry);
 				}
 			}
@@ -385,6 +392,10 @@ public class TextEditor extends JFrame implements ActionListener,
 		}
 	}
 
+	/**
+	 * Adds a menu item or a sub menu to the given menu, depending
+	 * on the path it should reflect.
+	 */
 	public void reflectDirStructInMenu(Dictionary<String, JMenu> menuEntries,
 			 JMenu menu, String res, String resPath) {
 		int checkSubdir = res.indexOf("/");
@@ -409,6 +420,29 @@ public class TextEditor extends JFrame implements ActionListener,
 			// res in now the file name and resPath is the path to it
 			JMenuItem item = new JMenuItem(res);
 			menu.add(item);
+
+			final String resource = templateFolder + resPath + res;
+
+			item.addActionListener(new ActionListener() {
+                                public void actionPerformed(ActionEvent e) {
+                                        // A template menu item opens a corresponding
+                                        // template file.
+                                        if (!handleUnsavedChanges())
+						return;
+
+					createNewDocument();
+
+					try {
+						InputStream is = Script_Editor.class.getClassLoader().getResourceAsStream(resource);
+						textArea.read(new BufferedReader(
+							new InputStreamReader(is)),
+							null);
+					} catch (Exception ex) {
+						ex.printStackTrace();
+						error("The template '" + resource + "' was not found.");
+						return;
+					}
+                                }});
 		}
 	}
 
