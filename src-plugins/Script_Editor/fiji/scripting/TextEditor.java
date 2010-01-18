@@ -625,6 +625,14 @@ public class TextEditor extends JFrame implements ActionListener,
 
 	public void findOrReplace(boolean replace) {
 		findDialog.setLocationRelativeTo(this);
+
+		// override search pattern only if
+		// there is sth. selected
+		String selection = textArea.getSelectedText();
+		if (selection != null) {
+			findDialog.setSearchPattern(selection);
+		}
+
 		findDialog.show(replace);
 	}
 

@@ -4,8 +4,6 @@
   from the beginning, and if it does not find anything (or if the user
   cancels) _not_ jump at all.
 
-- When some text is selected and "Find" is called, default to that string.
-
 - Enable to set breakpoints via the Breakpoints menu and F9 (IIRC).
 
 - if there are images on which the plugin wants to work, they have to be
