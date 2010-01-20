@@ -54,7 +54,6 @@ import java.util.Set;
 import java.util.HashSet;
 import java.util.Dictionary;
 import java.util.Hashtable;
-
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.jar.JarFile;
 import java.util.jar.JarEntry;
@@ -121,6 +120,7 @@ public class TextEditor extends JFrame implements ActionListener,
 
 	String templateFolder = "templates/";
 	Set<String> templatePaths;
+	Languages.Language[] availableLanguages = Languages.getInstance().languages;
 
 	int modifyCount;
 	boolean undoInProgress, redoInProgress;
@@ -398,6 +398,17 @@ public class TextEditor extends JFrame implements ActionListener,
 	 */
 	public void reflectDirStructInMenu(Dictionary<String, JMenu> menuEntries,
 			 JMenu menu, String res, String resPath) {
+		// Add menu items reflecting the files, i. e. the actual templates (typically on)
+		final boolean showFiles = true;
+		// Reflect tha dicetory structure within the menu
+		final boolean showFolders = false;
+		// The language of the template will be added the name (requires ShowFiles)
+		final boolean appendLang = true;
+		// Indicates that the language should be switched on template selection
+		final boolean switchLang = true;
+		// Show file name instead of striped version
+		final boolean showFileName = false;
+
 		int checkSubdir = res.indexOf("/");
 		if (checkSubdir >= 0) {
 			// if it is a subdirectory, get the directory name
@@ -407,49 +418,111 @@ public class TextEditor extends JFrame implements ActionListener,
 			// remember the current level
 			resPath = resPath + name + "/";
 
-			// create a new sub menu if not already there
-			JMenu subMenu = menuEntries.get(resPath);
-			if (subMenu == null) {
-				subMenu = new JMenu(name);
-				menuEntries.put(resPath, subMenu);
-				menu.add(subMenu);
+			if (showFolders) {
+				// create a new sub menu if not already there
+				JMenu subMenu = menuEntries.get(resPath);
+				if (subMenu == null) {
+					subMenu = new JMenu(name);
+					menuEntries.put(resPath, subMenu);
+					menu.add(subMenu);
+				}
+				menu = subMenu;
 			}
+
 			// recursively go througn the path
-			reflectDirStructInMenu(menuEntries, subMenu, res, resPath);
+			reflectDirStructInMenu(menuEntries, menu, res, resPath);
 		} else {
 			// res in now the file name and resPath is the path to it
-			String name = res.replace("_", " ");
-			int dot = res.lastIndexOf(".");
-			if (dot >= 0)
-				name = name.substring(0, dot);
-			JMenuItem item = new JMenuItem(name);
-			menu.add(item);
 
-			final String resource = templateFolder + resPath + res;
+			if (showFiles) {
+				String name = res;
+				if (!showFileName) {
+					// replace uder scores with spaces
+					name = name.replace("_", " ");
+					// remove file extension, if any present
+					int dot = name.lastIndexOf(".");
+					if (dot >= 0)
+						name = name.substring(0, dot);
+				}
 
-			item.addActionListener(new ActionListener() {
-                                public void actionPerformed(ActionEvent e) {
-                                        // A template menu item opens a corresponding
-                                        // template file.
-                                        if (!handleUnsavedChanges())
-						return;
+				// Get sub folder name, which should
+				// represent language
+				String subFolderName = "";
+				int slash = resPath.indexOf("/");
+				if (slash >= 0) {
+					subFolderName = resPath.substring(0, slash);
+				}
 
-					createNewDocument();
-
-					try {
-						InputStream is = Script_Editor.class.getClassLoader().getResourceAsStream(resource);
-						textArea.read(new BufferedReader(
-							new InputStreamReader(is)),
-							null);
-					} catch (Exception ex) {
-						ex.printStackTrace();
-						error("The template '" + resource + "' was not found.");
-						return;
+				// Try to mach sub folder name to
+				// available languges
+				Languages.Language templateLang = null;
+				for (final Languages.Language l : availableLanguages) {
+					// compare first sub folder (if any) to known
+					// languge names
+					if (l.menuLabel.equalsIgnoreCase(subFolderName)) {
+						templateLang = l;
+						break;
 					}
-                                }});
+				}
+
+				// if enabled, add laguge desription to label
+				if (appendLang) {
+					if (templateLang != null) {
+						name += " [" + templateLang.menuLabel + "]";
+					} else {
+						name += " [unknown]";
+					}
+				}
+
+				JMenuItem item = new JMenuItem(name);
+				menu.add(item);
+
+				// create final properties for inner class
+				final String resource = templateFolder + resPath + res;
+				final Languages.Language linkedLang = templateLang;
+
+				// add inner action listener class for item
+				item.addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent e) {
+						// A template menu item opens a corresponding
+						// template file.
+						loadTemplate(resource, linkedLang, switchLang);
+					}});
+			}
 		}
 	}
 
+	/**
+	 * Loads a template file from the given resource out of the jar file and
+	 * optionally switches the langunge.
+	 *
+	 * @param resource The resource to load.
+	 * @param lang The language to optionally switch to or null
+	 * @param switchLang Whether the language should be switched or not.
+	 */
+	public void loadTemplate(String resource, Languages.Language lang, boolean switchLang) {
+		if (!handleUnsavedChanges())
+			return;
+
+		createNewDocument();
+
+		try {
+			// Load the template
+			InputStream is = Script_Editor.class.getClassLoader().getResourceAsStream(resource);
+			textArea.read(new BufferedReader(
+				new InputStreamReader(is)),
+				null);
+
+			// Switch the language
+			if (switchLang && lang != null) {
+				setLanguage(lang);
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			error("The template '" + resource + "' was not found.");
+			return;
+		}
+	}
 
 	public void createNewDocument() {
 		open(null);
