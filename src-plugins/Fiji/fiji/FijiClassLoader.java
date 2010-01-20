@@ -39,6 +39,8 @@ public class FijiClassLoader extends ClassLoader {
 	}
 
 	public void addPath(String path) throws IOException {
+		if (path == null)
+			return;
 		if (path.endsWith("/.rsrc"))
 			return;
 		if (filesMap.containsKey(path))

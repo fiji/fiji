@@ -348,7 +348,11 @@ abstract public class RefreshScripts implements PlugIn {
 			return;
 		}
 
-		script_dir = new File(Menus.getPlugInsPath());
+		String pluginsPath = Menus.getPlugInsPath();
+		if (pluginsPath == null)
+			return; // most likely we're running via Java WebStart
+
+		script_dir = new File(pluginsPath);
 
 		// Find files with the correct extension
 		if (!script_dir.exists()) {
@@ -435,6 +439,9 @@ abstract public class RefreshScripts implements PlugIn {
 
 		// strip out all plugin .jar files (to keep classPath short)
 		String pluginsPath = Menus.getPlugInsPath();
+		if (pluginsPath == null)
+			return "";
+
 		for (int i = 0; i >= 0; i =
 				classPath.indexOf(File.pathSeparator, i + 1)) {
 			while (classPath.substring(i).startsWith(pluginsPath)) {
