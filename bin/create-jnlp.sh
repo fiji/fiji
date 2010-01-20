@@ -74,6 +74,8 @@ echo '<?xml version="1.0" encoding="utf-8"?>
     	<property name="jnlp" value="'$plugins'"/>
     </resources>
 
-    <application-desc main-class="fiji.Main"/>
+    <application-desc main-class="fiji.Main">
+      <argument>-port0</argument>
+    </application-desc>
 </jnlp>
 ' > $outpath
