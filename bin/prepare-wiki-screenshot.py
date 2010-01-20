@@ -7,6 +7,8 @@ from javax.media.j3d import Transform3D
 
 from ij import IJ
 
+label = 'Fiji Is Just ImageJ'
+
 if IJ.getInstance() == None:
 	# called from the command line
 	from ij import ImageJ, ImagePlus
@@ -20,14 +22,12 @@ if IJ.getInstance() == None:
 		file = "Stitching-overview.jpg"
 	if len(argv) > 2:
 		label = argv[2]
-	else:
-		label = ''
 	ImageJ()
 	screenshot = IJ.openImage(file)
 	print "Opened", file, screenshot
 else:
 	screenshot = IJ.getImage()
-	label = IJ.getString('Label:', '')
+	label = IJ.getString('Label:', label)
 
 # make a gradient image
 
@@ -82,20 +82,14 @@ cMirror.applyTransform(Transform3D([1.0, 0.0, 0.0, 0.0, \
 		0.0, 0.0, 1.0, dy, \
 		0.0, 0.0, 0.0, 1.0]))
 
-# rotate nicely (TODO!)
+# rotate nicely
 
+from time import sleep
+sleep(1)
 univ.rotateY(Math.PI/12)
-dy = 0
-if h > w / 2:
-	dy = 60 * h / w / 2
-univ.getViewPlatformTransformer().translateXY(20 + dy, dy)
 univ.fireTransformationUpdated()
-#univ.adjustView()
-zoom = 10
-if h < w:
-	zoom = int(10 + 22 * (1 - h * 1.0 / w))
-print zoom
-univ.getViewPlatformTransformer().zoom(zoom)
+sleep(1)
+univ.adjustView()
 univ.fireTransformationUpdated()
 
 # set background
@@ -146,5 +140,5 @@ def drawOutlineText(ip, string, size, x, y):
 	ip.drawString(string, x, y)
 
 smallImage = IJ.getImage()
-drawOutlineText(smallImage.getProcessor(), label, 24, 30, smallImage.getHeight() - 50)
+drawOutlineText(smallImage.getProcessor(), label, 24, 30, smallImage.getHeight() - 30)
 smallImage.updateAndDraw()
