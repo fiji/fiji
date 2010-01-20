@@ -262,7 +262,8 @@ misc/Fiji.jar:$JAVA_HOME/../lib/tools.jar
 plugins/Script_Editor.jar <- src-plugins/Script_Editor/**/*.java  \
 							icon.png[images/icon.png] \
 							var.png[images/var.png]    \
-							funtion.png[images/function.png]
+							funtion.png[images/function.png] \
+							src-plugins/Script_Editor/templates/**/*
 
 plugins/*_*.jar <- src-plugins/*_*/**/*.java
 

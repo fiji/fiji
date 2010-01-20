@@ -16,6 +16,8 @@ import ij.gui.GenericDialog;
 import ij.io.OpenDialog;
 import ij.io.SaveDialog;
 
+import java.net.URL;
+
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -41,13 +43,22 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.PrintWriter;
 import java.io.OutputStream;
+import java.io.InputStream;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Vector;
-
+import java.util.Enumeration;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Dictionary;
+import java.util.Hashtable;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.jar.JarFile;
+import java.util.jar.JarEntry;
+
+import java.net.URLDecoder;
 
 import javax.imageio.ImageIO;
 
@@ -106,6 +117,10 @@ public class TextEditor extends JFrame implements ActionListener,
 	StartDebugging debugging;
 	Gutter gutter;
 	IconGroup iconGroup;
+
+	String templateFolder = "templates/";
+	Set<String> templatePaths;
+	Languages.Language[] availableLanguages = Languages.getInstance().languages;
 
 	int modifyCount;
 	boolean undoInProgress, redoInProgress;
@@ -166,6 +181,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		panel.setResizeWeight(350.0 / 430.0);
 		setContentPane(panel);
 
+		// Initialize menu
 		int ctrl = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
 		JMenuBar mbar = new JMenuBar();
 		setJMenuBar(mbar);
@@ -223,6 +239,12 @@ public class TextEditor extends JFrame implements ActionListener,
 			language.item = item;
 		}
 		mbar.add(languages);
+
+		JMenu templates = new JMenu("Templates");
+		templates.setMnemonic(KeyEvent.VK_T);
+		setupTemplatePaths();
+		populateTemplateMenu(templates);
+		mbar.add(templates);
 
 		JMenu run = new JMenu("Run");
 		run.setMnemonic(KeyEvent.VK_R);
@@ -303,6 +325,203 @@ public class TextEditor extends JFrame implements ActionListener,
 				TextEditor.this.actionPerformed(event);
 			}
 		});
+	}
+
+	/**
+	 * Gets the base path of the resources contained in this jar.
+	 */
+	private String getResourceBase() {
+		return Script_Editor.class.getName().replace(".", "/")+".class";
+	}
+
+	/**
+	 * Initializes a member set with paths leading to templates.
+	 */
+	private void setupTemplatePaths() {
+		templatePaths = new HashSet<String>(); //avoid duplicates in case it is a subdirectory
+
+		URL dirURL = Script_Editor.class.getClassLoader().getResource( getResourceBase() );
+
+		// check if the resource has been found inside the jar
+		if (dirURL == null || dirURL.getProtocol() != "jar") {
+			return;
+		}
+
+		// modified version of http://www.uofr.net/~greg/java/get-resource-listing.html
+		String jarPath = dirURL.getPath().substring(5, dirURL.getPath().indexOf("!")); //strip out only the JAR file
+
+		try {
+			JarFile jar = new JarFile(URLDecoder.decode(jarPath, "UTF-8"));
+			Enumeration<JarEntry> entries = jar.entries(); //gives ALL entries in jar
+
+			while(entries.hasMoreElements()) {
+				String name = entries.nextElement().getName();
+				if (name.startsWith(templateFolder)) { //filter according to the path
+					String entry = name.substring(templateFolder.length());
+					templatePaths.add(entry);
+				}
+			}
+		}
+		catch (java.io.UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+		catch (java.io.IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Populates the given menu with template files available in the
+	 * templates folder. The folder structure is reflected within the sub menus.
+	 */
+	private void populateTemplateMenu(JMenu menu) {
+		menu.removeAll();
+
+		// use a dictionary for keeping track of created menu items
+		Dictionary<String, JMenu> menuEntries = new Hashtable<String, JMenu>();
+
+		for (String t : templatePaths) {
+			reflectDirStructInMenu(menuEntries, menu, t, "");
+		}
+
+		// add a „none“ item if no template was found
+		if (menu.getItemCount() == 0) {
+			JMenuItem none_item = new JMenuItem("(none)");
+			none_item.setEnabled(false);
+			menu.add(none_item);
+		}
+	}
+
+	/**
+	 * Adds a menu item or a sub menu to the given menu, depending
+	 * on the path it should reflect.
+	 */
+	public void reflectDirStructInMenu(Dictionary<String, JMenu> menuEntries,
+			 JMenu menu, String res, String resPath) {
+		// Add menu items reflecting the files, i. e. the actual templates (typically on)
+		final boolean showFiles = true;
+		// Reflect tha dicetory structure within the menu
+		final boolean showFolders = false;
+		// The language of the template will be added the name (requires ShowFiles)
+		final boolean appendLang = true;
+		// Indicates that the language should be switched on template selection
+		final boolean switchLang = true;
+		// Show file name instead of striped version
+		final boolean showFileName = false;
+
+		int checkSubdir = res.indexOf("/");
+		if (checkSubdir >= 0) {
+			// if it is a subdirectory, get the directory name
+			String name = res.substring(0, checkSubdir);
+			res = res.substring(checkSubdir + 1); // cut off the slash for next level
+
+			// remember the current level
+			resPath = resPath + name + "/";
+
+			if (showFolders) {
+				// create a new sub menu if not already there
+				JMenu subMenu = menuEntries.get(resPath);
+				if (subMenu == null) {
+					subMenu = new JMenu(name);
+					menuEntries.put(resPath, subMenu);
+					menu.add(subMenu);
+				}
+				menu = subMenu;
+			}
+
+			// recursively go througn the path
+			reflectDirStructInMenu(menuEntries, menu, res, resPath);
+		} else {
+			// res in now the file name and resPath is the path to it
+
+			if (showFiles) {
+				String name = res;
+				if (!showFileName) {
+					// replace uder scores with spaces
+					name = name.replace("_", " ");
+					// remove file extension, if any present
+					int dot = name.lastIndexOf(".");
+					if (dot >= 0)
+						name = name.substring(0, dot);
+				}
+
+				// Get sub folder name, which should
+				// represent language
+				String subFolderName = "";
+				int slash = resPath.indexOf("/");
+				if (slash >= 0) {
+					subFolderName = resPath.substring(0, slash);
+				}
+
+				// Try to mach sub folder name to
+				// available languges
+				Languages.Language templateLang = null;
+				for (final Languages.Language l : availableLanguages) {
+					// compare first sub folder (if any) to known
+					// languge names
+					if (l.menuLabel.equalsIgnoreCase(subFolderName)) {
+						templateLang = l;
+						break;
+					}
+				}
+
+				// if enabled, add laguge desription to label
+				if (appendLang) {
+					if (templateLang != null) {
+						name += " [" + templateLang.menuLabel + "]";
+					} else {
+						name += " [unknown]";
+					}
+				}
+
+				JMenuItem item = new JMenuItem(name);
+				menu.add(item);
+
+				// create final properties for inner class
+				final String resource = templateFolder + resPath + res;
+				final Languages.Language linkedLang = templateLang;
+
+				// add inner action listener class for item
+				item.addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent e) {
+						// A template menu item opens a corresponding
+						// template file.
+						loadTemplate(resource, linkedLang, switchLang);
+					}});
+			}
+		}
+	}
+
+	/**
+	 * Loads a template file from the given resource out of the jar file and
+	 * optionally switches the langunge.
+	 *
+	 * @param resource The resource to load.
+	 * @param lang The language to optionally switch to or null
+	 * @param switchLang Whether the language should be switched or not.
+	 */
+	public void loadTemplate(String resource, Languages.Language lang, boolean switchLang) {
+		if (!handleUnsavedChanges())
+			return;
+
+		createNewDocument();
+
+		try {
+			// Load the template
+			InputStream is = Script_Editor.class.getClassLoader().getResourceAsStream(resource);
+			textArea.read(new BufferedReader(
+				new InputStreamReader(is)),
+				null);
+
+			// Switch the language
+			if (switchLang && lang != null) {
+				setLanguage(lang);
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			error("The template '" + resource + "' was not found.");
+			return;
+		}
 	}
 
 	public void createNewDocument() {
@@ -406,6 +625,14 @@ public class TextEditor extends JFrame implements ActionListener,
 
 	public void findOrReplace(boolean replace) {
 		findDialog.setLocationRelativeTo(this);
+
+		// override search pattern only if
+		// there is sth. selected
+		String selection = textArea.getSelectedText();
+		if (selection != null) {
+			findDialog.setSearchPattern(selection);
+		}
+
 		findDialog.show(replace);
 	}
 

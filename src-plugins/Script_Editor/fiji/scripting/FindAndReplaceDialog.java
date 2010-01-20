@@ -192,4 +192,13 @@ public class FindAndReplaceDialog extends JDialog implements ActionListener {
 		return replace.isEnabled();
 	}
 
+	/**
+	 * Sets the content of the search field.
+	 *
+	 * @param pattern The new content of the search field.
+	 */
+	public void setSearchPattern(String pattern) {
+		searchField.setText(pattern);
+	}
 }
+
