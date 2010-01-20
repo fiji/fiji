@@ -4,50 +4,54 @@
 #    name="jnlp" 
 #    value="http://pacific.mpi-cbg.de/webstart/fiji/plugins/VIB_.jar"/>
 
-FIJIPATH="/var/www/webstart/fiji"
-CODEBASE="http://pacific.mpi-cbg.de/webstart/fiji"
+RELATIVE_PATH="webstart/test/fiji"
+FIJIPATH="/var/www/$RELATIVE_PATH"
+CODEBASE="http://pacific.mpi-cbg.de/$RELATIVE_PATH"
 JNLP_NAME="Fiji.jnlp"
 EXCLUDES=" plugins/ij-ImageIO_.jar jars/jpedalSTD.jar jars/itext-1.3.jar "
 
-plugins=""
-jars=""
+plugins=
+jars=
+files=./ij.jar
 outpath="$FIJIPATH/../$JNLP_NAME"
-cwd=$(pwd)
 
 test -d $FIJIPATH || exit
 
-# add jars from plugins folder
-cd $FIJIPATH
-for i in $(find plugins -name \*.jar); do
+# add jars from plugins, jars and misc folder
+for i in $(find plugins jars misc -name \*.jar)
+do
     case " $EXCLUDES " in
     *" $i "*) ;;
     *)
-        plugins="$plugins $CODEBASE/$i";
-        jars="$jars\n<jar href=\"$i\"/>"
+        plugins="$plugins $CODEBASE/$i" &&
+        jars="$jars\
+<jar href=\"$i\"/>" &&
+	files="$files $i" || break
     ;;
     esac
-done
+done || {
+	echo "Could not discover .jar files" >&2
+	exit 1
+}
 
-# add jars from jars folder
-for i in $(find jars -name \*.jar); do
-    case " $EXCLUDES " in
-    *" $i "*) ;;
-    *)
-        plugins="$plugins $CODEBASE/$i";
-        jars="$jars\n<jar href=\"$i\"/>"
-    ;;
-    esac
-done
-cd $cwd
+test -e ImageJA/.jarsignerrc && (
+	cd ImageJA &&
+	for jar in $files
+	do
+		mkdir -p $FIJIPATH/${jar%/*} &&
+		jarsigner -signedjar $FIJIPATH/$jar $(cat .jarsignerrc) \
+			../$jar dscho || break
+	done
+) || {
+	echo "Could not sign a .jar" >&2
+	exit 1
+}
 
-plugins=$(echo $plugins | sed -e 's/^ //');
+plugins=${plugins# }
 
 echo '<?xml version="1.0" encoding="utf-8"?>
-<!-- Test Deployment -->
-
-<jnlp spec="1.0+"
-    codebase="'$CODEBASE'/"
-    href="../'$JNLP_NAME'">
+<!DOCTYPE jnlp PUBLIC "-//Sun Microsystems, Inc//DTD JNLP Discriptor 1.1//EN" "http://kano.net/dtd/jnlp-1.5.dtd">
+<jnlp spec="1.0+" codebase="'$CODEBASE'/">
 
     <information>
     	<title>Fiji via Web Start</title>
@@ -70,25 +74,6 @@ echo '<?xml version="1.0" encoding="utf-8"?>
     	<property name="jnlp" value="'$plugins'"/>
     </resources>
 
-    <application-desc main-class="ij.ImageJ">
-    </application>
+    <application-desc main-class="fiji.Main"/>
 </jnlp>
 ' > $outpath
-
-echo '
-<?xml version="1.0" encoding="utf-8"?>
-<jnlp spec="1.0+"
-    codebase="'$CODEBASE'/"
-    href="../jpedal.jnlp">
-    <information>
-        <title>JavaHelp</title>
-        <vendor>Sun Microsystems, Inc.</vendor>
-        </information>
-    <resources>
-        <jar href="jars/jpedalSTD.jar"/>
-        <jar href="jars/itext-1.3.jar"/>
-    </resources>
-    <component-desc/>
-</jnlp> 
-' > $FIJIPATH/../jpedal.jnlp
-
