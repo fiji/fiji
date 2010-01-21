@@ -110,3 +110,5 @@
 /plugins/IsoData_Classifier.jar
 /plugins/RATS_.jar
 /jars/jython.jar
+/jars/VectorString.jar
+/jars/fiji-lib.jar
