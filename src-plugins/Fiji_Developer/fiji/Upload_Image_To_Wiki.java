@@ -10,6 +10,7 @@ import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
 
 import java.awt.Graphics;
+import java.awt.Toolkit;
 
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
@@ -67,12 +68,14 @@ public class Upload_Image_To_Wiki implements PlugInFilter {
 				+ (usePNG ? "PNG" : "JPEG"));
 		gd.addStringField("name", title, 30);
 		gd.addStringField("summary", title, 30);
+		gd.addCheckbox("copy [[Image:<name>]] to clipboard", true);
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return;
 
 		title = gd.getNextString();
 		String summary = gd.getNextString();
+		boolean copyToClipboard = gd.getNextBoolean();
 
 		GraphicalMediaWikiClient client =
 			new GraphicalMediaWikiClient(url);
@@ -81,6 +84,9 @@ public class Upload_Image_To_Wiki implements PlugInFilter {
 		if (!client.uploadFile(title, summary, usePNG ? png : jpeg))
 			IJ.error("Failed to upload " + title);
 		client.logOut();
+
+		if (copyToClipboard)
+			copyToClipboard();
 	}
 
 	BufferedImage getBufferedImage(ImageProcessor ip) {
@@ -119,5 +125,18 @@ public class Upload_Image_To_Wiki implements PlugInFilter {
 		ios.close();
 		writer.dispose();
 		return bytes.toByteArray();
+	}
+
+	void copyToClipboard() {
+		StringSelection selection =
+			new StringSelection("[[Image:" + title + "]]");
+		try {
+			Toolkit.getDefaultToolkit().getSystemClipboard()
+				.setContents(selection, null);
+		} catch (Exception e) { /* ignore */ }
+		try {
+			Toolkit.getDefaultToolkit().getSystemSelection()
+				.setContents(selection, null);
+		} catch (Exception e) { /* ignore */ }
 	}
 }
