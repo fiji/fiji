@@ -147,7 +147,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Gray_Morphology.jar \
 	plugins/Colocalisation_Analysis.jar \
 	plugins/LocalThickness_.jar \
-	plugins/Tutorial_Maker.jar \
+	plugins/Fiji_Developer.jar \
 	plugins/Script_Editor.jar \
 	plugins/Manual_Tracking.jar \
 	plugins/Calculator_Plus.jar \
