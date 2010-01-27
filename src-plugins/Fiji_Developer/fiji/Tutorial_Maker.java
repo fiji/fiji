@@ -63,7 +63,6 @@ import java.util.regex.Pattern;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.Menus;
-import ij.Prefs;
 import ij.WindowManager;
 
 import ij.gui.GenericDialog;
@@ -80,7 +79,6 @@ public class Tutorial_Maker implements PlugIn {
 	protected String name;
 
 	protected final static String URL = "http://pacific.mpi-cbg.de/wiki/";
-	protected String login, password;
 
 	public void run(String arg) {
 		if (arg.equals("rename")) {
@@ -203,9 +201,10 @@ public class Tutorial_Maker implements PlugIn {
 		if (!saveOrUploadImages(null, images))
 			return;
 
-		MediaWikiClient client = new MediaWikiClient(URL + "index.php");
+		GraphicalMediaWikiClient client =
+			new GraphicalMediaWikiClient(URL + "index.php");
 
-		if (!login(client, "Wiki Login"))
+		if (!client.login("Wiki Login"))
 			return;
 
 		if (!saveOrUploadImages(client, images))
@@ -223,29 +222,6 @@ public class Tutorial_Maker implements PlugIn {
 
 	}
 
-	protected boolean login(MediaWikiClient client, String title) {
-		if (login != null && password != null)
-			client.logIn(login, password);
-		while (!client.isLoggedIn()) {
-			GenericDialog gd = new GenericDialog(title);
-			if (login == null)
-				login = Prefs.get("fiji.wiki.user", "");
-			gd.addStringField("Login", login, 20);
-			gd.addStringField("Password", "", 20);
-			((TextField)gd.getStringFields().lastElement())
-				.setEchoChar('*');
-			gd.showDialog();
-			if (gd.wasCanceled())
-				return false;
-
-			login = gd.getNextString();
-			Prefs.set("fiji.wiki.user", login);
-			password = gd.getNextString();
-			client.logIn(login, password);
-		}
-		return true;
-	}
-
 	protected void preview() {
 		IJ.showStatus("Previewing " + name + "...");
 		IJ.showProgress(0, 2);
@@ -254,9 +230,10 @@ public class Tutorial_Maker implements PlugIn {
 		if (!saveOrUploadImages(null, images))
 			return;
 
-		MediaWikiClient client = new MediaWikiClient(URL + "index.php");
+		GraphicalMediaWikiClient client =
+			new GraphicalMediaWikiClient(URL + "index.php");
 
-		if (!login(client, "Wiki Login (Preview)"))
+		if (!client.login("Wiki Login (Preview)"))
 			return;
 		String html = client.uploadOrPreviewPage(name, editor.getText(),
 				"Add " + name, true);
