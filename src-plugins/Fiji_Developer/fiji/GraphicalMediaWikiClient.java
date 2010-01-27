@@ -17,6 +17,10 @@ public class GraphicalMediaWikiClient extends MediaWikiClient {
 		super(wikiBaseURI);
 	}
 
+	public boolean login() {
+		return login("Wiki login");
+	}
+
 	public boolean login(String title) {
 		if (login != null && password != null)
 			logIn(login, password);
