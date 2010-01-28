@@ -1908,9 +1908,11 @@ public class Fake {
 				new InputStreamReader(input);
 			BufferedReader reader = new BufferedReader(inputReader);
 			for (;;) {
-				String line = reader.readLine().trim();
+				String line = reader.readLine();
 				if (line == null)
 					break;
+				else
+					line = line.trim();
 				if (!line.startsWith("package "))
 					continue;
 				line = line.substring(8);
