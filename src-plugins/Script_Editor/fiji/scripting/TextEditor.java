@@ -406,7 +406,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		final boolean appendLang = true;
 		// Indicates that the language should be switched on template selection
 		final boolean switchLang = true;
-		// Show file name instead of striped version
+		// Show file name instead of stripped version
 		final boolean showFileName = false;
 
 		int checkSubdir = res.indexOf("/");
