@@ -631,7 +631,7 @@ static void maybe_reexec_with_correct_lib_path(void)
 		lib_path = string(original) + PATH_SEP + lib_path;
 	setenv_or_exit("LD_LIBRARY_PATH", lib_path.c_str(), 1);
 	cerr << "Re-executing with correct library lookup path" << endl;
-	execv(main_argv[0], main_argv);
+	execv(main_argv_backup[0], main_argv_backup);
 #endif
 }
 
