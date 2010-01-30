@@ -259,6 +259,7 @@ plugins/JRuby_Interpreter.jar:plugins/Javascript_.jar:\
 plugins/Jython_Interpreter.jar:plugins/Refresh_Javas.jar:\
 plugins/BeanShell_Interpreter.jar:jars/fiji-scripting.jar:\
 misc/Fiji.jar:$JAVA_HOME/../lib/tools.jar
+NO_COMPILE(plugins/Script_Editor.jar)=src-plugins/Script_Editor/templates/**/*
 plugins/Script_Editor.jar <- src-plugins/Script_Editor/**/*.java  \
 							icon.png[images/icon.png] \
 							var.png[images/var.png]    \
