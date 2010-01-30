@@ -784,8 +784,15 @@ public class TextEditor extends JFrame implements ActionListener,
 	}
 
 	protected String getFileName() {
-		return file == null ?
-			"New_" + currentLanguage.extension : file.getName();
+		if (file != null)
+			return file.getName();
+		if (currentLanguage.menuLabel.equals("Java")) {
+			String name =
+				new TokenFunctions(textArea).getClassName();
+			if (name != null)
+				return name + currentLanguage.extension;
+		}
+		return "New_" + currentLanguage.extension;
 	}
 
 	private synchronized void setTitle() {
