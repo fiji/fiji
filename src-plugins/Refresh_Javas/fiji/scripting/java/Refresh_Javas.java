@@ -85,17 +85,33 @@ public class Refresh_Javas extends RefreshScripts {
 		return sourceFile.lastModified() < targetFile.lastModified();
 	}
 
+	protected String[] unshift(String[] list, String[] add) {
+		String[] result = new String[list.length + add.length];
+		System.arraycopy(add, 0, result, 0, add.length);
+		System.arraycopy(list, 0, result, add.length, list.length);
+		return result;
+	}
+
 	static Method javac;
 
 	boolean compile(String path) throws ClassNotFoundException,
 			NoSuchMethodException, IllegalAccessException,
 			InvocationTargetException {
-		String[] arguments = { path };
+		return compile(path, null);
+	}
+
+	public boolean compile(String path, String outPath)
+			throws ClassNotFoundException, NoSuchMethodException,
+			       IllegalAccessException,
+			       InvocationTargetException {
+		String[] arguments = { "-g", path };
 		String classPath = getPluginsClasspath();
 		if (!classPath.equals(""))
-			arguments = new String[] {
-				"-g", "-classpath", classPath, path
-			};
+			arguments = unshift(arguments,
+				new String[] { "-classpath", classPath });
+		if (outPath != null)
+			arguments = unshift(arguments,
+				new String[] { "-d", outPath });
 		if (javac == null) {
 			String className = "com.sun.tools.javac.Main";
 			ClassLoader loader = getClass().getClassLoader();
@@ -160,7 +176,7 @@ public class Refresh_Javas extends RefreshScripts {
 		new PlugInExecutor(classPath).run(className);
 	}
 
-	String getPackageName(String path) throws IOException {
+	public String getPackageName(String path) throws IOException {
 		InputStream in = new FileInputStream(path);
 		InputStreamReader streamReader = new InputStreamReader(in);
 		BufferedReader reader = new BufferedReader(streamReader);
