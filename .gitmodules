@@ -67,3 +67,6 @@
 [submodule "jython"]
 	path = jython
 	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/jython/.git
+[submodule "imglib"]
+	path = imglib
+	url = contrib@pacific.mpi-cbg.de:/srv/git/imglib.git
