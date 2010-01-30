@@ -7,6 +7,8 @@ import common.RefreshScripts;
 import fiji.scripting.completion.ClassCompletionProvider;
 import fiji.scripting.completion.DefaultProvider;
 
+import fiji.scripting.java.Refresh_Javas;
+
 import ij.IJ;
 import ij.Prefs;
 import ij.WindowManager;
@@ -34,6 +36,8 @@ import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -54,9 +58,14 @@ import java.util.Set;
 import java.util.HashSet;
 import java.util.Dictionary;
 import java.util.Hashtable;
+
 import java.util.concurrent.ThreadPoolExecutor;
+
 import java.util.jar.JarFile;
 import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
+
+import java.util.zip.ZipException;
 
 import java.net.URLDecoder;
 
@@ -109,7 +118,8 @@ public class TextEditor extends JFrame implements ActionListener,
 	JTextArea screen;
 	JMenuItem new_file, open, save, saveas, compileAndRun, debug, quit,
 		  undo, redo, cut, copy, paste, find, replace, selectAll,
-		  autocomplete, resume, terminate, kill, gotoLine;
+		  autocomplete, resume, terminate, kill, gotoLine,
+		  makeJar, makeJarWithSource;
 	AutoCompletion autocomp;
 	Languages.Language currentLanguage;
 	ClassCompletionProvider provider;
@@ -192,6 +202,9 @@ public class TextEditor extends JFrame implements ActionListener,
 		open = addToMenu(file, "Open...",  KeyEvent.VK_O, ctrl);
 		save = addToMenu(file, "Save", KeyEvent.VK_S, ctrl);
 		saveas = addToMenu(file, "Save as...", 0, 0);
+		file.addSeparator();
+		makeJar = addToMenu(file, "Export as .jar", 0, 0);
+		makeJarWithSource = addToMenu(file, "Export as .jar (with source)", 0, 0);
 		file.addSeparator();
 		quit = addToMenu(file, "Close Editor", KeyEvent.VK_W, ctrl);
 
@@ -565,6 +578,10 @@ public class TextEditor extends JFrame implements ActionListener,
 			save();
 		else if (source == saveas)
 			saveAs();
+		else if (source == makeJar)
+			makeJar(false);
+		else if (source == makeJarWithSource)
+			makeJar(true);
 		else if (source == compileAndRun)
 			runText();
 		else if (source == debug) {
@@ -729,6 +746,137 @@ public class TextEditor extends JFrame implements ActionListener,
 		}
 	}
 
+	public boolean makeJar(boolean includeSources) {
+		if ((file == null || currentLanguage.isCompileable())
+				&& !handleUnsavedChanges())
+			return false;
+
+		String name = getFileName();
+		if (name.endsWith(currentLanguage.extension))
+			name = name.substring(0, name.length()
+				- currentLanguage.extension.length());
+		name += ".jar";
+		SaveDialog sd = new SaveDialog("Export ", name, ".jar");
+		name = sd.getFileName();
+		if (name == null)
+			return false;
+
+		String path = sd.getDirectory() + name;
+		if (new File(path).exists() &&
+				JOptionPane.showConfirmDialog(this,
+					"Do you want to replace " + path + "?",
+					"Replace " + path + "?",
+					JOptionPane.YES_NO_OPTION)
+				!= JOptionPane.YES_OPTION)
+			return false;
+		try {
+			makeJar(path, includeSources);
+			return true;
+		} catch (IOException e) {
+			e.printStackTrace();
+			error("Could not write " + path
+					+ ": " + e.getMessage());
+			return false;
+		}
+	}
+
+	public void makeJar(String path, boolean includeSources)
+			throws IOException {
+		List<String> paths = new ArrayList<String>();
+		List<String> names = new ArrayList<String>();
+		File tmpDir = null;
+		String sourceName = null;
+		if (currentLanguage.interpreter instanceof Refresh_Javas) try {
+			String sourcePath = file.getAbsolutePath();
+			Refresh_Javas java =
+				(Refresh_Javas)currentLanguage.interpreter;
+			tmpDir = File.createTempFile("tmp", "");
+			tmpDir.delete();
+			tmpDir.mkdir();
+			java.compile(sourcePath, tmpDir.getAbsolutePath());
+			getClasses(tmpDir, paths, names);
+			if (includeSources) {
+				String name = java.getPackageName(sourcePath);
+				name = (name == null ? "" :
+						name.replace('.', '/') + "/")
+					+ file.getName();
+				sourceName = name;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			if (e instanceof IOException)
+				throw (IOException)e;
+			throw new IOException(e.getMessage());
+		}
+		else
+			sourceName = file.getName();
+
+		OutputStream out = new FileOutputStream(path);
+		JarOutputStream jar = new JarOutputStream(out);
+
+		if (sourceName != null)
+			writeJarEntry(jar, sourceName,
+					textArea.getText().getBytes());
+		for (int i = 0; i < paths.size(); i++)
+			writeJarEntry(jar, names.get(i),
+					readFile(paths.get(i)));
+
+		jar.close();
+
+		if (tmpDir != null)
+			deleteRecursively(tmpDir);
+	}
+
+	static void getClasses(File directory,
+			List<String> paths, List<String> names) {
+		getClasses(directory, paths, names, "");
+	}
+
+	static void getClasses(File directory,
+			List<String> paths, List<String> names, String prefix) {
+		if (!prefix.equals(""))
+			prefix += "/";
+		for (File file : directory.listFiles())
+			if (file.isDirectory())
+				getClasses(file, paths, names,
+						prefix + file.getName());
+			else {
+				paths.add(file.getAbsolutePath());
+				names.add(prefix + file.getName());
+			}
+	}
+
+	static void writeJarEntry(JarOutputStream out, String name,
+			byte[] buf) throws IOException {
+		try {
+			JarEntry entry = new JarEntry(name);
+			out.putNextEntry(entry);
+			out.write(buf, 0, buf.length);
+			out.closeEntry();
+		} catch (ZipException e) {
+			e.printStackTrace();
+			throw new IOException(e.getMessage());
+		}
+	}
+
+	static byte[] readFile(String fileName) throws IOException {
+		File file = new File(fileName);
+		InputStream in = new FileInputStream(file);
+		byte[] buffer = new byte[(int)file.length()];
+		in.read(buffer);
+		in.close();
+		return buffer;
+	}
+
+	static void deleteRecursively(File directory) {
+		for (File file : directory.listFiles())
+			if (file.isDirectory())
+				deleteRecursively(file);
+			else
+				file.delete();
+		directory.delete();
+	}
+
 	public static String getExtension(String fileName) {
 		int dot = fileName.lastIndexOf(".");
 		return dot < 0 ?  "" : fileName.substring(dot);
@@ -765,6 +913,7 @@ public class TextEditor extends JFrame implements ActionListener,
 			"Compile and Run" : "Run");
 		compileAndRun.setEnabled(language.isRunnable());
 		debug.setEnabled(language.isDebuggable());
+		makeJarWithSource.setEnabled(language.isCompileable());
 
 		provider.setProviderLanguage(language.menuLabel);
 
