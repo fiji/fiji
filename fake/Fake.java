@@ -23,6 +23,7 @@ import java.net.URLDecoder;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Enumeration;
@@ -1074,7 +1075,8 @@ public class Fake {
 						".class"), ".jar"));
 			}
 
-			List compileJavas(List javas, File buildDir)
+			List compileJavas(List javas, File buildDir,
+					Set excludeJavas)
 					throws FakeException {
 				toolsPath = getVar("TOOLSPATH");
 				return Fake.compileJavas(javas, cwd, buildDir,
@@ -1082,7 +1084,7 @@ public class Fake {
 					getVarBool("DEBUG"),
 					getVarBool("VERBOSE"),
 					getVarBool("SHOWDEPRECATION"),
-					getVar("CLASSPATH"));
+					getVar("CLASSPATH"), excludeJavas);
 			}
 
 			String getPluginsConfig() {
@@ -1350,9 +1352,11 @@ public class Fake {
 					maybeMake((Rule)allRules.get(paths[i]));
 
 				File buildDir = getBuildDir();
-				compileJavas(prerequisites, buildDir);
+				Set exclude = expandToSet(getVar("NO_COMPILE"),
+					cwd);
+				compileJavas(prerequisites, buildDir, exclude);
 				List files = java2classFiles(prerequisites,
-						cwd, buildDir);
+						cwd, buildDir, exclude);
 				if (getVarBool("includeSource"))
 					addSources(files);
 				makeJar(target, getMainClass(), files, cwd,
@@ -1434,8 +1438,11 @@ public class Fake {
 				}
 
 				try {
+					Set exclude = expandToSet(
+						getVar("NO_COMPILE"), cwd);
 					iter = java2classFiles(javas,
-						cwd, getBuildDir()).iterator();
+						cwd, getBuildDir(),
+							exclude).iterator();
 				} catch (FakeException e) {
 					System.err.println("Warning: could not "
 						+ "find required .class files: "
@@ -1453,7 +1460,8 @@ public class Fake {
 			}
 
 			void action() throws FakeException {
-				compileJavas(prerequisites, getBuildDir());
+				compileJavas(prerequisites, getBuildDir(),
+					new HashSet());
 
 				// copy class files, if necessary
 				int slash = target.lastIndexOf('/') + 1;
@@ -1463,8 +1471,11 @@ public class Fake {
 				slash = prefix.lastIndexOf('/') + 1;
 				prefix = prefix.substring(0, slash);
 
+				Set exclude = expandToSet(getVar("NO_COMPILE"),
+					cwd);
 				Iterator iter = java2classFiles(prerequisites,
-					cwd, getBuildDir()).iterator();
+					cwd, getBuildDir(),
+					exclude).iterator();
 				while (iter.hasNext()) {
 					String source = (String)iter.next();
 					if (!source.startsWith(prefix))
@@ -1773,13 +1784,15 @@ public class Fake {
 		}
 	}
 
-	protected static int expandGlob(String glob, List list, File cwd)
+	protected static int expandGlob(String glob, Collection list, File cwd)
 			throws FakeException {
 		return expandGlob(glob, list, cwd, 0);
 	}
 
-	protected static int expandGlob(String glob, List list, File cwd,
+	protected static int expandGlob(String glob, Collection list, File cwd,
 			long newerThan) throws FakeException {
+		if (glob == null)
+			return 0;
 		// find first wildcard
 		int star = glob.indexOf('*'), qmark = glob.indexOf('?');
 
@@ -1840,6 +1853,14 @@ public class Fake {
 		}
 
 		return count;
+	}
+
+	Set expandToSet(String glob, File cwd) throws FakeException {
+		Set result = new HashSet();
+		String[] globs = split(glob, " ");
+		for (int i = 0; i < globs.length; i++)
+			expandGlob(globs[i], result, cwd);
+		return result;
 	}
 
 	/*
@@ -1934,7 +1955,7 @@ public class Fake {
 
 	/* discovers all the .class files for a given set of .java files */
 	protected static List java2classFiles(List javas, File cwd,
-			File buildDir) throws FakeException {
+			File buildDir, Set excludeJavas) throws FakeException {
 		List result = new ArrayList();
 		Set all = new HashSet();
 		if (buildDir != null) {
@@ -1945,8 +1966,9 @@ public class Fake {
 		Iterator iter = javas.iterator();
 		while (iter.hasNext()) {
 			String file = (String)iter.next();
+			boolean exclude = excludeJavas.contains(file);
 			if (buildDir != null) {
-				if (file.endsWith(".java")) {
+				if (!exclude && file.endsWith(".java")) {
 					lastJava = file;
 					continue;
 				}
@@ -1959,6 +1981,13 @@ public class Fake {
 							+ lastJava);
 					lastJava = null;
 				}
+			}
+			if (exclude) {
+				if (!all.contains(file)) {
+					result.add(file);
+					all.add(file);
+				}
+				continue;
 			}
 			java2classFiles(file, cwd, buildDir, result, all);
 		}
@@ -2012,7 +2041,8 @@ public class Fake {
 	// all the .java files have been replaced by their .class files.
 	protected static List compileJavas(List javas, File cwd, File buildDir,
 			String javaVersion, boolean debug, boolean verbose,
-			boolean showDeprecation, String extraClassPath)
+			boolean showDeprecation, String extraClassPath,
+			Set exclude)
 			throws FakeException {
 		List arguments = new ArrayList();
 		arguments.add("-encoding");
@@ -2052,7 +2082,7 @@ public class Fake {
 		while (iter.hasNext()) {
 			String path = (String)iter.next();
 
-			if (path.endsWith(".java"))
+			if (path.endsWith(".java") && !exclude.contains(path))
 				arguments.add(makePath(cwd, path));
 		}
 
@@ -2079,7 +2109,7 @@ public class Fake {
 			throw new FakeException("Compile error: " + e);
 		}
 
-		List result = java2classFiles(javas, cwd, buildDir);
+		List result = java2classFiles(javas, cwd, buildDir, exclude);
 		return result;
 	}
 
