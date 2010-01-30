@@ -692,7 +692,7 @@ public class TextEditor extends JFrame implements ActionListener,
 
 	public boolean saveAs(String path, boolean askBeforeReplacing) {
 		file = new File(path);
-		if (file.exists() && !askBeforeReplacing &&
+		if (file.exists() && askBeforeReplacing &&
 				JOptionPane.showConfirmDialog(this,
 					"Do you want to replace " + path + "?",
 					"Replace " + path + "?",
