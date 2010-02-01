@@ -1,6 +1,6 @@
 /* -*- mode: java; c-basic-offset: 8; indent-tabs-mode: t; tab-width: 8 -*- */
 
-/* Copyright 2009 Mark Longair, Johannes Schindelin */
+/* Copyright 2009, 2010 Mark Longair, Johannes Schindelin */
 
 /*
   This file is part of the ImageJ plugin "Tutorial Maker".
@@ -22,6 +22,21 @@
 */
 
 package fiji;
+
+import fiji.scripting.TextEditor;
+
+import ij.IJ;
+import ij.ImagePlus;
+import ij.Menus;
+import ij.WindowManager;
+
+import ij.gui.GenericDialog;
+
+import ij.io.FileInfo;
+
+import ij.plugin.BrowserLauncher;
+import ij.plugin.JpegWriter;
+import ij.plugin.PlugIn;
 
 import java.awt.AWTException;
 import java.awt.Button;
@@ -60,22 +75,15 @@ import java.util.List;
 
 import java.util.regex.Pattern;
 
-import ij.IJ;
-import ij.ImagePlus;
-import ij.Menus;
-import ij.WindowManager;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 
-import ij.gui.GenericDialog;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.Toolkit;
 
-import ij.io.FileInfo;
-
-import ij.plugin.BrowserLauncher;
-import ij.plugin.JpegWriter;
-import ij.plugin.PlugIn;
-
-import ij.plugin.frame.Editor;
-
-public class Tutorial_Maker implements PlugIn {
+public class Tutorial_Maker implements PlugIn, ActionListener {
 	protected String name;
 
 	protected final static String URL = "http://pacific.mpi-cbg.de/wiki/";
@@ -108,60 +116,26 @@ public class Tutorial_Maker implements PlugIn {
 			+ string.substring(1);
 	}
 
-	protected Editor editor;
+	protected TextEditor editor;
+	protected JMenuItem upload, preview, toBackToggle, renameImage;
 
 	protected void addEditor() {
-		editor = new Editor(25, 120, 14, Editor.MENU_BAR);
+		editor = new TextEditor(null);
 
-		editor.getTextArea().addKeyListener(new KeyAdapter() {
-			public void keyPressed(KeyEvent e) {
-				if ((e.getModifiers() & e.CTRL_MASK) == 0)
-					return;
-				switch (e.getKeyCode()) {
-				case KeyEvent.VK_U: upload(); break;
-				case KeyEvent.VK_R: preview(); break;
-				case KeyEvent.VK_I: renameImage(); break;
-				}
-			}
-		});
+		int ctrl = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
 
-		String ctrl = IJ.isMacintosh()?"  Cmd ":"  Ctrl+";
-		Menu menu = new Menu("Wiki");
-		MenuItem upload = new MenuItem("Upload" + ctrl + "U");
-		upload.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				upload();
-			}
-		});
-		menu.add(upload);
-		MenuItem preview = new MenuItem("Preview" + ctrl + "R");
-		preview.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				preview();
-			}
-		});
-		menu.add(preview);
+		JMenu menu = new JMenu("Wiki");
+		menu.setMnemonic(KeyEvent.VK_W);
+		upload = editor.addToMenu(menu, "Upload", KeyEvent.VK_U, ctrl);
+		preview = editor.addToMenu(menu, "Preview", KeyEvent.VK_R, ctrl);
+		toBackToggle = editor.addToMenu(menu, "", 0, 0);
+		renameImage = editor.addToMenu(menu, "Rename Image", KeyEvent.VK_I, ctrl);
+		toBackToggleSetLabel();
 
-		final MenuItem toBackToggle = new MenuItem();
-		toBackToggleSetLabel(toBackToggle);
-		toBackToggle.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				putSnapshotsToBack = !putSnapshotsToBack;
-				toBackToggleSetLabel(toBackToggle);
-			}
-		});
-		menu.add(toBackToggle);
+		for (JMenuItem item : new JMenuItem[] { upload, preview, toBackToggle, renameImage })
+			item.addActionListener(this);
 
-		MenuItem renameImage =
-			new MenuItem("Rename Image" + ctrl + "I");
-		renameImage.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				renameImage();
-			}
-		});
-		menu.add(renameImage);
-
-		editor.getMenuBar().add(menu);
+		editor.getJMenuBar().add(menu);
 
 		editors.add(editor);
 
@@ -175,21 +149,42 @@ public class Tutorial_Maker implements PlugIn {
 
 		String text = "== " + name.replace('_', ' ') + " ==\n\n";
 		String category = "\n[[Category:Tutorials]]";
-		editor.create("Edit Wiki - " + name, text + category);
+		editor.setTitle("Edit Wiki - " + name);
+		editor.getTextArea().setText(text + category);
 		editor.getTextArea().setCaretPosition(text.length());
 
-		MenuBar menuBar = editor.getMenuBar();
+		JMenuBar menuBar = editor.getJMenuBar();
 		for (int i = menuBar.getMenuCount() - 1; i >= 0; i--) {
 			String label = menuBar.getMenu(i).getLabel();
-			if (label.equals("Macros") || label.equals("Debug"))
+			if (!label.equals("File") && !label.equals("Edit") && !label.equals("Wiki"))
 				menuBar.remove(i);
 		}
+
+		editor.setVisible(true);
 	}
 
+	public String getText() {
+		return editor.getTextArea().getText();
+	}
+
+	public void actionPerformed(ActionEvent e) {
+		Object source = e.getSource();
+		if (source == upload)
+			upload();
+		else if (source == preview)
+			preview();
+		else if (source == renameImage)
+			renameImage();
+		else if (source == toBackToggle) {
+			putSnapshotsToBack = !putSnapshotsToBack;
+			toBackToggleSetLabel();
+		}
+	}
+	
 	protected boolean putSnapshotsToBack = true;
 
-	protected void toBackToggleSetLabel(MenuItem item) {
-		item.setLabel(putSnapshotsToBack ?
+	protected void toBackToggleSetLabel() {
+		toBackToggle.setLabel(putSnapshotsToBack ?
 			"Leave snapshots in the foreground" :
 			"Put snapshots into the background");
 	}
@@ -210,7 +205,7 @@ public class Tutorial_Maker implements PlugIn {
 		if (!saveOrUploadImages(client, images))
 			return;
 
-		client.uploadPage(name, editor.getText(), "Add " + name);
+		client.uploadPage(name, getText(), "Add " + name);
 
 		client.logOut();
 
@@ -219,7 +214,6 @@ public class Tutorial_Maker implements PlugIn {
 
 		new BrowserLauncher().run(URL + "index.php?title= " + name);
 		editor.dispose();
-
 	}
 
 	protected void preview() {
@@ -235,7 +229,7 @@ public class Tutorial_Maker implements PlugIn {
 
 		if (!client.login("Wiki Login (Preview)"))
 			return;
-		String html = client.uploadOrPreviewPage(name, editor.getText(),
+		String html = client.uploadOrPreviewPage(name, getText(),
 				"Add " + name, true);
 		client.logOut();
 
@@ -302,7 +296,7 @@ public class Tutorial_Maker implements PlugIn {
 
 	protected List<String> getImages() {
 		List<String> result = new ArrayList<String>();
-		String text = editor.getText();
+		String text = getText();
 		int image = 0;
 		for (;;) {
 			image = text.indexOf("[[Image:", image);
@@ -432,7 +426,7 @@ public class Tutorial_Maker implements PlugIn {
 		return gd.getNextChoiceIndex();
 	}
 
-	protected static List<Editor> editors = new ArrayList<Editor>();
+	protected static List<TextEditor> editors = new ArrayList<TextEditor>();
 
 	protected static String originalRename, originalRenameArg;
 
@@ -464,8 +458,8 @@ public class Tutorial_Maker implements PlugIn {
 	protected void rename(String oldTitle, String newTitle) {
 		if (oldTitle.equals(newTitle))
 			return;
-		for (Editor editor : editors) {
-			String text = editor.getText();
+		for (TextEditor editor : editors) {
+			String text = getText();
 			String transformed = text.replaceAll("\\[\\[Image:"
 					+ oldTitle.replaceAll("\\.", "\\\\.")
 					+ "(?=[]|])",
@@ -641,9 +635,9 @@ public class Tutorial_Maker implements PlugIn {
 					imp.getWindow().toBack();
 
 				/* insert into editor */
-				TextArea area = editor.getTextArea();
-				area.insert("[[Image:" + name + "]]\n",
-						area.getCaretPosition());
+				editor.getTextArea()
+					.insert("[[Image:" + name + "]]\n",
+					editor.getTextArea().getCaretPosition());
 			}
 		} catch (AWTException e) { /* ignore */ }
 	}
