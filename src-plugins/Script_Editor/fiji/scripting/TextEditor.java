@@ -116,7 +116,7 @@ public class TextEditor extends JFrame implements ActionListener,
 	File file;
 	RSyntaxTextArea textArea;
 	JTextArea screen;
-	JMenuItem new_file, open, save, saveas, compileAndRun, debug, quit,
+	JMenuItem newFile, open, save, saveas, compileAndRun, debug, quit,
 		  undo, redo, cut, copy, paste, find, replace, selectAll,
 		  autocomplete, resume, terminate, kill, gotoLine,
 		  makeJar, makeJarWithSource;
@@ -198,7 +198,7 @@ public class TextEditor extends JFrame implements ActionListener,
 
 		JMenu file = new JMenu("File");
 		file.setMnemonic(KeyEvent.VK_F);
-		new_file = addToMenu(file, "New",  KeyEvent.VK_N, ctrl);
+		newFile = addToMenu(file, "New",  KeyEvent.VK_N, ctrl);
 		open = addToMenu(file, "Open...",  KeyEvent.VK_O, ctrl);
 		save = addToMenu(file, "Save", KeyEvent.VK_S, ctrl);
 		saveas = addToMenu(file, "Save as...", 0, 0);
@@ -554,7 +554,7 @@ public class TextEditor extends JFrame implements ActionListener,
 
 	public void actionPerformed(ActionEvent ae) {
 		final Object source = ae.getSource();
-		if (source == new_file) {
+		if (source == newFile) {
 			if (!handleUnsavedChanges())
 				return;
 			createNewDocument();
