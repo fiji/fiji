@@ -135,7 +135,7 @@ public class TextEditor extends JFrame implements ActionListener,
 	int modifyCount;
 	boolean undoInProgress, redoInProgress;
 
-	public TextEditor(String path1) {
+	public TextEditor(String path) {
 		super("Script Editor");
 		WindowManager.addWindow(this);
 		JPanel cp = new JPanel(new BorderLayout());
@@ -297,8 +297,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		setTitle();
 
 		setLocationRelativeTo(null); // center on screen
-		if (path1 != null && !path1.equals(""))
-			open(path1);
+		if (path != null && !path.equals(""))
+			open(path);
 
 		addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
