@@ -1,6 +1,8 @@
 package fiji.scripting;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -116,6 +118,11 @@ public class TokenFunctions implements Iterable<Token> {
 			startOffset = start;
 			endOffset = end;
 			classOrPackage = text;
+		}
+
+		String getPackage() {
+			int dot = classOrPackage.lastIndexOf('.');
+			return dot < 0 ? "" : classOrPackage.substring(0, dot);
 		}
 	}
 
@@ -235,5 +242,43 @@ public class TokenFunctions implements Iterable<Token> {
 			else if (classSeen && isIdentifier(token))
 				result.add(getText(token));
 		return result;
+	}
+
+	public void sortImports() {
+		List<Import> imports = getImports();
+		if (imports.size() == 0)
+			return;
+		int start = imports.get(0).startOffset;
+		while (emptyLineAt(start - 2))
+			start--;
+		int end = imports.get(imports.size() - 1).endOffset;
+		while (eolAt(end))
+			end++;
+
+		Collections.sort(imports, new Comparator<Import>() {
+			public int compare(Import i1, Import i2) {
+				return i1.classOrPackage.compareTo(i2.classOrPackage);
+			}
+
+			public boolean equals(Object o) {
+				return false;
+			}
+		});
+
+		StringBuffer buffer = new StringBuffer();
+		String lastPrefix = null;
+		for (Import imp : imports) {
+			String prefix = imp.getPackage();
+			if (!prefix.equals(lastPrefix)) {
+				buffer.append("\n");
+				lastPrefix = prefix;
+			}
+			// TODO: honor comments
+			buffer.append(getText(imp.startOffset, imp.endOffset));
+			buffer.append("\n");
+		}
+		buffer.append("\n");
+
+		textArea.replaceRange(buffer.toString(), start, end);
 	}
 }
