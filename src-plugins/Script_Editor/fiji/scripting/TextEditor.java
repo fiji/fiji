@@ -310,6 +310,10 @@ public class TextEditor extends JFrame implements ActionListener,
 		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 	}
 
+	public RSyntaxTextArea getTextArea() {
+		return textArea;
+	}
+
 	public JMenuItem addToMenu(JMenu menu, String menuEntry,
 			int key, int modifiers) {
 		JMenuItem item = new JMenuItem(menuEntry);
