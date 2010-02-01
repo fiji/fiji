@@ -6,6 +6,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
+
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.Token;
 
@@ -180,6 +183,31 @@ public class TokenFunctions implements Iterable<Token> {
 		return result;
 	}
 
+	public boolean emptyLineAt(int offset) {
+		try {
+			return textArea.getDocument().getText(offset,
+					2).equals("\n\n");
+		} catch (BadLocationException e) { /* ignore */ }
+		return false;
+	}
+
+	public boolean eolAt(int offset) {
+		try {
+			return textArea.getDocument().getText(offset,
+					1).equals("\n");
+		} catch (BadLocationException e) { /* ignore */ }
+		return false;
+	}
+
+	void removeImport(Import imp) {
+		int start = imp.startOffset, end = imp.endOffset;
+		if (emptyLineAt(start - 2) && emptyLineAt(end))
+			end += 2;
+		else if (eolAt(end))
+			end++;
+		textArea.replaceRange("", start, end);
+	}
+
 	public void removeUnusedImports() {
 		Set<String> identifiers = getAllUsedIdentifiers();
 		List<Import> imports = getImports();
@@ -191,10 +219,8 @@ public class TokenFunctions implements Iterable<Token> {
 			int dot = clazz.lastIndexOf('.');
 			if (dot >= 0)
 				clazz = clazz.substring(dot + 1);
-			// TODO: take care of empty lines properly
 			if (!identifiers.contains(clazz))
-				textArea.replaceRange("",
-						imp.startOffset, imp.endOffset);
+				removeImport(imp);
 		}
 	}
 
