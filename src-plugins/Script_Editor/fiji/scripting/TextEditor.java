@@ -223,14 +223,9 @@ public class TextEditor extends JFrame implements ActionListener,
 		find = addToMenu(edit, "Find...", KeyEvent.VK_F, ctrl);
 		replace = addToMenu(edit, "Find and Replace...", KeyEvent.VK_H, ctrl);
 		gotoLine = addToMenu(edit, "Goto line...", KeyEvent.VK_G, ctrl);
+		edit.addSeparator();
+		autocomplete = addToMenu(edit, "Autocomplete", KeyEvent.VK_SPACE, ctrl);
 		mbar.add(edit);
-
-		JMenu options = new JMenu("Options");
-		options.setMnemonic(KeyEvent.VK_O);
-		autocomplete = addToMenu(options, "Autocomplete", KeyEvent.VK_SPACE, ctrl);
-		options.addSeparator();
-
-		mbar.add(options);
 
 		JMenu languages = new JMenu("Language");
 		languages.setMnemonic(KeyEvent.VK_L);
