@@ -105,4 +105,111 @@ public class TokenFunctions implements Iterable<Token> {
 				return getText(token);
 		return null;
 	}
+
+	class Import {
+		int startOffset, endOffset;
+		String classOrPackage;
+		Import(int start, int end, String text) {
+			startOffset = start;
+			endOffset = end;
+			classOrPackage = text;
+		}
+	}
+
+	Token skipNonCode(TokenIterator iter, Token current) {
+		for (;;) {
+			switch (current.type) {
+				case Token.COMMENT_DOCUMENTATION:
+				case Token.COMMENT_EOL:
+				case Token.COMMENT_MULTILINE:
+				case Token.WHITESPACE:
+					break;
+				default:
+					return current;
+			}
+			if (!iter.hasNext())
+				return null;
+			current = iter.next();
+		}
+	}
+
+	int skipToEOL(TokenIterator iter, Token current) {
+		int end = textArea.getDocument().getLength();
+		for (;;) {
+			if (current.type == current.NULL || !iter.hasNext())
+				return end;
+			end = current.textOffset + current.textCount;
+			current = iter.next();
+		}
+	}
+
+	public final char[] importChars = { 'i', 'm', 'p', 'o', 'r', 't' };
+	public List<Import> getImports() {
+		List<Import> result = new ArrayList<Import>();
+
+		TokenIterator iter = new TokenIterator();
+		while (iter.hasNext()) {
+			Token token = iter.next();
+			int offset = token.textOffset;
+			token = skipNonCode(iter, token);
+			if (tokenEquals(token, importChars)) {
+				do {
+					if (!iter.hasNext())
+						return result;
+					token = iter.next();
+				} while (!isIdentifier(token));
+				int start = token.textOffset, end = start;
+				do {
+					if (!iter.hasNext())
+						return result;
+					token = iter.next();
+					if (isDot(token) && iter.hasNext())
+						token = iter.next();
+					end = token.textOffset + token.textCount;
+				} while (isIdentifier(token));
+				String identifier = new String(token.text,
+					start, end - start);
+				if (identifier.endsWith(";"))
+					identifier = identifier.substring(0,
+						identifier.length() - 1);
+				end = skipToEOL(iter, token);
+				result.add(new Import(offset, end, identifier));
+			}
+		}
+
+		return result;
+	}
+
+	public void removeUnusedImports() {
+		Set<String> identifiers = getAllUsedIdentifiers();
+		List<Import> imports = getImports();
+		for (int i = imports.size() - 1; i >= 0; i--) {
+			Import imp = imports.get(i);
+			String clazz = imp.classOrPackage;
+			if (clazz.endsWith(".*"))
+				continue;
+			int dot = clazz.lastIndexOf('.');
+			if (dot >= 0)
+				clazz = clazz.substring(dot + 1);
+			// TODO: take care of empty lines properly
+			if (!identifiers.contains(clazz))
+				textArea.replaceRange("",
+						imp.startOffset, imp.endOffset);
+		}
+	}
+
+	public Set<String> getAllUsedIdentifiers() {
+		Set<String> result = new HashSet<String>();
+		boolean classSeen = false;
+		String className = null;
+		for (Token token : this)
+			if (isClass(token))
+				classSeen = true;
+			else if (classSeen && className == null &&
+					isIdentifier(token))
+				className = getText(token);
+			else if (classSeen && isIdentifier(token))
+				result.add(getText(token));
+		return result;
+	}
 }

@@ -119,7 +119,7 @@ public class TextEditor extends JFrame implements ActionListener,
 	JMenuItem newFile, open, save, saveas, compileAndRun, debug, quit,
 		  undo, redo, cut, copy, paste, find, replace, selectAll,
 		  autocomplete, resume, terminate, kill, gotoLine,
-		  makeJar, makeJarWithSource;
+		  makeJar, makeJarWithSource, removeUnusedImports;
 	AutoCompletion autocomp;
 	Languages.Language currentLanguage;
 	ClassCompletionProvider provider;
@@ -224,6 +224,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		replace = addToMenu(edit, "Find and Replace...", KeyEvent.VK_H, ctrl);
 		gotoLine = addToMenu(edit, "Goto line...", KeyEvent.VK_G, ctrl);
 		edit.addSeparator();
+		removeUnusedImports = addToMenu(edit, "Remove unused imports", 0, 0);
 		autocomplete = addToMenu(edit, "Autocomplete", KeyEvent.VK_SPACE, ctrl);
 		mbar.add(edit);
 
@@ -618,6 +619,8 @@ public class TextEditor extends JFrame implements ActionListener,
 			textArea.setCaretPosition(0);
 			textArea.moveCaretPosition(textArea.getDocument().getLength());
 		}
+		else if (source == removeUnusedImports)
+			new TokenFunctions(textArea).removeUnusedImports();
 		else if (source == autocomplete) {
 			try {
 				autocomp.doCompletion();
@@ -909,6 +912,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		compileAndRun.setEnabled(language.isRunnable());
 		debug.setEnabled(language.isDebuggable());
 		makeJarWithSource.setEnabled(language.isCompileable());
+		removeUnusedImports.setEnabled(language.menuLabel.equals("Java"));
 
 		provider.setProviderLanguage(language.menuLabel);
 
