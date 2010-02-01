@@ -141,7 +141,7 @@ public class TokenFunctions implements Iterable<Token> {
 		for (;;) {
 			if (current.type == current.NULL || !iter.hasNext())
 				return end;
-			end = current.textOffset + current.textCount;
+			end = current.offset + current.textCount;
 			current = iter.next();
 		}
 	}
@@ -153,7 +153,7 @@ public class TokenFunctions implements Iterable<Token> {
 		TokenIterator iter = new TokenIterator();
 		while (iter.hasNext()) {
 			Token token = iter.next();
-			int offset = token.textOffset;
+			int offset = token.offset;
 			token = skipNonCode(iter, token);
 			if (tokenEquals(token, importChars)) {
 				do {
@@ -161,17 +161,16 @@ public class TokenFunctions implements Iterable<Token> {
 						return result;
 					token = iter.next();
 				} while (!isIdentifier(token));
-				int start = token.textOffset, end = start;
+				int start = token.offset, end = start;
 				do {
 					if (!iter.hasNext())
 						return result;
 					token = iter.next();
 					if (isDot(token) && iter.hasNext())
 						token = iter.next();
-					end = token.textOffset + token.textCount;
+					end = token.offset + token.textCount;
 				} while (isIdentifier(token));
-				String identifier = new String(token.text,
-					start, end - start);
+				String identifier = getText(start, end);
 				if (identifier.endsWith(";"))
 					identifier = identifier.substring(0,
 						identifier.length() - 1);
@@ -183,20 +182,19 @@ public class TokenFunctions implements Iterable<Token> {
 		return result;
 	}
 
-	public boolean emptyLineAt(int offset) {
+	public String getText(int start, int end) {
 		try {
-			return textArea.getDocument().getText(offset,
-					2).equals("\n\n");
+			return textArea.getText(start, end - start);
 		} catch (BadLocationException e) { /* ignore */ }
-		return false;
+		return "";
+	}
+
+	public boolean emptyLineAt(int offset) {
+		return getText(offset, offset + 2).equals("\n\n");
 	}
 
 	public boolean eolAt(int offset) {
-		try {
-			return textArea.getDocument().getText(offset,
-					1).equals("\n");
-		} catch (BadLocationException e) { /* ignore */ }
-		return false;
+		return getText(offset, offset + 1).equals("\n");
 	}
 
 	void removeImport(Import imp) {
