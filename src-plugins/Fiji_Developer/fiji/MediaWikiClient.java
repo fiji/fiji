@@ -23,6 +23,8 @@
 
 package fiji;
 
+import ij.plugin.BrowserLauncher;
+
 import java.net.URL;
 import java.net.HttpURLConnection;
 import java.net.URLEncoder;
@@ -30,6 +32,7 @@ import java.net.URLEncoder;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
@@ -351,6 +354,19 @@ public class MediaWikiClient {
 				String value = matcher.group(2);
 				cookies.put(sessionKey, value);
 			}
+		}
+	}
+
+	protected void debugShow(String html) {
+		try {
+			File tmp = File.createTempFile("preview", ".html");
+			tmp.deleteOnExit();
+			FileOutputStream out = new FileOutputStream(tmp);
+			out.write(html.getBytes());
+			out.close();
+			new BrowserLauncher().run(tmp.getAbsolutePath());
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 }
