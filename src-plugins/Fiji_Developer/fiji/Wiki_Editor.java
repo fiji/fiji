@@ -267,6 +267,11 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 				"Add " + name, true);
 		client.logOut();
 
+		if (html == null) {
+			IJ.error("Could not parse response");
+			return;
+		}
+
 		IJ.showStatus("Preparing " + name + " for preview...");
 		IJ.showProgress(1, 2);
 
