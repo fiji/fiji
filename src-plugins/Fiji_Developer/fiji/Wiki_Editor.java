@@ -66,7 +66,10 @@ import java.io.InputStream;
 
 import java.net.URL;
 
+import java.text.SimpleDateFormat;
+
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 import java.util.regex.Pattern;
@@ -75,21 +78,34 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 
-public class Tutorial_Maker implements PlugIn, ActionListener {
+public class Wiki_Editor implements PlugIn, ActionListener {
 	protected String name;
 
 	protected final static String URL = "http://pacific.mpi-cbg.de/wiki/";
 
+	protected enum Mode { TUTORIAL_MAKER, NEWS };
+	protected Mode mode;
+
 	public void run(String arg) {
+		String dialogTitle = "Tutorial Maker";
+		String defaultTitle = "";
+		mode = Mode.TUTORIAL_MAKER;
+
 		if (arg.equals("rename")) {
 			rename();
 			return;
 		}
+		else if (arg.equals("news")) {
+			mode = Mode.NEWS;
+			dialogTitle = "Fiji News";
+			defaultTitle = new SimpleDateFormat("yyyy-MM-dd - ")
+				.format(Calendar.getInstance().getTime());
+		}
 		else
 			interceptRenames();
 
-		GenericDialog gd = new GenericDialog("Tutorial Maker");
-		gd.addStringField("Tutorial_title", "", 20);
+		GenericDialog gd = new GenericDialog(dialogTitle);
+		gd.addStringField("Tutorial_title", defaultTitle, 20);
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return;
@@ -99,7 +115,8 @@ public class Tutorial_Maker implements PlugIn, ActionListener {
 			return;
 		name = capitalize(name).replace(' ', '_');
 
-		showSnapshotFrame();
+		if (mode == Mode.TUTORIAL_MAKER)
+			showSnapshotFrame();
 		addEditor();
 	}
 
@@ -120,12 +137,15 @@ public class Tutorial_Maker implements PlugIn, ActionListener {
 		menu.setMnemonic(KeyEvent.VK_W);
 		upload = editor.addToMenu(menu, "Upload", KeyEvent.VK_U, ctrl);
 		preview = editor.addToMenu(menu, "Preview", KeyEvent.VK_R, ctrl);
-		toBackToggle = editor.addToMenu(menu, "", 0, 0);
-		renameImage = editor.addToMenu(menu, "Rename Image", KeyEvent.VK_I, ctrl);
-		toBackToggleSetLabel();
+		if (mode == Mode.TUTORIAL_MAKER) {
+			toBackToggle = editor.addToMenu(menu, "", 0, 0);
+			renameImage = editor.addToMenu(menu, "Rename Image", KeyEvent.VK_I, ctrl);
+			toBackToggleSetLabel();
+		}
 
 		for (JMenuItem item : new JMenuItem[] { upload, preview, toBackToggle, renameImage })
-			item.addActionListener(this);
+			if (item != null)
+				item.addActionListener(this);
 
 		editor.getJMenuBar().add(menu);
 
@@ -140,7 +160,9 @@ public class Tutorial_Maker implements PlugIn, ActionListener {
 		});
 
 		String text = "== " + name.replace('_', ' ') + " ==\n\n";
-		String category = "\n[[Category:Tutorials]]";
+		String category = "\n[[Category:"
+			+ (mode == Mode.TUTORIAL_MAKER ? "Tutorials" : "News")
+			+ "]]";
 		editor.setTitle("Edit Wiki - " + name);
 		editor.getTextArea().setText(text + category);
 		editor.getTextArea().setCaretPosition(text.length());
@@ -148,7 +170,8 @@ public class Tutorial_Maker implements PlugIn, ActionListener {
 		JMenuBar menuBar = editor.getJMenuBar();
 		for (int i = menuBar.getMenuCount() - 1; i >= 0; i--) {
 			String label = menuBar.getMenu(i).getLabel();
-			if (!label.equals("File") && !label.equals("Edit") && !label.equals("Wiki"))
+			if (!label.equals("File") && !label.equals("Edit") &&
+					!label.equals("Wiki"))
 				menuBar.remove(i);
 		}
 
