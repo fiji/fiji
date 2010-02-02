@@ -141,9 +141,8 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 			toBackToggleSetLabel();
 		}
 
-		for (JMenuItem item : new JMenuItem[] { upload, preview, toBackToggle, renameImage })
-			if (item != null)
-				item.addActionListener(this);
+		for (int i = 0; i < menu.getItemCount(); i++)
+			menu.getItem(i).addActionListener(this);
 
 		editor.getJMenuBar().add(menu);
 
