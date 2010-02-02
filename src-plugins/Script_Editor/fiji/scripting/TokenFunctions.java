@@ -267,7 +267,12 @@ public class TokenFunctions implements Iterable<Token> {
 
 		StringBuffer buffer = new StringBuffer();
 		String lastPrefix = null;
+		String lastImport = null;
 		for (Import imp : imports) {
+			if (imp.classOrPackage.equals(lastImport))
+				continue;
+			lastImport = imp.classOrPackage;
+
 			String prefix = imp.getPackage();
 			if (!prefix.equals(lastPrefix)) {
 				buffer.append("\n");
