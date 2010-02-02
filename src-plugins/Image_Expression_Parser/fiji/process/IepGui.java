@@ -4,39 +4,37 @@ import ij.ImagePlus;
 import ij.WindowManager;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.util.ArrayList;
 
-import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import javax.swing.border.LineBorder;
 
+import org.nfunk.jep.JEP;
+import org.nfunk.jep.type.DoubleNumberFactory;
 
-/**
-* This code was edited or generated using CloudGarden's Jigloo
-* SWT/Swing GUI Builder, which is free for non-commercial
-* use. If Jigloo is being used commercially (ie, by a corporation,
-* company or business for any purpose whatever) then you
-* should purchase a license for each developer using Jigloo.
-* Please visit www.cloudgarden.com for details.
-* Use of Jigloo implies acceptance of these licensing terms.
-* A COMMERCIAL LICENSE HAS NOT BEEN PURCHASED FOR
-* THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
-* LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
-*/
-public class IepGui extends javax.swing.JFrame implements ImageListener {
+
+public class IepGui extends javax.swing.JFrame implements ImageListener, ActionListener {
 
 
 	{
@@ -52,22 +50,32 @@ public class IepGui extends javax.swing.JFrame implements ImageListener {
 	 * FIELDS
 	 */
 	
+	public static final int CANCELED 	= 1;
+	public static final int OK			= 0;	
+	
 	private static final long serialVersionUID = 1L;
 	private static final int BOX_SPACE 	= 40;
+	private static final String[] MESSAGES = {		
+		"Enter an expression using canonical mathematical functions, and capital single" +
+		"letters as variable specifying the chosen image."	
+		};
+	
+	 private ArrayList<ActionListener> action_listeners = new ArrayList<ActionListener>();
 	
 	/** Number of image boxes currently displayed */
-	private int n_image_box;
+	private int n_image_box = 0;
 	/** List of ImagePlus currently opened in ImageJ */
 	private ArrayList<ImagePlus> images;
-	private JPanel jPanelImages;
 	/** Array of images names, for display in image boxes */
 	private String[] image_names;
 	/** List of Labels for the image boxes */
 	private ArrayList<JLabel> labels = new ArrayList<JLabel>();
 	/** List of Combo boxes */
 	private ArrayList<JComboBox> image_boxes = new ArrayList<JComboBox>();
+	/** Array of image variables */
+	private String[] variables;
 	
-	
+	private JPanel jPanelImages;
 	private JSplitPane jSplitPane1;
 	private JButton jButtonMinus;
 	private JButton jButtonPlus;
@@ -75,10 +83,15 @@ public class IepGui extends javax.swing.JFrame implements ImageListener {
 	private JScrollPane jScrollPaneImages;
 	private JPanel jPanelLeft;
 	private JPanel jPanelRight;
+	private JTextArea jTextAreaInfo;
+	private JButton jButtonOK;
+	private JButton jButtonCancel;
+	private JTextField jTextFieldExpression;
+	private JLabel jLabelExpression;
 
 	/**
-	* Auto-generated main method to display this JFrame
-	*/
+	 * Main method for debug
+	 */
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
@@ -89,17 +102,111 @@ public class IepGui extends javax.swing.JFrame implements ImageListener {
 		});
 	}
 	
+	/*
+	 * CONSTRUCTOR
+	 */
+	
 	public IepGui() {
 		super();
 		initImageList();
 		initGUI();
 		addImageBox();
+		jButtonMinus.setEnabled(false);
+		jTextAreaInfo.setText(MESSAGES[0]);
 	}
 	
+	/*
+	 * PUBLIC METHODS
+	 */
 	
+	/**
+	 * Return the variable list set by this GUI. Variables names are formed by single
+	 * capital letter, from A to Z, in alphabetical order. The matching {@link ImagePlus}
+	 * in the array returned by {@link #getImages()} has the same index.
+	 * @see {@link #getImages()}, {@link #getExpression()}
+	 */
+	public String[] getVariables() {
+		return variables;
+	}
+	
+	/**
+	 * Return the {@link ImagePlus} array set by this GUI. In the expression, the matching
+	 * variable name has the same index (A for the first, etc...)
+	 * @see {@link IepGui#getExpression()}, {@link #getVariables()}
+	 */
+	public ImagePlus[] getImages() {
+		final ImagePlus[] imps = new ImagePlus[n_image_box];
+		JComboBox box;
+		for ( int i=0; i<n_image_box; i++) {
+			box = image_boxes.get(i);
+			imps[i] = images.get(box.getSelectedIndex());
+		}
+		return imps;
+	}
+	
+	/**
+	 * Return the expression set by this GUI. The GUI works ensures that the user can press the 'OK'
+	 * button only if this expression is mathematically valid and has valid variables.
+	 * @see {@link #getVariables()}, {@link #getImages()}  
+	 */
+	public String getExpression() {
+		return jTextFieldExpression.getText();
+	}
+	
+	public void addActionListener(ActionListener l) {
+		action_listeners.add(l);
+	}
+
+	public void removeActionListener(ActionListener l) {
+		action_listeners.remove(l);
+	}
+
+	public ActionListener[] getActionListeners() {
+		return (ActionListener[]) action_listeners.toArray();
+	}
+
 	/*
 	 * PRIVATE METHODS
 	 */
+	
+	private void fireActionProperty(int event_id, String command) {
+		ActionEvent action = new ActionEvent(this, event_id, command);
+		for (ActionListener l : action_listeners) {
+			synchronized (l) {
+				l.notifyAll();
+				l.actionPerformed(action);
+			}
+		}
+	}
+	
+	/**
+	 * Called when the user type something in the expression area. 
+	 */
+	private void checkExpression() {
+		final String expression = jTextFieldExpression.getText();
+		if ( (null == expression) || (expression.equals(""))  ) {
+			jButtonOK.setEnabled(false);
+			jTextAreaInfo.setText(MESSAGES[0]);
+			return;
+		}
+		final JEP parser = new JEP(false, false, false, new DoubleNumberFactory());
+		parser.addStandardConstants();
+		parser.addStandardFunctions();
+		for ( String var : variables ) {
+			parser.addVariable(var, null); // we do not care for value yet
+		}
+		parser.parseExpression(expression);
+		final String error = parser.getErrorInfo();
+		if ( null == error) {
+			jButtonOK.setEnabled(true);
+			jTextFieldExpression.setForeground(Color.BLACK);
+			jTextAreaInfo.setText(MESSAGES[0]);
+		} else {
+			jButtonOK.setEnabled(false);
+			jTextFieldExpression.setForeground(Color.RED);
+			jTextAreaInfo.setText(error);
+		}
+	}
 	
 	/**
 	 * Called when the user presses the + button.
@@ -107,7 +214,7 @@ public class IepGui extends javax.swing.JFrame implements ImageListener {
 	 */
 	private void addImageBox() {
 		if (n_image_box >= 26) return;
-		char c = (char) ('a'+n_image_box);
+		char c = (char) ('A'+n_image_box);
 		final JLabel label = new JLabel(String.valueOf(c)+":");
 		jPanelImages.add(label);
 		final JComboBox combo_box = new JComboBox(image_names);
@@ -121,6 +228,14 @@ public class IepGui extends javax.swing.JFrame implements ImageListener {
 		image_boxes.add(combo_box);
 		jPanelImages.setPreferredSize(new Dimension(width, 50+BOX_SPACE*n_image_box));
 		n_image_box++;
+		refreshVariableList();
+		checkExpression();
+		if (n_image_box >= 26) {
+			jButtonPlus.setEnabled(false);
+		}
+		if (n_image_box > 1) {
+			jButtonMinus.setEnabled(true);
+		}
 	}
 	
 	private void removeImageBox() {
@@ -132,6 +247,14 @@ public class IepGui extends javax.swing.JFrame implements ImageListener {
 		jPanelImages.setPreferredSize(new Dimension(width, 50+BOX_SPACE*n_image_box));
 		jPanelImages.revalidate();
 		jPanelImages.repaint();
+		refreshVariableList();
+		checkExpression();
+		if (n_image_box <= 1) {
+			jButtonMinus.setEnabled(false);
+		}
+		if (n_image_box < 26) {
+			jButtonPlus.setEnabled(true);
+		}
 	}
 	
 	/**
@@ -141,6 +264,8 @@ public class IepGui extends javax.swing.JFrame implements ImageListener {
 		int[] IDs = WindowManager.getIDList();
 		if (null == IDs) {
 			image_names = new String[] {"No images are opened"};
+			images = new ArrayList<ImagePlus>();
+			images.add(null);
 			return;
 		}
 		ImagePlus imp;
@@ -153,13 +278,14 @@ public class IepGui extends javax.swing.JFrame implements ImageListener {
 	}
 	
 	/**
-	 * Refresh the name list of images, from the field {@link #images}.
+	 * Refresh the name list of images, from the field {@link #images}, and send it
+	 * to the {@link JComboBox} that display then.
 	 */
 	private void refreshImageNames() {
 		image_names = new String[images.size()];
 		for (int i = 0; i < images.size(); i++) {
 			image_names[i] = images.get(i).getTitle();
-		}		
+		}
 	}
 	
 	/**
@@ -171,6 +297,46 @@ public class IepGui extends javax.swing.JFrame implements ImageListener {
 			image_boxes.get(i).setBounds(30, 10+BOX_SPACE*i, width-50, 30);
 		}
 	}
+	
+	/**
+	 * Refresh the array of variables
+	 */
+	private void refreshVariableList() {
+		variables = new String[n_image_box];
+		for (int i=0; i < n_image_box; i++) {
+			char c = (char) ('A'+i);
+			variables[i] = String.valueOf(c);
+		}
+	}
+	
+	/*
+	 * ACTIONLISTENER METHOD
+	 */
+	
+	public void actionPerformed(ActionEvent e) {
+		String command = e.getActionCommand();
+		if (command.contentEquals(jButtonOK.getText())) {
+			fireActionProperty(OK, jButtonOK.getText());
+		} else if (command.contentEquals(jButtonCancel.getText())) {
+			fireActionProperty(CANCELED, jButtonCancel.getText());
+		}
+	}
+	
+	/*
+	 * IMAGELISTENER METHODS
+	 */
+	
+	public void imageClosed(ImagePlus imp) {
+		images.remove(imp);
+		refreshImageNames();
+	}
+
+	public void imageOpened(ImagePlus imp) {
+		images.add(imp);
+		refreshImageNames();
+	}
+
+	public void imageUpdated(ImagePlus imp) {	}
 	
 	/**
 	 * Display the GUI
@@ -187,8 +353,54 @@ public class IepGui extends javax.swing.JFrame implements ImageListener {
 				jSplitPane1.setResizeWeight(0.5);
 				{
 					jPanelRight = new JPanel();
+					GridBagLayout jPanelRightLayout = new GridBagLayout();
+					jPanelRightLayout.rowWeights = new double[] {0.0, 0.0, 1.0, 0.0};
+					jPanelRightLayout.rowHeights = new int[] {7, 7, 7, 7};
+					jPanelRightLayout.columnWeights = new double[] {0.0, 1.0, 0.0};
+					jPanelRightLayout.columnWidths = new int[] {4, 7, 7};
 					jSplitPane1.add(jPanelRight, JSplitPane.RIGHT);
 					jPanelRight.setBorder(new LineBorder(new java.awt.Color(0,0,0), 1, false));
+					jPanelRight.setLayout(jPanelRightLayout);
+					{
+						jLabelExpression = new JLabel();
+						jPanelRight.add(jLabelExpression, new GridBagConstraints(-1, 0, 4, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(20, 10, 0, 0), 0, 0));
+						jLabelExpression.setText("Expression:");
+					}
+					{
+						jTextFieldExpression = new JTextField();
+						jPanelRight.add(jTextFieldExpression, new GridBagConstraints(-1, 1, 4, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(20, 10, 0, 10), 0, 0));
+						jTextFieldExpression.setBorder(new LineBorder(new java.awt.Color(252,117,0), 1, false));
+						jTextFieldExpression.setSize(12, 18);
+						jTextFieldExpression.addKeyListener(new KeyListener() {
+							public void keyTyped(KeyEvent e) {}
+							public void keyReleased(KeyEvent e) {
+								checkExpression();
+							}
+							public void keyPressed(KeyEvent e) {}
+						});
+					}
+					{
+						jButtonCancel = new JButton();
+						jPanelRight.add(jButtonCancel, new GridBagConstraints(0, 3, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 10, 10, 0), 0, 0));
+						jButtonCancel.setText("Cancel");
+						jButtonCancel.addActionListener(this);
+					}
+					{
+						jButtonOK = new JButton();
+						jPanelRight.add(jButtonOK, new GridBagConstraints(2, 3, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 10, 10), 0, 0));
+						jButtonOK.setText("OK");
+						jButtonOK.setEnabled(false);
+						jButtonOK.addActionListener(this);
+					}
+					{
+						jTextAreaInfo = new JTextArea();
+						jTextAreaInfo.setEditable(false);
+						jPanelRight.add(jTextAreaInfo, new GridBagConstraints(0, 2, 3, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(10, 10, 10, 10), 0, 0));
+						jTextAreaInfo.setOpaque(false);
+						jTextAreaInfo.setLineWrap(true);
+						jTextAreaInfo.setWrapStyleWord(true);
+						jTextAreaInfo.setFont(new Font("Arial", Font.PLAIN, 10));
+					}
 				}
 				{
 					jPanelLeft = new JPanel();
@@ -220,10 +432,10 @@ public class IepGui extends javax.swing.JFrame implements ImageListener {
 							jButtonPlus = new JButton();
 							jPanelLeftButtons.add(jButtonPlus);
 							jButtonPlus.setText("+");
-							jButtonPlus.setBorder(BorderFactory.createTitledBorder(""));
 							jButtonPlus.setBounds(7, 5, 22, 28);
-							jButtonPlus.setFont(new java.awt.Font("Arial",1,12));
+							jButtonPlus.setFont(new java.awt.Font("Times New Roman",0,18));
 							jButtonPlus.setSize(25, 25);
+							jButtonPlus.setOpaque(true);
 							jButtonPlus.addActionListener(new ActionListener() {								
 								public void actionPerformed(ActionEvent e) {
 									addImageBox();
@@ -233,11 +445,11 @@ public class IepGui extends javax.swing.JFrame implements ImageListener {
 						{
 							jButtonMinus = new JButton();
 							jPanelLeftButtons.add(jButtonMinus);
-							jButtonMinus.setText("-");
-							jButtonMinus.setBorder(BorderFactory.createTitledBorder(""));
-							jButtonMinus.setBounds(35, 5, 20, 28);
-							jButtonMinus.setFont(new java.awt.Font("Arial",1,12));
+							jButtonMinus.setText("—");
+							jButtonMinus.setBounds(31, 5, 20, 28);
+							jButtonMinus.setFont(new java.awt.Font("Arial",0,12));
 							jButtonMinus.setSize(25, 25);
+							jButtonMinus.setOpaque(true);
 							jButtonMinus.addActionListener(new ActionListener() {
 								public void actionPerformed(ActionEvent e) {
 									removeImageBox();									
@@ -262,19 +474,5 @@ public class IepGui extends javax.swing.JFrame implements ImageListener {
 		}
 	}
 
-	/*
-	 * IMAGELISTENER METHODSs
-	 */
-	
-	public void imageClosed(ImagePlus imp) {
-		images.remove(imp);
-		refreshImageNames();
-	}
 
-	public void imageOpened(ImagePlus imp) {
-		images.add(imp);
-		refreshImageNames();
-	}
-
-	public void imageUpdated(ImagePlus imp) {	}
 }
