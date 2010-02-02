@@ -81,7 +81,7 @@ import javax.swing.JMenuItem;
 public class Wiki_Editor implements PlugIn, ActionListener {
 	protected String name;
 
-	protected final static String URL = "http://pacific.mpi-cbg.de/wiki/";
+	protected static String URL = "http://pacific.mpi-cbg.de/wiki/";
 
 	protected enum Mode { TUTORIAL_MAKER, NEWS };
 	protected Mode mode;
@@ -124,7 +124,8 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 	}
 
 	protected TextEditor editor;
-	protected JMenuItem upload, preview, toBackToggle, renameImage;
+	protected JMenuItem upload, preview, toBackToggle, renameImage,
+		changeURL;
 
 	protected void addEditor() {
 		editor = new TextEditor(null);
@@ -140,6 +141,8 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 			renameImage = editor.addToMenu(menu, "Rename Image", KeyEvent.VK_I, ctrl);
 			toBackToggleSetLabel();
 		}
+
+		changeURL = editor.addToMenu(menu, "Change Wiki URL", 0, 0);
 
 		for (int i = 0; i < menu.getItemCount(); i++)
 			menu.getItem(i).addActionListener(this);
@@ -193,6 +196,22 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		else if (source == toBackToggle) {
 			putSnapshotsToBack = !putSnapshotsToBack;
 			toBackToggleSetLabel();
+		}
+		else if (source == changeURL) {
+			GenericDialog gd = new GenericDialog("Change URL");
+			gd.addStringField("URL", URL, 40);
+			gd.showDialog();
+			if (!gd.wasCanceled()) {
+				URL = gd.getNextString();
+				if (URL.endsWith("/index.php"))
+					URL = URL.substring(0,
+							URL.length() - 9);
+				else {
+					int off = URL.indexOf("/index.php?");
+					if (off > 0)
+						URL = URL.substring(0, off + 1);
+				}
+			}
 		}
 	}
 
