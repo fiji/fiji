@@ -206,6 +206,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 				int off = URL.indexOf("/index.php");
 				if (off > 0)
 					URL = URL.substring(0, off + 1);
+				client = null;
 			}
 		}
 	}
@@ -218,6 +219,15 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 			"Put snapshots into the background");
 	}
 
+	GraphicalMediaWikiClient client;
+
+
+	protected void getClient() {
+		if (client != null)
+			return;
+		client = new GraphicalMediaWikiClient(URL + "index.php");
+	}
+
 	protected void upload() {
 		IJ.showStatus("Uploading " + name + "...");
 		IJ.showProgress(0, 1);
@@ -225,11 +235,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		if (!saveOrUploadImages(null, images))
 			return;
 
-		GraphicalMediaWikiClient client =
-			new GraphicalMediaWikiClient(URL + "index.php");
-
-		if (!client.login("Wiki Login"))
-			return;
+		getClient();
 
 		if (!saveOrUploadImages(client, images))
 			return;
@@ -253,8 +259,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		if (!saveOrUploadImages(null, images))
 			return;
 
-		GraphicalMediaWikiClient client =
-			new GraphicalMediaWikiClient(URL + "index.php");
+		getClient();
 
 		if (!client.login("Wiki Login (Preview)"))
 			return;
