@@ -157,23 +157,10 @@ public class FindAndReplaceDialog extends JDialog implements ActionListener {
 		String text = searchField.getText();
 		if (text.length() == 0)
 			return;
-		if (source == findNext) {
-			boolean found = SearchEngine.find(textArea, text,
-					forward.isSelected(),
-					matchCase.isSelected(),
-					wholeWord.isSelected(),
-					regex.isSelected());
-			messageAtEnd(found);
-		}
-		else if (source == replace) {
-			boolean replace = SearchEngine.replace(textArea, text,
-					replaceField.getText(),
-					forward.isSelected(),
-					matchCase.isSelected(),
-					wholeWord.isSelected(),
-					regex.isSelected());
-			messageAtEnd(replace);
-		}
+		if (source == findNext)
+			searchOrReplace(false);
+		else if (source == replace)
+			searchOrReplace(true);
 		else if (source == replaceAll) {
 			int replace = SearchEngine.replaceAll(textArea, text,
 					replaceField.getText(),
@@ -185,11 +172,40 @@ public class FindAndReplaceDialog extends JDialog implements ActionListener {
 		}
 	}
 
-	private void messageAtEnd(boolean value) {
-		if (!value) {
-			JOptionPane.showMessageDialog(this, "Fiji has finished searching the document");
-			textArea.setCaretPosition(0);
-		}
+	public boolean searchOrReplace(boolean replace) {
+		if (searchOrReplaceFromHere(replace))
+			return true;
+		boolean isForward = forward.isSelected();
+		if (JOptionPane.showConfirmDialog(this, "Do you want to "
+					+ "continue from the "
+					+ (isForward ? "beginning" : "end")
+					+ "?", "No match found",
+					JOptionPane.YES_NO_OPTION)
+				!= JOptionPane.YES_OPTION)
+			return false;
+		int caret = textArea.getCaretPosition();
+		textArea.setCaretPosition(isForward ?
+				0 : textArea.getDocument().getLength());
+		if (searchOrReplaceFromHere(replace))
+			return true;
+		JOptionPane.showMessageDialog(this, "No match found!");
+		textArea.setCaretPosition(caret);
+		return false;
+	}
+
+	protected boolean searchOrReplaceFromHere(boolean replace) {
+		return replace ?
+			SearchEngine.replace(textArea, searchField.getText(),
+					replaceField.getText(),
+					forward.isSelected(),
+					matchCase.isSelected(),
+					wholeWord.isSelected(),
+					regex.isSelected()) :
+			SearchEngine.find(textArea, searchField.getText(),
+					forward.isSelected(),
+					matchCase.isSelected(),
+					wholeWord.isSelected(),
+					regex.isSelected());
 	}
 
 	public boolean isReplace() {
