@@ -116,10 +116,11 @@ public class TextEditor extends JFrame implements ActionListener,
 	File file;
 	RSyntaxTextArea textArea;
 	JTextArea screen;
-	JMenuItem new_file, open, save, saveas, compileAndRun, debug, quit,
+	JMenuItem newFile, open, save, saveas, compileAndRun, debug, quit,
 		  undo, redo, cut, copy, paste, find, replace, selectAll,
 		  autocomplete, resume, terminate, kill, gotoLine,
-		  makeJar, makeJarWithSource;
+		  makeJar, makeJarWithSource, removeUnusedImports,
+		  sortImports, removeTrailingWhitespace;
 	AutoCompletion autocomp;
 	Languages.Language currentLanguage;
 	ClassCompletionProvider provider;
@@ -135,7 +136,7 @@ public class TextEditor extends JFrame implements ActionListener,
 	int modifyCount;
 	boolean undoInProgress, redoInProgress;
 
-	public TextEditor(String path1) {
+	public TextEditor(String path) {
 		super("Script Editor");
 		WindowManager.addWindow(this);
 		JPanel cp = new JPanel(new BorderLayout());
@@ -198,7 +199,7 @@ public class TextEditor extends JFrame implements ActionListener,
 
 		JMenu file = new JMenu("File");
 		file.setMnemonic(KeyEvent.VK_F);
-		new_file = addToMenu(file, "New",  KeyEvent.VK_N, ctrl);
+		newFile = addToMenu(file, "New",  KeyEvent.VK_N, ctrl);
 		open = addToMenu(file, "Open...",  KeyEvent.VK_O, ctrl);
 		save = addToMenu(file, "Save", KeyEvent.VK_S, ctrl);
 		saveas = addToMenu(file, "Save as...", 0, 0);
@@ -223,14 +224,12 @@ public class TextEditor extends JFrame implements ActionListener,
 		find = addToMenu(edit, "Find...", KeyEvent.VK_F, ctrl);
 		replace = addToMenu(edit, "Find and Replace...", KeyEvent.VK_H, ctrl);
 		gotoLine = addToMenu(edit, "Goto line...", KeyEvent.VK_G, ctrl);
+		edit.addSeparator();
+		removeUnusedImports = addToMenu(edit, "Remove unused imports", 0, 0);
+		sortImports = addToMenu(edit, "Sort imports", 0, 0);
+		removeTrailingWhitespace = addToMenu(edit, "Remove trailing whitespace", 0, 0);
+		autocomplete = addToMenu(edit, "Autocomplete", KeyEvent.VK_SPACE, ctrl);
 		mbar.add(edit);
-
-		JMenu options = new JMenu("Options");
-		options.setMnemonic(KeyEvent.VK_O);
-		autocomplete = addToMenu(options, "Autocomplete", KeyEvent.VK_SPACE, ctrl);
-		options.addSeparator();
-
-		mbar.add(options);
 
 		JMenu languages = new JMenu("Language");
 		languages.setMnemonic(KeyEvent.VK_L);
@@ -297,8 +296,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		setTitle();
 
 		setLocationRelativeTo(null); // center on screen
-		if (path1 != null && !path1.equals(""))
-			open(path1);
+		if (path != null && !path.equals(""))
+			open(path);
 
 		addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
@@ -309,6 +308,10 @@ public class TextEditor extends JFrame implements ActionListener,
 			}
 		});
 		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+	}
+
+	public RSyntaxTextArea getTextArea() {
+		return textArea;
 	}
 
 	public JMenuItem addToMenu(JMenu menu, String menuEntry,
@@ -559,7 +562,7 @@ public class TextEditor extends JFrame implements ActionListener,
 
 	public void actionPerformed(ActionEvent ae) {
 		final Object source = ae.getSource();
-		if (source == new_file) {
+		if (source == newFile) {
 			if (!handleUnsavedChanges())
 				return;
 			createNewDocument();
@@ -623,6 +626,12 @@ public class TextEditor extends JFrame implements ActionListener,
 			textArea.setCaretPosition(0);
 			textArea.moveCaretPosition(textArea.getDocument().getLength());
 		}
+		else if (source == removeUnusedImports)
+			new TokenFunctions(textArea).removeUnusedImports();
+		else if (source == sortImports)
+			new TokenFunctions(textArea).sortImports();
+		else if (source == removeTrailingWhitespace)
+			new TokenFunctions(textArea).removeTrailingWhitespace();
 		else if (source == autocomplete) {
 			try {
 				autocomp.doCompletion();
@@ -914,6 +923,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		compileAndRun.setEnabled(language.isRunnable());
 		debug.setEnabled(language.isDebuggable());
 		makeJarWithSource.setEnabled(language.isCompileable());
+		removeUnusedImports.setEnabled(language.menuLabel.equals("Java"));
+		sortImports.setEnabled(language.menuLabel.equals("Java"));
 
 		provider.setProviderLanguage(language.menuLabel);
 
