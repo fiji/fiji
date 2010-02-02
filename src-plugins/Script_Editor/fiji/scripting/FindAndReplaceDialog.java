@@ -107,6 +107,8 @@ public class FindAndReplaceDialog extends JDialog implements ActionListener {
 			getRootPane().getBackground());
 		this.replace.setEnabled(replace);
 		replaceAll.setEnabled(replace);
+
+		getRootPane().setDefaultButton(findNext);
 		show();
 	}
 
