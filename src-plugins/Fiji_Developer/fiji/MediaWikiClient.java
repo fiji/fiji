@@ -43,7 +43,7 @@ import java.util.regex.Matcher;
 
 public class MediaWikiClient {
 	final String wikiBaseURI;
-	String sessionID;
+	String sessionID, domain;
 
 	public MediaWikiClient() {
 		this("http://pacific.mpi-cbg.de/wiki/index.php");
@@ -84,6 +84,12 @@ public class MediaWikiClient {
 					return false;
 				}
 			}
+			if (domain != null)
+				postVars = new String[] {
+					"wpName", user,
+					"wpPassword", password,
+					"wpDomain", domain
+				};
 
 			String response =
 				sendRequest(getVars, postVars);
@@ -288,10 +294,6 @@ public class MediaWikiClient {
 		if (httpCode != 200)
 			throw new IOException("HTTP code: " + httpCode);
 
-		if (getSessionKey)
-			getCookies(conn.getHeaderFields()
-					.get("Set-Cookie"));
-
 		InputStream in = conn.getInputStream();
 		response = "";
 		byte[] buffer = new byte[1<<16];
@@ -302,6 +304,20 @@ public class MediaWikiClient {
 			response += new String(buffer, 0, len);
 		}
 		in.close();
+
+		if (getSessionKey) {
+			getCookies(conn.getHeaderFields()
+					.get("Set-Cookie"));
+
+			domain = null;
+			int off = response.indexOf("<select name=\"wpDomain\"");
+			if (off > 0) {
+				int i1 = response.indexOf("<option>", off) + 8;
+				int i2 = response.indexOf("</option>", i1);
+				if (i1 > 8 && i2 > 0)
+					domain = response.substring(i1, i2);
+			}
+		}
 
 		return response;
 	}
