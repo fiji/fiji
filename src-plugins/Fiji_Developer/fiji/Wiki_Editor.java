@@ -115,8 +115,6 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 			return;
 		name = capitalize(name).replace(' ', '_');
 
-		if (mode == Mode.TUTORIAL_MAKER)
-			showSnapshotFrame();
 		addEditor();
 	}
 
@@ -174,6 +172,9 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 					!label.equals("Wiki"))
 				menuBar.remove(i);
 		}
+
+		if (mode == Mode.TUTORIAL_MAKER)
+			showSnapshotFrame();
 
 		editor.setVisible(true);
 	}
