@@ -503,8 +503,15 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 					+ oldTitle.replaceAll("\\.", "\\\\.")
 					+ "(?=[]|])",
 				"[[Image:" + newTitle);
-			if (!text.equals(transformed))
+			if (!text.equals(transformed)) {
+				int pos = editor.getTextArea()
+					.getCaretPosition();
 				editor.getTextArea().setText(transformed);
+				try {
+					editor.getTextArea()
+						.setCaretPosition(pos);
+				} catch (Exception e) { /* ignore */ }
+			}
 		}
 	}
 
