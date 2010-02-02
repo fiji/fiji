@@ -333,6 +333,22 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		}
 	}
 
+	/* This method must not log out */
+	public String getPage(String title) throws IOException {
+		String[] getVars = {
+			"title", title
+		};
+		String result = client.sendRequest(getVars, null);
+		if (result == null || result.indexOf("Login Required") > 0) {
+			// Try after login
+			getClient();
+			if (!client.login("Login to view " + title))
+				return null;
+			result = client.sendRequest(getVars, null);
+		}
+		return result;
+	}
+
 	protected List<String> getImages() {
 		List<String> result = new ArrayList<String>();
 		String text = getText();
@@ -424,27 +440,15 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 
 	protected boolean wikiHasImage(String image) {
 		try {
-			URL url = new URL(URL
-					+ "index.php?title=Image:" + image);
-			InputStream input = url.openStream();
-			byte[] buffer = new byte[65536];
-			int offset = 0;
-			while (offset < buffer.length) {
-				int count = input.read(buffer, offset,
-					buffer.length - offset);
-				if (count < 0)
-					break;
-				offset += count;
-			}
-			input.close();
-			boolean hasFile = new String(buffer).indexOf("No file "
-					+ "by this name exists") < 0;
+			String html = getPage("Image:" + image);
+			boolean hasFile =
+				html.indexOf("No file by this name exists") < 0;
 			if (hasFile)
-				System.err.println("has image: "
-						+ new String(buffer));
+				System.err.println("has image: " + html);
 			return hasFile;
-		} catch (Exception e) {
-			e.printStackTrace();
+		} catch (IOException e) {
+			IJ.error("Could not retrieve image " + image + ": "
+					+ e.getMessage());
 			return false;
 		}
 	}
