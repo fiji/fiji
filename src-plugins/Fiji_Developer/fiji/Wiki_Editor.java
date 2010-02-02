@@ -203,14 +203,9 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 			gd.showDialog();
 			if (!gd.wasCanceled()) {
 				URL = gd.getNextString();
-				if (URL.endsWith("/index.php"))
-					URL = URL.substring(0,
-							URL.length() - 9);
-				else {
-					int off = URL.indexOf("/index.php?");
-					if (off > 0)
-						URL = URL.substring(0, off + 1);
-				}
+				int off = URL.indexOf("/index.php");
+				if (off > 0)
+					URL = URL.substring(0, off + 1);
 			}
 		}
 	}
