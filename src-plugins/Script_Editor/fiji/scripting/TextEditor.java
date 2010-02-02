@@ -50,6 +50,8 @@ import java.io.OutputStream;
 import java.io.InputStream;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Vector;
@@ -401,7 +403,20 @@ public class TextEditor extends JFrame implements ActionListener,
 		// use a dictionary for keeping track of created menu items
 		Dictionary<String, JMenu> menuEntries = new Hashtable<String, JMenu>();
 
-		for (String t : templatePaths) {
+		String[] paths =
+			templatePaths.toArray(new String[templatePaths.size()]);
+		Arrays.sort(paths, new Comparator<String>() {
+			public int compare(String s1, String s2) {
+				int slash1 = s1.lastIndexOf('/');
+				int slash2 = s2.lastIndexOf('/');
+				return s1.substring(slash1 + 1)
+					.compareTo(s2.substring(slash2 + 1));
+			}
+			public boolean equals(Object o) {
+				return false;
+			}
+		});
+		for (String t : paths) {
 			reflectDirStructInMenu(menuEntries, menu, t, "");
 		}
 
