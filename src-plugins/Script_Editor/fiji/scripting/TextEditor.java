@@ -310,8 +310,11 @@ public class TextEditor extends JFrame implements ActionListener,
 			public void windowClosing(WindowEvent e) {
 				if (!handleUnsavedChanges())
 					return;
-				WindowManager.removeWindow(TextEditor.this);
 				dispose();
+			}
+
+			public void windowClosed(WindowEvent e) {
+				WindowManager.removeWindow(TextEditor.this);
 			}
 		});
 		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
