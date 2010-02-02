@@ -375,7 +375,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		return false;
 	}
 
-	protected boolean saveOrUploadImages(MediaWikiClient client,
+	protected boolean saveOrUploadImages(GraphicalMediaWikiClient client,
 			List<String> images) {
 		int i = 0, total = images.size() * 2 + 1;
 		for (String image : images) {
@@ -422,10 +422,13 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 					case 1: return error("Aborted");
 					case 2: continue;
 					}
+				if (!client.login("Login to upload " + image))
+					return false;
 				if (!client.uploadFile(image, "Upload " + image
 							+ " for " + name,
 							new File(info.directory,
-								info.fileName)))
+								info.fileName))
+						&& !wikiHasImage(image))
 					return error("Uploading "
 							+ image + " failed");
 				IJ.showStatus("Uploading " + image + "...");
