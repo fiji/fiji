@@ -498,7 +498,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		if (oldTitle.equals(newTitle))
 			return;
 		for (TextEditor editor : editors) {
-			String text = getText();
+			String text = editor.getTextArea().getText();
 			String transformed = text.replaceAll("\\[\\[Image:"
 					+ oldTitle.replaceAll("\\.", "\\\\.")
 					+ "(?=[]|])",
