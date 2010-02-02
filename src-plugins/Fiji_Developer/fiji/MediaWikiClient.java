@@ -54,7 +54,7 @@ public class MediaWikiClient {
 	}
 
 	boolean hasSessionKey() {
-		return cookies.containsKey("wikidb_session");
+		return cookies.containsKey(sessionKey);
 	}
 
 	boolean loggedIn = false;
@@ -322,17 +322,18 @@ public class MediaWikiClient {
 		ps.print("\r\n");
 	}
 
+	String sessionKey = "wikidb_session";
 	Pattern cookiePattern =
-		Pattern.compile("^(wikidb_session)=([^;]*);.*$");
+		Pattern.compile("^(wikidb_[^=]*session)=([^;]*);.*$");
 	void getCookies(List<String> headers) {
 		if (headers == null)
 			return;
 		for (String s : headers) {
 			Matcher matcher = cookiePattern.matcher(s);
 			if (matcher.matches()) {
-				String key = matcher.group(1);
+				sessionKey = matcher.group(1);
 				String value = matcher.group(2);
-				cookies.put(key, value);
+				cookies.put(sessionKey, value);
 			}
 		}
 	}
