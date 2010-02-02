@@ -120,7 +120,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		  undo, redo, cut, copy, paste, find, replace, selectAll,
 		  autocomplete, resume, terminate, kill, gotoLine,
 		  makeJar, makeJarWithSource, removeUnusedImports,
-		  sortImports, removeTrailingWhitespace, findNext;
+		  sortImports, removeTrailingWhitespace, findNext,
+		  openHelp;
 	AutoCompletion autocomp;
 	Languages.Language currentLanguage;
 	ClassCompletionProvider provider;
@@ -286,6 +287,11 @@ public class TextEditor extends JFrame implements ActionListener,
 		resume = addToMenu(run, "Resume", 0, 0);
 		terminate = addToMenu(run, "Terminate", 0, 0);
 		mbar.add(run);
+
+		JMenu tools = new JMenu("Tools");
+		tools.setMnemonic(KeyEvent.VK_O);
+		openHelp = addToMenu(tools, "Open Help for Class...", 0, 0);
+		mbar.add(tools);
 
 		pack();
 		getToolkit().setDynamicLayout(true);            //added to accomodate the autocomplete part
@@ -643,7 +649,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		else if (source == terminate) {
 			// TODO not implemented
 		}
-
+		else if (source == openHelp)
+			openHelp();
 	}
 
 	protected RSyntaxDocument getDocument() {
@@ -1222,6 +1229,22 @@ public class TextEditor extends JFrame implements ActionListener,
 			modifyCount = Integer.MIN_VALUE;
 		if (update || modifyCount == 0)
 			setTitle();
+	}
+
+	public void openHelp() {
+		String selection = textArea.getSelectedText();
+		if (selection == null) {
+			selection = JOptionPane.showInputDialog(this,
+				"Class name:", "Class name...",
+				JOptionPane.QUESTION_MESSAGE);
+			if (selection == null)
+				return;
+		}
+		openHelp(selection);
+	}
+
+	public void openHelp(String className) {
+		new ClassNameFunctions(provider).openHelpForClass(className);
 	}
 
 	protected void error(String message) {
