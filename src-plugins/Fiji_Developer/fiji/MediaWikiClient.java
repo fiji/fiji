@@ -117,16 +117,22 @@ public class MediaWikiClient {
 		return false;
 	}
 
-	String valueRegex = "value=\"([^\"]*)\"";
-	Pattern editFormPattern =
-		Pattern.compile(".*"
-				+ "<input type='hidden' " + valueRegex
-				+ " name=\"wpEdittime\" />.*"
-				+ "<input type='hidden' " + valueRegex
-				+ " name=\"wpEditToken\" />.*"
-				+ "<input name=\"wpAutoSummary\" "
-				+ "type=\"hidden\" " + valueRegex + " />.*",
-				Pattern.DOTALL);
+	protected String getFormVariable(String html, String name) {
+		Pattern pattern = Pattern.compile(".*<input type=.hidden. "
+			+ "value=\"([^\"]*)\" name=\"" + name
+			+ "\" />.*", Pattern.DOTALL);
+		Matcher matcher = pattern.matcher(html);
+		if (matcher.matches())
+			return matcher.group(1);
+		pattern = Pattern.compile(".*<input name=\"" + name
+			+ "\" type=.hidden. value=\"([^\"]*)\" />.*",
+			Pattern.DOTALL);
+		matcher = pattern.matcher(html);
+		if (matcher.matches())
+			return matcher.group(1);
+		return null;
+	}
+
 	public boolean uploadPage(String title,
 			String contents, String comment) {
 		return uploadOrPreviewPage(title, contents, comment, false)
@@ -141,10 +147,16 @@ public class MediaWikiClient {
 				"action", "edit"
 			};
 			String response = sendRequest(getVars, null);
-			Matcher matcher =
-				editFormPattern.matcher(response);
-			if (!matcher.matches())
+			String time = getFormVariable(response, "wpEdittime");
+			String token = getFormVariable(response, "wpEditToken");
+			String summary =
+				getFormVariable(response, "wpAutoSummary");
+			if (time == null || token == null || summary == null) {
+				System.err.println("time: " + time + ", token: "
+					+ token + ", summary: " + summary);
 				return null;
+			}
+
 			getVars = new String[] {
 				"title", title,
 					"action", "submit"
@@ -153,9 +165,9 @@ public class MediaWikiClient {
 				"wpSave", "Save page",
 				"wpTextbox1", contents,
 				"wpSummary", comment,
-				"wpEdittime", matcher.group(1),
-				"wpEditToken", matcher.group(2),
-				"wpAutoSummary", matcher.group(3)
+				"wpEdittime", time,
+				"wpEditToken", token,
+				"wpAutoSummary", summary
 			};
 			if (previewOnly) {
 				postVars[0] = "wpPreview";
