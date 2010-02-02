@@ -1,0 +1,37 @@
+<body>
+<p>
+An advanced simplification/expansion/comparison algorithm.
+To use
+<pre>
+PolynomialCreator pc = new PolynomialCreator(jep);
+Node simp = pc.simplify(node);
+Node expand = pc.expand(node);
+boolean flag = pc.equals(node1,node2);
+int res = pc.compare(node1,node2);
+PNodeI poly = pc.createPoly(node);
+</pre>
+</p>
+
+<h2>How it works</h2>
+<p>
+The basic idea is to reduce each equation to a canonical form based on a total 
+ordering of the terms.
+For example a polynomial in <tt>x</tt> will always be in the form
+  <code>a+b x+c x^2+d x^3.</code>
+This makes comparison of two polynomials easy as it is just necessary to compare
+term by term, whereas it is difficult to compare <tt>x^2-1</tt> with 
+<tt>(x+1)*(x-1)</tt> without any simplification or reordering.
+</p>
+<p>The precise total ordering is intentionally not defined as it may be later modified.
+As an illustration some of the rules for the ordering are
+<tt>0&lt;1&lt;2</tt>, <tt>5&lt;x</tt>, <tt>x&lt;x^2&lt;x^3</tt>, <tt>x&lt;y</tt>.
+</p>
+<p>A polynomial is constructed from a set of monomials by arranging the monomials in order.
+Likewise a monomial is constructed from a set of variables by arranging the variables in name order. 
+<p>
+The algorithm can also work with non-polynomial equations. Functions are order 
+by the name of the function and the ordering of their arguments. 
+Hence <tt>cos(x)&lt;sin(x)&lt;sin(y)</tt>.
+</p>   
+
+</body>

@@ -155,7 +155,8 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/3D_Objects_Counter.jar \
 	plugins/IsoData_Classifier.jar \
 	plugins/RATS_.jar \
-	\
+	plugins/Image_Expression_Parser.jar \
+  \
 	misc/Fiji.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS third-party-plugins jars/zs.jar
@@ -209,6 +210,7 @@ CLASSPATH(jars/zs.jar)=jars/Jama-1.0.2.jar
 jars/zs.jar <- src-plugins/zs/**/*.java
 
 jars/fiji-lib.jar <- src-plugins/fiji-lib/**/*.java
+jars/jep.jar <- src-plugins/jep/**/*.java
 
 # These classes are common to the scripting plugins
 jars/fiji-scripting.jar <- src-plugins/fiji-scripting/**/*.java
