@@ -276,18 +276,16 @@ public class TextEditor extends JFrame implements ActionListener,
 		addAccelerator(debug, KeyEvent.VK_F5,
 				ActionEvent.SHIFT_MASK);
 
-		mbar.add(run);
-
 		run.addSeparator();
 
 		kill = addToMenu(run, "Kill running script...", 0, 0);
 		kill.setEnabled(false);
 
-		JMenu breakpoints = new JMenu("Breakpoints");
-		breakpoints.setMnemonic(KeyEvent.VK_B);
-		resume = addToMenu(breakpoints, "Resume", 0, 0);
-		terminate = addToMenu(breakpoints, "Terminate", 0, 0);
-		mbar.add(breakpoints);
+		run.addSeparator();
+
+		resume = addToMenu(run, "Resume", 0, 0);
+		terminate = addToMenu(run, "Terminate", 0, 0);
+		mbar.add(run);
 
 		pack();
 		getToolkit().setDynamicLayout(true);            //added to accomodate the autocomplete part
