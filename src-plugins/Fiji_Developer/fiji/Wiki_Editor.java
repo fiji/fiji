@@ -165,7 +165,6 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		String category = "\n[[Category:"
 			+ (mode == Mode.TUTORIAL_MAKER ? "Tutorials" : "News")
 			+ "]]";
-		editor.setTitle("Edit Wiki - " + name);
 		editor.getTextArea().setText(text + category);
 		editor.getTextArea().setCaretPosition(text.length());
 
@@ -181,6 +180,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 			showSnapshotFrame();
 
 		editor.setVisible(true);
+		editor.setTitle("Edit Wiki - " + name);
 	}
 
 	public String getText() {
