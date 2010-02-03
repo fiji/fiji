@@ -129,6 +129,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 
 	protected void addEditor() {
 		editor = new TextEditor(null);
+		editor.getTextArea().setLineWrap(true);
 
 		int ctrl = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
 
