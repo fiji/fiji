@@ -242,12 +242,18 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		if (!saveOrUploadImages(client, images))
 			return;
 
-		client.uploadPage(name, getText(), "Add " + name);
+		boolean result =
+			client.uploadPage(name, getText(), "Add " + name);
 
 		client.logOut();
 
 		IJ.showStatus("Uploading " + name + " finished.");
 		IJ.showProgress(1, 1);
+
+		if (!result) {
+			IJ.error("Could not upload!");
+			return;
+		}
 
 		new BrowserLauncher().run(URL + "index.php?title= " + name);
 		editor.dispose();
