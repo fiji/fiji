@@ -160,7 +160,8 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 			}
 		});
 
-		String text = "== " + name.replace('_', ' ') + " ==\n\n";
+		String text = mode == Mode.NEWS ? ""
+			: "== " + name.replace('_', ' ') + " ==\n\n";
 		String category = "\n[[Category:"
 			+ (mode == Mode.TUTORIAL_MAKER ? "Tutorials" : "News")
 			+ "]]";
