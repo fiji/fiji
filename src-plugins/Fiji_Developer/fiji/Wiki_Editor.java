@@ -239,6 +239,9 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 
 		getClient();
 
+		if (!client.login("Wiki Login (Preview)"))
+			return;
+
 		if (!saveOrUploadImages(client, images))
 			return;
 
