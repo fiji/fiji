@@ -28,7 +28,18 @@ public class Select_Bounding_Box implements PlugInFilter {
 	}
 
 	public void run(ImageProcessor ip) {
-		Rectangle rect = ip.getRoi();
+		double background = ip.getBestIndex(Toolbar.getBackgroundColor());
+		if (!(ip instanceof ByteProcessor))
+			background = ip.getMin() + (ip.getMax() - ip.getMin()) * background / 255.0;
+
+		Rectangle rect = getBoundingBox(ip, ip.getRoi(), background);
+		switch (mode) {
+			case SELECTION: image.setRoi(rect); break;
+			case AUTOCROP: crop(image, rect); break;
+		}
+	}
+
+	public static Rectangle getBoundingBox(ImageProcessor ip, Rectangle rect, double background) {
 		if (rect == null)
 			rect = new Rectangle(0, 0, ip.getWidth(), ip.getHeight());
 		else {
@@ -39,9 +50,6 @@ public class Select_Bounding_Box implements PlugInFilter {
 		}
 
 
-		double background = ip.getBestIndex(Toolbar.getBackgroundColor());
-		if (!(ip instanceof ByteProcessor))
-			background = ip.getMin() + (ip.getMax() - ip.getMin()) * background / 255.0;
 		findMinY(ip, rect, background);
 		findMaxY(ip, rect, background);
 		findMinX(ip, rect, background);
@@ -50,13 +58,10 @@ public class Select_Bounding_Box implements PlugInFilter {
 		// make it the proper width/height again
 		rect.width -= rect.x;
 		rect.height -= rect.y;
-		switch (mode) {
-			case SELECTION: image.setRoi(rect); break;
-			case AUTOCROP: crop(image, rect); break;
-		}
+		return rect;
 	}
 
-	void findMinY(ImageProcessor ip, Rectangle rect, double background) {
+	static void findMinY(ImageProcessor ip, Rectangle rect, double background) {
 		for (int y = rect.y; y < rect.height; y++)
 			for (int x = rect.x; x < rect.width; x++)
 				if (ip.getf(x, y) != background) {
@@ -65,7 +70,7 @@ public class Select_Bounding_Box implements PlugInFilter {
 				}
 	}
 
-	void findMaxY(ImageProcessor ip, Rectangle rect, double background) {
+	static void findMaxY(ImageProcessor ip, Rectangle rect, double background) {
 		for (int y = rect.height - 1; y >= rect.y; y--)
 			for (int x = rect.x; x < rect.width; x++)
 				if (ip.getf(x, y) != background) {
@@ -74,7 +79,7 @@ public class Select_Bounding_Box implements PlugInFilter {
 				}
 	}
 
-	void findMinX(ImageProcessor ip, Rectangle rect, double background) {
+	static void findMinX(ImageProcessor ip, Rectangle rect, double background) {
 		for (int x = rect.x; x < rect.width; x++)
 			for (int y = rect.y; y < rect.height; y++)
 				if (ip.getf(x, y) != background) {
@@ -84,7 +89,7 @@ public class Select_Bounding_Box implements PlugInFilter {
 	}
 
 
-	void findMaxX(ImageProcessor ip, Rectangle rect, double background) {
+	static void findMaxX(ImageProcessor ip, Rectangle rect, double background) {
 		for (int x = rect.width - 1; x >= rect.x; x--)
 			for (int y = rect.y; y < rect.height; y++)
 				if (ip.getf(x, y) != background) {
