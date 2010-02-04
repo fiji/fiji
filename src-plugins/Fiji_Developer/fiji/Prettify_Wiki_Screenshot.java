@@ -2,6 +2,8 @@ package fiji;
 
 import fiji.drawing.Linear_Gradient;
 
+import fiji.selection.Select_Bounding_Box;
+
 import ij.IJ;
 import ij.ImagePlus;
 
@@ -20,6 +22,7 @@ import ij3d.ImageCanvas3D;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.Rectangle;
 
 import javax.media.j3d.Transform3D;
 
@@ -116,11 +119,14 @@ public class Prettify_Wiki_Screenshot implements PlugInFilter {
 		IJ.run(snapshot, "downsample ", "width=" + w2 + " height=" + h2 + " source=0.50 target=0.50 keep");
 
 		// write label
-		if (label != null && !label.equals("")) {
-			ImagePlus smallImage = IJ.getImage();
+		ImagePlus smallImage = IJ.getImage();
+		if (label != null && !label.equals(""))
 			drawOutlineText(smallImage.getProcessor(), label, 24, 30, smallImage.getHeight() - 30);
-			smallImage.updateAndDraw();
-		}
+
+		// autocrop
+		Rectangle rect = Select_Bounding_Box.getBoundingBox(smallImage.getProcessor(), null, 0xffffffff);
+		Select_Bounding_Box.crop(smallImage, rect);
+		smallImage.updateAndDraw();
 	}
 
 	public static void drawOutlineText(ImageProcessor ip, String string, int size, int x, int y) {
