@@ -10,6 +10,8 @@ import ij.gui.Line;
 import ij.plugin.filter.PlugInFilter;
 
 import ij.process.Blitter;
+import ij.process.ColorProcessor;
+import ij.process.ImageConverter;
 import ij.process.ImageProcessor;
 
 import ij3d.Content;
@@ -25,10 +27,15 @@ public class Prettify_Wiki_Screenshot implements PlugInFilter {
 	public String label = "";
 
 	public int setup(String arg, ImagePlus imp) {
-		return DOES_RGB | NO_CHANGES;
+		return DOES_ALL | NO_CHANGES;
 	}
 
 	public void run(ImageProcessor ip) {
+		if (!(ip instanceof ColorProcessor)) {
+			ImagePlus image = new ImagePlus("", ip);
+			new ImageConverter(image).convertToRGB();
+			ip = image.getProcessor();
+		}
 		int h = ip.getHeight();
 
 		// make a gradient image
