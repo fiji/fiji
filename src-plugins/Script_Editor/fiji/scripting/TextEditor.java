@@ -668,7 +668,7 @@ public class TextEditor extends JFrame implements ActionListener,
 			// TODO not implemented
 		}
 		else if (source == openHelp)
-			openHelp();
+			openHelp(null);
 	}
 
 	protected RSyntaxDocument getDocument() {
@@ -949,8 +949,10 @@ public class TextEditor extends JFrame implements ActionListener,
 		compileAndRun.setEnabled(language.isRunnable());
 		debug.setEnabled(language.isDebuggable());
 		makeJarWithSource.setEnabled(language.isCompileable());
-		removeUnusedImports.setEnabled(language.menuLabel.equals("Java"));
-		sortImports.setEnabled(language.menuLabel.equals("Java"));
+
+		boolean isJava = language.menuLabel.equals("Java");
+		removeUnusedImports.setEnabled(isJava);
+		sortImports.setEnabled(isJava);
 
 		provider.setProviderLanguage(language.menuLabel);
 
@@ -1249,19 +1251,23 @@ public class TextEditor extends JFrame implements ActionListener,
 			setTitle();
 	}
 
-	public void openHelp() {
+	public String getSelectedTextOrAsk(String label) {
 		String selection = textArea.getSelectedText();
 		if (selection == null) {
 			selection = JOptionPane.showInputDialog(this,
-				"Class name:", "Class name...",
+				label + ":", label + "...",
 				JOptionPane.QUESTION_MESSAGE);
 			if (selection == null)
-				return;
+				return null;
 		}
-		openHelp(selection);
+		return selection;
 	}
 
 	public void openHelp(String className) {
+		if (className == null)
+			className = getSelectedTextOrAsk("Class name");
+		if (className == null)
+			return;
 		new ClassNameFunctions(provider).openHelpForClass(className);
 	}
 
