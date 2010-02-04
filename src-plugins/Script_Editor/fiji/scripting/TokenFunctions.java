@@ -37,7 +37,7 @@ public class TokenFunctions implements Iterable<Token> {
 		if (!Character.isJavaIdentifierStart(token.text[token.textOffset]))
 			return false;
 		for (int i = 1; i < token.textCount; i++)
-			if (!Character.isJavaIdentifierStart(token.text[token.textOffset + i]))
+			if (!Character.isJavaIdentifierPart(token.text[token.textOffset + i]))
 				return false;
 		return true;
 	}
