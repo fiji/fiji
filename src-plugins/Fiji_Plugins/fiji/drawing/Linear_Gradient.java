@@ -29,8 +29,7 @@ public class Linear_Gradient implements PlugInFilter {
 			return;
 		}
 		Line line = (Line)roi;
-		double length = line.getLength();
-		if (length == 0) {
+		if (line.getLength() == 0) {
 			IJ.error("Line too short");
 			return;
 		}
@@ -38,25 +37,31 @@ public class Linear_Gradient implements PlugInFilter {
 		int from = Toolbar.getBackgroundColor().getRGB();
 		int to = Toolbar.getForegroundColor().getRGB();
 
+		makeLinearGradient(ip, from, to, line);
+		image.updateAndDraw();
+	}
+
+	public static void makeLinearGradient(ImageProcessor ip,
+			int fromColor, int toColor, Line line) {
+		double length = line.getLength();
 		int w = ip.getWidth(), h = ip.getHeight();
 		int[] pixels = (int[])ip.getPixels();
 		for (int j = 0; j < h; j++)
 			for (int i = 0; i < w; i++) {
 				double scalar = (i - line.x1d) * (line.x2d - line.x1d)
 					+ (j - line.y1d) * (line.y2d - line.y1d);
-				pixels[i + j * w] = getColor(from, to, 	scalar / length / length);
+				pixels[i + j * w] = getColor(fromColor, toColor, 	scalar / length / length);
 			}
-		image.updateAndDraw();
 	}
 
-	int getByte(int from, int to, double factor, int shift) {
+	static int getByte(int from, int to, double factor, int shift) {
 		from = (from >> shift) & 0xff;
 		to = (to >> shift) & 0xff;
 		int value = (int)Math.round(from + factor * (to - from));
 		return Math.min(255, Math.max(0, value)) << shift;
 	}
 
-	int getColor(int from, int to, double factor) {
+	static int getColor(int from, int to, double factor) {
 		return getByte(from, to, factor, 0) |
 			getByte(from, to, factor, 8) |
 			getByte(from, to, factor, 16);
