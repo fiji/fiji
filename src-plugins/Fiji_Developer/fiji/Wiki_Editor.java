@@ -287,7 +287,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		String name = mode == Mode.SCREENSHOT ?
 			"Fiji:Featured_Projects" : this.name;
 		boolean result =
-			client.uploadPage(name, getText(), "Add " + name);
+			client.uploadPage(name, getText(), "Add " + this.name);
 
 		client.logOut();
 
@@ -318,7 +318,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		String name = mode == Mode.SCREENSHOT ?
 			"Fiji:Featured_Projects" : this.name;
 		String html = client.uploadOrPreviewPage(name, getText(),
-				"Add " + name, true);
+				"Add " + this.name, true);
 		client.logOut();
 
 		if (html == null) {
