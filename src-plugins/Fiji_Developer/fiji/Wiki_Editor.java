@@ -350,7 +350,8 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 			"title", title
 		};
 		String result = client.sendRequest(getVars, null);
-		if (result == null || result.indexOf("Login Required") > 0) {
+		if (result == null || result.indexOf("Login Required") > 0 ||
+				result.indexOf("Login required") > 0) {
 			// Try after login
 			getClient();
 			if (!client.login("Login to view " + title))
