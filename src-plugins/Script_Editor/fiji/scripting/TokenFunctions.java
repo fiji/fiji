@@ -111,7 +111,7 @@ public class TokenFunctions implements Iterable<Token> {
 		return null;
 	}
 
-	class Import {
+	class Import implements Comparable<Import> {
 		int startOffset, endOffset;
 		String classOrPackage;
 		Import(int start, int end, String text) {
@@ -123,6 +123,14 @@ public class TokenFunctions implements Iterable<Token> {
 		String getPackage() {
 			int dot = classOrPackage.lastIndexOf('.');
 			return dot < 0 ? "" : classOrPackage.substring(0, dot);
+		}
+
+		public boolean equals(Import imp) {
+			return classOrPackage.equals(imp.classOrPackage);
+		}
+
+		public int compareTo(Import imp) {
+			return classOrPackage.compareTo(imp.classOrPackage);
 		}
 	}
 
@@ -227,6 +235,52 @@ public class TokenFunctions implements Iterable<Token> {
 			if (!identifiers.contains(clazz))
 				removeImport(imp);
 		}
+	}
+
+	public void addImport(String className) {
+		String string = "import " + className + ";\n";
+		List<Import> imports = getImports();
+
+		if (imports.size() == 0) {
+			TokenIterator iter = new TokenIterator();
+			int offset = 0;
+			while (iter.hasNext()) {
+				Token token = iter.next();
+				if (token.type != token.RESERVED_WORD)
+					continue;
+				if (getText(token).equals("package"))
+					skipToEOL(iter, token);
+				else {
+					offset = token.offset;
+					break;
+				}
+			}
+			textArea.insert(string + "\n", offset);
+			return;
+		}
+
+		Import imp = new Import(0, 0, className);
+		int insert = -1;
+
+		for (int i = 0; i < imports.size(); i++) {
+			int cmp = imports.get(i).compareTo(imp);
+			if (cmp == 0)
+				return;
+			if (insert < 0 && cmp < 0)
+				insert = i;
+		}
+		if (insert >= 0 && !imp.getPackage()
+				.equals(imports.get(insert)))
+			string = "\n" + string;
+		if (insert + 1 < imports.size() && !imp.getPackage()
+				.equals(imports.get(insert + 1)))
+			string += "\n";
+		int startOffset = insert < 0 ? imports.get(0).startOffset :
+			imports.get(insert).endOffset;
+		int endOffset = insert + 1 < imports.size() ?
+			imports.get(insert + 1).startOffset :
+			imports.get(insert).endOffset;
+		textArea.replaceRange(string, startOffset, endOffset);
 	}
 
 	public Set<String> getAllUsedIdentifiers() {

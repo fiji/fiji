@@ -123,7 +123,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		  autocomplete, resume, terminate, kill, gotoLine,
 		  makeJar, makeJarWithSource, removeUnusedImports,
 		  sortImports, removeTrailingWhitespace, findNext,
-		  openHelp;
+		  openHelp, addImport;
 	AutoCompletion autocomp;
 	Languages.Language currentLanguage;
 	ClassCompletionProvider provider;
@@ -229,6 +229,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		replace = addToMenu(edit, "Find and Replace...", KeyEvent.VK_H, ctrl);
 		gotoLine = addToMenu(edit, "Goto line...", KeyEvent.VK_G, ctrl);
 		edit.addSeparator();
+		addImport = addToMenu(edit, "Add import...", 0, 0);
 		removeUnusedImports = addToMenu(edit, "Remove unused imports", 0, 0);
 		sortImports = addToMenu(edit, "Sort imports", 0, 0);
 		removeTrailingWhitespace = addToMenu(edit, "Remove trailing whitespace", 0, 0);
@@ -651,6 +652,8 @@ public class TextEditor extends JFrame implements ActionListener,
 			textArea.setCaretPosition(0);
 			textArea.moveCaretPosition(textArea.getDocument().getLength());
 		}
+		else if (source == addImport)
+			addImport(null);
 		else if (source == removeUnusedImports)
 			new TokenFunctions(textArea).removeUnusedImports();
 		else if (source == sortImports)
@@ -951,6 +954,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		makeJarWithSource.setEnabled(language.isCompileable());
 
 		boolean isJava = language.menuLabel.equals("Java");
+		addImport.setEnabled(isJava);
 		removeUnusedImports.setEnabled(isJava);
 		sortImports.setEnabled(isJava);
 
@@ -1261,6 +1265,18 @@ public class TextEditor extends JFrame implements ActionListener,
 				return null;
 		}
 		return selection;
+	}
+
+	public void addImport(String className) {
+		if (className == null)
+			className = getSelectedTextOrAsk("Class name");
+		if (className == null)
+			return;
+		if (className.indexOf('.') < 0)
+			className = new ClassNameFunctions(provider)
+				.getFullName(className);
+		if (className != null)
+			new TokenFunctions(textArea).addImport(className);
 	}
 
 	public void openHelp(String className) {
