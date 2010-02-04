@@ -83,8 +83,9 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 
 	protected static String URL = "http://pacific.mpi-cbg.de/wiki/";
 
-	protected enum Mode { TUTORIAL_MAKER, NEWS };
+	protected enum Mode { TUTORIAL_MAKER, NEWS, SCREENSHOT };
 	protected Mode mode;
+	protected ImagePlus screenshot;
 
 	public void run(String arg) {
 		String dialogTitle = "Tutorial Maker";
@@ -101,6 +102,19 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 			defaultTitle = new SimpleDateFormat("yyyy-MM-dd - ")
 				.format(Calendar.getInstance().getTime());
 		}
+		else if (arg.equals("screenshot")) {
+			screenshot = IJ.getImage();
+			if (screenshot == null) {
+				IJ.error("Which screenshot do you want to upload?");
+				return;
+			}
+			mode = Mode.SCREENSHOT;
+			dialogTitle = "Fiji Wiki Screenshot";
+			defaultTitle = screenshot.getTitle().replace('_', ' ');
+			int dot = defaultTitle.lastIndexOf('.');
+			if (dot > 0)
+				defaultTitle = defaultTitle.substring(0, dot);
+		}
 		else
 			interceptRenames();
 
@@ -113,7 +127,16 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		name = gd.getNextString();
 		if (name.length() == 0)
 			return;
-		name = capitalize(name).replace(' ', '_');
+		if (mode != Mode.SCREENSHOT)
+			name = capitalize(name).replace(' ', '_');
+		else {
+			new Prettify_Wiki_Screenshot().run(screenshot.getProcessor());
+			screenshot = IJ.getImage();
+			String imageTitle = name + "-snapshot.jpg";
+			for (int i = 2; wikiHasImage(imageTitle); i++)
+				imageTitle = name + "-snapshot-" + i + ".jpg";
+			screenshot.setTitle(imageTitle);
+		}
 
 		addEditor();
 	}
@@ -160,11 +183,27 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 			}
 		});
 
-		String text = mode == Mode.NEWS ? ""
-			: "== " + name.replace('_', ' ') + " ==\n\n";
-		String category = "\n[[Category:"
-			+ (mode == Mode.TUTORIAL_MAKER ? "Tutorials" : "News")
-			+ "]]";
+		String text = "", category = "";
+		switch (mode) {
+			case TUTORIAL_MAKER:
+				text = "== " + name.replace('_', ' ') + " ==\n\n";
+				category = "\n[[Category:Tutorials]]";
+				break;
+			case NEWS:
+				category = "\n[[Category:News]]";
+				break;
+			case SCREENSHOT:
+				try {
+					text = getPageSource("Fiji:Featured_Projects");
+				} catch (IOException e) {
+					IJ.error("Could not get page source for '" + name + "'");
+					return;
+				}
+				text += "\n* " + name + "|"
+					+ screenshot.getTitle() + "\n"
+					+ "The [[" + name + "]] plugin <describe the project here>\n";
+				break;
+		}
 		editor.getTextArea().setText(text + category);
 		editor.getTextArea().setCaretPosition(text.length());
 
@@ -245,6 +284,8 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		if (!saveOrUploadImages(client, images))
 			return;
 
+		String name = mode == Mode.SCREENSHOT ?
+			"Fiji:Featured_Projects" : this.name;
 		boolean result =
 			client.uploadPage(name, getText(), "Add " + name);
 
@@ -274,6 +315,8 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 
 		if (!client.login("Wiki Login (Preview)"))
 			return;
+		String name = mode == Mode.SCREENSHOT ?
+			"Fiji:Featured_Projects" : this.name;
 		String html = client.uploadOrPreviewPage(name, getText(),
 				"Add " + name, true);
 		client.logOut();
@@ -344,11 +387,36 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		}
 	}
 
+	public String getPageSource(String title) throws IOException {
+		String result = getPage(title, "edit");
+		client.logOut();
+		int offset = result.indexOf("id=\"wpTextbox1\"");
+		if (offset < 0)
+			return "";
+		offset = result.indexOf('>', offset);
+		if (offset < 0)
+			return "";
+		int endOffset = result.indexOf("</textarea>", offset);
+		if (endOffset < 0)
+			return "";
+		return result.substring(offset + 1, endOffset);
+	}
+
 	/* This method must not log out */
 	public String getPage(String title) throws IOException {
+		return getPage(title, null);
+	}
+
+	public String getPage(String title, String action) throws IOException {
+		getClient();
 		String[] getVars = {
 			"title", title
 		};
+		if (action != null)
+			getVars = new String[] {
+				"title", title,
+				"action", action
+			};
 		String result = client.sendRequest(getVars, null);
 		if (result == null || result.indexOf("Login Required") > 0 ||
 				result.indexOf("Login required") > 0) {
@@ -363,6 +431,10 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 
 	protected List<String> getImages() {
 		List<String> result = new ArrayList<String>();
+		if (mode == Mode.SCREENSHOT) {
+			result.add(screenshot.getTitle());
+			return result;
+		}
 		String text = getText();
 		int image = 0;
 		for (;;) {
