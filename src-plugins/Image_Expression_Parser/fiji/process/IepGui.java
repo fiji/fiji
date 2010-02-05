@@ -1,4 +1,5 @@
 package fiji.process;
+
 import ij.ImageListener;
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -17,9 +18,12 @@ import java.awt.event.ComponentListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
+import javax.swing.BorderFactory;
 
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JEditorPane;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -29,11 +33,26 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import javax.swing.border.LineBorder;
+import javax.swing.text.html.HTMLDocument;
 
 import org.nfunk.jep.JEP;
 import org.nfunk.jep.type.DoubleNumberFactory;
 
 
+
+
+/**
+* This code was edited or generated using CloudGarden's Jigloo
+* SWT/Swing GUI Builder, which is free for non-commercial
+* use. If Jigloo is being used commercially (ie, by a corporation,
+* company or business for any purpose whatever) then you
+* should purchase a license for each developer using Jigloo.
+* Please visit www.cloudgarden.com for details.
+* Use of Jigloo implies acceptance of these licensing terms.
+* A COMMERCIAL LICENSE HAS NOT BEEN PURCHASED FOR
+* THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
+* LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
+*/
 public class IepGui extends javax.swing.JFrame implements ImageListener, ActionListener {
 
 
@@ -57,7 +76,16 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 	private static final int BOX_SPACE 	= 40;
 	private static final String[] MESSAGES = {		
 		"Enter an expression using canonical mathematical functions, and capital single" +
-		"letters as variable specifying the chosen image."	
+		"letters as variable specifying the chosen image.\n" +
+		"\n" +
+		"Supported functions:" +
+		"<table>" +
+		"<tr>" +
+		"<td>row 1, cell 1</td>" +
+		"<td>row 1, cell 2</td>" +
+		"</tr>" +
+		"</table>",
+		"No images are opened."
 		};
 	
 	 private ArrayList<ActionListener> action_listeners = new ArrayList<ActionListener>();
@@ -83,7 +111,8 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 	private JScrollPane jScrollPaneImages;
 	private JPanel jPanelLeft;
 	private JPanel jPanelRight;
-	private JTextArea jTextAreaInfo;
+	private JEditorPane jTextAreaInfo;
+	private JScrollPane jScrollPane1;
 	private JButton jButtonOK;
 	private JButton jButtonCancel;
 	private JTextField jTextFieldExpression;
@@ -263,9 +292,8 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 	private void initImageList() {
 		int[] IDs = WindowManager.getIDList();
 		if (null == IDs) {
-			image_names = new String[] {"No images are opened"};
+			image_names = new String[] { MESSAGES[1] };
 			images = new ArrayList<ImagePlus>();
-			images.add(null);
 			return;
 		}
 		ImagePlus imp;
@@ -282,9 +310,20 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 	 * to the {@link JComboBox} that display then.
 	 */
 	private void refreshImageNames() {
-		image_names = new String[images.size()];
+		if (images.size() < 1) {
+			image_names = new String[] { MESSAGES[1] };
+		} else {
+			image_names = new String[images.size()];
+		}
 		for (int i = 0; i < images.size(); i++) {
-			image_names[i] = images.get(i).getTitle();
+			image_names[i] = images.get(i).getTitle();			
+		}
+		int current_index;
+		int max_index = images.size()-1;
+		for (JComboBox box : image_boxes) {
+			current_index = box.getSelectedIndex();
+			box.setModel(new DefaultComboBoxModel(image_names));
+			box.setSelectedIndex(Math.min(current_index, max_index));
 		}
 	}
 	
@@ -354,13 +393,14 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 				{
 					jPanelRight = new JPanel();
 					GridBagLayout jPanelRightLayout = new GridBagLayout();
-					jPanelRightLayout.rowWeights = new double[] {0.0, 0.0, 1.0, 0.0};
+					jPanelRightLayout.rowWeights = new double[] {0.0, 0.0, 0.5, 0.0};
 					jPanelRightLayout.rowHeights = new int[] {7, 7, 7, 7};
-					jPanelRightLayout.columnWeights = new double[] {0.0, 1.0, 0.0};
+					jPanelRightLayout.columnWeights = new double[] {0.0, 0.5, 0.0};
 					jPanelRightLayout.columnWidths = new int[] {4, 7, 7};
 					jSplitPane1.add(jPanelRight, JSplitPane.RIGHT);
 					jPanelRight.setBorder(new LineBorder(new java.awt.Color(0,0,0), 1, false));
 					jPanelRight.setLayout(jPanelRightLayout);
+					jPanelRight.setMinimumSize(new java.awt.Dimension(1, 1));
 					{
 						jLabelExpression = new JLabel();
 						jPanelRight.add(jLabelExpression, new GridBagConstraints(-1, 0, 4, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(20, 10, 0, 0), 0, 0));
@@ -393,13 +433,22 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 						jButtonOK.addActionListener(this);
 					}
 					{
-						jTextAreaInfo = new JTextArea();
-						jTextAreaInfo.setEditable(false);
-						jPanelRight.add(jTextAreaInfo, new GridBagConstraints(0, 2, 3, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(10, 10, 10, 10), 0, 0));
-						jTextAreaInfo.setOpaque(false);
-						jTextAreaInfo.setLineWrap(true);
-						jTextAreaInfo.setWrapStyleWord(true);
-						jTextAreaInfo.setFont(new Font("Arial", Font.PLAIN, 10));
+						jScrollPane1 = new JScrollPane();
+						jPanelRight.add(jScrollPane1, new GridBagConstraints(0, 2, 3, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(10, 10, 10, 10), 0, 0));
+						jScrollPane1.setOpaque(false);
+						jScrollPane1.setBorder(null);
+						{
+							jTextAreaInfo = new JEditorPane();
+							jTextAreaInfo.setBorder(null);
+							jScrollPane1.setViewportView(jTextAreaInfo);
+							jTextAreaInfo.setContentType("text/html");
+							jTextAreaInfo.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true);
+							jTextAreaInfo.setFont(new Font("Arial", Font.PLAIN, 10));
+							jTextAreaInfo.setEditable(false);
+//							background-color:transparent
+							
+							
+						}
 					}
 				}
 				{
@@ -473,6 +522,4 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 			e.printStackTrace();
 		}
 	}
-
-
 }
