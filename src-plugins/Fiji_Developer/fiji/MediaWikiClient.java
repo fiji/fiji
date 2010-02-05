@@ -23,6 +23,8 @@
 
 package fiji;
 
+import ij.plugin.BrowserLauncher;
+
 import java.net.URL;
 import java.net.HttpURLConnection;
 import java.net.URLEncoder;
@@ -30,6 +32,7 @@ import java.net.URLEncoder;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
@@ -43,7 +46,7 @@ import java.util.regex.Matcher;
 
 public class MediaWikiClient {
 	final String wikiBaseURI;
-	String sessionID;
+	String sessionID, domain;
 
 	public MediaWikiClient() {
 		this("http://pacific.mpi-cbg.de/wiki/index.php");
@@ -54,7 +57,7 @@ public class MediaWikiClient {
 	}
 
 	boolean hasSessionKey() {
-		return cookies.containsKey("wikidb_session");
+		return cookies.containsKey(sessionKey);
 	}
 
 	boolean loggedIn = false;
@@ -84,6 +87,12 @@ public class MediaWikiClient {
 					return false;
 				}
 			}
+			if (domain != null)
+				postVars = new String[] {
+					"wpName", user,
+					"wpPassword", password,
+					"wpDomain", domain
+				};
 
 			String response =
 				sendRequest(getVars, postVars);
@@ -108,16 +117,22 @@ public class MediaWikiClient {
 		return false;
 	}
 
-	String valueRegex = "value=\"([^\"]*)\"";
-	Pattern editFormPattern =
-		Pattern.compile(".*"
-				+ "<input type='hidden' " + valueRegex
-				+ " name=\"wpEdittime\" />.*"
-				+ "<input type='hidden' " + valueRegex
-				+ " name=\"wpEditToken\" />.*"
-				+ "<input name=\"wpAutoSummary\" "
-				+ "type=\"hidden\" " + valueRegex + " />.*",
-				Pattern.DOTALL);
+	protected String getFormVariable(String html, String name) {
+		Pattern pattern = Pattern.compile(".*<input type=.hidden. "
+			+ "value=\"([^\"]*)\" name=\"" + name
+			+ "\" />.*", Pattern.DOTALL);
+		Matcher matcher = pattern.matcher(html);
+		if (matcher.matches())
+			return matcher.group(1);
+		pattern = Pattern.compile(".*<input name=\"" + name
+			+ "\" type=.hidden. value=\"([^\"]*)\" />.*",
+			Pattern.DOTALL);
+		matcher = pattern.matcher(html);
+		if (matcher.matches())
+			return matcher.group(1);
+		return null;
+	}
+
 	public boolean uploadPage(String title,
 			String contents, String comment) {
 		return uploadOrPreviewPage(title, contents, comment, false)
@@ -132,10 +147,16 @@ public class MediaWikiClient {
 				"action", "edit"
 			};
 			String response = sendRequest(getVars, null);
-			Matcher matcher =
-				editFormPattern.matcher(response);
-			if (!matcher.matches())
+			String time = getFormVariable(response, "wpEdittime");
+			String token = getFormVariable(response, "wpEditToken");
+			String summary =
+				getFormVariable(response, "wpAutoSummary");
+			if (time == null || token == null || summary == null) {
+				System.err.println("time: " + time + ", token: "
+					+ token + ", summary: " + summary);
 				return null;
+			}
+
 			getVars = new String[] {
 				"title", title,
 					"action", "submit"
@@ -144,9 +165,9 @@ public class MediaWikiClient {
 				"wpSave", "Save page",
 				"wpTextbox1", contents,
 				"wpSummary", comment,
-				"wpEdittime", matcher.group(1),
-				"wpEditToken", matcher.group(2),
-				"wpAutoSummary", matcher.group(3)
+				"wpEdittime", time,
+				"wpEditToken", token,
+				"wpAutoSummary", summary
 			};
 			if (previewOnly) {
 				postVars[0] = "wpPreview";
@@ -288,10 +309,6 @@ public class MediaWikiClient {
 		if (httpCode != 200)
 			throw new IOException("HTTP code: " + httpCode);
 
-		if (getSessionKey)
-			getCookies(conn.getHeaderFields()
-					.get("Set-Cookie"));
-
 		InputStream in = conn.getInputStream();
 		response = "";
 		byte[] buffer = new byte[1<<16];
@@ -302,6 +319,20 @@ public class MediaWikiClient {
 			response += new String(buffer, 0, len);
 		}
 		in.close();
+
+		if (getSessionKey) {
+			getCookies(conn.getHeaderFields()
+					.get("Set-Cookie"));
+
+			domain = null;
+			int off = response.indexOf("<select name=\"wpDomain\"");
+			if (off > 0) {
+				int i1 = response.indexOf("<option>", off) + 8;
+				int i2 = response.indexOf("</option>", i1);
+				if (i1 > 8 && i2 > 0)
+					domain = response.substring(i1, i2);
+			}
+		}
 
 		return response;
 	}
@@ -322,18 +353,32 @@ public class MediaWikiClient {
 		ps.print("\r\n");
 	}
 
+	String sessionKey = "wikidb_session";
 	Pattern cookiePattern =
-		Pattern.compile("^(wikidb_session)=([^;]*);.*$");
+		Pattern.compile("^(wikidb_[^=]*session)=([^;]*);.*$");
 	void getCookies(List<String> headers) {
 		if (headers == null)
 			return;
 		for (String s : headers) {
 			Matcher matcher = cookiePattern.matcher(s);
 			if (matcher.matches()) {
-				String key = matcher.group(1);
+				sessionKey = matcher.group(1);
 				String value = matcher.group(2);
-				cookies.put(key, value);
+				cookies.put(sessionKey, value);
 			}
+		}
+	}
+
+	protected void debugShow(String html) {
+		try {
+			File tmp = File.createTempFile("preview", ".html");
+			tmp.deleteOnExit();
+			FileOutputStream out = new FileOutputStream(tmp);
+			out.write(html.getBytes());
+			out.close();
+			new BrowserLauncher().run(tmp.getAbsolutePath());
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 }

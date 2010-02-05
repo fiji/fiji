@@ -45,7 +45,7 @@ public class ClassCompletionProvider extends CompletionProviderBase
 	private CompletionProvider docCommentCompletionProvider;
 
 	Package topLevel;
-	ClassNames names;
+	final public ClassNames names;
 	String language;
 	/**
 	 * Constructor.

@@ -43,4 +43,15 @@ public class GraphicalMediaWikiClient extends MediaWikiClient {
 		}
 		return true;
 	}
+
+	public static void main(String[] args) {
+		if (args.length != 1) {
+			System.err.println("Need 1 arg: the wiki URL");
+			System.exit(1);
+		}
+
+		GraphicalMediaWikiClient client =
+			new GraphicalMediaWikiClient(args[0]);
+		System.err.println("login: " + client.login("Test"));
+	}
 }

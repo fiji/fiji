@@ -1,7 +1,5 @@
 package fiji.scripting.completion;
 
-import java.awt.List;
-
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 
@@ -15,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -36,9 +35,6 @@ element as awt which in turn has its childDList having its one childList
 as Listwhich is infact also a leaf ***********/
 
 public class ClassNames {
-
-	static List list = new List();
-
 	static Package root = new Package();
 	DefaultProvider defaultProvider;
 	Enumeration list1;
@@ -405,5 +401,30 @@ public class ClassNames {
 			}
 		}
 
+	}
+
+	public List<String> getFullPackageNames(String className) {
+		List<String> result = new ArrayList<String>();
+		getFullPackageNames(className, root, "", 10, result);
+		return result;
+	}
+
+	public void getFullPackageNames(String className, Package root,
+			String packagePrefix, int max, List<String> result) {
+		if (result.size() >= max)
+			return;
+		for (Item item : root) {
+			if (item instanceof Package)
+				getFullPackageNames(className, (Package)item,
+					packagePrefix + item.getName(),
+					max, result);
+			else if (item instanceof ClassName &&
+					className.equals(item.getName()))
+				result.add(packagePrefix + item.getName());
+			else
+				continue;
+			if (result.size() >= max)
+				return;
+		}
 	}
 }
