@@ -66,37 +66,16 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 			IJ.error("Input images do not have all the same dimensions.");
 			return;
 		}
-		
-//		// DEBUG
-//		StringBuilder str = new StringBuilder();
-//		str.append("To evaluate:\n\t");
-//		str.append(expression);
-//		str.append('\n');
-//		str.append("with the current variables:\n");
-//		for (int i = 0; i < variables.length; i++) {
-//			str.append('\t');
-//			str.append(variables[i]);
-//			str.append(" = ");
-//			if ( null == images.get(i)) {
-//				str.append("no image");
-//			} else {
-//				str.append(images.get(i).toString());
-//			}
-//			str.append('\n');
-//		}
-//		System.out.println(str);
-		
+
+		// Exec
 		Image<FloatType> result = getResult();
 		ImagePlus imp_result = ImageJFunctions.copyToImagePlus(result);
 		imp_result.show();
-
 	}
-
 
 	/*
 	 * PRIVATE METHODS
 	 */
-	
 	
 	private Image<FloatType> getResult() {
 		
@@ -107,11 +86,7 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 		for (String var : variables) {
 			parser.addVariable(var, null);
 		}
-		try {
-			parser.parse(expression);
-		} catch (ParseException e) {
-			e.printStackTrace();
-		}
+		parser.parseExpression(expression);
 		
 		// Build temp copy of images array
 		ArrayList<Image<T>> temp = new ArrayList<Image<T>>(images);
@@ -156,7 +131,8 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 			result_cursor.getType().set(result_value);
 		}
 		
-	return result;	
+		// Done!
+		return result;	
 	}
 	
 	/**
