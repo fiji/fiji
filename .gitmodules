@@ -64,3 +64,6 @@
 [submodule "imglib"]
 	path = imglib
 	url = contrib@pacific.mpi-cbg.de:/srv/git/imglib.git
+[submodule "commons-math"]
+	path = commons-math
+	url = contrib@pacific.mpi-cbg.de:/srv/git/commons-math
