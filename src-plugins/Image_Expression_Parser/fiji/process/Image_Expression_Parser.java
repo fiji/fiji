@@ -7,7 +7,6 @@ import ij.plugin.PlugIn;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Collections;
 
 import mpicbg.imglib.container.imageplus.ImagePlusContainerFactory;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
@@ -20,12 +19,10 @@ import mpicbg.imglib.type.NumericType;
 import mpicbg.imglib.type.numeric.FloatType;
 
 import org.nfunk.jep.JEP;
-import org.nfunk.jep.ParseException;
 import org.nfunk.jep.type.DoubleNumberFactory;
 
 public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn, ActionListener {
 	
-	protected ImagePlus image;
 	protected boolean user_has_canceled = false;
 	/** Array of Imglib images, on which calculations will be done */
 	protected ArrayList<Image<T>> images;
@@ -33,13 +30,19 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 	protected String[] variables;
 	/** The expression to evaluate */
 	protected String expression;
-
-
+	/** Here is stored the result of the evaluation */
+	protected Image<FloatType> result = null;
+	/** If an error occurred, an error message is put here	 */
+	protected String error_message = "";
+	
+	/*
+	 * RUN METHOD
+	 */
 	
 	/**
-	 * 
+	 * Launch the interactive version if this plugin. This is made by first
+	 * displaying the GUI. Must be launched from ImageJ.
 	 */
-//	@Override
 	public synchronized void run(String arg) {
 		// Launch GUI and wait for user 
 		IepGui gui = displayGUI();
@@ -48,8 +51,9 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}			
-		gui.dispose();
+		gui.removeActionListener(this);
 		ImagePlus.removeImageListener(gui);
+		gui.dispose();
 		if (user_has_canceled) {
 			return;
 		}
@@ -61,23 +65,60 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 		convertToImglib(imps); // will set #images field
 		
 		// Check inputs (this should be done in the GUI)
-		boolean valid_dimensions = checkDimensions();
-		if (!valid_dimensions) { 
-			IJ.error("Input images do not have all the same dimensions.");
+		if (!dimensionsAreValid()) {
+			error_message = "Input images do not have all the same dimensions.";
+			IJ.error(error_message);
 			return;
 		}
-
+		
+		// Check if expression is valid (this too)
+		Object[] validity = isExpressionValid();
+		boolean is_valid = (Boolean) validity[0];
+		String error_msg = (String) validity[1];
+		if (!is_valid) {
+			error_message = "Expression is invalid:\n"+error_msg; 
+			IJ.error(error_message);
+			return;
+		}
+		
 		// Exec
-		Image<FloatType> result = getResult();
+		exec();
 		ImagePlus imp_result = ImageJFunctions.copyToImagePlus(result);
 		imp_result.show();
 	}
 
 	/*
-	 * PRIVATE METHODS
+	 * PUBLIC METHODS
 	 */
 	
-	private Image<FloatType> getResult() {
+	/**
+	 * Execute calculation, given the expression, variable list and image list set for
+	 * this instance. The resulting image can be accessed afterwards by using {@link #getResult()}.
+	 * <p>
+	 * If the expression is invalid or if the image dimensions mismatch, and error
+	 * is thrown and the field {@link #result} is set to <code>null</code>. In this
+	 * case, an explanatory error message can be obtained by {@link #getErrorMessage()}.
+	 * @see {@link #getErrorMessage()}, {@link #setExpression(String)}, {@link #setVariables(String[])}, 
+	 * {@link #setImageList(ArrayList)}, {@link #getResult()}
+	 */
+	public void exec() {
+		
+		// Check inputs 
+		if (!dimensionsAreValid()) {
+			error_message = "Input images do not have all the same dimensions.";
+			result = null;
+			return;
+		}
+		
+		// Check if expression is valid 
+		Object[] validity = isExpressionValid();
+		boolean is_valid = (Boolean) validity[0];
+		String error_msg = (String) validity[1];
+		if (!is_valid) {
+			error_message = "Expression is invalid:\n"+error_msg;
+			result = null;
+			return;
+		}
 		
 		// Instantiate and prepare parser
 		final JEP parser = new JEP(false, false, false, new DoubleNumberFactory());
@@ -103,11 +144,11 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 		}
 
 		// Prepare new image
-		Image<FloatType> result = new ImageFactory<FloatType>(new FloatType(), new ImagePlusContainerFactory())
+		Image<FloatType> result_im = new ImageFactory<FloatType>(new FloatType(), new ImagePlusContainerFactory())
 			.createImage(first_im.getDimensions(), expression);
 		
 		// Create cursor for new image
-		LocalizableByDimCursor<FloatType> result_cursor = result.createLocalizableByDimCursor();
+		LocalizableByDimCursor<FloatType> result_cursor = result_im.createLocalizableByDimCursor();
 		
 		// Iterate over cursors.
 		// We iterate using the first cursor. The other ones are moved according to this one
@@ -132,8 +173,62 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 		}
 		
 		// Done!
-		return result;	
+		error_message = "";
+		result = result_im;	
 	}
+	
+	
+	
+	/*
+	 * SETTERS AND GETTERS 
+	 */
+	
+
+	/**
+	 * Return the result of the evaluation of the expression over the images given.
+	 * Is <code>null</code> if {@link #exec()} was not called before.
+	 */
+	public Image<FloatType> getResult()  {
+		return this.result;
+	}
+	
+	/**
+	 * If an error occurred during the call of {@link #exec()}, an error message can be read here. 
+	 */
+	public String getErrorMessage() {
+		return this.error_message;
+	}
+	
+	/**
+	 * Set the expression to evaluate.
+	 */
+	public void setExpression(String _expression) {
+		this.expression = _expression;
+	}
+	
+	public String getExpression() {
+		return this.expression;
+	}
+	
+	public void setImageList(ArrayList<Image<T>> _images) {
+		this.images = _images;
+	}
+	
+	public ArrayList<Image<T>> getImageList() {
+		return this.images;
+	}
+	
+	public void setVariables(String[] _variables) {
+		this.variables = _variables;
+	}
+	
+	public String[] getVariables() {
+		return this.variables;
+	}
+	
+	/*
+	 * PRIVATE METHODS
+	 */
 	
 	/**
 	 * Launch and display the GUI. Returns a reference to it that can be used
@@ -147,11 +242,11 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 		gui.addActionListener(this);
 		return gui;
 	}
-	
+
 	/**
-	 * Check that all images have the same dimensions
+	 * Check that all images have the same dimensions. 
 	 */
-	private boolean checkDimensions() {
+	private boolean dimensionsAreValid() {
 		if (images.size() == 1) { return true; }
 		int[] previous_dims = images.get(0).getDimensions();
 		int[] dims;
@@ -164,6 +259,32 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 			previous_dims = dims;
 		}
 		return true;		
+	}
+
+	/**
+	 * Check that the current expression is valid.
+	 * <p>
+	 * Return a 2 elements array:
+	 * <ul>
+	 * <li> the first one is a boolean, true if the expression is valid, false otherwise;
+	 * <li> the second one is a String containing the parser error message if the expression is invalid, 
+	 * or the empty string if it is valid.
+	 * </ul>
+	 */
+	private Object[] isExpressionValid() {
+		final JEP parser = new JEP(false, false, false, new DoubleNumberFactory());
+		parser.addStandardConstants();
+		parser.addStandardFunctions();
+		for ( String var : variables ) {
+			parser.addVariable(var, null); // we do not care for value yet
+		}
+		parser.parseExpression(expression);
+		final String error = parser.getErrorInfo();
+		if ( null == error) {
+			return new Object[] { true, "" };
+		} else {
+			return new Object[] { false, error };
+		}
 	}
 	
 	/**
@@ -199,14 +320,29 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 	/*
 	 * MAIN METHOD
 	 */
-	
-	@SuppressWarnings("unchecked")
-	public static void main(String[] args) {
-		Image_Expression_Parser iep = new Image_Expression_Parser();
-		iep.run("");
+		
+	public static <T extends NumericType<T>> void main(String[] args) {
+		ImagePlus imp = IJ.openImage("http://rsb.info.nih.gov/ij/images/blobs.gif");
+		Image<T> img = ImagePlusAdapter.wrap(imp);
+		imp.show();
+		
+		Image_Expression_Parser<T> iep = new Image_Expression_Parser<T>();
+		iep.setExpression("A^2");
+		iep.setVariables(new String[] {"A"});
+		ArrayList<Image<T>> images = new ArrayList<Image<T>>();
+		images.add(img);
+		iep.setImageList(images);
+		iep.exec();
+		Image<FloatType> result = iep.getResult();
+		if (null != result) {
+			ImagePlus result_imp = ImageJFunctions.copyToImagePlus(result);
+			result_imp.getProcessor().resetMinAndMax();
+			result_imp.show();			
+		} else {
+			System.err.println("Could not evaluate expression:");
+			System.err.println(iep.getErrorMessage());
+		}
 	}
-
-
 }
 
 
