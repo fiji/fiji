@@ -17,6 +17,8 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.util.ArrayList;
 
 import javax.swing.DefaultComboBoxModel;
@@ -29,7 +31,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
-import javax.swing.WindowConstants;
 import javax.swing.border.LineBorder;
 
 import org.nfunk.jep.JEP;
@@ -39,18 +40,12 @@ import org.nfunk.jep.type.DoubleNumberFactory;
 
 
 /**
-* This code was edited or generated using CloudGarden's Jigloo
-* SWT/Swing GUI Builder, which is free for non-commercial
-* use. If Jigloo is being used commercially (ie, by a corporation,
-* company or business for any purpose whatever) then you
-* should purchase a license for each developer using Jigloo.
-* Please visit www.cloudgarden.com for details.
-* Use of Jigloo implies acceptance of these licensing terms.
-* A COMMERCIAL LICENSE HAS NOT BEEN PURCHASED FOR
-* THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
-* LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
+ * This is a GUI for the plugin {@link Image_Expression_Parser}. 
+ * <p>
+ * It was built in part using Jigloo GUI builder.
+ * @author Jean-Yves Tinevez
 */
-public class IepGui extends javax.swing.JFrame implements ImageListener, ActionListener {
+public class IepGui extends javax.swing.JFrame implements ImageListener, ActionListener, WindowListener {
 
 
 	{
@@ -72,25 +67,29 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 	private static final long serialVersionUID = 1L;
 	private static final int BOX_SPACE 	= 40;
 	public static final String[] MESSAGES = {		
-		"Enter an expression using canonical mathematical functions, and capital single" +
-		"letters as variable specifying the chosen image.\n" +
+		"Enter an expression using canonical mathematical functions, and capital single " +
+		"letters as variable specifying the chosen image. Boolean operations are also supported.\n" +
 		"<p>" +
 		"Examples: <br>" +
-		"&nbsp&nbsp A+2*B*C<br>" +
-		"&nbsp&nbsp sqrt(A^2+B^2)*cos(C)<br>" +
-		"&nbsp&nbsp A > B<br>" +
+		"&nbsp&nbsp ■ 2*A<br>" +
+		"&nbsp&nbsp ■ A*(B+30)<br>" +
+		"&nbsp&nbsp ■ sqrt(A^2+B^2)*cos(C)<br>" +
+		"&nbsp&nbsp ■ A > B<br>" +
 		"<p>" +
 		"<u>Supported functions:</u><br>" +
 		"<table border=\"1\">" +
 		"<tr>" +
-		"<th>Function</th>" +
+		"<th>Description</th>" +
 		"<th>Syntax</th>" +
-		"</tr>" +
-		"<tr>" +
-		"<td><i>e</i></td> <td>e</td>"+
+		"</tr>"+
+		"<tr>"+
+		"<td>Euler constant</td> <td>e</td>"+
 		"</tr>"+
 		"<tr>"+
 		"<td>π</td> <td>pi</td>"+
+		"</tr>"+
+		"<tr>" +
+		"<td>Standard operators</td><td>+, -, *, /, ^, %</td>"+
 		"</tr>"+
 		"<tr>" +
 		"<td>Sine</td><td>sin</td>"+
@@ -175,6 +174,15 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 		"</tr>"+
 		"<tr>" +
 		"<td>Ceiling</td><td>ceil</td>" +
+		"</tr>"+
+		"<tr>" +
+		"<td>Boolean operators</td><td>!, &&, ||, <, >, !=, ==, >=, <=</td>" +	
+		"</tr>"+
+		"<tr>" +
+		"<td>Boolean true</td> <td>true</td>"+
+		"</tr>"+
+		"<tr>" +
+		"<td>Boolean false</td> <td>false</td>"+
 		"</table> ",
 		"No images are opened.",
 		"Image dimensions are incompatibles."
@@ -231,6 +239,7 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 		super();
 		initImageList();
 		initGUI();
+		addWindowListener(this);
 		addImageBox();
 		jButtonMinus.setEnabled(false);
 		jTextAreaInfo.setText(MESSAGES[0]);
@@ -257,13 +266,17 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 	 * @see {@link IepGui#getExpression()}, {@link #getVariables()}
 	 */
 	public ImagePlus[] getImages() {
-		final ImagePlus[] imps = new ImagePlus[n_image_box];
-		JComboBox box;
-		for ( int i=0; i<n_image_box; i++) {
-			box = image_boxes.get(i);
-			imps[i] = images.get(box.getSelectedIndex());
+		if (images.size() > 0) {
+			final ImagePlus[] imps = new ImagePlus[n_image_box];
+			JComboBox box;
+			for ( int i=0; i<n_image_box; i++) {
+				box = image_boxes.get(i);
+				imps[i] = images.get(box.getSelectedIndex());
+			}
+			return imps;
+		} else {
+			return null;
 		}
-		return imps;
 	}
 	
 	/**
@@ -302,23 +315,40 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 	}
 	
 	/**
-	 * Called when an image is selected in a box. 
+	 * Called when something is selected or typed.
+	 * Goal is to check that everything is valid. 
 	 */
-	private void checkDimensions() {
-		if (compatibleDimensions()) {
-			jButtonOK.setEnabled(true);
-			for (JComboBox box : image_boxes) {
-				box.setForeground(Color.BLACK);
-			}
-			jTextAreaInfo.setText(MESSAGES[0]);
-			jTextAreaInfo.setCaretPosition(0);
-		} else {
+	private void checkValid() {
+		if (!this.isShowing()) return; // prevent to check while init
+		if (!compatibleDimensions()) {
 			jButtonOK.setEnabled(false);
 			for (JComboBox box : image_boxes) {
 				box.setForeground(Color.RED);
 			}
 			jTextAreaInfo.setText(MESSAGES[2]);
 			jTextAreaInfo.setCaretPosition(0);
+			return;
+			
+		} else { 
+			
+			String error = getExpressionError();
+			if ( error.length() != 0) {
+			jButtonOK.setEnabled(false);
+			jTextFieldExpression.setForeground(Color.RED);
+			jTextAreaInfo.setText(error);			
+			jTextAreaInfo.setCaretPosition(0);
+			
+			} else {
+				
+				jButtonOK.setEnabled(true);
+				for (JComboBox box : image_boxes) {
+					box.setForeground(Color.BLACK);
+				}
+				jTextFieldExpression.setForeground(Color.BLACK);
+				jTextAreaInfo.setText(MESSAGES[0]);
+				jTextAreaInfo.setCaretPosition(0);
+				
+			}
 		}
 	}
 	
@@ -326,13 +356,15 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 	 * Check that dimensions are compatible.
 	 */
 	private boolean compatibleDimensions() {
-		if (images.size() <= 1) {
+		ImagePlus[] selected_images = getImages();
+		if (null == selected_images) return true; // avoid check for empty list
+		if (selected_images.length <= 1) {
 			return true;
 		}
 		int[] dim;
-		int[] old_dim = images.get(0).getDimensions();
-		for (int i=1; i<images.size(); i++) {
-			dim = images.get(i).getDimensions();
+		int[] old_dim = selected_images[0].getDimensions();
+		for (int i=1; i<selected_images.length; i++) {
+			dim = selected_images[i].getDimensions();
 			if (dim.length != old_dim.length) {
 				return false;
 			}
@@ -341,6 +373,7 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 					return false;
 				}
 			}
+			old_dim = dim;
 		}
 		return true;
 	}
@@ -348,13 +381,10 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 	/**
 	 * Called when the user type something in the expression area. 
 	 */
-	private void checkExpression() {
+	private String getExpressionError() {
 		final String expression = jTextFieldExpression.getText();
 		if ( (null == expression) || (expression.equals(""))  ) {
-			jButtonOK.setEnabled(false);
-			jTextAreaInfo.setText(MESSAGES[0]);
-			jTextAreaInfo.setCaretPosition(0);
-			return;
+			return "";
 		}
 		final JEP parser = new JEP(false, false, false, new DoubleNumberFactory());
 		parser.addStandardConstants();
@@ -365,14 +395,9 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 		parser.parseExpression(expression);
 		final String error = parser.getErrorInfo();
 		if ( null == error) {
-			jButtonOK.setEnabled(true);
-			jTextFieldExpression.setForeground(Color.BLACK);
-			jTextAreaInfo.setText(MESSAGES[0]);
-			jTextAreaInfo.setCaretPosition(0);
+			return "";
 		} else {
-			jButtonOK.setEnabled(false);
-			jTextFieldExpression.setForeground(Color.RED);
-			jTextAreaInfo.setText(error);
+			return error;
 		}
 	}
 	
@@ -393,14 +418,14 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 		combo_box.setBounds(30, 10+BOX_SPACE*n_image_box, width-50, 30);
 		combo_box.setFont(new Font("Arial", Font.PLAIN, 10));
 		combo_box.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) { checkDimensions();	}
+			public void actionPerformed(ActionEvent e) { checkValid(); }
 		});
 		labels.add(label);
 		image_boxes.add(combo_box);
 		jPanelImages.setPreferredSize(new Dimension(width, 50+BOX_SPACE*n_image_box));
 		n_image_box++;
 		refreshVariableList();
-		checkExpression();
+		checkValid();
 		if (n_image_box >= 26) {
 			jButtonPlus.setEnabled(false);
 		}
@@ -419,7 +444,7 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 		jPanelImages.revalidate();
 		jPanelImages.repaint();
 		refreshVariableList();
-		checkExpression();
+		checkValid();
 		if (n_image_box <= 1) {
 			jButtonMinus.setEnabled(false);
 		}
@@ -467,7 +492,7 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 			box.setModel(new DefaultComboBoxModel(image_names));
 			box.setSelectedIndex(Math.min(current_index, max_index));
 		}
-		checkDimensions();
+		if (this.isShowing()) checkValid();
 	}
 	
 	/**
@@ -525,7 +550,6 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 	 */
 	private void initGUI() {
 		try {
-			setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 			this.setTitle("Image Expression Parser");
 			{
 				jSplitPane1 = new JSplitPane();
@@ -557,7 +581,7 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 						jTextFieldExpression.addKeyListener(new KeyListener() {
 							public void keyTyped(KeyEvent e) {}
 							public void keyReleased(KeyEvent e) {
-								checkExpression();
+								checkValid();
 							}
 							public void keyPressed(KeyEvent e) {}
 						});
@@ -591,8 +615,6 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 							jTextAreaInfo.setOpaque(false);
 							jTextAreaInfo.setContentType("text/html");
 							jTextAreaInfo.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true);
-//							jTextAreaInfo.setLineWrap(true);
-//							jTextAreaInfo.setWrapStyleWord(true);
 						}
 					}
 				}
@@ -667,4 +689,22 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 			e.printStackTrace();
 		}
 	}
+
+	/*
+	 * WINDOWLISTENER METHODS
+	 */
+	
+	public void windowActivated(WindowEvent e) {	}
+	public void windowClosed(WindowEvent e) {	}
+
+	public void windowClosing(WindowEvent e) {	
+		ImagePlus.removeImageListener(this);
+		this.removeWindowListener(this);
+		this.dispose();
+	}
+
+	public void windowDeactivated(WindowEvent e) {	}
+	public void windowDeiconified(WindowEvent e) {	}
+	public void windowIconified(WindowEvent e) {	}
+	public void windowOpened(WindowEvent e) {	}
 }
