@@ -18,7 +18,6 @@ import java.awt.event.ComponentListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
-import javax.swing.BorderFactory;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -28,12 +27,10 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
-import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import javax.swing.border.LineBorder;
-import javax.swing.text.html.HTMLDocument;
 
 import org.nfunk.jep.JEP;
 import org.nfunk.jep.type.DoubleNumberFactory;
@@ -74,18 +71,113 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 	
 	private static final long serialVersionUID = 1L;
 	private static final int BOX_SPACE 	= 40;
-	private static final String[] MESSAGES = {		
+	public static final String[] MESSAGES = {		
 		"Enter an expression using canonical mathematical functions, and capital single" +
 		"letters as variable specifying the chosen image.\n" +
-		"\n" +
-		"Supported functions:" +
-		"<table>" +
+		"<p>" +
+		"Examples: <br>" +
+		"&nbsp&nbsp A+2*B*C<br>" +
+		"&nbsp&nbsp sqrt(A^2+B^2)*cos(C)<br>" +
+		"&nbsp&nbsp A > B<br>" +
+		"<p>" +
+		"<u>Supported functions:</u><br>" +
+		"<table border=\"1\">" +
 		"<tr>" +
-		"<td>row 1, cell 1</td>" +
-		"<td>row 1, cell 2</td>" +
+		"<th>Function</th>" +
+		"<th>Syntax</th>" +
 		"</tr>" +
-		"</table>",
-		"No images are opened."
+		"<tr>" +
+		"<td><i>e</i></td> <td>e</td>"+
+		"</tr>"+
+		"<tr>"+
+		"<td>π</td> <td>pi</td>"+
+		"</tr>"+
+		"<tr>" +
+		"<td>Sine</td><td>sin</td>"+
+		"</tr>"+
+		"<tr>" +
+		"<td>Cosine</td><td>cos</td>" +
+		"</tr>"+
+		"<tr>" +
+		"<td>Tangent</td><td>tan</td>" +
+		"</tr>"+
+		"<tr>" +
+		"<td>Arc Sine</td><td>asin</td>" +
+		"</tr>"+
+		"<tr>" +
+		"<td>Arc Cosine</td><td>acos</td>" +
+		"</tr>"+
+		"<tr>" +
+		"<td>Arc Tangent</td><td>atan</td>" +
+		"</tr>"+
+		"<tr>" +
+		"<td>Arc Tangent 2 args</td><td>atan2(y,x)</td>" +
+		"</tr>"+
+		"<tr>" +
+		"<td>Hyperbolic Sine</td><td>sinh</td>" +
+		"</tr>"+
+		"<tr>" +
+		"<td>Hyperbolic Cosine</td><td>cosh</td>" +
+		"</tr>"+
+		"<tr>" +
+		"<td>Hyperbolic Tangent</td><td>tanh</td>" +
+		"</tr>"+
+		"<tr>" +
+		"<td>Hyperbolic Arc Sine</td><td>asinh</td>" +
+		"</tr>"+
+		"<tr>" +
+		"<td>Hyperbolic Arc Cosine</td><td>acosh</td>" +
+		"</tr>"+
+		"<tr>" +
+		"<td>Hyperbolic Arc Tangent</td><td>atanh</td>" +
+		"</tr>"+
+		"<tr>" +
+		"<td>Logarithm (base 10)</td><td>log</td>" +
+		"</tr>"+
+		"<tr>" +
+		"<td>Natural Logarithm</td><td>ln</td>" +
+		"</tr>"+
+		"<tr>" +
+		"<td>Exponential</td><td>exp</td>" +
+		"</tr>"+
+		"<tr>" +
+		"<td>Power</td><td>pow</td>" +
+		"</tr>"+
+		"<tr>" +
+		"<td>Square Root</td><td>sqr</td>" +
+		"</tr>"+
+		"<tr>" +
+		"<td>Absolute Value</td><td>abs</td>" +
+		"</tr>"+
+		"<tr>" +
+		"<td>Modulus</td><td>mod</td>" +
+		"</tr>"+
+		"<tr>" +
+		"<td>Sum</td><td>sum</td>" +
+		"</tr>"+
+		"<tr>" +
+		"<td>Randon Number</td><td>rand</td>" +
+		"</tr>"+
+		"<tr>" +
+		"<td>'If' tests</td><td>if(condExpr,posExpr,negExpr)</td>" +
+		"</tr>"+
+		"<tr>" +
+		"<td>To String</td><td>str</td>" +
+		"</tr>"+
+		"<tr>" +
+		"<td>Binomial Function</td><td>binom(n,i)</td>" +
+		"</tr>"+
+		"<tr>" +
+		"<td>Round</td><td>round</td>" +
+		"</tr>"+
+		"<tr>" +
+		"<td>Floor</td><td>floor</td>" +
+		"</tr>"+
+		"<tr>" +
+		"<td>Ceiling</td><td>ceil</td>" +
+		"</table> ",
+		"No images are opened.",
+		"Image dimensions are incompatibles."
 		};
 	
 	 private ArrayList<ActionListener> action_listeners = new ArrayList<ActionListener>();
@@ -142,6 +234,7 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 		addImageBox();
 		jButtonMinus.setEnabled(false);
 		jTextAreaInfo.setText(MESSAGES[0]);
+		jTextAreaInfo.setCaretPosition(0);
 	}
 	
 	/*
@@ -209,6 +302,50 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 	}
 	
 	/**
+	 * Called when an image is selected in a box. 
+	 */
+	private void checkDimensions() {
+		if (compatibleDimensions()) {
+			jButtonOK.setEnabled(true);
+			for (JComboBox box : image_boxes) {
+				box.setForeground(Color.BLACK);
+			}
+			jTextAreaInfo.setText(MESSAGES[0]);
+			jTextAreaInfo.setCaretPosition(0);
+		} else {
+			jButtonOK.setEnabled(false);
+			for (JComboBox box : image_boxes) {
+				box.setForeground(Color.RED);
+			}
+			jTextAreaInfo.setText(MESSAGES[2]);
+			jTextAreaInfo.setCaretPosition(0);
+		}
+	}
+	
+	/**
+	 * Check that dimensions are compatible.
+	 */
+	private boolean compatibleDimensions() {
+		if (images.size() <= 1) {
+			return true;
+		}
+		int[] dim;
+		int[] old_dim = images.get(0).getDimensions();
+		for (int i=1; i<images.size(); i++) {
+			dim = images.get(i).getDimensions();
+			if (dim.length != old_dim.length) {
+				return false;
+			}
+			for (int j = 0; j < old_dim.length; j++) {
+				if (dim[j] != old_dim[j]) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+	
+	/**
 	 * Called when the user type something in the expression area. 
 	 */
 	private void checkExpression() {
@@ -216,6 +353,7 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 		if ( (null == expression) || (expression.equals(""))  ) {
 			jButtonOK.setEnabled(false);
 			jTextAreaInfo.setText(MESSAGES[0]);
+			jTextAreaInfo.setCaretPosition(0);
 			return;
 		}
 		final JEP parser = new JEP(false, false, false, new DoubleNumberFactory());
@@ -230,6 +368,7 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 			jButtonOK.setEnabled(true);
 			jTextFieldExpression.setForeground(Color.BLACK);
 			jTextAreaInfo.setText(MESSAGES[0]);
+			jTextAreaInfo.setCaretPosition(0);
 		} else {
 			jButtonOK.setEnabled(false);
 			jTextFieldExpression.setForeground(Color.RED);
@@ -253,6 +392,9 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 		label.setBounds(10, 10+BOX_SPACE*n_image_box, 20, 25);
 		combo_box.setBounds(30, 10+BOX_SPACE*n_image_box, width-50, 30);
 		combo_box.setFont(new Font("Arial", Font.PLAIN, 10));
+		combo_box.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) { checkDimensions();	}
+		});
 		labels.add(label);
 		image_boxes.add(combo_box);
 		jPanelImages.setPreferredSize(new Dimension(width, 50+BOX_SPACE*n_image_box));
@@ -325,6 +467,7 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 			box.setModel(new DefaultComboBoxModel(image_names));
 			box.setSelectedIndex(Math.min(current_index, max_index));
 		}
+		checkDimensions();
 	}
 	
 	/**
@@ -437,17 +580,19 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 						jPanelRight.add(jScrollPane1, new GridBagConstraints(0, 2, 3, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(10, 10, 10, 10), 0, 0));
 						jScrollPane1.setOpaque(false);
 						jScrollPane1.setBorder(null);
+						jScrollPane1.getViewport().setOpaque(false);
+						jScrollPane1.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 						{
 							jTextAreaInfo = new JEditorPane();
 							jTextAreaInfo.setBorder(null);
 							jScrollPane1.setViewportView(jTextAreaInfo);
-							jTextAreaInfo.setContentType("text/html");
-							jTextAreaInfo.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true);
 							jTextAreaInfo.setFont(new Font("Arial", Font.PLAIN, 10));
 							jTextAreaInfo.setEditable(false);
-//							background-color:transparent
-							
-							
+							jTextAreaInfo.setOpaque(false);
+							jTextAreaInfo.setContentType("text/html");
+							jTextAreaInfo.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, true);
+//							jTextAreaInfo.setLineWrap(true);
+//							jTextAreaInfo.setWrapStyleWord(true);
 						}
 					}
 				}
