@@ -9,6 +9,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
 import mpicbg.imglib.container.imageplus.ImagePlusContainerFactory;
+import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
@@ -134,42 +135,99 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 		
 		// Extract the first image, will be privileged. Might leave the temp array empty, but who cares.
 		Image<T> first_im = temp.remove(0);
-		LocalizableCursor<T> first_cursor = first_im.createLocalizableCursor(); // Canonical optimized cursor
 		String first_var = variables[0];
 		
-		// Create cursors for other input images
-		ArrayList<LocalizableByDimCursor<T>> cursors = new ArrayList<LocalizableByDimCursor<T>>(temp.size()); 
-		for (Image<T> im : temp) {
-			cursors.add(im.createLocalizableByDimCursor());
-		}
-
 		// Prepare new image
 		Image<FloatType> result_im = new ImageFactory<FloatType>(new FloatType(), new ImagePlusContainerFactory())
 			.createImage(first_im.getDimensions(), expression);
 		
-		// Create cursor for new image
-		LocalizableByDimCursor<FloatType> result_cursor = result_im.createLocalizableByDimCursor();
-		
-		// Iterate over cursors.
-		// We iterate using the first cursor. The other ones are moved according to this one
-		float local_value, result_value;
-		LocalizableByDimCursor<T> cursor;
-		while (first_cursor.hasNext()) {
-			// first cursor
-			first_cursor.fwd();
-			local_value = first_cursor.getType().getReal();
-			parser.addVariable(first_var, local_value);
-			// other input cursors
-			for (int i = 0; i < cursors.size(); i++) {
-				cursor = cursors.get(i);
-				cursor.setPosition(first_cursor);
-				local_value = cursor.getType().getReal();
-				parser.addVariable(variables[1+i], local_value);
+		// Check if all Containers are compatibles
+		boolean compatible_containers = true;
+		Image<T> previous_im = first_im;
+		for (Image<T> im : temp) {
+			if ( previous_im.getContainer().compareStorageContainerCompatibility(im.getContainer())) {
+				continue;
+			} else {
+				compatible_containers = false;
+				break;
 			}
-			// output cursors
-			result_value = (float) parser.getValue();
-			result_cursor.setPosition(first_cursor);
-			result_cursor.getType().set(result_value);
+		}		
+		if (!result_im.getContainer().compareStorageContainerCompatibility(first_im.getContainer())) {
+			compatible_containers = false;
+		}
+
+		if (compatible_containers) {
+			// Optimized cursors
+			
+			Cursor<T> first_cursor = first_im.createCursor(); // Canonical optimized cursor
+			
+			// Create cursors for other input images
+			ArrayList<Cursor<T>> cursors = new ArrayList<Cursor<T>>(temp.size()); 
+			for (Image<T> im : temp) {
+				cursors.add(im.createCursor());
+			}
+
+			// Create cursor for new image
+			Cursor<FloatType> result_cursor = result_im.createCursor();
+			
+			// Iterate over cursors.
+			// We iterate using the first cursor. The other ones are moved according to this one
+			float local_value, result_value;
+			Cursor<T> cursor;
+			while (first_cursor.hasNext()) {
+				// first cursor
+				first_cursor.fwd();
+				local_value = first_cursor.getType().getReal();
+				parser.addVariable(first_var, local_value);
+				// other input cursors
+				for (int i = 0; i < cursors.size(); i++) {
+					cursor = cursors.get(i);
+					cursor.fwd(); // since we are compatible, we are sure that they will iterate the same way
+					local_value = cursor.getType().getReal();
+					parser.addVariable(variables[1+i], local_value);
+				}
+				// output cursors
+				result_value = (float) parser.getValue();
+				result_cursor.fwd(); // since we are compatible, we are sure that they will iterate the same way
+				result_cursor.getType().set(result_value);
+			}
+				
+		} else {
+			// Non-optimized cursors.
+			
+			LocalizableCursor<T> first_cursor = first_im.createLocalizableCursor(); // Canonical optimized cursor
+			
+			// Create cursors for other input images
+			ArrayList<LocalizableByDimCursor<T>> cursors = new ArrayList<LocalizableByDimCursor<T>>(temp.size()); 
+			for (Image<T> im : temp) {
+				cursors.add(im.createLocalizableByDimCursor());
+			}
+
+			// Create cursor for new image
+			LocalizableByDimCursor<FloatType> result_cursor = result_im.createLocalizableByDimCursor();
+
+			// Iterate over cursors.
+			// We iterate using the first cursor. The other ones are moved according to this one
+			float local_value, result_value;
+			LocalizableByDimCursor<T> cursor;
+			while (first_cursor.hasNext()) {
+				// first cursor
+				first_cursor.fwd();
+				local_value = first_cursor.getType().getReal();
+				parser.addVariable(first_var, local_value);
+				// other input cursors
+				for (int i = 0; i < cursors.size(); i++) {
+					cursor = cursors.get(i);
+					cursor.setPosition(first_cursor);
+					local_value = cursor.getType().getReal();
+					parser.addVariable(variables[1+i], local_value);
+				}
+				// output cursors
+				result_value = (float) parser.getValue();
+				result_cursor.setPosition(first_cursor);
+				result_cursor.getType().set(result_value);
+			}
+			
 		}
 		
 		// Done!
