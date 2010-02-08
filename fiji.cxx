@@ -1326,6 +1326,9 @@ static void /* no-return */ usage(void)
 		<< "\tappend .jar files in <path> to the class path" << endl
 		<< "--ext <path>" << endl
 		<< "\tset Java's extension directory to <path>" << endl
+		<< "--default-gc" << endl
+		<< "\tdo not use advanced garbage collector settings by default"
+			<< endl << "\t(-Xincgc -XX:PermSize=128m)" << endl
 		<< endl
 		<< "Options for ImageJ:" << endl
 		<< "--allow-multiple" << endl
@@ -1469,7 +1472,7 @@ static int start_ij(void)
 	stringstream plugin_path;
 	int dashdash = 0;
 	bool allow_multiple = false, skip_build_classpath = false;
-	bool jdb = false, add_class_path_option = false;
+	bool jdb = false, add_class_path_option = false, advanced_gc = true;
 
 #ifdef WIN32
 #define EXE_EXTENSION ".exe"
@@ -1679,6 +1682,8 @@ static int start_ij(void)
 			cout << get_java_home() << endl;
 			exit(0);
 		}
+		else if (!strcmp("--default-gc", main_argv[i]))
+			advanced_gc = false;
 		else if (!strcmp("--help", main_argv[i]) ||
 				!strcmp("-h", main_argv[i]))
 			usage();
@@ -1730,6 +1735,11 @@ static int start_ij(void)
 
 	if (is_ipv6_broken())
 		add_option(options, "-Djava.net.preferIPv4Stack=true", 0);
+
+	if (advanced_gc) {
+		add_option(options, "-Xincgc", 0);
+		add_option(options, "-XX:PermSize=128m", 0);
+	}
 
 	if (!main_class) {
 		const char *first = main_argv[1];

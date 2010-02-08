@@ -24,8 +24,6 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Rectangle;
 
-import javax.media.j3d.Transform3D;
-
 public class Prettify_Wiki_Screenshot implements PlugInFilter {
 	public String label = "";
 
@@ -65,11 +63,11 @@ public class Prettify_Wiki_Screenshot implements PlugInFilter {
 		Content cImage = univ.addOrthoslice(new ImagePlus("screenshot", ip),
 				null, "image", 0, new boolean[] {true, true, true}, 1);
 		int dy = (int)(-h / 8);
-		cImage.setTransform(new Transform3D(new double[] {
+		cImage.setTransform(new double[] {
 			1.0, 0.0, 0.0, 0.0,
 			0.0, 1.0, 0.0, dy,
 			0.0, 0.0, 1.0, 0.0,
-			0.0, 0.0, 0.0, 1.0}));
+			0.0, 0.0, 0.0, 1.0});
 
 		// add the mirror image
 		Content cMirror = univ.addOrthoslice(new ImagePlus("mirror", mask),
@@ -78,18 +76,18 @@ public class Prettify_Wiki_Screenshot implements PlugInFilter {
 		double cos = 0.0;
 		double sin = 1.0;
 		// flap forward
-		cMirror.applyTransform(new Transform3D(new double[] {
+		cMirror.applyTransform(new double[] {
 			1.0, 0.0, 0.0, 0.0,
 			0.0, cos, sin, 0.0,
 			0.0, -sin, cos, 0.0,
-			0.0, 0.0, 0.0, 1.0}));
+			0.0, 0.0, 0.0, 1.0});
 
 		// move
-		cMirror.applyTransform(new Transform3D(new double[] {
+		cMirror.applyTransform(new double[] {
 			1.0, 0.0, 0.0, 0.0,
 			0.0, 1.0, 0.0, h,
 			0.0, 0.0, 1.0, dy,
-			0.0, 0.0, 0.0, 1.0}));
+			0.0, 0.0, 0.0, 1.0});
 
 		// rotate nicely
 
