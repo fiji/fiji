@@ -203,12 +203,18 @@ public class TextEditor extends JFrame implements ActionListener,
 		JMenu file = new JMenu("File");
 		file.setMnemonic(KeyEvent.VK_F);
 		newFile = addToMenu(file, "New",  KeyEvent.VK_N, ctrl);
+		newFile.setMnemonic(KeyEvent.VK_N);
 		open = addToMenu(file, "Open...",  KeyEvent.VK_O, ctrl);
+		open.setMnemonic(KeyEvent.VK_O);
 		save = addToMenu(file, "Save", KeyEvent.VK_S, ctrl);
+		save.setMnemonic(KeyEvent.VK_S);
 		saveas = addToMenu(file, "Save as...", 0, 0);
+		saveas.setMnemonic(KeyEvent.VK_A);
 		file.addSeparator();
 		makeJar = addToMenu(file, "Export as .jar", 0, 0);
+		makeJar.setMnemonic(KeyEvent.VK_E);
 		makeJarWithSource = addToMenu(file, "Export as .jar (with source)", 0, 0);
+		makeJarWithSource.setMnemonic(KeyEvent.VK_X);
 		file.addSeparator();
 		quit = addToMenu(file, "Close Editor", KeyEvent.VK_W, ctrl);
 
@@ -225,15 +231,24 @@ public class TextEditor extends JFrame implements ActionListener,
 		paste = addToMenu(edit, "Paste", KeyEvent.VK_V, ctrl);
 		edit.addSeparator();
 		find = addToMenu(edit, "Find...", KeyEvent.VK_F, ctrl);
+		find.setMnemonic(KeyEvent.VK_F);
 		findNext = addToMenu(edit, "Find Next", KeyEvent.VK_F3, 0);
+		findNext.setMnemonic(KeyEvent.VK_N);
 		replace = addToMenu(edit, "Find and Replace...", KeyEvent.VK_H, ctrl);
 		gotoLine = addToMenu(edit, "Goto line...", KeyEvent.VK_G, ctrl);
+		gotoLine.setMnemonic(KeyEvent.VK_G);
+		edit.addSeparator();
+		autocomplete = addToMenu(edit, "Autocomplete", KeyEvent.VK_SPACE, ctrl);
+		autocomplete.setMnemonic(KeyEvent.VK_A);
 		edit.addSeparator();
 		addImport = addToMenu(edit, "Add import...", 0, 0);
+		addImport.setMnemonic(KeyEvent.VK_I);
 		removeUnusedImports = addToMenu(edit, "Remove unused imports", 0, 0);
+		removeUnusedImports.setMnemonic(KeyEvent.VK_U);
 		sortImports = addToMenu(edit, "Sort imports", 0, 0);
+		sortImports.setMnemonic(KeyEvent.VK_S);
 		removeTrailingWhitespace = addToMenu(edit, "Remove trailing whitespace", 0, 0);
-		autocomplete = addToMenu(edit, "Autocomplete", KeyEvent.VK_SPACE, ctrl);
+		removeTrailingWhitespace.setMnemonic(KeyEvent.VK_W);
 		mbar.add(edit);
 
 		JMenu languages = new JMenu("Language");
@@ -269,9 +284,11 @@ public class TextEditor extends JFrame implements ActionListener,
 
 		compileAndRun = addToMenu(run, "Compile and Run",
 				KeyEvent.VK_R, ctrl);
+		compileAndRun.setMnemonic(KeyEvent.VK_R);
 
 		run.addSeparator();
 		debug = addToMenu(run, "Start Debugging", KeyEvent.VK_D, ctrl);
+		debug.setMnemonic(KeyEvent.VK_D);
 
 		// for Eclipse and MS Visual Studio lovers
 		addAccelerator(compileAndRun, KeyEvent.VK_F11, 0);
@@ -283,17 +300,21 @@ public class TextEditor extends JFrame implements ActionListener,
 		run.addSeparator();
 
 		kill = addToMenu(run, "Kill running script...", 0, 0);
+		kill.setMnemonic(KeyEvent.VK_K);
 		kill.setEnabled(false);
 
 		run.addSeparator();
 
 		resume = addToMenu(run, "Resume", 0, 0);
+		resume.setMnemonic(KeyEvent.VK_R);
 		terminate = addToMenu(run, "Terminate", 0, 0);
+		terminate.setMnemonic(KeyEvent.VK_T);
 		mbar.add(run);
 
 		JMenu tools = new JMenu("Tools");
 		tools.setMnemonic(KeyEvent.VK_O);
 		openHelp = addToMenu(tools, "Open Help for Class...", 0, 0);
+		openHelp.setMnemonic(KeyEvent.VK_O);
 		mbar.add(tools);
 
 		pack();
