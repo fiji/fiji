@@ -13,10 +13,13 @@ import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 
+import java.awt.Color;
 import java.awt.Rectangle;
 
+import java.util.Arrays;
+
 public class Select_Bounding_Box implements PlugInFilter {
-	enum Mode { SELECTION, AUTOCROP };
+	enum Mode { SELECTION, AUTOCROP, AUTOAUTOCROP };
 	Mode mode = Mode.SELECTION;
 
 	ImagePlus image;
@@ -25,19 +28,74 @@ public class Select_Bounding_Box implements PlugInFilter {
 		image = imp;
 		if ("autocrop".equals(arg))
 			mode = Mode.AUTOCROP;
+		else if ("autoautocrop".equals(arg))
+			mode = Mode.AUTOAUTOCROP;
 		return DOES_ALL | DOES_STACKS | SUPPORTS_MASKING | NO_CHANGES;
 	}
 
 	public void run(ImageProcessor ip) {
-		double background = ip.getBestIndex(Toolbar.getBackgroundColor());
-		if (!(ip instanceof ByteProcessor))
-			background = ip.getMin() + (ip.getMax() - ip.getMin()) * background / 255.0;
+		double background;
+		if (mode == Mode.AUTOAUTOCROP)
+			background = guessBackground(ip);
+		else if (ip instanceof ColorProcessor) {
+			Color color = Toolbar.getBackgroundColor();
+			background = (color.getRed() << 16) |
+				(color.getGreen() << 8) | color.getBlue();
+		}
+		else {
+			background =
+				ip.getBestIndex(Toolbar.getBackgroundColor());
+			if (!(ip instanceof ByteProcessor))
+				background = ip.getMin() + background *
+					(ip.getMax() - ip.getMin()) / 255.0;
+		}
 
 		Rectangle rect = getBoundingBox(ip, ip.getRoi(), background);
 		switch (mode) {
-			case SELECTION: image.setRoi(rect); break;
-			case AUTOCROP: crop(image, rect); break;
+			case SELECTION:
+				image.setRoi(rect);
+				break;
+			case AUTOCROP: case AUTOAUTOCROP:
+				crop(image, rect);
+				break;
 		}
+	}
+
+	public double guessBackground(ImageProcessor ip) {
+		Rectangle rect = ip.getRoi();
+		if (rect == null)
+			rect = new Rectangle(0, 0,
+					ip.getWidth(), ip.getHeight());
+
+		// get the border's values
+		double[] values =
+			new double[(rect.width + rect.height - 2) * 2];
+		for (int i = 0; i < rect.width; i++) {
+			values[i] = ip.getf(rect.x + i, rect.y + 0);
+			values[i + rect.width] =
+				ip.getf(rect.x + i, rect.y + rect.height - 1);
+		}
+		for (int i = 1; i < rect.height - 1; i++) {
+			values[i + 2 * rect.width - 1] =
+				ip.getf(rect.x + 0, rect.y + i);
+			values[i + 2 * rect.width - 1 + rect.height - 2] =
+				ip.getf(rect.x + rect.width - 1, rect.y + i);
+		}
+		if (ip instanceof ColorProcessor)
+			for (int i = 0; i < values.length; i++)
+				values[i] = ((int)values[i]) & 0xffffff;
+
+		// return the most frequent value
+		Arrays.sort(values);
+		int best = 0, bestCount = 1, currentCount = 1;
+		for (int i = 1; i < values.length; i++)
+			if (values[i] != values[i - 1])
+				currentCount = 1;
+			else if (++currentCount > bestCount) {
+				best = i;
+				bestCount = currentCount;
+			}
+		return values[best];
 	}
 
 	public static Rectangle getBoundingBox(ImageProcessor ip, Rectangle rect, double background) {
