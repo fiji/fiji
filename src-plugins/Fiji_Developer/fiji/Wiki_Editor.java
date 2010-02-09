@@ -772,9 +772,11 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 					imp.getWindow().toBack();
 
 				/* insert into editor */
-				editor.getTextArea()
-					.insert("[[Image:" + name + "]]\n",
-					editor.getTextArea().getCaretPosition());
+				int p = editor.getTextArea().getCaretPosition();
+				String insert = "[[Image:" + name + "]]\n";
+				editor.getTextArea().insert(insert, p);
+				p += insert.length();
+				editor.getTextArea().setCaretPosition(p);
 			}
 		} catch (AWTException e) { /* ignore */ }
 	}
