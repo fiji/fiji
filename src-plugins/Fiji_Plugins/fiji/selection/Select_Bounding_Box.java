@@ -1,7 +1,6 @@
 package fiji.selection;
 
 import ij.IJ;
-import ij.process.ByteProcessor;
 
 import ij.gui.Toolbar;
 
@@ -10,6 +9,8 @@ import ij.ImageStack;
 
 import ij.plugin.filter.PlugInFilter;
 
+import ij.process.ByteProcessor;
+import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 
 import java.awt.Rectangle;
@@ -49,11 +50,14 @@ public class Select_Bounding_Box implements PlugInFilter {
 			rect.height += rect.y;
 		}
 
+		Cropper cropper = (ip instanceof ColorProcessor) ?
+			new CropperRGB(ip, background) :
+			new CropperDefault(ip, background);
 
-		findMinY(ip, rect, background);
-		findMaxY(ip, rect, background);
-		findMinX(ip, rect, background);
-		findMaxX(ip, rect, background);
+		cropper.findMinY(rect);
+		cropper.findMaxY(rect);
+		cropper.findMinX(rect);
+		cropper.findMaxX(rect);
 
 		// make it the proper width/height again
 		rect.width -= rect.x;
@@ -61,41 +65,78 @@ public class Select_Bounding_Box implements PlugInFilter {
 		return rect;
 	}
 
-	static void findMinY(ImageProcessor ip, Rectangle rect, double background) {
-		for (int y = rect.y; y < rect.height; y++)
-			for (int x = rect.x; x < rect.width; x++)
-				if (ip.getf(x, y) != background) {
-					rect.y = y;
-					return;
-				}
-	}
+	abstract static class Cropper {
+		ImageProcessor ip;
+		double background;
 
-	static void findMaxY(ImageProcessor ip, Rectangle rect, double background) {
-		for (int y = rect.height - 1; y >= rect.y; y--)
-			for (int x = rect.x; x < rect.width; x++)
-				if (ip.getf(x, y) != background) {
-					rect.height = y + 1;
-					return;
-				}
-	}
+		Cropper(ImageProcessor ip, double background) {
+			this.ip = ip;
+			this.background = background;
+		}
 
-	static void findMinX(ImageProcessor ip, Rectangle rect, double background) {
-		for (int x = rect.x; x < rect.width; x++)
+		abstract boolean isBackground(int x, int y);
+
+		final void findMinY(Rectangle rect) {
 			for (int y = rect.y; y < rect.height; y++)
-				if (ip.getf(x, y) != background) {
-					rect.x = x;
-					return;
-				}
+				for (int x = rect.x; x < rect.width; x++)
+					if (!isBackground(x, y)) {
+						rect.y = y;
+						return;
+					}
+		}
+
+		final void findMaxY(Rectangle rect) {
+			for (int y = rect.height - 1; y >= rect.y; y--)
+				for (int x = rect.x; x < rect.width; x++)
+					if (!isBackground(x, y)) {
+						rect.height = y + 1;
+						return;
+					}
+		}
+
+		final void findMinX(Rectangle rect) {
+			for (int x = rect.x; x < rect.width; x++)
+				for (int y = rect.y; y < rect.height; y++)
+					if (!isBackground(x, y)) {
+						rect.x = x;
+						return;
+					}
+		}
+
+
+		final void findMaxX(Rectangle rect) {
+			for (int x = rect.width - 1; x >= rect.x; x--)
+				for (int y = rect.y; y < rect.height; y++)
+					if (!isBackground(x, y)) {
+						rect.width = x + 1;
+						return;
+					}
+		}
 	}
 
+	final static class CropperDefault extends Cropper {
+		CropperDefault(ImageProcessor ip, double background) {
+			super(ip, background);
+		}
 
-	static void findMaxX(ImageProcessor ip, Rectangle rect, double background) {
-		for (int x = rect.width - 1; x >= rect.x; x--)
-			for (int y = rect.y; y < rect.height; y++)
-				if (ip.getf(x, y) != background) {
-					rect.width = x + 1;
-					return;
-				}
+		final boolean isBackground(int x, int y) {
+			return ip.getf(x, y) == background;
+		}
+	}
+
+	final static class CropperRGB extends Cropper {
+		int[] pixels;
+		int w, backgroundRGB;
+		CropperRGB(ImageProcessor ip, double background) {
+			super(ip, background);
+			pixels = (int[])ip.getPixels();
+			w = ip.getWidth();
+			backgroundRGB = ((int)background) & 0xffffff;
+		}
+
+		final boolean isBackground(int x, int y) {
+			return (pixels[x + w * y] & 0xffffff) == backgroundRGB;
+		}
 	}
 
 	public static ImageProcessor crop(ImageProcessor ip, Rectangle rect) {
@@ -105,7 +146,8 @@ public class Select_Bounding_Box implements PlugInFilter {
 
 	public static void crop(ImagePlus image, Rectangle rect) {
 		if (image.getStackSize() == 1) {
-			image.setProcessor(image.getTitle(), crop(image.getProcessor(), rect));
+			image.setProcessor(image.getTitle(),
+					crop(image.getProcessor(), rect));
 			return;
 		}
 		ImageStack stack = new ImageStack(rect.width, rect.height);
