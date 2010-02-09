@@ -77,6 +77,7 @@ import java.util.regex.Pattern;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JTextArea;
 
 public class Wiki_Editor implements PlugIn, ActionListener {
 	protected String name;
@@ -148,7 +149,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 
 	protected TextEditor editor;
 	protected JMenuItem upload, preview, toBackToggle, renameImage,
-		changeURL;
+		changeURL, insertPluginInfobox;
 
 	protected void addEditor() {
 		editor = new TextEditor(null);
@@ -164,6 +165,8 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 			toBackToggle = editor.addToMenu(menu, "", 0, 0);
 			renameImage = editor.addToMenu(menu, "Rename Image", KeyEvent.VK_I, ctrl);
 			toBackToggleSetLabel();
+			insertPluginInfobox = editor.addToMenu(menu,
+					"Insert Plugin Infobox", 0, 0);
 		}
 
 		changeURL = editor.addToMenu(menu, "Change Wiki URL", 0, 0);
@@ -249,6 +252,23 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 					URL = URL.substring(0, off + 1);
 				client = null;
 			}
+		}
+		else if (source == insertPluginInfobox) {
+			JTextArea textArea = editor.getTextArea();
+			textArea.insert("{{Infobox Plugin\n"
+				+ "| software               = ImageJ\n"
+				+ "| name                   = \n"
+				+ "| maintainer             = [mailto:author_at_example_dot_com A U Thor]\n"
+				+ "| author                 = A U Thor\n"
+				+ "| source                 = \n"
+				+ "| released               = 15/06/2005\n"
+				+ "| latest version         = 12/08/2009\n"
+				+ "| status                 = \n"
+				+ "| category               = [[:Category:Plugins]]\n"
+				+ "| website                = \n"
+				+ "}}\n", 0);
+			textArea.insert("\n[[Category:Plugins]]",
+				textArea.getDocument().getLength());
 		}
 	}
 
