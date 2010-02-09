@@ -123,16 +123,19 @@ public class Refresh_Javas extends RefreshScripts {
 			javac = main.getMethod("compile", argsType);
 		}
 
-		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-		PrintWriter out = new PrintWriter(buffer);
+		ByteArrayOutputStream buffer = err == System.err ?
+			new ByteArrayOutputStream() : null;
+		PrintWriter out = new PrintWriter(buffer == null ?
+				err : buffer);
 		Object result = javac.invoke(null,
 			new Object[] { arguments, out });
 
 		if (result.equals(new Integer(0)))
 			return true;
 
-		new TextWindow("Could not compile " + path,
-				buffer.toString(), 640, 480);
+		if (buffer != null)
+			new TextWindow("Could not compile " + path,
+					buffer.toString(), 640, 480);
 		return false;
 	}
 
