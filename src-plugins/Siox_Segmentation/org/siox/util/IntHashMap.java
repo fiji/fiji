@@ -28,7 +28,6 @@ import java.util.Set;
 
 /**
  * A hashmap that uses primitive ints for the key rather than objects
- * An ArrayList that uses primitive ints for the key rather than objects
  * to avoid costly usage of <CODE>Integer</CODE> wrappers.
  *
  * @author Lars Knipping
