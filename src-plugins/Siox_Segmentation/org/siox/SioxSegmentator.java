@@ -425,7 +425,7 @@ public class SioxSegmentator
 					tupel.indexMinFg=minIndex;
 					if (fgSignature.length==0) {
 						isBackground=(minBg<=clusterSize);
-						// remove next line to force behaviour of old algorithm
+						// remove next line to force behavior of old algorithm
 						throw new IllegalStateException("foreground signature does not exist");
 					} else {
 						isBackground=minBg<minFg;
@@ -453,7 +453,7 @@ public class SioxSegmentator
 
 
 	/**
-	 * Segmentates the further frames of a scene in a video. Only a reduced postprocessing
+	 * Segment the further frames of a scene in a video. Only a reduced postprocessing
 	 * is applied. The methods DOES NOT rebuild the color signatures.
 	 * This method can only be used after a call to <tt>segmentate()</tt> or
 	 * <tt>segmentatevideo_firstframe()</tt>.
@@ -465,12 +465,12 @@ public class SioxSegmentator
 	 * as region of unknown affiliation. This method does not require any known
 	 * confidences in a frame.
 	 * <P>
-	 * As result, each pixel is classified either as foregroound or
+	 * As result, each pixel is classified either as foreground or
 	 * background, stored back into its <code>cm</code> entry as confidence
 	 * <code>CERTAIN_FOREGROUND_CONFIDENCE</code> or
 	 * <code>CERTAIN_BACKGROUND_CONFIDENCE</code>.
 	 *
-	 * @param image Pixel data of the image to be segmentated.
+	 * @param image Pixel data of the image to be segmented.
 	 *        Every integer represents one ARGB-value.
 	 * @param cm Confidence matrix specifying the probability of an image
 	 *        belonging to the foreground before and after the segmentation.
