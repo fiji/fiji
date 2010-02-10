@@ -256,7 +256,7 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 	 */
 	private synchronized void refine()
 	{
-		if ( controlPanel.status != ControlJPanel.SEGMENTATED_STATUS )
+		if ( controlPanel.status != ControlJPanel.SEGMENTED_STATUS )
 			return;
 		
 		if(controlPanel.addJRadioButton.isSelected())
@@ -307,7 +307,7 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 	
 		// Create confidence matrix and initialize to unknown region of confidence
 		confMatrix = new FloatProcessor(imp.getWidth(), imp.getHeight());
-		final float[] imgData = (float[])confMatrix.getPixels();
+		final float[] confMatrixArray = (float[])confMatrix.getPixels();
 		confMatrix.add( SioxSegmentator.UNKNOWN_REGION_CONFIDENCE );
 		
 		// Set foreground ROI
@@ -327,16 +327,16 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 			// Workaround: select border pixels which are not foreground as background if no background was specified.
 			int w = imp.getWidth(), h = imp.getHeight();
 			for (int i = 0; i < w; i++) {
-				if (imgData[i] < 0.8f)
-					imgData[i] = 0;
-				if (imgData[i + w * (h - 1)] < 0.8f)
-					imgData[i + w * (h - 1)] = 0;
+				if (confMatrixArray[i] < 0.8f)
+					confMatrixArray[i] = 0;
+				if (confMatrixArray[i + w * (h - 1)] < 0.8f)
+					confMatrixArray[i + w * (h - 1)] = 0;
 			}
 			for (int i = 0; i < h; i++) {
-				if (imgData[w * i] < 0.8f)
-					imgData[w * i] = 0;
-				if (imgData[w - 1 + w * i] < 0.8f)
-					imgData[w - 1 + w * i] = 0;
+				if (confMatrixArray[w * i] < 0.8f)
+					confMatrixArray[w * i] = 0;
+				if (confMatrixArray[w - 1 + w * i] < 0.8f)
+					confMatrixArray[w - 1 + w * i] = 0;
 			}
 		}
 		
@@ -347,9 +347,30 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 				
 		siox = new SioxSegmentator(imp.getWidth(), imp.getHeight(), null);
 		
-		final boolean multipleObjects = controlPanel.multipart.isSelected();
+		boolean multipleObjects = controlPanel.multipart.isSelected();
 		
-		boolean success = siox.segmentate(pixels, imgData, smoothes, multipleObjects ? 4:0);
+		if(!multipleObjects)
+		{
+			// Check if multiple foreground ROIs.
+			if(foregroundRoi instanceof ShapeRoi)
+			{
+				Roi[] rois = ((ShapeRoi) foregroundRoi).getRois();
+				if (rois.length > 1)
+				{
+					// Multiple foreground ROIs involve multiple objects
+					multipleObjects = true;
+					controlPanel.multipart.setSelected(true);
+				}
+			}
+		}
+		
+		boolean success = false;
+		
+		try{
+			success = siox.segmentate(pixels, confMatrixArray, smoothes, multipleObjects ? 4:0);
+		}catch(IllegalStateException ex){
+			IJ.error("Siox Segmentation", "ERROR: foreground signature does not exist.");
+		}
 		
 		if(!success)		
 			IJ.error("Siox Segmentation", "The segmentation failed!");										
@@ -357,7 +378,7 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 		updateResult();
 		
 		// Set status flag to segmented
-		controlPanel.status = ControlJPanel.SEGMENTATED_STATUS;
+		controlPanel.status = ControlJPanel.SEGMENTED_STATUS;
 		controlPanel.updateComponentEnabling();
 		
 		roiOverlay.setComposite( transparency100 );
