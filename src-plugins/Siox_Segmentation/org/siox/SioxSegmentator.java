@@ -180,7 +180,7 @@ public class SioxSegmentator
 	}
 
 	/**
-	 * Segmentates the given image with information from the confidence
+	 * Segments the given image with information from the confidence
 	 * matrix. For faster segmentation in videos, use the methods
 	 * <tt>segmentatevideo_firstframe()</tt> and <tt>segmentatevideo_nextframe()</tt>.
 	 * <P>
@@ -190,12 +190,12 @@ public class SioxSegmentator
 	 * foreground pixel for the segmentation. Any other entry is treated
 	 * as region of unknown affiliation.
 	 * <P>
-	 * As result, each pixel is classified either as foregroound or
+	 * As result, each pixel is classified either as foreground or
 	 * background, stored back into its <code>cm</code> entry as confidence
 	 * <code>CERTAIN_FOREGROUND_CONFIDENCE</code> or
 	 * <code>CERTAIN_BACKGROUND_CONFIDENCE</code>.
 	 *
-	 * @param image Pixel data of the image to be segmentated.
+	 * @param image Pixel data of the image to be segmented.
 	 *        Every integer represents one ARGB-value.
 	 * @param cm Confidence matrix specifying the probability of an image
 	 *        belonging to the foreground before and after the segmentation.
@@ -219,15 +219,19 @@ public class SioxSegmentator
 
 		// create color signatures
 		int knownBgCount=0, knownFgCount=0;
-		for (int i=0; i<cm.length; i++) {
-			if (cm[i]<=BACKGROUND_CONFIDENCE) {
+		for (int i=0; i<cm.length; i++) 
+		{
+			if (cm[i] <= BACKGROUND_CONFIDENCE) 
+			{
 				knownBg[knownBgCount++]=Utils.rgbToClab(image[i]);
-			} else if (cm[i]>=FOREGROUND_CONFIDENCE) {
+			} 
+			else if (cm[i]>=FOREGROUND_CONFIDENCE) 
+			{
 				knownFg[knownFgCount++]=Utils.rgbToClab(image[i]);
 			}
 		}
-		bgSignature=ColorSignature.createSignature(knownBg, knownBgCount, limits, BACKGROUND_CONFIDENCE);
-		fgSignature=ColorSignature.createSignature(knownFg, knownFgCount, limits, BACKGROUND_CONFIDENCE);
+		bgSignature = ColorSignature.createSignature(knownBg, knownBgCount, limits, BACKGROUND_CONFIDENCE);
+		fgSignature = ColorSignature.createSignature(knownFg, knownFgCount, limits, BACKGROUND_CONFIDENCE);
 		if (bgSignature.length<1) {
 			// segmentation impossible
 			return false;
@@ -235,22 +239,28 @@ public class SioxSegmentator
 
 		// classify using color signatures,
 		// classification cached in hashmap for drb and speedup purposes
-		for (int i=0; i<cm.length; i++) {
-			if (cm[i]>=FOREGROUND_CONFIDENCE) {
+		for (int i=0; i<cm.length; i++) 
+		{
+			if (cm[i]>=FOREGROUND_CONFIDENCE) 
+			{
 				cm[i]=CERTAIN_FOREGROUND_CONFIDENCE;
 				continue;
 			}
-			if (cm[i]>BACKGROUND_CONFIDENCE) {
+			else if (cm[i]>BACKGROUND_CONFIDENCE) 
+			{
 				Tupel tupel=(Tupel)hs.get(image[i]);
 				boolean isBackground=true;
-				if (tupel==null) {
+				if (tupel == null) 
+				{
 					tupel=new Tupel(0f, 0, 0f, 0);
 					final float[] lab=Utils.rgbToClab(image[i]);
 					float minBg=Utils.sqrEuclidianDist(lab, bgSignature[0]);
 					int minIndex=0;
-					for (int j=1; j<bgSignature.length; j++) {
+					for (int j=1; j<bgSignature.length; j++) 
+					{
 						final float d=Utils.sqrEuclidianDist(lab, bgSignature[j]);
-						if (d<minBg) {
+						if (d<minBg) 
+						{
 							minBg=d;
 							minIndex=j;
 						}
@@ -270,21 +280,28 @@ public class SioxSegmentator
 					tupel.indexMinFg=minIndex;
 					if (fgSignature.length==0) {
 						isBackground=(minBg<=clusterSize);
-						// remove next line to force behaviour of old algorithm
+						// remove next line to force behavior of old algorithm
 						throw new IllegalStateException("foreground signature does not exist");
 					} else {
 						isBackground=minBg<minFg;
 					}
 					hs.put(image[i], tupel);
-				} else {
+				} 
+				else 
+				{
 					isBackground=tupel.minBgDist<=tupel.minFgDist;
 				}
-				if (isBackground) {
+				if (isBackground) 
+				{
 					cm[i]=CERTAIN_BACKGROUND_CONFIDENCE;
-				} else {
+				} 
+				else 
+				{
 					cm[i]=CERTAIN_FOREGROUND_CONFIDENCE;
 				}
-			} else {
+			} 
+			else 
+			{
 				cm[i]=CERTAIN_BACKGROUND_CONFIDENCE;
 			}
 		}
@@ -294,14 +311,18 @@ public class SioxSegmentator
 		Utils.normalizeMatrix(cm);
 		Utils.erode(cm, imgWidth, imgHeight);
 		keepOnlyLargeComponents(cm, UNKNOWN_REGION_CONFIDENCE, sizeFactorToKeep);
-		for (int i=0; i<smoothness; i++) {
+		for (int i=0; i<smoothness; i++) 
+		{
 			Utils.smoothcm(cm, imgWidth, imgHeight, 0.33f, 0.33f, 0.33f); // average
 		}
 		Utils.normalizeMatrix(cm);
-		for (int i=0; i<cm.length; i++) {
-			if (cm[i]>=UNKNOWN_REGION_CONFIDENCE) {
+		for (int i=0; i<cm.length; i++) 
+		{
+			if (cm[i]>=UNKNOWN_REGION_CONFIDENCE) 
+			{
 				cm[i]=CERTAIN_FOREGROUND_CONFIDENCE;
-			} else {
+			} else 
+			{
 				cm[i]=CERTAIN_BACKGROUND_CONFIDENCE;
 			}
 		}
@@ -315,7 +336,7 @@ public class SioxSegmentator
 
 
 	/**
-	 * Segmentates the first frame of a scene in a video. Only a reduced postprocessing
+	 * Segments the first frame of a scene in a video. Only a reduced postprocessing
 	 * is applied. Still image segmentation should be performed with <tt>segmentate()</tt>.
 	 * This methods also rebuilds the color signatures.
 	 * <P>
@@ -325,12 +346,12 @@ public class SioxSegmentator
 	 * foreground pixel for the segmentation. Any other entry is treated
 	 * as region of unknown affiliation.
 	 * <P>
-	 * As result, each pixel is classified either as foregroound or
+	 * As result, each pixel is classified either as foreground or
 	 * background, stored back into its <code>cm</code> entry as confidence
 	 * <code>CERTAIN_FOREGROUND_CONFIDENCE</code> or
 	 * <code>CERTAIN_BACKGROUND_CONFIDENCE</code>.
 	 *
-	 * @param image Pixel data of the image to be segmentated.
+	 * @param image Pixel data of the image to be segmented.
 	 *        Every integer represents one ARGB-value.
 	 * @param cm Confidence matrix specifying the probability of an image
 	 *        belonging to the foreground before and after the segmentation.
@@ -538,7 +559,7 @@ public class SioxSegmentator
 	 * component and every component with
 	 * <CODE>size*sizeFactorToKeep >= sizeOfLargestComponent</CODE>.
 	 *
-	 * @param cm  Confidence matrixmatrix to be analysed
+	 * @param cm  Confidence matrix to be analysed
 	 * @param threshold Pixel visibility threshold.
 	 *        Exactly those cm entries larger than threshold are considered
 	 *        to be a "visible" foreground pixel.
@@ -549,33 +570,36 @@ public class SioxSegmentator
 	protected void keepOnlyLargeComponents(float[] cm, float threshold, double sizeFactorToKeep)
 	{
 		Arrays.fill(labelField, -1);
-		int curlabel=0;
-		int maxregion=0;
-		int maxblob=0;
+		int curlabel = 0;
+		int maxregion = 0;
+		int maxblob = 0;
 
 		// slow but easy to understand:
-		final IntArrayList labelSizes=new IntArrayList();
-		for (int i=0; i<cm.length; i++) {
+		final IntArrayList labelSizes = new IntArrayList();
+		for (int i=0; i<cm.length; i++) 
+		{
 			regionCount=0;
-			if (labelField[i]==-1&&cm[i]>=threshold) {
-				regionCount=depthFirstSearch(cm, i, threshold, curlabel++);
+			if (labelField[i] == -1 && cm[i] >= threshold) {
+				regionCount = depthFirstSearch(cm, i, threshold, curlabel++);
 				labelSizes.add(regionCount);
 			}
 
-			if (regionCount>maxregion) {
+			if (regionCount > maxregion) {
 				maxregion=regionCount;
 				maxblob=curlabel-1;
 			}
 		}
 
-		for (int i=0; i<cm.length; i++) {
-			if (labelField[i]!=-1) {
+		for (int i=0; i<cm.length; i++) 
+		{
+			if (labelField[i] != -1) 
+			{
 				// remove if the component is to small
-				if (labelSizes.get(labelField[i])*sizeFactorToKeep<maxregion) {
+				if (labelSizes.get(labelField[i])*sizeFactorToKeep < maxregion) {
 					cm[i]=CERTAIN_BACKGROUND_CONFIDENCE;
 				}
 				// add maxblob always to foreground
-				if (labelField[i]==maxblob) {
+				if (labelField[i] == maxblob) {
 					cm[i]=CERTAIN_FOREGROUND_CONFIDENCE;
 				}
 			}
@@ -763,7 +787,7 @@ public class SioxSegmentator
 	}
 
 	/**
-	 * A region growing algorithms used to fill up the confidence matrix
+	 * A region growing algorithm used to fill up the confidence matrix
 	 * with <CODE>CERTAIN_FOREGROUND_CONFIDENCE</CODE> for corresponding
 	 * areas of equal colors.
 	 * <P>

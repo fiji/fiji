@@ -26,6 +26,7 @@ import java.awt.Panel;
 import java.awt.Shape;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 
@@ -51,7 +52,7 @@ import org.siox.SioxSegmentator;
 /**
  * SIOX segmentation Graphical User Interface
  * 
- * @author Ignacio Arganda-Carreras (ignacio.arganda at gmail.com)
+ * @author Ignacio Arganda-Carreras (iarganda at mit.edu)
  *
  */
 public class SegmentationGUI extends ImageWindow implements ActionListener
@@ -71,7 +72,6 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 	protected ImageOverlay resultOverlay;
 	protected ControlJPanel controlPanel;
 	ImageProcessor ip;
-	ImageProcessor originalImage;
 	
 	final Composite transparency050 = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.50f );	
 	final Composite transparency075 = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.75f );
@@ -85,8 +85,8 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 	 */
 	public SegmentationGUI(ImagePlus imp) 
 	{
-		super(imp, new OverlayedImageCanvas(imp) );
-				
+		super(imp, new OverlayedImageCanvas(imp) );					
+		
 		while(ic.getWidth() > 800 && ic.getHeight() > 600)
 			IJ.run(imp, "Out","");
 		
@@ -346,7 +346,10 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 		final int smoothes = controlPanel.smoothness.getValue();
 				
 		siox = new SioxSegmentator(imp.getWidth(), imp.getHeight(), null);
-		boolean success = siox.segmentate(pixels, imgData, smoothes, controlPanel.multipart.isSelected()?4:0);
+		
+		final boolean multipleObjects = controlPanel.multipart.isSelected();
+		
+		boolean success = siox.segmentate(pixels, imgData, smoothes, multipleObjects ? 4:0);
 		
 		if(!success)		
 			IJ.error("Siox Segmentation", "The segmentation failed!");										
@@ -381,6 +384,19 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 		
 		imp.changes = true;
 		imp.updateAndDraw();		
+	}
+	
+	/**
+	 * Overwrite windowClosing to display the input image after closing GUI
+	 */
+	public void windowClosing(WindowEvent e) 
+	{		
+		final ImagePlus img = new ImagePlus(super.imp.getTitle(), super.imp.getProcessor().duplicate());
+		img.changes = super.imp.changes;
+		img.show();
+		super.imp.changes = false;
+		super.windowClosing(e);		
+		
 	}
 	
 }// end class SegmentationGUI

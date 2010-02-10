@@ -182,7 +182,7 @@ class ColorSignature
 	 * @param length int the number of pixels that should be processed from the input
 	 * @param limits float[] the cluster diameters for each dimension
 	 * @param threshold float the abstraction threshold
-	 * @return float[][] a color siganture containing cluster centroids in LAB space
+	 * @return float[][] a color signature containing cluster centroids in LAB space
 	 */
 	static float[][] createSignature(float[][] input, int length, float[] limits, float threshold)
 	{

@@ -306,8 +306,8 @@ public class Utils
 	 * <P>
 	 * The conversion used is decribed at
 	 * <a href="http://www.easyrgb.com/math.php?MATH=M7#text7">CLAB Conversion</a>
-	 * for reference white D65. Note that that the conversion is computational
-	 * expensive. Result are cached to speed up further conversion calls.
+	 * for reference white D65. Note that the conversion is computational
+	 * expensive. Results are cached to speed up further conversion calls.
 	 *
 	 * @param rgb RGB color value,
 	 * @return CLAB color value tripel.
@@ -323,6 +323,8 @@ public class Utils
 	final int G=getGreen(rgb);
 	final int B=getBlue(rgb);
 
+	
+	// First RGB -> XYZ
 	float var_R=(R/255.0f); //R = From 0 to 255
 	float var_G=(G/255.0f); //G = From 0 to 255
 	float var_B=(B/255.0f); //B = From 0 to 255
@@ -346,11 +348,13 @@ public class Utils
 	var_G=var_G*100f;
 	var_B=var_B*100f;
 
-	// Observer. = 2�, Illuminant = D65
+	// Observer. = 2 degrees, Illuminant = D65
 	final float X=var_R*0.4124f+var_G*0.3576f+var_B*0.1805f;
 	final float Y=var_R*0.2126f+var_G*0.7152f+var_B*0.0722f;
 	final float Z=var_R*0.0193f+var_G*0.1192f+var_B*0.9505f;
 
+	
+	// Second, XYZ -> CIE-L*ab
 	float var_X=X/95.047f;
 	float var_Y=Y/100f;
 	float var_Z=Z/108.883f;
