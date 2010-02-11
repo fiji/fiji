@@ -77,6 +77,10 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 	}
 
 	public void embedWithScrollbars(Container container) {
+		container.add(embedWithScrollbars());
+	}
+
+	public RTextScrollPane embedWithScrollbars() {
 		RTextScrollPane sp = new RTextScrollPane(this);
 		sp.setPreferredSize(new Dimension(600, 350));
 		sp.setIconRowHeaderEnabled(true);
@@ -84,7 +88,7 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 		iconGroup = new IconGroup("bullets", "images/", null, "png", null);
 		gutter.setBookmarkIcon(iconGroup.getIcon("var"));
 		gutter.setBookmarkingEnabled(true);
-		container.add(sp);
+		return sp;
 	}
 
 	RecordableTextAction wordMovement(final int direction,

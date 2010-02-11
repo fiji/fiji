@@ -82,6 +82,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
 import javax.swing.KeyStroke;
 
 import javax.swing.text.BadLocationException;
@@ -95,6 +96,7 @@ import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 
 public class TextEditor extends JFrame implements ActionListener {
 	EditorPane editorPane;
+	JTabbedPane tabbed;
 	JTextArea screen;
 	JMenuItem newFile, open, save, saveas, compileAndRun, debug, quit,
 		  undo, redo, cut, copy, paste, find, replace, selectAll,
@@ -112,9 +114,10 @@ public class TextEditor extends JFrame implements ActionListener {
 		super("Script Editor");
 		WindowManager.addWindow(this);
 
-		JPanel cp = new JPanel();
+		tabbed = new JTabbedPane();
+
 		editorPane = new EditorPane(this);
-		editorPane.embedWithScrollbars(cp);
+		tabbed.addTab("", editorPane.embedWithScrollbars());
 
 		screen = new JTextArea();
 		screen.setEditable(false);
@@ -124,7 +127,7 @@ public class TextEditor extends JFrame implements ActionListener {
 		JScrollPane scroll = new JScrollPane(screen);
 		scroll.setPreferredSize(new Dimension(600, 80));
 
-		JSplitPane panel = new JSplitPane(JSplitPane.VERTICAL_SPLIT, cp, scroll);
+		JSplitPane panel = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tabbed, scroll);
 		panel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
 		panel.setResizeWeight(350.0 / 430.0);
 		setContentPane(panel);
@@ -888,6 +891,7 @@ public class TextEditor extends JFrame implements ActionListener {
 		String title = (fileChanged ? "*" : "") + fileName
 			+ (executingTasks.isEmpty() ? "" : " (Running)");
 		setTitle(title);
+		tabbed.setTitleAt(tabbed.getSelectedIndex(), title);
 	}
 
 	/** Using a Vector to benefit from all its methods being synchronzed. */
