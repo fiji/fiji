@@ -120,25 +120,6 @@ public class TextEditor extends JFrame implements ActionListener,
 		super("Script Editor");
 		WindowManager.addWindow(this);
 
-		tabbed = new JTabbedPane();
-		tabbed.addChangeListener(this);
-
-		editorPane = new EditorPane(this);
-		tabbed.addTab("", editorPane.embedWithScrollbars());
-
-		screen = new JTextArea();
-		screen.setEditable(false);
-		screen.setLineWrap(true);
-		Font font = new Font("Courier", Font.PLAIN, 12);
-		screen.setFont(font);
-		JScrollPane scroll = new JScrollPane(screen);
-		scroll.setPreferredSize(new Dimension(600, 80));
-
-		JSplitPane panel = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tabbed, scroll);
-		panel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
-		panel.setResizeWeight(350.0 / 430.0);
-		setContentPane(panel);
-
 		// Initialize menu
 		int ctrl = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
 		JMenuBar mbar = new JMenuBar();
@@ -234,13 +215,6 @@ public class TextEditor extends JFrame implements ActionListener,
 		debug = addToMenu(run, "Start Debugging", KeyEvent.VK_D, ctrl);
 		debug.setMnemonic(KeyEvent.VK_D);
 
-		// for Eclipse and MS Visual Studio lovers
-		addAccelerator(compileAndRun, KeyEvent.VK_F11, 0, true);
-		addAccelerator(compileAndRun, KeyEvent.VK_F5, 0, true);
-		addAccelerator(debug, KeyEvent.VK_F11, ctrl, true);
-		addAccelerator(debug, KeyEvent.VK_F5,
-				ActionEvent.SHIFT_MASK, true);
-
 		run.addSeparator();
 
 		kill = addToMenu(run, "Kill running script...", 0, 0);
@@ -261,17 +235,32 @@ public class TextEditor extends JFrame implements ActionListener,
 		openHelp.setMnemonic(KeyEvent.VK_O);
 		mbar.add(tools);
 
-		pack();
-		getToolkit().setDynamicLayout(true);            //added to accomodate the autocomplete part
-		findDialog = new FindAndReplaceDialog(this);
+		// Add the editor and output area
+		tabbed = new JTabbedPane();
+		tabbed.addChangeListener(this);
+		open(path);
 
-		setLanguage(null);
-		setTitle();
+		screen = new JTextArea();
+		screen.setEditable(false);
+		screen.setLineWrap(true);
+		Font font = new Font("Courier", Font.PLAIN, 12);
+		screen.setFont(font);
+		JScrollPane scroll = new JScrollPane(screen);
+		scroll.setPreferredSize(new Dimension(600, 80));
 
-		setLocationRelativeTo(null); // center on screen
-		if (path != null && !path.equals(""))
-			open(path);
+		JSplitPane panel = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tabbed, scroll);
+		panel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
+		panel.setResizeWeight(350.0 / 430.0);
+		setContentPane(panel);
 
+		// for Eclipse and MS Visual Studio lovers
+		addAccelerator(compileAndRun, KeyEvent.VK_F11, 0, true);
+		addAccelerator(compileAndRun, KeyEvent.VK_F5, 0, true);
+		addAccelerator(debug, KeyEvent.VK_F11, ctrl, true);
+		addAccelerator(debug, KeyEvent.VK_F5,
+				ActionEvent.SHIFT_MASK, true);
+
+		// make sure that the window is not closed by accident
 		addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
 				while (tabbed.getTabCount() > 0) {
@@ -287,7 +276,22 @@ public class TextEditor extends JFrame implements ActionListener,
 				WindowManager.removeWindow(TextEditor.this);
 			}
 		});
+
+		addWindowFocusListener(new WindowAdapter() {
+			public void windowGainedFocus(WindowEvent e) {
+				getEditorPane().checkForOutsideChanges();
+			}
+		});
+
 		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+
+		pack();
+		getToolkit().setDynamicLayout(true);            //added to accomodate the autocomplete part
+		findDialog = new FindAndReplaceDialog(this);
+
+		setLocationRelativeTo(null); // center on screen
+
+		editorPane.requestFocus();
 	}
 
 	final public RSyntaxTextArea getTextArea() {
