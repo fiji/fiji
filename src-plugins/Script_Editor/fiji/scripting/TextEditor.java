@@ -85,6 +85,9 @@ import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.KeyStroke;
 
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 
@@ -94,7 +97,10 @@ import org.fife.ui.autocomplete.DefaultCompletionProvider;
 
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 
-public class TextEditor extends JFrame implements ActionListener {
+import org.fife.ui.rtextarea.RTextScrollPane;
+
+public class TextEditor extends JFrame implements ActionListener,
+	       ChangeListener {
 	EditorPane editorPane;
 	JTabbedPane tabbed;
 	JTextArea screen;
@@ -115,6 +121,7 @@ public class TextEditor extends JFrame implements ActionListener {
 		WindowManager.addWindow(this);
 
 		tabbed = new JTabbedPane();
+		tabbed.addChangeListener(this);
 
 		editorPane = new EditorPane(this);
 		tabbed.addTab("", editorPane.embedWithScrollbars());
@@ -228,11 +235,11 @@ public class TextEditor extends JFrame implements ActionListener {
 		debug.setMnemonic(KeyEvent.VK_D);
 
 		// for Eclipse and MS Visual Studio lovers
-		addAccelerator(compileAndRun, KeyEvent.VK_F11, 0);
-		addAccelerator(compileAndRun, KeyEvent.VK_F5, 0);
-		addAccelerator(debug, KeyEvent.VK_F11, ctrl);
+		addAccelerator(compileAndRun, KeyEvent.VK_F11, 0, true);
+		addAccelerator(compileAndRun, KeyEvent.VK_F5, 0, true);
+		addAccelerator(debug, KeyEvent.VK_F11, ctrl, true);
 		addAccelerator(debug, KeyEvent.VK_F5,
-				ActionEvent.SHIFT_MASK);
+				ActionEvent.SHIFT_MASK, true);
 
 		run.addSeparator();
 
@@ -267,8 +274,12 @@ public class TextEditor extends JFrame implements ActionListener {
 
 		addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
-				if (!handleUnsavedChanges())
-					return;
+				while (tabbed.getTabCount() > 0) {
+					if (!handleUnsavedChanges())
+						return;
+					int index = tabbed.getSelectedIndex();
+					tabbed.remove(index);
+				}
 				dispose();
 			}
 
@@ -279,8 +290,8 @@ public class TextEditor extends JFrame implements ActionListener {
 		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 	}
 
-	public RSyntaxTextArea getTextArea() {
-		return editorPane;
+	final public RSyntaxTextArea getTextArea() {
+		return getEditorPane();
 	}
 
 	public EditorPane getEditorPane() {
@@ -302,9 +313,29 @@ public class TextEditor extends JFrame implements ActionListener {
 		return item;
 	}
 
-	// TODO: with tabbed editors, remember the accelerators and reinstate
+	protected static class AcceleratorTriplet {
+		JMenuItem component;
+		int key, modifiers;
+	}
+
+	protected List<AcceleratorTriplet> defaultAccelerators =
+		new ArrayList<AcceleratorTriplet>();
+
 	public void addAccelerator(final JMenuItem component,
 			int key, int modifiers) {
+		addAccelerator(component, key, modifiers, false);
+	}
+
+	public void addAccelerator(final JMenuItem component,
+			int key, int modifiers, boolean record) {
+		if (record) {
+			AcceleratorTriplet triplet = new AcceleratorTriplet();
+			triplet.component = component;
+			triplet.key = key;
+			triplet.modifiers = modifiers;
+			defaultAccelerators.add(triplet);
+		}
+
 		RSyntaxTextArea textArea = getTextArea();
 		textArea.getInputMap().put(KeyStroke.getKeyStroke(key,
 					modifiers), component);
@@ -320,6 +351,12 @@ public class TextEditor extends JFrame implements ActionListener {
 				TextEditor.this.actionPerformed(event);
 			}
 		});
+	}
+
+	public void addDefaultAccelerators() {
+		for (AcceleratorTriplet triplet : defaultAccelerators)
+			addAccelerator(triplet.component,
+					triplet.key, triplet.modifiers, false);
 	}
 
 	/**
@@ -508,9 +545,6 @@ public class TextEditor extends JFrame implements ActionListener {
 	 * @param switchLang Whether the language should be switched or not.
 	 */
 	public void loadTemplate(String resource, Languages.Language lang, boolean switchLang) {
-		if (!handleUnsavedChanges())
-			return;
-
 		createNewDocument();
 
 		try {
@@ -557,15 +591,9 @@ public class TextEditor extends JFrame implements ActionListener {
 
 	public void actionPerformed(ActionEvent ae) {
 		final Object source = ae.getSource();
-		if (source == newFile) {
-			if (!handleUnsavedChanges())
-				return;
+		if (source == newFile)
 			createNewDocument();
-		}
 		else if (source == open) {
-			if (!handleUnsavedChanges())
-				return;
-
 			OpenDialog dialog = new OpenDialog("Open..", "");
 			String name = dialog.getFileName();
 			if (name != null)
@@ -592,7 +620,18 @@ public class TextEditor extends JFrame implements ActionListener {
 		else if (source == kill)
 			chooseTaskToKill();
 		else if (source == close)
-			processWindowEvent( new WindowEvent(this, WindowEvent.WINDOW_CLOSING) );
+			if (tabbed.getTabCount() < 2)
+				processWindowEvent(new WindowEvent(this,
+						WindowEvent.WINDOW_CLOSING));
+			else {
+				if (!handleUnsavedChanges())
+					return;
+				int index = tabbed.getSelectedIndex();
+				tabbed.remove(index);
+				if (index > 0)
+					index--;
+				tabbed.setSelectedIndex(index);
+			}
 		else if (source == cut)
 			getTextArea().cut();
 		else if (source == copy)
@@ -637,6 +676,18 @@ public class TextEditor extends JFrame implements ActionListener {
 			openHelp(null);
 	}
 
+	public void stateChanged(ChangeEvent e) {
+		int index = tabbed.getSelectedIndex();
+		if (index < 0) {
+			setTitle("");
+			return;
+		}
+		RTextScrollPane scrollPane =
+			(RTextScrollPane)tabbed.getComponentAt(index);
+		editorPane = (EditorPane)scrollPane.getTextArea();
+		setTitle();
+	}
+
 	public void findOrReplace(boolean replace) {
 		findDialog.setLocationRelativeTo(this);
 
@@ -665,10 +716,14 @@ public class TextEditor extends JFrame implements ActionListener {
 		getTextArea().setCaretPosition(getTextArea().getLineStartOffset(line-1));
 	}
 
-	// TODO: with tabbed editors, this should not close the existing one
 	public void open(String path) {
 		try {
-			getEditorPane().setFile(path);
+			editorPane = new EditorPane(this);
+			tabbed.addTab("", editorPane.embedWithScrollbars());
+			tabbed.setSelectedIndex(tabbed.getTabCount() - 1);
+			addDefaultAccelerators();
+			editorPane.setFile("".equals(path) ? null : path);
+			editorPane.requestFocus();
 		} catch (Exception e) {
 			e.printStackTrace();
 			error("The file '" + path + "' was not found.");
