@@ -319,7 +319,7 @@ public class TextEditor extends JFrame implements ActionListener,
 
 		pack();
 		getToolkit().setDynamicLayout(true);            //added to accomodate the autocomplete part
-		findDialog = new FindAndReplaceDialog(this, textArea);
+		findDialog = new FindAndReplaceDialog(this);
 
 		setLanguage(null);
 		setTitle();
