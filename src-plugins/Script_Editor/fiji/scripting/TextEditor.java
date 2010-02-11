@@ -4,9 +4,6 @@ import com.sun.jdi.connect.VMStartException;
 
 import common.RefreshScripts;
 
-import fiji.scripting.completion.ClassCompletionProvider;
-import fiji.scripting.completion.DefaultProvider;
-
 import fiji.scripting.java.Refresh_Javas;
 
 import ij.IJ;
@@ -34,12 +31,10 @@ import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
@@ -88,35 +83,18 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.KeyStroke;
-import javax.swing.ToolTipManager;
-
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 
 import javax.swing.text.BadLocationException;
-import javax.swing.text.DefaultEditorKit;
 import javax.swing.text.Document;
 
-import org.fife.ui.autocomplete.AutoCompletion;
 import org.fife.ui.autocomplete.BasicCompletion;
 import org.fife.ui.autocomplete.CompletionProvider;
 import org.fife.ui.autocomplete.DefaultCompletionProvider;
 
-import org.fife.ui.rtextarea.Gutter;
-import org.fife.ui.rtextarea.IconGroup;
-import org.fife.ui.rtextarea.RTextArea;
-import org.fife.ui.rtextarea.RTextScrollPane;
-import org.fife.ui.rtextarea.RecordableTextAction;
-import org.fife.ui.rtextarea.ToolTipSupplier;
-
-import org.fife.ui.rsyntaxtextarea.RSyntaxDocument;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
-import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 
-public class TextEditor extends JFrame implements ActionListener,
-		DocumentListener {
-	File file;
-	RSyntaxTextArea textArea;
+public class TextEditor extends JFrame implements ActionListener {
+	EditorPane editorPane;
 	JTextArea screen;
 	JMenuItem newFile, open, save, saveas, compileAndRun, debug, quit,
 		  undo, redo, cut, copy, paste, find, replace, selectAll,
@@ -124,65 +102,20 @@ public class TextEditor extends JFrame implements ActionListener,
 		  makeJar, makeJarWithSource, removeUnusedImports,
 		  sortImports, removeTrailingWhitespace, findNext,
 		  openHelp, addImport;
-	AutoCompletion autocomp;
-	Languages.Language currentLanguage;
-	ClassCompletionProvider provider;
 	FindAndReplaceDialog findDialog;
-	StartDebugging debugging;
-	Gutter gutter;
-	IconGroup iconGroup;
 
 	String templateFolder = "templates/";
 	Set<String> templatePaths;
 	Languages.Language[] availableLanguages = Languages.getInstance().languages;
 
-	int modifyCount;
-	boolean undoInProgress, redoInProgress;
-
 	public TextEditor(String path) {
 		super("Script Editor");
 		WindowManager.addWindow(this);
-		JPanel cp = new JPanel(new BorderLayout());
-		textArea = new RSyntaxTextArea() {
-			public void undoLastAction() {
-				undoInProgress = true;
-				super.undoLastAction();
-				undoInProgress = false;
-			}
 
-			public void redoLastAction() {
-				redoInProgress = true;
-				super.redoLastAction();
-				redoInProgress = false;
-			}
-		};
-		textArea.setTabSize(8);
-		textArea.getActionMap().put(DefaultEditorKit
-			.nextWordAction, wordMovement(+1, false));
-		textArea.getActionMap().put(DefaultEditorKit
-			.selectionNextWordAction, wordMovement(+1, true));
-		textArea.getActionMap().put(DefaultEditorKit
-			.previousWordAction, wordMovement(-1, false));
-		textArea.getActionMap().put(DefaultEditorKit
-			.selectionPreviousWordAction, wordMovement(-1, true));
-		provider = new ClassCompletionProvider(new DefaultProvider(),
-				textArea, null);
-		autocomp = new AutoCompletion(provider);
+		JPanel cp = new JPanel();
+		editorPane = new EditorPane(this);
+		editorPane.embedWithScrollbars(cp);
 
-		autocomp.setListCellRenderer(new CCellRenderer());
-		autocomp.setShowDescWindow(true);
-		autocomp.setParameterAssistanceEnabled(true);
-		autocomp.install(textArea);
-		textArea.setToolTipSupplier((ToolTipSupplier)provider);
-		ToolTipManager.sharedInstance().registerComponent(textArea);
-		textArea.getDocument().addDocumentListener(this);
-		RTextScrollPane sp = new RTextScrollPane(textArea);
-		sp.setPreferredSize(new Dimension(600, 350));
-		sp.setIconRowHeaderEnabled(true);
-		gutter = sp.getGutter();
-		iconGroup = new IconGroup("bullets", "images/", null, "png", null);
-		gutter.setBookmarkIcon(iconGroup.getIcon("var"));
-		gutter.setBookmarkingEnabled(true);
 		screen = new JTextArea();
 		screen.setEditable(false);
 		screen.setLineWrap(true);
@@ -190,7 +123,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		screen.setFont(font);
 		JScrollPane scroll = new JScrollPane(screen);
 		scroll.setPreferredSize(new Dimension(600, 80));
-		JSplitPane panel = new JSplitPane(JSplitPane.VERTICAL_SPLIT, sp, scroll);
+
+		JSplitPane panel = new JSplitPane(JSplitPane.VERTICAL_SPLIT, cp, scroll);
 		panel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
 		panel.setResizeWeight(350.0 / 430.0);
 		setContentPane(panel);
@@ -343,7 +277,15 @@ public class TextEditor extends JFrame implements ActionListener,
 	}
 
 	public RSyntaxTextArea getTextArea() {
-		return textArea;
+		return editorPane;
+	}
+
+	public EditorPane getEditorPane() {
+		return editorPane;
+	}
+
+	public Languages.Language getCurrentLanguage() {
+		return getEditorPane().currentLanguage;
 	}
 
 	public JMenuItem addToMenu(JMenu menu, String menuEntry,
@@ -357,8 +299,10 @@ public class TextEditor extends JFrame implements ActionListener,
 		return item;
 	}
 
+	// TODO: with tabbed editors, remember the accelerators and reinstate
 	public void addAccelerator(final JMenuItem component,
 			int key, int modifiers) {
+		RSyntaxTextArea textArea = getTextArea();
 		textArea.getInputMap().put(KeyStroke.getKeyStroke(key,
 					modifiers), component);
 		if (textArea.getActionMap().get(component) != null)
@@ -441,9 +385,8 @@ public class TextEditor extends JFrame implements ActionListener,
 				return false;
 			}
 		});
-		for (String t : paths) {
+		for (String t : paths)
 			reflectDirStructInMenu(menuEntries, menu, t, "");
-		}
 
 		// add a „none“ item if no template was found
 		if (menu.getItemCount() == 0) {
@@ -570,7 +513,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		try {
 			// Load the template
 			InputStream is = Script_Editor.class.getClassLoader().getResourceAsStream(resource);
-			textArea.read(new BufferedReader(
+			getTextArea().read(new BufferedReader(
 				new InputStreamReader(is)),
 				null);
 
@@ -587,6 +530,10 @@ public class TextEditor extends JFrame implements ActionListener,
 
 	public void createNewDocument() {
 		open(null);
+	}
+
+	public boolean fileChanged() {
+		return getEditorPane().fileChanged();
 	}
 
 	public boolean handleUnsavedChanges() {
@@ -633,18 +580,10 @@ public class TextEditor extends JFrame implements ActionListener,
 		else if (source == compileAndRun)
 			runText();
 		else if (source == debug) {
-			if (currentLanguage == null ||
-					!currentLanguage.isDebuggable()) {
-				error("No debug support for this language");
-				return;
-			}
-			BreakpointManager manager = new BreakpointManager(gutter, textArea, iconGroup);
-			debugging = new StartDebugging(file.getPath(), manager.findBreakpointsLineNumber());
-
 			try {
-				System.out.println(debugging.startDebugging().exitValue());
+				getEditorPane().startDebugging();
 			} catch (Exception e) {
-				e.printStackTrace();
+				error("No debug support for this language");
 			}
 		}
 		else if (source == kill)
@@ -652,15 +591,15 @@ public class TextEditor extends JFrame implements ActionListener,
 		else if (source == quit)
 			processWindowEvent( new WindowEvent(this, WindowEvent.WINDOW_CLOSING) );
 		else if (source == cut)
-			textArea.cut();
+			getTextArea().cut();
 		else if (source == copy)
-			textArea.copy();
+			getTextArea().copy();
 		else if (source == paste)
-			textArea.paste();
+			getTextArea().paste();
 		else if (source == undo)
-			textArea.undoLastAction();
+			getTextArea().undoLastAction();
 		else if (source == redo)
-			textArea.redoLastAction();
+			getTextArea().redoLastAction();
 		else if (source == find)
 			findOrReplace(false);
 		else if (source == findNext)
@@ -670,33 +609,29 @@ public class TextEditor extends JFrame implements ActionListener,
 		else if (source == gotoLine)
 			gotoLine();
 		else if (source == selectAll) {
-			textArea.setCaretPosition(0);
-			textArea.moveCaretPosition(textArea.getDocument().getLength());
+			getTextArea().setCaretPosition(0);
+			getTextArea().moveCaretPosition(getTextArea().getDocument().getLength());
 		}
 		else if (source == addImport)
 			addImport(null);
 		else if (source == removeUnusedImports)
-			new TokenFunctions(textArea).removeUnusedImports();
+			new TokenFunctions(getTextArea()).removeUnusedImports();
 		else if (source == sortImports)
-			new TokenFunctions(textArea).sortImports();
+			new TokenFunctions(getTextArea()).sortImports();
 		else if (source == removeTrailingWhitespace)
-			new TokenFunctions(textArea).removeTrailingWhitespace();
+			new TokenFunctions(getTextArea()).removeTrailingWhitespace();
 		else if (source == autocomplete) {
 			try {
-				autocomp.doCompletion();
+				getEditorPane().autocomp.doCompletion();
 			} catch (Exception e) {}
 		}
 		else if (source == resume)
-			debugging.resumeVM();
+			getEditorPane().resume();
 		else if (source == terminate) {
-			// TODO not implemented
+			getEditorPane().terminate();
 		}
 		else if (source == openHelp)
 			openHelp(null);
-	}
-
-	protected RSyntaxDocument getDocument() {
-		return (RSyntaxDocument)textArea.getDocument();
 	}
 
 	public void findOrReplace(boolean replace) {
@@ -704,10 +639,9 @@ public class TextEditor extends JFrame implements ActionListener,
 
 		// override search pattern only if
 		// there is sth. selected
-		String selection = textArea.getSelectedText();
-		if (selection != null) {
+		String selection = getTextArea().getSelectedText();
+		if (selection != null)
 			findDialog.setSearchPattern(selection);
-		}
 
 		findDialog.show(replace);
 	}
@@ -725,35 +659,23 @@ public class TextEditor extends JFrame implements ActionListener,
 	}
 
 	public void gotoLine(int line) throws BadLocationException {
-		textArea.setCaretPosition(textArea.getLineStartOffset(line-1));
+		getTextArea().setCaretPosition(getTextArea().getLineStartOffset(line-1));
 	}
 
+	// TODO: with tabbed editors, this should not close the existing one
 	public void open(String path) {
-		if (path == null) {
-			file = null;
-			textArea.setText("");
-		}
-		else try {
-			file = new File(path);
-			if (!file.exists()) {
-				modifyCount = Integer.MIN_VALUE;
-				setFileName(file);
-				return;
-			}
-			textArea.read(new BufferedReader(new FileReader(file)),
-				null);
+		try {
+			getEditorPane().setFile(path);
 		} catch (Exception e) {
 			e.printStackTrace();
 			error("The file '" + path + "' was not found.");
 			return;
 		}
-		textArea.discardAllEdits();
-		modifyCount = 0;
-		setFileName(file);
 	}
 
 	public boolean saveAs() {
-		SaveDialog sd = new SaveDialog("Save as ", getFileName() , "");
+		SaveDialog sd = new SaveDialog("Save as ",
+				getEditorPane().getFileName() , "");
 		String name = sd.getFileName();
 		if (name == null)
 			return false;
@@ -767,7 +689,7 @@ public class TextEditor extends JFrame implements ActionListener,
 	}
 
 	public boolean saveAs(String path, boolean askBeforeReplacing) {
-		file = new File(path);
+		File file = new File(path);
 		if (file.exists() && askBeforeReplacing &&
 				JOptionPane.showConfirmDialog(this,
 					"Do you want to replace " + path + "?",
@@ -782,6 +704,7 @@ public class TextEditor extends JFrame implements ActionListener,
 	}
 
 	public boolean save() {
+		File file = getEditorPane().file;
 		if (file == null)
 			return saveAs();
 		if (!write(file))
@@ -792,11 +715,7 @@ public class TextEditor extends JFrame implements ActionListener,
 
 	public boolean write(File file) {
 		try {
-			BufferedWriter outFile =
-				new BufferedWriter(new FileWriter(file));
-			outFile.write(textArea.getText());
-			outFile.close();
-			modifyCount = 0;
+			getEditorPane().write(file);
 			return true;
 		} catch (IOException e) {
 			error("Could not save " + file.getName());
@@ -806,11 +725,13 @@ public class TextEditor extends JFrame implements ActionListener,
 	}
 
 	public boolean makeJar(boolean includeSources) {
+		File file = getEditorPane().file;
+		Languages.Language currentLanguage = getCurrentLanguage();
 		if ((file == null || currentLanguage.isCompileable())
 				&& !handleUnsavedChanges())
 			return false;
 
-		String name = getFileName();
+		String name = getEditorPane().getFileName();
 		if (name.endsWith(currentLanguage.extension))
 			name = name.substring(0, name.length()
 				- currentLanguage.extension.length());
@@ -843,8 +764,9 @@ public class TextEditor extends JFrame implements ActionListener,
 			throws IOException {
 		List<String> paths = new ArrayList<String>();
 		List<String> names = new ArrayList<String>();
-		File tmpDir = null;
+		File tmpDir = null, file = getEditorPane().file;
 		String sourceName = null;
+		Languages.Language currentLanguage = getCurrentLanguage();
 		if (currentLanguage.interpreter instanceof Refresh_Javas) try {
 			String sourcePath = file.getAbsolutePath();
 			Refresh_Javas java =
@@ -875,7 +797,7 @@ public class TextEditor extends JFrame implements ActionListener,
 
 		if (sourceName != null)
 			writeJarEntry(jar, sourceName,
-					textArea.getText().getBytes());
+					getTextArea().getText().getBytes());
 		for (int i = 0; i < paths.size(); i++)
 			writeJarEntry(jar, names.get(i),
 					readFile(paths.get(i)));
@@ -936,35 +858,11 @@ public class TextEditor extends JFrame implements ActionListener,
 		directory.delete();
 	}
 
-	public static String getExtension(String fileName) {
-		int dot = fileName.lastIndexOf(".");
-		return dot < 0 ?  "" : fileName.substring(dot);
+	void setLanguage(Languages.Language language) {
+		getEditorPane().setLanguage(language);
 	}
 
-	private void setLanguageByExtension(String extension) {
-		setLanguage(Languages.get(extension));
-	}
-
-	protected void setLanguage(Languages.Language language) {
-		if (language == null)
-			language = Languages.get("");
-
-		if (file != null) {
-			String name = file.getName();
-			if (!name.endsWith(language.extension) &&
-					currentLanguage != null) {
-				String ext = currentLanguage.extension;
-				if (name.endsWith(ext))
-					name = name.substring(0, name.length()
-							- ext.length());
-				file = new File(file.getParentFile(),
-						name + language.extension);
-				modifyCount = Integer.MIN_VALUE;
-			}
-		}
-		currentLanguage = language;
-		setTitle();
-
+	void updateLanguageMenu(Languages.Language language) {
 		if (!language.item.isSelected())
 			language.item.setSelected(true);
 
@@ -978,38 +876,16 @@ public class TextEditor extends JFrame implements ActionListener,
 		addImport.setEnabled(isJava);
 		removeUnusedImports.setEnabled(isJava);
 		sortImports.setEnabled(isJava);
-
-		provider.setProviderLanguage(language.menuLabel);
-
-		// TODO: these should go to upstream RSyntaxTextArea
-		if (language.syntaxStyle != null)
-			textArea.setSyntaxEditingStyle(language.syntaxStyle);
-		else if (language.extension.equals(".clj"))
-			getDocument().setSyntaxStyle(new ClojureTokenMaker());
-		else if (language.extension.equals(".m"))
-			getDocument().setSyntaxStyle(new MatlabTokenMaker());
 	}
 
 	public void setFileName(File file) {
-		setTitle();
-		if (file != null)
-			setLanguageByExtension(getExtension(file.getName()));
+		getEditorPane().setFileName(file);
 	}
 
-	protected String getFileName() {
-		if (file != null)
-			return file.getName();
-		if (currentLanguage.menuLabel.equals("Java")) {
-			String name =
-				new TokenFunctions(textArea).getClassName();
-			if (name != null)
-				return name + currentLanguage.extension;
-		}
-		return "New_" + currentLanguage.extension;
-	}
-
-	private synchronized void setTitle() {
-		String title = (fileChanged() ? "*" : "") + getFileName()
+	synchronized void setTitle() {
+		boolean fileChanged = getEditorPane().fileChanged();
+		String fileName = getEditorPane().getFileName();
+		String title = (fileChanged ? "*" : "") + fileName
 			+ (executingTasks.isEmpty() ? "" : " (Running)");
 		setTitle(title);
 	}
@@ -1152,6 +1028,7 @@ public class TextEditor extends JFrame implements ActionListener,
 
 	/** Run the text in the textArea without compiling it, only if it's not java. */
 	public void runText() {
+		Languages.Language currentLanguage = getCurrentLanguage();
 		if (currentLanguage.isCompileable()) {
 			if (handleUnsavedChanges())
 				runScript();
@@ -1163,6 +1040,7 @@ public class TextEditor extends JFrame implements ActionListener,
 			return;
 		}
 
+		RSyntaxTextArea textArea = getTextArea();
 		textArea.setEditable(false);
 		final JTextAreaOutputStream output = new JTextAreaOutputStream(screen);
 		try {
@@ -1189,19 +1067,18 @@ public class TextEditor extends JFrame implements ActionListener,
 	}
 
 	public void runScript() {
-		String ext = getExtension(file.getName());
 		final RefreshScripts interpreter =
-		        Languages.getInstance().get(ext).interpreter;
+			getCurrentLanguage().interpreter;
 
 		if (interpreter == null) {
-			error("There is no interpreter for " + ext
-			         + " files!");
+			error("There is no interpreter for this language");
 			return;
 		}
 
 		JTextAreaOutputStream output = new JTextAreaOutputStream(screen);
 		interpreter.setOutputStreams(output, output);
 
+		final File file = getEditorPane().file;
 		new TextEditor.Executer(new JTextAreaOutputStream(screen)) {
 			public void execute() {
 				interpreter.runScript(file.getPath());
@@ -1209,75 +1086,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		};
 	}
 
-	RecordableTextAction wordMovement(final int direction,
-			final boolean select) {
-		final String id = "WORD_MOVEMENT_" + select + direction;
-		return new RecordableTextAction(id) {
-			public void actionPerformedImpl(ActionEvent e,
-					RTextArea textArea) {
-				int pos = textArea.getCaretPosition();
-				int end = direction < 0 ? 0 :
-					textArea.getDocument().getLength();
-				while (pos != end && !isWordChar(textArea, pos))
-					pos += direction;
-				while (pos != end && isWordChar(textArea, pos))
-					pos += direction;
-				if (select)
-					textArea.moveCaretPosition(pos);
-				else
-					textArea.setCaretPosition(pos);
-			}
-
-			public String getMacroID() {
-				return id;
-			}
-
-			boolean isWordChar(RTextArea textArea, int pos) {
-				try {
-					char c = textArea.getText(pos
-						+ (direction < 0 ? -1 : 0), 1)
-						.charAt(0);
-					return c > 0x7f ||
-						(c >= 'A' && c <= 'Z') ||
-						(c >= 'a' && c <= 'z') ||
-						(c >= '0' && c <= '9') ||
-						c == '_';
-				} catch (BadLocationException e) {
-					return false;
-				}
-			}
-		};
-	}
-
-	public boolean fileChanged() {
-		return modifyCount != 0;
-	}
-
-	public void insertUpdate(DocumentEvent e) {
-		modified();
-	}
-
-	public void removeUpdate(DocumentEvent e) {
-		modified();
-	}
-
-	// triggered only by syntax highlighting
-	public void changedUpdate(DocumentEvent e) { }
-
-	protected void modified() {
-		boolean update = modifyCount == 0;
-		if (undoInProgress)
-			modifyCount--;
-		else if (redoInProgress || modifyCount >= 0)
-			modifyCount++;
-		else // not possible to get back to clean state
-			modifyCount = Integer.MIN_VALUE;
-		if (update || modifyCount == 0)
-			setTitle();
-	}
-
 	public String getSelectedTextOrAsk(String label) {
-		String selection = textArea.getSelectedText();
+		String selection = getTextArea().getSelectedText();
 		if (selection == null) {
 			selection = JOptionPane.showInputDialog(this,
 				label + ":", label + "...",
@@ -1294,10 +1104,10 @@ public class TextEditor extends JFrame implements ActionListener,
 		if (className == null)
 			return;
 		if (className.indexOf('.') < 0)
-			className = new ClassNameFunctions(provider)
+			className = getEditorPane().getClassNameFunctions()
 				.getFullName(className);
 		if (className != null)
-			new TokenFunctions(textArea).addImport(className);
+			new TokenFunctions(getTextArea()).addImport(className);
 	}
 
 	public void openHelp(String className) {
@@ -1305,11 +1115,11 @@ public class TextEditor extends JFrame implements ActionListener,
 			className = getSelectedTextOrAsk("Class name");
 		if (className == null)
 			return;
-		new ClassNameFunctions(provider).openHelpForClass(className);
+		getEditorPane().getClassNameFunctions()
+			.openHelpForClass(className);
 	}
 
 	protected void error(String message) {
 		JOptionPane.showMessageDialog(this, message);
 	}
 }
-// TODO: check all files for whitespace issues
