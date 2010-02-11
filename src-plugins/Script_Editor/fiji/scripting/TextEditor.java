@@ -720,6 +720,34 @@ public class TextEditor extends JFrame implements ActionListener,
 		getTextArea().setCaretPosition(getTextArea().getLineStartOffset(line-1));
 	}
 
+	public boolean reload() {
+		return reload("Reload the file?");
+	}
+
+	public boolean reload(String message) {
+		File file = getEditorPane().file;
+		if (file == null || !file.exists())
+			return true;
+
+		boolean modified = getEditorPane().fileChanged();
+		String[] options = { "Reload", "Do not reload" };
+		if (modified)
+			options[0] = "Reload (discarding changes)";
+		switch (JOptionPane.showOptionDialog(this, message, "Reload",
+			JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE,
+			null, options, options[0])) {
+		case 0:
+			try {
+				editorPane.setFile(file.getPath());
+				return true;
+			} catch (IOException e) {
+				error("Could not reload " + file.getPath());
+			}
+			break;
+		}
+		return false;
+	}
+
 	public void open(String path) {
 		try {
 			editorPane = new EditorPane(this);

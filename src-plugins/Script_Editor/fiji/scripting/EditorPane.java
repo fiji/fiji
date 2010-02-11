@@ -42,6 +42,7 @@ import org.fife.ui.rtextarea.ToolTipSupplier;
 public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 	TextEditor frame;
 	File file;
+	long fileLastModified;
 	Languages.Language currentLanguage;
 	AutoCompletion autocomp;
 	ClassCompletionProvider provider;
@@ -159,6 +160,7 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 	public void changedUpdate(DocumentEvent e) { }
 
 	protected void modified() {
+		checkForOutsideChanges();
 		boolean update = modifyCount == 0;
 		if (undoInProgress)
 			modifyCount--;
@@ -170,22 +172,33 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 			setTitle();
 	}
 
+	public void checkForOutsideChanges() {
+		if (frame != null && wasChangedOutside() &&
+				!frame.reload("The file " + file.getName()
+					+ " was changed outside of the editor"))
+			fileLastModified = file.lastModified();
+	}
+
+	public boolean wasChangedOutside() {
+		return file != null && file.exists() &&
+				file.lastModified() != fileLastModified;
+	}
+
 	public void write(File file) throws IOException {
 		BufferedWriter outFile =
 			new BufferedWriter(new FileWriter(file));
 		outFile.write(getText());
 		outFile.close();
 		modifyCount = 0;
+		fileLastModified = file.lastModified();
 	}
 
 	public void setFile(String path) throws IOException {
-		File file;
-		if (path == null) {
-			file = null;
+		file = null;
+		if (path == null)
 			setText("");
-		}
 		else {
-			file = new File(path);
+			File file = new File(path);
 			if (!file.exists()) {
 				modifyCount = Integer.MIN_VALUE;
 				setFileName(file);
@@ -193,6 +206,7 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 			}
 			read(new BufferedReader(new FileReader(file)),
 				null);
+			this.file = file;
 		}
 		discardAllEdits();
 		modifyCount = 0;
@@ -204,6 +218,8 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 		setTitle();
 		if (file != null)
 			setLanguageByExtension(getExtension(file.getName()));
+		fileLastModified = file == null || !file.exists() ? 0 :
+			file.lastModified();
 	}
 
 	protected String getFileName() {
