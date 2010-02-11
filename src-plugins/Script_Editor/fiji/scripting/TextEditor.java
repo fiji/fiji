@@ -98,7 +98,7 @@ public class TextEditor extends JFrame implements ActionListener {
 	EditorPane editorPane;
 	JTabbedPane tabbed;
 	JTextArea screen;
-	JMenuItem newFile, open, save, saveas, compileAndRun, debug, quit,
+	JMenuItem newFile, open, save, saveas, compileAndRun, debug, close,
 		  undo, redo, cut, copy, paste, find, replace, selectAll,
 		  autocomplete, resume, terminate, kill, gotoLine,
 		  makeJar, makeJarWithSource, removeUnusedImports,
@@ -153,7 +153,7 @@ public class TextEditor extends JFrame implements ActionListener {
 		makeJarWithSource = addToMenu(file, "Export as .jar (with source)", 0, 0);
 		makeJarWithSource.setMnemonic(KeyEvent.VK_X);
 		file.addSeparator();
-		quit = addToMenu(file, "Close Editor", KeyEvent.VK_W, ctrl);
+		close = addToMenu(file, "Close", KeyEvent.VK_W, ctrl);
 
 		mbar.add(file);
 
@@ -591,7 +591,7 @@ public class TextEditor extends JFrame implements ActionListener {
 		}
 		else if (source == kill)
 			chooseTaskToKill();
-		else if (source == quit)
+		else if (source == close)
 			processWindowEvent( new WindowEvent(this, WindowEvent.WINDOW_CLOSING) );
 		else if (source == cut)
 			getTextArea().cut();
