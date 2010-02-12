@@ -10,6 +10,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -41,6 +42,19 @@ import org.nfunk.jep.type.DoubleNumberFactory;
 
 
 
+
+/**
+* This code was edited or generated using CloudGarden's Jigloo
+* SWT/Swing GUI Builder, which is free for non-commercial
+* use. If Jigloo is being used commercially (ie, by a corporation,
+* company or business for any purpose whatever) then you
+* should purchase a license for each developer using Jigloo.
+* Please visit www.cloudgarden.com for details.
+* Use of Jigloo implies acceptance of these licensing terms.
+* A COMMERCIAL LICENSE HAS NOT BEEN PURCHASED FOR
+* THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
+* LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
+*/
 /**
  * This is a GUI for the plugin {@link Image_Expression_Parser}. 
  * <p>
@@ -588,24 +602,6 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 					jPanelRight.setLayout(jPanelRightLayout);
 					jPanelRight.setMinimumSize(new java.awt.Dimension(1, 1));
 					{
-						jLabelExpression = new JLabel();
-						jPanelRight.add(jLabelExpression, new GridBagConstraints(-1, 0, 4, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(20, 10, 0, 0), 0, 0));
-						jLabelExpression.setText("Expression:");
-					}
-					{
-						jTextFieldExpression = new JTextField();
-						jPanelRight.add(jTextFieldExpression, new GridBagConstraints(-1, 1, 4, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(20, 10, 0, 10), 0, 0));
-						jTextFieldExpression.setBorder(new LineBorder(new java.awt.Color(252,117,0), 1, false));
-						jTextFieldExpression.setSize(12, 18);
-						jTextFieldExpression.addKeyListener(new KeyListener() {
-							public void keyTyped(KeyEvent e) {}
-							public void keyReleased(KeyEvent e) {
-								checkValid();
-							}
-							public void keyPressed(KeyEvent e) {}
-						});
-					}
-					{
 						jButtonCancel = new JButton();
 						jPanelRight.add(jButtonCancel, new GridBagConstraints(0, 3, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 10, 10, 0), 0, 0));
 						jButtonCancel.setText("Cancel");
@@ -639,27 +635,50 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 				}
 				{
 					jPanelLeft = new JPanel();
-					BorderLayout jPanelLeftLayout = new BorderLayout();
+					GridBagLayout jPanelLeftLayout = new GridBagLayout();
+					jPanelLeftLayout.rowWeights = new double[] {0.0, 0.0, 1.0, 0.0};
+					jPanelLeftLayout.rowHeights = new int[] {7, 7, -33, 50};
+					jPanelLeftLayout.columnWeights = new double[] {0.1};
+					jPanelLeftLayout.columnWidths = new int[] {7};
 					jPanelLeft.setLayout(jPanelLeftLayout);
 					jSplitPane1.add(jPanelLeft, JSplitPane.LEFT);
 					jPanelLeft.setBorder(new LineBorder(new java.awt.Color(0,0,0), 1, false));
-					jPanelLeft.setPreferredSize(new java.awt.Dimension(198, 274));
+					jPanelLeft.setPreferredSize(new java.awt.Dimension(198, 470));
+					{
+						jLabelExpression = new JLabel();
+						jPanelLeft.add(jLabelExpression, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(10, 10, 10, 0), 0, 0));
+						jLabelExpression.setText("Expression:");
+						jLabelExpression.setPreferredSize(new java.awt.Dimension(196, 240));
+					}
+					{
+						jTextFieldExpression = new JTextField();
+						jPanelLeft.add(jTextFieldExpression, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(10, 10, 10, 10), 0, 0));
+						jTextFieldExpression.setBorder(new LineBorder(new java.awt.Color(252,117,0), 1, false));
+						jTextFieldExpression.setSize(12, 18);
+						jTextFieldExpression.addKeyListener(new KeyListener() {
+							public void keyTyped(KeyEvent e) {}
+							public void keyReleased(KeyEvent e) {
+								checkValid();
+							}
+							public void keyPressed(KeyEvent e) {}
+						});
+					}
 					{
 						jScrollPaneImages = new JScrollPane();
-						jPanelLeft.add(jScrollPaneImages, BorderLayout.CENTER);
-						jScrollPaneImages.setPreferredSize(new java.awt.Dimension(92, 234));
+						jPanelLeft.add(jScrollPaneImages, new GridBagConstraints(0, 2, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(10, 0, 10, 0), 0, 0));
+						jScrollPaneImages.setPreferredSize(new java.awt.Dimension(196, 267));
 						jScrollPaneImages.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 						jScrollPaneImages.getVerticalScrollBar().setUnitIncrement(20);
 						{
 							jPanelImages = new JPanel();
 							jScrollPaneImages.setViewportView(jPanelImages);
 							jPanelImages.setLayout(null);
-							jPanelImages.setPreferredSize(new java.awt.Dimension(1, 1));
+							jPanelImages.setPreferredSize(new java.awt.Dimension(190, 45));
 						}
 					}
 					{
 						jPanelLeftButtons = new JPanel();
-						jPanelLeft.add(jPanelLeftButtons, BorderLayout.SOUTH);
+						jPanelLeft.add(jPanelLeftButtons, new GridBagConstraints(0, 3, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(10, 0, 10, 0), 0, 0));
 						jPanelLeftButtons.setLayout(null);
 						jPanelLeftButtons.setPreferredSize(new java.awt.Dimension(196, 35));
 						jPanelLeftButtons.setSize(196, 35);
