@@ -20,6 +20,8 @@ import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
@@ -393,11 +395,28 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 			parser.addVariable(var, null); // we do not care for value yet
 		}
 		parser.parseExpression(expression);
-		final String error = parser.getErrorInfo();
-		if ( null == error) {
+		if (!parser.hasError()) {
 			return "";
 		} else {
-			return error;
+			final String error = parser.getErrorInfo();
+			String[] errors = error.split("\\n");
+			StringBuilder formatted_error = new StringBuilder();
+			formatted_error.append("Found errors in expression:\n<p>");
+			for (String str : errors) {
+				if (str.startsWith("Encountered")) { // catch lengthy errors
+					Pattern column_getter = Pattern.compile("column \\d+");
+					Matcher match = column_getter.matcher(str);
+					if (match.find()) {
+						formatted_error.append("&nbsp&nbsp ■ Syntax error in expression at column "+match.group().substring(7)+"\n");
+					}
+				} else if (str.startsWith("Was expecting") || str.startsWith("    ") ){
+					continue;
+				} else {
+					formatted_error.append("&nbsp&nbsp ■ "+str+"\n");
+				}
+				formatted_error.append("<p>\n");
+			}
+			return formatted_error.toString();
 		}
 	}
 	
@@ -554,7 +573,7 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 			{
 				jSplitPane1 = new JSplitPane();
 				getContentPane().add(jSplitPane1, BorderLayout.CENTER);
-				jSplitPane1.setPreferredSize(new java.awt.Dimension(439, 302));
+				jSplitPane1.setPreferredSize(new java.awt.Dimension(500, 500));
 				jSplitPane1.setDividerLocation(200);
 				jSplitPane1.setResizeWeight(0.5);
 				{
@@ -684,7 +703,7 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 				}
 			}
 			pack();
-			setSize(400, 300);
+			setSize(500, 500);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
