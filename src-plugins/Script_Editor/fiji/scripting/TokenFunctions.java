@@ -132,6 +132,11 @@ public class TokenFunctions implements Iterable<Token> {
 		public int compareTo(Import imp) {
 			return classOrPackage.compareTo(imp.classOrPackage);
 		}
+
+		public String toString() {
+			return "Import(" + classOrPackage + ","
+				+ startOffset + "-" + endOffset + ")";
+		}
 	}
 
 	Token skipNonCode(TokenIterator iter, Token current) {
@@ -238,27 +243,33 @@ public class TokenFunctions implements Iterable<Token> {
 	}
 
 	public void addImport(String className) {
-		String string = "import " + className + ";\n";
 		List<Import> imports = getImports();
 
 		if (imports.size() == 0) {
 			TokenIterator iter = new TokenIterator();
 			int offset = 0;
+			boolean insertLF = false;
 			while (iter.hasNext()) {
 				Token token = iter.next();
-				if (token.type != token.RESERVED_WORD)
+				if (token.type != token.RESERVED_WORD) {
+					insertLF = false;
 					continue;
-				if (getText(token).equals("package"))
+				}
+				if (getText(token).equals("package")) {
 					skipToEOL(iter, token);
+					insertLF = true;
+				}
 				else {
 					offset = token.offset;
 					break;
 				}
 			}
-			textArea.insert(string + "\n", offset);
+			textArea.insert((insertLF ? "\n" : "") +
+				"import " + className + ";\n\n", offset);
 			return;
 		}
 
+		String string = "import " + className + ";\n";
 		Import imp = new Import(0, 0, className);
 		int insert = -1;
 
@@ -266,14 +277,19 @@ public class TokenFunctions implements Iterable<Token> {
 			int cmp = imports.get(i).compareTo(imp);
 			if (cmp == 0)
 				return;
-			if (insert < 0 && cmp < 0)
+			if (cmp < 0)
 				insert = i;
 		}
+
+		// 'insert' is the index of the import _after_ which we
+		// want to insert the current import.
+		if (insert >= 0)
+			string = "\n" + string;
 		if (insert >= 0 && !imp.getPackage()
-				.equals(imports.get(insert)))
+				.equals(imports.get(insert).getPackage()))
 			string = "\n" + string;
 		if (insert + 1 < imports.size() && !imp.getPackage()
-				.equals(imports.get(insert + 1)))
+				.equals(imports.get(insert + 1).getPackage()))
 			string += "\n";
 		int startOffset = insert < 0 ? imports.get(0).startOffset :
 			imports.get(insert).endOffset;

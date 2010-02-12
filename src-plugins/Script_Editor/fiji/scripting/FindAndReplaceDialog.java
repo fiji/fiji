@@ -28,17 +28,15 @@ import org.fife.ui.rtextarea.SearchEngine;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 
 public class FindAndReplaceDialog extends JDialog implements ActionListener {
-	RSyntaxTextArea textArea;
-
+	TextEditor textEditor;
 	JTextField searchField, replaceField;
 	JLabel replaceLabel;
 	JCheckBox matchCase, wholeWord, markAll, regex, forward;
 	JButton findNext, replace, replaceAll, cancel;
 
-	public FindAndReplaceDialog(TextEditor editor,
-			RSyntaxTextArea textArea) {
+	public FindAndReplaceDialog(TextEditor editor) {
 		super(editor);
-		this.textArea = textArea;
+		textEditor = editor;
 
 		Container root = getContentPane();
 		root.setLayout(new GridBagLayout());
@@ -96,6 +94,10 @@ public class FindAndReplaceDialog extends JDialog implements ActionListener {
 			component.addKeyListener(listener);
 		searchField.addKeyListener(listener);
 		replaceField.addKeyListener(listener);
+	}
+
+	protected RSyntaxTextArea getTextArea() {
+		return textEditor.getTextArea();
 	}
 
 	public void show(boolean replace) {
@@ -162,7 +164,8 @@ public class FindAndReplaceDialog extends JDialog implements ActionListener {
 		else if (source == replace)
 			searchOrReplace(true);
 		else if (source == replaceAll) {
-			int replace = SearchEngine.replaceAll(textArea, text,
+			int replace = SearchEngine.replaceAll(getTextArea(),
+					text,
 					replaceField.getText(),
 					matchCase.isSelected(),
 					wholeWord.isSelected(),
@@ -183,6 +186,7 @@ public class FindAndReplaceDialog extends JDialog implements ActionListener {
 					JOptionPane.YES_NO_OPTION)
 				!= JOptionPane.YES_OPTION)
 			return false;
+		RSyntaxTextArea textArea = getTextArea();
 		int caret = textArea.getCaretPosition();
 		textArea.setCaretPosition(isForward ?
 				0 : textArea.getDocument().getLength());
@@ -194,6 +198,7 @@ public class FindAndReplaceDialog extends JDialog implements ActionListener {
 	}
 
 	protected boolean searchOrReplaceFromHere(boolean replace) {
+		RSyntaxTextArea textArea = getTextArea();
 		return replace ?
 			SearchEngine.replace(textArea, searchField.getText(),
 					replaceField.getText(),

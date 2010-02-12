@@ -38,7 +38,7 @@ public class IntArrayList {
 
   // CHANGELOG
   // 2005-11-15 1.00 initial release.
-  //                 CAVEAT: Most methods are completly untested for now.
+  //                 CAVEAT: Most methods are completely untested for now.
 
 
   /** The contained int values. */
