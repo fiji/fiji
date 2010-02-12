@@ -104,7 +104,16 @@ public class Refresh_Javas extends RefreshScripts {
 			throws ClassNotFoundException, NoSuchMethodException,
 			       IllegalAccessException,
 			       InvocationTargetException {
+		return compile(path, outPath, null);
+	}
+
+	public boolean compile(String path, String outPath, String[] extraArgs)
+			throws ClassNotFoundException, NoSuchMethodException,
+			       IllegalAccessException,
+			       InvocationTargetException {
 		String[] arguments = { "-g", path };
+		if (extraArgs != null)
+			arguments = unshift(arguments, extraArgs);
 		String classPath = getPluginsClasspath();
 		if (!classPath.equals(""))
 			arguments = unshift(arguments,
