@@ -7,9 +7,16 @@ die () {
 	exit 1
 }
 
-OFFENDERS=$(./fiji tests/class_versions.py  |
-	sed -n -e 's/(.*//' -e 's/^\t//p' |
-	uniq)
+case $# in
+0)
+	OFFENDERS=$(./fiji tests/class_versions.py  |
+		sed -n -e 's/(.*//' -e 's/^\t//p' |
+		uniq)
+	;;
+*)
+	OFFENDERS="$*"
+	;;
+esac
 
 for f in $OFFENDERS
 do
