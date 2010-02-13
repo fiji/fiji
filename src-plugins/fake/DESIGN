@@ -49,7 +49,7 @@ See below for details which variables have a special meaning.
 The design of Fake.java
 =======================
 
-The whole system is in the class fake.Fake, with inner classes.  That was
+The whole system is in the class fiji.build.Fake, with inner classes.  That was
 done on purpose, so that you can copy one file around, should you need
 the same system somewhere else.
 

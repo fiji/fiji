@@ -1,4 +1,5 @@
 /* -*- mode: java; c-basic-offset: 8; indent-tabs-mode: t; tab-width: 8 -*- */
+package fiji.build;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -60,7 +61,7 @@ public class Fake {
 	public static boolean runPrecompiledFakeIfNewer(String[] args) {
 		String url = Fake.class.getResource("Fake.class").toString();
 		String prefix = "jar:file:";
-		String suffix = "/fake.jar!/Fake.class";
+		String suffix = "/fake.jar!/fiji/build/Fake.class";
 		if (!url.startsWith(prefix) || !url.endsWith(suffix))
 			return false;
 		url = url.substring(9, url.length() - suffix.length());
@@ -100,9 +101,9 @@ public class Fake {
 		String fijiHome = URLDecoder.decode(url.toString());
 		if (getPlatform().startsWith("win"))
 			fijiHome = fijiHome.replace('\\', '/');
-		if (!fijiHome.endsWith("/Fake.class"))
+		if (!fijiHome.endsWith("/fiji/build/Fake.class"))
 			throw new RuntimeException("unexpected URL: " + url);
-		fijiHome = fijiHome.substring(0, fijiHome.length() - 10);
+		fijiHome = fijiHome.substring(0, fijiHome.length() - 21);
 		int slash = fijiHome.lastIndexOf('/', fijiHome.length() - 2);
 		if (fijiHome.startsWith("jar:file:") &&
 				fijiHome.endsWith(".jar!/")) {
@@ -118,6 +119,9 @@ public class Fake {
 		if (fijiHome.endsWith("precompiled/"))
 			fijiHome = fijiHome.substring(0,
 					fijiHome.length() - 12);
+		else if (fijiHome.endsWith("jars/"))
+			fijiHome = fijiHome.substring(0,
+					fijiHome.length() - 5);
 
 		return fijiHome;
 	}

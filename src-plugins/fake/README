@@ -11,7 +11,7 @@ This is a simple replacement for "make" so that we can avoid
 In addition, we can do very special things, such as automatically adding
 staged-plugins/<name>.config as plugins.config to plugins/<name>.jar.
 
-The main class is Fake.
+The main class is fiji.build.Fake.
 
 When called without arguments, the prerequisites of "all" are made.
 

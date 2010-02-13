@@ -443,9 +443,9 @@ check-*[bin/up-to-date-check.py * precompiled/*_.jar] <-
 
 # Fake itself
 
-MAINCLASS(fake.jar)=Fake
-JAVAVERSION(fake.jar)=1.3
-fake.jar <- fake/Fake.java
+MAINCLASS(jars/fake.jar)=fiji.build.Fake
+JAVAVERSION(jars/fake.jar)=1.3
+jars/fake.jar <- src-plugins/fake/**/*.java
 
 # Script_Editor_Stub.jar (to include MainClassForDebugging in the classpath)
 
