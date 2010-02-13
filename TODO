@@ -18,13 +18,11 @@ A loose TODO list for Fiji
 - Building "fake.jar" on Windows should warn and resort to making
   precompiled/fake.jar directly.  Same goes for the Fiji launcher.
 - add script recorder for the new scripting languages
-- use the headless.jar trick to compile MacAdapter.source in ImageJA
 - check which Reader Plugins do not extend ImagePlus
 - extend GenericDialog to provide Help, Advanced, File button
 - GenericDialog.addToolText()
 - add tests (test that all plugins are found, test which image types
   they support, add regression tests, if file importers return ImagePlus)
-- make 'bin/update-fiji.py' part of release script
 - in ImageJA: add isCanceled() method to SaveDialog (is getDirectory() == null).
 - in ImageJA: what about a file extension based construct similar to
   HandleExtraFileTypes for save?  This would allow to work on top of custom
