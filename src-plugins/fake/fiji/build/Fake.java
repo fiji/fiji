@@ -185,9 +185,14 @@ public class Fake {
 	}
 
 	/* input defaults to reading the Fakefile, cwd to "." */
+	public Parser parse(InputStream input, File cwd) throws FakeException {
+		return new Parser(input, cwd);
+	}
+
+	/* input defaults to reading the Fakefile, cwd to "." */
 	public void make(InputStream input, File cwd, String[] args) {
 		try {
-			Parser parser = new Parser(input, cwd);
+			Parser parser = parse(input, cwd);
 
 			// filter out variable definitions
 			int firstArg = 0;
@@ -791,9 +796,13 @@ public class Fake {
 				 string.equals("1") || string.equals("2"));
 		}
 
+		public Rule getRule(String rule) {
+			return (Rule)allRules.get(rule);
+		}
+
 		// the different rule types
 
-		abstract class Rule {
+		public abstract class Rule {
 			protected String target;
 			protected List prerequisites, nonUpToDates;
 			protected boolean wasAlreadyInvoked;
@@ -915,7 +924,7 @@ public class Fake {
 				return true;
 			}
 
-			void make() throws FakeException {
+			public void make() throws FakeException {
 				if (wasAlreadyChecked)
 					return;
 				wasAlreadyChecked = true;
@@ -3146,7 +3155,7 @@ public class Fake {
 
 	// our very own exception
 
-	static class FakeException extends Exception {
+	static public class FakeException extends Exception {
 		public static final long serialVersionUID = 1;
 		public FakeException(String message) {
 			super(message);

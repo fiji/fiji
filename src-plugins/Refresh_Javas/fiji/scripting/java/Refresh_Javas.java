@@ -2,6 +2,8 @@ package fiji.scripting.java;
 
 import common.RefreshScripts;
 
+import fiji.build.Fake;
+
 import ij.IJ;
 import ij.ImagePlus;
 import ij.Menus;
@@ -14,10 +16,13 @@ import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.io.StringBufferInputStream;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -48,6 +53,16 @@ public class Refresh_Javas extends RefreshScripts {
 	public void runScript(String path) {
 		String c = path;
 		if (c.endsWith(".java")) {
+			try {
+				String className = fake(path);
+				if (className != null) {
+					runPlugin(className);
+					return;
+				}
+			} catch (Fake.FakeException e) {
+				e.printStackTrace(new PrintStream(err));
+				return;
+			}
 			c = c.substring(0, c.length() - 5);
 			try {
 				if (!upToDate(path, c + ".class") &&
@@ -72,7 +87,9 @@ public class Refresh_Javas extends RefreshScripts {
 				return;
 			}
 			runPlugin(c.replace('/', '.'));
-		} catch (Exception e) { e.printStackTrace(); }
+		} catch (Exception e) {
+			e.printStackTrace(new PrintStream(err));
+		}
 	}
 
 	boolean upToDate(String source, String target) {
@@ -90,6 +107,59 @@ public class Refresh_Javas extends RefreshScripts {
 		System.arraycopy(add, 0, result, 0, add.length);
 		System.arraycopy(list, 0, result, add.length, list.length);
 		return result;
+	}
+
+	/* returns the class name on success, null otherwise */
+	public String fake(String path) throws Fake.FakeException {
+		String fijiDir = System.getProperty("fiji.dir");
+		if (fijiDir == null)
+			return null;
+		if (!fijiDir.endsWith("/"))
+			fijiDir += "/";
+		String base = fijiDir + "src-plugins/";
+		try {
+			path = new File(path).getCanonicalFile()
+				.getAbsolutePath();
+		} catch (IOException e) {
+			e.printStackTrace(new PrintStream(err));
+			return null;
+		}
+		if (!path.startsWith(base))
+			return null;
+		path = path.substring(base.length());
+
+		int slash = path.indexOf("/");
+		base = path.substring(0, slash);
+		String target = "plugins/" + base + ".jar";
+		String name = path.substring(slash + 1).replace('/', '.');
+		if (name.endsWith(".java"))
+			name = name.substring(0, name.length() - 5);
+
+		Fake fake = new Fake();
+		fake.out = new PrintStream(out);
+		fake.err = new PrintStream(err);
+		Fake.Parser parser = null;
+		String fakefile = fijiDir + "/Fakefile";
+		if (new File(fakefile).exists()) try {
+			parser = fake.parse(new FileInputStream(fakefile),
+					new File(fijiDir));
+			parser.parseRules(null);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace(new PrintStream(err));
+		}
+		if (parser == null || parser.getRule(target) == null) {
+			String rule = "all <- " + target + "\n"
+				+ "\n"
+				+ target + " <- src-plugins/" + base
+					+ "/**/*.java\n";
+			parser = fake.parse(new StringBufferInputStream(rule),
+					new File(fijiDir));
+			parser.parseRules(null);
+		}
+		parser.setVariable("debug", "true");
+		parser.getRule(target).make();
+
+		return name;
 	}
 
 	static Method javac;
