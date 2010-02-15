@@ -95,8 +95,8 @@ public class Colocalisation_Threshold implements PlugIn {
 		threshold = false;
 		int indexMask=0;
 		GenericDialog gd = new GenericDialog("Colocalisation Thresholds");
-		gd.addChoice("Channel 1", titles, titles[index1]);
-		gd.addChoice("Channel 2", titles, titles[index2]);
+		gd.addChoice("Channel_1", titles, titles[index1]);
+		gd.addChoice("Channel_2", titles, titles[index2]);
 		gd.addChoice("Use ROI", chooseROI, chooseROI[indexRoi]);
 
 		//	gd.addChoice("Mask channel", chooseMask, chooseMask[indexMask]);
@@ -796,13 +796,10 @@ public class Colocalisation_Threshold implements PlugIn {
 		double plotY=0;
 		double plotY2=0;
 
-		if (textWindow == null)
+		if (textWindow == null || !textWindow.isVisible())
 			textWindow = new TextWindow("Results",
-				heading, str, 400, 250);
-		else {
-			textWindow.getTextPanel().setColumnHeadings(heading);
-			textWindow.getTextPanel().appendLine(str);
-		}
+				heading, "", 400, 250);
+		textWindow.getTextPanel().appendLine(str);
 
 		//new TextWindow( "mRegression: "+fileName, "\t \t \t.", sb.toString(), 420, 450);
 		Prefs.set("CTC_annels.int", (int)dualChannelIndex );
