@@ -1,13 +1,9 @@
 package fiji.scripting;
 
-import com.sun.jdi.connect.VMStartException;
-
 import common.RefreshScripts;
 
 import fiji.scripting.java.Refresh_Javas;
 
-import ij.IJ;
-import ij.Prefs;
 import ij.WindowManager;
 
 import ij.gui.GenericDialog;
@@ -15,9 +11,6 @@ import ij.gui.GenericDialog;
 import ij.io.OpenDialog;
 import ij.io.SaveDialog;
 
-import java.net.URL;
-
-import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Toolkit;
@@ -28,72 +21,57 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-import java.awt.image.BufferedImage;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.LineNumberReader;
+import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.PrintWriter;
-import java.io.OutputStream;
-import java.io.InputStream;
+
+import java.net.URL;
+import java.net.URLDecoder;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.List;
-import java.util.Vector;
-import java.util.Enumeration;
-import java.util.Set;
-import java.util.HashSet;
 import java.util.Dictionary;
+import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.List;
+import java.util.Set;
 
-import java.util.concurrent.ThreadPoolExecutor;
-
-import java.util.jar.JarFile;
 import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 
 import java.util.zip.ZipException;
 
-import java.net.URLDecoder;
-
-import javax.imageio.ImageIO;
-
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
-import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
-import javax.swing.JRadioButtonMenuItem;
-import javax.swing.JTextArea;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
+import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
+import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import javax.swing.text.BadLocationException;
-import javax.swing.text.Document;
-
-import org.fife.ui.autocomplete.BasicCompletion;
-import org.fife.ui.autocomplete.CompletionProvider;
-import org.fife.ui.autocomplete.DefaultCompletionProvider;
 
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 
@@ -1034,7 +1012,7 @@ public class TextEditor extends JFrame implements ActionListener,
 				}
 			};
 		}
-		
+
 		/** The method to extend, that will do the actual work. */
 		abstract void execute();
 
