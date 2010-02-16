@@ -640,7 +640,7 @@ public class Fake {
 			}
 
 			if (name.equals("CLASSPATH"))
-				value = prefixPaths(cwd.getName(), value, true);
+				value = prefixPaths(cwd, value, true);
 
 			value = expandVariables(value, paren < 0 ? null :
 				key.substring(paren + 1, key.length() - 1));
@@ -3106,18 +3106,14 @@ public class Fake {
 		return result;
 	}
 
-	public String prefixPaths(String prefix, String pathList,
+	public String prefixPaths(File cwd, String pathList,
 			boolean skipVariables) {
-		if (pathList == null || pathList.equals("")
-				|| prefix.equals("."))
+		if (pathList == null || pathList.equals(""))
 			return pathList;
-		if (!prefix.endsWith("/"))
-			prefix += "/";
-
 		String[] paths = split(pathList, ":");
 		for (int i = 0; i < paths.length; i++)
 			if (!skipVariables || !paths[i].startsWith("$"))
-				paths[i] = prefix + paths[i];
+				paths[i] = makePath(cwd, paths[i]);
 		return join(paths, ":");
 	}
 
