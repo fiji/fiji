@@ -72,6 +72,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
+import javax.swing.text.Position;
 
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 
@@ -87,12 +89,16 @@ public class TextEditor extends JFrame implements ActionListener,
 		  autocomplete, resume, terminate, kill, gotoLine,
 		  makeJar, makeJarWithSource, removeUnusedImports,
 		  sortImports, removeTrailingWhitespace, findNext,
-		  openHelp, addImport, clearScreen;
+		  openHelp, addImport, clearScreen, nextError, previousError;
 	FindAndReplaceDialog findDialog;
 
 	String templateFolder = "templates/";
 	Set<String> templatePaths;
 	Languages.Language[] availableLanguages = Languages.getInstance().languages;
+
+	Position compileStartPosition, currentErrorPosition;
+	String currentErrorFilePath;
+	int currentErrorLineNumber, currentErrorColumn;
 
 	public TextEditor(String path) {
 		super("Script Editor");
@@ -100,6 +106,7 @@ public class TextEditor extends JFrame implements ActionListener,
 
 		// Initialize menu
 		int ctrl = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+		int shift = ActionEvent.SHIFT_MASK;
 		JMenuBar mbar = new JMenuBar();
 		setJMenuBar(mbar);
 
@@ -192,6 +199,11 @@ public class TextEditor extends JFrame implements ActionListener,
 				KeyEvent.VK_R, ctrl);
 		compileAndRun.setMnemonic(KeyEvent.VK_R);
 
+		run.addSeparator();
+		nextError = addToMenu(run, "Next Error", KeyEvent.VK_F4, 0);
+		nextError.setMnemonic(KeyEvent.VK_N);
+		previousError = addToMenu(run, "Next Error", KeyEvent.VK_F4, shift);
+		previousError.setMnemonic(KeyEvent.VK_P);
 		run.addSeparator();
 		debug = addToMenu(run, "Start Debugging", KeyEvent.VK_D, ctrl);
 		debug.setMnemonic(KeyEvent.VK_D);
@@ -595,6 +607,10 @@ public class TextEditor extends JFrame implements ActionListener,
 			makeJar(true);
 		else if (source == compileAndRun)
 			runText();
+		else if (source == nextError)
+			searchErrorUI(true);
+		else if (source == previousError)
+			searchErrorUI(false);
 		else if (source == debug) {
 			try {
 				getEditorPane().startDebugging();
@@ -669,10 +685,14 @@ public class TextEditor extends JFrame implements ActionListener,
 			setTitle("");
 			return;
 		}
+		editorPane = getEditorPane(index);
+		setTitle();
+	}
+
+	public EditorPane getEditorPane(int index) {
 		RTextScrollPane scrollPane =
 			(RTextScrollPane)tabbed.getComponentAt(index);
-		editorPane = (EditorPane)scrollPane.getTextArea();
-		setTitle();
+		return (EditorPane)scrollPane.getTextArea();
 	}
 
 	public void findOrReplace(boolean replace) {
@@ -1114,6 +1134,7 @@ public class TextEditor extends JFrame implements ActionListener,
 			return;
 		}
 
+		markCompileStart();
 		RSyntaxTextArea textArea = getTextArea();
 		textArea.setEditable(false);
 		final JTextAreaOutputStream output = new JTextAreaOutputStream(screen);
@@ -1149,6 +1170,7 @@ public class TextEditor extends JFrame implements ActionListener,
 			return;
 		}
 
+		markCompileStart();
 		JTextAreaOutputStream output = new JTextAreaOutputStream(screen);
 		interpreter.setOutputStreams(output, output);
 
@@ -1170,6 +1192,115 @@ public class TextEditor extends JFrame implements ActionListener,
 				return null;
 		}
 		return selection;
+	}
+
+	public void markCompileStart() {
+		Document document = screen.getDocument();
+		int offset = document.getLength();
+		screen.setCaretPosition(offset);
+		// make sure that the position does not stay at the end
+		if (offset > 0)
+			offset--;
+		try {
+			compileStartPosition = document.createPosition(offset);
+			currentErrorPosition = compileStartPosition;
+		} catch (BadLocationException e) {
+			handleException(e);
+		}
+	}
+
+	public boolean searchErrorUI(boolean forward) {
+		try {
+			return searchError(forward);
+		} catch (BadLocationException e) {
+			handleException(e);
+		}
+		return false;
+	}
+
+	public boolean searchError(boolean forward) throws BadLocationException {
+		int line = screen.getLineOfOffset(currentErrorPosition.getOffset());
+		int increment = forward ? 1 : -1, lastLine;
+		if (forward) {
+			lastLine = screen.getLineCount();
+			if (line >= lastLine)
+				return false;
+		}
+		else {
+			int offset = compileStartPosition.getOffset();
+			lastLine = screen.getLineOfOffset(offset);
+			if (offset == 0)
+				lastLine--;
+			if (line <= lastLine)
+				return false;
+		}
+		for (;;) {
+			line += increment;
+			if (line == lastLine)
+				return false;
+			int start = screen.getLineStartOffset(line);
+			int end = screen.getLineEndOffset(line);
+			String text = screen.getText(start, end - start);
+			if (isError(text)) try {
+				screen.setCaretPosition(end);
+				screen.moveCaretPosition(start);
+				currentErrorPosition = screen.getDocument().createPosition(start);
+				switchTo(currentErrorFilePath, currentErrorLineNumber);
+				return true;
+			} catch (Exception e) {
+				handleException(e);
+				return false;
+			}
+		}
+	}
+
+	boolean isError(String line) {
+		if (isJavaError(line))
+			return true;
+		return false;
+	}
+
+	boolean isJavaError(String line) {
+		if (!line.startsWith("/"))
+			return false;
+		int colon = line.indexOf(':');
+		if (colon <= 0)
+			return false;
+		int next = line.indexOf(':', colon + 1);
+		if (next < colon + 2)
+			return false;
+		try {
+			currentErrorLineNumber = Integer.parseInt(line.substring(colon + 1, next));
+		} catch (NumberFormatException e) {
+			return false;
+		}
+		currentErrorFilePath = line.substring(0, colon);
+		return true;
+	}
+
+	public void switchTo(String path, int lineNumber)
+			throws BadLocationException, IOException {
+		switchTo(new File(path).getCanonicalFile(), lineNumber);
+	}
+
+	public void switchTo(File file, int lineNumber)
+			throws BadLocationException {
+		if (!editorPaneContainsFile(editorPane, file))
+			switchTo(file);
+		gotoLine(lineNumber);
+	}
+
+	public void switchTo(File file) {
+		for (int i = 0; i < tabbed.getTabCount(); i++)
+			if (editorPaneContainsFile(getEditorPane(i), file)) {
+				tabbed.setSelectedIndex(i);
+				return;
+			}
+		open(file.getPath());
+	}
+
+	boolean editorPaneContainsFile(EditorPane editorPane, File file) {
+		return file.equals(editorPane.file);
 	}
 
 	public void addImport(String className) {
@@ -1195,5 +1326,9 @@ public class TextEditor extends JFrame implements ActionListener,
 
 	protected void error(String message) {
 		JOptionPane.showMessageDialog(this, message);
+	}
+
+	void handleException(Throwable e) {
+		ij.IJ.handleException(e);
 	}
 }
