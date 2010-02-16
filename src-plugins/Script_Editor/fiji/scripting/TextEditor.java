@@ -287,6 +287,14 @@ public class TextEditor extends JFrame implements ActionListener,
 		editorPane.requestFocus();
 	}
 
+	public TextEditor(String title, String text) {
+		this(null);
+		editorPane.setText(text);
+		String extension = editorPane.getExtension(title);
+		editorPane.setLanguageByExtension(extension);
+		setTitle();
+	}
+
 	final public RSyntaxTextArea getTextArea() {
 		return getEditorPane();
 	}
