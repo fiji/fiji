@@ -109,7 +109,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		  autocomplete, resume, terminate, kill, gotoLine,
 		  makeJar, makeJarWithSource, removeUnusedImports,
 		  sortImports, removeTrailingWhitespace, findNext,
-		  openHelp, addImport;
+		  openHelp, addImport, clearScreen;
 	FindAndReplaceDialog findDialog;
 
 	String templateFolder = "templates/";
@@ -162,6 +162,9 @@ public class TextEditor extends JFrame implements ActionListener,
 		replace = addToMenu(edit, "Find and Replace...", KeyEvent.VK_H, ctrl);
 		gotoLine = addToMenu(edit, "Goto line...", KeyEvent.VK_G, ctrl);
 		gotoLine.setMnemonic(KeyEvent.VK_G);
+		edit.addSeparator();
+		clearScreen = addToMenu(edit, "Clear output panel", 0, 0);
+		clearScreen.setMnemonic(KeyEvent.VK_L);
 		edit.addSeparator();
 		autocomplete = addToMenu(edit, "Autocomplete", KeyEvent.VK_SPACE, ctrl);
 		autocomplete.setMnemonic(KeyEvent.VK_A);
@@ -666,6 +669,8 @@ public class TextEditor extends JFrame implements ActionListener,
 			new TokenFunctions(getTextArea()).sortImports();
 		else if (source == removeTrailingWhitespace)
 			new TokenFunctions(getTextArea()).removeTrailingWhitespace();
+		else if (source == clearScreen)
+			screen.setText("");
 		else if (source == autocomplete) {
 			try {
 				getEditorPane().autocomp.doCompletion();
