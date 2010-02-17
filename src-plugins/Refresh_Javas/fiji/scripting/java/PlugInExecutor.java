@@ -11,13 +11,9 @@ import ij.plugin.PlugIn;
 import ij.plugin.filter.PlugInFilter;
 import ij.plugin.filter.PlugInFilterRunner;
 
-import ij.text.TextWindow;
-
 import ij.util.Tools;
 
-import java.io.CharArrayWriter;
 import java.io.File;
-import java.io.PrintWriter;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -89,13 +85,7 @@ public class PlugInExecutor {
 			if (e instanceof RuntimeException && msg!=null &&
 					msg.equals(Macro.MACRO_CANCELED))
 				return;
-			CharArrayWriter caw = new CharArrayWriter();
-			PrintWriter pw = new PrintWriter(caw);
-			e.printStackTrace(pw);
-			String s = caw.toString();
-			if (IJ.isMacintosh())
-				s = Tools.fixNewLines(s);
-			new TextWindow("Exception", s, 350, 250);
+			IJ.handleException(e);
 		}
 	}
 
