@@ -53,8 +53,7 @@ test -f "$JAVA_HOME"/Home/lib/ext/vecmath.jar || {
 		git remote add -t master origin "$URL" &&
 		git fetch --depth 1 &&
 		git reset --hard origin/master
-	) &&
-	git submodule update "$JAVA_SUBMODULE" || {
+	) || {
 		echo "Could not clone JDK" >&2
 		exit 1
 	}

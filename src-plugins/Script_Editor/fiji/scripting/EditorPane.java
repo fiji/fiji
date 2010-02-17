@@ -244,7 +244,7 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 		return dot < 0 ?  "" : fileName.substring(dot);
 	}
 
-	private void setLanguageByExtension(String extension) {
+	void setLanguageByExtension(String extension) {
 		setLanguage(Languages.get(extension));
 	}
 
