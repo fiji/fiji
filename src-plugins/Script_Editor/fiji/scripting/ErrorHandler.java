@@ -20,14 +20,18 @@ public class ErrorHandler {
 	int currentOffset;
 	Parser parser;
 
+	public ErrorHandler(JTextArea textArea) {
+		this.textArea = textArea;
+	}
+
 	public ErrorHandler(Language language, JTextArea textArea,
 			int startOffset) {
+		this(textArea);
 		if (language.menuLabel.equals("Java"))
 			parser = new JavacErrorParser();
 		else
 			return;
 
-		this.textArea = textArea;
 		currentOffset = startOffset;
 
 		try {
@@ -72,7 +76,7 @@ public class ErrorHandler {
 		textArea.moveCaretPosition(start);
 	}
 
-	class Error {
+	static class Error {
 		String path;
 		int line;
 		Position position;

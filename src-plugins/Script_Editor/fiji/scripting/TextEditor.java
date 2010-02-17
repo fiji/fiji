@@ -1207,6 +1207,8 @@ public class TextEditor extends JFrame implements ActionListener,
 	}
 
 	public void markCompileStart() {
+		errorHandler = null;
+
 		Document document = screen.getDocument();
 		int offset = document.getLength();
 		screen.setCaretPosition(offset);
@@ -1218,11 +1220,13 @@ public class TextEditor extends JFrame implements ActionListener,
 		} catch (BadLocationException e) {
 			handleException(e);
 		}
+		ExceptionHandler.addThread(Thread.currentThread(), this);
 	}
 
 	public void markCompileEnd() {
-		errorHandler = new ErrorHandler(getCurrentLanguage(), screen,
-			compileStartPosition.getOffset());
+		if (errorHandler == null)
+			errorHandler = new ErrorHandler(getCurrentLanguage(),
+				screen, compileStartPosition.getOffset());
 	}
 
 	public boolean nextError(boolean forward) {
