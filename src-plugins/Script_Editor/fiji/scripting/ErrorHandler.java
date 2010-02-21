@@ -10,6 +10,7 @@ import java.util.List;
 import javax.swing.JTextArea;
 
 import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultHighlighter;
 import javax.swing.text.Position;
 
 
@@ -72,8 +73,10 @@ public class ErrorHandler {
 		int line = textArea.getLineOfOffset(offset);
 		int start = textArea.getLineStartOffset(line);
 		int end = textArea.getLineEndOffset(line);
-		textArea.setCaretPosition(end);
-		textArea.moveCaretPosition(start);
+		textArea.getHighlighter().removeAllHighlights();
+		textArea.getHighlighter().addHighlight(start, end,
+			DefaultHighlighter.DefaultPainter);
+		textArea.scrollRectToVisible(textArea.modelToView(start));
 	}
 
 	static class Error {
