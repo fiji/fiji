@@ -1211,10 +1211,9 @@ public class TextEditor extends JFrame implements ActionListener,
 
 		Document document = screen.getDocument();
 		int offset = document.getLength();
-		screen.setCaretPosition(offset);
-		// make sure that the position does not stay at the end
-		if (offset > 0)
-			offset--;
+		screen.insert("Started " + getFile().getName() + " at "
+			+ new Date() + "\n", offset);
+		screen.setCaretPosition(document.getLength());
 		try {
 			compileStartPosition = document.createPosition(offset);
 		} catch (BadLocationException e) {
