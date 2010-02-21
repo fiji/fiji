@@ -61,7 +61,7 @@ public class ClassNames {
 		File file = new File(path);
 		if (file.isDirectory())
 			setDirTree(path);
-		else if (path.endsWith(".jar")) try {
+		else if (path.endsWith(".jar") && file.length() > 0) try {
 				ZipFile jarFile = new ZipFile(file);
 				list1 = jarFile.entries();
 				while (list1.hasMoreElements()) {
