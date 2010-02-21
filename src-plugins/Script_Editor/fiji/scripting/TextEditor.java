@@ -1267,6 +1267,22 @@ public class TextEditor extends JFrame implements ActionListener,
 		}
 	}
 
+	public File getFile() {
+		return getEditorPane().file;
+	}
+
+	public File getFileForBasename(String baseName) {
+		File file = getFile();
+		if (file != null && file.getName().equals(baseName))
+			return file;
+		for (int i = 0; i < tabbed.getTabCount(); i++) {
+			file = getEditorPane(i).file;
+			if (file != null && file.getName().equals(baseName))
+				return file;
+		}
+		return null;
+	}
+
 	public void addImport(String className) {
 		if (className == null)
 			className = getSelectedTextOrAsk("Class name");
