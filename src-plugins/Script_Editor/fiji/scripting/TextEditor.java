@@ -4,6 +4,7 @@ import common.RefreshScripts;
 
 import fiji.scripting.java.Refresh_Javas;
 
+import ij.IJ;
 import ij.WindowManager;
 
 import ij.gui.GenericDialog;
@@ -96,9 +97,8 @@ public class TextEditor extends JFrame implements ActionListener,
 	Set<String> templatePaths;
 	Languages.Language[] availableLanguages = Languages.getInstance().languages;
 
-	Position compileStartPosition, currentErrorPosition;
-	String currentErrorFilePath;
-	int currentErrorLineNumber, currentErrorColumn;
+	Position compileStartPosition;
+	ErrorHandler errorHandler;
 
 	public TextEditor(String path) {
 		super("Script Editor");
@@ -616,9 +616,9 @@ public class TextEditor extends JFrame implements ActionListener,
 		else if (source == compileAndRun)
 			runText();
 		else if (source == nextError)
-			searchErrorUI(true);
+			nextError(true);
 		else if (source == previousError)
-			searchErrorUI(false);
+			nextError(false);
 		else if (source == debug) {
 			try {
 				getEditorPane().startDebugging();
@@ -1157,6 +1157,8 @@ public class TextEditor extends JFrame implements ActionListener,
 			new TextEditor.Executer(output) {
 				public void execute() {
 					interpreter.runScript(pi);
+					output.flush();
+					markCompileEnd();
 				}
 			};
 			textArea.write(new PrintWriter(po));
@@ -1179,13 +1181,15 @@ public class TextEditor extends JFrame implements ActionListener,
 		}
 
 		markCompileStart();
-		JTextAreaOutputStream output = new JTextAreaOutputStream(screen);
+		final JTextAreaOutputStream output = new JTextAreaOutputStream(screen);
 		interpreter.setOutputStreams(output, output);
 
 		final File file = getEditorPane().file;
-		new TextEditor.Executer(new JTextAreaOutputStream(screen)) {
+		new TextEditor.Executer(output) {
 			public void execute() {
 				interpreter.runScript(file.getPath());
+				output.flush();
+				markCompileEnd();
 			}
 		};
 	}
@@ -1211,79 +1215,26 @@ public class TextEditor extends JFrame implements ActionListener,
 			offset--;
 		try {
 			compileStartPosition = document.createPosition(offset);
-			currentErrorPosition = compileStartPosition;
 		} catch (BadLocationException e) {
 			handleException(e);
 		}
 	}
 
-	public boolean searchErrorUI(boolean forward) {
-		try {
-			return searchError(forward);
-		} catch (BadLocationException e) {
-			handleException(e);
-		}
-		return false;
+	public void markCompileEnd() {
+		errorHandler = new ErrorHandler(getCurrentLanguage(), screen,
+			compileStartPosition.getOffset());
 	}
 
-	public boolean searchError(boolean forward) throws BadLocationException {
-		int line = screen.getLineOfOffset(currentErrorPosition.getOffset());
-		int increment = forward ? 1 : -1, lastLine;
-		if (forward) {
-			lastLine = screen.getLineCount();
-			if (line >= lastLine)
-				return false;
-		}
-		else {
-			int offset = compileStartPosition.getOffset();
-			lastLine = screen.getLineOfOffset(offset);
-			if (offset == 0)
-				lastLine--;
-			if (line <= lastLine)
-				return false;
-		}
-		for (;;) {
-			line += increment;
-			if (line == lastLine)
-				return false;
-			int start = screen.getLineStartOffset(line);
-			int end = screen.getLineEndOffset(line);
-			String text = screen.getText(start, end - start);
-			if (isError(text)) try {
-				screen.setCaretPosition(end);
-				screen.moveCaretPosition(start);
-				currentErrorPosition = screen.getDocument().createPosition(start);
-				switchTo(currentErrorFilePath, currentErrorLineNumber);
-				return true;
-			} catch (Exception e) {
-				handleException(e);
-				return false;
-			}
-		}
-	}
-
-	boolean isError(String line) {
-		if (isJavaError(line))
+	public boolean nextError(boolean forward) {
+		if (errorHandler != null && errorHandler.nextError(forward)) try {
+			switchTo(errorHandler.getPath(),
+					errorHandler.getLine());
+			errorHandler.markLine();
 			return true;
-		return false;
-	}
-
-	boolean isJavaError(String line) {
-		if (!line.startsWith("/"))
-			return false;
-		int colon = line.indexOf(':');
-		if (colon <= 0)
-			return false;
-		int next = line.indexOf(':', colon + 1);
-		if (next < colon + 2)
-			return false;
-		try {
-			currentErrorLineNumber = Integer.parseInt(line.substring(colon + 1, next));
-		} catch (NumberFormatException e) {
-			return false;
+		} catch (Exception e) {
+			IJ.handleException(e);
 		}
-		currentErrorFilePath = line.substring(0, colon);
-		return true;
+		return false;
 	}
 
 	public void switchTo(String path, int lineNumber)
