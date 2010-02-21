@@ -1308,7 +1308,12 @@ public class TextEditor extends JFrame implements ActionListener,
 	}
 
 	boolean editorPaneContainsFile(EditorPane editorPane, File file) {
-		return file.equals(editorPane.file);
+		try {
+			return file.getCanonicalFile()
+				.equals(editorPane.file.getCanonicalFile());
+		} catch (IOException e) {
+			return false;
+		}
 	}
 
 	public void addImport(String className) {
