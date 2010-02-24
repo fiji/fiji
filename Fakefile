@@ -155,7 +155,8 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/3D_Objects_Counter.jar \
 	plugins/IsoData_Classifier.jar \
 	plugins/RATS_.jar \
-	\
+	plugins/Directionality_.jar \
+  \
 	misc/Fiji.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS third-party-plugins jars/zs.jar
