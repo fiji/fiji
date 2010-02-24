@@ -389,11 +389,7 @@ abstract public class RefreshScripts implements PlugIn {
 	abstract public void runScript(String filename);
 
 	static public void printError(Throwable t) {
-		final StringWriter w = new StringWriter();
-		final PrintWriter pw = new PrintWriter(w);
-		t.printStackTrace(pw);
-		pw.close();
-		IJ.log(w.toString());
+		IJ.handleException(t);
 	}
 
 	// TODO rename to readText
