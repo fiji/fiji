@@ -1,3 +1,9 @@
+- Properly handle Language menu when switching tabs.
+
+- Support Ctrl+PageUp/PageDown to switch between the tabs.
+
+- Add a Tabs menu.
+
 - Enable to set breakpoints via the Breakpoints menu and F9 (IIRC).
 
 - if there are images on which the plugin wants to work, they have to be
