@@ -1211,7 +1211,7 @@ public class TextEditor extends JFrame implements ActionListener,
 
 		Document document = screen.getDocument();
 		int offset = document.getLength();
-		screen.insert("Started " + getFile().getName() + " at "
+		screen.insert("Started " + editorPane.getFileName() + " at "
 			+ new Date() + "\n", offset);
 		screen.setCaretPosition(document.getLength());
 		try {
