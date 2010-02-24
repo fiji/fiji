@@ -35,7 +35,8 @@ public class Inspect {
 		try {
 			Field f = clazz.getDeclaredField(field);
 			f.setAccessible(true);
-			return f.set(object, value);
+			f.set(object, value);
+			return;
 		} catch (NoSuchFieldException e) {
 			IJ.log("Class " + clazz.getName()
 				+ " has no field called " + field
