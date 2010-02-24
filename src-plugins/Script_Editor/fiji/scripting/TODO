@@ -4,6 +4,9 @@
 
 - Add a Tabs menu.
 
+- BeanShell seems not to import the second time a BeanShell interpreter is
+  opened (reported by Stephan Saalfeld).
+
 - Enable to set breakpoints via the Breakpoints menu and F9 (IIRC).
 
 - if there are images on which the plugin wants to work, they have to be
