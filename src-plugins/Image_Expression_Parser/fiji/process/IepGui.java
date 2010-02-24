@@ -10,7 +10,6 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -21,6 +20,8 @@ import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -40,27 +41,34 @@ import org.nfunk.jep.JEP;
 import org.nfunk.jep.type.DoubleNumberFactory;
 
 
-
-
-
 /**
-* This code was edited or generated using CloudGarden's Jigloo
-* SWT/Swing GUI Builder, which is free for non-commercial
-* use. If Jigloo is being used commercially (ie, by a corporation,
-* company or business for any purpose whatever) then you
-* should purchase a license for each developer using Jigloo.
-* Please visit www.cloudgarden.com for details.
-* Use of Jigloo implies acceptance of these licensing terms.
-* A COMMERCIAL LICENSE HAS NOT BEEN PURCHASED FOR
-* THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
-* LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
-*/
-/**
- * This is a GUI for the plugin {@link Image_Expression_Parser}. 
+ * <h2>GUI for the plugin {@link Image_Expression_Parser}</h2>
  * <p>
- * It was built in part using Jigloo GUI builder.
- * @author Jean-Yves Tinevez
-*/
+ * When launched it displays a window allowing the user to enter a mathematical expression,
+ * with variables (capital single letters, so up to 26 variables) and canonical functions.
+ * The expression is checked by the parser of the JEP library (http://www.singularsys.com/jep/).
+ * If it is not valid, a hopefully useful error message is displayed.
+ * <p>
+ * Variables can be added using +/- buttons. They are matched to opened images in ImageJ. 
+ * <p>
+ * When the user presses the OK or Cancel button, the GUI exits, and trigger an action wich code 
+ * is the following:
+ * <ul>
+ * <li>If OK was pressed, an action with the text "OK", and ID flag {@link IepGui#OK} is triggered.
+ * <li>If Canceled was pressed, an action with the text "Canceled", and ID flag {@link IepGui#CANCELED}
+ * is triggered.
+ * </ul>
+ * The information the user entered can be retrieved afterwards with the following methods:
+ * <ul>
+ * <li>{@link #getExpression()} to retrieve the expression the user entered as a String
+ * <li>{@link #getImageMap()} to retrieve the couples Variable names - Images set by the user.
+ * </ul>
+ * <p>
+ * 
+ * <p>
+ * It was built in part using Jigloo GUI builder http://www.cloudgarden.com/jigloo/.
+ * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com>
+ */
 public class IepGui extends javax.swing.JFrame implements ImageListener, ActionListener, WindowListener {
 
 
@@ -77,11 +85,14 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 	 * FIELDS
 	 */
 	
+	/** The action ID is set to this value when the user pressed the Canceled button. */
 	public static final int CANCELED 	= 1;
+	/** The action ID is set to this value when the user pressed the OK button. */
 	public static final int OK			= 0;	
 	
 	private static final long serialVersionUID = 1L;
 	private static final int BOX_SPACE 	= 40;
+	/** Containes a html string referring to the expression syntax. */
 	public static final String[] MESSAGES = {		
 		"Enter an expression using canonical mathematical functions, and capital single " +
 		"letters as variable specifying the chosen image. Boolean operations are also supported.\n" +
@@ -267,29 +278,24 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 	 */
 	
 	/**
-	 * Return the variable list set by this GUI. Variables names are formed by single
-	 * capital letter, from A to Z, in alphabetical order. The matching {@link ImagePlus}
-	 * in the array returned by {@link #getImages()} has the same index.
-	 * @see {@link #getImages()}, {@link #getExpression()}
+	 * Return a {@link Map} whose keys are the variable names as String, and the values
+	 * are the {@link ImagePlus} linked to the key variable. In the case of this GUI,
+	 * variables are single capital letters.
+	 * @see {@link IepGui#getExpression()}
 	 */
-	public String[] getVariables() {
-		return variables;
-	}
-	
-	/**
-	 * Return the {@link ImagePlus} array set by this GUI. In the expression, the matching
-	 * variable name has the same index (A for the first, etc...)
-	 * @see {@link IepGui#getExpression()}, {@link #getVariables()}
-	 */
-	public ImagePlus[] getImages() {
+	public Map<String, ImagePlus> getImageMap() {
 		if (images.size() > 0) {
-			final ImagePlus[] imps = new ImagePlus[n_image_box];
+			final HashMap<String, ImagePlus> image_map = new HashMap<String, ImagePlus>(variables.length);
+			ImagePlus imp;
+			String var;
 			JComboBox box;
 			for ( int i=0; i<n_image_box; i++) {
 				box = image_boxes.get(i);
-				imps[i] = images.get(box.getSelectedIndex());
+				imp = images.get(box.getSelectedIndex());
+				var = variables[i];
+				image_map.put(var, imp);
 			}
-			return imps;
+			return image_map;
 		} else {
 			return null;
 		}
@@ -298,7 +304,7 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 	/**
 	 * Return the expression set by this GUI. The GUI works ensures that the user can press the 'OK'
 	 * button only if this expression is mathematically valid and has valid variables.
-	 * @see {@link #getVariables()}, {@link #getImages()}  
+	 * @see {@link #getImageMap()}  
 	 */
 	public String getExpression() {
 		return jTextFieldExpression.getText();
@@ -319,6 +325,25 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 	/*
 	 * PRIVATE METHODS
 	 */
+	
+	/**
+	 * Return the {@link ImagePlus} array set by this GUI. In the expression, the matching
+	 * variable name has the same index (A for the first, etc...)
+	 * @see {@link IepGui#getExpression()}, {@link #getVariables()}
+	 */
+	private ImagePlus[] getImages() {
+		if (images.size() > 0) {
+			final ImagePlus[] imps = new ImagePlus[variables.length];
+			JComboBox box;
+			for ( int i=0; i<n_image_box; i++) {
+				box = image_boxes.get(i);
+				imps[i] = images.get(box.getSelectedIndex());
+			}
+			return imps;
+		} else {
+			return null;
+		}
+	}
 	
 	private void fireActionProperty(int event_id, String command) {
 		ActionEvent action = new ActionEvent(this, event_id, command);

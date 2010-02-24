@@ -6,7 +6,11 @@ import ij.plugin.PlugIn;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
 
 import mpicbg.imglib.container.imageplus.ImagePlusContainerFactory;
 import mpicbg.imglib.cursor.Cursor;
@@ -26,9 +30,7 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 	
 	protected boolean user_has_canceled = false;
 	/** Array of Imglib images, on which calculations will be done */
-	protected ArrayList<Image<T>> images;
-	/** Array of image variables */
-	protected String[] variables;
+	protected Map<String, Image<T>> image_map;
 	/** The expression to evaluate */
 	protected String expression;
 	/** Here is stored the result of the evaluation */
@@ -61,9 +63,8 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 
 		// Get user settings
 		expression 	= gui.getExpression();
-		variables 	= gui.getVariables();
-		ImagePlus[] imps = gui.getImages();
-		convertToImglib(imps); // will set #images field
+		Map<String,ImagePlus> imp_map = gui.getImageMap(); 
+		convertToImglib(imp_map); // will set #images field 
 		
 		// Check inputs (this should be done in the GUI)
 		if (!dimensionsAreValid()) {
@@ -99,15 +100,15 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 	 * If the expression is invalid or if the image dimensions mismatch, and error
 	 * is thrown and the field {@link #result} is set to <code>null</code>. In this
 	 * case, an explanatory error message can be obtained by {@link #getErrorMessage()}.
-	 * @see {@link #getErrorMessage()}, {@link #setExpression(String)}, {@link #setVariables(String[])}, 
-	 * {@link #setImageList(ArrayList)}, {@link #getResult()}
+	 * @see {@link #setExpression(String)}, {@link #setImageMap(Map)}, {@link #getErrorMessage()}, {@link #getResult()}
 	 */
 	public void exec() {
 		
+		result = null;
+
 		// Check inputs 
 		if (!dimensionsAreValid()) {
 			error_message = "Input images do not have all the same dimensions.";
-			result = null;
 			return;
 		}
 		
@@ -117,7 +118,6 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 		String error_msg = (String) validity[1];
 		if (!is_valid) {
 			error_message = "Expression is invalid:\n"+error_msg;
-			result = null;
 			return;
 		}
 		
@@ -125,17 +125,16 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 		final JEP parser = new JEP(false, false, false, new DoubleNumberFactory());
 		parser.addStandardConstants();
 		parser.addStandardFunctions();
+		Set<String> variables = image_map.keySet();
 		for (String var : variables) {
 			parser.addVariable(var, null);
 		}
 		parser.parseExpression(expression);
 		
-		// Build temp copy of images array
-		ArrayList<Image<T>> temp = new ArrayList<Image<T>>(images);
-		
 		// Extract the first image, will be privileged. Might leave the temp array empty, but who cares.
-		Image<T> first_im = temp.remove(0);
-		String first_var = variables[0];
+		Iterator<String> it = variables.iterator();
+		String first_var = it.next();
+		Image<T> first_im = image_map.get(first_var);
 		
 		// Prepare new image
 		Image<FloatType> result_im = new ImageFactory<FloatType>(new FloatType(), new ImagePlusContainerFactory())
@@ -144,8 +143,8 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 		// Check if all Containers are compatibles
 		boolean compatible_containers = true;
 		Image<T> previous_im = first_im;
-		for (Image<T> im : temp) {
-			if ( previous_im.getContainer().compareStorageContainerCompatibility(im.getContainer())) {
+		while (it.hasNext()) {
+			if ( previous_im.getContainer().compareStorageContainerCompatibility(image_map.get(it.next()).getContainer())) {
 				continue;
 			} else {
 				compatible_containers = false;
@@ -158,13 +157,14 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 
 		if (compatible_containers) {
 			// Optimized cursors
-			
-			Cursor<T> first_cursor = first_im.createCursor(); // Canonical optimized cursor
-			
+		
 			// Create cursors for other input images
-			ArrayList<Cursor<T>> cursors = new ArrayList<Cursor<T>>(temp.size()); 
-			for (Image<T> im : temp) {
-				cursors.add(im.createCursor());
+			HashMap<String, Cursor<T>> cursors = new HashMap<String, Cursor<T>>(image_map.size());
+			it = variables.iterator();
+			String var;
+			while (it.hasNext()) {
+				var = it.next();
+				cursors.put(var, image_map.get(var).createCursor());
 			}
 
 			// Create cursor for new image
@@ -174,57 +174,55 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 			// We iterate using the first cursor. The other ones are moved according to this one
 			float local_value, result_value;
 			Cursor<T> cursor;
-			while (first_cursor.hasNext()) {
-				// first cursor
-				first_cursor.fwd();
-				local_value = first_cursor.getType().getReal();
-				parser.addVariable(first_var, local_value);
+			while (result_cursor.hasNext()) {
+				result_cursor.fwd();
 				// other input cursors
-				for (int i = 0; i < cursors.size(); i++) {
-					cursor = cursors.get(i);
+				it = variables.iterator();
+				while (it.hasNext()) {
+					var = it.next();
+					cursor = cursors.get(var);
 					cursor.fwd(); // since we are compatible, we are sure that they will iterate the same way
 					local_value = cursor.getType().getReal();
-					parser.addVariable(variables[1+i], local_value);
+					parser.addVariable(var, local_value);
 				}
-				// output cursors
+				// Assign output value
 				result_value = (float) parser.getValue();
-				result_cursor.fwd(); // since we are compatible, we are sure that they will iterate the same way
 				result_cursor.getType().set(result_value);
 			}
 				
 		} else {
 			// Non-optimized cursors.
 			
-			LocalizableCursor<T> first_cursor = first_im.createLocalizableCursor(); // Canonical optimized cursor
+			// Create cursor for new image
+			LocalizableCursor<FloatType> result_cursor = result_im.createLocalizableCursor();
 			
-			// Create cursors for other input images
-			ArrayList<LocalizableByDimCursor<T>> cursors = new ArrayList<LocalizableByDimCursor<T>>(temp.size()); 
-			for (Image<T> im : temp) {
-				cursors.add(im.createLocalizableByDimCursor());
+			// Create cursors for input images
+			HashMap<String, LocalizableByDimCursor<T>> cursors = new HashMap<String, LocalizableByDimCursor<T>>(image_map.size());
+			it = variables.iterator();
+			String var;
+			while (it.hasNext()) {
+				var = it.next();
+				cursors.put(var, image_map.get(var).createLocalizableByDimCursor());
 			}
 
-			// Create cursor for new image
-			LocalizableByDimCursor<FloatType> result_cursor = result_im.createLocalizableByDimCursor();
-
 			// Iterate over cursors.
-			// We iterate using the first cursor. The other ones are moved according to this one
+			// We iterate using the output cursor. The other ones are moved according to this one
 			float local_value, result_value;
 			LocalizableByDimCursor<T> cursor;
-			while (first_cursor.hasNext()) {
-				// first cursor
-				first_cursor.fwd();
-				local_value = first_cursor.getType().getReal();
-				parser.addVariable(first_var, local_value);
+			while (result_cursor.hasNext()) {
+				// output cursor
+				result_cursor.fwd();
 				// other input cursors
-				for (int i = 0; i < cursors.size(); i++) {
-					cursor = cursors.get(i);
-					cursor.setPosition(first_cursor);
+				it = variables.iterator();
+				while (it.hasNext()) {
+					var = it.next();
+					cursor = cursors.get(var);
+					cursor.setPosition(result_cursor); // the result cursor dictates its position to other cursors
 					local_value = cursor.getType().getReal();
-					parser.addVariable(variables[1+i], local_value);
+					parser.addVariable(var, local_value);
 				}
-				// output cursors
+				// Assign output value
 				result_value = (float) parser.getValue();
-				result_cursor.setPosition(first_cursor);
 				result_cursor.getType().set(result_value);
 			}
 			
@@ -243,7 +241,7 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 	
 
 	/**
-	 * Return the result of the evaluation of the expression over the images given.
+	 * Return the result of the last evaluation of the expression over the images given.
 	 * Is <code>null</code> if {@link #exec()} was not called before.
 	 */
 	public Image<FloatType> getResult()  {
@@ -268,21 +266,14 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 		return this.expression;
 	}
 	
-	public void setImageList(ArrayList<Image<T>> _images) {
-		this.images = _images;
+	public void setImageMap(Map<String, Image<T>> im) {
+		this.image_map = im;
 	}
 	
-	public ArrayList<Image<T>> getImageList() {
-		return this.images;
+	public Map<String, Image<T>> getImageMap() {
+		return this.image_map;
 	}
 	
-	public void setVariables(String[] _variables) {
-		this.variables = _variables;
-	}
-	
-	public String[] getVariables() {
-		return this.variables;
-	}
 	
 	/*
 	 * PRIVATE METHODS
@@ -305,11 +296,13 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 	 * Check that all images have the same dimensions. 
 	 */
 	private boolean dimensionsAreValid() {
-		if (images.size() == 1) { return true; }
-		int[] previous_dims = images.get(0).getDimensions();
+		if (image_map.size() == 1) { return true; }
+		Collection<Image<T>> images = image_map.values();
+		Iterator<Image<T>> it = images.iterator();
+		int[] previous_dims = it.next().getDimensions();
 		int[] dims;
-		for ( int i=1; i<images.size(); i++) {
-			dims = images.get(i).getDimensions();
+		while (it.hasNext()) {
+			dims = it.next().getDimensions();
 			if (previous_dims.length != dims.length) { return false; }
 			for (int j = 0; j < dims.length; j++) {
 				if (dims[j] != previous_dims[j]) { return false; }
@@ -333,6 +326,7 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 		final JEP parser = new JEP(false, false, false, new DoubleNumberFactory());
 		parser.addStandardConstants();
 		parser.addStandardFunctions();
+		Set<String> variables = image_map.keySet();
 		for ( String var : variables ) {
 			parser.addVariable(var, null); // we do not care for value yet
 		}
@@ -346,22 +340,23 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 	}
 	
 	/**
-	 * Convert the {@link ImagePlus} array "{@link #images}" to the {@link Image} ArrayList 
-	 * "{@link #il_images}".
+	 * Convert the <String ImagePlus> map in argument to a <String, {@link Image}> HasMap 
+	 * and put it in the "{@link #image_map}" field.
 	 * <p>
 	 * The internals of this plugin operate on {@link Image}, but for integration within 
 	 * current ImageJ, the GUI returns {@link ImagePlus}, so we have to do a conversion when 
 	 * we execute this plugin from ImageJ.
 	 * <p>
-	 * Warning: executing this method resets the {@link #images} field.
-	 * @param imps  the ImagePlus array to convert
+	 * Warning: executing this method resets the {@link #image_map} field.
+	 * @param imp_map  the <String, ImagePlus> map to convert
 	 */
-	private void convertToImglib(ImagePlus[] imps) {
-		images = new ArrayList<Image<T>>(imps.length);
+	private void convertToImglib(Map<String, ImagePlus> imp_map) {
+		image_map = new HashMap<String, Image<T>>(imp_map.size());
 		Image<T> img;
-		for (ImagePlus imp : imps) {
-			img = ImagePlusAdapter.wrap(imp);
-			images.add(img);
+		Set<String> variables = imp_map.keySet();
+		for (String var : variables) {
+			img = ImagePlusAdapter.wrap(imp_map.get(var));
+			image_map.put(var, img);
 		}
 	}
 	
@@ -386,10 +381,9 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 		
 		Image_Expression_Parser<T> iep = new Image_Expression_Parser<T>();
 		iep.setExpression("A^2");
-		iep.setVariables(new String[] {"A"});
-		ArrayList<Image<T>> images = new ArrayList<Image<T>>();
-		images.add(img);
-		iep.setImageList(images);
+		HashMap<String, Image<T>> map = new HashMap<String, Image<T>>(1);
+		map.put("A", img);
+		iep.setImageMap(map);
 		iep.exec();
 		Image<FloatType> result = iep.getResult();
 		if (null != result) {
