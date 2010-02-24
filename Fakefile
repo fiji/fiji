@@ -215,7 +215,7 @@ jars/jep.jar <- src-plugins/jep/**/*.java
 # These classes are common to the scripting plugins
 jars/fiji-scripting.jar <- src-plugins/fiji-scripting/**/*.java
 
-CLASSPATH(plugins/Refresh_Javas.jar)=jars/fiji-scripting.jar
+CLASSPATH(plugins/Refresh_Javas.jar)=jars/fiji-scripting.jar:jars/fake.jar
 CLASSPATH(plugins/Jython_Interpreter.jar)=jars/fiji-scripting.jar:jars/jython.jar
 plugins/Jython_Interpreter.jar <- src-plugins/Jython/*.java
 CLASSPATH(plugins/Clojure_Interpreter.jar)=jars/fiji-scripting.jar:jars/clojure.jar:jars/clojure-contrib.jar
@@ -447,9 +447,9 @@ check-*[bin/up-to-date-check.py * precompiled/*_.jar] <-
 
 # Fake itself
 
-MAINCLASS(fake.jar)=Fake
-JAVAVERSION(fake.jar)=1.3
-fake.jar <- fake/Fake.java
+MAINCLASS(jars/fake.jar)=fiji.build.Fake
+JAVAVERSION(jars/fake.jar)=1.3
+jars/fake.jar <- src-plugins/fake/**/*.java
 
 # Script_Editor_Stub.jar (to include MainClassForDebugging in the classpath)
 

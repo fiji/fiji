@@ -23,6 +23,8 @@ import bsh.Interpreter;
 
 import common.AbstractInterpreter;
 
+import java.io.PrintStream;
+
 public class BSH_Interpreter extends AbstractInterpreter {
 
 	private Interpreter interp;
@@ -32,6 +34,11 @@ public class BSH_Interpreter extends AbstractInterpreter {
 		super.run(arg);
 		interp = new Interpreter();
 		print("Starting BeanShell...");
+		if (out != null) {
+			PrintStream out = new PrintStream(this.out);
+			interp.setOut(out);
+			interp.setErr(out);
+		}
 		println(" Ready -- have fun.\n>>>");
 	}
 

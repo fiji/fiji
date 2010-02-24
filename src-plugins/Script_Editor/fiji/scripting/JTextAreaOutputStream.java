@@ -27,28 +27,7 @@ public class JTextAreaOutputStream extends OutputStream {
 		this.textArea = textArea;
 		updater.scheduleWithFixedDelay(new Runnable() {
 			public void run() {
-				ArrayList<String> strings;
-				synchronized (queue) {
-					if (0 == queue.size()) return;
-					strings = new ArrayList<String>();
-					strings.addAll(queue);
-					queue.clear();
-				}
-
-				StringBuilder sb = new StringBuilder();
-				for (String s : strings)
-					sb.append(s);
-
-				synchronized (textArea) {
-					int lineCount = textArea.getLineCount();
-					// Eliminate the first 100 lines when reaching 1100 lines:
-					if (lineCount > 1100) try {
-						textArea.replaceRange("", 0,
-							textArea.getLineEndOffset(lineCount - 1000));
-					} catch (BadLocationException e) { e.printStackTrace(); }
-					textArea.append(sb.toString());
-					textArea.setCaretPosition(textArea.getDocument().getLength());
-				}
+				flushQueue();
 			}
 		}, 10, 400, TimeUnit.MILLISECONDS);
 	}
@@ -69,7 +48,33 @@ public class JTextAreaOutputStream extends OutputStream {
 		queue.add(string);
 	}
 
+	public void flushQueue() {
+		ArrayList<String> strings;
+		synchronized (queue) {
+			if (0 == queue.size()) return;
+			strings = new ArrayList<String>();
+			strings.addAll(queue);
+			queue.clear();
+		}
+
+		StringBuilder sb = new StringBuilder();
+		for (String s : strings)
+			sb.append(s);
+
+		synchronized (textArea) {
+			int lineCount = textArea.getLineCount();
+			// Eliminate the first 100 lines when reaching 1100 lines:
+			if (lineCount > 1100) try {
+				textArea.replaceRange("", 0,
+					textArea.getLineEndOffset(lineCount - 1000));
+			} catch (BadLocationException e) { e.printStackTrace(); }
+			textArea.append(sb.toString());
+			textArea.setCaretPosition(textArea.getDocument().getLength());
+		}
+	}
+
 	public void flush() {
+		flushQueue();
 		textArea.repaint();
 	}
 

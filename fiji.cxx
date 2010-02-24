@@ -1630,19 +1630,20 @@ static int start_ij(void)
 #endif
 			skip_build_classpath = true;
 			headless = 1;
-			string fake_jar = string(fiji_dir) + "/fake.jar";
+			string fake_jar = string(fiji_dir) + "/jars/fake.jar";
 			string precompiled_fake_jar = string(fiji_dir)
 				+ "/precompiled/fake.jar";
 			if (run_precompiled || !file_exists(fake_jar) ||
 					file_is_newer(precompiled_fake_jar,
 						fake_jar))
 				fake_jar = precompiled_fake_jar;
-			if (file_is_newer(string(fiji_dir) + "/fake/Fake.java",
-					fake_jar) && !is_building("fake.jar"))
-				cerr << "Warning: fake.jar is not up-to-date"
+			if (file_is_newer(string(fiji_dir) + "/src-plugins/"
+					"fake/fiji/build/Fake.java", fake_jar)
+					&& !is_building("jars/fake.jar"))
+				cerr << "Warning: jars/fake.jar is not up-to-date"
 					<< endl;
 			class_path += fake_jar + PATH_SEP;
-			main_class = "Fake";
+			main_class = "fiji.build.Fake";
 		}
 		else if (!strcmp(main_argv[i], "--javac") ||
 				!strcmp(main_argv[i], "--javap")) {

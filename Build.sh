@@ -53,8 +53,7 @@ test -f "$JAVA_HOME"/Home/lib/ext/vecmath.jar || {
 		git remote add -t master origin "$URL" &&
 		git fetch --depth 1 &&
 		git reset --hard origin/master
-	) &&
-	git submodule update "$JAVA_SUBMODULE" || {
+	) || {
 		echo "Could not clone JDK" >&2
 		exit 1
 	}
@@ -78,26 +77,31 @@ handle_variables () {
 targets=$(handle_variables --strip "$@")
 variables=$(handle_variables "$@")
 
+jar=jars/fake.jar
+pre_jar=precompiled/${jar##*/}
+source_dir=src-plugins/fake/fiji/build/
+source=$source_dir/Fake.java
+
 # make sure fake.jar is up-to-date
-test "a$targets" != afake.jar &&
-test ! -f "$CWD"/fake.jar -o "$CWD"/fake/Fake.java -nt "$CWD"/fake.jar && {
-	sh "$0" $variables fake.jar || exit
+test "a$targets" != a$jar &&
+test ! -f "$CWD"/$jar -o "$CWD"/$source -nt "$CWD"/$jar && {
+	sh "$0" $variables $jar || exit
 }
 
 # make sure the Fiji launcher is up-to-date
-test "a$targets" != afake.jar -a "a$targets" != afiji &&
+test "a$targets" != a$jar -a "a$targets" != afiji &&
 test ! -f "$CWD"/fiji -o "$CWD"/fiji.cxx -nt "$CWD"/fiji$exe && {
 	sh "$0" $variables fiji || exit
 }
 
 # still needed for Windows, which cannot overwrite files that are in use
-test -f "$CWD"/fiji$exe -a -f "$CWD"/fake.jar &&
-test "a$targets" != afake.jar -a "a$targets" != afiji &&
+test -f "$CWD"/fiji$exe -a -f "$CWD"/$jar &&
+test "a$targets" != a$jar -a "a$targets" != afiji &&
 exec "$CWD"/fiji$exe --build "$@"
 
 # fall back to precompiled
 test -f "$CWD"/precompiled/fiji-$platform$exe \
-	-a -f "$CWD"/precompiled/fake.jar &&
+	-a -f "$CWD"/precompiled/${jar##*/} &&
 exec "$CWD"/precompiled/fiji-$platform$exe --build -- "$@"
 
 export SYSTEM_JAVA=java
@@ -117,13 +121,13 @@ then
 fi
 
 # fall back to calling Fake with system Java
-test -f "$CWD"/fake.jar &&
-$SYSTEM_JAVA -classpath "$CWD"/fake.jar Fake "$@"
+test -f "$CWD"/$jar &&
+$SYSTEM_JAVA -classpath "$CWD"/$jar fiji.build.Fake "$@"
 
 # fall back to calling precompiled Fake with system Java
-test -f "$CWD"/precompiled/fake.jar &&
-$SYSTEM_JAVA -classpath "$CWD"/precompiled/fake.jar Fake "$@"
+test -f "$CWD"/$pre_jar &&
+$SYSTEM_JAVA -classpath "$CWD"/$pre_jar fiji.build.Fake "$@"
 
 # fall back to compiling and running with system Java
-$SYSTEM_JAVAC -source 1.3 -target 1.3 "$CWD"/fake/Fake.java &&
-$SYSTEM_JAVA -classpath "$CWD"/fake Fake "$@"
+$SYSTEM_JAVAC -source 1.3 -target 1.3 "$CWD"/$source &&
+$SYSTEM_JAVA -classpath "$CWD"/$source_dir fiji.build.Fake "$@"

@@ -1,13 +1,10 @@
 package fiji.scripting;
 
-import com.sun.jdi.connect.VMStartException;
-
 import common.RefreshScripts;
 
 import fiji.scripting.java.Refresh_Javas;
 
 import ij.IJ;
-import ij.Prefs;
 import ij.WindowManager;
 
 import ij.gui.GenericDialog;
@@ -15,9 +12,6 @@ import ij.gui.GenericDialog;
 import ij.io.OpenDialog;
 import ij.io.SaveDialog;
 
-import java.net.URL;
-
-import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Toolkit;
@@ -28,61 +22,51 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-import java.awt.image.BufferedImage;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.LineNumberReader;
+import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.PrintWriter;
-import java.io.OutputStream;
-import java.io.InputStream;
+
+import java.net.URL;
+import java.net.URLDecoder;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.List;
-import java.util.Vector;
-import java.util.Enumeration;
-import java.util.Set;
-import java.util.HashSet;
 import java.util.Dictionary;
+import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.List;
+import java.util.Set;
 
-import java.util.concurrent.ThreadPoolExecutor;
-
-import java.util.jar.JarFile;
 import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 
 import java.util.zip.ZipException;
 
-import java.net.URLDecoder;
-
-import javax.imageio.ImageIO;
-
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
-import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
-import javax.swing.JRadioButtonMenuItem;
-import javax.swing.JTextArea;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
+import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
+import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
 
 import javax.swing.event.ChangeEvent;
@@ -90,10 +74,7 @@ import javax.swing.event.ChangeListener;
 
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
-
-import org.fife.ui.autocomplete.BasicCompletion;
-import org.fife.ui.autocomplete.CompletionProvider;
-import org.fife.ui.autocomplete.DefaultCompletionProvider;
+import javax.swing.text.Position;
 
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 
@@ -109,12 +90,15 @@ public class TextEditor extends JFrame implements ActionListener,
 		  autocomplete, resume, terminate, kill, gotoLine,
 		  makeJar, makeJarWithSource, removeUnusedImports,
 		  sortImports, removeTrailingWhitespace, findNext,
-		  openHelp, addImport;
+		  openHelp, addImport, clearScreen, nextError, previousError;
 	FindAndReplaceDialog findDialog;
 
 	String templateFolder = "templates/";
 	Set<String> templatePaths;
 	Languages.Language[] availableLanguages = Languages.getInstance().languages;
+
+	Position compileStartPosition;
+	ErrorHandler errorHandler;
 
 	public TextEditor(String path) {
 		super("Script Editor");
@@ -122,6 +106,7 @@ public class TextEditor extends JFrame implements ActionListener,
 
 		// Initialize menu
 		int ctrl = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+		int shift = ActionEvent.SHIFT_MASK;
 		JMenuBar mbar = new JMenuBar();
 		setJMenuBar(mbar);
 
@@ -162,6 +147,9 @@ public class TextEditor extends JFrame implements ActionListener,
 		replace = addToMenu(edit, "Find and Replace...", KeyEvent.VK_H, ctrl);
 		gotoLine = addToMenu(edit, "Goto line...", KeyEvent.VK_G, ctrl);
 		gotoLine.setMnemonic(KeyEvent.VK_G);
+		edit.addSeparator();
+		clearScreen = addToMenu(edit, "Clear output panel", 0, 0);
+		clearScreen.setMnemonic(KeyEvent.VK_L);
 		edit.addSeparator();
 		autocomplete = addToMenu(edit, "Autocomplete", KeyEvent.VK_SPACE, ctrl);
 		autocomplete.setMnemonic(KeyEvent.VK_A);
@@ -211,6 +199,11 @@ public class TextEditor extends JFrame implements ActionListener,
 				KeyEvent.VK_R, ctrl);
 		compileAndRun.setMnemonic(KeyEvent.VK_R);
 
+		run.addSeparator();
+		nextError = addToMenu(run, "Next Error", KeyEvent.VK_F4, 0);
+		nextError.setMnemonic(KeyEvent.VK_N);
+		previousError = addToMenu(run, "Next Error", KeyEvent.VK_F4, shift);
+		previousError.setMnemonic(KeyEvent.VK_P);
 		run.addSeparator();
 		debug = addToMenu(run, "Start Debugging", KeyEvent.VK_D, ctrl);
 		debug.setMnemonic(KeyEvent.VK_D);
@@ -292,6 +285,14 @@ public class TextEditor extends JFrame implements ActionListener,
 		setLocationRelativeTo(null); // center on screen
 
 		editorPane.requestFocus();
+	}
+
+	public TextEditor(String title, String text) {
+		this(null);
+		editorPane.setText(text);
+		String extension = editorPane.getExtension(title);
+		editorPane.setLanguageByExtension(extension);
+		setTitle();
 	}
 
 	final public RSyntaxTextArea getTextArea() {
@@ -614,6 +615,10 @@ public class TextEditor extends JFrame implements ActionListener,
 			makeJar(true);
 		else if (source == compileAndRun)
 			runText();
+		else if (source == nextError)
+			nextError(true);
+		else if (source == previousError)
+			nextError(false);
 		else if (source == debug) {
 			try {
 				getEditorPane().startDebugging();
@@ -666,6 +671,8 @@ public class TextEditor extends JFrame implements ActionListener,
 			new TokenFunctions(getTextArea()).sortImports();
 		else if (source == removeTrailingWhitespace)
 			new TokenFunctions(getTextArea()).removeTrailingWhitespace();
+		else if (source == clearScreen)
+			screen.setText("");
 		else if (source == autocomplete) {
 			try {
 				getEditorPane().autocomp.doCompletion();
@@ -686,10 +693,14 @@ public class TextEditor extends JFrame implements ActionListener,
 			setTitle("");
 			return;
 		}
+		editorPane = getEditorPane(index);
+		setTitle();
+	}
+
+	public EditorPane getEditorPane(int index) {
 		RTextScrollPane scrollPane =
 			(RTextScrollPane)tabbed.getComponentAt(index);
-		editorPane = (EditorPane)scrollPane.getTextArea();
-		setTitle();
+		return (EditorPane)scrollPane.getTextArea();
 	}
 
 	public void findOrReplace(boolean replace) {
@@ -1029,7 +1040,7 @@ public class TextEditor extends JFrame implements ActionListener,
 				}
 			};
 		}
-		
+
 		/** The method to extend, that will do the actual work. */
 		abstract void execute();
 
@@ -1131,6 +1142,7 @@ public class TextEditor extends JFrame implements ActionListener,
 			return;
 		}
 
+		markCompileStart();
 		RSyntaxTextArea textArea = getTextArea();
 		textArea.setEditable(false);
 		final JTextAreaOutputStream output = new JTextAreaOutputStream(screen);
@@ -1145,6 +1157,8 @@ public class TextEditor extends JFrame implements ActionListener,
 			new TextEditor.Executer(output) {
 				public void execute() {
 					interpreter.runScript(pi);
+					output.flush();
+					markCompileEnd();
 				}
 			};
 			textArea.write(new PrintWriter(po));
@@ -1166,13 +1180,16 @@ public class TextEditor extends JFrame implements ActionListener,
 			return;
 		}
 
-		JTextAreaOutputStream output = new JTextAreaOutputStream(screen);
+		markCompileStart();
+		final JTextAreaOutputStream output = new JTextAreaOutputStream(screen);
 		interpreter.setOutputStreams(output, output);
 
 		final File file = getEditorPane().file;
-		new TextEditor.Executer(new JTextAreaOutputStream(screen)) {
+		new TextEditor.Executer(output) {
 			public void execute() {
 				interpreter.runScript(file.getPath());
+				output.flush();
+				markCompileEnd();
 			}
 		};
 	}
@@ -1187,6 +1204,86 @@ public class TextEditor extends JFrame implements ActionListener,
 				return null;
 		}
 		return selection;
+	}
+
+	public void markCompileStart() {
+		errorHandler = null;
+
+		Document document = screen.getDocument();
+		int offset = document.getLength();
+		screen.insert("Started " + editorPane.getFileName() + " at "
+			+ new Date() + "\n", offset);
+		screen.setCaretPosition(document.getLength());
+		try {
+			compileStartPosition = document.createPosition(offset);
+		} catch (BadLocationException e) {
+			handleException(e);
+		}
+		ExceptionHandler.addThread(Thread.currentThread(), this);
+	}
+
+	public void markCompileEnd() {
+		if (errorHandler == null)
+			errorHandler = new ErrorHandler(getCurrentLanguage(),
+				screen, compileStartPosition.getOffset());
+	}
+
+	public boolean nextError(boolean forward) {
+		if (errorHandler != null && errorHandler.nextError(forward)) try {
+			switchTo(errorHandler.getPath(),
+					errorHandler.getLine());
+			errorHandler.markLine();
+			return true;
+		} catch (Exception e) {
+			IJ.handleException(e);
+		}
+		return false;
+	}
+
+	public void switchTo(String path, int lineNumber)
+			throws BadLocationException, IOException {
+		switchTo(new File(path).getCanonicalFile(), lineNumber);
+	}
+
+	public void switchTo(File file, int lineNumber)
+			throws BadLocationException {
+		if (!editorPaneContainsFile(editorPane, file))
+			switchTo(file);
+		gotoLine(lineNumber);
+	}
+
+	public void switchTo(File file) {
+		for (int i = 0; i < tabbed.getTabCount(); i++)
+			if (editorPaneContainsFile(getEditorPane(i), file)) {
+				tabbed.setSelectedIndex(i);
+				return;
+			}
+		open(file.getPath());
+	}
+
+	boolean editorPaneContainsFile(EditorPane editorPane, File file) {
+		try {
+			return file.getCanonicalFile()
+				.equals(editorPane.file.getCanonicalFile());
+		} catch (IOException e) {
+			return false;
+		}
+	}
+
+	public File getFile() {
+		return getEditorPane().file;
+	}
+
+	public File getFileForBasename(String baseName) {
+		File file = getFile();
+		if (file != null && file.getName().equals(baseName))
+			return file;
+		for (int i = 0; i < tabbed.getTabCount(); i++) {
+			file = getEditorPane(i).file;
+			if (file != null && file.getName().equals(baseName))
+				return file;
+		}
+		return null;
 	}
 
 	public void addImport(String className) {
@@ -1212,5 +1309,9 @@ public class TextEditor extends JFrame implements ActionListener,
 
 	protected void error(String message) {
 		JOptionPane.showMessageDialog(this, message);
+	}
+
+	void handleException(Throwable e) {
+		ij.IJ.handleException(e);
 	}
 }

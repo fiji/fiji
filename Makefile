@@ -6,8 +6,9 @@ run:
 fiji: fiji.cxx
 	sh Build.sh fiji
 
-fake.jar: fake/Fake.java
-	sh Build.sh fake.jar
+.PHONY: jars/fake.jar
+jars/fake.jar:
+	sh Build.sh $@
 
 # MicroManager
 mm:

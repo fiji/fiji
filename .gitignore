@@ -34,7 +34,7 @@
 /jars/javac.jar
 /jars/cachedir
 /tmp.ijm
-/fake.jar
+/jars/fake.jar
 /ij.jar
 /misc/Fiji.jar
 /plugins/Jython_Interpreter.jar
@@ -114,3 +114,4 @@
 /jars/fiji-lib.jar
 /jars/imglib.jar
 /jars/jep.jar
+/plugins/Siox_Segmentation.jar

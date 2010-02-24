@@ -62,6 +62,7 @@ public class Colocalisation_Threshold implements PlugIn {
 	ColorProcessor ipColoc;
 	private int rwidth, rheight, xOffset, yOffset;
 	String[] chooseROI=  { "None","Channel 1", "Channel 2",};
+	protected static TextWindow textWindow;
 
 	public void run(String arg) {
 		if (showDialog())
@@ -94,8 +95,8 @@ public class Colocalisation_Threshold implements PlugIn {
 		threshold = false;
 		int indexMask=0;
 		GenericDialog gd = new GenericDialog("Colocalisation Thresholds");
-		gd.addChoice("Channel 1", titles, titles[index1]);
-		gd.addChoice("Channel 2", titles, titles[index2]);
+		gd.addChoice("Channel_1", titles, titles[index1]);
+		gd.addChoice("Channel_2", titles, titles[index2]);
 		gd.addChoice("Use ROI", chooseROI, chooseROI[indexRoi]);
 
 		//	gd.addChoice("Mask channel", chooseMask, chooseMask[indexMask]);
@@ -794,15 +795,12 @@ public class Colocalisation_Threshold implements PlugIn {
 		//sb.append("Sum total \t Ch1 = "+ df3.format(sumXtotal )+ "\tCh2 = "+df3.format(sumYtotal)+"\n");
 		double plotY=0;
 		double plotY2=0;
-		boolean resultsOpen = IJ.isResultsWindow();
-		if (!resultsOpen) headingsSetCTC = false;
-		if ((!headingsSetCTC)) {
-			IJ.setColumnHeadings(heading);
-			headingsSetCTC = true;
-			IJ.write(heading);
-		}
 
-		IJ.write(str);
+		if (textWindow == null || !textWindow.isVisible())
+			textWindow = new TextWindow("Results",
+				heading, "", 400, 250);
+		textWindow.getTextPanel().appendLine(str);
+
 		//new TextWindow( "mRegression: "+fileName, "\t \t \t.", sb.toString(), 420, 450);
 		Prefs.set("CTC_annels.int", (int)dualChannelIndex );
 		Prefs.set("CTC_channels.int", (int)dualChannelIndex );
