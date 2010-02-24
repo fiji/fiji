@@ -44,7 +44,7 @@ public class ClassNameFunctions {
 		return gd.getNextChoice();
 	}
 
-	public void openHelpForClass(String className) {
+	public void openHelpForClass(String className, boolean withFrames) {
 		String fullName = getFullName(className);
 		if (fullName == null) {
 			JOptionPane.showMessageDialog(null, "Class '"
@@ -57,7 +57,8 @@ public class ClassNameFunctions {
 			urlPrefix = "http://java.sun.com/j2se/1.5.0/docs/api/";
 		else
 			urlPrefix = "http://pacific.mpi-cbg.de/javadoc/";
-		new BrowserLauncher().run(urlPrefix + "index.html?"
+		new BrowserLauncher().run(urlPrefix
+				+ (withFrames ? "index.html?" : "")
 				+ fullName.replace('.', '/') + ".html");
 	}
 }

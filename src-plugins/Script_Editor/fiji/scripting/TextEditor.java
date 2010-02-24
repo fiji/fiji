@@ -90,7 +90,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		  autocomplete, resume, terminate, kill, gotoLine,
 		  makeJar, makeJarWithSource, removeUnusedImports,
 		  sortImports, removeTrailingWhitespace, findNext,
-		  openHelp, addImport, clearScreen, nextError, previousError;
+		  openHelp, addImport, clearScreen, nextError, previousError,
+		  openHelpWithoutFrames;
 	FindAndReplaceDialog findDialog;
 
 	String templateFolder = "templates/";
@@ -226,6 +227,9 @@ public class TextEditor extends JFrame implements ActionListener,
 		tools.setMnemonic(KeyEvent.VK_O);
 		openHelp = addToMenu(tools, "Open Help for Class...", 0, 0);
 		openHelp.setMnemonic(KeyEvent.VK_O);
+		openHelpWithoutFrames = addToMenu(tools,
+			"Open Help for Class (without frames)...", 0, 0);
+		openHelpWithoutFrames.setMnemonic(KeyEvent.VK_P);
 		mbar.add(tools);
 
 		// Add the editor and output area
@@ -685,6 +689,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		}
 		else if (source == openHelp)
 			openHelp(null);
+		else if (source == openHelpWithoutFrames)
+			openHelp(null, false);
 	}
 
 	public void stateChanged(ChangeEvent e) {
@@ -1299,12 +1305,16 @@ public class TextEditor extends JFrame implements ActionListener,
 	}
 
 	public void openHelp(String className) {
+		openHelp(className, true);
+	}
+
+	public void openHelp(String className, boolean withFrames) {
 		if (className == null)
 			className = getSelectedTextOrAsk("Class name");
 		if (className == null)
 			return;
 		getEditorPane().getClassNameFunctions()
-			.openHelpForClass(className);
+			.openHelpForClass(className, withFrames);
 	}
 
 	protected void error(String message) {
