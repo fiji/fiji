@@ -91,7 +91,9 @@ public class TextEditor extends JFrame implements ActionListener,
 		  makeJar, makeJarWithSource, removeUnusedImports,
 		  sortImports, removeTrailingWhitespace, findNext,
 		  openHelp, addImport, clearScreen, nextError, previousError,
-		  openHelpWithoutFrames;
+		  openHelpWithoutFrames, nextTab, previousTab;
+	JMenu tabsMenu;
+	int tabsMenuTabsStart;
 	FindAndReplaceDialog findDialog;
 
 	String templateFolder = "templates/";
@@ -232,6 +234,18 @@ public class TextEditor extends JFrame implements ActionListener,
 		openHelpWithoutFrames.setMnemonic(KeyEvent.VK_P);
 		mbar.add(tools);
 
+		tabsMenu = new JMenu("Tabs");
+		tabsMenu.setMnemonic(KeyEvent.VK_A);
+		nextTab = addToMenu(tabsMenu, "Next Tab",
+				KeyEvent.VK_PAGE_DOWN, ctrl);
+		nextTab.setMnemonic(KeyEvent.VK_N);
+		previousTab = addToMenu(tabsMenu, "Previous Tab",
+				KeyEvent.VK_PAGE_UP, ctrl);
+		previousTab.setMnemonic(KeyEvent.VK_P);
+		tabsMenu.addSeparator();
+		tabsMenuTabsStart = tabsMenu.getItemCount();
+		mbar.add(tabsMenu);
+
 		// Add the editor and output area
 		tabbed = new JTabbedPane();
 		tabbed.addChangeListener(this);
@@ -256,6 +270,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		addAccelerator(debug, KeyEvent.VK_F11, ctrl, true);
 		addAccelerator(debug, KeyEvent.VK_F5,
 				ActionEvent.SHIFT_MASK, true);
+		addAccelerator(nextTab, KeyEvent.VK_PAGE_DOWN, ctrl, true);
+		addAccelerator(previousTab, KeyEvent.VK_PAGE_UP, ctrl, true);
 
 		// make sure that the window is not closed by accident
 		addWindowListener(new WindowAdapter() {
@@ -691,6 +707,10 @@ public class TextEditor extends JFrame implements ActionListener,
 			openHelp(null);
 		else if (source == openHelpWithoutFrames)
 			openHelp(null, false);
+		else if (source == nextTab)
+			switchTabRelative(1);
+		else if (source == previousTab)
+			switchTabRelative(-1);
 	}
 
 	public void stateChanged(ChangeEvent e) {
@@ -1265,6 +1285,15 @@ public class TextEditor extends JFrame implements ActionListener,
 				return;
 			}
 		open(file.getPath());
+	}
+
+	protected void switchTabRelative(int delta) {
+		int index = tabbed.getSelectedIndex();
+		int count = tabbed.getTabCount();
+		index = ((index + delta) % count);
+		if (index < 0)
+			index += count;
+		tabbed.setSelectedIndex(index);
 	}
 
 	boolean editorPaneContainsFile(EditorPane editorPane, File file) {
