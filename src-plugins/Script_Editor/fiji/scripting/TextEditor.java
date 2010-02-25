@@ -659,7 +659,7 @@ public class TextEditor extends JFrame implements ActionListener,
 				tabbed.remove(index);
 				if (index > 0)
 					index--;
-				tabbed.setSelectedIndex(index);
+				switchTo(index);
 			}
 		else if (source == cut)
 			getTextArea().cut();
@@ -720,7 +720,10 @@ public class TextEditor extends JFrame implements ActionListener,
 			return;
 		}
 		editorPane = getEditorPane(index);
+		editorPane.requestFocus();
 		setTitle();
+		String extension = editorPane.getExtension(editorPane.getFileName());
+		editorPane.setLanguageByExtension(extension);
 	}
 
 	public EditorPane getEditorPane(int index) {
@@ -789,10 +792,9 @@ public class TextEditor extends JFrame implements ActionListener,
 		try {
 			editorPane = new EditorPane(this);
 			tabbed.addTab("", editorPane.embedWithScrollbars());
-			tabbed.setSelectedIndex(tabbed.getTabCount() - 1);
+			switchTo(tabbed.getTabCount() - 1);
 			addDefaultAccelerators();
 			editorPane.setFile("".equals(path) ? null : path);
-			editorPane.requestFocus();
 		} catch (Exception e) {
 			e.printStackTrace();
 			error("The file '" + path + "' was not found.");
@@ -1281,10 +1283,14 @@ public class TextEditor extends JFrame implements ActionListener,
 	public void switchTo(File file) {
 		for (int i = 0; i < tabbed.getTabCount(); i++)
 			if (editorPaneContainsFile(getEditorPane(i), file)) {
-				tabbed.setSelectedIndex(i);
+				switchTo(i);
 				return;
 			}
 		open(file.getPath());
+	}
+
+	public void switchTo(int index) {
+		tabbed.setSelectedIndex(index);
 	}
 
 	protected void switchTabRelative(int delta) {
@@ -1293,7 +1299,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		index = ((index + delta) % count);
 		if (index < 0)
 			index += count;
-		tabbed.setSelectedIndex(index);
+		switchTo(index);
 	}
 
 	boolean editorPaneContainsFile(EditorPane editorPane, File file) {

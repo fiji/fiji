@@ -1,5 +1,3 @@
-- Properly handle Language menu when switching tabs.
-
 - BeanShell seems not to import the second time a BeanShell interpreter is
   opened (reported by Stephan Saalfeld).
 
