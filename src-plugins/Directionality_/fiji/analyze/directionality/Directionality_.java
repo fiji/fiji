@@ -3,36 +3,48 @@ package fiji.analyze.directionality;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
-import ij.gui.Plot;
-import ij.gui.PlotWindow;
 import ij.gui.Roi;
-import ij.plugin.filter.PlugInFilter;
+import ij.plugin.filter.ExtendedPlugInFilter;
+import ij.plugin.filter.PlugInFilterRunner;
 import ij.process.FHT;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 
+import java.util.ArrayList;
 
-public class Directionality_ implements PlugInFilter {
+import javax.swing.JFrame;
+
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
+
+
+public class Directionality_ implements ExtendedPlugInFilter {
 	
 	/*
 	 * FIELDS
 	 */
 	
 	private static final float FREQ_THRESHOLD = 5.0f; // get rid of pixels too close to the center in the FFT spectrum
-	private static final boolean DEBUG = true;
+	private static final boolean DEBUG = false;
 	
 	protected ImagePlus imp;
 	protected ImageStack filters;
 	protected FloatProcessor window, r, theta;
 	protected int width, height, small_side, long_side, npady, npadx, step, pad_size, nbins;
 	/** The bin centers, in degrees */
-	protected float[] bins;
+	protected double[] bins;
+	/** The directionality histogram, one array per processor.*/
+	protected ArrayList<double[]> directionality;
 	
 	private FloatProcessor padded_square_block; 
 	private float[] window_pixels;
 
 	/*
-	 * RUN METHOD
+	 * EXTENDEDPLUGINFILTER METHODS
 	 */
 	
 	public void run(ImageProcessor _ip) {
@@ -40,7 +52,7 @@ public class Directionality_ implements PlugInFilter {
 		final Roi original_square = new Roi((pad_size-small_side)/2, (pad_size-small_side)/2, small_side, small_side); 
 
 		float[] fpx, spectrum_px;
-		float[] directionality = new float[nbins];
+		double[] dir = new double[nbins];
 		ImageProcessor square_block;
 		Roi square_roi;
 		FHT fft, pspectrum;		
@@ -87,24 +99,24 @@ public class Directionality_ implements PlugInFilter {
 				for (int bin=0; bin<nbins; bin++) {
 					fpx = (float[]) filters.getPixels(bin+1);
 					for (int i = 0; i < spectrum_px.length; i++) {
-						directionality[bin] += spectrum_px[i] * fpx[i]; // will sum out with every block
+						dir[bin] += spectrum_px[i] * fpx[i]; // will sum out with every block
 					}
 				}
 			}
 		}
 		
 		// Normalize directionality
-		float sum = directionality[0];
-		for (int i = 1; i < directionality.length; i++) {
-			sum += directionality[i];
+		double sum = dir[0];
+		for (int i = 1; i < dir.length; i++) {
+			sum += dir[i];
 		}
-		for (int i = 0; i < directionality.length; i++) {
-			directionality[i] = directionality[i] / sum;
+		for (int i = 0; i < dir.length; i++) {
+			dir[i] = dir[i] / sum;
 		}
 		
-		// Plot it
-		Plot dir_histogram = new Plot("Directionality histogram", "Theta", "Density", bins, directionality);
-		PlotWindow dh_window = dir_histogram.show();
+		// Draw histogram		
+		directionality.add(dir);
+		
 		
 	}
 
@@ -113,6 +125,11 @@ public class Directionality_ implements PlugInFilter {
 	 */
 	
 	public int setup(String arg, ImagePlus _imp) {
+		
+		if (arg.contains("final")) {
+			drawResults();
+			return DONE;
+		}
 		
 		nbins = 90;
 		if (arg.contains("nbins=")) {
@@ -125,6 +142,9 @@ public class Directionality_ implements PlugInFilter {
 				return DONE;
 			}
 		} 
+		
+		// Prepare data storage
+		directionality = new ArrayList<double[]>(_imp.getStack().getSize());
 		
 		// Assign fields
 		this.imp = _imp;
@@ -170,7 +190,7 @@ public class Directionality_ implements PlugInFilter {
 		filters = makeFftFilters(nbins);
 		
 		// Prepare bins
-		bins = new float[nbins];
+		bins = new double[nbins];
 		for (int i = 0; i < nbins; i++) {
 			bins[i] = (float) (i * Math.PI / nbins / Math.PI * 180);
 		}
@@ -184,8 +204,17 @@ public class Directionality_ implements PlugInFilter {
 			+ DOES_STACKS
 			+ CONVERT_TO_FLOAT
 			+ NO_CHANGES
-			+ PARALLELIZE_STACKS;
+			+ PARALLELIZE_STACKS
+			+ FINAL_PROCESSING;
 	}
+	
+	public void setNPasses(int nPasses) {	}
+
+	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
 	
 	/*
 	 * PRIVATE METHODS
@@ -240,6 +269,42 @@ public class Directionality_ implements PlugInFilter {
 			filters.setPixels(pixels, i);
 		}
 		return filters;
+	}
+	
+	private final void drawResults() {
+		final XYSeriesCollection histograms = new XYSeriesCollection();
+		XYSeries series;
+		
+		double[] dir;
+		Integer key;
+		for (int i = 0; i < directionality.size(); i++) {
+			dir = directionality.get(i);
+			key = new Integer(i);
+			series = new XYSeries(key);
+			for (int j = 0; j < dir.length; j++) {
+				series.add(bins[j], dir[j]);
+				
+			}
+			histograms.addSeries(series);
+		}
+		
+		final JFreeChart chart = ChartFactory.createHistogram(
+				"Directionality histograms",
+				"Direction (deg)",
+				"Count", 
+				histograms, 
+				PlotOrientation.VERTICAL,
+				true,
+				true,
+				false);
+		
+		final ChartPanel chartPanel = new ChartPanel(chart);
+		chartPanel.setPreferredSize(new java.awt.Dimension(500, 270));
+		JFrame window = new JFrame("Directionality for "+imp.getShortTitle());
+        window.add(chartPanel);
+        window.validate();
+        window.setSize(new java.awt.Dimension(500, 270));
+        window.setVisible(true);
 	}
 	
 	/*
@@ -307,7 +372,6 @@ public class Directionality_ implements PlugInFilter {
 		return theta;
 	}
 	
-	
 	/*
 	 * MAIN METHOD
 	 */
@@ -319,6 +383,8 @@ public class Directionality_ implements PlugInFilter {
 		Directionality_ da = new Directionality_();
 		da.setup("nbins=45", imp);
 		da.run(imp.getProcessor().toFloat(0, null));
+		da.setup("final", imp);
 	}
+
 	
 }
