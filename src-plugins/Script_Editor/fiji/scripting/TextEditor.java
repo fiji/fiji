@@ -94,6 +94,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		  openHelpWithoutFrames, nextTab, previousTab;
 	JMenu tabsMenu;
 	int tabsMenuTabsStart;
+	Set<JMenuItem> tabsMenuItems;
 	FindAndReplaceDialog findDialog;
 
 	String templateFolder = "templates/";
@@ -244,6 +245,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		previousTab.setMnemonic(KeyEvent.VK_P);
 		tabsMenu.addSeparator();
 		tabsMenuTabsStart = tabsMenu.getItemCount();
+		tabsMenuItems = new HashSet<JMenuItem>();
 		mbar.add(tabsMenu);
 
 		// Add the editor and output area
@@ -280,7 +282,7 @@ public class TextEditor extends JFrame implements ActionListener,
 					if (!handleUnsavedChanges())
 						return;
 					int index = tabbed.getSelectedIndex();
-					tabbed.remove(index);
+					removeTab(index);
 				}
 				dispose();
 			}
@@ -656,7 +658,7 @@ public class TextEditor extends JFrame implements ActionListener,
 				if (!handleUnsavedChanges())
 					return;
 				int index = tabbed.getSelectedIndex();
-				tabbed.remove(index);
+				removeTab(index);
 				if (index > 0)
 					index--;
 				switchTo(index);
@@ -711,6 +713,23 @@ public class TextEditor extends JFrame implements ActionListener,
 			switchTabRelative(1);
 		else if (source == previousTab)
 			switchTabRelative(-1);
+		else if (handleTabsMenu(source))
+			return;
+	}
+
+	protected boolean handleTabsMenu(Object source) {
+		if (!(source instanceof JMenuItem))
+			return false;
+		JMenuItem item = (JMenuItem)source;
+		if (!tabsMenuItems.contains(item))
+			return false;
+		for (int i = tabsMenuTabsStart;
+				i < tabsMenu.getItemCount(); i++)
+			if (tabsMenu.getItem(i) == item) {
+				switchTo(i - tabsMenuTabsStart);
+				return true;
+			}
+		return false;
 	}
 
 	public void stateChanged(ChangeEvent e) {
@@ -795,6 +814,8 @@ public class TextEditor extends JFrame implements ActionListener,
 			switchTo(tabbed.getTabCount() - 1);
 			addDefaultAccelerators();
 			editorPane.setFile("".equals(path) ? null : path);
+			tabsMenuItems.add(addToMenu(tabsMenu,
+					editorPane.getFileName(), 0, 0));
 		} catch (Exception e) {
 			e.printStackTrace();
 			error("The file '" + path + "' was not found.");
@@ -1018,6 +1039,16 @@ public class TextEditor extends JFrame implements ActionListener,
 			+ (executingTasks.isEmpty() ? "" : " (Running)");
 		setTitle(title);
 		tabbed.setTitleAt(tabbed.getSelectedIndex(), title);
+	}
+
+	public void setTitle(String title) {
+		super.setTitle(title);
+		int index = tabsMenuTabsStart + tabbed.getSelectedIndex();
+		if (index < tabsMenu.getItemCount()) {
+			JMenuItem item = tabsMenu.getItem(index);
+			if (item != null)
+				item.setLabel(title);
+		}
 	}
 
 	/** Using a Vector to benefit from all its methods being synchronzed. */
@@ -1300,6 +1331,13 @@ public class TextEditor extends JFrame implements ActionListener,
 		if (index < 0)
 			index += count;
 		switchTo(index);
+	}
+
+	protected void removeTab(int index) {
+		tabbed.remove(index);
+		index += tabsMenuTabsStart;
+		tabsMenuItems.remove(tabsMenu.getItem(index));
+		tabsMenu.remove(index);
 	}
 
 	boolean editorPaneContainsFile(EditorPane editorPane, File file) {
