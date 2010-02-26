@@ -227,10 +227,10 @@ public class TextEditor extends JFrame implements ActionListener,
 		tools.setMnemonic(KeyEvent.VK_O);
 		openHelpWithoutFrames = addToMenu(tools,
 			"Open Help for Class...", 0, 0);
-		openHelp.setMnemonic(KeyEvent.VK_O);
+		openHelpWithoutFrames.setMnemonic(KeyEvent.VK_O);
 		openHelp = addToMenu(tools,
 				"Open Help for Class (with frames)...", 0, 0);
-		openHelpWithoutFrames.setMnemonic(KeyEvent.VK_P);
+		openHelp.setMnemonic(KeyEvent.VK_P);
 		mbar.add(tools);
 
 		// Add the editor and output area
