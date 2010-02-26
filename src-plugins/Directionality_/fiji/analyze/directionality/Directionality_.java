@@ -3,21 +3,33 @@ package fiji.analyze.directionality;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.gui.GenericDialog;
 import ij.gui.Roi;
+import ij.measure.CurveFitter;
 import ij.plugin.filter.ExtendedPlugInFilter;
 import ij.plugin.filter.PlugInFilterRunner;
 import ij.process.FHT;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.GridLayout;
 import java.util.ArrayList;
 
 import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.LookupPaintScale;
+import org.jfree.chart.renderer.xy.ClusteredXYBarRenderer;
+import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
@@ -29,12 +41,17 @@ public class Directionality_ implements ExtendedPlugInFilter {
 	 */
 	
 	private static final float FREQ_THRESHOLD = 5.0f; // get rid of pixels too close to the center in the FFT spectrum
-	private static final boolean DEBUG = false;
+	private static final String PLUGIN_NAME = "Directionality analysis";
+	private static final String VERSION_STR = "1.0";
+	
+	/** If true, will display FFTs and filters. */
+	protected boolean debug = false;
 	
 	protected ImagePlus imp;
 	protected ImageStack filters;
 	protected FloatProcessor window, r, theta;
-	protected int width, height, small_side, long_side, npady, npadx, step, pad_size, nbins;
+	protected int width, height, small_side, long_side, npady, npadx, step, pad_size;
+	protected int nbins = 90;
 	/** The bin centers, in degrees */
 	protected double[] bins;
 	/** The directionality histogram, one array per processor.*/
@@ -42,12 +59,21 @@ public class Directionality_ implements ExtendedPlugInFilter {
 	
 	private FloatProcessor padded_square_block; 
 	private float[] window_pixels;
+	/** Store fit results when fit method is called. */
+	protected ArrayList<double[]> params_from_fit;
+	/** Store goodness of fit results when fit method is called. */
+	protected double[] goodness_of_fit;
+	/** Store a String representing the fitting function. */
+	protected String fit_string;
+	/** False if fitting of the results have not been done, true otherwise. */
+	private boolean fit_done;
 
 	/*
 	 * EXTENDEDPLUGINFILTER METHODS
 	 */
 	
 	public void run(ImageProcessor _ip) {
+		fit_done = false;
 		final FloatProcessor ip = (FloatProcessor) _ip; // we can do that, for the flag of this plugin is set accordingly
 		final Roi original_square = new Roi((pad_size-small_side)/2, (pad_size-small_side)/2, small_side, small_side); 
 
@@ -91,7 +117,7 @@ public class Directionality_ implements ExtendedPlugInFilter {
 				small_pspectrum = (FloatProcessor) pspectrum .crop();
 				spectrum_px = (float[]) small_pspectrum.getPixels(); 
 				
-				if (DEBUG) {
+				if (debug) {
 					displayLog(small_pspectrum);
 				}
 				
@@ -120,18 +146,13 @@ public class Directionality_ implements ExtendedPlugInFilter {
 		
 	}
 
-	/*
-	 * SETUP METHOD
-	 */
-	
 	public int setup(String arg, ImagePlus _imp) {
 		
 		if (arg.contains("final")) {
-			drawResults();
+			displayResults();
 			return DONE;
 		}
 		
-		nbins = 90;
 		if (arg.contains("nbins=")) {
 			int narg = arg.indexOf("nbins=");
 			String nbins_str = arg.substring(narg+"nbins=".length());
@@ -151,6 +172,38 @@ public class Directionality_ implements ExtendedPlugInFilter {
 		this.width = _imp.getWidth();
 		this.height = _imp.getHeight();
 		
+		
+		
+		// Flags
+		return DOES_ALL
+			+ DOES_STACKS
+			+ CONVERT_TO_FLOAT
+			+ NO_CHANGES
+			+ PARALLELIZE_STACKS
+			+ FINAL_PROCESSING;
+	}
+	
+	public void setNPasses(int nPasses) {	}
+
+	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr) {
+		
+		// Prepare dialog
+		String current = imp.getTitle();
+		GenericDialog gd = new GenericDialog(PLUGIN_NAME + " v" + VERSION_STR);
+		gd.addMessage(current);
+		gd.addNumericField("nbins: ", 90, 0);
+		gd.addCheckbox("Debug", false);
+
+		gd.showDialog();
+		
+		
+		// Collect dialog settings
+		if (gd.wasCanceled())
+			return DONE;
+
+		nbins = (int) gd.getNextNumber();
+		debug = gd.getNextBoolean();
+
 		// Compute dimensions
 		if ( width == height) {
 			npadx = 1;
@@ -178,6 +231,12 @@ public class Directionality_ implements ExtendedPlugInFilter {
         while(pad_size<small_side) pad_size *= 2;
 		padded_square_block = new FloatProcessor(pad_size, pad_size);
 		
+		// Prepare bins
+		bins = new double[nbins];
+		for (int i = 0; i < nbins; i++) {
+			bins[i] = (float) (i * Math.PI / nbins / Math.PI * 180) - 90; // in FFT there is a rotation of 90º
+		}
+		
 		// Prepare windowing
 		window = getBlackmanProcessor(small_side, small_side);
 		window_pixels = (float[]) window.getPixels();
@@ -189,32 +248,29 @@ public class Directionality_ implements ExtendedPlugInFilter {
 		// Prepare filters
 		filters = makeFftFilters(nbins);
 		
-		// Prepare bins
-		bins = new double[nbins];
-		for (int i = 0; i < nbins; i++) {
-			bins[i] = (float) (i * Math.PI / nbins / Math.PI * 180);
+		if (debug) {
+			new ImagePlus("Angular filters", filters).show();
 		}
+
 		
-		if (DEBUG) {
-			new ImagePlus("Filters", filters).show();
-		}
-		
-		// Flags
 		return DOES_ALL
 			+ DOES_STACKS
 			+ CONVERT_TO_FLOAT
 			+ NO_CHANGES
 			+ PARALLELIZE_STACKS
-			+ FINAL_PROCESSING;
+			+ FINAL_PROCESSING;		
 	}
+
 	
-	public void setNPasses(int nPasses) {	}
-
-	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr) {
-		// TODO Auto-generated method stub
-		return 0;
+	/*
+	 * PUBLIC METHODS
+	 */
+	
+	public void displayResults() {
+		fitResults();
+		drawResults();
+		analyzeFits();
 	}
-
 	
 	/*
 	 * PRIVATE METHODS
@@ -267,27 +323,29 @@ public class Directionality_ implements ExtendedPlugInFilter {
 			}
 			
 			filters.setPixels(pixels, i);
+			filters.setSliceLabel("Angle: "+String.format("%.1f",theta_c*180/Math.PI), i);
 		}
 		return filters;
 	}
 	
-	private final void drawResults() {
+	private final JFrame drawResults() {
 		final XYSeriesCollection histograms = new XYSeriesCollection();
+		final LookupPaintScale lut = createLUT(directionality.size());
+		final String[] names = makeNames();
 		XYSeries series;
 		
 		double[] dir;
-		Integer key;
 		for (int i = 0; i < directionality.size(); i++) {
 			dir = directionality.get(i);
-			key = new Integer(i);
-			series = new XYSeries(key);
+			series = new XYSeries(names[i]);
 			for (int j = 0; j < dir.length; j++) {
 				series.add(bins[j], dir[j]);
-				
 			}
 			histograms.addSeries(series);
 		}
+		histograms.setIntervalWidth(bins[1]-bins[0]);
 		
+		// Create chart with histograms
 		final JFreeChart chart = ChartFactory.createHistogram(
 				"Directionality histograms",
 				"Direction (deg)",
@@ -298,6 +356,46 @@ public class Directionality_ implements ExtendedPlugInFilter {
 				true,
 				false);
 		
+		// Set the look of histograms
+		final XYPlot plot = (XYPlot) chart.getPlot();
+		final ClusteredXYBarRenderer renderer = new ClusteredXYBarRenderer(0.3, false);
+		float color_index;
+		for (int i = 0; i < directionality.size(); i++) {
+			color_index = (float)i/(float)(directionality.size()-1);
+			renderer.setSeriesPaint(i, lut.getPaint(color_index) );
+		}
+		plot.setRenderer(0, renderer);
+		
+		// Draw fit results
+		if (fit_done) {
+			// Make new X
+			final double[] X = new double[bins.length*10]; // oversample 10 times
+			for (int i = 0; i < X.length; i++) {
+				X[i] = bins[0] + (bins[bins.length-1]-bins[0])/X.length * i;
+			}
+			// Create dataset
+			final XYSeriesCollection fits = new XYSeriesCollection();
+			XYSeries fit_series;
+			double val;
+			double[] params;
+			for (int i = 0; i < directionality.size(); i++) {
+				params = params_from_fit.get(i);
+				fit_series = new XYSeries(names[i]);
+				for (int j = 0; j < X.length; j++) {
+					val = CurveFitter.f(CurveFitter.GAUSSIAN, params, X[j]);
+					fit_series.add(X[j], val);
+				}
+				fits.addSeries(fit_series);
+			}
+			plot.setDataset(1, fits);
+			plot.setRenderer(1, new XYLineAndShapeRenderer(true, false));
+			for (int i = 0; i < directionality.size(); i++) {
+				color_index = (float)i/(float)(directionality.size()-1);
+				plot.getRenderer(1).setSeriesPaint(i, lut.getPaint(color_index) );
+			}
+			
+		}
+		
 		final ChartPanel chartPanel = new ChartPanel(chart);
 		chartPanel.setPreferredSize(new java.awt.Dimension(500, 270));
 		JFrame window = new JFrame("Directionality for "+imp.getShortTitle());
@@ -305,13 +403,137 @@ public class Directionality_ implements ExtendedPlugInFilter {
         window.validate();
         window.setSize(new java.awt.Dimension(500, 270));
         window.setVisible(true);
+        return window;
+	}
+	
+	private final void fitResults() {
+		params_from_fit = new ArrayList<double[]>(directionality.size());
+		goodness_of_fit = new double[directionality.size()];
+		double[] dir;
+		double[] init_params = new double[4];
+		double[] params = new double[4];
+		double[] padded_dir = new double[3*bins.length];
+		double[] padded_bins = new double[3*bins.length];
+		
+		double ymax, xmax, ymin;
+		CurveFitter fitter = null;
+		for (int i = 0; i < directionality.size(); i++) {
+			dir = directionality.get(i);
+			
+			// Pad data (periodic issue)
+			for (int j = 0; j < padded_bins.length; j++) {
+				padded_bins[j] = bins[j % bins.length];
+				padded_dir[j] = dir[j % bins.length];
+			}
+			
+			// Infer initial values
+			ymax = Double.NEGATIVE_INFINITY;
+			ymin = Double.POSITIVE_INFINITY;
+			xmax = 0;
+			for (int j = 0; j < dir.length; j++) {
+				if (dir[j] > ymax) {
+					ymax = dir[j];
+					xmax = bins[j];					
+				}
+				if (dir[j]<ymin) {
+					ymin = dir[j];
+				}
+			}
+			init_params[0] = ymin; // base
+			init_params[1] = ymax; // peak value 
+			init_params[2] = bins.length + xmax; // peak center
+			init_params[3] = 4 * ( bins[1] - bins[0]); // std
+			
+			// Do fit
+			fitter = new CurveFitter(padded_bins, padded_dir);
+			fitter.setInitialParameters(init_params);
+			fitter.doFit(CurveFitter.GAUSSIAN);
+			goodness_of_fit[i] = fitter.getFitGoodness();
+			params = fitter.getParams();
+			params[3] -= bins.length;
+			params_from_fit.add(params);
+		}
+		fit_done = true;
+		fit_string = fitter.getFormula();
+	}
+	
+	private final String[] makeNames() {
+		final int n_slices = imp.getStack().getSize();
+		String[] names;
+		if (imp.getType() == ImagePlus.COLOR_RGB) {
+			names = new String[3*n_slices];
+			for (int i=0; i<n_slices; i++) {
+				names[0+i*3] = "Slice "+(i+1)+"R";
+				names[1+i*3] = "Slice "+(i+1)+"G";
+				names[2+i*3] = "Slice "+(i+1)+"B";
+			}
+		} else {
+			names = new String[n_slices];
+			for (int i=0; i<n_slices; i++) {
+				names[i] = "Slice "+(i+1);
+			}
+		}
+		return names;		
+	}
+	
+	private final JFrame analyzeFits() {
+		if (!fit_done) {
+			return null;
+		}
+		// Display result
+		String[] column_names = {
+				"Slice",
+				"Direction (º)",
+				"Dispersion (º)",
+				"Amount",
+				"Goodness" };
+
+		Object[][]  table_data = new Object[params_from_fit.size()][column_names.length];
+		double[] params, dir;
+		double sum;
+		final String[] names = makeNames();
+		for (int i = 0; i < table_data.length; i++) {
+			params =  params_from_fit.get(i);
+			dir = directionality.get(i);
+			table_data[i][0]	= names[i];
+			table_data[i][1]	= String.format("%.2f", params[2]); // peak center
+			table_data[i][2]	= String.format("%.2f", params[3]); // standard deviation
+			sum = 0; // we sum under +/- sigma 
+			for (int j = 0; j < dir.length; j++) {
+				if ( (bins[j]<params[2]-params[3]) || (bins[j]>params[2]+params[3]) ) {
+					continue;
+				}
+				sum += dir[j];
+			}
+			table_data[i][3] = String.format("%.2f", sum);
+			table_data[i][4] = String.format("%.2f", goodness_of_fit[i]);
+		}
+		JTable table = new JTable(table_data, column_names);
+		table.setPreferredScrollableViewportSize(new Dimension(500, 70));
+
+		JScrollPane scrollPane = new JScrollPane(table);
+		table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+		
+		JPanel		table_panel = new JPanel(new GridLayout());
+		table_panel.add(scrollPane);	
+	    JFrame 		frame = new JFrame("Directionality analysis for "+imp.getShortTitle());
+
+	    frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+	    //Create and set up the content pane.
+	    frame.setContentPane(table_panel);
+
+	    //Display the window.
+	    frame.pack();
+	    frame.setVisible(true);
+	    
+	    return frame;
 	}
 	
 	/*
 	 * STATIC METHODS
 	 */
 	
-	public static final void displayLog(FloatProcessor ip) {
+	public static final void displayLog(final FloatProcessor ip) {
 		final FloatProcessor log10 = new FloatProcessor(ip.getWidth(), ip.getHeight());
 		final float[] log10_pixels = (float[]) log10.getPixels();
 		final float[] pixels = (float[]) ip.getPixels();
@@ -367,9 +589,36 @@ public class Directionality_ implements ExtendedPlugInFilter {
 		for (int i = 0; i < pixels.length; i++) {
 			iy = i / nx;
 			ix = i % nx;
-			pixels[i] = (float) Math.atan2( iy-yc, ix-xc);
+			pixels[i] = (float) Math.atan2( -(iy-yc), ix-xc); // so that we have upright orientation
 		}		
 		return theta;
+	}
+	
+	public static final LookupPaintScale createLUT(final int ncol) {
+		final float[][] colors = new float[][]  { 
+				{0, 75/255f, 150/255f},
+				{0.1f, 0.8f, 0.1f},
+				{150/255f, 75/255f, 0}
+		};
+		final float[] limits = new float[] {0, 0.5f, 1};
+		final LookupPaintScale lut = new LookupPaintScale(0, 1, Color.BLACK);
+		float val;
+		float r, g, b;
+		for (int j = 0; j < ncol; j++) {			
+			val = (float)j/(float)(ncol-0.99f);
+			int i = 0;
+			for (i = 0; i < limits.length; i++) {
+				if (val < limits[i]) {
+					break;
+				}
+			}
+			i = i - 1;
+			r = colors[i][0] + (val-limits[i])/(limits[i+1]-limits[i])*(colors[i+1][0]-colors[i][0]); 
+			g = colors[i][1] + (val-limits[i])/(limits[i+1]-limits[i])*(colors[i+1][1]-colors[i][1]); 
+			b = colors[i][2] + (val-limits[i])/(limits[i+1]-limits[i])*(colors[i+1][2]-colors[i][2]); 
+			lut.add(val, new Color(r, g, b));
+		}
+		return lut;
 	}
 	
 	/*
@@ -377,14 +626,13 @@ public class Directionality_ implements ExtendedPlugInFilter {
 	 */
 	
 	public static void main(String[] args) {
-		ImagePlus imp = IJ.openImage("http://rsb.info.nih.gov/ij/images/gel.gif");
+		ImagePlus imp = IJ.openImage("http://rsb.info.nih.gov/ij/images/clown.jpg");
 		imp.show();
 		
 		Directionality_ da = new Directionality_();
-		da.setup("nbins=45", imp);
-		da.run(imp.getProcessor().toFloat(0, null));
-		da.setup("final", imp);
+		String command = "Directionality";
+		
+		new PlugInFilterRunner(da, command, "nbins=10");
 	}
-
 	
 }
