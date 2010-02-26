@@ -310,9 +310,9 @@ CXXFLAGS(win64)=$CXXFLAGS $WINOPTS
 # Include 64-bit architectures only in ./fiji (as opposed to ./fiji-tiger),
 # and only on MacOSX
 MACOPTS(osx10.3)=-I/System/Library/Frameworks/JavaVM.Framework/Headers \
-	-DMACOSX -arch ppc
+	-DMACOSX
 MACOPTS(osx10.4)=$MACOPTS(osx10.3) -mmacosx-version-min=10.3 -arch i386
-MACOPTS(osx10.5)=$MACOPTS(osx10.4) -arch ppc64 -arch x86_64
+MACOPTS(osx10.5)=$MACOPTS(osx10.4) -arch x86_64
 
 CXXFLAGS(linux)=$CXXFLAGS -DIPV6_MAYBE_BROKEN
 CXXFLAGS(linux64)=$CXXFLAGS -DIPV6_MAYBE_BROKEN

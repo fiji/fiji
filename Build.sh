@@ -42,7 +42,7 @@ JAVA_HOME="$("$CWD"/precompiled/fiji-"$platform" --print-java-home)"
 
 # need to clone java submodule
 test -f "$JAVA_HOME/lib/tools.jar" || test -f "$JAVA_HOME/../lib/tools.jar" ||
-test -f "$JAVA_HOME"/Home/lib/ext/vecmath.jar || {
+test -f java/"$java_submodule"/Home/lib/ext/vecmath.jar || {
 	echo "No JDK found; cloning it"
 	JAVA_SUBMODULE=java/$java_submodule
 	git submodule init "$JAVA_SUBMODULE" && (
