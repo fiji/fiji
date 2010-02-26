@@ -91,7 +91,10 @@ public class TextEditor extends JFrame implements ActionListener,
 		  makeJar, makeJarWithSource, removeUnusedImports,
 		  sortImports, removeTrailingWhitespace, findNext,
 		  openHelp, addImport, clearScreen, nextError, previousError,
-		  openHelpWithoutFrames;
+		  openHelpWithoutFrames, nextTab, previousTab;
+	JMenu tabsMenu;
+	int tabsMenuTabsStart;
+	Set<JMenuItem> tabsMenuItems;
 	FindAndReplaceDialog findDialog;
 
 	String templateFolder = "templates/";
@@ -233,6 +236,19 @@ public class TextEditor extends JFrame implements ActionListener,
 		openHelp.setMnemonic(KeyEvent.VK_P);
 		mbar.add(tools);
 
+		tabsMenu = new JMenu("Tabs");
+		tabsMenu.setMnemonic(KeyEvent.VK_A);
+		nextTab = addToMenu(tabsMenu, "Next Tab",
+				KeyEvent.VK_PAGE_DOWN, ctrl);
+		nextTab.setMnemonic(KeyEvent.VK_N);
+		previousTab = addToMenu(tabsMenu, "Previous Tab",
+				KeyEvent.VK_PAGE_UP, ctrl);
+		previousTab.setMnemonic(KeyEvent.VK_P);
+		tabsMenu.addSeparator();
+		tabsMenuTabsStart = tabsMenu.getItemCount();
+		tabsMenuItems = new HashSet<JMenuItem>();
+		mbar.add(tabsMenu);
+
 		// Add the editor and output area
 		tabbed = new JTabbedPane();
 		tabbed.addChangeListener(this);
@@ -257,6 +273,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		addAccelerator(debug, KeyEvent.VK_F11, ctrl, true);
 		addAccelerator(debug, KeyEvent.VK_F5,
 				ActionEvent.SHIFT_MASK, true);
+		addAccelerator(nextTab, KeyEvent.VK_PAGE_DOWN, ctrl, true);
+		addAccelerator(previousTab, KeyEvent.VK_PAGE_UP, ctrl, true);
 
 		// make sure that the window is not closed by accident
 		addWindowListener(new WindowAdapter() {
@@ -265,7 +283,7 @@ public class TextEditor extends JFrame implements ActionListener,
 					if (!handleUnsavedChanges())
 						return;
 					int index = tabbed.getSelectedIndex();
-					tabbed.remove(index);
+					removeTab(index);
 				}
 				dispose();
 			}
@@ -641,10 +659,10 @@ public class TextEditor extends JFrame implements ActionListener,
 				if (!handleUnsavedChanges())
 					return;
 				int index = tabbed.getSelectedIndex();
-				tabbed.remove(index);
+				removeTab(index);
 				if (index > 0)
 					index--;
-				tabbed.setSelectedIndex(index);
+				switchTo(index);
 			}
 		else if (source == cut)
 			getTextArea().cut();
@@ -692,6 +710,27 @@ public class TextEditor extends JFrame implements ActionListener,
 			openHelp(null);
 		else if (source == openHelpWithoutFrames)
 			openHelp(null, false);
+		else if (source == nextTab)
+			switchTabRelative(1);
+		else if (source == previousTab)
+			switchTabRelative(-1);
+		else if (handleTabsMenu(source))
+			return;
+	}
+
+	protected boolean handleTabsMenu(Object source) {
+		if (!(source instanceof JMenuItem))
+			return false;
+		JMenuItem item = (JMenuItem)source;
+		if (!tabsMenuItems.contains(item))
+			return false;
+		for (int i = tabsMenuTabsStart;
+				i < tabsMenu.getItemCount(); i++)
+			if (tabsMenu.getItem(i) == item) {
+				switchTo(i - tabsMenuTabsStart);
+				return true;
+			}
+		return false;
 	}
 
 	public void stateChanged(ChangeEvent e) {
@@ -701,7 +740,10 @@ public class TextEditor extends JFrame implements ActionListener,
 			return;
 		}
 		editorPane = getEditorPane(index);
+		editorPane.requestFocus();
 		setTitle();
+		String extension = editorPane.getExtension(editorPane.getFileName());
+		editorPane.setLanguageByExtension(extension);
 	}
 
 	public EditorPane getEditorPane(int index) {
@@ -770,10 +812,11 @@ public class TextEditor extends JFrame implements ActionListener,
 		try {
 			editorPane = new EditorPane(this);
 			tabbed.addTab("", editorPane.embedWithScrollbars());
-			tabbed.setSelectedIndex(tabbed.getTabCount() - 1);
+			switchTo(tabbed.getTabCount() - 1);
 			addDefaultAccelerators();
 			editorPane.setFile("".equals(path) ? null : path);
-			editorPane.requestFocus();
+			tabsMenuItems.add(addToMenu(tabsMenu,
+					editorPane.getFileName(), 0, 0));
 		} catch (Exception e) {
 			e.printStackTrace();
 			error("The file '" + path + "' was not found.");
@@ -997,6 +1040,16 @@ public class TextEditor extends JFrame implements ActionListener,
 			+ (executingTasks.isEmpty() ? "" : " (Running)");
 		setTitle(title);
 		tabbed.setTitleAt(tabbed.getSelectedIndex(), title);
+	}
+
+	public void setTitle(String title) {
+		super.setTitle(title);
+		int index = tabsMenuTabsStart + tabbed.getSelectedIndex();
+		if (index < tabsMenu.getItemCount()) {
+			JMenuItem item = tabsMenu.getItem(index);
+			if (item != null)
+				item.setLabel(title);
+		}
 	}
 
 	/** Using a Vector to benefit from all its methods being synchronzed. */
@@ -1262,10 +1315,30 @@ public class TextEditor extends JFrame implements ActionListener,
 	public void switchTo(File file) {
 		for (int i = 0; i < tabbed.getTabCount(); i++)
 			if (editorPaneContainsFile(getEditorPane(i), file)) {
-				tabbed.setSelectedIndex(i);
+				switchTo(i);
 				return;
 			}
 		open(file.getPath());
+	}
+
+	public void switchTo(int index) {
+		tabbed.setSelectedIndex(index);
+	}
+
+	protected void switchTabRelative(int delta) {
+		int index = tabbed.getSelectedIndex();
+		int count = tabbed.getTabCount();
+		index = ((index + delta) % count);
+		if (index < 0)
+			index += count;
+		switchTo(index);
+	}
+
+	protected void removeTab(int index) {
+		tabbed.remove(index);
+		index += tabsMenuTabsStart;
+		tabsMenuItems.remove(tabsMenu.getItem(index));
+		tabsMenu.remove(index);
 	}
 
 	boolean editorPaneContainsFile(EditorPane editorPane, File file) {
