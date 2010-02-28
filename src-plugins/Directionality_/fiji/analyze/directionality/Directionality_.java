@@ -4,6 +4,8 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.GenericDialog;
+import ij.gui.Plot;
+import ij.gui.PlotWindow;
 import ij.gui.Roi;
 import ij.measure.CurveFitter;
 import ij.plugin.filter.ExtendedPlugInFilter;
@@ -15,12 +17,14 @@ import ij.process.ImageProcessor;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.Toolkit;
 import java.util.ArrayList;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.SwingUtilities;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -68,6 +72,7 @@ public class Directionality_ implements ExtendedPlugInFilter {
 	/** False if fitting of the results have not been done, true otherwise. */
 	private boolean fit_done;
 
+	
 	/*
 	 * EXTENDEDPLUGINFILTER METHODS
 	 */
@@ -141,9 +146,7 @@ public class Directionality_ implements ExtendedPlugInFilter {
 		}
 		
 		// Draw histogram		
-		directionality.add(dir);
-		
-		
+		directionality.add(dir);		
 	}
 
 	public int setup(String arg, ImagePlus _imp) {
@@ -172,14 +175,11 @@ public class Directionality_ implements ExtendedPlugInFilter {
 		this.width = _imp.getWidth();
 		this.height = _imp.getHeight();
 		
-		
-		
 		// Flags
 		return DOES_ALL
 			+ DOES_STACKS
 			+ CONVERT_TO_FLOAT
 			+ NO_CHANGES
-			+ PARALLELIZE_STACKS
 			+ FINAL_PROCESSING;
 	}
 	
@@ -257,7 +257,6 @@ public class Directionality_ implements ExtendedPlugInFilter {
 			+ DOES_STACKS
 			+ CONVERT_TO_FLOAT
 			+ NO_CHANGES
-			+ PARALLELIZE_STACKS
 			+ FINAL_PROCESSING;		
 	}
 
@@ -268,8 +267,20 @@ public class Directionality_ implements ExtendedPlugInFilter {
 	
 	public void displayResults() {
 		fitResults();
-		drawResults();
-		analyzeFits();
+		JFrame plot_frame = drawResults();
+		JFrame data_frame = analyzeFits();
+		
+		int x = Math.max(0, imp.getWindow().getLocation().x - plot_frame.getSize().width);
+		int y = imp.getWindow().getLocation().y;
+		plot_frame.setLocation(x, y);
+		plot_frame.setVisible(true);
+		
+		y += plot_frame.getHeight();
+		if (y>Toolkit.getDefaultToolkit().getScreenSize().getHeight()) {
+			y = (int) (0.9 * Toolkit.getDefaultToolkit().getScreenSize().getHeight());
+		}
+		data_frame.setLocation(x, y);
+		data_frame.setVisible(true);		
 	}
 	
 	/*
@@ -376,13 +387,22 @@ public class Directionality_ implements ExtendedPlugInFilter {
 			// Create dataset
 			final XYSeriesCollection fits = new XYSeriesCollection();
 			XYSeries fit_series;
-			double val;
+			double val, center, xn;
 			double[] params;
-			for (int i = 0; i < directionality.size(); i++) {
-				params = params_from_fit.get(i);
+			for (int i = 0; i < directionality.size(); i++) { // we have to deal with periodic issue here too
+				params = params_from_fit.get(i).clone();
+				center = params[2];
 				fit_series = new XYSeries(names[i]);
 				for (int j = 0; j < X.length; j++) {
-					val = CurveFitter.f(CurveFitter.GAUSSIAN, params, X[j]);
+					xn = X[j];
+					if (Math.abs(xn-center) > -bins[0] ) { // too far
+						if (xn>center) {
+							xn = xn - 2*(-bins[0]);							
+						} else {
+							xn = xn + 2*(-bins[0]);
+						}
+					}
+					val = CurveFitter.f(CurveFitter.GAUSSIAN, params, xn);
 					fit_series.add(X[j], val);
 				}
 				fits.addSeries(fit_series);
@@ -402,7 +422,6 @@ public class Directionality_ implements ExtendedPlugInFilter {
         window.add(chartPanel);
         window.validate();
         window.setSize(new java.awt.Dimension(500, 270));
-        window.setVisible(true);
         return window;
 	}
 	
@@ -412,45 +431,66 @@ public class Directionality_ implements ExtendedPlugInFilter {
 		double[] dir;
 		double[] init_params = new double[4];
 		double[] params = new double[4];
-		double[] padded_dir = new double[3*bins.length];
-		double[] padded_bins = new double[3*bins.length];
+		double[] padded_dir;
+		double[] padded_bins;
 		
-		double ymax, xmax, ymin;
+		double ymax, ymin;
+		int imax, shift_index, current_index;
+		
+		// Prepare fitter and function
 		CurveFitter fitter = null;
+		
+		// Loop over slices
 		for (int i = 0; i < directionality.size(); i++) {
-			dir = directionality.get(i);
 			
-			// Pad data (periodic issue)
-			for (int j = 0; j < padded_bins.length; j++) {
-				padded_bins[j] = bins[j % bins.length];
-				padded_dir[j] = dir[j % bins.length];
-			}
+			dir = directionality.get(i);
 			
 			// Infer initial values
 			ymax = Double.NEGATIVE_INFINITY;
 			ymin = Double.POSITIVE_INFINITY;
-			xmax = 0;
+			imax = 0;
 			for (int j = 0; j < dir.length; j++) {
 				if (dir[j] > ymax) {
 					ymax = dir[j];
-					xmax = bins[j];					
+					imax = j;
 				}
 				if (dir[j]<ymin) {
 					ymin = dir[j];
 				}
 			}
+						
+			// Shift found peak to the center (periodic issue) and add to fitter
+			padded_dir 	= new double[bins.length];
+			padded_bins = new double[bins.length];
+			shift_index = bins.length/2 - imax;
+			for (int j = 0; j < bins.length; j++) {
+				current_index = j - shift_index;
+				if (current_index < 0) {
+					current_index += bins.length; 
+				}
+				if (current_index >= bins.length) {
+					current_index -= bins.length;
+				}
+				padded_dir[j] 	= dir[current_index];
+				padded_bins[j] 	= bins[j];
+			}			
+			fitter = new CurveFitter(padded_bins, padded_dir);
+			
 			init_params[0] = ymin; // base
 			init_params[1] = ymax; // peak value 
-			init_params[2] = bins.length + xmax; // peak center
-			init_params[3] = 4 * ( bins[1] - bins[0]); // std
+			init_params[2] = padded_bins[bins.length/2]; // peak center with padding
+			init_params[3] = 2 * ( bins[1] - bins[0]); // std
 			
 			// Do fit
-			fitter = new CurveFitter(padded_bins, padded_dir);
-			fitter.setInitialParameters(init_params);
 			fitter.doFit(CurveFitter.GAUSSIAN);
-			goodness_of_fit[i] = fitter.getFitGoodness();
 			params = fitter.getParams();
-			params[3] -= bins.length;
+			goodness_of_fit[i] = fitter.getFitGoodness();
+			if (shift_index < 0) { // back into orig coordinates
+				params[2] += (bins[-shift_index]-bins[0]);
+				
+			} else {
+				params[2] -= (bins[shift_index]-bins[0]);
+			}
 			params_from_fit.add(params);
 		}
 		fit_done = true;
@@ -490,23 +530,32 @@ public class Directionality_ implements ExtendedPlugInFilter {
 
 		Object[][]  table_data = new Object[params_from_fit.size()][column_names.length];
 		double[] params, dir;
-		double sum;
+		double sum, center, xn;
 		final String[] names = makeNames();
 		for (int i = 0; i < table_data.length; i++) {
 			params =  params_from_fit.get(i);
 			dir = directionality.get(i);
 			table_data[i][0]	= names[i];
 			table_data[i][1]	= String.format("%.2f", params[2]); // peak center
-			table_data[i][2]	= String.format("%.2f", params[3]); // standard deviation
-			sum = 0; // we sum under +/- sigma 
+			table_data[i][2]	= String.format("%.2f", Math.abs(params[3])); // standard deviation
+			sum = 0; // we sum under +/- sigma, taking periodicity into account
+			center = params[2];
 			for (int j = 0; j < dir.length; j++) {
-				if ( (bins[j]<params[2]-params[3]) || (bins[j]>params[2]+params[3]) ) {
+				xn = bins[j];
+				if (Math.abs(xn-center) > -bins[0] ) { // too far
+					if (xn>center) {
+						xn = xn - 2*(-bins[0]);							
+					} else {
+						xn = xn + 2*(-bins[0]);
+					}
+				}
+				if ( (xn<params[2]-params[3]) || (xn>params[2]+params[3]) ) {
 					continue;
 				}
-				sum += dir[j];
+				sum += dir[j];				
 			}
 			table_data[i][3] = String.format("%.2f", sum);
-			table_data[i][4] = String.format("%.2f", goodness_of_fit[i]);
+			table_data[i][4] = String.format("%.2f", Math.abs(goodness_of_fit[i]));
 		}
 		JTable table = new JTable(table_data, column_names);
 		table.setPreferredScrollableViewportSize(new Dimension(500, 70));
@@ -524,8 +573,6 @@ public class Directionality_ implements ExtendedPlugInFilter {
 
 	    //Display the window.
 	    frame.pack();
-	    frame.setVisible(true);
-	    
 	    return frame;
 	}
 	
@@ -626,7 +673,7 @@ public class Directionality_ implements ExtendedPlugInFilter {
 	 */
 	
 	public static void main(String[] args) {
-		ImagePlus imp = IJ.openImage("http://rsb.info.nih.gov/ij/images/clown.jpg");
+		ImagePlus imp = IJ.openImage("http://rsb.info.nih.gov/ij/images/gel.gif");
 		imp.show();
 		
 		Directionality_ da = new Directionality_();
