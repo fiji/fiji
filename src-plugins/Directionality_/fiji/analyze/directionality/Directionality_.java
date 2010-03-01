@@ -4,10 +4,9 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.GenericDialog;
-import ij.gui.Plot;
-import ij.gui.PlotWindow;
 import ij.gui.Roi;
 import ij.measure.CurveFitter;
+import ij.measure.ResultsTable;
 import ij.plugin.filter.ExtendedPlugInFilter;
 import ij.plugin.filter.PlugInFilterRunner;
 import ij.process.FHT;
@@ -24,7 +23,6 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.SwingUtilities;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -71,6 +69,8 @@ public class Directionality_ implements ExtendedPlugInFilter {
 	protected String fit_string;
 	/** False if fitting of the results have not been done, true otherwise. */
 	private boolean fit_done;
+	/** If set true, will display a {@link ResultsTable} with the histogram at the end of processing. */
+	private boolean display_table = false;
 
 	
 	/*
@@ -192,7 +192,8 @@ public class Directionality_ implements ExtendedPlugInFilter {
 		GenericDialog gd = new GenericDialog(PLUGIN_NAME + " v" + VERSION_STR);
 		gd.addMessage(current);
 		gd.addNumericField("nbins: ", 90, 0);
-		gd.addCheckbox("Debug", false);
+		gd.addCheckbox("Display table", display_table);
+		gd.addCheckbox("Debug", debug);
 
 		gd.showDialog();
 		
@@ -200,8 +201,8 @@ public class Directionality_ implements ExtendedPlugInFilter {
 		// Collect dialog settings
 		if (gd.wasCanceled())
 			return DONE;
-
 		nbins = (int) gd.getNextNumber();
+		display_table = gd.getNextBoolean();
 		debug = gd.getNextBoolean();
 
 		// Compute dimensions
@@ -252,7 +253,6 @@ public class Directionality_ implements ExtendedPlugInFilter {
 			new ImagePlus("Angular filters", filters).show();
 		}
 
-		
 		return DOES_ALL
 			+ DOES_STACKS
 			+ CONVERT_TO_FLOAT
@@ -280,7 +280,26 @@ public class Directionality_ implements ExtendedPlugInFilter {
 			y = (int) (0.9 * Toolkit.getDefaultToolkit().getScreenSize().getHeight());
 		}
 		data_frame.setLocation(x, y);
-		data_frame.setVisible(true);		
+		data_frame.setVisible(true);
+		
+		if (display_table) {
+			exportResults();
+		}
+	}
+	
+	public void exportResults() {
+		ResultsTable table = new ResultsTable();
+		String[] names = makeNames();
+		double[] dir;
+		for (int i = 0; i < bins.length; i++) {
+			table.incrementCounter();
+			table.addValue("Direction (º)", bins[i]);
+			for (int j = 0; j < names.length; j++) {
+				dir = directionality.get(j);
+				table.addValue(names[j], dir[i]);
+			}
+		}
+		table.show("Directionality histograms for "+imp.getShortTitle());
 	}
 	
 	/*
@@ -415,6 +434,7 @@ public class Directionality_ implements ExtendedPlugInFilter {
 			}
 			
 		}
+		plot.getDomainAxis().setRange(bins[0], bins[bins.length-1]);
 		
 		final ChartPanel chartPanel = new ChartPanel(chart);
 		chartPanel.setPreferredSize(new java.awt.Dimension(500, 270));
