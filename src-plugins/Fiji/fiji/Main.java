@@ -164,6 +164,10 @@ public class Main implements AWTEventListener {
 		catch (IllegalAccessException e) { }
 	}
 
+	public static void installRecentCommands() {
+		gentlyRunPlugIn("fiji.util.Recent_Commands", "install");
+	}
+
 	public static void premain() {
 		Toolkit.getDefaultToolkit().addAWTEventListener(new Main(), -1);
 	}
@@ -176,6 +180,7 @@ public class Main implements AWTEventListener {
 		if (IJ.getInstance() != null) {
 			new User_Plugins().run(null);
 			SampleImageLoader.install();
+			installRecentCommands();
 			new Thread() {
 				public void run() {
 					runUpdater();
