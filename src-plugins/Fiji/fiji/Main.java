@@ -147,12 +147,16 @@ public class Main implements AWTEventListener {
 
 	public static void runUpdater() {
 		System.setProperty("fiji.main.checksUpdaterAtStartup", "true");
+		gentlyRunPlugIn("fiji.updater.UptodateCheck", "quick");
+	}
+
+	public static void gentlyRunPlugIn(String className, String arg) {
 		try {
-			Class updater = IJ.getClassLoader()
-				.loadClass("fiji.updater.UptodateCheck");
-			if (updater != null) {
-				PlugIn plugin = (PlugIn)updater.newInstance();
-				plugin.run("quick");
+			Class clazz = IJ.getClassLoader()
+				.loadClass(className);
+			if (clazz != null) {
+				PlugIn plugin = (PlugIn)clazz.newInstance();
+				plugin.run(arg);
 			}
 		}
 		catch (ClassNotFoundException e) { }
