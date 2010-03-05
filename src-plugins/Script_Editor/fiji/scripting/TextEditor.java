@@ -639,9 +639,17 @@ public class TextEditor extends JFrame implements ActionListener,
 		else if (source == compileAndRun)
 			runText();
 		else if (source == nextError)
-			nextError(true);
+			new Thread() {
+				public void run() {
+					nextError(true);
+				}
+			}.start();
 		else if (source == previousError)
-			nextError(false);
+			new Thread() {
+				public void run() {
+					nextError(false);
+				}
+			}.start();
 		else if (source == debug) {
 			try {
 				getEditorPane().startDebugging();
