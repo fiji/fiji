@@ -580,7 +580,7 @@ static char *dos_path(const char *path)
 }
 #endif
 
-static string get_parent_directory(string path)
+static __attribute__((unused)) string get_parent_directory(string path)
 {
 	size_t slash = path.find_last_of("/\\");
 	if (slash == 0 || slash == path.npos)
