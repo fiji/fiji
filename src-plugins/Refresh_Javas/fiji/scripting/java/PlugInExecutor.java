@@ -1,5 +1,7 @@
 package fiji.scripting.java;
 
+import fiji.FijiClassLoader;
+
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
@@ -65,9 +67,15 @@ public class PlugInExecutor {
 	}
 
 	public void run(String plugin, String arg) {
+		run(plugin, arg, false);
+	}
+
+	public void run(String plugin, String arg, boolean newClassLoader) {
 		try {
 			IJ.resetEscape();
-			ClassLoader classLoader = getClassLoader();
+			ClassLoader classLoader = newClassLoader ?
+				new FijiClassLoader(IJ.getDirectory("plugins"))
+				: getClassLoader();
 			Class clazz = classLoader.loadClass(plugin);
 			try {
 				Object object = clazz.newInstance();

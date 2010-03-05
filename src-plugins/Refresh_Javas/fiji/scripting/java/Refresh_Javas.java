@@ -56,7 +56,7 @@ public class Refresh_Javas extends RefreshScripts {
 			try {
 				String className = fake(path);
 				if (className != null) {
-					runPlugin(className);
+					runPlugin(className, true);
 					return;
 				}
 			} catch (Fake.FakeException e) {
@@ -220,6 +220,10 @@ public class Refresh_Javas extends RefreshScripts {
 
 	void runPlugin(String className) {
 		new PlugInExecutor().run(className);
+	}
+
+	void runPlugin(String className, boolean newClassLoader) {
+		new PlugInExecutor().run(className, "", newClassLoader);
 	}
 
 	void runOutOfTreePlugin(String path) throws IOException,

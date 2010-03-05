@@ -147,17 +147,25 @@ public class Main implements AWTEventListener {
 
 	public static void runUpdater() {
 		System.setProperty("fiji.main.checksUpdaterAtStartup", "true");
+		gentlyRunPlugIn("fiji.updater.UptodateCheck", "quick");
+	}
+
+	public static void gentlyRunPlugIn(String className, String arg) {
 		try {
-			Class updater = IJ.getClassLoader()
-				.loadClass("fiji.updater.UptodateCheck");
-			if (updater != null) {
-				PlugIn plugin = (PlugIn)updater.newInstance();
-				plugin.run("quick");
+			Class clazz = IJ.getClassLoader()
+				.loadClass(className);
+			if (clazz != null) {
+				PlugIn plugin = (PlugIn)clazz.newInstance();
+				plugin.run(arg);
 			}
 		}
 		catch (ClassNotFoundException e) { }
 		catch (InstantiationException e) { }
 		catch (IllegalAccessException e) { }
+	}
+
+	public static void installRecentCommands() {
+		gentlyRunPlugIn("fiji.util.Recent_Commands", "install");
 	}
 
 	public static void premain() {
@@ -172,6 +180,7 @@ public class Main implements AWTEventListener {
 		if (IJ.getInstance() != null) {
 			new User_Plugins().run(null);
 			SampleImageLoader.install();
+			installRecentCommands();
 			new Thread() {
 				public void run() {
 					runUpdater();
