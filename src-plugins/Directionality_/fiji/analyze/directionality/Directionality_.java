@@ -35,7 +35,56 @@ import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 
-
+/**
+ * <h2>Usage</h2> This plugin is used to infer the preferred orientation of
+ * structures present in the input image. It computes a histogram indicating the
+ * amount of structures in a given direction. Images with completely isotropic
+ * content are expected to give a flat histogram, whereas images in which there
+ * is a preferred orientation are expected to give a histogram with a peak at
+ * that orientation.
+ * <p>
+ * Angles are reported in their common mathematical sense. That is: 0º is the
+ * East direction, and the orientation is counterclockwise.
+ * 
+ * <h2>Statistics generated</h2>
+ * 
+ * On top of the histogram, the plugin tries to generate statistics on the
+ * highest peak found.
+ * <p>
+ * The highest peak is fitted by a Gaussian function, taking into account the
+ * periodic nature of the histogram. The 'Direction (º)' column reports the
+ * center of the gaussian. The 'Dispersion (º)' column reports the standard
+ * deviation of the gaussian. The 'Amount' column is the sum of the histogram
+ * from center-std to center+std, divided by the total sum of the histogram. The
+ * real histogram values are used for the summation, not the gaussian fit. The
+ * 'Goodness' column reports the goodness of the fit; 1 is good, 0 is bad.
+ * <p>
+ * A study made on artificial images reveal that the 'Amount' value as
+ * calculated here underestimates the real proportion of structures with the
+ * preferred orientation. So for the pine image up there, one can conclude that
+ * the proportion of needle leaves oriented around +60º is at least 25%
+ * (however, the image is not completely uniform, which cripples the meaning of
+ * this amount value).
+ * 
+ * <h2>Method</h2>
+ * 
+ * The method implemented is based on Fourier spectrum analysis. For a square
+ * image, structures with a preferred orientation generate a periodic pattern at
+ * +90º orientation in the Fourier transform of the image, compared to the
+ * direction of the objects in the input image. This plugin chops the image into
+ * square pieces, and computes their Fourier power spectra. The later are
+ * analyzed in polar coordinates, and the power is measured for each angle using
+ * the spatial filters proposed in [1]
+ * 
+ * <h2>References</h2>
+ * [1] Liu. Scale space approach to directional analysis of images. Appl. Opt. (1991) vol. 30 (11) pp. 1369-1373 
+ * <p>
+ * A discussion with A. Leroy is greatly acknowledged. 
+ * <p>
+ * 
+ * @author Jean-Yves Tinevez jeanyves.tinevez@gmail.com
+ * 
+ */
 public class Directionality_ implements ExtendedPlugInFilter {
 	
 	/*
@@ -54,6 +103,8 @@ public class Directionality_ implements ExtendedPlugInFilter {
 	protected FloatProcessor window, r, theta;
 	protected int width, height, small_side, long_side, npady, npadx, step, pad_size;
 	protected int nbins = 90;
+	/** The first bin in degrees, so that we are not forced to start at -90 */
+	private double bin_start = -90;
 	/** The bin centers, in degrees */
 	protected double[] bins;
 	/** The directionality histogram, one array per processor.*/
@@ -71,12 +122,17 @@ public class Directionality_ implements ExtendedPlugInFilter {
 	private boolean fit_done;
 	/** If set true, will display a {@link ResultsTable} with the histogram at the end of processing. */
 	private boolean display_table = false;
-
+	
 	
 	/*
 	 * EXTENDEDPLUGINFILTER METHODS
 	 */
 	
+	/**
+	 * This method will be run once for every slice of the stack given in argument. It will analyze it 
+	 * using the fields set in the {@link #setup(String, ImagePlus)} method, and push results to the 
+	 * {@link #directionality} list, containing the histograms for all this image slices. 
+	 */
 	public void run(ImageProcessor _ip) {
 		fit_done = false;
 		final FloatProcessor ip = (FloatProcessor) _ip; // we can do that, for the flag of this plugin is set accordingly
@@ -191,7 +247,8 @@ public class Directionality_ implements ExtendedPlugInFilter {
 		String current = imp.getTitle();
 		GenericDialog gd = new GenericDialog(PLUGIN_NAME + " v" + VERSION_STR);
 		gd.addMessage(current);
-		gd.addNumericField("nbins: ", 90, 0);
+		gd.addNumericField("Nbins: ", nbins, 0);
+		gd.addNumericField("Histogram start", bin_start , 0, 4, "º");
 		gd.addCheckbox("Display table", display_table);
 		gd.addCheckbox("Debug", debug);
 
@@ -202,6 +259,7 @@ public class Directionality_ implements ExtendedPlugInFilter {
 		if (gd.wasCanceled())
 			return DONE;
 		nbins = (int) gd.getNextNumber();
+		bin_start = gd.getNextNumber();
 		display_table = gd.getNextBoolean();
 		debug = gd.getNextBoolean();
 
@@ -235,7 +293,7 @@ public class Directionality_ implements ExtendedPlugInFilter {
 		// Prepare bins
 		bins = new double[nbins];
 		for (int i = 0; i < nbins; i++) {
-			bins[i] = (float) (i * Math.PI / nbins / Math.PI * 180) - 90; // in FFT there is a rotation of 90º
+			bins[i] = (float) (i * Math.PI / nbins / Math.PI * 180) + bin_start; // in FFT there is a rotation of 90º
 		}
 		
 		// Prepare windowing
@@ -247,7 +305,7 @@ public class Directionality_ implements ExtendedPlugInFilter {
 		theta = makeThetaMatrix(small_side, small_side);
 		
 		// Prepare filters
-		filters = makeFftFilters(nbins);
+		filters = makeFftFilters();
 		
 		if (debug) {
 			new ImagePlus("Angular filters", filters).show();
@@ -265,6 +323,11 @@ public class Directionality_ implements ExtendedPlugInFilter {
 	 * PUBLIC METHODS
 	 */
 	
+	/**
+	 * This method is called when all slices have been analyzed. It is used to call 
+	 * the display of the fitting of the histograms, their display, and the display
+	 * of the result table.
+	 */
 	public void displayResults() {
 		fitResults();
 		JFrame plot_frame = drawResults();
@@ -283,11 +346,18 @@ public class Directionality_ implements ExtendedPlugInFilter {
 		data_frame.setVisible(true);
 		
 		if (display_table) {
-			exportResults();
+			ResultsTable table = exportResults();
+			table.show("Directionality histograms for "+imp.getShortTitle());
 		}
 	}
 	
-	public void exportResults() {
+	/**
+	 * This method generates a {@link ResultsTable} containing the histogram data for display 
+	 * in ImageJ. It can be used to export the data to a CSV file.
+	 * 
+	 * @return  the result table, which show() method must be called to become visible.
+	 */
+	public ResultsTable exportResults() {
 		ResultsTable table = new ResultsTable();
 		String[] names = makeNames();
 		double[] dir;
@@ -299,7 +369,7 @@ public class Directionality_ implements ExtendedPlugInFilter {
 				table.addValue(names[j], dir[i]);
 			}
 		}
-		table.show("Directionality histograms for "+imp.getShortTitle());
+		return table;		
 	}
 	
 	/*
@@ -307,7 +377,14 @@ public class Directionality_ implements ExtendedPlugInFilter {
 	 */
 	
 	
-	private final ImageStack makeFftFilters(final int nbins) {
+	/**
+	 * This method generates the angular filters used for analysis. It reads the fields {@link #nbins},
+	 * {@link #bin_start} to determine how many individual angle filter to generate, and {@link #small_side}
+	 * to determine the image filter size. As such, they must be set before calling this method.
+	 * 
+	 * @return  an {@link ImageStack} made of each individual angular filter
+	 */
+	private final ImageStack makeFftFilters() {
 		final ImageStack filters = new ImageStack(small_side, small_side, nbins);
 		float[] pixels;
 		
@@ -320,7 +397,7 @@ public class Directionality_ implements ExtendedPlugInFilter {
 		for (int i=1; i<= nbins; i++) {
 			
 			pixels = new float[small_side*small_side];
-			theta_c = (i-1) * Math.PI / nbins;
+			theta_c = (i-1) * Math.PI / nbins - (90 + bin_start)*Math.PI/180;
 			
 			for (int index = 0; index < pixels.length; index++) {
 
@@ -358,6 +435,14 @@ public class Directionality_ implements ExtendedPlugInFilter {
 		return filters;
 	}
 	
+	/**
+	 * This method is called to draw the histograms resulting from image analysis. It reads the result
+	 * in the {@link #directionality} list field, and use the JFreeChart library to draw a nice 
+	 * plot window. If the {@link #fitResults()} method was called before, the fits are also drawn.
+	 * 
+	 * @return  a {@link JFrame} containing the histogram plots, which setVisible(boolean) method must
+	 * be called in order to be displayed
+	 */
 	private final JFrame drawResults() {
 		final XYSeriesCollection histograms = new XYSeriesCollection();
 		final LookupPaintScale lut = createLUT(directionality.size());
@@ -378,8 +463,8 @@ public class Directionality_ implements ExtendedPlugInFilter {
 		// Create chart with histograms
 		final JFreeChart chart = ChartFactory.createHistogram(
 				"Directionality histograms",
-				"Direction (deg)",
-				"Count", 
+				"Direction (º)",
+				"Amount", 
 				histograms, 
 				PlotOrientation.VERTICAL,
 				true,
@@ -408,17 +493,18 @@ public class Directionality_ implements ExtendedPlugInFilter {
 			XYSeries fit_series;
 			double val, center, xn;
 			double[] params;
+			final double half_range = (bins[bins.length-1] - bins[0])/2.0;
 			for (int i = 0; i < directionality.size(); i++) { // we have to deal with periodic issue here too
 				params = params_from_fit.get(i).clone();
 				center = params[2];
 				fit_series = new XYSeries(names[i]);
 				for (int j = 0; j < X.length; j++) {
 					xn = X[j];
-					if (Math.abs(xn-center) > -bins[0] ) { // too far
+					if (Math.abs(xn-center) > half_range ) { // too far
 						if (xn>center) {
-							xn = xn - 2*(-bins[0]);							
+							xn = xn - 2*half_range;							
 						} else {
-							xn = xn + 2*(-bins[0]);
+							xn = xn + 2*half_range;
 						}
 					}
 					val = CurveFitter.f(CurveFitter.GAUSSIAN, params, xn);
@@ -445,6 +531,10 @@ public class Directionality_ implements ExtendedPlugInFilter {
         return window;
 	}
 	
+	/**
+	 * This method tries to fit a gaussian to the highest peak of each directionality histogram, 
+	 * and store fit results in the {@link #params_from_fit} field.
+	 */
 	private final void fitResults() {
 		params_from_fit = new ArrayList<double[]>(directionality.size());
 		goodness_of_fit = new double[directionality.size()];
@@ -517,25 +607,53 @@ public class Directionality_ implements ExtendedPlugInFilter {
 		fit_string = fitter.getFormula();
 	}
 	
+	/**
+	 * This method generate a name for each analyzed slice, to display in result tables.
+	 * 
+	 * @return  a String array with the names
+	 */
 	private final String[] makeNames() {
 		final int n_slices = imp.getStack().getSize();
 		String[] names;
+		String label;
 		if (imp.getType() == ImagePlus.COLOR_RGB) {
 			names = new String[3*n_slices];
 			for (int i=0; i<n_slices; i++) {
-				names[0+i*3] = "Slice "+(i+1)+"R";
-				names[1+i*3] = "Slice "+(i+1)+"G";
-				names[2+i*3] = "Slice "+(i+1)+"B";
+				label = imp.getStack().getShortSliceLabel(i+1);
+				if (null == label) {				
+					names[0+i*3] = "Slice_"+(i+1)+"R";
+					names[1+i*3] = "Slice_"+(i+1)+"G";
+					names[2+i*3] = "Slice_"+(i+1)+"B";
+				} else {
+					names[0+i*3] = label+"_R";
+					names[1+i*3] = label+"_G";
+					names[2+i*3] = label+"_B";					
+				}
 			}
 		} else {
+			if (n_slices <= 1) {
+				return new String[] { imp.getShortTitle() };
+			}
 			names = new String[n_slices];
 			for (int i=0; i<n_slices; i++) {
-				names[i] = "Slice "+(i+1);
+				label = imp.getStack().getShortSliceLabel(i+1);
+				if (null == label) {
+					names[i] = "Slice_"+(i+1);
+				} else {
+					names[i] = label;
+				}
 			}
 		}
 		return names;		
 	}
 	
+	/**
+	 * This method generates statistics from the gaussian fit made in {@link #fitResults()}, and 
+	 * display them in a {@link JTable}.
+	 * 
+	 * @return  a {@link JFrame} containing the table,  which setVisible(boolean) method must
+	 * be called in order to be displayed
+	 */
 	private final JFrame analyzeFits() {
 		if (!fit_done) {
 			return null;
@@ -600,6 +718,12 @@ public class Directionality_ implements ExtendedPlugInFilter {
 	 * STATIC METHODS
 	 */
 	
+	/**
+	 * This utility method displays an {@link ImagePlus} window with the log10 of each pixel in the
+	 * {@link FloatProcessor} given in argument. Usefull to display power spectrum.
+	 * 
+	 * @param ip  the source FloatProcessor
+	 */
 	public static final void displayLog(final FloatProcessor ip) {
 		final FloatProcessor log10 = new FloatProcessor(ip.getWidth(), ip.getHeight());
 		final float[] log10_pixels = (float[]) log10.getPixels();
@@ -611,6 +735,12 @@ public class Directionality_ implements ExtendedPlugInFilter {
 		log10.resetMinAndMax();
 	}
 	
+	/**
+	 * This utility generates a <b>periodic</b> Blackman window over n points.
+	 * @param n  the number of point in the window
+	 * @return  a double array containing the Blackman window
+	 * @see #getBlackmanProcessor(int, int)
+	 */
 	public static final double[] getBlackmanPeriodicWindow1D(final int n) {
 		final double[] window = new double[n];
 		for (int i = 0; i < window.length; i++) {
@@ -619,6 +749,14 @@ public class Directionality_ implements ExtendedPlugInFilter {
 		return window;
 	}
 
+	/** 
+	 * Generate a 2D Blackman window used in this plugin before computing FFT, so as to avoid the cross
+	 * artifact at x=0 and y=0.
+	 * @param nx  the width in pixel of the desired window
+	 * @param ny  
+	 * @return  the window, as a FloatProcessor
+	 * @see #getBlackmanPeriodicWindow1D(int)
+	 */
 	public static  final FloatProcessor getBlackmanProcessor(final int nx, final int ny) {
 		final FloatProcessor bpw = new FloatProcessor(nx, ny);
 		final float[] pixels = (float[]) bpw.getPixels();
@@ -633,6 +771,13 @@ public class Directionality_ implements ExtendedPlugInFilter {
 		return bpw;
 	}
 	
+	/**
+	 * Generate a 2D matrix of the radius polar coordinates, centered in the middle of the image.
+	 * @param nx  the width in pixel of the desired matrix
+	 * @param ny  the height in pixel of the desired matrix
+	 * @return  the coordinate matrix, as aFloatProcessor
+	 * @see #makeThetaMatrix(int, int)
+	 */
 	public static final FloatProcessor makeRMatrix(final int nx, final int ny) {
 		final FloatProcessor r = new FloatProcessor(nx, ny);
 		final float[] pixels = (float[]) r.getPixels();
@@ -647,6 +792,13 @@ public class Directionality_ implements ExtendedPlugInFilter {
 		return r;
 	}
 	
+	/**
+	 * Generate a 2D matrix of the angle polar coordinates, centered in the middle of the image.
+	 * @param nx  the width in pixel of the desired matrix
+	 * @param ny  the height in pixel of the desired matrix
+	 * @return  the coordinate matrix, as aFloatProcessor
+	 * @see #makeRMatrix(int, int)
+	 */
 	public static final FloatProcessor makeThetaMatrix(final int nx, final int ny) {
 		final FloatProcessor theta = new FloatProcessor(nx, ny);
 		final float[] pixels = (float[]) theta.getPixels();
@@ -661,6 +813,11 @@ public class Directionality_ implements ExtendedPlugInFilter {
 		return theta;
 	}
 	
+	/**
+	 * Generate a bluish to greenish to redish LUT for the display of histograms.
+	 * @param ncol  the number of colors in the LUT
+	 * @return  the LUT
+	 */
 	public static final LookupPaintScale createLUT(final int ncol) {
 		final float[][] colors = new float[][]  { 
 				{0, 75/255f, 150/255f},
