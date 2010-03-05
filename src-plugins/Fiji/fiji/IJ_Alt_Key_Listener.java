@@ -3,9 +3,11 @@ package fiji;
 import ij.IJ;
 import ij.ImageJ;
 
+import java.awt.AWTException;
 import java.awt.Menu;
 import java.awt.MenuBar;
 import java.awt.PopupMenu;
+import java.awt.Robot;
 
 import java.awt.event.ComponentEvent;
 import java.awt.event.FocusEvent;
@@ -87,6 +89,9 @@ public class IJ_Alt_Key_Listener extends KeyAdapter implements FocusListener {
 		try {
 			return getX11Opener();
 		} catch (Exception e) { /* ignore */ }
+		try {
+			return getAquaOpener();
+		} catch (Exception e) { /* ignore */ }
 		return null;
 	}
 
@@ -106,6 +111,29 @@ public class IJ_Alt_Key_Listener extends KeyAdapter implements FocusListener {
 					method.invoke(bar.getPeer(),
 						new Object[] { event });
 				} catch (Exception e) { /* ignore */ }
+			}
+		};
+	}
+
+	static Runnable getAquaOpener() throws UnsupportedOperationException {
+		if (!IJ.isMacOSX())
+			throw new UnsupportedOperationException("No Aqua available");
+		/*
+		 * After a short delay, send Ctrl+F2, which is the shortcut on
+		 * MacOSX to gain keyboard control to the menu bar.
+		 */
+		return new Runnable() {
+			public void run() {
+				try {
+					Robot robot = new Robot();
+					robot.delay(10);
+					robot.keyPress(KeyEvent.VK_CONTROL);
+					robot.keyPress(KeyEvent.VK_F2);
+					robot.keyRelease(KeyEvent.VK_F2);
+					robot.keyRelease(KeyEvent.VK_CONTROL);
+				} catch (AWTException e) {
+					IJ.handleException(e);
+				}
 			}
 		};
 	}
