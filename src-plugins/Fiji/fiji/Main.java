@@ -186,6 +186,7 @@ public class Main implements AWTEventListener {
 					runUpdater();
 				}
 			}.start();
+			new IJ_Alt_Key_Listener().run();
 		}
 	}
 
