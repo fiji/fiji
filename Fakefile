@@ -82,7 +82,7 @@ ENVOVERRIDES(JAVA_HOME)=true
 # the main target
 
 SUBMODULE_TARGETS=\
-	ij.jar \
+	jars/ij.jar \
 	plugins/loci_tools.jar \
 	plugins/VIB_.jar \
 	jars/VectorString.jar \
@@ -179,7 +179,7 @@ JDK(macosx)=java/macosx-java3d
 jdk[bin/checkout-jdk.py $JDK] <-
 
 # From submodules
-ij.jar <- jars/javac.jar ImageJA/
+jars/ij.jar <- jars/javac.jar ImageJA/
 CLASSPATH(plugins/VIB_.jar)=plugins/LSM_Toolbox.jar
 plugins/VIB_.jar <- plugins/LSM_Toolbox.jar VIB/
 plugins/mpicbg_.jar <- mpicbg/
@@ -188,7 +188,7 @@ jars/clojure-contrib.jar <- jars/clojure.jar clojure-contrib/
 plugins/loci_tools.jar <- bio-formats/
 jars/VectorString.jar <- TrakEM2/
 CLASSPATH(plugins/TrakEM2_.jar)=plugins/VIB_.jar:plugins/mpicbg_.jar:plugins/loci_tools.jar:plugins/bUnwarpJ_.jar:plugins/level_sets.jar:plugins/Fiji_Plugins.jar
-plugins/TrakEM2_.jar <- ij.jar plugins/VIB_.jar plugins/mpicbg_.jar plugins/bUnwarpJ_.jar plugins/level_sets.jar plugins/Fiji_Plugins.jar jars/VectorString.jar TrakEM2/
+plugins/TrakEM2_.jar <- jars/ij.jar plugins/VIB_.jar plugins/mpicbg_.jar plugins/bUnwarpJ_.jar plugins/level_sets.jar plugins/Fiji_Plugins.jar jars/VectorString.jar TrakEM2/
 plugins/ij-ImageIO_.jar <- ij-plugins/
 jars/jacl.jar <- tcljava/
 jars/batik.jar <- batik/
@@ -378,7 +378,7 @@ precompile-submodules[] <- \
 	precompiled/jython.jar \
 	precompiled/imglib.jar \
 
-precompiled/ij.jar <- ij.jar
+precompiled/ij.jar <- jars/ij.jar
 precompiled/clojure.jar <- jars/clojure.jar
 precompiled/clojure-contrib.jar <- jars/clojure.jar jars/clojure-contrib.jar
 precompiled/jacl.jar <- jars/jacl.jar
@@ -450,5 +450,5 @@ jars/fake.jar <- src-plugins/fake/**/*.java
 # Script_Editor_Stub.jar (to include MainClassForDebugging in the classpath)
 
 MAINCLASS(jars/Script_Editor_Stub.jar)=stub.MainClassForDebugging
-CLASSPATH(jars/Script_Editor_Stub.jar)=ij.jar
+CLASSPATH(jars/Script_Editor_Stub.jar)=jars/ij.jar
 jars/Script_Editor_Stub.jar <- stub/MainClassForDebugging.java

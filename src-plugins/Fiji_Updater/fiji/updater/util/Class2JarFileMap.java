@@ -15,7 +15,6 @@ import java.util.jar.JarFile;
 public class Class2JarFileMap extends HashMap<String, String> {
 	public Class2JarFileMap() {
 		try {
-			addJar("ij.jar");
 			addJar("misc/Fiji.jar");
 		} catch (IOException e) {
 			e.printStackTrace();

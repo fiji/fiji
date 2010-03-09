@@ -41,7 +41,7 @@ Fiji.app-%:
 		mkdir -p $@/$(JAVA_HOME) && \
 		mkdir -p $@/images && \
 		cp -R precompiled/fiji-$$ARCH$$EXE $@/fiji$$EXE && \
-		cp -R ij.jar plugins macros jars misc $@ && \
+		cp -R plugins macros jars misc $@ && \
 		REL_PATH=$$(echo $(JAVA_HOME) | sed "s|java/$(ARCH)/||") && \
 		git archive --prefix=java/$(ARCH)/$$REL_PATH/ \
 				origin/java/$(ARCH):$$REL_PATH | \

@@ -147,9 +147,6 @@ public class Fake {
 
 	protected List discoverJars() throws FakeException {
 		List jars = new ArrayList();
-		if (new File(fijiHome + "ij.jar").exists())
-			jars.add(fijiHome + "ij.jar");
-
 		File cwd = new File(".");
 		/*
 		 * Since View5D contains an ImageCanvas (d'oh!) which would
