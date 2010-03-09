@@ -7,6 +7,7 @@ import ij.gui.GenericDialog;
 import ij.gui.Roi;
 import ij.measure.CurveFitter;
 import ij.measure.ResultsTable;
+import ij.plugin.filter.Convolver;
 import ij.plugin.filter.ExtendedPlugInFilter;
 import ij.plugin.filter.PlugInFilterRunner;
 import ij.process.FHT;
@@ -88,6 +89,25 @@ import org.jfree.data.xy.XYSeriesCollection;
 public class Directionality_ implements ExtendedPlugInFilter {
 	
 	/*
+	 * ENUMS
+	 */
+	
+	protected enum AnalysisMethod {
+		FOURIER_COMPONENTS,
+		LOCAL_GRADIENT_ORIENTATION;
+		public String toString() {
+			switch (this) {
+			case FOURIER_COMPONENTS:
+				return "Fourier components";
+			case LOCAL_GRADIENT_ORIENTATION:
+				return "Local gradient orientation";
+			}
+			return "Not implemented";
+		}
+	}
+	
+	
+	/*
 	 * FIELDS
 	 */
 	
@@ -122,6 +142,8 @@ public class Directionality_ implements ExtendedPlugInFilter {
 	private boolean fit_done;
 	/** If set true, will display a {@link ResultsTable} with the histogram at the end of processing. */
 	private boolean display_table = false;
+	/** Method used for analysis, as set by the user. */
+	private AnalysisMethod method = AnalysisMethod.FOURIER_COMPONENTS; // Only method implemented so far
 	
 	
 	/*
@@ -134,62 +156,18 @@ public class Directionality_ implements ExtendedPlugInFilter {
 	 * {@link #directionality} list, containing the histograms for all this image slices. 
 	 */
 	public void run(ImageProcessor _ip) {
+		
 		fit_done = false;
 		final FloatProcessor ip = (FloatProcessor) _ip; // we can do that, for the flag of this plugin is set accordingly
-		final Roi original_square = new Roi((pad_size-small_side)/2, (pad_size-small_side)/2, small_side, small_side); 
-
-		float[] fpx, spectrum_px;
-		double[] dir = new double[nbins];
-		ImageProcessor square_block;
-		Roi square_roi;
-		FHT fft, pspectrum;		
-		FloatProcessor small_pspectrum;
+		double[] dir = null;
 		
-		// If the image is not square, split it in small square padding all the image
-		for (int ix = 0; ix<npadx; ix++) {
-			
-			for (int iy = 0; iy<npady; iy++) {
-				
-				// Extract a square block from the image
-				square_roi = new Roi( ix*step, iy*step, small_side, small_side );
-				ip.setRoi(square_roi);
-				square_block = ip.crop();
-				
-				// Window the block
-				float[] block_pixels = (float[]) square_block.getPixels();
-				for (int i = 0; i < block_pixels.length; i++) {
-					block_pixels[i] *= window_pixels[i]; 
-				}
-				
-				// Pad the block with a power of 2 size
-				padded_square_block.setValue(0.0);
-				padded_square_block.fill();
-				padded_square_block.insert(square_block, 0, 0);
-				
-				// Computes its FFT
-				fft = new FHT(padded_square_block);
-				fft.setShowProgress(false);
-				fft.transform();
-				fft.swapQuadrants();
-				
-				// Get a centered power spectrum with right size
-				pspectrum = fft.conjugateMultiply(fft);
-				pspectrum .setRoi(original_square);
-				small_pspectrum = (FloatProcessor) pspectrum .crop();
-				spectrum_px = (float[]) small_pspectrum.getPixels(); 
-				
-				if (debug) {
-					displayLog(small_pspectrum);
-				}
-				
-				// Computes angular density
-				for (int bin=0; bin<nbins; bin++) {
-					fpx = (float[]) filters.getPixels(bin+1);
-					for (int i = 0; i < spectrum_px.length; i++) {
-						dir[bin] += spectrum_px[i] * fpx[i]; // will sum out with every block
-					}
-				}
-			}
+		switch (method) {
+		case FOURIER_COMPONENTS:
+			dir = fourier_component(ip);
+			break;
+		case LOCAL_GRADIENT_ORIENTATION:
+			dir = local_gradient_orientation(ip);
+			break;
 		}
 		
 		// Normalize directionality
@@ -200,10 +178,10 @@ public class Directionality_ implements ExtendedPlugInFilter {
 		for (int i = 0; i < dir.length; i++) {
 			dir[i] = dir[i] / sum;
 		}
+		directionality.add(dir);
 		
-		// Draw histogram		
-		directionality.add(dir);		
 	}
+	
 
 	public int setup(String arg, ImagePlus _imp) {
 		
@@ -372,10 +350,138 @@ public class Directionality_ implements ExtendedPlugInFilter {
 		return table;		
 	}
 	
+	
+	
+	
 	/*
 	 * PRIVATE METHODS
 	 */
 	
+	
+	private final double[] local_gradient_orientation(FloatProcessor ip) {
+		final double[] dir = new double[nbins]; // histo with #bins
+		final double[] norm_dir = new double[nbins]; // histo from -pi to pi;
+		final FloatProcessor grad_x = (FloatProcessor) ip.duplicate();
+		final FloatProcessor grad_y = (FloatProcessor) ip.duplicate();
+		final Convolver convolver = new Convolver();
+		final float[] kernel_x = new float[] { 
+				-2f,  	-1f, 	0f, 	1f, 	2f,
+				-3f,  	-2f,  	0f, 	2f, 	3f,
+				-4f, 	-3f, 	0f, 	3f, 	4f,
+				-3f,  	-2f,  	0f, 	2f, 	3f,
+				-2f,  	-1f,  	0f, 	1f, 	2f		} ;
+		final float[] kernel_y = new float[] {
+				2f, 	3f, 	4f, 	3f, 	2f,
+				1f, 	2f, 	3f, 	2f, 	1f,
+				0, 		0, 		0, 		0, 		0,
+				-1f, 	-2f, 	-3f, 	-2f, 	-1f,
+				-2f, 	-3f, 	-4f, 	-3f, 	-2f		};
+
+		convolver.convolveFloat(grad_x, kernel_x, 5, 5);
+		convolver.convolveFloat(grad_y, kernel_y, 5, 5);
+		
+		final float[] pixels_gx = (float[]) grad_x.getPixels();
+		final float[] pixels_gy = (float[]) grad_y.getPixels();
+		
+		double norm;
+		double angle;
+		int histo_index;
+		float dx, dy;
+		for (int i = 0; i < pixels_gx.length; i++) {
+			dx = pixels_gx[i];
+			dy = pixels_gy[i];
+			norm = Math.sqrt(dx*dx+dy*dy);
+			angle = Math.atan2(dy, dx);
+			histo_index = (int) Math.ceil(nbins/2 * (1 + angle / Math.PI)) - 1; // where to put it
+			norm_dir[histo_index] += norm; // we put the norm, the stronger the better
+		}
+		
+		// Shift histo
+		final double shift = bins[0] - (-Math.PI);
+		final int index_shift = (int) (shift / Math.PI * nbins/2);
+		int j;
+		for (int i = 0; i < norm_dir.length; i++) {
+			j = i + index_shift;
+			while (true) {
+				if (j<0) { j += nbins; } 
+				else if (j>=nbins) { j-= nbins; } 
+				else { break;}
+			}
+			dir[i] = norm_dir[j];
+		}
+		
+		return dir;
+	}
+
+	/**
+	 * This method implements the Fourier component analysis method.
+	 * <p>
+	 * Images are chopped in squares, and the Fourier spectrum of each square is calculated.
+	 * For the spectrum, we get the angular component using the filters generated by {@link #makeFftFilters()}.
+	 * <p>
+	 * We return the results as a double array, containing the amount of orientation for each angles
+	 * specified in the {@link #bins} field. 
+	 */
+	private final double[] fourier_component(FloatProcessor ip) {
+		final Roi original_square = new Roi((pad_size-small_side)/2, (pad_size-small_side)/2, small_side, small_side); 
+
+		float[] fpx, spectrum_px;
+		final double[] dir = new double[nbins];
+		ImageProcessor square_block;
+		Roi square_roi;
+		FHT fft, pspectrum;		
+		FloatProcessor small_pspectrum;
+		
+		// If the image is not square, split it in small square padding all the image
+		for (int ix = 0; ix<npadx; ix++) {
+			
+			for (int iy = 0; iy<npady; iy++) {
+				
+				// Extract a square block from the image
+				square_roi = new Roi( ix*step, iy*step, small_side, small_side );
+				ip.setRoi(square_roi);
+				square_block = ip.crop();
+				
+				// Window the block
+				float[] block_pixels = (float[]) square_block.getPixels();
+				for (int i = 0; i < block_pixels.length; i++) {
+					block_pixels[i] *= window_pixels[i]; 
+				}
+				
+				// Pad the block with a power of 2 size
+				padded_square_block.setValue(0.0);
+				padded_square_block.fill();
+				padded_square_block.insert(square_block, 0, 0);
+				
+				// Computes its FFT
+				fft = new FHT(padded_square_block);
+				fft.setShowProgress(false);
+				fft.transform();
+				fft.swapQuadrants();
+				
+				// Get a centered power spectrum with right size
+				pspectrum = fft.conjugateMultiply(fft);
+				pspectrum .setRoi(original_square);
+				small_pspectrum = (FloatProcessor) pspectrum .crop();
+				spectrum_px = (float[]) small_pspectrum.getPixels(); 
+				
+				if (debug) {
+					displayLog(small_pspectrum);
+				}
+				
+				// Computes angular density
+				for (int bin=0; bin<nbins; bin++) {
+					fpx = (float[]) filters.getPixels(bin+1);
+					for (int i = 0; i < spectrum_px.length; i++) {
+						dir[bin] += spectrum_px[i] * fpx[i]; // will sum out with every block
+					}
+				}
+			}
+		}
+		
+		return dir;		
+	}
+
 	
 	/**
 	 * This method generates the angular filters used for analysis. It reads the fields {@link #nbins},
@@ -855,6 +961,7 @@ public class Directionality_ implements ExtendedPlugInFilter {
 		
 		Directionality_ da = new Directionality_();
 		String command = "Directionality";
+		da.method = AnalysisMethod.LOCAL_GRADIENT_ORIENTATION;
 		
 		new PlugInFilterRunner(da, command, "nbins=10");
 	}
