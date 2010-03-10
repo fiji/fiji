@@ -1790,9 +1790,6 @@ static int start_ij(void)
 				+ PATH_SEP;
 		class_path += fiji_dir;
 		class_path += "/misc/Fiji.jar";
-		class_path += PATH_SEP;
-		class_path += fiji_dir;
-		class_path += "/ij.jar";
 
 		if (is_default_main_class(main_class))
 			update_files();

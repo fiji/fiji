@@ -100,8 +100,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 			/* the old updater will only checksum these! */
 			})), or(startsWith("fiji-"),
 				and(startsWith(new String[] {
-					"ij.jar", "plugins/", "jars/",
-					"retro/", "misc/"
+					"plugins/", "jars/", "retro/", "misc/"
 					}), endsWith(".jar")))));
 	}
 

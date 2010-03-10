@@ -49,7 +49,7 @@ for i in range(0, len(fakefile)):
 				last_submodule_line = i
 				faked_submodules[fakefile[i]] = i
 			i += 1
-	elif fakefile[i].startswith('ij.jar <- '):
+	elif fakefile[i].startswith('jars/ij.jar <- '):
 		while i < len(fakefile) and fakefile[i] != "\n":
 			space = fakefile[i].find(' <- ')
 			if space > 0:

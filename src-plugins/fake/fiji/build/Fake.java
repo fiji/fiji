@@ -147,9 +147,6 @@ public class Fake {
 
 	protected List discoverJars() throws FakeException {
 		List jars = new ArrayList();
-		if (new File(fijiHome + "ij.jar").exists())
-			jars.add(fijiHome + "ij.jar");
-
 		File cwd = new File(".");
 		/*
 		 * Since View5D contains an ImageCanvas (d'oh!) which would
@@ -157,7 +154,8 @@ public class Fake {
 		 * include all plugin's jars...
 		 */
 		// expandGlob(fijiHome + "plugins/**/*.jar", jars, cwd);
-		expandGlob(fijiHome + "misc/**/*.jar", jars, cwd);
+		if (new File(fijiHome + "misc/Fiji.jar").exists())
+			jars.add(fijiHome + "misc/Fiji.jar");
 		expandGlob(fijiHome + "jars/**/*.jar", jars, cwd);
 		if (getPlatform().startsWith("win")) {
 			String[] paths =
