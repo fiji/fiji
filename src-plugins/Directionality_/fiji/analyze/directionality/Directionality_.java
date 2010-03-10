@@ -9,6 +9,7 @@ import ij.measure.CurveFitter;
 import ij.measure.ResultsTable;
 import ij.plugin.filter.Convolver;
 import ij.plugin.filter.ExtendedPlugInFilter;
+import ij.plugin.filter.PlugInFilter;
 import ij.plugin.filter.PlugInFilterRunner;
 import ij.process.FHT;
 import ij.process.FloatProcessor;
@@ -35,6 +36,7 @@ import org.jfree.chart.renderer.xy.ClusteredXYBarRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+
 
 /**
  * <h2>Usage</h2> This plugin is used to infer the preferred orientation of
@@ -67,15 +69,54 @@ import org.jfree.data.xy.XYSeriesCollection;
  * (however, the image is not completely uniform, which cripples the meaning of
  * this amount value).
  * 
- * <h2>Method</h2>
+ * <h2>Analysis methods</h2>
  * 
- * The method implemented is based on Fourier spectrum analysis. For a square
+ * Two methods are implemented:
+ * 
+ * <h3>Fourier components analysis</h3>
+ * 
+ * This method is based on Fourier spectrum analysis. For a square
  * image, structures with a preferred orientation generate a periodic pattern at
  * +90º orientation in the Fourier transform of the image, compared to the
- * direction of the objects in the input image. This plugin chops the image into
+ * direction of the objects in the input image. 
+ * <p>
+ * This plugin chops the image into
  * square pieces, and computes their Fourier power spectra. The later are
  * analyzed in polar coordinates, and the power is measured for each angle using
  * the spatial filters proposed in [1]
+ * 
+ * <h3>Local gradient orientation</h3>
+ * 
+ * This method is a local analysis. The gradient of the image is calculated using a 5x5
+ * Sobel filter, and is used to derive the local gradient orientation. This orientation 
+ * is then used to build the histogram, by putting the square of the gradient norm 
+ * in the adequate bin. The square of the norm was retained, so as to have an histogram 
+ * with the same dimension that for the Fourier analysis.
+ * 
+ * 
+ * <h2>Code structure</h2>
+ * 
+ * This plugin is written as a classical ImageJ plugin. It implements {@link PlugInFilter},
+ * and relies on {@link PlugInFilterRunner} to be run. 
+ * <p>
+ * String arguments can be passed to it, using the {@link #setup(String, ImagePlus)} method.
+ * For instance:
+ * 
+ *  <pre>
+ *  ImagePlus imp = IJ.openImage("./TwoLines.tif");
+ *  imp.show();
+ *  Directionality_ da = new Directionality_();
+ *  String command = "Directionality";
+ *  new PlugInFilterRunner(da, command, "nbins=60, start=-90, method=gradient");
+ *  </pre>
+ * 
+ * <h2>Version history</h2>
+ * 
+ * <ul>
+ * <li> v1.2: Added a new analysis method based on local gradient orientation.
+ * <li> v1.1: Added an option to export the histogram as a table.
+ * <li> v1.0: First working commit with the Fourier method.
+ * </ul>
  * 
  * <h2>References</h2>
  * [1] Liu. Scale space approach to directional analysis of images. Appl. Opt. (1991) vol. 30 (11) pp. 1369-1373 
@@ -84,7 +125,7 @@ import org.jfree.data.xy.XYSeriesCollection;
  * <p>
  * 
  * @author Jean-Yves Tinevez jeanyves.tinevez@gmail.com
- * 
+ * @version 1.2
  */
 public class Directionality_ implements ExtendedPlugInFilter {
 	
@@ -101,6 +142,15 @@ public class Directionality_ implements ExtendedPlugInFilter {
 				return "Fourier components";
 			case LOCAL_GRADIENT_ORIENTATION:
 				return "Local gradient orientation";
+			}
+			return "Not implemented";
+		}
+		public String toCommandName() {
+			switch (this) {
+			case FOURIER_COMPONENTS:
+				return "Fourier";
+			case LOCAL_GRADIENT_ORIENTATION:
+				return "gradient";
 			}
 			return "Not implemented";
 		}
@@ -185,21 +235,39 @@ public class Directionality_ implements ExtendedPlugInFilter {
 
 	public int setup(String arg, ImagePlus _imp) {
 		
+		// Are we called after processing?
 		if (arg.contains("final")) {
 			displayResults();
 			return DONE;
 		}
 		
-		if (arg.contains("nbins=")) {
-			int narg = arg.indexOf("nbins=");
-			String nbins_str = arg.substring(narg+"nbins=".length());
+		// Parse possible macro inputs
+		String str = parseArgumentString(arg, "nbins=");
+		if (null != str) {
 			try {
-				nbins = Integer.parseInt(nbins_str);
+				nbins = Integer.parseInt(str);
 			} catch (NumberFormatException nfe) {
-				IJ.error("Directionality: bad argument for number of bins: "+nbins_str);
+				IJ.error("Directionality: bad argument for number of bins: "+str);
 				return DONE;
 			}
-		} 
+		}
+		str = parseArgumentString(arg, "start=");
+		if (null != str) {
+			try {
+				bin_start = Double.parseDouble(str);
+			} catch (NumberFormatException nfe) {
+				IJ.error("Directionality: bad argument for start point: "+str);
+				return DONE;
+			}
+		}
+		str = parseArgumentString(arg, "method=");
+		if (null != str) {
+			for (AnalysisMethod m : AnalysisMethod.values()) {
+				if (m.toCommandName().equalsIgnoreCase(str)) {
+					method = m;
+				}
+			}
+		}
 		
 		// Prepare data storage
 		directionality = new ArrayList<double[]>(_imp.getStack().getSize());
@@ -223,72 +291,44 @@ public class Directionality_ implements ExtendedPlugInFilter {
 		
 		// Prepare dialog
 		String current = imp.getTitle();
+		String[] method_names = new String[AnalysisMethod.values().length];
+		for (int i = 0; i < method_names.length; i++) {
+			method_names[i] = AnalysisMethod.values()[i].toString();
+		}
+		
+		// Layout dialog
 		GenericDialog gd = new GenericDialog(PLUGIN_NAME + " v" + VERSION_STR);
 		gd.addMessage(current);
+		gd.addChoice("Method:", method_names, method.toString());
 		gd.addNumericField("Nbins: ", nbins, 0);
 		gd.addNumericField("Histogram start", bin_start , 0, 4, "º");
 		gd.addCheckbox("Display table", display_table);
 		gd.addCheckbox("Debug", debug);
-
 		gd.showDialog();
-		
 		
 		// Collect dialog settings
 		if (gd.wasCanceled())
 			return DONE;
+		String chosen_method = gd.getNextChoice();
+		for (int i = 0; i < method_names.length; i++) {
+			if (chosen_method.equals(method_names[i])) {
+				method = AnalysisMethod.values()[i];
+				break;
+			}
+		} 
+		
+		// Reflect user settings in fields
 		nbins = (int) gd.getNextNumber();
 		bin_start = gd.getNextNumber();
 		display_table = gd.getNextBoolean();
 		debug = gd.getNextBoolean();
 
-		// Compute dimensions
-		if ( width == height) {
-			npadx = 1;
-			npady = 1;
-			long_side = width;
-			small_side = width;
-			step = 0;
-		} else {
-			small_side = Math.min(width, height);
-			long_side  = Math.max(width, height);
-			int npad = long_side / small_side + 1;
-			if (width == long_side) {
-				npadx = npad;
-				npady = 1;
-			} else {
-				npadx = 1;
-				npady = npad;
-			}
-			int delta = (long_side - small_side);
-			step = delta / (npad-1);
+		if (AnalysisMethod.FOURIER_COMPONENTS.equals(method)) {
+			initFourierFields();
 		}
 		
-		// Computes power of 2 image dimension
-		pad_size = 2;
-        while(pad_size<small_side) pad_size *= 2;
-		padded_square_block = new FloatProcessor(pad_size, pad_size);
+		prepareBins();
 		
-		// Prepare bins
-		bins = new double[nbins];
-		for (int i = 0; i < nbins; i++) {
-			bins[i] = (float) (i * Math.PI / nbins / Math.PI * 180) + bin_start; // in FFT there is a rotation of 90º
-		}
-		
-		// Prepare windowing
-		window = getBlackmanProcessor(small_side, small_side);
-		window_pixels = (float[]) window.getPixels();
-		
-		// Prepare polar coordinates
-		r = makeRMatrix(small_side, small_side);
-		theta = makeThetaMatrix(small_side, small_side);
-		
-		// Prepare filters
-		filters = makeFftFilters();
-		
-		if (debug) {
-			new ImagePlus("Angular filters", filters).show();
-		}
-
 		return DOES_ALL
 			+ DOES_STACKS
 			+ CONVERT_TO_FLOAT
@@ -351,26 +391,95 @@ public class Directionality_ implements ExtendedPlugInFilter {
 	}
 	
 	
-	
-	
 	/*
 	 * PRIVATE METHODS
 	 */
 	
 	
+	/**
+	 * This method is used to initialize variables required for the Fourier analysis
+	 * after parameters have been set by the user.
+	 */
+	private void initFourierFields() {
+		// Compute dimensions
+		if ( width == height) {
+			npadx = 1;
+			npady = 1;
+			long_side = width;
+			small_side = width;
+			step = 0;
+		} else {
+			small_side = Math.min(width, height);
+			long_side  = Math.max(width, height);
+			int npad = long_side / small_side + 1;
+			if (width == long_side) {
+				npadx = npad;
+				npady = 1;
+			} else {
+				npadx = 1;
+				npady = npad;
+			}
+			int delta = (long_side - small_side);
+			step = delta / (npad-1);
+		}
+		
+		// Computes power of 2 image dimension
+		pad_size = 2;
+        while(pad_size<small_side) pad_size *= 2;
+		padded_square_block = new FloatProcessor(pad_size, pad_size);
+		
+		// Prepare windowing
+		window = getBlackmanProcessor(small_side, small_side);
+		window_pixels = (float[]) window.getPixels();
+		
+		// Prepare polar coordinates
+		r = makeRMatrix(small_side, small_side);
+		theta = makeThetaMatrix(small_side, small_side);
+		
+		// Prepare filters
+		filters = makeFftFilters();
+		
+		if (debug) {
+			new ImagePlus("Angular filters", filters).show();
+		}
+	}
+	
+	/**
+	 * Initialize the {@link #bins} field with value set by user.
+	 */
+	private void prepareBins() {
+		// Prepare bins
+		bins = new double[nbins];
+		for (int i = 0; i < nbins; i++) {
+			bins[i] = (float) Math.toDegrees(i * Math.PI / nbins) + bin_start;
+		}
+	}
+	
+	/**
+	 * This method implements the local gradient orientation analysis method.
+	 * <p>
+	 * The gradient is calculated using a 5x5 Sobel filter. The gradient orientation
+	 * from -pi/2 to pi/2 is calculated and put in the histogram. The histogram
+	 * get the square of the norm as value, so that only strong gradient contribute to it.
+	 * We use the square of the norm, so that the histogram calculated with this method
+	 * has the same dimension that with the Fourier method.
+	 * 
+	 * @see #fourier_component(FloatProcessor)
+	 *  
+	 */
 	private final double[] local_gradient_orientation(FloatProcessor ip) {
-		final double[] dir = new double[nbins]; // histo with #bins
+		double[] dir = new double[nbins]; // histo with #bins
 		final double[] norm_dir = new double[nbins]; // histo from -pi to pi;
 		final FloatProcessor grad_x = (FloatProcessor) ip.duplicate();
 		final FloatProcessor grad_y = (FloatProcessor) ip.duplicate();
 		final Convolver convolver = new Convolver();
-		final float[] kernel_x = new float[] { 
+		final float[] kernel_y = new float[] { 
 				-2f,  	-1f, 	0f, 	1f, 	2f,
 				-3f,  	-2f,  	0f, 	2f, 	3f,
 				-4f, 	-3f, 	0f, 	3f, 	4f,
 				-3f,  	-2f,  	0f, 	2f, 	3f,
-				-2f,  	-1f,  	0f, 	1f, 	2f		} ;
-		final float[] kernel_y = new float[] {
+				-2f,  	-1f,  	0f, 	1f, 	2f		} ; // That's gx, but we want to have a 90º shift, to comply to the rest of the plugin
+		final float[] kernel_x = new float[] {
 				2f, 	3f, 	4f, 	3f, 	2f,
 				1f, 	2f, 	3f, 	2f, 	1f,
 				0, 		0, 		0, 		0, 		0,
@@ -389,16 +498,19 @@ public class Directionality_ implements ExtendedPlugInFilter {
 		float dx, dy;
 		for (int i = 0; i < pixels_gx.length; i++) {
 			dx = pixels_gx[i];
-			dy = pixels_gy[i];
-			norm = Math.sqrt(dx*dx+dy*dy);
-			angle = Math.atan2(dy, dx);
-			histo_index = (int) Math.ceil(nbins/2 * (1 + angle / Math.PI)) - 1; // where to put it
+			dy =  - pixels_gy[i]; // upright orientation
+			norm = dx*dx+dy*dy; // We keep the square so as to have the same dimension that Fourier components analysis
+			angle = Math.atan(dy/dx);
+			histo_index = (int) ((nbins/2.0) * (1 + angle / (Math.PI/2)) ); // where to put it
+			if (histo_index == nbins) {
+				histo_index = 0; // circular shift in case of exact vertical orientation
+			}
 			norm_dir[histo_index] += norm; // we put the norm, the stronger the better
 		}
 		
-		// Shift histo
-		final double shift = bins[0] - (-Math.PI);
-		final int index_shift = (int) (shift / Math.PI * nbins/2);
+		// Shift histogram				
+		final double shift = Math.toRadians(bins[0]) - (-Math.PI/2);
+		final int index_shift = (int) ( nbins / Math.PI * shift );
 		int j;
 		for (int i = 0; i < norm_dir.length; i++) {
 			j = i + index_shift;
@@ -407,20 +519,22 @@ public class Directionality_ implements ExtendedPlugInFilter {
 				else if (j>=nbins) { j-= nbins; } 
 				else { break;}
 			}
-			dir[i] = norm_dir[j];
+			dir[j] = norm_dir[i];
 		}
 		
 		return dir;
 	}
 
 	/**
-	 * This method implements the Fourier component analysis method.
+	 * This method implements the Fourier component analysis method. The method {@link #initFourierFields()}
+	 * must be called before this method is.
 	 * <p>
 	 * Images are chopped in squares, and the Fourier spectrum of each square is calculated.
 	 * For the spectrum, we get the angular component using the filters generated by {@link #makeFftFilters()}.
 	 * <p>
 	 * We return the results as a double array, containing the amount of orientation for each angles
 	 * specified in the {@link #bins} field. 
+	 * @see {@link #local_gradient_orientation(FloatProcessor)}
 	 */
 	private final double[] fourier_component(FloatProcessor ip) {
 		final Roi original_square = new Roi((pad_size-small_side)/2, (pad_size-small_side)/2, small_side, small_side); 
@@ -484,11 +598,12 @@ public class Directionality_ implements ExtendedPlugInFilter {
 
 	
 	/**
-	 * This method generates the angular filters used for analysis. It reads the fields {@link #nbins},
+	 * This method generates the angular filters used by the Fourier analysis. It reads the fields {@link #nbins},
 	 * {@link #bin_start} to determine how many individual angle filter to generate, and {@link #small_side}
 	 * to determine the image filter size. As such, they must be set before calling this method.
 	 * 
 	 * @return  an {@link ImageStack} made of each individual angular filter
+	 * @see {@link #fourier_component(FloatProcessor)}, {@link #prepareBins()}
 	 */
 	private final ImageStack makeFftFilters() {
 		final ImageStack filters = new ImageStack(small_side, small_side, nbins);
@@ -825,6 +940,28 @@ public class Directionality_ implements ExtendedPlugInFilter {
 	 */
 	
 	/**
+	 * Utility method to analyze the content of the argument string passed by ImageJ to 
+	 * this plugin using the {@link #setup(String, ImagePlus)} method. Not as clever as it
+	 * could be.
+	 * @param  argument_string  the argument string to parse
+	 * @param  command_str  the command to search for
+	 * @return  a string containing the value after the command string, null if the command string 
+	 * was not found
+	 */
+	private final static String parseArgumentString(String argument_string, String command_str) {
+		if (argument_string.contains(command_str)) {
+			int narg = argument_string.indexOf(command_str)+command_str.length();
+			int next_arg = argument_string.indexOf(",", narg);
+			if (next_arg == -1) {
+				next_arg = argument_string.length();
+			}
+			String str = argument_string.substring(narg, next_arg);
+			return str;
+		}
+		return null;
+	}
+	
+	/**
 	 * This utility method displays an {@link ImagePlus} window with the log10 of each pixel in the
 	 * {@link FloatProcessor} given in argument. Usefull to display power spectrum.
 	 * 
@@ -956,14 +1093,14 @@ public class Directionality_ implements ExtendedPlugInFilter {
 	 */
 	
 	public static void main(String[] args) {
-		ImagePlus imp = IJ.openImage("http://rsb.info.nih.gov/ij/images/gel.gif");
+//		ImagePlus imp = IJ.openImage("http://rsb.info.nih.gov/ij/images/gel.gif");
+		ImagePlus imp = IJ.openImage("./TwoLines.tif");
 		imp.show();
 		
 		Directionality_ da = new Directionality_();
 		String command = "Directionality";
-		da.method = AnalysisMethod.LOCAL_GRADIENT_ORIENTATION;
 		
-		new PlugInFilterRunner(da, command, "nbins=10");
+		new PlugInFilterRunner(da, command, "nbins=60, start=-90, method=gradient");
 	}
 	
 }
