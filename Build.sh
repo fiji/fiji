@@ -94,6 +94,20 @@ test ! -f "$CWD"/fiji -o "$CWD"/fiji.cxx -nt "$CWD"/fiji$exe && {
 	sh "$0" $variables fiji || exit
 }
 
+# on Win64, with a 32-bit compiler, do not try to compile
+case $platform in
+win64)
+	case "$(g++ --version)" in
+	*mingw32*)
+		# cannot compile!
+		test "$CWD"/fiji.exe -nt "$CWD"/fiji.cxx &&
+		test "$CWD"/fiji.exe -nt "$CWD"/precompiled/fiji-win64.exe &&
+		test "$CWD"/fiji.exe -nt "$CWD"/Fakefile &&
+		test "$CWD"/fiji.exe -nt "$CWD"/jars/fake.jar ||
+		cp precompiled/fiji-win64.exe fiji.exe
+	esac
+esac
+
 # still needed for Windows, which cannot overwrite files that are in use
 test -f "$CWD"/fiji$exe -a -f "$CWD"/$jar &&
 test "a$targets" != a$jar -a "a$targets" != afiji &&
