@@ -231,6 +231,16 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 			}
 		for (PluginObject plugin : toInstall.keySet())
 			needUpload(plugin);
+
+		// Replace dependencies on to-be-removed plugins
+		for (PluginObject plugin : plugins.fijiPlugins()) {
+			if (plugin.getAction() == Action.REMOVE)
+				continue;
+			for (Dependency dependency : plugin.getDependencies())
+				if (plugins.getPlugin(dependency.filename).getAction()
+						== Action.REMOVE)
+					dependencyRemoved(plugin, dependency.filename);
+		}
 	}
 
 	void needUpload(final PluginObject plugin) {
@@ -266,10 +276,40 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 		});
 	}
 
+	void dependencyRemoved(final PluginObject plugin,
+			final String dependency) {
+		newText("Warning: ", normal);
+		addText(plugin.getFilename(), bold);
+		addText(" depends on " + dependency + " which is about to be removed.\n\n");
+		addDependencyButton("Break the dependency", plugin,
+				dependency, null);
+		for (PluginObject toUpload : plugins.toUpload()) {
+			if (plugin.hasDependency(toUpload.getFilename()))
+				continue;
+			addText("    ");
+			addDependencyButton("Replace with dependency to "
+					+ toUpload, plugin, dependency,
+					toUpload.getFilename());
+		}
+	}
+
 	void addIgnoreButton(String label, final PluginObject plugin) {
 		addButton(label, new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				ignore.add(plugin);
+				listIssues();
+			}
+		});
+	}
+
+	void addDependencyButton(String label, final PluginObject plugin,
+			final String removeDependency,
+			final String addDependency) {
+		addButton(label, new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				plugin.removeDependency(removeDependency);
+				if (addDependency != null)
+					plugin.addDependency(addDependency);
 				listIssues();
 			}
 		});

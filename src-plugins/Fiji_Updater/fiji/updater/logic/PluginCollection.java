@@ -52,6 +52,10 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		return filter(is(Action.UNINSTALL));
 	}
 
+	public Iterable<PluginObject> toRemove() {
+		return filter(is(Action.REMOVE));
+	}
+
 	public Iterable<PluginObject> toUpdate() {
 		return filter(is(Action.UPDATE));
 	}

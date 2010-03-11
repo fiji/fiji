@@ -194,6 +194,10 @@ public class PluginObject {
 		dependencies.remove(other);
 	}
 
+	public boolean hasDependency(String filename) {
+		return dependencies.containsKey(filename);
+	}
+
 	public void addLink(String link) {
 		links.put(link, (Object)null);
 	}
