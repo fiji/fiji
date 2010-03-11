@@ -22,19 +22,33 @@ public class FileDialogDecorator extends KeyAdapter {
 		this.list = list;
 	}
 
-	public void keyPressed(KeyEvent e) {
-		if (e.getKeyCode() < e.VK_SPACE)
+	public void select(int index) {
+		if (index < 0 || index >= list.getItemCount())
 			return;
+		list.select(index);
+		list.makeVisible(index);
+	}
+
+	public void keyPressed(KeyEvent e) {
+		int keyCode = e.getKeyCode();
+		if (keyCode < e.VK_SPACE)
+			return;
+		switch (keyCode) {
+		case KeyEvent.VK_HOME:
+			select(0);
+			return;
+		case KeyEvent.VK_END:
+			select(list.getItemCount() - 1);
+			return;
+		}
 		long when = e.getWhen();
 		if (when - lastWhen > timeout)
 			prefix = "" + e.getKeyChar();
 		else
 			prefix += e.getKeyChar();
 		int index = findItemForPrefix(list, prefix);
-		if (index >= 0) {
-			list.select(index);
-			list.makeVisible(index);
-		}
+		if (index >= 0)
+			select(index);
 		lastWhen = when;
 	}
 
