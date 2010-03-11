@@ -40,6 +40,12 @@ public class FileDialogDecorator extends KeyAdapter {
 		case KeyEvent.VK_END:
 			select(list.getItemCount() - 1);
 			return;
+		case KeyEvent.VK_PAGE_DOWN:
+			select(list.getSelectedIndex() + list.getRows());
+			return;
+		case KeyEvent.VK_PAGE_UP:
+			select(list.getSelectedIndex() - list.getRows());
+			return;
 		}
 		long when = e.getWhen();
 		if (when - lastWhen > timeout)
