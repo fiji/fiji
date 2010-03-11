@@ -106,8 +106,6 @@ public class PluginObject {
 	public Map<Version, Object> previous;
 	public long filesize, newTimestamp;
 
-	// TODO: finally add platform
-
 	// These are LinkedHashMaps to retain the order of the entries
 	protected Map<String, Dependency> dependencies;
 	protected Map<String, Object> links, authors, platforms, categories;
@@ -333,7 +331,6 @@ public class PluginObject {
 	}
 
 	public void markRemoved() {
-		// TODO: check dependencies (but not here; _after_ all marking)
 		addPreviousVersion(current.checksum, current.timestamp);
 		setStatus(Status.OBSOLETE);
 		current = null;
@@ -387,7 +384,6 @@ public class PluginObject {
 		return action != status.getNoAction();
 	}
 
-	// TODO: why that redundancy?  We set Action.UPDATE only if it is updateable anyway!  Besides, use getAction(). DRY, DRY, DRY!
 	public boolean toUpdate() {
 		return action == Action.UPDATE;
 	}
