@@ -254,7 +254,7 @@ plugins/IO_.jar <- src-plugins/IO_/**/*.java \
 	io/df3_scene.pov[src-plugins/IO_/io/df3/df3_scene.pov]
 
 CLASSPATH(plugins/Sync_Win.jar)=plugins/Image_5D.jar
-CLASSPATH(plugins/Fiji_Developer.jar)=plugins/Script_Editor.jar:plugins/Fiji_Plugins.jar:plugins/VIB_.jar
+CLASSPATH(plugins/Fiji_Developer.jar)=plugins/Script_Editor.jar:plugins/Fiji_Plugins.jar:plugins/VIB_.jar:jars/fiji-lib.jar
 MAINCLASS(plugins/Script_Editor.jar)=fiji.scripting.Script_Editor
 CLASSPATH(plugins/Script_Editor.jar)=jars/rsyntaxtextarea.jar:\
 jars/autocomplete.jar:plugins/Clojure_Interpreter.jar:\
