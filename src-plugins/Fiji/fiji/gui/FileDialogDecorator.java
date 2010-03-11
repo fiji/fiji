@@ -1,16 +1,31 @@
 package fiji.gui;
 
+import ij.IJ;
+
 import java.awt.AWTEvent;
+import java.awt.Component;
 import java.awt.Container;
 import java.awt.EventQueue;
 import java.awt.FileDialog;
 import java.awt.List;
 import java.awt.Toolkit;
 
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+
+import java.awt.dnd.DnDConstants;
+import java.awt.dnd.DropTarget;
+import java.awt.dnd.DropTargetDragEvent;
+import java.awt.dnd.DropTargetDropEvent;
+import java.awt.dnd.DropTargetEvent;
+import java.awt.dnd.DropTargetListener;
+
 import java.awt.event.AWTEventListener;
 import java.awt.event.ContainerEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+
+import java.io.File;
 
 public class FileDialogDecorator extends KeyAdapter {
 	// the list is assumed to be sorted
@@ -30,8 +45,10 @@ public class FileDialogDecorator extends KeyAdapter {
 		 * The directory list is identified by the component count 7,
 		 * which is a hack, but then, this whole class is.
 		 */
-		if (((Container)list.getParent()).getComponentCount() == 7)
+		if (((Container)list.getParent()).getComponentCount() == 7) {
 			reRequestFocusAfterEnter = true;
+			registerDropTarget(list.getParent());
+		}
 	}
 
 	public void select(int index) {
@@ -123,6 +140,68 @@ public class FileDialogDecorator extends KeyAdapter {
 
 	public static void registerAutomaticDecorator() {
 		Toolkit.getDefaultToolkit().addAWTEventListener(new AutomaticDecorator(), AWTEvent.CONTAINER_EVENT_MASK);
+	}
+
+	static class DropListener implements DropTargetListener {
+		FileDialog fileDialog;
+
+		DropListener(FileDialog fileDialog) {
+			this.fileDialog = fileDialog;
+		}
+
+		String trim(String string) {
+			int i;
+			for (i = string.length(); i > 0; i--)
+				if ("\r\n".indexOf(string.charAt(i - 1)) < 0)
+					break;
+			return string.substring(0, i);
+		}
+
+		public void drop(DropTargetDropEvent dtde) {
+			dtde.acceptDrop(DnDConstants.ACTION_COPY);
+			Transferable t = dtde.getTransferable();
+
+			/* seems not to occor on Linux
+			if (t.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) try {
+				Iterable list = (Iterable)t.getTransferData(DataFlavor.javaFileListFlavor);
+				for (Object item : list) {
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			else
+			*/
+
+			if (t.isDataFlavorSupported(DataFlavor.stringFlavor)) try {
+                                String string = (String)t.getTransferData(DataFlavor.stringFlavor);
+				if (string.startsWith("file://")) {
+					string = trim(string.substring(7));
+					File file = new File(string);
+					if (file.isDirectory())
+						fileDialog.setDirectory(string);
+					else {
+						fileDialog.setDirectory(file.getParent());
+						fileDialog.setFile(file.getName());
+					}
+				}
+                        } catch (Exception e) {
+                                e.printStackTrace();
+                        }
+		}
+		public void dragOver(DropTargetDragEvent e) { }
+		public void dragEnter(DropTargetDragEvent e) {
+			e.acceptDrag(DnDConstants.ACTION_COPY);
+		}
+		public void dragExit(DropTargetEvent e) { }
+		public void dropActionChanged(DropTargetDragEvent e) { }
+	}
+
+	public static void registerDropTarget(Component component) {
+		if (component instanceof FileDialog)
+			new DropTarget(component,
+				new DropListener((FileDialog)component));
+		else
+			IJ.log("Warning: not a FileDialog: " + component);
 	}
 
 	/* convenience function to start it in the Script Editor */
