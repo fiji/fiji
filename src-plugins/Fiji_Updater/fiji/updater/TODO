@@ -25,7 +25,3 @@ Not-quite show-stoppers:
   details without updating the file, that should be perfectly fine.
 
   Think for example if a dependency is fixed.
-
-- The dependency list should be editable so that the developer can
-  correct mistakes (not all are "at-least" dependencies) and add
-  additional dependencies.

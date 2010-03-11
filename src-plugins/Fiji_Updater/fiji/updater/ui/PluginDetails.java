@@ -190,6 +190,7 @@ public class PluginDetails extends JTextPane implements UndoableEditListener {
 			return;
 
 		blankLine();
+		String tag = label;
 		if (list.size() > 1 && label.endsWith("y"))
 			label = label.substring(0, label.length() - 1) + "ie";
 		bold(label + (list.size() > 1 ? "s" : "") + ":\n");
@@ -203,7 +204,7 @@ public class PluginDetails extends JTextPane implements UndoableEditListener {
 			else
 				normal(object.toString());
 		}
-		addEditableRegion(offset, label, plugin);
+		addEditableRegion(offset, tag, plugin);
 	}
 
 	public void blankLine() {
