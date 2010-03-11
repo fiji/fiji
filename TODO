@@ -1,7 +1,6 @@
 A loose TODO list for Fiji
 ==========================
 
-- upload sample image does not say "Uploading ... finished"
 - freeline selection with thickness has a display bug
 - fix z-project, split channels for virtual stacks
 - fix substack maker for hyperstacks

@@ -104,6 +104,7 @@ public class Fiji_Uploader implements PlugIn {
 				total += len;
 				IJ.showProgress(total / (float)filesize);
 			}
+			IJ.showStatus(file.getName() + " uploaded");
 			IJ.showProgress(1, 1);
 			input.close();
 
