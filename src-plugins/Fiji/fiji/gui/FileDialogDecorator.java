@@ -1,6 +1,8 @@
 package fiji.gui;
 
 import java.awt.AWTEvent;
+import java.awt.Container;
+import java.awt.EventQueue;
 import java.awt.FileDialog;
 import java.awt.List;
 import java.awt.Toolkit;
@@ -15,11 +17,21 @@ public class FileDialogDecorator extends KeyAdapter {
 	protected List list;
 	protected long lastWhen;
 	protected String prefix;
+	protected boolean reRequestFocusAfterEnter;
 
 	long timeout = 300; // maybe there is a proper AWT/Swing property for this?
 
 	public FileDialogDecorator(List list) {
 		this.list = list;
+
+		/* Try to regain focus in the directory list after a
+		 * directory was entered.
+		 *
+		 * The directory list is identified by the component count 7,
+		 * which is a hack, but then, this whole class is.
+		 */
+		if (((Container)list.getParent()).getComponentCount() == 7)
+			reRequestFocusAfterEnter = true;
 	}
 
 	public void select(int index) {
@@ -29,10 +41,28 @@ public class FileDialogDecorator extends KeyAdapter {
 		list.makeVisible(index);
 	}
 
+	public void requestFocus() {
+		EventQueue.invokeLater(new Runnable() {
+			public void run() {
+				list.requestFocus();
+			}
+		});
+	}
+
 	public void keyPressed(KeyEvent e) {
 		int keyCode = e.getKeyCode();
-		if (keyCode < e.VK_SPACE)
+		if (keyCode < e.VK_SPACE) {
+			if (reRequestFocusAfterEnter && keyCode == e.VK_ENTER)
+				// Need to invoke later 2x to give Sun's
+				// KeyEvent handler a chance to request focus
+				// for the "Files" list.
+				EventQueue.invokeLater(new Runnable() {
+					public void run() {
+						requestFocus();
+					}
+				});
 			return;
+		}
 		switch (keyCode) {
 		case KeyEvent.VK_HOME:
 			select(0);
