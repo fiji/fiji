@@ -24,10 +24,19 @@ public class Object_Inspector implements PlugIn, TreeWillExpandListener {
 	
 	public void run(String arg) {
 		windows = new DefaultMutableTreeNode("Windows");
-		node(windows, "Dummy");
+		openFrame("Windows", windows);
+	}
+
+	public static void openFrame(String label, Object object) {
+		new Object_Inspector().openFrame(label,
+				new ObjectWrapper(label, object));
+	}
+
+	public void openFrame(String label, DefaultMutableTreeNode node) {
+		node(node, label);
 		
 		root = new DefaultMutableTreeNode("Root");
-		root.add(windows);
+		root.add(node);
 		
 		JTree tree = new JTree(root);
 		tree.setRootVisible(false);
