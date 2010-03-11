@@ -1,8 +1,6 @@
 A loose TODO list for Fiji
 ==========================
 
-- teach the Updater's "Upload it" option to break dependencies (optionally
-  replacing with a new dependency)
 - upload sample image does not say "Uploading ... finished"
 - freeline selection with thickness has a display bug
 - fix z-project, split channels for virtual stacks

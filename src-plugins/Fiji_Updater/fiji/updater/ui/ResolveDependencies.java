@@ -290,6 +290,11 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 			addDependencyButton("Replace with dependency to "
 					+ toUpload, plugin, dependency,
 					toUpload.getFilename());
+			addText("    ");
+			addDependencyButton("Replace all dependencies on "
+					+ dependency + " with dependencies to "
+					+ toUpload, null, dependency,
+					toUpload.getFilename());
 		}
 	}
 
@@ -306,10 +311,19 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 			final String removeDependency,
 			final String addDependency) {
 		addButton(label, new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
+			void replaceDependency(PluginObject plugin) {
 				plugin.removeDependency(removeDependency);
 				if (addDependency != null)
 					plugin.addDependency(addDependency);
+			}
+
+			public void actionPerformed(ActionEvent e) {
+				if (plugin != null)
+					replaceDependency(plugin);
+				else
+					for (PluginObject plugin : plugins)
+						if (plugin.hasDependency(removeDependency))
+							replaceDependency(plugin);
 				listIssues();
 			}
 		});
