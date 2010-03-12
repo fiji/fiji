@@ -103,7 +103,7 @@ win64)
 		test "$CWD"/fiji.exe -nt "$CWD"/fiji.cxx &&
 		test "$CWD"/fiji.exe -nt "$CWD"/precompiled/fiji-win64.exe &&
 		test "$CWD"/fiji.exe -nt "$CWD"/Fakefile &&
-		test "$CWD"/fiji.exe -nt "$CWD"/jars/fake.jar ||
+		test "$CWD"/fiji.exe -nt "$CWD"/$jar ||
 		cp precompiled/fiji-win64.exe fiji.exe
 	esac
 esac
