@@ -150,7 +150,7 @@ public class Directionality_ implements ExtendedPlugInFilter {
 			case FOURIER_COMPONENTS:
 				return "Fourier";
 			case LOCAL_GRADIENT_ORIENTATION:
-				return "gradient";
+				return "Gradient";
 			}
 			return "Not implemented";
 		}
@@ -365,7 +365,7 @@ public class Directionality_ implements ExtendedPlugInFilter {
 		
 		if (display_table) {
 			ResultsTable table = exportResults();
-			table.show("Directionality histograms for "+imp.getShortTitle());
+			table.show("Directionality histograms for "+imp.getShortTitle()+" (using "+method.toString()+")");
 		}
 	}
 	
@@ -745,7 +745,7 @@ public class Directionality_ implements ExtendedPlugInFilter {
 		
 		final ChartPanel chartPanel = new ChartPanel(chart);
 		chartPanel.setPreferredSize(new java.awt.Dimension(500, 270));
-		JFrame window = new JFrame("Directionality for "+imp.getShortTitle());
+		JFrame window = new JFrame("Directionality for "+imp.getShortTitle()+" (using "+method.toString()+")");
         window.add(chartPanel);
         window.validate();
         window.setSize(new java.awt.Dimension(500, 270));
@@ -924,7 +924,7 @@ public class Directionality_ implements ExtendedPlugInFilter {
 		
 		JPanel		table_panel = new JPanel(new GridLayout());
 		table_panel.add(scrollPane);	
-	    JFrame 		frame = new JFrame("Directionality analysis for "+imp.getShortTitle());
+	    JFrame 		frame = new JFrame("Directionality analysis for "+imp.getShortTitle()+" (using "+method.toString()+")");
 
 	    frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 	    //Create and set up the content pane.
