@@ -18,14 +18,3 @@ Not-quite show-stoppers:
 
 - make the list sortable by clicking on the column titles (second click
   sorts descending).
-
-- Usability bug: the "Edit details" button is only active when uploading a
-  plugin.  I'd rather have the Edit Details button on at all times (or let the
-  field be editable at all times); if the developer chooses to just edit the
-  details without updating the file, that should be perfectly fine.
-
-  Think for example if a dependency is fixed.
-
-- The dependency list should be editable so that the developer can
-  correct mistakes (not all are "at-least" dependencies) and add
-  additional dependencies.

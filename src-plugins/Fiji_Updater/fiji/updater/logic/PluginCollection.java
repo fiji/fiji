@@ -52,6 +52,10 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		return filter(is(Action.UNINSTALL));
 	}
 
+	public Iterable<PluginObject> toRemove() {
+		return filter(is(Action.REMOVE));
+	}
+
 	public Iterable<PluginObject> toUpdate() {
 		return filter(is(Action.UPDATE));
 	}
@@ -100,8 +104,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 			/* the old updater will only checksum these! */
 			})), or(startsWith("fiji-"),
 				and(startsWith(new String[] {
-					"ij.jar", "plugins/", "jars/",
-					"retro/", "misc/"
+					"plugins/", "jars/", "retro/", "misc/"
 					}), endsWith(".jar")))));
 	}
 

@@ -35,7 +35,7 @@
 /jars/cachedir
 /tmp.ijm
 /jars/fake.jar
-/ij.jar
+/jars/ij.jar
 /misc/Fiji.jar
 /plugins/Jython_Interpreter.jar
 /plugins/Clojure_Interpreter.jar

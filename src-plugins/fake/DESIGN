@@ -110,7 +110,7 @@ All
 This is the first rule in a Fakefile.  Its prerequisites are made, its
 target is ignored.
 
-	all <- ij.jar fiji
+	all <- jars/ij.jar fiji
 
 CompileClass
 ------------
