@@ -361,6 +361,8 @@ precompiled/fiji-tiger[bin/copy-file.py $PRE $TARGET] <- fiji-tiger
 precompiled/fiji-*[bin/copy-file.py $PRE $TARGET] <- fiji
 
 precompile-fake[] <- precompiled/fake.jar
+precompiled/fake.jar <- jars/fake.jar
+precompiled/ij.jar <- jars/ij.jar
 precompiled/*[bin/copy-file.py $PRE $TARGET] <- *
 
 precompile-submodules[] <- \
