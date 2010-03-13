@@ -15,6 +15,7 @@
 /jvm.cfg
 /samples/
 *.swp
+/.recent-changes.*
 /IJ_Prefs.txt
 /Fiji.app
 /fiji-*.dmg
