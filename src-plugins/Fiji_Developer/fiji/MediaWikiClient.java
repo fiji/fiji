@@ -229,7 +229,7 @@ public class MediaWikiClient {
 		}
 	}
 
-	String sendRequest(String[] getVars,
+	public String sendRequest(String[] getVars,
 			String[] postVars) throws IOException {
 		return sendRequest(getVars, postVars, null, false);
 	}
