@@ -200,13 +200,19 @@ public class Register_Virtual_Stack_MT implements PlugIn
 
 		String source_dir = sourceDirectory;
 		if (null == source_dir) 
+		{
+			IJ.error("Error: No source directory was provided.");
 			return;
+		}
 		source_dir = source_dir.replace('\\', '/');
 		if (!source_dir.endsWith("/")) source_dir += "/";
 		
 		String target_dir = outputDirectory;
 		if (null == target_dir) 
+		{
+			IJ.error("Error: No output directory was provided.");
 			return;
+		}
 		target_dir = target_dir.replace('\\', '/');
 		if (!target_dir.endsWith("/")) target_dir += "/";
 		
@@ -216,7 +222,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		if(save_transforms)
 		{
 			// Choose target folder to save images into
-			JFileChooser chooser = new JFileChooser(); 			
+			JFileChooser chooser = new JFileChooser(source_dir); 			
 			chooser.setDialogTitle("Choose directory to store Transform files");
 			chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 			chooser.setAcceptAllFileFilterUsed(true);
@@ -234,10 +240,9 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		String referenceName = null;						
 		if(non_shrinkage == false)
 		{		
-			JFileChooser chooser = new JFileChooser(); 
+			JFileChooser chooser = new JFileChooser(source_dir); 
 			// Choose reference image
 			chooser.setDialogTitle("Choose reference image");
-			chooser.setCurrentDirectory(new java.io.File(source_dir));
 			chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 			chooser.setAcceptAllFileFilterUsed(true);
 			if (chooser.showOpenDialog(gd) != JFileChooser.APPROVE_OPTION)
