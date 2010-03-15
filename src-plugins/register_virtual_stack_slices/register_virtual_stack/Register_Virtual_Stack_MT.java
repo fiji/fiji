@@ -1,7 +1,7 @@
 package register_virtual_stack;
 
 /** 
- * Albert Cardona, Ignacio Arganda-Carreras and Stephan Saalfeld 2009. 
+ * Albert Cardona, Ignacio Arganda-Carreras and Stephan Saalfeld 2009, 2010. 
  * This work released under the terms of the General Public License in its latest edition. 
  * */
 
@@ -88,7 +88,7 @@ import bunwarpj.trakem2.transform.CubicBSplineTransform;
  * <p>
  * <A target="_blank" href="http://pacific.mpi-cbg.de/wiki/Register_Virtual_Stack_Slices">http://pacific.mpi-cbg.de/wiki/Register_Virtual_Stack_Slices</A>
  * 
- * @version 11/30/2009
+ * @version 03/15/2010
  * @author Ignacio Arganda-Carreras (ignacio.arganda@gmail.com), Stephan Saalfeld and Albert Cardona
  */
 public class Register_Virtual_Stack_MT implements PlugIn 
