@@ -91,6 +91,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 	public void run(String arg) {
 		String dialogTitle = "Tutorial Maker";
 		String defaultTitle = "";
+		String label = "Tutorial_title";
 		mode = Mode.TUTORIAL_MAKER;
 
 		if (arg.equals("rename")) {
@@ -102,6 +103,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 			dialogTitle = "Fiji News";
 			defaultTitle = new SimpleDateFormat("yyyy-MM-dd - ")
 				.format(Calendar.getInstance().getTime());
+			label = "News_title";
 		}
 		else if (arg.equals("screenshot")) {
 			screenshot = IJ.getImage();
@@ -115,12 +117,13 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 			int dot = defaultTitle.lastIndexOf('.');
 			if (dot > 0)
 				defaultTitle = defaultTitle.substring(0, dot);
+			label = "Project_title";
 		}
 		else
 			interceptRenames();
 
 		GenericDialog gd = new GenericDialog(dialogTitle);
-		gd.addStringField("Tutorial_title", defaultTitle, 20);
+		gd.addStringField(label, defaultTitle, 20);
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return;
