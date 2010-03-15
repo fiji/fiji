@@ -523,6 +523,8 @@ public class Fake {
 			if (rule == null)
 				throw new FakeException("Unrecognized rule");
 
+			rule.prerequisiteString = prerequisites;
+
 			allRules.put(target, rule);
 
 			Iterator iter = list.iterator();
@@ -802,6 +804,7 @@ public class Fake {
 
 		public abstract class Rule {
 			protected String target;
+			protected String prerequisiteString;
 			protected List prerequisites, nonUpToDates;
 			protected boolean wasAlreadyInvoked;
 			protected boolean wasAlreadyChecked;
@@ -1182,6 +1185,10 @@ public class Fake {
 				}
 				in.close();
 				out.close();
+			}
+
+			public String getPrerequisiteString() {
+				return prerequisiteString;
 			}
 		}
 
