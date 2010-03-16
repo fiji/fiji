@@ -58,6 +58,10 @@ debug=false
 # Compile .java files for this Java version
 javaVersion=1.5
 
+# If false, skips rebuilds triggered from newer Fakefile or fake.jar
+# (see issues 40 & 45)
+rebuildIfFakeIsNewer=false
+
 # When building a .jar file, and a .config file of the same name is found in
 # this directory, it will be included as "plugins.config".
 pluginsConfigDirectory=staged-plugins

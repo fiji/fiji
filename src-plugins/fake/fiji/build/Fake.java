@@ -853,11 +853,14 @@ public class Fake {
 					return false;
 				}
 				long targetModifiedTime = file.lastModified();
-				if (targetModifiedTime < mtimeFakefile)
-					return upToDateError(file,
-							new File(path));
-				if (targetModifiedTime < mtimeFijiBuild)
-					return upToDateError(new File(fijiBuildJar), file);
+
+				if (getVarBool("rebuildIfFakeIsNewer")) {
+					if (targetModifiedTime < mtimeFakefile)
+						return upToDateError(file,
+								new File(path));
+					if (targetModifiedTime < mtimeFijiBuild)
+						return upToDateError(new File(fijiBuildJar), file);
+				}
 
 				nonUpToDates = new ArrayList();
 				Iterator iter = prerequisites.iterator();
