@@ -113,15 +113,16 @@ import org.jfree.data.xy.XYSeriesCollection;
  * <h2>Version history</h2>
  * 
  * <ul>
- * <li> v1.2: Added a new analysis method based on local gradient orientation.
- * <li> v1.1: Added an option to export the histogram as a table.
- * <li> v1.0: First working commit with the Fourier method.
+ * <li> v1.2 - 2010-03-10: Added a new analysis method based on local gradient orientation.
+ * <li> v1.1 - 2010-03-05: Added an option to export the histogram as a table, and option 
+ * to circular-shifts the histogram.
+ * <li> v1.0 - 2010-03-01: First working commit with the Fourier method.
  * </ul>
  * 
  * <h2>References</h2>
  * [1] Liu. Scale space approach to directional analysis of images. Appl. Opt. (1991) vol. 30 (11) pp. 1369-1373 
  * <p>
- * A discussion with A. Leroy is greatly acknowledged. 
+ * A discussion with A. Leroy and another one with J. Schindein are greatly acknowledged. 
  * <p>
  * 
  * @author Jean-Yves Tinevez jeanyves.tinevez@gmail.com
@@ -241,6 +242,12 @@ public class Directionality_ implements ExtendedPlugInFilter {
 			return DONE;
 		}
 		
+		// Test if we get an image
+		if (null == _imp) {
+			IJ.error("Directionality", "No images are open.");
+			return DONE;
+		}		
+	
 		// Parse possible macro inputs
 		String str = parseArgumentString(arg, "nbins=");
 		if (null != str) {
