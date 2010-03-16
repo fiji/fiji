@@ -8,12 +8,14 @@ import java.io.IOException;
 
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-public class Class2JarFileMap extends HashMap<String, String> {
-	public Class2JarFileMap() {
+public class Class2JarFilesMap extends HashMap<String, ArrayList<String>> {
+	public Class2JarFilesMap() {
 		try {
 			addJar("misc/Fiji.jar");
 		} catch (IOException e) {
@@ -72,30 +74,50 @@ public class Class2JarFileMap extends HashMap<String, String> {
 		if (ignore(className, jar))
 			return;
 		if (containsKey(className)) {
-			if (!className.startsWith("com.sun.medialib.codec.") &&
-					!className.startsWith("org.mozilla."))
-				IJ.log("Warning: class " + className
-						+ " was found both"
-						+ " in " + get(className)
-						+ " and in " + jar);
+			List jarList = get(className);
+			jarList.add(jar);
+		} else {
+			// Make the ArrayList initially of capacity 1, since it's
+			// rare to have a class in multiple jar files.
+			ArrayList<String> jarList = new ArrayList<String>(1);
+			jarList.add(jar);
+			put(className,jarList);
 		}
-		else
-			put(className, jar);
+	}
+
+	public static void printJarsForClass(Class2JarFilesMap map, String className, boolean oneLine) {
+		String indent = "    ";
+		List<String> classes = map.get(className);
+		if (!oneLine)
+			System.out.print(indent);
+		boolean firstTime = true;
+		for (String jarFile : classes) {
+			if (firstTime)
+				firstTime = false;
+			else
+				System.out.print(oneLine?", ":"\n"+indent);
+			System.out.print(jarFile);
+		}
+		System.out.println();
 	}
 
 	public static void main(String[] args) {
 		if (IJ.getInstance() == null)
 			new ImageJ();
 
-		Class2JarFileMap map = new Class2JarFileMap();
+		Class2JarFilesMap map = new Class2JarFilesMap();
 
 		if (args.length == 0)
-			for (String className : map.keySet())
-				System.out.println("class " + className
-					+ " is in " + map.get(className));
+			for (String className : map.keySet()) {
+				System.out.print("class " + className
+						   + " is in the following jar files: ");
+				printJarsForClass(map,className,true);
+			}
 		else
-			for (int i = 0; i < args.length; i++)
+			for (int i = 0; i < args.length; i++) {
 				System.out.println("class " + args[i]
-					+ " is in " + map.get(args[i]));
+						 + " is in the following jar files: ");
+				printJarsForClass(map,args[i],false);
+			}
 	}
 }
