@@ -1227,6 +1227,11 @@ public class Fake {
 				source = getLastPrerequisite() + jarName;
 				baseName = stripSuffix(jarName, ".jar");
 				configPath = getPluginsConfig();
+
+				String[] paths =
+					split(getVar("CLASSPATH"), ":");
+				for (int i = 0; i < paths.length; i++)
+					prerequisites.add(paths[i]);
 			}
 
 			boolean checkUpToDate() {
