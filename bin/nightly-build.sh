@@ -64,7 +64,7 @@ case "$1" in
 		then
 			find -name \*.java |
 			grep -ve ij-plugins/Sun_JAI_Sample_IO_Source_Code \
-				-e ij-plugins/Quickvol |
+				-e ij-plugins/Quickvol -e jython/sandbox |
 			./fiji --jar-path $(./fiji --print-java-home)/../lib/ \
 				--main-class=com.sun.tools.javadoc.Main \
 				-d /var/www/javadoc \
