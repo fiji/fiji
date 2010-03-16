@@ -157,6 +157,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Manual_Tracking.jar \
 	plugins/Calculator_Plus.jar \
 	plugins/3D_Objects_Counter.jar \
+	plugins/Trainable_Segmentation.jar \
 	plugins/IsoData_Classifier.jar \
 	plugins/RATS_.jar \
 	plugins/Directionality_.jar \
@@ -275,6 +276,8 @@ plugins/Script_Editor.jar <- src-plugins/Script_Editor/**/*.java  \
 							var.png[images/var.png]    \
 							funtion.png[images/function.png] \
 							src-plugins/Script_Editor/templates/**/*
+
+CLASSPATH(plugins/Trainable_Segmentation.jar)=jars/weka.jar:plugins/Stitching_.jar
 
 plugins/*_*.jar <- src-plugins/*_*/**/*.java
 
