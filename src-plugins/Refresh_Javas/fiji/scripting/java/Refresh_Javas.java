@@ -157,6 +157,7 @@ public class Refresh_Javas extends RefreshScripts {
 			parser.parseRules(null);
 		}
 		parser.setVariable("debug", "true");
+		parser.setVariable("buildDir", "build");
 		parser.getRule(target).make();
 
 		return name;

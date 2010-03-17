@@ -853,11 +853,14 @@ public class Fake {
 					return false;
 				}
 				long targetModifiedTime = file.lastModified();
-				if (targetModifiedTime < mtimeFakefile)
-					return upToDateError(file,
-							new File(path));
-				if (targetModifiedTime < mtimeFijiBuild)
-					return upToDateError(new File(fijiBuildJar), file);
+
+				if (getVarBool("rebuildIfFakeIsNewer")) {
+					if (targetModifiedTime < mtimeFakefile)
+						return upToDateError(file,
+								new File(path));
+					if (targetModifiedTime < mtimeFijiBuild)
+						return upToDateError(new File(fijiBuildJar), file);
+				}
 
 				nonUpToDates = new ArrayList();
 				Iterator iter = prerequisites.iterator();
@@ -1227,6 +1230,11 @@ public class Fake {
 				source = getLastPrerequisite() + jarName;
 				baseName = stripSuffix(jarName, ".jar");
 				configPath = getPluginsConfig();
+
+				String[] paths =
+					split(getVar("CLASSPATH"), ":");
+				for (int i = 0; i < paths.length; i++)
+					prerequisites.add(paths[i]);
 			}
 
 			boolean checkUpToDate() {

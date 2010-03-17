@@ -58,6 +58,10 @@ debug=false
 # Compile .java files for this Java version
 javaVersion=1.5
 
+# If false, skips rebuilds triggered from newer Fakefile or fake.jar
+# (see issues 40 & 45)
+rebuildIfFakeIsNewer=true
+
 # When building a .jar file, and a .config file of the same name is found in
 # this directory, it will be included as "plugins.config".
 pluginsConfigDirectory=staged-plugins
@@ -153,6 +157,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Manual_Tracking.jar \
 	plugins/Calculator_Plus.jar \
 	plugins/3D_Objects_Counter.jar \
+	plugins/Trainable_Segmentation.jar \
 	plugins/IsoData_Classifier.jar \
 	plugins/RATS_.jar \
 	plugins/Directionality_.jar \
@@ -181,7 +186,7 @@ jdk[bin/checkout-jdk.py $JDK] <-
 
 # From submodules
 jars/ij.jar <- jars/javac.jar ImageJA/
-CLASSPATH(plugins/VIB_.jar)=plugins/LSM_Toolbox.jar
+CLASSPATH(plugins/VIB_.jar)=plugins/LSM_Toolbox.jar:plugins/mpicbg_.jar:jars/imglib.jar
 plugins/VIB_.jar <- plugins/LSM_Toolbox.jar VIB/
 plugins/mpicbg_.jar <- mpicbg/
 jars/clojure.jar <- clojure/
@@ -271,6 +276,8 @@ plugins/Script_Editor.jar <- src-plugins/Script_Editor/**/*.java  \
 							var.png[images/var.png]    \
 							funtion.png[images/function.png] \
 							src-plugins/Script_Editor/templates/**/*
+
+CLASSPATH(plugins/Trainable_Segmentation.jar)=jars/weka.jar:plugins/Stitching_.jar
 
 plugins/*_*.jar <- src-plugins/*_*/**/*.java
 
