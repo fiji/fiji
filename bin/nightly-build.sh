@@ -67,7 +67,7 @@ case "$1" in
 				-e ij-plugins/Quickvol -e jython/sandbox \
 				-e ij-plugins/VTK-Examples \
 				-e jython/jython/Demo \
-				-e weka/wekaexamples/src/main/java/wekaexamples i\
+				-e weka/wekaexamples/src/main/java/wekaexamples \
 				-e jython/jython/src/org/python/expose/generate/PyTypes \
 				-e bio-formats/components/visbio/src/loci/visbio/overlays/OverlayTransform.java \
 				-e bio-formats/components/slim-plotter/ \
