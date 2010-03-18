@@ -48,15 +48,14 @@ public class JFileChooserDecorator implements DropTargetListener {
 
 			((ContainerEvent)e).getChild().setDropTarget(null);
 			synchronized(this) {
-				if (allJFileChoosers.containsKey(source)) {
-					removeDropTargetsFromChildren(allJFileChoosers.get(source).fileChooser);
+				if (allJFileChoosers.containsKey(source))
 					return;
-				}
 				allJFileChoosers.put((JFileChooser)source, null);
 			}
 			JFileChooserDecorator decorator = new JFileChooserDecorator((JFileChooser)source);
 			new DropTarget((JFileChooser)source, decorator);
 			allJFileChoosers.put((JFileChooser)source, decorator);
+			decorator.removeDropTargetsWithDelay(8);
 		}
 	}
 
@@ -123,10 +122,10 @@ public class JFileChooserDecorator implements DropTargetListener {
 				 * is set using the setCurrentDirectory()
 				 * method, Swing insists to set an
 				 * (incompatible) DropTarget. It does that so
-				 * late that we have to invokeLater() >2 times
+				 * late that we have to invokeLater() >4 times
 				 * and remove that DropTarget only then.
 				 */
-				removeDropTargetsWithDelay(2);
+				removeDropTargetsWithDelay(4);
 			}
                 } catch (Exception e) {
                         e.printStackTrace();
@@ -134,6 +133,7 @@ public class JFileChooserDecorator implements DropTargetListener {
 	}
 	public void dragOver(DropTargetDragEvent e) { }
 	public void dragEnter(DropTargetDragEvent e) {
+		removeDropTargetsWithDelay(8);
 		e.acceptDrag(DnDConstants.ACTION_COPY);
 	}
 	public void dragExit(DropTargetEvent e) { }
