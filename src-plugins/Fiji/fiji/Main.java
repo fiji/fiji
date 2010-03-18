@@ -1,6 +1,7 @@
 package fiji;
 
 import fiji.gui.FileDialogDecorator;
+import fiji.gui.JFileChooserDecorator;
 
 import ij.IJ;
 import ij.ImageJ;
@@ -173,6 +174,7 @@ public class Main implements AWTEventListener {
 	public static void premain() {
 		Toolkit.getDefaultToolkit().addAWTEventListener(new Main(), -1);
 		FileDialogDecorator.registerAutomaticDecorator();
+		JFileChooserDecorator.registerAutomaticDecorator();
 	}
 
 	/*
