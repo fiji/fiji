@@ -44,6 +44,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ExecutionException;
 
+import ij3d.segmentation.SegmentationListener;
+
 public class Image3DUniverse extends DefaultAnimatableUniverse {
 
 	public static ArrayList<Image3DUniverse> universes =
@@ -152,6 +154,8 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 				select(c);
 			}
 		});
+
+		canvas.addMouseListener(new SegmentationListener(this));
 
 		universes.add(this);
 	}
