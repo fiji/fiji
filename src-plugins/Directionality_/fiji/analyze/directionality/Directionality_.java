@@ -3,12 +3,16 @@ package fiji.analyze.directionality;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.WindowManager;
 import ij.gui.GenericDialog;
+import ij.gui.Line;
+import ij.gui.NewImage;
 import ij.gui.Roi;
 import ij.measure.CurveFitter;
 import ij.measure.ResultsTable;
+import ij.plugin.PlugIn;
 import ij.plugin.filter.Convolver;
-import ij.plugin.filter.ExtendedPlugInFilter;
+import ij.plugin.filter.GaussianBlur;
 import ij.plugin.filter.PlugInFilter;
 import ij.plugin.filter.PlugInFilterRunner;
 import ij.process.FHT;
@@ -58,16 +62,14 @@ import org.jfree.data.xy.XYSeriesCollection;
  * periodic nature of the histogram. The 'Direction (º)' column reports the
  * center of the gaussian. The 'Dispersion (º)' column reports the standard
  * deviation of the gaussian. The 'Amount' column is the sum of the histogram
- * from center-std to center+std, divided by the total sum of the histogram. The
+ * from the center of the peak to <b>two</b> standard deviation away, divided by 
+ * the total sum of the histogram. The
  * real histogram values are used for the summation, not the gaussian fit. The
  * 'Goodness' column reports the goodness of the fit; 1 is good, 0 is bad.
  * <p>
  * A study made on artificial images reveal that the 'Amount' value as
  * calculated here underestimates the real proportion of structures with the
- * preferred orientation. So for the pine image up there, one can conclude that
- * the proportion of needle leaves oriented around +60º is at least 25%
- * (however, the image is not completely uniform, which cripples the meaning of
- * this amount value).
+ * preferred orientation.
  * 
  * <h2>Analysis methods</h2>
  * 
@@ -96,23 +98,23 @@ import org.jfree.data.xy.XYSeriesCollection;
  * 
  * <h2>Code structure</h2>
  * 
- * This plugin is written as a classical ImageJ plugin. It implements {@link PlugInFilter},
- * and relies on {@link PlugInFilterRunner} to be run. 
+ * This plugin is written as a classical ImageJ plugin. It implements {@link PlugIn}. 
  * <p>
- * String arguments can be passed to it, using the {@link #setup(String, ImagePlus)} method.
+ * String arguments can be passed to it, using the {@link #run(String)} method.
  * For instance:
  * 
  *  <pre>
  *  ImagePlus imp = IJ.openImage("./TwoLines.tif");
  *  imp.show();
  *  Directionality_ da = new Directionality_();
- *  String command = "Directionality";
- *  new PlugInFilterRunner(da, command, "nbins=60, start=-90, method=gradient");
+ *  da.run("nbins=60, start=-90, method=gradient");
  *  </pre>
  * 
  * <h2>Version history</h2>
  * 
  * <ul>
+ * <li> v1.3 - 2010-03-17: Heavy refactoring, made it implement Plugin interface, so has to 
+ * be conveniently called from a script.
  * <li> v1.2 - 2010-03-10: Added a new analysis method based on local gradient orientation.
  * <li> v1.1 - 2010-03-05: Added an option to export the histogram as a table, and option 
  * to circular-shifts the histogram.
@@ -128,13 +130,13 @@ import org.jfree.data.xy.XYSeriesCollection;
  * @author Jean-Yves Tinevez jeanyves.tinevez@gmail.com
  * @version 1.2
  */
-public class Directionality_ implements ExtendedPlugInFilter {
+public class Directionality_ implements PlugIn {
 	
 	/*
 	 * ENUMS
 	 */
 	
-	protected enum AnalysisMethod {
+	public enum AnalysisMethod {
 		FOURIER_COMPONENTS,
 		LOCAL_GRADIENT_ORIENTATION;
 		public String toString() {
@@ -162,24 +164,42 @@ public class Directionality_ implements ExtendedPlugInFilter {
 	 * FIELDS
 	 */
 	
-	private static final float FREQ_THRESHOLD = 5.0f; // get rid of pixels too close to the center in the FFT spectrum
-	private static final String PLUGIN_NAME = "Directionality analysis";
-	private static final String VERSION_STR = "1.0";
+	/* CONSTANTS */
 	
+	private static final float FREQ_THRESHOLD = 5.0f; // get rid of pixels too close to the center in the FFT spectrum
+	/** How many sigmas away from the gaussian center we sum to get the amount value. */ 
+	private static final double SIGMA_NUMBER = 2;
+	private static final String PLUGIN_NAME = "Directionality analysis";
+	private static final String VERSION_STR = "1.3";
+	
+	/* SETTING FIELDS, they determine results */
+	
+	/** The ImagePlus this plugin operates on. */
+	protected ImagePlus imp;
 	/** If true, will display FFTs and filters. */
 	protected boolean debug = false;
-	
-	protected ImagePlus imp;
-	protected ImageStack filters;
-	protected FloatProcessor window, r, theta;
-	protected int width, height, small_side, long_side, npady, npadx, step, pad_size;
+	/** The number of bins to create. */
 	protected int nbins = 90;
 	/** The first bin in degrees, so that we are not forced to start at -90 */
 	private double bin_start = -90;
+	/** Method used for analysis, as set by the user. */
+	private AnalysisMethod method = AnalysisMethod.FOURIER_COMPONENTS; // Only method implemented so far
+	/** If set true, will display a {@link ResultsTable} with the histogram at the end of processing. */
+	private boolean display_table = false;
+
+	/* STD FIELDS */
+	
+	/** FloatProcessor to convert source ImageProcessor to. */
+	private FloatProcessor fip;
+	/** Fourier filters are stored as a stack */
+	protected ImageStack filters;
+	/** Polar coordinates, stored as a FloatProcessor. */
+	protected FloatProcessor window, r, theta;
+	protected int width, height, small_side, long_side, npady, npadx, step, pad_size;
 	/** The bin centers, in degrees */
 	protected double[] bins;
-	/** The directionality histogram, one array per processor.*/
-	protected ArrayList<double[]> directionality;
+	/** The directionality histogram, one array per processor (3 in the case of a ColorProcessor).*/
+	protected ArrayList<double[]> histograms;
 	
 	private FloatProcessor padded_square_block; 
 	private float[] window_pixels;
@@ -189,174 +209,83 @@ public class Directionality_ implements ExtendedPlugInFilter {
 	protected double[] goodness_of_fit;
 	/** Store a String representing the fitting function. */
 	protected String fit_string;
-	/** False if fitting of the results have not been done, true otherwise. */
-	private boolean fit_done;
-	/** If set true, will display a {@link ResultsTable} with the histogram at the end of processing. */
-	private boolean display_table = false;
-	/** Method used for analysis, as set by the user. */
-	private AnalysisMethod method = AnalysisMethod.FOURIER_COMPONENTS; // Only method implemented so far
+	/** Used to pass the slice we are currently analyzing. */
+	private int slice_index;
 	
 	
 	/*
-	 * EXTENDEDPLUGINFILTER METHODS
+	 * PLUGIN METHODS
 	 */
+	
 	
 	/**
-	 * This method will be run once for every slice of the stack given in argument. It will analyze it 
-	 * using the fields set in the {@link #setup(String, ImagePlus)} method, and push results to the 
-	 * {@link #directionality} list, containing the histograms for all this image slices. 
+	 * Called when this plugin is launched from ImageJ. 
+	 * This method
+	 * <ol>
+	 * 	<li> grabs the current ImagePlus
+	 * 	<li> displays the user dialog and sets setting fields accordingly
+	 * 	<li> calls the {@link #computesHistograms()} method, which computes the histograms
+	 * 	<li> calls the {@link #fitHistograms()} method, which fits the histograms
+	 * 	<li> display the results
+	 * </ol>
+	 * <p>
+	 * If the method is called with String arguments, fields are set according to it, and
+	 * no dialog are displayed (macro recordable).
+	 * 
+	 *  @param  arg  the string argument, for instance "nbins=90, start=-90, method=gradient"
 	 */
-	public void run(ImageProcessor _ip) {
-		
-		fit_done = false;
-		final FloatProcessor ip = (FloatProcessor) _ip; // we can do that, for the flag of this plugin is set accordingly
-		double[] dir = null;
-		
-		switch (method) {
-		case FOURIER_COMPONENTS:
-			dir = fourier_component(ip);
-			break;
-		case LOCAL_GRADIENT_ORIENTATION:
-			dir = local_gradient_orientation(ip);
-			break;
-		}
-		
-		// Normalize directionality
-		double sum = dir[0];
-		for (int i = 1; i < dir.length; i++) {
-			sum += dir[i];
-		}
-		for (int i = 0; i < dir.length; i++) {
-			dir[i] = dir[i] / sum;
-		}
-		directionality.add(dir);
-		
-	}
-	
-
-	public int setup(String arg, ImagePlus _imp) {
-		
-		// Are we called after processing?
-		if (arg.contains("final")) {
-			displayResults();
-			return DONE;
-		}
+	public void run(String arg) {
 		
 		// Test if we get an image
-		if (null == _imp) {
+		imp = WindowManager.getCurrentImage();
+		if (null == imp) {
 			IJ.error("Directionality", "No images are open.");
-			return DONE;
+			return;
 		}		
-	
-		// Parse possible macro inputs
-		String str = parseArgumentString(arg, "nbins=");
-		if (null != str) {
-			try {
-				nbins = Integer.parseInt(str);
-			} catch (NumberFormatException nfe) {
-				IJ.error("Directionality: bad argument for number of bins: "+str);
-				return DONE;
-			}
-		}
-		str = parseArgumentString(arg, "start=");
-		if (null != str) {
-			try {
-				bin_start = Double.parseDouble(str);
-			} catch (NumberFormatException nfe) {
-				IJ.error("Directionality: bad argument for start point: "+str);
-				return DONE;
-			}
-		}
-		str = parseArgumentString(arg, "method=");
-		if (null != str) {
-			for (AnalysisMethod m : AnalysisMethod.values()) {
-				if (m.toCommandName().equalsIgnoreCase(str)) {
-					method = m;
+
+		// Non-interactive mode?
+		if (null != arg && arg.length() > 0) {
+			
+			// Parse possible macro inputs
+			String str = parseArgumentString(arg, "nbins=");
+			if (null != str) {
+				try {
+					nbins = Integer.parseInt(str);
+				} catch (NumberFormatException nfe) {
+					IJ.error("Directionality: bad argument for number of bins: "+str);
+					return;
 				}
 			}
-		}
-		
-		// Prepare data storage
-		directionality = new ArrayList<double[]>(_imp.getStack().getSize());
-		
-		// Assign fields
-		this.imp = _imp;
-		this.width = _imp.getWidth();
-		this.height = _imp.getHeight();
-		
-		// Flags
-		return DOES_ALL
-			+ DOES_STACKS
-			+ CONVERT_TO_FLOAT
-			+ NO_CHANGES
-			+ FINAL_PROCESSING;
-	}
-	
-	public void setNPasses(int nPasses) {	}
-
-	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr) {
-		
-		// Prepare dialog
-		String current = imp.getTitle();
-		String[] method_names = new String[AnalysisMethod.values().length];
-		for (int i = 0; i < method_names.length; i++) {
-			method_names[i] = AnalysisMethod.values()[i].toString();
-		}
-		
-		// Layout dialog
-		GenericDialog gd = new GenericDialog(PLUGIN_NAME + " v" + VERSION_STR);
-		gd.addMessage(current);
-		gd.addChoice("Method:", method_names, method.toString());
-		gd.addNumericField("Nbins: ", nbins, 0);
-		gd.addNumericField("Histogram start", bin_start , 0, 4, "º");
-		gd.addCheckbox("Display table", display_table);
-		gd.addCheckbox("Debug", debug);
-		gd.showDialog();
-		
-		// Collect dialog settings
-		if (gd.wasCanceled())
-			return DONE;
-		String chosen_method = gd.getNextChoice();
-		for (int i = 0; i < method_names.length; i++) {
-			if (chosen_method.equals(method_names[i])) {
-				method = AnalysisMethod.values()[i];
-				break;
+			str = parseArgumentString(arg, "start=");
+			if (null != str) {
+				try {
+					bin_start = Double.parseDouble(str);
+				} catch (NumberFormatException nfe) {
+					IJ.error("Directionality: bad argument for start point: "+str);
+					return;
+				}
 			}
-		} 
-		
-		// Reflect user settings in fields
-		nbins = (int) gd.getNextNumber();
-		bin_start = gd.getNextNumber();
-		display_table = gd.getNextBoolean();
-		debug = gd.getNextBoolean();
-
-		if (AnalysisMethod.FOURIER_COMPONENTS.equals(method)) {
-			initFourierFields();
+			str = parseArgumentString(arg, "method=");
+			if (null != str) {
+				for (AnalysisMethod m : AnalysisMethod.values()) {
+					if (m.toCommandName().equalsIgnoreCase(str)) {
+						method = m;
+					}
+				}
+			}
+		} else {
+			showDialog();
 		}
 		
-		prepareBins();
+		// Launch analysis, this will set the directionality field
+		computesHistograms();
 		
-		return DOES_ALL
-			+ DOES_STACKS
-			+ CONVERT_TO_FLOAT
-			+ NO_CHANGES
-			+ FINAL_PROCESSING;		
-	}
-
-	
-	/*
-	 * PUBLIC METHODS
-	 */
-	
-	/**
-	 * This method is called when all slices have been analyzed. It is used to call 
-	 * the display of the fitting of the histograms, their display, and the display
-	 * of the result table.
-	 */
-	public void displayResults() {
-		fitResults();
-		JFrame plot_frame = drawResults();
-		JFrame data_frame = analyzeFits();
+		// Fit histograms
+		fitHistograms();
+		
+		// Display results
+		JFrame plot_frame = plotResults();
+		JFrame data_frame = displayFitAnalysis();
 		
 		int x = Math.max(0, imp.getWindow().getLocation().x - plot_frame.getSize().width);
 		int y = imp.getWindow().getLocation().y;
@@ -371,8 +300,83 @@ public class Directionality_ implements ExtendedPlugInFilter {
 		data_frame.setVisible(true);
 		
 		if (display_table) {
-			ResultsTable table = exportResults();
+			ResultsTable table = displayResultsTable();
 			table.show("Directionality histograms for "+imp.getShortTitle()+" (using "+method.toString()+")");
+		}
+	}
+	
+	
+	
+	
+	
+	
+	
+
+	/*
+	 * PUBLIC METHODS
+	 */
+
+
+	
+	
+	
+	/**
+	 * This method runs the analysis on all slices, and store resulting histograms in the 
+	 * {@link #histograms} fields. Calling this method resets the aforementioned field.
+	 */
+	public void computesHistograms() {
+		if (null == imp) return;
+		
+		// Reset analysis fields
+		params_from_fit = null;
+		goodness_of_fit = null;
+		
+		// Prepare helper fields
+		bins = prepareBins(nbins, bin_start);
+		switch (method) {
+		case FOURIER_COMPONENTS:
+			initFourierFields();
+			break;
+		case LOCAL_GRADIENT_ORIENTATION:
+			break;		
+		}
+
+		// Prepare result holder
+		int n_slices = imp.getStackSize();
+		histograms = new ArrayList<double[]>(n_slices * imp.getNChannels()); 
+		
+		// Loop over each slice
+		ImageProcessor ip = null;
+		double[] dir = null;
+		for (int i = 0; i < n_slices; i++) {
+			slice_index = i;
+			ip = imp.getStack().getProcessor(i+1);
+			for (int channel_number = 0; channel_number < ip.getNChannels(); channel_number++) {
+				
+				// Convert to float processor
+				fip = ip.toFloat(channel_number, fip);
+				
+				// Dispatch to specialized method
+				switch (method) {
+				case FOURIER_COMPONENTS:
+					dir = fourier_component(fip);
+					break;
+				case LOCAL_GRADIENT_ORIENTATION:
+					dir = local_gradient_orientation(fip);
+					break;
+				}
+				
+				// Normalize directionality
+				double sum = dir[0];
+				for (int j = 1; j < dir.length; j++) {
+					sum += dir[i];
+				}
+				for (int j = 0; j < dir.length; j++) {
+					dir[i] = dir[i] / sum;
+				}
+				
+				histograms.add( dir );
+			}
 		}
 	}
 	
@@ -382,7 +386,10 @@ public class Directionality_ implements ExtendedPlugInFilter {
 	 * 
 	 * @return  the result table, which show() method must be called to become visible.
 	 */
-	public ResultsTable exportResults() {
+	public ResultsTable displayResultsTable() {
+		if (null == histograms) 
+			return null;
+		
 		ResultsTable table = new ResultsTable();
 		String[] names = makeNames();
 		double[] dir;
@@ -390,12 +397,441 @@ public class Directionality_ implements ExtendedPlugInFilter {
 			table.incrementCounter();
 			table.addValue("Direction (º)", bins[i]);
 			for (int j = 0; j < names.length; j++) {
-				dir = directionality.get(j);
+				dir = histograms.get(j);
 				table.addValue(names[j], dir[i]);
 			}
 		}
 		return table;		
 	}
+	
+	/**
+	 * Return the result of analyzing the gaussian fit of the peak.
+	 * Results are returned in the shape of an ArrayList of double[], one element
+	 * per slice. The content of the double arrays is as follow:
+	 * <ol start=0>
+	 * 	<li> gaussian peak center
+	 * 	<li> gaussian standard deviation
+	 * 	<li> amount, that is: the sum of the histogram data from the gaussian center until {@value #SIGMA_NUMBER} times
+	 * its standard deviation away
+	 * 	<li> the goodness of fit 
+	 * </ol>
+	 * The periodic nature of the data is taken into account. For the amount value, the actual values
+	 * of the histogram are summed, not the values from the fit.
+	 * 
+	 * 
+	 * @return  the fit analysis
+	 */
+	public ArrayList<double[]> getFitAnalysis() {
+		if (null == histograms)
+			return null;
+		
+		final ArrayList<double[]> fit_analysis = new ArrayList<double[]>(histograms.size());
+		double[] gof = getGoodnessOfFit();
+		double[] params = null;
+		double[] dir = null;
+		double[] analysis = null;
+		double amount, center, std, xn;
+		
+		for (int i = 0; i < histograms.size(); i++) {
+			params =  params_from_fit.get(i);
+			dir = histograms.get(i);
+			analysis = new double[4];
+			
+			amount = 0; // we sum under +/- N*sigma, taking periodicity into account
+			center = params[2];
+			std = params[3];
+			for (int j = 0; j < dir.length; j++) {
+				xn = bins[j];
+				if (Math.abs(xn-center) > 90.0 ) { // too far, we want to shift then
+					if (xn>center) {
+						xn = xn - 180.0;							
+					} else {
+						xn = xn + 180.0;
+					}
+				}
+				if ( (xn<center-SIGMA_NUMBER*std) || (xn>center+SIGMA_NUMBER*std) ) {
+					continue;
+				}
+				amount += dir[j];
+			}
+			
+			analysis[0] = center;
+			analysis[1] = std;
+			analysis[2] = amount;
+			analysis[3] = gof[i];
+			fit_analysis.add(analysis);
+		}
+		return fit_analysis;
+	}
+	
+	/**
+	 * This method is called to draw the histograms resulting from image analysis. It reads the result
+	 * in the {@link #histograms} list field, and use the JFreeChart library to draw a nice 
+	 * plot window. If the {@link #fitResults()} method was called before, the fits are also drawn.
+	 * 
+	 * @return  a {@link JFrame} containing the histogram plots, which setVisible(boolean) method must
+	 * be called in order to be displayed
+	 */
+	public JFrame plotResults() {
+		final XYSeriesCollection histogram_plots = new XYSeriesCollection();
+		final LookupPaintScale lut = createLUT(histograms.size());
+		final String[] names = makeNames();
+		XYSeries series;
+		
+		double[] dir;
+		for (int i = 0; i < histograms.size(); i++) {
+			dir = histograms.get(i);
+			series = new XYSeries(names[i]);
+			for (int j = 0; j < dir.length; j++) {
+				series.add(bins[j], dir[j]);
+			}
+			histogram_plots.addSeries(series);
+		}
+		histogram_plots.setIntervalWidth(bins[1]-bins[0]);
+		
+		// Create chart with histograms
+		final JFreeChart chart = ChartFactory.createHistogram(
+				"Directionality histograms",
+				"Direction (º)",
+				"Amount", 
+				histogram_plots, 
+				PlotOrientation.VERTICAL,
+				true,
+				true,
+				false);
+		
+		// Set the look of histograms
+		final XYPlot plot = (XYPlot) chart.getPlot();
+		final ClusteredXYBarRenderer renderer = new ClusteredXYBarRenderer(0.3, false);
+		float color_index;
+		for (int i = 0; i < histograms.size(); i++) {
+			color_index = (float)i/(float)(histograms.size()-1);
+			renderer.setSeriesPaint(i, lut.getPaint(color_index) );
+		}
+		plot.setRenderer(0, renderer);
+		
+		// Draw fit results
+		if (null == params_from_fit) {
+			// Make new X
+			final double[] X = new double[bins.length*10]; // oversample 10 times
+			for (int i = 0; i < X.length; i++) {
+				X[i] = bins[0] + (bins[bins.length-1]-bins[0])/X.length * i;
+			}
+			// Create dataset
+			final XYSeriesCollection fits = new XYSeriesCollection();
+			XYSeries fit_series;
+			double val, center, xn;
+			double[] params;
+			final double half_range = (bins[bins.length-1] - bins[0])/2.0;
+			for (int i = 0; i < histograms.size(); i++) { // we have to deal with periodic issue here too
+				params = params_from_fit.get(i).clone();
+				center = params[2];
+				fit_series = new XYSeries(names[i]);
+				for (int j = 0; j < X.length; j++) {
+					xn = X[j];
+					if (Math.abs(xn-center) > half_range ) { // too far
+						if (xn>center) {
+							xn = xn - 2*half_range;							
+						} else {
+							xn = xn + 2*half_range;
+						}
+					}
+					val = CurveFitter.f(CurveFitter.GAUSSIAN, params, xn);
+					fit_series.add(X[j], val);
+				}
+				fits.addSeries(fit_series);
+			}
+			plot.setDataset(1, fits);
+			plot.setRenderer(1, new XYLineAndShapeRenderer(true, false));
+			for (int i = 0; i < histograms.size(); i++) {
+				color_index = (float)i/(float)(histograms.size()-1);
+				plot.getRenderer(1).setSeriesPaint(i, lut.getPaint(color_index) );
+			}
+			
+		}
+		plot.getDomainAxis().setRange(bins[0], bins[bins.length-1]);
+		
+		final ChartPanel chartPanel = new ChartPanel(chart);
+		chartPanel.setPreferredSize(new java.awt.Dimension(500, 270));
+		JFrame window = new JFrame("Directionality for "+imp.getShortTitle()+" (using "+method.toString()+")");
+        window.add(chartPanel);
+        window.validate();
+        window.setSize(new java.awt.Dimension(500, 270));
+        return window;
+	}
+	
+	/**
+	 * This method tries to fit a gaussian to the highest peak of each directionality histogram, 
+	 * and store fit results in the {@link #params_from_fit} field. The goodness of fit will be
+	 * stored in {@link #goodness_of_fit}.
+	 */
+	public void fitHistograms() {
+		if (null == histograms)
+			return;
+		
+		params_from_fit = new ArrayList<double[]>(histograms.size());
+		goodness_of_fit = new double[histograms.size()];
+		double[] dir;
+		double[] init_params = new double[4];
+		double[] params = new double[4];
+		double[] padded_dir;
+		double[] padded_bins;
+		
+		double ymax, ymin;
+		int imax, shift_index, current_index;
+		
+		// Prepare fitter and function
+		CurveFitter fitter = null;
+		
+		// Loop over slices
+		for (int i = 0; i < histograms.size(); i++) {
+			
+			dir = histograms.get(i);
+			
+			// Infer initial values
+			ymax = Double.NEGATIVE_INFINITY;
+			ymin = Double.POSITIVE_INFINITY;
+			imax = 0;
+			for (int j = 0; j < dir.length; j++) {
+				if (dir[j] > ymax) {
+					ymax = dir[j];
+					imax = j;
+				}
+				if (dir[j]<ymin) {
+					ymin = dir[j];
+				}
+			}
+						
+			// Shift found peak to the center (periodic issue) and add to fitter
+			padded_dir 	= new double[bins.length];
+			padded_bins = new double[bins.length];
+			shift_index = bins.length/2 - imax;
+			for (int j = 0; j < bins.length; j++) {
+				current_index = j - shift_index;
+				if (current_index < 0) {
+					current_index += bins.length; 
+				}
+				if (current_index >= bins.length) {
+					current_index -= bins.length;
+				}
+				padded_dir[j] 	= dir[current_index];
+				padded_bins[j] 	= bins[j];
+			}			
+			fitter = new CurveFitter(padded_bins, padded_dir);
+			
+			init_params[0] = ymin; // base
+			init_params[1] = ymax; // peak value 
+			init_params[2] = padded_bins[bins.length/2]; // peak center with padding
+			init_params[3] = 2 * ( bins[1] - bins[0]); // std
+			
+			// Do fit
+			fitter.doFit(CurveFitter.GAUSSIAN);
+			params = fitter.getParams();
+			goodness_of_fit[i] = fitter.getFitGoodness();
+			if (shift_index < 0) { // back into orig coordinates
+				params[2] += (bins[-shift_index]-bins[0]);
+			} else {
+				params[2] -= (bins[shift_index]-bins[0]);
+			}
+			params[3] = Math.abs(params[3]); // std is positive
+			params_from_fit.add(params);
+		}
+		fit_string = fitter.getFormula();
+	}
+	
+	/**
+	 * This method displays the fit analysis results in a {@link JTable}.
+	 * 
+	 * @return  a {@link JFrame} containing the table; its setVisible(boolean) method must
+	 * be called in order to be displayed
+	 */
+	public JFrame displayFitAnalysis() {
+		if (null == params_from_fit) {
+			return null;
+		}
+		// Display result
+		String[] column_names = {
+				"Slice",
+				"Direction (º)",
+				"Dispersion (º)",
+				"Amount",
+				"Goodness" };
+		Object[][]  table_data = new Object[params_from_fit.size()][column_names.length];
+		final String[] names = makeNames();
+		final ArrayList<double[]> fit_analysis = getFitAnalysis();
+		double[] analysis = null;
+		
+		for (int i = 0; i < table_data.length; i++) {
+			analysis = fit_analysis.get(i);
+			table_data[i][0]	= names[i];
+			table_data[i][1]	= String.format("%.2f", analysis[0]); // peak center
+			table_data[i][2]	= String.format("%.2f", analysis[1]); // standard deviation
+			table_data[i][3] 	= String.format("%.2f", analysis[2]); // amount
+			table_data[i][4] 	= String.format("%.2f", analysis[3]); // goodness of fit
+		}
+		JTable table = new JTable(table_data, column_names);
+		table.setPreferredScrollableViewportSize(new Dimension(500, 70));
+
+		JScrollPane scrollPane = new JScrollPane(table);
+		table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+		
+		JPanel		table_panel = new JPanel(new GridLayout());
+		table_panel.add(scrollPane);	
+	    JFrame 		frame = new JFrame("Directionality analysis for "+imp.getShortTitle()+" (using "+method.toString()+")");
+
+	    frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+	    //Create and set up the content pane.
+	    frame.setContentPane(table_panel);
+
+	    //Display the window.
+	    frame.pack();
+	    return frame;
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	/*
+	 * SETTERS AND GETTERS
+	 */
+	
+	
+	
+	/**
+	 * Set the image for analysis
+	 */
+	public void setImagePlus(ImagePlus imp) {
+		this.imp = imp;
+	}
+	
+	/**
+	 * Get the image analyzed.
+	 */
+	public ImagePlus getImagePlus() {
+		return imp;
+	}
+	
+	/**
+	 * Return the parameters of the gaussian fit of the main peak in histogram. Results
+	 * are arranged in an ArrayList of double[], one array per slice analyzed.
+	 * If the fit was not done prior to this method call, it is called. If the 
+	 * method {@link #computesHistograms()} was not called, null is returned.
+	 * <p>
+	 * The double array is organized as follow, for the fitting model y = a + (b-a)*exp(-(x-c)*(x-c)/(2*d*d))
+	 * <ol start=0>
+	 * 	<li> a
+	 * 	<li> b
+	 *  <li> x
+	 *  <li> d
+	 * </ul>
+	 *  
+	 * @return  the fitting parameters
+	 * @see {@link #getGoodnessOfFit()}, {@link #getHistograms()}, {@link #getBins()}
+	 */
+	public ArrayList<double[]> getFitParameters() {
+		if (null == params_from_fit) {
+			fitHistograms();
+		}
+		return params_from_fit;
+	}
+	
+	/** 
+	 * Return the goodness of fit for the gaussian fit; 1 is good, 0 is bad. One value per slice.
+	 * If the fit was not done prior to this method call, it is called. If the 
+	 * method {@link #computesHistograms()} was not called, null is returned.
+	 * @see {@link #getFitParameters()}, {@link #getHistograms()}, {@link #getBins()}
+	 * @return the goodness of fit
+	 */
+	public double[] getGoodnessOfFit() {
+		if (null == params_from_fit) {
+			fitHistograms();
+		}
+		return goodness_of_fit;
+	}
+	
+	/**
+	 * Return the directionality histograms as an ArrayList of double[], one array
+	 * per slice.
+	 * @see {@link #getBins()}, {@link #getFitParameters()}, {@link #getGoodnessOfFit()}
+	 * @return  the directionality histograms; is null if the method {@link #computesHistograms()} 
+	 * was not called before.
+	 */
+	public ArrayList<double[]> getHistograms() {
+		return histograms;
+	}
+	
+	/**
+	 * Return the center of the bins for the directionality histograms. They are in degrees.
+	 * @see {@link #getHistograms()}, {@link #getFitParameters()}, {@link #getGoodnessOfFit()}
+	 * @return  the bin centers, in degrees
+	 */
+	public double[] getBins() {
+		return bins;
+	}
+	
+	/**
+	 * Set the desired number of bins. This resets the {@link #histograms} field to null.
+	 */
+	public void setBinNumber(int nbins) {
+		this.nbins = nbins;
+		prepareBins(nbins, bin_start);
+		histograms = null;
+	}
+	
+	/**
+	 * Return the current number of bins for this instance.
+	 * @return
+	 */
+	public int getBinNumber() {
+		return nbins;
+	}
+	
+	/**
+	 * Set the desired start for the angle bins, in degrees. This resets the {@link #histograms} field to null.
+	 */
+	public void setBinStart(double bin_start) {
+		this.bin_start = bin_start;
+		histograms = null;
+	}
+	
+	/**
+	 * Return the current value for angle bin start, in degrees.
+	 */
+	public double getBinStart() {
+		return bin_start;
+	}
+	
+	/**
+	 * Set the desired method for analysis. This resets the {@link #histograms} field to null.
+	 * @see {@link AnalysisMethod}
+	 */
+	public void setMethod(AnalysisMethod method) {
+		this.method = method;
+		histograms = null;
+	}
+	
+	/**
+	 * Return the analysis method used by this instance.
+	 * @return
+	 */
+	public AnalysisMethod getMethod() {
+		return method;
+	}
+	
+	/**
+	 * Set the debug flag.
+	 */
+	public void setDebugFlag(boolean flag) {
+		this.debug = flag;
+	}
+	
+	
+	
+	
 	
 	
 	/*
@@ -403,12 +839,63 @@ public class Directionality_ implements ExtendedPlugInFilter {
 	 */
 	
 	
+	
+	
+	
+	
+	/**
+	 * Display the dialog when the plugin is launched from ImageJ. A successful interaction will
+	 * result in setting the {@link #nbins}, {@link #bin_start}, {@link #display_table} 
+	 * and {@link #debug} fields.
+	 */
+	private void showDialog() {
+
+		// Prepare dialog
+		String current = imp.getTitle();
+		String[] method_names = new String[AnalysisMethod.values().length];
+		for (int i = 0; i < method_names.length; i++) {
+			method_names[i] = AnalysisMethod.values()[i].toString();
+		}
+
+		// Layout dialog
+		GenericDialog gd = new GenericDialog(PLUGIN_NAME + " v" + VERSION_STR);
+		gd.addMessage(current);
+		gd.addChoice("Method:", method_names, method.toString());
+		gd.addNumericField("Nbins: ", nbins, 0);
+		gd.addNumericField("Histogram start", bin_start , 0, 4, "º");
+		gd.addCheckbox("Display table", display_table);
+		gd.addCheckbox("Debug", debug);
+		gd.showDialog();
+
+		// Collect dialog settings
+		if (gd.wasCanceled())
+			return;
+		String chosen_method = gd.getNextChoice();
+		for (int i = 0; i < method_names.length; i++) {
+			if (chosen_method.equals(method_names[i])) {
+				method = AnalysisMethod.values()[i];
+				break;
+			}
+		} 
+
+		// Reflect user settings in fields
+		nbins = (int) gd.getNextNumber();
+		bin_start = gd.getNextNumber();
+		display_table = gd.getNextBoolean();
+		debug = gd.getNextBoolean();
+	}
+	
 	/**
 	 * This method is used to initialize variables required for the Fourier analysis
 	 * after parameters have been set by the user.
 	 */
 	private void initFourierFields() {
+		if (null == imp)
+			return;
+		
 		// Compute dimensions
+		width = imp.getWidth();
+		height = imp.getHeight();
 		if ( width == height) {
 			npadx = 1;
 			npady = 1;
@@ -452,17 +939,6 @@ public class Directionality_ implements ExtendedPlugInFilter {
 	}
 	
 	/**
-	 * Initialize the {@link #bins} field with value set by user.
-	 */
-	private void prepareBins() {
-		// Prepare bins
-		bins = new double[nbins];
-		for (int i = 0; i < nbins; i++) {
-			bins[i] = (float) Math.toDegrees(i * Math.PI / nbins) + bin_start;
-		}
-	}
-	
-	/**
 	 * This method implements the local gradient orientation analysis method.
 	 * <p>
 	 * The gradient is calculated using a 5x5 Sobel filter. The gradient orientation
@@ -498,6 +974,8 @@ public class Directionality_ implements ExtendedPlugInFilter {
 		
 		final float[] pixels_gx = (float[]) grad_x.getPixels();
 		final float[] pixels_gy = (float[]) grad_y.getPixels();
+		final float[] pixels_theta = new float[pixels_gx.length];
+		final float[] pixels_r = new float[pixels_gx.length];
 		
 		double norm;
 		double angle;
@@ -508,6 +986,8 @@ public class Directionality_ implements ExtendedPlugInFilter {
 			dy =  - pixels_gy[i]; // upright orientation
 			norm = dx*dx+dy*dy; // We keep the square so as to have the same dimension that Fourier components analysis
 			angle = Math.atan(dy/dx);
+			pixels_theta[i] = (float) (angle * 180.0 / Math.PI);
+			pixels_r[i] = (float) norm;
 			histo_index = (int) ((nbins/2.0) * (1 + angle / (Math.PI/2)) ); // where to put it
 			if (histo_index == nbins) {
 				histo_index = 0; // circular shift in case of exact vertical orientation
@@ -527,6 +1007,13 @@ public class Directionality_ implements ExtendedPlugInFilter {
 				else { break;}
 			}
 			dir[j] = norm_dir[i];
+		}
+		
+		if (debug) {
+			ImageStack grad = new ImageStack(imp.getWidth(), imp.getHeight());
+			grad.addSlice("θ (º)", pixels_theta);
+			grad.addSlice("R²", pixels_r);
+			new ImagePlus("Gradient orientation for "+makeNames()[slice_index], grad).show();
 		}
 		
 		return dir;
@@ -552,6 +1039,11 @@ public class Directionality_ implements ExtendedPlugInFilter {
 		Roi square_roi;
 		FHT fft, pspectrum;		
 		FloatProcessor small_pspectrum;
+		
+		ImageStack spectra = null;
+		if (debug) {
+			spectra = new ImageStack(small_side, small_side);
+		}
 		
 		// If the image is not square, split it in small square padding all the image
 		for (int ix = 0; ix<npadx; ix++) {
@@ -587,7 +1079,8 @@ public class Directionality_ implements ExtendedPlugInFilter {
 				spectrum_px = (float[]) small_pspectrum.getPixels(); 
 				
 				if (debug) {
-					displayLog(small_pspectrum);
+					spectra.addSlice("block nbr "+(ix+1)*(iy+1), displayLog(small_pspectrum));
+
 				}
 				
 				// Computes angular density
@@ -600,10 +1093,13 @@ public class Directionality_ implements ExtendedPlugInFilter {
 			}
 		}
 		
+		if (debug) {
+			new ImagePlus("Log10 power FFT of "+makeNames()[slice_index], spectra).show();
+		}
+		
 		return dir;		
 	}
 
-	
 	/**
 	 * This method generates the angular filters used by the Fourier analysis. It reads the fields {@link #nbins},
 	 * {@link #bin_start} to determine how many individual angle filter to generate, and {@link #small_side}
@@ -664,178 +1160,6 @@ public class Directionality_ implements ExtendedPlugInFilter {
 	}
 	
 	/**
-	 * This method is called to draw the histograms resulting from image analysis. It reads the result
-	 * in the {@link #directionality} list field, and use the JFreeChart library to draw a nice 
-	 * plot window. If the {@link #fitResults()} method was called before, the fits are also drawn.
-	 * 
-	 * @return  a {@link JFrame} containing the histogram plots, which setVisible(boolean) method must
-	 * be called in order to be displayed
-	 */
-	private final JFrame drawResults() {
-		final XYSeriesCollection histograms = new XYSeriesCollection();
-		final LookupPaintScale lut = createLUT(directionality.size());
-		final String[] names = makeNames();
-		XYSeries series;
-		
-		double[] dir;
-		for (int i = 0; i < directionality.size(); i++) {
-			dir = directionality.get(i);
-			series = new XYSeries(names[i]);
-			for (int j = 0; j < dir.length; j++) {
-				series.add(bins[j], dir[j]);
-			}
-			histograms.addSeries(series);
-		}
-		histograms.setIntervalWidth(bins[1]-bins[0]);
-		
-		// Create chart with histograms
-		final JFreeChart chart = ChartFactory.createHistogram(
-				"Directionality histograms",
-				"Direction (º)",
-				"Amount", 
-				histograms, 
-				PlotOrientation.VERTICAL,
-				true,
-				true,
-				false);
-		
-		// Set the look of histograms
-		final XYPlot plot = (XYPlot) chart.getPlot();
-		final ClusteredXYBarRenderer renderer = new ClusteredXYBarRenderer(0.3, false);
-		float color_index;
-		for (int i = 0; i < directionality.size(); i++) {
-			color_index = (float)i/(float)(directionality.size()-1);
-			renderer.setSeriesPaint(i, lut.getPaint(color_index) );
-		}
-		plot.setRenderer(0, renderer);
-		
-		// Draw fit results
-		if (fit_done) {
-			// Make new X
-			final double[] X = new double[bins.length*10]; // oversample 10 times
-			for (int i = 0; i < X.length; i++) {
-				X[i] = bins[0] + (bins[bins.length-1]-bins[0])/X.length * i;
-			}
-			// Create dataset
-			final XYSeriesCollection fits = new XYSeriesCollection();
-			XYSeries fit_series;
-			double val, center, xn;
-			double[] params;
-			final double half_range = (bins[bins.length-1] - bins[0])/2.0;
-			for (int i = 0; i < directionality.size(); i++) { // we have to deal with periodic issue here too
-				params = params_from_fit.get(i).clone();
-				center = params[2];
-				fit_series = new XYSeries(names[i]);
-				for (int j = 0; j < X.length; j++) {
-					xn = X[j];
-					if (Math.abs(xn-center) > half_range ) { // too far
-						if (xn>center) {
-							xn = xn - 2*half_range;							
-						} else {
-							xn = xn + 2*half_range;
-						}
-					}
-					val = CurveFitter.f(CurveFitter.GAUSSIAN, params, xn);
-					fit_series.add(X[j], val);
-				}
-				fits.addSeries(fit_series);
-			}
-			plot.setDataset(1, fits);
-			plot.setRenderer(1, new XYLineAndShapeRenderer(true, false));
-			for (int i = 0; i < directionality.size(); i++) {
-				color_index = (float)i/(float)(directionality.size()-1);
-				plot.getRenderer(1).setSeriesPaint(i, lut.getPaint(color_index) );
-			}
-			
-		}
-		plot.getDomainAxis().setRange(bins[0], bins[bins.length-1]);
-		
-		final ChartPanel chartPanel = new ChartPanel(chart);
-		chartPanel.setPreferredSize(new java.awt.Dimension(500, 270));
-		JFrame window = new JFrame("Directionality for "+imp.getShortTitle()+" (using "+method.toString()+")");
-        window.add(chartPanel);
-        window.validate();
-        window.setSize(new java.awt.Dimension(500, 270));
-        return window;
-	}
-	
-	/**
-	 * This method tries to fit a gaussian to the highest peak of each directionality histogram, 
-	 * and store fit results in the {@link #params_from_fit} field.
-	 */
-	private final void fitResults() {
-		params_from_fit = new ArrayList<double[]>(directionality.size());
-		goodness_of_fit = new double[directionality.size()];
-		double[] dir;
-		double[] init_params = new double[4];
-		double[] params = new double[4];
-		double[] padded_dir;
-		double[] padded_bins;
-		
-		double ymax, ymin;
-		int imax, shift_index, current_index;
-		
-		// Prepare fitter and function
-		CurveFitter fitter = null;
-		
-		// Loop over slices
-		for (int i = 0; i < directionality.size(); i++) {
-			
-			dir = directionality.get(i);
-			
-			// Infer initial values
-			ymax = Double.NEGATIVE_INFINITY;
-			ymin = Double.POSITIVE_INFINITY;
-			imax = 0;
-			for (int j = 0; j < dir.length; j++) {
-				if (dir[j] > ymax) {
-					ymax = dir[j];
-					imax = j;
-				}
-				if (dir[j]<ymin) {
-					ymin = dir[j];
-				}
-			}
-						
-			// Shift found peak to the center (periodic issue) and add to fitter
-			padded_dir 	= new double[bins.length];
-			padded_bins = new double[bins.length];
-			shift_index = bins.length/2 - imax;
-			for (int j = 0; j < bins.length; j++) {
-				current_index = j - shift_index;
-				if (current_index < 0) {
-					current_index += bins.length; 
-				}
-				if (current_index >= bins.length) {
-					current_index -= bins.length;
-				}
-				padded_dir[j] 	= dir[current_index];
-				padded_bins[j] 	= bins[j];
-			}			
-			fitter = new CurveFitter(padded_bins, padded_dir);
-			
-			init_params[0] = ymin; // base
-			init_params[1] = ymax; // peak value 
-			init_params[2] = padded_bins[bins.length/2]; // peak center with padding
-			init_params[3] = 2 * ( bins[1] - bins[0]); // std
-			
-			// Do fit
-			fitter.doFit(CurveFitter.GAUSSIAN);
-			params = fitter.getParams();
-			goodness_of_fit[i] = fitter.getFitGoodness();
-			if (shift_index < 0) { // back into orig coordinates
-				params[2] += (bins[-shift_index]-bins[0]);
-				
-			} else {
-				params[2] -= (bins[shift_index]-bins[0]);
-			}
-			params_from_fit.add(params);
-		}
-		fit_done = true;
-		fit_string = fitter.getFormula();
-	}
-	
-	/**
 	 * This method generate a name for each analyzed slice, to display in result tables.
 	 * 
 	 * @return  a String array with the names
@@ -875,76 +1199,35 @@ public class Directionality_ implements ExtendedPlugInFilter {
 		return names;		
 	}
 	
-	/**
-	 * This method generates statistics from the gaussian fit made in {@link #fitResults()}, and 
-	 * display them in a {@link JTable}.
-	 * 
-	 * @return  a {@link JFrame} containing the table,  which setVisible(boolean) method must
-	 * be called in order to be displayed
-	 */
-	private final JFrame analyzeFits() {
-		if (!fit_done) {
-			return null;
-		}
-		// Display result
-		String[] column_names = {
-				"Slice",
-				"Direction (º)",
-				"Dispersion (º)",
-				"Amount",
-				"Goodness" };
-
-		Object[][]  table_data = new Object[params_from_fit.size()][column_names.length];
-		double[] params, dir;
-		double sum, center, xn;
-		final String[] names = makeNames();
-		for (int i = 0; i < table_data.length; i++) {
-			params =  params_from_fit.get(i);
-			dir = directionality.get(i);
-			table_data[i][0]	= names[i];
-			table_data[i][1]	= String.format("%.2f", params[2]); // peak center
-			table_data[i][2]	= String.format("%.2f", Math.abs(params[3])); // standard deviation
-			sum = 0; // we sum under +/- sigma, taking periodicity into account
-			center = params[2];
-			for (int j = 0; j < dir.length; j++) {
-				xn = bins[j];
-				if (Math.abs(xn-center) > -bins[0] ) { // too far
-					if (xn>center) {
-						xn = xn - 2*(-bins[0]);							
-					} else {
-						xn = xn + 2*(-bins[0]);
-					}
-				}
-				if ( (xn<params[2]-params[3]) || (xn>params[2]+params[3]) ) {
-					continue;
-				}
-				sum += dir[j];				
-			}
-			table_data[i][3] = String.format("%.2f", sum);
-			table_data[i][4] = String.format("%.2f", Math.abs(goodness_of_fit[i]));
-		}
-		JTable table = new JTable(table_data, column_names);
-		table.setPreferredScrollableViewportSize(new Dimension(500, 70));
-
-		JScrollPane scrollPane = new JScrollPane(table);
-		table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
-		
-		JPanel		table_panel = new JPanel(new GridLayout());
-		table_panel.add(scrollPane);	
-	    JFrame 		frame = new JFrame("Directionality analysis for "+imp.getShortTitle()+" (using "+method.toString()+")");
-
-	    frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-	    //Create and set up the content pane.
-	    frame.setContentPane(table_panel);
-
-	    //Display the window.
-	    frame.pack();
-	    return frame;
-	}
+	
+	
+	
+	
+	
 	
 	/*
 	 * STATIC METHODS
 	 */
+	
+	
+	
+	
+	
+	
+	/**
+	 * Generate a bin array of angle in degrees, from the start value to value+PI.
+	 * @return a double array of n elements, the angles in degrees
+	 * @param n the number of elements to generate
+	 * @param start  the value of the first element
+	 */
+	private final static double[] prepareBins(final int n, final double start) {
+		// Prepare bins
+		final double[] bins = new double[n];
+		for (int i = 0; i < n; i++) {
+			bins[i] = (float) Math.toDegrees(i * Math.PI / n) + start;
+		}
+		return bins;
+	}
 	
 	/**
 	 * Utility method to analyze the content of the argument string passed by ImageJ to 
@@ -955,7 +1238,7 @@ public class Directionality_ implements ExtendedPlugInFilter {
 	 * @return  a string containing the value after the command string, null if the command string 
 	 * was not found
 	 */
-	private final static String parseArgumentString(String argument_string, String command_str) {
+	protected final static String parseArgumentString(String argument_string, String command_str) {
 		if (argument_string.contains(command_str)) {
 			int narg = argument_string.indexOf(command_str)+command_str.length();
 			int next_arg = argument_string.indexOf(",", narg);
@@ -969,20 +1252,19 @@ public class Directionality_ implements ExtendedPlugInFilter {
 	}
 	
 	/**
-	 * This utility method displays an {@link ImagePlus} window with the log10 of each pixel in the
+	 * This utility method returns a FloatProcessor with the log10 of each pixel in the
 	 * {@link FloatProcessor} given in argument. Usefull to display power spectrum.
 	 * 
 	 * @param ip  the source FloatProcessor
 	 */
-	public static final void displayLog(final FloatProcessor ip) {
+	protected static final FloatProcessor displayLog(final FloatProcessor ip) {
 		final FloatProcessor log10 = new FloatProcessor(ip.getWidth(), ip.getHeight());
 		final float[] log10_pixels = (float[]) log10.getPixels();
 		final float[] pixels = (float[]) ip.getPixels();
 		for (int i = 0; i < pixels.length; i++) {
 			log10_pixels[i] = (float) Math.log10(1+pixels[i]); 
 		}
-		new ImagePlus("Log10 of "+ip.toString(), log10).show();
-		log10.resetMinAndMax();
+		return log10;
 	}
 	
 	/**
@@ -991,7 +1273,7 @@ public class Directionality_ implements ExtendedPlugInFilter {
 	 * @return  a double array containing the Blackman window
 	 * @see #getBlackmanProcessor(int, int)
 	 */
-	public static final double[] getBlackmanPeriodicWindow1D(final int n) {
+	protected static final double[] getBlackmanPeriodicWindow1D(final int n) {
 		final double[] window = new double[n];
 		for (int i = 0; i < window.length; i++) {
 			window[i] = 0.42 - 0.5 * Math.cos(2*Math.PI*i/n) + 0.08 * Math.cos(4*Math.PI/n);
@@ -1007,7 +1289,7 @@ public class Directionality_ implements ExtendedPlugInFilter {
 	 * @return  the window, as a FloatProcessor
 	 * @see #getBlackmanPeriodicWindow1D(int)
 	 */
-	public static  final FloatProcessor getBlackmanProcessor(final int nx, final int ny) {
+	protected static  final FloatProcessor getBlackmanProcessor(final int nx, final int ny) {
 		final FloatProcessor bpw = new FloatProcessor(nx, ny);
 		final float[] pixels = (float[]) bpw.getPixels();
 		final double[] bpwx = getBlackmanPeriodicWindow1D(nx);
@@ -1028,7 +1310,7 @@ public class Directionality_ implements ExtendedPlugInFilter {
 	 * @return  the coordinate matrix, as aFloatProcessor
 	 * @see #makeThetaMatrix(int, int)
 	 */
-	public static final FloatProcessor makeRMatrix(final int nx, final int ny) {
+	protected static final FloatProcessor makeRMatrix(final int nx, final int ny) {
 		final FloatProcessor r = new FloatProcessor(nx, ny);
 		final float[] pixels = (float[]) r.getPixels();
 		final float xc = nx / 2.0f;
@@ -1049,7 +1331,7 @@ public class Directionality_ implements ExtendedPlugInFilter {
 	 * @return  the coordinate matrix, as aFloatProcessor
 	 * @see #makeRMatrix(int, int)
 	 */
-	public static final FloatProcessor makeThetaMatrix(final int nx, final int ny) {
+	protected static final FloatProcessor makeThetaMatrix(final int nx, final int ny) {
 		final FloatProcessor theta = new FloatProcessor(nx, ny);
 		final float[] pixels = (float[]) theta.getPixels();
 		final float xc = nx / 2.0f;
@@ -1068,7 +1350,7 @@ public class Directionality_ implements ExtendedPlugInFilter {
 	 * @param ncol  the number of colors in the LUT
 	 * @return  the LUT
 	 */
-	public static final LookupPaintScale createLUT(final int ncol) {
+	protected static final LookupPaintScale createLUT(final int ncol) {
 		final float[][] colors = new float[][]  { 
 				{0, 75/255f, 150/255f},
 				{0.1f, 0.8f, 0.1f},
@@ -1100,14 +1382,38 @@ public class Directionality_ implements ExtendedPlugInFilter {
 	 */
 	
 	public static void main(String[] args) {
-//		ImagePlus imp = IJ.openImage("http://rsb.info.nih.gov/ij/images/gel.gif");
-		ImagePlus imp = IJ.openImage("./TwoLines.tif");
-		imp.show();
+		// Generate a test image
+		ImagePlus imp = NewImage.createByteImage("Lines", 412, 512, 1, NewImage.FILL_BLACK);
+		ImageProcessor ip = imp.getProcessor();
+		ip.setLineWidth(2);
+		ip.setColor(Color.WHITE);
+		Roi line_30deg 	= new Line(100.0, 412.0, 446.4102, 212.0); // 400px long line, 30º
+		Roi line_30deg2 = new Line(100.0, 312.0, 446.4102, 112.0); // 400px long line, 30º
+		Roi line_m60deg = new Line(100.0, 100, 300.0, 446.4102); // 400px long line, 60º
+		Roi[] rois = new Roi[] { line_30deg, line_30deg2, line_m60deg };
+		for ( Roi roi : rois) {
+			ip.draw(roi);
+		}		
+		GaussianBlur smoother = new GaussianBlur();
+		smoother.blurGaussian(ip, 2.0, 2.0, 1e-2);		
+//		imp.show();
 		
 		Directionality_ da = new Directionality_();
-		String command = "Directionality";
+		da.setImagePlus(imp);
+		da.setMethod(AnalysisMethod.LOCAL_GRADIENT_ORIENTATION);
+		da.setBinNumber(180);
+		da.setBinStart(-90);
+		da.setDebugFlag(true);
+		da.computesHistograms();
+		ArrayList<double[]> fit_results = da.getFitParameters();
+		double center = fit_results.get(0)[2];
+		System.out.println("With method: "+AnalysisMethod.LOCAL_GRADIENT_ORIENTATION);
+		System.out.println(String.format("Found maxima at %.1f, expected it at 30º.\n", center, 30));
+		da.setMethod(AnalysisMethod.FOURIER_COMPONENTS);
+		da.computesHistograms();
+		System.out.println("With method: "+AnalysisMethod.FOURIER_COMPONENTS);
+		System.out.println(String.format("Found maxima at %.1f, expected it at 30º.\n", center, 30));
 		
-		new PlugInFilterRunner(da, command, "nbins=60, start=-90, method=gradient");
 	}
 	
 }
