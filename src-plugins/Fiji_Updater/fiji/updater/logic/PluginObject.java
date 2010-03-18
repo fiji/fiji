@@ -183,7 +183,9 @@ public class PluginObject {
 
 	public void addDependency(Dependency dependency) {
 		// the timestamp should not be changed unnecessarily
-		if (dependencies.containsKey(dependency.filename))
+		if (dependency.filename == null ||
+				"".equals(dependency.filename.trim()) ||
+				dependencies.containsKey(dependency.filename))
 			return;
 		dependencies.put(dependency.filename, dependency);
 	}
