@@ -21,7 +21,9 @@ import java.awt.event.KeyListener;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.Vector;
 
 import javax.swing.JButton;
@@ -39,6 +41,7 @@ public class Recent_Commands implements ActionListener, CommandListener, KeyList
 	protected static int recentListSize = 8;
 	protected static int frequentListSize = 8;
 	protected static int maxLRUSize = 100;
+	protected static boolean suppressRepeatedCommands = true;
 	protected final static String PREFS_KEY = "recent.command";
 
 	public void run(String arg) {
@@ -203,13 +206,22 @@ public class Recent_Commands implements ActionListener, CommandListener, KeyList
 
 	protected Vector getMostRecent(int maxCount) {
 		Vector result = new Vector();
+		Set<String> all = suppressRepeatedCommands ?
+			new HashSet<String>() : null;
 		int listIndex = getListIndex();
-		for (int i = 0; i < maxCount; i++) {
+		for (int i = 0; i < maxLRUSize; i++) {
 			listIndex = ((listIndex - 1 + maxLRUSize) % maxLRUSize);
 			String command = Prefs.get(PREFS_KEY + listIndex, null);
 			if (command == null)
 				break;
+			if (suppressRepeatedCommands) {
+				if (all.contains(command))
+					continue;
+				all.add(command);
+			}
 			result.add(command);
+			if (result.size() >= maxCount)
+				break;
 		}
 		return result;
 	}
@@ -246,6 +258,7 @@ public class Recent_Commands implements ActionListener, CommandListener, KeyList
 		recentListSize = (int)Prefs.get(PREFS_KEY + ".recent-list-size", recentListSize);
 		frequentListSize = (int)Prefs.get(PREFS_KEY + ".frequent-list-size", frequentListSize);
 		maxLRUSize = (int)Prefs.get(PREFS_KEY + ".max-lru-size", maxLRUSize);
+		suppressRepeatedCommands = Prefs.get(PREFS_KEY + ".suppress-repetitions", suppressRepeatedCommands);
 	}
 
 	void showOptionsDialog() {
@@ -253,6 +266,7 @@ public class Recent_Commands implements ActionListener, CommandListener, KeyList
 		gd.addNumericField("size_of_recent_list", recentListSize, 0);
 		gd.addNumericField("size_of_most-frequent_list", frequentListSize, 0);
 		gd.addNumericField("history_size", maxLRUSize, 0);
+		gd.addCheckbox("suppress_repeated_commands", suppressRepeatedCommands);
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return;
@@ -271,6 +285,11 @@ public class Recent_Commands implements ActionListener, CommandListener, KeyList
 		if (value != maxLRUSize) {
 			maxLRUSize = value;
 			Prefs.set(PREFS_KEY + ".max-lru-size", maxLRUSize);
+		}
+		boolean bool = gd.getNextBoolean();
+		if (bool != suppressRepeatedCommands) {
+			suppressRepeatedCommands = bool;
+			Prefs.set(PREFS_KEY + ".suppress-repetitions", suppressRepeatedCommands);
 		}
 		mostRecent.setListData(getMostRecent(recentListSize));
 		mostFrequent.setListData(getMostFrequent(frequentListSize));
