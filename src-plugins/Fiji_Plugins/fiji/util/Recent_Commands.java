@@ -36,9 +36,9 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 public class Recent_Commands implements ActionListener, CommandListener, KeyListener, ListSelectionListener, PlugIn {
-	protected static int RECENT_LIST_SIZE = 8;
-	protected static int FREQUENT_LIST_SIZE = 8;
-	protected static int MAX_LRU_SIZE = 100;
+	protected static int recentListSize = 8;
+	protected static int frequentListSize = 8;
+	protected static int maxLRUSize = 100;
 	protected final static String PREFS_KEY = "recent.command";
 
 	public void run(String arg) {
@@ -61,7 +61,7 @@ public class Recent_Commands implements ActionListener, CommandListener, KeyList
 	JButton okay, cancel, options;
 
 	public void runInteractively() {
-		Vector recent = getMostRecent(RECENT_LIST_SIZE);
+		Vector recent = getMostRecent(recentListSize);
 		if (recent.size() == 0) {
 			JOptionPane.showMessageDialog(IJ.getInstance(),
 				"No recent commands available!");
@@ -69,7 +69,7 @@ public class Recent_Commands implements ActionListener, CommandListener, KeyList
 		}
 
 		mostRecent = makeJList(recent);
-		mostFrequent = makeJList(getMostFrequent(FREQUENT_LIST_SIZE));
+		mostFrequent = makeJList(getMostFrequent(frequentListSize));
 		mostRecent.setSelectedIndex(0);
 		mostFrequent.clearSelection();
 
@@ -174,7 +174,7 @@ public class Recent_Commands implements ActionListener, CommandListener, KeyList
 			return command;
 		int listIndex = getListIndex();
 		Prefs.set(PREFS_KEY + listIndex, command);
-		listIndex = ((listIndex + 1) % MAX_LRU_SIZE);
+		listIndex = ((listIndex + 1) % maxLRUSize);
 		Prefs.set(PREFS_KEY + ".lastIndex", "" + listIndex);
 		return command;
 	}
@@ -196,7 +196,7 @@ public class Recent_Commands implements ActionListener, CommandListener, KeyList
 		Vector result = new Vector();
 		int listIndex = getListIndex();
 		for (int i = 0; i < maxCount; i++) {
-			listIndex = ((listIndex - 1 + MAX_LRU_SIZE) % MAX_LRU_SIZE);
+			listIndex = ((listIndex - 1 + maxLRUSize) % maxLRUSize);
 			String command = Prefs.get(PREFS_KEY + listIndex, null);
 			if (command == null)
 				break;
@@ -208,7 +208,7 @@ public class Recent_Commands implements ActionListener, CommandListener, KeyList
 	protected Vector getMostFrequent(int maxCount) {
 		Vector result = new Vector();
 		final Map<String, Integer> map = new HashMap<String, Integer>();
-		for (int i = 0; i < MAX_LRU_SIZE; i++) {
+		for (int i = 0; i < maxLRUSize; i++) {
 			String command = Prefs.get(PREFS_KEY + i, null);
 			if (command == null)
 				break;
@@ -234,37 +234,37 @@ public class Recent_Commands implements ActionListener, CommandListener, KeyList
 	}
 
 	void readPrefs() {
-		RECENT_LIST_SIZE = (int)Prefs.get(PREFS_KEY + ".recent-list-size", RECENT_LIST_SIZE);
-		FREQUENT_LIST_SIZE = (int)Prefs.get(PREFS_KEY + ".frequent-list-size", FREQUENT_LIST_SIZE);
-		MAX_LRU_SIZE = (int)Prefs.get(PREFS_KEY + ".max-lru-size", MAX_LRU_SIZE);
+		recentListSize = (int)Prefs.get(PREFS_KEY + ".recent-list-size", recentListSize);
+		frequentListSize = (int)Prefs.get(PREFS_KEY + ".frequent-list-size", frequentListSize);
+		maxLRUSize = (int)Prefs.get(PREFS_KEY + ".max-lru-size", maxLRUSize);
 	}
 
 	void showOptionsDialog() {
 		GenericDialog gd = new GenericDialog("Recent Command Options");
-		gd.addNumericField("size_of_recent_list", RECENT_LIST_SIZE, 0);
-		gd.addNumericField("size_of_most-frequent_list", FREQUENT_LIST_SIZE, 0);
-		gd.addNumericField("history_size", MAX_LRU_SIZE, 0);
+		gd.addNumericField("size_of_recent_list", recentListSize, 0);
+		gd.addNumericField("size_of_most-frequent_list", frequentListSize, 0);
+		gd.addNumericField("history_size", maxLRUSize, 0);
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return;
 
 		int value = (int)gd.getNextNumber();
-		if (value != RECENT_LIST_SIZE) {
-			RECENT_LIST_SIZE = value;
-			Prefs.set(PREFS_KEY + ".recent-list-size", RECENT_LIST_SIZE);
+		if (value != recentListSize) {
+			recentListSize = value;
+			Prefs.set(PREFS_KEY + ".recent-list-size", recentListSize);
 		}
 		value = (int)gd.getNextNumber();
-		if (value != FREQUENT_LIST_SIZE) {
-			FREQUENT_LIST_SIZE = value;
-			Prefs.set(PREFS_KEY + ".frequent-list-size", FREQUENT_LIST_SIZE);
+		if (value != frequentListSize) {
+			frequentListSize = value;
+			Prefs.set(PREFS_KEY + ".frequent-list-size", frequentListSize);
 		}
 		value = (int)gd.getNextNumber();
-		if (value != MAX_LRU_SIZE) {
-			MAX_LRU_SIZE = value;
-			Prefs.set(PREFS_KEY + ".max-lru-size", MAX_LRU_SIZE);
+		if (value != maxLRUSize) {
+			maxLRUSize = value;
+			Prefs.set(PREFS_KEY + ".max-lru-size", maxLRUSize);
 		}
-		mostRecent.setListData(getMostRecent(RECENT_LIST_SIZE));
-		mostFrequent.setListData(getMostFrequent(FREQUENT_LIST_SIZE));
+		mostRecent.setListData(getMostRecent(recentListSize));
+		mostFrequent.setListData(getMostFrequent(frequentListSize));
 		dialog.pack();
 	}
 }
