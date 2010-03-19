@@ -5,6 +5,7 @@ package trainableSegmentation;
  * - Gradientmagnitude
  * - Hessian
  * - Difference of Gaussian
+ * - do probability output (accessible?) and define threshold?
  * 
  * filters to come:
  * - membraneFilters
@@ -62,11 +63,11 @@ public class FeatureStack {
 	private int height;
 	
 	public FeatureStack(ImagePlus image){
-		originalImage = image;
+		originalImage = new ImagePlus("original image", image.getProcessor().convertToFloat());
 		width = image.getWidth();
 		height = image.getHeight();
 		wholeStack = new ImageStack(width, height);
-		wholeStack.addSlice("original", image.getProcessor().duplicate());
+		wholeStack.addSlice("original", originalImage.getProcessor().duplicate());
 	}
 
 	public void show(){
@@ -116,13 +117,13 @@ public class FeatureStack {
 	
 	public void addGradient(float sigma){
 		GaussianBlur gs = new GaussianBlur();
-		ImageProcessor ip_x = originalImage.getProcessor().duplicate().convertToFloat();
+		ImageProcessor ip_x = originalImage.getProcessor().duplicate();
 		gs.blur(ip_x, sigma);
 		Convolver c = new Convolver();
 		float[] sobelFilter_x = {1f,2f,1f,0f,0f,0f,-1f,-2f,-1f};
 		c.convolveFloat(ip_x, sobelFilter_x, 3, 3);
 		
-		ImageProcessor ip_y = originalImage.getProcessor().duplicate().convertToFloat();
+		ImageProcessor ip_y = originalImage.getProcessor().duplicate();
 		gs.blur(ip_y, sigma);
 		c = new Convolver();
 		float[] sobelFilter_y = {1f,0f,-1f,2f,0f,-2f,1f,0f,-1f};
@@ -139,7 +140,7 @@ public class FeatureStack {
 		}
 		
 		//ip.add(-ip.getMin());
-		wholeStack.addSlice("SobelFilter_"+sigma, ip.convertToByte(true));
+		wholeStack.addSlice("SobelFilter_"+sigma, ip);
 	}
 	
 	public void addHessian(float sigma){
@@ -148,24 +149,24 @@ public class FeatureStack {
 		Convolver c = new Convolver();				
 		GaussianBlur gs = new GaussianBlur();
 		
-		ImageProcessor ip_x = originalImage.getProcessor().duplicate().convertToFloat();
+		ImageProcessor ip_x = originalImage.getProcessor().duplicate();
 		gs.blur(ip_x, sigma);		
 		c.convolveFloat(ip_x, sobelFilter_x, 3, 3);		
 		
-		ImageProcessor ip_y = originalImage.getProcessor().duplicate().convertToFloat();
+		ImageProcessor ip_y = originalImage.getProcessor().duplicate();
 		gs.blur(ip_y, sigma);
 		c = new Convolver();
 		c.convolveFloat(ip_y, sobelFilter_y, 3, 3);
 		
-		ImageProcessor ip_xx = ip_x.duplicate().convertToFloat();
+		ImageProcessor ip_xx = ip_x.duplicate();
 		//gs.blur(ip_xx, sigma);		
 		c.convolveFloat(ip_xx, sobelFilter_x, 3, 3);		
 		
-		ImageProcessor ip_xy = ip_x.duplicate().convertToFloat();
+		ImageProcessor ip_xy = ip_x.duplicate();
 		//gs.blur(ip_xy, sigma);		
 		c.convolveFloat(ip_xy, sobelFilter_y, 3, 3);		
 		
-		ImageProcessor ip_yy = ip_y.duplicate().convertToFloat();
+		ImageProcessor ip_yy = ip_y.duplicate();
 		//gs.blur(ip_yy, sigma);		
 		c.convolveFloat(ip_yy, sobelFilter_y, 3, 3);		
 		
@@ -184,12 +185,9 @@ public class FeatureStack {
 			}
 		}
 		
-		ip.add(-ip.getMin());
-		ipTr.add(-ipTr.getMin());
-		ipDet.add(-ipDet.getMin());
-		wholeStack.addSlice("Hessian_"+sigma, ip.convertToByte(true));
-		wholeStack.addSlice("HessianTrace_"+sigma, ipTr.convertToByte(true));
-		wholeStack.addSlice("HessianDeterminant_"+sigma, ipDet.convertToByte(true));
+		wholeStack.addSlice("Hessian_"+sigma, ip);
+		wholeStack.addSlice("HessianTrace_"+sigma, ipTr);
+		wholeStack.addSlice("HessianDeterminant_"+sigma, ipDet);
 	}
 	
 	public void addDoG(float sigma1, float sigma2){
@@ -209,8 +207,7 @@ public class FeatureStack {
 			}
 		}
 		
-		ip.add(-ip.getMin());
-		wholeStack.addSlice("DoG_"+sigma1+"_"+sigma2, ip.convertToByte(true));
+		wholeStack.addSlice("DoG_"+sigma1+"_"+sigma2, ip);
 	}
 	
 	public void addMembraneFeatures(int patchSize, int membraneSize){
@@ -235,10 +232,10 @@ public class FeatureStack {
 			Convolver c = new Convolver();				
 	
 			float[] kernel = (float[]) rotatedPatch.getPixels();
-			ImageProcessor ip = originalImage.getProcessor().duplicate().convertToFloat();		
+			ImageProcessor ip = originalImage.getProcessor().duplicate();		
 			c.convolveFloat(ip, kernel, patchSize, patchSize);		
 
-			is.addSlice("Membrane_"+patchSize+"_"+membraneSize, ip.convertToByte(true));
+			is.addSlice("Membrane_"+patchSize+"_"+membraneSize, ip);
 		//	wholeStack.addSlice("Membrane_"+patchSize+"_"+membraneSize, ip.convertToByte(true));
 		}
 		
@@ -248,13 +245,13 @@ public class FeatureStack {
 		for (int i=0;i<6; i++){
 			zp.setMethod(i);
 			zp.doProjection();
-			wholeStack.addSlice("Membrane_Projection_"+i+"_"+patchSize+"_"+membraneSize, zp.getProjection().getChannelProcessor().convertToByte(true));
+			wholeStack.addSlice("Membrane_Projection_"+i+"_"+patchSize+"_"+membraneSize, zp.getProjection().getChannelProcessor());
 		}
 	}
 	
 	
 	public void addTest(){
-		FloatArray2D fftImage = new FloatArray2D((float[]) originalImage.getProcessor().convertToFloat().getPixels(),originalImage.getWidth(), originalImage.getHeight());
+		FloatArray2D fftImage = new FloatArray2D((float[]) originalImage.getProcessor().getPixels(),originalImage.getWidth(), originalImage.getHeight());
 		int fftSize = FftReal.nfftFast(Math.max(width, height));
 		FloatArray2D fftImagePadded = CommonFunctions.zeroPad(fftImage, fftSize, fftSize);
 		
@@ -304,7 +301,8 @@ public class FeatureStack {
 				double[] values = new double[wholeStack.getSize()+1];
 				for (int z=1; z<=wholeStack.getSize(); z++){
 					//values[z-1] = wholeStack.getProcessor(z).getPixelValue(x, y);
-					values[z-1] = 0xff & ((byte[]) pixelData[z-1])[y*width+x];
+					//values[z-1] = 0xff & ((byte[]) pixelData[z-1])[y*width+x];
+					values[z-1] = ((float[]) pixelData[z-1])[y*width+x];
 					//System.out.println("" + wholeStack.getProcessor(z).getPixelValue(x, y) + " * " + values[z-1]);
 				}
 				values[wholeStack.getSize()] = 0.0;
@@ -319,16 +317,16 @@ public class FeatureStack {
 		int counter = 1;
 		for (float i=1.0f; i<17; i*=2){
 			IJ.showStatus("creating feature stack   " + counter);
-			//this.addGaussianBlur(i); counter++;
+			this.addGaussianBlur(i); counter++;
 			IJ.showStatus("creating feature stack   " + counter);			
 			this.addGradient(i); counter++;
 			IJ.showStatus("creating feature stack   " + counter);			
-			//this.addHessian(i); counter++;
-			//for (float j=1.0f; j<i; j*=2){
-			//	IJ.showStatus("creating feature stack   " + counter);				
-			//	this.addDoG(i, j); counter++;
-			//}
+			this.addHessian(i); counter++;
+		//	for (float j=1.0f; j<i; j*=2){
+		//		IJ.showStatus("creating feature stack   " + counter);				
+		//		this.addDoG(i, j); counter++;
+		//	}
 		}
-		//this.addMembraneFeatures(19, 1);
+		this.addMembraneFeatures(19, 1);
 	}
 }

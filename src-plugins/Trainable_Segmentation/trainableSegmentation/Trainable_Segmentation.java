@@ -263,7 +263,6 @@ public class Trainable_Segmentation implements PlugIn {
 		
 		trainingImage.setProcessor("training image", trainingImage.getProcessor().duplicate().convertToByte(true));
 		createFeatureStack(trainingImage);
-		featureStack.show();
 		IJ.log("reading whole image data");
 		long start = System.currentTimeMillis();
 		wholeImageData = featureStack.createInstances();
@@ -517,7 +516,7 @@ public class Trainable_Segmentation implements PlugIn {
 	public void applyClassifierToTestImage(){
 		ImagePlus testImage = IJ.openImage();
 		if (null == testImage) return; // user canceled open dialog
-		testImage.setProcessor(testImage.getProcessor().duplicate().convertToByte(true));
+		testImage.setProcessor(testImage.getProcessor().convertToByte(true));
 		
 		IJ.log("creating features for test image");
 		FeatureStack testImageFeatures = new FeatureStack(testImage);
