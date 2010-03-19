@@ -12,6 +12,7 @@ package trainableSegmentation;
  * - delete annotations with a shortkey
  * - save classifier and load classifier
  * - apply classifier to other images
+ * - do probability output (accessible?) and define threshold?
  * - put thread solution to wiki http://pacific.mpi-cbg.de/wiki/index.php/Developing_Fiji#Writing_plugins
  * 
  * License: GPL
@@ -144,7 +145,7 @@ public class Trainable_Segmentation implements PlugIn {
   		  				deleteSelected(e);
   		  			}
   		  			else if(e.getSource() == applyButton){
-  						applyClassifierToTestImage();
+  						applyClassifierToTestData();
   			}
   				}
   			});
@@ -513,9 +514,32 @@ public class Trainable_Segmentation implements PlugIn {
 		resultImage.show();
 	}
 	
-	public void applyClassifierToTestImage(){
+	public void applyClassifierToTestData(){
 		ImagePlus testImage = IJ.openImage();
 		if (null == testImage) return; // user canceled open dialog
+		
+		if (testImage.getImageStackSize() == 1){
+			applyClassifierToTestImage(testImage).show();
+			testImage.show();
+		}
+		else{
+			ImageStack testImageStack = testImage.getStack();
+			ImageStack testStackClassified = new ImageStack(testImageStack.getWidth(), testImageStack.getHeight());
+			IJ.log("size: " + testImageStack.getSize() + " " + testImageStack.getWidth() + " " + testImageStack.getHeight());
+			for (int i=1; i<=testImageStack.getSize(); i++){
+				IJ.log("classifying image " + i);
+				ImagePlus currentSlice = new ImagePlus(testImageStack.getSliceLabel(i),testImageStack.getProcessor(i).duplicate());
+				//applyClassifierToTestImage(currentSlice).show();
+				testStackClassified.addSlice(currentSlice.getTitle(), applyClassifierToTestImage(currentSlice).getProcessor().duplicate());
+			}
+			testImage.show();
+			ImagePlus showStack = new ImagePlus("classified Stack", testStackClassified);
+			showStack.show();
+		}
+	}
+	
+	
+	public ImagePlus applyClassifierToTestImage(ImagePlus testImage){
 		testImage.setProcessor(testImage.getProcessor().convertToByte(true));
 		
 		IJ.log("creating features for test image");
@@ -528,7 +552,7 @@ public class Trainable_Segmentation implements PlugIn {
 		ImagePlus testClassImage = applyClassifier(testData, testImage.getWidth(), testImage.getHeight());
 		testClassImage.setTitle("classified_" + testImage.getTitle());
 		testClassImage.setProcessor(testClassImage.getProcessor().convertToByte(true).duplicate());
-		testImage.show();
-		testClassImage.show();
+		
+		return testClassImage;
 	}
 }

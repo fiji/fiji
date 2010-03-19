@@ -5,7 +5,6 @@ package trainableSegmentation;
  * - Gradientmagnitude
  * - Hessian
  * - Difference of Gaussian
- * - do probability output (accessible?) and define threshold?
  * 
  * filters to come:
  * - membraneFilters
