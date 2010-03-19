@@ -253,7 +253,7 @@ public class Recent_Commands implements ActionListener, CommandListener, KeyList
 		value = (int)gd.getNextNumber();
 		if (value != MAX_LRU_SIZE) {
 			MAX_LRU_SIZE = value;
-			Prefs.set(PREFS_KEY + ".list-size", MAX_LRU_SIZE);
+			Prefs.set(PREFS_KEY + ".max-lru-size", MAX_LRU_SIZE);
 		}
 		mostRecent.setListData(getMostRecent(LIST_SIZE));
 		mostFrequent.setListData(getMostFrequent(LIST_SIZE));
