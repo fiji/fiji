@@ -145,6 +145,20 @@ public class Recent_Commands implements ActionListener, CommandListener, KeyList
 		else if (e.getSource() instanceof JButton) {
 			if (key == KeyEvent.VK_ENTER)
 				actionPerformed(new ActionEvent(e.getSource(), 0, ""));
+			else if (key == KeyEvent.VK_UP) {
+				mostFrequent.setSelectedIndex(mostFrequent.getModel().getSize() - 1);
+				mostFrequent.requestFocus();
+			}
+			else if (key == KeyEvent.VK_DOWN) {
+				mostRecent.setSelectedIndex(0);
+				mostRecent.requestFocus();
+			}
+			else if (key == KeyEvent.VK_RIGHT) {
+				((JButton)e.getSource()).transferFocus();
+			}
+			else if (key == KeyEvent.VK_LEFT) {
+				((JButton)e.getSource()).transferFocusBackward();
+			}
 			return;
 		}
 		else if (key == KeyEvent.VK_ENTER) {
