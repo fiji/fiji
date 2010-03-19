@@ -87,6 +87,7 @@ public class Recent_Commands implements ActionListener, CommandListener, KeyList
 		dialog.add(mostFrequent, c);
 		okay = new JButton("OK");
 		okay.addActionListener(this);
+		dialog.getRootPane().setDefaultButton(okay);
 		cancel = new JButton("Cancel");
 		cancel.addActionListener(this);
 		options = new JButton("Options");
