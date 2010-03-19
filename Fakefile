@@ -375,6 +375,7 @@ precompiled/fiji-*[bin/copy-file.py $PRE $TARGET] <- fiji
 precompile-fake[] <- precompiled/fake.jar
 precompiled/fake.jar <- jars/fake.jar
 precompiled/ij.jar <- jars/ij.jar
+precompiled/mpicbg.jar <- jars/mpicbg.jar
 precompiled/*[bin/copy-file.py $PRE $TARGET] <- *
 
 precompile-submodules[] <- \
@@ -383,6 +384,7 @@ precompile-submodules[] <- \
 	precompiled/TrakEM2_.jar \
 	precompiled/VIB_.jar \
 	precompiled/mpicbg_.jar \
+	precompiled/mpicbg.jar \
 	precompiled/clojure.jar \
 	precompiled/clojure-contrib.jar \
 	precompiled/ij-ImageIO_.jar \
