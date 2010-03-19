@@ -4,4 +4,4 @@ all <- loci_tools.jar
 MAINCLASS(loci_tools.jar)=loci.ome.notes.Notes
 loci_tools.jar <- artifacts/loci_tools.jar
 
-artifacts/loci_tools.jar[../fiji --ant -Dsvn.log= tools] <-
+artifacts/loci_tools.jar[../fiji --ant tools] <-

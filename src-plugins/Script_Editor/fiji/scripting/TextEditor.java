@@ -91,7 +91,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		  makeJar, makeJarWithSource, removeUnusedImports,
 		  sortImports, removeTrailingWhitespace, findNext,
 		  openHelp, addImport, clearScreen, nextError, previousError,
-		  openHelpWithoutFrames, nextTab, previousTab;
+		  openHelpWithoutFrames, nextTab, previousTab,
+		  runSelection;
 	JMenu tabsMenu;
 	int tabsMenuTabsStart;
 	Set<JMenuItem> tabsMenuItems;
@@ -197,11 +198,14 @@ public class TextEditor extends JFrame implements ActionListener,
 
 		JMenu run = new JMenu("Run");
 		run.setMnemonic(KeyEvent.VK_R);
-		// TODO: allow outside-of-plugins/ sources
 
 		compileAndRun = addToMenu(run, "Compile and Run",
 				KeyEvent.VK_R, ctrl);
 		compileAndRun.setMnemonic(KeyEvent.VK_R);
+
+		runSelection = addToMenu(run, "Run selected code",
+				KeyEvent.VK_R, ctrl | shift);
+		runSelection.setMnemonic(KeyEvent.VK_S);
 
 		run.addSeparator();
 		nextError = addToMenu(run, "Next Error", KeyEvent.VK_F4, 0);
@@ -271,8 +275,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		addAccelerator(compileAndRun, KeyEvent.VK_F11, 0, true);
 		addAccelerator(compileAndRun, KeyEvent.VK_F5, 0, true);
 		addAccelerator(debug, KeyEvent.VK_F11, ctrl, true);
-		addAccelerator(debug, KeyEvent.VK_F5,
-				ActionEvent.SHIFT_MASK, true);
+		addAccelerator(debug, KeyEvent.VK_F5, shift, true);
 		addAccelerator(nextTab, KeyEvent.VK_PAGE_DOWN, ctrl, true);
 		addAccelerator(previousTab, KeyEvent.VK_PAGE_UP, ctrl, true);
 
@@ -638,6 +641,8 @@ public class TextEditor extends JFrame implements ActionListener,
 			makeJar(true);
 		else if (source == compileAndRun)
 			runText();
+		else if (source == runSelection)
+			runText(true);
 		else if (source == nextError)
 			new Thread() {
 				public void run() {
@@ -1028,6 +1033,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		compileAndRun.setLabel(language.isCompileable() ?
 			"Compile and Run" : "Run");
 		compileAndRun.setEnabled(language.isRunnable());
+		runSelection.setEnabled(language.isRunnable() &&
+				!language.isCompileable());
 		debug.setEnabled(language.isDebuggable());
 		makeJarWithSource.setEnabled(language.isCompileable());
 
@@ -1198,8 +1205,16 @@ public class TextEditor extends JFrame implements ActionListener,
 
 	/** Run the text in the textArea without compiling it, only if it's not java. */
 	public void runText() {
+		runText(false);
+	}
+
+	public void runText(boolean selectionOnly) {
 		Languages.Language currentLanguage = getCurrentLanguage();
 		if (currentLanguage.isCompileable()) {
+			if (selectionOnly) {
+				error("Cannot run selection of compiled language!");
+				return;
+			}
 			if (handleUnsavedChanges())
 				runScript();
 			return;
@@ -1229,7 +1244,15 @@ public class TextEditor extends JFrame implements ActionListener,
 					markCompileEnd();
 				}
 			};
-			textArea.write(new PrintWriter(po));
+			if (selectionOnly) {
+				String text = textArea.getSelectedText();
+				if (text == null)
+					error("Selection required!");
+				else
+					po.write(text.getBytes());
+			}
+			else
+				textArea.write(new PrintWriter(po));
 			po.flush();
 			po.close();
 		} catch (Throwable t) {

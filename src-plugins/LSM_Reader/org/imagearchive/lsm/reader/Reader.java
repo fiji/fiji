@@ -596,11 +596,11 @@ public class Reader {
 					.get(imageCounter);
 			for (int i = 0; i < imDir.TIF_STRIPBYTECOUNTS.length; i++)
 
+				flength = (int) new File(lsmFi.directory
+						+ System.getProperty("file.separator")
+						+ lsmFi.fileName).length();
 				if (imDir.TIF_COMPRESSION == 5) {
 					lsmFi.compression = FileInfo.LZW;
-					flength = (int) new File(lsmFi.directory
-							+ System.getProperty("file.separator")
-							+ lsmFi.fileName).length();
 					if (imDir.TIF_PREDICTOR == 2)
 						lsmFi.compression = FileInfo.LZW_WITH_DIFFERENCING;
 				} else

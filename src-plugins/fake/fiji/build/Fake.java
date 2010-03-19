@@ -523,6 +523,8 @@ public class Fake {
 			if (rule == null)
 				throw new FakeException("Unrecognized rule");
 
+			rule.prerequisiteString = prerequisites;
+
 			allRules.put(target, rule);
 
 			Iterator iter = list.iterator();
@@ -802,6 +804,7 @@ public class Fake {
 
 		public abstract class Rule {
 			protected String target;
+			protected String prerequisiteString;
 			protected List prerequisites, nonUpToDates;
 			protected boolean wasAlreadyInvoked;
 			protected boolean wasAlreadyChecked;
@@ -850,11 +853,14 @@ public class Fake {
 					return false;
 				}
 				long targetModifiedTime = file.lastModified();
-				if (targetModifiedTime < mtimeFakefile)
-					return upToDateError(file,
-							new File(path));
-				if (targetModifiedTime < mtimeFijiBuild)
-					return upToDateError(new File(fijiBuildJar), file);
+
+				if (getVarBool("rebuildIfFakeIsNewer")) {
+					if (targetModifiedTime < mtimeFakefile)
+						return upToDateError(file,
+								new File(path));
+					if (targetModifiedTime < mtimeFijiBuild)
+						return upToDateError(new File(fijiBuildJar), file);
+				}
 
 				nonUpToDates = new ArrayList();
 				Iterator iter = prerequisites.iterator();
@@ -1183,6 +1189,10 @@ public class Fake {
 				in.close();
 				out.close();
 			}
+
+			public String getPrerequisiteString() {
+				return prerequisiteString;
+			}
 		}
 
 		class All extends Rule {
@@ -1220,6 +1230,11 @@ public class Fake {
 				source = getLastPrerequisite() + jarName;
 				baseName = stripSuffix(jarName, ".jar");
 				configPath = getPluginsConfig();
+
+				String[] paths =
+					split(getVar("CLASSPATH"), ":");
+				for (int i = 0; i < paths.length; i++)
+					prerequisites.add(paths[i]);
 			}
 
 			boolean checkUpToDate() {
