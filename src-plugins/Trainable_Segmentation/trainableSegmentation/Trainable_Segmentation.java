@@ -54,6 +54,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.awt.*;
 import java.awt.event.*;
+import java.beans.FeatureDescriptor;
 
 import javax.swing.*;
 
@@ -79,11 +80,13 @@ public class Trainable_Segmentation implements PlugIn {
 	private int negTraceCounter;
    	private boolean showColorOverlay;
    	private Instances wholeImageData;
+   	private FastRandomForest rf;
 	final Button posExampleButton;
   	final Button negExampleButton;
   	final Button trainButton;
   	final Button overlayButton;
   	final Button resultButton;
+  	final Button applyButton;
   	
   	
   	public Trainable_Segmentation() {
@@ -94,6 +97,8 @@ public class Trainable_Segmentation implements PlugIn {
   	      	overlayButton.setEnabled(false);
   	      	resultButton = new Button("create result");
   	      	resultButton.setEnabled(false);
+  	      	applyButton = new Button ("apply classifier");
+  	      	applyButton.setEnabled(false);
   	      	posExampleList = new java.awt.List(5);
   	      	posExampleList.setForeground(Color.green);
   	      	negExampleList = new java.awt.List(5);
@@ -101,6 +106,17 @@ public class Trainable_Segmentation implements PlugIn {
   	      	posTraceCounter = 0;
   	      	negTraceCounter = 0;
   	      	showColorOverlay = false;
+  	      	
+  	      	rf = new FastRandomForest();
+  	      	//FIXME: should depend on image size?? Or labels??
+  	      	rf.setNumTrees(200);
+  	      	//this is the default that Breiman suggests
+  	      	//rf.setNumFeatures((int) Math.round(Math.sqrt(featureStack.getSize())));
+  	      	//but this seems to work better
+  	      	rf.setNumFeatures(2);
+		
+		 
+  	      	rf.setSeed(123);
 	}
 	
   	ExecutorService exec = Executors.newFixedThreadPool(1);
@@ -127,6 +143,9 @@ public class Trainable_Segmentation implements PlugIn {
   		  			else if(e.getSource() == posExampleList || e.getSource() == negExampleList){
   		  				deleteSelected(e);
   		  			}
+  		  			else if(e.getSource() == applyButton){
+  						applyClassifierToTestImage();
+  			}
   				}
   			});
   		}
@@ -137,7 +156,6 @@ public class Trainable_Segmentation implements PlugIn {
 			exec.submit(new Runnable() {
 				public void run() {
   		  			if(e.getSource() == posExampleList || e.getSource() == negExampleList){
-  		  				IJ.log("exampleList clicked");
   		  				listSelected(e);
   		  			}
 				}
@@ -181,13 +199,15 @@ public class Trainable_Segmentation implements PlugIn {
   	      	trainButton.addActionListener(listener);
   	      	overlayButton.addActionListener(listener);
   	      	resultButton.addActionListener(listener);
+  	      	applyButton.addActionListener(listener);
   	      	buttons.add(posExampleButton);
   	      	buttons.add(negExampleButton);
   	      	buttons.add(trainButton);
   	      	buttons.add(overlayButton);
   	      	buttons.add(resultButton);
+  	      	buttons.add(applyButton);
   	      	
-  	      	for (Component c : new Component[]{posExampleButton, negExampleButton, trainButton, overlayButton, resultButton}) {
+  	      	for (Component c : new Component[]{posExampleButton, negExampleButton, trainButton, overlayButton, resultButton, applyButton}) {
   	      		c.setMaximumSize(new Dimension(230, 50));
   	      		c.setPreferredSize(new Dimension(130, 30));
   	      	}
@@ -243,7 +263,7 @@ public class Trainable_Segmentation implements PlugIn {
 		
 		trainingImage.setProcessor("training image", trainingImage.getProcessor().duplicate().convertToByte(true));
 		createFeatureStack(trainingImage);
-		
+		featureStack.show();
 		IJ.log("reading whole image data");
 		long start = System.currentTimeMillis();
 		wholeImageData = featureStack.createInstances();
@@ -391,40 +411,33 @@ public class Trainable_Segmentation implements PlugIn {
 		 IJ.log("creating training data took: " + (end-start));
 		 data.setClassIndex(data.numAttributes() - 1);
 		 
-		 FastRandomForest rf = new FastRandomForest();
-		 //FIXME: should depend on image size?? Or labels??
-		 rf.setNumTrees(200);
-		 //this is the default that Breiman suggests
-		 //rf.setNumFeatures((int) Math.round(Math.sqrt(featureStack.getSize())));
-		 //but this seems to work better
-		 rf.setNumFeatures(2);
-		
-		 
-		 rf.setSeed(123);
-		 
 		 IJ.log("training classifier");
 		 try{rf.buildClassifier(data);}
 		 catch(Exception e){IJ.showMessage("Could not train Classifier!");}
-		 applyClassifier(rf);
+		 
+		 classifiedImage = applyClassifier(wholeImageData, trainingImage.getWidth(), trainingImage.getHeight());
+		 
+		 overlayButton.setEnabled(true);
+		 resultButton.setEnabled(true);
+		 applyButton.setEnabled(true);
+		 showColorOverlay = false;
+		 toggleOverlay();
 	}
 
-	public void applyClassifier(FastRandomForest rf){
+	public ImagePlus applyClassifier(Instances data, int w, int h){
 		 IJ.log("classifying image");
-		 double[] classificationResult = new double[wholeImageData.numInstances()];
-		 for (int i=0; i<wholeImageData.numInstances(); i++){
+		 double[] classificationResult = new double[data.numInstances()];
+		 for (int i=0; i<data.numInstances(); i++){
 			 try{
-			 classificationResult[i] = rf.classifyInstance(wholeImageData.instance(i));
+			 classificationResult[i] = rf.classifyInstance(data.instance(i));
 			 }catch(Exception e){IJ.showMessage("Could not apply Classifier!");}
 		 }
 		 
 		 IJ.log("showing result");
-		 ImageProcessor classifiedImageProcessor = new FloatProcessor(trainingImage.getWidth(), trainingImage.getHeight(), classificationResult);
+		 ImageProcessor classifiedImageProcessor = new FloatProcessor(w, h, classificationResult);
 		 classifiedImageProcessor.convertToByte(true);
-		 classifiedImage = new ImagePlus("classification result", classifiedImageProcessor);
-		 overlayButton.setEnabled(true);
-		 resultButton.setEnabled(true);
-		 showColorOverlay = false;
-		 toggleOverlay();
+		 ImagePlus classImg = new ImagePlus("classification result", classifiedImageProcessor);
+		 return classImg;
 	}
 	
 	void toggleOverlay(){
@@ -497,7 +510,26 @@ public class Trainable_Segmentation implements PlugIn {
 	}
 	
 	void showClassificationImage(){
-		ImagePlus resultImage = new ImagePlus("classification result", classifiedImage.getProcessor().duplicate());
+		ImagePlus resultImage = new ImagePlus("classification result", classifiedImage.getProcessor().convertToByte(true).duplicate());
 		resultImage.show();
+	}
+	
+	public void applyClassifierToTestImage(){
+		ImagePlus testImage = IJ.openImage();
+		if (null == testImage) return; // user canceled open dialog
+		testImage.setProcessor(testImage.getProcessor().duplicate().convertToByte(true));
+		
+		IJ.log("creating features for test image");
+		FeatureStack testImageFeatures = new FeatureStack(testImage);
+		testImageFeatures.addDefaultFeatures();
+		
+		Instances testData = testImageFeatures.createInstances();
+		testData.setClassIndex(testData.numAttributes() - 1);
+		
+		ImagePlus testClassImage = applyClassifier(testData, testImage.getWidth(), testImage.getHeight());
+		testClassImage.setTitle("classified_" + testImage.getTitle());
+		testClassImage.setProcessor(testClassImage.getProcessor().convertToByte(true).duplicate());
+		testImage.show();
+		testClassImage.show();
 	}
 }

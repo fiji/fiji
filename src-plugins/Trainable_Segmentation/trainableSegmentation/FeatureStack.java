@@ -138,7 +138,7 @@ public class FeatureStack {
 			}
 		}
 		
-		ip.add(-ip.getMin());
+		//ip.add(-ip.getMin());
 		wholeStack.addSlice("SobelFilter_"+sigma, ip.convertToByte(true));
 	}
 	
@@ -319,16 +319,16 @@ public class FeatureStack {
 		int counter = 1;
 		for (float i=1.0f; i<17; i*=2){
 			IJ.showStatus("creating feature stack   " + counter);
-			this.addGaussianBlur(i); counter++;
+			//this.addGaussianBlur(i); counter++;
 			IJ.showStatus("creating feature stack   " + counter);			
 			this.addGradient(i); counter++;
 			IJ.showStatus("creating feature stack   " + counter);			
-			this.addHessian(i); counter++;
-			for (float j=1.0f; j<i; j*=2){
-				IJ.showStatus("creating feature stack   " + counter);				
-				this.addDoG(i, j); counter++;
-			}
+			//this.addHessian(i); counter++;
+			//for (float j=1.0f; j<i; j*=2){
+			//	IJ.showStatus("creating feature stack   " + counter);				
+			//	this.addDoG(i, j); counter++;
+			//}
 		}
-		this.addMembraneFeatures(19, 1);
+		//this.addMembraneFeatures(19, 1);
 	}
 }
