@@ -13,8 +13,7 @@ import ij.measure.ResultsTable;
 import ij.plugin.PlugIn;
 import ij.plugin.filter.Convolver;
 import ij.plugin.filter.GaussianBlur;
-import ij.plugin.filter.PlugInFilter;
-import ij.plugin.filter.PlugInFilterRunner;
+import ij.process.ColorProcessor;
 import ij.process.FHT;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
@@ -40,6 +39,8 @@ import org.jfree.chart.renderer.xy.ClusteredXYBarRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+
+import com.sun.tools.javac.code.Attribute.Array;
 
 
 /**
@@ -128,7 +129,7 @@ import org.jfree.data.xy.XYSeriesCollection;
  * <p>
  * 
  * @author Jean-Yves Tinevez jeanyves.tinevez@gmail.com
- * @version 1.2
+ * @version 1.3
  */
 public class Directionality_ implements PlugIn {
 	
@@ -186,6 +187,8 @@ public class Directionality_ implements PlugIn {
 	private AnalysisMethod method = AnalysisMethod.FOURIER_COMPONENTS; // Only method implemented so far
 	/** If set true, will display a {@link ResultsTable} with the histogram at the end of processing. */
 	private boolean display_table = false;
+	/** If true, will display a map of orientation. */
+	private boolean build_orientation_map = true;
 
 	/* STD FIELDS */
 	
@@ -211,6 +214,8 @@ public class Directionality_ implements PlugIn {
 	protected String fit_string;
 	/** Used to pass the slice we are currently analyzing. */
 	private int slice_index;
+	/** This stack stores the orientation map. */
+	ImageStack orientation_map;
 	
 	
 	/*
@@ -303,6 +308,10 @@ public class Directionality_ implements PlugIn {
 			ResultsTable table = displayResultsTable();
 			table.show("Directionality histograms for "+imp.getShortTitle()+" (using "+method.toString()+")");
 		}
+		
+		if (build_orientation_map) {
+			new ImagePlus("Orientation map for "+imp.getShortTitle(), orientation_map).show();
+		}
 	}
 	
 	
@@ -344,6 +353,10 @@ public class Directionality_ implements PlugIn {
 		// Prepare result holder
 		int n_slices = imp.getStackSize();
 		histograms = new ArrayList<double[]>(n_slices * imp.getNChannels()); 
+		if (build_orientation_map) {
+			orientation_map = new ImageStack(imp.getWidth(), imp.getHeight());
+		}
+		
 		
 		// Loop over each slice
 		ImageProcessor ip = null;
@@ -829,6 +842,16 @@ public class Directionality_ implements PlugIn {
 		this.debug = flag;
 	}
 	
+	/**
+	 * Return the orientation map as an {@link ImageStack}, one slice per slice in the source image.
+	 * Return null if the orientation map flag was not set, or if computation was not done.  
+	 */
+	public ImageStack getOrientationMap() {
+//		if (!build_orientation_map) 
+//			return null;
+		return orientation_map;
+	}
+	
 	
 	
 	
@@ -950,7 +973,7 @@ public class Directionality_ implements PlugIn {
 	 * @see #fourier_component(FloatProcessor)
 	 *  
 	 */
-	private final double[] local_gradient_orientation(FloatProcessor ip) {
+	private final double[] local_gradient_orientation(final FloatProcessor ip) {
 		double[] dir = new double[nbins]; // histo with #bins
 		final double[] norm_dir = new double[nbins]; // histo from -pi to pi;
 		final FloatProcessor grad_x = (FloatProcessor) ip.duplicate();
@@ -977,7 +1000,7 @@ public class Directionality_ implements PlugIn {
 		final float[] pixels_theta = new float[pixels_gx.length];
 		final float[] pixels_r = new float[pixels_gx.length];
 		
-		double norm;
+		double norm, max_norm = 0.0;
 		double angle;
 		int histo_index;
 		float dx, dy;
@@ -985,6 +1008,9 @@ public class Directionality_ implements PlugIn {
 			dx = pixels_gx[i];
 			dy =  - pixels_gy[i]; // upright orientation
 			norm = dx*dx+dy*dy; // We keep the square so as to have the same dimension that Fourier components analysis
+			if (norm > max_norm) { 
+				max_norm = norm;
+			}
 			angle = Math.atan(dy/dx);
 			pixels_theta[i] = (float) (angle * 180.0 / Math.PI);
 			pixels_r[i] = (float) norm;
@@ -1009,11 +1035,30 @@ public class Directionality_ implements PlugIn {
 			dir[j] = norm_dir[i];
 		}
 		
-		if (debug) {
-			ImageStack grad = new ImageStack(imp.getWidth(), imp.getHeight());
-			grad.addSlice("θ (º)", pixels_theta);
-			grad.addSlice("R²", pixels_r);
-			new ImagePlus("Gradient orientation for "+makeNames()[slice_index], grad).show();
+		if (build_orientation_map) {
+			final float[] pixels = (float[]) ip.getPixels();
+			float max_brightness = Float.NEGATIVE_INFINITY;
+			float min_brightness = Float.POSITIVE_INFINITY;
+			
+			for (int i = 0; i < pixels.length; i++) {
+				if (pixels[i] > max_brightness){
+					max_brightness = pixels[i];
+				}
+				if (pixels[i] < min_brightness) {
+					min_brightness = pixels[i];
+				}
+			}
+			final ColorProcessor cp = new ColorProcessor(ip.getWidth(), ip.getHeight());
+			final byte[] H = new byte[pixels_r.length];
+			final byte[] S = new byte[pixels_r.length];
+			final byte[] B = new byte[pixels_r.length];
+			for (int i = 0; i < pixels_r.length; i++) {
+				H[i] = (byte) (255.0 * (pixels_theta[i]+90.0)/180.0);
+				S[i] = (byte) (255.0 * Math.log10(1.0 + 9.0*pixels_r[i] / max_norm) );
+				B[i] = (byte) 255.0; // (byte) (255.0 * ( (pixels[i]-min_brightness) / (max_brightness-min_brightness) ) );
+			}
+			cp.setHSB(H, S, B);
+			orientation_map.addSlice(makeNames()[slice_index], cp);
 		}
 		
 		return dir;
@@ -1403,17 +1448,17 @@ public class Directionality_ implements PlugIn {
 		da.setMethod(AnalysisMethod.LOCAL_GRADIENT_ORIENTATION);
 		da.setBinNumber(180);
 		da.setBinStart(-90);
-		da.setDebugFlag(true);
+		da.setDebugFlag(false);
 		da.computesHistograms();
 		ArrayList<double[]> fit_results = da.getFitParameters();
 		double center = fit_results.get(0)[2];
 		System.out.println("With method: "+AnalysisMethod.LOCAL_GRADIENT_ORIENTATION);
 		System.out.println(String.format("Found maxima at %.1f, expected it at 30º.\n", center, 30));
-		da.setMethod(AnalysisMethod.FOURIER_COMPONENTS);
-		da.computesHistograms();
-		System.out.println("With method: "+AnalysisMethod.FOURIER_COMPONENTS);
-		System.out.println(String.format("Found maxima at %.1f, expected it at 30º.\n", center, 30));
-		
+//		da.setMethod(AnalysisMethod.FOURIER_COMPONENTS);
+//		da.computesHistograms();
+//		System.out.println("With method: "+AnalysisMethod.FOURIER_COMPONENTS);
+//		System.out.println(String.format("Found maxima at %.1f, expected it at 30º.\n", center, 30));
+		new ImagePlus("Orientation map for "+imp.getShortTitle(),da.getOrientationMap()).show();
 	}
 	
 }
