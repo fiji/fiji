@@ -188,8 +188,9 @@ jdk[bin/checkout-jdk.py $JDK] <-
 jars/ij.jar <- jars/javac.jar ImageJA/
 CLASSPATH(plugins/VIB_.jar)=plugins/LSM_Toolbox.jar:plugins/mpicbg_.jar:jars/imglib.jar:jars/Jama-1.0.2.jar
 plugins/VIB_.jar <- plugins/LSM_Toolbox.jar VIB/
-CLASSPATH(plugins/mpicbg_.jar)=jars/Jama-1.0.2.jar
+CLASSPATH(plugins/mpicbg_.jar)=jars/mpicbg.jar
 plugins/mpicbg_.jar <- mpicbg/
+jars/mpicbg.jar <- mpicbg/
 jars/clojure.jar <- clojure/
 jars/clojure-contrib.jar <- jars/clojure.jar clojure-contrib/
 plugins/loci_tools.jar <- bio-formats/
