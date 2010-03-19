@@ -6,6 +6,8 @@ import ij.IJ;
 import ij.Menus;
 import ij.Prefs;
 
+import ij.gui.GenericDialog;
+
 import ij.plugin.PlugIn;
 
 import java.awt.GridBagConstraints;
@@ -22,7 +24,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
 
-import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
@@ -35,11 +36,12 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 public class Recent_Commands implements ActionListener, CommandListener, KeyListener, ListSelectionListener, PlugIn {
-	protected final static int LIST_SIZE = 8;
-	protected final static int MAX_LRU_SIZE = 100;
+	protected static int LIST_SIZE = 8;
+	protected static int MAX_LRU_SIZE = 100;
 	protected final static String PREFS_KEY = "recent.command";
 
 	public void run(String arg) {
+		readPrefs();
 		if ("install".equals(arg))
 			install();
 		else
@@ -55,7 +57,7 @@ public class Recent_Commands implements ActionListener, CommandListener, KeyList
 
 	JDialog dialog;
 	JList mostRecent, mostFrequent;
-	JButton okay, cancel;
+	JButton okay, cancel, options;
 
 	public void runInteractively() {
 		Vector recent = getMostRecent(LIST_SIZE);
@@ -86,9 +88,12 @@ public class Recent_Commands implements ActionListener, CommandListener, KeyList
 		okay.addActionListener(this);
 		cancel = new JButton("Cancel");
 		cancel.addActionListener(this);
+		options = new JButton("Options");
+		options.addActionListener(this);
 		JPanel panel = new JPanel();
 		panel.add(okay);
 		panel.add(cancel);
+		panel.add(options);
 		c.gridy++; c.gridx = 0;
 		dialog.add(panel, c);
 		dialog.pack();
@@ -115,8 +120,13 @@ public class Recent_Commands implements ActionListener, CommandListener, KeyList
 	}
 
 	public void actionPerformed(ActionEvent e) {
-		if (e.getSource() == okay)
+		Object source = e.getSource();
+		if (source == okay)
 			runSelectedCommand();
+		else if (source == options) {
+			showOptionsDialog();
+			return;
+		}
 		dialog.dispose();
 	}
 
@@ -220,5 +230,33 @@ public class Recent_Commands implements ActionListener, CommandListener, KeyList
 			}
 		});
 		return new Vector(result.subList(0, Math.min(result.size(), maxCount)));
+	}
+
+	void readPrefs() {
+		LIST_SIZE = (int)Prefs.get(PREFS_KEY + ".list-size", LIST_SIZE);
+		MAX_LRU_SIZE = (int)Prefs.get(PREFS_KEY + ".max-lru-size", MAX_LRU_SIZE);
+	}
+
+	void showOptionsDialog() {
+		GenericDialog gd = new GenericDialog("Recent Command Options");
+		gd.addNumericField("list_size", LIST_SIZE, 0);
+		gd.addNumericField("history_size", MAX_LRU_SIZE, 0);
+		gd.showDialog();
+		if (gd.wasCanceled())
+			return;
+
+		int value = (int)gd.getNextNumber();
+		if (value != LIST_SIZE) {
+			LIST_SIZE = value;
+			Prefs.set(PREFS_KEY + ".list-size", LIST_SIZE);
+		}
+		value = (int)gd.getNextNumber();
+		if (value != MAX_LRU_SIZE) {
+			MAX_LRU_SIZE = value;
+			Prefs.set(PREFS_KEY + ".list-size", MAX_LRU_SIZE);
+		}
+		mostRecent.setListData(getMostRecent(LIST_SIZE));
+		mostFrequent.setListData(getMostFrequent(LIST_SIZE));
+		dialog.pack();
 	}
 }
