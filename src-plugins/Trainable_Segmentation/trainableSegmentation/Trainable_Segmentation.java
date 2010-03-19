@@ -255,6 +255,9 @@ public class Trainable_Segmentation implements PlugIn {
 	private void addPositiveExamples(){
 		//get selected pixels
 		Roi r = displayImage.getRoi();
+		if (null == r){
+			return;
+		}
 		displayImage.killRoi();
 		positiveExamples.add(r);
 		posExampleList.add("trace " + posTraceCounter); posTraceCounter++;
@@ -264,6 +267,9 @@ public class Trainable_Segmentation implements PlugIn {
 	private void addNegativeExamples(){
 		//get selected pixels
 		Roi r = displayImage.getRoi();
+		if (null == r){
+			return;
+		}
 		displayImage.killRoi();
 		negativeExamples.add(r);
 		negExampleList.add("trace " + negTraceCounter); negTraceCounter++;
@@ -392,7 +398,6 @@ public class Trainable_Segmentation implements PlugIn {
 		 long end = System.currentTimeMillis();
 		 IJ.log("creating training data took: " + (end-start));
 		 data.setClassIndex(data.numAttributes() - 1);
-//		 writeDataToARFF(data, "trainingDataFromInstances.arff");
 		 
 		 FastRandomForest rf = new FastRandomForest();
 		 //FIXME: should depend on image size?? Or labels??
@@ -400,7 +405,7 @@ public class Trainable_Segmentation implements PlugIn {
 		 //this is the default that Breiman suggests
 		 rf.setNumFeatures((int) Math.round(Math.sqrt(featureStack.getSize())));
 		 //rf.setNumFeatures(2);
-		 writeDataToARFF(data, "trainingDataFromInstances.arff");
+		
 		 
 		 rf.setSeed(123);
 		 
