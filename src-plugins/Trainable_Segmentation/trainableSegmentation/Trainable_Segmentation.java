@@ -308,20 +308,7 @@ public class Trainable_Segmentation implements PlugIn {
 	public void createFeatureStack(ImagePlus img){
 		IJ.log("creating feature stack");
 		featureStack = new FeatureStack(img);
-		int counter = 1;
-		for (float i=2.0f; i<featureStack.getWidth()/5.0f; i*=2){
-			IJ.showStatus("creating feature stack   " + counter);
-			featureStack.addGaussianBlur(i); counter++;
-			IJ.showStatus("creating feature stack   " + counter);			
-			featureStack.addGradient(i); counter++;
-			IJ.showStatus("creating feature stack   " + counter);			
-			featureStack.addHessian(i); counter++;
-			for (float j=2.0f; j<i; j*=2){
-				IJ.showStatus("creating feature stack   " + counter);				
-				featureStack.addDoG(i, j); counter++;
-			}
-		}
-		featureStack.addMembraneFeatures(19, 1);
+		featureStack.addDefaultFeatures();
 	}
 	
 	
