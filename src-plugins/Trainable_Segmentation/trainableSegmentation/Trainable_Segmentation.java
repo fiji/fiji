@@ -245,6 +245,7 @@ public class Trainable_Segmentation implements PlugIn {
 		displayImage = new ImagePlus();
 		displayImage.setProcessor("training image", trainingImage.getProcessor().duplicate().convertToRGB());
 		
+		ij.gui.Toolbar.getInstance().setTool(ij.gui.Toolbar.FREELINE);
 		
 		//Build GUI
 		win = new CustomWindow(displayImage);
