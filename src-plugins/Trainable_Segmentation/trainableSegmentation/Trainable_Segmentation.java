@@ -78,6 +78,7 @@ public class Trainable_Segmentation implements PlugIn {
 	private int posTraceCounter;
 	private int negTraceCounter;
    	private boolean showColorOverlay;
+   	private Instances wholeImageData;
 	final Button posExampleButton;
   	final Button negExampleButton;
   	final Button trainButton;
@@ -242,6 +243,14 @@ public class Trainable_Segmentation implements PlugIn {
 		
 		trainingImage.setProcessor("training image", trainingImage.getProcessor().duplicate().convertToByte(true));
 		createFeatureStack(trainingImage);
+		
+		IJ.log("reading whole image data");
+		long start = System.currentTimeMillis();
+		wholeImageData = featureStack.createInstances();
+		long end = System.currentTimeMillis();
+		IJ.log("creating whole image data took: " + (end-start));
+		wholeImageData.setClassIndex(wholeImageData.numAttributes() - 1);
+		 
 		displayImage = new ImagePlus();
 		displayImage.setProcessor("training image", trainingImage.getProcessor().duplicate().convertToRGB());
 		
@@ -387,11 +396,6 @@ public class Trainable_Segmentation implements PlugIn {
 			IJ.showMessage("Cannot train without negative examples!");
 			return;
 		}
-		/*Dialog testDialog = new Dialog(this.win, true);
-		testDialog.setSize(150, 50);
-		testDialog.setName("Processing Image...");
-		testDialog.setEnabled(true);
-		testDialog.setVisible(true);*/
 		
 		 IJ.showStatus("training classifier");
 		 long start = System.currentTimeMillis();
@@ -404,8 +408,9 @@ public class Trainable_Segmentation implements PlugIn {
 		 //FIXME: should depend on image size?? Or labels??
 		 rf.setNumTrees(200);
 		 //this is the default that Breiman suggests
-		 rf.setNumFeatures((int) Math.round(Math.sqrt(featureStack.getSize())));
-		 //rf.setNumFeatures(2);
+		 //rf.setNumFeatures((int) Math.round(Math.sqrt(featureStack.getSize())));
+		 //but this seems to work better
+		 rf.setNumFeatures(2);
 		
 		 
 		 rf.setSeed(123);
@@ -413,21 +418,15 @@ public class Trainable_Segmentation implements PlugIn {
 		 IJ.log("training classifier");
 		 try{rf.buildClassifier(data);}
 		 catch(Exception e){IJ.showMessage("Could not train Classifier!");}
-		 
-		 IJ.log("reading whole image data");
-		 start = System.currentTimeMillis();
-		 data = featureStack.createInstances();
-		 end = System.currentTimeMillis();
-		 IJ.log("creating whole image data took: " + (end-start));
-		 data.setClassIndex(data.numAttributes() - 1);
-		 
-//		 writeDataToARFF(data, "testWholeImageData.arff");
-		 
+		 applyClassifier(rf);
+	}
+
+	public void applyClassifier(FastRandomForest rf){
 		 IJ.log("classifying image");
-		 double[] classificationResult = new double[data.numInstances()];
-		 for (int i=0; i<data.numInstances(); i++){
+		 double[] classificationResult = new double[wholeImageData.numInstances()];
+		 for (int i=0; i<wholeImageData.numInstances(); i++){
 			 try{
-			 classificationResult[i] = rf.classifyInstance(data.instance(i));
+			 classificationResult[i] = rf.classifyInstance(wholeImageData.instance(i));
 			 }catch(Exception e){IJ.showMessage("Could not apply Classifier!");}
 		 }
 		 
@@ -439,10 +438,8 @@ public class Trainable_Segmentation implements PlugIn {
 		 resultButton.setEnabled(true);
 		 showColorOverlay = false;
 		 toggleOverlay();
-		 //testDialog.setVisible(false);
-		 //testDialog.setEnabled(false);
 	}
-
+	
 	void toggleOverlay(){
 		showColorOverlay = !showColorOverlay;
 		if (showColorOverlay){
