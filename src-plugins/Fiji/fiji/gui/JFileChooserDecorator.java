@@ -142,7 +142,6 @@ public class JFileChooserDecorator implements DropTargetListener {
 	/* convenience function to start it in the Script Editor */
 
 	public static void main(String[] args) {
-		fiji.UnregisterAWTListeners.unregisterAWTListeners();
 		registerAutomaticDecorator();
 		report("JFileChooser decorator started");
 		report("========================");
