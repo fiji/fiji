@@ -87,11 +87,14 @@ public class Recent_Commands implements ActionListener, CommandListener, KeyList
 		dialog.add(mostFrequent, c);
 		okay = new JButton("OK");
 		okay.addActionListener(this);
+		okay.addKeyListener(this);
 		dialog.getRootPane().setDefaultButton(okay);
 		cancel = new JButton("Cancel");
 		cancel.addActionListener(this);
+		cancel.addKeyListener(this);
 		options = new JButton("Options");
 		options.addActionListener(this);
+		options.addKeyListener(this);
 		JPanel panel = new JPanel();
 		panel.add(okay);
 		panel.add(cancel);
@@ -136,6 +139,11 @@ public class Recent_Commands implements ActionListener, CommandListener, KeyList
 		int key = e.getKeyCode();
 		if (key == KeyEvent.VK_ESCAPE)
 			dialog.dispose();
+		else if (e.getSource() instanceof JButton) {
+			if (key == KeyEvent.VK_ENTER)
+				actionPerformed(new ActionEvent(e.getSource(), 0, ""));
+			return;
+		}
 		else if (key == KeyEvent.VK_ENTER) {
 			runSelectedCommand();
 			dialog.dispose();
