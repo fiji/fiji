@@ -149,6 +149,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/AnalyzeSkeleton_.jar \
 	plugins/Skeletonize3D_.jar \
 	plugins/TurboReg_.jar \
+	plugins/Feature_Detection.jar \
 	plugins/Bug_Submitter.jar \
 	plugins/Fiji_Plugins.jar \
 	plugins/ToAST_.jar \
