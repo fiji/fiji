@@ -186,14 +186,16 @@ jdk[bin/checkout-jdk.py $JDK] <-
 
 # From submodules
 jars/ij.jar <- jars/javac.jar ImageJA/
-CLASSPATH(plugins/VIB_.jar)=plugins/LSM_Toolbox.jar:plugins/mpicbg_.jar:jars/imglib.jar
+CLASSPATH(plugins/VIB_.jar)=plugins/LSM_Toolbox.jar:plugins/mpicbg_.jar:jars/imglib.jar:jars/Jama-1.0.2.jar
 plugins/VIB_.jar <- plugins/LSM_Toolbox.jar VIB/
+CLASSPATH(plugins/mpicbg_.jar)=jars/Jama-1.0.2.jar
 plugins/mpicbg_.jar <- mpicbg/
 jars/clojure.jar <- clojure/
 jars/clojure-contrib.jar <- jars/clojure.jar clojure-contrib/
 plugins/loci_tools.jar <- bio-formats/
+CLASSPATH(jars/VectorString.jar)=jars/Jama-1.0.2.jar
 jars/VectorString.jar <- TrakEM2/
-CLASSPATH(plugins/TrakEM2_.jar)=plugins/VIB_.jar:plugins/mpicbg_.jar:plugins/loci_tools.jar:plugins/bUnwarpJ_.jar:plugins/level_sets.jar:plugins/Fiji_Plugins.jar
+CLASSPATH(plugins/TrakEM2_.jar)=plugins/VIB_.jar:plugins/mpicbg_.jar:plugins/loci_tools.jar:plugins/bUnwarpJ_.jar:plugins/level_sets.jar:plugins/Fiji_Plugins.jar:jars/Jama-1.0.2.jar
 plugins/TrakEM2_.jar <- jars/ij.jar plugins/VIB_.jar plugins/mpicbg_.jar plugins/bUnwarpJ_.jar plugins/level_sets.jar plugins/Fiji_Plugins.jar jars/VectorString.jar TrakEM2/
 plugins/ij-ImageIO_.jar <- ij-plugins/
 jars/jacl.jar <- tcljava/
@@ -213,6 +215,8 @@ misc/Fiji.jar <- src-plugins/Fiji/fiji/**/*.java icon.png[images/icon.png]
 # These classes are common
 CLASSPATH(jars/zs.jar)=jars/Jama-1.0.2.jar
 jars/zs.jar <- src-plugins/zs/**/*.java
+
+jars/Jama-1.0.2.jar <- src-plugins/Jama-1.0.2/**/*.java
 
 jars/fiji-lib.jar <- src-plugins/fiji-lib/**/*.java
 
