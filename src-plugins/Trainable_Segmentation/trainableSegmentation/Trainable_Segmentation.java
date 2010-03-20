@@ -11,11 +11,11 @@ package trainableSegmentation;
  * - work on whole Stack 
  * - delete annotations with a shortkey
  * - save classifier and load classifier
- * - do probability output (accessible?) and define threshold?
+ * - do probability output (accessible?) and define threshold
  * - put thread solution to wiki http://pacific.mpi-cbg.de/wiki/index.php/Developing_Fiji#Writing_plugins
  * 
  * - clean up gui (buttons, window size, funny zoom)
- * - give feedback when classifier is trained or applied
+ * - give more feedback when classifier is trained or applied
  * 
  * License: GPL
  *
@@ -195,7 +195,9 @@ public class Trainable_Segmentation implements PlugIn {
   	      	imageAndLists.add(annotations);
   	      	
   			Panel buttons = new Panel();
-  			buttons.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+  			BoxLayout buttonLayout = new BoxLayout(buttons, BoxLayout.Y_AXIS);
+  			buttons.setLayout(buttonLayout);
+  			//buttons.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
   			
   	      	posExampleButton.addActionListener(listener);
   	      	negExampleButton.addActionListener(listener);
@@ -216,10 +218,10 @@ public class Trainable_Segmentation implements PlugIn {
   	      	}
   	      	
   	      	Panel all = new Panel();
-			BoxLayout box = new BoxLayout(all, BoxLayout.Y_AXIS);
+			BoxLayout box = new BoxLayout(all, BoxLayout.X_AXIS);
 			all.setLayout(box);
+ 	      	all.add(buttons);
   	      	all.add(imageAndLists);
-  	      	all.add(buttons);
   	      	removeAll();
   	      	add(all);
   	      	
@@ -278,7 +280,7 @@ public class Trainable_Segmentation implements PlugIn {
 		
 		//Build GUI
 		win = new CustomWindow(displayImage);
-		
+				
 		//trainingImage.getWindow().setVisible(false);
 		}
 	
