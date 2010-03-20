@@ -11,9 +11,11 @@ package trainableSegmentation;
  * - work on whole Stack 
  * - delete annotations with a shortkey
  * - save classifier and load classifier
- * - apply classifier to other images
  * - do probability output (accessible?) and define threshold?
  * - put thread solution to wiki http://pacific.mpi-cbg.de/wiki/index.php/Developing_Fiji#Writing_plugins
+ * 
+ * - clean up gui (buttons, window size, funny zoom)
+ * - give feedback when classifier is trained or applied
  * 
  * License: GPL
  *
@@ -237,9 +239,7 @@ public class Trainable_Segmentation implements PlugIn {
   	      		}
   	      	});
   		}
-  		public void setDisplayImage(ImagePlus newDisplay){
-  			
-  		}
+
   	}
   	
 	public void run(String arg) {
@@ -281,6 +281,15 @@ public class Trainable_Segmentation implements PlugIn {
 		
 		//trainingImage.getWindow().setVisible(false);
 		}
+	
+	private void setButtonsEnabled(Boolean s){
+		posExampleButton.setEnabled(s);
+	    negExampleButton.setEnabled(s);
+	    trainButton.setEnabled(s);
+	    overlayButton.setEnabled(s);
+	    resultButton.setEnabled(s);
+	    applyButton.setEnabled(s);
+	}
 	
 	private void addPositiveExamples(){
 		//get selected pixels
@@ -404,6 +413,8 @@ public class Trainable_Segmentation implements PlugIn {
 			return;
 		}
 		
+		setButtonsEnabled(false);
+		
 		 IJ.showStatus("training classifier");
 		 long start = System.currentTimeMillis();
 		 Instances data = createTrainingInstances();
@@ -422,6 +433,8 @@ public class Trainable_Segmentation implements PlugIn {
 		 applyButton.setEnabled(true);
 		 showColorOverlay = false;
 		 toggleOverlay();
+		 
+		 setButtonsEnabled(true);
 	}
 
 	public ImagePlus applyClassifier(Instances data, int w, int h){
