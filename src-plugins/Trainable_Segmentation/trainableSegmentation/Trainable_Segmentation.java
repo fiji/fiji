@@ -47,6 +47,8 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.gui.ImageWindow;
 import ij.gui.Roi;
+import ij.io.OpenDialog;
+import ij.io.SaveDialog;
 import ij.ImagePlus;
 import ij.WindowManager;
 
@@ -83,6 +85,7 @@ public class Trainable_Segmentation implements PlugIn {
 	private int negTraceCounter;
    	private boolean showColorOverlay;
    	private Instances wholeImageData;
+   	private Instances loadedTrainingData;
    	private FastRandomForest rf;
 	final Button posExampleButton;
   	final Button negExampleButton;
@@ -90,6 +93,8 @@ public class Trainable_Segmentation implements PlugIn {
   	final Button overlayButton;
   	final Button resultButton;
   	final Button applyButton;
+  	final Button loadDataButton;
+  	final Button saveDataButton;
   	
   	
   	public Trainable_Segmentation() {
@@ -102,6 +107,9 @@ public class Trainable_Segmentation implements PlugIn {
   	      	resultButton.setEnabled(false);
   	      	applyButton = new Button ("apply classifier");
   	      	applyButton.setEnabled(false);
+  	      	loadDataButton = new Button ("load data");
+  	      	saveDataButton = new Button ("save data");
+  	      	
   	      	posExampleList = new java.awt.List(5);
   	      	posExampleList.setForeground(Color.green);
   	      	negExampleList = new java.awt.List(5);
@@ -148,7 +156,13 @@ public class Trainable_Segmentation implements PlugIn {
   		  			}
   		  			else if(e.getSource() == applyButton){
   						applyClassifierToTestData();
-  			}
+  		  			}
+  		  			else if(e.getSource() == loadDataButton){
+  		  				loadTrainingData();
+  		  			}
+  		  			else if(e.getSource() == saveDataButton){
+  		  				saveTrainingData();
+  		  			}
   				}
   			});
   		}
@@ -205,14 +219,18 @@ public class Trainable_Segmentation implements PlugIn {
   	      	overlayButton.addActionListener(listener);
   	      	resultButton.addActionListener(listener);
   	      	applyButton.addActionListener(listener);
+  	      	loadDataButton.addActionListener(listener);
+  	      	saveDataButton.addActionListener(listener);
   	      	buttons.add(posExampleButton);
   	      	buttons.add(negExampleButton);
   	      	buttons.add(trainButton);
   	      	buttons.add(overlayButton);
   	      	buttons.add(resultButton);
   	      	buttons.add(applyButton);
+  	      	buttons.add(loadDataButton);
+  	      	buttons.add(saveDataButton);
   	      	
-  	      	for (Component c : new Component[]{posExampleButton, negExampleButton, trainButton, overlayButton, resultButton, applyButton}) {
+  	      	for (Component c : new Component[]{posExampleButton, negExampleButton, trainButton, overlayButton, resultButton, applyButton, loadDataButton, saveDataButton}) {
   	      		c.setMaximumSize(new Dimension(230, 50));
   	      		c.setPreferredSize(new Dimension(130, 30));
   	      	}
@@ -226,6 +244,7 @@ public class Trainable_Segmentation implements PlugIn {
   	      	add(all);
   	      	
   	      	pack();
+  	        pack();
   	      	
   	      	// Propagate all listeners
   	      	for (Panel p : new Panel[]{all, buttons, piw}) {
@@ -291,6 +310,8 @@ public class Trainable_Segmentation implements PlugIn {
 	    overlayButton.setEnabled(s);
 	    resultButton.setEnabled(s);
 	    applyButton.setEnabled(s);
+	    loadDataButton.setEnabled(s);
+	    saveDataButton.setEnabled(s);
 	}
 	
 	private void addPositiveExamples(){
@@ -350,12 +371,29 @@ public class Trainable_Segmentation implements PlugIn {
 				new FileOutputStream( filename) ) );
 			try{	
 					out.write(data.toString());
-					
+					out.close();
 			}
 			catch(IOException e){IJ.showMessage("IOException");}
 	}
 	catch(FileNotFoundException e){IJ.showMessage("File not found!");}
 		
+	}
+	
+	public Instances readDataFromARFF(String filename){
+		try{
+			BufferedReader reader = new BufferedReader(
+					new FileReader(filename));
+			try{
+				Instances data = new Instances(reader);
+				// setting class attribute
+				data.setClassIndex(data.numAttributes() - 1);
+				reader.close();
+				return data;
+			}
+			catch(IOException e){IJ.showMessage("IOException");}
+		}
+		catch(FileNotFoundException e){IJ.showMessage("File not found!");}
+		return null;
 	}
 
 	public Instances createTrainingInstances(){
@@ -405,12 +443,13 @@ public class Trainable_Segmentation implements PlugIn {
 		return trainingData;
 	}
 	
+	
 	public void trainClassifier(){
-		if (positiveExamples.size()==0){
+		if (positiveExamples.size()==0 & loadedTrainingData==null){
 			IJ.showMessage("Cannot train without positive examples!");
 			return;
 		}
-		if (negativeExamples.size()==0){
+		if (negativeExamples.size()==0 & loadedTrainingData==null){
 			IJ.showMessage("Cannot train without negative examples!");
 			return;
 		}
@@ -418,15 +457,38 @@ public class Trainable_Segmentation implements PlugIn {
 		setButtonsEnabled(false);
 		
 		 IJ.showStatus("training classifier");
-		 long start = System.currentTimeMillis();
-		 Instances data = createTrainingInstances();
-		 long end = System.currentTimeMillis();
-		 IJ.log("creating training data took: " + (end-start));
-		 data.setClassIndex(data.numAttributes() - 1);
+		 Instances data = null;
+		 if (0 == positiveExamples.size() | 0 == negativeExamples.size())
+			 IJ.log("training from loaded data only");
+		 else {
+			 long start = System.currentTimeMillis();
+			 data = createTrainingInstances();
+			 long end = System.currentTimeMillis();
+			 IJ.log("creating training data took: " + (end-start));
+			 data.setClassIndex(data.numAttributes() - 1);
+		 }
+		 
+		 if (loadedTrainingData != null & data != null){
+			 IJ.log("merging data");
+			 for (int i=0; i < loadedTrainingData.numInstances(); i++){
+				 data.add(loadedTrainingData.instance(i));
+			 }
+			 IJ.log("finished");
+		 }
+		 else if (data == null){
+			 data = loadedTrainingData;
+			 IJ.log("taking loaded data as only data");
+		 }
 		 
 		 IJ.showStatus("training classifier");
+		 IJ.log("training classifier");
+		 if (null == data){
+			 IJ.log("WTF");
+		 }
 		 try{rf.buildClassifier(data);}
 		 catch(Exception e){IJ.showMessage("Could not train Classifier!");}
+		 
+		 IJ.log("classifying whole image");
 		 
 		 classifiedImage = applyClassifier(wholeImageData, trainingImage.getWidth(), trainingImage.getHeight());
 		 
@@ -572,5 +634,40 @@ public class Trainable_Segmentation implements PlugIn {
 		testClassImage.setProcessor(testClassImage.getProcessor().convertToByte(true).duplicate());
 		
 		return testClassImage;
+	}
+	
+	public void loadTrainingData(){
+		OpenDialog od = new OpenDialog("choose data file","");
+		if (od.getFileName()==null)
+			return;
+		IJ.log("load data from " + od.getDirectory() + od.getFileName());
+		loadedTrainingData = readDataFromARFF(od.getDirectory() + od.getFileName());
+		IJ.log("loaded data: " + loadedTrainingData.numInstances());
+	}
+	public void saveTrainingData(){
+		if (positiveExamples.size() == 0 & negativeExamples.size() == 0 & loadedTrainingData == null){
+			IJ.showMessage("There is no data to save");
+			return;
+		}
+		
+		Instances data = createTrainingInstances();
+		data.setClassIndex(data.numAttributes() - 1);
+		if (null != loadedTrainingData & null != data){
+			 IJ.log("merging data");
+			 for (int i=0; i < loadedTrainingData.numInstances(); i++){
+				// IJ.log("" + i)
+				 data.add(loadedTrainingData.instance(i));
+			 }
+			 IJ.log("finished");
+		}
+		else if (null == data)
+			data = loadedTrainingData;
+		
+		SaveDialog sd = new SaveDialog("choose save file", "data",".arff");
+		if (sd.getFileName()==null)
+			return;
+		IJ.log("writing training data: " + data.numInstances());
+		writeDataToARFF(data, sd.getDirectory() + sd.getFileName());
+		IJ.log("wrote training data " + sd.getDirectory() + " " + sd.getFileName());
 	}
 }
