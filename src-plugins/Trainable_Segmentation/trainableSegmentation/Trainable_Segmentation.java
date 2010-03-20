@@ -264,7 +264,7 @@ public class Trainable_Segmentation implements PlugIn {
 		
 		trainingImage.setProcessor("training image", trainingImage.getProcessor().duplicate().convertToByte(true));
 		createFeatureStack(trainingImage);
-		IJ.log("reading whole image data");
+		IJ.showStatus("reading whole image data");
 		long start = System.currentTimeMillis();
 		wholeImageData = featureStack.createInstances();
 		long end = System.currentTimeMillis();
@@ -335,7 +335,7 @@ public class Trainable_Segmentation implements PlugIn {
 	}
 	
 	public void createFeatureStack(ImagePlus img){
-		IJ.log("creating feature stack");
+		IJ.showStatus("creating feature stack");
 		featureStack = new FeatureStack(img);
 		featureStack.addDefaultFeatures();
 	}
@@ -422,7 +422,7 @@ public class Trainable_Segmentation implements PlugIn {
 		 IJ.log("creating training data took: " + (end-start));
 		 data.setClassIndex(data.numAttributes() - 1);
 		 
-		 IJ.log("training classifier");
+		 IJ.showStatus("training classifier");
 		 try{rf.buildClassifier(data);}
 		 catch(Exception e){IJ.showMessage("Could not train Classifier!");}
 		 
@@ -438,7 +438,7 @@ public class Trainable_Segmentation implements PlugIn {
 	}
 
 	public ImagePlus applyClassifier(Instances data, int w, int h){
-		 IJ.log("classifying image");
+		 IJ.showStatus("classifying image");
 		 double[] classificationResult = new double[data.numInstances()];
 		 for (int i=0; i<data.numInstances(); i++){
 			 try{
@@ -446,7 +446,7 @@ public class Trainable_Segmentation implements PlugIn {
 			 }catch(Exception e){IJ.showMessage("Could not apply Classifier!");}
 		 }
 		 
-		 IJ.log("showing result");
+		 IJ.showStatus("showing result");
 		 ImageProcessor classifiedImageProcessor = new FloatProcessor(w, h, classificationResult);
 		 classifiedImageProcessor.convertToByte(true);
 		 ImagePlus classImg = new ImagePlus("classification result", classifiedImageProcessor);
@@ -531,6 +531,8 @@ public class Trainable_Segmentation implements PlugIn {
 		ImagePlus testImage = IJ.openImage();
 		if (null == testImage) return; // user canceled open dialog
 		
+		setButtonsEnabled(false);
+		
 		if (testImage.getImageStackSize() == 1){
 			applyClassifierToTestImage(testImage).show();
 			testImage.show();
@@ -549,13 +551,14 @@ public class Trainable_Segmentation implements PlugIn {
 			ImagePlus showStack = new ImagePlus("classified Stack", testStackClassified);
 			showStack.show();
 		}
+		setButtonsEnabled(true);
 	}
 	
 	
 	public ImagePlus applyClassifierToTestImage(ImagePlus testImage){
 		testImage.setProcessor(testImage.getProcessor().convertToByte(true));
 		
-		IJ.log("creating features for test image");
+		IJ.showStatus("creating features for test image");
 		FeatureStack testImageFeatures = new FeatureStack(testImage);
 		testImageFeatures.addDefaultFeatures();
 		
