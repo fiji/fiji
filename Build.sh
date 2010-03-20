@@ -79,8 +79,8 @@ variables=$(handle_variables "$@")
 
 jar=jars/fake.jar
 pre_jar=precompiled/${jar##*/}
-source_dir=src-plugins/fake/fiji/build/
-source=$source_dir/Fake.java
+source_dir=src-plugins/fake
+source=$source_dir/fiji/build/Fake.java
 
 # make sure fake.jar is up-to-date
 test "a$targets" != a$jar &&
