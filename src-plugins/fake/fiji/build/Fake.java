@@ -1979,10 +1979,12 @@ public class Fake {
 							line.length() -
 							path.length() + slash);
 			}
+			int slash = path.lastIndexOf('/');
+			return path.substring(0, slash + 1);
 		} catch (Exception e) {
 			e.printStackTrace();
+			return null;
 		}
-		return null;
 	}
 
 	/* discovers all the .class files for a given set of .java files */
