@@ -68,6 +68,8 @@ public class Class2JarFilesMap extends HashMap<String, ArrayList<String>> {
 		if (jar.endsWith("/jython.jar") || jar.endsWith("/jruby.jar"))
 			return name.startsWith("com.sun.jna.") ||
 				name.startsWith("jline.");
+		if (jar.endsWith("/ij.jar"))
+			return name.startsWith("javax.script.");
 		return false;
 	}
 
