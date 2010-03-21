@@ -10,7 +10,7 @@ package trainableSegmentation;
  * ToDos:
  * - work on whole Stack 
  * - delete annotations with a shortkey
- * - save classifier and load classifier
+ * - change training image
  * - do probability output (accessible?) and define threshold
  * - put thread solution to wiki http://pacific.mpi-cbg.de/wiki/index.php/Developing_Fiji#Writing_plugins
  * 
@@ -95,6 +95,7 @@ public class Trainable_Segmentation implements PlugIn {
   	final Button applyButton;
   	final Button loadDataButton;
   	final Button saveDataButton;
+  	final Button changeImageButton;
   	
   	
   	public Trainable_Segmentation() {
@@ -109,6 +110,7 @@ public class Trainable_Segmentation implements PlugIn {
   	      	applyButton.setEnabled(false);
   	      	loadDataButton = new Button ("load data");
   	      	saveDataButton = new Button ("save data");
+  	      	changeImageButton = new Button ("change training image");
   	      	
   	      	posExampleList = new java.awt.List(5);
   	      	posExampleList.setForeground(Color.green);
@@ -162,6 +164,9 @@ public class Trainable_Segmentation implements PlugIn {
   		  			}
   		  			else if(e.getSource() == saveDataButton){
   		  				saveTrainingData();
+  		  			}
+  		  			else if(e.getSource() == changeImageButton){
+  		  				changeTrainingImage();
   		  			}
   				}
   			});
@@ -221,6 +226,7 @@ public class Trainable_Segmentation implements PlugIn {
   	      	applyButton.addActionListener(listener);
   	      	loadDataButton.addActionListener(listener);
   	      	saveDataButton.addActionListener(listener);
+  	      	changeImageButton.addActionListener(listener);
   	      	buttons.add(posExampleButton);
   	      	buttons.add(negExampleButton);
   	      	buttons.add(trainButton);
@@ -229,8 +235,9 @@ public class Trainable_Segmentation implements PlugIn {
   	      	buttons.add(applyButton);
   	      	buttons.add(loadDataButton);
   	      	buttons.add(saveDataButton);
+  	      	buttons.add(changeImageButton);
   	      	
-  	      	for (Component c : new Component[]{posExampleButton, negExampleButton, trainButton, overlayButton, resultButton, applyButton, loadDataButton, saveDataButton}) {
+  	      	for (Component c : new Component[]{posExampleButton, negExampleButton, trainButton, overlayButton, resultButton, applyButton, loadDataButton, saveDataButton, changeImageButton}) {
   	      		c.setMaximumSize(new Dimension(230, 50));
   	      		c.setPreferredSize(new Dimension(130, 30));
   	      	}
@@ -255,12 +262,27 @@ public class Trainable_Segmentation implements PlugIn {
   	      	
   	      	addWindowListener(new WindowAdapter() {
   	      		public void windowClosing(WindowEvent e) {
+  	      			IJ.log("closing window");
   	      			// cleanup
   	      			exec.shutdownNow();
+  	      			posExampleButton.removeActionListener(listener);
+  	      			negExampleButton.removeActionListener(listener);
+  	      			trainButton.removeActionListener(listener);
+  	      			overlayButton.removeActionListener(listener);
+  	      			resultButton.removeActionListener(listener);
+  	      			applyButton.removeActionListener(listener);
+  	      			loadDataButton.removeActionListener(listener);
+  	      			saveDataButton.removeActionListener(listener);
+  	      			changeImageButton.removeActionListener(listener);
   	      		}
   	      	});
   		}
 
+ /* 		public void changeDisplayImage(ImagePlus imp){
+  			super.getImagePlus().setProcessor(imp.getProcessor());
+  			super.getImagePlus().setTitle(imp.getTitle());
+  		}
+ */ 	
   	}
   	
 	public void run(String arg) {
@@ -312,6 +334,7 @@ public class Trainable_Segmentation implements PlugIn {
 	    applyButton.setEnabled(s);
 	    loadDataButton.setEnabled(s);
 	    saveDataButton.setEnabled(s);
+	    changeImageButton.setEnabled(s);
 	}
 	
 	private void addPositiveExamples(){
@@ -486,7 +509,7 @@ public class Trainable_Segmentation implements PlugIn {
 			 IJ.log("WTF");
 		 }
 		 try{rf.buildClassifier(data);}
-		 catch(Exception e){IJ.showMessage("Could not train Classifier!");}
+		 catch(Exception e){IJ.showMessage(e.getMessage());}
 		 
 		 IJ.log("classifying whole image");
 		 
@@ -519,6 +542,7 @@ public class Trainable_Segmentation implements PlugIn {
 	
 	void toggleOverlay(){
 		showColorOverlay = !showColorOverlay;
+		IJ.log("toggel overlay to: " + showColorOverlay);
 		if (showColorOverlay){
 			//do this every time cause most likely classification changed
 			int width = trainingImage.getWidth();
@@ -669,5 +693,62 @@ public class Trainable_Segmentation implements PlugIn {
 		IJ.log("writing training data: " + data.numInstances());
 		writeDataToARFF(data, sd.getDirectory() + sd.getFileName());
 		IJ.log("wrote training data " + sd.getDirectory() + " " + sd.getFileName());
+	}
+	
+	public void changeTrainingImage(){
+		ImagePlus trainingImageNew = IJ.openImage();
+		if (null == trainingImageNew) return; // user canceled open dialog
+		
+		//save current annotations
+		if (0 != positiveExamples.size() | 0 != negativeExamples.size())
+		{
+			if (null == loadedTrainingData)
+			{
+				IJ.log("swapping current annotations to loaded data");
+				loadedTrainingData = createTrainingInstances();
+				loadedTrainingData.setClassIndex(loadedTrainingData.numAttributes() - 1);
+			} 
+			else 
+			{
+				IJ.log("appinding current annotations to loaded data");
+				Instances data = createTrainingInstances();
+				for (int i=0; i<data.numInstances(); i++){
+					loadedTrainingData.add(data.instance(i));
+				}
+				loadedTrainingData.setClassIndex(loadedTrainingData.numAttributes() - 1);
+			}
+		}
+		trainingImage = trainingImageNew;
+		trainingImage.setProcessor("training image", trainingImage.getProcessor().duplicate().convertToByte(true));
+		
+		createFeatureStack(trainingImage);
+		IJ.showStatus("reading whole image data");
+		long start = System.currentTimeMillis();
+		wholeImageData = featureStack.createInstances();
+		long end = System.currentTimeMillis();
+		IJ.log("creating whole image data took: " + (end-start));
+		wholeImageData.setClassIndex(wholeImageData.numAttributes() - 1);
+		 
+		displayImage = new ImagePlus();
+		displayImage.setProcessor("training image", trainingImage.getProcessor().duplicate().convertToRGB());
+		
+		positiveExamples = new ArrayList< Roi>(); 
+		negativeExamples = new ArrayList< Roi>();
+		 
+		classifiedImage = null;
+		overlayImage = null;
+		
+		posExampleList.removeAll();
+		posExampleList = new java.awt.List(5);
+	    posExampleList.setForeground(Color.green);
+	    negExampleList.removeAll();
+	    negExampleList = new java.awt.List(5);
+	    negExampleList.setForeground(Color.red);
+	    posTraceCounter = 0;
+	    negTraceCounter = 0;
+	    
+		win.updateImage(displayImage);
+		win.repaint();
+		drawExamples();
 	}
 }
