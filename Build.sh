@@ -143,5 +143,6 @@ test -f "$CWD"/$pre_jar &&
 $SYSTEM_JAVA -classpath "$CWD"/$pre_jar fiji.build.Fake "$@"
 
 # fall back to compiling and running with system Java
-$SYSTEM_JAVAC -source 1.3 -target 1.3 "$CWD"/$source &&
-$SYSTEM_JAVA -classpath "$CWD"/$source_dir fiji.build.Fake "$@"
+mkdir -p "$CWD"/build &&
+$SYSTEM_JAVAC -d "$CWD"/build/ -source 1.3 -target 1.3 "$CWD"/$source &&
+$SYSTEM_JAVA -classpath "$CWD"/build fiji.build.Fake "$@"
