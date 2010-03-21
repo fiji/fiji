@@ -34,6 +34,14 @@ for plugin in plugins:
 			seen.add(dependency)
 		else:
 			plugin.addDependency(dependency)
+
+	# special case: imglib dependency of Script Editor
+	if plugin.filename == 'plugins/Script_Editor.jar':
+		for dependency in ['jars/imglib.jar']:
+			if not dependency in dependencies:
+				plugin.addDependency(dependency)
+				seen.add(dependency)
+
 	for dependency in dependencies:
 		if not dependency in seen:
 			plugin.removeDependency(dependency)
