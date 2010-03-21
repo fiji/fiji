@@ -2004,7 +2004,7 @@ public class Fake {
 					continue;
 				}
 				if (lastJava != null) {
-					String prefix = getPrefix(lastJava);
+					String prefix = getPrefix(makePath(cwd, lastJava));
 					if (prefix != null)
 						result.add(prefix);
 					else
