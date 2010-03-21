@@ -114,8 +114,11 @@ public class Fake {
 			mtimeFijiBuild = new File(fijiBuildJar).lastModified();
 			fijiHome = fijiHome.substring(9, slash + 1);
 		}
-		else if (fijiHome.startsWith("file:/"))
+		else if (fijiHome.startsWith("file:/")) {
 			fijiHome = fijiHome.substring(5, slash + 1);
+			if (fijiHome.endsWith("/src-plugins/"))
+				fijiHome = stripSuffix(fijiHome, "src-plugins/");
+		}
 		if (getPlatform().startsWith("win") && fijiHome.startsWith("/"))
 			fijiHome = fijiHome.substring(1);
 		if (fijiHome.endsWith("precompiled/"))
