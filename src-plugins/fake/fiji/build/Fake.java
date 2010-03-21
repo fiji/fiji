@@ -1301,6 +1301,7 @@ public class Fake {
 					getVarPath("CLASSPATH", directory),
 					getVar("PLUGINSCONFIGDIRECTORY")
 						+ "/" + baseName + ".Fakefile",
+					getBuildDir(),
 					jarName);
 			}
 
@@ -2556,7 +2557,7 @@ public class Fake {
 	protected void fakeOrMake(File cwd, String directory, boolean verbose,
 			boolean ignoreMissingFakefiles, String toolsPath,
 			String classPath, String fallBackFakefile,
-			String defaultTarget)
+			File buildDir, String defaultTarget)
 			throws FakeException {
 		String[] files = new File(directory).list();
 		if (files == null || files.length == 0)
@@ -2590,6 +2591,9 @@ public class Fake {
 				if (classPath != null)
 					parser.setVariable("CLASSPATH",
 							classPath);
+				if (buildDir != null)
+					parser.setVariable("BUILDDIR",
+						buildDir.getAbsolutePath());
 				parser.cwd = new File(cwd, directory);
 				Parser.Rule all = parser.parseRules(null);
 				if (defaultTarget != null) {
