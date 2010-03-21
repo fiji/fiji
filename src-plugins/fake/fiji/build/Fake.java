@@ -1092,9 +1092,9 @@ public class Fake {
 				String dir = getVar("builddir");
 				if (dir == null || dir.equals(""))
 					return null;
-				return new File(cwd, dir + "/"
+				return new File(makePath(cwd, dir + "/"
 					+ stripSuffix(stripSuffix(target,
-						".class"), ".jar"));
+						".class"), ".jar")));
 			}
 
 			List compileJavas(List javas, File buildDir,
