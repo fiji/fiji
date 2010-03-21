@@ -7,7 +7,8 @@ package trainableSegmentation;
  * - Difference of Gaussian
  * 
  * filters to come:
- * - membraneFilters
+ * - make use of color channels
+ * - membraneFilters faster
  * - histogram patch
  * - BEL type edge detector
  * 

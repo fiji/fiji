@@ -8,6 +8,7 @@ package trainableSegmentation;
  * all filters.
  * 
  * ToDos:
+ * - work with color features
  * - work on whole Stack 
  * - delete annotations with a shortkey
  * - change training image
@@ -95,7 +96,6 @@ public class Trainable_Segmentation implements PlugIn {
   	final Button applyButton;
   	final Button loadDataButton;
   	final Button saveDataButton;
-  	final Button changeImageButton;
   	
   	
   	public Trainable_Segmentation() {
@@ -110,7 +110,6 @@ public class Trainable_Segmentation implements PlugIn {
   	      	applyButton.setEnabled(false);
   	      	loadDataButton = new Button ("load data");
   	      	saveDataButton = new Button ("save data");
-  	      	changeImageButton = new Button ("change training image");
   	      	
   	      	posExampleList = new java.awt.List(5);
   	      	posExampleList.setForeground(Color.green);
@@ -164,9 +163,6 @@ public class Trainable_Segmentation implements PlugIn {
   		  			}
   		  			else if(e.getSource() == saveDataButton){
   		  				saveTrainingData();
-  		  			}
-  		  			else if(e.getSource() == changeImageButton){
-  		  				changeTrainingImage();
   		  			}
   				}
   			});
@@ -226,7 +222,6 @@ public class Trainable_Segmentation implements PlugIn {
   	      	applyButton.addActionListener(listener);
   	      	loadDataButton.addActionListener(listener);
   	      	saveDataButton.addActionListener(listener);
-  	      	changeImageButton.addActionListener(listener);
   	      	buttons.add(posExampleButton);
   	      	buttons.add(negExampleButton);
   	      	buttons.add(trainButton);
@@ -235,9 +230,8 @@ public class Trainable_Segmentation implements PlugIn {
   	      	buttons.add(applyButton);
   	      	buttons.add(loadDataButton);
   	      	buttons.add(saveDataButton);
-  	      	buttons.add(changeImageButton);
   	      	
-  	      	for (Component c : new Component[]{posExampleButton, negExampleButton, trainButton, overlayButton, resultButton, applyButton, loadDataButton, saveDataButton, changeImageButton}) {
+  	      	for (Component c : new Component[]{posExampleButton, negExampleButton, trainButton, overlayButton, resultButton, applyButton, loadDataButton, saveDataButton}) {
   	      		c.setMaximumSize(new Dimension(230, 50));
   	      		c.setPreferredSize(new Dimension(130, 30));
   	      	}
@@ -273,7 +267,6 @@ public class Trainable_Segmentation implements PlugIn {
   	      			applyButton.removeActionListener(listener);
   	      			loadDataButton.removeActionListener(listener);
   	      			saveDataButton.removeActionListener(listener);
-  	      			changeImageButton.removeActionListener(listener);
   	      		}
   	      	});
   		}
@@ -334,7 +327,6 @@ public class Trainable_Segmentation implements PlugIn {
 	    applyButton.setEnabled(s);
 	    loadDataButton.setEnabled(s);
 	    saveDataButton.setEnabled(s);
-	    changeImageButton.setEnabled(s);
 	}
 	
 	private void addPositiveExamples(){
@@ -695,60 +687,4 @@ public class Trainable_Segmentation implements PlugIn {
 		IJ.log("wrote training data " + sd.getDirectory() + " " + sd.getFileName());
 	}
 	
-	public void changeTrainingImage(){
-		ImagePlus trainingImageNew = IJ.openImage();
-		if (null == trainingImageNew) return; // user canceled open dialog
-		
-		//save current annotations
-		if (0 != positiveExamples.size() | 0 != negativeExamples.size())
-		{
-			if (null == loadedTrainingData)
-			{
-				IJ.log("swapping current annotations to loaded data");
-				loadedTrainingData = createTrainingInstances();
-				loadedTrainingData.setClassIndex(loadedTrainingData.numAttributes() - 1);
-			} 
-			else 
-			{
-				IJ.log("appinding current annotations to loaded data");
-				Instances data = createTrainingInstances();
-				for (int i=0; i<data.numInstances(); i++){
-					loadedTrainingData.add(data.instance(i));
-				}
-				loadedTrainingData.setClassIndex(loadedTrainingData.numAttributes() - 1);
-			}
-		}
-		trainingImage = trainingImageNew;
-		trainingImage.setProcessor("training image", trainingImage.getProcessor().duplicate().convertToByte(true));
-		
-		createFeatureStack(trainingImage);
-		IJ.showStatus("reading whole image data");
-		long start = System.currentTimeMillis();
-		wholeImageData = featureStack.createInstances();
-		long end = System.currentTimeMillis();
-		IJ.log("creating whole image data took: " + (end-start));
-		wholeImageData.setClassIndex(wholeImageData.numAttributes() - 1);
-		 
-		displayImage = new ImagePlus();
-		displayImage.setProcessor("training image", trainingImage.getProcessor().duplicate().convertToRGB());
-		
-		positiveExamples = new ArrayList< Roi>(); 
-		negativeExamples = new ArrayList< Roi>();
-		 
-		classifiedImage = null;
-		overlayImage = null;
-		
-		posExampleList.removeAll();
-		posExampleList = new java.awt.List(5);
-	    posExampleList.setForeground(Color.green);
-	    negExampleList.removeAll();
-	    negExampleList = new java.awt.List(5);
-	    negExampleList.setForeground(Color.red);
-	    posTraceCounter = 0;
-	    negTraceCounter = 0;
-	    
-		win.updateImage(displayImage);
-		win.repaint();
-		drawExamples();
-	}
 }
