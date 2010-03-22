@@ -580,7 +580,7 @@ static char *dos_path(const char *path)
 }
 #endif
 
-static string get_parent_directory(string path)
+static __attribute__((unused)) string get_parent_directory(string path)
 {
 	size_t slash = path.find_last_of("/\\");
 	if (slash == 0 || slash == path.npos)
@@ -1598,9 +1598,7 @@ static int start_ij(void)
 			main_class = strdup(arg.c_str());
 		}
 		else if (handle_one_option(i, "--jar", arg)) {
-			class_path += string(fiji_dir)
-				+ "/misc/Fiji.jar" PATH_SEP
-				+ arg + PATH_SEP;
+			class_path += arg + PATH_SEP;
 			main_class = "fiji.JarLauncher";
 			main_argv[count++] = strdup(arg.c_str());
 		}
@@ -1786,13 +1784,7 @@ static int start_ij(void)
 	}
 	else {
 		if (headless)
-			class_path += string(fiji_dir) + "/misc/headless.jar"
-				+ PATH_SEP;
-		class_path += fiji_dir;
-		class_path += "/misc/Fiji.jar";
-		class_path += PATH_SEP;
-		class_path += fiji_dir;
-		class_path += "/ij.jar";
+			class_path += string(fiji_dir) + "/misc/headless.jar";
 
 		if (is_default_main_class(main_class))
 			update_files();

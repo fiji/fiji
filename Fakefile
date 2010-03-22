@@ -58,6 +58,10 @@ debug=false
 # Compile .java files for this Java version
 javaVersion=1.5
 
+# If false, skips rebuilds triggered from newer Fakefile or fake.jar
+# (see issues 40 & 45)
+rebuildIfFakeIsNewer=true
+
 # When building a .jar file, and a .config file of the same name is found in
 # this directory, it will be included as "plugins.config".
 pluginsConfigDirectory=staged-plugins
@@ -82,7 +86,7 @@ ENVOVERRIDES(JAVA_HOME)=true
 # the main target
 
 SUBMODULE_TARGETS=\
-	ij.jar \
+	jars/ij.jar \
 	plugins/loci_tools.jar \
 	plugins/VIB_.jar \
 	jars/VectorString.jar \
@@ -99,6 +103,8 @@ SUBMODULE_TARGETS=\
 	jars/weka.jar \
 	jars/jython.jar \
 	jars/imglib.jar \
+	jars/mpicbg.jar \
+
 
 PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Clojure_Interpreter.jar \
@@ -153,8 +159,12 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Manual_Tracking.jar \
 	plugins/Calculator_Plus.jar \
 	plugins/3D_Objects_Counter.jar \
+	plugins/Trainable_Segmentation.jar \
 	plugins/IsoData_Classifier.jar \
 	plugins/RATS_.jar \
+	plugins/Directionality_.jar \
+  \
+	jars/Fiji.jar
 	plugins/Image_Expression_Parser.jar \
   \
 	misc/Fiji.jar
@@ -180,16 +190,19 @@ JDK(macosx)=java/macosx-java3d
 jdk[bin/checkout-jdk.py $JDK] <-
 
 # From submodules
-ij.jar <- jars/javac.jar ImageJA/
-CLASSPATH(plugins/VIB_.jar)=plugins/LSM_Toolbox.jar
+jars/ij.jar <- jars/javac.jar ImageJA/
+CLASSPATH(plugins/VIB_.jar)=plugins/LSM_Toolbox.jar:jars/mpicbg.jar:jars/imglib.jar:jars/Jama-1.0.2.jar:plugins/level_sets.jar
 plugins/VIB_.jar <- plugins/LSM_Toolbox.jar VIB/
+CLASSPATH(plugins/mpicbg_.jar)=jars/mpicbg.jar
 plugins/mpicbg_.jar <- mpicbg/
+jars/mpicbg.jar <- mpicbg/
 jars/clojure.jar <- clojure/
 jars/clojure-contrib.jar <- jars/clojure.jar clojure-contrib/
 plugins/loci_tools.jar <- bio-formats/
+CLASSPATH(jars/VectorString.jar)=jars/Jama-1.0.2.jar
 jars/VectorString.jar <- TrakEM2/
-CLASSPATH(plugins/TrakEM2_.jar)=plugins/VIB_.jar:plugins/mpicbg_.jar:plugins/loci_tools.jar:plugins/bUnwarpJ_.jar:plugins/level_sets.jar:plugins/Fiji_Plugins.jar
-plugins/TrakEM2_.jar <- ij.jar plugins/VIB_.jar plugins/mpicbg_.jar plugins/bUnwarpJ_.jar plugins/level_sets.jar plugins/Fiji_Plugins.jar jars/VectorString.jar TrakEM2/
+CLASSPATH(plugins/TrakEM2_.jar)=plugins/VIB_.jar:jars/mpicbg.jar:plugins/loci_tools.jar:plugins/bUnwarpJ_.jar:plugins/level_sets.jar:plugins/Fiji_Plugins.jar:jars/Jama-1.0.2.jar
+plugins/TrakEM2_.jar <- jars/ij.jar plugins/VIB_.jar jars/mpicbg.jar plugins/bUnwarpJ_.jar plugins/level_sets.jar plugins/Fiji_Plugins.jar jars/VectorString.jar TrakEM2/
 plugins/ij-ImageIO_.jar <- ij-plugins/
 jars/jacl.jar <- tcljava/
 jars/batik.jar <- batik/
@@ -201,13 +214,15 @@ jars/jython.jar <- jython/
 jars/imglib.jar <- imglib/
 
 # From source
-javaVersion(misc/Fiji.jar)=1.5
-mainClass(misc/Fiji.jar)=fiji.Main
-misc/Fiji.jar <- src-plugins/Fiji/fiji/*.java icon.png[images/icon.png]
+javaVersion(jars/Fiji.jar)=1.5
+mainClass(jars/Fiji.jar)=fiji.Main
+jars/Fiji.jar <- src-plugins/Fiji/fiji/**/*.java icon.png[images/icon.png]
 
 # These classes are common
 CLASSPATH(jars/zs.jar)=jars/Jama-1.0.2.jar
 jars/zs.jar <- src-plugins/zs/**/*.java
+
+jars/Jama-1.0.2.jar <- src-plugins/Jama-1.0.2/**/*.java
 
 jars/fiji-lib.jar <- src-plugins/fiji-lib/**/*.java
 jars/jep.jar <- src-plugins/jep/**/*.java
@@ -215,7 +230,7 @@ jars/jep.jar <- src-plugins/jep/**/*.java
 # These classes are common to the scripting plugins
 jars/fiji-scripting.jar <- src-plugins/fiji-scripting/**/*.java
 
-CLASSPATH(plugins/Refresh_Javas.jar)=jars/fiji-scripting.jar:jars/fake.jar
+CLASSPATH(plugins/Refresh_Javas.jar)=jars/fiji-scripting.jar:jars/fake.jar:jars/Fiji.jar
 CLASSPATH(plugins/Jython_Interpreter.jar)=jars/fiji-scripting.jar:jars/jython.jar
 plugins/Jython_Interpreter.jar <- src-plugins/Jython/*.java
 CLASSPATH(plugins/Clojure_Interpreter.jar)=jars/fiji-scripting.jar:jars/clojure.jar:jars/clojure-contrib.jar
@@ -229,11 +244,13 @@ plugins/Javascript_.jar <- src-plugins/Javascript/*.java
 
 plugins/Bug_Submitter.jar <- src-plugins/Bug_Submitter/*.java
 
-CLASSPATH(plugins/register_virtual_stack_slices.jar)=plugins/TrakEM2_.jar:plugins/mpicbg_.jar:plugins/bUnwarpJ_.jar:plugins/Fiji_Plugins.jar
+CLASSPATH(plugins/register_virtual_stack_slices.jar)=plugins/TrakEM2_.jar:jars/mpicbg.jar:plugins/bUnwarpJ_.jar:plugins/Fiji_Plugins.jar
 
 CLASSPATH(plugins/Siox_Segmentation.jar)=jars/fiji-lib.jar
 
 CLASSPATH(plugins/Image_Expression_Parser.jar)=jars/jep.jar:jars/imglib.jar:plugins/mpicbg_.jar
+
+CLASSPATH(plugins/Directionality_.jar)=jars/jfreechart-1.0.9.jar
 
 CLASSPATH(plugins/LSM_Toolbox.jar)=plugins/LSM_Reader.jar
 MAINCLASS(plugins/LSM_Toolbox.jar)=org.imagearchive.lsm.toolbox.gui.AboutDialog
@@ -246,7 +263,7 @@ plugins/LSM_Toolbox.jar <- \
 MAINCLASS(plugins/Interactive_3D_Surface_Plot.jar)=Interactive_3D_Surface_Plot
 CLASSPATH(plugins/Stitching_.jar)=plugins/loci_tools.jar:plugins/Fiji_Plugins.jar
 CLASSPATH(plugins/Fiji_Plugins.jar)=jars/jsch-0.1.37.jar
-CLASSPATH(plugins/Fiji_Updater.jar)=jars/jsch-0.1.37.jar:misc/Fiji.jar
+CLASSPATH(plugins/Fiji_Updater.jar)=jars/jsch-0.1.37.jar:jars/Fiji.jar
 
 plugins/Record_Screen.jar <- src-plugins/Record_Screen/ src-plugins/Record_Screen/**/*
 
@@ -258,20 +275,22 @@ plugins/IO_.jar <- src-plugins/IO_/**/*.java \
 	io/df3_scene.pov[src-plugins/IO_/io/df3/df3_scene.pov]
 
 CLASSPATH(plugins/Sync_Win.jar)=plugins/Image_5D.jar
-CLASSPATH(plugins/Fiji_Developer.jar)=plugins/Script_Editor.jar:plugins/Fiji_Plugins.jar:plugins/VIB_.jar
+CLASSPATH(plugins/Fiji_Developer.jar)=plugins/Script_Editor.jar:plugins/Fiji_Plugins.jar:plugins/VIB_.jar:jars/fiji-lib.jar
 MAINCLASS(plugins/Script_Editor.jar)=fiji.scripting.Script_Editor
 CLASSPATH(plugins/Script_Editor.jar)=jars/rsyntaxtextarea.jar:\
 jars/autocomplete.jar:plugins/Clojure_Interpreter.jar:\
 plugins/JRuby_Interpreter.jar:plugins/Javascript_.jar:\
 plugins/Jython_Interpreter.jar:plugins/Refresh_Javas.jar:\
 plugins/BeanShell_Interpreter.jar:jars/fiji-scripting.jar:\
-misc/Fiji.jar:$JAVA_HOME/../lib/tools.jar
+jars/Fiji.jar:$JAVA_HOME/../lib/tools.jar
 NO_COMPILE(plugins/Script_Editor.jar)=src-plugins/Script_Editor/templates/**/*
 plugins/Script_Editor.jar <- src-plugins/Script_Editor/**/*.java  \
 							icon.png[images/icon.png] \
 							var.png[images/var.png]    \
 							funtion.png[images/function.png] \
 							src-plugins/Script_Editor/templates/**/*
+
+CLASSPATH(plugins/Trainable_Segmentation.jar)=jars/weka.jar:plugins/Stitching_.jar
 
 plugins/*_*.jar <- src-plugins/*_*/**/*.java
 
@@ -311,9 +330,9 @@ CXXFLAGS(win64)=$CXXFLAGS $WINOPTS
 # Include 64-bit architectures only in ./fiji (as opposed to ./fiji-tiger),
 # and only on MacOSX
 MACOPTS(osx10.3)=-I/System/Library/Frameworks/JavaVM.Framework/Headers \
-	-DMACOSX -arch ppc
+	-DMACOSX
 MACOPTS(osx10.4)=$MACOPTS(osx10.3) -mmacosx-version-min=10.3 -arch i386
-MACOPTS(osx10.5)=$MACOPTS(osx10.4) -arch ppc64 -arch x86_64
+MACOPTS(osx10.5)=$MACOPTS(osx10.4) -arch x86_64
 
 CXXFLAGS(linux)=$CXXFLAGS -DIPV6_MAYBE_BROKEN
 CXXFLAGS(linux64)=$CXXFLAGS -DIPV6_MAYBE_BROKEN
@@ -362,6 +381,10 @@ precompiled/fiji-tiger[bin/copy-file.py $PRE $TARGET] <- fiji-tiger
 precompiled/fiji-*[bin/copy-file.py $PRE $TARGET] <- fiji
 
 precompile-fake[] <- precompiled/fake.jar
+precompiled/fake.jar <- jars/fake.jar
+precompiled/javac.jar <- jars/javac.jar
+precompiled/ij.jar <- jars/ij.jar
+precompiled/mpicbg.jar <- jars/mpicbg.jar
 precompiled/*[bin/copy-file.py $PRE $TARGET] <- *
 
 precompile-submodules[] <- \
@@ -370,6 +393,7 @@ precompile-submodules[] <- \
 	precompiled/TrakEM2_.jar \
 	precompiled/VIB_.jar \
 	precompiled/mpicbg_.jar \
+	precompiled/mpicbg.jar \
 	precompiled/clojure.jar \
 	precompiled/clojure-contrib.jar \
 	precompiled/ij-ImageIO_.jar \
@@ -382,7 +406,7 @@ precompile-submodules[] <- \
 	precompiled/jython.jar \
 	precompiled/imglib.jar \
 
-precompiled/ij.jar <- ij.jar
+precompiled/ij.jar <- jars/ij.jar
 precompiled/clojure.jar <- jars/clojure.jar
 precompiled/clojure-contrib.jar <- jars/clojure.jar jars/clojure-contrib.jar
 precompiled/jacl.jar <- jars/jacl.jar
@@ -454,5 +478,5 @@ jars/fake.jar <- src-plugins/fake/**/*.java
 # Script_Editor_Stub.jar (to include MainClassForDebugging in the classpath)
 
 MAINCLASS(jars/Script_Editor_Stub.jar)=stub.MainClassForDebugging
-CLASSPATH(jars/Script_Editor_Stub.jar)=ij.jar
+CLASSPATH(jars/Script_Editor_Stub.jar)=jars/ij.jar
 jars/Script_Editor_Stub.jar <- stub/MainClassForDebugging.java

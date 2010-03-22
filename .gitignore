@@ -15,6 +15,7 @@
 /jvm.cfg
 /samples/
 *.swp
+/.recent-changes.*
 /IJ_Prefs.txt
 /Fiji.app
 /fiji-*.dmg
@@ -35,8 +36,8 @@
 /jars/cachedir
 /tmp.ijm
 /jars/fake.jar
-/ij.jar
-/misc/Fiji.jar
+/jars/ij.jar
+/jars/Fiji.jar
 /plugins/Jython_Interpreter.jar
 /plugins/Clojure_Interpreter.jar
 /plugins/JRuby_Interpreter.jar
@@ -105,6 +106,7 @@
 /plugins/Calculator_Plus.jar
 /plugins/Script_Editor.jar
 /plugins/3D_Objects_Counter.jar
+/plugins/Trainable_Segmentation.jar
 /jars/clojure-contrib.jar
 /jars/weka.jar
 /plugins/IsoData_Classifier.jar
@@ -115,3 +117,6 @@
 /jars/imglib.jar
 /jars/jep.jar
 /plugins/Siox_Segmentation.jar
+/plugins/Directionality_.jar
+/jars/Jama-1.0.2.jar
+/jars/mpicbg.jar

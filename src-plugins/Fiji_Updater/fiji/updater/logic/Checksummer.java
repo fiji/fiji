@@ -205,8 +205,7 @@ public class Checksummer extends Progressable {
 		path = path.replace('\\', '/'); // Microsoft time toll
 		int slash = path.indexOf('/');
 		if (slash < 0)
-			return path.equals("ij.jar") || path.equals("fake.jar")
-				|| Util.isLauncher(path);
+			return Util.isLauncher(path);
 		Set<String> exts = extensions.get(path.substring(0, slash));
 		int dot = path.lastIndexOf('.');
 		return exts == null || dot < 0 ?
@@ -219,8 +218,6 @@ public class Checksummer extends Progressable {
 		for (String launcher : Util.isDeveloper ?
 					Util.launchers : Util.getLaunchers())
 				queueIfExists(launcher);
-
-		queue("ij.jar");
 
 		for (int i = 0; i < directories.length; i += 2)
 			queueDir(directories[i], directories[i + 1]);

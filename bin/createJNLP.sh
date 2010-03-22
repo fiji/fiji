@@ -65,7 +65,6 @@ echo '<?xml version="1.0" encoding="utf-8"?>
     <resources>
     	<j2se version="1.5+" initial-heap-size="64m"/>
         '$jars'
-    	<jar href="ij.jar" main="true"/>
     	<extension href="http://download.java.net/media/java3d/webstart/release/java3d-latest.jnlp"/>
     	<property name="jnlp" value="'$plugins'"/>
     </resources>

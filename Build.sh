@@ -42,7 +42,7 @@ JAVA_HOME="$("$CWD"/precompiled/fiji-"$platform" --print-java-home)"
 
 # need to clone java submodule
 test -f "$JAVA_HOME/lib/tools.jar" || test -f "$JAVA_HOME/../lib/tools.jar" ||
-test -f "$JAVA_HOME"/Home/lib/ext/vecmath.jar || {
+test -f java/"$java_submodule"/Home/lib/ext/vecmath.jar || {
 	echo "No JDK found; cloning it"
 	JAVA_SUBMODULE=java/$java_submodule
 	git submodule init "$JAVA_SUBMODULE" && (
@@ -79,20 +79,34 @@ variables=$(handle_variables "$@")
 
 jar=jars/fake.jar
 pre_jar=precompiled/${jar##*/}
-source_dir=src-plugins/fake/fiji/build/
-source=$source_dir/Fake.java
+source_dir=src-plugins/fake
+source=$source_dir/fiji/build/Fake.java
 
 # make sure fake.jar is up-to-date
 test "a$targets" != a$jar &&
 test ! -f "$CWD"/$jar -o "$CWD"/$source -nt "$CWD"/$jar && {
-	sh "$0" $variables $jar || exit
+	(cd "$CWD" && sh "$(basename "$0")" $variables $jar) || exit
 }
 
 # make sure the Fiji launcher is up-to-date
 test "a$targets" != a$jar -a "a$targets" != afiji &&
 test ! -f "$CWD"/fiji -o "$CWD"/fiji.cxx -nt "$CWD"/fiji$exe && {
-	sh "$0" $variables fiji || exit
+	(cd "$CWD" && sh "$(basename "$0")" $variables fiji) || exit
 }
+
+# on Win64, with a 32-bit compiler, do not try to compile
+case $platform in
+win64)
+	case "$(g++ --version)" in
+	*mingw32*)
+		# cannot compile!
+		test "$CWD"/fiji.exe -nt "$CWD"/fiji.cxx &&
+		test "$CWD"/fiji.exe -nt "$CWD"/precompiled/fiji-win64.exe &&
+		test "$CWD"/fiji.exe -nt "$CWD"/Fakefile &&
+		test "$CWD"/fiji.exe -nt "$CWD"/$jar ||
+		cp precompiled/fiji-win64.exe fiji.exe
+	esac
+esac
 
 # still needed for Windows, which cannot overwrite files that are in use
 test -f "$CWD"/fiji$exe -a -f "$CWD"/$jar &&
@@ -129,5 +143,6 @@ test -f "$CWD"/$pre_jar &&
 $SYSTEM_JAVA -classpath "$CWD"/$pre_jar fiji.build.Fake "$@"
 
 # fall back to compiling and running with system Java
-$SYSTEM_JAVAC -source 1.3 -target 1.3 "$CWD"/$source &&
-$SYSTEM_JAVA -classpath "$CWD"/$source_dir fiji.build.Fake "$@"
+mkdir -p "$CWD"/build &&
+$SYSTEM_JAVAC -d "$CWD"/build/ -source 1.3 -target 1.3 "$CWD"/$source &&
+$SYSTEM_JAVA -classpath "$CWD"/build fiji.build.Fake "$@"

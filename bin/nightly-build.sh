@@ -16,7 +16,7 @@ compile () {
 	done &&
 	git clean -q -x -d -f &&
 	# remove empty directories
-	for d in $(git ls-files --other --directory)
+	for d in $(git ls-files --others --directory)
 	do
 		rm -r $d || break
 	done &&
@@ -64,7 +64,14 @@ case "$1" in
 		then
 			find -name \*.java |
 			grep -ve ij-plugins/Sun_JAI_Sample_IO_Source_Code \
-				-e ij-plugins/Quickvol |
+				-e ij-plugins/Quickvol -e jython/sandbox \
+				-e ij-plugins/VTK-Examples \
+				-e jython/jython/Demo \
+				-e weka/wekaexamples/src/main/java/wekaexamples \
+				-e jython/jython/src/org/python/expose/generate/PyTypes \
+				-e bio-formats/components/visbio/src/loci/visbio/overlays/OverlayTransform.java \
+				-e bio-formats/components/slim-plotter/ \
+				-e bio-formats/components/visbio/ |
 			./fiji --jar-path $(./fiji --print-java-home)/../lib/ \
 				--main-class=com.sun.tools.javadoc.Main \
 				-d /var/www/javadoc \

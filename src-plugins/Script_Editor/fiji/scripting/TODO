@@ -1,9 +1,3 @@
-- Properly handle Language menu when switching tabs.
-
-- Support Ctrl+PageUp/PageDown to switch between the tabs.
-
-- Add a Tabs menu.
-
 - BeanShell seems not to import the second time a BeanShell interpreter is
   opened (reported by Stephan Saalfeld).
 

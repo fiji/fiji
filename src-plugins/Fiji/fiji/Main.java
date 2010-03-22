@@ -1,5 +1,8 @@
 package fiji;
 
+import fiji.gui.FileDialogDecorator;
+import fiji.gui.JFileChooserDecorator;
+
 import ij.IJ;
 import ij.ImageJ;
 
@@ -147,12 +150,16 @@ public class Main implements AWTEventListener {
 
 	public static void runUpdater() {
 		System.setProperty("fiji.main.checksUpdaterAtStartup", "true");
+		gentlyRunPlugIn("fiji.updater.UptodateCheck", "quick");
+	}
+
+	public static void gentlyRunPlugIn(String className, String arg) {
 		try {
-			Class updater = IJ.getClassLoader()
-				.loadClass("fiji.updater.UptodateCheck");
-			if (updater != null) {
-				PlugIn plugin = (PlugIn)updater.newInstance();
-				plugin.run("quick");
+			Class clazz = IJ.getClassLoader()
+				.loadClass(className);
+			if (clazz != null) {
+				PlugIn plugin = (PlugIn)clazz.newInstance();
+				plugin.run(arg);
 			}
 		}
 		catch (ClassNotFoundException e) { }
@@ -160,8 +167,14 @@ public class Main implements AWTEventListener {
 		catch (IllegalAccessException e) { }
 	}
 
+	public static void installRecentCommands() {
+		gentlyRunPlugIn("fiji.util.Recent_Commands", "install");
+	}
+
 	public static void premain() {
 		Toolkit.getDefaultToolkit().addAWTEventListener(new Main(), -1);
+		FileDialogDecorator.registerAutomaticDecorator();
+		JFileChooserDecorator.registerAutomaticDecorator();
 	}
 
 	/*
@@ -172,11 +185,13 @@ public class Main implements AWTEventListener {
 		if (IJ.getInstance() != null) {
 			new User_Plugins().run(null);
 			SampleImageLoader.install();
+			installRecentCommands();
 			new Thread() {
 				public void run() {
 					runUpdater();
 				}
 			}.start();
+			new IJ_Alt_Key_Listener().run();
 		}
 	}
 

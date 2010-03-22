@@ -44,6 +44,10 @@ import java.util.HashMap;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSession;
+
 public class MediaWikiClient {
 	final String wikiBaseURI;
 	String sessionID, domain;
@@ -229,7 +233,7 @@ public class MediaWikiClient {
 		}
 	}
 
-	String sendRequest(String[] getVars,
+	public String sendRequest(String[] getVars,
 			String[] postVars) throws IOException {
 		return sendRequest(getVars, postVars, null, false);
 	}
@@ -250,6 +254,15 @@ public class MediaWikiClient {
 		URL url = new URL(uri);
 		HttpURLConnection conn =
 			(HttpURLConnection)url.openConnection();
+		if (conn instanceof HttpsURLConnection) {
+			HttpsURLConnection secure = (HttpsURLConnection)conn;
+			secure.setHostnameVerifier(new HostnameVerifier() {
+				public boolean verify(String hostname,
+						SSLSession session) {
+					return true;
+				}
+			});
+		}
 
 		conn.setDoInput(true);
 		conn.setUseCaches(false);

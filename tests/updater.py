@@ -36,7 +36,7 @@ f.write('''<?xml version="1.0" encoding="UTF-8"?>
 f.close()
 
 # populate webroot
-uploadables = ['ij.jar', 'misc/Fiji.jar', 'plugins/Fiji_Updater.jar',
+uploadables = ['jars/ij.jar', 'jars/Fiji.jar', 'plugins/Fiji_Updater.jar',
 	'jars/jsch-0.1.37.jar', 'jars/jzlib-1.0.7.jar',
 	'plugins/Arrow_.jar', 'jars/javac.jar']
 if launchProgram(['./fiji','-Dpython.cachedir.skip=true', '--',
@@ -55,7 +55,7 @@ if len(uploadables) + len(extra) != sum([len(listdir(tmpWebRoot + dir)) for
 	die('Wrong number of files')
 
 # populate with minimal Fiji; reuse Java
-for file in ['fiji', 'ij.jar', 'misc/Fiji.jar', 'plugins/Fiji_Updater.jar',
+for file in ['fiji', 'jars/ij.jar', 'jars/Fiji.jar', 'plugins/Fiji_Updater.jar',
 		'jars/jsch-0.1.37.jar', 'jars/jzlib-1.0.7.jar',
 		'jars/javac.jar',
 		'jars/fiji-scripting.jar', 'jars/jython.jar',
@@ -177,7 +177,7 @@ from fiji.updater.logic.PluginObject import Action, Status
 
 # test that the list is correct
 expect = {
-	'misc/Fiji.jar' : Status.INSTALLED,
+	'jars/Fiji.jar' : Status.INSTALLED,
 	'plugins/Fiji_Updater.jar' : Status.INSTALLED,
 	'jars/jsch-0.1.37.jar' : Status.INSTALLED,
 	'jars/jzlib-1.0.7.jar' : Status.INSTALLED,
@@ -185,7 +185,7 @@ expect = {
 	'macros/updateable.ijm' : Status.UPDATEABLE,
 	'macros/deleted-modified.ijm' : Status.OBSOLETE_MODIFIED,
 	'macros/obsolete.ijm' : Status.OBSOLETE,
-	'ij.jar' : Status.INSTALLED,
+	'jars/ij.jar' : Status.INSTALLED,
 	'jars/javac.jar' : Status.INSTALLED,
 	'jars/fiji-scripting.jar' : Status.NOT_FIJI,
 	'jars/jython.jar' : Status.NOT_FIJI,

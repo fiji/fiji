@@ -90,7 +90,6 @@ install-arch-stamp : build-arch-stamp
 	install -d $(DESTDIR)/usr/lib/fiji/java/$(JRE_PREFIX)
 	cp -rv java/$(JRE_PREFIX)jre $(DESTDIR)/usr/lib/fiji/java/$(JRE_PREFIX)
 	install -d $(DESTDIR)/usr/share/doc/fiji/
-	install -m 644 ij.jar $(DESTDIR)/usr/lib/fiji/
 	install -m 644 LICENSES $(DESTDIR)/usr/share/doc/fiji/
 	install -m 644 NOTES $(DESTDIR)/usr/share/doc/fiji/
 	install -m 644 README $(DESTDIR)/usr/share/doc/fiji/

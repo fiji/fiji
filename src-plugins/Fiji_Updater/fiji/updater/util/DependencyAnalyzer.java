@@ -1,5 +1,7 @@
 package fiji.updater.util;
 
+import ij.IJ;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -9,6 +11,7 @@ import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.List;
 
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -23,10 +26,10 @@ import java.util.jar.JarFile;
  * turn their JAR files, i.e.: The dependencies themselves
  */
 public class DependencyAnalyzer {
-	private Class2JarFileMap map;
+	private Class2JarFilesMap map;
 
 	public DependencyAnalyzer() {
-		map = new Class2JarFileMap();
+		map = new Class2JarFilesMap();
 	}
 
 	public Iterable<String> getDependencies(String filename)
@@ -48,10 +51,28 @@ public class DependencyAnalyzer {
 			ByteCodeAnalyzer analyzer = new ByteCodeAnalyzer(code);
 
 			for (String name : analyzer) {
-				String otherJar = map.get(name);
-				if (otherJar != null &&
-						!otherJar.equals(filename))
-					result.put(otherJar, (Object)null);
+				if (IJ.debugMode)
+					IJ.log("Considering name from analyzer: "+name);
+				List<String> allJars = map.get(name);
+				if (allJars == null ||
+						allJars.contains(filename))
+					continue;
+				if (allJars.size() > 1) {
+					IJ.log("Warning: class " + name
+						+ ", referenced in " + filename
+						+ ", is in more than one jar:");
+					for (String j : allJars)
+						IJ.log("  "+j);
+					IJ.log("... adding all as dependency.");
+				}
+				for (String j : allJars) {
+					result.put(j, (Object)null);
+					if (IJ.debugMode)
+						IJ.log("... adding dep "
+							+ j + " for " + filename
+							+ " because of class "
+							+ name);
+				}
 			}
 		}
 		return result.keySet();

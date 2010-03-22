@@ -114,8 +114,11 @@ public class Fake {
 			mtimeFijiBuild = new File(fijiBuildJar).lastModified();
 			fijiHome = fijiHome.substring(9, slash + 1);
 		}
-		else if (fijiHome.startsWith("file:/"))
+		else if (fijiHome.startsWith("file:/")) {
 			fijiHome = fijiHome.substring(5, slash + 1);
+			if (fijiHome.endsWith("/src-plugins/"))
+				fijiHome = stripSuffix(fijiHome, "src-plugins/");
+		}
 		if (getPlatform().startsWith("win") && fijiHome.startsWith("/"))
 			fijiHome = fijiHome.substring(1);
 		if (fijiHome.endsWith("precompiled/"))
@@ -147,9 +150,6 @@ public class Fake {
 
 	protected List discoverJars() throws FakeException {
 		List jars = new ArrayList();
-		if (new File(fijiHome + "ij.jar").exists())
-			jars.add(fijiHome + "ij.jar");
-
 		File cwd = new File(".");
 		/*
 		 * Since View5D contains an ImageCanvas (d'oh!) which would
@@ -157,7 +157,6 @@ public class Fake {
 		 * include all plugin's jars...
 		 */
 		// expandGlob(fijiHome + "plugins/**/*.jar", jars, cwd);
-		expandGlob(fijiHome + "misc/**/*.jar", jars, cwd);
 		expandGlob(fijiHome + "jars/**/*.jar", jars, cwd);
 		if (getPlatform().startsWith("win")) {
 			String[] paths =
@@ -525,6 +524,8 @@ public class Fake {
 			if (rule == null)
 				throw new FakeException("Unrecognized rule");
 
+			rule.prerequisiteString = prerequisites;
+
 			allRules.put(target, rule);
 
 			Iterator iter = list.iterator();
@@ -804,6 +805,7 @@ public class Fake {
 
 		public abstract class Rule {
 			protected String target;
+			protected String prerequisiteString;
 			protected List prerequisites, nonUpToDates;
 			protected boolean wasAlreadyInvoked;
 			protected boolean wasAlreadyChecked;
@@ -852,11 +854,14 @@ public class Fake {
 					return false;
 				}
 				long targetModifiedTime = file.lastModified();
-				if (targetModifiedTime < mtimeFakefile)
-					return upToDateError(file,
-							new File(path));
-				if (targetModifiedTime < mtimeFijiBuild)
-					return upToDateError(new File(fijiBuildJar), file);
+
+				if (getVarBool("rebuildIfFakeIsNewer")) {
+					if (targetModifiedTime < mtimeFakefile)
+						return upToDateError(file,
+								new File(path));
+					if (targetModifiedTime < mtimeFijiBuild)
+						return upToDateError(new File(fijiBuildJar), file);
+				}
 
 				nonUpToDates = new ArrayList();
 				Iterator iter = prerequisites.iterator();
@@ -1085,9 +1090,9 @@ public class Fake {
 				String dir = getVar("builddir");
 				if (dir == null || dir.equals(""))
 					return null;
-				return new File(cwd, dir + "/"
+				return new File(makePath(cwd, dir + "/"
 					+ stripSuffix(stripSuffix(target,
-						".class"), ".jar"));
+						".class"), ".jar")));
 			}
 
 			List compileJavas(List javas, File buildDir,
@@ -1185,6 +1190,10 @@ public class Fake {
 				in.close();
 				out.close();
 			}
+
+			public String getPrerequisiteString() {
+				return prerequisiteString;
+			}
 		}
 
 		class All extends Rule {
@@ -1222,6 +1231,11 @@ public class Fake {
 				source = getLastPrerequisite() + jarName;
 				baseName = stripSuffix(jarName, ".jar");
 				configPath = getPluginsConfig();
+
+				String[] paths =
+					split(getVar("CLASSPATH"), ":");
+				for (int i = 0; i < paths.length; i++)
+					prerequisites.add(paths[i]);
 			}
 
 			boolean checkUpToDate() {
@@ -1285,6 +1299,7 @@ public class Fake {
 					getVarPath("CLASSPATH", directory),
 					getVar("PLUGINSCONFIGDIRECTORY")
 						+ "/" + baseName + ".Fakefile",
+					getBuildDir(),
 					jarName);
 			}
 
@@ -1879,6 +1894,30 @@ public class Fake {
 	}
 
 	/*
+	 * Sort .class entries at end of the given list
+	 *
+	 * Due to the recursive nature of java2classFiles(), the sorting of
+	 * the glob expansion is not enough.
+	 */
+	protected void sortClassesAtEnd(List list) {
+		int size = list.size();
+		if (size == 0 || !isClass(list, size - 1))
+			return;
+		int start = size - 1;
+		while (start > 0 && isClass(list, start - 1))
+			start--;
+		List classes = list.subList(start, size);
+		Collections.sort(classes);
+		while (size > start)
+			list.remove(--size);
+		list.addAll(classes);
+	}
+	final protected boolean isClass(List list, int index) {
+		return ((String)list.get(index)).endsWith(".class");
+	}
+
+
+	/*
 	 * This function inspects a .class file for a given .java file,
 	 * infers the package name and all used classes, and adds to "all"
 	 * the class file names of those classes used that have been found
@@ -1890,6 +1929,8 @@ public class Fake {
 			java = java.substring(0, java.length() - 5) + ".class";
 		else if (!java.endsWith(".class")) {
 			if (!all.contains(java)) {
+				if (buildDir == null)
+					sortClassesAtEnd(result);
 				result.add(java);
 				all.add(java);
 			}
@@ -1962,10 +2003,12 @@ public class Fake {
 							line.length() -
 							path.length() + slash);
 			}
+			int slash = path.lastIndexOf('/');
+			return path.substring(0, slash + 1);
 		} catch (Exception e) {
 			e.printStackTrace();
+			return null;
 		}
-		return null;
 	}
 
 	/* discovers all the .class files for a given set of .java files */
@@ -1976,6 +2019,7 @@ public class Fake {
 		if (buildDir != null) {
 			result.add(buildDir.getAbsolutePath() + "/");
 			addRecursively(buildDir, result, all);
+			Collections.sort(result);
 		}
 		String lastJava = null;
 		Iterator iter = javas.iterator();
@@ -1988,7 +2032,7 @@ public class Fake {
 					continue;
 				}
 				if (lastJava != null) {
-					String prefix = getPrefix(lastJava);
+					String prefix = getPrefix(makePath(cwd, lastJava));
 					if (prefix != null)
 						result.add(prefix);
 					else
@@ -2006,6 +2050,8 @@ public class Fake {
 			}
 			java2classFiles(file, cwd, buildDir, result, all);
 		}
+		if (buildDir == null)
+			sortClassesAtEnd(result);
 		return result;
 	}
 
@@ -2540,7 +2586,7 @@ public class Fake {
 	protected void fakeOrMake(File cwd, String directory, boolean verbose,
 			boolean ignoreMissingFakefiles, String toolsPath,
 			String classPath, String fallBackFakefile,
-			String defaultTarget)
+			File buildDir, String defaultTarget)
 			throws FakeException {
 		String[] files = new File(directory).list();
 		if (files == null || files.length == 0)
@@ -2574,6 +2620,9 @@ public class Fake {
 				if (classPath != null)
 					parser.setVariable("CLASSPATH",
 							classPath);
+				if (buildDir != null)
+					parser.setVariable("BUILDDIR",
+						buildDir.getAbsolutePath());
 				parser.cwd = new File(cwd, directory);
 				Parser.Rule all = parser.parseRules(null);
 				if (defaultTarget != null) {

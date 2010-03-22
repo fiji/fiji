@@ -1,6 +1,11 @@
 A loose TODO list for Fiji
 ==========================
 
+- freeline selection with thickness has a display bug
+- fix z-project, split channels for virtual stacks
+- fix substack maker for hyperstacks
+- provide preview for auto threshold plugin
+- provide a plugin that runs another plugin with a range of parameters
 - add an installer (translate the original WinGit installer to Java, using the
   progress infrastructure of the Fiji Updater; maybe need to use reflection
   to access java.util.prefs.WindowsPreferences)

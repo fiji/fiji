@@ -152,9 +152,17 @@ public class LevelSet implements PlugIn {
 		}
 		
 	}
-	
 
-	public void run(ImagePlus imp) {
+	public void run(final ImagePlus imp) {
+		ImagePlus result = execute(imp, true);
+		if (null != result) result.show();
+	}
+
+	/**
+	 * @param imp The ImagePlus to operate on
+	 * @param with_progress Whether to show an image that tracks progress
+	 */
+	public ImagePlus execute(ImagePlus imp, boolean with_progress) {
 		
 		// TODO Would make sense to offer starting points as mask in separate image. 
 		// If no ROI found, have the additional dialog field to select mask image. 
@@ -167,17 +175,19 @@ public class LevelSet implements PlugIn {
 			// 3 cases should be separate classes
 			// - FastMarching
 			// - ActiveContours with option of fast marching 
-			return;
+			return null;
         	}
         
         	// Wrap the selected image into the ImageContainer
 		ic = new ImageContainer(imp);
 		
 		// Create a ImageContainer for showing the progress
-		ImageProgressContainer progressImage = new ImageProgressContainer();
-		progressImage.duplicateImages(ic);
-		progressImage.createImagePlus("Segmentation progress of " + imp.getTitle());
-		progressImage.showProgressStep();
+		ImageProgressContainer progressImage = with_progress ? new ImageProgressContainer() : null;
+		if (null != progressImage) {
+			progressImage.duplicateImages(ic);
+			progressImage.createImagePlus("Segmentation progress of " + imp.getTitle());
+			progressImage.showProgressStep();
+		}
 		
 		// Create a initial state map out of the roi
 		StateContainer sc_roi = new StateContainer();
@@ -203,14 +213,14 @@ public class LevelSet implements PlugIn {
 					}
 					if (IJ.escapePressed()) {
 						IJ.log("Aborted");
-						return;
+						return null;
 					}
 				}
 				IJ.log("Fast Marching: Finished " + new Date(System.currentTimeMillis()));
 				sc_ls = fm.getStateContainer();
 				if ( sc_ls == null ) {
 					// don't continue if something happened during Fast Marching
-					return;
+					return null;
 				}
 				sc_ls.setExpansionToInside(insideout);
 				sc_final = sc_ls;
@@ -234,7 +244,7 @@ public class LevelSet implements PlugIn {
 					}
 					if (IJ.escapePressed()) {
 						IJ.log("Aborted");
-						return;
+						return null;
 					}
 				}
 				IJ.log("Level Set: Finished " + new Date(System.currentTimeMillis()));
@@ -243,7 +253,7 @@ public class LevelSet implements PlugIn {
 			
 			// Convert sc_final into binary image ImageContainer and display
 			if ( sc_final == null ) {
-				return;
+				return null;
 			}
 			ImageStack stack = new ImageStack(imp.getWidth(), imp.getHeight());
 			for (ImageProcessor bp : sc_final.getIPMask()) {
@@ -251,8 +261,8 @@ public class LevelSet implements PlugIn {
 			}
 			ImagePlus seg = imp.createImagePlus();
 			seg.setStack("Segmentation of " + imp.getTitle(), stack);
-			seg.show();
 			seg.setSlice(imp.getCurrentSlice());
+			return seg;
 		} catch (IllegalArgumentException e) {
 			// Usually happens with ROI specifications
 			IJ.error(e.getMessage());
@@ -260,7 +270,8 @@ public class LevelSet implements PlugIn {
 			// Numerical instability
 			IJ.error("Arithmetic problem: " + e.getMessage());			
 		}
-		
+
+		return null;
 	}
 
 	public void run(String arg) {
@@ -300,7 +311,7 @@ public class LevelSet implements PlugIn {
 	}
 	
 	
-	protected boolean showDialog() {
+	public boolean showDialog() {
 		// TODO interactive selection of gray value range
 		
 

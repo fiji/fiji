@@ -2,7 +2,7 @@ import os
 
 # Jython does not support removedirs and symlink.
 # Warning: this implementation is not space-safe!
-if 'removedirs' in dir(os):
+if not 'JavaPOSIX' in dir(os):
 	def removedirs(dir):
 		os.removedirs(dir)
 else:
