@@ -188,7 +188,7 @@ jdk[bin/checkout-jdk.py $JDK] <-
 
 # From submodules
 jars/ij.jar <- jars/javac.jar ImageJA/
-CLASSPATH(plugins/VIB_.jar)=plugins/LSM_Toolbox.jar:jars/mpicbg.jar:jars/imglib.jar:jars/Jama-1.0.2.jar
+CLASSPATH(plugins/VIB_.jar)=plugins/LSM_Toolbox.jar:jars/mpicbg.jar:jars/imglib.jar:jars/Jama-1.0.2.jar:plugins/level_sets.jar
 plugins/VIB_.jar <- plugins/LSM_Toolbox.jar VIB/
 CLASSPATH(plugins/mpicbg_.jar)=jars/mpicbg.jar
 plugins/mpicbg_.jar <- mpicbg/
