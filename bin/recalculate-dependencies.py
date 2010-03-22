@@ -18,7 +18,7 @@ for plugin in plugins:
 	if plugin.current == None or not plugin.filename.endswith('.jar'):
 		continue
 
-	if argv.length > 1:
+	if len(argv) > 1:
 		if not plugin.filename in argv[1:]:
 			continue
 		from ij import IJ
