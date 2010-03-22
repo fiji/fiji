@@ -48,6 +48,7 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.gui.ImageWindow;
 import ij.gui.Roi;
+import ij.gui.ShapeRoi;
 import ij.io.OpenDialog;
 import ij.io.SaveDialog;
 import ij.ImagePlus;
@@ -426,33 +427,59 @@ public class Trainable_Segmentation implements PlugIn {
 		
 		for(int j=0; j<positiveExamples.size(); j++){
 			Roi r = positiveExamples.get(j);
-			int[] x = r.getPolygon().xpoints;
-			int[] y = r.getPolygon().ypoints;
-			int n = r.getPolygon().npoints;
+			//need to take care of shapeRois that are represented as multiple poygons
+			Roi[] rois;
+			if (r instanceof ij.gui.ShapeRoi){
+				IJ.log("shape roi detected");
+				rois = ((ShapeRoi) r).getRois();
+			}
+			else{
+				rois = new Roi[1];
+				rois[0] = r;
+			}
 			
-			for (int i=0; i<n; i++){
-				double[] values = new double[featureStack.getSize()+1];
-				for (int z=1; z<=featureStack.getSize(); z++){
-					values[z-1] = featureStack.getProcessor(z).getPixelValue(x[i], y[i]);
+			for(int k=0; k<rois.length; k++){
+				int[] x = rois[k].getPolygon().xpoints;
+				int[] y = rois[k].getPolygon().ypoints;
+				int n = rois[k].getPolygon().npoints;
+			
+				for (int i=0; i<n; i++){
+					double[] values = new double[featureStack.getSize()+1];
+					for (int z=1; z<=featureStack.getSize(); z++){
+						values[z-1] = featureStack.getProcessor(z).getPixelValue(x[i], y[i]);
+					}
+					values[featureStack.getSize()] = 1.0;
+					trainingData.add(new Instance(1.0, values));
 				}
-				values[featureStack.getSize()] = 1.0;
-				trainingData.add(new Instance(1.0, values));
 			}
 		}
 		
 		for(int j=0; j<negativeExamples.size(); j++){
 			Roi r = negativeExamples.get(j);
-			int[] x = r.getPolygon().xpoints;
-			int[] y = r.getPolygon().ypoints;
-			int n = r.getPolygon().npoints;
+
+			Roi[] rois;
+			if (r instanceof ij.gui.ShapeRoi){
+				IJ.log("shape roi detected");
+				rois = ((ShapeRoi) r).getRois();
+			}
+			else{
+				rois = new Roi[1];
+				rois[0] = r;
+			}
 			
-			for (int i=0; i<n; i++){
-				double[] values = new double[featureStack.getSize()+1];
-				for (int z=1; z<=featureStack.getSize(); z++){
-					values[z-1] = featureStack.getProcessor(z).getPixelValue(x[i], y[i]);
+			for(int k=0; k<rois.length; k++){
+				int[] x = rois[k].getPolygon().xpoints;
+				int[] y = rois[k].getPolygon().ypoints;
+				int n = rois[k].getPolygon().npoints;
+			
+				for (int i=0; i<n; i++){
+					double[] values = new double[featureStack.getSize()+1];
+					for (int z=1; z<=featureStack.getSize(); z++){
+						values[z-1] = featureStack.getProcessor(z).getPixelValue(x[i], y[i]);
+					}
+					values[featureStack.getSize()] = 0.0;
+					trainingData.add(new Instance(1.0, values));
 				}
-				values[featureStack.getSize()] = 0.0;
-				trainingData.add(new Instance(1.0, values));
 			}
 		}
 		return trainingData;
