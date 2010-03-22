@@ -18,11 +18,6 @@ import java.util.zip.ZipException;
 
 public class Class2JarFilesMap extends HashMap<String, ArrayList<String>> {
 	public Class2JarFilesMap() {
-		try {
-			addJar("misc/Fiji.jar");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 		addDirectory("plugins");
 		addDirectory("jars");
 	}

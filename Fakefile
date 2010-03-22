@@ -164,7 +164,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/RATS_.jar \
 	plugins/Directionality_.jar \
   \
-	misc/Fiji.jar
+	jars/Fiji.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS third-party-plugins jars/zs.jar
 
@@ -211,9 +211,9 @@ jars/jython.jar <- jython/
 jars/imglib.jar <- imglib/
 
 # From source
-javaVersion(misc/Fiji.jar)=1.5
-mainClass(misc/Fiji.jar)=fiji.Main
-misc/Fiji.jar <- src-plugins/Fiji/fiji/**/*.java icon.png[images/icon.png]
+javaVersion(jars/Fiji.jar)=1.5
+mainClass(jars/Fiji.jar)=fiji.Main
+jars/Fiji.jar <- src-plugins/Fiji/fiji/**/*.java icon.png[images/icon.png]
 
 # These classes are common
 CLASSPATH(jars/zs.jar)=jars/Jama-1.0.2.jar
@@ -226,7 +226,7 @@ jars/fiji-lib.jar <- src-plugins/fiji-lib/**/*.java
 # These classes are common to the scripting plugins
 jars/fiji-scripting.jar <- src-plugins/fiji-scripting/**/*.java
 
-CLASSPATH(plugins/Refresh_Javas.jar)=jars/fiji-scripting.jar:jars/fake.jar:misc/Fiji.jar
+CLASSPATH(plugins/Refresh_Javas.jar)=jars/fiji-scripting.jar:jars/fake.jar:jars/Fiji.jar
 CLASSPATH(plugins/Jython_Interpreter.jar)=jars/fiji-scripting.jar:jars/jython.jar
 plugins/Jython_Interpreter.jar <- src-plugins/Jython/*.java
 CLASSPATH(plugins/Clojure_Interpreter.jar)=jars/fiji-scripting.jar:jars/clojure.jar:jars/clojure-contrib.jar
@@ -257,7 +257,7 @@ plugins/LSM_Toolbox.jar <- \
 MAINCLASS(plugins/Interactive_3D_Surface_Plot.jar)=Interactive_3D_Surface_Plot
 CLASSPATH(plugins/Stitching_.jar)=plugins/loci_tools.jar:plugins/Fiji_Plugins.jar
 CLASSPATH(plugins/Fiji_Plugins.jar)=jars/jsch-0.1.37.jar
-CLASSPATH(plugins/Fiji_Updater.jar)=jars/jsch-0.1.37.jar:misc/Fiji.jar
+CLASSPATH(plugins/Fiji_Updater.jar)=jars/jsch-0.1.37.jar:jars/Fiji.jar
 
 plugins/Record_Screen.jar <- src-plugins/Record_Screen/ src-plugins/Record_Screen/**/*
 
@@ -276,7 +276,7 @@ jars/autocomplete.jar:plugins/Clojure_Interpreter.jar:\
 plugins/JRuby_Interpreter.jar:plugins/Javascript_.jar:\
 plugins/Jython_Interpreter.jar:plugins/Refresh_Javas.jar:\
 plugins/BeanShell_Interpreter.jar:jars/fiji-scripting.jar:\
-misc/Fiji.jar:$JAVA_HOME/../lib/tools.jar
+jars/Fiji.jar:$JAVA_HOME/../lib/tools.jar
 NO_COMPILE(plugins/Script_Editor.jar)=src-plugins/Script_Editor/templates/**/*
 plugins/Script_Editor.jar <- src-plugins/Script_Editor/**/*.java  \
 							icon.png[images/icon.png] \
