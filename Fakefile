@@ -1,4 +1,3 @@
-# TODO: micromanager
 
 # This is a configuration file for Fiji mAKE ("fake")
 #
@@ -163,11 +162,8 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/IsoData_Classifier.jar \
 	plugins/RATS_.jar \
 	plugins/Directionality_.jar \
-  \
-	jars/Fiji.jar
-	plugins/Image_Expression_Parser.jar \
-  \
-	misc/Fiji.jar
+	jars/Fiji.jar \
+	plugins/Image_Expression_Parser.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS third-party-plugins jars/zs.jar
 
