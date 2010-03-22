@@ -376,6 +376,7 @@ precompiled/fiji-*[bin/copy-file.py $PRE $TARGET] <- fiji
 
 precompile-fake[] <- precompiled/fake.jar
 precompiled/fake.jar <- jars/fake.jar
+precompiled/javac.jar <- jars/javac.jar
 precompiled/ij.jar <- jars/ij.jar
 precompiled/mpicbg.jar <- jars/mpicbg.jar
 precompiled/*[bin/copy-file.py $PRE $TARGET] <- *
