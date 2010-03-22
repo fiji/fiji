@@ -64,7 +64,6 @@ import java.util.Stack;
  * <A target="_blank" href="http://biocomp.cnb.csic.es/~iarganda/bUnwarpJ/">
  * http://biocomp.cnb.csic.es/~iarganda/bUnwarpJ/</a>
  *
- * @version 2.6 11/02/2009
  * @author Ignacio Arganda-Carreras (ignacio.arganda at gmail.com)
  */
 public class bUnwarpJ_ implements PlugIn
