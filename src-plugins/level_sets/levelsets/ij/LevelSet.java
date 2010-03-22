@@ -311,7 +311,7 @@ public class LevelSet implements PlugIn {
 	}
 	
 	
-	protected boolean showDialog() {
+	public boolean showDialog() {
 		// TODO interactive selection of gray value range
 		
 

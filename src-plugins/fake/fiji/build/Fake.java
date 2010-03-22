@@ -114,8 +114,11 @@ public class Fake {
 			mtimeFijiBuild = new File(fijiBuildJar).lastModified();
 			fijiHome = fijiHome.substring(9, slash + 1);
 		}
-		else if (fijiHome.startsWith("file:/"))
+		else if (fijiHome.startsWith("file:/")) {
 			fijiHome = fijiHome.substring(5, slash + 1);
+			if (fijiHome.endsWith("/src-plugins/"))
+				fijiHome = stripSuffix(fijiHome, "src-plugins/");
+		}
 		if (getPlatform().startsWith("win") && fijiHome.startsWith("/"))
 			fijiHome = fijiHome.substring(1);
 		if (fijiHome.endsWith("precompiled/"))
@@ -1089,9 +1092,9 @@ public class Fake {
 				String dir = getVar("builddir");
 				if (dir == null || dir.equals(""))
 					return null;
-				return new File(cwd, dir + "/"
+				return new File(makePath(cwd, dir + "/"
 					+ stripSuffix(stripSuffix(target,
-						".class"), ".jar"));
+						".class"), ".jar")));
 			}
 
 			List compileJavas(List javas, File buildDir,
@@ -1298,6 +1301,7 @@ public class Fake {
 					getVarPath("CLASSPATH", directory),
 					getVar("PLUGINSCONFIGDIRECTORY")
 						+ "/" + baseName + ".Fakefile",
+					getBuildDir(),
 					jarName);
 			}
 
@@ -1975,10 +1979,12 @@ public class Fake {
 							line.length() -
 							path.length() + slash);
 			}
+			int slash = path.lastIndexOf('/');
+			return path.substring(0, slash + 1);
 		} catch (Exception e) {
 			e.printStackTrace();
+			return null;
 		}
-		return null;
 	}
 
 	/* discovers all the .class files for a given set of .java files */
@@ -2001,7 +2007,7 @@ public class Fake {
 					continue;
 				}
 				if (lastJava != null) {
-					String prefix = getPrefix(lastJava);
+					String prefix = getPrefix(makePath(cwd, lastJava));
 					if (prefix != null)
 						result.add(prefix);
 					else
@@ -2553,7 +2559,7 @@ public class Fake {
 	protected void fakeOrMake(File cwd, String directory, boolean verbose,
 			boolean ignoreMissingFakefiles, String toolsPath,
 			String classPath, String fallBackFakefile,
-			String defaultTarget)
+			File buildDir, String defaultTarget)
 			throws FakeException {
 		String[] files = new File(directory).list();
 		if (files == null || files.length == 0)
@@ -2587,6 +2593,9 @@ public class Fake {
 				if (classPath != null)
 					parser.setVariable("CLASSPATH",
 							classPath);
+				if (buildDir != null)
+					parser.setVariable("BUILDDIR",
+						buildDir.getAbsolutePath());
 				parser.cwd = new File(cwd, directory);
 				Parser.Rule all = parser.parseRules(null);
 				if (defaultTarget != null) {

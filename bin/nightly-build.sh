@@ -16,7 +16,7 @@ compile () {
 	done &&
 	git clean -q -x -d -f &&
 	# remove empty directories
-	for d in $(git ls-files --other --directory)
+	for d in $(git ls-files --others --directory)
 	do
 		rm -r $d || break
 	done &&

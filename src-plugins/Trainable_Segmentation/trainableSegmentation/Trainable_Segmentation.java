@@ -8,11 +8,15 @@ package trainableSegmentation;
  * all filters.
  * 
  * ToDos:
+ * - work with color features
  * - work on whole Stack 
  * - delete annotations with a shortkey
- * - save classifier and load classifier
- * - apply classifier to other images
+ * - change training image
+ * - do probability output (accessible?) and define threshold
  * - put thread solution to wiki http://pacific.mpi-cbg.de/wiki/index.php/Developing_Fiji#Writing_plugins
+ * 
+ * - clean up gui (buttons, window size, funny zoom)
+ * - give more feedback when classifier is trained or applied
  * 
  * License: GPL
  *
@@ -44,6 +48,8 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.gui.ImageWindow;
 import ij.gui.Roi;
+import ij.io.OpenDialog;
+import ij.io.SaveDialog;
 import ij.ImagePlus;
 import ij.WindowManager;
 
@@ -54,6 +60,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.awt.*;
 import java.awt.event.*;
+import java.beans.FeatureDescriptor;
 
 import javax.swing.*;
 
@@ -78,11 +85,17 @@ public class Trainable_Segmentation implements PlugIn {
 	private int posTraceCounter;
 	private int negTraceCounter;
    	private boolean showColorOverlay;
+   	private Instances wholeImageData;
+   	private Instances loadedTrainingData;
+   	private FastRandomForest rf;
 	final Button posExampleButton;
   	final Button negExampleButton;
   	final Button trainButton;
   	final Button overlayButton;
   	final Button resultButton;
+  	final Button applyButton;
+  	final Button loadDataButton;
+  	final Button saveDataButton;
   	
   	
   	public Trainable_Segmentation() {
@@ -93,6 +106,11 @@ public class Trainable_Segmentation implements PlugIn {
   	      	overlayButton.setEnabled(false);
   	      	resultButton = new Button("create result");
   	      	resultButton.setEnabled(false);
+  	      	applyButton = new Button ("apply classifier");
+  	      	applyButton.setEnabled(false);
+  	      	loadDataButton = new Button ("load data");
+  	      	saveDataButton = new Button ("save data");
+  	      	
   	      	posExampleList = new java.awt.List(5);
   	      	posExampleList.setForeground(Color.green);
   	      	negExampleList = new java.awt.List(5);
@@ -100,6 +118,17 @@ public class Trainable_Segmentation implements PlugIn {
   	      	posTraceCounter = 0;
   	      	negTraceCounter = 0;
   	      	showColorOverlay = false;
+  	      	
+  	      	rf = new FastRandomForest();
+  	      	//FIXME: should depend on image size?? Or labels??
+  	      	rf.setNumTrees(200);
+  	      	//this is the default that Breiman suggests
+  	      	//rf.setNumFeatures((int) Math.round(Math.sqrt(featureStack.getSize())));
+  	      	//but this seems to work better
+  	      	rf.setNumFeatures(2);
+		
+		 
+  	      	rf.setSeed(123);
 	}
 	
   	ExecutorService exec = Executors.newFixedThreadPool(1);
@@ -126,6 +155,15 @@ public class Trainable_Segmentation implements PlugIn {
   		  			else if(e.getSource() == posExampleList || e.getSource() == negExampleList){
   		  				deleteSelected(e);
   		  			}
+  		  			else if(e.getSource() == applyButton){
+  						applyClassifierToTestData();
+  		  			}
+  		  			else if(e.getSource() == loadDataButton){
+  		  				loadTrainingData();
+  		  			}
+  		  			else if(e.getSource() == saveDataButton){
+  		  				saveTrainingData();
+  		  			}
   				}
   			});
   		}
@@ -136,7 +174,6 @@ public class Trainable_Segmentation implements PlugIn {
 			exec.submit(new Runnable() {
 				public void run() {
   		  			if(e.getSource() == posExampleList || e.getSource() == negExampleList){
-  		  				IJ.log("exampleList clicked");
   		  				listSelected(e);
   		  			}
 				}
@@ -173,33 +210,42 @@ public class Trainable_Segmentation implements PlugIn {
   	      	imageAndLists.add(annotations);
   	      	
   			Panel buttons = new Panel();
-  			buttons.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+  			BoxLayout buttonLayout = new BoxLayout(buttons, BoxLayout.Y_AXIS);
+  			buttons.setLayout(buttonLayout);
+  			//buttons.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
   			
   	      	posExampleButton.addActionListener(listener);
   	      	negExampleButton.addActionListener(listener);
   	      	trainButton.addActionListener(listener);
   	      	overlayButton.addActionListener(listener);
   	      	resultButton.addActionListener(listener);
+  	      	applyButton.addActionListener(listener);
+  	      	loadDataButton.addActionListener(listener);
+  	      	saveDataButton.addActionListener(listener);
   	      	buttons.add(posExampleButton);
   	      	buttons.add(negExampleButton);
   	      	buttons.add(trainButton);
   	      	buttons.add(overlayButton);
   	      	buttons.add(resultButton);
+  	      	buttons.add(applyButton);
+  	      	buttons.add(loadDataButton);
+  	      	buttons.add(saveDataButton);
   	      	
-  	      	for (Component c : new Component[]{posExampleButton, negExampleButton, trainButton, overlayButton, resultButton}) {
+  	      	for (Component c : new Component[]{posExampleButton, negExampleButton, trainButton, overlayButton, resultButton, applyButton, loadDataButton, saveDataButton}) {
   	      		c.setMaximumSize(new Dimension(230, 50));
   	      		c.setPreferredSize(new Dimension(130, 30));
   	      	}
   	      	
   	      	Panel all = new Panel();
-			BoxLayout box = new BoxLayout(all, BoxLayout.Y_AXIS);
+			BoxLayout box = new BoxLayout(all, BoxLayout.X_AXIS);
 			all.setLayout(box);
+ 	      	all.add(buttons);
   	      	all.add(imageAndLists);
-  	      	all.add(buttons);
   	      	removeAll();
   	      	add(all);
   	      	
   	      	pack();
+  	        pack();
   	      	
   	      	// Propagate all listeners
   	      	for (Panel p : new Panel[]{all, buttons, piw}) {
@@ -210,14 +256,26 @@ public class Trainable_Segmentation implements PlugIn {
   	      	
   	      	addWindowListener(new WindowAdapter() {
   	      		public void windowClosing(WindowEvent e) {
+  	      			IJ.log("closing window");
   	      			// cleanup
   	      			exec.shutdownNow();
+  	      			posExampleButton.removeActionListener(listener);
+  	      			negExampleButton.removeActionListener(listener);
+  	      			trainButton.removeActionListener(listener);
+  	      			overlayButton.removeActionListener(listener);
+  	      			resultButton.removeActionListener(listener);
+  	      			applyButton.removeActionListener(listener);
+  	      			loadDataButton.removeActionListener(listener);
+  	      			saveDataButton.removeActionListener(listener);
   	      		}
   	      	});
   		}
-  		public void setDisplayImage(ImagePlus newDisplay){
-  			
+
+ /* 		public void changeDisplayImage(ImagePlus imp){
+  			super.getImagePlus().setProcessor(imp.getProcessor());
+  			super.getImagePlus().setTitle(imp.getTitle());
   		}
+ */ 	
   	}
   	
 	public void run(String arg) {
@@ -242,19 +300,41 @@ public class Trainable_Segmentation implements PlugIn {
 		
 		trainingImage.setProcessor("training image", trainingImage.getProcessor().duplicate().convertToByte(true));
 		createFeatureStack(trainingImage);
+		IJ.showStatus("reading whole image data");
+		long start = System.currentTimeMillis();
+		wholeImageData = featureStack.createInstances();
+		long end = System.currentTimeMillis();
+		IJ.log("creating whole image data took: " + (end-start));
+		wholeImageData.setClassIndex(wholeImageData.numAttributes() - 1);
+		 
 		displayImage = new ImagePlus();
 		displayImage.setProcessor("training image", trainingImage.getProcessor().duplicate().convertToRGB());
 		
+		ij.gui.Toolbar.getInstance().setTool(ij.gui.Toolbar.FREELINE);
 		
 		//Build GUI
 		win = new CustomWindow(displayImage);
-		
+				
 		//trainingImage.getWindow().setVisible(false);
 		}
+	
+	private void setButtonsEnabled(Boolean s){
+		posExampleButton.setEnabled(s);
+	    negExampleButton.setEnabled(s);
+	    trainButton.setEnabled(s);
+	    overlayButton.setEnabled(s);
+	    resultButton.setEnabled(s);
+	    applyButton.setEnabled(s);
+	    loadDataButton.setEnabled(s);
+	    saveDataButton.setEnabled(s);
+	}
 	
 	private void addPositiveExamples(){
 		//get selected pixels
 		Roi r = displayImage.getRoi();
+		if (null == r){
+			return;
+		}
 		displayImage.killRoi();
 		positiveExamples.add(r);
 		posExampleList.add("trace " + posTraceCounter); posTraceCounter++;
@@ -264,6 +344,9 @@ public class Trainable_Segmentation implements PlugIn {
 	private void addNegativeExamples(){
 		//get selected pixels
 		Roi r = displayImage.getRoi();
+		if (null == r){
+			return;
+		}
 		displayImage.killRoi();
 		negativeExamples.add(r);
 		negExampleList.add("trace " + negTraceCounter); negTraceCounter++;
@@ -290,22 +373,9 @@ public class Trainable_Segmentation implements PlugIn {
 	}
 	
 	public void createFeatureStack(ImagePlus img){
-		IJ.log("creating feature stack");
+		IJ.showStatus("creating feature stack");
 		featureStack = new FeatureStack(img);
-		int counter = 1;
-		for (float i=2.0f; i<featureStack.getWidth()/5.0f; i*=2){
-			IJ.showStatus("creating feature stack   " + counter);
-			featureStack.addGaussianBlur(i); counter++;
-			IJ.showStatus("creating feature stack   " + counter);			
-			featureStack.addGradient(i); counter++;
-			IJ.showStatus("creating feature stack   " + counter);			
-			featureStack.addHessian(i); counter++;
-			for (float j=2.0f; j<i; j*=2){
-				IJ.showStatus("creating feature stack   " + counter);				
-				featureStack.addDoG(i, j); counter++;
-			}
-		}
-		featureStack.addMembraneFeatures(19, 1);
+		featureStack.addDefaultFeatures();
 	}
 	
 	
@@ -316,12 +386,29 @@ public class Trainable_Segmentation implements PlugIn {
 				new FileOutputStream( filename) ) );
 			try{	
 					out.write(data.toString());
-					
+					out.close();
 			}
 			catch(IOException e){IJ.showMessage("IOException");}
 	}
 	catch(FileNotFoundException e){IJ.showMessage("File not found!");}
 		
+	}
+	
+	public Instances readDataFromARFF(String filename){
+		try{
+			BufferedReader reader = new BufferedReader(
+					new FileReader(filename));
+			try{
+				Instances data = new Instances(reader);
+				// setting class attribute
+				data.setClassIndex(data.numAttributes() - 1);
+				reader.close();
+				return data;
+			}
+			catch(IOException e){IJ.showMessage("IOException");}
+		}
+		catch(FileNotFoundException e){IJ.showMessage("File not found!");}
+		return null;
 	}
 
 	public Instances createTrainingInstances(){
@@ -371,53 +458,66 @@ public class Trainable_Segmentation implements PlugIn {
 		return trainingData;
 	}
 	
+	
 	public void trainClassifier(){
-		if (positiveExamples.size()==0){
+		if (positiveExamples.size()==0 & loadedTrainingData==null){
 			IJ.showMessage("Cannot train without positive examples!");
 			return;
 		}
-		if (negativeExamples.size()==0){
+		if (negativeExamples.size()==0 & loadedTrainingData==null){
 			IJ.showMessage("Cannot train without negative examples!");
 			return;
 		}
-		/*Dialog testDialog = new Dialog(this.win, true);
-		testDialog.setSize(150, 50);
-		testDialog.setName("Processing Image...");
-		testDialog.setEnabled(true);
-		testDialog.setVisible(true);*/
+		
+		setButtonsEnabled(false);
 		
 		 IJ.showStatus("training classifier");
-		 long start = System.currentTimeMillis();
-		 Instances data = createTrainingInstances();
-		 long end = System.currentTimeMillis();
-		 IJ.log("creating training data took: " + (end-start));
-		 data.setClassIndex(data.numAttributes() - 1);
-//		 writeDataToARFF(data, "trainingDataFromInstances.arff");
+		 Instances data = null;
+		 if (0 == positiveExamples.size() | 0 == negativeExamples.size())
+			 IJ.log("training from loaded data only");
+		 else {
+			 long start = System.currentTimeMillis();
+			 data = createTrainingInstances();
+			 long end = System.currentTimeMillis();
+			 IJ.log("creating training data took: " + (end-start));
+			 data.setClassIndex(data.numAttributes() - 1);
+		 }
 		 
-		 FastRandomForest rf = new FastRandomForest();
-		 //FIXME: should depend on image size?? Or labels??
-		 rf.setNumTrees(200);
-		 //this is the default that Breiman suggests
-		 rf.setNumFeatures((int) Math.round(Math.sqrt(featureStack.getSize())));
-		 //rf.setNumFeatures(2);
-		 writeDataToARFF(data, "trainingDataFromInstances.arff");
+		 if (loadedTrainingData != null & data != null){
+			 IJ.log("merging data");
+			 for (int i=0; i < loadedTrainingData.numInstances(); i++){
+				 data.add(loadedTrainingData.instance(i));
+			 }
+			 IJ.log("finished");
+		 }
+		 else if (data == null){
+			 data = loadedTrainingData;
+			 IJ.log("taking loaded data as only data");
+		 }
 		 
-		 rf.setSeed(123);
-		 
+		 IJ.showStatus("training classifier");
 		 IJ.log("training classifier");
+		 if (null == data){
+			 IJ.log("WTF");
+		 }
 		 try{rf.buildClassifier(data);}
-		 catch(Exception e){IJ.showMessage("Could not train Classifier!");}
+		 catch(Exception e){IJ.showMessage(e.getMessage());}
 		 
-		 IJ.log("reading whole image data");
-		 start = System.currentTimeMillis();
-		 data = featureStack.createInstances();
-		 end = System.currentTimeMillis();
-		 IJ.log("creating whole image data took: " + (end-start));
-		 data.setClassIndex(data.numAttributes() - 1);
+		 IJ.log("classifying whole image");
 		 
-//		 writeDataToARFF(data, "testWholeImageData.arff");
+		 classifiedImage = applyClassifier(wholeImageData, trainingImage.getWidth(), trainingImage.getHeight());
 		 
-		 IJ.log("classifying image");
+		 overlayButton.setEnabled(true);
+		 resultButton.setEnabled(true);
+		 applyButton.setEnabled(true);
+		 showColorOverlay = false;
+		 toggleOverlay();
+		 
+		 setButtonsEnabled(true);
+	}
+
+	public ImagePlus applyClassifier(Instances data, int w, int h){
+		 IJ.showStatus("classifying image");
 		 double[] classificationResult = new double[data.numInstances()];
 		 for (int i=0; i<data.numInstances(); i++){
 			 try{
@@ -425,20 +525,16 @@ public class Trainable_Segmentation implements PlugIn {
 			 }catch(Exception e){IJ.showMessage("Could not apply Classifier!");}
 		 }
 		 
-		 IJ.log("showing result");
-		 ImageProcessor classifiedImageProcessor = new FloatProcessor(trainingImage.getWidth(), trainingImage.getHeight(), classificationResult);
+		 IJ.showStatus("showing result");
+		 ImageProcessor classifiedImageProcessor = new FloatProcessor(w, h, classificationResult);
 		 classifiedImageProcessor.convertToByte(true);
-		 classifiedImage = new ImagePlus("classification result", classifiedImageProcessor);
-		 overlayButton.setEnabled(true);
-		 resultButton.setEnabled(true);
-		 showColorOverlay = false;
-		 toggleOverlay();
-		 //testDialog.setVisible(false);
-		 //testDialog.setEnabled(false);
+		 ImagePlus classImg = new ImagePlus("classification result", classifiedImageProcessor);
+		 return classImg;
 	}
-
+	
 	void toggleOverlay(){
 		showColorOverlay = !showColorOverlay;
+		IJ.log("toggel overlay to: " + showColorOverlay);
 		if (showColorOverlay){
 			//do this every time cause most likely classification changed
 			int width = trainingImage.getWidth();
@@ -507,7 +603,88 @@ public class Trainable_Segmentation implements PlugIn {
 	}
 	
 	void showClassificationImage(){
-		ImagePlus resultImage = new ImagePlus("classification result", classifiedImage.getProcessor().duplicate());
+		ImagePlus resultImage = new ImagePlus("classification result", classifiedImage.getProcessor().convertToByte(true).duplicate());
 		resultImage.show();
 	}
+	
+	public void applyClassifierToTestData(){
+		ImagePlus testImage = IJ.openImage();
+		if (null == testImage) return; // user canceled open dialog
+		
+		setButtonsEnabled(false);
+		
+		if (testImage.getImageStackSize() == 1){
+			applyClassifierToTestImage(testImage).show();
+			testImage.show();
+		}
+		else{
+			ImageStack testImageStack = testImage.getStack();
+			ImageStack testStackClassified = new ImageStack(testImageStack.getWidth(), testImageStack.getHeight());
+			IJ.log("size: " + testImageStack.getSize() + " " + testImageStack.getWidth() + " " + testImageStack.getHeight());
+			for (int i=1; i<=testImageStack.getSize(); i++){
+				IJ.log("classifying image " + i);
+				ImagePlus currentSlice = new ImagePlus(testImageStack.getSliceLabel(i),testImageStack.getProcessor(i).duplicate());
+				//applyClassifierToTestImage(currentSlice).show();
+				testStackClassified.addSlice(currentSlice.getTitle(), applyClassifierToTestImage(currentSlice).getProcessor().duplicate());
+			}
+			testImage.show();
+			ImagePlus showStack = new ImagePlus("classified Stack", testStackClassified);
+			showStack.show();
+		}
+		setButtonsEnabled(true);
+	}
+	
+	
+	public ImagePlus applyClassifierToTestImage(ImagePlus testImage){
+		testImage.setProcessor(testImage.getProcessor().convertToByte(true));
+		
+		IJ.showStatus("creating features for test image");
+		FeatureStack testImageFeatures = new FeatureStack(testImage);
+		testImageFeatures.addDefaultFeatures();
+		
+		Instances testData = testImageFeatures.createInstances();
+		testData.setClassIndex(testData.numAttributes() - 1);
+		
+		ImagePlus testClassImage = applyClassifier(testData, testImage.getWidth(), testImage.getHeight());
+		testClassImage.setTitle("classified_" + testImage.getTitle());
+		testClassImage.setProcessor(testClassImage.getProcessor().convertToByte(true).duplicate());
+		
+		return testClassImage;
+	}
+	
+	public void loadTrainingData(){
+		OpenDialog od = new OpenDialog("choose data file","");
+		if (od.getFileName()==null)
+			return;
+		IJ.log("load data from " + od.getDirectory() + od.getFileName());
+		loadedTrainingData = readDataFromARFF(od.getDirectory() + od.getFileName());
+		IJ.log("loaded data: " + loadedTrainingData.numInstances());
+	}
+	public void saveTrainingData(){
+		if (positiveExamples.size() == 0 & negativeExamples.size() == 0 & loadedTrainingData == null){
+			IJ.showMessage("There is no data to save");
+			return;
+		}
+		
+		Instances data = createTrainingInstances();
+		data.setClassIndex(data.numAttributes() - 1);
+		if (null != loadedTrainingData & null != data){
+			 IJ.log("merging data");
+			 for (int i=0; i < loadedTrainingData.numInstances(); i++){
+				// IJ.log("" + i)
+				 data.add(loadedTrainingData.instance(i));
+			 }
+			 IJ.log("finished");
+		}
+		else if (null == data)
+			data = loadedTrainingData;
+		
+		SaveDialog sd = new SaveDialog("choose save file", "data",".arff");
+		if (sd.getFileName()==null)
+			return;
+		IJ.log("writing training data: " + data.numInstances());
+		writeDataToARFF(data, sd.getDirectory() + sd.getFileName());
+		IJ.log("wrote training data " + sd.getDirectory() + " " + sd.getFileName());
+	}
+	
 }
