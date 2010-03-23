@@ -18,7 +18,6 @@ package org.siox;
 
 import java.awt.Rectangle;
 import java.awt.geom.Area;
-import java.io.Serializable;
 import java.util.*;
 
 import org.siox.util.*;
@@ -59,12 +58,8 @@ import org.siox.util.*;
  * @author Gerald Friedland, Kristian Jantz, Lars Knipping
  * @version 1.13
  */
-public class SioxSegmentator implements Serializable
+public class SioxSegmentator
 {
-	/**
-	 * Default serial version UID
-	 */
-	private static final long serialVersionUID = 1L;
 
 	// CHANGELOG
 	// 2006-26-04 1.13 added method segmentatevideo_firstframe() and segmentatevideo_nextframe()
@@ -523,7 +518,7 @@ public class SioxSegmentator implements Serializable
 		Utils.smoothcm(cm, imgWidth, imgHeight, 0.33f, 0.33f, 0.33f); // average
 		Utils.normalizeMatrix(cm);
 		Utils.erode(cm, imgWidth, imgHeight);
-		keepOnlyLargeComponents(cm, UNKNOWN_REGION_CONFIDENCE, sizeFactorToKeep, predefinedFgPixels);
+		//keepOnlyLargeComponents(cm, UNKNOWN_REGION_CONFIDENCE, sizeFactorToKeep, predefinedFgPixels);
 		for (int i=0; i<smoothness; i++) 
 		{
 			Utils.smoothcm(cm, imgWidth, imgHeight, 0.33f, 0.33f, 0.33f); // average
@@ -543,7 +538,7 @@ public class SioxSegmentator implements Serializable
 		//for(int i=0 ; i < predefinedFgPixels.size(); i++)
 		//	System.out.println("cm["+predefinedFgPixels.get(i)+"] = " + cm[predefinedFgPixels.get(i)]);
 		
-		keepOnlyLargeComponents(cm, UNKNOWN_REGION_CONFIDENCE, sizeFactorToKeep, predefinedFgPixels);
+		//keepOnlyLargeComponents(cm, UNKNOWN_REGION_CONFIDENCE, sizeFactorToKeep, predefinedFgPixels);
 		fillColorRegions(cm, image);
 		Utils.dilate(cm, imgWidth, imgHeight);
 
@@ -1165,11 +1160,7 @@ public class SioxSegmentator implements Serializable
 	 * in background and foreground and the index to the centroids in each
 	 * signature for a given color.
 	 */
-	private final class Tupel implements Serializable {
-		/**
-		 * Generated serial version UID
-		 */
-		private static final long serialVersionUID = 2748845640978694710L;
+	private final class Tupel{
 		float minBgDist;
 		int indexMinBg;
 		float minFgDist;
@@ -1183,4 +1174,11 @@ public class SioxSegmentator implements Serializable
 			this.indexMinFg=indexMinFg;
 		}
 	}
+	
+	/** Get background signature */
+	public float[][] getBgSignature(){ return this.bgSignature;}
+	/** Get foreground signature */
+	public float[][] getFgSignature(){ return this.fgSignature;}
+	
+	
 }

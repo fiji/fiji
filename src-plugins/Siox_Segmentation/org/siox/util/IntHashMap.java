@@ -35,17 +35,12 @@ import java.util.Set;
  * @version 1.01
  * @see java.util.HashMap
  */
-public class IntHashMap implements Serializable{
-
-  /**
-   * Generated serial version UID
-   */
-	private static final long serialVersionUID = 2143830240557923392L;
+public class IntHashMap {
 	
-// CHANGELOG
+  // CHANGELOG
   // 2005-11-21 1.01 fixed rehash size bug
   // 2005-11-18 1.00 initial release.
-  //                 CAVEAT: Most methods are completly untested for now.
+  //                 CAVEAT: Most methods are completely untested for now.
 
   /** Constant for constructing a key iterator. */
   private static final int KEYS = 0;
