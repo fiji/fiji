@@ -49,7 +49,6 @@ import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 
 import javax.swing.BoxLayout;
-import javax.swing.JFileChooser;
 import javax.swing.JRadioButton;
 
 import org.siox.SioxSegmentator;
@@ -211,7 +210,10 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 		{
 			fos = new FileOutputStream(sd.getDirectory() + filename);
 			out = new ObjectOutputStream(fos);
-			out.writeObject(this.siox);
+			out.writeObject(
+					new SegmentationInfo(siox.getBgSignature(), 
+							siox.getFgSignature(), controlPanel.smoothness.getValue(), 
+							controlPanel.multipart.isSelected()?4:0));
 			out.close();
 		}
 		catch(IOException ex)
