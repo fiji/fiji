@@ -49,14 +49,6 @@ public class User_Plugins implements PlugIn {
 	public void run(String arg) {
 		if ("update".equals(arg))
 			Menus.updateImageJMenus();
-		installScripts();
-		installPlugins(path, ".", menuPath);
-		/* make sure "Update Menus" runs _this_ plugin */
-		Menus.getCommands().put("Update Menus",
-			"fiji.User_Plugins(\"update\")");
-		// make sure "Edit>Options>Memory & Threads runs Fiji's plugin
-		Menus.getCommands().put("Memory & Threads...", "fiji.Memory");
-
 		FijiClassLoader classLoader = new FijiClassLoader();
 		try {
 			classLoader.addPath(Menus.getPlugInsPath());
@@ -74,6 +66,14 @@ public class User_Plugins implements PlugIn {
 			method.setAccessible(true);
 			method.invoke(null, new Object[] { classLoader });
 		} catch (Exception e) { e.printStackTrace(); }
+
+		installScripts();
+		installPlugins(path, ".", menuPath);
+		/* make sure "Update Menus" runs _this_ plugin */
+		Menus.getCommands().put("Update Menus",
+			"fiji.User_Plugins(\"update\")");
+		// make sure "Edit>Options>Memory & Threads runs Fiji's plugin
+		Menus.getCommands().put("Memory & Threads...", "fiji.Memory");
 	}
 
 	public static void install() {
