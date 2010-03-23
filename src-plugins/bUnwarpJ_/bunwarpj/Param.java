@@ -56,6 +56,14 @@ public class Param {
 	/** maximum scale deformation choices */
 	protected String[] sMaxScaleDeformationChoices = { "Very Coarse", "Coarse", "Fine", "Very Fine", "Super Fine" };
 	
+	// Initial affine matrix pre-process
+	/** percentage of shear correction in initial matrix */
+	private double shearCorrection = 0.0;
+	/** percentage of scale correction in initial matrix */
+	private double scaleCorrection = 0.0;
+	/** percentage of anisotropy correction in initial matrix */
+	private double anisotropyCorrection = 0.0;
+	
 	/**
 	 * Empty constructor
 	 */
@@ -167,7 +175,34 @@ public class Param {
 						  "Landmark weight = " + landmarkWeight + "\n" +
 						  "Image weight = " + imageWeight + "\n" +
 						  "Consistency weight = " + consistencyWeight + "\n" +
-						  "Stopping threshold = " + stopThreshold);
+						  "Stopping threshold = " + stopThreshold + "\n" +
+						  "Shear correction = " + shearCorrection + "\n" +
+						  "Scale correction = " + scaleCorrection + "\n" +
+						  "Anisotropy correction = " + anisotropyCorrection + "\n");
+	}
+
+	public void setShearCorrection(double shearCorrection) {
+		this.shearCorrection = shearCorrection;
+	}
+
+	public double getShearCorrection() {
+		return shearCorrection;
+	}
+
+	public void setScaleCorrection(double scaleCorrection) {
+		this.scaleCorrection = scaleCorrection;
+	}
+
+	public double getScaleCorrection() {
+		return scaleCorrection;
+	}
+
+	public void setAnisotropyCorrection(double anisotropyCorrection) {
+		this.anisotropyCorrection = anisotropyCorrection;
+	}
+
+	public double getAnisotropyCorrection() {
+		return anisotropyCorrection;
 	}
 	
 	
