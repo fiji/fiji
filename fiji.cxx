@@ -1786,13 +1786,20 @@ static int start_ij(void)
 		if (headless)
 			class_path += string(fiji_dir) + "/misc/headless.jar";
 
-		if (is_default_main_class(main_class))
+		if (is_default_main_class(main_class)) {
 			update_files();
-		else
+			if (class_path != "")
+				class_path += PATH_SEP;
+			class_path += string(fiji_dir) + "/jars/Fiji.jar"
+				PATH_SEP + fiji_dir + "/jars/ij.jar";
+		}
+		else {
 			if (build_classpath(class_path, string(fiji_dir)
 						+ "/plugins", 0))
 				return 1;
-		build_classpath(class_path, string(fiji_dir) + "/jars", 0);
+			build_classpath(class_path, string(fiji_dir)
+					+ "/jars", 0);
+		}
 	}
 	add_option(options, class_path, 0);
 
