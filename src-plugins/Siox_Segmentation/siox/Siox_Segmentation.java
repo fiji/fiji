@@ -52,7 +52,13 @@ public static void main(String[] args) {
 		
 		if(inputImage.getType() != ImagePlus.COLOR_RGB)
 		{
-			IJ.error("SIOX Segmentation", "SIOX works only only on RGB images");
+			IJ.error("SIOX Segmentation", "SIOX works only on RGB images");
+			return;
+		}
+		
+		if(inputImage.getNSlices() > 1)
+		{
+			IJ.error("SIOX Segmentation", "SIOX does not support stacks");
 			return;
 		}
 		
