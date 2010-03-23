@@ -175,7 +175,10 @@ public class Param {
 						  "Landmark weight = " + landmarkWeight + "\n" +
 						  "Image weight = " + imageWeight + "\n" +
 						  "Consistency weight = " + consistencyWeight + "\n" +
-						  "Stopping threshold = " + stopThreshold);
+						  "Stopping threshold = " + stopThreshold + "\n" +
+						  "Shear correction = " + shearCorrection + "\n" +
+						  "Scale correction = " + scaleCorrection + "\n" +
+						  "Anisotropy correction = " + anisotropyCorrection + "\n");
 	}
 
 	public void setShearCorrection(double shearCorrection) {
