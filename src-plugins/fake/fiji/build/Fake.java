@@ -1906,7 +1906,8 @@ public class Fake {
 		int start = size - 1;
 		while (start > 0 && isClass(list, start - 1))
 			start--;
-		List classes = list.subList(start, size);
+		List classes = new ArrayList();
+		classes.addAll(list.subList(start, size));
 		Collections.sort(classes);
 		while (size > start)
 			list.remove(--size);
