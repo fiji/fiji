@@ -106,6 +106,8 @@ public class bUnwarpJ_ implements PlugIn
     private int     min_scale_image            = 0;
     /** stopping threshold */
     private static double  stopThreshold      = 1e-2;
+    /** debug flag */
+	private static boolean debug = false;
 
 	
     /*....................................................................
@@ -383,8 +385,12 @@ public class bUnwarpJ_ implements PlugIn
     	   IJ.error("Missing parameters to compute transformation!");
     	   return null;
        }
-
-       //IJ.log("--- bUnwarpJ parameters ---\n" + parameter.toString() + "\n");
+       
+       if(debug)
+    	   IJ.log("\n--- bUnwarpJ parameters ---\n" +
+    			   "\nSource image: " + sourceImp.getTitle() + 
+    			   "\nTarget image: " + targetImp.getTitle() + "\n" +
+    			   parameter.toString() + "\n");
        
        // Produce side information
        final int imagePyramidDepth = parameter.max_scale_deformation - parameter.min_scale_deformation + 1;
