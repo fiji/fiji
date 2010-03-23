@@ -157,8 +157,6 @@ public class Fake {
 		 * include all plugin's jars...
 		 */
 		// expandGlob(fijiHome + "plugins/**/*.jar", jars, cwd);
-		if (new File(fijiHome + "misc/Fiji.jar").exists())
-			jars.add(fijiHome + "misc/Fiji.jar");
 		expandGlob(fijiHome + "jars/**/*.jar", jars, cwd);
 		if (getPlatform().startsWith("win")) {
 			String[] paths =
@@ -1896,6 +1894,30 @@ public class Fake {
 	}
 
 	/*
+	 * Sort .class entries at end of the given list
+	 *
+	 * Due to the recursive nature of java2classFiles(), the sorting of
+	 * the glob expansion is not enough.
+	 */
+	protected void sortClassesAtEnd(List list) {
+		int size = list.size();
+		if (size == 0 || !isClass(list, size - 1))
+			return;
+		int start = size - 1;
+		while (start > 0 && isClass(list, start - 1))
+			start--;
+		List classes = list.subList(start, size);
+		Collections.sort(classes);
+		while (size > start)
+			list.remove(--size);
+		list.addAll(classes);
+	}
+	final protected boolean isClass(List list, int index) {
+		return ((String)list.get(index)).endsWith(".class");
+	}
+
+
+	/*
 	 * This function inspects a .class file for a given .java file,
 	 * infers the package name and all used classes, and adds to "all"
 	 * the class file names of those classes used that have been found
@@ -1907,6 +1929,8 @@ public class Fake {
 			java = java.substring(0, java.length() - 5) + ".class";
 		else if (!java.endsWith(".class")) {
 			if (!all.contains(java)) {
+				if (buildDir == null)
+					sortClassesAtEnd(result);
 				result.add(java);
 				all.add(java);
 			}
@@ -1995,6 +2019,7 @@ public class Fake {
 		if (buildDir != null) {
 			result.add(buildDir.getAbsolutePath() + "/");
 			addRecursively(buildDir, result, all);
+			Collections.sort(result);
 		}
 		String lastJava = null;
 		Iterator iter = javas.iterator();
@@ -2025,6 +2050,8 @@ public class Fake {
 			}
 			java2classFiles(file, cwd, buildDir, result, all);
 		}
+		if (buildDir == null)
+			sortClassesAtEnd(result);
 		return result;
 	}
 

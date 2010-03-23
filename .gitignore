@@ -37,7 +37,7 @@
 /tmp.ijm
 /jars/fake.jar
 /jars/ij.jar
-/misc/Fiji.jar
+/jars/Fiji.jar
 /plugins/Jython_Interpreter.jar
 /plugins/Clojure_Interpreter.jar
 /plugins/JRuby_Interpreter.jar
