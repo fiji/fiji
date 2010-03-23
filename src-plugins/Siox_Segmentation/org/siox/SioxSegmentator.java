@@ -60,6 +60,7 @@ import org.siox.util.*;
  */
 public class SioxSegmentator
 {
+
 	// CHANGELOG
 	// 2006-26-04 1.13 added method segmentatevideo_firstframe() and segmentatevideo_nextframe()
 	//                 for quick video segmentation.
@@ -179,6 +180,46 @@ public class SioxSegmentator
 		segmentated=false;
 	}
 
+	/**
+	 * Constructs a SioxSegmentator Object to be used for image segmentation.
+	 *
+	 * @param w X resolution of the image to be segmented.
+	 * @param h Y resolution of the image to be segmented.
+	 * @param limits Size of the cluster on LAB axises.
+	 *        If <code>null</code>, the default value {0.64f,1.28f,2.56f}
+	 *        is used.
+	 * @param bgSignature background color signature
+	 * @param fgSignature foreground color signature
+	 * 
+	 * @author Ignacio Arganda-Carreras (iarganda at mit.edu)
+	 */
+	public SioxSegmentator(
+			int w, 
+			int h, 
+			float[] limits,
+			float[][] bgSignature,
+			float[][] fgSignature)
+	{
+
+		imgWidth=w;
+		imgHeight=h;
+		labelField=new int[imgWidth*imgHeight];
+		knownBg=new float[imgWidth*imgHeight][3];
+		knownFg=new float[imgWidth*imgHeight][3];
+
+		if (limits==null) {
+			this.limits=new float[] {0.64f, 1.28f, 2.56f};
+		} else {
+			this.limits=limits;
+		}
+		clusterSize=Utils.sqrEuclidianDist(this.limits, new float[] {-this.limits[0], -this.limits[1], -this.limits[2]});
+		segmentated=false;
+		
+		this.bgSignature = bgSignature;
+		this.fgSignature = fgSignature;
+	}
+	
+	
 	/**
 	 * Segments the given image with information from the confidence
 	 * matrix. For faster segmentation in videos, use the methods
@@ -346,6 +387,165 @@ public class SioxSegmentator
 		return true;
 	}
 
+	/**
+	 * Segments the given image with the previously calculated color signatures.
+	 *
+	 * @param image Pixel data of the image to be segmented.
+	 *        Every integer represents one ARGB-value.
+	 * @param cm Confidence matrix specifying the probability of an image
+	 *        belonging to the foreground before and after the segmentation.
+	 * @param smoothness Number of smoothing steps in the post processing.
+	 * @param sizeFactorToKeep Segmentation retains the largest connected
+	 *        foreground component plus any component with size at least
+	 *        <CODE>sizeOfLargestComponent/sizeFactorToKeep</CODE>.
+	 * @return <CODE>true</CODE> if the segmentation algorithm succeeded,
+	 *         <CODE>false</CODE> if segmentation is impossible
+	 * @exception IllegalStateException if the confidence matrix defines no
+	 *         image foreground.
+	 *         
+	 * @author Ignacio Arganda-Carreras (iarganda at mit.edu)
+	 */
+	public boolean applyPrecomputedSignatures(
+			int[] image, 
+			float[] cm, 
+			int smoothness, 
+			double sizeFactorToKeep)
+	{
+		segmentated = false;
+		hs.clear();
+
+		// save image for drb
+		origImage = new int[image.length];
+		System.arraycopy(image, 0, origImage, 0, image.length);
+
+		// user predefined foreground pixels
+		IntArrayList predefinedFgPixels = new IntArrayList();
+		
+		// create color signatures
+		int knownBgCount=0, knownFgCount=0;
+		for (int i=0; i<cm.length; i++) 
+		{
+			if (cm[i] <= BACKGROUND_CONFIDENCE) 
+			{
+				knownBg[knownBgCount++]=Utils.rgbToClab(image[i]);
+			} 
+			else if (cm[i]>=FOREGROUND_CONFIDENCE) 
+			{
+				knownFg[knownFgCount++]=Utils.rgbToClab(image[i]);
+				if(cm[i] == CERTAIN_FOREGROUND_CONFIDENCE)
+				{
+					predefinedFgPixels.add(i);
+					//System.out.println("added " + i);
+				}
+			}
+		}
+		
+		if (bgSignature.length<1) {
+			// segmentation impossible
+			return false;
+		}
+
+		// classify using color signatures,
+		// classification cached in hashmap for drb and speedup purposes
+		for (int i=0; i<cm.length; i++) 
+		{
+			if (cm[i]>=FOREGROUND_CONFIDENCE) 
+			{
+				cm[i]=CERTAIN_FOREGROUND_CONFIDENCE;
+				continue;
+			}
+			else if (cm[i]>BACKGROUND_CONFIDENCE) 
+			{
+				Tupel tupel=(Tupel)hs.get(image[i]);
+				boolean isBackground=true;
+				if (tupel == null) 
+				{
+					tupel=new Tupel(0f, 0, 0f, 0);
+					final float[] lab=Utils.rgbToClab(image[i]);
+					float minBg=Utils.sqrEuclidianDist(lab, bgSignature[0]);
+					int minIndex=0;
+					for (int j=1; j<bgSignature.length; j++) 
+					{
+						final float d=Utils.sqrEuclidianDist(lab, bgSignature[j]);
+						if (d<minBg) 
+						{
+							minBg=d;
+							minIndex=j;
+						}
+					}
+					tupel.minBgDist=minBg;
+					tupel.indexMinBg=minIndex;
+					float minFg=Float.MAX_VALUE;
+					minIndex=-1;
+					for (int j=0; j<fgSignature.length; j++) {
+						final float d=Utils.sqrEuclidianDist(lab, fgSignature[j]);
+						if (d<minFg) {
+							minFg=d;
+							minIndex=j;
+						}
+					}
+					tupel.minFgDist=minFg;
+					tupel.indexMinFg=minIndex;
+					if (fgSignature.length==0) {
+						isBackground=(minBg<=clusterSize);
+						// remove next line to force behavior of old algorithm
+						throw new IllegalStateException("foreground signature does not exist");
+					} else {
+						isBackground=minBg<minFg;
+					}
+					hs.put(image[i], tupel);
+				} 
+				else 
+				{
+					isBackground=tupel.minBgDist<=tupel.minFgDist;
+				}
+				if (isBackground) 
+				{
+					cm[i]=CERTAIN_BACKGROUND_CONFIDENCE;
+				} 
+				else 
+				{
+					cm[i]=CERTAIN_FOREGROUND_CONFIDENCE;
+				}
+			} 
+			else 
+			{
+				cm[i]=CERTAIN_BACKGROUND_CONFIDENCE;
+			}
+		}
+
+		// postprocessing
+		Utils.smoothcm(cm, imgWidth, imgHeight, 0.33f, 0.33f, 0.33f); // average
+		Utils.normalizeMatrix(cm);
+		Utils.erode(cm, imgWidth, imgHeight);
+		//keepOnlyLargeComponents(cm, UNKNOWN_REGION_CONFIDENCE, sizeFactorToKeep, predefinedFgPixels);
+		for (int i=0; i<smoothness; i++) 
+		{
+			Utils.smoothcm(cm, imgWidth, imgHeight, 0.33f, 0.33f, 0.33f); // average
+		}
+		Utils.normalizeMatrix(cm);
+		for (int i=0; i<cm.length; i++) 
+		{
+			if (cm[i]>=UNKNOWN_REGION_CONFIDENCE) // || predefinedFgPixels.contains(i)) 
+			{
+				cm[i]=CERTAIN_FOREGROUND_CONFIDENCE;
+			} else 
+			{
+				cm[i]=CERTAIN_BACKGROUND_CONFIDENCE;
+			}
+		}
+		
+		//for(int i=0 ; i < predefinedFgPixels.size(); i++)
+		//	System.out.println("cm["+predefinedFgPixels.get(i)+"] = " + cm[predefinedFgPixels.get(i)]);
+		
+		//keepOnlyLargeComponents(cm, UNKNOWN_REGION_CONFIDENCE, sizeFactorToKeep, predefinedFgPixels);
+		fillColorRegions(cm, image);
+		Utils.dilate(cm, imgWidth, imgHeight);
+
+		segmentated=true;
+		return true;
+	}
+	
 
 	/**
 	 * Segments the first frame of a scene in a video. Only a reduced postprocessing
@@ -960,7 +1160,7 @@ public class SioxSegmentator
 	 * in background and foreground and the index to the centroids in each
 	 * signature for a given color.
 	 */
-	private final class Tupel {
+	private final class Tupel{
 		float minBgDist;
 		int indexMinBg;
 		float minFgDist;
@@ -974,4 +1174,11 @@ public class SioxSegmentator
 			this.indexMinFg=indexMinFg;
 		}
 	}
+	
+	/** Get background signature */
+	public float[][] getBgSignature(){ return this.bgSignature;}
+	/** Get foreground signature */
+	public float[][] getFgSignature(){ return this.fgSignature;}
+	
+	
 }

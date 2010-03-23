@@ -29,6 +29,9 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 
 import fiji.util.gui.OverlayedImageCanvas;
 import ij.IJ;
@@ -38,6 +41,8 @@ import ij.gui.ImageWindow;
 import ij.gui.Roi;
 import ij.gui.ShapeRoi;
 import ij.gui.ShapeRoiHelper;
+import ij.io.OpenDialog;
+import ij.io.SaveDialog;
 import ij.process.Blitter;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
@@ -117,6 +122,7 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 		controlPanel.segmentJButton.addActionListener(this);
 		controlPanel.resetJButton.addActionListener(this);
 		controlPanel.createMaskJButton.addActionListener(this);
+		controlPanel.saveSegmentatorJButton.addActionListener(this);
 		controlPanel.addJRadioButton.addActionListener(this);
 		controlPanel.subJRadioButton.addActionListener(this);
 		controlPanel.refineJButton.addActionListener(this);		
@@ -169,9 +175,54 @@ public class SegmentationGUI extends ImageWindow implements ActionListener
 		}
 		else if (e.getSource() == controlPanel.createMaskJButton) {
 			createBinaryMask();
-		}		
+		}	
+		else if (e.getSource() == controlPanel.saveSegmentatorJButton) {
+			saveSegmentator();
+		}
 			
 	}
+
+	/**
+	 * Save current segmentator into a file
+	 */
+	private void saveSegmentator() 
+	{
+		if ( controlPanel.status != ControlJPanel.SEGMENTED_STATUS )
+		{
+			IJ.error("No segmentator found!");
+			return;
+		}
+		
+		String currentDirectory = (OpenDialog.getLastDirectory() == null) ? 
+				 OpenDialog.getDefaultDirectory() : OpenDialog.getLastDirectory();
+				 
+		if(null == currentDirectory)
+			currentDirectory = ".";
+		
+		SaveDialog sd = new SaveDialog("Save segmentator", currentDirectory, 
+				"segmentator-"+this.imp.getTitle(), ".siox");
+		
+		String filename = sd.getFileName();
+		
+		FileOutputStream fos = null;
+		ObjectOutputStream out = null;
+		try
+		{
+			fos = new FileOutputStream(sd.getDirectory() + filename);
+			out = new ObjectOutputStream(fos);
+			out.writeObject(
+					new SegmentationInfo(siox.getBgSignature(), 
+							siox.getFgSignature(), controlPanel.smoothness.getValue(), 
+							controlPanel.multipart.isSelected()?4:0));
+			out.close();
+		}
+		catch(IOException ex)
+		{
+			ex.printStackTrace();
+		}
+	}
+
+
 
 	/**
 	 * Produce a binary image based on the current confidence matrix
