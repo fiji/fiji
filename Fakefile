@@ -242,7 +242,7 @@ plugins/Bug_Submitter.jar <- src-plugins/Bug_Submitter/*.java
 
 CLASSPATH(plugins/register_virtual_stack_slices.jar)=plugins/TrakEM2_.jar:jars/mpicbg.jar:plugins/bUnwarpJ_.jar:plugins/Fiji_Plugins.jar
 
-CLASSPATH(plugins/Siox_Segmentation.jar)=jars/fiji-lib.jar
+CLASSPATH(plugins/Siox_Segmentation.jar)=jars/fiji-lib.jar:plugins/Fiji_Plugins.jar
 
 CLASSPATH(plugins/Directionality_.jar)=jars/jfreechart-1.0.9.jar
 
