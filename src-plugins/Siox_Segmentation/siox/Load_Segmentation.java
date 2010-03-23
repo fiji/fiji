@@ -137,9 +137,14 @@ public class Load_Segmentation implements PlugIn
 		FloatProcessor confMatrix = new FloatProcessor(w, h);
 		final float[] confMatrixArray = (float[])confMatrix.getPixels();
 		
+		final int size = imRef.getImageStack().getSize();
+		
 		// Iterate on all images in the stack
-		for(int i = 0 ; i < imRef.getImageStack().getSize(); i++)
+		for(int i = 0 ; i < size; i++)
 		{
+			IJ.showStatus("Segmenting image " + (i+1) + "/" + size);
+			IJ.showProgress((double) (i+1) / size);
+			
 			Arrays.fill(confMatrixArray, SioxSegmentator.UNKNOWN_REGION_CONFIDENCE);
 			boolean success = false;
 			
@@ -165,6 +170,9 @@ public class Load_Segmentation implements PlugIn
 			// Add binary image to output stack
 			outputStack.addSlice(imRef.getImageStack().getSliceLabel(i+1), result.duplicate());
 		}
+		
+		IJ.showStatus("Segmentation done!");
+		IJ.showProgress(1.0);
 		
 		// Display result
 		return new ImagePlus("Segmented stack", outputStack);
