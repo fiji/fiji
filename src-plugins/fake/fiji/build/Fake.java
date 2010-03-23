@@ -1101,7 +1101,7 @@ public class Fake {
 			}
 
 			List compileJavas(List javas, File buildDir,
-					Set excludeJavas)
+					Set exclude, Set noCompile)
 					throws FakeException {
 				toolsPath = getVar("TOOLSPATH");
 				return Fake.this.compileJavas(javas, cwd, buildDir,
@@ -1109,7 +1109,8 @@ public class Fake {
 					getVarBool("DEBUG"),
 					getVarBool("VERBOSE"),
 					getVarBool("SHOWDEPRECATION"),
-					getVar("CLASSPATH"), excludeJavas);
+					getVar("CLASSPATH"),
+					exclude, noCompile);
 			}
 
 			String getPluginsConfig() {
@@ -1387,11 +1388,14 @@ public class Fake {
 					maybeMake((Rule)allRules.get(paths[i]));
 
 				File buildDir = getBuildDir();
-				Set exclude = expandToSet(getVar("NO_COMPILE"),
-					cwd);
-				compileJavas(prerequisites, buildDir, exclude);
+				Set noCompile =
+					expandToSet(getVar("NO_COMPILE"), cwd);
+				Set exclude =
+					expandToSet(getVar("EXCLUDE"), cwd);
+				compileJavas(prerequisites, buildDir, exclude,
+					noCompile);
 				List files = java2classFiles(prerequisites,
-						cwd, buildDir, exclude);
+					cwd, buildDir, exclude, noCompile);
 				if (getVarBool("includeSource"))
 					addSources(files);
 				makeJar(target, getMainClass(), files, cwd,
@@ -1474,10 +1478,12 @@ public class Fake {
 
 				try {
 					Set exclude = expandToSet(
+						getVar("EXCLUDE"), cwd);
+					Set noCompile = expandToSet(
 						getVar("NO_COMPILE"), cwd);
 					iter = java2classFiles(javas,
 						cwd, getBuildDir(),
-							exclude).iterator();
+						exclude, noCompile).iterator();
 				} catch (FakeException e) {
 					err.println("Warning: could not "
 						+ "find required .class files: "
@@ -1496,7 +1502,7 @@ public class Fake {
 
 			void action() throws FakeException {
 				compileJavas(prerequisites, getBuildDir(),
-					new HashSet());
+					new HashSet(), new HashSet());
 
 				// copy class files, if necessary
 				int slash = target.lastIndexOf('/') + 1;
@@ -1510,7 +1516,7 @@ public class Fake {
 					cwd);
 				Iterator iter = java2classFiles(prerequisites,
 					cwd, getBuildDir(),
-					exclude).iterator();
+					exclude, new HashSet()).iterator();
 				while (iter.hasNext()) {
 					String source = (String)iter.next();
 					if (!source.startsWith(prefix))
@@ -2020,7 +2026,8 @@ public class Fake {
 
 	/* discovers all the .class files for a given set of .java files */
 	protected List java2classFiles(List javas, File cwd,
-			File buildDir, Set excludeJavas) throws FakeException {
+			File buildDir, Set exclude, Set noCompile)
+			throws FakeException {
 		List result = new ArrayList();
 		Set all = new HashSet();
 		if (buildDir != null) {
@@ -2032,9 +2039,11 @@ public class Fake {
 		Iterator iter = javas.iterator();
 		while (iter.hasNext()) {
 			String file = (String)iter.next();
-			boolean exclude = excludeJavas.contains(file);
+			if (exclude.contains(file))
+				continue;
+			boolean dontCompile = noCompile.contains(file);
 			if (buildDir != null) {
-				if (!exclude && file.endsWith(".java")) {
+				if (!dontCompile && file.endsWith(".java")) {
 					lastJava = file;
 					continue;
 				}
@@ -2048,7 +2057,7 @@ public class Fake {
 					lastJava = null;
 				}
 			}
-			if (exclude) {
+			if (dontCompile) {
 				if (!all.contains(file)) {
 					result.add(file);
 					all.add(file);
@@ -2111,7 +2120,7 @@ public class Fake {
 	protected List compileJavas(List javas, File cwd, File buildDir,
 			String javaVersion, boolean debug, boolean verbose,
 			boolean showDeprecation, String extraClassPath,
-			Set exclude)
+			Set exclude, Set noCompile)
 			throws FakeException {
 		List arguments = new ArrayList();
 		arguments.add("-encoding");
@@ -2178,7 +2187,8 @@ public class Fake {
 			throw new FakeException("Compile error: " + e);
 		}
 
-		List result = java2classFiles(javas, cwd, buildDir, exclude);
+		List result = java2classFiles(javas, cwd, buildDir, exclude,
+			noCompile);
 		return result;
 	}
 
