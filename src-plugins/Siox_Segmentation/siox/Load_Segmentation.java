@@ -20,34 +20,41 @@ import ij.process.FloatProcessor;
 public class Load_Segmentation implements PlugIn
 {
 
-	/** working image plus */
-	private ImagePlus imRef;
+	/** SIOX segmentation info */
+	SegmentationInfo sioxInfo = null;
+	/** SIOX segmentator */
+	private SioxSegmentator siox = null; 
+	
+	public Load_Segmentation()
+	{
+		
+	}
 	
 	/**
-	 * Plugin run method
+	 * Constructor 
+	 * 
+	 * @param img image to be segmented
+	 * @param filename name of the SIOX info file
 	 */
-	public void run(String args) 
+	public Load_Segmentation(ImagePlus img, String filename)
 	{
-		this.imRef = IJ.getImage();
-		
-		GenericDialogPlus gd = new GenericDialogPlus("Load SIOX segmentator");
-		
-		gd.addFileField("SIOX segmentator file:", "", 50);
-		
-		gd.showDialog();
-		
-		// Exit when canceled
-		if (gd.wasCanceled()) 
-			return;
-		
-		String segmentatorFileName = gd.getNextString();
-		
+		this.sioxInfo = readFileInfo(filename);
+	}
+	
+	/**
+	 * Read segmentation information from file
+	 * @param filename name of the segmentation info file
+	 * @return segmentation information object
+	 */
+	private SegmentationInfo readFileInfo(String filename) 
+	{
+		// Read file
 		FileInputStream fis = null;
 		ObjectInputStream in = null;
 		SegmentationInfo sioxInfo = null;
 		try
 		{
-			fis = new FileInputStream(segmentatorFileName);
+			fis = new FileInputStream(filename);
 			in = new ObjectInputStream(fis);
 			sioxInfo = (SegmentationInfo) in.readObject();
 			in.close();
@@ -61,11 +68,67 @@ public class Load_Segmentation implements PlugIn
 			ex.printStackTrace();
 		}
 		
-		final int w = this.imRef.getWidth();
-		final int h = this.imRef.getHeight();
+		return sioxInfo;
+	}
+
+	/**
+	 * Plugin run method
+	 */
+	public void run(String args) 
+	{
+		ImagePlus imRef = IJ.getImage();
 		
-		// Create siox segmentator out of the info
-		final SioxSegmentator siox = new SioxSegmentator(w, h, null, sioxInfo.getBgSignature(), sioxInfo.getFgSignature());
+		// Chek if the file name has been set
+		if(null == this.siox)
+			if(!setup())
+				return;
+		
+		ImagePlus out = execute(imRef);
+		
+		if(null != out)
+			out.show();
+			
+	}
+	
+	/**
+	 * Plugin setup (ask for the SIOX info file)
+	 * 
+	 * @return false if the user cancel the dialog
+	 */
+	public boolean setup()
+	{
+		GenericDialogPlus gd = new GenericDialogPlus("Load SIOX segmentator");
+		
+		gd.addFileField("SIOX segmentator file:", "", 50);
+		
+		gd.showDialog();
+		
+		// Exit when canceled
+		if (gd.wasCanceled()) 
+			return false;
+		
+		String segmentatorFileName = gd.getNextString();
+		
+		this.sioxInfo = readFileInfo(segmentatorFileName);		
+		
+		return true;
+	}
+	
+	/**
+	 * Execute SIOX segmentator
+	 * 
+	 * @return segmentation result image
+	 */
+	public ImagePlus execute(final ImagePlus imRef)
+	{
+		synchronized (this) {
+			if (null == this.siox)
+				// Create SIOX segmentator out of the info
+				this.siox = new SioxSegmentator(imRef.getWidth(), imRef.getHeight(), null, sioxInfo.getBgSignature(), sioxInfo.getFgSignature());
+		}
+		
+		final int w = imRef.getWidth();
+		final int h = imRef.getHeight();
 		
 		// Output image
 		ImageStack outputStack = new ImageStack(w, h, null);
@@ -75,12 +138,12 @@ public class Load_Segmentation implements PlugIn
 		final float[] confMatrixArray = (float[])confMatrix.getPixels();
 		
 		// Iterate on all images in the stack
-		for(int i = 0 ; i < this.imRef.getImageStack().getSize(); i++)
+		for(int i = 0 ; i < imRef.getImageStack().getSize(); i++)
 		{
 			Arrays.fill(confMatrixArray, SioxSegmentator.UNKNOWN_REGION_CONFIDENCE);
 			boolean success = false;
 			
-			ColorProcessor image = (ColorProcessor) this.imRef.getImageStack().getProcessor(i+1);
+			ColorProcessor image = (ColorProcessor) imRef.getImageStack().getProcessor(i+1);
 			
 			try{
 				success = siox.applyPrecomputedSignatures(
@@ -104,8 +167,7 @@ public class Load_Segmentation implements PlugIn
 		}
 		
 		// Display result
-		new ImagePlus("Segmented stack", outputStack).show();
+		return new ImagePlus("Segmented stack", outputStack);
 	}
-	
 	
 }
