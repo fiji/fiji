@@ -41,8 +41,7 @@ import ij.IJ;
 import ij.ImageStack;
 import ij.plugin.PlugIn;
 import ij.plugin.RGBStackMerge;
-import ij.process.ColorProcessor;
-import ij.plugin.PlugIn;
+
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
@@ -54,16 +53,36 @@ import ij.io.SaveDialog;
 import ij.ImagePlus;
 import ij.WindowManager;
 
-import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.awt.*;
-import java.awt.event.*;
-import java.beans.FeatureDescriptor;
+import java.awt.Button;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Panel;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.KeyListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 
-import javax.swing.*;
+import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
+import javax.swing.JRadioButton;
+
 
 import weka.core.Attribute;
 import weka.core.FastVector;
@@ -73,24 +92,20 @@ import hr.irb.fastRandomForest.FastRandomForest;
 
 public class Trainable_Segmentation implements PlugIn {
 	
-	private List<Roi> positiveExamples = new ArrayList< Roi>(); 
-	private List<Roi> negativeExamples = new ArrayList< Roi>();
+	private List<Roi> [] examples = new ArrayList[5]; 
 	private ImagePlus trainingImage;
 	private ImagePlus displayImage;
 	private ImagePlus classifiedImage;
 	private ImagePlus overlayImage;
 	private FeatureStack featureStack;
 	private CustomWindow win;
-	private java.awt.List posExampleList;
-	private java.awt.List negExampleList;
-	private int posTraceCounter;
-	private int negTraceCounter;
+	
+	private int traceCounter[] = new int[5];
    	private boolean showColorOverlay;
    	private Instances wholeImageData;
    	private Instances loadedTrainingData;
    	private FastRandomForest rf;
-	final Button posExampleButton;
-  	final Button negExampleButton;
+	final Button addExampleButton;
   	final Button trainButton;
   	final Button overlayButton;
   	final Button resultButton;
@@ -98,26 +113,39 @@ public class Trainable_Segmentation implements PlugIn {
   	final Button loadDataButton;
   	final Button saveDataButton;
   	
+  	final Color[] colors = new Color[]{Color.green, Color.red, Color.blue,
+  		Color.orange, Color.pink};
   	
-  	public Trainable_Segmentation() {
-	    	posExampleButton = new Button("positiveExample");
-  	      	negExampleButton = new Button("negativeExample");
-  	      	trainButton = new Button("train Classifier");
-  	      	overlayButton = new Button("toggle Overlay");
+  	String[] classLabels = new String[]{"foreground", "background", "class-3", "class-4", "class-5"};
+  	
+  	private int numOfClasses = 2;
+  	private java.awt.List exampleList[] = new java.awt.List[5];
+  	private JRadioButton [] classButton = new JRadioButton[5];
+  	//Group the radio buttons.
+    ButtonGroup group = new ButtonGroup();
+  	
+  	
+  	public Trainable_Segmentation() 
+  	{
+	    	addExampleButton = new Button("+");
+  	      	trainButton = new Button("Train Classifier");
+  	      	overlayButton = new Button("Toggle Overlay");
   	      	overlayButton.setEnabled(false);
-  	      	resultButton = new Button("create result");
+  	      	resultButton = new Button("Create Result");
   	      	resultButton.setEnabled(false);
-  	      	applyButton = new Button ("apply classifier");
+  	      	applyButton = new Button ("Apply Classifier");
   	      	applyButton.setEnabled(false);
-  	      	loadDataButton = new Button ("load data");
-  	      	saveDataButton = new Button ("save data");
+  	      	loadDataButton = new Button ("Load Data");
+  	      	saveDataButton = new Button ("Save Data");
   	      	
-  	      	posExampleList = new java.awt.List(5);
-  	      	posExampleList.setForeground(Color.green);
-  	      	negExampleList = new java.awt.List(5);
-  	      	negExampleList.setForeground(Color.red);
-  	      	posTraceCounter = 0;
-  	      	negTraceCounter = 0;
+  	      	
+  	      	for(int i = 0; i < numOfClasses ; i++)
+  	      	{
+  	      		examples[i] = new ArrayList<Roi>();
+  	      		exampleList[i] = new java.awt.List(5);
+  	      		exampleList[i].setForeground(colors[i]);
+  	      	}
+  	      	
   	      	showColorOverlay = false;
   	      	
   	      	rf = new FastRandomForest();
@@ -138,11 +166,18 @@ public class Trainable_Segmentation implements PlugIn {
   		public void actionPerformed(final ActionEvent e) {
   			exec.submit(new Runnable() {
   				public void run() {
-  					if(e.getSource() == posExampleButton){
-  		  				addPositiveExamples();
-  		  			}
-  		  			else if(e.getSource() == negExampleButton){
-  		  				addNegativeExamples();
+
+  					if(e.getSource() == addExampleButton)
+  					{
+  						IJ.log("+ pressed");
+  						for(int i = 0; i < numOfClasses; i++)
+  						{
+  							if(classButton[i].isSelected())
+  							{
+  								addExamples(i);
+  								break;
+  							}
+  						}
   		  			}
   		  			else if(e.getSource() == trainButton){
   		  				trainClassifier();
@@ -153,9 +188,6 @@ public class Trainable_Segmentation implements PlugIn {
   		  			else if(e.getSource() == resultButton){
   						showClassificationImage();
   					}
-  		  			else if(e.getSource() == posExampleList || e.getSource() == negExampleList){
-  		  				deleteSelected(e);
-  		  			}
   		  			else if(e.getSource() == applyButton){
   						applyClassifierToTestData();
   		  			}
@@ -165,8 +197,21 @@ public class Trainable_Segmentation implements PlugIn {
   		  			else if(e.getSource() == saveDataButton){
   		  				saveTrainingData();
   		  			}
+  		  			else{ 
+  		  				for(int i = 0; i < numOfClasses; i++)
+  		  					if(e.getSource() == exampleList[i])
+  		  					{
+  		  						deleteSelected(e);
+  		  						break;
+  		  					}
+  		  			}
+  				
+  
+ 
   				}
   			});
+  			
+ 
   		}
   	};
   	
@@ -174,9 +219,14 @@ public class Trainable_Segmentation implements PlugIn {
 		public void itemStateChanged(final ItemEvent e) {
 			exec.submit(new Runnable() {
 				public void run() {
-  		  			if(e.getSource() == posExampleList || e.getSource() == negExampleList){
-  		  				listSelected(e);
-  		  			}
+					for(int i = 0; i < numOfClasses; i++)
+					{
+						if(e.getSource() == exampleList[i])
+							listSelected(e, i);
+					}
+  		  			//if(e.getSource() == posExampleList || e.getSource() == negExampleList){
+  		  			//	listSelected(e);
+  		  			//}
 				}
 			});
 		}
@@ -195,15 +245,34 @@ public class Trainable_Segmentation implements PlugIn {
   			}
   			
  	      	Panel annotations = new Panel();
- 	      	BoxLayout boxAnnotation = new BoxLayout(annotations, BoxLayout.Y_AXIS);
+ 	      	GridBagLayout boxAnnotation = new GridBagLayout();
+ 	      	GridBagConstraints c = new GridBagConstraints();
+ 	      	c.anchor = GridBagConstraints.NORTHWEST;
+ 	      	c.fill = GridBagConstraints.NONE;
+ 	      	c.gridwidth = 1;
+ 	      	c.gridheight = 1;
+ 	      	c.gridx = 0;
+ 	      	c.gridy = 0;
+ 	      	
  	      	annotations.setLayout(boxAnnotation);
-  	      	posExampleList.addActionListener(listener);
-  	      	negExampleList.addActionListener(listener);	
-  	      	posExampleList.addItemListener(itemListener);
-  	      	negExampleList.addItemListener(itemListener);
-  	      	annotations.add(posExampleList);
-  	      	annotations.add(negExampleList);
-  			
+ 	      	for(int i = 0; i < numOfClasses ; i++)
+ 	      	{
+ 	      		exampleList[i].addActionListener(listener);
+ 	      		classButton[i] = new JRadioButton(classLabels[i]);
+ 	      		group.add(classButton[i]);
+ 	      		
+ 	      		boxAnnotation.setConstraints(classButton[i], c);
+ 	      		annotations.add(classButton[i]);
+ 	      		c.gridy++;
+ 	      		
+ 	      		boxAnnotation.setConstraints(exampleList[i], c);
+ 	      		annotations.add(exampleList[i]);
+ 	      		c.gridy++;
+ 	      	}
+  	      	
+ 	      	// Select first class
+ 	      	classButton[0].setSelected(true);
+  	      	
 	      	Panel imageAndLists = new Panel();
 			BoxLayout boxImgList = new BoxLayout(imageAndLists, BoxLayout.X_AXIS);
 			imageAndLists.setLayout(boxImgList);
@@ -215,16 +284,14 @@ public class Trainable_Segmentation implements PlugIn {
   			buttons.setLayout(buttonLayout);
   			//buttons.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
   			
-  	      	posExampleButton.addActionListener(listener);
-  	      	negExampleButton.addActionListener(listener);
+  	      	addExampleButton.addActionListener(listener);
   	      	trainButton.addActionListener(listener);
   	      	overlayButton.addActionListener(listener);
   	      	resultButton.addActionListener(listener);
   	      	applyButton.addActionListener(listener);
   	      	loadDataButton.addActionListener(listener);
   	      	saveDataButton.addActionListener(listener);
-  	      	buttons.add(posExampleButton);
-  	      	buttons.add(negExampleButton);
+  	      	buttons.add(addExampleButton);
   	      	buttons.add(trainButton);
   	      	buttons.add(overlayButton);
   	      	buttons.add(resultButton);
@@ -232,9 +299,9 @@ public class Trainable_Segmentation implements PlugIn {
   	      	buttons.add(loadDataButton);
   	      	buttons.add(saveDataButton);
   	      	
-  	      	for (Component c : new Component[]{posExampleButton, negExampleButton, trainButton, overlayButton, resultButton, applyButton, loadDataButton, saveDataButton}) {
-  	      		c.setMaximumSize(new Dimension(230, 50));
-  	      		c.setPreferredSize(new Dimension(130, 30));
+  	      	for (Component comp : new Component[]{addExampleButton, trainButton, overlayButton, resultButton, applyButton, loadDataButton, saveDataButton}) {
+  	      		comp.setMaximumSize(new Dimension(230, 50));
+  	      		comp.setPreferredSize(new Dimension(130, 30));
   	      	}
   	      	
   	      	Panel all = new Panel();
@@ -260,8 +327,7 @@ public class Trainable_Segmentation implements PlugIn {
   	      			IJ.log("closing window");
   	      			// cleanup
   	      			exec.shutdownNow();
-  	      			posExampleButton.removeActionListener(listener);
-  	      			negExampleButton.removeActionListener(listener);
+  	      			addExampleButton.removeActionListener(listener);
   	      			trainButton.removeActionListener(listener);
   	      			overlayButton.removeActionListener(listener);
   	      			resultButton.removeActionListener(listener);
@@ -320,8 +386,7 @@ public class Trainable_Segmentation implements PlugIn {
 		}
 	
 	private void setButtonsEnabled(Boolean s){
-		posExampleButton.setEnabled(s);
-	    negExampleButton.setEnabled(s);
+		addExampleButton.setEnabled(s);
 	    trainButton.setEnabled(s);
 	    overlayButton.setEnabled(s);
 	    resultButton.setEnabled(s);
@@ -330,46 +395,43 @@ public class Trainable_Segmentation implements PlugIn {
 	    saveDataButton.setEnabled(s);
 	}
 	
-	private void addPositiveExamples(){
+	private void addExamples(int i)
+	{
+		IJ.log("add examples in list "+ i + " (numOfClasses = " + numOfClasses + ")");
 		//get selected pixels
 		Roi r = displayImage.getRoi();
 		if (null == r){
+			IJ.log("no ROI");
 			return;
 		}
+		
+		IJ.log("Before killRoi r = " + r + " examples[i].size + " + examples[i].size());
+		
 		displayImage.killRoi();
-		positiveExamples.add(r);
-		posExampleList.add("trace " + posTraceCounter); posTraceCounter++;
+		examples[i].add(r);
+		IJ.log("added ROI " + r + " to list " + i);
+		exampleList[i].add("trace " + traceCounter[i]); 
+		traceCounter[i]++;
 		drawExamples();
 	}
 	
-	private void addNegativeExamples(){
-		//get selected pixels
-		Roi r = displayImage.getRoi();
-		if (null == r){
-			return;
-		}
-		displayImage.killRoi();
-		negativeExamples.add(r);
-		negExampleList.add("trace " + negTraceCounter); negTraceCounter++;
-		drawExamples();
-	}
 	
-	private void drawExamples(){
+	private void drawExamples()
+	{
 		if (!showColorOverlay)
 			displayImage.setProcessor("Playground", trainingImage.getProcessor().convertToRGB());
 		else
 			displayImage.setProcessor("Playground", overlayImage.getProcessor().convertToRGB());
 		
-		displayImage.setColor(Color.GREEN);
-		for (Roi r : positiveExamples){
-			r.drawPixels(displayImage.getProcessor());
-		}
 		
-		displayImage.setColor(Color.RED);
-		for (Roi r : negativeExamples){
-			r.drawPixels(displayImage.getProcessor());
+		for(int i = 0; i < numOfClasses; i++)
+		{
+			displayImage.setColor(colors[i]);
+			for (Roi r : examples[i]){
+				r.drawPixels(displayImage.getProcessor());
+				IJ.log("painted ROI: " + r + " in color "+ colors[i]);
+			}
 		}
-		
 		displayImage.updateAndDraw();
 	}
 	
@@ -412,86 +474,69 @@ public class Trainable_Segmentation implements PlugIn {
 		return null;
 	}
 
-	public Instances createTrainingInstances(){
+	public Instances createTrainingInstances()
+	{
 		FastVector attributes = new FastVector();
 		for (int i=1; i<=featureStack.getSize(); i++){
 			String attString = featureStack.getSliceLabel(i) + " numeric";
 			attributes.addElement(new Attribute(attString));
 		}
 		FastVector classes = new FastVector();
-		classes.addElement("foreground");
-		classes.addElement("background");
+		
+		int numOfInstances = 0;
+		for(int i = 0; i < numOfClasses ; i ++)
+		{
+			classes.addElement(classLabels[i]);
+			numOfInstances += examples[i].size();
+		}
+		
 		attributes.addElement(new Attribute("class", classes));
 		
-		Instances trainingData =  new Instances("segment", attributes, positiveExamples.size()+negativeExamples.size());
+		Instances trainingData =  new Instances("segment", attributes, numOfInstances);
 		
-		for(int j=0; j<positiveExamples.size(); j++){
-			Roi r = positiveExamples.get(j);
-			//need to take care of shapeRois that are represented as multiple poygons
-			Roi[] rois;
-			if (r instanceof ij.gui.ShapeRoi){
-				IJ.log("shape roi detected");
-				rois = ((ShapeRoi) r).getRois();
-			}
-			else{
-				rois = new Roi[1];
-				rois[0] = r;
-			}
-			
-			for(int k=0; k<rois.length; k++){
-				int[] x = rois[k].getPolygon().xpoints;
-				int[] y = rois[k].getPolygon().ypoints;
-				int n = rois[k].getPolygon().npoints;
-			
-				for (int i=0; i<n; i++){
-					double[] values = new double[featureStack.getSize()+1];
-					for (int z=1; z<=featureStack.getSize(); z++){
-						values[z-1] = featureStack.getProcessor(z).getPixelValue(x[i], y[i]);
-					}
-					values[featureStack.getSize()] = 1.0;
-					trainingData.add(new Instance(1.0, values));
+		for(int l = 0; l < numOfClasses; l++)
+		{
+			for(int j=0; j<examples[l].size(); j++)
+			{
+				Roi r = examples[l].get(j);
+				//need to take care of shapeRois that are represented as multiple poygons
+				Roi[] rois;
+				if (r instanceof ij.gui.ShapeRoi){
+					IJ.log("shape roi detected");
+					rois = ((ShapeRoi) r).getRois();
 				}
-			}
-		}
-		
-		for(int j=0; j<negativeExamples.size(); j++){
-			Roi r = negativeExamples.get(j);
+				else{
+					rois = new Roi[1];
+					rois[0] = r;
+				}
 
-			Roi[] rois;
-			if (r instanceof ij.gui.ShapeRoi){
-				IJ.log("shape roi detected");
-				rois = ((ShapeRoi) r).getRois();
-			}
-			else{
-				rois = new Roi[1];
-				rois[0] = r;
-			}
-			
-			for(int k=0; k<rois.length; k++){
-				int[] x = rois[k].getPolygon().xpoints;
-				int[] y = rois[k].getPolygon().ypoints;
-				int n = rois[k].getPolygon().npoints;
-			
-				for (int i=0; i<n; i++){
-					double[] values = new double[featureStack.getSize()+1];
-					for (int z=1; z<=featureStack.getSize(); z++){
-						values[z-1] = featureStack.getProcessor(z).getPixelValue(x[i], y[i]);
+				for(int k=0; k<rois.length; k++){
+					int[] x = rois[k].getPolygon().xpoints;
+					int[] y = rois[k].getPolygon().ypoints;
+					int n = rois[k].getPolygon().npoints;
+
+					for (int i=0; i<n; i++){
+						double[] values = new double[featureStack.getSize()+1];
+						for (int z=1; z<=featureStack.getSize(); z++){
+							values[z-1] = featureStack.getProcessor(z).getPixelValue(x[i], y[i]);
+						}
+						values[featureStack.getSize()] = (double) l;
+						trainingData.add(new Instance(1.0, values));
 					}
-					values[featureStack.getSize()] = 0.0;
-					trainingData.add(new Instance(1.0, values));
 				}
-			}
 		}
+		}
+	
 		return trainingData;
 	}
 	
 	
 	public void trainClassifier(){
-		if (positiveExamples.size()==0 & loadedTrainingData==null){
+		if (examples[0].size()==0 & loadedTrainingData==null){
 			IJ.showMessage("Cannot train without positive examples!");
 			return;
 		}
-		if (negativeExamples.size()==0 & loadedTrainingData==null){
+		if (examples[1].size()==0 & loadedTrainingData==null){
 			IJ.showMessage("Cannot train without negative examples!");
 			return;
 		}
@@ -500,7 +545,7 @@ public class Trainable_Segmentation implements PlugIn {
 		
 		 IJ.showStatus("training classifier");
 		 Instances data = null;
-		 if (0 == positiveExamples.size() | 0 == negativeExamples.size())
+		 if (0 == examples[0].size() | 0 == examples[1].size())
 			 IJ.log("training from loaded data only");
 		 else {
 			 long start = System.currentTimeMillis();
@@ -588,35 +633,34 @@ public class Trainable_Segmentation implements PlugIn {
 		drawExamples();
 	}
 	
-	void listSelected(final ItemEvent e){
+	void listSelected(final ItemEvent e, final int i)
+	{
 		drawExamples();
 		displayImage.setColor(Color.YELLOW);
 			
-		if (e.getSource() == posExampleList) {
-			negExampleList.deselect(negExampleList.getSelectedIndex());
-			positiveExamples.get(posExampleList.getSelectedIndex()).drawPixels(displayImage.getProcessor());
+		for(int j = 0; j < numOfClasses; j++)
+		{
+			if (j == i) 
+				examples[i].get(exampleList[i].getSelectedIndex()).drawPixels(displayImage.getProcessor());
+			else
+				exampleList[j].deselect(exampleList[j].getSelectedIndex());
 		}
-		else{
-			posExampleList.deselect(posExampleList.getSelectedIndex());
-			negativeExamples.get(negExampleList.getSelectedIndex()).drawPixels(displayImage.getProcessor());
-		}
+		
 		displayImage.updateAndDraw();
 	}
 	
 	void deleteSelected(final ActionEvent e){
-		if (e.getSource() == posExampleList) {
-			//delete item from ROI
-			int index = posExampleList.getSelectedIndex();
-			positiveExamples.remove(index);
-			//delete item from list
-			posExampleList.remove(index);
-		}
-		else{
-			//delete item from ROI
-			int index = negExampleList.getSelectedIndex();
-			negativeExamples.remove(index);
-			//delete item from list
-			negExampleList.remove(index);
+		
+		for(int i = 0; i < numOfClasses; i++)
+		{
+		
+			if (e.getSource() == exampleList[i]) {
+				//delete item from ROI
+				int index = exampleList[i].getSelectedIndex();
+				examples[i].remove(index);
+				//delete item from list
+				exampleList[i].remove(index);
+			}
 		}
 		
 		if (!showColorOverlay)
@@ -688,7 +732,7 @@ public class Trainable_Segmentation implements PlugIn {
 		IJ.log("loaded data: " + loadedTrainingData.numInstances());
 	}
 	public void saveTrainingData(){
-		if (positiveExamples.size() == 0 & negativeExamples.size() == 0 & loadedTrainingData == null){
+		if (examples[0].size() == 0 & examples[1].size() == 0 & loadedTrainingData == null){
 			IJ.showMessage("There is no data to save");
 			return;
 		}
