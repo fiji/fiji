@@ -163,6 +163,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/IsoData_Classifier.jar \
 	plugins/RATS_.jar \
 	plugins/Directionality_.jar \
+	plugins/Algorithm_Launcher.jar \
   \
 	jars/Fiji.jar
 
@@ -245,6 +246,11 @@ CLASSPATH(plugins/register_virtual_stack_slices.jar)=plugins/TrakEM2_.jar:jars/m
 CLASSPATH(plugins/Siox_Segmentation.jar)=jars/fiji-lib.jar
 
 CLASSPATH(plugins/Directionality_.jar)=jars/jfreechart-1.0.9.jar
+
+CLASSPATH(plugins/Algorithm_Launcher.jar)=jars/imglib.jar
+plugins/Algorithm_Launcher.jar <- \
+	src-plugins/Algorithm_Launcher/**/*.java \
+	src-plugins/Algorithm_Launcher/**/*.config
 
 CLASSPATH(plugins/LSM_Toolbox.jar)=plugins/LSM_Reader.jar
 MAINCLASS(plugins/LSM_Toolbox.jar)=org.imagearchive.lsm.toolbox.gui.AboutDialog
