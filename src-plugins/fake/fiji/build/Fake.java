@@ -157,7 +157,7 @@ public class Fake {
 		 * include all plugin's jars...
 		 */
 		// expandGlob(fijiHome + "plugins/**/*.jar", jars, cwd);
-		expandGlob(fijiHome + "jars/**/*.jar", jars, cwd);
+		expandGlob(fijiHome + "jars/**/*.jar", jars, cwd, 0, null);
 		if (getPlatform().startsWith("win")) {
 			String[] paths =
 				split(System.getProperty("java.ext.dirs"),
@@ -166,7 +166,7 @@ public class Fake {
 				if (!new File(paths[i]).exists())
 					continue;
 				expandGlob(paths[i].replace('\\', '/')
-						+ "/*.jar", jars, cwd);
+						+ "/*.jar", jars, cwd, 0, null);
 			}
 		}
 
@@ -248,6 +248,7 @@ public class Fake {
 		protected Set allPrerequisites = new HashSet();
 		protected Set allPlatforms;
 		protected Rule allRule;
+		protected String buildDir;
 
 		public Parser() throws FakeException {
 			this(null, null);
@@ -483,7 +484,8 @@ public class Fake {
 
 			while (tokenizer.hasMoreTokens()) {
 				String token = tokenizer.nextToken();
-				if (expandGlob(token, list, cwd) == 0)
+				if (expandGlob(token, list, cwd, 0, buildDir)
+						== 0)
 					throw new FakeException("Glob did not "
 						+ "match any file: '"
 						+ token + "'");
@@ -656,7 +658,8 @@ public class Fake {
 							' '), separator);
 				while (tokenizer.hasMoreTokens()) {
 					String token = tokenizer.nextToken();
-					if (expandGlob(token, files, cwd) < 1)
+					if (expandGlob(token, files, cwd, 0,
+								buildDir) < 1)
 						err.println("Warning: "
 							+ "no match for "
 							+ token);
@@ -673,6 +676,8 @@ public class Fake {
 			name = name.toUpperCase() + (paren < 0 ?
 				"" : key.substring(paren));
 			variables.put(name, value);
+			if (name.equals("BUILDDIR"))
+				buildDir = value;
 		}
 
 		public String expandVariables(String value) {
@@ -1096,7 +1101,7 @@ public class Fake {
 			}
 
 			List compileJavas(List javas, File buildDir,
-					Set excludeJavas)
+					Set exclude, Set noCompile)
 					throws FakeException {
 				toolsPath = getVar("TOOLSPATH");
 				return Fake.this.compileJavas(javas, cwd, buildDir,
@@ -1104,7 +1109,8 @@ public class Fake {
 					getVarBool("DEBUG"),
 					getVarBool("VERBOSE"),
 					getVarBool("SHOWDEPRECATION"),
-					getVar("CLASSPATH"), excludeJavas);
+					getVar("CLASSPATH"),
+					exclude, noCompile);
 			}
 
 			String getPluginsConfig() {
@@ -1382,11 +1388,14 @@ public class Fake {
 					maybeMake((Rule)allRules.get(paths[i]));
 
 				File buildDir = getBuildDir();
-				Set exclude = expandToSet(getVar("NO_COMPILE"),
-					cwd);
-				compileJavas(prerequisites, buildDir, exclude);
+				Set noCompile =
+					expandToSet(getVar("NO_COMPILE"), cwd);
+				Set exclude =
+					expandToSet(getVar("EXCLUDE"), cwd);
+				compileJavas(prerequisites, buildDir, exclude,
+					noCompile);
 				List files = java2classFiles(prerequisites,
-						cwd, buildDir, exclude);
+					cwd, buildDir, exclude, noCompile);
 				if (getVarBool("includeSource"))
 					addSources(files);
 				makeJar(target, getMainClass(), files, cwd,
@@ -1469,10 +1478,12 @@ public class Fake {
 
 				try {
 					Set exclude = expandToSet(
+						getVar("EXCLUDE"), cwd);
+					Set noCompile = expandToSet(
 						getVar("NO_COMPILE"), cwd);
 					iter = java2classFiles(javas,
 						cwd, getBuildDir(),
-							exclude).iterator();
+						exclude, noCompile).iterator();
 				} catch (FakeException e) {
 					err.println("Warning: could not "
 						+ "find required .class files: "
@@ -1491,7 +1502,7 @@ public class Fake {
 
 			void action() throws FakeException {
 				compileJavas(prerequisites, getBuildDir(),
-					new HashSet());
+					new HashSet(), new HashSet());
 
 				// copy class files, if necessary
 				int slash = target.lastIndexOf('/') + 1;
@@ -1505,7 +1516,7 @@ public class Fake {
 					cwd);
 				Iterator iter = java2classFiles(prerequisites,
 					cwd, getBuildDir(),
-					exclude).iterator();
+					exclude, new HashSet()).iterator();
 				while (iter.hasNext()) {
 					String source = (String)iter.next();
 					if (!source.startsWith(prefix))
@@ -1814,13 +1825,8 @@ public class Fake {
 		}
 	}
 
-	protected int expandGlob(String glob, Collection list, File cwd)
-			throws FakeException {
-		return expandGlob(glob, list, cwd, 0);
-	}
-
 	protected int expandGlob(String glob, Collection list, File cwd,
-			long newerThan) throws FakeException {
+			long newerThan, String buildDir) throws FakeException {
 		if (glob == null)
 			return 0;
 		// find first wildcard
@@ -1841,6 +1847,9 @@ public class Fake {
 
 		String parentPath =
 			prevSlash < 0 ? "" : glob.substring(0, prevSlash + 1);
+		if (buildDir != null && parentPath.equals(buildDir))
+			return 0;
+
 		File parentDirectory = new File(makePath(cwd, parentPath));
 		if (!parentDirectory.exists())
 			throw new FakeException("Directory '" + parentDirectory
@@ -1857,7 +1866,7 @@ public class Fake {
 
 		if (starstar) {
 			count += expandGlob(parentPath + remainder, list,
-						cwd, newerThan);
+						cwd, newerThan, buildDir);
 			remainder = "**/" + remainder;
 			pattern = "*";
 		}
@@ -1870,6 +1879,9 @@ public class Fake {
 			String path = parentPath + names[i];
 			if (starstar && names[i].startsWith("."))
 				continue;
+			if (names[i].equals(".git") || names[i].endsWith(".swp")
+					|| names[i].endsWith(".swo"))
+				continue;
 			File file = new File(makePath(cwd, path));
 			if (nextSlash < 0) {
 				if (file.isDirectory())
@@ -1879,7 +1891,7 @@ public class Fake {
 			}
 			else if (file.isDirectory())
 				count += expandGlob(path + "/" + remainder,
-						list, cwd, newerThan);
+						list, cwd, newerThan, buildDir);
 		}
 
 		return count;
@@ -1889,7 +1901,7 @@ public class Fake {
 		Set result = new HashSet();
 		String[] globs = split(glob, " ");
 		for (int i = 0; i < globs.length; i++)
-			expandGlob(globs[i], result, cwd);
+			expandGlob(globs[i], result, cwd, 0, null);
 		return result;
 	}
 
@@ -2014,7 +2026,8 @@ public class Fake {
 
 	/* discovers all the .class files for a given set of .java files */
 	protected List java2classFiles(List javas, File cwd,
-			File buildDir, Set excludeJavas) throws FakeException {
+			File buildDir, Set exclude, Set noCompile)
+			throws FakeException {
 		List result = new ArrayList();
 		Set all = new HashSet();
 		if (buildDir != null) {
@@ -2026,9 +2039,11 @@ public class Fake {
 		Iterator iter = javas.iterator();
 		while (iter.hasNext()) {
 			String file = (String)iter.next();
-			boolean exclude = excludeJavas.contains(file);
+			if (exclude.contains(file))
+				continue;
+			boolean dontCompile = noCompile.contains(file);
 			if (buildDir != null) {
-				if (!exclude && file.endsWith(".java")) {
+				if (!dontCompile && file.endsWith(".java")) {
 					lastJava = file;
 					continue;
 				}
@@ -2042,7 +2057,7 @@ public class Fake {
 					lastJava = null;
 				}
 			}
-			if (exclude) {
+			if (dontCompile) {
 				if (!all.contains(file)) {
 					result.add(file);
 					all.add(file);
@@ -2105,7 +2120,7 @@ public class Fake {
 	protected List compileJavas(List javas, File cwd, File buildDir,
 			String javaVersion, boolean debug, boolean verbose,
 			boolean showDeprecation, String extraClassPath,
-			Set exclude)
+			Set exclude, Set noCompile)
 			throws FakeException {
 		List arguments = new ArrayList();
 		arguments.add("-encoding");
@@ -2172,7 +2187,8 @@ public class Fake {
 			throw new FakeException("Compile error: " + e);
 		}
 
-		List result = java2classFiles(javas, cwd, buildDir, exclude);
+		List result = java2classFiles(javas, cwd, buildDir, exclude,
+			noCompile);
 		return result;
 	}
 
