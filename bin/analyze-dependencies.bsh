@@ -1,0 +1,21 @@
+#!/bin/sh
+/*/. 2>/dev/null; exec "$(dirname "$0")"/../fiji "$0" "$@" # exec with fiji */
+
+import fiji.updater.util.DependencyAnalyzer;
+import java.util.Iterator;
+
+if (bsh.args.length == 0) {
+	System.err.println(
+		"Usage: analyze-dependencies <file.jar> [<file2.jar> ...]");
+	System.exit(1);
+}
+DependencyAnalyzer da = new DependencyAnalyzer();
+for (String arg : bsh.args) {
+	print("[" + arg + "]");
+	Iterator iter = da.getDependencies(arg).iterator();
+	while (iter.hasNext()) {
+		String dep = iter.next();
+		print("\t" + dep);
+	}
+  print("");
+}
