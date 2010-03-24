@@ -85,14 +85,17 @@ import javax.swing.JRadioButton;
 
 
 import weka.core.Attribute;
+import weka.core.DenseInstance;
 import weka.core.FastVector;
-import weka.core.Instance;
 import weka.core.Instances;
 import hr.irb.fastRandomForest.FastRandomForest;
 
 public class Trainable_Segmentation implements PlugIn {
 	
-	private List<Roi> [] examples = new ArrayList[5]; 
+	
+	private final int MAX_NUM_CLASSES = 5;
+	
+	private List<Roi> [] examples = new ArrayList[MAX_NUM_CLASSES]; 
 	private ImagePlus trainingImage;
 	private ImagePlus displayImage;
 	private ImagePlus classifiedImage;
@@ -100,7 +103,7 @@ public class Trainable_Segmentation implements PlugIn {
 	private FeatureStack featureStack;
 	private CustomWindow win;
 	
-	private int traceCounter[] = new int[5];
+	private int traceCounter[] = new int[MAX_NUM_CLASSES];
    	private boolean showColorOverlay;
    	private Instances wholeImageData;
    	private Instances loadedTrainingData;
@@ -113,14 +116,14 @@ public class Trainable_Segmentation implements PlugIn {
   	final Button loadDataButton;
   	final Button saveDataButton;
   	
-  	final Color[] colors = new Color[]{Color.green, Color.red, Color.blue,
+  	final Color[] colors = new Color[]{Color.red, Color.green, Color.blue,
   		Color.orange, Color.pink};
   	
-  	String[] classLabels = new String[]{"foreground", "background", "class-3", "class-4", "class-5"};
+  	String[] classLabels = new String[]{"background", "foreground", "class-3", "class-4", "class-5"};
   	
   	private int numOfClasses = 2;
-  	private java.awt.List exampleList[] = new java.awt.List[5];
-  	private JRadioButton [] classButton = new JRadioButton[5];
+  	private java.awt.List exampleList[] = new java.awt.List[MAX_NUM_CLASSES];
+  	private JRadioButton [] classButton = new JRadioButton[MAX_NUM_CLASSES];
   	//Group the radio buttons.
     ButtonGroup group = new ButtonGroup();
   	
@@ -142,7 +145,7 @@ public class Trainable_Segmentation implements PlugIn {
   	      	for(int i = 0; i < numOfClasses ; i++)
   	      	{
   	      		examples[i] = new ArrayList<Roi>();
-  	      		exampleList[i] = new java.awt.List(5);
+  	      		exampleList[i] = new java.awt.List(MAX_NUM_CLASSES);
   	      		exampleList[i].setForeground(colors[i]);
   	      	}
   	      	
@@ -224,9 +227,6 @@ public class Trainable_Segmentation implements PlugIn {
 						if(e.getSource() == exampleList[i])
 							listSelected(e, i);
 					}
-  		  			//if(e.getSource() == posExampleList || e.getSource() == negExampleList){
-  		  			//	listSelected(e);
-  		  			//}
 				}
 			});
 		}
@@ -397,19 +397,19 @@ public class Trainable_Segmentation implements PlugIn {
 	
 	private void addExamples(int i)
 	{
-		IJ.log("add examples in list "+ i + " (numOfClasses = " + numOfClasses + ")");
+		//IJ.log("add examples in list "+ i + " (numOfClasses = " + numOfClasses + ")");
 		//get selected pixels
 		Roi r = displayImage.getRoi();
 		if (null == r){
-			IJ.log("no ROI");
+			//IJ.log("no ROI");
 			return;
 		}
 		
-		IJ.log("Before killRoi r = " + r + " examples[i].size + " + examples[i].size());
+		//IJ.log("Before killRoi r = " + r + " examples[i].size + " + examples[i].size());
 		
 		displayImage.killRoi();
 		examples[i].add(r);
-		IJ.log("added ROI " + r + " to list " + i);
+		//IJ.log("added ROI " + r + " to list " + i);
 		exampleList[i].add("trace " + traceCounter[i]); 
 		traceCounter[i]++;
 		drawExamples();
@@ -499,10 +499,10 @@ public class Trainable_Segmentation implements PlugIn {
 			for(int j=0; j<examples[l].size(); j++)
 			{
 				Roi r = examples[l].get(j);
-				//need to take care of shapeRois that are represented as multiple poygons
+				//need to take care of shapeRois that are represented as multiple polygons
 				Roi[] rois;
 				if (r instanceof ij.gui.ShapeRoi){
-					IJ.log("shape roi detected");
+					//IJ.log("shape roi detected");
 					rois = ((ShapeRoi) r).getRois();
 				}
 				else{
@@ -521,7 +521,7 @@ public class Trainable_Segmentation implements PlugIn {
 							values[z-1] = featureStack.getProcessor(z).getPixelValue(x[i], y[i]);
 						}
 						values[featureStack.getSize()] = (double) l;
-						trainingData.add(new Instance(1.0, values));
+						trainingData.add(new DenseInstance(1.0, values));
 					}
 				}
 		}

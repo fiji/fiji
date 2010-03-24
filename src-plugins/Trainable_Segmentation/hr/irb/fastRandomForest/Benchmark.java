@@ -29,6 +29,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
+
+import weka.classifiers.AbstractClassifier;
 import weka.classifiers.Classifier;
 import weka.classifiers.Evaluation;
 import weka.core.Instances;
@@ -74,7 +76,7 @@ public class Benchmark {
     }
 
     // create classifiers to compare and set their parameters
-    Classifier[] classifiers = new Classifier[ 1 + threadNums.size() ];
+    AbstractClassifier[] classifiers = new AbstractClassifier[ 1 + threadNums.size() ];
     classifiers[0] = new weka.classifiers.trees.RandomForest();
     classifiers[0].setOptions(new String[]{"-I", args[1] /* "1" */ });
 

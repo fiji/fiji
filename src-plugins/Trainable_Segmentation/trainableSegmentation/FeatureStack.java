@@ -35,10 +35,10 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
 
 import weka.core.Attribute;
-import weka.core.FastVector;
-import weka.core.Instance;
+import weka.core.DenseInstance;
 import weka.core.Instances;
 import ij.IJ;
 import ij.ImageStack;
@@ -281,15 +281,15 @@ public class FeatureStack {
 	}
 	
 	public Instances createInstances(){
-		FastVector attributes = new FastVector();
+		ArrayList<Attribute> attributes = new ArrayList<Attribute>();
 		for (int i=1; i<=wholeStack.getSize(); i++){
 			String attString = wholeStack.getSliceLabel(i) + " numeric";
-			attributes.addElement(new Attribute(attString));
+			attributes.add(new Attribute(attString));
 		}
-		FastVector classes = new FastVector();
-		classes.addElement("foreground");
-		classes.addElement("background");
-		attributes.addElement(new Attribute("class", classes));
+		ArrayList<String> classes = new ArrayList<String>();
+		classes.add("foreground");
+		classes.add("background");
+		attributes.add(new Attribute("class", classes));
 		
 		Instances data =  new Instances("segment", attributes, width*height);
 		
@@ -306,7 +306,7 @@ public class FeatureStack {
 					//System.out.println("" + wholeStack.getProcessor(z).getPixelValue(x, y) + " * " + values[z-1]);
 				}
 				values[wholeStack.getSize()] = 0.0;
-				data.add(new Instance(1.0, values));
+				data.add(new DenseInstance(1.0, values));
 			}
 		}
 		
