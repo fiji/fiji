@@ -1,4 +1,3 @@
-# TODO: micromanager
 
 # This is a configuration file for Fiji mAKE ("fake")
 #
@@ -163,8 +162,8 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/IsoData_Classifier.jar \
 	plugins/RATS_.jar \
 	plugins/Directionality_.jar \
-  \
-	jars/Fiji.jar
+	jars/Fiji.jar \
+	plugins/Image_Expression_Parser.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS third-party-plugins jars/zs.jar
 
@@ -190,11 +189,13 @@ jdk[bin/checkout-jdk.py $JDK] <-
 jars/ij.jar <- jars/javac.jar ImageJA/
 CLASSPATH(plugins/VIB_.jar)=jars/VIB-lib.jar
 plugins/VIB_.jar <- VIB/
-CLASSPATH(jars/VIB-lib.jar)=plugins/level_sets.jar
+CLASSPATH(jars/VIB-lib.jar)=jars/Jama-1.0.2.jar:jars/imglib.jar:jars/junit-4.5.jar:plugins/level_sets.jar
 jars/VIB-lib.jar <- VIB/
 CLASSPATH(plugins/mpicbg_.jar)=jars/mpicbg.jar
 plugins/mpicbg_.jar <- mpicbg/
 jars/mpicbg.jar <- mpicbg/
+CLASSPATH(jars/imglib.jar)=jars/mpicbg.jar
+jars/imglib.jar <- imglib/
 jars/clojure.jar <- clojure/
 jars/clojure-contrib.jar <- jars/clojure.jar clojure-contrib/
 plugins/loci_tools.jar <- bio-formats/
@@ -210,7 +211,6 @@ jars/rsyntaxtextarea.jar <- RSyntaxTextArea/
 jars/autocomplete.jar <- AutoComplete/
 jars/weka.jar <- weka/
 jars/jython.jar <- jython/
-jars/imglib.jar <- imglib/
 
 # From source
 javaVersion(jars/Fiji.jar)=1.5
@@ -224,6 +224,7 @@ jars/zs.jar <- src-plugins/zs/**/*.java
 jars/Jama-1.0.2.jar <- src-plugins/Jama-1.0.2/**/*.java
 
 jars/fiji-lib.jar <- src-plugins/fiji-lib/**/*.java
+jars/jep.jar <- src-plugins/jep/**/*.java
 
 # These classes are common to the scripting plugins
 jars/fiji-scripting.jar <- src-plugins/fiji-scripting/**/*.java
@@ -245,6 +246,8 @@ plugins/Bug_Submitter.jar <- src-plugins/Bug_Submitter/*.java
 CLASSPATH(plugins/register_virtual_stack_slices.jar)=plugins/TrakEM2_.jar:jars/mpicbg.jar:plugins/bUnwarpJ_.jar:plugins/Fiji_Plugins.jar
 
 CLASSPATH(plugins/Siox_Segmentation.jar)=jars/fiji-lib.jar:plugins/Fiji_Plugins.jar
+
+CLASSPATH(plugins/Image_Expression_Parser.jar)=jars/jep.jar:jars/imglib.jar:plugins/mpicbg_.jar
 
 CLASSPATH(plugins/Directionality_.jar)=jars/jfreechart-1.0.9.jar
 

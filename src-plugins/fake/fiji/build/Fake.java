@@ -2262,7 +2262,8 @@ public class Fake {
 						verbose);
 					continue;
 				}
-				if (realName.endsWith("/")) {
+				if (realName.endsWith("/") ||
+						realName.equals("")) {
 					lastBase = realName;
 					continue;
 				}
