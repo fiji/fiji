@@ -1,3 +1,5 @@
+javaVersion=1.5
+
 buildDir=build/
 all <- imglib.jar
 
