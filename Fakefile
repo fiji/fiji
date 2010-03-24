@@ -187,13 +187,15 @@ jdk[bin/checkout-jdk.py $JDK] <-
 
 # From submodules
 jars/ij.jar <- jars/javac.jar ImageJA/
-CLASSPATH(plugins/VIB_.jar)=jars/VIB-lib.jar
+CLASSPATH(plugins/VIB_.jar)=jars/VIB-lib.jar:jars/imglib.jar
 plugins/VIB_.jar <- VIB/
-CLASSPATH(jars/VIB-lib.jar)=plugins/level_sets.jar
+CLASSPATH(jars/VIB-lib.jar)=jars/Jama-1.0.2.jar:jars/imglib.jar:jars/junit-4.5.jar:plugins/level_sets.jar
 jars/VIB-lib.jar <- VIB/
 CLASSPATH(plugins/mpicbg_.jar)=jars/mpicbg.jar
 plugins/mpicbg_.jar <- mpicbg/
 jars/mpicbg.jar <- mpicbg/
+CLASSPATH(jars/imglib.jar)=jars/mpicbg.jar
+jars/imglib.jar <- imglib/
 jars/clojure.jar <- clojure/
 jars/clojure-contrib.jar <- jars/clojure.jar clojure-contrib/
 plugins/loci_tools.jar <- bio-formats/
@@ -209,7 +211,6 @@ jars/rsyntaxtextarea.jar <- RSyntaxTextArea/
 jars/autocomplete.jar <- AutoComplete/
 jars/weka.jar <- weka/
 jars/jython.jar <- jython/
-jars/imglib.jar <- imglib/
 
 # From source
 javaVersion(jars/Fiji.jar)=1.5
