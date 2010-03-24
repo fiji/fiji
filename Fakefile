@@ -187,7 +187,7 @@ jdk[bin/checkout-jdk.py $JDK] <-
 
 # From submodules
 jars/ij.jar <- jars/javac.jar ImageJA/
-CLASSPATH(plugins/VIB_.jar)=jars/VIB-lib.jar:jars/imglib.jar
+CLASSPATH(plugins/VIB_.jar)=jars/VIB-lib.jar
 plugins/VIB_.jar <- VIB/
 CLASSPATH(jars/VIB-lib.jar)=jars/Jama-1.0.2.jar:jars/imglib.jar:jars/junit-4.5.jar:plugins/level_sets.jar
 jars/VIB-lib.jar <- VIB/
