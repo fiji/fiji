@@ -37,8 +37,6 @@ public class InteractiveBehavior extends Behavior {
 	private WakeupOnAWTEvent[] mouseEvents;
 	private WakeupCondition wakeupCriterion;
 
-	private int toolID;
-
 	private ContentTransformer contentTransformer;
 	private Picker picker;
 	private InteractiveViewPlatformTransformer viewTransformer;
@@ -88,17 +86,9 @@ public class InteractiveBehavior extends Behavior {
 	 * @see Behavior#processStimulus(Enumeration) Behavior.processStimulus
 	 */
 	public void processStimulus(Enumeration criteria) {
-		toolID = Toolbar.getToolId();
-		if(toolID != Toolbar.HAND && toolID != Toolbar.MAGNIFIER &&
-				toolID != Toolbar.POINT) {
-			wakeupOn (wakeupCriterion);
-			return;
-		}
-		WakeupOnAWTEvent wakeup;
-		AWTEvent[] events;
 		while(criteria.hasMoreElements()) {
-			wakeup = (WakeupOnAWTEvent)criteria.nextElement();
-			events = (AWTEvent[])wakeup.getAWTEvent();
+			WakeupOnAWTEvent wakeup = (WakeupOnAWTEvent)criteria.nextElement();
+			AWTEvent[] events = (AWTEvent[])wakeup.getAWTEvent();
 			for(AWTEvent evt : events) {
 				if(evt instanceof MouseEvent)
 					doProcess((MouseEvent)evt);
@@ -147,6 +137,7 @@ public class InteractiveBehavior extends Behavior {
 	 * @param e
 	 */
 	protected void doProcess(KeyEvent e) {
+		int toolID = Toolbar.getToolId();
 		int id = e.getID();
 
 		if(id == KeyEvent.KEY_RELEASED || id == KeyEvent.KEY_TYPED)
@@ -257,6 +248,7 @@ public class InteractiveBehavior extends Behavior {
 	 * @param e
 	 */
 	protected void doProcess(MouseEvent e) {
+		int toolID = Toolbar.getToolId();
 		int id = e.getID();
 		int mask = e.getModifiersEx();
 		Content c = univ.getSelected();
