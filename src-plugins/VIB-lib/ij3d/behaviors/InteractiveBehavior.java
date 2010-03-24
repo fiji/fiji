@@ -269,7 +269,7 @@ public class InteractiveBehavior extends Behavior {
 				if(c != null && !c.isLocked()) contentTransformer.translate(e);
 				else viewTransformer.translate(e);
 			} else if(shouldRotate(mask, toolID)) {
-				if(c != null && !c.isLocked()) contentTransformer.rotate(e);
+				if(c != null && !c.isLocked() && (MouseEvent.BUTTON1_DOWN_MASK == (mask & MouseEvent.BUTTON1_DOWN_MASK))) contentTransformer.rotate(e);
 				else viewTransformer.rotate(e);
 			} else if(shouldZoom(mask, toolID))
 				viewTransformer.zoom(e);
