@@ -7,6 +7,7 @@ import ij.gui.*;
 import ij.process.*;
 import ij.text.*;
 import ij.plugin.PlugIn;
+import ij.plugin.ContrastEnhancer;
 import java.text.DecimalFormat;
 import ij.measure.*;
 import ij.util.*;
@@ -598,14 +599,21 @@ public class Colocalisation_Threshold implements PlugIn {
 
 		ch1threshmax =Math.round((ch1BestThresh));
 		ch2threshmax =Math.round(((double)ch1BestThresh*(double)m)+(double)b);
-		int colocInt=255;
 
 		Nzero=0;
+
+		imp1.setSlice(i);
+		imp2.setSlice(i);
+
+		ipColoc = createColocalizedPixelsImage(img1, img2, ipMask,  ch1threshmax, ch2threshmax);
+		//IJ.showMessage(stackColoc.getWidth()+ "  -  " + ipColoc.getWidth());
+		stackColoc.addSlice("Correlation Plot", ipColoc);
+
+		// N=Ncoloc;
+
 		int sumColocCh1=0;
 		int sumColocCh2=0;
 		int Ncoloc=0;
-		imp1.setSlice(i);
-		imp2.setSlice(i);
 		sumXYm=0;
 		sumCh1gtT=0;
 		sumCh2gtT=0;
@@ -626,14 +634,11 @@ public class Colocalisation_Threshold implements PlugIn {
 		N2 = 0;
 		N=0;
 		Ncoloc=0;
-
-		int [] color  = new int [3];
 		for (int s=1;s<=nslices; s++) {
-			IJ.showStatus("3/3: Performing final regression. Slice = "+s +" Press 'Esc' to abort");
+			IJ.showStatus("3/3: Calculating statistics. Slice = "+s +" Press 'Esc' to abort");
 			ip1 = img1.getProcessor(s);
 			ip2 = img2.getProcessor(s);
 			//ipMask = imgMask.getProcessor(s);
-			ipColoc = new ColorProcessor(rwidth,rheight);
 			for (int y=0; y<rheight; y++) {
 				for (int x=0; x<rwidth; x++) {
 					mask=1;
@@ -641,12 +646,6 @@ public class Colocalisation_Threshold implements PlugIn {
 					if (mask!=0) {
 						ch1 = (int)ip1.getPixel(x+xOffset,y+yOffset);
 						ch2 = (int)ip2.getPixel(x+xOffset,y+yOffset);
-
-						color[colIndex1 ]=(int)ch1;
-						color[colIndex2 ]=(int)ch2;
-						color[colIndex3 ]=(int)0;
-
-						ipColoc.putPixel(x,y,color );
 
 						sumCh1total=sumCh1total+ch1;
 						sumCh2total=sumCh2total+ch2;
@@ -681,17 +680,6 @@ public class Colocalisation_Threshold implements PlugIn {
 							sumColocCh1 = sumColocCh1+ch1;
 							sumColocCh2 = sumColocCh2+ch2;
 							Ncoloc++;
-							colocInt=255;
-							if (!colocValConst) {
-								colocInt = (int)Math.sqrt(ch1*ch2);
-							}
-							color[colIndex1 ]=(int)colocInt;
-							color[colIndex2 ]=(int)colocInt;
-							//color[colIndex1 ]=(int)0;
-							//color[colIndex2 ]=(int)0;
-							color[colIndex3 ]=(int)colocInt;
-
-							ipColoc.putPixel(x,y,color );
 
 							//calc pearsons
 							sumX = sumX+ch1;
@@ -703,13 +691,8 @@ public class Colocalisation_Threshold implements PlugIn {
 					}
 				}
 			}
-			//IJ.showMessage(stackColoc.getWidth()+ "  -  " + ipColoc.getWidth());
-			stackColoc.addSlice("Correlation Plot", ipColoc);
 		}
 
-		// N=Ncoloc;
-
-		//IJ.showMessage("Totoal"+N+"   N0:"+Nzero+" Nc :"+ Ncoloc);
 		pearsons1 = sumXY - (sumX*sumY/N);
 		pearsons2 = sumXX - (sumX*sumX/N);
 		pearsons3 = sumYY - (sumY*sumY/N);
@@ -747,6 +730,7 @@ public class Colocalisation_Threshold implements PlugIn {
 		//Imaris percentage material
 		double percMatCh1 = (double) sumColocCh1/(double)sumCh1gtT;
 		double percMatCh2 =  (double)sumColocCh2/(double)sumCh2gtT;
+		//IJ.showMessage("Totoal"+N+"   N0:"+Nzero+" Nc :"+ Ncoloc);
 
 		sb.append(fileName+"\n");
 
@@ -858,7 +842,47 @@ public class Colocalisation_Threshold implements PlugIn {
 
 	}
 
+	private ColorProcessor createColocalizedPixelsImage(ImageStack img1, ImageStack img2, ImageProcessor ipMask, double ch1threshmax, double ch2threshmax) {
+		int mask=0;
+		int colocInt=255;
+		int [] color  = new int [3];
+		ColorProcessor ipColoc
+			= new ColorProcessor(rwidth,rheight);
+		for (int s=1;s<=nslices; s++) {
+			IJ.showStatus("3/3: Creating colocalized pixels image. Slice = "+s +" Press 'Esc' to abort");
+			ip1 = img1.getProcessor(s);
+			ip2 = img2.getProcessor(s);
+			//ipMask = imgMask.getProcessor(s);
+			ipColoc = new ColorProcessor(rwidth,rheight);
+			for (int y=0; y<rheight; y++) {
+				for (int x=0; x<rwidth; x++) {
+					mask=1;
+					if (useRoi) mask = (int)ipMask.getPixelValue(x,y);
+					if (mask!=0) {
+						ch1 = (int)ip1.getPixel(x+xOffset,y+yOffset);
+						ch2 = (int)ip2.getPixel(x+xOffset,y+yOffset);
 
+						color[colIndex1 ]=(int)ch1;
+						color[colIndex2 ]=(int)ch2;
+						color[colIndex3 ]=(int)0;
 
+						ipColoc.putPixel(x,y,color );
 
+						if (((double)ch1>ch1threshmax)&&((double)ch2>ch2threshmax)) {
+							colocInt=255;
+							if (!colocValConst) {
+								colocInt = (int)Math.sqrt(ch1*ch2);
+							}
+							color[colIndex1 ]=(int)colocInt;
+							color[colIndex2 ]=(int)colocInt;
+							color[colIndex3 ]=(int)colocInt;
+
+							ipColoc.putPixel(x,y,color );
+						}
+					}
+				}
+			}
+		}
+		return ipColoc;
+	}
 }
