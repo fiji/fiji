@@ -1,6 +1,8 @@
 #!/bin/sh
 
-cd "$(dirname "$0")/.."
+FIJIROOT="$(dirname "$0")/.."
+FIJI="$FIJIROOT"/fiji
+RETRO="$FIJIROOT"/retro/retrotranslator-transformer-1.2.7.jar
 
 die () {
 	echo "$*" >&2
@@ -9,7 +11,7 @@ die () {
 
 case $# in
 0)
-	OFFENDERS=$(./fiji tests/class_versions.py  |
+	OFFENDERS=$(cd "$FIJIROOT" && ./fiji tests/class_versions.py |
 		sed -n -e 's/(.*//' -e 's/^\t//p' |
 		uniq)
 	;;
@@ -18,21 +20,20 @@ case $# in
 	;;
 esac
 
+TMPDIR="$(mktemp -d)"
 for f in $OFFENDERS
 do
 	echo "Fixing $f..."
-	case $f in
+	case "$f" in
 	*.jar)
-		./fiji --jar retro/retrotranslator-transformer-1.2.7.jar \
-			-srcjar $f -destjar $f.new -target 1.5 &&
-		mv $f.new $f
+		"$FIJI" --jar "$RETRO" \
+			-srcjar "$f" -destjar "$f".new -target 1.5 &&
+		mv -f "$f".new "$f"
 		;;
 	*.class)
-		TMPDIR=$(mktemp -d) &&
-		mv $f $TMPDIR &&
-		./fiji --jar retro/retrotranslator-transformer-1.2.7.jar \
-			-srcdir $TMPDIR -destdir $(dirname $f) -target 1.5 &&
-		rm -r $TMPDIR
+		mv "$f" "$TMPDIR" &&
+		"$FIJI" --jar "$RETRO" \
+			-srcdir "$TMPDIR" -destdir $(dirname "$f") -target 1.5
 		;;
 	*)
 		die "Unknown type: $f"
@@ -40,3 +41,4 @@ do
 	esac ||
 	die "Could not transform $f"
 done
+rm -rf "$TMPDIR"
