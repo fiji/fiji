@@ -1,0 +1,43 @@
+<body>
+<p>
+Classes to perform differentiation of equations and various utility classes.
+The main class is 
+{@link org.lsmp.djep.djep.DifferentiationVisitor DifferentiationVisitor}
+which performs the differentation by repeated applications
+of the chain, product and quotient rules.
+Typically the result of differentation should be simplified
+to remove occurences of redundant expressions (for example
+<tt>diff(x^2.0,x)</tt> is <tt>2.0*x^1.0*1.0</tt> which is simplified to <tt>2.0*x</tt>).
+</p>
+<p>
+For each function, a rule is used to specify how to differentiate it.
+For example, the differative of <tt>sin</tt> is specified using
+<pre>addDiffRule(new MacroDiffRules(Jep,"sin","cos(x)"))</pre>
+There are various classes of differentiation rules which
+all implement {@link org.lsmp.djep.djep.DiffRulesI DiffRulesI} and have special behaviours.
+</p>
+<p>
+Variables can also be differentiated, and the derivative of
+<tt>y</tt> with respect to <tt>x</tt> will be represented 
+by the {@link org.lsmp.djep.djep.PartialDerivative PartialDerivative} <tt>dy/dx</tt>.
+To allow this, the {@link org.lsmp.djep.djep.DVariable DVariable} is used to represent 
+variable and
+{@link org.lsmp.djep.djep.DSymbolTable DSymbolTable} and 
+{@link org.lsmp.djep.djep.DVariableFactory DVariableFactory} are used to control
+the look up of variables and the creation of new variables.
+</p>
+
+<table BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+<tr BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<td COLSPAN=2><font SIZE="+2">
+<b>Sub-packages</b></font></td>
+</tr>
+<tr BGCOLOR="white" CLASS="TableRowColor">
+<td WIDTH="15%"><b><a HREF="diffRules/package-summary.html">org.lsmp.djep.djep.diffRules</a></b></td>
+<td>Classes defining how to perform differentation of given functions.
+ </td>
+</tr>
+</table>
+@see <a href="../../../../../html/extensions/djep.html">DJep documentation</a>
+
+</body>

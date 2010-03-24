@@ -1,4 +1,3 @@
-# TODO: micromanager
 
 # This is a configuration file for Fiji mAKE ("fake")
 #
@@ -163,8 +162,8 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/IsoData_Classifier.jar \
 	plugins/RATS_.jar \
 	plugins/Directionality_.jar \
-  \
-	jars/Fiji.jar
+	jars/Fiji.jar \
+	plugins/Image_Expression_Parser.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS third-party-plugins jars/zs.jar
 
@@ -224,6 +223,7 @@ jars/zs.jar <- src-plugins/zs/**/*.java
 jars/Jama-1.0.2.jar <- src-plugins/Jama-1.0.2/**/*.java
 
 jars/fiji-lib.jar <- src-plugins/fiji-lib/**/*.java
+jars/jep.jar <- src-plugins/jep/**/*.java
 
 # These classes are common to the scripting plugins
 jars/fiji-scripting.jar <- src-plugins/fiji-scripting/**/*.java
@@ -245,6 +245,8 @@ plugins/Bug_Submitter.jar <- src-plugins/Bug_Submitter/*.java
 CLASSPATH(plugins/register_virtual_stack_slices.jar)=plugins/TrakEM2_.jar:jars/mpicbg.jar:plugins/bUnwarpJ_.jar:plugins/Fiji_Plugins.jar
 
 CLASSPATH(plugins/Siox_Segmentation.jar)=jars/fiji-lib.jar:plugins/Fiji_Plugins.jar
+
+CLASSPATH(plugins/Image_Expression_Parser.jar)=jars/jep.jar:jars/imglib.jar:plugins/mpicbg_.jar
 
 CLASSPATH(plugins/Directionality_.jar)=jars/jfreechart-1.0.9.jar
 
