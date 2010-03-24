@@ -280,15 +280,21 @@ public class FeatureStack {
 		return wholeStack.getProcessor(index);
 	}
 	
-	public Instances createInstances(){
+	/**
+	 * Create the instances for the whole stack
+	 * 
+	 * @param classes list of classes names
+	 * 
+	 * @return whole stack set of instances
+	 */
+	public Instances createInstances(ArrayList<String> classes)
+	{
 		ArrayList<Attribute> attributes = new ArrayList<Attribute>();
 		for (int i=1; i<=wholeStack.getSize(); i++){
 			String attString = wholeStack.getSliceLabel(i) + " numeric";
 			attributes.add(new Attribute(attString));
 		}
-		ArrayList<String> classes = new ArrayList<String>();
-		classes.add("foreground");
-		classes.add("background");
+		
 		attributes.add(new Attribute("class", classes));
 		
 		Instances data =  new Instances("segment", attributes, width*height);
