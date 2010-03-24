@@ -45,6 +45,7 @@ import ij.plugin.RGBStackMerge;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
+import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import ij.gui.Roi;
 import ij.gui.ShapeRoi;
@@ -59,9 +60,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.awt.Panel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -78,9 +79,11 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 
+import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.SwingUtilities;
@@ -137,17 +140,32 @@ public class Trainable_Segmentation implements PlugIn {
 	public Trainable_Segmentation() 
 	{
 		addExampleButton = new JButton("+");
+		addExampleButton.setToolTipText("Add current ROI to selected label");
+		
 		trainButton = new JButton("Train classifier");
+		trainButton.setToolTipText("Start training the classifier");
+		
 		overlayButton = new JButton("Toggle overlay");
+		overlayButton.setToolTipText("Toggle between current segmentation and original image");		
 		overlayButton.setEnabled(false);
+		
 		resultButton = new JButton("Create result");
+		resultButton.setToolTipText("Generate result image");
 		resultButton.setEnabled(false);
+		
+		
 		applyButton = new JButton ("Apply classifier");
+		applyButton.setToolTipText("Load data and apply current classifier");
 		applyButton.setEnabled(false);
+		
 		loadDataButton = new JButton ("Load data");
+		loadDataButton.setToolTipText("Load previous segmentation from an ARFF file");
+		
 		saveDataButton = new JButton ("Save data");
+		saveDataButton.setToolTipText("Save current segmentation into an ARFF file");
 
-		addClassButton = new JButton ("Add class");
+		addClassButton = new JButton ("Add new label");
+		addClassButton.setToolTipText("Add one more label to mark different areas");
 
 
 		for(int i = 0; i < numOfClasses ; i++)
@@ -165,7 +183,7 @@ public class Trainable_Segmentation implements PlugIn {
 		//this is the default that Breiman suggests
 		//rf.setNumFeatures((int) Math.round(Math.sqrt(featureStack.getSize())));
 		//but this seems to work better
-		rf.setNumFeatures(6);
+		rf.setNumFeatures(2);
 
 
 		rf.setSeed(123);
@@ -184,7 +202,7 @@ public class Trainable_Segmentation implements PlugIn {
 
 					if(e.getSource() == addExampleButton)
 					{
-						IJ.log("+ pressed");
+						//IJ.log("+ pressed");
 						for(int i = 0; i < numOfClasses; i++)
 						{
 							if(classButton[i].isSelected())
@@ -251,18 +269,18 @@ public class Trainable_Segmentation implements PlugIn {
 	 */
 	private class CustomWindow extends ImageWindow 
 	{
+		JPanel piw = new JPanel();
 		/** layout for annotation panel */
 		GridBagLayout boxAnnotation = new GridBagLayout();
 		/** constraints for annotation panel */
 		GridBagConstraints annotationsConstraints = new GridBagConstraints();
 		/** Panel with class radio buttons and lists */
-		Panel annotationsPanel = new Panel();
+		JPanel annotationsPanel = new JPanel();
 		
-		Panel imageAndLists = new Panel();
+		JPanel buttons = new JPanel();
 		
-		Panel buttons = new Panel();
-		
-		JPanel trainingJPanel=new JPanel(new GridBagLayout());
+		JPanel trainingJPanel = new JPanel();
+		JPanel optionsJPanel = new JPanel();		
 		
 		Panel all = new Panel();
 		
@@ -270,15 +288,17 @@ public class Trainable_Segmentation implements PlugIn {
 		{
 			super(imp);
 
-			Panel piw = new Panel();
-			piw.setLayout(super.getLayout());
+			
 			setTitle("Trainable Segmentation");
-			for (Component c : getComponents()) {
+			
+			
+			Component[] cs = getComponents();
+			removeAll();
+			for (Component c : cs) {
 				piw.add(c);
 			}
+			
 
-			
-			
 			annotationsConstraints.anchor = GridBagConstraints.NORTHWEST;
 			annotationsConstraints.fill = GridBagConstraints.NONE;
 			annotationsConstraints.gridwidth = 1;
@@ -286,11 +306,14 @@ public class Trainable_Segmentation implements PlugIn {
 			annotationsConstraints.gridx = 0;
 			annotationsConstraints.gridy = 0;
 
+			annotationsPanel.setBorder(BorderFactory.createTitledBorder("Labels"));
 			annotationsPanel.setLayout(boxAnnotation);
+			
 			for(int i = 0; i < numOfClasses ; i++)
 			{
 				exampleList[i].addActionListener(listener);
 				classButton[i] = new JRadioButton(classLabels[i]);
+				classButton[i].setToolTipText("Select to add markings of label '" + classLabels[i] + "'");
 				classButtonGroup.add(classButton[i]);
 
 				boxAnnotation.setConstraints(classButton[i], annotationsConstraints);
@@ -304,13 +327,6 @@ public class Trainable_Segmentation implements PlugIn {
 
 			// Select first class
 			classButton[1].setSelected(true);
-
-			BoxLayout boxImgList = new BoxLayout(imageAndLists, BoxLayout.X_AXIS);
-			
-			imageAndLists.setLayout(boxImgList);
-			imageAndLists.add(piw);
-			imageAndLists.add(annotationsPanel);
-
 			
 			BoxLayout buttonLayout = new BoxLayout(buttons, BoxLayout.Y_AXIS);
 			buttons.setLayout(buttonLayout);
@@ -326,35 +342,80 @@ public class Trainable_Segmentation implements PlugIn {
 			saveDataButton.addActionListener(listener);
 			addClassButton.addActionListener(listener);
 
-			// Buttons panel (left side of the GUI)
-			buttons.add(addExampleButton);
-			buttons.add(trainButton);
-			buttons.add(overlayButton);
-			buttons.add(resultButton);
-			buttons.add(applyButton);
-			buttons.add(loadDataButton);
-			buttons.add(saveDataButton);
-			buttons.add(addClassButton);
-
-			for (Component comp : new Component[]{addExampleButton, trainButton, overlayButton, 
-					resultButton, applyButton, loadDataButton, saveDataButton, addClassButton}) {
-				comp.setMaximumSize(new Dimension(230, 50));
-				comp.setPreferredSize(new Dimension(130, 30));
-			}
-
+			// Training panel (left side of the GUI)
+			trainingJPanel.setBorder(BorderFactory.createTitledBorder("Training"));
+			GridBagLayout trainingLayout = new GridBagLayout();
+			GridBagConstraints trainingConstraints = new GridBagConstraints();
+			trainingConstraints.anchor = GridBagConstraints.NORTHWEST;
+			trainingConstraints.fill = GridBagConstraints.HORIZONTAL;
+			trainingConstraints.gridwidth = 1;
+			trainingConstraints.gridheight = 1;
+			trainingConstraints.gridx = 0;
+			trainingConstraints.gridy = 0;
+			trainingConstraints.insets = new Insets(5, 5, 6, 6);
+			trainingJPanel.setLayout(trainingLayout);
 			
+			trainingJPanel.add(addExampleButton, trainingConstraints);
+			trainingConstraints.gridy++;
+			trainingJPanel.add(trainButton, trainingConstraints);
+			trainingConstraints.gridy++;
+			trainingJPanel.add(overlayButton, trainingConstraints);
+			trainingConstraints.gridy++;
+			trainingJPanel.add(resultButton, trainingConstraints);
+			trainingConstraints.gridy++;
+			
+			
+			// Options panel
+			optionsJPanel.setBorder(BorderFactory.createTitledBorder("Options"));
+			GridBagLayout optionsLayout = new GridBagLayout();
+			GridBagConstraints optionsConstraints = new GridBagConstraints();
+			optionsConstraints.anchor = GridBagConstraints.NORTHWEST;
+			optionsConstraints.fill = GridBagConstraints.HORIZONTAL;
+			optionsConstraints.gridwidth = 1;
+			optionsConstraints.gridheight = 1;
+			optionsConstraints.gridx = 0;
+			optionsConstraints.gridy = 0;
+			optionsConstraints.insets = new Insets(5, 5, 6, 6);
+			optionsJPanel.setLayout(optionsLayout);
+			
+			optionsJPanel.add(applyButton, optionsConstraints);
+			optionsConstraints.gridy++;
+			optionsJPanel.add(loadDataButton, optionsConstraints);
+			optionsConstraints.gridy++;
+			optionsJPanel.add(saveDataButton, optionsConstraints);
+			optionsConstraints.gridy++;
+			optionsJPanel.add(addClassButton, optionsConstraints);
+			optionsConstraints.gridy++;
+			
+			// Buttons panel (including training and options)
+			buttons.add(trainingJPanel);
+			buttons.add(optionsJPanel);
+
 			BoxLayout box = new BoxLayout(all, BoxLayout.X_AXIS);
-			all.setLayout(box);
-			all.add(buttons);
-			all.add(imageAndLists);
-			removeAll();
+			GridBagLayout layout = new GridBagLayout();
+			GridBagConstraints allConstraints = new GridBagConstraints();
+			allConstraints.anchor = GridBagConstraints.NORTHWEST;
+			allConstraints.fill = GridBagConstraints.BOTH;
+			allConstraints.gridwidth = 1;
+			allConstraints.gridheight = 1;
+			allConstraints.gridx = 0;
+			allConstraints.gridy = 0;
+				
+			all.setLayout(layout);
+		
+			all.add(buttons, allConstraints);
+			allConstraints.gridx++;
+			all.add(piw, allConstraints);
+			allConstraints.gridx++;
+			all.add(annotationsPanel, allConstraints);
+			
+			//removeAll();
+			
 			add(all);
-
-			pack();
-			pack();
-
+			
+			
 			// Propagate all listeners
-			for (Panel p : new Panel[]{all, buttons, piw}) {
+			for (Component p : new Component[]{all, buttons, piw}) {
 				for (KeyListener kl : getKeyListeners()) {
 					p.addKeyListener(kl);
 				}
@@ -373,6 +434,9 @@ public class Trainable_Segmentation implements PlugIn {
 					loadDataButton.removeActionListener(listener);
 					saveDataButton.removeActionListener(listener);
 					addClassButton.removeActionListener(listener);
+					
+					// Set number of classes back to 2
+					numOfClasses = 2;
 				}
 			});
 		}
@@ -381,12 +445,13 @@ public class Trainable_Segmentation implements PlugIn {
   			super.getImagePlus().setProcessor(imp.getProcessor());
   			super.getImagePlus().setTitle(imp.getTitle());
   		}
-		 */ 	
-		
+		 */
+
+
 		public void repaintAll()
 		{
 			this.annotationsPanel.repaint();
-			this.imageAndLists.repaint();
+			this.piw.repaint();
 			this.buttons.repaint();
 			this.all.repaint();
 		}
@@ -432,7 +497,7 @@ public class Trainable_Segmentation implements PlugIn {
 			if (null == trainingImage) return; // user canceled open dialog
 		}
 		else {
-			trainingImage = new ImagePlus("training Image",WindowManager.getCurrentImage().getProcessor().duplicate());
+			trainingImage = new ImagePlus("Trainable Segmentation",WindowManager.getCurrentImage().getProcessor().duplicate());
 		}
 
 		if (Math.max(trainingImage.getWidth(), trainingImage.getHeight()) > 1024)
@@ -444,18 +509,25 @@ public class Trainable_Segmentation implements PlugIn {
 				return;
 
 
-		trainingImage.setProcessor("training image", trainingImage.getProcessor().duplicate().convertToByte(true));
+		trainingImage.setProcessor("Trainable Segmentation", trainingImage.getProcessor().duplicate().convertToByte(true));
 		createFeatureStack(trainingImage);
 		
 
 		displayImage = new ImagePlus();
-		displayImage.setProcessor("training image", trainingImage.getProcessor().duplicate().convertToRGB());
+		displayImage.setProcessor("Trainable Segmentation", trainingImage.getProcessor().duplicate().convertToRGB());
 
 		ij.gui.Toolbar.getInstance().setTool(ij.gui.Toolbar.FREELINE);
 
+		
 		//Build GUI
-		win = new CustomWindow(displayImage);
-
+		SwingUtilities.invokeLater(
+				new Runnable() {
+					public void run() {
+						win = new CustomWindow(displayImage);
+						win.pack();
+					}
+				});
+		
 		//trainingImage.getWindow().setVisible(false);
 	}
 
@@ -503,9 +575,9 @@ public class Trainable_Segmentation implements PlugIn {
 	private void drawExamples()
 	{
 		if (!showColorOverlay)
-			displayImage.setProcessor("Playground", trainingImage.getProcessor().convertToRGB());
+			displayImage.setProcessor("Trainable Segmentation", trainingImage.getProcessor().convertToRGB());
 		else
-			displayImage.setProcessor("Playground", overlayImage.getProcessor().convertToRGB());
+			displayImage.setProcessor("Trainable Segmentation", overlayImage.getProcessor().convertToRGB());
 
 
 		for(int i = 0; i < numOfClasses; i++)
@@ -641,7 +713,7 @@ public class Trainable_Segmentation implements PlugIn {
 
 		setButtonsEnabled(false);
 
-		IJ.showStatus("training classifier");
+		IJ.showStatus("Training classifier...");
 		Instances data = null;
 		if (0 == examples[0].size() | 0 == examples[1].size())
 			IJ.log("Training from loaded data only");
@@ -654,7 +726,7 @@ public class Trainable_Segmentation implements PlugIn {
 		}
 
 		if (loadedTrainingData != null & data != null){
-			IJ.log("merging data");
+			IJ.log("Merging data...");
 			for (int i=0; i < loadedTrainingData.numInstances(); i++){
 				data.add(loadedTrainingData.instance(i));
 			}
@@ -665,7 +737,7 @@ public class Trainable_Segmentation implements PlugIn {
 			IJ.log("Taking loaded data as only data...");
 		}
 
-		IJ.showStatus("Ttraining classifier...");
+		IJ.showStatus("Training classifier...");
 		IJ.log("Training classifier...");
 		if (null == data){
 			IJ.log("WTF");
@@ -687,6 +759,8 @@ public class Trainable_Segmentation implements PlugIn {
 
 		classifiedImage = applyClassifier(wholeImageData, trainingImage.getWidth(), trainingImage.getHeight());
 
+		IJ.log("Finished segmentation of whole image");
+		
 		overlayButton.setEnabled(true);
 		resultButton.setEnabled(true);
 		applyButton.setEnabled(true);
@@ -953,9 +1027,27 @@ public class Trainable_Segmentation implements PlugIn {
 
 		IJ.log("Adding new class...");
 		
+		String inputName = JOptionPane.showInputDialog("Please input a new label name");
+		
+		if(null == inputName)
+			return;
+		
+		classLabels[numOfClasses] = inputName;
+		
 		// Add new class label and list
 		win.addClass();
 		
+		repaintWindow();
+		
+		// Force whole data to be updated
+		updateWholeData = true;
+		
+	}
+
+	/**
+	 * Repaint whole window
+	 */
+	private void repaintWindow() {
 		// Repaint window
 		SwingUtilities.invokeLater(
 				new Runnable() {
@@ -966,9 +1058,7 @@ public class Trainable_Segmentation implements PlugIn {
 					}
 				});
 		
-		// Force whole data to be updated
-		updateWholeData = true;
-		
 	}
+	
 
 }
