@@ -187,8 +187,10 @@ jdk[bin/checkout-jdk.py $JDK] <-
 
 # From submodules
 jars/ij.jar <- jars/javac.jar ImageJA/
-CLASSPATH(plugins/VIB_.jar)=plugins/LSM_Toolbox.jar:jars/mpicbg.jar:jars/imglib.jar:jars/Jama-1.0.2.jar:plugins/level_sets.jar
-plugins/VIB_.jar <- plugins/LSM_Toolbox.jar VIB/
+CLASSPATH(plugins/VIB_.jar)=jars/VIB-lib.jar
+plugins/VIB_.jar <- VIB/
+CLASSPATH(jars/VIB-lib.jar)=plugins/level_sets.jar
+jars/VIB-lib.jar <- VIB/
 CLASSPATH(plugins/mpicbg_.jar)=jars/mpicbg.jar
 plugins/mpicbg_.jar <- mpicbg/
 jars/mpicbg.jar <- mpicbg/
@@ -242,7 +244,7 @@ plugins/Bug_Submitter.jar <- src-plugins/Bug_Submitter/*.java
 
 CLASSPATH(plugins/register_virtual_stack_slices.jar)=plugins/TrakEM2_.jar:jars/mpicbg.jar:plugins/bUnwarpJ_.jar:plugins/Fiji_Plugins.jar
 
-CLASSPATH(plugins/Siox_Segmentation.jar)=jars/fiji-lib.jar
+CLASSPATH(plugins/Siox_Segmentation.jar)=jars/fiji-lib.jar:plugins/Fiji_Plugins.jar
 
 CLASSPATH(plugins/Image_Expression_Parser.jar)=jars/jep.jar:jars/imglib.jar:plugins/mpicbg_.jar
 
@@ -413,6 +415,7 @@ precompiled/autocomplete.jar <- jars/autocomplete.jar
 precompiled/weka.jar <- jars/weka.jar
 precompiled/jython.jar <- jars/jython.jar
 precompiled/imglib.jar <- jars/imglib.jar
+precompiled/VIB-lib.jar <- jars/VIB-lib.jar
 precompiled/* <- plugins/*
 
 precompile[] <- precompile-fiji precompile-fake precompile-submodules
