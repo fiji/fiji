@@ -57,7 +57,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.awt.Button;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -81,12 +80,12 @@ import java.io.OutputStreamWriter;
 
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
+import javax.swing.JButton;
 import javax.swing.JRadioButton;
 
 
 import weka.core.Attribute;
 import weka.core.DenseInstance;
-import weka.core.FastVector;
 import weka.core.Instances;
 import hr.irb.fastRandomForest.FastRandomForest;
 
@@ -108,13 +107,15 @@ public class Trainable_Segmentation implements PlugIn {
    	private Instances wholeImageData;
    	private Instances loadedTrainingData;
    	private FastRandomForest rf;
-	final Button addExampleButton;
-  	final Button trainButton;
-  	final Button overlayButton;
-  	final Button resultButton;
-  	final Button applyButton;
-  	final Button loadDataButton;
-  	final Button saveDataButton;
+	final JButton addExampleButton;
+  	final JButton trainButton;
+  	final JButton overlayButton;
+  	final JButton resultButton;
+  	final JButton applyButton;
+  	final JButton loadDataButton;
+  	final JButton saveDataButton;
+  	
+  	final JButton addClassButton;
   	
   	final Color[] colors = new Color[]{Color.red, Color.green, Color.blue,
   		Color.orange, Color.pink};
@@ -130,16 +131,18 @@ public class Trainable_Segmentation implements PlugIn {
   	
   	public Trainable_Segmentation() 
   	{
-	    	addExampleButton = new Button("+");
-  	      	trainButton = new Button("Train Classifier");
-  	      	overlayButton = new Button("Toggle Overlay");
+	    	addExampleButton = new JButton("+");
+  	      	trainButton = new JButton("Train classifier");
+  	      	overlayButton = new JButton("Toggle overlay");
   	      	overlayButton.setEnabled(false);
-  	      	resultButton = new Button("Create Result");
+  	      	resultButton = new JButton("Create result");
   	      	resultButton.setEnabled(false);
-  	      	applyButton = new Button ("Apply Classifier");
+  	      	applyButton = new JButton ("Apply classifier");
   	      	applyButton.setEnabled(false);
-  	      	loadDataButton = new Button ("Load Data");
-  	      	saveDataButton = new Button ("Save Data");
+  	      	loadDataButton = new JButton ("Load data");
+  	      	saveDataButton = new JButton ("Save data");
+  	      	
+  	      	addClassButton = new JButton ("Add class");
   	      	
   	      	
   	      	for(int i = 0; i < numOfClasses ; i++)
@@ -163,7 +166,7 @@ public class Trainable_Segmentation implements PlugIn {
   	      	rf.setSeed(123);
 	}
 	
-  	ExecutorService exec = Executors.newFixedThreadPool(1);
+  	final ExecutorService exec = Executors.newFixedThreadPool(1);
   	
   	private ActionListener listener = new ActionListener() {
   		public void actionPerformed(final ActionEvent e) {
@@ -208,9 +211,7 @@ public class Trainable_Segmentation implements PlugIn {
   		  						break;
   		  					}
   		  			}
-  				
-  
- 
+
   				}
   			});
   			
@@ -239,11 +240,12 @@ public class Trainable_Segmentation implements PlugIn {
   		
   			Panel piw = new Panel();
   			piw.setLayout(super.getLayout());
-  			setTitle("Playground");
+  			setTitle("Trainable Segmentation");
   			for (Component c : getComponents()) {
   				piw.add(c);
   			}
   			
+  			// Panel with class radio buttons and lists
  	      	Panel annotations = new Panel();
  	      	GridBagLayout boxAnnotation = new GridBagLayout();
  	      	GridBagConstraints c = new GridBagConstraints();
@@ -284,6 +286,7 @@ public class Trainable_Segmentation implements PlugIn {
   			buttons.setLayout(buttonLayout);
   			//buttons.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
   			
+  			// Add listeners
   	      	addExampleButton.addActionListener(listener);
   	      	trainButton.addActionListener(listener);
   	      	overlayButton.addActionListener(listener);
@@ -291,6 +294,9 @@ public class Trainable_Segmentation implements PlugIn {
   	      	applyButton.addActionListener(listener);
   	      	loadDataButton.addActionListener(listener);
   	      	saveDataButton.addActionListener(listener);
+  	        addClassButton.addActionListener(listener);
+  	      
+  	        // Buttons panel (left side of the GUI)
   	      	buttons.add(addExampleButton);
   	      	buttons.add(trainButton);
   	      	buttons.add(overlayButton);
@@ -298,8 +304,10 @@ public class Trainable_Segmentation implements PlugIn {
   	      	buttons.add(applyButton);
   	      	buttons.add(loadDataButton);
   	      	buttons.add(saveDataButton);
-  	      	
-  	      	for (Component comp : new Component[]{addExampleButton, trainButton, overlayButton, resultButton, applyButton, loadDataButton, saveDataButton}) {
+  	        buttons.add(addClassButton);
+  	      
+  	      	for (Component comp : new Component[]{addExampleButton, trainButton, overlayButton, 
+  	      			resultButton, applyButton, loadDataButton, saveDataButton, addClassButton}) {
   	      		comp.setMaximumSize(new Dimension(230, 50));
   	      		comp.setPreferredSize(new Dimension(130, 30));
   	      	}
@@ -334,6 +342,7 @@ public class Trainable_Segmentation implements PlugIn {
   	      			applyButton.removeActionListener(listener);
   	      			loadDataButton.removeActionListener(listener);
   	      			saveDataButton.removeActionListener(listener);
+  	      			addClassButton.removeActionListener(listener);
   	      		}
   	      	});
   		}
@@ -393,6 +402,7 @@ public class Trainable_Segmentation implements PlugIn {
 	    applyButton.setEnabled(s);
 	    loadDataButton.setEnabled(s);
 	    saveDataButton.setEnabled(s);
+	    addClassButton.setEnabled(s);
 	}
 	
 	private void addExamples(int i)
@@ -429,7 +439,7 @@ public class Trainable_Segmentation implements PlugIn {
 			displayImage.setColor(colors[i]);
 			for (Roi r : examples[i]){
 				r.drawPixels(displayImage.getProcessor());
-				IJ.log("painted ROI: " + r + " in color "+ colors[i]);
+				//IJ.log("painted ROI: " + r + " in color "+ colors[i]);
 			}
 		}
 		displayImage.updateAndDraw();
@@ -476,21 +486,21 @@ public class Trainable_Segmentation implements PlugIn {
 
 	public Instances createTrainingInstances()
 	{
-		FastVector attributes = new FastVector();
+		ArrayList<Attribute> attributes = new ArrayList<Attribute>();
 		for (int i=1; i<=featureStack.getSize(); i++){
 			String attString = featureStack.getSliceLabel(i) + " numeric";
-			attributes.addElement(new Attribute(attString));
+			attributes.add(new Attribute(attString));
 		}
-		FastVector classes = new FastVector();
+		ArrayList<String> classes = new ArrayList<String>();
 		
 		int numOfInstances = 0;
 		for(int i = 0; i < numOfClasses ; i ++)
 		{
-			classes.addElement(classLabels[i]);
+			classes.add(classLabels[i]);
 			numOfInstances += examples[i].size();
 		}
 		
-		attributes.addElement(new Attribute("class", classes));
+		attributes.add(new Attribute("class", classes));
 		
 		Instances trainingData =  new Instances("segment", attributes, numOfInstances);
 		
@@ -560,22 +570,22 @@ public class Trainable_Segmentation implements PlugIn {
 			 for (int i=0; i < loadedTrainingData.numInstances(); i++){
 				 data.add(loadedTrainingData.instance(i));
 			 }
-			 IJ.log("finished");
+			 IJ.log("Finished");
 		 }
 		 else if (data == null){
 			 data = loadedTrainingData;
-			 IJ.log("taking loaded data as only data");
+			 IJ.log("Taking loaded data as only data...");
 		 }
 		 
-		 IJ.showStatus("training classifier");
-		 IJ.log("training classifier");
+		 IJ.showStatus("Ttraining classifier...");
+		 IJ.log("Training classifier...");
 		 if (null == data){
 			 IJ.log("WTF");
 		 }
 		 try{rf.buildClassifier(data);}
 		 catch(Exception e){IJ.showMessage(e.getMessage());}
 		 
-		 IJ.log("classifying whole image");
+		 IJ.log("Classifying whole image...");
 		 
 		 classifiedImage = applyClassifier(wholeImageData, trainingImage.getWidth(), trainingImage.getHeight());
 		 
@@ -589,7 +599,7 @@ public class Trainable_Segmentation implements PlugIn {
 	}
 
 	public ImagePlus applyClassifier(Instances data, int w, int h){
-		 IJ.showStatus("classifying image");
+		 IJ.showStatus("Classifying image...");
 		 double[] classificationResult = new double[data.numInstances()];
 		 for (int i=0; i<data.numInstances(); i++){
 			 try{
@@ -614,7 +624,6 @@ public class Trainable_Segmentation implements PlugIn {
 		
 			ImageProcessor white = new ByteProcessor(width, height);
 			white.setMinAndMax(255, 255);
-			ImageProcessor black = new ByteProcessor(width, height);
 			
 			ImageStack redStack = new ImageStack(width, height);
 			redStack.addSlice("red", trainingImage.getProcessor().duplicate());
