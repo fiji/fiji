@@ -6,7 +6,8 @@ import com.lowagie.text.pdf.*;
 import java.io.FileOutputStream;
 
 if (bsh.args.length != 2) {
-	System.err.println("Usage: pdf-recompress <input> <output>");
+	System.err.println("Usage: " + this.interpreter.getSourceFileInfo()
+		+ " <input> <output>");
 	System.exit(1);
 }
 
