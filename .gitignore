@@ -37,7 +37,7 @@
 /tmp.ijm
 /jars/fake.jar
 /jars/ij.jar
-/misc/Fiji.jar
+/jars/Fiji.jar
 /plugins/Jython_Interpreter.jar
 /plugins/Clojure_Interpreter.jar
 /plugins/JRuby_Interpreter.jar
@@ -118,3 +118,4 @@
 /plugins/Siox_Segmentation.jar
 /plugins/Directionality_.jar
 /jars/Jama-1.0.2.jar
+/jars/mpicbg.jar

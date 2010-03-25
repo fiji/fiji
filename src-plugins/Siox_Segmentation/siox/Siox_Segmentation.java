@@ -23,9 +23,7 @@ package siox;
 
 import ij.IJ;
 import ij.ImagePlus;
-import ij.WindowManager;
-import ij.plugin.filter.PlugInFilter;
-import ij.process.ImageProcessor;
+import ij.plugin.PlugIn;
 
 /**
  * Fiji plugin to run SIOX: Simple Interactive Object Extraction.
@@ -33,7 +31,7 @@ import ij.process.ImageProcessor;
  * @author Ignacio Arganda-Carreras (ignacio.arganda at gmail.com)
  *
  */
-public class Siox_Segmentation implements PlugInFilter
+public class Siox_Segmentation implements PlugIn
 {
 	/** input image to be segmented */
 	private ImagePlus inputImage = null;
@@ -44,40 +42,31 @@ public static void main(String[] args) {
 	IJ.run("Leaf (36K)");
 	
 	Siox_Segmentation s = new Siox_Segmentation();
-	s.setup(null, WindowManager.getCurrentImage());
 	s.run(null);
 }
 
-
-
 	//@Override
-	public void run(ImageProcessor ip) 
+	public void run(String args) 
 	{
+		this.inputImage = IJ.getImage();
+		
+		if(inputImage.getType() != ImagePlus.COLOR_RGB)
+		{
+			IJ.error("SIOX Segmentation", "SIOX works only on RGB images");
+			return;
+		}
+		
+		if(inputImage.getNSlices() > 1)
+		{
+			IJ.error("SIOX Segmentation", "SIOX does not support stacks");
+			return;
+		}
+		
 		new SegmentationGUI(this.inputImage);
 		
 	}
 
-	//@Override
-	public int setup(String arg, ImagePlus imp) 
-	{
-		this.inputImage = imp;
-		
-		if ("about".equals(arg)) 
-		{
-			showAbout();
-			return DONE;
-		}
 
-		return DOES_RGB; 
-	}
-
-	private void showAbout() {
-		IJ.showMessage(
-				"About Siox Segmentation...",
-				"This plug-in filter segmentates color images based on SIOX: Simple Interactive Object Extraction\n");
-		
-	}
-	
 	
 
 }// end class Siox_Segmentation

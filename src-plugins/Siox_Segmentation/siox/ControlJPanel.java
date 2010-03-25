@@ -78,6 +78,7 @@ public class ControlJPanel extends JPanel
 	
 	final JButton resetJButton=new JButton("Reset");	
 	final JButton createMaskJButton=new JButton("Create mask");
+	final JButton saveSegmentatorJButton=new JButton("Save segmentator");
 	
 	/** Denotes some foreground being added. More foreground/background can be added or segmentation started. */
 	final static int FG_ADDED_STATUS = 5;
@@ -164,6 +165,7 @@ public class ControlJPanel extends JPanel
 		resetJButton.setToolTipText(resetTooltip);		
 		resetJPanel.add(resetJButton, getGbc(0, 0, 1, false, false));				
 		resetJPanel.add(createMaskJButton, getGbc(1, 0, 1, false, false));
+		resetJPanel.add(saveSegmentatorJButton, getGbc(2, 0, 1, false, false));
 		
 		controlsBox.add(segJPanel, getGbc(0, 0, 1, false, true));
 		controlsBox.add(drbJPanel, getGbc(0, 1, 1, false, true));
