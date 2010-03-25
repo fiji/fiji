@@ -189,7 +189,7 @@ public class Trainable_Segmentation implements PlugIn {
   		
   			Panel piw = new Panel();
   			piw.setLayout(super.getLayout());
-  			setTitle("Playground");
+  			setTitle("Trainable Segmentation");
   			for (Component c : getComponents()) {
   				piw.add(c);
   			}
