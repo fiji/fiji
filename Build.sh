@@ -85,13 +85,13 @@ source=$source_dir/fiji/build/Fake.java
 # make sure fake.jar is up-to-date
 test "a$targets" != a$jar &&
 test ! -f "$CWD"/$jar -o "$CWD"/$source -nt "$CWD"/$jar && {
-	sh "$0" $variables $jar || exit
+	(cd "$CWD" && sh "$(basename "$0")" $variables $jar) || exit
 }
 
 # make sure the Fiji launcher is up-to-date
 test "a$targets" != a$jar -a "a$targets" != afiji &&
 test ! -f "$CWD"/fiji -o "$CWD"/fiji.cxx -nt "$CWD"/fiji$exe && {
-	sh "$0" $variables fiji || exit
+	(cd "$CWD" && sh "$(basename "$0")" $variables fiji) || exit
 }
 
 # on Win64, with a 32-bit compiler, do not try to compile

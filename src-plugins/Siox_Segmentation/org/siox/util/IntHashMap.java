@@ -15,6 +15,7 @@
 */
 package org.siox.util;
 
+import java.io.Serializable;
 import java.util.ConcurrentModificationException;
 import java.util.NoSuchElementException;
 import java.util.AbstractCollection;
@@ -23,7 +24,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 /**
@@ -36,11 +36,11 @@ import java.util.Set;
  * @see java.util.HashMap
  */
 public class IntHashMap {
-
+	
   // CHANGELOG
   // 2005-11-21 1.01 fixed rehash size bug
   // 2005-11-18 1.00 initial release.
-  //                 CAVEAT: Most methods are completly untested for now.
+  //                 CAVEAT: Most methods are completely untested for now.
 
   /** Constant for constructing a key iterator. */
   private static final int KEYS = 0;
@@ -467,8 +467,13 @@ public class IntHashMap {
   ///////////////////////////////////////////////////////////////////////////
 
   /** Class for representing a key-value-pair in the map. */
-  private static class Entry implements Map.Entry {
+  private static class Entry implements Map.Entry, Serializable {
 
+	/**
+	 * Generated serial version UID
+	 */
+	private static final long serialVersionUID = 577580285278842632L;
+	
 	final int key;
 	Object value;
 	Entry next;

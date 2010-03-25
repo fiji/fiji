@@ -2,7 +2,7 @@ package bunwarpj;
 
 /**
  * bUnwarpJ plugin for ImageJ(C) and Fiji.
- * Copyright (C) 2005-2009 Ignacio Arganda-Carreras and Jan Kybic 
+ * Copyright (C) 2005-2010 Ignacio Arganda-Carreras and Jan Kybic 
  *
  * More information at http://biocomp.cnb.csic.es/%7Eiarganda/bUnwarpJ/
  *
@@ -34,6 +34,7 @@ import ij.process.ImageProcessor;
 
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.geom.AffineTransform;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Vector;
@@ -106,6 +107,14 @@ public class Transformation
 	private double[][] sourceAffineMatrix = null;
 	/** initial affine matrix for the target image */
 	private double[][] targetAffineMatrix = null;
+	
+	// Initial affine matrix pre-process
+	/** percentage of shear correction in initial matrix */
+	private double tweakShear = 0.0;
+	/** percentage of scale correction in initial matrix */
+	private double tweakScale = 0.0;
+	/** percentage of anisotropy correction in initial matrix */
+	private double tweakIso = 0.0;
 
 	// Image size
 	/** source image height */
@@ -485,6 +494,8 @@ public class Transformation
 		else                K = 0;
 		double [] dxTargetToSource = new double[K];
 		double [] dyTargetToSource = new double[K];
+		computeInitialResidues(dxTargetToSource,dyTargetToSource, false);
+		computeInitialResidues(dxTargetToSource,dyTargetToSource, false);
 
 		// Compute the affine transformation FROM THE TARGET TO THE SOURCE coordinates
 		// Notice that this matrix is independent of the scale (unless it was loaded from
@@ -528,6 +539,8 @@ public class Transformation
 		else                K2 = 0;
 		double [] dxSourceToTarget = new double[K2];
 		double [] dySourceToTarget = new double[K2];
+		computeInitialResidues(dxSourceToTarget,dySourceToTarget, true);
+		computeInitialResidues(dxSourceToTarget,dySourceToTarget, true);
 
 		cxSourceToTarget = new double[intervals+3][intervals+3];
 		cySourceToTarget = new double[intervals+3][intervals+3];
@@ -822,6 +835,7 @@ public class Transformation
 		else                K = 0;
 		double [] dxTargetToSource = new double[K];
 		double [] dyTargetToSource = new double[K];
+		computeInitialResidues(dxTargetToSource,dyTargetToSource, false);
 
 		// Compute the affine transformation FROM THE TARGET TO THE SOURCE coordinates
 		// Notice that this matrix is independent of the scale (unless it was loaded from
@@ -1790,10 +1804,160 @@ public class Transformation
 				auxTargetPh.getPoints().removeElementAt(n-i);
 			}
 		}
+		
+		
+		double centerX = (double) auxSource.getCurrentWidth();
+		double centerY = (double) auxSource.getCurrentHeight();
 
+		final AffineTransform matrix = new AffineTransform(X[0][0], X[1][0],
+		                                             X[0][1], X[1][1],
+		                                             X[0][2], X[1][2]);
+		
+		//MiscTools.printMatrix("source affine matrix before reg", X);
+		
+		// "Rigidize" matrix based on the user preferences
+		regularizeMatrix(matrix, centerX, centerY);
+		
+		
+		X[0][0] = matrix.getScaleX();
+		X[0][1] = matrix.getShearX();
+		
+		X[1][0] = matrix.getShearY();
+		X[1][1] = matrix.getScaleY();
+		
+		X[0][2] = matrix.getTranslateX();
+		X[1][2] = matrix.getTranslateY();
+		
+		//MiscTools.printMatrix("source affine matrix after reg", X);
+		
+		
 		return(X);
-	} /* end computeAffineMatrix */
+	} // end computeAffineMatrix
 
+	// -------------------------------------------------------------------
+	/**
+	 * Regularize matrix to remove sharing, scaling, etc.
+	 * @param a affine transform
+	 * @param centerX image center x- coordinate
+	 * @param centerX image center y- coordinate
+	 */
+	public void regularizeMatrix(
+			AffineTransform a,
+            double centerX, 
+            double centerY)
+	{
+		
+		// Move to the center of the image
+		a.translate(centerX, centerY);
+
+		/*
+			IJ.log(" A: " + a.getScaleX() + " " + a.getShearY() + " " + a.getShearX()
+					+ " " + a.getScaleY() + " " + a.getTranslateX() + " " + 
+					+ a.getTranslateY() );
+		 */
+
+		// retrieves scaling, shearing, rotation and translation from an affine
+		// transformation matrix A (which has translation values in the right column)
+		// by Daniel Berger for MIT-BCS Seung, April 19 2009
+
+		// We assume that sheary=0
+		// scalex=sqrt(A(1,1)*A(1,1)+A(2,1)*A(2,1));
+		final double a11 = a.getScaleX();
+		final double a21 = a.getShearY();
+		final double scaleX = Math.sqrt( a11 * a11 + a21 * a21 );
+		// rotang=atan2(A(2,1)/scalex,A(1,1)/scalex);
+		final double rotang = Math.atan2( a21/scaleX, a11/scaleX);
+
+		// R=[[cos(-rotang) -sin(-rotang)];[sin(-rotang) cos(-rotang)]];
+
+		// rotate back shearx and scaley
+		//v=R*[A(1,2) A(2,2)]';
+		final double a12 = a.getShearX();
+		final double a22 = a.getScaleY();
+		final double shearX = Math.cos(-rotang) * a12 - Math.sin(-rotang) * a22;
+		final double scaleY = Math.sin(-rotang) * a12 + Math.cos(-rotang) * a22;
+
+		// rotate back translation
+		// v=R*[A(1,3) A(2,3)]';
+		final double transX = Math.cos(-rotang) * a.getTranslateX() - Math.sin(-rotang) * a.getTranslateY();
+		final double transY = Math.sin(-rotang) * a.getTranslateX() + Math.cos(-rotang) * a.getTranslateY();
+
+		// TWEAK	
+		
+		
+
+		final double new_shearX = shearX * (1.0 - tweakShear); 
+		//final double new_shearY = 0; // shearY * (1.0 - tweakShear);
+
+		final double avgScale = (scaleX + scaleY)/2;
+		final double aspectRatio = scaleX / scaleY;
+		final double regAvgScale = avgScale * (1.0 - tweakScale) + 1.0  * tweakScale;
+		final double regAspectRatio = aspectRatio * (1.0 - tweakIso) + 1.0 * tweakIso;
+
+		//IJ.log("avgScale = " + avgScale + " aspectRatio = " + aspectRatio + " regAvgScale = " + regAvgScale + " regAspectRatio = " + regAspectRatio);
+
+		final double new_scaleY = (2.0 * regAvgScale) / (regAspectRatio + 1.0);
+		final double new_scaleX = regAspectRatio * new_scaleY;
+
+		final AffineTransform b = makeAffineMatrix(new_scaleX, new_scaleY, new_shearX, 0, rotang, transX, transY);
+
+		//IJ.log("new_scaleX = " + new_scaleX + " new_scaleY = " + new_scaleY + " new_shearX = " + new_shearX + " new_shearY = " + new_shearY);		    		    		    
+
+		// Move back the center
+		b.translate(-centerX, -centerY);
+		
+		a.setTransform(b);
+
+		
+										
+	}// end method regularize
+	
+	//---------------------------------------------------------------------------------
+	/**
+	 * Makes an affine transformation matrix from the given scale, shear,
+	 * rotation and translation values
+     * if you want a uniquely retrievable matrix, give sheary=0
+     * 
+	 * @param scalex scaling in x
+	 * @param scaley scaling in y
+	 * @param shearx shearing in x
+	 * @param sheary shearing in y
+	 * @param rotang angle of rotation (in radians)
+	 * @param transx translation in x
+	 * @param transy translation in y
+	 * @return affine transformation matrix
+	 */
+	public static AffineTransform makeAffineMatrix(
+			final double scalex, 
+			final double scaley, 
+			final double shearx, 
+			final double sheary, 
+			final double rotang, 
+			final double transx, 
+			final double transy)
+	{
+		/*
+		%makes an affine transformation matrix from the given scale, shear,
+		%rotation and translation values
+		%if you want a uniquely retrievable matrix, give sheary=0
+		%by Daniel Berger for MIT-BCS Seung, April 19 2009
+
+		A=[[scalex shearx transx];[sheary scaley transy];[0 0 1]];
+		A=[[cos(rotang) -sin(rotang) 0];[sin(rotang) cos(rotang) 0];[0 0 1]] * A;
+		*/
+		
+		final double m00 = Math.cos(rotang) * scalex - Math.sin(rotang) * sheary;
+		final double m01 = Math.cos(rotang) * shearx - Math.sin(rotang) * scaley;
+		final double m02 = Math.cos(rotang) * transx - Math.sin(rotang) * transy;
+		
+		final double m10 = Math.sin(rotang) * scalex + Math.cos(rotang) * sheary;
+		final double m11 = Math.sin(rotang) * shearx + Math.cos(rotang) * scaley;
+		final double m12 = Math.sin(rotang) * transx + Math.cos(rotang) * transy;
+		
+		return new AffineTransform( m00,  m10,  m01,  m11,  m02,  m12);		
+	} // end method makeAffineMatrix	
+	
+	
 	//------------------------------------------------------------------
 	/**
 	 * Compute the affine residues for the landmarks.
@@ -2040,7 +2204,6 @@ public class Transformation
 	 * @param dx output, difference in x for each landmark
 	 * @param dy output, difference in y for each landmark
 	 * @param bIsReverse determines the transformation direction (source-target=TRUE or target-source=FALSE)
-	 * @deprecated
 	 */
 	private void computeInitialResidues(
 			final double[] dx,                           // output, difference in x for each landmark
@@ -4015,7 +4178,7 @@ public class Transformation
 		update = MathTools.linearLeastSquares(u,g);
 		if(update == null)
 		{
-			IJ.error("Error when calculating linear least square solution...");
+			IJ.log("Error when calculating linear least square solution...");
 			return;
 		}
 
@@ -7075,6 +7238,38 @@ public class Transformation
 				
 		
 	}
-
 	
-} /* end class Transformation */
+	//------------------------------------------------------------------------------------------
+	/**
+	 * Correct shear on initial affine transform
+	 * @param shearCorrection percentage of shear correction (0.0 - 1.0)
+	 */
+	public void setShearCorrection(double shearCorrection)
+	{
+		if(shearCorrection >= 0 && shearCorrection <= 1.0)
+			this.tweakShear = shearCorrection;
+	}
+	
+	//------------------------------------------------------------------------------------------
+	/**
+	 * Correct scale on initial affine transform
+	 * @param scaleCorrection percentage of scale correction (0.0 - 1.0)
+	 */
+	public void setScaleCorrection(double scaleCorrection)
+	{
+		if(scaleCorrection >= 0 && scaleCorrection <= 1.0)
+			this.tweakScale = scaleCorrection;
+	}
+	
+	//------------------------------------------------------------------------------------------
+	/**
+	 * Correct anisotropy on initial affine transform
+	 * @param isoCorrection percentage of anisotropy correction (0.0 - 1.0)
+	 */
+	public void setAnisotropyCorrection(double isoCorrection)
+	{
+		if(isoCorrection >= 0 && isoCorrection <= 1.0)
+			this.tweakIso = isoCorrection;
+	}
+	
+} // end class Transformation

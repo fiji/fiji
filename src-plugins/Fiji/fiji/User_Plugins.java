@@ -29,7 +29,7 @@ import java.util.jar.JarFile;
 
 /*
  * This plugin looks through all files in a given directory (default:
- * $ROOT/user-plugins/, where $ROOT is the parent directory of misc/Fiji.jar)
+ * $ROOT/user-plugins/, where $ROOT is the parent directory of jars/Fiji.jar)
  * and inserts the found plugins into a given menu (default: Plugins>User).
  */
 public class User_Plugins implements PlugIn {
@@ -287,7 +287,7 @@ public class User_Plugins implements PlugIn {
 
 	public static String getDefaultPath() {
 		final String prefix = "file:";
-		final String suffix = "/misc/Fiji.jar!/fiji/User_Plugins.class";
+		final String suffix = "/jars/Fiji.jar!/fiji/User_Plugins.class";
 		try {
 			String path = Class.forName("fiji.User_Plugins")
 				.getResource("User_Plugins.class").getPath();
