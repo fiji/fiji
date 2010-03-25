@@ -56,6 +56,7 @@ import ij.io.SaveDialog;
 import ij.ImagePlus;
 import ij.WindowManager;
 
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -670,6 +671,11 @@ public class Trainable_Segmentation implements PlugIn {
 		saveDataButton.setEnabled(s);
 		addClassButton.setEnabled(s);
 		settingsButton.setEnabled(s);
+		for(int i = 0 ; i < numOfClasses; i++)
+		{
+			exampleList[i].setEnabled(s);
+			classButton[i].setEnabled(s);
+		}
 	}
 
 	/**
@@ -885,8 +891,11 @@ public class Trainable_Segmentation implements PlugIn {
 		}
 		catch(Exception e){
 			IJ.showMessage(e.getMessage());
+			e.printStackTrace();
+			return;
 		}
-		
+		final DecimalFormat df = new DecimalFormat("0.0000");
+		IJ.log("Finished, training error: " + df.format(rf.measureOutOfBagError()));
 		//
 		if(updateWholeData)
 			updateTestSet();
@@ -1297,11 +1306,16 @@ public class Trainable_Segmentation implements PlugIn {
 		
 		gd.addMessage("Training features:");
 		final int rows = (int)Math.round(FeatureStack.availableFeatures.length/2.0);
-		IJ.log("rows = " + rows);
 		gd.addCheckboxGroup(rows, 2, FeatureStack.availableFeatures, oldEnableFeatures);
+		
+		gd.addMessage("General options:");
+		gd.addCheckbox("Normalize data", this.featureStack.isNormalized());
+		
 		gd.addMessage("Fast Random Forest settings:");
 		gd.addNumericField("Number of trees:", Trainable_Segmentation.numOfTrees, 0);
 		gd.addNumericField("Random features", Trainable_Segmentation.randomFeatures, 0);
+		
+		gd.addHelp("http://pacific.mpi-cbg.de/wiki/Trainable_Segmentation_Plugin");
 		
 		gd.showDialog();
 		
@@ -1321,7 +1335,9 @@ public class Trainable_Segmentation implements PlugIn {
 			if (newEnableFeatures[i] != oldEnableFeatures[i])
 				featuresChanged = true;
 		}
-
+		// Normalization
+		final boolean normalize = gd.getNextBoolean();
+		
 		// Read fast random forest parameters and check if changed
 		final int newNumTrees = (int) gd.getNextNumber();
 		final int newRandomFeatures = (int) gd.getNextNumber();
@@ -1332,9 +1348,10 @@ public class Trainable_Segmentation implements PlugIn {
 				updateClassifier(newNumTrees, newRandomFeatures);
 		
 		// Update feature stack if necessary
-		if(featuresChanged)
+		if(featuresChanged || normalize != this.featureStack.isNormalized())
 		{
 			this.setButtonsEnabled(false);
+			this.featureStack.setNormalize(normalize);
 			//IJ.log("Settings (before update): num of features = " + featureStack.getSize());
 			this.featureStack.setEnableFeatures(newEnableFeatures);
 			this.featureStack.updateFeatures();
