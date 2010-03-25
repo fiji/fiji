@@ -6,6 +6,11 @@ package trainableSegmentation;
  * - Gradientmagnitude
  * - Hessian
  * - Difference of Gaussian
+ * - Orientation filter to detect membranes and then its projection
+ * - Mean
+ * - Variance
+ * - Minimum
+ * - Maximum
  * 
  * filters to come:
  * - make use of color channels
@@ -47,17 +52,12 @@ import weka.core.Instances;
 import ij.IJ;
 import ij.ImageStack;
 import ij.ImagePlus;
-//import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
-//import ij.process.FHT;
-//import ij.plugin.FFT;
 import ij.plugin.ZProjector;
 import ij.plugin.filter.GaussianBlur;
 import ij.plugin.filter.Convolver;
 import ij.plugin.filter.RankFilters;
-
-//import edu.mines.jtk.dsp.*;
 
 
 
@@ -71,9 +71,12 @@ public class FeatureStack
 	private static final int MAX_SIGMA = 16;
 	
 	public static final String[] availableFeatures 
-		= new String[]{"Gaussian Blur", "Sobel filter", "Hessian", "Difference of gaussians", "Membrane projections","Variance","Mean"};
+		= new String[]{	"Gaussian Blur", "Sobel filter", "Hessian", "Difference of gaussians", 
+					   	"Membrane projections","Variance","Mean", "Minimum", "Maximum"};
 	
-	private boolean[] enableFeatures = new boolean[]{true, true, true, true, true, false, false};
+	private boolean[] enableFeatures = new boolean[]{true, true, true, true, true, false, false, false, false};
+	
+	private boolean normalize = false;
 	
 	/**
 	 * Construct object to store stack of image features
@@ -116,20 +119,36 @@ public class FeatureStack
 		wholeStack.addSlice("GaussianBlur_" + sigma, ip);
 	}
 	
-	public void addVariance(float sigma)
+	public void addVariance(float radius)
 	{
 		final ImageProcessor ip = originalImage.getProcessor().duplicate();
 		final RankFilters filter = new RankFilters();
-		filter.rank(ip, sigma, RankFilters.VARIANCE);
-		wholeStack.addSlice("Variance_" + sigma, ip);
+		filter.rank(ip, radius, RankFilters.VARIANCE);
+		wholeStack.addSlice("Variance_" + radius, ip);
 	}
 	
-	public void addMean(float sigma)
+	public void addMean(float radius)
 	{
 		final ImageProcessor ip = originalImage.getProcessor().duplicate();
 		final RankFilters filter = new RankFilters();
-		filter.rank(ip, sigma, RankFilters.MEAN);
-		wholeStack.addSlice("Mean_" + sigma, ip);
+		filter.rank(ip, radius, RankFilters.MEAN);
+		wholeStack.addSlice("Mean_" + radius, ip);
+	}
+	
+	public void addMin(float radius)
+	{
+		final ImageProcessor ip = originalImage.getProcessor().duplicate();
+		final RankFilters filter = new RankFilters();
+		filter.rank(ip, radius, RankFilters.MIN);
+		wholeStack.addSlice("Minimum_" + radius, ip);
+	}
+	
+	public void addMax(float radius)
+	{
+		final ImageProcessor ip = originalImage.getProcessor().duplicate();
+		final RankFilters filter = new RankFilters();
+		filter.rank(ip, radius, RankFilters.MAX);
+		wholeStack.addSlice("Maximum_" + radius, ip);
 	}
 	
 	public void writeConfigurationToFile(String filename){
@@ -438,10 +457,32 @@ public class FeatureStack
 				counter++;
 			}
 			
+			// Min
+			if(enableFeatures[6])
+			{
+				IJ.showStatus("Creating feature stack...   " + counter);
+				this.addMin(i); 
+				counter++;
+			}
+			// Mean
+			if(enableFeatures[7])
+			{
+				IJ.showStatus("Creating feature stack...   " + counter);
+				this.addMax(i); 
+				counter++;
+			}
+			
 		}
 		// Membrane projections
 		if(enableFeatures[4])
 			this.addMembraneFeatures(19, 1);
+		
+		if(normalize)
+		{
+			IJ.showStatus("Normalizing stack...");
+			final ImagePlus imp = new ImagePlus("", this.wholeStack);
+			IJ.run(imp, "Enhance Contrast", "saturated=0.1 normalize_all");
+		}
 	}
 	
 
@@ -456,5 +497,13 @@ public class FeatureStack
 	public boolean isEmpty()
 	{
 		return (null == this.wholeStack || this.wholeStack.getSize() < 2);
+	}
+
+	public void setNormalize(boolean normalize) {
+		this.normalize = normalize;
+	}
+
+	public boolean isNormalized() {
+		return normalize;
 	}
 }
