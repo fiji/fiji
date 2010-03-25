@@ -36,6 +36,17 @@ function edge2(i, j) {
 		getX(i, j + 1), getY(i, j + 1));
 }
 
+function diamond(i, j) {
+	x = getX(i, j) + (dxx + dyx) / 2;
+	y = getY(i, j) + (dxy + dyy) / 2;
+	r1 = 1 / 6; r2 = 1 / 4;
+	ow = dxx * r1; oh = dyy * r2;
+	makePolygon(x - dxx * r1, y - dxy * r1,
+		x - dyx * r2, y - dyy * r2,
+		x + dxx * r1, y + dxy * r1,
+		x + dyx * r2, y + dyy * r2);
+}
+
 newImage("Grey square optical illusion", "RGB White", w, h, 1);
 image = getImageID();
 
@@ -147,6 +158,13 @@ run("Paste");
 
 setForegroundColor(grey2, grey2, grey2);
 makeOval(x1, y1 - h1, x2 - x1, y2 - y1);
+run("Fill");
+
+setForegroundColor(grey1, grey1, grey1);
+selectImage(image);
+diamond(1, 4);
+run("Fill");
+diamond(2, 2);
 run("Fill");
 
 run("Select None");
