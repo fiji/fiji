@@ -58,8 +58,15 @@ import ij.WindowManager;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -96,7 +103,7 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.SwingUtilities;
 
-
+import weka.classifiers.AbstractClassifier;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instances;
@@ -232,11 +239,11 @@ public class Trainable_Segmentation implements PlugIn {
 					}
 					else if(e.getSource() == trainButton)
 					{
-							try{
-								trainClassifier();
-							}catch(Exception e){
-								e.printStackTrace();
-							}
+						try{
+							trainClassifier();
+						}catch(Exception e){
+							e.printStackTrace();
+						}
 					}
 					else if(e.getSource() == overlayButton){
 						toggleOverlay();
@@ -929,26 +936,67 @@ public class Trainable_Segmentation implements PlugIn {
 	 * @param h image height
 	 * @return result image
 	 */
-	public ImagePlus applyClassifier(Instances data, int w, int h)
+	public ImagePlus applyClassifier(final Instances data, int w, int h)
 	{
 		IJ.showStatus("Classifying image...");
 		
 		final long start = System.currentTimeMillis();
-		final int numInstances = data.numInstances();
-		final double[] classificationResult = new double[numInstances];
-		for (int i=0; i<numInstances; i++)
+
+		final int numOfProcessors = Runtime.getRuntime().availableProcessors();
+		final ExecutorService exe = Executors.newFixedThreadPool(numOfProcessors);
+		final double[][] results = new double[numOfProcessors][];
+		final Instances[] partialData = new Instances[numOfProcessors];
+		final int partialSize = data.numInstances() / numOfProcessors;
+		Future<double[]> fu[] = new Future[numOfProcessors];
+		
+		final AtomicInteger counter = new AtomicInteger();
+		
+		for(int i = 0; i<numOfProcessors; i++)
 		{
-			IJ.showProgress((double) i / numInstances);
-			try{
-				classificationResult[i] = rf.classifyInstance(data.instance(i));
-			}catch(Exception e){
-				IJ.showMessage("Could not apply Classifier!");
+			if(i == numOfProcessors-1)
+				partialData[i] = new Instances(data, i*partialSize, data.numInstances()-i*partialSize);
+			else
+				partialData[i] = new Instances(data, i*partialSize, partialSize);
+			
+			fu[i] = exe.submit(classifyIntances(partialData[i], rf, counter));
+		}
+		
+		ScheduledExecutorService monitor = Executors.newScheduledThreadPool(1);
+		ScheduledFuture task = monitor.scheduleWithFixedDelay(new Runnable() {
+			public void run() {
+				IJ.showProgress(counter.get(), data.numInstances());
+			}
+		}, 0, 1, TimeUnit.SECONDS);
+		
+		// Join threads
+		for(int i = 0; i<numOfProcessors; i++)
+		{
+			try {
+				results[i] = fu[i].get();
+			} catch (InterruptedException e) {
 				e.printStackTrace();
 				return null;
+			} catch (ExecutionException e) {
+				e.printStackTrace();
+				return null;
+			} finally {
+				exe.shutdown();
+				task.cancel(true);
+				monitor.shutdownNow();
+				IJ.showProgress(1);
 			}
 		}
-		IJ.showProgress(1.0);
 		
+		
+		exe.shutdown();
+		
+		// Create final array
+		double[] classificationResult = new double[data.numInstances()];
+		for(int i = 0; i<numOfProcessors; i++)
+			System.arraycopy(results[i], 0, classificationResult, i*partialSize, results[i].length);
+			
+		
+		IJ.showProgress(1.0);
 		final long end = System.currentTimeMillis();
 		IJ.log("Classifying whole image data took: " + (end-start) + "ms");
 
@@ -958,6 +1006,39 @@ public class Trainable_Segmentation implements PlugIn {
 		ImagePlus classImg = new ImagePlus("Classification result", classifiedImageProcessor);
 		return classImg;
 	}
+	
+	/**
+	 * Classify instance concurrently
+	 * @param data set of instances to classify
+	 * @param classifier current classifier
+	 * @return classification result
+	 */
+	private static Callable<double[]> classifyIntances(
+			final Instances data, 
+			final AbstractClassifier classifier,
+			final AtomicInteger counter)
+	{
+		return new Callable<double[]>(){
+			public double[] call(){
+				final int numInstances = data.numInstances();
+				final double[] classificationResult = new double[numInstances];
+				for (int i=0; i<numInstances; i++)
+				{
+					try{
+						if (0 == i % 4000) counter.addAndGet(4000);
+						classificationResult[i] = classifier.classifyInstance(data.instance(i));
+					}catch(Exception e){
+						IJ.showMessage("Could not apply Classifier!");
+						e.printStackTrace();
+						return null;
+					}
+				}
+				return classificationResult;
+			}
+		};
+		
+	}
+	
 
 	/**
 	 * Toggle between overlay and original image with markings
@@ -1050,7 +1131,8 @@ public class Trainable_Segmentation implements PlugIn {
 	/**
 	 * Apply classifier to test data
 	 */
-	public void applyClassifierToTestData(){
+	public void applyClassifierToTestData()
+	{
 		ImagePlus testImage = IJ.openImage();
 		if (null == testImage) return; // user canceled open dialog
 
@@ -1107,10 +1189,10 @@ public class Trainable_Segmentation implements PlugIn {
 	}
 
 	/**
-	 * Load previously saved model
+	 * Load previously saved data
 	 */
 	public void loadTrainingData(){
-		OpenDialog od = new OpenDialog("choose data file","");
+		OpenDialog od = new OpenDialog("Choose data file","");
 		if (od.getFileName()==null)
 			return;
 		IJ.log("Loading data from " + od.getDirectory() + od.getFileName() + "...");
