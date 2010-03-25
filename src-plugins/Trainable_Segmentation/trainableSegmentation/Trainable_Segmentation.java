@@ -586,8 +586,7 @@ public class Trainable_Segmentation implements PlugIn {
 
 		trainingImage.setProcessor("Trainable Segmentation", trainingImage.getProcessor().duplicate().convertToByte(true));
 
-		IJ.log("DISABLED training for debugging");
-		//createFeatureStack(trainingImage);
+		createFeatureStack(trainingImage);
 		
 
 		displayImage = new ImagePlus();
