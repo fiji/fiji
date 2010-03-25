@@ -34,13 +34,13 @@ Name					File					Author(s)						Contact	(2008)							License
 * Fiji as a framework																							GPL
 * ij-ImageIO 				ij-ImageIO_.jar				Jarek Sacha 						jarek@ieee.org 							LGPL
 * ImageJA				ij.jar					Johannes Schindelin, Wayne Rasband			Johannes.Schindelin@gmx.de					PD
-* imagescience.jar 			imagescience.jar 			Erik Meijering 						meijering@imagescience.org 					Copyright © Erik Meijering. All rights reserved. See http://www.imagescience.org/meijering/software/transformj/
-
+* imagescience.jar 			imagescience.jar 			Erik Meijering 						meijering@imagescience.org 					Copyright � Erik Meijering. All rights reserved. See http://www.imagescience.org/meijering/software/transformj/
 * Interactive 3D Surface Plot 		Interactive_3D_Surface_Plot.jar		Kai Uwe Barthel 					k.barthel@fhtw-berlin.de 					PD
 * itext-1.3.jar 			itext-1.3.jar 				Bruno Lowagie, Paulo Soares 				http://www.lowagie.com/iText/ 					MPL/LGPL
 * IO package 				IO_.jar 				A. Cardona, S. Saalfeld, J. Schindelin, G. Jefferis 	acardona@ini.phys.ethz.ch 					GPL/public domain
 * IPLab Reader 				IPLab_Reader.jar			Wayne Rasband 						wsr@nih.gov 							PD
 * Jacl 					jacl.jar 											http://sourceforge.net/projects/tcljava				BSD
+* Java Expression Parser (JEP)		jep.jar					Nathan Funk, Richard Morris				http://www.singularsys.com/jep/					GPL
 * Java Matrix package 			Jama-1.0.2.jar 				http://math.nist.gov/javanumerics/jama/#Authors 	http://math.nist.gov/javanumerics/jama/#Authors 		PD
 * Javascript Rhino Engine 		js.jar 					http://www.mozilla.org/rhino/ 				http://www.mozilla.org/rhino/ 					MPL 1.1/GPL 2  see http://developer.mozilla.org/en/docs/Rhino_License
 * Javascript Interpreter 		Javascript_Interpreter.jar 		Albert Cardona 						acardona@ini.phys.ethz.ch 					GPL
@@ -60,7 +60,7 @@ Name					File					Author(s)						Contact	(2008)							License
 * Register virtual stack slices 	register_virtual_stack_slices.jar 	Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
 * Substack Maker 			Substack_Maker.class 			Wayne Rasband 						http://rsb.info.nih.gov/ij/plugins/reverser.html 		PD
 * Stack Reverser 			Stack_Reverser.class 			Anthony Padua, Daniel Barboriak 			http://rsb.info.nih.gov/ij/plugins/substack-maker.html		PD			
-* TransformJ 				TransformJ_.jar 			Erik Meijering 						meijering@imagescience.org 					Copyright © Erik Meijering. All rights reserved. See http://www.imagescience.org/meijering/software/transformj/
+* TransformJ 				TransformJ_.jar 			Erik Meijering 						meijering@imagescience.org 					Copyright � Erik Meijering. All rights reserved. See http://www.imagescience.org/meijering/software/transformj/
 * TrakEM2				TrakEM2_.jar				Albert Cardona, Rodney Douglas				acardona@ini.phys.ethz.ch					GPL
 * TurboReg				TurboReg_.jar				Philippe Thévenaz					philippe.thevenaz@epfl.ch					Citationware (see below)
 * VIB as VIB_.jar plugin bundle		VIB_.jar				J. Schindelin, Benjamin Schmid, M. Longair		bene.schmid@gmail.com						GPL
@@ -70,15 +70,14 @@ Name					File					Author(s)						Contact	(2008)							License
 
 
 TurboReg (Citationware):
-
 	On Wed, 18 Feb 2009, Philippe Thévenaz wrote:
-
 	> Dear Johannes Schindelin,
 	>
 	> You have my explicit placet to include TurboReg in Fiji.
+Note that this blessing is for the (re)distribution within Fiji only.
 
-	Note that this blessing is for the (re)distribution within Fiji only.
-
+JEP version included in Fiji is jep-2.4.1-ext-1.1.1-gpl. This version is the last to be distributed
+under GPL. Subsequent versions (>3.0) have a commercial license.
 
 Unresolved (TODO):
 * Example/ scripts folder
