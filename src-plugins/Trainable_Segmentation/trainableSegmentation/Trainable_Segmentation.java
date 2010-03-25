@@ -100,17 +100,17 @@ public class Trainable_Segmentation implements PlugIn {
   	
   	
   	public Trainable_Segmentation() {
-	    	posExampleButton = new Button("positiveExample");
-  	      	negExampleButton = new Button("negativeExample");
-  	      	trainButton = new Button("train Classifier");
-  	      	overlayButton = new Button("toggle Overlay");
+	    	posExampleButton = new Button("Positive example");
+  	      	negExampleButton = new Button("Negative example");
+  	      	trainButton = new Button("Train classifier");
+  	      	overlayButton = new Button("Toggle overlay");
   	      	overlayButton.setEnabled(false);
-  	      	resultButton = new Button("create result");
+  	      	resultButton = new Button("Create result");
   	      	resultButton.setEnabled(false);
-  	      	applyButton = new Button ("apply classifier");
+  	      	applyButton = new Button ("Apply classifier");
   	      	applyButton.setEnabled(false);
-  	      	loadDataButton = new Button ("load data");
-  	      	saveDataButton = new Button ("save data");
+  	      	loadDataButton = new Button ("Load data");
+  	      	saveDataButton = new Button ("Save data");
   	      	
   	      	posExampleList = new java.awt.List(5);
   	      	posExampleList.setForeground(Color.green);
