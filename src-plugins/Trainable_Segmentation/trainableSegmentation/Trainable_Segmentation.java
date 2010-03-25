@@ -60,12 +60,19 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Panel;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyListener;
@@ -263,13 +270,63 @@ public class Trainable_Segmentation implements PlugIn {
 		}
 	};
 
+	private class CustomCanvas extends ImageCanvas {
+		CustomCanvas(ImagePlus imp) {
+			super(imp);
+			Dimension dim = new Dimension(Math.min(512, imp.getWidth()), Math.min(512, imp.getHeight()));
+			setMinimumSize(dim);
+			setSize(dim.width, dim.height);
+			setDstDimensions(dim.width, dim.height);
+			addKeyListener(new KeyAdapter() {
+				public void keyReleased(KeyEvent ke) {
+					repaint();
+				}
+			});
+		}
+		@Override
+		public void setDrawingSize(int w, int h) {}
+
+		public void setDstDimensions(int width, int height) {
+			super.dstWidth = width;
+			super.dstHeight = height;
+			// adjust srcRect: can it grow/shrink?
+			int w = Math.min((int)(width  / magnification), imp.getWidth());
+			int h = Math.min((int)(height / magnification), imp.getHeight());
+			int x = srcRect.x;
+			if (x + w > imp.getWidth()) x = w - imp.getWidth();
+			int y = srcRect.y;
+			if (y + h > imp.getHeight()) y = h - imp.getHeight();
+			srcRect.setRect(x, y, w, h);
+			repaint();
+		}
+
+		@Override
+		public void paint(Graphics g) {
+			Rectangle srcRect = getSrcRect();
+			double mag = getMagnification();
+			int dw = (int)(srcRect.width * mag);
+			int dh = (int)(srcRect.height * mag);
+			g.setClip(0, 0, dw, dh);
+
+			super.paint(g);
+
+			int w = getWidth();
+			int h = getHeight();
+			g.setClip(0, 0, w, h);
+
+			// Paint away the outside
+			g.setColor(getBackground());
+			g.fillRect(dw, 0, w - dw, h);
+			g.fillRect(0, dh, w, h - dh);
+		}
+	}
+
 	/**
 	 * Custom window to define the trainable segmentation GUI
 	 * 
 	 */
 	private class CustomWindow extends ImageWindow 
 	{
-		JPanel piw = new JPanel();
 		/** layout for annotation panel */
 		GridBagLayout boxAnnotation = new GridBagLayout();
 		/** constraints for annotation panel */
@@ -286,17 +343,14 @@ public class Trainable_Segmentation implements PlugIn {
 		
 		CustomWindow(ImagePlus imp) 
 		{
-			super(imp);
+			super(imp, new CustomCanvas(imp));
 
-			
-			setTitle("Trainable Segmentation");
-			
-			
-			Component[] cs = getComponents();
+			final CustomCanvas canvas = (CustomCanvas) getCanvas();
+
+			// Remove the canvas from the window, to add it later
 			removeAll();
-			for (Component c : cs) {
-				piw.add(c);
-			}
+
+			setTitle("Trainable Segmentation");
 			
 
 			annotationsConstraints.anchor = GridBagConstraints.NORTHWEST;
@@ -394,28 +448,42 @@ public class Trainable_Segmentation implements PlugIn {
 			BoxLayout box = new BoxLayout(all, BoxLayout.X_AXIS);
 			GridBagLayout layout = new GridBagLayout();
 			GridBagConstraints allConstraints = new GridBagConstraints();
+			all.setLayout(layout);
+
 			allConstraints.anchor = GridBagConstraints.NORTHWEST;
 			allConstraints.fill = GridBagConstraints.BOTH;
 			allConstraints.gridwidth = 1;
 			allConstraints.gridheight = 1;
 			allConstraints.gridx = 0;
 			allConstraints.gridy = 0;
-				
-			all.setLayout(layout);
-		
+			allConstraints.weightx = 0;
+			allConstraints.weighty = 0;
+
 			all.add(buttons, allConstraints);
+
 			allConstraints.gridx++;
-			all.add(piw, allConstraints);
+			allConstraints.weightx = 1;
+			allConstraints.weighty = 1;
+			all.add(canvas, allConstraints);
+
 			allConstraints.gridx++;
+			allConstraints.anchor = GridBagConstraints.NORTHEAST;
+			allConstraints.weightx = 0;
+			allConstraints.weighty = 0;
 			all.add(annotationsPanel, allConstraints);
-			
-			//removeAll();
-			
-			add(all);
-			
+
+			GridBagLayout wingb = new GridBagLayout();
+			GridBagConstraints winc = new GridBagConstraints();
+			winc.anchor = GridBagConstraints.NORTHWEST;
+			winc.fill = GridBagConstraints.BOTH;
+			winc.weightx = 1;
+			winc.weighty = 1;
+			setLayout(wingb);
+			add(all, winc);
+
 			
 			// Propagate all listeners
-			for (Component p : new Component[]{all, buttons, piw}) {
+			for (Component p : new Component[]{all, buttons}) {
 				for (KeyListener kl : getKeyListeners()) {
 					p.addKeyListener(kl);
 				}
@@ -439,6 +507,13 @@ public class Trainable_Segmentation implements PlugIn {
 					numOfClasses = 2;
 				}
 			});
+
+			canvas.addComponentListener(new ComponentAdapter() {
+				public void componentResized(ComponentEvent ce) {
+					Rectangle r = canvas.getBounds();
+					canvas.setDstDimensions(r.width, r.height);
+				}
+			});
 		}
 
 		/* 		public void changeDisplayImage(ImagePlus imp){
@@ -451,7 +526,7 @@ public class Trainable_Segmentation implements PlugIn {
 		public void repaintAll()
 		{
 			this.annotationsPanel.repaint();
-			this.piw.repaint();
+			getCanvas().repaint();
 			this.buttons.repaint();
 			this.all.repaint();
 		}
@@ -510,6 +585,7 @@ public class Trainable_Segmentation implements PlugIn {
 
 
 		trainingImage.setProcessor("Trainable Segmentation", trainingImage.getProcessor().duplicate().convertToByte(true));
+
 		createFeatureStack(trainingImage);
 		
 
