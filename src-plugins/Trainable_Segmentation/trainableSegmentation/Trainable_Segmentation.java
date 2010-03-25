@@ -423,7 +423,7 @@ public class Trainable_Segmentation implements PlugIn {
 
 			addWindowListener(new WindowAdapter() {
 				public void windowClosing(WindowEvent e) {
-					IJ.log("closing window");
+					//IJ.log("closing window");
 					// cleanup
 					exec.shutdownNow();
 					addExampleButton.removeActionListener(listener);
