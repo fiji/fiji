@@ -1,5 +1,6 @@
 package trainableSegmentation;
-/* This is a small Plugin that should perform better in segmentation than thresholding
+/** 
+ * This is a small Plugin that should perform better in segmentation than thresholding
  * The idea is to train a random forest classifier on given manual labels
  * and then classify the whole image 
  * I try to keep parameters hidden from the user to make usage of the plugin
@@ -15,7 +16,6 @@ package trainableSegmentation;
  * - do probability output (accessible?) and define threshold
  * - put thread solution to wiki http://pacific.mpi-cbg.de/wiki/index.php/Developing_Fiji#Writing_plugins
  * 
- * - clean up gui (buttons, window size, funny zoom)
  * - give more feedback when classifier is trained or applied
  * 
  * License: GPL
@@ -33,7 +33,8 @@ package trainableSegmentation;
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * Author: Verena Kaynig (verena.kaynig@inf.ethz.ch)
+ * Authors: Verena Kaynig (verena.kaynig@inf.ethz.ch), Ignacio Arganda-Carreras (iarganda@mit.edu)
+ *          Albert Cardona (acardona@ini.phys.ethz.ch)
  */
 
 
@@ -45,6 +46,7 @@ import ij.plugin.RGBStackMerge;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
+import ij.gui.GenericDialog;
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import ij.gui.Roi;
@@ -87,7 +89,6 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 
 import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
@@ -111,7 +112,7 @@ public class Trainable_Segmentation implements PlugIn {
 	private ImagePlus displayImage;
 	private ImagePlus classifiedImage;
 	private ImagePlus overlayImage;
-	private FeatureStack featureStack;
+	private FeatureStack featureStack = null;
 	private CustomWindow win;
 
 	private int traceCounter[] = new int[MAX_NUM_CLASSES];
@@ -129,6 +130,7 @@ public class Trainable_Segmentation implements PlugIn {
 	final JButton applyButton;
 	final JButton loadDataButton;
 	final JButton saveDataButton;
+	final JButton settingsButton;
 
 	final JButton addClassButton;
 
@@ -143,10 +145,17 @@ public class Trainable_Segmentation implements PlugIn {
 	//Group the radio buttons.
 	ButtonGroup classButtonGroup = new ButtonGroup();
 
+	
+	// Random Forest parameters
+	private static int numOfTrees = 200;
+	private static int randomFeatures = 2;
 
+	/**
+	 * Basic constructor
+	 */
 	public Trainable_Segmentation() 
 	{
-		addExampleButton = new JButton("+");
+		addExampleButton = new JButton("ADD");
 		addExampleButton.setToolTipText("Add current ROI to selected label");
 		
 		trainButton = new JButton("Train classifier");
@@ -171,9 +180,11 @@ public class Trainable_Segmentation implements PlugIn {
 		saveDataButton = new JButton ("Save data");
 		saveDataButton.setToolTipText("Save current segmentation into an ARFF file");
 
-		addClassButton = new JButton ("Add new label");
+		addClassButton = new JButton ("Create new label");
 		addClassButton.setToolTipText("Add one more label to mark different areas");
-
+		
+		settingsButton = new JButton ("Settings");
+		addClassButton.setToolTipText("Display advanced options");
 
 		for(int i = 0; i < numOfClasses ; i++)
 		{
@@ -186,11 +197,11 @@ public class Trainable_Segmentation implements PlugIn {
 
 		rf = new FastRandomForest();
 		//FIXME: should depend on image size?? Or labels??
-		rf.setNumTrees(200);
+		rf.setNumTrees(Trainable_Segmentation.numOfTrees);
 		//this is the default that Breiman suggests
 		//rf.setNumFeatures((int) Math.round(Math.sqrt(featureStack.getSize())));
 		//but this seems to work better
-		rf.setNumFeatures(2);
+		rf.setNumFeatures(Trainable_Segmentation.randomFeatures);
 
 
 		rf.setSeed(123);
@@ -219,8 +230,13 @@ public class Trainable_Segmentation implements PlugIn {
 							}
 						}
 					}
-					else if(e.getSource() == trainButton){
-						trainClassifier();
+					else if(e.getSource() == trainButton)
+					{
+							try{
+								trainClassifier();
+							}catch(Exception e){
+								e.printStackTrace();
+							}
 					}
 					else if(e.getSource() == overlayButton){
 						toggleOverlay();
@@ -239,6 +255,9 @@ public class Trainable_Segmentation implements PlugIn {
 					}
 					else if(e.getSource() == addClassButton){
 						addNewClass();
+					}
+					else if(e.getSource() == settingsButton){
+						showSettingsDialog();
 					}
 					else{ 
 						for(int i = 0; i < numOfClasses; i++)
@@ -269,7 +288,10 @@ public class Trainable_Segmentation implements PlugIn {
 			});
 		}
 	};
-
+	
+	/**
+	 * Custom canvas to deal with zooming an panning
+	 */
 	private class CustomCanvas extends ImageCanvas {
 		CustomCanvas(ImagePlus imp) {
 			super(imp);
@@ -283,7 +305,7 @@ public class Trainable_Segmentation implements PlugIn {
 				}
 			});
 		}
-		@Override
+		//@Override
 		public void setDrawingSize(int w, int h) {}
 
 		public void setDstDimensions(int width, int height) {
@@ -300,7 +322,7 @@ public class Trainable_Segmentation implements PlugIn {
 			repaint();
 		}
 
-		@Override
+		//@Override
 		public void paint(Graphics g) {
 			Rectangle srcRect = getSrcRect();
 			double mag = getMagnification();
@@ -334,7 +356,7 @@ public class Trainable_Segmentation implements PlugIn {
 		/** Panel with class radio buttons and lists */
 		JPanel annotationsPanel = new JPanel();
 		
-		JPanel buttons = new JPanel();
+		JPanel buttonsPanel = new JPanel();
 		
 		JPanel trainingJPanel = new JPanel();
 		JPanel optionsJPanel = new JPanel();		
@@ -352,16 +374,23 @@ public class Trainable_Segmentation implements PlugIn {
 
 			setTitle("Trainable Segmentation");
 			
-
+			// Annotations panel
 			annotationsConstraints.anchor = GridBagConstraints.NORTHWEST;
-			annotationsConstraints.fill = GridBagConstraints.NONE;
+			annotationsConstraints.fill = GridBagConstraints.HORIZONTAL;
 			annotationsConstraints.gridwidth = 1;
 			annotationsConstraints.gridheight = 1;
 			annotationsConstraints.gridx = 0;
 			annotationsConstraints.gridy = 0;
-
+			
+			annotationsConstraints.insets = new Insets(5, 5, 6, 6);
 			annotationsPanel.setBorder(BorderFactory.createTitledBorder("Labels"));
 			annotationsPanel.setLayout(boxAnnotation);
+			
+			annotationsPanel.add(addExampleButton, annotationsConstraints);
+			annotationsConstraints.gridy++;
+			
+			annotationsConstraints.insets = new Insets(0,0,0,0);
+			annotationsConstraints.fill = GridBagConstraints.NONE;
 			
 			for(int i = 0; i < numOfClasses ; i++)
 			{
@@ -382,9 +411,6 @@ public class Trainable_Segmentation implements PlugIn {
 			// Select first class
 			classButton[1].setSelected(true);
 			
-			BoxLayout buttonLayout = new BoxLayout(buttons, BoxLayout.Y_AXIS);
-			buttons.setLayout(buttonLayout);
-			//buttons.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
 
 			// Add listeners
 			addExampleButton.addActionListener(listener);
@@ -395,6 +421,7 @@ public class Trainable_Segmentation implements PlugIn {
 			loadDataButton.addActionListener(listener);
 			saveDataButton.addActionListener(listener);
 			addClassButton.addActionListener(listener);
+			settingsButton.addActionListener(listener);
 
 			// Training panel (left side of the GUI)
 			trainingJPanel.setBorder(BorderFactory.createTitledBorder("Training"));
@@ -409,8 +436,6 @@ public class Trainable_Segmentation implements PlugIn {
 			trainingConstraints.insets = new Insets(5, 5, 6, 6);
 			trainingJPanel.setLayout(trainingLayout);
 			
-			trainingJPanel.add(addExampleButton, trainingConstraints);
-			trainingConstraints.gridy++;
 			trainingJPanel.add(trainButton, trainingConstraints);
 			trainingConstraints.gridy++;
 			trainingJPanel.add(overlayButton, trainingConstraints);
@@ -440,12 +465,24 @@ public class Trainable_Segmentation implements PlugIn {
 			optionsConstraints.gridy++;
 			optionsJPanel.add(addClassButton, optionsConstraints);
 			optionsConstraints.gridy++;
+			optionsJPanel.add(settingsButton, optionsConstraints);
+			optionsConstraints.gridy++;
 			
 			// Buttons panel (including training and options)
-			buttons.add(trainingJPanel);
-			buttons.add(optionsJPanel);
+			GridBagLayout buttonsLayout = new GridBagLayout();
+			GridBagConstraints buttonsConstraints = new GridBagConstraints();
+			buttonsPanel.setLayout(buttonsLayout);
+			buttonsConstraints.anchor = GridBagConstraints.NORTHWEST;
+			buttonsConstraints.fill = GridBagConstraints.HORIZONTAL;
+			buttonsConstraints.gridwidth = 1;
+			buttonsConstraints.gridheight = 1;
+			buttonsConstraints.gridx = 0;
+			buttonsConstraints.gridy = 0;
+			buttonsPanel.add(trainingJPanel, buttonsConstraints);
+			buttonsConstraints.gridy++;
+			buttonsPanel.add(optionsJPanel, buttonsConstraints);
+			
 
-			BoxLayout box = new BoxLayout(all, BoxLayout.X_AXIS);
 			GridBagLayout layout = new GridBagLayout();
 			GridBagConstraints allConstraints = new GridBagConstraints();
 			all.setLayout(layout);
@@ -459,7 +496,7 @@ public class Trainable_Segmentation implements PlugIn {
 			allConstraints.weightx = 0;
 			allConstraints.weighty = 0;
 
-			all.add(buttons, allConstraints);
+			all.add(buttonsPanel, allConstraints);
 
 			allConstraints.gridx++;
 			allConstraints.weightx = 1;
@@ -483,7 +520,7 @@ public class Trainable_Segmentation implements PlugIn {
 
 			
 			// Propagate all listeners
-			for (Component p : new Component[]{all, buttons}) {
+			for (Component p : new Component[]{all, buttonsPanel}) {
 				for (KeyListener kl : getKeyListeners()) {
 					p.addKeyListener(kl);
 				}
@@ -502,6 +539,7 @@ public class Trainable_Segmentation implements PlugIn {
 					loadDataButton.removeActionListener(listener);
 					saveDataButton.removeActionListener(listener);
 					addClassButton.removeActionListener(listener);
+					settingsButton.removeActionListener(listener);
 					
 					// Set number of classes back to 2
 					numOfClasses = 2;
@@ -523,11 +561,14 @@ public class Trainable_Segmentation implements PlugIn {
 		 */
 
 
+		/**
+		 * Repaint all panels
+		 */
 		public void repaintAll()
 		{
 			this.annotationsPanel.repaint();
 			getCanvas().repaint();
-			this.buttons.repaint();
+			this.buttonsPanel.repaint();
 			this.all.repaint();
 		}
 		
@@ -555,7 +596,7 @@ public class Trainable_Segmentation implements PlugIn {
 			// increase number of available classes
 			numOfClasses ++;
 			
-			IJ.log("new number of classes = " + numOfClasses);
+			//IJ.log("new number of classes = " + numOfClasses);
 			
 			repaintAll();
 		}
@@ -585,10 +626,10 @@ public class Trainable_Segmentation implements PlugIn {
 
 
 		trainingImage.setProcessor("Trainable Segmentation", trainingImage.getProcessor().duplicate().convertToByte(true));
-
-		createFeatureStack(trainingImage);
 		
-
+		// Initialize feature stack (no features yet)
+		featureStack = new FeatureStack(trainingImage);
+		
 		displayImage = new ImagePlus();
 		displayImage.setProcessor("Trainable Segmentation", trainingImage.getProcessor().duplicate().convertToRGB());
 
@@ -621,6 +662,7 @@ public class Trainable_Segmentation implements PlugIn {
 		loadDataButton.setEnabled(s);
 		saveDataButton.setEnabled(s);
 		addClassButton.setEnabled(s);
+		settingsButton.setEnabled(s);
 	}
 
 	/**
@@ -667,13 +709,11 @@ public class Trainable_Segmentation implements PlugIn {
 		displayImage.updateAndDraw();
 	}
 
-	public void createFeatureStack(ImagePlus img){
-		IJ.showStatus("creating feature stack");
-		featureStack = new FeatureStack(img);
-		featureStack.addDefaultFeatures();
-	}
-
-
+	/**
+	 * Write current instances into an ARFF file
+	 * @param data set of instances
+	 * @param filename ARFF file name
+	 */
 	public void writeDataToARFF(Instances data, String filename){
 		try{
 			BufferedWriter out = new BufferedWriter(
@@ -717,6 +757,8 @@ public class Trainable_Segmentation implements PlugIn {
 	 */
 	public Instances createTrainingInstances()
 	{
+		//IJ.log("create training instances: num of features = " + featureStack.getSize());
+		
 		ArrayList<Attribute> attributes = new ArrayList<Attribute>();
 		for (int i=1; i<=featureStack.getSize(); i++){
 			String attString = featureStack.getSliceLabel(i) + " numeric";
@@ -736,7 +778,7 @@ public class Trainable_Segmentation implements PlugIn {
 
 		attributes.add(new Attribute("class", classes));
 
-		Instances trainingData =  new Instances("segment", attributes, numOfInstances);
+		final Instances trainingData =  new Instances("segment", attributes, numOfInstances);
 
 		for(int l = 0; l < numOfClasses; l++)
 		{
@@ -777,22 +819,33 @@ public class Trainable_Segmentation implements PlugIn {
 	/**
 	 * Train classifier with the current instances
 	 */
-	public void trainClassifier(){
-		if (examples[0].size()==0 & loadedTrainingData==null){
-			IJ.showMessage("Cannot train without positive examples!");
+	public void trainClassifier()
+	{	
+		// Two list of examples need to be non empty
+		int nonEmpty = 0;
+		for(int i = 0; i < numOfClasses; i++)
+			if(examples[i].size() > 0)
+				nonEmpty++;
+		if (nonEmpty < 2 && loadedTrainingData==null){
+			IJ.showMessage("Cannot train without at least 2 sets of examples!");
 			return;
 		}
-		if (examples[1].size()==0 & loadedTrainingData==null){
-			IJ.showMessage("Cannot train without negative examples!");
-			return;
-		}
-
+		
+		// Disable buttons until the training has finished
 		setButtonsEnabled(false);
+
+		// Create feature stack if it was not created yet
+		if(featureStack.isEmpty())
+		{
+			IJ.showStatus("Creating feature stack...");
+			featureStack.addDefaultFeatures();
+		}
+		
 
 		IJ.showStatus("Training classifier...");
 		Instances data = null;
-		if (0 == examples[0].size() | 0 == examples[1].size())
-			IJ.log("Training from loaded data only");
+		if (0 == examples[0].size() || 0 == examples[1].size())
+			IJ.log("Training from loaded data only...");
 		else {
 			long start = System.currentTimeMillis();
 			data = createTrainingInstances();
@@ -801,7 +854,7 @@ public class Trainable_Segmentation implements PlugIn {
 			data.setClassIndex(data.numAttributes() - 1);
 		}
 
-		if (loadedTrainingData != null & data != null){
+		if (loadedTrainingData != null && data != null){
 			IJ.log("Merging data...");
 			for (int i=0; i < loadedTrainingData.numInstances(); i++){
 				data.add(loadedTrainingData.instance(i));
@@ -844,6 +897,8 @@ public class Trainable_Segmentation implements PlugIn {
 		toggleOverlay();
 
 		setButtonsEnabled(true);
+		
+		//featureStack.show();
 	}
 	
 	/**
@@ -877,8 +932,13 @@ public class Trainable_Segmentation implements PlugIn {
 	public ImagePlus applyClassifier(Instances data, int w, int h)
 	{
 		IJ.showStatus("Classifying image...");
-		double[] classificationResult = new double[data.numInstances()];
-		for (int i=0; i<data.numInstances(); i++){
+		
+		final long start = System.currentTimeMillis();
+		final int numInstances = data.numInstances();
+		final double[] classificationResult = new double[numInstances];
+		for (int i=0; i<numInstances; i++)
+		{
+			IJ.showProgress((double) i / numInstances);
 			try{
 				classificationResult[i] = rf.classifyInstance(data.instance(i));
 			}catch(Exception e){
@@ -887,21 +947,27 @@ public class Trainable_Segmentation implements PlugIn {
 				return null;
 			}
 		}
+		IJ.showProgress(1.0);
+		
+		final long end = System.currentTimeMillis();
+		IJ.log("Classifying whole image data took: " + (end-start) + "ms");
 
 		IJ.showStatus("Displaying result...");
-		ImageProcessor classifiedImageProcessor = new FloatProcessor(w, h, classificationResult);
+		final ImageProcessor classifiedImageProcessor = new FloatProcessor(w, h, classificationResult);
 		classifiedImageProcessor.convertToByte(true);
-		ImagePlus classImg = new ImagePlus("classification result", classifiedImageProcessor);
+		ImagePlus classImg = new ImagePlus("Classification result", classifiedImageProcessor);
 		return classImg;
 	}
 
 	/**
 	 * Toggle between overlay and original image with markings
 	 */
-	void toggleOverlay(){
+	void toggleOverlay()
+	{
 		showColorOverlay = !showColorOverlay;
-		IJ.log("toggel overlay to: " + showColorOverlay);
-		if (showColorOverlay){
+		//IJ.log("toggel overlay to: " + showColorOverlay);
+		if (showColorOverlay)
+		{
 			//do this every time cause most likely classification changed
 			int width = trainingImage.getWidth();
 			int height = trainingImage.getHeight();
@@ -1047,9 +1113,9 @@ public class Trainable_Segmentation implements PlugIn {
 		OpenDialog od = new OpenDialog("choose data file","");
 		if (od.getFileName()==null)
 			return;
-		IJ.log("load data from " + od.getDirectory() + od.getFileName());
+		IJ.log("Loading data from " + od.getDirectory() + od.getFileName() + "...");
 		loadedTrainingData = readDataFromARFF(od.getDirectory() + od.getFileName());
-		IJ.log("loaded data: " + loadedTrainingData.numInstances());
+		IJ.log("Loaded data: " + loadedTrainingData.numInstances());
 	}
 	
 	/**
@@ -1064,25 +1130,25 @@ public class Trainable_Segmentation implements PlugIn {
 				examplesEmpty = false;
 				break;
 			}
-		if (examplesEmpty & loadedTrainingData == null){
+		if (examplesEmpty && loadedTrainingData == null){
 			IJ.showMessage("There is no data to save");
 			return;
 		}
 
 		Instances data = createTrainingInstances();
 		data.setClassIndex(data.numAttributes() - 1);
-		if (null != loadedTrainingData & null != data){
+		if (null != loadedTrainingData && null != data){
 			IJ.log("merging data");
 			for (int i=0; i < loadedTrainingData.numInstances(); i++){
 				// IJ.log("" + i)
 				data.add(loadedTrainingData.instance(i));
 			}
-			IJ.log("finished");
+			IJ.log("Finished");
 		}
 		else if (null == data)
 			data = loadedTrainingData;
 
-		SaveDialog sd = new SaveDialog("choose save file", "data",".arff");
+		SaveDialog sd = new SaveDialog("Choose save file", "data",".arff");
 		if (sd.getFileName()==null)
 			return;
 		IJ.log("writing training data: " + data.numInstances());
@@ -1101,7 +1167,7 @@ public class Trainable_Segmentation implements PlugIn {
 			return;
 		}
 
-		IJ.log("Adding new class...");
+		//IJ.log("Adding new class...");
 		
 		String inputName = JOptionPane.showInputDialog("Please input a new label name");
 		
@@ -1134,6 +1200,89 @@ public class Trainable_Segmentation implements PlugIn {
 					}
 				});
 		
+	}
+	
+	/**
+	 * Show advanced settings dialog
+	 * 
+	 * @return false when canceled
+	 */
+	public boolean showSettingsDialog()
+	{
+		GenericDialog gd = new GenericDialog("Segmentation settings");
+		
+		final boolean[] oldEnableFeatures = this.featureStack.getEnableFeatures();
+		
+		gd.addMessage("Training features:");
+		final int rows = (int)Math.round(FeatureStack.availableFeatures.length/2.0);
+		IJ.log("rows = " + rows);
+		gd.addCheckboxGroup(rows, 2, FeatureStack.availableFeatures, oldEnableFeatures);
+		gd.addMessage("Fast Random Forest settings:");
+		gd.addNumericField("Number of trees:", Trainable_Segmentation.numOfTrees, 0);
+		gd.addNumericField("Random features", Trainable_Segmentation.randomFeatures, 0);
+		
+		gd.showDialog();
+		
+		if (gd.wasCanceled())
+			return false;
+		
+		final int numOfFeatures = FeatureStack.availableFeatures.length;
+		
+		final boolean[] newEnableFeatures = new boolean[numOfFeatures];
+		
+		boolean featuresChanged = false;
+		
+		// Read checked features and check if any of them changed
+		for(int i = 0; i < numOfFeatures; i++)
+		{
+			newEnableFeatures[i] = gd.getNextBoolean();
+			if (newEnableFeatures[i] != oldEnableFeatures[i])
+				featuresChanged = true;
+		}
+
+		// Read fast random forest parameters and check if changed
+		final int newNumTrees = (int) gd.getNextNumber();
+		final int newRandomFeatures = (int) gd.getNextNumber();
+		
+		// Update random forest if necessary
+		if(newNumTrees != Trainable_Segmentation.numOfTrees ||
+				newRandomFeatures != Trainable_Segmentation.randomFeatures)
+				updateClassifier(newNumTrees, newRandomFeatures);
+		
+		// Update feature stack if necessary
+		if(featuresChanged)
+		{
+			this.setButtonsEnabled(false);
+			//IJ.log("Settings (before update): num of features = " + featureStack.getSize());
+			this.featureStack.setEnableFeatures(newEnableFeatures);
+			this.featureStack.updateFeatures();
+			//IJ.log("Settings (after update): num of features = " + featureStack.getSize());
+			this.setButtonsEnabled(true);
+			// Force whole data to be updated
+			updateWholeData = true;
+		}
+		
+		return true;
+	}
+
+	/**
+	 * Update fast random forest classifier with new values
+	 * 
+	 * @param newNumTrees new number of trees
+	 * @param newRandomFeatures new number of random features per tree
+	 * @return false if error
+	 */
+	private boolean updateClassifier(int newNumTrees, int newRandomFeatures) 
+	{
+		if(newNumTrees < 1 || newRandomFeatures < 1)
+			return false;
+		Trainable_Segmentation.numOfTrees = newNumTrees;
+		Trainable_Segmentation.randomFeatures = newRandomFeatures;
+		
+		rf.setNumTrees(Trainable_Segmentation.numOfTrees);
+		rf.setNumFeatures(Trainable_Segmentation.randomFeatures);
+		
+		return true;
 	}
 	
 
