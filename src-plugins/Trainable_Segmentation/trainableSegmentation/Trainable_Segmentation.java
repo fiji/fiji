@@ -122,7 +122,6 @@ public class Trainable_Segmentation implements PlugIn {
 	private ImagePlus overlayImage;
 	private FeatureStack featureStack = null;
 	private CustomWindow win;
-
 	private int traceCounter[] = new int[MAX_NUM_CLASSES];
 	private boolean showColorOverlay;
 	private Instances wholeImageData;
@@ -418,7 +417,6 @@ public class Trainable_Segmentation implements PlugIn {
 
 			// Select first class
 			classButton[1].setSelected(true);
-			
 
 			// Add listeners
 			addExampleButton.addActionListener(listener);

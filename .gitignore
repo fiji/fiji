@@ -115,7 +115,10 @@
 /jars/VectorString.jar
 /jars/fiji-lib.jar
 /jars/imglib.jar
+/jars/jep.jar
 /plugins/Siox_Segmentation.jar
 /plugins/Directionality_.jar
 /jars/Jama-1.0.2.jar
 /jars/mpicbg.jar
+/plugins/Image_Expression_Parser.jar
+/jars/VIB-lib.jar
