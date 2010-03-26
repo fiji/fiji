@@ -58,7 +58,9 @@ import ij.WindowManager;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
+import java.util.Vector;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -68,6 +70,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.awt.Checkbox;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -154,6 +157,8 @@ public class Trainable_Segmentation implements PlugIn {
 	// Random Forest parameters
 	private int numOfTrees = 200;
 	private int randomFeatures = 2;
+	
+	ArrayList<String> loadedClassNames = null;
 
 	/**
 	 * Basic constructor
@@ -867,9 +872,10 @@ public class Trainable_Segmentation implements PlugIn {
 
 		IJ.showStatus("Training classifier...");
 		Instances data = null;
-		if (0 == examples[0].size() || 0 == examples[1].size())
+		if (nonEmpty < 2)
 			IJ.log("Training from loaded data only...");
-		else {
+		else 
+		{
 			final long start = System.currentTimeMillis();
 			data = createTrainingInstances();
 			final long end = System.currentTimeMillis();
@@ -879,12 +885,12 @@ public class Trainable_Segmentation implements PlugIn {
 
 		if (loadedTrainingData != null && data != null){
 			IJ.log("Merging data...");
-			for (int i=0; i < loadedTrainingData.numInstances(); i++){
+			for (int i=0; i < loadedTrainingData.numInstances(); i++)
 				data.add(loadedTrainingData.instance(i));
-			}
 			IJ.log("Finished");
 		}
-		else if (data == null){
+		else if (data == null)
+		{
 			data = loadedTrainingData;
 			IJ.log("Taking loaded data as only data...");
 		}
@@ -908,7 +914,7 @@ public class Trainable_Segmentation implements PlugIn {
 		final long end = System.currentTimeMillis();
 		final DecimalFormat df = new DecimalFormat("0.0000");
 		IJ.log("Finished training in "+(end-start)+"ms, out of bag error: " + df.format(rf.measureOutOfBagError()));
-		//
+		
 		if(updateWholeData)
 			updateTestSet();
 
@@ -937,11 +943,18 @@ public class Trainable_Segmentation implements PlugIn {
 		IJ.showStatus("Reading whole image data...");
 		
 		long start = System.currentTimeMillis();
-		ArrayList<String> classNames = new ArrayList<String>();
-		for(int i = 0; i < numOfClasses; i++)
-			if(examples[i].size() > 0)
-				classNames.add(classLabels[i]);
+		ArrayList<String> classNames = null;
 		
+		if(loadedTrainingData != null)
+			classNames = loadedClassNames;
+		else
+		{
+			classNames = new ArrayList<String>();
+
+			for(int i = 0; i < numOfClasses; i++)
+				if(examples[i].size() > 0)
+					classNames.add(classLabels[i]);
+		}
 		wholeImageData = featureStack.createInstances(classNames);
 		long end = System.currentTimeMillis();
 		IJ.log("Creating whole image data took: " + (end-start) + "ms");
@@ -1212,13 +1225,80 @@ public class Trainable_Segmentation implements PlugIn {
 	/**
 	 * Load previously saved data
 	 */
-	public void loadTrainingData(){
+	public void loadTrainingData()
+	{
 		OpenDialog od = new OpenDialog("Choose data file","");
 		if (od.getFileName()==null)
 			return;
 		IJ.log("Loading data from " + od.getDirectory() + od.getFileName() + "...");
 		loadedTrainingData = readDataFromARFF(od.getDirectory() + od.getFileName());
-		IJ.log("Loaded data: " + loadedTrainingData.numInstances());
+		
+		
+		// Check the features that were used in the loaded data
+		Enumeration<Attribute> attributes = loadedTrainingData.enumerateAttributes();
+		final int numFeatures = FeatureStack.availableFeatures.length;
+		boolean[] usedFeatures = new boolean[numFeatures];
+		while(attributes.hasMoreElements())
+		{
+			final Attribute a = attributes.nextElement();
+			for(int i = 0 ; i < numFeatures; i++)
+				if(a.name().startsWith(FeatureStack.availableFeatures[i]))
+					usedFeatures[i] = true;
+		}
+		
+		// Check if classes match
+		Attribute classAttribute = loadedTrainingData.classAttribute();
+		Enumeration<String> classValues  = classAttribute.enumerateValues();
+		
+		// Update list of names of loaded classes
+		loadedClassNames = new ArrayList<String>();
+		
+		int j = 0;
+		while(classValues.hasMoreElements())
+		{
+			final String className = classValues.nextElement().trim();
+			loadedClassNames.add(className);
+			
+			IJ.log("Read class name: " + className);
+			if( !className.equals(this.classLabels[j]))
+			{
+				String s = classLabels[0];
+				for(int i = 1; i < numOfClasses; i++)
+					s = s.concat(", " + classLabels[i]);
+				IJ.error("ERROR: Loaded classes and current classes do not match!\nExpected: " + s);
+				loadedTrainingData = null;
+				return;
+			}
+			j++;
+		}
+		
+		if(j != numOfClasses)
+		{
+			IJ.error("ERROR: Loaded number of classes and current number do not match!");
+			loadedTrainingData = null;
+			return;
+		}
+		
+		IJ.log("Loaded data: " + loadedTrainingData.numInstances() + " instances");
+		
+		boolean featuresChanged = false;
+		final boolean[] oldEnableFeatures = this.featureStack.getEnableFeatures();
+		// Read checked features and check if any of them changed
+		for(int i = 0; i < numFeatures; i++)
+		{
+			if (usedFeatures[i] != oldEnableFeatures[i])
+				featuresChanged = true;
+		}
+		// Update feature stack if necessary
+		if(featuresChanged)
+		{
+			this.setButtonsEnabled(false);
+			this.featureStack.setEnableFeatures(usedFeatures);
+			this.featureStack.updateFeatures();
+			this.setButtonsEnabled(true);
+			// Force whole data to be updated
+			updateWholeData = true;
+		}
 	}
 	
 	/**
@@ -1292,7 +1372,8 @@ public class Trainable_Segmentation implements PlugIn {
 	/**
 	 * Repaint whole window
 	 */
-	private void repaintWindow() {
+	private void repaintWindow() 
+	{
 		// Repaint window
 		SwingUtilities.invokeLater(
 				new Runnable() {
@@ -1301,8 +1382,7 @@ public class Trainable_Segmentation implements PlugIn {
 						win.validate();
 						win.repaint();
 					}
-				});
-		
+				});	
 	}
 	
 	/**
@@ -1319,6 +1399,14 @@ public class Trainable_Segmentation implements PlugIn {
 		gd.addMessage("Training features:");
 		final int rows = (int)Math.round(FeatureStack.availableFeatures.length/2.0);
 		gd.addCheckboxGroup(rows, 2, FeatureStack.availableFeatures, oldEnableFeatures);
+		
+		if(loadedTrainingData != null)
+		{
+			final Vector<Checkbox> v = gd.getCheckboxes();
+			for(Checkbox c : v)
+				c.setEnabled(false);
+			gd.addMessage("WARNING: no features are selectable while using loaded data");
+		}
 		
 		gd.addMessage("General options:");
 		gd.addCheckbox("Normalize data", this.featureStack.isNormalized());
@@ -1366,6 +1454,7 @@ public class Trainable_Segmentation implements PlugIn {
 				IJ.log("Invalid name for class " + (i+1));
 				continue;
 			}
+			s = s.trim();
 			if(!s.equals(classLabels[i]))
 			{
 				if (0 == s.toLowerCase().indexOf("add ")) 
@@ -1396,10 +1485,8 @@ public class Trainable_Segmentation implements PlugIn {
 		{
 			this.setButtonsEnabled(false);
 			this.featureStack.setNormalize(normalize);
-			//IJ.log("Settings (before update): num of features = " + featureStack.getSize());
 			this.featureStack.setEnableFeatures(newEnableFeatures);
 			this.featureStack.updateFeatures();
-			//IJ.log("Settings (after update): num of features = " + featureStack.getSize());
 			this.setButtonsEnabled(true);
 			// Force whole data to be updated
 			updateWholeData = true;
