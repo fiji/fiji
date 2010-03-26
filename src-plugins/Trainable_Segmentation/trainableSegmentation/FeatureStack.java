@@ -72,9 +72,9 @@ public class FeatureStack
 	
 	public static final String[] availableFeatures 
 		= new String[]{	"Gaussian Blur", "Sobel filter", "Hessian", "Difference of gaussians", 
-					   	"Membrane projections","Variance","Mean", "Minimum", "Maximum"};
+					   	"Membrane projections","Variance","Mean", "Minimum", "Maximum", "Median"};
 	
-	private boolean[] enableFeatures = new boolean[]{true, true, true, true, true, false, false, false, false};
+	private boolean[] enableFeatures = new boolean[]{true, true, true, true, true, false, false, false, false, false};
 	
 	private boolean normalize = false;
 	
@@ -149,6 +149,14 @@ public class FeatureStack
 		final RankFilters filter = new RankFilters();
 		filter.rank(ip, radius, RankFilters.MAX);
 		wholeStack.addSlice("Maximum_" + radius, ip);
+	}
+	
+	public void addMedian(float radius)
+	{
+		final ImageProcessor ip = originalImage.getProcessor().duplicate();
+		final RankFilters filter = new RankFilters();
+		filter.rank(ip, radius, RankFilters.MEDIAN);
+		wholeStack.addSlice("Median_" + radius, ip);
 	}
 	
 	public void writeConfigurationToFile(String filename){
@@ -464,11 +472,19 @@ public class FeatureStack
 				this.addMin(i); 
 				counter++;
 			}
-			// Mean
+			// Max
 			if(enableFeatures[7])
 			{
 				IJ.showStatus("Creating feature stack...   " + counter);
 				this.addMax(i); 
+				counter++;
+			}
+			
+			// Median
+			if(enableFeatures[7])
+			{
+				IJ.showStatus("Creating feature stack...   " + counter);
+				this.addMedian(i); 
 				counter++;
 			}
 			
