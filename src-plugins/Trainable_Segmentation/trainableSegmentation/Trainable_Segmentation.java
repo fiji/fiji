@@ -792,8 +792,13 @@ public class Trainable_Segmentation implements PlugIn {
 
 		final Instances trainingData =  new Instances("segment", attributes, numOfInstances);
 
+		IJ.log("\nTraining input:");
+		
+		// For all classes
 		for(int l = 0; l < numOfClasses; l++)
 		{
+			int nl = 0;
+			// Read all lists of examples
 			for(int j=0; j<examples[l].size(); j++)
 			{
 				Roi r = examples[l].get(j);
@@ -803,26 +808,32 @@ public class Trainable_Segmentation implements PlugIn {
 					//IJ.log("shape roi detected");
 					rois = ((ShapeRoi) r).getRois();
 				}
-				else{
+				else
+				{
 					rois = new Roi[1];
 					rois[0] = r;
 				}
 
-				for(int k=0; k<rois.length; k++){
+				for(int k=0; k<rois.length; k++)
+				{
 					int[] x = rois[k].getPolygon().xpoints;
 					int[] y = rois[k].getPolygon().ypoints;
-					int n = rois[k].getPolygon().npoints;
+					final int n = rois[k].getPolygon().npoints;
 
-					for (int i=0; i<n; i++){
+					for (int i=0; i<n; i++)
+					{
 						double[] values = new double[featureStack.getSize()+1];
-						for (int z=1; z<=featureStack.getSize(); z++){
+						for (int z=1; z<=featureStack.getSize(); z++)
 							values[z-1] = featureStack.getProcessor(z).getPixelValue(x[i], y[i]);
-						}
 						values[featureStack.getSize()] = (double) l;
 						trainingData.add(new DenseInstance(1.0, values));
+						// increase number of instances for this class
+						nl ++;
 					}
 				}
 			}
+			
+			IJ.log("# of pixels selected as " + classLabels[l] + ": " +nl);
 		}
 
 		return trainingData;
