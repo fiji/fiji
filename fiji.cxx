@@ -1584,15 +1584,26 @@ static int start_ij(void)
 			if (i + 2 == main_argc && main_argv[i + 1][0] != '-')
 				dashdash = count;
 		}
-		else if (!strcmp(main_argv[i], "--jython"))
+		else if (!strcmp(main_argv[i], "--jython")) {
 			main_class = "org.python.util.jython";
+			/* When running on Debian / Ubuntu we depend on the
+			   external version of jython, so add its jar: */
+			class_path += "/usr/share/java/jython.jar" PATH_SEP;
+		}
 		else if (!strcmp(main_argv[i], "--jruby"))
 			main_class = "org.jruby.Main";
-		else if (!strcmp(main_argv[i], "--clojure"))
+		else if (!strcmp(main_argv[i], "--clojure")) {
 			main_class = "clojure.lang.Repl";
-		else if (!strcmp(main_argv[i], "--beanshell") ||
-				!strcmp(main_argv[i], "--bsh"))
+			/* When running on Debian / Ubuntu we depend on the
+			   external version of clojure, so add its jar: */
+			class_path += "/usr/share/java/clojure.jar" PATH_SEP;
+		} else if (!strcmp(main_argv[i], "--beanshell") ||
+			   !strcmp(main_argv[i], "--bsh")) {
 			main_class = "bsh.Interpreter";
+			/* When running on Debian / Ubuntu we depend on the
+			   external version of beanshell, so add its jar: */
+			class_path += "/usr/share/java/bsh.jar" PATH_SEP;
+		}
 		else if (handle_one_option(i, "--main-class", arg)) {
 			class_path += "." PATH_SEP;
 			main_class = strdup(arg.c_str());
@@ -1667,6 +1678,11 @@ static int start_ij(void)
 			main_class = "org.apache.tools.ant.Main";
 			class_path += get_jre_home()
 				+ "/../lib/tools.jar" PATH_SEP;
+			/* When running on Debian / Ubuntu we depend on the
+			   external version of ant, so add those jars too: */
+			class_path += "/usr/share/java/ant.jar" PATH_SEP;
+			class_path += "/usr/share/java/ant-launcher.jar" PATH_SEP;
+			class_path += "/usr/share/java/ant-nodeps.jar" PATH_SEP;
 		}
 		else if (!strcmp(main_argv[i], "--retrotranslator") ||
 				!strcmp(main_argv[i], "--retro"))
