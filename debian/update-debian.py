@@ -119,7 +119,8 @@ package_name_to_file_matchers = {
         [ "jars/imglib.jar" ],
 
     "fiji-vib" :
-        [ "plugins/VIB_.jar" ],
+        [ "plugins/VIB_.jar",
+          "jars/VIB-lib.jar" ],
 
     "fiji-trakem2" :
         [ "plugins/TrakEM2_.jar" ],
