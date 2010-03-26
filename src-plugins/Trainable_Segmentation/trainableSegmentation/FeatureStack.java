@@ -483,6 +483,8 @@ public class FeatureStack
 			final ImagePlus imp = new ImagePlus("", this.wholeStack);
 			IJ.run(imp, "Enhance Contrast", "saturated=0.1 normalize_all");
 		}
+		
+		IJ.showStatus("Features stack is updated now!");
 	}
 	
 

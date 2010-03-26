@@ -858,9 +858,9 @@ public class Trainable_Segmentation implements PlugIn {
 		if (0 == examples[0].size() || 0 == examples[1].size())
 			IJ.log("Training from loaded data only...");
 		else {
-			long start = System.currentTimeMillis();
+			final long start = System.currentTimeMillis();
 			data = createTrainingInstances();
-			long end = System.currentTimeMillis();
+			final long end = System.currentTimeMillis();
 			IJ.log("Creating training data took: " + (end-start) + "ms");
 			data.setClassIndex(data.numAttributes() - 1);
 		}
@@ -884,6 +884,7 @@ public class Trainable_Segmentation implements PlugIn {
 		}
 		
 		// Train the classifier on the current data
+		final long start = System.currentTimeMillis();
 		try{
 			rf.buildClassifier(data);
 		}
@@ -892,8 +893,9 @@ public class Trainable_Segmentation implements PlugIn {
 			e.printStackTrace();
 			return;
 		}
+		final long end = System.currentTimeMillis();
 		final DecimalFormat df = new DecimalFormat("0.0000");
-		IJ.log("Finished, training error: " + df.format(rf.measureOutOfBagError()));
+		IJ.log("Finished training in "+(end-start)+"ms, out of the bag error: " + df.format(rf.measureOutOfBagError()));
 		//
 		if(updateWholeData)
 			updateTestSet();
@@ -902,7 +904,7 @@ public class Trainable_Segmentation implements PlugIn {
 
 		classifiedImage = applyClassifier(wholeImageData, trainingImage.getWidth(), trainingImage.getHeight());
 
-		IJ.log("Finished segmentation of whole image");
+		IJ.log("Finished segmentation of whole image.");
 		
 		overlayButton.setEnabled(true);
 		resultButton.setEnabled(true);
