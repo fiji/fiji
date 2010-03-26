@@ -1,10 +1,16 @@
 package trainableSegmentation;
-/* This class is intended for the Simple_Segmentation plugin. It creates and holds
+/** 
+ * This class is intended for the Trainable_Segmentation plugin. It creates and holds
  * different feature images for the classification. Possible filters include:
  * - Gaussianblur
  * - Gradientmagnitude
  * - Hessian
  * - Difference of Gaussian
+ * - Orientation filter to detect membranes and then its projection
+ * - Mean
+ * - Variance
+ * - Minimum
+ * - Maximum
  * 
  * filters to come:
  * - make use of color channels
@@ -27,7 +33,8 @@ package trainableSegmentation;
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
- * Author: Verena Kaynig (verena.kaynig@inf.ethz.ch)
+ * Authors: Verena Kaynig (verena.kaynig@inf.ethz.ch), Ignacio Arganda-Carreras (iarganda@mit.edu)
+ *          Albert Cardona (acardona@ini.phys.ethz.ch)
  */
 
 import java.io.BufferedWriter;
@@ -35,34 +42,48 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+
+import stitching.FloatArray2D;
 
 import weka.core.Attribute;
-import weka.core.FastVector;
-import weka.core.Instance;
+import weka.core.DenseInstance;
 import weka.core.Instances;
 import ij.IJ;
 import ij.ImageStack;
 import ij.ImagePlus;
-import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
-import ij.process.FHT;
-import ij.plugin.FFT;
 import ij.plugin.ZProjector;
 import ij.plugin.filter.GaussianBlur;
 import ij.plugin.filter.Convolver;
-
-import edu.mines.jtk.dsp.*;
-import stitching.*;
+import ij.plugin.filter.RankFilters;
 
 
-public class FeatureStack {
-	private ImagePlus originalImage;
-	private ImageStack wholeStack;
-	private int width;
-	private int height;
+
+public class FeatureStack 
+{
+	private ImagePlus originalImage = null;
+	private ImageStack wholeStack = null;
+	private int width = 0;
+	private int height = 0;
 	
-	public FeatureStack(ImagePlus image){
+	private static final int MAX_SIGMA = 16;
+	
+	public static final String[] availableFeatures 
+		= new String[]{	"Gaussian Blur", "Sobel filter", "Hessian", "Difference of gaussians", 
+					   	"Membrane projections","Variance","Mean", "Minimum", "Maximum", "Median"};
+	
+	private boolean[] enableFeatures = new boolean[]{true, true, true, true, true, false, false, false, false, false};
+	
+	private boolean normalize = false;
+	
+	/**
+	 * Construct object to store stack of image features
+	 * @param image original image
+	 */
+	public FeatureStack(ImagePlus image)
+	{
 		originalImage = new ImagePlus("original image", image.getProcessor().convertToFloat());
 		width = image.getWidth();
 		height = image.getHeight();
@@ -96,6 +117,46 @@ public class FeatureStack {
 		GaussianBlur gs = new GaussianBlur();
 		gs.blur(ip, sigma);
 		wholeStack.addSlice("GaussianBlur_" + sigma, ip);
+	}
+	
+	public void addVariance(float radius)
+	{
+		final ImageProcessor ip = originalImage.getProcessor().duplicate();
+		final RankFilters filter = new RankFilters();
+		filter.rank(ip, radius, RankFilters.VARIANCE);
+		wholeStack.addSlice("Variance_" + radius, ip);
+	}
+	
+	public void addMean(float radius)
+	{
+		final ImageProcessor ip = originalImage.getProcessor().duplicate();
+		final RankFilters filter = new RankFilters();
+		filter.rank(ip, radius, RankFilters.MEAN);
+		wholeStack.addSlice("Mean_" + radius, ip);
+	}
+	
+	public void addMin(float radius)
+	{
+		final ImageProcessor ip = originalImage.getProcessor().duplicate();
+		final RankFilters filter = new RankFilters();
+		filter.rank(ip, radius, RankFilters.MIN);
+		wholeStack.addSlice("Minimum_" + radius, ip);
+	}
+	
+	public void addMax(float radius)
+	{
+		final ImageProcessor ip = originalImage.getProcessor().duplicate();
+		final RankFilters filter = new RankFilters();
+		filter.rank(ip, radius, RankFilters.MAX);
+		wholeStack.addSlice("Maximum_" + radius, ip);
+	}
+	
+	public void addMedian(float radius)
+	{
+		final ImageProcessor ip = originalImage.getProcessor().duplicate();
+		final RankFilters filter = new RankFilters();
+		filter.rank(ip, radius, RankFilters.MEDIAN);
+		wholeStack.addSlice("Median_" + radius, ip);
 	}
 	
 	public void writeConfigurationToFile(String filename){
@@ -143,7 +204,8 @@ public class FeatureStack {
 		wholeStack.addSlice("SobelFilter_"+sigma, ip);
 	}
 	
-	public void addHessian(float sigma){
+	public void addHessian(float sigma)
+	{
 		float[] sobelFilter_x = {1f,2f,1f,0f,0f,0f,-1f,-2f,-1f};
 		float[] sobelFilter_y = {1f,0f,-1f,2f,0f,-2f,1f,0f,-1f};
 		Convolver c = new Convolver();				
@@ -226,9 +288,14 @@ public class FeatureStack {
 		
 		ImageStack is = new ImageStack(width, height);
 		ImageProcessor rotatedPatch;
-		for (int i=0; i<9; i++){
+		
+		// Rotate kernel 15 degrees up to 180
+		for (int i=0; i<12; i++)
+		{
 			rotatedPatch = membranePatch.duplicate();
-			rotatedPatch.invert();rotatedPatch.rotate(20*i);rotatedPatch.invert();
+			rotatedPatch.invert();
+			rotatedPatch.rotate(15*i);
+			rotatedPatch.invert();
 			Convolver c = new Convolver();				
 	
 			float[] kernel = (float[]) rotatedPatch.getPixels();
@@ -240,6 +307,8 @@ public class FeatureStack {
 		}
 		
 		ImagePlus projectStack = new ImagePlus("membraneStack",is);
+		//projectStack.show();
+		
 		ZProjector zp = new ZProjector(projectStack);
 		zp.setStopSlice(is.getSize());
 		for (int i=0;i<6; i++){
@@ -251,9 +320,11 @@ public class FeatureStack {
 	
 	
 	public void addTest(){
-		FloatArray2D fftImage = new FloatArray2D((float[]) originalImage.getProcessor().getPixels(),originalImage.getWidth(), originalImage.getHeight());
-		int fftSize = FftReal.nfftFast(Math.max(width, height));
-		FloatArray2D fftImagePadded = CommonFunctions.zeroPad(fftImage, fftSize, fftSize);
+		FloatArray2D fftImage = new FloatArray2D((float[]) originalImage.getProcessor().getPixels(),
+													originalImage.getWidth(), originalImage.getHeight());
+		//int fftSize = FftReal.nfftFast(Math.max(width, height));
+		
+		//FloatArray2D fftImagePadded = CommonFunctions.zeroPad(fftImage, fftSize, fftSize);
 		
 		//fftImage = CommonFunctions.computeFFT(fftImage);
 		//float[] xcorr = CommonFunctions.multiply(fftImage.data, fftImage.data, false);
@@ -280,16 +351,22 @@ public class FeatureStack {
 		return wholeStack.getProcessor(index);
 	}
 	
-	public Instances createInstances(){
-		FastVector attributes = new FastVector();
+	/**
+	 * Create the instances for the whole stack
+	 * 
+	 * @param classes list of classes names
+	 * 
+	 * @return whole stack set of instances
+	 */
+	public Instances createInstances(ArrayList<String> classes)
+	{
+		ArrayList<Attribute> attributes = new ArrayList<Attribute>();
 		for (int i=1; i<=wholeStack.getSize(); i++){
 			String attString = wholeStack.getSliceLabel(i) + " numeric";
-			attributes.addElement(new Attribute(attString));
+			attributes.add(new Attribute(attString));
 		}
-		FastVector classes = new FastVector();
-		classes.addElement("foreground");
-		classes.addElement("background");
-		attributes.addElement(new Attribute("class", classes));
+		
+		attributes.add(new Attribute("class", classes));
 		
 		Instances data =  new Instances("segment", attributes, width*height);
 		
@@ -306,27 +383,145 @@ public class FeatureStack {
 					//System.out.println("" + wholeStack.getProcessor(z).getPixelValue(x, y) + " * " + values[z-1]);
 				}
 				values[wholeStack.getSize()] = 0.0;
-				data.add(new Instance(1.0, values));
+				data.add(new DenseInstance(1.0, values));
 			}
 		}
 		
 		return data;
 	}
 	
-	public void addDefaultFeatures(){
+	public void addDefaultFeatures()
+	{
 		int counter = 1;
-		for (float i=1.0f; i<17; i*=2){
-			IJ.showStatus("creating feature stack   " + counter);
+		for (float i=1.0f; i<FeatureStack.MAX_SIGMA; i*=2){
+			IJ.showStatus("Creating feature stack...   " + counter);
 			this.addGaussianBlur(i); counter++;
-			IJ.showStatus("creating feature stack   " + counter);			
+			IJ.showStatus("Creating feature stack...   " + counter);			
 			this.addGradient(i); counter++;
-			IJ.showStatus("creating feature stack   " + counter);			
+			IJ.showStatus("Creating feature stack...   " + counter);			
 			this.addHessian(i); counter++;
 			for (float j=1.0f; j<i; j*=2){
-				IJ.showStatus("creating feature stack   " + counter);				
+				IJ.showStatus("Creating feature stack...   " + counter);				
 				this.addDoG(i, j); counter++;
 			}
 		}
 		this.addMembraneFeatures(19, 1);
+	}
+	
+	/**
+	 * Update features with current list
+	 */
+	public void updateFeatures()
+	{
+		wholeStack = new ImageStack(width, height);
+		wholeStack.addSlice("original", originalImage.getProcessor().duplicate());
+
+		int counter = 1;
+		for (float i=1.0f; i<= FeatureStack.MAX_SIGMA; i*=2)
+		{
+			// Gaussian blur
+			if(enableFeatures[0])
+			{
+				IJ.showStatus("Creating feature stack...   " + counter);
+				this.addGaussianBlur(i); 
+				counter++;
+			}
+			// Sobel
+			if(enableFeatures[1])
+			{
+				IJ.showStatus("Creating feature stack...   " + counter);			
+				this.addGradient(i); 
+				counter++;
+			}
+			// Hessian
+			if(enableFeatures[2])
+			{
+				IJ.showStatus("Creating feature stack...   " + counter);			
+				this.addHessian(i); 
+				counter++;
+			}
+			// Difference of gaussians
+			if(enableFeatures[3])
+			{
+				for (float j=1.0f; j<i; j*=2)
+				{
+					IJ.showStatus("Creating feature stack...   " + counter);				
+					this.addDoG(i, j); 
+					counter++;
+				}
+			}
+			// Variance
+			if(enableFeatures[5])
+			{
+				IJ.showStatus("Creating feature stack...   " + counter);
+				this.addVariance(i); 
+				counter++;
+			}
+			// Mean
+			if(enableFeatures[6])
+			{
+				IJ.showStatus("Creating feature stack...   " + counter);
+				this.addMean(i); 
+				counter++;
+			}
+			
+			// Min
+			if(enableFeatures[6])
+			{
+				IJ.showStatus("Creating feature stack...   " + counter);
+				this.addMin(i); 
+				counter++;
+			}
+			// Max
+			if(enableFeatures[7])
+			{
+				IJ.showStatus("Creating feature stack...   " + counter);
+				this.addMax(i); 
+				counter++;
+			}
+			
+			// Median
+			if(enableFeatures[7])
+			{
+				IJ.showStatus("Creating feature stack...   " + counter);
+				this.addMedian(i); 
+				counter++;
+			}
+			
+		}
+		// Membrane projections
+		if(enableFeatures[4])
+			this.addMembraneFeatures(19, 1);
+		
+		if(normalize)
+		{
+			IJ.showStatus("Normalizing stack...");
+			final ImagePlus imp = new ImagePlus("", this.wholeStack);
+			IJ.run(imp, "Enhance Contrast", "saturated=0.1 normalize_all");
+		}
+		
+		IJ.showStatus("Features stack is updated now!");
+	}
+	
+
+	public void setEnableFeatures(boolean[] enableFeatures) {
+		this.enableFeatures = enableFeatures;
+	}
+
+	public boolean[] getEnableFeatures() {
+		return enableFeatures;
+	}
+	
+	public boolean isEmpty()
+	{
+		return (null == this.wholeStack || this.wholeStack.getSize() < 2);
+	}
+
+	public void setNormalize(boolean normalize) {
+		this.normalize = normalize;
+	}
+
+	public boolean isNormalized() {
+		return normalize;
 	}
 }
