@@ -101,7 +101,6 @@ import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JRadioButton;
 import javax.swing.SwingUtilities;
 
 import weka.classifiers.AbstractClassifier;
@@ -128,9 +127,8 @@ public class Trainable_Segmentation implements PlugIn {
 	private Instances loadedTrainingData;
 	private FastRandomForest rf;
 	
-	private static boolean updateWholeData = true;
+	private boolean updateWholeData = true;
 	
-	final JButton addExampleButton;
 	final JButton trainButton;
 	final JButton overlayButton;
 	final JButton resultButton;
@@ -144,27 +142,24 @@ public class Trainable_Segmentation implements PlugIn {
 	final Color[] colors = new Color[]{Color.red, Color.green, Color.blue,
 			Color.orange, Color.pink};
 
-	String[] classLabels = new String[]{"background", "foreground", "class-3", "class-4", "class-5"};
+	String[] classLabels = new String[]{"class 1", "class 2", "class 3", "class 4", "class 5"};
 
-	private static int numOfClasses = 2;
+	private int numOfClasses = 2;
 	private java.awt.List exampleList[] = new java.awt.List[MAX_NUM_CLASSES];
-	private JRadioButton [] classButton = new JRadioButton[MAX_NUM_CLASSES];
+	private JButton [] addExampleButton = new JButton[MAX_NUM_CLASSES];
 	//Group the radio buttons.
-	ButtonGroup classButtonGroup = new ButtonGroup();
+	final ButtonGroup classButtonGroup = new ButtonGroup();
 
 	
 	// Random Forest parameters
-	private static int numOfTrees = 200;
-	private static int randomFeatures = 2;
+	private int numOfTrees = 200;
+	private int randomFeatures = 2;
 
 	/**
 	 * Basic constructor
 	 */
 	public Trainable_Segmentation() 
 	{
-		addExampleButton = new JButton("ADD");
-		addExampleButton.setToolTipText("Add current ROI to selected label");
-		
 		trainButton = new JButton("Train classifier");
 		trainButton.setToolTipText("Start training the classifier");
 		
@@ -202,13 +197,13 @@ public class Trainable_Segmentation implements PlugIn {
 
 		showColorOverlay = false;
 
+		// Initialization of Fast Random Forest classifier
 		rf = new FastRandomForest();
-		//FIXME: should depend on image size?? Or labels??
-		rf.setNumTrees(Trainable_Segmentation.numOfTrees);
+		rf.setNumTrees(numOfTrees);
 		//this is the default that Breiman suggests
 		//rf.setNumFeatures((int) Math.round(Math.sqrt(featureStack.getSize())));
 		//but this seems to work better
-		rf.setNumFeatures(Trainable_Segmentation.randomFeatures);
+		rf.setNumFeatures(randomFeatures);
 
 
 		rf.setSeed(123);
@@ -223,21 +218,10 @@ public class Trainable_Segmentation implements PlugIn {
 	private ActionListener listener = new ActionListener() {
 		public void actionPerformed(final ActionEvent e) {
 			exec.submit(new Runnable() {
-				public void run() {
-
-					if(e.getSource() == addExampleButton)
-					{
-						//IJ.log("+ pressed");
-						for(int i = 0; i < numOfClasses; i++)
-						{
-							if(classButton[i].isSelected())
-							{
-								addExamples(i);
-								break;
-							}
-						}
-					}
-					else if(e.getSource() == trainButton)
+				public void run() 
+				{											
+					
+					if(e.getSource() == trainButton)
 					{
 						try{
 							trainClassifier();
@@ -268,11 +252,18 @@ public class Trainable_Segmentation implements PlugIn {
 					}
 					else{ 
 						for(int i = 0; i < numOfClasses; i++)
+						{
 							if(e.getSource() == exampleList[i])
 							{
 								deleteSelected(e);
 								break;
 							}
+							if(e.getSource() == addExampleButton[i])
+							{
+								addExamples(i);
+								break;
+							}
+						}
 					}
 
 				}
@@ -383,43 +374,43 @@ public class Trainable_Segmentation implements PlugIn {
 			
 			// Annotations panel
 			annotationsConstraints.anchor = GridBagConstraints.NORTHWEST;
-			annotationsConstraints.fill = GridBagConstraints.HORIZONTAL;
 			annotationsConstraints.gridwidth = 1;
 			annotationsConstraints.gridheight = 1;
 			annotationsConstraints.gridx = 0;
 			annotationsConstraints.gridy = 0;
 			
-			annotationsConstraints.insets = new Insets(5, 5, 6, 6);
 			annotationsPanel.setBorder(BorderFactory.createTitledBorder("Labels"));
 			annotationsPanel.setLayout(boxAnnotation);
 			
-			annotationsPanel.add(addExampleButton, annotationsConstraints);
-			annotationsConstraints.gridy++;
 			
-			annotationsConstraints.insets = new Insets(0,0,0,0);
-			annotationsConstraints.fill = GridBagConstraints.NONE;
 			
 			for(int i = 0; i < numOfClasses ; i++)
 			{
 				exampleList[i].addActionListener(listener);
-				classButton[i] = new JRadioButton(classLabels[i]);
-				classButton[i].setToolTipText("Select to add markings of label '" + classLabels[i] + "'");
-				classButtonGroup.add(classButton[i]);
+				addExampleButton[i] = new JButton("Add " + classLabels[i]);
+				addExampleButton[i].setToolTipText("Add markings of label '" + classLabels[i] + "'");
+				classButtonGroup.add(addExampleButton[i]);
 
-				boxAnnotation.setConstraints(classButton[i], annotationsConstraints);
-				annotationsPanel.add(classButton[i]);
+				annotationsConstraints.fill = GridBagConstraints.HORIZONTAL;
+				annotationsConstraints.insets = new Insets(5, 5, 6, 6);
+				
+				boxAnnotation.setConstraints(addExampleButton[i], annotationsConstraints);
+				annotationsPanel.add(addExampleButton[i]);
 				annotationsConstraints.gridy++;
 
+				annotationsConstraints.insets = new Insets(0,0,0,0);
+				
 				boxAnnotation.setConstraints(exampleList[i], annotationsConstraints);
 				annotationsPanel.add(exampleList[i]);
 				annotationsConstraints.gridy++;
 			}
 
 			// Select first class
-			classButton[1].setSelected(true);
+			addExampleButton[0].setSelected(true);
 
 			// Add listeners
-			addExampleButton.addActionListener(listener);
+			for(int i = 0; i < numOfClasses ; i++)
+				addExampleButton[i].addActionListener(listener);
 			trainButton.addActionListener(listener);
 			overlayButton.addActionListener(listener);
 			resultButton.addActionListener(listener);
@@ -537,7 +528,8 @@ public class Trainable_Segmentation implements PlugIn {
 					//IJ.log("closing window");
 					// cleanup
 					exec.shutdownNow();
-					addExampleButton.removeActionListener(listener);
+					for(int i = 0; i < numOfClasses ; i++)
+						addExampleButton[i].removeActionListener(listener);
 					trainButton.removeActionListener(listener);
 					overlayButton.removeActionListener(listener);
 					resultButton.removeActionListener(listener);
@@ -588,16 +580,24 @@ public class Trainable_Segmentation implements PlugIn {
 			exampleList[numOfClasses].setForeground(colors[numOfClasses]);
 			
 			exampleList[numOfClasses].addActionListener(listener);
-			classButton[numOfClasses] = new JRadioButton(classLabels[numOfClasses]);
-			classButtonGroup.add(classButton[numOfClasses]);
-
-			boxAnnotation.setConstraints(classButton[numOfClasses], annotationsConstraints);
-			annotationsPanel.add(classButton[numOfClasses]);
+			addExampleButton[numOfClasses] = new JButton("Add " + classLabels[numOfClasses]);
+			classButtonGroup.add(addExampleButton[numOfClasses]);
+			
+			annotationsConstraints.fill = GridBagConstraints.HORIZONTAL;
+			annotationsConstraints.insets = new Insets(5, 5, 6, 6);
+			
+			boxAnnotation.setConstraints(addExampleButton[numOfClasses], annotationsConstraints);
+			annotationsPanel.add(addExampleButton[numOfClasses]);
 			annotationsConstraints.gridy++;
+			
+			annotationsConstraints.insets = new Insets(0,0,0,0);
 
 			boxAnnotation.setConstraints(exampleList[numOfClasses], annotationsConstraints);
 			annotationsPanel.add(exampleList[numOfClasses]);
 			annotationsConstraints.gridy++;
+			
+			// Add listener to the new button
+			addExampleButton[numOfClasses].addActionListener(listener);
 			
 			// increase number of available classes
 			numOfClasses ++;
@@ -660,7 +660,6 @@ public class Trainable_Segmentation implements PlugIn {
 	 */
 	private void setButtonsEnabled(Boolean s)
 	{
-		addExampleButton.setEnabled(s);
 		trainButton.setEnabled(s);
 		overlayButton.setEnabled(s);
 		resultButton.setEnabled(s);
@@ -672,7 +671,7 @@ public class Trainable_Segmentation implements PlugIn {
 		for(int i = 0 ; i < numOfClasses; i++)
 		{
 			exampleList[i].setEnabled(s);
-			classButton[i].setEnabled(s);
+			addExampleButton[i].setEnabled(s);
 		}
 	}
 
@@ -700,7 +699,9 @@ public class Trainable_Segmentation implements PlugIn {
 		drawExamples();
 	}
 
-
+	/**
+	 * Draw the painted traces on the display image
+	 */
 	private void drawExamples()
 	{
 		if (!showColorOverlay)
@@ -1312,8 +1313,12 @@ public class Trainable_Segmentation implements PlugIn {
 		gd.addCheckbox("Normalize data", this.featureStack.isNormalized());
 		
 		gd.addMessage("Fast Random Forest settings:");
-		gd.addNumericField("Number of trees:", Trainable_Segmentation.numOfTrees, 0);
-		gd.addNumericField("Random features", Trainable_Segmentation.randomFeatures, 0);
+		gd.addNumericField("Number of trees:", numOfTrees, 0);
+		gd.addNumericField("Random features", randomFeatures, 0);
+		
+		gd.addMessage("Class names:");
+		for(int i = 0; i < numOfClasses; i++)
+			gd.addStringField("Class "+(i+1), classLabels[i]);
 		
 		gd.addHelp("http://pacific.mpi-cbg.de/wiki/Trainable_Segmentation_Plugin");
 		
@@ -1342,10 +1347,38 @@ public class Trainable_Segmentation implements PlugIn {
 		final int newNumTrees = (int) gd.getNextNumber();
 		final int newRandomFeatures = (int) gd.getNextNumber();
 		
+		boolean classNameChanged = false;
+		for(int i = 0; i < numOfClasses; i++)
+		{
+			String s = gd.getNextString();
+			if (null == s || 0 == s.length()) {
+				IJ.log("Invalid name for class " + (i+1));
+				continue;
+			}
+			if(!s.equals(classLabels[i]))
+			{
+				if (0 == s.toLowerCase().indexOf("add ")) 
+					s = s.substring(4);
+				
+				classLabels[i] = s;
+				classNameChanged = true;
+				addExampleButton[i].setText("Add " + classLabels[i]);
+
+			}
+		}
+		
+		// If there is a change in the class names, 
+		// the data set (instances) must be updated.
+		if(classNameChanged)
+		{
+			updateWholeData = true;
+			// Pack window to udpate buttons
+			win.pack();
+		}
+			
 		// Update random forest if necessary
-		if(newNumTrees != Trainable_Segmentation.numOfTrees ||
-				newRandomFeatures != Trainable_Segmentation.randomFeatures)
-				updateClassifier(newNumTrees, newRandomFeatures);
+		if(newNumTrees != numOfTrees ||	newRandomFeatures != randomFeatures)
+			updateClassifier(newNumTrees, newRandomFeatures);
 		
 		// Update feature stack if necessary
 		if(featuresChanged || normalize != this.featureStack.isNormalized())
@@ -1375,11 +1408,11 @@ public class Trainable_Segmentation implements PlugIn {
 	{
 		if(newNumTrees < 1 || newRandomFeatures < 1)
 			return false;
-		Trainable_Segmentation.numOfTrees = newNumTrees;
-		Trainable_Segmentation.randomFeatures = newRandomFeatures;
+		numOfTrees = newNumTrees;
+		randomFeatures = newRandomFeatures;
 		
-		rf.setNumTrees(Trainable_Segmentation.numOfTrees);
-		rf.setNumFeatures(Trainable_Segmentation.randomFeatures);
+		rf.setNumTrees(numOfTrees);
+		rf.setNumFeatures(randomFeatures);
 		
 		return true;
 	}
