@@ -1,0 +1,21 @@
+#!/bin/sh
+
+set -e
+
+echo === Checking this is a clean working tree:
+debian/update-debian.py --check-git-clean
+
+echo === Cleaning the tree:
+debian/update-debian.py --clean
+
+echo ==== Building the tree:
+debian/build-command
+
+echo ==== Generating a new debian/control:
+debian/update-debian.py --generate-complete-control
+
+echo ==== Cleaning again:
+debian/update-debian.py --clean
+
+echo ==== Finally, building the packages:
+dpkg-buildpackage -rfakeroot -b -us -uc
