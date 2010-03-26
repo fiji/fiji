@@ -907,7 +907,7 @@ public class Trainable_Segmentation implements PlugIn {
 		}
 		final long end = System.currentTimeMillis();
 		final DecimalFormat df = new DecimalFormat("0.0000");
-		IJ.log("Finished training in "+(end-start)+"ms, out of the bag error: " + df.format(rf.measureOutOfBagError()));
+		IJ.log("Finished training in "+(end-start)+"ms, out of bag error: " + df.format(rf.measureOutOfBagError()));
 		//
 		if(updateWholeData)
 			updateTestSet();
