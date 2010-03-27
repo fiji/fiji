@@ -63,7 +63,7 @@ public class Curvatures_<T extends NumericType<T>> implements PlugIn {
 	    particular eigenvalue of the Hessian matrix at each point
 	    in the image. */
 
-	public ArrayList< Image<FloatType> > hessianEigenvalueImages( Image<T> input ) {
+	public ArrayList< Image<FloatType> > hessianEigenvalueImages( Image<T> input, float [] spacing ) {
 
 		/* Various cursors may go outside the image, in which
 		   case we supply mirror values: */
@@ -115,14 +115,14 @@ public class Curvatures_<T extends NumericType<T>> implements PlugIn {
 					ahead.fwd(n);
 					behind.fwd(n);
 
-					float firstDerivativeA = (ahead.getType().getReal() - behind.getType().getReal()) / 2;
+					float firstDerivativeA = (ahead.getType().getReal() - behind.getType().getReal()) / (2 * spacing[m]);
 
 					ahead.bck(n); ahead.bck(n);
 					behind.bck(n); behind.bck(n);
 
-					float firstDerivativeB = (ahead.getType().getReal() - behind.getType().getReal()) / 2;
+					float firstDerivativeB = (ahead.getType().getReal() - behind.getType().getReal()) / (2 * spacing[m]);
 
-					double value = (firstDerivativeA - firstDerivativeB) / 2;
+					double value = (firstDerivativeA - firstDerivativeB) / (2 * spacing[n]);
 					hessian.set(m,n,value);
 				}
 
@@ -169,9 +169,17 @@ public class Curvatures_<T extends NumericType<T>> implements PlugIn {
 			return;
 		}
 
+		float realSigma = 2;
+
 		image = ImagePlusAdapter.wrap(imagePlus);
 
-		GaussianConvolution<T> gauss = new GaussianConvolution<T>( image, new OutsideStrategyMirrorFactory<T>(), 2 );
+		float [] spacing = image.getCalibration();
+
+		double [] sigmas = new double[spacing.length];
+		for( int i = 0; i < spacing.length; ++i )
+			sigmas[i] = 1.0 / (double)spacing[i];
+
+		GaussianConvolution<T> gauss = new GaussianConvolution<T>( image, new OutsideStrategyMirrorFactory<T>(), sigmas );
 
 		gauss.setNumThreads( Runtime.getRuntime().availableProcessors() );
 
@@ -185,7 +193,7 @@ public class Curvatures_<T extends NumericType<T>> implements PlugIn {
 
 		ImageJFunctions.copyToImagePlus( result ).show();
 
-		ArrayList< Image<FloatType> > eigenvalueImages = hessianEigenvalueImages(result);
+		ArrayList< Image<FloatType> > eigenvalueImages = hessianEigenvalueImages(result,spacing);
 
 		for( Image<FloatType> resultImage : eigenvalueImages ) {
 			ImageJFunctions.copyToImagePlus( resultImage ).show();
