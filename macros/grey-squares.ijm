@@ -1,3 +1,4 @@
+// Adelson Checker-shadow illusion
 w = 700; h = 600;
 n = 5;
 grey1 = 50; grey3 = 200;
@@ -50,6 +51,7 @@ function diamond(i, j) {
 newImage("Grey square optical illusion", "RGB White", w, h, 1);
 image = getImageID();
 
+setBatchMode(true);
 setForegroundColor(grey2, grey2, grey2);
 for (i = 0; i < n; i++)
 	for (j = ((i + 1) % 2); j < n; j += 2) {
@@ -72,19 +74,24 @@ for (i = 0; i < n; i += 2) {
 	run("Fill");
 }
 
+setForegroundColor(grey3+48, grey3+48, grey3+48);
 for (i = 0; i < n; i += 2) {
 	edge2(n, i);
 	run("Fill");
 }
+
 setForegroundColor(grey2, grey2, grey2);
 for (i = 0; i < n; i += 2) {
 	edge(i, 0);
 	run("Fill");
 }
+
+setForegroundColor(grey3, grey3, grey3);
 for (i = 1; i < n - 1; i += 2) {
 	edge2(n, i);
 	run("Fill");
 }
+
 setForegroundColor(grey1, grey1, grey1);
 for (i = 1; i < n; i += 2) {
 	edge(i, 0);
@@ -93,9 +100,6 @@ for (i = 1; i < n; i += 2) {
 setForegroundColor(grey4, grey4, grey4);
 square(n - 1, n - 1);
 run("Fill");
-edge2(n, n - 1);
-run("Fill");
-
 newImage("scratch pad", "RGB White", w, h, 1);
 scratch = getImageID();
 setBackgroundColor(grey3, grey3, grey3);
@@ -170,3 +174,4 @@ run("Fill");
 run("Select None");
 selectImage(scratch);
 close();
+setBatchMode(false);
