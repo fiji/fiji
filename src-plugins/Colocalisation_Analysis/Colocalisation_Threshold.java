@@ -7,6 +7,7 @@ import ij.gui.*;
 import ij.process.*;
 import ij.text.*;
 import ij.plugin.PlugIn;
+import ij.measure.*;
 import ij.plugin.ContrastEnhancer;
 import java.text.DecimalFormat;
 import ij.measure.*;
@@ -61,6 +62,8 @@ public class Colocalisation_Threshold implements PlugIn {
 	private int colIndex3 = 2;
 	ImageProcessor ip1, ip2, ipmask;
 	ColorProcessor ipColoc;
+	ImagePlus colocPix;
+	
 	private int rwidth, rheight, xOffset, yOffset;
 	String[] chooseROI=  { "None","Channel 1", "Channel 2",};
 	protected static TextWindow textWindow;
@@ -102,7 +105,7 @@ public class Colocalisation_Threshold implements PlugIn {
 
 		//	gd.addChoice("Mask channel", chooseMask, chooseMask[indexMask]);
 		gd.addChoice("Channel Combination", dualChannels, dualChannels[dualChannelIndex]);
-		gd.addCheckbox("Show Colocalized pixels",bShowLocalisation);
+		gd.addCheckbox("Show Colocalized Pixel Map",bShowLocalisation);
 		gd.addCheckbox("Use constant intensity for colocalized pixels",colocValConst);
 		gd.addCheckbox("Show Scatter plot",bScatter);
 		gd.addCheckbox("Include zero-zero pixels in threshold calculation",opt0);
@@ -264,6 +267,7 @@ public class Colocalisation_Threshold implements PlugIn {
 		String fileName = ch1fileName +  " & " + ch2fileName;
 		ImageProcessor ip1 = imp1.getProcessor();
 		ImageProcessor ip2 = imp2.getProcessor();
+		Calibration spatialCalibration = imp1.getCalibration();
 
 		ImageProcessor ipMask = imp1.getMask();
 		if (indexRoi>1) ipMask = imp2.getMask();
@@ -355,7 +359,7 @@ public class Colocalisation_Threshold implements PlugIn {
 		double ch2BestThresh=0;
 		String mString;
 		//start regression
-		IJ.showStatus("1/3: Performing regression. Press 'Esc' to abort");
+		IJ.showStatus("1/4: Performing regression. Press 'Esc' to abort");
 		int ch1Sum=0;
 		int ch2Sum=0;
 		int ch3Sum=0;
@@ -529,7 +533,7 @@ public class Colocalisation_Threshold implements PlugIn {
 				IJ.beep();
 				return;
 			}
-			IJ.showStatus("2/3: Calculating Threshold. i = "+iteration+" Press 'Esc' to abort");
+			IJ.showStatus("2/4: Calculating Threshold. i = "+iteration+" Press 'Esc' to abort");
 			//reset values
 			sumX = 0;
 			sumXY = 0;
@@ -614,7 +618,7 @@ public class Colocalisation_Threshold implements PlugIn {
 		imp1.setSlice(i);
 		imp2.setSlice(i);
 
-		stackColoc = createColocalizedPixelsImage(imp1, imp2, ipMask,  ch1threshmax, ch2threshmax);
+		//stackColoc = createColocalizedPixelsImage(imp1, imp2, ipMask,  ch1threshmax, ch2threshmax); moved this call to the boolean test for if it should be shown
 
 		// N=Ncoloc;
 
@@ -642,7 +646,7 @@ public class Colocalisation_Threshold implements PlugIn {
 		N=0;
 		Ncoloc=0;
 		for (int s=1;s<=nslices; s++) {
-			IJ.showStatus("3/3: Calculating statistics. Slice = "+s +" Press 'Esc' to abort");
+			IJ.showStatus("3/4: Calculating statistics. Slice = "+s +" Press 'Esc' to abort");
 			ip1 = img1.getProcessor(s);
 			ip2 = img2.getProcessor(s);
 			//ipMask = imgMask.getProcessor(s);
@@ -816,7 +820,10 @@ public class Colocalisation_Threshold implements PlugIn {
 
 
 		if (bShowLocalisation) {//ipColoc.resetMinAndMax();
-			new ImagePlus("Colocalized Pixel Map", stackColoc).show();
+			stackColoc = createColocalizedPixelsImage(imp1, imp2, ipMask,  ch1threshmax, ch2threshmax);
+			colocPix = new ImagePlus("Colocalized Pixel Map RGB Image", stackColoc);
+			colocPix.setCalibration(spatialCalibration);
+			colocPix.show();
 		}
 
 		if (bScatter) {
@@ -862,16 +869,17 @@ public class Colocalisation_Threshold implements PlugIn {
 		ImageStack img1 = imp1.getStack();
 		ImageStack img2 = imp2.getStack();
 		
+		ImageStack stackColocPix = new ImageStack(rwidth,rheight);
+		
 		boolean needsScaling1 = imp1.getBitDepth() != 8;
 		boolean needsScaling2 = imp2.getBitDepth() != 8;
 		
 		int mask=0;
 		int colocInt=255;
 		int [] color  = new int [3];
-		ImageStack stackColoc = new ImageStack(rwidth,rheight);
-		ColorProcessor ipColoc = new ColorProcessor(rwidth,rheight);
+		
 		for (int s=1;s<=nslices; s++) {
-			IJ.showStatus("3/3: Creating colocalized pixels image. Slice = "+s +" Press 'Esc' to abort");
+			IJ.showStatus("4/4: Creating colocalized pixels image. Slice = "+s +" Press 'Esc' to abort");
 			ip1 = img1.getProcessor(s);
 			ImageProcessor ip1Stretch = ip1.duplicate(); 
 			ip2 = img2.getProcessor(s);
@@ -929,9 +937,9 @@ public class Colocalisation_Threshold implements PlugIn {
 				}
 			}
 			//IJ.showMessage(stackColoc.getWidth()+ "  -  " + ipColoc.getWidth());
-			stackColoc.addSlice("Correlation Plot", ipColoc);
+			stackColocPix.addSlice("Colocalized Pixel Map Image", ipColoc);
 		}
-		return stackColoc;
+		return stackColocPix;
 	}
 	
 	private class MinMaxContainer {
