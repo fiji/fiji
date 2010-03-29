@@ -1,0 +1,7 @@
+Description: A metapackage for the Fiji image processing suite (based on ImageJ)
+ Fiji is a project aiming at simplifying:
+    * the installation of ImageJ
+    * the usage of ImageJ
+    * the usage of specific, powerful ImageJ plugins
+    * the development of plugins using ImageJ
+ For more information please visit http://pacific.mpi-cbg.de/

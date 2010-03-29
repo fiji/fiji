@@ -70,9 +70,20 @@ public class FeatureStack
 	
 	private static final int MAX_SIGMA = 16;
 	
+	public static final int GAUSSIAN 	= 0;
+	public static final int SOBEL 		= 1;
+	public static final int HESSIAN 	= 2; 
+	public static final int DOG			= 3;
+	public static final int MEMBRANE	= 4;
+	public static final int VARIANCE	= 5;
+	public static final int MEAN		= 6;
+	public static final int MINIMUM		= 7;
+	public static final int MAXIMUM		= 8;
+	public static final int MEDIAN		= 9;
+	
 	public static final String[] availableFeatures 
-		= new String[]{	"Gaussian Blur", "Sobel filter", "Hessian", "Difference of gaussians", 
-					   	"Membrane projections","Variance","Mean", "Minimum", "Maximum", "Median"};
+		= new String[]{	"Gaussian_blur", "Sobel_filter", "Hessian", "Difference_of_gaussians", 
+					   	"Membrane_projections","Variance","Mean", "Minimum", "Maximum", "Median"};
 	
 	private boolean[] enableFeatures = new boolean[]{true, true, true, true, true, false, false, false, false, false};
 	
@@ -116,7 +127,7 @@ public class FeatureStack
 		ImageProcessor ip = originalImage.getProcessor().duplicate();
 		GaussianBlur gs = new GaussianBlur();
 		gs.blur(ip, sigma);
-		wholeStack.addSlice("GaussianBlur_" + sigma, ip);
+		wholeStack.addSlice(availableFeatures[GAUSSIAN] + "_" + sigma, ip);
 	}
 	
 	public void addVariance(float radius)
@@ -124,7 +135,7 @@ public class FeatureStack
 		final ImageProcessor ip = originalImage.getProcessor().duplicate();
 		final RankFilters filter = new RankFilters();
 		filter.rank(ip, radius, RankFilters.VARIANCE);
-		wholeStack.addSlice("Variance_" + radius, ip);
+		wholeStack.addSlice(availableFeatures[VARIANCE]+ "_"  + radius, ip);
 	}
 	
 	public void addMean(float radius)
@@ -132,7 +143,7 @@ public class FeatureStack
 		final ImageProcessor ip = originalImage.getProcessor().duplicate();
 		final RankFilters filter = new RankFilters();
 		filter.rank(ip, radius, RankFilters.MEAN);
-		wholeStack.addSlice("Mean_" + radius, ip);
+		wholeStack.addSlice(availableFeatures[MEAN]+ "_"  + radius, ip);
 	}
 	
 	public void addMin(float radius)
@@ -140,7 +151,7 @@ public class FeatureStack
 		final ImageProcessor ip = originalImage.getProcessor().duplicate();
 		final RankFilters filter = new RankFilters();
 		filter.rank(ip, radius, RankFilters.MIN);
-		wholeStack.addSlice("Minimum_" + radius, ip);
+		wholeStack.addSlice(availableFeatures[MINIMUM]+ "_"  + radius, ip);
 	}
 	
 	public void addMax(float radius)
@@ -148,7 +159,7 @@ public class FeatureStack
 		final ImageProcessor ip = originalImage.getProcessor().duplicate();
 		final RankFilters filter = new RankFilters();
 		filter.rank(ip, radius, RankFilters.MAX);
-		wholeStack.addSlice("Maximum_" + radius, ip);
+		wholeStack.addSlice(availableFeatures[MAXIMUM]+ "_"  + radius, ip);
 	}
 	
 	public void addMedian(float radius)
@@ -156,25 +167,27 @@ public class FeatureStack
 		final ImageProcessor ip = originalImage.getProcessor().duplicate();
 		final RankFilters filter = new RankFilters();
 		filter.rank(ip, radius, RankFilters.MEDIAN);
-		wholeStack.addSlice("Median_" + radius, ip);
+		wholeStack.addSlice(availableFeatures[MEDIAN]+ "_"  + radius, ip);
 	}
 	
-	public void writeConfigurationToFile(String filename){
+	public void writeConfigurationToFile(String filename)
+	{
 		try{
 			BufferedWriter out = new BufferedWriter(
-				new OutputStreamWriter(
-				new FileOutputStream(filename) ) );
-				try{	
-					for (int i=1; i <= wholeStack.getSize(); i++){
+					new OutputStreamWriter(
+							new FileOutputStream(filename) ) );
+			try{	
+				for (int i=1; i <= wholeStack.getSize(); i++)
+				{
 					out.write(wholeStack.getSliceLabel(i));
 					out.newLine();
-					}
-					out.close();
 				}
-					catch(IOException e){System.out.println("IOException");}
+				out.close();
 			}
-			catch(FileNotFoundException e){System.out.println("File not found!");}
+			catch(IOException e){System.out.println("IOException");}
 		}
+		catch(FileNotFoundException e){System.out.println("File not found!");}
+	}
 	
 	public void addGradient(float sigma){
 		GaussianBlur gs = new GaussianBlur();
@@ -201,7 +214,7 @@ public class FeatureStack
 		}
 		
 		//ip.add(-ip.getMin());
-		wholeStack.addSlice("SobelFilter_"+sigma, ip);
+		wholeStack.addSlice(availableFeatures[SOBEL]+ "_"  +sigma, ip);
 	}
 	
 	public void addHessian(float sigma)
@@ -247,12 +260,13 @@ public class FeatureStack
 			}
 		}
 		
-		wholeStack.addSlice("Hessian_"+sigma, ip);
-		wholeStack.addSlice("HessianTrace_"+sigma, ipTr);
-		wholeStack.addSlice("HessianDeterminant_"+sigma, ipDet);
+		wholeStack.addSlice(availableFeatures[HESSIAN] + "_"  + sigma, ip);
+		wholeStack.addSlice(availableFeatures[HESSIAN]+ "_Trace_"+sigma, ipTr);
+		wholeStack.addSlice(availableFeatures[HESSIAN]+ "_Determinant_"+sigma, ipDet);
 	}
 	
-	public void addDoG(float sigma1, float sigma2){
+	public void addDoG(float sigma1, float sigma2)
+	{
 		GaussianBlur gs = new GaussianBlur();
 		ImageProcessor ip_1 = originalImage.getProcessor().duplicate();
 		gs.blur(ip_1, sigma1);
@@ -269,7 +283,7 @@ public class FeatureStack
 			}
 		}
 		
-		wholeStack.addSlice("DoG_"+sigma1+"_"+sigma2, ip);
+		wholeStack.addSlice(availableFeatures[DOG]+ "_"+sigma1+"_"+sigma2, ip);
 	}
 	
 	public void addMembraneFeatures(int patchSize, int membraneSize){
@@ -314,12 +328,13 @@ public class FeatureStack
 		for (int i=0;i<6; i++){
 			zp.setMethod(i);
 			zp.doProjection();
-			wholeStack.addSlice("Membrane_Projection_"+i+"_"+patchSize+"_"+membraneSize, zp.getProjection().getChannelProcessor());
+			wholeStack.addSlice(availableFeatures[MEMBRANE] + "_" +i+"_"+patchSize+"_"+membraneSize, zp.getProjection().getChannelProcessor());
 		}
 	}
 	
 	
-	public void addTest(){
+	public void addTest()
+	{
 		FloatArray2D fftImage = new FloatArray2D((float[]) originalImage.getProcessor().getPixels(),
 													originalImage.getWidth(), originalImage.getHeight());
 		//int fftSize = FftReal.nfftFast(Math.max(width, height));
@@ -372,13 +387,14 @@ public class FeatureStack
 		
 		Object[] pixelData = wholeStack.getImageArray();
 		
-		for (int y=0; y<wholeStack.getHeight(); y++){
+		for (int y=0; y<wholeStack.getHeight(); y++)
+		{
 			IJ.showProgress(y, wholeStack.getHeight());
-			for (int x=0; x<wholeStack.getWidth(); x++){
+			for (int x=0; x<wholeStack.getWidth(); x++)
+			{
 				double[] values = new double[wholeStack.getSize()+1];
-				for (int z=1; z<=wholeStack.getSize(); z++){
-					//values[z-1] = wholeStack.getProcessor(z).getPixelValue(x, y);
-					//values[z-1] = 0xff & ((byte[]) pixelData[z-1])[y*width+x];
+				for (int z=1; z<=wholeStack.getSize(); z++)
+				{
 					values[z-1] = ((float[]) pixelData[z-1])[y*width+x];
 					//System.out.println("" + wholeStack.getProcessor(z).getPixelValue(x, y) + " * " + values[z-1]);
 				}
@@ -390,6 +406,9 @@ public class FeatureStack
 		return data;
 	}
 	
+	/**
+	 * Add the default features to the feature stack
+	 */
 	public void addDefaultFeatures()
 	{
 		int counter = 1;
@@ -420,28 +439,28 @@ public class FeatureStack
 		for (float i=1.0f; i<= FeatureStack.MAX_SIGMA; i*=2)
 		{
 			// Gaussian blur
-			if(enableFeatures[0])
+			if(enableFeatures[GAUSSIAN])
 			{
 				IJ.showStatus("Creating feature stack...   " + counter);
 				this.addGaussianBlur(i); 
 				counter++;
 			}
 			// Sobel
-			if(enableFeatures[1])
+			if(enableFeatures[SOBEL])
 			{
 				IJ.showStatus("Creating feature stack...   " + counter);			
 				this.addGradient(i); 
 				counter++;
 			}
 			// Hessian
-			if(enableFeatures[2])
+			if(enableFeatures[HESSIAN])
 			{
 				IJ.showStatus("Creating feature stack...   " + counter);			
 				this.addHessian(i); 
 				counter++;
 			}
 			// Difference of gaussians
-			if(enableFeatures[3])
+			if(enableFeatures[DOG])
 			{
 				for (float j=1.0f; j<i; j*=2)
 				{
@@ -451,14 +470,14 @@ public class FeatureStack
 				}
 			}
 			// Variance
-			if(enableFeatures[5])
+			if(enableFeatures[VARIANCE])
 			{
 				IJ.showStatus("Creating feature stack...   " + counter);
 				this.addVariance(i); 
 				counter++;
 			}
 			// Mean
-			if(enableFeatures[6])
+			if(enableFeatures[MEAN])
 			{
 				IJ.showStatus("Creating feature stack...   " + counter);
 				this.addMean(i); 
@@ -466,14 +485,14 @@ public class FeatureStack
 			}
 			
 			// Min
-			if(enableFeatures[6])
+			if(enableFeatures[MINIMUM])
 			{
 				IJ.showStatus("Creating feature stack...   " + counter);
 				this.addMin(i); 
 				counter++;
 			}
 			// Max
-			if(enableFeatures[7])
+			if(enableFeatures[MAXIMUM])
 			{
 				IJ.showStatus("Creating feature stack...   " + counter);
 				this.addMax(i); 
@@ -481,7 +500,7 @@ public class FeatureStack
 			}
 			
 			// Median
-			if(enableFeatures[7])
+			if(enableFeatures[MEDIAN])
 			{
 				IJ.showStatus("Creating feature stack...   " + counter);
 				this.addMedian(i); 
@@ -490,7 +509,7 @@ public class FeatureStack
 			
 		}
 		// Membrane projections
-		if(enableFeatures[4])
+		if(enableFeatures[MEMBRANE])
 			this.addMembraneFeatures(19, 1);
 		
 		if(normalize)

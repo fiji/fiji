@@ -2,4 +2,23 @@
 
 set -e
 
-/usr/lib/fiji/fiji --fiji-dir /usr/lib/fiji/ "$@"
+. /etc/default/fiji
+
+# If the user hasn't got JAVA_HOME set to a particular value, then
+# either use FIJI_JAVA_HOME (which may be set in /etc/default/fiji) or
+# the default, which is; @@INSTALLED_JVM_ROOT@@
+
+if [ -z "$JAVA_HOME" ]
+then
+    if [ -n "$FIJI_JAVA_HOME" ]
+    then
+        export JAVA_HOME=$FIJI_JAVA_HOME
+    else
+        export JAVA_HOME=@@INSTALLED_JVM_ROOT@@
+    fi
+fi
+
+export LD_LIBRARY_PATH=@@LD_LIBRARY_PATH@@:$(cat /usr/lib/fiji/jni/*.conf 2> /dev/null | tr '\n' ':')
+
+/usr/lib/fiji/fiji --class-path @@JAVA_3D_JARS@@:/usr/share/java/jama.jar:/usr/share/java/bsh.jar:/usr/share/java/batik-all.jar:/usr/share/java/xml-apis-ext.jar --fiji-dir /usr/lib/fiji/ "$@"
+
