@@ -413,6 +413,7 @@ public class Trainable_Segmentation implements PlugIn {
 			for(int i = 0; i < numOfClasses ; i++)
 			{
 				exampleList[i].addActionListener(listener);
+				exampleList[i].addItemListener(itemListener);
 				addExampleButton[i] = new JButton("Add " + classLabels[i]);
 				addExampleButton[i].setToolTipText("Add markings of label '" + classLabels[i] + "'");
 
