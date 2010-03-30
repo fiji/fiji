@@ -1491,8 +1491,8 @@ static int start_ij(void)
 	memset(&options, 0, sizeof(options));
 
 #ifdef MACOSX
-	// When double-clicked => exactly 1 empty string argument
-	if (main_argc == 2 && !*main_argv[1])
+	// When double-clicked Finder adds a psn argument
+	if (main_argc > 1 && ! strncmp(main_argv[1],"-psn_",5))
 	{
 		/*
 		 * Reset main_argc so that ImageJ won't try to open
