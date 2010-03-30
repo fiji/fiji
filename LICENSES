@@ -35,12 +35,12 @@ Name					File					Author(s)						Contact	(2008)							License
 * ij-ImageIO 				ij-ImageIO_.jar				Jarek Sacha 						jarek@ieee.org 							LGPL
 * ImageJA				ij.jar					Johannes Schindelin, Wayne Rasband			Johannes.Schindelin@gmx.de					PD
 * imagescience.jar 			imagescience.jar 			Erik Meijering 						meijering@imagescience.org 					Copyright © Erik Meijering. All rights reserved. See http://www.imagescience.org/meijering/software/transformj/
-
 * Interactive 3D Surface Plot 		Interactive_3D_Surface_Plot.jar		Kai Uwe Barthel 					k.barthel@fhtw-berlin.de 					PD
 * itext-1.3.jar 			itext-1.3.jar 				Bruno Lowagie, Paulo Soares 				http://www.lowagie.com/iText/ 					MPL/LGPL
 * IO package 				IO_.jar 				A. Cardona, S. Saalfeld, J. Schindelin, G. Jefferis 	acardona@ini.phys.ethz.ch 					GPL/public domain
 * IPLab Reader 				IPLab_Reader.jar			Wayne Rasband 						wsr@nih.gov 							PD
 * Jacl 					jacl.jar 											http://sourceforge.net/projects/tcljava				BSD
+* Java Expression Parser (JEP)		jep.jar					Nathan Funk, Richard Morris				http://www.singularsys.com/jep/					GPL
 * Java Matrix package 			Jama-1.0.2.jar 				http://math.nist.gov/javanumerics/jama/#Authors 	http://math.nist.gov/javanumerics/jama/#Authors 		PD
 * Javascript Rhino Engine 		js.jar 					http://www.mozilla.org/rhino/ 				http://www.mozilla.org/rhino/ 					MPL 1.1/GPL 2  see http://developer.mozilla.org/en/docs/Rhino_License
 * Javascript Interpreter 		Javascript_Interpreter.jar 		Albert Cardona 						acardona@ini.phys.ethz.ch 					GPL
@@ -70,15 +70,14 @@ Name					File					Author(s)						Contact	(2008)							License
 
 
 TurboReg (Citationware):
-
 	On Wed, 18 Feb 2009, Philippe Thévenaz wrote:
-
 	> Dear Johannes Schindelin,
 	>
 	> You have my explicit placet to include TurboReg in Fiji.
+Note that this blessing is for the (re)distribution within Fiji only.
 
-	Note that this blessing is for the (re)distribution within Fiji only.
-
+JEP version included in Fiji is jep-2.4.1-ext-1.1.1-gpl. This version is the last to be distributed
+under GPL. Subsequent versions (>3.0) have a commercial license.
 
 Unresolved (TODO):
 * Example/ scripts folder

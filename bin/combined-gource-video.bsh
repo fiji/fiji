@@ -1,0 +1,114 @@
+#!/bin/sh
+// 2>&1 | :; exec "$(dirname "$0")"/../fiji --bsh "$0" "$@" # exec with fiji */
+
+if (bsh.args.length != 1) {
+	System.err.println("Usage: " + this.interpreter.getSourceFileInfo()
+		+ " <since.when>");
+	System.exit(1);
+}
+
+since = bsh.args[0];
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+
+class Logger {
+	final static String LOG4GOURCE = "log --reverse --raw --pretty=raw";
+	String command, prefix, line;
+	StringBuffer buffer;
+	long commitTime;
+	Process process;
+	BufferedReader reader;
+
+	public Logger(String gitDirectory, String prefix, String since) {
+		command = "git --git-dir=" + gitDirectory + "/.git "
+			+ LOG4GOURCE + " --since=" + since;
+		this.prefix = prefix;
+		process = Runtime.getRuntime().exec(command);
+		reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+		//reader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+		readLine();
+	}
+
+	boolean readLine() {
+		try {
+			line = reader.readLine();
+			return true;
+		} catch (Exception e) {
+			line = null;
+			return false;
+		}
+	}
+
+	public boolean readOneCommit() {
+		if (line == null || !line.startsWith("commit ")) {
+			commitTime = Long.MAX_VALUE;
+			return false;
+		}
+		buffer = new StringBuffer();
+		do {
+			if (line.startsWith("committer ")) {
+				int end = line.length();
+				int space = line.lastIndexOf(' ');
+				if (space >= 0 && space + 1 < end &&
+						line.charAt(space + 1) == '+') {
+					end = space;
+					space = line.lastIndexOf(' ', end - 1);
+				}
+				if (space >= 0)
+					commitTime = Long.parseLong(line
+						.substring(space + 1, end));
+			}
+			else if (line.startsWith(":") && line.length() > 38)
+				line = line.substring(0, 39) + prefix
+					+ line.substring(39);
+
+			buffer.append(line);
+			buffer.append('\n');
+
+			readLine();
+		} while (line != null && !line.startsWith("commit "));
+		return true;
+	}
+
+	public String toString() {
+		return buffer.toString();
+	}
+}
+
+loggers = new ArrayList();
+fijiDir = System.getProperty("fiji.dir") + "/";
+loggers.add(new Logger(fijiDir, "", since));
+for (sub : new String[] { "ImageJA", "TrakEM2", "VIB", "imglib", "mpicbg" })
+	loggers.add(new Logger(fijiDir + "/" + sub, sub + "/", since));
+for (l : loggers)
+	l.readOneCommit();
+
+import java.io.FileWriter;
+
+writer = new FileWriter(fijiDir + "out.gource");
+for (;;) {
+	logger = null;
+	time = Long.MAX_VALUE;
+	for (l : loggers)
+		if (l.commitTime <time) {
+			time = l.commitTime;
+			logger = l;
+		}
+	if (logger == null)
+		break;
+	writer.write(logger.toString());
+	logger.readOneCommit();
+}
+writer.close();
+
+gource = "gource";
+Runtime.getRuntime().exec(new String[] {
+	gource,
+	"-800x600",
+	"-s", "1",
+	"--disable-auto-skip",
+	"--disable-progress",
+	"--hide-filenames",
+	"--output-movie", fijiDir + "gource.flv",
+	fijiDir + "out.gource" });

@@ -1,0 +1,49 @@
+<body>
+A version of JEP which can work over an arbitary group.
+This version of jep changes the behaviour of the
+arithmetic and the comparative operations according
+to the group operations. These group operations
+are specified by objects which implement
+GroupI or one of its decendants like RingI or HasPowerI.
+There are various example groups which can be used:
+arbitrary-precision integers, arbitrary-precision rationals,
+integers mod n, reals with a fixed precision.
+</p>
+<p>
+Typically it is used like
+<pre>
+import org.lsmp.djep.rationalJep.*;
+import org.lsmp.djep.rationalJep.groups.*;
+....
+GroupI group = new Rationals();
+JEP j = new GroupJep(group);
+....
+</pre>
+See the <a href="groups/package-summary.html">groups</a> package for the different types of group which can be used.
+</p>
+
+<table BORDER="1" CELLPADDING="3" CELLSPACING="0" WIDTH="100%">
+<tr BGCOLOR="#CCCCFF" CLASS="TableHeadingColor">
+<td COLSPAN=2><font SIZE="+2">
+<b>Sub-packages</b></font></td>
+</tr>
+<tr BGCOLOR="white" CLASS="TableRowColor">
+<td WIDTH="15%"><b><a HREF="function/package-summary.html">org.lsmp.djep.groupJep.function</a></b></td>
+<td>Functions for basic operators +,-,* in GroupJep</td>
+</tr>
+<tr BGCOLOR="white" CLASS="TableRowColor">
+<td WIDTH="15%"><b><a HREF="groups/package-summary.html">org.lsmp.djep.groupJep.groups</a></b></td>
+<td>Various pre-defined groups.</td>
+</tr>
+<tr BGCOLOR="white" CLASS="TableRowColor">
+<td WIDTH="15%"><b><a HREF="interfaces/package-summary.html">org.lsmp.djep.groupJep.interfaces</a></b></td>
+<td>Interfaces defining ring, field and other group structures.</td>
+</tr>
+<tr BGCOLOR="white" CLASS="TableRowColor">
+<td WIDTH="15%"><b><a HREF="values/package-summary.html">org.lsmp.djep.groupJep.values</a></b></td>
+<td>Objects representing elements of groups.</td>
+</tr>
+</table>
+@see <a href="../../../../../html/extensions/GroupJep.html">GroupJep documentation</a>
+
+</body>

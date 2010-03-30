@@ -23,7 +23,7 @@
 
 package hr.irb.fastRandomForest;
 
-import weka.classifiers.Classifier;
+import weka.classifiers.AbstractClassifier;
 import weka.core.Capabilities;
 import weka.core.Instance;
 import weka.core.Instances;
@@ -49,10 +49,10 @@ import weka.core.RevisionUtils;
  * @author Eibe Frank (eibe@cs.waikato.ac.nz) - original code
  * @author Richard Kirkby (rkirkby@cs.waikato.ac.nz) - original code
  * @author Fran Supek (fran.supek[AT]irb.hr) - adapted code
- * @version $Revision: 0.98$
+ * @version Adapted by Ignacio Arganda-Carreras (iarganda at mit.edu) to work on Weka 3.7
  */
 class FastRandomTree
-        extends Classifier
+        extends AbstractClassifier
         implements OptionHandler, WeightedInstancesHandler, Runnable {
 
   /** for serialization */

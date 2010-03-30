@@ -1,0 +1,8 @@
+# You can set the FIJI_JAVA_HOME environment variable to use a Java virtual
+# machine other than the default, that in openjdk-6-jdk.  For example,
+# to switch to the Sun Java 6 JDK, you could uncomment this line:
+#
+#FIJI_JAVA_HOME=/usr/lib/jvm/java-6-sun/
+#
+# Note that if the user has set JAVA_HOME in their environment, then that
+# setting will override both FIJI_JAVA_HOME and the default.

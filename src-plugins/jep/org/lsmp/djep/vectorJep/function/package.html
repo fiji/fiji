@@ -1,0 +1,15 @@
+<body>
+Functions and operators for working with vectors and matricies.
+<p>
+In the VectorJep package vectors are handled if a different fashion to standard Jep.
+The VList function converts a list of values [1,2,3] into one of the MatrixValueI types:
+Scaler, MVector, Matrix or Tensor.
+<p>
+Functions which work with Vectors in this package should handle the above types.
+<p>
+Furthermore if the MatrixJep package is going to be used, then classes should implement one of 
+the interfaces
+either UnaryOperatorI BinaryOperatorI or NaryOperatorI interfaces. These use a more efficient 
+method for evaluation through the calcValue methods, 
+where an object to hold the results is provided.
+</body>
