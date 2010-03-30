@@ -100,7 +100,6 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 
 import javax.swing.BorderFactory;
-import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -114,52 +113,76 @@ import hr.irb.fastRandomForest.FastRandomForest;
 
 public class Trainable_Segmentation implements PlugIn {
 
-
+	/** maximum number of classes (labels) allowed on the GUI*/
 	private static final int MAX_NUM_CLASSES = 5;
-
-	private List<Roi> [] examples = new ArrayList[MAX_NUM_CLASSES]; 
+	/** array of lists of Rois for each class */
+	private List<Roi> [] examples = new ArrayList[MAX_NUM_CLASSES];
+	/** image to be used in the training */
 	private ImagePlus trainingImage;
+	/** image to display on the GUI, it includes the painted rois*/
 	private ImagePlus displayImage;
+	/** result image after classification */
 	private ImagePlus classifiedImage;
+	/** image to overlay with temporary results */
 	private ImagePlus overlayImage;
+	/** features to be used in the training */
 	private FeatureStack featureStack = null;
+	/** GUI window */
 	private CustomWindow win;
+	/** array of number of traces per class */
 	private int traceCounter[] = new int[MAX_NUM_CLASSES];
+	/** flag to display the overlay image */
 	private boolean showColorOverlay;
+	/** set of instances for the whole training image */
 	private Instances wholeImageData;
+	/** set of instances from loaded data (previously saved segmentation) */
 	private Instances loadedTrainingData;
+	/** current classifier */
+	private AbstractClassifier classifier = null;
+	/** default classifier (Fast Random Forest) */
 	private FastRandomForest rf;
-	
+	/** flag to update the whole set of instances (used when there is any change on the features) */
 	private boolean updateWholeData = true;
 	
+	/** train classifier button */
 	final JButton trainButton;
+	/** toggle overlay button */
 	final JButton overlayButton;
+	/** create result button */
 	final JButton resultButton;
+	/** apply classifier button */
 	final JButton applyButton;
+	/** load data button */
 	final JButton loadDataButton;
+	/** save data button */
 	final JButton saveDataButton;
+	/** settings button */
 	final JButton settingsButton;
-
+	/** create new class button */
 	final JButton addClassButton;
-
+	/** available colors for available classes*/
 	final Color[] colors = new Color[]{Color.red, Color.green, Color.blue,
 			Color.orange, Color.pink};
-
+	/** names of the current classes */
 	String[] classLabels = new String[]{"class 1", "class 2", "class 3", "class 4", "class 5"};
-
+	/** current number of classes */
 	private int numOfClasses = 2;
+	/** array of trace lists for every class */
 	private java.awt.List exampleList[] = new java.awt.List[MAX_NUM_CLASSES];
+	/** array of buttons for adding each trace class */
 	private JButton [] addExampleButton = new JButton[MAX_NUM_CLASSES];
-	//Group the radio buttons.
-	final ButtonGroup classButtonGroup = new ButtonGroup();
-
 	
 	// Random Forest parameters
+	/** current number of trees in the fast random forest classifier */
 	private int numOfTrees = 200;
+	/** current number of random features per tree in the fast random forest classifier */
 	private int randomFeatures = 2;
-	
+	/** list of class names on the loaded data */
 	ArrayList<String> loadedClassNames = null;
+	/** executor service to launch threads for the plugin methods and events */
+	final ExecutorService exec = Executors.newFixedThreadPool(1);
 
+	
 	/**
 	 * Basic constructor
 	 */
@@ -209,23 +232,21 @@ public class Trainable_Segmentation implements PlugIn {
 		//rf.setNumFeatures((int) Math.round(Math.sqrt(featureStack.getSize())));
 		//but this seems to work better
 		rf.setNumFeatures(randomFeatures);
-
-
 		rf.setSeed(123);
+		
+		classifier = rf;
 	}
-
-	final ExecutorService exec = Executors.newFixedThreadPool(1);
-
 	
 	/**
 	 * Listeners
 	 */
 	private ActionListener listener = new ActionListener() {
 		public void actionPerformed(final ActionEvent e) {
+			// listen to the buttons on separate threads not to block
+			// the event dispatch thread
 			exec.submit(new Runnable() {
 				public void run() 
 				{											
-					
 					if(e.getSource() == trainButton)
 					{
 						try{
@@ -273,11 +294,12 @@ public class Trainable_Segmentation implements PlugIn {
 
 				}
 			});
-
-
 		}
 	};
 
+	/**
+	 * Item listener for the trace lists 
+	 */
 	private ItemListener itemListener = new ItemListener() {
 		public void itemStateChanged(final ItemEvent e) {
 			exec.submit(new Runnable() {
@@ -348,7 +370,6 @@ public class Trainable_Segmentation implements PlugIn {
 
 	/**
 	 * Custom window to define the trainable segmentation GUI
-	 * 
 	 */
 	private class CustomWindow extends ImageWindow 
 	{
@@ -394,7 +415,6 @@ public class Trainable_Segmentation implements PlugIn {
 				exampleList[i].addActionListener(listener);
 				addExampleButton[i] = new JButton("Add " + classLabels[i]);
 				addExampleButton[i].setToolTipText("Add markings of label '" + classLabels[i] + "'");
-				classButtonGroup.add(addExampleButton[i]);
 
 				annotationsConstraints.fill = GridBagConstraints.HORIZONTAL;
 				annotationsConstraints.insets = new Insets(5, 5, 6, 6);
@@ -586,7 +606,6 @@ public class Trainable_Segmentation implements PlugIn {
 			
 			exampleList[numOfClasses].addActionListener(listener);
 			addExampleButton[numOfClasses] = new JButton("Add " + classLabels[numOfClasses]);
-			classButtonGroup.add(addExampleButton[numOfClasses]);
 			
 			annotationsConstraints.fill = GridBagConstraints.HORIZONTAL;
 			annotationsConstraints.insets = new Insets(5, 5, 6, 6);
@@ -904,7 +923,7 @@ public class Trainable_Segmentation implements PlugIn {
 		// Train the classifier on the current data
 		final long start = System.currentTimeMillis();
 		try{
-			rf.buildClassifier(data);
+			classifier.buildClassifier(data);
 		}
 		catch(Exception e){
 			IJ.showMessage(e.getMessage());
@@ -913,7 +932,9 @@ public class Trainable_Segmentation implements PlugIn {
 		}
 		final long end = System.currentTimeMillis();
 		final DecimalFormat df = new DecimalFormat("0.0000");
-		IJ.log("Finished training in "+(end-start)+"ms, out of bag error: " + df.format(rf.measureOutOfBagError()));
+		
+		final String outOfBagError = (rf != null) ? ", out of bag error: " + df.format(rf.measureOutOfBagError()) : "";
+		IJ.log("Finished training in "+(end-start)+"ms"+ outOfBagError);
 		
 		if(updateWholeData)
 			updateTestSet();
@@ -992,7 +1013,7 @@ public class Trainable_Segmentation implements PlugIn {
 			else
 				partialData[i] = new Instances(data, i*partialSize, partialSize);
 			
-			fu[i] = exe.submit(classifyIntances(partialData[i], rf, counter));
+			fu[i] = exe.submit(classifyIntances(partialData[i], classifier, counter));
 		}
 		
 		ScheduledExecutorService monitor = Executors.newScheduledThreadPool(1);
@@ -1417,7 +1438,7 @@ public class Trainable_Segmentation implements PlugIn {
 		
 		gd.addMessage("Class names:");
 		for(int i = 0; i < numOfClasses; i++)
-			gd.addStringField("Class "+(i+1), classLabels[i]);
+			gd.addStringField("Class "+(i+1), classLabels[i], 15);
 		
 		gd.addHelp("http://pacific.mpi-cbg.de/wiki/Trainable_Segmentation_Plugin");
 		
@@ -1472,7 +1493,7 @@ public class Trainable_Segmentation implements PlugIn {
 		if(classNameChanged)
 		{
 			updateWholeData = true;
-			// Pack window to udpate buttons
+			// Pack window to update buttons
 			win.pack();
 		}
 			
