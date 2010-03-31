@@ -14,10 +14,11 @@ import ij.process.*;
 import ij.gui.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Vector;
 import ij.plugin.filter.*;
 
 
-public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListener { //, ActionListener {
+public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListener, AdjustmentListener { //, ActionListener {
 					// http://rsb.info.nih.gov/ij/developer/api/ij/plugin/filter/ExtendedPlugInFilter.html
 					// should use extended plugin filter for preview ability and for stacks!
 					// then need more methods: setNPasses(int last-first)  thats the number of frames to stamp.
@@ -52,6 +53,10 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 	int frame, first, last;  //these default to 0 as no values are given
 	//int nPasses = 1;
 	PlugInFilterRunner pfr; 	// set pfr to the default PlugInFilterRunner object - the object that runs the plugin. 
+	
+	Vector sliders;
+	
+	
 	int flags = DOES_ALL+DOES_STACKS+STACK_REQUIRED; //a combination (bitwise OR) of the flags specified in
 							//interfaces PlugInFilter and ExtendedPlugInFilter.
 							// determines what kind of image the plugin can run on etc. 
@@ -74,13 +79,18 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		//this.pfr = pfr; // Not needed.... pfr is declared as a PlugInFilterRunner object with default value above
 		
 		// here is a list of SI? approved time units for a drop down list to choose from 
-		String[] timeUnitsOptions =  { "y", "d", "h", "min", "s", "ms", "µs", "ns", "ps", "fs", "as", "Custom Suffix"};
+		String[] timeUnitsOptions =  { "y", "d", "h", "min", "s", "ms", "us", "ns", "ps", "fs", "as", "Custom Suffix"};
 		String[] timeFormats = {"Decimal", "hh:mm:ss.ms"};
 		
 		// This makes the GUI object 
 		GenericDialog gd = new GenericDialog("Time Stamper Enhanced");
 		
 			// these are the fields of the GUI
+		
+		gd.addSlider("Slice", 1, imp.getStackSize(), last);
+		sliders=gd.getSliders();
+		((Scrollbar)sliders.elementAt(0)).addAdjustmentListener(this);
+		
 		
 		// this is a choice between digital or decimal
 		// but what about mm:ss???
@@ -108,6 +118,8 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		gd.addMessage("Time Stamper plugin for Fiji (is just ImageJ - batteries included)\nmaintained by Dan White MPI-CBG dan(at)chalkie.org.uk");
 		
 		gd.addDialogListener(this); 	//needed for listening to dialog field/button/checkbok changes?
+		
+		updateImg();
 		
 		gd.showDialog();  // shows the dialog GUI!
 		
@@ -154,11 +166,13 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 				//that works, but now the time stamper counts up from time = lastTime value not from  time = (start + (first*interval))
 				// when making the time stamps for the whole stack...
 	
-		frame = 0; // so the value of frame is reset to 0 each time the plugin is run or the preview checkbox is checked. 
+		 
 		if (preview){
-			time = lastTime();
+			frame = 0; //getCurrentSliceFromSlider();
+			time = getTimeFromFrame(frame);
 		}
 		else {
+			frame = 0; // so the value of frame is reset to 0 each time the plugin is run or the preview checkbox is checked.
 			time = start; 
 		}
 		time -= interval; // time = time - interval.  // because we start "before the stack", at frame = 0,  not frame = 1
@@ -337,7 +351,11 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 	}
 	
 	double lastTime() {
-		return start + (interval*(last-1)); 	// is the last time for which a time stamp will be made
+		return getTimeFromFrame(last); 	// is the last time for which a time stamp will be made
+	}
+	
+	double getTimeFromFrame(int f) {
+		return start + (interval*(f-1)); 	// is the time for a certain frame
 	}
 	
 	//moved out of run method to its own method.
@@ -358,6 +376,17 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 	//	IJ.showProgress(percent);
 	//}
 	
+	public void adjustmentValueChanged(AdjustmentEvent e) {
+		updateImg();
+	}
+	
+	private void updateImg(){
+		imp.setSlice(getCurrentSliceFromSlider());
+	}
+	
+	private int getCurrentSliceFromSlider(){
+		return ((Scrollbar)sliders.elementAt(0)).getValue();
+	}
 	
 }	// thats the end of Time_Stamper_Enhanced class
 
