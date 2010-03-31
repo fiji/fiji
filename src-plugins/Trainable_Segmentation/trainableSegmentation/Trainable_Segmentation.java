@@ -51,7 +51,6 @@ import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import ij.gui.Roi;
 import ij.gui.ShapeRoi;
-import ij.io.FileSaver;
 import ij.io.OpenDialog;
 import ij.io.SaveDialog;
 import ij.ImagePlus;
@@ -100,7 +99,9 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 
+import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -163,11 +164,17 @@ public class Trainable_Segmentation implements PlugIn {
 	final JButton addClassButton;
 	/** save feature stack button */
 	final JButton saveFeatureStackButton;
+	
+	final JButton advancedOptionsButton;
+	final JPanel advancedJPanel = new JPanel();
+	boolean displayAdvanced = false;
+	
 	/** available colors for available classes*/
 	final Color[] colors = new Color[]{Color.red, Color.green, Color.blue,
 			Color.orange, Color.pink};
 	/** names of the current classes */
 	String[] classLabels = new String[]{"class 1", "class 2", "class 3", "class 4", "class 5"};
+	
 	/** current number of classes */
 	private int numOfClasses = 2;
 	/** array of trace lists for every class */
@@ -220,8 +227,14 @@ public class Trainable_Segmentation implements PlugIn {
 		saveFeatureStackButton.setToolTipText("Save current feature stack into a TIFF file");
 		
 		settingsButton = new JButton ("Settings");
-		settingsButton.setToolTipText("Display advanced options");
-
+		settingsButton.setToolTipText("Display settings dialog");
+		
+		advancedOptionsButton = new JButton("Advanced");
+		advancedOptionsButton.setToolTipText("Display advanced options");
+		advancedOptionsButton.setIcon(new ImageIcon("images/down-18x18.png"));
+		advancedOptionsButton.setVerticalTextPosition(AbstractButton.CENTER);
+		advancedOptionsButton.setHorizontalTextPosition(AbstractButton.LEADING); //aka LEFT, for left-to-right locales
+		
 		for(int i = 0; i < numOfClasses ; i++)
 		{
 			examples[i] = new ArrayList<Roi>();
@@ -279,6 +292,9 @@ public class Trainable_Segmentation implements PlugIn {
 					else if(e.getSource() == addClassButton){
 						addNewClass();
 					}
+					else if(e.getSource() == advancedOptionsButton){
+						displayHideAdvancedOptions();
+					}
 					else if(e.getSource() == saveFeatureStackButton){
 						saveFeatureStack();
 					}
@@ -301,7 +317,7 @@ public class Trainable_Segmentation implements PlugIn {
 						}
 					}
 
-				}				
+				}							
 			});
 		}
 	};
@@ -392,7 +408,10 @@ public class Trainable_Segmentation implements PlugIn {
 		JPanel buttonsPanel = new JPanel();
 		
 		JPanel trainingJPanel = new JPanel();
-		JPanel optionsJPanel = new JPanel();		
+		JPanel optionsJPanel = new JPanel();
+		
+		
+		
 		
 		Panel all = new Panel();
 		
@@ -453,9 +472,10 @@ public class Trainable_Segmentation implements PlugIn {
 			loadDataButton.addActionListener(listener);
 			saveDataButton.addActionListener(listener);
 			addClassButton.addActionListener(listener);
-			saveFeatureStackButton.addActionListener(listener);
+			advancedOptionsButton.addActionListener(listener);
 			settingsButton.addActionListener(listener);
-
+			saveFeatureStackButton.addActionListener(listener);
+			
 			// Training panel (left side of the GUI)
 			trainingJPanel.setBorder(BorderFactory.createTitledBorder("Training"));
 			GridBagLayout trainingLayout = new GridBagLayout();
@@ -497,11 +517,26 @@ public class Trainable_Segmentation implements PlugIn {
 			optionsJPanel.add(saveDataButton, optionsConstraints);
 			optionsConstraints.gridy++;
 			optionsJPanel.add(addClassButton, optionsConstraints);
-			optionsConstraints.gridy++;
-			optionsJPanel.add(saveFeatureStackButton, optionsConstraints);
-			optionsConstraints.gridy++;
+			optionsConstraints.gridy++;			
 			optionsJPanel.add(settingsButton, optionsConstraints);
 			optionsConstraints.gridy++;
+			
+			// Advanced options panel
+			advancedJPanel.setVisible(displayAdvanced);
+			advancedJPanel.setBorder(BorderFactory.createTitledBorder("Advanced Options"));
+			GridBagLayout advancedLayout = new GridBagLayout();
+			GridBagConstraints advancedConstraints = new GridBagConstraints();
+			advancedConstraints.anchor = GridBagConstraints.NORTHWEST;
+			advancedConstraints.fill = GridBagConstraints.HORIZONTAL;
+			advancedConstraints.gridwidth = 1;
+			advancedConstraints.gridheight = 1;
+			advancedConstraints.gridx = 0;
+			advancedConstraints.gridy = 0;
+			advancedConstraints.insets = new Insets(5, 5, 6, 6);
+			advancedJPanel.setLayout(advancedLayout);
+			
+			advancedJPanel.add(saveFeatureStackButton, advancedConstraints);
+			advancedConstraints.gridy++;
 			
 			// Buttons panel (including training and options)
 			GridBagLayout buttonsLayout = new GridBagLayout();
@@ -516,7 +551,12 @@ public class Trainable_Segmentation implements PlugIn {
 			buttonsPanel.add(trainingJPanel, buttonsConstraints);
 			buttonsConstraints.gridy++;
 			buttonsPanel.add(optionsJPanel, buttonsConstraints);
-			
+			buttonsConstraints.gridy++;
+			buttonsConstraints.insets = new Insets(5, 5, 6, 6);
+			buttonsPanel.add(advancedOptionsButton, buttonsConstraints);
+			buttonsConstraints.gridy++;
+			buttonsConstraints.insets = new Insets(0, 0, 0, 0);
+			buttonsPanel.add(advancedJPanel, buttonsConstraints);
 
 			GridBagLayout layout = new GridBagLayout();
 			GridBagConstraints allConstraints = new GridBagConstraints();
@@ -576,6 +616,7 @@ public class Trainable_Segmentation implements PlugIn {
 					saveDataButton.removeActionListener(listener);
 					addClassButton.removeActionListener(listener);
 					saveFeatureStackButton.removeActionListener(listener);
+					advancedOptionsButton.removeActionListener(listener);
 					settingsButton.removeActionListener(listener);
 					
 					// Set number of classes back to 2
@@ -652,7 +693,8 @@ public class Trainable_Segmentation implements PlugIn {
 	/**
 	 * Plugin run method
 	 */
-	public void run(String arg) {
+	public void run(String arg) 
+	{
 		//		trainingImage = IJ.openImage("testImages/i00000-1.tif");
 		//get current image
 		if (null == WindowManager.getCurrentImage()) {
@@ -708,6 +750,7 @@ public class Trainable_Segmentation implements PlugIn {
 		loadDataButton.setEnabled(s);
 		saveDataButton.setEnabled(s);
 		addClassButton.setEnabled(s);
+		advancedOptionsButton.setEnabled(s);
 		saveFeatureStackButton.setEnabled(s);
 		settingsButton.setEnabled(s);
 		for(int i = 0 ; i < numOfClasses; i++)
@@ -723,19 +766,14 @@ public class Trainable_Segmentation implements PlugIn {
 	 */
 	private void addExamples(int i)
 	{
-		//IJ.log("add examples in list "+ i + " (numOfClasses = " + numOfClasses + ")");
 		//get selected pixels
 		Roi r = displayImage.getRoi();
 		if (null == r){
-			//IJ.log("no ROI");
 			return;
 		}
 
-		//IJ.log("Before killRoi r = " + r + " examples[i].size + " + examples[i].size());
-
 		displayImage.killRoi();
 		examples[i].add(r);
-		//IJ.log("added ROI " + r + " to list " + i);
 		exampleList[i].add("trace " + traceCounter[i]); 
 		traceCounter[i]++;
 		drawExamples();
@@ -764,6 +802,17 @@ public class Trainable_Segmentation implements PlugIn {
 	}
 	
 	/**
+	 * Display / hide advanced options panel
+	 */
+	private void displayHideAdvancedOptions() 
+	{
+		displayAdvanced = !displayAdvanced;
+		this.advancedJPanel.setVisible(displayAdvanced);
+		win.pack();		
+	}
+	
+	
+	/**
 	 * Save current feature stack into a file
 	 */
 	private void saveFeatureStack() 
@@ -786,6 +835,7 @@ public class Trainable_Segmentation implements PlugIn {
 			IJ.error("Error", "Feature stack could not be saved");
 			return;
 		}
+		
 		IJ.log("Feature stack saved as " + dir + filename);
 	}
 
@@ -1222,6 +1272,9 @@ public class Trainable_Segmentation implements PlugIn {
 		}
 	}
 
+	/**
+	 * Display the whole image after classification 
+	 */
 	void showClassificationImage(){
 		ImagePlus resultImage = new ImagePlus("classification result", classifiedImage.getProcessor().convertToByte(true).duplicate());
 		resultImage.show();
