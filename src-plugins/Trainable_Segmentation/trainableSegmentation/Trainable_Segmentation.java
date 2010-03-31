@@ -51,6 +51,7 @@ import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import ij.gui.Roi;
 import ij.gui.ShapeRoi;
+import ij.io.FileSaver;
 import ij.io.OpenDialog;
 import ij.io.SaveDialog;
 import ij.ImagePlus;
@@ -160,6 +161,8 @@ public class Trainable_Segmentation implements PlugIn {
 	final JButton settingsButton;
 	/** create new class button */
 	final JButton addClassButton;
+	/** save feature stack button */
+	final JButton saveFeatureStackButton;
 	/** available colors for available classes*/
 	final Color[] colors = new Color[]{Color.red, Color.green, Color.blue,
 			Color.orange, Color.pink};
@@ -213,8 +216,11 @@ public class Trainable_Segmentation implements PlugIn {
 		addClassButton = new JButton ("Create new label");
 		addClassButton.setToolTipText("Add one more label to mark different areas");
 		
+		saveFeatureStackButton = new JButton ("Save feature stack");
+		saveFeatureStackButton.setToolTipText("Save current feature stack into a TIFF file");
+		
 		settingsButton = new JButton ("Settings");
-		addClassButton.setToolTipText("Display advanced options");
+		settingsButton.setToolTipText("Display advanced options");
 
 		for(int i = 0; i < numOfClasses ; i++)
 		{
@@ -273,6 +279,9 @@ public class Trainable_Segmentation implements PlugIn {
 					else if(e.getSource() == addClassButton){
 						addNewClass();
 					}
+					else if(e.getSource() == saveFeatureStackButton){
+						saveFeatureStack();
+					}
 					else if(e.getSource() == settingsButton){
 						showSettingsDialog();
 					}
@@ -292,7 +301,7 @@ public class Trainable_Segmentation implements PlugIn {
 						}
 					}
 
-				}
+				}				
 			});
 		}
 	};
@@ -444,6 +453,7 @@ public class Trainable_Segmentation implements PlugIn {
 			loadDataButton.addActionListener(listener);
 			saveDataButton.addActionListener(listener);
 			addClassButton.addActionListener(listener);
+			saveFeatureStackButton.addActionListener(listener);
 			settingsButton.addActionListener(listener);
 
 			// Training panel (left side of the GUI)
@@ -487,6 +497,8 @@ public class Trainable_Segmentation implements PlugIn {
 			optionsJPanel.add(saveDataButton, optionsConstraints);
 			optionsConstraints.gridy++;
 			optionsJPanel.add(addClassButton, optionsConstraints);
+			optionsConstraints.gridy++;
+			optionsJPanel.add(saveFeatureStackButton, optionsConstraints);
 			optionsConstraints.gridy++;
 			optionsJPanel.add(settingsButton, optionsConstraints);
 			optionsConstraints.gridy++;
@@ -563,6 +575,7 @@ public class Trainable_Segmentation implements PlugIn {
 					loadDataButton.removeActionListener(listener);
 					saveDataButton.removeActionListener(listener);
 					addClassButton.removeActionListener(listener);
+					saveFeatureStackButton.removeActionListener(listener);
 					settingsButton.removeActionListener(listener);
 					
 					// Set number of classes back to 2
@@ -581,7 +594,10 @@ public class Trainable_Segmentation implements PlugIn {
 		/* 		public void changeDisplayImage(ImagePlus imp){
   			super.getImagePlus().setProcessor(imp.getProcessor());
   			super.getImagePlus().setTitle(imp.getTitle());
-  		}
+  		}private void saveFeatureStack() {
+					// TODO Auto-generated method stub
+					
+				}
 		 */
 
 
@@ -692,6 +708,7 @@ public class Trainable_Segmentation implements PlugIn {
 		loadDataButton.setEnabled(s);
 		saveDataButton.setEnabled(s);
 		addClassButton.setEnabled(s);
+		saveFeatureStackButton.setEnabled(s);
 		settingsButton.setEnabled(s);
 		for(int i = 0 ; i < numOfClasses; i++)
 		{
@@ -744,6 +761,32 @@ public class Trainable_Segmentation implements PlugIn {
 			}
 		}
 		displayImage.updateAndDraw();
+	}
+	
+	/**
+	 * Save current feature stack into a file
+	 */
+	private void saveFeatureStack() 
+	{
+		if(featureStack.getSize() < 2)
+		{
+			IJ.error("Error", "The feature stack has not been initialized yet, please train first.");
+			return;
+		}
+		
+		SaveDialog sd = new SaveDialog("Save feature stack", this.trainingImage.getTitle() + "-feature-stack", ".tif");
+		final String dir = sd.getDirectory();
+		final String filename = sd.getFileName();
+		
+		if(null == dir || null == filename)
+			return;
+		
+		if(!this.featureStack.saveStackAsTiff(dir + filename))
+		{
+			IJ.error("Error", "Feature stack could not be saved");
+			return;
+		}
+		IJ.log("Feature stack saved as " + dir + filename);
 	}
 
 	/**
