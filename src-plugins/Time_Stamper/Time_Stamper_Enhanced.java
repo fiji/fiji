@@ -44,7 +44,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 	String suffix = chosenSuffix;
 	int decimalPlaces = 3;
 	boolean canceled;
-	boolean okayed = false;
+	boolean preview = true;
 	String digitalOrDecimal = "decimal";
 	String lastTimeStampString; // = "teststring";
 
@@ -114,7 +114,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		// handle the plugin cancel button being pressed.
 		if (gd.wasCanceled()) return DONE;
 			//{canceled = true; return DONE;} 
-		okayed = gd.wasOKed(); // if the ok button was pressed, we are really running the plugin, so later we can tell what time stamp to make as its not the last as used by preview
+		preview = !gd.wasOKed(); // if the ok button was pressed, we are really running the plugin, so later we can tell what time stamp to make as its not the last as used by preview
 		// initialise time with the value of the starting time
 		///time = start; moved to setNPasses
 		
@@ -154,24 +154,23 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 				//that works, but now the time stamper counts up from time = lastTime value not from  time = (start + (first*interval))
 				// when making the time stamps for the whole stack...
 	
-		if (okayed){
-			time = start;
-		}
-		else {
+		frame = 0; // so the value of frame is reset to 0 each time the plugin is run or the preview checkbox is checked. 
+		if (preview){
 			time = lastTime();
 		}
-		
-	
-	System.out.println(nPasses);
+		else {
+			time = start; 
+		}
+		time -= interval; // time = time - interval.  // because we start "before the stack", at frame = 0,  not frame = 1
 	}	
 	
 
 	// run the plugin on the ip object, which is the ImageProcessor object associated with the open/selected image. 
 	// but remember that showDialog method is run before this in ExtendedPluginFilter
 	public void run(ImageProcessor ip) {
-	
 		// this increments frame integer by 1. If an int is declared with no value, it defaults to 0
 		frame++;
+		time += interval;  // increments the time by the time interval
 		
 		if (frame==last) imp.updateAndDraw(); 	// Updates this image from the pixel data in its associated
 							// ImageProcessor object and then displays it
@@ -183,20 +182,18 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		//if (frame==1) showDialog(imp, "TimeStamperEnhanced", pfr);	// if at the 1st frame of the stack, show the GUI by calling the showDialog method
 							// and set the variables according to the GUI input. 
 		
-		if (canceled || frame<first || frame>last) return; // tell the run method when to not do anything just return  
-								// Here there is a bug: with the new use of ExtendedPluginFilter,
-								// using preview on, the first time stamp is placed in frame first-1 not first...
-								// and the last time stamp in last-1. With preview off it works as expected. 
+		if ((!preview) && (canceled || frame<first || frame>last))
+			return; // tell the run method when to not do anything just return  
+				// Here there is a bug: with the new use of ExtendedPluginFilter,
+				// using preview on, the first time stamp is placed in frame first-1 not first...
+				// and the last time stamp in last-1. With preview off it works as expected. 
 	
 		// Have moved the font size and xy loclation calculations for timestamp stuff out of the run method, into their own methods.
 		// set the font size according to ROI size, or if no ROI the GUI text input
 		setFontParams(ip);
 		setLocation(ip);
-
-
 		ip.drawString(timeString()); // draw the timestring into the image
 		//showProgress(precent done calc here); // dont really need a progress bar... but seem to get one anyway...
-		time += interval;  // increments the time by the time interval
 	}
 	
 	
@@ -340,7 +337,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 	}
 	
 	double lastTime() {
-		return start + (interval*(last-first)); 	// is the last time for which a time stamp will be made
+		return start + (interval*(last-1)); 	// is the last time for which a time stamp will be made
 	}
 	
 	//moved out of run method to its own method.
