@@ -1503,6 +1503,7 @@ public class Fake {
 						getVar("EXCLUDE"), cwd);
 					Set noCompile = expandToSet(
 						getVar("NO_COMPILE"), cwd);
+					exclude.addAll(noCompile);
 					iter = java2classFiles(javas,
 						cwd, getBuildDir(),
 						exclude, noCompile).iterator();
