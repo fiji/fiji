@@ -18,8 +18,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 You may contact Albert Cardona at albert at pensament dot net, at http://www.pensament.net/java/
 */
 import ij.IJ;
+import org.python.core.PyDictionary;
+import org.python.core.PySystemState;
 import org.python.util.PythonInterpreter;
 import common.RefreshScripts;
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.File;
+import java.io.InputStream;
 
 /**
  * 	1 - looks for python script files under the ImageJ/plugins/jython folder
@@ -40,11 +46,33 @@ public class Refresh_Jython_Scripts extends RefreshScripts {
 	/** Run a jython script in its own separate interpreter and namespace. */
 	public void runScript(String path) {
 		try {
-			PythonInterpreter PI = new PythonInterpreter();
-			Jython_Interpreter.importAll(PI);
-			PI.execfile(path);
+			// runScript(InputStream) will close the stream
+			runScript(new BufferedInputStream(new FileInputStream(new File(path))));
 		} catch (Throwable t) {
 			printError(t);
+		}
+	}
+
+	/** Will consume and close the stream. */
+	public void runScript(InputStream istream) {
+		try {
+			PySystemState pystate = new PySystemState();
+			pystate.setClassLoader(IJ.getClassLoader());
+			PythonInterpreter PI =
+				new PythonInterpreter(new PyDictionary(), pystate);
+			PI.setOut(this.out);
+			PI.setErr(this.err);
+			Jython_Interpreter.importAll(PI);
+			PI.execfile(istream);
+		} catch (Throwable t) {
+			printError(t);
+		} finally {
+			try {
+				istream.close();
+			} catch (Exception e) {
+				System.out.println("Jython runScript could not close the stream!");
+				e.printStackTrace();
+			}
 		}
 	}
 }

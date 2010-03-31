@@ -46,12 +46,11 @@ public class Jython_Interpreter extends AbstractInterpreter {
 		super.run(arg);
 		super.window.setTitle("Jython Interpreter");
 		super.prompt.setEnabled(false);
-		print_out.print("Starting Jython ...");
+		print("Starting Jython ...");
 		// Create a python interpreter that can load classes from plugin jar files.
 		PySystemState.initialize(System.getProperties(), System.getProperties(), new String[] { }, IJ.getClassLoader());
 		PySystemState pystate = new PySystemState();
 		pystate.setClassLoader(IJ.getClassLoader());
-		pystate.add_extdir(ij.Menus.getPlugInsPath()); // without this line, the class loader doesn't find plugin jars.
 		pi = new PythonInterpreter(new PyDictionary(), pystate);
 		//redirect stdout and stderr to the screen for the interpreter
 		pi.setOut(out);
@@ -70,7 +69,7 @@ public class Jython_Interpreter extends AbstractInterpreter {
 		);
 		super.prompt.setEnabled(true);
 		super.prompt.requestFocus();
-		print_out.println("... done.");
+		println("... done.");
 	}
 
 	/** Evaluate python code. */
@@ -101,6 +100,8 @@ public class Jython_Interpreter extends AbstractInterpreter {
 
 	/** pre-import all ImageJ java classes and TrakEM2 java classes */
 	static public String importAll(PythonInterpreter pi) {
+		if (System.getProperty("jnlp") != null)
+			return "Because Fiji was started via WebStart, no packages were imported implicitly";
 		try {
 			pi.exec("from ij import *\nfrom ij.gui import *\nfrom ij.io import *\nfrom ij.macro import *\nfrom ij.measure import *\nfrom ij.plugin import *\nfrom ij.plugin.filter import *\nfrom ij.plugin.frame import *\nfrom ij.process import *\nfrom ij.text import *\nfrom ij.util import *\nfrom java.lang import *\n");
 		} catch (Exception e) {
@@ -109,7 +110,7 @@ public class Jython_Interpreter extends AbstractInterpreter {
 		}
 		String msg = "All ImageJ and java.lang";
 		try {
-			pi.exec("from ini.trakem2 import *\nfrom ini.trakem2.persistence import *\nfrom ini.trakem2.tree import *\nfrom ini.trakem2.display import *\nfrom ini.trakem2.imaging import *\nfrom ini.trakem2.io import *\nfrom ini.trakem2.utils import *\nfrom ini.trakem2.vector import *\nfrom mpi.fruitfly.analysis import *\nfrom mpi.fruitfly.fft import *\nfrom mpi.fruitfly.general import *\nfrom mpi.fruitfly.math import *\nfrom mpi.fruitfly.math.datastructures import *\nfrom mpi.fruitfly.registration import *\n");
+			pi.exec("from ini.trakem2 import *\nfrom ini.trakem2.persistence import *\nfrom ini.trakem2.tree import *\nfrom ini.trakem2.display import *\nfrom ini.trakem2.imaging import *\nfrom ini.trakem2.io import *\nfrom ini.trakem2.utils import *\nfrom ini.trakem2.vector import *\nfrom mpicbg.trakem2.align import *\nfrom mpicbg.trakem2.transform import *\nfrom lenscorrection import *\nfrom bunwarpj.trakem2.transform import *\nfrom mpi.fruitfly.analysis import *\nfrom mpi.fruitfly.fft import *\nfrom mpi.fruitfly.general import *\nfrom mpi.fruitfly.math import *\nfrom mpi.fruitfly.math.datastructures import *\nfrom mpi.fruitfly.registration import *\n");
 			msg += " and TrakEM2";
 		} catch (Exception e) { /*fail silently*/ }
 		return msg + " classes imported.\n";

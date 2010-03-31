@@ -1,32 +1,24 @@
 package org.imagearchive.lsm.toolbox.gui;
 
-import ij.ImagePlus;
-
-import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.event.WindowFocusListener;
 
-import org.imagearchive.lsm.toolbox.MasterModel;
-import org.imagearchive.lsm.toolbox.info.LsmFileInfo;
+import org.imagearchive.lsm.toolbox.ServiceMediator;
 
-public class ImageFocusListener extends WindowAdapter {
-	private ImagePlus imp;
+public class ImageFocusListener implements WindowFocusListener {
 
-	private LsmFileInfo lfi;
-
-	private MasterModel masterModel;
-
-	public ImageFocusListener(MasterModel masterModel, LsmFileInfo lfi,
-			ImagePlus imp) {
-		this.imp = imp;
-		this.lfi = lfi;
-		this.masterModel = masterModel;
+	public ImageFocusListener() {
 	}
 
-	public void windowActivated(WindowEvent e) {
-		masterModel.setLSMFI(lfi);
+	public void windowGainedFocus(WindowEvent e) {
+		DetailsFrame details = ServiceMediator.getDetailsFrame();
+		InfoFrame info = ServiceMediator.getInfoFrame();
+		if (info != null)
+			info.updateInfoFrame();
+		if (details != null)
+			details.updateTreeAndLabels();
 	}
 
 	public void windowLostFocus(WindowEvent e) {
-		masterModel.setLSMFI(lfi);
 	}
 }

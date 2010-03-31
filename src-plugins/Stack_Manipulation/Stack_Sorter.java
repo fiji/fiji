@@ -2,6 +2,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 import java.util.*;
+import java.awt.datatransfer.*;
 import ij.*;
 import ij.process.*;
 import ij.gui.*;
@@ -9,10 +10,12 @@ import ij.io.*;
 import ij.plugin.PlugIn;
 import ij.plugin.filter.PlugInFilter;
 import ij.plugin.frame.PlugInFrame;
-import ij.measure.Calibration;
+import ij.measure.*;
+import ij.plugin.filter.Analyzer;
+
 
 /** Bob Dougherty.  Plugin to reorder slides in a stack
-Some code borrowed from Wayne Rasband's ROI Manager and Filler.
+Some code borrowed from Wayne Rasband's ROI Manager, Filler, and StackEditor.
 Version 0 3/14/2004
 Version 1 3/15/2004  Added Insert command.
 Version 2 3/16/2004  Updated (by Wayne) for new type of masks in ImageJ 1.32c
@@ -21,6 +24,40 @@ Version 4 3/20/2004  Improved Insert type conversion
 Version 5 3/22/2004  Added image scaling for insert.   Added message on insert
                      when multiple windows have the same name.  Simplified button labels.
                      Added Delete n.
+Version 6 4/2/2004   Added Insert File.
+Version 7 4/2/2004   Added Paste (system) and Insert URL.
+Version 8 4/5/2005   Fixed bug in duplicate and revised delete and delete n.
+Version 9 11/18/2005 Added Sort and Reverse commands
+Version 10 11/18/2005 Added Sort by mean, Label Slices
+*/
+/*	License:
+	Copyright (c) 2004, 2005, OptiNav, Inc.
+	All rights reserved.
+
+	Redistribution and use in source and binary forms, with or without
+	modification, are permitted provided that the following conditions
+	are met:
+
+		Redistributions of source code must retain the above copyright
+	notice, this list of conditions and the following disclaimer.
+		Redistributions in binary form must reproduce the above copyright
+	notice, this list of conditions and the following disclaimer in the
+	documentation and/or other materials provided with the distribution.
+		Neither the name of OptiNav, Inc. nor the names of its contributors
+	may be used to endorse or promote products derived from this software
+	without specific prior written permission.
+
+	THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+	"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+	LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+	A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+	CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+	EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+	PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+	PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+	LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+	NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+	SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
 public class Stack_Sorter implements PlugIn {
@@ -32,7 +69,7 @@ public class Stack_Sorter implements PlugIn {
 }
 /**
 */
-class StackSorter extends PlugInFrame implements ActionListener {
+class StackSorter extends PlugInFrame implements ActionListener, Measurements {
 
 	Panel panel;
 	static Frame instance;
@@ -60,7 +97,7 @@ class StackSorter extends PlugInFrame implements ActionListener {
 		instance = this;
 		setLayout(new FlowLayout(FlowLayout.CENTER,5,5));
 		panel = new Panel();
-		panel.setLayout(new GridLayout(10,1,5,5));
+		panel.setLayout(new GridLayout(18,1,5,5));
 		addLabel("Operate on slice");
 		addButton("<< First");
 		addButton("<");
@@ -69,8 +106,16 @@ class StackSorter extends PlugInFrame implements ActionListener {
 		addButton("Duplicate");
 		addButton("Duplicate n");
 		addButton("Insert");
+		addButton("Insert File");
+		addButton("Insert URL");
+		addButton("Paste (system)");
 		addButton("Delete");
 		addButton("Delete n");
+		addLabel("Whole stack");
+		addButton("Label Slices");
+		addButton("Sort by Label");
+		addButton("Sort by Mean");
+		addButton("Reverse");
 		add(panel);
 		pack();
  		show();
@@ -91,13 +136,28 @@ class StackSorter extends PlugInFrame implements ActionListener {
 			return;
 		imp = WindowManager.getCurrentImage();
 		if (imp == null){
-			IJ.noImage();
+			if(label.equals("Insert File")){
+				String path = getFileName();
+				if(path != null){
+					ImagePlus imp = new Opener().openImage(path);
+					if (imp!=null) imp.show();
+				}
+			} else if(label.equals("Insert URL")){
+				ImagePlus imp = getImagePlusFromURL();
+				if (imp!=null) imp.show();
+			} else if(label.equals("Paste (system)")){
+				ImagePlus imp = getSystemClipboardImage();
+				if (imp!=null) imp.show();
+			} else
+				IJ.noImage();
 		} else {
 			numSlices = imp.getStackSize();
 			slice = imp.getCurrentSlice();
 			if ((numSlices < 2)&&(!label.equals("Duplicate"))&&
-				(!label.equals("Duplicate n"))&&(!label.equals("Insert"))){
-				IJ.showMessage("Stack required");
+				(!label.equals("Duplicate n"))&&(!label.equals("Insert"))&&
+				(!label.equals("Insert File"))&&(!label.equals("Paste (system)"))&&
+				(!label.equals("Insert URL"))){
+					IJ.showMessage("Stack required");
 			} else {
 				stack = imp.getStack();
 				if (label.equals("<< First"))
@@ -114,12 +174,90 @@ class StackSorter extends PlugInFrame implements ActionListener {
 					dupN();
 				else if (label.equals("Insert"))
 					ins();
+				else if (label.equals("Insert File"))
+					insf();
+				else if (label.equals("Insert URL"))
+					insURL();
+				else if (label.equals("Paste (system)"))
+					pasteSys();
 				else if (label.equals("Delete"))
 					del();
 				else if (label.equals("Delete n"))
 					delN();
+				else if (label.equals("Sort by Label"))
+					sortByLabel();
+				else if (label.equals("Sort by Mean"))
+					sortByMean();
+				else if (label.equals("Label Slices"))
+					labelSlices();
+				else if (label.equals("Reverse"))
+					reverse();
 			}
 		}
+	}
+	void labelSlices(){
+		for(int iSlice = 1; iSlice <= numSlices; iSlice++){
+			String title = ""+iSlice;
+			if(iSlice < 10){
+				title = "00000"+title;
+			}else if(iSlice < 100){
+				title = "0000"+title;
+			}else if(iSlice < 1000){
+				title = "000"+title;
+			}else if(iSlice < 10000){
+				title = "00"+title;
+			}else if(iSlice < 100000){
+				title = "0"+title;
+			}
+			stack.setSliceLabel(title,iSlice);
+		}
+		imp.setStack(null,stack);
+		imp.updateAndDraw();
+	}
+	void reverse(){
+		for(int iSlice = 1; iSlice < numSlices; iSlice++){
+			stack.addSlice(stack.getSliceLabel(1), stack.getProcessor(1),numSlices - iSlice + 1);
+			stack.deleteSlice(1);
+		}
+		imp.setStack(null,stack);
+		imp.updateAndDraw();
+	}
+	void sortByLabel(){
+		boolean swapped = false;
+		for(int pass = 0; pass < numSlices; pass++){
+			for(int iSlice = 1; iSlice < (numSlices-pass); iSlice++){
+				int comp = stack.getSliceLabel(iSlice).compareTo(stack.getSliceLabel(iSlice+1));
+				if(comp > 0){
+					swapped = true;
+					stack.addSlice(stack.getSliceLabel(iSlice), stack.getProcessor(iSlice),iSlice+1);
+					stack.deleteSlice(iSlice);
+				}
+			}
+			if(!swapped)break;
+		}
+		imp.setStack(null,stack);
+		imp.updateAndDraw();
+	}
+	void sortByMean(){
+		float[] y = getZAxisProfile();
+		if(y == null)return;
+		boolean swapped = false;
+		for(int pass = 0; pass < numSlices; pass++){
+			for(int iSlice = 1; iSlice < (numSlices-pass); iSlice++){
+				float comp = y[iSlice - 1] - y[iSlice];
+				if(comp > 0){
+					swapped = true;
+					stack.addSlice(stack.getSliceLabel(iSlice), stack.getProcessor(iSlice),iSlice+1);
+					stack.deleteSlice(iSlice);
+					float temp = y[iSlice - 1];
+					y[iSlice - 1] = y[iSlice];
+					y[iSlice] = temp;
+				}
+			}
+			if(!swapped)break;
+		}
+		imp.setStack(null,stack);
+		imp.updateAndDraw();
 	}
 	void first(){
 		if(slice!=1){
@@ -158,7 +296,7 @@ class StackSorter extends PlugInFrame implements ActionListener {
 		}
 	}
 	void dup(){
-		stack.addSlice(stack.getSliceLabel(slice), stack.getProcessor(slice),slice);
+		stack.addSlice(stack.getSliceLabel(slice), stack.getProcessor(slice).duplicate(),slice);
 		imp.setStack(null,stack);
 		imp.setSlice(slice+1);
 		imp.updateAndDraw();
@@ -169,6 +307,65 @@ class StackSorter extends PlugInFrame implements ActionListener {
 	}
 	void ins(){
 		ImagePlus imp1 = showDialog(imp.getTitle());
+		insImp1(imp1);
+	}
+	void insf(){
+		String path = getFileName();
+		if(path != null){
+			ImagePlus imp1 = new Opener().openImage(path);
+			insImp1(imp1);
+		}
+	}
+	void insURL(){
+		ImagePlus imp1 = getImagePlusFromURL();
+		insImp1(imp1);
+	}
+	void pasteSys(){
+		ImagePlus imp1 = getSystemClipboardImage();
+				insImp1(imp1);
+	}
+	ImagePlus getImagePlusFromURL(){
+		ImagePlus imp1 = null;
+		String url = IJ.getString("URL (or path) for an image","http://rsb.info.nih.gov/ij/images/clown.gif");
+		if (!url.equals(""))
+			imp1 = new ImagePlus(url);
+		return imp1;
+	}
+	ImagePlus getSystemClipboardImage(){
+		ImagePlus imp1 = null;
+		try {
+			Toolkit toolkit = Toolkit.getDefaultToolkit();
+			Clipboard cb = toolkit.getSystemClipboard();
+			Transferable trns = cb.getContents(this);
+			String name = cb.getName();
+				if(trns==null){
+					IJ.showMessage("The system clipboard is empty.");
+					return null;
+				}
+				if(!trns.isDataFlavorSupported(DataFlavor.imageFlavor)){
+					IJ.showMessage("The system clipboard has no usable image.");
+					return null;
+				}
+				Image img =	(Image)trns.getTransferData(DataFlavor.imageFlavor);
+				if (img!=null){
+					imp1 =new ImagePlus(name, img);
+				}
+			} catch(Exception e) {
+				IJ.showMessage("Exception with system clipboard.");
+		}
+		return imp1;
+	}
+	String getFileName(){
+		Frame f = new Frame();
+		FileDialog fd = new FileDialog(f, "Image file", FileDialog.LOAD);
+		fd.setVisible(true);
+		String path = fd.getDirectory();
+		String filename = fd.getFile();
+		if ((path == null) || (filename == null))
+			return null;
+		return path+filename;
+	}
+	void insImp1(ImagePlus imp1){
 		if(imp1==null){
 			return;
 		}
@@ -313,15 +510,24 @@ class StackSorter extends PlugInFrame implements ActionListener {
 			result = ip1;
 		return result;
 	}
-	void del(){
-			stack.deleteSlice(slice);
-			imp.setStack(null,stack);
-			if(slice==--numSlices){
-				imp.setSlice(numSlices);
-			}
-			imp.setStack(null,stack);
-			imp.updateAndDraw();
-	}
+	void del() {
+		if (!imp.lock())
+			return;
+		ImageStack stack = imp.getStack();
+		int n = imp.getCurrentSlice();
+		stack.deleteSlice(n);
+		if (stack.getSize()==1) {
+			imp.setProcessor(null, stack.getProcessor(1));
+ 			new ImageWindow(imp);
+		}
+		imp.setStack(null, stack);
+ 		numSlices--;
+		if (n>numSlices)
+			imp.setSlice(numSlices);
+		else
+			imp.setSlice(n);
+        imp.unlock();
+    }
 	void delN(){
 		int maxDelete;
 		if(slice == 1)
@@ -338,7 +544,10 @@ class StackSorter extends PlugInFrame implements ActionListener {
 			}
 		}
 		if(nDelete==0)return;
-		for(int i = 0; i < nDelete; i++)del();
+		for(int i = 0; i < nDelete; i++){
+			del();
+		}
+
 	}
     public void clearOutside(ImageProcessor ip,ImagePlus imp, Roi roi, Rectangle r) {
         if (isLineSelection(roi)) {
@@ -388,7 +597,7 @@ class StackSorter extends PlugInFrame implements ActionListener {
 		String[] titles = new String[wList.length];
 		int n = titles.length;
 		if (n == 1) {
-			IJ.showMessage("No image to insert.  Open one in a second window first.");
+			IJ.showMessage("No image to insert.  Open a second image first, or use Insert File or Paste.");
 			return null;
 		}
 
@@ -440,4 +649,47 @@ class StackSorter extends PlugInFrame implements ActionListener {
 			instance = null;
 		}
 	}
+	//Adapted from ImageJ code by Wayne Rasband
+	float[] getZAxisProfile(){
+		Roi roi = imp.getRoi();
+		if (roi!=null && roi.isLine()) {
+    		IJ.error("ZAxisProfiler", "This command does not work with line selections.");
+    		return null;
+		}
+		ImageProcessor ip = imp.getProcessor();
+		double minThreshold = ip.getMinThreshold();
+		double maxThreshold = ip.getMaxThreshold();
+		return getZAxisProfile(roi, minThreshold, maxThreshold);
+	}
+	//Adapted from ImageJ code by Wayne Rasband
+    float[] getZAxisProfile(Roi roi, double minThreshold, double maxThreshold) {
+        ImageStack stack = imp.getStack();
+        int size = stack.getSize();
+        float[] values = new float[size];
+        Calibration cal = imp.getCalibration();
+        Analyzer analyzer = new Analyzer(imp);
+        int measurements = analyzer.getMeasurements();
+        boolean showResults = measurements!=0 && measurements!=LIMIT;
+        boolean showingLabels = (measurements&LABELS)!=0;
+        measurements |= MEAN;
+        if (showResults) {
+            if (!analyzer.resetCounter())
+                return null;
+        }
+        int current = imp.getCurrentSlice();
+        for (int i=1; i<=size; i++) {
+            if (showingLabels) imp.setSlice(i);
+            ImageProcessor ip = stack.getProcessor(i);
+            if (minThreshold!=ImageProcessor.NO_THRESHOLD)
+                ip.setThreshold(minThreshold,maxThreshold,ImageProcessor.NO_LUT_UPDATE);
+            ip.setRoi(roi);
+            ImageStatistics stats = ImageStatistics.getStatistics(ip, measurements, cal);
+            analyzer.saveResults(stats, roi);
+            if (showResults)
+                analyzer.displayResults();
+            values[i-1] = (float)stats.mean;
+        }
+        if (showingLabels) imp.setSlice(current);
+        return values;
+    }
 }

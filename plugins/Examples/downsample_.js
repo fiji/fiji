@@ -97,8 +97,16 @@ if ( imp )
 			if ( keepSource )
 				IJ.run( "Duplicate...", "title=" + imp.getTitle() + " duplicate" );
 			IJ.run( "Gaussian Blur...", "sigma=" + Math.sqrt( s * s - sourceSigma * sourceSigma ) + " stack" );
+                        //IJ.log( "sigma = " + Math.sqrt( s * s - sourceSigma * sourceSigma ));
 			IJ.run( "Scale...", "x=- y=- width=" + width + " height=" + height + " process title=- interpolation=None" );
-			IJ.run( "Canvas Size...", "width=" + width + " height=" + height + " position=Center" );
+                        
+                        var extraX = (imp.getWidth() % 2 == 0) ? 0 : 1;
+                        var extraY = (imp.getHeight() % 2 == 0) ? 0 : 1;
+			var initialX = (width % 2 == 0) ? (imp.getWidth() / 2 - width/2 + extraX) : (imp.getWidth() / 2 - width/2 +1 -extraX);
+                        var initialY = (height % 2 == 0) ? (imp.getHeight() / 2 - height/2 + extraY) : (imp.getHeight() / 2 - height/2 +1 -extraY);
+                        IJ.makeRectangle(initialX, initialY, width, height);
+                        IJ.run("Crop");
+                        //IJ.run( "Canvas Size...", "width=" + width + " height=" + height + " position=Center" );
 		}
 		else
 			IJ.showMessage( "You try to upsample the image.  You need an interpolator for that not a downsampler." );

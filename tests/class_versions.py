@@ -1,5 +1,14 @@
-#!/usr/bin/python
+#!/bin/sh
+''''exec "$(dirname "$0")"/../fiji --jython "$0" "$@" # (call again with fiji)'''
+
 
 from fiji import CheckClassVersions
 
-CheckClassVersions().main(['plugins/', 'jars/', 'misc/', 'precompiled/'])
+from java.lang import System
+
+fiji_dir = System.getProperty('fiji.dir') + '/'
+
+dirs = ['plugins/', 'jars/', 'misc/', 'precompiled/']
+dirs = [fiji_dir + dir for dir in dirs]
+
+CheckClassVersions().main(dirs)

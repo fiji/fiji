@@ -24,9 +24,9 @@
 package Bug_Submitter;
 
 import ij.IJ;
+import ij.WindowManager;
 import ij.plugin.PlugIn;
 import ij.text.TextWindow;
-
 import ij.plugin.BrowserLauncher;
 
 import java.net.URL;
@@ -47,10 +47,44 @@ import java.util.HashMap;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
-import java.awt.*;
-import java.awt.event.*;
-
 import ij.Prefs;
+
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JTextField;
+import javax.swing.JPasswordField;
+import javax.swing.JTextArea;
+import javax.swing.text.JTextComponent;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JCheckBox;
+import javax.swing.AbstractAction;
+import javax.swing.ActionMap;
+import javax.swing.InputMap;
+import javax.swing.KeyStroke;
+import javax.swing.undo.UndoManager;
+import javax.swing.event.UndoableEditListener;
+import javax.swing.event.UndoableEditEvent;
+import javax.swing.undo.CannotUndoException;
+import javax.swing.undo.CannotRedoException;
+
+import java.awt.event.ActionListener;
+import java.awt.event.WindowListener;
+import java.awt.event.FocusListener;
+import java.awt.event.ActionEvent;
+import java.awt.event.FocusEvent;
+import java.awt.event.WindowEvent;
+import java.awt.event.KeyEvent;
+
+import java.awt.BorderLayout;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.GridBagLayout;
+import java.awt.GridBagConstraints;
+import java.awt.Insets;
+import java.awt.Toolkit;
 
 public class Bug_Submitter implements PlugIn {
 
@@ -64,6 +98,29 @@ public class Bug_Submitter implements PlugIn {
 			IJ.error("UnsupportedEncodingException (!): "+e);
 			return null;
 		}
+	}
+
+	/* We warn the user that saving their password between
+	   sessions is insecure, and only rot13 the password for
+	   storing in the ImageJ preferences file so that someone
+	   glancing over your shoulder while you're editing the file
+	   is less likely to be able to read your password.  There's
+	   no pretence here that this actually adds any meaningful
+	   security. */
+
+	public static String rot13(String s) {
+		int n = s.length();
+		char [] originalChars = s.toCharArray();
+		char [] newChars = new char[n];
+		for( int i = 0; i < n; ++i ) {
+			char c = originalChars[i];
+			if( (c >= 'a' && c <= 'm') || (c >= 'A' && c <= 'M') )
+				c += 13;
+			else if( (c >= 'n' && c <= 'z') || (c >= 'N' && c <= 'Z') )
+				c -= 13;
+			newChars[i] = c;
+		}
+		return new String(newChars);
 	}
 
 	final String bugzillaBaseURI = "http://pacific.mpi-cbg.de/cgi-bin/bugzilla/";
@@ -91,6 +148,39 @@ public class Bug_Submitter implements PlugIn {
 		String bugURL;
 		String authenticationResultPage;
 		String submissionResultPage;
+	}
+
+	public String getUsefulSystemInformation() {
+		String [] interestingProperties = {
+			"os.arch",
+			"os.name",
+			"os.version",
+			"java.version",
+			"java.vendor",
+			"java.runtime.name",
+			"java.runtime.version",
+			"java.vm.name",
+			"java.vm.version",
+			"java.vm.vendor",
+			"java.vm.info",
+			"java.awt.graphicsenv",
+			"java.specification.name",
+			"java.specification.version",
+			"sun.cpu.endian",
+			"sun.desktop",
+			"file.separator" };
+
+		StringBuffer result = new StringBuffer();
+		for( String k : interestingProperties ) {
+			result.append("  ");
+			result.append(k);
+			result.append(" => ");
+			String value = System.getProperty(k);
+			result.append(value == null ? "null" : value);
+			result.append("\n");
+		}
+
+		return result.toString();
 	}
 
 	/** If the bug is submitted successfully, the URL for the bug
@@ -167,58 +257,6 @@ public class Bug_Submitter implements PlugIn {
 							     submissionReply.toString() );
 			}
 
-			// Now we make the actual request.
-			String [] interestingProperties = {
-				"os.arch",
-				"os.name",
-				"os.version",
-				"java.version",
-				"java.vendor",
-				"java.runtime.name",
-				"java.runtime.version",
-				"java.vm.name",
-				"java.vm.version",
-				"java.vm.vendor",
-				"java.vm.info",
-				"java.awt.graphicsenv",
-				"java.specification.name",
-				"java.specification.version",
-				"sun.cpu.endian",
-				"sun.desktop",
-				"file.separator" };
-
-			StringBuffer completeBugText = new StringBuffer();
-			completeBugText.append("Useful Java System Properties:\n");
-			for( String k : interestingProperties ) {
-				completeBugText.append("  ");
-				completeBugText.append(k);
-				completeBugText.append(" => ");
-				String value = System.getProperty(k);
-				completeBugText.append(value == null ? "null" : value);
-				completeBugText.append("\n");
-			}
-			completeBugText.append("\nBug Report Text:\n\n");
-			completeBugText.append(bugText);
-
-			String osParameterValue = null;
-			String platformParameterValue = null;
-
-			String osName = System.getProperty("os.name");
-
-			if( linuxPattern.matcher(osName).matches() ) {
-				osParameterValue = "Linux";
-				platformParameterValue = "PC";
-			} else if( windowsPattern.matcher(osName).matches() ) {
-				osParameterValue = "Windows";
-				platformParameterValue = "PC";
-			} else if( macPattern.matcher(osName).matches() ) {
-				osParameterValue = "Mac OS";
-				platformParameterValue = "Macintosh";
-			} else {
-				osParameterValue = "Other";
-				platformParameterValue = "Other";
-			}
-
 			String ccString = "";
 			if( submitterEmail != null && submitterEmail.trim().length() > 0 )
 				ccString = "&cc="+e(submitterEmail.trim());
@@ -243,6 +281,25 @@ public class Bug_Submitter implements PlugIn {
 			}
 			connection.setRequestProperty( "Cookie", cookieValueToSend );
 
+			String osParameterValue = null;
+			String platformParameterValue = null;
+
+			String osName = System.getProperty("os.name");
+
+			if( linuxPattern.matcher(osName).matches() ) {
+				osParameterValue = "Linux";
+				platformParameterValue = "PC";
+			} else if( windowsPattern.matcher(osName).matches() ) {
+				osParameterValue = "Windows";
+				platformParameterValue = "PC";
+			} else if( macPattern.matcher(osName).matches() ) {
+				osParameterValue = "Mac OS";
+				platformParameterValue = "Macintosh";
+			} else {
+				osParameterValue = "Other";
+				platformParameterValue = "Other";
+			}
+
 			ps = new PrintStream(connection.getOutputStream());
 			ps.println("product=Fiji"+
 				   "&component="+e(bugComponent)+
@@ -257,7 +314,7 @@ public class Bug_Submitter implements PlugIn {
 				   "&assigned_to="+e(bugzillaAssignee)+
 				   ccString+
 				   "&short_desc="+e(bugSubject)+
-				   "&comment="+e(completeBugText.toString())+
+				   "&comment="+e(bugText)+
 				   "&commentprivacy=0"+
 				   "&dependson="+
 				   "&blocked="+
@@ -319,28 +376,127 @@ public class Bug_Submitter implements PlugIn {
 		}
 	}
 
-	class NewBugDialog extends Dialog implements ActionListener, WindowListener {
+	class NewBugDialog extends JFrame implements ActionListener, WindowListener {
 
-		Button bugzillaAccountCreation;
-		Button submitReport;
-		Button cancel;
+		JButton bugzillaAccountCreation;
+		JButton submitReport;
+		JButton cancel;
 
-		TextField username;
-		TextField password;
+		JTextField username;
+		JPasswordField password;
+		JCheckBox rememberPassword;
 
-		TextField summary;
-		TextArea description;
+		JTextField summary;
+		JTextArea description;
+		UndoManager undo;
+
+		private class HighlightingFocusListener implements FocusListener {
+			String stringToHighlight;
+			boolean notYetFocussed = true;
+			JTextComponent textComponent;
+			public HighlightingFocusListener( String stringToHighlight, JTextComponent textComponent ) {
+				this.stringToHighlight = stringToHighlight;
+				this.textComponent = textComponent;
+			}
+			public void focusGained(FocusEvent e) {
+				if( notYetFocussed ) {
+					String text = textComponent.getText();
+					int startIndex = text.indexOf( stringToHighlight );
+					if( startIndex >= 0 ) {
+						textComponent.setSelectionStart(startIndex);
+						textComponent.setSelectionEnd(startIndex+stringToHighlight.length());
+					}
+					notYetFocussed = false;
+				}
+			}
+			public void focusLost(FocusEvent e) { }
+		}
+
+		private class JTextAreaTabFocus extends JTextArea {
+			public JTextAreaTabFocus( int rows, int columns ) {
+				super( rows, columns );
+			}
+			protected void processComponentKeyEvent( KeyEvent e ) {
+				if( e.getID() == KeyEvent.KEY_PRESSED &&
+				    e.getKeyCode() == KeyEvent.VK_TAB ) {
+					e.consume();
+					if (e.isShiftDown())
+						transferFocusBackward();
+					else
+						transferFocus();
+				} else {
+					super.processComponentKeyEvent( e );
+				}
+			}
+		}
+
+		// This example is derived from:
+		//   http://java.sun.com/docs/books/tutorial/uiswing/components/generaltext.html#undo
+		protected class SimpleEditListener implements UndoableEditListener {
+			public void undoableEditHappened(UndoableEditEvent e) {
+				undo.addEdit(e.getEdit());
+			}
+		}
+
+		// More "Programming with Google" from:
+		//   http://www.exampledepot.com/egs/javax.swing.undo/UndoText.html
+
+		protected class UndoAction extends AbstractAction {
+			public UndoAction() {
+				super("Undo");
+			}
+			public void actionPerformed(ActionEvent evt) {
+				try {
+					if( undo.canUndo() )
+						undo.undo();
+				} catch (CannotUndoException e) { }
+			}
+		}
+
+		protected class RedoAction extends AbstractAction {
+			public RedoAction() {
+				super("Redo");
+			}
+			public void actionPerformed(ActionEvent evt) {
+				try {
+					if( undo.canRedo() )
+						undo.redo();
+				} catch (CannotRedoException e) { }
+			}
+		}
 
 		boolean askedToSubmit = false;
 		boolean alreadyDisposed = false;
 
+		public void setVisible(boolean visible) {
+			if (visible)
+				WindowManager.addWindow(this);
+			super.setVisible(visible);
+		}
+
+		public synchronized void show() {
+			WindowManager.addWindow(this);
+			super.show();
+			try {
+				wait();
+			} catch (InterruptedException e) { }
+		}
+
+		public synchronized void dispose() {
+			WindowManager.removeWindow(this);
+			notify();
+			super.dispose();
+	        }
+
+
 		public NewBugDialog( String suggestedUsername,
+				     String suggestedPassword,
 				     String suggestedSummary,
 				     String suggestedDescription ) {
 
-			super( IJ.getInstance(),
-			       "Bug Report Form",
-			       true );
+			super( "Bug Report Form" );
+
+			Container contentPane = getContentPane();
 
 			addWindowListener( this );
 
@@ -348,105 +504,148 @@ public class Bug_Submitter implements PlugIn {
 
 			GridBagConstraints c = new GridBagConstraints();
 
-			c.gridwidth = 2;
 			c.gridx = 0;
 			c.gridy = 0;
-			c.insets = new Insets( 3, 3, 3, 3 );
+			c.weightx = 1;
+			c.weighty = 0;
+			c.insets = new Insets( 5, 3, 5, 3 );
+			c.fill = GridBagConstraints.HORIZONTAL;
 			c.anchor = GridBagConstraints.CENTER;
 
 			{
-				Panel labelsPanel = new Panel();
+				JPanel labelsPanel = new JPanel();
 				labelsPanel.setLayout( new GridBagLayout() );
+
+				JTextArea instructions = new JTextArea(3,30);
+				instructions.setEditable(false);
+				instructions.setCursor(null);
+				instructions.setOpaque(false);
+				instructions.setFocusable(false);
+				instructions.setLineWrap(true);
+				instructions.setWrapStyleWord(true);
+
+				instructions.setText(
+					"In order to report a bug, we ask that you create a Bugzilla account. "+
+					" This is so that you can follow the progress of fixing the problem by"+
+					" email and enables us to ask follow-up questions if that's necessary.");
+
+				bugzillaAccountCreation = new JButton( "Visit the Bugzilla account creation page" );
+				bugzillaAccountCreation.addActionListener(this);
+
 				GridBagConstraints clabels = new GridBagConstraints();
+				clabels.fill = GridBagConstraints.BOTH;
 				clabels.gridx = 0;
 				clabels.gridy = 0;
-				clabels.anchor = GridBagConstraints.LINE_START;
-				labelsPanel.add( new Label( "In order to report a bug, we ask that you create a Bugzilla account." ), clabels );
-				++ clabels.gridy;
-				labelsPanel.add( new Label( "This is so that you can follow the progress of fixing the problem by" ), clabels );
-				++ clabels.gridy;
-				clabels.insets = new Insets( 0, 0, 4, 0 );
-				labelsPanel.add( new Label( "email and enables us to ask follow-up questions if that's necessary." ), clabels );
-
+				labelsPanel.add( instructions, clabels );
 				clabels.gridx = 1;
 				clabels.gridy = 0;
-				clabels.gridheight = 3;
-				clabels.fill = GridBagConstraints.BOTH;
-				bugzillaAccountCreation = new Button( "Visit the Bugzilla account creation page" );
-				bugzillaAccountCreation.addActionListener(this);
 				labelsPanel.add( bugzillaAccountCreation, clabels );
 
-				add( labelsPanel, c );
-				++ c.gridy;
+				contentPane.add( labelsPanel, c );
 			}
 
-			username = new TextField(20);
+			username = new JTextField(20);
 			username.setText( suggestedUsername );
-			password = new TextField(20);
+			password = new JPasswordField(20);
 			password.setEchoChar('*');
+			if( suggestedPassword != null )
+				password.setText( suggestedPassword );
+			rememberPassword = new JCheckBox("",suggestedPassword != null);
 
 			{
-				Panel p = new Panel();
+				JPanel p = new JPanel();
 				p.setLayout( new GridBagLayout() );
 
 				GridBagConstraints cl = new GridBagConstraints();
 
 				cl.gridx = 0; cl.gridy = 0; cl.anchor = GridBagConstraints.LINE_END;
-				p.add( new Label("Bugzilla username (your email address):"), cl );
+				p.add( new JLabel("Bugzilla username (your email address): "), cl );
 				cl.gridx = 1; cl.gridy = 0; cl.anchor = GridBagConstraints.LINE_START;
 				p.add( username, cl );
 
 				cl.gridx = 0; cl.gridy = 1; cl.anchor = GridBagConstraints.LINE_END;
-				p.add( new Label("Bugzilla password:"), cl );
+				p.add( new JLabel("Bugzilla password: "), cl );
 				cl.gridx = 1; cl.gridy = 1; cl.anchor = GridBagConstraints.LINE_START;
 				p.add( password, cl );
 
+				cl.gridx = 0; cl.gridy = 2; cl.anchor = GridBagConstraints.LINE_END;
+				p.add( new JLabel("Remember password (insecure): "), cl );
+				cl.gridx = 1; cl.gridy = 2; cl.anchor = GridBagConstraints.LINE_START;
+				p.add( rememberPassword, cl );
+
 				c.anchor = GridBagConstraints.LINE_START;
-				add( p, c );
 				++ c.gridy;
+				contentPane.add( p, c );
 			}
 
-			summary = new TextField(40);
+			summary = new JTextField(30);
 			summary.setText( suggestedSummary );
-			description = new TextArea(16,76);
+			summary.addFocusListener( new HighlightingFocusListener(
+							      dummyBugTextSummary,
+							      summary) );
+			description = new JTextAreaTabFocus(16,42);
+			description.setLineWrap(true);
+			description.setWrapStyleWord(true);
 			description.setText( suggestedDescription );
+			undo = new UndoManager();
+			description.getDocument().addUndoableEditListener(
+				new SimpleEditListener() );
+			ActionMap actionMap = description.getActionMap();
+			actionMap.put("Undo",new UndoAction());
+			actionMap.put("Redo",new RedoAction());
+			InputMap inputMap = description.getInputMap();
+			inputMap.put(KeyStroke.getKeyStroke("control Z"), "Undo");
+			inputMap.put(KeyStroke.getKeyStroke("control Y"), "Redo");
 
-			c.gridx = 0;
-			c.gridwidth = 1;
-			add( new Label("Summary of the bug:"), c );
-
-			c.gridx = 1;
-			c.fill = GridBagConstraints.HORIZONTAL;
-			add( summary, c );
-			++c.gridy;
-
-			c.gridx = 0;
-			c.gridwidth = 2;
-			c.fill = GridBagConstraints.NONE;
-			c.anchor = GridBagConstraints.LINE_START;
-			add( new Label("A full description of the bug:"), c );
-			++c.gridy;
-
-			add( description, c );
-			++c.gridy;
+			description.addFocusListener( new HighlightingFocusListener(
+							      dummyBugTextDescription,
+							      description) );
 
 			{
-				Panel p = new Panel();
+				JPanel summaryPanel = new JPanel();
+				summaryPanel.setLayout( new BorderLayout() );
+				summaryPanel.add( new JLabel("Summary of the bug: "), BorderLayout.WEST );
+				summaryPanel.add( summary, BorderLayout.CENTER );
+				++ c.gridy;
+				c.anchor = GridBagConstraints.LINE_START;
+				contentPane.add( summaryPanel, c );
+			}
 
-				submitReport = new Button( "Submit Bug Report" );
+			++ c.gridy;
+			contentPane.add( new JLabel("A full description of the bug:"), c );
+
+			JScrollPane scrollPane = new JScrollPane(description);
+
+			++ c.gridy;
+			c.fill = GridBagConstraints.BOTH;
+			c.weighty = 1;
+			contentPane.add( scrollPane, c );
+			c.fill = GridBagConstraints.HORIZONTAL;
+			c.weighty = 0;
+
+			{
+				JPanel p = new JPanel();
+
+				submitReport = new JButton( "Submit Bug Report" );
 				submitReport.addActionListener( this );
 				p.add( submitReport );
 
-				cancel = new Button( "Cancel" );
+				cancel = new JButton( "Cancel" );
 				cancel.addActionListener( this );
 				p.add( cancel );
 
 				c.anchor = GridBagConstraints.CENTER;
-				c.gridwidth = 2;
-				add( p, c );
+				++ c.gridy;
+				contentPane.add( p, c );
 			}
 
+			// Call pack twice to workaround:
+			//   http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4446522
 			pack();
+
+			addAccelerator(cancel, (JComponent)contentPane, this,
+				KeyEvent.VK_W, Toolkit.getDefaultToolkit()
+					.getMenuShortcutKeyMask());
 		}
 
 		public void resetForm() {
@@ -496,26 +695,46 @@ public class Bug_Submitter implements PlugIn {
 	}
 
 	String usernamePreferenceKey = "Bug_Submitter.username";
+	String passwordPreferenceKey = "Bug_Submitter.password";
+
+	final String dummyBugTextSummary = "[Your summary of the problem or bug.]";
+	final String dummyBugTextDescription = "[Enter details of the problem or "+
+			"bug and how to reproduce it here.]";
 
 	public void run( String ignore ) {
 
-		String summary = "[Your summary of the problem or bug.]";
-		String description = "[A full description of the problem or bug and how to reproduce it.]";
-		String username = Prefs.get(usernamePreferenceKey,"");
+		String summary = dummyBugTextSummary;
+		String description = dummyBugTextDescription+"\n"+
+			"\nInformation about your version of Java - "+
+			"this information is useful for the Fiji developers:\n"+
+			getUsefulSystemInformation();
 
 		while( true ) {
 
-			NewBugDialog dialog = new NewBugDialog( username, summary, description );
+			String suggestedUsername = Prefs.get(usernamePreferenceKey,"");
+			String suggestedPassword = Prefs.get(passwordPreferenceKey,null);
+			if( suggestedPassword == null || suggestedPassword.length() == 0 )
+				suggestedPassword = null;
+			else
+				suggestedPassword = rot13( suggestedPassword );
+
+			NewBugDialog dialog = new NewBugDialog( suggestedUsername, suggestedPassword, summary, description );
 			dialog.show();
 
 			if( ! dialog.askedToSubmit )
 				return;
 
-			username = dialog.username.getText().trim();
+			String username = dialog.username.getText().trim();
 			Prefs.set( usernamePreferenceKey, username );
 			Prefs.savePreferences();
 
 			String password = dialog.password.getText();
+			if( dialog.rememberPassword.isSelected() )
+				Prefs.set( passwordPreferenceKey, rot13(password) );
+			else
+				Prefs.set( passwordPreferenceKey, "" );
+			Prefs.savePreferences();
+
 			summary = dialog.summary.getText().trim();
 			description = dialog.description.getText().trim();
 
@@ -533,8 +752,8 @@ public class Bug_Submitter implements PlugIn {
 				IJ.error("The login failed: your username or password may be incorrect.");
 				break;
 			case OTHER_FAILURE:
-				new TextWindow( "Login Reply Page", result.authenticationResultPage, 30, 10 );
-				new TextWindow( "Submission Reply Page", result.submissionResultPage, 30, 10 );
+				new TextWindow( "Login Reply Page", result.authenticationResultPage, 640, 480 );
+				new TextWindow( "Submission Reply Page", result.submissionResultPage, 640, 480 );
 				IJ.error("Sorry - there was an unknown error while submitting your bug.\n"+
 					 "Please submit this as a bug manually, including the text from\nthe two windows which were just created.");
 				break;
@@ -550,4 +769,29 @@ public class Bug_Submitter implements PlugIn {
 			}
 		}
 	}
+
+	/**
+	 * Add a keyboard accelerator to a container.
+	 *
+	 * This method adds a keystroke to the input map of a container that
+	 * sends an action event with the given source to the given listener.
+	 */
+        public static void addAccelerator(final Component source,
+			final JComponent container,
+			final ActionListener listener, int key, int modifiers) {
+                container.getInputMap(container.WHEN_IN_FOCUSED_WINDOW)
+			.put(KeyStroke.getKeyStroke(key, modifiers), source);
+                if (container.getActionMap().get(source) != null)
+                        return;
+                container.getActionMap().put(source,
+                                new AbstractAction() {
+                        public void actionPerformed(ActionEvent e) {
+                                if (!source.isEnabled())
+                                        return;
+                                ActionEvent event = new ActionEvent(source,
+                                        0, "Accelerator");
+                                listener.actionPerformed(event);
+                        }
+                });
+        }
 }

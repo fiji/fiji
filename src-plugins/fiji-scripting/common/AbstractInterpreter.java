@@ -41,8 +41,13 @@ import java.io.PrintWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.FileOutputStream;
+import java.io.BufferedReader;
+import java.io.PipedOutputStream;
+import java.io.PipedInputStream;
+import java.io.InputStreamReader;
 import java.io.File;
 import java.io.Writer;
+import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.List;
@@ -63,18 +68,30 @@ public abstract class AbstractInterpreter implements PlugIn {
 	protected int active_line = 0;
 	final protected ArrayList al_lines = new ArrayList();
 	final protected ArrayList<Boolean> valid_lines = new ArrayList<Boolean>();
-	final protected ByteArrayOutputStream byte_out = new ByteArrayOutputStream();
-	final protected BufferedOutputStream out = new BufferedOutputStream(byte_out);
-    final protected PrintWriter print_out = new PrintWriter(out);
-	Thread reader;
-	boolean reader_run = true;
+	private PipedOutputStream pout = null;
+	private BufferedReader readin = null;
+	protected BufferedOutputStream out = null;
+	protected PrintWriter print_out = null;
+	Thread reader, writer;
 	protected JPopupMenu popup_menu;
-	String last_dir = ij.Menus.getPlugInsPath();//ij.Prefs.getString(ij.Prefs.DIR_IMAGE);
+	String last_dir = System.getProperty("user.dir");
+	{
+		try {
+			last_dir = ij.Menus.getPlugInsPath();//ij.Prefs.getString(ij.Prefs.DIR_IMAGE);
+		} catch (Exception e) {
+			System.out.println("Could not retrieve Menus.getPlugInsPath()");
+		}
+	}
 	protected ExecuteCode runner;
 
 	static final protected Hashtable<Class,AbstractInterpreter> instances = new Hashtable<Class,AbstractInterpreter>();
 
 	static {
+		/* set the default class loader to ImageJ's PluginClassLoader */
+		if (IJ.getInstance() != null)
+			Thread.currentThread()
+				.setContextClassLoader(IJ.getClassLoader());
+
 		// Save history of all open interpreters even in the case of a call to System.exit(0),
 		// which doesn't spawn windowClosing events.
 		Runtime.getRuntime().addShutdownHook(new Thread() { public void run() {
@@ -124,28 +141,51 @@ public abstract class AbstractInterpreter implements PlugIn {
 			active_line = 0;
 		}
 
-		// make GUI
-		makeGUI();
+		runner = new ExecuteCode();
+
+		// Wait until runner is alive (then piped streams will exist)
+		while (!runner.isAlive() || null == pout) {
+			try {
+				Thread.sleep(50);
+			} catch (InterruptedException ie) {}
+		}
+
 		// start thread to write stdout and stderr to the screen
 		reader = new Thread("out_reader") {
 			public void run() {
-				setPriority(Thread.NORM_PRIORITY);
-				while(reader_run) {
-					print_out.flush();
-					String output = byte_out.toString(); // this should go with proper encoding 8859_1 or whatever is called
-					if (output.length() > 0) {
-						screen.append(output + "\n");
-						screen.setCaretPosition(screen.getDocument().getLength());
-						byte_out.reset();
-					}
+				{
 					try {
-						sleep(500);
-					} catch (InterruptedException ie) {}
+						readin = new BufferedReader(new InputStreamReader(new PipedInputStream(pout)));
+					} catch (Exception ioe) {
+						ioe.printStackTrace();
+					}
+				}
+				setPriority(Thread.NORM_PRIORITY);
+				while (!isInterrupted()) {
+					try {
+						// Will block until it can print a full line:
+						String s = new StringBuilder(readin.readLine()).append('\n').toString();
+						if (!window.isVisible()) continue;
+						screen.append(s);
+						screen.setCaretPosition(screen.getDocument().getLength());
+					} catch (IOException ioe) {
+						// Write end dead
+						p("Out reader quit reading.");
+						return;
+					} catch (Throwable e) {
+						if (!isInterrupted() && window.isVisible()) e.printStackTrace();
+						else {
+							p("Out reader terminated.");
+							return;
+						}
+					}
 				}
 			}
 		};
 		reader.start();
-		runner = new ExecuteCode();
+
+		// make GUI
+		makeGUI();
 	}
 
 	protected void makeGUI() {
@@ -204,6 +244,8 @@ public abstract class AbstractInterpreter implements PlugIn {
 		addMenuItem(popup_menu, "Save", menu_listener);
 		JScrollPane scroll_prompt = new JScrollPane(prompt);
 		scroll_prompt.setPreferredSize(new Dimension(440, 35));
+		scroll_prompt.setVerticalScrollBarPolicy(JScrollPane
+			.VERTICAL_SCROLLBAR_ALWAYS);
 		prompt.setFont(font);
 		prompt.setLineWrap(true);
 
@@ -211,11 +253,12 @@ public abstract class AbstractInterpreter implements PlugIn {
 		prompt.getActionMap().put("down",
 				new AbstractAction("down") {
 					public void actionPerformed(ActionEvent ae) {
-						if (isCaretOnLastLine()) {
+						int position = cursorUpDown(true);
+						if (position < 0) {
 							trySetNextPrompt();
 						} else {
 							// Move down one line within a multiline prompt
-							doArrowDown(prompt.getText());
+							prompt.setCaretPosition(position);
 						}
 					}
 				});
@@ -223,11 +266,12 @@ public abstract class AbstractInterpreter implements PlugIn {
 		prompt.getActionMap().put("up",
 				new AbstractAction("up") {
 					public void actionPerformed(ActionEvent ae) {
-						if (isCaretOnFirstLine()) {
+						int position = cursorUpDown(false);
+						if (position < 0) {
 							trySetPreviousPrompt();
 						} else {
-							// Move up one line within a multiline prompt
-							doArrowUp(prompt.getText());
+							// Move down one line within a multiline prompt
+							prompt.setCaretPosition(position);
 						}
 					}
 				});
@@ -250,10 +294,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 				new AbstractAction("shift+down") {
 					public void actionPerformed(ActionEvent ae) {
 						//enable to scroll within lines when the prompt consists of multiple lines.
-						String text = prompt.getText();
-						if (-1 != text.indexOf('\n')) {
-							doArrowDown(text);
-						}
+						doArrowDown();
 					}
 				});
 		prompt.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_UP, ActionEvent.SHIFT_MASK), "shift+up");
@@ -261,10 +302,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 				new AbstractAction("shift+up") {
 					public void actionPerformed(ActionEvent ae) {
 						//enable to scroll within lines when the prompt consists of multiple lines.
-						String text = prompt.getText();
-						if (-1 != text.indexOf('\n')) {
-							doArrowUp(text);
-						}
+						doArrowUp();
 					}
 				});
 		prompt.getInputMap().put(KeyStroke.getKeyStroke("ENTER"), "enter");
@@ -394,66 +432,59 @@ public abstract class AbstractInterpreter implements PlugIn {
 		}
 		final String text = (String)al_lines.get(active_line);
 		prompt.setText(text);
-		final int i_newline = text.indexOf('\n');
-		if (-1 != i_newline) prompt.setCaretPosition(i_newline);
+	}
+
+	/** get the position when moving one visible line forward or backward */
+	private int cursorUpDown(boolean forward) {
+		try {
+			int position = prompt.getCaretPosition();
+			int columns = prompt.getColumns();
+			int line = prompt.getLineOfOffset(position);
+			int start = prompt.getLineStartOffset(line);
+			int end = prompt.getLineEndOffset(line);
+			int column = (position - start) % columns;
+
+			int wrappedLineCount =
+				(end + columns - 1 - start) / columns;
+			int currentWrappedLine =
+				(position - start) / columns;
+
+			if (forward) {
+				if ((position - start) / columns <
+						(end - start) / columns)
+					return Math.min(position + columns,
+							end);
+
+				start = prompt.getLineStartOffset(line + 1);
+				end = prompt.getLineEndOffset(line + 1);
+				return Math.min(start + column, end - 1);
+			}
+
+			// backward
+			if ((position - start) / columns > 0)
+				return position - columns;
+
+			start = prompt.getLineStartOffset(line - 1);
+			end = prompt.getLineEndOffset(line - 1);
+			int endColumn = (end - start) % columns;
+			return end - Math.max(1, endColumn - column);
+		} catch (Exception e) {
+			return -1;
+		}
 	}
 
 	/** Move the prompt caret down one line in a multiline prompt, if possible. */
-	private void doArrowDown(final String text) {
-		// Caret can be from 0 to text.length() inclusive (i.e. after the last char)
-		int cp = prompt.getCaretPosition();
-		// next newline
-		int next_nl = text.indexOf('\n', cp);
-		if (-1 == next_nl) return; // can't scroll down
-		// previous newline
-		int prev_nl = text.lastIndexOf('\n', cp-1);
-		if (-1 == prev_nl) prev_nl = -1; // caret at first char of first line
-		// distance from prev_nl to caret
-		int column = cp - prev_nl;
-		// second next newline
-		int next_nl_2 = text.indexOf('\n', next_nl+1);
-		if (-1 == next_nl_2) next_nl_2 = text.length();
-		// new caret position
-		if (column > next_nl_2 - next_nl) cp = next_nl_2;
-		else cp = next_nl + column;
-		// check boundaries
-		if (cp > text.length()) cp = text.length();
-		//
-		prompt.setCaretPosition(cp);
+	private void doArrowDown() {
+		int position = cursorUpDown(true);
+		if (position >= 0)
+			prompt.setCaretPosition(position);
 	}
 
 	/** Move the prompt caret up one line in a multiline prompt, if possible. */
-	private void doArrowUp(final String text) {
-		int cp = prompt.getCaretPosition();
-		// next newline
-		int next_nl = text.indexOf('\n', cp);
-		if (-1 == next_nl) next_nl = text.length(); // imaginary
-		// previous newline
-		int prev_nl = text.lastIndexOf('\n', cp -1);
-		if (-1 == prev_nl) return; // already at first row
-		// distance from prev_nl to caret
-		int column = cp - prev_nl;
-		// second previous newline
-		int prev_nl_2 = text.lastIndexOf('\n', prev_nl -1);
-		// if -1 == prev_nl_2 it's ok: means we are at second row
-		if (column > prev_nl - prev_nl_2) cp = prev_nl;
-		else cp = prev_nl_2 + column;
-		//
-		prompt.setCaretPosition(cp);
-	}
-
-	private boolean isCaretOnFirstLine() {
-		final String text = prompt.getText();
-		final int i_newline = text.indexOf('\n');
-		return -1 == i_newline
-		    || prompt.getCaretPosition() <= i_newline;
-	}
-
-	private boolean isCaretOnLastLine() {
-		final String text = prompt.getText();
-		final int i_newline = text.lastIndexOf('\n');
-		return -1 == i_newline
-		    || prompt.getCaretPosition() > i_newline;
+	private void doArrowUp() {
+		int position = cursorUpDown(false);
+		if (position >= 0)
+			prompt.setCaretPosition(position);
 	}
 
 	private void closingWindow() {
@@ -468,7 +499,8 @@ public abstract class AbstractInterpreter implements PlugIn {
 		//
 		AbstractInterpreter.this.windowClosing();
 		runner.quit();
-		reader_run = false;
+		Thread.yield();
+		reader.interrupt();
 	}
 
 	void addMenuItem(JPopupMenu menu, String label, ActionListener listener) {
@@ -489,6 +521,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 		}
 		public void quit() {
 			go = false;
+			interrupt();
 			synchronized (this) { notify(); }
 		}
 		public void execute(String text) {
@@ -503,15 +536,25 @@ public abstract class AbstractInterpreter implements PlugIn {
 			synchronized (this) { notify(); }
 		}
 		public void run() {
+			try {
+				pout = new PipedOutputStream();
+				out = new BufferedOutputStream(pout);
+				print_out = new PrintWriter(out);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 			AbstractInterpreter.this.threadStarting();
 			while (go) {
+				if (isInterrupted()) return;
 				try {
 					synchronized (this) { wait(); }
 					if (!go) return;
 					AbstractInterpreter.this.execute(text, store);
-				 } catch (Exception e) {
-					 e.printStackTrace();
-				 } finally {
+				} catch (InterruptedException ie) {
+					return; 
+				} catch (Exception e) {
+					e.printStackTrace();
+				} finally {
 					if (!go) return; // this statement is reached when returning from the middle of the try/catch!
 					window.setVisible(true);
 					if (store) {
@@ -526,7 +569,15 @@ public abstract class AbstractInterpreter implements PlugIn {
 				 }
 			}
 			AbstractInterpreter.this.threadQuitting();
+			try {
+				print_out.flush();
+				print_out.close();
+			} catch (Exception e) {}
 		}
+	}
+
+	protected String getPrompt() {
+		return ">>>";
 	}
 
 	boolean previous_line_empty = false;
@@ -535,7 +586,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 		if (null == text) return;
 		int len = text.length();
 		if (len <= 0) {
-			print(">>>");
+			println(getPrompt());
 			return;
 		}
 		// store text
@@ -574,7 +625,7 @@ public abstract class AbstractInterpreter implements PlugIn {
 				prompt.setText(new String(tabs));
 			}
 			// print to screen
-			print("... " + fix(text));
+			println("... " + fix(text));
 			// remove tabs from line:
 			text = text.replaceAll("\\t", "");
 			len = text.length(); // refresh length
@@ -593,20 +644,22 @@ public abstract class AbstractInterpreter implements PlugIn {
 			}
 		} else {
 		*/
-			print(">>> " + text);
+			print(new StringBuilder(getPrompt()).append(' ').append(text).append('\n').toString());
 		/*
 		}
 		*/
 		try {
 			Object ob = eval(text);
 			if (null != ob) {
-				print(ob.toString());
+				println(ob.toString());
 			}
 			// if no error, mark as valid
 			valid_lines.set(valid_lines.size() -1, true);
 		} catch (Throwable e) {
 			e.printStackTrace(print_out);
 		} finally {
+			print_out.write('\n');
+			print_out.flush();
 			//remove tabs from prompt
 			prompt.setText("");
 			// reset tab expansion
@@ -615,8 +668,13 @@ public abstract class AbstractInterpreter implements PlugIn {
 	}
 
 	/** Prints to screen: will append a newline char to the text, and also scroll down. */
+	protected void println(String text) {
+		print(text + "\n");
+	}
+
+	/** Prints to screen and scrolls down. */
 	protected void print(String text) {
-		screen.append(text + "\n");
+		screen.append(text);
 		screen.setCaretPosition(screen.getDocument().getLength());
 	}
 
@@ -636,9 +694,8 @@ public abstract class AbstractInterpreter implements PlugIn {
 
 	/** Enable tab chars in the prompt. */
 	protected String fix(String text) {
-		String t = text.replaceAll("\\\\n", "\n");
-		t = t.replaceAll("\\\\t", "\t");
-		return t;
+		return text.replaceAll("\\\\n", "\n")
+			   .replaceAll("\\\\t", "\t");
 	}
 
 	/** Insert a tab in the prompt (in replacement for Component focus)*/
@@ -779,14 +836,15 @@ public abstract class AbstractInterpreter implements PlugIn {
 		int istart = 0;
 		int inl = sel.indexOf('\n');
 		int len = sel.length();
-		Pattern pat = Pattern.compile("^>>> .*$");
+		String sprompt = getPrompt();
+		Pattern pat = Pattern.compile("^" + sprompt + " .*$");
 
 		while (true) {
 			if (-1 == inl) inl = len -1;
 			// process line:
 			String line = sel.substring(istart, inl+1);
 			if (pat.matcher(line).matches()) {
-				line = line.substring(5);
+				line = line.substring(sprompt.length() + 1); // + 1 to reach the first char after the space after the prompt text.
 			}
 			sb.append(line);
 			// quit if possible

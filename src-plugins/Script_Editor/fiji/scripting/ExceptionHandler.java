@@ -1,0 +1,117 @@
+package fiji.scripting;
+
+import fiji.scripting.ErrorHandler;
+import fiji.scripting.ErrorHandler.Error;
+
+import ij.IJ;
+
+import ij.text.TextWindow;
+
+import java.io.CharArrayWriter;
+import java.io.File;
+import java.io.PrintWriter;
+
+import java.lang.reflect.InvocationTargetException;
+
+import java.util.Map;
+import java.util.WeakHashMap;
+
+import javax.swing.JTextArea;
+
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
+
+public class ExceptionHandler implements IJ.ExceptionHandler {
+	protected Map<ThreadGroup, TextEditor> threadMap =
+		new WeakHashMap<ThreadGroup, TextEditor>();
+
+	IJ.ExceptionHandler fallBack;
+
+	protected ExceptionHandler(IJ.ExceptionHandler fallBackHandler) {
+		fallBack = fallBackHandler;
+	}
+
+	public static void addThread(Thread thread, TextEditor editor) {
+		addThreadGroup(thread.getThreadGroup(), editor);
+	}
+
+	public static void addThreadGroup(ThreadGroup group, TextEditor editor) {
+		ExceptionHandler handler = getInstance();
+		handler.threadMap.put(group, editor);
+	}
+
+	public static ExceptionHandler getInstance() {
+		IJ.ExceptionHandler current = null;
+
+		try {
+			current = IJ.getExceptionHandler();
+			if (current instanceof ExceptionHandler)
+				return (ExceptionHandler)current;
+		} catch (Exception e) { /* ignore */ }
+
+		if (current == null)
+			current = new IJ.ExceptionHandler() {
+				public void handle(Throwable t) {
+					legacyHandle(t);
+				}
+			};
+
+		ExceptionHandler result = new ExceptionHandler(current);
+		IJ.setExceptionHandler(result);
+		return result;
+	}
+
+	public void handle(Throwable t) {
+		ThreadGroup group = Thread.currentThread().getThreadGroup();
+		while (group != null) {
+			TextEditor editor = threadMap.get(group);
+			if (editor != null) {
+				handle(t, editor);
+				return;
+			}
+			group = group.getParent();
+		}
+		fallBack.handle(t);
+	}
+
+	public static void legacyHandle(Throwable t) {
+		CharArrayWriter writer = new CharArrayWriter();
+		t.printStackTrace(new PrintWriter(writer));
+		new TextWindow("Exception", writer.toString(), 350, 250);
+	}
+
+	public static void handle(Throwable t, TextEditor editor) {
+		JTextArea screen = editor.screen;
+		Document document = screen.getDocument();
+
+		if (t instanceof InvocationTargetException) {
+			t = ((InvocationTargetException)t).getTargetException();
+		}
+		StackTraceElement[] trace = t.getStackTrace();
+
+		screen.insert(t.getClass().getName() + ": "
+				+ t.getMessage() + "\n", document.getLength());
+		ErrorHandler handler = new ErrorHandler(screen);
+		for (int i = 0; i < trace.length; i++) {
+			int offset = document.getLength();
+			String fileName = trace[i].getFileName();
+			int line = trace[i].getLineNumber();
+			screen.insert("\t at " + trace[i].getClassName()
+					+ "." + trace[i].getMethodName()
+					+ "(" + fileName + ":" + line + ")\n",
+					offset);
+			File file = editor.getFileForBasename(fileName);
+			if (file != null) try {
+				Error error =
+					new Error(file.getAbsolutePath(), line);
+				error.position =
+					document.createPosition(offset + 1);
+				handler.list.add(error);
+			} catch (BadLocationException e) {
+				e.printStackTrace();
+			}
+		}
+
+		editor.errorHandler = handler;
+	}
+}

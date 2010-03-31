@@ -12,34 +12,34 @@ public abstract class MorphologicalOperator implements Filter
    /**
     * The structuring element
     */
-   protected boolean[][] mask = null;
+   protected final boolean[][] mask;
    /**
     * A preallocated array for pixel storage
     */
-   protected int[] pixel = new int[3];
+   protected final int[] pixel = new int[3];
    /**
     * Mask center index - held to avoid repeated costly calculations
     */
    protected int center = 0;
       
    /** Creates a new instance of MorphologicalOperator */
-   public MorphologicalOperator(boolean[][] mask)
+   public MorphologicalOperator(final boolean[][] mask)
    {
       this.mask = mask;
       center = mask.length / 2 + 1;
    }
    
    // see javadoch in interface Filter
-   public BufferedImage filter(BufferedImage input)
+   public BufferedImage filter(final BufferedImage input)
    {
-      BufferedImage image =
+      final BufferedImage image =
               new BufferedImage(input.getWidth(), input.getHeight(), BufferedImage.TYPE_USHORT_GRAY);
       
-      Raster in = input.getRaster();
-      WritableRaster raster = image.getRaster();
+      final Raster in = input.getRaster();
+      final WritableRaster raster = image.getRaster();
 
-      int width = image.getWidth();
-      int height = image.getHeight();
+      final int width = image.getWidth();
+      final int height = image.getHeight();
       for (int i = 0; i < width; i ++)
       {
          for (int j = 0; j < height; j ++)
@@ -52,6 +52,18 @@ public abstract class MorphologicalOperator implements Filter
       
       return image;
    }
+
+   public final void filter(final int width, final int height, final short[] source, final short[] target) {
+      for (int i = 0; i < width; i ++)
+      {
+         for (int j = 0; j < height; j ++)
+         {
+            if (i < center || i > (width - center - 1)) continue;
+            if (j < center || j > (height - center - 1)) continue;
+            processPosition(i, j, width, source, target);
+         }
+      }
+   }
    
    /**
     * Returns a completely set mask
@@ -59,9 +71,9 @@ public abstract class MorphologicalOperator implements Filter
     * @param height Mask height
     * @return The mask
     */
-   public static boolean[][] getTrueMask(int width, int height)
+   public final static boolean[][] getTrueMask(final int width, final int height)
    {
-       boolean[][] newMask = new boolean[width][height];
+       final boolean[][] newMask = new boolean[width][height];
        for (int i = 0; i< newMask.length; i++)
        {
            for (int j = 0; j < newMask[0].length; j++)
@@ -83,4 +95,6 @@ public abstract class MorphologicalOperator implements Filter
     * @param in The input raster
     */
    protected abstract void processPosition(int x, int y, WritableRaster raster, Raster in);
+
+   protected abstract void processPosition(final int x, final int y, final int width, final short[] source, final short[] target); // inverse order than raster, in
 }

@@ -33,16 +33,26 @@ import ij.IJ;
 import ij.ImageJ;
 import ij.Menus;
 import ij.plugin.PlugIn;
+
 import java.awt.Menu;
 import java.awt.PopupMenu;
 import java.awt.MenuItem;
 import java.awt.MenuBar;
+
 import java.util.ArrayList;
+import java.util.Arrays;
+
 import java.io.File;
+import java.io.IOException;
 import java.io.StringWriter;
 import java.io.PrintWriter;
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
 
 /**
  *  This class looks through the plugins directory for files with a
@@ -70,9 +80,23 @@ import java.io.FileReader;
  *
  */
 abstract public class RefreshScripts implements PlugIn {
+	static {
+		if (IJ.getInstance() != null)
+			System.setProperty("java.class.path",
+					getPluginsClasspath());
+	}
 
 	protected String scriptExtension;
 	protected String languageName;
+
+	/** Default values: the system's. */
+	protected OutputStream out = System.out,
+		               err = System.err;
+
+	public void setOutputStreams(OutputStream out, OutputStream err) {
+		if (null != out) this.out = out;
+		if (null != err) this.err = err;
+	}
 
 	public void setLanguageProperties( String scriptExtension, String languageName ) {
 		this.scriptExtension = scriptExtension;
@@ -150,8 +174,10 @@ abstract public class RefreshScripts implements PlugIn {
 				command.startsWith("ij.plugin.Macro_Runner("))
 			return true;
 
-System.err.println("ext: " + scriptExtension);
 		if (scriptExtension.equals(".java"))
+			return true;
+
+		if (command.startsWith(getClass().getName() + "("))
 			return true;
 
 		IJ.log("The script " + filename + " would override "
@@ -254,11 +280,14 @@ System.err.println("ext: " + scriptExtension);
 	// This is just for recursion; call the addFromDirectory(String,int)
 	// method instead
 	private void addFromDirectory( String topLevelDirectory, String subPath, int depth, int maxDepth ) {
+		if (subPath.equals(".rsrc") || subPath.endsWith("/.rsrc"))
+			return;
 		File f = new File(topLevelDirectory + File.separator + subPath );
 		if (f.isDirectory() ) {
 			if (maxDepth >= 0 && depth >= maxDepth)
 				return;
 			String [] entries = f.list();
+			Arrays.sort(entries);
 			for( int i = 0; i < entries.length; ++i )
 				if( ! (entries[i].equals(".")||entries[i].equals("..")) ) {
 					String newSubPath = subPath;
@@ -291,7 +320,8 @@ System.err.println("ext: " + scriptExtension);
 			String label = item.getLabel();
 			String command = (String)Menus.getCommands().get(label);
 			if (command == null ||
-			    !command.startsWith(getClass().getName() + "(\"") ||
+			    !command.startsWith(getClass().getName() + "(\""
+				+ Menus.getPlugInsPath()) ||
 			    !command.endsWith(scriptExtension + "\")"))
 				continue;
 			menu.remove(i);
@@ -302,7 +332,14 @@ System.err.println("ext: " + scriptExtension);
 	public void run(String arg) {
 
 		if( arg != null && ! arg.equals("") ) {
-			runScript(arg);
+			/* set the default class loader to ImageJ's PluginClassLoader */
+			Thread.currentThread()
+				.setContextClassLoader(IJ.getClassLoader());
+
+			String path = arg;
+			if (!new File(path).isAbsolute())
+				path = new StringBuffer(Menus.getPlugInsPath()).append(path).toString(); // blackslash-safe
+			runScript(path);
 			return;
 		}
 
@@ -339,34 +376,40 @@ System.err.println("ext: " + scriptExtension);
 
 	/** Converts 'My_python_script.py' to 'My python script'*/
 	private String strip(String file_name) {
-		StringBuffer name = new StringBuffer(file_name);
-		int i_extension = file_name.indexOf(scriptExtension);
-		//don't cut the extension if the .py is some internal part of the name
-		if (-1 != i_extension && ((file_name.length()-scriptExtension.length()) == i_extension)) {
-			//cut extension
-			name.setLength(i_extension);
-		}
-		String result = name.toString();
-		return result.replace('_',' ');
+		if (file_name.endsWith(scriptExtension))
+			file_name = file_name.substring(0,
+				file_name.length() - scriptExtension.length());
+		return file_name.replace('_',' ');
 	}
 
 	/** Run the script in a new thread. */
-	abstract protected void runScript(String filename);
+	abstract public void runScript(InputStream istream);
+
+	/** Run the script in a new thread. */
+	abstract public void runScript(String filename);
 
 	static public void printError(Throwable t) {
-		final StringWriter w = new StringWriter();
-		final PrintWriter pw = new PrintWriter(w);
-		t.printStackTrace(pw);
-		pw.close();
-		IJ.log(w.toString());
+		IJ.handleException(t);
 	}
 
+	// TODO rename to readText
         static public final String openTextFile(final String path) {
                 if (null == path || !new File(path).exists()) return null;
+		try {
+			// Stream will be closed in overloaded method:
+                        return openTextFile(new BufferedInputStream(new FileInputStream(path)));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	/** Will consume and close the stream. */
+        static public final String openTextFile(final InputStream istream) {
                 final StringBuffer sb = new StringBuffer();
 		BufferedReader r = null;
                 try {
-                        r = new BufferedReader(new FileReader(path));
+                        r = new BufferedReader(new InputStreamReader(istream));
                         while (true) {
                                 String s = r.readLine();
                                 if (null == s) break;
@@ -379,5 +422,59 @@ System.err.println("ext: " + scriptExtension);
                         if (null != r) try { r.close(); } catch (java.io.IOException ioe) { ioe.printStackTrace(); }
 		}
                 return sb.toString();
+        }
+
+	protected static String getPluginsClasspath() {
+		String classPath = System.getProperty("java.class.path");
+		if (classPath == null)
+			return "";
+
+		// strip out all plugin .jar files (to keep classPath short)
+		String pluginsPath = Menus.getPlugInsPath();
+		for (int i = 0; i >= 0; i =
+				classPath.indexOf(File.pathSeparator, i + 1)) {
+			while (classPath.substring(i).startsWith(pluginsPath)) {
+				int j = classPath.indexOf(File.pathSeparator,
+					i + 1);
+				classPath = classPath.substring(0, i)
+					+ (j < 0 ? "" :
+						classPath.substring(j + 1));
+			}
+		}
+
+		// append the plugin .jar files
+		try {
+			String path = discoverJars(pluginsPath);
+			if (path != null && !path.equals("")) {
+				if (!classPath.equals(""))
+					classPath += File.pathSeparator;
+				classPath += path;
+			}
+		} catch (IOException e) { }
+		return classPath;
+	}
+
+	protected static String discoverJars(String path) throws IOException {
+		if (path.equals(".rsrc") || path.endsWith("/.rsrc"))
+			return "";
+                File file = new File(path);
+                if (file.isDirectory()) {
+			String result = "";
+			String[] paths = file.list();
+			Arrays.sort(paths);
+                        for (int i = 0; i < paths.length; i++) {
+				String add = discoverJars(path
+						+ File.separator + paths[i]);
+				if (add == null || add.equals(""))
+					continue;
+				if (!result.equals(""))
+					result += File.pathSeparator;
+                                result += add;
+			}
+			return result;
+		}
+                else if (path.endsWith(".jar"))
+			return path;
+		return null;
         }
 }

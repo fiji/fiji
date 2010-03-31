@@ -31,6 +31,7 @@ import static stitching.CommonFunctions.getPixelMinRGB;
 import java.awt.Rectangle;
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.PrintWriter;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -38,7 +39,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import ij.gui.GenericDialog;
+import fiji.util.GenericDialogPlus;
+
 import ij.gui.MultiLineLabel;
 import ij.measure.Calibration;
 import ij.plugin.PlugIn;
@@ -71,6 +73,7 @@ public class Stitch_Image_Collection implements PlugIn
 	public String rgbOrder;
 	
 	public static String fileNameStatic = "TileConfiguration.txt";
+	public static boolean computeOverlapStatic = true;
 	public static String handleRGBStatic = colorList[colorList.length - 1];
 	public static String rgbOrderStatic = rgbTypes[0];	
 	public static String fusionMethodStatic = methodListCollection[LIN_BLEND];
@@ -83,9 +86,11 @@ public class Stitch_Image_Collection implements PlugIn
 	
 	public void run(String arg0)
 	{
-		GenericDialog gd = new GenericDialog("Stitch Image Collection");
+		GenericDialogPlus gd = new GenericDialogPlus("Stitch Image Collection");
 		
-		gd.addStringField("Layout file", fileNameStatic, 50);
+		//gd.addStringField("Layout file", fileNameStatic, 50);
+		gd.addFileField("Layout file", fileNameStatic, 50);		
+		gd.addCheckbox("compute_overlap (otherwise use the coordinates given in the layout file)", computeOverlapStatic );
 		gd.addChoice("Channels_for_Registration", colorList, handleRGBStatic);
 		gd.addChoice("rgb_order", rgbTypes, rgbOrderStatic);
 		gd.addChoice("Fusion_Method", methodListCollection, methodListCollection[LIN_BLEND]);
@@ -105,7 +110,10 @@ public class Stitch_Image_Collection implements PlugIn
 
 		String fileName = gd.getNextString();
 		fileNameStatic = fileName;
-		
+
+		boolean computeOverlap = gd.getNextBoolean();
+		computeOverlapStatic = computeOverlap;
+
 		String handleRGB = gd.getNextChoice();
 		handleRGBStatic = handleRGB;
 		
@@ -130,17 +138,17 @@ public class Stitch_Image_Collection implements PlugIn
 		boolean previewOnly = gd.getNextBoolean();
 		previewOnlyStatic = previewOnly;
 		
-		work(fileName, previewOnly, fusionMethod, handleRGB);		
+		work(fileName, previewOnly, computeOverlap, fusionMethod, handleRGB);		
 	}
 	
-	public void work(String fileName, boolean createPreview, String fusionMethod, String handleRGB)
+	public void work(String fileName, boolean createPreview, boolean computeOverlap, String fusionMethod, String handleRGB)
 	{
 		// read the layout file
 		ArrayList<ImageInformation> imageInformationList = readLayoutFile(fileName);		
-		work(imageInformationList, createPreview, fusionMethod, handleRGB);
+		work(imageInformationList, createPreview, computeOverlap, fusionMethod, handleRGB, fileName);
 	}
 	
-	public void work(GridLayout gridLayout, boolean createPreview)
+	public ImagePlus work( GridLayout gridLayout, boolean createPreview, boolean computeOverlap, String fileName )
 	{
 		this.alpha = gridLayout.alpha;
 		this.thresholdR = gridLayout.thresholdR;
@@ -149,10 +157,10 @@ public class Stitch_Image_Collection implements PlugIn
 		this.dim = gridLayout.dim;
 		this.rgbOrder = gridLayout.rgbOrder;
 		
-		work(gridLayout.imageInformationList, createPreview, gridLayout.fusionMethod, gridLayout.handleRGB);
+		return work(gridLayout.imageInformationList, createPreview, computeOverlap, gridLayout.fusionMethod, gridLayout.handleRGB, fileName);
 	}
 	
-	public void work(ArrayList<ImageInformation> imageInformationList, boolean createPreview, String fusionMethod, String handleRGB)
+	public ImagePlus work(ArrayList<ImageInformation> imageInformationList, boolean createPreview, boolean computeOverlap, String fusionMethod, String handleRGB, String fileName)
 	{		
 		IJ.log("(" + new Date(System.currentTimeMillis()) + "): Stitching the following files:");
 		for (ImageInformation iI : imageInformationList)
@@ -163,21 +171,39 @@ public class Stitch_Image_Collection implements PlugIn
 				
 		// ask if we should start like this
 		if (createPreview)
-			return;
+			return null;
+				
+		// this will store the final output configuration
+		ArrayList<ImageInformation> newImageInformationList;
 		
-		// compute all phase correlations
-		computePhaseCorrelations(overlappingTiles, handleRGB);
-		
-		// compute the model
-		ArrayList<ImageInformation> newImageInformationList = optimize(overlappingTiles);
+		if ( computeOverlap )
+		{
+			// compute all phase correlations
+			computePhaseCorrelations(overlappingTiles, handleRGB);
+			
+			// compute the model
+			newImageInformationList = optimize(overlappingTiles);
+			
+			if(newImageInformationList == null)
+				return null;
+		}
+		else
+		{
+			newImageInformationList = imageInformationList;
+		}
 		
 		// output the final positions
 		IJ.log("(" + new Date(System.currentTimeMillis()) + "): Final image positions in the fused image:");
 		for (ImageInformation i: newImageInformationList)
+		{
 			if (dim == 3)
-				IJ.log("Tile " + i.id + " (" + i.imageName + "): " + i.position[0] + " " + i.position[1] + " " + i.position[2]);
+				IJ.log("Tile " + i.id + " (" + i.imageName + "): " + i.position[0] + ", " + i.position[1] + ", " + i.position[2]);
 			else
-				IJ.log("Tile " + i.id + " (" + i.imageName + "): " + i.position[0] + " " + i.position[1]);
+				IJ.log("Tile " + i.id + " (" + i.imageName + "): " + i.position[0] + ", " + i.position[1]);
+		}
+		
+		// write the new tile configuration
+		writeOutputConfiguration( fileName, newImageInformationList );
 		
 		// getMax and set minimum coordinates to 0,0,0
 		float[] max = getAndApplyMinMax(newImageInformationList, dim);		
@@ -190,6 +216,41 @@ public class Stitch_Image_Collection implements PlugIn
 		ImagePlus fused = fuseImages(newImageInformationList, max, "Stitched Image", fusionMethod, rgbOrder, dim, alpha);
 		fused.show();
 		IJ.log("(" + new Date(System.currentTimeMillis()) + "): Finished Stitching.");
+		return fused;
+	}
+	
+	protected void writeOutputConfiguration( String fileName, ArrayList<ImageInformation> imageInformationList )
+	{
+		try
+		{
+			String outputfileName;
+			
+			if ( fileName.endsWith( ".registered"))
+				outputfileName = fileName;
+			else
+				outputfileName = fileName + ".registered";
+			
+			PrintWriter out = Stitch_Image_Grid.openFileWrite( outputfileName );
+
+			out.println("# Define the number of dimensions we are working on");
+	        out.println("dim = " + dim);
+	        out.println("");
+	        out.println("# Define the image coordinates");
+
+	        for ( ImageInformation iI : imageInformationList )
+	        {	        		        	
+		        if (dim == 3)
+	    			out.println(iI.imageName + "; ; (" + iI.position[0] + ", " + iI.position[1] + ", " + iI.position[2] + ")");
+	    		else
+	    			out.println(iI.imageName + "; ; (" + iI.position[0] + ", " + iI.position[1] + ")");
+	        }
+
+			out.close();
+		}
+		catch (Exception e)
+		{
+			IJ.log("Cannot write registered configuration file: " + e );
+		}
 	}
 	
 	public static ImagePlus fuseImages(final ArrayList<ImageInformation> imageInformationList, final float[] max, final String name, final String fusionMethod, 
@@ -201,6 +262,7 @@ public class Stitch_Image_Collection implements PlugIn
 		else if (fusionMethod.equals("Linear Blending")) type = LIN_BLEND;
 		else if (fusionMethod.equals("Max. Intensity")) type = MAX;
 		else if (fusionMethod.equals("Red-Cyan Overlay") && imageInformationList.size() == 2) type = RED_CYAN;
+		else if (fusionMethod.equals("None")) type = CommonFunctions.NONE;
 		else type = AVG; // fusionMethod.equals("Average")
 		
 		if (type == AVG)
@@ -213,6 +275,8 @@ public class Stitch_Image_Collection implements PlugIn
 			IJ.log("Linear Blending Fusion started.");
 		else if (type == RED_CYAN)
 			IJ.log("Red-Cyan Fusion started.");
+		else if (type == CommonFunctions.NONE)
+			IJ.log("Overlapping (non fusion) started.");
 
 		final int imageType = imageInformationList.get(0).imageType; 
 		final int imgW = Math.round(max[0]);
@@ -250,7 +314,7 @@ public class Stitch_Image_Collection implements PlugIn
 		}
 		catch (Exception e){};
 	
-		if (type == MAX || type == RED_CYAN)
+		if (type == CommonFunctions.NONE || type == MAX || type == RED_CYAN)
 		{
 			int count = 0;
 			final int dimension = dim;
@@ -318,12 +382,17 @@ public class Stitch_Image_Collection implements PlugIn
 									for (int i = 0; i < pixelrgbSRC.length; i++)
 										pixelrgbimg[i] = Math.max(pixelrgbSRC[i], pixelrgbimg[i]);										
 								}
-								else
+								else if(type == RED_CYAN)
 								{
 									if (count == 0)
 										pixelrgbimg[0] = (pixelrgbSRC[0] + pixelrgbSRC[1] + pixelrgbSRC[2])/3;
 									else if (count == 1)
 										pixelrgbimg[1] = pixelrgbimg[2] = (pixelrgbSRC[0] + pixelrgbSRC[1] + pixelrgbSRC[2])/3;
+								}
+								else if(type == CommonFunctions.NONE)
+								{
+									for (int i = 0; i < pixelrgbSRC.length; i++)
+										pixelrgbimg[i] = pixelrgbSRC[i];	
 								}
 								
 								fusedIp.putPixel(x + Math.round(iI.position[0]), y + Math.round(iI.position[1]), pixelrgbimg);																
@@ -356,7 +425,7 @@ public class Stitch_Image_Collection implements PlugIn
 											minmax[0] = pixel;
 									}
 								}
-								else
+								else if(type == RED_CYAN)
 								{
 									// get pixel value from target image
 									fusedIp.getPixel(x + Math.round(iI.position[0]), y + Math.round(iI.position[1]), pixelrgbimg);
@@ -387,6 +456,9 @@ public class Stitch_Image_Collection implements PlugIn
 									
 									fusedIp.putPixel(x + Math.round(iI.position[0]), y + Math.round(iI.position[1]), pixelrgbimg);
 								}
+								else if(type == CommonFunctions.NONE)								 
+									fusedIp.putPixelValue(x + Math.round(iI.position[0]), y + Math.round(iI.position[1]), pixel);
+									
 								
 							}
 							
@@ -940,9 +1012,65 @@ public class Stitch_Image_Collection implements PlugIn
 				}
 			}
 			IJ.log("Tile size: " + tiles.size());
+			
+			if(tiles.size() == 0)
+			{
+				IJ.error("No correlated tiles found!");
+				return null;
+			}						
+			
+			// trash everything but the largest graph			
+			final ArrayList< ArrayList< Tile > > graphs = Tile.identifyConnectedGraphs( tiles );
+			IJ.log("Number of tile graphs = " + graphs.size());
+			
+			/*
+			for ( final ArrayList< Tile > graph : graphs )
+			{
+				IJ.log("graph size = " + graph.size());
+				if ( graph.size() < 30 )
+				{
+					tiles.removeAll( graph );
+					IJ.log("-removed");
+				}
+				else
+				{
+					IJ.log("-kept");
+					tc.fixTile( graph.get( 0 ) );
+				}
+			}
+			
+			*/
+			ArrayList< Tile > largestGraph = new ArrayList< Tile >();
+			for ( final ArrayList< Tile > graph : graphs )
+			{
+				
+				if ( graph.size() > largestGraph.size() )
+				{
+					largestGraph = graph;
+				}
+				
+				//IJ.log("graph size = " + graph.size());
+			}
+			
+			for ( final ArrayList< Tile > graph : graphs )
+				if ( graph != largestGraph )
+				{
+					tiles.removeAll( graph );
+					//IJ.log(" Removed graph of size " + graph.size());
+				}
+			/*
+			for ( final ArrayList< Tile > graph : graphs )
+				   tc.fixTile( graph.get( 0 ) );
+			*/
+			
+			
 			tc = new TileConfiguration();
 			tc.addTiles( tiles );
-			tc.fixTile( tiles.get( 0 ) );
+			tc.fixTile( tiles.get( 0 ) );						
+			
+			//IJ.log(" tiles size =" + tiles.size());
+			//IJ.log(" tc.getTiles() size =" + tc.getTiles().size());
+			
 			try
 			{
 				tc.optimize( 10, 10000, 200 );
@@ -950,7 +1078,7 @@ public class Stitch_Image_Collection implements PlugIn
 				double avgError = tc.getAvgError();
 				double maxError = tc.getMaxError();				
 				
-				if (avgError*thresholdDisplacementRelative < maxError || avgError > thresholdDisplacementAbsolute)
+				if ( (avgError*thresholdDisplacementRelative < maxError && maxError > 0.75) || avgError > thresholdDisplacementAbsolute)
 				{
 					IJ.log("maxError more than " + thresholdDisplacementRelative + " times bigger than avgerror.");
 					Tile worstTile = tc.getWorstError();
@@ -979,7 +1107,7 @@ public class Stitch_Image_Collection implements PlugIn
 		while(redo);
 		
 		
-		// create a list of imageinformations containing their positions			
+		// create a list of image informations containing their positions			
 		ArrayList<ImageInformation> imageInformationList = new ArrayList<ImageInformation>();
 		for ( Tile t : tc.getTiles() )
 		{
@@ -993,9 +1121,17 @@ public class Stitch_Image_Collection implements PlugIn
 		Collections.sort(imageInformationList);
 		
 		
+		IJ.log(" image information list size =" + imageInformationList.size());
+		
 		return imageInformationList;
 	}
 	
+	/**
+	 * Compute phase correlation between overlapping tiles
+	 * 
+	 * @param overlappingTiles list of overlapping tiles
+	 * @param handleRGB RGB mode (@see stitching.CommonFunctions.colorList)
+	 */
 	private void computePhaseCorrelations(final ArrayList<OverlapProperties> overlappingTiles, String handleRGB)
 	{
 		for (final OverlapProperties o : overlappingTiles)
@@ -1035,12 +1171,13 @@ public class Stitch_Image_Collection implements PlugIn
 				stitch.fusedImageName = "Fused " + imp1.getTitle() + " " + imp2.getTitle();
 				stitch.fuseImages = false;
 				stitch.handleRGB1 = handleRGB;
-				stitch.handleRGB2 = handleRGB;
-				stitch.imgStack1 = imp1.getTitle();
+				stitch.handleRGB2 = handleRGB;				
+				stitch.imgStack1 = imp1.getTitle();				
 				stitch.imgStack2 = imp2.getTitle();
 				stitch.imp1 = imp1;
 				stitch.imp2 = imp2;
 				stitch.doLogging = false;
+				stitch.computeOverlap = true;
 				
 				try
 				{
@@ -1067,9 +1204,20 @@ public class Stitch_Image_Collection implements PlugIn
 				stitch.handleRGB2 = handleRGB;
 				stitch.image1 = imp1.getTitle();
 				stitch.image2 = imp2.getTitle();
+				
+				//final ImagePlus imp1b =  new ImagePlus("Imp1 B", imp1.getProcessor().duplicate());
+				final ImageProcessor ip1 = imp1.getProcessor().duplicate();
+				IJ.run(imp1, "Enhance Contrast", "saturated=0.1 normalize");				
 				stitch.imp1 = imp1;
+				
+				//final ImagePlus imp2b = new ImagePlus("Imp2 B", imp2.getProcessor().duplicate());
+				
+				final ImageProcessor ip2 = imp2.getProcessor().duplicate();
+				IJ.run(imp2, "Enhance Contrast", "saturated=0.1 normalize");				
 				stitch.imp2 = imp2;
+				
 				stitch.doLogging = false;
+				stitch.computeOverlap = true;
 				
 				try
 				{
@@ -1083,6 +1231,9 @@ public class Stitch_Image_Collection implements PlugIn
 					o.R = -1;
 					o.translation2D = new Point2D(0, 0);
 				}
+				
+				imp1.setProcessor(imp1.getTitle(), ip1);
+				imp2.setProcessor(imp2.getTitle(), ip2);
 								
 				IJ.log(o.i1.id + " overlaps " + o.i2.id + ": " + o.R + " translation: " + o.translation2D);
 			}
@@ -1398,6 +1549,7 @@ public class Stitch_Image_Collection implements PlugIn
 							try
 							{
 								imageInformation.offset[i] = Float.parseFloat(points[i].trim()); 
+								imageInformation.position[i] = imageInformation.offset[i]; 
 							}
 							catch (NumberFormatException e)
 							{

@@ -7,7 +7,7 @@ import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 
 import java.awt.Rectangle;
-import java.util.Vector;
+import java.util.ArrayList;
 
 import levelsets.algorithm.Coordinate;
 import levelsets.algorithm.DeferredByteArray3D;
@@ -46,8 +46,8 @@ public class StateContainer {
 	DeferredObjectArray3D<States> d_map = null;
 	// Full array containing the state map
 	States [][][] s_map = null;
-	// Vector holding bounding box coordinates
-	Vector<Coordinate> c_map = null;
+	// ArrayList holding bounding box coordinates
+	ArrayList<Coordinate> c_map = null;
 	// ROI
 	Roi roi_map = null;
 	
@@ -148,7 +148,7 @@ public class StateContainer {
 	}
 
 	
-	public Vector<Coordinate> getForFastMarching() {
+	public ArrayList<Coordinate> getForFastMarching() {
 		
 		return roi2points();
 		
@@ -209,6 +209,60 @@ public class StateContainer {
 		return null;
 	}
 	
+	/*
+	 * Returns the x/y/z of the ROI/segmented area as ArrayList<Coordinate>
+	 * zero_crossing_only = true -> return only the boundary (the zero crossing)
+	 * zero_crossing_only = false -> return inside and boundary of segmented object
+	 */
+	
+	public ArrayList<Coordinate> getXYZ(boolean zero_crossing_only) {
+		ArrayList<Coordinate> xyz = new ArrayList<Coordinate>(100);
+		
+		if ( s_map != null ) {
+	        for (int z = 0; z < s_map[0][0].length; z++) {
+	            for (int y = 0; y < s_map[0].length; y++) {
+	               for (int x = 0; x < s_map.length; x++) {
+	             	  if ( s_map[x][y][z] == States.ZERO ) {
+	             		 xyz.add(new Coordinate(x,y,z));
+	             	  }
+	             	  else if ( s_map[x][y][z] == States.INSIDE ) {
+	             		  if ( zero_crossing_only == false ) {
+	             			  xyz.add(new Coordinate(x,y,z));
+	             		  }
+	             	  }
+	               }
+	            }
+	         }
+			 return xyz;
+		}
+		else if ( roi_map != null ) {
+			d_map = roi2dmap();
+		}
+		
+		if ( d_map != null ) {
+	        for (int z = 0; z < d_map.getZLength(); z++) {
+	            for (int y = 0; y < d_map.getYLength(); y++) {
+	               for (int x = 0; x < d_map.getXLength(); x++) {
+	             	  if ( d_map.get(x, y, z) == States.ZERO ) {
+	             		 xyz.add(new Coordinate(x,y,z));
+	             	  }
+	             	  else if ( d_map.get(x, y, z) == States.INSIDE ) {
+	             		  if ( zero_crossing_only == false ) {
+	             			  xyz.add(new Coordinate(x,y,z));
+	             		  }
+	             	  }
+	               }
+	            }
+	         }
+			 return xyz;			
+		}
+		
+		// Converting the c_map to mask is somewhat silly and thus not implemented
+		
+		return null;	
+	}
+	
+	
 	
 	// TODO Make more robust so that it works with points too
 	// Simplification but currently only used for SparseField anyway
@@ -216,14 +270,14 @@ public class StateContainer {
 		return avg_grey;
 	}
 	
-	protected Vector<Coordinate> roi2points() {
+	protected ArrayList<Coordinate> roi2points() {
 		
 		if ( c_map != null ) {
 			return c_map;
 		}
 		else if ( roi_map != null ) {
 			
-			c_map = new Vector<Coordinate>(10);
+			c_map = new ArrayList<Coordinate>(10);
 			
 			if ( roi_map instanceof PolygonRoi ) {
 				PolygonRoi roi_p = (PolygonRoi) roi_map;
@@ -232,7 +286,7 @@ public class StateContainer {
 				int [] yp = roi_p.getYCoordinates();
 				
 				for ( int i = 0; i < roi_p.getNCoordinates(); i++ ) {
-					c_map.add(new Coordinate(roi_r.x + xp[i], roi_r.y+yp[i], 0));
+					c_map.add(new Coordinate(roi_r.x + xp[i], roi_r.y+yp[i], roi_z -1));
 				}
 			
 				return c_map;
@@ -271,22 +325,22 @@ public class StateContainer {
 		// IJ.log("Got bounding rectangle with coordinates " + x_start + "/" + x_end + "/" + y_start + "/" + y_end);
 
 		if ( mask == null ) {
-			IJ.log("Rectangle, just parsing borders");
+			IJ.log("Note: ROI is rectangle, parsing borders");
 			int z = this.roi_z - 1; // TODO z is not possible with roi
-            for (int y = y_start; y < y_end; y++) {
-               for (int x = x_start; x < x_end; x++) {
-            	   if ( x == x_start || y == y_start || x == x_end - 1 || y == y_end - 1 ) {
-            		   d_map.set(x, y, z, States.ZERO);
-            		   px_zero++;
-            	   } else {
-            		   d_map.set(x, y, z, inside);
-            		   px_inside++;
-            	   }
-               }
-            }
-            // IJ.log("Zero level= " + px_zero + ", Inside = " + px_inside );
+			for (int y = y_start; y < y_end; y++) {
+				for (int x = x_start; x < x_end; x++) {
+					if ( x == x_start || y == y_start || x == x_end - 1 || y == y_end - 1 ) {
+						d_map.set(x, y, z, States.ZERO);
+						px_zero++;
+					} else {
+						d_map.set(x, y, z, inside);
+						px_inside++;
+					}
+				}
+			}
+            		// IJ.log("Zero level= " + px_zero + ", Inside = " + px_inside );
 		} else {
-			IJ.log("Shape, parsing shape");
+			IJ.log("Note: ROI is shape, parsing shape");
 			int z = this.roi_z - 1;
 			for (int y = 0; y < roi_r.height; y++) {
 				for (int x = 0; x < roi_r.width; x++) {

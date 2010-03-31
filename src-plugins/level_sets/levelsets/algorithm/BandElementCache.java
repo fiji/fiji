@@ -11,15 +11,15 @@ import java.util.Stack;
  */
 public class BandElementCache
 {
-   private Stack<BandElement> element_cache = new Stack<BandElement>();
+   final private Stack<BandElement> element_cache = new Stack<BandElement>();
    
    /** Creates a new instance of BandElementCache */
-   public BandElementCache(int capacity)
+   public BandElementCache(final int capacity)
    {
       element_cache.ensureCapacity(capacity);
    }
    
-   public void recycleBandElement(BandElement elem)
+   final public void recycleBandElement(final BandElement elem)
    {
       if (element_cache.size() < element_cache.capacity())
       {
@@ -27,7 +27,7 @@ public class BandElementCache
       }
    }
    
-   public BandElement getRecycledBandElement(int x, int y, int z, double value)
+   final public BandElement getRecycledBandElement(final int x, final int y, final int z, final double value)
    {
       if (element_cache.size() == 0)
       {
@@ -35,7 +35,7 @@ public class BandElementCache
       }
       else
       {
-         BandElement elem = element_cache.pop();
+         final BandElement elem = element_cache.pop();
          elem.setX(x);
          elem.setY(y);
          elem.setZ(z);
@@ -44,7 +44,7 @@ public class BandElementCache
       }
    }
    
-   public BandElement getRecycledBandElement()
+   final public BandElement getRecycledBandElement()
    {
       return getRecycledBandElement(0, 0, 0, 0);
    }

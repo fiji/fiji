@@ -16,4 +16,6 @@ public interface Filter {
     * @return The result image
     */
    public BufferedImage filter(BufferedImage input);
+
+   public void filter(final int width, final int height, final short[] source, final short[] target);
 }

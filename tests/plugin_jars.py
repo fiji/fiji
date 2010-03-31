@@ -1,4 +1,5 @@
-#!/usr/bin/python
+#!/bin/sh
+''''exec "$(dirname "$0")"/../fiji --jython "$0" "$@" # (call again with fiji)'''
 
 # Test whether any menu items contain pointers to non-existent classes which
 # likely indicate a missconfiguration of a plugins.config file in a .jar plugin.
@@ -42,7 +43,8 @@ for it in Menus.getCommands().entrySet().iterator():
 		dot = name.find('.')
 		if -1 == dot or not doesClassExist(name[dot+1:]):
 			print 'ERROR: Class not found for menu command:', \
-				it.key, '=>', it.value
+				it.key, '=>', it.value, \
+				'in:', Menus.getJarFileForMenuEntry(it.key)
 			ok = 0
 
 if ok:

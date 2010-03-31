@@ -5,10 +5,8 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.io.FileInfo;
 import ij.io.RandomAccessStream;
-import ij.process.ImageProcessor;
 
 import java.awt.Color;
-import java.awt.image.ColorModel;
 import java.awt.image.IndexColorModel;
 import java.io.IOException;
 
@@ -117,7 +115,7 @@ public class ReaderToolkit {
         }
         return tempstr;
     }
-    
+
     /*
 	 * applyColors, applies color gradient; function taken out from Lut_Panel
 	 * plugin

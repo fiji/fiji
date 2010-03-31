@@ -22,6 +22,7 @@
 import ij.plugin.PlugIn;
 
 import ij3d.Image3DUniverse;
+import ij3d.Content;
 import isosurface.MeshExporter;
 
 import ini.trakem2.ControlWindow;
@@ -37,6 +38,9 @@ import ini.trakem2.utils.Utils;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.concurrent.Future;
+import java.util.concurrent.ExecutionException;
 
 public class TrakEM2_Add_Balls implements PlugIn {
 
@@ -94,8 +98,18 @@ public class TrakEM2_Add_Balls implements PlugIn {
 		// 7 - Show the balls in 3D (OPTIONAL):
 		ProjectThing p1 = project.findProjectThing(b1); // a Project tree node
 		ProjectThing p2 = project.findProjectThing(b2); // a Project tree node
-		Display3D.show(p1, true, 1); // wait, and resample 1 ( but resample only affects image volumes and AreaList meshes!)
-		Display3D.show(p2, true, 1); //  If not waiting, then since its threaded, the saveAsWaveFront below would find nothing to save.
+		Future<List<Content>> fu1 = Display3D.show(p1, true, 1); // wait, and resample 1 ( but resample only affects image volumes and AreaList meshes!)
+		Future<List<Content>> fu2 = Display3D.show(p2, true, 1); //  If not waiting, then since its threaded, the saveAsWaveFront below would find nothing to save.
+
+		// WAIT until added, so we know the Display3D has been created
+		try {
+			fu1.get();
+			fu2.get();
+		} catch (InterruptedException ie) {
+			//
+		} catch (ExecutionException ee) {
+			ee.printStackTrace();
+		}
 
 		// 8 - Export the balls meshes to a .obj wavefront file (OPTIONAL):
 		// (This will export all the current contents of the Display3D that can be exported as meshes.
