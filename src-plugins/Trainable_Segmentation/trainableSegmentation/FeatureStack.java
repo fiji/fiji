@@ -52,6 +52,7 @@ import weka.core.Instances;
 import ij.IJ;
 import ij.ImageStack;
 import ij.ImagePlus;
+import ij.io.FileSaver;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.plugin.ZProjector;
@@ -543,4 +544,16 @@ public class FeatureStack
 	public boolean isNormalized() {
 		return normalize;
 	}
+	
+	/**
+	 * Save current whole stack as TIFF
+	 * @param filename destination path and file name
+	 * @return false if fails
+	 */
+	public boolean saveStackAsTiff(final String filename)
+	{
+		final FileSaver fs = new FileSaver(new ImagePlus("", this.wholeStack));
+		return fs.saveAsTiff(filename);
+	}
+	
 }
