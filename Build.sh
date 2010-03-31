@@ -131,6 +131,10 @@ then
     if [ -e $JAVA_HOME/bin/javac ]
     then
         export SYSTEM_JAVAC=$JAVA_HOME/bin/javac
+    elif [ -e $JAVA_HOME/../bin/javac ]
+    then
+        export SYSTEM_JAVAC=$JAVA_HOME/../bin/javac
+
     fi
 fi
 
