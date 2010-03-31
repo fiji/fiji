@@ -1325,6 +1325,19 @@ public class Fake {
 				}
 				return result;
 			}
+
+			protected void clean(boolean dry_run) {
+				File buildDir = getBuildDir();
+				if (buildDir == null) {
+					super.clean(dry_run);
+					return;
+				}
+				if (dry_run)
+					out.println("rm -rf "
+							+ buildDir.getPath());
+				else if (buildDir.exists())
+					deleteRecursively(buildDir);
+			}
 		}
 
 		class CopyJar extends Rule {
@@ -1468,6 +1481,15 @@ public class Fake {
 
 			protected void clean(boolean dry_run) {
 				super.clean(dry_run);
+				File buildDir = getBuildDir();
+				if (buildDir != null) {
+					if (dry_run)
+						out.println("rm -rf "
+							+ buildDir.getPath());
+					else if (buildDir.exists())
+						deleteRecursively(buildDir);
+					return;
+				}
 				List javas = new ArrayList();
 				Iterator iter = prerequisites.iterator();
 				while (iter.hasNext()) {
@@ -3087,6 +3109,28 @@ public class Fake {
 			if (len < 0)
 				return realloc(buffer, offset);
 			offset += len;
+		}
+	}
+
+	protected void delete(File file) throws FakeException {
+		if (!file.delete())
+			throw new FakeException("Could not delete "
+					+ file.getPath());
+	}
+
+	protected void deleteRecursively(File dir) {
+		try {
+			File[] list = dir.listFiles();
+			if (list != null)
+				for (int i = 0; i < list.length; i++) {
+					if (list[i].isDirectory())
+						deleteRecursively(list[i]);
+					else
+						delete(list[i]);
+				}
+			delete(dir);
+		} catch (FakeException e) {
+			out.println("Error: " + e.getMessage());
 		}
 	}
 
