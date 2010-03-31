@@ -44,6 +44,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 	String suffix = chosenSuffix;
 	int decimalPlaces = 3;
 	boolean canceled;
+	boolean okayed = false;
 	String digitalOrDecimal = "decimal";
 	String lastTimeStampString; // = "teststring";
 
@@ -89,7 +90,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		// we can choose time units from a drop down list, list defined in timeunitsoptions
 		gd.addChoice("Time units:", timeUnitsOptions, timeUnitsOptions[4]); 
 		
-		// we can set a custom suffix and use that by selecting custom siffic in the time units drop down list above
+		// we can set a custom suffix and use that by selecting custom suffix in the time units drop down list above
 		gd.addStringField("Custom Suffix:", customSuffix);
 		gd.addNumericField("Starting Time (in s if digital):", start, 2);
 		gd.addNumericField("Time Interval Between Frames (in s if digital):", interval, 3);
@@ -104,7 +105,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		
 		gd.addPreviewCheckbox(pfr); 	//adds preview checkbox - needs ExtendedPluginFilter and DialogListener!
 		
-		gd.addMessage("Time Stamper plugin for Fiji (is just ImageJ - batteries included), maintained by Dan White MPI-CBG dan(at)chalkie.org.uk");
+		gd.addMessage("Time Stamper plugin for Fiji (is just ImageJ - batteries included)\nmaintained by Dan White MPI-CBG dan(at)chalkie.org.uk");
 		
 		gd.addDialogListener(this); 	//needed for listening to dialog field/button/checkbok changes?
 		
@@ -113,11 +114,11 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		// handle the plugin cancel button being pressed.
 		if (gd.wasCanceled()) return DONE;
 			//{canceled = true; return DONE;} 
-		
+		okayed = gd.wasOKed(); // if the ok button was pressed, we are really running the plugin, so later we can tell what time stamp to make as its not the last as used by preview
 		// initialise time with the value of the starting time
-		time = start; 
+		///time = start; moved to setNPasses
 		
-		imp.startTiming(); //What is this for?
+		//imp.startTiming(); //What is this for? Why need to know when it was started... is this used elsewhere..?  
 		
 		return DOES_ALL+DOES_STACKS+STACK_REQUIRED; 	// extendedpluginfilter showDialog method should
 								//return a combination (bitwise OR) of the flags specified in
@@ -145,13 +146,23 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 	public void setNPasses(int nPasses) {	// this is part of the preview functionality 
 						// Informs the filter of the number of calls of run(ip) that will follow. 
 						// nPasses is worked out by the plugin runner.
-		//frame = first;   // dont need this
-		time = lastTime();  // set the time to lastTime, when doing the preview run,
+		//frame = first;   // dont need this	
+		//time = lastTime();  // set the time to lastTime, when doing the preview run,
 				// so the preview does not increment time when clicking the preview box causes run method execution.
 				// and i see the longest time stamp that will be made when i do a preview, so i can make sure its where
 				// i wanted it.
 				//that works, but now the time stamper counts up from time = lastTime value not from  time = (start + (first*interval))
 				// when making the time stamps for the whole stack...
+	
+		if (okayed){
+			time = start;
+		}
+		else {
+			time = lastTime();
+		}
+		
+	
+	System.out.println(nPasses);
 	}	
 	
 
@@ -196,8 +207,8 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 			// single characters fit the ROI, but if the time stamper string is long
 			// then the font is too big to fit the whole thing in!
 		
-		// need to see if we should use the ROI height to set the fornt size or read it from the plugin gui 
-		// if (theROI != null)  doesnt work as if there is no ROI set, the ROI is the size fo the image! There is always an ROI!
+		// need to see if we should use the ROI height to set the font size or read it from the plugin gui 
+		// if (theROI != null)  doesnt work as if there is no ROI set, the ROI is the size of the image! There is always an ROI!
 		// So we can say, if there is no ROI set , its the same size as the image, and if that is the case,
 		// we should then use the size as read from the GUI.
 		
@@ -225,7 +236,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 	}
 	
 	
-	// methos to position the time stamp string correctly, so it is all on the image, even for the last frames with bigger numbers. 
+	// method to position the time stamp string correctly, so it is all on the image, even for the last frames with bigger numbers. 
 	// ip.moveTo(x, y);  // move to x y position for Timestamp writing 
 		
 	// the maxwidth if statement tries to move the time stamp right a bit to account for the max length the time stamp will be.
@@ -334,7 +345,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 	
 	//moved out of run method to its own method.
 		// maxWidth is an integer = length of the decimal time stamp string in pixels
-		// for the last slice of the stack to be stamped. It is used in the run method below, 
+		// for the last slice of the stack to be stamped. It is used in the run method, 
 		// to prevent the time stamp running off the right edge of the image
 		// ip.getStringWidth(string) seems to return the # of pixels long a string is in x?
 		// how does it take care of font size i wonder? The font is set 
