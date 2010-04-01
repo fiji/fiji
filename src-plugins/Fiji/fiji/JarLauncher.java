@@ -49,7 +49,7 @@ public class JarLauncher {
 		}
 		Class main = null;
 		try {
-			main = Class.forName(className);
+			main = Class.forName(className.replace('/', '.'));
 		} catch (ClassNotFoundException e) {
 			System.err.println("Class '" + className
 					+ "' was not found in '"
