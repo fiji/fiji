@@ -125,8 +125,6 @@ public class GenericDialogPlus extends GenericDialog {
 		
 		layout.setConstraints(panel, constraints);
 		addPanel(panel);
-		
-		constraints.gridy++;
 	}
 
 	static class FileListener implements ActionListener {
