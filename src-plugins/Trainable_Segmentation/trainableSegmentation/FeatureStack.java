@@ -552,8 +552,11 @@ public class FeatureStack
 	 */
 	public boolean saveStackAsTiff(final String filename)
 	{
-		final FileSaver fs = new FileSaver(new ImagePlus("", this.wholeStack));
-		return fs.saveAsTiff(filename);
+		final ImagePlus ip = new ImagePlus("feature-stack", this.wholeStack);
+		//ip.show();
+		//IJ.log("path = " + filename);
+		final FileSaver fs = new FileSaver(ip);
+		return fs.saveAsTiffStack(filename);
 	}
 	
 }
