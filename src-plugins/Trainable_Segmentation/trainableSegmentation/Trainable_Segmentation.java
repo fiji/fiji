@@ -46,7 +46,6 @@ import ij.plugin.RGBStackMerge;
 import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
-import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import ij.gui.Roi;
 import ij.gui.ShapeRoi;
@@ -69,9 +68,11 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.awt.AlphaComposite;
 import java.awt.Checkbox;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Composite;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
@@ -110,10 +111,13 @@ import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instances;
 import fiji.util.gui.GenericDialogPlus;
+import fiji.util.gui.OverlayedImageCanvas;
 import hr.irb.fastRandomForest.FastRandomForest;
 
-public class Trainable_Segmentation implements PlugIn {
-
+public class Trainable_Segmentation implements PlugIn 
+{
+	final Composite transparency050 = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.50f );	
+	
 	/** maximum number of classes (labels) allowed on the GUI*/
 	private static final int MAX_NUM_CLASSES = 5;
 	/** array of lists of Rois for each class */
@@ -162,6 +166,8 @@ public class Trainable_Segmentation implements PlugIn {
 	/** create new class button */
 	final JButton addClassButton;
 	
+	
+	private RoiListOverlay [] roiOverlay = new RoiListOverlay[MAX_NUM_CLASSES];
 	
 	/** available colors for available classes*/
 	final Color[] colors = new Color[]{Color.red, Color.green, Color.blue,
@@ -321,8 +327,10 @@ public class Trainable_Segmentation implements PlugIn {
 	/**
 	 * Custom canvas to deal with zooming an panning
 	 */
-	private class CustomCanvas extends ImageCanvas {
-		CustomCanvas(ImagePlus imp) {
+	private class CustomCanvas extends OverlayedImageCanvas 
+	{
+		CustomCanvas(ImagePlus imp) 
+		{
 			super(imp);
 			Dimension dim = new Dimension(Math.min(512, imp.getWidth()), Math.min(512, imp.getHeight()));
 			setMinimumSize(dim);
@@ -387,10 +395,7 @@ public class Trainable_Segmentation implements PlugIn {
 		JPanel buttonsPanel = new JPanel();
 		
 		JPanel trainingJPanel = new JPanel();
-		JPanel optionsJPanel = new JPanel();
-		
-		
-		
+		JPanel optionsJPanel = new JPanel();						
 		
 		Panel all = new Panel();
 		
@@ -399,6 +404,13 @@ public class Trainable_Segmentation implements PlugIn {
 			super(imp, new CustomCanvas(imp));
 
 			final CustomCanvas canvas = (CustomCanvas) getCanvas();
+			
+			for(int i = 0; i < MAX_NUM_CLASSES; i++)
+			{
+				roiOverlay[i] = new RoiListOverlay();
+				roiOverlay[i].setComposite( transparency050 );
+				((OverlayedImageCanvas)ic).addOverlay(roiOverlay[i]);
+			}
 
 			// Remove the canvas from the window, to add it later
 			removeAll();
@@ -611,7 +623,7 @@ public class Trainable_Segmentation implements PlugIn {
 		 * Add new segmentation class (new label and new list on the right side)
 		 */
 		public void addClass()
-		{
+		{								
 			examples[numOfClasses] = new ArrayList<Roi>();
 			exampleList[numOfClasses] = new java.awt.List(5);
 			exampleList[numOfClasses].setForeground(colors[numOfClasses]);
@@ -744,12 +756,16 @@ public class Trainable_Segmentation implements PlugIn {
 
 		for(int i = 0; i < numOfClasses; i++)
 		{
-			displayImage.setColor(colors[i]);
-			for (Roi r : examples[i]){
-				r.drawPixels(displayImage.getProcessor());
+			roiOverlay[i].setColor(colors[i]);
+			final ArrayList< Roi > rois = new ArrayList<Roi>();
+			for (Roi r : examples[i])
+			{
+				//r.drawPixels(displayImage.getProcessor());
+				rois.add(r);
 				//IJ.log("painted ROI: " + r + " in color "+ colors[i]);
 			}
-		}
+			roiOverlay[i].setRoi(rois);
+		}		
 		displayImage.updateAndDraw();
 	}
 	
@@ -849,6 +865,22 @@ public class Trainable_Segmentation implements PlugIn {
 
 				for(int k=0; k<rois.length; k++)
 				{
+					Rectangle rect = rois[k].getBounds();
+					
+					for(int x = rect.x; x < rect.x + rect.width; x++)
+						for(int y = rect.y; y < rect.y + rect.height; y++)
+							if(r.contains(x, y))
+							{
+								double[] values = new double[featureStack.getSize()+1];
+								for (int z=1; z<=featureStack.getSize(); z++)
+									values[z-1] = featureStack.getProcessor(z).getPixelValue(x, y);
+								values[featureStack.getSize()] = (double) l;
+								trainingData.add(new DenseInstance(1.0, values));
+								// increase number of instances for this class
+								nl ++;
+							}
+					
+					/*
 					int[] x = rois[k].getPolygon().xpoints;
 					int[] y = rois[k].getPolygon().ypoints;
 					final int n = rois[k].getPolygon().npoints;
@@ -863,6 +895,7 @@ public class Trainable_Segmentation implements PlugIn {
 						// increase number of instances for this class
 						nl ++;
 					}
+					*/
 				}
 			}
 			
@@ -1390,6 +1423,7 @@ public class Trainable_Segmentation implements PlugIn {
 		if(null == inputName)
 			return;
 		
+		// Add new name to the list of labels
 		classLabels[numOfClasses] = inputName;
 		
 		// Add new class label and list
@@ -1534,6 +1568,10 @@ public class Trainable_Segmentation implements PlugIn {
 		return true;
 	}
 	
+	/**
+	 * Button listener class to handle the button action from the 
+	 * settings dialog 
+	 */
 	static class ButtonListener implements ActionListener 
 	{
 		String title;
