@@ -13,12 +13,15 @@ import ij.*;
 import ij.process.*;
 import ij.gui.*;
 import java.awt.*;
+import java.awt.Checkbox;
 import java.awt.event.*;
-import java.util.Vector;
 import ij.plugin.filter.*;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+import java.util.Date;
+import java.text.SimpleDateFormat;
 
-
-public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListener, AdjustmentListener { //, ActionListener {
+public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListener { //, ActionListener {
 					// http://rsb.info.nih.gov/ij/developer/api/ij/plugin/filter/ExtendedPlugInFilter.html
 					// should use extended plugin filter for preview ability and for stacks!
 					// then need more methods: setNPasses(int last-first)  thats the number of frames to stamp.
@@ -35,27 +38,28 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 	int size = 12;  // default font size
 //	int maxWidth; // maxWidth is now a method returning an int
 	Font font;
-	double time;
 	double start = 4.877;
 	double interval = 1.679;
 	double lastTime;
 	String timeString;
+	String customTimeFormat;
 	String customSuffix = "";
 	static String chosenSuffix = "s";
 	String suffix = chosenSuffix;
 	int decimalPlaces = 3;
 	boolean canceled;
 	boolean preview = true;
-	String digitalOrDecimal = "decimal";
+	String timeFormat = "decimal";
+	//SimpleDateFormat timeFormat;
 	String lastTimeStampString; // = "teststring";
+	Checkbox previewCheckbox;
 
 	boolean AAtext = true;
 	int frame, first, last;  //these default to 0 as no values are given
 	//int nPasses = 1;
 	PlugInFilterRunner pfr; 	// set pfr to the default PlugInFilterRunner object - the object that runs the plugin. 
 	
-	Vector sliders;
-	
+	int currentSlice;
 	
 	int flags = DOES_ALL+DOES_STACKS+STACK_REQUIRED; //a combination (bitwise OR) of the flags specified in
 							//interfaces PlugInFilter and ExtendedPlugInFilter.
@@ -79,24 +83,22 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		//this.pfr = pfr; // Not needed.... pfr is declared as a PlugInFilterRunner object with default value above
 		
 		// here is a list of SI? approved time units for a drop down list to choose from 
-		String[] timeUnitsOptions =  { "y", "d", "h", "min", "s", "ms", "us", "ns", "ps", "fs", "as", "Custom Suffix"};
-		String[] timeFormats = {"Decimal", "hh:mm:ss.ms"};
+		String[] timeUnitsOptions =  { "y", "mon", "d", "h", "min", "s", "ms", "us", "ns", "ps", "fs", "as", "Custom Suffix"};
+		String[] timeFormats = {"Decimal", "hh:mm:ss.ms", "Custom Time Format"};
 		
 		// This makes the GUI object 
 		GenericDialog gd = new GenericDialog("Time Stamper Enhanced");
 		
 			// these are the fields of the GUI
-		
-		gd.addSlider("Slice", 1, imp.getStackSize(), last);
-		sliders=gd.getSliders();
-		((Scrollbar)sliders.elementAt(0)).addAdjustmentListener(this);
-		
+		currentSlice = last;
+		gd.addSlider("Slice (disabled, dont use me)", 1, imp.getStackSize(), currentSlice);
+		( (Scrollbar)(gd.getSliders().elementAt(0) ) ).setEnabled(false);
 		
 		// this is a choice between digital or decimal
 		// but what about mm:ss???
 		// options are in the string array timeFormats, default is Decimal:  something.somethingelse 
 		gd.addChoice("Time format:", timeFormats, timeFormats[0]); 
-		
+		gd.addStringField("Custom Time Format:", customTimeFormat);
 		// we can choose time units from a drop down list, list defined in timeunitsoptions
 		gd.addChoice("Time units:", timeUnitsOptions, timeUnitsOptions[4]); 
 		
@@ -114,7 +116,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		gd.addCheckbox("Anti-Aliased text for font size 12 or smaller?", true);  //AA only works for font size 12 or smaller!
 		
 		gd.addPreviewCheckbox(pfr); 	//adds preview checkbox - needs ExtendedPluginFilter and DialogListener!
-		
+		previewCheckbox = gd.getPreviewCheckbox();
 		gd.addMessage("Time Stamper plugin for Fiji (is just ImageJ - batteries included)\nmaintained by Dan White MPI-CBG dan(at)chalkie.org.uk");
 		
 		gd.addDialogListener(this); 	//needed for listening to dialog field/button/checkbok changes?
@@ -139,7 +141,8 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 	
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e) {
 		// This reads user input parameters from the GUI and listens to changes in GUI fields
-		digitalOrDecimal = gd.getNextChoice();
+		int slice = (int)gd.getNextNumber(); // we dont use this as we read the value of the slider in the getCurrentSliceFromSlider methof, but we need to read it so the next hetNextNumber is right. 
+		timeFormat = gd.getNextChoice();
 		chosenSuffix = gd.getNextChoice();
 		customSuffix = gd.getNextString();
 		start = gd.getNextNumber();
@@ -150,7 +153,19 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		decimalPlaces = (int)gd.getNextNumber();
 		first = (int)gd.getNextNumber();
 		last = (int)gd.getNextNumber();
-		AAtext = gd.getNextBoolean(); 
+		AAtext = gd.getNextBoolean();
+		if (slice != currentSlice) {
+			boolean reactivatePreview = false;
+			if ( (previewCheckbox != null) && (previewCheckbox.getState() == true) ){
+				previewCheckbox.setState(false);
+				reactivatePreview = true;
+			}
+			currentSlice = slice;
+			updateImg();
+			if (reactivatePreview){
+				previewCheckbox.setState(true);
+			}
+		}
 		return true;  // or else the dialog will have the ok button inactivated!
 	}
 	
@@ -166,25 +181,22 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 				//that works, but now the time stamper counts up from time = lastTime value not from  time = (start + (first*interval))
 				// when making the time stamps for the whole stack...
 	
-		 
+		
 		if (preview){
-			frame = 0; //getCurrentSliceFromSlider();
-			time = getTimeFromFrame(frame);
+			frame = currentSlice;
 		}
 		else {
-			frame = 0; // so the value of frame is reset to 0 each time the plugin is run or the preview checkbox is checked.
-			time = start; 
+			frame = 1; // so the value of frame is reset to 0 each time the plugin is run or the preview checkbox is checked.
 		}
-		time -= interval; // time = time - interval.  // because we start "before the stack", at frame = 0,  not frame = 1
-	}	
+		frame--;
+	}
 	
 
 	// run the plugin on the ip object, which is the ImageProcessor object associated with the open/selected image. 
 	// but remember that showDialog method is run before this in ExtendedPluginFilter
 	public void run(ImageProcessor ip) {
-		// this increments frame integer by 1. If an int is declared with no value, it defaults to 0
 		frame++;
-		time += interval;  // increments the time by the time interval
+		// this increments frame integer by 1. If an int is declared with no value, it defaults to 0
 		
 		if (frame==last) imp.updateAndDraw(); 	// Updates this image from the pixel data in its associated
 							// ImageProcessor object and then displays it
@@ -206,10 +218,21 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		// set the font size according to ROI size, or if no ROI the GUI text input
 		setFontParams(ip);
 		setLocation(ip);
-		ip.drawString(timeString()); // draw the timestring into the image
+		double time = getTimeFromFrame(frame);  // ask the getTimeFromFrame method to return the time for that frame
+		ip.drawString(getTimeString(time)); // draw the timestring into the image
 		//showProgress(precent done calc here); // dont really need a progress bar... but seem to get one anyway...
 	}
-	
+
+	/*
+	private void setTimeFormat(){
+		String format = "";
+		if (timeFormat.equals("hh:mm:ss.ms"))
+			format = "HH:mm:ss:SSS";
+		else if (timeFormat.equals("Decimal"))
+			format =  "";
+		else return ("timeFormat was not selected!");
+	}
+	*/
 	
 	void setFontParams(ImageProcessor ip) { //work out the size of the font to use from the size of the ROI box drawn, 
 											//if one was drawn (how does it know?)
@@ -284,13 +307,13 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		// which might be custom suffix if one is entered and selected.
 		// if it is digital, then there is no suffix as format is set hh:mm:ss.ms
 		
-	String timeString() {
-		if (digitalOrDecimal.equals("hh:mm:ss.ms"))
-			return digitalString(time);
-		else if (digitalOrDecimal.equals("Decimal"))
+	String getTimeString(double time) {
+		if (timeFormat.equals("hh:mm:ss.ms"))
+			return digitalString((int)time);
+		else if (timeFormat.equals("Decimal"))
 			return decimalString(time);
-		else return ("digitalOrDecimal was not selected!");
-		// IJ.log("Error occurred: digitalOrDecimal must be hh:mm:ss.ms or Decimal, but it was not."); 
+		else return ("timeFormat was not selected!");
+		// IJ.log("Error occurred: timeFormat must be hh:mm:ss.ms or Decimal, but it was not."); 
 	}
 	
 		// is there a non empty string in the custom suffix box in the dialog GUI?
@@ -325,13 +348,41 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 	// which is nice, but also really need hh:mm:ss and mm:ss.ms etc. 
 	// could use the java time/date formating stuff for that?
 	String digitalString(double time) {
-		int hour = (int)(time / 3600);
+		Calendar c = new GregorianCalendar();
+		c.setTimeInMillis(0);
+		if (chosenSuffix.equals("y")){    //"y", "d", "h", "min", "s", "ms", "us", "ns", "ps", "fs", "as", "Custom Suffix"
+			time = time * (365.25*24.0*60.0*60.0*1000.0); //   c.set(Calendar.YEAR, time); // time would have to be an integer... so can't use that
+		}
+		else if (chosenSuffix.equals("mon")){    
+			time = time * ((365.25/12)*24.0*60.0*60.0*1000.0); 
+		}
+		else if (chosenSuffix.equals("d")){    
+			time = time * (24.0*60.0*60.0*1000.0);
+		}
+		else if (chosenSuffix.equals("h")){   
+			time = time * (60.0*60.0*1000.0);
+		}
+		else if (chosenSuffix.equals("min")){   
+			time = time * (60.0*1000.0);
+		}
+		else if (chosenSuffix.equals("s")){    
+			time = time * 1000.0;
+		}
+		else if (chosenSuffix.equals("ms")){
+			time = time;
+		}
+		else IJ.error("For a digital 00:00:00 time you must use y, mon, h, min, s or ms only as the time units.");
+		SimpleDateFormat f = new SimpleDateFormat("HH:mm:ss.SSS");
+		return f.format(c.getTime() );
+		
+		/*int hour = (int)(time / 3600);
 		time -= hour * 3600;
 		int minute = (int)(time / 60);
 		time -= minute * 60;
 		return twoDigits(hour) + ":" + twoDigits(minute) + ":"
 			+ (time < 10 ? "0" : "") 
 			+ IJ.d2s(time, decimalPlaces);
+		*/
 	}
 
 	// this method returns the string of the TimeStamp  for the last frame to be stamped
@@ -342,12 +393,12 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 	// but should use last not stacksize, since no time stamp is made for slices after last?
 	// It also needs to calculate maxWidth for both digital and decimal time formats:
 	String lastTimeStampString() {
-		if (digitalOrDecimal.equals ("Decimal"))
+		if (timeFormat.equals ("Decimal"))
 			return decimalString(lastTime());
-		else if (digitalOrDecimal.equals ("hh:mm:ss.ms"))
+		else if (timeFormat.equals ("hh:mm:ss.ms"))
 			return digitalString(lastTime());
-		else return "";  // IJ.log("Error occured: digitalOrDecimal was not selected!"); //+ message());
-		// IJ.log("Error occurred: digitalOrDecimal must be hh:mm:ss.ms or Decimal, but it was not."); 
+		else return "";  // IJ.log("Error occured: timeFormat was not selected!"); //+ message());
+		// IJ.log("Error occurred: timeFormat must be hh:mm:ss.ms or Decimal, but it was not."); 
 	}
 	
 	double lastTime() {
@@ -376,18 +427,9 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 	//	IJ.showProgress(percent);
 	//}
 	
-	public void adjustmentValueChanged(AdjustmentEvent e) {
-		updateImg();
-	}
-	
 	private void updateImg(){
-		imp.setSlice(getCurrentSliceFromSlider());
-	}
-	
-	private int getCurrentSliceFromSlider(){
-		return ((Scrollbar)sliders.elementAt(0)).getValue();
-	}
-	
+		imp.setSlice(currentSlice);
+	}	
 }	// thats the end of Time_Stamper_Enhanced class
 
 
