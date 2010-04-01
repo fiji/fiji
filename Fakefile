@@ -237,7 +237,7 @@ plugins/Clojure_Interpreter.jar <- src-plugins/Clojure_Interpreter/*.java
 CLASSPATH(plugins/JRuby_Interpreter.jar)=jars/fiji-scripting.jar
 plugins/JRuby_Interpreter.jar <- src-plugins/JRuby_Interpreter/*.java
 CLASSPATH(plugins/BeanShell_Interpreter.jar)=jars/fiji-scripting.jar
-plugins/BeanShell_Interpreter.jar <- src-plugins/BSH/*.java
+plugins/BeanShell_Interpreter.jar <- src-plugins/BeanShell_Interpreter/*.java
 CLASSPATH(plugins/Javascript_.jar)=jars/fiji-scripting.jar
 plugins/Javascript_.jar <- src-plugins/Javascript_/*.java
 
