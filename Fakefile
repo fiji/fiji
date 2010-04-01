@@ -474,9 +474,3 @@ check-*[bin/up-to-date-check.py * precompiled/*_.jar] <-
 MAINCLASS(jars/fake.jar)=fiji.build.Fake
 JAVAVERSION(jars/fake.jar)=1.3
 jars/fake.jar <- src-plugins/fake/**/*.java
-
-# Script_Editor_Stub.jar (to include MainClassForDebugging in the classpath)
-
-MAINCLASS(jars/Script_Editor_Stub.jar)=stub.MainClassForDebugging
-CLASSPATH(jars/Script_Editor_Stub.jar)=jars/ij.jar
-jars/Script_Editor_Stub.jar <- stub/MainClassForDebugging.java
