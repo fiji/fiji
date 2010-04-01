@@ -22,7 +22,7 @@ import static stitching.CommonFunctions.colorList;
 import static stitching.CommonFunctions.methodListCollection;
 import static stitching.CommonFunctions.rgbTypes;
 import stitching.GridLayout;
-import fiji.util.GenericDialogPlus;
+import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.MultiLineLabel;
