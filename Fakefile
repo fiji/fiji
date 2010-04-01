@@ -235,7 +235,7 @@ plugins/Jython_Interpreter.jar <- src-plugins/Jython_Interpreter/*.java
 CLASSPATH(plugins/Clojure_Interpreter.jar)=jars/fiji-scripting.jar:jars/clojure.jar:jars/clojure-contrib.jar
 plugins/Clojure_Interpreter.jar <- src-plugins/Clojure/*.java
 CLASSPATH(plugins/JRuby_Interpreter.jar)=jars/fiji-scripting.jar
-plugins/JRuby_Interpreter.jar <- src-plugins/JRuby/*.java
+plugins/JRuby_Interpreter.jar <- src-plugins/JRuby_Interpreter/*.java
 CLASSPATH(plugins/BeanShell_Interpreter.jar)=jars/fiji-scripting.jar
 plugins/BeanShell_Interpreter.jar <- src-plugins/BSH/*.java
 CLASSPATH(plugins/Javascript_.jar)=jars/fiji-scripting.jar
