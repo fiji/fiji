@@ -1,4 +1,4 @@
-package fiji.util;
+package fiji.util.gui;
 
 import ij.gui.GenericDialog;
 

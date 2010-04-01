@@ -7,7 +7,7 @@ import java.util.Arrays;
 
 import org.siox.SioxSegmentator;
 
-import fiji.util.GenericDialogPlus;
+import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
