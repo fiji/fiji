@@ -239,7 +239,7 @@ plugins/JRuby_Interpreter.jar <- src-plugins/JRuby_Interpreter/*.java
 CLASSPATH(plugins/BeanShell_Interpreter.jar)=jars/fiji-scripting.jar
 plugins/BeanShell_Interpreter.jar <- src-plugins/BSH/*.java
 CLASSPATH(plugins/Javascript_.jar)=jars/fiji-scripting.jar
-plugins/Javascript_.jar <- src-plugins/Javascript/*.java
+plugins/Javascript_.jar <- src-plugins/Javascript_/*.java
 
 plugins/Bug_Submitter.jar <- src-plugins/Bug_Submitter/*.java
 
