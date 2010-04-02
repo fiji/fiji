@@ -7,6 +7,7 @@ import fiji.updater.logic.PluginObject.Status;
 import fiji.updater.logic.XMLFileReader;
 import fiji.updater.logic.XMLFileWriter;
 
+import fiji.updater.util.Downloader;
 import fiji.updater.util.StderrProgress;
 import fiji.updater.util.Util;
 
@@ -35,6 +36,7 @@ import org.xml.sax.SAXException;
  */
 public class Main {
 	protected PluginCollection plugins;
+	protected StderrProgress progress;
 
 	public Main() throws IOException, MalformedURLException,
 			ParserConfigurationException, SAXException {
@@ -54,6 +56,7 @@ public class Main {
 	public Main(InputStream in) throws IOException,
 			ParserConfigurationException, SAXException {
 		plugins = PluginCollection.getInstance();
+		progress = new StderrProgress();
 		new XMLFileReader(new GZIPInputStream(in), 0);
 	}
 
@@ -62,7 +65,6 @@ public class Main {
 	}
 
 	public void checksum(List<String> files) {
-		StderrProgress progress = new StderrProgress();
 		Checksummer checksummer = new Checksummer(progress);
 		if (files != null && files.size() > 0)
 			checksummer.updateFromLocal(files);
@@ -95,6 +97,66 @@ public class Main {
 				+ plugin.getTimestamp());
 	}
 
+	class OnePlugin implements Downloader.FileDownload {
+		PluginObject plugin;
+
+		OnePlugin(PluginObject plugin) {
+			this.plugin = plugin;
+		}
+
+		public String getDestination() {
+			return plugin.filename;
+		}
+
+		public String getURL() {
+			return Updater.MAIN_URL + plugin.filename + "-"
+				+ plugin.getTimestamp();
+		}
+
+		public long getFilesize() {
+			return plugin.filesize;
+		}
+
+		public String toString() {
+			return plugin.filename;
+		}
+	}
+
+	public void download(PluginObject plugin) {
+		try {
+			new Downloader(progress).start(new OnePlugin(plugin));
+			System.err.println("Installed " + plugin.filename);
+		} catch (IOException e) {
+			System.err.println("IO error downloading "
+				+ plugin.filename + ": " + e.getMessage());
+		}
+	}
+
+	public void delete(PluginObject plugin) {
+		if (new File(plugin.filename).delete())
+			System.err.println("Deleted " + plugin.filename);
+		else
+			System.err.println("Failed to delete "
+					+ plugin.filename);
+	}
+
+	public void update(List<String> files) {
+		checksum(files);
+		for (PluginObject plugin : plugins.filter(new Filter(files)))
+			switch (plugin.getStatus()) {
+			case UPDATEABLE:
+			case MODIFIED:
+			case NEW:
+				download(plugin);
+				break;
+			case NOT_FIJI:
+			case OBSOLETE:
+			case OBSOLETE_MODIFIED:
+				delete(plugin);
+				break;
+			}
+	}
+
 	protected static Main instance;
 
 	public static Main getInstance() {
@@ -112,7 +174,8 @@ public class Main {
 		System.err.println("Usage: fiji.update.Main <command>\n"
 			+ "\n"
 			+ "Commands:\n"
-			+ "\t--list [<files>]");
+			+ "\t--list [<files>]\n"
+			+ "\t--update [<files>]");
 	}
 
 	public static List<String> makeList(String[] list, int start) {
@@ -130,6 +193,8 @@ public class Main {
 		String command = args[0];
 		if (command.equals("--list"))
 			getInstance().list(makeList(args, 1));
+		else if (command.equals("--update"))
+			getInstance().update(makeList(args, 1));
 		else
 			usage();
 	}
