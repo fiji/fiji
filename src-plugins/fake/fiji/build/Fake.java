@@ -2468,21 +2468,23 @@ public class Fake {
 	}
 
 	protected static class StreamDumper extends Thread {
-		BufferedReader in;
-		PrintStream out;
+		InputStream in;
+		OutputStream out;
 
 		StreamDumper(InputStream in, PrintStream out) {
-			this.in = new BufferedReader(new InputStreamReader(in));
+			this.in = in;
 			this.out = out;
 		}
 
 		public void run() {
+			byte[] buffer = new byte[65536];
 			for (;;) {
 				try {
-					String line = in.readLine();
-					if (line == null)
+					int len = in.read(buffer, 0, buffer.length);
+					if (len < 0)
 						break;
-					out.println(line);
+					if (len > 0)
+						out.write(buffer, 0, len);
 				} catch(Exception e) {
 					e.printStackTrace();
 				}
