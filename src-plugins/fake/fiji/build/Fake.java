@@ -802,6 +802,20 @@ public class Fake {
 				 string.equals("1") || string.equals("2"));
 		}
 
+		public void missingPrecompiledFallBack(String target)
+				throws FakeException {
+			Rule fallBack = getRule("missingPrecompiledFallBack");
+			if (fallBack == null)
+				throw new FakeException("No precompiled and "
+					+ "no fallback for " + target + "!");
+			synchronized(fallBack) {
+				String save = fallBack.target;
+				fallBack.target = target;
+				fallBack.make();
+				fallBack.target = save;
+			}
+		}
+
 		public Rule getRule(String rule) {
 			return (Rule)allRules.get(rule);
 		}
@@ -1258,8 +1272,10 @@ public class Fake {
 			}
 
 			boolean checkUpToDate(String directory, File target) {
-				File dir = new File(directory);
+				if (!target.exists())
+					return false;
 
+				File dir = new File(directory);
 				if (!dir.exists() || (dir.isDirectory()) &&
 						dir.listFiles().length == 0) {
 					String precompiled =
@@ -1288,8 +1304,10 @@ public class Fake {
 						return;
 					source = precompiled + file.getName();
 					if (!new File(makePath(cwd,
-							source)).exists())
+							source)).exists()) {
+						missingPrecompiledFallBack(target);
 						return;
+					}
 				}
 
 				if (target.indexOf('.') >= 0)
