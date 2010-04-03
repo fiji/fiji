@@ -422,6 +422,11 @@ precompiled/* <- plugins/*
 
 precompile[] <- precompile-fiji precompile-fake precompile-submodules
 
+# precompiled fall back
+
+missingPrecompiledFallBack[./fiji --jar plugins/Fiji_Updater.jar --update $TARGET] <- \
+	misc/Fiji.jar plugins/Fiji_Updater.jar
+
 # Portable application/.app
 
 all-apps[] <- app-macosx app-linux app-linux64 app-win32 app-win64
