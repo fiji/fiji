@@ -174,7 +174,7 @@ public class Directionality_ implements PlugIn {
 	/** How many sigmas away from the gaussian center we sum to get the amount value. */ 
 	private static final double SIGMA_NUMBER = 2;
 	private static final String PLUGIN_NAME = "Directionality analysis";
-	private static final String VERSION_STR = "1.3";
+	private static final String VERSION_STR = "1.4";
 	
 	/* SETTING FIELDS, they determine results */
 	
@@ -1301,9 +1301,11 @@ public class Directionality_ implements PlugIn {
 		final float[] r_px = (float[]) r.getPixels();
 		final float[] theta_px = (float[]) theta.getPixels();
 		
-		double current_r, current_theta, theta_c, angular_part;
+		double current_r, current_theta, theta_c, angular_part, radial_part;
 		final double theta_bw = Math.PI/(nbins-1);
-		
+		final double r_c = pad_size / 4;
+		final double r_bw = r_c/2;
+				
 		for (int i=1; i<= nbins; i++) {
 			
 			pixels = new float[pad_size*pad_size];
@@ -1315,6 +1317,7 @@ public class Directionality_ implements PlugIn {
 				if ( current_r < FREQ_THRESHOLD || current_r > pad_size/2) {
 					continue;
 				}
+				radial_part = Math.exp( -(current_r-r_c)*(current_r-r_c)/(r_bw*r_bw));
 				
 				current_theta = theta_px[index];
 				if ( Math.abs(current_theta-theta_c) < theta_bw) {
@@ -1335,7 +1338,7 @@ public class Directionality_ implements PlugIn {
 					continue; // leave it to 0
 				}
 				
-				pixels[index] = (float) angular_part; // only angular for now 
+				pixels[index] = (float)(angular_part * radial_part); 
 
 			}
 			
