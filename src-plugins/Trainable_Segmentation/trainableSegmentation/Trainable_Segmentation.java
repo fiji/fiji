@@ -47,6 +47,7 @@ import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.gui.ImageWindow;
+import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.gui.ShapeRoi;
 import ij.io.OpenDialog;
@@ -864,38 +865,43 @@ public class Trainable_Segmentation implements PlugIn
 				}
 
 				for(int k=0; k<rois.length; k++)
-				{
-					Rectangle rect = rois[k].getBounds();
-					
-					for(int x = rect.x; x < rect.x + rect.width; x++)
-						for(int y = rect.y; y < rect.y + rect.height; y++)
-							if(r.contains(x, y))
-							{
-								double[] values = new double[featureStack.getSize()+1];
-								for (int z=1; z<=featureStack.getSize(); z++)
-									values[z-1] = featureStack.getProcessor(z).getPixelValue(x, y);
-								values[featureStack.getSize()] = (double) l;
-								trainingData.add(new DenseInstance(1.0, values));
-								// increase number of instances for this class
-								nl ++;
-							}
-					
-					/*
-					int[] x = rois[k].getPolygon().xpoints;
-					int[] y = rois[k].getPolygon().ypoints;
-					final int n = rois[k].getPolygon().npoints;
-
-					for (int i=0; i<n; i++)
+				{										
+					// For polygon rois we get the list of points
+					if(rois[k] instanceof PolygonRoi)
 					{
-						double[] values = new double[featureStack.getSize()+1];
-						for (int z=1; z<=featureStack.getSize(); z++)
-							values[z-1] = featureStack.getProcessor(z).getPixelValue(x[i], y[i]);
-						values[featureStack.getSize()] = (double) l;
-						trainingData.add(new DenseInstance(1.0, values));
-						// increase number of instances for this class
-						nl ++;
+						int[] x = rois[k].getPolygon().xpoints;
+						int[] y = rois[k].getPolygon().ypoints;
+						final int n = rois[k].getPolygon().npoints;
+
+						for (int i=0; i<n; i++)
+						{
+							double[] values = new double[featureStack.getSize()+1];
+							for (int z=1; z<=featureStack.getSize(); z++)
+								values[z-1] = featureStack.getProcessor(z).getPixelValue(x[i], y[i]);
+							values[featureStack.getSize()] = (double) l;
+							trainingData.add(new DenseInstance(1.0, values));
+							// increase number of instances for this class
+							nl ++;
+						}
 					}
-					*/
+					else // for the rest of rois we get ALL points inside the roi
+					{
+						final Rectangle rect = rois[k].getBounds();
+						
+						for(int x = rect.x; x < rect.x + rect.width; x++)
+							for(int y = rect.y; y < rect.y + rect.height; y++)
+								if(r.contains(x, y))
+								{
+									double[] values = new double[featureStack.getSize()+1];
+									for (int z=1; z<=featureStack.getSize(); z++)
+										values[z-1] = featureStack.getProcessor(z).getPixelValue(x, y);
+									values[featureStack.getSize()] = (double) l;
+									trainingData.add(new DenseInstance(1.0, values));
+									// increase number of instances for this class
+									nl ++;
+								}
+					}
+					
 				}
 			}
 			
