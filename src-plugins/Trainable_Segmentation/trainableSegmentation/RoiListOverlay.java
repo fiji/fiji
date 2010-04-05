@@ -89,7 +89,8 @@ public class RoiListOverlay implements Overlay
 			g2d.setComposite( this.composite );
 			g2d.setColor( this.color );
 
-			if(r instanceof FreehandRoi && r.getType() == FreehandRoi.FREELINE)
+			final int type = r.getType();
+			if(type == Roi.FREELINE || type == Roi.LINE || type == Roi.POLYLINE)
 				g2d.draw(shape);
 			else
 				g2d.fill(shape);
