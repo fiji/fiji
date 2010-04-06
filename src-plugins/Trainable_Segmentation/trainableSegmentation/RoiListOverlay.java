@@ -1,5 +1,5 @@
 /**
- * Siox_Segmentation plug-in for ImageJ and Fiji.
+ * Trainable_Segmentation plug-in for ImageJ and Fiji.
  * 2010 Ignacio Arganda-Carreras 
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,6 @@
 
 package trainableSegmentation;
 
-import ij.gui.FreehandRoi;
 import ij.gui.Roi;
 import ij.gui.ShapeRoi;
 import ij.gui.ShapeRoiHelper;
