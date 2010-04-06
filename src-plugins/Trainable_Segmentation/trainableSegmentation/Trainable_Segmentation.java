@@ -116,7 +116,8 @@ import hr.irb.fastRandomForest.FastRandomForest;
 
 public class Trainable_Segmentation implements PlugIn 
 {
-	final Composite transparency050 = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.50f );	
+	final Composite transparency050 = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.50f );
+	final Composite transparency025 = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.25f );
 	
 	/** maximum number of classes (labels) allowed on the GUI*/
 	private static final int MAX_NUM_CLASSES = 5;
@@ -171,7 +172,7 @@ public class Trainable_Segmentation implements PlugIn
 	
 	/** available colors for available classes*/
 	final Color[] colors = new Color[]{Color.red, Color.green, Color.blue,
-			Color.orange, Color.pink};
+			Color.cyan, Color.magenta};
 	/** names of the current classes */
 	String[] classLabels = new String[]{"class 1", "class 2", "class 3", "class 4", "class 5"};
 	
@@ -437,7 +438,7 @@ public class Trainable_Segmentation implements PlugIn
 			}
 
 			// add result overlay
-			resultOverlay.setComposite( transparency050 );
+			resultOverlay.setComposite( transparency025 );
 			((OverlayedImageCanvas)ic).addOverlay(resultOverlay);	
 			
 			// Remove the canvas from the window, to add it later
@@ -891,7 +892,7 @@ public class Trainable_Segmentation implements PlugIn
 				for(int k=0; k<rois.length; k++)
 				{										
 					// For polygon rois we get the list of points
-					if(rois[k] instanceof PolygonRoi)
+					if(rois[k] instanceof PolygonRoi && rois[k].getType() != Roi.FREEROI)
 					{
 						int[] x = rois[k].getPolygon().xpoints;
 						int[] y = rois[k].getPolygon().ypoints;
@@ -1451,6 +1452,17 @@ public class Trainable_Segmentation implements PlugIn
 		
 		if(null == inputName)
 			return;
+		
+		
+		if (null == inputName || 0 == inputName.length()) {
+			IJ.error("Invalid name for class");
+			return;
+		}
+		inputName = inputName.trim();
+		
+		if (0 == inputName.toLowerCase().indexOf("add ")) 
+			inputName = inputName.substring(4);					
+		
 		
 		// Add new name to the list of labels
 		classLabels[numOfClasses] = inputName;
