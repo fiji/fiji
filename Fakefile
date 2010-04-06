@@ -231,15 +231,15 @@ jars/fiji-scripting.jar <- src-plugins/fiji-scripting/**/*.java
 
 CLASSPATH(plugins/Refresh_Javas.jar)=jars/fiji-scripting.jar:jars/fake.jar:jars/Fiji.jar
 CLASSPATH(plugins/Jython_Interpreter.jar)=jars/fiji-scripting.jar:jars/jython.jar
-plugins/Jython_Interpreter.jar <- src-plugins/Jython/*.java
+plugins/Jython_Interpreter.jar <- src-plugins/Jython_Interpreter/*.java
 CLASSPATH(plugins/Clojure_Interpreter.jar)=jars/fiji-scripting.jar:jars/clojure.jar:jars/clojure-contrib.jar
-plugins/Clojure_Interpreter.jar <- src-plugins/Clojure/*.java
+plugins/Clojure_Interpreter.jar <- src-plugins/Clojure_Interpreter/*.java
 CLASSPATH(plugins/JRuby_Interpreter.jar)=jars/fiji-scripting.jar
-plugins/JRuby_Interpreter.jar <- src-plugins/JRuby/*.java
+plugins/JRuby_Interpreter.jar <- src-plugins/JRuby_Interpreter/*.java
 CLASSPATH(plugins/BeanShell_Interpreter.jar)=jars/fiji-scripting.jar
-plugins/BeanShell_Interpreter.jar <- src-plugins/BSH/*.java
+plugins/BeanShell_Interpreter.jar <- src-plugins/BeanShell_Interpreter/*.java
 CLASSPATH(plugins/Javascript_.jar)=jars/fiji-scripting.jar
-plugins/Javascript_.jar <- src-plugins/Javascript/*.java
+plugins/Javascript_.jar <- src-plugins/Javascript_/*.java
 
 plugins/Bug_Submitter.jar <- src-plugins/Bug_Submitter/*.java
 
@@ -262,6 +262,7 @@ plugins/LSM_Toolbox.jar <- \
 MAINCLASS(plugins/Interactive_3D_Surface_Plot.jar)=Interactive_3D_Surface_Plot
 CLASSPATH(plugins/Stitching_.jar)=plugins/loci_tools.jar:plugins/Fiji_Plugins.jar
 CLASSPATH(plugins/Fiji_Plugins.jar)=jars/jsch-0.1.37.jar:jars/fiji-lib.jar
+MAINCLASS(plugins/Fiji_Updater.jar)=fiji.updater.Main
 CLASSPATH(plugins/Fiji_Updater.jar)=jars/jsch-0.1.37.jar:jars/Fiji.jar
 
 plugins/Record_Screen.jar <- src-plugins/Record_Screen/ src-plugins/Record_Screen/**/*
@@ -421,6 +422,11 @@ precompiled/* <- plugins/*
 
 precompile[] <- precompile-fiji precompile-fake precompile-submodules
 
+# precompiled fall back
+
+missingPrecompiledFallBack[./fiji --jar plugins/Fiji_Updater.jar --update $TARGET] <- \
+	misc/Fiji.jar plugins/Fiji_Updater.jar
+
 # Portable application/.app
 
 all-apps[] <- app-macosx app-linux app-linux64 app-win32 app-win64
@@ -474,9 +480,3 @@ check-*[bin/up-to-date-check.py * precompiled/*_.jar] <-
 MAINCLASS(jars/fake.jar)=fiji.build.Fake
 JAVAVERSION(jars/fake.jar)=1.3
 jars/fake.jar <- src-plugins/fake/**/*.java
-
-# Script_Editor_Stub.jar (to include MainClassForDebugging in the classpath)
-
-MAINCLASS(jars/Script_Editor_Stub.jar)=stub.MainClassForDebugging
-CLASSPATH(jars/Script_Editor_Stub.jar)=jars/ij.jar
-jars/Script_Editor_Stub.jar <- stub/MainClassForDebugging.java

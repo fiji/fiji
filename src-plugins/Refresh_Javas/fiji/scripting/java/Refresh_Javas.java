@@ -54,12 +54,12 @@ public class Refresh_Javas extends RefreshScripts {
 		String c = path;
 		if (c.endsWith(".java")) {
 			try {
-				String className = fake(path);
-				if (className != null) {
-					runPlugin(className, true);
+				String[] result = fake(path);
+				if (result != null) {
+					runPlugin(result[1], result[0], true);
 					return;
 				}
-			} catch (Fake.FakeException e) {
+			} catch (Exception e) {
 				e.printStackTrace(new PrintStream(err));
 				return;
 			}
@@ -109,8 +109,8 @@ public class Refresh_Javas extends RefreshScripts {
 		return result;
 	}
 
-	/* returns the class name on success, null otherwise */
-	public String fake(String path) throws Fake.FakeException {
+	/* returns the class name and .jar on success, null otherwise */
+	public String[] fake(String path) throws Fake.FakeException {
 		String fijiDir = System.getProperty("fiji.dir");
 		if (fijiDir == null)
 			return null;
@@ -160,7 +160,7 @@ public class Refresh_Javas extends RefreshScripts {
 		parser.setVariable("buildDir", "build");
 		parser.getRule(target).make();
 
-		return name;
+		return new String[] { name, target };
 	}
 
 	static Method javac;
@@ -225,6 +225,11 @@ public class Refresh_Javas extends RefreshScripts {
 
 	void runPlugin(String className, boolean newClassLoader) {
 		new PlugInExecutor().run(className, "", newClassLoader);
+	}
+
+	void runPlugin(String path, String className, boolean newClassLoader)
+			throws Exception {
+		new PlugInExecutor(path).run(className, "", newClassLoader);
 	}
 
 	void runOutOfTreePlugin(String path) throws IOException,
