@@ -41,11 +41,10 @@ package trainableSegmentation;
 import ij.IJ;
 import ij.ImageStack;
 import ij.plugin.PlugIn;
-import ij.plugin.RGBStackMerge;
 
-import ij.process.ByteProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
+import ij.process.LUT;
 import ij.gui.ImageWindow;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
@@ -125,12 +124,10 @@ public class Trainable_Segmentation implements PlugIn
 	private List<Roi> [] examples = new ArrayList[MAX_NUM_CLASSES];
 	/** image to be used in the training */
 	private ImagePlus trainingImage;
-	/** image to display on the GUI, it includes the painted rois*/
+	/** image to display on the GUI, it includes the painted rois */
 	private ImagePlus displayImage;
 	/** result image after classification */
 	private ImagePlus classifiedImage;
-	/** image to overlay with temporary results */
-	private ImagePlus overlayImage;
 	/** features to be used in the training */
 	private FeatureStack featureStack = null;
 	/** GUI window */
@@ -167,8 +164,10 @@ public class Trainable_Segmentation implements PlugIn
 	/** create new class button */
 	final JButton addClassButton;
 	
-	
-	private RoiListOverlay [] roiOverlay = new RoiListOverlay[MAX_NUM_CLASSES];
+	/** array of roi list overlays to paint the transparent rois of each class */
+	RoiListOverlay [] roiOverlay;
+	/** current segmentation result overlay */
+	ImageOverlay resultOverlay;
 	
 	/** available colors for available classes*/
 	final Color[] colors = new Color[]{Color.red, Color.green, Color.blue,
@@ -176,12 +175,14 @@ public class Trainable_Segmentation implements PlugIn
 	/** names of the current classes */
 	String[] classLabels = new String[]{"class 1", "class 2", "class 3", "class 4", "class 5"};
 	
+	LUT overlayLUT;
+	
 	/** current number of classes */
 	private int numOfClasses = 2;
 	/** array of trace lists for every class */
-	private java.awt.List exampleList[] = new java.awt.List[MAX_NUM_CLASSES];
+	private java.awt.List exampleList[];
 	/** array of buttons for adding each trace class */
-	private JButton [] addExampleButton = new JButton[MAX_NUM_CLASSES];
+	private JButton [] addExampleButton;
 	
 	// Random Forest parameters
 	/** current number of trees in the fast random forest classifier */
@@ -199,6 +200,27 @@ public class Trainable_Segmentation implements PlugIn
 	 */
 	public Trainable_Segmentation() 
 	{
+		// Create overlay LUT
+		final byte[] red = new byte[256];
+		final byte[] green = new byte[256];
+		final byte[] blue = new byte[256];
+		final int shift = 255 / MAX_NUM_CLASSES;
+		for(int i = 0 ; i < 256; i++)
+		{
+			final int colorIndex = i / (shift+1);
+			//IJ.log("i = " + i + " color index = " + colorIndex);
+			red[i] = (byte) colors[colorIndex].getRed();
+			green[i] = (byte) colors[colorIndex].getGreen();
+			blue[i] = (byte) colors[colorIndex].getBlue();
+		}
+		overlayLUT = new LUT(red, green, blue);
+		
+		exampleList = new java.awt.List[MAX_NUM_CLASSES];
+		addExampleButton = new JButton[MAX_NUM_CLASSES];
+		
+		roiOverlay = new RoiListOverlay[MAX_NUM_CLASSES];
+		resultOverlay = new ImageOverlay();
+		
 		trainButton = new JButton("Train classifier");
 		trainButton.setToolTipText("Start training the classifier");
 		
@@ -406,6 +428,7 @@ public class Trainable_Segmentation implements PlugIn
 
 			final CustomCanvas canvas = (CustomCanvas) getCanvas();
 			
+			// add roi list overlays (one per class)
 			for(int i = 0; i < MAX_NUM_CLASSES; i++)
 			{
 				roiOverlay[i] = new RoiListOverlay();
@@ -413,6 +436,10 @@ public class Trainable_Segmentation implements PlugIn
 				((OverlayedImageCanvas)ic).addOverlay(roiOverlay[i]);
 			}
 
+			// add result overlay
+			resultOverlay.setComposite( transparency050 );
+			((OverlayedImageCanvas)ic).addOverlay(resultOverlay);	
+			
 			// Remove the canvas from the window, to add it later
 			removeAll();
 
@@ -629,7 +656,8 @@ public class Trainable_Segmentation implements PlugIn
 			exampleList[numOfClasses] = new java.awt.List(5);
 			exampleList[numOfClasses].setForeground(colors[numOfClasses]);
 			
-			exampleList[numOfClasses].addActionListener(listener);
+			exampleList[numOfClasses].addActionListener(listener);			
+			exampleList[numOfClasses].addItemListener(itemListener);
 			addExampleButton[numOfClasses] = new JButton("Add " + classLabels[numOfClasses]);
 			
 			annotationsConstraints.fill = GridBagConstraints.HORIZONTAL;
@@ -664,13 +692,14 @@ public class Trainable_Segmentation implements PlugIn
 	{
 		//		trainingImage = IJ.openImage("testImages/i00000-1.tif");
 		//get current image
-		if (null == WindowManager.getCurrentImage()) {
+		if (null == WindowManager.getCurrentImage()) 
+		{
 			trainingImage = IJ.openImage();
 			if (null == trainingImage) return; // user canceled open dialog
 		}
-		else {
+		else 		
 			trainingImage = new ImagePlus("Trainable Segmentation",WindowManager.getCurrentImage().getProcessor().duplicate());
-		}
+		
 
 		if (Math.max(trainingImage.getWidth(), trainingImage.getHeight()) > 1024)
 			if (!IJ.showMessageWithCancel("Warning", "At least one dimension of the image \n" +
@@ -687,7 +716,7 @@ public class Trainable_Segmentation implements PlugIn
 		featureStack = new FeatureStack(trainingImage);
 		
 		displayImage = new ImagePlus();
-		displayImage.setProcessor("Trainable Segmentation", trainingImage.getProcessor().duplicate().convertToRGB());
+		displayImage.setProcessor("Trainable Segmentation", trainingImage.getProcessor().duplicate());
 
 		ij.gui.Toolbar.getInstance().setTool(ij.gui.Toolbar.FREELINE);
 
@@ -749,11 +778,6 @@ public class Trainable_Segmentation implements PlugIn
 	 */
 	private void drawExamples()
 	{
-		if (!showColorOverlay)
-			displayImage.setProcessor("Trainable Segmentation", trainingImage.getProcessor().convertToRGB());
-		else
-			displayImage.setProcessor("Trainable Segmentation", overlayImage.getProcessor().convertToRGB());
-
 
 		for(int i = 0; i < numOfClasses; i++)
 		{
@@ -1149,31 +1173,28 @@ public class Trainable_Segmentation implements PlugIn
 	void toggleOverlay()
 	{
 		showColorOverlay = !showColorOverlay;
-		//IJ.log("toggel overlay to: " + showColorOverlay);
+		//IJ.log("toggle overlay to: " + showColorOverlay);
 		if (showColorOverlay)
 		{
-			//do this every time cause most likely classification changed
-			int width = trainingImage.getWidth();
-			int height = trainingImage.getHeight();
-
-			ImageProcessor white = new ByteProcessor(width, height);
-			white.setMinAndMax(255, 255);
-
-			ImageStack redStack = new ImageStack(width, height);
-			redStack.addSlice("red", trainingImage.getProcessor().duplicate());
-			ImageStack greenStack = new ImageStack(width, height);
-			greenStack.addSlice("green", classifiedImage.getProcessor().duplicate());
-			ImageStack blueStack = new ImageStack(width, height);
-			blueStack.addSlice("blue", white.duplicate());
-
-			RGBStackMerge merger = new RGBStackMerge();
-			ImageStack overlayStack = merger.mergeStacks(trainingImage.getWidth(), trainingImage.getHeight(), 
-					1, redStack, greenStack, blueStack, true);
-
-			overlayImage = new ImagePlus("overlay image", overlayStack);
+			
+			ImageProcessor overlay = classifiedImage.getProcessor().duplicate();
+			//classifiedImage.show();
+			
+			double shift = 255.0 / MAX_NUM_CLASSES;
+			overlay.multiply(shift+1);
+			overlay = overlay.convertToByte(false);
+			overlay.setColorModel(overlayLUT);
+			
+			///new ImagePlus("Overlay", overlay).show();
+			
+			resultOverlay.setImage(overlay);
 		}
+		else
+			resultOverlay.setImage(null);
 
-		drawExamples();
+		displayImage.updateAndDraw();
+		
+		//drawExamples();
 	}
 
 	/**
@@ -1189,7 +1210,12 @@ public class Trainable_Segmentation implements PlugIn
 		for(int j = 0; j < numOfClasses; j++)
 		{
 			if (j == i) 
-				examples[i].get(exampleList[i].getSelectedIndex()).drawPixels(displayImage.getProcessor());
+			{
+				final Roi newRoi = examples[i].get(exampleList[i].getSelectedIndex()); 
+				// Set selected trace as current ROI
+				newRoi.setImage(displayImage);
+				displayImage.setRoi(newRoi);
+			}
 			else
 				exampleList[j].deselect(exampleList[j].getSelectedIndex());
 		}
@@ -1205,25 +1231,22 @@ public class Trainable_Segmentation implements PlugIn
 	void deleteSelected(final ActionEvent e){
 
 		for(int i = 0; i < numOfClasses; i++)
-		{
-
-			if (e.getSource() == exampleList[i]) {
+			if (e.getSource() == exampleList[i]) 
+			{
 				//delete item from ROI
 				int index = exampleList[i].getSelectedIndex();
+				
+				// kill Roi from displayed image
+				if(displayImage.getRoi().equals( examples[i].get(index) ))
+					displayImage.killRoi();
+
+				
 				examples[i].remove(index);
 				//delete item from list
 				exampleList[i].remove(index);
 			}
-		}
-
-		if (!showColorOverlay)
-			drawExamples();
-		else{
-			//FIXME I have no clue why drawExamples 
-			//does not do the trick if overlay is displayed
-			toggleOverlay();
-			toggleOverlay();
-		}
+		
+		drawExamples();		
 	}
 
 	/**
