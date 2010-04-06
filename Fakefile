@@ -289,7 +289,7 @@ plugins/Script_Editor.jar <- src-plugins/Script_Editor/**/*.java  \
 							funtion.png[images/function.png] \
 							src-plugins/Script_Editor/templates/**/*
 
-CLASSPATH(plugins/Trainable_Segmentation.jar)=jars/weka.jar:plugins/Stitching_.jar
+CLASSPATH(plugins/Trainable_Segmentation.jar)=jars/weka.jar:plugins/Stitching_.jar:jars/fiji-lib.jar
 
 plugins/*_*.jar <- src-plugins/*_*/**/*.java
 
