@@ -879,58 +879,50 @@ public class Trainable_Segmentation implements PlugIn
 			// Read all lists of examples
 			for(int j=0; j<examples[l].size(); j++)
 			{
-				Roi r = examples[l].get(j);
-				//need to take care of shapeRois that are represented as multiple polygons
-				Roi[] rois;
-				if (r instanceof ij.gui.ShapeRoi){
-					//IJ.log("shape roi detected");
-					rois = ((ShapeRoi) r).getRois();
-				}
-				else
+				final Roi r = examples[l].get(j);
+				
+													
+				// For polygon rois we get the list of points
+				if(r instanceof PolygonRoi && r.getType() != Roi.FREEROI)
 				{
-					rois = new Roi[1];
-					rois[0] = r;
+					int[] x = r.getPolygon().xpoints;
+					int[] y = r.getPolygon().ypoints;
+					final int n = r.getPolygon().npoints;
+
+					for (int i=0; i<n; i++)
+					{
+						double[] values = new double[featureStack.getSize()+1];
+						for (int z=1; z<=featureStack.getSize(); z++)
+							values[z-1] = featureStack.getProcessor(z).getPixelValue(x[i], y[i]);
+						values[featureStack.getSize()] = (double) l;
+						trainingData.add(new DenseInstance(1.0, values));
+						// increase number of instances for this class
+						nl ++;
+					}
+				}
+				else // for the rest of rois we get ALL points inside the roi
+				{
+					final ShapeRoi shapeRoi = new ShapeRoi(r); 
+					final Rectangle rect = shapeRoi.getBounds();
+
+					final int lastX = rect.x + rect.width;
+					final int lastY = rect.y + rect.height;
+
+					for(int x = rect.x; x < lastX; x++)
+						for(int y = rect.y; y < lastY; y++)
+							if(shapeRoi.contains(x, y))
+							{
+								double[] values = new double[featureStack.getSize()+1];
+								for (int z=1; z<=featureStack.getSize(); z++)
+									values[z-1] = featureStack.getProcessor(z).getPixelValue(x, y);
+								values[featureStack.getSize()] = (double) l;
+								trainingData.add(new DenseInstance(1.0, values));
+								// increase number of instances for this class
+								nl ++;
+							}
 				}
 
-				for(int k=0; k<rois.length; k++)
-				{										
-					// For polygon rois we get the list of points
-					if(rois[k] instanceof PolygonRoi && rois[k].getType() != Roi.FREEROI)
-					{
-						int[] x = rois[k].getPolygon().xpoints;
-						int[] y = rois[k].getPolygon().ypoints;
-						final int n = rois[k].getPolygon().npoints;
-
-						for (int i=0; i<n; i++)
-						{
-							double[] values = new double[featureStack.getSize()+1];
-							for (int z=1; z<=featureStack.getSize(); z++)
-								values[z-1] = featureStack.getProcessor(z).getPixelValue(x[i], y[i]);
-							values[featureStack.getSize()] = (double) l;
-							trainingData.add(new DenseInstance(1.0, values));
-							// increase number of instances for this class
-							nl ++;
-						}
-					}
-					else // for the rest of rois we get ALL points inside the roi
-					{
-						final Rectangle rect = rois[k].getBounds();
-						
-						for(int x = rect.x; x < rect.x + rect.width; x++)
-							for(int y = rect.y; y < rect.y + rect.height; y++)
-								if(r.contains(x, y))
-								{
-									double[] values = new double[featureStack.getSize()+1];
-									for (int z=1; z<=featureStack.getSize(); z++)
-										values[z-1] = featureStack.getProcessor(z).getPixelValue(x, y);
-									values[featureStack.getSize()] = (double) l;
-									trainingData.add(new DenseInstance(1.0, values));
-									// increase number of instances for this class
-									nl ++;
-								}
-					}
-					
-				}
+				
 			}
 			
 			IJ.log("# of pixels selected as " + classLabels[l] + ": " +nl);
@@ -1301,15 +1293,23 @@ public class Trainable_Segmentation implements PlugIn
 	{
 		testImage.setProcessor(testImage.getProcessor().convertToByte(true));
 
+		// Create feature stack for test image
 		IJ.showStatus("Creating features for test image...");
 		final FeatureStack testImageFeatures = new FeatureStack(testImage);
-		testImageFeatures.addDefaultFeatures();
+		// Use the same features as the current classifier
+		testImageFeatures.setEnableFeatures(featureStack.getEnableFeatures());
+		testImageFeatures.updateFeatures();
 
 		// Set proper class names (skip empty list ones)
 		ArrayList<String> classNames = new ArrayList<String>();
-		for(int i = 0; i < numOfClasses; i++)
-			if(examples[i].size() > 0)
-				classNames.add(classLabels[i]);
+		if(loadedTrainingData == null)
+		{
+			for(int i = 0; i < numOfClasses; i++)
+				if(examples[i].size() > 0)
+					classNames.add(classLabels[i]);
+		}
+		else
+			classNames = loadedClassNames;
 		
 		final Instances testData = testImageFeatures.createInstances(classNames);
 		testData.setClassIndex(testData.numAttributes() - 1);
@@ -1433,9 +1433,9 @@ public class Trainable_Segmentation implements PlugIn
 		SaveDialog sd = new SaveDialog("Choose save file", "data",".arff");
 		if (sd.getFileName()==null)
 			return;
-		IJ.log("writing training data: " + data.numInstances());
+		IJ.log("Writing training data: " + data.numInstances() + " instances...");
 		writeDataToARFF(data, sd.getDirectory() + sd.getFileName());
-		IJ.log("wrote training data " + sd.getDirectory() + " " + sd.getFileName());
+		IJ.log("Wrote training data: " + sd.getDirectory() + " " + sd.getFileName());
 	}
 	
 	/**
