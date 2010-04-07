@@ -119,6 +119,9 @@ public class Trainable_Segmentation implements PlugIn
 	final Composite transparency050 = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.50f );
 	final Composite transparency025 = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.25f );
 	
+	int overlayOpacity = 33;
+	Composite overlayAlpha = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, overlayOpacity / 100f);
+	
 	/** maximum number of classes (labels) allowed on the GUI*/
 	private static final int MAX_NUM_CLASSES = 5;
 	/** array of lists of Rois for each class */
@@ -438,7 +441,7 @@ public class Trainable_Segmentation implements PlugIn
 			}
 
 			// add result overlay
-			resultOverlay.setComposite( transparency025 );
+			resultOverlay.setComposite( overlayAlpha );
 			((OverlayedImageCanvas)ic).addOverlay(resultOverlay);	
 			
 			// Remove the canvas from the window, to add it later
@@ -1530,7 +1533,7 @@ public class Trainable_Segmentation implements PlugIn
 		
 		gd.addMessage("Advanced options:");
 		gd.addButton("Save feature stack", new ButtonListener("Select location to save feature stack", featureStack));
-		
+		gd.addSlider("Result overlay opacity", 0, 100, overlayOpacity);
 		gd.addHelp("http://pacific.mpi-cbg.de/wiki/Trainable_Segmentation_Plugin");
 		
 		gd.showDialog();
@@ -1579,6 +1582,18 @@ public class Trainable_Segmentation implements PlugIn
 				addExampleButton[i].setText("Add " + classLabels[i]);
 
 			}
+		}
+		
+		// Update result overlay alpha
+		final int newOpacity = (int) gd.getNextNumber();
+		if( newOpacity != overlayOpacity )
+		{
+			overlayOpacity = newOpacity;
+			overlayAlpha = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, overlayOpacity / 100f);
+			resultOverlay.setComposite(overlayAlpha);
+			
+			if( showColorOverlay )
+				displayImage.updateAndDraw();
 		}
 		
 		// If there is a change in the class names, 
