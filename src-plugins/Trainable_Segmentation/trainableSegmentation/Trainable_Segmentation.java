@@ -247,7 +247,7 @@ public class Trainable_Segmentation implements PlugIn
 		saveDataButton = new JButton ("Save data");
 		saveDataButton.setToolTipText("Save current segmentation into an ARFF file");
 
-		addClassButton = new JButton ("Create new label");
+		addClassButton = new JButton ("Create new class");
 		addClassButton.setToolTipText("Add one more label to mark different areas");
 		
 		settingsButton = new JButton ("Settings");
@@ -465,7 +465,7 @@ public class Trainable_Segmentation implements PlugIn
 			{
 				exampleList[i].addActionListener(listener);
 				exampleList[i].addItemListener(itemListener);
-				addExampleButton[i] = new JButton("Add " + classLabels[i]);
+				addExampleButton[i] = new JButton("Add to " + classLabels[i]);
 				addExampleButton[i].setToolTipText("Add markings of label '" + classLabels[i] + "'");
 
 				annotationsConstraints.fill = GridBagConstraints.HORIZONTAL;
@@ -765,7 +765,7 @@ public class Trainable_Segmentation implements PlugIn
 	private void addExamples(int i)
 	{
 		//get selected pixels
-		Roi r = displayImage.getRoi();
+		final Roi r = displayImage.getRoi();
 		if (null == r){
 			return;
 		}
@@ -789,7 +789,6 @@ public class Trainable_Segmentation implements PlugIn
 			final ArrayList< Roi > rois = new ArrayList<Roi>();
 			for (Roi r : examples[i])
 			{
-				//r.drawPixels(displayImage.getProcessor());
 				rois.add(r);
 				//IJ.log("painted ROI: " + r + " in color "+ colors[i]);
 			}
@@ -883,7 +882,8 @@ public class Trainable_Segmentation implements PlugIn
 				
 													
 				// For polygon rois we get the list of points
-				if(r instanceof PolygonRoi && r.getType() != Roi.FREEROI)
+				if( r instanceof PolygonRoi && r.getType() != Roi.FREEROI 
+						&& r.getStrokeWidth() < 2 )
 				{
 					int[] x = r.getPolygon().xpoints;
 					int[] y = r.getPolygon().ypoints;
@@ -901,7 +901,7 @@ public class Trainable_Segmentation implements PlugIn
 					}
 				}
 				else // for the rest of rois we get ALL points inside the roi
-				{
+				{				
 					final ShapeRoi shapeRoi = new ShapeRoi(r); 
 					final Rectangle rect = shapeRoi.getBounds();
 
@@ -1463,8 +1463,8 @@ public class Trainable_Segmentation implements PlugIn
 		}
 		inputName = inputName.trim();
 		
-		if (0 == inputName.toLowerCase().indexOf("add ")) 
-			inputName = inputName.substring(4);					
+		if (0 == inputName.toLowerCase().indexOf("add to ")) 
+			inputName = inputName.substring(7);					
 		
 		
 		// Add new name to the list of labels
@@ -1574,12 +1574,12 @@ public class Trainable_Segmentation implements PlugIn
 			s = s.trim();
 			if(!s.equals(classLabels[i]))
 			{
-				if (0 == s.toLowerCase().indexOf("add ")) 
-					s = s.substring(4);
+				if (0 == s.toLowerCase().indexOf("add to ")) 
+					s = s.substring(7);
 				
 				classLabels[i] = s;
 				classNameChanged = true;
-				addExampleButton[i].setText("Add " + classLabels[i]);
+				addExampleButton[i].setText("Add to " + classLabels[i]);
 
 			}
 		}
