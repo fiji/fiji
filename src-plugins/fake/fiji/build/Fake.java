@@ -802,6 +802,20 @@ public class Fake {
 				 string.equals("1") || string.equals("2"));
 		}
 
+		public void missingPrecompiledFallBack(String target)
+				throws FakeException {
+			Rule fallBack = getRule("missingPrecompiledFallBack");
+			if (fallBack == null)
+				throw new FakeException("No precompiled and "
+					+ "no fallback for " + target + "!");
+			synchronized(fallBack) {
+				String save = fallBack.target;
+				fallBack.target = target;
+				fallBack.make();
+				fallBack.target = save;
+			}
+		}
+
 		public Rule getRule(String rule) {
 			return (Rule)allRules.get(rule);
 		}
@@ -1258,8 +1272,10 @@ public class Fake {
 			}
 
 			boolean checkUpToDate(String directory, File target) {
-				File dir = new File(directory);
+				if (!target.exists())
+					return false;
 
+				File dir = new File(directory);
 				if (!dir.exists() || (dir.isDirectory()) &&
 						dir.listFiles().length == 0) {
 					String precompiled =
@@ -1288,8 +1304,10 @@ public class Fake {
 						return;
 					source = precompiled + file.getName();
 					if (!new File(makePath(cwd,
-							source)).exists())
+							source)).exists()) {
+						missingPrecompiledFallBack(target);
 						return;
+					}
 				}
 
 				if (target.indexOf('.') >= 0)
@@ -1324,6 +1342,19 @@ public class Fake {
 					result += tokenizer.nextToken();
 				}
 				return result;
+			}
+
+			protected void clean(boolean dry_run) {
+				File buildDir = getBuildDir();
+				if (buildDir == null) {
+					super.clean(dry_run);
+					return;
+				}
+				if (dry_run)
+					out.println("rm -rf "
+							+ buildDir.getPath());
+				else if (buildDir.exists())
+					deleteRecursively(buildDir);
 			}
 		}
 
@@ -1468,6 +1499,15 @@ public class Fake {
 
 			protected void clean(boolean dry_run) {
 				super.clean(dry_run);
+				File buildDir = getBuildDir();
+				if (buildDir != null) {
+					if (dry_run)
+						out.println("rm -rf "
+							+ buildDir.getPath());
+					else if (buildDir.exists())
+						deleteRecursively(buildDir);
+					return;
+				}
 				List javas = new ArrayList();
 				Iterator iter = prerequisites.iterator();
 				while (iter.hasNext()) {
@@ -1481,6 +1521,7 @@ public class Fake {
 						getVar("EXCLUDE"), cwd);
 					Set noCompile = expandToSet(
 						getVar("NO_COMPILE"), cwd);
+					exclude.addAll(noCompile);
 					iter = java2classFiles(javas,
 						cwd, getBuildDir(),
 						exclude, noCompile).iterator();
@@ -2445,21 +2486,23 @@ public class Fake {
 	}
 
 	protected static class StreamDumper extends Thread {
-		BufferedReader in;
-		PrintStream out;
+		InputStream in;
+		OutputStream out;
 
 		StreamDumper(InputStream in, PrintStream out) {
-			this.in = new BufferedReader(new InputStreamReader(in));
+			this.in = in;
 			this.out = out;
 		}
 
 		public void run() {
+			byte[] buffer = new byte[65536];
 			for (;;) {
 				try {
-					String line = in.readLine();
-					if (line == null)
+					int len = in.read(buffer, 0, buffer.length);
+					if (len < 0)
 						break;
-					out.println(line);
+					if (len > 0)
+						out.write(buffer, 0, len);
 				} catch(Exception e) {
 					e.printStackTrace();
 				}
@@ -3087,6 +3130,28 @@ public class Fake {
 			if (len < 0)
 				return realloc(buffer, offset);
 			offset += len;
+		}
+	}
+
+	protected void delete(File file) throws FakeException {
+		if (!file.delete())
+			throw new FakeException("Could not delete "
+					+ file.getPath());
+	}
+
+	protected void deleteRecursively(File dir) {
+		try {
+			File[] list = dir.listFiles();
+			if (list != null)
+				for (int i = 0; i < list.length; i++) {
+					if (list[i].isDirectory())
+						deleteRecursively(list[i]);
+					else
+						delete(list[i]);
+				}
+			delete(dir);
+		} catch (FakeException e) {
+			out.println("Error: " + e.getMessage());
 		}
 	}
 

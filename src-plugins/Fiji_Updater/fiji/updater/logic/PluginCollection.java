@@ -29,7 +29,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 	static DependencyAnalyzer dependencyAnalyzer;
 
-	interface Filter {
+	public interface Filter {
 		boolean matches(PluginObject plugin);
 	}
 

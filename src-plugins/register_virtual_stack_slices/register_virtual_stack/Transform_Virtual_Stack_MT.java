@@ -17,7 +17,7 @@ import java.util.concurrent.Executors;
 
 import javax.swing.JFileChooser;
 
-import fiji.util.GenericDialogPlus;
+import fiji.util.gui.GenericDialogPlus;
 
 import mpicbg.trakem2.transform.CoordinateTransform;
 import mpicbg.trakem2.transform.CoordinateTransformList;
