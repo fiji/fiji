@@ -215,7 +215,8 @@ public class PluginObject {
 	}
 
 	public void addPlatform(String platform) {
-		platforms.put(platform, (Object)null);
+		if (platform != null && !platform.trim().equals(""))
+			platforms.put(platform.trim(), (Object)null);
 	}
 
 	public Iterable<String> getPlatforms() {
