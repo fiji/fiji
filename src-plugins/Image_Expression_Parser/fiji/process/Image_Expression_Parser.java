@@ -2,7 +2,9 @@ package fiji.process;
 
 import ij.IJ;
 import ij.ImagePlus;
+import ij.gui.ImageWindow;
 import ij.plugin.PlugIn;
+import ij.process.FloatProcessor;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -44,49 +46,68 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 	
 	/**
 	 * Launch the interactive version if this plugin. This is made by first
-	 * displaying the GUI. Must be launched from ImageJ.
+	 * displaying the GUI, then looping, waiting for the user to press the 
+	 * compute button. When it does so, initiate calculation, and resume wait mode.
+	 *  Must be launched from ImageJ.
 	 */
 	public synchronized void run(String arg) {
 		// Launch GUI and wait for user 
-		IepGui gui = displayGUI();
-		try {
-			this.wait();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}			
-		gui.removeActionListener(this);
-		ImagePlus.removeImageListener(gui);
-		gui.dispose();
-		if (user_has_canceled) {
-			return;
-		}
+		IepGui gui = displayGUI();		
+		ImagePlus target_imp = null;
 
-		// Get user settings
-		expression 	= gui.getExpression();
-		Map<String,ImagePlus> imp_map = gui.getImageMap(); 
-		convertToImglib(imp_map); // will set #images field 
-		
-		// Check inputs (this should be done in the GUI)
-		if (!dimensionsAreValid()) {
-			error_message = "Input images do not have all the same dimensions.";
-			IJ.error(error_message);
-			return;
+		while (true) {
+			
+			try {
+				this.wait();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}			
+			if (user_has_canceled) {
+				gui.removeActionListener(this);
+				ImagePlus.removeImageListener(gui);
+				gui.dispose();
+				return;
+			}
+
+			// Get user settings
+			expression 	= gui.getExpression();
+			Map<String,ImagePlus> imp_map = gui.getImageMap(); 
+			convertToImglib(imp_map); // will set #images field 
+
+			// Check inputs (this should be done in the GUI)
+			if (!dimensionsAreValid()) {
+				error_message = "Input images do not have all the same dimensions.";
+				IJ.error(error_message);
+			} else {
+
+				// Check if expression is valid (this too)
+				Object[] validity = isExpressionValid();
+				boolean is_valid = (Boolean) validity[0];
+				String error_msg = (String) validity[1];
+				if (!is_valid) {
+					error_message = "Expression is invalid:\n"+error_msg; 
+					IJ.error(error_message);
+					return;
+				}
+
+				// Exec
+				exec();
+				if (target_imp == null) {
+					target_imp = ImageJFunctions.copyToImagePlus(result);
+					target_imp.show();
+				} else {
+					ImagePlus new_imp = ImageJFunctions.copyToImagePlus(result);
+					if (!target_imp.isVisible()) {
+						target_imp = new_imp;
+						target_imp.show();
+					} else {
+						target_imp.setStack(expression, new_imp.getStack());
+					}
+				}
+				target_imp.resetDisplayRange();
+				target_imp.updateAndDraw();
+			}
 		}
-		
-		// Check if expression is valid (this too)
-		Object[] validity = isExpressionValid();
-		boolean is_valid = (Boolean) validity[0];
-		String error_msg = (String) validity[1];
-		if (!is_valid) {
-			error_message = "Expression is invalid:\n"+error_msg; 
-			IJ.error(error_message);
-			return;
-		}
-		
-		// Exec
-		exec();
-		ImagePlus imp_result = ImageJFunctions.copyToImagePlus(result);
-		imp_result.show();
 	}
 
 	/*
@@ -367,6 +388,8 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 	public synchronized void actionPerformed(ActionEvent e) {
 		if (e.getID() == IepGui.CANCELED) {
 			user_has_canceled = true;
+		} else {
+			user_has_canceled = false;
 		}
 	}
 	
