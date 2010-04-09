@@ -84,14 +84,17 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 	
 	private static final String PLUGIN_VERSION = "v1.1";
 	private static final String PLUGIN_NAME = "Image Expression Parser";
-	/** The action ID is set to this value when the user pressed the Canceled button. */
-	public static final int CANCELED 	= 1;
-	/** The action ID is set to this value when the user pressed the OK button. */
-	public static final int OK			= 0;	
+	
+	/** The GUI fires an ActionEvent with this command String when the quit button is pressed. */
+	public static final String QUIT_ACTION_COMMAND = "Quit";
+	/** The GUI fires an ActionEvent with this command String when the parse button is pressed
+	 * or the enter key is pressed when in the expression field. */
+	public static final String PARSE_ACTION_COMMAND = "Parse";
 	
 	private static final long serialVersionUID = 1L;
 	private static final int BOX_SPACE 	= 40;
-	/** Containes a html string referring to the expression syntax. */
+	/** Contains a html string referring to the expression syntax, and error messages to be displayed
+	 * in the info text box. */
 	public static final String[] MESSAGES = {		
 		"Enter an expression using canonical mathematical functions, and capital single " +
 		"letters as variable specifying the chosen image. Boolean operations are also supported.\n" +
@@ -214,7 +217,7 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 		"Image dimensions are incompatibles."
 		};
 	
-	 private ArrayList<ActionListener> action_listeners = new ArrayList<ActionListener>();
+	private ArrayList<ActionListener> action_listeners = new ArrayList<ActionListener>();
 	
 	/** Number of image boxes currently displayed */
 	private int n_image_box = 0;
@@ -349,8 +352,8 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 		}
 	}
 	
-	private void fireActionProperty(int event_id, String command) {
-		ActionEvent action = new ActionEvent(this, event_id, command);
+	private synchronized void fireActionProperty(String command) {
+		ActionEvent action = new ActionEvent(this, ActionEvent.ACTION_PERFORMED, command);
 		for (ActionListener l : action_listeners) {
 			synchronized (l) {
 				l.notifyAll();
@@ -599,10 +602,30 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 	
 	public void actionPerformed(ActionEvent e) {
 		String command = e.getActionCommand();
-		if (command.contentEquals(jButtonOK.getText())) {
-			fireActionProperty(OK, jButtonOK.getText());
-		} else if (command.contentEquals(jButtonCancel.getText())) {
-			fireActionProperty(CANCELED, jButtonCancel.getText());
+		
+		if (command.equals(PARSE_ACTION_COMMAND)) {
+			fireActionProperty(PARSE_ACTION_COMMAND);
+		
+		} else if (command.equals(QUIT_ACTION_COMMAND)) {
+			fireActionProperty(QUIT_ACTION_COMMAND);
+		
+		} else if (command.equals(Image_Expression_Parser.CALCULATION_DONE_COMMAND)) {
+			// Re-enable the GUI
+			this.toFront(); // Bring the GUI to front
+			expressionField.requestFocusInWindow(); // give focus to expression field
+			jButtonOK.setEnabled(true);
+			expressionField.setEnabled(true);
+			for (JComboBox box : image_boxes) {
+				box.setEnabled(true);
+			}
+			
+		} else if (command.equals(Image_Expression_Parser.CALCULATION_STARTED_COMMAND)) {
+			// Lock the GUI
+			jButtonOK.setEnabled(false);
+			expressionField.setEnabled(false);
+			for (JComboBox box : image_boxes) {
+				box.setEnabled(false);
+			}
 		}
 	}
 	
@@ -707,7 +730,7 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 									boolean valid = checkValid();
 									if (valid) {
 										addCurrentExpressionToHistory();
-										fireActionProperty(OK, jButtonOK.getText());
+										fireActionProperty(PARSE_ACTION_COMMAND);
 									}
 								}
 							}

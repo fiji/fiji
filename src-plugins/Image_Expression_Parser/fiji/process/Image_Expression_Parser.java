@@ -2,12 +2,11 @@ package fiji.process;
 
 import ij.IJ;
 import ij.ImagePlus;
-import ij.gui.ImageWindow;
 import ij.plugin.PlugIn;
-import ij.process.FloatProcessor;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -28,6 +27,33 @@ import mpicbg.imglib.type.numeric.FloatType;
 import org.nfunk.jep.JEP;
 import org.nfunk.jep.type.DoubleNumberFactory;
 
+/**
+ * This plugins parses mathematical expressions and compute results using images as variables. 
+ * As of version 1.x, only pixel per pixel based operations are supported.
+ * <p>
+ * The parsing ability is provided by the JEP library: Java Expression Parser v.jep-2.4.1-ext-1.1.1-gpl.
+ * This is the last version released under the GPL by its authors Nathan Funk and Richard Morris,
+ * see {@link http://www.singularsys.com/jep/}.
+ * <p>
+ * Internally, this plugin uses ImgLib to deal with images. 
+ * <p>
+ * The interactive version (launched from ImageJ) uses a GUI, see {@link IepGui}. It is possible 
+ * to use this plugin in scripts using the following methods:
+ * <ul>
+ * 	<li> {@link #setExpression(String)} to pass the expression to parse
+ * 	<li> {@link #setImageMap(Map)} to pass the couples (variable name, image) to the parser
+ * 	<li> {@link #exec()} to compute the resulting image
+ * 	<li> {@link #getResult()} to retrieve the resulting image
+ * </ul>
+ * 
+ * versions:
+ * <ul>
+ * 	<li> v1.0 - Feb 2010 - First working version.
+ * 	<li> v1.1 - Apr 2010 - Expression field now has a history.
+ * </ul>
+ *   
+ * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com>
+ */	
 public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn, ActionListener {
 	
 	protected boolean user_has_canceled = false;
@@ -39,6 +65,14 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 	protected Image<FloatType> result = null;
 	/** If an error occurred, an error message is put here	 */
 	protected String error_message = "";
+	
+	private ArrayList<ActionListener> action_listeners = new ArrayList<ActionListener>();
+	
+	/** This plugin sends a ActionEvent with this command when the external calculation is over. */
+	public static final String CALCULATION_DONE_COMMAND	= "CalculationDone";
+	/** This plugin sends a ActionEvent with this command when the external calculation is over. */
+	public static final String CALCULATION_STARTED_COMMAND	= "CalculationStarted";
+
 	
 	/*
 	 * RUN METHOD
@@ -53,8 +87,8 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 	public synchronized void run(String arg) {
 		// Launch GUI and wait for user 
 		IepGui gui = displayGUI();		
+		addActionListener(gui);
 		ImagePlus target_imp = null;
-
 		while (true) {
 			
 			try {
@@ -91,7 +125,10 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 				}
 
 				// Exec
+				IJ.showStatus("IEP parsing....");
+				fireActionProperty(CALCULATION_STARTED_COMMAND);
 				exec();
+
 				if (target_imp == null) {
 					target_imp = ImageJFunctions.copyToImagePlus(result);
 					target_imp.show();
@@ -106,6 +143,8 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 				}
 				target_imp.resetDisplayRange();
 				target_imp.updateAndDraw();
+				IJ.showStatus("");
+				fireActionProperty(CALCULATION_DONE_COMMAND);
 			}
 		}
 	}
@@ -300,6 +339,27 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 	 * PRIVATE METHODS
 	 */
 	
+	private synchronized void fireActionProperty(String command) {
+		ActionEvent action = new ActionEvent(this, ActionEvent.ACTION_PERFORMED, command);
+		for (ActionListener l : action_listeners) {
+			synchronized (l) {
+				l.actionPerformed(action);
+			}
+		}
+	}
+	
+	public void addActionListener(ActionListener l) {
+		action_listeners.add(l);
+	}
+
+	public void removeActionListener(ActionListener l) {
+		action_listeners.remove(l);
+	}
+
+	public ActionListener[] getActionListeners() {
+		return (ActionListener[]) action_listeners.toArray();
+	}
+	
 	/**
 	 * Launch and display the GUI. Returns a reference to it that can be used
 	 * to retrieve settings.
@@ -386,9 +446,11 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 	 */
 
 	public synchronized void actionPerformed(ActionEvent e) {
-		if (e.getID() == IepGui.CANCELED) {
+		String command = e.getActionCommand();
+		
+		if (command.equals(IepGui.QUIT_ACTION_COMMAND)) {
 			user_has_canceled = true;
-		} else {
+		} else if (command.equals(IepGui.PARSE_ACTION_COMMAND)) {
 			user_has_canceled = false;
 		}
 	}
