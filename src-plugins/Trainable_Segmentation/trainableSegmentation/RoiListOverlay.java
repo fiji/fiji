@@ -19,6 +19,7 @@
 
 package trainableSegmentation;
 
+import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.gui.ShapeRoi;
 import ij.gui.ShapeRoiHelper;
@@ -30,7 +31,9 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.Shape;
+import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.GeneralPath;
 import java.util.ArrayList;
 
 import fiji.util.gui.OverlayedImageCanvas.Overlay;
@@ -72,11 +75,12 @@ public class RoiListOverlay implements Overlay
 			return;
 		// Set ROI image to null to avoid repainting
 		for(Roi r : this.roi)
-		{
+		{			
 			r.setImage(null);
 			Shape shape = ShapeRoiHelper.getShape(new ShapeRoi(r));
 			final Rectangle roiBox = r.getBounds();
 			final Graphics2D g2d = (Graphics2D)g;
+			final Stroke originalStroke = g2d.getStroke();
 			final AffineTransform originalTransform = g2d.getTransform();
 			final AffineTransform at = new AffineTransform();
 			at.scale( magnification, magnification );
@@ -87,16 +91,22 @@ public class RoiListOverlay implements Overlay
 			final Composite originalComposite = g2d.getComposite();
 			g2d.setComposite( this.composite );
 			g2d.setColor( this.color );
-
+	
 			final int type = r.getType();
-			if(type == Roi.FREELINE || type == Roi.LINE || type == Roi.POLYLINE)
-				g2d.draw(shape);
+			
+			if(null != r.getStroke())
+				g2d.setStroke(r.getStroke());
+			
+			if(type == Roi.FREELINE || type == Roi.LINE || type == Roi.POLYLINE)				
+				g2d.draw(shape);							
 			else
 				g2d.fill(shape);
 
 			g2d.setTransform( originalTransform );
 			g2d.setComposite(originalComposite);
+			g2d.setStroke(originalStroke);
 		}
+				
 	}
 	
 	public void setRoi(ArrayList<Roi> roi)
