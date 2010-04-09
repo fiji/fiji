@@ -42,6 +42,7 @@ import ij.IJ;
 import ij.ImageStack;
 import ij.plugin.PlugIn;
 
+import ij.process.FloatPolygon;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
@@ -662,7 +663,7 @@ public class Trainable_Segmentation implements PlugIn
 			
 			exampleList[numOfClasses].addActionListener(listener);			
 			exampleList[numOfClasses].addItemListener(itemListener);
-			addExampleButton[numOfClasses] = new JButton("Add " + classLabels[numOfClasses]);
+			addExampleButton[numOfClasses] = new JButton("Add to" + classLabels[numOfClasses]);
 			
 			annotationsConstraints.fill = GridBagConstraints.HORIZONTAL;
 			annotationsConstraints.insets = new Insets(5, 5, 6, 6);
@@ -878,33 +879,75 @@ public class Trainable_Segmentation implements PlugIn
 			// Read all lists of examples
 			for(int j=0; j<examples[l].size(); j++)
 			{
-				final Roi r = examples[l].get(j);
+				Roi r = examples[l].get(j);
 				
 													
 				// For polygon rois we get the list of points
-				if( r instanceof PolygonRoi && r.getType() != Roi.FREEROI 
-						&& r.getStrokeWidth() < 2 )
+				if( r instanceof PolygonRoi && r.getType() != Roi.FREEROI )
 				{
-					int[] x = r.getPolygon().xpoints;
-					int[] y = r.getPolygon().ypoints;
-					final int n = r.getPolygon().npoints;
-
-					for (int i=0; i<n; i++)
+					if(r.getStrokeWidth() == 1)
 					{
-						double[] values = new double[featureStack.getSize()+1];
-						for (int z=1; z<=featureStack.getSize(); z++)
-							values[z-1] = featureStack.getProcessor(z).getPixelValue(x[i], y[i]);
-						values[featureStack.getSize()] = (double) l;
-						trainingData.add(new DenseInstance(1.0, values));
-						// increase number of instances for this class
-						nl ++;
+						int[] x = r.getPolygon().xpoints;
+						int[] y = r.getPolygon().ypoints;
+						final int n = r.getPolygon().npoints;
+
+						for (int i=0; i<n; i++)
+						{
+							double[] values = new double[featureStack.getSize()+1];
+							for (int z=1; z<=featureStack.getSize(); z++)
+								values[z-1] = featureStack.getProcessor(z).getPixelValue(x[i], y[i]);
+							values[featureStack.getSize()] = (double) l;
+							trainingData.add(new DenseInstance(1.0, values));
+							// increase number of instances for this class
+							nl ++;
+						}
+					}
+					else // For thicker lines, include also neighbors
+					{
+						final int width = (int) Math.round(r.getStrokeWidth());
+						FloatPolygon p = r.getFloatPolygon();
+						int n = p.npoints;
+												
+						double x1, y1;
+						double x2=p.xpoints[0]-(p.xpoints[1]-p.xpoints[0]);
+						double y2=p.ypoints[0]-(p.ypoints[1]-p.ypoints[0]);
+						for (int i=0; i<n; i++) 
+						{
+							x1 = x2; 
+							y1 = y2;
+							x2  =p.xpoints[i]; 
+							y2 = p.ypoints[i];
+							
+							double dx = x2-x1;
+							double dy = y1-y2;
+				            double length = (float)Math.sqrt(dx*dx+dy*dy);
+				            dx /= length;
+				            dy /= length;
+							double x = x2-dy*width/2.0;
+							double y = y2-dx*width/2.0;
+							
+							int n2 = width;
+							do {								
+								double[] values = new double[featureStack.getSize()+1];
+								for (int z=1; z<=featureStack.getSize(); z++)
+									values[z-1] = featureStack.getProcessor(z).getInterpolatedValue(x, y);
+								values[featureStack.getSize()] = (double) l;
+								trainingData.add(new DenseInstance(1.0, values));
+								// increase number of instances for this class
+								nl ++;
+																
+								x += dy;
+								y += dx;
+							} while (--n2>0);
+						}
+						
 					}
 				}
 				else // for the rest of rois we get ALL points inside the roi
-				{				
+				{														
 					final ShapeRoi shapeRoi = new ShapeRoi(r); 
-					final Rectangle rect = shapeRoi.getBounds();
-
+					final Rectangle rect = shapeRoi.getBounds();												
+					
 					final int lastX = rect.x + rect.width;
 					final int lastY = rect.y + rect.height;
 
