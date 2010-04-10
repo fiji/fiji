@@ -49,6 +49,11 @@ public class TokenFunctions implements Iterable<Token> {
 				token.textOffset, token.textCount);
 	}
 
+	public void replaceToken(Token token, String text) {
+		textArea.replaceRange(text, token.textOffset,
+				token.textOffset + token.textCount);
+	}
+
 	class TokenIterator implements Iterator<Token> {
 		int line = -1;
 		Token current, next;
@@ -109,6 +114,17 @@ public class TokenFunctions implements Iterable<Token> {
 			else if (classSeen && isIdentifier(token))
 				return getText(token);
 		return null;
+	}
+
+	public void setClassName(String className) {
+		boolean classSeen = false;
+		for (Token token : this)
+			if (isClass(token))
+				classSeen = true;
+			else if (classSeen && isIdentifier(token)) {
+				replaceToken(token, className);
+				return;
+			}
 	}
 
 	class Import implements Comparable<Import> {

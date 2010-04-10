@@ -41,6 +41,7 @@ import org.fife.ui.rtextarea.ToolTipSupplier;
 
 public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 	TextEditor frame;
+	String fallBackBaseName;
 	File file;
 	long fileLastModified;
 	Languages.Language currentLanguage;
@@ -213,11 +214,23 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 		setFileName(file);
 	}
 
+	public void setFileName(String baseName) {
+		String name = baseName;
+		if (baseName.endsWith(currentLanguage.extension))
+			name = name.substring(0, name.length()
+					- currentLanguage.extension.length());
+		fallBackBaseName = name;
+		if (currentLanguage.extension.equals(".java"))
+			new TokenFunctions(this).setClassName(name);
+	}
+
 	public void setFileName(File file) {
 		this.file = file;
 		setTitle();
-		if (file != null)
+		if (file != null) {
 			setLanguageByExtension(getExtension(file.getName()));
+			fallBackBaseName = null;
+		}
 		fileLastModified = file == null || !file.exists() ? 0 :
 			file.lastModified();
 	}
@@ -231,7 +244,8 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 			if (name != null)
 				return name + currentLanguage.extension;
 		}
-		return "New_" + currentLanguage.extension;
+		return (fallBackBaseName == null ? "New_" : fallBackBaseName)
+			+ currentLanguage.extension;
 	}
 
 	private synchronized void setTitle() {
