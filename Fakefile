@@ -87,7 +87,6 @@ ENVOVERRIDES(JAVA_HOME)=true
 SUBMODULE_TARGETS=\
 	jars/ij.jar \
 	plugins/loci_tools.jar \
-	plugins/VIB_.jar \
 	jars/VectorString.jar \
 	plugins/TrakEM2_.jar \
 	plugins/mpicbg_.jar \
@@ -163,7 +162,8 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/RATS_.jar \
 	plugins/Directionality_.jar \
 	jars/Fiji.jar \
-	plugins/Image_Expression_Parser.jar
+	plugins/Image_Expression_Parser.jar \
+	plugins/VIB_.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS third-party-plugins jars/zs.jar
 
@@ -188,9 +188,7 @@ jdk[bin/checkout-jdk.py $JDK] <-
 # From submodules
 jars/ij.jar <- jars/javac.jar ImageJA/
 CLASSPATH(plugins/VIB_.jar)=jars/VIB-lib.jar
-plugins/VIB_.jar <- VIB/
 CLASSPATH(jars/VIB-lib.jar)=jars/Jama-1.0.2.jar:jars/imglib.jar:jars/junit-4.5.jar:plugins/level_sets.jar
-jars/VIB-lib.jar <- VIB/
 CLASSPATH(plugins/mpicbg_.jar)=jars/mpicbg.jar
 plugins/mpicbg_.jar <- mpicbg/
 jars/mpicbg.jar <- mpicbg/
@@ -294,6 +292,18 @@ CLASSPATH(plugins/Trainable_Segmentation.jar)=jars/weka.jar:plugins/Stitching_.j
 
 plugins/*_*.jar <- src-plugins/*_*/**/*.java
 
+jars/VIB-lib.jar <- src-plugins/VIB-lib/**/*
+
+# pre-Java5 generics ;-)
+
+src-plugins/VIB-lib/vib/FloatMatrix.java[src-plugins/VIB-lib/sed.py $PRE $TARGET] <- src-plugins/VIB-lib/vib/FastMatrix.java
+src-plugins/VIB-lib/math3d/FloatMatrixN.java[src-plugins/VIB-lib/sed.py $PRE $TARGET] <- src-plugins/VIB-lib/math3d/FastMatrixN.java
+src-plugins/VIB-lib/math3d/JacobiFloat.java[src-plugins/VIB-lib/sed.py $PRE $TARGET] <- src-plugins/VIB-lib/math3d/JacobiDouble.java
+src-plugins/VIB-lib/math3d/Eigensystem3x3Float.java[src-plugins/VIB-lib/sed.py $PRE $TARGET] <- \
+	src-plugins/VIB-lib/math3d/Eigensystem3x3Double.java
+src-plugins/VIB-lib/math3d/Eigensystem2x2Float.java[src-plugins/VIB-lib/sed.py $PRE $TARGET] <- \
+	src-plugins/VIB-lib/math3d/Eigensystem2x2Double.java
+
 MAINCLASS(jars/javac.jar)=com.sun.tools.javac.Main
 JAVAVERSION(jars/javac.jar)=1.5
 jars/javac.jar <- src-plugins/javac/**/*
@@ -391,7 +401,6 @@ precompile-submodules[] <- \
 	precompiled/ij.jar \
 	precompiled/loci_tools.jar \
 	precompiled/TrakEM2_.jar \
-	precompiled/VIB_.jar \
 	precompiled/mpicbg_.jar \
 	precompiled/mpicbg.jar \
 	precompiled/clojure.jar \
@@ -417,7 +426,6 @@ precompiled/autocomplete.jar <- jars/autocomplete.jar
 precompiled/weka.jar <- jars/weka.jar
 precompiled/jython.jar <- jars/jython.jar
 precompiled/imglib.jar <- jars/imglib.jar
-precompiled/VIB-lib.jar <- jars/VIB-lib.jar
 precompiled/* <- plugins/*
 
 precompile[] <- precompile-fiji precompile-fake precompile-submodules
