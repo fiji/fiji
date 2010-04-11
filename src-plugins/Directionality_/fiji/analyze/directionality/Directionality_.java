@@ -1117,14 +1117,14 @@ public class Directionality_ implements PlugIn {
 			spectra = new ImageStack(small_side, small_side);			
 		}
 		
-		ByteProcessor[] hue_images = null;
-		ByteProcessor[] saturation_images = null;
-		ByteProcessor hue, saturation;
+		FloatProcessor[] hue_arrays = null, saturation_arrays = null;
 		if (build_orientation_map) {
-			hue_images = new ByteProcessor[npadx*npady];
-			saturation_images = new ByteProcessor[npadx*npady];
+			hue_arrays = new FloatProcessor[npadx*npady];
+			saturation_arrays = new FloatProcessor[npadx*npady];
 		}
 				
+		// Overall maximum of the weights
+		float max_norm =0.0f;
 		// If the image is not square, split it in small square padding all the image
 		for (int ix = 0; ix<npadx; ix++) {
 			
@@ -1163,17 +1163,16 @@ public class Directionality_ implements PlugIn {
 				}
 
 				// For orientation map
-				float[] weights = null, max_weights = null;
-				double[] best_angle = null;
+				float[] weights = null, max_weights = null, best_angle = null;
 				FHT tmp;
 				FloatProcessor small_tmp;
 				float[] tmp_px, small_tmp_px;
-				float max_norm =0.0f;
+				
 
 				if (build_orientation_map) {
 					weights 	= new float[small_side * small_side];
 					max_weights = new float[small_side * small_side];
-					best_angle 	= new double[small_side * small_side];
+					best_angle 	= new float[small_side * small_side];
 				}
 
 				// Loop over all bins
@@ -1204,12 +1203,13 @@ public class Directionality_ implements PlugIn {
 							weights[j] = small_tmp_px[j] * small_tmp_px[j];
 							if (weights[j] > max_weights[j]) {
 								max_weights[j] = weights[j];
-								best_angle[j] = bins[bin];
+								best_angle[j] = (float) bins[bin];
 							}
+							// Overall maximum calculation
 							if (weights[j] > max_norm) {
 								max_norm = weights[j]; 
 							}
-						}						
+						}
 						
 					} else {
 						
@@ -1220,38 +1220,44 @@ public class Directionality_ implements PlugIn {
 					}
 
 				} // end loop over all bins
-				
+
+				// Store results
 				if (build_orientation_map) {
-					// Build the HSV image -> 3rd loop!!
-					hue 		= new ByteProcessor(small_side, small_side);
-					saturation 	= new ByteProcessor(small_side, small_side);
-					byte[] H = (byte[]) hue.getPixels();
-					byte[] S = (byte[]) saturation.getPixels();
-					for (int j = 0; j < best_angle.length; j++) {
-						H[j] = (byte) (255.0 * (best_angle[j]-bins[0])/(bins[bins.length-1]-bins[0]));
-						S[j] = (byte) (255.0 * max_weights[j] / max_norm);//Math.log10(1.0 + 9.0*mean_norm[j] / max_norm) );
-					}
-					hue_images[ix+npadx*iy] = (ByteProcessor) hue; 
-					saturation_images[ix+npadx*iy] = (ByteProcessor) hue;
+					hue_arrays[ix+npadx*iy] = new FloatProcessor(ip.getWidth(), ip.getHeight());
+					hue_arrays[ix+npadx*iy].insert(new FloatProcessor(small_side, small_side, best_angle, null),
+							ix*step, iy*step);
+					saturation_arrays[ix+npadx*iy] = new FloatProcessor(ip.getWidth(), ip.getHeight());
+					saturation_arrays[ix+npadx*iy].insert(new FloatProcessor(small_side, small_side, max_weights, null),
+							ix*step, iy*step);
 				}
 			}
 		}
 		
-		// Reconstruct final orientation map CRAP CRAP
+		// Reconstruct final orientation map
 		if (build_orientation_map) {
-			ByteProcessor big_hue = new ByteProcessor(ip.getWidth(), ip.getHeight());
-			ByteProcessor big_saturation = new ByteProcessor(ip.getWidth(), ip.getHeight());
-			ByteProcessor big_brightness = (ByteProcessor) ip.convertToByte(true);
+			FloatProcessor big_hue = new FloatProcessor(ip.getWidth(), ip.getHeight());
+			FloatProcessor big_saturation = new FloatProcessor(ip.getWidth(), ip.getHeight());
+			float[] big_hue_px = (float[]) big_hue.getPixels();
+			float[] big_saturation_px = (float[]) big_saturation.getPixels();
+			float[] saturation_px = null, hue_px = null;
 			for (int ix = 0; ix<npadx; ix++) {
-				for (int iy = 0; iy<npady; iy++) {					
-					big_hue.insert(hue_images[ix+npadx*iy], ix*step,  iy*step);
-					big_saturation.insert(saturation_images[ix+npadx*iy], ix*step,  iy*step);	
+				for (int iy = 0; iy<npady; iy++) {
+					hue_px = (float[]) hue_arrays[ix+npadx*iy].getPixels();
+					saturation_px = (float[]) saturation_arrays[ix+npadx*iy].getPixels();
+					for (int i = 0; i < big_hue_px.length; i++) {
+						if ((255*saturation_px[i]/max_norm) >= big_saturation_px[i]) {
+							big_saturation_px[i] = (255*saturation_px[i]/max_norm);
+							big_hue_px[i] = (float) (255*(hue_px[i]-bins[0])/(bins[nbins-1]-bins[0]));
+						}
+					}
 				}
 			}
+
+			ByteProcessor big_brightness = (ByteProcessor) ip.convertToByte(true);
 			ColorProcessor cp = new ColorProcessor(ip.getWidth(), ip.getHeight());
 			cp.setHSB(
-					(byte[]) big_hue.getPixels(), 
-					(byte[]) big_saturation.getPixels(), 
+					(byte[]) big_hue.convertToByte(false).getPixels(), 
+					(byte[]) big_saturation.convertToByte(false).getPixels(), 
 					(byte[]) big_brightness.getPixels()
 					); 
 			orientation_map.addSlice(makeNames()[slice_index], cp);
