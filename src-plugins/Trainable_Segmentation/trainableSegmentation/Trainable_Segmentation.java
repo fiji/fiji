@@ -663,7 +663,7 @@ public class Trainable_Segmentation implements PlugIn
 			
 			exampleList[numOfClasses].addActionListener(listener);			
 			exampleList[numOfClasses].addItemListener(itemListener);
-			addExampleButton[numOfClasses] = new JButton("Add to" + classLabels[numOfClasses]);
+			addExampleButton[numOfClasses] = new JButton("Add to " + classLabels[numOfClasses]);
 			
 			annotationsConstraints.fill = GridBagConstraints.HORIZONTAL;
 			annotationsConstraints.insets = new Insets(5, 5, 6, 6);
