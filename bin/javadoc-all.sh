@@ -13,7 +13,7 @@ grep -ve ij-plugins/Sun_JAI_Sample_IO_Source_Code \
 	-e bio-formats/components/visbio/src/loci/visbio/overlays/OverlayTransform.java \
 	-e bio-formats/components/slim-plotter/ \
 	-e bio-formats/components/visbio/ |
-./fiji --javadoc \
+./fiji --javadoc --jarpath bio-formats/jar \
 	-link http://download.java.net/media/java3d/javadoc/1.5.2/ \
 	-link http://java.sun.com/j2se/1.5.0/docs/api/ \
 	"$@" \
