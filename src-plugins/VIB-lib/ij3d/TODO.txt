@@ -1,0 +1,20 @@
+TODO for the ImageJ 3D Viewer
+===========================================================
+
+* volume textures by ref.
+* painting in 3D window
+* ContentChangeBehavior
+* improve UniverseListener
+* SwitchInterpolator
+* update macro language support
+* update scalebar
+
+* parallel projection
+* Light sources
+* remove axis -- done
+* multiple selection
+* printing
+
+* Grouping
+
+* Content hinzufügen ohne ensureScale and center
