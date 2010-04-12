@@ -209,7 +209,8 @@ jars/weka.jar <- weka/
 jars/jython.jar <- jython/
 
 # From source
-libs[] <- jars/test-fiji.jar jars/zs.jar jars/VIB-lib.jar jars/Jama-1.0.2.jar
+libs[] <- jars/test-fiji.jar jars/zs.jar jars/VIB-lib.jar jars/Jama-1.0.2.jar \
+	jars/fiji-scripting.jar jars/fiji-lib.jar jars/jep.jar
 
 plugins/Record_Screen.jar <- src-plugins/Record_Screen/ src-plugins/Record_Screen/**/*
 
