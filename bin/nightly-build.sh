@@ -62,22 +62,8 @@ case "$1" in
 		nightly_build &&
 		if test -d /var/www/update
 		then
-			find -name \*.java |
-			grep -ve ij-plugins/Sun_JAI_Sample_IO_Source_Code \
-				-e ij-plugins/Quickvol -e jython/sandbox \
-				-e ij-plugins/VTK-Examples \
-				-e jython/jython/Demo \
-				-e weka/wekaexamples/src/main/java/wekaexamples \
-				-e jython/jython/src/org/python/expose/generate/PyTypes \
-				-e bio-formats/components/visbio/src/loci/visbio/overlays/OverlayTransform.java \
-				-e bio-formats/components/slim-plotter/ \
-				-e bio-formats/components/visbio/ |
-			./fiji --jar-path $(./fiji --print-java-home)/../lib/ \
-				--main-class=com.sun.tools.javadoc.Main \
-				-link http://download.java.net/media/java3d/javadoc/1.5.2/ \
-				-link http://java.sun.com/j2se/1.5.0/docs/api/ \
-				-d /var/www/javadoc \
-				@/dev/stdin > javadoc.out 2>&1 ||
+			./bin/javadoc-all.sh -d /var/www/javadoc \
+				> javadoc.out 2>&1 ||
 			(echo "JavaDoc failed"; false)
 		fi
 		;; # okay
