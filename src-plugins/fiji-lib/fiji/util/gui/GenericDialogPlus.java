@@ -9,7 +9,6 @@ import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.Insets;
 import java.awt.Panel;
 import java.awt.TextField;
 
@@ -108,22 +107,12 @@ public class GenericDialogPlus extends GenericDialog {
 	public void addButton(String label, ActionListener listener)
 	{
 		Button button = new Button(label);
-		button.addActionListener(listener);
-		
-		TextField text = (TextField)stringField.lastElement();
-		GridBagLayout layout = (GridBagLayout)getLayout();
-		GridBagConstraints constraints = layout.getConstraints(text);
-		
-		constraints.gridx = 0; 
-		constraints.anchor = GridBagConstraints.EAST;
-		constraints.gridwidth = 1;
-		constraints.insets = new Insets(0, 0, 3, 0);				
+		button.addActionListener(listener);					
 		
 		Panel panel = new Panel();
 		panel.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
 		panel.add(button);
 		
-		layout.setConstraints(panel, constraints);
 		addPanel(panel);
 	}
 
