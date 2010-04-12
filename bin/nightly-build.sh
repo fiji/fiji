@@ -74,6 +74,7 @@ case "$1" in
 				-e bio-formats/components/visbio/ |
 			./fiji --jar-path $(./fiji --print-java-home)/../lib/ \
 				--main-class=com.sun.tools.javadoc.Main \
+				-link http://java.sun.com/j2se/1.5.0/docs/api/ \
 				-d /var/www/javadoc \
 				@/dev/stdin > javadoc.out 2>&1 ||
 			(echo "JavaDoc failed"; false)
