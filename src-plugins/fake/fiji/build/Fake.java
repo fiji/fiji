@@ -1430,7 +1430,7 @@ public class Fake {
 				if (getVarBool("includeSource"))
 					addSources(files);
 				makeJar(target, getMainClass(), files, cwd,
-					buildDir, configPath,
+					buildDir, configPath, getStripPath(),
 					getVarBool("VERBOSE"));
 			}
 
@@ -1496,6 +1496,20 @@ public class Fake {
 			String getMainClass() {
 				return getVariable("MAINCLASS", target);
 			}
+
+			String getStripPath() {
+				String s = prerequisiteString.trim();
+				int stars = s.indexOf("/**/");
+				if (stars < 0)
+					return null;
+				int space = s.indexOf(' ');
+				if (space > 0 && space < stars) {
+					if (s.charAt(space - 1) == '/')
+						return s.substring(0, space);
+					return null;
+				}
+				return s.substring(0, stars + 1);
+		}
 
 			protected void clean(boolean dry_run) {
 				super.clean(dry_run);
@@ -2073,7 +2087,6 @@ public class Fake {
 		List result = new ArrayList();
 		Set all = new HashSet();
 		if (buildDir != null) {
-			result.add(buildDir.getAbsolutePath() + "/");
 			addRecursively(buildDir, result, all);
 			Collections.sort(result);
 		}
@@ -2249,7 +2262,7 @@ public class Fake {
 	// TODO: we really need string pairs; real path and desired path.
 	protected void makeJar(String path, String mainClass, List files,
 			File cwd, File buildDir, String configPath,
-			boolean verbose) throws FakeException {
+			String stripPath, boolean verbose) throws FakeException {
 		path = makePath(cwd, path);
 		if (verbose) {
 			String output = "Making " + path;
@@ -2294,7 +2307,7 @@ public class Fake {
 				new JarOutputStream(out, manifest);
 
 			addPluginsConfigToJar(jar, configPath);
-			String lastBase = null;
+			String lastBase = stripPath;
 			Iterator iter = files.iterator();
 			while (iter.hasNext()) {
 				String realName = (String)iter.next();
@@ -2327,17 +2340,17 @@ public class Fake {
 						new ByteCodeAnalyzer(buffer);
 					name = analyzer.getPathForClass()
 						+ ".class";
-					if (realName.endsWith(name))
-						lastBase = realName.substring(0,
-							realName.length()
-							- name.length());
-					else
-						lastBase = null;
 				}
 				else if (lastBase != null &&
-						name.startsWith(lastBase))
+						name.startsWith(lastBase)) {
+					if (!lastBase.equals(stripPath))
+						throw new FakeException("strip "
+							+ "path mismatch: "
+							+ lastBase + " != "
+							+ stripPath);
 					name = name
 						.substring(lastBase.length());
+				}
 
 				JarEntry entry = new JarEntry(name);
 				writeJarEntry(entry, jar, buffer);
