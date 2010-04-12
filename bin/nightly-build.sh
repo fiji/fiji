@@ -18,7 +18,7 @@ compile () {
 	# remove empty directories
 	for d in $(git ls-files --others --directory)
 	do
-		rm -r $d || break
+		rm -rf $d || break
 	done &&
 	git reset &&
 	./Build.sh
