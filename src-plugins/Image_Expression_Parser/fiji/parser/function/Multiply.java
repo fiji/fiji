@@ -11,8 +11,6 @@ import mpicbg.imglib.type.numeric.FloatType;
 
 import org.nfunk.jep.ParseException;
 
-import com.sun.xml.internal.bind.v2.runtime.RuntimeUtil.ToStringAdapter;
-
 public class Multiply<T extends NumericType<T>> extends org.nfunk.jep.function.Multiply {
 
 	public Multiply() {

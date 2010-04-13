@@ -1,20 +1,12 @@
 package fiji.process;
 
-import org.nfunk.jep.JEP;
-import org.nfunk.jep.Operator;
-import org.nfunk.jep.OperatorSet;
-
-import fiji.parser.ImgLibOperatorSet;
 import fiji.parser.ImgLibParser;
-import fiji.parser.function.Multiply;
-
 import ij.IJ;
 import ij.ImagePlus;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImagePlusAdapter;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.type.NumericType;
-import mpicbg.imglib.type.numeric.FloatType;
 
 public class Test_JEP {
 
@@ -31,10 +23,10 @@ public class Test_JEP {
 		String expression = "A * A";
 		System.out.println("\nTrying expression: "+expression);
 		
-		ImgLibParser parser = new ImgLibParser();
+		ImgLibParser<T> parser = new ImgLibParser<T>();
 		parser.addVariable("A", img);
 		parser.parseExpression(expression);
-		Image<FloatType> result = (Image<FloatType>) parser.getValueAsObject();
+		Image<?> result = (Image<?>) parser.getValueAsObject();
 		
 		ImagePlus target_imp = ImageJFunctions.copyToImagePlus(result);
 		target_imp.show();
@@ -45,7 +37,7 @@ public class Test_JEP {
 		System.out.println("\nTrying expression: "+expression);
 
 		parser.parseExpression(expression);
-		result = (Image<FloatType>) parser.getValueAsObject();
+		result = (Image<?>) parser.getValueAsObject();
 		
 		target_imp = ImageJFunctions.copyToImagePlus(result);
 		target_imp.show();
