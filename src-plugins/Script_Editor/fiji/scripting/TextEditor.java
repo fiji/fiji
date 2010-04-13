@@ -318,6 +318,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		editorPane.setText(text);
 		String extension = editorPane.getExtension(title);
 		editorPane.setLanguageByExtension(extension);
+		setFileName(title);
 		setTitle();
 	}
 
@@ -1042,6 +1043,10 @@ public class TextEditor extends JFrame implements ActionListener,
 		addImport.setEnabled(isJava);
 		removeUnusedImports.setEnabled(isJava);
 		sortImports.setEnabled(isJava);
+	}
+
+	public void setFileName(String baseName) {
+		getEditorPane().setFileName(baseName);
 	}
 
 	public void setFileName(File file) {

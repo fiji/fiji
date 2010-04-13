@@ -174,7 +174,7 @@ public class Directionality_ implements PlugIn {
 	/** How many sigmas away from the gaussian center we sum to get the amount value. */ 
 	private static final double SIGMA_NUMBER = 2;
 	private static final String PLUGIN_NAME = "Directionality analysis";
-	private static final String VERSION_STR = "1.3";
+	private static final String VERSION_STR = "1.4";
 	
 	/* SETTING FIELDS, they determine results */
 	
@@ -1104,8 +1104,7 @@ public class Directionality_ implements PlugIn {
 	 */
 	private final double[] fourier_component(FloatProcessor ip) {
 		final Roi original_square = new Roi((pad_size-small_side)/2, (pad_size-small_side)/2, small_side, small_side); 
-		final Roi top_corner = new Roi(0, 0, small_side, small_side);
-		
+				
 		float[] fpx, spectrum_px;
 		final double[] dir = new double[nbins];
 		ImageProcessor square_block;
@@ -1114,21 +1113,18 @@ public class Directionality_ implements PlugIn {
 		FloatProcessor small_pspectrum;
 		
 		ImageStack spectra = null;
-		ImageStack filtered_blocks = null;
 		if (debug) {
-			spectra = new ImageStack(small_side, small_side);
-			filtered_blocks = new ImageStack(small_side, small_side);
+			spectra = new ImageStack(small_side, small_side);			
 		}
 		
-		ByteProcessor[] hue_images = null;
-		ByteProcessor[] saturation_images = null;
-		ByteProcessor hue, saturation;
+		FloatProcessor[] hue_arrays = null, saturation_arrays = null;
 		if (build_orientation_map) {
-			hue_images = new ByteProcessor[npadx*npady];
-			saturation_images = new ByteProcessor[npadx*npady];
+			hue_arrays = new FloatProcessor[npadx*npady];
+			saturation_arrays = new FloatProcessor[npadx*npady];
 		}
-		
-		
+				
+		// Overall maximum of the weights
+		float max_norm =0.0f;
 		// If the image is not square, split it in small square padding all the image
 		for (int ix = 0; ix<npadx; ix++) {
 			
@@ -1167,12 +1163,18 @@ public class Directionality_ implements PlugIn {
 				}
 
 				// For orientation map
-				float[] weights = null, sini = null, cosi = null;
+				float[] weights = null, max_weights = null, best_angle = null;
 				FHT tmp;
 				FloatProcessor small_tmp;
-				float[] tmp_px, small_tmp_px; 
-				double sangle, cangle;				
+				float[] tmp_px, small_tmp_px;
 				
+
+				if (build_orientation_map) {
+					weights 	= new float[small_side * small_side];
+					max_weights = new float[small_side * small_side];
+					best_angle 	= new float[small_side * small_side];
+				}
+
 				// Loop over all bins
 				for (int bin=0; bin<nbins; bin++) {
 					
@@ -1196,22 +1198,17 @@ public class Directionality_ implements PlugIn {
 						small_tmp = (FloatProcessor) tmp.crop();
 						
 						// Build angular statistics arrays -> 2nd loop
-						sangle = Math.sin(Math.toRadians(bins[bin]));
-						cangle = Math.cos(Math.toRadians(bins[bin]));
 						small_tmp_px = (float[]) small_tmp.getPixels();
-						weights = new float[small_tmp.getPixelCount()];
-						sini 	= new float[small_tmp.getPixelCount()];
-						cosi 	= new float[small_tmp.getPixelCount()];
 						for (int j = 0; j < small_tmp_px.length; j++) {
-							weights[j] 		+= small_tmp_px[j] * small_tmp_px[j];
-							sini[j] 		+= weights[j] * sangle;
-							cosi[j] 		+= weights[j] * cangle;
-						}
-						
-						if (debug) {
-							FloatProcessor fp =new FloatProcessor(small_side, small_side, weights, null);
-							fp.resetMinAndMax();
-							filtered_blocks.addSlice("angle "+bins[bin], fp);
+							weights[j] = small_tmp_px[j] * small_tmp_px[j];
+							if (weights[j] > max_weights[j]) {
+								max_weights[j] = weights[j];
+								best_angle[j] = (float) bins[bin];
+							}
+							// Overall maximum calculation
+							if (weights[j] > max_norm) {
+								max_norm = weights[j]; 
+							}
 						}
 						
 					} else {
@@ -1223,64 +1220,51 @@ public class Directionality_ implements PlugIn {
 					}
 
 				} // end loop over all bins
-				
+
+				// Store results
 				if (build_orientation_map) {
-					// Computes angular statistics -> 3rd loop!
-					final double[] mean_angle = new double[cosi.length];
-					final double[] mean_norm = new double[cosi.length];
-					double max_norm = 0.0;
-					for (int j = 0; j < cosi.length; j++) {
-						mean_angle[j] 	= Math.atan(sini[j]/cosi[j]);
-						mean_norm[j]	= 1 / weights[j] * Math.sqrt(cosi[j]*cosi[j]+sini[j]*sini[j]);
-						if (mean_norm[j] > max_norm) {
-							max_norm = mean_norm[j];
-						}
-					}
-					// Build the HSV image -> 4th loop!!
-					hue 		= new ByteProcessor(small_side, small_side);
-					saturation 	= new ByteProcessor(small_side, small_side);
-					byte[] H = (byte[]) hue.getPixels();
-					byte[] S = (byte[]) saturation.getPixels();
-					for (int j = 0; j < cosi.length; j++) {
-						H[j] = (byte) (255.0 * (mean_angle[j]-Math.toRadians(bins[0]))/(Math.PI));
-						S[j] = (byte) (255.0 * mean_norm[j] / max_norm);//Math.log10(1.0 + 9.0*mean_norm[j] / max_norm) );
-					}
-					hue.setRoi(top_corner);
-					saturation.setRoi(top_corner);
-					hue_images[ix+npadx*iy] = (ByteProcessor) hue.crop(); 
-					saturation_images[ix+npadx*iy] = (ByteProcessor) hue.crop();
-				}			
+					hue_arrays[ix+npadx*iy] = new FloatProcessor(ip.getWidth(), ip.getHeight());
+					hue_arrays[ix+npadx*iy].insert(new FloatProcessor(small_side, small_side, best_angle, null),
+							ix*step, iy*step);
+					saturation_arrays[ix+npadx*iy] = new FloatProcessor(ip.getWidth(), ip.getHeight());
+					saturation_arrays[ix+npadx*iy].insert(new FloatProcessor(small_side, small_side, max_weights, null),
+							ix*step, iy*step);
+				}
 			}
-			
 		}
 		
 		// Reconstruct final orientation map
 		if (build_orientation_map) {
-			ByteProcessor big_hue = new ByteProcessor(ip.getWidth(), ip.getHeight());
-			ByteProcessor big_saturation = new ByteProcessor(ip.getWidth(), ip.getHeight());
-//			ByteProcessor big_brightness = (ByteProcessor) ip.convertToByte(true);
-			ByteProcessor big_brightness = (ByteProcessor) NewImage.createByteImage("", ip.getWidth(), ip.getHeight(), 1, NewImage.FILL_WHITE).getProcessor();
+			FloatProcessor big_hue = new FloatProcessor(ip.getWidth(), ip.getHeight());
+			FloatProcessor big_saturation = new FloatProcessor(ip.getWidth(), ip.getHeight());
+			float[] big_hue_px = (float[]) big_hue.getPixels();
+			float[] big_saturation_px = (float[]) big_saturation.getPixels();
+			float[] saturation_px = null, hue_px = null;
 			for (int ix = 0; ix<npadx; ix++) {
-				for (int iy = 0; iy<npady; iy++) {					
-					big_hue.insert(hue_images[ix+npadx*iy], ix*step,  iy*step);
-					big_saturation.insert(saturation_images[ix+npadx*iy], ix*step,  iy*step);	
+				for (int iy = 0; iy<npady; iy++) {
+					hue_px = (float[]) hue_arrays[ix+npadx*iy].getPixels();
+					saturation_px = (float[]) saturation_arrays[ix+npadx*iy].getPixels();
+					for (int i = 0; i < big_hue_px.length; i++) {
+						if ((255*saturation_px[i]/max_norm) >= big_saturation_px[i]) {
+							big_saturation_px[i] = (255*saturation_px[i]/max_norm);
+							big_hue_px[i] = (float) (255*(hue_px[i]-bins[0])/(bins[nbins-1]-bins[0]));
+						}
+					}
 				}
 			}
+
+			ByteProcessor big_brightness = (ByteProcessor) ip.convertToByte(true);
 			ColorProcessor cp = new ColorProcessor(ip.getWidth(), ip.getHeight());
 			cp.setHSB(
-					(byte[]) big_hue.getPixels(), 
-					(byte[]) big_saturation.getPixels(), 
+					(byte[]) big_hue.convertToByte(false).getPixels(), 
+					(byte[]) big_saturation.convertToByte(false).getPixels(), 
 					(byte[]) big_brightness.getPixels()
-					);
+					); 
 			orientation_map.addSlice(makeNames()[slice_index], cp);
 		}
 
-		
 		if (debug) {
 			new ImagePlus("Log10 power FFT of "+makeNames()[slice_index], spectra).show();
-			if (build_orientation_map) {
-				new ImagePlus("Angular components of "+makeNames()[slice_index], filtered_blocks).show();
-			}
 		}
 		
 		return dir;		
@@ -1301,9 +1285,11 @@ public class Directionality_ implements PlugIn {
 		final float[] r_px = (float[]) r.getPixels();
 		final float[] theta_px = (float[]) theta.getPixels();
 		
-		double current_r, current_theta, theta_c, angular_part;
+		double current_r, current_theta, theta_c, angular_part, radial_part;
 		final double theta_bw = Math.PI/(nbins-1);
-		
+		final double r_c = pad_size / 4;
+		final double r_bw = r_c/2;
+				
 		for (int i=1; i<= nbins; i++) {
 			
 			pixels = new float[pad_size*pad_size];
@@ -1315,6 +1301,7 @@ public class Directionality_ implements PlugIn {
 				if ( current_r < FREQ_THRESHOLD || current_r > pad_size/2) {
 					continue;
 				}
+				radial_part = Math.exp( -(current_r-r_c)*(current_r-r_c)/(r_bw*r_bw));
 				
 				current_theta = theta_px[index];
 				if ( Math.abs(current_theta-theta_c) < theta_bw) {
@@ -1335,7 +1322,7 @@ public class Directionality_ implements PlugIn {
 					continue; // leave it to 0
 				}
 				
-				pixels[index] = (float) angular_part; // only angular for now 
+				pixels[index] = (float)(angular_part * radial_part); 
 
 			}
 			

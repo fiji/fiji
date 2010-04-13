@@ -1367,6 +1367,10 @@ static void /* no-return */ usage(void)
 		<< "\tstart JavaC, the Java Compiler, instead of ImageJ" << endl
 		<< "--ant" << endl
 		<< "\trun Apache Ant" << endl
+		<< "--javap" << endl
+		<< "\tstart javap instead of ImageJ" << endl
+		<< "--javadoc" << endl
+		<< "\tstart javadoc instead of ImageJ" << endl
 		<< "--retrotranslator" << endl
 		<< "\tuse Retrotranslator to support Java < 1.6" << endl
 		<< endl;
@@ -1655,22 +1659,28 @@ static int start_ij(void)
 			main_class = "fiji.build.Fake";
 		}
 		else if (!strcmp(main_argv[i], "--javac") ||
-				!strcmp(main_argv[i], "--javap")) {
+				!strcmp(main_argv[i], "--javap") ||
+				!strcmp(main_argv[i], "--javadoc")) {
 			add_class_path_option = true;
 			headless = 1;
-			class_path += fiji_dir;
-			if (run_precompiled || !file_exists(string(fiji_dir)
-						+ "/jars/javac.jar"))
-				class_path += "/precompiled";
-			else
-				class_path += "/jars";
-			class_path += string("/javac.jar" PATH_SEP)
-				+ get_jre_home()
+			if (!strcmp(main_argv[i], "--javac")) {
+				class_path += fiji_dir;
+				if (run_precompiled ||
+						!file_exists(string(fiji_dir)
+							+ "/jars/javac.jar"))
+					class_path += "/precompiled";
+				else
+					class_path += "/jars";
+				class_path += string("/javac.jar" PATH_SEP);
+			}
+			class_path += get_jre_home()
 				+ "/../lib/tools.jar" PATH_SEP;
 			if (!strcmp(main_argv[i], "--javac"))
 				main_class = "com.sun.tools.javac.Main";
 			else if (!strcmp(main_argv[i], "--javap"))
 				main_class = "sun.tools.javap.Main";
+			else if (!strcmp(main_argv[i], "--javadoc"))
+				main_class = "com.sun.tools.javadoc.Main";
 			else
 				cerr << main_argv[i] << "!\n";
 		}
@@ -1802,13 +1812,20 @@ static int start_ij(void)
 		if (headless)
 			class_path += string(fiji_dir) + "/misc/headless.jar";
 
-		if (is_default_main_class(main_class))
+		if (is_default_main_class(main_class)) {
 			update_files();
-		else
+			if (class_path != "")
+				class_path += PATH_SEP;
+			class_path += string(fiji_dir) + "/jars/Fiji.jar"
+				PATH_SEP + fiji_dir + "/jars/ij.jar";
+		}
+		else {
 			if (build_classpath(class_path, string(fiji_dir)
 						+ "/plugins", 0))
 				return 1;
-		build_classpath(class_path, string(fiji_dir) + "/jars", 0);
+			build_classpath(class_path, string(fiji_dir)
+					+ "/jars", 0);
+		}
 	}
 	add_option(options, class_path, 0);
 

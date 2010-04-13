@@ -1,0 +1,24 @@
+- orthoslice
+- have a tool to iterate through slices when left/right clicking (or 
+  scroll-wheeling) on a slice
+- have a way to open a list of objects, being able to reassign to a new 3D 
+  window, or open another view of the same objects (e.g. a second slice, 
+  or an isosurface)
+- make it scriptable (for movie generation, presentations)
+- segmentation tool (as scissors, but works only on isosurfaces, i.e. 
+  thresholded objects, and does not remove, but rather label it)
+- move Lasso/Blow Tool to Fiji?
+
+segmentation editor: CustomStackWindow -> SegmentationEditorPanel
+
+VIB:
+	- eye candy: file list with processes already done (checkboxes)
+	- leica.Leica_SP_Reader: fix negative voxelDepth
+	  (and revert all the other voodoo to work around that)
+	- Gaussian Blur before optimising
+	- get rid of Amira Tables
+	- separate "AmiraTable_Writer" out of "AmiraMeshWriter_".
+	- general code cleanup (DO_CHANGES...)
+	- fix names (like AmiraMesh_Writer instead of AmiraMeshWriter_)
+	- ImageMetaData.upToDate(): look at template, too
+	- add rigid registration method (no labelling!)

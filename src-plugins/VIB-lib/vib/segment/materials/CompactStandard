@@ -1,0 +1,94 @@
+Parameters {
+	Materials {
+		Exterior {
+			Id 1
+		}
+		medulla_r {
+			Name "outer_medulla_r",
+			Id -1,
+			Group "OL_r",
+			Color 1 0 0
+		}
+		medulla_l {
+			Name "outer_medulla_l",
+			Id -1,
+			Group "OL_l",
+			Color 1 0 0
+		}
+		lobula_r {
+			Group "OL_r",
+			Color 1 0.552326 0
+		}
+		lobula_l {
+			Id -1,
+			Group "OL_l",
+			Color 1 0.552326 0
+		}
+		lobula_plate_r {
+			Id -1,
+			Group "OL_r",
+			Color 1 0.796512 0
+		}
+		lobula_plate_l {
+			Id -1,
+			Group "OL_l",
+			Color 1 0.802326 0
+		}
+		mushroom_body_r {
+			Id -1,
+			Color 1 0 1
+		}
+		mushroom_body_l {
+			Id -1,
+			Color 1 0 1
+		}
+		ellipsoid_body {
+			Id -1,
+			Group "CC",
+			Color 0.00392157 0.788235 0
+		}
+		noduli {
+			Id -1,
+			Group "CC",
+			Color 0.00199997 1 0
+		}
+		fan_shaped_body {
+			Id -1,
+			Group "CC",
+			Color 0.00147998 0.74 0
+		}
+		protocerebral_bridge {
+			Name "protocebral_bridge",
+			Id -1,
+			Group "CC",
+			Color 0 0.88 0
+		}
+		antennal_nerve_r {
+			Name "antennal_nerve",
+			Id -1,
+			Color 0 0 0.59
+		}
+		antennal_nerve_l {
+			Id 17,
+			Color 0 0 0.588235
+		}
+		antennal_lobe_r {
+			Id 18,
+			Color 0.156863 0.45098 0.8
+		}
+		antennal_lobe_l {
+			Id 19,
+			Color 0.156863 0.45098 0.8
+		}
+		lateral_horn_r {
+			Name "lateral horn",
+			Id 18,
+			Color 0.57 0.3534 0.171
+		}
+		lateral_horn_l {
+			Id 19,
+			Color 0.57 0.352944 0.171
+		}
+	}
+}
+

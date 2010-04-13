@@ -441,17 +441,25 @@ abstract public class RefreshScripts implements PlugIn {
 						classPath.substring(j + 1));
 			}
 		}
+		String jarsPath = System.getProperty("fiji.dir") + "/jars";
 
 		// append the plugin .jar files
 		try {
-			String path = discoverJars(pluginsPath);
-			if (path != null && !path.equals("")) {
-				if (!classPath.equals(""))
-					classPath += File.pathSeparator;
-				classPath += path;
-			}
-		} catch (IOException e) { }
+			classPath = appendToPath(classPath,
+					discoverJars(pluginsPath));
+			classPath = appendToPath(classPath,
+					discoverJars(jarsPath));
+		} catch (IOException e) { e.printStackTrace(); }
 		return classPath;
+	}
+
+	protected static String appendToPath(String path, String append) {
+		if (append != null && !path.equals("")) {
+			if (!path.equals(""))
+				path += File.pathSeparator;
+			return path + append;
+		}
+		return path;
 	}
 
 	protected static String discoverJars(String path) throws IOException {
