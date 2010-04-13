@@ -4,9 +4,6 @@
 [submodule "TrakEM2"]
 	path = TrakEM2
 	url = ssh://mob@repo.or.cz/srv/git/trakem2.git
-[submodule "VIB"]
-	path = VIB
-	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/VIB.git/
 [submodule "java/linux"]
 	path = java/linux
 	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/java/linux.git
