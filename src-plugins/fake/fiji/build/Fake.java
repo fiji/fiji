@@ -1831,6 +1831,9 @@ public class Fake {
 					else {
 						result.append(".*");
 						i++;
+						if (i + 1 < len && array[i + 1]
+								== '/')
+							i++;
 					}
 				} else
 					result.append(c);
