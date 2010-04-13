@@ -1077,7 +1077,7 @@ public class Fake {
 			}
 
 			public String toString() {
-				return toString(getVar("VERBOSE").equals("2") ?
+				return toString("2".equals(getVar("VERBOSE")) ?
 						0 : 60);
 			}
 
