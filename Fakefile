@@ -252,11 +252,6 @@ CLASSPATH(plugins/Trainable_Segmentation.jar)=jars/weka.jar:plugins/Stitching_.j
 CLASSPATH(plugins/VIB_.jar)=jars/VIB-lib.jar
 CLASSPATH(jars/VIB-lib.jar)=jars/Jama-1.0.2.jar:jars/imglib.jar:jars/junit-4.5.jar:plugins/level_sets.jar
 
-MAINCLASS(jars/test-fiji.jar)=fiji.Tests
-
-plugins/*.jar <- src-plugins/*/**/*
-jars/*.jar <- src-plugins/*/**/*
-
 # pre-Java5 generics ;-)
 
 src-plugins/VIB-lib/vib/FloatMatrix.java[src-plugins/VIB-lib/sed.py $PRE $TARGET] <- src-plugins/VIB-lib/vib/FastMatrix.java
@@ -266,6 +261,13 @@ src-plugins/VIB-lib/math3d/Eigensystem3x3Float.java[src-plugins/VIB-lib/sed.py $
 	src-plugins/VIB-lib/math3d/Eigensystem3x3Double.java
 src-plugins/VIB-lib/math3d/Eigensystem2x2Float.java[src-plugins/VIB-lib/sed.py $PRE $TARGET] <- \
 	src-plugins/VIB-lib/math3d/Eigensystem2x2Double.java
+
+MAINCLASS(jars/test-fiji.jar)=fiji.Tests
+
+# the default rules
+
+plugins/*.jar <- src-plugins/*/**/*
+jars/*.jar <- src-plugins/*/**/*
 
 # Third party plugins
 

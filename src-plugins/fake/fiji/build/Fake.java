@@ -485,6 +485,7 @@ public class Fake {
 			while (tokenizer.hasMoreTokens()) {
 				String token = tokenizer.nextToken();
 				if (expandGlob(token, list, cwd, 0, buildDir)
+						+ addMatchingTargets(token, list)
 						== 0)
 					throw new FakeException("Glob did not "
 						+ "match any file: '"
@@ -543,6 +544,26 @@ public class Fake {
 			File dir = new File(directory);
 			return dir.isDirectory() ||
 				(!dir.exists() && directory.endsWith("/"));
+		}
+
+		int addMatchingTargets(String glob, List sortedPrereqs) {
+			if (glob.indexOf('*') < 0)
+				return 0;
+			int count = 0;
+			GlobFilter filter = new GlobFilter(glob);
+			Iterator iter = allRules.keySet().iterator();
+			while (iter.hasNext()) {
+				String target = (String)iter.next();
+				if (!filter.accept(null, target))
+					continue;
+				int index = Collections
+					.binarySearch(sortedPrereqs, target);
+				if (index >= 0)
+					continue;
+				sortedPrereqs.add(-1 - index, target);
+				count++;
+			}
+			return count;
 		}
 
 		protected void addSpecialRule(Special rule) {
