@@ -13,9 +13,9 @@ import mpicbg.imglib.image.ImagePlusAdapter;
 
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 
-import mpicbg.imglib.type.NumericType;
+import mpicbg.imglib.type.numeric.RealType;
 
-public class Imglib_Plugin<T extends NumericType<T>> implements PlugInFilter {
+public class Imglib_Plugin<T extends RealType<T>> implements PlugInFilter {
 	ImagePlus image;
 
 	public int setup(String arg, ImagePlus imp) {
@@ -33,7 +33,7 @@ public class Imglib_Plugin<T extends NumericType<T>> implements PlugInFilter {
 		add(img, 20);
 	}
 
-	public static<T extends NumericType<T>> void add(Image<T> img, float value) {
+	public static<T extends RealType<T>> void add(Image<T> img, float value) {
 		final Cursor<T> cursor = img.createCursor();
 		final T summand = cursor.getType().createVariable();
 
