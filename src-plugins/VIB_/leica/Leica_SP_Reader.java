@@ -15,11 +15,11 @@ import java.util.*;
  * Modified to read the new Leica tiff format by B. Schmid 2007
  */
 public class Leica_SP_Reader extends LeicaSPReader implements PlugIn {
-	
+
 	public void run(String arg) {
 		if (IJ.versionLessThan("1.18h"))
 			return;
-		boolean showIt = (arg == null || arg.trim().equals("")) &&  
+		boolean showIt = (arg == null || arg.trim().equals("")) &&
 						 !Interpreter.isBatchMode();
 		String dir = "";
 		String file = "";
@@ -34,7 +34,7 @@ public class Leica_SP_Reader extends LeicaSPReader implements PlugIn {
 		}
 		if(arg==null)
 			return;
-		
+
 		try {
 			FileInfo[] fi =  getFileInfo(dir, file);
 			nr_channels = fi.length / nr_frames;
@@ -44,7 +44,7 @@ public class Leica_SP_Reader extends LeicaSPReader implements PlugIn {
 				if (stack != null){
 					int l = channel + 1;
 					fi[0].fileName = arg;
-					fi[0].directory = dir;				
+					fi[0].directory = dir;
 					Calibration cal = new Calibration();
 					cal.pixelWidth = fi[0].pixelWidth;
 					cal.pixelHeight = fi[0].pixelHeight;

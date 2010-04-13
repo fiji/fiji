@@ -21,7 +21,7 @@ public class ShowHistogram extends ImageWindow implements Measurements, ActionLi
 	static final int BAR_HEIGHT = 12;
 	static final int XMARGIN = 20;
 	static final int YMARGIN = 10;
-	
+
 	protected double[] histogram;
 	protected double histMin,binSize;
 	protected Rectangle frame = null;
@@ -36,7 +36,7 @@ public class ShowHistogram extends ImageWindow implements Measurements, ActionLi
 	protected boolean logScale;
 	protected int yMax;
 	public static int nBins = 256;
-    
+
 	/** Displays a histogram using the title "Histogram of ImageName". */
 	public ShowHistogram(double[] histogram, double histMin, double binSize) {
 		super(NewImage.createByteImage("Histogram", WIN_WIDTH, WIN_HEIGHT, 1, NewImage.FILL_WHITE));
@@ -64,7 +64,7 @@ public class ShowHistogram extends ImageWindow implements Measurements, ActionLi
 	}
 
 	public void setup() {
- 		Panel buttons = new Panel();
+		Panel buttons = new Panel();
 		buttons.setLayout(new FlowLayout(FlowLayout.RIGHT));
 		list = new Button("List");
 		list.addActionListener(this);
@@ -102,14 +102,14 @@ public class ShowHistogram extends ImageWindow implements Measurements, ActionLi
 			count.setText("");
 		}
 	}
-    
+
 	protected void drawHistogram(ImageProcessor ip) {
 		int x, y;
 		double minCount2 = histogram[0];
 		double maxCount2 = histogram[0];
 		int mode2 = 0;
 		int saveModalCount;
-		    	
+
 		ip.setColor(Color.black);
 		ip.setLineWidth(1);
 		decimalPlaces = Analyzer.getPrecision();
@@ -121,13 +121,13 @@ public class ShowHistogram extends ImageWindow implements Measurements, ActionLi
 			} else if (histogram[i] < minCount2)
 				minCount2 = histogram[i];
 		drawPlot(minCount2, maxCount2, ip);
- 		x = XMARGIN + 1;
+		x = XMARGIN + 1;
 		y = YMARGIN + HIST_HEIGHT + 2;
 		y += BAR_HEIGHT+15;
-  		drawText(ip, x, y);
+		drawText(ip, x, y);
 	}
 
-       
+
 	void drawPlot(double minCount, double maxCount, ImageProcessor ip) {
 		if (maxCount <= minCount)
 			maxCount = minCount + 1;
@@ -138,7 +138,7 @@ public class ShowHistogram extends ImageWindow implements Measurements, ActionLi
 		ip.drawRect(frame.x-1, frame.y, frame.width+2, frame.height+1);
 		int index, y;
 		for (int i = 0; i<HIST_WIDTH; i++) {
-			index = (int)(i*(double)histogram.length/HIST_WIDTH); 
+			index = (int)(i*(double)histogram.length/HIST_WIDTH);
 			y = (int)(HIST_HEIGHT * (histogram[index] - minCount)
 					/ (maxCount - minCount));
 			if (y>HIST_HEIGHT)
@@ -146,7 +146,7 @@ public class ShowHistogram extends ImageWindow implements Measurements, ActionLi
 			ip.drawLine(i+XMARGIN, YMARGIN+HIST_HEIGHT, i+XMARGIN, YMARGIN+HIST_HEIGHT-y);
 		}
 	}
-		
+
 	void drawLogPlot (int maxCount, ImageProcessor ip) {
 		frame = new Rectangle(XMARGIN, YMARGIN, HIST_WIDTH, HIST_HEIGHT);
 		ip.drawRect(frame.x-1, frame.y, frame.width+2, frame.height+1);
@@ -154,7 +154,7 @@ public class ShowHistogram extends ImageWindow implements Measurements, ActionLi
 		ip.setColor(Color.gray);
 		int index, y;
 		for (int i = 0; i<HIST_WIDTH; i++) {
-			index = (int)(i*(double)histogram.length/HIST_WIDTH); 
+			index = (int)(i*(double)histogram.length/HIST_WIDTH);
 			y = histogram[index]==0?0:(int)(HIST_HEIGHT*Math.log(histogram[index])/max);
 			if (y>HIST_HEIGHT)
 				y = HIST_HEIGHT;
@@ -162,7 +162,7 @@ public class ShowHistogram extends ImageWindow implements Measurements, ActionLi
 		}
 		ip.setColor(Color.black);
 	}
-		
+
 	void drawText(ImageProcessor ip, int x, int y) {
 		ip.setFont(new Font("SansSerif",Font.PLAIN,12));
 		ip.setAntialiasedText(true);
@@ -170,7 +170,7 @@ public class ShowHistogram extends ImageWindow implements Measurements, ActionLi
 		double hmax = histMin+binSize*(histogram.length-1);
 		ip.drawString(d2s(hmin), x - 4, y);
 		ip.drawString(d2s(hmax), x + HIST_WIDTH - getWidth(hmax, ip) + 10, y);
-        
+
 		binSize = Math.abs(binSize);
 		boolean showBins = binSize!=1.0;
 		int col1 = XMARGIN + 5;
@@ -200,7 +200,7 @@ public class ShowHistogram extends ImageWindow implements Measurements, ActionLi
 		ip.drawString("StdDev: " + d2s(stdDev), col1, row3);
 		ip.drawString("Min: " + d2s(min), col2, row1);
 		ip.drawString("Max: " + d2s(max), col2, row2);
-		
+
 		if (showBins) {
 			ip.drawString("Bins: " + d2s(histogram.length), col1, row4);
 			ip.drawString("Bin Width: " + d2s(binSize), col2, row4);
@@ -219,14 +219,14 @@ public class ShowHistogram extends ImageWindow implements Measurements, ActionLi
 		else
 			return IJ.d2s(d,decimalPlaces);
 	}
-	
+
 	int getWidth(double d, ImageProcessor ip) {
 		return ip.getStringWidth(d2s(d));
 	}
 
 	protected void showList() {
 		StringBuffer sb = new StringBuffer();
-        	String vheading = binSize==1.0?"value":"bin start";
+		String vheading = binSize==1.0?"value":"bin start";
 		for (int i=0; i<histogram.length; i++)
 			sb.append(IJ.d2s(histMin+i*binSize, digits)+"\t"+histogram[i]+"\n");
 		TextWindow tw = new TextWindow(getTitle(), vheading+"\tcount", sb.toString(), 200, 400);
@@ -249,7 +249,7 @@ public class ShowHistogram extends ImageWindow implements Measurements, ActionLi
 		systemClipboard.setContents(contents, this);
 		IJ.showStatus(text.length() + " characters copied to Clipboard");
 	}
-	
+
 	void replot() {
 		logScale = !logScale;
 		ImageProcessor ip = this.imp.getProcessor();
@@ -266,7 +266,7 @@ public class ShowHistogram extends ImageWindow implements Measurements, ActionLi
 			drawPlot(newMinCount, newMaxCount, ip);
 		this.imp.updateAndDraw();
 	}
-	
+
 	/*
 	void rescale() {
 		Graphics g = img.getGraphics();
@@ -284,7 +284,7 @@ public class ShowHistogram extends ImageWindow implements Measurements, ActionLi
 		this.imp.setImage(img);
 	}
 	*/
-	
+
 	public void actionPerformed(ActionEvent e) {
 		Object b = e.getSource();
 		if (b==list)
@@ -294,12 +294,11 @@ public class ShowHistogram extends ImageWindow implements Measurements, ActionLi
 		else if (b==log)
 			replot();
 	}
-	
+
 	public void lostOwnership(Clipboard clipboard, Transferable contents) {}
-	
+
 	public double[] getHistogram() {
 		return histogram;
 	}
 
 }
-

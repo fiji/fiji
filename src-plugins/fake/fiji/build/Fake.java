@@ -485,6 +485,7 @@ public class Fake {
 			while (tokenizer.hasMoreTokens()) {
 				String token = tokenizer.nextToken();
 				if (expandGlob(token, list, cwd, 0, buildDir)
+						+ addMatchingTargets(token, list)
 						== 0)
 					throw new FakeException("Glob did not "
 						+ "match any file: '"
@@ -543,6 +544,26 @@ public class Fake {
 			File dir = new File(directory);
 			return dir.isDirectory() ||
 				(!dir.exists() && directory.endsWith("/"));
+		}
+
+		int addMatchingTargets(String glob, List sortedPrereqs) {
+			if (glob.indexOf('*') < 0)
+				return 0;
+			int count = 0;
+			GlobFilter filter = new GlobFilter(glob);
+			Iterator iter = allRules.keySet().iterator();
+			while (iter.hasNext()) {
+				String target = (String)iter.next();
+				if (!filter.accept(null, target))
+					continue;
+				int index = Collections
+					.binarySearch(sortedPrereqs, target);
+				if (index >= 0)
+					continue;
+				sortedPrereqs.add(-1 - index, target);
+				count++;
+			}
+			return count;
 		}
 
 		protected void addSpecialRule(Special rule) {
@@ -1056,7 +1077,7 @@ public class Fake {
 			}
 
 			public String toString() {
-				return toString(getVar("VERBOSE") == "2" ?
+				return toString("2".equals(getVar("VERBOSE")) ?
 						0 : 60);
 			}
 
@@ -1248,7 +1269,8 @@ public class Fake {
 			SubFake(String target, List prerequisites) {
 				super(target, prerequisites);
 				jarName = new File(target).getName();
-				source = getLastPrerequisite() + jarName;
+				String directory = getLastPrerequisite();
+				source = directory + jarName;
 				baseName = stripSuffix(jarName, ".jar");
 				configPath = getPluginsConfig();
 
@@ -1256,6 +1278,9 @@ public class Fake {
 					split(getVar("CLASSPATH"), ":");
 				for (int i = 0; i < paths.length; i++)
 					prerequisites.add(paths[i]);
+				if (!new File(makePath(cwd, directory)).exists())
+					err.println("Warning: " + directory
+						+ " does not exist!");
 			}
 
 			boolean checkUpToDate() {
@@ -1810,6 +1835,9 @@ public class Fake {
 					else {
 						result.append(".*");
 						i++;
+						if (i + 1 < len && array[i + 1]
+								== '/')
+							i++;
 					}
 				} else
 					result.append(c);
