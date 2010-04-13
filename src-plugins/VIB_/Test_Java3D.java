@@ -3,7 +3,7 @@ import java.awt.Panel;
 import java.awt.event.*;
 import java.awt.Dimension;
 
-import com.sun.j3d.utils.applet.MainFrame; 
+import com.sun.j3d.utils.applet.MainFrame;
 import com.sun.j3d.utils.geometry.ColorCube;
 import com.sun.j3d.utils.universe.*;
 import javax.media.j3d.*;
@@ -21,12 +21,12 @@ public class Test_Java3D implements PlugIn {
 		gd.addPanel(p);
 		gd.showDialog();
 	}
-	
+
 	public Panel createPanel() {
 		Panel p = new Panel();
 		p.setPreferredSize(new Dimension(512, 512));
 		p.setLayout(new BorderLayout());
-	    	Canvas3D canvas3D = new Canvas3D(
+		Canvas3D canvas3D = new Canvas3D(
 			SimpleUniverse.getPreferredConfiguration());
 		p.add("Center", canvas3D);
 
@@ -62,7 +62,7 @@ public class Test_Java3D implements PlugIn {
 
 		objRoot.addChild(objRotate);
 		objRotate.addChild(objSpin);
-	 
+
 		// Create a simple shape leaf node, add it to the scene graph.
 		// ColorCube is a Convenience Utility class
 		objSpin.addChild(new ColorCube(0.4));
@@ -74,7 +74,7 @@ public class Test_Java3D implements PlugIn {
 		Alpha rotationAlpha = new Alpha(-1, 4000);
 
 		RotationInterpolator rotator = new RotationInterpolator(
-					rotationAlpha, objSpin, yAxis, 
+					rotationAlpha, objSpin, yAxis,
 					0.0f, (float) Math.PI*2.0f);
 
 		// a bounding sphere specifies a region a behavior is active
@@ -87,4 +87,3 @@ public class Test_Java3D implements PlugIn {
 	} // end of CreateSceneGraph method of HelloJava3Dd
 
 } // end of class HelloJava3Dd
-

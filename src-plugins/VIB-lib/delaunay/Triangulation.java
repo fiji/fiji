@@ -1,20 +1,20 @@
 /*
  * Copyright (c) 2005 by L. Paul Chew.
- * 
+ *
  * Permission is hereby granted, without written agreement and without
  * license or royalty fees, to use, copy, modify, and distribute this
- * software and its documentation for any purpose, subject to the following 
+ * software and its documentation for any purpose, subject to the following
  * conditions:
  *
- * The above copyright notice and this permission notice shall be included 
+ * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS 
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
 
@@ -31,15 +31,15 @@ import java.util.Set;
  * A Triangulation is a set of Simplices (see Simplex below).
  * For efficiency, we keep track of the neighbors of each Simplex.
  * Two Simplices are neighbors of they share a facet.
- * 
+ *
  * @author Paul Chew
- * 
+ *
  * Created July 2005.  Derived from an earlier, messier version.
  */
 public class Triangulation {
-    
+
     private HashMap neighbors;  // Maps Simplex to Set of neighbors
-    
+
     /**
      * Constructor.
      * @param simplex the initial Simplex.
@@ -48,7 +48,7 @@ public class Triangulation {
         neighbors = new HashMap();
         neighbors.put(simplex, new HashSet());
     }
-    
+
     /**
      * String representation.
      * Shows number of simplices currently in the Triangulation.
@@ -57,7 +57,7 @@ public class Triangulation {
     public String toString () {
         return "Triangulation (with " + neighbors.size() + " elements)";
     }
-    
+
     /**
      * Size (# of Simplices) in Triangulation.
      * @return the number of Simplices in this Triangulation
@@ -65,7 +65,7 @@ public class Triangulation {
     public int size () {
         return neighbors.size();
     }
-    
+
     /**
      * True iff the simplex is in this Triangulation.
      * @param simplex the simplex to check
@@ -74,7 +74,7 @@ public class Triangulation {
     public boolean contains (Simplex simplex) {
         return this.neighbors.containsKey(simplex);
     }
-    
+
     /**
      * Iterator.
      * @return an iterator for every Simplex in the Triangulation
@@ -82,7 +82,7 @@ public class Triangulation {
     public Iterator iterator () {
         return Collections.unmodifiableSet(this.neighbors.keySet()).iterator();
     }
-    
+
     /**
      * Print stuff about a Triangulation.
      * Used for debugging.
@@ -95,16 +95,16 @@ public class Triangulation {
             Simplex.moreInfo = true;
             System.out.print("    " + simplex + ":");
             Simplex.moreInfo = false;
-            for (Iterator otherIt = ((Set) neighbors.get(simplex)).iterator(); 
+            for (Iterator otherIt = ((Set) neighbors.get(simplex)).iterator();
                  otherIt.hasNext();)
                 System.out.print(" " + otherIt.next());
             System.out.println();
         }
         Simplex.moreInfo = remember;
     }
-    
+
     /* Navigation */
-    
+
     /**
      * Report neighbor opposite the given vertex of simplex.
      * @param vertex a vertex of simplex
@@ -115,7 +115,7 @@ public class Triangulation {
     public Simplex neighborOpposite (Object vertex, Simplex simplex) {
         if (!simplex.contains(vertex))
             throw new IllegalArgumentException("Bad vertex; not in simplex");
-        SimplexLoop: for (Iterator it = ((Set) neighbors.get(simplex)).iterator(); 
+        SimplexLoop: for (Iterator it = ((Set) neighbors.get(simplex)).iterator();
                           it.hasNext();) {
             Simplex s = (Simplex) it.next();
             for (Iterator otherIt = simplex.iterator(); otherIt.hasNext(); ) {
@@ -127,7 +127,7 @@ public class Triangulation {
         }
         return null;
     }
-    
+
     /**
      * Report neighbors of the given simplex.
      * @param simplex a Simplex
@@ -136,9 +136,9 @@ public class Triangulation {
     public Set neighbors (Simplex simplex) {
         return new HashSet((Set) this.neighbors.get(simplex));
     }
-    
+
     /* Modification */
-    
+
     /**
      * Update by replacing one set of Simplices with another.
      * Both sets of simplices must fill the same "hole" in the
@@ -146,7 +146,7 @@ public class Triangulation {
      * @param oldSet set of Simplices to be replaced
      * @param newSet set of replacement Simplices
      */
-    public void update (Set oldSet, 
+    public void update (Set oldSet,
                         Set newSet) {
         // Collect all simplices neighboring the oldSet
         Set allNeighbors = new HashSet();
@@ -155,7 +155,7 @@ public class Triangulation {
         // Delete the oldSet
         for (Iterator it = oldSet.iterator(); it.hasNext();) {
             Simplex simplex = (Simplex) it.next();
-            for (Iterator otherIt = ((Set) neighbors.get(simplex)).iterator(); 
+            for (Iterator otherIt = ((Set) neighbors.get(simplex)).iterator();
                  otherIt.hasNext();)
                 ((Set) neighbors.get(otherIt.next())).remove(simplex);
             neighbors.remove(simplex);
@@ -178,4 +178,3 @@ public class Triangulation {
         }
     }
 }
-
