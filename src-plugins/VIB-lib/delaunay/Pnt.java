@@ -1,41 +1,41 @@
 /*
  * Copyright (c) 2005 by L. Paul Chew.
- * 
+ *
  * Permission is hereby granted, without written agreement and without
  * license or royalty fees, to use, copy, modify, and distribute this
- * software and its documentation for any purpose, subject to the following 
+ * software and its documentation for any purpose, subject to the following
  * conditions:
  *
- * The above copyright notice and this permission notice shall be included 
+ * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS 
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
 
 /**
  * Points in Euclidean space, implemented as double[].
- * 
+ *
  * Includes simple geometric operations.
  * Uses matrices; a matrix is represented as an array of Pnts.
  * Uses simplices; a simplex is represented as an array of Pnts.
- * 
+ *
  * @author Paul Chew
- * 
+ *
  * Created July 2005.  Derived from an earlier, messier version.
  */
 
 package delaunay;
 
 public class Pnt {
-    
+
     private double[] coordinates;          // The point's coordinates
-    
+
     /**
      * Constructor.
      * @param coords the coordinates
@@ -45,7 +45,7 @@ public class Pnt {
         coordinates = new double[coords.length];
         System.arraycopy(coords, 0, coordinates, 0, coords.length);
     }
-    
+
     /**
      * Constructor.
      * @param coordA
@@ -54,7 +54,7 @@ public class Pnt {
     public Pnt (double coordA, double coordB) {
         this(new double[] {coordA, coordB});
     }
-    
+
     /**
      * Constructor.
      * @param coordA
@@ -64,7 +64,7 @@ public class Pnt {
     public Pnt (double coordA, double coordB, double coordC) {
         this(new double[] {coordA, coordB, coordC});
     }
-    
+
     /**
      * Create a String for this Pnt.
      * @return a String representation of this Pnt.
@@ -77,7 +77,7 @@ public class Pnt {
         result = result + ")";
         return result;
     }
-    
+
     /**
      * Equality.
      * @param other the other Object to compare to
@@ -91,7 +91,7 @@ public class Pnt {
             if (this.coordinates[i] != p.coordinates[i]) return false;
         return true;
     }
-    
+
     /**
      * HashCode.
      * @return the hashCode for this Pnt
@@ -104,9 +104,9 @@ public class Pnt {
         }
         return hash;
     }
-    
+
     /* Pnts as vectors */
-    
+
     /**
      * @return the specified coordinate of this Pnt
      * @throws ArrayIndexOutOfBoundsException for bad coordinate
@@ -114,14 +114,14 @@ public class Pnt {
     public double coord (int i) {
         return this.coordinates[i];
     }
-    
+
     /**
      * @return this Pnt's dimension.
      */
     public int dimension () {
         return coordinates.length;
     }
-    
+
     /**
      * Check that dimensions match.
      * @param p the Pnt to check (against this Pnt)
@@ -134,7 +134,7 @@ public class Pnt {
             throw new IllegalArgumentException("Dimension mismatch");
         return len;
     }
-    
+
     /**
      * Create a new Pnt by adding additional coordinates to this Pnt.
      * @param coords the new coordinates (added on the right end)
@@ -146,7 +146,7 @@ public class Pnt {
         System.arraycopy(coords, 0, result, coordinates.length, coords.length);
         return new Pnt(result);
     }
-    
+
     /**
      * Dot product.
      * @param p the other Pnt
@@ -159,7 +159,7 @@ public class Pnt {
             sum += this.coordinates[i] * p.coordinates[i];
         return sum;
     }
-    
+
     /**
      * Magnitude (as a vector).
      * @return the Euclidean length of this vector
@@ -167,7 +167,7 @@ public class Pnt {
     public double magnitude () {
         return Math.sqrt(this.dot(this));
     }
-    
+
     /**
      * Subtract.
      * @param p the other Pnt
@@ -180,7 +180,7 @@ public class Pnt {
             coords[i] = this.coordinates[i] - p.coordinates[i];
         return new Pnt(coords);
     }
-    
+
     /**
      * Add.
      * @param p the other Pnt
@@ -193,7 +193,7 @@ public class Pnt {
             coords[i] = this.coordinates[i] + p.coordinates[i];
         return new Pnt(coords);
     }
-    
+
     /**
      * Angle (in radians) between two Pnts (treated as vectors).
      * @param p the other Pnt
@@ -202,7 +202,7 @@ public class Pnt {
     public double angle (Pnt p) {
         return Math.acos(this.dot(p) / (this.magnitude() * p.magnitude()));
     }
-    
+
     /**
      * Perpendicular bisector of two Pnts.
      * Works in any dimension.  The coefficients are returned as a Pnt of one
@@ -218,9 +218,9 @@ public class Pnt {
         double dot = diff.dot(sum);
         return diff.extend(new double[] {-dot / 2});
     }
-    
+
     /* Pnts as matrices */
-    
+
     /**
      * Create a String for a matrix.
      * @param matrix the matrix (an array of Pnts)
@@ -232,10 +232,10 @@ public class Pnt {
         buf.append(" }");
         return buf.toString();
     }
-    
+
     /**
      * Compute the determinant of a matrix (array of Pnts).
-     * This is not an efficient implementation, but should be adequate 
+     * This is not an efficient implementation, but should be adequate
      * for low dimension.
      * @param matrix the matrix as an array of Pnts
      * @return the determinnant of the input matrix
@@ -251,7 +251,7 @@ public class Pnt {
             throw new IllegalArgumentException("Matrix is wrong shape");
         }
     }
-    
+
     /**
      * Compute the determinant of a submatrix specified by starting row
      * and by "active" columns.
@@ -275,11 +275,11 @@ public class Pnt {
         }
         return sum;
     }
-    
+
     /**
      * Compute generalized cross-product of the rows of a matrix.
      * The result is a Pnt perpendicular (as a vector) to each row of
-     * the matrix.  This is not an efficient implementation, but should 
+     * the matrix.  This is not an efficient implementation, but should
      * be adequate for low dimension.
      * @param matrix the matrix of Pnts (one less row than the Pnt dimension)
      * @return a Pnt perpendicular to each row Pnt
@@ -305,9 +305,9 @@ public class Pnt {
         }
         return new Pnt(result);
     }
-    
+
     /* Pnts as simplices */
-    
+
     /**
      * Determine the signed content (i.e., area or volume, etc.) of a simplex.
      * @param simplex the simplex (as an array of Pnts)
@@ -321,7 +321,7 @@ public class Pnt {
         for (int i = 1; i < matrix.length; i++) fact = fact*i;
         return determinant(matrix) / fact;
     }
-    
+
     /**
      * Relation between this Pnt and a simplex (represented as an array of Pnts).
      * Result is an array of signs, one for each vertex of the simplex, indicating
@@ -349,7 +349,7 @@ public class Pnt {
         int dim = simplex.length - 1;
         if (this.dimension() != dim)
             throw new IllegalArgumentException("Dimension mismatch");
-        
+
         /* Create and load the matrix */
         Pnt[] matrix = new Pnt[dim+1];
         /* First row */
@@ -359,11 +359,11 @@ public class Pnt {
         /* Other rows */
         for (int i = 0; i < dim; i++) {
             coords[0] = this.coordinates[i];
-            for (int j = 0; j < simplex.length; j++) 
+            for (int j = 0; j < simplex.length; j++)
                 coords[j+1] = simplex[j].coordinates[i];
             matrix[i+1] = new Pnt(coords);
         }
-        
+
         /* Compute and analyze the vector of areas/volumes/contents */
         Pnt vector = cross(matrix);
         double content = vector.coordinates[0];
@@ -382,7 +382,7 @@ public class Pnt {
         }
         return result;
     }
-    
+
     /**
      * Test if this Pnt is outside of simplex.
      * @param simplex the simplex (an array of Pnts)
@@ -395,7 +395,7 @@ public class Pnt {
         }
         return null;
     }
-    
+
     /**
      * Test if this Pnt is on a simplex.
      * @param simplex the simplex (an array of Pnts)
@@ -410,7 +410,7 @@ public class Pnt {
         }
         return witness;
     }
-    
+
     /**
      * Test if this Pnt is inside a simplex.
      * @param simplex the simplex (an arary of Pnts)
@@ -421,7 +421,7 @@ public class Pnt {
         for (int i = 0; i < result.length; i++) if (result[i] >= 0) return false;
         return true;
     }
-    
+
     /**
      * Test relation between this Pnt and circumcircle of a simplex.
      * @param simplex the simplex (as an array of Pnts)
@@ -437,7 +437,7 @@ public class Pnt {
         if (content(simplex) < 0) result = - result;
         return result;
     }
-    
+
     /**
      * Circumcenter of a simplex.
      * @param simplex the simplex (as an array of Pnts)
@@ -448,7 +448,7 @@ public class Pnt {
         if (simplex.length - 1 != dim)
             throw new IllegalArgumentException("Dimension mismatch");
         Pnt[] matrix = new Pnt[dim];
-        for (int i = 0; i < dim; i++) 
+        for (int i = 0; i < dim; i++)
             matrix[i] = simplex[i].bisector(simplex[i+1]);
         Pnt hCenter = cross(matrix);      // Center in homogeneous coordinates
         double last = hCenter.coordinates[dim];
@@ -456,7 +456,7 @@ public class Pnt {
         for (int i = 0; i < dim; i++) result[i] = hCenter.coordinates[i] / last;
         return new Pnt(result);
     }
-     
+
     /**
      * Main program (used for testing).
      */
