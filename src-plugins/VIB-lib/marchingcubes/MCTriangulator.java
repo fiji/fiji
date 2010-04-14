@@ -45,7 +45,7 @@ public class MCTriangulator implements Triangulator {
 	 * @param threshold The cut-off (inclusive) of pixel values considered inside.
 	 * @param origin The translation of the origin, in 3D.
 	 */
-	public List<Point3f> getTriangles(Image<? extends RealType> img, int threshold, float[] origin) throws Exception {
+	public<T extends RealType<T>> List<Point3f> getTriangles(Image<T> img, int threshold, float[] origin) throws Exception {
 		return MCCube.getTriangles(new ImgLibVolume(img, origin), threshold);
 	}
 
