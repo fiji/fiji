@@ -1524,14 +1524,16 @@ public class Fake {
 
 			String getStripPath() {
 				String s = prerequisiteString.trim();
+				if (s.startsWith("**/"))
+					return "";
 				int stars = s.indexOf("/**/");
 				if (stars < 0)
-					return null;
+					return "";
 				int space = s.indexOf(' ');
 				if (space > 0 && space < stars) {
 					if (s.charAt(space - 1) == '/')
 						return s.substring(0, space);
-					return null;
+					return "";
 				}
 				return s.substring(0, stars + 1);
 		}
