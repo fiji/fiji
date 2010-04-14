@@ -27,12 +27,9 @@ public abstract class TwoOperandsPixelBasedFunction<T extends NumericType<T>> ex
 				c1.fwd();
 				c2.fwd();
 				rc.fwd();
-				rc.getType().set( evaluate(c1.getType(), c2.getType()) );
+				rc.getType().set(evaluate(c1.getType(), c2.getType()));
 			}
 		}
-
-		
-		
 		
 		return result;
 	}
