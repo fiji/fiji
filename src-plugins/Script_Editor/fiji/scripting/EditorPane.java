@@ -302,7 +302,7 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 	}
 
 	public ClassNameFunctions getClassNameFunctions() {
-		return new ClassNameFunctions(provider);
+		return new ClassNameFunctions(frame, provider);
 	}
 
 	public void startDebugging() {
