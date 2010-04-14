@@ -96,9 +96,9 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		}
 		
 		// add all supported formats
-		formats.add(new DecimalLabelFormat(new String[]{ "y", "w", "d", "h", "min", "s", "ms", "us", "ns", "ps", "fs", "as"}, "Decimal"));
-		formats.add(new DigitalLabelFormat(new String[]{"y", "d", "h", "min", "s", "ms"}, "Digital"));
-		formats.add(new CustomLabelFormat(new String[]{"Custom Suffix"}, "Custom Format"));
+		formats.add(new DecimalLabelFormat());
+		formats.add(new DigitalLabelFormat());
+		formats.add(new CustomLabelFormat());
 		selectedFormat = formats.get(0);
 		
 		// return supported flags
@@ -161,8 +161,8 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		customUnitStringField = (TextField) gd.getStringFields().get(1);
 		
 		
-		gd.addNumericField("Starting Time (in s if digital):", start, 2);
-		gd.addNumericField("Time Interval Between Frames (in s if digital):", interval, 3);
+		gd.addNumericField("Starting Time (in selected units):", start, 2);
+		gd.addNumericField("Time Interval Between Frames (in selected units):", interval, 3);
 		gd.addNumericField("X Location:", x, 0);
 		gd.addNumericField("Y Location:", y, 0);
 		gd.addNumericField("Font Size:", size, 0);
@@ -517,7 +517,28 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		}
 	}
 	
+	/**
+	 * Represents a decimal label format, e. g. 7.3 days.
+	 */
 	private class DecimalLabelFormat extends LabelFormat {
+		
+		/**
+		 * Constructs a new {@link DecimalLabelFormat}. This default constructor allows
+		 * years, weeks, days, hours, minutes, seconds and milli-, micro-, nano-, pico-
+		 * pico-, femto and attoseconds as formats. The display name is set to "Decimal". 
+		 */
+		public DecimalLabelFormat() {
+			this(new String[]{ "y", "w", "d", "h", "min", "s", "ms", "us", "ns", "ps", "fs", "as"}, "Decimal");
+		}
+		
+		/**
+		 * Constructs a new {@link DecimalLabelFormat}. The allowed units and a name are
+		 * requested as parameters. No custom time format input is supported, but one
+		 * can use a custom suffix with this class.
+		 * 
+		 * @param allowedFormatUnits The allowed units for this format.
+		 * @param name The display name of the format.
+		 */
 		public DecimalLabelFormat(String[] allowedFormatUnits, String name){
 			this(allowedFormatUnits, name, false, false);
 		}
@@ -546,9 +567,26 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 	 * Represents a digital label format, e. g. HH:mm:ss:ms.
 	 */
 	private class DigitalLabelFormat extends LabelFormat {
-		// A calender to calculate time representation with.
+		// A calendar to calculate time representation with.
 		Calendar calendar = new GregorianCalendar();
 		
+		/**
+		 * Constructs a new {@link DigitalLabelFormat}. This default constructor allows
+		 * years, days, hours, minutes, seconds and milliseconds as formats. The display
+		 * name is set to "Digital". 
+		 */
+		public DigitalLabelFormat() {
+			this(new String[]{"y", "d", "h", "min", "s", "ms"}, "Digital");
+		}
+		
+		/**
+		 * Constructs a new {@link DigitalLabelFormat}. The allowed units and a name are requested
+		 * as parameters. No custom time format input is supported, but one can use a
+		 * custom suffix with this class.
+		 * 
+		 * @param allowedFormatUnits The allowed units for this format.
+		 * @param name The display name of the format.
+		 */
 		public DigitalLabelFormat(String[] allowedFormatUnits, String name){
 			super(allowedFormatUnits, name, false, true);
 		}
@@ -624,6 +662,14 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 	 */
 	private class CustomLabelFormat extends DecimalLabelFormat {
 
+		/**
+		 * Creates a new {@link CustomLabelFormat}. It allows only custom suffixes
+		 * as units and its display name is set to "Custom Format".
+		 */
+		public CustomLabelFormat() {
+			this(new String[]{"Custom Suffix"}, "Custom Format");
+		}
+		
 		protected CustomLabelFormat(String[] allowedFormatUnits, String name){
 			super(allowedFormatUnits, name, true, false);
 		}
