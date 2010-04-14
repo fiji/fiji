@@ -53,6 +53,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 import java.awt.AlphaComposite;
 import java.awt.Checkbox;
 import java.awt.Color;
@@ -79,10 +81,16 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 
 import javax.swing.BorderFactory;
@@ -92,10 +100,14 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 import weka.classifiers.AbstractClassifier;
+import weka.classifiers.pmml.consumer.PMMLClassifier;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instances;
 import weka.core.SerializationHelper;
+import weka.core.pmml.PMMLFactory;
+import weka.core.pmml.PMMLModel;
+import weka.gui.explorer.ClassifierPanel;
 import fiji.util.gui.GenericDialogPlus;
 import fiji.util.gui.OverlayedImageCanvas;
 import hr.irb.fastRandomForest.FastRandomForest;
@@ -105,10 +117,13 @@ import hr.irb.fastRandomForest.FastRandomForest;
  */
 public class Weka_Segmentation implements PlugIn 
 {
+	/** 50% alpha composite */
 	final Composite transparency050 = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.50f );
+	/** 25% alpha composite */
 	final Composite transparency025 = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.25f );
-	
+	/** opacity (in %) of the result overlay image */
 	int overlayOpacity = 33;
+	/** alpha composite for the result overlay image */
 	Composite overlayAlpha = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, overlayOpacity / 100f);
 	
 	/** maximum number of classes (labels) allowed on the GUI*/
@@ -135,6 +150,9 @@ public class Weka_Segmentation implements PlugIn
 	private Instances loadedTrainingData;
 	/** current classifier */
 	private AbstractClassifier classifier = null;
+	/** train header */
+	Instances trainHeader = null;
+	
 	/** default classifier (Fast Random Forest) */
 	private FastRandomForest rf;
 	/** flag to update the whole set of instances (used when there is any change on the features) */
@@ -172,6 +190,7 @@ public class Weka_Segmentation implements PlugIn
 	/** names of the current classes */
 	String[] classLabels = new String[]{"class 1", "class 2", "class 3", "class 4", "class 5"};
 	
+	/** Lookup table for the result overlay image */
 	LUT overlayLUT;
 	
 	/** current number of classes */
@@ -305,7 +324,7 @@ public class Weka_Segmentation implements PlugIn
 						loadClassifier();
 					}
 					else if(e.getSource() == saveClassifierButton){
-						saveCurrentClassifier();
+						saveClassifier();
 					}
 					else if(e.getSource() == loadDataButton){
 						loadTrainingData();
@@ -766,6 +785,48 @@ public class Weka_Segmentation implements PlugIn
 	}
 
 	/**
+	 * Update buttons enabling depending on the current status of the plugin
+	 */
+	private void updateButtonsEnabling()
+	{
+		final boolean classifierExists =  null != this.classifier;
+		
+		trainButton.setEnabled(classifierExists);
+		saveClassifierButton.setEnabled(classifierExists);
+		applyButton.setEnabled(classifierExists);
+		
+		final boolean resultExists = null != this.classifiedImage 
+									&& null != this.classifiedImage.getProcessor();
+		
+		overlayButton.setEnabled(resultExists);
+		resultButton.setEnabled(resultExists);
+		
+		
+		loadClassifierButton.setEnabled(true);
+		
+		loadDataButton.setEnabled(true);
+		
+		addClassButton.setEnabled(this.numOfClasses < MAX_NUM_CLASSES);
+		settingsButton.setEnabled(true);
+		
+		boolean examplesEmpty = true;
+		for(int i = 0; i < numOfClasses; i ++)
+			if(examples[i].size() > 0)
+			{
+				examplesEmpty = false;
+				break;
+			}
+		
+		saveDataButton.setEnabled(!examplesEmpty || null != loadedTrainingData);
+		
+		for(int i = 0 ; i < numOfClasses; i++)
+		{
+			exampleList[i].setEnabled(true);
+			addExampleButton[i].setEnabled(true);
+		}
+	}	
+	
+	/**
 	 * Add examples defined by the user to the corresponding list
 	 * @param i list index
 	 */
@@ -1043,6 +1104,9 @@ public class Weka_Segmentation implements PlugIn
 			IJ.log("WTF");
 		}
 		
+		// Update train header
+		this.trainHeader = new Instances(data, 0);
+		
 		// Train the classifier on the current data
 		final long start = System.currentTimeMillis();
 		try{
@@ -1067,12 +1131,7 @@ public class Weka_Segmentation implements PlugIn
 		classifiedImage = applyClassifier(wholeImageData, trainingImage.getWidth(), trainingImage.getHeight());
 
 		IJ.log("Finished segmentation of whole image.");
-		
-		overlayButton.setEnabled(true);
-		resultButton.setEnabled(true);
-		applyButton.setEnabled(true);		
-		saveClassifierButton.setEnabled(true);
-		showColorOverlay = false;
+				
 		toggleOverlay();
 
 		setButtonsEnabled(true);
@@ -1090,7 +1149,7 @@ public class Weka_Segmentation implements PlugIn
 		long start = System.currentTimeMillis();
 		ArrayList<String> classNames = null;
 		
-		if(loadedTrainingData != null)
+		if(null != loadedClassNames)
 			classNames = loadedClassNames;
 		else
 		{
@@ -1337,7 +1396,8 @@ public class Weka_Segmentation implements PlugIn
 			ImagePlus showStack = new ImagePlus("Classified Stack", testStackClassified);
 			showStack.show();
 		}
-		setButtonsEnabled(true);
+		
+		updateButtonsEnabling();		
 	}
 
 	/**
@@ -1358,7 +1418,7 @@ public class Weka_Segmentation implements PlugIn
 
 		// Set proper class names (skip empty list ones)
 		ArrayList<String> classNames = new ArrayList<String>();
-		if(loadedTrainingData == null)
+		if( null == loadedClassNames )
 		{
 			for(int i = 0; i < numOfClasses; i++)
 				if(examples[i].size() > 0)
@@ -1366,6 +1426,7 @@ public class Weka_Segmentation implements PlugIn
 		}
 		else
 			classNames = loadedClassNames;
+				
 		
 		final Instances testData = testImageFeatures.createInstances(classNames);
 		testData.setClassIndex(testData.numAttributes() - 1);
@@ -1387,25 +1448,71 @@ public class Weka_Segmentation implements PlugIn
 			return;
 		IJ.log("Loading Weka classifier from " + od.getDirectory() + od.getFileName() + "...");
 		
-		setButtonsEnabled(false);
+		setButtonsEnabled(false);				
+							
+		final AbstractClassifier oldClassifier = this.classifier;
 		
-		AbstractClassifier newClassifier = readClassifier(od.getDirectory() + od.getFileName());
+		loadClassifier(od.getDirectory() + od.getFileName());
 		
-		if(null == newClassifier)
+		if(null == classifier)
 		{
 			IJ.error("Error when loading Weka classifier from file");
+			this.classifier = oldClassifier;
+			updateButtonsEnabling();
 			return;
 		}
+				
 		
-		this.classifier = newClassifier;
-		
-		setButtonsEnabled(true);
 		
 		IJ.log("Loaded " + od.getDirectory() + od.getFileName());
+		IJ.log("Read header from " + od.getDirectory() + od.getFileName() + " (number of attributes = " + trainHeader.numAttributes() + ")");
+		
+		if(false == adjustSegmentationStateToData(trainHeader))		
+			IJ.log("Error: current segmentator state could not be updated to loaded data requirements (attributes and classes)");
+							
+		updateButtonsEnabling();
 	}
 	
 	
-	
+	/**
+	 * Read header classifier from a .model file
+	 * @param filename complete path and file name
+	 */
+	public void loadClassifier(String filename) 
+	{
+		File selected = new File(filename);
+		try {
+			InputStream is = new FileInputStream( selected );
+			if (selected.getName().endsWith(ClassifierPanel.PMML_FILE_EXTENSION)) 
+			{
+				PMMLModel model = PMMLFactory.getPMMLModel(is, null);
+				if (model instanceof PMMLClassifier) 				
+					classifier = (PMMLClassifier)model;				 
+				else 				
+					throw new Exception("PMML model is not a classification/regression model!");				
+			} 
+			else 
+			{
+				if (selected.getName().endsWith(".gz")) 				
+					is = new GZIPInputStream(is);
+				
+				ObjectInputStream objectInputStream = new ObjectInputStream(is);
+				classifier = (AbstractClassifier) objectInputStream.readObject();
+				try 
+				{ // see if we can load the header
+					trainHeader = (Instances) objectInputStream.readObject();
+				} 
+				catch (Exception e) {} // don't fuss if we can't
+				objectInputStream.close();
+			}
+		} 
+		catch (Exception e) 
+		{
+			IJ.error("Load Failed", "Error while loading classifier");
+			e.printStackTrace();
+		}	
+	}
+
 	/**
 	 * Load a Weka model (classifier) from a file
 	 * @param filename complete path and file name
@@ -1427,20 +1534,63 @@ public class Weka_Segmentation implements PlugIn
 	/**
 	 * Save current classifier into a file
 	 */
-	public void saveCurrentClassifier()
+	public void saveClassifier()
 	{
-		SaveDialog sd = new SaveDialog("Choose save file", "classifier",".model");
+		SaveDialog sd = new SaveDialog("Save model as...", "classifier",".model");
 		if (sd.getFileName()==null)
 			return;
 		
-		IJ.log("Writing classifier into a file...");
-		if( false == writeClassifier(this.classifier, sd.getDirectory() + sd.getFileName()) )
+		if( false == saveClassifier(this.classifier, this.trainHeader, sd.getDirectory() + sd.getFileName()) )
 		{
 			IJ.error("Error while writing classifier into a file");
 			return;
 		}
-		IJ.log("Saved classifier as " + sd.getDirectory() + sd.getFileName());		
 	}
+
+	/**
+	 * Write classifier into a file
+	 * 
+	 * @param classifier classifier
+	 * @param trainHeader train header containing attribute and class information
+	 * @param filename name (with complete path) of the destination file
+	 * @return false if error
+	 */
+	public static boolean saveClassifier(
+			AbstractClassifier classifier, 
+			Instances trainHeader, 
+			String filename)
+	{
+		File sFile = null;
+		boolean saveOK = true;
+
+
+		IJ.log("Saving model to file...");
+
+		try {
+			sFile = new File(filename);
+			OutputStream os = new FileOutputStream(sFile);
+			if (sFile.getName().endsWith(".gz")) 
+			{
+				os = new GZIPOutputStream(os);
+			}
+			ObjectOutputStream objectOutputStream = new ObjectOutputStream(os);
+			objectOutputStream.writeObject(classifier);
+			if (trainHeader != null) 
+				objectOutputStream.writeObject(trainHeader);
+			objectOutputStream.flush();
+			objectOutputStream.close();
+		} 
+		catch (Exception e) 
+		{
+			IJ.error("Save Failed", "Error when saving classifier into a file");
+			saveOK = false;
+		}
+		if (saveOK)
+			IJ.log("Saved model (" + filename
+					+ ") to file '" + sFile.getName() + "'");
+
+		return saveOK;
+	}	
 	
 	/**
 	 * Write classifier into a file
@@ -1473,8 +1623,24 @@ public class Weka_Segmentation implements PlugIn
 		loadedTrainingData = readDataFromARFF(od.getDirectory() + od.getFileName());
 		
 		
+		// Adjust current state to loaded data to match 
+		// attributes and classes
+		if (false == adjustSegmentationStateToData(loadedTrainingData) )
+			loadedTrainingData = null;
+		else
+			IJ.log("Loaded data: " + loadedTrainingData.numInstances() + " instances");
+	}
+	
+	/**
+	 * Adjust current segmentation state (attributes and classes) to 
+	 * loaded data
+	 * @param data loaded instances
+	 * @return false if error
+	 */
+	public boolean adjustSegmentationStateToData(Instances data)
+	{
 		// Check the features that were used in the loaded data
-		Enumeration<Attribute> attributes = loadedTrainingData.enumerateAttributes();
+		Enumeration<Attribute> attributes = data.enumerateAttributes();
 		final int numFeatures = FeatureStack.availableFeatures.length;
 		boolean[] usedFeatures = new boolean[numFeatures];
 		while(attributes.hasMoreElements())
@@ -1486,7 +1652,7 @@ public class Weka_Segmentation implements PlugIn
 		}
 		
 		// Check if classes match
-		Attribute classAttribute = loadedTrainingData.classAttribute();
+		Attribute classAttribute = data.classAttribute();
 		Enumeration<String> classValues  = classAttribute.enumerateValues();
 		
 		// Update list of names of loaded classes
@@ -1501,12 +1667,14 @@ public class Weka_Segmentation implements PlugIn
 			IJ.log("Read class name: " + className);
 			if( !className.equals(this.classLabels[j]))
 			{
-				String s = classLabels[0];
+				String currentLabels = classLabels[0];
 				for(int i = 1; i < numOfClasses; i++)
-					s = s.concat(", " + classLabels[i]);
-				IJ.error("ERROR: Loaded classes and current classes do not match!\nExpected: " + s);
-				loadedTrainingData = null;
-				return;
+					currentLabels = currentLabels.concat(", " + classLabels[i]);
+				String loadedLabels = ""; 
+				for(String name : loadedClassNames)
+					loadedLabels = loadedLabels.concat(name +  ", ");
+				IJ.error("ERROR: Loaded classes and current classes do not match!\nLoaded: " + loadedLabels + "\nFound:" + currentLabels);
+				return false;
 			}
 			j++;
 		}
@@ -1514,11 +1682,8 @@ public class Weka_Segmentation implements PlugIn
 		if(j != numOfClasses)
 		{
 			IJ.error("ERROR: Loaded number of classes and current number do not match!");
-			loadedTrainingData = null;
-			return;
-		}
-		
-		IJ.log("Loaded data: " + loadedTrainingData.numInstances() + " instances");
+			return false;
+		}				
 		
 		boolean featuresChanged = false;
 		final boolean[] oldEnableFeatures = this.featureStack.getEnableFeatures();
@@ -1538,7 +1703,10 @@ public class Weka_Segmentation implements PlugIn
 			// Force whole data to be updated
 			updateWholeData = true;
 		}
+		
+		return true;
 	}
+	
 	
 	/**
 	 * Save training model into a file
@@ -1758,7 +1926,7 @@ public class Weka_Segmentation implements PlugIn
 			this.setButtonsEnabled(false);
 			this.featureStack.setEnableFeatures(newEnableFeatures);
 			this.featureStack.updateFeatures();
-			this.setButtonsEnabled(true);
+			this.updateButtonsEnabling();
 			// Force whole data to be updated
 			updateWholeData = true;
 		}
