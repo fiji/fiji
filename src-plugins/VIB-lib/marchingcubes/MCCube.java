@@ -54,15 +54,16 @@ public final class MCCube {
 	 * return the point on the edge where intensity equals the isovalue; 
 	 * @return false if the interpolated point is beyond edge boundaries
 	 */
-	private boolean computeEdge(Point3f v1, Point3f v2, 
-				Point3f result, final Carrier car) {
+	private boolean computeEdge(Point3f v1, int i1,
+				    Point3f v2, int i2,
+				    Point3f result, final Carrier car) {
 
 		// 30 --- 50 --- 70 : t=0.5
 		// 70 --- 50 --- 30 : t=0.5
-		int i1 = car.intensity(v1);
-		int i2 = car.intensity(v2);
+		///int i1 = car.intensity(v1);
+		///int i2 = car.intensity(v2);
 		if(i2 < i1)
-			return computeEdge(v2, v1, result, car);
+			return computeEdge(v2, i2, v1, i1, result, car);
 
 		float t = (car.threshold - i1) / (float) (i2 - i1);
 		if (t >= 0 && t <= 1) {
@@ -83,20 +84,29 @@ public final class MCCube {
 	 * (null if interpolated value doesn't belong to the edge)
 	 */
 	private void computeEdges(final Carrier car) {
-		this.computeEdge(v[0], v[1], e[0], car);
-		this.computeEdge(v[1], v[2], e[1], car);
-		this.computeEdge(v[2], v[3], e[2], car);
-		this.computeEdge(v[3], v[0], e[3], car);
+		int i0 = car.intensity(v[0]);
+		int i1 = car.intensity(v[1]);
+		int i2 = car.intensity(v[2]);
+		int i3 = car.intensity(v[3]);
+		int i4 = car.intensity(v[4]);
+		int i5 = car.intensity(v[5]);
+		int i6 = car.intensity(v[6]);
+		int i7 = car.intensity(v[7]);
+
+		this.computeEdge(v[0], i0, v[1], i1, e[0], car);
+		this.computeEdge(v[1], i1, v[2], i2, e[1], car);
+		this.computeEdge(v[2], i2, v[3], i3, e[2], car);
+		this.computeEdge(v[3], i3, v[0], i0, e[3], car);
 		
-		this.computeEdge(v[4], v[5], e[4], car);
-		this.computeEdge(v[5], v[6], e[5], car);
-		this.computeEdge(v[6], v[7], e[6], car);
-		this.computeEdge(v[7], v[4], e[7], car);
+		this.computeEdge(v[4], i4, v[5], i5, e[4], car);
+		this.computeEdge(v[5], i5, v[6], i6, e[5], car);
+		this.computeEdge(v[6], i6, v[7], i7, e[6], car);
+		this.computeEdge(v[7], i7, v[4], i4, e[7], car);
 		
-		this.computeEdge(v[0], v[4], e[8], car);
-		this.computeEdge(v[1], v[5], e[9], car);
-		this.computeEdge(v[3], v[7], e[10], car);
-		this.computeEdge(v[2], v[6], e[11], car);
+		this.computeEdge(v[0], i0, v[4], i4, e[8], car);
+		this.computeEdge(v[1], i1, v[5], i5, e[9], car);
+		this.computeEdge(v[3], i3, v[7], i7, e[10], car);
+		this.computeEdge(v[2], i2, v[6], i6, e[11], car);
 	}
 	
 	/**
