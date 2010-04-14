@@ -92,7 +92,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		  sortImports, removeTrailingWhitespace, findNext,
 		  openHelp, addImport, clearScreen, nextError, previousError,
 		  openHelpWithoutFrames, nextTab, previousTab,
-		  runSelection;
+		  runSelection, extractSourceJar;
 	JMenu tabsMenu;
 	int tabsMenuTabsStart;
 	Set<JMenuItem> tabsMenuItems;
@@ -236,8 +236,11 @@ public class TextEditor extends JFrame implements ActionListener,
 			"Open Help for Class...", 0, 0);
 		openHelpWithoutFrames.setMnemonic(KeyEvent.VK_O);
 		openHelp = addToMenu(tools,
-				"Open Help for Class (with frames)...", 0, 0);
+			"Open Help for Class (with frames)...", 0, 0);
 		openHelp.setMnemonic(KeyEvent.VK_P);
+		extractSourceJar = addToMenu(tools,
+			"Extract source .jar...", 0, 0);
+		extractSourceJar.setMnemonic(KeyEvent.VK_E);
 		mbar.add(tools);
 
 		tabsMenu = new JMenu("Tabs");
@@ -724,6 +727,8 @@ public class TextEditor extends JFrame implements ActionListener,
 			openHelp(null);
 		else if (source == openHelpWithoutFrames)
 			openHelp(null, false);
+		else if (source == extractSourceJar)
+			extractSourceJar();
 		else if (source == nextTab)
 			switchTabRelative(1);
 		else if (source == previousTab)
@@ -1425,6 +1430,26 @@ public class TextEditor extends JFrame implements ActionListener,
 			return;
 		getEditorPane().getClassNameFunctions()
 			.openHelpForClass(className, withFrames);
+	}
+
+	public void extractSourceJar() {
+		OpenDialog dialog = new OpenDialog("Open...", "");
+		String name = dialog.getFileName();
+		if (name != null)
+			extractSourceJar(dialog.getDirectory() + name);
+	}
+
+	public void extractSourceJar(String path) {
+		try {
+			FileFunctions functions = new FileFunctions();
+			List<String> paths = functions.extractSourceJar(path);
+			for (String file : paths)
+				if (!functions.isBinaryFile(file))
+					open(file);
+		} catch (IOException e) {
+			error("There was a problem opening " + path
+				+ ": " + e.getMessage());
+		}
 	}
 
 	protected void error(String message) {
