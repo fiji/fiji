@@ -17,7 +17,7 @@ public abstract class TwoOperandsFunction <T extends NumericType<T>>  extends Po
 	 * @param img2  The second image 
 	 * @return  The resulting image
 	 */
-//	public abstract Image<FloatType> evaluate(Image<T> img1, Image<T> img2);
+	public abstract Image<FloatType> evaluate(Image<T> img1, Image<T> img2);
 
 	/**
 	 * Singleton expansion. Evaluate this function on an image and an image that would be of same 
@@ -26,7 +26,7 @@ public abstract class TwoOperandsFunction <T extends NumericType<T>>  extends Po
 	 * @param alpha  The number to do singleton expansion on 
 	 * @return  The resulting image 
 	 */
-//	public abstract Image<FloatType> evaluate(Image<T> img, Number alpha);
+	public abstract Image<FloatType> evaluate(Image<T> img, T alpha);
 
 	/**
 	 * Evaluate this function on two numbers. This class only allow operation on two numbers 
@@ -37,7 +37,7 @@ public abstract class TwoOperandsFunction <T extends NumericType<T>>  extends Po
 	 */
 	 public abstract FloatType evaluate(T type, T type2);
 
-
+	 
 	@SuppressWarnings("unchecked")
 	@Override
 	public void run(Stack inStack)	throws ParseException {
@@ -52,7 +52,7 @@ public abstract class TwoOperandsFunction <T extends NumericType<T>>  extends Po
 			if (param2 instanceof Image<?>) {
 				result = evaluate((Image<T>)param1, (Image<T>)param2);
 			} else if (param2 instanceof Number) {
-				Number t2 = (Number)param2;
+				T t2 = (T) new FloatType(((Number)param2).floatValue());
 				result = evaluate((Image<T>)param1, t2);
 			} else {
 				throw new ParseException("In function "+this.getClass().getSimpleName()
@@ -61,19 +61,18 @@ public abstract class TwoOperandsFunction <T extends NumericType<T>>  extends Po
 		
 		} else if (param1 instanceof Number) {
 
-			T t1 = new FloatType(1.0f);
+			T t1 = (T) new FloatType(((Number)param1).floatValue());
 			
 			if (param2 instanceof Image<?>) {
 				result = evaluate((Image<T>)param2, t1);
 			} else if (param2 instanceof Number) {
-				T t2; // = (Number)param2;
+				T t2 = (T) new FloatType(((Number)param2).floatValue());
 				result = evaluate(t1, t2);
 			} else {
 				throw new ParseException("In function "+this.getClass().getSimpleName()
 						+": Bad type of operand 2: "+param2.getClass().getSimpleName() );
 			}
 
-			
 		} else {
 			throw new ParseException("In function "+this.getClass().getSimpleName()
 					+": Bad type of operand 1: "+param1.getClass().getSimpleName() );
