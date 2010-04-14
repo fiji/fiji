@@ -95,6 +95,7 @@ import weka.classifiers.AbstractClassifier;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instances;
+import weka.core.SerializationHelper;
 import fiji.util.gui.GenericDialogPlus;
 import fiji.util.gui.OverlayedImageCanvas;
 import hr.irb.fastRandomForest.FastRandomForest;
@@ -147,6 +148,10 @@ public class Weka_Segmentation implements PlugIn
 	final JButton resultButton;
 	/** apply classifier button */
 	final JButton applyButton;
+	/** load classifier button */
+	final JButton loadClassifierButton;
+	/** save classifier button */
+	final JButton saveClassifierButton;
 	/** load data button */
 	final JButton loadDataButton;
 	/** save data button */
@@ -226,8 +231,15 @@ public class Weka_Segmentation implements PlugIn
 		
 		
 		applyButton = new JButton ("Apply classifier");
-		applyButton.setToolTipText("Load data and apply current classifier");
+		applyButton.setToolTipText("Apply current classifier to a single image or stack");
 		applyButton.setEnabled(false);
+		
+		loadClassifierButton = new JButton ("Load classifier");
+		loadClassifierButton.setToolTipText("Load Weka classifier from a file");
+		
+		saveClassifierButton = new JButton ("Save classifier");
+		saveClassifierButton.setToolTipText("Save current classifier into a file");
+		saveClassifierButton.setEnabled(false);
 		
 		loadDataButton = new JButton ("Load data");
 		loadDataButton.setToolTipText("Load previous segmentation from an ARFF file");
@@ -288,6 +300,12 @@ public class Weka_Segmentation implements PlugIn
 					}
 					else if(e.getSource() == applyButton){
 						applyClassifierToTestData();
+					}
+					else if(e.getSource() == loadClassifierButton){
+						loadClassifier();
+					}
+					else if(e.getSource() == saveClassifierButton){
+						saveCurrentClassifier();
 					}
 					else if(e.getSource() == loadDataButton){
 						loadTrainingData();
@@ -480,6 +498,8 @@ public class Weka_Segmentation implements PlugIn
 			overlayButton.addActionListener(listener);
 			resultButton.addActionListener(listener);
 			applyButton.addActionListener(listener);
+			loadClassifierButton.addActionListener(listener);
+			saveClassifierButton.addActionListener(listener);
 			loadDataButton.addActionListener(listener);
 			saveDataButton.addActionListener(listener);
 			addClassButton.addActionListener(listener);
@@ -520,6 +540,10 @@ public class Weka_Segmentation implements PlugIn
 			optionsJPanel.setLayout(optionsLayout);
 			
 			optionsJPanel.add(applyButton, optionsConstraints);
+			optionsConstraints.gridy++;
+			optionsJPanel.add(loadClassifierButton, optionsConstraints);
+			optionsConstraints.gridy++;
+			optionsJPanel.add(saveClassifierButton, optionsConstraints);
 			optionsConstraints.gridy++;
 			optionsJPanel.add(loadDataButton, optionsConstraints);
 			optionsConstraints.gridy++;
@@ -600,6 +624,8 @@ public class Weka_Segmentation implements PlugIn
 					overlayButton.removeActionListener(listener);
 					resultButton.removeActionListener(listener);
 					applyButton.removeActionListener(listener);
+					loadClassifierButton.removeActionListener(listener);
+					saveClassifierButton.removeActionListener(listener);
 					loadDataButton.removeActionListener(listener);
 					saveDataButton.removeActionListener(listener);
 					addClassButton.removeActionListener(listener);
@@ -617,15 +643,6 @@ public class Weka_Segmentation implements PlugIn
 				}
 			});
 		}
-
-		/* 		public void changeDisplayImage(ImagePlus imp){
-  			super.getImagePlus().setProcessor(imp.getProcessor());
-  			super.getImagePlus().setTitle(imp.getTitle());
-  		}private void saveFeatureStack() {
-					// TODO Auto-generated method stub
-					
-				}
-		 */
 
 
 		/**
@@ -735,6 +752,8 @@ public class Weka_Segmentation implements PlugIn
 		overlayButton.setEnabled(s);
 		resultButton.setEnabled(s);
 		applyButton.setEnabled(s);
+		loadClassifierButton.setEnabled(s);
+		saveClassifierButton.setEnabled(s);
 		loadDataButton.setEnabled(s);
 		saveDataButton.setEnabled(s);
 		addClassButton.setEnabled(s);
@@ -795,7 +814,7 @@ public class Weka_Segmentation implements PlugIn
 		try{
 			BufferedWriter out = new BufferedWriter(
 					new OutputStreamWriter(
-							new FileOutputStream( filename) ) );
+							new FileOutputStream( filename ) ) );
 			try{	
 				out.write(data.toString());
 				out.close();
@@ -845,14 +864,19 @@ public class Weka_Segmentation implements PlugIn
 		final ArrayList<String> classes = new ArrayList<String>();
 
 		int numOfInstances = 0;
+		int numOfUsedClasses = 0;
 		for(int i = 0; i < numOfClasses ; i ++)
 		{
 			// Do not add empty lists
 			if(examples[i].size() > 0)
+			{
 				classes.add(classLabels[i]);
+				numOfUsedClasses++;
+			}
 			numOfInstances += examples[i].size();
 		}
 
+				
 		attributes.add(new Attribute("class", classes));
 
 		final Instances trainingData =  new Instances("segment", attributes, numOfInstances);
@@ -861,7 +885,7 @@ public class Weka_Segmentation implements PlugIn
 		
 		// For all classes
 		for(int l = 0; l < numOfClasses; l++)
-		{
+		{			
 			int nl = 0;
 			// Read all lists of examples
 			for(int j=0; j<examples[l].size(); j++)
@@ -955,9 +979,10 @@ public class Weka_Segmentation implements PlugIn
 				
 			}
 			
-			IJ.log("# of pixels selected as " + classLabels[l] + ": " +nl);
+			IJ.log("# of pixels selected as " + classLabels[l] + ": " +nl);						
 		}
 
+				
 		return trainingData;
 	}
 
@@ -1045,7 +1070,8 @@ public class Weka_Segmentation implements PlugIn
 		
 		overlayButton.setEnabled(true);
 		resultButton.setEnabled(true);
-		applyButton.setEnabled(true);
+		applyButton.setEnabled(true);		
+		saveClassifierButton.setEnabled(true);
 		showColorOverlay = false;
 		toggleOverlay();
 
@@ -1352,6 +1378,90 @@ public class Weka_Segmentation implements PlugIn
 	}
 
 	/**
+	 * Load a Weka classifier from a file
+	 */
+	public void loadClassifier()
+	{
+		OpenDialog od = new OpenDialog("Choose Weka classifier file","");
+		if (od.getFileName()==null)
+			return;
+		IJ.log("Loading Weka classifier from " + od.getDirectory() + od.getFileName() + "...");
+		
+		setButtonsEnabled(false);
+		
+		AbstractClassifier newClassifier = readClassifier(od.getDirectory() + od.getFileName());
+		
+		if(null == newClassifier)
+		{
+			IJ.error("Error when loading Weka classifier from file");
+			return;
+		}
+		
+		this.classifier = newClassifier;
+		
+		setButtonsEnabled(true);
+		
+		IJ.log("Loaded " + od.getDirectory() + od.getFileName());
+	}
+	
+	
+	
+	/**
+	 * Load a Weka model (classifier) from a file
+	 * @param filename complete path and file name
+	 * @return classifier
+	 */
+	public static AbstractClassifier readClassifier(String filename) 
+	{
+		AbstractClassifier cls = null;
+		// deserialize model
+		try {
+			cls = (AbstractClassifier) SerializationHelper.read(filename);
+		} catch (Exception e) {
+			IJ.log("Error when loading classifier from " + filename);
+			e.printStackTrace();
+		}
+		return cls;
+	}
+
+	/**
+	 * Save current classifier into a file
+	 */
+	public void saveCurrentClassifier()
+	{
+		SaveDialog sd = new SaveDialog("Choose save file", "classifier",".model");
+		if (sd.getFileName()==null)
+			return;
+		
+		IJ.log("Writing classifier into a file...");
+		if( false == writeClassifier(this.classifier, sd.getDirectory() + sd.getFileName()) )
+		{
+			IJ.error("Error while writing classifier into a file");
+			return;
+		}
+		IJ.log("Saved classifier as " + sd.getDirectory() + sd.getFileName());		
+	}
+	
+	/**
+	 * Write classifier into a file
+	 * 
+	 * @param cls classifier
+	 * @param filename name (with complete path) of the destination file
+	 * @return false if error
+	 */
+	public static boolean writeClassifier(AbstractClassifier cls, String filename)
+	{
+		try {
+			SerializationHelper.write(filename, cls);
+		} catch (Exception e) {
+			IJ.log("Error while writing classifier into a file");
+			e.printStackTrace();
+			return false;
+		}
+		return true;
+	}
+	
+	/**
 	 * Load previously saved data
 	 */
 	public void loadTrainingData()
@@ -1447,6 +1557,13 @@ public class Weka_Segmentation implements PlugIn
 			return;
 		}
 
+		if(featureStack.getSize() < 2)
+		{
+			setButtonsEnabled(false);
+			featureStack.updateFeatures();
+			setButtonsEnabled(true);
+		}
+		
 		Instances data = createTrainingInstances();
 		data.setClassIndex(data.numAttributes() - 1);
 		if (null != loadedTrainingData && null != data){
@@ -1465,7 +1582,7 @@ public class Weka_Segmentation implements PlugIn
 			return;
 		IJ.log("Writing training data: " + data.numInstances() + " instances...");
 		writeDataToARFF(data, sd.getDirectory() + sd.getFileName());
-		IJ.log("Wrote training data: " + sd.getDirectory() + " " + sd.getFileName());
+		IJ.log("Saved training data: " + sd.getDirectory() + " " + sd.getFileName());
 	}
 	
 	/**
@@ -1550,8 +1667,6 @@ public class Weka_Segmentation implements PlugIn
 		}
 		
 		gd.addMessage("General options:");
-		//FIXME normalization
-		//gd.addCheckbox("Normalize data", this.featureStack.isNormalized());
 		
 		gd.addMessage("Fast Random Forest settings:");
 		gd.addNumericField("Number of trees:", numOfTrees, 0);
@@ -1584,10 +1699,7 @@ public class Weka_Segmentation implements PlugIn
 			if (newEnableFeatures[i] != oldEnableFeatures[i])
 				featuresChanged = true;
 		}
-		//FIXME normalization
-		// Normalization
-		//final boolean normalize = gd.getNextBoolean();
-		final boolean normalize = false;
+
 		
 		// Read fast random forest parameters and check if changed
 		final int newNumTrees = (int) gd.getNextNumber();
@@ -1625,6 +1737,7 @@ public class Weka_Segmentation implements PlugIn
 			if( showColorOverlay )
 				displayImage.updateAndDraw();
 		}
+
 		
 		// If there is a change in the class names, 
 		// the data set (instances) must be updated.
@@ -1640,10 +1753,9 @@ public class Weka_Segmentation implements PlugIn
 			updateClassifier(newNumTrees, newRandomFeatures);
 		
 		// Update feature stack if necessary
-		if(featuresChanged || normalize != this.featureStack.isNormalized())
+		if(featuresChanged)
 		{
 			this.setButtonsEnabled(false);
-			this.featureStack.setNormalize(normalize);
 			this.featureStack.setEnableFeatures(newEnableFeatures);
 			this.featureStack.updateFeatures();
 			this.setButtonsEnabled(true);
