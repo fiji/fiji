@@ -74,8 +74,10 @@ public class PlugInExecutor {
 		try {
 			IJ.resetEscape();
 			ClassLoader classLoader = newClassLoader ?
-				new FijiClassLoader(IJ.getDirectory("plugins"))
-				: getClassLoader();
+				new FijiClassLoader(new String[] {
+					IJ.getDirectory("plugins"),
+					System.getProperty("fiji.dir") + "/jars"
+				}) : getClassLoader();
 			Class clazz = classLoader.loadClass(plugin);
 			try {
 				Object object = clazz.newInstance();
