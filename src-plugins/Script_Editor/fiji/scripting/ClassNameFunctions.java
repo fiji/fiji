@@ -44,8 +44,11 @@ public class ClassNameFunctions {
 	 */
 	public String getFullName(String className) {
 		List<String> list = names.getFullPackageNames(className);
-		if (list.size() == 0)
+		if (list.size() == 0) {
+			JOptionPane.showMessageDialog(parent, "Class '"
+					+ className + "' was not found!");
 			return null;
+		}
 		if (list.size() == 1)
 			return list.get(0);
 		String[] names = list.toArray(new String[list.size()]);
@@ -59,11 +62,8 @@ public class ClassNameFunctions {
 
 	public void openHelpForClass(String className, boolean withFrames) {
 		String fullName = getFullName(className);
-		if (fullName == null) {
-			JOptionPane.showMessageDialog(null, "Class '"
-					+ className + "' was not found!");
+		if (fullName == null)
 			return;
-		}
 		String urlPrefix;
 		if (fullName.startsWith("java.") ||
 				fullName.startsWith("javax."))
