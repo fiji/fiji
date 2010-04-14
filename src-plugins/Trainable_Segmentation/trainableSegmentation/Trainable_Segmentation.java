@@ -1459,6 +1459,13 @@ public class Trainable_Segmentation implements PlugIn
 			IJ.showMessage("There is no data to save");
 			return;
 		}
+		
+		if(featureStack.getSize() < 2)
+		{
+			setButtonsEnabled(false);
+			featureStack.updateFeatures();
+			setButtonsEnabled(true);
+		}
 
 		Instances data = createTrainingInstances();
 		data.setClassIndex(data.numAttributes() - 1);
