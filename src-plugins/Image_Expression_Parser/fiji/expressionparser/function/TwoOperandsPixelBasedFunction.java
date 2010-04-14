@@ -1,39 +1,57 @@
 package fiji.expressionparser.function;
 
-import mpicbg.imglib.container.imageplus.ImagePlusContainerFactory;
-import mpicbg.imglib.cursor.Cursor;
+import java.util.Stack;
+
 import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.type.NumericType;
 import mpicbg.imglib.type.numeric.FloatType;
 
-public abstract class TwoOperandsPixelBasedFunction<T extends NumericType<T>> extends TwoOperandsFunction<T> {
+import org.nfunk.jep.ParseException;
 
+public abstract class TwoOperandsPixelBasedFunction <T extends NumericType<T>> extends PixelBasedFunction<T> {
+
+	@SuppressWarnings("unchecked")
 	@Override
-	public Image<FloatType> evaluate(Image<T> img1, Image<T> img2) {
-		
-		// Create target image
-		Image<FloatType> result = new ImageFactory<FloatType>(new FloatType(), new ImagePlusContainerFactory())
-			.createImage(img1.getDimensions(), String.format("%s %s %s", img1.getName(), toString(), img2.getName()));
-		
-		// Check if all Containers are compatibles
-		boolean compatible_containers = img1.getContainer().compareStorageContainerCompatibility(img2.getContainer());
-		
-		if (compatible_containers) {
-			Cursor<T> c1 = img1.createCursor();
-			Cursor<T> c2 = img2.createCursor();
-			Cursor<FloatType> rc = result.createCursor();
-			while (c1.hasNext()) {
-				c1.fwd();
-				c2.fwd();
-				rc.fwd();
-				rc.getType().set(evaluate(c1.getType(), c2.getType()));
+	public void run(final Stack inStack) throws ParseException {
+		checkStack(inStack); // check the stack
+
+		Object param2 = inStack.pop();
+		Object param1 = inStack.pop();
+		Object result = null;
+
+		if (param1 instanceof Image<?>) {
+			
+			if (param2 instanceof Image<?>) {
+				result = evaluate((Image<T>)param1, (Image<T>)param2);
+			} else if (param2 instanceof Number) {
+				T t2 = (T) new FloatType(1.0f);
+				result = evaluate((Image<T>)param1, t2);
+			} else {
+				throw new ParseException("In function "+this.getClass().getSimpleName()
+						+": Bad type of operand 2: "+param2.getClass().getSimpleName() );
 			}
+		
+		} else if (param1 instanceof Number) {
+
+			T t1 = (T) new FloatType(((Number)param1).floatValue());
+			
+			if (param2 instanceof Image<?>) {
+				result = evaluate((Image<T>)param2, t1);
+			} else if (param2 instanceof Number) {
+				T t2 = (T) new FloatType(((Number)param2).floatValue());
+				result = new Float(evaluate(t1, t2));
+			} else {
+				throw new ParseException("In function "+this.getClass().getSimpleName()
+						+": Bad type of operand 2: "+param2.getClass().getSimpleName() );
+			}
+
+		} else {
+			throw new ParseException("In function "+this.getClass().getSimpleName()
+					+": Bad type of operand 1: "+param1.getClass().getSimpleName() );
 		}
 		
-		return result;
+		inStack.push(result);
 	}
-
 
 
 }

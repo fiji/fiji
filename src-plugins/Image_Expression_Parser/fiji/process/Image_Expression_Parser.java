@@ -55,6 +55,7 @@ import org.nfunk.jep.type.DoubleNumberFactory;
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com>
  */	
 public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn, ActionListener {
+//public class Image_Expression_Parser<T extends RealType<T>> implements PlugIn, ActionListener {
 	
 	protected boolean user_has_canceled = false;
 	/** Array of Imglib images, on which calculations will be done */
@@ -242,6 +243,7 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 					var = it.next();
 					cursor = cursors.get(var);
 					cursor.fwd(); // since we are compatible, we are sure that they will iterate the same way
+//					local_value = cursor.getType().getRealFloat();
 					local_value = cursor.getType().getReal();
 					parser.addVariable(var, local_value);
 				}
@@ -278,6 +280,7 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 					var = it.next();
 					cursor = cursors.get(var);
 					cursor.setPosition(result_cursor); // the result cursor dictates its position to other cursors
+//					local_value = cursor.getType().getRealFloat();
 					local_value = cursor.getType().getReal();
 					parser.addVariable(var, local_value);
 				}
