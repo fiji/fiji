@@ -1,4 +1,4 @@
-package fiji.parser.function;
+package fiji.expressionparser.function;
 
 import java.util.Stack;
 
@@ -11,9 +11,9 @@ import mpicbg.imglib.type.numeric.FloatType;
 
 import org.nfunk.jep.ParseException;
 
-public class Multiply<T extends NumericType<T>> extends org.nfunk.jep.function.Multiply {
+public class ImgLibMultiply<T extends NumericType<T>> extends org.nfunk.jep.function.Multiply {
 
-	public Multiply() {
+	public ImgLibMultiply() {
 		super();
 	}
 

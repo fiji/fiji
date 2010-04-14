@@ -1,4 +1,4 @@
-package fiji.parser;
+package fiji.expressionparser;
 
 import mpicbg.imglib.type.NumericType;
 

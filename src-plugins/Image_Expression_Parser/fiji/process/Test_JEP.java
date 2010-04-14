@@ -1,6 +1,6 @@
 package fiji.process;
 
-import fiji.parser.ImgLibParser;
+import fiji.expressionparser.ImgLibParser;
 import ij.IJ;
 import ij.ImagePlus;
 import mpicbg.imglib.image.Image;
