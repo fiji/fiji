@@ -31,7 +31,6 @@ targets = {
   'RSyntaxTextArea':'jars/rsyntaxtextarea.jar',
   #'Retrotranslator':'',
   'TrakEM2':'plugins/TrakEM2_.jar',
-  'VIB':'plugins/VIB_.jar',
   'batik':'jars/batik.jar',
   'bio-formats':'plugins/loci_tools.jar',
   'clojure':'jars/clojure.jar',
@@ -53,11 +52,8 @@ for key in targets:
   if target is not '':
     submodules[target] = key
 
-# TODO - Switch ImageJA submodule to use master branch with Fiji by default.
-
 # non-default branch to use for certain known submodules
 branches = {
-  'ImageJA':'fiji',
 }
 
 # updates an already-initialized submodule

@@ -38,6 +38,18 @@ public class FijiClassLoader extends ClassLoader {
 		addPath(path);
 	}
 
+	public FijiClassLoader(Iterable<String> paths) throws IOException {
+		this();
+		for (String path : paths)
+			addPath(path);
+	}
+
+	public FijiClassLoader(String[] paths) throws IOException {
+		this();
+		for (String path : paths)
+			addPath(path);
+	}
+
 	public void addPath(String path) throws IOException {
 		if (path.endsWith("/.rsrc"))
 			return;
