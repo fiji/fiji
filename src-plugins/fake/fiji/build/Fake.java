@@ -103,9 +103,11 @@ public class Fake {
 		String fijiHome = URLDecoder.decode(url.toString());
 		if (getPlatform().startsWith("win"))
 			fijiHome = fijiHome.replace('\\', '/');
-		if (!fijiHome.endsWith("/fiji/build/Fake.class"))
+		if (!fijiHome.endsWith("/Fake.class"))
 			throw new RuntimeException("unexpected URL: " + url);
-		fijiHome = fijiHome.substring(0, fijiHome.length() - 21);
+		fijiHome = fijiHome.substring(0, fijiHome.length() - 10);
+		if (fijiHome.endsWith("/fiji/build/"))
+			fijiHome = fijiHome.substring(0, fijiHome.length() - 11);
 		int slash = fijiHome.lastIndexOf('/', fijiHome.length() - 2);
 		if (fijiHome.startsWith("jar:file:") &&
 				fijiHome.endsWith(".jar!/")) {
