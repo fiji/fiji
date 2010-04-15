@@ -31,7 +31,6 @@ public class ImgLibGaussConv <T extends RealType<T>> extends PostfixMathCommand 
 		if ( !(param2 instanceof Number) ) {
 			throw new ParseException("In function "+this.getClass().getSimpleName()
 					+": Second operand must be a scalar, got a "+param1.getClass().getSimpleName() );
-			
 		}
 		Image<T> img = (Image<T>) param1;
 		Number sigma = (Number) param2;
