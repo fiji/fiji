@@ -791,13 +791,13 @@ public class Weka_Segmentation implements PlugIn
 	{
 		final boolean classifierExists =  null != this.classifier;
 		
-		trainButton.setEnabled(classifierExists);
-		saveClassifierButton.setEnabled(classifierExists);
+		trainButton.setEnabled(classifierExists);		
 		applyButton.setEnabled(classifierExists);
 		
 		final boolean resultExists = null != this.classifiedImage 
 									&& null != this.classifiedImage.getProcessor();
 		
+		saveClassifierButton.setEnabled(resultExists);
 		overlayButton.setEnabled(resultExists);
 		resultButton.setEnabled(resultExists);
 		
@@ -1120,7 +1120,7 @@ public class Weka_Segmentation implements PlugIn
 		final long end = System.currentTimeMillis();
 		final DecimalFormat df = new DecimalFormat("0.0000");
 		
-		final String outOfBagError = (rf != null) ? ", out of bag error: " + df.format(rf.measureOutOfBagError()) : "";
+		final String outOfBagError = (classifier instanceof FastRandomForest) ? ", out of bag error: " + df.format(rf.measureOutOfBagError()) : "";
 		IJ.log("Finished training in "+(end-start)+"ms"+ outOfBagError);
 		
 		if(updateWholeData)
@@ -1135,8 +1135,6 @@ public class Weka_Segmentation implements PlugIn
 		toggleOverlay();
 
 		setButtonsEnabled(true);
-		
-		//featureStack.show();
 	}
 	
 	/**
@@ -1452,23 +1450,26 @@ public class Weka_Segmentation implements PlugIn
 							
 		final AbstractClassifier oldClassifier = this.classifier;
 		
-		loadClassifier(od.getDirectory() + od.getFileName());
 		
-		if(null == classifier)
+		// Try to load Weka model (classifier and train header)
+		if( false == loadClassifier(od.getDirectory() + od.getFileName()) )
 		{
 			IJ.error("Error when loading Weka classifier from file");
 			this.classifier = oldClassifier;
 			updateButtonsEnabling();
 			return;
 		}
-				
-		
-		
+								
 		IJ.log("Loaded " + od.getDirectory() + od.getFileName());
 		IJ.log("Read header from " + od.getDirectory() + od.getFileName() + " (number of attributes = " + trainHeader.numAttributes() + ")");
 		
+		// Check if the loaded information corresponds to current state of the segmentator
+		// (the attributes can be adjusted, but the classes must match)
 		if(false == adjustSegmentationStateToData(trainHeader))		
+		{
 			IJ.log("Error: current segmentator state could not be updated to loaded data requirements (attributes and classes)");
+			this.classifier = oldClassifier;
+		}
 							
 		updateButtonsEnabling();
 	}
@@ -1477,8 +1478,9 @@ public class Weka_Segmentation implements PlugIn
 	/**
 	 * Read header classifier from a .model file
 	 * @param filename complete path and file name
+	 * @return false if error
 	 */
-	public void loadClassifier(String filename) 
+	public boolean loadClassifier(String filename) 
 	{
 		File selected = new File(filename);
 		try {
@@ -1502,15 +1504,25 @@ public class Weka_Segmentation implements PlugIn
 				{ // see if we can load the header
 					trainHeader = (Instances) objectInputStream.readObject();
 				} 
-				catch (Exception e) {} // don't fuss if we can't
-				objectInputStream.close();
+				catch (Exception e) 
+				{
+					IJ.error("Load Failed", "Error while loading train header");
+					return false;
+				} 
+				finally
+				{
+					objectInputStream.close();
+				}
 			}
 		} 
 		catch (Exception e) 
 		{
 			IJ.error("Load Failed", "Error while loading classifier");
 			e.printStackTrace();
+			return false;
 		}	
+		
+		return true;
 	}
 
 	/**
@@ -1663,16 +1675,19 @@ public class Weka_Segmentation implements PlugIn
 		{
 			final String className = classValues.nextElement().trim();
 			loadedClassNames.add(className);
-			
+		}
+		
+		for(String className : loadedClassNames)
+		{
 			IJ.log("Read class name: " + className);
 			if( !className.equals(this.classLabels[j]))
 			{
 				String currentLabels = classLabels[0];
 				for(int i = 1; i < numOfClasses; i++)
 					currentLabels = currentLabels.concat(", " + classLabels[i]);
-				String loadedLabels = ""; 
-				for(String name : loadedClassNames)
-					loadedLabels = loadedLabels.concat(name +  ", ");
+				String loadedLabels = loadedClassNames.get(0); 
+				for(int i = 1; i < loadedClassNames.size(); i++)
+					loadedLabels = loadedLabels.concat(", " + loadedClassNames.get(i));
 				IJ.error("ERROR: Loaded classes and current classes do not match!\nLoaded: " + loadedLabels + "\nFound:" + currentLabels);
 				return false;
 			}
