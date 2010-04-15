@@ -81,6 +81,14 @@ if (bsh.args.length > 0 && bsh.args[0].equals("--check-fakefile")) {
 	return;
 }
 
+if (bsh.args[0].equals("-v")) {
+	import ij.IJ;
+	IJ.debugMode = true;
+	args = new String[bsh.args.length - 1];
+	System.arraycopy(bsh.args, 1, args, 0, args.length);
+	bsh.args = args;
+}
+
 for (String arg : bsh.args) {
 	print("[" + arg + "]");
 	dependencies = da.getDependencies(arg);
