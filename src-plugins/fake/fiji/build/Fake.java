@@ -1115,24 +1115,24 @@ public class Fake {
 				return result;
 			}
 
-			String getVar(String key) {
+			public String getVar(String key) {
 				return getVariable(key, target);
 			}
 
-			String getVar(String key, String subkey) {
+			public String getVar(String key, String subkey) {
 				return getVariable(key, subkey, target);
 			}
 
-			boolean getVarBool(String key) {
+			public boolean getVarBool(String key) {
 				return getBool(getVariable(key, target));
 			}
 
-			boolean getVarBool(String key, String subkey) {
+			public boolean getVarBool(String key, String subkey) {
 				return getBool(getVariable(key,
 							subkey, target));
 			}
 
-			File getBuildDir() {
+			public File getBuildDir() {
 				String dir = getVar("builddir");
 				if (dir == null || dir.equals(""))
 					return null;
@@ -1431,7 +1431,7 @@ public class Fake {
 				}
 			}
 
-			String getVar(String var) {
+			public String getVar(String var) {
 				String value = super.getVar(var);
 				if (var.toUpperCase().equals("CLASSPATH")) {
 					if( classPath != null ) {
