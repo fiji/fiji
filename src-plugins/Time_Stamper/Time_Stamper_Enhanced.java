@@ -1,32 +1,60 @@
-// This plugin is a merge of the Time_Stamper plugins from ImageJ and from Tony Collins' plugin collection at macbiophotonics. 
-// it aims to combine all the functionality of both plugins and refine and enhance their functionality,
-//for instance by adding the preview functionality suggested by Michael Weber.
+	/**
+	 * This plugin is a merge of the Time_Stamper plugins from ImageJ and from Tony Collins' plugin collection at macbiophotonics. 
+	it aims to combine all the functionality of both plugins and refine and enhance their functionality
+	for instance by adding the preview functionality suggested by Michael Weber.
 
-// It does not know about hyper stacks - multiple channels..... only works as expected for normal stacks.
-// That meeans a single channel time series stack. 
+	*It does not know about hyper stacks - multiple channels..... only works as expected for normal stacks.
+	That means a single channel time series or z stack. 
 
-// Dan White MPI-CBG , began hacking on 15.04.09
+	*We might want to rename this tool "Stack Labeler", since it will handle labeling of Z stacks as well as time stacks. 
 
+	*The sequence of calls to an ExtendedPlugInFilter is the following:
+	- setup(arg, imp): The filter should return its flags.
+	- showDialog(imp, command, pfr): The filter should display the dialog asking for parameters (if any)
+	and do all operations needed to prepare for processing the individual image(s) (E.g., slices of a stack).
+	For preview, a separate thread may call setNPasses(nPasses) and run(ip) while the dialog is displayed.
+	The filter should return its flags.
+	- setNPasses(nPasses): Informs the filter of the number of calls of run(ip) that will follow.
+	- run(ip): Processing of the image(s). With the CONVERT_TO_FLOAT flag,
+	this method will be called for each color channel of an RGB image.
+	With DOES_STACKS, it will be called for each slice of a stack.
+	- setup("final", imp): called only if flag FINAL_PROCESSING has been specified.
+	Flag DONE stops this sequence of calls.
+
+	*Here is a list (in no particular order) of requested and "would be nice" features that could be added:
+	-prevent longest label running off side of image  - ok
+	-choose colour
+	-font selection
+	-top left, bottom right etc.  drop down menu 
+	-Hyperstacks z, t, c
+	-read correct time / z units, start and intervals from image metadata. Get it from Image Properties?
+	-every nth slice labelled
+	-label only slices where time became greater than multiples of some time eg every 5 min. 
+	-preview with live update when change GUI
+	-preview with stack slider in the GUI. 
+	-Use Java Date for robust formatting of dates/times counted in milliseconds. 
+	-switch unit according to magnitude of number eg sec or min or nm or microns etc. 
+	- background colour for label. 
+
+	*Dan White MPI-CBG , began hacking on 15.04.09. Work continued from 02-2010 by Tomka and Dan
+*/
+ 
 import ij.IJ;
 import ij.ImagePlus;
-import ij.gui.ColorChooser;
 import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
+import ij.gui.Roi;
 import ij.gui.TextRoi;
 import ij.gui.Toolbar;
 import ij.plugin.filter.ExtendedPlugInFilter;
 import ij.plugin.filter.PlugInFilterRunner;
-import ij.plugin.frame.ColorPicker;
-import ij.plugin.frame.Fonts;
 import ij.process.ImageProcessor;
 
 import java.awt.AWTEvent;
-import java.awt.Button;
 import java.awt.Checkbox;
 import java.awt.Choice;
 import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.Frame;
 import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
@@ -34,19 +62,12 @@ import java.awt.Panel;
 import java.awt.Rectangle;
 import java.awt.Scrollbar;
 import java.awt.TextField;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
-
-import javax.swing.BorderFactory;
-import javax.swing.JColorChooser;
-import javax.swing.border.Border;
-import javax.swing.text.StyleConstants.FontConstants;
 
 public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListener { //, ActionListener {
 					// http://rsb.info.nih.gov/ij/developer/api/ij/plugin/filter/ExtendedPlugInFilter.html
@@ -62,11 +83,9 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 	ImagePlus imp;
 	int x = 2;
 	int y = 15;
-	int size = 12;  // default font size
-//	int maxWidth; // maxWidth is now a method returning an int
-	Font font = new Font("SansSerif", Font.PLAIN, size);
-	double start = 4.877;
-	double interval = 1.679;
+	Font font;
+	double start = 1.0;
+	double interval = 1.0;
 	double lastTime;
 	String timeString;
 	String customLabelFormat;
@@ -77,11 +96,10 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 	boolean canceled;
 	boolean preview = true;
 	String customFormat = "decimal";
-	//SimpleDateFormat timeFormat;
 	String lastTimeStampString; // = "teststring";
 	Checkbox previewCheckbox;
 
-	boolean AAtext = true;
+	boolean AAtext = true; // use anti aliased text or not. 
 	
 	int frame, first, last;  //these default to 0 as no values are given
 	//int nPasses = 1;
@@ -124,12 +142,16 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		formats.add(new CustomLabelFormat());
 		selectedFormat = formats.get(0);
 		
+		setFontParams(imp);
+		
 		// return supported flags
 		return flags;
 	}
 	
 	/**
 	 * Creates a string array out of the names of the available formats.
+	 * Should move this after the run method to keep code style method order:
+	 * setup, showDialog, setNPasses, run, other methods. 
 	 */
 	private String[] getAvailableFormats(){
 		String[] formatArray = new String[formats.size()];
@@ -189,12 +211,11 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		gd.addNumericField("Time Interval Between Frames (in selected units):", interval, 3);
 		gd.addNumericField("X Location:", x, 0);
 		gd.addNumericField("Y Location:", y, 0);
-		gd.addNumericField("Font Size:", size, 0);
 		gd.addNumericField("Decimal Places:", decimalPlaces, 0);
 		gd.addNumericField("First Frame:", first, 0);
 		gd.addNumericField("Last Frame:", last, 0);
 
-		fontProperties = new FontPropertiesPanel(gd);
+		fontProperties = new FontPropertiesPanel(gd, font);
 		gd.addPanel(fontProperties, GridBagConstraints.CENTER, new Insets(5, 0, 0, 0));
 		
 		gd.addPreviewCheckbox(pfr); 	//adds preview checkbox - needs ExtendedPluginFilter and DialogListener!
@@ -228,6 +249,12 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		return DOES_ALL+DOES_STACKS+STACK_REQUIRED;
 	}	
 	
+	
+	/**
+	 * method to deal with changes in the GUI
+	 * Should move this after the run method to keep code style method order:
+	 * setup, showDialog, setNPasses, run, other methods. 
+	 */	
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e) {
 		// This reads user input parameters from the GUI and listens to changes in GUI fields
 		int slice = (int)gd.getNextNumber(); // we dont use this as we read the value of the slider in the getCurrentSliceFromSlider method, but we need to read it so the next hetNextNumber is right. 
@@ -256,7 +283,6 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
  		interval = gd.getNextNumber();
  		x = (int)gd.getNextNumber();
 		y = (int)gd.getNextNumber();
-		size = (int)gd.getNextNumber();
 		decimalPlaces = (int)gd.getNextNumber();
 		first = (int)gd.getNextNumber();
 		last = (int)gd.getNextNumber();
@@ -343,11 +369,21 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		// and the last time stamp in last-1. With preview off it works as expected. 
 		if ((!preview) && (canceled || frame<first || frame>last))
 			return;
-	
+		
+		//if (fontProperties != null)
+		//	fontProperties.updateGUI(font);
+		ip.setFont(font);
+		
+		//more font related setting stuff moved from the run method
+		// seems to work more reliable with this code in this method instead of in run.
+		// But if i dont change the font size by typing in the GUI - it ignores the AA text setting!!! Why??? 
+		ip.setColor(Toolbar.getForegroundColor());
+		ip.setAntialiasedText(AAtext);
+		
 		// Have moved the font size and xy loclation calculations for timestamp stuff out of the run method, into their own methods.
 		// set the font size according to ROI size, or if no ROI the GUI text input
-		setFontParams(ip);
 		setLocation(ip);
+		
 		double time = getTimeFromFrame(frame);  // ask the getTimeFromFrame method to return the time for that frame
 		ip.drawString(selectedFormat.getTimeString(time)); // draw the timestring into the image
 		//showProgress(precent done calc here); // dont really need a progress bar... but seem to get one anyway...
@@ -364,42 +400,36 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 	}
 	*/
 	
-	void setFontParams(ImageProcessor ip) { //work out the size of the font to use from the size of the ROI box drawn, 
-											//if one was drawn (how does it know?)
-		Rectangle theROI = ip.getRoi();
-		// whats up with these numbers? Are they special?
+	void setFontParams(ImagePlus imp) { //work out the size of the font to use from the size of the ROI box drawn, 
+										//if one was drawn (how does it know?)
+		int size = 12;
+		
+		Roi roi = imp.getRoi();
+		if (roi!=null){
+			Rectangle theROI = roi.getBounds();
 			// single characters fit the ROI, but if the time stamper string is long
 			// then the font is too big to fit the whole thing in!
 		
-		// need to see if we should use the ROI height to set the font size or read it from the plugin gui 
-		// if (theROI != null)  doesnt work as if there is no ROI set, the ROI is the size of the image! There is always an ROI!
-		// So we can say, if there is no ROI set , its the same size as the image, and if that is the case,
-		// we should then use the size as read from the GUI.
+			// need to see if we should use the ROI height to set the font size or read it from the plugin gui 
+			// if (theROI != null)  doesnt work as if there is no ROI set, the ROI is the size of the image! There is always an ROI!
+			// So we can say, if there is no ROI set , its the same size as the image, and if that is the case,
+			// we should then use the size as read from the GUI.
+			
+			if ( theROI.height != imp.getHeight() || theROI.width != imp.getWidth() ) // if the ROI is the same size as the image leave size as it was set by the gui
+				size = (int) (theROI.height); //- 1.10526)/0.934211) whats up with these numbers? Are they special? pixel to point size conversion? // if there is an ROI not the same size as the image then set size to its height.       
+			
+	
+			// make sure the font is not too big or small.... but why? Too -  small cant read it. Too Big - ?
+			// should this use private and public and get / set methods?
+			// in any case it doesnt seem to work... i can set the font < 7  and it is printed that small. 
+			if (size<7)
+				size = 7;
+			else if (size>80)
+				size = 80;
+			// if no ROI, x and y are defaulted or set according to text in gui
+		}
 		
-		if ( theROI.height != ip.getHeight() && theROI.width != ip.getWidth() ) // if the ROI is the same size as the image leave size as it was set by the gui
-			size = (int) (theROI.height); // - 1.10526)/0.934211);	     // if there is an ROI not the same size as the image then set size to its height.       
-		
-		
-		
-		// make sure the font is not too big or small.... but why? Too -  small cant read it. Too Big - ?
-		// should this use private and public and get / set methods?
-		// in any case it doesnt seem to work... i can set the font < 7  and it is printed that small. 
-		if (size<7) size = 7;
-		if (size>80) size = 80;
-		// if no ROI, x and y are defaulted or set according to text in gui
-		
-		font = new Font(TextRoi.getFont(), Font.PLAIN, size);
-		
-		if (fontProperties != null)
-			fontProperties.updateGUI(font);
-		
-		ip.setFont(font);
-		
-		//more font related setting stuff moved from the run method
-		// seems to work more reliable with this code in this method instead of in run.
-		// But if i dont change the font size by typing in the GUI - it ignores the AA text setting!!! Why??? 
-		ip.setColor(Toolbar.getForegroundColor());
-		ip.setAntialiasedText(AAtext);
+		font = new Font(TextRoi.getFont(), TextRoi.getStyle(), size);
 	}
 	
 	
@@ -412,22 +442,23 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 	// maxWidth from the width of the image (x dimension) only if its so close that it will run off.
 	// this seems to work now with digital and decimal time formats. 
 	void setLocation(ImageProcessor ip) {
-	
+		int bottom = y, left = x;
+		
 		// Here we  set x and y at the ROI if there is one (how does it know?), so time stamp is drawn there, not at default x and y. 
 		Rectangle roi = ip.getRoi();
 		// set the xy time stamp drawing position for ROI smaller than the image, to bottom left of ROI
 		if (roi.width<ip.getWidth() || roi.height<ip.getHeight()) {
-			x = roi.x;  			// left of the ROI
-			y = roi.y+roi.height;  		// bottom of the ROI
+			left = roi.x;  			// left of the ROI
+			bottom = roi.y+roi.height;  		// bottom of the ROI
 		}	
 		// make sure the y position is not less than the font height: size, 
 		// so the time stamp is not off the top of the image?
-		if (y<size)
-			y = size;
+		if (bottom<font.getSize())
+			bottom = font.getSize();
 		// if longest timestamp is wider than (image width - ROI width) , move x in appropriately
-		if (maxWidth(ip, selectedFormat.lastTimeStampString()) > ( ip.getWidth() - x ) )
-			ip.moveTo( (ip.getWidth() - maxWidth(ip, selectedFormat.lastTimeStampString())), y);
-		else ip.moveTo(x, y);
+		if (maxWidth(ip, selectedFormat.lastTimeStampString()) > ( ip.getWidth() - left ) )
+			ip.moveTo( (ip.getWidth() - maxWidth(ip, selectedFormat.lastTimeStampString())), bottom);
+		else ip.moveTo(left, bottom);
 	}
 	
 	/**
@@ -523,22 +554,47 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 			return getTimeString(lastTime());
 		}
 		
+		/**
+		 * Gets the suffix (if any) that should be appended to the
+		 * time stamp.
+		 * @return The suffix to display.
+		 */
 		public String suffix() {
 				return chosenSuffix;
 		}
 
+		/**
+		 * Gets an array of allowed units for the format. E. g. to
+		 * display them in a drop down component.
+		 * @return The allowed units.
+		 */
 		public String[] getAllowedFormatUnits() {
 			return allowedFormatUnits;
 		}
 
+		/**
+		 * Gets the display name of the format.
+		 * @return The display name of the format
+		 */
 		public String getName() {
 			return name;
 		}
 		
+		/**
+		 * Indicates whether custom (user input) suffixes are allowed
+		 * to this format or not.
+		 * @return True if custom suffixes are allowed, false otherwise
+		 */
 		public boolean supportsCustomSuffix() {
 			return customSuffixSupported;
 		}
 		
+		/**
+		 * Indicates whether a custom time format can be used by the
+		 * format. This could be useful for decimal formats like
+		 * HH:mm which should be user definable.
+		 * @return True if the format supports custom formats, false otherwise.
+		 */
 		public boolean supportsCustomFormat() {
 			return customFormatSupported;
 		}
@@ -706,53 +762,73 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		}
 	}
 	
+	/**
+	 * A panel containing several font manipulation items. It consists of
+	 * a type face chooser, font size chooser, style chooser and a checkbox
+	 * to enable/disable anti-aliased text (smoothing).
+	 */
+	@SuppressWarnings("serial")
 	private class FontPropertiesPanel extends Panel implements ItemListener {
-		private static final long serialVersionUID = 1L;
-		private String[] sizes = {"8","9","10","12","14","18","24","28","36","48","60","72"};
-		private int[] isizes = {8,9,10,12,14,18,24,28,36,48,60,72};
-		
+		// the available font sizes
+		private final int[] isizes = {7,8,9,10,12,14,18,24,28,36,48,60,72};
+		// a drop down choice for type face selection
 		Choice fontChoice;
+		// a drop down choice for font size selection
 		Choice fontSize;
+		// a drop down choice for font stle selection
 		Choice fontStyle;
+		// a checkbox to enable/disable anti-aliased text
 		Checkbox antiAlias;
-		
+		// the generic dialog this panel is put into
 		GenericDialog dialog;
 		
-		boolean guiUpdate = false;
-		
-		public FontPropertiesPanel(GenericDialog dialog) {
+		/**
+		 * Creates a new {@link FontPropertiesPanel} for a generic dialog.
+		 * It is initialized with the given font.
+		 * @param dialog The dialog the panel is added to
+		 * @param font The font it is initialized with
+		 */
+		public FontPropertiesPanel(final GenericDialog dialog, final Font font) {
 			this.dialog = dialog;
 			
+			// for now use a flow layout that puts components just
+			// next to each other, respecting the given margins
 			setLayout(new FlowLayout(FlowLayout.LEFT, 10, 5));
+			
+			// set up type face selection
 			fontChoice = new Choice();
-			GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-			String[] fonts = ge.getAvailableFontFamilyNames();
+			final GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+			final String[] fonts = ge.getAvailableFontFamilyNames();
 			fontChoice.add("SansSerif");
 			fontChoice.add("Serif");
 			fontChoice.add("Monospaced");
 			for (int i=0; i<fonts.length; i++) {
-				String f = fonts[i];
+				final String f = fonts[i];
 				if (!(f.equals("SansSerif")||f.equals("Serif")||f.equals("Monospaced")))
 					fontChoice.add(f);
 			}
-			
-			fontChoice.select(TextRoi.getFont());
+			fontChoice.select(font.getName());
 			fontChoice.addItemListener(this);
 			add(fontChoice);
 
+			// set up font size selection
 			fontSize = new Choice();
-			for (int i=0; i<sizes.length; i++)
-				fontSize.add(sizes[i]);
-			fontSize.select(getSizeIndex());
+			for (int i=0; i<isizes.length; i++) {
+				// add the string representation of each available
+				// size to the drop down component
+				fontSize.add( Integer.toString(isizes[i]) );
+			}
+			fontSize.select(getSizeIndex(font.getSize()));
 			fontSize.addItemListener(this);
 			add(fontSize);
 
+			// set up font style selection
 			fontStyle = new Choice();
 			fontStyle.add("Plain");
 			fontStyle.add("Bold");
 			fontStyle.add("Italic");
 			fontStyle.add("Bold+Italic");
-			int i = TextRoi.getStyle();
+			final int i = font.getStyle();
 			String s = "Plain";
 			if (i==Font.BOLD)
 				s = "Bold";
@@ -764,13 +840,19 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 			fontStyle.addItemListener(this);
 			add(fontStyle);
 
-			antiAlias = new Checkbox("Smooth", TextRoi.isAntialiased());
+			// the anti alias checkbox
+			antiAlias = new Checkbox("Smooth", AAtext);
 			add(antiAlias);
 			antiAlias.addItemListener(this);
 		}
 		
-		int getSizeIndex() {
-			int size = TextRoi.getSize();
+		/**
+		 * Converts a font size to an index number of
+		 * the fonts string representation array.
+		 * @param size The font size to index
+		 * @return The index of the size in the string array
+		 */
+		int getSizeIndex(final int size) {
 			int index=0;
 			for (int i=0; i<isizes.length; i++) {
 				if (size>=isizes[i])
@@ -779,22 +861,13 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 			return index;
 		}
 		
-		public void updateGUI(Font f) {
-			// TODO: Deal with potential problem of guiUpdate being true
-			// again before itemstateChanged was called.
-			guiUpdate = true;
-			fontChoice.select(f.getFontName());
-			// TODO: font size is NO index
-			fontSize.select(f.getSize());
-			// TODO: Style to String selection
-			//fontStyle.select(f.getStyle());
-			antiAlias.setState(AAtext);
-			guiUpdate = false;
-		}
-
-		public void itemStateChanged(ItemEvent e) {
-			if (!guiUpdate) {
-				String styleName = fontStyle.getSelectedItem();
+		/**
+		 * Handles item changes like changing the type face.
+		 * As a reaction a new font is created and saved in
+		 * the dialog.
+		 */
+		public void itemStateChanged(final ItemEvent e) {
+				final String styleName = fontStyle.getSelectedItem();
 				int style = Font.PLAIN;
 				if (styleName.equals("Bold"))
 					style = Font.BOLD;
@@ -803,7 +876,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 				else if (styleName.equals("Bold+Italic"))
 					style = Font.BOLD+Font.ITALIC;
 				
-				int selectedSize = Integer.parseInt(fontSize.getSelectedItem());
+				final int selectedSize = Integer.parseInt(fontSize.getSelectedItem());
 				
 				font = new Font(
 						fontChoice.getSelectedItem(),
@@ -816,7 +889,6 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 				// the preview. It seems a bit like a hack
 				// this way so we should look for another one.
 				pfr.dialogItemChanged(dialog, e);
-			}
 		}
 	}
 }	// thats the end of Time_Stamper_Enhanced class
