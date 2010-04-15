@@ -1,10 +1,10 @@
 package fiji.expressionparser.function;
 
 import mpicbg.imglib.image.Image;
-import mpicbg.imglib.type.NumericType;
-import mpicbg.imglib.type.numeric.FloatType;
+import mpicbg.imglib.type.numeric.real.FloatType;
+import mpicbg.imglib.type.numeric.RealType;
 
-public interface ImgLibFunction <T extends NumericType<T>> {
+public interface ImgLibFunction <T extends RealType<T>> {
 
 	/**
 	 * Return a String describing this operator

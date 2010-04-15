@@ -21,8 +21,8 @@ import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.image.ImagePlusAdapter;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
-import mpicbg.imglib.type.NumericType;
-import mpicbg.imglib.type.numeric.FloatType;
+import mpicbg.imglib.type.numeric.RealType;
+import mpicbg.imglib.type.numeric.real.FloatType;
 
 import org.nfunk.jep.JEP;
 import org.nfunk.jep.type.DoubleNumberFactory;
@@ -54,7 +54,7 @@ import org.nfunk.jep.type.DoubleNumberFactory;
  *   
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com>
  */	
-public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn, ActionListener {
+public class Image_Expression_Parser<T extends RealType<T>> implements PlugIn, ActionListener {
 //public class Image_Expression_Parser<T extends RealType<T>> implements PlugIn, ActionListener {
 	
 	protected boolean user_has_canceled = false;
@@ -243,8 +243,7 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 					var = it.next();
 					cursor = cursors.get(var);
 					cursor.fwd(); // since we are compatible, we are sure that they will iterate the same way
-//					local_value = cursor.getType().getRealFloat();
-					local_value = cursor.getType().getReal();
+					local_value = cursor.getType().getRealFloat();
 					parser.addVariable(var, local_value);
 				}
 				// Assign output value
@@ -280,8 +279,7 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 					var = it.next();
 					cursor = cursors.get(var);
 					cursor.setPosition(result_cursor); // the result cursor dictates its position to other cursors
-//					local_value = cursor.getType().getRealFloat();
-					local_value = cursor.getType().getReal();
+					local_value = cursor.getType().getRealFloat();
 					parser.addVariable(var, local_value);
 				}
 				// Assign output value
@@ -462,7 +460,7 @@ public class Image_Expression_Parser<T extends NumericType<T>> implements PlugIn
 	 * MAIN METHOD
 	 */
 		
-	public static <T extends NumericType<T>> void main(String[] args) {
+	public static <T extends RealType<T>> void main(String[] args) {
 		ImagePlus imp = IJ.openImage("http://rsb.info.nih.gov/ij/images/blobs.gif");
 		Image<T> img = ImagePlusAdapter.wrap(imp);
 		imp.show();

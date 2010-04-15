@@ -3,12 +3,12 @@ package fiji.expressionparser.function;
 import java.util.Stack;
 
 import mpicbg.imglib.image.Image;
-import mpicbg.imglib.type.NumericType;
-import mpicbg.imglib.type.numeric.FloatType;
+import mpicbg.imglib.type.numeric.real.FloatType;
+import mpicbg.imglib.type.numeric.RealType;
 
 import org.nfunk.jep.ParseException;
 
-public abstract class TwoOperandsPixelBasedFunction <T extends NumericType<T>> extends PixelBasedFunction<T> {
+public abstract class TwoOperandsPixelBasedFunction <T extends RealType<T>> extends PixelBasedFunction<T> {
 
 	@SuppressWarnings("unchecked")
 	@Override

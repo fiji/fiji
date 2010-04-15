@@ -1,11 +1,11 @@
 package fiji.expressionparser;
 
-import mpicbg.imglib.type.NumericType;
+import mpicbg.imglib.type.numeric.RealType;
 
 import org.nfunk.jep.JEP;
 import org.nfunk.jep.type.NumberFactory;
 
-public class ImgLibParser <T extends NumericType<T>> extends JEP {
+public class ImgLibParser <T extends RealType<T>> extends JEP {
 
 	public ImgLibParser() {
 		super();

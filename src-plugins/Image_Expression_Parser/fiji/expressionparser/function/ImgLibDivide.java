@@ -1,8 +1,8 @@
 package fiji.expressionparser.function;
 
-import mpicbg.imglib.type.NumericType;
+import mpicbg.imglib.type.numeric.RealType;
 
-public final class ImgLibDivide <T extends NumericType<T>> extends TwoOperandsPixelBasedFunction<T> {
+public final class ImgLibDivide <T extends RealType<T>> extends TwoOperandsPixelBasedFunction<T> {
 
 	public ImgLibDivide() {
 		numberOfParameters = 2;
@@ -10,7 +10,7 @@ public final class ImgLibDivide <T extends NumericType<T>> extends TwoOperandsPi
 
 	@Override
 	public final float evaluate(final T t1, final T t2) {
-		return t1.getReal() / t2.getReal();
+		return t1.getRealFloat() / t2.getRealFloat();
 	}
 
 	@Override

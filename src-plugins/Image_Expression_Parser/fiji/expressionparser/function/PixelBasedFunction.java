@@ -7,10 +7,10 @@ import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
-import mpicbg.imglib.type.NumericType;
-import mpicbg.imglib.type.numeric.FloatType;
+import mpicbg.imglib.type.numeric.real.FloatType;
+import mpicbg.imglib.type.numeric.RealType;
 
-public abstract class PixelBasedFunction <T extends NumericType<T>> extends PostfixMathCommand implements ImgLibFunction<T> {
+public abstract class PixelBasedFunction <T extends RealType<T>> extends PostfixMathCommand implements ImgLibFunction<T> {
 	
 	@Override
 	public final Image<FloatType> evaluate(final Image<T> img1, final Image<T> img2) {
@@ -55,7 +55,7 @@ public abstract class PixelBasedFunction <T extends NumericType<T>> extends Post
 	public final Image<FloatType> evaluate(final Image<T> img, final T alpha) {
 		// Create target image
 		Image<FloatType> result = new ImageFactory<FloatType>(new FloatType(), img.getContainerFactory())
-		.createImage(img.getDimensions(), String.format("%5f %s %s", alpha.getReal(), toString(), img.getName()) );
+		.createImage(img.getDimensions(), String.format("%.1f %s %s", alpha.getRealFloat(), toString(), img.getName()) );
 		
 		Cursor<T> ic = img.createCursor();
 		Cursor<FloatType> rc = result.createCursor();
