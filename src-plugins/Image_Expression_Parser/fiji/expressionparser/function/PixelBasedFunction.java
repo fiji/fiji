@@ -33,6 +33,9 @@ public abstract class PixelBasedFunction <T extends RealType<T>> extends Postfix
 				rc.fwd();
 				rc.getType().set( evaluate(c1.getType(), c2.getType()) );
 			}
+			c1.close();
+			c2.close();
+			rc.close();
 			
 		} else {
 			
@@ -45,6 +48,9 @@ public abstract class PixelBasedFunction <T extends RealType<T>> extends Postfix
 				c2.setPosition(rc);
 				rc.getType().set( evaluate(c1.getType(), c2.getType()) );
 			}
+			c1.close();
+			c2.close();
+			rc.close();
 			
 		}
 		
@@ -65,6 +71,9 @@ public abstract class PixelBasedFunction <T extends RealType<T>> extends Postfix
 			ic.fwd();
 			rc.getType().set(evaluate(alpha, ic.getType()));
 		}
+		rc.close();
+		ic.close();
+				
 		return result;
 	}
 
