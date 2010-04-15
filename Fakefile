@@ -271,10 +271,8 @@ jars/*.jar <- src-plugins/*/**/*
 
 # Third party plugins
 
-# TODO: compile ij-ImageIO_ as submodule
 THIRD_PARTY_PLUGINS= \
 	plugins/TransformJ_.jar \
-	plugins/ij-ImageIO_.jar \
 
 third-party-plugins[] <- $THIRD_PARTY_PLUGINS
 plugins/*.jar <- staged-plugins/*.jar
