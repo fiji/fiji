@@ -843,6 +843,10 @@ public class Fake {
 			return (Rule)allRules.get(rule);
 		}
 
+		public Map getAllRules() {
+			return allRules;
+		}
+
 		// the different rule types
 
 		public abstract class Rule {
