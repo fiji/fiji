@@ -103,9 +103,11 @@ public class Fake {
 		String fijiHome = URLDecoder.decode(url.toString());
 		if (getPlatform().startsWith("win"))
 			fijiHome = fijiHome.replace('\\', '/');
-		if (!fijiHome.endsWith("/fiji/build/Fake.class"))
+		if (!fijiHome.endsWith("/Fake.class"))
 			throw new RuntimeException("unexpected URL: " + url);
-		fijiHome = fijiHome.substring(0, fijiHome.length() - 21);
+		fijiHome = fijiHome.substring(0, fijiHome.length() - 10);
+		if (fijiHome.endsWith("/fiji/build/"))
+			fijiHome = fijiHome.substring(0, fijiHome.length() - 11);
 		int slash = fijiHome.lastIndexOf('/', fijiHome.length() - 2);
 		if (fijiHome.startsWith("jar:file:") &&
 				fijiHome.endsWith(".jar!/")) {
@@ -841,6 +843,10 @@ public class Fake {
 			return (Rule)allRules.get(rule);
 		}
 
+		public Map getAllRules() {
+			return allRules;
+		}
+
 		// the different rule types
 
 		public abstract class Rule {
@@ -1109,24 +1115,24 @@ public class Fake {
 				return result;
 			}
 
-			String getVar(String key) {
+			public String getVar(String key) {
 				return getVariable(key, target);
 			}
 
-			String getVar(String key, String subkey) {
+			public String getVar(String key, String subkey) {
 				return getVariable(key, subkey, target);
 			}
 
-			boolean getVarBool(String key) {
+			public boolean getVarBool(String key) {
 				return getBool(getVariable(key, target));
 			}
 
-			boolean getVarBool(String key, String subkey) {
+			public boolean getVarBool(String key, String subkey) {
 				return getBool(getVariable(key,
 							subkey, target));
 			}
 
-			File getBuildDir() {
+			public File getBuildDir() {
 				String dir = getVar("builddir");
 				if (dir == null || dir.equals(""))
 					return null;
@@ -1425,7 +1431,7 @@ public class Fake {
 				}
 			}
 
-			String getVar(String var) {
+			public String getVar(String var) {
 				String value = super.getVar(var);
 				if (var.toUpperCase().equals("CLASSPATH")) {
 					if( classPath != null ) {
