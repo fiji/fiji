@@ -23,4 +23,11 @@ public final class ImgLibSubtract <T extends RealType<T>> extends TwoOperandsPix
 		return "Pixel-wise subtract two operands";
 	}
 
+	@Override
+	public String getDocumentationString() {
+		return "<h3>Element-wise subtraction</h3>" +
+		"This function subtracts its two operands, element-wise. " +
+		"See 'element-wise addition' for details.";
+	}
+
 }

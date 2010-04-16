@@ -21,6 +21,19 @@ public class ImgLibGaussConv <T extends RealType<T>> extends TwoOperandsAbstract
 	}
 
 	@Override
+	public String getDocumentationString() {
+		return "<h3>Gaussian convolution</h3>" +
+				"This function implements the isotropic gaussian convolution, as coded " +
+				"in ImgLib, effectively implementing a gaussian filter." +
+				"Syntax: " +
+				"<br><code>" + getFunctionString() + "(A, sigma)</code><br>" +
+				"with A an image and sigma a number. Sigma is the standard deviation" +
+				"of the gaussian kernel applied to image A.<br>" +
+				"Input image is converted to <i>FloatType</i> then convolved. " +
+				"If the source image is a 3D image, the convolution will be made in 3D as well.";				
+	}
+	
+	@Override
 	public String getFunctionString() {
 		return "gauss";
 	}
@@ -47,5 +60,6 @@ public class ImgLibGaussConv <T extends RealType<T>> extends TwoOperandsAbstract
 		throw new ParseException("In function "+getFunctionString()
 				+": Arguments must be one image and one number, got 2 images.");
 	}
+
 
 }

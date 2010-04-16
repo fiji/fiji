@@ -23,6 +23,26 @@ public interface ImgLibFunction <T extends RealType<T>> {
 	public abstract String getFunctionString();
 	
 	/**
+	 * Returns a documentation string that documents in enough details what the function
+	 * does, and how. The String can use html syntax in it for formatting. 
+	 * <p>
+	 * Example:
+	 * <p>
+	 * <h3>Gaussian convolution</h3>
+	 * This function implements the isotropic gaussian convolution, as coded 
+	 * in ImgLib, effectively implementing a gaussian filter.
+	 * Syntax:
+ 	 * <br> 
+	 * <code> >> gauss(A, sigma)</code> <br>
+	 * with A an image and sigma a number. Sigma is the standard deviation
+	 * of the gaussian kernel applied to image A.
+	 * <br>
+	 * Input image is converted to <i>FloatType</i> then convolved. If the source image is a 3D image, 
+	 * the convolution will be made in 3D as well.
+	 */
+	public abstract String getDocumentationString();
+	
+	/**
 	 * Evaluate this function on two images, and return result as an image.
 	 * @param img1  The first image 
 	 * @param img2  The second image 

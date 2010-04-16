@@ -22,5 +22,12 @@ public final class ImgLibDivide <T extends RealType<T>> extends TwoOperandsPixel
 	public String getFunctionString() {
 		return "/";
 	}
+	
+	@Override
+	public String getDocumentationString() {
+		return "<h3>Element-wise division</h3>" +
+		"This function divides its two operands, element-wise. " +
+		"See 'element-wise addition' for details.";
+	}
 
 }

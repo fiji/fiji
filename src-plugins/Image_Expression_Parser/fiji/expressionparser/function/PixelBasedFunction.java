@@ -1,5 +1,6 @@
 package fiji.expressionparser.function;
 
+import org.nfunk.jep.ParseException;
 import org.nfunk.jep.function.PostfixMathCommand;
 
 import mpicbg.imglib.cursor.Cursor;
@@ -13,7 +14,7 @@ import mpicbg.imglib.type.numeric.RealType;
 public abstract class PixelBasedFunction <T extends RealType<T>> extends PostfixMathCommand implements ImgLibFunction<T> {
 	
 	@Override
-	public final Image<FloatType> evaluate(final Image<T> img1, final Image<T> img2) {
+	public final Image<FloatType> evaluate(final Image<T> img1, final Image<T> img2) throws ParseException {
 		
 		// Create target image
 		Image<FloatType> result = new ImageFactory<FloatType>(new FloatType(), img1.getContainerFactory())
@@ -58,7 +59,7 @@ public abstract class PixelBasedFunction <T extends RealType<T>> extends Postfix
 	}
 	
 	@Override
-	public final Image<FloatType> evaluate(final Image<T> img, final T alpha) {
+	public final Image<FloatType> evaluate(final Image<T> img, final T alpha) throws ParseException {
 		// Create target image
 		Image<FloatType> result = new ImageFactory<FloatType>(new FloatType(), img.getContainerFactory())
 		.createImage(img.getDimensions(), String.format("%.1f %s %s", alpha.getRealFloat(), toString(), img.getName()) );

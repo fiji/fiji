@@ -23,5 +23,12 @@ public final class ImgLibMultiply<T extends RealType<T>> extends TwoOperandsPixe
 		return "*";
 	}
 
+	@Override
+	public String getDocumentationString() {
+		return "<h3>Element-wise multiplication</h3>" +
+		"This function multiplies its two operands, element-wise. " +
+		"See 'element-wise' addition for details.";
+	}
+
 	
 }
