@@ -49,8 +49,10 @@ public class Test_JEP {
 				"A + A - 2*A",
 				"(2*A-A) / A",
 				"gauss(A,1.5)",
-				"gauss(1.0,2.0)", // should generate an error
-				"gauss(A,A)", // should generate an error
+				"gauss(A,3) > A",
+				"gauss(A,3) == A",
+				"A == A"
+				
 		};
 
 		ImgLibParser<T> parser = new ImgLibParser<T>();
