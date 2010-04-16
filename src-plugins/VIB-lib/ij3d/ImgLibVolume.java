@@ -2,15 +2,15 @@ package ij3d;
 
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.image.Image;
-import mpicbg.imglib.type.NumericType;
-import mpicbg.imglib.outside.OutsideStrategyValueFactory;
+import mpicbg.imglib.type.numeric.RealType;
+import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 
 /**
  * This class encapsulates an mpicbg.imglib.Image object, for use in Marching Cubes.
  *
  * @author Albert Cardona
  */
-public class ImgLibVolume<T extends NumericType<T>> extends Volume {
+public class ImgLibVolume<T extends RealType<T>> extends Volume {
 
 	final Image<T> img;
 	LocalizableByDimCursor<T> cursor = null;
@@ -51,7 +51,7 @@ public class ImgLibVolume<T extends NumericType<T>> extends Volume {
 	protected void initLoader() {
 		final T val = img.createType();
 		val.setReal(0);
-		this.cursor = img.createLocalizableByDimCursor(new OutsideStrategyValueFactory<T>(val));
+		this.cursor = img.createLocalizableByDimCursor(new OutOfBoundsStrategyValueFactory<T>(val));
 	}
 
 	/** Does nothing. */
@@ -84,7 +84,7 @@ public class ImgLibVolume<T extends NumericType<T>> extends Volume {
 		cursor.setPosition(x, 0);
 		cursor.setPosition(y, 1);
 		cursor.setPosition(z, 2);
-		return (int) cursor.getType().getReal();
+		return (int) cursor.getType().getRealFloat();
 	}
 
 	protected int dataType = BYTE_DATA;
