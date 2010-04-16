@@ -132,7 +132,7 @@ public class Weka_Segmentation implements PlugIn
 	private List<Roi> [] examples = new ArrayList[MAX_NUM_CLASSES];
 	/** image to be used in the training */
 	private ImagePlus trainingImage;
-	/** image to display on the GUI, it includes the painted rois */
+	/** image to display on the GUI */
 	private ImagePlus displayImage;
 	/** result image after classification */
 	private ImagePlus classifiedImage;
@@ -164,6 +164,8 @@ public class Weka_Segmentation implements PlugIn
 	final JButton overlayButton;
 	/** create result button */
 	final JButton resultButton;
+	/** new image button */
+	final JButton newImageButton;
 	/** apply classifier button */
 	final JButton applyButton;
 	/** load classifier button */
@@ -248,6 +250,8 @@ public class Weka_Segmentation implements PlugIn
 		resultButton.setToolTipText("Generate result image");
 		resultButton.setEnabled(false);
 		
+		newImageButton = new JButton("New image");
+		newImageButton.setToolTipText("Load a new image to segment");
 		
 		applyButton = new JButton ("Apply classifier");
 		applyButton.setToolTipText("Apply current classifier to a single image or stack");
@@ -316,6 +320,9 @@ public class Weka_Segmentation implements PlugIn
 					}
 					else if(e.getSource() == resultButton){
 						showClassificationImage();
+					}
+					else if(e.getSource() == newImageButton){
+						loadNewImage();
 					}
 					else if(e.getSource() == applyButton){
 						applyClassifierToTestData();
@@ -430,6 +437,11 @@ public class Weka_Segmentation implements PlugIn
 			g.fillRect(dw, 0, w - dw, h);
 			g.fillRect(0, dh, w, h - dh);
 		}
+		
+		public void setImagePlus(ImagePlus imp)
+		{
+			super.imp = imp;
+		}
 	}
 
 	/**
@@ -516,6 +528,7 @@ public class Weka_Segmentation implements PlugIn
 			trainButton.addActionListener(listener);
 			overlayButton.addActionListener(listener);
 			resultButton.addActionListener(listener);
+			newImageButton.addActionListener(listener);
 			applyButton.addActionListener(listener);
 			loadClassifierButton.addActionListener(listener);
 			saveClassifierButton.addActionListener(listener);
@@ -543,7 +556,8 @@ public class Weka_Segmentation implements PlugIn
 			trainingConstraints.gridy++;
 			trainingJPanel.add(resultButton, trainingConstraints);
 			trainingConstraints.gridy++;
-			
+			trainingJPanel.add(newImageButton, trainingConstraints);
+			trainingConstraints.gridy++;
 			
 			// Options panel
 			optionsJPanel.setBorder(BorderFactory.createTitledBorder("Options"));
@@ -579,7 +593,7 @@ public class Weka_Segmentation implements PlugIn
 			buttonsPanel.setLayout(buttonsLayout);
 			buttonsConstraints.anchor = GridBagConstraints.NORTHWEST;
 			buttonsConstraints.fill = GridBagConstraints.HORIZONTAL;
-			buttonsConstraints.gridwidth = 1;
+			buttonsConstraints.gridwidth = 1;super.imp = imp;
 			buttonsConstraints.gridheight = 1;
 			buttonsConstraints.gridx = 0;
 			buttonsConstraints.gridy = 0;
@@ -642,6 +656,7 @@ public class Weka_Segmentation implements PlugIn
 					trainButton.removeActionListener(listener);
 					overlayButton.removeActionListener(listener);
 					resultButton.removeActionListener(listener);
+					newImageButton.removeActionListener(listener);
 					applyButton.removeActionListener(listener);
 					loadClassifierButton.removeActionListener(listener);
 					saveClassifierButton.removeActionListener(listener);
@@ -711,6 +726,19 @@ public class Weka_Segmentation implements PlugIn
 			
 			repaintAll();
 		}
+		
+		/**
+		 * Set the image being displayed on the custom canvas
+		 * @param imp new image
+		 */
+		public void setImagePlus(ImagePlus imp)
+		{
+			super.imp = imp;
+			((CustomCanvas) super.getCanvas()).setImagePlus(imp);
+			imp.setWindow(this);
+			repaint();
+		}
+		
 	}
 
 	/**
@@ -770,6 +798,7 @@ public class Weka_Segmentation implements PlugIn
 		trainButton.setEnabled(s);
 		overlayButton.setEnabled(s);
 		resultButton.setEnabled(s);
+		newImageButton.setEnabled(s);
 		applyButton.setEnabled(s);
 		loadClassifierButton.setEnabled(s);
 		saveClassifierButton.setEnabled(s);
@@ -801,9 +830,8 @@ public class Weka_Segmentation implements PlugIn
 		overlayButton.setEnabled(resultExists);
 		resultButton.setEnabled(resultExists);
 		
-		
-		loadClassifierButton.setEnabled(true);
-		
+		newImageButton.setEnabled(true);
+		loadClassifierButton.setEnabled(true);		
 		loadDataButton.setEnabled(true);
 		
 		addClassButton.setEnabled(this.numOfClasses < MAX_NUM_CLASSES);
@@ -1069,7 +1097,7 @@ public class Weka_Segmentation implements PlugIn
 		if(featureStack.isEmpty())
 		{
 			IJ.showStatus("Creating feature stack...");
-			featureStack.addDefaultFeatures();
+			featureStack.updateFeatures();
 		}
 		
 
@@ -1622,13 +1650,100 @@ public class Weka_Segmentation implements PlugIn
 		}
 		return true;
 	}
+
+	/**
+	 * Load a new image to segment
+	 */
+	public void loadNewImage()
+	{
+		OpenDialog od = new OpenDialog("Choose new image", "");
+		if (od.getFileName()==null)
+			return;
+		
+		IJ.log("Loading image " + od.getDirectory() + od.getFileName() + "...");
+		
+		ImagePlus newImage = new ImagePlus(od.getDirectory() + od.getFileName());
+		
+		if (Math.max(newImage.getWidth(), newImage.getHeight()) > 1024)
+			if (!IJ.showMessageWithCancel("Warning", "At least one dimension of the image \n" +
+					"is larger than 1024 pixels. \n" +
+					"Feature stack creation and classifier training \n" +
+					"might take some time depending on your computer.\n" +
+			"Proceed?"))
+				return;
+		
+		// Accumulate current data in "loadedTrainingData"
+		IJ.log("Storing previous image instances...");
+		
+		// Create feature stack if it was not created yet
+		if(featureStack.isEmpty())
+		{
+			IJ.showStatus("Creating feature stack...");
+			featureStack.updateFeatures();
+		}
+		
+		Instances data = createTrainingInstances();
+		data.setClassIndex(data.numAttributes() - 1);
+		if (null != loadedTrainingData && null != data){
+			IJ.log("Merging data...");
+			for (int i=0; i < loadedTrainingData.numInstances(); i++){
+				// IJ.log("" + i)
+				data.add(loadedTrainingData.instance(i));
+			}
+			IJ.log("Finished");
+		}
+		else if (null == data)
+			data = loadedTrainingData;
+		
+		loadedTrainingData = data;
+		
+		IJ.log("Number of accumulated examples: " + loadedTrainingData.numInstances());
+		
+		// Remove traces from the lists and ROI overlays
+		IJ.log("Removing previous markings...");
+		for(int i = 0; i < numOfClasses; i ++)
+		{
+			examples[i] = new ArrayList<Roi>();			
+			exampleList[i].removeAll();
+			
+			roiOverlay[i].setRoi(null);
+		}
+			
+		// Updating image
+		IJ.log("Updating image...");
+		
+		trainingImage.setProcessor("Advanced Weka Segmentation", newImage.getProcessor().duplicate().convertToByte(true));
+		
+		// Initialize feature stack (no features yet)
+		final boolean[] enabledFeatures = featureStack.getEnableFeatures();
+		featureStack = new FeatureStack(trainingImage);
+		featureStack.setEnableFeatures(enabledFeatures);
+		updateWholeData = true;
+		
+		displayImage = new ImagePlus();
+		displayImage.setProcessor("Advanced Weka Segmentation", trainingImage.getProcessor().duplicate());
+		
+		// Remove current classification result image
+		classifiedImage = null;
+		resultOverlay.setImage(null);
+		
+		if(showColorOverlay)
+			toggleOverlay();				
+		
+		// Update GUI
+		win.setImagePlus(displayImage);
+		displayImage.updateAndDraw();
+		win.pack();
+		
+		IJ.log("Done");
+	}
 	
 	/**
 	 * Load previously saved data
 	 */
 	public void loadTrainingData()
 	{
-		OpenDialog od = new OpenDialog("Choose data file","");
+		OpenDialog od = new OpenDialog("Choose data file","", "data.arff");
 		if (od.getFileName()==null)
 			return;
 		IJ.log("Loading data from " + od.getDirectory() + od.getFileName() + "...");
