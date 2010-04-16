@@ -1159,7 +1159,9 @@ public class Weka_Segmentation implements PlugIn
 		classifiedImage = applyClassifier(wholeImageData, trainingImage.getWidth(), trainingImage.getHeight());
 
 		IJ.log("Finished segmentation of whole image.");
-				
+		
+		if(showColorOverlay)
+			toggleOverlay();
 		toggleOverlay();
 
 		setButtonsEnabled(true);
@@ -1315,23 +1317,18 @@ public class Weka_Segmentation implements PlugIn
 		{
 			
 			ImageProcessor overlay = classifiedImage.getProcessor().duplicate();
-			//classifiedImage.show();
 			
 			double shift = 255.0 / MAX_NUM_CLASSES;
 			overlay.multiply(shift+1);
 			overlay = overlay.convertToByte(false);
 			overlay.setColorModel(overlayLUT);
-			
-			///new ImagePlus("Overlay", overlay).show();
-			
+						
 			resultOverlay.setImage(overlay);
 		}
 		else
 			resultOverlay.setImage(null);
 
 		displayImage.updateAndDraw();
-		
-		//drawExamples();
 	}
 
 	/**
@@ -1726,9 +1723,8 @@ public class Weka_Segmentation implements PlugIn
 		// Remove current classification result image
 		classifiedImage = null;
 		resultOverlay.setImage(null);
-		
-		if(showColorOverlay)
-			toggleOverlay();				
+					
+		toggleOverlay();
 		
 		// Update GUI
 		win.setImagePlus(displayImage);
