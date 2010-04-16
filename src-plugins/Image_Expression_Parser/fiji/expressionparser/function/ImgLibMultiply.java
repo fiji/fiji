@@ -2,7 +2,7 @@ package fiji.expressionparser.function;
 
 import mpicbg.imglib.type.numeric.RealType;
 
-public final class ImgLibMultiply<T extends RealType<T>> extends TwoOperandsPixelBasedFunction<T> {
+public final class ImgLibMultiply<T extends RealType<T>> extends TwoOperandsPixelBasedAbstractFunction<T> {
 
 	public ImgLibMultiply() {
 		numberOfParameters = 2;
@@ -15,6 +15,11 @@ public final class ImgLibMultiply<T extends RealType<T>> extends TwoOperandsPixe
 
 	@Override
 	public String toString() {
+		return "Pixel-wise multiply two operands";
+	}
+	
+	@Override
+	public String getFunctionString() {
 		return "*";
 	}
 

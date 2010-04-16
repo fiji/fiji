@@ -2,7 +2,7 @@ package fiji.expressionparser.function;
 
 import mpicbg.imglib.type.numeric.RealType;
 
-public final class ImgLibSubtract <T extends RealType<T>> extends TwoOperandsPixelBasedFunction<T> {
+public final class ImgLibSubtract <T extends RealType<T>> extends TwoOperandsPixelBasedAbstractFunction<T> {
 
 	public ImgLibSubtract() {
 		numberOfParameters = 2;
@@ -14,8 +14,13 @@ public final class ImgLibSubtract <T extends RealType<T>> extends TwoOperandsPix
 	}
 
 	@Override
-	public String toString() {
+	public String getFunctionString() {
 		return "-";
+	}
+	
+	@Override
+	public String toString() {
+		return "Pixel-wise subtract two operands";
 	}
 
 }

@@ -2,7 +2,7 @@ package fiji.expressionparser.function;
 
 import mpicbg.imglib.type.numeric.RealType;
 
-public final class ImgLibDivide <T extends RealType<T>> extends TwoOperandsPixelBasedFunction<T> {
+public final class ImgLibDivide <T extends RealType<T>> extends TwoOperandsPixelBasedAbstractFunction<T> {
 
 	public ImgLibDivide() {
 		numberOfParameters = 2;
@@ -15,6 +15,11 @@ public final class ImgLibDivide <T extends RealType<T>> extends TwoOperandsPixel
 
 	@Override
 	public String toString() {
+		return "Pixel-wise divide two operands";
+	}
+
+	@Override
+	public String getFunctionString() {
 		return "/";
 	}
 

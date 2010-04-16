@@ -1,5 +1,7 @@
 package fiji.expressionparser.function;
 
+import org.nfunk.jep.ParseException;
+
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.type.numeric.RealType;
@@ -7,9 +9,18 @@ import mpicbg.imglib.type.numeric.RealType;
 public interface ImgLibFunction <T extends RealType<T>> {
 
 	/**
-	 * Return a String describing this operator
+	 * Return a String describing this operator. Example: "Addition of two operands",
+	 * "Gaussian convolution", "Element-wise cosine", ...
 	 */
 	public abstract String toString();
+	
+	
+	/**
+	 * Return a String containing the function name, that is, how this function 
+	 * must be represented in an expression to be called. Examples: "+", "gauss",
+	 * "cos", ...
+	 */
+	public abstract String getFunctionString();
 	
 	/**
 	 * Evaluate this function on two images, and return result as an image.
@@ -17,7 +28,7 @@ public interface ImgLibFunction <T extends RealType<T>> {
 	 * @param img2  The second image 
 	 * @return  The resulting image
 	 */
-	public abstract Image<FloatType> evaluate(final Image<T> img1, final Image<T> img2);
+	public abstract Image<FloatType> evaluate(final Image<T> img1, final Image<T> img2) throws ParseException;
 
 	/**
 	 * Singleton expansion. Evaluate this function on an image and an image that would be of same 
@@ -26,7 +37,7 @@ public interface ImgLibFunction <T extends RealType<T>> {
 	 * @param alpha  The number to do singleton expansion on 
 	 * @return  The resulting image 
 	 */
-	public abstract Image<FloatType> evaluate(final Image<T> img, final T alpha);
+	public abstract Image<FloatType> evaluate(final Image<T> img, final T alpha) throws ParseException;
 
 	/**
 	 * Evaluate this function on two numeric types. Argument types can be of any numeric type, but a float must
@@ -35,7 +46,7 @@ public interface ImgLibFunction <T extends RealType<T>> {
 	 * @param alpha2  The second number
 	 * @return  The resulting number
 	 */
-	 public abstract float evaluate(final T t1, final T t2);
+	 public abstract float evaluate(final T t1, final T t2) throws ParseException;
 
 	
 }

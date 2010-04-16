@@ -16,7 +16,7 @@ import mpicbg.imglib.type.numeric.RealType;
 
 public class Test_JEP {
 
-	public static synchronized <T extends RealType<T>> void main(String[] args) {
+	public static <T extends RealType<T>> void main(String[] args) {
 		System.out.println("Testing JEP extension");
 		
 		System.out.println("\nLoading image");
@@ -58,6 +58,7 @@ public class Test_JEP {
 
 		for (String expression : expressions) {
 
+			System.err.flush();
 			System.out.println("\nTrying expression: "+expression);		
 			parser.addVariable("A", img);
 			
@@ -88,6 +89,7 @@ public class Test_JEP {
 				
 			} catch (ParseException e) {
 				
+				System.out.flush();
 				System.err.println("Cound not evaluate expression: "+expression);
 				System.err.println("Reason: "+e.getErrorInfo());
 
