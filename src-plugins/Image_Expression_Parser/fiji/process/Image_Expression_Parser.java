@@ -55,7 +55,6 @@ import org.nfunk.jep.type.DoubleNumberFactory;
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com>
  */	
 public class Image_Expression_Parser<T extends RealType<T>> implements PlugIn, ActionListener {
-//public class Image_Expression_Parser<T extends RealType<T>> implements PlugIn, ActionListener {
 	
 	protected boolean user_has_canceled = false;
 	/** Array of Imglib images, on which calculations will be done */
