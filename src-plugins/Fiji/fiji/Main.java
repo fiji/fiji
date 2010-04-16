@@ -138,7 +138,8 @@ public class Main implements AWTEventListener {
 			ImageProducer ip = (ImageProducer)url.getContent();
 			icon = window.createImage(ip);
 		} catch (Exception e) {
-			IJ.error("Could not set the icon: '" + url + "'");
+			System.err.println("Could not set the icon: '"
+					+ url + "'");
 			e.printStackTrace();
 			return null;
 		}

@@ -197,8 +197,8 @@ jars/clojure-contrib.jar <- jars/clojure.jar clojure-contrib/
 plugins/loci_tools.jar <- bio-formats/
 CLASSPATH(jars/VectorString.jar)=jars/Jama-1.0.2.jar
 jars/VectorString.jar <- TrakEM2/
-CLASSPATH(plugins/TrakEM2_.jar)=plugins/VIB_.jar:jars/mpicbg.jar:plugins/loci_tools.jar:plugins/bUnwarpJ_.jar:plugins/level_sets.jar:plugins/Fiji_Plugins.jar:jars/Jama-1.0.2.jar
-plugins/TrakEM2_.jar <- jars/ij.jar plugins/VIB_.jar jars/mpicbg.jar plugins/bUnwarpJ_.jar plugins/level_sets.jar plugins/Fiji_Plugins.jar jars/VectorString.jar TrakEM2/
+CLASSPATH(plugins/TrakEM2_.jar)=plugins/VIB_.jar:jars/mpicbg.jar:plugins/loci_tools.jar:plugins/bUnwarpJ_.jar:plugins/level_sets.jar:plugins/Fiji_Plugins.jar:jars/Jama-1.0.2.jar:jars/imglib.jar
+plugins/TrakEM2_.jar <- jars/ij.jar plugins/VIB_.jar jars/mpicbg.jar plugins/bUnwarpJ_.jar plugins/level_sets.jar plugins/Fiji_Plugins.jar jars/imglib.jar jars/VectorString.jar TrakEM2/
 plugins/ij-ImageIO_.jar <- ij-plugins/
 jars/jacl.jar <- tcljava/
 jars/batik.jar <- batik/
@@ -219,6 +219,7 @@ src-plugins/Fiji/icon.png[cp $PRE $TARGET] <- images/icon.png
 
 MAINCLASS(jars/javac.jar)=com.sun.tools.javac.Main
 
+CLASSPATH(jars/fiji-scripting.jar)=jars/jython.jar
 CLASSPATH(plugins/Refresh_Javas.jar)=jars/fiji-scripting.jar:jars/fake.jar:jars/Fiji.jar
 CLASSPATH(plugins/Jython_Interpreter.jar)=jars/fiji-scripting.jar:jars/jython.jar
 CLASSPATH(plugins/Clojure_Interpreter.jar)=jars/fiji-scripting.jar:jars/clojure.jar:jars/clojure-contrib.jar
@@ -227,35 +228,31 @@ CLASSPATH(plugins/BeanShell_Interpreter.jar)=jars/fiji-scripting.jar
 CLASSPATH(plugins/Javascript_.jar)=jars/fiji-scripting.jar
 CLASSPATH(plugins/CLI_.jar)=jars/fiji-scripting.jar
 MAINCLASS(plugins/Script_Editor.jar)=fiji.scripting.Script_Editor
-CLASSPATH(plugins/Script_Editor.jar)=jars/rsyntaxtextarea.jar:jars/autocomplete.jar:plugins/Clojure_Interpreter.jar:plugins/JRuby_Interpreter.jar:plugins/Javascript_.jar:plugins/Jython_Interpreter.jar:plugins/Refresh_Javas.jar:plugins/BeanShell_Interpreter.jar:jars/fiji-scripting.jar:jars/Fiji.jar:$JAVA_HOME/../lib/tools.jar
+CLASSPATH(plugins/Script_Editor.jar)=jars/rsyntaxtextarea.jar:jars/autocomplete.jar:plugins/Clojure_Interpreter.jar:plugins/JRuby_Interpreter.jar:plugins/Javascript_.jar:plugins/Jython_Interpreter.jar:plugins/Refresh_Javas.jar:plugins/BeanShell_Interpreter.jar:jars/fiji-scripting.jar:jars/Fiji.jar:jars/imglib.jar:$JAVA_HOME/../lib/tools.jar
 NO_COMPILE(plugins/Script_Editor.jar)=src-plugins/Script_Editor/templates/**/*
 src-plugins/Script_Editor/icon.png[cp $PRE $TARGET] <- images/icon.png
 src-plugins/Script_Editor/var.png[cp $PRE $TARGET] <- images/var.png
 src-plugins/Script_Editor/function.png[cp $PRE $TARGET] <- images/function.png
 
 CLASSPATH(jars/zs.jar)=jars/Jama-1.0.2.jar
-CLASSPATH(plugins/register_virtual_stack_slices.jar)=plugins/TrakEM2_.jar:jars/mpicbg.jar:plugins/bUnwarpJ_.jar:plugins/Fiji_Plugins.jar
-CLASSPATH(plugins/Siox_Segmentation.jar)=jars/fiji-lib.jar:plugins/Fiji_Plugins.jar
-CLASSPATH(plugins/Image_Expression_Parser.jar)=jars/jep.jar:jars/imglib.jar:plugins/mpicbg_.jar
+CLASSPATH(plugins/register_virtual_stack_slices.jar)=plugins/TrakEM2_.jar:jars/mpicbg.jar:plugins/bUnwarpJ_.jar:jars/fiji-lib.jar
+CLASSPATH(plugins/Siox_Segmentation.jar)=jars/fiji-lib.jar
+CLASSPATH(plugins/Image_Expression_Parser.jar)=jars/jep.jar:jars/imglib.jar
 CLASSPATH(plugins/Directionality_.jar)=jars/jfreechart-1.0.9.jar
 CLASSPATH(plugins/LSM_Toolbox.jar)=plugins/LSM_Reader.jar
 MAINCLASS(plugins/LSM_Toolbox.jar)=org.imagearchive.lsm.toolbox.gui.AboutDialog
 MAINCLASS(plugins/Interactive_3D_Surface_Plot.jar)=Interactive_3D_Surface_Plot
-CLASSPATH(plugins/Stitching_.jar)=plugins/loci_tools.jar:plugins/Fiji_Plugins.jar
-CLASSPATH(plugins/Fiji_Plugins.jar)=jars/jsch-0.1.37.jar:jars/fiji-lib.jar
+CLASSPATH(plugins/Stitching_.jar)=plugins/loci_tools.jar:jars/fiji-lib.jar
+CLASSPATH(plugins/Fiji_Plugins.jar)=jars/jsch-0.1.37.jar
 MAINCLASS(plugins/Fiji_Updater.jar)=fiji.updater.Main
-CLASSPATH(plugins/Fiji_Updater.jar)=jars/jsch-0.1.37.jar:jars/Fiji.jar
+CLASSPATH(plugins/Fiji_Updater.jar)=jars/jsch-0.1.37.jar
 CLASSPATH(plugins/IO_.jar)=jars/batik.jar
 CLASSPATH(plugins/Sync_Win.jar)=plugins/Image_5D.jar
-CLASSPATH(plugins/Fiji_Developer.jar)=plugins/Script_Editor.jar:plugins/Fiji_Plugins.jar:plugins/VIB_.jar:jars/fiji-lib.jar
+CLASSPATH(plugins/Fiji_Developer.jar)=plugins/Script_Editor.jar:plugins/Fiji_Plugins.jar:jars/VIB-lib.jar:jars/rsyntaxtextarea.jar
 CLASSPATH(plugins/Trainable_Segmentation.jar)=jars/weka.jar:plugins/Stitching_.jar:jars/fiji-lib.jar
 CLASSPATH(plugins/VIB_.jar)=jars/VIB-lib.jar
-CLASSPATH(jars/VIB-lib.jar)=jars/Jama-1.0.2.jar:jars/imglib.jar:jars/junit-4.5.jar:plugins/level_sets.jar
-
-MAINCLASS(jars/test-fiji.jar)=fiji.Tests
-
-plugins/*.jar <- src-plugins/*/**/*
-jars/*.jar <- src-plugins/*/**/*
+CLASSPATH(jars/VIB-lib.jar)=jars/Jama-1.0.2.jar:jars/imglib.jar:jars/junit-4.5.jar
+CLASSPATH(jars/jep.jar)=jars/Jama-1.0.2.jar:jars/junit-4.5.jar
 
 # pre-Java5 generics ;-)
 
@@ -267,12 +264,17 @@ src-plugins/VIB-lib/math3d/Eigensystem3x3Float.java[src-plugins/VIB-lib/sed.py $
 src-plugins/VIB-lib/math3d/Eigensystem2x2Float.java[src-plugins/VIB-lib/sed.py $PRE $TARGET] <- \
 	src-plugins/VIB-lib/math3d/Eigensystem2x2Double.java
 
+MAINCLASS(jars/test-fiji.jar)=fiji.Tests
+
+# the default rules
+
+plugins/*.jar <- src-plugins/*/**/*
+jars/*.jar <- src-plugins/*/**/*
+
 # Third party plugins
 
-# TODO: compile ij-ImageIO_ as submodule
 THIRD_PARTY_PLUGINS= \
 	plugins/TransformJ_.jar \
-	plugins/ij-ImageIO_.jar \
 
 third-party-plugins[] <- $THIRD_PARTY_PLUGINS
 plugins/*.jar <- staged-plugins/*.jar

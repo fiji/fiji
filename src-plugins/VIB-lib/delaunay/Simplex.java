@@ -1,20 +1,20 @@
 /*
  * Copyright (c) 2005 by L. Paul Chew.
- * 
+ *
  * Permission is hereby granted, without written agreement and without
  * license or royalty fees, to use, copy, modify, and distribute this
- * software and its documentation for any purpose, subject to the following 
+ * software and its documentation for any purpose, subject to the following
  * conditions:
  *
- * The above copyright notice and this permission notice shall be included 
+ * The above copyright notice and this permission notice shall be included
  * in all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS 
- * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
 
@@ -33,18 +33,18 @@ import java.util.Set;
 
 /**
  * A Simplex is an immutable set of vertices (usually Pnts).
- * 
+ *
  * @author Paul Chew
- * 
+ *
  * Created July 2005. Derived from an earlier, messier version.
  */
 public class Simplex extends AbstractSet implements Set {
-    
+
     private List vertices;                  // The simplex's vertices
     private long idNumber;                  // The id number
     private static long idGenerator = 0;    // Used to create id numbers
     public static boolean moreInfo = false; // True iff more info in toString
-    
+
     /**
      * Constructor.
      * @param collection a Collection holding the Simplex vertices
@@ -57,7 +57,7 @@ public class Simplex extends AbstractSet implements Set {
         if (noDups.size() != this.vertices.size())
             throw new IllegalArgumentException("Duplicate vertices in Simplex");
     }
-    
+
     /**
      * Constructor.
      * @param vertices the vertices of the Simplex.
@@ -66,7 +66,7 @@ public class Simplex extends AbstractSet implements Set {
     public Simplex (Object[] vertices) {
         this(Arrays.asList(vertices));
     }
-    
+
     /**
      * String representation.
      * @return the String representation of this Simplex
@@ -75,7 +75,7 @@ public class Simplex extends AbstractSet implements Set {
         if (!moreInfo) return "Simplex" + idNumber;
         return "Simplex" + idNumber + super.toString();
     }
-    
+
     /**
      * Dimension of the Simplex.
      * @return dimension of Simplex (one less than number of vertices)
@@ -83,7 +83,7 @@ public class Simplex extends AbstractSet implements Set {
     public int dimension () {
         return this.vertices.size() - 1;
     }
-    
+
     /**
      * True iff simplices are neighbors.
      * Two simplices are neighbors if they are the same dimension and they share
@@ -96,7 +96,7 @@ public class Simplex extends AbstractSet implements Set {
         h.removeAll(simplex);
         return (this.size() == simplex.size()) && (h.size() == 1);
     }
-    
+
     /**
      * Report the facets of this Simplex.
      * Each facet is a set of vertices.
@@ -112,7 +112,7 @@ public class Simplex extends AbstractSet implements Set {
         }
         return theFacets;
     }
-    
+
     /**
      * Report the boundary of a Set of Simplices.
      * The boundary is a Set of facets where each facet is a Set of vertices.
@@ -130,30 +130,30 @@ public class Simplex extends AbstractSet implements Set {
         }
         return theBoundary;
     }
-    
+
     /* Remaining methods are those required by AbstractSet */
-    
+
     /**
      * @return Iterator for Simplex's vertices.
      */
     public Iterator iterator () {
         return this.vertices.iterator();
     }
-    
+
     /**
      * @return the size (# of vertices) of this Simplex
      */
     public int size () {
         return this.vertices.size();
     }
-    
+
     /**
      * @return the hashCode of this Simplex
      */
     public int hashCode () {
         return (int)(idNumber^(idNumber>>>32));
     }
-    
+
     /**
      * We want to allow for different simplices that share the same vertex set.
      * @return true for equal Simplices
