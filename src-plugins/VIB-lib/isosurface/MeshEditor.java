@@ -51,6 +51,8 @@ public class MeshEditor {
 			PointGroup pg = (PointGroup)it.next();
 			pg.smoothMembers(K);
 		}
+
+		c.update();
 		// done!
 	}
 
