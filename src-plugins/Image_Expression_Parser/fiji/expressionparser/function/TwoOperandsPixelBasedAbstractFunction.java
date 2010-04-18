@@ -143,6 +143,4 @@ public abstract class TwoOperandsPixelBasedAbstractFunction <T extends RealType<
 	 */
 	 public abstract float evaluate(final T t1, final T t2) throws ParseException;
 
-
-
 }

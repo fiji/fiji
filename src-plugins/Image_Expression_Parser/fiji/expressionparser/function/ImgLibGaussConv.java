@@ -60,6 +60,5 @@ public class ImgLibGaussConv <T extends RealType<T>> extends TwoOperandsAbstract
 		throw new ParseException("In function "+getFunctionString()
 				+": Arguments must be one image and one number, got 2 images.");
 	}
-
-
+	
 }

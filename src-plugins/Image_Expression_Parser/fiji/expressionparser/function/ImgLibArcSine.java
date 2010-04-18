@@ -7,7 +7,7 @@ public final class ImgLibArcSine <T extends RealType<T>> extends
 
 	public static final String DOCUMENTATION_STRING = 
 		"<h3>Element-wise arc-sine</h3>" +
-		"This function computes the arc sine of an ImgLib image, taking" +
+		"This function computes the arc sine of an ImgLib image, taking " +
 		"each pixel as its operand. Calculations are done using Math.asin";
 
 	
@@ -16,10 +16,12 @@ public final class ImgLibArcSine <T extends RealType<T>> extends
 		return (float) Math.asin(alpha.getRealDouble());
 	}
 
+	@Override
 	public String getDocumentationString() {
 		return DOCUMENTATION_STRING;
 	}
 
+	@Override
 	public String getFunctionString() {
 		return "asin";
 	}

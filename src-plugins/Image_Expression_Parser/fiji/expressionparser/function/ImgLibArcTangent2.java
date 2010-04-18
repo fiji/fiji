@@ -9,7 +9,7 @@ public final class ImgLibArcTangent2 <T extends RealType<T>> extends
 
 	public static final String DOCUMENTATION_STRING = 
 		"<h3>Element-wise arc-tangent</h3>" +
-		"This function computes the two operands arc-tangent of two ImgLib images, taking" +
+		"This function computes the two operands arc-tangent of two ImgLib images, taking " +
 		"each pixel of the two images as its two operands. Calculations are done using Math.atan2." ;
 
 	
@@ -18,10 +18,12 @@ public final class ImgLibArcTangent2 <T extends RealType<T>> extends
 		return (float) Math.atan2(t1.getRealDouble(), t2.getRealDouble());
 	}
 
+	@Override
 	public String getDocumentationString() {
 		return DOCUMENTATION_STRING;
 	}
 
+	@Override
 	public String getFunctionString() {
 		return "atan2";
 	}

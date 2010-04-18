@@ -7,7 +7,7 @@ public final class ImgLibTangent <T extends RealType<T>> extends SingleOperandPi
 
 	public static final String DOCUMENTATION_STRING = 
 		"<h3>Element-wise tangent</h3>" +
-		"This function computes the tangent of an ImgLib image, taking" +
+		"This function computes the tangent of an ImgLib image, taking " +
 		"each pixel as its operand (must be in radians). " +
 		"Calculations are done using Math.tan";
 
@@ -16,10 +16,12 @@ public final class ImgLibTangent <T extends RealType<T>> extends SingleOperandPi
 		return (float) Math.tan(alpha.getRealDouble());
 	}
 
+	@Override
 	public String getDocumentationString() {
 		return DOCUMENTATION_STRING;
 	}
 
+	@Override
 	public String getFunctionString() {
 		return "tan";
 	}

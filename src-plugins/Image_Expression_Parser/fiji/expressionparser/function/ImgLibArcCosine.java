@@ -6,7 +6,7 @@ public final class ImgLibArcCosine <T extends RealType<T>> extends SingleOperand
 
 	public static final String DOCUMENTATION_STRING = 
 		"<h3>Element-wise arc-cosine</h3>" +
-		"This function computes the arc cosine of an ImgLib image, taking" +
+		"This function computes the arc cosine of an ImgLib image, taking " +
 		"each pixel as its operand. Calculations are done using Math.acos";
 	
 	@Override
@@ -14,10 +14,12 @@ public final class ImgLibArcCosine <T extends RealType<T>> extends SingleOperand
 		return (float) Math.acos(t.getRealDouble());
 	}
 
+	@Override
 	public String getDocumentationString() {
 		return DOCUMENTATION_STRING;
 	}
 
+	@Override
 	public String getFunctionString() {
 		return "acos";
 	}

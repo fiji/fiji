@@ -55,4 +55,36 @@ public abstract class TwoOperandsAbstractFunction <T extends RealType<T>> extend
 		inStack.push(result);
 	}
 	
+	/**
+	 * Evaluate this function on two numeric types. Argument types can be of any numeric type, but a float must
+	 * be returned, so as to avoid underflow and overflow problems on bounded types (e.g. ByeType).
+	 * @param alpha1  The first number 
+	 * @param alpha2  The second number
+	 * @return  The resulting number
+	 */
+	 public abstract float evaluate(final T t1, final T t2) throws ParseException;
+
+	 /**
+	  * Evaluate this function on two ImgLib images. A new {@link Image} of {@link FloatType}  
+	  * is returned, so as to avoid underflow and overflow problems on bounded types (e.g. ByeType).
+	  * @param img1 the first image 
+	  * @param img2 the second image 
+	  * @return  The new resulting image
+	  */
+	 public abstract Image<FloatType> evaluate(Image<T> img1, Image<T> img2) throws ParseException;
+
+	 /**
+	  * Evaluate this function on an ImgLib images and a numeric {@link RealType} type.
+	  * A new {@link Image} of {@link FloatType}  
+	  * is returned, so as to avoid underflow and overflow problems on 
+	  * bounded types (e.g. ByeType). This method should implement a singleton expansion
+	  * of the method {@link #evaluate(Image, Image)}, as meant by the implement
+	  * function.
+	  * 
+	  * @param img the image 
+	  * @param alpha the numeric type 
+	  * @return  The new resulting image
+	  */
+	 public abstract Image<FloatType> evaluate(Image<T> img, T alpha) throws ParseException;
+
 }
