@@ -4,7 +4,7 @@ import mpicbg.imglib.type.numeric.RealType;
 
 import org.nfunk.jep.ParseException;
 
-public class ImgLibArcTangent2 <T extends RealType<T>> extends
+public final class ImgLibArcTangent2 <T extends RealType<T>> extends
 		TwoOperandsPixelBasedAbstractFunction<T> {
 
 	public static final String DOCUMENTATION_STRING = 
@@ -14,7 +14,7 @@ public class ImgLibArcTangent2 <T extends RealType<T>> extends
 
 	
 	@Override
-	public float evaluate(T t1, T t2) throws ParseException {
+	public final float evaluate(T t1, T t2) throws ParseException {
 		return (float) Math.atan2(t1.getRealDouble(), t2.getRealDouble());
 	}
 
