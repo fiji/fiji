@@ -4,6 +4,11 @@ import mpicbg.imglib.type.numeric.RealType;
 
 public final class ImgLibDivide <T extends RealType<T>> extends TwoOperandsPixelBasedAbstractFunction<T> {
 
+	public static final String DOCUMENTATION_STRING = "<h3>Element-wise division</h3> " +
+		"This function divides its two operands, element-wise. " +
+		"See 'element-wise addition' for details.";
+ 
+	
 	public ImgLibDivide() {
 		numberOfParameters = 2;
 	}
@@ -25,9 +30,7 @@ public final class ImgLibDivide <T extends RealType<T>> extends TwoOperandsPixel
 	
 	@Override
 	public String getDocumentationString() {
-		return "<h3>Element-wise division</h3>" +
-		"This function divides its two operands, element-wise. " +
-		"See 'element-wise addition' for details.";
+		return DOCUMENTATION_STRING;
 	}
 
 }

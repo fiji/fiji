@@ -4,6 +4,10 @@ import mpicbg.imglib.type.numeric.RealType;
 
 public final class ImgLibSubtract <T extends RealType<T>> extends TwoOperandsPixelBasedAbstractFunction<T> {
 
+	public final static String DOCUMENTATION_STING = "<h3>Element-wise subtraction</h3> " +
+		"This function subtracts its two operands, element-wise. " +
+		"See 'element-wise addition' for details.";
+	
 	public ImgLibSubtract() {
 		numberOfParameters = 2;
 	}
@@ -25,9 +29,7 @@ public final class ImgLibSubtract <T extends RealType<T>> extends TwoOperandsPix
 
 	@Override
 	public String getDocumentationString() {
-		return "<h3>Element-wise subtraction</h3>" +
-		"This function subtracts its two operands, element-wise. " +
-		"See 'element-wise addition' for details.";
+		return DOCUMENTATION_STING;
 	}
 
 }

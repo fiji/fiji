@@ -6,10 +6,14 @@ public final class ImgLibArcSine <T extends RealType<T>> extends
 		SingleOperandPixelBasedAbstractFunction<T> {
 
 	public static final String DOCUMENTATION_STRING = 
-		"<h3>Element-wise arc-sine</h3>" +
+		"<h3>Element-wise arc-sine</h3> " +
 		"This function computes the arc sine of an ImgLib image, taking " +
-		"each pixel as its operand. Calculations are done using Math.asin";
+		"each pixel as its operand. Calculations are done using <i>Math.asin</i>. " +
+		"Values returned are in the range [-π/2, π/2]";
 
+	public ImgLibArcSine() {
+		numberOfParameters = 1;
+	}
 	
 	@Override
 	public float evaluate(T alpha) {
@@ -24,6 +28,11 @@ public final class ImgLibArcSine <T extends RealType<T>> extends
 	@Override
 	public String getFunctionString() {
 		return "asin";
+	}
+	
+	@Override
+	public String toString() {
+		return "Pixel-wise arc sine";
 	}
 
 }
