@@ -1485,7 +1485,7 @@ public class Weka_Segmentation implements PlugIn
 			return;
 		}
 								
-		IJ.log("Loaded " + od.getDirectory() + od.getFileName());
+		
 		IJ.log("Read header from " + od.getDirectory() + od.getFileName() + " (number of attributes = " + trainHeader.numAttributes() + ")");
 		
 		// Check if the loaded information corresponds to current state of the segmentator
@@ -1497,6 +1497,8 @@ public class Weka_Segmentation implements PlugIn
 		}
 							
 		updateButtonsEnabling();
+		
+		IJ.log("Loaded " + od.getDirectory() + od.getFileName());
 	}
 	
 	
