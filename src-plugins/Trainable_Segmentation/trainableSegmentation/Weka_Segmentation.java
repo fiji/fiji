@@ -39,7 +39,6 @@ import ij.io.SaveDialog;
 import ij.ImagePlus;
 import ij.WindowManager;
 
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
@@ -61,6 +60,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Composite;
 import java.awt.Dimension;
+import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -79,6 +79,7 @@ import java.awt.event.ItemListener;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.beans.PropertyEditor;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -93,6 +94,7 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 
+
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
@@ -104,10 +106,14 @@ import weka.classifiers.pmml.consumer.PMMLClassifier;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instances;
+import weka.core.OptionHandler;
 import weka.core.SerializationHelper;
+import weka.core.Utils;
 import weka.core.pmml.PMMLFactory;
 import weka.core.pmml.PMMLModel;
+import weka.gui.GenericObjectEditor;
 import weka.gui.explorer.ClassifierPanel;
+import weka.gui.PropertyDialog;
 import fiji.util.gui.GenericDialogPlus;
 import fiji.util.gui.OverlayedImageCanvas;
 import hr.irb.fastRandomForest.FastRandomForest;
@@ -293,7 +299,7 @@ public class Weka_Segmentation implements PlugIn
 		//but this seems to work better
 		rf.setNumFeatures(randomFeatures);
 		rf.setSeed(123);
-		
+				
 		classifier = rf;
 	}
 	
@@ -1092,14 +1098,13 @@ public class Weka_Segmentation implements PlugIn
 		
 		// Disable buttons until the training has finished
 		setButtonsEnabled(false);
-
+				
 		// Create feature stack if it was not created yet
 		if(featureStack.isEmpty())
 		{
 			IJ.showStatus("Creating feature stack...");
 			featureStack.updateFeatures();
-		}
-		
+		}		
 
 		IJ.showStatus("Training classifier...");
 		Instances data = null;
@@ -1145,11 +1150,13 @@ public class Weka_Segmentation implements PlugIn
 			e.printStackTrace();
 			return;
 		}
-		final long end = System.currentTimeMillis();
-		final DecimalFormat df = new DecimalFormat("0.0000");
 		
-		final String outOfBagError = (classifier instanceof FastRandomForest) ? ", out of bag error: " + df.format(rf.measureOutOfBagError()) : "";
-		IJ.log("Finished training in "+(end-start)+"ms"+ outOfBagError);
+		// Print classifier information
+		IJ.log("\n" + this.classifier.toString());
+		
+		final long end = System.currentTimeMillis();
+						
+		IJ.log("Finished training in "+(end-start)+"ms");
 		
 		if(updateWholeData)
 			updateTestSet();
@@ -1963,17 +1970,34 @@ public class Weka_Segmentation implements PlugIn
 		}
 		
 		gd.addMessage("General options:");
-		
-		gd.addMessage("Fast Random Forest settings:");
-		gd.addNumericField("Number of trees:", numOfTrees, 0);
-		gd.addNumericField("Random features", randomFeatures, 0);
+						
+		if( this.classifier instanceof FastRandomForest )
+		{
+			gd.addMessage("Fast Random Forest settings:");
+			gd.addNumericField("Number of trees:", numOfTrees, 0);
+			gd.addNumericField("Random features", randomFeatures, 0);
+		}
+		else
+		{
+			String classifierName = (this.classifier.getClass()).toString();
+			int index = classifierName.indexOf(" ");
+			classifierName = classifierName.substring(index + 1);
+			gd.addMessage(classifierName + " settings");
+			gd.addButton("Set Weka classifier options", new ClassifierSettingsButtonListener(this.classifier));
+		}
+				
+		/*
+		final String[] options = this.classifier.getOptions();
+		for(int i = 0; i < options.length; i++)
+			IJ.log(options[i]);
+		*/
 		
 		gd.addMessage("Class names:");
 		for(int i = 0; i < numOfClasses; i++)
 			gd.addStringField("Class "+(i+1), classLabels[i], 15);
 		
 		gd.addMessage("Advanced options:");
-		gd.addButton("Save feature stack", new ButtonListener("Select location to save feature stack", featureStack));
+		gd.addButton("Save feature stack", new SaveFeatureStackButtonListener("Select location to save feature stack", featureStack));
 		gd.addSlider("Result overlay opacity", 0, 100, overlayOpacity);
 		gd.addHelp("http://pacific.mpi-cbg.de/wiki/Trainable_Segmentation_Plugin");
 		
@@ -1998,8 +2022,15 @@ public class Weka_Segmentation implements PlugIn
 
 		
 		// Read fast random forest parameters and check if changed
-		final int newNumTrees = (int) gd.getNextNumber();
-		final int newRandomFeatures = (int) gd.getNextNumber();
+		if( this.classifier instanceof FastRandomForest )
+		{
+			final int newNumTrees = (int) gd.getNextNumber();
+			final int newRandomFeatures = (int) gd.getNextNumber();
+			
+			// Update random forest if necessary
+			if(newNumTrees != numOfTrees ||	newRandomFeatures != randomFeatures)
+				updateClassifier(newNumTrees, newRandomFeatures);
+		}		
 		
 		boolean classNameChanged = false;
 		for(int i = 0; i < numOfClasses; i++)
@@ -2043,10 +2074,7 @@ public class Weka_Segmentation implements PlugIn
 			// Pack window to update buttons
 			win.pack();
 		}
-			
-		// Update random forest if necessary
-		if(newNumTrees != numOfTrees ||	newRandomFeatures != randomFeatures)
-			updateClassifier(newNumTrees, newRandomFeatures);
+					
 		
 		// Update feature stack if necessary
 		if(featuresChanged)
@@ -2061,18 +2089,64 @@ public class Weka_Segmentation implements PlugIn
 		
 		return true;
 	}
+
+
+	/**
+	 * Button listener class to handle the button action from the 
+	 * settings dialog to set the Weka classifier parameters
+	 */
+	static class ClassifierSettingsButtonListener implements ActionListener 
+	{
+		AbstractClassifier classifier;
+
+
+		public ClassifierSettingsButtonListener(AbstractClassifier classifier) 
+		{
+			this.classifier = classifier;
+		}
+
+		public void actionPerformed(ActionEvent e) 
+		{
+			try {
+				GenericObjectEditor.registerEditors();
+				GenericObjectEditor ce = new GenericObjectEditor(true);
+				ce.setClassType(weka.classifiers.Classifier.class);
+				Object initial = classifier;
+			 
+			 	ce.setValue(initial);
+
+				PropertyDialog pd = new PropertyDialog((Frame) null, ce, 100, 100);
+				pd.addWindowListener(new WindowAdapter() {
+					public void windowClosing(WindowEvent e) {
+						PropertyEditor pe = ((PropertyDialog)e.getSource()).getEditor();
+						Object c = (Object)pe.getValue();
+						String options = "";
+						if (c instanceof OptionHandler) {
+							options = Utils.joinOptions(((OptionHandler)c).getOptions());
+						}
+						IJ.log(c.getClass().getName() + " " + options);
+						return;
+					}
+				});
+				pd.setVisible(true);
+			} catch (Exception ex) {
+				ex.printStackTrace();
+				IJ.error(ex.getMessage());
+			}	
+		}
+	}	
 	
 	/**
 	 * Button listener class to handle the button action from the 
-	 * settings dialog 
+	 * settings dialog to save the feature stack
 	 */
-	static class ButtonListener implements ActionListener 
+	static class SaveFeatureStackButtonListener implements ActionListener 
 	{
 		String title;
 		TextField text;
 		FeatureStack featureStack;
 
-		public ButtonListener(String title, FeatureStack featureStack) 
+		public SaveFeatureStackButtonListener(String title, FeatureStack featureStack) 
 		{
 			this.title = title;
 			this.featureStack = featureStack;
