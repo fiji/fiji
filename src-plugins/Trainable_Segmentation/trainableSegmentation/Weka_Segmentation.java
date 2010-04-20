@@ -64,10 +64,12 @@ import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Image;
 import java.awt.Insets;
 import java.awt.Panel;
 import java.awt.Rectangle;
 import java.awt.TextField;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
@@ -96,6 +98,7 @@ import java.io.OutputStreamWriter;
 
 
 import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -184,6 +187,8 @@ public class Weka_Segmentation implements PlugIn
 	final JButton saveDataButton;
 	/** settings button */
 	final JButton settingsButton;
+	/** Weka button */
+	final JButton wekaButton;
 	/** create new class button */
 	final JButton addClassButton;
 	
@@ -281,6 +286,13 @@ public class Weka_Segmentation implements PlugIn
 		
 		settingsButton = new JButton ("Settings");
 		settingsButton.setToolTipText("Display settings dialog");
+		
+		/** The weka image */
+		  Image m_weka = Toolkit.getDefaultToolkit().
+		    getImage(ClassLoader.getSystemResource("weka/gui/images/weka_background.gif"));
+		ImageIcon icon = new ImageIcon(m_weka);
+		wekaButton = new JButton( icon );
+		wekaButton.setToolTipText("Launch Weka GUI chooser");
 		
 		for(int i = 0; i < numOfClasses ; i++)
 		{
@@ -592,7 +604,9 @@ public class Weka_Segmentation implements PlugIn
 			optionsConstraints.gridy++;			
 			optionsJPanel.add(settingsButton, optionsConstraints);
 			optionsConstraints.gridy++;
-					
+			optionsJPanel.add(wekaButton, optionsConstraints);
+			optionsConstraints.gridy++;
+			
 			// Buttons panel (including training and options)
 			GridBagLayout buttonsLayout = new GridBagLayout();
 			GridBagConstraints buttonsConstraints = new GridBagConstraints();
@@ -812,6 +826,7 @@ public class Weka_Segmentation implements PlugIn
 		saveDataButton.setEnabled(s);
 		addClassButton.setEnabled(s);
 		settingsButton.setEnabled(s);
+		wekaButton.setEnabled(s);
 		for(int i = 0 ; i < numOfClasses; i++)
 		{
 			exampleList[i].setEnabled(s);
@@ -842,6 +857,7 @@ public class Weka_Segmentation implements PlugIn
 		
 		addClassButton.setEnabled(this.numOfClasses < MAX_NUM_CLASSES);
 		settingsButton.setEnabled(true);
+		wekaButton.setEnabled(true);
 		
 		boolean examplesEmpty = true;
 		for(int i = 0; i < numOfClasses; i ++)
