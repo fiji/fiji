@@ -25,9 +25,10 @@ public class FileFunctions {
 		List<String> result = new ArrayList<String>();
 		JarFile jar = new JarFile(path);
 		for (JarEntry entry : Collections.list(jar.entries())) {
-			if (entry.getName().endsWith(".class"))
+			String name = entry.getName();
+			if (name.endsWith(".class") || name.endsWith("/"))
 				continue;
-			String destination = baseDirectory + entry.getName();
+			String destination = baseDirectory + name;
 			copyTo(jar.getInputStream(entry), destination);
 			result.add(destination);
 		}
