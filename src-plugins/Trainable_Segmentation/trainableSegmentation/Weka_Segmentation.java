@@ -287,10 +287,8 @@ public class Weka_Segmentation implements PlugIn
 		settingsButton = new JButton ("Settings");
 		settingsButton.setToolTipText("Display settings dialog");
 		
-		/** The weka image */
-		  Image m_weka = Toolkit.getDefaultToolkit().
-		    getImage(ClassLoader.getSystemResource("weka/gui/images/weka_background.gif"));
-		ImageIcon icon = new ImageIcon(m_weka);
+		/** The weka image */		
+		ImageIcon icon = new ImageIcon(Weka_Segmentation.class.getResource("/trainableSegmentation/images/weka.png"));
 		wekaButton = new JButton( icon );
 		wekaButton.setToolTipText("Launch Weka GUI chooser");
 		
