@@ -41,7 +41,7 @@ public abstract class TwoOperandsPixelBasedAbstractFunction <T extends RealType<
 			T t1 = (T) new FloatType(((Number)param1).floatValue());
 			
 			if (param2 instanceof Image<?>) {
-				result = evaluate((Image<T>)param2, t1);
+				result = evaluate(t1, (Image<T>)param2);
 			} else if (param2 instanceof Number) {
 				T t2 = (T) new FloatType(((Number)param2).floatValue());
 				result = new Float(evaluate(t1, t2));
@@ -109,13 +109,39 @@ public abstract class TwoOperandsPixelBasedAbstractFunction <T extends RealType<
 	}
 	
 	/**
-	 * Singleton expansion. Evaluate this function on an image and an image that would be of same 
+	 * Right-singleton expansion. Evaluate this function on an image and an image that would be of same 
 	 * dimension but with all element being the number passed in argument.
 	 * @param img  The image 
 	 * @param alpha  The number to do singleton expansion on 
 	 * @return  The resulting image 
 	 */
 	public final Image<FloatType> evaluate(final Image<T> img, final T alpha) throws ParseException {
+		// Create target image
+		Image<FloatType> result = new ImageFactory<FloatType>(new FloatType(), img.getContainerFactory())
+			.createImage(img.getDimensions(), String.format("%.1f %s %s", alpha.getRealFloat(), getFunctionString(), img.getName()) );
+		
+		Cursor<T> ic = img.createCursor();
+		Cursor<FloatType> rc = result.createCursor();
+		
+		while (rc.hasNext()) {
+			rc.fwd();
+			ic.fwd();
+			rc.getType().set(evaluate(ic.getType(), alpha));
+		}
+		rc.close();
+		ic.close();
+				
+		return result;
+	}
+
+	/**
+	 * Left-singleton expansion. Evaluate this function on an image and an image that would be of same 
+	 * dimension but with all element being the number passed in argument.
+	 * @param img  The image 
+	 * @param alpha  The number to do singleton expansion on 
+	 * @return  The resulting image 
+	 */
+	public final Image<FloatType> evaluate(final T alpha, final Image<T> img) throws ParseException {
 		// Create target image
 		Image<FloatType> result = new ImageFactory<FloatType>(new FloatType(), img.getContainerFactory())
 			.createImage(img.getDimensions(), String.format("%.1f %s %s", alpha.getRealFloat(), getFunctionString(), img.getName()) );
@@ -133,7 +159,7 @@ public abstract class TwoOperandsPixelBasedAbstractFunction <T extends RealType<
 				
 		return result;
 	}
-
+	
 	/**
 	 * Evaluate this function on two numeric types. Argument types can be of any numeric type, but a float must
 	 * be returned, so as to avoid underflow and overflow problems on bounded types (e.g. ByeType).
