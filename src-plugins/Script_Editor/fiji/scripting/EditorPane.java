@@ -292,6 +292,9 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 		else if (language.extension.equals(".m"))
 			getRSyntaxDocument()
 				.setSyntaxStyle(new MatlabTokenMaker());
+		else if (language.extension.equals(".ijm"))
+			getRSyntaxDocument()
+				.setSyntaxStyle(new ImageJMacroTokenMaker());
 
 		frame.setTitle();
 		frame.updateLanguageMenu(language);
