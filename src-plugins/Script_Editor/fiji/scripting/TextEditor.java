@@ -829,12 +829,24 @@ public class TextEditor extends JFrame implements ActionListener,
 
 	public void open(String path) {
 		try {
-			editorPane = new EditorPane(this);
-			tabbed.addTab("", editorPane.embedWithScrollbars());
-			switchTo(tabbed.getTabCount() - 1);
-			addDefaultAccelerators();
+			boolean wasNew =
+				editorPane != null && editorPane.isNew();
+			if (!wasNew) {
+				editorPane = new EditorPane(this);
+				tabbed.addTab("",
+					editorPane.embedWithScrollbars());
+				switchTo(tabbed.getTabCount() - 1);
+				addDefaultAccelerators();
+			}
 			editorPane.setFile("".equals(path) ? null : path);
-			tabsMenuItems.add(addToMenu(tabsMenu,
+			if (wasNew) {
+				int index = tabbed.getSelectedIndex()
+					+ tabsMenuTabsStart;
+				tabsMenu.getItem(index)
+					.setText(editorPane.getFileName());
+			}
+			else
+				tabsMenuItems.add(addToMenu(tabsMenu,
 					editorPane.getFileName(), 0, 0));
 		} catch (Exception e) {
 			e.printStackTrace();

@@ -173,6 +173,12 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 			setTitle();
 	}
 
+	public boolean isNew() {
+		return !fileChanged() && file == null &&
+			fallBackBaseName == null &&
+			getDocument().getLength() == 0;
+	}
+
 	public void checkForOutsideChanges() {
 		if (frame != null && wasChangedOutside() &&
 				!frame.reload("The file " + file.getName()
