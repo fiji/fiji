@@ -16,6 +16,8 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import java.util.Vector;
+
 import javax.swing.KeyStroke;
 import javax.swing.ToolTipManager;
 
@@ -33,6 +35,7 @@ import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 
 import org.fife.ui.rtextarea.Gutter;
+import org.fife.ui.rtextarea.GutterIconInfo;
 import org.fife.ui.rtextarea.IconGroup;
 import org.fife.ui.rtextarea.RTextArea;
 import org.fife.ui.rtextarea.RTextScrollPane;
@@ -312,6 +315,50 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 
 	public ClassNameFunctions getClassNameFunctions() {
 		return new ClassNameFunctions(frame, provider);
+	}
+
+	public void toggleBookmark() {
+		toggleBookmark(getCaretLineNumber());
+	}
+
+	public void toggleBookmark(int line) {
+		if (gutter != null) try {
+			gutter.toggleBookmark(line);
+		} catch (BadLocationException e) { /* ignore */ }
+	}
+
+	public class Bookmark {
+		int tab;
+		GutterIconInfo info;
+
+		public Bookmark(int tab, GutterIconInfo info) {
+			this.tab = tab;
+			this.info = info;
+		}
+
+		public int getLineNumber() {
+			try {
+				return getLineOfOffset(info.getMarkedOffset());
+			} catch (BadLocationException e) {
+				return -1;
+			}
+		}
+
+		public void setCaret() {
+			frame.switchTo(tab);
+			setCaretPosition(info.getMarkedOffset());
+		}
+
+		public String toString() {
+			return "Line " + (getLineNumber() + 1) + " (" + getFileName() + ")";
+		}
+	}
+
+	public void getBookmarks(int tab, Vector<Bookmark> result) {
+		if (gutter == null)
+			return;
+		for (GutterIconInfo info : gutter.getBookmarks())
+			result.add(new Bookmark(tab, info));
 	}
 
 	public void startDebugging() {

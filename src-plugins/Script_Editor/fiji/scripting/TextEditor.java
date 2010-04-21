@@ -47,6 +47,7 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Set;
+import java.util.Vector;
 
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -92,7 +93,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		  sortImports, removeTrailingWhitespace, findNext,
 		  openHelp, addImport, clearScreen, nextError, previousError,
 		  openHelpWithoutFrames, nextTab, previousTab,
-		  runSelection, extractSourceJar;
+		  runSelection, extractSourceJar, toggleBookmark,
+		  listBookmarks;
 	JMenu tabsMenu;
 	int tabsMenuTabsStart;
 	Set<JMenuItem> tabsMenuItems;
@@ -152,6 +154,10 @@ public class TextEditor extends JFrame implements ActionListener,
 		replace = addToMenu(edit, "Find and Replace...", KeyEvent.VK_H, ctrl);
 		gotoLine = addToMenu(edit, "Goto line...", KeyEvent.VK_G, ctrl);
 		gotoLine.setMnemonic(KeyEvent.VK_G);
+		toggleBookmark = addToMenu(edit, "Toggle Bookmark", KeyEvent.VK_B, ctrl);
+		toggleBookmark.setMnemonic(KeyEvent.VK_B);
+		listBookmarks = addToMenu(edit, "List Bookmarks", 0, 0);
+		listBookmarks.setMnemonic(KeyEvent.VK_O);
 		edit.addSeparator();
 		clearScreen = addToMenu(edit, "Clear output panel", 0, 0);
 		clearScreen.setMnemonic(KeyEvent.VK_L);
@@ -699,6 +705,10 @@ public class TextEditor extends JFrame implements ActionListener,
 			findOrReplace(true);
 		else if (source == gotoLine)
 			gotoLine();
+		else if (source == toggleBookmark)
+			toggleBookmark();
+		else if (source == listBookmarks)
+			listBookmarks();
 		else if (source == selectAll) {
 			getTextArea().setCaretPosition(0);
 			getTextArea().moveCaretPosition(getTextArea().getDocument().getLength());
@@ -797,6 +807,19 @@ public class TextEditor extends JFrame implements ActionListener,
 
 	public void gotoLine(int line) throws BadLocationException {
 		getTextArea().setCaretPosition(getTextArea().getLineStartOffset(line-1));
+	}
+
+	public void toggleBookmark() {
+		getEditorPane().toggleBookmark();
+	}
+
+	public void listBookmarks() {
+		Vector<EditorPane.Bookmark> bookmarks =
+			new Vector<EditorPane.Bookmark>();
+		for (int i = 0; i < tabbed.getTabCount(); i++)
+			getEditorPane(i).getBookmarks(i, bookmarks);
+		BookmarkDialog dialog = new BookmarkDialog(this, bookmarks);
+		dialog.show();
 	}
 
 	public boolean reload() {
