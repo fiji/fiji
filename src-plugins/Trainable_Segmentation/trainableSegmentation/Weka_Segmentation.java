@@ -64,12 +64,10 @@ import java.awt.Frame;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.Image;
 import java.awt.Insets;
 import java.awt.Panel;
 import java.awt.Rectangle;
 import java.awt.TextField;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
@@ -81,6 +79,7 @@ import java.awt.event.ItemListener;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.beans.PropertyEditor;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -114,6 +113,7 @@ import weka.core.SerializationHelper;
 import weka.core.Utils;
 import weka.core.pmml.PMMLFactory;
 import weka.core.pmml.PMMLModel;
+import weka.gui.GUIChooser;
 import weka.gui.GenericObjectEditor;
 import weka.gui.explorer.ClassifierPanel;
 import weka.gui.PropertyDialog;
@@ -361,6 +361,14 @@ public class Weka_Segmentation implements PlugIn
 					else if(e.getSource() == settingsButton){
 						showSettingsDialog();
 					}
+					else if(e.getSource() == wekaButton){		
+						GUIChooser chooser = new GUIChooser();
+						// Remove window listeners to prevent from Weka closing Fiji
+						for (WindowListener wl : chooser.getWindowListeners()) {
+							chooser.removeWindowListener(wl);
+						}
+						chooser.setVisible(true);
+					}
 					else{ 
 						for(int i = 0; i < numOfClasses; i++)
 						{
@@ -552,6 +560,7 @@ public class Weka_Segmentation implements PlugIn
 			saveDataButton.addActionListener(listener);
 			addClassButton.addActionListener(listener);
 			settingsButton.addActionListener(listener);
+			wekaButton.addActionListener(listener);
 			
 			// Training panel (left side of the GUI)
 			trainingJPanel.setBorder(BorderFactory.createTitledBorder("Training"));
@@ -682,6 +691,7 @@ public class Weka_Segmentation implements PlugIn
 					saveDataButton.removeActionListener(listener);
 					addClassButton.removeActionListener(listener);
 					settingsButton.removeActionListener(listener);
+					wekaButton.removeActionListener(listener);
 					
 					// Set number of classes back to 2
 					numOfClasses = 2;
