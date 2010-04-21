@@ -1801,11 +1801,10 @@ static int start_ij(void)
 		return 1;
 
 	/* set up class path */
-	class_path = "-Djava.class.path=" + class_path;
 	if (skip_build_classpath) {
 		/* strip trailing ":" */
 		int len = class_path.length();
-		if (class_path[len - 1] == PATH_SEP[0])
+		if (len > 0 && class_path[len - 1] == PATH_SEP[0])
 			class_path = class_path.substr(0, len - 1);
 	}
 	else {
@@ -1827,7 +1826,10 @@ static int start_ij(void)
 					+ "/jars", 0);
 		}
 	}
-	add_option(options, class_path, 0);
+	if (class_path != "") {
+		class_path = "-Djava.class.path=" + class_path;
+		add_option(options, class_path, 0);
+	}
 
 	if (jvm_options != "")
 		add_options(options, jvm_options, 0);
