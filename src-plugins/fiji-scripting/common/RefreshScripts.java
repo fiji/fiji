@@ -465,6 +465,8 @@ abstract public class RefreshScripts implements PlugIn {
 	protected static String discoverJars(String path) throws IOException {
 		if (path.equals(".rsrc") || path.endsWith("/.rsrc"))
 			return "";
+		if (path.endsWith(File.separator))
+			path = path.substring(0, path.length() - 1);
                 File file = new File(path);
                 if (file.isDirectory()) {
 			String result = "";
