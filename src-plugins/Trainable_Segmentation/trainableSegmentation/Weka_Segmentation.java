@@ -103,6 +103,9 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
+import bsh.EvalError;
+import bsh.Interpreter;
+
 import weka.classifiers.AbstractClassifier;
 import weka.classifiers.pmml.consumer.PMMLClassifier;
 import weka.core.Attribute;
@@ -223,6 +226,7 @@ public class Weka_Segmentation implements PlugIn
 	/** executor service to launch threads for the plugin methods and events */
 	final ExecutorService exec = Executors.newFixedThreadPool(1);
 
+	private Interpreter interp = new Interpreter();
 	
 	/**
 	 * Basic constructor
@@ -318,6 +322,20 @@ public class Weka_Segmentation implements PlugIn
 	 */
 	private ActionListener listener = new ActionListener() {
 		public void actionPerformed(final ActionEvent e) {
+			
+			if(e.getSource() == wekaButton){
+				new Thread(){
+					{
+						setContextClassLoader(ClassLoader.getSystemClassLoader()); 
+						//setContextClassLoader(IJ.getClassLoader());
+						IJ.log(" " + ClassLoader.getSystemClassLoader());
+					}
+					public void run(){
+						launchWeka();
+					}				
+				}.start();
+			}
+			
 			// listen to the buttons on separate threads not to block
 			// the event dispatch thread
 			exec.submit(new Runnable() {
@@ -361,14 +379,7 @@ public class Weka_Segmentation implements PlugIn
 					else if(e.getSource() == settingsButton){
 						showSettingsDialog();
 					}
-					else if(e.getSource() == wekaButton){		
-						GUIChooser chooser = new GUIChooser();
-						// Remove window listeners to prevent from Weka closing Fiji
-						for (WindowListener wl : chooser.getWindowListeners()) {
-							chooser.removeWindowListener(wl);
-						}
-						chooser.setVisible(true);
-					}
+					
 					else{ 
 						for(int i = 0; i < numOfClasses; i++)
 						{
@@ -405,7 +416,7 @@ public class Weka_Segmentation implements PlugIn
 				}
 			});
 		}
-	};
+	};		
 	
 	/**
 	 * Custom canvas to deal with zooming an panning
@@ -472,7 +483,7 @@ public class Weka_Segmentation implements PlugIn
 	 * Custom window to define the Advanced Weka Segmentation GUI
 	 */
 	private class CustomWindow extends ImageWindow 
-	{
+	{		
 		/** layout for annotation panel */
 		GridBagLayout boxAnnotation = new GridBagLayout();
 		/** constraints for annotation panel */
@@ -1968,6 +1979,21 @@ public class Weka_Segmentation implements PlugIn
 						win.repaint();
 					}
 				});	
+	}
+	
+	/**
+	 * Call the Weka chooser
+	 */
+	public void launchWeka()
+	{		
+		IJ.log(" " + ClassLoader.getSystemClassLoader());
+		GUIChooser chooser = new GUIChooser();
+		for (WindowListener wl : chooser.getWindowListeners()) 
+		{
+			chooser.removeWindowListener(wl);
+		}
+		chooser.setVisible(true);
+
 	}
 	
 	/**
