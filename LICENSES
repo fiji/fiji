@@ -20,7 +20,7 @@ Abbreviations:
 * ?: UNKNOWN
 
 
-Name					File					Author(s)						Contact	(2008)							License
+Name					File					Author(s)						Contact								License
 ----					----					---------						--------------							-------
 * Batik 				batik.jar 				http://xmlgraphics.apache.org/batik/contributors.html									AL
 * Bean Shell language 			bsh-2.0b4.jar 											http://www.beanshell.org/ 					SPL/LGPL
@@ -64,7 +64,7 @@ Name					File					Author(s)						Contact	(2008)							License
 * TransformJ 				TransformJ_.jar 			Erik Meijering 						meijering@imagescience.org 					Copyright © Erik Meijering. All rights reserved. See http://www.imagescience.org/meijering/software/transformj/
 * TrakEM2				TrakEM2_.jar				Albert Cardona, Rodney Douglas				acardona@ini.phys.ethz.ch					GPL
 * TurboReg				TurboReg_.jar				Philippe Thévenaz					philippe.thevenaz@epfl.ch					Citationware (see below)
-* VIB as VIB_.jar plugin bundle		VIB_.jar				J. Schindelin, Benjamin Schmid, M. Longair		bene.schmid@gmail.com						GPL
+* VIB as VIB_.jar plugin bundle		VIB_.jar, VIB-lib.jar				J. Schindelin, Benjamin Schmid, M. Longair		bene.schmid@gmail.com						GPL
 * Video Editing			Video_Editing.jar				Benjamin Schmid						bene.schmid@gmail.com						GPL
 * View5D 				View5D_.jar 				Rainer Heintzmann					heintzmannd@gmail.com						GPL 2
 * Volume Viewer / 3D Reslicer 		Volume_Viewer.jar 			Kai Uwe Barthel 					k.barthel@fhtw-berlin.de 					PD
