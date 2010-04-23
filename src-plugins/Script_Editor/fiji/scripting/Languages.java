@@ -1,9 +1,15 @@
 package fiji.scripting;
 
 import BSH.Refresh_BSH_Scripts;
+
+import CLI.Refresh_Macros;
+
 import Clojure.Refresh_Clojure_Scripts;
+
 import JRuby.Refresh_JRuby_Scripts;
+
 import Javascript.Refresh_Javascript_Scripts;
+
 import Jython.Refresh_Jython_Scripts;
 
 import common.RefreshScripts;
@@ -11,6 +17,7 @@ import common.RefreshScripts;
 import fiji.scripting.java.Refresh_Javas;
 
 import java.awt.event.KeyEvent;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,6 +38,7 @@ public class Languages {
 		        new Language(".clj", null, "Clojure", KeyEvent.VK_C, new Refresh_Clojure_Scripts(), false, false),
 		        new Language(".m", null, "Matlab", KeyEvent.VK_M, null, false, false),
 		        new Language(".bsh", SyntaxConstants.SYNTAX_STYLE_JAVA, "BeanShell", KeyEvent.VK_B, new Refresh_BSH_Scripts(), false, false),
+		        new Language(".ijm", null, "ImageJ Macro", KeyEvent.VK_I, new Refresh_Macros(), false, false),
 		        new Language("", SyntaxConstants.SYNTAX_STYLE_NONE, "None", KeyEvent.VK_N, null, false, false)
 		};
 

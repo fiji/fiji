@@ -260,10 +260,12 @@ public class Refresh_Javas extends RefreshScripts {
 		}
 		if (classPath == null || classPath.equals(""))
 			classPath = directory.getPath();
-		else
+		else {
 			// make sure classes from this directory are found first
-			classPath = directory.getPath()
-				+ File.pathSeparator + classPath;
+			if (!classPath.startsWith(File.pathSeparator))
+				classPath = File.pathSeparator + classPath;
+			classPath = directory.getPath() + classPath;
+		}
 
 		new PlugInExecutor(classPath).run(className);
 	}
