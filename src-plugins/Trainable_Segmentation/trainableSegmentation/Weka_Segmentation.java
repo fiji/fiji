@@ -326,12 +326,11 @@ public class Weka_Segmentation implements PlugIn
 			if(e.getSource() == wekaButton){
 				new Thread(){
 					{
-						setContextClassLoader(ClassLoader.getSystemClassLoader()); 
-						//setContextClassLoader(IJ.getClassLoader());
-						IJ.log(" " + ClassLoader.getSystemClassLoader());
+						//setContextClassLoader(ClassLoader.getSystemClassLoader()); 
+						setContextClassLoader(IJ.getClassLoader());
 					}
-					public void run(){
-						launchWeka();
+					public void run(){						
+							launchWeka();						
 					}				
 				}.start();
 			}
@@ -1984,7 +1983,7 @@ public class Weka_Segmentation implements PlugIn
 	/**
 	 * Call the Weka chooser
 	 */
-	public void launchWeka()
+	public static void launchWeka()
 	{		
 		IJ.log(" " + ClassLoader.getSystemClassLoader());
 		GUIChooser chooser = new GUIChooser();
