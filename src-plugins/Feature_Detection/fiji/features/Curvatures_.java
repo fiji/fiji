@@ -34,10 +34,11 @@ import java.util.Collections;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.image.ImagePlusAdapter;
-import mpicbg.imglib.type.NumericType;
-import mpicbg.imglib.type.numeric.FloatType;
+import mpicbg.imglib.type.numeric.RealType;
+import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.algorithm.gauss.GaussianConvolution;
-import mpicbg.imglib.outside.OutsideStrategyMirrorFactory;
+import mpicbg.imglib.outofbounds.OutOfBoundsStrategy;
+import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
@@ -45,7 +46,7 @@ import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import Jama.Matrix;
 import Jama.EigenvalueDecomposition;
 
-public class Curvatures_<T extends NumericType<T>> implements PlugIn {
+public class Curvatures_<T extends RealType<T>> implements PlugIn {
 
 	protected Image<T> image;
 
@@ -68,7 +69,7 @@ public class Curvatures_<T extends NumericType<T>> implements PlugIn {
 		/* Various cursors may go outside the image, in which
 		   case we supply mirror values: */
 
-		OutsideStrategyMirrorFactory osmf = new OutsideStrategyMirrorFactory<T>();
+		OutOfBoundsStrategyMirrorFactory osmf = new OutOfBoundsStrategyMirrorFactory<T>();
 
 		LocalizableByDimCursor<T> cursor = input.createLocalizableByDimCursor( osmf );
 
@@ -115,12 +116,12 @@ public class Curvatures_<T extends NumericType<T>> implements PlugIn {
 					ahead.fwd(n);
 					behind.fwd(n);
 
-					float firstDerivativeA = (ahead.getType().getReal() - behind.getType().getReal()) / (2 * spacing[m]);
+					float firstDerivativeA = (ahead.getType().getRealFloat() - behind.getType().getRealFloat()) / (2 * spacing[m]);
 
 					ahead.bck(n); ahead.bck(n);
 					behind.bck(n); behind.bck(n);
 
-					float firstDerivativeB = (ahead.getType().getReal() - behind.getType().getReal()) / (2 * spacing[m]);
+					float firstDerivativeB = (ahead.getType().getRealFloat() - behind.getType().getRealFloat()) / (2 * spacing[m]);
 
 					double value = (firstDerivativeA - firstDerivativeB) / (2 * spacing[n]);
 					hessian.set(m,n,value);
@@ -179,7 +180,7 @@ public class Curvatures_<T extends NumericType<T>> implements PlugIn {
 		for( int i = 0; i < spacing.length; ++i )
 			sigmas[i] = 1.0 / (double)spacing[i];
 
-		GaussianConvolution<T> gauss = new GaussianConvolution<T>( image, new OutsideStrategyMirrorFactory<T>(), sigmas );
+		GaussianConvolution<T> gauss = new GaussianConvolution<T>( image, new OutOfBoundsStrategyMirrorFactory<T>(), sigmas );
 
 		gauss.setNumThreads( Runtime.getRuntime().availableProcessors() );
 
