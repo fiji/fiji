@@ -283,6 +283,6 @@ print 'Everything fine!'
 script.close()
 
 # launch
-if launchProgram(['./fiji', '-Dpython.cachedir.skip=true',
+if launchProgram(['./fiji', '-Dpython.cachedir.skip=true', '--',
 	'--run', 'Test_Fiji_Updater'], tmpRoot) != 0:
 	die('The Fiji Updater test failed')
