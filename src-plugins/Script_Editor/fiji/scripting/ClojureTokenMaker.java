@@ -9,7 +9,11 @@ import org.fife.ui.rsyntaxtextarea.*;
 
 
 /**
- * Scanner for the Java programming language.<p>
+ * Scanner for the Clojure programming language.<p>
+ *
+ * Copyright (C) 2009 Sumit Dubey
+ * Licensed as per LGPLv3, or any other license at the discretion of
+ * Robert Futrell.
  *
  * This implementation was created using
  * <a href="http://www.jflex.de/">JFlex</a> 1.4.1; however, the generated file
