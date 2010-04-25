@@ -49,9 +49,9 @@ def die(message):
 	exit(1)
 
 # check that there are exactly the right number of files
-extra = ['db.xml.gz', 'db.xml.gz.old', 'current.txt', 'misc', 'jars', 'plugins']
+extra = ['db.xml.gz', 'db.xml.gz.old', 'current.txt', 'jars', 'plugins']
 if len(uploadables) + len(extra) != sum([len(listdir(tmpWebRoot + dir)) for
-		dir in ['.', 'misc', 'plugins', 'jars']]):
+		dir in ['.', 'plugins', 'jars']]):
 	die('Wrong number of files')
 
 # populate with minimal Fiji; reuse Java
