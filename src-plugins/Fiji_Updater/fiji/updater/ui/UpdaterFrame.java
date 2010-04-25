@@ -449,7 +449,9 @@ public class UpdaterFrame extends JFrame
 					PluginCollection.getInstance()
 						.remove(plugin);
 				else
-					plugin.setStatus(Status.NOT_INSTALLED);
+					plugin.setStatus(plugin.isObsolete() ?
+						Status.OBSOLETE_UNINSTALLED :
+						Status.NOT_INSTALLED);
 			updatePluginsTable();
 			pluginsChanged();
 			info("Updated successfully.  Please restart Fiji!");
@@ -610,7 +612,8 @@ public class UpdaterFrame extends JFrame
 				}
 				else {
 					plugin.markRemoved();
-					plugin.setStatus(Status.NOT_INSTALLED);
+					plugin.setStatus(Status
+						.OBSOLETE_UNINSTALLED);
 				}
 			updatePluginsTable();
 			canUpload = false;
