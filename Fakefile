@@ -220,7 +220,7 @@ src-plugins/Fiji/icon.png[cp $PRE $TARGET] <- images/icon.png
 
 MAINCLASS(jars/javac.jar)=com.sun.tools.javac.Main
 
-CLASSPATH(jars/fiji-scripting.jar)=jars/jython.jar
+CLASSPATH(jars/fiji-scripting.jar)=jars/jython.jar:jars/Fiji.jar
 CLASSPATH(plugins/Refresh_Javas.jar)=jars/fiji-scripting.jar:jars/fake.jar:jars/Fiji.jar
 CLASSPATH(plugins/Jython_Interpreter.jar)=jars/fiji-scripting.jar:jars/jython.jar
 CLASSPATH(plugins/Clojure_Interpreter.jar)=jars/fiji-scripting.jar:jars/clojure.jar:jars/clojure-contrib.jar
