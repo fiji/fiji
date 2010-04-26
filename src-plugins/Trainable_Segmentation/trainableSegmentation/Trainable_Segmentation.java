@@ -41,14 +41,13 @@ package trainableSegmentation;
 import ij.IJ;
 import ij.ImageStack;
 import ij.plugin.PlugIn;
-import ij.plugin.RGBStackMerge;
 
-import ij.process.ByteProcessor;
+import ij.process.FloatPolygon;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
-import ij.gui.GenericDialog;
-import ij.gui.ImageCanvas;
+import ij.process.LUT;
 import ij.gui.ImageWindow;
+import ij.gui.PolygonRoi;
 import ij.gui.Roi;
 import ij.gui.ShapeRoi;
 import ij.io.OpenDialog;
@@ -70,9 +69,11 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.awt.AlphaComposite;
 import java.awt.Checkbox;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Composite;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
@@ -80,6 +81,7 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Panel;
 import java.awt.Rectangle;
+import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
@@ -100,7 +102,6 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 
 import javax.swing.BorderFactory;
-import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -110,61 +111,121 @@ import weka.classifiers.AbstractClassifier;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instances;
+import fiji.util.gui.GenericDialogPlus;
+import fiji.util.gui.OverlayedImageCanvas;
 import hr.irb.fastRandomForest.FastRandomForest;
 
-public class Trainable_Segmentation implements PlugIn {
-
-
-	private static final int MAX_NUM_CLASSES = 5;
-
-	private List<Roi> [] examples = new ArrayList[MAX_NUM_CLASSES]; 
-	private ImagePlus trainingImage;
-	private ImagePlus displayImage;
-	private ImagePlus classifiedImage;
-	private ImagePlus overlayImage;
-	private FeatureStack featureStack = null;
-	private CustomWindow win;
-	private int traceCounter[] = new int[MAX_NUM_CLASSES];
-	private boolean showColorOverlay;
-	private Instances wholeImageData;
-	private Instances loadedTrainingData;
-	private FastRandomForest rf;
+public class Trainable_Segmentation implements PlugIn 
+{
+	final Composite transparency050 = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.50f );
+	final Composite transparency025 = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.25f );
 	
+	int overlayOpacity = 33;
+	Composite overlayAlpha = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, overlayOpacity / 100f);
+	
+	/** maximum number of classes (labels) allowed on the GUI*/
+	private static final int MAX_NUM_CLASSES = 5;
+	/** array of lists of Rois for each class */
+	private List<Roi> [] examples = new ArrayList[MAX_NUM_CLASSES];
+	/** image to be used in the training */
+	private ImagePlus trainingImage;
+	/** image to display on the GUI, it includes the painted rois */
+	private ImagePlus displayImage;
+	/** result image after classification */
+	private ImagePlus classifiedImage;
+	/** features to be used in the training */
+	private FeatureStack featureStack = null;
+	/** GUI window */
+	private CustomWindow win;
+	/** array of number of traces per class */
+	private int traceCounter[] = new int[MAX_NUM_CLASSES];
+	/** flag to display the overlay image */
+	private boolean showColorOverlay;
+	/** set of instances for the whole training image */
+	private Instances wholeImageData;
+	/** set of instances from loaded data (previously saved segmentation) */
+	private Instances loadedTrainingData;
+	/** current classifier */
+	private AbstractClassifier classifier = null;
+	/** default classifier (Fast Random Forest) */
+	private FastRandomForest rf;
+	/** flag to update the whole set of instances (used when there is any change on the features) */
 	private boolean updateWholeData = true;
 	
+	/** train classifier button */
 	final JButton trainButton;
+	/** toggle overlay button */
 	final JButton overlayButton;
+	/** create result button */
 	final JButton resultButton;
+	/** apply classifier button */
 	final JButton applyButton;
+	/** load data button */
 	final JButton loadDataButton;
+	/** save data button */
 	final JButton saveDataButton;
+	/** settings button */
 	final JButton settingsButton;
-
+	/** create new class button */
 	final JButton addClassButton;
-
+	
+	/** array of roi list overlays to paint the transparent rois of each class */
+	RoiListOverlay [] roiOverlay;
+	/** current segmentation result overlay */
+	ImageOverlay resultOverlay;
+	
+	/** available colors for available classes*/
 	final Color[] colors = new Color[]{Color.red, Color.green, Color.blue,
-			Color.orange, Color.pink};
-
+			Color.cyan, Color.magenta};
+	/** names of the current classes */
 	String[] classLabels = new String[]{"class 1", "class 2", "class 3", "class 4", "class 5"};
-
+	
+	LUT overlayLUT;
+	
+	/** current number of classes */
 	private int numOfClasses = 2;
-	private java.awt.List exampleList[] = new java.awt.List[MAX_NUM_CLASSES];
-	private JButton [] addExampleButton = new JButton[MAX_NUM_CLASSES];
-	//Group the radio buttons.
-	final ButtonGroup classButtonGroup = new ButtonGroup();
-
+	/** array of trace lists for every class */
+	private java.awt.List exampleList[];
+	/** array of buttons for adding each trace class */
+	private JButton [] addExampleButton;
 	
 	// Random Forest parameters
+	/** current number of trees in the fast random forest classifier */
 	private int numOfTrees = 200;
+	/** current number of random features per tree in the fast random forest classifier */
 	private int randomFeatures = 2;
-	
+	/** list of class names on the loaded data */
 	ArrayList<String> loadedClassNames = null;
+	/** executor service to launch threads for the plugin methods and events */
+	final ExecutorService exec = Executors.newFixedThreadPool(1);
 
+	
 	/**
 	 * Basic constructor
 	 */
 	public Trainable_Segmentation() 
 	{
+		// Create overlay LUT
+		final byte[] red = new byte[256];
+		final byte[] green = new byte[256];
+		final byte[] blue = new byte[256];
+		final int shift = 255 / MAX_NUM_CLASSES;
+		for(int i = 0 ; i < 256; i++)
+		{
+			final int colorIndex = i / (shift+1);
+			//IJ.log("i = " + i + " color index = " + colorIndex);
+			red[i] = (byte) colors[colorIndex].getRed();
+			green[i] = (byte) colors[colorIndex].getGreen();
+			blue[i] = (byte) colors[colorIndex].getBlue();
+		}
+		overlayLUT = new LUT(red, green, blue);
+		
+		exampleList = new java.awt.List[MAX_NUM_CLASSES];
+		addExampleButton = new JButton[MAX_NUM_CLASSES];
+		
+		roiOverlay = new RoiListOverlay[MAX_NUM_CLASSES];
+		resultOverlay = new ImageOverlay();
+		
 		trainButton = new JButton("Train classifier");
 		trainButton.setToolTipText("Start training the classifier");
 		
@@ -187,12 +248,12 @@ public class Trainable_Segmentation implements PlugIn {
 		saveDataButton = new JButton ("Save data");
 		saveDataButton.setToolTipText("Save current segmentation into an ARFF file");
 
-		addClassButton = new JButton ("Create new label");
+		addClassButton = new JButton ("Create new class");
 		addClassButton.setToolTipText("Add one more label to mark different areas");
 		
 		settingsButton = new JButton ("Settings");
-		addClassButton.setToolTipText("Display advanced options");
-
+		settingsButton.setToolTipText("Display settings dialog");
+		
 		for(int i = 0; i < numOfClasses ; i++)
 		{
 			examples[i] = new ArrayList<Roi>();
@@ -209,23 +270,21 @@ public class Trainable_Segmentation implements PlugIn {
 		//rf.setNumFeatures((int) Math.round(Math.sqrt(featureStack.getSize())));
 		//but this seems to work better
 		rf.setNumFeatures(randomFeatures);
-
-
 		rf.setSeed(123);
+		
+		classifier = rf;
 	}
-
-	final ExecutorService exec = Executors.newFixedThreadPool(1);
-
 	
 	/**
 	 * Listeners
 	 */
 	private ActionListener listener = new ActionListener() {
 		public void actionPerformed(final ActionEvent e) {
+			// listen to the buttons on separate threads not to block
+			// the event dispatch thread
 			exec.submit(new Runnable() {
 				public void run() 
 				{											
-					
 					if(e.getSource() == trainButton)
 					{
 						try{
@@ -271,13 +330,14 @@ public class Trainable_Segmentation implements PlugIn {
 						}
 					}
 
-				}
+				}							
 			});
-
-
 		}
 	};
 
+	/**
+	 * Item listener for the trace lists 
+	 */
 	private ItemListener itemListener = new ItemListener() {
 		public void itemStateChanged(final ItemEvent e) {
 			exec.submit(new Runnable() {
@@ -295,8 +355,10 @@ public class Trainable_Segmentation implements PlugIn {
 	/**
 	 * Custom canvas to deal with zooming an panning
 	 */
-	private class CustomCanvas extends ImageCanvas {
-		CustomCanvas(ImagePlus imp) {
+	private class CustomCanvas extends OverlayedImageCanvas 
+	{
+		CustomCanvas(ImagePlus imp) 
+		{
 			super(imp);
 			Dimension dim = new Dimension(Math.min(512, imp.getWidth()), Math.min(512, imp.getHeight()));
 			setMinimumSize(dim);
@@ -348,7 +410,6 @@ public class Trainable_Segmentation implements PlugIn {
 
 	/**
 	 * Custom window to define the trainable segmentation GUI
-	 * 
 	 */
 	private class CustomWindow extends ImageWindow 
 	{
@@ -362,7 +423,7 @@ public class Trainable_Segmentation implements PlugIn {
 		JPanel buttonsPanel = new JPanel();
 		
 		JPanel trainingJPanel = new JPanel();
-		JPanel optionsJPanel = new JPanel();		
+		JPanel optionsJPanel = new JPanel();						
 		
 		Panel all = new Panel();
 		
@@ -371,7 +432,19 @@ public class Trainable_Segmentation implements PlugIn {
 			super(imp, new CustomCanvas(imp));
 
 			final CustomCanvas canvas = (CustomCanvas) getCanvas();
+			
+			// add roi list overlays (one per class)
+			for(int i = 0; i < MAX_NUM_CLASSES; i++)
+			{
+				roiOverlay[i] = new RoiListOverlay();
+				roiOverlay[i].setComposite( transparency050 );
+				((OverlayedImageCanvas)ic).addOverlay(roiOverlay[i]);
+			}
 
+			// add result overlay
+			resultOverlay.setComposite( overlayAlpha );
+			((OverlayedImageCanvas)ic).addOverlay(resultOverlay);	
+			
 			// Remove the canvas from the window, to add it later
 			removeAll();
 
@@ -392,9 +465,9 @@ public class Trainable_Segmentation implements PlugIn {
 			for(int i = 0; i < numOfClasses ; i++)
 			{
 				exampleList[i].addActionListener(listener);
-				addExampleButton[i] = new JButton("Add " + classLabels[i]);
+				exampleList[i].addItemListener(itemListener);
+				addExampleButton[i] = new JButton("Add to " + classLabels[i]);
 				addExampleButton[i].setToolTipText("Add markings of label '" + classLabels[i] + "'");
-				classButtonGroup.add(addExampleButton[i]);
 
 				annotationsConstraints.fill = GridBagConstraints.HORIZONTAL;
 				annotationsConstraints.insets = new Insets(5, 5, 6, 6);
@@ -424,7 +497,7 @@ public class Trainable_Segmentation implements PlugIn {
 			saveDataButton.addActionListener(listener);
 			addClassButton.addActionListener(listener);
 			settingsButton.addActionListener(listener);
-
+			
 			// Training panel (left side of the GUI)
 			trainingJPanel.setBorder(BorderFactory.createTitledBorder("Training"));
 			GridBagLayout trainingLayout = new GridBagLayout();
@@ -466,10 +539,10 @@ public class Trainable_Segmentation implements PlugIn {
 			optionsJPanel.add(saveDataButton, optionsConstraints);
 			optionsConstraints.gridy++;
 			optionsJPanel.add(addClassButton, optionsConstraints);
-			optionsConstraints.gridy++;
+			optionsConstraints.gridy++;			
 			optionsJPanel.add(settingsButton, optionsConstraints);
 			optionsConstraints.gridy++;
-			
+					
 			// Buttons panel (including training and options)
 			GridBagLayout buttonsLayout = new GridBagLayout();
 			GridBagConstraints buttonsConstraints = new GridBagConstraints();
@@ -483,7 +556,8 @@ public class Trainable_Segmentation implements PlugIn {
 			buttonsPanel.add(trainingJPanel, buttonsConstraints);
 			buttonsConstraints.gridy++;
 			buttonsPanel.add(optionsJPanel, buttonsConstraints);
-			
+			buttonsConstraints.gridy++;
+			buttonsConstraints.insets = new Insets(5, 5, 6, 6);
 
 			GridBagLayout layout = new GridBagLayout();
 			GridBagConstraints allConstraints = new GridBagConstraints();
@@ -560,7 +634,10 @@ public class Trainable_Segmentation implements PlugIn {
 		/* 		public void changeDisplayImage(ImagePlus imp){
   			super.getImagePlus().setProcessor(imp.getProcessor());
   			super.getImagePlus().setTitle(imp.getTitle());
-  		}
+  		}private void saveFeatureStack() {
+					// TODO Auto-generated method stub
+					
+				}
 		 */
 
 
@@ -579,14 +656,14 @@ public class Trainable_Segmentation implements PlugIn {
 		 * Add new segmentation class (new label and new list on the right side)
 		 */
 		public void addClass()
-		{
+		{								
 			examples[numOfClasses] = new ArrayList<Roi>();
 			exampleList[numOfClasses] = new java.awt.List(5);
 			exampleList[numOfClasses].setForeground(colors[numOfClasses]);
 			
-			exampleList[numOfClasses].addActionListener(listener);
-			addExampleButton[numOfClasses] = new JButton("Add " + classLabels[numOfClasses]);
-			classButtonGroup.add(addExampleButton[numOfClasses]);
+			exampleList[numOfClasses].addActionListener(listener);			
+			exampleList[numOfClasses].addItemListener(itemListener);
+			addExampleButton[numOfClasses] = new JButton("Add to " + classLabels[numOfClasses]);
 			
 			annotationsConstraints.fill = GridBagConstraints.HORIZONTAL;
 			annotationsConstraints.insets = new Insets(5, 5, 6, 6);
@@ -616,16 +693,18 @@ public class Trainable_Segmentation implements PlugIn {
 	/**
 	 * Plugin run method
 	 */
-	public void run(String arg) {
+	public void run(String arg) 
+	{
 		//		trainingImage = IJ.openImage("testImages/i00000-1.tif");
 		//get current image
-		if (null == WindowManager.getCurrentImage()) {
+		if (null == WindowManager.getCurrentImage()) 
+		{
 			trainingImage = IJ.openImage();
 			if (null == trainingImage) return; // user canceled open dialog
 		}
-		else {
+		else 		
 			trainingImage = new ImagePlus("Trainable Segmentation",WindowManager.getCurrentImage().getProcessor().duplicate());
-		}
+		
 
 		if (Math.max(trainingImage.getWidth(), trainingImage.getHeight()) > 1024)
 			if (!IJ.showMessageWithCancel("Warning", "At least one dimension of the image \n" +
@@ -642,7 +721,7 @@ public class Trainable_Segmentation implements PlugIn {
 		featureStack = new FeatureStack(trainingImage);
 		
 		displayImage = new ImagePlus();
-		displayImage.setProcessor("Trainable Segmentation", trainingImage.getProcessor().duplicate().convertToRGB());
+		displayImage.setProcessor("Trainable Segmentation", trainingImage.getProcessor().duplicate());
 
 		ij.gui.Toolbar.getInstance().setTool(ij.gui.Toolbar.FREELINE);
 
@@ -686,19 +765,14 @@ public class Trainable_Segmentation implements PlugIn {
 	 */
 	private void addExamples(int i)
 	{
-		//IJ.log("add examples in list "+ i + " (numOfClasses = " + numOfClasses + ")");
 		//get selected pixels
-		Roi r = displayImage.getRoi();
+		final Roi r = displayImage.getRoi();
 		if (null == r){
-			//IJ.log("no ROI");
 			return;
 		}
 
-		//IJ.log("Before killRoi r = " + r + " examples[i].size + " + examples[i].size());
-
 		displayImage.killRoi();
 		examples[i].add(r);
-		//IJ.log("added ROI " + r + " to list " + i);
 		exampleList[i].add("trace " + traceCounter[i]); 
 		traceCounter[i]++;
 		drawExamples();
@@ -709,23 +783,22 @@ public class Trainable_Segmentation implements PlugIn {
 	 */
 	private void drawExamples()
 	{
-		if (!showColorOverlay)
-			displayImage.setProcessor("Trainable Segmentation", trainingImage.getProcessor().convertToRGB());
-		else
-			displayImage.setProcessor("Trainable Segmentation", overlayImage.getProcessor().convertToRGB());
-
 
 		for(int i = 0; i < numOfClasses; i++)
 		{
-			displayImage.setColor(colors[i]);
-			for (Roi r : examples[i]){
-				r.drawPixels(displayImage.getProcessor());
+			roiOverlay[i].setColor(colors[i]);
+			final ArrayList< Roi > rois = new ArrayList<Roi>();
+			for (Roi r : examples[i])
+			{
+				rois.add(r);
 				//IJ.log("painted ROI: " + r + " in color "+ colors[i]);
 			}
-		}
+			roiOverlay[i].setRoi(rois);
+		}		
 		displayImage.updateAndDraw();
 	}
-
+	
+	
 	/**
 	 * Write current instances into an ARFF file
 	 * @param data set of instances
@@ -807,35 +880,92 @@ public class Trainable_Segmentation implements PlugIn {
 			for(int j=0; j<examples[l].size(); j++)
 			{
 				Roi r = examples[l].get(j);
-				//need to take care of shapeRois that are represented as multiple polygons
-				Roi[] rois;
-				if (r instanceof ij.gui.ShapeRoi){
-					//IJ.log("shape roi detected");
-					rois = ((ShapeRoi) r).getRois();
-				}
-				else
+				
+													
+				// For polygon rois we get the list of points
+				if( r instanceof PolygonRoi && r.getType() != Roi.FREEROI )
 				{
-					rois = new Roi[1];
-					rois[0] = r;
-				}
-
-				for(int k=0; k<rois.length; k++)
-				{
-					int[] x = rois[k].getPolygon().xpoints;
-					int[] y = rois[k].getPolygon().ypoints;
-					final int n = rois[k].getPolygon().npoints;
-
-					for (int i=0; i<n; i++)
+					if(r.getStrokeWidth() == 1)
 					{
-						double[] values = new double[featureStack.getSize()+1];
-						for (int z=1; z<=featureStack.getSize(); z++)
-							values[z-1] = featureStack.getProcessor(z).getPixelValue(x[i], y[i]);
-						values[featureStack.getSize()] = (double) l;
-						trainingData.add(new DenseInstance(1.0, values));
-						// increase number of instances for this class
-						nl ++;
+						int[] x = r.getPolygon().xpoints;
+						int[] y = r.getPolygon().ypoints;
+						final int n = r.getPolygon().npoints;
+
+						for (int i=0; i<n; i++)
+						{
+							double[] values = new double[featureStack.getSize()+1];
+							for (int z=1; z<=featureStack.getSize(); z++)
+								values[z-1] = featureStack.getProcessor(z).getPixelValue(x[i], y[i]);
+							values[featureStack.getSize()] = (double) l;
+							trainingData.add(new DenseInstance(1.0, values));
+							// increase number of instances for this class
+							nl ++;
+						}
+					}
+					else // For thicker lines, include also neighbors
+					{
+						final int width = (int) Math.round(r.getStrokeWidth());
+						FloatPolygon p = r.getFloatPolygon();
+						int n = p.npoints;
+												
+						double x1, y1;
+						double x2=p.xpoints[0]-(p.xpoints[1]-p.xpoints[0]);
+						double y2=p.ypoints[0]-(p.ypoints[1]-p.ypoints[0]);
+						for (int i=0; i<n; i++) 
+						{
+							x1 = x2; 
+							y1 = y2;
+							x2  =p.xpoints[i]; 
+							y2 = p.ypoints[i];
+							
+							double dx = x2-x1;
+							double dy = y1-y2;
+				            double length = (float)Math.sqrt(dx*dx+dy*dy);
+				            dx /= length;
+				            dy /= length;
+							double x = x2-dy*width/2.0;
+							double y = y2-dx*width/2.0;
+							
+							int n2 = width;
+							do {								
+								double[] values = new double[featureStack.getSize()+1];
+								for (int z=1; z<=featureStack.getSize(); z++)
+									values[z-1] = featureStack.getProcessor(z).getInterpolatedValue(x, y);
+								values[featureStack.getSize()] = (double) l;
+								trainingData.add(new DenseInstance(1.0, values));
+								// increase number of instances for this class
+								nl ++;
+																
+								x += dy;
+								y += dx;
+							} while (--n2>0);
+						}
+						
 					}
 				}
+				else // for the rest of rois we get ALL points inside the roi
+				{														
+					final ShapeRoi shapeRoi = new ShapeRoi(r); 
+					final Rectangle rect = shapeRoi.getBounds();												
+					
+					final int lastX = rect.x + rect.width;
+					final int lastY = rect.y + rect.height;
+
+					for(int x = rect.x; x < lastX; x++)
+						for(int y = rect.y; y < lastY; y++)
+							if(shapeRoi.contains(x, y))
+							{
+								double[] values = new double[featureStack.getSize()+1];
+								for (int z=1; z<=featureStack.getSize(); z++)
+									values[z-1] = featureStack.getProcessor(z).getPixelValue(x, y);
+								values[featureStack.getSize()] = (double) l;
+								trainingData.add(new DenseInstance(1.0, values));
+								// increase number of instances for this class
+								nl ++;
+							}
+				}
+
+				
 			}
 			
 			IJ.log("# of pixels selected as " + classLabels[l] + ": " +nl);
@@ -904,7 +1034,7 @@ public class Trainable_Segmentation implements PlugIn {
 		// Train the classifier on the current data
 		final long start = System.currentTimeMillis();
 		try{
-			rf.buildClassifier(data);
+			classifier.buildClassifier(data);
 		}
 		catch(Exception e){
 			IJ.showMessage(e.getMessage());
@@ -913,7 +1043,9 @@ public class Trainable_Segmentation implements PlugIn {
 		}
 		final long end = System.currentTimeMillis();
 		final DecimalFormat df = new DecimalFormat("0.0000");
-		IJ.log("Finished training in "+(end-start)+"ms, out of bag error: " + df.format(rf.measureOutOfBagError()));
+		
+		final String outOfBagError = (rf != null) ? ", out of bag error: " + df.format(rf.measureOutOfBagError()) : "";
+		IJ.log("Finished training in "+(end-start)+"ms"+ outOfBagError);
 		
 		if(updateWholeData)
 			updateTestSet();
@@ -992,7 +1124,7 @@ public class Trainable_Segmentation implements PlugIn {
 			else
 				partialData[i] = new Instances(data, i*partialSize, partialSize);
 			
-			fu[i] = exe.submit(classifyIntances(partialData[i], rf, counter));
+			fu[i] = exe.submit(classifyIntances(partialData[i], classifier, counter));
 		}
 		
 		ScheduledExecutorService monitor = Executors.newScheduledThreadPool(1);
@@ -1080,31 +1212,28 @@ public class Trainable_Segmentation implements PlugIn {
 	void toggleOverlay()
 	{
 		showColorOverlay = !showColorOverlay;
-		//IJ.log("toggel overlay to: " + showColorOverlay);
+		//IJ.log("toggle overlay to: " + showColorOverlay);
 		if (showColorOverlay)
 		{
-			//do this every time cause most likely classification changed
-			int width = trainingImage.getWidth();
-			int height = trainingImage.getHeight();
-
-			ImageProcessor white = new ByteProcessor(width, height);
-			white.setMinAndMax(255, 255);
-
-			ImageStack redStack = new ImageStack(width, height);
-			redStack.addSlice("red", trainingImage.getProcessor().duplicate());
-			ImageStack greenStack = new ImageStack(width, height);
-			greenStack.addSlice("green", classifiedImage.getProcessor().duplicate());
-			ImageStack blueStack = new ImageStack(width, height);
-			blueStack.addSlice("blue", white.duplicate());
-
-			RGBStackMerge merger = new RGBStackMerge();
-			ImageStack overlayStack = merger.mergeStacks(trainingImage.getWidth(), trainingImage.getHeight(), 
-					1, redStack, greenStack, blueStack, true);
-
-			overlayImage = new ImagePlus("overlay image", overlayStack);
+			
+			ImageProcessor overlay = classifiedImage.getProcessor().duplicate();
+			//classifiedImage.show();
+			
+			double shift = 255.0 / MAX_NUM_CLASSES;
+			overlay.multiply(shift+1);
+			overlay = overlay.convertToByte(false);
+			overlay.setColorModel(overlayLUT);
+			
+			///new ImagePlus("Overlay", overlay).show();
+			
+			resultOverlay.setImage(overlay);
 		}
+		else
+			resultOverlay.setImage(null);
 
-		drawExamples();
+		displayImage.updateAndDraw();
+		
+		//drawExamples();
 	}
 
 	/**
@@ -1120,7 +1249,12 @@ public class Trainable_Segmentation implements PlugIn {
 		for(int j = 0; j < numOfClasses; j++)
 		{
 			if (j == i) 
-				examples[i].get(exampleList[i].getSelectedIndex()).drawPixels(displayImage.getProcessor());
+			{
+				final Roi newRoi = examples[i].get(exampleList[i].getSelectedIndex()); 
+				// Set selected trace as current ROI
+				newRoi.setImage(displayImage);
+				displayImage.setRoi(newRoi);
+			}
 			else
 				exampleList[j].deselect(exampleList[j].getSelectedIndex());
 		}
@@ -1136,27 +1270,27 @@ public class Trainable_Segmentation implements PlugIn {
 	void deleteSelected(final ActionEvent e){
 
 		for(int i = 0; i < numOfClasses; i++)
-		{
-
-			if (e.getSource() == exampleList[i]) {
+			if (e.getSource() == exampleList[i]) 
+			{
 				//delete item from ROI
 				int index = exampleList[i].getSelectedIndex();
+				
+				// kill Roi from displayed image
+				if(displayImage.getRoi().equals( examples[i].get(index) ))
+					displayImage.killRoi();
+
+				
 				examples[i].remove(index);
 				//delete item from list
 				exampleList[i].remove(index);
 			}
-		}
-
-		if (!showColorOverlay)
-			drawExamples();
-		else{
-			//FIXME I have no clue why drawExamples 
-			//does not do the trick if overlay is displayed
-			toggleOverlay();
-			toggleOverlay();
-		}
+		
+		drawExamples();		
 	}
 
+	/**
+	 * Display the whole image after classification 
+	 */
 	void showClassificationImage(){
 		ImagePlus resultImage = new ImagePlus("classification result", classifiedImage.getProcessor().convertToByte(true).duplicate());
 		resultImage.show();
@@ -1202,15 +1336,23 @@ public class Trainable_Segmentation implements PlugIn {
 	{
 		testImage.setProcessor(testImage.getProcessor().convertToByte(true));
 
+		// Create feature stack for test image
 		IJ.showStatus("Creating features for test image...");
 		final FeatureStack testImageFeatures = new FeatureStack(testImage);
-		testImageFeatures.addDefaultFeatures();
+		// Use the same features as the current classifier
+		testImageFeatures.setEnableFeatures(featureStack.getEnableFeatures());
+		testImageFeatures.updateFeatures();
 
 		// Set proper class names (skip empty list ones)
 		ArrayList<String> classNames = new ArrayList<String>();
-		for(int i = 0; i < numOfClasses; i++)
-			if(examples[i].size() > 0)
-				classNames.add(classLabels[i]);
+		if(loadedTrainingData == null)
+		{
+			for(int i = 0; i < numOfClasses; i++)
+				if(examples[i].size() > 0)
+					classNames.add(classLabels[i]);
+		}
+		else
+			classNames = loadedClassNames;
 		
 		final Instances testData = testImageFeatures.createInstances(classNames);
 		testData.setClassIndex(testData.numAttributes() - 1);
@@ -1334,9 +1476,9 @@ public class Trainable_Segmentation implements PlugIn {
 		SaveDialog sd = new SaveDialog("Choose save file", "data",".arff");
 		if (sd.getFileName()==null)
 			return;
-		IJ.log("writing training data: " + data.numInstances());
+		IJ.log("Writing training data: " + data.numInstances() + " instances...");
 		writeDataToARFF(data, sd.getDirectory() + sd.getFileName());
-		IJ.log("wrote training data " + sd.getDirectory() + " " + sd.getFileName());
+		IJ.log("Wrote training data: " + sd.getDirectory() + " " + sd.getFileName());
 	}
 	
 	/**
@@ -1357,6 +1499,18 @@ public class Trainable_Segmentation implements PlugIn {
 		if(null == inputName)
 			return;
 		
+		
+		if (null == inputName || 0 == inputName.length()) {
+			IJ.error("Invalid name for class");
+			return;
+		}
+		inputName = inputName.trim();
+		
+		if (0 == inputName.toLowerCase().indexOf("add to ")) 
+			inputName = inputName.substring(7);					
+		
+		
+		// Add new name to the list of labels
 		classLabels[numOfClasses] = inputName;
 		
 		// Add new class label and list
@@ -1392,7 +1546,7 @@ public class Trainable_Segmentation implements PlugIn {
 	 */
 	public boolean showSettingsDialog()
 	{
-		GenericDialog gd = new GenericDialog("Segmentation settings");
+		GenericDialogPlus gd = new GenericDialogPlus("Segmentation settings");
 		
 		final boolean[] oldEnableFeatures = this.featureStack.getEnableFeatures();
 		
@@ -1418,8 +1572,11 @@ public class Trainable_Segmentation implements PlugIn {
 		
 		gd.addMessage("Class names:");
 		for(int i = 0; i < numOfClasses; i++)
-			gd.addStringField("Class "+(i+1), classLabels[i]);
+			gd.addStringField("Class "+(i+1), classLabels[i], 15);
 		
+		gd.addMessage("Advanced options:");
+		gd.addButton("Save feature stack", new ButtonListener("Select location to save feature stack", featureStack));
+		gd.addSlider("Result overlay opacity", 0, 100, overlayOpacity);
 		gd.addHelp("http://pacific.mpi-cbg.de/wiki/Trainable_Segmentation_Plugin");
 		
 		gd.showDialog();
@@ -1440,7 +1597,7 @@ public class Trainable_Segmentation implements PlugIn {
 			if (newEnableFeatures[i] != oldEnableFeatures[i])
 				featuresChanged = true;
 		}
-		//FIXME normlization
+		//FIXME normalization
 		// Normalization
 		//final boolean normalize = gd.getNextBoolean();
 		final boolean normalize = false;
@@ -1460,14 +1617,26 @@ public class Trainable_Segmentation implements PlugIn {
 			s = s.trim();
 			if(!s.equals(classLabels[i]))
 			{
-				if (0 == s.toLowerCase().indexOf("add ")) 
-					s = s.substring(4);
+				if (0 == s.toLowerCase().indexOf("add to ")) 
+					s = s.substring(7);
 				
 				classLabels[i] = s;
 				classNameChanged = true;
-				addExampleButton[i].setText("Add " + classLabels[i]);
+				addExampleButton[i].setText("Add to " + classLabels[i]);
 
 			}
+		}
+		
+		// Update result overlay alpha
+		final int newOpacity = (int) gd.getNextNumber();
+		if( newOpacity != overlayOpacity )
+		{
+			overlayOpacity = newOpacity;
+			overlayAlpha = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, overlayOpacity / 100f);
+			resultOverlay.setComposite(overlayAlpha);
+			
+			if( showColorOverlay )
+				displayImage.updateAndDraw();
 		}
 		
 		// If there is a change in the class names, 
@@ -1475,7 +1644,7 @@ public class Trainable_Segmentation implements PlugIn {
 		if(classNameChanged)
 		{
 			updateWholeData = true;
-			// Pack window to udpate buttons
+			// Pack window to update buttons
 			win.pack();
 		}
 			
@@ -1497,6 +1666,48 @@ public class Trainable_Segmentation implements PlugIn {
 		
 		return true;
 	}
+	
+	/**
+	 * Button listener class to handle the button action from the 
+	 * settings dialog 
+	 */
+	static class ButtonListener implements ActionListener 
+	{
+		String title;
+		TextField text;
+		FeatureStack featureStack;
+
+		public ButtonListener(String title, FeatureStack featureStack) 
+		{
+			this.title = title;
+			this.featureStack = featureStack;
+		}
+
+		public void actionPerformed(ActionEvent e) 
+		{
+			if(featureStack.isEmpty())
+			{
+				IJ.error("Error", "The feature stack has not been initialized yet, please train first.");
+				return;
+			}
+			
+			SaveDialog sd = new SaveDialog(title, "feature-stack", ".tif");
+			final String dir = sd.getDirectory();
+			final String filename = sd.getFileName();
+			
+			if(null == dir || null == filename)
+				return;
+								
+			if(false == this.featureStack.saveStackAsTiff(dir + filename))
+			{
+				IJ.error("Error", "Feature stack could not be saved");
+				return;
+			}
+			
+			IJ.log("Feature stack saved as " + dir + filename);
+		}
+	}
+	
 
 	/**
 	 * Update fast random forest classifier with new values

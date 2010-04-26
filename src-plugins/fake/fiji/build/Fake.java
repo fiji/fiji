@@ -103,9 +103,11 @@ public class Fake {
 		String fijiHome = URLDecoder.decode(url.toString());
 		if (getPlatform().startsWith("win"))
 			fijiHome = fijiHome.replace('\\', '/');
-		if (!fijiHome.endsWith("/fiji/build/Fake.class"))
+		if (!fijiHome.endsWith("/Fake.class"))
 			throw new RuntimeException("unexpected URL: " + url);
-		fijiHome = fijiHome.substring(0, fijiHome.length() - 21);
+		fijiHome = fijiHome.substring(0, fijiHome.length() - 10);
+		if (fijiHome.endsWith("/fiji/build/"))
+			fijiHome = fijiHome.substring(0, fijiHome.length() - 11);
 		int slash = fijiHome.lastIndexOf('/', fijiHome.length() - 2);
 		if (fijiHome.startsWith("jar:file:") &&
 				fijiHome.endsWith(".jar!/")) {
@@ -485,6 +487,7 @@ public class Fake {
 			while (tokenizer.hasMoreTokens()) {
 				String token = tokenizer.nextToken();
 				if (expandGlob(token, list, cwd, 0, buildDir)
+						+ addMatchingTargets(token, list)
 						== 0)
 					throw new FakeException("Glob did not "
 						+ "match any file: '"
@@ -543,6 +546,26 @@ public class Fake {
 			File dir = new File(directory);
 			return dir.isDirectory() ||
 				(!dir.exists() && directory.endsWith("/"));
+		}
+
+		int addMatchingTargets(String glob, List sortedPrereqs) {
+			if (glob.indexOf('*') < 0)
+				return 0;
+			int count = 0;
+			GlobFilter filter = new GlobFilter(glob);
+			Iterator iter = allRules.keySet().iterator();
+			while (iter.hasNext()) {
+				String target = (String)iter.next();
+				if (!filter.accept(null, target))
+					continue;
+				int index = Collections
+					.binarySearch(sortedPrereqs, target);
+				if (index >= 0)
+					continue;
+				sortedPrereqs.add(-1 - index, target);
+				count++;
+			}
+			return count;
 		}
 
 		protected void addSpecialRule(Special rule) {
@@ -802,8 +825,26 @@ public class Fake {
 				 string.equals("1") || string.equals("2"));
 		}
 
+		public void missingPrecompiledFallBack(String target)
+				throws FakeException {
+			Rule fallBack = getRule("missingPrecompiledFallBack");
+			if (fallBack == null)
+				throw new FakeException("No precompiled and "
+					+ "no fallback for " + target + "!");
+			synchronized(fallBack) {
+				String save = fallBack.target;
+				fallBack.target = target;
+				fallBack.make();
+				fallBack.target = save;
+			}
+		}
+
 		public Rule getRule(String rule) {
 			return (Rule)allRules.get(rule);
+		}
+
+		public Map getAllRules() {
+			return allRules;
 		}
 
 		// the different rule types
@@ -1042,7 +1083,7 @@ public class Fake {
 			}
 
 			public String toString() {
-				return toString(getVar("VERBOSE") == "2" ?
+				return toString("2".equals(getVar("VERBOSE")) ?
 						0 : 60);
 			}
 
@@ -1074,24 +1115,24 @@ public class Fake {
 				return result;
 			}
 
-			String getVar(String key) {
+			public String getVar(String key) {
 				return getVariable(key, target);
 			}
 
-			String getVar(String key, String subkey) {
+			public String getVar(String key, String subkey) {
 				return getVariable(key, subkey, target);
 			}
 
-			boolean getVarBool(String key) {
+			public boolean getVarBool(String key) {
 				return getBool(getVariable(key, target));
 			}
 
-			boolean getVarBool(String key, String subkey) {
+			public boolean getVarBool(String key, String subkey) {
 				return getBool(getVariable(key,
 							subkey, target));
 			}
 
-			File getBuildDir() {
+			public File getBuildDir() {
 				String dir = getVar("builddir");
 				if (dir == null || dir.equals(""))
 					return null;
@@ -1234,7 +1275,8 @@ public class Fake {
 			SubFake(String target, List prerequisites) {
 				super(target, prerequisites);
 				jarName = new File(target).getName();
-				source = getLastPrerequisite() + jarName;
+				String directory = getLastPrerequisite();
+				source = directory + jarName;
 				baseName = stripSuffix(jarName, ".jar");
 				configPath = getPluginsConfig();
 
@@ -1242,6 +1284,9 @@ public class Fake {
 					split(getVar("CLASSPATH"), ":");
 				for (int i = 0; i < paths.length; i++)
 					prerequisites.add(paths[i]);
+				if (!new File(makePath(cwd, directory)).exists())
+					err.println("Warning: " + directory
+						+ " does not exist!");
 			}
 
 			boolean checkUpToDate() {
@@ -1258,8 +1303,10 @@ public class Fake {
 			}
 
 			boolean checkUpToDate(String directory, File target) {
-				File dir = new File(directory);
+				if (!target.exists())
+					return false;
 
+				File dir = new File(directory);
 				if (!dir.exists() || (dir.isDirectory()) &&
 						dir.listFiles().length == 0) {
 					String precompiled =
@@ -1288,8 +1335,10 @@ public class Fake {
 						return;
 					source = precompiled + file.getName();
 					if (!new File(makePath(cwd,
-							source)).exists())
+							source)).exists()) {
+						missingPrecompiledFallBack(target);
 						return;
+					}
 				}
 
 				if (target.indexOf('.') >= 0)
@@ -1324,6 +1373,19 @@ public class Fake {
 					result += tokenizer.nextToken();
 				}
 				return result;
+			}
+
+			protected void clean(boolean dry_run) {
+				File buildDir = getBuildDir();
+				if (buildDir == null) {
+					super.clean(dry_run);
+					return;
+				}
+				if (dry_run)
+					out.println("rm -rf "
+							+ buildDir.getPath());
+				else if (buildDir.exists())
+					deleteRecursively(buildDir);
 			}
 		}
 
@@ -1369,7 +1431,7 @@ public class Fake {
 				}
 			}
 
-			String getVar(String var) {
+			public String getVar(String var) {
 				String value = super.getVar(var);
 				if (var.toUpperCase().equals("CLASSPATH")) {
 					if( classPath != null ) {
@@ -1399,7 +1461,7 @@ public class Fake {
 				if (getVarBool("includeSource"))
 					addSources(files);
 				makeJar(target, getMainClass(), files, cwd,
-					buildDir, configPath,
+					buildDir, configPath, getStripPath(),
 					getVarBool("VERBOSE"));
 			}
 
@@ -1466,8 +1528,33 @@ public class Fake {
 				return getVariable("MAINCLASS", target);
 			}
 
+			String getStripPath() {
+				String s = prerequisiteString.trim();
+				if (s.startsWith("**/"))
+					return "";
+				int stars = s.indexOf("/**/");
+				if (stars < 0)
+					return "";
+				int space = s.indexOf(' ');
+				if (space > 0 && space < stars) {
+					if (s.charAt(space - 1) == '/')
+						return s.substring(0, space);
+					return "";
+				}
+				return s.substring(0, stars + 1);
+		}
+
 			protected void clean(boolean dry_run) {
 				super.clean(dry_run);
+				File buildDir = getBuildDir();
+				if (buildDir != null) {
+					if (dry_run)
+						out.println("rm -rf "
+							+ buildDir.getPath());
+					else if (buildDir.exists())
+						deleteRecursively(buildDir);
+					return;
+				}
 				List javas = new ArrayList();
 				Iterator iter = prerequisites.iterator();
 				while (iter.hasNext()) {
@@ -1481,6 +1568,7 @@ public class Fake {
 						getVar("EXCLUDE"), cwd);
 					Set noCompile = expandToSet(
 						getVar("NO_COMPILE"), cwd);
+					exclude.addAll(noCompile);
 					iter = java2classFiles(javas,
 						cwd, getBuildDir(),
 						exclude, noCompile).iterator();
@@ -1755,6 +1843,9 @@ public class Fake {
 					else {
 						result.append(".*");
 						i++;
+						if (i + 1 < len && array[i + 1]
+								== '/')
+							i++;
 					}
 				} else
 					result.append(c);
@@ -1980,6 +2071,7 @@ public class Fake {
 		String[] files = dir.list();
 		if (files == null || files.length == 0)
 			return;
+		Arrays.sort(files);
 		for (int i = 0; i < files.length; i++) {
 			File file = new File(dir, files[i]);
 			if (file.isDirectory())
@@ -2031,7 +2123,6 @@ public class Fake {
 		List result = new ArrayList();
 		Set all = new HashSet();
 		if (buildDir != null) {
-			result.add(buildDir.getAbsolutePath() + "/");
 			addRecursively(buildDir, result, all);
 			Collections.sort(result);
 		}
@@ -2207,7 +2298,7 @@ public class Fake {
 	// TODO: we really need string pairs; real path and desired path.
 	protected void makeJar(String path, String mainClass, List files,
 			File cwd, File buildDir, String configPath,
-			boolean verbose) throws FakeException {
+			String stripPath, boolean verbose) throws FakeException {
 		path = makePath(cwd, path);
 		if (verbose) {
 			String output = "Making " + path;
@@ -2252,7 +2343,7 @@ public class Fake {
 				new JarOutputStream(out, manifest);
 
 			addPluginsConfigToJar(jar, configPath);
-			String lastBase = null;
+			String lastBase = stripPath;
 			Iterator iter = files.iterator();
 			while (iter.hasNext()) {
 				String realName = (String)iter.next();
@@ -2285,17 +2376,17 @@ public class Fake {
 						new ByteCodeAnalyzer(buffer);
 					name = analyzer.getPathForClass()
 						+ ".class";
-					if (realName.endsWith(name))
-						lastBase = realName.substring(0,
-							realName.length()
-							- name.length());
-					else
-						lastBase = null;
 				}
 				else if (lastBase != null &&
-						name.startsWith(lastBase))
+						name.startsWith(lastBase)) {
+					if (!lastBase.equals(stripPath))
+						throw new FakeException("strip "
+							+ "path mismatch: "
+							+ lastBase + " != "
+							+ stripPath);
 					name = name
 						.substring(lastBase.length());
+				}
 
 				JarEntry entry = new JarEntry(name);
 				writeJarEntry(entry, jar, buffer);
@@ -2445,21 +2536,23 @@ public class Fake {
 	}
 
 	protected static class StreamDumper extends Thread {
-		BufferedReader in;
-		PrintStream out;
+		InputStream in;
+		OutputStream out;
 
 		StreamDumper(InputStream in, PrintStream out) {
-			this.in = new BufferedReader(new InputStreamReader(in));
+			this.in = in;
 			this.out = out;
 		}
 
 		public void run() {
+			byte[] buffer = new byte[65536];
 			for (;;) {
 				try {
-					String line = in.readLine();
-					if (line == null)
+					int len = in.read(buffer, 0, buffer.length);
+					if (len < 0)
 						break;
-					out.println(line);
+					if (len > 0)
+						out.write(buffer, 0, len);
 				} catch(Exception e) {
 					e.printStackTrace();
 				}
@@ -3087,6 +3180,28 @@ public class Fake {
 			if (len < 0)
 				return realloc(buffer, offset);
 			offset += len;
+		}
+	}
+
+	protected void delete(File file) throws FakeException {
+		if (!file.delete())
+			throw new FakeException("Could not delete "
+					+ file.getPath());
+	}
+
+	protected void deleteRecursively(File dir) {
+		try {
+			File[] list = dir.listFiles();
+			if (list != null)
+				for (int i = 0; i < list.length; i++) {
+					if (list[i].isDirectory())
+						deleteRecursively(list[i]);
+					else
+						delete(list[i]);
+				}
+			delete(dir);
+		} catch (FakeException e) {
+			out.println("Error: " + e.getMessage());
 		}
 	}
 

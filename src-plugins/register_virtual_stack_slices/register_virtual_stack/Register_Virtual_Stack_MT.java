@@ -5,7 +5,7 @@ package register_virtual_stack;
  * This work released under the terms of the General Public License in its latest edition. 
  * */
 
-import fiji.util.GenericDialogPlus;
+import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
 import ij.gui.GenericDialog;
 import ij.gui.Plot;

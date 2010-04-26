@@ -33,9 +33,32 @@ public class FijiClassLoader extends ClassLoader {
 		fallBacks = new ArrayList<ClassLoader>();
 	}
 
+	public FijiClassLoader(boolean initDefaults) {
+		this();
+		if (initDefaults) try {
+			String fijiDir = User_Plugins.getFijiDir();
+			addPath(fijiDir + "/plugins");
+			addPath(fijiDir + "/jars");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
 	public FijiClassLoader(String path) throws IOException {
 		this();
 		addPath(path);
+	}
+
+	public FijiClassLoader(Iterable<String> paths) throws IOException {
+		this();
+		for (String path : paths)
+			addPath(path);
+	}
+
+	public FijiClassLoader(String[] paths) throws IOException {
+		this();
+		for (String path : paths)
+			addPath(path);
 	}
 
 	public void addPath(String path) throws IOException {

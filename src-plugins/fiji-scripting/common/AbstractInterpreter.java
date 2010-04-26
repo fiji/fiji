@@ -1,5 +1,7 @@
 package common;
 
+import fiji.InspectJar;
+
 import ij.plugin.PlugIn;
 import ij.IJ;
 import ij.gui.GenericDialog;
@@ -49,16 +51,21 @@ import java.io.File;
 import java.io.Writer;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+
+import java.net.URL;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Arrays;
 import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Iterator;
 import java.util.Collections;
 import java.util.regex.Pattern;
 import java.util.Scanner;
+import java.util.Set;
 
 public abstract class AbstractInterpreter implements PlugIn {
 
@@ -930,5 +937,39 @@ public abstract class AbstractInterpreter implements PlugIn {
 			scanner.close();
 		}
 		return new ArrayList[]{blocks, valid};
+	}
+
+	public static Map<String, List<String>> getDefaultImports() {
+		final String[] classNames = {
+			"ij.IJ", "java.lang.String", "ini.trakem2.Project"
+		};
+		InspectJar inspector = new InspectJar();
+		for (String className : classNames) try {
+			String baseName = className.substring(className.lastIndexOf('.') + 1);
+			URL url = Class.forName(className).getResource(baseName + ".class");
+			inspector.addJar(url);
+		} catch (Exception e) {
+			if (IJ.debugMode)
+				IJ.log("Warning: class " + className
+						+ " was not found!");
+		}
+		Map<String, List<String>> result = new HashMap<String, List<String>>();
+		Set<String> prefixes = new HashSet<String>();
+		for (String className : classNames)
+			prefixes.add(className.substring(0, className.lastIndexOf('.')));
+		for (String className : inspector.classNames(true)) {
+			int dot = className.lastIndexOf('.');
+			String packageName = dot < 0 ? "" : className.substring(0, dot);
+			if (!prefixes.contains(packageName))
+				continue;
+			String baseName = className.substring(dot + 1);
+			List<String> list = result.get(packageName);
+			if (list == null) {
+				list = new ArrayList<String>();
+				result.put(packageName, list);
+			}
+			list.add(baseName);
+		}
+		return result;
 	}
 }

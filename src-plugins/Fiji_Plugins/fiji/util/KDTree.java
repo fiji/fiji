@@ -5,56 +5,24 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
-public class KDTree {
-	public interface Node { }
+import fiji.util.node.Leaf;
+import fiji.util.node.Node;
+import fiji.util.node.NonLeaf;
 
-	public interface Leaf extends Node {
-		/* get the k'th component of the vector */
-		float get(int k);
-	}
-
-	protected class NonLeaf implements Node {
-		/* the axis of 'coordinate' is the depth modulo the dimension */
-		float coordinate;
-		Node left, right;
-
-		public NonLeaf(float coordinate, Node left, Node right) {
-			this.coordinate = coordinate;
-			this.left = left;
-			this.right = right;
-		}
-
-		public String toString(Node node) {
-			if (node == null)
-				return "null";
-			if (node instanceof Leaf) {
-				String result = "(" + ((Leaf)node).get(0);
-				for (int i = 1; i < dimension; i++)
-					result += ", " + ((Leaf)node).get(i);
-				return result + ")";
-			}
-			if (node instanceof NonLeaf) {
-				NonLeaf nonLeaf = (NonLeaf)node;
-				return "[" + toString(nonLeaf.left)
-					+ " |{" + nonLeaf.coordinate + "} "
-					+ toString(nonLeaf.right) + "]";
-			}
-			return node.toString();
-		}
-
-		public String toString() {
-			return toString(this);
-		}
-	}
-
+public class KDTree<T extends Leaf<T>>
+{
 	/*
 	 * Use only a subset of at most medianLength semi-randomly picked
 	 * values to determine the splitting point.
 	 */
-	protected int medianLength = 15;
+	final protected int medianLength;
 
-	protected int dimension;
-	protected Node root;
+	final protected int dimension;
+	final protected Node<T> root;
+
+	public static boolean debug = false;
+
+	protected ArrayList<T> duplicates = new ArrayList<T>();
 
 	/**
 	 * Construct a KDTree from the elements in the given list.
@@ -65,43 +33,126 @@ public class KDTree {
 	 * as the median needs to be calculated (or estimated, if the length
 	 * is greater than medianLength).
 	 */
-	public KDTree(List leaves, int dimension) {
-		this.dimension = dimension;
+	public KDTree(final List<T> leaves) {
+		this( leaves, 100000 );
+	}
+
+	public KDTree(final List<T> leaves, final int maxMedianLength) {
+		this.medianLength = maxMedianLength;
+		this.dimension = leaves.get( 0 ).getNumDimensions();
+
+		// test that dimensionality is preserved
+		int i = 0;
+		for (final T leaf : leaves) {
+			if (leaf.getNumDimensions() != dimension)
+				throw new RuntimeException("Dimensionality of nodes is not preserved, first entry has dimensionality " + dimension + " entry " + i + " has dimensionality " + leaf.getNumDimensions() );
+
+			++i;
+		}
+
 		root = makeNode(leaves, 0);
 	}
 
-	protected Node makeNode(List leaves, int depth) {
-		int length = leaves.size();
+
+
+	protected Node<T> makeNode(final List<T> leaves, final int depth) {
+		final int length = leaves.size();
 
 		if (length == 0)
 			return null;
 
 		if (length == 1)
-			return (Leaf)leaves.get(0);
+			return leaves.get(0);
 
-		int k = (depth % dimension);
-		float median = median(leaves, k);
+		final int k = (depth % dimension);
+		final float median = median(leaves, k);
 
-		List left = new ArrayList();
-		List right = new ArrayList();
+		final List<T> left = new ArrayList<T>();
+		final List<T> right = new ArrayList<T>();
+
 		for (int i = 0; i < length; i++) {
-			Leaf leaf = (Leaf)leaves.get(i);
+			final T leaf = leaves.get(i);
 			if (leaf.get(k) <= median)
 				left.add(leaf);
 			else
 				right.add(leaf);
 		}
 
-		return new NonLeaf(median, makeNode(left, depth + 1),
-			makeNode(right, depth + 1));
+		/*
+		 * This fails for the following example:
+		 *
+		 * P1( 1, 1, 0 )
+		 * P2( 0, 1, 1 )
+		 * P3( 1, 0, 1 )
+		 *
+		 * k = 0
+		 * ( 1; 0; 1 ) median = 1, all are <= 1
+		 *
+		 * k = 1
+		 * ( 1; 1; 0 ) median = 1, all are <= 1
+		 *
+		 * k = 2
+		 * ( 0; 1; 1 ) median = 1, all are <= 1
+		 *
+		 * That's why added the check for "leaf.get(k) < median"
+		 */
+
+		if (right.size() == 0) {
+			if (allIdentical(left)) {
+				final T result = leaves.get(0);
+				left.remove(0);
+				duplicates.addAll(left);
+				return result;
+			}
+			else {
+				left.clear();
+				right.clear();
+
+				for (int i = 0; i < length; i++) {
+					final T leaf = leaves.get(i);
+					if (leaf.get(k) < median)
+						left.add(leaf);
+					else
+						right.add(leaf);
+				}
+
+			}
+
+		}
+
+		return new NonLeaf<T>(median, dimension, makeNode(left, depth + 1), makeNode(right, depth + 1));
 	}
 
-	protected float median(List leaves, int k) {
+	protected boolean allIdentical(final List<T> list) {
+		T first = null;
+		for (final T leaf : list) {
+			if (first == null)
+				first = leaf;
+			else {
+				final T next = leaf;
+
+				for (int j = 0; j < dimension; j++)
+					if (next.get(j) != first.get(j))
+						return false;
+			}
+		}
+		return true;
+	}
+
+	public ArrayList<T> getDuplicates() {
+		return duplicates;
+	}
+
+	public boolean hasDuplicates() {
+		return duplicates.size() > 0;
+	}
+
+	protected float median(final List<T> leaves, final int k) {
 		float[] list;
 		if (leaves.size() <= medianLength) {
 			list = new float[leaves.size()];
 			for (int i = 0; i < list.length; i++) {
-				Leaf leaf = (Leaf)leaves.get(i);
+				T leaf = leaves.get(i);
 				list[i] = leaf.get(k);
 			}
 		}
@@ -110,17 +161,17 @@ public class KDTree {
 			Random random = new Random();
 			for (int i = 0; i < list.length; i++) {
 				int index = Math.abs(random.nextInt()) % list.length;
-				Leaf leaf = (Leaf)leaves.get(index);
+				T leaf = leaves.get(index);
 				list[i] = leaf.get(k);
 			}
 		}
+
 		Arrays.sort(list);
-		return (list.length & 1) == 1 ?
-			list[list.length / 2] :
-			(list[list.length / 2] + list[list.length / 2 - 1]) / 2;
+
+		return (list.length & 1) == 1 ? list[list.length / 2] :	(list[list.length / 2] + list[list.length / 2 - 1]) / 2;
 	}
 
-	public Node getRoot() {
+	public Node<T> getRoot() {
 		return root;
 	}
 
@@ -128,10 +179,12 @@ public class KDTree {
 		return dimension;
 	}
 
-	public String toString(Node node, String indent) {
+	public String toString(Node<T> node, String indent) {
+		if (node == null)
+			return indent + "null";
 		if (node instanceof Leaf)
 			return indent + node.toString();
-		NonLeaf nonLeaf = (NonLeaf)node;
+		NonLeaf<T> nonLeaf = (NonLeaf<T>)node;
 		return toString(nonLeaf.left, indent + "\t") + "\n"
 			+ indent + nonLeaf.coordinate + "\n"
 			+ toString(nonLeaf.right, indent + "\t") + "\n";
@@ -141,39 +194,4 @@ public class KDTree {
 		return toString(root, "");
 	}
 
-	// tests
-
-	static class Leaf2D implements Leaf {
-		float x, y;
-
-		public Leaf2D(float x, float y) {
-			this.x = x;
-			this.y = y;
-		}
-
-		public float get(int k) {
-			return k == 0 ? x : y;
-		}
-
-		public String toString() {
-			return "(" + x + "," + y + ")";
-		}
-	}
-
-	public static void test() {
-		List list = new ArrayList();
-		list.add(new Leaf2D(2, 3));
-		list.add(new Leaf2D(5, 4));
-		list.add(new Leaf2D(9, 6));
-		list.add(new Leaf2D(4, 7));
-		list.add(new Leaf2D(8, 1));
-		list.add(new Leaf2D(7, 2));
-
-		KDTree kd = new KDTree(list, 2);
-		System.out.println(kd);
-	}
-
-	public static void main(String[] args) {
-		test();
-	}
 }

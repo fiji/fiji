@@ -47,6 +47,7 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Set;
+import java.util.Vector;
 
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -92,7 +93,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		  sortImports, removeTrailingWhitespace, findNext,
 		  openHelp, addImport, clearScreen, nextError, previousError,
 		  openHelpWithoutFrames, nextTab, previousTab,
-		  runSelection;
+		  runSelection, extractSourceJar, toggleBookmark,
+		  listBookmarks;
 	JMenu tabsMenu;
 	int tabsMenuTabsStart;
 	Set<JMenuItem> tabsMenuItems;
@@ -152,6 +154,10 @@ public class TextEditor extends JFrame implements ActionListener,
 		replace = addToMenu(edit, "Find and Replace...", KeyEvent.VK_H, ctrl);
 		gotoLine = addToMenu(edit, "Goto line...", KeyEvent.VK_G, ctrl);
 		gotoLine.setMnemonic(KeyEvent.VK_G);
+		toggleBookmark = addToMenu(edit, "Toggle Bookmark", KeyEvent.VK_B, ctrl);
+		toggleBookmark.setMnemonic(KeyEvent.VK_B);
+		listBookmarks = addToMenu(edit, "List Bookmarks", 0, 0);
+		listBookmarks.setMnemonic(KeyEvent.VK_O);
 		edit.addSeparator();
 		clearScreen = addToMenu(edit, "Clear output panel", 0, 0);
 		clearScreen.setMnemonic(KeyEvent.VK_L);
@@ -236,8 +242,11 @@ public class TextEditor extends JFrame implements ActionListener,
 			"Open Help for Class...", 0, 0);
 		openHelpWithoutFrames.setMnemonic(KeyEvent.VK_O);
 		openHelp = addToMenu(tools,
-				"Open Help for Class (with frames)...", 0, 0);
+			"Open Help for Class (with frames)...", 0, 0);
 		openHelp.setMnemonic(KeyEvent.VK_P);
+		extractSourceJar = addToMenu(tools,
+			"Extract source .jar...", 0, 0);
+		extractSourceJar.setMnemonic(KeyEvent.VK_E);
 		mbar.add(tools);
 
 		tabsMenu = new JMenu("Tabs");
@@ -318,6 +327,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		editorPane.setText(text);
 		String extension = editorPane.getExtension(title);
 		editorPane.setLanguageByExtension(extension);
+		setFileName(title);
 		setTitle();
 	}
 
@@ -625,7 +635,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		if (source == newFile)
 			createNewDocument();
 		else if (source == open) {
-			OpenDialog dialog = new OpenDialog("Open..", "");
+			OpenDialog dialog = new OpenDialog("Open...", "");
 			String name = dialog.getFileName();
 			if (name != null)
 				open(dialog.getDirectory() + name);
@@ -695,6 +705,10 @@ public class TextEditor extends JFrame implements ActionListener,
 			findOrReplace(true);
 		else if (source == gotoLine)
 			gotoLine();
+		else if (source == toggleBookmark)
+			toggleBookmark();
+		else if (source == listBookmarks)
+			listBookmarks();
 		else if (source == selectAll) {
 			getTextArea().setCaretPosition(0);
 			getTextArea().moveCaretPosition(getTextArea().getDocument().getLength());
@@ -723,6 +737,8 @@ public class TextEditor extends JFrame implements ActionListener,
 			openHelp(null);
 		else if (source == openHelpWithoutFrames)
 			openHelp(null, false);
+		else if (source == extractSourceJar)
+			extractSourceJar();
 		else if (source == nextTab)
 			switchTabRelative(1);
 		else if (source == previousTab)
@@ -793,6 +809,19 @@ public class TextEditor extends JFrame implements ActionListener,
 		getTextArea().setCaretPosition(getTextArea().getLineStartOffset(line-1));
 	}
 
+	public void toggleBookmark() {
+		getEditorPane().toggleBookmark();
+	}
+
+	public void listBookmarks() {
+		Vector<EditorPane.Bookmark> bookmarks =
+			new Vector<EditorPane.Bookmark>();
+		for (int i = 0; i < tabbed.getTabCount(); i++)
+			getEditorPane(i).getBookmarks(i, bookmarks);
+		BookmarkDialog dialog = new BookmarkDialog(this, bookmarks);
+		dialog.show();
+	}
+
 	public boolean reload() {
 		return reload("Reload the file?");
 	}
@@ -823,12 +852,24 @@ public class TextEditor extends JFrame implements ActionListener,
 
 	public void open(String path) {
 		try {
-			editorPane = new EditorPane(this);
-			tabbed.addTab("", editorPane.embedWithScrollbars());
-			switchTo(tabbed.getTabCount() - 1);
-			addDefaultAccelerators();
+			boolean wasNew =
+				editorPane != null && editorPane.isNew();
+			if (!wasNew) {
+				editorPane = new EditorPane(this);
+				tabbed.addTab("",
+					editorPane.embedWithScrollbars());
+				switchTo(tabbed.getTabCount() - 1);
+				addDefaultAccelerators();
+			}
 			editorPane.setFile("".equals(path) ? null : path);
-			tabsMenuItems.add(addToMenu(tabsMenu,
+			if (wasNew) {
+				int index = tabbed.getSelectedIndex()
+					+ tabsMenuTabsStart;
+				tabsMenu.getItem(index)
+					.setText(editorPane.getFileName());
+			}
+			else
+				tabsMenuItems.add(addToMenu(tabsMenu,
 					editorPane.getFileName(), 0, 0));
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -1042,6 +1083,10 @@ public class TextEditor extends JFrame implements ActionListener,
 		addImport.setEnabled(isJava);
 		removeUnusedImports.setEnabled(isJava);
 		sortImports.setEnabled(isJava);
+	}
+
+	public void setFileName(String baseName) {
+		getEditorPane().setFileName(baseName);
 	}
 
 	public void setFileName(File file) {
@@ -1420,6 +1465,26 @@ public class TextEditor extends JFrame implements ActionListener,
 			return;
 		getEditorPane().getClassNameFunctions()
 			.openHelpForClass(className, withFrames);
+	}
+
+	public void extractSourceJar() {
+		OpenDialog dialog = new OpenDialog("Open...", "");
+		String name = dialog.getFileName();
+		if (name != null)
+			extractSourceJar(dialog.getDirectory() + name);
+	}
+
+	public void extractSourceJar(String path) {
+		try {
+			FileFunctions functions = new FileFunctions();
+			List<String> paths = functions.extractSourceJar(path);
+			for (String file : paths)
+				if (!functions.isBinaryFile(file))
+					open(file);
+		} catch (IOException e) {
+			error("There was a problem opening " + path
+				+ ": " + e.getMessage());
+		}
 	}
 
 	protected void error(String message) {

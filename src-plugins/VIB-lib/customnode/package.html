@@ -1,0 +1,81 @@
+<html>
+<body>
+<h2>Package Specification</h2>
+
+The <code>customnode</code> package aims to provide classes which facilitate
+to add new (custom) 3D objects to the viewer.</p>
+
+
+
+<h3>If you only want to display some basic shapes</h3>
+<p>
+In addition to the classes provided by this package, you may consider to use
+the helper methods of <code>ij3d.Image3DUniverse</code>, which are in
+particular:<br>
+
+<ul>
+<li>{@link ij3d.Image3DUniverse#addVoltex Image3DUniverse.addVoltex}
+<li>{@link ij3d.Image3DUniverse#addOrthoslice Image3DUniverse.addOrthoslice}
+<li>{@link ij3d.Image3DUniverse#addMesh Image3DUniverse.addMesh}
+<br>
+<li>{@link ij3d.Image3DUniverse#addLineMesh Image3DUniverse.addLineMesh}
+<li>{@link ij3d.Image3DUniverse#addTriangleMesh Image3DUniverse.addTriangleMesh}
+</ul>
+
+The first three methods are intended to add a 3D object which displays
+an ImagePlus - either as volume rendering, orthoslice or as isosurface. The
+next two methods, <code>addLineMesh</code> and <code>addTriangleMesh</code> are
+for displaying custom meshes, whose vertices are given in a list. (Refer to
+the documentation of these methods for more detail).<br>
+
+
+
+<h3>More advanced meshes</h3>
+For this purpose, <code>ImageJ3DUniverse</code> has the method
+{@link ij3d.Image3DUniverse#addCustomMesh Image3DUniverse.addCustomMesh(CustomMesh)}. 
+<code>CustomMesh</code> is an abstract base class, which is extended by
+<ul>
+<li>{@link customnode.CustomPointMesh CustomPointMesh}
+<li>{@link customnode.CustomQuadMesh CustomQuadMesh}
+<li>{@link customnode.CustomTriangleMesh CustomTriangleMesh}
+<li>{@link customnode.CustomLineMesh CustomLineMesh}
+</ul>
+Each of these methods take a list of <code>Point3f</code>, which specify
+the corresponding mesh. To facilitate the mesh creation of some basic
+shapes, {@link customnode.Mesh_Maker MeshMaker} offers a few static methods:
+<ul>
+<li>{@link customnode.Mesh_Maker#createSphere MeshMaker.createSphere}
+<li>{@link customnode.Mesh_Maker#createTube MeshMaker.createTube}
+<li>{@link customnode.Mesh_Maker#createDisc MeshMaker.createDisc}
+</ul>
+<br>
+
+
+<h3>For total freedom about what to display</h3>
+If you need total freedom about what you display and how you display it, there
+is a simple recipe for doing so:<br>
+First, create a new <code>Content</code>:
+<code><pre>
+	Content content = new Content("My example Content");
+	content.color = new Color3f(1, 0, 0);
+	content.showCoordinateSystem(false);
+</pre></code><br>
+
+Then, create your own class, and let it extend {@link ij3d.ContentNode ContentNode}.
+A <code>ContentNode</code> is the displayed unit of a Content, the actual 3D object.
+It belongs to a <code>Content</code>, and gets informed by this <code>Content</code>
+when the color, transparency, etc of the Content was updated. To enable this
+mechanism, your class has to implement the abstract methods of
+<code>ContentNode</code>. If you are looking for an example, have a look at
+{@link customnode.CustomMeshNode CustomMeshNode}.
+
+Now, display the content:
+<code><pre>
+	Image3DUniverse universe = new Image3DUniverse(512, 512);
+	content.display(myContentNode);
+	universe.addContent(content);
+</pre></code>
+<br><br>
+
+</body>
+</html>
