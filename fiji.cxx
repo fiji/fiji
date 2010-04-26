@@ -1736,8 +1736,8 @@ static int start_ij(void)
 		add_option(options, ext_option, 0);
 	}
 
-	/* For Jython to work properly with .jar packages: */
-	add_option(options, "-Dpython.cachedir.skip=false", 0);
+	/* Avoid Jython's huge startup cost: */
+	add_option(options, "-Dpython.cachedir.skip=true", 0);
 	if (plugin_path.str() == "")
 		plugin_path << "-Dplugins.dir=" << fiji_dir;
 	add_option(options, plugin_path, 0);
