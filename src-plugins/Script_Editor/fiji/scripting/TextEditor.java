@@ -638,7 +638,12 @@ public class TextEditor extends JFrame implements ActionListener,
 		if (source == newFile)
 			createNewDocument();
 		else if (source == open) {
-			OpenDialog dialog = new OpenDialog("Open...", "");
+			String defaultDir =
+				editorPane != null && editorPane.file != null ?
+				editorPane.file.getParent() :
+				System.getProperty("fiji.dir");
+			OpenDialog dialog = new OpenDialog("Open...",
+					defaultDir, "");
 			String name = dialog.getFileName();
 			if (name != null)
 				open(dialog.getDirectory() + name);
