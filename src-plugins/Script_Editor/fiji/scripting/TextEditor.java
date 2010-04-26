@@ -1387,6 +1387,8 @@ public class TextEditor extends JFrame implements ActionListener,
 			switchTo(errorHandler.getPath(),
 					errorHandler.getLine());
 			errorHandler.markLine();
+			screen.repaint();
+			getEditorPane().repaint();
 			return true;
 		} catch (Exception e) {
 			IJ.handleException(e);
