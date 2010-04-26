@@ -791,6 +791,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		setTitle();
 		String extension = editorPane.getExtension(editorPane.getFileName());
 		editorPane.setLanguageByExtension(extension);
+		editorPane.checkForOutsideChanges();
 	}
 
 	public EditorPane getEditorPane(int index) {
