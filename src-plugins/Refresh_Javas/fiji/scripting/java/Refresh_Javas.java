@@ -229,7 +229,12 @@ public class Refresh_Javas extends RefreshScripts {
 
 	void runPlugin(String path, String className, boolean newClassLoader)
 			throws Exception {
-		new PlugInExecutor(path).run(className, "", newClassLoader);
+		PlugInExecutor executor = new PlugInExecutor(path);
+		try {
+			executor.tryRun(className, "", newClassLoader);
+		} catch (NoSuchMethodException e) {
+			executor.runOneOf(path, newClassLoader);
+		}
 	}
 
 	void runOutOfTreePlugin(String path) throws IOException,

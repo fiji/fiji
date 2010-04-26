@@ -139,7 +139,7 @@ public class User_Plugins implements PlugIn {
 		}
 	}
 
-	protected List getJarPluginList(File jarFile, String menuPath)
+	public List getJarPluginList(File jarFile, String menuPath)
 			throws IOException {
 		List result = new ArrayList();
 		JarFile jar = new JarFile(jarFile);
