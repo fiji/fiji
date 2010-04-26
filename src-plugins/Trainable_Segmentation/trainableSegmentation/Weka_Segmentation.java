@@ -324,15 +324,21 @@ public class Weka_Segmentation implements PlugIn
 		public void actionPerformed(final ActionEvent e) {
 			
 			if(e.getSource() == wekaButton){
-				new Thread(){
+				/*new Thread(){
 					{
-						//setContextClassLoader(ClassLoader.getSystemClassLoader()); 
-						setContextClassLoader(IJ.getClassLoader());
+						setContextClassLoader( ClassLoader.getSystemClassLoader() );
+						//setContextClassLoader( IJ.getClassLoader() );						
 					}
-					public void run(){						
-							launchWeka();						
+					public void run(){	
+						try{
+							launchWeka();
+						}catch(Throwable e){
+							IJ.log("error while launching Weka");
+							e.printStackTrace();
+						}
+						
 					}				
-				}.start();
+				}.start();*/
 			}
 			
 			// listen to the buttons on separate threads not to block
