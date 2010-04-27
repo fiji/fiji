@@ -939,6 +939,13 @@ public abstract class AbstractInterpreter implements PlugIn {
 		return new ArrayList[]{blocks, valid};
 	}
 
+	protected static boolean hasPrefix(String subject, Set<String> prefixes) {
+		for (String prefix : prefixes)
+			if (subject.startsWith(prefix))
+				return true;
+		return false;
+	}
+
 	public static Map<String, List<String>> getDefaultImports() {
 		final String[] classNames = {
 			"ij.IJ", "java.lang.String", "ini.trakem2.Project"
@@ -958,10 +965,10 @@ public abstract class AbstractInterpreter implements PlugIn {
 		for (String className : classNames)
 			prefixes.add(className.substring(0, className.lastIndexOf('.')));
 		for (String className : inspector.classNames(true)) {
+			if (!hasPrefix(className, prefixes))
+				continue;
 			int dot = className.lastIndexOf('.');
 			String packageName = dot < 0 ? "" : className.substring(0, dot);
-			if (!prefixes.contains(packageName))
-				continue;
 			String baseName = className.substring(dot + 1);
 			List<String> list = result.get(packageName);
 			if (list == null) {
