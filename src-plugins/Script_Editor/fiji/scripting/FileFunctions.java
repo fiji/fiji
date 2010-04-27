@@ -1,5 +1,7 @@
 package fiji.scripting;
 
+import ij.gui.GenericDialog;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -8,13 +10,25 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import javax.swing.JOptionPane;
+
 public class FileFunctions {
+	protected TextEditor parent;
+
+	public FileFunctions(TextEditor parent) {
+		this.parent = parent;
+	}
+
 	public List<String> extractSourceJar(String path) throws IOException {
 		String baseName = new File(path).getName();
 		if (baseName.endsWith(".jar") || baseName.endsWith(".zip"))
@@ -85,5 +99,125 @@ public class FileFunctions {
 					return true;
 		} catch (IOException e) { }
 		return false;
+	}
+
+	protected static String fijiDir;
+
+	/**
+	 * Make a sensible effort to get the path of the source for a class.
+	 */
+	public String getSourcePath(String className) throws ClassNotFoundException {
+		if (fijiDir == null)
+			fijiDir = System.getProperty("fiji.dir");
+
+		// First, let's try to get the .jar file for said class.
+		String result = getJar(className);
+		if (result == null)
+			return findSourcePath(className);
+
+		// try the simple thing first
+		int slash = result.lastIndexOf('/'), backSlash = result.lastIndexOf('\\');
+		String baseName = result.substring(Math.max(slash, backSlash) + 1, result.length() - 4);
+		String dir = fijiDir + "/src-plugins/" + baseName;
+		String path = dir + "/" + className.replace('.', '/') + ".java";
+		if (new File(path).exists())
+			return path;
+		if (new File(dir).isDirectory())
+			for (;;) {
+				int dot = className.lastIndexOf('.');
+				if (dot < 0)
+					break;
+				className = className.substring(0, dot);
+				path = dir + "/" + className.replace('.', '/') + ".java";
+			}
+
+		return null;
+	}
+
+	public String getJar(String className) {
+		try {
+			Class clazz = Class.forName(className);
+			String baseName = className;
+			int dot = baseName.lastIndexOf('.');
+			if (dot > 0)
+				baseName = baseName.substring(dot + 1);
+			baseName += ".class";
+			String url = clazz.getResource(baseName).toString();
+			int dotJar = url.indexOf("!/");
+			if (dotJar < 0)
+				return null;
+			int offset = url.startsWith("jar:file:") ? 9 : 0;
+			return url.substring(offset, dotJar);
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	protected static Map<String, List<String>> class2source;
+
+	public String findSourcePath(String className) {
+		if (class2source == null) {
+			if (JOptionPane.showConfirmDialog(parent,
+					"The class " + className + " was not found "
+					+ "in the CLASSPATH. Do you want me to search "
+					+ "for the source?",
+					"Question", JOptionPane.YES_OPTION)
+					!= JOptionPane.YES_OPTION)
+				return null;
+			if (fijiDir == null)
+				fijiDir = System.getProperty("fiji.dir");
+			class2source = new HashMap<String, List<String>>();
+			findJavaPaths(new File(fijiDir), "");
+		}
+		int dot = className.lastIndexOf('.');
+		String baseName = className.substring(dot + 1);
+		List<String> paths = class2source.get(baseName);
+		if (paths == null || paths.size() == 0) {
+			JOptionPane.showMessageDialog(parent, "No source for class '"
+					+ className + "' was not found!");
+			return null;
+		}
+		if (dot >= 0) {
+			String suffix = "/" + className.replace('.', '/') + ".java";
+			paths = new ArrayList<String>(paths);
+			Iterator<String> iter = paths.iterator();
+			while (iter.hasNext())
+				if (!iter.next().endsWith(suffix))
+					iter.remove();
+			if (paths.size() == 0) {
+				JOptionPane.showMessageDialog(parent, "No source for class '"
+						+ className + "' was not found!");
+				return null;
+			}
+		}
+		if (paths.size() == 1)
+			return fijiDir + "/" + paths.get(0);
+		String[] names = paths.toArray(new String[paths.size()]);
+		GenericDialog gd = new GenericDialog("Choose path", parent);
+		gd.addChoice("path", names, names[0]);
+		gd.showDialog();
+		if (gd.wasCanceled())
+			return null;
+		return fijiDir + "/" + gd.getNextChoice();
+	}
+
+	protected void findJavaPaths(File directory, String prefix) {
+		String[] files = directory.list();
+		Arrays.sort(files);
+		for (int i = 0; i < files.length; i++)
+			if (files[i].endsWith(".java")) {
+				String baseName = files[i].substring(0, files[i].length() - 5);
+				List<String> list = class2source.get(baseName);
+				if (list == null) {
+					list = new ArrayList<String>();
+					class2source.put(baseName, list);
+				}
+				list.add(prefix + "/" + files[i]);
+			}
+			else {
+				File file = new File(directory, files[i]);
+				if (file.isDirectory())
+					findJavaPaths(file, prefix + "/" + files[i]);
+			}
 	}
 }

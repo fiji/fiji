@@ -94,7 +94,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		  openHelp, addImport, clearScreen, nextError, previousError,
 		  openHelpWithoutFrames, nextTab, previousTab,
 		  runSelection, extractSourceJar, toggleBookmark,
-		  listBookmarks;
+		  listBookmarks, openSourceForClass;
 	JMenu tabsMenu;
 	int tabsMenuTabsStart;
 	Set<JMenuItem> tabsMenuItems;
@@ -247,6 +247,9 @@ public class TextEditor extends JFrame implements ActionListener,
 		extractSourceJar = addToMenu(tools,
 			"Extract source .jar...", 0, 0);
 		extractSourceJar.setMnemonic(KeyEvent.VK_E);
+		openSourceForClass = addToMenu(tools,
+			"Open .java file for class...", 0, 0);
+		openSourceForClass.setMnemonic(KeyEvent.VK_J);
 		mbar.add(tools);
 
 		tabsMenu = new JMenu("Tabs");
@@ -635,7 +638,12 @@ public class TextEditor extends JFrame implements ActionListener,
 		if (source == newFile)
 			createNewDocument();
 		else if (source == open) {
-			OpenDialog dialog = new OpenDialog("Open...", "");
+			String defaultDir =
+				editorPane != null && editorPane.file != null ?
+				editorPane.file.getParent() :
+				System.getProperty("fiji.dir");
+			OpenDialog dialog = new OpenDialog("Open...",
+					defaultDir, "");
 			String name = dialog.getFileName();
 			if (name != null)
 				open(dialog.getDirectory() + name);
@@ -739,6 +747,16 @@ public class TextEditor extends JFrame implements ActionListener,
 			openHelp(null, false);
 		else if (source == extractSourceJar)
 			extractSourceJar();
+		else if (source == openSourceForClass) {
+			String className = getSelectedTextOrAsk("Name of class");
+			if (className != null) try {
+				String path = new FileFunctions(this).getSourcePath(className);
+				if (path != null)
+					open(path);
+			} catch (ClassNotFoundException e) {
+				error("Could not open source for class " + className);
+			}
+		}
 		else if (source == nextTab)
 			switchTabRelative(1);
 		else if (source == previousTab)
@@ -773,6 +791,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		setTitle();
 		String extension = editorPane.getExtension(editorPane.getFileName());
 		editorPane.setLanguageByExtension(extension);
+		editorPane.checkForOutsideChanges();
 	}
 
 	public EditorPane getEditorPane(int index) {
@@ -1369,6 +1388,8 @@ public class TextEditor extends JFrame implements ActionListener,
 			switchTo(errorHandler.getPath(),
 					errorHandler.getLine());
 			errorHandler.markLine();
+			screen.repaint();
+			getEditorPane().repaint();
 			return true;
 		} catch (Exception e) {
 			IJ.handleException(e);
@@ -1476,7 +1497,7 @@ public class TextEditor extends JFrame implements ActionListener,
 
 	public void extractSourceJar(String path) {
 		try {
-			FileFunctions functions = new FileFunctions();
+			FileFunctions functions = new FileFunctions(this);
 			List<String> paths = functions.extractSourceJar(path);
 			for (String file : paths)
 				if (!functions.isBinaryFile(file))
