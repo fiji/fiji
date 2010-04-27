@@ -63,6 +63,8 @@ import javax.vecmath.Color3f;
 import ij3d.Content;
 import ij3d.UniverseListener;
 
+import util.XMLFunctions;
+
 class TracesFileFormatException extends SAXException {
 	public TracesFileFormatException(String message) {
 		super(message);
@@ -701,7 +703,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				pw.print(startsString);
 				pw.print(endsString);
 				if( p.name != null ) {
-					pw.print( " name=\""+escapeForXMLAttributeValue(p.name)+"\"" );
+					pw.print( " name=\""+XMLFunctions.escapeForXMLAttributeValue(p.name)+"\"" );
 				}
 				pw.print(" reallength=\"" + p.getRealLength( ) + "\"");
 				pw.println( ">" );
@@ -1798,30 +1800,6 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		plugin.use3DViewer = false;
 	}
 	// ... end of methods for UniverseListener
-
-	private static void replaceAll( StringBuffer s, String substring, String replacement ) {
-		int fromIndex = 0;
-		while (true) {
-			int foundIndex = s.indexOf(substring,fromIndex);
-			if( foundIndex >= 0 ) {
-				int afterEnd = foundIndex + substring.length();
-				s.replace(foundIndex,afterEnd,replacement);
-				fromIndex = afterEnd;
-			} else
-				break;
-		}
-	}
-
-	// This is quite ineffficient, but not expected to be a serious problem:
-	public static String escapeForXMLAttributeValue( String s ) {
-		StringBuffer sb = new StringBuffer(s);
-		replaceAll( sb, "&", "&amp;" );
-		replaceAll( sb, "<", "&lt;" );
-		replaceAll( sb, ">", "&gt;" );
-		replaceAll( sb, "'", "&apos;" );
-		replaceAll( sb, "\"", "&quot;" );
-		return sb.toString();
-	}
 
 	public NearPoint nearestPointOnAnyPath( double x, double y, double z, double distanceLimit ) {
 
