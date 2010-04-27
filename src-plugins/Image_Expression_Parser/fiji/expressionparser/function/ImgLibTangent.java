@@ -11,6 +11,10 @@ public final class ImgLibTangent <T extends RealType<T>> extends SingleOperandPi
 		"each pixel as its operand (must be in radians). " +
 		"Calculations are done using Math.tan";
 
+	public ImgLibTangent() {
+		numberOfParameters = 1;
+	}
+	
 	@Override
 	public final float evaluate(T alpha) {
 		return (float) Math.tan(alpha.getRealDouble());
@@ -28,7 +32,7 @@ public final class ImgLibTangent <T extends RealType<T>> extends SingleOperandPi
 	
 	@Override
 	public String toString() {
-		return "Pixel wise tangent";
+		return "Pixel-wise tangent";
 	}
 
 }

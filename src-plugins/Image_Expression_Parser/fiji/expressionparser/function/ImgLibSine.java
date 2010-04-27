@@ -11,6 +11,10 @@ public final class ImgLibSine <T extends RealType<T>> extends SingleOperandPixel
 		"each pixel as its operand (must be in radians). " +
 		"Calculations are done using <i>Math.sin</i>.";
 
+	public ImgLibSine() {
+		numberOfParameters =1;
+	}
+	
 	@Override
 	public final float evaluate(T alpha) {
 		return (float) Math.sin(alpha.getRealDouble());
@@ -26,7 +30,7 @@ public final class ImgLibSine <T extends RealType<T>> extends SingleOperandPixel
 	
 	@Override
 	public String toString() {
-		return "Pixel wise sine";
+		return "Pixel-wise sine";
 	}
 
 }
