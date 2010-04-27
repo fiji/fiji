@@ -103,22 +103,14 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
-import bsh.EvalError;
-import bsh.Interpreter;
-
 import weka.classifiers.AbstractClassifier;
-import weka.classifiers.pmml.consumer.PMMLClassifier;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instances;
 import weka.core.OptionHandler;
 import weka.core.SerializationHelper;
 import weka.core.Utils;
-import weka.core.pmml.PMMLFactory;
-import weka.core.pmml.PMMLModel;
-import weka.gui.GUIChooser;
 import weka.gui.GenericObjectEditor;
-import weka.gui.explorer.ClassifierPanel;
 import weka.gui.PropertyDialog;
 import fiji.util.gui.GenericDialogPlus;
 import fiji.util.gui.OverlayedImageCanvas;
@@ -225,8 +217,6 @@ public class Weka_Segmentation implements PlugIn
 	ArrayList<String> loadedClassNames = null;
 	/** executor service to launch threads for the plugin methods and events */
 	final ExecutorService exec = Executors.newFixedThreadPool(1);
-
-	private Interpreter interp = new Interpreter();
 	
 	/**
 	 * Basic constructor
@@ -324,7 +314,7 @@ public class Weka_Segmentation implements PlugIn
 		public void actionPerformed(final ActionEvent e) {
 			
 			if(e.getSource() == wekaButton){
-				/*new Thread(){
+				new Thread(){
 					{
 						setContextClassLoader( ClassLoader.getSystemClassLoader() );
 						//setContextClassLoader( IJ.getClassLoader() );						
@@ -338,7 +328,7 @@ public class Weka_Segmentation implements PlugIn
 						}
 						
 					}				
-				}.start();*/
+				}.start();
 			}
 			
 			// listen to the buttons on separate threads not to block
@@ -789,7 +779,7 @@ public class Weka_Segmentation implements PlugIn
 	 * Plugin run method
 	 */
 	public void run(String arg) 
-	{
+	{				
 		//		trainingImage = IJ.openImage("testImages/i00000-1.tif");
 		//get current image
 		if (null == WindowManager.getCurrentImage()) 
@@ -1555,15 +1545,19 @@ public class Weka_Segmentation implements PlugIn
 	 * @return false if error
 	 */
 	public boolean loadClassifier(String filename) 
-	{
+	{			
+		Thread t = Thread.currentThread();
+		t.setContextClassLoader( ClassLoader.getSystemClassLoader() );
+		IJ.log(" loader class: " +  t.getContextClassLoader().getClass());
+		
 		File selected = new File(filename);
 		try {
 			InputStream is = new FileInputStream( selected );
-			if (selected.getName().endsWith(ClassifierPanel.PMML_FILE_EXTENSION)) 
+			if (selected.getName().endsWith(weka.gui.explorer.ClassifierPanel.PMML_FILE_EXTENSION)) 
 			{
-				PMMLModel model = PMMLFactory.getPMMLModel(is, null);
-				if (model instanceof PMMLClassifier) 				
-					classifier = (PMMLClassifier)model;				 
+				weka.core.pmml.PMMLModel model = weka.core.pmml.PMMLFactory.getPMMLModel(is, null);
+				if (model instanceof weka.classifiers.pmml.consumer.PMMLClassifier) 				
+					classifier = (weka.classifiers.pmml.consumer.PMMLClassifier)model;				 
 				else 				
 					throw new Exception("PMML model is not a classification/regression model!");				
 			} 
@@ -1991,8 +1985,9 @@ public class Weka_Segmentation implements PlugIn
 	 */
 	public static void launchWeka()
 	{		
+		
 		IJ.log(" " + ClassLoader.getSystemClassLoader());
-		GUIChooser chooser = new GUIChooser();
+		weka.gui.GUIChooser chooser = new weka.gui.GUIChooser();
 		for (WindowListener wl : chooser.getWindowListeners()) 
 		{
 			chooser.removeWindowListener(wl);
