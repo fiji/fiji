@@ -20,19 +20,23 @@
 	With DOES_STACKS, it will be called for each slice of a stack.
 	- setup("final", imp): called only if flag FINAL_PROCESSING has been specified.
 	Flag DONE stops this sequence of calls.
+	
+	*We are using javas calendar for formatting the time stamps for "digital" style, 
+	*but this has limitations, as you can t count over 59 min and the zero date is 01 01 1970, not zero. 
+	*Also we seem to start at time = 01 hours.. not sure if thats because i am in CET, or if the date counts midnight as 24.
 
 	*Here is a list (in no particular order) of requested and "would be nice" features that could be added:
 	-prevent longest label running off side of image  - ok
-	-choose colour
-	-font selection
+	-choose colour 
+	-font selection -ok
 	-top left, bottom right etc.  drop down menu 
 	-Hyperstacks z, t, c
 	-read correct time / z units, start and intervals from image metadata. Get it from Image Properties?
 	-every nth slice labelled
 	-label only slices where time became greater than multiples of some time eg every 5 min. 
-	-preview with live update when change GUI
-	-preview with stack slider in the GUI. 
-	-Use Java Date for robust formatting of dates/times counted in milliseconds. 
+	-preview with live update when change GUI -ok, changes in GUI are read into the preview. 
+	-preview with stack slider in the GUI. - slider now in GUI but functionality is half broken
+	-Use Java Date for robust formatting of dates/times counted in milliseconds. - some bugs - need to format more sensibly, dont always need all the fields.
 	-switch unit according to magnitude of number eg sec or min or nm or microns etc. 
 	- background colour for label. 
 
@@ -68,6 +72,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.TimeZone;
 
 public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListener { //, ActionListener {
 					// http://rsb.info.nih.gov/ij/developer/api/ij/plugin/filter/ExtendedPlugInFilter.html
@@ -373,20 +378,16 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		//if (fontProperties != null)
 		//	fontProperties.updateGUI(font);
 		ip.setFont(font);
-		
-		//more font related setting stuff moved from the run method
-		// seems to work more reliable with this code in this method instead of in run.
-		// But if i dont change the font size by typing in the GUI - it ignores the AA text setting!!! Why??? 
 		ip.setColor(Toolbar.getForegroundColor());
 		ip.setAntialiasedText(AAtext);
 		
-		// Have moved the font size and xy loclation calculations for timestamp stuff out of the run method, into their own methods.
+		// Have moved the font size and xy location calculations for timestamp stuff out of the run method, into their own methods.
 		// set the font size according to ROI size, or if no ROI the GUI text input
 		setLocation(ip);
 		
 		double time = getTimeFromFrame(frame);  // ask the getTimeFromFrame method to return the time for that frame
 		ip.drawString(selectedFormat.getTimeString(time)); // draw the timestring into the image
-		//showProgress(precent done calc here); // dont really need a progress bar... but seem to get one anyway...
+		//showProgress(percent done calc here); // dont really need a progress bar... but seem to get one anyway...
 	}
 
 	/*
@@ -633,8 +634,8 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		/**
 		 * Makes the string containing the number for the time stamp, 
 		 * with specified decimal places 
-		 * format is decimal number with specificed no of digits after the point
-		 * if specificed no. of decimal places is 0 then just return the
+		 * format is decimal number with specified no of digits after the point
+		 * if specified no. of decimal places is 0 then just return the
 		 * specified suffix
 		 */
 		@Override
@@ -655,11 +656,11 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		
 		/**
 		 * Constructs a new {@link DigitalLabelFormat}. This default constructor allows
-		 * years, days, hours, minutes, seconds and milliseconds as formats. The display
-		 * name is set to "Digital". 
+		 * minutes, seconds and milliseconds only as possible formats.
+		 * The display name is set to "Digital". 
 		 */
 		public DigitalLabelFormat() {
-			this(new String[]{"y", "d", "h", "min", "s", "ms"}, "Digital");
+			this(new String[]{"min", "s", "ms"}, "Digital");
 		}
 		
 		/**
@@ -683,19 +684,19 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 		@Override
 		public String getTimeString(double time) {
 			calendar.setTimeInMillis(0);
-			if (chosenSuffix.equals("y")){    //"y", "d", "h", "min", "s", "ms", "us", "ns", "ps", "fs", "as", "Custom Suffix"
-				time = time * (365.25*24.0*60.0*60.0*1000.0); //   c.set(Calendar.YEAR, time); // time would have to be an integer... so can't use that
-			}
-			else if (chosenSuffix.equals("w")){    
-				time = time * (7.0*24.0*60.0*60.0*1000.0); 
-			}
-			else if (chosenSuffix.equals("d")){    
-				time = time * (24.0*60.0*60.0*1000.0);
-			}
-			else if (chosenSuffix.equals("h")){   
-				time = time * (60.0*60.0*1000.0);
-			}
-			else if (chosenSuffix.equals("min")){   
+			//if (chosenSuffix.equals("y")){    //"y", "d", "h", "min", "s", "ms", "us", "ns", "ps", "fs", "as", "Custom Suffix"
+			//	time = time * (365.25*24.0*60.0*60.0*1000.0); //   c.set(Calendar.YEAR, time); // time would have to be an integer... so can't use that
+			//}
+			//if (chosenSuffix.equals("w")){    
+			//	time = time * (7.0*24.0*60.0*60.0*1000.0); 
+			//}
+			//else if (chosenSuffix.equals("d")){    
+			//	time = time * (24.0*60.0*60.0*1000.0);
+			//}
+			//if (chosenSuffix.equals("h")){   
+			//	time = time * (60.0*60.0*1000.0);
+			//}
+			if (chosenSuffix.equals("min")){   
 				time = time * (60.0*1000.0);
 			}
 			else if (chosenSuffix.equals("s")){    
@@ -705,13 +706,15 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 				// trivial case, nothing to do:
 				// time = time;
 			}
+			// if its not h m s or ms then wont use SimpleDateFormat below for digital time. 
+			// so reset chosenSuffix to s. 
 			else {
-				IJ.error("For a digital 00:00:00 time you must use y, mon, h, min, s or ms only as the time units.");
+				IJ.error("For a digital 00:00:00.000 time you must use min, s or ms only as the time units.");
+				
 			}
 			
 			// set the time
 			calendar.setTimeInMillis( Math.round(time) );
-			
 			SimpleDateFormat f;
 			// check if a custom format has been entered
 			if (customFormat.length() > 0) {
@@ -723,9 +726,9 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 					return "Invalid pattern";
 				}
 			} else {
-				f = new SimpleDateFormat("HH:mm:ss.SSS");
+				f = new SimpleDateFormat("mm:ss.SSS");
 			}
-			
+			System.out.println(calendar.getTime());
 			return f.format(calendar.getTime() );
 			
 			/*int hour = (int)(time / 3600);
