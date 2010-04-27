@@ -19,12 +19,14 @@ You may contact Albert Cardona at albert at pensament dot net, at http://www.pen
 */
 import ij.IJ;
 import org.python.core.PyDictionary;
+import org.python.core.PyException;
 import org.python.core.PySystemState;
 import org.python.util.PythonInterpreter;
 import common.RefreshScripts;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 
 /**
@@ -64,6 +66,12 @@ public class Refresh_Jython_Scripts extends RefreshScripts {
 			PI.setErr(this.err);
 			Jython_Interpreter.importAll(PI);
 			PI.execfile(istream);
+		} catch (PyException e) {
+			try {
+				err.write(e.toString().getBytes());
+			} catch (IOException e2) {
+				e.printStackTrace();
+			}
 		} catch (Throwable t) {
 			printError(t);
 		} finally {
