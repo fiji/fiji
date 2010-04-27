@@ -163,6 +163,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Directionality_.jar \
 	jars/Fiji.jar \
 	plugins/Image_Expression_Parser.jar \
+	plugins/Algorithm_Launcher.jar \
 	plugins/VIB_.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS third-party-plugins
@@ -239,6 +240,12 @@ CLASSPATH(jars/zs.jar)=jars/Jama-1.0.2.jar
 CLASSPATH(plugins/register_virtual_stack_slices.jar)=plugins/TrakEM2_.jar:jars/mpicbg.jar:plugins/bUnwarpJ_.jar:jars/fiji-lib.jar
 CLASSPATH(plugins/Siox_Segmentation.jar)=jars/fiji-lib.jar
 CLASSPATH(plugins/Image_Expression_Parser.jar)=jars/jep.jar:jars/imglib.jar
+
+CLASSPATH(plugins/Algorithm_Launcher.jar)=jars/imglib.jar
+plugins/Algorithm_Launcher.jar <- \
+	src-plugins/Algorithm_Launcher/**/*.java \
+	src-plugins/Algorithm_Launcher/**/*.config
+
 CLASSPATH(plugins/Directionality_.jar)=jars/jfreechart-1.0.9.jar
 CLASSPATH(plugins/LSM_Toolbox.jar)=plugins/LSM_Reader.jar
 MAINCLASS(plugins/LSM_Toolbox.jar)=org.imagearchive.lsm.toolbox.gui.AboutDialog
