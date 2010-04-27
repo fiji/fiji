@@ -164,7 +164,8 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	jars/Fiji.jar \
 	plugins/Image_Expression_Parser.jar \
 	plugins/Algorithm_Launcher.jar \
-	plugins/VIB_.jar
+	plugins/VIB_.jar \
+	plugins/Anisotropic_Diffusion_2D.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS third-party-plugins
 
