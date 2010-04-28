@@ -1123,7 +1123,9 @@ public class TextEditor extends JFrame implements ActionListener,
 		String title = (fileChanged ? "*" : "") + fileName
 			+ (executingTasks.isEmpty() ? "" : " (Running)");
 		setTitle(title);
-		tabbed.setTitleAt(tabbed.getSelectedIndex(), title);
+		int index = tabbed.getSelectedIndex();
+		if (index >= 0)
+			tabbed.setTitleAt(index, title);
 	}
 
 	public void setTitle(String title) {
