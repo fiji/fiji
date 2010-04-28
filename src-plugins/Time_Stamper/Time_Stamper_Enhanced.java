@@ -715,33 +715,32 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 			}
 			
 			// set the time
-			calendar.setTimeInMillis( Math.round(time) );
-			SimpleDateFormat f;
-			// check if a custom format has been entered
-			if (customFormat.length() > 0) {
-				// Make sure that our custom format can be handled
-				try {
-					f = new SimpleDateFormat(customFormat);
-				}
-				catch (IllegalArgumentException ex) {
-					return "Invalid pattern";
+			calendar.setTimeInMillis(Math.round(time));
+			DateFormat f;
+			try {
+				// check if a custom format has been entered
+				if (customFormat.length() > 0) {
+					// Make sure that our custom format can be handled
+
+					f = new HybridDateFormat(customFormat);
+
+				} else {
+					f = new SimpleDateFormat("HH:mm:ss.SSS");
 				}
 				f.setTimeZone(tz); // the SimpleDateFormat needs to know the
 				// time zone is UTC!
-			} else {
-				f = new SimpleDateFormat("mm:ss.SSS");
+
+				return f.format(calendar.getTime());
+			} catch (IllegalArgumentException ex) {
+				return ex.getMessage();
 			}
-			System.out.println(calendar.getTime());
-			return f.format(calendar.getTime() );
-			
-			/*int hour = (int)(time / 3600);
-			time -= hour * 3600;
-			int minute = (int)(time / 60);
-			time -= minute * 60;
-			return twoDigits(hour) + ":" + twoDigits(minute) + ":"
-				+ (time < 10 ? "0" : "") 
-				+ IJ.d2s(time, decimalPlaces);
-			*/
+
+			/*
+			 * int hour = (int)(time / 3600); time -= hour * 3600; int minute =
+			 * (int)(time / 60); time -= minute * 60; return twoDigits(hour) +
+			 * ":" + twoDigits(minute) + ":" + (time < 10 ? "0" : "") +
+			 * IJ.d2s(time, decimalPlaces);
+			 */
 		}
 	}
 	
