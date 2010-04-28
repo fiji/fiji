@@ -652,6 +652,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 	 */
 	private class DigitalLabelFormat extends LabelFormat {
 		// A calendar to calculate time representation with.
+		TimeZone tz = TimeZone.getTimeZone("UTC");
 		Calendar calendar = new GregorianCalendar();
 		
 		/**
@@ -725,6 +726,8 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter, DialogListen
 				catch (IllegalArgumentException ex) {
 					return "Invalid pattern";
 				}
+				f.setTimeZone(tz); // the SimpleDateFormat needs to know the
+				// time zone is UTC!
 			} else {
 				f = new SimpleDateFormat("mm:ss.SSS");
 			}
