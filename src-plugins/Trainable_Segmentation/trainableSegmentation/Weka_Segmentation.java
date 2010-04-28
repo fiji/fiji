@@ -313,24 +313,6 @@ public class Weka_Segmentation implements PlugIn
 	private ActionListener listener = new ActionListener() {
 		public void actionPerformed(final ActionEvent e) {
 			
-			if(e.getSource() == wekaButton){
-				new Thread(){
-					{
-						setContextClassLoader( ClassLoader.getSystemClassLoader() );
-						//setContextClassLoader( IJ.getClassLoader() );						
-					}
-					public void run(){	
-						try{
-							launchWeka();
-						}catch(Throwable e){
-							IJ.log("error while launching Weka");
-							e.printStackTrace();
-						}
-						
-					}				
-				}.start();
-			}
-			
 			// listen to the buttons on separate threads not to block
 			// the event dispatch thread
 			exec.submit(new Runnable() {
@@ -374,7 +356,9 @@ public class Weka_Segmentation implements PlugIn
 					else if(e.getSource() == settingsButton){
 						showSettingsDialog();
 					}
-					
+					else if(e.getSource() == wekaButton){
+						launchWeka();
+					}
 					else{ 
 						for(int i = 0; i < numOfClasses; i++)
 						{
@@ -1545,11 +1529,7 @@ public class Weka_Segmentation implements PlugIn
 	 * @return false if error
 	 */
 	public boolean loadClassifier(String filename) 
-	{			
-		Thread t = Thread.currentThread();
-		t.setContextClassLoader( ClassLoader.getSystemClassLoader() );
-		IJ.log(" loader class: " +  t.getContextClassLoader().getClass());
-		
+	{	
 		File selected = new File(filename);
 		try {
 			InputStream is = new FileInputStream( selected );
@@ -1984,9 +1964,8 @@ public class Weka_Segmentation implements PlugIn
 	 * Call the Weka chooser
 	 */
 	public static void launchWeka()
-	{		
-		
-		IJ.log(" " + ClassLoader.getSystemClassLoader());
+	{				
+		IJ.log(" " + ClassLoader.getSystemClassLoader().getClass());
 		weka.gui.GUIChooser chooser = new weka.gui.GUIChooser();
 		for (WindowListener wl : chooser.getWindowListeners()) 
 		{

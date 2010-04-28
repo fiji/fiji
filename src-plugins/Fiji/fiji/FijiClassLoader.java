@@ -17,15 +17,15 @@ import java.util.Map;
 import java.util.jar.JarFile;
 import java.util.jar.JarEntry;
 
-public class FijiClassLoader extends ClassLoader {
+public class FijiClassLoader extends URLClassLoader {
 	Map filesMap;
 	List filesNames;
 	List filesObjects;
 	Map cache;
 	List<ClassLoader> fallBacks;
-
-	public FijiClassLoader() {
-		super(Thread.currentThread().getContextClassLoader());
+	
+	public FijiClassLoader() {		
+		super(new URL[0], Thread.currentThread().getContextClassLoader());
 		filesMap = new HashMap();
 		filesNames = new ArrayList(10);
 		filesObjects = new ArrayList(10);
@@ -33,7 +33,7 @@ public class FijiClassLoader extends ClassLoader {
 		fallBacks = new ArrayList<ClassLoader>();
 	}
 
-	public FijiClassLoader(String path) throws IOException {
+	public FijiClassLoader(String path) throws IOException {	
 		this();
 		addPath(path);
 	}
@@ -56,7 +56,19 @@ public class FijiClassLoader extends ClassLoader {
 		if (filesMap.containsKey(path))
 			return;
 		File file = new File(path);
+		try {
+			// Add plugin directory to search path
+			addURL(file.toURI().toURL());
+		} catch (MalformedURLException e) {
+			ij.IJ.log("PluginClassLoader: "+e);
+		}
 		if (file.isDirectory()) {
+			try {
+                // Add first level subdirectories to search path
+                addURL(file.toURI().toURL());
+            } catch (MalformedURLException e) {
+        		ij.IJ.log("PluginClassLoader: "+e);
+            }
 			filesMap.put(path, file);
 			filesNames.add(path);
 			filesObjects.add(file);
@@ -69,6 +81,11 @@ public class FijiClassLoader extends ClassLoader {
 			filesMap.put(path, jar);
 			filesNames.add(path);
 			filesObjects.add(jar);
+			try {
+                addURL(file.toURI().toURL());
+            } catch (MalformedURLException e) {
+				ij.IJ.log("PluginClassLoader: "+e);
+            }
 		}
 	}
 
@@ -79,7 +96,7 @@ public class FijiClassLoader extends ClassLoader {
 	public void removeFallBack(ClassLoader loader) {
 		fallBacks.remove(loader);
 	}
-
+/*
 	public URL getResource(String name) {
 		int n = filesNames.size();
 		for (int i = n - 1; i >= 0; --i) {
@@ -88,7 +105,7 @@ public class FijiClassLoader extends ClassLoader {
 				File file = new File((File)item, name);
 				try {
 					if (file.exists())
-						return file.toURL();
+						return file.toURI().toURL();
 				} catch (MalformedURLException e) {}
 				continue;
 			}
@@ -106,7 +123,9 @@ public class FijiClassLoader extends ClassLoader {
 		}
 		return getSystemResource(name);
 	}
-
+	
+	*/
+/*
 	public InputStream getResourceAsStream(String name) {
 		return getResourceAsStream(name, false);
 	}
@@ -136,7 +155,7 @@ public class FijiClassLoader extends ClassLoader {
 			return null;
 		return super.getResourceAsStream(name);
 	}
-
+*/
 	public Class forceLoadClass(String name)
 		throws ClassNotFoundException {
 			return loadClass(name, true, true);
@@ -167,7 +186,7 @@ public class FijiClassLoader extends ClassLoader {
 		} catch (Exception e) { }
 		String path = name.replace('.', '/') + ".class";
 		try {
-			InputStream input = getResourceAsStream(path, !true);
+			InputStream input = getResourceAsStream(path); //, !true);
 			if (input != null) {
 				byte[] buffer = readStream(input);
 				input.close();
