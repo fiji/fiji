@@ -35,7 +35,8 @@ Flag DONE stops this sequence of calls.
 -label only slices where time became greater than multiples of some time eg every 5 min. 
 -preview with live update when change GUI -ok, changes in GUI are read into the preview. 
 -preview with stack slider in the GUI. - slider now in GUI but functionality is half broken
--Use Java Date for robust formatting of dates/times counted in milliseconds. - some bugs - need to format more sensibly, dont always need all the fields.
+-Use Java Date for robust formatting of dates/times counted in milliseconds. - added hybrid date form at for 
+	versatile formatting of the digital time. 
 -switch unit according to magnitude of number eg sec or min or nm or microns etc. 
 - background colour for label. 
 
@@ -43,19 +44,25 @@ Flag DONE stops this sequence of calls.
  */
 
 import ij.IJ;
+import ij.IJEventListener;
 import ij.ImagePlus;
+import ij.gui.ColorChooser;
 import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
+import ij.gui.NonBlockingGenericDialog;
 import ij.gui.Roi;
 import ij.gui.TextRoi;
 import ij.gui.Toolbar;
 import ij.plugin.filter.ExtendedPlugInFilter;
 import ij.plugin.filter.PlugInFilterRunner;
+import ij.plugin.frame.ColorPicker;
 import ij.process.ImageProcessor;
 
 import java.awt.AWTEvent;
+import java.awt.Button;
 import java.awt.Checkbox;
 import java.awt.Choice;
+import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GraphicsEnvironment;
@@ -65,6 +72,8 @@ import java.awt.Panel;
 import java.awt.Rectangle;
 import java.awt.Scrollbar;
 import java.awt.TextField;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.text.DateFormat;
@@ -112,7 +121,8 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 
 	int frame, first, last; // these default to 0 as no values are given
 	// int nPasses = 1;
-	PlugInFilterRunner pfr; // set pfr to the default PlugInFilterRunner object
+	PlugInFilterRunner pluginFilterRunner; // set pfr to the default
+											// PlugInFilterRunner object
 	// - the object that runs the plugin.
 
 	int currentSlice;
@@ -179,10 +189,11 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	 * need. we are using ExtendedPluginFilter, so first argument is imp not ip.
 	 */
 	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr) {
-		this.pfr = pfr;
+		this.pluginFilterRunner = pfr;
 
 		// This makes the GUI object
-		GenericDialog gd = new GenericDialog("Time Stamper Enhanced");
+		final NonBlockingGenericDialog gd = new NonBlockingGenericDialog(
+				"Time Stamper Enhanced");
 
 		// these are the fields of the GUI
 		currentSlice = last;
@@ -236,11 +247,21 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		gd.addPreviewCheckbox(pfr); // adds preview checkbox - needs
 		// ExtendedPluginFilter and DialogListener!
 		previewCheckbox = gd.getPreviewCheckbox();
-		gd
-				.addMessage("Time Stamper plugin for Fiji (is just ImageJ - batteries included)\nmaintained by Dan White MPI-CBG dan(at)chalkie.org.uk");
+		gd.addMessage("Time Stamper plugin for Fiji (is just ImageJ - batteries included)\nmaintained by Dan White MPI-CBG dan(at)chalkie.org.uk");
 
 		gd.addDialogListener(this); // needed for listening to dialog
 		// field/button/checkbok changes?
+
+		// add an ImageJ event listener to react to
+		// color changes, etc.
+		IJ.addEventListener(new IJEventListener() {
+			public void eventOccurred(int event) {
+				if (event == IJEventListener.FOREGROUND_COLOR_CHANGED
+						|| event == IJEventListener.BACKGROUND_COLOR_CHANGED) {
+					updatePreview(gd, null);
+				}
+			}
+		});
 
 		updateUI();
 		updateImg();
@@ -331,6 +352,19 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	}
 
 	/**
+	 * Updates the preview.
+	 * 
+	 * @param dialog
+	 * @param e
+	 */
+	private void updatePreview(GenericDialog dialog, AWTEvent e) {
+		// tell the plug-in filter runner to update
+		// the preview. It seems a bit like a hack
+		// this way so we should look for another one.
+		pluginFilterRunner.dialogItemChanged(dialog, e);
+	}
+
+	/**
 	 * Updates some GUI components, based on the current state of the selected
 	 * label format.
 	 */
@@ -409,14 +443,17 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		// if (fontProperties != null)
 		// fontProperties.updateGUI(font);
 		ip.setFont(font);
-		ip.setColor(Toolbar.getForegroundColor());
 		ip.setAntialiasedText(AAtext);
 
 		// Have moved the font size and xy location calculations for timestamp
 		// stuff out of the run method, into their own methods.
 		// set the font size according to ROI size, or if no ROI the GUI text
 		// input
-		setLocation(ip);
+		Rectangle backgroundRectangle = getBackgroundRectangle(ip);
+		ip.setColor(Toolbar.getBackgroundColor());
+		ip.fill(new Roi(backgroundRectangle));
+		ip.setColor(Toolbar.getForegroundColor());
+		ip.moveTo(backgroundRectangle.x, (backgroundRectangle.y + backgroundRectangle.height) );
 
 		double time = getTimeFromFrame(frame); // ask the getTimeFromFrame
 		// method to return the time for
@@ -483,40 +520,45 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		font = new Font(TextRoi.getFont(), TextRoi.getStyle(), size);
 	}
 
-	// method to position the time stamp string correctly, so it is all on the
-	// image, even for the last frames with bigger numbers.
-	// ip.moveTo(x, y); // move to x y position for Timestamp writing
-
-	// the maxwidth if statement tries to move the time stamp right a bit to
-	// account for the max length the time stamp will be.
-	// it's nice to not have the time stamp run off the right edge of the image.
-	// how about subtracting the
-	// maxWidth from the width of the image (x dimension) only if its so close
-	// that it will run off.
-	// this seems to work now with digital and decimal time formats.
-	void setLocation(ImageProcessor ip) {
-		int bottom = y, left = x;
-
+	/**
+	 * 	method to position the time stamp string correctly, so it is all on the
+	 *	image, even for the last frames with bigger numbers.
+	 *	ip.moveTo(x, y); // move to x y position for Timestamp writing
+	 *
+	 *	the maxwidth if statement tries to move the time stamp right a bit to
+	 *  account for the max length the time stamp will be.
+	 *  it's nice to not have the time stamp run off the right edge of the image.
+	 *  how about subtracting the
+	 *  maxWidth from the width of the image (x dimension) only if its so close
+	 *  that it will run off.
+	 *  this seems to work now with digital and decimal time formats.
+	 */
+	Rectangle getBackgroundRectangle(ImageProcessor ip) {
 		// Here we set x and y at the ROI if there is one (how does it know?),
 		// so time stamp is drawn there, not at default x and y.
 		Rectangle roi = ip.getRoi();
 		// set the xy time stamp drawing position for ROI smaller than the
 		// image, to bottom left of ROI
-		if (roi.width < ip.getWidth() || roi.height < ip.getHeight()) {
-			left = roi.x; // left of the ROI
-			bottom = roi.y + roi.height; // bottom of the ROI
+		if (roi.width == ip.getWidth() && roi.height == ip.getHeight()) {
+			roi.x = x;
+			roi.y = y;
+			roi.height = font.getSize();
 		}
+			
 		// make sure the y position is not less than the font height: size,
 		// so the time stamp is not off the top of the image?
-		if (bottom < font.getSize())
-			bottom = font.getSize();
+		if ( (roi.y + roi.height) < font.getSize())
+			roi.y = 1;
+		
+		roi.width = maxWidth(ip, selectedFormat.lastTimeStampString());
+		
 		// if longest timestamp is wider than (image width - ROI width) , move x
 		// in appropriately
-		if (maxWidth(ip, selectedFormat.lastTimeStampString()) > (ip.getWidth() - left))
-			ip.moveTo((ip.getWidth() - maxWidth(ip, selectedFormat
-					.lastTimeStampString())), bottom);
-		else
-			ip.moveTo(left, bottom);
+		if (roi.width > (ip.getWidth() - roi.x)) {
+			roi.x = (ip.getWidth() - roi.width);
+		}
+		
+		return roi;
 	}
 
 	/**
@@ -878,6 +920,8 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		Choice fontStyle;
 		// a checkbox to enable/disable anti-aliased text
 		Checkbox antiAlias;
+		// the font color
+		Color fontColor;
 		// the generic dialog this panel is put into
 		GenericDialog dialog;
 
@@ -892,6 +936,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		 */
 		public FontPropertiesPanel(final GenericDialog dialog, final Font font) {
 			this.dialog = dialog;
+			fontColor = TextRoi.getColor();
 
 			// for now use a flow layout that puts components just
 			// next to each other, respecting the given margins
@@ -948,6 +993,16 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 			antiAlias = new Checkbox("Smooth", AAtext);
 			add(antiAlias);
 			antiAlias.addItemListener(this);
+
+			Button fontColourButton = new Button("Font Color");
+
+			fontColourButton.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent actionEvent) {
+					ColorPicker cp = new ColorPicker();
+
+				}
+			});
+			add(fontColourButton);
 		}
 
 		/**
@@ -991,7 +1046,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 			// tell the plug-in filter runner to update
 			// the preview. It seems a bit like a hack
 			// this way so we should look for another one.
-			pfr.dialogItemChanged(dialog, e);
+			updatePreview(dialog, e);
 		}
 	}
 } // thats the end of Time_Stamper_Enhanced class
