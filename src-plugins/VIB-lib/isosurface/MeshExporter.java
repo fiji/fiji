@@ -6,6 +6,7 @@ import ij3d.ContentNode;
 import customnode.WavefrontExporter;
 import customnode.CustomMeshNode;
 import customnode.CustomMesh;
+import customnode.CustomMultiMesh;
 
 import ij.IJ;
 import ij.io.SaveDialog;
@@ -34,25 +35,26 @@ public class MeshExporter {
 
 	private MeshExporter() {}
 
-	// The test for CustomMeshNode does not work with a 3D texture object that was converted to a surface on the menus!
-	// This test is also done later, at each specific method. So must update there as well on figuring out how to properly detect a mesh.
-	static private Collection filterMeshes(final Collection contents) {
-		ArrayList meshes = new ArrayList();
+	static private Collection<Content> filterMeshes(final Collection contents) {
+		ArrayList<Content> meshes = new ArrayList<Content>();
 		for (Iterator it = contents.iterator(); it.hasNext(); ) {
-			Content ob = (Content)it.next();
-			if (!(ob.getContent() instanceof CustomMeshNode)
-				&& !(ob.getContent() instanceof MeshGroup) )
+			Content c = (Content)it.next();
+			ContentNode node = c.getContent();
+			if (node instanceof voltex.VoltexGroup
+			 || node instanceof orthoslice.OrthoGroup
+			 || node instanceof surfaceplot.SurfacePlotGroup) {
 				continue;
-			meshes.add(ob);
+			}
+			meshes.add(c);
 		}
 		return meshes;
 	}
 
 	/** Accepts a collection of MeshGroup objects. */
-	static public void saveAsWaveFront(Collection contents) {
-		if (null == contents || 0 == contents.size())
+	static public void saveAsWaveFront(Collection contents_) {
+		if (null == contents_ || 0 == contents_.size())
 			return;
-		contents = filterMeshes(contents);
+		Collection<Content> contents = filterMeshes(contents_);
 		if (0 == contents.size()) {
 			IJ.log("No meshes to export!");
 			return;
@@ -243,17 +245,25 @@ public class MeshExporter {
 
 		for(Iterator it = contents.iterator(); it.hasNext(); ) {
 			Content mob = (Content)it.next();
-			CustomMesh cmesh=null;
+			
+			ContentNode node = mob.getContent();
 
-			if (mob.getContent() instanceof CustomMeshNode) {
-				CustomMeshNode cmeshnode = (CustomMeshNode) mob.getContent();
-				cmesh = cmeshnode.getMesh();
-			} else if (mob.getContent() instanceof MeshGroup) {
-				MeshGroup mg = (MeshGroup)mob.getContent();
-				cmesh = mg.getMesh();
-			} else
+			// First CustomMultiMesh, which is also a CustomMeshNode:
+			if (node instanceof CustomMultiMesh) {
+				CustomMultiMesh multi = (CustomMultiMesh)node;
+				for (int i=0; i<multi.size(); i++) {
+					meshes.put(mob.getName() + " [" + (i+1) + "]", multi.getMesh(i));
+				}
+			// Then CustomMeshNode (all custom meshes):
+			} else if (node instanceof CustomMeshNode) {
+				meshes.put(mob.getName(), ((CustomMeshNode)node).getMesh());
+			// An image volume rendered as isosurface:
+			} else if (node instanceof MeshGroup) {
+				meshes.put(mob.getName(), ((MeshGroup)node).getMesh());
+			} else {
+				IJ.log("Ignoring " + mob.getName() + " with node of class " + node.getClass());
 				continue;
-			meshes.put(mob.getName(), cmesh);
+			}
 		}
 		WavefrontExporter.save(meshes, mtl_filename, w_obj, w_mtl);
 	}

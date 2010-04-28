@@ -58,10 +58,7 @@ public class ClassCompletionProvider extends CompletionProviderBase
 		this.textArea = textArea;
 		names = new ClassNames(defaultProvider);
 		this.language = language;
-		names.run(System.getProperty("java.class.path").split(File.pathSeparator));
-		names.run(System.getProperty("sun.boot.class.path").split(File.pathSeparator));
 		topLevel = names.getRoot();
-
 	}
 
 

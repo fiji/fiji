@@ -1328,7 +1328,8 @@ public class Fake {
 
 				File file = new File(makePath(cwd, source));
 				if (getVarBool("IGNOREMISSINGFAKEFILES") &&
-						!file.exists()) {
+						!file.exists() &&
+						isDirEmpty(getLastPrerequisite())) {
 					String precompiled =
 						getVar("PRECOMPILEDDIRECTORY");
 					if (precompiled == null)
@@ -1340,6 +1341,8 @@ public class Fake {
 						return;
 					}
 				}
+				else if (!file.exists())
+					error("Target " + target + " was not built!");
 
 				if (target.indexOf('.') >= 0)
 					copyJar(source, target, cwd, configPath);
@@ -3203,6 +3206,11 @@ public class Fake {
 		} catch (FakeException e) {
 			out.println("Error: " + e.getMessage());
 		}
+	}
+
+	protected static boolean isDirEmpty(String path) {
+		String[] list = new File(path).list();
+		return list == null || list.length == 0;
 	}
 
 	static byte[] realloc(byte[] buffer, int newLength) {

@@ -229,7 +229,12 @@ public class Refresh_Javas extends RefreshScripts {
 
 	void runPlugin(String path, String className, boolean newClassLoader)
 			throws Exception {
-		new PlugInExecutor(path).run(className, "", newClassLoader);
+		PlugInExecutor executor = new PlugInExecutor(path);
+		try {
+			executor.tryRun(className, "", newClassLoader);
+		} catch (NoSuchMethodException e) {
+			executor.runOneOf(path, newClassLoader);
+		}
 	}
 
 	void runOutOfTreePlugin(String path) throws IOException,
@@ -260,10 +265,12 @@ public class Refresh_Javas extends RefreshScripts {
 		}
 		if (classPath == null || classPath.equals(""))
 			classPath = directory.getPath();
-		else
+		else {
 			// make sure classes from this directory are found first
-			classPath = directory.getPath()
-				+ File.pathSeparator + classPath;
+			if (!classPath.startsWith(File.pathSeparator))
+				classPath = File.pathSeparator + classPath;
+			classPath = directory.getPath() + classPath;
+		}
 
 		new PlugInExecutor(classPath).run(className);
 	}

@@ -1,39 +1,39 @@
 package fiji;
 
+import ij.IJ;
+
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.net.MalformedURLException;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-
-import java.util.jar.JarFile;
-import java.util.jar.JarEntry;
 
 public class FijiClassLoader extends URLClassLoader {
-	Map filesMap;
-	List filesNames;
-	List filesObjects;
-	Map cache;
+
 	List<ClassLoader> fallBacks;
-	
-	public FijiClassLoader() {		
+
+	public FijiClassLoader() {
 		super(new URL[0], Thread.currentThread().getContextClassLoader());
-		filesMap = new HashMap();
-		filesNames = new ArrayList(10);
-		filesObjects = new ArrayList(10);
-		cache = new HashMap();
 		fallBacks = new ArrayList<ClassLoader>();
 	}
 
-	public FijiClassLoader(String path) throws IOException {	
+	public FijiClassLoader(boolean initDefaults) {
+		this();
+		if (initDefaults) try {
+			String fijiDir = User_Plugins.getFijiDir();
+			addPath(fijiDir + "/plugins");
+			addPath(fijiDir + "/jars");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	public FijiClassLoader(String path) throws IOException {
 		this();
 		addPath(path);
 	}
@@ -53,8 +53,6 @@ public class FijiClassLoader extends URLClassLoader {
 	public void addPath(String path) throws IOException {
 		if (path.endsWith("/.rsrc"))
 			return;
-		if (filesMap.containsKey(path))
-			return;
 		File file = new File(path);
 		try {
 			// Add plugin directory to search path
@@ -64,28 +62,22 @@ public class FijiClassLoader extends URLClassLoader {
 		}
 		if (file.isDirectory()) {
 			try {
-                // Add first level subdirectories to search path
-                addURL(file.toURI().toURL());
-            } catch (MalformedURLException e) {
-        		ij.IJ.log("PluginClassLoader: "+e);
-            }
-			filesMap.put(path, file);
-			filesNames.add(path);
-			filesObjects.add(file);
+
+				// Add first level subdirectories to search path
+				addURL(file.toURI().toURL());
+			} catch (MalformedURLException e) {
+				IJ.log("FijiClassLoader: " + e);
+			}
 			String[] paths = file.list();
 			for (int i = 0; i < paths.length; i++)
 				addPath(path + File.separator + paths[i]);
 		}
 		else if (path.endsWith(".jar")) {
-			JarFile jar = new JarFile(file);
-			filesMap.put(path, jar);
-			filesNames.add(path);
-			filesObjects.add(jar);
 			try {
-                addURL(file.toURI().toURL());
-            } catch (MalformedURLException e) {
-				ij.IJ.log("PluginClassLoader: "+e);
-            }
+				addURL(file.toURI().toURL());
+			} catch (MalformedURLException e) {
+				IJ.log("FijiClassLoader: " + e);
+			}
 		}
 	}
 
@@ -96,66 +88,8 @@ public class FijiClassLoader extends URLClassLoader {
 	public void removeFallBack(ClassLoader loader) {
 		fallBacks.remove(loader);
 	}
-/*
-	public URL getResource(String name) {
-		int n = filesNames.size();
-		for (int i = n - 1; i >= 0; --i) {
-			Object item = filesObjects.get(i);
-			if (item instanceof File) {
-				File file = new File((File)item, name);
-				try {
-					if (file.exists())
-						return file.toURI().toURL();
-				} catch (MalformedURLException e) {}
-				continue;
-			}
 
-			JarFile jar = (JarFile)item;
-			String file = (String)filesNames.get(i);
-			if (jar.getEntry(name) == null)
-				continue;
-			String url = "file:///"
-				+ file.replace('\\', '/')
-				+ "!/" + name;
-			try {
-				return new URL("jar", "", url);
-			} catch (MalformedURLException e) { }
-		}
-		return getSystemResource(name);
-	}
-	
-	*/
-/*
-	public InputStream getResourceAsStream(String name) {
-		return getResourceAsStream(name, false);
-	}
 
-	public InputStream getResourceAsStream(String name,
-			boolean nonSystemOnly) {
-		int n = filesNames.size();
-		for (int i = n - 1; i >= 0; --i) {
-			Object item = filesObjects.get(i);
-			if (item instanceof File) {
-				File f = new File((File)item, name);
-				try {
-					if (f.exists())
-						return new FileInputStream(f);
-				} catch (IOException e) {}
-				continue;
-			}
-			JarFile jar = (JarFile)item;
-			JarEntry entry = jar.getJarEntry(name);
-			if (entry == null)
-				continue;
-			try {
-				return jar.getInputStream(entry);
-			} catch (IOException e) { }
-		}
-		if (nonSystemOnly)
-			return null;
-		return super.getResourceAsStream(name);
-	}
-*/
 	public Class forceLoadClass(String name)
 		throws ClassNotFoundException {
 			return loadClass(name, true, true);
@@ -173,9 +107,6 @@ public class FijiClassLoader extends URLClassLoader {
 
 	public synchronized Class loadClass(String name, boolean resolve,
 			boolean forceReload) throws ClassNotFoundException {
-		Object cached = forceReload ? null : cache.get(name);
-		if (cached != null)
-			return (Class)cached;
 		Class result;
 		try {
 			if (!forceReload) {
@@ -186,13 +117,12 @@ public class FijiClassLoader extends URLClassLoader {
 		} catch (Exception e) { }
 		String path = name.replace('.', '/') + ".class";
 		try {
-			InputStream input = getResourceAsStream(path); //, !true);
+			InputStream input = getResourceAsStream(path);
 			if (input != null) {
 				byte[] buffer = readStream(input);
 				input.close();
 				result = defineClass(name,
 						buffer, 0, buffer.length);
-				cache.put(name, result);
 				return result;
 			}
 		} catch (IOException e) { e.printStackTrace(); }
