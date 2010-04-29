@@ -56,6 +56,7 @@ import ij.gui.Toolbar;
 import ij.plugin.filter.ExtendedPlugInFilter;
 import ij.plugin.filter.PlugInFilterRunner;
 import ij.plugin.frame.ColorPicker;
+import ij.plugin.frame.Fonts;
 import ij.process.ImageProcessor;
 
 import java.awt.AWTEvent;
@@ -144,6 +145,8 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	private TextField customFormatStringField;
 	// a reference to the font editor
 	private FontPropertiesPanel fontProperties;
+	// member variable for the GUI dialog
+	private GenericDialog gd;
 
 	/**
 	 * Setup the plug-in and tell ImageJ it needs to work on a stack by
@@ -191,7 +194,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		this.pluginFilterRunner = pfr;
 
 		// This makes the GUI object
-		final NonBlockingGenericDialog gd = new NonBlockingGenericDialog(
+		gd = new NonBlockingGenericDialog(
 				"Time Stamper Enhanced");
 
 		// these are the fields of the GUI
@@ -239,7 +242,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		gd.addNumericField("First Frame:", first, 0);
 		gd.addNumericField("Last Frame:", last, 0);
 
-		fontProperties = new FontPropertiesPanel(gd, font);
+		fontProperties = new FontPropertiesPanel();
 		gd.addPanel(fontProperties, GridBagConstraints.CENTER, new Insets(5, 0,
 				0, 0));
 
@@ -257,7 +260,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 			public void eventOccurred(int event) {
 				if (event == IJEventListener.FOREGROUND_COLOR_CHANGED
 						|| event == IJEventListener.BACKGROUND_COLOR_CHANGED) {
-					updatePreview(gd, null);
+					updatePreview(null);
 				}
 			}
 		});
@@ -356,13 +359,14 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	 * @param dialog
 	 * @param e
 	 */
-	private void updatePreview(GenericDialog dialog, AWTEvent e) {
-		// tell the plug-in filter runner to update
-		// the preview. It seems a bit like a hack
-		// this way so we should look for another one.
-		pluginFilterRunner.dialogItemChanged(dialog, e);
+	private void updatePreview(AWTEvent e) {
+		if (gd != null){
+			// tell the plug-in filter runner to update
+			// the preview. Apparently, this is "OK"
+			pluginFilterRunner.dialogItemChanged(gd, e);
+		}
 	}
-
+	
 	/**
 	 * Updates some GUI components, based on the current state of the selected
 	 * label format.
@@ -907,146 +911,45 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	 * enable/disable anti-aliased text (smoothing).
 	 */
 	@SuppressWarnings("serial")
-	private class FontPropertiesPanel extends Panel implements ItemListener {
-		// the available font sizes
-		private final int[] isizes = { 7, 8, 9, 10, 12, 14, 18, 24, 28, 36, 48,
-				60, 72 };
-		// a drop down choice for type face selection
-		Choice fontChoice;
-		// a drop down choice for font size selection
-		Choice fontSize;
-		// a drop down choice for font stle selection
-		Choice fontStyle;
-		// a checkbox to enable/disable anti-aliased text
-		Checkbox antiAlias;
-		// the font color
-		Color fontColor;
-		// the generic dialog this panel is put into
-		GenericDialog dialog;
-
+	private class FontPropertiesPanel extends Panel{
 		/**
-		 * Creates a new {@link FontPropertiesPanel} for a generic dialog. It is
-		 * initialized with the given font.
-		 * 
-		 * @param dialog
-		 *            The dialog the panel is added to
-		 * @param font
-		 *            The font it is initialized with
+		 * Creates a new {@link FontPropertiesPanel} containing the font setting
+		 * and font colour buttons.
 		 */
-		public FontPropertiesPanel(final GenericDialog dialog, final Font font) {
-			this.dialog = dialog;
-			fontColor = TextRoi.getColor();
+		public FontPropertiesPanel() {
+			Button fontStyleButton = new Button("Font Settings");
+			
+			fontStyleButton.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent actionEvent) {
+					new ExtendedFonts();
 
-			// for now use a flow layout that puts components just
-			// next to each other, respecting the given margins
-			setLayout(new FlowLayout(FlowLayout.LEFT, 10, 5));
-
-			// set up type face selection
-			fontChoice = new Choice();
-			final GraphicsEnvironment ge = GraphicsEnvironment
-					.getLocalGraphicsEnvironment();
-			final String[] fonts = ge.getAvailableFontFamilyNames();
-			fontChoice.add("SansSerif");
-			fontChoice.add("Serif");
-			fontChoice.add("Monospaced");
-			for (int i = 0; i < fonts.length; i++) {
-				final String f = fonts[i];
-				if (!(f.equals("SansSerif") || f.equals("Serif") || f
-						.equals("Monospaced")))
-					fontChoice.add(f);
-			}
-			fontChoice.select(font.getName());
-			fontChoice.addItemListener(this);
-			add(fontChoice);
-
-			// set up font size selection
-			fontSize = new Choice();
-			for (int i = 0; i < isizes.length; i++) {
-				// add the string representation of each available
-				// size to the drop down component
-				fontSize.add(Integer.toString(isizes[i]));
-			}
-			fontSize.select(getSizeIndex(font.getSize()));
-			fontSize.addItemListener(this);
-			add(fontSize);
-
-			// set up font style selection
-			fontStyle = new Choice();
-			fontStyle.add("Plain");
-			fontStyle.add("Bold");
-			fontStyle.add("Italic");
-			fontStyle.add("Bold+Italic");
-			final int i = font.getStyle();
-			String s = "Plain";
-			if (i == Font.BOLD)
-				s = "Bold";
-			else if (i == Font.ITALIC)
-				s = "Italic";
-			else if (i == (Font.BOLD + Font.ITALIC))
-				s = "Bold+Italic";
-			fontStyle.select(s);
-			fontStyle.addItemListener(this);
-			add(fontStyle);
-
-			// the anti alias checkbox
-			antiAlias = new Checkbox("Smooth", AAtext);
-			add(antiAlias);
-			antiAlias.addItemListener(this);
-
+				}
+			});
+			
 			Button fontColourButton = new Button("Font Color");
 
 			fontColourButton.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent actionEvent) {
-					ColorPicker cp = new ColorPicker();
+					new ColorPicker();
 
 				}
 			});
+			
+			add(fontStyleButton);
 			add(fontColourButton);
 		}
-
-		/**
-		 * Converts a font size to an index number of the fonts string
-		 * representation array.
-		 * 
-		 * @param size
-		 *            The font size to index
-		 * @return The index of the size in the string array
-		 */
-		int getSizeIndex(final int size) {
-			int index = 0;
-			for (int i = 0; i < isizes.length; i++) {
-				if (size >= isizes[i])
-					index = i;
-			}
-			return index;
+	}
+	
+	@SuppressWarnings("serial")
+	class ExtendedFonts extends Fonts{
+		@Override
+		public void itemStateChanged(ItemEvent e) {
+			super.itemStateChanged(e);
+			font = new Font(TextRoi.getFont(), TextRoi.getStyle(), TextRoi.getSize());
+			AAtext = TextRoi.isAntialiased();
+			updatePreview(e);
 		}
-
-		/**
-		 * Handles item changes like changing the type face. As a reaction a new
-		 * font is created and saved in the dialog.
-		 */
-		public void itemStateChanged(final ItemEvent e) {
-			final String styleName = fontStyle.getSelectedItem();
-			int style = Font.PLAIN;
-			if (styleName.equals("Bold"))
-				style = Font.BOLD;
-			else if (styleName.equals("Italic"))
-				style = Font.ITALIC;
-			else if (styleName.equals("Bold+Italic"))
-				style = Font.BOLD + Font.ITALIC;
-
-			final int selectedSize = Integer.parseInt(fontSize
-					.getSelectedItem());
-
-			font = new Font(fontChoice.getSelectedItem(), style, selectedSize);
-
-			AAtext = antiAlias.getState();
-
-			// tell the plug-in filter runner to update
-			// the preview. It seems a bit like a hack
-			// this way so we should look for another one.
-			updatePreview(dialog, e);
-		}
+		
 	}
 } // thats the end of Time_Stamper_Enhanced class
 
