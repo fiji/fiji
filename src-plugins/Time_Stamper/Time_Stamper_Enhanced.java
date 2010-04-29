@@ -155,6 +155,9 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	private FontPropertiesPanel fontProperties;
 	// member variable for the GUI dialog
 	private GenericDialog gd;
+	static final String[] locations = {"Upper Right", "Lower Right", "Lower Left", "Upper Left", "Custom"};
+	static final int UPPER_RIGHT=0, LOWER_RIGHT=1, LOWER_LEFT=2, UPPER_LEFT=3, CUSTOM=4;
+	int locationPreset;
 
 	/**
 	 * Setup the plug-in and tell ImageJ it needs to work on a stack by
@@ -232,17 +235,22 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		// we can set a custom suffix and use that by selecting custom
 		// suffix in the time units drop down list above
 		gd.addStringField("Custom Suffix:", customSuffix);
-
+		// get decimal places for the decimal format
+		gd.addNumericField("Decimal Places:", decimalPlaces, 0);
 		// the custom suffix text-box could potentially be disabled,
 		// depending on the format selection. So save a reference to it.
 		customUnitStringField = (TextField) gd.getStringFields().get(1);
 
-		gd.addNumericField("Starting Time (in selected units):", start, 2);
-		gd.addNumericField("Time Interval Between Frames (in selected units):",
+		gd.addNumericField("Starting Time\n(in selected units):", start, 2);
+		gd.addNumericField("Time Interval Between Frames\n(in selected units):",
 				interval, 3);
+		if (isCustomROI())
+			 locationPreset = CUSTOM;
+		else locationPreset = UPPER_LEFT;
+		
+		gd.addChoice("Location Presets", locations, locations[locationPreset]);
 		gd.addNumericField("X Location:", x, 0);
 		gd.addNumericField("Y Location:", y, 0);
-		gd.addNumericField("Decimal Places:", decimalPlaces, 0);
 		gd.addNumericField("First Frame:", first, 0);
 		gd.addNumericField("Last Frame:", last, 0);
 		gd.addNumericField("Label every n-th frame", frameMask, 0);
@@ -253,10 +261,10 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 
 		gd.addPreviewCheckbox(pfr); // adds preview checkbox - needs
 		// ExtendedPluginFilter and DialogListener!
-		gd.addMessage("Time Stamper plugin for Fiji (is just ImageJ - batteries included)\nmaintained by Dan White MPI-CBG dan(at)chalkie.org.uk");
+		gd.addMessage("Time Stamper plugin for Fiji\n(is just ImageJ - batteries included)\nmaintained by Dan White MPI-CBG\ndan(at)chalkie.org.uk");
 
 		gd.addDialogListener(this); // needed for listening to dialog
-		// field/button/checkbok changes?
+		// field/button/checkbox changes?
 
 		// add an ImageJ event listener to react to
 		// color changes, etc.
@@ -325,11 +333,12 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		chosenSuffix = gd.getNextChoice();
 
 		customSuffix = gd.getNextString();
+		decimalPlaces = (int) gd.getNextNumber();
 		start = gd.getNextNumber();
 		interval = gd.getNextNumber();
+		locationPreset = gd.getNextChoiceIndex();
 		x = (int) gd.getNextNumber();
 		y = (int) gd.getNextNumber();
-		decimalPlaces = (int) gd.getNextNumber();
 		first = (int) gd.getNextNumber();
 		last = (int) gd.getNextNumber();
 		frameMask = (int) gd.getNextNumber();
@@ -456,36 +465,36 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		// bar... but seem to get one anyway...
 	}
 
-	/*
-	 * private void setLabelFormat(){ String format = ""; if
-	 * (timeFormat.equals("hh:mm:ss.ms")) format = "HH:mm:ss:SSS"; else if
-	 * (timeFormat.equals("Decimal")) format = ""; else return
-	 * ("timeFormat was not selected!"); }
-	 */
+	boolean isCustomROI(){
+		Roi roi = imp.getRoi();
+		if (roi == null)
+			return false;
+		
+		Rectangle theROI = roi.getBounds();
+
+		return (theROI.height != imp.getHeight()
+					|| theROI.width != imp.getWidth()); // if the ROI is the same
+	}
 
 	void setFontParams(ImagePlus imp) { // work out the size of the font to use
 		// from the size of the ROI box drawn,
 		// if one was drawn (how does it know?)
 		int size = 12;
-
-		Roi roi = imp.getRoi();
-		if (roi != null) {
+		
+		if (isCustomROI()){
+			Roi roi = imp.getRoi();
 			Rectangle theROI = roi.getBounds();
-			// single characters fit the ROI, but if the time stamper string is
-			// long
-			// then the font is too big to fit the whole thing in!
+		// single characters fit the ROI, but if the time stamper string is
+		// long
+		// then the font is too big to fit the whole thing in!
 
-			// need to see if we should use the ROI height to set the font size
-			// or read it from the plugin gui
-			// if (theROI != null) doesnt work as if there is no ROI set, the
-			// ROI is the size of the image! There is always an ROI!
-			// So we can say, if there is no ROI set , its the same size as the
-			// image, and if that is the case,
-			// we should then use the size as read from the GUI.
-
-			if (theROI.height != imp.getHeight()
-					|| theROI.width != imp.getWidth()) // if the ROI is the same
-				
+		// need to see if we should use the ROI height to set the font size
+		// or read it from the plugin gui
+		// if (theROI != null) doesnt work as if there is no ROI set, the
+		// ROI is the size of the image! There is always an ROI!
+		// So we can say, if there is no ROI set , its the same size as the
+		// image, and if that is the case,
+		// we should then use the size as read from the GUI.
 				// remember the ROIs top left coordinates to be the X and Y values
 				// of the font rectangle
 				x = theROI.x;
