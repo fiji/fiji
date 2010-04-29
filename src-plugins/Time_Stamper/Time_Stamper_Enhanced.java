@@ -38,7 +38,7 @@ Flag DONE stops this sequence of calls.
 -Use Java Date for robust formatting of dates/times counted in milliseconds. - added hybrid date form at for 
 	versatile formatting of the digital time. 
 -switch unit according to magnitude of number eg sec or min or nm or microns etc. 
-- background colour for label. -0k but need checkbox to enable/disable  
+- background colour for label. -0K.  
 
  *Dan White MPI-CBG , began hacking on 15.04.09. Work continued from 02-2010 by Tomka and Dan
  */
@@ -100,32 +100,38 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	// Static can be used to remember last used values,
 	// so next time the plugin is run, it remembers the value it used last time.
 	ImagePlus imp;
+	// the px distance to the left
 	int x = 2;
+	// the px distance to the top
 	int y = 15;
+	// the font to draw the text with
 	Font font;
 	double start = 1.0;
 	double interval = 1.0;
 	double lastTime;
-	String timeString;
-	String customLabelFormat;
+	// the custom suffix, used if format supports it
 	String customSuffix = "";
+	// the suffix to append to the time stamp, used if
+	// format supports supports no custom suffix
 	static String chosenSuffix = "s";
-	String suffix = chosenSuffix;
+	// the amount of decimal places, used by some formats
 	int decimalPlaces = 3;
+	// indicates if processing has been canceled or not
 	boolean canceled;
+	// indicates if we are in preview mode or do the actual processing
 	boolean preview = true;
-	String customFormat = "decimal";
-	String lastTimeStampString; // = "teststring";
-	Checkbox previewCheckbox;
-
-	boolean AAtext = true; // use anti aliased text or not.
-
-	int frame, first, last; // these default to 0 as no values are given
-	// int nPasses = 1;
-	PlugInFilterRunner pluginFilterRunner; // set pfr to the default
-											// PlugInFilterRunner object
-	// - the object that runs the plugin.
-
+	// the custom pattern for labeling, used if format supports it
+	String customFormat = "";
+	// indicates if the text should be anti-aliased or not
+	boolean AAtext = true;
+	// the current frame 
+	int frame;
+	// a visibility range for the stamps
+	// these default to 0 as no values are given
+	int first, last;
+	// the object that runs the plugin.
+	PlugInFilterRunner pluginFilterRunner; 
+	// the slice currently worked on
 	int currentSlice;
 	// a combination (bitwise OR) of the flags specified in
 	// interfaces PlugInFilter and ExtendedPlugInFilter.
@@ -212,7 +218,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		String[] fl = getAvailableFormats();
 		gd.addChoice("Label format:", fl, fl[0]);
 
-		gd.addStringField("Custom Time Format:", customLabelFormat);
+		gd.addStringField("Custom Time Format:", customFormat);
 
 		// the custom formats text-box could potentially be disabled,
 		// depending on the format selection. So save a reference to it.
@@ -250,7 +256,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 
 		gd.addPreviewCheckbox(pfr); // adds preview checkbox - needs
 		// ExtendedPluginFilter and DialogListener!
-		previewCheckbox = gd.getPreviewCheckbox();
+		gd.getPreviewCheckbox();
 		gd.addMessage("Time Stamper plugin for Fiji (is just ImageJ - batteries included)\nmaintained by Dan White MPI-CBG dan(at)chalkie.org.uk");
 
 		gd.addDialogListener(this); // needed for listening to dialog
@@ -334,21 +340,6 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		decimalPlaces = (int) gd.getNextNumber();
 		first = (int) gd.getNextNumber();
 		last = (int) gd.getNextNumber();
-
-		// has the slice been changed?
-		if (slice != currentSlice) {
-			boolean reactivatePreview = false;
-			if ((previewCheckbox != null)
-					&& (previewCheckbox.getState() == true)) {
-				previewCheckbox.setState(false);
-				reactivatePreview = true;
-			}
-			currentSlice = slice;
-			updateImg();
-			if (reactivatePreview) {
-				previewCheckbox.setState(true);
-			}
-		}
 
 		updateUI();
 
