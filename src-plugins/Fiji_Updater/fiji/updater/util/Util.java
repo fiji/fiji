@@ -76,6 +76,8 @@ public class Util {
 	public static String stripPrefix(String string, String prefix) {
 		if (!string.startsWith(prefix))
 			return string;
+		if (useMacPrefix && string.startsWith(prefix + macPrefix))
+			return string.substring((prefix + macPrefix).length());
 		return string.substring(prefix.length());
 	}
 

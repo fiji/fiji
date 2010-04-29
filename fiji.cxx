@@ -1367,6 +1367,10 @@ static void /* no-return */ usage(void)
 		<< "\tstart JavaC, the Java Compiler, instead of ImageJ" << endl
 		<< "--ant" << endl
 		<< "\trun Apache Ant" << endl
+		<< "--javap" << endl
+		<< "\tstart javap instead of ImageJ" << endl
+		<< "--javadoc" << endl
+		<< "\tstart javadoc instead of ImageJ" << endl
 		<< "--retrotranslator" << endl
 		<< "\tuse Retrotranslator to support Java < 1.6" << endl
 		<< endl;
@@ -1657,22 +1661,28 @@ static int start_ij(void)
 			main_class = "fiji.build.Fake";
 		}
 		else if (!strcmp(main_argv[i], "--javac") ||
-				!strcmp(main_argv[i], "--javap")) {
+				!strcmp(main_argv[i], "--javap") ||
+				!strcmp(main_argv[i], "--javadoc")) {
 			add_class_path_option = true;
 			headless = 1;
-			class_path += fiji_dir;
-			if (run_precompiled || !file_exists(string(fiji_dir)
-						+ "/jars/javac.jar"))
-				class_path += "/precompiled";
-			else
-				class_path += "/jars";
-			class_path += string("/javac.jar" PATH_SEP)
-				+ get_jre_home()
+			if (!strcmp(main_argv[i], "--javac")) {
+				class_path += fiji_dir;
+				if (run_precompiled ||
+						!file_exists(string(fiji_dir)
+							+ "/jars/javac.jar"))
+					class_path += "/precompiled";
+				else
+					class_path += "/jars";
+				class_path += string("/javac.jar" PATH_SEP);
+			}
+			class_path += get_jre_home()
 				+ "/../lib/tools.jar" PATH_SEP;
 			if (!strcmp(main_argv[i], "--javac"))
 				main_class = "com.sun.tools.javac.Main";
 			else if (!strcmp(main_argv[i], "--javap"))
 				main_class = "sun.tools.javap.Main";
+			else if (!strcmp(main_argv[i], "--javadoc"))
+				main_class = "com.sun.tools.javadoc.Main";
 			else
 				cerr << main_argv[i] << "!\n";
 		}
@@ -1728,8 +1738,8 @@ static int start_ij(void)
 		add_option(options, ext_option, 0);
 	}
 
-	/* For Jython to work properly with .jar packages: */
-	add_option(options, "-Dpython.cachedir.skip=false", 0);
+	/* Avoid Jython's huge startup cost: */
+	add_option(options, "-Dpython.cachedir.skip=true", 0);
 	if (plugin_path.str() == "")
 		plugin_path << "-Dplugins.dir=" << fiji_dir;
 	add_option(options, plugin_path, 0);
@@ -1793,26 +1803,35 @@ static int start_ij(void)
 		return 1;
 
 	/* set up class path */
-	class_path = "-Djava.class.path=" + class_path;
 	if (skip_build_classpath) {
 		/* strip trailing ":" */
 		int len = class_path.length();
-		if (class_path[len - 1] == PATH_SEP[0])
+		if (len > 0 && class_path[len - 1] == PATH_SEP[0])
 			class_path = class_path.substr(0, len - 1);
 	}
 	else {
 		if (headless)
 			class_path += string(fiji_dir) + "/misc/headless.jar";
 
-		if (is_default_main_class(main_class))
+		if (is_default_main_class(main_class)) {
 			update_files();
-		else
+			if (class_path != "")
+				class_path += PATH_SEP;
+			class_path += string(fiji_dir) + "/jars/Fiji.jar"
+				PATH_SEP + fiji_dir + "/jars/ij.jar";
+		}
+		else {
 			if (build_classpath(class_path, string(fiji_dir)
 						+ "/plugins", 0))
 				return 1;
-		build_classpath(class_path, string(fiji_dir) + "/jars", 0);
+			build_classpath(class_path, string(fiji_dir)
+					+ "/jars", 0);
+		}
 	}
-	add_option(options, class_path, 0);
+	if (class_path != "") {
+		class_path = "-Djava.class.path=" + class_path;
+		add_option(options, class_path, 0);
+	}
 
 	if (jvm_options != "")
 		add_options(options, jvm_options, 0);

@@ -117,8 +117,10 @@ public class Recent_Commands implements ActionListener, CommandListener, KeyList
 		list.addKeyListener(this);
 		list.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
-				if (e.getClickCount() == 2)
+				if (e.getClickCount() == 2) {
 					runSelectedCommand();
+					dialog.dispose();
+				}
 			}
 		});
 		return list;

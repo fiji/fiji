@@ -15,8 +15,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.ArrayList;
@@ -33,7 +31,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
-import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.border.LineBorder;
 
@@ -85,14 +82,19 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 	 * FIELDS
 	 */
 	
-	/** The action ID is set to this value when the user pressed the Canceled button. */
-	public static final int CANCELED 	= 1;
-	/** The action ID is set to this value when the user pressed the OK button. */
-	public static final int OK			= 0;	
+	private static final String PLUGIN_VERSION = "v1.1";
+	private static final String PLUGIN_NAME = "Image Expression Parser";
+	
+	/** The GUI fires an ActionEvent with this command String when the quit button is pressed. */
+	public static final String QUIT_ACTION_COMMAND = "Quit";
+	/** The GUI fires an ActionEvent with this command String when the parse button is pressed
+	 * or the enter key is pressed when in the expression field. */
+	public static final String PARSE_ACTION_COMMAND = "Parse";
 	
 	private static final long serialVersionUID = 1L;
 	private static final int BOX_SPACE 	= 40;
-	/** Containes a html string referring to the expression syntax. */
+	/** Contains a html string referring to the expression syntax, and error messages to be displayed
+	 * in the info text box. */
 	public static final String[] MESSAGES = {		
 		"Enter an expression using canonical mathematical functions, and capital single " +
 		"letters as variable specifying the chosen image. Boolean operations are also supported.\n" +
@@ -215,7 +217,7 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 		"Image dimensions are incompatibles."
 		};
 	
-	 private ArrayList<ActionListener> action_listeners = new ArrayList<ActionListener>();
+	private ArrayList<ActionListener> action_listeners = new ArrayList<ActionListener>();
 	
 	/** Number of image boxes currently displayed */
 	private int n_image_box = 0;
@@ -229,6 +231,8 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 	private ArrayList<JComboBox> image_boxes = new ArrayList<JComboBox>();
 	/** Array of image variables */
 	private String[] variables;
+	/** This is where we store the history of valid command. */
+	private DefaultComboBoxModel expression_history = new DefaultComboBoxModel();
 	
 	private JPanel jPanelImages;
 	private JSplitPane jSplitPane1;
@@ -242,7 +246,7 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 	private JScrollPane jScrollPane1;
 	private JButton jButtonOK;
 	private JButton jButtonCancel;
-	private JTextField jTextFieldExpression;
+	private JComboBox expressionField;
 	private JLabel jLabelExpression;
 
 	/**
@@ -307,7 +311,7 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 	 * @see {@link #getImageMap()}  
 	 */
 	public String getExpression() {
-		return jTextFieldExpression.getText();
+		return (String) expressionField.getSelectedItem();
 	}
 	
 	public void addActionListener(ActionListener l) {
@@ -337,6 +341,9 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 			JComboBox box;
 			for ( int i=0; i<n_image_box; i++) {
 				box = image_boxes.get(i);
+				if (box.getSelectedIndex() < 0) {
+					continue;
+				}
 				imps[i] = images.get(box.getSelectedIndex());
 			}
 			return imps;
@@ -345,8 +352,8 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 		}
 	}
 	
-	private void fireActionProperty(int event_id, String command) {
-		ActionEvent action = new ActionEvent(this, event_id, command);
+	private synchronized void fireActionProperty(String command) {
+		ActionEvent action = new ActionEvent(this, ActionEvent.ACTION_PERFORMED, command);
 		for (ActionListener l : action_listeners) {
 			synchronized (l) {
 				l.notifyAll();
@@ -359,8 +366,8 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 	 * Called when something is selected or typed.
 	 * Goal is to check that everything is valid. 
 	 */
-	private void checkValid() {
-		if (!this.isShowing()) return; // prevent to check while init
+	private boolean checkValid() {	
+		if (!this.isShowing()) return true; // prevent to check while init
 		if (!compatibleDimensions()) {
 			jButtonOK.setEnabled(false);
 			for (JComboBox box : image_boxes) {
@@ -368,29 +375,44 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 			}
 			jTextAreaInfo.setText(MESSAGES[2]);
 			jTextAreaInfo.setCaretPosition(0);
-			return;
-			
+			return false;
+
 		} else { 
-			
+
 			String error = getExpressionError();
 			if ( error.length() != 0) {
-			jButtonOK.setEnabled(false);
-			jTextFieldExpression.setForeground(Color.RED);
-			jTextAreaInfo.setText(error);			
-			jTextAreaInfo.setCaretPosition(0);
-			
+				jButtonOK.setEnabled(false);
+				expressionField.getEditor().getEditorComponent().setForeground(Color.RED);
+				jTextAreaInfo.setText(error);			
+				jTextAreaInfo.setCaretPosition(0);
+				return false;
+
 			} else {
-				
+
 				jButtonOK.setEnabled(true);
 				for (JComboBox box : image_boxes) {
 					box.setForeground(Color.BLACK);
 				}
-				jTextFieldExpression.setForeground(Color.BLACK);
+				expressionField.getEditor().getEditorComponent().setForeground(Color.BLACK);
 				jTextAreaInfo.setText(MESSAGES[0]);
 				jTextAreaInfo.setCaretPosition(0);
-				
+				return true;
 			}
 		}
+	}
+	
+	
+	private void addCurrentExpressionToHistory() {
+		String current_expression = (String) expressionField.getSelectedItem();
+		String str;
+		for (int i=0; i<expression_history.getSize(); i++) {
+			str = (String) expression_history.getElementAt(i);
+			if (str.equals(current_expression)) {
+				return; // already there, we do not add
+			}
+		}
+		expression_history.addElement(current_expression);
+		
 	}
 	
 	/**
@@ -423,7 +445,7 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 	 * Called when the user type something in the expression area. 
 	 */
 	private String getExpressionError() {
-		final String expression = jTextFieldExpression.getText();
+		final String expression = (String) expressionField.getSelectedItem();
 		if ( (null == expression) || (expression.equals(""))  ) {
 			return "";
 		}
@@ -580,10 +602,30 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 	
 	public void actionPerformed(ActionEvent e) {
 		String command = e.getActionCommand();
-		if (command.contentEquals(jButtonOK.getText())) {
-			fireActionProperty(OK, jButtonOK.getText());
-		} else if (command.contentEquals(jButtonCancel.getText())) {
-			fireActionProperty(CANCELED, jButtonCancel.getText());
+		
+		if (command.equals(PARSE_ACTION_COMMAND)) {
+			fireActionProperty(PARSE_ACTION_COMMAND);
+		
+		} else if (command.equals(QUIT_ACTION_COMMAND)) {
+			fireActionProperty(QUIT_ACTION_COMMAND);
+		
+		} else if (command.equals(Image_Expression_Parser.CALCULATION_DONE_COMMAND)) {
+			// Re-enable the GUI
+			this.toFront(); // Bring the GUI to front
+			expressionField.requestFocusInWindow(); // give focus to expression field
+			jButtonOK.setEnabled(true);
+			expressionField.setEnabled(true);
+			for (JComboBox box : image_boxes) {
+				box.setEnabled(true);
+			}
+			
+		} else if (command.equals(Image_Expression_Parser.CALCULATION_STARTED_COMMAND)) {
+			// Lock the GUI
+			jButtonOK.setEnabled(false);
+			expressionField.setEnabled(false);
+			for (JComboBox box : image_boxes) {
+				box.setEnabled(false);
+			}
 		}
 	}
 	
@@ -608,7 +650,7 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 	 */
 	private void initGUI() {
 		try {
-			this.setTitle("Image Expression Parser");
+			this.setTitle(PLUGIN_NAME + " - " + PLUGIN_VERSION);
 			{
 				jSplitPane1 = new JSplitPane();
 				getContentPane().add(jSplitPane1, BorderLayout.CENTER);
@@ -629,13 +671,13 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 					{
 						jButtonCancel = new JButton();
 						jPanelRight.add(jButtonCancel, new GridBagConstraints(0, 3, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 10, 10, 0), 0, 0));
-						jButtonCancel.setText("Cancel");
+						jButtonCancel.setText("Quit");
 						jButtonCancel.addActionListener(this);
 					}
 					{
 						jButtonOK = new JButton();
 						jPanelRight.add(jButtonOK, new GridBagConstraints(2, 3, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 10, 10), 0, 0));
-						jButtonOK.setText("OK");
+						jButtonOK.setText("Parse");
 						jButtonOK.setEnabled(false);
 						jButtonOK.addActionListener(this);
 					}
@@ -673,19 +715,25 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 						jLabelExpression = new JLabel();
 						jPanelLeft.add(jLabelExpression, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(10, 10, 10, 0), 0, 0));
 						jLabelExpression.setText("Expression:");
-						jLabelExpression.setPreferredSize(new java.awt.Dimension(196, 240));
+						jLabelExpression.setPreferredSize(new java.awt.Dimension(196, 16));
 					}
 					{
-						jTextFieldExpression = new JTextField();
-						jPanelLeft.add(jTextFieldExpression, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(10, 10, 10, 10), 0, 0));
-						jTextFieldExpression.setBorder(new LineBorder(new java.awt.Color(252,117,0), 1, false));
-						jTextFieldExpression.setSize(12, 18);
-						jTextFieldExpression.addKeyListener(new KeyListener() {
-							public void keyTyped(KeyEvent e) {}
-							public void keyReleased(KeyEvent e) {
-								checkValid();
+						expressionField = new JComboBox(expression_history);
+						expressionField.setEditable(true);
+						expressionField.setBorder(new LineBorder(new java.awt.Color(252,117,0), 1, false));
+						expressionField.setSize(12, 18);
+						jPanelLeft.add(expressionField, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(10, 10, 10, 10), 0, 0));
+						expressionField.addActionListener(new ActionListener() {
+							@Override
+							public void actionPerformed(ActionEvent e) {
+								if (e.getActionCommand().equals("comboBoxEdited")) {
+									boolean valid = checkValid();
+									if (valid) {
+										addCurrentExpressionToHistory();
+										fireActionProperty(PARSE_ACTION_COMMAND);
+									}
+								}
 							}
-							public void keyPressed(KeyEvent e) {}
 						});
 					}
 					{
@@ -711,9 +759,8 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 							jButtonPlus = new JButton();
 							jPanelLeftButtons.add(jButtonPlus);
 							jButtonPlus.setText("+");
-							jButtonPlus.setBounds(7, 5, 22, 28);
+							jButtonPlus.setBounds(9, -2, 35, 35);
 							jButtonPlus.setFont(new java.awt.Font("Times New Roman",0,18));
-							jButtonPlus.setSize(25, 25);
 							jButtonPlus.setOpaque(true);
 							jButtonPlus.addActionListener(new ActionListener() {								
 								public void actionPerformed(ActionEvent e) {
@@ -725,9 +772,8 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 							jButtonMinus = new JButton();
 							jPanelLeftButtons.add(jButtonMinus);
 							jButtonMinus.setText("—");
-							jButtonMinus.setBounds(31, 5, 20, 28);
+							jButtonMinus.setBounds(46, -2, 35, 35);
 							jButtonMinus.setFont(new java.awt.Font("Arial",0,12));
-							jButtonMinus.setSize(25, 25);
 							jButtonMinus.setOpaque(true);
 							jButtonMinus.addActionListener(new ActionListener() {
 								public void actionPerformed(ActionEvent e) {

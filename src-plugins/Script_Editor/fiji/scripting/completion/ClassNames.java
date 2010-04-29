@@ -35,7 +35,7 @@ element as awt which in turn has its childDList having its one childList
 as Listwhich is infact also a leaf ***********/
 
 public class ClassNames {
-	static Package root = new Package();
+	static Package root;
 	DefaultProvider defaultProvider;
 	Enumeration list1;
 	Package toReturnClassPart = new Package();
@@ -46,9 +46,14 @@ public class ClassNames {
 
 	public ClassNames(DefaultProvider provider) {
 		defaultProvider = provider;
+		if (root == null) {
+			root = new Package();
+			add(System.getProperty("java.class.path").split(File.pathSeparator));
+			add(System.getProperty("sun.boot.class.path").split(File.pathSeparator));
+		}
 	}
 
-	public void run(String[] args) {
+	protected void add(String[] args) {
 		for (String arg : args)
 			setPathTree(arg);
 	}
@@ -116,7 +121,6 @@ public class ClassNames {
 			toAdd.add(item);
 		}
 	}
-
 
 	private boolean isDotInEnteredText(String text) {
 		return text.lastIndexOf('.') > 0;

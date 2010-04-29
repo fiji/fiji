@@ -20,8 +20,9 @@ Abbreviations:
 * ?: UNKNOWN
 
 
-Name					File					Author(s)						Contact	(2008)							License
+Name					File					Author(s)						Contact								License
 ----					----					---------						--------------							-------
+* Anisotropic Diffusion 2D 		Anisotropic_Diffusion_2D.jar 		http://rsb.info.nih.gov/ij/plugins/download/Anisotropic_Diffusion_2D.java						GPL
 * Batik 				batik.jar 				http://xmlgraphics.apache.org/batik/contributors.html									AL
 * Bean Shell language 			bsh-2.0b4.jar 											http://www.beanshell.org/ 					SPL/LGPL
 * Bean Shell Interpreter 		BSH_Interpreter.jar			Johannes Schindelin					Johannes.Schindelin@gmx.de					GPL
@@ -55,6 +56,7 @@ Name					File					Author(s)						Contact	(2008)							License
 * Mines Java Toolkit 			edu_mines_jtk.jar 			Dave Hale 						http://www.mines.edu/~dhale/jtk/ 				CPL 1.0
 * MTrack2				MTrack2_.jar				Nico Stuurman						http://valelab.ucsf.edu/~nico/IJplugins/MTrack2.html		BSDR
 * Multiple Image Processor 		M_I_P.jar				Nathaniel Gonzalez Santiago				http://ciar.rcm.upr.edu/projects/imageprocessor/multiples/	GPL
+* PAL Optimization			pal-optimization.jar			Alexei Drummond et al					http://ftp.cse.sc.edu/bioinformatics/PAL/pal-1.4/doc/index.html	LGPL
 * PDF Viewer 				PDF_Viewer.jar				Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
 * PostgreSQL JDBC 			postgresql-8.2-506.jdbc3.jar 		http://jdbc.postgresql.org/ 				http://jdbc.postgresql.org/					BSD
 * Register virtual stack slices 	register_virtual_stack_slices.jar 	Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
@@ -63,7 +65,7 @@ Name					File					Author(s)						Contact	(2008)							License
 * TransformJ 				TransformJ_.jar 			Erik Meijering 						meijering@imagescience.org 					Copyright © Erik Meijering. All rights reserved. See http://www.imagescience.org/meijering/software/transformj/
 * TrakEM2				TrakEM2_.jar				Albert Cardona, Rodney Douglas				acardona@ini.phys.ethz.ch					GPL
 * TurboReg				TurboReg_.jar				Philippe Thévenaz					philippe.thevenaz@epfl.ch					Citationware (see below)
-* VIB as VIB_.jar plugin bundle		VIB_.jar				J. Schindelin, Benjamin Schmid, M. Longair		bene.schmid@gmail.com						GPL
+* VIB as VIB_.jar plugin bundle		VIB_.jar, VIB-lib.jar				J. Schindelin, Benjamin Schmid, M. Longair		bene.schmid@gmail.com						GPL
 * Video Editing			Video_Editing.jar				Benjamin Schmid						bene.schmid@gmail.com						GPL
 * View5D 				View5D_.jar 				Rainer Heintzmann					heintzmannd@gmail.com						GPL 2
 * Volume Viewer / 3D Reslicer 		Volume_Viewer.jar 			Kai Uwe Barthel 					k.barthel@fhtw-berlin.de 					PD

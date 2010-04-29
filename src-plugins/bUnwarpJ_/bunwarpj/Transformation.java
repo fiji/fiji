@@ -4880,7 +4880,7 @@ public class Transformation
 
 			if (outputLevel > -1 && this.dialog != null && this.dialog.isMacroCall() == false)
 			{
-				final SaveDialog sd = new SaveDialog("Save Transformation", new_filename, ".txt");
+				final SaveDialog sd = new SaveDialog("Save"+sDirection+"_transformation", new_filename, ".txt");
 
 				path = sd.getDirectory();
 				filename = sd.getFileName();
