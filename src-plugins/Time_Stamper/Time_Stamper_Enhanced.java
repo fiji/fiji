@@ -496,6 +496,12 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 
 			if (theROI.height != imp.getHeight()
 					|| theROI.width != imp.getWidth()) // if the ROI is the same
+				
+				// remember the ROIs top left coordinates to be the X and Y values
+				// of the font rectangle
+				x = theROI.x;
+				y = theROI.y;
+
 				// size as the image
 				// leave size as it was
 				// set by the gui
@@ -541,7 +547,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		Rectangle roi = ip.getRoi();
 		// set the xy time stamp drawing position for ROI smaller than the
 		// image, to bottom left of ROI
-		if (roi.width == ip.getWidth() && roi.height == ip.getHeight()) {
+		if (roi.width == imp.getWidth() && roi.height == imp.getHeight()) {
 			roi.x = x;
 			roi.y = y;
 			roi.height = font.getSize();
