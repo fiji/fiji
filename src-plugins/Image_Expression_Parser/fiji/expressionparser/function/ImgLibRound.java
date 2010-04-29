@@ -15,7 +15,7 @@ public class ImgLibRound <T extends RealType<T>> extends SingleOperandPixelBased
 	}
 	
 	@Override
-	public final float evaluate(T alpha) {
+	public final <R extends RealType<R>> float evaluate(R alpha) {
 		return (float) Math.round(alpha.getRealDouble());
 	}
 

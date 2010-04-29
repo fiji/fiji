@@ -75,7 +75,7 @@ public class ImgLibLogical {
 		}
 		
 		@Override
-		public float evaluate(T t) throws  ParseException {
+		public <R extends RealType<R>> float evaluate(R t) throws  ParseException {
 			return t.getRealFloat() == 0f ? 1.0f : 0.0f;
 		}
 

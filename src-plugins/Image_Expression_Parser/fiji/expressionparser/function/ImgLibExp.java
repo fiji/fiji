@@ -15,7 +15,7 @@ public class ImgLibExp <T extends RealType<T>> extends SingleOperandPixelBasedAb
 	}
 	
 	@Override
-	public final float evaluate(T alpha) {
+	public final <R extends RealType<R>> float evaluate(R alpha) {
 		return (float) Math.exp(alpha.getRealDouble());
 	}
 

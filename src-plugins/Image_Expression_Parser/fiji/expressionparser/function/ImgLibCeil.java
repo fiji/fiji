@@ -16,7 +16,7 @@ public class ImgLibCeil <T extends RealType<T>> extends SingleOperandPixelBasedA
 	}
 	
 	@Override
-	public final float evaluate(T alpha) {
+	public final <R extends RealType<R>> float evaluate(R alpha) {
 		return (float) Math.ceil(alpha.getRealDouble());
 	}
 

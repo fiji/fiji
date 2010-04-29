@@ -16,7 +16,7 @@ public final class ImgLibArcSine <T extends RealType<T>> extends
 	}
 	
 	@Override
-	public float evaluate(T alpha) {
+	public final <R extends RealType<R>> float evaluate(R alpha) {
 		return (float) Math.asin(alpha.getRealDouble());
 	}
 

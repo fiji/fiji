@@ -27,7 +27,7 @@ public abstract class SingleOperandPixelBasedAbstractFunction <T extends RealTyp
 		
 		} else if (param instanceof Number) {
 
-			T t = (T) new FloatType(((Number)param).floatValue());
+			RealType t = new FloatType(((Number)param).floatValue());
 			result = evaluate(t);
 			
 		} else {
@@ -73,6 +73,6 @@ public abstract class SingleOperandPixelBasedAbstractFunction <T extends RealTyp
 	 * @return  The resulting number as a float
 	 * @throws ParseException 
 	 */
-	public abstract float evaluate(T alpha) throws ParseException;
+	public abstract <R extends RealType<R>> float  evaluate(R alpha) throws ParseException;
 
 }

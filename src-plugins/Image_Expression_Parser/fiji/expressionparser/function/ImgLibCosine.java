@@ -16,7 +16,7 @@ public final class ImgLibCosine <T extends RealType<T>> extends SingleOperandPix
 	}
 	
 	@Override
-	public final float evaluate(T alpha) {
+	public final <R extends RealType<R>> float evaluate(R alpha) {
 		return (float) Math.cos(alpha.getRealDouble());
 	}
 

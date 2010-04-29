@@ -16,7 +16,7 @@ public final class ImgLibArcTangent <T extends RealType<T>> extends
 	}
 	
 	@Override
-	public final float evaluate(T t) {
+	public final <R extends RealType<R>> float evaluate(R t) {
 		return (float) Math.atan(t.getRealDouble());
 	}
 
