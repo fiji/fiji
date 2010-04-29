@@ -26,7 +26,7 @@ Flag DONE stops this sequence of calls.
 
  *Here is a list (in no particular order) of requested and "would be nice" features that could be added:
 -prevent longest label running off side of image  - ok
--choose colour 
+-choose colour  -ok
 -font selection -ok
 -top left, bottom right etc.  drop down menu 
 -Hyperstacks z, t, c
@@ -38,7 +38,7 @@ Flag DONE stops this sequence of calls.
 -Use Java Date for robust formatting of dates/times counted in milliseconds. - added hybrid date form at for 
 	versatile formatting of the digital time. 
 -switch unit according to magnitude of number eg sec or min or nm or microns etc. 
-- background colour for label. 
+- background colour for label. -0k but need checkbox to enable/disable  
 
  *Dan White MPI-CBG , began hacking on 15.04.09. Work continued from 02-2010 by Tomka and Dan
  */
@@ -136,6 +136,8 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	ArrayList<LabelFormat> formats = new ArrayList<LabelFormat>();
 	// the currently selected format
 	LabelFormat selectedFormat;
+	// background of timestamp/label enabled
+	private boolean backgroundEnabled = false;
 
 	// a reference to the units drop-down list
 	private Choice unitsChoice;
@@ -453,8 +455,10 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		// set the font size according to ROI size, or if no ROI the GUI text
 		// input
 		Rectangle backgroundRectangle = getBackgroundRectangle(ip);
-		ip.setColor(Toolbar.getBackgroundColor());
-		ip.fill(new Roi(backgroundRectangle));
+		if (backgroundEnabled){
+			ip.setColor(Toolbar.getBackgroundColor());
+			ip.fill(new Roi(backgroundRectangle));
+		}
 		ip.setColor(Toolbar.getForegroundColor());
 		ip.moveTo(backgroundRectangle.x, (backgroundRectangle.y + backgroundRectangle.height) );
 
@@ -935,8 +939,18 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 				}
 			});
 			
+			final Checkbox drawBackground = new Checkbox("Background");
+			
+			drawBackground.addItemListener(new ItemListener() {
+				public void itemStateChanged(ItemEvent e) {
+					backgroundEnabled = drawBackground.getState();
+					updatePreview(e);
+				}
+			});
+			
 			add(fontStyleButton);
 			add(fontColourButton);
+			add(drawBackground);
 		}
 	}
 	
