@@ -4,7 +4,7 @@ import mpicbg.imglib.type.numeric.RealType;
 
 import org.nfunk.jep.ParseException;
 
-public class ImgLibModulus <T extends RealType<T>> extends
+public final class ImgLibModulus <T extends RealType<T>> extends
 		TwoOperandsPixelBasedAbstractFunction<T> {
 
 	public static final String DOCUMENTATION_STRING = 
@@ -17,7 +17,7 @@ public class ImgLibModulus <T extends RealType<T>> extends
 	}
 	
 	@Override
-	public final float evaluate(T t1, T t2) throws ParseException {
+	public final <R extends RealType<R>> float evaluate(final R t1, final R t2) throws ParseException {
 		return t1.getRealFloat() % t2.getRealFloat();
 	}
 

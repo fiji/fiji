@@ -15,7 +15,7 @@ public final class ImgLibArcCosine <T extends RealType<T>> extends SingleOperand
 	}
 	
 	@Override
-	public final <R extends RealType<R>> float evaluate(R t) {
+	public final <R extends RealType<R>> float evaluate(final R t) {
 		return (float) Math.acos(t.getRealDouble());
 	}
 

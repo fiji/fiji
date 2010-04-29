@@ -10,7 +10,7 @@ import org.nfunk.jep.ParseException;
 
 import fiji.expressionparser.ImgLibUtils;
 
-public class ImgLibGaussConv <T extends RealType<T>> extends TwoOperandsAbstractFunction<T> {
+public final class ImgLibGaussConv <T extends RealType<T>> extends TwoOperandsAbstractFunction<T> {
 
 	public ImgLibGaussConv() {
 		numberOfParameters = 2;
@@ -39,7 +39,7 @@ public class ImgLibGaussConv <T extends RealType<T>> extends TwoOperandsAbstract
 	}
 
 	@Override
-	public Image<FloatType> evaluate(Image<T> img, T alpha) throws ParseException {
+	public final <R extends RealType<R>> Image<FloatType> evaluate(final Image<R> img, final R alpha) throws ParseException {
 		Image<FloatType> fimg = ImgLibUtils.copyToFloatTypeImage(img);
 		OutOfBoundsStrategyMirrorFactory<FloatType> strategy = new OutOfBoundsStrategyMirrorFactory<FloatType>();
 		GaussianConvolution<FloatType> gaussian_fiter = new GaussianConvolution<FloatType>(fimg, strategy, alpha.getRealDouble());
@@ -50,15 +50,22 @@ public class ImgLibGaussConv <T extends RealType<T>> extends TwoOperandsAbstract
 	}
 
 	@Override
-	public float evaluate(T t1, T t2) throws ParseException{
+	public final <R extends RealType<R>> float evaluate(final R t1, final R t2) throws ParseException{
 			throw new ParseException("In function "+getFunctionString()
 					+": Arguments must be one image and one number, got 2 numbers.");
 	}
 
 	@Override
-	public Image<FloatType> evaluate(Image<T> img1, Image<T> img2) throws ParseException {
+	public final <R extends RealType<R>> Image<FloatType> evaluate(final Image<R> img1, final Image<R> img2) throws ParseException {
 		throw new ParseException("In function "+getFunctionString()
 				+": Arguments must be one image and one number, got 2 images.");
 	}
+
+	@Override
+	public final <R extends RealType<R>> Image<FloatType> evaluate(final R alpha, Image<R> img) throws ParseException {
+		throw new ParseException("In function "+getFunctionString()
+			+": First argument must be one image and second one a number, in this order.");
+	}
+
 	
 }

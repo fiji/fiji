@@ -16,7 +16,7 @@ public final class ImgLibTangent <T extends RealType<T>> extends SingleOperandPi
 	}
 	
 	@Override
-	public final <R extends RealType<R>> float evaluate(R alpha) {
+	public final <R extends RealType<R>> float evaluate(final R alpha) {
 		return (float) Math.tan(alpha.getRealDouble());
 	}
 

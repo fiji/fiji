@@ -4,7 +4,7 @@ import org.nfunk.jep.ParseException;
 
 import mpicbg.imglib.type.numeric.RealType;
 
-public class ImgLibLogical {
+public final class ImgLibLogical {
 
 	public static final String DOCUMENTATION_STRING_AND = "<h3>Element-wise 'AND' logical operation</h3> " +
 		"This function performs the pixel-wise logical AND operation, extended to real numbers. " +
@@ -22,14 +22,14 @@ public class ImgLibLogical {
 	"That is: the value returned by this operation will be the float value 1 if " +
 	"its operand is zero, and will be 0 otherwise.";
 
-	public static class And <T extends RealType<T>> extends TwoOperandsPixelBasedAbstractFunction<T> {
+	public static final class And <T extends RealType<T>> extends TwoOperandsPixelBasedAbstractFunction<T> {
 
 		public And() {
 			numberOfParameters = 2;
 		}
 		
 		@Override
-		public float evaluate(T t1, T t2) throws ParseException {
+		public final <R extends RealType<R>> float evaluate(final R t1, final R t2) throws ParseException {
 			return t1.getRealFloat() != 0f && t2.getRealFloat() != 0f ? 1.0f : 0.0f;
 		}
 
@@ -45,14 +45,14 @@ public class ImgLibLogical {
 		
 	}
 
-	public static class Or <T extends RealType<T>> extends TwoOperandsPixelBasedAbstractFunction<T> {
+	public static final class Or <T extends RealType<T>> extends TwoOperandsPixelBasedAbstractFunction<T> {
 
 		public Or() {
 			numberOfParameters = 2;
 		}
 		
 		@Override
-		public float evaluate(T t1, T t2) throws ParseException {
+		public final <R extends RealType<R>> float evaluate(final R t1, final R t2) throws ParseException {
 			return t1.getRealFloat() != 0f || t2.getRealFloat() != 0f ? 1.0f : 0.0f;
 		}
 
@@ -68,14 +68,14 @@ public class ImgLibLogical {
 		
 	}
 
-	public static class Not <T extends RealType<T>> extends SingleOperandPixelBasedAbstractFunction<T> {
+	public static final class Not <T extends RealType<T>> extends SingleOperandPixelBasedAbstractFunction<T> {
 
 		public Not() {
 			numberOfParameters = 1;
 		}
 		
 		@Override
-		public <R extends RealType<R>> float evaluate(R t) throws  ParseException {
+		public final <R extends RealType<R>> float evaluate(final R t) throws  ParseException {
 			return t.getRealFloat() == 0f ? 1.0f : 0.0f;
 		}
 

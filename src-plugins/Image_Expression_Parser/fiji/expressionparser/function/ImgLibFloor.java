@@ -2,7 +2,7 @@ package fiji.expressionparser.function;
 
 import mpicbg.imglib.type.numeric.RealType;
 
-public class ImgLibFloor <T extends RealType<T>> extends SingleOperandPixelBasedAbstractFunction<T> {
+public final class ImgLibFloor <T extends RealType<T>> extends SingleOperandPixelBasedAbstractFunction<T> {
 
 	public static final String DOCUMENTATION_STRING = 
 		"<h3>Element-wise floor</h3> " +
@@ -16,7 +16,7 @@ public class ImgLibFloor <T extends RealType<T>> extends SingleOperandPixelBased
 	}
 	
 	@Override
-	public final <R extends RealType<R>> float evaluate(R alpha) {
+	public final <R extends RealType<R>> float evaluate(final R alpha) {
 		return (float) Math.floor(alpha.getRealDouble());
 	}
 

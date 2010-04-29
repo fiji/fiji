@@ -13,7 +13,7 @@ public final class ImgLibMultiply<T extends RealType<T>> extends TwoOperandsPixe
 	}
 	
 	@Override
-	public final float evaluate(final T t1, final T t2) {
+	public final <R extends RealType<R>> float evaluate(final R t1, final R t2) {
 		return t1.getRealFloat() * t2.getRealFloat();
 	}
 

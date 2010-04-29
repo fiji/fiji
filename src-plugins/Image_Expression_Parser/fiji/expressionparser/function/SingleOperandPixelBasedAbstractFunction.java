@@ -15,7 +15,7 @@ public abstract class SingleOperandPixelBasedAbstractFunction <T extends RealTyp
 		implements ImgLibFunction<T> {
 
 	@SuppressWarnings("unchecked")
-	public void run(final Stack inStack) throws ParseException {
+	public final void run(final Stack inStack) throws ParseException {
 		checkStack(inStack); // check the stack
 
 		Object param = inStack.pop();
@@ -23,11 +23,11 @@ public abstract class SingleOperandPixelBasedAbstractFunction <T extends RealTyp
 
 		if (param instanceof Image<?>) {
 			
-				result = evaluate((Image<T>)param);
+				result = evaluate((Image)param);
 		
 		} else if (param instanceof Number) {
 
-			RealType t = new FloatType(((Number)param).floatValue());
+			FloatType t = new FloatType(((Number)param).floatValue());
 			result = evaluate(t);
 			
 		} else {
@@ -45,7 +45,7 @@ public abstract class SingleOperandPixelBasedAbstractFunction <T extends RealTyp
 	 * @return  The resulting image 
 	 * @throws ParseException 
 	 */	
-	public final Image<FloatType> evaluate(Image<T> img) throws ParseException {
+	public final Image<FloatType> evaluate(final Image<T> img) throws ParseException {
 		// Create target image
 		Image<FloatType> result = new ImageFactory<FloatType>(new FloatType(), img.getContainerFactory())
 			.createImage(img.getDimensions(), String.format("%s(%s)", getFunctionString(), img.getName()) );
@@ -73,6 +73,6 @@ public abstract class SingleOperandPixelBasedAbstractFunction <T extends RealTyp
 	 * @return  The resulting number as a float
 	 * @throws ParseException 
 	 */
-	public abstract <R extends RealType<R>> float  evaluate(R alpha) throws ParseException;
+	public abstract <R extends RealType<R>> float  evaluate(final R alpha) throws ParseException;
 
 }

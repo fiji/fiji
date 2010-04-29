@@ -17,7 +17,7 @@ public abstract class TwoOperandsPixelBasedAbstractFunction <T extends RealType<
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public void run(final Stack inStack) throws ParseException {
+	public final void run(final Stack inStack) throws ParseException {
 		checkStack(inStack); // check the stack
 
 		Object param2 = inStack.pop();
@@ -27,10 +27,10 @@ public abstract class TwoOperandsPixelBasedAbstractFunction <T extends RealType<
 		if (param1 instanceof Image<?>) {
 			
 			if (param2 instanceof Image<?>) {
-				result = evaluate((Image<T>)param1, (Image<T>)param2);
+				result = evaluate((Image)param1, (Image)param2);
 			} else if (param2 instanceof Number) {
-				T t2 = (T) new FloatType(((Number) param2).floatValue());
-				result = evaluate((Image<T>)param1, t2);
+				FloatType t2 = new FloatType(((Number) param2).floatValue());
+				result = evaluate((Image)param1, t2);
 			} else {
 				throw new ParseException("In function '" + getFunctionString()
 						+"': Bad type of operand 2: "+param2.getClass().getSimpleName() );
@@ -38,12 +38,12 @@ public abstract class TwoOperandsPixelBasedAbstractFunction <T extends RealType<
 		
 		} else if (param1 instanceof Number) {
 
-			T t1 = (T) new FloatType(((Number)param1).floatValue());
+			FloatType t1 = new FloatType(((Number)param1).floatValue());
 			
 			if (param2 instanceof Image<?>) {
-				result = evaluate(t1, (Image<T>)param2);
+				result = evaluate(t1, (Image)param2);
 			} else if (param2 instanceof Number) {
-				T t2 = (T) new FloatType(((Number)param2).floatValue());
+				FloatType t2 = new FloatType(((Number)param2).floatValue());
 				result = new Float(evaluate(t1, t2));
 			} else {
 				throw new ParseException("In function '" + getFunctionString()
@@ -64,7 +64,7 @@ public abstract class TwoOperandsPixelBasedAbstractFunction <T extends RealType<
 	 * @param img2  The second image 
 	 * @return  The resulting image
 	 */
-	public final Image<FloatType> evaluate(final Image<T> img1, final Image<T> img2) throws ParseException {
+	public final <R extends RealType<R>> Image<FloatType> evaluate(final Image<R> img1, final Image<R> img2) throws ParseException {
 		
 		// Create target image
 		Image<FloatType> result = new ImageFactory<FloatType>(new FloatType(), img1.getContainerFactory())
@@ -75,8 +75,8 @@ public abstract class TwoOperandsPixelBasedAbstractFunction <T extends RealType<
 		
 		if (compatible_containers) {
 			
-			Cursor<T> c1 = img1.createCursor();
-			Cursor<T> c2 = img2.createCursor();
+			Cursor<R> c1 = img1.createCursor();
+			Cursor<R> c2 = img2.createCursor();
 			Cursor<FloatType> rc = result.createCursor();
 			while (c1.hasNext()) {
 				c1.fwd();
@@ -91,8 +91,8 @@ public abstract class TwoOperandsPixelBasedAbstractFunction <T extends RealType<
 		} else {
 			
 			LocalizableCursor<FloatType> rc = result.createLocalizableCursor();
-			LocalizableByDimCursor<T> c1 = img1.createLocalizableByDimCursor();
-			LocalizableByDimCursor<T> c2 = img2.createLocalizableByDimCursor();
+			LocalizableByDimCursor<R> c1 = img1.createLocalizableByDimCursor();
+			LocalizableByDimCursor<R> c2 = img2.createLocalizableByDimCursor();
 			while (rc.hasNext()) {
 				rc.fwd();
 				c1.setPosition(rc);
@@ -115,12 +115,12 @@ public abstract class TwoOperandsPixelBasedAbstractFunction <T extends RealType<
 	 * @param alpha  The number to do singleton expansion on 
 	 * @return  The resulting image 
 	 */
-	public final Image<FloatType> evaluate(final Image<T> img, final T alpha) throws ParseException {
+	public final <R extends RealType<R>> Image<FloatType> evaluate(final Image<R> img, final R alpha) throws ParseException {
 		// Create target image
 		Image<FloatType> result = new ImageFactory<FloatType>(new FloatType(), img.getContainerFactory())
 			.createImage(img.getDimensions(), String.format("%.1f %s %s", alpha.getRealFloat(), getFunctionString(), img.getName()) );
 		
-		Cursor<T> ic = img.createCursor();
+		Cursor<R> ic = img.createCursor();
 		Cursor<FloatType> rc = result.createCursor();
 		
 		while (rc.hasNext()) {
@@ -141,12 +141,12 @@ public abstract class TwoOperandsPixelBasedAbstractFunction <T extends RealType<
 	 * @param alpha  The number to do singleton expansion on 
 	 * @return  The resulting image 
 	 */
-	public final Image<FloatType> evaluate(final T alpha, final Image<T> img) throws ParseException {
+	public final <R extends RealType<R>> Image<FloatType> evaluate(final R alpha, final Image<R> img) throws ParseException {
 		// Create target image
 		Image<FloatType> result = new ImageFactory<FloatType>(new FloatType(), img.getContainerFactory())
 			.createImage(img.getDimensions(), String.format("%.1f %s %s", alpha.getRealFloat(), getFunctionString(), img.getName()) );
 		
-		Cursor<T> ic = img.createCursor();
+		Cursor<R> ic = img.createCursor();
 		Cursor<FloatType> rc = result.createCursor();
 		
 		while (rc.hasNext()) {
@@ -167,6 +167,6 @@ public abstract class TwoOperandsPixelBasedAbstractFunction <T extends RealType<
 	 * @param alpha2  The second number
 	 * @return  The resulting number
 	 */
-	 public abstract float evaluate(final T t1, final T t2) throws ParseException;
+	 public abstract <R extends RealType<R>> float evaluate(final R t1, final R t2) throws ParseException;
 
 }

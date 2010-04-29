@@ -2,7 +2,7 @@ package fiji.expressionparser.function;
 
 import mpicbg.imglib.type.numeric.RealType;
 
-public class ImgLibRound <T extends RealType<T>> extends SingleOperandPixelBasedAbstractFunction<T> {
+public final class ImgLibRound <T extends RealType<T>> extends SingleOperandPixelBasedAbstractFunction<T> {
 
 	public static final String DOCUMENTATION_STRING = 
 		"<h3>Element-wise round</h3> " +
@@ -15,7 +15,7 @@ public class ImgLibRound <T extends RealType<T>> extends SingleOperandPixelBased
 	}
 	
 	@Override
-	public final <R extends RealType<R>> float evaluate(R alpha) {
+	public final <R extends RealType<R>> float evaluate(final R alpha) {
 		return (float) Math.round(alpha.getRealDouble());
 	}
 

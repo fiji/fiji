@@ -16,7 +16,7 @@ public final class ImgLibSine <T extends RealType<T>> extends SingleOperandPixel
 	}
 	
 	@Override
-	public final <R extends RealType<R>> float evaluate(R alpha) {
+	public final <R extends RealType<R>> float evaluate(final R alpha) {
 		return (float) Math.sin(alpha.getRealDouble());
 	}
 

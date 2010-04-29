@@ -14,7 +14,7 @@ public abstract class TwoOperandsAbstractFunction <T extends RealType<T>> extend
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public void run(final Stack inStack) throws ParseException {
+	public final void run(final Stack inStack) throws ParseException {
 		checkStack(inStack); // check the stack
 
 		Object param2 = inStack.pop();
@@ -24,10 +24,10 @@ public abstract class TwoOperandsAbstractFunction <T extends RealType<T>> extend
 		if (param1 instanceof Image<?>) {
 			
 			if (param2 instanceof Image<?>) {
-				result = evaluate((Image<T>)param1, (Image<T>)param2);
+				result = evaluate((Image)param1, (Image)param2);
 			} else if (param2 instanceof Number) {
-				T t2 = (T) new FloatType(((Number) param2).floatValue());
-				result = evaluate((Image<T>)param1, t2);
+				FloatType t2 = new FloatType(((Number) param2).floatValue());
+				result = evaluate((Image)param1, t2);
 			} else {
 				throw new ParseException("In function '" + getFunctionString()
 						+"': Bad type of operand 2: "+param2.getClass().getSimpleName() );
@@ -35,12 +35,12 @@ public abstract class TwoOperandsAbstractFunction <T extends RealType<T>> extend
 		
 		} else if (param1 instanceof Number) {
 
-			T t1 = (T) new FloatType(((Number)param1).floatValue());
+			FloatType t1 = new FloatType(((Number)param1).floatValue());
 			
 			if (param2 instanceof Image<?>) {
-				result = evaluate((Image<T>)param2, t1);
+				result = evaluate((Image)param2, t1);
 			} else if (param2 instanceof Number) {
-				T t2 = (T) new FloatType(((Number)param2).floatValue());
+				FloatType t2 = new FloatType(((Number)param2).floatValue());
 				result = new Float(evaluate(t1, t2));
 			} else {
 				throw new ParseException("In function '" + getFunctionString()
@@ -62,7 +62,7 @@ public abstract class TwoOperandsAbstractFunction <T extends RealType<T>> extend
 	 * @param alpha2  The second number
 	 * @return  The resulting number
 	 */
-	 public abstract float evaluate(final T t1, final T t2) throws ParseException;
+	 public abstract <R extends RealType<R>> float evaluate(final R t1, final R t2) throws ParseException;
 
 	 /**
 	  * Evaluate this function on two ImgLib images. A new {@link Image} of {@link FloatType}  
@@ -71,11 +71,11 @@ public abstract class TwoOperandsAbstractFunction <T extends RealType<T>> extend
 	  * @param img2 the second image 
 	  * @return  The new resulting image
 	  */
-	 public abstract Image<FloatType> evaluate(Image<T> img1, Image<T> img2) throws ParseException;
+	 public abstract <R extends RealType<R>> Image<FloatType> evaluate(final Image<R> img1, final Image<R> img2) throws ParseException;
 
 	 /**
-	  * Evaluate this function on an ImgLib images and a numeric {@link RealType} type.
-	  * A new {@link Image} of {@link FloatType}  
+	  * Evaluate this function on an ImgLib images and a numeric {@link RealType} type,
+	  * right singleton expansion. A new {@link Image} of {@link FloatType}  
 	  * is returned, so as to avoid underflow and overflow problems on 
 	  * bounded types (e.g. ByeType). This method should implement a singleton expansion
 	  * of the method {@link #evaluate(Image, Image)}, as meant by the implement
@@ -85,6 +85,20 @@ public abstract class TwoOperandsAbstractFunction <T extends RealType<T>> extend
 	  * @param alpha the numeric type 
 	  * @return  The new resulting image
 	  */
-	 public abstract Image<FloatType> evaluate(Image<T> img, T alpha) throws ParseException;
+	 public abstract <R extends RealType<R>> Image<FloatType> evaluate(final Image<R> img, final R alpha) throws ParseException;
+
+	 /**
+	  * Evaluate this function on an ImgLib images and a numeric {@link RealType} type,
+	  * left singleton expansion. A new {@link Image} of {@link FloatType}  
+	  * is returned, so as to avoid underflow and overflow problems on 
+	  * bounded types (e.g. ByeType). This method should implement a singleton expansion
+	  * of the method {@link #evaluate(Image, Image)}, as meant by the implement
+	  * function.
+	  * 
+	  * @param img the image 
+	  * @param alpha the numeric type 
+	  * @return  The new resulting image
+	  */
+	 public abstract <R extends RealType<R>> Image<FloatType> evaluate(final R alpha, final Image<R> img) throws ParseException;
 
 }

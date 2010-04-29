@@ -16,7 +16,7 @@ public final class ImgLibSquareRoot <T extends RealType<T>> extends SingleOperan
 	}
 	
 	@Override
-	public final <R extends RealType<R>> float evaluate(R alpha) {
+	public final <R extends RealType<R>> float evaluate(final R alpha) {
 		return (float) Math.sqrt(alpha.getRealDouble());
 	}
 

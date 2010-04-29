@@ -2,7 +2,7 @@ package fiji.expressionparser.function;
 
 import mpicbg.imglib.type.numeric.RealType;
 
-public class ImgLibExp <T extends RealType<T>> extends SingleOperandPixelBasedAbstractFunction<T> {
+public final class ImgLibExp <T extends RealType<T>> extends SingleOperandPixelBasedAbstractFunction<T> {
 
 	public static final String DOCUMENTATION_STRING = 
 		"<h3>Element-wise exponential</h3> " +
@@ -15,7 +15,7 @@ public class ImgLibExp <T extends RealType<T>> extends SingleOperandPixelBasedAb
 	}
 	
 	@Override
-	public final <R extends RealType<R>> float evaluate(R alpha) {
+	public final <R extends RealType<R>> float evaluate(final R alpha) {
 		return (float) Math.exp(alpha.getRealDouble());
 	}
 
