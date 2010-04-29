@@ -31,7 +31,7 @@ Flag DONE stops this sequence of calls.
 -top left, bottom right etc.  drop down menu 
 -Hyperstacks z, t, c
 -read correct time / z units, start and intervals from image metadata. Get it from Image Properties?
--every nth slice labelled
+-every nth slice labelled -ok
 -label only slices where time became greater than multiples of some time eg every 5 min. 
 -preview with live update when change GUI -ok, changes in GUI are read into the preview. 
 -preview with stack slider in the GUI. - slider now in GUI but functionality is half broken
@@ -129,6 +129,8 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	// a visibility range for the stamps
 	// these default to 0 as no values are given
 	int first, last;
+	// the 'n' for 'label every n-th frame'. Treated as 1 for values below one
+	int frameMask = 1;
 	// the object that runs the plugin.
 	PlugInFilterRunner pluginFilterRunner; 
 	// the slice currently worked on
@@ -249,7 +251,8 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		gd.addNumericField("Decimal Places:", decimalPlaces, 0);
 		gd.addNumericField("First Frame:", first, 0);
 		gd.addNumericField("Last Frame:", last, 0);
-
+		gd.addNumericField("Label every n-th frame", frameMask, 0);
+		
 		fontProperties = new FontPropertiesPanel();
 		gd.addPanel(fontProperties, GridBagConstraints.CENTER, new Insets(5, 0,
 				0, 0));
@@ -340,6 +343,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		decimalPlaces = (int) gd.getNextNumber();
 		first = (int) gd.getNextNumber();
 		last = (int) gd.getNextNumber();
+		frameMask = (int) gd.getNextNumber();
 
 		updateUI();
 
@@ -433,7 +437,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		// first...
 		// and the last time stamp in last-1. With preview off it works as
 		// expected.
-		if ((!preview) && (canceled || frame < first || frame > last))
+		if ((!preview) && (canceled || frame < first || frame > last || (frame % frameMask != 0)))
 			return;
 
 		// if (fontProperties != null)
