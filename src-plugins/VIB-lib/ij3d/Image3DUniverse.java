@@ -178,7 +178,6 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	 */
 	@Override
 	public void close() {
-		super.close();
 		timeline.pause();
 		removeAllContents();
 		contents = null;
@@ -188,6 +187,7 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 		for(WindowListener l : ls)
 			plDialog.removeWindowListener(l);
 		plDialog.dispose();
+		super.close();
 	}
 
 	/**
