@@ -44,6 +44,23 @@ import java.awt.event.ActionListener;
 
 public class SaveSession {
 
+	public static void saveView(Image3DUniverse univ, String path)
+							throws IOException {
+		SaveSession sase = new SaveSession();
+		PrintWriter out = new PrintWriter(new FileWriter(path));
+		sase.saveView(out, univ);
+		out.close();
+	}
+
+	public static void loadView(Image3DUniverse univ, String path)
+							throws IOException {
+		SaveSession sase = new SaveSession();
+		BufferedReader in = new BufferedReader(new FileReader(path));
+		HashMap<String, String> view = sase.readView(in, univ);
+		in.close();
+		sase.apply(view, univ);
+	}
+
 	public static void saveScene(Image3DUniverse univ, String path)
 							throws IOException {
 		SaveSession sase = new SaveSession();

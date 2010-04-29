@@ -237,6 +237,34 @@ public class Executer {
 		MeshExporter.saveAsWaveFront(univ.getContents());
 	}
 
+	public void loadView() {
+		OpenDialog sd = new OpenDialog(
+			"Open view...", "", ".view");
+		final String dir = sd.getDirectory();
+		final String name = sd.getFileName();
+		if(dir == null || name == null)
+			return;
+		try {
+			univ.loadView(dir + name);
+		} catch(Exception e) {
+			IJ.error(e.getMessage());
+		}
+	}
+
+	public void saveView() {
+		SaveDialog sd = new SaveDialog(
+			"Save view...", "", ".view");
+		String dir = sd.getDirectory();
+		String name = sd.getFileName();
+		if(dir == null || name == null)
+			return;
+		try {
+			univ.saveView(dir + name);
+		} catch(Exception e) {
+			IJ.error(e.getMessage());
+		}
+	}
+
 	public void loadSession() {
 		OpenDialog sd = new OpenDialog(
 			"Open session...", "session", ".scene");

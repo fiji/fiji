@@ -1074,6 +1074,20 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	 * Methods changing the view of this universe
 	 * *************************************************************/
 	/**
+	 * Save the current view transformations to a file
+	 */
+	public void saveView(String file) throws IOException {
+		SaveSession.saveView(this, file);
+	}
+
+	/**
+	 * Load view transformations from file
+	 */
+	public void loadView(final String file) throws IOException {
+		SaveSession.loadView(this, file);
+	}
+
+	/**
 	 * Reset the transformations of the view side of the scene graph
 	 * as if the Contents of this universe were just displayed.
 	 */
