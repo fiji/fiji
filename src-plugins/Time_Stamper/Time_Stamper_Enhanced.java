@@ -275,6 +275,9 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 				}
 			}
 		});
+		
+		//add a help button that opens a link to the documentation wiki page. 
+		gd.addHelp("http://pacific.mpi-cbg.de/wiki/index.php/Stack_labeler");
 
 		updateUI();
 		updateImg();
