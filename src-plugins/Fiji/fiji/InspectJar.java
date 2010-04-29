@@ -70,6 +70,19 @@ public class InspectJar implements Iterable<JarEntry> {
 			jarFiles.add(new JarFile(file));
 	}
 
+	public void addClassPath() {
+		for (String path : System.getProperty("java.class.path")
+				.split(File.pathSeparator)) try {
+			addJar(path);
+		} catch (IOException e) { /* ignore */ }
+		for (String path : System.getProperty("sun.boot.class.path")
+				.split(File.pathSeparator))
+			if (!path.endsWith("/sunrsasign.jar") &&
+					path.endsWith(".jar")) try {
+				addJar(path);
+			} catch (IOException e) { /* ignore */ }
+	}
+
 	protected class EntryIterator implements Iterator<JarEntry> {
 		Iterator<JarFile> jarIterator;
 		Enumeration<JarEntry> enumeration;
