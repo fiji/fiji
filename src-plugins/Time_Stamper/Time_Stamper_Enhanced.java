@@ -155,6 +155,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		if (imp != null) {
 			first = 1;
 			last = imp.getStackSize();
+			setFontParams(imp);
 		}
 
 		// add all supported formats
@@ -162,8 +163,6 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		formats.add(new DigitalLabelFormat());
 		formats.add(new CustomLabelFormat());
 		selectedFormat = formats.get(0);
-
-		setFontParams(imp);
 
 		// return supported flags
 		return flags;
