@@ -543,9 +543,10 @@ public class Fake {
 		boolean isSubmodule(String directory) {
 			if (directory == null)
 				return false;
-			File dir = new File(directory);
+			File dir = new File(makePath(cwd, directory));
 			return dir.isDirectory() ||
-				(!dir.exists() && directory.endsWith("/"));
+				(!dir.exists() && directory.endsWith("/") &&
+				 allRules.get(stripSuffix(directory, "/")) == null);
 		}
 
 		int addMatchingTargets(String glob, List sortedPrereqs) {
