@@ -43,8 +43,9 @@ public abstract class SingleOperandPixelBasedAbstractFunction <T extends RealTyp
 	 * applied on the corresponding pixel of the source image.
 	 * @param img  The source image 
 	 * @return  The resulting image 
+	 * @throws ParseException 
 	 */	
-	public final Image<FloatType> evaluate(Image<T> img) {
+	public final Image<FloatType> evaluate(Image<T> img) throws ParseException {
 		// Create target image
 		Image<FloatType> result = new ImageFactory<FloatType>(new FloatType(), img.getContainerFactory())
 			.createImage(img.getDimensions(), String.format("%s(%s)", getFunctionString(), img.getName()) );
@@ -70,7 +71,8 @@ public abstract class SingleOperandPixelBasedAbstractFunction <T extends RealTyp
 	 * on bounded types (e.g. ByeType).
 	 * @param alpha  The first number  as a {@link RealType}
 	 * @return  The resulting number as a float
+	 * @throws ParseException 
 	 */
-	public abstract float evaluate(T alpha);
+	public abstract float evaluate(T alpha) throws ParseException;
 
 }
