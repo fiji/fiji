@@ -133,8 +133,6 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	int frameMask = 1;
 	// the object that runs the plugin.
 	PlugInFilterRunner pluginFilterRunner; 
-	// the slice currently worked on
-	int currentSlice;
 	// a combination (bitwise OR) of the flags specified in
 	// interfaces PlugInFilter and ExtendedPlugInFilter.
 	// determines what kind of image the plug-in can run on etc.
@@ -202,16 +200,12 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	 */
 	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr) {
 		this.pluginFilterRunner = pfr;
-
+		
 		// This makes the GUI object
 		gd = new NonBlockingGenericDialog(
 				"Time Stamper Enhanced");
 
 		// these are the fields of the GUI
-		currentSlice = last;
-		gd.addSlider("Slice (disabled, dont use me)", 1, imp.getStackSize(),
-				currentSlice);
-		((Scrollbar) (gd.getSliders().elementAt(0))).setEnabled(false);
 
 		// this is a choice between digital or decimal
 		// but what about mm:ss???
@@ -259,7 +253,6 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 
 		gd.addPreviewCheckbox(pfr); // adds preview checkbox - needs
 		// ExtendedPluginFilter and DialogListener!
-		gd.getPreviewCheckbox();
 		gd.addMessage("Time Stamper plugin for Fiji (is just ImageJ - batteries included)\nmaintained by Dan White MPI-CBG dan(at)chalkie.org.uk");
 
 		gd.addDialogListener(this); // needed for listening to dialog
@@ -280,7 +273,6 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		gd.addHelp("http://pacific.mpi-cbg.de/wiki/index.php/Stack_labeler");
 
 		updateUI();
-		updateImg();
 
 		gd.showDialog(); // shows the dialog GUI!
 
@@ -313,12 +305,6 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e) {
 		// This reads user input parameters from the GUI and listens to changes
 		// in GUI fields
-		int slice = (int) gd.getNextNumber(); // we dont use this as we read the
-		// value of the slider in the
-		// getCurrentSliceFromSlider
-		// method, but we need to read
-		// it so the next hetNextNumber
-		// is right.
 
 		// has the label format been changed?
 		int currentFormat = gd.getNextChoiceIndex();
@@ -400,7 +386,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		// when making the time stamps for the whole stack...
 
 		if (preview) {
-			frame = currentSlice;
+			frame = last;
 		} else {
 			frame = 1; // so the value of frame is reset to 0 each time the
 			// plugin is run or the preview checkbox is checked.
@@ -613,17 +599,6 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	// font is.
 	int maxWidth(ImageProcessor ip, String lastTimeStampString) {
 		return ip.getStringWidth(lastTimeStampString);
-	}
-
-	// to make progress bar in main imagej panel. ... looks like we get one
-	// anyway...can see with several hundred frame stack?
-	// void showProgress(double percent) { // dont really need a progress bar...
-	// percent = (double)(frame-1)/nPasses + percent/nPasses; //whats this for?
-	// IJ.showProgress(percent);
-	// }
-
-	private void updateImg() {
-		imp.setSlice(currentSlice);
 	}
 
 	/**
