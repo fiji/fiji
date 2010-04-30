@@ -403,7 +403,7 @@ public class FeatureStack
 				data.add(new DenseInstance(1.0, values));
 			}
 		}
-		
+		IJ.showProgress(1.0);
 		return data;
 	}
 	
