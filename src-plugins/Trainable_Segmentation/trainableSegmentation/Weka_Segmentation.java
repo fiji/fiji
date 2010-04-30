@@ -753,7 +753,8 @@ public class Weka_Segmentation implements PlugIn
 		{
 			super.imp = imp;
 			((CustomCanvas) super.getCanvas()).setImagePlus(imp);
-			((CustomCanvas) super.getCanvas()).setDstDimensions(imp.getWidth(), imp.getHeight());
+			Dimension dim = new Dimension(Math.min(512, imp.getWidth()), Math.min(512, imp.getHeight()));
+			((CustomCanvas) super.getCanvas()).setDstDimensions(dim.width, dim.height);
 			imp.setWindow(this);
 			repaint();
 		}
