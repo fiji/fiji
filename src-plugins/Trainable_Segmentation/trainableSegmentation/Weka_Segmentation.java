@@ -1137,7 +1137,7 @@ public class Weka_Segmentation implements PlugIn
 			IJ.log("Merging data...");
 			for (int i=0; i < loadedTrainingData.numInstances(); i++)
 				data.add(loadedTrainingData.instance(i));
-			IJ.log("Finished");
+			IJ.log("Finished: total number of instances = " + data.numInstances());
 		}
 		else if (data == null)
 		{
@@ -1874,6 +1874,10 @@ public class Weka_Segmentation implements PlugIn
 			return;
 		}
 
+		SaveDialog sd = new SaveDialog("Choose save file", "data",".arff");
+		if (sd.getFileName()==null)
+			return;
+		
 		if(featureStack.getSize() < 2)
 		{
 			setButtonsEnabled(false);
@@ -1884,19 +1888,17 @@ public class Weka_Segmentation implements PlugIn
 		Instances data = createTrainingInstances();
 		data.setClassIndex(data.numAttributes() - 1);
 		if (null != loadedTrainingData && null != data){
-			IJ.log("merging data");
+			IJ.log("Merging data...");
 			for (int i=0; i < loadedTrainingData.numInstances(); i++){
 				// IJ.log("" + i)
 				data.add(loadedTrainingData.instance(i));
 			}
-			IJ.log("Finished");
+			IJ.log("Finished: total number of instances = " + data.numInstances());
 		}
 		else if (null == data)
 			data = loadedTrainingData;
 
-		SaveDialog sd = new SaveDialog("Choose save file", "data",".arff");
-		if (sd.getFileName()==null)
-			return;
+		
 		IJ.log("Writing training data: " + data.numInstances() + " instances...");
 		writeDataToARFF(data, sd.getDirectory() + sd.getFileName());
 		IJ.log("Saved training data: " + sd.getDirectory() + " " + sd.getFileName());
@@ -1965,14 +1967,12 @@ public class Weka_Segmentation implements PlugIn
 	 */
 	public static void launchWeka()
 	{				
-		IJ.log(" " + ClassLoader.getSystemClassLoader().getClass());
 		weka.gui.GUIChooser chooser = new weka.gui.GUIChooser();
 		for (WindowListener wl : chooser.getWindowListeners()) 
 		{
 			chooser.removeWindowListener(wl);
 		}
 		chooser.setVisible(true);
-
 	}
 	
 	/**
