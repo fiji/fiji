@@ -753,6 +753,7 @@ public class Weka_Segmentation implements PlugIn
 		{
 			super.imp = imp;
 			((CustomCanvas) super.getCanvas()).setImagePlus(imp);
+			((CustomCanvas) super.getCanvas()).setDstDimensions(imp.getWidth(), imp.getHeight());
 			imp.setWindow(this);
 			repaint();
 		}
@@ -1334,7 +1335,7 @@ public class Weka_Segmentation implements PlugIn
 	{
 		showColorOverlay = !showColorOverlay;
 		//IJ.log("toggle overlay to: " + showColorOverlay);
-		if (showColorOverlay)
+		if (showColorOverlay && null != classifiedImage)
 		{
 			
 			ImageProcessor overlay = classifiedImage.getProcessor().duplicate();
@@ -1680,6 +1681,8 @@ public class Weka_Segmentation implements PlugIn
 		if (od.getFileName()==null)
 			return;
 		
+		this.setButtonsEnabled(false);
+		
 		IJ.log("Loading image " + od.getDirectory() + od.getFileName() + "...");
 		
 		ImagePlus newImage = new ImagePlus(od.getDirectory() + od.getFileName());
@@ -1755,6 +1758,8 @@ public class Weka_Segmentation implements PlugIn
 		win.pack();
 		
 		IJ.log("Done");
+		
+		this.updateButtonsEnabling();
 	}
 	
 	/**
