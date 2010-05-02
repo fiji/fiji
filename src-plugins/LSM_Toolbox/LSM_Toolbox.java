@@ -107,7 +107,7 @@ public class LSM_Toolbox implements PlugIn, MacroExtension {
 
 		String fileName = "";
 		String macroOptions = Macro.getOptions();
-		if (IJ.macroRunning())
+		if (IJ.macroRunning() && macroOptions != null)
 		if (macroOptions.trim().equalsIgnoreCase("ext")){
 				    Functions.registerExtensions(this);
 				return;

@@ -56,16 +56,18 @@ public class Stitching_3D implements PlugIn
 	public static String methodStatic = methodList[1];
 	public static String handleRGB1Static = colorList[colorList.length - 1];
 	public static String handleRGB2Static = colorList[colorList.length - 1];
-	public static boolean fuseImagesStatic = true, windowingStatic = true, coregisterStatic = false;
+	public static boolean fuseImagesStatic = true, windowingStatic = true, coregisterStatic = false, computeOverlapStatic = true;
 	public static int checkPeaksStatic = 5, numberOfChannelsStatic = 1;
 	public static double alphaStatic = 1.5;
+	public static int xOffsetStatic = 0, yOffsetStatic = 0, zOffsetStatic = 0;
 
 	public String method;
 	public String handleRGB1;
 	public String handleRGB2;
-	public boolean fuseImages, windowing, coregister;
+	public boolean fuseImages, windowing, coregister, computeOverlap = true;
 	public int checkPeaks, numberOfChannels;
 	public double alpha;
+	public int xOffset = 0, yOffset = 0, zOffset = 0;
 
 	public ImagePlus imp1 = null, imp2 = null;
 	public boolean wasIndexed, doLogging = true;
@@ -83,7 +85,7 @@ public class Stitching_3D implements PlugIn
 
 		
 	// a macro can call to only fuse two images given a certain shift
-	public Point3D translation = null;
+	private Point3D translation = null;
 
 	public void run(String args)
 	{
@@ -138,6 +140,10 @@ public class Stitching_3D implements PlugIn
 		gd.addStringField("Fused_Image_Name: ", "Fused_" + stackList[0] + "_" + stackList[1]);
 		gd.addCheckbox("Apply_to_other_Channels", coregisterStatic);
 		gd.addNumericField("Number_of_other_Channels", numberOfChannelsStatic, 0);
+		gd.addCheckbox("compute_overlap", computeOverlapStatic);
+		gd.addNumericField("x", xOffset, xOffsetStatic);
+		gd.addNumericField("y", yOffset, yOffsetStatic);
+		gd.addNumericField("z", zOffset, zOffsetStatic);
 		gd.addMessage("");
 		gd.addMessage("This Plugin is developed by Stephan Preibisch\n" + myURL);
 
@@ -145,14 +151,13 @@ public class Stitching_3D implements PlugIn
 		addHyperLinkListener(text, myURL);
 
 		// get Checkboxes
-		Component[] c1 = new Component[] { (Component) gd.getChoices().get(4), (Component) gd.getStringFields().get(0), (Component) gd.getCheckboxes().get(2), (Component) gd.getNumericFields().get(1), (Component) gd.getNumericFields().get(2) };
-
-		Component[] c2 = new Component[] { (Component) gd.getNumericFields().get(2) };
-		((Component) gd.getNumericFields().get(2)).setEnabled(false);
-
+		Component[] c1 = new Component[] { (Component) gd.getChoices().get(4), 
+										   (Component) gd.getStringFields().get(0), 
+										   (Component) gd.getCheckboxes().get(2), 
+										   (Component) gd.getNumericFields().get(1), 
+										   (Component) gd.getNumericFields().get(2) };
 		addEnablerListener((Checkbox) gd.getCheckboxes().get(1), c1, null);
-		addEnablerListener((Checkbox) gd.getCheckboxes().get(2), c2, null);
-
+		
 		gd.showDialog();
 
 		if (gd.wasCanceled()) return;
@@ -171,6 +176,10 @@ public class Stitching_3D implements PlugIn
 		this.fusedImageName = gd.getNextString();
 		coregisterStatic = gd.getNextBoolean();
 		numberOfChannelsStatic = (int) gd.getNextNumber();
+		computeOverlap = gd.getNextBoolean();
+		xOffset = (int)Math.round( gd.getNextNumber() );
+		yOffset = (int)Math.round( gd.getNextNumber() );
+		zOffset = (int)Math.round( gd.getNextNumber() );
 
 		method = methodStatic;
 		handleRGB1 = handleRGB1Static;
@@ -181,6 +190,11 @@ public class Stitching_3D implements PlugIn
 		checkPeaks = checkPeaksStatic;
 		numberOfChannels = numberOfChannelsStatic;
 		alpha = alphaStatic;
+		
+		if ( !computeOverlap )
+			this.translation = new Point3D( xOffset, yOffset, zOffset );
+		else
+			this.translation = null;
 
 		//
 		// determine wheater a macro called it which limits in determining name
@@ -342,7 +356,7 @@ public class Stitching_3D implements PlugIn
 		else target.setEnabled(false);
 	}
 
-	private final void addEnablerListener(/* final GenericDialog gd, */final Checkbox master, final Component[] enable, final Component[] disable)
+	public static final void addEnablerListener(/* final GenericDialog gd, */final Checkbox master, final Component[] enable, final Component[] disable)
 	{
 		master.addItemListener(new ItemListener()
 		{
@@ -373,6 +387,37 @@ public class Stitching_3D implements PlugIn
 		});
 	}
 
+	public static final void addInverseEnablerListener(/* final GenericDialog gd, */final Checkbox master, final Component[] enable, final Component[] disable)
+	{
+		master.addItemListener(new ItemListener()
+		{
+			public void itemStateChanged(ItemEvent ie)
+			{
+				if (ie.getStateChange() == ItemEvent.SELECTED)
+				{
+					process(enable, false);
+					process(disable, true);
+				}
+				else
+				{
+					process(enable, true);
+					process(disable, false);
+				}
+			}
+
+			private void process(final Component[] c, final boolean state)
+			{
+				if (null == c) return;
+				for (int i = 0; i < c.length; i++)
+				{
+					c[i].setEnabled(state);
+					// c[i].setVisible(state);
+				}
+				// gd.pack();
+			}
+		});
+	}
+	
 	private ImagePlus getImage(String imgStack)
 	{
 		ImagePlus imp = null;
@@ -546,7 +591,11 @@ public class Stitching_3D implements PlugIn
 		{
 			IJ.log("Translation Parameters:");
 			IJ.log("(second stack relative to first stack)");
-			IJ.log("x=" + shift.x + " y=" + shift.y + " z=" + shift.z + " R=" + result[0].R);
+			
+			if ( this.translation == null )
+				IJ.log("x=" + shift.x + " y=" + shift.y + " z=" + shift.z + " R=" + result[0].R);
+			else
+				IJ.log("x=" + shift.x + " y=" + shift.y + " z=" + shift.z );				
 		}
 	}
 

@@ -1,3 +1,6 @@
+#!/bin/sh
+''''exec "$(dirname "$0")"/../fiji --jython "$0" "$@" # (call again with fiji)'''
+
 import lib
 from java.awt import AWTEvent, Button, Dialog, Frame, Menu, MenuBar, MenuItem
 from java.awt import Toolkit, Window

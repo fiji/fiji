@@ -56,6 +56,8 @@
 		<string>false</string>
 		<key>JVMOptions</key>
 		<string></string>
+		<key>DefaultArguments</key>
+		<string></string>
 	</dict>
 </dict>
 </plist>

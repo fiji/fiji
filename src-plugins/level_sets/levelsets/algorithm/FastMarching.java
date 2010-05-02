@@ -5,7 +5,7 @@ package levelsets.algorithm;
 import ij.IJ;
 
 import java.util.PriorityQueue;
-import java.util.Vector;
+import java.util.ArrayList;
 
 import levelsets.filter.GreyValueErosion;
 import levelsets.filter.MorphologicalOperator;
@@ -32,7 +32,7 @@ public class FastMarching implements StagedAlgorithm
    private DeferredObjectArray3D<BandElement> elementLUT = null;
    
    // The seed points - held for later initialization
-   private Vector<Coordinate> seeds = null;
+   private ArrayList<Coordinate> seeds = null;
    // Mean of greyvalues around all seedpoints
    private int seed_greyvalue = 0;
    
@@ -192,7 +192,7 @@ public class FastMarching implements StagedAlgorithm
        */       
       for (int i = 0; i< seeds.size(); i++)
       {
-         final Coordinate seed = seeds.elementAt(i);
+         final Coordinate seed = seeds.get(i);
          this.seed_greyvalue += probeSeedGreyValue(seed.getX(), seed.getY(), seed.getZ());
          
          final BandElement start = elem_cache.getRecycledBandElement(seed.getX(), seed.getY(), seed.getZ(), 0);

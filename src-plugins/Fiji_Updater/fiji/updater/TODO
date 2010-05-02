@@ -1,0 +1,20 @@
+Show-stoppers:
+
+- Add a context menu to trigger actions
+
+Not-quite show-stoppers:
+
+- If the developer tries to upload a version that has already be marked
+  as a previous version, ask her loudly if she is sure.
+
+- The actions should be editable by keyboard shortcuts.  Likewise,
+  "Escape" should exit, asking if the user is sure when actions where
+  selected but not launched.
+
+- The list of plugins included in the file should be shown, too.  We can
+  use fiji.User_Plugins' parsePluginsConfig() method, probably after
+  wrapping it into a public method that takes a String parameter
+  containing the .jar file's path.
+
+- make the list sortable by clicking on the column titles (second click
+  sorts descending).

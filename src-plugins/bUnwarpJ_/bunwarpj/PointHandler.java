@@ -1,7 +1,7 @@
 package bunwarpj;
 
 /**
- * bUnwarpJ plugin for ImageJ(C).
+ * bUnwarpJ plugin for ImageJ and Fiji.
  * Copyright (C) 2005-2009 Ignacio Arganda-Carreras and Jan Kybic 
  *
  * More information at http://biocomp.cnb.csic.es/%7Eiarganda/bUnwarpJ/
@@ -38,7 +38,8 @@ import java.awt.Point;
 import java.util.Vector;
 
 /**
- * Class to deal with point handler in bUnwarpJ.
+ * Class to deal with handle points in bUnwarpJ: here we have the methods
+ * to paint the landmarks and the masks.
  */
 public class PointHandler extends Roi
 { /* begin class PointHandler */
@@ -47,21 +48,17 @@ public class PointHandler extends Roi
        Private variables
     ....................................................................*/
 
+	/**
+	 * Serial version UID
+	 */
+	private static final long serialVersionUID = 4829296689557078996L;
+
 	/** constant to keep half of the cross size */
 	private static final int CROSS_HALFSIZE = 5;
 
 	// Colors
-	/** colors rank */
-	private static final int GAMUT       = 1024;
-	/** array of colors */
-	private final Color   spectrum[]     = new Color[GAMUT];
-	/** array with a flag for each color to determine if it is being used */
-	private final boolean usedColor[]    = new boolean[GAMUT];
-	/** list of colors */
-	private final Vector <Integer>  listColors     = new Vector <Integer> (0, 16);
-	/** current color */
-	private int           currentColor   = 0;
-
+	private final Vector <Color> listColors = new Vector <Color>();
+	
 	// List of crosses
 	/** list of points */
 	private final Vector <Point>  listPoints     = new Vector <Point> (0, 16);
@@ -79,15 +76,19 @@ public class PointHandler extends Roi
 
 	// Some useful references
 	/** pointer to the image representation */
-	private ImagePlus                      imp;
+	private ImagePlus imp = null;
 	/** pointer to the point actions */
-	private PointAction  pa;
+	private PointAction  pa = null;
 	/** pointer to the point toolbar */
-	private PointToolbar tb;
+	private PointToolbar tb = null;
 	/** pointer to the mask */
-	private Mask         mask;
-	/** pointer to the bUnwarpJ dialog */
-	private MainDialog       dialog;
+	private Mask mask = null;
+	/** pointer to the main bUnwarpJ dialog */
+	private MainDialog dialog = null;
+	/** hue for assigning new color ([0.0-1.0]) */
+	private float hue = 0f;
+	/** saturation for assigning new color ([0.5-1.0]) */
+	private float saturation = 0.5f;
 
 	/*....................................................................
        Public methods
@@ -103,16 +104,16 @@ public class PointHandler extends Roi
 	 * @param dialog pointer to the bUnwarpJ dialog
 	 */
 	public PointHandler (
-			final ImagePlus           imp,
+			final ImagePlus imp,
 			final PointToolbar tb,
-			final Mask         mask,
-			final MainDialog       dialog)
+			final Mask mask,
+			final MainDialog dialog)
 	{
 		super(0, 0, imp.getWidth(), imp.getHeight(), imp);
 		this.imp = imp;
 		this.tb = tb;
 		this.dialog = dialog;
-		pa = new PointAction(imp, this, tb, dialog);
+		this.pa = new PointAction(imp, this, tb, dialog);
 		final ImageWindow iw = imp.getWindow();
 		final ImageCanvas ic = iw.getCanvas();
 		//iw.requestFocus();
@@ -124,7 +125,6 @@ public class PointHandler extends Roi
 		ic.addKeyListener(pa);
 		ic.addMouseListener(pa);
 		ic.addMouseMotionListener(pa);
-		setSpectrum();
 		started = true;
 
 		this.mask = mask;
@@ -148,6 +148,23 @@ public class PointHandler extends Roi
 	} /* end PointHandler */
 
 
+	/**
+	 * Constructor without graphical capabilities, create an instance of PointHandler.
+	 *
+	 * @param width image width
+	 * @param height image height
+	 */
+	public PointHandler (final int width, final int height)
+	{
+		super(0, 0, width, height);
+		this.imp = null;
+		tb = null;
+		dialog = null;
+		pa = null;
+		started = true;
+		mask = null;
+	} /* end PointHandler */
+	
 
 	/*------------------------------------------------------------------*/
 	/**
@@ -176,50 +193,23 @@ public class PointHandler extends Roi
 			final int x,
 			final int y)
 	{
-		if (numPoints < GAMUT) 
-		{
-			final Point p = new Point(x, y);
-			listPoints.addElement(p);
-			
-			if (!usedColor[currentColor]) 
-			{
-				usedColor[currentColor] = true;
-			}
-			else 
-			{
-				int k;
-				for (k = 0; (k < GAMUT); k++) 
-				{
-					currentColor++;
-					currentColor &= GAMUT - 1;
-					if (!usedColor[currentColor]) 
-					{
-						break;
-					}
-				}
-				if (GAMUT <= k) 
-				{
-					throw new IllegalStateException("Unexpected lack of available colors");
-				}
-			}
-			int stirredColor = 0;
-			int c = currentColor;
-			for (int k = 0; (k < (int)Math.round(Math.log((double)GAMUT) / Math.log(2.0))); k++) 
-			{
-				stirredColor <<= 1;
-				stirredColor |= (c & 1);
-				c >>= 1;
-			}
-			listColors.addElement(new Integer(stirredColor));
-			currentColor++;
-			currentColor &= GAMUT - 1;
-			currentPoint = numPoints;
-			numPoints++;
-		}
-		else {
-			IJ.error("Maximum number of points reached");
-		}
-	} /* end addPoint */
+		final Point p = new Point(x, y);
+		listPoints.addElement(p);
+		Color c = Color.getHSBColor(this.hue, this.saturation, 1);
+		// Calculate next color by golden angle
+		this.hue += 0.38197f; // golden angle
+		if (this.hue > 1) 
+			this.hue -= 1;
+		this.saturation += 0.38197f; // golden angle
+		if (this.saturation > 1)
+			this.saturation -= 1;
+		this.saturation = 0.5f * this.saturation + 0.5f;
+		
+		listColors.addElement(c);
+		currentPoint = numPoints;
+		numPoints++;
+
+	} // end addPoint
 
 	/*------------------------------------------------------------------*/
 	/**
@@ -276,7 +266,9 @@ public class PointHandler extends Roi
 			for (int k = 0; (k < numPoints); k++)
 			{
 				final Point p = (Point)listPoints.elementAt(k);
-				g.setColor(spectrum[((Integer)listColors.elementAt(k)).intValue()]);
+				//g.setColor(spectrum[((Integer)listColors.elementAt(k)).intValue()]);
+				g.setColor(listColors.elementAt(k));
+				
 				if (k == currentPoint)
 				{
 					if (WindowManager.getCurrentImage() == imp)
@@ -481,14 +473,18 @@ public class PointHandler extends Roi
 	 */
 	public void killListeners ()
 	{
-		final ImageWindow iw = imp.getWindow();
-		final ImageCanvas ic = iw.getCanvas();
-		ic.removeKeyListener(pa);
-		ic.removeMouseListener(pa);
-		ic.removeMouseMotionListener(pa);
-		ic.addMouseMotionListener(ic);
-		ic.addMouseListener(ic);
-		ic.addKeyListener(IJ.getInstance());
+		if(imp != null)
+		{
+			final ImageWindow iw = imp.getWindow();
+			final ImageCanvas ic = iw.getCanvas();
+		
+			ic.removeKeyListener(pa);
+			ic.removeMouseListener(pa);
+			ic.removeMouseMotionListener(pa);
+			ic.addMouseMotionListener(ic);
+			ic.addMouseListener(ic);
+			ic.addKeyListener(IJ.getInstance());
+		}
 	} /* end killListeners */
 
 	/*------------------------------------------------------------------*/
@@ -533,7 +529,7 @@ public class PointHandler extends Roi
 	{
 		if (0 < numPoints) {
 			listPoints.removeElementAt(currentPoint);
-			usedColor[((Integer)listColors.elementAt(currentPoint)).intValue()] = false;
+			//usedColor[((Integer)listColors.elementAt(currentPoint)).intValue()] = false;
 			listColors.removeElementAt(currentPoint);
 			numPoints--;
 		}
@@ -553,7 +549,7 @@ public class PointHandler extends Roi
 	{
 		if (0 < numPoints) {
 			listPoints.removeElementAt(k);
-			usedColor[((Integer)listColors.elementAt(k)).intValue()] = false;
+			//usedColor[((Integer)listColors.elementAt(k)).intValue()] = false;
 			listColors.removeElementAt(k);
 			numPoints--;
 		}
@@ -571,11 +567,6 @@ public class PointHandler extends Roi
 	{
 		listPoints.removeAllElements();
 		listColors.removeAllElements();
-		for (int k = 0; (k < GAMUT); k++)
-		{
-			usedColor[k] = false;
-		}
-		currentColor = 0;
 		numPoints = 0;
 		currentPoint = -1;
 		tb.setTool(PointAction.ADD_CROSS);
@@ -666,53 +657,5 @@ public class PointHandler extends Roi
 	} /* end setSecondaryPointHandler */
 
 
-	/*....................................................................
-       Private methods
-    ....................................................................*/
-
-	/*------------------------------------------------------------------*/
-	/**
-	 * Set the spectrum of colors.
-	 */
-	private void setSpectrum ()
-	{
-		final int bound1 = GAMUT / 6;
-		final int bound2 = GAMUT / 3;
-		final int bound3 = GAMUT / 2;
-		final int bound4 = (2 * GAMUT) / 3;
-		final int bound5 = (5 * GAMUT) / 6;
-		final int bound6 = GAMUT;
-		final float gamutChunk1 = (float)bound1;
-		final float gamutChunk2 = (float)(bound2 - bound1);
-		final float gamutChunk3 = (float)(bound3 - bound2);
-		final float gamutChunk4 = (float)(bound4 - bound3);
-		final float gamutChunk5 = (float)(bound5 - bound4);
-		final float gamutChunk6 = (float)(bound6 - bound5);
-		int k = 0;
-		do {
-			spectrum[k] = new Color(1.0F, (float)k / gamutChunk1, 0.0F);
-			usedColor[k] = false;
-		} while (++k < bound1);
-		do {
-			spectrum[k] = new Color(1.0F - (float)(k - bound1) / gamutChunk2, 1.0F, 0.0F);
-			usedColor[k] = false;
-		} while (++k < bound2);
-		do {
-			spectrum[k] = new Color(0.0F, 1.0F, (float)(k - bound2) / gamutChunk3);
-			usedColor[k] = false;
-		} while (++k < bound3);
-		do {
-			spectrum[k] = new Color(0.0F, 1.0F - (float)(k - bound3) / gamutChunk4, 1.0F);
-			usedColor[k] = false;
-		} while (++k < bound4);
-		do {
-			spectrum[k] = new Color((float)(k - bound4) / gamutChunk5, 0.0F, 1.0F);
-			usedColor[k] = false;
-		} while (++k < bound5);
-		do {
-			spectrum[k] = new Color(1.0F, 0.0F, 1.0F - (float)(k - bound5) / gamutChunk6);
-			usedColor[k] = false;
-		} while (++k < bound6);
-	} /* end setSpectrum */
 
 } /* end class PointHandler */

@@ -214,13 +214,16 @@ public class Open_MRC_Leginon extends ImagePlus implements PlugIn {
 		int n = readInt(buf, 8);
 		int dtype = getType(readInt(buf, 12));
 		if (-1 == dtype) return;
+		// Determine the size of the extended header correctly
+		// see http://www.biochem.mpg.de/doc_tom/index.html
+		long offset = 1024 + readInt(buf, 0x5c);
 		ImagePlus imp = openRaw(
 					dtype,
 					directory,
 					filename,
 					w,
 					h,
-					1024L,
+					offset,
 					n,
 					0,
 					true, // little-endian

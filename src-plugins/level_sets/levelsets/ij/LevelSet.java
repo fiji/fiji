@@ -31,11 +31,13 @@ package levelsets.ij;
 
 import ij.IJ;
 import ij.ImagePlus;
+import ij.ImageStack;
+import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.gui.PointRoi;
 import ij.gui.PolygonRoi;
 import ij.gui.Roi;
-import ij.plugin.filter.PlugInFilter;
+import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
 
 import java.awt.Checkbox;
@@ -53,10 +55,8 @@ import levelsets.algorithm.LevelSetImplementation;
 import levelsets.algorithm.LevelSetFactory.Parameter;
 import levelsets.ij.StateContainer.States;
 
-public class LevelSet implements PlugInFilter {
+public class LevelSet implements PlugIn {
 	
-	
-	private int flags = DOES_16|DOES_32|DOES_8G|DOES_STACKS;
 
 	private static String [] shapeList = {"none"}; // not implemented yet
 	private static String [] preprocessList = {"none", "Gaussian difference"};
@@ -147,48 +147,51 @@ public class LevelSet implements PlugInFilter {
 			ls_filter.showROI(testIP, new PolygonRoi(poly_rx, poly_ry, poly_rx.length, PolygonRoi.POLYGON), null);
 		}		
 		if ( test_algorithm ) {
-			ls_filter.setup("", testIP);
-			ls_filter.run(testIP.getProcessor());
+			ls_filter.imp = testIP;
+			ls_filter.run("");
 		}
 		
 	}
-	
 
-	public void run(ImageProcessor ip) {
+	public void run(final ImagePlus imp) {
+		ImagePlus result = execute(imp, true);
+		if (null != result) result.show();
+	}
+
+	/**
+	 * @param imp The ImagePlus to operate on
+	 * @param with_progress Whether to show an image that tracks progress
+	 */
+	public ImagePlus execute(ImagePlus imp, boolean with_progress) {
 		
 		// TODO Would make sense to offer starting points as mask in separate image. 
 		// If no ROI found, have the additional dialog field to select mask image. 
-				
+
 		Roi roi = imp.getRoi();
-        if ( roi==null ) {
-        	
-        	// FastMarching needs points
-            IJ.error("Seed (points) required");
-            
-            // TODO Active contour needs contour - 
-            // 3 cases should be separate classes
-            // - FastMarching
-            // - ActiveContours with option of fast marching 
-            return;
-        }
-        
-        if ( ask_params == true ) {
-        	if ( showDialog() == false ) {
-        		return;
+        	if ( roi==null ) {
+        		// FastMarching needs points
+
+			// TODO Active contour needs contour - 
+			// 3 cases should be separate classes
+			// - FastMarching
+			// - ActiveContours with option of fast marching 
+			return null;
         	}
-        }
-         
-        // Wrap the selected image into the ImageContainer
+        
+        	// Wrap the selected image into the ImageContainer
 		ic = new ImageContainer(imp);
 		
 		// Create a ImageContainer for showing the progress
-		ImageProgressContainer progressImage = new ImageProgressContainer();
-		progressImage.duplicateImages(ic);
-		progressImage.createImagePlus("Segmentation progress of " + imp.getTitle());
-		progressImage.showProgressStep();
+		ImageProgressContainer progressImage = with_progress ? new ImageProgressContainer() : null;
+		if (null != progressImage) {
+			progressImage.duplicateImages(ic);
+			progressImage.createImagePlus("Segmentation progress of " + imp.getTitle());
+			progressImage.showProgressStep();
+		}
 		
 		// Create a initial state map out of the roi
 		StateContainer sc_roi = new StateContainer();
+		System.out.println("current slice: " + imp.getCurrentSlice());
 		sc_roi.setROI(roi, ic.getWidth(), ic.getHeight(), ic.getImageCount(), imp.getCurrentSlice());
 		sc_roi.setExpansionToInside(insideout);
 		
@@ -210,14 +213,14 @@ public class LevelSet implements PlugInFilter {
 					}
 					if (IJ.escapePressed()) {
 						IJ.log("Aborted");
-						return;
+						return null;
 					}
 				}
 				IJ.log("Fast Marching: Finished " + new Date(System.currentTimeMillis()));
 				sc_ls = fm.getStateContainer();
 				if ( sc_ls == null ) {
 					// don't continue if something happened during Fast Marching
-					return;
+					return null;
 				}
 				sc_ls.setExpansionToInside(insideout);
 				sc_final = sc_ls;
@@ -241,7 +244,7 @@ public class LevelSet implements PlugInFilter {
 					}
 					if (IJ.escapePressed()) {
 						IJ.log("Aborted");
-						return;
+						return null;
 					}
 				}
 				IJ.log("Level Set: Finished " + new Date(System.currentTimeMillis()));
@@ -250,11 +253,16 @@ public class LevelSet implements PlugInFilter {
 			
 			// Convert sc_final into binary image ImageContainer and display
 			if ( sc_final == null ) {
-				return;
+				return null;
 			}
-			ImageContainer result = new ImageContainer(sc_final.getIPMask());
-			ImagePlus result_ip = result.createImagePlus("Segmentation of " + imp.getTitle());
-			result_ip.show();
+			ImageStack stack = new ImageStack(imp.getWidth(), imp.getHeight());
+			for (ImageProcessor bp : sc_final.getIPMask()) {
+				stack.addSlice(null, bp);
+			}
+			ImagePlus seg = imp.createImagePlus();
+			seg.setStack("Segmentation of " + imp.getTitle(), stack);
+			seg.setSlice(imp.getCurrentSlice());
+			return seg;
 		} catch (IllegalArgumentException e) {
 			// Usually happens with ROI specifications
 			IJ.error(e.getMessage());
@@ -262,14 +270,33 @@ public class LevelSet implements PlugInFilter {
 			// Numerical instability
 			IJ.error("Arithmetic problem: " + e.getMessage());			
 		}
-		
+
+		return null;
 	}
 
-	public int setup(String arg, ImagePlus imp) {
+	public void run(String arg) {
 		// TODO: check for seed == selection
 		
-		this.imp = imp;
-		
+		if (null == imp) {
+			imp = WindowManager.getCurrentImage();
+			if (null == imp) {
+				IJ.showMessage("Level Sets needs an image with a ROI in it!");
+				return;
+			}
+		}
+
+		Roi roi = imp.getRoi();
+		if (null == roi) {
+			IJ.error("Seed (points) required");
+			return;
+		}
+
+		if ( ask_params == true ) {
+			if ( showDialog() == false ) {
+				return;
+			}
+		}
+
 		// if never called before set the parameters to meaningful defaults from the class
 		// otherwise keep them at previous values
 		
@@ -280,11 +307,11 @@ public class LevelSet implements PlugInFilter {
 		}
 
 		
-		return flags;
+		run(imp);
 	}
 	
 	
-	protected boolean showDialog() {
+	public boolean showDialog() {
 		// TODO interactive selection of gray value range
 		
 

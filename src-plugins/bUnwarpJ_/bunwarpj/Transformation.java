@@ -1,7 +1,7 @@
 package bunwarpj;
 
 /**
- * bUnwarpJ plugin for ImageJ(C).
+ * bUnwarpJ plugin for ImageJ(C) and Fiji.
  * Copyright (C) 2005-2009 Ignacio Arganda-Carreras and Jan Kybic 
  *
  * More information at http://biocomp.cnb.csic.es/%7Eiarganda/bUnwarpJ/
@@ -40,7 +40,14 @@ import java.util.Vector;
 
 
 /**
- * Class to perform the transformation for bUnwarpJ.
+ * Class to perform the transformation for bUnwarpJ:
+ * <p>
+ * <ul>
+ * 	<li>It stores the information about the bidirectional or unidirectional registration.</li>
+ * 	<li>It produces the registration results and the corresponding output if called from dialog.</li>
+ * 	<li>The main registration methods are <code>doBidirectionalRegistration</code> (bidirectional) and <code>doUnidirectionalRegistration</code> (unidirectional).</li>
+ * 	<li>The intermediate states of the registration are displayed in separate windows (depending on the value of <code>outputLevel</code>.</li>
+ * </ul>
  */
 public class Transformation
 { /* begin class Transformation */
@@ -51,30 +58,30 @@ public class Transformation
 
 	/** float epsilon */
 	private final double FLT_EPSILON = (double)Float.intBitsToFloat((int)0x33FFFFFF);
-	/** pyramid flag */
+	/** pyramid flag to indicate the image information is taken from the pyramid */
 	private final boolean PYRAMID  = true;
-	/** original flag */
+	/** original flag to indicate the image information is taken from the original image */
 	private final boolean ORIGINAL = false;
 	/** degree of the B-splines involved in the transformation */
 	private final int transformationSplineDegree = 3;
 
 	// Some useful references
 	/** reference to the first output image */
-	private ImagePlus           output_ip_1;
+	private ImagePlus output_ip_1;
 	/** reference to the second output image */
-	private ImagePlus           output_ip_2;
+	private ImagePlus output_ip_2;
 	/** pointer to the dialog of the bUnwarpJ interface */
-	private MainDialog       dialog;
+	private MainDialog dialog;
 
 	// Images
 	/** pointer to the source image representation */
-	private ImagePlus           sourceImp;
+	private ImagePlus sourceImp;
 	/** pointer to the target image representation */
-	private ImagePlus           targetImp;
+	private ImagePlus targetImp;
 	/** pointer to the source image model */
-	private BSplineModel   source;
+	private BSplineModel source;
 	/** pointer to the target image model */
-	private BSplineModel   target;
+	private BSplineModel target;
 
 	// Original image processors
 	/** initial source image processor */
@@ -189,10 +196,6 @@ public class Transformation
 	private double  stopThreshold;
 	/** level of accuracy */
 	private int     accurate_mode;
-	/** image subsampling factor at highest resolution level */
-    private int maxImageSubsamplingFactor;
-	/** flag to save the transformation */
-	private boolean saveTransf;
 	/** direct transformation file name */
 	private String  fn_tnf_1;
 	/** inverse transformation file name */
@@ -238,7 +241,7 @@ public class Transformation
        Public methods
     ....................................................................*/
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Create an instance of Transformation.
 	 *
@@ -264,8 +267,6 @@ public class Transformation
 	 * @param outputLevel flag to specify the level of resolution in the output
 	 * @param showMarquardtOptim flag to show the optimizer
 	 * @param accurate_mode level of accuracy
-	 * @param maxImageSubsamplingFactor image subsampling factor at highest resolution level
-	 * @param saveTransf flat to choose to save the transformation in a file
 	 * @param fn_tnf_1 direct transformation file name
 	 * @param fn_tnf_2 inverse transformation file name
 	 * @param output_ip_1 pointer to the first output image
@@ -295,8 +296,6 @@ public class Transformation
 			final int outputLevel,
 			final boolean showMarquardtOptim,
 			final int accurate_mode,
-			final int maxImageSubsamplingFactor,
-			final boolean saveTransf,
 			final String fn_tnf_1,
 			final String fn_tnf_2,
 			final ImagePlus output_ip_1,
@@ -325,8 +324,6 @@ public class Transformation
 		this.outputLevel           = outputLevel;
 		this.showMarquardtOptim    = showMarquardtOptim;
 		this.accurate_mode         		= accurate_mode;
-		this.maxImageSubsamplingFactor 	= maxImageSubsamplingFactor;
-		this.saveTransf            		= saveTransf;
 		this.fn_tnf_1              		= fn_tnf_1;
 		this.fn_tnf_2              		= fn_tnf_2;
 		this.output_ip_1           		= output_ip_1;
@@ -343,7 +340,7 @@ public class Transformation
 	} /* end Transformation */
 
 	
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Create an instance of Transformation.
 	 *
@@ -369,8 +366,6 @@ public class Transformation
 	 * @param outputLevel flag to specify the level of resolution in the output
 	 * @param showMarquardtOptim flag to show the optimizer
 	 * @param accurate_mode level of accuracy
-	 * @param maxImageSubsamplingFactor image subsampling factor at highest resolution level
-	 * @param saveTransf flat to choose to save the transformation in a file
 	 * @param fn_tnf_1 direct transformation file name
 	 * @param fn_tnf_2 inverse transformation file name
 	 * @param output_ip_1 pointer to the first output image
@@ -378,8 +373,8 @@ public class Transformation
 	 * @param dialog pointer to the dialog of the bUnwarpJ interface
 	 */
 	public Transformation (
-			final ImagePlus                    sourceImp,
-			final ImagePlus                    targetImp,
+			final ImagePlus sourceImp,
+			final ImagePlus targetImp,
 			final BSplineModel source,
 			final BSplineModel target,
 			final PointHandler sourcePh,
@@ -400,8 +395,6 @@ public class Transformation
 			final int outputLevel,
 			final boolean showMarquardtOptim,
 			final int accurate_mode,
-			final int maxImageSubsamplingFactor,
-			final boolean saveTransf,
 			final String fn_tnf_1,
 			final String fn_tnf_2,
 			final ImagePlus output_ip_1,
@@ -432,8 +425,6 @@ public class Transformation
 		this.outputLevel           = outputLevel;
 		this.showMarquardtOptim    = showMarquardtOptim;
 		this.accurate_mode         		= accurate_mode;
-		this.maxImageSubsamplingFactor 	= maxImageSubsamplingFactor;
-		this.saveTransf            		= saveTransf;
 		this.fn_tnf_1              		= fn_tnf_1;
 		this.fn_tnf_2              		= fn_tnf_2;
 		this.output_ip_1           		= output_ip_1;
@@ -447,14 +438,14 @@ public class Transformation
 		this.sourceHeight          = source.getHeight();
 		this.targetWidth           = target.getWidth();
 		this.targetHeight          = target.getHeight();
-	} /* end Transformation */
+	} // end Transformation
 	
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Registration method. It applies the consistent and elastic registration
 	 * algorithm to the selected source and target images.
 	 */
-	public void doRegistration ()
+	public void doBidirectionalRegistration ()
 	{	
 		// This function can only be applied with splines of an odd order
 
@@ -736,15 +727,15 @@ public class Transformation
 		}// end while (state != -1).
 
 		// Adapt coefficients if necessary
-		if(this.sourceWidth > this.sourceCurrentWidth)
+		if(source.getOriginalImageWidth() > this.sourceCurrentWidth)
 		{
 			if(source.isSubOutput() || target.isSubOutput())
-				IJ.log("Adapting coefficients from " + this.sourceCurrentWidth + " to " + this.sourceWidth);
+				IJ.log("Adapting coefficients from " + this.sourceCurrentWidth + " to " + source.getOriginalImageWidth() +"...");
 			// Adapt the transformation to the new image size
-			double targetFactorY = (targetHeight-1) / (targetCurrentHeight-1);
-			double targetFactorX = (targetWidth-1)  / (targetCurrentWidth -1);
-			double sourceFactorY = (sourceHeight-1) / (sourceCurrentHeight-1);
-			double sourceFactorX = (sourceWidth -1) / (sourceCurrentWidth -1);
+			double targetFactorY = (target.getOriginalImageHeight() - 1) / (targetCurrentHeight-1);
+			double targetFactorX = (target.getOriginalImageWidth()  - 1) / (targetCurrentWidth -1);
+			double sourceFactorY = (source.getOriginalImageHeight() - 1) / (sourceCurrentHeight-1);
+			double sourceFactorX = (source.getOriginalImageWidth()  - 1) / (sourceCurrentWidth -1);
 
 			for (int i=0; i<intervals+3; i++)
 				for (int j=0; j<intervals+3; j++)
@@ -754,25 +745,12 @@ public class Transformation
 					cxSourceToTarget[i][j] *= sourceFactorX;
 					cySourceToTarget[i][j] *= sourceFactorY;
 				}
-			this.targetCurrentHeight = this.targetHeight;
-			this.targetCurrentWidth  = this.targetWidth;
-			this.sourceCurrentHeight = this.sourceHeight;
-			this.sourceCurrentWidth  = this.sourceWidth;
+			this.targetCurrentHeight = target.getOriginalImageHeight();
+			this.targetCurrentWidth  = target.getOriginalImageWidth();
+			this.sourceCurrentHeight = source.getOriginalImageHeight();
+			this.sourceCurrentWidth  = source.getOriginalImageWidth();
 		}
-		/*
-		// Show results.
-		if(source.isSubOutput())
-		{
-			IJ.log("Calculating final transformed source image");
-		}
-		showTransformationMultiThread(intervals, cxTargetToSource, cyTargetToSource, false);
-		
-		if(target.isSubOutput())
-		{
-			IJ.log("Calculating final transformed target image");			
-		}
-		showTransformationMultiThread(intervals, cxSourceToTarget, cySourceToTarget, true);
-*/
+
 		// Display final errors.		
 		if(this.outputLevel == 2)
 		{
@@ -798,18 +776,9 @@ public class Transformation
 			}
 		}
 		
+	} // end doBidirectionalRegistration
 
-		// Save transformations.
-		/*
-		if (saveTransf)
-		{
-			saveTransformation(intervals, cxTargetToSource, cyTargetToSource, false);
-			saveTransformation(intervals, cxSourceToTarget, cySourceToTarget, true);
-		}
-		*/
-	} /* end doRegistration */
-
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Unidirectional registration method. It applies unidirectional
 	 * elastic registration to the selected source and target images.
@@ -870,10 +839,12 @@ public class Transformation
 			// NOTE: after version 1.1 the landmarks are always used to calculate
 			// an initial affine transformation (whether the landmarks weight is 0 or not).
 			
-			affineMatrix = computeAffineMatrix(false);
-
+			affineMatrix = computeAffineMatrix(false);			
 		}
 
+		//MiscTools.printMatrix("source affine matrix", affineMatrix);
+		
+		
 		// Incorporate the affine transformation into the spline coefficient
 		for (int i= 0; i<intervals + 3; i++)
 		{
@@ -886,20 +857,7 @@ public class Transformation
 				cxTargetToSource[i][j] = xv + affineMatrix[0][0] * u;
 				cyTargetToSource[i][j] = yv + affineMatrix[1][0] * u;
 			}
-		}
-
-	
-		// Print initial coefficients
-		/*
-		System.out.println("CX --- ");
-		for (int i = 0; i < intervals+3; i ++)
-		{
-			for(int j = 0; j < intervals+3; j++)
-				System.out.print(" " + cxTargetToSource[i][j]);
-			System.out.println("");
-		}
-		*/
-		
+		}		
 		
 		// Now refine with the different scales
 		int state;   // state=-1 --> Finish
@@ -951,9 +909,12 @@ public class Transformation
 					}
 
 				}
-
+						
 				// Optimize deformation coefficients
 				optimizeCoeffs(intervals, stopThreshold, cxTargetToSource, cyTargetToSource);
+				
+				
+				
 			}
 
 			// Prepare for next iteration
@@ -1034,28 +995,25 @@ public class Transformation
 		}// end while (state != -1).
 		
 		// Adapt coefficients if necessary
-		if(this.targetWidth > this.targetCurrentWidth)
+		if(source.getOriginalImageWidth() > this.targetCurrentWidth)
 		{
-			if(source.isSubOutput())
-				IJ.log("Adapting coefficients from " + this.sourceCurrentWidth + " to " + this.sourceWidth);
+			if(source.isSubOutput() || target.isSubOutput())
+				IJ.log("Adapting coefficients from " + this.sourceCurrentWidth + " to " + this.originalSourceIP.getWidth() + "...");
 			// Adapt the transformation to the new image size
-			double targetFactorY = (targetHeight-1) / (targetCurrentHeight-1);
-			double targetFactorX = (targetWidth-1) / (targetCurrentWidth -1);
+			double targetFactorY = (target.getOriginalImageHeight() - 1) / (targetCurrentHeight-1);
+			double targetFactorX = (target.getOriginalImageWidth()  - 1) / (targetCurrentWidth -1);
 
 			for (int i=0; i<intervals+3; i++)
 				for (int j=0; j<intervals+3; j++)
 				{
 					cxTargetToSource[i][j] *= targetFactorX;
-					cyTargetToSource[i][j] *= targetFactorY;
+					cyTargetToSource[i][j] *= targetFactorY;					
 				}
-			this.targetCurrentHeight = this.targetHeight;
-			this.targetCurrentWidth  = this.targetWidth;
-			this.sourceCurrentHeight = this.sourceHeight;
-			this.sourceCurrentWidth  = this.sourceWidth;
+			this.targetCurrentHeight = target.getOriginalImageHeight();
+			this.targetCurrentWidth  = target.getOriginalImageWidth();
+			this.sourceCurrentHeight = source.getOriginalImageHeight();
+			this.sourceCurrentWidth  = source.getOriginalImageWidth();
 		}
-
-		// Show results.
-		//showTransformationMultiThread(intervals, cxTargetToSource, cyTargetToSource, false);
 
 		// Display final errors.		
 		if(this.outputLevel == 2)
@@ -1078,14 +1036,6 @@ public class Transformation
 			}
 		}
 		
-
-		// Save transformations.
-		/*
-		if (saveTransf)
-		{
-			saveTransformation(intervals, cxTargetToSource, cyTargetToSource, false);
-		}
-		*/
 	} /* end doUnidirectionalRegistration */
 	
 
@@ -1155,7 +1105,7 @@ public class Transformation
 	}
 
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Get the deformation from the corresponding coefficients.
 	 *
@@ -1182,7 +1132,7 @@ public class Transformation
 		
 	} // end getDeformation
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Get the direct deformation X coefficients.
 	 *
@@ -1194,7 +1144,7 @@ public class Transformation
 		
 	} // end getDirectDeformationCoefficientsX	
 	
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Get the direct deformation Y coefficients.
 	 *
@@ -1206,7 +1156,7 @@ public class Transformation
 		
 	} // end getDirectDeformationCoefficientsY
 	
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Get the inverse deformation X coefficients.
 	 *
@@ -1218,7 +1168,7 @@ public class Transformation
 		
 	} // end getInverseDeformationCoefficientsX
 	
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Get the inverse deformation Y coefficients.
 	 *
@@ -1230,7 +1180,7 @@ public class Transformation
 		
 	} // end getInverseDeformationCoefficientsY
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Get the current number of intervals between B-spline coefficients.
 	 *
@@ -1242,7 +1192,7 @@ public class Transformation
 		
 	} // end getIntervals
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Apply the current transformation to a given point.
 	 *
@@ -1280,7 +1230,7 @@ public class Transformation
        Private methods
     ....................................................................*/
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Build the matrix for the landmark interpolation.
 	 *
@@ -1323,7 +1273,7 @@ public class Transformation
 		}
 	}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Build matrix Rq1q2.
 	 */
@@ -1335,7 +1285,7 @@ public class Transformation
 			boolean bIsReverse)
 	{build_Matrix_Rq1q2q3q4(intervals, weight, q1, q2, q1, q2, R, bIsReverse);}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Build matrix Rq1q2q3q4.
 	 */
@@ -1396,7 +1346,7 @@ public class Transformation
 					}
 	}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Compute the following integral
 	 *<P>
@@ -1451,7 +1401,7 @@ public class Transformation
 		return integral;
 	}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Compute the following integral
 	 *<PRE>
@@ -1506,7 +1456,7 @@ public class Transformation
 		return integral*h;
 	}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 *<P>
 	 *<PRE>
@@ -1558,7 +1508,7 @@ public class Transformation
 		return IxFp-Ix0p;
 	}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Build matrix R, get eta.
 	 */
@@ -1595,7 +1545,7 @@ public class Transformation
 			}
 	}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Build matrix R, get eta index.
 	 */
@@ -1634,7 +1584,7 @@ public class Transformation
 		return true;
 	}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Build regularization temporary.
 	 *
@@ -1682,7 +1632,7 @@ public class Transformation
 		build_Matrix_Rq1q2q3q4(intervals,-2*curlWeight, 1, 1, 2, 0, P12, bIsReverse);
 	}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Compute the affine matrix.
 	 *
@@ -1702,8 +1652,6 @@ public class Transformation
 		// Auxiliary variables to calculate inverse transformation
 		PointHandler auxSourcePh = sourcePh;
 		PointHandler auxTargetPh = targetPh;
-		Mask auxSourceMsk = sourceMsk;
-		Mask auxTargetMsk = targetMsk;
 		BSplineModel auxSource = source;
 		BSplineModel auxTarget = target;
 		double auxFactorWidth = this.targetFactorWidth;
@@ -1713,8 +1661,6 @@ public class Transformation
 		{
 			auxSourcePh = targetPh;
 			auxTargetPh = sourcePh;
-			auxSourceMsk = targetMsk;
-			auxTargetMsk = sourceMsk;
 			auxSource = target;
 			auxTarget = source;
 			auxFactorWidth = this.sourceFactorWidth;
@@ -1730,17 +1676,7 @@ public class Transformation
 		else                   targetVector = new Vector <Point>();
 
 		int removeLastPoint = 0;
-
-		if (false)
-		{
-			removeLastPoint = auxSourceMsk.numberOfMaskPoints();
-			for (int i=0; i<removeLastPoint; i++)
-			{
-				sourceVector.addElement(auxSourceMsk.getPoint(i));
-				targetVector.addElement(auxTargetMsk.getPoint(i));
-			}
-		}
-
+					
 		int n = targetVector.size();
 		switch (n)
 		{
@@ -1858,7 +1794,7 @@ public class Transformation
 		return(X);
 	} /* end computeAffineMatrix */
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Compute the affine residues for the landmarks.
 	 * <p>
@@ -1868,6 +1804,7 @@ public class Transformation
 	 * @param dx Output, difference in x for each landmark
 	 * @param dy Output, difference in y for each landmark
 	 * @param bIsReverse determines the transformation direction (source-target=TRUE or target-source=FALSE)
+	 * @deprecated
 	 */
 	private void computeAffineResidues(
 			final double[][] affineMatrix,               // Input
@@ -1917,7 +1854,7 @@ public class Transformation
 		}
 	}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Compute the coefficients at this scale.
 	 *
@@ -1968,7 +1905,7 @@ public class Transformation
 		}
 		return underconstrained;
 	}
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Compute the coefficients scale with regularization.
 	 *
@@ -2094,7 +2031,7 @@ public class Transformation
 		return underconstrained;
 	}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Compute the initial residues for the landmarks.
 	 * <p>
@@ -2103,6 +2040,7 @@ public class Transformation
 	 * @param dx output, difference in x for each landmark
 	 * @param dy output, difference in y for each landmark
 	 * @param bIsReverse determines the transformation direction (source-target=TRUE or target-source=FALSE)
+	 * @deprecated
 	 */
 	private void computeInitialResidues(
 			final double[] dx,                           // output, difference in x for each landmark
@@ -2146,7 +2084,7 @@ public class Transformation
 		}
 	}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Compute the deformation.
 	 *
@@ -2241,7 +2179,7 @@ public class Transformation
 			this.intervals = intervals;
 		}
 	
-		/*------------------------------------------------------------------*/
+		//------------------------------------------------------------------
 		/**
 		 * Run method to calculate the corresponding X or Y transformation
 		 * table.
@@ -2265,7 +2203,7 @@ public class Transformation
 	} /* end ConcurrentDeformation class */
 	
 	
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Compute the rotation matrix.
 	 *
@@ -2410,7 +2348,7 @@ public class Transformation
 		return(X);
 	} /* end computeRotationMatrix */
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Compute the scale residues.
 	 * <p>
@@ -2423,6 +2361,7 @@ public class Transformation
 	 * @param dx input/output, X residues
 	 * @param dy input/output, Y residues
 	 * @param bIsReverse determines the transformation direction (target-source=FALSE or source-target=TRUE)
+	 * @deprecated
 	 */
 	private void computeScaleResidues(
 			int intervals,                                  // input, number of intervals
@@ -2490,12 +2429,12 @@ public class Transformation
 
 	/*--------------------------------------------------------------------------*/
 	/**
-	 * This code is an excerpt from doRegistration() to compute the exact
+	 * This code is an excerpt from doBidirectionalRegistration() to compute the exact
 	 * number of steps.
 	 */
 	private void computeTotalWorkload()
 	{
-		// This code is an excerpt from doRegistration() to compute the exact
+		// This code is an excerpt from doBidirectionalRegistration() to compute the exact
 		// number of steps
 
 		// Now refine with the different scales
@@ -4073,7 +4012,12 @@ public class Transformation
 
 		// Solve he equation system
 		/* SVD u=u*w*v^t */
-		update=MathTools.linearLeastSquares(u,g);
+		update = MathTools.linearLeastSquares(u,g);
+		if(update == null)
+		{
+			IJ.error("Error when calculating linear least square solution...");
+			return;
+		}
 
 		/* x = x - update */
 		kr=0;
@@ -4447,7 +4391,7 @@ public class Transformation
 		this.swyTargetToSource.precomputed_prepareForInterpolation(
 				target.getCurrentHeight(), target.getCurrentWidth(), intervals);
 
-		/* First computation of the energy */
+		// First computation of the energy (similarity + landmarks + regularization)
 		//f = evaluateSimilarity(x, intervals, grad, false, false, false);
 		f = evaluateSimilarityMultiThread(x, intervals, grad, false, false);
 
@@ -4714,7 +4658,7 @@ public class Transformation
 		return newc;
 	}
 	
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Save source transformation. GUI mode. 
 	 */
@@ -4722,7 +4666,7 @@ public class Transformation
 	{
 		saveTransformation(intervals, cxTargetToSource, cyTargetToSource, false);		
 	} 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Save target transformation. GUI mode. 
 	 */
@@ -4731,7 +4675,7 @@ public class Transformation
 		saveTransformation(intervals, cxSourceToTarget, cySourceToTarget, true);
 	}
 	
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Save the transformation.
 	 *
@@ -4791,7 +4735,7 @@ public class Transformation
 		MiscTools.saveElasticTransformation(intervals, cx, cy, filename);
 	}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Compute and draw the final deformation grid.
 	 *
@@ -4874,7 +4818,7 @@ public class Transformation
 			is.addSlice("Deformation Grid",fp.convertToRGB());
 	}
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Compute and draw the final deformation vectors.
 	 *
@@ -5042,8 +4986,8 @@ public class Transformation
 		BSplineModel auxSource = source;
 		Mask auxTargetMsk = targetMsk;
 		Mask auxSourceMsk = sourceMsk;
-		int auxTargetWidth = this.targetWidth;
-		int auxTargetHeight = this.targetHeight;		
+		int auxTargetWidth = this.originalTargetIP.getWidth();
+		int auxTargetHeight = this.originalTargetIP.getHeight();		
 		ImageProcessor originalIP = this.originalSourceIP;
 
 		// Change if necessary
@@ -5053,8 +4997,8 @@ public class Transformation
 			auxSource = target;
 			auxTargetMsk = sourceMsk;
 			auxSourceMsk = targetMsk;
-			auxTargetWidth = this.sourceWidth;
-			auxTargetHeight = this.sourceHeight;
+			auxTargetWidth = this.originalSourceIP.getWidth();
+			auxTargetHeight = this.originalSourceIP.getHeight();
 			originalIP = this.originalTargetIP;
 		}
 		
@@ -5066,15 +5010,30 @@ public class Transformation
 		BSplineModel swx = new BSplineModel(cx);
 		BSplineModel swy = new BSplineModel(cy);
 
-		// We compute the deformation (transformation_x and transformation_y) in the fly
+		// We compute the deformation (transformation_x and transformation_y) on the fly
 
 		/* GRAY SCALE IMAGES */
 		if(!(originalIP instanceof ColorProcessor))
 		{
 			final FloatProcessor fp = new FloatProcessor(auxTargetWidth, auxTargetHeight);
 			final FloatProcessor fp_mask = new FloatProcessor(auxTargetWidth, auxTargetHeight);
-			final FloatProcessor fp_target = new FloatProcessor(auxTargetWidth, auxTargetHeight, auxTarget.getImage());
-									
+			final FloatProcessor fp_target = new FloatProcessor(auxTargetWidth, auxTargetHeight, auxTarget.getOriginalImage());
+			
+			
+			// take original processor if necessary
+			if(auxSource.getOriginalImageWidth() > auxSource.getWidth())
+			{
+				auxSource = new BSplineModel( originalIP, false, 1);
+				auxSource.setPyramidDepth(0);
+				auxSource.startPyramids();			
+
+				// Join thread
+				try {
+					auxSource.getThread().join();				
+				} catch (InterruptedException e) {
+					IJ.error("Unexpected interruption exception " + e);
+				}
+			}
 
 			// Check the number of processors in the computer 
 			int nproc = Runtime.getRuntime().availableProcessors();
@@ -5146,9 +5105,7 @@ public class Transformation
 				is.addSlice("Warped Source Mask",fp_mask);					
 		}
 		else /* COLOR IMAGES */
-		{
-
-			
+		{			
 			// red
 			BSplineModel sourceR = new BSplineModel( ((ColorProcessor) originalIP).toFloat(0, null), false, 1);
 			sourceR.setPyramidDepth(0);
@@ -5161,7 +5118,7 @@ public class Transformation
 			BSplineModel sourceB = new BSplineModel( ((ColorProcessor) originalIP).toFloat(2, null), false, 1);
 			sourceB.setPyramidDepth(0);
 			sourceB.startPyramids();
-
+			
 			// Join threads
 			try {
 				sourceR.getThread().join();
@@ -5297,7 +5254,7 @@ public class Transformation
 		final private FloatProcessor fp;
 		final private FloatProcessor fp_mask;
 		
-		/*------------------------------------------------------------------*/
+		//------------------------------------------------------------------
 		/**
 		 * Grayscale result tile maker constructor
 		 * 
@@ -5335,7 +5292,7 @@ public class Transformation
 			this.fp_mask = fp_mask;
 		}
 	
-		/*------------------------------------------------------------------*/
+		//------------------------------------------------------------------
 		/**
 		 * Run method to update the intermediate window. Only the part defined by
 		 * the rectangle will be updated (in this thread).
@@ -5417,7 +5374,7 @@ public class Transformation
 		final private FloatProcessor fpB;
 		final private ColorProcessor cp_mask;
 				
-		/*------------------------------------------------------------------*/
+		//------------------------------------------------------------------
 		/**
 		 * Color result tile maker constructor
 		 * 
@@ -5467,7 +5424,7 @@ public class Transformation
 			this.cp_mask = cp_mask;
 		}
 	
-		/*------------------------------------------------------------------*/
+		//------------------------------------------------------------------
 		/**
 		 * Run method to update the intermediate window. Only the part defined by
 		 * the rectangle will be updated (in this thread).
@@ -5802,9 +5759,9 @@ public class Transformation
 		if(auxSource.isSubOutput())
 			output_ip.show();
 		
-	}	/* end showTransformation */
+	}	// end showTransformation 
 	
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Method to update both current outputs
 	 * (source-target and target-source).
@@ -5836,7 +5793,7 @@ public class Transformation
 		update_current_output(x1, intervals, false);
 		update_current_output(x2, intervals, true);
 	}
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Method to update a current output (multi-thread).
 	 *
@@ -5968,16 +5925,28 @@ public class Transformation
 		output_ip.updateAndDraw();
 		
 		// Draw the grid on the target image ...............................
+		
+		// We take the values from the original image
+		auxTargetHeight = bIsReverse ? this.originalSourceIP.getHeight() : this.originalTargetIP.getHeight();
+		auxTargetWidth = bIsReverse ? this.originalSourceIP.getWidth() : this.originalTargetIP.getWidth();
+		auxSourceHeight = bIsReverse ? this.originalTargetIP.getHeight() : this.originalSourceIP.getHeight();
+		auxSourceWidth = bIsReverse ? this.originalTargetIP.getWidth() : this.originalSourceIP.getWidth();
+		
+		auxFactorWidth = (double) auxTargetCurrentWidth / auxTargetWidth;
+		auxFactorHeight = (double) auxTargetCurrentHeight / auxTargetHeight;
+		
+			
+		
 		// Some initialization
 		int stepv = Math.min(Math.max(10, auxTargetHeight/15), 60);
 		int stepu = Math.min(Math.max(10, auxTargetWidth/15), 60);
-		final double transformedImage [][]=new double [auxSourceHeight][auxSourceWidth];
+		final double transformedImage [][] = new double [auxSourceHeight][auxSourceWidth];
 		double grid_colour = -1e-10;
 		uv = 0;
 		for (int v=0; v<auxSourceHeight; v++)
 			for (int u=0; u<auxSourceWidth; u++,uv++)
 			{
-				transformedImage[v][u] = auxSource.getImage()[uv];
+				transformedImage[v][u] = auxSource.getOriginalImage()[uv];
 				if (transformedImage[v][u]>grid_colour) 
 					grid_colour = transformedImage[v][u];
 			}
@@ -6008,14 +5977,14 @@ public class Transformation
 				int uh=u+stepu;
 				if (uh<auxTargetWidth+stepu)
 				{
-					double down_uh = uh * auxFactorWidth;
+					final double down_uh = uh * auxFactorWidth;
 					final double tuh = (double)(down_uh * intervals)/(double)(auxTargetCurrentWidth -1) + 1.0F;
 					swx.prepareForInterpolation(tuh,tv,ORIGINAL);
-					double xh=swx.interpolateI();
+					final double xh = swx.interpolateI();
 					swy.prepareForInterpolation(tuh,tv,ORIGINAL);
-					double yh=swy.interpolateI();
-					double up_xh = xh / auxFactorWidth;
-					double up_yh = yh / auxFactorHeight;
+					final double yh = swy.interpolateI();
+					final double up_xh = xh / auxFactorWidth;
+					final double up_yh = yh / auxFactorHeight;
 					MiscTools.drawLine(
 							transformedImage,
 							(int)Math.round(up_x) ,(int)Math.round(up_y),
@@ -6028,8 +5997,10 @@ public class Transformation
 				{
 					double down_vv= vv * auxFactorHeight;
 					final double tvv = (double)(down_vv * intervals)/(double)(auxTargetCurrentHeight-1) + 1.0F;
-					swx.prepareForInterpolation(tu,tvv,ORIGINAL); double xv=swx.interpolateI();
-					swy.prepareForInterpolation(tu,tvv,ORIGINAL); double yv=swy.interpolateI();
+					swx.prepareForInterpolation(tu,tvv,ORIGINAL); 
+					double xv=swx.interpolateI();
+					swy.prepareForInterpolation(tu,tvv,ORIGINAL); 
+					double yv=swy.interpolateI();
 					double up_xv=xv / auxFactorWidth;
 					double up_yv=yv / auxFactorHeight;
 					MiscTools.drawLine(
@@ -6072,7 +6043,7 @@ public class Transformation
 		final Rectangle rect;
 		final private FloatProcessor fp;
 		
-		/*------------------------------------------------------------------*/
+		//------------------------------------------------------------------
 		/**
 		 * Output tile maker constructor
 		 * 
@@ -6089,18 +6060,19 @@ public class Transformation
 		 * @param rect retangle with the coordinates of the output image to be updated
 		 * @param fp processor to be updated 
 		 */
-		OutputTileMaker(BSplineModel swx, 
-		 		  BSplineModel swy, 
-		 		  BSplineModel auxSource,
-		 		  BSplineModel auxTarget,		 		  
-		 		  Mask auxSourceMsk,
-		 		  Mask auxTargetMsk,
-		 		  double auxFactorWidth,
-		 		  double auxFactorHeight,
-		 		  int auxTargetCurrentHeight,
-		 		  int auxTargetCurrentWidth,	
-				  Rectangle rect, 
-				  FloatProcessor fp)
+		OutputTileMaker(
+				final BSplineModel swx, 
+		 		final BSplineModel swy, 
+		 		final BSplineModel auxSource,
+		 		final BSplineModel auxTarget,		 		  
+		 		final Mask auxSourceMsk,
+		 		final Mask auxTargetMsk,
+		 		final double auxFactorWidth,
+		 		final double auxFactorHeight,
+		 		final int auxTargetCurrentHeight,
+		 		final int auxTargetCurrentWidth,	
+		 		final Rectangle rect, 
+		 		final FloatProcessor fp)
 		{
 			this.swx = swx;
 			this.swy = swy;
@@ -6116,7 +6088,7 @@ public class Transformation
 			this.fp = fp;
 		}
 	
-		/*------------------------------------------------------------------*/
+		//------------------------------------------------------------------
 		/**
 		 * Run method to update the intermediate window. Only the part defined by
 		 * the rectangle will be updated (in this thread).
@@ -6128,8 +6100,10 @@ public class Transformation
 			int auxTargetWidth = rect.x + rect.width;
 			
 			// Subsampling (output) factors
-			final int subFactorT = this.auxTarget.getWidth() / this.auxTarget.getSubWidth();
-			final int subFactorS = this.auxSource.getWidth() / this.auxSource.getSubWidth();
+			// Note: we get them from original image, since they will be used in the masks and the
+			//       masks store the information relative to the original sizes (without scaling).
+			final int subFactorT = this.auxTarget.getOriginalImageWidth() / this.auxTarget.getSubWidth();
+			final int subFactorS = this.auxSource.getOriginalImageWidth() / this.auxSource.getSubWidth();
 			
 			final boolean fromSubT = (auxTarget.isSubOutput());
 			final boolean fromSubS = (auxSource.isSubOutput());
@@ -6168,10 +6142,10 @@ public class Transformation
 				}
 			}
 			
-		} /* end run */
-	} /* end OutputTileMaker class */
+		} // end run
+	} // end OutputTileMaker class 
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Calculate the cubic B-spline x weight.
 	 *
@@ -6205,7 +6179,7 @@ public class Transformation
 		return(b);
 	} /* end xWeight */
 
-	/*------------------------------------------------------------------*/
+	//------------------------------------------------------------------
 	/**
 	 * Calculate the cubic B-spline y weight.
 	 *
@@ -6257,9 +6231,9 @@ public class Transformation
 	
 	private double evaluateSimilarityMultiThread(
 			final double []c,
-			final int      intervals,
+			final int intervals,
 			double []grad,
-			final boolean  only_image,
+			final boolean only_image,
 			boolean bIsReverse)
 	{
 
@@ -6565,18 +6539,18 @@ public class Transformation
 		 * @param result output results: image similarity value for the current rectangle and number of pixels that have been evaluated
 		 * @param rect rectangle containing the area of the image to be evaluated
 		 */
-		EvaluateSimilarityTile(BSplineModel auxTarget,
-							   BSplineModel auxSource,
-							   Mask auxTargetMsk,
-							   Mask auxSourceMsk,
-							   BSplineModel swx,
-							   BSplineModel swy,
-							   double auxFactorWidth,
-							   double auxFactorHeight,
-							   int intervals,
-							   double[] grad,
-							   double[] result,
-							   Rectangle rect)
+		EvaluateSimilarityTile(final BSplineModel auxTarget,
+							   final BSplineModel auxSource,
+							   final Mask auxTargetMsk,
+							   final Mask auxSourceMsk,
+							   final BSplineModel swx,
+							   final BSplineModel swy,
+							   final double auxFactorWidth,
+							   final double auxFactorHeight,
+							   final int intervals,
+							   final double[] grad,
+							   final double[] result,
+							   final Rectangle rect)
 		{
 			this.auxTarget = auxTarget;
 			this.auxSource = auxSource;
@@ -6599,7 +6573,7 @@ public class Transformation
 			this.rect = rect;
 		}
 
-		/*------------------------------------------------------------------*/
+		//------------------------------------------------------------------
 		/**
 		 * Run method to evaluate the similarity of source and target images. 
 		 * Only the part defined by the rectangle will be evaluated.

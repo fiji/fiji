@@ -48,9 +48,9 @@ import ij.process.ShortProcessor;
 public class CommonFunctions
 {
 	public static String[] methodList = {"Average", "Linear Blending", "Max. Intensity", "Min. Intensity", "Red-Cyan Overlay"};	
-	public final static int AVG = 0, LIN_BLEND = 1,  MAX = 2, MIN = 3, RED_CYAN = 4;
+	public final static int AVG = 0, LIN_BLEND = 1,  MAX = 2, MIN = 3, RED_CYAN = 4, NONE = 5;
 
-	public static String[] methodListCollection = {"Average", "Linear Blending", "Max. Intensity", "Min. Intensity"};	
+	public static String[] methodListCollection = {"Average", "Linear Blending", "Max. Intensity", "Min. Intensity", "None"};	
 	public static String[] rgbTypes = {"rgb", "rbg", "grb", "gbr", "brg", "bgr"}; 
 	public static String[] colorList = { "Red", "Green", "Blue", "Red and Green", "Red and Blue", "Green and Blue", "Red, Green and Blue" };
 	

@@ -1,7 +1,7 @@
 package bunwarpj;
 
 /**
- * bUnwarpJ plugin for ImageJ(C).
+ * bUnwarpJ plugin for ImageJ/Fiji.
  * Copyright (C) 2005-2009 Ignacio Arganda-Carreras and Jan Kybic 
  *
  * More information at http://biocomp.cnb.csic.es/%7Eiarganda/bUnwarpJ/
@@ -26,7 +26,6 @@ package bunwarpj;
 \===================================================================*/
 
 /*------------------------------------------------------------------*/
-import ij.ImagePlus;
 
 import java.awt.Button;
 import java.awt.Dialog;
@@ -41,12 +40,18 @@ import java.awt.event.ActionListener;
  * Class to clear all the processes and actions in bUnwarpJ.
  */
 public class ClearAll extends Dialog implements ActionListener
-{ /* begin class ClearAll */
+{/* begin class ClearAll */
+	
+
 
     /*....................................................................
        Private variables
     ....................................................................*/
 
+	/**
+	 * Generated serial version UID
+	 */
+	private static final long serialVersionUID = 2082815245983765787L;
     /** point handler for source image */
     private PointHandler sourcePh;
     /** point handler for target image */

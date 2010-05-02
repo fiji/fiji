@@ -48,6 +48,11 @@ import java.io.StringWriter;
 import java.io.PrintWriter;
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
 
 /**
  *  This class looks through the plugins directory for files with a
@@ -83,6 +88,15 @@ abstract public class RefreshScripts implements PlugIn {
 
 	protected String scriptExtension;
 	protected String languageName;
+
+	/** Default values: the system's. */
+	protected OutputStream out = System.out,
+		               err = System.err;
+
+	public void setOutputStreams(OutputStream out, OutputStream err) {
+		if (null != out) this.out = out;
+		if (null != err) this.err = err;
+	}
 
 	public void setLanguageProperties( String scriptExtension, String languageName ) {
 		this.scriptExtension = scriptExtension;
@@ -161,6 +175,9 @@ abstract public class RefreshScripts implements PlugIn {
 			return true;
 
 		if (scriptExtension.equals(".java"))
+			return true;
+
+		if (command.startsWith(getClass().getName() + "("))
 			return true;
 
 		IJ.log("The script " + filename + " would override "
@@ -263,6 +280,8 @@ abstract public class RefreshScripts implements PlugIn {
 	// This is just for recursion; call the addFromDirectory(String,int)
 	// method instead
 	private void addFromDirectory( String topLevelDirectory, String subPath, int depth, int maxDepth ) {
+		if (subPath.equals(".rsrc") || subPath.endsWith("/.rsrc"))
+			return;
 		File f = new File(topLevelDirectory + File.separator + subPath );
 		if (f.isDirectory() ) {
 			if (maxDepth >= 0 && depth >= maxDepth)
@@ -364,22 +383,33 @@ abstract public class RefreshScripts implements PlugIn {
 	}
 
 	/** Run the script in a new thread. */
-	abstract protected void runScript(String filename);
+	abstract public void runScript(InputStream istream);
+
+	/** Run the script in a new thread. */
+	abstract public void runScript(String filename);
 
 	static public void printError(Throwable t) {
-		final StringWriter w = new StringWriter();
-		final PrintWriter pw = new PrintWriter(w);
-		t.printStackTrace(pw);
-		pw.close();
-		IJ.log(w.toString());
+		IJ.handleException(t);
 	}
 
+	// TODO rename to readText
         static public final String openTextFile(final String path) {
                 if (null == path || !new File(path).exists()) return null;
+		try {
+			// Stream will be closed in overloaded method:
+                        return openTextFile(new BufferedInputStream(new FileInputStream(path)));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	/** Will consume and close the stream. */
+        static public final String openTextFile(final InputStream istream) {
                 final StringBuffer sb = new StringBuffer();
 		BufferedReader r = null;
                 try {
-                        r = new BufferedReader(new FileReader(path));
+                        r = new BufferedReader(new InputStreamReader(istream));
                         while (true) {
                                 String s = r.readLine();
                                 if (null == s) break;
@@ -425,6 +455,8 @@ abstract public class RefreshScripts implements PlugIn {
 	}
 
 	protected static String discoverJars(String path) throws IOException {
+		if (path.equals(".rsrc") || path.endsWith("/.rsrc"))
+			return "";
                 File file = new File(path);
                 if (file.isDirectory()) {
 			String result = "";

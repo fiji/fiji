@@ -1,3 +1,6 @@
+#!/bin/sh
+''''exec "$(dirname "$0")"/../fiji --jython "$0" "$@" # (call again with fiji)'''
+
 # Test whether HandleExtraFileTypes.java tryPlugIn(<classname>) calls
 # will succeed, by testing if the class is in the classpath or in the plugins folder.
 

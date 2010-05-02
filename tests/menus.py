@@ -1,3 +1,6 @@
+#!/bin/sh
+''''exec "$(dirname "$0")"/../fiji --jython "$0" "$@" # (call again with fiji)'''
+
 # Test that ImageJ(A) can add to any menu, and that the result is
 # appropriately separated by a separator, and sorted alphabetically.
 

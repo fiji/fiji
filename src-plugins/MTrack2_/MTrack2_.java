@@ -156,7 +156,7 @@ public class MTrack2_ implements PlugInFilter, Measurements  {
 			float[] sxRes = rt.getColumn(ResultsTable.X_CENTROID);				
 			float[] syRes = rt.getColumn(ResultsTable.Y_CENTROID);
 			if (sxRes==null)
-				return;
+				continue;
 
 			for (int iPart=0; iPart<sxRes.length; iPart++) {
 				particle aParticle = new particle();

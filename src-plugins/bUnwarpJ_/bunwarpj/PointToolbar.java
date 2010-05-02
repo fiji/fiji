@@ -40,7 +40,8 @@ import java.awt.Graphics;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 /**
- * Class to deal with the point toolbar option in the bUnwarpJ interface.
+ * Class to deal with the point toolbar option in the bUnwarpJ interface:
+ * draw the toolbar and change between tools.
  */
 public class PointToolbar extends Canvas implements MouseListener
 { /* begin class PointToolbar */
@@ -49,6 +50,10 @@ public class PointToolbar extends Canvas implements MouseListener
        Private variables
     ....................................................................*/
 
+	/**
+	 * Generated serial version UID
+	 */
+	private static final long serialVersionUID = 4280253125939921252L;
 	/** number of tools */
 	private static final int NUM_TOOLS = 19;
 	/** size of toolbar */
@@ -112,9 +117,9 @@ public class PointToolbar extends Canvas implements MouseListener
 			final Toolbar previousToolbar,
 			final MainDialog dialog)
 	{
-		previousInstance = previousToolbar;
-		this.dialog      = dialog;
-		instance = this;
+		this.previousInstance = previousToolbar;
+		this.dialog = dialog;
+		this.instance = this;
 		final Container container = previousToolbar.getParent();
 		final Component[] component = container.getComponents();
 		for (int i = 0; (i < component.length); i++) {
