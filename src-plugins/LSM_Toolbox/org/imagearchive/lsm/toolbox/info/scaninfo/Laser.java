@@ -5,7 +5,7 @@ import java.util.LinkedHashMap;
 public class Laser{
 
     public LinkedHashMap<String, Object> records = new LinkedHashMap<String, Object>();
-
+    
     public Object[][] data = {
             { new Long(0x050000001), DataType.STRING, "LASER_NAME" },
             { new Long(0x050000002), DataType.LONG, "LASER_ACQUIRE" },

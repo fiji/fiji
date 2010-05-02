@@ -5,7 +5,7 @@ import java.awt.Container;
 import java.awt.GridBagConstraints;
 
 public class GUIMaker {
-
+	
 	public static Container addComponentToGrid(Component component,
 			Container container, int x, int y, int width, int height, int fill, int anchor,
 			double weightx, double weighty) {
@@ -21,5 +21,5 @@ public class GUIMaker {
 		container.add(component, constraints);
 		return container;
 	}
-
+	
 }

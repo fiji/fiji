@@ -59,10 +59,10 @@ public class AboutDialog extends JDialog {
 
 	private String infoText = "<html><center>LSM_Toolbox ver "
 			+ MasterModel.VERSION
-			+ " (C) 2008 Patrick Pirrotte </center></html>";
+			+ " (C) 2003-2009 Patrick Pirrotte </center></html>";
 
 	//private HtmlPageLoader loader;
-
+	
 	public AboutDialog(JFrame parent, MasterModel masterModel)
 			throws HeadlessException {
 		super(parent, true);
@@ -104,20 +104,20 @@ public class AboutDialog extends JDialog {
 		iconsetScroller.setViewportView(iconset);
 		helpScroller.setViewportView(help);
 		licenseScroller.setViewportView(license);
-
+		
 		tabber.addTab("About", aboutScroller);
 		tabber.addTab("Changelog", changelogScroller);
 		tabber.addTab("Help", helpScroller);
 		tabber.addTab("LSM_Toolbox Licence", licenseScroller);
 		tabber.addTab("Nuvola Iconset License", iconsetScroller);
-
+		
 		String loadingText = "Loading... please wait...";
 		about.setText(loadingText);
 		changelog.setText(loadingText);
 		help.setText(loadingText);
 		license.setText(loadingText);
 		iconset.setText(loadingText);
-
+		
 		about.setContentType("text/html");
 		about.setEditable(false);
 		changelog.setContentType("text/html");
@@ -128,10 +128,10 @@ public class AboutDialog extends JDialog {
 		license.setEditable(false);
 		help.setContentType("text/html");
 		help.setEditable(false);
-
+		
 		infoTitle.setBorder(BorderFactory.createEtchedBorder());
 		infoTitle.setHorizontalAlignment(JLabel.CENTER);
-
+		
 		getContentPane().add(infoTitle, BorderLayout.NORTH);
 		getContentPane().add(tabber, BorderLayout.CENTER);
 		getContentPane().add(okButton, BorderLayout.SOUTH);
@@ -148,7 +148,7 @@ public class AboutDialog extends JDialog {
 		Object[][] pages = new Object[][]{{about,"html/about.htm"},{changelog,"html/changelog.htm"},{iconset,"html/lgpl.txt"},{license,"html/licence.txt"},{help,"html/help.htm"}};
 		HtmlPageLoader loader = new HtmlPageLoader(this, pages);
 		loader.start();
-
+		
 	}
 
 	public void centerWindow() {

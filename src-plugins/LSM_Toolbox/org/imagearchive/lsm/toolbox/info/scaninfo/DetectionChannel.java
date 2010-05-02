@@ -5,7 +5,7 @@ import java.util.LinkedHashMap;
 public class DetectionChannel{
 
 	public LinkedHashMap<String, Object> records = new LinkedHashMap<String, Object>();
-
+    
 	public Object[][] data = {
 			{new Long(0x070000003),DataType.DOUBLE,"DETECTOR_GAIN"},       //DETECTION CHANNELS
             {new Long(0x070000005),DataType.DOUBLE,"AMPLIFIER_GAIN"},
@@ -31,7 +31,7 @@ public class DetectionChannel{
             {new Long(0x070000026),DataType.STRING,"DYE_NAME"},
             {new Long(0x070000027),DataType.STRING,"DYE_FOLDER"}
 	};
-
+	
 	public static boolean isDetectionChannels(long tagEntry) {
 		if (tagEntry == 0x060000000)
 			return true;

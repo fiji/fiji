@@ -81,7 +81,7 @@ public class BatchConverter {
 		try {
 			br = new BufferedReader(new FileReader(fileName));
 			String row = null;
-
+			
 			while ((row = br.readLine()) != null) {
 				String[] arr = row.split("\t");
 				String inputFile = arr[0];

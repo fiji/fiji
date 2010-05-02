@@ -11,18 +11,20 @@ import java.io.InputStreamReader;
 
 public class MasterModel {
 
-	private ServiceMediator serviceMediator;
+	//private ServiceMediator serviceMediator;
 
-	private Reader reader;
+	//private Reader reader;
 
-	public static final String VERSION = "4.0f";
+	private static MasterModel masterModel;
+	
+	public static final String VERSION = "4.0g";
 
 	public static boolean debugMode = false;
 
 	public static char micro = '\u00b5';
 
 	public static String micrometer = micro + "m";
-
+	
 	public static byte NONE = 0;
 
 	public static byte CHANNEL = 1;
@@ -38,23 +40,21 @@ public class MasterModel {
 
 	public String[] macros = new String[macroFiles.length];
 
+
+	public static MasterModel getMasterModel(){
+		if (masterModel == null) masterModel = new MasterModel();
+		return masterModel;
+	}
+	
 	public MasterModel() {
 		initializeModel();
 		registerServices();
 		readMacros();
 	}
-
-	public ServiceMediator getServiceMediator() {
-		return serviceMediator;
-	}
-
-	protected void setServiceMediator(ServiceMediator serviceMediator) {
-		this.serviceMediator = serviceMediator;
-	}
-
+	
 	public void initializeModel() {
-		serviceMediator = new ServiceMediator();
-		reader = new Reader(this);
+		//serviceMediator = new ServiceMediator();
+		//reader = new Reader();
 	}
 
 	public void readMacros() {
@@ -79,13 +79,10 @@ public class MasterModel {
 			}
 		}
 	}
-
-
+	
 	private void registerServices() {
-		serviceMediator.registerMasterModel(this);
-		ServiceMediator.registerReader(reader);
 	}
-
+	
 	/** *************************************************************************** */
 	public String getVersion() {
 		return VERSION;
@@ -117,7 +114,7 @@ public class MasterModel {
 			}
 			input.close();
 			ext_macro = sb.toString();
-
+			
 		} catch (IOException e) {
 			//probably no magic montage
 		}

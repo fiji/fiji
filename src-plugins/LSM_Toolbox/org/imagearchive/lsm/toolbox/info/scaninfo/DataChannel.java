@@ -5,9 +5,9 @@ import java.util.LinkedHashMap;
 public class DataChannel{
 
 	public LinkedHashMap<String, Object> records = new LinkedHashMap<String, Object>();
-
+	
 	public Object[][] data = {
-			{new Long(0x0D0000001),DataType.STRING,"DATA_NAME"},
+			{new Long(0x0D0000001),DataType.STRING,"DATA_NAME"}, 
             {new Long(0x0D0000004),DataType.LONG,"COLOR"},
             {new Long(0x0D0000005),DataType.LONG,"SAMPLETYPE"},
             {new Long(0x0D0000006),DataType.LONG,"BITS_PER_SAMPLE"},
@@ -27,9 +27,9 @@ public class DataChannel{
             {new Long(0x0D0000014),DataType.STRING,"DYE_NAME"},
             {new Long(0x0D0000015),DataType.STRING,"DYE_FOLDER"},
             {new Long(0x0D0000016),DataType.STRING,"SPECTRUM"},
-            {new Long(0x0D0000017),DataType.LONG,"ACQUIRE"}
+            {new Long(0x0D0000017),DataType.LONG,"ACQUIRE"}            
 	};
-
+	
 	public static boolean isDataChannels(long tagEntry) {
 		if (tagEntry == 0x0C0000000)
 			return true;
