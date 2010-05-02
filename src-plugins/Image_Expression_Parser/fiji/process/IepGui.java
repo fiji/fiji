@@ -34,9 +34,7 @@ import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
 import javax.swing.border.LineBorder;
 
-import org.nfunk.jep.JEP;
-import org.nfunk.jep.type.DoubleNumberFactory;
-
+import fiji.expressionparser.ImgLibParser;
 
 /**
  * <h2>GUI for the plugin {@link Image_Expression_Parser}</h2>
@@ -61,9 +59,10 @@ import org.nfunk.jep.type.DoubleNumberFactory;
  * <li>{@link #getImageMap()} to retrieve the couples Variable names - Images set by the user.
  * </ul>
  * <p>
+ * See {@link Image_Expression_Parser} for more information.
  * 
  * <p>
- * It was built in part using Jigloo GUI builder http://www.cloudgarden.com/jigloo/.
+ * This GUI was built in part using Jigloo GUI builder http://www.cloudgarden.com/jigloo/.
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com>
  */
 public class IepGui extends javax.swing.JFrame implements ImageListener, ActionListener, WindowListener {
@@ -82,7 +81,7 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 	 * FIELDS
 	 */
 	
-	private static final String PLUGIN_VERSION = "v1.1";
+	private static final String PLUGIN_VERSION = "v2.0";
 	private static final String PLUGIN_NAME = "Image Expression Parser";
 	
 	/** The GUI fires an ActionEvent with this command String when the quit button is pressed. */
@@ -97,13 +96,25 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 	 * in the info text box. */
 	public static final String[] MESSAGES = {		
 		"Enter an expression using canonical mathematical functions, and capital single " +
-		"letters as variable specifying the chosen image. Boolean operations are also supported.\n" +
+		"letters as variable specifying the chosen image.\n " +
+		"ImgLib algorithms are also supported. " +
 		"<p>" +
 		"Examples: <br>" +
 		"&nbsp&nbsp ■ 2*A<br>" +
 		"&nbsp&nbsp ■ A*(B+30)<br>" +
 		"&nbsp&nbsp ■ sqrt(A^2+B^2)*cos(C)<br>" +
 		"&nbsp&nbsp ■ A > B<br>" +
+		"&nbsp&nbsp ■ gauss(A, 0.8)<br>" +
+		"<p>" +
+		"<u>Supported ImgLib algorithms:</u><br>" +
+		"<table border=\"1\">" +
+		"<tr>" +
+		"<th>Description</th>" +
+		"<th>Syntax</th>" +
+		"</tr>"+
+		"<tr>"+
+		"<td>Gaussian convolution</td> <td>gauss(img, sigma)</td> "+
+		"</table> " +
 		"<p>" +
 		"<u>Supported functions:</u><br>" +
 		"<table border=\"1\">" +
@@ -151,19 +162,7 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 		"<td>Hyperbolic Tangent</td><td>tanh</td>" +
 		"</tr>"+
 		"<tr>" +
-		"<td>Hyperbolic Arc Sine</td><td>asinh</td>" +
-		"</tr>"+
-		"<tr>" +
-		"<td>Hyperbolic Arc Cosine</td><td>acosh</td>" +
-		"</tr>"+
-		"<tr>" +
-		"<td>Hyperbolic Arc Tangent</td><td>atanh</td>" +
-		"</tr>"+
-		"<tr>" +
-		"<td>Logarithm (base 10)</td><td>log</td>" +
-		"</tr>"+
-		"<tr>" +
-		"<td>Natural Logarithm</td><td>ln</td>" +
+		"<td>Natural Logarithm</td><td>log</td>" +
 		"</tr>"+
 		"<tr>" +
 		"<td>Exponential</td><td>exp</td>" +
@@ -178,24 +177,6 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 		"<td>Absolute Value</td><td>abs</td>" +
 		"</tr>"+
 		"<tr>" +
-		"<td>Modulus</td><td>mod</td>" +
-		"</tr>"+
-		"<tr>" +
-		"<td>Sum</td><td>sum</td>" +
-		"</tr>"+
-		"<tr>" +
-		"<td>Randon Number</td><td>rand</td>" +
-		"</tr>"+
-		"<tr>" +
-		"<td>'If' tests</td><td>if(condExpr,posExpr,negExpr)</td>" +
-		"</tr>"+
-		"<tr>" +
-		"<td>To String</td><td>str</td>" +
-		"</tr>"+
-		"<tr>" +
-		"<td>Binomial Function</td><td>binom(n,i)</td>" +
-		"</tr>"+
-		"<tr>" +
 		"<td>Round</td><td>round</td>" +
 		"</tr>"+
 		"<tr>" +
@@ -206,12 +187,6 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 		"</tr>"+
 		"<tr>" +
 		"<td>Boolean operators</td><td>!, &&, ||, <, >, !=, ==, >=, <=</td>" +	
-		"</tr>"+
-		"<tr>" +
-		"<td>Boolean true</td> <td>true</td>"+
-		"</tr>"+
-		"<tr>" +
-		"<td>Boolean false</td> <td>false</td>"+
 		"</table> ",
 		"No images are opened.",
 		"Image dimensions are incompatibles."
@@ -444,14 +419,16 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 	/**
 	 * Called when the user type something in the expression area. 
 	 */
+	@SuppressWarnings("unchecked")
 	private String getExpressionError() {
 		final String expression = (String) expressionField.getSelectedItem();
 		if ( (null == expression) || (expression.equals(""))  ) {
 			return "";
 		}
-		final JEP parser = new JEP(false, false, false, new DoubleNumberFactory());
+		final ImgLibParser parser = new ImgLibParser();
 		parser.addStandardConstants();
 		parser.addStandardFunctions();
+		parser.addImgLibAlgorithms();
 		for ( String var : variables ) {
 			parser.addVariable(var, null); // we do not care for value yet
 		}
