@@ -25,14 +25,27 @@ import fiji.expressionparser.function.ImgLibTangent;
 
 public class ImgLibParser <T extends RealType<T>> extends JEP {
 
+	/**
+	 * Creates a default ImgLib expression parser, with ImgLib operator set
+	 * {@link ImgLibOperatorSet} and {@link ImgLibNumberFactory} as number
+	 * factory.
+	 */
 	public ImgLibParser() {
 		super();
 		opSet = new ImgLibOperatorSet<T>();
+		numberFactory = new ImgLibNumberFactory();
 	}
 
+	/**
+	 * Creates an ImgLib expression parser by copying fields from an
+	 * existing {@link JEP} instance. However, we still use {@link ImgLibOperatorSet}
+	 * and {@link ImgLibNumberFactory}.
+	 * @param j  the source JEP
+	 */
 	public ImgLibParser(JEP j) {
 		super(j);
 		opSet = new ImgLibOperatorSet<T>();
+		numberFactory = new ImgLibNumberFactory();		
 	}
 
 	public ImgLibParser(boolean traverseIn, boolean allowUndeclaredIn,

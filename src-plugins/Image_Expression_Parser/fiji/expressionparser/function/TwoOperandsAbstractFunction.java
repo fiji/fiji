@@ -25,8 +25,8 @@ public abstract class TwoOperandsAbstractFunction <T extends RealType<T>> extend
 			
 			if (param2 instanceof Image<?>) {
 				result = evaluate((Image)param1, (Image)param2);
-			} else if (param2 instanceof Number) {
-				FloatType t2 = new FloatType(((Number) param2).floatValue());
+			} else if (param2 instanceof RealType) {
+				FloatType t2 = (FloatType) param2;
 				result = evaluate((Image)param1, t2);
 			} else {
 				throw new ParseException("In function '" + getFunctionString()
@@ -35,12 +35,12 @@ public abstract class TwoOperandsAbstractFunction <T extends RealType<T>> extend
 		
 		} else if (param1 instanceof Number) {
 
-			FloatType t1 = new FloatType(((Number)param1).floatValue());
+			FloatType t1 = (FloatType) param1;
 			
 			if (param2 instanceof Image<?>) {
 				result = evaluate((Image)param2, t1);
 			} else if (param2 instanceof Number) {
-				FloatType t2 = new FloatType(((Number)param2).floatValue());
+				FloatType t2 = (FloatType) param2;
 				result = new Float(evaluate(t1, t2));
 			} else {
 				throw new ParseException("In function '" + getFunctionString()

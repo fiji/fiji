@@ -25,9 +25,9 @@ public abstract class SingleOperandPixelBasedAbstractFunction <T extends RealTyp
 			
 				result = evaluate((Image)param);
 		
-		} else if (param instanceof Number) {
+		} else if (param instanceof RealType) {
 
-			FloatType t = new FloatType(((Number)param).floatValue());
+			FloatType t = (FloatType) param;
 			result = evaluate(t);
 			
 		} else {
