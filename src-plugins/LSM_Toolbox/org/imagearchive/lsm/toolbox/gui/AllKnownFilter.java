@@ -26,7 +26,7 @@ public class AllKnownFilter extends FileFilter {
 	public String getDescription() {
 		return "Show all known files (*.lsm, *.csv)";
 	}
-
+	
 	public static String getExtension(File f) {
 		String ext = null;
 		String s = f.getName();

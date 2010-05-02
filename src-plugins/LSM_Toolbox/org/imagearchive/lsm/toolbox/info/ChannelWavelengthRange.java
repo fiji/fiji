@@ -7,7 +7,7 @@ public class ChannelWavelengthRange {
 	public double[] StartWavelength;
 
 	public double[] EndWavelength;
-
+    
     public double[] LambdaStamps; //calculated: (StartWavelength+EndWavelength)/2
 
 }

@@ -3,7 +3,7 @@ package org.imagearchive.lsm.toolbox.info.scaninfo;
 import java.util.LinkedHashMap;
 
 public class Recording{
-
+  
 	public LinkedHashMap<String, Object> records = new LinkedHashMap<String, Object>();
 
     public static Object[][] data = {
@@ -64,7 +64,7 @@ public class Recording{
             { new Long(0x010000055), DataType.LONG, "CAMERA_FRAME_HEIGHT" },
     		{ new Long(0x010000056), DataType.DOUBLE, "CAMERA_OFFSETX" },
 			{ new Long(0x010000057), DataType.DOUBLE, "CAMERA_OFFSETY" }};
-
+    
     public static boolean isRecording(long tagEntry) {//268435456
         if (tagEntry == 0x010000000){
             return true;
@@ -78,6 +78,6 @@ public class Recording{
     public Marker[] markers;
 
     public Timer[] timers;
-
+    
     public Laser[] lasers;
 }

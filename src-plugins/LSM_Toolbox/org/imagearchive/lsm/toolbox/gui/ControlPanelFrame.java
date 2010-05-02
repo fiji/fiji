@@ -236,27 +236,21 @@ public class ControlPanelFrame extends JFrame {
 		});
 
 		initInfoFrame();
-		/*masterModel.addMasterModelListener(new MasterModelAdapter() {
-			public void LSMFileInfoChanged(MasterModelEvent evt) {
-				updateShowInfo();
-				if (masterModel.getCz().DimensionTime <= 1)
-					applyTStampItem.setEnabled(false);
-				else
-					applyTStampItem.setEnabled(true);
-				if (masterModel.getCz().DimensionZ <= 1)
-					applyZStampItem.setEnabled(false);
-				else
-					applyZStampItem.setEnabled(true);
-				if (masterModel.getCz().SpectralScan == 0)
-					applyLStampItem.setEnabled(false);
-				else if (masterModel.getCz().channelWavelength != null
-						&& masterModel.getCz().channelWavelength.Channels >= 1)
-					applyLStampItem.setEnabled(true);
-				pack();
-			}
-		});
-		*/
-		new CPDragAndDrop(masterModel, this);
+		/*
+		 * masterModel.addMasterModelListener(new MasterModelAdapter() { public
+		 * void LSMFileInfoChanged(MasterModelEvent evt) { updateShowInfo(); if
+		 * (masterModel.getCz().DimensionTime <= 1)
+		 * applyTStampItem.setEnabled(false); else
+		 * applyTStampItem.setEnabled(true); if (masterModel.getCz().DimensionZ
+		 * <= 1) applyZStampItem.setEnabled(false); else
+		 * applyZStampItem.setEnabled(true); if
+		 * (masterModel.getCz().SpectralScan == 0)
+		 * applyLStampItem.setEnabled(false); else if
+		 * (masterModel.getCz().channelWavelength != null &&
+		 * masterModel.getCz().channelWavelength.Channels >= 1)
+		 * applyLStampItem.setEnabled(true); pack(); } });
+		 */
+		new CPDragAndDrop(this);
 		invalidate();
 		pack();
 		baseFrameXlocation = (int) ((ScreenX) - (this.getWidth()));
@@ -271,7 +265,7 @@ public class ControlPanelFrame extends JFrame {
 	}
 
 	public void initInfoFrame() {
-		infoFrame = new InfoFrame(masterModel);
+		infoFrame = new InfoFrame();
 	}
 
 	private void addExitListener(final JButton button, final JFrame parent) {
@@ -299,7 +293,7 @@ public class ControlPanelFrame extends JFrame {
 	private void addOpenListener(final JButton button, final JFrame parent) {
 		button.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				final Reader reader = new Reader(masterModel);
+				final Reader reader = ServiceMediator.getReader();
 				SwingUtilities.invokeLater(new Runnable() {
 					public void run() {
 						try {
@@ -403,7 +397,6 @@ public class ControlPanelFrame extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 
 				SelectImageDialog id = new SelectImageDialog(parent,
-						masterModel,
 						"Select an lsm image to apply Z stamps to", false,
 						MasterModel.DEPTH);
 				int returnVal = id.showDialog();
@@ -462,7 +455,6 @@ public class ControlPanelFrame extends JFrame {
 		item.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				SelectImageDialog id = new SelectImageDialog(parent,
-						masterModel,
 						"Select an lsm image to apply time stamps to", false,
 						MasterModel.TIME);
 				int returnVal = id.showDialog();
@@ -515,7 +507,6 @@ public class ControlPanelFrame extends JFrame {
 		item.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				SelectImageDialog id = new SelectImageDialog(parent,
-						masterModel,
 						"Select an lsm image to apply lambda stamps to", false,
 						MasterModel.CHANNEL);
 				int returnVal = id.showDialog();
@@ -576,8 +567,7 @@ public class ControlPanelFrame extends JFrame {
 		item.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				SelectImageDialog id = new SelectImageDialog(parent,
-						masterModel, "Select an image to open with Image5D",
-						false);
+						"Select an image to open with Image5D", false);
 				int returnVal = id.showDialog();
 				if (returnVal == SelectImageDialog.OK_OPTION) {
 					final int[] imageVals = id.getSelected();
@@ -592,9 +582,11 @@ public class ControlPanelFrame extends JFrame {
 						public void run() {
 							try {
 								for (int i = 0; i < imageVals.length; i++) {
-									ImagePlus imp = WindowManager.getImage(imageVals[i]);
+									ImagePlus imp = WindowManager
+											.getImage(imageVals[i]);
 									reader.updateMetadata(imp);
-									LSMFileInfo openLSM = (LSMFileInfo) imp.getOriginalFileInfo();
+									LSMFileInfo openLSM = (LSMFileInfo) imp
+											.getOriginalFileInfo();
 									CZLSMInfoExtended cz = (CZLSMInfoExtended) ((ImageDirectory) openLSM.imageDirectories
 											.get(0)).TIF_CZ_LSMINFO;
 									Class i5Dc = null;
@@ -673,11 +665,10 @@ public class ControlPanelFrame extends JFrame {
 																ColorModel.class });
 
 										Method i5DsetFileInfo = o
-										.getClass()
-										.getMethod(
-												"setFileInfo",
-												new Class[] {
-														FileInfo.class});
+												.getClass()
+												.getMethod(
+														"setFileInfo",
+														new Class[] { FileInfo.class });
 
 										int position = 1;
 										for (int t = 0; t < cz.DimensionTime; t++) {
@@ -723,16 +714,20 @@ public class ControlPanelFrame extends JFrame {
 												new Object[] { imp
 														.getCalibration()
 														.copy() });
-										i5DsetFileInfo.invoke(o,
-												new Object[] { (LSMFileInfo)imp
-														.getOriginalFileInfo()});
+										i5DsetFileInfo
+												.invoke(
+														o,
+														new Object[] { (LSMFileInfo) imp
+																.getOriginalFileInfo() });
 										i5Dshow.invoke(o, new Object[] {});
 										((ImageWindow) i5DgetWindow.invoke(o,
 												new Object[] {}))
 												.addWindowFocusListener(new ImageFocusListener());
 
-										ServiceMediator.getInfoFrame().updateInfoFrame();
-										ServiceMediator.getDetailsFrame().updateTreeAndLabels();
+										ServiceMediator.getInfoFrame()
+												.updateInfoFrame();
+										ServiceMediator.getDetailsFrame()
+												.updateTreeAndLabels();
 									} catch (IllegalArgumentException ex) {
 										ex.printStackTrace();
 									} catch (InstantiationException ex) {
@@ -762,9 +757,7 @@ public class ControlPanelFrame extends JFrame {
 		item.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				SelectImageDialog id = new SelectImageDialog(
-						parent,
-						masterModel,
-						"Select one or more channels to open with HyperVolume_Browser",
+						parent,"Select one or more channels to open with HyperVolume_Browser",
 						true);
 				int returnVal = id.showDialog();
 				if (returnVal == SelectImageDialog.OK_OPTION) {
@@ -776,7 +769,7 @@ public class ControlPanelFrame extends JFrame {
 								JOptionPane.ERROR_MESSAGE);
 						return;
 					}
-					Reader reader  = ServiceMediator.getReader();
+					Reader reader = ServiceMediator.getReader();
 					for (int i = 0; i < imageVals.length; i++) {
 						ImagePlus imp = WindowManager.getImage(imageVals[i]);
 						reader.updateMetadata(imp);
@@ -785,7 +778,7 @@ public class ControlPanelFrame extends JFrame {
 							LSMFileInfo lsm = (LSMFileInfo) fi;
 							CZLSMInfoExtended cz = (CZLSMInfoExtended) ((ImageDirectory) lsm.imageDirectories
 									.get(0)).TIF_CZ_LSMINFO;
-							//System.err.println("dimz:" + cz.DimensionZ);
+							// System.err.println("dimz:" + cz.DimensionZ);
 							// if (cz.DimensionZ/imageVals.length)
 							// long depth = (long) (cz.DimensionZ /
 							// imageVals.length);

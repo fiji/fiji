@@ -6,11 +6,11 @@
   <property name="build" location="bin" />
   <property name="dist"  location="dist" />
 
-	<!--<property name="pluginsDir"  location="C:/Users/Patrick/Desktop/ImageJ/plugins/Input-Output" />
+	<!--<property name="pluginsDir"  location="C:/Users/Patrick/Desktop/ImageJ/plugins/Input-Output" /> 
 -->
 	 <property name="pluginsDir"  location="$basedir/../../ij/plugins/" />
 
-
+	
   <property name="user.name" value="Patrick Pirrotte" />
 <target name="main" depends="compress" description="Main target">
 	<echo>

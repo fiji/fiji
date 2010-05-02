@@ -35,11 +35,10 @@ public class NotesDialog extends JDialog {
 
 	private JPanel panel;
 
-	private MasterModel masterModel;
+	private MasterModel masterModel = MasterModel.getMasterModel();
 
-	public NotesDialog(JFrame parent, boolean modal, MasterModel masterModel) {
+	public NotesDialog(JFrame parent, boolean modal) {
 		super(parent, modal);
-		this.masterModel = masterModel;
 		initializeGUI();
 	}
 
@@ -90,7 +89,7 @@ public class NotesDialog extends JDialog {
 		if (imp == null) return;
 		if (imp.getOriginalFileInfo() instanceof LSMFileInfo){
 			LSMFileInfo lsm = (LSMFileInfo)imp.getOriginalFileInfo();
-
+			
 		ArrayList<ImageDirectory> imageDirectories = lsm.imageDirectories;
 		ImageDirectory imDir = (ImageDirectory)(imageDirectories.get(0));
 		if (imDir == null) return;

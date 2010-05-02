@@ -5,7 +5,7 @@ import java.util.LinkedHashMap;
 public class Marker{
 
 	public LinkedHashMap<String, Object> records = new LinkedHashMap<String, Object>();
-
+    
 	public Object[][] data = {
 			{new Long(0x014000001),DataType.STRING,"MARKER_NAME"},
 			{new Long(0x014000002),DataType.STRING,"DESCRIPTION"},

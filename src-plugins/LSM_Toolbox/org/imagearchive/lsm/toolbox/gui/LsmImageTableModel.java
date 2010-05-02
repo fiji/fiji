@@ -10,17 +10,17 @@ import javax.swing.table.AbstractTableModel;
 public class LsmImageTableModel extends AbstractTableModel{
 
     public ArrayList<File> files;
-
+ 
     public String[] columnTitles = {"Filename","Size","Last modifed"};
-
+    
     public LsmImageTableModel(ArrayList<File> files){
         this.files = files;
     }
-
+    
     public LsmImageTableModel(){
         files = new ArrayList<File>();
     }
-
+    
     public int getRowCount() {
         return files.size();
     }
@@ -31,7 +31,7 @@ public class LsmImageTableModel extends AbstractTableModel{
     public String getColumnName(int columnIndex){
     	return columnTitles[columnIndex];
     }
-
+      
     public Object getValueAt(int row, int col) {
         File file = (File)files.get(row);
         if (col == 0)
@@ -42,21 +42,21 @@ public class LsmImageTableModel extends AbstractTableModel{
         	return new SimpleDateFormat("dd/MM/yyyy, HH:mm:ss").format(new Date(file.lastModified()));
     	return "N/A";
     }
-
+    
     public Class<String> getColumnClass(int col){
         return String.class;
     }
-
+    
     public void addFile(File file){
         files.add(file);
         fireTableDataChanged();
     }
-
+    
     public void removeFile(int index){
         files.remove(index);
         fireTableDataChanged();
     }
-
+    
     public void removeFile(int row, int col){
         files.remove(row*columnTitles.length+col);
         fireTableDataChanged();
@@ -65,18 +65,18 @@ public class LsmImageTableModel extends AbstractTableModel{
         files.removeAll(files);
         fireTableDataChanged();
     }
-
+    
     public void setValueAt(Object object,int row, int col){
         files.set(row*columnTitles.length+col,(File)object);
         fireTableDataChanged();
         fireTableCellUpdated(row, col);
     }
-
+    
     public void insertFile(Object object,int row, int col){
         files.add(row*columnTitles.length+col,(File)object);
         fireTableDataChanged();
     }
-
+    
     public void setFileAt(File file,int row, int col){
         setValueAt(file,row,col);
     }
