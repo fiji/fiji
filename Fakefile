@@ -164,7 +164,8 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	jars/Fiji.jar \
 	plugins/Image_Expression_Parser.jar \
 	plugins/Algorithm_Launcher.jar \
-	plugins/VIB_.jar
+	plugins/VIB_.jar \
+	plugins/Anisotropic_Diffusion_2D.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS third-party-plugins
 
@@ -258,7 +259,7 @@ CLASSPATH(plugins/IO_.jar)=jars/batik.jar
 CLASSPATH(plugins/Sync_Win.jar)=plugins/Image_5D.jar
 CLASSPATH(plugins/Fiji_Developer.jar)=plugins/Script_Editor.jar:plugins/Fiji_Plugins.jar:jars/VIB-lib.jar:jars/rsyntaxtextarea.jar
 CLASSPATH(plugins/Trainable_Segmentation.jar)=jars/weka.jar:plugins/Stitching_.jar:jars/fiji-lib.jar
-CLASSPATH(plugins/VIB_.jar)=jars/VIB-lib.jar
+CLASSPATH(plugins/VIB_.jar)=jars/VIB-lib.jar:jars/pal-optimization.jar
 CLASSPATH(jars/VIB-lib.jar)=jars/Jama-1.0.2.jar:jars/imglib.jar:jars/junit-4.5.jar:jars/pal-optimization.jar
 CLASSPATH(jars/jep.jar)=jars/Jama-1.0.2.jar:jars/junit-4.5.jar
 

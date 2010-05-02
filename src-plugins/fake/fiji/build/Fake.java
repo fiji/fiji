@@ -543,9 +543,10 @@ public class Fake {
 		boolean isSubmodule(String directory) {
 			if (directory == null)
 				return false;
-			File dir = new File(directory);
+			File dir = new File(makePath(cwd, directory));
 			return dir.isDirectory() ||
-				(!dir.exists() && directory.endsWith("/"));
+				(!dir.exists() && directory.endsWith("/") &&
+				 allRules.get(stripSuffix(directory, "/")) == null);
 		}
 
 		int addMatchingTargets(String glob, List sortedPrereqs) {
@@ -1328,7 +1329,8 @@ public class Fake {
 
 				File file = new File(makePath(cwd, source));
 				if (getVarBool("IGNOREMISSINGFAKEFILES") &&
-						!file.exists()) {
+						!file.exists() &&
+						isDirEmpty(getLastPrerequisite())) {
 					String precompiled =
 						getVar("PRECOMPILEDDIRECTORY");
 					if (precompiled == null)
@@ -1340,6 +1342,8 @@ public class Fake {
 						return;
 					}
 				}
+				else if (!file.exists())
+					error("Target " + target + " was not built!");
 
 				if (target.indexOf('.') >= 0)
 					copyJar(source, target, cwd, configPath);
@@ -3203,6 +3207,11 @@ public class Fake {
 		} catch (FakeException e) {
 			out.println("Error: " + e.getMessage());
 		}
+	}
+
+	protected static boolean isDirEmpty(String path) {
+		String[] list = new File(path).list();
+		return list == null || list.length == 0;
 	}
 
 	static byte[] realloc(byte[] buffer, int newLength) {
