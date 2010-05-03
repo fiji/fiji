@@ -8,7 +8,7 @@ import javax.swing.JButton;
 import javax.swing.JMenuItem;
 
 public class GUIMenuItem extends JMenuItem {
-    
+
     public GUIMenuItem(String itemText, String tooltipText) {
         Font font = new Font(null);
         float fontsize = 11;

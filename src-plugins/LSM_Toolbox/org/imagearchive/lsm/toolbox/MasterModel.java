@@ -16,7 +16,7 @@ public class MasterModel {
 	//private Reader reader;
 
 	private static MasterModel masterModel;
-	
+
 	public static final String VERSION = "4.0g";
 
 	public static boolean debugMode = false;
@@ -24,7 +24,7 @@ public class MasterModel {
 	public static char micro = '\u00b5';
 
 	public static String micrometer = micro + "m";
-	
+
 	public static byte NONE = 0;
 
 	public static byte CHANNEL = 1;
@@ -45,13 +45,13 @@ public class MasterModel {
 		if (masterModel == null) masterModel = new MasterModel();
 		return masterModel;
 	}
-	
+
 	public MasterModel() {
 		initializeModel();
 		registerServices();
 		readMacros();
 	}
-	
+
 	public void initializeModel() {
 		//serviceMediator = new ServiceMediator();
 		//reader = new Reader();
@@ -79,10 +79,10 @@ public class MasterModel {
 			}
 		}
 	}
-	
+
 	private void registerServices() {
 	}
-	
+
 	/** *************************************************************************** */
 	public String getVersion() {
 		return VERSION;
@@ -114,7 +114,7 @@ public class MasterModel {
 			}
 			input.close();
 			ext_macro = sb.toString();
-			
+
 		} catch (IOException e) {
 			//probably no magic montage
 		}

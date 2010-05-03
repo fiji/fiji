@@ -9,7 +9,7 @@ function versionCheck() {
 }
 
 macro "Auto Montage Action Tool - C00fF0077C0f0F9977Cf00F9077C888F0977" {
-    
+
     setBatchMode(true);
     b=bitDepth;
     if ((b!=24)&&(nSlices==1)) 	{ exit("Stack, Composite, or RGB image required.");}
@@ -109,7 +109,7 @@ macro "Montage Shuffler Tool - C888R0077R9977C03fR0977R9077"{
         if (y>h) yext=1;
         if ((xext>0)||(yext>0)) {
             run("Canvas Size...", "width="+w+xext*(w/xn)+" height="+h+yext*(h/yn)+" position=Top-Left zero");
-	
+
             setMetadata("xMontage="+(parseInt(xn)+parseInt(xext))+"\nyMontage="+(parseInt(yn)+parseInt(yext))+"\n");
 	exit;
         }
@@ -134,11 +134,11 @@ var pos="Clicked quadrant";
 macro "Annot Tool - C000 T2709A T8709B T1f09C T8f09D" {
     xn = info("xMontage");
     yn = info("yMontage");
-    
+
     getCursorLoc(x, y, z, flags);
     iw = getWidth/xn;
     ih = getHeight/yn;
-    
+
     co = floor(x/iw);
     li = floor(y/ih);
 
@@ -149,9 +149,9 @@ macro "Annot Tool - C000 T2709A T8709B T1f09C T8f09D" {
     opt="";
 
     if (pos == "Clicked quadrant") {
-    xoffset=0.05; yoffset=0.05; 
-    if (x>((co+0.5)*iw)) xoffset=0.90; 
-    if (y<((li+0.5)*ih)) yoffset=0.85; 
+    xoffset=0.05; yoffset=0.05;
+    if (x>((co+0.5)*iw)) xoffset=0.90;
+    if (y<((li+0.5)*ih)) yoffset=0.85;
     }
 
     if (antialiasedLabels==true) opt=opt+"antialiased";
@@ -178,7 +178,7 @@ macro "Annot Tool Options" {
     // Dialog.addNumber("Font size (pixels)",10);
     // Dialog.addCheckbox("Auto Offset, or",true);
     // Dialog.addNumber("Offset (pixels)",5);
-    
+
     Dialog.show;
     str  = Dialog.getString;
     lcas = Dialog.getCheckbox;
@@ -355,7 +355,7 @@ macro "Fit Clipboard content into panel [F4]" {
 }
 
 macro "Fill Panel with Clipboard content [F5]" {
-    
+
     getSelectionBounds(x,y,sw,sh);
     id=getImageID;
     setBatchMode(true);
@@ -376,7 +376,7 @@ macro "Fill Panel with Clipboard content [F5]" {
     setBatchMode(false);
     setPasteMode("Copy");
     run("Paste");
-    
+
 }
 
 macro "Set Montage Layout [F12]" {

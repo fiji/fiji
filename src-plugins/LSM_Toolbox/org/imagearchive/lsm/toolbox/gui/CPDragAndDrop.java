@@ -37,7 +37,7 @@ public class CPDragAndDrop implements DropTargetListener {
 		String vers = System.getProperty("java.version");
 		if (vers.compareTo("1.3.1") < 0)
 			return;
-	
+
 		this.cp = cp;
 		/*
 		 * ij = IJ.getInstance(); ij.setDropTarget(null);

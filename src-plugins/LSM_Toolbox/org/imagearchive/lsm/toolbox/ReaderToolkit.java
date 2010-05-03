@@ -115,7 +115,7 @@ public class ReaderToolkit {
         }
         return tempstr;
     }
-    
+
     /*
 	 * applyColors, applies color gradient; function taken out from Lut_Panel
 	 * plugin

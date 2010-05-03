@@ -8,8 +8,8 @@
  * ImageJ plugin
  * Version	:      4.0g
  * Authors  :      Patrick PIRROTTE, Jerome MUTTERER
- * Licence  :	   GPL 
- * 
+ * Licence  :	   GPL
+ *
  * This software includes images from the Nuvola iconset which was released under LGPL v2.1, please see
  * iconset license
  *
@@ -29,7 +29,7 @@
  * runPlugIn("LSM_Toolbox","file=path_to_file");
  * To run from a macro:
  * call("LSM_Toolbox.open","file=path_to_file")
- * 
+ *
  * __________________________________________________________________________
  * (C) 2003-2008 Patrick Pirrotte, Jérôme Mutterer
  *
@@ -91,9 +91,9 @@ public class LSM_Toolbox implements PlugIn, MacroExtension {
 			ExtensionDescriptor
 			.newDescriptor("getEvents", this, ARG_STRING+ARG_OUTPUT),
 			ExtensionDescriptor
-			.newDescriptor("lsmOpen", this, ARG_STRING)		
+			.newDescriptor("lsmOpen", this, ARG_STRING)
 	};
-	
+
 	public ControlPanelFrame controlPanel;
 
 	public void run(String args) {
@@ -105,14 +105,14 @@ public class LSM_Toolbox implements PlugIn, MacroExtension {
 		}
 		if (IJ.versionLessThan("1.41a"))
 			return;
-		
+
 		String fileName = "";
 		String macroOptions = Macro.getOptions();
 		if (IJ.macroRunning())
 		if (macroOptions.trim().equalsIgnoreCase("ext")){
 				    Functions.registerExtensions(this);
 				return;
-		} 
+		}
 		if (!args.equals(""))
 			fileName = getMacroOption("file=", args);
 		if (macroOptions != null && (!macroOptions.equals("")))
@@ -159,7 +159,7 @@ public class LSM_Toolbox implements PlugIn, MacroExtension {
 	public static String getXML(String filename, boolean filter) {
 		return new DomXmlExporter().getXML(filename, filter);
 	}
-	
+
 	/*public static CZLSMInfoExtended getCZ(String filename) {
 		Reader reader = ServiceMediator.getReader();
 		ImagePlus imp = reader.open(filename, false);
@@ -169,7 +169,7 @@ public class LSM_Toolbox implements PlugIn, MacroExtension {
 		CZLSMInfoExtended cz = (CZLSMInfoExtended) imDir.TIF_CZ_LSMINFO;
 		return cz;
 	}*/
-	
+
 	public ExtensionDescriptor[] getExtensionFunctions() {
 		return extensions;
 	}
@@ -179,7 +179,7 @@ public class LSM_Toolbox implements PlugIn, MacroExtension {
 		if (name.equals("lsmXML")) {
 			if (o == null)
 				return null;
-			
+
 			String[] a =(String[])o;
 			return new DomXmlExporter().getXML(a[0], false);
 		}
