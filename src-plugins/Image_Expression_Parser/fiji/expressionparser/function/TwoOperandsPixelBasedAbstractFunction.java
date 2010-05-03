@@ -42,8 +42,8 @@ public abstract class TwoOperandsPixelBasedAbstractFunction <T extends RealType<
 			
 			if (param2 instanceof Image<?>) {
 				result = evaluate(t1, (Image)param2);
-			} else if (param2 instanceof Number) {
-				FloatType t2 = new FloatType(((Number)param2).floatValue());
+			} else if (param2 instanceof RealType) {
+				FloatType t2 = (FloatType)param2;
 				result = new Float(evaluate(t1, t2));
 			} else {
 				throw new ParseException("In function '" + getFunctionString()
