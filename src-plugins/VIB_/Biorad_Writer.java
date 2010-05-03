@@ -7,6 +7,10 @@ import ij.measure.*;  //for Calibration
 // Class to save an image as a Biorad PIC file
 // (c) Greg Jefferis <jefferis@gmail.com> 2006-8
 // Source code released under the terms of GPLv2 or later
+//
+// In addition, as a special exception, the copyright holders give
+// you permission to combine this program with free software programs or
+// libraries that are released under the Apache Public License. 
 
 public class Biorad_Writer implements PlugIn {
 
