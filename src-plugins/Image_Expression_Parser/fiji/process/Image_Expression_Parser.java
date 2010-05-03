@@ -3,6 +3,7 @@ package fiji.process;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.plugin.PlugIn;
+import ij.process.FloatProcessor;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -13,23 +14,21 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import mpicbg.imglib.container.imageplus.ImagePlusContainerFactory;
-import mpicbg.imglib.cursor.Cursor;
-import mpicbg.imglib.cursor.LocalizableByDimCursor;
-import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.image.ImagePlusAdapter;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.real.FloatType;
 
-import org.nfunk.jep.JEP;
-import org.nfunk.jep.type.DoubleNumberFactory;
+import org.nfunk.jep.Node;
+import org.nfunk.jep.ParseException;
+
+import fiji.expressionparser.ImgLibParser;
 
 /**
  * This plugins parses mathematical expressions and compute results using images as variables. 
- * As of version 1.x, only pixel per pixel based operations are supported.
+ * As of version 2.x, pixel per pixel based operations are supported and ImgLib algorithm
+ * are supported.
  * <p>
  * The parsing ability is provided by the JEP library: Java Expression Parser v.jep-2.4.1-ext-1.1.1-gpl.
  * This is the last version released under the GPL by its authors Nathan Funk and Richard Morris,
@@ -50,6 +49,12 @@ import org.nfunk.jep.type.DoubleNumberFactory;
  * <ul>
  * 	<li> v1.0 - Feb 2010 - First working version.
  * 	<li> v1.1 - Apr 2010 - Expression field now has a history.
+ * 	<li> v2.0 - May 2010 - Complete logic rewrite:
+ * 		<ul>
+ * 			<li> functions are now handled by code specific for ImgLib;
+ * 			<li> support for ImgLib algorithms and non pixel-based operations, such as gaussian convolution;
+ * 			<li> faster evaluation, thanks to dealing with ImgLib images as objects within the parser instead of pixel per pixel evaluation.
+ * 		</ul>
  * </ul>
  *   
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com>
@@ -162,6 +167,7 @@ public class Image_Expression_Parser<T extends RealType<T>> implements PlugIn, A
 	 * case, an explanatory error message can be obtained by {@link #getErrorMessage()}.
 	 * @see {@link #setExpression(String)}, {@link #setImageMap(Map)}, {@link #getErrorMessage()}, {@link #getResult()}
 	 */
+	@SuppressWarnings("unchecked")
 	public void exec() {
 		
 		result = null;
@@ -182,115 +188,28 @@ public class Image_Expression_Parser<T extends RealType<T>> implements PlugIn, A
 		}
 		
 		// Instantiate and prepare parser
-		final JEP parser = new JEP(false, false, false, new DoubleNumberFactory());
+		final ImgLibParser<T> parser = new ImgLibParser<T>();
 		parser.addStandardConstants();
 		parser.addStandardFunctions();
+		parser.addImgLibAlgorithms();
 		Set<String> variables = image_map.keySet();
 		for (String var : variables) {
-			parser.addVariable(var, null);
-		}
-		parser.parseExpression(expression);
-		
-		// Extract the first image, will be privileged. Might leave the temp array empty, but who cares.
-		Iterator<String> it = variables.iterator();
-		String first_var = it.next();
-		Image<T> first_im = image_map.get(first_var);
-		
-		// Prepare new image
-		Image<FloatType> result_im = new ImageFactory<FloatType>(new FloatType(), new ImagePlusContainerFactory())
-			.createImage(first_im.getDimensions(), expression);
-		
-		// Check if all Containers are compatibles
-		boolean compatible_containers = true;
-		Image<T> previous_im = first_im;
-		while (it.hasNext()) {
-			if ( previous_im.getContainer().compareStorageContainerCompatibility(image_map.get(it.next()).getContainer())) {
-				continue;
-			} else {
-				compatible_containers = false;
-				break;
-			}
-		}		
-		if (!result_im.getContainer().compareStorageContainerCompatibility(first_im.getContainer())) {
-			compatible_containers = false;
-		}
-
-		if (compatible_containers) {
-			// Optimized cursors
-		
-			// Create cursors for other input images
-			HashMap<String, Cursor<T>> cursors = new HashMap<String, Cursor<T>>(image_map.size());
-			it = variables.iterator();
-			String var;
-			while (it.hasNext()) {
-				var = it.next();
-				cursors.put(var, image_map.get(var).createCursor());
-			}
-
-			// Create cursor for new image
-			Cursor<FloatType> result_cursor = result_im.createCursor();
-			
-			// Iterate over cursors.
-			// We iterate using the first cursor. The other ones are moved according to this one
-			float local_value, result_value;
-			Cursor<T> cursor;
-			while (result_cursor.hasNext()) {
-				result_cursor.fwd();
-				// other input cursors
-				it = variables.iterator();
-				while (it.hasNext()) {
-					var = it.next();
-					cursor = cursors.get(var);
-					cursor.fwd(); // since we are compatible, we are sure that they will iterate the same way
-					local_value = cursor.getType().getRealFloat();
-					parser.addVariable(var, local_value);
-				}
-				// Assign output value
-				result_value = (float) parser.getValue();
-				result_cursor.getType().set(result_value);
-			}
-				
-		} else {
-			// Non-optimized cursors.
-			
-			// Create cursor for new image
-			LocalizableCursor<FloatType> result_cursor = result_im.createLocalizableCursor();
-			
-			// Create cursors for input images
-			HashMap<String, LocalizableByDimCursor<T>> cursors = new HashMap<String, LocalizableByDimCursor<T>>(image_map.size());
-			it = variables.iterator();
-			String var;
-			while (it.hasNext()) {
-				var = it.next();
-				cursors.put(var, image_map.get(var).createLocalizableByDimCursor());
-			}
-
-			// Iterate over cursors.
-			// We iterate using the output cursor. The other ones are moved according to this one
-			float local_value, result_value;
-			LocalizableByDimCursor<T> cursor;
-			while (result_cursor.hasNext()) {
-				// output cursor
-				result_cursor.fwd();
-				// other input cursors
-				it = variables.iterator();
-				while (it.hasNext()) {
-					var = it.next();
-					cursor = cursors.get(var);
-					cursor.setPosition(result_cursor); // the result cursor dictates its position to other cursors
-					local_value = cursor.getType().getRealFloat();
-					parser.addVariable(var, local_value);
-				}
-				// Assign output value
-				result_value = (float) parser.getValue();
-				result_cursor.getType().set(result_value);
-			}
-			
+			parser.addVariable(var, image_map.get(var));
 		}
 		
-		// Done!
-		error_message = "";
-		result = result_im;	
+		try {
+			Node root_node = parser.parse(expression);
+			result = (Image<FloatType>) parser.evaluate(root_node);
+			result.setName(expression);
+			error_message = "";
+
+		} catch (ParseException e) {
+			error_message = e.getErrorInfo();
+
+		}
+		
+
+		
 	}
 	
 	
@@ -404,9 +323,10 @@ public class Image_Expression_Parser<T extends RealType<T>> implements PlugIn, A
 	 * </ul>
 	 */
 	private Object[] isExpressionValid() {
-		final JEP parser = new JEP(false, false, false, new DoubleNumberFactory());
+		final ImgLibParser<T> parser = new ImgLibParser<T>();
 		parser.addStandardConstants();
 		parser.addStandardFunctions();
+		parser.addImgLibAlgorithms();
 		Set<String> variables = image_map.keySet();
 		for ( String var : variables ) {
 			parser.addVariable(var, null); // we do not care for value yet
@@ -473,8 +393,20 @@ public class Image_Expression_Parser<T extends RealType<T>> implements PlugIn, A
 		Image<FloatType> result = iep.getResult();
 		if (null != result) {
 			ImagePlus result_imp = ImageJFunctions.copyToImagePlus(result);
-			result_imp.getProcessor().resetMinAndMax();
-			result_imp.show();			
+
+			float max = Float.NEGATIVE_INFINITY;
+			float min = Float.POSITIVE_INFINITY;
+			for (int i = 0; i < result_imp.getStackSize(); i++) {
+				FloatProcessor fp = (FloatProcessor) result_imp.getStack().getProcessor(i+1);
+				float[] arr = (float[]) fp.getPixels();
+				for (int j = 0; j < arr.length; j++) {
+					if (arr[j] > max) max = arr[j];
+					if (arr[j] < min) min = arr[j];
+				}
+			}
+			result_imp.show();	
+			result_imp.setDisplayRange(min, max);
+			result_imp.updateAndDraw();
 		} else {
 			System.err.println("Could not evaluate expression:");
 			System.err.println(iep.getErrorMessage());

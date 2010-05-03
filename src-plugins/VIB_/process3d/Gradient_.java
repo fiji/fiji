@@ -13,8 +13,6 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.IJ;
 
-import process3d.Convolve_3d;
-
 public class Gradient_ implements PlugInFilter {
 
 	private ImagePlus image;
@@ -44,13 +42,13 @@ public class Gradient_ implements PlugInFilter {
 		float dz = useCalib ? 2*(float)c.pixelDepth : 2;
 
 		float[] H_x = new float[] {-1/dx, 0, 1/dx};
-		ImagePlus g_x = Convolve_3d.convolveX(imp, H_x);
+		ImagePlus g_x = Convolve3d.convolveX(imp, H_x);
 
 		float[] H_y = new float[] {-1/dy, 0, 1/dy};
-		ImagePlus g_y = Convolve_3d.convolveY(imp, H_y);
+		ImagePlus g_y = Convolve3d.convolveY(imp, H_y);
 
 		float[] H_z = new float[] {-1/dz, 0, 1/dz};
-		ImagePlus g_z = Convolve_3d.convolveZ(imp, H_z);
+		ImagePlus g_z = Convolve3d.convolveZ(imp, H_z);
 
 		int w = imp.getWidth(), h = imp.getHeight();
 		int d = imp.getStackSize();

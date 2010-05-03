@@ -4,7 +4,7 @@ import org.nfunk.jep.ParseException;
 
 import mpicbg.imglib.type.numeric.RealType;
 
-public class ImgLibComparison  {
+public final class ImgLibComparison  {
 
 
 	public static final String DOCUMENTATION_STRING_GREATER_THAN = "<h3>Element-wise 'greater than' comparison</h3> " +
@@ -56,14 +56,14 @@ public class ImgLibComparison  {
 	
 
 	
-	public static class GreaterThan <T extends RealType<T>> extends TwoOperandsPixelBasedAbstractFunction<T> {
+	public static final class GreaterThan <T extends RealType<T>> extends TwoOperandsPixelBasedAbstractFunction<T> {
 		
 		public GreaterThan() {
 			numberOfParameters = 2;
 		}
 		
 		@Override
-		public float evaluate(T t1, T t2) throws ParseException {
+		public final <R extends RealType<R>> float evaluate(final R t1, final R t2) throws ParseException {
 			return t1.getRealFloat() > t2.getRealFloat() ? 1.0f :0.0f;
 		}
 
@@ -83,7 +83,7 @@ public class ImgLibComparison  {
 		}
 	}
 
-	public static class LowerThan <T extends RealType<T>> extends TwoOperandsPixelBasedAbstractFunction<T> {
+	public static final class LowerThan <T extends RealType<T>> extends TwoOperandsPixelBasedAbstractFunction<T> {
 
 			
 		public LowerThan() {
@@ -91,7 +91,7 @@ public class ImgLibComparison  {
 		}
 		
 		@Override
-		public float evaluate(T t1, T t2) throws ParseException {
+		public final <R extends RealType<R>> float evaluate(final R t1, final R t2) throws ParseException {
 			return t1.getRealFloat() < t2.getRealFloat() ? 1.0f :0.0f;
 		}
 
@@ -112,14 +112,14 @@ public class ImgLibComparison  {
 
 	}
 
-	public static class GreaterOrEqual <T extends RealType<T>> extends TwoOperandsPixelBasedAbstractFunction<T> {
+	public static final class GreaterOrEqual <T extends RealType<T>> extends TwoOperandsPixelBasedAbstractFunction<T> {
 
 		public GreaterOrEqual() {
 			numberOfParameters = 2;
 		}
 		
 		@Override
-		public float evaluate(T t1, T t2) throws ParseException {
+		public final <R extends RealType<R>> float evaluate(final R t1, final R t2) throws ParseException {
 			return t1.getRealFloat() >= t2.getRealFloat() ? 1.0f :0.0f;
 		}
 
@@ -140,14 +140,14 @@ public class ImgLibComparison  {
 
 	}
 
-	public static class LowerOrEqual <T extends RealType<T>> extends TwoOperandsPixelBasedAbstractFunction<T> {
+	public static final class LowerOrEqual <T extends RealType<T>> extends TwoOperandsPixelBasedAbstractFunction<T> {
 		
 		public LowerOrEqual() {
 			numberOfParameters = 2;
 		}
 		
 		@Override
-		public float evaluate(T t1, T t2) throws ParseException {
+		public final <R extends RealType<R>> float evaluate(final R t1, final R t2) throws ParseException {
 			return t1.getRealFloat() <= t2.getRealFloat() ? 1.0f :0.0f;
 		}
 
@@ -167,14 +167,14 @@ public class ImgLibComparison  {
 		}
 	}
 
-	public static class Equal <T extends RealType<T>> extends TwoOperandsPixelBasedAbstractFunction<T> {
+	public static final class Equal <T extends RealType<T>> extends TwoOperandsPixelBasedAbstractFunction<T> {
 
 		public Equal() {
 			numberOfParameters = 2;
 		}
 		
 		@Override
-		public float evaluate(T t1, T t2) throws ParseException {
+		public final <R extends RealType<R>> float evaluate(final R t1, final R t2) throws ParseException {
 			return t1.getRealFloat() == t2.getRealFloat() ? 1.0f :0.0f;
 		}
 
@@ -194,14 +194,14 @@ public class ImgLibComparison  {
 		}
 	}
 
-	public static class NotEqual <T extends RealType<T>> extends TwoOperandsPixelBasedAbstractFunction<T> {
+	public static final class NotEqual <T extends RealType<T>> extends TwoOperandsPixelBasedAbstractFunction<T> {
 
 		public NotEqual() {
 			numberOfParameters = 2;
 		}
 		
 		@Override
-		public float evaluate(T t1, T t2) throws ParseException {
+		public final <R extends RealType<R>> float evaluate(final R t1, final R t2) throws ParseException {
 			return t1.getRealFloat() != t2.getRealFloat() ? 1.0f :0.0f;
 		}
 

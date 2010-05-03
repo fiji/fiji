@@ -178,7 +178,6 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	 */
 	@Override
 	public void close() {
-		super.close();
 		timeline.pause();
 		removeAllContents();
 		contents = null;
@@ -188,6 +187,7 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 		for(WindowListener l : ls)
 			plDialog.removeWindowListener(l);
 		plDialog.dispose();
+		super.close();
 	}
 
 	/**
@@ -245,6 +245,8 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 		for(Content c : contents.values()) {
 			c.showPointList(false);
 		}
+		// just for now, to update the menu bar
+		fireContentSelected(selected);
 	}
 
 	/* *************************************************************
@@ -622,7 +624,6 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 		}
 		Content c = ContentCreator.createContent(name, image, type,
 			resf, -1, color, thresh, channels);
-		c.setPointListDialog(plDialog);
 		return addContent(c);
 	}
 
@@ -824,7 +825,6 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 			return null;
 		}
 		Content content = createContent(mesh, name);
-		content.setPointListDialog(plDialog);
 		return addContent(content);
 	}
 
@@ -843,7 +843,6 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 			return null;
 		}
 		Content content = createContent(mesh, name);
-		content.setPointListDialog(plDialog);
 		return addContent(content);
 	}
 
@@ -1073,6 +1072,20 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	/* *************************************************************
 	 * Methods changing the view of this universe
 	 * *************************************************************/
+	/**
+	 * Save the current view transformations to a file
+	 */
+	public void saveView(String file) throws IOException {
+		SaveSession.saveView(this, file);
+	}
+
+	/**
+	 * Load view transformations from file
+	 */
+	public void loadView(final String file) throws IOException {
+		SaveSession.loadView(this, file);
+	}
+
 	/**
 	 * Reset the transformations of the view side of the scene graph
 	 * as if the Contents of this universe were just displayed.
@@ -1317,6 +1330,8 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 			this.contents.put(name, c);
 			this.recalculateGlobalMinMax(c);
 			c.showTimepoint(currentTimepoint);
+
+			c.setPointListDialog(plDialog);
 		}
 		return true;
 	}

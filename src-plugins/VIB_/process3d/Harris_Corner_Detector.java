@@ -77,9 +77,9 @@ public class Harris_Corner_Detector implements PlugInFilter {
 		float sigma = 2f;
 		float[] H = new float[] {-1f/2, 0, 1f/2};
 		ImagePlus smooth = Smooth_.smooth(image, true, sigma, false);
-		ImagePlus dx = Convolve_3d.convolveX(smooth, H);
-		ImagePlus dy = Convolve_3d.convolveY(smooth, H);
-		ImagePlus dz = Convolve_3d.convolveZ(smooth, H);
+		ImagePlus dx = Convolve3d.convolveX(smooth, H);
+		ImagePlus dy = Convolve3d.convolveY(smooth, H);
+		ImagePlus dz = Convolve3d.convolveZ(smooth, H);
 
 		XX = Smooth_.smooth(mul(dx, dx), true, sigma, false);
 		XY = Smooth_.smooth(mul(dx, dy), true, sigma, false);

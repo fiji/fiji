@@ -25,7 +25,10 @@ import org.python.core.PyDictionary;
 import org.python.core.PySystemState;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowAdapter;
+
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 import common.AbstractInterpreter;
 import common.RefreshScripts;
@@ -102,18 +105,32 @@ public class Jython_Interpreter extends AbstractInterpreter {
 	static public String importAll(PythonInterpreter pi) {
 		if (System.getProperty("jnlp") != null)
 			return "Because Fiji was started via WebStart, no packages were imported implicitly";
+		boolean trakem2 = false;
 		try {
-			pi.exec("from ij import *\nfrom ij.gui import *\nfrom ij.io import *\nfrom ij.macro import *\nfrom ij.measure import *\nfrom ij.plugin import *\nfrom ij.plugin.filter import *\nfrom ij.plugin.frame import *\nfrom ij.process import *\nfrom ij.text import *\nfrom ij.util import *\nfrom java.lang import *\n");
+			Map<String, List<String>> classNames = getDefaultImports();
+			for (String packageName : classNames.keySet()) {
+				StringBuffer names = null;
+				for (String className : classNames.get(packageName)) {
+					if (names == null)
+						names = new StringBuffer();
+					else
+						names.append(", ");
+					names.append(className);
+				}
+				if ("".equals(packageName))
+					pi.exec("import " + names);
+				else
+					pi.exec("from " + packageName + " import " + names);
+				if (packageName.startsWith("ini.trakem2"))
+					trakem2 = true;
+			}
 		} catch (Exception e) {
 			RefreshScripts.printError(e);
 			return "";
 		}
-		String msg = "All ImageJ and java.lang";
-		try {
-			pi.exec("from ini.trakem2 import *\nfrom ini.trakem2.persistence import *\nfrom ini.trakem2.tree import *\nfrom ini.trakem2.display import *\nfrom ini.trakem2.imaging import *\nfrom ini.trakem2.io import *\nfrom ini.trakem2.utils import *\nfrom ini.trakem2.vector import *\nfrom mpicbg.trakem2.align import *\nfrom mpicbg.trakem2.transform import *\nfrom lenscorrection import *\nfrom bunwarpj.trakem2.transform import *\nfrom mpi.fruitfly.analysis import *\nfrom mpi.fruitfly.fft import *\nfrom mpi.fruitfly.general import *\nfrom mpi.fruitfly.math import *\nfrom mpi.fruitfly.math.datastructures import *\nfrom mpi.fruitfly.registration import *\n");
-			msg += " and TrakEM2";
-		} catch (Exception e) { /*fail silently*/ }
-		return msg + " classes imported.\n";
+		return "All ImageJ and java.lang"
+			+ (trakem2 ? " and TrakEM2" : "")
+			+ " classes imported.\n";
 	}
 
 	protected String getLineCommentMark() {

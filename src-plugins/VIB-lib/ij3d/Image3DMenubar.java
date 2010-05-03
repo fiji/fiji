@@ -21,6 +21,8 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 	private MenuItem add4DFromFile;
 	private MenuItem add4DFromImage;
 	private MenuItem add4DFromFolder;
+	private MenuItem saveView;
+	private MenuItem loadView;
 	private MenuItem saveSession;
 	private MenuItem loadSession;
 	private MenuItem importObj;
@@ -144,6 +146,16 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 		delete.setEnabled(false);
 		delete.addActionListener(this);
 		file.add(delete);
+
+		file.addSeparator();
+
+		saveView = new MenuItem("Save View");
+		saveView.addActionListener(this);
+		file.add(saveView);
+
+		loadView = new MenuItem("Load View");
+		loadView.addActionListener(this);
+		file.add(loadView);
 
 		file.addSeparator();
 
@@ -537,6 +549,10 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 			executer.savePointList(univ.getSelected());
 		else if (src == pl_size)
 			executer.changePointSize(univ.getSelected());
+		else if (src == saveView)
+			executer.saveView();
+		else if (src == loadView)
+			executer.loadView();
 		else if (src == saveSession)
 			executer.saveSession();
 		else if (src == loadSession)

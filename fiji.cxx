@@ -1553,6 +1553,8 @@ static int start_ij(void)
 			open_win_console();
 #endif
 		else if (!strcmp(main_argv[i], "--jdb")) {
+			class_path += get_jre_home()
+				+ "/../lib/tools.jar" PATH_SEP;
 			add_class_path_option = true;
 			jdb = true;
 		}
@@ -1736,8 +1738,8 @@ static int start_ij(void)
 		add_option(options, ext_option, 0);
 	}
 
-	/* For Jython to work properly with .jar packages: */
-	add_option(options, "-Dpython.cachedir.skip=false", 0);
+	/* Avoid Jython's huge startup cost: */
+	add_option(options, "-Dpython.cachedir.skip=true", 0);
 	if (plugin_path.str() == "")
 		plugin_path << "-Dplugins.dir=" << fiji_dir;
 	add_option(options, plugin_path, 0);
@@ -1851,6 +1853,8 @@ static int start_ij(void)
 	if (!strcmp(main_class, "org.apache.tools.ant.Main"))
 		add_java_home_to_path();
 
+	if (jdb)
+		add_option(options, main_class, 1);
 	if (is_default_main_class(main_class)) {
 		if (allow_multiple)
 			add_option(options, "-port0", 1);
@@ -1872,10 +1876,8 @@ static int start_ij(void)
 			add_option(options, "-batch", 1);
 	}
 
-	if (jdb) {
-		add_option(options, main_class, 1);
+	if (jdb)
 		main_class = "com.sun.tools.example.debug.tty.TTY";
-	}
 
 	if (retrotranslator) {
 		add_option(options, "-advanced", 1);

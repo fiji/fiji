@@ -121,6 +121,7 @@
 /jars/Jama-1.0.2.jar
 /jars/mpicbg.jar
 /plugins/Image_Expression_Parser.jar
+/plugins/Algorithm_Launcher.jar
 /jars/VIB-lib.jar
 /src-plugins/Fiji/icon.png
 /src-plugins/Script_Editor/function.png
@@ -131,3 +132,5 @@
 /src-plugins/VIB-lib/math3d/FloatMatrixN.java
 /src-plugins/VIB-lib/math3d/JacobiFloat.java
 /src-plugins/VIB-lib/vib/FloatMatrix.java
+/jars/pal-optimization.jar
+/plugins/Anisotropic_Diffusion_2D.jar

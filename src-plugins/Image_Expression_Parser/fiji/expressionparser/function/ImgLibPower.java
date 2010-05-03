@@ -19,7 +19,7 @@ public final class ImgLibPower <T extends RealType<T>> extends
 	}
 	
 	@Override
-	public final float evaluate(T t1, T t2) throws ParseException {
+	public final <R extends RealType<R>> float evaluate(final R t1, final R t2) throws ParseException {
 		return (float) Math.pow(t1.getRealDouble(), t2.getRealDouble());
 	}
 

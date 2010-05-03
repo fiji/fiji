@@ -1,11 +1,6 @@
 package fiji.process;
 
-import org.nfunk.jep.Node;
-import org.nfunk.jep.ParseException;
-
 import fiji.expressionparser.ImgLibParser;
-import fiji.expressionparser.function.ImgLibGaussConv;
-import ij.IJ;
 import ij.ImagePlus;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
@@ -14,18 +9,21 @@ import mpicbg.imglib.image.ImagePlusAdapter;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.type.numeric.RealType;
 
+import org.nfunk.jep.Node;
+import org.nfunk.jep.ParseException;
+
 public class Test_JEP {
 
 	public static <T extends RealType<T>> void main(String[] args) {
 		System.out.println("Testing JEP extension");
 		
-		System.out.println("\nLoading image");
-		ImagePlus imp = IJ.openImage("http://rsb.info.nih.gov/ij/images/blobs.gif");
+//		System.out.println("\nLoading image");
+//		ImagePlus imp = ij.IJ.openImage("http://rsb.info.nih.gov/ij/images/blobs.gif");
 		
-//		System.out.println("\nCreating point image.");
-//		ImagePlus imp = NewImage.createFloatImage("Point", 128, 128, 32, NewImage.FILL_BLACK);
-//		float[] px = (float[]) imp.getStack().getPixels(16);
-//		px[128*128/2+64] = 1e3f;
+		System.out.println("\nCreating point image.");
+		ImagePlus imp = ij.gui.NewImage.createFloatImage("Point", 128, 128, 32, ij.gui.NewImage.FILL_BLACK);
+		float[] px = (float[]) imp.getStack().getPixels(16);
+		px[128*128/2+64] = 1e3f;
 
 		Image<T> img = ImagePlusAdapter.wrap(imp);
 		imp.show();
@@ -56,7 +54,8 @@ public class Test_JEP {
 		};
 
 		ImgLibParser<T> parser = new ImgLibParser<T>();
-		parser.addFunction("gauss", new ImgLibGaussConv<T>());
+		parser.addStandardFunctions();
+		parser.addImgLibAlgorithms();
 
 		for (String expression : expressions) {
 
