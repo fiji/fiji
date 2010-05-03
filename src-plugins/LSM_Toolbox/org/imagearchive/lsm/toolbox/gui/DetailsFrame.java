@@ -58,7 +58,7 @@ import org.imagearchive.lsm.toolbox.info.scaninfo.ScanInfo;
 
 public class DetailsFrame extends JFrame {
 
-	private MasterModel masterModel;
+	private MasterModel masterModel = MasterModel.getMasterModel();
 
 	private int detailsFrameXsize = 260;
 
@@ -108,9 +108,8 @@ public class DetailsFrame extends JFrame {
 
 	private LSMFileInfo lsm = null;
 
-	public DetailsFrame(MasterModel masterModel) throws HeadlessException {
+	public DetailsFrame() throws HeadlessException {
 		super();
-		this.masterModel = masterModel;
 		initializeGUI();
 		ServiceMediator.registerDetailsFrame(this);
 	}

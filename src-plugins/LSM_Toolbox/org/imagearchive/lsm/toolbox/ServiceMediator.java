@@ -6,7 +6,7 @@ import org.imagearchive.lsm.toolbox.gui.InfoFrame;
 
 public class ServiceMediator {
 
-	private static MasterModel masterModel;
+	//private static MasterModel masterModel;
 
 	private static ControlPanelFrame controlPanelFrame;
 
@@ -16,13 +16,13 @@ public class ServiceMediator {
 
 	private static Reader reader;
 
-	public MasterModel getMasterModel() {
-		return masterModel;
+	/*public static MasterModel getMasterModel() {
+		return masterModel.getMaster.;
 	}
 
-	public void registerMasterModel(MasterModel masterModel) {
+	public static void registerMasterModel(MasterModel masterModel) {
 		ServiceMediator.masterModel = masterModel;
-	}
+	}*/
 
 	public static void registerReader(Reader reader) {
 		ServiceMediator.reader = reader;
@@ -53,6 +53,7 @@ public class ServiceMediator {
 	}
 
 	public static Reader getReader() {
+		if (reader == null) reader = new Reader();
 		return reader;
 	}
 }
