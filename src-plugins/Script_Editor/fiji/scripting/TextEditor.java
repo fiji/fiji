@@ -1392,8 +1392,10 @@ public class TextEditor extends JFrame implements ActionListener,
 
 	public boolean nextError(boolean forward) {
 		if (errorHandler != null && errorHandler.nextError(forward)) try {
-			switchTo(errorHandler.getPath(),
-					errorHandler.getLine());
+			File file = new File(errorHandler.getPath());
+			if (!file.isAbsolute())
+				file = getFileForBasename(file.getName());
+			switchTo(file, errorHandler.getLine());
 			errorHandler.markLine();
 			screen.repaint();
 			getEditorPane().repaint();

@@ -116,11 +116,10 @@ public class ErrorHandler {
 
 	class JavacErrorParser implements Parser {
 		public Error getError(String line) {
-			if (!line.startsWith("/"))
-				return null;
-			int colon = line.indexOf(':');
+			int colon = line.indexOf(".java:");
 			if (colon <= 0)
 				return null;
+			colon += 5;
 			int next = line.indexOf(':', colon + 1);
 			if (next < colon + 2)
 				return null;
@@ -131,7 +130,8 @@ public class ErrorHandler {
 			} catch (NumberFormatException e) {
 				return null;
 			}
-			return new Error(line.substring(0, colon), lineNumber);
+			String fileName = line.substring(0, colon);
+			return new Error(fileName, lineNumber);
 		}
 	}
 }
