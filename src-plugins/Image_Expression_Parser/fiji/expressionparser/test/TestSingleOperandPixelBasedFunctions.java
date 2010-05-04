@@ -21,17 +21,16 @@ import org.nfunk.jep.ParseException;
 
 import fiji.expressionparser.ImgLibParser;
 
-public class TestSingleOperandPixelBasedOperators  <T extends RealType<T>> {
+public class TestSingleOperandPixelBasedFunctions  <T extends RealType<T>>  {
+
 
 	private final static int WIDTH = 9; 
 	private final static int HEIGHT = 9;
-	private final static float PRECISION_LIMIT = 1e-6f;
 	/** 16-bit image */
 	public static Image<UnsignedShortType> image_A, image_B;
 	public ImgLibParser<T> parser;
 	
-	
-	
+
 	@BeforeClass
 	public static void setup() {
 		
@@ -64,15 +63,17 @@ public class TestSingleOperandPixelBasedOperators  <T extends RealType<T>> {
 	
 	@Before
 	public void setupParser() {
-		parser = new ImgLibParser<T>(); // no need to add standard functions
+		parser = new ImgLibParser<T>(); 
+		parser.addStandardFunctions();
 	}
+	
 	
 	@SuppressWarnings("unchecked")
 	@Test
-	public void not() throws ParseException {
+	public void abs() throws ParseException {
 		
 		// Two images
-		String expression = "!A"; // true when A == 0
+		String expression = "abs(-A)"; // should return A, for A is positive everywhere 
 		parser.addVariable("A", image_A);
 		Node root_node = parser.parse(expression);
 		Image<T> result = (Image<T>) parser.evaluate(root_node);
@@ -82,7 +83,7 @@ public class TestSingleOperandPixelBasedOperators  <T extends RealType<T>> {
 			while (rc.hasNext()) {
 				rc.fwd();
 				ca.setPosition(rc);
-				assertEquals(ca.getType().getRealFloat() == 0.0f? 1.0f:0.0f, rc.getType().getRealFloat(), Float.MIN_VALUE);
+				assertEquals(ca.getType().getRealFloat(), rc.getType().getRealFloat(), Float.MIN_VALUE);
 			}
 		} catch (AssertionError ae) {
 			System.out.println("Assertion failed on "+expression+" with result:");
@@ -92,50 +93,13 @@ public class TestSingleOperandPixelBasedOperators  <T extends RealType<T>> {
 			rc.close();
 			ca.close();
 		}
-
 		
 		// Numbers 
-		expression = "!0"; // true
+		expression = "abs(-100)"; 
 		root_node = parser.parse(expression);
 		FloatType number_result = (FloatType) parser.evaluate(root_node);
-		assertEquals(1.0f, number_result.getRealFloat(), Float.MIN_VALUE);
+		assertEquals(100.0f, number_result.getRealFloat(), Float.MIN_VALUE);
 	}
-	
-
-	@SuppressWarnings("unchecked")
-	@Test
-	public void uMinus() throws ParseException {
-		
-		// Two images
-		String expression = "-A"; 
-		parser.addVariable("A", image_A);
-		Node root_node = parser.parse(expression);
-		Image<T> result = (Image<T>) parser.evaluate(root_node);
-		LocalizableCursor<T> rc = result.createLocalizableCursor();
-		LocalizableByDimCursor<UnsignedShortType> ca = image_A.createLocalizableByDimCursor(); 
-		try {
-			while (rc.hasNext()) {
-				rc.fwd();
-				ca.setPosition(rc);
-				assertEquals(-ca.getType().getRealFloat(), rc.getType().getRealFloat(), Float.MIN_VALUE);
-			}
-		} catch (AssertionError ae) {
-			System.out.println("Assertion failed on "+expression+" with result:");
-			echoImage(result, System.out);
-			throw (ae);
-		} finally {
-			rc.close();
-			ca.close();
-		}
-
-		
-		// Numbers 
-		expression = "-100"; 
-		root_node = parser.parse(expression);
-		FloatType number_result = (FloatType) parser.evaluate(root_node);
-		assertEquals(-100.0f, number_result.getRealFloat(), Float.MIN_VALUE);
-	}
-	
 	
 
 	/*

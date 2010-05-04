@@ -12,6 +12,7 @@ import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.integer.UnsignedShortType;
+import mpicbg.imglib.type.numeric.real.FloatType;
 
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -32,7 +33,6 @@ public class TestTwoOperandsPixelBasedOperators <T extends RealType<T>>{
 	
 	private final static int WIDTH = 9; 
 	private final static int HEIGHT = 9;
-	private final static float PRECISION_LIMIT = 1e-6f;
 	/** 16-bit image */
 	public static Image<UnsignedShortType> image_A, image_B;
 	public ImgLibParser<T> parser;
@@ -122,8 +122,8 @@ public class TestTwoOperandsPixelBasedOperators <T extends RealType<T>>{
 		// Numbers addition
 		expression = "256+256";
 		root_node = parser.parse(expression);
-		Number number_result = (Number) parser.evaluate(root_node);
-		assertEquals(512.0f, number_result.floatValue(), Float.MIN_VALUE);
+		FloatType number_result = (FloatType) parser.evaluate(root_node);
+		assertEquals(512.0f, number_result.getRealFloat(), Float.MIN_VALUE);
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -194,8 +194,8 @@ public class TestTwoOperandsPixelBasedOperators <T extends RealType<T>>{
 		// Numbers 
 		expression = "256-128";
 		root_node = parser.parse(expression);
-		Number number_result = (Number) parser.evaluate(root_node);
-		assertEquals(128.0f, number_result.floatValue(), Float.MIN_VALUE);
+		FloatType number_result = (FloatType) parser.evaluate(root_node);
+		assertEquals(128.0f, number_result.getRealFloat(), Float.MIN_VALUE);
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -274,8 +274,8 @@ public class TestTwoOperandsPixelBasedOperators <T extends RealType<T>>{
 		// Numbers 
 		expression = "256*10";
 		root_node = parser.parse(expression);
-		Number number_result = (Number) parser.evaluate(root_node);
-		assertEquals(2560.0f, number_result.floatValue(), Float.MIN_VALUE);
+		FloatType number_result = (FloatType) parser.evaluate(root_node);
+		assertEquals(2560.0f, number_result.getRealFloat(), Float.MIN_VALUE);
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -353,8 +353,8 @@ public class TestTwoOperandsPixelBasedOperators <T extends RealType<T>>{
 		// Numbers 
 		expression = "256/10";
 		root_node = parser.parse(expression);
-		Number number_result = (Number) parser.evaluate(root_node);
-		assertEquals(25.6f, number_result.floatValue(), Float.MIN_VALUE);
+		FloatType number_result = (FloatType) parser.evaluate(root_node);
+		assertEquals(25.6f, number_result.getRealFloat(), Float.MIN_VALUE);
 	}
 	
 
@@ -395,7 +395,7 @@ public class TestTwoOperandsPixelBasedOperators <T extends RealType<T>>{
 			while (rc.hasNext()) {
 				rc.fwd();
 				ca.setPosition(rc);
-				assertEquals(ca.getType().getRealFloat()<128? 1.0f:0.0f, rc.getType().getRealFloat(), PRECISION_LIMIT);
+				assertEquals(ca.getType().getRealFloat()<128? 1.0f:0.0f, rc.getType().getRealFloat(), Float.MIN_VALUE);
 			}
 		} catch (AssertionError ae) {
 			System.out.println("Assertion failed on "+expression+" with result:");
@@ -416,7 +416,7 @@ public class TestTwoOperandsPixelBasedOperators <T extends RealType<T>>{
 			while (rc.hasNext()) {
 				rc.fwd();
 				ca.setPosition(rc);
-				assertEquals(ca.getType().getRealFloat()>128? 1.0f:0.0f, rc.getType().getRealFloat(), PRECISION_LIMIT);
+				assertEquals(ca.getType().getRealFloat()>128? 1.0f:0.0f, rc.getType().getRealFloat(), Float.MIN_VALUE);
 			}
 		} catch (AssertionError ae) {
 			System.out.println("Assertion failed on "+expression+" with result:");
@@ -430,8 +430,8 @@ public class TestTwoOperandsPixelBasedOperators <T extends RealType<T>>{
 		// Numbers 
 		expression = "128 < 128.0001";
 		root_node = parser.parse(expression);
-		Number number_result = (Number) parser.evaluate(root_node);
-		assertEquals(1.0f, number_result.floatValue(), PRECISION_LIMIT);
+		FloatType number_result = (FloatType) parser.evaluate(root_node);
+		assertEquals(1.0f, number_result.getRealFloat(), Float.MIN_VALUE);
 	}
 	
 
@@ -471,7 +471,7 @@ public class TestTwoOperandsPixelBasedOperators <T extends RealType<T>>{
 			while (rc.hasNext()) {
 				rc.fwd();
 				ca.setPosition(rc);
-				assertEquals(ca.getType().getRealFloat()>128? 1.0f:0.0f, rc.getType().getRealFloat(), PRECISION_LIMIT);
+				assertEquals(ca.getType().getRealFloat()>128? 1.0f:0.0f, rc.getType().getRealFloat(), Float.MIN_VALUE);
 			}
 		} catch (AssertionError ae) {
 			System.out.println("Assertion failed on "+expression+" with result:");
@@ -492,7 +492,7 @@ public class TestTwoOperandsPixelBasedOperators <T extends RealType<T>>{
 			while (rc.hasNext()) {
 				rc.fwd();
 				ca.setPosition(rc);
-				assertEquals(ca.getType().getRealFloat()<128? 1.0f:0.0f, rc.getType().getRealFloat(), PRECISION_LIMIT);
+				assertEquals(ca.getType().getRealFloat()<128? 1.0f:0.0f, rc.getType().getRealFloat(), Float.MIN_VALUE);
 			}
 		} catch (AssertionError ae) {
 			System.out.println("Assertion failed on "+expression+" with result:");
@@ -506,8 +506,8 @@ public class TestTwoOperandsPixelBasedOperators <T extends RealType<T>>{
 		// Numbers 
 		expression = "128 > 128.0001";
 		root_node = parser.parse(expression);
-		Number number_result = (Number) parser.evaluate(root_node);
-		assertEquals(0.0f, number_result.floatValue(), PRECISION_LIMIT);
+		FloatType number_result = (FloatType) parser.evaluate(root_node);
+		assertEquals(0.0f, number_result.getRealFloat(), Float.MIN_VALUE);
 	}
 	
 
@@ -547,7 +547,7 @@ public class TestTwoOperandsPixelBasedOperators <T extends RealType<T>>{
 			while (rc.hasNext()) {
 				rc.fwd();
 				ca.setPosition(rc);
-				assertEquals(ca.getType().getRealFloat()>=128? 1.0f:0.0f, rc.getType().getRealFloat(), PRECISION_LIMIT);
+				assertEquals(ca.getType().getRealFloat()>=128? 1.0f:0.0f, rc.getType().getRealFloat(), Float.MIN_VALUE);
 			}
 		} catch (AssertionError ae) {
 			System.out.println("Assertion failed on "+expression+" with result:");
@@ -568,7 +568,7 @@ public class TestTwoOperandsPixelBasedOperators <T extends RealType<T>>{
 			while (rc.hasNext()) {
 				rc.fwd();
 				ca.setPosition(rc);
-				assertEquals(ca.getType().getRealFloat()<=128? 1.0f:0.0f, rc.getType().getRealFloat(), PRECISION_LIMIT);
+				assertEquals(ca.getType().getRealFloat()<=128? 1.0f:0.0f, rc.getType().getRealFloat(), Float.MIN_VALUE);
 			}
 		} catch (AssertionError ae) {
 			System.out.println("Assertion failed on "+expression+" with result:");
@@ -582,8 +582,8 @@ public class TestTwoOperandsPixelBasedOperators <T extends RealType<T>>{
 		// Numbers 
 		expression = "128 >= 128.0001";
 		root_node = parser.parse(expression);
-		Number number_result = (Number) parser.evaluate(root_node);
-		assertEquals(0.0f, number_result.floatValue(), PRECISION_LIMIT);
+		FloatType number_result = (FloatType) parser.evaluate(root_node);
+		assertEquals(0.0f, number_result.getRealFloat(), Float.MIN_VALUE);
 	}
 
 
@@ -623,7 +623,7 @@ public class TestTwoOperandsPixelBasedOperators <T extends RealType<T>>{
 			while (rc.hasNext()) {
 				rc.fwd();
 				ca.setPosition(rc);
-				assertEquals(ca.getType().getRealFloat()<=128? 1.0f:0.0f, rc.getType().getRealFloat(), PRECISION_LIMIT);
+				assertEquals(ca.getType().getRealFloat()<=128? 1.0f:0.0f, rc.getType().getRealFloat(), Float.MIN_VALUE);
 			}
 		} catch (AssertionError ae) {
 			System.out.println("Assertion failed on "+expression+" with result:");
@@ -644,7 +644,7 @@ public class TestTwoOperandsPixelBasedOperators <T extends RealType<T>>{
 			while (rc.hasNext()) {
 				rc.fwd();
 				ca.setPosition(rc);
-				assertEquals(ca.getType().getRealFloat()>=128? 1.0f:0.0f, rc.getType().getRealFloat(), PRECISION_LIMIT);
+				assertEquals(ca.getType().getRealFloat()>=128? 1.0f:0.0f, rc.getType().getRealFloat(), Float.MIN_VALUE);
 			}
 		} catch (AssertionError ae) {
 			System.out.println("Assertion failed on "+expression+" with result:");
@@ -658,8 +658,8 @@ public class TestTwoOperandsPixelBasedOperators <T extends RealType<T>>{
 		// Numbers 
 		expression = "128 <= 128.0001";
 		root_node = parser.parse(expression);
-		Number number_result = (Number) parser.evaluate(root_node);
-		assertEquals(1.0f, number_result.floatValue(), PRECISION_LIMIT);
+		FloatType number_result = (FloatType) parser.evaluate(root_node);
+		assertEquals(1.0f, number_result.getRealFloat(), Float.MIN_VALUE);
 	}
 	
 
@@ -700,7 +700,7 @@ public class TestTwoOperandsPixelBasedOperators <T extends RealType<T>>{
 			while (rc.hasNext()) {
 				rc.fwd();
 				ca.setPosition(rc);
-				assertEquals(ca.getType().getRealFloat()==128f? 1.0f:0.0f, rc.getType().getRealFloat(), PRECISION_LIMIT);
+				assertEquals(ca.getType().getRealFloat()==128f? 1.0f:0.0f, rc.getType().getRealFloat(), Float.MIN_VALUE);
 			}
 		} catch (AssertionError ae) {
 			System.out.println("Assertion failed on "+expression+" with result:");
@@ -721,7 +721,7 @@ public class TestTwoOperandsPixelBasedOperators <T extends RealType<T>>{
 			while (rc.hasNext()) {
 				rc.fwd();
 				ca.setPosition(rc);
-				assertEquals(ca.getType().getRealFloat()==128f? 1.0f:0.0f, rc.getType().getRealFloat(), PRECISION_LIMIT);
+				assertEquals(ca.getType().getRealFloat()==128f? 1.0f:0.0f, rc.getType().getRealFloat(), Float.MIN_VALUE);
 			}
 		} catch (AssertionError ae) {
 			System.out.println("Assertion failed on "+expression+" with result:");
@@ -735,8 +735,8 @@ public class TestTwoOperandsPixelBasedOperators <T extends RealType<T>>{
 		// Numbers 
 		expression = "128 == 128.0001";
 		root_node = parser.parse(expression);
-		Number number_result = (Number) parser.evaluate(root_node);
-		assertEquals(0.0f, number_result.floatValue(), PRECISION_LIMIT);
+		FloatType number_result = (FloatType) parser.evaluate(root_node);
+		assertEquals(0.0f, number_result.getRealFloat(), Float.MIN_VALUE);
 	}
 	
 
@@ -777,7 +777,7 @@ public class TestTwoOperandsPixelBasedOperators <T extends RealType<T>>{
 			while (rc.hasNext()) {
 				rc.fwd();
 				ca.setPosition(rc);
-				assertEquals(ca.getType().getRealFloat()==128f? 0.0f:1.0f, rc.getType().getRealFloat(), PRECISION_LIMIT);
+				assertEquals(ca.getType().getRealFloat()==128f? 0.0f:1.0f, rc.getType().getRealFloat(), Float.MIN_VALUE);
 			}
 		} catch (AssertionError ae) {
 			System.out.println("Assertion failed on "+expression+" with result:");
@@ -798,7 +798,7 @@ public class TestTwoOperandsPixelBasedOperators <T extends RealType<T>>{
 			while (rc.hasNext()) {
 				rc.fwd();
 				ca.setPosition(rc);
-				assertEquals(ca.getType().getRealFloat()==128f? 0.0f:1.0f, rc.getType().getRealFloat(), PRECISION_LIMIT);
+				assertEquals(ca.getType().getRealFloat()==128f? 0.0f:1.0f, rc.getType().getRealFloat(), Float.MIN_VALUE);
 			}
 		} catch (AssertionError ae) {
 			System.out.println("Assertion failed on "+expression+" with result:");
@@ -812,8 +812,8 @@ public class TestTwoOperandsPixelBasedOperators <T extends RealType<T>>{
 		// Numbers 
 		expression = "128 != 128.0001";
 		root_node = parser.parse(expression);
-		Number number_result = (Number) parser.evaluate(root_node);
-		assertEquals(1.0f, number_result.floatValue(), PRECISION_LIMIT);
+		FloatType number_result = (FloatType) parser.evaluate(root_node);
+		assertEquals(1.0f, number_result.getRealFloat(), Float.MIN_VALUE);
 	}
 	
 
@@ -894,8 +894,8 @@ public class TestTwoOperandsPixelBasedOperators <T extends RealType<T>>{
 		// Numbers 
 		expression = "128 && 1"; // true
 		root_node = parser.parse(expression);
-		Number number_result = (Number) parser.evaluate(root_node);
-		assertEquals(1.0f, number_result.floatValue(), PRECISION_LIMIT);
+		FloatType number_result = (FloatType) parser.evaluate(root_node);
+		assertEquals(1.0f, number_result.getRealFloat(), Float.MIN_VALUE);
 	}
 	
 
@@ -974,8 +974,8 @@ public class TestTwoOperandsPixelBasedOperators <T extends RealType<T>>{
 		// Numbers 
 		expression = "0 || 1"; // true
 		root_node = parser.parse(expression);
-		Number number_result = (Number) parser.evaluate(root_node);
-		assertEquals(1.0f, number_result.floatValue(), PRECISION_LIMIT);
+		FloatType number_result = (FloatType) parser.evaluate(root_node);
+		assertEquals(1.0f, number_result.getRealFloat(), Float.MIN_VALUE);
 	}
 		
 	

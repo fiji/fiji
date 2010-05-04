@@ -28,13 +28,14 @@ public abstract class SingleOperandPixelBasedAbstractFunction <T extends RealTyp
 		} else if (param instanceof RealType) {
 
 			FloatType t = (FloatType) param;
-			result = evaluate(t);
+			result = new FloatType(evaluate(t)); // since this is pixel-based, this must be a singleton
+			
 			
 		} else {
 			throw new ParseException("In function '" + getFunctionString()
 					+"': Bad type of operand: "+param.getClass().getSimpleName() );
 		}
-		
+
 		inStack.push(result);
 	}
 
@@ -73,6 +74,6 @@ public abstract class SingleOperandPixelBasedAbstractFunction <T extends RealTyp
 	 * @return  The resulting number as a float
 	 * @throws ParseException 
 	 */
-	public abstract <R extends RealType<R>> float  evaluate(final R alpha) throws ParseException;
+	public abstract <R extends RealType<R>> float evaluate(final R alpha) throws ParseException;
 
 }
