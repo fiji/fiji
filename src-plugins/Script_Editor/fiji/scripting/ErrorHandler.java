@@ -76,6 +76,7 @@ public class ErrorHandler {
 		textArea.getHighlighter().removeAllHighlights();
 		textArea.getHighlighter().addHighlight(start, end,
 			DefaultHighlighter.DefaultPainter);
+		textArea.scrollRectToVisible(textArea.modelToView(textArea.getDocument().getLength()));
 		textArea.scrollRectToVisible(textArea.modelToView(start));
 	}
 
