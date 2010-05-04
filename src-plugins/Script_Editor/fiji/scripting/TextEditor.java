@@ -1481,7 +1481,7 @@ public class TextEditor extends JFrame implements ActionListener,
 			className = getEditorPane().getClassNameFunctions()
 				.getFullName(className);
 		if (className != null)
-			new TokenFunctions(getTextArea()).addImport(className);
+			new TokenFunctions(getTextArea()).addImport(className.trim());
 	}
 
 	public void openHelp(String className) {
