@@ -1,36 +1,29 @@
 package fiji.expressionparser.test;
 
-import static org.junit.Assert.assertEquals;
+import static fiji.expressionparser.test.TestUtilities.doTest;
+import static fiji.expressionparser.test.TestUtilities.image_A;
 
-import java.io.PrintStream;
-
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.nfunk.jep.Node;
-import org.nfunk.jep.ParseException;
-
-import fiji.expressionparser.ImgLibParser;
+import java.util.HashMap;
+import java.util.Map;
 
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
-import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.integer.UnsignedShortType;
 
+import org.junit.Test;
+import org.nfunk.jep.ParseException;
+
+import fiji.expressionparser.test.TestUtilities.ExpectedExpression;
+
 public class TestImgLibAlgorithms <T extends RealType<T>> {
 
-	
-	private final static int WIDTH = 9; 
-	private final static int HEIGHT = 9; 
-	private final static int DEPTH = 9;
-	/** 16-bit image */
-	public static Image<UnsignedShortType> image_A, image_B, image_C;
-	public ImgLibParser<T> parser;
-	
 	private final static int PULSE_VALUE = 1;
+	private final static int WIDTH = 9;
+	private final static int HEIGHT = 9;
+	private final static int DEPTH = 9;
 	private final static float SIGMA = 0.84089642f;
 	private static final double[] CONVOLVED = new double[] {
 			0.0,			0.0,			0.0,			0.0,			0.0,			0.0,			0.0,			0.0,			0.0,  
@@ -44,137 +37,66 @@ public class TestImgLibAlgorithms <T extends RealType<T>> {
 			0.0,			0.0,			0.0,			0.0,			0.0,			0.0,			0.0,			0.0,										0.0 
 	};
 	
-
-	@BeforeClass
-	public static void setUpBeforeClass() throws Exception {
+	private Image<UnsignedShortType> image_C;
+	private Map<String, Image<UnsignedShortType>> source_map; 
+	{
 		// Create source images
 		ArrayContainerFactory cfact = new ArrayContainerFactory();
 		UnsignedShortType type = new UnsignedShortType();
-		ImageFactory<UnsignedShortType> ifact = new ImageFactory<UnsignedShortType>(type, cfact);
-		
-		image_A = ifact.createImage(new int[] {WIDTH, HEIGHT}, "A");
-		image_B = ifact.createImage(new int[] {WIDTH, HEIGHT}, "B");
+		ImageFactory<UnsignedShortType> ifact = new ImageFactory<UnsignedShortType>(type, cfact);		
 		image_C = ifact.createImage(new int[] {(int) Math.sqrt(CONVOLVED.length), (int) Math.sqrt(CONVOLVED.length)}, "C"); // Spike 3D image
-		
-		LocalizableCursor<UnsignedShortType> ca = image_A.createLocalizableCursor();
-		LocalizableByDimCursor<UnsignedShortType> cb = image_B.createLocalizableByDimCursor();
-
-		int[] pos = ca.createPositionArray();
-		while (ca.hasNext()) {
-			ca.fwd();
-			ca.getPosition(pos);
-			cb.setPosition(ca);
-			ca.getType().set( pos[0] * (WIDTH-1-pos[0]) * pos[1] * (HEIGHT-1-pos[1]) );
-			cb.getType().set( 256 - (pos[0] * (WIDTH-1-pos[0]) * pos[1] * (HEIGHT-1-pos[1]) ) );
-		}
-		ca.close();
-		cb.close();
-		
 		LocalizableByDimCursor<UnsignedShortType> cc = image_C.createLocalizableByDimCursor();
 		cc.setPosition(new int[] { (int) Math.sqrt(CONVOLVED.length)/2, (int) Math.sqrt(CONVOLVED.length)/2});
 		cc.getType().set(PULSE_VALUE);
 		cc.close();
-		
+		//
+		source_map = new HashMap<String, Image<UnsignedShortType>>();
+		source_map.put("A", image_A);
+		source_map.put("C", image_C);
 	}
 
-
-	@Before
-	public void setUp() throws Exception {
-		parser = new ImgLibParser<T>();
-		parser.addStandardFunctions();
-		parser.addImgLibAlgorithms();
-	}
-	
-	
-	@SuppressWarnings("unchecked")
 	@Test(expected=ParseException.class)
 	public void gaussianConvolutionTwoImages() throws ParseException {		
 		// Two images -> Should generate an exception
 		String expression = "gauss(C,A)";
-		parser.addVariable("A", image_A);
-		parser.addVariable("C", image_C);
-		Node node = parser.parse(expression);
-		Image<T> result = (Image<T>) parser.evaluate(node); // Never reach this code
-		System.out.println("Assertion failed on "+expression+" with result:");
-		echoImage(result, System.out);
+		doTest(expression, source_map, new ExpectedExpression() {
+			@Override
+			public <R extends RealType<R>> float getExpectedValue(
+					Map<String, LocalizableByDimCursor<R>> cursors) {
+				return 0;
+			}
+		});
 	}
 
-	@SuppressWarnings("unchecked")
 	@Test(expected=ParseException.class)
-	public void gaussianConvolutionTwoNumbers() throws ParseException {		
-		// Two images -> Should generate an exception
-		String expression = "gauss(1.0,5)";
-		parser.addVariable("A", image_A);
-		parser.addVariable("C", image_C);
-		Node node = parser.parse(expression);
-		Image<T> result = (Image<T>) parser.evaluate(node); // Never reach this code
-		System.out.println("Assertion failed on "+expression+" with result:");
-		echoImage(result, System.out);
+	public void gaussianConvolutionBadOrder() throws ParseException {		
+		// Bad order -> Should generate an exception
+		String expression = "gauss(1,C)";
+		doTest(expression, source_map, new ExpectedExpression() {
+			@Override
+			public <R extends RealType<R>> float getExpectedValue(
+					Map<String, LocalizableByDimCursor<R>> cursors) {
+				return 0;
+			}
+		});
 	}
 
-	@SuppressWarnings("unchecked")
 	@Test
 	public void gaussianConvolution() throws ParseException {		
-		// Two images -> Should generate an exception
-		String expression = "gauss(C,"+SIGMA+")";
-		parser.addVariable("C", image_C);
-		Node node = parser.parse(expression);
-		Image<T> result = (Image<T>) parser.evaluate(node);
-		LocalizableCursor<T> rc = result.createLocalizableCursor();
-		int[] position = rc.createPositionArray();
-		float tv;
-		try {
-			int index = 0;
-			while (rc.hasNext()) {
-				rc.fwd();
-				rc.getPosition(position);
-				tv = (float) CONVOLVED[index];
-				assertEquals( tv, rc.getType().getRealFloat(), tv/1e3);
+		// Bad order -> Should generate an exception
+		String expression = "gauss(C," + SIGMA + ")" ;
+		doTest(expression, source_map, new ExpectedExpression() {
+			private int[] position = new int[2];
+			@Override
+			public <R extends RealType<R>> float getExpectedValue(final Map<String, LocalizableByDimCursor<R>> cursors) {
+				final LocalizableByDimCursor<R> cursor = cursors.get("C");
+				position = cursor.getPosition();
+				final int index = ((int) Math.sqrt(CONVOLVED.length)) * position[1] + position[0];
+				return (float) CONVOLVED[index];
 			}
-		} catch (AssertionError ae) {
-			System.out.println("Assertion failed on "+expression+" with result:");
-			echoImage(result, System.out);
-			System.out.println(String.format("on position: x=%d, y=%d.\n", position[0], position[1]));
-			throw (ae);
-		} finally {
-			rc.close();
-		}
+		});
 	}
 
-	/*
-	 * UTILS
-	 */
-	
-	
-	public static final <T extends RealType<T>> void echoImage(Image<T> img, PrintStream logger) {
-		LocalizableByDimCursor<T> lc = img.createLocalizableByDimCursor();
-		int[] dims = lc.getDimensions();
-
-		logger.append(img.toString() + "\n");
-		logger.append("      ");
-
-		logger.append('\n');
-
-		logger.append("        ");
-		for (int i =0; i<dims[0]; i++) {
-			logger.append(String.format("%9d.", i) );				
-		}
-		logger.append('\n');
-
-		for (int j = 0; j<dims[1]; j++) {
-
-			lc.setPosition(j, 1);
-			logger.append(String.format("%2d.  -  ", j) );				
-			for (int i =0; i<dims[0]; i++) {
-				lc.setPosition(i, 0);
-				logger.append(String.format("%10.1e", lc.getType().getRealFloat()));				
-			}
-			logger.append('\n');
-		}
-
-		lc.close();
-
-	}
 	
 	public static final float theroeticalGaussianConv(final int[] position) {
 		final int x = position[0];

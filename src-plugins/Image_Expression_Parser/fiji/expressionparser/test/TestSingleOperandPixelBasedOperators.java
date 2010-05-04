@@ -25,7 +25,6 @@ public class TestSingleOperandPixelBasedOperators  <T extends RealType<T>> {
 
 	private final static int WIDTH = 9; 
 	private final static int HEIGHT = 9;
-	private final static float PRECISION_LIMIT = 1e-6f;
 	/** 16-bit image */
 	public static Image<UnsignedShortType> image_A, image_B;
 	public ImgLibParser<T> parser;
