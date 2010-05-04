@@ -24,6 +24,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  *
+ * In addition, as a special exception, the copyright holders give
+ * you permission to combine this program with free software programs or
+ * libraries that are released under the Apache Public License. 
+ *
  * @author Stephan Preibisch
  * @version 1.0
  *
