@@ -217,6 +217,16 @@ public class FileFunctions {
 				}
 				list.add(prefix + "/" + files[i]);
 			}
+			else if ("".equals(prefix) &&
+					(files[i].equals("full-nightly-build") ||
+					 files[i].equals("livecd") ||
+					 files[i].equals("java") ||
+					 files[i].equals("nightly-build") ||
+					 files[i].equals("other") ||
+					 files[i].equals("work") ||
+					 files[i].startsWith("chroot-")))
+				// skip known non-source directories
+				continue;
 			else {
 				File file = new File(directory, files[i]);
 				if (file.isDirectory())
