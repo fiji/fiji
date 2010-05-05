@@ -19,7 +19,7 @@
 
     In addition, as a special exception, the copyright holders give
     you permission to combine this program with free software programs or
-    libraries that are released under the Apache Public License. 
+    libraries that are released under the Apache Public License.
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
@@ -173,7 +173,7 @@ public class Find_Connected_Regions implements PlugIn {
 
 		
 		ImageCalculator iCalc = new ImageCalculator();
-		
+
 		ImagePlus imagePlus = IJ.getImage();
 		if (imagePlus == null) {
 			IJ.error("No image to operate on.");
@@ -195,7 +195,7 @@ public class Find_Connected_Regions implements PlugIn {
 		if (!byteImage && mustHaveSameValue) {
 			IJ.error("You can only specify that each region must have the same value for 8 bit images.");
 			return;
-		}				
+		}
 
 		boolean startAtMaxValue = !mustHaveSameValue;
 
@@ -204,7 +204,7 @@ public class Find_Connected_Regions implements PlugIn {
 		int point_roi_z = -1;
 
 		if( startFromPointROI ) {
-			
+
 			Roi roi = imagePlus.getRoi();
 			if (roi == null) {
 				IJ.error("There's no point selected in the image.");
@@ -213,13 +213,13 @@ public class Find_Connected_Regions implements PlugIn {
 			if (roi.getType() != Roi.POINT) {
 				IJ.error("There's a selection in the image, but it's not a point selection.");
 				return;
-			}			
+			}
 			Polygon p = roi.getPolygon();
 			if(p.npoints > 1) {
 				IJ.error("You can only have one point selected.");
 				return;
 			}
-			
+
 			point_roi_x = p.xpoints[0];
 			point_roi_y = p.ypoints[0];
 			point_roi_z = imagePlus.getCurrentSlice()-1;
@@ -247,6 +247,7 @@ public class Find_Connected_Regions implements PlugIn {
 		ArrayList<Region> results = new ArrayList<Region>();
 
 		ImageStack stack = imagePlus.getStack();
+
 
 		byte[][] sliceDataBytes = null;
 		float[][] sliceDataFloats = null;
@@ -304,7 +305,7 @@ public class Find_Connected_Regions implements PlugIn {
 			float maxValueFloat = Float.MIN_VALUE;
 
 			if (firstTime && startFromPointROI ) {
-				
+
 				initial_x = point_roi_x;
 				initial_y = point_roi_y;
 				initial_z = point_roi_z;
@@ -568,7 +569,7 @@ public class Find_Connected_Regions implements PlugIn {
 				if (parameters != null) {
 					parameters.setParameters(newImagePlus, true);
 				}
-				
+
 				if (autoSubtract) {
 					iCalc.calculate("Subtract stack", imagePlus, newImagePlus);
 				}
@@ -592,14 +593,14 @@ public class Find_Connected_Regions implements PlugIn {
 
 		for (Iterator<Region> it = results.iterator(); it.hasNext();) {
 			Region r = it.next();
-			System.out.println(r.toString());		       			
+			System.out.println(r.toString());
 			if( showResults ) {
 				r.addRow(rt);
-			}		
+			}
 		}
 
 		if( showResults )
 			rt.show("Results");
-		
+
 	}
 }
