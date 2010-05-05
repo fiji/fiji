@@ -46,7 +46,6 @@ Flag DONE stops this sequence of calls.
 import ij.IJ;
 import ij.IJEventListener;
 import ij.ImagePlus;
-import ij.gui.ColorChooser;
 import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
 import ij.gui.NonBlockingGenericDialog;
@@ -63,20 +62,21 @@ import java.awt.AWTEvent;
 import java.awt.Button;
 import java.awt.Checkbox;
 import java.awt.Choice;
-import java.awt.Color;
-import java.awt.FlowLayout;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import java.awt.Panel;
 import java.awt.Rectangle;
-import java.awt.Scrollbar;
 import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.TextEvent;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -84,8 +84,17 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
 
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+
 public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
-		DialogListener { // , ActionListener {
+		DialogListener, FocusListener, DocumentListener { // , ActionListener {
 	// http://rsb.info.nih.gov/ij/developer/api/ij/plugin/filter/ExtendedPlugInFilter.html
 	// should use extended plugin filter for preview ability and for stacks!
 	// then need more methods: setNPasses(int last-first) thats the number of
@@ -158,6 +167,43 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	static final String[] locations = {"Upper Right", "Lower Right", "Lower Left", "Upper Left", "Custom"};
 	static final int UPPER_RIGHT=0, LOWER_RIGHT=1, LOWER_LEFT=2, UPPER_LEFT=3, CUSTOM=4;
 	int locationPreset;
+	
+	// GUI variables
+	private javax.swing.ButtonGroup buttonGroup1;
+	private javax.swing.JPanel cCustomLabelFormat;
+	private javax.swing.JComboBox cbLabelFormats;
+	private javax.swing.JComboBox cbLabelUnits;
+	private javax.swing.JComboBox cbStackType;
+	private JComboBox cbLocationPresets;
+	private javax.swing.JLabel labelFormat;
+	private javax.swing.JLabel lblCustomLabelFormat;
+	private javax.swing.JLabel lblCustomSuffix;
+	private javax.swing.JLabel lblDecimalPlaces;
+	private javax.swing.JLabel lblLabelUnits;
+	private javax.swing.JLabel lblStackType;
+	private javax.swing.JLabel lblStartup;
+	private JLabel lblInterval;
+	private JLabel lblEveryNth;
+	private JLabel lblFirstFrame;
+	private JLabel lblLastFrame;
+	private JLabel lblLocationX;
+	private JLabel lblLocationY;
+	private JLabel lblLocationPresets;
+	private JPanel pGeneralSettings;
+	private javax.swing.JPanel pUnitsFormatting;
+	private javax.swing.JPanel pStartStopIntervals;
+	private JPanel pLocationFont;
+	private JPanel pFontProperties;
+	private javax.swing.JTextField tfCustomLabelFormat;
+	private javax.swing.JTextField tfCustomSuffix;
+	private javax.swing.JTextField tfDecimalPlaces;
+	private javax.swing.JTextField tfStartup;
+	private JTextField tfInterval;
+	private JTextField tfEveryNth;
+	private JTextField tfFirstFrame;
+	private JTextField tfLastFrame;
+	private JTextField tfLocationX;
+	private JTextField tfLocationY;
 
 	/**
 	 * Setup the plug-in and tell ImageJ it needs to work on a stack by
@@ -204,10 +250,219 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr) {
 		this.pluginFilterRunner = pfr;
 		
+		int textFieldHeight = 22;
+		int labelHeight = 20;
+		int subpanelHeight = 30;
+		int left = 20;
+		int frameWidth = 540;
 		// This makes the GUI object
 		gd = new NonBlockingGenericDialog(
 				"Time Stamper Enhanced");
+		
+		
+		// General settings panel
+		pGeneralSettings = new JPanel(null);
+		pGeneralSettings.setPreferredSize(new Dimension(frameWidth, 70));
+		pGeneralSettings.setBorder(javax.swing.BorderFactory.createTitledBorder("General Settings"));
+		
+		lblStackType = new JLabel("Stack Type");
+		lblStackType.setBounds(left, 30, 100, labelHeight);
+		
+		cbStackType = new JComboBox();
+		cbStackType.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "z-stack", "time series / movie" }));
+		cbStackType.setBounds(100, 30, 180, textFieldHeight);
+		registComboBox(cbStackType);
+		
+		pGeneralSettings.add(lblStackType);
+		pGeneralSettings.add(cbStackType);
 
+		Panel awtGeneralSettingsPanel = new Panel();
+		awtGeneralSettingsPanel.add(pGeneralSettings);
+		gd.addPanel(awtGeneralSettingsPanel, GridBagConstraints.CENTER, new Insets(5, 0, 0, 0));
+		
+		
+		// Units formatting panel
+		pUnitsFormatting = new JPanel(null);
+		pUnitsFormatting.setPreferredSize(new Dimension(frameWidth, 100));
+		pUnitsFormatting.setBorder(javax.swing.BorderFactory.createTitledBorder("Units Formatting"));
+		
+		labelFormat = new JLabel("Label Format");
+		cbLabelFormats = new JComboBox();
+        cbLabelFormats.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Decimal", "Digital", "Hybrid Dig/Dec", "Custom" }));
+        registComboBox(cbLabelFormats);
+        JPanel pLabelFormat = new JPanel(null);
+        pLabelFormat.add(labelFormat);
+        pLabelFormat.add(cbLabelFormats);
+        labelFormat.setBounds(0, 0, 100, labelHeight);
+        cbLabelFormats.setBounds(100, 0, 150, textFieldHeight);
+        pLabelFormat.setBounds(left, 30, 250, subpanelHeight);
+        
+        lblLabelUnits = new JLabel("Label Unit");
+		cbLabelUnits = new JComboBox();
+		cbLabelUnits.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "y", "m", "sec", "msec" }));
+		registComboBox(cbLabelUnits);
+        JPanel pLabelUnits = new JPanel(null);
+        pLabelUnits.add(lblLabelUnits);
+        pLabelUnits.add(cbLabelUnits);
+        lblLabelUnits.setBounds(0, 0, 100, labelHeight);
+        cbLabelUnits.setBounds(100, 0, 150, textFieldHeight);
+        pLabelUnits.setBounds(left, 60, 250, subpanelHeight);
+        
+		lblCustomSuffix = new JLabel("Custom Suffix");
+		tfCustomSuffix = new JTextField();
+		registerTextField(tfCustomSuffix);
+		JPanel pCustomSuffix = new JPanel(null);
+		pCustomSuffix.add(lblCustomSuffix);
+		pCustomSuffix.add(tfCustomSuffix);
+		lblCustomSuffix.setBounds(0, 0, 100, labelHeight);
+		tfCustomSuffix.setBounds(100, 0, 100, textFieldHeight);
+		pCustomSuffix.setBounds(left, 60, 250, subpanelHeight);
+		pCustomSuffix.setVisible(false);
+		
+		lblDecimalPlaces = new JLabel("Decimal Places");
+		tfDecimalPlaces = new JTextField();
+		registerTextField(tfDecimalPlaces);
+		JPanel pDecimalPlaces = new JPanel(null);
+		pDecimalPlaces.add(lblDecimalPlaces);
+		pDecimalPlaces.add(tfDecimalPlaces);
+		lblDecimalPlaces.setBounds(0, 0, 100, labelHeight);
+		tfDecimalPlaces.setBounds(100, 0, 100, textFieldHeight);
+		pDecimalPlaces.setBounds(300, 30, 200, subpanelHeight);
+		pDecimalPlaces.setVisible(false);
+		
+		lblCustomLabelFormat = new JLabel("Custom Format");
+		tfCustomLabelFormat = new JTextField();
+		registerTextField(tfCustomLabelFormat);
+		JPanel pCustomLabelFormat = new JPanel(null);
+		pCustomLabelFormat.add(lblCustomLabelFormat);
+		pCustomLabelFormat.add(tfCustomLabelFormat);
+		lblCustomLabelFormat.setBounds(0, 0, 100, labelHeight);
+		tfCustomLabelFormat.setBounds(100, 0, 100, textFieldHeight);
+		pCustomLabelFormat.setBounds(300, 30, 200, subpanelHeight);
+
+		pUnitsFormatting.add(pLabelFormat);
+		pUnitsFormatting.add(pCustomSuffix);
+		pUnitsFormatting.add(pLabelUnits);
+		pUnitsFormatting.add(pDecimalPlaces);
+		pUnitsFormatting.add(pCustomLabelFormat);
+		
+		Panel awtUnitsFormattingPanel = new Panel();
+		awtUnitsFormattingPanel.add(pUnitsFormatting);
+		gd.addPanel(awtUnitsFormattingPanel, GridBagConstraints.CENTER, new Insets(5, 0, 0, 0));
+		
+		// Start/Stop/Interval
+		pStartStopIntervals = new JPanel(null);
+		pStartStopIntervals.setPreferredSize(new Dimension(frameWidth, 130));
+		pStartStopIntervals.setBorder(javax.swing.BorderFactory.createTitledBorder("Start/Stop/Interval"));
+		
+		lblStartup = new JLabel("Startup");
+		tfStartup = new JTextField();
+		registerTextField(tfStartup);
+		JPanel pStartup = new JPanel(null);
+		pStartup.add(lblStartup);
+		pStartup.add(tfStartup);
+		lblStartup.setBounds(0, 0, 100, labelHeight);
+		tfStartup.setBounds(100, 0, 100, textFieldHeight);
+		pStartup.setBounds(left, 30, 200, subpanelHeight);
+		
+		lblInterval = new JLabel("Interval");
+		tfInterval = new JTextField();
+		registerTextField(tfInterval);
+		JPanel pInterval = new JPanel(null);
+		pInterval.add(lblInterval);
+		pInterval.add(tfInterval);
+		lblInterval.setBounds(0, 0, 100, labelHeight);
+		tfInterval.setBounds(100, 0, 100, textFieldHeight);
+		pInterval.setBounds(left, 60, 200, subpanelHeight);
+		
+		lblEveryNth = new JLabel("Every n-th");
+		tfEveryNth = new JTextField();
+		registerTextField(tfEveryNth);
+		JPanel pEveryNth = new JPanel(null);
+		pEveryNth.add(lblEveryNth);
+		pEveryNth.add(tfEveryNth);
+		lblEveryNth.setBounds(0, 0, 100, labelHeight);
+		tfEveryNth.setBounds(100, 0, 100, textFieldHeight);
+		pEveryNth.setBounds(left, 90, 200, subpanelHeight);
+		
+		lblFirstFrame = new JLabel("First");
+		tfFirstFrame = new JTextField();
+		registerTextField(tfFirstFrame);
+		JPanel pFirstFrame = new JPanel(null);
+		pFirstFrame.add(lblFirstFrame);
+		pFirstFrame.add(tfFirstFrame);
+		lblFirstFrame.setBounds(0, 0, 100, labelHeight);
+		tfFirstFrame.setBounds(100, 0, 100, textFieldHeight);
+		pFirstFrame.setBounds(300, 30, 200, subpanelHeight);
+		
+		lblLastFrame = new JLabel("Last");
+		tfLastFrame = new JTextField();
+		registerTextField(tfLastFrame);
+		JPanel pLastFrame = new JPanel(null);
+		pLastFrame.add(lblLastFrame);
+		pLastFrame.add(tfLastFrame);
+		lblLastFrame.setBounds(0, 0, 100, labelHeight);
+		tfLastFrame.setBounds(100, 0, 100, textFieldHeight);
+		pLastFrame.setBounds(300, 60, 200, subpanelHeight);
+		
+		pStartStopIntervals.add(pStartup);
+		pStartStopIntervals.add(pInterval);
+		pStartStopIntervals.add(pEveryNth);
+		pStartStopIntervals.add(pFirstFrame);
+		pStartStopIntervals.add(pLastFrame);
+		
+		Panel awtStartStopInvervalPanel = new Panel();
+		awtStartStopInvervalPanel.add(pStartStopIntervals);
+		gd.addPanel(awtStartStopInvervalPanel, GridBagConstraints.CENTER, new Insets(5, 0, 0, 0));
+		
+		// Location and Font panel
+		pLocationFont = new JPanel(null);
+		pLocationFont.setPreferredSize(new Dimension(frameWidth, 110));
+		pLocationFont.setBorder(javax.swing.BorderFactory.createTitledBorder("Location & Font"));
+		
+		lblLocationX = new JLabel("X");
+		tfLocationX = new JTextField();
+		registerTextField(tfLocationX);
+		JPanel pLocationX = new JPanel(null);
+		pLocationX.add(lblLocationX);
+		pLocationX.add(tfLocationX);
+		lblLocationX.setBounds(0, 0, 20, labelHeight);
+		tfLocationX.setBounds(20, 0, 50, textFieldHeight);
+		pLocationX.setBounds(left, 30, 70, subpanelHeight);
+		
+		lblLocationY = new JLabel("Y");
+		tfLocationY = new JTextField();
+		registerTextField(tfLocationY);
+		JPanel pLocationY = new JPanel(null);
+		pLocationY.add(lblLocationY);
+		pLocationY.add(tfLocationY);
+		lblLocationY.setBounds(0, 0, 20, labelHeight);
+		tfLocationY.setBounds(20, 0, 50, textFieldHeight);
+		pLocationY.setBounds(120, 30, 70, subpanelHeight);
+		
+		lblLocationPresets = new JLabel("Location Presets");
+		cbLocationPresets = new JComboBox();
+		cbLocationPresets.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Top Left", "Top Right", "Bottom Left", "Bottom Right", "Custom" }));
+		registComboBox(cbLocationPresets);
+        JPanel pLocationPresets = new JPanel(null);
+        pLocationPresets.add(lblLocationPresets);
+        pLocationPresets.add(cbLocationPresets);
+        lblLocationPresets.setBounds(0, 0, 110, labelHeight);
+        cbLocationPresets.setBounds(110, 0, 150, textFieldHeight);
+        pLocationPresets.setBounds(240, 30, 260, subpanelHeight);
+        
+        pFontProperties = new FontPropertiesPanel();
+  		pFontProperties.setBounds(left, 70, 400, subpanelHeight);
+  		
+		pLocationFont.add(pLocationX);
+		pLocationFont.add(pLocationY);
+		pLocationFont.add(pLocationPresets);
+		pLocationFont.add(pFontProperties);
+		
+		Panel awtLocationFont = new Panel();
+		awtLocationFont.add(pLocationFont);
+		gd.addPanel(awtLocationFont, GridBagConstraints.CENTER, new Insets(5, 0, 0, 0));
+		
 		// these are the fields of the GUI
 
 		// this is a choice between digital or decimal
@@ -256,8 +511,8 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		gd.addNumericField("Label every n-th frame", frameMask, 0);
 		
 		fontProperties = new FontPropertiesPanel();
-		gd.addPanel(fontProperties, GridBagConstraints.CENTER, new Insets(5, 0,
-				0, 0));
+		//gd.addPanel(fontProperties, GridBagConstraints.CENTER, new Insets(5, 0,
+		//		0, 0));
 
 		gd.addPreviewCheckbox(pfr); // adds preview checkbox - needs
 		// ExtendedPluginFilter and DialogListener!
@@ -304,6 +559,52 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		// interfaces PlugInFilter and ExtendedPlugInFilter.
 		return DOES_ALL + DOES_STACKS + STACK_REQUIRED;
 	}
+	
+	private void registerTextField(JTextField tf) {
+		tf.addActionListener(gd);
+		tf.addKeyListener(gd);
+		tf.addFocusListener(this);
+		tf.getDocument().addDocumentListener(this);
+	}
+	
+	private void registComboBox(JComboBox cb) {
+		cb.addItemListener(gd);
+		cb.addKeyListener(gd);
+	}
+	
+	private void registerCheckBox(JCheckBox cb) {
+		cb.addItemListener(gd);
+		cb.addKeyListener(gd);
+	}
+	
+	public void focusGained(FocusEvent e) {
+		Component c = e.getComponent();
+		if (c instanceof JTextField)
+			((JTextField)c).selectAll();
+	}
+
+	public void focusLost(FocusEvent e) {
+		Component c = e.getComponent();
+		if (c instanceof JTextField)
+			((JTextField)c).select(0,0);
+	}
+	
+	public void changedUpdate(DocumentEvent e) {
+		announceTextChange(e);
+	}
+
+	public void insertUpdate(DocumentEvent e) {
+		announceTextChange(e);
+	}
+
+	public void removeUpdate(DocumentEvent e) {
+		announceTextChange(e);
+	}
+	
+	private void announceTextChange(DocumentEvent e) {
+		TextEvent te = new TextEvent(e.getDocument(), e.getOffset());
+		gd.textValueChanged(te);
+	}
 
 	/**
 	 * method to deal with changes in the GUI Should move this after the run
@@ -311,6 +612,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	 * run, other methods.
 	 */
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e) {
+		System.out.println("Got update");
 		// This reads user input parameters from the GUI and listens to changes
 		// in GUI fields
 
@@ -903,14 +1205,16 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	 * enable/disable anti-aliased text (smoothing).
 	 */
 	@SuppressWarnings("serial")
-	private class FontPropertiesPanel extends Panel{
+	private class FontPropertiesPanel extends JPanel{
 		/**
 		 * Creates a new {@link FontPropertiesPanel} containing the font setting
 		 * and font colour buttons.
 		 */
 		public FontPropertiesPanel() {
-			Button fontStyleButton = new Button("Font Settings");
+			super(null);
 			
+			JButton fontStyleButton = new JButton("Font Settings");
+			fontStyleButton.setBounds(0, 0, 120, 25);
 			fontStyleButton.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent actionEvent) {
 					new ExtendedFonts();
@@ -918,8 +1222,8 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 				}
 			});
 			
-			Button fontColourButton = new Button("Font Color");
-
+			JButton fontColourButton = new JButton("Font Color");
+			fontColourButton.setBounds(130, 0, 120, 25);
 			fontColourButton.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent actionEvent) {
 					new ColorPicker();
@@ -927,11 +1231,11 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 				}
 			});
 			
-			final Checkbox drawBackground = new Checkbox("Background");
-			
+			final JCheckBox drawBackground = new JCheckBox("Background");
+			drawBackground.setBounds(260, 0, 120, 25);
 			drawBackground.addItemListener(new ItemListener() {
 				public void itemStateChanged(ItemEvent e) {
-					backgroundEnabled = drawBackground.getState();
+					backgroundEnabled = drawBackground.isSelected();
 					updatePreview(e);
 				}
 			});
