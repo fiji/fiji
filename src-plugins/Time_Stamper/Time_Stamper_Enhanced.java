@@ -154,14 +154,6 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	// background of timestamp/label enabled
 	private boolean backgroundEnabled = false;
 
-	// a reference to the units drop-down list
-	private Choice unitsChoice;
-	// a reference to the custom suffix text field
-	private TextField customUnitStringField;
-	// a reference to the custom format text field
-	private TextField customFormatStringField;
-	// a reference to the font editor
-	private FontPropertiesPanel fontProperties;
 	// member variable for the GUI dialog
 	private GenericDialog gd;
 	static final String[] locations = {"Upper Right", "Lower Right", "Lower Left", "Upper Left", "Custom"};
@@ -271,7 +263,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		cbStackType = new JComboBox();
 		cbStackType.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "z-stack", "time series / movie" }));
 		cbStackType.setBounds(100, 30, 180, textFieldHeight);
-		registComboBox(cbStackType);
+		registComboBox(cbStackType, 1);
 		
 		pGeneralSettings.add(lblStackType);
 		pGeneralSettings.add(cbStackType);
@@ -288,19 +280,23 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		
 		labelFormat = new JLabel("Label Format");
 		cbLabelFormats = new JComboBox();
-        cbLabelFormats.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Decimal", "Digital", "Hybrid Dig/Dec", "Custom" }));
-        registComboBox(cbLabelFormats);
+		
+		String[] fl = getAvailableFormats();
+        cbLabelFormats.setModel(new javax.swing.DefaultComboBoxModel(fl));
+        registComboBox(cbLabelFormats, 0);
         JPanel pLabelFormat = new JPanel(null);
         pLabelFormat.add(labelFormat);
         pLabelFormat.add(cbLabelFormats);
+        
         labelFormat.setBounds(0, 0, 100, labelHeight);
         cbLabelFormats.setBounds(100, 0, 150, textFieldHeight);
         pLabelFormat.setBounds(left, 30, 250, subpanelHeight);
         
         lblLabelUnits = new JLabel("Label Unit");
 		cbLabelUnits = new JComboBox();
-		cbLabelUnits.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "y", "m", "sec", "msec" }));
-		registComboBox(cbLabelUnits);
+		String[] un = selectedFormat.getAllowedFormatUnits();
+		cbLabelUnits.setModel(new javax.swing.DefaultComboBoxModel(un));
+		registComboBox(cbLabelUnits, 0);
         JPanel pLabelUnits = new JPanel(null);
         pLabelUnits.add(lblLabelUnits);
         pLabelUnits.add(cbLabelUnits);
@@ -310,7 +306,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
         
 		lblCustomSuffix = new JLabel("Custom Suffix");
 		tfCustomSuffix = new JTextField();
-		registerTextField(tfCustomSuffix);
+		registerTextField(tfCustomSuffix, customSuffix);
 		JPanel pCustomSuffix = new JPanel(null);
 		pCustomSuffix.add(lblCustomSuffix);
 		pCustomSuffix.add(tfCustomSuffix);
@@ -321,7 +317,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		
 		lblDecimalPlaces = new JLabel("Decimal Places");
 		tfDecimalPlaces = new JTextField();
-		registerTextField(tfDecimalPlaces);
+		registerTextField(tfDecimalPlaces, Integer.toString(decimalPlaces));
 		JPanel pDecimalPlaces = new JPanel(null);
 		pDecimalPlaces.add(lblDecimalPlaces);
 		pDecimalPlaces.add(tfDecimalPlaces);
@@ -332,7 +328,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		
 		lblCustomLabelFormat = new JLabel("Custom Format");
 		tfCustomLabelFormat = new JTextField();
-		registerTextField(tfCustomLabelFormat);
+		registerTextField(tfCustomLabelFormat, customFormat);
 		JPanel pCustomLabelFormat = new JPanel(null);
 		pCustomLabelFormat.add(lblCustomLabelFormat);
 		pCustomLabelFormat.add(tfCustomLabelFormat);
@@ -357,7 +353,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		
 		lblStartup = new JLabel("Startup");
 		tfStartup = new JTextField();
-		registerTextField(tfStartup);
+		registerTextField(tfStartup, IJ.d2s(start));
 		JPanel pStartup = new JPanel(null);
 		pStartup.add(lblStartup);
 		pStartup.add(tfStartup);
@@ -367,7 +363,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		
 		lblInterval = new JLabel("Interval");
 		tfInterval = new JTextField();
-		registerTextField(tfInterval);
+		registerTextField(tfInterval, IJ.d2s(interval));
 		JPanel pInterval = new JPanel(null);
 		pInterval.add(lblInterval);
 		pInterval.add(tfInterval);
@@ -377,7 +373,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		
 		lblEveryNth = new JLabel("Every n-th");
 		tfEveryNth = new JTextField();
-		registerTextField(tfEveryNth);
+		registerTextField(tfEveryNth, Integer.toString(frameMask));
 		JPanel pEveryNth = new JPanel(null);
 		pEveryNth.add(lblEveryNth);
 		pEveryNth.add(tfEveryNth);
@@ -387,7 +383,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		
 		lblFirstFrame = new JLabel("First");
 		tfFirstFrame = new JTextField();
-		registerTextField(tfFirstFrame);
+		registerTextField(tfFirstFrame, Integer.toString(first));
 		JPanel pFirstFrame = new JPanel(null);
 		pFirstFrame.add(lblFirstFrame);
 		pFirstFrame.add(tfFirstFrame);
@@ -397,7 +393,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		
 		lblLastFrame = new JLabel("Last");
 		tfLastFrame = new JTextField();
-		registerTextField(tfLastFrame);
+		registerTextField(tfLastFrame, Integer.toString(last));
 		JPanel pLastFrame = new JPanel(null);
 		pLastFrame.add(lblLastFrame);
 		pLastFrame.add(tfLastFrame);
@@ -422,7 +418,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		
 		lblLocationX = new JLabel("X");
 		tfLocationX = new JTextField();
-		registerTextField(tfLocationX);
+		registerTextField(tfLocationX, Integer.toString(x));
 		JPanel pLocationX = new JPanel(null);
 		pLocationX.add(lblLocationX);
 		pLocationX.add(tfLocationX);
@@ -432,7 +428,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		
 		lblLocationY = new JLabel("Y");
 		tfLocationY = new JTextField();
-		registerTextField(tfLocationY);
+		registerTextField(tfLocationY, Integer.toString(y));
 		JPanel pLocationY = new JPanel(null);
 		pLocationY.add(lblLocationY);
 		pLocationY.add(tfLocationY);
@@ -440,10 +436,14 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		tfLocationY.setBounds(20, 0, 50, textFieldHeight);
 		pLocationY.setBounds(120, 30, 70, subpanelHeight);
 		
+		if (isCustomROI())
+			 locationPreset = CUSTOM;
+		else locationPreset = UPPER_LEFT;
+		
 		lblLocationPresets = new JLabel("Location Presets");
 		cbLocationPresets = new JComboBox();
-		cbLocationPresets.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Top Left", "Top Right", "Bottom Left", "Bottom Right", "Custom" }));
-		registComboBox(cbLocationPresets);
+		cbLocationPresets.setModel(new javax.swing.DefaultComboBoxModel(locations));
+		registComboBox(cbLocationPresets, locationPreset);
         JPanel pLocationPresets = new JPanel(null);
         pLocationPresets.add(lblLocationPresets);
         pLocationPresets.add(cbLocationPresets);
@@ -462,57 +462,6 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		Panel awtLocationFont = new Panel();
 		awtLocationFont.add(pLocationFont);
 		gd.addPanel(awtLocationFont, GridBagConstraints.CENTER, new Insets(5, 0, 0, 0));
-		
-		// these are the fields of the GUI
-
-		// this is a choice between digital or decimal
-		// but what about mm:ss???
-		// options are in the string array timeFormats, default is Decimal:
-		// something.somethingelse
-		String[] fl = getAvailableFormats();
-		gd.addChoice("Label format:", fl, fl[0]);
-
-		gd.addStringField("Custom Time Format:", customFormat);
-
-		// the custom formats text-box could potentially be disabled,
-		// depending on the format selection. So save a reference to it.
-		customFormatStringField = (TextField) gd.getStringFields().get(0);
-
-		// the list of supported units is determined by the currently selected
-		// format
-		String[] un = selectedFormat.getAllowedFormatUnits();
-		gd.addChoice("Time units:", un, un[0]);
-
-		// since we want to modify the contents of the formats drop-down list
-		// later, we save s reference to it
-		unitsChoice = (Choice) gd.getChoices().get(1);
-
-		// we can set a custom suffix and use that by selecting custom
-		// suffix in the time units drop down list above
-		gd.addStringField("Custom Suffix:", customSuffix);
-		// get decimal places for the decimal format
-		gd.addNumericField("Decimal Places:", decimalPlaces, 0);
-		// the custom suffix text-box could potentially be disabled,
-		// depending on the format selection. So save a reference to it.
-		customUnitStringField = (TextField) gd.getStringFields().get(1);
-
-		gd.addNumericField("Starting Time\n(in selected units):", start, 2);
-		gd.addNumericField("Time Interval Between Frames\n(in selected units):",
-				interval, 3);
-		if (isCustomROI())
-			 locationPreset = CUSTOM;
-		else locationPreset = UPPER_LEFT;
-		
-		gd.addChoice("Location Presets", locations, locations[locationPreset]);
-		gd.addNumericField("X Location:", x, 0);
-		gd.addNumericField("Y Location:", y, 0);
-		gd.addNumericField("First Frame:", first, 0);
-		gd.addNumericField("Last Frame:", last, 0);
-		gd.addNumericField("Label every n-th frame", frameMask, 0);
-		
-		fontProperties = new FontPropertiesPanel();
-		//gd.addPanel(fontProperties, GridBagConstraints.CENTER, new Insets(5, 0,
-		//		0, 0));
 
 		gd.addPreviewCheckbox(pfr); // adds preview checkbox - needs
 		// ExtendedPluginFilter and DialogListener!
@@ -560,14 +509,16 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		return DOES_ALL + DOES_STACKS + STACK_REQUIRED;
 	}
 	
-	private void registerTextField(JTextField tf) {
+	private void registerTextField(JTextField tf, String defaultText) {
+		tf.setText(defaultText);
 		tf.addActionListener(gd);
 		tf.addKeyListener(gd);
 		tf.addFocusListener(this);
 		tf.getDocument().addDocumentListener(this);
 	}
 	
-	private void registComboBox(JComboBox cb) {
+	private void registComboBox(JComboBox cb, int defaultSelection) {
+		cb.setSelectedIndex(defaultSelection);
 		cb.addItemListener(gd);
 		cb.addKeyListener(gd);
 	}
@@ -617,33 +568,33 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		// in GUI fields
 
 		// has the label format been changed?
-		int currentFormat = gd.getNextChoiceIndex();
+		int currentFormat = cbLabelFormats.getSelectedIndex();
 		LabelFormat lf = formats.get(currentFormat);
 		if (lf != selectedFormat) {
 			selectedFormat = lf;
 			// if the format has changed, we need to modify the
 			// units choice accordingly
-			unitsChoice.removeAll();
+			cbLabelUnits.removeAll();
 			for (String unit : selectedFormat.getAllowedFormatUnits()) {
-				unitsChoice.addItem(unit);
+				cbLabelUnits.addItem(unit);
 			}
 		}
 
-		customFormat = gd.getNextString();
+		customFormat = tfCustomLabelFormat.getText();
 
 		// get the selected suffix of drop-down list
-		chosenSuffix = gd.getNextChoice();
+		chosenSuffix = (String) cbLabelUnits.getSelectedItem();
 
-		customSuffix = gd.getNextString();
-		decimalPlaces = (int) gd.getNextNumber();
-		start = gd.getNextNumber();
-		interval = gd.getNextNumber();
-		locationPreset = gd.getNextChoiceIndex();
-		x = (int) gd.getNextNumber();
-		y = (int) gd.getNextNumber();
-		first = (int) gd.getNextNumber();
-		last = (int) gd.getNextNumber();
-		frameMask = (int) gd.getNextNumber();
+		customSuffix = tfCustomSuffix.getText();
+		decimalPlaces = Integer.parseInt(tfDecimalPlaces.getText());
+		start = Double.parseDouble(tfStartup.getText());
+		interval = Double.parseDouble(tfInterval.getText());
+		locationPreset = cbLocationPresets.getSelectedIndex();
+		x = Integer.parseInt(tfLocationX.getText());
+		y = Integer.parseInt(tfLocationY.getText());
+		first = Integer.parseInt(tfFirstFrame.getText());
+		last = Integer.parseInt(tfLastFrame.getText());
+		frameMask = Integer.parseInt(tfEveryNth.getText());
 
 		updateUI();
 
@@ -671,11 +622,11 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	private void updateUI() {
 		// if the new format supports custom suffixes, enable
 		// the custom suffix text box
-		customUnitStringField.setEnabled(selectedFormat.supportsCustomSuffix());
+		//customUnitStringField.setEnabled(selectedFormat.supportsCustomSuffix());
 		// if the current format supports custom format, enable
 		// the custom format text box
-		customFormatStringField.setEnabled(selectedFormat
-				.supportsCustomFormat());
+		//customFormatStringField.setEnabled(selectedFormat
+		//		.supportsCustomFormat());
 	}
 
 	/**
