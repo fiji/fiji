@@ -766,7 +766,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		if ( (roi.y + roi.height) < font.getSize())
 			roi.y = 1;
 		
-		roi.width = maxWidth(ip, selectedFormat.lastTimeStampString());
+		roi.width = ip.getStringWidth(selectedFormat.lastTimeStampString());
 		
 		// if longest timestamp is wider than (image width - ROI width) , move x
 		// in appropriately
@@ -801,21 +801,6 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	 */
 	double getTimeFromFrame(int f) {
 		return start + (interval * (f - 1)); // is the time for a certain frame
-	}
-
-	// moved out of run method to its own method.
-	// maxWidth is an integer = length of the decimal time stamp string in
-	// pixels
-	// for the last slice of the stack to be stamped. It is used in the run
-	// method,
-	// to prevent the time stamp running off the right edge of the image
-	// ip.getStringWidth(string) seems to return the # of pixels long a string
-	// is in x?
-	// how does it take care of font size i wonder? The font is set
-	// using the variable size... so i guess the ip object knows how big the
-	// font is.
-	int maxWidth(ImageProcessor ip, String lastTimeStampString) {
-		return ip.getStringWidth(lastTimeStampString);
 	}
 
 	/**
