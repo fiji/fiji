@@ -1,6 +1,7 @@
 package fiji;
 
 import ij.IJ;
+import ij.Macro;
 
 import java.io.File;
 import java.io.IOException;
@@ -105,7 +106,11 @@ public class FijiClassLoader extends URLClassLoader {
 				if (result != null)
 					return result;
 			}
-		} catch (Exception e) { }
+		}
+		catch (Exception e) { }
+		catch (UnsupportedClassVersionError e) {
+			handleUnsupportedClassVersion(name);
+		}
 		String path = name.replace('.', '/') + ".class";
 		try {
 			InputStream input = getResourceAsStream(path);
@@ -116,11 +121,18 @@ public class FijiClassLoader extends URLClassLoader {
 						buffer, 0, buffer.length);
 				return result;
 			}
-		} catch (IOException e) { e.printStackTrace(); }
-		for (ClassLoader fallBack : fallBacks) {
+		}
+		catch (IOException e) { e.printStackTrace(); }
+		catch (UnsupportedClassVersionError e) {
+			handleUnsupportedClassVersion(name);
+		}
+		for (ClassLoader fallBack : fallBacks) try {
 			result = fallBack.loadClass(name);
 			if (result != null)
 				return result;
+		}
+		catch (UnsupportedClassVersionError e) {
+			handleUnsupportedClassVersion(name);
 		}
 		return super.loadClass(name, resolve);
 	}
@@ -147,5 +159,61 @@ public class FijiClassLoader extends URLClassLoader {
 		System.arraycopy(buffer, 0, newBuffer, 0,
 				Math.min(newLength, buffer.length));
 		return newBuffer;
+	}
+
+	protected void handleUnsupportedClassVersion(String className) {
+		try {
+			String path = className.replace('.', '/') + ".class";
+			String url = getResource(path).toString();
+			if (url.startsWith("jar:file:") && url.endsWith("!/" + path)) {
+				String jarFile = url.substring(9, url.length() - path.length() - 2);
+				retrotranslateJarFile(jarFile, className);
+			}
+			else
+				throw new Exception("Retrotranslating .class files not yet supported!");
+		} catch (Exception e) {
+			e.printStackTrace();
+			IJ.error("The class " + className + " has an unsupported class version!");
+		}
+		throw new RuntimeException(Macro.MACRO_CANCELED);
+	}
+
+	public static void retrotranslateJarFile(String path, String offendingClass) {
+		String message = "The file '" + path + "' appears to have\n"
+			+ "at least one Class compiled for a newer Java version:\n"
+			+ offendingClass + ".\n \n";
+		File file = new File(path);
+		if (!file.canWrite()) {
+			IJ.error(message + "Unfortunately, the file is not writable, so I cannot fix it!");
+			return;
+		}
+		if (!IJ.showMessageWithCancel("Retrotranslator",
+				message + "Do you want me to try to fix the file?"))
+			return;
+		try {
+			IJ.showStatus("Retrotranslating '" + path + "'");
+			File tmpFile = File.createTempFile("retro-", ".jar");
+			SimpleExecuter executer = new SimpleExecuter(new String[] {
+				System.getProperty("fiji.executable"),
+				"--jar", System.getProperty("fiji.dir") + "/retro/retrotranslator-transformer-1.2.7.jar",
+				"-srcjar", path,
+				"-destjar", tmpFile.getCanonicalPath(),
+				"-target", "1.5"
+			});
+			if (executer.getExitCode() != 0) {
+				IJ.error("Could not retrotranslate '" + path + "':\n"
+					+ executer.getError() + "\n" + executer.getOutput());
+				return;
+			}
+			file.delete();
+			tmpFile.renameTo(file);
+			IJ.showMessage("Successfully retrotranslated '" + path + "'\n"
+				+ "Please call Help>Refresh Menus or restart Fiji\n"
+				+ "so that Fiji can see the fixed classes.");
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+			IJ.error("There was an I/O error while retrotranslating '" + path + "'");
+		}
 	}
 }
