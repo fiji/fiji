@@ -728,7 +728,9 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		// make sure the y position is not less than the font height: size,
 		// so the time stamp is not off the top of the image?
 		if ( (roi.y + roi.height) < font.getSize()) {
-			roi.y = 1;
+			y = roi.y = 1;
+		} 
+		
 		// make sure the stamp falls not off the bottom
 		if (ip.getHeight() < (roi.y + font.getSize())) {
 			y = roi.y = ip.getHeight() - font.getSize();
@@ -742,7 +744,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		// if longest time stamp is wider than (image width - ROI width),
 		// move x in appropriately
 		if (roi.width > (ip.getWidth() - roi.x)) {
-			roi.x = (ip.getWidth() - roi.width);
+			x = roi.x = (ip.getWidth() - roi.width);
 		}
 		
 		return roi;
