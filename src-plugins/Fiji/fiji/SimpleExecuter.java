@@ -17,7 +17,14 @@ public class SimpleExecuter {
 			exitCode = process.waitFor();
 			break;
 		} catch (InterruptedException e) { /* ignore */ }
-		stdout.canceled = stderr.canceled = true;
+		for (;;) try {
+			stdout.join();
+			break;
+		} catch (InterruptedException e) { /* ignore */ }
+		for (;;) try {
+			stderr.join();
+			break;
+		} catch (InterruptedException e) { /* ignore */ }
 	}
 
 	public int getExitCode() {
@@ -35,7 +42,6 @@ public class SimpleExecuter {
 	protected class StreamDumper extends Thread {
 		protected InputStream in;
 		public StringBuffer out;
-		public boolean canceled;
 
 		public StreamDumper(InputStream in) {
 			this.in = in;
@@ -46,7 +52,7 @@ public class SimpleExecuter {
 		public void run() {
 			byte[] buffer = new byte[16384];
 			try {
-				while (!canceled) {
+				for (;;) {
 					int count = in.read(buffer);
 					if (count < 0)
 						break;
