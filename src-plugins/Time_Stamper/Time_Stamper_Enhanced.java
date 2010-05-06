@@ -227,11 +227,9 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		stackTypeComboBox = new JComboBox();
 		JPanel stackTypePanel = createComboBoxPanel("Stack Type", stackTypeComboBox, stackTypes, 1, 100, 180);
 		stackTypePanel.setLocation(left, 30);
-		generalSettingsContainer.add(stackTypePanel);
-
-		Panel awtGeneralSettingsPanel = new Panel();
-		awtGeneralSettingsPanel.add(generalSettingsContainer);
-		gd.addPanel(awtGeneralSettingsPanel, GridBagConstraints.CENTER, new Insets(5, 0, 0, 0));
+		
+		addPanelsToDialg(generalSettingsContainer,
+				new JPanel[] {stackTypePanel} );
 		
 		//
 		// Units formatting panel
@@ -263,15 +261,8 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		customLabelFormatPanel = createTextFieldPanel("Custom Format", customLabelFormatTextField, customFormat);
 		customLabelFormatPanel.setLocation(300, 30);
 
-		unitsFormattingContainer.add(pLabelFormat);
-		unitsFormattingContainer.add(customSuffixPanel);
-		unitsFormattingContainer.add(labelUnitsPanel);
-		unitsFormattingContainer.add(decimalPlacesPanel);
-		unitsFormattingContainer.add(customLabelFormatPanel);
-		
-		Panel awtUnitsFormattingPanel = new Panel();
-		awtUnitsFormattingPanel.add(unitsFormattingContainer);
-		gd.addPanel(awtUnitsFormattingPanel, GridBagConstraints.CENTER, new Insets(5, 0, 0, 0));
+		addPanelsToDialg(unitsFormattingContainer,
+				new JPanel[] {pLabelFormat, customSuffixPanel, labelUnitsPanel, decimalPlacesPanel, customLabelFormatPanel} );
 		
 		//
 		// Start/Stop/Interval
@@ -303,15 +294,8 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		JPanel pLastFrame = createTextFieldPanel("Last", lastFrameTextField, Integer.toString(last));
 		pLastFrame.setLocation(300, 60);
 		
-		startStopIntervalsContainer.add(pStartup);
-		startStopIntervalsContainer.add(pInterval);
-		startStopIntervalsContainer.add(pEveryNth);
-		startStopIntervalsContainer.add(pFirstFrame);
-		startStopIntervalsContainer.add(pLastFrame);
-		
-		Panel awtStartStopInvervalPanel = new Panel();
-		awtStartStopInvervalPanel.add(startStopIntervalsContainer);
-		gd.addPanel(awtStartStopInvervalPanel, GridBagConstraints.CENTER, new Insets(5, 0, 0, 0));
+		addPanelsToDialg(startStopIntervalsContainer,
+				new JPanel[] {pStartup, pInterval, pEveryNth, pFirstFrame, pLastFrame} );
 		
 		//
 		// Location and Font panel
@@ -341,14 +325,8 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
         fontPropertiesContainer = new FontPropertiesPanel();
   		fontPropertiesContainer.setBounds(left, 70, 400, subpanelHeight);
   		
-		locationFontContainer.add(pLocationX);
-		locationFontContainer.add(pLocationY);
-		locationFontContainer.add(pLocationPresets);
-		locationFontContainer.add(fontPropertiesContainer);
-		
-		Panel awtLocationFont = new Panel();
-		awtLocationFont.add(locationFontContainer);
-		gd.addPanel(awtLocationFont, GridBagConstraints.CENTER, new Insets(5, 0, 0, 0));
+  		addPanelsToDialg(locationFontContainer,
+  				new JPanel[] {pLocationX, pLocationY, pLocationPresets, fontPropertiesContainer} );
 
 		gd.addPreviewCheckbox(pfr); // adds preview checkbox - needs
 		// ExtendedPluginFilter and DialogListener!
@@ -518,6 +496,16 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		panel.add(textfield);
 		panel.setSize(labelWidth+textFieldWidth, 30);
 		return panel;
+	}
+	
+	private void addPanelsToDialg(JPanel container, JPanel[] panels) {
+		for (JPanel p : panels) {
+			container.add(p);
+		}
+		
+		Panel awtPanel = new Panel();
+		awtPanel.add(container);
+		gd.addPanel(awtPanel, GridBagConstraints.CENTER, new Insets(5, 0, 0, 0));
 	}
 
 	private void registerTextField(JTextField tf, String defaultText) {
