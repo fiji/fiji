@@ -478,7 +478,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		// stuff out of the run method, into their own methods.
 		// set the font size according to ROI size, or if no ROI the GUI text
 		// input
-		Rectangle backgroundRectangle = getBackgroundRectangle(ip);
+		Rectangle backgroundRectangle = getBoundingRectangle(ip);
 		if (backgroundEnabled){
 			ip.setColor(Toolbar.getBackgroundColor());
 			ip.fill(new Roi(backgroundRectangle));
@@ -737,24 +737,16 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	}
 
 	/**
-	 * 	method to position the time stamp string correctly, so it is all on the
-	 *	image, even for the last frames with bigger numbers.
-	 *	ip.moveTo(x, y); // move to x y position for Timestamp writing
-	 *
-	 *	the maxwidth if statement tries to move the time stamp right a bit to
-	 *  account for the max length the time stamp will be.
-	 *  it's nice to not have the time stamp run off the right edge of the image.
-	 *  how about subtracting the
-	 *  maxWidth from the width of the image (x dimension) only if its so close
-	 *  that it will run off.
-	 *  this seems to work now with digital and decimal time formats.
+	 * Gets a valid bounding rectangle for the time stamp positioning.
+	 * It aims for having all of the time stamp on the	image, even for
+	 * the last frames with bigger numbers.
+	 * It tries to move the time stamp right a bit to account for the
+	 * max length the time stamp will be.
 	 */
-	Rectangle getBackgroundRectangle(ImageProcessor ip) {
-		// Here we set x and y at the ROI if there is one (how does it know?),
-		// so time stamp is drawn there, not at default x and y.
+	Rectangle getBoundingRectangle(ImageProcessor ip) {
 		Rectangle roi = ip.getRoi();
 		// set the xy time stamp drawing position for ROI smaller than the
-		// image, to bottom left of ROI
+		// image, to top left of ROI and make its height be the font size
 		if (roi.width == imp.getWidth() && roi.height == imp.getHeight()) {
 			roi.x = x;
 			roi.y = y;
@@ -763,13 +755,14 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 			
 		// make sure the y position is not less than the font height: size,
 		// so the time stamp is not off the top of the image?
-		if ( (roi.y + roi.height) < font.getSize())
+		if ( (roi.y + roi.height) < font.getSize()) {
 			roi.y = 1;
+		}
 		
 		roi.width = ip.getStringWidth(selectedFormat.lastTimeStampString());
 		
-		// if longest timestamp is wider than (image width - ROI width) , move x
-		// in appropriately
+		// if longest time stamp is wider than (image width - ROI width),
+		// move x in appropriately
 		if (roi.width > (ip.getWidth() - roi.x)) {
 			roi.x = (ip.getWidth() - roi.width);
 		}
