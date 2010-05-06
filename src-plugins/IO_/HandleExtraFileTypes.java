@@ -132,7 +132,8 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 		}
 
 		// NIFTI format (.nii) handler
-		if (name.endsWith(".nii")) {
+		if (name.endsWith(".nii") || name.endsWith( ".nii.gz" ) ||
+				name.endsWith(".nii.z")) {
 			return tryPlugIn("Nifti_Reader", path);
 		}
 
