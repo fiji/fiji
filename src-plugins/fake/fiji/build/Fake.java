@@ -557,6 +557,9 @@ public class Fake {
 			Iterator iter = allRules.keySet().iterator();
 			while (iter.hasNext()) {
 				String target = (String)iter.next();
+				Rule rule = (Rule)allRules.get(target);
+				if (rule instanceof Special || rule instanceof All)
+					continue;
 				if (!filter.accept(null, target))
 					continue;
 				int index = Collections
