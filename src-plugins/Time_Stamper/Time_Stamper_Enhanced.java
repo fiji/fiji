@@ -209,7 +209,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		if (imp != null) {
 			first = 1;
 			last = imp.getStackSize();
-			setFontParams(imp);
+			setFontParams();
 		}
 
 		// add all supported formats
@@ -685,7 +685,10 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 					|| theROI.width != imp.getWidth()); // if the ROI is the same
 	}
 
-	void setFontParams(ImagePlus imp) { // work out the size of the font to use
+	/**
+	 * Works out the size of the font to use.
+	 */
+	void setFontParams() {
 		// from the size of the ROI box drawn,
 		// if one was drawn (how does it know?)
 		int size = 12;
