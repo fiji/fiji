@@ -803,15 +803,6 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	}
 
 	/**
-	 * this method adds a preceding 0 to a number if it only has one digit
-	 * instead of two. Which is handy for making 00:00 type format strings
-	 * later. Thx Dscho.
-	 */
-	String twoDigits(int value) {
-		return (value < 10 ? "0" : "") + value;
-	}
-
-	/**
 	 * Returns the time of the last frame where a stamp is made.
 	 */
 	double lastTime() {
