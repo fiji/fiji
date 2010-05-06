@@ -342,7 +342,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 			public void eventOccurred(int event) {
 				if (event == IJEventListener.FOREGROUND_COLOR_CHANGED
 						|| event == IJEventListener.BACKGROUND_COLOR_CHANGED) {
-					updatePreview(null);
+					updatePreview();
 				}
 			}
 		});
@@ -563,11 +563,11 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	 * @param dialog
 	 * @param e
 	 */
-	private void updatePreview(AWTEvent e) {
+	private void updatePreview() {
 		if (gd != null){
 			// tell the plug-in filter runner to update
 			// the preview. Apparently, this is "OK"
-			pluginFilterRunner.dialogItemChanged(gd, e);
+			pluginFilterRunner.dialogItemChanged(gd, null);
 		}
 	}
 	
@@ -1129,7 +1129,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 			drawBackground.addItemListener(new ItemListener() {
 				public void itemStateChanged(ItemEvent e) {
 					backgroundEnabled = drawBackground.isSelected();
-					updatePreview(e);
+					updatePreview();
 				}
 			});
 			
@@ -1146,7 +1146,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 			super.itemStateChanged(e);
 			font = new Font(TextRoi.getFont(), TextRoi.getStyle(), TextRoi.getSize());
 			antiAliasedText = TextRoi.isAntialiased();
-			updatePreview(e);
+			updatePreview();
 		}
 		
 	}
