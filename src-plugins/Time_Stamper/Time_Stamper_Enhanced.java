@@ -133,10 +133,8 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	// and ExtendedPlugInFilter. Determines what kind of image the plug-in can run on etc.
 	int flags = DOES_ALL + DOES_STACKS + STACK_REQUIRED;
 
-	// a list containing all supported formats, set up at runtime
-	ArrayList<LabelFormat> formats = new ArrayList<LabelFormat>();
 	// the currently selected format
-	LabelFormat selectedFormat;
+	AbstractStampFormat selectedFormat;
 	// background of timestamp/label enabled
 	private boolean backgroundEnabled = false;
 
@@ -152,6 +150,9 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	
 	// the available kinds of stack we can label. 
 	final String[] stackTypes = { "z-stack", "time series / movie" };
+	
+	// the available time formats
+	final AbstractStampFormat[] formats = {new DecimalLabelFormat(), new DigitalLabelFormat(), new CustomLabelFormat()};
 	
 	// GUI variables that are needed to read out data
 	// from the components
@@ -198,11 +199,8 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 			setFontParams();
 		}
 
-		// add all supported formats
-		formats.add(new DecimalLabelFormat());
-		formats.add(new DigitalLabelFormat());
-		formats.add(new CustomLabelFormat());
-		selectedFormat = formats.get(0);
+		// set the currently selected format to the first available
+		selectedFormat = formats[0];
 
 		// return supported flags
 		return flags;
@@ -610,7 +608,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e) {
 		// has the label format been changed?
 		int currentFormat = cbLabelFormats.getSelectedIndex();
-		LabelFormat lf = formats.get(currentFormat);
+		AbstractStampFormat lf = formats[currentFormat];
 		if (lf != selectedFormat) {
 			selectedFormat = lf;
 			// if the format has changed, we need to modify the
@@ -646,9 +644,9 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	 * Creates a string array out of the names of the available formats.
 	 */
 	private String[] getAvailableFormats() {
-		String[] formatArray = new String[formats.size()];
+		String[] formatArray = new String[formats.length];
 		int i = 0;
-		for (LabelFormat t : formats) {
+		for (AbstractStampFormat t : formats) {
 			formatArray[i] = t.getName();
 			i++;
 		}
@@ -790,7 +788,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	 * plug-in. It relates supported format units/suffixes to a format name.
 	 * Besides that it determines if a custom suffix should be usable.
 	 */
-	private abstract class LabelFormat {
+	protected abstract class AbstractStampFormat {
 		// an array of all the supported units for this format
 		String[] allowedFormatUnits;
 		// the display name for this format
@@ -809,7 +807,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		 * @param supportCustomSuffix
 		 * @param supportCustomFormat
 		 */
-		public LabelFormat(String[] allowedFormatUnits, String name,
+		public AbstractStampFormat(String[] allowedFormatUnits, String name,
 				boolean supportCustomSuffix, boolean supportCustomFormat,
 				boolean supportDecimalPlaces) {
 			this.allowedFormatUnits = allowedFormatUnits;
@@ -911,7 +909,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	/**
 	 * Represents a decimal label format, e. g. 7.3 days.
 	 */
-	private class DecimalLabelFormat extends LabelFormat {
+	protected class DecimalLabelFormat extends AbstractStampFormat {
 
 		/**
 		 * Constructs a new {@link DecimalLabelFormat}. This default constructor
@@ -964,7 +962,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	/**
 	 * Represents a digital label format, e. g. HH:mm:ss:ms.
 	 */
-	private class DigitalLabelFormat extends LabelFormat {
+	protected class DigitalLabelFormat extends AbstractStampFormat {
 		// A calendar to calculate time representation with.
 		TimeZone tz = TimeZone.getTimeZone("UTC");
 		Calendar calendar = new GregorianCalendar();
