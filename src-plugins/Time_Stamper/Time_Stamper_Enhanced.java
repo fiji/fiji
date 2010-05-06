@@ -68,6 +68,7 @@ import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import java.awt.Panel;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.TextField;
 import java.awt.event.ActionEvent;
@@ -616,9 +617,35 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		decimalPlaces = Integer.parseInt(decimalPlacesTextField.getText());
 		start = Double.parseDouble(startupTextField.getText());
 		interval = Double.parseDouble(intervalTextField.getText());
-		locationPreset = locationPresetsComboBox.getSelectedIndex();
-		x = Integer.parseInt(locationXTextField.getText());
-		y = Integer.parseInt(locationYTextField.getText());
+		// has a different location preset has been selected?
+		int preset = locationPresetsComboBox.getSelectedIndex();
+		if (preset != locationPreset){
+			locationPreset = preset;
+			Point p = getPresetPosition(preset);
+
+			locationXTextField.setText(Integer.toString(p.x));
+			locationYTextField.setText(Integer.toString(p.y));
+		}
+		
+		try {
+			int curX = Integer.parseInt(locationXTextField.getText());
+			if (curX != x) {
+				x = curX;
+				locationPresetsComboBox.setSelectedIndex(CUSTOM);
+			}
+		}
+		catch (NumberFormatException ex) { return false; }
+		
+		try {
+			int curY = Integer.parseInt(locationYTextField.getText());
+			if (curY != y) {
+				y = curY;
+				locationPresetsComboBox.setSelectedIndex(CUSTOM);
+			}
+		}
+		catch (NumberFormatException ex) { return false; }
+		
+		
 		first = Integer.parseInt(firstFrameTextField.getText());
 		last = Integer.parseInt(lastFrameTextField.getText());
 		frameMask = Integer.parseInt(everyNthTextField.getText());
@@ -748,6 +775,31 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		}
 		
 		return roi;
+	}
+	
+	Point getPresetPosition(int preset) {
+		ImageProcessor ip = imp.getProcessor();
+		if (preset == UPPER_LEFT){
+			x = 0;
+			y = 0;
+		}
+		else if (preset == UPPER_RIGHT){
+			x = ip.getWidth();
+			y = 0;
+		}
+		else if (preset == LOWER_LEFT){
+			x = 0;
+			y = ip.getHeight();
+		}
+		else if (preset == LOWER_RIGHT){
+			x = ip.getWidth();
+			y = ip.getHeight();
+		}
+		else return new Point(x, y);
+		
+		Rectangle rect = getBoundingRectangle(ip);
+		
+		return new Point(rect.x, rect.y);
 	}
 
 	/**
