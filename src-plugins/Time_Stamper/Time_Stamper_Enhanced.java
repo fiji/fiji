@@ -160,6 +160,9 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	static final int UPPER_RIGHT=0, LOWER_RIGHT=1, LOWER_LEFT=2, UPPER_LEFT=3, CUSTOM=4;
 	int locationPreset;
 	
+	// the available kinds of stack we can label. 
+	final String[] stackTypes = { "z-stack", "time series / movie" };
+	
 	// GUI variables
 	private javax.swing.ButtonGroup buttonGroup1;
 	private javax.swing.JPanel cCustomLabelFormat;
@@ -186,6 +189,16 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	private javax.swing.JPanel pStartStopIntervals;
 	private JPanel pLocationFont;
 	private JPanel pFontProperties;
+	
+	// the panel containing the units selection
+	private javax.swing.JPanel pLabelUnits;
+	// the panel containing the custom suffix elements
+	private javax.swing.JPanel pCustomSuffix;
+	// the panel containing the custom formats elements
+	private javax.swing.JPanel pCustomLabelFormat;
+	// the panel containing the Decimal Places elements
+	private javax.swing.JPanel pDecimalPlaces;
+	
 	private javax.swing.JTextField tfCustomLabelFormat;
 	private javax.swing.JTextField tfCustomSuffix;
 	private javax.swing.JTextField tfDecimalPlaces;
@@ -241,32 +254,24 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	 */
 	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr) {
 		this.pluginFilterRunner = pfr;
-		
-		int textFieldHeight = 22;
-		int labelHeight = 20;
+
 		int subpanelHeight = 30;
 		int left = 20;
-		int frameWidth = 540;
+		
+		
 		// This makes the GUI object
 		gd = new NonBlockingGenericDialog(
 				"Time Stamper Enhanced");
 		
 		
 		// General settings panel
-		pGeneralSettings = new JPanel(null);
-		pGeneralSettings.setPreferredSize(new Dimension(frameWidth, 70));
-		pGeneralSettings.setBorder(javax.swing.BorderFactory.createTitledBorder("General Settings"));
+		pGeneralSettings = createContainerPanel(70, "General Settings");
 		
-		lblStackType = new JLabel("Stack Type");
-		lblStackType.setBounds(left, 30, 100, labelHeight);
-		
+		//add combobox for stack type
 		cbStackType = new JComboBox();
-		cbStackType.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "z-stack", "time series / movie" }));
-		cbStackType.setBounds(100, 30, 180, textFieldHeight);
-		registComboBox(cbStackType, 1);
-		
-		pGeneralSettings.add(lblStackType);
-		pGeneralSettings.add(cbStackType);
+		JPanel stackTypePanel = createComboBoxPanel("Stack Type", cbStackType, stackTypes, 1, 100, 180);
+		stackTypePanel.setLocation(left, 30);
+		pGeneralSettings.add(stackTypePanel);
 
 		Panel awtGeneralSettingsPanel = new Panel();
 		awtGeneralSettingsPanel.add(pGeneralSettings);
@@ -274,67 +279,32 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		
 		
 		// Units formatting panel
-		pUnitsFormatting = new JPanel(null);
-		pUnitsFormatting.setPreferredSize(new Dimension(frameWidth, 100));
-		pUnitsFormatting.setBorder(javax.swing.BorderFactory.createTitledBorder("Units Formatting"));
+		pUnitsFormatting = createContainerPanel(100, "Units Formatting");
 		
-		labelFormat = new JLabel("Label Format");
+		// add combobox for label format
 		cbLabelFormats = new JComboBox();
-		
-		String[] fl = getAvailableFormats();
-        cbLabelFormats.setModel(new javax.swing.DefaultComboBoxModel(fl));
-        registComboBox(cbLabelFormats, 0);
-        JPanel pLabelFormat = new JPanel(null);
-        pLabelFormat.add(labelFormat);
-        pLabelFormat.add(cbLabelFormats);
+		JPanel pLabelFormat = createComboBoxPanel("Label Format", cbLabelFormats, getAvailableFormats(), 0);
+		pLabelFormat.setLocation(left, 30);
         
-        labelFormat.setBounds(0, 0, 100, labelHeight);
-        cbLabelFormats.setBounds(100, 0, 150, textFieldHeight);
-        pLabelFormat.setBounds(left, 30, 250, subpanelHeight);
-        
-        lblLabelUnits = new JLabel("Label Unit");
+		// add combobox for label unit
 		cbLabelUnits = new JComboBox();
-		String[] un = selectedFormat.getAllowedFormatUnits();
-		cbLabelUnits.setModel(new javax.swing.DefaultComboBoxModel(un));
-		registComboBox(cbLabelUnits, 0);
-        JPanel pLabelUnits = new JPanel(null);
-        pLabelUnits.add(lblLabelUnits);
-        pLabelUnits.add(cbLabelUnits);
-        lblLabelUnits.setBounds(0, 0, 100, labelHeight);
-        cbLabelUnits.setBounds(100, 0, 150, textFieldHeight);
-        pLabelUnits.setBounds(left, 60, 250, subpanelHeight);
+		pLabelUnits = createComboBoxPanel("Label Unit", cbLabelUnits, selectedFormat.getAllowedFormatUnits(), 0);
+		pLabelUnits.setLocation(left, 60);
         
-		lblCustomSuffix = new JLabel("Custom Suffix");
+        // add Custom Suffix panel
 		tfCustomSuffix = new JTextField();
-		registerTextField(tfCustomSuffix, customSuffix);
-		JPanel pCustomSuffix = new JPanel(null);
-		pCustomSuffix.add(lblCustomSuffix);
-		pCustomSuffix.add(tfCustomSuffix);
-		lblCustomSuffix.setBounds(0, 0, 100, labelHeight);
-		tfCustomSuffix.setBounds(100, 0, 100, textFieldHeight);
-		pCustomSuffix.setBounds(left, 60, 250, subpanelHeight);
-		pCustomSuffix.setVisible(false);
+		pCustomSuffix = createTextFieldPanel("Custom Suffix", tfCustomSuffix, customSuffix);
+		pCustomSuffix.setLocation(left, 60);
 		
-		lblDecimalPlaces = new JLabel("Decimal Places");
+		// add Decimal Places panel
 		tfDecimalPlaces = new JTextField();
-		registerTextField(tfDecimalPlaces, Integer.toString(decimalPlaces));
-		JPanel pDecimalPlaces = new JPanel(null);
-		pDecimalPlaces.add(lblDecimalPlaces);
-		pDecimalPlaces.add(tfDecimalPlaces);
-		lblDecimalPlaces.setBounds(0, 0, 100, labelHeight);
-		tfDecimalPlaces.setBounds(100, 0, 100, textFieldHeight);
-		pDecimalPlaces.setBounds(300, 30, 200, subpanelHeight);
-		pDecimalPlaces.setVisible(false);
+		pDecimalPlaces = createTextFieldPanel("Decimal Places", tfDecimalPlaces, Integer.toString(decimalPlaces));
+		pDecimalPlaces.setLocation(300, 30);
 		
-		lblCustomLabelFormat = new JLabel("Custom Format");
+		// add Custom Format panel
 		tfCustomLabelFormat = new JTextField();
-		registerTextField(tfCustomLabelFormat, customFormat);
-		JPanel pCustomLabelFormat = new JPanel(null);
-		pCustomLabelFormat.add(lblCustomLabelFormat);
-		pCustomLabelFormat.add(tfCustomLabelFormat);
-		lblCustomLabelFormat.setBounds(0, 0, 100, labelHeight);
-		tfCustomLabelFormat.setBounds(100, 0, 100, textFieldHeight);
-		pCustomLabelFormat.setBounds(300, 30, 200, subpanelHeight);
+		pCustomLabelFormat = createTextFieldPanel("Custom Format", tfCustomLabelFormat, customFormat);
+		pCustomLabelFormat.setLocation(300, 30);
 
 		pUnitsFormatting.add(pLabelFormat);
 		pUnitsFormatting.add(pCustomSuffix);
@@ -347,59 +317,32 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		gd.addPanel(awtUnitsFormattingPanel, GridBagConstraints.CENTER, new Insets(5, 0, 0, 0));
 		
 		// Start/Stop/Interval
-		pStartStopIntervals = new JPanel(null);
-		pStartStopIntervals.setPreferredSize(new Dimension(frameWidth, 130));
-		pStartStopIntervals.setBorder(javax.swing.BorderFactory.createTitledBorder("Start/Stop/Interval"));
+		pStartStopIntervals = createContainerPanel(130, "Start/Stop/Interval of Stack");
 		
-		lblStartup = new JLabel("Startup");
+		// add a panel for the time stamper start value
 		tfStartup = new JTextField();
-		registerTextField(tfStartup, IJ.d2s(start));
-		JPanel pStartup = new JPanel(null);
-		pStartup.add(lblStartup);
-		pStartup.add(tfStartup);
-		lblStartup.setBounds(0, 0, 100, labelHeight);
-		tfStartup.setBounds(100, 0, 100, textFieldHeight);
-		pStartup.setBounds(left, 30, 200, subpanelHeight);
+		JPanel pStartup = createTextFieldPanel("Startup", tfStartup, IJ.d2s(start));
+		pStartup.setLocation(left, 30);
 		
-		lblInterval = new JLabel("Interval");
+		// add a panel for the interval settings
 		tfInterval = new JTextField();
-		registerTextField(tfInterval, IJ.d2s(interval));
-		JPanel pInterval = new JPanel(null);
-		pInterval.add(lblInterval);
-		pInterval.add(tfInterval);
-		lblInterval.setBounds(0, 0, 100, labelHeight);
-		tfInterval.setBounds(100, 0, 100, textFieldHeight);
-		pInterval.setBounds(left, 60, 200, subpanelHeight);
+		JPanel pInterval = createTextFieldPanel("Interval", tfInterval, IJ.d2s(interval));
+		pInterval.setLocation(left, 60);
 		
-		lblEveryNth = new JLabel("Every n-th");
+		// add panel for the everyNth setting
 		tfEveryNth = new JTextField();
-		registerTextField(tfEveryNth, Integer.toString(frameMask));
-		JPanel pEveryNth = new JPanel(null);
-		pEveryNth.add(lblEveryNth);
-		pEveryNth.add(tfEveryNth);
-		lblEveryNth.setBounds(0, 0, 100, labelHeight);
-		tfEveryNth.setBounds(100, 0, 100, textFieldHeight);
-		pEveryNth.setBounds(left, 90, 200, subpanelHeight);
+		JPanel pEveryNth = createTextFieldPanel("Every n-th", tfEveryNth, Integer.toString(frameMask));
+		pEveryNth.setLocation(left, 90);
 		
-		lblFirstFrame = new JLabel("First");
+		// add panel for First Frame setting
 		tfFirstFrame = new JTextField();
-		registerTextField(tfFirstFrame, Integer.toString(first));
-		JPanel pFirstFrame = new JPanel(null);
-		pFirstFrame.add(lblFirstFrame);
-		pFirstFrame.add(tfFirstFrame);
-		lblFirstFrame.setBounds(0, 0, 100, labelHeight);
-		tfFirstFrame.setBounds(100, 0, 100, textFieldHeight);
-		pFirstFrame.setBounds(300, 30, 200, subpanelHeight);
+		JPanel pFirstFrame = createTextFieldPanel("First", tfFirstFrame, Integer.toString(first));
+		pFirstFrame.setLocation(300, 30);
 		
-		lblLastFrame = new JLabel("Last");
+		// add panel for Last Frame setting
 		tfLastFrame = new JTextField();
-		registerTextField(tfLastFrame, Integer.toString(last));
-		JPanel pLastFrame = new JPanel(null);
-		pLastFrame.add(lblLastFrame);
-		pLastFrame.add(tfLastFrame);
-		lblLastFrame.setBounds(0, 0, 100, labelHeight);
-		tfLastFrame.setBounds(100, 0, 100, textFieldHeight);
-		pLastFrame.setBounds(300, 60, 200, subpanelHeight);
+		JPanel pLastFrame = createTextFieldPanel("Last", tfLastFrame, Integer.toString(last));
+		pLastFrame.setLocation(300, 60);
 		
 		pStartStopIntervals.add(pStartup);
 		pStartStopIntervals.add(pInterval);
@@ -412,44 +355,26 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		gd.addPanel(awtStartStopInvervalPanel, GridBagConstraints.CENTER, new Insets(5, 0, 0, 0));
 		
 		// Location and Font panel
-		pLocationFont = new JPanel(null);
-		pLocationFont.setPreferredSize(new Dimension(frameWidth, 110));
-		pLocationFont.setBorder(javax.swing.BorderFactory.createTitledBorder("Location & Font"));
+		pLocationFont = createContainerPanel(110, "Location & Font");
 		
-		lblLocationX = new JLabel("X");
+		// add panel for X location
 		tfLocationX = new JTextField();
-		registerTextField(tfLocationX, Integer.toString(x));
-		JPanel pLocationX = new JPanel(null);
-		pLocationX.add(lblLocationX);
-		pLocationX.add(tfLocationX);
-		lblLocationX.setBounds(0, 0, 20, labelHeight);
-		tfLocationX.setBounds(20, 0, 50, textFieldHeight);
-		pLocationX.setBounds(left, 30, 70, subpanelHeight);
+		JPanel pLocationX = createTextFieldPanel("X", tfLocationX, Integer.toString(x), 20, 50);
+		pLocationX.setLocation(left, 30);
 		
-		lblLocationY = new JLabel("Y");
+		// add panel for Y location
 		tfLocationY = new JTextField();
-		registerTextField(tfLocationY, Integer.toString(y));
-		JPanel pLocationY = new JPanel(null);
-		pLocationY.add(lblLocationY);
-		pLocationY.add(tfLocationY);
-		lblLocationY.setBounds(0, 0, 20, labelHeight);
-		tfLocationY.setBounds(20, 0, 50, textFieldHeight);
-		pLocationY.setBounds(120, 30, 70, subpanelHeight);
+		JPanel pLocationY = createTextFieldPanel("Y", tfLocationY, Integer.toString(y), 20, 50);
+		pLocationY.setLocation(120, 30);
 		
 		if (isCustomROI())
 			 locationPreset = CUSTOM;
 		else locationPreset = UPPER_LEFT;
 		
-		lblLocationPresets = new JLabel("Location Presets");
+		// add combobox for location presets
 		cbLocationPresets = new JComboBox();
-		cbLocationPresets.setModel(new javax.swing.DefaultComboBoxModel(locations));
-		registComboBox(cbLocationPresets, locationPreset);
-        JPanel pLocationPresets = new JPanel(null);
-        pLocationPresets.add(lblLocationPresets);
-        pLocationPresets.add(cbLocationPresets);
-        lblLocationPresets.setBounds(0, 0, 110, labelHeight);
-        cbLocationPresets.setBounds(110, 0, 150, textFieldHeight);
-        pLocationPresets.setBounds(240, 30, 260, subpanelHeight);
+		JPanel pLocationPresets = createComboBoxPanel("Location Presets", cbLocationPresets, locations, locationPreset, 110, 150);
+		pLocationPresets.setLocation(240, 30);
         
         pFontProperties = new FontPropertiesPanel();
   		pFontProperties.setBounds(left, 70, 400, subpanelHeight);
@@ -497,18 +422,54 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		// as used by preview
 		preview = !gd.wasOKed();
 
+		return flags;
+	}
 		// initialise time with the value of the starting time
 		// /time = start; moved to setNPasses
 
 		// imp.startTiming(); //What is this for? Why need to know when it was
 		// started... is this used elsewhere..?
 
-		// extendedpluginfilter showDialog method should
-		// return a combination (bitwise OR) of the flags specified in
-		// interfaces PlugInFilter and ExtendedPlugInFilter.
-		return DOES_ALL + DOES_STACKS + STACK_REQUIRED;
+	private JPanel createContainerPanel(int height, String label){
+		JPanel panel = new JPanel(null);
+		panel.setPreferredSize(new Dimension(540, height));
+		panel.setBorder(javax.swing.BorderFactory.createTitledBorder(label));
+		return panel;
 	}
 	
+	private JPanel createComboBoxPanel(String labelText, JComboBox combobox, String[] values, int defaultIndex) {
+		return createComboBoxPanel(labelText, combobox, values, defaultIndex, 100, 150);
+	}
+	
+	private JPanel createComboBoxPanel(String labelText, JComboBox combobox, String[] values, int defaultIndex, int labelWidth, int comboboxWidth) {
+		JLabel label = new JLabel(labelText);
+		combobox.setModel(new javax.swing.DefaultComboBoxModel(values));
+        registerComboBox(combobox, defaultIndex);
+        JPanel panel = new JPanel(null);
+        label.setBounds(0, 0, labelWidth, 20);
+        combobox.setBounds(labelWidth, 0, comboboxWidth, 22);
+        panel.add(label);
+        panel.add(combobox);
+        panel.setSize(labelWidth+comboboxWidth, 30);
+        return panel;
+	}
+	
+	private JPanel createTextFieldPanel(String labelText, JTextField textfield, String defaultText) {
+		return createTextFieldPanel(labelText, textfield, defaultText, 100, 100);
+	}
+	
+	private JPanel createTextFieldPanel(String labelText, JTextField textfield, String defaultText, int labelWidth, int textFieldWidth) {
+		JLabel label = new JLabel(labelText);
+		registerTextField(textfield, defaultText);
+		JPanel panel = new JPanel(null);
+		label.setBounds(0,0, labelWidth, 20);
+		textfield.setBounds(labelWidth,0,textFieldWidth, 22);
+		panel.add(label);
+		panel.add(textfield);
+		panel.setSize(labelWidth+textFieldWidth, 30);
+		return panel;
+	}
+
 	private void registerTextField(JTextField tf, String defaultText) {
 		tf.setText(defaultText);
 		tf.addActionListener(gd);
@@ -517,7 +478,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		tf.getDocument().addDocumentListener(this);
 	}
 	
-	private void registComboBox(JComboBox cb, int defaultSelection) {
+	private void registerComboBox(JComboBox cb, int defaultSelection) {
 		cb.setSelectedIndex(defaultSelection);
 		cb.addItemListener(gd);
 		cb.addKeyListener(gd);
