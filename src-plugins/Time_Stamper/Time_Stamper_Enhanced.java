@@ -693,44 +693,42 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		if (isCustomROI()){
 			Roi roi = imp.getRoi();
 			Rectangle theROI = roi.getBounds();
-		// single characters fit the ROI, but if the time stamper string is
-		// long
-		// then the font is too big to fit the whole thing in!
+			
+			/*
+			 * single characters fit the ROI, but if the time stamper string is
+			 * long then the font is too big to fit the whole thing in!
+	         *
+			 * need to see if we should use the ROI height to set the font size
+			 * or read it from the plugin gui if (theROI != null) doesnt work as
+			 * if there is no ROI set, the ROI is the size of the image! There
+			 * is always an ROI! So we can say, if there is no ROI set , its
+			 * the same size as the image, and if that is the case, we should
+			 * then use the size as read from the GUI.
+			 * remember the ROIs top left coordinates to be the X and Y values
+			 * of the font rectangle
+			 */
+			x = theROI.x;
+			y = theROI.y;
 
-		// need to see if we should use the ROI height to set the font size
-		// or read it from the plugin gui
-		// if (theROI != null) doesnt work as if there is no ROI set, the
-		// ROI is the size of the image! There is always an ROI!
-		// So we can say, if there is no ROI set , its the same size as the
-		// image, and if that is the case,
-		// we should then use the size as read from the GUI.
-				// remember the ROIs top left coordinates to be the X and Y values
-				// of the font rectangle
-				x = theROI.x;
-				y = theROI.y;
+			/*
+			 * size as the image, leave size as it was set by the gui.
+			 * For now, ignore point ti pixel conversion.
+			 */
+			size = (int) (theROI.height);
 
-				// size as the image
-				// leave size as it was
-				// set by the gui
-				size = (int) (theROI.height); // - 1.10526)/0.934211) whats up
-			// with these numbers? Are they
-			// special? pixel to point size
-			// conversion? // if there is an
-			// ROI not the same size as the
-			// image then set size to its
-			// height.
-
-			// make sure the font is not too big or small.... but why? Too -
-			// small cant read it. Too Big - ?
-			// should this use private and public and get / set methods?
-			// in any case it doesnt seem to work... i can set the font < 7 and
-			// it is printed that small.
+			/*
+			 * make sure the font is not too big or small.... but why? Too -
+			 * small cant read it. Too Big - ?
+			 * should this use private and public and get / set methods?
+			 * in any case it doesnt seem to work... i can set the font < 7 and
+			 * it is printed that small.
+			 */
 			if (size < 7)
 				size = 7;
 			else if (size > 80)
 				size = 80;
-			// if no ROI, x and y are defaulted or set according to text in gui
 		}
+		// if no ROI, x and y are defaulted or set according to text in gui
 
 		font = new Font(TextRoi.getFont(), TextRoi.getStyle(), size);
 	}
@@ -786,18 +784,16 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	}
 
 	/**
-	 * Returns the time of the last frame.
+	 * Returns the time of the last frame where a stamp is made.
 	 */
 	double lastTime() {
-		return getTimeFromFrame(last); // is the last time for which a time
-		// stamp will be made
+		return getTimeFromFrame(last); 
 	}
 
 	/**
 	 * Returns the time of a specific frame.
 	 * 
-	 * @param f
-	 *            The frame to calculate the time of
+	 * @param f The frame to calculate the time of
 	 * @return The time at frame f
 	 */
 	double getTimeFromFrame(int f) {
