@@ -877,7 +877,9 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		boolean customSuffixSupported;
 		// a member indicating if a custom format should be supported
 		boolean customFormatSupported;
-
+		// a member indicating if decimal places modification is supported
+		boolean decimalPlacesSupported;
+		
 		/**
 		 * 
 		 * @param allowedFormatUnits
@@ -886,11 +888,13 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		 * @param supportCustomFormat
 		 */
 		public LabelFormat(String[] allowedFormatUnits, String name,
-				boolean supportCustomSuffix, boolean supportCustomFormat) {
+				boolean supportCustomSuffix, boolean supportCustomFormat,
+				boolean supportDecimalPlaces) {
 			this.allowedFormatUnits = allowedFormatUnits;
 			this.name = name;
 			this.customSuffixSupported = supportCustomSuffix;
 			this.customFormatSupported = supportCustomFormat;
+			this.decimalPlacesSupported = supportDecimalPlaces;
 		}
 
 		/**
@@ -961,13 +965,24 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 
 		/**
 		 * Indicates whether a custom time format can be used by the format.
-		 * This could be useful for decimal formats like HH:mm which should be
+		 * This could be useful for digital formats like HH:mm which should be
 		 * user definable.
 		 * 
 		 * @return True if the format supports custom formats, false otherwise.
 		 */
 		public boolean supportsCustomFormat() {
 			return customFormatSupported;
+		}
+		
+		/**
+		 * Indicates whether decimal places are part of the format.
+		 * This could be useful for decimal formats for which the number of
+		 * decimal places should be user definable.
+		 * 
+		 * @return True if the format supports decimal places, false otherwise.
+		 */
+		public boolean supportsDecimalPlaces() {
+			return decimalPlacesSupported;
 		}
 	}
 
@@ -1004,7 +1019,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		protected DecimalLabelFormat(String[] allowedFormatUnits, String name,
 				boolean supportCustomSuffix, boolean supportCustomFormat) {
 			super(allowedFormatUnits, name, supportCustomSuffix,
-					supportCustomFormat);
+					supportCustomFormat, true);
 		}
 
 		/**
@@ -1052,7 +1067,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		 *            The display name of the format.
 		 */
 		public DigitalLabelFormat(String[] allowedFormatUnits, String name) {
-			super(allowedFormatUnits, name, false, true);
+			super(allowedFormatUnits, name, false, true, false);
 		}
 
 		/**
