@@ -2107,6 +2107,9 @@ public class Fake {
 							line.length() - 1);
 				line = line.replace(".", "/");
 				int slash = path.lastIndexOf("/");
+				int backslash = path.lastIndexOf("\\");
+				if (backslash > slash)
+					slash = backslash;
 				if (path.endsWith(line + path.substring(slash)))
 					return path.substring(0, path.length() -
 							line.length() -
@@ -2357,7 +2360,7 @@ public class Fake {
 						verbose);
 					continue;
 				}
-				if (realName.endsWith("/") ||
+				if (realName.endsWith("/") || realName.endsWith("\\") ||
 						realName.equals("")) {
 					lastBase = realName;
 					continue;
