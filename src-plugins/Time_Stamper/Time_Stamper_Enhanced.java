@@ -1,47 +1,47 @@
-/**
- * This plugin is a merge of the Time_Stamper plugins from ImageJ and from Tony Collins' plugin collection at macbiophotonics. 
-it aims to combine all the functionality of both plugins and refine and enhance their functionality
-for instance by adding the preview functionality suggested by Michael Weber.
-
- *It does not know about hyper stacks - multiple channels..... only works as expected for normal stacks.
-That means a single channel time series or z stack. 
-
- *We might want to rename this tool "Stack Labeler", since it will handle labeling of Z stacks as well as time stacks. 
-
- *The sequence of calls to an ExtendedPlugInFilter is the following:
-- setup(arg, imp): The filter should return its flags.
-- showDialog(imp, command, pfr): The filter should display the dialog asking for parameters (if any)
-and do all operations needed to prepare for processing the individual image(s) (E.g., slices of a stack).
-For preview, a separate thread may call setNPasses(nPasses) and run(ip) while the dialog is displayed.
-The filter should return its flags.
-- setNPasses(nPasses): Informs the filter of the number of calls of run(ip) that will follow.
-- run(ip): Processing of the image(s). With the CONVERT_TO_FLOAT flag,
-this method will be called for each color channel of an RGB image.
-With DOES_STACKS, it will be called for each slice of a stack.
-- setup("final", imp): called only if flag FINAL_PROCESSING has been specified.
-Flag DONE stops this sequence of calls.
-
- *We are using javas calendar for formatting the time stamps for "digital" style, 
- *but this has limitations, as you can t count over 59 min and the zero date is 01 01 1970, not zero. 
-
- *Here is a list (in no particular order) of requested and "would be nice" features that could be added:
--prevent longest label running off side of image  - ok
--choose colour  -ok
--font selection -ok
--top left, bottom right etc.  drop down menu 
--Hyperstacks z, t, c
--read correct time / z units, start and intervals from image metadata. Get it from Image Properties?
--every nth slice labelled -ok
--label only slices where time became greater than multiples of some time eg every 5 min. 
--preview with live update when change GUI -ok, changes in GUI are read into the preview. 
--preview with stack slider in the GUI. - slider now in GUI but functionality is half broken
--Use Java Date for robust formatting of dates/times counted in milliseconds. - added hybrid date form at for 
-	versatile formatting of the digital time. 
--switch unit according to magnitude of number eg sec or min or nm or microns etc. 
-- background colour for label. -0K.  
-
- *Dan White MPI-CBG , began hacking on 15.04.09. Work continued from 02-2010 by Tomka and Dan
- */
+	/**
+	 * This plugin is a merge of the Time_Stamper plugins from ImageJ and from Tony Collins' plugin collection at macbiophotonics. 
+	 *it aims to combine all the functionality of both plugins and refine and enhance their functionality
+	 *for instance by adding the preview functionality suggested by Michael Weber.
+	 *
+	 *It does not know about hyper stacks - multiple channels..... only works as expected for normal stacks.
+	 *That means a single channel time series or z stack. 
+	 *
+	 *We might want to rename this tool "Stack Labeler", since it will handle labeling of Z stacks as well as time stacks. 
+	 *
+	 *The sequence of calls to an ExtendedPlugInFilter is the following:
+	 *- setup(arg, imp): The filter should return its flags.
+	 *- showDialog(imp, command, pfr): The filter should display the dialog asking for parameters (if any)
+	 *and do all operations needed to prepare for processing the individual image(s) (E.g., slices of a stack).
+	 *For preview, a separate thread may call setNPasses(nPasses) and run(ip) while the dialog is displayed.
+	 *The filter should return its flags.
+	 *- setNPasses(nPasses): Informs the filter of the number of calls of run(ip) that will follow.
+	 *- run(ip): Processing of the image(s). With the CONVERT_TO_FLOAT flag,
+	 *this method will be called for each color channel of an RGB image.
+	 *With DOES_STACKS, it will be called for each slice of a stack.
+	 *- setup("final", imp): called only if flag FINAL_PROCESSING has been specified.
+	 *Flag DONE stops this sequence of calls.
+	 *
+	 *We are using javas calendar for formatting the time stamps for "digital" style, 
+	 *but this has limitations, as you can t count over 59 min and the zero date is 01 01 1970, not zero. 
+	 *
+	 *Here is a list (in no particular order) of requested and "would be nice" features that could be added:
+	 *-prevent longest label running off side of image  - ok
+	 *-choose colour  -ok
+	 *-font selection -ok
+	 *-top left, bottom right etc.  drop down menu 
+	 *-Hyperstacks z, t, c
+	 *-read correct time / z units, start and intervals from image metadata. Get it from Image Properties?
+	 *-every nth slice labelled -ok
+	 *-label only slices where time became greater than multiples of some time eg every 5 min. 
+	 *-preview with live update when change GUI -ok, changes in GUI are read into the preview. 
+	 *-preview with stack slider in the GUI. - slider now in GUI but functionality is half broken
+	 *-Use Java Date for robust formatting of dates/times counted in milliseconds. - added hybrid date form at for 
+	 *-versatile formatting of the digital time - ok 
+	 *-switch unit according to magnitude of number eg sec or min or nm or microns etc. 
+	 *- background colour for label. -0K.  
+	 *
+	 *Dan White MPI-CBG , began hacking on 15.04.09. Work continued from 02-2010 by Tomka and Dan
+	 */
 
 import ij.IJ;
 import ij.IJEventListener;
@@ -95,19 +95,21 @@ import javax.swing.event.DocumentListener;
 
 public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		DialogListener, FocusListener, DocumentListener { // , ActionListener {
-	// http://rsb.info.nih.gov/ij/developer/api/ij/plugin/filter/ExtendedPlugInFilter.html
-	// should use extended plugin filter for preview ability and for stacks!
-	// then need more methods: setNPasses(int last-first) thats the number of
-	// frames to stamp.
-	// showDialog method needs another argument: PlugInFilterRunner pfr
-	// also need Dialog listener and Action listener to listen to GUI changes?
-	// declare the variables we are going to use in the plugin
-	// note to self - static variables are things that should never change and
-	// always be the same no matter what instance of the object is alive.
-	// class member variables that need to change during execution should not be
-	// static!
-	// Static can be used to remember last used values,
-	// so next time the plugin is run, it remembers the value it used last time.
+	/* http://rsb.info.nih.gov/ij/developer/api/ij/plugin/filter/ExtendedPlugInFilter.html
+	 * should use extended plugin filter for preview ability and for stacks!
+	 * then need more methods: setNPasses(int last-first) thats the number of
+	 * frames to stamp.
+	 * showDialog method needs another argument: PlugInFilterRunner pfr
+	 * also need Dialog listener and Action listener to listen to GUI changes?
+	 * declare the variables we are going to use in the plugin
+	 * note to self - static variables are things that should never change and
+	 *  always be the same no matter what instance of the object is alive.
+	 * class member variables that need to change during execution should not be
+	 * static!
+	 * Static can be used to remember last used values,
+	 * so next time the plugin is run, it remembers the value it used last time.
+	 */
+
 	ImagePlus imp;
 	// the px distance to the left
 	int x = 2;
@@ -132,19 +134,17 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	// the custom pattern for labeling, used if format supports it
 	String customFormat = "";
 	// indicates if the text should be anti-aliased or not
-	boolean AAtext = true;
+	boolean antiAliasedText = true;
 	// the current frame 
 	int frame;
-	// a visibility range for the stamps
-	// these default to 0 as no values are given
+	// a visibility range for the stamps, these default to 0 as no values are given
 	int first, last;
 	// the 'n' for 'label every n-th frame'. Treated as 1 for values below one
 	int frameMask = 1;
 	// the object that runs the plugin.
 	PlugInFilterRunner pluginFilterRunner; 
-	// a combination (bitwise OR) of the flags specified in
-	// interfaces PlugInFilter and ExtendedPlugInFilter.
-	// determines what kind of image the plug-in can run on etc.
+	// a combination (bitwise OR) of the flags specified in interfaces PlugInFilter 
+	// and ExtendedPlugInFilter. Determines what kind of image the plug-in can run on etc.
 	int flags = DOES_ALL + DOES_STACKS + STACK_REQUIRED;
 
 	// a list containing all supported formats, set up at runtime
@@ -156,39 +156,28 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 
 	// member variable for the GUI dialog
 	private GenericDialog gd;
+	
+	// String representations of the location presets offered
 	static final String[] locations = {"Upper Right", "Lower Right", "Lower Left", "Upper Left", "Custom"};
+	// Some index aliases for the locations array
 	static final int UPPER_RIGHT=0, LOWER_RIGHT=1, LOWER_LEFT=2, UPPER_LEFT=3, CUSTOM=4;
+	// the currently selected location preset
 	int locationPreset;
 	
 	// the available kinds of stack we can label. 
 	final String[] stackTypes = { "z-stack", "time series / movie" };
 	
-	// GUI variables
-	private javax.swing.ButtonGroup buttonGroup1;
-	private javax.swing.JPanel cCustomLabelFormat;
+	// GUI variables that are needed to read out data
+	// from the components
 	private javax.swing.JComboBox cbLabelFormats;
 	private javax.swing.JComboBox cbLabelUnits;
 	private javax.swing.JComboBox cbStackType;
-	private JComboBox cbLocationPresets;
-	private javax.swing.JLabel labelFormat;
-	private javax.swing.JLabel lblCustomLabelFormat;
-	private javax.swing.JLabel lblCustomSuffix;
-	private javax.swing.JLabel lblDecimalPlaces;
-	private javax.swing.JLabel lblLabelUnits;
-	private javax.swing.JLabel lblStackType;
-	private javax.swing.JLabel lblStartup;
-	private JLabel lblInterval;
-	private JLabel lblEveryNth;
-	private JLabel lblFirstFrame;
-	private JLabel lblLastFrame;
-	private JLabel lblLocationX;
-	private JLabel lblLocationY;
-	private JLabel lblLocationPresets;
-	private JPanel pGeneralSettings;
+	private javax.swing.JComboBox cbLocationPresets;
+	private javax.swing.JPanel pGeneralSettings;
 	private javax.swing.JPanel pUnitsFormatting;
 	private javax.swing.JPanel pStartStopIntervals;
-	private JPanel pLocationFont;
-	private JPanel pFontProperties;
+	private javax.swing.JPanel pLocationFont;
+	private javax.swing.JPanel pFontProperties;
 	
 	// the panel containing the units selection
 	private javax.swing.JPanel pLabelUnits;
@@ -234,37 +223,21 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	}
 
 	/**
-	 * Creates a string array out of the names of the available formats. Should
-	 * move this after the run method to keep code style method order: setup,
-	 * showDialog, setNPasses, run, other methods.
-	 */
-	private String[] getAvailableFormats() {
-		String[] formatArray = new String[formats.size()];
-		int i = 0;
-		for (LabelFormat t : formats) {
-			formatArray[i] = t.getName();
-			i++;
-		}
-		return formatArray;
-	}
-
-	/**
 	 * Make the GUI for the plug-in, with fields to fill all the variables we
 	 * need. we are using ExtendedPluginFilter, so first argument is imp not ip.
 	 */
 	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr) {
 		this.pluginFilterRunner = pfr;
-
 		int subpanelHeight = 30;
 		int left = 20;
-		
 		
 		// This makes the GUI object
 		gd = new NonBlockingGenericDialog(
 				"Time Stamper Enhanced");
 		
-		
+		//
 		// General settings panel
+		//
 		pGeneralSettings = createContainerPanel(70, "General Settings");
 		
 		//add combobox for stack type
@@ -277,8 +250,9 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		awtGeneralSettingsPanel.add(pGeneralSettings);
 		gd.addPanel(awtGeneralSettingsPanel, GridBagConstraints.CENTER, new Insets(5, 0, 0, 0));
 		
-		
+		//
 		// Units formatting panel
+		//
 		pUnitsFormatting = createContainerPanel(100, "Units Formatting");
 		
 		// add combobox for label format
@@ -316,7 +290,9 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		awtUnitsFormattingPanel.add(pUnitsFormatting);
 		gd.addPanel(awtUnitsFormattingPanel, GridBagConstraints.CENTER, new Insets(5, 0, 0, 0));
 		
+		//
 		// Start/Stop/Interval
+		//
 		pStartStopIntervals = createContainerPanel(130, "Start/Stop/Interval of Stack");
 		
 		// add a panel for the time stamper start value
@@ -354,7 +330,9 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		awtStartStopInvervalPanel.add(pStartStopIntervals);
 		gd.addPanel(awtStartStopInvervalPanel, GridBagConstraints.CENTER, new Insets(5, 0, 0, 0));
 		
+		//
 		// Location and Font panel
+		//
 		pLocationFont = createContainerPanel(110, "Location & Font");
 		
 		// add panel for X location
@@ -390,13 +368,13 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 
 		gd.addPreviewCheckbox(pfr); // adds preview checkbox - needs
 		// ExtendedPluginFilter and DialogListener!
-		gd.addMessage("Time Stamper plugin for Fiji\n(is just ImageJ - batteries included)\nmaintained by Dan White MPI-CBG\ndan(at)chalkie.org.uk");
+		gd.addMessage("Time Stamper plugin for Fiji (is just ImageJ - batteries included)\n" +
+				"maintained by Dan White MPI-CBG dan(at)chalkie.org.uk");
 
 		gd.addDialogListener(this); // needed for listening to dialog
 		// field/button/checkbox changes?
 
-		// add an ImageJ event listener to react to
-		// color changes, etc.
+		// add an ImageJ event listener to react to color changes, etc.
 		IJ.addEventListener(new IJEventListener() {
 			public void eventOccurred(int event) {
 				if (event == IJEventListener.FOREGROUND_COLOR_CHANGED
@@ -409,6 +387,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		//add a help button that opens a link to the documentation wiki page. 
 		gd.addHelp("http://pacific.mpi-cbg.de/wiki/index.php/Stack_labeler");
 
+		// update GUI parts that are dependent on current variable contents
 		updateUI();
 
 		gd.showDialog(); // shows the dialog GUI!
@@ -422,14 +401,101 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		// as used by preview
 		preview = !gd.wasOKed();
 
+		// extendedpluginfilter showDialog method should
+		// return a combination (bitwise OR) of the flags specified in
+		// interfaces PlugInFilter and ExtendedPlugInFilter.
 		return flags;
 	}
-		// initialise time with the value of the starting time
-		// /time = start; moved to setNPasses
 
-		// imp.startTiming(); //What is this for? Why need to know when it was
-		// started... is this used elsewhere..?
+	/**
+	 * This is part of the preview functionality. Informs the filter of the
+	 * number of calls of run(ip) that will follow. The argument nPasses is
+	 * worked out by the plug-in runner.
+	 */
+	public void setNPasses(int nPasses) {
+		// frame = first; // dont need this
+		// time = lastTime(); // set the time to lastTime, when doing the
+		// preview run,
+		// so the preview does not increment time when clicking the preview box
+		// causes run method execution.
+		// and i see the longest time stamp that will be made when i do a
+		// preview, so i can make sure its where
+		// i wanted it.
+		// that works, but now the time stamper counts up from time = lastTime
+		// value not from time = (start + (first*interval))
+		// when making the time stamps for the whole stack...
 
+		if (preview) {
+			frame = last;
+		} else {
+			frame = 1; // so the value of frame is reset to 0 each time the
+			// plugin is run or the preview checkbox is checked.
+		}
+		frame--;
+	}
+
+	/**
+	 * Run the plug-in on the ip object, which is the ImageProcessor object
+	 * associated with the open/selected image. but remember that showDialog
+	 * method is run before this in ExtendedPluginFilter
+	 */
+	public void run(ImageProcessor ip) {
+		// this increments frame integer by 1. If an int is declared with no
+		// value, it defaults to 0
+		frame++;
+
+		// Updates this image from the pixel data in its associated
+		// ImageProcessor object and then displays it
+		// if it is the last frame. Why do we need this when there is
+		// ip.drawString(timeString); below?
+		if (frame == last)
+			imp.updateAndDraw();
+
+		// the following line isnt needed in ExtendedPluginFilter because
+		// setNPasses takes care of number of frames to write in
+		// and ExtendedPluginFilter executes the showDialog method before the
+		// run method, always, so don't need to call it in run.
+		// if (frame==1) showDialog(imp, "TimeStamperEnhanced", pfr); // if at
+		// the 1st frame of the stack, show the GUI by calling the showDialog
+		// method
+		// and set the variables according to the GUI input.
+
+		// tell the run method when to not do anything just return
+		// Here there is a bug: with the new use of ExtendedPluginFilter,
+		// using preview on, the first time stamp is placed in frame first-1 not
+		// first...
+		// and the last time stamp in last-1. With preview off it works as
+		// expected.
+		if ((!preview) && (canceled || frame < first || frame > last || (frame % frameMask != 0)))
+			return;
+
+		// if (fontProperties != null)
+		// fontProperties.updateGUI(font);
+		ip.setFont(font);
+		ip.setAntialiasedText(antiAliasedText);
+
+		// Have moved the font size and xy location calculations for timestamp
+		// stuff out of the run method, into their own methods.
+		// set the font size according to ROI size, or if no ROI the GUI text
+		// input
+		Rectangle backgroundRectangle = getBackgroundRectangle(ip);
+		if (backgroundEnabled){
+			ip.setColor(Toolbar.getBackgroundColor());
+			ip.fill(new Roi(backgroundRectangle));
+		}
+		ip.setColor(Toolbar.getForegroundColor());
+		ip.moveTo(backgroundRectangle.x, (backgroundRectangle.y + backgroundRectangle.height) );
+
+		double time = getTimeFromFrame(frame); // ask the getTimeFromFrame
+		// method to return the time for
+		// that frame
+		ip.drawString(selectedFormat.getTimeString(time)); // draw the
+		// timestring into
+		// the image
+		// showProgress(percent done calc here); // dont really need a progress
+		// bar... but seem to get one anyway...
+	}
+	
 	private JPanel createContainerPanel(int height, String label){
 		JPanel panel = new JPanel(null);
 		panel.setPreferredSize(new Dimension(540, height));
@@ -519,15 +585,43 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	}
 
 	/**
-	 * method to deal with changes in the GUI Should move this after the run
+	 * Updates the preview.
+	 * 
+	 * @param dialog
+	 * @param e
+	 */
+	private void updatePreview(AWTEvent e) {
+		if (gd != null){
+			// tell the plug-in filter runner to update
+			// the preview. Apparently, this is "OK"
+			pluginFilterRunner.dialogItemChanged(gd, e);
+		}
+	}
+	
+	/**
+	 * Updates some GUI components, based on the current state of the selected
+	 * label format.
+	 */
+	private void updateUI() {
+		// if the new format supports custom suffixes, enable
+		// the custom suffix panel and deactivate unit selection
+		boolean supportsCustomSuffix = selectedFormat.supportsCustomSuffix();
+		pCustomSuffix.setVisible(supportsCustomSuffix);
+		pLabelUnits.setVisible(!supportsCustomSuffix);
+		// if the current format supports custom format, enable
+		// the custom format panel
+		pCustomLabelFormat.setVisible(selectedFormat.supportsCustomFormat());
+		// if the current format supports decimal places, enable
+		// the decimal places panel
+		pDecimalPlaces.setVisible(selectedFormat.supportsDecimalPlaces());
+	}
+	
+	/**
+	 * This method to deals with changes in the GUI Should move this after the run
 	 * method to keep code style method order: setup, showDialog, setNPasses,
 	 * run, other methods.
 	 */
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e) {
-		System.out.println("Got update");
-		// This reads user input parameters from the GUI and listens to changes
-		// in GUI fields
-
 		// has the label format been changed?
 		int currentFormat = cbLabelFormats.getSelectedIndex();
 		LabelFormat lf = formats.get(currentFormat);
@@ -535,7 +629,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 			selectedFormat = lf;
 			// if the format has changed, we need to modify the
 			// units choice accordingly
-			cbLabelUnits.removeAll();
+			cbLabelUnits.removeAllItems();
 			for (String unit : selectedFormat.getAllowedFormatUnits()) {
 				cbLabelUnits.addItem(unit);
 			}
@@ -561,124 +655,25 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 
 		return true; // or else the dialog will have the ok button deactivated!
 	}
-
+	
 	/**
-	 * Updates the preview.
-	 * 
-	 * @param dialog
-	 * @param e
+	 * Creates a string array out of the names of the available formats.
 	 */
-	private void updatePreview(AWTEvent e) {
-		if (gd != null){
-			// tell the plug-in filter runner to update
-			// the preview. Apparently, this is "OK"
-			pluginFilterRunner.dialogItemChanged(gd, e);
+	private String[] getAvailableFormats() {
+		String[] formatArray = new String[formats.size()];
+		int i = 0;
+		for (LabelFormat t : formats) {
+			formatArray[i] = t.getName();
+			i++;
 		}
+		return formatArray;
 	}
 	
 	/**
-	 * Updates some GUI components, based on the current state of the selected
-	 * label format.
+	 * Returns true if a custom ROI has been selected, i.e if the current
+	 * ROI has not the extent of the whole image.
+	 * @return true if custom ROI selected, false otherwise
 	 */
-	private void updateUI() {
-		// if the new format supports custom suffixes, enable
-		// the custom suffix text box
-		//customUnitStringField.setEnabled(selectedFormat.supportsCustomSuffix());
-		// if the current format supports custom format, enable
-		// the custom format text box
-		//customFormatStringField.setEnabled(selectedFormat
-		//		.supportsCustomFormat());
-	}
-
-	/**
-	 * This is part of the preview functionality. Informs the filter of the
-	 * number of calls of run(ip) that will follow. The argument nPasses is
-	 * worked out by the plug-in runner.
-	 */
-	public void setNPasses(int nPasses) {
-		// frame = first; // dont need this
-		// time = lastTime(); // set the time to lastTime, when doing the
-		// preview run,
-		// so the preview does not increment time when clicking the preview box
-		// causes run method execution.
-		// and i see the longest time stamp that will be made when i do a
-		// preview, so i can make sure its where
-		// i wanted it.
-		// that works, but now the time stamper counts up from time = lastTime
-		// value not from time = (start + (first*interval))
-		// when making the time stamps for the whole stack...
-
-		if (preview) {
-			frame = last;
-		} else {
-			frame = 1; // so the value of frame is reset to 0 each time the
-			// plugin is run or the preview checkbox is checked.
-		}
-		frame--;
-	}
-
-	/**
-	 * Run the plug-in on the ip object, which is the ImageProcessor object
-	 * associated with the open/selected image. but remember that showDialog
-	 * method is run before this in ExtendedPluginFilter
-	 */
-	public void run(ImageProcessor ip) {
-		// this increments frame integer by 1. If an int is declared with no
-		// value, it defaults to 0
-		frame++;
-
-		// Updates this image from the pixel data in its associated
-		// ImageProcessor object and then displays it
-		// if it is the last frame. Why do we need this when there is
-		// ip.drawString(timeString); below?
-		if (frame == last)
-			imp.updateAndDraw();
-
-		// the following line isnt needed in ExtendedPluginFilter because
-		// setNPasses takes care of number of frames to write in
-		// and ExtendedPluginFilter executes the showDialog method before the
-		// run method, always, so don't need to call it in run.
-		// if (frame==1) showDialog(imp, "TimeStamperEnhanced", pfr); // if at
-		// the 1st frame of the stack, show the GUI by calling the showDialog
-		// method
-		// and set the variables according to the GUI input.
-
-		// tell the run method when to not do anything just return
-		// Here there is a bug: with the new use of ExtendedPluginFilter,
-		// using preview on, the first time stamp is placed in frame first-1 not
-		// first...
-		// and the last time stamp in last-1. With preview off it works as
-		// expected.
-		if ((!preview) && (canceled || frame < first || frame > last || (frame % frameMask != 0)))
-			return;
-
-		// if (fontProperties != null)
-		// fontProperties.updateGUI(font);
-		ip.setFont(font);
-		ip.setAntialiasedText(AAtext);
-
-		// Have moved the font size and xy location calculations for timestamp
-		// stuff out of the run method, into their own methods.
-		// set the font size according to ROI size, or if no ROI the GUI text
-		// input
-		Rectangle backgroundRectangle = getBackgroundRectangle(ip);
-		if (backgroundEnabled){
-			ip.setColor(Toolbar.getBackgroundColor());
-			ip.fill(new Roi(backgroundRectangle));
-		}
-		ip.setColor(Toolbar.getForegroundColor());
-		ip.moveTo(backgroundRectangle.x, (backgroundRectangle.y + backgroundRectangle.height) );
-
-		double time = getTimeFromFrame(frame); // ask the getTimeFromFrame
-		// method to return the time for
-		// that frame
-		ip.drawString(selectedFormat.getTimeString(time)); // draw the
-		// timestring into
-		// the image
-		// showProgress(percent done calc here); // dont really need a progress
-		// bar... but seem to get one anyway...
-	}
-
 	boolean isCustomROI(){
 		Roi roi = imp.getRoi();
 		if (roi == null)
@@ -782,7 +777,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	}
 
 	/**
-	 * this method adds a preceeding 0 to a number if it only has one digit
+	 * this method adds a preceding 0 to a number if it only has one digit
 	 * instead of two. Which is handy for making 00:00 type format strings
 	 * later. Thx Dscho.
 	 */
@@ -1179,7 +1174,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		public void itemStateChanged(ItemEvent e) {
 			super.itemStateChanged(e);
 			font = new Font(TextRoi.getFont(), TextRoi.getStyle(), TextRoi.getSize());
-			AAtext = TextRoi.isAntialiased();
+			antiAliasedText = TextRoi.isAntialiased();
 			updatePreview(e);
 		}
 		
