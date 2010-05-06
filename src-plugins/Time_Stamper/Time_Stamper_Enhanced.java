@@ -94,21 +94,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
-		DialogListener, FocusListener, DocumentListener { // , ActionListener {
-	/* http://rsb.info.nih.gov/ij/developer/api/ij/plugin/filter/ExtendedPlugInFilter.html
-	 * should use extended plugin filter for preview ability and for stacks!
-	 * then need more methods: setNPasses(int last-first) thats the number of
-	 * frames to stamp.
-	 * showDialog method needs another argument: PlugInFilterRunner pfr
-	 * also need Dialog listener and Action listener to listen to GUI changes?
-	 * declare the variables we are going to use in the plugin
-	 * note to self - static variables are things that should never change and
-	 *  always be the same no matter what instance of the object is alive.
-	 * class member variables that need to change during execution should not be
-	 * static!
-	 * Static can be used to remember last used values,
-	 * so next time the plugin is run, it remembers the value it used last time.
-	 */
+		DialogListener, FocusListener, DocumentListener {
 
 	ImagePlus imp;
 	// the px distance to the left
@@ -759,6 +745,9 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 			roi.y = 1;
 		}
 		
+		// assume that the last time stamp is the widest one to calculate
+		// the maximum width of the bounding rectangle. This is not always
+		// true (e.g. 0:00 vs. 0:11) and could be made more precise.
 		roi.width = ip.getStringWidth(selectedFormat.lastTimeStampString());
 		
 		// if longest time stamp is wider than (image width - ROI width),
@@ -1012,21 +1001,6 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		@Override
 		public String getTimeString(double time) {
 			calendar.setTimeInMillis(0);
-			// if (chosenSuffix.equals("y")){ //"y", "d", "h", "min", "s", "ms",
-			// "us", "ns", "ps", "fs", "as", "Custom Suffix"
-			// time = time * (365.25*24.0*60.0*60.0*1000.0); //
-			// c.set(Calendar.YEAR, time); // time would have to be an
-			// integer... so can't use that
-			// }
-			// if (chosenSuffix.equals("w")){
-			// time = time * (7.0*24.0*60.0*60.0*1000.0);
-			// }
-			// else if (chosenSuffix.equals("d")){
-			// time = time * (24.0*60.0*60.0*1000.0);
-			// }
-			// if (chosenSuffix.equals("h")){
-			// time = time * (60.0*60.0*1000.0);
-			// }
 			if (chosenSuffix.equals("min")) {
 				time = time * (60.0 * 1000.0);
 			} else if (chosenSuffix.equals("s")) {
@@ -1035,13 +1009,8 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 				// trivial case, nothing to do:
 				// time = time;
 			}
-			// if its not h m s or ms then wont use SimpleDateFormat below for
-			// digital time.
-			// so reset chosenSuffix to s.
 			else {
-				IJ
-						.error("For a digital 00:00:00.000 time you must use min, s or ms only as the time units.");
-
+				IJ.error("For a digital 00:00:00.000 time you must use min, s or ms only as the time units.");
 			}
 
 			// set the time
@@ -1051,9 +1020,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 				// check if a custom format has been entered
 				if (customFormat.length() > 0) {
 					// Make sure that our custom format can be handled
-
 					f = new HybridDateFormat(customFormat);
-
 				} else {
 					f = new SimpleDateFormat("HH:mm:ss.SSS");
 				}
@@ -1064,13 +1031,6 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 			} catch (IllegalArgumentException ex) {
 				return ex.getMessage();
 			}
-
-			/*
-			 * int hour = (int)(time / 3600); time -= hour * 3600; int minute =
-			 * (int)(time / 60); time -= minute * 60; return twoDigits(hour) +
-			 * ":" + twoDigits(minute) + ":" + (time < 10 ? "0" : "") +
-			 * IJ.d2s(time, decimalPlaces);
-			 */
 		}
 	}
 
