@@ -11,6 +11,7 @@ public class SimpleExecuter {
 
 	public SimpleExecuter(String[] cmdarray) throws IOException {
 		Process process = Runtime.getRuntime().exec(cmdarray);
+		process.getOutputStream().close();
 		stderr = new StreamDumper(process.getErrorStream());
 		stdout = new StreamDumper(process.getInputStream());
 		for (;;) try {
