@@ -156,35 +156,34 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	
 	// GUI variables that are needed to read out data
 	// from the components
-	private javax.swing.JComboBox cbLabelFormats;
-	private javax.swing.JComboBox cbLabelUnits;
-	private javax.swing.JComboBox cbStackType;
-	private javax.swing.JComboBox cbLocationPresets;
-	private javax.swing.JPanel pGeneralSettings;
-	private javax.swing.JPanel pUnitsFormatting;
-	private javax.swing.JPanel pStartStopIntervals;
-	private javax.swing.JPanel pLocationFont;
-	private javax.swing.JPanel pFontProperties;
+	private JComboBox labelFormatsComboBox;
+	private JComboBox labelUnitsComboBox;
+	private JComboBox stackTypeComboBox;
+	private JComboBox locationPresetsComboBox;
+	private JPanel generalSettingsContainer;
+	private JPanel unitsFormattingContainer;
+	private JPanel startStopIntervalsContainer;
+	private JPanel locationFontContainer;
+	private JPanel fontPropertiesContainer;
+	private JTextField customLabelFormatTextField;
+	private JTextField customSuffixTextField;
+	private JTextField decimalPlacesTextField;
+	private JTextField startupTextField;
+	private JTextField intervalTextField;
+	private JTextField everyNthTextField;
+	private JTextField firstFrameTextField;
+	private JTextField lastFrameTextField;
+	private JTextField locationXTextField;
+	private JTextField locationYTextField;
 	
 	// the panel containing the units selection
-	private javax.swing.JPanel pLabelUnits;
+	private JPanel labelUnitsPanel;
 	// the panel containing the custom suffix elements
-	private javax.swing.JPanel pCustomSuffix;
+	private JPanel customSuffixPanel;
 	// the panel containing the custom formats elements
-	private javax.swing.JPanel pCustomLabelFormat;
+	private JPanel customLabelFormatPanel;
 	// the panel containing the Decimal Places elements
-	private javax.swing.JPanel pDecimalPlaces;
-	
-	private javax.swing.JTextField tfCustomLabelFormat;
-	private javax.swing.JTextField tfCustomSuffix;
-	private javax.swing.JTextField tfDecimalPlaces;
-	private javax.swing.JTextField tfStartup;
-	private JTextField tfInterval;
-	private JTextField tfEveryNth;
-	private JTextField tfFirstFrame;
-	private JTextField tfLastFrame;
-	private JTextField tfLocationX;
-	private JTextField tfLocationY;
+	private JPanel decimalPlacesPanel;
 
 	/**
 	 * Setup the plug-in and tell ImageJ it needs to work on a stack by
@@ -222,111 +221,111 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		//
 		// General settings panel
 		//
-		pGeneralSettings = createContainerPanel(70, "General Settings");
+		generalSettingsContainer = createContainerPanel(70, "General Settings");
 		
 		//add combobox for stack type
-		cbStackType = new JComboBox();
-		JPanel stackTypePanel = createComboBoxPanel("Stack Type", cbStackType, stackTypes, 1, 100, 180);
+		stackTypeComboBox = new JComboBox();
+		JPanel stackTypePanel = createComboBoxPanel("Stack Type", stackTypeComboBox, stackTypes, 1, 100, 180);
 		stackTypePanel.setLocation(left, 30);
-		pGeneralSettings.add(stackTypePanel);
+		generalSettingsContainer.add(stackTypePanel);
 
 		Panel awtGeneralSettingsPanel = new Panel();
-		awtGeneralSettingsPanel.add(pGeneralSettings);
+		awtGeneralSettingsPanel.add(generalSettingsContainer);
 		gd.addPanel(awtGeneralSettingsPanel, GridBagConstraints.CENTER, new Insets(5, 0, 0, 0));
 		
 		//
 		// Units formatting panel
 		//
-		pUnitsFormatting = createContainerPanel(100, "Units Formatting");
+		unitsFormattingContainer = createContainerPanel(100, "Units Formatting");
 		
 		// add combobox for label format
-		cbLabelFormats = new JComboBox();
-		JPanel pLabelFormat = createComboBoxPanel("Label Format", cbLabelFormats, getAvailableFormats(), 0);
+		labelFormatsComboBox = new JComboBox();
+		JPanel pLabelFormat = createComboBoxPanel("Label Format", labelFormatsComboBox, getAvailableFormats(), 0);
 		pLabelFormat.setLocation(left, 30);
         
 		// add combobox for label unit
-		cbLabelUnits = new JComboBox();
-		pLabelUnits = createComboBoxPanel("Label Unit", cbLabelUnits, selectedFormat.getAllowedFormatUnits(), 0);
-		pLabelUnits.setLocation(left, 60);
+		labelUnitsComboBox = new JComboBox();
+		labelUnitsPanel = createComboBoxPanel("Label Unit", labelUnitsComboBox, selectedFormat.getAllowedFormatUnits(), 0);
+		labelUnitsPanel.setLocation(left, 60);
         
         // add Custom Suffix panel
-		tfCustomSuffix = new JTextField();
-		pCustomSuffix = createTextFieldPanel("Custom Suffix", tfCustomSuffix, customSuffix);
-		pCustomSuffix.setLocation(left, 60);
+		customSuffixTextField = new JTextField();
+		customSuffixPanel = createTextFieldPanel("Custom Suffix", customSuffixTextField, customSuffix);
+		customSuffixPanel.setLocation(left, 60);
 		
 		// add Decimal Places panel
-		tfDecimalPlaces = new JTextField();
-		pDecimalPlaces = createTextFieldPanel("Decimal Places", tfDecimalPlaces, Integer.toString(decimalPlaces));
-		pDecimalPlaces.setLocation(300, 30);
+		decimalPlacesTextField = new JTextField();
+		decimalPlacesPanel = createTextFieldPanel("Decimal Places", decimalPlacesTextField, Integer.toString(decimalPlaces));
+		decimalPlacesPanel.setLocation(300, 30);
 		
 		// add Custom Format panel
-		tfCustomLabelFormat = new JTextField();
-		pCustomLabelFormat = createTextFieldPanel("Custom Format", tfCustomLabelFormat, customFormat);
-		pCustomLabelFormat.setLocation(300, 30);
+		customLabelFormatTextField = new JTextField();
+		customLabelFormatPanel = createTextFieldPanel("Custom Format", customLabelFormatTextField, customFormat);
+		customLabelFormatPanel.setLocation(300, 30);
 
-		pUnitsFormatting.add(pLabelFormat);
-		pUnitsFormatting.add(pCustomSuffix);
-		pUnitsFormatting.add(pLabelUnits);
-		pUnitsFormatting.add(pDecimalPlaces);
-		pUnitsFormatting.add(pCustomLabelFormat);
+		unitsFormattingContainer.add(pLabelFormat);
+		unitsFormattingContainer.add(customSuffixPanel);
+		unitsFormattingContainer.add(labelUnitsPanel);
+		unitsFormattingContainer.add(decimalPlacesPanel);
+		unitsFormattingContainer.add(customLabelFormatPanel);
 		
 		Panel awtUnitsFormattingPanel = new Panel();
-		awtUnitsFormattingPanel.add(pUnitsFormatting);
+		awtUnitsFormattingPanel.add(unitsFormattingContainer);
 		gd.addPanel(awtUnitsFormattingPanel, GridBagConstraints.CENTER, new Insets(5, 0, 0, 0));
 		
 		//
 		// Start/Stop/Interval
 		//
-		pStartStopIntervals = createContainerPanel(130, "Start/Stop/Interval of Stack");
+		startStopIntervalsContainer = createContainerPanel(130, "Start/Stop/Interval of Stack");
 		
 		// add a panel for the time stamper start value
-		tfStartup = new JTextField();
-		JPanel pStartup = createTextFieldPanel("Startup", tfStartup, IJ.d2s(start));
+		startupTextField = new JTextField();
+		JPanel pStartup = createTextFieldPanel("Startup", startupTextField, IJ.d2s(start));
 		pStartup.setLocation(left, 30);
 		
 		// add a panel for the interval settings
-		tfInterval = new JTextField();
-		JPanel pInterval = createTextFieldPanel("Interval", tfInterval, IJ.d2s(interval));
+		intervalTextField = new JTextField();
+		JPanel pInterval = createTextFieldPanel("Interval", intervalTextField, IJ.d2s(interval));
 		pInterval.setLocation(left, 60);
 		
 		// add panel for the everyNth setting
-		tfEveryNth = new JTextField();
-		JPanel pEveryNth = createTextFieldPanel("Every n-th", tfEveryNth, Integer.toString(frameMask));
+		everyNthTextField = new JTextField();
+		JPanel pEveryNth = createTextFieldPanel("Every n-th", everyNthTextField, Integer.toString(frameMask));
 		pEveryNth.setLocation(left, 90);
 		
 		// add panel for First Frame setting
-		tfFirstFrame = new JTextField();
-		JPanel pFirstFrame = createTextFieldPanel("First", tfFirstFrame, Integer.toString(first));
+		firstFrameTextField = new JTextField();
+		JPanel pFirstFrame = createTextFieldPanel("First", firstFrameTextField, Integer.toString(first));
 		pFirstFrame.setLocation(300, 30);
 		
 		// add panel for Last Frame setting
-		tfLastFrame = new JTextField();
-		JPanel pLastFrame = createTextFieldPanel("Last", tfLastFrame, Integer.toString(last));
+		lastFrameTextField = new JTextField();
+		JPanel pLastFrame = createTextFieldPanel("Last", lastFrameTextField, Integer.toString(last));
 		pLastFrame.setLocation(300, 60);
 		
-		pStartStopIntervals.add(pStartup);
-		pStartStopIntervals.add(pInterval);
-		pStartStopIntervals.add(pEveryNth);
-		pStartStopIntervals.add(pFirstFrame);
-		pStartStopIntervals.add(pLastFrame);
+		startStopIntervalsContainer.add(pStartup);
+		startStopIntervalsContainer.add(pInterval);
+		startStopIntervalsContainer.add(pEveryNth);
+		startStopIntervalsContainer.add(pFirstFrame);
+		startStopIntervalsContainer.add(pLastFrame);
 		
 		Panel awtStartStopInvervalPanel = new Panel();
-		awtStartStopInvervalPanel.add(pStartStopIntervals);
+		awtStartStopInvervalPanel.add(startStopIntervalsContainer);
 		gd.addPanel(awtStartStopInvervalPanel, GridBagConstraints.CENTER, new Insets(5, 0, 0, 0));
 		
 		//
 		// Location and Font panel
 		//
-		pLocationFont = createContainerPanel(110, "Location & Font");
+		locationFontContainer = createContainerPanel(110, "Location & Font");
 		
 		// add panel for X location
-		tfLocationX = new JTextField();
-		JPanel pLocationX = createTextFieldPanel("X", tfLocationX, Integer.toString(x), 20, 50);
+		locationXTextField = new JTextField();
+		JPanel pLocationX = createTextFieldPanel("X", locationXTextField, Integer.toString(x), 20, 50);
 		pLocationX.setLocation(left, 30);
 		
 		// add panel for Y location
-		tfLocationY = new JTextField();
-		JPanel pLocationY = createTextFieldPanel("Y", tfLocationY, Integer.toString(y), 20, 50);
+		locationYTextField = new JTextField();
+		JPanel pLocationY = createTextFieldPanel("Y", locationYTextField, Integer.toString(y), 20, 50);
 		pLocationY.setLocation(120, 30);
 		
 		if (isCustomROI())
@@ -334,20 +333,21 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		else locationPreset = UPPER_LEFT;
 		
 		// add combobox for location presets
-		cbLocationPresets = new JComboBox();
-		JPanel pLocationPresets = createComboBoxPanel("Location Presets", cbLocationPresets, locations, locationPreset, 110, 150);
+		locationPresetsComboBox = new JComboBox();
+		JPanel pLocationPresets = createComboBoxPanel("Location Presets",
+				locationPresetsComboBox, locations, locationPreset, 110, 150);
 		pLocationPresets.setLocation(240, 30);
         
-        pFontProperties = new FontPropertiesPanel();
-  		pFontProperties.setBounds(left, 70, 400, subpanelHeight);
+        fontPropertiesContainer = new FontPropertiesPanel();
+  		fontPropertiesContainer.setBounds(left, 70, 400, subpanelHeight);
   		
-		pLocationFont.add(pLocationX);
-		pLocationFont.add(pLocationY);
-		pLocationFont.add(pLocationPresets);
-		pLocationFont.add(pFontProperties);
+		locationFontContainer.add(pLocationX);
+		locationFontContainer.add(pLocationY);
+		locationFontContainer.add(pLocationPresets);
+		locationFontContainer.add(fontPropertiesContainer);
 		
 		Panel awtLocationFont = new Panel();
-		awtLocationFont.add(pLocationFont);
+		awtLocationFont.add(locationFontContainer);
 		gd.addPanel(awtLocationFont, GridBagConstraints.CENTER, new Insets(5, 0, 0, 0));
 
 		gd.addPreviewCheckbox(pfr); // adds preview checkbox - needs
@@ -590,14 +590,14 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		// if the new format supports custom suffixes, enable
 		// the custom suffix panel and deactivate unit selection
 		boolean supportsCustomSuffix = selectedFormat.supportsCustomSuffix();
-		pCustomSuffix.setVisible(supportsCustomSuffix);
-		pLabelUnits.setVisible(!supportsCustomSuffix);
+		customSuffixPanel.setVisible(supportsCustomSuffix);
+		labelUnitsPanel.setVisible(!supportsCustomSuffix);
 		// if the current format supports custom format, enable
 		// the custom format panel
-		pCustomLabelFormat.setVisible(selectedFormat.supportsCustomFormat());
+		customLabelFormatPanel.setVisible(selectedFormat.supportsCustomFormat());
 		// if the current format supports decimal places, enable
 		// the decimal places panel
-		pDecimalPlaces.setVisible(selectedFormat.supportsDecimalPlaces());
+		decimalPlacesPanel.setVisible(selectedFormat.supportsDecimalPlaces());
 	}
 	
 	/**
@@ -607,33 +607,33 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	 */
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e) {
 		// has the label format been changed?
-		int currentFormat = cbLabelFormats.getSelectedIndex();
+		int currentFormat = labelFormatsComboBox.getSelectedIndex();
 		AbstractStampFormat lf = formats[currentFormat];
 		if (lf != selectedFormat) {
 			selectedFormat = lf;
 			// if the format has changed, we need to modify the
 			// units choice accordingly
-			cbLabelUnits.removeAllItems();
+			labelUnitsComboBox.removeAllItems();
 			for (String unit : selectedFormat.getAllowedFormatUnits()) {
-				cbLabelUnits.addItem(unit);
+				labelUnitsComboBox.addItem(unit);
 			}
 		}
 
-		customFormat = tfCustomLabelFormat.getText();
+		customFormat = customLabelFormatTextField.getText();
 
 		// get the selected suffix of drop-down list
-		chosenSuffix = (String) cbLabelUnits.getSelectedItem();
+		chosenSuffix = (String) labelUnitsComboBox.getSelectedItem();
 
-		customSuffix = tfCustomSuffix.getText();
-		decimalPlaces = Integer.parseInt(tfDecimalPlaces.getText());
-		start = Double.parseDouble(tfStartup.getText());
-		interval = Double.parseDouble(tfInterval.getText());
-		locationPreset = cbLocationPresets.getSelectedIndex();
-		x = Integer.parseInt(tfLocationX.getText());
-		y = Integer.parseInt(tfLocationY.getText());
-		first = Integer.parseInt(tfFirstFrame.getText());
-		last = Integer.parseInt(tfLastFrame.getText());
-		frameMask = Integer.parseInt(tfEveryNth.getText());
+		customSuffix = customSuffixTextField.getText();
+		decimalPlaces = Integer.parseInt(decimalPlacesTextField.getText());
+		start = Double.parseDouble(startupTextField.getText());
+		interval = Double.parseDouble(intervalTextField.getText());
+		locationPreset = locationPresetsComboBox.getSelectedIndex();
+		x = Integer.parseInt(locationXTextField.getText());
+		y = Integer.parseInt(locationYTextField.getText());
+		first = Integer.parseInt(firstFrameTextField.getText());
+		last = Integer.parseInt(lastFrameTextField.getText());
+		frameMask = Integer.parseInt(everyNthTextField.getText());
 
 		updateUI();
 
