@@ -1036,7 +1036,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	 * Represents a label format that is essentially the same as a decimal
 	 * format, but allows custom suffixes.
 	 */
-	private class CustomLabelFormat extends DecimalLabelFormat {
+	protected class CustomLabelFormat extends DecimalLabelFormat {
 
 		/**
 		 * Creates a new {@link CustomLabelFormat}. It allows only custom
@@ -1062,7 +1062,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	 * enable/disable anti-aliased text (smoothing).
 	 */
 	@SuppressWarnings("serial")
-	private class FontPropertiesPanel extends JPanel{
+	protected class FontPropertiesPanel extends JPanel{
 		/**
 		 * Creates a new {@link FontPropertiesPanel} containing the font setting
 		 * and font colour buttons.
@@ -1104,7 +1104,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	}
 	
 	@SuppressWarnings("serial")
-	class ExtendedFonts extends Fonts{
+	protected class ExtendedFonts extends Fonts{
 		@Override
 		public void itemStateChanged(ItemEvent e) {
 			super.itemStateChanged(e);
