@@ -1,5 +1,3 @@
-package view5d;
-
 /****************************************************************************
  *   Copyright (C) 1996-2007 by Rainer Heintzmann                          *
  *   heintzmann@gmail.com                                                  *
@@ -21,13 +19,15 @@ package view5d;
  ***************************************************************************
 */
 // By making the appropriate class "View5D" or "View5D_" public and renaming the file, this code can be toggled between Applet and ImageJ respectively
+package view5d;
+
 
 import java.util.*;
 
 class MarkerList extends Object {
     int NumPoints = 0;  // Number of Points in the active list
     int ActivePoint = -1;
-    public Vector MyPoints=null;    // currently active list of positions
+    public Vector<APoint> MyPoints=null;    // currently active list of positions
     MarkerList Parent1List=null;    // the list from which this list was inherited
     MarkerList Parent2List=null;    // the list from which this list was inherited
     MarkerList Child1List=null;    // the list from which this list was inherited
@@ -74,7 +74,7 @@ class MarkerList extends Object {
     void NewList() {
         if (MyPoints != null && NumPoints == 0)
             return; // No New list here, since an empty list would be left behind
-      MyPoints = new Vector();    // stores a number of points
+      MyPoints = new Vector<APoint>();    // stores a number of points
       NumPoints = 0;
       ActivePoint=-1;
     }

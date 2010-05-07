@@ -1,5 +1,3 @@
-package view5d;
-
 /****************************************************************************
  *   Copyright (C) 1996-2007 by Rainer Heintzmann                          *
  *   heintzmann@gmail.com                                                  *
@@ -23,23 +21,25 @@ package view5d;
 // By making the appropriate class "View5D" or "View5D_" public and renaming the file, this code can be toggled between Applet and ImageJ respectively
 
 // import java.io.*;
+package view5d;
+
 import java.io.*;
 import java.util.*;
 import java.text.*;
 import ij.*;
 import ij.gui.*;
 
-class MarkerLists extends Object { // This class manages multiple lists of point markers
+public class MarkerLists extends Object { // This class manages multiple lists of point markers
 	MarkerList MyActiveList = null;
     int NumLists = 0;
     int ActiveList = -1;
     int CurrentNameNr=1;
-    Vector ListOfLists;   // marker coordinates are stored as a list of APoint objects in pixel coordinates here
+    Vector<MarkerList> ListOfLists;   // marker coordinates are stored as a list of APoint objects in pixel coordinates here
     //public Vector MyPoints=null;    // currently active list of positions
     static int dx=3,dy=3;  // size of the marker in pixels
     
     public MarkerLists() {
-      ListOfLists = new Vector();
+      ListOfLists = new Vector<MarkerList>();
       NewList();
     }
 
@@ -184,7 +184,7 @@ class MarkerLists extends Object { // This class manages multiple lists of point
         MyActiveList.ToggleColor();
     }
     
-    void ImportPositions(float [][] positions)   // this works only for one list
+    public void ImportPositions(float [][] positions)   // this works only for one list
     {
        int numpos = positions.length;
        for (int n=0;n<numpos;n++)
@@ -538,7 +538,7 @@ class MarkerLists extends Object { // This class manages multiple lists of point
 	RemoveList();
    }
 
-    void ImportMarkerLists(float [][] lists)    // inserts all lists
+    public void ImportMarkerLists(float [][] lists)    // inserts all lists
     {
     	float [] alist;
     	for (int l=0; l<lists.length; l++)
@@ -633,7 +633,7 @@ class MarkerLists extends Object { // This class manages multiple lists of point
     	// return myparent.GetPoint(myparent.ClosestTrackMarker(mylist.GetPoint(0), dir, -1));  // return the closest marker when stepping backwards
     	}
 
-    double [][] ExportMarkers(int list,My3DData data3d)
+    public double [][] ExportMarkers(int list,My3DData data3d)
     {
         if (list >= NumLists)
             return new double[0][0];
@@ -667,7 +667,7 @@ class MarkerLists extends Object { // This class manages multiple lists of point
         return markers;
     }
 
-    double [][] ExportMarkerLists(My3DData data3d)
+    public double [][] ExportMarkerLists(My3DData data3d)
     {
     	int totallength=0;
         for (int list=0;list<NumLists;list++)  // Test for all lists
@@ -806,7 +806,7 @@ class MarkerLists extends Object { // This class manages multiple lists of point
         return penalty;
     }
 
-    String PrintList(My3DData data3d) {
+    public String PrintList(My3DData data3d) {
         String newtext="#List Nr.,\tMarker Nr,\tPosX [pixels],\tY [pixels],\tZ [pixels],\tElements [element],\tTime [time],\tIntegral (no BG sub) [Units],\tMax (no BG sub) [Units],"+
         "\t"+data3d.GetAxisNames()[0]+" ["+data3d.GetAxisUnits()[0]+"],\t"+data3d.GetAxisNames()[1]+" ["+data3d.GetAxisUnits()[1]+"],\t"+data3d.GetAxisNames()[2]+" ["+data3d.GetAxisUnits()[2]+"],\t"+data3d.GetAxisNames()[3]+" ["+data3d.GetAxisUnits()[3]+"],\t"+data3d.GetAxisNames()[4]+" ["+data3d.GetAxisUnits()[4]+"],\tIntegral "+data3d.GetValueName(data3d.ActiveElement)+" (no BG sub)["+data3d.GetValueUnit(data3d.ActiveElement)+"],\tMax "+data3d.GetValueName(data3d.ActiveElement)+" (no BG sub)["+data3d.GetValueUnit(data3d.ActiveElement)+"]\tTagText \tTagInteger \tParentNr \tChild1 \t Child2 \tListColor \tListName\n";
         APoint point;
@@ -845,6 +845,43 @@ class MarkerLists extends Object { // This class manages multiple lists of point
         return newtext;
     }
 
+ double[] MSDFromList(My3DData data3d, int l, boolean do3D)
+ {
+  double MSDs[] =new double[(int) Math.sqrt(NumMarkers(l)+1)];
+  double MSDNums[] =new double[(int) Math.sqrt(NumMarkers(l)+1)];
+  APoint point,point2;
+  double SumDist2;
+  int adT;   // deltaTime but in unit steps
+  for (int i=0;i<NumMarkers(l);i++) {
+  for (int j=i+1;j<NumMarkers(l);j++)  	{
+      point=GetPoint(i,l);
+      point2=GetPoint(j,l);
+      int elem = (int) point.coord[3];
+      adT = (int) (point2.coord[data3d.TrackDirection]-point.coord[data3d.TrackDirection]);
+      if (do3D)
+          SumDist2 = point.SqrDistTo(point2,data3d.GetScale(elem,0),data3d.GetScale(elem,1),data3d.GetScale(elem,2));
+      else
+          SumDist2 = point.SqrXYDistTo(point2,data3d.GetScale(elem,0),data3d.GetScale(elem,1));
+      if (adT < 0) adT = -adT;
+      if (adT < MSDs.length+1) 
+      {
+    	  if (adT > 0) {
+    	  MSDs[adT-1] += SumDist2;
+    	  MSDNums[adT-1]++;
+    	  }
+      }
+      else
+    	  j=NumMarkers(l);  // break this for loop and go on
+  	}
+  }
+
+  for (int i=0;i<MSDs.length;i++) {
+	  if (MSDNums[i] > 0)
+		  MSDs[i] /= MSDNums[i];
+  	}
+  return MSDs;
+ }
+    
  String PrintSummary(My3DData data3d) {
     String newtext = "# Statistics Summary\n";
     APoint point,oldpoint;
@@ -852,12 +889,13 @@ class MarkerLists extends Object { // This class manages multiple lists of point
     nf.setMaximumFractionDigits(3);
     // nf.setMinimumIntegerDigits(7);
     nf.setGroupingUsed(false);
+    int doMSD=1;
     for (int l=0;l<NumLists;l++)
         {
           double adT,XYDist,XYZDist, SumXYSpeed = 0.0, SumXYZSpeed = 0.0, N = 0.0;
           oldpoint=GetPoint(0,l);
           for (int i=1;i<NumMarkers(l);i++)
-          {
+            {
             point=GetPoint(i,l);
             int elem = (int) point.coord[3];
             adT = (point.coord[data3d.TrackDirection]-oldpoint.coord[data3d.TrackDirection])*data3d.GetScale(elem,data3d.TrackDirection);
@@ -867,7 +905,9 @@ class MarkerLists extends Object { // This class manages multiple lists of point
             SumXYZSpeed += XYZDist/adT;
             oldpoint=point;
             N += 1.0;
-          }
+            }
+
+         
           if (NumMarkers(l) > 0)
           {
           newtext += "\n# Summary for List \t"+l+"\n";
@@ -900,8 +940,29 @@ class MarkerLists extends Object { // This class manages multiple lists of point
             newtext += "# Directionality "+XYZ+" Index: \t"+nf.format((totalXYZ/dT)/(SumXYZSpeed/N))+"\n";
           }
           }
+    // MSD Plots
+    // compute MSD plots
+    if (doMSD > 0)
+    	{
+        double MSDs[];
+        if (data3d.TrackDirection == 2 || data3d.SizeZ == 1)
+        {
+            newtext += "\n# XY-MSD summary list : \t"+l+"]\n";
+            MSDs=MSDFromList(data3d,l,false);
         }
-       return newtext;
+        else
+        {
+            newtext += "\n# XYZ-MSD summary list : \t"+l+"]\n";
+            MSDs=MSDFromList(data3d,l,true);  // in 3D
+        }
+        int elem = (int) GetPoint(0,l).coord[3];
+  		for (int dd=0;dd<MSDs.length;dd++) {
+            newtext+= l + "\t"+(dd+1)*data3d.GetScale(elem,data3d.TrackDirection) + "\t" + MSDs[dd] + "\n";  	      		  
+  		  }        		
+    	}
+    }
+
+    return newtext;
     }
 
 

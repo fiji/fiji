@@ -1,5 +1,3 @@
-package view5d;
-
 /****************************************************************************
  *   Copyright (C) 1996-2007 by Rainer Heintzmann                          *
  *   heintzmann@gmail.com                                                  *
@@ -24,16 +22,18 @@ package view5d;
 
 // import java.awt.image.ColorModel.*;
 // import java.awt.color.*;
+package view5d;
+
 import java.util.*;
 import java.text.*;
 
-abstract class AnElement extends Object {
+public abstract class AnElement extends Object {
     // Different Data Types, tags listed below
-    static int InvalidType=-10;
-    static int ByteType = 0; static int IntegerType = 1; static int FloatType = 2;static int DoubleType = 3;static int ComplexType = 4;static int ShortType=5;static int LongType=6;
-    static int NumTypes=7;
-    static String TypeNames[]={"Byte","Integer","Float","Double","Complex","Short","Long"};  // The last types are converted to integer
-    static String UTypeNames[]={"Unsigned Byte","Unsigned Integer","Float","Double","Complex","Unsigned Short","Unsigned Long"};  // The last types are converted to integer
+    public static int InvalidType=-10;
+    public static int ByteType = 0, IntegerType = 1, FloatType = 2, DoubleType = 3, ComplexType = 4, ShortType=5, LongType=6;
+    public static int NumTypes=7;
+    public static String TypeNames[]={"Byte","Integer","Float","Double","Complex","Short","Long"};  // The last types are converted to integer
+    public static String UTypeNames[]={"Unsigned Byte","Unsigned Integer","Float","Double","Complex","Unsigned Short","Unsigned Long"};  // The last types are converted to integer
     public int Sizes[];
     public double Scales[], ScaleV;
     public double OffsetV;  // marks the minimum of the dataset
