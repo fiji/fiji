@@ -83,13 +83,13 @@ public class NotesDialog extends JDialog {
 	}
 
 	public void setNotes() {
-    	ImagePlus imp = WindowManager.getCurrentImage();
+	ImagePlus imp = WindowManager.getCurrentImage();
 		Reader reader = ServiceMediator.getReader();
 		reader.updateMetadata(imp);
 		if (imp == null) return;
 		if (imp.getOriginalFileInfo() instanceof LSMFileInfo){
 			LSMFileInfo lsm = (LSMFileInfo)imp.getOriginalFileInfo();
-			
+
 		ArrayList<ImageDirectory> imageDirectories = lsm.imageDirectories;
 		ImageDirectory imDir = (ImageDirectory)(imageDirectories.get(0));
 		if (imDir == null) return;

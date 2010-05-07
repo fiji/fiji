@@ -33,13 +33,13 @@ public abstract class TwoOperandsAbstractFunction <T extends RealType<T>> extend
 						+"': Bad type of operand 2: "+param2.getClass().getSimpleName() );
 			}
 		
-		} else if (param1 instanceof Number) {
+		} else if (param1 instanceof FloatType) {
 
 			FloatType t1 = (FloatType) param1;
 			
 			if (param2 instanceof Image<?>) {
-				result = evaluate((Image)param2, t1);
-			} else if (param2 instanceof Number) {
+				result = evaluate(t1, (Image)param2);
+			} else if (param2 instanceof FloatType) {
 				FloatType t2 = (FloatType) param2;
 				result = new Float(evaluate(t1, t2));
 			} else {

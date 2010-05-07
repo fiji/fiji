@@ -48,9 +48,9 @@ public class BatchDialog extends JDialog {
 	private JLabel sourceLabel;
 
 	private JLabel outputLabel;
-	
+
 	private JLabel formatLabel;
-		
+
 	private JTable sourceTable;
 
 	private JScrollPane sourcePane;
@@ -62,15 +62,15 @@ public class BatchDialog extends JDialog {
 	private JButton outputButton;
 
 	private JButton resetButton;
-	
+
 	private JComboBox formatCombo;
-	
+
 	private JCheckBox verboseCB;
-	
+
 	private JCheckBox dirCB;
-	
+
 	private JFrame parent;
-	
+
 	public BatchDialog(Object parent, MasterModel masterModel) {
 		super((JFrame) parent, true);
 		this.parent = (JFrame)parent;
@@ -105,19 +105,19 @@ public class BatchDialog extends JDialog {
 
 	public void setGUI() {
 		getContentPane().setLayout(new BorderLayout());
-	
+
 		mainPanel.setLayout(new GridBagLayout());
-		
+
 		sourcePane.setViewportView(sourceTable);
 
 		mainPanel = (JPanel) GUIMaker.addComponentToGrid(sourceLabel, mainPanel, 0, 0,
 				1, 1, GridBagConstraints.HORIZONTAL, GridBagConstraints.NORTH,0.125d, 1d);
-		
+
 		sourcePane.setMinimumSize(new Dimension(400, 200));
-		
+
 		mainPanel = (JPanel) GUIMaker.addComponentToGrid(sourcePane, mainPanel, 1, 0,
 				1,4, GridBagConstraints.BOTH,GridBagConstraints.CENTER, 1d, 1d);
-		
+
 		mainPanel = (JPanel) GUIMaker.addComponentToGrid(sourceButton, mainPanel, 2, 0,
 				1, 1, GridBagConstraints.HORIZONTAL,GridBagConstraints.NORTH, 0.125d, 0.5d);
 
@@ -132,16 +132,16 @@ public class BatchDialog extends JDialog {
 
 		mainPanel = (JPanel) GUIMaker.addComponentToGrid(formatLabel, mainPanel, 0, 6,
 				1, 1,GridBagConstraints.HORIZONTAL,GridBagConstraints.CENTER, 0.125d, 0.5d);
-		
+
 		mainPanel = (JPanel) GUIMaker.addComponentToGrid(formatCombo, mainPanel, 1, 6,
 				1, 1,GridBagConstraints.HORIZONTAL,GridBagConstraints.CENTER, 0.125d, 0.5d);
-		
+
 		mainPanel = (JPanel) GUIMaker.addComponentToGrid(dirCB, mainPanel, 0, 7,
 				3,1, GridBagConstraints.HORIZONTAL,GridBagConstraints.CENTER, 0.125d, 0.5d);
-		
+
 		mainPanel = (JPanel) GUIMaker.addComponentToGrid(verboseCB, mainPanel, 0, 8,
 				3,1, GridBagConstraints.HORIZONTAL,GridBagConstraints.CENTER, 0.125d, 0.5d);
-		
+
 		buttonsPanel.add(resetButton);
 		buttonsPanel.add(okButton);
 		buttonsPanel.add(cancelButton);
@@ -152,7 +152,7 @@ public class BatchDialog extends JDialog {
 		setTitle(title);
 	}
 
-	
+
 
 	public void setListeners() {
 		okButton.addActionListener(new ActionListener() {
@@ -217,9 +217,9 @@ public class BatchDialog extends JDialog {
 			((LsmImageTableModel)sourceTable.getModel()).removeAllFiles();
 			}
 		});
-		
+
 	}
-	
+
 	public void doConvert(ArrayList list, File outputDir){
 		BatchConverter converter = new BatchConverter(masterModel);
 		IJ.showStatus("Conversion started");
@@ -234,21 +234,21 @@ public class BatchDialog extends JDialog {
 	     IJ.showMessage("Conversion done");
 	     this.dispose();
 	}
-	
+
 	public LsmImageTableModel processPath(LsmImageTableModel tm, File path) {
         if (path.isDirectory()) {
             String[] children = path.list();
             for (int i=0; i<children.length; i++) {
-            	tm = processPath(tm, new File(path, children[i]));
+		tm = processPath(tm, new File(path, children[i]));
             }
         } else {
-        	if (ImageFilter.getExtension(path).equals("lsm"))
-        	tm.addFile(path);
+		if (ImageFilter.getExtension(path).equals("lsm"))
+		tm.addFile(path);
         }
         return tm;
-        
+
 	}
-	
+
 	public void centerWindow() {
 		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 		setLocation((screenSize.width - getWidth()) / 2,

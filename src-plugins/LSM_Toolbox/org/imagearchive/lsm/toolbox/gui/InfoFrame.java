@@ -118,21 +118,21 @@ public class InfoFrame extends JFrame {
 				.getResource("images/events.png")));
 		details_button.setToolTipText("Events...");
 		addEventsListener(events_button, this);
-		
+
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new FlowLayout());
 		buttonPanel.add(events_button);
 		buttonPanel.add(notes_button);
 		buttonPanel.add(dumpinfos_button);
 		buttonPanel.add(details_button);
-		
+
 		getContentPane().add(buttonPanel, BorderLayout.NORTH);
 		getContentPane().add(infopanel, BorderLayout.CENTER);
 
 		addWindowFocusListener(new WindowFocusListener() {
 
 			public void windowGainedFocus(WindowEvent e) {
-				
+
 					updateInfoFrame();
 			}
 
@@ -168,7 +168,7 @@ public class InfoFrame extends JFrame {
 			}
 		});
 	}
-	
+
 	private void addEventsListener(final JButton button, final JFrame parent) {
 		button.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -179,7 +179,7 @@ public class InfoFrame extends JFrame {
 				LSMFileInfo openLSM = (LSMFileInfo) imp.getOriginalFileInfo();
 				CZLSMInfoExtended cz = (CZLSMInfoExtended) ((ImageDirectory) openLSM.imageDirectories
 						.get(0)).TIF_CZ_LSMINFO;
-				
+
 				EventList events = cz.eventList;
 				if (events != null) {
 					String header = new String(

@@ -70,13 +70,13 @@ public class CZLSMInfoExtended extends CZLSMInfo{
 	public long[] Reserved;
 
 	public TimeStamps timeStamps;
-	
+
 	public ChannelWavelengthRange channelWavelength; // lambda stamps
-	
+
 	public EventList eventList;
-	
+
 	public ScanInfo scanInfo;
-		
+
 	public String toString() {
 		return new String("DimensionX:  " + DimensionX + "\n" +
 				"DimensionY:  "+ DimensionY + "\n" +

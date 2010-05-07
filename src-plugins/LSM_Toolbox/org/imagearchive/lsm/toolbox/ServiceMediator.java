@@ -13,7 +13,7 @@ public class ServiceMediator {
 	private static InfoFrame infoFrame;
 
 	private static DetailsFrame detailsFrame;
-	
+
 	private static Reader reader;
 
 	/*public static MasterModel getMasterModel() {
@@ -27,7 +27,7 @@ public class ServiceMediator {
 	public static void registerReader(Reader reader) {
 		ServiceMediator.reader = reader;
 	}
-	
+
 	public static void registerControlPanelFrame(ControlPanelFrame controlPanelFrame) {
 		ServiceMediator.controlPanelFrame = controlPanelFrame;
 	}
@@ -51,7 +51,7 @@ public class ServiceMediator {
 	public static DetailsFrame getDetailsFrame() {
 		return detailsFrame;
 	}
-	
+
 	public static Reader getReader() {
 		if (reader == null) reader = new Reader();
 		return reader;

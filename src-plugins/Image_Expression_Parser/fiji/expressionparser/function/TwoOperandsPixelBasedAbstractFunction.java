@@ -42,9 +42,9 @@ public abstract class TwoOperandsPixelBasedAbstractFunction <T extends RealType<
 			
 			if (param2 instanceof Image<?>) {
 				result = evaluate(t1, (Image)param2);
-			} else if (param2 instanceof Number) {
-				FloatType t2 = new FloatType(((Number)param2).floatValue());
-				result = new Float(evaluate(t1, t2));
+			} else if (param2 instanceof RealType) {
+				FloatType t2 = (FloatType)param2;
+				result = new FloatType(evaluate(t1, t2)); // since it is pixel based, this must be a singleton
 			} else {
 				throw new ParseException("In function '" + getFunctionString()
 						+"': Bad type of operand 2: "+param2.getClass().getSimpleName() );
@@ -54,6 +54,7 @@ public abstract class TwoOperandsPixelBasedAbstractFunction <T extends RealType<
 			throw new ParseException("In function '" + getFunctionString()
 					+"': Bad type of operand 1: "+param1.getClass().getSimpleName() );
 		}
+		
 		
 		inStack.push(result);
 	}

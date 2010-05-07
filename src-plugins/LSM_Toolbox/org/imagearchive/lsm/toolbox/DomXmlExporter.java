@@ -36,7 +36,7 @@ public class DomXmlExporter {
 		CZLSMInfoExtended cz = (CZLSMInfoExtended) imDir.TIF_CZ_LSMINFO;
 		return buildTree(cz,filter);
 	}
-	
+
 	public String buildTree(CZLSMInfoExtended cz, boolean filter) {
 
 		try {
@@ -75,7 +75,7 @@ public class DomXmlExporter {
 			addNode(child, "DisplayAspectTime", DataType.DOUBLE,
 					cz.DisplayAspectTime);
 			addNode(child, "ToolbarFlags", DataType.DOUBLE, cz.OriginZ);
-			
+
 			root.appendChild(child);
 
 			for (int i = 0; i < recordings.size(); i++) {

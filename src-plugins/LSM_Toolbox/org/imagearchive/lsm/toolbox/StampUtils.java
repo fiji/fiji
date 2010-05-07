@@ -17,7 +17,7 @@ public class StampUtils {
 		CZLSMInfoExtended cz = (CZLSMInfoExtended) ((ImageDirectory) openLSM.imageDirectories
 				.get(0)).TIF_CZ_LSMINFO;
 		int n = new Long(cz.timeStamps.NumberTimeStamps).intValue();
-		String[] stamps = new String[n];  
+		String[] stamps = new String[n];
 		for (int k = 0; k < n; k++)
 			stamps[k] = Double.toString(cz.timeStamps.TimeStamps[k]);
 		return implode(stamps);
@@ -31,14 +31,14 @@ public class StampUtils {
 		Recording r = (Recording) cz.scanInfo.recordings.get(0);
 		double planeSpacing = ((Double) r.records.get("PLANE_SPACING")).doubleValue();
 		double ps = 0;
-		String[] stamps = new String[(int) cz.DimensionZ];  
+		String[] stamps = new String[(int) cz.DimensionZ];
 		for (int k = 0; k < cz.DimensionZ; k++){
 			stamps[k] = IJ.d2s(ps, 2) + " "+ MasterModel.micrometer;
 			ps += planeSpacing;
 		}
 		return implode(stamps);
 	}
-	
+
 	public static String getLStamps(Reader reader, ImagePlus imp) {
 		reader.updateMetadata(imp);
 		LSMFileInfo openLSM = (LSMFileInfo) imp.getOriginalFileInfo();
@@ -49,20 +49,20 @@ public class StampUtils {
 					.error("Image not issued from spectral scan. Lambda stamp obsolete!");
 			return null;
 		}
-		String[] stamps = new String[(int) cz.channelWavelength.Channels];  
+		String[] stamps = new String[(int) cz.channelWavelength.Channels];
 		for (int k = 0; k < cz.channelWavelength.Channels; k++){
 			stamps[k] = IJ.d2s(cz.channelWavelength.LambdaStamps[k], 2);
-			
+
 		}
 		return implode(stamps);
 	}
-	
+
 	public static String getEvents(Reader reader, ImagePlus imp) {
 		reader.updateMetadata(imp);
 		LSMFileInfo openLSM = (LSMFileInfo) imp.getOriginalFileInfo();
 		CZLSMInfoExtended cz = (CZLSMInfoExtended) ((ImageDirectory) openLSM.imageDirectories
 				.get(0)).TIF_CZ_LSMINFO;
-		
+
 		EventList events = cz.eventList;
 		StringBuffer buffer = new StringBuffer();
 		if (events != null) {
@@ -71,7 +71,7 @@ public class StampUtils {
 		}
 		return buffer.toString();
 	}
-	
+
 	private static String implode(String[] input) {
 		String result;
 		if (input.length == 0) {
@@ -88,5 +88,5 @@ public class StampUtils {
 		return result;
 	}
 
-	
+
 }

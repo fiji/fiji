@@ -35,9 +35,9 @@ public class ImagePreview extends JPanel implements PropertyChangeListener {
 	File file = null;
 
 	org.imagearchive.lsm.reader.Reader reader;
-	
+
 	JPanel panel ;
-	
+
 	Color backgroundcolor = SystemColor.window;
 
 	public ImagePreview(JFileChooser fc) {

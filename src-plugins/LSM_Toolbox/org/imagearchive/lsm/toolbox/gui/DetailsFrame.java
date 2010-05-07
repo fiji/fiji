@@ -77,7 +77,7 @@ public class DetailsFrame extends JFrame {
 	private JButton exitButton;
 
 	private JButton dumpButton;
-	
+
 	private JButton xmlButton;
 
 	private JToggleButton filterButton;
@@ -155,7 +155,7 @@ public class DetailsFrame extends JFrame {
 		"images/xml.png")));
 		xmlButton
 		.setToolTipText("Dump xml data to textwindow, saving to text file is possible");
-		
+
 		searchTF = new JTextField("");
 		detailsTreePopupMenu = new JPopupMenu();
 		expandAllItem = new JMenuItem("Expand all", new ImageIcon(getClass()
@@ -202,7 +202,7 @@ public class DetailsFrame extends JFrame {
 			public void windowLostFocus(WindowEvent e) {
 			}
 		});
-		
+
 		dumpButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				dumpData();
@@ -214,7 +214,7 @@ public class DetailsFrame extends JFrame {
 				dumpXmlData();
 			}
 		});
-		
+
 		expandAllItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				expandAll();
@@ -298,7 +298,7 @@ public class DetailsFrame extends JFrame {
 					((TreeTableModel) table.getModel()).setData(null);
 			}
 		});
-		
+
 		updateTreeAndLabels();
 	}
 
@@ -436,7 +436,7 @@ public class DetailsFrame extends JFrame {
 		CZLSMInfoExtended cz = (CZLSMInfoExtended) imDir.TIF_CZ_LSMINFO;
 		new TextWindow("XML SCANINFO DUMP", new DomXmlExporter().buildTree(cz,filterButton.isSelected()), 250, 400);
 	}
-	
+
 	public void updateFilteredTree(boolean filter) {
 
 		((DefaultMutableTreeNode) detailsTree.getModel().getRoot())
