@@ -1511,6 +1511,14 @@ public class Weka_Segmentation implements PlugIn
 		
 		IJ.log("Read header from " + od.getDirectory() + od.getFileName() + " (number of attributes = " + trainHeader.numAttributes() + ")");
 		
+		if(trainHeader.numAttributes() < 1)
+		{
+			IJ.error("Error", "No attributes were found on the model header");
+			updateButtonsEnabling();
+			return;
+		}
+		
+try{		
 		// Check if the loaded information corresponds to current state of the segmentator
 		// (the attributes can be adjusted, but the classes must match)
 		if(false == adjustSegmentationStateToData(trainHeader))		
@@ -1518,7 +1526,11 @@ public class Weka_Segmentation implements PlugIn
 			IJ.log("Error: current segmentator state could not be updated to loaded data requirements (attributes and classes)");
 			this.classifier = oldClassifier;
 		}
-							
+}catch(Exception e)
+{
+	IJ.log("Error while adjusting data!");
+	e.printStackTrace();
+}
 		updateButtonsEnabling();
 		
 		IJ.log("Loaded " + od.getDirectory() + od.getFileName());
