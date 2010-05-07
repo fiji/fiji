@@ -557,6 +557,9 @@ public class Fake {
 			Iterator iter = allRules.keySet().iterator();
 			while (iter.hasNext()) {
 				String target = (String)iter.next();
+				Rule rule = (Rule)allRules.get(target);
+				if (rule instanceof Special || rule instanceof All)
+					continue;
 				if (!filter.accept(null, target))
 					continue;
 				int index = Collections
@@ -2107,6 +2110,9 @@ public class Fake {
 							line.length() - 1);
 				line = line.replace(".", "/");
 				int slash = path.lastIndexOf("/");
+				int backslash = path.lastIndexOf("\\");
+				if (backslash > slash)
+					slash = backslash;
 				if (path.endsWith(line + path.substring(slash)))
 					return path.substring(0, path.length() -
 							line.length() -
@@ -2357,7 +2363,7 @@ public class Fake {
 						verbose);
 					continue;
 				}
-				if (realName.endsWith("/") ||
+				if (realName.endsWith("/") || realName.endsWith("\\") ||
 						realName.equals("")) {
 					lastBase = realName;
 					continue;
@@ -2610,6 +2616,13 @@ public class Fake {
 			if (args[0].startsWith("../"))
 				args[0] = new File(dir,
 						args[0]).getAbsolutePath();
+			else if (args[0].equals("bash") && getPlatform().equals("win64")) {
+				String[] newArgs = new String[args.length + 2];
+				newArgs[0] = System.getenv("WINDIR") + "\\SYSWOW64\\cmd.exe";
+				newArgs[1] = "/C";
+				System.arraycopy(args, 0, newArgs, 2, args.length);
+				args = newArgs;
+			}
 		}
 
 		Process proc = Runtime.getRuntime().exec(args, null, dir);
