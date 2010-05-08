@@ -12,13 +12,16 @@ import fiji.expressionparser.function.ImgLibArcCosine;
 import fiji.expressionparser.function.ImgLibArcSine;
 import fiji.expressionparser.function.ImgLibArcTangent;
 import fiji.expressionparser.function.ImgLibArcTangent2;
+import fiji.expressionparser.function.ImgLibCeil;
 import fiji.expressionparser.function.ImgLibCosine;
 import fiji.expressionparser.function.ImgLibExp;
+import fiji.expressionparser.function.ImgLibFloor;
 import fiji.expressionparser.function.ImgLibFunction;
 import fiji.expressionparser.function.ImgLibGaussConv;
 import fiji.expressionparser.function.ImgLibLog;
 import fiji.expressionparser.function.ImgLibModulus;
 import fiji.expressionparser.function.ImgLibPower;
+import fiji.expressionparser.function.ImgLibRound;
 import fiji.expressionparser.function.ImgLibSine;
 import fiji.expressionparser.function.ImgLibSquareRoot;
 import fiji.expressionparser.function.ImgLibTangent;
@@ -70,6 +73,9 @@ public class ImgLibParser <T extends RealType<T>> extends JEP {
 		ImgLibSquareRoot<T> sqrt = new ImgLibSquareRoot<T>();
 		ImgLibAbs<T> abs = new ImgLibAbs<T>();
 		ImgLibModulus<T> modulus = new ImgLibModulus<T>();
+		ImgLibCeil<T> ceil = new ImgLibCeil<T>();
+		ImgLibFloor<T> floor = new ImgLibFloor<T>();
+		ImgLibRound<T> round = new ImgLibRound<T>();
 		
 		ArrayList<ImgLibFunction<T>> il_funs = new ArrayList<ImgLibFunction<T>>();
 		il_funs.add(sine);
@@ -85,6 +91,9 @@ public class ImgLibParser <T extends RealType<T>> extends JEP {
 		il_funs.add(sqrt);
 		il_funs.add(abs);
 		il_funs.add(modulus);
+		il_funs.add(ceil);
+		il_funs.add(floor);
+		il_funs.add(round);
 		
 		for (ImgLibFunction<T> il_fun : il_funs) {
 			funTab.put(il_fun.getFunctionString(), il_fun);
