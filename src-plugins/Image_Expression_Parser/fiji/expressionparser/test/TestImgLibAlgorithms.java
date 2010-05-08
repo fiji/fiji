@@ -83,7 +83,7 @@ public class TestImgLibAlgorithms <T extends RealType<T>> {
 
 	@Test
 	public void gaussianConvolution() throws ParseException {		
-		// Bad order -> Should generate an exception
+		// Should work
 		String expression = "gauss(C," + SIGMA + ")" ;
 		doTest(expression, source_map, new ExpectedExpression() {
 			private int[] position = new int[2];

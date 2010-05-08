@@ -1,171 +1,51 @@
 package fiji.expressionparser.test;
 
-import static org.junit.Assert.assertEquals;
+import static fiji.expressionparser.test.TestUtilities.*;
 
-import java.io.PrintStream;
+import java.util.HashMap;
+import java.util.Map;
 
-import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
-import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.integer.UnsignedShortType;
-import mpicbg.imglib.type.numeric.real.FloatType;
 
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
-import org.nfunk.jep.Node;
 import org.nfunk.jep.ParseException;
 
-import fiji.expressionparser.ImgLibParser;
+import fiji.expressionparser.test.TestUtilities.ExpectedExpression;
 
 public class TestSingleOperandPixelBasedOperators  <T extends RealType<T>> {
 
-	private final static int WIDTH = 9; 
-	private final static int HEIGHT = 9;
-	/** 16-bit image */
-	public static Image<UnsignedShortType> image_A, image_B;
-	public ImgLibParser<T> parser;
-	
-	
-	
-	@BeforeClass
-	public static void setup() {
-		
-		
-		// Create source images
-		ArrayContainerFactory cfact = new ArrayContainerFactory();
-		UnsignedShortType type = new UnsignedShortType();
-		ImageFactory<UnsignedShortType> ifact = new ImageFactory<UnsignedShortType>(type, cfact);
-		
-		image_A = ifact.createImage(new int[] {WIDTH, HEIGHT}, "A");
-		image_B = ifact.createImage(new int[] {WIDTH, HEIGHT}, "B");
-		
-		LocalizableCursor<UnsignedShortType> ca = image_A.createLocalizableCursor();
-		LocalizableByDimCursor<UnsignedShortType> cb = image_B.createLocalizableByDimCursor();
-
-		int[] pos = ca.createPositionArray();
-		while (ca.hasNext()) {
-			ca.fwd();
-			ca.getPosition(pos);
-			cb.setPosition(ca);
-			ca.getType().set( pos[0] * (WIDTH-1-pos[0]) * pos[1] * (HEIGHT-1-pos[1]) );
-			cb.getType().set( 256 - (pos[0] * (WIDTH-1-pos[0]) * pos[1] * (HEIGHT-1-pos[1]) ) );
-			
-		}
-		ca.close();
-		cb.close();
-//		echoImage(image_A, System.out);
-//		echoImage(image_B, System.out);		
+	private Map<String, Image<UnsignedShortType>> source_map; 
+	{
+		source_map = new HashMap<String, Image<UnsignedShortType>>();
+		source_map.put("A", image_A);
 	}
-	
-	@Before
-	public void setupParser() {
-		parser = new ImgLibParser<T>(); // no need to add standard functions
-	}
-	
-	@SuppressWarnings("unchecked")
-	@Test
-	public void not() throws ParseException {
-		
-		// Two images
-		String expression = "!A"; // true when A == 0
-		parser.addVariable("A", image_A);
-		Node root_node = parser.parse(expression);
-		Image<T> result = (Image<T>) parser.evaluate(root_node);
-		LocalizableCursor<T> rc = result.createLocalizableCursor();
-		LocalizableByDimCursor<UnsignedShortType> ca = image_A.createLocalizableByDimCursor(); 
-		try {
-			while (rc.hasNext()) {
-				rc.fwd();
-				ca.setPosition(rc);
-				assertEquals(ca.getType().getRealFloat() == 0.0f? 1.0f:0.0f, rc.getType().getRealFloat(), Float.MIN_VALUE);
-			}
-		} catch (AssertionError ae) {
-			System.out.println("Assertion failed on "+expression+" with result:");
-			echoImage(result, System.out);
-			throw (ae);
-		} finally {
-			rc.close();
-			ca.close();
-		}
 
-		
-		// Numbers 
-		expression = "!0"; // true
-		root_node = parser.parse(expression);
-		FloatType number_result = (FloatType) parser.evaluate(root_node);
-		assertEquals(1.0f, number_result.getRealFloat(), Float.MIN_VALUE);
-	}
-	
 
-	@SuppressWarnings("unchecked")
 	@Test
 	public void uMinus() throws ParseException {
-		
-		// Two images
-		String expression = "-A"; 
-		parser.addVariable("A", image_A);
-		Node root_node = parser.parse(expression);
-		Image<T> result = (Image<T>) parser.evaluate(root_node);
-		LocalizableCursor<T> rc = result.createLocalizableCursor();
-		LocalizableByDimCursor<UnsignedShortType> ca = image_A.createLocalizableByDimCursor(); 
-		try {
-			while (rc.hasNext()) {
-				rc.fwd();
-				ca.setPosition(rc);
-				assertEquals(-ca.getType().getRealFloat(), rc.getType().getRealFloat(), Float.MIN_VALUE);
+		String expression = "-A" ;
+		doTest(expression, source_map, new ExpectedExpression() {
+			@Override
+			public <R extends RealType<R>> float getExpectedValue(final Map<String, LocalizableByDimCursor<R>> cursors) {
+				final LocalizableByDimCursor<R> cursor = cursors.get("A");
+				return -cursor.getType().getRealFloat();
 			}
-		} catch (AssertionError ae) {
-			System.out.println("Assertion failed on "+expression+" with result:");
-			echoImage(result, System.out);
-			throw (ae);
-		} finally {
-			rc.close();
-			ca.close();
-		}
+		});
+	}	
 
-		
-		// Numbers 
-		expression = "-100"; 
-		root_node = parser.parse(expression);
-		FloatType number_result = (FloatType) parser.evaluate(root_node);
-		assertEquals(-100.0f, number_result.getRealFloat(), Float.MIN_VALUE);
-	}
-	
-	
-
-	/*
-	 * UTILS
-	 */
-	
-	public static final <T extends RealType<T>> void echoImage(Image<T> img, PrintStream logger) {
-		LocalizableByDimCursor<T> lc = img.createLocalizableByDimCursor();
-		int[] dims = lc.getDimensions();
-		
-		logger.append(img.toString() + "\n");
-		logger.append("        ");
-		for (int i =0; i<dims[0]; i++) {
-			logger.append(String.format("%6d.", i) );				
-		}
-		logger.append('\n');
-		logger.append('\n');
-		
-		for (int j = 0; j<dims[1]; j++) {
-			
-			lc.setPosition(j, 1);
-			logger.append(String.format("%2d.  -  ", j) );				
-			for (int i =0; i<dims[0]; i++) {
-				lc.setPosition(i, 0);
-				logger.append(String.format("%7.1f", lc.getType().getRealFloat()));				
+	@Test
+	public void not() throws ParseException {
+		String expression = "!A" ;
+		doTest(expression, source_map, new ExpectedExpression() {
+			@Override
+			public <R extends RealType<R>> float getExpectedValue(final Map<String, LocalizableByDimCursor<R>> cursors) {
+				LocalizableByDimCursor<R> cursor = cursors.get("A");
+				return cursor.getType().getRealFloat() == 0f ? 1.0f : 0.0f;
 			}
-			logger.append('\n');
-		}
-		lc.close();
-		
-	}
+		});
+	}	
 
-	
 }
