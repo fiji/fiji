@@ -41,7 +41,7 @@ public abstract class TwoOperandsAbstractFunction <T extends RealType<T>> extend
 				result = evaluate(t1, (Image)param2);
 			} else if (param2 instanceof FloatType) {
 				FloatType t2 = (FloatType) param2;
-				result = new Float(evaluate(t1, t2));
+				result = new FloatType(evaluate(t1, t2));
 			} else {
 				throw new ParseException("In function '" + getFunctionString()
 						+"': Bad type of operand 2: "+param2.getClass().getSimpleName() );

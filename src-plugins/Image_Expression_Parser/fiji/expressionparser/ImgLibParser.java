@@ -20,6 +20,7 @@ import fiji.expressionparser.function.ImgLibFunction;
 import fiji.expressionparser.function.ImgLibGaussConv;
 import fiji.expressionparser.function.ImgLibLog;
 import fiji.expressionparser.function.ImgLibModulus;
+import fiji.expressionparser.function.ImgLibNormalize;
 import fiji.expressionparser.function.ImgLibPower;
 import fiji.expressionparser.function.ImgLibRound;
 import fiji.expressionparser.function.ImgLibSine;
@@ -106,9 +107,11 @@ public class ImgLibParser <T extends RealType<T>> extends JEP {
 	 */
 	public void addImgLibAlgorithms() {
 		ImgLibGaussConv<T> gauss = new ImgLibGaussConv<T>();
+		ImgLibNormalize<T> normalizer = new ImgLibNormalize<T>();
 		
 		ArrayList<ImgLibFunction<T>> il_algos = new ArrayList<ImgLibFunction<T>>();
 		il_algos.add(gauss);
+		il_algos.add(normalizer);
 		
 		for (ImgLibFunction<T> il_algo : il_algos) {			
 			funTab.put(il_algo.getFunctionString(), il_algo);

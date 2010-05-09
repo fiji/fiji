@@ -1,7 +1,6 @@
 package fiji.expressionparser.test;
 
-import static fiji.expressionparser.test.TestUtilities.doTest;
-import static fiji.expressionparser.test.TestUtilities.image_A;
+import static fiji.expressionparser.test.TestUtilities.*;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,6 +16,7 @@ import org.junit.Test;
 import org.nfunk.jep.ParseException;
 
 import fiji.expressionparser.test.TestUtilities.ExpectedExpression;
+
 
 public class TestImgLibAlgorithms <T extends RealType<T>> {
 
@@ -36,8 +36,14 @@ public class TestImgLibAlgorithms <T extends RealType<T>> {
 			0.0,			0.00000067, 	0.00002292, 	0.00019117, 	0.00038771, 	0.00019117, 	0.00002292, 	0.00000067,			0.0,
 			0.0,			0.0,			0.0,			0.0,			0.0,			0.0,			0.0,			0.0,										0.0 
 	};
+	private static final int[] TO_NORMALIZE = new int[] {
+		0,	0,	0,	0,
+		0,	50, 50, 0,
+		0, 	0,	0,	0,
+		0,	0,	0,	0	};
 	
 	private Image<UnsignedShortType> image_C;
+	private Image<UnsignedShortType> image_D;
 	private Map<String, Image<UnsignedShortType>> source_map; 
 	{
 		// Create source images
@@ -50,9 +56,21 @@ public class TestImgLibAlgorithms <T extends RealType<T>> {
 		cc.getType().set(PULSE_VALUE);
 		cc.close();
 		//
+		image_D = ifact.createImage(new int[] {(int) Math.sqrt(TO_NORMALIZE.length), (int) Math.sqrt(TO_NORMALIZE.length)}, "D"); // Simple image to normalize
+		LocalizableByDimCursor<UnsignedShortType> cd = image_D.createLocalizableByDimCursor();
+		int[] pos = new int[2];
+		for (int i = 0; i < TO_NORMALIZE.length; i++) {
+			pos[0] =  i % (int) Math.sqrt(TO_NORMALIZE.length);
+			pos[1] =  i / (int) Math.sqrt(TO_NORMALIZE.length);
+			cd.setPosition(pos);
+			cd.getType().set(TO_NORMALIZE[i]);
+		}
+		cd.close();
+		//		
 		source_map = new HashMap<String, Image<UnsignedShortType>>();
 		source_map.put("A", image_A);
 		source_map.put("C", image_C);
+		source_map.put("D", image_D);
 	}
 
 	@Test(expected=ParseException.class)
@@ -97,6 +115,24 @@ public class TestImgLibAlgorithms <T extends RealType<T>> {
 		});
 	}
 
+	@Test
+	public void normalize() throws ParseException {		
+		// Should work
+		String expression = "normalize(D)" ;
+		doTest(expression, source_map, new ExpectedExpression() {
+			@Override
+			public <R extends RealType<R>> float getExpectedValue(final Map<String, LocalizableByDimCursor<R>> cursors) {
+				final LocalizableByDimCursor<R> cursor = cursors.get("D");
+				return cursor.getType().getRealFloat() == 0? 0.0f : 0.5f; // since only 2 pixels have non-zero values, they should have the value 0.5 to sum up to 1.
+			}
+		});
+	}
+	
+	
+	
+	/*
+	 * UTILS
+	 */
 	
 	public static final float theroeticalGaussianConv(final int[] position) {
 		final int x = position[0];
