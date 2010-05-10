@@ -1,16 +1,19 @@
 package fiji.expressionparser.test;
 
 import static fiji.expressionparser.test.TestUtilities.*;
+import static org.junit.Assert.assertTrue;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import mpicbg.imglib.container.array.ArrayContainerFactory;
+import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.integer.UnsignedShortType;
+import mpicbg.imglib.type.numeric.real.FloatType;
 
 import org.junit.Test;
 import org.nfunk.jep.ParseException;
@@ -126,6 +129,66 @@ public class TestImgLibAlgorithms <T extends RealType<T>> {
 				return cursor.getType().getRealFloat() == 0? 0.0f : 0.5f; // since only 2 pixels have non-zero values, they should have the value 0.5 to sum up to 1.
 			}
 		});
+	}
+	
+	@Test
+	public void dither() throws ParseException {
+		// Should work
+		String expression = "dither(A)";
+		Image<FloatType> result = getEvaluationResult(expression, source_map);
+		Cursor<FloatType> cr = result.createCursor();
+		while (cr.hasNext()) {
+			cr.fwd();
+			assertTrue(cr.getType().get() == 0f || cr.getType().get() == 1f); // we just check that is 0 or 1, as in a dithered image
+		}
+	}
+	
+	@Test
+	public void ditherThreshold() throws ParseException {
+		// Should work
+		String expression = "dither(A,100)";
+		Image<FloatType> result = getEvaluationResult(expression, source_map);
+		Cursor<FloatType> cr = result.createCursor();
+		while (cr.hasNext()) {
+			cr.fwd();
+			assertTrue(cr.getType().get() == 0f || cr.getType().get() == 1f); // we just check that is 0 or 1, as in a dithered image
+		}
+	}
+	
+	@Test(expected=ParseException.class)
+	public void ditherBadOrder() throws ParseException {
+		// Should NOT work
+		String expression = "dither(100,A)";
+		Image<FloatType> result = getEvaluationResult(expression, source_map);
+		Cursor<FloatType> cr = result.createCursor();
+		while (cr.hasNext()) {
+			cr.fwd();
+			assertTrue(cr.getType().get() == 0f || cr.getType().get() == 1f); // we just check that is 0 or 1, as in a dithered image
+		}
+	}
+	
+	@Test(expected=ParseException.class)
+	public void ditherBadNumberOfArgs() throws ParseException {
+		// Should NOT work
+		String expression = "dither(A,100,10)";
+		Image<FloatType> result = getEvaluationResult(expression, source_map);
+		Cursor<FloatType> cr = result.createCursor();
+		while (cr.hasNext()) {
+			cr.fwd();
+			assertTrue(cr.getType().get() == 0f || cr.getType().get() == 1f); // we just check that is 0 or 1, as in a dithered image
+		}
+	}
+	
+	@Test(expected=ParseException.class)
+	public void ditherBadNumberOfArgs2() throws ParseException {
+		// Should NOT work
+		String expression = "dither()";
+		Image<FloatType> result = getEvaluationResult(expression, source_map);
+		Cursor<FloatType> cr = result.createCursor();
+		while (cr.hasNext()) {
+			cr.fwd();
+			assertTrue(cr.getType().get() == 0f || cr.getType().get() == 1f); // we just check that is 0 or 1, as in a dithered image
+		}
 	}
 	
 	

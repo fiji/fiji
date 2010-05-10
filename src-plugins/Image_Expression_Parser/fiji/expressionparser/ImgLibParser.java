@@ -14,6 +14,7 @@ import fiji.expressionparser.function.ImgLibArcTangent;
 import fiji.expressionparser.function.ImgLibArcTangent2;
 import fiji.expressionparser.function.ImgLibCeil;
 import fiji.expressionparser.function.ImgLibCosine;
+import fiji.expressionparser.function.ImgLibDithering;
 import fiji.expressionparser.function.ImgLibExp;
 import fiji.expressionparser.function.ImgLibFloor;
 import fiji.expressionparser.function.ImgLibFunction;
@@ -108,10 +109,14 @@ public class ImgLibParser <T extends RealType<T>> extends JEP {
 	public void addImgLibAlgorithms() {
 		ImgLibGaussConv<T> gauss = new ImgLibGaussConv<T>();
 		ImgLibNormalize<T> normalizer = new ImgLibNormalize<T>();
+//		ImgLibBandPassFilter<T> bandpass = new ImgLibBandPassFilter<T>(); // dont know what to do with it right now
+		ImgLibDithering<T> dither = new ImgLibDithering<T>();
 		
 		ArrayList<ImgLibFunction<T>> il_algos = new ArrayList<ImgLibFunction<T>>();
 		il_algos.add(gauss);
 		il_algos.add(normalizer);
+//		il_algos.add(bandpass);
+		il_algos.add(dither);
 		
 		for (ImgLibFunction<T> il_algo : il_algos) {			
 			funTab.put(il_algo.getFunctionString(), il_algo);
