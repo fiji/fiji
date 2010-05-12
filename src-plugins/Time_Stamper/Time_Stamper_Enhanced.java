@@ -59,43 +59,34 @@ import ij.plugin.frame.Fonts;
 import ij.process.ImageProcessor;
 
 import java.awt.AWTEvent;
-import java.awt.Button;
-import java.awt.Checkbox;
 import java.awt.Choice;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
+import java.awt.Label;
 import java.awt.Panel;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.TextField;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.awt.event.TextEvent;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JTextField;
-import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
-		DialogListener, FocusListener, DocumentListener {
+		DialogListener {
 
 	ImagePlus imp;
 	// the px distance to the left
@@ -157,25 +148,15 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	
 	// GUI variables that are needed to read out data
 	// from the components
-	private JComboBox labelFormatsComboBox;
-	private JComboBox labelUnitsComboBox;
-	private JComboBox stackTypeComboBox;
-	private JComboBox locationPresetsComboBox;
+	private Choice labelUnitsComboBox;
+	private Choice locationPresetsComboBox;
 	private JPanel generalSettingsContainer;
 	private JPanel unitsFormattingContainer;
 	private JPanel startStopIntervalsContainer;
 	private JPanel locationFontContainer;
 	private JPanel fontPropertiesContainer;
-	private JTextField customLabelFormatTextField;
-	private JTextField customSuffixTextField;
-	private JTextField decimalPlacesTextField;
-	private JTextField startupTextField;
-	private JTextField intervalTextField;
-	private JTextField everyNthTextField;
-	private JTextField firstFrameTextField;
-	private JTextField lastFrameTextField;
-	private JTextField locationXTextField;
-	private JTextField locationYTextField;
+	private TextField locationXTextField;
+	private TextField locationYTextField;
 	
 	// the panel containing the units selection
 	private JPanel labelUnitsPanel;
@@ -218,15 +199,14 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		// This makes the GUI object
 		gd = new NonBlockingGenericDialog(
 				"Time Stamper Enhanced");
-		
+
 		//
 		// General settings panel
 		//
 		generalSettingsContainer = createContainerPanel(70, "General Settings");
 		
 		//add combobox for stack type
-		stackTypeComboBox = new JComboBox();
-		JPanel stackTypePanel = createComboBoxPanel("Stack Type", stackTypeComboBox, stackTypes, 1, 100, 180);
+		JPanel stackTypePanel = createComboBoxPanel("Stack Type", stackTypes, 1, 100, 180);
 		stackTypePanel.setLocation(left, 30);
 		
 		addPanelsToDialg(generalSettingsContainer,
@@ -238,30 +218,26 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		unitsFormattingContainer = createContainerPanel(100, "Units Formatting");
 		
 		// add combobox for label format
-		labelFormatsComboBox = new JComboBox();
-		JPanel pLabelFormat = createComboBoxPanel("Label Format", labelFormatsComboBox, getAvailableFormats(), 0);
+		JPanel pLabelFormat = createComboBoxPanel("Label Format", getAvailableFormats(), 0);
 		pLabelFormat.setLocation(left, 30);
         
 		// add combobox for label unit
-		labelUnitsComboBox = new JComboBox();
-		labelUnitsPanel = createComboBoxPanel("Label Unit", labelUnitsComboBox, selectedFormat.getAllowedFormatUnits(), 0);
+		labelUnitsPanel = createComboBoxPanel("Label Unit", selectedFormat.getAllowedFormatUnits(), 0);
+		labelUnitsComboBox = (Choice) gd.getChoices().lastElement();
 		labelUnitsPanel.setLocation(left, 60);
         
         // add Custom Suffix panel
-		customSuffixTextField = new JTextField();
-		customSuffixPanel = createTextFieldPanel("Custom Suffix", customSuffixTextField, customSuffix);
+		customSuffixPanel = createTextFieldPanel("Custom Suffix", customSuffix);
 		customSuffixPanel.setLocation(left, 60);
 		
+		// add Custom Format panel
+		customLabelFormatPanel = createTextFieldPanel("Custom Format", customFormat);
+		customLabelFormatPanel.setLocation(300, 30);
+		
 		// add Decimal Places panel
-		decimalPlacesTextField = new JTextField();
-		decimalPlacesPanel = createTextFieldPanel("Decimal Places", decimalPlacesTextField, Integer.toString(decimalPlaces));
+		decimalPlacesPanel = createNumericFieldPanel("Decimal Places", decimalPlaces, 0);
 		decimalPlacesPanel.setLocation(300, 30);
 		
-		// add Custom Format panel
-		customLabelFormatTextField = new JTextField();
-		customLabelFormatPanel = createTextFieldPanel("Custom Format", customLabelFormatTextField, customFormat);
-		customLabelFormatPanel.setLocation(300, 30);
-
 		addPanelsToDialg(unitsFormattingContainer,
 				new JPanel[] {pLabelFormat, customSuffixPanel, labelUnitsPanel, decimalPlacesPanel, customLabelFormatPanel} );
 		
@@ -271,28 +247,23 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		startStopIntervalsContainer = createContainerPanel(130, "Start/Stop/Interval of Stack");
 		
 		// add a panel for the time stamper start value
-		startupTextField = new JTextField();
-		JPanel pStartup = createTextFieldPanel("Startup", startupTextField, IJ.d2s(start));
+		JPanel pStartup = createNumericFieldPanel("Startup", start, 2);
 		pStartup.setLocation(left, 30);
 		
 		// add a panel for the interval settings
-		intervalTextField = new JTextField();
-		JPanel pInterval = createTextFieldPanel("Interval", intervalTextField, IJ.d2s(interval));
+		JPanel pInterval = createNumericFieldPanel("Interval", interval, 2);
 		pInterval.setLocation(left, 60);
 		
 		// add panel for the everyNth setting
-		everyNthTextField = new JTextField();
-		JPanel pEveryNth = createTextFieldPanel("Every n-th", everyNthTextField, Integer.toString(frameMask));
+		JPanel pEveryNth = createNumericFieldPanel("Every n-th", frameMask, 0);
 		pEveryNth.setLocation(left, 90);
 		
 		// add panel for First Frame setting
-		firstFrameTextField = new JTextField();
-		JPanel pFirstFrame = createTextFieldPanel("First", firstFrameTextField, Integer.toString(first));
+		JPanel pFirstFrame = createNumericFieldPanel("First", first, 0);
 		pFirstFrame.setLocation(300, 30);
 		
 		// add panel for Last Frame setting
-		lastFrameTextField = new JTextField();
-		JPanel pLastFrame = createTextFieldPanel("Last", lastFrameTextField, Integer.toString(last));
+		JPanel pLastFrame = createNumericFieldPanel("Last", last, 0);
 		pLastFrame.setLocation(300, 60);
 		
 		addPanelsToDialg(startStopIntervalsContainer,
@@ -304,13 +275,13 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		locationFontContainer = createContainerPanel(110, "Location & Font");
 		
 		// add panel for X location
-		locationXTextField = new JTextField();
-		JPanel pLocationX = createTextFieldPanel("X", locationXTextField, Integer.toString(x), 20, 50);
+		JPanel pLocationX = createNumericFieldPanel("X", x, 0, 20, 50);
+		locationXTextField = (TextField) gd.getNumericFields().lastElement();
 		pLocationX.setLocation(left, 30);
 		
 		// add panel for Y location
-		locationYTextField = new JTextField();
-		JPanel pLocationY = createTextFieldPanel("Y", locationYTextField, Integer.toString(y), 20, 50);
+		JPanel pLocationY = createNumericFieldPanel("Y", y, 0, 20, 50);
+		locationYTextField = (TextField) gd.getNumericFields().lastElement();
 		pLocationY.setLocation(120, 30);
 		
 		if (isCustomROI())
@@ -318,9 +289,8 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		else locationPreset = UPPER_LEFT;
 		
 		// add combobox for location presets
-		locationPresetsComboBox = new JComboBox();
-		JPanel pLocationPresets = createComboBoxPanel("Location Presets",
-				locationPresetsComboBox, locations, locationPreset, 110, 150);
+		JPanel pLocationPresets = createComboBoxPanel("Location Presets", locations, locationPreset, 110, 150);
+		locationPresetsComboBox = (Choice) gd.getChoices().lastElement();
 		pLocationPresets.setLocation(240, 30);
         
         fontPropertiesContainer = new FontPropertiesPanel();
@@ -466,38 +436,83 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		return panel;
 	}
 	
-	private JPanel createComboBoxPanel(String labelText, JComboBox combobox, String[] values, int defaultIndex) {
-		return createComboBoxPanel(labelText, combobox, values, defaultIndex, 100, 150);
+	private JPanel createComboBoxPanel(String labelText, String[] values, int defaultIndex) {
+		return createComboBoxPanel(labelText, values, defaultIndex, 100, 150);
 	}
 	
-	private JPanel createComboBoxPanel(String labelText, JComboBox combobox, String[] values, int defaultIndex, int labelWidth, int comboboxWidth) {
-		JLabel label = new JLabel(labelText);
-		combobox.setModel(new javax.swing.DefaultComboBoxModel(values));
-        registerComboBox(combobox, defaultIndex);
-        JPanel panel = new JPanel(null);
+	private JPanel createComboBoxPanel(String labelText, String[] values, int defaultIndex, int labelWidth, int comboboxWidth) {
+		gd.addChoice(labelText, values, values[defaultIndex]);
+		// get the previously added choice
+		Choice choice = (Choice) gd.getChoices().lastElement();
+		// get the label belonging to it
+		Label label = (Label) gd.getComponent(gd.getComponentCount()-2);
+		// remove the components again from dialog, we want
+		// them to be placed in a different container, but be
+		// registered with GerericDialog
+		gd.remove(choice);
+		gd.remove(label);
+		
+		JPanel panel = new JPanel(null);
         label.setBounds(0, 0, labelWidth, 20);
-        combobox.setBounds(labelWidth, 0, comboboxWidth, 22);
+        choice.setBounds(labelWidth, 0, comboboxWidth, 22);
         panel.add(label);
-        panel.add(combobox);
+        panel.add(choice);
         panel.setSize(labelWidth+comboboxWidth, 30);
         return panel;
 	}
 	
-	private JPanel createTextFieldPanel(String labelText, JTextField textfield, String defaultText) {
-		return createTextFieldPanel(labelText, textfield, defaultText, 100, 100);
+	private JPanel createTextFieldPanel(String labelText, String defaultText) {
+		return createTextFieldPanel(labelText, defaultText, 100, 100);
 	}
 	
-	private JPanel createTextFieldPanel(String labelText, JTextField textfield, String defaultText, int labelWidth, int textFieldWidth) {
-		JLabel label = new JLabel(labelText);
-		registerTextField(textfield, defaultText);
+	private JPanel createTextFieldPanel(String labelText, String defaultText, int labelWidth, int textFieldWidth) {
+		// add the text field
+		gd.addStringField(labelText, defaultText);
+		// get the previously added text field object
+		TextField textField = (TextField)gd.getStringFields().lastElement();
+		// get the label belonging to it
+		Label label = (Label) gd.getComponent(gd.getComponentCount()-2);
+		// remove the components again from dialog, we want
+		// them to be placed in a different container, but be
+		// registered with GerericDialog
+		gd.remove(textField);
+		gd.remove(label);
+		
 		JPanel panel = new JPanel(null);
-		label.setBounds(0,0, labelWidth, 20);
-		textfield.setBounds(labelWidth,0,textFieldWidth, 22);
+		label.setBounds(0, 0, labelWidth, 20);
+		textField.setBounds(labelWidth,0,textFieldWidth, 22);
 		panel.add(label);
-		panel.add(textfield);
+		panel.add(textField);
 		panel.setSize(labelWidth+textFieldWidth, 30);
 		return panel;
 	}
+	
+	private JPanel createNumericFieldPanel(String labelText, double defaultValue, int digits) {
+		return createNumericFieldPanel(labelText, defaultValue, digits, 100, 100); 
+	}
+	
+	private JPanel createNumericFieldPanel(String labelText, double defaultValue, int digits, int labelWidth, int textFieldWidth) {
+		// add the numeric field
+		gd.addNumericField(labelText, defaultValue, digits);
+		// get the previously added numeric field object
+		TextField textField = (TextField)gd.getNumericFields().lastElement();
+		// get the label belonging to it
+		Label label = (Label) gd.getComponent(gd.getComponentCount()-2);
+		// remove the components again from dialog, we want
+		// them to be placed in a different container, but be
+		// registered with GerericDialog
+		gd.remove(textField);
+		gd.remove(label);
+		
+		JPanel panel = new JPanel(null);
+		label.setBounds(0, 0, labelWidth, 20);
+		textField.setBounds(labelWidth,0,textFieldWidth, 22);
+		panel.add(label);
+		panel.add(textField);
+		panel.setSize(labelWidth+textFieldWidth, 30);
+		return panel;
+	}
+	
 	
 	private void addPanelsToDialg(JPanel container, JPanel[] panels) {
 		for (JPanel p : panels) {
@@ -507,54 +522,6 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		Panel awtPanel = new Panel();
 		awtPanel.add(container);
 		gd.addPanel(awtPanel, GridBagConstraints.CENTER, new Insets(5, 0, 0, 0));
-	}
-
-	private void registerTextField(JTextField tf, String defaultText) {
-		tf.setText(defaultText);
-		tf.addActionListener(gd);
-		tf.addKeyListener(gd);
-		tf.addFocusListener(this);
-		tf.getDocument().addDocumentListener(this);
-	}
-	
-	private void registerComboBox(JComboBox cb, int defaultSelection) {
-		cb.setSelectedIndex(defaultSelection);
-		cb.addItemListener(gd);
-		cb.addKeyListener(gd);
-	}
-	
-	private void registerCheckBox(JCheckBox cb) {
-		cb.addItemListener(gd);
-		cb.addKeyListener(gd);
-	}
-	
-	public void focusGained(FocusEvent e) {
-		Component c = e.getComponent();
-		if (c instanceof JTextField)
-			((JTextField)c).selectAll();
-	}
-
-	public void focusLost(FocusEvent e) {
-		Component c = e.getComponent();
-		if (c instanceof JTextField)
-			((JTextField)c).select(0,0);
-	}
-	
-	public void changedUpdate(DocumentEvent e) {
-		announceTextChange(e);
-	}
-
-	public void insertUpdate(DocumentEvent e) {
-		announceTextChange(e);
-	}
-
-	public void removeUpdate(DocumentEvent e) {
-		announceTextChange(e);
-	}
-	
-	private void announceTextChange(DocumentEvent e) {
-		TextEvent te = new TextEvent(e.getDocument(), e.getOffset());
-		gd.textValueChanged(te);
 	}
 
 	/**
@@ -595,30 +562,36 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	 * run, other methods.
 	 */
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e) {
+		// the stack type choice
+		int stackType = gd.getNextChoiceIndex();
 		// has the label format been changed?
-		int currentFormat = labelFormatsComboBox.getSelectedIndex();
+		int currentFormat = gd.getNextChoiceIndex();
 		AbstractStampFormat lf = formats[currentFormat];
 		if (lf != selectedFormat) {
 			selectedFormat = lf;
 			// if the format has changed, we need to modify the
 			// units choice accordingly
-			labelUnitsComboBox.removeAllItems();
+			labelUnitsComboBox.removeAll();
 			for (String unit : selectedFormat.getAllowedFormatUnits()) {
 				labelUnitsComboBox.addItem(unit);
 			}
 		}
-
-		customFormat = customLabelFormatTextField.getText();
+		customSuffix = gd.getNextString();
+		customFormat = gd.getNextString();
 
 		// get the selected suffix of drop-down list
-		chosenSuffix = (String) labelUnitsComboBox.getSelectedItem();
+		chosenSuffix = gd.getNextChoice();
 
-		customSuffix = customSuffixTextField.getText();
-		decimalPlaces = Integer.parseInt(decimalPlacesTextField.getText());
-		start = Double.parseDouble(startupTextField.getText());
-		interval = Double.parseDouble(intervalTextField.getText());
+		decimalPlaces = (int) gd.getNextNumber();
+		
+		start = gd.getNextNumber();
+		interval = gd.getNextNumber();
+		frameMask = (int) gd.getNextNumber();
+		first = (int) gd.getNextNumber();
+		last = (int) gd.getNextNumber();
+		
 		// has a different location preset has been selected?
-		int preset = locationPresetsComboBox.getSelectedIndex();
+		int preset = gd.getNextChoiceIndex();
 		if (preset != locationPreset){
 			locationPreset = preset;
 			Point p = getPresetPosition(preset);
@@ -628,27 +601,23 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		}
 		
 		try {
-			int curX = Integer.parseInt(locationXTextField.getText());
+			int curX = (int) gd.getNextNumber();
 			if (curX != x) {
 				x = curX;
-				locationPresetsComboBox.setSelectedIndex(CUSTOM);
+				locationPresetsComboBox.select(CUSTOM);
 			}
 		}
 		catch (NumberFormatException ex) { return false; }
 		
 		try {
-			int curY = Integer.parseInt(locationYTextField.getText());
+			int curY = (int) gd.getNextNumber();
 			if (curY != y) {
 				y = curY;
-				locationPresetsComboBox.setSelectedIndex(CUSTOM);
+				locationPresetsComboBox.select(CUSTOM);
 			}
 		}
 		catch (NumberFormatException ex) { return false; }
 		
-		
-		first = Integer.parseInt(firstFrameTextField.getText());
-		last = Integer.parseInt(lastFrameTextField.getText());
-		frameMask = Integer.parseInt(everyNthTextField.getText());
 
 		updateUI();
 
