@@ -40,7 +40,9 @@ import ij.gui.GenericDialog;
 import ij.gui.Roi;
 import ij.gui.PointRoi;
 import ij.plugin.PlugIn;
+import ij.process.ImageProcessor;
 import ij.process.ByteProcessor;
+import ij.process.ShortProcessor;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.ArrayList;
@@ -53,8 +55,10 @@ import ij.measure.ResultsTable;
 import java.awt.Dialog;
 import java.awt.Button;
 import java.awt.Polygon;
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.image.IndexColorModel;
 
 class CancelDialog extends Dialog implements ActionListener {
 	Button cancel;
@@ -141,20 +145,53 @@ public class Find_Connected_Regions implements PlugIn {
 
 	}
 	private static final byte IN_QUEUE = 1;
-	private static final byte ADDED = 2;
+	private static final byte ADDED_TO_CURRENT_REGION = 2;
+	private static final byte IN_PREVIOUS_REGION = 3;
+
+	IndexColorModel backgroundAndSpectrum() {
+		return backgroundAndSpectrum(255);
+	}
+
+	/* This method returns an IndexColorModel where 0 is black
+	   (background) and 1 to min(maximum,255) inclusive are spread
+	   through the spectrum.  Any higher values are set to white. */
+	IndexColorModel backgroundAndSpectrum(int maximum) {
+		if( maximum > 255 )
+			maximum = 255;
+		byte [] reds = new byte[256];
+		byte [] greens = new byte[256];
+		byte [] blues = new byte[256];
+		// Set all to white:
+		for( int i = 0; i < 256; ++i ) {
+			reds[i] = greens[i] = blues[i] = (byte)255;
+		}
+		// Set 0 to black:
+		reds[0] = greens[0] = blues[0] = 0;
+		float divisions = maximum;
+		Color c;
+		for( int i = 1; i <= maximum; ++i ) {
+			float h = (i - 1) / divisions;
+			c = Color.getHSBColor(h,1f,1f);
+			reds[i] = (byte)c.getRed();
+			greens[i] = (byte)c.getGreen();
+			blues[i] = (byte)c.getBlue();
+		}
+		return new IndexColorModel( 8, 256, reds, greens, blues );
+	}
 
 	public void run(String ignored) {
 
 		GenericDialog gd = new GenericDialog("Find Connected Regions Options (version: "+PLUGIN_VERSION+")");
-		gd.addCheckbox("Allow_diagonal connections?", false);
-		gd.addCheckbox("Display_image_for_each region?", true);
+		gd.addCheckbox("Allow_diagonal connections?", true);
+		gd.addCheckbox("Display_image_for_each region?", false);
+		gd.addCheckbox("Display_one_image for all regions?", true);
 		gd.addCheckbox("Display_results table?", true);
-		gd.addCheckbox("Regions_must have the same value?", true);
+		gd.addCheckbox("Regions_must have the same value?", false);
 		gd.addCheckbox("Start_from_point selection?", false);
 		gd.addCheckbox("Autosubtract discovered regions from original image?", false);
-		gd.addNumericField("Regions_for_values_over: ", 0, 0);
+		gd.addNumericField("Regions_for_values_over: ", 100, 0);
 		gd.addNumericField("Minimum_number_of_points in a region", 1, 0);
-		gd.addNumericField("Stop_after this number of regions are found: ", 1, 0);
+		gd.addNumericField("Stop_after this number of regions are found: ", -1, 0);
 		gd.addMessage("(If number of regions is -1, find all of them.)");
 
 		gd.showDialog();
@@ -162,7 +199,8 @@ public class Find_Connected_Regions implements PlugIn {
 			return;
 		}
 		boolean diagonal = gd.getNextBoolean();
-		boolean display = gd.getNextBoolean();
+		boolean imagePerRegion = gd.getNextBoolean();
+		boolean imageAllRegions = gd.getNextBoolean();
 		boolean showResults = gd.getNextBoolean();
 		boolean mustHaveSameValue = gd.getNextBoolean();
 		boolean startFromPointROI = gd.getNextBoolean();
@@ -171,7 +209,10 @@ public class Find_Connected_Regions implements PlugIn {
 		double minimumPointsInRegionDouble = gd.getNextNumber();
 		int stopAfterNumberOfRegions = (int) gd.getNextNumber();
 
-		
+		System.out.println("mustHaveSameValue is: "+mustHaveSameValue);
+
+
+
 		ImageCalculator iCalc = new ImageCalculator();
 
 		ImagePlus imagePlus = IJ.getImage();
@@ -223,8 +264,6 @@ public class Find_Connected_Regions implements PlugIn {
 			point_roi_x = p.xpoints[0];
 			point_roi_y = p.ypoints[0];
 			point_roi_z = imagePlus.getCurrentSlice()-1;
-			
-			System.out.println("Fetched ROI with co-ordinates: "+p.xpoints[0]+", "+p.ypoints[0]);			
 		}
 
 		int width = imagePlus.getWidth();
@@ -276,6 +315,30 @@ public class Find_Connected_Regions implements PlugIn {
 			cm = stack.getColorModel();
 		}
 
+		String defaultAllRegionsTitle = "All connected regions";
+
+		ImagePlus allRegionsImage = null;
+		ImageStack allRegionsStack = null;
+		short [][] allRegionsPixels = null;
+		if( imageAllRegions ) {
+			allRegionsStack = new ImageStack(width,height);
+			allRegionsPixels = new short[depth][width*height];
+			for( int z = 0; z < depth; z++ ) {
+				ShortProcessor sp = new ShortProcessor(width,height);
+				sp.setPixels(allRegionsPixels[z]);
+				allRegionsStack.addSlice("",sp);
+			}
+			allRegionsStack.setColorModel(backgroundAndSpectrum(0));
+			allRegionsImage = new ImagePlus(
+				defaultAllRegionsTitle + " (still generating...)",
+				allRegionsStack);
+			if (calibration != null)
+				allRegionsImage.setCalibration(calibration);
+			if (parameters != null)
+				parameters.setParameters(allRegionsImage, true);
+			allRegionsImage.show();
+		}
+
 		ResultsTable rt=ResultsTable.getResultsTable();
 		rt.reset();
 
@@ -283,6 +346,15 @@ public class Find_Connected_Regions implements PlugIn {
 		cancelDialog.show();
 
 		boolean firstTime = true;
+
+		int regionNumber = 0;
+
+		int numberOfPointsInStack = width * height * depth;
+		byte[] pointState = new byte[numberOfPointsInStack];
+
+		int ignoreBeforeX = 0;
+		int ignoreBeforeY = 0;
+		int ignoreBeforeZ = 0;
 
 		while (true) {
 
@@ -304,6 +376,10 @@ public class Find_Connected_Regions implements PlugIn {
 			int maxValueInt = -1;
 			float maxValueFloat = Float.MIN_VALUE;
 
+			// ------------------------------------------------------------------------
+			/* The next section tries to find the next starting point, depending on the
+			   options the user chose: */
+
 			if (firstTime && startFromPointROI ) {
 
 				initial_x = point_roi_x;
@@ -317,9 +393,13 @@ public class Find_Connected_Regions implements PlugIn {
 
 			} else if (byteImage && startAtMaxValue) {
 
-				for (int z = 0; z < depth; ++z) {
-					for (int y = 0; y < height; ++y) {
-						for (int x = 0; x < width; ++x) {
+				for (int z = ignoreBeforeZ; z < depth; ++z) {
+					int startY = (z == ignoreBeforeZ) ? ignoreBeforeY : 0;
+					for (int y = startY; y < height; ++y) {
+						int startX = (z == ignoreBeforeZ && y == ignoreBeforeY) ? ignoreBeforeX : 0;
+						for (int x = startX; x < width; ++x) {
+							if( IN_PREVIOUS_REGION == pointState[ width * (z * height + y) + x ] )
+								continue;
 							int value = sliceDataBytes[z][y * width + x] & 0xFF;
 							if (value > maxValueInt) {
 								initial_x = x;
@@ -342,10 +422,14 @@ public class Find_Connected_Regions implements PlugIn {
 
 			} else if (byteImage && !startAtMaxValue) {
 
-				// Just finding some point in the a region...
-				for (int z = 0; z < depth && foundValueInt == -1; ++z) {
-					for (int y = 0; y < height && foundValueInt == -1; ++y) {
-						for (int x = 0; x < width; ++x) {
+				// Just finding some point above the user supplied threshold:
+				for (int z = ignoreBeforeZ; z < depth && foundValueInt == -1; ++z) {
+					int startY = (z == ignoreBeforeZ) ? ignoreBeforeY : 0;
+					for (int y = startY; y < height && foundValueInt == -1; ++y) {
+						int startX = (z == ignoreBeforeZ && y == ignoreBeforeY) ? ignoreBeforeX : 0;
+						for (int x = startX; x < width; ++x) {
+							if( IN_PREVIOUS_REGION == pointState[ width * (z * height + y) + x ] )
+								continue;
 							int value = sliceDataBytes[z][y * width + x] & 0xFF;
 							if (value > valuesOverDouble) {
 
@@ -368,9 +452,13 @@ public class Find_Connected_Regions implements PlugIn {
 				// This must be a 32 bit image and we're starting at the maximum
 				assert (!byteImage && startAtMaxValue);
 
-				for (int z = 0; z < depth; ++z) {
-					for (int y = 0; y < height; ++y) {
-						for (int x = 0; x < width; ++x) {
+				for (int z = ignoreBeforeZ; z < depth; ++z) {
+					int startY = (z == ignoreBeforeZ) ? ignoreBeforeY : 0;
+					for (int y = startY; y < height; ++y) {
+						int startX = (z == ignoreBeforeZ && y == ignoreBeforeY) ? ignoreBeforeX : 0;
+						for (int x = startX; x < width; ++x) {
+							if( IN_PREVIOUS_REGION == pointState[ width * (z * height + y) + x ] )
+								continue;
 							float value = sliceDataFloats[z][y * width + x];
 							if (value > valuesOverDouble) {
 								initial_x = x;
@@ -396,6 +484,18 @@ public class Find_Connected_Regions implements PlugIn {
 
 			}
 
+			// ------------------------------------------------------------------------
+			/* Now we've got the starting point, we can record that we can start
+			   at the next part when we start searching again */
+
+			/* If x >= width it immediately moves on to
+			   the next y as we'd like */
+			ignoreBeforeX = initial_x + 1;
+			ignoreBeforeZ = initial_z;
+			ignoreBeforeY = initial_y;
+
+			System.out.println("Setting ignoreBefore* to: "+ignoreBeforeX+", "+ignoreBeforeY+", "+ignoreBeforeZ);
+
 			firstTime = false;
 
 			int vint = foundValueInt;
@@ -409,7 +509,6 @@ public class Find_Connected_Regions implements PlugIn {
 			int queueArrayLength = 1024;
 			int[] queue = new int[queueArrayLength];
 
-			byte[] pointState = new byte[depth * width * height];
 			int i = width * (initial_z * height + initial_y) + initial_x;
 			pointState[i] = IN_QUEUE;
 			queue[pointsInQueue++] = i;
@@ -429,7 +528,7 @@ public class Find_Connected_Regions implements PlugIn {
 				int py = currentSliceIndex / width;
 				int px = currentSliceIndex % width;
 
-				pointState[currentPointStateIndex] = ADDED;
+				pointState[currentPointStateIndex] = ADDED_TO_CURRENT_REGION;
 
 				if (byteImage) {
 					sliceDataBytes[pz][currentSliceIndex] = 0;
@@ -476,6 +575,8 @@ public class Find_Connected_Regions implements PlugIn {
 									}
 								} else {
 									if (neighbourValue <= valuesOverDouble) {
+										if( regionNumber >= 2)
+											System.out.println("Skipping under threshold value "+neighbourValue+", at: "+x+", "+y+", "+z);
 										continue;
 									}
 								}
@@ -498,6 +599,9 @@ public class Find_Connected_Regions implements PlugIn {
 									queueArrayLength = newArrayLength;
 								}
 								queue[pointsInQueue++] = newPointStateIndex;
+							} else {
+								if( regionNumber >= 2)
+									System.out.println("Skipping because pointState is: "+pointState[newPointStateIndex]+" at "+x+", "+y+", "+z);
 							}
 						}
 					}
@@ -506,6 +610,8 @@ public class Find_Connected_Regions implements PlugIn {
 
 			if(pleaseStop)
 				break;
+
+			++regionNumber;
 
 			// So now pointState should have no IN_QUEUE
 			// status points...
@@ -516,8 +622,15 @@ public class Find_Connected_Regions implements PlugIn {
 				region = new Region(pointsInThisRegion, mustHaveSameValue);
 			}
 			if (pointsInThisRegion < minimumPointsInRegionDouble) {
-				// System.out.println("Too few points - only " + pointsInThisRegion);
+				System.out.println("Ignoring region of size: "+pointsInThisRegion);
+				/* But we don't want to keep searching
+				   these, so set as IN_PREVIOUS_REGION: */
+				for( int p = 0; p < numberOfPointsInStack; ++p )
+					if( pointState[p] == ADDED_TO_CURRENT_REGION )
+						pointState[p] = IN_PREVIOUS_REGION;
 				continue;
+			} else {
+				System.out.println("Enough points!  Adding...");
 			}
 
 			results.add(region);
@@ -529,8 +642,35 @@ public class Find_Connected_Regions implements PlugIn {
 				replacementValue = (byte) 255;
 			}
 
-	
-			if (display || autoSubtract) {
+			if (imageAllRegions) {
+				if( regionNumber == Short.MAX_VALUE + 1 ) {
+					IJ.showMessage("Found more regions than Short.MAX_VALUE, so the all regions image will have overflowed values...");
+				}
+				/* Look for all the ADDED_TO_CURRENT_REGION points just found, and
+				   add them to the "all regions" image: */
+				for (int z = 0; z < depth; ++z ) {
+					for( int y = 0; y < height; ++y ) {
+						for( int x = 0; x < width; ++x ) {
+							if( pointState[width * (z * height + y) + x] == ADDED_TO_CURRENT_REGION ) {
+								allRegionsPixels[z][y*width+x] = (short)regionNumber;
+							}
+						}
+					}
+				}
+				allRegionsStack.setColorModel(backgroundAndSpectrum(Math.min(regionNumber,255)));
+				ImageProcessor ip = allRegionsImage.getProcessor();
+				ip.setColorModel(backgroundAndSpectrum(Math.min(regionNumber,255)));
+				int min = 0;
+				int max = Math.max( regionNumber, 255 );
+				ip.setMinAndMax( min, max );
+				allRegionsImage.updateAndDraw();
+			}
+
+			/* In either case we generate a new image for
+			   that region, either display it or just use
+			   it for subtracing from the original image */
+
+			if (imagePerRegion || autoSubtract) {
 
 				ImageStack newStack = new ImageStack(width, height);
 				for (int z = 0; z < depth; ++z) {
@@ -544,7 +684,7 @@ public class Find_Connected_Regions implements PlugIn {
 								IJ.log("BUG: point " + x + "," + y + "," + z + " is still marked as IN_QUEUE");
 							}
 
-							if (status == ADDED) {
+							if (status == ADDED_TO_CURRENT_REGION) {
 								sliceBytes[y * width + x] = replacementValue;
 							}
 						}
@@ -573,8 +713,8 @@ public class Find_Connected_Regions implements PlugIn {
 				if (autoSubtract) {
 					iCalc.calculate("Subtract stack", imagePlus, newImagePlus);
 				}
-				
-				if (display) {
+
+				if (imagePerRegion) {
 					newImagePlus.show();
 				} else {
 					newImagePlus.changes = false;
@@ -582,10 +722,15 @@ public class Find_Connected_Regions implements PlugIn {
 				}
 			}
 
+			for( int p = 0; p < numberOfPointsInStack; ++p )
+				if( pointState[p] == ADDED_TO_CURRENT_REGION )
+				    pointState[p] = IN_PREVIOUS_REGION;
+
 			if ( (stopAfterNumberOfRegions > 0) && (results.size() >= stopAfterNumberOfRegions) ) {
 				break;
 			}
 		}
+		allRegionsImage.setTitle(defaultAllRegionsTitle);
 
 		Collections.sort(results, Collections.reverseOrder());
 
