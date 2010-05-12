@@ -46,6 +46,7 @@
 import ij.IJ;
 import ij.IJEventListener;
 import ij.ImagePlus;
+import ij.Macro;
 import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
 import ij.gui.NonBlockingGenericDialog;
@@ -192,6 +193,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	 * need. we are using ExtendedPluginFilter, so first argument is imp not ip.
 	 */
 	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr) {
+		preview = !IJ.isMacro();
 		this.pluginFilterRunner = pfr;
 		int subpanelHeight = 30;
 		int left = 20;
@@ -206,7 +208,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		generalSettingsContainer = createContainerPanel(70, "General Settings");
 		
 		//add combobox for stack type
-		JPanel stackTypePanel = createComboBoxPanel("Stack Type", stackTypes, 1, 100, 180);
+		JPanel stackTypePanel = createComboBoxPanel("Stack_Type", stackTypes, 1, 100, 180);
 		stackTypePanel.setLocation(left, 30);
 		
 		addPanelsToDialg(generalSettingsContainer,
@@ -215,27 +217,27 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		//
 		// Units formatting panel
 		//
-		unitsFormattingContainer = createContainerPanel(100, "Units Formatting");
+		unitsFormattingContainer = createContainerPanel(100, "Units_Formatting");
 		
 		// add combobox for label format
-		JPanel pLabelFormat = createComboBoxPanel("Label Format", getAvailableFormats(), 0);
+		JPanel pLabelFormat = createComboBoxPanel("Label_Format", getAvailableFormats(), 0);
 		pLabelFormat.setLocation(left, 30);
         
 		// add combobox for label unit
-		labelUnitsPanel = createComboBoxPanel("Label Unit", selectedFormat.getAllowedFormatUnits(), 0);
+		labelUnitsPanel = createComboBoxPanel("Label_Unit", selectedFormat.getAllowedFormatUnits(), 0);
 		labelUnitsComboBox = (Choice) gd.getChoices().lastElement();
 		labelUnitsPanel.setLocation(left, 60);
         
         // add Custom Suffix panel
-		customSuffixPanel = createTextFieldPanel("Custom Suffix", customSuffix);
+		customSuffixPanel = createTextFieldPanel("Custom_Suffix", customSuffix);
 		customSuffixPanel.setLocation(left, 60);
 		
 		// add Custom Format panel
-		customLabelFormatPanel = createTextFieldPanel("Custom Format", customFormat);
+		customLabelFormatPanel = createTextFieldPanel("Custom_Format", customFormat);
 		customLabelFormatPanel.setLocation(300, 30);
 		
 		// add Decimal Places panel
-		decimalPlacesPanel = createNumericFieldPanel("Decimal Places", decimalPlaces, 0);
+		decimalPlacesPanel = createNumericFieldPanel("Decimal_Places", decimalPlaces, 0);
 		decimalPlacesPanel.setLocation(300, 30);
 		
 		addPanelsToDialg(unitsFormattingContainer,
@@ -255,7 +257,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		pInterval.setLocation(left, 60);
 		
 		// add panel for the everyNth setting
-		JPanel pEveryNth = createNumericFieldPanel("Every n-th", frameMask, 0);
+		JPanel pEveryNth = createNumericFieldPanel("Every_n-th", frameMask, 0);
 		pEveryNth.setLocation(left, 90);
 		
 		// add panel for First Frame setting
@@ -275,12 +277,12 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		locationFontContainer = createContainerPanel(110, "Location & Font");
 		
 		// add panel for X location
-		JPanel pLocationX = createNumericFieldPanel("X", x, 0, 20, 50);
+		JPanel pLocationX = createNumericFieldPanel("X_", x, 0, 20, 50);
 		locationXTextField = (TextField) gd.getNumericFields().lastElement();
 		pLocationX.setLocation(left, 30);
 		
 		// add panel for Y location
-		JPanel pLocationY = createNumericFieldPanel("Y", y, 0, 20, 50);
+		JPanel pLocationY = createNumericFieldPanel("Y_", y, 0, 20, 50);
 		locationYTextField = (TextField) gd.getNumericFields().lastElement();
 		pLocationY.setLocation(120, 30);
 		
@@ -289,7 +291,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		else locationPreset = UPPER_LEFT;
 		
 		// add combobox for location presets
-		JPanel pLocationPresets = createComboBoxPanel("Location Presets", locations, locationPreset, 110, 150);
+		JPanel pLocationPresets = createComboBoxPanel("Location_Presets", locations, locationPreset, 110, 150);
 		locationPresetsComboBox = (Choice) gd.getChoices().lastElement();
 		pLocationPresets.setLocation(240, 30);
         
@@ -320,9 +322,11 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		//add a help button that opens a link to the documentation wiki page. 
 		gd.addHelp("http://pacific.mpi-cbg.de/wiki/index.php/Stack_labeler");
 
-		// update GUI parts that are dependent on current variable contents
-		updateUI();
-
+		if (!IJ.isMacro()){
+			// update GUI parts that are dependent on current variable contents
+			updateUI();
+		}
+		System.out.println(Macro.getOptions());
 		gd.showDialog(); // shows the dialog GUI!
 
 		// handle the plug-in cancel button being pressed.
