@@ -81,7 +81,7 @@ class CancelDialog extends Dialog implements ActionListener {
 
 public class Find_Connected_Regions implements PlugIn {
 
-	public static final String PLUGIN_VERSION = "1.2";
+	public static final String PLUGIN_VERSION = "1.3";
 
 	boolean pleaseStop = false;
 
