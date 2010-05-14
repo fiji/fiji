@@ -699,8 +699,6 @@ public class FindConnectedRegions {
 		if( imageAllRegions )
 			results.allRegions.setTitle(defaultAllRegionsTitle);
 
-		Collections.sort(results.regionInfo, Collections.reverseOrder());
-
 		if( ! noUI )
 			cancelDialog.dispose();
 
