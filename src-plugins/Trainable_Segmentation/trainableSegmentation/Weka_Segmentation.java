@@ -1753,7 +1753,6 @@ public class Weka_Segmentation implements PlugIn
 		IJ.log("Loading data from " + od.getDirectory() + od.getFileName() + "...");
 		loadedTrainingData = readDataFromARFF(od.getDirectory() + od.getFileName());
 		
-		
 		// Adjust current state to loaded data to match 
 		// attributes and classes
 		if (false == adjustSegmentationStateToData(loadedTrainingData) )
@@ -2454,5 +2453,73 @@ public class Weka_Segmentation implements PlugIn
 		
 		return true;
 	}
+	
+	
+	/**
+	 * Add instances to a specific class from a label (binary) image.
+	 * Only white (non black) pixels will be added to the corresponding class.
+	 *  
+	 * @param labelImage binary image 
+	 * @param featureStack corresponding feature stack
+	 * @param className name of the class which receives the instances
+	 * @return false if error
+	 */
+	public boolean addBinaryData(
+			ImagePlus labelImage,
+			FeatureStack featureStack,
+			String className)
+	{
+		// Update features if necessary
+		if(featureStack.getSize() < 2)
+			featureStack.updateFeatures();
+
+		// Create instances
+		ArrayList<Attribute> attributes = new ArrayList<Attribute>();
+		for (int i=1; i<=featureStack.getSize(); i++){
+			String attString = featureStack.getSliceLabel(i) + " numeric";
+			attributes.add(new Attribute(attString));
+		}
+			
+		// Detect class index
+		int classIndex = 0;
+		for(classIndex = 0 ; classIndex < this.classLabels.length; classIndex++)
+			if(className.equalsIgnoreCase(this.classLabels[classIndex]))
+				break;
+		if(classIndex == this.classLabels.length)
+			return false;
+		
+		// Create loaded training data if it does not exist yet
+		if(null == loadedTrainingData) 
+			loadedTrainingData = new Instances("segment", attributes, 1); 
+		
+		// Check all pixels different from black
+		final int width = labelImage.getWidth();
+		final int height = labelImage.getHeight();
+		final ImageProcessor img = labelImage.getProcessor();
+		int nl = 0;
+		for(int x = 0 ; x < width ; x++)
+			for(int y = 0 ; y < height; y++)
+			{
+				// White pixels are added to the class
+				if(img.getPixelValue(x, y) > 0)
+				{
+					
+					
+						double[] values = new double[featureStack.getSize()+1];
+						for (int z=1; z<=featureStack.getSize(); z++)
+							values[z-1] = featureStack.getProcessor(z).getPixelValue(x, y);
+						values[featureStack.getSize()] = (double) classIndex;
+						loadedTrainingData.add(new DenseInstance(1.0, values));
+						// increase number of instances for this class
+						nl ++;					
+				}
+			}
+		
+		
+		IJ.log("Added " + nl + " instances of '" + className +"'.");
+		
+		return true;
+	}
+	
 }
 
