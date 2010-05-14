@@ -69,6 +69,7 @@ import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -1120,15 +1121,19 @@ public class TextEditor extends JFrame implements ActionListener,
 	synchronized void setTitle() {
 		boolean fileChanged = getEditorPane().fileChanged();
 		String fileName = getEditorPane().getFileName();
-		String title = (fileChanged ? "*" : "") + fileName
+		final String title = (fileChanged ? "*" : "") + fileName
 			+ (executingTasks.isEmpty() ? "" : " (Running)");
-		setTitle(title);
+		SwingUtilities.invokeLater(new Thread() {
+			public void run() {
+				setTitle(title);
+			}
+		});
 		int index = tabbed.getSelectedIndex();
 		if (index >= 0)
 			tabbed.setTitleAt(index, title);
 	}
 
-	public void setTitle(String title) {
+	public synchronized void setTitle(String title) {
 		super.setTitle(title);
 		int index = tabsMenuTabsStart + tabbed.getSelectedIndex();
 		if (index < tabsMenu.getItemCount()) {
