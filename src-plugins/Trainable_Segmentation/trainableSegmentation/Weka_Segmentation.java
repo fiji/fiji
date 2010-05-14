@@ -104,14 +104,19 @@ import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
 import weka.classifiers.AbstractClassifier;
+import weka.classifiers.pmml.consumer.PMMLClassifier;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instances;
 import weka.core.OptionHandler;
 import weka.core.SerializationHelper;
 import weka.core.Utils;
+import weka.core.pmml.PMMLFactory;
+import weka.core.pmml.PMMLModel;
+import weka.gui.GUIChooser;
 import weka.gui.GenericObjectEditor;
 import weka.gui.PropertyDialog;
+import weka.gui.explorer.ClassifierPanel;
 import fiji.util.gui.GenericDialogPlus;
 import fiji.util.gui.OverlayedImageCanvas;
 import hr.irb.fastRandomForest.FastRandomForest;
@@ -163,29 +168,29 @@ public class Weka_Segmentation implements PlugIn
 	private boolean updateWholeData = true;
 	
 	/** train classifier button */
-	final JButton trainButton;
+	JButton trainButton;
 	/** toggle overlay button */
-	final JButton overlayButton;
+	JButton overlayButton;
 	/** create result button */
-	final JButton resultButton;
+	JButton resultButton;
 	/** new image button */
-	final JButton newImageButton;
+	JButton newImageButton;
 	/** apply classifier button */
-	final JButton applyButton;
+	JButton applyButton;
 	/** load classifier button */
-	final JButton loadClassifierButton;
+	JButton loadClassifierButton;
 	/** save classifier button */
-	final JButton saveClassifierButton;
+	JButton saveClassifierButton;
 	/** load data button */
-	final JButton loadDataButton;
+	JButton loadDataButton;
 	/** save data button */
-	final JButton saveDataButton;
+	JButton saveDataButton;
 	/** settings button */
-	final JButton settingsButton;
+	JButton settingsButton;
 	/** Weka button */
-	final JButton wekaButton;
+	JButton wekaButton;
 	/** create new class button */
-	final JButton addClassButton;
+	JButton addClassButton;
 	
 	/** array of roi list overlays to paint the transparent rois of each class */
 	RoiListOverlay [] roiOverlay;
@@ -218,11 +223,17 @@ public class Weka_Segmentation implements PlugIn
 	/** executor service to launch threads for the plugin methods and events */
 	final ExecutorService exec = Executors.newFixedThreadPool(1);
 	
+	/** GUI/no GUI flag */
+	private boolean useGUI = true;
+	
+	
 	/**
 	 * Basic constructor
 	 */
 	public Weka_Segmentation() 
 	{
+		this.useGUI = true;
+		
 		// Create overlay LUT
 		final byte[] red = new byte[256];
 		final byte[] green = new byte[256];
@@ -322,6 +333,7 @@ public class Weka_Segmentation implements PlugIn
 					{
 						try{
 							trainClassifier();
+							applyClassifier();
 						}catch(Exception e){
 							e.printStackTrace();
 						}
@@ -815,22 +827,25 @@ public class Weka_Segmentation implements PlugIn
 	 */
 	private void setButtonsEnabled(Boolean s)
 	{
-		trainButton.setEnabled(s);
-		overlayButton.setEnabled(s);
-		resultButton.setEnabled(s);
-		newImageButton.setEnabled(s);
-		applyButton.setEnabled(s);
-		loadClassifierButton.setEnabled(s);
-		saveClassifierButton.setEnabled(s);
-		loadDataButton.setEnabled(s);
-		saveDataButton.setEnabled(s);
-		addClassButton.setEnabled(s);
-		settingsButton.setEnabled(s);
-		wekaButton.setEnabled(s);
-		for(int i = 0 ; i < numOfClasses; i++)
+		if(useGUI)
 		{
-			exampleList[i].setEnabled(s);
-			addExampleButton[i].setEnabled(s);
+			trainButton.setEnabled(s);
+			overlayButton.setEnabled(s);
+			resultButton.setEnabled(s);
+			newImageButton.setEnabled(s);
+			applyButton.setEnabled(s);
+			loadClassifierButton.setEnabled(s);
+			saveClassifierButton.setEnabled(s);
+			loadDataButton.setEnabled(s);
+			saveDataButton.setEnabled(s);
+			addClassButton.setEnabled(s);
+			settingsButton.setEnabled(s);
+			wekaButton.setEnabled(s);
+			for(int i = 0 ; i < numOfClasses; i++)
+			{
+				exampleList[i].setEnabled(s);
+				addExampleButton[i].setEnabled(s);
+			}
 		}
 	}
 
@@ -839,40 +854,43 @@ public class Weka_Segmentation implements PlugIn
 	 */
 	private void updateButtonsEnabling()
 	{
-		final boolean classifierExists =  null != this.classifier;
-		
-		trainButton.setEnabled(classifierExists);		
-		applyButton.setEnabled(classifierExists);
-		
-		final boolean resultExists = null != this.classifiedImage 
-									&& null != this.classifiedImage.getProcessor();
-		
-		saveClassifierButton.setEnabled(resultExists);
-		overlayButton.setEnabled(resultExists);
-		resultButton.setEnabled(resultExists);
-		
-		newImageButton.setEnabled(true);
-		loadClassifierButton.setEnabled(true);		
-		loadDataButton.setEnabled(true);
-		
-		addClassButton.setEnabled(this.numOfClasses < MAX_NUM_CLASSES);
-		settingsButton.setEnabled(true);
-		wekaButton.setEnabled(true);
-		
-		boolean examplesEmpty = true;
-		for(int i = 0; i < numOfClasses; i ++)
-			if(examples[i].size() > 0)
-			{
-				examplesEmpty = false;
-				break;
-			}
-		
-		saveDataButton.setEnabled(!examplesEmpty || null != loadedTrainingData);
-		
-		for(int i = 0 ; i < numOfClasses; i++)
+		if(useGUI)
 		{
-			exampleList[i].setEnabled(true);
-			addExampleButton[i].setEnabled(true);
+			final boolean classifierExists =  null != this.classifier;
+
+			trainButton.setEnabled(classifierExists);		
+			applyButton.setEnabled(classifierExists);
+
+			final boolean resultExists = null != this.classifiedImage 
+			&& null != this.classifiedImage.getProcessor();
+
+			saveClassifierButton.setEnabled(resultExists);
+			overlayButton.setEnabled(resultExists);
+			resultButton.setEnabled(resultExists);
+
+			newImageButton.setEnabled(true);
+			loadClassifierButton.setEnabled(true);		
+			loadDataButton.setEnabled(true);
+
+			addClassButton.setEnabled(this.numOfClasses < MAX_NUM_CLASSES);
+			settingsButton.setEnabled(true);
+			wekaButton.setEnabled(true);
+
+			boolean examplesEmpty = true;
+			for(int i = 0; i < numOfClasses; i ++)
+				if(examples[i].size() > 0)
+				{
+					examplesEmpty = false;
+					break;
+				}
+
+			saveDataButton.setEnabled(!examplesEmpty || null != loadedTrainingData);
+
+			for(int i = 0 ; i < numOfClasses; i++)
+			{
+				exampleList[i].setEnabled(true);
+				addExampleButton[i].setEnabled(true);
+			}
 		}
 	}	
 	
@@ -1172,23 +1190,34 @@ public class Weka_Segmentation implements PlugIn
 		
 		final long end = System.currentTimeMillis();
 						
-		IJ.log("Finished training in "+(end-start)+"ms");
-		
+		IJ.log("Finished training in "+(end-start)+"ms");						
+	}
+	
+	/**
+	 * Apply current classifier to current training image
+	 */
+	public void applyClassifier()
+	{
 		if(updateWholeData)
+		{
 			updateTestSet();
+			IJ.log("Test dataset updated ("+ wholeImageData.numInstances() + " instances)");
+		}
 
 		IJ.log("Classifying whole image...");
 
 		classifiedImage = applyClassifier(wholeImageData, trainingImage.getWidth(), trainingImage.getHeight());
 
 		IJ.log("Finished segmentation of whole image.");
-		
-		if(showColorOverlay)
+		if(useGUI)
+		{
+			if(showColorOverlay)
+				toggleOverlay();
 			toggleOverlay();
-		toggleOverlay();
-
-		setButtonsEnabled(true);
+			setButtonsEnabled(true);
+		}
 	}
+	
 	
 	/**
 	 * Update whole data set with current number of classes and features
@@ -1514,79 +1543,17 @@ public class Weka_Segmentation implements PlugIn
 		if(trainHeader.numAttributes() < 1)
 		{
 			IJ.error("Error", "No attributes were found on the model header");
+			this.classifier = oldClassifier;
 			updateButtonsEnabling();
 			return;
 		}
 		
-try{		
-		// Check if the loaded information corresponds to current state of the segmentator
-		// (the attributes can be adjusted, but the classes must match)
-		if(false == adjustSegmentationStateToData(trainHeader))		
-		{
-			IJ.log("Error: current segmentator state could not be updated to loaded data requirements (attributes and classes)");
-			this.classifier = oldClassifier;
-		}
-}catch(Exception e)
-{
-	IJ.log("Error while adjusting data!");
-	e.printStackTrace();
-}
 		updateButtonsEnabling();
 		
 		IJ.log("Loaded " + od.getDirectory() + od.getFileName());
 	}
 	
 	
-	/**
-	 * Read header classifier from a .model file
-	 * @param filename complete path and file name
-	 * @return false if error
-	 */
-	public boolean loadClassifier(String filename) 
-	{	
-		File selected = new File(filename);
-		try {
-			InputStream is = new FileInputStream( selected );
-			if (selected.getName().endsWith(weka.gui.explorer.ClassifierPanel.PMML_FILE_EXTENSION)) 
-			{
-				weka.core.pmml.PMMLModel model = weka.core.pmml.PMMLFactory.getPMMLModel(is, null);
-				if (model instanceof weka.classifiers.pmml.consumer.PMMLClassifier) 				
-					classifier = (weka.classifiers.pmml.consumer.PMMLClassifier)model;				 
-				else 				
-					throw new Exception("PMML model is not a classification/regression model!");				
-			} 
-			else 
-			{
-				if (selected.getName().endsWith(".gz")) 				
-					is = new GZIPInputStream(is);
-				
-				ObjectInputStream objectInputStream = new ObjectInputStream(is);
-				classifier = (AbstractClassifier) objectInputStream.readObject();
-				try 
-				{ // see if we can load the header
-					trainHeader = (Instances) objectInputStream.readObject();
-				} 
-				catch (Exception e) 
-				{
-					IJ.error("Load Failed", "Error while loading train header");
-					return false;
-				} 
-				finally
-				{
-					objectInputStream.close();
-				}
-			}
-		} 
-		catch (Exception e) 
-		{
-			IJ.error("Load Failed", "Error while loading classifier");
-			e.printStackTrace();
-			return false;
-		}	
-		
-		return true;
-	}
-
 	/**
 	 * Load a Weka model (classifier) from a file
 	 * @param filename complete path and file name
@@ -1879,48 +1846,15 @@ try{
 	 * Save training model into a file
 	 */
 	public void saveTrainingData()
-	{
-		boolean examplesEmpty = true;
-		for(int i = 0; i < numOfClasses; i ++)
-			if(examples[i].size() > 0)
-			{
-				examplesEmpty = false;
-				break;
-			}
-		if (examplesEmpty && loadedTrainingData == null){
-			IJ.showMessage("There is no data to save");
-			return;
-		}
-
+	{		
 		SaveDialog sd = new SaveDialog("Choose save file", "data",".arff");
 		if (sd.getFileName()==null)
 			return;
 		
-		if(featureStack.getSize() < 2)
-		{
-			setButtonsEnabled(false);
-			featureStack.updateFeatures();
-			setButtonsEnabled(true);
-		}
-		
-		Instances data = createTrainingInstances();
-		data.setClassIndex(data.numAttributes() - 1);
-		if (null != loadedTrainingData && null != data){
-			IJ.log("Merging data...");
-			for (int i=0; i < loadedTrainingData.numInstances(); i++){
-				// IJ.log("" + i)
-				data.add(loadedTrainingData.instance(i));
-			}
-			IJ.log("Finished: total number of instances = " + data.numInstances());
-		}
-		else if (null == data)
-			data = loadedTrainingData;
-
-		
-		IJ.log("Writing training data: " + data.numInstances() + " instances...");
-		writeDataToARFF(data, sd.getDirectory() + sd.getFileName());
-		IJ.log("Saved training data: " + sd.getDirectory() + sd.getFileName());
+		if(false == saveData(sd.getDirectory() + sd.getFileName()))
+			IJ.showMessage("There is no data to save");
 	}
+	
 	
 	/**
 	 * Add new class in the panel (up to MAX_NUM_CLASSES)
@@ -1985,7 +1919,7 @@ try{
 	 */
 	public static void launchWeka()
 	{				
-		weka.gui.GUIChooser chooser = new weka.gui.GUIChooser();
+		GUIChooser chooser = new GUIChooser();
 		for (WindowListener wl : chooser.getWindowListeners()) 
 		{
 			chooser.removeWindowListener(wl);
@@ -2244,7 +2178,281 @@ try{
 		
 		return true;
 	}
-	
 
+	///////////////////////////////////////////////////////////////////////////
+	// Library style methods //////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////
+
+	/**
+	 * No GUI constructor
+	 * 
+	 * @param trainingImage input image
+	 */
+	public Weka_Segmentation(ImagePlus trainingImage) 
+	{	
+		// no GUI
+		this.useGUI = false;
+		
+		this.trainingImage = trainingImage;
+		
+		for(int i = 0; i < numOfClasses ; i++)
+			examples[i] = new ArrayList<Roi>();
+
+
+		// Initialization of Fast Random Forest classifier
+		rf = new FastRandomForest();
+		rf.setNumTrees(numOfTrees);
+		//this is the default that Breiman suggests
+		//rf.setNumFeatures((int) Math.round(Math.sqrt(featureStack.getSize())));
+		//but this seems to work better
+		rf.setNumFeatures(randomFeatures);
+		rf.setSeed(123);
+		
+		classifier = rf;
+		
+		// Initialize feature stack (no features yet)
+		featureStack = new FeatureStack(trainingImage);
+	}
+
+	/**
+	 * Load training data (no GUI)
+	 * 
+	 * @param pathname complete path name of the training data file (.arff)
+	 * @return false if error
+	 */
+	public boolean loadTrainingData(String pathname)
+	{
+		IJ.log("Loading data from " + pathname + "...");
+		loadedTrainingData = readDataFromARFF(pathname);
+				
+		// Check the features that were used in the loaded data
+		Enumeration<Attribute> attributes = loadedTrainingData.enumerateAttributes();
+		final int numFeatures = FeatureStack.availableFeatures.length;
+		boolean[] usedFeatures = new boolean[numFeatures];
+		while(attributes.hasMoreElements())
+		{
+			final Attribute a = attributes.nextElement();
+			for(int i = 0 ; i < numFeatures; i++)
+				if(a.name().startsWith(FeatureStack.availableFeatures[i]))
+					usedFeatures[i] = true;
+		}
+		
+		// Check if classes match
+		Attribute classAttribute = loadedTrainingData.classAttribute();
+		Enumeration<String> classValues  = classAttribute.enumerateValues();
+		
+		// Update list of names of loaded classes
+		loadedClassNames = new ArrayList<String>();
+		
+		int j = 0;
+		while(classValues.hasMoreElements())
+		{
+			final String className = classValues.nextElement().trim();
+			loadedClassNames.add(className);
+			
+			IJ.log("Read class name: " + className);
+			if( !className.equals(this.classLabels[j]))
+			{
+				String s = classLabels[0];
+				for(int i = 1; i < numOfClasses; i++)
+					s = s.concat(", " + classLabels[i]);
+				IJ.error("ERROR: Loaded classes and current classes do not match!\nExpected: " + s);
+				loadedTrainingData = null;
+				return false;
+			}
+			j++;
+		}
+		
+		if(j != numOfClasses)
+		{
+			IJ.error("ERROR: Loaded number of classes and current number do not match!");
+			loadedTrainingData = null;
+			return false;
+		}
+		
+		IJ.log("Loaded data: " + loadedTrainingData.numInstances() + " instances");
+		
+		boolean featuresChanged = false;
+		final boolean[] oldEnableFeatures = this.featureStack.getEnableFeatures();
+		// Read checked features and check if any of them chasetButtonsEnablednged
+		for(int i = 0; i < numFeatures; i++)
+		{
+			if (usedFeatures[i] != oldEnableFeatures[i])
+				featuresChanged = true;
+		}
+		// Update feature stack if necessary
+		if(featuresChanged)
+		{
+			this.setButtonsEnabled(false);
+			this.featureStack.setEnableFeatures(usedFeatures);
+			this.featureStack.updateFeatures();
+			this.setButtonsEnabled(true);
+			// Force whole data to be updated
+			updateWholeData = true;
+		}
+		
+		return true;
+	}
+
+	/**
+	 * Get current classification result
+	 * @return classified image
+	 */
+	public ImagePlus getClassifiedImage()
+	{
+		return classifiedImage;
+	}
+	
+	/**
+	 * Read header classifier from a .model file
+	 * @param filename complete path and file name
+	 * @return false if error
+	 */
+	public boolean loadClassifier(String filename) 
+	{	
+		File selected = new File(filename);
+		try {
+			InputStream is = new FileInputStream( selected );
+			if (selected.getName().endsWith(ClassifierPanel.PMML_FILE_EXTENSION)) 
+			{
+				PMMLModel model = PMMLFactory.getPMMLModel(is, null);
+				if (model instanceof PMMLClassifier) 				
+					classifier = (PMMLClassifier)model;				 
+				else 				
+					throw new Exception("PMML model is not a classification/regression model!");				
+			} 
+			else 
+			{
+				if (selected.getName().endsWith(".gz")) 				
+					is = new GZIPInputStream(is);
+				
+				ObjectInputStream objectInputStream = new ObjectInputStream(is);
+				classifier = (AbstractClassifier) objectInputStream.readObject();
+				try 
+				{ // see if we can load the header
+					trainHeader = (Instances) objectInputStream.readObject();
+				} 
+				catch (Exception e) 
+				{
+					IJ.error("Load Failed", "Error while loading train header");
+					return false;
+				} 
+				finally
+				{
+					objectInputStream.close();
+				}
+			}
+		} 
+		catch (Exception e) 
+		{
+			IJ.error("Load Failed", "Error while loading classifier");
+			e.printStackTrace();
+			return false;
+		}	
+		
+		try{		
+			// Check if the loaded information corresponds to current state of the segmentator
+			// (the attributes can be adjusted, but the classes must match)
+			if(false == adjustSegmentationStateToData(trainHeader))		
+			{
+				IJ.log("Error: current segmentator state could not be updated to loaded data requirements (attributes and classes)");				
+			}
+		}catch(Exception e)
+		{
+			IJ.log("Error while adjusting data!");
+			e.printStackTrace();
+		}
+		
+		
+		return true;
+	}
+
+	
+	/**
+	 * Write current classifier into a file
+	 * 
+	 * @param filename name (with complete path) of the destination file
+	 * @return false if error
+	 */
+	public boolean saveClassifier(String filename)
+	{
+		File sFile = null;
+		boolean saveOK = true;
+
+
+		IJ.log("Saving model to file...");
+
+		try {
+			sFile = new File(filename);
+			OutputStream os = new FileOutputStream(sFile);
+			if (sFile.getName().endsWith(".gz")) 
+			{
+				os = new GZIPOutputStream(os);
+			}
+			ObjectOutputStream objectOutputStream = new ObjectOutputStream(os);
+			objectOutputStream.writeObject(classifier);
+			if (trainHeader != null) 
+				objectOutputStream.writeObject(trainHeader);
+			objectOutputStream.flush();
+			objectOutputStream.close();
+		} 
+		catch (Exception e) 
+		{
+			IJ.error("Save Failed", "Error when saving classifier into a file");
+			saveOK = false;
+		}
+		if (saveOK)
+			IJ.log("Saved model (" + filename
+					+ ") to file '" + sFile.getName() + "'");
+
+		return saveOK;
+	}
+	
+	/**
+	 * Save training data into a file (.arff)
+	 * @param pathname complete path name
+	 * @return false if error
+	 */
+	public boolean saveData(final String pathname)
+	{
+		boolean examplesEmpty = true;
+		for(int i = 0; i < numOfClasses; i ++)
+			if(examples[i].size() > 0)
+			{
+				examplesEmpty = false;
+				break;
+			}
+		if (examplesEmpty && loadedTrainingData == null){
+			IJ.log("There is no data to save");
+			return false;
+		}
+		
+		if(featureStack.getSize() < 2)
+		{
+			setButtonsEnabled(false);
+			featureStack.updateFeatures();
+			setButtonsEnabled(true);
+		}
+		
+		Instances data = createTrainingInstances();
+		data.setClassIndex(data.numAttributes() - 1);
+		if (null != loadedTrainingData && null != data){
+			IJ.log("Merging data...");
+			for (int i=0; i < loadedTrainingData.numInstances(); i++){
+				// IJ.log("" + i)
+				data.add(loadedTrainingData.instance(i));
+			}
+			IJ.log("Finished: total number of instances = " + data.numInstances());
+		}
+		else if (null == data)
+			data = loadedTrainingData;
+
+		
+		IJ.log("Writing training data: " + data.numInstances() + " instances...");
+		writeDataToARFF(data, pathname);
+		IJ.log("Saved training data: " + pathname);
+		
+		return true;
+	}
 }
 
