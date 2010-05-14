@@ -1919,7 +1919,7 @@ try{
 		
 		IJ.log("Writing training data: " + data.numInstances() + " instances...");
 		writeDataToARFF(data, sd.getDirectory() + sd.getFileName());
-		IJ.log("Saved training data: " + sd.getDirectory() + " " + sd.getFileName());
+		IJ.log("Saved training data: " + sd.getDirectory() + sd.getFileName());
 	}
 	
 	/**
