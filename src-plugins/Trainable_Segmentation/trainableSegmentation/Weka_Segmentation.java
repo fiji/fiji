@@ -164,8 +164,10 @@ public class Weka_Segmentation implements PlugIn
 	
 	/** default classifier (Fast Random Forest) */
 	private FastRandomForest rf;
-	/** flag to update the whole set of instances (used when there is any change on the features) */
+	/** flag to update the whole set of instances (used when there is any change on the features or the classes) */
 	private boolean updateWholeData = true;
+	/** flag to update the feature stack (used when there is any change on the features) */
+	private boolean updateFeatures = true;
 	
 	/** train classifier button */
 	JButton trainButton;
@@ -1134,10 +1136,14 @@ public class Weka_Segmentation implements PlugIn
 		setButtonsEnabled(false);
 				
 		// Create feature stack if it was not created yet
-		if(featureStack.isEmpty())
+		if(featureStack.isEmpty() || updateFeatures)
 		{
 			IJ.showStatus("Creating feature stack...");
+			IJ.log("Creating feature stack...");
 			featureStack.updateFeatures();
+			updateFeatures = false;
+			updateWholeData = true;
+			IJ.log("Features stack is now updated.");
 		}		
 
 		IJ.showStatus("Training classifier...");
@@ -1198,6 +1204,17 @@ public class Weka_Segmentation implements PlugIn
 	 */
 	public void applyClassifier()
 	{
+		// Create feature stack if it was not created yet
+		if(featureStack.isEmpty() || updateFeatures)
+		{
+			IJ.showStatus("Creating feature stack...");
+			IJ.log("Creating feature stack...");
+			featureStack.updateFeatures();
+			updateFeatures = false;
+			updateWholeData = true;
+			IJ.log("Features stack is now updated.");
+		}
+		
 		if(updateWholeData)
 		{
 			updateTestSet();
@@ -1679,12 +1696,14 @@ public class Weka_Segmentation implements PlugIn
 		IJ.log("Storing previous image instances...");
 		
 		// Create feature stack if it was not created yet
-		if(featureStack.isEmpty())
+		if(featureStack.isEmpty() || updateFeatures)
 		{
 			IJ.showStatus("Creating feature stack...");
 			featureStack.updateFeatures();
+			updateFeatures = false;
 		}
 		
+		// Create instances
 		Instances data = createTrainingInstances();
 		data.setClassIndex(data.numAttributes() - 1);
 		if (null != loadedTrainingData && null != data){
@@ -1721,7 +1740,7 @@ public class Weka_Segmentation implements PlugIn
 		final boolean[] enabledFeatures = featureStack.getEnableFeatures();
 		featureStack = new FeatureStack(trainingImage);
 		featureStack.setEnableFeatures(enabledFeatures);
-		updateWholeData = true;
+		updateFeatures = true;
 		
 		displayImage = new ImagePlus();
 		displayImage.setProcessor("Advanced Weka Segmentation", trainingImage.getProcessor().duplicate());
@@ -1829,12 +1848,10 @@ public class Weka_Segmentation implements PlugIn
 		// Update feature stack if necessary
 		if(featuresChanged)
 		{
-			this.setButtonsEnabled(false);
+			//this.setButtonsEnabled(false);
 			this.featureStack.setEnableFeatures(usedFeatures);
-			this.featureStack.updateFeatures();
-			this.setButtonsEnabled(true);
-			// Force whole data to be updated
-			updateWholeData = true;
+			// Force features to be updated
+			updateFeatures = true;
 		}
 		
 		return true;
@@ -2059,12 +2076,10 @@ public class Weka_Segmentation implements PlugIn
 		// Update feature stack if necessary
 		if(featuresChanged)
 		{
-			this.setButtonsEnabled(false);
+			//this.setButtonsEnabled(false);
 			this.featureStack.setEnableFeatures(newEnableFeatures);
-			this.featureStack.updateFeatures();
-			this.updateButtonsEnabling();
-			// Force whole data to be updated
-			updateWholeData = true;
+			// Force features to be updated
+			updateFeatures = true;
 		}
 		
 		return true;
@@ -2282,12 +2297,10 @@ public class Weka_Segmentation implements PlugIn
 		// Update feature stack if necessary
 		if(featuresChanged)
 		{
-			this.setButtonsEnabled(false);
+			//this.setButtonsEnabled(false);
 			this.featureStack.setEnableFeatures(usedFeatures);
-			this.featureStack.updateFeatures();
-			this.setButtonsEnabled(true);
-			// Force whole data to be updated
-			updateWholeData = true;
+			// Force features to be updated
+			updateFeatures = true;
 		}
 		
 		return true;
@@ -2426,11 +2439,13 @@ public class Weka_Segmentation implements PlugIn
 			return false;
 		}
 		
-		if(featureStack.getSize() < 2)
+		if(featureStack.getSize() < 2 || updateFeatures)
 		{
 			setButtonsEnabled(false);
+			IJ.log("Creating feature stack...");
 			featureStack.updateFeatures();
-			setButtonsEnabled(true);
+			updateFeatures = false;
+			IJ.log("Features stack is now updated.");
 		}
 		
 		Instances data = createTrainingInstances();
