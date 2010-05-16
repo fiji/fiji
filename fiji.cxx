@@ -898,7 +898,7 @@ static void add_java_home_to_path(void)
 	setenv_or_exit("PATH", new_path.c_str(), 1);
 }
 
-static int headless;
+static int headless, headless_argc;
 
 int build_classpath(string &result, string jar_directory, int no_error) {
 	DIR *directory = opendir(jar_directory.c_str());
@@ -1569,6 +1569,7 @@ static int start_ij(void)
 			add_option(options, "-eval", 1);
 			arg = string("run(\"") + arg + "\");";
 			add_option(options, arg, 1);
+			headless_argc++;
 		}
 		else if (handle_one_option(i, "--edit", arg))
 			for (;;) {
@@ -1867,7 +1868,7 @@ static int start_ij(void)
 
 	/* handle "--headless script.ijm" gracefully */
 	if (headless && is_default_main_class(main_class)) {
-		if (main_argc < 2) {
+		if (main_argc + headless_argc < 2) {
 			cerr << "--headless without a parameter?" << endl;
 			if (!options.debug)
 				exit(1);
