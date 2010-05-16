@@ -184,6 +184,8 @@ public class FindConnectedRegions {
 		public List<Region> regionInfo;
 	}
 
+	static final boolean verbose = false;
+
 	public Results run( ImagePlus imagePlus,
 			    boolean diagonal,
 			    boolean imagePerRegion,
@@ -468,6 +470,9 @@ public class FindConnectedRegions {
 			ignoreBeforeZ = initial_z;
 			ignoreBeforeY = initial_y;
 
+			if( verbose )
+				System.out.println("Starting from "+initial_x+", "+initial_y+", "+initial_z);
+
 			firstTime = false;
 
 			int vint = foundValueInt;
@@ -499,6 +504,9 @@ public class FindConnectedRegions {
 				int currentSliceIndex = nextIndex % (width * height);
 				int py = currentSliceIndex / width;
 				int px = currentSliceIndex % width;
+
+				if( verbose )
+					System.out.println("  Considering point from queue at "+px+", "+py+", "+pz);
 
 				pointState[currentPointStateIndex] = ADDED_TO_CURRENT_REGION;
 
@@ -534,6 +542,9 @@ public class FindConnectedRegions {
 							if ((!diagonal) && (x == x_unchecked_min || x == x_unchecked_max) && (y == y_unchecked_min || y == y_unchecked_max) && (z == z_unchecked_min || z == z_unchecked_max)) {
 								continue;
 							}
+							if( verbose ) {
+								System.out.println("    Considering neighbour point at: "+x+", "+y+", "+z);
+							}
 							int newSliceIndex = y * width + x;
 							int newPointStateIndex = width * (z * height + y) + x;
 
@@ -559,6 +570,11 @@ public class FindConnectedRegions {
 								}
 							}
 
+							if( verbose ) {
+								System.out.println("    Not excluded by value");
+								System.out.println("    pointState is: "+pointState[newPointStateIndex]);
+							}
+
 							if (0 == pointState[newPointStateIndex]) {
 								pointState[newPointStateIndex] = IN_QUEUE;
 								if (pointsInQueue == queueArrayLength) {
@@ -568,6 +584,8 @@ public class FindConnectedRegions {
 									queue = newArray;
 									queueArrayLength = newArrayLength;
 								}
+								if( verbose )
+									System.out.println("    ... so adding");
 								queue[pointsInQueue++] = newPointStateIndex;
 							}
 						}
@@ -704,7 +722,8 @@ public class FindConnectedRegions {
 
 		for (Iterator<Region> it = results.regionInfo.iterator(); it.hasNext();) {
 			Region r = it.next();
-			System.out.println(r.toString());
+			if( verbose )
+				System.out.println(r.toString());
 			if( showResults ) {
 				r.addRow(rt);
 			}
