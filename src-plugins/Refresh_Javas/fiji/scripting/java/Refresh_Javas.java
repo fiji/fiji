@@ -6,6 +6,7 @@ import fiji.build.Fake;
 
 import ij.IJ;
 import ij.ImagePlus;
+import ij.Macro;
 import ij.Menus;
 
 import ij.io.PluginClassLoader;
@@ -41,6 +42,11 @@ public class Refresh_Javas extends RefreshScripts {
 	public void run(String arg) {
 		setLanguageProperties(".java", "Java");
 		setVerbose(false);
+		if (arg == null || arg.equals("")) {
+			arg = Macro.getOptions();
+			if (arg != null)
+				arg = arg.trim();
+		}
 		super.run(arg);
 	}
 
