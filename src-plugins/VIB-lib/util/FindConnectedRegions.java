@@ -537,14 +537,26 @@ public class FindConnectedRegions {
 					for (int y = y_min; y <= y_max; ++y) {
 						for (int x = x_min; x <= x_max; ++x) {
 
-							// If we're not including diagonals,
-							// skip those points.
-							if ((!diagonal) && (x == x_unchecked_min || x == x_unchecked_max) && (y == y_unchecked_min || y == y_unchecked_max) && (z == z_unchecked_min || z == z_unchecked_max)) {
+							int x_off_centre = (x == x_unchecked_min || x == x_unchecked_max) ? 1 : 0;
+							int y_off_centre = (y == y_unchecked_min || y == y_unchecked_max) ? 1 : 0;
+							int z_off_centre = (z == z_unchecked_min || z == z_unchecked_max) ? 1 : 0;
+
+							int off_centre_total = x_off_centre + y_off_centre + z_off_centre;
+
+							// Ignore the start point:
+							if( off_centre_total == 0 )
 								continue;
+
+							// If we're not including diagonals,
+							// skip those points too:
+							if (!diagonal) {
+								if( x_off_centre + y_off_centre + z_off_centre > 1 )
+									continue;
 							}
 							if( verbose ) {
 								System.out.println("    Considering neighbour point at: "+x+", "+y+", "+z);
 							}
+
 							int newSliceIndex = y * width + x;
 							int newPointStateIndex = width * (z * height + y) + x;
 
