@@ -525,13 +525,13 @@ public class FindConnectedRegions {
 				int y_unchecked_max = py + 1;
 				int z_unchecked_max = pz + 1;
 
-				int x_min = (x_unchecked_min < 0) ? 0 : x_unchecked_min;
-				int y_min = (y_unchecked_min < 0) ? 0 : y_unchecked_min;
-				int z_min = (z_unchecked_min < 0) ? 0 : z_unchecked_min;
+				int x_min = Math.max(0,x_unchecked_min);
+				int y_min = Math.max(0,y_unchecked_min);
+				int z_min = Math.max(0,z_unchecked_min);
 
-				int x_max = (x_unchecked_max >= width) ? width - 1 : x_unchecked_max;
-				int y_max = (y_unchecked_max >= height) ? height - 1 : y_unchecked_max;
-				int z_max = (z_unchecked_max >= depth) ? depth - 1 : z_unchecked_max;
+				int x_max = Math.min(x_unchecked_max,width-1);
+				int y_max = Math.min(y_unchecked_max,height-1);
+				int z_max = Math.min(z_unchecked_max,depth-1);
 
 				for (int z = z_min; z <= z_max; ++z) {
 					for (int y = y_min; y <= y_max; ++y) {
