@@ -77,12 +77,14 @@ public class User_Plugins implements PlugIn {
 			"fiji.User_Plugins(\"update\")");
 		Menus.getCommands().put("Refresh Menus",
 			"fiji.User_Plugins(\"update\")");
-		Menu help = Menus.getMenuBar().getHelpMenu();
-		for (int i = help.getItemCount() - 1; i >= 0; i--) {
-			MenuItem item = help.getItem(i);
-			String name = item.getLabel();
-			if (name.equals("Update Menus"))
-				item.setLabel("Refresh Menus");
+		if (IJ.getInstance() != null) {
+			Menu help = Menus.getMenuBar().getHelpMenu();
+			for (int i = help.getItemCount() - 1; i >= 0; i--) {
+				MenuItem item = help.getItem(i);
+				String name = item.getLabel();
+				if (name.equals("Update Menus"))
+					item.setLabel("Refresh Menus");
+			}
 		}
 
 		// make sure "Edit>Options>Memory & Threads runs Fiji's plugin
