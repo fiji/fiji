@@ -1337,6 +1337,8 @@ static void /* no-return */ usage(void)
 		<< "\tuse <dir> to discover plugins" << endl
 		<< "--run <plugin> [<arg>]" << endl
 		<< "\trun <plugin> in ImageJ, optionally with arguments" << endl
+		<< "--compile-and-run <path-to-.java-file>" << endl
+		<< "\tcompile and run <plugin> in ImageJ" << endl
 		<< "--edit <file>" << endl
 		<< "\tedit the given file in the script editor" << endl
 		<< endl
@@ -1568,6 +1570,13 @@ static int start_ij(void)
 				arg += string("\", \"") + main_argv[++i];
 			add_option(options, "-eval", 1);
 			arg = string("run(\"") + arg + "\");";
+			add_option(options, arg, 1);
+			headless_argc++;
+		}
+		else if (handle_one_option(i, "--compile-and-run", arg)) {
+			add_option(options, "-eval", 1);
+			arg = string("run(\"Refresh Javas\", \"")
+				+ make_absolute_path(arg.c_str()) + "\");";
 			add_option(options, arg, 1);
 			headless_argc++;
 		}
