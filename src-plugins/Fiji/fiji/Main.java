@@ -183,8 +183,8 @@ public class Main implements AWTEventListener {
 	 * command line arguments are parsed.
 	 */
 	public static void setup() {
+		new User_Plugins().run(null);
 		if (IJ.getInstance() != null) {
-			new User_Plugins().run(null);
 			SampleImageLoader.install();
 			installRecentCommands();
 			new Thread() {
