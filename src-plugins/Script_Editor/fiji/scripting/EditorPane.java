@@ -210,6 +210,8 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 			setText("");
 		else {
 			File file = new File(path);
+			if (!file.isAbsolute())
+				file = new File(ij.io.OpenDialog.getDefaultDirectory(), path);
 			int line = 0;
 			try {
 				if (file.getCanonicalPath().equals(oldFile.getCanonicalPath()))
