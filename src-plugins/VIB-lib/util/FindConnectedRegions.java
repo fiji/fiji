@@ -219,8 +219,6 @@ public class FindConnectedRegions {
 		if (!byteImage && mustHaveSameValue)
 			throw new IllegalArgumentException("You can only specify that each region must have the same value for 8 bit images.");
 
-		boolean startAtMaxValue = !mustHaveSameValue;
-
 		int point_roi_x = -1;
 		int point_roi_y = -1;
 		int point_roi_z = -1;
@@ -337,11 +335,7 @@ public class FindConnectedRegions {
 			if( pleaseStop )
 				break;
 
-			/* Find one pixel that's above the minimum, or
-			   find the maximum in the case where we're
-			   not insisting that all regions are made up
-			   of the same color.  These are set in all
-			   cases... */
+			/* Find the next pixel that's should be in a region: */
 
 			int initial_x = -1;
 			int initial_y = -1;
@@ -349,8 +343,6 @@ public class FindConnectedRegions {
 
 			int foundValueInt = -1;
 			float foundValueFloat = Float.MIN_VALUE;
-			int maxValueInt = -1;
-			float maxValueFloat = Float.MIN_VALUE;
 
 			// ------------------------------------------------------------------------
 			/* The next section tries to find the next starting point, depending on the
@@ -367,70 +359,41 @@ public class FindConnectedRegions {
 				else
 					foundValueFloat = sliceDataFloats[initial_z][initial_y * width + initial_x];
 
-			} else if (byteImage && startAtMaxValue) {
+			} else if (byteImage) {
 
-				for (int z = ignoreBeforeZ; z < depth; ++z) {
+				boolean foundPoint = false;
+				for (int z = ignoreBeforeZ; z < depth && ! foundPoint; ++z) {
 					int startY = (z == ignoreBeforeZ) ? ignoreBeforeY : 0;
-					for (int y = startY; y < height; ++y) {
-						int startX = (z == ignoreBeforeZ && y == ignoreBeforeY) ? ignoreBeforeX : 0;
-						for (int x = startX; x < width; ++x) {
-							if( IN_PREVIOUS_REGION == pointState[ width * (z * height + y) + x ] )
-								continue;
-							int value = sliceDataBytes[z][y * width + x] & 0xFF;
-							if (value > maxValueInt) {
-								initial_x = x;
-								initial_y = y;
-								initial_z = z;
-								maxValueInt = value;
-							}
-						}
-					}
-				}
-
-				foundValueInt = maxValueInt;
-
-				/* If the maximum value is below the
-				   level we care about, we're done. */
-
-				if (foundValueInt < valuesOverDouble) {
-					break;
-				}
-
-			} else if (byteImage && !startAtMaxValue) {
-
-				// Just finding some point above the user supplied threshold:
-				for (int z = ignoreBeforeZ; z < depth && foundValueInt == -1; ++z) {
-					int startY = (z == ignoreBeforeZ) ? ignoreBeforeY : 0;
-					for (int y = startY; y < height && foundValueInt == -1; ++y) {
+					for (int y = startY; y < height && ! foundPoint; ++y) {
 						int startX = (z == ignoreBeforeZ && y == ignoreBeforeY) ? ignoreBeforeX : 0;
 						for (int x = startX; x < width; ++x) {
 							if( IN_PREVIOUS_REGION == pointState[ width * (z * height + y) + x ] )
 								continue;
 							int value = sliceDataBytes[z][y * width + x] & 0xFF;
 							if (value > valuesOverDouble) {
-
 								initial_x = x;
 								initial_y = y;
 								initial_z = z;
 								foundValueInt = value;
+								foundPoint = true;
 								break;
 							}
 						}
 					}
 				}
 
-				if (foundValueInt == -1) {
+				if( foundValueInt == -1 )
 					break;
-				}
 
 			} else {
 
-				// This must be a 32 bit image and we're starting at the maximum
-				assert (!byteImage && startAtMaxValue);
+				// This must be a 32 bit image:
+				assert (!byteImage);
 
-				for (int z = ignoreBeforeZ; z < depth; ++z) {
+				boolean foundPoint = false;
+				for (int z = ignoreBeforeZ; z < depth && ! foundPoint; ++z) {
 					int startY = (z == ignoreBeforeZ) ? ignoreBeforeY : 0;
-					for (int y = startY; y < height; ++y) {
+					for (int y = startY; y < height && ! foundPoint; ++y) {
 						int startX = (z == ignoreBeforeZ && y == ignoreBeforeY) ? ignoreBeforeX : 0;
 						for (int x = startX; x < width; ++x) {
 							if( IN_PREVIOUS_REGION == pointState[ width * (z * height + y) + x ] )
@@ -440,24 +403,16 @@ public class FindConnectedRegions {
 								initial_x = x;
 								initial_y = y;
 								initial_z = z;
-								maxValueFloat = value;
+								foundValueFloat = value;
+								foundPoint = true;
+								break;
 							}
 						}
 					}
 				}
 
-				foundValueFloat = maxValueFloat;
-
-				if (foundValueFloat == Float.MIN_VALUE) {
+				if (foundValueFloat == Float.MIN_VALUE)
 					break;
-
-					// If the maximum value is below the level we
-					// care about, we're done.
-				}
-				if (foundValueFloat < valuesOverDouble) {
-					break;
-				}
-
 			}
 
 			// ------------------------------------------------------------------------
