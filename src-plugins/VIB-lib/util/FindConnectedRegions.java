@@ -26,9 +26,19 @@
  */
 
 /* This plugin looks for connected regions with the same value in 8
- * bit images, and optionally displays images with just each of those
- * connected regions.  (Otherwise the useful information is just
- * printed out.)
+   bit images, and optionally displays images with just each of those
+   connected regions or one image where each value represents the
+   region number.  The sizes of the regions are output to the results table.
+
+   This is rather inefficient at the moment:
+
+      - We maintain an extra "pointState" array of bytes the size of
+      the image, which we could do without - the state of the search
+      could be stored in the output image.
+
+      - We should exclude sub-threshold points discovered in the
+      search as we go along, and at the moment this isn't done.
+
  */
 
 package util;
