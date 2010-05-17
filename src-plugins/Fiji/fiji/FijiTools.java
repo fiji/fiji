@@ -2,9 +2,12 @@ package fiji;
 
 public class FijiTools {
 	public static String getFijiDir() throws ClassNotFoundException {
+		String path = System.getProperty("fiji.dir");
+		if (path != null)
+			return path;
 		final String prefix = "file:";
 		final String suffix = "/jars/Fiji.jar!/fiji/FijiTools.class";
-		String path = Class.forName("fiji.FijiTools")
+		path = Class.forName("fiji.FijiTools")
 			.getResource("FijiTools.class").getPath();
 		if (path.startsWith(prefix))
 			path = path.substring(prefix.length());
