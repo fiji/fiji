@@ -16,4 +16,12 @@ public class FijiTools {
 				path.length() - suffix.length());
 		return path;
 	}
+
+	public static boolean isFijiDeveloper() {
+		try {
+			return new File(getFijiDir(), "fiji.cxx").exists();
+		} catch (Exception e) {
+			return false;
+		}
+	}
 }
