@@ -585,8 +585,6 @@ public class FindConnectedRegions {
 			if(pleaseStop)
 				break;
 
-			++regionNumber;
-
 			// So now pointState should have no IN_QUEUE
 			// status points...
 			Region region;
@@ -605,6 +603,7 @@ public class FindConnectedRegions {
 				continue;
 			}
 
+			++regionNumber;
 			results.regionInfo.add(region);
 
 			byte replacementValue;
