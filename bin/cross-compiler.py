@@ -15,7 +15,7 @@ if sys.argv[1] != 'win64':
 	sys.exit(1)
 
 root = 'root-x86_64-pc-linux/'
-cc = root + 'bin/x86_64-w64-mingw32-g'
+cc = root + 'bin/x86_64-w64-mingw32-gcc'
 strip = root + 'bin/x86_64-w64-mingw32-strip'
 windres = root + 'bin/x86_64-w64-mingw32-windres'
 target = 'precompiled/fiji-win64.exe'
