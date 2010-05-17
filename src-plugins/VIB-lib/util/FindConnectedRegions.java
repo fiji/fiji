@@ -324,392 +324,402 @@ public class FindConnectedRegions {
 		rt.reset();
 
 		CancelDialog cancelDialog = null;
-		if( ! noUI ) {
-			cancelDialog=new CancelDialog(this);
-			cancelDialog.show();
-		}
+		try {
 
-		boolean firstTime = true;
+			if( ! noUI ) {
+				cancelDialog=new CancelDialog(this);
+				cancelDialog.show();
+			}
 
-		int regionNumber = 0;
+			boolean firstTime = true;
 
-		int numberOfPointsInStack = width * height * depth;
-		byte[] pointState = new byte[numberOfPointsInStack];
+			int regionNumber = 0;
 
-		int ignoreBeforeX = 0;
-		int ignoreBeforeY = 0;
-		int ignoreBeforeZ = 0;
+			int numberOfPointsInStack = width * height * depth;
+			byte[] pointState = new byte[numberOfPointsInStack];
 
-		IJ.showProgress(0);
+			int ignoreBeforeX = 0;
+			int ignoreBeforeY = 0;
+			int ignoreBeforeZ = 0;
 
-		int lastProgessZ = 0;
+			IJ.showProgress(0);
 
-		while (true) {
+			int lastProgessZ = 0;
 
-			if( pleaseStop )
-				break;
+			while (true) {
 
-			/* Find the next pixel that's should be in a region: */
+				if( pleaseStop )
+					break;
 
-			int initial_x = -1;
-			int initial_y = -1;
-			int initial_z = -1;
+				/* Find the next pixel that's should be in a region: */
 
-			int foundValueInt = -1;
-			float foundValueFloat = Float.MIN_VALUE;
+				int initial_x = -1;
+				int initial_y = -1;
+				int initial_z = -1;
 
-			// ------------------------------------------------------------------------
-			/* The next section tries to find the next starting point, depending on the
-			   options the user chose: */
+				int foundValueInt = -1;
+				float foundValueFloat = Float.MIN_VALUE;
 
-			if (firstTime && startFromPointROI ) {
+				// ------------------------------------------------------------------------
+				/* The next section tries to find the next starting point, depending on the
+				   options the user chose: */
 
-				initial_x = point_roi_x;
-				initial_y = point_roi_y;
-				initial_z = point_roi_z;
+				if (firstTime && startFromPointROI ) {
 
-				if(byteImage)
-					foundValueInt = sliceDataBytes[initial_z][initial_y * width + initial_x] & 0xFF;
-				else
-					foundValueFloat = sliceDataFloats[initial_z][initial_y * width + initial_x];
+					initial_x = point_roi_x;
+					initial_y = point_roi_y;
+					initial_z = point_roi_z;
 
-			} else if (byteImage) {
-
-				boolean foundPoint = false;
-				for (int z = ignoreBeforeZ; z < depth && ! foundPoint; ++z) {
-					if( z != lastProgessZ ) {
-						IJ.showProgress(z / (double)depth);
-						lastProgessZ = z;
+					boolean tooSmall;
+					if(byteImage) {
+						foundValueInt = sliceDataBytes[initial_z][initial_y * width + initial_x] & 0xFF;
+						tooSmall = foundValueInt <= valuesOverDouble;
+					} else {
+						foundValueFloat = sliceDataFloats[initial_z][initial_y * width + initial_x];
+						tooSmall = foundValueFloat <= valuesOverDouble;
 					}
-					int startY = (z == ignoreBeforeZ) ? ignoreBeforeY : 0;
-					for (int y = startY; y < height && ! foundPoint; ++y) {
-						int startX = (z == ignoreBeforeZ && y == ignoreBeforeY) ? ignoreBeforeX : 0;
-						for (int x = startX; x < width; ++x) {
-							if( IN_PREVIOUS_REGION == pointState[ width * (z * height + y) + x ] )
-								continue;
-							int value = sliceDataBytes[z][y * width + x] & 0xFF;
-							if (value > valuesOverDouble) {
-								initial_x = x;
-								initial_y = y;
-								initial_z = z;
-								foundValueInt = value;
-								foundPoint = true;
-								break;
+					if(tooSmall)
+						throw new IllegalArgumentException("The value at the point you selected is not over the threshold you specified ("+valuesOverDouble+")");
+
+				} else if (byteImage) {
+
+					boolean foundPoint = false;
+					for (int z = ignoreBeforeZ; z < depth && ! foundPoint; ++z) {
+						if( z != lastProgessZ ) {
+							IJ.showProgress(z / (double)depth);
+							lastProgessZ = z;
+						}
+						int startY = (z == ignoreBeforeZ) ? ignoreBeforeY : 0;
+						for (int y = startY; y < height && ! foundPoint; ++y) {
+							int startX = (z == ignoreBeforeZ && y == ignoreBeforeY) ? ignoreBeforeX : 0;
+							for (int x = startX; x < width; ++x) {
+								if( IN_PREVIOUS_REGION == pointState[ width * (z * height + y) + x ] )
+									continue;
+								int value = sliceDataBytes[z][y * width + x] & 0xFF;
+								if (value > valuesOverDouble) {
+									initial_x = x;
+									initial_y = y;
+									initial_z = z;
+									foundValueInt = value;
+									foundPoint = true;
+									break;
+								}
 							}
 						}
 					}
-				}
 
-				if( foundValueInt == -1 )
-					break;
+					if( foundValueInt == -1 )
+						break;
 
-			} else {
+				} else {
 
-				// This must be a 32 bit image:
-				assert (!byteImage);
+					// This must be a 32 bit image:
+					assert (!byteImage);
 
-				boolean foundPoint = false;
-				for (int z = ignoreBeforeZ; z < depth && ! foundPoint; ++z) {
-					if( z != lastProgessZ ) {
-						IJ.showProgress(z / (double)depth);
-						lastProgessZ = z;
-					}
-					int startY = (z == ignoreBeforeZ) ? ignoreBeforeY : 0;
-					for (int y = startY; y < height && ! foundPoint; ++y) {
-						int startX = (z == ignoreBeforeZ && y == ignoreBeforeY) ? ignoreBeforeX : 0;
-						for (int x = startX; x < width; ++x) {
-							if( IN_PREVIOUS_REGION == pointState[ width * (z * height + y) + x ] )
-								continue;
-							float value = sliceDataFloats[z][y * width + x];
-							if (value > valuesOverDouble) {
-								initial_x = x;
-								initial_y = y;
-								initial_z = z;
-								foundValueFloat = value;
-								foundPoint = true;
-								break;
+					boolean foundPoint = false;
+					for (int z = ignoreBeforeZ; z < depth && ! foundPoint; ++z) {
+						if( z != lastProgessZ ) {
+							IJ.showProgress(z / (double)depth);
+							lastProgessZ = z;
+						}
+						int startY = (z == ignoreBeforeZ) ? ignoreBeforeY : 0;
+						for (int y = startY; y < height && ! foundPoint; ++y) {
+							int startX = (z == ignoreBeforeZ && y == ignoreBeforeY) ? ignoreBeforeX : 0;
+							for (int x = startX; x < width; ++x) {
+								if( IN_PREVIOUS_REGION == pointState[ width * (z * height + y) + x ] )
+									continue;
+								float value = sliceDataFloats[z][y * width + x];
+								if (value > valuesOverDouble) {
+									initial_x = x;
+									initial_y = y;
+									initial_z = z;
+									foundValueFloat = value;
+									foundPoint = true;
+									break;
+								}
 							}
 						}
 					}
+
+					if (foundValueFloat == Float.MIN_VALUE)
+						break;
 				}
 
-				if (foundValueFloat == Float.MIN_VALUE)
-					break;
-			}
+				// ------------------------------------------------------------------------
+				/* Now we've got the starting point, we can record that we can start
+				   at the next part when we start searching again */
 
-			// ------------------------------------------------------------------------
-			/* Now we've got the starting point, we can record that we can start
-			   at the next part when we start searching again */
-
-			/* If x >= width it immediately moves on to
-			   the next y as we'd like */
-			ignoreBeforeX = initial_x + 1;
-			ignoreBeforeZ = initial_z;
-			ignoreBeforeY = initial_y;
-
-			if( verbose )
-				System.out.println("Starting from "+initial_x+", "+initial_y+", "+initial_z);
-
-			firstTime = false;
-
-			int vint = foundValueInt;
-			float vfloat = foundValueFloat;
-
-			String materialName = null;
-			if (materialList != null) {
-				materialName = materialList[vint];
-			}
-			int pointsInQueue = 0;
-			int queueArrayLength = 1024;
-			int[] queue = new int[queueArrayLength];
-
-			int i = width * (initial_z * height + initial_y) + initial_x;
-			pointState[i] = IN_QUEUE;
-			queue[pointsInQueue++] = i;
-
-			int pointsInThisRegion = 0;
-
-			while (pointsInQueue > 0) {
-
-				if(pleaseStop)
-					break;
-
-				int nextIndex = queue[--pointsInQueue];
-
-				int currentPointStateIndex = nextIndex;
-				int pz = nextIndex / (width * height);
-				int currentSliceIndex = nextIndex % (width * height);
-				int py = currentSliceIndex / width;
-				int px = currentSliceIndex % width;
+				/* If x >= width it immediately moves on to
+				   the next y as we'd like */
+				ignoreBeforeX = initial_x + 1;
+				ignoreBeforeZ = initial_z;
+				ignoreBeforeY = initial_y;
 
 				if( verbose )
-					System.out.println("  Considering point from queue at "+px+", "+py+", "+pz);
+					System.out.println("Starting from "+initial_x+", "+initial_y+", "+initial_z);
 
-				pointState[currentPointStateIndex] = ADDED_TO_CURRENT_REGION;
+				firstTime = false;
 
-				if (byteImage) {
-					sliceDataBytes[pz][currentSliceIndex] = 0;
-				} else {
-					sliceDataFloats[pz][currentSliceIndex] = Float.MIN_VALUE;
+				int vint = foundValueInt;
+				float vfloat = foundValueFloat;
+
+				String materialName = null;
+				if (materialList != null) {
+					materialName = materialList[vint];
 				}
-				++pointsInThisRegion;
+				int pointsInQueue = 0;
+				int queueArrayLength = 1024;
+				int[] queue = new int[queueArrayLength];
 
-				int x_unchecked_min = px - 1;
-				int y_unchecked_min = py - 1;
-				int z_unchecked_min = pz - 1;
+				int i = width * (initial_z * height + initial_y) + initial_x;
+				pointState[i] = IN_QUEUE;
+				queue[pointsInQueue++] = i;
 
-				int x_unchecked_max = px + 1;
-				int y_unchecked_max = py + 1;
-				int z_unchecked_max = pz + 1;
+				int pointsInThisRegion = 0;
 
-				int x_min = Math.max(0,x_unchecked_min);
-				int y_min = Math.max(0,y_unchecked_min);
-				int z_min = Math.max(0,z_unchecked_min);
+				while (pointsInQueue > 0) {
 
-				int x_max = Math.min(x_unchecked_max,width-1);
-				int y_max = Math.min(y_unchecked_max,height-1);
-				int z_max = Math.min(z_unchecked_max,depth-1);
+					if(pleaseStop)
+						break;
 
-				for (int z = z_min; z <= z_max; ++z) {
-					for (int y = y_min; y <= y_max; ++y) {
-						for (int x = x_min; x <= x_max; ++x) {
+					int nextIndex = queue[--pointsInQueue];
 
-							int x_off_centre = (x == x_unchecked_min || x == x_unchecked_max) ? 1 : 0;
-							int y_off_centre = (y == y_unchecked_min || y == y_unchecked_max) ? 1 : 0;
-							int z_off_centre = (z == z_unchecked_min || z == z_unchecked_max) ? 1 : 0;
+					int currentPointStateIndex = nextIndex;
+					int pz = nextIndex / (width * height);
+					int currentSliceIndex = nextIndex % (width * height);
+					int py = currentSliceIndex / width;
+					int px = currentSliceIndex % width;
 
-							int off_centre_total = x_off_centre + y_off_centre + z_off_centre;
+					if( verbose )
+						System.out.println("  Considering point from queue at "+px+", "+py+", "+pz);
 
-							// Ignore the start point:
-							if( off_centre_total == 0 )
-								continue;
+					pointState[currentPointStateIndex] = ADDED_TO_CURRENT_REGION;
 
-							// If we're not including diagonals,
-							// skip those points too:
-							if (!diagonal) {
-								if( x_off_centre + y_off_centre + z_off_centre > 1 )
+					if (byteImage) {
+						sliceDataBytes[pz][currentSliceIndex] = 0;
+					} else {
+						sliceDataFloats[pz][currentSliceIndex] = Float.MIN_VALUE;
+					}
+					++pointsInThisRegion;
+
+					int x_unchecked_min = px - 1;
+					int y_unchecked_min = py - 1;
+					int z_unchecked_min = pz - 1;
+
+					int x_unchecked_max = px + 1;
+					int y_unchecked_max = py + 1;
+					int z_unchecked_max = pz + 1;
+
+					int x_min = Math.max(0,x_unchecked_min);
+					int y_min = Math.max(0,y_unchecked_min);
+					int z_min = Math.max(0,z_unchecked_min);
+
+					int x_max = Math.min(x_unchecked_max,width-1);
+					int y_max = Math.min(y_unchecked_max,height-1);
+					int z_max = Math.min(z_unchecked_max,depth-1);
+
+					for (int z = z_min; z <= z_max; ++z) {
+						for (int y = y_min; y <= y_max; ++y) {
+							for (int x = x_min; x <= x_max; ++x) {
+
+								int x_off_centre = (x == x_unchecked_min || x == x_unchecked_max) ? 1 : 0;
+								int y_off_centre = (y == y_unchecked_min || y == y_unchecked_max) ? 1 : 0;
+								int z_off_centre = (z == z_unchecked_min || z == z_unchecked_max) ? 1 : 0;
+
+								int off_centre_total = x_off_centre + y_off_centre + z_off_centre;
+
+								// Ignore the start point:
+								if( off_centre_total == 0 )
 									continue;
-							}
-							if( verbose ) {
-								System.out.println("    Considering neighbour point at: "+x+", "+y+", "+z);
-							}
 
-							int newSliceIndex = y * width + x;
-							int newPointStateIndex = width * (z * height + y) + x;
-
-							if (byteImage) {
-
-								int neighbourValue = sliceDataBytes[z][newSliceIndex] & 0xFF;
-
-								if (mustHaveSameValue) {
-									if (neighbourValue != vint) {
+								// If we're not including diagonals,
+								// skip those points too:
+								if (!diagonal) {
+									if( x_off_centre + y_off_centre + z_off_centre > 1 )
 										continue;
+								}
+								if( verbose ) {
+									System.out.println("    Considering neighbour point at: "+x+", "+y+", "+z);
+								}
+
+								int newSliceIndex = y * width + x;
+								int newPointStateIndex = width * (z * height + y) + x;
+
+								if (byteImage) {
+
+									int neighbourValue = sliceDataBytes[z][newSliceIndex] & 0xFF;
+
+									if (mustHaveSameValue) {
+										if (neighbourValue != vint) {
+											continue;
+										}
+									} else {
+										if (neighbourValue <= valuesOverDouble) {
+											continue;
+										}
 									}
 								} else {
+
+									float neighbourValue = sliceDataFloats[z][newSliceIndex];
+
 									if (neighbourValue <= valuesOverDouble) {
 										continue;
 									}
 								}
-							} else {
 
-								float neighbourValue = sliceDataFloats[z][newSliceIndex];
-
-								if (neighbourValue <= valuesOverDouble) {
-									continue;
+								if( verbose ) {
+									System.out.println("    Not excluded by value");
+									System.out.println("    pointState is: "+pointState[newPointStateIndex]);
 								}
-							}
 
-							if( verbose ) {
-								System.out.println("    Not excluded by value");
-								System.out.println("    pointState is: "+pointState[newPointStateIndex]);
-							}
-
-							if (0 == pointState[newPointStateIndex]) {
-								pointState[newPointStateIndex] = IN_QUEUE;
-								if (pointsInQueue == queueArrayLength) {
-									int newArrayLength = (int) (queueArrayLength * 1.2);
-									int[] newArray = new int[newArrayLength];
-									System.arraycopy(queue, 0, newArray, 0, pointsInQueue);
-									queue = newArray;
-									queueArrayLength = newArrayLength;
+								if (0 == pointState[newPointStateIndex]) {
+									pointState[newPointStateIndex] = IN_QUEUE;
+									if (pointsInQueue == queueArrayLength) {
+										int newArrayLength = (int) (queueArrayLength * 1.2);
+										int[] newArray = new int[newArrayLength];
+										System.arraycopy(queue, 0, newArray, 0, pointsInQueue);
+										queue = newArray;
+										queueArrayLength = newArrayLength;
+									}
+									if( verbose )
+										System.out.println("    ... so adding");
+									queue[pointsInQueue++] = newPointStateIndex;
 								}
-								if( verbose )
-									System.out.println("    ... so adding");
-								queue[pointsInQueue++] = newPointStateIndex;
 							}
 						}
 					}
 				}
-			}
 
-			if(pleaseStop)
-				break;
+				if(pleaseStop)
+					break;
 
-			// So now pointState should have no IN_QUEUE
-			// status points...
-			Region region;
-			if (byteImage) {
-				region = new Region(vint, materialName, pointsInThisRegion, mustHaveSameValue );
-			} else {
-				region = new Region(pointsInThisRegion, mustHaveSameValue);
-			}
+				// So now pointState should have no IN_QUEUE
+				// status points...
+				Region region;
+				if (byteImage) {
+					region = new Region(vint, materialName, pointsInThisRegion, mustHaveSameValue );
+				} else {
+					region = new Region(pointsInThisRegion, mustHaveSameValue);
+				}
 
-			if (pointsInThisRegion < minimumPointsInRegionDouble) {
-				/* But we don't want to keep searching
-				   these, so set as IN_PREVIOUS_REGION: */
+				if (pointsInThisRegion < minimumPointsInRegionDouble) {
+					/* But we don't want to keep searching
+					   these, so set as IN_PREVIOUS_REGION: */
+					for( int p = 0; p < numberOfPointsInStack; ++p )
+						if( pointState[p] == ADDED_TO_CURRENT_REGION )
+							pointState[p] = IN_PREVIOUS_REGION;
+					continue;
+				}
+
+				++regionNumber;
+				results.regionInfo.add(region);
+
+				byte replacementValue;
+				if (byteImage) {
+					replacementValue = (byte) ( (cm == null) ? 255 : vint );
+				} else {
+					replacementValue = (byte) 255;
+				}
+
+				if (imageAllRegions) {
+					if( regionNumber == Short.MAX_VALUE + 1 ) {
+						IJ.showMessage("Found more regions than Short.MAX_VALUE, so the all regions image will have overflowed values...");
+					}
+					/* Look for all the ADDED_TO_CURRENT_REGION points just found, and
+					   add them to the "all regions" image: */
+					for (int z = 0; z < depth; ++z ) {
+						for( int y = 0; y < height; ++y ) {
+							for( int x = 0; x < width; ++x ) {
+								if( pointState[width * (z * height + y) + x] == ADDED_TO_CURRENT_REGION ) {
+									allRegionsPixels[z][y*width+x] = (short)regionNumber;
+								}
+							}
+						}
+					}
+					allRegionsStack.setColorModel(backgroundAndSpectrum(Math.min(regionNumber,255)));
+					ImageProcessor ip = results.allRegions.getProcessor();
+					ip.setColorModel(backgroundAndSpectrum(Math.min(regionNumber,255)));
+					int min = 0;
+					int max = Math.max( regionNumber, 255 );
+					ip.setMinAndMax( min, max );
+					results.allRegions.updateAndDraw();
+				}
+
+				/* In either case we generate a new image for
+				   that region, either display it or just use
+				   it for subtracing from the original image */
+
+				if (imagePerRegion || autoSubtract) {
+
+					ImageStack newStack = new ImageStack(width, height);
+					for (int z = 0; z < depth; ++z) {
+						byte[] sliceBytes = new byte[width * height];
+						for (int y = 0; y < height; ++y) {
+							for (int x = 0; x < width; ++x) {
+
+								byte status = pointState[width * (z * height + y) + x];
+
+								if (status == IN_QUEUE) {
+									IJ.log("BUG: point " + x + "," + y + "," + z + " is still marked as IN_QUEUE");
+								}
+
+								if (status == ADDED_TO_CURRENT_REGION) {
+									sliceBytes[y * width + x] = replacementValue;
+								}
+							}
+						}
+						ByteProcessor bp = new ByteProcessor(width, height);
+						bp.setPixels(sliceBytes);
+						newStack.addSlice("", bp);
+					}
+
+					if (ImagePlus.COLOR_256 == type) {
+						if (cm != null) {
+							newStack.setColorModel(cm);
+						}
+					}
+
+					ImagePlus newImagePlus = new ImagePlus(region.toString(), newStack);
+
+					if (calibration != null) {
+						newImagePlus.setCalibration(calibration);
+					}
+
+					if (parameters != null) {
+						parameters.setParameters(newImagePlus, true);
+					}
+
+					if (autoSubtract) {
+						iCalc.calculate("Subtract stack", imagePlus, newImagePlus);
+					}
+
+					if (imagePerRegion) {
+						if( ! noUI )
+							newImagePlus.show();
+					} else {
+						newImagePlus.changes = false;
+						newImagePlus.close();
+					}
+				}
+
 				for( int p = 0; p < numberOfPointsInStack; ++p )
 					if( pointState[p] == ADDED_TO_CURRENT_REGION )
 						pointState[p] = IN_PREVIOUS_REGION;
-				continue;
-			}
 
-			++regionNumber;
-			results.regionInfo.add(region);
-
-			byte replacementValue;
-			if (byteImage) {
-				replacementValue = (byte) ( (cm == null) ? 255 : vint );
-			} else {
-				replacementValue = (byte) 255;
-			}
-
-			if (imageAllRegions) {
-				if( regionNumber == Short.MAX_VALUE + 1 ) {
-					IJ.showMessage("Found more regions than Short.MAX_VALUE, so the all regions image will have overflowed values...");
-				}
-				/* Look for all the ADDED_TO_CURRENT_REGION points just found, and
-				   add them to the "all regions" image: */
-				for (int z = 0; z < depth; ++z ) {
-					for( int y = 0; y < height; ++y ) {
-						for( int x = 0; x < width; ++x ) {
-							if( pointState[width * (z * height + y) + x] == ADDED_TO_CURRENT_REGION ) {
-								allRegionsPixels[z][y*width+x] = (short)regionNumber;
-							}
-						}
-					}
-				}
-				allRegionsStack.setColorModel(backgroundAndSpectrum(Math.min(regionNumber,255)));
-				ImageProcessor ip = results.allRegions.getProcessor();
-				ip.setColorModel(backgroundAndSpectrum(Math.min(regionNumber,255)));
-				int min = 0;
-				int max = Math.max( regionNumber, 255 );
-				ip.setMinAndMax( min, max );
-				results.allRegions.updateAndDraw();
-			}
-
-			/* In either case we generate a new image for
-			   that region, either display it or just use
-			   it for subtracing from the original image */
-
-			if (imagePerRegion || autoSubtract) {
-
-				ImageStack newStack = new ImageStack(width, height);
-				for (int z = 0; z < depth; ++z) {
-					byte[] sliceBytes = new byte[width * height];
-					for (int y = 0; y < height; ++y) {
-						for (int x = 0; x < width; ++x) {
-
-							byte status = pointState[width * (z * height + y) + x];
-
-							if (status == IN_QUEUE) {
-								IJ.log("BUG: point " + x + "," + y + "," + z + " is still marked as IN_QUEUE");
-							}
-
-							if (status == ADDED_TO_CURRENT_REGION) {
-								sliceBytes[y * width + x] = replacementValue;
-							}
-						}
-					}
-					ByteProcessor bp = new ByteProcessor(width, height);
-					bp.setPixels(sliceBytes);
-					newStack.addSlice("", bp);
-				}
-
-				if (ImagePlus.COLOR_256 == type) {
-					if (cm != null) {
-						newStack.setColorModel(cm);
-					}
-				}
-
-				ImagePlus newImagePlus = new ImagePlus(region.toString(), newStack);
-
-				if (calibration != null) {
-					newImagePlus.setCalibration(calibration);
-				}
-
-				if (parameters != null) {
-					parameters.setParameters(newImagePlus, true);
-				}
-
-				if (autoSubtract) {
-					iCalc.calculate("Subtract stack", imagePlus, newImagePlus);
-				}
-
-				if (imagePerRegion) {
-					if( ! noUI )
-						newImagePlus.show();
-				} else {
-					newImagePlus.changes = false;
-					newImagePlus.close();
+				if ( (stopAfterNumberOfRegions > 0) && (results.regionInfo.size() >= stopAfterNumberOfRegions) ) {
+					break;
 				}
 			}
 
-			for( int p = 0; p < numberOfPointsInStack; ++p )
-				if( pointState[p] == ADDED_TO_CURRENT_REGION )
-				    pointState[p] = IN_PREVIOUS_REGION;
+			IJ.showProgress(1.0);
 
-			if ( (stopAfterNumberOfRegions > 0) && (results.regionInfo.size() >= stopAfterNumberOfRegions) ) {
-				break;
-			}
+			if( imageAllRegions )
+				results.allRegions.setTitle(defaultAllRegionsTitle);
+
+		} finally {
+			if( ! noUI )
+				cancelDialog.dispose();
 		}
-
-		IJ.showProgress(1.0);
-
-		if( imageAllRegions )
-			results.allRegions.setTitle(defaultAllRegionsTitle);
-
-		if( ! noUI )
-			cancelDialog.dispose();
 
 		for (Iterator<Region> it = results.regionInfo.iterator(); it.hasNext();) {
 			Region r = it.next();
