@@ -90,17 +90,17 @@ test ! -f "$CWD"/$jar -o "$CWD"/$source -nt "$CWD"/$jar && {
 
 # make sure the Fiji launcher is up-to-date
 test "a$targets" != a$jar -a "a$targets" != afiji &&
-test ! -f "$CWD"/fiji -o "$CWD"/fiji.cxx -nt "$CWD"/fiji$exe && {
+test ! -f "$CWD"/fiji -o "$CWD"/fiji.c -nt "$CWD"/fiji$exe && {
 	(cd "$CWD" && sh "$(basename "$0")" $variables fiji) || exit
 }
 
 # on Win64, with a 32-bit compiler, do not try to compile
 case $platform in
 win64)
-	case "$(g++ --version)" in
+	case "$(gcc --version)" in
 	*mingw32*)
 		# cannot compile!
-		test "$CWD"/fiji.exe -nt "$CWD"/fiji.cxx &&
+		test "$CWD"/fiji.exe -nt "$CWD"/fiji.c &&
 		test "$CWD"/fiji.exe -nt "$CWD"/precompiled/fiji-win64.exe &&
 		test "$CWD"/fiji.exe -nt "$CWD"/Fakefile &&
 		test "$CWD"/fiji.exe -nt "$CWD"/$jar ||
