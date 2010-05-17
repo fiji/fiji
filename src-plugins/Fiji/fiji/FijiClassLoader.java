@@ -25,7 +25,7 @@ public class FijiClassLoader extends URLClassLoader {
 	public FijiClassLoader(boolean initDefaults) {
 		this();
 		if (initDefaults) try {
-			String fijiDir = User_Plugins.getFijiDir();
+			String fijiDir = FijiTools.getFijiDir();
 			addPath(fijiDir + "/plugins");
 			addPath(fijiDir + "/jars");
 		} catch (Exception e) {
