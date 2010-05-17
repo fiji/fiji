@@ -1,5 +1,7 @@
 package fiji;
 
+import java.io.File;
+
 public class FijiTools {
 	public static String getFijiDir() throws ClassNotFoundException {
 		String path = System.getProperty("fiji.dir");
