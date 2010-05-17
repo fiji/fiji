@@ -156,7 +156,7 @@ public class Weka_Segmentation implements PlugIn
 	/** set of instances for the whole training image */
 	private Instances wholeImageData;
 	/** set of instances from loaded data (previously saved segmentation) */
-	private Instances loadedTrainingData;
+	private Instances loadedTrainingData = null;
 	/** current classifier */
 	private AbstractClassifier classifier = null;
 	/** train header */
@@ -1012,7 +1012,7 @@ public class Weka_Segmentation implements PlugIn
 
 		final Instances trainingData =  new Instances("segment", attributes, numOfInstances);
 
-		IJ.log("\nTraining input:");
+		IJ.log("Training input:");
 		
 		// For all classes
 		for(int l = 0; l < numOfClasses; l++)
@@ -1192,7 +1192,7 @@ public class Weka_Segmentation implements PlugIn
 		}
 		
 		// Print classifier information
-		IJ.log("\n" + this.classifier.toString());
+		IJ.log( this.classifier.toString() );
 		
 		final long end = System.currentTimeMillis();
 						
@@ -1218,14 +1218,14 @@ public class Weka_Segmentation implements PlugIn
 		if(updateWholeData)
 		{
 			updateTestSet();
-			IJ.log("Test dataset updated ("+ wholeImageData.numInstances() + " instances)");
+			IJ.log("Test dataset updated ("+ wholeImageData.numInstances() + " instances, " + wholeImageData.numAttributes() + " attributes).");
 		}
 
 		IJ.log("Classifying whole image...");
 
 		classifiedImage = applyClassifier(wholeImageData, trainingImage.getWidth(), trainingImage.getHeight());
 
-		IJ.log("Finished segmentation of whole image.");
+		IJ.log("Finished segmentation of whole image.\n");
 		if(useGUI)
 		{
 			if(showColorOverlay)
@@ -1684,69 +1684,21 @@ public class Weka_Segmentation implements PlugIn
 		
 		ImagePlus newImage = new ImagePlus(od.getDirectory() + od.getFileName());
 		
-		if (Math.max(newImage.getWidth(), newImage.getHeight()) > 1024)
-			if (!IJ.showMessageWithCancel("Warning", "At least one dimension of the image \n" +
-					"is larger than 1024 pixels. \n" +
-					"Feature stack creation and classifier training \n" +
-					"might take some time depending on your computer.\n" +
-			"Proceed?"))
-				return;
-		
-		// Accumulate current data in "loadedTrainingData"
-		IJ.log("Storing previous image instances...");
-		
-		// Create feature stack if it was not created yet
-		if(featureStack.isEmpty() || updateFeatures)
-		{
-			IJ.showStatus("Creating feature stack...");
-			featureStack.updateFeatures();
-			updateFeatures = false;
-		}
-		
-		// Create instances
-		Instances data = createTrainingInstances();
-		data.setClassIndex(data.numAttributes() - 1);
-		if (null != loadedTrainingData && null != data){
-			IJ.log("Merging data...");
-			for (int i=0; i < loadedTrainingData.numInstances(); i++){
-				// IJ.log("" + i)
-				data.add(loadedTrainingData.instance(i));
-			}
-			IJ.log("Finished");
-		}
-		else if (null == data)
-			data = loadedTrainingData;
-		
-		loadedTrainingData = data;
-		
-		IJ.log("Number of accumulated examples: " + loadedTrainingData.numInstances());
+		if( false == loadNewImage( newImage ) )
+			return;
 		
 		// Remove traces from the lists and ROI overlays
-		IJ.log("Removing previous markings...");
 		for(int i = 0; i < numOfClasses; i ++)
 		{
-			examples[i] = new ArrayList<Roi>();			
-			exampleList[i].removeAll();
-			
+			exampleList[i].removeAll();			
 			roiOverlay[i].setRoi(null);
 		}
 			
 		// Updating image
-		IJ.log("Updating image...");
-		
-		trainingImage.setProcessor("Advanced Weka Segmentation", newImage.getProcessor().duplicate().convertToByte(true));
-		
-		// Initialize feature stack (no features yet)
-		final boolean[] enabledFeatures = featureStack.getEnableFeatures();
-		featureStack = new FeatureStack(trainingImage);
-		featureStack.setEnableFeatures(enabledFeatures);
-		updateFeatures = true;
-		
 		displayImage = new ImagePlus();
 		displayImage.setProcessor("Advanced Weka Segmentation", trainingImage.getProcessor().duplicate());
 		
 		// Remove current classification result image
-		classifiedImage = null;
 		resultOverlay.setImage(null);
 					
 		toggleOverlay();
@@ -1755,9 +1707,7 @@ public class Weka_Segmentation implements PlugIn
 		win.setImagePlus(displayImage);
 		displayImage.updateAndDraw();
 		win.pack();
-		
-		IJ.log("Done");
-		
+				
 		this.updateButtonsEnabling();
 	}
 	
@@ -2463,6 +2413,9 @@ public class Weka_Segmentation implements PlugIn
 
 		
 		IJ.log("Writing training data: " + data.numInstances() + " instances...");
+		
+		//IJ.log("Data: " + data.numAttributes() +" attributes, " + data.numClasses() + " classes");
+		
 		writeDataToARFF(data, pathname);
 		IJ.log("Saved training data: " + pathname);
 		
@@ -2486,26 +2439,45 @@ public class Weka_Segmentation implements PlugIn
 	{
 		// Update features if necessary
 		if(featureStack.getSize() < 2)
+		{
+			IJ.log("Creating feature stack...");
 			featureStack.updateFeatures();
-
-		// Create instances
-		ArrayList<Attribute> attributes = new ArrayList<Attribute>();
-		for (int i=1; i<=featureStack.getSize(); i++){
-			String attString = featureStack.getSliceLabel(i) + " numeric";
-			attributes.add(new Attribute(attString));
+			updateFeatures = false;
+			IJ.log("Features stack is now updated.");
 		}
-			
+					
 		// Detect class index
 		int classIndex = 0;
 		for(classIndex = 0 ; classIndex < this.classLabels.length; classIndex++)
 			if(className.equalsIgnoreCase(this.classLabels[classIndex]))
 				break;
 		if(classIndex == this.classLabels.length)
+		{
+			IJ.log("Error: class named '" + className + "' not found.");
 			return false;
-		
+		}
 		// Create loaded training data if it does not exist yet
-		if(null == loadedTrainingData) 
-			loadedTrainingData = new Instances("segment", attributes, 1); 
+		if(null == loadedTrainingData)
+		{
+			IJ.log("Initializing loaded data...");
+			// Create instances
+			ArrayList<Attribute> attributes = new ArrayList<Attribute>();
+			for (int i=1; i<=featureStack.getSize(); i++){
+				String attString = featureStack.getSliceLabel(i) + " numeric";
+				attributes.add(new Attribute(attString));
+			}
+			// Update list of names of loaded classes
+			// (we assume the first two default class names)
+			loadedClassNames = new ArrayList<String>();						
+			for(int i = 0; i < numOfClasses ; i ++)
+				loadedClassNames.add(classLabels[i]);
+			attributes.add(new Attribute("class", loadedClassNames));
+			loadedTrainingData = new Instances("segment", attributes, 1);
+			
+			loadedTrainingData.setClassIndex(loadedTrainingData.numAttributes()-1);
+		}
+		
+			
 		
 		// Check all pixels different from black
 		final int width = labelImage.getWidth();
@@ -2533,7 +2505,180 @@ public class Weka_Segmentation implements PlugIn
 		
 		IJ.log("Added " + nl + " instances of '" + className +"'.");
 		
+		IJ.log("Training dataset updated ("+ loadedTrainingData.numInstances() + 
+				" instances, " + loadedTrainingData.numAttributes() + 
+				" attributes, " + loadedTrainingData.numClasses() + " classes).");
+		
 		return true;
+	}
+
+
+	/**
+	 * Get current feature stack
+	 * @return feature stack
+	 */
+	public FeatureStack getFeatureStack()
+	{
+		return this.featureStack;
+	}
+
+	/**
+	 * Set current classifier
+	 * @param cls new classifier
+	 */
+	public void setClassifier(AbstractClassifier cls)
+	{
+		this.classifier = cls;
+	}
+	
+	/**
+	 * Load a new image to segment (no GUI)
+	 * 
+	 * @param newImage new image to segment
+	 * @return false if error
+	 */
+	public boolean loadNewImage( ImagePlus newImage )
+	{
+		// Warning for images larger than 1024x1024
+		if (Math.max(newImage.getWidth(), newImage.getHeight()) > 1024)
+			if (!IJ.showMessageWithCancel("Warning", "At least one dimension of the image \n" +
+					"is larger than 1024 pixels. \n" +
+					"Feature stack creation and classifier training \n" +
+					"might take some time depending on your computer.\n" +
+			"Proceed?"))
+				return false;
+		
+		// Accumulate current data in "loadedTrainingData"
+		IJ.log("Storing previous image instances...");
+		
+		// Create feature stack if it was not created yet
+		if(featureStack.isEmpty() || updateFeatures)
+		{
+			IJ.log("Creating feature stack...");
+			featureStack.updateFeatures();
+			updateFeatures = false;
+			IJ.log("Features stack is now updated.");
+		}
+		
+		// Create instances
+		Instances data = createTrainingInstances();
+		data.setClassIndex(data.numAttributes() - 1);
+		if (null != loadedTrainingData && null != data){
+			IJ.log("Merging data...");
+			for (int i=0; i < loadedTrainingData.numInstances(); i++){
+				// IJ.log("" + i)
+				data.add(loadedTrainingData.instance(i));
+			}
+			IJ.log("Finished");
+		}
+		else if (null == data)
+			data = loadedTrainingData;
+		
+		loadedTrainingData = data;
+		
+		Attribute classAttribute = data.classAttribute();
+		Enumeration<String> classValues  = classAttribute.enumerateValues();
+		
+		// Update list of names of loaded classes
+		loadedClassNames = new ArrayList<String>();		
+		while(classValues.hasMoreElements())
+		{
+			final String className = classValues.nextElement().trim();
+			loadedClassNames.add(className);
+		}
+		
+		
+		IJ.log("Number of accumulated examples: " + loadedTrainingData.numInstances());
+		
+		// Remove traces from the lists and ROI overlays
+		IJ.log("Removing previous markings...");
+		for(int i = 0; i < numOfClasses; i ++)
+		{
+			examples[i] = new ArrayList<Roi>();			
+		}
+			
+		// Updating image
+		IJ.log("Updating image...");
+		
+		trainingImage.setProcessor("Advanced Weka Segmentation", newImage.getProcessor().duplicate().convertToByte(true));
+		
+		// Initialize feature stack (no features yet)
+		final boolean[] enabledFeatures = featureStack.getEnableFeatures();
+		featureStack = new FeatureStack(trainingImage);
+		featureStack.setEnableFeatures(enabledFeatures);
+		updateFeatures = true;
+		updateWholeData = true;
+		
+		// Remove current classification result image
+		classifiedImage = null;
+					
+		IJ.log("Done");
+		
+		return true;		
+	}
+	
+	/**
+	 * Add center lines of label image as binary data (for the first two classes)
+	 * 
+	 * @param labelImage binary label image
+	 * @param whiteClassName class name for the white pixels
+	 * @param blackClassName class name for the black pixels
+	 * @return false if error
+	 */
+	public boolean addCenterLinesBinaryData(
+			ImagePlus labelImage,
+			String whiteClassName,
+			String blackClassName)
+	{
+		// Update features if necessary
+		if(featureStack.getSize() < 2)
+		{
+			IJ.log("Creating feature stack...");
+			featureStack.updateFeatures();
+			updateFeatures = false;
+			IJ.log("Features stack is now updated.");
+		}
+		
+		if(labelImage.getWidth() != this.trainingImage.getWidth()
+				|| labelImage.getHeight() != this.trainingImage.getHeight())
+		{
+			IJ.log("Error: label and training image sizes do not fit.");
+			return false;
+		}
+		
+		// Process white pixels
+		final ImagePlus whiteIP = new ImagePlus ("white", labelImage.getProcessor().duplicate());
+		IJ.run(whiteIP, "Skeletonize","");
+		// Add skeleton to white class
+		if( false == this.addBinaryData(whiteIP, featureStack, whiteClassName) )
+		{
+			IJ.log("Error while loading white class center-lines data.");
+			return false;
+		}
+		
+		
+		// Process black pixels
+		final ImagePlus blackIP = new ImagePlus ("black", labelImage.getProcessor().duplicate());
+		IJ.run(blackIP, "Invert","");
+		IJ.run(blackIP, "Skeletonize","");
+		// Add skeleton to white class
+		if( false == this.addBinaryData(blackIP, featureStack, blackClassName))
+		{
+			IJ.log("Error while loading black class center-lines data.");
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Force segmentator to use all available features
+	 */
+	public void useAllFeatures()
+	{
+		boolean[] enableFeatures = this.featureStack.getEnableFeatures();
+		for (int i = 0; i < enableFeatures.length; i++)
+			enableFeatures[i] = true;
+		this.featureStack.setEnableFeatures(enableFeatures);
 	}
 	
 }
