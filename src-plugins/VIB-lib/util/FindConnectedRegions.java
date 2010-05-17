@@ -340,6 +340,10 @@ public class FindConnectedRegions {
 		int ignoreBeforeY = 0;
 		int ignoreBeforeZ = 0;
 
+		IJ.showProgress(0);
+
+		int lastProgessZ = 0;
+
 		while (true) {
 
 			if( pleaseStop )
@@ -373,6 +377,10 @@ public class FindConnectedRegions {
 
 				boolean foundPoint = false;
 				for (int z = ignoreBeforeZ; z < depth && ! foundPoint; ++z) {
+					if( z != lastProgessZ ) {
+						IJ.showProgress(z / (double)depth);
+						lastProgessZ = z;
+					}
 					int startY = (z == ignoreBeforeZ) ? ignoreBeforeY : 0;
 					for (int y = startY; y < height && ! foundPoint; ++y) {
 						int startX = (z == ignoreBeforeZ && y == ignoreBeforeY) ? ignoreBeforeX : 0;
@@ -402,6 +410,10 @@ public class FindConnectedRegions {
 
 				boolean foundPoint = false;
 				for (int z = ignoreBeforeZ; z < depth && ! foundPoint; ++z) {
+					if( z != lastProgessZ ) {
+						IJ.showProgress(z / (double)depth);
+						lastProgessZ = z;
+					}
 					int startY = (z == ignoreBeforeZ) ? ignoreBeforeY : 0;
 					for (int y = startY; y < height && ! foundPoint; ++y) {
 						int startX = (z == ignoreBeforeZ && y == ignoreBeforeY) ? ignoreBeforeX : 0;
@@ -691,6 +703,9 @@ public class FindConnectedRegions {
 				break;
 			}
 		}
+
+		IJ.showProgress(1.0);
+
 		if( imageAllRegions )
 			results.allRegions.setTitle(defaultAllRegionsTitle);
 
