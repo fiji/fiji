@@ -6,7 +6,8 @@
 	 *It does not know about hyper stacks - multiple channels..... only works as expected for normal stacks.
 	 *That means a single channel time series or z stack. 
 	 *
-	 *We might want to rename this tool "Stack Labeler", since it will handle labeling of Z stacks as well as time stacks. 
+	 *We might want to rename this tool "Series Labeler", since it will handle labeling of Z stacks as well as time stacks,
+	 *as well as any other series of images contained in an imageJ stack. Spectral series, etc. 
 	 *
 	 *The sequence of calls to an ExtendedPlugInFilter is the following:
 	 *- setup(arg, imp): The filter should return its flags.
@@ -17,17 +18,17 @@
 	 *- setNPasses(nPasses): Informs the filter of the number of calls of run(ip) that will follow.
 	 *- run(ip): Processing of the image(s). With the CONVERT_TO_FLOAT flag,
 	 *this method will be called for each color channel of an RGB image.
-	 *With DOES_STACKS, it will be called for each slice of a stack.
+	 *With DOES_STACKS, it will be called for each slice of a stack. But is this irrelevant here?
 	 *- setup("final", imp): called only if flag FINAL_PROCESSING has been specified.
 	 *Flag DONE stops this sequence of calls.
 	 *
 	 *We are using javas calendar for formatting the time stamps for "digital" style, 
-	 *but this has limitations, as you can t count over 59 min and the zero date is 01 01 1970, not zero. 
+	 *but this has limitations, as you can't count over 59 min and the zero date is 01 01 1970, not zero. 
 	 *
 	 *Here is a list (in no particular order) of requested and "would be nice" features that could be added:
-	 *-prevent longest label running off side of image  - ok
-	 *-choose colour  -ok
-	 *-font selection -ok
+	 *-prevent longest label running off sides and top/bottom of image  - ok
+	 *-choose colour  -ok uses imageJ builtin color chooser.
+	 *-font selection -ok uses imageJ builtin font chooser. 
 	 *-top left, bottom right etc.  drop down menu 
 	 *-Hyperstacks z, t, c
 	 *-read correct time / z units, start and intervals from image metadata. Get it from Image Properties?
@@ -36,7 +37,7 @@
 	 *-preview with live update when change GUI -ok, changes in GUI are read into the preview. 
 	 *-preview with stack slider in the GUI. - slider now in GUI but functionality is half broken
 	 *-Use Java Date for robust formatting of dates/times counted in milliseconds. - added hybrid date form at for 
-	 *-versatile formatting of the digital time - ok 
+	 *	versatile formatting of the digital time - ok 
 	 *-switch unit according to magnitude of number eg sec or min or nm or microns etc. 
 	 *- background colour for label. -0K.  
 	 *
@@ -90,7 +91,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		DialogListener {
 
 	ImagePlus imp;
-	// the px distance to the left
+	// the distance from left of image in px to put the label. 
 	int x = 2;
 	// the px distance to the top
 	int y = 15;
@@ -108,7 +109,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	int decimalPlaces = 3;
 	// indicates if processing has been canceled or not
 	boolean canceled;
-	// indicates if we are in preview mode or do the actual processing
+	// indicates if we are in preview mode or doing the actual processing
 	boolean preview = true;
 	// the custom pattern for labeling, used if format supports it
 	String customFormat = "";
@@ -116,7 +117,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	boolean antiAliasedText = true;
 	// the current frame 
 	int frame;
-	// a visibility range for the stamps, these default to 0 as no values are given
+	// a generation range for the labels, these default to 0 as no values are given
 	int first, last;
 	// the 'n' for 'label every n-th frame'. Treated as 1 for values below one
 	int frameMask = 1;
@@ -142,7 +143,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	int locationPreset;
 	
 	// the available kinds of stack we can label. 
-	final String[] stackTypes = { "z-stack", "time series / movie" };
+	final String[] stackTypes = { "z-stack", "time series or movie" }; //, "spectral series" };
 	
 	// the available time formats
 	final AbstractStampFormat[] formats = {new DecimalLabelFormat(), new DigitalLabelFormat(), new CustomLabelFormat()};
@@ -190,7 +191,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 
 	/**
 	 * Make the GUI for the plug-in, with fields to fill all the variables we
-	 * need. we are using ExtendedPluginFilter, so first argument is imp not ip.
+	 * need. We use ExtendedPluginFilter, so first argument is imp not ip.
 	 */
 	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr) {
 		preview = !IJ.isMacro();
@@ -200,7 +201,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		
 		// This makes the GUI object
 		gd = new NonBlockingGenericDialog(
-				"Time Stamper Enhanced");
+				"Time Stamper Enhanced / Series Labeler");
 
 		//
 		// General settings panel
@@ -211,7 +212,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		JPanel stackTypePanel = createComboBoxPanel("Stack_Type", stackTypes, 1, 100, 180);
 		stackTypePanel.setLocation(left, 30);
 		
-		addPanelsToDialg(generalSettingsContainer,
+		addPanelsToDialog(generalSettingsContainer,
 				new JPanel[] {stackTypePanel} );
 		
 		//
@@ -240,7 +241,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		decimalPlacesPanel = createNumericFieldPanel("Decimal_Places", decimalPlaces, 0);
 		decimalPlacesPanel.setLocation(300, 30);
 		
-		addPanelsToDialg(unitsFormattingContainer,
+		addPanelsToDialog(unitsFormattingContainer,
 				new JPanel[] {pLabelFormat, customSuffixPanel, labelUnitsPanel, decimalPlacesPanel, customLabelFormatPanel} );
 		
 		//
@@ -268,7 +269,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		JPanel pLastFrame = createNumericFieldPanel("Last", last, 0);
 		pLastFrame.setLocation(300, 60);
 		
-		addPanelsToDialg(startStopIntervalsContainer,
+		addPanelsToDialog(startStopIntervalsContainer,
 				new JPanel[] {pStartup, pInterval, pEveryNth, pFirstFrame, pLastFrame} );
 		
 		//
@@ -298,7 +299,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
         fontPropertiesContainer = new FontPropertiesPanel();
   		fontPropertiesContainer.setBounds(left, 70, 400, subpanelHeight);
   		
-  		addPanelsToDialg(locationFontContainer,
+  		addPanelsToDialog(locationFontContainer,
   				new JPanel[] {pLocationX, pLocationY, pLocationPresets, fontPropertiesContainer} );
 
 		gd.addPreviewCheckbox(pfr); // adds preview checkbox - needs
@@ -333,14 +334,16 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		if (gd.wasCanceled())
 			return DONE;
 
-		// if the ok button was pressed, we are really running the plug-in,
-		// so later we can tell what time stamp to make as its not the last
-		// as used by preview
+		/** if the ok button was pressed, we are really running the plug-in,
+		 *so later we can tell what time stamp to make 
+		 *as its not the last as used by preview
+		 */
 		preview = !gd.wasOKed();
 
-		// extendedpluginfilter showDialog method should
-		// return a combination (bitwise OR) of the flags specified in
-		// interfaces PlugInFilter and ExtendedPlugInFilter.
+		/** extendedpluginfilter showDialog method should
+		 * return a combination (bitwise OR) of the flags specified in
+		 * interfaces PlugInFilter and ExtendedPlugInFilter.
+		 */
 		return flags;
 	}
 
@@ -350,23 +353,13 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	 * worked out by the plug-in runner.
 	 */
 	public void setNPasses(int nPasses) {
-		// frame = first; // dont need this
-		// time = lastTime(); // set the time to lastTime, when doing the
-		// preview run,
-		// so the preview does not increment time when clicking the preview box
-		// causes run method execution.
-		// and i see the longest time stamp that will be made when i do a
-		// preview, so i can make sure its where
-		// i wanted it.
-		// that works, but now the time stamper counts up from time = lastTime
-		// value not from time = (start + (first*interval))
-		// when making the time stamps for the whole stack...
-
+		/** so the value of frame is reset to 1 each time the
+		 *plugin is run or the preview checkbox is checked.
+		 */
 		if (preview) {
 			frame = last;
 		} else {
-			frame = 1; // so the value of frame is reset to 0 each time the
-			// plugin is run or the preview checkbox is checked.
+			frame = 1;	
 		}
 		frame--;
 	}
@@ -377,44 +370,25 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	 * method is run before this in ExtendedPluginFilter
 	 */
 	public void run(ImageProcessor ip) {
-		// this increments frame integer by 1. If an int is declared with no
-		// value, it defaults to 0
+		// this increments frame integer by 1.
 		frame++;
 
-		// Updates this image from the pixel data in its associated
-		// ImageProcessor object and then displays it
-		// if it is the last frame. Why do we need this when there is
-		// ip.drawString(timeString); below?
+		/**Updates this image from the pixel data in its associated
+		 * ImageProcessor object and then displays it
+		 * if it is the last frame. Why do we need this when there is
+		 * ip.drawString(timeString); below?
+		 */
 		if (frame == last)
 			imp.updateAndDraw();
 
-		// the following line isnt needed in ExtendedPluginFilter because
-		// setNPasses takes care of number of frames to write in
-		// and ExtendedPluginFilter executes the showDialog method before the
-		// run method, always, so don't need to call it in run.
-		// if (frame==1) showDialog(imp, "TimeStamperEnhanced", pfr); // if at
-		// the 1st frame of the stack, show the GUI by calling the showDialog
-		// method
-		// and set the variables according to the GUI input.
-
 		// tell the run method when to not do anything just return
-		// Here there is a bug: with the new use of ExtendedPluginFilter,
-		// using preview on, the first time stamp is placed in frame first-1 not
-		// first...
-		// and the last time stamp in last-1. With preview off it works as
-		// expected.
-		if ((!preview) && (canceled || frame < first || frame > last || (frame % frameMask != 0)))
+		if ( (!preview) && (canceled || frame < first || frame > last || (frame % frameMask != 0) ) )
 			return;
 
-		// if (fontProperties != null)
-		// fontProperties.updateGUI(font);
 		ip.setFont(font);
 		ip.setAntialiasedText(antiAliasedText);
 
-		// Have moved the font size and xy location calculations for timestamp
-		// stuff out of the run method, into their own methods.
-		// set the font size according to ROI size, or if no ROI the GUI text
-		// input
+		// set the font size according to ROI size, or if no ROI the GUI text input
 		Rectangle backgroundRectangle = getBoundingRectangle(ip);
 		if (backgroundEnabled){
 			ip.setColor(Toolbar.getBackgroundColor());
@@ -422,17 +396,14 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		}
 		ip.setColor(Toolbar.getForegroundColor());
 		ip.moveTo(backgroundRectangle.x, (backgroundRectangle.y + backgroundRectangle.height) );
-
-		double time = getTimeFromFrame(frame); // ask the getTimeFromFrame
-		// method to return the time for
-		// that frame
-		ip.drawString(selectedFormat.getTimeString(time)); // draw the
-		// timestring into
-		// the image
-		// showProgress(percent done calc here); // dont really need a progress
-		// bar... but seem to get one anyway...
+		
+		// ask the getTimeFromFrame method to return the time for that frame
+		double time = getTimeFromFrame(frame); 
+		//draw the label string into the image
+		ip.drawString(selectedFormat.getTimeString(time));
 	}
 	
+	// container panel from swing for gui items to be put in.
 	private JPanel createContainerPanel(int height, String label){
 		JPanel panel = new JPanel(null);
 		panel.setPreferredSize(new Dimension(540, height));
@@ -440,19 +411,19 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		return panel;
 	}
 	
+	// drop down selection with a text label
 	private JPanel createComboBoxPanel(String labelText, String[] values, int defaultIndex) {
 		return createComboBoxPanel(labelText, values, defaultIndex, 100, 150);
 	}
 	
+	// generate gd awt drop down selections for use in a different container later
 	private JPanel createComboBoxPanel(String labelText, String[] values, int defaultIndex, int labelWidth, int comboboxWidth) {
 		gd.addChoice(labelText, values, values[defaultIndex]);
 		// get the previously added choice
 		Choice choice = (Choice) gd.getChoices().lastElement();
 		// get the label belonging to it
 		Label label = (Label) gd.getComponent(gd.getComponentCount()-2);
-		// remove the components again from dialog, we want
-		// them to be placed in a different container, but be
-		// registered with GerericDialog
+		// remove components from dialog, since we use elsewhere, but be still registered with GerericDialog
 		gd.remove(choice);
 		gd.remove(label);
 		
@@ -465,10 +436,12 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
         return panel;
 	}
 	
+	// this is a text field panel for use in the GUI
 	private JPanel createTextFieldPanel(String labelText, String defaultText) {
 		return createTextFieldPanel(labelText, defaultText, 100, 100);
 	}
 	
+	// generate gd awt string fields for use in a different container later
 	private JPanel createTextFieldPanel(String labelText, String defaultText, int labelWidth, int textFieldWidth) {
 		// add the text field
 		gd.addStringField(labelText, defaultText);
@@ -476,9 +449,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		TextField textField = (TextField)gd.getStringFields().lastElement();
 		// get the label belonging to it
 		Label label = (Label) gd.getComponent(gd.getComponentCount()-2);
-		// remove the components again from dialog, we want
-		// them to be placed in a different container, but be
-		// registered with GerericDialog
+		// remove components from dialog, since we use elsewhere, but be still registered with GerericDialog
 		gd.remove(textField);
 		gd.remove(label);
 		
@@ -491,10 +462,12 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		return panel;
 	}
 	
+	// A numeric field for the GUI
 	private JPanel createNumericFieldPanel(String labelText, double defaultValue, int digits) {
 		return createNumericFieldPanel(labelText, defaultValue, digits, 100, 100); 
 	}
 	
+	// generate gd awt numeric fields for use in a different container later
 	private JPanel createNumericFieldPanel(String labelText, double defaultValue, int digits, int labelWidth, int textFieldWidth) {
 		// add the numeric field
 		gd.addNumericField(labelText, defaultValue, digits);
@@ -502,9 +475,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		TextField textField = (TextField)gd.getNumericFields().lastElement();
 		// get the label belonging to it
 		Label label = (Label) gd.getComponent(gd.getComponentCount()-2);
-		// remove the components again from dialog, we want
-		// them to be placed in a different container, but be
-		// registered with GerericDialog
+		// remove components from dialog, since we use elsewhere, but be still registered with GerericDialog
 		gd.remove(textField);
 		gd.remove(label);
 		
@@ -518,7 +489,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	}
 	
 	
-	private void addPanelsToDialg(JPanel container, JPanel[] panels) {
+	private void addPanelsToDialog(JPanel container, JPanel[] panels) {
 		for (JPanel p : panels) {
 			container.add(p);
 		}
@@ -531,7 +502,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	/**
 	 * Updates the preview.
 	 * 
-	 * @param dialog
+	 * @param dialog     are these params still right?
 	 * @param e
 	 */
 	private void updatePreview() {
@@ -543,27 +514,25 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	}
 	
 	/**
-	 * Updates some GUI components, based on the current state of the selected
-	 * label format.
+	 * Shows and Hides relevant GUI components,
+	 * based on the current state of the selected label format.
 	 */
 	private void updateUI() {
-		// if the new format supports custom suffixes, enable
-		// the custom suffix panel and deactivate unit selection
+		// if the new format supports custom suffixes,
+		// enable the custom suffix panel and deactivate unit selection
 		boolean supportsCustomSuffix = selectedFormat.supportsCustomSuffix();
 		customSuffixPanel.setVisible(supportsCustomSuffix);
 		labelUnitsPanel.setVisible(!supportsCustomSuffix);
-		// if the current format supports custom format, enable
-		// the custom format panel
+		// if the current format supports custom format,
+		//  enable the custom format panel
 		customLabelFormatPanel.setVisible(selectedFormat.supportsCustomFormat());
-		// if the current format supports decimal places, enable
-		// the decimal places panel
+		// if the current format supports decimal places,
+		// enable the decimal places panel
 		decimalPlacesPanel.setVisible(selectedFormat.supportsDecimalPlaces());
 	}
 	
 	/**
-	 * This method to deals with changes in the GUI Should move this after the run
-	 * method to keep code style method order: setup, showDialog, setNPasses,
-	 * run, other methods.
+	 * This method deals with changes the user makes in the GUI
 	 */
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e) {
 		// the stack type choice
@@ -573,8 +542,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		AbstractStampFormat lf = formats[currentFormat];
 		if (lf != selectedFormat) {
 			selectedFormat = lf;
-			// if the format has changed, we need to modify the
-			// units choice accordingly
+			// if format changed, must modify units choice accordingly
 			labelUnitsComboBox.removeAll();
 			for (String unit : selectedFormat.getAllowedFormatUnits()) {
 				labelUnitsComboBox.addItem(unit);
@@ -643,7 +611,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	
 	/**
 	 * Returns true if a custom ROI has been selected, i.e if the current
-	 * ROI has not the extent of the whole image.
+	 * ROI does not have the extent of the whole image.
 	 * @return true if custom ROI selected, false otherwise
 	 */
 	boolean isCustomROI(){
@@ -652,97 +620,100 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 			return false;
 		
 		Rectangle theROI = roi.getBounds();
-
+		
+		// if the ROI is the same size as the image (default ROI), return false
 		return (theROI.height != imp.getHeight()
-					|| theROI.width != imp.getWidth()); // if the ROI is the same
+					|| theROI.width != imp.getWidth());
 	}
 
 	/**
-	 * Works out the size of the font to use.
+	 * Works out the size of the font to use,
+	 * from the size of the ROI box drawn so it fits in the ROI.
+	 * If no ROI is set by the user, 
+	 * x and y are defaulted or set according to text fields in GUI
 	 */
 	void setFontParams() {
-		// from the size of the ROI box drawn,
-		// if one was drawn (how does it know?)
-		int size = 12;
+
+		int size = 12; // do we need this -font size we use is set globally in imageJ?
 		
 		if (isCustomROI()){
 			Roi roi = imp.getRoi();
 			Rectangle theROI = roi.getBounds();
 			
-			/*
-			 * single characters fit the ROI, but if the time stamper string is
-			 * long then the font is too big to fit the whole thing in!
-	         *
-			 * need to see if we should use the ROI height to set the font size
-			 * or read it from the plugin gui if (theROI != null) doesnt work as
-			 * if there is no ROI set, the ROI is the size of the image! There
-			 * is always an ROI! So we can say, if there is no ROI set , its
-			 * the same size as the image, and if that is the case, we should
-			 * then use the size as read from the GUI.
-			 * remember the ROIs top left coordinates to be the X and Y values
+			/**
+			 * Remember the ROIs top left coordinates to be the X and Y values
 			 * of the font rectangle
 			 */
 			x = theROI.x;
 			y = theROI.y;
 
-			/*
+			/**
 			 * size as the image, leave size as it was set by the gui.
-			 * For now, ignore point ti pixel conversion.
+			 * For now, ignore point to pixel conversion.
 			 */
 			size = (int) (theROI.height);
 
-			/*
-			 * make sure the font is not too big or small.... but why? Too -
-			 * small cant read it. Too Big - ?
-			 * should this use private and public and get / set methods?
-			 * in any case it doesnt seem to work... i can set the font < 7 and
-			 * it is printed that small.
+			/**
+			 * make sure the font is not too big or small
+			 * ImageJ font dialog smallest size is 8
+			 * and largest is 72. Should stick to those limits. 
 			 */
-			if (size < 7)
-				size = 7;
-			else if (size > 80)
-				size = 80;
+			if (size < 8)
+				size = 8;
+			else if (size > 72)
+				size = 72;
 		}
-		// if no ROI, x and y are defaulted or set according to text in gui
-
+		
 		font = new Font(TextRoi.getFont(), TextRoi.getStyle(), size);
 	}
 
 	/**
-	 * Gets a valid bounding rectangle for the time stamp positioning.
-	 * It aims for having all of the time stamp on the	image, even for
-	 * the last frames with bigger numbers.
+	 * Gets a valid bounding rectangle for the label positioning.
+	 * It aims for having all of the time stamp on the image, even for
+	 * the last frames/slices with the biggest numbers,
+	 * and if the ROI is large in y so font size is also big
 	 * It tries to move the time stamp right a bit to account for the
-	 * max length the time stamp will be.
+	 * max length the time stamp will be, and checks if the
+	 * label will fall off the image and if it does move it in appropriately.
 	 */
 	Rectangle getBoundingRectangle(ImageProcessor ip) {
 		Rectangle roi = ip.getRoi();
-		// set the xy time stamp drawing position for ROI smaller than the
-		// image, to top left of ROI and make its height be the font size
+		/**
+		 * set the xy time stamp drawing position, for ROI smaller than the
+		 * image, to top left of ROI and make its height be the font size
+		 */
 		if (roi.width == imp.getWidth() && roi.height == imp.getHeight()) {
 			roi.x = x;
 			roi.y = y;
 			roi.height = font.getSize();
 		}
-			
-		// make sure the y position is not less than the font height: size,
-		// so the time stamp is not off the top of the image?
+		
+		/**
+		 * make sure the y position is not less than the font height: size,
+		 * so the time stamp is not off the top of the image?
+		 */
 		if ( (roi.y + roi.height) < font.getSize()) {
 			y = roi.y = 1;
 		} 
 		
-		// make sure the stamp falls not off the bottom
+		/**
+		 * make sure the stamp does not fall off the bottom of the image
+		 */
 		if (ip.getHeight() < (roi.y + font.getSize())) {
 			y = roi.y = ip.getHeight() - font.getSize();
 		}
 		
-		// assume that the last time stamp is the widest one to calculate
-		// the maximum width of the bounding rectangle. This is not always
-		// true (e.g. 0:00 vs. 0:11) and could be made more precise.
+		/**
+		 * assume that the last time stamp is the widest one to calculate
+		 * the maximum width of the bounding rectangle. This is not always
+		 * true (e.g. 0:00 vs. 0:11) and could be made more precise.
+		 */
 		roi.width = ip.getStringWidth(selectedFormat.lastTimeStampString());
 		
-		// if longest time stamp is wider than (image width - ROI width),
-		// move x in appropriately
+		/**
+		 * if longest time stamp is wider than (image width - ROI width),
+		 * move x in appropriately
+		 */
 		if (roi.width > (ip.getWidth() - roi.x)) {
 			x = roi.x = (ip.getWidth() - roi.width);
 		}
@@ -750,6 +721,9 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		return roi;
 	}
 	
+	/**
+	 * Work out where in the image the preset positions are.
+	 */
 	Point getPresetPosition(int preset) {
 		ImageProcessor ip = imp.getProcessor();
 		if (preset == UPPER_LEFT){
@@ -776,9 +750,9 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	}
 
 	/**
-	 * Returns the time of the last frame where a stamp is made.
+	 * Returns the time of the last frame where a stamp will be made.
 	 */
-	double lastTime() {
+	double lastTime() { //should remane it so no time, as can be z or whatever series. 
 		return getTimeFromFrame(last); 
 	}
 
@@ -788,14 +762,14 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	 * @param f The frame to calculate the time of
 	 * @return The time at frame f
 	 */
-	double getTimeFromFrame(int f) {
-		return start + (interval * (f - 1)); // is the time for a certain frame
+	double getTimeFromFrame(int f) {  //should remane it so no time, as can be z or whatever series. 
+		return start + (interval * (f - 1)); // is the double ype number of the label for a certain frame
 	}
 
 	/**
-	 * A class representing a supported label format of the time stamper
-	 * plug-in. It relates supported format units/suffixes to a format name.
-	 * Besides that it determines if a custom suffix should be usable.
+	 * A class representing a supported label format 
+	 * It relates supported format units/suffixes to a format name.
+	 * Besides that it determines if a custom suffix should be avaialble to the user.
 	 */
 	protected abstract class AbstractStampFormat {
 		// an array of all the supported units for this format
@@ -827,16 +801,16 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		}
 
 		/**
-		 * Here we make the strings to print into the images. decide if the time
+		 * Here we make the strings to print into the images. decide if the
 		 * format is digital or decimal according to the plugin GUI input if it
 		 * is decimal (not digital) then need to set suffix from drop down list
 		 * which might be custom suffix if one is entered and selected. if it is
-		 * digital, then there is no suffix as format is set hh:mm:ss.ms
+		 * digital, then there is no suffix as format is set default as hh:mm:ss.ms
 		 * 
 		 * @param time
 		 * @return
 		 */
-		public abstract String getTimeString(double time);
+		public abstract String getTimeString(double time); //rename to remove time
 
 		/**
 		 * this method returns the string of the TimeStamp for the last frame to
@@ -850,12 +824,12 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		 * 
 		 * @return
 		 */
-		public String lastTimeStampString() {
+		public String lastTimeStampString() { //rename to remove time, use label instead
 			return getTimeString(lastTime());
 		}
 
 		/**
-		 * Gets the suffix (if any) that should be appended to the time stamp.
+		 * Gets the suffix (if any) that should be appended to the label.
 		 * 
 		 * @return The suffix to display.
 		 */
@@ -864,8 +838,8 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		}
 
 		/**
-		 * Gets an array of allowed units for the format. E. g. to display them
-		 * in a drop down component.
+		 * Gets an array of allowed units for the format. 
+		 * eg. to display them in a drop down choice list.
 		 * 
 		 * @return The allowed units.
 		 */
@@ -883,7 +857,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		}
 
 		/**
-		 * Indicates whether custom (user input) suffixes are allowed to this
+		 * Indicates whether custom (user input) suffixes are allowed for this
 		 * format or not.
 		 * 
 		 * @return True if custom suffixes are allowed, false otherwise
@@ -952,9 +926,10 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		}
 
 		/**
-		 * Makes the string containing the number for the time stamp, with
-		 * specified decimal places format is decimal number with specified no
-		 * of digits after the point if specified no. of decimal places is 0
+		 * Makes the string containing the number for the label stamp, with
+		 * specified decimal places format is decimal number with specified no.
+		 * of digits after the point
+		 * If specified no. of decimal places is 0
 		 * then just return the specified suffix
 		 */
 		@Override
@@ -1000,10 +975,9 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		}
 
 		/**
-		 * Makes the string containing the number for the time stamp, with
-		 * hh:mm:ss.decimalPlaces format which is nice, but also really need
-		 * hh:mm:ss and mm:ss.ms etc. could use the java time/date formating
-		 * stuff for that?
+		 * Makes the string containing the number for the label stamp, with
+		 * hh:mm:ss.decimalPlaces format which is nice, 
+		 * and we do have that functionality in HybridDateFormat?
 		 */
 		@Override
 		public String getTimeString(double time) {
@@ -1024,15 +998,14 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 			calendar.setTimeInMillis(Math.round(time));
 			DateFormat f;
 			try {
-				// check if a custom format has been entered
+				// check if a custom format has been entered in the GUI
 				if (customFormat.length() > 0) {
 					// Make sure that our custom format can be handled
 					f = new HybridDateFormat(customFormat);
 				} else {
 					f = new SimpleDateFormat("HH:mm:ss.SSS");
 				}
-				f.setTimeZone(tz); // the SimpleDateFormat needs to know the
-				// time zone is UTC!
+				f.setTimeZone(tz); // the SimpleDateFormat needs to know thetime zone is UTC!
 
 				return f.format(calendar.getTime());
 			} catch (IllegalArgumentException ex) {
@@ -1049,7 +1022,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 
 		/**
 		 * Creates a new {@link CustomLabelFormat}. It allows only custom
-		 * suffixes as units and its display name is set to "Custom Format".
+		 * suffixes as units and it's display name is set to "Custom Format".
 		 */
 		public CustomLabelFormat() {
 			this(new String[] { "Custom Suffix" }, "Custom Format");
@@ -1066,9 +1039,9 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	}
 
 	/**
-	 * A panel containing several font manipulation items. It consists of a type
-	 * face chooser, font size chooser, style chooser and a checkbox to
-	 * enable/disable anti-aliased text (smoothing).
+	 * Class for a panel containing several font manipulation items.
+	 * It consists of a font style and colour buttons, 
+	 * and also a check box for toggling drawing a background behind the label.
 	 */
 	@SuppressWarnings("serial")
 	protected class FontPropertiesPanel extends JPanel{
@@ -1112,6 +1085,11 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		}
 	}
 	
+	/**
+	 * This class extends Fonts so we can listen to the changes in the 
+	 * imageJ fonts GUI that we reuse for font settings 
+	 * and update the preview accordingly.
+	 */
 	@SuppressWarnings("serial")
 	protected class ExtendedFonts extends Fonts{
 		@Override
@@ -1123,5 +1101,5 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		}
 		
 	}
-} // thats the end of Time_Stamper_Enhanced class
+} // thats the end of Time_Stamper_Enhanced - remember to rename it Series_Labeller
 
