@@ -1689,7 +1689,7 @@ public class Fake {
 					execute(arguments, path,
 						getVarBool("VERBOSE", path));
 					return path.substring(0,
-						path.length() - 4) + ".o";
+						path.length() - (compiler.endsWith("++") ? 4 : 2)) + ".o";
 				} catch(FakeException e) {
 					return error("compile", path, e);
 				}
