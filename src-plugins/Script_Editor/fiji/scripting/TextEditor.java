@@ -91,7 +91,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		  undo, redo, cut, copy, paste, find, replace, selectAll,
 		  autocomplete, resume, terminate, kill, gotoLine,
 		  makeJar, makeJarWithSource, removeUnusedImports,
-		  sortImports, removeTrailingWhitespace, findNext,
+		  sortImports, removeTrailingWhitespace, findNext, findPrevious,
 		  openHelp, addImport, clearScreen, nextError, previousError,
 		  openHelpWithoutFrames, nextTab, previousTab,
 		  runSelection, extractSourceJar, toggleBookmark,
@@ -152,6 +152,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		find.setMnemonic(KeyEvent.VK_F);
 		findNext = addToMenu(edit, "Find Next", KeyEvent.VK_F3, 0);
 		findNext.setMnemonic(KeyEvent.VK_N);
+		findPrevious = addToMenu(edit, "Find Previous", KeyEvent.VK_F3, shift);
+		findPrevious.setMnemonic(KeyEvent.VK_P);
 		replace = addToMenu(edit, "Find and Replace...", KeyEvent.VK_H, ctrl);
 		gotoLine = addToMenu(edit, "Goto line...", KeyEvent.VK_G, ctrl);
 		gotoLine.setMnemonic(KeyEvent.VK_G);
@@ -713,6 +715,8 @@ public class TextEditor extends JFrame implements ActionListener,
 			findOrReplace(false);
 		else if (source == findNext)
 			findDialog.searchOrReplace(false);
+		else if (source == findPrevious)
+			findDialog.searchOrReplace(false, false);
 		else if (source == replace)
 			findOrReplace(true);
 		else if (source == gotoLine)

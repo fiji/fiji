@@ -176,21 +176,24 @@ public class FindAndReplaceDialog extends JDialog implements ActionListener {
 	}
 
 	public boolean searchOrReplace(boolean replace) {
-		if (searchOrReplaceFromHere(replace))
+		return searchOrReplace(replace, forward.isSelected());
+	}
+
+	public boolean searchOrReplace(boolean replace, boolean forward) {
+		if (searchOrReplaceFromHere(replace, forward))
 			return true;
-		boolean isForward = forward.isSelected();
 		if (JOptionPane.showConfirmDialog(this, "Do you want to "
 					+ "continue from the "
-					+ (isForward ? "beginning" : "end")
+					+ (forward ? "beginning" : "end")
 					+ "?", "No match found",
 					JOptionPane.YES_NO_OPTION)
 				!= JOptionPane.YES_OPTION)
 			return false;
 		RSyntaxTextArea textArea = getTextArea();
 		int caret = textArea.getCaretPosition();
-		textArea.setCaretPosition(isForward ?
+		textArea.setCaretPosition(forward ?
 				0 : textArea.getDocument().getLength());
-		if (searchOrReplaceFromHere(replace))
+		if (searchOrReplaceFromHere(replace, forward))
 			return true;
 		JOptionPane.showMessageDialog(this, "No match found!");
 		textArea.setCaretPosition(caret);
@@ -198,16 +201,20 @@ public class FindAndReplaceDialog extends JDialog implements ActionListener {
 	}
 
 	protected boolean searchOrReplaceFromHere(boolean replace) {
+		return searchOrReplaceFromHere(forward.isSelected());
+	}
+
+	protected boolean searchOrReplaceFromHere(boolean replace, boolean forward) {
 		RSyntaxTextArea textArea = getTextArea();
 		return replace ?
 			SearchEngine.replace(textArea, searchField.getText(),
 					replaceField.getText(),
-					forward.isSelected(),
+					forward,
 					matchCase.isSelected(),
 					wholeWord.isSelected(),
 					regex.isSelected()) :
 			SearchEngine.find(textArea, searchField.getText(),
-					forward.isSelected(),
+					forward,
 					matchCase.isSelected(),
 					wholeWord.isSelected(),
 					regex.isSelected());
