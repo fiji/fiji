@@ -182,13 +182,6 @@ public class FindAndReplaceDialog extends JDialog implements ActionListener {
 	public boolean searchOrReplace(boolean replace, boolean forward) {
 		if (searchOrReplaceFromHere(replace, forward))
 			return true;
-		if (JOptionPane.showConfirmDialog(this, "Do you want to "
-					+ "continue from the "
-					+ (forward ? "beginning" : "end")
-					+ "?", "No match found",
-					JOptionPane.YES_NO_OPTION)
-				!= JOptionPane.YES_OPTION)
-			return false;
 		RSyntaxTextArea textArea = getTextArea();
 		int caret = textArea.getCaretPosition();
 		textArea.setCaretPosition(forward ?
