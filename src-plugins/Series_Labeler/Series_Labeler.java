@@ -403,7 +403,6 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			// update GUI parts that are dependent on current variable contents
 			updateUI();
 		}
-		System.out.println(Macro.getOptions());
 		gd.showDialog(); // shows the dialog GUI!
 
 		// handle the plug-in cancel button being pressed.
