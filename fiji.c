@@ -2584,11 +2584,11 @@ static int start_ij_macosx(void)
 	struct string *env_key, *icon_path;
 
 	/* set the Application's name */
-	env_key = string_initf("APP_NAME_%ld", (long)getpid());
+	env_key = string_initf("APP_NAME_%d", (int)getpid());
 	setenv(env_key->buffer, "Fiji", 1);
 
 	/* set the Dock icon */
-	string_setf(env_key, "APP_ICON_%ld", (long)getpid());
+	string_setf(env_key, "APP_ICON_%d", (int)getpid());
 	icon_path = string_init(32);
 	append_icon_path(icon_path);
 	setenv(env_key->buffer, icon_path->buffer, 1);
