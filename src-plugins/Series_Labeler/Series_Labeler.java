@@ -1,48 +1,69 @@
-	/**
-	 * This plugin is a merge of the Time_Stamper plugins from ImageJ and from Tony Collins' plugin collection at macbiophotonics. 
-	 *it aims to combine all the functionality of both plugins and refine and enhance their functionality
-	 *for instance by adding the preview functionality suggested by Michael Weber.
-	 *
-	 *It does not know about hyper stacks - multiple channels..... only works as expected for normal stacks.
-	 *That means a single channel time series or z stack. 
-	 *
-	 *We might want to rename this tool "Series Labeler", since it will handle labeling of Z stacks as well as time stacks,
-	 *as well as any other series of images contained in an imageJ stack. Spectral series, etc. 
-	 *
-	 *The sequence of calls to an ExtendedPlugInFilter is the following:
-	 *- setup(arg, imp): The filter should return its flags.
-	 *- showDialog(imp, command, pfr): The filter should display the dialog asking for parameters (if any)
-	 *and do all operations needed to prepare for processing the individual image(s) (E.g., slices of a stack).
-	 *For preview, a separate thread may call setNPasses(nPasses) and run(ip) while the dialog is displayed.
-	 *The filter should return its flags.
-	 *- setNPasses(nPasses): Informs the filter of the number of calls of run(ip) that will follow.
-	 *- run(ip): Processing of the image(s). With the CONVERT_TO_FLOAT flag,
-	 *this method will be called for each color channel of an RGB image.
-	 *With DOES_STACKS, it will be called for each slice of a stack. But is this irrelevant here?
-	 *- setup("final", imp): called only if flag FINAL_PROCESSING has been specified.
-	 *Flag DONE stops this sequence of calls.
-	 *
-	 *We are using javas calendar for formatting the time stamps for "digital" style, 
-	 *but this has limitations, as you can't count over 59 min and the zero date is 01 01 1970, not zero. 
-	 *
-	 *Here is a list (in no particular order) of requested and "would be nice" features that could be added:
-	 *-prevent longest label running off sides and top/bottom of image  - ok
-	 *-choose colour  -ok uses imageJ builtin color chooser.
-	 *-font selection -ok uses imageJ builtin font chooser. 
-	 *-top left, bottom right etc.  drop down menu 
-	 *-Hyperstacks z, t, c
-	 *-read correct time / z units, start and intervals from image metadata. Get it from Image Properties?
-	 *-every nth slice labelled -ok
-	 *-label only slices where time became greater than multiples of some time eg every 5 min. 
-	 *-preview with live update when change GUI -ok, changes in GUI are read into the preview. 
-	 *-preview with stack slider in the GUI. - slider now in GUI but functionality is half broken
-	 *-Use Java Date for robust formatting of dates/times counted in milliseconds. - added hybrid date form at for 
-	 *	versatile formatting of the digital time - ok 
-	 *-switch unit according to magnitude of number eg sec or min or nm or microns etc. 
-	 *- background colour for label. -0K.  
-	 *
-	 *Dan White MPI-CBG , began hacking on 15.04.09. Work continued from 02-2010 by Tomka and Dan
-	 */
+/**
+ * This plugin is a merge of the Time_Stamper plugins from ImageJ
+ * and from Tony Collins' plugin collection at macbiophotonics.
+ * It aims to combine all the functionality of both plugins and
+ * refine and enhance their functionality for instance by adding
+ * the preview functionality suggested by Michael Weber.
+ *
+ * It currently does not know about hyper stacks - multiple
+ * channels... (i.e. only works as expected for normal stacks).
+ * That means a single channel time series or z stack.
+ *
+ * We might want to rename this tool "Series Labeler", since it
+ * will handle labeling of Z stacks as well as time stacks, as
+ * well as any other series of images contained in an imageJ
+ * stack. Spectral series, etc.
+ *
+ * The sequence of calls to an ExtendedPlugInFilter is the
+ * following:
+ *  - setup(arg, imp): The filter should return its flags.
+ *  - showDialog(imp, command, pfr): The filter should display
+ *    the dialog asking for parameters (if any) and do all
+ *    operations needed to prepare for processing the individual
+ *    image(s) (E.g., slices of a stack). For preview, a separate
+ *    thread may call setNPasses(nPasses) and run(ip) while the
+ *    dialog is displayed. The filter should return its flags.
+ *  - setNPasses(nPasses): Informs the filter of the number of
+ *    calls of run(ip) that will follow.
+ *  - run(ip): Processing of the image(s). With the
+ *    CONVERT_TO_FLOAT flag, this method will be called for each
+ *    color channel of an RGB image. With DOES_STACKS, it will be
+ *    called for each slice of a stack. But is this irrelevant
+ *    here?
+ *  - setup("final", imp): called only if flag FINAL_PROCESSING
+ *    has been specified. Flag DONE stops this sequence of calls.
+ *
+ * We are using javas calendar for formatting the time stamps for
+ * "digital" style, but this has limitations, as you can't count
+ * over 59 min and the zero date is 01 01 1970, not zero.
+ *
+ * Here is a list (in no particular order) of requested and "would
+ * be nice" features that could be added:
+ *  - prevent longest label running off sides and top/bottom of
+ *     image (done)
+ *  - choose colour (done. uses imageJ builtin color chooser)
+ *  - font selection (done, uses imageJ builtin font chooser
+ *  - top left, bottom right etc.  drop down menu (done)
+ *  - Hyperstacks z, t, c
+ *  - read correct time / z units, start and intervals from image
+ *    metadata. Get it from Image Properties?
+ *  - every nth slice labelled (done)
+ *  - label only slices where time became greater than multiples
+ *     of some time eg every 5 min.
+ *  - preview with live update when change GUI -ok, changes in
+ *    GUI are read into the preview.
+ *  - preview with stack slider in the GUI. - slider now in GUI
+ *    but functionality is half broken
+ *  - Use Java Date for robust formatting of dates/times counted
+ *    in milliseconds. (done, added hybrid date form at for
+ *    versatile formatting of the digital time)
+ *  - switch unit according to magnitude of number eg sec or min
+ *    or nm or microns etc.
+ *  - background colour for label (done)
+ *
+ * Dan White MPI-CBG , began hacking on 15.04.09. Work continued
+ * from 02-2010 by Tomka and Dan
+ */
 
 import ij.IJ;
 import ij.IJEventListener;
@@ -102,29 +123,40 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	double lastTime;
 	// the custom suffix, used if format supports it
 	String customSuffix = "";
-	// the suffix to append to the time stamp, used if
-	// format supports supports no custom suffix
+	/* the suffix to append to the time stamp, used if
+	 * format supports supports no custom suffix
+	 */
 	static String chosenSuffix = "s";
 	// the amount of decimal places, used by some formats
 	int decimalPlaces = 3;
 	// indicates if processing has been canceled or not
 	boolean canceled;
-	// indicates if we are in preview mode or doing the actual processing
+	/* indicates if we are in preview mode or doing the
+	 * actual processing
+	 */
 	boolean preview = true;
-	// the custom pattern for labeling, used if format supports it
+	/* the custom pattern for labeling, used if format
+	 * supports it
+	 */
 	String customFormat = "";
 	// indicates if the text should be anti-aliased or not
 	boolean antiAliasedText = true;
 	// the current frame 
 	int frame;
-	// a generation range for the labels, these default to 0 as no values are given
+	/* a generation range for the labels, these default to 0 as no
+	 * values are given
+	 */
 	int first, last;
-	// the 'n' for 'label every n-th frame'. Treated as 1 for values below one
+	/* the 'n' for 'label every n-th frame'. Treated as 1 for values
+	 * below one
+	 */
 	int frameMask = 1;
 	// the object that runs the plugin.
 	PlugInFilterRunner pluginFilterRunner; 
-	// a combination (bitwise OR) of the flags specified in interfaces PlugInFilter 
-	// and ExtendedPlugInFilter. Determines what kind of image the plug-in can run on etc.
+	/* a combination (bitwise OR) of the flags specified in
+         * interfaces PlugInFilter and ExtendedPlugInFilter.
+         * Determines what kind of image the plug-in can run on etc.
+	 */
 	int flags = DOES_ALL + DOES_STACKS + STACK_REQUIRED;
 
 	// the currently selected format
@@ -136,17 +168,21 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	private GenericDialog gd;
 	
 	// String representations of the location presets offered
-	static final String[] locations = {"Upper Right", "Lower Right", "Lower Left", "Upper Left", "Custom"};
+	static final String[] locations = {"Upper Right", "Lower Right",
+		"Lower Left", "Upper Left", "Custom"};
 	// Some index aliases for the locations array
-	static final int UPPER_RIGHT=0, LOWER_RIGHT=1, LOWER_LEFT=2, UPPER_LEFT=3, CUSTOM=4;
+	static final int UPPER_RIGHT=0, LOWER_RIGHT=1, LOWER_LEFT=2,
+		UPPER_LEFT=3, CUSTOM=4;
 	// the currently selected location preset
 	int locationPreset;
 	
 	// the available kinds of stack we can label. 
-	final String[] stackTypes = { "z-stack", "time series or movie" }; //, "spectral series" };
+	final String[] stackTypes = { "z-stack",
+		"time series or movie" }; //, "spectral series" };
 	
 	// the available time formats
-	final AbstractStampFormat[] formats = {new DecimalLabelFormat(), new DigitalLabelFormat(), new CustomLabelFormat()};
+	final AbstractStampFormat[] formats = {new DecimalLabelFormat(),
+		new DigitalLabelFormat(), new CustomLabelFormat()};
 	
 	// GUI variables that are needed to read out data
 	// from the components
@@ -170,8 +206,8 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	private JPanel decimalPlacesPanel;
 
 	/**
-	 * Setup the plug-in and tell ImageJ it needs to work on a stack by
-	 * returning the flags
+	 * Setup the plug-in and tell ImageJ it needs to work on
+	 * a stack by returning the flags
 	 */
 	public int setup(String arg, ImagePlus imp) {
 		this.imp = imp;
@@ -182,7 +218,9 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			setFontParams();
 		}
 
-		// set the currently selected format to the first available
+		/* set the currently selected format to the
+		 * first available
+		 */
 		selectedFormat = formats[0];
 
 		// return supported flags
@@ -190,10 +228,12 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	}
 
 	/**
-	 * Make the GUI for the plug-in, with fields to fill all the variables we
-	 * need. We use ExtendedPluginFilter, so first argument is imp not ip.
+	 * Make the GUI for the plug-in, with fields to fill all
+	 * the variables we need. We use ExtendedPluginFilter,
+	 * so first argument is imp not ip.
 	 */
-	public int showDialog(ImagePlus imp, String command, PlugInFilterRunner pfr) {
+	public int showDialog(ImagePlus imp, String command,
+			PlugInFilterRunner pfr) {
 		preview = !IJ.isMacro();
 		this.pluginFilterRunner = pfr;
 		int subpanelHeight = 30;
@@ -203,88 +243,110 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		gd = new NonBlockingGenericDialog(
 				"Series Labeler");
 
-		//
-		// General settings panel
-		//
-		generalSettingsContainer = createContainerPanel(70, "General Settings");
+		/*
+		 * General settings panel
+		 */
+		generalSettingsContainer = createContainerPanel(70,
+			"General Settings");
 		
 		//add combobox for stack type
-		JPanel stackTypePanel = createComboBoxPanel("Stack_Type", stackTypes, 1, 100, 180);
+		JPanel stackTypePanel = createComboBoxPanel(
+			"Stack_Type", stackTypes, 1, 100, 180);
 		stackTypePanel.setLocation(left, 30);
 		
 		addPanelsToDialog(generalSettingsContainer,
-				new JPanel[] {stackTypePanel} );
+			new JPanel[] {stackTypePanel} );
 		
-		//
-		// Units formatting panel
-		//
-		unitsFormattingContainer = createContainerPanel(100, "Units_Formatting");
+		/*
+		 * Units formatting panel
+		 */
+		unitsFormattingContainer = createContainerPanel(100,
+			"Units_Formatting");
 		
 		// add combobox for label format
-		JPanel pLabelFormat = createComboBoxPanel("Label_Format", getAvailableFormats(), 0);
+		JPanel pLabelFormat = createComboBoxPanel("Label_Format",
+			getAvailableFormats(), 0);
 		pLabelFormat.setLocation(left, 30);
         
 		// add combobox for label unit
-		labelUnitsPanel = createComboBoxPanel("Label_Unit", selectedFormat.getAllowedFormatUnits(), 0);
+		labelUnitsPanel = createComboBoxPanel("Label_Unit",
+			selectedFormat.getAllowedFormatUnits(), 0);
 		labelUnitsComboBox = (Choice) gd.getChoices().lastElement();
 		labelUnitsPanel.setLocation(left, 60);
         
-        // add Custom Suffix panel
-		customSuffixPanel = createTextFieldPanel("Custom_Suffix", customSuffix);
+		// add Custom Suffix panel
+		customSuffixPanel = createTextFieldPanel("Custom_Suffix",
+			customSuffix);
 		customSuffixPanel.setLocation(left, 60);
 		
 		// add Custom Format panel
-		customLabelFormatPanel = createTextFieldPanel("Custom_Format", customFormat);
+		customLabelFormatPanel = createTextFieldPanel("Custom_Format",
+			customFormat);
 		customLabelFormatPanel.setLocation(300, 30);
 		
 		// add Decimal Places panel
-		decimalPlacesPanel = createNumericFieldPanel("Decimal_Places", decimalPlaces, 0);
+		decimalPlacesPanel = createNumericFieldPanel("Decimal_Places",
+			decimalPlaces, 0);
 		decimalPlacesPanel.setLocation(300, 30);
 		
 		addPanelsToDialog(unitsFormattingContainer,
-				new JPanel[] {pLabelFormat, customSuffixPanel, labelUnitsPanel, decimalPlacesPanel, customLabelFormatPanel} );
+			new JPanel[] {pLabelFormat, customSuffixPanel,
+				labelUnitsPanel, decimalPlacesPanel,
+				customLabelFormatPanel} );
 		
-		//
-		// Start/Stop/Interval
-		//
-		startStopIntervalsContainer = createContainerPanel(130, "Start/Stop/Interval of Stack");
+		/*
+		 * Start/Stop/Interval
+		 */
+		startStopIntervalsContainer = createContainerPanel(130,
+			"Start/Stop/Interval of Stack");
 		
 		// add a panel for the series stamper start value
-		JPanel pStartup = createNumericFieldPanel("Startup", start, 2);
+		JPanel pStartup = createNumericFieldPanel("Startup",
+			start, 2);
 		pStartup.setLocation(left, 30);
 		
 		// add a panel for the interval settings
-		JPanel pInterval = createNumericFieldPanel("Interval", interval, 2);
+		JPanel pInterval = createNumericFieldPanel("Interval",
+			interval, 2);
 		pInterval.setLocation(left, 60);
 		
 		// add panel for the everyNth setting
-		JPanel pEveryNth = createNumericFieldPanel("Every_n-th", frameMask, 0);
+		JPanel pEveryNth = createNumericFieldPanel("Every_n-th",
+			frameMask, 0);
 		pEveryNth.setLocation(left, 90);
 		
 		// add panel for First Frame setting
-		JPanel pFirstFrame = createNumericFieldPanel("First", first, 0);
+		JPanel pFirstFrame = createNumericFieldPanel("First",
+			first, 0);
 		pFirstFrame.setLocation(300, 30);
 		
 		// add panel for Last Frame setting
-		JPanel pLastFrame = createNumericFieldPanel("Last", last, 0);
+		JPanel pLastFrame = createNumericFieldPanel("Last",
+			last, 0);
 		pLastFrame.setLocation(300, 60);
 		
 		addPanelsToDialog(startStopIntervalsContainer,
-				new JPanel[] {pStartup, pInterval, pEveryNth, pFirstFrame, pLastFrame} );
+			new JPanel[] {pStartup, pInterval,
+				 pEveryNth, pFirstFrame, pLastFrame} );
 		
-		//
-		// Location and Font panel
-		//
-		locationFontContainer = createContainerPanel(110, "Location & Font");
+		/*
+		 * Location and Font panel
+		 */
+		locationFontContainer = createContainerPanel(110,
+			"Location & Font");
 		
 		// add panel for X location
-		JPanel pLocationX = createNumericFieldPanel("X_", x, 0, 20, 50);
-		locationXTextField = (TextField) gd.getNumericFields().lastElement();
+		JPanel pLocationX = createNumericFieldPanel("X_",
+			x, 0, 20, 50);
+		locationXTextField =
+			(TextField) gd.getNumericFields().lastElement();
 		pLocationX.setLocation(left, 30);
 		
 		// add panel for Y location
-		JPanel pLocationY = createNumericFieldPanel("Y_", y, 0, 20, 50);
-		locationYTextField = (TextField) gd.getNumericFields().lastElement();
+		JPanel pLocationY =
+			createNumericFieldPanel("Y_", y, 0, 20, 50);
+		locationYTextField =
+			(TextField) gd.getNumericFields().lastElement();
 		pLocationY.setLocation(120, 30);
 		
 		if (isCustomROI())
@@ -292,25 +354,37 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		else locationPreset = UPPER_LEFT;
 		
 		// add combobox for location presets
-		JPanel pLocationPresets = createComboBoxPanel("Location_Presets", locations, locationPreset, 110, 150);
-		locationPresetsComboBox = (Choice) gd.getChoices().lastElement();
+		JPanel pLocationPresets = createComboBoxPanel(
+			"Location_Presets", locations,
+			locationPreset, 110, 150);
+		locationPresetsComboBox =
+			(Choice) gd.getChoices().lastElement();
 		pLocationPresets.setLocation(240, 30);
         
-        fontPropertiesContainer = new FontPropertiesPanel();
-  		fontPropertiesContainer.setBounds(left, 70, 400, subpanelHeight);
+	        fontPropertiesContainer = new FontPropertiesPanel();
+		fontPropertiesContainer.setBounds(left, 70, 400,
+		subpanelHeight);
   		
   		addPanelsToDialog(locationFontContainer,
-  				new JPanel[] {pLocationX, pLocationY, pLocationPresets, fontPropertiesContainer} );
+			new JPanel[] {pLocationX,
+				pLocationY, pLocationPresets,
+				fontPropertiesContainer} );
 
-		gd.addPreviewCheckbox(pfr); // adds preview checkbox - needs
-		// ExtendedPluginFilter and DialogListener!
+		/* adds preview checkbox - needs
+		 * ExtendedPluginFilter and DialogListener!
+		 */
+		gd.addPreviewCheckbox(pfr);
 		gd.addMessage("Series Labeler plugin for Fiji (is just ImageJ - batteries included)\n" +
 				"maintained by Dan White MPI-CBG dan(at)chalkie.org.uk");
 
-		gd.addDialogListener(this); // needed for listening to dialog
-		// field/button/checkbox changes?
+		/* needed for listening to dialog,
+		 * field/button/checkbox changes
+		 */
+		gd.addDialogListener(this);
 
-		// add an ImageJ event listener to react to color changes, etc.
+		/* add an ImageJ event listener to react to
+		 * color changes, etc.
+		 */
 		IJ.addEventListener(new IJEventListener() {
 			public void eventOccurred(int event) {
 				if (event == IJEventListener.FOREGROUND_COLOR_CHANGED
@@ -320,7 +394,9 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			}
 		});
 		
-		//add a help button that opens a link to the documentation wiki page. 
+		/* add a help button that opens a link to the
+		 * documentation wiki page.
+		 */
 		gd.addHelp("http://pacific.mpi-cbg.de/wiki/index.php/Stack_labeler");
 
 		if (!IJ.isMacro()){
@@ -334,13 +410,13 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		if (gd.wasCanceled())
 			return DONE;
 
-		/** if the ok button was pressed, we are really running the plug-in,
-		 *so later we can tell what time stamp to make 
-		 *as its not the last as used by preview
+		/* if the ok button was pressed, we are really running the plug-in,
+		 * so later we can tell what time stamp to make
+		 * as its not the last as used by preview
 		 */
 		preview = !gd.wasOKed();
 
-		/** extendedpluginfilter showDialog method should
+		/* extendedpluginfilter showDialog method should
 		 * return a combination (bitwise OR) of the flags specified in
 		 * interfaces PlugInFilter and ExtendedPlugInFilter.
 		 */
@@ -353,8 +429,8 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	 * worked out by the plug-in runner.
 	 */
 	public void setNPasses(int nPasses) {
-		/** so the value of frame is reset to 1 each time the
-		 *plugin is run or the preview checkbox is checked.
+		/* so the value of frame is reset to 1 each time the
+		 * plugin is run or the preview checkbox is checked.
 		 */
 		if (preview) {
 			frame = last;
@@ -373,7 +449,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		// this increments frame integer by 1.
 		frame++;
 
-		/**Updates this image from the pixel data in its associated
+		/* Updates this image from the pixel data in its associated
 		 * ImageProcessor object and then displays it
 		 * if it is the last frame. Why do we need this when there is
 		 * ip.drawString(timeString); below?
@@ -382,28 +458,40 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			imp.updateAndDraw();
 
 		// tell the run method when to not do anything just return
-		if ( (!preview) && (canceled || frame < first || frame > last || (frame % frameMask != 0) ) )
+		if ( (!preview)
+			  && (canceled
+				|| frame < first
+				|| frame > last
+				|| (frame % frameMask != 0) ) )
 			return;
 
 		ip.setFont(font);
 		ip.setAntialiasedText(antiAliasedText);
 
-		// set the font size according to ROI size, or if no ROI the GUI text input
+		/* set the background according to label
+		 * Rectangle
+		 */
 		Rectangle backgroundRectangle = getBoundingRectangle(ip);
+
 		if (backgroundEnabled){
 			ip.setColor(Toolbar.getBackgroundColor());
 			ip.fill(new Roi(backgroundRectangle));
 		}
 		ip.setColor(Toolbar.getForegroundColor());
-		ip.moveTo(backgroundRectangle.x, (backgroundRectangle.y + backgroundRectangle.height) );
+		ip.moveTo(backgroundRectangle.x,
+			(backgroundRectangle.y + backgroundRectangle.height) );
 		
-		// ask the getTimeFromFrame method to return the time for that frame
+		/* ask the getTimeFromFrame method to return the
+		 * time for that frame
+		 */
 		double time = getTimeFromFrame(frame); 
-		//draw the label string into the image
+		// draw the label string into the image
 		ip.drawString(selectedFormat.getTimeString(time));
 	}
 	
-	// container panel from swing for gui items to be put in.
+	/**
+	 * container panel from swing for gui items to be put in.
+	 */
 	private JPanel createContainerPanel(int height, String label){
 		JPanel panel = new JPanel(null);
 		panel.setPreferredSize(new Dimension(540, height));
@@ -411,19 +499,26 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		return panel;
 	}
 	
-	// drop down selection with a text label
+	/**
+	 * drop down selection with a text label
+	 */
 	private JPanel createComboBoxPanel(String labelText, String[] values, int defaultIndex) {
 		return createComboBoxPanel(labelText, values, defaultIndex, 100, 150);
 	}
 	
-	// generate gd awt drop down selections for use in a different container later
+	/**
+	 * generate gd awt drop down selections for use in a
+	 * different container later
+	 */
 	private JPanel createComboBoxPanel(String labelText, String[] values, int defaultIndex, int labelWidth, int comboboxWidth) {
 		gd.addChoice(labelText, values, values[defaultIndex]);
 		// get the previously added choice
 		Choice choice = (Choice) gd.getChoices().lastElement();
 		// get the label belonging to it
 		Label label = (Label) gd.getComponent(gd.getComponentCount()-2);
-		// remove components from dialog, since we use elsewhere, but be still registered with GerericDialog
+		/* remove components from dialog, since we use
+		 * elsewhere, but be still registered with GerericDialog
+		 */
 		gd.remove(choice);
 		gd.remove(label);
 		
@@ -436,20 +531,27 @@ public class Series_Labeler implements ExtendedPlugInFilter,
         return panel;
 	}
 	
-	// this is a text field panel for use in the GUI
+	/**
+	 * This is a text field panel for use in the GUI
+	 */
 	private JPanel createTextFieldPanel(String labelText, String defaultText) {
 		return createTextFieldPanel(labelText, defaultText, 100, 100);
 	}
 	
-	// generate gd awt string fields for use in a different container later
-	private JPanel createTextFieldPanel(String labelText, String defaultText, int labelWidth, int textFieldWidth) {
+	/* Generates gd awt string fields for use in a
+	 * different container later
+	 */
+	private JPanel createTextFieldPanel(String labelText,
+			String defaultText, int labelWidth, int textFieldWidth) {
 		// add the text field
 		gd.addStringField(labelText, defaultText);
 		// get the previously added text field object
 		TextField textField = (TextField)gd.getStringFields().lastElement();
 		// get the label belonging to it
 		Label label = (Label) gd.getComponent(gd.getComponentCount()-2);
-		// remove components from dialog, since we use elsewhere, but be still registered with GerericDialog
+		/* remove components from dialog, since we use
+		 * elsewhere, but be still registered with GerericDialog
+		 */
 		gd.remove(textField);
 		gd.remove(label);
 		
@@ -462,12 +564,16 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		return panel;
 	}
 	
-	// A numeric field for the GUI
+	/**
+	 * A numeric field for the GUI
+	 */
 	private JPanel createNumericFieldPanel(String labelText, double defaultValue, int digits) {
 		return createNumericFieldPanel(labelText, defaultValue, digits, 100, 100); 
 	}
 	
-	// generate gd awt numeric fields for use in a different container later
+	/* Generates gd awt numeric fields for use in a
+	 * different container later
+	 */
 	private JPanel createNumericFieldPanel(String labelText, double defaultValue, int digits, int labelWidth, int textFieldWidth) {
 		// add the numeric field
 		gd.addNumericField(labelText, defaultValue, digits);
@@ -488,7 +594,12 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		return panel;
 	}
 	
-	
+	/**
+	 * Adds different Swing JPanels to a container JPanel.
+	 * Moreover the container JPanel is encapsulated in a
+	 * AWT Panel which in turn is added to the generic
+	 * dialog.
+	 */
 	private void addPanelsToDialog(JPanel container, JPanel[] panels) {
 		for (JPanel p : panels) {
 			container.add(p);
@@ -507,8 +618,9 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	 */
 	private void updatePreview() {
 		if (gd != null){
-			// tell the plug-in filter runner to update
-			// the preview. Apparently, this is "OK"
+			/* tell the plug-in filter runner to update
+			 * the preview. Apparently, this is "OK"
+			 */
 			pluginFilterRunner.dialogItemChanged(gd, null);
 		}
 	}
@@ -518,16 +630,20 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	 * based on the current state of the selected label format.
 	 */
 	private void updateUI() {
-		// if the new format supports custom suffixes,
-		// enable the custom suffix panel and deactivate unit selection
+		/* if the new format supports custom suffixes,
+		 * enable the custom suffix panel and deactivate
+		 * unit selection
+		 */
 		boolean supportsCustomSuffix = selectedFormat.supportsCustomSuffix();
 		customSuffixPanel.setVisible(supportsCustomSuffix);
 		labelUnitsPanel.setVisible(!supportsCustomSuffix);
-		// if the current format supports custom format,
-		//  enable the custom format panel
+		/* if the current format supports custom format,
+		 * enable the custom format panel
+		 */
 		customLabelFormatPanel.setVisible(selectedFormat.supportsCustomFormat());
-		// if the current format supports decimal places,
-		// enable the decimal places panel
+		/* if the current format supports decimal places,
+		 * enable the decimal places panel
+		 */
 		decimalPlacesPanel.setVisible(selectedFormat.supportsDecimalPlaces());
 	}
 	
@@ -542,7 +658,9 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		AbstractStampFormat lf = formats[currentFormat];
 		if (lf != selectedFormat) {
 			selectedFormat = lf;
-			// if format changed, must modify units choice accordingly
+			/* if format changed, must modify units
+			 * choice accordingly
+			 */
 			labelUnitsComboBox.removeAll();
 			for (String unit : selectedFormat.getAllowedFormatUnits()) {
 				labelUnitsComboBox.addItem(unit);
@@ -634,7 +752,8 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	 */
 	void setFontParams() {
 
-		int size = 12; // do we need this -font size we use is set globally in imageJ?
+		// the default font size
+		int size = 12;
 		
 		if (isCustomROI()){
 			Roi roi = imp.getRoi();
@@ -678,8 +797,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	 */
 	Rectangle getBoundingRectangle(ImageProcessor ip) {
 		Rectangle roi = ip.getRoi();
-		/**
-		 * set the xy time stamp drawing position, for ROI smaller than the
+		/* set the xy time stamp drawing position, for ROI smaller than the
 		 * image, to top left of ROI and make its height be the font size
 		 */
 		if (roi.width == imp.getWidth() && roi.height == imp.getHeight()) {
@@ -688,30 +806,26 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			roi.height = font.getSize();
 		}
 		
-		/**
-		 * make sure the y position is not less than the font height: size,
+		/* make sure the y position is not less than the font height: size,
 		 * so the time stamp is not off the top of the image?
 		 */
 		if ( (roi.y + roi.height) < font.getSize()) {
 			y = roi.y = 1;
 		} 
 		
-		/**
-		 * make sure the stamp does not fall off the bottom of the image
+		/* make sure the stamp does not fall off the bottom of the image
 		 */
 		if (ip.getHeight() < (roi.y + font.getSize())) {
 			y = roi.y = ip.getHeight() - font.getSize();
 		}
 		
-		/**
-		 * assume that the last time stamp is the widest one to calculate
+		/* assume that the last time stamp is the widest one to calculate
 		 * the maximum width of the bounding rectangle. This is not always
 		 * true (e.g. 0:00 vs. 0:11) and could be made more precise.
 		 */
 		roi.width = ip.getStringWidth(selectedFormat.lastTimeStampString());
-		
-		/**
-		 * if longest time stamp is wider than (image width - ROI width),
+
+		/* if longest time stamp is wider than (image width - ROI width),
 		 * move x in appropriately
 		 */
 		if (roi.width > (ip.getWidth() - roi.x)) {
@@ -763,13 +877,14 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	 * @return The time at frame f
 	 */
 	double getTimeFromFrame(int f) {  //should remane it so no time, as can be z or whatever series. 
-		return start + (interval * (f - 1)); // is the double ype number of the label for a certain frame
+		return start + (interval * (f - 1));
 	}
 
 	/**
 	 * A class representing a supported label format 
-	 * It relates supported format units/suffixes to a format name.
-	 * Besides that it determines if a custom suffix should be avaialble to the user.
+	 * It relates supported format units/suffixes to a format
+	 * name. Besides that it determines if a custom suffix
+	 * should be avaialble to the user.
 	 */
 	protected abstract class AbstractStampFormat {
 		// an array of all the supported units for this format
@@ -1005,7 +1120,8 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 				} else {
 					f = new SimpleDateFormat("HH:mm:ss.SSS");
 				}
-				f.setTimeZone(tz); // the SimpleDateFormat needs to know thetime zone is UTC!
+				// the SimpleDateFormat needs to know thetime zone is UTC!
+				f.setTimeZone(tz);
 
 				return f.format(calendar.getTime());
 			} catch (IllegalArgumentException ex) {
