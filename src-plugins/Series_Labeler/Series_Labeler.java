@@ -123,7 +123,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	double lastTime;
 	// the custom suffix, used if format supports it
 	String customSuffix = "";
-	/* the suffix to append to the time stamp, used if
+	/* the suffix to append to the label, used if
 	 * format supports supports no custom suffix
 	 */
 	static String chosenSuffix = "s";
@@ -161,7 +161,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 
 	// the currently selected format
 	AbstractStampFormat selectedFormat;
-	// background of timestamp/label enabled
+	// background of label enabled
 	private boolean backgroundEnabled = false;
 
 	// member variable for the GUI dialog
@@ -180,7 +180,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	final String[] stackTypes = { "z-stack",
 		"time series or movie" }; //, "spectral series" };
 	
-	// the available time formats
+	// the available formats
 	final AbstractStampFormat[] formats = {new DecimalLabelFormat(),
 		new DigitalLabelFormat(), new CustomLabelFormat()};
 	
@@ -410,7 +410,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			return DONE;
 
 		/* if the ok button was pressed, we are really running the plug-in,
-		 * so later we can tell what time stamp to make
+		 * so later we can tell what label to make
 		 * as its not the last as used by preview
 		 */
 		preview = !gd.wasOKed();
@@ -451,7 +451,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		/* Updates this image from the pixel data in its associated
 		 * ImageProcessor object and then displays it
 		 * if it is the last frame. Why do we need this when there is
-		 * ip.drawString(timeString); below?
+		 * ip.drawString(label); below?
 		 */
 		if (frame == last)
 			imp.updateAndDraw();
@@ -480,12 +480,11 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		ip.moveTo(backgroundRectangle.x,
 			(backgroundRectangle.y + backgroundRectangle.height) );
 		
-		/* ask the getTimeFromFrame method to return the
-		 * time for that frame
+		 /* get current label value for that frame
 		 */
-		double time = getTimeFromFrame(frame); 
+		double labelValue = getLabelValue(frame);
 		// draw the label string into the image
-		ip.drawString(selectedFormat.getTimeString(time));
+		ip.drawString(selectedFormat.getLabelString(labelValue));
 	}
 	
 	/**
@@ -787,16 +786,16 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 
 	/**
 	 * Gets a valid bounding rectangle for the label positioning.
-	 * It aims for having all of the time stamp on the image, even for
+	 * It aims for having all of the label on the image, even for
 	 * the last frames/slices with the biggest numbers,
 	 * and if the ROI is large in y so font size is also big
-	 * It tries to move the time stamp right a bit to account for the
-	 * max length the time stamp will be, and checks if the
+	 * It tries to move the label right a bit to account for the
+	 * max length the label will be, and checks if the
 	 * label will fall off the image and if it does move it in appropriately.
 	 */
 	Rectangle getBoundingRectangle(ImageProcessor ip) {
 		Rectangle roi = ip.getRoi();
-		/* set the xy time stamp drawing position, for ROI smaller than the
+		/* set the xy label drawing position, for ROI smaller than the
 		 * image, to top left of ROI and make its height be the font size
 		 */
 		if (roi.width == imp.getWidth() && roi.height == imp.getHeight()) {
@@ -805,8 +804,8 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			roi.height = font.getSize();
 		}
 		
-		/* make sure the y position is not less than the font height: size,
-		 * so the time stamp is not off the top of the image?
+		/* make sure the y position is not less than the font height/
+		 * size, so the label is not off the top of the image?
 		 */
 		if ( (roi.y + roi.height) < font.getSize()) {
 			y = roi.y = 1;
@@ -818,13 +817,13 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			y = roi.y = ip.getHeight() - font.getSize();
 		}
 		
-		/* assume that the last time stamp is the widest one to calculate
+		/* assume that the last label is the widest one to calculate
 		 * the maximum width of the bounding rectangle. This is not always
 		 * true (e.g. 0:00 vs. 0:11) and could be made more precise.
 		 */
-		roi.width = ip.getStringWidth(selectedFormat.lastTimeStampString());
+		roi.width = ip.getStringWidth(selectedFormat.lastLabelString());
 
-		/* if longest time stamp is wider than (image width - ROI width),
+		/* if longest label is wider than (image width - ROI width),
 		 * move x in appropriately
 		 */
 		if (roi.width > (ip.getWidth() - roi.x)) {
@@ -863,20 +862,20 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	}
 
 	/**
-	 * Returns the time of the last frame where a stamp will be made.
+	 * Returns the label of the last frame where a stamp will be made.
 	 */
-	double lastTime() { //should remane it so no time, as can be z or whatever series. 
-		return getTimeFromFrame(last); 
+	double lastFrameValue() {
+		return getLabelValue(last);
 	}
 
 	/**
-	 * Returns the time of a specific frame.
+	 * Returns the label value of a specific frame.
 	 * 
-	 * @param f The frame to calculate the time of
-	 * @return The time at frame f
+	 * @param f The frame to calculate the value of
+	 * @return The label value at frame f
 	 */
-	double getTimeFromFrame(int f) {  //should remane it so no time, as can be z or whatever series. 
-		return start + (interval * (f - 1));
+	double getLabelValue(int frame) {
+		return start + (interval * (frame - 1));
 	}
 
 	/**
@@ -921,25 +920,26 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		 * which might be custom suffix if one is entered and selected. if it is
 		 * digital, then there is no suffix as format is set default as hh:mm:ss.ms
 		 * 
-		 * @param time
-		 * @return
+		 * @param labelValue The value to a frame of which
+		 * the label should be generated
+		 * @return The string representation of the label value
 		 */
-		public abstract String getTimeString(double time); //rename to remove time
+		public abstract String getLabelString(double labelValue);
 
 		/**
 		 * this method returns the string of the label for the last frame to
 		 * be stamped which is for the frame with value of the last variable. It
-		 * should be the longest string the timestamp will be. we should use
-		 * this in maxWidth method and for the preview of the timestamp used to
+		 * should be the longest string the label will be. we should use
+		 * this in maxWidth method and for the preview of the label used to
 		 * be: maxWidth = ip.getStringWidth(decimalString(start +
 		 * interval*imp.getStackSize())); but should use last not stacksize,
-		 * since no time stamp is made for slices after last? It also needs to
-		 * calculate maxWidth for both digital and decimal time formats:
+		 * since no label is made for slices after last? It also needs to
+		 * calculate maxWidth for both digital and decimal label formats:
 		 * 
 		 * @return
 		 */
-		public String lastTimeStampString() { //rename to remove time, use label instead
-			return getTimeString(lastTime());
+		public String lastLabelString() {
+			return getLabelString(lastFrameValue());
 		}
 
 		/**
@@ -981,7 +981,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		}
 
 		/**
-		 * Indicates whether a custom time format can be used by the format.
+		 * Indicates whether a custom label format can be used by the format.
 		 * This could be useful for digital formats like HH:mm which should be
 		 * user definable.
 		 * 
@@ -1021,7 +1021,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 
 		/**
 		 * Constructs a new {@link DecimalLabelFormat}. The allowed units and a
-		 * name are requested as parameters. No custom time format input is
+		 * name are requested as parameters. No custom label format input is
 		 * supported, but one can use a custom suffix with this class.
 		 * 
 		 * @param allowedFormatUnits
@@ -1047,11 +1047,11 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		 * then just return the specified suffix
 		 */
 		@Override
-		public String getTimeString(double time) {
+		public String getLabelString(double labelValue) {
 			if (interval == 0.0)
 				return suffix();
 			else
-				return (decimalPlaces == 0 ? "" + (int) time : IJ.d2s(time,
+				return (decimalPlaces == 0 ? "" + (int) labelValue : IJ.d2s(labelValue,
 						decimalPlaces))
 						+ " " + suffix();
 		}
@@ -1076,7 +1076,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 
 		/**
 		 * Constructs a new {@link DigitalLabelFormat}. The allowed units and a
-		 * name are requested as parameters. No custom time format input is
+		 * name are requested as parameters. No custom label format input is
 		 * supported, but one can use a custom suffix with this class.
 		 * 
 		 * @param allowedFormatUnits
@@ -1094,22 +1094,22 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		 * and we do have that functionality in HybridDateFormat?
 		 */
 		@Override
-		public String getTimeString(double time) {
+		public String getLabelString(double labelValue) {
 			calendar.setTimeInMillis(0);
 			if (chosenSuffix.equals("min")) {
-				time = time * (60.0 * 1000.0);
+				labelValue = labelValue * (60.0 * 1000.0);
 			} else if (chosenSuffix.equals("s")) {
-				time = time * 1000.0;
+				labelValue = labelValue * 1000.0;
 			} else if (chosenSuffix.equals("ms")) {
 				// trivial case, nothing to do:
-				// time = time;
+				// labelValue = labelValue;
 			}
 			else {
 				IJ.error("For a digital 00:00:00.000 time you must use min, s or ms only as the time units.");
 			}
 
 			// set the time
-			calendar.setTimeInMillis(Math.round(time));
+			calendar.setTimeInMillis(Math.round(labelValue));
 			DateFormat f;
 			try {
 				// check if a custom format has been entered in the GUI
