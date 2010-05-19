@@ -1254,10 +1254,10 @@ int build_classpath_for_string(struct string *result, struct string *jar_directo
 			len = jar_directory->length;
 			string_addf(jar_directory, "/%s", filename);
 			if (build_classpath_for_string(result, jar_directory, 1)) {
-				string_set_length(result, len);
+				string_set_length(jar_directory, len);
 				return 1;
 			}
-			string_set_length(result, len);
+			string_set_length(jar_directory, len);
 		}
 
 	}
