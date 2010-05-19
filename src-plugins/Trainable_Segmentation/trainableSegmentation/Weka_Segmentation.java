@@ -1113,6 +1113,8 @@ public class Weka_Segmentation implements PlugIn
 			IJ.log("# of pixels selected as " + classLabels[l] + ": " +nl);						
 		}
 
+		if (trainingData.numInstances() == 0)
+			return null;
 				
 		return trainingData;
 	}
@@ -2398,8 +2400,13 @@ public class Weka_Segmentation implements PlugIn
 			IJ.log("Features stack is now updated.");
 		}
 		
-		Instances data = createTrainingInstances();
-		data.setClassIndex(data.numAttributes() - 1);
+		Instances data = null;
+		
+		if(examplesEmpty == false)
+		{
+			data = createTrainingInstances();
+			data.setClassIndex(data.numAttributes() - 1);
+		}
 		if (null != loadedTrainingData && null != data){
 			IJ.log("Merging data...");
 			for (int i=0; i < loadedTrainingData.numInstances(); i++){
@@ -2550,7 +2557,7 @@ public class Weka_Segmentation implements PlugIn
 		
 		// Accumulate current data in "loadedTrainingData"
 		IJ.log("Storing previous image instances...");
-		
+						
 		// Create feature stack if it was not created yet
 		if(featureStack.isEmpty() || updateFeatures)
 		{
@@ -2561,9 +2568,10 @@ public class Weka_Segmentation implements PlugIn
 		}
 		
 		// Create instances
-		Instances data = createTrainingInstances();
-		data.setClassIndex(data.numAttributes() - 1);
-		if (null != loadedTrainingData && null != data){
+		Instances data = createTrainingInstances();		
+		if (null != loadedTrainingData && null != data)
+		{
+			data.setClassIndex(data.numAttributes() - 1);
 			IJ.log("Merging data...");
 			for (int i=0; i < loadedTrainingData.numInstances(); i++){
 				// IJ.log("" + i)
@@ -2574,21 +2582,25 @@ public class Weka_Segmentation implements PlugIn
 		else if (null == data)
 			data = loadedTrainingData;
 		
+		// Store merged data as loaded data
 		loadedTrainingData = data;
 		
-		Attribute classAttribute = data.classAttribute();
-		Enumeration<String> classValues  = classAttribute.enumerateValues();
-		
-		// Update list of names of loaded classes
-		loadedClassNames = new ArrayList<String>();		
-		while(classValues.hasMoreElements())
+		if(null != loadedTrainingData)
 		{
-			final String className = classValues.nextElement().trim();
-			loadedClassNames.add(className);
+			Attribute classAttribute = loadedTrainingData.classAttribute();
+			Enumeration<String> classValues  = classAttribute.enumerateValues();
+
+			// Update list of names of loaded classes
+			loadedClassNames = new ArrayList<String>();		
+			while(classValues.hasMoreElements())
+			{
+				final String className = classValues.nextElement().trim();
+				loadedClassNames.add(className);
+			}
+			IJ.log("Number of accumulated examples: " + loadedTrainingData.numInstances());
 		}
-		
-		
-		IJ.log("Number of accumulated examples: " + loadedTrainingData.numInstances());
+		else 
+			IJ.log("Number of accumulated examples: 0");
 		
 		// Remove traces from the lists and ROI overlays
 		IJ.log("Removing previous markings...");
@@ -2655,8 +2667,7 @@ public class Weka_Segmentation implements PlugIn
 			IJ.log("Error while loading white class center-lines data.");
 			return false;
 		}
-		
-		
+				
 		// Process black pixels
 		final ImagePlus blackIP = new ImagePlus ("black", labelImage.getProcessor().duplicate());
 		IJ.run(blackIP, "Invert","");
@@ -2670,6 +2681,62 @@ public class Weka_Segmentation implements PlugIn
 		return true;
 	}
 
+	
+	/**
+	 * Add eroded version of label image as binary data (for the first two classes)
+	 * 
+	 * @param labelImage binary label image
+	 * @param whiteClassName class name for the white pixels
+	 * @param blackClassName class name for the black pixels
+	 * @return false if error
+	 */
+	public boolean addErodedBinaryData(
+			ImagePlus labelImage,
+			String whiteClassName,
+			String blackClassName)
+	{
+		// Update features if necessary
+		if(featureStack.getSize() < 2)
+		{
+			IJ.log("Creating feature stack...");
+			featureStack.updateFeatures();
+			updateFeatures = false;
+			IJ.log("Features stack is now updated.");
+		}
+		
+		if(labelImage.getWidth() != this.trainingImage.getWidth()
+				|| labelImage.getHeight() != this.trainingImage.getHeight())
+		{
+			IJ.log("Error: label and training image sizes do not fit.");
+			return false;
+		}
+		
+		// Process white pixels
+		final ImagePlus whiteIP = new ImagePlus ("white", labelImage.getProcessor().duplicate());
+		IJ.run(whiteIP, "Erode","");
+		// Add skeleton to white class
+		if( false == this.addBinaryData(whiteIP, featureStack, whiteClassName) )
+		{
+			IJ.log("Error while loading white class center-lines data.");
+			return false;
+		}
+		
+
+		
+		// Process black pixels
+		final ImagePlus blackIP = new ImagePlus ("black", labelImage.getProcessor().duplicate());
+		IJ.run(blackIP, "Invert","");
+		IJ.run(blackIP, "Erode","");
+		// Add skeleton to white class
+		if( false == this.addBinaryData(blackIP, featureStack, blackClassName))
+		{
+			IJ.log("Error while loading black class center-lines data.");
+			return false;
+		}
+		return true;
+	}
+	
+	
 	/**
 	 * Force segmentator to use all available features
 	 */
