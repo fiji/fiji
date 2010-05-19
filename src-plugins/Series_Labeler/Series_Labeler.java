@@ -161,6 +161,9 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 
 	// the currently selected format
 	AbstractStampFormat selectedFormat;
+	// the currently selected stack type
+	StackType selectedStackType;
+
 	// background of label enabled
 	private boolean backgroundEnabled = false;
 
@@ -176,17 +179,30 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	// the currently selected location preset
 	int locationPreset;
 	
-	// the available kinds of stack we can label. 
-	final String[] stackTypes = { "z-stack",
-		"time series or movie" }; //, "spectral series" };
-	
-	// the available formats
-	final AbstractStampFormat[] formats = {new DecimalLabelFormat(),
+	// the available time formats
+	final AbstractStampFormat[] timeFormats = {new DecimalLabelFormat(),
 		new DigitalLabelFormat(), new CustomLabelFormat()};
+
+	// the availble z-stack formats
+	final AbstractStampFormat[] zFormats = {
+		new DecimalLabelFormat( new String[] {"pm", "Å",
+			"nm", "um", "mm", "cm", "m", "km", "Mm",
+			"parsec", "light year"}, "Lengths", false,
+			true) };
+
+	// the available kinds of stack we can label. 
+	//final String[] stackTypes = { "z-stack",
+	//	"time series or movie" }; //, "spectral series" };
+	
+	// the different types of stacks
+	final StackType[] stackTypes = {
+		new StackType("time series or movie", timeFormats),
+		new StackType("z-stack", zFormats) };
 	
 	// GUI variables that are needed to read out data
 	// from the components
 	private Choice labelUnitsComboBox;
+	private Choice formatsComboBox;
 	private Choice locationPresetsComboBox;
 	private JPanel generalSettingsContainer;
 	private JPanel unitsFormattingContainer;
@@ -218,10 +234,12 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			setFontParams();
 		}
 
+		selectedStackType = stackTypes[0];
+
 		/* set the currently selected format to the
 		 * first available
 		 */
-		selectedFormat = formats[0];
+		selectedFormat = selectedStackType.getSupportedFormats()[0];
 
 		// return supported flags
 		return flags;
@@ -250,8 +268,9 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			"General Settings");
 		
 		//add combobox for stack type
+		String[] stacks = convertStackTypesToStrings(stackTypes);
 		JPanel stackTypePanel = createComboBoxPanel(
-			"Stack_Type", stackTypes, 1, 100, 180);
+			"Stack_Type", stacks, 0, 100, 180);
 		stackTypePanel.setLocation(left, 30);
 		
 		addPanelsToDialog(generalSettingsContainer,
@@ -265,7 +284,8 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		
 		// add combobox for label format
 		JPanel pLabelFormat = createComboBoxPanel("Label_Format",
-			getAvailableFormats(), 0);
+			convertFormatsToStrings(timeFormats), 0);
+		formatsComboBox = (Choice) gd.getChoices().lastElement();
 		pLabelFormat.setLocation(left, 30);
         
 		// add combobox for label unit
@@ -650,10 +670,28 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	 */
 	public boolean dialogItemChanged(GenericDialog gd, AWTEvent e) {
 		// the stack type choice
-		int stackType = gd.getNextChoiceIndex();
+		int currentType = gd.getNextChoiceIndex();
+		StackType st = stackTypes[currentType];
+
+		if (st != selectedStackType) {
+			selectedStackType = st;
+			/* if stack type has changed, we must
+			 * update the formats choice
+			 */
+			formatsComboBox.removeAll();
+			for (AbstractStampFormat format :
+					st.getSupportedFormats()) {
+				formatsComboBox.addItem(format.getName());
+			}
+			// select first item of new list
+			formatsComboBox.select(0);
+		}
+
+
 		// has the label format been changed?
 		int currentFormat = gd.getNextChoiceIndex();
-		AbstractStampFormat lf = formats[currentFormat];
+		AbstractStampFormat lf =
+			selectedStackType.getSupportedFormats()[currentFormat];
 		if (lf != selectedFormat) {
 			selectedFormat = lf;
 			/* if format changed, must modify units
@@ -715,7 +753,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	/**
 	 * Creates a string array out of the names of the available formats.
 	 */
-	private String[] getAvailableFormats() {
+	private String[] convertFormatsToStrings(AbstractStampFormat[] formats) {
 		String[] formatArray = new String[formats.length];
 		int i = 0;
 		for (AbstractStampFormat t : formats) {
@@ -725,6 +763,20 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		return formatArray;
 	}
 	
+	/**
+	 * Creates a string array out of the names of the available formats.
+	 */
+
+	private String[] convertStackTypesToStrings(StackType[] types) {
+		String[] typeArray = new String[types.length];
+		int i = 0;
+		for (StackType t : types) {
+			typeArray[i] = t.getName();
+			i++;
+		}
+		return typeArray;
+	}
+
 	/**
 	 * Returns true if a custom ROI has been selected, i.e if the current
 	 * ROI does not have the extent of the whole image.
@@ -876,6 +928,30 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	 */
 	double getLabelValue(int frame) {
 		return start + (interval * (frame - 1));
+	}
+
+	/**
+	 * A class representing a type of stack. It contains
+	 * a name and the supported formats.
+	 */
+	protected class StackType {
+		// the name
+		String name;
+		// the supported formats
+		AbstractStampFormat[] supportedFormats;
+
+		public StackType(String name, AbstractStampFormat[] formats) {
+			this.name = name;
+			supportedFormats = formats;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public AbstractStampFormat[] getSupportedFormats() {
+			return supportedFormats;
+		 }
 	}
 
 	/**
