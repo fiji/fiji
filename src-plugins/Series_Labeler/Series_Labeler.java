@@ -87,7 +87,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 import javax.swing.event.DocumentListener;
 
-public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
+public class Series_Labeler implements ExtendedPlugInFilter,
 		DialogListener {
 
 	ImagePlus imp;
@@ -175,7 +175,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 	 */
 	public int setup(String arg, ImagePlus imp) {
 		this.imp = imp;
-		IJ.register(Time_Stamper_Enhanced.class);
+		IJ.register(Series_Labeler.class);
 		if (imp != null) {
 			first = 1;
 			last = imp.getStackSize();
@@ -201,7 +201,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		
 		// This makes the GUI object
 		gd = new NonBlockingGenericDialog(
-				"Time Stamper Enhanced / Series Labeler");
+				"Series Labeler");
 
 		//
 		// General settings panel
@@ -249,7 +249,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		//
 		startStopIntervalsContainer = createContainerPanel(130, "Start/Stop/Interval of Stack");
 		
-		// add a panel for the time stamper start value
+		// add a panel for the series stamper start value
 		JPanel pStartup = createNumericFieldPanel("Startup", start, 2);
 		pStartup.setLocation(left, 30);
 		
@@ -304,7 +304,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 
 		gd.addPreviewCheckbox(pfr); // adds preview checkbox - needs
 		// ExtendedPluginFilter and DialogListener!
-		gd.addMessage("Time Stamper plugin for Fiji (is just ImageJ - batteries included)\n" +
+		gd.addMessage("Series Labeler plugin for Fiji (is just ImageJ - batteries included)\n" +
 				"maintained by Dan White MPI-CBG dan(at)chalkie.org.uk");
 
 		gd.addDialogListener(this); // needed for listening to dialog
@@ -813,7 +813,7 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		public abstract String getTimeString(double time); //rename to remove time
 
 		/**
-		 * this method returns the string of the TimeStamp for the last frame to
+		 * this method returns the string of the label for the last frame to
 		 * be stamped which is for the frame with value of the last variable. It
 		 * should be the longest string the timestamp will be. we should use
 		 * this in maxWidth method and for the preview of the timestamp used to
@@ -1101,5 +1101,5 @@ public class Time_Stamper_Enhanced implements ExtendedPlugInFilter,
 		}
 		
 	}
-} // thats the end of Time_Stamper_Enhanced - remember to rename it Series_Labeller
+} // thats the end of Series_Labeler
 
