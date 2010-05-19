@@ -17,6 +17,10 @@
   PARTICULAR PURPOSE.  See the GNU General Public License for more
   details.
 
+  In addition, as a special exception, the copyright holders give
+  you permission to combine this program with free software programs or
+  libraries that are released under the Apache Public License. 
+
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */

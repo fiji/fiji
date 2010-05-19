@@ -1,5 +1,3 @@
-package view5d;
-
 /****************************************************************************
  *   Copyright (C) 1996-2007 by Rainer Heintzmann                          *
  *   heintzmann@gmail.com                                                  *
@@ -23,22 +21,26 @@ package view5d;
 // By making the appropriate class "View5D" or "View5D_" public and renaming the file, this code can be toggled between Applet and ImageJ respectively
 
 // import java.io.*;
+package view5d;
+
 import java.awt.image.*;
 import java.awt.*;
 import java.util.*;
 
-class Bundle extends Object implements Cloneable {  // this class bundles some user-defined values seperately for each element
+public class Bundle extends Object implements Cloneable {  // this class bundles some user-defined values seperately for each element
     private double mincs=0.0,maxcs=1.0;
     private double ProjMincs[]={0.0,0.0},ProjMaxcs[]={1.0,1.0}; // For the different projection modes (Max, Avg)
     public int ElementModelNr=0;    // just a number for the current model 
     final static int ElementModels=13;  // Nr of element models
     final static String ElementModelName[]={"GrayScale","Red","Green","Blue","Purple","Glow Red","Glow Green-Blue","Glow Green-Yellow","Glow Blue","Glow Purple","Rainbow","Random","Cyclic"};  // Nr of element models
     byte  cmapRed[],cmapGreen[],cmapBlue[];
-    static Vector MapSizes = new Vector(),RedMaps = new Vector(),GreenMaps = new Vector(),BlueMaps = new Vector(); // For user-supplied colormaps
+    static Vector<Integer> MapSizes = new Vector<Integer>();
+    static Vector<byte[]> RedMaps = new Vector<byte[]>(),GreenMaps = new Vector<byte[]>(),BlueMaps = new Vector<byte[]>(); // For user-supplied colormaps
     boolean cmapIsInverse=false;
     IndexColorModel ElementModel;
     boolean ShowOvUn=false;
     boolean LogScale=false;
+    double Gamma=1.0;
     final static int MaxCTableBits=15;
     final static int MaxCTable = (2 << (MaxCTableBits-1));
     int cmapcLow=0, cmapcHigh=(2 << (MaxCTableBits-1)); // cmap indices for threshold
@@ -90,7 +92,7 @@ class Bundle extends Object implements Cloneable {  // this class bundles some u
     boolean InOverlayDispl() {return DispOverlay;}
     boolean MulOverlayDispl() {return MulDisplay;}
 
-    void ToggleOverlayDispl(int val) {
+    public void ToggleOverlayDispl(int val) {
         if (val < 0)
             DispOverlay = ! DispOverlay;
         else if (val == 0)
@@ -99,7 +101,7 @@ class Bundle extends Object implements Cloneable {  // this class bundles some u
             DispOverlay = true;            
     }
 
-    void ToggleMulDispl(int val) {
+    public void ToggleMulDispl(int val) {
         if (val < 0)
             MulDisplay= ! MulDisplay;
         else if (val == 0)
@@ -118,7 +120,7 @@ class Bundle extends Object implements Cloneable {  // this class bundles some u
     {rectROI.UpdateSqrROI(ROIX,ROIY,ROIXe,ROIYe,dir);}
 
     public void TakePolyROIs(Polygon []PS) {polyROI.TakePolyROIs(PS);}
-    public void TakePlaneROIs(Vector [] PlanesS, Vector [] PlanesD) {return;}  // ignored for now
+    public void TakePlaneROIs(Vector<Integer> [] PlanesS, Vector<Double> [] PlanesD) {return;}  // ignored for now
     
     public Object clone()
     {
@@ -126,6 +128,7 @@ class Bundle extends Object implements Cloneable {  // this class bundles some u
         nb.MIPMode = MIPMode;
         nb.ShowOvUn= ShowOvUn;
         nb.LogScale=LogScale;
+        nb.Gamma=Gamma;
         nb.DispOverlay=DispOverlay;      // will be displayed in Multicolor overlay mode
         // System.out.println("Cloned Bundle : "+mincs+", "+maxcs+", Model "+ElementModelNr+"\n");
         nb.TakeSqrROIs(rectROI.ProjMin,rectROI.ProjMax);
@@ -191,6 +194,9 @@ class Bundle extends Object implements Cloneable {  // this class bundles some u
                     }
                 }
 
+        if (Gamma != 1.0)
+        	tmp = java.lang.Math.pow(tmp,Gamma);
+        
 		if (LogScale)
 		    tmp = java.lang.Math.log(LogGain*tmp+1)/LogCalib; 
 
@@ -298,12 +304,12 @@ class Bundle extends Object implements Cloneable {  // this class bundles some u
                             break;
                         default:  // a user supplied colormap
                             int elem=ElementModelNr-ElementModels;
-                            int MapSize=((Integer) MapSizes.elementAt(elem)).intValue();
+                            int MapSize=MapSizes.elementAt(elem).intValue();
                             //int MapSize=((byte []) RedMaps.elementAt(elem)).length;
                             int index=(int) ((MapSize-1)*tmp);
-                            cmapRed[i]=((byte []) RedMaps.elementAt(elem))[index];
-                            cmapGreen[i]=((byte []) GreenMaps.elementAt(elem))[index];
-                            cmapBlue[i]=((byte []) BlueMaps.elementAt(elem))[index];
+                            cmapRed[i]=RedMaps.elementAt(elem)[index];
+                            cmapGreen[i]=GreenMaps.elementAt(elem)[index];
+                            cmapBlue[i]=BlueMaps.elementAt(elem)[index];
 		    }
 		if (cmapIsInverse)
 		{
@@ -355,6 +361,17 @@ class Bundle extends Object implements Cloneable {  // this class bundles some u
         return ShowOvUn;
    }
 	
+   public void SetGamma(double newVal) {
+	   double oldGamma=Gamma;
+	   Gamma=newVal;
+	   if (Gamma != oldGamma)
+		   CompCMap();
+   }
+
+   public double GetGamma() {
+		return Gamma;
+	    }
+   
 public void ToggleLog(int newVal) {
 	if (newVal < 0)
 	    LogScale = ! LogScale;

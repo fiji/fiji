@@ -59,7 +59,7 @@ public class AboutDialog extends JDialog {
 
 	private String infoText = "<html><center>LSM_Toolbox ver "
 			+ MasterModel.VERSION
-			+ " (C) 2008 Patrick Pirrotte </center></html>";
+			+ " (C) 2003-2009 Patrick Pirrotte </center></html>";
 
 	//private HtmlPageLoader loader;
 

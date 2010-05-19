@@ -1,5 +1,3 @@
-package view5d;
-
 /****************************************************************************
  *   Copyright (C) 1996-2007 by Rainer Heintzmann                          *
  *   heintzmann@gmail.com                                                  *
@@ -21,24 +19,27 @@ package view5d;
  ***************************************************************************
 */
 // By making the appropriate class "View5D" or "View5D_" public and renaming the file, this code can be toggled between Applet and ImageJ respectively
+package view5d;
+
 
 // import java.io.*;
 import java.util.*;
 
 // A RIO class based on separating planes (in 3D, any orientation)
 class PlaneROI extends ROI {
-    Vector PlanesS[], PlanesD[];  // Starting vectors and direction vectors of planes
+    Vector<Integer> PlanesS[];
+    Vector<Double>PlanesD[];  // Starting vectors and direction vectors of planes
     
     PlaneROI() {
-        PlanesS = new Vector[3];
-        PlanesD = new Vector[3];
+        PlanesS = (Vector<Integer>[]) new Vector[3];
+        PlanesD = (Vector<Double>[]) new Vector[3];
     }
 
     double GetROISize(int dim) {
         return 0;
      }
 
-    void TakePlaneROIs(Vector PS[],Vector PD[]) {
+    void TakePlaneROIs(Vector<Integer> PS[],Vector<Double> PD[]) {
         PlanesS = PS;
         PlanesD = PD;
     }

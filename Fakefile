@@ -17,7 +17,7 @@
 # on the right side are packaged into the target, compiling them first, if
 # they are .java files.
 #
-# If the last item on the right side is a .cxx file, the GNU C++ compiler
+# If the last item on the right side is a .c file, the GNU C++ compiler
 # will be invoked to make the target from it.
 #
 # If an item on the right side is a directory, and a Fakefile or a Makefile
@@ -300,11 +300,11 @@ JAVA_LIB_PATH(macosx)=
 
 # The variables CFLAGS, CXXFLAGS, LDFLAGS and LIBS will be used for compiling
 # C and C++ programs.
-CXXFLAGS(*)=-Wall -Iincludes \
+CFLAGS(*)=-Wall -Iincludes \
 	-DJAVA_HOME='"$FIJI_JAVA_HOME"' -DJAVA_LIB_PATH='"$JAVA_LIB_PATH"'
 WINOPTS=-mwindows -mno-cygwin -DMINGW32
-CXXFLAGS(win32)=$CXXFLAGS $WINOPTS
-CXXFLAGS(win64)=$CXXFLAGS $WINOPTS
+CFLAGS(win32)=$CFLAGS $WINOPTS
+CFLAGS(win64)=$CFLAGS $WINOPTS
 
 # Include 64-bit architectures only in ./fiji (as opposed to ./fiji-tiger),
 # and only on MacOSX
@@ -313,38 +313,38 @@ MACOPTS(osx10.3)=-I/System/Library/Frameworks/JavaVM.Framework/Headers \
 MACOPTS(osx10.4)=$MACOPTS(osx10.3) -mmacosx-version-min=10.3 -arch i386
 MACOPTS(osx10.5)=$MACOPTS(osx10.4) -arch x86_64
 
-CXXFLAGS(linux)=$CXXFLAGS -DIPV6_MAYBE_BROKEN
-CXXFLAGS(linux64)=$CXXFLAGS -DIPV6_MAYBE_BROKEN
+CFLAGS(linux)=$CFLAGS -DIPV6_MAYBE_BROKEN
+CFLAGS(linux64)=$CFLAGS -DIPV6_MAYBE_BROKEN
 
 LDFLAGS(win32)=$LDFLAGS $WINOPTS
 
-CXXFLAGS(fiji)=$CXXFLAGS $MACOPTS
+CFLAGS(fiji)=$CFLAGS $MACOPTS
 LDFLAGS(fiji)=$LDFLAGS $MACOPTS
 
 LIBS(linux)=-ldl
 LIBS(linux64)=-ldl
 LIBS(macosx)=-framework CoreFoundation -framework JavaVM
 
-fiji <- fiji.cxx
+fiji <- fiji.c
 
-CXXFLAGS(fiji-tiger)=$CXXFLAGS $MACOPTS(osx10.4)
+CFLAGS(fiji-tiger)=$CFLAGS $MACOPTS(osx10.4)
 LDFLAGS(fiji-tiger)=$LDFLAGS $MACOPTS(osx10.4)
-fiji-tiger <- fiji.cxx
+fiji-tiger <- fiji.c
 
-CXXFLAGS(fiji-panther)=$CXXFLAGS $MACOPTS(osx10.3)
+CFLAGS(fiji-panther)=$CFLAGS $MACOPTS(osx10.3)
 LDFLAGS(fiji-panther)=$LDFLAGS $MACOPTS(osx10.3)
-fiji-panther <- fiji.cxx
+fiji-panther <- fiji.c
 
 # Cross-compiling (works only on Linux64 so far)
 
 all-cross[] <- cross-win32 cross-win64 cross-linux
 # cross-tiger does not work yet
 
-cross-win64[bin/cross-compiler.py win64 $CXXFLAGS(win64)] <- fiji.cxx
+cross-win64[bin/cross-compiler.py win64 $CFLAGS(win64)] <- fiji.c
 cross-tiger[bin/chrooted-cross-compiler.sh tiger \
-	$CXXFLAGS(macosx) $LIBS(macosx)] <- fiji.cxx
+	$CFLAGS(macosx) $LIBS(macosx)] <- fiji.c
 cross-*[bin/chrooted-cross-compiler.sh * \
-	$CXXFLAGS(*) $LIBS(*)] <- fiji.cxx
+	$CFLAGS(*) $LIBS(*)] <- fiji.c
 
 # Precompiled stuff
 
@@ -445,7 +445,7 @@ check[] <- check-launchers check-submodules
 
 LAUNCHERS=$LAUNCHER(linux) $LAUNCHER(linux64) \
 	$LAUNCHER(win32) $LAUNCHER(win64) $LAUNCHER(macosx)
-check-launchers[bin/up-to-date-check.py fiji.cxx $LAUNCHERS] <-
+check-launchers[bin/up-to-date-check.py fiji.c $LAUNCHERS] <-
 
 check-submodules[] <- check-ij check-VIB check-TrakEM2 check-mpicbg
 

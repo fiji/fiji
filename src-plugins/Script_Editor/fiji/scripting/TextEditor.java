@@ -69,6 +69,7 @@ import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -90,7 +91,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		  undo, redo, cut, copy, paste, find, replace, selectAll,
 		  autocomplete, resume, terminate, kill, gotoLine,
 		  makeJar, makeJarWithSource, removeUnusedImports,
-		  sortImports, removeTrailingWhitespace, findNext,
+		  sortImports, removeTrailingWhitespace, findNext, findPrevious,
 		  openHelp, addImport, clearScreen, nextError, previousError,
 		  openHelpWithoutFrames, nextTab, previousTab,
 		  runSelection, extractSourceJar, toggleBookmark,
@@ -151,6 +152,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		find.setMnemonic(KeyEvent.VK_F);
 		findNext = addToMenu(edit, "Find Next", KeyEvent.VK_F3, 0);
 		findNext.setMnemonic(KeyEvent.VK_N);
+		findPrevious = addToMenu(edit, "Find Previous", KeyEvent.VK_F3, shift);
+		findPrevious.setMnemonic(KeyEvent.VK_P);
 		replace = addToMenu(edit, "Find and Replace...", KeyEvent.VK_H, ctrl);
 		gotoLine = addToMenu(edit, "Goto line...", KeyEvent.VK_G, ctrl);
 		gotoLine.setMnemonic(KeyEvent.VK_G);
@@ -216,7 +219,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		run.addSeparator();
 		nextError = addToMenu(run, "Next Error", KeyEvent.VK_F4, 0);
 		nextError.setMnemonic(KeyEvent.VK_N);
-		previousError = addToMenu(run, "Next Error", KeyEvent.VK_F4, shift);
+		previousError = addToMenu(run, "Previous Error", KeyEvent.VK_F4, shift);
 		previousError.setMnemonic(KeyEvent.VK_P);
 		run.addSeparator();
 		debug = addToMenu(run, "Start Debugging", KeyEvent.VK_D, ctrl);
@@ -712,6 +715,8 @@ public class TextEditor extends JFrame implements ActionListener,
 			findOrReplace(false);
 		else if (source == findNext)
 			findDialog.searchOrReplace(false);
+		else if (source == findPrevious)
+			findDialog.searchOrReplace(false, false);
 		else if (source == replace)
 			findOrReplace(true);
 		else if (source == gotoLine)
@@ -1120,15 +1125,19 @@ public class TextEditor extends JFrame implements ActionListener,
 	synchronized void setTitle() {
 		boolean fileChanged = getEditorPane().fileChanged();
 		String fileName = getEditorPane().getFileName();
-		String title = (fileChanged ? "*" : "") + fileName
+		final String title = (fileChanged ? "*" : "") + fileName
 			+ (executingTasks.isEmpty() ? "" : " (Running)");
-		setTitle(title);
+		SwingUtilities.invokeLater(new Thread() {
+			public void run() {
+				setTitle(title);
+			}
+		});
 		int index = tabbed.getSelectedIndex();
 		if (index >= 0)
 			tabbed.setTitleAt(index, title);
 	}
 
-	public void setTitle(String title) {
+	public synchronized void setTitle(String title) {
 		super.setTitle(title);
 		int index = tabsMenuTabsStart + tabbed.getSelectedIndex();
 		if (index < tabsMenu.getItemCount()) {
@@ -1392,8 +1401,10 @@ public class TextEditor extends JFrame implements ActionListener,
 
 	public boolean nextError(boolean forward) {
 		if (errorHandler != null && errorHandler.nextError(forward)) try {
-			switchTo(errorHandler.getPath(),
-					errorHandler.getLine());
+			File file = new File(errorHandler.getPath());
+			if (!file.isAbsolute())
+				file = getFileForBasename(file.getName());
+			switchTo(file, errorHandler.getLine());
 			errorHandler.markLine();
 			screen.repaint();
 			getEditorPane().repaint();
@@ -1479,7 +1490,7 @@ public class TextEditor extends JFrame implements ActionListener,
 			className = getEditorPane().getClassNameFunctions()
 				.getFullName(className);
 		if (className != null)
-			new TokenFunctions(getTextArea()).addImport(className);
+			new TokenFunctions(getTextArea()).addImport(className.trim());
 	}
 
 	public void openHelp(String className) {

@@ -57,7 +57,7 @@ public class User_Plugins implements PlugIn {
 			classLoader.addPath(path);
 		} catch (IOException e) {}
 		try {
-			classLoader.addPath(getFijiDir() + "/jars");
+			classLoader.addPath(FijiTools.getFijiDir() + "/jars");
 		} catch (Exception e) { e.printStackTrace(); }
 
 		try {
@@ -77,12 +77,14 @@ public class User_Plugins implements PlugIn {
 			"fiji.User_Plugins(\"update\")");
 		Menus.getCommands().put("Refresh Menus",
 			"fiji.User_Plugins(\"update\")");
-		Menu help = Menus.getMenuBar().getHelpMenu();
-		for (int i = help.getItemCount() - 1; i >= 0; i--) {
-			MenuItem item = help.getItem(i);
-			String name = item.getLabel();
-			if (name.equals("Update Menus"))
-				item.setLabel("Refresh Menus");
+		if (IJ.getInstance() != null) {
+			Menu help = Menus.getMenuBar().getHelpMenu();
+			for (int i = help.getItemCount() - 1; i >= 0; i--) {
+				MenuItem item = help.getItem(i);
+				String name = item.getLabel();
+				if (name.equals("Update Menus"))
+					item.setLabel("Refresh Menus");
+			}
 		}
 
 		// make sure "Edit>Options>Memory & Threads runs Fiji's plugin
@@ -298,22 +300,9 @@ public class User_Plugins implements PlugIn {
 
 	/* defaults */
 
-	public static String getFijiDir() throws ClassNotFoundException {
-		final String prefix = "file:";
-		final String suffix = "/jars/Fiji.jar!/fiji/User_Plugins.class";
-		String path = Class.forName("fiji.User_Plugins")
-			.getResource("User_Plugins.class").getPath();
-		if (path.startsWith(prefix))
-			path = path.substring(prefix.length());
-		if (path.endsWith(suffix))
-			path = path.substring(0,
-				path.length() - suffix.length());
-		return path;
-	}
-
 	public static String getDefaultPath() {
 		try {
-			return getFijiDir() + "/user-plugins";
+			return FijiTools.getFijiDir() + "/user-plugins";
 		} catch (Exception e) {
 			e.printStackTrace();
 			return "";
