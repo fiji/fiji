@@ -71,7 +71,9 @@ import ij.ImagePlus;
 import ij.Macro;
 import ij.gui.DialogListener;
 import ij.gui.GenericDialog;
+import ij.gui.ImageRoi;
 import ij.gui.NonBlockingGenericDialog;
+import ij.gui.Overlay;
 import ij.gui.Roi;
 import ij.gui.TextRoi;
 import ij.gui.Toolbar;
@@ -79,7 +81,9 @@ import ij.plugin.filter.ExtendedPlugInFilter;
 import ij.plugin.filter.PlugInFilterRunner;
 import ij.plugin.frame.ColorPicker;
 import ij.plugin.frame.Fonts;
+import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
+import ij.ImageListener;
 
 import java.awt.AWTEvent;
 import java.awt.Choice;
@@ -109,7 +113,7 @@ import javax.swing.JPanel;
 import javax.swing.event.DocumentListener;
 
 public class Series_Labeler implements ExtendedPlugInFilter,
-		DialogListener {
+		DialogListener, ImageListener {
 
 	ImagePlus imp;
 	// the distance from left of image in px to put the label. 
@@ -135,6 +139,8 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	 * actual processing
 	 */
 	boolean preview = true;
+	// the current state of the preview checkbox
+	boolean previewCheckState = false;
 	/* the custom pattern for labeling, used if format
 	 * supports it
 	 */
@@ -143,6 +149,8 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	boolean antiAliasedText = true;
 	// the current frame 
 	int frame;
+	// the current slice selected in the ImagePlus
+	int currentSlice;
 	/* a generation range for the labels, these default to 0 as no
 	 * values are given
 	 */
@@ -240,6 +248,8 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		 * first available
 		 */
 		selectedFormat = selectedStackType.getSupportedFormats()[0];
+		
+		imp.addImageListener(this);
 
 		// return supported flags
 		return flags;
@@ -256,6 +266,10 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		this.pluginFilterRunner = pfr;
 		int subpanelHeight = 30;
 		int left = 20;
+		
+		// by default thea last frame is shown
+		currentSlice = imp.getNSlices();
+		imp.setSlice(currentSlice);
 		
 		// This makes the GUI object
 		gd = new NonBlockingGenericDialog(
@@ -434,6 +448,9 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		 * as its not the last as used by preview
 		 */
 		preview = !gd.wasOKed();
+		
+		// detach listener
+		imp.removeImageListener(this);
 
 		/* extendedpluginfilter showDialog method should
 		 * return a combination (bitwise OR) of the flags specified in
@@ -452,7 +469,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		 * plugin is run or the preview checkbox is checked.
 		 */
 		if (preview) {
-			frame = last;
+			frame = imp.getCurrentSlice();
 		} else {
 			frame = 1;	
 		}
@@ -487,24 +504,51 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		ip.setFont(font);
 		ip.setAntialiasedText(antiAliasedText);
 
+		// get current label value for that frame
+		double labelValue = getLabelValue(frame);
+		
 		/* set the background according to label
 		 * Rectangle
 		 */
 		Rectangle backgroundRectangle = getBoundingRectangle(ip);
-
-		if (backgroundEnabled){
-			ip.setColor(Toolbar.getBackgroundColor());
-			ip.fill(new Roi(backgroundRectangle));
-		}
-		ip.setColor(Toolbar.getForegroundColor());
-		ip.moveTo(backgroundRectangle.x,
-			(backgroundRectangle.y + backgroundRectangle.height) );
 		
-		 /* get current label value for that frame
+		/* If we are in preview mode, an overlay is used to show
+		 * what the current settings will lokk like.
 		 */
-		double labelValue = getLabelValue(frame);
-		// draw the label string into the image
-		ip.drawString(selectedFormat.getLabelString(labelValue));
+		if (preview) {
+			ImageProcessor labelIP = new FloatProcessor(backgroundRectangle.width,
+					backgroundRectangle.height);
+			labelIP.setFont(font);
+			labelIP.setAntialiasedText(antiAliasedText);
+			labelIP.moveTo(0, backgroundRectangle.height);
+			if (backgroundEnabled){
+				labelIP.setColor(Toolbar.getBackgroundColor());
+				labelIP.fill(new Roi(
+					new Rectangle(0,0,
+						backgroundRectangle.width,
+						backgroundRectangle.height)));
+			}
+			labelIP.setColor(Toolbar.getForegroundColor());
+			// draw the label string into the image
+			labelIP.drawString(selectedFormat.getLabelString(labelValue));
+			
+			ImageRoi imageRoi =
+				new ImageRoi(backgroundRectangle.x, backgroundRectangle.y,
+						labelIP);
+			Overlay overlay = new Overlay(imageRoi);
+			imp.setOverlay(overlay);
+		} else {
+			if (backgroundEnabled){
+				ip.setColor(Toolbar.getBackgroundColor());
+				ip.fill(new Roi(backgroundRectangle));
+			}
+			ip.setColor(Toolbar.getForegroundColor());
+			ip.moveTo(backgroundRectangle.x,
+					backgroundRectangle.y + backgroundRectangle.height);
+			// draw the label string into the image
+			ip.drawString(selectedFormat.getLabelString(labelValue));
+			imp.setOverlay(null);
+		}
 	}
 	
 	/**
@@ -635,7 +679,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	 * @param e
 	 */
 	private void updatePreview() {
-		if (gd != null){
+		if (gd != null && preview){
 			/* tell the plug-in filter runner to update
 			 * the preview. Apparently, this is "OK"
 			 */
@@ -744,10 +788,43 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		}
 		catch (NumberFormatException ex) { return false; }
 		
+		boolean currestPreviewState = gd.getPreviewCheckbox().getState();
+		
+		// did the state of the preview checkbox change?
+		if (currestPreviewState != previewCheckState) {
+			// remember value
+			previewCheckState = currestPreviewState;
+			// if now false, remove preview overlay
+			if (currestPreviewState == false) {
+				imp.setOverlay(null);
+			}
+		}
 
 		updateUI();
 
 		return true; // or else the dialog will have the ok button deactivated!
+	}
+	
+	
+	public void imageClosed(ImagePlus imp) {
+		// currently we are not interested in this event
+	}
+     
+	public void imageOpened(ImagePlus imp) {
+		// currently we are not interested in this event
+	}
+	
+	public void imageUpdated(ImagePlus imp) {
+		// has the slice been changed?
+		int slice = imp.getCurrentSlice();
+		if (slice != currentSlice) {
+			// if yes, remember slice...
+			currentSlice = slice;
+			// .. and update the preview (if wanted)
+			if (previewCheckState == true) {
+				updatePreview();
+			}
+		}
 	}
 	
 	/**
