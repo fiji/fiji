@@ -197,6 +197,18 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			"nm", "um", "mm", "cm", "m", "km", "Mm",
 			"parsec", "light year"}, "Lengths", false,
 			true) };
+	
+	// the availble spectral formats
+	final AbstractStampFormat[] spectralFormats = {
+		new DecimalLabelFormat( new String[] {"Hz", "pm⁻¹", "Å⁻¹",
+			"um⁻¹", "mm⁻¹", "cm⁻¹", "m⁻¹", "km⁻¹", "Mm⁻¹",
+			"parsec⁻¹", "light year⁻¹"}, "Frequency", false,
+			false),
+		new DecimalLabelFormat( new String[] {"pm", "Å",
+			"nm", "um", "mm", "cm", "m", "km", "Mm",
+			"parsec", "light year"}, "Wavelength", false,
+			false),
+		new CustomLabelFormat() };
 
 	// the available kinds of stack we can label. 
 	//final String[] stackTypes = { "z-stack",
@@ -205,7 +217,8 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	// the different types of stacks
 	final StackType[] stackTypes = {
 		new StackType("time series or movie", timeFormats),
-		new StackType("z-stack", zFormats) };
+		new StackType("z-stack", zFormats),
+		new StackType("spectral", spectralFormats)};
 	
 	// GUI variables that are needed to read out data
 	// from the components
