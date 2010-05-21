@@ -2749,9 +2749,8 @@ static void adjust_java_home_if_necessary(void)
 	/* On MacOSX, we use the system Java anyway. */
 	return;
 #endif
-	buffer = string_initf("%s/%s/%s", fiji_dir, relative_java_home, library_path);
-	if (file_exists(buffer->buffer))
-		return;
+	buffer = string_init(32);
+
 	/* platform */
 	get_newest_subdir(buffer, "java");
 	if (!buffer->length) {
