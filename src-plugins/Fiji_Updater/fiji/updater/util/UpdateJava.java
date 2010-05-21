@@ -4,6 +4,8 @@ package fiji.updater.util;
  * This class helps with updating Fiji's JRE/JDK on Windows and Linux
  */
 
+import fiji.updater.ui.IJProgress;
+
 import ij.IJ;
 import ij.Macro;
 
@@ -49,17 +51,29 @@ public class UpdateJava implements PlugIn {
 	public final static String mainURL = "http://java.sun.com/javase/downloads/index.jsp";
 	protected String cookie;
 	protected int totalBytes, currentBytes;
+	protected Progress progress;
+
+	public UpdateJava() {
+		this(new IJProgress());
+		progress.setTitle("");
+	}
+
+	public UpdateJava(Progress progress) {
+		this.progress = progress;
+	}
 
 	public void run(String  arg) {
 		String what = Util.isDeveloper ? "JDK" : "JRE";
 		try {
 			downloadAndInstall(!Util.isDeveloper);
 		} catch (IOException e) {
+			progress.done();
 			e.printStackTrace();
 			IJ.error("Error downloading " + what + ": "
 				+ (e instanceof UnknownHostException ? "unknown host " : "")
 				+ e.getMessage());
 		} catch (RuntimeException e) {
+			progress.done();
 			if (e.getMessage() == Macro.MACRO_CANCELED && !IJ.macroRunning())
 				return;
 			throw e;
@@ -67,6 +81,7 @@ public class UpdateJava implements PlugIn {
 	}
 
 	public void downloadAndInstall(boolean isJRE) throws IOException {
+		progress.setCount(0, 1);
 		String platform = (IJ.isLinux() ? "Linux" : IJ.isWindows() ? "Windows" : "MacOSX haha")
 			+ (IJ.is64Bit() ? " x64" : "");
 		String ext = IJ.isLinux() ? "bin" : "exe";
@@ -89,11 +104,11 @@ public class UpdateJava implements PlugIn {
 		if (outputDirectory.exists())
 			abort("Already up-to-date? " + outputDirectory + " exists!");
 		File exe = copyToTemp(url);
-		IJ.showStatus("Installing new Java...");
+		progress.addItem("Installing new Java...");
 		KnightRider eyeCandy = new KnightRider();
 		eyeCandy.start();
 		silentInstall(exe, outputDirectory);
-		IJ.showStatus("Installing Java 3D...");
+		progress.addItem("Installing Java 3D...");
 		launchProgram(new String[] {
 			System.getProperty("fiji.executable"),
 			"--java-home", outputDirectory.getAbsolutePath(),
@@ -104,7 +119,7 @@ public class UpdateJava implements PlugIn {
 		IJ.showMessage("Successfully installed new Java "
 			+ (isJRE ? "Runtime" : "Development Kit")
 			+ " to " + outputDirectory);
-		IJ.showStatus("Done.");
+		progress.done();
 	}
 
 	public static void abort(String message) {
@@ -138,7 +153,7 @@ public class UpdateJava implements PlugIn {
 			out.write(buf, 0, count);
 			if (totalBytes > 0) {
 				currentBytes += count;
-				IJ.showProgress(currentBytes, totalBytes);
+				progress.setItemCount(currentBytes, totalBytes);
 				if (currentBytes >= totalBytes)
 					totalBytes = currentBytes = 0;
 			}
@@ -154,7 +169,7 @@ public class UpdateJava implements PlugIn {
 	protected InputStream openURL(String url) throws IOException {
 		if (url.startsWith("http://") || url.startsWith("https://")) try {
 			HttpURLConnection http = (HttpURLConnection)new URL(url).openConnection();
-			IJ.showStatus("Downloading " + url);
+			progress.addItem("Downloading " + url);
 			getOrSetCookies(http);
 			totalBytes = http.getContentLength();
 			currentBytes = 0;
@@ -386,7 +401,7 @@ public class UpdateJava implements PlugIn {
 			out.write(bytes);
 			out.close();
 
-			IJ.showStatus("Downloading " + url);
+			progress.addItem("Downloading " + url);
 			totalBytes = http.getContentLength();
 			currentBytes = 0;
 
@@ -577,7 +592,7 @@ public class UpdateJava implements PlugIn {
 		return cmd;
 	}
 
-	protected static class KnightRider extends Thread {
+	protected class KnightRider extends Thread {
 		protected int total = 20, current, increment;
 		protected long frameMillis = 50;
 		protected boolean canceled = false;
@@ -588,7 +603,7 @@ public class UpdateJava implements PlugIn {
 			increment = +1;
 
 			while (!canceled) {
-				IJ.showProgress(current, total);
+				progress.setItemCount(current, total);
 				if (current + increment == 0 || current + increment == total)
 					increment = -increment;
 				current += increment;
@@ -602,7 +617,7 @@ public class UpdateJava implements PlugIn {
 					/* ignore */
 				}
 			}
-			IJ.showProgress(1, 1);
+			progress.itemDone("");
 		}
 
 		public void cancel() {

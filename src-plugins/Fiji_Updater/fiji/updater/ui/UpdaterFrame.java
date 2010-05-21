@@ -260,7 +260,7 @@ public class UpdaterFrame extends JFrame
 				public void actionPerformed(ActionEvent e) {
 					new Thread() {
 						public void run() {
-							new UpdateJava().run(null);
+							new UpdateJava(getProgress("Update Java")).run(null);
 						}
 					}.start();
 				}
