@@ -67,7 +67,8 @@ public class Install_J3D implements PlugIn {
 	 * Run the installation stand-alone.
 	 */
 	public static void main(String[] args) {
-		new Install_J3D().autoInstall();
+		if (!new Install_J3D().autoInstall())
+			System.exit(1);
 	}
 
 	/**
