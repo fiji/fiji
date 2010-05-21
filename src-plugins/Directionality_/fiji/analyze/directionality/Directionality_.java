@@ -128,11 +128,11 @@ import org.jfree.data.xy.XYSeriesCollection;
  * <h2>References</h2>
  * [1] Liu. Scale space approach to directional analysis of images. Appl. Opt. (1991) vol. 30 (11) pp. 1369-1373 
  * <p>
- * A discussion with A. Leroy and another one with J. Schindein are greatly acknowledged. 
+ * A discussion with A. Leroy and another one with J. Schindelin are greatly acknowledged. 
  * <p>
  * 
  * @author Jean-Yves Tinevez jeanyves.tinevez@gmail.com
- * @version 1.3
+ * @version 1.4
  */
 public class Directionality_ implements PlugIn {
 	
@@ -373,7 +373,6 @@ public class Directionality_ implements PlugIn {
 			orientation_map = new ImageStack(imp.getWidth(), imp.getHeight());
 		}
 		
-		
 		// Loop over each slice
 		ImageProcessor ip = null;
 		double[] dir = null;
@@ -398,10 +397,10 @@ public class Directionality_ implements PlugIn {
 				// Normalize directionality
 				double sum = dir[0];
 				for (int j = 1; j < dir.length; j++) {
-					sum += dir[i];
+					sum += dir[j];
 				}
 				for (int j = 0; j < dir.length; j++) {
-					dir[i] = dir[i] / sum;
+					dir[j] = dir[j] / sum;
 				}
 				
 				histograms.add( dir );
@@ -1256,9 +1255,9 @@ public class Directionality_ implements PlugIn {
 			ByteProcessor big_brightness = (ByteProcessor) ip.convertToByte(true);
 			ColorProcessor cp = new ColorProcessor(ip.getWidth(), ip.getHeight());
 			cp.setHSB(
-					(byte[]) big_hue.convertToByte(false).getPixels(), 
-					(byte[]) big_saturation.convertToByte(false).getPixels(), 
-					(byte[]) big_brightness.getPixels()
+						(byte[]) big_hue.convertToByte(false).getPixels(), 
+						(byte[]) big_saturation.convertToByte(false).getPixels(), 
+						(byte[]) big_brightness.getPixels()
 					); 
 			orientation_map.addSlice(makeNames()[slice_index], cp);
 		}
@@ -1626,7 +1625,6 @@ public class Directionality_ implements PlugIn {
 		}		
 		GaussianBlur smoother = new GaussianBlur();
 		smoother.blurGaussian(ip, 2.0, 2.0, 1e-2);		
-//		smoother.blurGaussian(ip, 2.0, 2.0, 1e-2);		
 		imp.show();
 		
 		AnalysisMethod method;
