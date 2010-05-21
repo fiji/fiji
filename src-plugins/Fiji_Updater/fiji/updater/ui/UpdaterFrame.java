@@ -13,6 +13,7 @@ import fiji.updater.logic.PluginUploader;
 import fiji.updater.util.Downloader;
 import fiji.updater.util.Canceled;
 import fiji.updater.util.Progress;
+import fiji.updater.util.UpdateJava;
 import fiji.updater.util.Util;
 
 import ij.IJ;
@@ -249,6 +250,21 @@ public class UpdaterFrame extends JFrame
 				}
 			}, bottomPanel);
 			btnUpload.setEnabled(false);
+		}
+
+		// offer to update Java, but only on non-Macs
+		if (!IJ.isMacOSX() && new File(Util.fijiRoot, "java").canWrite()) {
+			bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
+			SwingTools.button("Update Java",
+					"Update the Java version used for Fiji", new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					new Thread() {
+						public void run() {
+							new UpdateJava().run(null);
+						}
+					}.start();
+				}
+			}, bottomPanel);
 		}
 
 		bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
