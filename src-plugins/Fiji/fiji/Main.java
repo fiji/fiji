@@ -189,6 +189,17 @@ public class Main implements AWTEventListener {
 			installRecentCommands();
 			new Thread() {
 				public void run() {
+					/*
+					 * Do not run updater when command line
+					 * parameters were specified.
+					 * Fiji automatically adds -eval ...
+					 * and -port7, so there should be at
+					 * least 3 parameters anyway.
+					 */
+					String[] ijArgs = ImageJ.getArgs();
+					if (ijArgs != null && ijArgs.length > 3)
+						return;
+
 					runUpdater();
 				}
 			}.start();
