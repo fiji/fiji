@@ -638,10 +638,12 @@ public class FindConnectedRegions {
 					}
 					allRegionsStack.setColorModel(backgroundAndSpectrum(Math.min(regionNumber,255)));
 					ImageProcessor ip = results.allRegions.getProcessor();
-					ip.setColorModel(backgroundAndSpectrum(Math.min(regionNumber,255)));
-					int min = 0;
-					int max = Math.max( regionNumber, 255 );
-					ip.setMinAndMax( min, max );
+					if( ip != null ) {
+						ip.setColorModel(backgroundAndSpectrum(Math.min(regionNumber,255)));
+						int min = 0;
+						int max = Math.max( regionNumber, 255 );
+						ip.setMinAndMax( min, max );
+					}
 					results.allRegions.updateAndDraw();
 				}
 
@@ -717,7 +719,7 @@ public class FindConnectedRegions {
 				results.allRegions.setTitle(defaultAllRegionsTitle);
 
 		} finally {
-			if( ! noUI )
+			if( ! noUI && cancelDialog != null )
 				cancelDialog.dispose();
 		}
 
