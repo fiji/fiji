@@ -106,7 +106,7 @@ public class Main implements AWTEventListener {
 		synchronized (title) {
 			synchronized (all) {
 				Window window = getWindow(title);
-				if (window != null)
+				if (window != null || timeout == 0)
 					return window;
 				waiters.add(title);
 			}
