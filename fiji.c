@@ -2684,90 +2684,64 @@ static int launch_32bit_on_tiger(int argc, char **argv)
 }
 #endif
 
-static int is_dir_empty(const char *path)
+static void find_newest(struct string *relative_path, int max_depth, const char *file, struct string *result)
 {
-	DIR *dir = opendir(path);
+	int len = relative_path->length;
+	DIR *directory;
 	struct dirent *entry;
 
-	if (!dir)
-		return 0;
+	string_add_char(relative_path, '/');
 
-	while (NULL != (entry = readdir(dir)))
-		if (entry->d_name[0] != '.') {
-			closedir(dir);
-			return 0;
-		}
+	string_append(relative_path, file);
+	if (file_exists(fiji_path(relative_path->buffer))) {
+		string_set_length(relative_path, len);
+		if (!result->length || file_is_newer(fiji_path(relative_path->buffer), fiji_path(result->buffer)))
+			string_set(result, relative_path->buffer);
+	}
 
-	closedir(dir);
-	return 1;
-}
-
-static void get_newest_subdir(struct string *result, const char *relative_path)
-{
-	const char *path = fiji_path(relative_path);
-	struct string *buffer;
-	DIR *dir = opendir(path);
-
-	string_set_length(result, 0);
-
-	if (!dir)
+	if (max_depth <= 0)
 		return;
 
-	buffer = string_init(32);
-	long mtime = 0;
-	struct dirent *entry;
-	while (NULL != (entry = readdir(dir))) {
-		const char *filename = entry->d_name;
-		struct stat st;
-
-		if (!strcmp(filename, ".") || !strcmp(filename, "..") || !strcmp(filename, ".git"))
+	string_set_length(relative_path, len);
+	directory = opendir(fiji_path(relative_path->buffer));
+	if (!directory)
+		return;
+	string_add_char(relative_path, '/');
+	while (NULL != (entry = readdir(directory))) {
+		if (entry->d_name[0] == '.')
 			continue;
-		string_setf(buffer, "%s/%s", path, filename);
-		if (stat(buffer->buffer, &st))
-			continue;
-		if (!S_ISDIR(st.st_mode))
-			continue;
-		if (is_dir_empty(buffer->buffer))
-			continue;
-		if (mtime < st.st_mtime) {
-			mtime = st.st_mtime;
-			string_setf(result, "%s/%s", relative_path, filename);
-		}
+		string_append(relative_path, entry->d_name);
+		if (dir_exists(relative_path->buffer))
+			find_newest(relative_path, max_depth - 1, file, result);
+		string_set_length(relative_path, len + 1);
 	}
-	closedir(dir);
-	string_release(buffer);
-
-	return;
+	string_set_length(relative_path, len);
 }
 
 static void adjust_java_home_if_necessary(void)
 {
-	struct string *buffer, *buffer2;
+	struct string *result, *buffer, *jre_path;
 #ifdef MACOSX
 	/* On MacOSX, we use the system Java anyway. */
 	return;
 #endif
-	buffer = string_init(32);
+	buffer = string_copy("java");
+	result = string_init(32);
+	jre_path = string_initf("jre/%s", library_path);
 
-	/* platform */
-	get_newest_subdir(buffer, "java");
-	if (!buffer->length) {
-		string_release(buffer);
-		return;
+	find_newest(buffer, 2, jre_path->buffer, result);
+	if (result->length) {
+		string_append(result, "/jre");
+		relative_java_home = xstrdup(result->buffer);
 	}
-	/* jdk */
-	buffer2 = string_init(32);
-	get_newest_subdir(buffer2, buffer->buffer);
-	if (!buffer2->length) {
-		string_release(buffer);
-		string_release(buffer2);
-		return;
+	else {
+		find_newest(buffer, 3, library_path, buffer);
+		if (result->length)
+			relative_java_home = xstrdup(result->buffer);
 	}
-	string_append(buffer2, "/jre");
-	if (dir_exists(fiji_path(buffer2->buffer)))
-		relative_java_home = xstrdup(buffer2->buffer);
 	string_release(buffer);
-	string_release(buffer2);
+	string_release(result);
+	string_release(jre_path);
 }
 
 int main(int argc, char **argv, char **e)
