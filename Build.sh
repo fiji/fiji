@@ -97,8 +97,11 @@ test ! -f "$CWD"/fiji -o "$CWD"/fiji.c -nt "$CWD"/fiji$exe && {
 # on Win64, with a 32-bit compiler, do not try to compile
 case $platform in
 win64)
-	case "$(gcc --version)" in
-	*mingw32*)
+	W64_GCC=/src/mingw-w64/sysroot/bin/x86_64-w64-mingw32-gcc.exe
+	test -f "$W64_GCC" && export CC="$W64_GCC"
+
+	case "$CC,$(gcc --version)" in
+	,*mingw32*)
 		# cannot compile!
 		test "$CWD"/fiji.exe -nt "$CWD"/fiji.c &&
 		test "$CWD"/fiji.exe -nt "$CWD"/precompiled/fiji-win64.exe &&
