@@ -1244,12 +1244,10 @@ int build_classpath_for_string(struct string *result, struct string *jar_directo
 	while (NULL != (entry = readdir(directory))) {
 		const char *filename = entry->d_name;
 		int len = strlen(filename);
-		if (len <= extension_length)
-			continue;
-		if (!strcmp(filename + len - extension_length, extension))
+		if (len > extension_length && !strcmp(filename + len - extension_length, extension))
 			string_addf_path_list(result, "%s/%s", jar_directory->buffer, filename);
 		else {
-			if (!strcmp(filename, ".") || !strcmp(filename, ".."))
+			if (filename[0] == '.')
 				continue;
 			len = jar_directory->length;
 			string_addf(jar_directory, "/%s", filename);
