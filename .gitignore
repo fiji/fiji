@@ -167,3 +167,5 @@
 /weka/weka/build/
 /weka/weka/dist/
 /weka/weka.jar
+/plugins/Simple_Neurite_Tracer.jar
+/plugins/3D_Viewer.jar

@@ -35,7 +35,6 @@ import java.util.Set;
 import math3d.Point3d;
 import vib.transforms.FastMatrixTransform;
 import vib.transforms.OrderedTransformations;
-import tracing.PathAndFillManager;
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.parsers.SAXParser;
 import org.xml.sax.Attributes;
