@@ -14,8 +14,10 @@ git ls-remote --heads origin |
 while read sha1 ref
 do
 	ref=origin/${ref#refs/heads/}
-	test $ref = origin/master &&
-	continue
+	case $ref in
+	origin/master|origin/debian-*)
+		continue;; # ignore debian as a topic branch
+	esac
 	case "$(git merge-base $sha1 master)" in
 	$sha1)
 		case "$mode" in
