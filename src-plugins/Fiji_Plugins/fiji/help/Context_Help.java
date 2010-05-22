@@ -64,7 +64,7 @@ public class Context_Help implements KeyListener, PlugIn {
                 ij.setCursor(helpCursor);
 
                 ij.addKeyListener(this);
-		IJ.showStatus("Click on a menu entry for context help");
+		IJ.showStatus("Click menu entry for context help (Esc to abort)");
         }
 
         public void resetActions() {
