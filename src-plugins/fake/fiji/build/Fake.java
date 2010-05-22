@@ -1667,12 +1667,12 @@ public class Fake {
 			String compileCXX(String path)
 					throws IOException, FakeException {
 				linkCPlusPlus = true;
-				return compile(path, "g++", "CXXFLAGS");
+				return compile(path, gxx(), "CXXFLAGS");
 			}
 
 			String compileC(String path)
 					throws IOException, FakeException {
-				return compile(path, "gcc", "CFLAGS");
+				return compile(path, gcc(), "CFLAGS");
 			}
 
 			String compile(String path, String compiler,
@@ -1704,7 +1704,7 @@ public class Fake {
 					file = moveToUpdateDirectory(file);
 				}
 				List arguments = new ArrayList();
-				arguments.add(linkCPlusPlus ? "g++" : "gcc");
+				arguments.add(linkCPlusPlus ? gxx() : gcc());
 				arguments.add("-o");
 				arguments.add(file.getAbsolutePath());
 				addFlags("LDFLAGS", target, arguments);
@@ -1716,6 +1716,19 @@ public class Fake {
 				} catch(Exception e) {
 					error("link", target, e);
 				}
+			}
+
+			String gcc() {
+				return getenv("CC", "gcc");
+			}
+
+			String gxx() {
+				return getenv("CXX", "g++");
+			}
+
+			String getenv(String key, String fallback) {
+				String value = System.getenv(key);
+				return value == null ? fallback : value;
 			}
 
 			void fallBackToPrecompiled(String reason)
