@@ -27,10 +27,12 @@ do
     *)
 	case "$i" in
 	plugins/*)
-		plugins="$plugins $CODEBASE/$i";;
+		plugins="$plugins $CODEBASE/$i"
+		;;
+	*)
+		jars="$jars $CODEBASE/$i"
+		;;
 	esac &&
-        jars="$jars\
-<jar href=\"$i\"/>" &&
 	files="$files $i" || break
     ;;
     esac
@@ -74,9 +76,11 @@ cat > $outpath << EOF
 
     <resources>
     	<j2se version="1.5+" initial-heap-size="64m"/>
-        $jars
+	<jar href="jars/ij.jar"/>
+	<jar href="jars/Fiji.jar" main="true"/>
     	<extension href="http://download.java.net/media/java3d/webstart/release/java3d-latest.jnlp"/>
 	<property name="jnlp" value="$plugins"/>
+	<property name="jnlp_jars" value="$jars"/>
     </resources>
 
     <application-desc main-class="fiji.Main">
