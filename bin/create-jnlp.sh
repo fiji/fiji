@@ -19,6 +19,8 @@ test -d $FIJIPATH || exit
 
 cd "$(dirname "$0")"/..
 
+printf "" > plugins.config
+
 # add jars from plugins, jars and misc folder
 for i in $(find plugins jars misc -name \*.jar)
 do
@@ -27,6 +29,9 @@ do
     *)
 	case "$i" in
 	plugins/*)
+		content="$(unzip -p "$i" plugins.config 2> /dev/null)" &&
+		printf "# From $i\n\n$content\n\n" >> plugins.config &&
+		jars="$jars $CODEBASE/$i" ||
 		plugins="$plugins $CODEBASE/$i"
 		;;
 	*)
@@ -41,11 +46,22 @@ done || {
 	exit 1
 }
 
+if test -s plugins.config
+then
+	zip -9r configs.jar plugins.config
+	files="$files configs.jar"
+	plugins="$plugins $CODEBASE/configs.jar"
+fi
+
 test -e ImageJA/.jarsignerrc && (
 	cd ImageJA &&
 	for jar in $files
 	do
-		mkdir -p $FIJIPATH/${jar%/*} &&
+		case "$jar" in
+		*/*)
+			mkdir -p $FIJIPATH/${jar%/*}
+			;;
+		esac &&
 		jarsigner -signedjar $FIJIPATH/$jar $(cat .jarsignerrc) \
 			../$jar dscho || break
 	done
@@ -53,6 +69,8 @@ test -e ImageJA/.jarsignerrc && (
 	echo "Could not sign a .jar" >&2
 	exit 1
 }
+
+rm -f plugins.config configs.jar
 
 plugins=${plugins# }
 
