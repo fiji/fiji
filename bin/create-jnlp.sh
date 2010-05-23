@@ -25,7 +25,10 @@ do
     case " $EXCLUDES " in
     *" $i "*) ;;
     *)
-        plugins="$plugins $CODEBASE/$i" &&
+	case "$i" in
+	plugins/*)
+		plugins="$plugins $CODEBASE/$i";;
+	esac &&
         jars="$jars\
 <jar href=\"$i\"/>" &&
 	files="$files $i" || break
