@@ -12,7 +12,6 @@ EXCLUDES=" plugins/ij-ImageIO_.jar jars/jpedalSTD.jar jars/itext-1.3.jar "
 
 plugins=
 jars=
-files=
 outpath="$FIJIPATH/../$JNLP_NAME"
 
 test -d $FIJIPATH || exit
@@ -30,15 +29,11 @@ do
 	case "$i" in
 	plugins/*)
 		content="$(unzip -p "$i" plugins.config 2> /dev/null)" &&
-		printf "# From $i\n\n$content\n\n" >> plugins.config &&
-		jars="$jars $CODEBASE/$i" ||
+		printf "# From $i\n\n$content\n\n" >> plugins.config ||
 		plugins="$plugins $CODEBASE/$i"
 		;;
-	*)
-		jars="$jars $CODEBASE/$i"
-		;;
 	esac &&
-	files="$files $i" || break
+	jars="$jars $i" || break
     ;;
     esac
 done || {
@@ -46,12 +41,18 @@ done || {
 	exit 1
 }
 
-if test -s plugins.config
-then
-	zip -9r configs.jar plugins.config
-	files="$files configs.jar"
-	plugins="$plugins $CODEBASE/configs.jar"
-fi
+printf "" > class.map
+for jar in $jars
+do
+	unzip -l -qq $jar |
+	sed -n -e 's/\//./g' \
+		-e 's|^.*:[0-9][0-9]   \(.*\)\.class$|\1 '$jar'|p' \
+		>> class.map
+done
+
+zip -9r configs.jar plugins.config class.map
+files="$jars configs.jar"
+plugins="$plugins $CODEBASE/configs.jar"
 
 test -e ImageJA/.jarsignerrc && (
 	cd ImageJA &&
@@ -70,7 +71,7 @@ test -e ImageJA/.jarsignerrc && (
 	exit 1
 }
 
-rm -f plugins.config configs.jar
+rm -f plugins.config configs.jar class.map
 
 plugins=${plugins# }
 
@@ -98,7 +99,7 @@ cat > $outpath << EOF
 	<jar href="jars/Fiji.jar" main="true"/>
     	<extension href="http://download.java.net/media/java3d/webstart/release/java3d-latest.jnlp"/>
 	<property name="jnlp" value="$plugins"/>
-	<property name="jnlp_jars" value="$jars"/>
+	<property name="jnlp_class_map" value="$CODEBASE/configs.jar"/>
     </resources>
 
     <application-desc main-class="fiji.Main">
