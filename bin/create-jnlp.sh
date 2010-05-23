@@ -1,7 +1,7 @@
 #!/bin/sh
 
-# <property 
-#    name="jnlp" 
+# <property
+#    name="jnlp"
 #    value="http://pacific.mpi-cbg.de/webstart/fiji/plugins/VIB_.jar"/>
 
 RELATIVE_PATH="webstart/test/fiji"
@@ -54,24 +54,24 @@ echo '<?xml version="1.0" encoding="utf-8"?>
 <jnlp spec="1.0+" codebase="'$CODEBASE'/">
 
     <information>
-    	<title>Fiji via Web Start</title>
-    	<vendor>Fiji development team</vendor>
-    	<homepage href="http://pacific.mpi-cbg.de/wiki/index.php/Main_Page"/>
-    	<description>ImageJ based image processing platform</description>
-    	<icon href="http://pacific.mpi-cbg.de/fiji.png"/>
-    	<offline-allowed/>
+	<title>Fiji via Web Start</title>
+	<vendor>Fiji development team</vendor>
+	<homepage href="http://pacific.mpi-cbg.de/wiki/index.php/Main_Page"/>
+	<description>ImageJ based image processing platform</description>
+	<icon href="http://pacific.mpi-cbg.de/fiji.png"/>
+	<offline-allowed/>
       </information>
 
     <security>
-    	<all-permissions/>
+	<all-permissions/>
     </security>
 
     <resources>
     	<j2se version="1.5+" initial-heap-size="64m"/>
         '$jars'
-    	<jar href="ij.jar" main="true"/>
+	<jar href="ij.jar" main="true"/>
     	<extension href="http://download.java.net/media/java3d/webstart/release/java3d-latest.jnlp"/>
-    	<property name="jnlp" value="'$plugins'"/>
+	<property name="jnlp" value="$plugins"/>
     </resources>
 
     <application-desc main-class="fiji.Main">
