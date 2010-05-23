@@ -17,6 +17,8 @@ outpath="$FIJIPATH/../$JNLP_NAME"
 
 test -d $FIJIPATH || exit
 
+cd "$(dirname "$0")"/..
+
 # add jars from plugins, jars and misc folder
 for i in $(find plugins jars misc -name \*.jar)
 do
