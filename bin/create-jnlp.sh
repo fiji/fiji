@@ -22,7 +22,7 @@ cd "$(dirname "$0")"/..
 printf "" > plugins.config
 
 # add jars from plugins, jars and misc folder
-for i in $(find plugins jars misc -name \*.jar)
+for i in $(find plugins jars -name \*.jar)
 do
     case " $EXCLUDES " in
     *" $i "*) ;;
