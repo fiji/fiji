@@ -49,9 +49,10 @@ test -e ImageJA/.jarsignerrc && (
 
 plugins=${plugins# }
 
-echo '<?xml version="1.0" encoding="utf-8"?>
+cat > $outpath << EOF
+<?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE jnlp PUBLIC "-//Sun Microsystems, Inc//DTD JNLP Discriptor 1.1//EN" "http://kano.net/dtd/jnlp-1.5.dtd">
-<jnlp spec="1.0+" codebase="'$CODEBASE'/">
+<jnlp spec="1.0+" codebase="$CODEBASE/">
 
     <information>
 	<title>Fiji via Web Start</title>
@@ -68,7 +69,7 @@ echo '<?xml version="1.0" encoding="utf-8"?>
 
     <resources>
     	<j2se version="1.5+" initial-heap-size="64m"/>
-        '$jars'
+        $jars
 	<jar href="ij.jar" main="true"/>
     	<extension href="http://download.java.net/media/java3d/webstart/release/java3d-latest.jnlp"/>
 	<property name="jnlp" value="$plugins"/>
@@ -78,4 +79,4 @@ echo '<?xml version="1.0" encoding="utf-8"?>
       <argument>-port0</argument>
     </application-desc>
 </jnlp>
-' > $outpath
+EOF
