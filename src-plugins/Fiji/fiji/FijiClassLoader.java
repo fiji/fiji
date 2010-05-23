@@ -3,19 +3,25 @@ package fiji;
 import ij.IJ;
 import ij.Macro;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class FijiClassLoader extends URLClassLoader {
 	List<ClassLoader> fallBacks;
+	Map<String, String> classMap;
 
 	public FijiClassLoader() {
 		super(new URL[0], Thread.currentThread().getContextClassLoader());
@@ -26,8 +32,12 @@ public class FijiClassLoader extends URLClassLoader {
 		this();
 		if (initDefaults) try {
 			String fijiDir = FijiTools.getFijiDir();
-			addPath(fijiDir + "/plugins");
-			addPath(fijiDir + "/jars");
+			if (fijiDir != null && !fijiDir.startsWith("http://")) {
+				addPath(fijiDir + "/plugins");
+				addPath(fijiDir + "/jars");
+			}
+			else
+				addClassMap(System.getProperty("jnlp_class_map"));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -48,6 +58,29 @@ public class FijiClassLoader extends URLClassLoader {
 		this();
 		for (String path : paths)
 			addPath(path);
+	}
+
+	public void addClassMap(String url) {
+		if (url == null)
+			return;
+		try {
+			URL jarURL = new URL("jar:" + url + "!/class.map");
+			BufferedReader reader = new BufferedReader(new InputStreamReader(jarURL.openStream()));
+			if (classMap == null)
+				classMap = new HashMap<String, String>();
+			url = url.substring(0, url.lastIndexOf('/') + 1);
+			String line;
+			while ((line = reader.readLine()) != null) {
+				int space = line.indexOf(' ');
+				if (space < 0)
+					continue;
+				String className = line.substring(0, space);
+				String jarName = url + line.substring(space + 1);
+				if (!classMap.containsKey(className))
+					classMap.put(className, jarName);
+			}
+			reader.close();
+		} catch (Exception e) { e.printStackTrace(); /* ignore */ }
 	}
 
 	public void addPath(String path) throws IOException {
@@ -116,6 +149,15 @@ public class FijiClassLoader extends URLClassLoader {
 		String path = name.replace('.', '/') + ".class";
 		try {
 			InputStream input = getResourceAsStream(path);
+
+			if (input == null && classMap != null && classMap.containsKey(name)) try {
+				String jar = classMap.get(name);
+				IJ.showStatus("Loading " + jar);
+				addURL(new URL(jar));
+				input = getResourceAsStream(path);
+				IJ.showStatus("");
+			} catch (Exception e) { e.printStackTrace(); /* ignore */ }
+
 			if (input != null) {
 				byte[] buffer = readStream(input);
 				input.close();
