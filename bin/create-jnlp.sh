@@ -12,7 +12,7 @@ EXCLUDES=" plugins/ij-ImageIO_.jar jars/jpedalSTD.jar jars/itext-1.3.jar "
 
 plugins=
 jars=
-files=./ij.jar
+files=
 outpath="$FIJIPATH/../$JNLP_NAME"
 
 test -d $FIJIPATH || exit
@@ -70,7 +70,6 @@ cat > $outpath << EOF
     <resources>
     	<j2se version="1.5+" initial-heap-size="64m"/>
         $jars
-	<jar href="ij.jar" main="true"/>
     	<extension href="http://download.java.net/media/java3d/webstart/release/java3d-latest.jnlp"/>
 	<property name="jnlp" value="$plugins"/>
     </resources>
