@@ -8,7 +8,7 @@ RELATIVE_PATH="webstart/test/fiji"
 FIJIPATH="/var/www/$RELATIVE_PATH"
 CODEBASE="http://pacific.mpi-cbg.de/$RELATIVE_PATH"
 JNLP_NAME="Fiji.jnlp"
-EXCLUDES=" plugins/ij-ImageIO_.jar jars/jpedalSTD.jar jars/itext-1.3.jar "
+EXCLUDES="plugins/Fiji_Updater.jar"
 
 plugins=
 jars=
