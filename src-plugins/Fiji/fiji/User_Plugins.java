@@ -49,16 +49,10 @@ public class User_Plugins implements PlugIn {
 	public void run(String arg) {
 		if ("update".equals(arg))
 			Menus.updateImageJMenus();
-		FijiClassLoader classLoader = new FijiClassLoader();
-		try {
-			classLoader.addPath(Menus.getPlugInsPath());
-		} catch (IOException e) {}
+		FijiClassLoader classLoader = new FijiClassLoader(true);
 		try {
 			classLoader.addPath(path);
 		} catch (IOException e) {}
-		try {
-			classLoader.addPath(FijiTools.getFijiDir() + "/jars");
-		} catch (Exception e) { e.printStackTrace(); }
 
 		try {
 			// IJ.setClassLoader(classLoader);
