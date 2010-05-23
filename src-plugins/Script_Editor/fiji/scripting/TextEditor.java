@@ -1,14 +1,10 @@
 package fiji.scripting;
 
-import com.sun.jdi.connect.VMStartException;
-
 import common.RefreshScripts;
 
-import fiji.scripting.completion.ClassCompletionProvider;
-import fiji.scripting.completion.DefaultProvider;
+import fiji.scripting.java.Refresh_Javas;
 
 import ij.IJ;
-import ij.Prefs;
 import ij.WindowManager;
 
 import ij.gui.GenericDialog;
@@ -16,7 +12,6 @@ import ij.gui.GenericDialog;
 import ij.io.OpenDialog;
 import ij.io.SaveDialog;
 
-import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Toolkit;
@@ -27,157 +22,119 @@ import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
-import java.awt.image.BufferedImage;
-
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.LineNumberReader;
+import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.PrintWriter;
-import java.io.OutputStream;
+
+import java.net.URL;
+import java.net.URLDecoder;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.Dictionary;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.List;
+import java.util.Set;
 import java.util.Vector;
 
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.jar.JarOutputStream;
 
-import javax.imageio.ImageIO;
+import java.util.zip.ZipException;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
-import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
-import javax.swing.JRadioButtonMenuItem;
-import javax.swing.JTextArea;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
+import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
-import javax.swing.ToolTipManager;
+import javax.swing.SwingUtilities;
 
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import javax.swing.text.BadLocationException;
-import javax.swing.text.DefaultEditorKit;
 import javax.swing.text.Document;
+import javax.swing.text.Position;
 
-import org.fife.ui.autocomplete.AutoCompletion;
-import org.fife.ui.autocomplete.BasicCompletion;
-import org.fife.ui.autocomplete.CompletionProvider;
-import org.fife.ui.autocomplete.DefaultCompletionProvider;
-
-import org.fife.ui.rtextarea.Gutter;
-import org.fife.ui.rtextarea.IconGroup;
-import org.fife.ui.rtextarea.RTextArea;
-import org.fife.ui.rtextarea.RTextScrollPane;
-import org.fife.ui.rtextarea.RecordableTextAction;
-import org.fife.ui.rtextarea.ToolTipSupplier;
-
-import org.fife.ui.rsyntaxtextarea.RSyntaxDocument;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
-import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
+
+import org.fife.ui.rtextarea.RTextScrollPane;
 
 public class TextEditor extends JFrame implements ActionListener,
-		DocumentListener {
-	File file;
-	RSyntaxTextArea textArea;
+	       ChangeListener {
+	EditorPane editorPane;
+	JTabbedPane tabbed;
 	JTextArea screen;
-	JMenuItem new_file, open, save, saveas, compileAndRun, debug, quit,
+	JMenuItem newFile, open, save, saveas, compileAndRun, debug, close,
 		  undo, redo, cut, copy, paste, find, replace, selectAll,
-		  autocomplete, resume, terminate, kill, gotoLine;
-	AutoCompletion autocomp;
-	Languages.Language currentLanguage;
-	ClassCompletionProvider provider;
+		  autocomplete, resume, terminate, kill, gotoLine,
+		  makeJar, makeJarWithSource, removeUnusedImports,
+		  sortImports, removeTrailingWhitespace, findNext, findPrevious,
+		  openHelp, addImport, clearScreen, nextError, previousError,
+		  openHelpWithoutFrames, nextTab, previousTab,
+		  runSelection, extractSourceJar, toggleBookmark,
+		  listBookmarks, openSourceForClass, newPlugin;
+	JMenu tabsMenu;
+	int tabsMenuTabsStart;
+	Set<JMenuItem> tabsMenuItems;
 	FindAndReplaceDialog findDialog;
-	StartDebugging debugging;
-	Gutter gutter;
-	IconGroup iconGroup;
 
-	int modifyCount;
-	boolean undoInProgress, redoInProgress;
+	String templateFolder = "templates/";
+	Set<String> templatePaths;
+	Languages.Language[] availableLanguages = Languages.getInstance().languages;
 
-	public TextEditor(String path1) {
+	Position compileStartPosition;
+	ErrorHandler errorHandler;
+
+	public TextEditor(String path) {
 		super("Script Editor");
 		WindowManager.addWindow(this);
-		JPanel cp = new JPanel(new BorderLayout());
-		textArea = new RSyntaxTextArea() {
-			public void undoLastAction() {
-				undoInProgress = true;
-				super.undoLastAction();
-				undoInProgress = false;
-			}
 
-			public void redoLastAction() {
-				redoInProgress = true;
-				super.redoLastAction();
-				redoInProgress = false;
-			}
-		};
-		textArea.setTabSize(8);
-		textArea.getActionMap().put(DefaultEditorKit
-			.nextWordAction, wordMovement(+1, false));
-		textArea.getActionMap().put(DefaultEditorKit
-			.selectionNextWordAction, wordMovement(+1, true));
-		textArea.getActionMap().put(DefaultEditorKit
-			.previousWordAction, wordMovement(-1, false));
-		textArea.getActionMap().put(DefaultEditorKit
-			.selectionPreviousWordAction, wordMovement(-1, true));
-		provider = new ClassCompletionProvider(new DefaultProvider(),
-				textArea, null);
-		autocomp = new AutoCompletion(provider);
-
-		autocomp.setListCellRenderer(new CCellRenderer());
-		autocomp.setShowDescWindow(true);
-		autocomp.setParameterAssistanceEnabled(true);
-		autocomp.install(textArea);
-		textArea.setToolTipSupplier((ToolTipSupplier)provider);
-		ToolTipManager.sharedInstance().registerComponent(textArea);
-		textArea.getDocument().addDocumentListener(this);
-		RTextScrollPane sp = new RTextScrollPane(textArea);
-		sp.setPreferredSize(new Dimension(600, 350));
-		sp.setIconRowHeaderEnabled(true);
-		gutter = sp.getGutter();
-		iconGroup = new IconGroup("bullets", "images/", null, "png", null);
-		gutter.setBookmarkIcon(iconGroup.getIcon("var"));
-		gutter.setBookmarkingEnabled(true);
-		screen = new JTextArea();
-		screen.setEditable(false);
-		screen.setLineWrap(true);
-		Font font = new Font("Courier", Font.PLAIN, 12);
-		screen.setFont(font);
-		JScrollPane scroll = new JScrollPane(screen);
-		scroll.setPreferredSize(new Dimension(600, 80));
-		JSplitPane panel = new JSplitPane(JSplitPane.VERTICAL_SPLIT, sp, scroll);
-		panel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
-		panel.setResizeWeight(350.0 / 430.0);
-		setContentPane(panel);
-
+		// Initialize menu
 		int ctrl = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+		int shift = ActionEvent.SHIFT_MASK;
 		JMenuBar mbar = new JMenuBar();
 		setJMenuBar(mbar);
 
 		JMenu file = new JMenu("File");
 		file.setMnemonic(KeyEvent.VK_F);
-		new_file = addToMenu(file, "New",  KeyEvent.VK_N, ctrl);
+		newFile = addToMenu(file, "New",  KeyEvent.VK_N, ctrl);
+		newFile.setMnemonic(KeyEvent.VK_N);
 		open = addToMenu(file, "Open...",  KeyEvent.VK_O, ctrl);
+		open.setMnemonic(KeyEvent.VK_O);
 		save = addToMenu(file, "Save", KeyEvent.VK_S, ctrl);
+		save.setMnemonic(KeyEvent.VK_S);
 		saveas = addToMenu(file, "Save as...", 0, 0);
+		saveas.setMnemonic(KeyEvent.VK_A);
 		file.addSeparator();
-		quit = addToMenu(file, "Close Editor", KeyEvent.VK_W, ctrl);
+		makeJar = addToMenu(file, "Export as .jar", 0, 0);
+		makeJar.setMnemonic(KeyEvent.VK_E);
+		makeJarWithSource = addToMenu(file, "Export as .jar (with source)", 0, 0);
+		makeJarWithSource.setMnemonic(KeyEvent.VK_X);
+		file.addSeparator();
+		close = addToMenu(file, "Close", KeyEvent.VK_W, ctrl);
 
 		mbar.add(file);
 
@@ -192,16 +149,34 @@ public class TextEditor extends JFrame implements ActionListener,
 		paste = addToMenu(edit, "Paste", KeyEvent.VK_V, ctrl);
 		edit.addSeparator();
 		find = addToMenu(edit, "Find...", KeyEvent.VK_F, ctrl);
+		find.setMnemonic(KeyEvent.VK_F);
+		findNext = addToMenu(edit, "Find Next", KeyEvent.VK_F3, 0);
+		findNext.setMnemonic(KeyEvent.VK_N);
+		findPrevious = addToMenu(edit, "Find Previous", KeyEvent.VK_F3, shift);
+		findPrevious.setMnemonic(KeyEvent.VK_P);
 		replace = addToMenu(edit, "Find and Replace...", KeyEvent.VK_H, ctrl);
 		gotoLine = addToMenu(edit, "Goto line...", KeyEvent.VK_G, ctrl);
+		gotoLine.setMnemonic(KeyEvent.VK_G);
+		toggleBookmark = addToMenu(edit, "Toggle Bookmark", KeyEvent.VK_B, ctrl);
+		toggleBookmark.setMnemonic(KeyEvent.VK_B);
+		listBookmarks = addToMenu(edit, "List Bookmarks", 0, 0);
+		listBookmarks.setMnemonic(KeyEvent.VK_O);
+		edit.addSeparator();
+		clearScreen = addToMenu(edit, "Clear output panel", 0, 0);
+		clearScreen.setMnemonic(KeyEvent.VK_L);
+		edit.addSeparator();
+		autocomplete = addToMenu(edit, "Autocomplete", KeyEvent.VK_SPACE, ctrl);
+		autocomplete.setMnemonic(KeyEvent.VK_A);
+		edit.addSeparator();
+		addImport = addToMenu(edit, "Add import...", 0, 0);
+		addImport.setMnemonic(KeyEvent.VK_I);
+		removeUnusedImports = addToMenu(edit, "Remove unused imports", 0, 0);
+		removeUnusedImports.setMnemonic(KeyEvent.VK_U);
+		sortImports = addToMenu(edit, "Sort imports", 0, 0);
+		sortImports.setMnemonic(KeyEvent.VK_S);
+		removeTrailingWhitespace = addToMenu(edit, "Remove trailing whitespace", 0, 0);
+		removeTrailingWhitespace.setMnemonic(KeyEvent.VK_W);
 		mbar.add(edit);
-
-		JMenu options = new JMenu("Options");
-		options.setMnemonic(KeyEvent.VK_O);
-		autocomplete = addToMenu(options, "Autocomplete", KeyEvent.VK_SPACE, ctrl);
-		options.addSeparator();
-
-		mbar.add(options);
 
 		JMenu languages = new JMenu("Language");
 		languages.setMnemonic(KeyEvent.VK_L);
@@ -224,56 +199,157 @@ public class TextEditor extends JFrame implements ActionListener,
 		}
 		mbar.add(languages);
 
+		JMenu templates = new JMenu("Templates");
+		templates.setMnemonic(KeyEvent.VK_T);
+		setupTemplatePaths();
+		populateTemplateMenu(templates);
+		mbar.add(templates);
+
 		JMenu run = new JMenu("Run");
 		run.setMnemonic(KeyEvent.VK_R);
-		// TODO: allow outside-of-plugins/ sources
 
 		compileAndRun = addToMenu(run, "Compile and Run",
 				KeyEvent.VK_R, ctrl);
+		compileAndRun.setMnemonic(KeyEvent.VK_R);
+
+		runSelection = addToMenu(run, "Run selected code",
+				KeyEvent.VK_R, ctrl | shift);
+		runSelection.setMnemonic(KeyEvent.VK_S);
 
 		run.addSeparator();
+		nextError = addToMenu(run, "Next Error", KeyEvent.VK_F4, 0);
+		nextError.setMnemonic(KeyEvent.VK_N);
+		previousError = addToMenu(run, "Previous Error", KeyEvent.VK_F4, shift);
+		previousError.setMnemonic(KeyEvent.VK_P);
+		run.addSeparator();
 		debug = addToMenu(run, "Start Debugging", KeyEvent.VK_D, ctrl);
-
-		// for Eclipse and MS Visual Studio lovers
-		addAccelerator(compileAndRun, KeyEvent.VK_F11, 0);
-		addAccelerator(compileAndRun, KeyEvent.VK_F5, 0);
-		addAccelerator(debug, KeyEvent.VK_F11, ctrl);
-		addAccelerator(debug, KeyEvent.VK_F5,
-				ActionEvent.SHIFT_MASK);
-
-		mbar.add(run);
+		debug.setMnemonic(KeyEvent.VK_D);
 
 		run.addSeparator();
 
 		kill = addToMenu(run, "Kill running script...", 0, 0);
+		kill.setMnemonic(KeyEvent.VK_K);
 		kill.setEnabled(false);
 
-		JMenu breakpoints = new JMenu("Breakpoints");
-		breakpoints.setMnemonic(KeyEvent.VK_B);
-		resume = addToMenu(breakpoints, "Resume", 0, 0);
-		terminate = addToMenu(breakpoints, "Terminate", 0, 0);
-		mbar.add(breakpoints);
+		run.addSeparator();
+
+		resume = addToMenu(run, "Resume", 0, 0);
+		resume.setMnemonic(KeyEvent.VK_R);
+		terminate = addToMenu(run, "Terminate", 0, 0);
+		terminate.setMnemonic(KeyEvent.VK_T);
+		mbar.add(run);
+
+		JMenu tools = new JMenu("Tools");
+		tools.setMnemonic(KeyEvent.VK_O);
+		openHelpWithoutFrames = addToMenu(tools,
+			"Open Help for Class...", 0, 0);
+		openHelpWithoutFrames.setMnemonic(KeyEvent.VK_O);
+		openHelp = addToMenu(tools,
+			"Open Help for Class (with frames)...", 0, 0);
+		openHelp.setMnemonic(KeyEvent.VK_P);
+		extractSourceJar = addToMenu(tools,
+			"Extract source .jar...", 0, 0);
+		extractSourceJar.setMnemonic(KeyEvent.VK_E);
+		openSourceForClass = addToMenu(tools,
+			"Open .java file for class...", 0, 0);
+		openSourceForClass.setMnemonic(KeyEvent.VK_J);
+		newPlugin = addToMenu(tools,
+			"Create new plugin...", 0, 0);
+		newPlugin.setMnemonic(KeyEvent.VK_C);
+		mbar.add(tools);
+
+		tabsMenu = new JMenu("Tabs");
+		tabsMenu.setMnemonic(KeyEvent.VK_A);
+		nextTab = addToMenu(tabsMenu, "Next Tab",
+				KeyEvent.VK_PAGE_DOWN, ctrl);
+		nextTab.setMnemonic(KeyEvent.VK_N);
+		previousTab = addToMenu(tabsMenu, "Previous Tab",
+				KeyEvent.VK_PAGE_UP, ctrl);
+		previousTab.setMnemonic(KeyEvent.VK_P);
+		tabsMenu.addSeparator();
+		tabsMenuTabsStart = tabsMenu.getItemCount();
+		tabsMenuItems = new HashSet<JMenuItem>();
+		mbar.add(tabsMenu);
+
+		// Add the editor and output area
+		tabbed = new JTabbedPane();
+		tabbed.addChangeListener(this);
+		open(path);
+
+		screen = new JTextArea();
+		screen.setEditable(false);
+		screen.setLineWrap(true);
+		Font font = new Font("Courier", Font.PLAIN, 12);
+		screen.setFont(font);
+		JScrollPane scroll = new JScrollPane(screen);
+		scroll.setPreferredSize(new Dimension(600, 80));
+
+		JSplitPane panel = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tabbed, scroll);
+		panel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
+		panel.setResizeWeight(350.0 / 430.0);
+		setContentPane(panel);
+
+		// for Eclipse and MS Visual Studio lovers
+		addAccelerator(compileAndRun, KeyEvent.VK_F11, 0, true);
+		addAccelerator(compileAndRun, KeyEvent.VK_F5, 0, true);
+		addAccelerator(debug, KeyEvent.VK_F11, ctrl, true);
+		addAccelerator(debug, KeyEvent.VK_F5, shift, true);
+		addAccelerator(nextTab, KeyEvent.VK_PAGE_DOWN, ctrl, true);
+		addAccelerator(previousTab, KeyEvent.VK_PAGE_UP, ctrl, true);
+
+		// make sure that the window is not closed by accident
+		addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent e) {
+				while (tabbed.getTabCount() > 0) {
+					if (!handleUnsavedChanges())
+						return;
+					int index = tabbed.getSelectedIndex();
+					removeTab(index);
+				}
+				dispose();
+			}
+
+			public void windowClosed(WindowEvent e) {
+				WindowManager.removeWindow(TextEditor.this);
+			}
+		});
+
+		addWindowFocusListener(new WindowAdapter() {
+			public void windowGainedFocus(WindowEvent e) {
+				getEditorPane().checkForOutsideChanges();
+			}
+		});
+
+		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 
 		pack();
 		getToolkit().setDynamicLayout(true);            //added to accomodate the autocomplete part
-		findDialog = new FindAndReplaceDialog(this, textArea);
-
-		setLanguage(null);
-		setTitle();
+		findDialog = new FindAndReplaceDialog(this);
 
 		setLocationRelativeTo(null); // center on screen
-		if (path1 != null && !path1.equals(""))
-			open(path1);
 
-		addWindowListener(new WindowAdapter() {
-			public void windowClosing(WindowEvent e) {
-				if (!handleUnsavedChanges())
-					return;
-				WindowManager.removeWindow(TextEditor.this);
-				dispose();
-			}
-		});
-		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+		editorPane.requestFocus();
+	}
+
+	public TextEditor(String title, String text) {
+		this(null);
+		editorPane.setText(text);
+		String extension = editorPane.getExtension(title);
+		editorPane.setLanguageByExtension(extension);
+		setFileName(title);
+		setTitle();
+	}
+
+	final public RSyntaxTextArea getTextArea() {
+		return getEditorPane();
+	}
+
+	public EditorPane getEditorPane() {
+		return editorPane;
+	}
+
+	public Languages.Language getCurrentLanguage() {
+		return getEditorPane().currentLanguage;
 	}
 
 	public JMenuItem addToMenu(JMenu menu, String menuEntry,
@@ -287,8 +363,30 @@ public class TextEditor extends JFrame implements ActionListener,
 		return item;
 	}
 
+	protected static class AcceleratorTriplet {
+		JMenuItem component;
+		int key, modifiers;
+	}
+
+	protected List<AcceleratorTriplet> defaultAccelerators =
+		new ArrayList<AcceleratorTriplet>();
+
 	public void addAccelerator(final JMenuItem component,
 			int key, int modifiers) {
+		addAccelerator(component, key, modifiers, false);
+	}
+
+	public void addAccelerator(final JMenuItem component,
+			int key, int modifiers, boolean record) {
+		if (record) {
+			AcceleratorTriplet triplet = new AcceleratorTriplet();
+			triplet.component = component;
+			triplet.key = key;
+			triplet.modifiers = modifiers;
+			defaultAccelerators.add(triplet);
+		}
+
+		RSyntaxTextArea textArea = getTextArea();
 		textArea.getInputMap().put(KeyStroke.getKeyStroke(key,
 					modifiers), component);
 		if (textArea.getActionMap().get(component) != null)
@@ -305,8 +403,224 @@ public class TextEditor extends JFrame implements ActionListener,
 		});
 	}
 
+	public void addDefaultAccelerators() {
+		for (AcceleratorTriplet triplet : defaultAccelerators)
+			addAccelerator(triplet.component,
+					triplet.key, triplet.modifiers, false);
+	}
+
+	/**
+	 * Gets the base path of the resources contained in this jar.
+	 */
+	private String getResourceBase() {
+		return Script_Editor.class.getName().replace(".", "/")+".class";
+	}
+
+	/**
+	 * Initializes a member set with paths leading to templates.
+	 */
+	private void setupTemplatePaths() {
+		templatePaths = new HashSet<String>(); //avoid duplicates in case it is a subdirectory
+
+		URL dirURL = Script_Editor.class.getClassLoader().getResource( getResourceBase() );
+
+		// check if the resource has been found inside the jar
+		if (dirURL == null || dirURL.getProtocol() != "jar") {
+			return;
+		}
+
+		// modified version of http://www.uofr.net/~greg/java/get-resource-listing.html
+		String jarPath = dirURL.getPath().substring(5, dirURL.getPath().indexOf("!")); //strip out only the JAR file
+
+		try {
+			JarFile jar = new JarFile(URLDecoder.decode(jarPath, "UTF-8"));
+			Enumeration<JarEntry> entries = jar.entries(); //gives ALL entries in jar
+
+			while(entries.hasMoreElements()) {
+				String name = entries.nextElement().getName();
+				if (name.startsWith(templateFolder)) { //filter according to the path
+					String entry = name.substring(templateFolder.length());
+					templatePaths.add(entry);
+				}
+			}
+		}
+		catch (java.io.UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+		catch (java.io.IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Populates the given menu with template files available in the
+	 * templates folder. The folder structure is reflected within the sub menus.
+	 */
+	private void populateTemplateMenu(JMenu menu) {
+		menu.removeAll();
+
+		// use a dictionary for keeping track of created menu items
+		Dictionary<String, JMenu> menuEntries = new Hashtable<String, JMenu>();
+
+		String[] paths =
+			templatePaths.toArray(new String[templatePaths.size()]);
+		Arrays.sort(paths, new Comparator<String>() {
+			public int compare(String s1, String s2) {
+				int slash1 = s1.lastIndexOf('/');
+				int slash2 = s2.lastIndexOf('/');
+				return s1.substring(slash1 + 1)
+					.compareTo(s2.substring(slash2 + 1));
+			}
+			public boolean equals(Object o) {
+				return false;
+			}
+		});
+		for (String t : paths)
+			reflectDirStructInMenu(menuEntries, menu, t, "");
+
+		// add a „none“ item if no template was found
+		if (menu.getItemCount() == 0) {
+			JMenuItem none_item = new JMenuItem("(none)");
+			none_item.setEnabled(false);
+			menu.add(none_item);
+		}
+	}
+
+	/**
+	 * Adds a menu item or a sub menu to the given menu, depending
+	 * on the path it should reflect.
+	 */
+	public void reflectDirStructInMenu(Dictionary<String, JMenu> menuEntries,
+			 JMenu menu, String res, String resPath) {
+		// Add menu items reflecting the files, i. e. the actual templates (typically on)
+		final boolean showFiles = true;
+		// Reflect tha dicetory structure within the menu
+		final boolean showFolders = false;
+		// The language of the template will be added the name (requires ShowFiles)
+		final boolean appendLang = true;
+		// Indicates that the language should be switched on template selection
+		final boolean switchLang = true;
+		// Show file name instead of stripped version
+		final boolean showFileName = false;
+
+		int checkSubdir = res.indexOf("/");
+		if (checkSubdir >= 0) {
+			// if it is a subdirectory, get the directory name
+			String name = res.substring(0, checkSubdir);
+			res = res.substring(checkSubdir + 1); // cut off the slash for next level
+
+			// remember the current level
+			resPath = resPath + name + "/";
+
+			if (showFolders) {
+				// create a new sub menu if not already there
+				JMenu subMenu = menuEntries.get(resPath);
+				if (subMenu == null) {
+					subMenu = new JMenu(name);
+					menuEntries.put(resPath, subMenu);
+					menu.add(subMenu);
+				}
+				menu = subMenu;
+			}
+
+			// recursively go througn the path
+			reflectDirStructInMenu(menuEntries, menu, res, resPath);
+		} else {
+			// res in now the file name and resPath is the path to it
+
+			if (showFiles) {
+				String name = res;
+				if (!showFileName) {
+					// replace uder scores with spaces
+					name = name.replace("_", " ");
+					// remove file extension, if any present
+					int dot = name.lastIndexOf(".");
+					if (dot >= 0)
+						name = name.substring(0, dot);
+				}
+
+				// Get sub folder name, which should
+				// represent language
+				String subFolderName = "";
+				int slash = resPath.indexOf("/");
+				if (slash >= 0) {
+					subFolderName = resPath.substring(0, slash);
+				}
+
+				// Try to mach sub folder name to
+				// available languges
+				Languages.Language templateLang = null;
+				for (final Languages.Language l : availableLanguages) {
+					// compare first sub folder (if any) to known
+					// languge names
+					if (l.menuLabel.equalsIgnoreCase(subFolderName)) {
+						templateLang = l;
+						break;
+					}
+				}
+
+				// if enabled, add laguge desription to label
+				if (appendLang) {
+					if (templateLang != null) {
+						name += " [" + templateLang.menuLabel + "]";
+					} else {
+						name += " [unknown]";
+					}
+				}
+
+				JMenuItem item = new JMenuItem(name);
+				menu.add(item);
+
+				// create final properties for inner class
+				final String resource = templateFolder + resPath + res;
+				final Languages.Language linkedLang = templateLang;
+
+				// add inner action listener class for item
+				item.addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent e) {
+						// A template menu item opens a corresponding
+						// template file.
+						loadTemplate(resource, linkedLang, switchLang);
+					}});
+			}
+		}
+	}
+
+	/**
+	 * Loads a template file from the given resource out of the jar file and
+	 * optionally switches the langunge.
+	 *
+	 * @param resource The resource to load.
+	 * @param lang The language to optionally switch to or null
+	 * @param switchLang Whether the language should be switched or not.
+	 */
+	public void loadTemplate(String resource, Languages.Language lang, boolean switchLang) {
+		createNewDocument();
+
+		try {
+			// Load the template
+			InputStream is = Script_Editor.class.getClassLoader().getResourceAsStream(resource);
+			getTextArea().read(new BufferedReader(
+				new InputStreamReader(is)),
+				null);
+
+			// Switch the language
+			if (switchLang && lang != null) {
+				setLanguage(lang);
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			error("The template '" + resource + "' was not found.");
+			return;
+		}
+	}
+
 	public void createNewDocument() {
 		open(null);
+	}
+
+	public boolean fileChanged() {
+		return getEditorPane().fileChanged();
 	}
 
 	public boolean handleUnsavedChanges() {
@@ -327,16 +641,15 @@ public class TextEditor extends JFrame implements ActionListener,
 
 	public void actionPerformed(ActionEvent ae) {
 		final Object source = ae.getSource();
-		if (source == new_file) {
-			if (!handleUnsavedChanges())
-				return;
+		if (source == newFile)
 			createNewDocument();
-		}
 		else if (source == open) {
-			if (!handleUnsavedChanges())
-				return;
-
-			OpenDialog dialog = new OpenDialog("Open..", "");
+			String defaultDir =
+				editorPane != null && editorPane.file != null ?
+				editorPane.file.getParent() :
+				System.getProperty("fiji.dir");
+			OpenDialog dialog = new OpenDialog("Open...",
+					defaultDir, "");
 			String name = dialog.getFileName();
 			if (name != null)
 				open(dialog.getDirectory() + name);
@@ -346,66 +659,166 @@ public class TextEditor extends JFrame implements ActionListener,
 			save();
 		else if (source == saveas)
 			saveAs();
+		else if (source == makeJar)
+			makeJar(false);
+		else if (source == makeJarWithSource)
+			makeJar(true);
 		else if (source == compileAndRun)
 			runText();
+		else if (source == runSelection)
+			runText(true);
+		else if (source == nextError)
+			new Thread() {
+				public void run() {
+					nextError(true);
+				}
+			}.start();
+		else if (source == previousError)
+			new Thread() {
+				public void run() {
+					nextError(false);
+				}
+			}.start();
 		else if (source == debug) {
-			if (currentLanguage == null ||
-					!currentLanguage.isDebuggable()) {
-				error("No debug support for this language");
-				return;
-			}
-			BreakpointManager manager = new BreakpointManager(gutter, textArea, iconGroup);
-			debugging = new StartDebugging(file.getPath(), manager.findBreakpointsLineNumber());
-
 			try {
-				System.out.println(debugging.startDebugging().exitValue());
+				getEditorPane().startDebugging();
 			} catch (Exception e) {
-				e.printStackTrace();
+				error("No debug support for this language");
 			}
 		}
 		else if (source == kill)
 			chooseTaskToKill();
-		else if (source == quit)
-			processWindowEvent( new WindowEvent(this, WindowEvent.WINDOW_CLOSING) );
+		else if (source == close)
+			if (tabbed.getTabCount() < 2)
+				processWindowEvent(new WindowEvent(this,
+						WindowEvent.WINDOW_CLOSING));
+			else {
+				if (!handleUnsavedChanges())
+					return;
+				int index = tabbed.getSelectedIndex();
+				removeTab(index);
+				if (index > 0)
+					index--;
+				switchTo(index);
+			}
 		else if (source == cut)
-			textArea.cut();
+			getTextArea().cut();
 		else if (source == copy)
-			textArea.copy();
+			getTextArea().copy();
 		else if (source == paste)
-			textArea.paste();
+			getTextArea().paste();
 		else if (source == undo)
-			textArea.undoLastAction();
+			getTextArea().undoLastAction();
 		else if (source == redo)
-			textArea.redoLastAction();
+			getTextArea().redoLastAction();
 		else if (source == find)
 			findOrReplace(false);
+		else if (source == findNext)
+			findDialog.searchOrReplace(false);
+		else if (source == findPrevious)
+			findDialog.searchOrReplace(false, false);
 		else if (source == replace)
 			findOrReplace(true);
 		else if (source == gotoLine)
 			gotoLine();
+		else if (source == toggleBookmark)
+			toggleBookmark();
+		else if (source == listBookmarks)
+			listBookmarks();
 		else if (source == selectAll) {
-			textArea.setCaretPosition(0);
-			textArea.moveCaretPosition(textArea.getDocument().getLength());
+			getTextArea().setCaretPosition(0);
+			getTextArea().moveCaretPosition(getTextArea().getDocument().getLength());
 		}
+		else if (source == addImport)
+			addImport(null);
+		else if (source == removeUnusedImports)
+			new TokenFunctions(getTextArea()).removeUnusedImports();
+		else if (source == sortImports)
+			new TokenFunctions(getTextArea()).sortImports();
+		else if (source == removeTrailingWhitespace)
+			new TokenFunctions(getTextArea()).removeTrailingWhitespace();
+		else if (source == clearScreen)
+			screen.setText("");
 		else if (source == autocomplete) {
 			try {
-				autocomp.doCompletion();
+				getEditorPane().autocomp.doCompletion();
 			} catch (Exception e) {}
 		}
 		else if (source == resume)
-			debugging.resumeVM();
+			getEditorPane().resume();
 		else if (source == terminate) {
-			// TODO not implemented
+			getEditorPane().terminate();
 		}
-
+		else if (source == openHelp)
+			openHelp(null);
+		else if (source == openHelpWithoutFrames)
+			openHelp(null, false);
+		else if (source == extractSourceJar)
+			extractSourceJar();
+		else if (source == openSourceForClass) {
+			String className = getSelectedTextOrAsk("Name of class");
+			if (className != null) try {
+				String path = new FileFunctions(this).getSourcePath(className);
+				if (path != null)
+					open(path);
+			} catch (ClassNotFoundException e) {
+				error("Could not open source for class " + className);
+			}
+		}
+		else if (source == newPlugin)
+			new FileFunctions(this).newPlugin();
+		else if (source == nextTab)
+			switchTabRelative(1);
+		else if (source == previousTab)
+			switchTabRelative(-1);
+		else if (handleTabsMenu(source))
+			return;
 	}
 
-	protected RSyntaxDocument getDocument() {
-		return (RSyntaxDocument)textArea.getDocument();
+	protected boolean handleTabsMenu(Object source) {
+		if (!(source instanceof JMenuItem))
+			return false;
+		JMenuItem item = (JMenuItem)source;
+		if (!tabsMenuItems.contains(item))
+			return false;
+		for (int i = tabsMenuTabsStart;
+				i < tabsMenu.getItemCount(); i++)
+			if (tabsMenu.getItem(i) == item) {
+				switchTo(i - tabsMenuTabsStart);
+				return true;
+			}
+		return false;
+	}
+
+	public void stateChanged(ChangeEvent e) {
+		int index = tabbed.getSelectedIndex();
+		if (index < 0) {
+			setTitle("");
+			return;
+		}
+		editorPane = getEditorPane(index);
+		editorPane.requestFocus();
+		setTitle();
+		String extension = editorPane.getExtension(editorPane.getFileName());
+		editorPane.setLanguageByExtension(extension);
+		editorPane.checkForOutsideChanges();
+	}
+
+	public EditorPane getEditorPane(int index) {
+		RTextScrollPane scrollPane =
+			(RTextScrollPane)tabbed.getComponentAt(index);
+		return (EditorPane)scrollPane.getTextArea();
 	}
 
 	public void findOrReplace(boolean replace) {
 		findDialog.setLocationRelativeTo(this);
+
+		// override search pattern only if
+		// there is sth. selected
+		String selection = getTextArea().getSelectedText();
+		if (selection != null)
+			findDialog.setSearchPattern(selection);
+
 		findDialog.show(replace);
 	}
 
@@ -422,35 +835,81 @@ public class TextEditor extends JFrame implements ActionListener,
 	}
 
 	public void gotoLine(int line) throws BadLocationException {
-		textArea.setCaretPosition(textArea.getLineStartOffset(line-1));
+		getTextArea().setCaretPosition(getTextArea().getLineStartOffset(line-1));
+	}
+
+	public void toggleBookmark() {
+		getEditorPane().toggleBookmark();
+	}
+
+	public void listBookmarks() {
+		Vector<EditorPane.Bookmark> bookmarks =
+			new Vector<EditorPane.Bookmark>();
+		for (int i = 0; i < tabbed.getTabCount(); i++)
+			getEditorPane(i).getBookmarks(i, bookmarks);
+		BookmarkDialog dialog = new BookmarkDialog(this, bookmarks);
+		dialog.show();
+	}
+
+	public boolean reload() {
+		return reload("Reload the file?");
+	}
+
+	public boolean reload(String message) {
+		File file = getEditorPane().file;
+		if (file == null || !file.exists())
+			return true;
+
+		boolean modified = getEditorPane().fileChanged();
+		String[] options = { "Reload", "Do not reload" };
+		if (modified)
+			options[0] = "Reload (discarding changes)";
+		switch (JOptionPane.showOptionDialog(this, message, "Reload",
+			JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE,
+			null, options, options[0])) {
+		case 0:
+			try {
+				editorPane.setFile(file.getPath());
+				return true;
+			} catch (IOException e) {
+				error("Could not reload " + file.getPath());
+			}
+			break;
+		}
+		return false;
 	}
 
 	public void open(String path) {
-		if (path == null) {
-			file = null;
-			textArea.setText("");
-		}
-		else try {
-			file = new File(path);
-			if (!file.exists()) {
-				modifyCount = Integer.MIN_VALUE;
-				setFileName(file);
-				return;
+		try {
+			boolean wasNew =
+				editorPane != null && editorPane.isNew();
+			if (!wasNew) {
+				editorPane = new EditorPane(this);
+				tabbed.addTab("",
+					editorPane.embedWithScrollbars());
+				switchTo(tabbed.getTabCount() - 1);
+				addDefaultAccelerators();
 			}
-			textArea.read(new BufferedReader(new FileReader(file)),
-				null);
+			editorPane.setFile("".equals(path) ? null : path);
+			if (wasNew) {
+				int index = tabbed.getSelectedIndex()
+					+ tabsMenuTabsStart;
+				tabsMenu.getItem(index)
+					.setText(editorPane.getFileName());
+			}
+			else
+				tabsMenuItems.add(addToMenu(tabsMenu,
+					editorPane.getFileName(), 0, 0));
 		} catch (Exception e) {
 			e.printStackTrace();
 			error("The file '" + path + "' was not found.");
 			return;
 		}
-		textArea.discardAllEdits();
-		modifyCount = 0;
-		setFileName(file);
 	}
 
 	public boolean saveAs() {
-		SaveDialog sd = new SaveDialog("Save as ", getFileName() , "");
+		SaveDialog sd = new SaveDialog("Save as ",
+				getEditorPane().getFileName() , "");
 		String name = sd.getFileName();
 		if (name == null)
 			return false;
@@ -464,8 +923,8 @@ public class TextEditor extends JFrame implements ActionListener,
 	}
 
 	public boolean saveAs(String path, boolean askBeforeReplacing) {
-		file = new File(path);
-		if (file.exists() && !askBeforeReplacing &&
+		File file = new File(path);
+		if (file.exists() && askBeforeReplacing &&
 				JOptionPane.showConfirmDialog(this,
 					"Do you want to replace " + path + "?",
 					"Replace " + path + "?",
@@ -479,6 +938,7 @@ public class TextEditor extends JFrame implements ActionListener,
 	}
 
 	public boolean save() {
+		File file = getEditorPane().file;
 		if (file == null)
 			return saveAs();
 		if (!write(file))
@@ -489,11 +949,7 @@ public class TextEditor extends JFrame implements ActionListener,
 
 	public boolean write(File file) {
 		try {
-			BufferedWriter outFile =
-				new BufferedWriter(new FileWriter(file));
-			outFile.write(textArea.getText());
-			outFile.close();
-			modifyCount = 0;
+			getEditorPane().write(file);
 			return true;
 		} catch (IOException e) {
 			error("Could not save " + file.getName());
@@ -502,69 +958,193 @@ public class TextEditor extends JFrame implements ActionListener,
 		}
 	}
 
-	public static String getExtension(String fileName) {
-		int dot = fileName.lastIndexOf(".");
-		return dot < 0 ?  "" : fileName.substring(dot);
-	}
+	public boolean makeJar(boolean includeSources) {
+		File file = getEditorPane().file;
+		Languages.Language currentLanguage = getCurrentLanguage();
+		if ((file == null || currentLanguage.isCompileable())
+				&& !handleUnsavedChanges())
+			return false;
 
-	private void setLanguageByExtension(String extension) {
-		setLanguage(Languages.get(extension));
-	}
+		String name = getEditorPane().getFileName();
+		if (name.endsWith(currentLanguage.extension))
+			name = name.substring(0, name.length()
+				- currentLanguage.extension.length());
+		name += ".jar";
+		SaveDialog sd = new SaveDialog("Export ", name, ".jar");
+		name = sd.getFileName();
+		if (name == null)
+			return false;
 
-	protected void setLanguage(Languages.Language language) {
-		if (language == null)
-			language = Languages.get("");
-
-		if (file != null) {
-			String name = file.getName();
-			if (!name.endsWith(language.extension) &&
-					currentLanguage != null) {
-				String ext = currentLanguage.extension;
-				if (name.endsWith(ext))
-					name = name.substring(0, name.length()
-							- ext.length());
-				file = new File(file.getParentFile(),
-						name + language.extension);
-				modifyCount = Integer.MIN_VALUE;
-			}
+		String path = sd.getDirectory() + name;
+		if (new File(path).exists() &&
+				JOptionPane.showConfirmDialog(this,
+					"Do you want to replace " + path + "?",
+					"Replace " + path + "?",
+					JOptionPane.YES_NO_OPTION)
+				!= JOptionPane.YES_OPTION)
+			return false;
+		try {
+			makeJar(path, includeSources);
+			return true;
+		} catch (IOException e) {
+			e.printStackTrace();
+			error("Could not write " + path
+					+ ": " + e.getMessage());
+			return false;
 		}
-		currentLanguage = language;
-		setTitle();
+	}
 
+	public void makeJar(String path, boolean includeSources)
+			throws IOException {
+		List<String> paths = new ArrayList<String>();
+		List<String> names = new ArrayList<String>();
+		File tmpDir = null, file = getEditorPane().file;
+		String sourceName = null;
+		Languages.Language currentLanguage = getCurrentLanguage();
+		if (currentLanguage.interpreter instanceof Refresh_Javas) try {
+			String sourcePath = file.getAbsolutePath();
+			Refresh_Javas java =
+				(Refresh_Javas)currentLanguage.interpreter;
+			tmpDir = File.createTempFile("tmp", "");
+			tmpDir.delete();
+			tmpDir.mkdir();
+			java.compile(sourcePath, tmpDir.getAbsolutePath());
+			getClasses(tmpDir, paths, names);
+			if (includeSources) {
+				String name = java.getPackageName(sourcePath);
+				name = (name == null ? "" :
+						name.replace('.', '/') + "/")
+					+ file.getName();
+				sourceName = name;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			if (e instanceof IOException)
+				throw (IOException)e;
+			throw new IOException(e.getMessage());
+		}
+		else
+			sourceName = file.getName();
+
+		OutputStream out = new FileOutputStream(path);
+		JarOutputStream jar = new JarOutputStream(out);
+
+		if (sourceName != null)
+			writeJarEntry(jar, sourceName,
+					getTextArea().getText().getBytes());
+		for (int i = 0; i < paths.size(); i++)
+			writeJarEntry(jar, names.get(i),
+					readFile(paths.get(i)));
+
+		jar.close();
+
+		if (tmpDir != null)
+			deleteRecursively(tmpDir);
+	}
+
+	static void getClasses(File directory,
+			List<String> paths, List<String> names) {
+		getClasses(directory, paths, names, "");
+	}
+
+	static void getClasses(File directory,
+			List<String> paths, List<String> names, String prefix) {
+		if (!prefix.equals(""))
+			prefix += "/";
+		for (File file : directory.listFiles())
+			if (file.isDirectory())
+				getClasses(file, paths, names,
+						prefix + file.getName());
+			else {
+				paths.add(file.getAbsolutePath());
+				names.add(prefix + file.getName());
+			}
+	}
+
+	static void writeJarEntry(JarOutputStream out, String name,
+			byte[] buf) throws IOException {
+		try {
+			JarEntry entry = new JarEntry(name);
+			out.putNextEntry(entry);
+			out.write(buf, 0, buf.length);
+			out.closeEntry();
+		} catch (ZipException e) {
+			e.printStackTrace();
+			throw new IOException(e.getMessage());
+		}
+	}
+
+	static byte[] readFile(String fileName) throws IOException {
+		File file = new File(fileName);
+		InputStream in = new FileInputStream(file);
+		byte[] buffer = new byte[(int)file.length()];
+		in.read(buffer);
+		in.close();
+		return buffer;
+	}
+
+	static void deleteRecursively(File directory) {
+		for (File file : directory.listFiles())
+			if (file.isDirectory())
+				deleteRecursively(file);
+			else
+				file.delete();
+		directory.delete();
+	}
+
+	void setLanguage(Languages.Language language) {
+		getEditorPane().setLanguage(language);
+	}
+
+	void updateLanguageMenu(Languages.Language language) {
 		if (!language.item.isSelected())
 			language.item.setSelected(true);
 
 		compileAndRun.setLabel(language.isCompileable() ?
 			"Compile and Run" : "Run");
 		compileAndRun.setEnabled(language.isRunnable());
+		runSelection.setEnabled(language.isRunnable() &&
+				!language.isCompileable());
 		debug.setEnabled(language.isDebuggable());
+		makeJarWithSource.setEnabled(language.isCompileable());
 
-		provider.setProviderLanguage(language.menuLabel);
+		boolean isJava = language.menuLabel.equals("Java");
+		addImport.setEnabled(isJava);
+		removeUnusedImports.setEnabled(isJava);
+		sortImports.setEnabled(isJava);
+	}
 
-		// TODO: these should go to upstream RSyntaxTextArea
-		if (language.syntaxStyle != null)
-			textArea.setSyntaxEditingStyle(language.syntaxStyle);
-		else if (language.extension.equals(".clj"))
-			getDocument().setSyntaxStyle(new ClojureTokenMaker());
-		else if (language.extension.equals(".m"))
-			getDocument().setSyntaxStyle(new MatlabTokenMaker());
+	public void setFileName(String baseName) {
+		getEditorPane().setFileName(baseName);
 	}
 
 	public void setFileName(File file) {
-		setTitle();
-		if (file != null)
-			setLanguageByExtension(getExtension(file.getName()));
+		getEditorPane().setFileName(file);
 	}
 
-	protected String getFileName() {
-		return file == null ?
-			"New_" + currentLanguage.extension : file.getName();
-	}
-
-	private synchronized void setTitle() {
-		String title = (fileChanged() ? "*" : "") + getFileName()
+	synchronized void setTitle() {
+		boolean fileChanged = getEditorPane().fileChanged();
+		String fileName = getEditorPane().getFileName();
+		final String title = (fileChanged ? "*" : "") + fileName
 			+ (executingTasks.isEmpty() ? "" : " (Running)");
-		setTitle(title);
+		SwingUtilities.invokeLater(new Thread() {
+			public void run() {
+				setTitle(title);
+			}
+		});
+		int index = tabbed.getSelectedIndex();
+		if (index >= 0)
+			tabbed.setTitleAt(index, title);
+	}
+
+	public synchronized void setTitle(String title) {
+		super.setTitle(title);
+		int index = tabsMenuTabsStart + tabbed.getSelectedIndex();
+		if (index < tabsMenu.getItemCount()) {
+			JMenuItem item = tabsMenu.getItem(index);
+			if (item != null)
+				item.setLabel(title);
+		}
 	}
 
 	/** Using a Vector to benefit from all its methods being synchronzed. */
@@ -615,7 +1195,7 @@ public class TextEditor extends JFrame implements ActionListener,
 				}
 			};
 		}
-		
+
 		/** The method to extend, that will do the actual work. */
 		abstract void execute();
 
@@ -705,7 +1285,16 @@ public class TextEditor extends JFrame implements ActionListener,
 
 	/** Run the text in the textArea without compiling it, only if it's not java. */
 	public void runText() {
+		runText(false);
+	}
+
+	public void runText(boolean selectionOnly) {
+		Languages.Language currentLanguage = getCurrentLanguage();
 		if (currentLanguage.isCompileable()) {
+			if (selectionOnly) {
+				error("Cannot run selection of compiled language!");
+				return;
+			}
 			if (handleUnsavedChanges())
 				runScript();
 			return;
@@ -716,6 +1305,8 @@ public class TextEditor extends JFrame implements ActionListener,
 			return;
 		}
 
+		markCompileStart();
+		RSyntaxTextArea textArea = getTextArea();
 		textArea.setEditable(false);
 		final JTextAreaOutputStream output = new JTextAreaOutputStream(screen);
 		try {
@@ -729,9 +1320,19 @@ public class TextEditor extends JFrame implements ActionListener,
 			new TextEditor.Executer(output) {
 				public void execute() {
 					interpreter.runScript(pi);
+					output.flush();
+					markCompileEnd();
 				}
 			};
-			textArea.write(new PrintWriter(po));
+			if (selectionOnly) {
+				String text = textArea.getSelectedText();
+				if (text == null)
+					error("Selection required!");
+				else
+					po.write(text.getBytes());
+			}
+			else
+				textArea.write(new PrintWriter(po));
 			po.flush();
 			po.close();
 		} catch (Throwable t) {
@@ -742,95 +1343,194 @@ public class TextEditor extends JFrame implements ActionListener,
 	}
 
 	public void runScript() {
-		String ext = getExtension(file.getName());
 		final RefreshScripts interpreter =
-		        Languages.getInstance().get(ext).interpreter;
+			getCurrentLanguage().interpreter;
 
 		if (interpreter == null) {
-			error("There is no interpreter for " + ext
-			         + " files!");
+			error("There is no interpreter for this language");
 			return;
 		}
 
-		JTextAreaOutputStream output = new JTextAreaOutputStream(screen);
+		markCompileStart();
+		final JTextAreaOutputStream output = new JTextAreaOutputStream(screen);
 		interpreter.setOutputStreams(output, output);
 
-		new TextEditor.Executer(new JTextAreaOutputStream(screen)) {
+		final File file = getEditorPane().file;
+		new TextEditor.Executer(output) {
 			public void execute() {
 				interpreter.runScript(file.getPath());
+				output.flush();
+				markCompileEnd();
 			}
 		};
 	}
 
-	RecordableTextAction wordMovement(final int direction,
-			final boolean select) {
-		final String id = "WORD_MOVEMENT_" + select + direction;
-		return new RecordableTextAction(id) {
-			public void actionPerformedImpl(ActionEvent e,
-					RTextArea textArea) {
-				int pos = textArea.getCaretPosition();
-				int end = direction < 0 ? 0 :
-					textArea.getDocument().getLength();
-				while (pos != end && !isWordChar(textArea, pos))
-					pos += direction;
-				while (pos != end && isWordChar(textArea, pos))
-					pos += direction;
-				if (select)
-					textArea.moveCaretPosition(pos);
-				else
-					textArea.setCaretPosition(pos);
+	public String getSelectedTextOrAsk(String label) {
+		String selection = getTextArea().getSelectedText();
+		if (selection == null) {
+			selection = JOptionPane.showInputDialog(this,
+				label + ":", label + "...",
+				JOptionPane.QUESTION_MESSAGE);
+			if (selection == null)
+				return null;
+		}
+		return selection;
+	}
+
+	public void markCompileStart() {
+		errorHandler = null;
+
+		Document document = screen.getDocument();
+		int offset = document.getLength();
+		screen.insert("Started " + editorPane.getFileName() + " at "
+			+ new Date() + "\n", offset);
+		screen.setCaretPosition(document.getLength());
+		try {
+			compileStartPosition = document.createPosition(offset);
+		} catch (BadLocationException e) {
+			handleException(e);
+		}
+		ExceptionHandler.addThread(Thread.currentThread(), this);
+	}
+
+	public void markCompileEnd() {
+		if (errorHandler == null)
+			errorHandler = new ErrorHandler(getCurrentLanguage(),
+				screen, compileStartPosition.getOffset());
+	}
+
+	public boolean nextError(boolean forward) {
+		if (errorHandler != null && errorHandler.nextError(forward)) try {
+			File file = new File(errorHandler.getPath());
+			if (!file.isAbsolute())
+				file = getFileForBasename(file.getName());
+			switchTo(file, errorHandler.getLine());
+			errorHandler.markLine();
+			screen.repaint();
+			getEditorPane().repaint();
+			return true;
+		} catch (Exception e) {
+			IJ.handleException(e);
+		}
+		return false;
+	}
+
+	public void switchTo(String path, int lineNumber)
+			throws BadLocationException, IOException {
+		switchTo(new File(path).getCanonicalFile(), lineNumber);
+	}
+
+	public void switchTo(File file, int lineNumber)
+			throws BadLocationException {
+		if (!editorPaneContainsFile(editorPane, file))
+			switchTo(file);
+		gotoLine(lineNumber);
+	}
+
+	public void switchTo(File file) {
+		for (int i = 0; i < tabbed.getTabCount(); i++)
+			if (editorPaneContainsFile(getEditorPane(i), file)) {
+				switchTo(i);
+				return;
 			}
-
-			public String getMacroID() {
-				return id;
-			}
-
-			boolean isWordChar(RTextArea textArea, int pos) {
-				try {
-					char c = textArea.getText(pos
-						+ (direction < 0 ? -1 : 0), 1)
-						.charAt(0);
-					return c > 0x7f ||
-						(c >= 'A' && c <= 'Z') ||
-						(c >= 'a' && c <= 'z') ||
-						(c >= '0' && c <= '9') ||
-						c == '_';
-				} catch (BadLocationException e) {
-					return false;
-				}
-			}
-		};
+		open(file.getPath());
 	}
 
-	public boolean fileChanged() {
-		return modifyCount != 0;
+	public void switchTo(int index) {
+		tabbed.setSelectedIndex(index);
 	}
 
-	public void insertUpdate(DocumentEvent e) {
-		modified();
+	protected void switchTabRelative(int delta) {
+		int index = tabbed.getSelectedIndex();
+		int count = tabbed.getTabCount();
+		index = ((index + delta) % count);
+		if (index < 0)
+			index += count;
+		switchTo(index);
 	}
 
-	public void removeUpdate(DocumentEvent e) {
-		modified();
+	protected void removeTab(int index) {
+		tabbed.remove(index);
+		index += tabsMenuTabsStart;
+		tabsMenuItems.remove(tabsMenu.getItem(index));
+		tabsMenu.remove(index);
 	}
 
-	// triggered only by syntax highlighting
-	public void changedUpdate(DocumentEvent e) { }
+	boolean editorPaneContainsFile(EditorPane editorPane, File file) {
+		try {
+			return file.getCanonicalFile()
+				.equals(editorPane.file.getCanonicalFile());
+		} catch (IOException e) {
+			return false;
+		}
+	}
 
-	protected void modified() {
-		boolean update = modifyCount == 0;
-		if (undoInProgress)
-			modifyCount--;
-		else if (redoInProgress || modifyCount >= 0)
-			modifyCount++;
-		else // not possible to get back to clean state
-			modifyCount = Integer.MIN_VALUE;
-		if (update || modifyCount == 0)
-			setTitle();
+	public File getFile() {
+		return getEditorPane().file;
+	}
+
+	public File getFileForBasename(String baseName) {
+		File file = getFile();
+		if (file != null && file.getName().equals(baseName))
+			return file;
+		for (int i = 0; i < tabbed.getTabCount(); i++) {
+			file = getEditorPane(i).file;
+			if (file != null && file.getName().equals(baseName))
+				return file;
+		}
+		return null;
+	}
+
+	public void addImport(String className) {
+		if (className == null)
+			className = getSelectedTextOrAsk("Class name");
+		if (className == null)
+			return;
+		if (className.indexOf('.') < 0)
+			className = getEditorPane().getClassNameFunctions()
+				.getFullName(className);
+		if (className != null)
+			new TokenFunctions(getTextArea()).addImport(className.trim());
+	}
+
+	public void openHelp(String className) {
+		openHelp(className, true);
+	}
+
+	public void openHelp(String className, boolean withFrames) {
+		if (className == null)
+			className = getSelectedTextOrAsk("Class name");
+		if (className == null)
+			return;
+		getEditorPane().getClassNameFunctions()
+			.openHelpForClass(className, withFrames);
+	}
+
+	public void extractSourceJar() {
+		OpenDialog dialog = new OpenDialog("Open...", "");
+		String name = dialog.getFileName();
+		if (name != null)
+			extractSourceJar(dialog.getDirectory() + name);
+	}
+
+	public void extractSourceJar(String path) {
+		try {
+			FileFunctions functions = new FileFunctions(this);
+			List<String> paths = functions.extractSourceJar(path);
+			for (String file : paths)
+				if (!functions.isBinaryFile(file))
+					open(file);
+		} catch (IOException e) {
+			error("There was a problem opening " + path
+				+ ": " + e.getMessage());
+		}
 	}
 
 	protected void error(String message) {
 		JOptionPane.showMessageDialog(this, message);
 	}
+
+	void handleException(Throwable e) {
+		ij.IJ.handleException(e);
+	}
 }
-// TODO: check all files for whitespace issues

@@ -6,7 +6,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import fiji.util.GenericDialogPlus;
+import fiji.util.gui.GenericDialogPlus;
 import ij.IJ;
 import ij.gui.MultiLineLabel;
 import ij.plugin.PlugIn;

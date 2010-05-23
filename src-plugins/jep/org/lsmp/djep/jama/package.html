@@ -1,0 +1,15 @@
+<body>
+Wrapper for JAMA matrix operations for use in vectorJep and matrixJep.
+To add these functions to a VectorJep or MatrixJep instance use
+<pre>
+VectorJep j = new VectorJep();
+j.addStandardFunctions();
+...
+JamaUtil.addStandardFunctions(j);
+</pre>
+This will add a rank, inverse and solve function.
+<tt>z = solve(x,y)</tt> solves <code>x*z = y</code>.
+@see org.lsmp.djep.vectorJep
+@see org.lsmp.djep.matrixJep
+@see <a href="http://math.nist.gov/javanumerics/jama/">http://math.nist.gov/javanumerics/jama/</a>
+</body>

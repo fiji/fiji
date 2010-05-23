@@ -1,0 +1,92 @@
+#!/bin/sh
+/*/. 2>/dev/null; exec "$(dirname "$0")"/../fiji "$0" "$@" # exec with fiji */
+
+/*
+ * This script helps to identify the commits performed on plugins since they
+ * were uploaded last time.
+ */
+import fiji.build.Fake;
+
+import fiji.updater.logic.PluginCollection;
+import fiji.updater.logic.XMLFileReader;
+
+import java.io.File;
+import java.io.FileInputStream;
+
+import java.util.ArrayList;
+
+import java.util.zip.GZIPInputStream;
+
+if (bsh.args.length == 0) {
+	System.err.println("Usage: " + this.interpreter.getSourceFileInfo()
+		+ " <file.jar> [<file2.jar> ...]");
+	System.exit(1);
+}
+
+// Read the database
+
+fijiDir = System.getProperty("fiji.dir");
+dbPath = fijiDir + "/db.xml.gz";
+new XMLFileReader(new GZIPInputStream(new FileInputStream(dbPath)), 0);
+
+plugins = PluginCollection.getInstance();
+
+// Read the Fakefile
+
+fake = new Fake();
+parser = fake.parse(new FileInputStream(fijiDir + "/Fakefile"), new File(fijiDir));
+parser.parseRules(new ArrayList());
+
+public class Outputter extends Thread {
+	InputStream in;
+	PrintStream out;
+
+	public Outputter(InputStream in, PrintStream out) {
+		this.in = in;
+		this.out = out;
+	}
+
+	public void run() {
+		byte[] buffer = new byte[65536];
+		for (;;) {
+			int count = in.read(buffer);
+			if (count < 0)
+				break;
+			out.write(buffer, 0, count);
+		}
+		in.close();
+	}
+}
+
+int execute(String[] cmdarray, File directory) {
+	process = Runtime.getRuntime().exec(cmdarray, null, directory);
+	new Outputter(process.getInputStream(), System.out).start();
+	new Outputter(process.getErrorStream(), System.err).start();
+	return process.waitFor();
+}
+
+for (String arg : bsh.args) {
+	timestamp = "" + plugins.getPlugin(arg).getTimestamp();
+	since = timestamp.substring(0, 4) + "-" + timestamp.substring(4, 6) + "-" + timestamp.substring(6, 8) + " " 
+		+ timestamp.substring(8, 10) + ":" + timestamp.substring(10, 12) + ":" + timestamp.substring(12, 14);
+
+	System.out.println("*** Changes in " + arg + " since " + since + " ***");
+	since = "--since=" + since;
+	String[] cmdarray = {
+		"git", "log", since, "--", "."
+	};
+
+	rule = parser.getRule(arg);
+	if (rule.getClass().getName().endsWith("SubFake"))
+		execute(cmdarray,
+			new File(fijiDir + rule.getLastPrerequisite()));
+	else {
+		setAccessibility(true);
+		path = rule.prerequisiteString;
+		starstar = path.indexOf("**");
+		if (starstar >= 0)
+			path = path.substring(0, starstar);
+		cmdarray[cmdarray.length - 1] = path;
+		execute(cmdarray, new File(fijiDir));
+	}
+}

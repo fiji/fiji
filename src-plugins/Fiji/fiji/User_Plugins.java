@@ -29,7 +29,7 @@ import java.util.jar.JarFile;
 
 /*
  * This plugin looks through all files in a given directory (default:
- * $ROOT/user-plugins/, where $ROOT is the parent directory of misc/Fiji.jar)
+ * $ROOT/user-plugins/, where $ROOT is the parent directory of jars/Fiji.jar)
  * and inserts the found plugins into a given menu (default: Plugins>User).
  */
 public class User_Plugins implements PlugIn {
@@ -49,14 +49,6 @@ public class User_Plugins implements PlugIn {
 	public void run(String arg) {
 		if ("update".equals(arg))
 			Menus.updateImageJMenus();
-		installScripts();
-		installPlugins(path, ".", menuPath);
-		/* make sure "Update Menus" runs _this_ plugin */
-		Menus.getCommands().put("Update Menus",
-			"fiji.User_Plugins(\"update\")");
-		// make sure "Edit>Options>Memory & Threads runs Fiji's plugin
-		Menus.getCommands().put("Memory & Threads...", "fiji.Memory");
-
 		FijiClassLoader classLoader = new FijiClassLoader();
 		try {
 			classLoader.addPath(Menus.getPlugInsPath());
@@ -64,6 +56,9 @@ public class User_Plugins implements PlugIn {
 		try {
 			classLoader.addPath(path);
 		} catch (IOException e) {}
+		try {
+			classLoader.addPath(FijiTools.getFijiDir() + "/jars");
+		} catch (Exception e) { e.printStackTrace(); }
 
 		try {
 			// IJ.setClassLoader(classLoader);
@@ -74,6 +69,26 @@ public class User_Plugins implements PlugIn {
 			method.setAccessible(true);
 			method.invoke(null, new Object[] { classLoader });
 		} catch (Exception e) { e.printStackTrace(); }
+
+		installScripts();
+		installPlugins(path, ".", menuPath);
+		/* make sure "Update Menus" runs _this_ plugin */
+		Menus.getCommands().put("Update Menus",
+			"fiji.User_Plugins(\"update\")");
+		Menus.getCommands().put("Refresh Menus",
+			"fiji.User_Plugins(\"update\")");
+		if (IJ.getInstance() != null) {
+			Menu help = Menus.getMenuBar().getHelpMenu();
+			for (int i = help.getItemCount() - 1; i >= 0; i--) {
+				MenuItem item = help.getItem(i);
+				String name = item.getLabel();
+				if (name.equals("Update Menus"))
+					item.setLabel("Refresh Menus");
+			}
+		}
+
+		// make sure "Edit>Options>Memory & Threads runs Fiji's plugin
+		Menus.getCommands().put("Memory & Threads...", "fiji.Memory");
 	}
 
 	public static void install() {
@@ -126,7 +141,7 @@ public class User_Plugins implements PlugIn {
 		}
 	}
 
-	protected List getJarPluginList(File jarFile, String menuPath)
+	public List getJarPluginList(File jarFile, String menuPath)
 			throws IOException {
 		List result = new ArrayList();
 		JarFile jar = new JarFile(jarFile);
@@ -286,17 +301,8 @@ public class User_Plugins implements PlugIn {
 	/* defaults */
 
 	public static String getDefaultPath() {
-		final String prefix = "file:";
-		final String suffix = "/misc/Fiji.jar!/fiji/User_Plugins.class";
 		try {
-			String path = Class.forName("fiji.User_Plugins")
-				.getResource("User_Plugins.class").getPath();
-			if (path.startsWith(prefix))
-				path = path.substring(prefix.length());
-			if (path.endsWith(suffix))
-				path = path.substring(0,
-					path.length() - suffix.length());
-			return path + "/user-plugins";
+			return FijiTools.getFijiDir() + "/user-plugins";
 		} catch (Exception e) {
 			e.printStackTrace();
 			return "";

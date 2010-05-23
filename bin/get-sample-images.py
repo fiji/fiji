@@ -7,11 +7,15 @@ from fiji import User_Plugins
 
 from ij import IJ, ImageJ, Menus
 
-from java.lang import System
+from java.lang import System, Thread
 
-from os import makedirs, rename
+from os import makedirs, rename, stat
 
 from os.path import exists, isdir
+
+from sys import stderr
+
+from time import sleep
 
 import urllib
 
@@ -21,6 +25,20 @@ menu = User_Plugins.getMenuItem('File>Open Samples')
 commands = Menus.getCommands()
 plugin = 'ij.plugin.URLOpener("'
 samples = System.getProperty('fiji.dir') + '/samples'
+
+class FileSizeReporter(Thread):
+	def __init__(self, name, path):
+		self.name = name
+		self.path = path
+		self.canceled = False
+
+	def run(self):
+		while self.canceled == False:
+			if exists(self.path):
+				stderr.write('\rDownload ' + self.name \
+					+ ': ' + str(stat(self.path).st_size) \
+					+ ' bytes')
+			sleep(1)
 
 for i in range(0, menu.getItemCount()):
 	label = menu.getItem(i).getLabel()
@@ -42,12 +60,18 @@ for i in range(0, menu.getItemCount()):
 			print 'Already have', name
 			continue
 
-		print 'Download', name
+		reporter = FileSizeReporter(name, target)
+		reporter.start()
+
+		stderr.write('Download ' + name)
 		if not isdir(samples):
 			makedirs(samples)
 		filename = urllib.urlretrieve(url, target)[0]
 		if filename != target:
 			rename(filename, target)
+
+		reporter.canceled = True
+		stderr.write('\rDownloaded ' + name + '                 \n')
 	else:
 		print 'Skipping unknown command', command, 'for label', label
 

@@ -17,6 +17,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 
 public class Script_Editor implements PlugIn {
+	protected static TextEditor instance;
 
 	public void run(String path) {
 		addToolsJarToClassPath();
@@ -33,7 +34,14 @@ public class Script_Editor implements PlugIn {
 							path.length() - 1);
 			}
 		}
-		new TextEditor(path).setVisible(true);
+		if (instance == null || !instance.isVisible()) {
+			instance = new TextEditor(path);
+			instance.setVisible(true);
+		}
+		else {
+			instance.open(path);
+			instance.toFront();
+		}
 	}
 
 	final private static String gitwebURL =

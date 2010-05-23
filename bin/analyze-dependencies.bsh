@@ -1,0 +1,112 @@
+#!/bin/sh
+/*/. 2>/dev/null; exec "$(dirname "$0")"/../fiji "$0" "$@" # exec with fiji */
+
+import fiji.build.Fake;
+
+import fiji.updater.util.DependencyAnalyzer;
+
+import java.io.File;
+import java.io.FileInputStream;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+
+if (bsh.args.length == 0) {
+	System.err.println(
+		"Usage: analyze-dependencies <file.jar> [<file2.jar> ...]");
+	System.exit(1);
+}
+
+DependencyAnalyzer da = new DependencyAnalyzer();
+if (bsh.args.length > 0 && bsh.args[0].equals("--check-fakefile")) {
+	fijiDir = System.getProperty("fiji.dir");
+	if (!fijiDir.endsWith("/"))
+		fijiDir += "/";
+	fake = new Fake();
+	parser = fake.parse(new FileInputStream(fijiDir + "Fakefile"),
+		new File(fijiDir));
+	parser.parseRules(new ArrayList());
+
+	targets = new ArrayList();
+	if (bsh.args.length > 1)
+		for (i = 1; i < bsh.args.length; i++)
+			targets.add(bsh.args[i]);
+	else
+		for (String target : parser.getAllRules().keySet())
+			if (parser.getRule(target).getClass().getName().endsWith("CompileJar"))
+				targets.add(target);
+
+	for (String target : targets) {
+		rule = parser.getRule(target);
+		if (rule == null) {
+			print("No rule found for " + target);
+			continue;
+		}
+		analyzed = new HashSet();
+		dependencies = da.getDependencies(target);
+		if (dependencies == null) {
+			print("No dependencies found for " + target);
+			continue;
+		}
+		for (String dependency : dependencies)
+			analyzed.add(dependency);
+		inFakefile = new HashSet();
+		classPath = rule.getVar("CLASSPATH");
+		if (classPath != null)
+			for (String dependency : fake.split(classPath, ":")) {
+				if (dependency.startsWith(fijiDir))
+					dependency = dependency.substring(fijiDir.length());
+				inFakefile.add(dependency);
+			}
+
+		message = "";
+		for (String dependency : inFakefile) {
+			if (dependency.equals("jars/clojure-contrib.jar") &&
+					target.equals("plugins/Clojure_Interpreter.jar"))
+				continue;
+			if (dependency.endsWith("/tools.jar") &&
+					target.equals("plugins/Script_Editor.jar"))
+				continue;
+			if (!analyzed.contains(dependency))
+				message += " " + dependency;
+		}
+		if (!message.equals(""))
+			print("Target " + target + " has extra elements in the "
+				+ "classpath: " + message);
+
+		message = "";
+		for (String dependency : analyzed)
+			if (!dependency.equals("jars/ij.jar") &&
+					!inFakefile.contains(dependency) &&
+					parser.getRule(dependency) != null)
+				message += " " + dependency;
+		if (!message.equals(""))
+			print("Target " + target + " misses elements in the "
+				+ "classpath: " + message);
+	}
+	return;
+}
+
+if (bsh.args[0].equals("-v")) {
+	import ij.IJ;
+	IJ.debugMode = true;
+	args = new String[bsh.args.length - 1];
+	System.arraycopy(bsh.args, 1, args, 0, args.length);
+	bsh.args = args;
+}
+
+for (String arg : bsh.args) {
+	print("[" + arg + "]");
+	dependencies = da.getDependencies(arg);
+	if (dependencies == null) {
+		print("Not found: " + arg);
+		continue;
+	}
+	Iterator iter = dependencies.iterator();
+	while (iter.hasNext()) {
+		String dep = iter.next();
+		print("\t" + dep);
+	}
+  print("");
+}

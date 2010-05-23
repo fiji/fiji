@@ -1,0 +1,94 @@
+title = getTitle();
+print("\\Clear");
+print("Run 3D Viewer");
+run("ImageJ 3D Viewer", "surface=Volume name=name color=None resampling=2 red green blue");
+call("ImageJ_3D_Viewer.resetView");
+wait(3000);
+
+// Animate for a few seconds
+print("Animate a little bit");
+call("ImageJ_3D_Viewer.startAnimate");
+
+// Record
+print("Start recording");
+call("ImageJ_3D_Viewer.startRecord");
+wait(10000);
+print("Close movie");
+selectWindow("Movie");
+close();
+
+// Stop animation
+print("Stop animation");
+call("ImageJ_3D_Viewer.stopAnimate");
+call("ImageJ_3D_Viewer.resetView");
+wait(3000);
+
+// Select sth
+call("ImageJ_3D_Viewer.select","name");
+call("ImageJ_3D_Viewer.resetView");
+wait(3000);
+
+// Change Color
+print("Change color");
+call("ImageJ_3D_Viewer.setColor","255","0","0");
+call("ImageJ_3D_Viewer.resetView");
+wait(3000);
+
+// Change transparency
+print("Change transparency");
+call("ImageJ_3D_Viewer.setTransparency","0.5");
+call("ImageJ_3D_Viewer.resetView");
+wait(3000);
+
+// Set roi
+// fill roi
+
+// Change channels
+print("Change channels");
+call("ImageJ_3D_Viewer.select","name");
+call("ImageJ_3D_Viewer.setChannels","True", "False", "False");
+call("ImageJ_3D_Viewer.resetView");
+wait(3000);
+
+// Reset view
+print("Reset view");
+call("ImageJ_3D_Viewer.resetView");
+wait(3000);
+
+// Delete content
+print("Delete content");
+call("ImageJ_3D_Viewer.select","name");
+call("ImageJ_3D_Viewer.delete");
+wait(3000);
+
+// Add as orthoslice
+print("Add content as orthoslice");
+call("ImageJ_3D_Viewer.addOrthoslice", title, "Green", "name", "true",
+ 		"true", "true", "2");
+wait(3000);
+print("Delete again");
+call("ImageJ_3D_Viewer.select", "name");
+call("ImageJ_3D_Viewer.delete");
+
+// Add as mesh
+print("Add content as surface");
+call("ImageJ_3D_Viewer.addMesh", title, "Green", "name", "50", 
+		"true", "true", "true", "2");
+wait(3000);
+print("Delete again");
+call("ImageJ_3D_Viewer.select", "name");
+call("ImageJ_3D_Viewer.delete");
+
+// Add as volume again
+print("Add content as volume again");
+call("ImageJ_3D_Viewer.addVolume", title, "Green", "name", "true",
+ 		"true", "true", "2");
+wait(3000);
+print("Delete again");
+call("ImageJ_3D_Viewer.select", "name");
+call("ImageJ_3D_Viewer.delete");
+
+
+// Close window
+print("Close 3D window");
+call("ImageJ_3D_Viewer.close");

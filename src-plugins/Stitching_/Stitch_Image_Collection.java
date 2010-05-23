@@ -39,7 +39,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import fiji.util.GenericDialogPlus;
+import fiji.util.gui.GenericDialogPlus;
 
 import ij.gui.MultiLineLabel;
 import ij.measure.Calibration;

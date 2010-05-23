@@ -1,6 +1,11 @@
 A loose TODO list for Fiji
 ==========================
 
+- freeline selection with thickness has a display bug
+- fix z-project, split channels for virtual stacks
+- fix substack maker for hyperstacks
+- provide preview for auto threshold plugin
+- provide a plugin that runs another plugin with a range of parameters
 - add an installer (translate the original WinGit installer to Java, using the
   progress infrastructure of the Fiji Updater; maybe need to use reflection
   to access java.util.prefs.WindowsPreferences)
@@ -15,16 +20,14 @@ A loose TODO list for Fiji
 - test Bilateral Filter
 - Segmentation Editor fails
 - compile and test Java7 (has nasty bugs)
-- Building "fake.jar" on Windows should warn and resort to making
+- Building "jars/fake.jar" on Windows should warn and resort to making
   precompiled/fake.jar directly.  Same goes for the Fiji launcher.
 - add script recorder for the new scripting languages
-- use the headless.jar trick to compile MacAdapter.source in ImageJA
 - check which Reader Plugins do not extend ImagePlus
 - extend GenericDialog to provide Help, Advanced, File button
 - GenericDialog.addToolText()
 - add tests (test that all plugins are found, test which image types
   they support, add regression tests, if file importers return ImagePlus)
-- make 'bin/update-fiji.py' part of release script
 - in ImageJA: add isCanceled() method to SaveDialog (is getDirectory() == null).
 - in ImageJA: what about a file extension based construct similar to
   HandleExtraFileTypes for save?  This would allow to work on top of custom

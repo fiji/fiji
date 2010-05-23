@@ -39,7 +39,7 @@ import org.siox.util.*;
  * </LI><LI>Optionally call <code>subpixelRefine</code> to areas
  *      where pixels contain both foreground and background (e.g.
  *      object borders or highly detailed features like flowing hairs).
- *      The pixel are then assigned confidence values bwetween zero and
+ *      The pixel are then assigned confidence values between zero and
  *      one to give them a measure of "foregroundness".
  *      This step may be repeated as often as needed.
  * </LI></OL>
@@ -60,12 +60,13 @@ import org.siox.util.*;
  */
 public class SioxSegmentator
 {
+
 	// CHANGELOG
 	// 2006-26-04 1.13 added method segmentatevideo_firstframe() and segmentatevideo_nextframe()
 	//                 for quick video segmentation.
 	// 2006-01-16 1.12 fixed bug in subpixelrefine that handled the sure regions improperly
 	// 2005-12-05 1.11 minor updates to JavaDoc comments
-	// 2005-12-02 1.10 fixed misclassification accendently introduced in prev. rev
+	// 2005-12-02 1.10 fixed misclassification accidentally introduced in prev. rev
 	// 2005-12-02 1.09 more updates to JavaDoc comments
 	// 2005-11-15 1.08 minor updates to JavaDoc comments
 	// 2005-11-15 1.07 performance improvements to depthFirstSearch and
@@ -100,28 +101,28 @@ public class SioxSegmentator
 	/** Confidence for a region likely being background.*/
 	public static final float BACKGROUND_CONFIDENCE=0.1f;
 
-	/** Confidence corresponding to a certain background reagion (equals zero). */
+	/** Confidence corresponding to a certain background region (equals zero). */
 	public static final float CERTAIN_BACKGROUND_CONFIDENCE=0.0f;
 
 	// instance fields:
 
-	/** Horizontal resolution of the image to be segmentated. */
+	/** Horizontal resolution of the image to be segmented. */
 	private final int imgWidth;
 
-	/** Vertical resolution of the image to be segmentated. */
+	/** Vertical resolution of the image to be segmented. */
 	private final int imgHeight;
 
 	/** Stores component label (index) by pixel it belongs to. */
 	private final int[] labelField;
 
 	/**
-	 * LAB color values of pixels that are definitly known background.
+	 * LAB color values of pixels that are definitely known background.
 	 * Entries are of form {l,a,b}.
 	 */
 	private final float[][] knownBg;
 
 	/**
-	 * LAB color values of pixels that are definitly known foreground.
+	 * LAB color values of pixels that are definitely known foreground.
 	 * Entries are of form {l,a,b}.
 	 */
 	private final float[][] knownFg;
@@ -155,8 +156,8 @@ public class SioxSegmentator
 	/**
 	 * Constructs a SioxSegmentator Object to be used for image segmentation.
 	 *
-	 * @param w X resolution of the image to be segmentated.
-	 * @param h Y resolution of the image to be segmentated.
+	 * @param w X resolution of the image to be segmented.
+	 * @param h Y resolution of the image to be segmented.
 	 * @param limits Size of the cluster on LAB axises.
 	 *        If <code>null</code>, the default value {0.64f,1.28f,2.56f}
 	 *        is used.
@@ -180,7 +181,47 @@ public class SioxSegmentator
 	}
 
 	/**
-	 * Segmentates the given image with information from the confidence
+	 * Constructs a SioxSegmentator Object to be used for image segmentation.
+	 *
+	 * @param w X resolution of the image to be segmented.
+	 * @param h Y resolution of the image to be segmented.
+	 * @param limits Size of the cluster on LAB axises.
+	 *        If <code>null</code>, the default value {0.64f,1.28f,2.56f}
+	 *        is used.
+	 * @param bgSignature background color signature
+	 * @param fgSignature foreground color signature
+	 * 
+	 * @author Ignacio Arganda-Carreras (iarganda at mit.edu)
+	 */
+	public SioxSegmentator(
+			int w, 
+			int h, 
+			float[] limits,
+			float[][] bgSignature,
+			float[][] fgSignature)
+	{
+
+		imgWidth=w;
+		imgHeight=h;
+		labelField=new int[imgWidth*imgHeight];
+		knownBg=new float[imgWidth*imgHeight][3];
+		knownFg=new float[imgWidth*imgHeight][3];
+
+		if (limits==null) {
+			this.limits=new float[] {0.64f, 1.28f, 2.56f};
+		} else {
+			this.limits=limits;
+		}
+		clusterSize=Utils.sqrEuclidianDist(this.limits, new float[] {-this.limits[0], -this.limits[1], -this.limits[2]});
+		segmentated=false;
+		
+		this.bgSignature = bgSignature;
+		this.fgSignature = fgSignature;
+	}
+	
+	
+	/**
+	 * Segments the given image with information from the confidence
 	 * matrix. For faster segmentation in videos, use the methods
 	 * <tt>segmentatevideo_firstframe()</tt> and <tt>segmentatevideo_nextframe()</tt>.
 	 * <P>
@@ -190,12 +231,12 @@ public class SioxSegmentator
 	 * foreground pixel for the segmentation. Any other entry is treated
 	 * as region of unknown affiliation.
 	 * <P>
-	 * As result, each pixel is classified either as foregroound or
+	 * As result, each pixel is classified either as foreground or
 	 * background, stored back into its <code>cm</code> entry as confidence
 	 * <code>CERTAIN_FOREGROUND_CONFIDENCE</code> or
 	 * <code>CERTAIN_BACKGROUND_CONFIDENCE</code>.
 	 *
-	 * @param image Pixel data of the image to be segmentated.
+	 * @param image Pixel data of the image to be segmented.
 	 *        Every integer represents one ARGB-value.
 	 * @param cm Confidence matrix specifying the probability of an image
 	 *        belonging to the foreground before and after the segmentation.
@@ -210,24 +251,36 @@ public class SioxSegmentator
 	 */
 	public boolean segmentate(int[] image, float[] cm, int smoothness, double sizeFactorToKeep)
 	{
-		segmentated=false;
+		segmentated = false;
 		hs.clear();
 
 		// save image for drb
-		origImage=new int[image.length];
+		origImage = new int[image.length];
 		System.arraycopy(image, 0, origImage, 0, image.length);
 
+		// user predefined foreground pixels
+		IntArrayList predefinedFgPixels = new IntArrayList();
+		
 		// create color signatures
 		int knownBgCount=0, knownFgCount=0;
-		for (int i=0; i<cm.length; i++) {
-			if (cm[i]<=BACKGROUND_CONFIDENCE) {
+		for (int i=0; i<cm.length; i++) 
+		{
+			if (cm[i] <= BACKGROUND_CONFIDENCE) 
+			{
 				knownBg[knownBgCount++]=Utils.rgbToClab(image[i]);
-			} else if (cm[i]>=FOREGROUND_CONFIDENCE) {
+			} 
+			else if (cm[i]>=FOREGROUND_CONFIDENCE) 
+			{
 				knownFg[knownFgCount++]=Utils.rgbToClab(image[i]);
+				if(cm[i] == CERTAIN_FOREGROUND_CONFIDENCE)
+				{
+					predefinedFgPixels.add(i);
+					//System.out.println("added " + i);
+				}
 			}
 		}
-		bgSignature=ColorSignature.createSignature(knownBg, knownBgCount, limits, BACKGROUND_CONFIDENCE);
-		fgSignature=ColorSignature.createSignature(knownFg, knownFgCount, limits, BACKGROUND_CONFIDENCE);
+		bgSignature = ColorSignature.createSignature(knownBg, knownBgCount, limits, BACKGROUND_CONFIDENCE);
+		fgSignature = ColorSignature.createSignature(knownFg, knownFgCount, limits, BACKGROUND_CONFIDENCE);
 		if (bgSignature.length<1) {
 			// segmentation impossible
 			return false;
@@ -235,22 +288,28 @@ public class SioxSegmentator
 
 		// classify using color signatures,
 		// classification cached in hashmap for drb and speedup purposes
-		for (int i=0; i<cm.length; i++) {
-			if (cm[i]>=FOREGROUND_CONFIDENCE) {
+		for (int i=0; i<cm.length; i++) 
+		{
+			if (cm[i]>=FOREGROUND_CONFIDENCE) 
+			{
 				cm[i]=CERTAIN_FOREGROUND_CONFIDENCE;
 				continue;
 			}
-			if (cm[i]>BACKGROUND_CONFIDENCE) {
+			else if (cm[i]>BACKGROUND_CONFIDENCE) 
+			{
 				Tupel tupel=(Tupel)hs.get(image[i]);
 				boolean isBackground=true;
-				if (tupel==null) {
+				if (tupel == null) 
+				{
 					tupel=new Tupel(0f, 0, 0f, 0);
 					final float[] lab=Utils.rgbToClab(image[i]);
 					float minBg=Utils.sqrEuclidianDist(lab, bgSignature[0]);
 					int minIndex=0;
-					for (int j=1; j<bgSignature.length; j++) {
+					for (int j=1; j<bgSignature.length; j++) 
+					{
 						final float d=Utils.sqrEuclidianDist(lab, bgSignature[j]);
-						if (d<minBg) {
+						if (d<minBg) 
+						{
 							minBg=d;
 							minIndex=j;
 						}
@@ -270,21 +329,28 @@ public class SioxSegmentator
 					tupel.indexMinFg=minIndex;
 					if (fgSignature.length==0) {
 						isBackground=(minBg<=clusterSize);
-						// remove next line to force behaviour of old algorithm
+						// remove next line to force behavior of old algorithm
 						throw new IllegalStateException("foreground signature does not exist");
 					} else {
 						isBackground=minBg<minFg;
 					}
 					hs.put(image[i], tupel);
-				} else {
+				} 
+				else 
+				{
 					isBackground=tupel.minBgDist<=tupel.minFgDist;
 				}
-				if (isBackground) {
+				if (isBackground) 
+				{
 					cm[i]=CERTAIN_BACKGROUND_CONFIDENCE;
-				} else {
+				} 
+				else 
+				{
 					cm[i]=CERTAIN_FOREGROUND_CONFIDENCE;
 				}
-			} else {
+			} 
+			else 
+			{
 				cm[i]=CERTAIN_BACKGROUND_CONFIDENCE;
 			}
 		}
@@ -293,19 +359,27 @@ public class SioxSegmentator
 		Utils.smoothcm(cm, imgWidth, imgHeight, 0.33f, 0.33f, 0.33f); // average
 		Utils.normalizeMatrix(cm);
 		Utils.erode(cm, imgWidth, imgHeight);
-		keepOnlyLargeComponents(cm, UNKNOWN_REGION_CONFIDENCE, sizeFactorToKeep);
-		for (int i=0; i<smoothness; i++) {
+		keepOnlyLargeComponents(cm, UNKNOWN_REGION_CONFIDENCE, sizeFactorToKeep, predefinedFgPixels);
+		for (int i=0; i<smoothness; i++) 
+		{
 			Utils.smoothcm(cm, imgWidth, imgHeight, 0.33f, 0.33f, 0.33f); // average
 		}
 		Utils.normalizeMatrix(cm);
-		for (int i=0; i<cm.length; i++) {
-			if (cm[i]>=UNKNOWN_REGION_CONFIDENCE) {
+		for (int i=0; i<cm.length; i++) 
+		{
+			if (cm[i]>=UNKNOWN_REGION_CONFIDENCE) // || predefinedFgPixels.contains(i)) 
+			{
 				cm[i]=CERTAIN_FOREGROUND_CONFIDENCE;
-			} else {
+			} else 
+			{
 				cm[i]=CERTAIN_BACKGROUND_CONFIDENCE;
 			}
 		}
-		keepOnlyLargeComponents(cm, UNKNOWN_REGION_CONFIDENCE, sizeFactorToKeep);
+		
+		//for(int i=0 ; i < predefinedFgPixels.size(); i++)
+		//	System.out.println("cm["+predefinedFgPixels.get(i)+"] = " + cm[predefinedFgPixels.get(i)]);
+		
+		keepOnlyLargeComponents(cm, UNKNOWN_REGION_CONFIDENCE, sizeFactorToKeep, predefinedFgPixels);
 		fillColorRegions(cm, image);
 		Utils.dilate(cm, imgWidth, imgHeight);
 
@@ -313,9 +387,168 @@ public class SioxSegmentator
 		return true;
 	}
 
+	/**
+	 * Segments the given image with the previously calculated color signatures.
+	 *
+	 * @param image Pixel data of the image to be segmented.
+	 *        Every integer represents one ARGB-value.
+	 * @param cm Confidence matrix specifying the probability of an image
+	 *        belonging to the foreground before and after the segmentation.
+	 * @param smoothness Number of smoothing steps in the post processing.
+	 * @param sizeFactorToKeep Segmentation retains the largest connected
+	 *        foreground component plus any component with size at least
+	 *        <CODE>sizeOfLargestComponent/sizeFactorToKeep</CODE>.
+	 * @return <CODE>true</CODE> if the segmentation algorithm succeeded,
+	 *         <CODE>false</CODE> if segmentation is impossible
+	 * @exception IllegalStateException if the confidence matrix defines no
+	 *         image foreground.
+	 *         
+	 * @author Ignacio Arganda-Carreras (iarganda at mit.edu)
+	 */
+	public boolean applyPrecomputedSignatures(
+			int[] image, 
+			float[] cm, 
+			int smoothness, 
+			double sizeFactorToKeep)
+	{
+		segmentated = false;
+		hs.clear();
+
+		// save image for drb
+		origImage = new int[image.length];
+		System.arraycopy(image, 0, origImage, 0, image.length);
+
+		// user predefined foreground pixels
+		IntArrayList predefinedFgPixels = new IntArrayList();
+		
+		// create color signatures
+		int knownBgCount=0, knownFgCount=0;
+		for (int i=0; i<cm.length; i++) 
+		{
+			if (cm[i] <= BACKGROUND_CONFIDENCE) 
+			{
+				knownBg[knownBgCount++]=Utils.rgbToClab(image[i]);
+			} 
+			else if (cm[i]>=FOREGROUND_CONFIDENCE) 
+			{
+				knownFg[knownFgCount++]=Utils.rgbToClab(image[i]);
+				if(cm[i] == CERTAIN_FOREGROUND_CONFIDENCE)
+				{
+					predefinedFgPixels.add(i);
+					//System.out.println("added " + i);
+				}
+			}
+		}
+		
+		if (bgSignature.length<1) {
+			// segmentation impossible
+			return false;
+		}
+
+		// classify using color signatures,
+		// classification cached in hashmap for drb and speedup purposes
+		for (int i=0; i<cm.length; i++) 
+		{
+			if (cm[i]>=FOREGROUND_CONFIDENCE) 
+			{
+				cm[i]=CERTAIN_FOREGROUND_CONFIDENCE;
+				continue;
+			}
+			else if (cm[i]>BACKGROUND_CONFIDENCE) 
+			{
+				Tupel tupel=(Tupel)hs.get(image[i]);
+				boolean isBackground=true;
+				if (tupel == null) 
+				{
+					tupel=new Tupel(0f, 0, 0f, 0);
+					final float[] lab=Utils.rgbToClab(image[i]);
+					float minBg=Utils.sqrEuclidianDist(lab, bgSignature[0]);
+					int minIndex=0;
+					for (int j=1; j<bgSignature.length; j++) 
+					{
+						final float d=Utils.sqrEuclidianDist(lab, bgSignature[j]);
+						if (d<minBg) 
+						{
+							minBg=d;
+							minIndex=j;
+						}
+					}
+					tupel.minBgDist=minBg;
+					tupel.indexMinBg=minIndex;
+					float minFg=Float.MAX_VALUE;
+					minIndex=-1;
+					for (int j=0; j<fgSignature.length; j++) {
+						final float d=Utils.sqrEuclidianDist(lab, fgSignature[j]);
+						if (d<minFg) {
+							minFg=d;
+							minIndex=j;
+						}
+					}
+					tupel.minFgDist=minFg;
+					tupel.indexMinFg=minIndex;
+					if (fgSignature.length==0) {
+						isBackground=(minBg<=clusterSize);
+						// remove next line to force behavior of old algorithm
+						throw new IllegalStateException("foreground signature does not exist");
+					} else {
+						isBackground=minBg<minFg;
+					}
+					hs.put(image[i], tupel);
+				} 
+				else 
+				{
+					isBackground=tupel.minBgDist<=tupel.minFgDist;
+				}
+				if (isBackground) 
+				{
+					cm[i]=CERTAIN_BACKGROUND_CONFIDENCE;
+				} 
+				else 
+				{
+					cm[i]=CERTAIN_FOREGROUND_CONFIDENCE;
+				}
+			} 
+			else 
+			{
+				cm[i]=CERTAIN_BACKGROUND_CONFIDENCE;
+			}
+		}
+
+		// postprocessing
+		Utils.smoothcm(cm, imgWidth, imgHeight, 0.33f, 0.33f, 0.33f); // average
+		Utils.normalizeMatrix(cm);
+		Utils.erode(cm, imgWidth, imgHeight);
+		//keepOnlyLargeComponents(cm, UNKNOWN_REGION_CONFIDENCE, sizeFactorToKeep, predefinedFgPixels);
+		for (int i=0; i<smoothness; i++) 
+		{
+			Utils.smoothcm(cm, imgWidth, imgHeight, 0.33f, 0.33f, 0.33f); // average
+		}
+		Utils.normalizeMatrix(cm);
+		for (int i=0; i<cm.length; i++) 
+		{
+			if (cm[i]>=UNKNOWN_REGION_CONFIDENCE) // || predefinedFgPixels.contains(i)) 
+			{
+				cm[i]=CERTAIN_FOREGROUND_CONFIDENCE;
+			} else 
+			{
+				cm[i]=CERTAIN_BACKGROUND_CONFIDENCE;
+			}
+		}
+		
+		//for(int i=0 ; i < predefinedFgPixels.size(); i++)
+		//	System.out.println("cm["+predefinedFgPixels.get(i)+"] = " + cm[predefinedFgPixels.get(i)]);
+		
+		//keepOnlyLargeComponents(cm, UNKNOWN_REGION_CONFIDENCE, sizeFactorToKeep, predefinedFgPixels);
+		fillColorRegions(cm, image);
+		Utils.dilate(cm, imgWidth, imgHeight);
+
+		segmentated=true;
+		return true;
+	}
+	
 
 	/**
-	 * Segmentates the first frame of a scene in a video. Only a reduced postprocessing
+	 * Segments the first frame of a scene in a video. Only a reduced postprocessing
 	 * is applied. Still image segmentation should be performed with <tt>segmentate()</tt>.
 	 * This methods also rebuilds the color signatures.
 	 * <P>
@@ -325,12 +558,12 @@ public class SioxSegmentator
 	 * foreground pixel for the segmentation. Any other entry is treated
 	 * as region of unknown affiliation.
 	 * <P>
-	 * As result, each pixel is classified either as foregroound or
+	 * As result, each pixel is classified either as foreground or
 	 * background, stored back into its <code>cm</code> entry as confidence
 	 * <code>CERTAIN_FOREGROUND_CONFIDENCE</code> or
 	 * <code>CERTAIN_BACKGROUND_CONFIDENCE</code>.
 	 *
-	 * @param image Pixel data of the image to be segmentated.
+	 * @param image Pixel data of the image to be segmented.
 	 *        Every integer represents one ARGB-value.
 	 * @param cm Confidence matrix specifying the probability of an image
 	 *        belonging to the foreground before and after the segmentation.
@@ -404,7 +637,7 @@ public class SioxSegmentator
 					tupel.indexMinFg=minIndex;
 					if (fgSignature.length==0) {
 						isBackground=(minBg<=clusterSize);
-						// remove next line to force behaviour of old algorithm
+						// remove next line to force behavior of old algorithm
 						throw new IllegalStateException("foreground signature does not exist");
 					} else {
 						isBackground=minBg<minFg;
@@ -424,7 +657,7 @@ public class SioxSegmentator
 		}
 		// postprocessing
 		Utils.smoothcm(cm, imgWidth, imgHeight, 0.33f, 0.33f, 0.33f); // average
-		Utils.normalizeMatrix(cm);
+		Utils.normalizeMatrix(cm);				
 		keepOnlyLargeComponents(cm, UNKNOWN_REGION_CONFIDENCE, sizeFactorToKeep);
 		segmentated=true;
 		return true;
@@ -432,7 +665,7 @@ public class SioxSegmentator
 
 
 	/**
-	 * Segmentates the further frames of a scene in a video. Only a reduced postprocessing
+	 * Segment the further frames of a scene in a video. Only a reduced postprocessing
 	 * is applied. The methods DOES NOT rebuild the color signatures.
 	 * This method can only be used after a call to <tt>segmentate()</tt> or
 	 * <tt>segmentatevideo_firstframe()</tt>.
@@ -444,12 +677,12 @@ public class SioxSegmentator
 	 * as region of unknown affiliation. This method does not require any known
 	 * confidences in a frame.
 	 * <P>
-	 * As result, each pixel is classified either as foregroound or
+	 * As result, each pixel is classified either as foreground or
 	 * background, stored back into its <code>cm</code> entry as confidence
 	 * <code>CERTAIN_FOREGROUND_CONFIDENCE</code> or
 	 * <code>CERTAIN_BACKGROUND_CONFIDENCE</code>.
 	 *
-	 * @param image Pixel data of the image to be segmentated.
+	 * @param image Pixel data of the image to be segmented.
 	 *        Every integer represents one ARGB-value.
 	 * @param cm Confidence matrix specifying the probability of an image
 	 *        belonging to the foreground before and after the segmentation.
@@ -538,7 +771,7 @@ public class SioxSegmentator
 	 * component and every component with
 	 * <CODE>size*sizeFactorToKeep >= sizeOfLargestComponent</CODE>.
 	 *
-	 * @param cm  Confidence matrixmatrix to be analysed
+	 * @param cm  Confidence matrix to be analyzed
 	 * @param threshold Pixel visibility threshold.
 	 *        Exactly those cm entries larger than threshold are considered
 	 *        to be a "visible" foreground pixel.
@@ -549,39 +782,128 @@ public class SioxSegmentator
 	protected void keepOnlyLargeComponents(float[] cm, float threshold, double sizeFactorToKeep)
 	{
 		Arrays.fill(labelField, -1);
-		int curlabel=0;
-		int maxregion=0;
-		int maxblob=0;
+		int curlabel = 0;
+		int maxregion = 0;
+		int maxblob = 0;
 
 		// slow but easy to understand:
-		final IntArrayList labelSizes=new IntArrayList();
-		for (int i=0; i<cm.length; i++) {
+		final IntArrayList labelSizes = new IntArrayList();
+		for (int i=0; i<cm.length; i++) 
+		{
 			regionCount=0;
-			if (labelField[i]==-1&&cm[i]>=threshold) {
-				regionCount=depthFirstSearch(cm, i, threshold, curlabel++);
+			if (labelField[i] == -1 && cm[i] >= threshold) {
+				regionCount = depthFirstSearch(cm, i, threshold, curlabel++);
 				labelSizes.add(regionCount);
 			}
 
-			if (regionCount>maxregion) {
+			if (regionCount > maxregion) {
 				maxregion=regionCount;
 				maxblob=curlabel-1;
 			}
 		}
 
-		for (int i=0; i<cm.length; i++) {
-			if (labelField[i]!=-1) {
+		for (int i=0; i<cm.length; i++) 
+		{
+			if (labelField[i] != -1) 
+			{
 				// remove if the component is to small
-				if (labelSizes.get(labelField[i])*sizeFactorToKeep<maxregion) {
+				if (labelSizes.get(labelField[i])*sizeFactorToKeep < maxregion) {
 					cm[i]=CERTAIN_BACKGROUND_CONFIDENCE;
 				}
 				// add maxblob always to foreground
-				if (labelField[i]==maxblob) {
+				if (labelField[i] == maxblob) {
 					cm[i]=CERTAIN_FOREGROUND_CONFIDENCE;
 				}
 			}
 		}
 	}
 
+	
+	/**
+	 * Clears given confidence matrix except entries for the user-defined connected
+	 * component and every component with
+	 * <CODE>size*sizeFactorToKeep >= sizeOfLargestComponent</CODE>.
+	 *
+	 * @param cm  Confidence matrix to be analyzed
+	 * @param threshold Pixel visibility threshold.
+	 *        Exactly those cm entries larger than threshold are considered
+	 *        to be a "visible" foreground pixel.
+	 * @param sizeFactorToKeep This method keeps the largest connected
+	 *        component plus any component with size at least
+	 *        <CODE>sizeOfLargestComponent/sizeFactorToKeep</CODE>.
+	 * @param predefinedFgPixels list of pixels defined for the user as foreground.
+	 */
+	protected void keepOnlyLargeComponents(
+			final float[] cm, 
+			final float threshold, 
+			final double sizeFactorToKeep, 
+			final IntArrayList predefinedFgPixels)
+	{
+		Arrays.fill(labelField, -1);
+		int curlabel = 0;
+		int maxregion = 0;
+		int maxblob = 0;
+
+		// slow but easy to understand:
+		final IntArrayList labelSizes = new IntArrayList();
+		
+		final IntArrayList predefinedLabels = new IntArrayList();
+		
+		for (int i=0; i<cm.length; i++) 
+		{
+			regionCount=0;
+			if (labelField[i] == -1 && cm[i] >= threshold) {
+				regionCount = depthFirstSearch(cm, i, threshold, curlabel++);
+				labelSizes.add(regionCount);				
+			}
+			
+			if(labelField[i] != -1 && !predefinedLabels.contains(labelField[i])
+					&& predefinedFgPixels.contains(i))
+			{
+				predefinedLabels.add(labelField[i]);
+				//System.out.println("added label " + labelField[i]);
+			}
+
+			if (regionCount > maxregion) {
+				maxregion=regionCount;
+				maxblob=curlabel-1;
+			}
+		}
+
+		// Uni-label
+		if(sizeFactorToKeep == 0)
+		{
+			for (int i=0; i<cm.length; i++) 
+			{
+				if (labelField[i] != -1) 
+				{
+					if ( predefinedLabels.contains(labelField[i]) ) 
+						cm[i]=CERTAIN_FOREGROUND_CONFIDENCE;
+					else
+						cm[i]=CERTAIN_BACKGROUND_CONFIDENCE;
+				}
+					
+			}
+		}
+		else // multi-label
+		{
+			for (int i=0; i<cm.length; i++) 
+				if (labelField[i] != -1) 
+				{
+					// remove if the component is to small
+					if (labelSizes.get(labelField[i])*sizeFactorToKeep < maxregion 
+							&& !predefinedLabels.contains(labelField[i]) ) 
+					{
+						cm[i]=CERTAIN_BACKGROUND_CONFIDENCE;
+					}
+					// add maxblob always to foreground
+					else if (labelField[i] == maxblob) {
+						cm[i]=CERTAIN_FOREGROUND_CONFIDENCE;
+					}
+				}
+		}
+	}	
+	
 	/**
 	 * Depth first search pixels in a foreground component.
 	 *
@@ -594,7 +916,7 @@ public class SioxSegmentator
 	 */
 	private int depthFirstSearch(float[] cm, int i, float threshold, int curLabel)
 	{
-		// stores positions of labeled pixels, where the neighbours
+		// stores positions of labeled pixels, where the neighbors
 		// should still be checked for processing:
 		final IntArrayList pixelsToVisit=new IntArrayList();
 		int componentSize=0;
@@ -645,7 +967,7 @@ public class SioxSegmentator
 	 * The can be used in displaying the image by assigning the alpha values
 	 * of the pixels according to the confidence entries.
 	 * <P>
-	 * In the algorithm descriptions and examples GUIs this step is referrered
+	 * In the algorithm descriptions and examples GUIs this step is referred
 	 * to as <EM>Detail Refinement (Brush)</EM>.
 	 *
 	 * @param x Horizontal coordinate of the squares center.
@@ -657,7 +979,7 @@ public class SioxSegmentator
 	 * @param threshold Threshold for the add and sub refinement, deciding
 	 *        at the confidence level to stop at.
 	 * @param cf The confidence matrix to modify, generated by
-	 *        <CODE>segmentate</CODE>, possibly already refined by privious
+	 *        <CODE>segmentate</CODE>, possibly already refined by previous
 	 *        calls to <CODE>subpixelRefine</CODE>.
 	 * @param brushsize Halfed diameter of the square shaped brush.
 	 *
@@ -763,7 +1085,7 @@ public class SioxSegmentator
 	}
 
 	/**
-	 * A region growing algorithms used to fill up the confidence matrix
+	 * A region growing algorithm used to fill up the confidence matrix
 	 * with <CODE>CERTAIN_FOREGROUND_CONFIDENCE</CODE> for corresponding
 	 * areas of equal colors.
 	 * <P>
@@ -838,7 +1160,7 @@ public class SioxSegmentator
 	 * in background and foreground and the index to the centroids in each
 	 * signature for a given color.
 	 */
-	private final class Tupel {
+	private final class Tupel{
 		float minBgDist;
 		int indexMinBg;
 		float minFgDist;
@@ -852,4 +1174,11 @@ public class SioxSegmentator
 			this.indexMinFg=indexMinFg;
 		}
 	}
+	
+	/** Get background signature */
+	public float[][] getBgSignature(){ return this.bgSignature;}
+	/** Get foreground signature */
+	public float[][] getFgSignature(){ return this.fgSignature;}
+	
+	
 }

@@ -1,0 +1,18 @@
+#!/bin/sh
+// 2>&1 | :; exec "$(dirname "$0")"/../fiji "$0" "$@" # exec with fiji */
+
+import com.lowagie.text.*;
+import com.lowagie.text.pdf.*;
+import java.io.FileOutputStream;
+
+if (bsh.args.length != 2) {
+	System.err.println("Usage: " + this.interpreter.getSourceFileInfo()
+		+ " <input> <output>");
+	System.exit(1);
+}
+
+PdfReader reader = new PdfReader(bsh.args[0]);
+PdfStamper stamper = new PdfStamper(reader,
+		new FileOutputStream(bsh.args[1]), PdfWriter.VERSION_1_5);
+stamper.setFullCompression();
+stamper.close();

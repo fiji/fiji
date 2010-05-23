@@ -61,7 +61,7 @@ public class PluginObject {
 		UPDATEABLE (new Action[] { Action.UPDATEABLE, Action.UNINSTALL, Action.UPDATE }, Action.UPLOAD),
 		MODIFIED (new Action[] { Action.MODIFIED, Action.UNINSTALL, Action.UPDATE }, Action.UPLOAD),
 		NOT_FIJI (new Action[] { Action.NOT_FIJI, Action.UNINSTALL }, Action.UPLOAD),
-		NEW (new Action[] { Action.NEW, Action.INSTALL}),
+		NEW (new Action[] { Action.NEW, Action.INSTALL, Action.REMOVE }),
 		OBSOLETE_UNINSTALLED (new Action[] { Action.OBSOLETE }),
 		OBSOLETE (new Action[] { Action.OBSOLETE, Action.UNINSTALL }, Action.UPLOAD),
 		OBSOLETE_MODIFIED (new Action[] { Action.MODIFIED, Action.UNINSTALL }, Action.UPLOAD);
@@ -105,8 +105,6 @@ public class PluginObject {
 	public Version current;
 	public Map<Version, Object> previous;
 	public long filesize, newTimestamp;
-
-	// TODO: finally add platform
 
 	// These are LinkedHashMaps to retain the order of the entries
 	protected Map<String, Dependency> dependencies;
@@ -185,13 +183,19 @@ public class PluginObject {
 
 	public void addDependency(Dependency dependency) {
 		// the timestamp should not be changed unnecessarily
-		if (dependencies.containsKey(dependency.filename))
+		if (dependency.filename == null ||
+				"".equals(dependency.filename.trim()) ||
+				dependencies.containsKey(dependency.filename))
 			return;
 		dependencies.put(dependency.filename, dependency);
 	}
 
 	public void removeDependency(String other) {
 		dependencies.remove(other);
+	}
+
+	public boolean hasDependency(String filename) {
+		return dependencies.containsKey(filename);
 	}
 
 	public void addLink(String link) {
@@ -211,7 +215,8 @@ public class PluginObject {
 	}
 
 	public void addPlatform(String platform) {
-		platforms.put(platform, (Object)null);
+		if (platform != null && !platform.trim().equals(""))
+			platforms.put(platform.trim(), (Object)null);
 	}
 
 	public Iterable<String> getPlatforms() {
@@ -329,7 +334,6 @@ public class PluginObject {
 	}
 
 	public void markRemoved() {
-		// TODO: check dependencies (but not here; _after_ all marking)
 		addPreviousVersion(current.checksum, current.timestamp);
 		setStatus(Status.OBSOLETE);
 		current = null;
@@ -383,7 +387,6 @@ public class PluginObject {
 		return action != status.getNoAction();
 	}
 
-	// TODO: why that redundancy?  We set Action.UPDATE only if it is updateable anyway!  Besides, use getAction(). DRY, DRY, DRY!
 	public boolean toUpdate() {
 		return action == Action.UPDATE;
 	}
