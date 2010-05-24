@@ -10,6 +10,7 @@ import ij.IJ;
 import ij.WindowManager;
 import ij.ImagePlus;
 import ij.text.TextWindow;
+import ij.plugin.frame.Recorder;
 import ij.process.StackConverter;
 import ij.process.ImageConverter;
 
@@ -1267,47 +1268,13 @@ public class Executer {
 	/* **********************************************************
 	 * Recording methods
 	 * *********************************************************/
-	public static void record(String command) {
-		command = "ij3d.ImageJ3DViewer." + command;
-		if(ij.plugin.frame.Recorder.record) {
-			ij.plugin.frame.Recorder.record("call", command);
-		}
-	}
-	
-	public static void record(String command, String a1) {
-		command = "ij3d.ImageJ3DViewer." + command;
-		if(ij.plugin.frame.Recorder.record) {
-			ij.plugin.frame.Recorder.record("call", command, a1);
-		}
-	}
-
-	public static void record(String command, String a1, String a2) {
-		command = "ij3d.ImageJ3DViewer." + command;
-		if(ij.plugin.frame.Recorder.record) {
-			ij.plugin.frame.Recorder.record("call",command,a1,a2);
-		}
-	}
-
-	public static void record(String command, String a1,
-						String a2, String a3) {
-		command = "call(\"ij3d.ImageJ3DViewer." + command + "\", " + 
-				"\"" + a1 + "\"," + 
-				"\"" + a2 + "\"," + 
-				"\"" + a3 + "\");\n";
-		if(ij.plugin.frame.Recorder.record) {
-			ij.plugin.frame.Recorder.recordString(command);
-		}
-	}
-
-	public static void record(String command, String[] args) {
-		command = "call(\"ij3d.ImageJ3DViewer." + command + "\"";
-		for(int i = 0; i < args.length; i++) {
-			command += ", \"" + args[i] + "\"";
-		}
-		command += ");\n";
-		if(ij.plugin.frame.Recorder.record) {
-			ij.plugin.frame.Recorder.recordString(command);
-		}
+	public static void record(String command, String... args) {
+		command = "call(\"ij3d.ImageJ3DViewer." + command;
+		for(int i = 0; i < args.length; i++)
+			command += "\", \"" + args[i];
+		command += "\");\n";
+		if(Recorder.record)
+			Recorder.recordString(command);
 	}
 
 
