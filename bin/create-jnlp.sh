@@ -10,64 +10,96 @@ CODEBASE="http://pacific.mpi-cbg.de/$RELATIVE_PATH"
 JNLP_NAME="Fiji.jnlp"
 EXCLUDES="plugins/Fiji_Updater.jar"
 
+mode=current
+case "$1" in
+--updater)
+	mode=updater
+	;;
+esac
+
 plugins=
 jars=
+files=
 outpath="$FIJIPATH/../$JNLP_NAME"
 
-test -d $FIJIPATH || exit
+test -d $FIJIPATH ||
+mkdir -p $FIJIPATH ||
+exit
 
-cd "$(dirname "$0")"/..
+cd "$(dirname "$0")"/.. ||
+exit
 
 printf "" > plugins.config
 
+set_target () {
+	target=${1#/var/www/update/} &&
+	target=${target%-*[0-9]}
+}
+
 # add jars from plugins, jars and misc folder
-for i in $(find plugins jars -name \*.jar)
-do
-    case " $EXCLUDES " in
-    *" $i "*) ;;
-    *)
-	case "$i" in
-	plugins/*)
-		content="$(unzip -p "$i" plugins.config 2> /dev/null)" &&
-		printf "# From $i\n\n$content\n\n" >> plugins.config ||
-		plugins="$plugins $CODEBASE/$i"
+for jar in $(case "$mode" in
+	current)
+		find plugins jars -name \*.jar
 		;;
-	esac &&
-	jars="$jars $i" || break
-    ;;
-    esac
+	updater)
+		./fiji --jar plugins/Fiji_Updater.jar --list-current |
+		sed -n -e 's|^|/var/www/update/|' -e '/\.jar-/p'
+		;;
+	esac)
+do
+	set_target $jar &&
+	case " $EXCLUDES " in
+	*" $target "*) ;;
+	*)
+		case "$target" in
+		plugins/*)
+			content="$(unzip -p "$jar" plugins.config 2> /dev/null)" &&
+			printf "# From $target\n\n$content\n\n" >> plugins.config ||
+			plugins="$plugins $CODEBASE/$target"
+			;;
+		esac &&
+		files="$files $jar" &&
+		jars="$jars $target" || break
+		;;
+	esac
 done || {
 	echo "Could not discover .jar files" >&2
 	exit 1
 }
 
 printf "" > class.map
-for jar in $jars
+for jar in $files
 do
+	set_target $jar &&
 	unzip -l -qq $jar |
 	sed -n -e 's/\//./g' \
-		-e 's|^.*:[0-9][0-9]   \(.*\)\.class$|\1 '$jar'|p' \
+		-e 's|^.*:[0-9][0-9]   \(.*\)\.class$|\1 '$target'|p' \
 		>> class.map
 done
 
 zip -9r configs.jar plugins.config class.map
-files="$jars configs.jar"
+files="$files configs.jar"
 plugins="$plugins $CODEBASE/configs.jar"
 
 test -e ImageJA/.jarsignerrc && (
 	cd ImageJA &&
 	for jar in $files
 	do
-		test -f $FIJIPATH/$jar &&
-		test ! ../$jar -nt $FIJIPATH/$jar &&
+		set_target $jar &&
+		if test $jar = ${jar#/}
+		then
+			jar=../$jar
+		fi &&
+		test -f $FIJIPATH/$target &&
+		test ! $jar -nt $FIJIPATH/$target &&
 		continue
-		case "$jar" in
+		case "$target" in
 		*/*)
-			mkdir -p $FIJIPATH/${jar%/*}
+			mkdir -p $FIJIPATH/${target%/*}
 			;;
 		esac &&
-		jarsigner -signedjar $FIJIPATH/$jar $(cat .jarsignerrc) \
-			../$jar dscho || break
+		jarsigner -signedjar $FIJIPATH/$target $(cat .jarsignerrc) \
+			$jar dscho || break
 	done
 ) || {
 	echo "Could not sign a .jar" >&2
