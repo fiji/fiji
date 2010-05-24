@@ -356,8 +356,7 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 		fireContentSelected(selected);
 
 		if(c != null && ij.plugin.frame.Recorder.record)
-			ij.plugin.frame.Recorder.record(
-				"call", "ImageJ_3D_Viewer.select", c.getName());
+			Executer.record("select", c.getName());
 	}
 
 	/**
