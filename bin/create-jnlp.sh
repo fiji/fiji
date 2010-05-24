@@ -90,9 +90,11 @@ test -e ImageJA/.jarsignerrc && (
 		then
 			jar=../$jar
 		fi &&
-		test -f $FIJIPATH/$target &&
-		test ! $jar -nt $FIJIPATH/$target &&
-		continue
+		if test -f $FIJIPATH/$target &&
+			test ! $jar -nt $FIJIPATH/$target
+		then
+			continue
+		fi &&
 		case "$target" in
 		*/*)
 			mkdir -p $FIJIPATH/${target%/*}
