@@ -58,8 +58,12 @@ public class Refresh_Jython_Scripts extends RefreshScripts {
 	/** Will consume and close the stream. */
 	public void runScript(InputStream istream) {
 		try {
+			ClassLoader classLoader = IJ.getClassLoader();
+			if (classLoader == null)
+				classLoader = getClass().getClassLoader();
+			PySystemState.initialize(System.getProperties(), System.getProperties(), new String[] { }, classLoader);
 			PySystemState pystate = new PySystemState();
-			pystate.setClassLoader(IJ.getClassLoader());
+			pystate.setClassLoader(classLoader);
 			PythonInterpreter PI =
 				new PythonInterpreter(new PyDictionary(), pystate);
 			PI.setOut(this.out);

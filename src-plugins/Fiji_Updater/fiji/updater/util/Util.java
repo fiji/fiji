@@ -46,7 +46,7 @@ public class Util {
 			.toString().replace("jar:file:", "")
 			.replace("plugins/Fiji_Updater.jar!/"
 				+ "fiji/updater/util/Util.class", "");
-		isDeveloper = new File(fijiRoot + "/fiji.cxx").exists();
+		isDeveloper = new File(fijiRoot + "/fiji.c").exists();
 		platform = getPlatform();
 
 		String macLauncher = macPrefix + "fiji-macosx";
