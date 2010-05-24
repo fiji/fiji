@@ -2211,7 +2211,7 @@ static int start_ij(void)
 
 	if (add_class_path_option) {
 		add_option(&options, "-classpath", 1);
-		add_option_copy(&options, class_path->buffer + 18, 1);
+		add_option_copy(&options, class_path->buffer, 1);
 	}
 
 	if (!strcmp(main_class, "org.apache.tools.ant.Main"))
