@@ -1267,28 +1267,28 @@ public class Executer {
 	/* **********************************************************
 	 * Recording methods
 	 * *********************************************************/
-	private static void record(String command) {
+	public static void record(String command) {
 		command = "ij3d.ImageJ3DViewer." + command;
 		if(ij.plugin.frame.Recorder.record) {
 			ij.plugin.frame.Recorder.record("call", command);
 		}
 	}
 	
-	private static void record(String command, String a1) {
+	public static void record(String command, String a1) {
 		command = "ij3d.ImageJ3DViewer." + command;
 		if(ij.plugin.frame.Recorder.record) {
 			ij.plugin.frame.Recorder.record("call", command, a1);
 		}
 	}
 
-	private static void record(String command, String a1, String a2) {
+	public static void record(String command, String a1, String a2) {
 		command = "ij3d.ImageJ3DViewer." + command;
 		if(ij.plugin.frame.Recorder.record) {
 			ij.plugin.frame.Recorder.record("call",command,a1,a2);
 		}
 	}
 
-	private static void record(String command, String a1, 
+	public static void record(String command, String a1,
 						String a2, String a3) {
 		command = "call(\"ij3d.ImageJ3DViewer." + command + "\", " + 
 				"\"" + a1 + "\"," + 
@@ -1299,7 +1299,7 @@ public class Executer {
 		}
 	}
 
-	private static void record(String command, String[] args) {
+	public static void record(String command, String[] args) {
 		command = "call(\"ij3d.ImageJ3DViewer." + command + "\"";
 		for(int i = 0; i < args.length; i++) {
 			command += ", \"" + args[i] + "\"";
