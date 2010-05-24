@@ -96,6 +96,8 @@ public class User_Plugins implements PlugIn {
 	}
 
 	public static void installScripts() {
+		if (System.getProperty("jnlp") != null)
+			return;
 		runPlugIn("Refresh Javas");
 		String[] languages = {
 			"Jython", "JRuby", "Clojure", "BSH", "Javascript"
