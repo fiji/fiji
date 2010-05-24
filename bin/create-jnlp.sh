@@ -46,7 +46,8 @@ for jar in $(case "$mode" in
 		grep -e '^plugins/' -e '^jars/' |
 		sed -n -e 's|^|/var/www/update/|' -e '/\.jar-/p'
 		;;
-	esac)
+	esac |
+	LANG=C sort)
 do
 	set_target $jar &&
 	case " $EXCLUDES " in
