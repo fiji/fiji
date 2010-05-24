@@ -4,7 +4,7 @@
 #    name="jnlp"
 #    value="http://pacific.mpi-cbg.de/webstart/fiji/plugins/VIB_.jar"/>
 
-RELATIVE_PATH="webstart/test/fiji"
+RELATIVE_PATH="webstart/fiji"
 FIJIPATH="/var/www/$RELATIVE_PATH"
 CODEBASE="http://pacific.mpi-cbg.de/$RELATIVE_PATH"
 JNLP_NAME="Fiji.jnlp"
