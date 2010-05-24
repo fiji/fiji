@@ -100,6 +100,7 @@ test -e ImageJA/.jarsignerrc && (
 			mkdir -p $FIJIPATH/${target%/*}
 			;;
 		esac &&
+		echo "Signing $target..." &&
 		jarsigner -signedjar $FIJIPATH/$target $(cat .jarsignerrc) \
 			$jar dscho || break
 	done
