@@ -1293,7 +1293,7 @@ public class Executer {
 		command = "call(\"ij3d.ImageJ3DViewer." + command + "\", " + 
 				"\"" + a1 + "\"," + 
 				"\"" + a2 + "\"," + 
-				"\"" + a3 + "\")"; 
+				"\"" + a3 + "\");\n";
 		if(ij.plugin.frame.Recorder.record) {
 			ij.plugin.frame.Recorder.recordString(command);
 		}
@@ -1304,7 +1304,7 @@ public class Executer {
 		for(int i = 0; i < args.length; i++) {
 			command += ", \"" + args[i] + "\"";
 		}
-		command += ");";
+		command += ");\n";
 		if(ij.plugin.frame.Recorder.record) {
 			ij.plugin.frame.Recorder.recordString(command);
 		}
