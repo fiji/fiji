@@ -58,6 +58,9 @@ test -e ImageJA/.jarsignerrc && (
 	cd ImageJA &&
 	for jar in $files
 	do
+		test -f $FIJIPATH/$jar &&
+		test ! ../$jar -nt $FIJIPATH/$jar &&
+		continue
 		case "$jar" in
 		*/*)
 			mkdir -p $FIJIPATH/${jar%/*}
