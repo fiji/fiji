@@ -2,7 +2,7 @@ package bunwarpj;
 
 /**
  * bUnwarpJ plugin for ImageJ(C).
- * Copyright (C) 2005-2009 Ignacio Arganda-Carreras and Jan Kybic 
+ * Copyright (C) 2005-2010 Ignacio Arganda-Carreras and Jan Kybic 
  *
  * More information at http://biocomp.cnb.csic.es/%7Eiarganda/bUnwarpJ/
  *
@@ -57,6 +57,9 @@ public class IODialog extends Dialog implements ActionListener
 	/*....................................................................
        Private variables
     ....................................................................*/
+	
+	/** Generated serial version UID */
+	private static final long serialVersionUID = 2016840469406208859L;
 	/** Pointer to the source image representation */
 	private ImagePlus sourceImp;
 	/** Pointer to the target image representation */

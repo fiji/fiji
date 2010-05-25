@@ -1,5 +1,3 @@
-package view5d;
-
 /****************************************************************************
  *   Copyright (C) 1996-2007 by Rainer Heintzmann                          *
  *   heintzmann@gmail.com                                                  *
@@ -21,11 +19,13 @@ package view5d;
  ***************************************************************************
 */
 // By making the appropriate class "View5D" or "View5D_" public and renaming the file, this code can be toggled between Applet and ImageJ respectively
+package view5d;
+
 
 // import java.io.*;
 
-class ShortElement extends AnElement {
-  short [] myData;        // holds the 3D 16 bit data
+public class ShortElement extends AnElement {
+  public short [] myData;        // holds the 3D 16 bit data
   int NumBytes=2;
   int SizeXY;
   

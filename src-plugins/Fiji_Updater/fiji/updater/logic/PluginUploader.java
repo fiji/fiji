@@ -76,15 +76,21 @@ public class PluginUploader {
 
 		// TODO: rename "UpdateSource" to "Transferable", reuse!
 		files = new ArrayList<SourceFile>();
+		List<String> locks = new ArrayList<String>();
 		files.add(new UploadableFile(compressed,
 					Updater.XML_LOCK, "C0444"));
-		files.add(new UploadableFile(text,
-					Updater.TXT_FILENAME, "C0644"));
 		for (PluginObject plugin :
 				PluginCollection.getInstance().toUpload())
 			files.add(new UploadableFile(plugin));
 
-		uploader.upload(files);
+		files.add(new UploadableFile(text,
+			Updater.TXT_FILENAME + ".lock", "C0644"));
+
+		locks.add(Updater.TXT_FILENAME);
+		// must be last lock
+		locks.add(Updater.XML_COMPRESSED);
+
+		uploader.upload(files, locks);
 
 		// No errors thrown -> just remove temporary files
 		new File(backup).delete();
@@ -101,8 +107,15 @@ public class PluginUploader {
 			PluginObject plugin = file.plugin;
 			if (plugin == null)
 				continue;
-			file.plugin.newTimestamp = timestamp;
+			plugin.filesize = file.filesize =
+				Util.getFilesize(plugin.filename);
+			plugin.newTimestamp = timestamp;
 			file.filename = plugin.filename + "-" + timestamp;
+			if (plugin.getStatus() ==
+					PluginObject.Status.NOT_FIJI) {
+				plugin.setStatus(PluginObject.Status.INSTALLED);
+				plugin.current.timestamp = timestamp;
+			}
 		}
 
 		XMLFileWriter.writeAndValidate(backup);
@@ -111,7 +124,7 @@ public class PluginUploader {
 		((UploadableFile)files.get(0)).updateFilesize();
 		// TODO: do no save text file at all!
 		saveTextFile(text);
-		((UploadableFile)files.get(1)).updateFilesize();
+		((UploadableFile)files.get(files.size() - 1)).updateFilesize();
 
 		uploader.calculateTotalSize(files);
 	}

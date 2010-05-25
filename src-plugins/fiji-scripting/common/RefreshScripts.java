@@ -348,7 +348,11 @@ abstract public class RefreshScripts implements PlugIn {
 			return;
 		}
 
-		script_dir = new File(Menus.getPlugInsPath());
+		String pluginsPath = Menus.getPlugInsPath();
+		if (pluginsPath == null)
+			return; // most likely we're running via Java WebStart
+
+		script_dir = new File(pluginsPath);
 
 		// Find files with the correct extension
 		if (!script_dir.exists()) {
@@ -389,11 +393,7 @@ abstract public class RefreshScripts implements PlugIn {
 	abstract public void runScript(String filename);
 
 	static public void printError(Throwable t) {
-		final StringWriter w = new StringWriter();
-		final PrintWriter pw = new PrintWriter(w);
-		t.printStackTrace(pw);
-		pw.close();
-		IJ.log(w.toString());
+		IJ.handleException(t);
 	}
 
 	// TODO rename to readText
@@ -435,6 +435,9 @@ abstract public class RefreshScripts implements PlugIn {
 
 		// strip out all plugin .jar files (to keep classPath short)
 		String pluginsPath = Menus.getPlugInsPath();
+		if (pluginsPath == null)
+			return "";
+
 		for (int i = 0; i >= 0; i =
 				classPath.indexOf(File.pathSeparator, i + 1)) {
 			while (classPath.substring(i).startsWith(pluginsPath)) {
@@ -445,22 +448,32 @@ abstract public class RefreshScripts implements PlugIn {
 						classPath.substring(j + 1));
 			}
 		}
+		String jarsPath = System.getProperty("fiji.dir") + "/jars";
 
 		// append the plugin .jar files
 		try {
-			String path = discoverJars(pluginsPath);
-			if (path != null && !path.equals("")) {
-				if (!classPath.equals(""))
-					classPath += File.pathSeparator;
-				classPath += path;
-			}
-		} catch (IOException e) { }
+			classPath = appendToPath(classPath,
+					discoverJars(pluginsPath));
+			classPath = appendToPath(classPath,
+					discoverJars(jarsPath));
+		} catch (IOException e) { e.printStackTrace(); }
 		return classPath;
+	}
+
+	protected static String appendToPath(String path, String append) {
+		if (append != null && !path.equals("")) {
+			if (!path.equals(""))
+				path += File.pathSeparator;
+			return path + append;
+		}
+		return path;
 	}
 
 	protected static String discoverJars(String path) throws IOException {
 		if (path.equals(".rsrc") || path.endsWith("/.rsrc"))
 			return "";
+		if (path.endsWith(File.separator))
+			path = path.substring(0, path.length() - 1);
                 File file = new File(path);
                 if (file.isDirectory()) {
 			String result = "";

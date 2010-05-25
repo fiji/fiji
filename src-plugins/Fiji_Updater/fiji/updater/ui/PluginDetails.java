@@ -170,7 +170,8 @@ public class PluginDetails extends JTextPane implements UndoableEditListener {
 	}
 
 	public void description(String description, PluginObject plugin) {
-		if (description == null || description.trim().equals(""))
+		if (!Util.isDeveloper && (description == null ||
+					description.trim().equals("")))
 			return;
 		blankLine();
 		bold("Description:\n");
@@ -189,6 +190,7 @@ public class PluginDetails extends JTextPane implements UndoableEditListener {
 			return;
 
 		blankLine();
+		String tag = label;
 		if (list.size() > 1 && label.endsWith("y"))
 			label = label.substring(0, label.length() - 1) + "ie";
 		bold(label + (list.size() > 1 ? "s" : "") + ":\n");
@@ -202,7 +204,7 @@ public class PluginDetails extends JTextPane implements UndoableEditListener {
 			else
 				normal(object.toString());
 		}
-		addEditableRegion(offset, label, plugin);
+		addEditableRegion(offset, tag, plugin);
 	}
 
 	public void blankLine() {

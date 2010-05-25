@@ -14,7 +14,8 @@ import ij.plugin.*;
 // 1.5  2009/Apr/12 Mean method, MinimumErrorIterative method , enahanced Triangle 
 // 1.6  2009/Apr/14 Reverted IsoData to a copy of IJ's code as the other version does not always return the same value as IJ
 // 1.7  2009/Apr/14 small fixes, restore histogram in Triangle if reversed
-//1.8 2009/Jun/01 Set the threshold to foreground colour
+// 1.8  2009/Jun/01 Set the threshold to foreground colour
+// 1.9  2009/Oct/30 report both isodata and IJ's default methods
                 
 public class Auto_Threshold implements PlugIn {
         /** Ask for parameters and then execute.*/
@@ -35,8 +36,8 @@ public class Auto_Threshold implements PlugIn {
 		 // 2 - Ask for parameters:
 		GenericDialog gd = new GenericDialog("Auto Threshold");
 //		String [] methods={"Bernsen", "Huang", "Intermodes", "IsoData",  "Li", "MaxEntropy", "MinError", "Minimum", "Moments", "Niblack", "Otsu", "Percentile", "RenyiEntropy", "Sauvola", "Shanbhag" , "Triangle", "Yen"};
-		gd.addMessage("Auto Threshold v1.8");
-		String [] methods={"Try all", "Huang", "Intermodes", "IsoData",  "Li", "MaxEntropy","Mean", "MinError(I)", "Minimum", "Moments", "Otsu", "Percentile", "RenyiEntropy", "Shanbhag" , "Triangle", "Yen"};
+		gd.addMessage("Auto Threshold v1.9");
+		String [] methods={"Try all", "Default", "Huang", "Intermodes", "IsoData",  "Li", "MaxEntropy","Mean", "MinError(I)", "Minimum", "Moments", "Otsu", "Percentile", "RenyiEntropy", "Shanbhag" , "Triangle", "Yen"};
 		gd.addChoice("Method", methods, methods[0]);
 		String[] labels = new String[2];
 		boolean[] states = new boolean[2];
@@ -143,7 +144,7 @@ public class Auto_Threshold implements PlugIn {
 							imp3 = new ImagePlus("Auto Threshold", stackNew);
 							imp3.updateAndDraw();
 							MontageMaker mm= new MontageMaker();
-							mm.makeMontage( imp3, 5, 3, 1.0, 1, (ml-1), 1, 0, true); // 5 columns and 3 rows
+							mm.makeMontage( imp3, 4, 4, 1.0, 1, (ml-1), 1, 0, true); // 4 columns and 4 rows
 						}
 					}
 				}
@@ -170,7 +171,7 @@ public class Auto_Threshold implements PlugIn {
 				imp3 = new ImagePlus("Auto Threshold", stackNew);
 				imp3.updateAndDraw();
 				MontageMaker mm= new MontageMaker();
-				mm.makeMontage( imp3, 5, 3, 1.0, 1, (ml-1), 1, 0, true);
+				mm.makeMontage( imp3, 4, 4, 1.0, 1, (ml-1), 1, 0, true); // 4 columns and 4 rows
 				return;
 			}
 		}
@@ -242,15 +243,17 @@ public class Auto_Threshold implements PlugIn {
 		if (noWhite) data[255]=0;
 
 		// Apply the selected algorithm
-		 if(myMethod.equals("Huang")){
-			threshold = Huang(data);
+		 if(myMethod.equals("Default")){
+			threshold = IJDefault(data); // re-implemeted so we can ignore black/white and set the bright or dark objects
+		}
+		else if(myMethod.equals("Huang")){
+			threshold =  Huang(data);
 		}
 		else if(myMethod.equals("Intermodes")){
 			threshold = Intermodes(data);
 		}
 		else if(myMethod.equals("IsoData")){
-			threshold = IsoData (data); // re-implemeted so we can ignore black/white and set the bright or dark objects
-			//IJ.showMessage("IJ "+ip.getAutoThreshold());
+			threshold = IsoData (data);
 		}
 		else if(myMethod.equals("Li")){
 			threshold = Li(data);
@@ -333,6 +336,45 @@ public class Auto_Threshold implements PlugIn {
 		// 2 - Return the threshold and the image
 		return new Object[] {threshold, imp};
 	}
+
+	int IJDefault(int [] data ) {
+		// Original IJ implementation for compatibility.
+		int level;
+		int maxValue = data.length - 1;
+		double result, sum1, sum2, sum3, sum4;
+		
+		int min = 0;
+		while ((data[min]==0) && (min<maxValue))
+			min++;
+		int max = maxValue;
+		while ((data[max]==0) && (max>0))
+			max--;
+		if (min>=max) {
+			level = data.length/2;
+			return level;
+		}
+		
+		int movingIndex = min;
+		int inc = Math.max(max/40, 1);
+		do {
+			sum1=sum2=sum3=sum4=0.0;
+			for (int i=min; i<=movingIndex; i++) {
+				sum1 += i*data[i];
+				sum2 += data[i];
+			}
+			for (int i=(movingIndex+1); i<=max; i++) {
+				sum3 += i*data[i];
+				sum4 += data[i];
+			}			
+			result = (sum1/sum2 + sum3/sum4)/2.0;
+			movingIndex++;
+		} while ((movingIndex+1)<=result && movingIndex<max-1);
+		
+		//.showProgress(1.0);
+		level = (int)Math.round(result);
+		return level;
+	}
+
 
 	int Huang(int [] data ) {
 		// Implements Huang's fuzzy thresholding method 
@@ -511,44 +553,7 @@ public class Auto_Threshold implements PlugIn {
 		// yes => exit
 		// no => increment G and repeat
 		//
-		// However the code commented below have the occasional discrepancy with IJ code.
-		// so I am reproducing the original IJ implementation for compatibility.
-		int level;
-		int maxValue = data.length - 1;
-		double result, sum1, sum2, sum3, sum4;
-		
-		int min = 0;
-		while ((data[min]==0) && (min<maxValue))
-			min++;
-		int max = maxValue;
-		while ((data[max]==0) && (max>0))
-			max--;
-		if (min>=max) {
-			level = data.length/2;
-			return level;
-		}
-		
-		int movingIndex = min;
-		int inc = Math.max(max/40, 1);
-		do {
-			sum1=sum2=sum3=sum4=0.0;
-			for (int i=min; i<=movingIndex; i++) {
-				sum1 += i*data[i];
-				sum2 += data[i];
-			}
-			for (int i=(movingIndex+1); i<=max; i++) {
-				sum3 += i*data[i];
-				sum4 += data[i];
-			}			
-			result = (sum1/sum2 + sum3/sum4)/2.0;
-			movingIndex++;
-		} while ((movingIndex+1)<=result && movingIndex<max-1);
-		
-		//.showProgress(1.0);
-		level = (int)Math.round(result);
-		return level;
-/*
-		// this should work straight away, but for some images there is a discrepancy with IJ
+		// There is a discrepancy with IJ because they are slightly different methods
 		int i, l, toth, totl, h, g=0;
 		for (i = 1; i < 256; i++){
 			if (data[i] > 0){
@@ -579,8 +584,7 @@ public class Auto_Threshold implements PlugIn {
 			if (g > 254)
 				return -1;
 		}
-		return g+1; // +1 to match ImageJ output, but some images are off by +1 or -1
-*/
+		return g;
 	}
 
 	int Li(int [] data ) {

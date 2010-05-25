@@ -1,6 +1,6 @@
-//--version--1.4
+//--version--1.5
 // Montage tools for easy montage manipulation
-// jm at ibmp.fr
+// jerome.mutterer at ibmp.fr
 
 var v=versionCheck();
 function versionCheck() {
@@ -36,10 +36,7 @@ macro "Auto Montage Action Tool - C00fF0077C0f0F9977Cf00F9077C888F0977" {
             run("Paste");
         }
     }
-    c = floor(sqrt(nSlices+1));
-    r =c;
-    while ((r*c)<(nSlices+1)) c++;
-    run("Make Montage...", "columns="+c+" rows="+r+" scale=1 border=0");
+    run("Make Montage...", "scale=1 border=0");
     rename(getTitle+" of "+t);
     setVoxelSize(xp,yp,zp,unit);
     setBatchMode(false);
@@ -121,6 +118,7 @@ macro "Montage Shuffler Tool - C888R0077R9977C03fR0977R9077"{
         sr = floor(ystart/(h/yn));
         tr = floor(y/(h/yn));
         swap(sc,sr,tc,tr);
+
     }
 }
 
@@ -129,7 +127,9 @@ var str="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 var lcas=false;
 var antialiasedLabels = true;
 var n=0;
-var offset=0.05;
+var xoffset=0.05;
+var yoffset=0.05;
+var pos="Clicked quadrant";
 
 macro "Annot Tool - C000 T2709A T8709B T1f09C T8f09D" {
     xn = info("xMontage");
@@ -141,18 +141,28 @@ macro "Annot Tool - C000 T2709A T8709B T1f09C T8f09D" {
 
     co = floor(x/iw);
     li = floor(y/ih);
+
     fontsize = ih/10;
     if (fontsize<12) fontsize=12;
     marque = substring(str,n,n+1);
     if (lcas==1) marque= toLowerCase(marque);
     opt="";
+
+    if (pos == "Clicked quadrant") {
+    xoffset=0.05; yoffset=0.05;
+    if (x>((co+0.5)*iw)) xoffset=0.90;
+    if (y<((li+0.5)*ih)) yoffset=0.85;
+    }
+
     if (antialiasedLabels==true) opt=opt+"antialiased";
     setFont("SanSerif",fontsize, opt);
     setForegroundColor(0,0,0);
-    drawString(marque ,co*iw+offset*iw,(li+1)*ih-offset*ih);
+    if (isKeyDown('shift')) setForegroundColor(255,255,255);
+    drawString(marque ,co*iw+xoffset*iw,(li+1)*ih-yoffset*ih);
     setForegroundColor(255,255,255);
-    drawString(marque ,co*iw+offset*iw+1,(li+1)*ih-offset*ih+1);
-    n++; if (n>25) n=0;
+    if (isKeyDown('shift')) setForegroundColor(0,0,0);
+    drawString(marque ,co*iw+xoffset*iw+1,(li+1)*ih-yoffset*ih+1);
+    n++; if (n>lengthOf(str)) n=0;
 }
 
 macro "Annot Tool Options" {
@@ -162,16 +172,25 @@ macro "Annot Tool Options" {
     Dialog.addCheckbox("Lowercase labels",lcas);
     Dialog.addCheckbox("Reset label counter",true);
     Dialog.addCheckbox("Antialiased",true);
+    Dialog.addChoice("Position",newArray("Clicked quadrant","Lower left","Lower right","Upper right","Upper left"),pos);
+
     // Dialog.addCheckbox("Auto font size, or",true);
     // Dialog.addNumber("Font size (pixels)",10);
     // Dialog.addCheckbox("Auto Offset, or",true);
     // Dialog.addNumber("Offset (pixels)",5);
+
     Dialog.show;
     str  = Dialog.getString;
     lcas = Dialog.getCheckbox;
     resetCounter = Dialog.getCheckbox;
     if (resetCounter==true)	n=0;
     antialiasedLabels = Dialog.getCheckbox;
+    pos=Dialog.getChoice();
+    if (pos=="Lower left") {xoffset=0.05; yoffset=0.05;}
+    else if (pos=="Lower right") {xoffset=0.90; yoffset=0.05;}
+    else if (pos=="Upper left") {xoffset=0.05; yoffset=0.85;}
+    else if (pos=="Upper right") {xoffset=0.90; yoffset=0.85;}
+
 }
 
 
@@ -251,10 +270,6 @@ function spring(x0,y0,x1,y1) {
 
 macro "bar Action Tool - C000L060bLe6ebL09e9L08e8"{
     doCommand("Scale Bar...");
-}
-
-macro "Magic Montage Help Action Tool - C000T3f15?"{
-    run("URL...", "url=http://imagejdocu.tudor.lu/Members/jmutterer/Magic_Montage/");
 }
 
 
@@ -380,23 +395,9 @@ var pmCmds = newMenu("Popup Menu",
         "Extract Selected Panels","-",
         "Add Panel to Manager [F1]", "Selected panels to stack [F2]","-","Crop Montage [F3]","-",
         "Fit Clipboard content into panel [F4]","Fill Panel with Clipboard content [F5]","-",
-        "Set Montage Layout [F12]",
-        "Help..."));
+        "Set Montage Layout [F12]"));
 
 macro "Popup Menu" {
     cmd = getArgument;
-    if (cmd=="Help...") run("URL...", "url=http://imagejdocu.tudor.lu/Members/jmutterer/Magic_Montage/");
-    else run(cmd);
+    run(cmd);
 }
-
-var menu=newMenu( "Fix LSM XZ Scale Menu Tool",newArray("interpolate","no-interpolate"));
-
-macro "Fix LSM XZ Scale Menu Tool -C000T0710FT6710iT9710xT0f10XT6f10Z"{
-    cmd=getArgument;
-    setupUndo;
-    getVoxelSize(x,y,z,unit);
-    run("Size...", "width="+getWidth+" height="+(getHeight*(z/x))+" "+cmd);
-
-}
-
-

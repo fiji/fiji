@@ -29,4 +29,23 @@ public class Inspect {
 		}
 		return null;
 	}
+
+	public static void set(Object object, String field, Object value) {
+		Class clazz = object.getClass();
+		try {
+			Field f = clazz.getDeclaredField(field);
+			f.setAccessible(true);
+			f.set(object, value);
+			return;
+		} catch (NoSuchFieldException e) {
+			IJ.log("Class " + clazz.getName()
+				+ " has no field called " + field
+				+ ". Available fields:");
+			for (Field f : clazz.getDeclaredFields())
+				IJ.log(" " + f.getName());
+		} catch (IllegalAccessException e) {
+			IJ.log("Failed to make " + field
+				+ " accessible");
+		}
+	}
 }

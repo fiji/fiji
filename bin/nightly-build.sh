@@ -16,9 +16,9 @@ compile () {
 	done &&
 	git clean -q -x -d -f &&
 	# remove empty directories
-	for d in $(git ls-files --other --directory)
+	for d in $(git ls-files --others --directory)
 	do
-		rm -r $d || break
+		rm -rf $d || break
 	done &&
 	git reset &&
 	./Build.sh
@@ -59,16 +59,22 @@ case "$1" in
 		git fetch origin master &&
 		git reset --hard FETCH_HEAD &&
 		git submodule update &&
+		for submodule in $(git ls-files --stage |
+				sed -n 's/^160000 .\{40\} 0.//p')
+		do
+			(cd "$submodule" &&
+			 git clean -q -x -d -f &&
+			 # remove empty directories
+			 for d in $(git ls-files --others --directory)
+			 do
+				rm -rf $d || break
+			 done)
+		done &&
 		nightly_build &&
 		if test -d /var/www/update
 		then
-			find -name \*.java |
-			grep -ve ij-plugins/Sun_JAI_Sample_IO_Source_Code \
-				-e ij-plugins/Quickvol |
-			./fiji --jar-path $(./fiji --print-java-home)/../lib/ \
-				--main-class=com.sun.tools.javadoc.Main \
-				-d /var/www/javadoc
-				@/dev/stdin > javadoc.out 2>&1 ||
+			./bin/javadoc-all.sh -d /var/www/javadoc \
+				> javadoc.out 2>&1 ||
 			(echo "JavaDoc failed"; false)
 		fi
 		;; # okay

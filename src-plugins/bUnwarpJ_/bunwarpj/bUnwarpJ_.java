@@ -23,7 +23,7 @@ package bunwarpj;
 
 /**
  * ====================================================================
- *  Version: October 17th, 2009
+ *  Version: November 2nd, 2009
  *  http://biocomp.cnb.csic.es/%7Eiarganda/bUnwarpJ/
  * \===================================================================
  */
@@ -42,6 +42,7 @@ import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
 
 import java.awt.Point;
+import java.awt.geom.AffineTransform;
 import java.util.Stack;
 
 /*====================================================================
@@ -63,8 +64,7 @@ import java.util.Stack;
  * <A target="_blank" href="http://biocomp.cnb.csic.es/~iarganda/bUnwarpJ/">
  * http://biocomp.cnb.csic.es/~iarganda/bUnwarpJ/</a>
  *
- * @version 2.6 10/17/2009
- * @author Ignacio Arganda-Carreras (ignacio.arganda@gmail.com)
+ * @author Ignacio Arganda-Carreras (ignacio.arganda at gmail.com)
  */
 public class bUnwarpJ_ implements PlugIn
 { /* begin class bUnwarpJ_ */
@@ -106,13 +106,15 @@ public class bUnwarpJ_ implements PlugIn
     private int     min_scale_image            = 0;
     /** stopping threshold */
     private static double  stopThreshold      = 1e-2;
+    /** debug flag */
+	private static boolean debug = false;
 
 	
     /*....................................................................
        Public methods
     ....................................................................*/
 
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to lunch the plugin.
      *
@@ -213,7 +215,7 @@ public class bUnwarpJ_ implements PlugIn
     } /* end run */
 
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method for images alignment with no graphical interface. This 
      * method gives as result a Transformation object that 
@@ -351,14 +353,14 @@ public class bUnwarpJ_ implements PlugIn
     	   warp.doBidirectionalRegistration();
 
        long stop = System.currentTimeMillis(); // stop timing
-       IJ.log("Registration time: " + (stop - start) + "ms"); // print execution time
+       IJ.log("bUnwarpJ is done! Registration time: " + (stop - start) + "ms"); // print execution time
 
        return warp;
        
     } // end computeTransformationBatch    
     
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method for images alignment with no graphical interface. This 
      * method gives as result a Transformation object that 
@@ -383,7 +385,13 @@ public class bUnwarpJ_ implements PlugIn
     	   IJ.error("Missing parameters to compute transformation!");
     	   return null;
        }
-
+       
+       if(debug)
+    	   IJ.log("\n--- bUnwarpJ parameters ---\n" +
+    			   "\nSource image: " + sourceImp.getTitle() + 
+    			   "\nTarget image: " + targetImp.getTitle() + "\n" +
+    			   parameter.toString() + "\n");
+       
        // Produce side information
        final int imagePyramidDepth = parameter.max_scale_deformation - parameter.min_scale_deformation + 1;
        final int min_scale_image = 0;
@@ -476,6 +484,11 @@ public class bUnwarpJ_ implements PlugIn
          parameter.consistencyWeight, parameter.stopThreshold, 
          outputLevel, showMarquardtOptim, parameter.mode,null, null, output_ip[0], output_ip[1], dialog,
          originalSourceIP, originalTargetIP);
+       
+       // Initial affine transform correction values
+       warp.setAnisotropyCorrection( parameter.getAnisotropyCorrection() );
+       warp.setScaleCorrection( parameter.getScaleCorrection() );
+       warp.setShearCorrection( parameter.getShearCorrection() );
 
        IJ.log("\nRegistering...\n");
        
@@ -487,16 +500,298 @@ public class bUnwarpJ_ implements PlugIn
     	   warp.doBidirectionalRegistration();
 
        long stop = System.currentTimeMillis(); // stop timing
-       IJ.log("Registration time: " + (stop - start) + "ms"); // print execution time
+       IJ.log("bUnwarpJ is done! Registration time: " + (stop - start) + "ms"); // print execution time
 
        return warp;
        
     } // end computeTransformationBatch    
     
 
+    //------------------------------------------------------------------
+    /**
+     * Method for images alignment with no graphical interface. This 
+     * method gives as result a Transformation object that 
+     * contains all the registration information.
+     *
+     * @param targetImp input target image 
+     * @param sourceImp input source image
+     * @param targetMskIP target mask 
+     * @param sourceMskIP source mask
+     * @param targetAffineTransf initial target affine transform
+     * @param sourceAffineTransf initial source affine transform
+     * @param parameter registration parameters
+     * 
+     * @return results transformation object
+     */
+    public static Transformation computeTransformationBatch(ImagePlus targetImp,
+    									 ImagePlus sourceImp,
+    									 ImageProcessor targetMskIP,
+    									 ImageProcessor sourceMskIP,
+    									 AffineTransform targetAffineTransf,
+    									 AffineTransform sourceAffineTransf,
+    									 Param parameter) 
+    {    	
+       if(targetImp == null || sourceImp == null || parameter == null)
+       {
+    	   IJ.error("Missing parameters to compute transformation!");
+    	   return null;
+       }
+
+       // Produce side information
+       final int imagePyramidDepth = parameter.max_scale_deformation - parameter.min_scale_deformation + 1;
+       final int min_scale_image = 0;
+       
+       // output level to -1 so nothing is displayed 
+       final int outputLevel = -1;
+       
+       final boolean showMarquardtOptim = false;       
+
+       // Create target image model
+       final BSplineModel target = new BSplineModel(targetImp.getProcessor(), true, 
+    		   													 (int) Math.pow(2, parameter.img_subsamp_fact));
+       
+       target.setPyramidDepth(imagePyramidDepth+min_scale_image);
+       target.startPyramids();
+       
+       // Create target mask
+       final Mask targetMsk = (targetMskIP != null) ? new Mask(targetMskIP, true) 
+       		  										         : new Mask(targetImp.getProcessor(), false);
+                    
+       PointHandler targetPh = null;
+
+       // Create source image model
+       boolean bIsReverse = true;         
+
+       final BSplineModel source = new BSplineModel(sourceImp.getProcessor(), bIsReverse, 
+    		   													(int) Math.pow(2, parameter.img_subsamp_fact));
+
+       source.setPyramidDepth(imagePyramidDepth + min_scale_image);
+       source.startPyramids();
+       
+       // Create source mask
+       final Mask sourceMsk = (sourceMskIP != null) ? new Mask(sourceMskIP, true) 
+       														 : new Mask(sourceImp.getProcessor(), false);
+       
+       PointHandler sourcePh = null;
+
+       Stack<Point> sourceStack = new Stack<Point>();
+       Stack<Point> targetStack = new Stack<Point>();
+       MiscTools.loadPointRoiAsLandmarks(sourceImp, targetImp, sourceStack, targetStack);
+
+       sourcePh  = new PointHandler(sourceImp);
+       targetPh  = new PointHandler(targetImp);
+
+       while ((!sourceStack.empty()) && (!targetStack.empty())) 
+       {
+    	   Point sourcePoint = (Point)sourceStack.pop();
+    	   Point targetPoint = (Point)targetStack.pop();
+    	   sourcePh.addPoint(sourcePoint.x, sourcePoint.y);
+    	   targetPh.addPoint(targetPoint.x, targetPoint.y);
+       }
+
+ 
+       // Join threads
+       try 
+       {
+           source.getThread().join();
+           target.getThread().join();
+       } 
+       catch (InterruptedException e) 
+       {
+           IJ.error("Unexpected interruption exception " + e);
+       }
+
+       // Perform registration
+       ImagePlus[] output_ip = new ImagePlus[2];
+       output_ip[0] = null; 
+       output_ip[1] = null; 
+       
+       // The dialog is set to null to work in batch mode
+       final MainDialog dialog = null;
+       
+       final ImageProcessor originalSourceIP = sourceImp.getProcessor();
+       final ImageProcessor originalTargetIP = targetImp.getProcessor();
+
+       
+       final double[][] targetAffineMatrix;
+       final double[][] sourceAffineMatrix;
+       
+       if(sourceAffineTransf != null && targetAffineTransf != null)
+       {
+    	   final double[] flatMat = new double [6];
+    	   sourceAffineTransf.getMatrix(flatMat);
+    	   sourceAffineMatrix = new double[][]{ {flatMat[0], flatMat[2], flatMat[4] },  {flatMat[1], flatMat[3], flatMat[5]} };
+    	   //IJ.log("Source Matrix = " + flatMat[0] + " " +  flatMat[2] + " " +  flatMat[4] + " " +  flatMat[1] + " "  + flatMat[3] + " " +  flatMat[5]);
+    	   targetAffineTransf.getMatrix(flatMat);
+    	   //IJ.log("Target Matrix = " + flatMat[0] + " " +  flatMat[2] + " " +  flatMat[4] + " " +  flatMat[1] + " "  + flatMat[3] + " " +  flatMat[5]);
+    	   targetAffineMatrix = new double[][]{ {flatMat[0], flatMat[2], flatMat[4] },  {flatMat[1], flatMat[3], flatMat[5]} };
+       }
+       else
+       {
+    	   sourceAffineMatrix = null;
+    	   targetAffineMatrix = null;
+       }
+       
+       final Transformation warp = new Transformation(
+         sourceImp, targetImp, source, target, sourcePh, targetPh,
+         sourceMsk, targetMsk, sourceAffineMatrix, targetAffineMatrix,
+         parameter.min_scale_deformation, parameter.max_scale_deformation, 
+         min_scale_image, parameter.divWeight, 
+         parameter.curlWeight, parameter.landmarkWeight, parameter.imageWeight, 
+         parameter.consistencyWeight, parameter.stopThreshold, 
+         outputLevel, showMarquardtOptim, parameter.mode,null, null, output_ip[0], output_ip[1], dialog,
+         originalSourceIP, originalTargetIP);
+
+       IJ.log("\nRegistering...\n");
+       
+       long start = System.currentTimeMillis(); // start timing
+
+       if(parameter.mode == MainDialog.MONO_MODE)       
+    	   warp.doUnidirectionalRegistration();    	       
+       else
+    	   warp.doBidirectionalRegistration();
+
+       long stop = System.currentTimeMillis(); // stop timing
+       IJ.log("bUnwarpJ is done! Registration time: " + (stop - start) + "ms"); // print execution time
+
+       return warp;
+       
+    } // end computeTransformationBatch   
     
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
+    /**
+     * Method for images alignment with no graphical interface. This 
+     * method gives as result a Transformation object that 
+     * contains all the registration information.
+     *
+     * @param sourceWidth
+     * @param sourceHeight
+     * @param targetWidth 
+     * @param targetHeight
+     * @param sourcePoints
+     * @param targetPoints
+     * @param parameter registration parameters
+     * 
+     * @return results transformation object
+     */
+    public static Transformation computeTransformationBatch(
+    									int sourceWidth,
+    									int sourceHeight,
+    									int targetWidth,
+    									int targetHeight,
+    									Stack<Point> sourcePoints,
+    									Stack<Point> targetPoints,
+    									Param parameter) 
+    {    	
+       if(sourcePoints == null || targetPoints == null || parameter == null)
+       {
+    	   IJ.error("Missing parameters to compute transformation!");
+    	   return null;
+       }
+
+
+       //IJ.log("Registration parameters:\n" + parameter.toString());
+       
+       // Produce side information
+       final int imagePyramidDepth = parameter.max_scale_deformation - parameter.min_scale_deformation + 1;
+       final int min_scale_image = 0;
+       
+       // output level to -1 so nothing is displayed 
+       final int outputLevel = -1;
+       
+       final boolean showMarquardtOptim = false;       
+
+       // Create target image model
+       final BSplineModel target = new BSplineModel(targetWidth, targetHeight, (int) Math.pow(2, parameter.img_subsamp_fact));
+       
+       target.setPyramidDepth(imagePyramidDepth+min_scale_image);
+       target.startPyramids();
+       
+       // Create target mask
+       final Mask targetMsk = new Mask(targetWidth, targetHeight);                           
+
+       // Create source image model
+       final BSplineModel source = new BSplineModel(sourceWidth, sourceHeight, (int) Math.pow(2, parameter.img_subsamp_fact));
+
+       source.setPyramidDepth(imagePyramidDepth + min_scale_image);
+       source.startPyramids();
+       
+       // Create source mask
+       final Mask sourceMsk = new Mask (sourceWidth, sourceHeight);
+          
+
+       // Set landmarks
+       PointHandler sourcePh  = new PointHandler(sourceWidth, sourceHeight);
+       PointHandler targetPh  = new PointHandler(targetWidth, targetHeight);
+
+       while ((!sourcePoints.empty()) && (!targetPoints.empty())) 
+       {
+    	   Point sourcePoint = (Point)sourcePoints.pop();
+    	   Point targetPoint = (Point)targetPoints.pop();
+    	   sourcePh.addPoint(sourcePoint.x, sourcePoint.y);
+    	   targetPh.addPoint(targetPoint.x, targetPoint.y);
+       }
+
+       
+       // Set no initial affine matrices
+       final double[][] sourceAffineMatrix = null;
+       final double[][] targetAffineMatrix = null;
+ 
+       // Join threads
+       try 
+       {
+           source.getThread().join();
+           target.getThread().join();
+       } 
+       catch (InterruptedException e) 
+       {
+           IJ.error("Unexpected interruption exception " + e);
+       }
+
+       // Perform registration
+       ImagePlus[] output_ip = new ImagePlus[2];
+       output_ip[0] = null; 
+       output_ip[1] = null; 
+       
+       // The dialog is set to null to work in batch mode
+       final MainDialog dialog = null;
+       
+       final ImageProcessor originalSourceIP = null;
+       final ImageProcessor originalTargetIP = null;
+
+       // Set transformation parameters
+       final Transformation warp = new Transformation(
+         null, null, source, target, sourcePh, targetPh,
+         sourceMsk, targetMsk, sourceAffineMatrix, targetAffineMatrix,
+         parameter.min_scale_deformation, parameter.max_scale_deformation, 
+         min_scale_image, parameter.divWeight, 
+         parameter.curlWeight, parameter.landmarkWeight, parameter.imageWeight, 
+         parameter.consistencyWeight, parameter.stopThreshold, 
+         outputLevel, showMarquardtOptim, parameter.mode, null, null, output_ip[0], output_ip[1], dialog,
+         originalSourceIP, originalTargetIP);
+
+       IJ.log("\nRegistering...\n");
+       
+       long start = System.currentTimeMillis(); // start timing
+       
+       // Register
+       if(parameter.mode == MainDialog.MONO_MODE)       
+    	   warp.doUnidirectionalRegistration();    	       
+       else
+    	   warp.doBidirectionalRegistration();
+
+       long stop = System.currentTimeMillis(); // stop timing
+       IJ.log("bUnwarpJ is done! Registration time: " + (stop - start) + "ms"); // print execution time
+
+       return warp;
+       
+    } // end computeTransformationBatch  
+    
+    
+    
+    
+    //------------------------------------------------------------------
     /**
      * Method for images alignment with no graphical interface. This 
      * method gives as result an array of 2 ImagePlus containing the
@@ -554,7 +849,7 @@ public class bUnwarpJ_ implements PlugIn
        
     } // end alignImagesBatch
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method for images alignment with no graphical interface. This 
      * method gives as result an array of 2 ImagePlus containing the
@@ -591,7 +886,7 @@ public class bUnwarpJ_ implements PlugIn
        
     } // end alignImagesBatch
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method for images alignment with no graphical interface. This 
      * method gives as result an array of 2 ImagePlus containing the
@@ -653,7 +948,6 @@ public class bUnwarpJ_ implements PlugIn
     	final int outputLevel = -1;
 
     	final boolean showMarquardtOptim = false;       
-    	final boolean saveTransf = false;
 
     	// Create target image model
     	final BSplineModel target = new BSplineModel(scaledTargetIP, true, 
@@ -747,7 +1041,7 @@ public class bUnwarpJ_ implements PlugIn
     		warp.doBidirectionalRegistration();
 
     	long stop = System.currentTimeMillis(); // stop timing
-    	IJ.log("Registration time: " + (stop - start) + "ms"); // print execution time
+    	IJ.log("bUnwarpJ is done! Registration time: " + (stop - start) + "ms"); // print execution time
 
     	// Adapt transformation to scale
     	int intervals = warp.getIntervals();
@@ -789,7 +1083,7 @@ public class bUnwarpJ_ implements PlugIn
 
     } // end alignImagesBatch
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Main method for bUnwarpJ (command line).
      *
@@ -826,7 +1120,7 @@ public class bUnwarpJ_ implements PlugIn
        Private methods
     ....................................................................*/
 
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method for images alignment with no graphical interface.
      *
@@ -891,25 +1185,25 @@ public class bUnwarpJ_ implements PlugIn
        }
 
        // Show parameters
-       IJ.write("Target image           : " + fn_target);
-       IJ.write("Target mask            : " + fn_target_mask);
-       IJ.write("Source image           : " + fn_source);
-       IJ.write("Source mask            : " + fn_source_mask);
-       IJ.write("Min. Scale Deformation : " + min_scale_deformation);
-       IJ.write("Max. Scale Deformation : " + max_scale_deformation);
-       IJ.write("Max. Subsampling factor: " + max_subsamp_fact);
-       IJ.write("Div. Weight            : " + divWeight);
-       IJ.write("Curl Weight            : " + curlWeight);
-       IJ.write("Image Weight           : " + imageWeight);
-       IJ.write("Consistency Weight     : " + consistencyWeight);
-       IJ.write("Output 1               : " + fn_out_1);
-       IJ.write("Output 2               : " + fn_out_2);
-       IJ.write("Landmark Weight        : " + landmarkWeight);
-       IJ.write("Landmark file          : " + fn_landmark);
-       IJ.write("Affine matrix file 1   : " + fn_affine_1);
-       IJ.write("Affine matrix file 2   : " + fn_affine_2);
+       IJ.log("Target image           : " + fn_target);
+       IJ.log("Target mask            : " + fn_target_mask);
+       IJ.log("Source image           : " + fn_source);
+       IJ.log("Source mask            : " + fn_source_mask);
+       IJ.log("Min. Scale Deformation : " + min_scale_deformation);
+       IJ.log("Max. Scale Deformation : " + max_scale_deformation);
+       IJ.log("Max. Subsampling factor: " + max_subsamp_fact);
+       IJ.log("Div. Weight            : " + divWeight);
+       IJ.log("Curl Weight            : " + curlWeight);
+       IJ.log("Image Weight           : " + imageWeight);
+       IJ.log("Consistency Weight     : " + consistencyWeight);
+       IJ.log("Output 1               : " + fn_out_1);
+       IJ.log("Output 2               : " + fn_out_2);
+       IJ.log("Landmark Weight        : " + landmarkWeight);
+       IJ.log("Landmark file          : " + fn_landmark);
+       IJ.log("Affine matrix file 1   : " + fn_affine_1);
+       IJ.log("Affine matrix file 2   : " + fn_affine_2);
        String sMode = (accurate_mode == MainDialog.MONO_MODE) ? "Mono" : "Accurate";
-       IJ.write("Registration mode	    : " + sMode);
+       IJ.log("Registration mode	    : " + sMode);
 
        // Produce side information
        int     imagePyramidDepth=max_scale_deformation-min_scale_deformation+1;
@@ -917,7 +1211,6 @@ public class bUnwarpJ_ implements PlugIn
        double  stopThreshold = 1e-2;  // originally -2
        int     outputLevel = -1;
        boolean showMarquardtOptim = false;       
-       boolean saveTransf = true;
 
        // First transformation file name.
        String fn_tnf_1 = "";
@@ -1034,7 +1327,7 @@ public class bUnwarpJ_ implements PlugIn
          outputLevel, showMarquardtOptim, accurate_mode, fn_tnf_1, fn_tnf_2, output_ip_1, output_ip_2, dialog,
          originalSourceIP, originalTargetIP);
 
-       IJ.write("\nRegistering...\n");
+       IJ.log("\nRegistering...\n");
        
        long start = System.currentTimeMillis(); // start timing
        
@@ -1044,7 +1337,7 @@ public class bUnwarpJ_ implements PlugIn
     	   warp.doBidirectionalRegistration();
        
        long stop = System.currentTimeMillis(); // stop timing
-       IJ.write("Registration time: " + (stop - start) + "ms"); // print execution time
+       IJ.log("Registration time: " + (stop - start) + "ms"); // print execution time
 
 
        // Save results (only the registered image, the target 
@@ -1070,7 +1363,7 @@ public class bUnwarpJ_ implements PlugIn
        
     } // end alignImagesCommandLine
 
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Create a list with the open images in ImageJ that bUnwarpJ can
      * process.
@@ -1102,137 +1395,137 @@ public class bUnwarpJ_ implements PlugIn
        return(imageList);
     } /* end createImageList */
 
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to write the syntax of the program in the command line.
      */
     private static void dumpSyntax () 
     {
-       IJ.write("Purpose: Consistent and elastic registration of two images.");
-       IJ.write(" ");
-       IJ.write("Usage: bUnwarpj_ ");
-       IJ.write("  -help                       : SHOW THIS MESSAGE");
-       IJ.write("");
-       IJ.write("  -align                      : ALIGN TWO IMAGES");
-       IJ.write("          target_image        : In any image format");
-       IJ.write("          target_mask         : In any image format");
-       IJ.write("          source_image        : In any image format");
-       IJ.write("          source_mask         : In any image format");
-       IJ.write("          min_scale_def       : Scale of the coarsest deformation");
-       IJ.write("                                0 is the coarsest possible");
-       IJ.write("          max_scale_def       : Scale of the finest deformation");
-       IJ.write("          max_subsamp_fact    : Maximum subsampling factor (power of 2: [0, 1, 2 ... 7]");
-       IJ.write("          Div_weight          : Weight of the divergence term");
-       IJ.write("          Curl_weight         : Weight of the curl term");
-       IJ.write("          Image_weight        : Weight of the image term");
-       IJ.write("          Consistency_weight  : Weight of the deformation consistency");
-       IJ.write("          Output image 1      : Output result 1 in TIFF");
-       IJ.write("          Output image 2      : Output result 2 in TIFF");
-       IJ.write("          Optional parameters :");
-       IJ.write("             -landmarks        ");
-       IJ.write("                   Landmark_weight  : Weight of the landmarks");
-       IJ.write("                   Landmark_file    : Landmark file");
-       IJ.write("             OR -affine        ");
-       IJ.write("                   Affine_file_1    : Initial source affine matrix transformation");
-       IJ.write("                   Affine_file_2    : Initial target affine matrix transformation");
-       IJ.write("             OR -mono    : Unidirectional registration (source to target)");      
-       IJ.write("");
-       IJ.write("  -elastic_transform          : TRANSFORM A SOURCE IMAGE WITH A GIVEN ELASTIC DEFORMATION");
-       IJ.write("          target_image        : In any image format");
-       IJ.write("          source_image        : In any image format");
-       IJ.write("          transformation_file : As saved by bUnwarpJ in elastic format");
-       IJ.write("          Output image        : Output result in TIFF");
-       IJ.write("");
-       IJ.write("  -raw_transform              : TRANSFORM A SOURCE IMAGE WITH A GIVEN RAW DEFORMATION");
-       IJ.write("          target_image        : In any image format");
-       IJ.write("          source_image        : In any image format");
-       IJ.write("          transformation_file : As saved by bUnwarpJ in raw format");
-       IJ.write("          Output image        : Output result in TIFF");
-       IJ.write("");
-       IJ.write("  -compare_elastic                   : COMPARE 2 OPPOSITE ELASTIC DEFORMATIONS (BY WARPING INDEX)");
-       IJ.write("          target_image               : In any image format");
-       IJ.write("          source_image               : In any image format");
-       IJ.write("          target_transformation_file : As saved by bUnwarpJ");
-       IJ.write("          source_transformation_file : As saved by bUnwarpJ");
-       IJ.write("");
-       IJ.write("  -compare_elastic_raw                : COMPARE AN ELASTIC DEFORMATION WITH A RAW DEFORMATION (BY WARPING INDEX)");
-       IJ.write("          target_image                : In any image format");
-       IJ.write("          source_image                : In any image format");
-       IJ.write("          Elastic Transformation File : As saved by bUnwarpJ in elastic format");
-       IJ.write("          Raw Transformation File     : As saved by bUnwarpJ in raw format");
-       IJ.write("");
-       IJ.write("  -compare_raw                       : COMPARE 2 ELASTIC DEFORMATIONS (BY WARPING INDEX)");
-       IJ.write("          target_image               : In any image format");
-       IJ.write("          source_image               : In any image format");
-       IJ.write("          Raw Transformation File 1  : As saved by bUnwarpJ in raw format");
-       IJ.write("          Raw Transformation File 2  : As saved by bUnwarpJ in raw format");
-       IJ.write("");
-       IJ.write("  -convert_to_raw                           : CONVERT AN ELASTIC DEFORMATION INTO RAW FORMAT");
-       IJ.write("          target_image                      : In any image format");
-       IJ.write("          source_image                      : In any image format");
-       IJ.write("          Input Elastic Transformation File : As saved by bUnwarpJ in elastic format");
-       IJ.write("          Output Raw Transformation File    : As saved by bUnwarpJ in raw format");
-       IJ.write("");
-       IJ.write("  -compose_elastic                          : COMPOSE TWO ELASTIC DEFORMATIONS");
-       IJ.write("          target_image                      : In any image format");
-       IJ.write("          source_image                      : In any image format");
-       IJ.write("          Elastic Transformation File 1     : As saved by bUnwarpJ in elastic format");
-       IJ.write("          Elastic Transformation File 2     : As saved by bUnwarpJ in elastic format");
-       IJ.write("          Output Raw Transformation File    : As saved by bUnwarpJ in raw format");
-       IJ.write("");
-       IJ.write("  -compose_raw                              : COMPOSE TWO RAW DEFORMATIONS");
-       IJ.write("          target_image                      : In any image format");
-       IJ.write("          source_image                      : In any image format");
-       IJ.write("          Raw Transformation File 1         : As saved by bUnwarpJ in raw format");
-       IJ.write("          Raw Transformation File 2         : As saved by bUnwarpJ in raw format");
-       IJ.write("          Output Raw Transformation File    : As saved by bUnwarpJ in raw format");
-       IJ.write("");
-       IJ.write("  -compose_raw_elastic                      : COMPOSE A RAW DEFORMATION WITH AN ELASTIC DEFORMATION");
-       IJ.write("          target_image                      : In any image format");
-       IJ.write("          source_image                      : In any image format");
-       IJ.write("          Raw Transformation File           : As saved by bUnwarpJ in raw format");
-       IJ.write("          Elastic Transformation File       : As saved by bUnwarpJ in elastic format");       
-       IJ.write("          Output Raw Transformation File    : As saved by bUnwarpJ in raw format");
-       IJ.write("");
-       IJ.write("  -adapt_transform                           : ADAPT AN ELASTIC DEFORMATION GIVEN A NEW IMAGE SIZE");
-       IJ.write("          target_image                       : In any image format");
-       IJ.write("          source_image                       : In any image format");
-       IJ.write("          Input Elastic Transformation File  : As saved by bUnwarpJ in elastic format");
-       IJ.write("          Output Elastic Transformation File : As saved by bUnwarpJ in elastic format");
-       IJ.write("          Image Size Factor                  : Integer (2, 4, 8...)");
-       IJ.write("");
-       IJ.write("Examples:");
-       IJ.write("Align two images without landmarks and without mask (no subsampling)");
-       IJ.write("   bUnwarpj_ -align target.jpg NULL source.jpg NULL 0 2 0 0.1 0.1 1 10 output_1.tif output_2.tif");
-       IJ.write("Align two images with landmarks and mask (no subsampling)");
-       IJ.write("   bUnwarpj_ -align target.tif target_mask.tif source.tif source_mask.tif 0 2 0 0.1 0.1 1 10 output_1.tif output_2.tif -landmarks 1 landmarks.txt");
-       IJ.write("Align two images with landmarks and initial affine transformations (no subsampling)");
-       IJ.write("   bUnwarpj_ -align target.tif target_mask.tif source.tif source_mask.tif 0 2 0 0.1 0.1 1 10 output_1.tif output_2.tif -affine affine_mat1.txt affine_mat2.txt");       
-       IJ.write("Align two images using only landmarks (no subsampling)");
-       IJ.write("   bUnwarpj_ -align target.jpg NULL source.jpg NULL 0 2 0 0.1 0.1 0 0 output.tif_1 output_2.tif -landmarks 1 landmarks.txt");
-       IJ.write("Transform the source image with a previously computed elastic transformation");
-       IJ.write("   bUnwarpj_ -elastic_transform target.jpg source.jpg elastic_transformation.txt output.tif");       
-       IJ.write("Transform the source image with a previously computed raw transformation");
-       IJ.write("   bUnwarpj_ -raw_transform target.jpg source.jpg raw_transformation.txt output.tif");
-       IJ.write("Calculate the warping index of two opposite elastic transformations");
-       IJ.write("   bUnwarpj_ -compare_elastic target.jpg source.jpg source_transformation.txt target_transformation.txt");
-       IJ.write("Calculate the warping index between an elastic transformation and a raw transformation");
-       IJ.write("   bUnwarpj_ -compare_elastic_raw target.jpg source.jpg elastic_transformation.txt raw_transformation.txt");
-       IJ.write("Calculate the warping index between two raw transformations");
-       IJ.write("   bUnwarpj_ -compare_raw target.jpg source.jpg raw_transformation_1.txt raw_transformation_2.txt");
-       IJ.write("Convert an elastic transformation into raw format");
-       IJ.write("   bUnwarpj_ -convert_to_raw target.jpg source.jpg elastic_transformation.txt output_raw_transformation.txt");
-       IJ.write("Compose two elastic transformations ");
-       IJ.write("   bUnwarpj_ -compose_elastic target.jpg source.jpg elastic_transformation_1.txt elastic_transformation_2.txt output_raw_transformation.txt");
-       IJ.write("Compose two raw transformations ");
-       IJ.write("   bUnwarpj_ -compose_raw target.jpg source.jpg raw_transformation_1.txt raw_transformation_2.txt output_raw_transformation.txt");
-       IJ.write("Compose a raw transformation with an elastic transformation ");
-       IJ.write("   bUnwarpj_ -compose_raw_elastic target.jpg source.jpg raw_transformation.txt elastic_transformation.txt output_raw_transformation.txt");
-       IJ.write("Adapt an elastic transformation to a new image size ");
-       IJ.write("   bUnwarpj_ -adapt_transform target.jpg source.jpg input_transformation.txt output_transformation.txt 2");
+       IJ.log("Purpose: Consistent and elastic registration of two images.");
+       IJ.log(" ");
+       IJ.log("Usage: bUnwarpj_ ");
+       IJ.log("  -help                       : SHOW THIS MESSAGE");
+       IJ.log("");
+       IJ.log("  -align                      : ALIGN TWO IMAGES");
+       IJ.log("          target_image        : In any image format");
+       IJ.log("          target_mask         : In any image format");
+       IJ.log("          source_image        : In any image format");
+       IJ.log("          source_mask         : In any image format");
+       IJ.log("          min_scale_def       : Scale of the coarsest deformation");
+       IJ.log("                                0 is the coarsest possible");
+       IJ.log("          max_scale_def       : Scale of the finest deformation");
+       IJ.log("          max_subsamp_fact    : Maximum subsampling factor (power of 2: [0, 1, 2 ... 7]");
+       IJ.log("          Div_weight          : Weight of the divergence term");
+       IJ.log("          Curl_weight         : Weight of the curl term");
+       IJ.log("          Image_weight        : Weight of the image term");
+       IJ.log("          Consistency_weight  : Weight of the deformation consistency");
+       IJ.log("          Output image 1      : Output result 1 in TIFF");
+       IJ.log("          Output image 2      : Output result 2 in TIFF");
+       IJ.log("          Optional parameters :");
+       IJ.log("             -landmarks        ");
+       IJ.log("                   Landmark_weight  : Weight of the landmarks");
+       IJ.log("                   Landmark_file    : Landmark file");
+       IJ.log("             OR -affine        ");
+       IJ.log("                   Affine_file_1    : Initial source affine matrix transformation");
+       IJ.log("                   Affine_file_2    : Initial target affine matrix transformation");
+       IJ.log("             OR -mono    : Unidirectional registration (source to target)");      
+       IJ.log("");
+       IJ.log("  -elastic_transform          : TRANSFORM A SOURCE IMAGE WITH A GIVEN ELASTIC DEFORMATION");
+       IJ.log("          target_image        : In any image format");
+       IJ.log("          source_image        : In any image format");
+       IJ.log("          transformation_file : As saved by bUnwarpJ in elastic format");
+       IJ.log("          Output image        : Output result in TIFF");
+       IJ.log("");
+       IJ.log("  -raw_transform              : TRANSFORM A SOURCE IMAGE WITH A GIVEN RAW DEFORMATION");
+       IJ.log("          target_image        : In any image format");
+       IJ.log("          source_image        : In any image format");
+       IJ.log("          transformation_file : As saved by bUnwarpJ in raw format");
+       IJ.log("          Output image        : Output result in TIFF");
+       IJ.log("");
+       IJ.log("  -compare_elastic                   : COMPARE 2 OPPOSITE ELASTIC DEFORMATIONS (BY WARPING INDEX)");
+       IJ.log("          target_image               : In any image format");
+       IJ.log("          source_image               : In any image format");
+       IJ.log("          target_transformation_file : As saved by bUnwarpJ");
+       IJ.log("          source_transformation_file : As saved by bUnwarpJ");
+       IJ.log("");
+       IJ.log("  -compare_elastic_raw                : COMPARE AN ELASTIC DEFORMATION WITH A RAW DEFORMATION (BY WARPING INDEX)");
+       IJ.log("          target_image                : In any image format");
+       IJ.log("          source_image                : In any image format");
+       IJ.log("          Elastic Transformation File : As saved by bUnwarpJ in elastic format");
+       IJ.log("          Raw Transformation File     : As saved by bUnwarpJ in raw format");
+       IJ.log("");
+       IJ.log("  -compare_raw                       : COMPARE 2 ELASTIC DEFORMATIONS (BY WARPING INDEX)");
+       IJ.log("          target_image               : In any image format");
+       IJ.log("          source_image               : In any image format");
+       IJ.log("          Raw Transformation File 1  : As saved by bUnwarpJ in raw format");
+       IJ.log("          Raw Transformation File 2  : As saved by bUnwarpJ in raw format");
+       IJ.log("");
+       IJ.log("  -convert_to_raw                           : CONVERT AN ELASTIC DEFORMATION INTO RAW FORMAT");
+       IJ.log("          target_image                      : In any image format");
+       IJ.log("          source_image                      : In any image format");
+       IJ.log("          Input Elastic Transformation File : As saved by bUnwarpJ in elastic format");
+       IJ.log("          Output Raw Transformation File    : As saved by bUnwarpJ in raw format");
+       IJ.log("");
+       IJ.log("  -compose_elastic                          : COMPOSE TWO ELASTIC DEFORMATIONS");
+       IJ.log("          target_image                      : In any image format");
+       IJ.log("          source_image                      : In any image format");
+       IJ.log("          Elastic Transformation File 1     : As saved by bUnwarpJ in elastic format");
+       IJ.log("          Elastic Transformation File 2     : As saved by bUnwarpJ in elastic format");
+       IJ.log("          Output Raw Transformation File    : As saved by bUnwarpJ in raw format");
+       IJ.log("");
+       IJ.log("  -compose_raw                              : COMPOSE TWO RAW DEFORMATIONS");
+       IJ.log("          target_image                      : In any image format");
+       IJ.log("          source_image                      : In any image format");
+       IJ.log("          Raw Transformation File 1         : As saved by bUnwarpJ in raw format");
+       IJ.log("          Raw Transformation File 2         : As saved by bUnwarpJ in raw format");
+       IJ.log("          Output Raw Transformation File    : As saved by bUnwarpJ in raw format");
+       IJ.log("");
+       IJ.log("  -compose_raw_elastic                      : COMPOSE A RAW DEFORMATION WITH AN ELASTIC DEFORMATION");
+       IJ.log("          target_image                      : In any image format");
+       IJ.log("          source_image                      : In any image format");
+       IJ.log("          Raw Transformation File           : As saved by bUnwarpJ in raw format");
+       IJ.log("          Elastic Transformation File       : As saved by bUnwarpJ in elastic format");       
+       IJ.log("          Output Raw Transformation File    : As saved by bUnwarpJ in raw format");
+       IJ.log("");
+       IJ.log("  -adapt_transform                           : ADAPT AN ELASTIC DEFORMATION GIVEN A NEW IMAGE SIZE");
+       IJ.log("          target_image                       : In any image format");
+       IJ.log("          source_image                       : In any image format");
+       IJ.log("          Input Elastic Transformation File  : As saved by bUnwarpJ in elastic format");
+       IJ.log("          Output Elastic Transformation File : As saved by bUnwarpJ in elastic format");
+       IJ.log("          Image Size Factor                  : Integer (2, 4, 8...)");
+       IJ.log("");
+       IJ.log("Examples:");
+       IJ.log("Align two images without landmarks and without mask (no subsampling)");
+       IJ.log("   bUnwarpj_ -align target.jpg NULL source.jpg NULL 0 2 0 0.1 0.1 1 10 output_1.tif output_2.tif");
+       IJ.log("Align two images with landmarks and mask (no subsampling)");
+       IJ.log("   bUnwarpj_ -align target.tif target_mask.tif source.tif source_mask.tif 0 2 0 0.1 0.1 1 10 output_1.tif output_2.tif -landmarks 1 landmarks.txt");
+       IJ.log("Align two images with landmarks and initial affine transformations (no subsampling)");
+       IJ.log("   bUnwarpj_ -align target.tif target_mask.tif source.tif source_mask.tif 0 2 0 0.1 0.1 1 10 output_1.tif output_2.tif -affine affine_mat1.txt affine_mat2.txt");       
+       IJ.log("Align two images using only landmarks (no subsampling)");
+       IJ.log("   bUnwarpj_ -align target.jpg NULL source.jpg NULL 0 2 0 0.1 0.1 0 0 output.tif_1 output_2.tif -landmarks 1 landmarks.txt");
+       IJ.log("Transform the source image with a previously computed elastic transformation");
+       IJ.log("   bUnwarpj_ -elastic_transform target.jpg source.jpg elastic_transformation.txt output.tif");       
+       IJ.log("Transform the source image with a previously computed raw transformation");
+       IJ.log("   bUnwarpj_ -raw_transform target.jpg source.jpg raw_transformation.txt output.tif");
+       IJ.log("Calculate the warping index of two opposite elastic transformations");
+       IJ.log("   bUnwarpj_ -compare_elastic target.jpg source.jpg source_transformation.txt target_transformation.txt");
+       IJ.log("Calculate the warping index between an elastic transformation and a raw transformation");
+       IJ.log("   bUnwarpj_ -compare_elastic_raw target.jpg source.jpg elastic_transformation.txt raw_transformation.txt");
+       IJ.log("Calculate the warping index between two raw transformations");
+       IJ.log("   bUnwarpj_ -compare_raw target.jpg source.jpg raw_transformation_1.txt raw_transformation_2.txt");
+       IJ.log("Convert an elastic transformation into raw format");
+       IJ.log("   bUnwarpj_ -convert_to_raw target.jpg source.jpg elastic_transformation.txt output_raw_transformation.txt");
+       IJ.log("Compose two elastic transformations ");
+       IJ.log("   bUnwarpj_ -compose_elastic target.jpg source.jpg elastic_transformation_1.txt elastic_transformation_2.txt output_raw_transformation.txt");
+       IJ.log("Compose two raw transformations ");
+       IJ.log("   bUnwarpj_ -compose_raw target.jpg source.jpg raw_transformation_1.txt raw_transformation_2.txt output_raw_transformation.txt");
+       IJ.log("Compose a raw transformation with an elastic transformation ");
+       IJ.log("   bUnwarpj_ -compose_raw_elastic target.jpg source.jpg raw_transformation.txt elastic_transformation.txt output_raw_transformation.txt");
+       IJ.log("Adapt an elastic transformation to a new image size ");
+       IJ.log("   bUnwarpj_ -adapt_transform target.jpg source.jpg input_transformation.txt output_transformation.txt 2");
     } /* end dumpSyntax */
 
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to adapt coefficients to new image size. The factor between
      * the old and the new image size is expected to be a power of 2, positive
@@ -1250,11 +1543,11 @@ public class bUnwarpJ_ implements PlugIn
        String sImageSizeFactor  = args[5];
 
        // Show parameters
-       IJ.write("Target image                 : " + fn_target);
-       IJ.write("Source image                 : " + fn_source);
-       IJ.write("Input Transformation file    : " + fn_tnf);
-       IJ.write("Output Transformation file   : " + fn_out);
-       IJ.write("Image Size Factor            : " + sImageSizeFactor);
+       IJ.log("Target image                 : " + fn_target);
+       IJ.log("Source image                 : " + fn_source);
+       IJ.log("Input Transformation file    : " + fn_tnf);
+       IJ.log("Output Transformation file   : " + fn_out);
+       IJ.log("Image Size Factor            : " + sImageSizeFactor);
 
        // Open target
        Opener opener=new Opener();
@@ -1301,7 +1594,7 @@ public class bUnwarpJ_ implements PlugIn
        
     } /* end adaptCoefficientsCommandLine */    
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to transform an image given an elastic deformation.
      *
@@ -1316,10 +1609,10 @@ public class bUnwarpJ_ implements PlugIn
        String fn_out    = args[4];
 
        // Show parameters
-       IJ.write("Target image           : " + fn_target);
-       IJ.write("Source image           : " + fn_source);
-       IJ.write("Transformation file    : " + fn_tnf);
-       IJ.write("Output:                : " + fn_out);
+       IJ.log("Target image           : " + fn_target);
+       IJ.log("Source image           : " + fn_source);
+       IJ.log("Transformation file    : " + fn_tnf);
+       IJ.log("Output:                : " + fn_out);
 
        // Open target
        Opener opener=new Opener();
@@ -1371,7 +1664,7 @@ public class bUnwarpJ_ implements PlugIn
        
     } /* end elasticTransformIMageCommandLine */
 
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to transform an image given an raw deformation.
      *
@@ -1386,10 +1679,10 @@ public class bUnwarpJ_ implements PlugIn
        String fn_out    = args[4];
 
        // Show parameters
-       IJ.write("Target image           : " + fn_target);
-       IJ.write("Source image           : " + fn_source);
-       IJ.write("Transformation file    : " + fn_tnf);
-       IJ.write("Output:                : " + fn_out);
+       IJ.log("Target image           : " + fn_target);
+       IJ.log("Source image           : " + fn_source);
+       IJ.log("Transformation file    : " + fn_tnf);
+       IJ.log("Output:                : " + fn_out);
 
        // Open target
        Opener opener=new Opener();
@@ -1427,7 +1720,7 @@ public class bUnwarpJ_ implements PlugIn
        
     } /* end rawTransformImageCommandLine */    
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to compare two opposite elastic deformations through the 
      * warping index.
@@ -1443,10 +1736,10 @@ public class bUnwarpJ_ implements PlugIn
        String fn_tnf_2   = args[4];
 
        // Show parameters
-       IJ.write("Target image                  : " + fn_target);
-       IJ.write("Source image                  : " + fn_source);
-       IJ.write("Target Transformation file    : " + fn_tnf_1);
-       IJ.write("Source Transformation file    : " + fn_tnf_2);
+       IJ.log("Target image                  : " + fn_target);
+       IJ.log("Source image                  : " + fn_source);
+       IJ.log("Target Transformation file    : " + fn_tnf_1);
+       IJ.log("Source Transformation file    : " + fn_tnf_2);
 
        // Open target
        Opener opener=new Opener();
@@ -1479,13 +1772,13 @@ public class bUnwarpJ_ implements PlugIn
        double warpingIndex = MiscTools.warpingIndex(sourceImp, targetImp, intervals, cx_direct, cy_direct, cx_inverse, cy_inverse);
 
        if(warpingIndex != -1)
-           IJ.write(" Warping index = " + warpingIndex);             
+           IJ.log(" Warping index = " + warpingIndex);             
        else
-           IJ.write(" Warping index could not be evaluated because not a single pixel matched after the deformation!");             
+           IJ.log(" Warping index could not be evaluated because not a single pixel matched after the deformation!");             
        
     } /* end method compareElasticTransformationsCommandLine */
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to compare an elastic deformation with a raw deformation
      * through the warping index (both transformations having same direction).
@@ -1501,10 +1794,10 @@ public class bUnwarpJ_ implements PlugIn
        String fn_tnf_raw     = args[4];
 
        // Show parameters
-       IJ.write("Target image                  : " + fn_target);
-       IJ.write("Source image                  : " + fn_source);
-       IJ.write("Elastic Transformation file   : " + fn_tnf_elastic);
-       IJ.write("Raw Transformation file       : " + fn_tnf_raw);
+       IJ.log("Target image                  : " + fn_target);
+       IJ.log("Source image                  : " + fn_source);
+       IJ.log("Elastic Transformation file   : " + fn_tnf_elastic);
+       IJ.log("Raw Transformation file       : " + fn_tnf_raw);
 
        // Open target
        Opener opener=new Opener();
@@ -1536,13 +1829,13 @@ public class bUnwarpJ_ implements PlugIn
                intervals, cx_direct, cy_direct, transformation_x, transformation_y);
 
        if(warpingIndex != -1)
-           IJ.write(" Warping index = " + warpingIndex);             
+           IJ.log(" Warping index = " + warpingIndex);             
        else
-           IJ.write(" Warping index could not be evaluated because not a single pixel matched after the deformation!");             
+           IJ.log(" Warping index could not be evaluated because not a single pixel matched after the deformation!");             
        
     } /* end method compareElasticRawTransformationCommandLine */    
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to compare two raw deformations through the warping index
      * (both transformations having same direction).
@@ -1558,10 +1851,10 @@ public class bUnwarpJ_ implements PlugIn
        String fn_tnf_2   = args[4];
 
        // Show parameters
-       IJ.write("Target image                  : " + fn_target);
-       IJ.write("Source image                  : " + fn_source);
-       IJ.write("Target Transformation file    : " + fn_tnf_1);
-       IJ.write("Source Transformation file    : " + fn_tnf_2);
+       IJ.log("Target image                  : " + fn_target);
+       IJ.log("Source image                  : " + fn_source);
+       IJ.log("Target Transformation file    : " + fn_tnf_1);
+       IJ.log("Source Transformation file    : " + fn_tnf_2);
 
        // Open target
        Opener opener=new Opener();
@@ -1590,13 +1883,13 @@ public class bUnwarpJ_ implements PlugIn
                transformation_x_1, transformation_y_1, transformation_x_2, transformation_y_2);
 
        if(warpingIndex != -1)
-           IJ.write(" Warping index = " + warpingIndex);             
+           IJ.log(" Warping index = " + warpingIndex);             
        else
-           IJ.write(" Warping index could not be evaluated because not a single pixel matched after the deformation!");            
+           IJ.log(" Warping index could not be evaluated because not a single pixel matched after the deformation!");            
        
     } /* end method compareRawTransformationsCommandLine */
 
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to convert an elastic deformations into raw format.
      *
@@ -1612,10 +1905,10 @@ public class bUnwarpJ_ implements PlugIn
        
 
        // Show parameters
-       IJ.write("Target image                      : " + fn_target);
-       IJ.write("Source image                      : " + fn_source);
-       IJ.write("Input Elastic Transformation file : " + fn_tnf_elastic);
-       IJ.write("Ouput Raw Transformation file     : " + fn_tnf_raw);
+       IJ.log("Target image                      : " + fn_target);
+       IJ.log("Source image                      : " + fn_source);
+       IJ.log("Input Elastic Transformation file : " + fn_tnf_elastic);
+       IJ.log("Ouput Raw Transformation file     : " + fn_tnf_raw);
 
        // Open target
        Opener opener = new Opener();
@@ -1648,7 +1941,7 @@ public class bUnwarpJ_ implements PlugIn
        
     } /* end method convertToRawTransformationCommandLine */    
 
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to compose two raw deformations.
      *
@@ -1665,11 +1958,11 @@ public class bUnwarpJ_ implements PlugIn
        
 
        // Show parameters
-       IJ.write("Target image                      : " + fn_target);
-       IJ.write("Source image                      : " + fn_source);
-       IJ.write("Input Raw Transformation file 1   : " + fn_tnf_raw_1);
-       IJ.write("Input Raw Transformation file 2   : " + fn_tnf_raw_2);
-       IJ.write("Output Raw Transformation file    : " + fn_tnf_raw_out);
+       IJ.log("Target image                      : " + fn_target);
+       IJ.log("Source image                      : " + fn_source);
+       IJ.log("Input Raw Transformation file 1   : " + fn_tnf_raw_1);
+       IJ.log("Input Raw Transformation file 2   : " + fn_tnf_raw_2);
+       IJ.log("Output Raw Transformation file    : " + fn_tnf_raw_out);
 
        // Open target
        Opener opener=new Opener();
@@ -1707,7 +2000,7 @@ public class bUnwarpJ_ implements PlugIn
        
     } /* end method composeRawTransformationsCommandLine */     
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to compose two elastic deformations.
      *
@@ -1724,11 +2017,11 @@ public class bUnwarpJ_ implements PlugIn
        
 
        // Show parameters
-       IJ.write("Target image                        : " + fn_target);
-       IJ.write("Source image                        : " + fn_source);
-       IJ.write("Input Elastic Transformation file 1 : " + fn_tnf_elastic_1);
-       IJ.write("Input Elastic Transformation file 2 : " + fn_tnf_elastic_2);
-       IJ.write("Output Raw Transformation file      : " + fn_tnf_raw);
+       IJ.log("Target image                        : " + fn_target);
+       IJ.log("Source image                        : " + fn_source);
+       IJ.log("Input Elastic Transformation file 1 : " + fn_tnf_elastic_1);
+       IJ.log("Input Elastic Transformation file 2 : " + fn_tnf_elastic_2);
+       IJ.log("Output Raw Transformation file      : " + fn_tnf_raw);
 
        // Open target
        Opener opener=new Opener();
@@ -1770,7 +2063,7 @@ public class bUnwarpJ_ implements PlugIn
        
     } /* end method composeElasticTransformationsCommandLine */
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to compose a raw deformation with an elastic deformation.
      *
@@ -1787,11 +2080,11 @@ public class bUnwarpJ_ implements PlugIn
        
 
        // Show parameters
-       IJ.write("Target image                      : " + fn_target);
-       IJ.write("Source image                      : " + fn_source);
-       IJ.write("Input Raw Transformation file     : " + fn_tnf_raw_in);
-       IJ.write("Input Elastic Transformation file : " + fn_tnf_elastic);
-       IJ.write("Output Raw Transformation file    : " + fn_tnf_raw_out);
+       IJ.log("Target image                      : " + fn_target);
+       IJ.log("Source image                      : " + fn_source);
+       IJ.log("Input Raw Transformation file     : " + fn_tnf_raw_in);
+       IJ.log("Input Elastic Transformation file : " + fn_tnf_elastic);
+       IJ.log("Output Raw Transformation file    : " + fn_tnf_raw_out);
 
        // Open target
        Opener opener=new Opener();
@@ -1831,7 +2124,7 @@ public class bUnwarpJ_ implements PlugIn
        
     } /* end method composeRawElasticTransformationsCommandLine */
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to transform the source image given an elastic deformation.
      * To be called by the macro language instruction "call":
@@ -1861,7 +2154,7 @@ public class bUnwarpJ_ implements PlugIn
     }
     /* end elasticTransformImageMacro */
 
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to transform the source image given an raw deformation.
      * To be called by the macro language instruction "call":
@@ -1891,7 +2184,7 @@ public class bUnwarpJ_ implements PlugIn
     }
     /* end rawTransformImageMacro */    
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to compare two opposite elastic transformations by warping index.
      * To be called by the macro language instruction "call":
@@ -1921,7 +2214,7 @@ public class bUnwarpJ_ implements PlugIn
     }
     /* end compareElasticTransformationsMacro */ 
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to compare an elastic and a raw transformations by warping index.
      * To be called by the macro language instruction "call":
@@ -1951,7 +2244,7 @@ public class bUnwarpJ_ implements PlugIn
     }
     /* end compareElasticRawTransformationsMacro */ 
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to compare two raw transformations by warping index.
      * To be called by the macro language instruction "call":
@@ -1981,7 +2274,7 @@ public class bUnwarpJ_ implements PlugIn
     }
     /* end compareRawTransformationsMacro */     
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to convert an elastic deformation into raw format.
      * To be called by the macro language instruction "call":
@@ -2011,7 +2304,7 @@ public class bUnwarpJ_ implements PlugIn
     }
     /* end convertToRawTransformationsMacro */ 
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to compose two elastic transformations.
      * To be called by the macro language instruction "call":
@@ -2044,7 +2337,7 @@ public class bUnwarpJ_ implements PlugIn
     }
     /* end composeElasticTransformationsMacro */     
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to compose two raw transformations.
      * To be called by the macro language instruction "call":
@@ -2077,7 +2370,7 @@ public class bUnwarpJ_ implements PlugIn
     }
     /* end composeRawTransformationsMacro */    
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to compose a raw transformation with an elastic transformation.
      * To be called by the macro language instruction "call":
@@ -2110,7 +2403,7 @@ public class bUnwarpJ_ implements PlugIn
     }
     /* end composeRawElasticTransformationsMacro */     
     
-    /*------------------------------------------------------------------*/
+    //------------------------------------------------------------------
     /**
      * Method to adapt an elastic transformation given a new image size.
      * To be called by the macro language instruction "call":

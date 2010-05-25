@@ -4,7 +4,7 @@ import ij.gui.GenericDialog;
 
 /**
  * bUnwarpJ plugin for ImageJ(C).
- * Copyright (C) 2005-2009 Ignacio Arganda-Carreras and Jan Kybic 
+ * Copyright (C) 2005-2010 Ignacio Arganda-Carreras and Jan Kybic 
  *
  * More information at http://biocomp.cnb.csic.es/%7Eiarganda/bUnwarpJ/
  *
@@ -49,6 +49,20 @@ public class Param {
 	public double  consistencyWeight = 10;
 	/** stopping threshold */
 	public double  stopThreshold = 0.01;
+	/** available registration modes */
+	protected final String[] sRegistrationModes = { "Fast", "Accurate", "Mono" };
+	/** minimum scale deformation choices */
+	protected final String[] sMinScaleDeformationChoices = { "Very Coarse", "Coarse", "Fine", "Very Fine" };
+	/** maximum scale deformation choices */
+	protected String[] sMaxScaleDeformationChoices = { "Very Coarse", "Coarse", "Fine", "Very Fine", "Super Fine" };
+	
+	// Initial affine matrix pre-process
+	/** percentage of shear correction in initial matrix */
+	private double shearCorrection = 0.0;
+	/** percentage of scale correction in initial matrix */
+	private double scaleCorrection = 0.0;
+	/** percentage of anisotropy correction in initial matrix */
+	private double anisotropyCorrection = 0.0;
 	
 	/**
 	 * Empty constructor
@@ -86,6 +100,7 @@ public class Param {
 		this.max_scale_deformation = max_scale_deformation;
 		this.divWeight = divWeight;
 		this.curlWeight = curlWeight;
+		this.landmarkWeight = landmarkWeight;
 		this.imageWeight = imageWeight;
 		this.consistencyWeight = consistencyWeight;
 		this.stopThreshold = stopThreshold;		
@@ -99,8 +114,7 @@ public class Param {
 	public boolean showDialog()
 	{
 		GenericDialog gd = new GenericDialog("Elastic Registration");
-		// Registration Mode
-		String[] sRegistrationModes = { "Fast", "Accurate", "Mono" };
+		
 		gd.addChoice("Registration Mode", sRegistrationModes, sRegistrationModes[2]);
 		
 		// Maximum image pyramid resolution
@@ -108,12 +122,10 @@ public class Param {
 		
 		// Advanced Options
 		gd.addMessage("------ Advanced Options ------");
-		String[] sMinScaleDeformationChoices = { "Very Coarse", "Coarse", "Fine", "Very Fine" };
-		gd.addChoice("Initial_Deformation :", sMinScaleDeformationChoices, sMinScaleDeformationChoices[0]);		
 		
-		String[] sMaxScaleDeformationChoices = { "Very Coarse", "Coarse", "Fine", "Very Fine", "Super Fine" };
-		gd.addChoice("Final_Deformation :", sMaxScaleDeformationChoices, sMaxScaleDeformationChoices[2]);
-		
+		gd.addChoice("Initial_Deformation :", sMinScaleDeformationChoices, sMinScaleDeformationChoices[this.min_scale_deformation]);		
+				
+		gd.addChoice("Final_Deformation :", sMaxScaleDeformationChoices, sMaxScaleDeformationChoices[this.max_scale_deformation]);		
 		
 		gd.addNumericField("Divergence_Weight :", this.divWeight, 1);
 		gd.addNumericField("Curl_Weight :", this.curlWeight, 1);
@@ -148,5 +160,50 @@ public class Param {
 				
 		return true;
 	} // end method showDialog
+	
+	/**
+	 * Print parameters into a String
+	 */
+	public String toString()
+	{
+		return new String("Registration mode: " + sRegistrationModes[mode] + "\n" + 
+						  "Image Sub-sampling factor:  " + img_subsamp_fact + " => " + Math.pow(2.0,img_subsamp_fact) + "\n" +
+						  "Minimum scale factor = " + sMinScaleDeformationChoices[min_scale_deformation] + "\n" + 
+						  "Maximum scale factor = " + sMaxScaleDeformationChoices[max_scale_deformation] + "\n" + 
+						  "Divergence weight = " + divWeight + "\n" + 
+						  "Curl weight = " + curlWeight + "\n" +
+						  "Landmark weight = " + landmarkWeight + "\n" +
+						  "Image weight = " + imageWeight + "\n" +
+						  "Consistency weight = " + consistencyWeight + "\n" +
+						  "Stopping threshold = " + stopThreshold + "\n" +
+						  "Shear correction = " + shearCorrection + "\n" +
+						  "Scale correction = " + scaleCorrection + "\n" +
+						  "Anisotropy correction = " + anisotropyCorrection + "\n");
+	}
+
+	public void setShearCorrection(double shearCorrection) {
+		this.shearCorrection = shearCorrection;
+	}
+
+	public double getShearCorrection() {
+		return shearCorrection;
+	}
+
+	public void setScaleCorrection(double scaleCorrection) {
+		this.scaleCorrection = scaleCorrection;
+	}
+
+	public double getScaleCorrection() {
+		return scaleCorrection;
+	}
+
+	public void setAnisotropyCorrection(double anisotropyCorrection) {
+		this.anisotropyCorrection = anisotropyCorrection;
+	}
+
+	public double getAnisotropyCorrection() {
+		return anisotropyCorrection;
+	}
+	
 	
 } // end class Param

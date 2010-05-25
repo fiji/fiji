@@ -1,17 +1,7 @@
-Show stoppers (this needs to be done _before_ the first public release):
+- BeanShell seems not to import the second time a BeanShell interpreter is
+  opened (reported by Stephan Saalfeld).
 
 - Enable to set breakpoints via the Breakpoints menu and F9 (IIRC).
-
-- when called with
-
-	fiji -eval 'run("Script Editor", "open=<relative path>");'
-
-  and the given file does not exist, it opens _two_ editor windows.
-
-- make Ctrl-R another shortcut for running, because people might be used to that
-  by ImageJ's macro editor (and likewise F5 for the Visual Studio fans).
-
-Not-quite show-stoppers:
 
 - if there are images on which the plugin wants to work, they have to be
   transported to the other virtual machine.  Mark them with the "(Debugging)"
@@ -20,10 +10,6 @@ Not-quite show-stoppers:
 - when debugging finished, give the user a chance to save resulting images
   or some such before closing the debuggee.
 
-Nice-to-haves:
-
 - Integrate Fiji Build much better.
-
-- Identify unused imports (and add an option to remove them).
 
 - Identify non-explicit imports and add an option to make them explicit.

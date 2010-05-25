@@ -3,7 +3,7 @@
 
 #	UNIX-makefile
 
-S     = src
+S     = src/view5d
 T	= view5D 
 
 SRCS =	$(S)/View5D_.java 

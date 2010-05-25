@@ -1,0 +1,35 @@
+
+var brushWidth = 10;
+var leftClick=16, alt=9;
+
+requires("1.37c");
+print("ImageJ version:", call("ij.IJ.getVersion")); // same as getVersion()
+print("java.version:", call("java.lang.System.getProperty", "java.version"));
+print("user.home:", call("java.lang.System.getProperty", "user.home"));
+print("user.dir:", call("java.lang.System.getProperty", "user.dir"));
+print("Images URL:", call("ij.Prefs.getImagesURL"));
+print("Plugins path:", call("ij.Menus.getPlugInsPath"));
+
+
+    macro "Roi Brush Tool - C111o11ff" {
+        requires("1.37c");
+
+        while (true) {
+            getCursorLoc(x, y, z, flags);
+            if (flags&leftClick==0) exit();
+            if (flags&alt==0){
+                call("ROIBrush_.label", x,y,z,flags,brushWidth);
+            }else{
+                call("ROIBrush_.unlabel", x,y,z,flags,brushWidth);
+            }
+            wait(10);
+        }
+    }
+
+    macro 'Roi Brush Tool Options...' {
+       brushWidth = getNumber("Roi Brush Width (pixels):", brushWidth);
+    }
+
+
+
+

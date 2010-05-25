@@ -34,13 +34,8 @@ done
 
 # sign jars in jars folder
 for i in $(find "$FIJIDIR/jars/" -name \*.jar); do
+	$JARSIGNER -verify $FIJIDIR/jars/ij.jar | grep verified > /dev/null &&
+	continue
 	echo "Signing $i"
 	$JARSIGNER -keystore $KEYSTORE -storepass $PASSWD $i $ALIAS
 done
-
-# sign ij.jar
-if ! $JARSIGNER -verify $FIJIDIR/ij.jar | grep verified; then  
-	echo "Signing ij.jar"
-	$JARSIGNER -keystore $KEYSTORE -storepass $PASSWD $FIJIDIR/ij.jar $ALIAS
-fi
-

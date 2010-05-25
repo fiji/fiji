@@ -36,7 +36,7 @@ f.write('''<?xml version="1.0" encoding="UTF-8"?>
 f.close()
 
 # populate webroot
-uploadables = ['ij.jar', 'misc/Fiji.jar', 'plugins/Fiji_Updater.jar',
+uploadables = ['jars/ij.jar', 'jars/Fiji.jar', 'plugins/Fiji_Updater.jar',
 	'jars/jsch-0.1.37.jar', 'jars/jzlib-1.0.7.jar',
 	'plugins/Arrow_.jar', 'jars/javac.jar']
 if launchProgram(['./fiji','-Dpython.cachedir.skip=true', '--',
@@ -49,16 +49,16 @@ def die(message):
 	exit(1)
 
 # check that there are exactly the right number of files
-extra = ['db.xml.gz', 'db.xml.gz.old', 'current.txt', 'misc', 'jars', 'plugins']
+extra = ['db.xml.gz', 'db.xml.gz.old', 'current.txt', 'jars', 'plugins']
 if len(uploadables) + len(extra) != sum([len(listdir(tmpWebRoot + dir)) for
-		dir in ['.', 'misc', 'plugins', 'jars']]):
+		dir in ['.', 'plugins', 'jars']]):
 	die('Wrong number of files')
 
 # populate with minimal Fiji; reuse Java
-for file in ['fiji', 'ij.jar', 'misc/Fiji.jar', 'plugins/Fiji_Updater.jar',
+for file in ['fiji', 'jars/ij.jar', 'jars/Fiji.jar', 'plugins/Fiji_Updater.jar',
 		'jars/jsch-0.1.37.jar', 'jars/jzlib-1.0.7.jar',
 		'jars/javac.jar',
-		'jars/fiji-scripting.jar', 'jars/jython2.2.1/jython.jar',
+		'jars/fiji-scripting.jar', 'jars/jython.jar',
 		'plugins/Jython_Interpreter.jar']:
 	source = fijiDir + file
 	target = tmpRoot + file
@@ -71,7 +71,7 @@ if launchProgram(['chmod', 'a+x', tmpRoot + 'fiji']) != 0:
 	die('Could not make ' + tmpRoot + 'fiji executable')
 
 # update some "packages"
-f = open(tmpRoot + 'fiji.cxx', 'w')
+f = open(tmpRoot + 'fiji.c', 'w')
 f.write('pretend to be a developer')
 f.close()
 
@@ -148,7 +148,7 @@ f.close()
 rename(macros + 'obsoleted.ijm', macros + 'obsolete.ijm')
 
 # pretend to be a user again
-remove(tmpRoot + 'fiji.cxx')
+remove(tmpRoot + 'fiji.c')
 
 # install a test script
 action = tmpRoot + 'plugins/Test_Fiji_Updater.py'
@@ -177,7 +177,7 @@ from fiji.updater.logic.PluginObject import Action, Status
 
 # test that the list is correct
 expect = {
-	'misc/Fiji.jar' : Status.INSTALLED,
+	'jars/Fiji.jar' : Status.INSTALLED,
 	'plugins/Fiji_Updater.jar' : Status.INSTALLED,
 	'jars/jsch-0.1.37.jar' : Status.INSTALLED,
 	'jars/jzlib-1.0.7.jar' : Status.INSTALLED,
@@ -185,10 +185,10 @@ expect = {
 	'macros/updateable.ijm' : Status.UPDATEABLE,
 	'macros/deleted-modified.ijm' : Status.OBSOLETE_MODIFIED,
 	'macros/obsolete.ijm' : Status.OBSOLETE,
-	'ij.jar' : Status.INSTALLED,
+	'jars/ij.jar' : Status.INSTALLED,
 	'jars/javac.jar' : Status.INSTALLED,
 	'jars/fiji-scripting.jar' : Status.NOT_FIJI,
-	'jars/jython2.2.1/jython.jar' : Status.NOT_FIJI,
+	'jars/jython.jar' : Status.NOT_FIJI,
 	'plugins/Jython_Interpreter.jar' : Status.NOT_FIJI,
 	'plugins/Test_Fiji_Updater.py' : Status.NOT_FIJI,
 	'thisPlatform' : Status.NOT_INSTALLED,
@@ -283,6 +283,6 @@ print 'Everything fine!'
 script.close()
 
 # launch
-if launchProgram(['./fiji', '-Dpython.cachedir.skip=true',
+if launchProgram(['./fiji', '-Dpython.cachedir.skip=true', '--',
 	'--run', 'Test_Fiji_Updater'], tmpRoot) != 0:
 	die('The Fiji Updater test failed')

@@ -56,17 +56,18 @@ public class Stitching_3D implements PlugIn
 	public static String methodStatic = methodList[1];
 	public static String handleRGB1Static = colorList[colorList.length - 1];
 	public static String handleRGB2Static = colorList[colorList.length - 1];
-	public static boolean fuseImagesStatic = true, windowingStatic = true, coregisterStatic = false, computeOverlap = true;
+	public static boolean fuseImagesStatic = true, windowingStatic = true, coregisterStatic = false, computeOverlapStatic = true;
 	public static int checkPeaksStatic = 5, numberOfChannelsStatic = 1;
 	public static double alphaStatic = 1.5;
-	public static int xOffset = 0, yOffset = 0, zOffset = 0;
+	public static int xOffsetStatic = 0, yOffsetStatic = 0, zOffsetStatic = 0;
 
 	public String method;
 	public String handleRGB1;
 	public String handleRGB2;
-	public boolean fuseImages, windowing, coregister;
+	public boolean fuseImages, windowing, coregister, computeOverlap = true;
 	public int checkPeaks, numberOfChannels;
 	public double alpha;
+	public int xOffset = 0, yOffset = 0, zOffset = 0;
 
 	public ImagePlus imp1 = null, imp2 = null;
 	public boolean wasIndexed, doLogging = true;
@@ -84,7 +85,7 @@ public class Stitching_3D implements PlugIn
 
 		
 	// a macro can call to only fuse two images given a certain shift
-	public Point3D translation = null;
+	private Point3D translation = null;
 
 	public void run(String args)
 	{
@@ -139,10 +140,10 @@ public class Stitching_3D implements PlugIn
 		gd.addStringField("Fused_Image_Name: ", "Fused_" + stackList[0] + "_" + stackList[1]);
 		gd.addCheckbox("Apply_to_other_Channels", coregisterStatic);
 		gd.addNumericField("Number_of_other_Channels", numberOfChannelsStatic, 0);
-		gd.addCheckbox("compute_overlap", computeOverlap);
-		gd.addNumericField("x", xOffset, 0);
-		gd.addNumericField("y", yOffset, 0);
-		gd.addNumericField("z", zOffset, 0);
+		gd.addCheckbox("compute_overlap", computeOverlapStatic);
+		gd.addNumericField("x", xOffset, xOffsetStatic);
+		gd.addNumericField("y", yOffset, yOffsetStatic);
+		gd.addNumericField("z", zOffset, zOffsetStatic);
 		gd.addMessage("");
 		gd.addMessage("This Plugin is developed by Stephan Preibisch\n" + myURL);
 
@@ -156,19 +157,6 @@ public class Stitching_3D implements PlugIn
 										   (Component) gd.getNumericFields().get(1), 
 										   (Component) gd.getNumericFields().get(2) };
 		addEnablerListener((Checkbox) gd.getCheckboxes().get(1), c1, null);
-
-		
-		Component[] c2 = new Component[] { (Component) gd.getNumericFields().get(2) };
-		addEnablerListener((Checkbox) gd.getCheckboxes().get(2), c2, null);		
-		((Component) gd.getNumericFields().get(2)).setEnabled(false);
-
-		Component[] c3 = new Component[] { (Component) gd.getNumericFields().get(3),
-										   (Component) gd.getNumericFields().get(4),
-										   (Component) gd.getNumericFields().get(5)};		
-		addInverseEnablerListener((Checkbox) gd.getCheckboxes().get(3), c3, null);
-		((Component) gd.getNumericFields().get(3)).setEnabled(false);
-		((Component) gd.getNumericFields().get(4)).setEnabled(false);
-		((Component) gd.getNumericFields().get(5)).setEnabled(false);
 		
 		gd.showDialog();
 

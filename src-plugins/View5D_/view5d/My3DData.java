@@ -1,5 +1,3 @@
-package view5d;
-
 /****************************************************************************
  *   Copyright (C) 1996-2007 by Rainer Heintzmann                          *
  *   heintzmann@gmail.com                                                  *
@@ -22,6 +20,8 @@ package view5d;
 */
 // By making the appropriate class "View5D" or "View5D_" public and renaming the file, this code can be toggled between Applet and ImageJ respectively
 
+package view5d;
+
 import java.io.*;
 import java.net.*;
 import java.awt.image.*;
@@ -32,12 +32,12 @@ import java.text.*;
 import ij.*;
 import ij.gui.*;
 
-class My3DData extends Object {
+public class My3DData extends Object {
     public String markerInfilename=null;
     public String markerOutfilename=null;
-    public Vector MyElements;    // this stores all the data
+    public Vector<AnElement> MyElements;    // this stores all the data
     
-    public Vector MyProjections[];    // these manage progections
+    public Vector<ASlice> MyProjections[];    // these manage projections
     public ASlice MyColorProjection[];    // this manage color projections
 
     public ASlice MySlice[];    // this manage the ZY, XZ and XY slices
@@ -72,10 +72,11 @@ class My3DData extends Object {
     public int DimensionOrder=0;  // defines the order of the dimensions to read in
     public int AppendTo=0;  // defines the dimension to wich to append the extra loaded data
 
-    public Vector MyTimes,MyTimeProj;    // this stores all the different multi element data as a vector of vectors
+    public Vector<Vector<AnElement>> MyTimes;
+    public Vector<Vector<ASlice>[]> MyTimeProj;    // this stores all the different multi element projection data as a vector of vectors
     public int Times=0,ActiveTime=0;
-    public Vector MyTimeColorProj; // a vector of an array of ASlice
-    public Vector TimeValues;    // keeps track of the exact time points
+    public Vector<ASlice[]>  MyTimeColorProj; // a vector of an array of ASlice
+//    public Vector TimeValues;    // keeps track of the exact time points
     
     My3DData MyHistogram=null;
     My3DData DataToHistogram=null;
@@ -87,7 +88,8 @@ class My3DData extends Object {
     int HistoX=0, HistoY=-1, HistoZ=-1;  // -1 means no histgram is computed along this dimension
     
     int ProjMin[],ProjMax[];       // Square ROIs
-    Vector PlanesS[], PlanesD[];
+    Vector<Integer> PlanesS[];
+    Vector<Double> PlanesD[];
     Polygon ROIPolygons[];
     
     boolean ProjMode[];
@@ -104,7 +106,7 @@ class My3DData extends Object {
 
     public Container  applet;
 
-    Vector MyBundle;    // containes maxcs, mincs, ElementModelNr;
+    Vector<Bundle> MyBundle;    // containes maxcs, mincs, ElementModelNr;
 
     void AddPoint(APoint p) {MyMarkers.AddPoint(p);}
     void AddPoint(double x, double y, double z, double e, double t) {AddPoint(new APoint(x,y,z,e,t));}
@@ -156,8 +158,8 @@ class My3DData extends Object {
     int NumMarkerLists() {return MyMarkers.NumMarkerLists();}
     int ActiveMarkerListPos() {return MyMarkers.ActiveMarkerListPos();}
     String GetMarkerPrintout (My3DData data3d) {return MyMarkers.PrintList(data3d)+MyMarkers.PrintSummary(data3d);}
-    void NewMarkerList() {MyMarkers.NewList();}
-    void NewMarkerList(int linkTo, String NameExtension) {MyMarkers.NewList(linkTo,NameExtension);}
+    public void NewMarkerList() {MyMarkers.NewList();}
+    public void NewMarkerList(int linkTo, String NameExtension) {MyMarkers.NewList(linkTo,NameExtension);}
 
     void DevideMarkerList(double px, double py, double pz) {
     int currentList = ActiveMarkerListPos();
@@ -800,6 +802,14 @@ class My3DData extends Object {
 	GetBundleAt(e).ToggleLog(newVal);
     }
     
+    public void SetGamma(int e, double gamma) {
+	GetBundleAt(e).SetGamma(gamma);
+    }
+
+    public double GetGamma(int e) {
+    	return GetBundleAt(e).GetGamma();
+        }
+    
     public void ToggleOvUn(int newVal) {
 	boolean resOvUn=GetBundleAt(ActiveElement).ToggleOvUn(newVal);
         if (resOvUn) newVal=1;
@@ -1073,19 +1083,19 @@ class My3DData extends Object {
         InvalidateSlices();                    
     }
  
-    public Vector ElementsAtTime(int atime)
+    public Vector<AnElement> ElementsAtTime(int atime)
     {
-        return (Vector) MyTimes.elementAt(atime);
+        return MyTimes.elementAt(atime);
     }
 
-    public Vector [] ProjsAtTime(int atime)
+    public Vector<ASlice> [] ProjsAtTime(int atime)
     {
-        return (Vector []) MyTimeProj.elementAt(atime);
+        return MyTimeProj.elementAt(atime);
     }
 
     public ASlice [] ColorProjsAtTime(int atime)
     {
-        return (ASlice []) MyTimeColorProj.elementAt(atime);
+        return MyTimeColorProj.elementAt(atime);
     }
     
     public void GetElementsFromTime() 
@@ -1163,6 +1173,7 @@ class My3DData extends Object {
    }
 
    public double GetROISum(int elem) {
+       DoProject(elem,0);  // Also checks if really necessary
        for (int d=0;d<3;d++)
            if (BundleAt(elem).ProjValid[d] && ProjAt(d,elem).isValid)
                 return ProjAt(d,elem).ROISum;
@@ -1172,6 +1183,7 @@ class My3DData extends Object {
    }
 
    public double GetROIVoxels(int elem) {
+       DoProject(elem,0);  // Also checks if really necessary
        for (int d=0;d<3;d++)
            if (BundleAt(elem).ProjValid[d] && ProjAt(d,elem).isValid)
                 return ProjAt(d,elem).ROIVoxels;
@@ -1181,6 +1193,7 @@ class My3DData extends Object {
    }
    
    public double GetROIAvg(int elem) {
+       DoProject(elem,0);  // Also checks if really necessary
        for (int d=0;d<3;d++)
            if (BundleAt(elem).ProjValid[d] && ProjAt(d,elem).isValid)
                 return ProjAt(d,elem).ROIAvg;
@@ -1190,6 +1203,7 @@ class My3DData extends Object {
    }
 
    public double GetROIMax(int elem) {
+       DoProject(elem,0);  // Also checks if really necessary
        for (int d=0;d<3;d++)
            if (BundleAt(elem).ProjValid[d] && ProjAt(d,elem).isValid)
                 return ProjAt(d,elem).ROIMax;
@@ -1199,6 +1213,7 @@ class My3DData extends Object {
    }
 
    public double GetROIMin(int elem) {
+       DoProject(elem,0);  // Also checks if really necessary
        for (int d=0;d<3;d++)
            if (BundleAt(elem).ProjValid[d] && ProjAt(d,elem).isValid)
                 return ProjAt(d,elem).ROIMin;
@@ -1328,15 +1343,17 @@ class My3DData extends Object {
         md.addNumericField("DisplayOffset X: ",DispOffset[0],5);
         md.addNumericField("DisplayOffset Y: ",DispOffset[1],5);
         md.addNumericField("DisplayOffset Z: ",DispOffset[2],5);
+        md.addNumericField("Display Gamma: ",GetGamma(e),5);
         md.showDialog();
         if (! md.wasCanceled())
         {
             String NV,UV;
-            double SV,OV,Min,Max;
+            double SV,OV,Min,Max,Gamma;
             NV=md.getNextString();UV=md.getNextString();SV=md.getNextNumber();OV=md.getNextNumber();Min=md.getNextNumber();Max=md.getNextNumber();
-            DispOffset[0]=md.getNextNumber();DispOffset[1]=md.getNextNumber();DispOffset[2]=md.getNextNumber();
+            DispOffset[0]=md.getNextNumber();DispOffset[1]=md.getNextNumber();DispOffset[2]=md.getNextNumber();Gamma=md.getNextNumber();
             ElementAt(e).SetScales(SV,OV,NV,UV);  // The value scales are element specific
            SetScaledMinMaxcs(e,Min,Max);
+           SetGamma(e,Gamma);
         }
     }
 
@@ -1384,7 +1401,7 @@ class My3DData extends Object {
             InvalidateColor(t);
     }
 
-   void InvalidateSlices() {
+   public void InvalidateSlices() {
         MyColorSlice[0].Invalidate();MyColorSlice[1].Invalidate();MyColorSlice[2].Invalidate();
         MySlice[0].Invalidate();MySlice[1].Invalidate();MySlice[2].Invalidate();
    }
@@ -1559,11 +1576,11 @@ class My3DData extends Object {
 
     
     Bundle BundleAt (int num) {
-        return (Bundle) MyBundle.elementAt(num);
+        return MyBundle.elementAt(num);
     }
     
     
-    private AnElement GNE(AnElement oldelem, Vector ElementsList, Vector ProjList[]) // will generate a new element in the list
+    private AnElement GNE(AnElement oldelem, Vector<AnElement> ElementsList, Vector<ASlice> ProjList[]) // will generate a new element in the list
     {
         AnElement ne=null;
         if (oldelem.DataType == AnElement.IntegerType)
@@ -1612,7 +1629,7 @@ class My3DData extends Object {
         
         // Bundle bd = (Bundle) MyBundle.lastElement();
 	GNE(oldelem);
-        MyBundle.addElement(BundleAt(Elements-2).clone());
+        MyBundle.addElement((Bundle) BundleAt(Elements-2).clone());
 
         ActiveElement=Elements-1;
         if (Elements == 2)
@@ -1630,7 +1647,7 @@ class My3DData extends Object {
             CloneElement((AnElement) ElementsAtTime(t).lastElement());
     }
     
-    private AnElement GNE(int DataType, int NumBytes, int NumBits, Vector ElementList, Vector ProjList[])  // just generate the element, not the bundle
+    private AnElement GNE(int DataType, int NumBytes, int NumBits, Vector<AnElement> ElementList, Vector<ASlice> ProjList[])  // just generate the element, not the bundle
     {
         double MaxValue=(2<<(NumBits-1))-1;
         // System.out.println("Sizes: "+SizeX+", "+SizeY+", "+SizeZ+ ", MaxValue : :"+MaxValue);
@@ -1668,7 +1685,7 @@ class My3DData extends Object {
     private int GenerateNewElement(int DataType, int NumBytes, int NumBits, double[] Scales, double[] Offsets,
                                    double ScaleV, double OffsetV, 
                                    String [] Names, String [] Units,
-                                   Vector ElementList, Vector ProjList[])
+                                   Vector<AnElement> ElementList, Vector<ASlice> ProjList[])
     {
 	int mynewnr = Elements; // this will be the number of the new element
         AnElement ne=GNE(DataType,NumBytes,NumBits,ElementList, ProjList);
@@ -1718,12 +1735,12 @@ class My3DData extends Object {
 		{
 		int ne=0;
 
-		MyElements = new Vector();   // A list of elements is generated for each timepoint
+		MyElements = new Vector<AnElement>();   // A list of elements is generated for each timepoint
         MyTimes.addElement(MyElements);  // However, all times use the same list of elements.
-        MyProjections = new Vector[3];    // these manage progections
-        MyProjections[0] = new Vector();
-        MyProjections[1] = new Vector();
-        MyProjections[2] = new Vector();
+        MyProjections = (Vector<ASlice>[]) new Vector[3];    // these manage RGB projections
+        MyProjections[0] = new Vector<ASlice>();
+        MyProjections[1] = new Vector<ASlice>();
+        MyProjections[2] = new Vector<ASlice>();
         MyTimeProj.addElement(MyProjections);
 		
 		ActiveTime=Times;
@@ -1800,7 +1817,7 @@ class My3DData extends Object {
         InvalidateSlices();
     }
     
-    public void DeleteActElement(Vector ElementList)  // what, if another dublicate exists?
+    public void DeleteActElement(Vector<AnElement> ElementList)  // what, if another dublicate exists?
     {
         if (Elements <= 1) // The last element must not be deleted
             return;
@@ -1870,9 +1887,13 @@ class My3DData extends Object {
         double val= ElementAt(e).GetRawValueAtOffset(x,y,z,ElementAt(ActiveElement));
         double min=GetMinThresh(e);
         double max=GetMaxThresh(e);
+        double Gamma=GetBundleAt(e).Gamma;
         
         if (! GetBundleAt(e).LogScale)
-            return (val-min) /(max-min);
+        	if (Gamma == 1.0)
+        		return (val-min) /(max-min);
+        	else
+        		return java.lang.Math.pow((val-min) /(max-min),Gamma);
         else
             if (val > 0)
             {
@@ -1991,21 +2012,21 @@ class My3DData extends Object {
         setElement(ne);
     }
 
-    AnElement ElementAt(int num, int time) {
+    public AnElement ElementAt(int num, int time) {
         if (num >= 0 && time >= 0)
             return (AnElement) ElementsAtTime(time).elementAt(num);
         else
             return null;
     }
 
-    AnElement ElementAt(int num) {
+    public AnElement ElementAt(int num) {
         if (num >= 0)
             return (AnElement) MyElements.elementAt(num);
         else
             return null;
     }
     
-    AnElement ActElement() {
+    public AnElement ActElement() {
         return ElementAt(ActiveElement);
     }  
     
@@ -2019,6 +2040,8 @@ class My3DData extends Object {
     
     public int GetPolyROISize(int dir)  // returns the number of corners in the polygon
     {
+    	if (ROIPolygons == null)
+    		return 0;
         if (ROIPolygons[dir] != null)
             return ROIPolygons[dir].npoints;
         else
@@ -2038,16 +2061,22 @@ class My3DData extends Object {
     {
         ROIPolygons[dir].translate(DX,DY);
         for (int e=0;e<Elements;e++)
+        {
             BundleAt(e).TakePolyROIs(ROIPolygons);
-        InvalidateProjs(-1);  // all projections are invalid
+            InvalidateProjs(e);  // all projections are invalid
+            DoProject(e,dir);
+        }
     }
 
     public void MoveSqrROI(int DX,int DY, int dir)  // adds a point to the Polygon ROI
     {
         Rectangle r2 = GetSqrROI(dir);
         for (int e=0;e<Elements;e++)
+        {
             BundleAt(e).UpdateSqrROI(r2.x + DX,r2.y + DY, r2.x+r2.width + DX, r2.y+r2.height + DY,dir);
-        InvalidateProjs(-1);  // all projections are invalid
+        	InvalidateProjs(e);  // all projections are invalid
+        	DoProject(e,dir);
+        }
     }
     
     public void MoveROI(int DX,int DY, int dir)  // adds a point to the Polygon ROI
@@ -2058,16 +2087,30 @@ class My3DData extends Object {
             MovePolyROI(DX,DY,dir);
     }
     
-    public void TakePolyROI(int ROIX,int ROIY, int dir)  // adds a point to the Polygon ROI
+//    public void TakePolyROI(int ROIX,int ROIY, int dir)  // adds a point to the Polygon ROI
+//    {
+//        if (ROIPolygons[dir] == null)
+//            ROIPolygons[dir] = new Polygon();
+//            
+//        ROIPolygons[dir].addPoint(ROIX,ROIY);
+//        for (int e=0;e<Elements;e++) {
+//            BundleAt(e).TakePolyROIs(ROIPolygons);
+//    		InvalidateProjs(e);  // all projections are invalid
+//    		DoProject(e,dir);
+//    		}
+//        return;
+//    }
+
+    public void TakePolyROI(Polygon myNewROI, int dir)  // adds a point to the Polygon ROI
     {
-        if (ROIPolygons[dir] == null)
-            ROIPolygons[dir] = new Polygon();
-            
-        ROIPolygons[dir].addPoint(ROIX,ROIY);
-        for (int e=0;e<Elements;e++)
+        ROIPolygons[dir]=myNewROI;
+        for (int e=0;e<Elements;e++) {
             BundleAt(e).TakePolyROIs(ROIPolygons);
-        InvalidateProjs(-1);  // all projections are invalid
-        return;
+    		InvalidateProjs(e);  // all projections are invalid
+    		DoProject(e,dir);
+    		}
+		// System.out.println("Take PolyROI");
+		return;
     }
     
     public void ClearPolyROIs(int dir) {
@@ -2274,65 +2317,68 @@ class My3DData extends Object {
 
 
     public void SetUp(int DataType, View5D_ myv3d, int elements, int times, int ImageType) {
-	if (SizeX*SizeY*SizeZ == 0)
-	    {
-		myv3d.add("South",new Label ("Error ! Image has zero sizes !\n"));
-		myv3d.setVisible(true);
-	    }
-	 // ActiveElement=0;
-	// copy dataset to  arrays
-        int ijslice=0, z=0, elem=0, t=0;
-	try {
+    	// System.out.println("Setup loading ImageJ image");
+    	
+    	if (SizeX*SizeY*SizeZ == 0)
+    	{
+    		myv3d.add("South",new Label ("Error ! Image has zero sizes !\n"));
+        	System.out.println("Error: Image has zero size");
+    		myv3d.setVisible(true);
+    	}
+    	// ActiveElement=0;
+    	// copy dataset to  arrays
+    	int ijslice=0, z=0, elem=0, t=0;
+    	try {
 
-	 if (ImageType == ImagePlus.COLOR_RGB) elements/=3;
-	 for (t=0;t<times;t++)  
-      for (elem=0;elem<elements;elem++)  
-  	   for (z=0;z<SizeZ;z++)  
-	     {
-          switch(DimensionOrder)
-          {
-              case 0: ijslice=t*elements*SizeZ + elem *SizeZ + z; break;
-              case 1: ijslice=t*elements*SizeZ + z *elements + elem; break;
-              case 2: ijslice=elem*times*SizeZ + t *SizeZ + z; break;
-              case 3: ijslice=elem*times*SizeZ + z *elements + t; break;
-              case 4: ijslice=z*elements*times + t *elements + elem; break;
-              case 5: ijslice=z*elements*times + elem *times + t; break;
-          }
+    		if (ImageType == ImagePlus.COLOR_RGB) elements/=3;
+    		for (t=0;t<times;t++)  
+    			for (elem=0;elem<elements;elem++)  
+    				for (z=0;z<SizeZ;z++)  
+    				{
+    					switch(DimensionOrder)
+    					{
+    					case 0: ijslice=t*elements*SizeZ + elem *SizeZ + z; break;
+    					case 1: ijslice=t*elements*SizeZ + z *elements + elem; break;
+    					case 2: ijslice=elem*times*SizeZ + t *SizeZ + z; break;
+    					case 3: ijslice=elem*times*SizeZ + z *elements + t; break;
+    					case 4: ijslice=z*elements*times + t *elements + elem; break;
+    					case 5: ijslice=z*elements*times + elem *times + t; break;
+    					}
 
-	    	// System.out.println("Elem: " + Elements+", elements: "+elements+", time = "+t+", Filling element "+((Elements-elements)+elem)+"\n");
-		if (ImageType == ImagePlus.COLOR_RGB)
-                    {int slice[] = (int[]) myv3d.GetImp().getImageStack().getPixels(ijslice+1);
-                     ElementAt((Elements-3*elements)+elem,Times-times+t).ConvertSliceFromRGB(z,0,slice,1,0,2);  
-                     ElementAt((Elements-3*elements)+elem+1,Times-times+t).ConvertSliceFromRGB(z,0,slice,1,0,1); 
-                     ElementAt((Elements-3*elements)+elem+2,Times-times+t).ConvertSliceFromRGB(z,0,slice,1,0,0);
-                    }
-                else
-                   ElementAt((Elements-elements)+elem,Times-times+t).ConvertSliceFromSimilar(z,0,myv3d.GetImp().getImageStack().getPixels(ijslice+1),1,0);
+    					// System.out.println("Elem: " + Elements+", elements: "+elements+", time = "+t+", Filling element "+((Elements-elements)+elem)+"\n");
+    					if (ImageType == ImagePlus.COLOR_RGB)
+    					{int slice[] = (int[]) myv3d.GetImp().getImageStack().getPixels(ijslice+1);
+    					ElementAt((Elements-3*elements)+elem,Times-times+t).ConvertSliceFromRGB(z,0,slice,1,0,2);  
+    					ElementAt((Elements-3*elements)+elem+1,Times-times+t).ConvertSliceFromRGB(z,0,slice,1,0,1); 
+    					ElementAt((Elements-3*elements)+elem+2,Times-times+t).ConvertSliceFromRGB(z,0,slice,1,0,0);
+    					}
+    					else
+    						ElementAt((Elements-elements)+elem,Times-times+t).ConvertSliceFromSimilar(z,0,myv3d.GetImp().getImageStack().getPixels(ijslice+1),1,0);
 
-                // System.out.println("Optained Slice");
-	    	// System.out.println("Loaded Slice");
-			   //if (ImageType == ImagePlus.COLOR_RGB)
-			   // elem+=2;  // skip the next three
-	     }
-	 }
-     catch(Exception e)
-       {
-	myv3d.add("South",new Label ("Memoryexception appeared during data setup ! ("+SizeX+", "+SizeY+", "+SizeZ+") \n"));
-	System.out.println("Exception appeared during data setup ! ("+SizeX+", "+SizeY+", "+SizeZ+", z: "+z+", ijslice: "+ijslice+") \n");
-	System.out.println("Element ("+Elements+", "+elements+", " + elem+", T "+Times+", "+times+", " + t +") \n");
-	System.out.println("Exception was : "+e);
-        e.printStackTrace();
-	myv3d.setVisible(true);
-	}
-     sizes[3]=Elements;
-     sizes[4]=Times;
+    					//System.out.println("Optained Slice");
+    					//System.out.println("Loaded Slice");
+    					//if (ImageType == ImagePlus.COLOR_RGB)
+    					// elem+=2;  // skip the next three
+    				}
+    	}
+    	catch(Exception e)
+    	{
+    		System.out.println("Exception appeared during data setup ! ("+SizeX+", "+SizeY+", "+SizeZ+", z: "+z+", ijslice: "+ijslice+") \n");
+    		System.out.println("Element ("+Elements+", "+elements+", " + elem+", T "+Times+", "+times+", " + t +") \n");
+    		System.out.println("Exception was : "+e);
+        	System.out.println("Setup loading ImageJ image");
+    		e.printStackTrace();
+    		myv3d.setVisible(true);
+    	}
+    	sizes[3]=Elements;
+    	sizes[4]=Times;
      
      // initThresh();
 
      // AdjustThresh(false);
     }
 
-    public void SaveMarkers() {  // loads a marker-file and generates a new set of marker list from it
+    public void SaveMarkers() {  // saves a marker-file and generates a new set of marker list from it
       try {
         System.out.println("Saving marker file: "+markerOutfilename);
 	FileOutputStream os=new FileOutputStream(markerOutfilename);
@@ -2400,10 +2446,15 @@ class My3DData extends Object {
 	        //myurl = new URL(((View5D) applet).getDocumentBase(), markerInfilename);
             //else
 	     {
-	    if (System.getProperty("os.name").startsWith("Windows"))
-	        myurl = new URL("file:////"+markerInfilename);
-		else
-	        myurl = new URL("file://"+markerInfilename);
+ 	    if (markerInfilename.startsWith("http:") || markerInfilename.startsWith("file:") || markerInfilename.startsWith("ftp:")) 	    	
+	        myurl = new URL(markerInfilename);
+ 	    else
+ 	    	myurl = new URL(((View5D) applet).getDocumentBase(), markerInfilename);
+ 	    	//if (System.getProperty("os.name").startsWith("Windows"))
+ 	    		// myurl = new URL(protocol+":////"+markerInfilename);
+ 	    	//else
+ 		        myurl = new URL(((View5D) applet).getDocumentBase(), markerInfilename);
+ 	    		// myurl = new URL(protocol+"://"+markerInfilename);
 
 	    }
             System.out.println("Opening Markerfile "+myurl+"\n");
@@ -2606,10 +2657,10 @@ class My3DData extends Object {
     elemB =other.elemB;
     GateElem =other.GateElem;
     GateActive =other.GateActive;
-    PlanesS= new Vector[3];
-    PlanesD= new Vector[3];
-    PlanesS[0] = new Vector();PlanesS[1] = new Vector();PlanesS[2] = new Vector();
-    PlanesD[0] = new Vector();PlanesD[1] = new Vector();PlanesD[2] = new Vector();
+    PlanesS= (Vector<Integer>[]) new Vector[3];
+    PlanesD= (Vector<Double>[]) new Vector[3];
+    PlanesS[0] = new Vector<Integer>();PlanesS[1] = new Vector<Integer>();PlanesS[2] = new Vector<Integer>();
+    PlanesD[0] = new Vector<Double>();PlanesD[1] = new Vector<Double>();PlanesD[2] = new Vector<Double>();
     ROIPolygons = new Polygon[3];
     
     ProjMin = new int[3];ProjMax = new int[3];
@@ -2630,20 +2681,20 @@ class My3DData extends Object {
         Elements = other.Elements;       // Contains the data 
         MyTimes = other.MyTimes;         // Contains the data
         Times = other.Times;
-        MyBundle = new Vector();
-        MyTimeProj = new Vector();  // stores arrays[3] of vectors
-        MyTimeColorProj = new Vector();
+        MyBundle = new Vector<Bundle>();
+        MyTimeProj = new Vector<Vector<ASlice>[]>();  // stores arrays[3] of vectors
+        MyTimeColorProj = new Vector<ASlice[]>();
         // something is wrong with the line below
         //MyBundle = (Vector) other.MyBundle.clone();  // clones the full vector with all its elements
         for (int e=0;e < other.Elements;e++)
-            MyBundle.addElement(other.BundleAt(e).clone());
+            MyBundle.addElement((Bundle) other.BundleAt(e).clone());
 
         for (int t=0;t < other.Times;t++)
             {
-            MyProjections = new Vector[3];    // these manage progections
-            MyProjections[0] = new Vector();
-            MyProjections[1] = new Vector();
-            MyProjections[2] = new Vector();
+            MyProjections = (Vector<ASlice>[]) new Vector[3];    // these manage progections
+            MyProjections[0] = new Vector<ASlice>();
+            MyProjections[1] = new Vector<ASlice>();
+            MyProjections[2] = new Vector<ASlice>();
             for (int e=0;e < other.Elements;e++)
                 {
                 MyProjections[0].addElement(new ASlice(0,other.ElementAt(e)));
@@ -2652,8 +2703,8 @@ class My3DData extends Object {
                 }
             MyTimeProj.addElement(MyProjections);
             }
-    MyElements = (Vector) MyTimes.elementAt(0);
-    MyProjections = (Vector []) MyTimeProj.elementAt(0);
+    MyElements = MyTimes.elementAt(0);
+    MyProjections = MyTimeProj.elementAt(0);
 
     MySlice[0] = new ASlice(0,((AnElement) MyElements.firstElement()));
     MySlice[1] = new ASlice(1,((AnElement) MyElements.firstElement()));
@@ -2729,10 +2780,11 @@ class My3DData extends Object {
     ProjMax[0]=SizeX-1;ProjMax[1]=SizeY-1;ProjMax[2]=SizeZ-1;
     ProjMode = new boolean[3]; ProjMode[0] = false; ProjMode[1] = false; ProjMode[2] = false;
    
-    PlanesS= new Vector[3];
-    PlanesD= new Vector[3];
-    PlanesS[0] = new Vector();PlanesS[1] = new Vector();PlanesS[2] = new Vector();
-    PlanesD[0] = new Vector();PlanesD[1] = new Vector();PlanesD[2] = new Vector();
+    PlanesS= (Vector<Integer>[]) new Vector[3];
+    PlanesD= (Vector<Double>[]) new Vector[3];
+    PlanesS[0] = new Vector<Integer>();PlanesS[1] = new Vector<Integer>();PlanesS[2] = new Vector<Integer>();
+    PlanesD[0] = new Vector<Double>();PlanesD[1] = new Vector<Double>();PlanesD[2] = new Vector<Double>();
+
     ROIPolygons = new Polygon[3];
     
     MySlice = new ASlice[3];
@@ -2750,25 +2802,25 @@ class My3DData extends Object {
 	    applet.setVisible(true);
 	}
     try {
-        MyTimes = new Vector();
-        MyTimeProj = new Vector();  // stores arrays[3] of vectors
-        MyTimeColorProj = new Vector();
-        MyBundle = new Vector();
+        MyTimes = new Vector<Vector<AnElement>>();
+        MyTimeProj = new Vector<Vector<ASlice>[]>();  // stores arrays[3] of vectors
+        MyTimeColorProj = new Vector<ASlice[]>();
+        MyBundle = new Vector<Bundle>();
         Elements = 0;
         Times = times;
 	for (int t=0; t < times; t++)
         {
-            MyElements = new Vector();   // A list of elements is generated for each timepoint
+            MyElements = new Vector<AnElement>();   // A list of elements is generated for each timepoint
             MyTimes.addElement(MyElements);  // However, all times use the same list of elements.
-            MyProjections = new Vector[3];    // these manage progections
-            MyProjections[0] = new Vector();
-            MyProjections[1] = new Vector();
-            MyProjections[2] = new Vector();
+            MyProjections = (Vector<ASlice>[]) new Vector[3];    // these manage progections
+            MyProjections[0] = new Vector<ASlice>();
+            MyProjections[1] = new Vector<ASlice>();
+            MyProjections[2] = new Vector<ASlice>();
             MyTimeProj.addElement(MyProjections);
         }
 
-        MyElements = (Vector) MyTimes.elementAt(0);
-        MyProjections = (Vector []) MyTimeProj.elementAt(0);
+        MyElements = MyTimes.elementAt(0);
+        MyProjections = MyTimeProj.elementAt(0);
         String [] nNames = (String []) Names.clone();
         String [] nUnits = (String []) Units.clone();
         
@@ -2828,11 +2880,11 @@ boolean InOverlayDispl(int e) {
     return GetBundleAt(e).InOverlayDispl();
 }
 
-void ToggleOverlayDispl(int val) {
+public void ToggleOverlayDispl(int val) {
     GetBundleAt(ActiveElement).ToggleOverlayDispl(val);
 }
 
-void ToggleMulDispl(int val) {
+public void ToggleMulDispl(int val) {
     GetBundleAt(ActiveElement).ToggleMulDispl(val);
 }
  

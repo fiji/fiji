@@ -28,12 +28,13 @@ def make_app():
 		removedirs('Fiji.app')
 	os.makedirs('Fiji.app/images')
 	shutil.copy('images/icon.png', 'Fiji.app/images/')
-	shutil.copy('ij.jar', 'Fiji.app/')
 	for d in ['plugins', 'macros', 'jars', 'misc', 'retro', 'luts', \
 			'scripts']:
 		shutil.copytree(d, 'Fiji.app/' + d)
 	if os.path.isdir('Fiji.app/jars/jython2.2.1/cachedir'):
 		removedirs('Fiji.app/jars/jython2.2.1/cachedir')
+	if os.path.isdir('Fiji.app/jars/cachedir'):
+		removedirs('Fiji.app/jars/cachedir')
 
 def get_java_platform(platform):
 	if platform == 'linux64':

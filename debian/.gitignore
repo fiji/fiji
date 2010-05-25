@@ -1,5 +1,7 @@
 *.log
-fiji
+/fiji
 *.substvars
 *.debhelper
-files
+/files
+/db.xml
+/db.xml.gz

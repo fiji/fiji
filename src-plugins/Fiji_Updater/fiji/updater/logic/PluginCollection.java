@@ -29,7 +29,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 	static DependencyAnalyzer dependencyAnalyzer;
 
-	interface Filter {
+	public interface Filter {
 		boolean matches(PluginObject plugin);
 	}
 
@@ -50,6 +50,10 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 	public Iterable<PluginObject> toUninstall() {
 		return filter(is(Action.UNINSTALL));
+	}
+
+	public Iterable<PluginObject> toRemove() {
+		return filter(is(Action.REMOVE));
 	}
 
 	public Iterable<PluginObject> toUpdate() {
@@ -100,8 +104,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 			/* the old updater will only checksum these! */
 			})), or(startsWith("fiji-"),
 				and(startsWith(new String[] {
-					"ij.jar", "plugins/", "jars/",
-					"retro/", "misc/"
+					"plugins/", "jars/", "retro/", "misc/"
 					}), endsWith(".jar")))));
 	}
 
@@ -394,6 +397,12 @@ public class PluginCollection extends ArrayList<PluginObject> {
 	}
 
 	public void markForUpdate(boolean evenForcedUpdates) {
+		PluginObject updater = getPlugin("plugins/Fiji_Updater.jar");
+		if (updater != null &&
+				updater.getStatus() == Status.UPDATEABLE) {
+			updater.setAction(Action.UPDATE);
+			return;
+		}
 		for (PluginObject plugin : updateable(evenForcedUpdates))
 			plugin.setFirstValidAction(new Action[] {
 				Action.UPDATE, Action.UNINSTALL, Action.INSTALL

@@ -77,7 +77,8 @@ public class XMLFileWriter {
 			writeSimpleTags("platform", plugin.getPlatforms());
 			writeSimpleTags("category", plugin.getCategories());
 
-			if (plugin.current != null) {
+			PluginObject.Version current = plugin.current;
+			if (plugin.getChecksum() != null) {
 				attr.clear();
 				setAttribute(attr, "checksum",
 						plugin.getChecksum());
@@ -106,7 +107,11 @@ public class XMLFileWriter {
 				writeSimpleTags("author", plugin.getAuthors());
 				handler.endElement("", "", "version");
 			}
-                        for (PluginObject.Version version :
+			if (current != null && !current.checksum
+					.equals(plugin.getChecksum()))
+				plugin.addPreviousVersion(current.checksum,
+						current.timestamp);
+			for (PluginObject.Version version :
                                         plugin.getPrevious()) {
                                 attr.clear();
                                 setAttribute(attr, "timestamp",

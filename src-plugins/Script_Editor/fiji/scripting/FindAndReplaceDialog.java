@@ -28,17 +28,15 @@ import org.fife.ui.rtextarea.SearchEngine;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
 
 public class FindAndReplaceDialog extends JDialog implements ActionListener {
-	RSyntaxTextArea textArea;
-
+	TextEditor textEditor;
 	JTextField searchField, replaceField;
 	JLabel replaceLabel;
 	JCheckBox matchCase, wholeWord, markAll, regex, forward;
 	JButton findNext, replace, replaceAll, cancel;
 
-	public FindAndReplaceDialog(TextEditor editor,
-			RSyntaxTextArea textArea) {
+	public FindAndReplaceDialog(TextEditor editor) {
 		super(editor);
-		this.textArea = textArea;
+		textEditor = editor;
 
 		Container root = getContentPane();
 		root.setLayout(new GridBagLayout());
@@ -98,6 +96,10 @@ public class FindAndReplaceDialog extends JDialog implements ActionListener {
 		replaceField.addKeyListener(listener);
 	}
 
+	protected RSyntaxTextArea getTextArea() {
+		return textEditor.getTextArea();
+	}
+
 	public void show(boolean replace) {
 		setTitle(replace ? "Replace" : "Find");
 		replaceLabel.setEnabled(replace);
@@ -107,6 +109,10 @@ public class FindAndReplaceDialog extends JDialog implements ActionListener {
 			getRootPane().getBackground());
 		this.replace.setEnabled(replace);
 		replaceAll.setEnabled(replace);
+
+		searchField.selectAll();
+		replaceField.selectAll();
+		getRootPane().setDefaultButton(findNext);
 		show();
 	}
 
@@ -153,25 +159,13 @@ public class FindAndReplaceDialog extends JDialog implements ActionListener {
 		String text = searchField.getText();
 		if (text.length() == 0)
 			return;
-		if (source == findNext) {
-			boolean found = SearchEngine.find(textArea, text,
-					forward.isSelected(),
-					matchCase.isSelected(),
-					wholeWord.isSelected(),
-					regex.isSelected());
-			messageAtEnd(found);
-		}
-		else if (source == replace) {
-			boolean replace = SearchEngine.replace(textArea, text,
-					replaceField.getText(),
-					forward.isSelected(),
-					matchCase.isSelected(),
-					wholeWord.isSelected(),
-					regex.isSelected());
-			messageAtEnd(replace);
-		}
+		if (source == findNext)
+			searchOrReplace(false);
+		else if (source == replace)
+			searchOrReplace(true);
 		else if (source == replaceAll) {
-			int replace = SearchEngine.replaceAll(textArea, text,
+			int replace = SearchEngine.replaceAll(getTextArea(),
+					text,
 					replaceField.getText(),
 					matchCase.isSelected(),
 					wholeWord.isSelected(),
@@ -181,15 +175,55 @@ public class FindAndReplaceDialog extends JDialog implements ActionListener {
 		}
 	}
 
-	private void messageAtEnd(boolean value) {
-		if (!value) {
-			JOptionPane.showMessageDialog(this, "Fiji has finished searching the document");
-			textArea.setCaretPosition(0);
-		}
+	public boolean searchOrReplace(boolean replace) {
+		return searchOrReplace(replace, forward.isSelected());
+	}
+
+	public boolean searchOrReplace(boolean replace, boolean forward) {
+		if (searchOrReplaceFromHere(replace, forward))
+			return true;
+		RSyntaxTextArea textArea = getTextArea();
+		int caret = textArea.getCaretPosition();
+		textArea.setCaretPosition(forward ?
+				0 : textArea.getDocument().getLength());
+		if (searchOrReplaceFromHere(replace, forward))
+			return true;
+		JOptionPane.showMessageDialog(this, "No match found!");
+		textArea.setCaretPosition(caret);
+		return false;
+	}
+
+	protected boolean searchOrReplaceFromHere(boolean replace) {
+		return searchOrReplaceFromHere(forward.isSelected());
+	}
+
+	protected boolean searchOrReplaceFromHere(boolean replace, boolean forward) {
+		RSyntaxTextArea textArea = getTextArea();
+		return replace ?
+			SearchEngine.replace(textArea, searchField.getText(),
+					replaceField.getText(),
+					forward,
+					matchCase.isSelected(),
+					wholeWord.isSelected(),
+					regex.isSelected()) :
+			SearchEngine.find(textArea, searchField.getText(),
+					forward,
+					matchCase.isSelected(),
+					wholeWord.isSelected(),
+					regex.isSelected());
 	}
 
 	public boolean isReplace() {
 		return replace.isEnabled();
 	}
 
+	/**
+	 * Sets the content of the search field.
+	 *
+	 * @param pattern The new content of the search field.
+	 */
+	public void setSearchPattern(String pattern) {
+		searchField.setText(pattern);
+	}
 }
+

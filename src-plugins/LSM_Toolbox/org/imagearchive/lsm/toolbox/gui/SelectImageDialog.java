@@ -33,7 +33,7 @@ public class SelectImageDialog extends JDialog {
 
 	private JList imageList;
 
-	private MasterModel masterModel;
+	private MasterModel masterModel = MasterModel.getMasterModel();
 
 	private Vector<ListBoxImage> fileInfos;
 
@@ -55,20 +55,16 @@ public class SelectImageDialog extends JDialog {
 
 	private boolean channel = false;
 
-	public SelectImageDialog(JFrame parent, MasterModel masterModel,
-			String label, boolean channel, byte filter) {
+	public SelectImageDialog(JFrame parent, String label, boolean channel, byte filter) {
 		super(parent, true);
-		this.masterModel = masterModel;
 		this.label = label;
 		this.channel = channel;
 		initiliazeGUI();
 		fillList(filter);
 	}
 
-	public SelectImageDialog(JFrame parent, MasterModel masterModel,
-			String label, boolean channel) {
+	public SelectImageDialog(JFrame parent, String label, boolean channel) {
 		super(parent, true);
-		this.masterModel = masterModel;
 		this.label = label;
 		this.channel = channel;
 		initiliazeGUI();

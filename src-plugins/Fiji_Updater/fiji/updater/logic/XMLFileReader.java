@@ -41,24 +41,26 @@ public class XMLFileReader extends DefaultHandler {
 	private PluginObject current;
 	private String currentTag, body;
 
-	public XMLFileReader(String path) throws ParserConfigurationException,
-			IOException, SAXException {
-		initialize(new InputSource(path));
+	public XMLFileReader(String path, long previousLastModified)
+			throws ParserConfigurationException, IOException,
+				SAXException {
+		initialize(new InputSource(path), previousLastModified);
 	}
 
-	public XMLFileReader(InputStream in)
+	public XMLFileReader(InputStream in, long previousLastModified)
 			throws ParserConfigurationException, IOException,
 			       SAXException {
-		initialize(new InputSource(in));
+		initialize(new InputSource(in), previousLastModified);
 	}
 
-	private void initialize(InputSource inputSource)
+	private void initialize(InputSource inputSource,
+			long previousLastModified)
 			throws ParserConfigurationException, SAXException,
 			       IOException {
 		File dbXml = new File(Util.prefix(Updater.XML_COMPRESSED));
-		newTimestamp = !dbXml.exists() ? 0 :
+		newTimestamp =
 			// lastModified is a Unix epoch, we need a timestamp
-			Long.parseLong(Util.timestamp(dbXml.lastModified()));
+			Long.parseLong(Util.timestamp(previousLastModified));
 
 		SAXParserFactory factory = SAXParserFactory.newInstance();
 		factory.setNamespaceAware(true);
@@ -127,8 +129,10 @@ public class XMLFileReader extends DefaultHandler {
 		else if (tagName.equals("plugin")) {
 			if (current.current == null)
 				current.setStatus(Status.OBSOLETE_UNINSTALLED);
-			else if (current.isNewerThan(newTimestamp))
+			else if (current.isNewerThan(newTimestamp)) {
 				current.setStatus(Status.NEW);
+				current.setAction(PluginObject.Action.INSTALL);
+			}
 			plugins.add(current);
 			current = null;
 		}

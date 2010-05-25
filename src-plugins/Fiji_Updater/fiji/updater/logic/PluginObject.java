@@ -61,7 +61,7 @@ public class PluginObject {
 		UPDATEABLE (new Action[] { Action.UPDATEABLE, Action.UNINSTALL, Action.UPDATE }, Action.UPLOAD),
 		MODIFIED (new Action[] { Action.MODIFIED, Action.UNINSTALL, Action.UPDATE }, Action.UPLOAD),
 		NOT_FIJI (new Action[] { Action.NOT_FIJI, Action.UNINSTALL }, Action.UPLOAD),
-		NEW (new Action[] { Action.NEW, Action.INSTALL}),
+		NEW (new Action[] { Action.NEW, Action.INSTALL, Action.REMOVE }),
 		OBSOLETE_UNINSTALLED (new Action[] { Action.OBSOLETE }),
 		OBSOLETE (new Action[] { Action.OBSOLETE, Action.UNINSTALL }, Action.UPLOAD),
 		OBSOLETE_MODIFIED (new Action[] { Action.MODIFIED, Action.UNINSTALL }, Action.UPLOAD);
@@ -105,8 +105,6 @@ public class PluginObject {
 	public Version current;
 	public Map<Version, Object> previous;
 	public long filesize, newTimestamp;
-
-	// TODO: finally add platform
 
 	// These are LinkedHashMaps to retain the order of the entries
 	protected Map<String, Dependency> dependencies;
@@ -185,13 +183,19 @@ public class PluginObject {
 
 	public void addDependency(Dependency dependency) {
 		// the timestamp should not be changed unnecessarily
-		if (dependencies.containsKey(dependency.filename))
+		if (dependency.filename == null ||
+				"".equals(dependency.filename.trim()) ||
+				dependencies.containsKey(dependency.filename))
 			return;
 		dependencies.put(dependency.filename, dependency);
 	}
 
 	public void removeDependency(String other) {
 		dependencies.remove(other);
+	}
+
+	public boolean hasDependency(String filename) {
+		return dependencies.containsKey(filename);
 	}
 
 	public void addLink(String link) {
@@ -211,7 +215,8 @@ public class PluginObject {
 	}
 
 	public void addPlatform(String platform) {
-		platforms.put(platform, (Object)null);
+		if (platform != null && !platform.trim().equals(""))
+			platforms.put(platform.trim(), (Object)null);
 	}
 
 	public Iterable<String> getPlatforms() {
@@ -282,10 +287,15 @@ public class PluginObject {
 			throw new Error("Invalid action requested for plugin "
 					+ filename + "(" + action
 					+ ", " + status + ")");
-		if (action == Action.UPLOAD)
-			markForUpload();
-		else if (action == Action.REMOVE)
-			markForRemoval();
+		if (action == Action.UPLOAD) {
+			PluginCollection plugins =
+				PluginCollection.getInstance();
+			Iterable<String> dependencies =
+				plugins.analyzeDependencies(this);
+			if (dependencies != null)
+				for (String dependency : dependencies)
+					addDependency(dependency);
+		}
 		this.action = action;
 	}
 
@@ -303,7 +313,7 @@ public class PluginObject {
 		setNoAction();
 	}
 
-	private void markForUpload() {
+	public void markUploaded() {
 		if (!isFiji()) {
 			status = Status.INSTALLED;
 			newChecksum = current.checksum;
@@ -321,19 +331,9 @@ public class PluginObject {
 						+ " is already uploaded");
 			setVersion(newChecksum, newTimestamp);
 		}
-		filesize = Util.getFilesize(filename);
-
-		PluginCollection plugins = PluginCollection.getInstance();
-		// TODO: complain if not Fiji (and offer to add them)
-		Iterable<String> dependencies =
-			plugins.analyzeDependencies(this);
-		if (dependencies != null)
-			for (String dependency : dependencies)
-					addDependency(dependency);
 	}
 
-	protected void markForRemoval() {
-		// TODO: check dependencies (but not here; _after_ all marking)
+	public void markRemoved() {
 		addPreviousVersion(current.checksum, current.timestamp);
 		setStatus(Status.OBSOLETE);
 		current = null;
@@ -345,12 +345,14 @@ public class PluginObject {
 
 	public String getChecksum() {
 		return action == Action.UPLOAD ? newChecksum :
-			current == null ? null : current.checksum;
+			action == Action.REMOVE || current == null ?
+			null : current.checksum;
 	}
 
 	public long getTimestamp() {
-		return action == Action.UPLOAD ?
-			newTimestamp : current == null ? 0 : current.timestamp;
+		return action == Action.UPLOAD ? newTimestamp :
+			action == Action.REMOVE || current == null ?
+			0 : current.timestamp;
 	}
 
 	public Iterable<Dependency> getDependencies() {
@@ -385,7 +387,6 @@ public class PluginObject {
 		return action != status.getNoAction();
 	}
 
-	// TODO: why that redundancy?  We set Action.UPDATE only if it is updateable anyway!  Besides, use getAction(). DRY, DRY, DRY!
 	public boolean toUpdate() {
 		return action == Action.UPDATE;
 	}
