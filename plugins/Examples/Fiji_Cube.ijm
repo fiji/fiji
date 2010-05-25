@@ -25,7 +25,7 @@ max=256;
 th=16;
 
 selectWindow("FijiCube");
-for (i=1;i<=16;i++) {
+for (i=1;i<=th;i++) {
   setSlice(i);
   run("Paste");
 }
