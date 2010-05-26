@@ -250,6 +250,11 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		this.imp = imp;
 		IJ.register(Series_Labeler.class);
 		if (imp != null) {
+			if (imp.isHyperStack()) {
+				IJ.error("Series Labeler", "Sorry, but this plugin does not work with hyperstacks.");
+					return DONE;
+			}
+
 			first = 1;
 			last = imp.getStackSize();
 			setFontParams();
