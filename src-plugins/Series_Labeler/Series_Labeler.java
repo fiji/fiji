@@ -1228,7 +1228,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		 * display name is set to "Decimal".
 		 */
 		public DecimalLabelFormat() {
-			this(new String[] { "y", "w", "d", "h", "min", "s", "ms", "us",
+			this(new String[] { "y", "w", "d", "h", "m", "min", "s", "ms", "us",
 					"ns", "ps", "fs", "as" }, "Decimal");
 		}
 
