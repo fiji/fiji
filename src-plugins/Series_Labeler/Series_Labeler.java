@@ -195,7 +195,8 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		new DecimalLabelFormat( new String[] {"pixels", "pm", "Å",
 			"nm", "um", "mm", "cm", "m", "km", "Mm",
 			"parsec", "light year"}, "Lengths", false,
-			true) };
+			false),
+		new CustomLabelFormat()};
 	
 	// the availble spectral formats
 	final AbstractStampFormat[] spectralFormats = {
