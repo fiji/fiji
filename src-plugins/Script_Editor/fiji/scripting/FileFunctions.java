@@ -1,5 +1,7 @@
 package fiji.scripting;
 
+import ij.IJ;
+
 import ij.gui.GenericDialog;
 
 import java.io.File;
@@ -13,6 +15,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -370,6 +373,51 @@ public class FileFunctions {
 		}
 		in.close();
 		return buf.toString();
+	}
+
+	/**
+	 * Get a list of files from a directory (recursively)
+	 */
+	public void listFilesRecursively(File directory, String prefix, List<String> result) {
+		for (File file : directory.listFiles())
+			if (file.isDirectory())
+				listFilesRecursively(file, prefix + file.getName() + "/", result);
+			else if (file.isFile())
+				result.add(prefix + file.getName());
+	}
+
+	/**
+	 * Get a list of files from a directory or within a .jar file
+	 *
+	 * The returned items will only have the base path, to get at the
+	 * full URL you have to prefix the url passed to the function.
+	 */
+	public List<String> getResourceList(String url) {
+		List<String> result = new ArrayList<String>();
+
+		if (url.startsWith("jar:")) {
+			int bang = url.indexOf("!/");
+			String jarURL = url.substring(4, bang);
+			if (jarURL.startsWith("file:"))
+				jarURL = jarURL.substring(5);
+			String prefix = url.substring(bang + 2);
+			int prefixLength = prefix.length();
+
+			try {
+				JarFile jar = new JarFile(jarURL);
+				Enumeration<JarEntry> e = jar.entries();
+				while (e.hasMoreElements()) {
+					JarEntry entry = e.nextElement();
+					if (entry.getName().startsWith(prefix))
+						result.add(entry.getName().substring(prefixLength));
+				}
+			} catch (IOException e) {
+				IJ.handleException(e);
+			}
+		}
+		else
+			listFilesRecursively(new File(url), "", result);
+		return result;
 	}
 
 	protected boolean error(String message) {

@@ -63,11 +63,16 @@ public class Install_J3D implements PlugIn {
 	/** Java home directory */
 	private static final String JRE = System.getProperty("java.home");
 
+	/** Overwrite without asking for confirmation? */
+	protected static boolean overwrite = false;
+
 	/**
 	 * Run the installation stand-alone.
 	 */
 	public static void main(String[] args) {
-		new Install_J3D().autoInstall();
+		overwrite = true;
+		if (!new Install_J3D().autoInstall())
+			System.exit(1);
 	}
 
 	/**
@@ -391,7 +396,7 @@ public class Install_J3D implements PlugIn {
 	}
 
 	static boolean overwrite(File f) {
-		if(!f.exists())
+		if(overwrite || !f.exists())
 			return true;
 		YesNoCancelDialog d = new YesNoCancelDialog(
 			IJ.getInstance() != null ? IJ.getInstance() : new Frame(),
