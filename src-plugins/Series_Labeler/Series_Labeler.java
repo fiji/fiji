@@ -103,6 +103,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
@@ -235,6 +236,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	private TextField locationXTextField;
 	private TextField locationYTextField;
 	private TextField intervalTextField;
+	private TextField suffixTextField;
 	
 	// the panel containing the units selection
 	private JPanel labelUnitsPanel;
@@ -246,6 +248,8 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	private JPanel decimalPlacesPanel;
 	// has a custom interval been entered in the gui
 	private boolean customIntervalEntered;
+	// has a custom unit been selected in the gui
+	private boolean customUnitSelected;
 
 	/**
 	 * Setup the plug-in and tell ImageJ it needs to work on
@@ -326,7 +330,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		
 		// add combobox for label format
 		JPanel pLabelFormat = createComboBoxPanel("Label_Format",
-			convertFormatsToStrings(timeFormats), 0);
+			convertFormatsToStrings(selectedStackType.getSupportedFormats()), 0);
 		formatsComboBox = (Choice) gd.getChoices().lastElement();
 		pLabelFormat.setLocation(left, 30);
         
@@ -339,6 +343,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		// add Custom Suffix panel
 		customSuffixPanel = createTextFieldPanel("Custom_Suffix",
 			customSuffix);
+		suffixTextField = (TextField) gd.getStringFields().lastElement();
 		customSuffixPanel.setLocation(left, 60);
 		
 		// add Custom Format panel
@@ -437,6 +442,8 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		 * ExtendedPluginFilter and DialogListener!
 		 */
 		gd.addPreviewCheckbox(pfr);
+		bringMetaDataUnitToGUI();
+
 		gd.addMessage("Series Labeler plugin for Fiji (is just ImageJ - batteries included)\n" +
 				"maintained by Dan White MPI-CBG dan(at)chalkie.org.uk");
 
@@ -686,6 +693,16 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	}
 	
 	/**
+	 * A method for selecting the custom unit format
+	 * of the currently selected stack type.
+	 */
+	protected void selectCustomFormat() {
+		int customFormat = selectedStackType.getCustomFormatIndex();
+		formatsComboBox.select(customFormat);
+		selectedFormat = selectedStackType.getSupportedFormats()[customFormat];
+	}
+
+	/**
 	 * Adds different Swing JPanels to a container JPanel.
 	 * Moreover the container JPanel is encapsulated in a
 	 * AWT Panel which in turn is added to the generic
@@ -746,7 +763,9 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		int currentType = gd.getNextChoiceIndex();
 		StackType st = stackTypes[currentType];
 
-		if (st != selectedStackType) {
+		boolean stackTypeChanged = (st != selectedStackType);
+
+		if (stackTypeChanged) {
 			selectedStackType = st;
 			/* if stack type has changed, we must
 			 * update the formats choice
@@ -790,7 +809,8 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		int currentFormat = gd.getNextChoiceIndex();
 		AbstractStampFormat lf =
 			selectedStackType.getSupportedFormats()[currentFormat];
-		if (lf != selectedFormat) {
+		boolean selectedFormatChanged = (lf != selectedFormat);
+		if (selectedFormatChanged) {
 			selectedFormat = lf;
 			/* if format changed, must modify units
 			 * choice accordingly
@@ -799,12 +819,28 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			for (String unit : selectedFormat.getAllowedFormatUnits()) {
 				labelUnitsComboBox.addItem(unit);
 			}
+
+			if (!stackTypeChanged) {
+				customUnitSelected = true;
+			}
 		}
 		customSuffix = gd.getNextString();
 		customFormat = gd.getNextString();
 
 		// get the selected suffix of drop-down list
-		chosenSuffix = gd.getNextChoice();
+		String theCurrentSuffix = gd.getNextChoice();
+		if (!theCurrentSuffix.equals(chosenSuffix)){
+			chosenSuffix = theCurrentSuffix;
+			if (!selectedFormatChanged) {
+				customUnitSelected = true;
+			}
+		}
+
+		if (selectedFormatChanged) {
+			if (!customUnitSelected){
+				bringMetaDataUnitToGUI();
+			}
+		}
 
 		decimalPlaces = (int) gd.getNextNumber();
 		
@@ -887,6 +923,33 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		}
 	}
 	
+	/**
+	 * Method to take the meta data units from the calibration in the imp
+	 * and give it to the required member variables and drop down list
+	 * and custom suffix field. Tries to find the units test from the read
+	 * metadata in the list of available units for that stack type,
+	 * and uses that list entry if it finds it, but if its not in the list
+	 * then use that unit text in the custom suffix field.
+	 */
+	void bringMetaDataUnitToGUI() {
+		// check if there is time unit in the imp.getCalibration we can use
+		String unitFromMetaData = selectedStackType.getStackMetaDataUnit(imp);
+		// select the unit got from the calibration if its in the list of possible units
+		int unitIndex = Arrays.asList(selectedFormat.getAllowedFormatUnits()).indexOf(unitFromMetaData);
+		if (unitIndex != -1) {
+			chosenSuffix = unitFromMetaData;
+			labelUnitsComboBox.select(unitIndex);
+		} else {
+			chosenSuffix = selectedFormat.getAllowedFormatUnits()[0];
+			labelUnitsComboBox.select(0);
+			// if the suffix got from the imp.getCalibration is not in our list of possibilities
+			// put it in the customSuffix
+			customSuffix = unitFromMetaData;
+			suffixTextField.setText(unitFromMetaData);
+			selectCustomFormat();
+		}
+	}
+
 	/**
 	 * Creates a string array out of the names of the available formats.
 	 */
