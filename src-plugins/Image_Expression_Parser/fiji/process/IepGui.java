@@ -114,6 +114,12 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 		"</tr>"+
 		"<tr>"+
 		"<td>Gaussian convolution</td> <td>gauss(img, sigma)</td> "+
+		"</tr>"+
+		"<tr>"+
+		"<td>Floyd-Steinberg dithering</td> <td>dither(img)</td> "+
+		"</tr>"+
+		"<tr>"+
+		"<td>Image normalization (sum to 1)</td> <td>normalize(img)</td> "+
 		"</table> " +
 		"<p>" +
 		"<u>Supported functions:</u><br>" +
