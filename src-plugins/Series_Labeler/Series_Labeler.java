@@ -194,7 +194,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 
 	// the availble z-stack formats
 	final AbstractStampFormat[] zFormats = {
-		new DecimalLabelFormat( new String[] {"pixels", "pm", "Å",
+		new DecimalLabelFormat( new String[] {"pixel", "pm", "Å",
 			"nm", "um", "mm", "cm", "m", "km", "Mm",
 			"parsec", "light year"}, "Lengths", false,
 			false),
