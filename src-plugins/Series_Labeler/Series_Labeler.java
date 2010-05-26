@@ -83,6 +83,7 @@ import ij.plugin.frame.Fonts;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.ImageListener;
+import ij.measure.Calibration;
 
 import java.awt.AWTEvent;
 import java.awt.Choice;
@@ -122,6 +123,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	// the font to draw the text with
 	Font font;
 	double start = 1.0;
+	// the interval between two frames
 	double interval = 1.0;
 	double lastTime;
 	// the custom suffix, used if format supports it
@@ -232,6 +234,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	private JPanel fontPropertiesContainer;
 	private TextField locationXTextField;
 	private TextField locationYTextField;
+	private TextField intervalTextField;
 	
 	// the panel containing the units selection
 	private JPanel labelUnitsPanel;
@@ -241,6 +244,8 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	private JPanel customLabelFormatPanel;
 	// the panel containing the Decimal Places elements
 	private JPanel decimalPlacesPanel;
+	// has a custom interval been entered in the gui
+	private boolean customIntervalEntered;
 
 	/**
 	 * Setup the plug-in and tell ImageJ it needs to work on
@@ -255,8 +260,13 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 					return DONE;
 			}
 
+			Calibration cal = imp.getCalibration();
+
 			first = 1;
 			last = imp.getStackSize();
+			// if frame interval property of image is zero, set it to one
+			interval = Math.abs(cal.frameInterval) < 0.0000001 ? 1.0 : cal.frameInterval;
+			// initialize font parameters
 			setFontParams();
 		}
 
@@ -360,6 +370,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		// add a panel for the interval settings
 		JPanel pInterval = createNumericFieldPanel("Interval",
 			interval, 2);
+		intervalTextField = (TextField) gd.getNumericFields().lastElement();
 		pInterval.setLocation(left, 60);
 		
 		// add panel for the everyNth setting
@@ -747,8 +758,33 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			}
 			// select first item of new list
 			formatsComboBox.select(0);
-		}
 
+			// if the user did not change the interval the
+			// values are read in from the image properties
+			// this check relies on the order of stack types in that drop down list
+			if (!customIntervalEntered) {
+				// if time stack is selected in the list,
+				// then use frame interval as the interval.
+				if (selectedStackType == stackTypes[0]){
+					interval = imp.getCalibration().frameInterval;
+					// if frame interval property of image is zero, set it to one
+					interval = Math.abs(interval) < 0.0000001 ? 1.0 : interval;
+					intervalTextField.setText(IJ.d2s(interval, 2));
+				}
+				// if its a z-stack then use pixel depth as the interval
+				else if (selectedStackType == stackTypes[1]){
+					interval = imp.getCalibration().pixelDepth;
+					// if frame interval property of image is zero, set it to one
+					interval = Math.abs(interval) < 0.0000001 ? 1.0 : interval;
+					intervalTextField.setText(IJ.d2s(interval, 2));
+				}
+				// if its a spectral-stack then use 1 as the interval
+				else if (selectedStackType == stackTypes[2]){
+					interval = 1.0;
+					intervalTextField.setText(IJ.d2s(interval, 2));
+				}
+			}
+		}
 
 		// has the label format been changed?
 		int currentFormat = gd.getNextChoiceIndex();
@@ -773,7 +809,13 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		decimalPlaces = (int) gd.getNextNumber();
 		
 		start = gd.getNextNumber();
-		interval = gd.getNextNumber();
+
+		double currentIntervalInGui = gd.getNextNumber();
+		if (Math.abs(currentIntervalInGui - interval) > 0.000001) {
+			customIntervalEntered = true;
+			interval = currentIntervalInGui;
+		}
+
 		frameMask = (int) gd.getNextNumber();
 		first = (int) gd.getNextNumber();
 		last = (int) gd.getNextNumber();
