@@ -218,9 +218,9 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	
 	// the different types of stacks
 	final StackType[] stackTypes = {
-		new StackType("time series or movie", timeFormats),
-		new StackType("z-stack", zFormats),
-		new StackType("spectral", spectralFormats)};
+		new StackType("time series or movie", timeFormats, 2),
+		new StackType("z-stack", zFormats, 1),
+		new StackType("spectral", spectralFormats, 2)};
 	
 	// GUI variables that are needed to read out data
 	// from the components
@@ -1076,10 +1076,13 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		String name;
 		// the supported formats
 		AbstractStampFormat[] supportedFormats;
+		// this variable keeps the index value of the custom format
+		int customFormatIndex;
 
-		public StackType(String name, AbstractStampFormat[] formats) {
+		public StackType(String name, AbstractStampFormat[] formats, int indexOfCustomFormat) {
 			this.name = name;
 			supportedFormats = formats;
+			customFormatIndex = indexOfCustomFormat;
 		}
 
 		public String getName() {
@@ -1088,7 +1091,11 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 
 		public AbstractStampFormat[] getSupportedFormats() {
 			return supportedFormats;
-		 }
+		}
+
+		public int getCustomFormatIndex() {
+			return customFormatIndex;
+		}
 	}
 
 	/**
