@@ -2103,9 +2103,9 @@ public class Fake {
 		}
 	}
 
-	protected static String getPrefix(String path) {
+	protected String getPrefix(File cwd, String path) {
 		try {
-			InputStream input = new FileInputStream(path);
+			InputStream input = new FileInputStream(makePath(cwd, path));
 			InputStreamReader inputReader =
 				new InputStreamReader(input);
 			BufferedReader reader = new BufferedReader(inputReader);
@@ -2162,7 +2162,7 @@ public class Fake {
 					continue;
 				}
 				if (lastJava != null) {
-					String prefix = getPrefix(makePath(cwd, lastJava));
+					String prefix = getPrefix(cwd, lastJava);
 					if (prefix != null)
 						result.add(prefix);
 					else
