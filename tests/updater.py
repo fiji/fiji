@@ -71,7 +71,7 @@ if launchProgram(['chmod', 'a+x', tmpRoot + 'fiji']) != 0:
 	die('Could not make ' + tmpRoot + 'fiji executable')
 
 # update some "packages"
-f = open(tmpRoot + 'fiji.cxx', 'w')
+f = open(tmpRoot + 'fiji.c', 'w')
 f.write('pretend to be a developer')
 f.close()
 
@@ -148,7 +148,7 @@ f.close()
 rename(macros + 'obsoleted.ijm', macros + 'obsolete.ijm')
 
 # pretend to be a user again
-remove(tmpRoot + 'fiji.cxx')
+remove(tmpRoot + 'fiji.c')
 
 # install a test script
 action = tmpRoot + 'plugins/Test_Fiji_Updater.py'

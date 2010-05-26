@@ -97,6 +97,12 @@ public class Main {
 				+ plugin.getTimestamp());
 	}
 
+	public void listCurrent(List<String> files) {
+		for (PluginObject plugin : plugins.filter(new Filter(files)))
+			System.out.println(plugin.filename + "-"
+				+ plugin.getTimestamp());
+	}
+
 	class OnePlugin implements Downloader.FileDownload {
 		PluginObject plugin;
 
@@ -175,6 +181,7 @@ public class Main {
 			+ "\n"
 			+ "Commands:\n"
 			+ "\t--list [<files>]\n"
+			+ "\t--list-current [<files>]\n"
 			+ "\t--update [<files>]");
 	}
 
@@ -193,6 +200,8 @@ public class Main {
 		String command = args[0];
 		if (command.equals("--list"))
 			getInstance().list(makeList(args, 1));
+		else if (command.equals("--list-current"))
+			getInstance().listCurrent(makeList(args, 1));
 		else if (command.equals("--update"))
 			getInstance().update(makeList(args, 1));
 		else

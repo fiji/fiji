@@ -204,11 +204,19 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 	}
 
 	public void setFile(String path) throws IOException {
+		File oldFile = file;
 		file = null;
 		if (path == null)
 			setText("");
 		else {
 			File file = new File(path);
+			if (!file.isAbsolute())
+				file = new File(ij.io.OpenDialog.getDefaultDirectory(), path);
+			int line = 0;
+			try {
+				if (file.getCanonicalPath().equals(oldFile.getCanonicalPath()))
+					line = getCaretLineNumber();
+			} catch (Exception e) { /* ignore */ }
 			if (!file.exists()) {
 				modifyCount = Integer.MIN_VALUE;
 				setFileName(file);
@@ -217,6 +225,11 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 			read(new BufferedReader(new FileReader(file)),
 				null);
 			this.file = file;
+			if (line > getLineCount())
+				line = getLineCount() - 1;
+			try {
+				setCaretPosition(getLineStartOffset(line));
+			} catch (BadLocationException e) { /* ignore */ }
 		}
 		discardAllEdits();
 		modifyCount = 0;

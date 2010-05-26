@@ -126,7 +126,7 @@ This rule calls GCC (or G++) to make a program.  If GCC could not be
 executed, and the variable 'precompiledPath' is set, Fake attempts to
 copy the executable from there instead (possibly with suffix "-<platform>"):
 
-	fiji <- fiji.cxx
+	fiji <- fiji.c
 
 CompileJar
 ----------
