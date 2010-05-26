@@ -52,8 +52,7 @@
  *     of some time eg every 5 min.
  *  - preview with live update when change GUI -ok, changes in
  *    GUI are read into the preview.
- *  - preview with stack slider in the GUI. - slider now in GUI
- *    but functionality is half broken
+ *  - preview with stack slider in the GUI. - ok
  *  - Use Java Date for robust formatting of dates/times counted
  *    in milliseconds. (done, added hybrid date form at for
  *    versatile formatting of the digital time)
