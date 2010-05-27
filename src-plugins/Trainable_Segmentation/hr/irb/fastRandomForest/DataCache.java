@@ -219,18 +219,18 @@ public class DataCache {
             new DataCache(this); // makes shallow copy of vals matrix
 
     double[] newWeights = new double[ numInstances ]; // all 0.0 by default
-    
+             
     for ( int r = 0; r < bagSize; r++ ) {
-      
-      int curIdx = random.nextInt( numInstances );
-      newWeights[curIdx] += instWeights[curIdx];
-      if ( !result.inBag[curIdx] ) {
-        result.numInBag++;
-        result.inBag[curIdx] = true;
-      }
-      
-    }
 
+    	int curIdx = random.nextInt( numInstances );
+    	newWeights[curIdx] += instWeights[curIdx];
+    	if ( !result.inBag[curIdx] ) {
+    		result.numInBag++;
+    		result.inBag[curIdx] = true;
+    	}
+
+    }
+    
     result.instWeights = newWeights;
 
     // we also need to fill sortedIndices by peeking into the inBag array, but
@@ -246,6 +246,12 @@ public class DataCache {
   /** Invoked only when tree is trained. */
   protected void createInBagSortedIndices() {
 
+	  // If the bag size is equal to the number of instances, there is
+	  // no need to create the indices again.
+	if(this.numInBag == this.numInstances)
+		  return;
+
+	  
     int[][] newSortedIndices = new int[ numAttributes ][ ];
     
     for (int a = 0; a < numAttributes; a++) {
