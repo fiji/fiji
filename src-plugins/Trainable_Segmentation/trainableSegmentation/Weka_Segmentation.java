@@ -1142,7 +1142,7 @@ public class Weka_Segmentation implements PlugIn
 		{
 			IJ.showStatus("Creating feature stack...");
 			IJ.log("Creating feature stack...");
-			featureStack.updateFeatures();
+			featureStack.updateFeaturesMT();
 			updateFeatures = false;
 			updateWholeData = true;
 			IJ.log("Features stack is now updated.");
@@ -1211,7 +1211,7 @@ public class Weka_Segmentation implements PlugIn
 		{
 			IJ.showStatus("Creating feature stack...");
 			IJ.log("Creating feature stack...");
-			featureStack.updateFeatures();
+			featureStack.updateFeaturesMT();
 			updateFeatures = false;
 			updateWholeData = true;
 			IJ.log("Features stack is now updated.");
@@ -1508,7 +1508,7 @@ public class Weka_Segmentation implements PlugIn
 		final FeatureStack testImageFeatures = new FeatureStack(testImage);
 		// Use the same features as the current classifier
 		testImageFeatures.setEnableFeatures(featureStack.getEnableFeatures());
-		testImageFeatures.updateFeatures();
+		testImageFeatures.updateFeaturesMT();
 
 		// Set proper class names (skip empty list ones)
 		ArrayList<String> classNames = new ArrayList<String>();
@@ -2103,8 +2103,9 @@ public class Weka_Segmentation implements PlugIn
 		{
 			if(featureStack.isEmpty())
 			{
-				IJ.error("Error", "The feature stack has not been initialized yet, please train first.");
-				return;
+				//IJ.error("Error", "The feature stack has not been initialized yet, please train first.");
+				//return;
+				featureStack.updateFeaturesMT();
 			}
 			
 			SaveDialog sd = new SaveDialog(title, "feature-stack", ".tif");
@@ -2395,7 +2396,7 @@ public class Weka_Segmentation implements PlugIn
 		{
 			setButtonsEnabled(false);
 			IJ.log("Creating feature stack...");
-			featureStack.updateFeatures();
+			featureStack.updateFeaturesMT();
 			updateFeatures = false;
 			IJ.log("Features stack is now updated.");
 		}
@@ -2448,7 +2449,7 @@ public class Weka_Segmentation implements PlugIn
 		if(featureStack.getSize() < 2)
 		{
 			IJ.log("Creating feature stack...");
-			featureStack.updateFeatures();
+			featureStack.updateFeaturesMT();
 			updateFeatures = false;
 			IJ.log("Features stack is now updated.");
 		}
@@ -2562,7 +2563,7 @@ public class Weka_Segmentation implements PlugIn
 		if(featureStack.isEmpty() || updateFeatures)
 		{
 			IJ.log("Creating feature stack...");
-			featureStack.updateFeatures();
+			featureStack.updateFeaturesMT();
 			updateFeatures = false;
 			IJ.log("Features stack is now updated.");
 		}
@@ -2646,7 +2647,7 @@ public class Weka_Segmentation implements PlugIn
 		if(featureStack.getSize() < 2)
 		{
 			IJ.log("Creating feature stack...");
-			featureStack.updateFeatures();
+			featureStack.updateFeaturesMT();
 			updateFeatures = false;
 			IJ.log("Features stack is now updated.");
 		}
@@ -2699,7 +2700,7 @@ public class Weka_Segmentation implements PlugIn
 		if(featureStack.getSize() < 2)
 		{
 			IJ.log("Creating feature stack...");
-			featureStack.updateFeatures();
+			featureStack.updateFeaturesMT();
 			updateFeatures = false;
 			IJ.log("Features stack is now updated.");
 		}
