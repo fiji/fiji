@@ -153,21 +153,21 @@ public class Trainable_Segmentation implements PlugIn
 	private boolean updateWholeData = true;
 	
 	/** train classifier button */
-	final JButton trainButton;
+	JButton trainButton;
 	/** toggle overlay button */
-	final JButton overlayButton;
+	JButton overlayButton;
 	/** create result button */
-	final JButton resultButton;
+	JButton resultButton;
 	/** apply classifier button */
-	final JButton applyButton;
+	JButton applyButton;
 	/** load data button */
-	final JButton loadDataButton;
+	JButton loadDataButton;
 	/** save data button */
-	final JButton saveDataButton;
+	JButton saveDataButton;
 	/** settings button */
-	final JButton settingsButton;
+	JButton settingsButton;
 	/** create new class button */
-	final JButton addClassButton;
+	JButton addClassButton;
 	
 	/** array of roi list overlays to paint the transparent rois of each class */
 	RoiListOverlay [] roiOverlay;
@@ -199,12 +199,16 @@ public class Trainable_Segmentation implements PlugIn
 	/** executor service to launch threads for the plugin methods and events */
 	final ExecutorService exec = Executors.newFixedThreadPool(1);
 
+	/** GUI/no GUI flag */
+	private boolean useGUI = true;
 	
 	/**
 	 * Basic constructor
 	 */
 	public Trainable_Segmentation() 
 	{
+		this.useGUI = true;
+		
 		// Create overlay LUT
 		final byte[] red = new byte[256];
 		final byte[] green = new byte[256];
@@ -744,18 +748,21 @@ public class Trainable_Segmentation implements PlugIn
 	 */
 	private void setButtonsEnabled(Boolean s)
 	{
-		trainButton.setEnabled(s);
-		overlayButton.setEnabled(s);
-		resultButton.setEnabled(s);
-		applyButton.setEnabled(s);
-		loadDataButton.setEnabled(s);
-		saveDataButton.setEnabled(s);
-		addClassButton.setEnabled(s);
-		settingsButton.setEnabled(s);
-		for(int i = 0 ; i < numOfClasses; i++)
+		if(useGUI)
 		{
-			exampleList[i].setEnabled(s);
-			addExampleButton[i].setEnabled(s);
+			trainButton.setEnabled(s);
+			overlayButton.setEnabled(s);
+			resultButton.setEnabled(s);
+			applyButton.setEnabled(s);
+			loadDataButton.setEnabled(s);
+			saveDataButton.setEnabled(s);
+			addClassButton.setEnabled(s);
+			settingsButton.setEnabled(s);
+			for(int i = 0 ; i < numOfClasses; i++)
+			{
+				exampleList[i].setEnabled(s);
+				addExampleButton[i].setEnabled(s);
+			}
 		}
 	}
 
@@ -1048,7 +1055,10 @@ public class Trainable_Segmentation implements PlugIn
 		IJ.log("Finished training in "+(end-start)+"ms"+ outOfBagError);
 		
 		if(updateWholeData)
+		{
 			updateTestSet();
+			IJ.log("Test dataset updated ("+ wholeImageData.numInstances() + " instances)");
+		}
 
 		IJ.log("Classifying whole image...");
 
@@ -1056,13 +1066,16 @@ public class Trainable_Segmentation implements PlugIn
 
 		IJ.log("Finished segmentation of whole image.");
 		
-		overlayButton.setEnabled(true);
-		resultButton.setEnabled(true);
-		applyButton.setEnabled(true);
-		showColorOverlay = false;
-		toggleOverlay();
-
-		setButtonsEnabled(true);
+		if(useGUI)
+		{
+			overlayButton.setEnabled(true);
+			resultButton.setEnabled(true);
+			applyButton.setEnabled(true);
+			showColorOverlay = false;
+			toggleOverlay();
+			setButtonsEnabled(true);
+		}
+		
 		
 		//featureStack.show();
 	}
@@ -1105,7 +1118,7 @@ public class Trainable_Segmentation implements PlugIn
 	public ImagePlus applyClassifier(final Instances data, int w, int h)
 	{
 		IJ.showStatus("Classifying image...");
-		
+						
 		final long start = System.currentTimeMillis();
 
 		final int numOfProcessors = Runtime.getRuntime().availableProcessors();
@@ -1116,6 +1129,8 @@ public class Trainable_Segmentation implements PlugIn
 		Future<double[]> fu[] = new Future[numOfProcessors];
 		
 		final AtomicInteger counter = new AtomicInteger();
+		
+		//IJ.log("Dividing dataset into subsets for parallel execution...");
 		
 		for(int i = 0; i<numOfProcessors; i++)
 		{
@@ -1134,15 +1149,19 @@ public class Trainable_Segmentation implements PlugIn
 			}
 		}, 0, 1, TimeUnit.SECONDS);
 		
+		//IJ.log("Waiting for jobs...");
+		
 		// Join threads
 		for(int i = 0; i<numOfProcessors; i++)
 		{
 			try {
 				results[i] = fu[i].get();
 			} catch (InterruptedException e) {
+				IJ.log("Interruption exception");
 				e.printStackTrace();
 				return null;
 			} catch (ExecutionException e) {
+				IJ.log("Execution exception");
 				e.printStackTrace();
 				return null;
 			} finally {
@@ -1371,76 +1390,9 @@ public class Trainable_Segmentation implements PlugIn
 	{
 		OpenDialog od = new OpenDialog("Choose data file","");
 		if (od.getFileName()==null)
-			return;
-		IJ.log("Loading data from " + od.getDirectory() + od.getFileName() + "...");
-		loadedTrainingData = readDataFromARFF(od.getDirectory() + od.getFileName());
+			return;				
+		loadTrainingData(od.getDirectory() + od.getFileName());
 		
-		
-		// Check the features that were used in the loaded data
-		Enumeration<Attribute> attributes = loadedTrainingData.enumerateAttributes();
-		final int numFeatures = FeatureStack.availableFeatures.length;
-		boolean[] usedFeatures = new boolean[numFeatures];
-		while(attributes.hasMoreElements())
-		{
-			final Attribute a = attributes.nextElement();
-			for(int i = 0 ; i < numFeatures; i++)
-				if(a.name().startsWith(FeatureStack.availableFeatures[i]))
-					usedFeatures[i] = true;
-		}
-		
-		// Check if classes match
-		Attribute classAttribute = loadedTrainingData.classAttribute();
-		Enumeration<String> classValues  = classAttribute.enumerateValues();
-		
-		// Update list of names of loaded classes
-		loadedClassNames = new ArrayList<String>();
-		
-		int j = 0;
-		while(classValues.hasMoreElements())
-		{
-			final String className = classValues.nextElement().trim();
-			loadedClassNames.add(className);
-			
-			IJ.log("Read class name: " + className);
-			if( !className.equals(this.classLabels[j]))
-			{
-				String s = classLabels[0];
-				for(int i = 1; i < numOfClasses; i++)
-					s = s.concat(", " + classLabels[i]);
-				IJ.error("ERROR: Loaded classes and current classes do not match!\nExpected: " + s);
-				loadedTrainingData = null;
-				return;
-			}
-			j++;
-		}
-		
-		if(j != numOfClasses)
-		{
-			IJ.error("ERROR: Loaded number of classes and current number do not match!");
-			loadedTrainingData = null;
-			return;
-		}
-		
-		IJ.log("Loaded data: " + loadedTrainingData.numInstances() + " instances");
-		
-		boolean featuresChanged = false;
-		final boolean[] oldEnableFeatures = this.featureStack.getEnableFeatures();
-		// Read checked features and check if any of them changed
-		for(int i = 0; i < numFeatures; i++)
-		{
-			if (usedFeatures[i] != oldEnableFeatures[i])
-				featuresChanged = true;
-		}
-		// Update feature stack if necessary
-		if(featuresChanged)
-		{
-			this.setButtonsEnabled(false);
-			this.featureStack.setEnableFeatures(usedFeatures);
-			this.featureStack.updateFeatures();
-			this.setButtonsEnabled(true);
-			// Force whole data to be updated
-			updateWholeData = true;
-		}
 	}
 	
 	/**
@@ -1458,6 +1410,13 @@ public class Trainable_Segmentation implements PlugIn
 		if (examplesEmpty && loadedTrainingData == null){
 			IJ.showMessage("There is no data to save");
 			return;
+		}
+		
+		if(featureStack.getSize() < 2)
+		{
+			setButtonsEnabled(false);
+			featureStack.updateFeatures();
+			setButtonsEnabled(true);
 		}
 
 		Instances data = createTrainingInstances();
@@ -1478,7 +1437,7 @@ public class Trainable_Segmentation implements PlugIn
 			return;
 		IJ.log("Writing training data: " + data.numInstances() + " instances...");
 		writeDataToARFF(data, sd.getDirectory() + sd.getFileName());
-		IJ.log("Wrote training data: " + sd.getDirectory() + " " + sd.getFileName());
+		IJ.log("Wrote training data: " + sd.getDirectory() + sd.getFileName());
 	}
 	
 	/**
@@ -1728,6 +1687,131 @@ public class Trainable_Segmentation implements PlugIn
 		
 		return true;
 	}
-	
 
+	
+	///////////////////////////////////////////////////////////////////////////
+	// Library style methods //////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////
+
+	/**
+	 * No GUI constructor
+	 * 
+	 * @param trainingImage input image
+	 */
+	public Trainable_Segmentation(ImagePlus trainingImage) 
+	{	
+		// no GUI
+		this.useGUI = false;
+		
+		this.trainingImage = trainingImage;
+		
+		for(int i = 0; i < numOfClasses ; i++)
+			examples[i] = new ArrayList<Roi>();
+
+
+		// Initialization of Fast Random Forest classifier
+		rf = new FastRandomForest();
+		rf.setNumTrees(numOfTrees);
+		//this is the default that Breiman suggests
+		//rf.setNumFeatures((int) Math.round(Math.sqrt(featureStack.getSize())));
+		//but this seems to work better
+		rf.setNumFeatures(randomFeatures);
+		rf.setSeed(123);
+		
+		classifier = rf;
+		
+		// Initialize feature stack (no features yet)
+		featureStack = new FeatureStack(trainingImage);
+	}
+
+	/**
+	 * Load training data (no GUI)
+	 * 
+	 * @param pathname complete path name of the training data file (.arff)
+	 * @return false if error
+	 */
+	public boolean loadTrainingData(String pathname)
+	{
+		IJ.log("Loading data from " + pathname + "...");
+		loadedTrainingData = readDataFromARFF(pathname);
+				
+		// Check the features that were used in the loaded data
+		Enumeration<Attribute> attributes = loadedTrainingData.enumerateAttributes();
+		final int numFeatures = FeatureStack.availableFeatures.length;
+		boolean[] usedFeatures = new boolean[numFeatures];
+		while(attributes.hasMoreElements())
+		{
+			final Attribute a = attributes.nextElement();
+			for(int i = 0 ; i < numFeatures; i++)
+				if(a.name().startsWith(FeatureStack.availableFeatures[i]))
+					usedFeatures[i] = true;
+		}
+		
+		// Check if classes match
+		Attribute classAttribute = loadedTrainingData.classAttribute();
+		Enumeration<String> classValues  = classAttribute.enumerateValues();
+		
+		// Update list of names of loaded classes
+		loadedClassNames = new ArrayList<String>();
+		
+		int j = 0;
+		while(classValues.hasMoreElements())
+		{
+			final String className = classValues.nextElement().trim();
+			loadedClassNames.add(className);
+			
+			IJ.log("Read class name: " + className);
+			if( !className.equals(this.classLabels[j]))
+			{
+				String s = classLabels[0];
+				for(int i = 1; i < numOfClasses; i++)
+					s = s.concat(", " + classLabels[i]);
+				IJ.error("ERROR: Loaded classes and current classes do not match!\nExpected: " + s);
+				loadedTrainingData = null;
+				return false;
+			}
+			j++;
+		}
+		
+		if(j != numOfClasses)
+		{
+			IJ.error("ERROR: Loaded number of classes and current number do not match!");
+			loadedTrainingData = null;
+			return false;
+		}
+		
+		IJ.log("Loaded data: " + loadedTrainingData.numInstances() + " instances");
+		
+		boolean featuresChanged = false;
+		final boolean[] oldEnableFeatures = this.featureStack.getEnableFeatures();
+		// Read checked features and check if any of them chasetButtonsEnablednged
+		for(int i = 0; i < numFeatures; i++)
+		{
+			if (usedFeatures[i] != oldEnableFeatures[i])
+				featuresChanged = true;
+		}
+		// Update feature stack if necessary
+		if(featuresChanged)
+		{
+			this.setButtonsEnabled(false);
+			this.featureStack.setEnableFeatures(usedFeatures);
+			this.featureStack.updateFeatures();
+			this.setButtonsEnabled(true);
+			// Force whole data to be updated
+			updateWholeData = true;
+		}
+		
+		return true;
+	}
+
+	/**
+	 * Get current classification result
+	 * @return classified image
+	 */
+	public ImagePlus getClassifiedImage()
+	{
+		return classifiedImage;
+	}
+	
+	
 }
