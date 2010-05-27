@@ -218,8 +218,8 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	
 	// the different types of stacks
 	final StackType[] stackTypes = {
-		new StackType("time series or movie", timeFormats, 2),
-		new StackType("z-stack", zFormats, 1),
+		new TimeStackType("time series or movie", timeFormats, 2),
+		new ZStackType("z-stack", zFormats, 1),
 		new StackType("spectral", spectralFormats, 2)};
 	
 	// GUI variables that are needed to read out data
@@ -1095,6 +1095,28 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 
 		public int getCustomFormatIndex() {
 			return customFormatIndex;
+		}
+
+		public String getStackMetaDataUnit (ImagePlus imp) {
+			return "";
+		}
+	}
+
+	protected class TimeStackType extends StackType {
+		public TimeStackType(String name, AbstractStampFormat[] formats, int indexOfCustomFormat) {
+			super(name, formats, indexOfCustomFormat);
+		}
+		public String getStackMetaDataUnit (ImagePlus imp) {
+			return imp.getCalibration().getTimeUnit();
+		}
+	}
+
+	protected class ZStackType extends StackType {
+		public ZStackType(String name, AbstractStampFormat[] formats, int indexOfCustomFormat) {
+			super(name, formats, indexOfCustomFormat);
+		}
+		public String getStackMetaDataUnit (ImagePlus imp) {
+			return imp.getCalibration().getUnit();
 		}
 	}
 
