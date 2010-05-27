@@ -86,6 +86,7 @@ import ij.ImageListener;
 import ij.measure.Calibration;
 
 import java.awt.AWTEvent;
+import java.awt.Checkbox;
 import java.awt.Choice;
 import java.awt.Dimension;
 import java.awt.Font;
@@ -110,6 +111,7 @@ import java.util.TimeZone;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.event.DocumentListener;
 
@@ -354,7 +356,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		// add Decimal Places panel
 		decimalPlacesPanel = createNumericFieldPanel("Decimal_Places",
 			decimalPlaces, 0);
-		decimalPlacesPanel.setLocation(300, 30);
+		decimalPlacesPanel.setLocation(280, 30);
 		
 		addPanelsToDialog(unitsFormattingContainer,
 			new JPanel[] {pLabelFormat, customSuffixPanel,
@@ -386,12 +388,12 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		// add panel for First Frame setting
 		JPanel pFirstFrame = createNumericFieldPanel("First",
 			first, 0);
-		pFirstFrame.setLocation(300, 30);
+		pFirstFrame.setLocation(280, 30);
 		
 		// add panel for Last Frame setting
 		JPanel pLastFrame = createNumericFieldPanel("Last",
 			last, 0);
-		pLastFrame.setLocation(300, 60);
+		pLastFrame.setLocation(280, 60);
 		
 		addPanelsToDialog(startStopIntervalsContainer,
 			new JPanel[] {pStartup, pInterval,
@@ -424,7 +426,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		// add combobox for location presets
 		JPanel pLocationPresets = createComboBoxPanel(
 			"Location_Presets", locations,
-			locationPreset, 110, 150);
+			locationPreset, 110, 130);
 		locationPresetsComboBox =
 			(Choice) gd.getChoices().lastElement();
 		pLocationPresets.setLocation(240, 30);
@@ -438,14 +440,26 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 				pLocationY, pLocationPresets,
 				fontPropertiesContainer} );
 
+		JPanel previewAndMessage = createContainerPanel(35, "", false);
 		/* adds preview checkbox - needs
 		 * ExtendedPluginFilter and DialogListener!
+		 * Puts the preview checkbox and message into a panel of their very own.
 		 */
 		gd.addPreviewCheckbox(pfr);
-		bringMetaDataUnitToGUI();
+		Checkbox thePreviewCheckbox = gd.getPreviewCheckbox();
+		gd.remove(thePreviewCheckbox);
+		previewAndMessage.add(thePreviewCheckbox);
+		thePreviewCheckbox.setBounds(10, 0, 80, 20);
+		JLabel theMessage = new JLabel("<html>Series Labeler for " +
+				"Fiji (is just ImageJ - batteries included)<P>" +
+				"maintained by Dan White MPI-CBG dan(at)chalkie.org.uk</html>");
+		theMessage.setBounds(95, 0, 420, 35);
+		theMessage.setVerticalAlignment(javax.swing.SwingConstants.TOP);
+		theMessage.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+		previewAndMessage.add(theMessage);
+		addPanelIntoDialog(previewAndMessage);
 
-		gd.addMessage("Series Labeler plugin for Fiji (is just ImageJ - batteries included)\n" +
-				"maintained by Dan White MPI-CBG dan(at)chalkie.org.uk");
+		bringMetaDataUnitToGUI();
 
 		/* needed for listening to dialog,
 		 * field/button/checkbox changes
@@ -590,13 +604,21 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	/**
 	 * container panel from swing for gui items to be put in.
 	 */
-	private JPanel createContainerPanel(int height, String label){
+	private JPanel createContainerPanel(int height, String label, boolean border){
 		JPanel panel = new JPanel(null);
-		panel.setPreferredSize(new Dimension(540, height));
-		panel.setBorder(javax.swing.BorderFactory.createTitledBorder(label));
+		panel.setPreferredSize(new Dimension(490, height));
+		if (border)
+			panel.setBorder(javax.swing.BorderFactory.createTitledBorder(label));
 		return panel;
 	}
 	
+	/**
+	 * container panel from swing for gui items to be put in, with a border.
+	 */
+	private JPanel createContainerPanel(int height, String label){
+		return createContainerPanel(height, label, true);
+	}
+
 	/**
 	 * drop down selection with a text label
 	 */
@@ -713,6 +735,15 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			container.add(p);
 		}
 		
+		addPanelIntoDialog(container);
+	}
+
+	/**
+	 * The container JPanel is encapsulated in a
+	 * AWT Panel which in turn is added to the generic
+	 * dialog.
+	 */
+	private void addPanelIntoDialog(JPanel container) {
 		Panel awtPanel = new Panel();
 		awtPanel.add(container);
 		gd.addPanel(awtPanel, GridBagConstraints.CENTER, new Insets(5, 0, 0, 0));
