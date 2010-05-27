@@ -1003,7 +1003,7 @@ public class Trainable_Segmentation implements PlugIn
 		if(featureStack.isEmpty())
 		{
 			IJ.showStatus("Creating feature stack...");
-			featureStack.addDefaultFeatures();
+			featureStack.updateFeaturesMT();
 		}
 		
 
@@ -1360,7 +1360,7 @@ public class Trainable_Segmentation implements PlugIn
 		final FeatureStack testImageFeatures = new FeatureStack(testImage);
 		// Use the same features as the current classifier
 		testImageFeatures.setEnableFeatures(featureStack.getEnableFeatures());
-		testImageFeatures.updateFeatures();
+		testImageFeatures.updateFeaturesMT();
 
 		// Set proper class names (skip empty list ones)
 		ArrayList<String> classNames = new ArrayList<String>();
@@ -1415,7 +1415,7 @@ public class Trainable_Segmentation implements PlugIn
 		if(featureStack.getSize() < 2)
 		{
 			setButtonsEnabled(false);
-			featureStack.updateFeatures();
+			featureStack.updateFeaturesMT();
 			setButtonsEnabled(true);
 		}
 
@@ -1617,7 +1617,7 @@ public class Trainable_Segmentation implements PlugIn
 			this.setButtonsEnabled(false);
 			this.featureStack.setNormalize(normalize);
 			this.featureStack.setEnableFeatures(newEnableFeatures);
-			this.featureStack.updateFeatures();
+			this.featureStack.updateFeaturesMT();
 			this.setButtonsEnabled(true);
 			// Force whole data to be updated
 			updateWholeData = true;
@@ -1795,7 +1795,7 @@ public class Trainable_Segmentation implements PlugIn
 		{
 			this.setButtonsEnabled(false);
 			this.featureStack.setEnableFeatures(usedFeatures);
-			this.featureStack.updateFeatures();
+			this.featureStack.updateFeaturesMT();
 			this.setButtonsEnabled(true);
 			// Force whole data to be updated
 			updateWholeData = true;
