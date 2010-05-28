@@ -48,6 +48,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+import anisotropic_diffusion.Anisotropic_Diffusion_2D;
+
 import stitching.FloatArray2D;
 
 import weka.core.Attribute;
@@ -85,12 +87,13 @@ public class FeatureStack
 	public static final int MINIMUM		= 7;
 	public static final int MAXIMUM		= 8;
 	public static final int MEDIAN		= 9;
+	public static final int ANISOTROPIC_DIFFUSION = 10;
 	
 	public static final String[] availableFeatures 
 		= new String[]{	"Gaussian_blur", "Sobel_filter", "Hessian", "Difference_of_gaussians", 
-					   	"Membrane_projections","Variance","Mean", "Minimum", "Maximum", "Median"};
+					   	"Membrane_projections","Variance","Mean", "Minimum", "Maximum", "Median", "Anisotropic_diffusion"};
 	
-	private boolean[] enableFeatures = new boolean[]{true, true, true, true, true, false, false, false, false, false};
+	private boolean[] enableFeatures = new boolean[]{true, true, true, true, true, false, false, false, false, false, false};
 	
 	private boolean normalize = false;
 	
@@ -626,6 +629,27 @@ public class FeatureStack
 	}
 	
 	
+	public Callable<ImagePlus> getAnisotropicDiffusion(
+			final ImagePlus originalImage,
+			final int nb_iter, 
+			final int saveSteps)
+	{
+		return new Callable<ImagePlus>(){
+			public ImagePlus call(){
+				
+				Anisotropic_Diffusion_2D ad = new Anisotropic_Diffusion_2D();
+				
+				ad.setup("", originalImage);
+				
+				ad.setSaveSteps(saveSteps);
+				ad.setNumOfIterations(nb_iter);
+				
+				return ad.runTD(originalImage.getProcessor());
+			}
+		};
+	}
+	
+	
 	public void addTest()
 	{
 		FloatArray2D fftImage = new FloatArray2D((float[]) originalImage.getProcessor().getPixels(),
@@ -832,6 +856,10 @@ public class FeatureStack
 		final ArrayList< Future<ImagePlus> > futures = new ArrayList< Future<ImagePlus> >();
 		
 		try{
+			
+			// Anisotropic Diffusion
+			if(enableFeatures[ANISOTROPIC_DIFFUSION])
+				futures.add(exe.submit( getAnisotropicDiffusion(originalImage, 60, 20) ) );
 		
 			for (float i=1.0f; i<= FeatureStack.MAX_SIGMA; i*=2)
 			{
@@ -889,7 +917,7 @@ public class FeatureStack
 			}
 			// Membrane projections
 			if(enableFeatures[MEMBRANE])
-				futures.add(exe.submit( getMembraneFeatures(originalImage, 19, 1) ));
+				futures.add(exe.submit( getMembraneFeatures(originalImage, 19, 1) ));						
 
 			for(Future<ImagePlus> f : futures)
 			{
