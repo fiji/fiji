@@ -5,20 +5,17 @@ import ij.ImagePlus;
 import ij.plugin.PlugIn;
 import ij.process.FloatProcessor;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import mpicbg.imglib.algorithm.OutputAlgorithm;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImagePlusAdapter;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.type.numeric.RealType;
-import mpicbg.imglib.type.numeric.real.FloatType;
 
 import org.nfunk.jep.Node;
 import org.nfunk.jep.ParseException;
@@ -59,7 +56,7 @@ import fiji.expressionparser.ImgLibParser;
  *   
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com>
  */	
-public class Image_Expression_Parser<T extends RealType<T>> implements PlugIn, ActionListener {
+public class Image_Expression_Parser<T extends RealType<T>> implements PlugIn, OutputAlgorithm<T> {
 	
 	protected boolean user_has_canceled = false;
 	/** Array of Imglib images, on which calculations will be done */
@@ -67,17 +64,9 @@ public class Image_Expression_Parser<T extends RealType<T>> implements PlugIn, A
 	/** The expression to evaluate */
 	protected String expression;
 	/** Here is stored the result of the evaluation */
-	protected Image<FloatType> result = null;
+	protected Image<T> result = null;
 	/** If an error occurred, an error message is put here	 */
 	protected String error_message = "";
-	
-	private ArrayList<ActionListener> action_listeners = new ArrayList<ActionListener>();
-	
-	/** This plugin sends a ActionEvent with this command when the external calculation is over. */
-	public static final String CALCULATION_DONE_COMMAND	= "CalculationDone";
-	/** This plugin sends a ActionEvent with this command when the external calculation is over. */
-	public static final String CALCULATION_STARTED_COMMAND	= "CalculationStarted";
-
 	
 	/*
 	 * RUN METHOD
@@ -85,97 +74,37 @@ public class Image_Expression_Parser<T extends RealType<T>> implements PlugIn, A
 	
 	/**
 	 * Launch the interactive version if this plugin. This is made by first
-	 * displaying the GUI, then looping, waiting for the user to press the 
-	 * compute button. When it does so, initiate calculation, and resume wait mode.
-	 *  Must be launched from ImageJ.
+	 * displaying the GUI, which will take all user interaction work.
+	 * Calculations will be later delegated by the GUI to <b>this</b> instance.
 	 */
-	public synchronized void run(String arg) {
-		// Launch GUI and wait for user 
-		IepGui gui = displayGUI();		
-		addActionListener(gui);
-		ImagePlus target_imp = null;
-		while (true) {
-			
-			try {
-				this.wait();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}			
-			if (user_has_canceled) {
-				gui.removeActionListener(this);
-				ImagePlus.removeImageListener(gui);
-				gui.dispose();
-				return;
-			}
-
-			// Get user settings
-			expression 	= gui.getExpression();
-			Map<String,ImagePlus> imp_map = gui.getImageMap(); 
-			convertToImglib(imp_map); // will set #images field 
-
-			// Check inputs (this should be done in the GUI)
-			if (!dimensionsAreValid()) {
-				error_message = "Input images do not have all the same dimensions.";
-				IJ.error(error_message);
-			} else {
-
-				// Check if expression is valid (this too)
-				Object[] validity = isExpressionValid();
-				boolean is_valid = (Boolean) validity[0];
-				String error_msg = (String) validity[1];
-				if (!is_valid) {
-					error_message = "Expression is invalid:\n"+error_msg; 
-					IJ.error(error_message);
-					return;
-				}
-
-				// Exec
-				IJ.showStatus("IEP parsing....");
-				fireActionProperty(CALCULATION_STARTED_COMMAND);
-				exec();
-
-				if (target_imp == null) {
-					target_imp = ImageJFunctions.copyToImagePlus(result);
-					target_imp.show();
-				} else {
-					ImagePlus new_imp = ImageJFunctions.copyToImagePlus(result);
-					if (!target_imp.isVisible()) {
-						target_imp = new_imp;
-						target_imp.show();
-					} else {
-						target_imp.setStack(expression, new_imp.getStack());
-					}
-				}
-				target_imp.resetDisplayRange();
-				target_imp.updateAndDraw();
-				IJ.showStatus("");
-				fireActionProperty(CALCULATION_DONE_COMMAND);
-			}
-		}
+	public void run(String arg) {
+		// Launch GUI and delegate work to it
+		IepGui<T> gui = displayGUI();		
+		gui.setIep(this);
 	}
+	
+	
 
 	/*
 	 * PUBLIC METHODS
 	 */
 	
 	/**
-	 * Execute calculation, given the expression, variable list and image list set for
-	 * this instance. The resulting image can be accessed afterwards by using {@link #getResult()}.
+	 * Check that inputs are valid. Namely, that all input images have
+	 * the same dimensions, and the expression to evaluate is valid, 
+	 * using the JEP parser. 
 	 * <p>
-	 * If the expression is invalid or if the image dimensions mismatch, and error
-	 * is thrown and the field {@link #result} is set to <code>null</code>. In this
-	 * case, an explanatory error message can be obtained by {@link #getErrorMessage()}.
-	 * @see {@link #setExpression(String)}, {@link #setImageMap(Map)}, {@link #getErrorMessage()}, {@link #getResult()}
+	 * If one of the input is not valid, the boolean false is returned, 
+	 * and the method {@link #getErrorMessage()} will return an 
+	 * explanatory message.
+	 * 
+	 * @return  a boolean, true if inputs are valid
 	 */
-	@SuppressWarnings("unchecked")
-	public void exec() {
-		
-		result = null;
-
+	public boolean checkInput() {
 		// Check inputs 
 		if (!dimensionsAreValid()) {
 			error_message = "Input images do not have all the same dimensions.";
-			return;
+			return false;
 		}
 		
 		// Check if expression is valid 
@@ -184,7 +113,28 @@ public class Image_Expression_Parser<T extends RealType<T>> implements PlugIn, A
 		String error_msg = (String) validity[1];
 		if (!is_valid) {
 			error_message = "Expression is invalid:\n"+error_msg;
-			return;
+			return false;
+		}
+		
+		return true;
+	}
+	
+	/**
+	 * Execute calculation, given the expression, variable list and image list set for
+	 * this instance. The resulting image can be accessed afterwards by using {@link #getResult()}.
+	 * <p>
+	 * If the expression is invalid or if the image dimensions mismatch, an error
+	 * is thrown and the field {@link #result} is set to <code>null</code>. In this
+	 * case, an explanatory error message can be obtained by {@link #getErrorMessage()}.
+	 * @see {@link #setExpression(String)}, {@link #setImageMap(Map)}, {@link #getErrorMessage()}, {@link #getResult()}
+	 */
+	@SuppressWarnings("unchecked")
+	public boolean process() {
+		
+		result = null;
+		boolean valid = checkInput();
+		if (!valid) {
+			return false;
 		}
 		
 		// Instantiate and prepare parser
@@ -199,16 +149,15 @@ public class Image_Expression_Parser<T extends RealType<T>> implements PlugIn, A
 		
 		try {
 			Node root_node = parser.parse(expression);
-			result = (Image<FloatType>) parser.evaluate(root_node);
+			result = (Image<T>) parser.evaluate(root_node);
 			result.setName(expression);
 			error_message = "";
+			return true;
 
 		} catch (ParseException e) {
 			error_message = e.getErrorInfo();
-
+			return false;
 		}
-		
-
 		
 	}
 	
@@ -223,7 +172,7 @@ public class Image_Expression_Parser<T extends RealType<T>> implements PlugIn, A
 	 * Return the result of the last evaluation of the expression over the images given.
 	 * Is <code>null</code> if {@link #exec()} was not called before.
 	 */
-	public Image<FloatType> getResult()  {
+	public Image<T> getResult()  {
 		return this.result;
 	}
 	
@@ -258,37 +207,15 @@ public class Image_Expression_Parser<T extends RealType<T>> implements PlugIn, A
 	 * PRIVATE METHODS
 	 */
 	
-	private synchronized void fireActionProperty(String command) {
-		ActionEvent action = new ActionEvent(this, ActionEvent.ACTION_PERFORMED, command);
-		for (ActionListener l : action_listeners) {
-			synchronized (l) {
-				l.actionPerformed(action);
-			}
-		}
-	}
-	
-	public void addActionListener(ActionListener l) {
-		action_listeners.add(l);
-	}
-
-	public void removeActionListener(ActionListener l) {
-		action_listeners.remove(l);
-	}
-
-	public ActionListener[] getActionListeners() {
-		return (ActionListener[]) action_listeners.toArray();
-	}
 	
 	/**
 	 * Launch and display the GUI. Returns a reference to it that can be used
 	 * to retrieve settings.
 	 */
-	private IepGui displayGUI() {
-		IepGui gui = new IepGui();
+	private IepGui<T> displayGUI() {
+		IepGui<T> gui = new IepGui<T>();
 		gui.setLocationRelativeTo(null);
-		gui.setVisible(true);
-		ImagePlus.addImageListener(gui);
-		gui.addActionListener(this);
+		gui.setVisible(true);		
 		return gui;
 	}
 
@@ -351,29 +278,17 @@ public class Image_Expression_Parser<T extends RealType<T>> implements PlugIn, A
 	 * Warning: executing this method resets the {@link #image_map} field.
 	 * @param imp_map  the <String, ImagePlus> map to convert
 	 */
-	private void convertToImglib(Map<String, ImagePlus> imp_map) {
-		image_map = new HashMap<String, Image<T>>(imp_map.size());
+	public Map<String, Image<T>> convertToImglib(Map<String, ImagePlus> imp_map) {
+		Map<String, Image<T>> map = new HashMap<String, Image<T>>(imp_map.size());
 		Image<T> img;
 		Set<String> variables = imp_map.keySet();
 		for (String var : variables) {
 			img = ImagePlusAdapter.wrap(imp_map.get(var));
-			image_map.put(var, img);
+			map.put(var, img);
 		}
+		return map;
 	}
-	
-	/*
-	 * ACTIONLISTENER METHOD
-	 */
-
-	public synchronized void actionPerformed(ActionEvent e) {
-		String command = e.getActionCommand();
 		
-		if (command.equals(IepGui.QUIT_ACTION_COMMAND)) {
-			user_has_canceled = true;
-		} else if (command.equals(IepGui.PARSE_ACTION_COMMAND)) {
-			user_has_canceled = false;
-		}
-	}
 	
 	/*
 	 * MAIN METHOD
@@ -389,9 +304,9 @@ public class Image_Expression_Parser<T extends RealType<T>> implements PlugIn, A
 		HashMap<String, Image<T>> map = new HashMap<String, Image<T>>(1);
 		map.put("A", img);
 		iep.setImageMap(map);
-		iep.exec();
-		Image<FloatType> result = iep.getResult();
-		if (null != result) {
+		boolean everything_went_fine = iep.process();
+		Image<T> result = iep.getResult();
+		if (everything_went_fine) {
 			ImagePlus result_imp = ImageJFunctions.copyToImagePlus(result);
 
 			float max = Float.NEGATIVE_INFINITY;
