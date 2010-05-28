@@ -334,8 +334,8 @@ public class Weka_Segmentation implements PlugIn
 					if(e.getSource() == trainButton)
 					{
 						try{
-							trainClassifier();
-							applyClassifier();
+							if( trainClassifier() );
+								applyClassifier();
 						}catch(Exception e){
 							e.printStackTrace();
 						}
@@ -1122,7 +1122,7 @@ public class Weka_Segmentation implements PlugIn
 	/**
 	 * Train classifier with the current instances
 	 */
-	public void trainClassifier()
+	public boolean trainClassifier()
 	{	
 		// Two list of examples need to be non empty
 		int nonEmpty = 0;
@@ -1131,7 +1131,7 @@ public class Weka_Segmentation implements PlugIn
 				nonEmpty++;
 		if (nonEmpty < 2 && loadedTrainingData==null){
 			IJ.showMessage("Cannot train without at least 2 sets of examples!");
-			return;
+			return false;
 		}
 		
 		// Disable buttons until the training has finished
@@ -1190,7 +1190,7 @@ public class Weka_Segmentation implements PlugIn
 		catch(Exception e){
 			IJ.showMessage(e.getMessage());
 			e.printStackTrace();
-			return;
+			return false;
 		}
 		
 		// Print classifier information
@@ -1198,7 +1198,8 @@ public class Weka_Segmentation implements PlugIn
 		
 		final long end = System.currentTimeMillis();
 						
-		IJ.log("Finished training in "+(end-start)+"ms");						
+		IJ.log("Finished training in "+(end-start)+"ms");
+		return true;
 	}
 	
 	/**
