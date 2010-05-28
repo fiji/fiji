@@ -319,6 +319,8 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 		// if an image was returned, assume success
 		if (o instanceof ImagePlus) return (ImagePlus)o;
 
+		if (IMAGE_OPENED == width) return null; // assume success
+
 		// try opening the file with LOCI Bio-Formats plugin - always check this last!
 		// Do not call Bio-Formats if File>Import>Image Sequence is opening this file.
 		if (o==null && (IJ.getVersion().compareTo("1.38j")<0||!IJ.redirectingErrorMessages()) && (new File(path).exists())) {
@@ -344,9 +346,7 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 	} // openImage
 
 	/**
-	* Attempts to open the specified path with the given plugin. If the
-	* plugin extends the ImagePlus class (e.g., BioRad_Reader), set
-	* extendsImagePlus to true, otherwise (e.g., LSM_Reader) set it to false.
+	* Attempts to open the specified path with the given plugin.
 	*
 	* @return A reference to the plugin, if it was successful.
 	*/
