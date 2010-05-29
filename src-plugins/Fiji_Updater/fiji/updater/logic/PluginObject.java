@@ -61,7 +61,7 @@ public class PluginObject {
 		UPDATEABLE (new Action[] { Action.UPDATEABLE, Action.UNINSTALL, Action.UPDATE }, Action.UPLOAD),
 		MODIFIED (new Action[] { Action.MODIFIED, Action.UNINSTALL, Action.UPDATE }, Action.UPLOAD),
 		NOT_FIJI (new Action[] { Action.NOT_FIJI, Action.UNINSTALL }, Action.UPLOAD),
-		NEW (new Action[] { Action.NEW, Action.INSTALL}),
+		NEW (new Action[] { Action.NEW, Action.INSTALL, Action.REMOVE }),
 		OBSOLETE_UNINSTALLED (new Action[] { Action.OBSOLETE }),
 		OBSOLETE (new Action[] { Action.OBSOLETE, Action.UNINSTALL }, Action.UPLOAD),
 		OBSOLETE_MODIFIED (new Action[] { Action.MODIFIED, Action.UNINSTALL }, Action.UPLOAD);
@@ -215,7 +215,8 @@ public class PluginObject {
 	}
 
 	public void addPlatform(String platform) {
-		platforms.put(platform, (Object)null);
+		if (platform != null && !platform.trim().equals(""))
+			platforms.put(platform.trim(), (Object)null);
 	}
 
 	public Iterable<String> getPlatforms() {

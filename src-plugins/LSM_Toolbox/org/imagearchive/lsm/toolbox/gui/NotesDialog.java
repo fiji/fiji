@@ -35,11 +35,10 @@ public class NotesDialog extends JDialog {
 
 	private JPanel panel;
 
-	private MasterModel masterModel;
+	private MasterModel masterModel = MasterModel.getMasterModel();
 
-	public NotesDialog(JFrame parent, boolean modal, MasterModel masterModel) {
+	public NotesDialog(JFrame parent, boolean modal) {
 		super(parent, modal);
-		this.masterModel = masterModel;
 		initializeGUI();
 	}
 
@@ -84,7 +83,7 @@ public class NotesDialog extends JDialog {
 	}
 
 	public void setNotes() {
-    	ImagePlus imp = WindowManager.getCurrentImage();
+	ImagePlus imp = WindowManager.getCurrentImage();
 		Reader reader = ServiceMediator.getReader();
 		reader.updateMetadata(imp);
 		if (imp == null) return;

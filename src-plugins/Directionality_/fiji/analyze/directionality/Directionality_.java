@@ -5,6 +5,7 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
+import ij.gui.ImageCanvas;
 import ij.gui.Line;
 import ij.gui.NewImage;
 import ij.gui.Roi;
@@ -13,6 +14,7 @@ import ij.measure.ResultsTable;
 import ij.plugin.PlugIn;
 import ij.plugin.filter.Convolver;
 import ij.plugin.filter.GaussianBlur;
+import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.FHT;
 import ij.process.FloatProcessor;
@@ -21,7 +23,10 @@ import ij.process.ImageProcessor;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.Point;
 import java.awt.Toolkit;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
 
 import javax.swing.JFrame;
@@ -39,8 +44,6 @@ import org.jfree.chart.renderer.xy.ClusteredXYBarRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
-
-import com.sun.tools.javac.code.Attribute.Array;
 
 
 /**
@@ -125,11 +128,11 @@ import com.sun.tools.javac.code.Attribute.Array;
  * <h2>References</h2>
  * [1] Liu. Scale space approach to directional analysis of images. Appl. Opt. (1991) vol. 30 (11) pp. 1369-1373 
  * <p>
- * A discussion with A. Leroy and another one with J. Schindein are greatly acknowledged. 
+ * A discussion with A. Leroy and another one with J. Schindelin are greatly acknowledged. 
  * <p>
  * 
  * @author Jean-Yves Tinevez jeanyves.tinevez@gmail.com
- * @version 1.3
+ * @version 1.4
  */
 public class Directionality_ implements PlugIn {
 	
@@ -171,7 +174,7 @@ public class Directionality_ implements PlugIn {
 	/** How many sigmas away from the gaussian center we sum to get the amount value. */ 
 	private static final double SIGMA_NUMBER = 2;
 	private static final String PLUGIN_NAME = "Directionality analysis";
-	private static final String VERSION_STR = "1.3";
+	private static final String VERSION_STR = "1.4";
 	
 	/* SETTING FIELDS, they determine results */
 	
@@ -181,14 +184,17 @@ public class Directionality_ implements PlugIn {
 	protected boolean debug = false;
 	/** The number of bins to create. */
 	protected int nbins = 90;
-	/** The first bin in degrees, so that we are not forced to start at -90 */
+	/** The first bin in degrees when displaying the histogram, so that we are not forced to start at -90 */
 	private double bin_start = -90;
 	/** Method used for analysis, as set by the user. */
-	private AnalysisMethod method = AnalysisMethod.FOURIER_COMPONENTS; // Only method implemented so far
+	private AnalysisMethod method = AnalysisMethod.FOURIER_COMPONENTS;
 	/** If set true, will display a {@link ResultsTable} with the histogram at the end of processing. */
 	private boolean display_table = false;
-	/** If true, will display a map of orientation. */
-	private boolean build_orientation_map = true;
+	/** If true, will calculate a map of orientation. */
+	private boolean build_orientation_map = false;
+	/** If true, will display a color wheel to interpret the orientation map. */
+	private boolean display_color_wheel = false;
+
 
 	/* STD FIELDS */
 	
@@ -199,7 +205,7 @@ public class Directionality_ implements PlugIn {
 	/** Polar coordinates, stored as a FloatProcessor. */
 	protected FloatProcessor window, r, theta;
 	protected int width, height, small_side, long_side, npady, npadx, step, pad_size;
-	/** The bin centers, in degrees */
+	/** The bin centers, in radians. Internally, they always range from -pi/2 to pi/2. */
 	protected double[] bins;
 	/** The directionality histogram, one array per processor (3 in the case of a ColorProcessor).*/
 	protected ArrayList<double[]> histograms;
@@ -310,7 +316,17 @@ public class Directionality_ implements PlugIn {
 		}
 		
 		if (build_orientation_map) {
-			new ImagePlus("Orientation map for "+imp.getShortTitle(), orientation_map).show();
+			ImagePlus imp_map = new ImagePlus("Orientation map for "+imp.getShortTitle(), orientation_map);
+			imp_map.show();
+			ImageCanvas canvas_map = imp_map.getCanvas();
+			addColorMouseListener(canvas_map);
+		}
+		
+		if (display_color_wheel) {
+			ImagePlus cw = generateColorWheel();
+			cw.show();
+			ImageCanvas canvas_cw = cw.getCanvas();
+			addColorMouseListener(canvas_cw);
 		}
 	}
 	
@@ -341,7 +357,7 @@ public class Directionality_ implements PlugIn {
 		goodness_of_fit = null;
 		
 		// Prepare helper fields
-		bins = prepareBins(nbins, bin_start);
+		bins = prepareBins(nbins);
 		switch (method) {
 		case FOURIER_COMPONENTS:
 			initFourierFields();
@@ -356,7 +372,6 @@ public class Directionality_ implements PlugIn {
 		if (build_orientation_map) {
 			orientation_map = new ImageStack(imp.getWidth(), imp.getHeight());
 		}
-		
 		
 		// Loop over each slice
 		ImageProcessor ip = null;
@@ -382,10 +397,10 @@ public class Directionality_ implements PlugIn {
 				// Normalize directionality
 				double sum = dir[0];
 				for (int j = 1; j < dir.length; j++) {
-					sum += dir[i];
+					sum += dir[j];
 				}
 				for (int j = 0; j < dir.length; j++) {
-					dir[i] = dir[i] / sum;
+					dir[j] = dir[j] / sum;
 				}
 				
 				histograms.add( dir );
@@ -491,11 +506,12 @@ public class Directionality_ implements PlugIn {
 		final String[] names = makeNames();
 		XYSeries series;
 		
+		// This is where we shift histograms
 		double[] dir;
 		for (int i = 0; i < histograms.size(); i++) {
 			dir = histograms.get(i);
 			series = new XYSeries(names[i]);
-			for (int j = 0; j < dir.length; j++) {
+			for (int j = 0; j < nbins; j++) { // DO IT DO IT DO IT DO IT
 				series.add(bins[j], dir[j]);
 			}
 			histogram_plots.addSeries(series);
@@ -535,7 +551,7 @@ public class Directionality_ implements PlugIn {
 			XYSeries fit_series;
 			double val, center, xn;
 			double[] params;
-			final double half_range = (bins[bins.length-1] - bins[0])/2.0;
+			final double half_range = Math.PI/2;
 			for (int i = 0; i < histograms.size(); i++) { // we have to deal with periodic issue here too
 				params = params_from_fit.get(i).clone();
 				center = params[2];
@@ -715,10 +731,11 @@ public class Directionality_ implements PlugIn {
 	
 	
 	/**
-	 * Set the image for analysis
+	 * Set the image for analysis. Calling this method resets the field {@link #histograms} to null.
 	 */
 	public void setImagePlus(ImagePlus imp) {
 		this.imp = imp;
+		histograms = null;
 	}
 	
 	/**
@@ -783,7 +800,11 @@ public class Directionality_ implements PlugIn {
 	 * @return  the bin centers, in degrees
 	 */
 	public double[] getBins() {
-		return bins;
+		final double[] degree_bins = new double[nbins];
+		for (int i = 0; i < degree_bins.length; i++) {
+			degree_bins[i] = bin_start + 180 *  i * (bins[i]+Math.PI/2)/Math.PI ;
+		}
+		return degree_bins;
 	}
 	
 	/**
@@ -791,7 +812,7 @@ public class Directionality_ implements PlugIn {
 	 */
 	public void setBinNumber(int nbins) {
 		this.nbins = nbins;
-		prepareBins(nbins, bin_start);
+		prepareBins(nbins);
 		histograms = null;
 	}
 	
@@ -843,12 +864,17 @@ public class Directionality_ implements PlugIn {
 	}
 	
 	/**
+	 * Set the build orientation map flag
+	 */
+	public void setBuildOrientationMapFlag(boolean flag) {
+		this.build_orientation_map = flag;
+	}
+
+	/**
 	 * Return the orientation map as an {@link ImageStack}, one slice per slice in the source image.
 	 * Return null if the orientation map flag was not set, or if computation was not done.  
 	 */
 	public ImageStack getOrientationMap() {
-//		if (!build_orientation_map) 
-//			return null;
 		return orientation_map;
 	}
 	
@@ -886,6 +912,8 @@ public class Directionality_ implements PlugIn {
 		gd.addChoice("Method:", method_names, method.toString());
 		gd.addNumericField("Nbins: ", nbins, 0);
 		gd.addNumericField("Histogram start", bin_start , 0, 4, "º");
+		gd.addCheckbox("Build orientation map", build_orientation_map);
+		gd.addCheckbox("Display color wheel", display_color_wheel);
 		gd.addCheckbox("Display table", display_table);
 		gd.addCheckbox("Debug", debug);
 		gd.showDialog();
@@ -904,6 +932,8 @@ public class Directionality_ implements PlugIn {
 		// Reflect user settings in fields
 		nbins = (int) gd.getNextNumber();
 		bin_start = gd.getNextNumber();
+		build_orientation_map = gd.getNextBoolean();
+		display_color_wheel = gd.getNextBoolean();
 		display_table = gd.getNextBoolean();
 		debug = gd.getNextBoolean();
 	}
@@ -950,8 +980,8 @@ public class Directionality_ implements PlugIn {
 		window_pixels = (float[]) window.getPixels();
 		
 		// Prepare polar coordinates
-		r = makeRMatrix(small_side, small_side);
-		theta = makeThetaMatrix(small_side, small_side);
+		r = makeRMatrix(pad_size, pad_size);
+		theta = makeThetaMatrix(pad_size, pad_size);
 		
 		// Prepare filters
 		filters = makeFftFilters();
@@ -974,7 +1004,7 @@ public class Directionality_ implements PlugIn {
 	 *  
 	 */
 	private final double[] local_gradient_orientation(final FloatProcessor ip) {
-		double[] dir = new double[nbins]; // histo with #bins
+//		double[] dir = new double[nbins]; // histo with #bins
 		final double[] norm_dir = new double[nbins]; // histo from -pi to pi;
 		final FloatProcessor grad_x = (FloatProcessor) ip.duplicate();
 		final FloatProcessor grad_y = (FloatProcessor) ip.duplicate();
@@ -1012,27 +1042,13 @@ public class Directionality_ implements PlugIn {
 				max_norm = norm;
 			}
 			angle = Math.atan(dy/dx);
-			pixels_theta[i] = (float) (angle * 180.0 / Math.PI);
+			pixels_theta[i] = (float) (angle * 180.0 / Math.PI); // deg, -90º to 90º
 			pixels_r[i] = (float) norm;
 			histo_index = (int) ((nbins/2.0) * (1 + angle / (Math.PI/2)) ); // where to put it
 			if (histo_index == nbins) {
 				histo_index = 0; // circular shift in case of exact vertical orientation
 			}
 			norm_dir[histo_index] += norm; // we put the norm, the stronger the better
-		}
-		
-		// Shift histogram				
-		final double shift = Math.toRadians(bins[0]) - (-Math.PI/2);
-		final int index_shift = (int) ( nbins / Math.PI * shift );
-		int j;
-		for (int i = 0; i < norm_dir.length; i++) {
-			j = i + index_shift;
-			while (true) {
-				if (j<0) { j += nbins; } 
-				else if (j>=nbins) { j-= nbins; } 
-				else { break;}
-			}
-			dir[j] = norm_dir[i];
 		}
 		
 		if (build_orientation_map) {
@@ -1051,17 +1067,16 @@ public class Directionality_ implements PlugIn {
 			final ColorProcessor cp = new ColorProcessor(ip.getWidth(), ip.getHeight());
 			final byte[] H = new byte[pixels_r.length];
 			final byte[] S = new byte[pixels_r.length];
-			final byte[] B = new byte[pixels_r.length];
 			for (int i = 0; i < pixels_r.length; i++) {
 				H[i] = (byte) (255.0 * (pixels_theta[i]+90.0)/180.0);
-				S[i] = (byte) (255.0 * Math.log10(1.0 + 9.0*pixels_r[i] / max_norm) );
-				B[i] = (byte) 255.0; // (byte) (255.0 * ( (pixels[i]-min_brightness) / (max_brightness-min_brightness) ) );
+				S[i] = (byte) (255.0 * pixels_r[i] / max_norm) ; //Math.log10(1.0 + 9.0*pixels_r[i] / max_norm) );
 			}
+			final byte[] B = (byte[]) ip.convertToByte(true).getPixels();
 			cp.setHSB(H, S, B);
 			orientation_map.addSlice(makeNames()[slice_index], cp);
 		}
 		
-		return dir;
+		return norm_dir;
 	}
 
 	/**
@@ -1077,7 +1092,7 @@ public class Directionality_ implements PlugIn {
 	 */
 	private final double[] fourier_component(FloatProcessor ip) {
 		final Roi original_square = new Roi((pad_size-small_side)/2, (pad_size-small_side)/2, small_side, small_side); 
-
+				
 		float[] fpx, spectrum_px;
 		final double[] dir = new double[nbins];
 		ImageProcessor square_block;
@@ -1087,9 +1102,17 @@ public class Directionality_ implements PlugIn {
 		
 		ImageStack spectra = null;
 		if (debug) {
-			spectra = new ImageStack(small_side, small_side);
+			spectra = new ImageStack(small_side, small_side);			
 		}
 		
+		FloatProcessor[] hue_arrays = null, saturation_arrays = null;
+		if (build_orientation_map) {
+			hue_arrays = new FloatProcessor[npadx*npady];
+			saturation_arrays = new FloatProcessor[npadx*npady];
+		}
+				
+		// Overall maximum of the weights
+		float max_norm =0.0f;
 		// If the image is not square, split it in small square padding all the image
 		for (int ix = 0; ix<npadx; ix++) {
 			
@@ -1109,7 +1132,7 @@ public class Directionality_ implements PlugIn {
 				// Pad the block with a power of 2 size
 				padded_square_block.setValue(0.0);
 				padded_square_block.fill();
-				padded_square_block.insert(square_block, 0, 0);
+				padded_square_block.insert(square_block, (pad_size-small_side)/2, (pad_size-small_side)/2);
 				
 				// Computes its FFT
 				fft = new FHT(padded_square_block);
@@ -1120,60 +1143,151 @@ public class Directionality_ implements PlugIn {
 				// Get a centered power spectrum with right size
 				pspectrum = fft.conjugateMultiply(fft);
 				pspectrum .setRoi(original_square);
-				small_pspectrum = (FloatProcessor) pspectrum .crop();
-				spectrum_px = (float[]) small_pspectrum.getPixels(); 
+				small_pspectrum = (FloatProcessor) pspectrum.crop();
+				spectrum_px = (float[]) pspectrum.getPixels(); //small_pspectrum.getPixels(); 
 				
 				if (debug) {
 					spectra.addSlice("block nbr "+(ix+1)*(iy+1), displayLog(small_pspectrum));
-
 				}
+
+				// For orientation map
+				float[] weights = null, max_weights = null, best_angle = null;
+				FHT tmp;
+				FloatProcessor small_tmp;
+				float[] tmp_px, small_tmp_px;
 				
-				// Computes angular density
+
+				if (build_orientation_map) {
+					weights 	= new float[small_side * small_side];
+					max_weights = new float[small_side * small_side];
+					best_angle 	= new float[small_side * small_side];
+				}
+
+				// Loop over all bins
 				for (int bin=0; bin<nbins; bin++) {
+					
+					// Get filter pixels
 					fpx = (float[]) filters.getPixels(bin+1);
-					for (int i = 0; i < spectrum_px.length; i++) {
-						dir[bin] += spectrum_px[i] * fpx[i]; // will sum out with every block
+					
+					// Loop over all pixels
+					if (build_orientation_map) {
+						
+						tmp = fft.getCopy();
+						tmp.setShowProgress(false);
+						tmp_px = (float[]) tmp.getPixels();
+						for (int i = 0; i < spectrum_px.length; i++) {
+							// Computes angular density
+							dir[bin] += spectrum_px[i] * fpx[i]; // will sum out with every block
+							// Build orientation map if needed
+							tmp_px[i] *= fpx[i];							
+						}
+						tmp.inverseTransform();
+						tmp.setRoi(original_square);
+						small_tmp = (FloatProcessor) tmp.crop();
+						
+						// Build angular statistics arrays -> 2nd loop
+						small_tmp_px = (float[]) small_tmp.getPixels();
+						for (int j = 0; j < small_tmp_px.length; j++) {
+							weights[j] = small_tmp_px[j] * small_tmp_px[j];
+							if (weights[j] > max_weights[j]) {
+								max_weights[j] = weights[j];
+								best_angle[j] = (float) bins[bin]; // rad, [-pi/2 - pi/2[
+							}
+							// Overall maximum calculation
+							if (weights[j] > max_norm) {
+								max_norm = weights[j]; 
+							}
+						}
+						
+					} else {
+						
+						for (int i = 0; i < spectrum_px.length; i++) {
+							// Computes angular density, and that's all
+							dir[bin] += spectrum_px[i] * fpx[i]; // will sum out with every block
+						}							
 					}
+
+				} // end loop over all bins
+
+				// Store results
+				if (build_orientation_map) {
+					hue_arrays[ix+npadx*iy] = new FloatProcessor(ip.getWidth(), ip.getHeight());
+					hue_arrays[ix+npadx*iy].insert(new FloatProcessor(small_side, small_side, best_angle, null), ix*step, iy*step);
+					saturation_arrays[ix+npadx*iy] = new FloatProcessor(ip.getWidth(), ip.getHeight());
+					saturation_arrays[ix+npadx*iy].insert(new FloatProcessor(small_side, small_side, max_weights, null), ix*step, iy*step);
 				}
 			}
 		}
 		
+		// Reconstruct final orientation map
+		if (build_orientation_map) {
+			FloatProcessor big_hue = new FloatProcessor(ip.getWidth(), ip.getHeight());
+			FloatProcessor big_saturation = new FloatProcessor(ip.getWidth(), ip.getHeight());
+			float[] big_hue_px = (float[]) big_hue.getPixels();
+			float[] big_saturation_px = (float[]) big_saturation.getPixels();
+			float[] saturation_px = null, hue_px = null;
+			for (int ix = 0; ix<npadx; ix++) {
+				for (int iy = 0; iy<npady; iy++) {
+					hue_px = (float[]) hue_arrays[ix+npadx*iy].getPixels();
+					saturation_px = (float[]) saturation_arrays[ix+npadx*iy].getPixels();
+					for (int i = 0; i < big_hue_px.length; i++) {
+						if ((255*saturation_px[i]/max_norm) >= big_saturation_px[i]) {
+							big_saturation_px[i] = (255*saturation_px[i]/max_norm);
+							big_hue_px[i] = (float) ( 255 *  ( ( 1 + hue_px[i]/Math.PI ) % 1 ) ); 
+						}
+					}
+				}
+			}
+
+			ByteProcessor big_brightness = (ByteProcessor) ip.convertToByte(true);
+			ColorProcessor cp = new ColorProcessor(ip.getWidth(), ip.getHeight());
+			cp.setHSB(
+						(byte[]) big_hue.convertToByte(false).getPixels(), 
+						(byte[]) big_saturation.convertToByte(false).getPixels(), 
+						(byte[]) big_brightness.getPixels()
+					); 
+			orientation_map.addSlice(makeNames()[slice_index], cp);
+		}
+
 		if (debug) {
 			new ImagePlus("Log10 power FFT of "+makeNames()[slice_index], spectra).show();
 		}
 		
 		return dir;		
 	}
-
+	
 	/**
 	 * This method generates the angular filters used by the Fourier analysis. It reads the fields {@link #nbins},
-	 * {@link #bin_start} to determine how many individual angle filter to generate, and {@link #small_side}
+	 * {@link #bin_start} to determine how many individual angle filter to generate, and {@link #pad_size}
 	 * to determine the image filter size. As such, they must be set before calling this method.
 	 * 
 	 * @return  an {@link ImageStack} made of each individual angular filter
 	 * @see {@link #fourier_component(FloatProcessor)}, {@link #prepareBins()}
 	 */
 	private final ImageStack makeFftFilters() {
-		final ImageStack filters = new ImageStack(small_side, small_side, nbins);
+		final ImageStack filters = new ImageStack(pad_size, pad_size, nbins);
 		float[] pixels;
 		
 		final float[] r_px = (float[]) r.getPixels();
 		final float[] theta_px = (float[]) theta.getPixels();
 		
-		double current_r, current_theta, theta_c, angular_part;
+		double current_r, current_theta, theta_c, angular_part, radial_part;
 		final double theta_bw = Math.PI/(nbins-1);
-		
+		final double r_c = pad_size / 4;
+		final double r_bw = r_c/2;
+				
 		for (int i=1; i<= nbins; i++) {
 			
-			pixels = new float[small_side*small_side];
-			theta_c = (i-1) * Math.PI / nbins - (90 + bin_start)*Math.PI/180;
+			pixels = new float[pad_size*pad_size];
+			theta_c = bins[i-1];
 			
 			for (int index = 0; index < pixels.length; index++) {
 
 				current_r = r_px[index];
-				if ( current_r < FREQ_THRESHOLD || current_r > small_side/2) {
+				if ( current_r < FREQ_THRESHOLD || current_r > pad_size/2) {
 					continue;
 				}
+				radial_part = Math.exp( -(current_r-r_c)*(current_r-r_c)/(r_bw*r_bw));
 				
 				current_theta = theta_px[index];
 				if ( Math.abs(current_theta-theta_c) < theta_bw) {
@@ -1194,7 +1308,7 @@ public class Directionality_ implements PlugIn {
 					continue; // leave it to 0
 				}
 				
-				pixels[index] = (float) angular_part; // only angular for now 
+				pixels[index] = (float)(angular_part * radial_part); 
 
 			}
 			
@@ -1255,21 +1369,74 @@ public class Directionality_ implements PlugIn {
 	 */
 	
 	
+	public static final ImagePlus generateColorWheel() {
+		final int cw_height= 256;
+		final int cw_width = cw_height/2;
+		final ColorProcessor color_ip = new ColorProcessor(cw_width, cw_height);
+		FloatProcessor R = makeRMatrix(cw_height, cw_height);
+		FloatProcessor T = makeThetaMatrix(cw_height, cw_height);
+		final Roi half_roi = new Roi(cw_height/2, 0, cw_width, cw_height);
+		R.setRoi(half_roi);
+		R = (FloatProcessor) R.crop();
+		T.setRoi(half_roi);
+		T = (FloatProcessor) T.crop();
+		final float[] r = (float[]) R.getPixels();
+		final float[] t = (float[]) T.getPixels();
+		final byte[] hue = new byte[r.length];
+		final byte[] sat = new byte[r.length];
+		final byte[] bgh = new byte[r.length];
+		for (int i = 0; i < t.length; i++) {
+			if (r[i] > cw_height) {
+				hue[i] = (byte) 255;
+				sat[i] = (byte) 255;
+				bgh[i] = 0;
+			} else {
+				hue[i] = (byte) ( 255 * (t[i]+Math.PI/2)/Math.PI);
+				sat[i] = (byte) ( 255 * r[i]/cw_width);
+				bgh[i] = (byte) 255;
+			}
+		}
+		color_ip.setHSB(hue, sat, bgh);
+		final ImagePlus imp = new ImagePlus("Color wheel", color_ip);
+		return imp;
+	}
 	
 	
-	
+	protected static final void addColorMouseListener(final ImageCanvas canvas) {
+
+		MouseMotionListener ml = new MouseMotionListener() {
+			public void mouseDragged(MouseEvent e) {}
+			public void mouseMoved(MouseEvent e) {
+				Point coord = canvas.getCursorLoc();
+				int x = coord.x;
+				int y = coord.y;
+				try {
+					final ColorProcessor cp = (ColorProcessor) canvas.getImage().getProcessor();
+					final int c = cp.getPixel(x, y);
+					final int r = (c&0xff0000) >>16;
+					final int g = (c&0xff00)>>8;
+					final int b = c&0xff;
+					final float[] hsb = Color.RGBtoHSB(r, g, b, null);
+					final float angle = hsb[0] * 180 - 90;
+					final float amount = hsb[1];
+					IJ.showStatus( String.format("Orientation: %5.1f º - Amont: %5.1f %%", angle, 100*amount));
+				} catch (ClassCastException cce) {
+					return;
+				}
+			}};
+			canvas.addMouseMotionListener(ml);
+	}
+
 	
 	/**
-	 * Generate a bin array of angle in degrees, from the start value to value+PI.
-	 * @return a double array of n elements, the angles in degrees
+	 * Generate a bin array of angle in degrees, from -pi/2 to pi/2.
+	 * @return a double array of n elements, the angles in radians
 	 * @param n the number of elements to generate
-	 * @param start  the value of the first element
 	 */
-	private final static double[] prepareBins(final int n, final double start) {
-		// Prepare bins
+	protected final static double[] prepareBins(final int n) {
 		final double[] bins = new double[n];
 		for (int i = 0; i < n; i++) {
-			bins[i] = (float) Math.toDegrees(i * Math.PI / n) + start;
+			bins[i] = i * Math.PI / n - Math.PI/2;
 		}
 		return bins;
 	}
@@ -1352,7 +1519,8 @@ public class Directionality_ implements PlugIn {
 	 * Generate a 2D matrix of the radius polar coordinates, centered in the middle of the image.
 	 * @param nx  the width in pixel of the desired matrix
 	 * @param ny  the height in pixel of the desired matrix
-	 * @return  the coordinate matrix, as aFloatProcessor
+	 * @return  the coordinate matrix, as a FloatProcessor, where values range from 0 to 
+	 * sqrt(nx^2+ny^2)/2
 	 * @see #makeThetaMatrix(int, int)
 	 */
 	protected static final FloatProcessor makeRMatrix(final int nx, final int ny) {
@@ -1373,7 +1541,8 @@ public class Directionality_ implements PlugIn {
 	 * Generate a 2D matrix of the angle polar coordinates, centered in the middle of the image.
 	 * @param nx  the width in pixel of the desired matrix
 	 * @param ny  the height in pixel of the desired matrix
-	 * @return  the coordinate matrix, as aFloatProcessor
+	 * @return  the coordinate matrix, as a FloatProcessor, where angles are in radians, and range 
+	 * from -pi to pi
 	 * @see #makeRMatrix(int, int)
 	 */
 	protected static final FloatProcessor makeThetaMatrix(final int nx, final int ny) {
@@ -1427,38 +1596,61 @@ public class Directionality_ implements PlugIn {
 	 */
 	
 	public static void main(String[] args) {
+		
 		// Generate a test image
-		ImagePlus imp = NewImage.createByteImage("Lines", 412, 512, 1, NewImage.FILL_BLACK);
+		ImagePlus imp = NewImage.createShortImage("Lines", 400, 400, 1, NewImage.FILL_BLACK);
 		ImageProcessor ip = imp.getProcessor();
-		ip.setLineWidth(2);
+		ip.setLineWidth(4);
 		ip.setColor(Color.WHITE);
-		Roi line_30deg 	= new Line(100.0, 412.0, 446.4102, 212.0); // 400px long line, 30º
-		Roi line_30deg2 = new Line(100.0, 312.0, 446.4102, 112.0); // 400px long line, 30º
-		Roi line_m60deg = new Line(100.0, 100, 300.0, 446.4102); // 400px long line, 60º
-		Roi[] rois = new Roi[] { line_30deg, line_30deg2, line_m60deg };
-		for ( Roi roi : rois) {
+		Line line_30deg 	= new Line(10.0, 412.0, 446.4102, 112.0); // 400px long line, 30º
+		Line line_30deg2 = new Line(10.0, 312.0, 446.4102, 12.0); // 400px long line, 30º
+		Line line_m60deg = new Line(10.0, 10, 300.0, 446.4102); // 400px long line, 60º
+		Line[] rois = new Line[] { line_30deg, line_30deg2, line_m60deg };
+		for ( Line roi : rois) {
 			ip.draw(roi);
 		}		
 		GaussianBlur smoother = new GaussianBlur();
 		smoother.blurGaussian(ip, 2.0, 2.0, 1e-2);		
-//		imp.show();
+		imp.show();
+		
+		AnalysisMethod method;
+		ArrayList<double[]> fit_results;
+		double center;
 		
 		Directionality_ da = new Directionality_();
 		da.setImagePlus(imp);
-		da.setMethod(AnalysisMethod.LOCAL_GRADIENT_ORIENTATION);
-		da.setBinNumber(180);
+		
+		da.setBinNumber(60);
 		da.setBinStart(-90);
-		da.setDebugFlag(false);
+
+		da.setBuildOrientationMapFlag(true);
+		da.setDebugFlag(true);
+		
+		
+		method = AnalysisMethod.FOURIER_COMPONENTS;
+		da.setMethod(method);
 		da.computesHistograms();
-		ArrayList<double[]> fit_results = da.getFitParameters();
-		double center = fit_results.get(0)[2];
-		System.out.println("With method: "+AnalysisMethod.LOCAL_GRADIENT_ORIENTATION);
+		fit_results = da.getFitParameters();
+		center = fit_results.get(0)[2];
+		System.out.println("With method: "+method);
 		System.out.println(String.format("Found maxima at %.1f, expected it at 30º.\n", center, 30));
-//		da.setMethod(AnalysisMethod.FOURIER_COMPONENTS);
-//		da.computesHistograms();
-//		System.out.println("With method: "+AnalysisMethod.FOURIER_COMPONENTS);
-//		System.out.println(String.format("Found maxima at %.1f, expected it at 30º.\n", center, 30));
 		new ImagePlus("Orientation map for "+imp.getShortTitle(),da.getOrientationMap()).show();
+		
+		/*
+		method = AnalysisMethod.LOCAL_GRADIENT_ORIENTATION;
+		da.setMethod(method);
+		da.computesHistograms();
+		fit_results = da.getFitParameters();
+		center = fit_results.get(0)[2];
+		System.out.println("With method: "+method);
+		System.out.println(String.format("Found maxima at %.1f, expected it at 30º.\n", center, 30));
+		new ImagePlus("Orientation map for "+imp.getShortTitle(),da.getOrientationMap()).show();
+		 */
+		
+		ImagePlus cw = generateColorWheel();
+		cw.show();
+		addColorMouseListener(cw.getCanvas());
+
 	}
 	
 }

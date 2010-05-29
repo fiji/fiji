@@ -2,7 +2,7 @@ package bunwarpj;
 
 /**
  * bUnwarpJ plugin for ImageJ/Fiji.
- * Copyright (C) 2005-2009 Ignacio Arganda-Carreras and Jan Kybic 
+ * Copyright (C) 2005-2010 Ignacio Arganda-Carreras and Jan Kybic 
  *
  * More information at http://biocomp.cnb.csic.es/%7Eiarganda/bUnwarpJ/
  *

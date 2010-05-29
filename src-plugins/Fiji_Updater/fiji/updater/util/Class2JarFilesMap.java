@@ -14,13 +14,10 @@ import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import java.util.zip.ZipException;
+
 public class Class2JarFilesMap extends HashMap<String, ArrayList<String>> {
 	public Class2JarFilesMap() {
-		try {
-			addJar("misc/Fiji.jar");
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 		addDirectory("plugins");
 		addDirectory("jars");
 	}
@@ -43,14 +40,18 @@ public class Class2JarFilesMap extends HashMap<String, ArrayList<String>> {
 	}
 
 	private void addJar(String jar) throws IOException {
-		JarFile file = new JarFile(Util.fijiRoot + "/" + jar);
-		Enumeration entries = file.entries();
-		while (entries.hasMoreElements()) {
-			String name =
-				((JarEntry)entries.nextElement()).getName();
-			if (name.endsWith(".class"))
-				addClass(Util.stripSuffix(name,
-					".class").replace('/', '.'), jar);
+		try {
+			JarFile file = new JarFile(Util.fijiRoot + "/" + jar);
+			Enumeration entries = file.entries();
+			while (entries.hasMoreElements()) {
+				String name = ((JarEntry)entries.nextElement())
+					.getName();
+				if (name.endsWith(".class"))
+					addClass(Util.stripSuffix(name,
+						".class").replace('/', '.'), jar);
+			}
+		} catch (ZipException e) {
+			IJ.log("Warning: could not open " + jar);
 		}
 	}
 
@@ -63,10 +64,13 @@ public class Class2JarFilesMap extends HashMap<String, ArrayList<String>> {
 		if (jar.endsWith("/batik.jar"))
 			return name.startsWith("org.xml.") ||
 				name.startsWith("org.w3c.") ||
-				name.startsWith("javax.xml.");
+				name.startsWith("javax.xml.") ||
+				name.startsWith("org.mozilla.javascript.");
 		if (jar.endsWith("/jython.jar") || jar.endsWith("/jruby.jar"))
 			return name.startsWith("com.sun.jna.") ||
 				name.startsWith("jline.");
+		if (jar.endsWith("/ij.jar"))
+			return name.startsWith("javax.script.");
 		return false;
 	}
 

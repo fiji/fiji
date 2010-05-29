@@ -85,22 +85,25 @@ source=$source_dir/fiji/build/Fake.java
 # make sure fake.jar is up-to-date
 test "a$targets" != a$jar &&
 test ! -f "$CWD"/$jar -o "$CWD"/$source -nt "$CWD"/$jar && {
-	sh "$0" $variables $jar || exit
+	(cd "$CWD" && sh "$(basename "$0")" $variables $jar) || exit
 }
 
 # make sure the Fiji launcher is up-to-date
 test "a$targets" != a$jar -a "a$targets" != afiji &&
-test ! -f "$CWD"/fiji -o "$CWD"/fiji.cxx -nt "$CWD"/fiji$exe && {
-	sh "$0" $variables fiji || exit
+test ! -f "$CWD"/fiji -o "$CWD"/fiji.c -nt "$CWD"/fiji$exe && {
+	(cd "$CWD" && sh "$(basename "$0")" $variables fiji) || exit
 }
 
 # on Win64, with a 32-bit compiler, do not try to compile
 case $platform in
 win64)
-	case "$(g++ --version)" in
-	*mingw32*)
+	W64_GCC=/src/mingw-w64/sysroot/bin/x86_64-w64-mingw32-gcc.exe
+	test -f "$W64_GCC" && export CC="$W64_GCC"
+
+	case "$CC,$(gcc --version)" in
+	,*mingw32*)
 		# cannot compile!
-		test "$CWD"/fiji.exe -nt "$CWD"/fiji.cxx &&
+		test "$CWD"/fiji.exe -nt "$CWD"/fiji.c &&
 		test "$CWD"/fiji.exe -nt "$CWD"/precompiled/fiji-win64.exe &&
 		test "$CWD"/fiji.exe -nt "$CWD"/Fakefile &&
 		test "$CWD"/fiji.exe -nt "$CWD"/$jar ||
@@ -131,6 +134,10 @@ then
     if [ -e $JAVA_HOME/bin/javac ]
     then
         export SYSTEM_JAVAC=$JAVA_HOME/bin/javac
+    elif [ -e $JAVA_HOME/../bin/javac ]
+    then
+        export SYSTEM_JAVAC=$JAVA_HOME/../bin/javac
+
     fi
 fi
 

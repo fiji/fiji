@@ -1,5 +1,3 @@
-package view5d;
-
 /****************************************************************************
  *   Copyright (C) 1996-2007 by Rainer Heintzmann                          *
  *   heintzmann@gmail.com                                                  *
@@ -23,16 +21,17 @@ package view5d;
 // By making the appropriate class "View5D" or "View5D_" public and renaming the file, this code can be toggled between Applet and ImageJ respectively
 
 // import java.io.*;
+package view5d;
+
 import java.awt.image.*;
 import java.awt.event.*;
-import java.awt.Graphics;
 import java.awt.*;
 import java.util.*;
 import java.text.*;
 import ij.gui.*;  // for export of plotwindow
 
 // a canvas represents one view of the data
-class ImageCanvas extends Canvas implements ImageObserver,MouseListener,MouseMotionListener,KeyListener,FocusListener,AdjustmentListener {
+public class ImageCanvas extends Canvas implements ImageObserver,MouseListener,MouseMotionListener,KeyListener,FocusListener,AdjustmentListener {
     static final long serialVersionUID = 1;
     //int		xadd = 0;
     //int		yadd = 0;
@@ -50,6 +49,8 @@ class ImageCanvas extends Canvas implements ImageObserver,MouseListener,MouseMot
     int         ROIMoveStartY;
     int         ROIMoveDX=0;
     int         ROIMoveDY=0;
+    Polygon tmpROIPolygons=null;   // these are only used before the ROI is saved
+
     boolean     ImgDragStarted=false; // for now allways drag
     int		ximgdrag = 0;
     int		yimgdrag = 0;
@@ -75,7 +76,7 @@ class ImageCanvas extends Canvas implements ImageObserver,MouseListener,MouseMot
     ImageCanvas   otherCanvas1;  // other dimension object (x dimension in this canvas)
     ImageCanvas   otherCanvas2;  // other dimension object (y dimension in this canvas)
     My3DData    my3ddata;
-    Vector PlanesXs, PlanesYs, PlanesXe, PlanesYe;  // this is a dublicate used for displaying the lines
+    Vector<Integer> PlanesXs, PlanesYs, PlanesXe, PlanesYe;  // this is a duplicate used for displaying the lines
 
     boolean hastoinit = true;
     int     DimNr=0;
@@ -89,10 +90,10 @@ private int  MaxPos=1;
 
    public ImageCanvas(Container app, ImgPanel mp, My3DData data3d, int mydimnr, String myt) {
 
-        PlanesXs= new Vector();PlanesYs= new Vector();
-    	PlanesXe= new Vector();PlanesYe= new Vector();
+        PlanesXs= new Vector<Integer>();PlanesYs= new Vector<Integer>();
+    	PlanesXe= new Vector<Integer>();PlanesYe= new Vector<Integer>();
     	MyPopupMenu =new PopupMenu(myt);  // tear off menu
-	add(MyPopupMenu);
+    	add(MyPopupMenu);
         MenuItem tmp;
         Menu SubMenu = new Menu("Navigation",false);  // can eventually be dragged to the side
         MyPopupMenu.add(SubMenu);
@@ -523,13 +524,26 @@ public void paint(Graphics g) {
         }
         else if   (true) // ! my3ddata.GetProjectionMode(DimNr) || LineROIStarted)
             {
-                if (LineROIStarted)
+                if (LineROIStarted && tmpROIPolygons != null)
                 {
+                    	int xold=0,yold=0,xnew=0,ynew=0;
+                    	for (int s=0;s<tmpROIPolygons.npoints;s++)
+                    	{
+                    		xnew = tmpROIPolygons.xpoints[s];
+                    		ynew = tmpROIPolygons.ypoints[s];
+
+                    		xnew = DMouseFromX(xnew+ ROIMoveDX);
+                    		ynew = DMouseFromY(ynew+ ROIMoveDY);
+                    		if (s>0)
+                    			g.drawLine(xold, yold, xnew, ynew);
+                    		xold = xnew; yold = ynew;
+                    	}
+                	
                     int xrs = DMouseFromX(otherCanvas1.LROIs);
                     int yrs = DMouseFromY(otherCanvas2.LROIs);
                     int xre = DMouseFromX(otherCanvas1.LROIe);
                     int yre = DMouseFromY(otherCanvas2.LROIe);
-                    g.drawLine(xrs, yrs, xre, yre);
+                    g.drawLine(xrs, yrs, xre, yre);             // line in progress
                 }
                 float coords[] = new float[2];
                 
@@ -540,14 +554,18 @@ public void paint(Graphics g) {
                     int xold = DMouseFromX(coords[0] + ROIMoveDX); 
                     int yold = DMouseFromY(coords[1] + ROIMoveDY);
                     int xnew,ynew;
-                for (int s=1;s<Rsize;s++)
-                    {
+                    for (int s=1;s<Rsize;s++)
+                    	{
                         my3ddata.GetPolyROICoords(DimNr,s,coords);
                         xnew = DMouseFromX(coords[0]+ ROIMoveDX);
                         ynew = DMouseFromY(coords[1]+ ROIMoveDY);
                         g.drawLine(xold, yold, xnew, ynew);
                         xold = xnew; yold = ynew;
-                    }
+                    	}
+                    my3ddata.GetPolyROICoords(DimNr,0,coords);
+                    xnew = DMouseFromX(coords[0]+ ROIMoveDX);
+                    ynew = DMouseFromY(coords[1]+ ROIMoveDY);
+                    g.drawLine(xold, yold, xnew, ynew); // to close the ROI
                 }
             }
         
@@ -962,18 +980,19 @@ public void mousePressed(MouseEvent e) {
 
     if (LineROIStarted)
     {
-        if (otherCanvas1.LROIs == (int) XFromMouse(e.getX()) && otherCanvas2.LROIs == (int) YFromMouse(e.getY()))
+        if (otherCanvas1.LROIs == (int) XFromMouse(e.getX()) && otherCanvas2.LROIs == (int) YFromMouse(e.getY()) && tmpROIPolygons != null)
         {   // User clicked twice :  Finish the ROI
-            int Rsize = my3ddata.GetPolyROISize(DimNr);
+            int Rsize = tmpROIPolygons.npoints;
             if (Rsize <= 2)   // ROI too small -> clear ROI
                 my3ddata.ClearPolyROIs(DimNr);
             else
             {
-                float coords[] = new float[2];
-                my3ddata.GetPolyROICoords(DimNr,0,coords);
-                my3ddata.TakePolyROI((int) coords[0], (int) coords[1], DimNr);  // close the ROI
-                my3ddata.InvalidateProjs(-1);  // All projectiopns invalid
+                tmpROIPolygons.addPoint((int) XFromMouse(e.getX()), (int) YFromMouse(e.getY()));
+                // float coords[] = new float[2];
+                // my3ddata.GetPolyROICoords(DimNr,0,coords);
+                my3ddata.TakePolyROI(tmpROIPolygons, DimNr);  // close the ROI and submit
             }
+            tmpROIPolygons=null;  // clear all the entries
             LineROIStarted = false;
             // repaint();
             UpdateAll();
@@ -981,7 +1000,9 @@ public void mousePressed(MouseEvent e) {
         }
         else    // just add another point to the PolyROI
             {
-            my3ddata.TakePolyROI( (int) XFromMouse(e.getX()), (int) YFromMouse(e.getY()),DimNr);
+        	if (tmpROIPolygons != null)
+        		tmpROIPolygons.addPoint((int) XFromMouse(e.getX()), (int) YFromMouse(e.getY()));
+            // my3ddata.TakePolyROI( (int) XFromMouse(e.getX()), (int) YFromMouse(e.getY()),DimNr);
             }
         otherCanvas1.LROIs = (int) XFromMouse(e.getX());
         otherCanvas2.LROIs = (int) YFromMouse(e.getY());
@@ -1009,11 +1030,14 @@ public void mousePressed(MouseEvent e) {
             if (! LineROIStarted)  // start a new LineROI
             {
                 LineROIStarted=true;
-                my3ddata.ClearPolyROIs(DimNr);
+                if (tmpROIPolygons == null)
+                	tmpROIPolygons = new Polygon();
                 LROIs=-1;
                 otherCanvas1.LROIs = (int) XFromMouse(e.getX());
                 otherCanvas2.LROIs = (int) YFromMouse(e.getY());
-                my3ddata.TakePolyROI( (int) XFromMouse(e.getX()), (int) YFromMouse(e.getY()),DimNr);
+                tmpROIPolygons.addPoint((int) XFromMouse(e.getX()), (int) YFromMouse(e.getY()));
+                //my3ddata.ClearPolyROIs(DimNr);
+                //my3ddata.TakePolyROI( (int) XFromMouse(e.getX()), (int) YFromMouse(e.getY()),DimNr);
                 return;
             }
        }

@@ -16,15 +16,26 @@
 DEB_HOST_ARCH := $(shell dpkg-architecture -qDEB_HOST_ARCH)
 DEB_BUILD_ARCH := $(shell dpkg-architecture -qDEB_BUILD_ARCH)
 
-ifeq ($(DEB_BUILD_ARCH),i386)
-JRE_PREFIX := linux/jdk1.6.0_06/
-else
-ifeq ($(DEB_BUILD_ARCH),amd64)
-JRE_PREFIX := linux-amd64/jdk1.6.0_04/
-else
-JRE_PREFIX := linux/unknown/
-endif
-endif
+CWD := $(shell pwd)
+
+BUILD_COMMAND := debian/build-command
+
+JAVA3D_JARS := /usr/share/java/vecmath.jar:/usr/share/java/j3dutils.jar:/usr/lib/jni/libj3dcore-ogl.so:/usr/share/java/j3dcore.jar
+
+INSTALLED_JVM_ROOT := /usr/lib/jvm/java-6-openjdk/
+
+VERSION_IN_CHANGELOG=$(shell dpkg-parsechangelog | egrep ^Version: | sed "s/Version: //")
+PACKAGE_IN_CHANGELOG=$(shell dpkg-parsechangelog | egrep ^Source: | sed "s/Source: //")
+
+CWD_BASENAME=$(shell basename `realpath .`)
+REQUIRED_DIRECTORY_NAME=${PACKAGE_IN_CHANGELOG}-${VERSION_IN_CHANGELOG}
+
+prebuild-actions :
+	@if test $(CWD_BASENAME) != $(REQUIRED_DIRECTORY_NAME); then \
+		echo "Warning: the current directory name ($(CWD_BASENAME)) does not match" && \
+		echo "the package name and version in the new changelog." && \
+		echo "Rename this directory to: $(REQUIRED_DIRECTORY_NAME)" && \
+		false; fi
 
 # This has to be exported to make some magic below work.
 export DH_OPTIONS
@@ -39,12 +50,12 @@ configure-stamp :
 	dh_testdir
 	touch configure-stamp
 
-build : build-arch build-indep
+build : prebuild-actions build-arch build-indep
 
 build-arch : build-arch-stamp
 
 build-arch-stamp : configure-stamp
-	sh Build.sh
+	$(BUILD_COMMAND)
 	touch $@
 
 build-indep : build-indep-stamp
@@ -52,12 +63,12 @@ build-indep : build-indep-stamp
 build-indep-stamp : configure-stamp
 	touch $@
 
-clean :
+clean : prebuild-actions
 	dh_testdir
 	dh_testroot
 	rm -f build-arch-stamp build-indep-stamp configure-stamp install-arch-stamp install-indep-stamp
 	rm -f $(INDEP_STAMPS) $(ARCH_STAMPS)
-	sh Build.sh clean
+	JAVA_HOME=$(INSTALLED_JVM_ROOT) sh -x Fake.sh clean
 	rm -f fjij fiji.o
 	dh_clean
 
@@ -68,11 +79,10 @@ install-indep-stamp : build-indep-stamp
 	dh_testroot
 	dh_clean -k -i
 	dh_installdirs -i
-	# $(MAKE) DESTDIR=$(CURDIR)/debian/fiji install-fiji
 	dh_install -i
 	touch install-indep-stamp
 
-DESTDIR=$(CURDIR)/debian/fiji
+DESTDIR=$(CURDIR)/debian/fiji-base
 
 install-arch-stamp : build-arch-stamp
 	dh_testdir
@@ -82,97 +92,96 @@ install-arch-stamp : build-arch-stamp
 	install -d $(DESTDIR)/usr/bin/
 	install -d $(DESTDIR)/usr/lib/fiji/
 	install -m 755 fiji $(DESTDIR)/usr/lib/fiji/
-	install -m 755 debian/simple-launcher $(DESTDIR)/usr/bin/fiji
-	cp -rv plugins $(DESTDIR)/usr/lib/fiji/
-	cp -rv jars $(DESTDIR)/usr/lib/fiji/
-	cp -rv macros $(DESTDIR)/usr/lib/fiji/
-	cp -rv images $(DESTDIR)/usr/lib/fiji/
-	install -d $(DESTDIR)/usr/lib/fiji/java/$(JRE_PREFIX)
-	cp -rv java/$(JRE_PREFIX)jre $(DESTDIR)/usr/lib/fiji/java/$(JRE_PREFIX)
-	install -d $(DESTDIR)/usr/share/doc/fiji/
-	install -m 644 LICENSES $(DESTDIR)/usr/share/doc/fiji/
-	install -m 644 NOTES $(DESTDIR)/usr/share/doc/fiji/
-	install -m 644 README $(DESTDIR)/usr/share/doc/fiji/
-	install -m 644 TODO $(DESTDIR)/usr/share/doc/fiji/
-	#install -d $(DESTDIR)/usr/share/icons/hicolor/16x16/apps
-	#install -d $(DESTDIR)/usr/share/icons/hicolor/22x22/apps
-	#install -d $(DESTDIR)/usr/share/icons/hicolor/32x32/apps
-	#install -d $(DESTDIR)/usr/share/icons/hicolor/48x48/apps
-	#install -d $(DESTDIR)/usr/share/icons/hicolor/scalable/apps
-	#install -m 644 images/gnome/16x16/apps/fiji.png $(DESTDIR)/usr/share/icons/hicolor/16x16/apps/
-	#install -m 644 images/gnome/22x22/apps/fiji.png $(DESTDIR)/usr/share/icons/hicolor/22x22/apps/
-	#install -m 644 images/gnome/32x32/apps/fiji.png $(DESTDIR)/usr/share/icons/hicolor/32x32/apps/
-	#install -m 644 images/gnome/48x48/apps/fiji.png $(DESTDIR)/usr/share/icons/hicolor/48x48/apps/
-	#install -m 644 images/gnome/scalable/apps/fiji.svg $(DESTDIR)/usr/share/icons/hicolor/scalable/apps/
+	< debian/simple-launcher sed \
+		-e 's,@@INSTALLED_JVM_ROOT@@,$(INSTALLED_JVM_ROOT),' \
+		-e 's,@@JAVA_3D_JARS@@,$(INSTALLED_BUNDLED_JAVA3D_JARS),' \
+		-e 's,@@LD_LIBRARY_PATH@@,$(NEW_LD_LIBRARY_PATH),' > $(DESTDIR)/usr/bin/fiji
+	chmod 755 $(DESTDIR)/usr/bin/fiji
+
+	install -d $(DESTDIR)/usr/share/fiji/
 	install -d $(DESTDIR)/usr/share/pixmaps/
-	install -m 644 images/fiji-icon-16x16.xpm $(DESTDIR)/usr/share/pixmaps/
-	install -m 644 images/fiji-icon-32x32.xpm $(DESTDIR)/usr/share/pixmaps/
+	install -d $(DESTDIR)/usr/share/doc/fiji-base/
+	install -d $(DESTDIR)/usr/lib/fiji/jni/
 	install -d $(DESTDIR)/usr/share/applications/
+	install -d $(DESTDIR)/etc/default/
+
+	install -m 644 LICENSES $(DESTDIR)/usr/share/doc/fiji-base/
+	install -m 644 NOTES $(DESTDIR)/usr/share/doc/fiji-base/
+	install -m 644 README $(DESTDIR)/usr/share/doc/fiji-base/
+	install -m 644 TODO $(DESTDIR)/usr/share/doc/fiji-base/
+
+	install -m 644 images/fiji-logo-16x16.xpm $(DESTDIR)/usr/share/pixmaps/
+	install -m 644 images/fiji-logo-32x32-b.xpm $(DESTDIR)/usr/share/pixmaps/
+
 	install -m 644 debian/fiji.desktop $(DESTDIR)/usr/share/applications/
+	install -m 644 debian/etc-default-fiji $(DESTDIR)/etc/default/fiji
+
+	debian/update-debian.py --install
+
 	dh_install -s
 	touch install-arch-stamp
 
 %-packindep-stamp : build-indep-stamp install-indep-stamp
-	dh_testdir -p$*
-	dh_testroot -p$*
-	dh_installchangelogs -p$*
-	dh_installdocs -p$*
-	dh_installexamples -p$*
-	dh_installmenu -p$*
-#	dh_installdebconf	 -p$*
-#	dh_installlogrotate	 -p$*
-#	dh_installemacsen -p$*f
-#	dh_installpam -p$*
-#	dh_installmime -p$*
-#	dh_python -p$*
-#	dh_installinit -p$*
-#	dh_installcron -p$*
-#	dh_installinfo -p$*
-	dh_installman -p$*
-	dh_link -p$*
-	dh_strip -p$*
-	dh_compress  -p$*
-	dh_fixperms -p$*
-#	dh_perl -p$*
-#	dh_makeshlibs -p$*
-	dh_installdeb -p$*
-#	dh_shlibdeps -p$*
-	dh_gencontrol -p$*
-	dh_md5sums -p$*
-	dh_builddeb -p$*
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs
+	dh_installdocs
+	dh_installexamples
+	dh_installmenu
+#	dh_installdebconf
+#	dh_installlogrotate
+#	dh_installemacsen
+#	dh_installpam
+#	dh_installmime
+#	dh_python
+#	dh_installinit
+#	dh_installcron
+#	dh_installinfo
+	dh_installman
+	dh_link
+	dh_strip
+	dh_compress
+	dh_fixperms
+#	dh_perl
+#	dh_makeshlibs
+	dh_installdeb
+#	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
 	touch $@
 
 # Build architecture independant packages using the common target.
 binary-indep : $(INDEP_STAMPS)
 
 %-packarch-stamp : build-arch-stamp install-arch-stamp
-	dh_testdir -p$*
-	dh_testroot -p$*
-	dh_installchangelogs -p$*
-	dh_installdocs -p$*
-	dh_installexamples -p$*
-	dh_installmenu -p$*
-#	dh_installdebconf	 -p$*
-#	dh_installlogrotate	 -p$*
-#	dh_installemacsen -p$*
-#	dh_installpam -p$*
-#	dh_installmime -p$*
-#	dh_python -p$*
-#	dh_installinit -p$*
-#	dh_installcron -p$*
-#	dh_installinfo -p$*
-	dh_installman -p$*
-	dh_link -p$*
-	dh_strip -p$*
-	dh_compress  -p$*
-	dh_fixperms -p$*
-#	dh_perl -p$*
-#	dh_makeshlibs -p$*
-	dh_installdeb -p$*
-#	dh_shlibdeps -p$*
-	dh_gencontrol -p$*
-	dh_md5sums -p$*
-	dh_builddeb -p$*
+	dh_testdir
+	dh_testroot
+	dh_installchangelogs
+	dh_installdocs
+	dh_installexamples
+	dh_installmenu
+#	dh_installdebconf
+#	dh_installlogrotate
+#	dh_installemacsen
+#	dh_installpam
+#	dh_installmime
+#	dh_python
+#	dh_installinit
+#	dh_installcron
+#	dh_installinfo
+	dh_installman
+	dh_link
+	dh_strip
+	dh_compress
+	dh_fixperms
+#	dh_perl
+#	dh_makeshlibs
+	dh_installdeb
+#	dh_shlibdeps
+	dh_gencontrol
+	dh_md5sums
+	dh_builddeb
 	touch $@
 
 # Build architecture dependant packages using the common target.
@@ -180,4 +189,4 @@ binary-arch : $(ARCH_STAMPS)
 
 binary : binary-arch binary-indep
 
-.PHONY : build clean binary-indep binary-arch binary install install-indep install-arch configure
+.PHONY : build clean binary-indep binary-arch binary install install-indep install-arch configure prebuild-actions

@@ -37,7 +37,7 @@ import org.imagearchive.lsm.toolbox.info.scaninfo.Recording;
 
 public class InfoFrame extends JFrame {
 
-	private MasterModel masterModel;
+	private MasterModel masterModel = MasterModel.getMasterModel();
 
 	private DetailsFrame detailsFrame;
 
@@ -51,11 +51,10 @@ public class InfoFrame extends JFrame {
 
 	private JTextArea[] area = new JTextArea[22];
 
-	public InfoFrame(MasterModel masterModel) throws HeadlessException {
+	public InfoFrame() throws HeadlessException {
 		super();
-		this.masterModel = masterModel;
-		detailsFrame = new DetailsFrame(masterModel);
-		notesDialog = new NotesDialog(this, true, masterModel);
+		detailsFrame = new DetailsFrame();
+		notesDialog = new NotesDialog(this, true);
 		initializeGUI();
 		ServiceMediator.registerInfoFrame(this);
 	}

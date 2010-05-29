@@ -1,9 +1,14 @@
 package fiji;
 
+import java.io.File;
 import java.io.IOException;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.InvocationTargetException;
+
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
@@ -49,10 +54,16 @@ public class JarLauncher {
 		}
 		Class main = null;
 		try {
-			main = Class.forName(className);
+			URL[] urls = new URL[] { new File(jarPath).toURL() };
+			ClassLoader loader = new URLClassLoader(urls);
+			main = loader.loadClass(className.replace('/', '.'));
 		} catch (ClassNotFoundException e) {
 			System.err.println("Class '" + className
 					+ "' was not found in '"
+					+ jarPath + "'.");
+			System.exit(1);
+		} catch (MalformedURLException e) {
+			System.err.println("Could not make URL for '"
 					+ jarPath + "'.");
 			System.exit(1);
 		}

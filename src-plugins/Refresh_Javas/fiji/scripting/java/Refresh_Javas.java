@@ -6,6 +6,7 @@ import fiji.build.Fake;
 
 import ij.IJ;
 import ij.ImagePlus;
+import ij.Macro;
 import ij.Menus;
 
 import ij.io.PluginClassLoader;
@@ -41,6 +42,11 @@ public class Refresh_Javas extends RefreshScripts {
 	public void run(String arg) {
 		setLanguageProperties(".java", "Java");
 		setVerbose(false);
+		if (arg == null || arg.equals("")) {
+			arg = Macro.getOptions();
+			if (arg != null)
+				arg = arg.trim();
+		}
 		super.run(arg);
 	}
 
@@ -54,12 +60,12 @@ public class Refresh_Javas extends RefreshScripts {
 		String c = path;
 		if (c.endsWith(".java")) {
 			try {
-				String className = fake(path);
-				if (className != null) {
-					runPlugin(className, true);
+				String[] result = fake(path);
+				if (result != null) {
+					runPlugin(result[1], result[0], true);
 					return;
 				}
-			} catch (Fake.FakeException e) {
+			} catch (Exception e) {
 				e.printStackTrace(new PrintStream(err));
 				return;
 			}
@@ -109,8 +115,8 @@ public class Refresh_Javas extends RefreshScripts {
 		return result;
 	}
 
-	/* returns the class name on success, null otherwise */
-	public String fake(String path) throws Fake.FakeException {
+	/* returns the class name and .jar on success, null otherwise */
+	public String[] fake(String path) throws Fake.FakeException {
 		String fijiDir = System.getProperty("fiji.dir");
 		if (fijiDir == null)
 			return null;
@@ -160,7 +166,7 @@ public class Refresh_Javas extends RefreshScripts {
 		parser.setVariable("buildDir", "build");
 		parser.getRule(target).make();
 
-		return name;
+		return new String[] { name, target };
 	}
 
 	static Method javac;
@@ -227,6 +233,16 @@ public class Refresh_Javas extends RefreshScripts {
 		new PlugInExecutor().run(className, "", newClassLoader);
 	}
 
+	void runPlugin(String path, String className, boolean newClassLoader)
+			throws Exception {
+		PlugInExecutor executor = new PlugInExecutor(path);
+		try {
+			executor.tryRun(className, "", newClassLoader);
+		} catch (NoSuchMethodException e) {
+			executor.runOneOf(path, newClassLoader);
+		}
+	}
+
 	void runOutOfTreePlugin(String path) throws IOException,
 			MalformedURLException {
 		String className = new File(path).getName();
@@ -255,10 +271,12 @@ public class Refresh_Javas extends RefreshScripts {
 		}
 		if (classPath == null || classPath.equals(""))
 			classPath = directory.getPath();
-		else
+		else {
 			// make sure classes from this directory are found first
-			classPath = directory.getPath()
-				+ File.pathSeparator + classPath;
+			if (!classPath.startsWith(File.pathSeparator))
+				classPath = File.pathSeparator + classPath;
+			classPath = directory.getPath() + classPath;
+		}
 
 		new PlugInExecutor(classPath).run(className);
 	}

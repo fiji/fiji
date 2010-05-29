@@ -1,0 +1,117 @@
+#!/bin/sh
+/*/. 2>/dev/null; exec "$(dirname "$0")"/../fiji "$0" "$@" # exec with fiji */
+
+/*
+ * This script helps to identify the commits performed on plugins since they
+ * were uploaded last time.
+ */
+import fiji.build.Fake;
+
+import fiji.updater.logic.PluginCollection;
+import fiji.updater.logic.XMLFileReader;
+
+import java.io.File;
+import java.io.FileInputStream;
+
+import java.text.SimpleDateFormat;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+
+import java.util.zip.GZIPInputStream;
+
+fuzz = 0;
+if (bsh.args.length > 1 && bsh.args[0].equals("--fuzz")) {
+	fuzz = Integer.parseInt(bsh.args[1]);
+	args = new String[bsh.args.length - 2];
+	System.arraycopy(bsh.args, 2, args, 0, args.length);
+	bsh.args = args;
+}
+
+if (bsh.args.length == 0) {
+	System.err.println("Usage: " + this.interpreter.getSourceFileInfo()
+		+ " [--fuzz minutes-before]"
+		+ " <file.jar> [<file2.jar> ...]");
+	System.exit(1);
+}
+
+// Read the database
+
+fijiDir = System.getProperty("fiji.dir");
+dbPath = fijiDir + "/db.xml.gz";
+new XMLFileReader(new GZIPInputStream(new FileInputStream(dbPath)), 0);
+
+plugins = PluginCollection.getInstance();
+
+// Read the Fakefile
+
+fake = new Fake();
+parser = fake.parse(new FileInputStream(fijiDir + "/Fakefile"), new File(fijiDir));
+parser.parseRules(new ArrayList());
+
+public class Outputter extends Thread {
+	InputStream in;
+	PrintStream out;
+
+	public Outputter(InputStream in, PrintStream out) {
+		this.in = in;
+		this.out = out;
+	}
+
+	public void run() {
+		byte[] buffer = new byte[65536];
+		for (;;) {
+			int count = in.read(buffer);
+			if (count < 0)
+				break;
+			out.write(buffer, 0, count);
+		}
+		in.close();
+	}
+}
+
+int execute(String[] cmdarray, File directory) {
+	process = Runtime.getRuntime().exec(cmdarray, null, directory);
+	new Outputter(process.getInputStream(), System.out).start();
+	new Outputter(process.getErrorStream(), System.err).start();
+	return process.waitFor();
+}
+
+calendar = Calendar.getInstance();
+dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+for (String arg : bsh.args) {
+	timestamp = plugins.getPlugin(arg).getTimestamp();
+	calendar.set((int)((timestamp / 10000000000l) % 10000),
+		(int)((timestamp / 100000000l) % 100) - 1,
+		(int)((timestamp / 1000000l) % 100),
+		(int)((timestamp / 10000l) % 100),
+		(int)((timestamp / 100l) % 100),
+		(int)(timestamp % 100));
+	message = since = dateFormat.format(calendar.getTime());
+	if (fuzz != 0) {
+		calendar.setTimeInMillis(calendar.getTimeInMillis() - 60000l * fuzz);
+		since = dateFormat.format(calendar.getTime());
+		message += " (-" + fuzz + " minutes) = " + since;
+	}
+
+	System.out.println("*** Changes in " + arg + " since " + message + " ***");
+	since = "--since=" + since;
+	String[] cmdarray = {
+		"git", "log", since, "--", "."
+	};
+
+	rule = parser.getRule(arg);
+	if (rule.getClass().getName().endsWith("SubFake"))
+		execute(cmdarray,
+			new File(fijiDir + rule.getLastPrerequisite()));
+	else {
+		setAccessibility(true);
+		path = rule.prerequisiteString;
+		starstar = path.indexOf("**");
+		if (starstar >= 0)
+			path = path.substring(0, starstar);
+		cmdarray[cmdarray.length - 1] = path;
+		execute(cmdarray, new File(fijiDir));
+	}
+}

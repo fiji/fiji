@@ -1,3 +1,99 @@
+fiji (20100323143452) unstable; urgency=low
+
+  * Based on fiji.git at 7c3204631415f76508e020e8bb9ca72f336afc79
+    [Fill in the rest of the commit message here.]
+
+ -- Mark Longair <mhl@pobox.com>  Tue, 23 Mar 2010 13:34:52 +0000
+
+fiji (20100320) unstable; urgency=low
+
+  * Update to upstream 59f7d1652296901b1616.  This is a first
+    attempt at improved packaging.
+
+ -- Mark Longair <mhl@pobox.com>  Sat, 20 Mar 2010 12:26:47 +0000
+
+fiji (20091116) unstable; urgency=low
+
+  * Update to upstream 9c9fdc0d30473b5.  This version of the
+    package has more dependencies and so the package is smaller.
+    The package now depends on openjdk-6-jdk instead of
+    sun-java6-jdk, but you can change this in either
+    /etc/default/fiji or by setting JAVA_HOME.  This version
+    also includes a change in the launcher so that other
+    packages that need to depend on Fiji but need JNI libraries
+    can be added more easily.
+
+ -- Mark Longair <mhl@pobox.com>  Mon, 16 Nov 2009 12:26:47 +0000
+
+fiji (20091003) unstable; urgency=low
+
+  * Update to upstream bd0dd1703835e24, shortly after the
+    Fiji-Pilzn-rc1 tag.
+
+ -- Mark Longair <mhl@pobox.com>  Tue, 22 Sep 2009 11:43:15 +0000
+
+fiji (20090513) unstable; urgency=low
+
+  * Update to upstream 26538219bf4f for bug fixes after the
+    Dresden-2009 release.
+
+ -- Mark Longair <mhl@pobox.com>  Wed, 13 May 2009 10:46:10 +0000
+
+fiji (20090430) unstable; urgency=low
+
+  * Update to upstream add34998e364 for the Dresden-2009
+    release.
+
+ -- Mark Longair <mhl@pobox.com>  Thu, 30 Apr 2009 10:46:10 +0000
+
+fiji (20090419) unstable; urgency=low
+
+  * Update to upstream d98757aff58e2 for the Dresden-2009-rc1
+    release.
+
+ -- Mark Longair <mhl@pobox.com>  Sun, 19 Apr 2009 16:01:07 +0000
+
+fiji (20090216) unstable; urgency=low
+
+  * Update to upstream f35261a1d6bc9cbe7dd7070.  This upstream
+    version has the same submodule versions as the
+    Fiji-Luxembourg release, but is from after the switch to the
+    new repository.
+
+ -- Mark Longair <mhl@pobox.com>  Thu, 30 Oct 2008 10:34:00 +0000
+
+fiji (20081112.0) unstable; urgency=low
+
+  * Update to upstream cc66a23151d76e85 for the Luxembourg
+    release.
+
+ -- Mark Longair <mhl@pobox.com>  Thu, 30 Oct 2008 10:34:00 +0000
+
+fiji (20081030.0) unstable; urgency=low
+
+  * Change the version numbering scheme again, hopefully for
+    the last time.  Update to upstream 034213dae8a8e688a474ad
+
+ -- Mark Longair <mhl@pobox.com>  Thu, 30 Oct 2008 10:34:00 +0000
+
+fiji (0.9.4.20081024rc5) unstable; urgency=low
+
+  * A change back to a single package for Ubuntu and Debian
+    which doesn't try to install the Java3D classes into
+    /usr/lib/jvm/...
+
+ -- Mark Longair <mhl@pobox.com>  Fri, 24 Oct 2008 23:00:00 +0200
+
+fiji (0.9.3.20081015rc4) unstable; urgency=low
+
+  * An update for the public release of Fiji to the ImageJ
+    mailing list.  The key difference here is that we no
+    longer include the JVM, but instead depend on
+    sun-java6-bin (with different versions for Ubuntu and
+    Debian.)
+
+ -- Mark Longair <mhl@pobox.com>  Wed, 15 Oct 2008 23:00:00 +0200
+
 fiji (0.9.3.20080807rc3) unstable; urgency=low
 
   * Fiji should now appear in the GNOME and KDE menus under
