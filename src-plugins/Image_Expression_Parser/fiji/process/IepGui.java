@@ -361,6 +361,7 @@ public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implement
 	 * @param command  unused
 	 */
 	private void fireActionProperty() {
+		System.out.println("Action fired!");
 		ActionEvent action = new ActionEvent(this, ActionEvent.ACTION_PERFORMED, PARSE_ACTION_COMMAND);
 		for (ActionListener l : action_listeners) {
 			synchronized (l) {
@@ -627,6 +628,8 @@ public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implement
 	public void actionPerformed(ActionEvent e) {
 		// This method is called in the context of the event dispatch thread
 
+		System.out.println("Action performing!");
+		
 		// Check inputs
 		boolean is_valid = checkValid();
 		if (!is_valid) 
@@ -649,6 +652,8 @@ public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implement
 			}
 
 			public void run() {
+				
+				System.out.println("New thread is running!");
 
 				// Lock the GUI
 				IJ.showStatus("IEP parsing....");
@@ -818,6 +823,7 @@ public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implement
 								boolean valid = checkValid();
 								if (valid) {
 									addCurrentExpressionToHistory();
+									System.out.println("Valid expression!");
 									fireActionProperty();
 								}
 							}
