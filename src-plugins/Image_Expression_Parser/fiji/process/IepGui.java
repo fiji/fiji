@@ -625,67 +625,91 @@ public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implement
 	 * calculation.
 	 */
 	public void actionPerformed(ActionEvent e) {
-		final IepGui<T> gui = this;
+		// This method is called in the context of the event dispatch thread
 
-		SwingUtilities.invokeLater(new Runnable() {
+		// Check inputs
+		boolean is_valid = checkValid();
+		if (!is_valid) 
+			return;
+
+		// Collect input from GUI widgets while under the event dispatch thread
+		final String expression	= getExpression();
+		final Map<String, ImagePlus> imp_map = getImageMap(); 
+
+		// Fork a new process to carry on the bulk of the execution,
+		// freeing the event dispatch thread for other tasks like repainting windows
+		// and dispatching other events:
+		new Thread() {
+			
+			{
+				// Reduce, at construction time, the priority of this Thread from ~15
+				// (that of the parent Thread, the AWT-EventQueue-0, aka Event Dispatch Thread)
+				// to a more suitable one that doesn't compete with event dispatch:
+				setPriority(Thread.NORM_PRIORITY);
+			}
+
 			public void run() {
-
-				// Check inputs
-				boolean is_valid = checkValid();
-				if (!is_valid) 
-					return;
-
-				if (null == image_expression_parser) {
-					image_expression_parser = new Image_Expression_Parser<T>();
-				}
-
-				// Collect input
-				String expression 	= getExpression();
-				Map<String, ImagePlus> imp_map = getImageMap(); 
-				Map<String, Image<T>> img_map = image_expression_parser.convertToImglib(imp_map);
-				image_expression_parser.setExpression(expression);
-				image_expression_parser.setImageMap(img_map);
 
 				// Lock the GUI
 				IJ.showStatus("IEP parsing....");
-				jButtonOK.setEnabled(false);
-				expressionField.setEnabled(false);
-				for (JComboBox box : image_boxes) {
-					box.setEnabled(false);
-				}
+				setGUIEnabled(false);
 
-				// Call calculation
-				image_expression_parser.process();
+				try {
+					if (null == image_expression_parser) {
+						image_expression_parser = new Image_Expression_Parser<T>();
+					}
 
-				// Collect result
-				Image<T> result_img = image_expression_parser.getResult();
-				if (target_imp == null) {
-					target_imp = ImageJFunctions.copyToImagePlus(result_img);
-					target_imp.show();
-				} else {
-					ImagePlus new_imp = ImageJFunctions.copyToImagePlus(result_img);
-					if (!target_imp.isVisible()) {
-						target_imp = new_imp;
+					Map<String, Image<T>> img_map = image_expression_parser.convertToImglib(imp_map);
+					image_expression_parser.setExpression(expression);
+					image_expression_parser.setImageMap(img_map);
+
+					// Call calculation
+					image_expression_parser.process();
+
+					// Collect result
+					Image<T> result_img = image_expression_parser.getResult();
+					if (target_imp == null) {
+						target_imp = ImageJFunctions.copyToImagePlus(result_img);
 						target_imp.show();
 					} else {
-						target_imp.setStack(expression, new_imp.getStack());
+						ImagePlus new_imp = ImageJFunctions.copyToImagePlus(result_img);
+						if (!target_imp.isVisible()) {
+							target_imp = new_imp;
+							target_imp.show();
+						} else {
+							target_imp.setStack(expression, new_imp.getStack());
+						}
 					}
-				}
-				target_imp.resetDisplayRange();
-				target_imp.updateAndDraw();
+					target_imp.resetDisplayRange();
+					target_imp.updateAndDraw();
 
-				// Re-enable the GUI
-				IJ.showStatus("");
-				gui.toFront();
-				expressionField.requestFocusInWindow(); // give focus to expression field
-				jButtonOK.setEnabled(true);
-				expressionField.setEnabled(true);
+				} catch (Exception e) {
+					e.printStackTrace();
+					IJ.error("An error occurred: " + e);
+				} finally {
+					// Re-enable the GUI
+					IJ.showStatus("");
+					setGUIEnabled(true);
+				}
+			}
+		}.start();
+	}
+
+	/** Toggle GUI enabled/disabled via the event dispatch thread. */
+	protected void setGUIEnabled(final boolean enabled) {
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				jButtonOK.setEnabled(enabled);
+				expressionField.setEnabled(enabled);
 				for (JComboBox box : image_boxes) {
-					box.setEnabled(true);
+					box.setEnabled(enabled);
+				}
+				if (enabled) {
+					toFront();
+					expressionField.requestFocusInWindow(); // give focus to expression field
 				}
 			}
 		});
-
 	}
 	
 	/*
