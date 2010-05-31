@@ -70,7 +70,7 @@ import fiji.expressionparser.ImgLibParser;
  * This GUI was built in part using Jigloo GUI builder http://www.cloudgarden.com/jigloo/.
  * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com>
  */
-public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implements ImageListener, ActionListener, WindowListener {
+public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implements ImageListener, WindowListener {
 
 
 	{
@@ -203,8 +203,6 @@ public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implement
 		"Image dimensions are incompatibles."
 		};
 	
-	private ArrayList<ActionListener> action_listeners = new ArrayList<ActionListener>();
-	
 	/** Number of image boxes currently displayed */
 	private int n_image_box = 0;
 	/** List of ImagePlus currently opened in ImageJ */
@@ -244,6 +242,10 @@ public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implement
 	 * Main method for debug
 	 */
 	public static <T extends RealType<T>> void main(String[] args) {
+		// Load an image
+		ImagePlus imp = IJ.openImage("http://rsb.info.nih.gov/ij/images/blobs.gif");
+		imp.show();
+		// Launch the GUI
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				IepGui<T> inst = new IepGui<T>();
@@ -262,7 +264,6 @@ public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implement
 		initImageList();
 		initGUI();
 		addWindowListener(this);
-		addActionListener(this);
 		addImageBox();
 		jButtonMinus.setEnabled(false);
 		jTextAreaInfo.setText(MESSAGES[0]);
@@ -314,21 +315,10 @@ public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implement
 	 * @see {@link #getImageMap()}  
 	 */
 	public String getExpression() {
-		return (String) expressionField.getSelectedItem();
+		String expression = (String) expressionField.getSelectedItem();
+		return expression.trim();
 	}
 	
-	public void addActionListener(ActionListener l) {
-		action_listeners.add(l);
-	}
-
-	public void removeActionListener(ActionListener l) {
-		action_listeners.remove(l);
-	}
-
-	public ActionListener[] getActionListeners() {
-		return (ActionListener[]) action_listeners.toArray();
-	}
-
 	/*
 	 * PRIVATE METHODS
 	 */
@@ -352,22 +342,6 @@ public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implement
 			return imps;
 		} else {
 			return null;
-		}
-	}
-	
-	/**
-	 * This is triggered when a Parse action is triggered, wether by pressing the Parse button
-	 * or by pressing enter in the expression field.
-	 * @param command  unused
-	 */
-	private void fireActionProperty() {
-		System.out.println("Action fired!");
-		ActionEvent action = new ActionEvent(this, ActionEvent.ACTION_PERFORMED, PARSE_ACTION_COMMAND);
-		for (ActionListener l : action_listeners) {
-			synchronized (l) {
-				l.notifyAll();
-				l.actionPerformed(action);
-			}
 		}
 	}
 	
@@ -455,7 +429,7 @@ public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implement
 	 */
 	@SuppressWarnings("unchecked")
 	private String getExpressionError() {
-		final String expression = (String) expressionField.getSelectedItem();
+		final String expression = getExpression();
 		if ( (null == expression) || (expression.equals(""))  ) {
 			return "";
 		}
@@ -616,19 +590,14 @@ public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implement
 		this.dispose();
 	}
 
-	
-	/*
-	 * ACTIONLISTENER METHOD
-	 */
-
 	/**
 	 * Invoked when an action occur. This causes the GUI to grab all input and to start
 	 * calculation.
 	 */
-	public void actionPerformed(ActionEvent e) {
+	private void launchCalculation() {
 		// This method is called in the context of the event dispatch thread
 
-		System.out.println("Action performing!");
+		System.out.println("  Calculation launching!");
 		
 		// Check inputs
 		boolean is_valid = checkValid();
@@ -653,7 +622,7 @@ public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implement
 
 			public void run() {
 				
-				System.out.println("New thread is running!");
+				System.out.println("  New thread is running!");
 
 				// Lock the GUI
 				IJ.showStatus("IEP parsing....");
@@ -773,7 +742,18 @@ public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implement
 						jPanelRight.add(jButtonOK, new GridBagConstraints(2, 3, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 10, 10), 0, 0));
 						jButtonOK.setText("Parse");
 						jButtonOK.setEnabled(false);
-						jButtonOK.addActionListener(this);
+						jButtonOK.addActionListener(new ActionListener() {
+							@Override
+							public void actionPerformed(ActionEvent e) {
+								System.out.println("Parse button pressed!");
+								boolean valid = checkValid();
+								if (valid) {
+									addCurrentExpressionToHistory();
+									System.out.println("  Valid expression!");
+									launchCalculation();
+								} 
+							}
+						});
 					}
 					{
 						jScrollPane1 = new JScrollPane();
@@ -817,16 +797,21 @@ public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implement
 						expressionField.setBorder(new LineBorder(new java.awt.Color(252,117,0), 1, false));
 						expressionField.setSize(12, 18);
 						jPanelLeft.add(expressionField, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(10, 10, 10, 10), 0, 0));
-						expressionField.addActionListener(new ActionListener() {
+						expressionField.addActionListener(new ActionListener()  {
 							@Override
 							public void actionPerformed(ActionEvent e) {
-								boolean valid = checkValid();
-								if (valid) {
-									addCurrentExpressionToHistory();
-									System.out.println("Valid expression!");
-									fireActionProperty();
+								// Two action events are fired on edit: one for editing the textfield, one for changing
+								// the combo box selection. We only catch the edition.								
+								if (e.getActionCommand().equalsIgnoreCase("comboBoxEdited")) { 
+									boolean valid = checkValid();
+									if (valid) {
+										addCurrentExpressionToHistory();
+										System.out.println("  Valid expression!");
+										launchCalculation();
+									}
 								}
 							}
+
 						});
 					}
 					{
