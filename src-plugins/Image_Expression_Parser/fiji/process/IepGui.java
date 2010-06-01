@@ -597,8 +597,6 @@ public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implement
 	private void launchCalculation() {
 		// This method is called in the context of the event dispatch thread
 
-		System.out.println("  Calculation launching!");
-		
 		// Check inputs
 		boolean is_valid = checkValid();
 		if (!is_valid) 
@@ -622,8 +620,6 @@ public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implement
 
 			public void run() {
 				
-				System.out.println("  New thread is running!");
-
 				// Lock the GUI
 				IJ.showStatus("IEP parsing....");
 				setGUIEnabled(false);
@@ -745,11 +741,9 @@ public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implement
 						jButtonOK.addActionListener(new ActionListener() {
 							@Override
 							public void actionPerformed(ActionEvent e) {
-								System.out.println("Parse button pressed!");
 								boolean valid = checkValid();
 								if (valid) {
 									addCurrentExpressionToHistory();
-									System.out.println("  Valid expression!");
 									launchCalculation();
 								} 
 							}
@@ -806,7 +800,6 @@ public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implement
 									boolean valid = checkValid();
 									if (valid) {
 										addCurrentExpressionToHistory();
-										System.out.println("  Valid expression!");
 										launchCalculation();
 									}
 								}
