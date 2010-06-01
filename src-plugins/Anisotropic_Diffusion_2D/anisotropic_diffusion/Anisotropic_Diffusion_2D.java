@@ -1,12 +1,13 @@
+package anisotropic_diffusion;
 /******************************************************************************\
 * 2D Anisotropic Diffusion Tschumperle-Deriche Filtering Plug-in for ImageJ    *
-* version 0.3, 2006/02/02                                                      *
-* written by Vladimir Pilny (vladimir@pilny.com) and Jiri Janacek                                                      *
+* version 0.4, 2010/05/28                                                      *
+* written by Vladimir Pilny (vladimir@pilny.com) and Jiri Janacek              *
 * based on CImg Library by David Tschumperle (http://cimg.sourceforge.net/)    *
 * GNU GPL2 license                                                             *
-* This plug-in is designed to perform Filtering on an 8-bit, 16-bit    *
+* This plug-in is designed to perform Filtering on an 8-bit, 16-bit            *
 * and RGB images with support for ROI and Stacks. Long processing can be       *
-* stopped with Esc.                                                       *
+* stopped with Esc.                                                            *
 \******************************************************************************/
 
 
@@ -15,37 +16,76 @@ import ij.*;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.*;
 import java.awt.*;
-import java.io.*;
-import java.lang.*;
 import ij.gui.*;
 import java.util.*; // for time measuring
 
 public class Anisotropic_Diffusion_2D implements PlugInFilter
 {
 	static final String ADTDVersion = "0.3";
-	static final String ADTDDate = "2006/02/02";
+	static final String ADTDDate = "2010/27/05";
 
 	// the following are the input parameters, with default values assigned to them
-	static int nb_iter       = 20;    // Number of iterations
-	static int nb_smoothings = 1;     // Number of smoothings per iteration
-	static double dt         = 20.0;  // Adapting time step
-	static float a1          = 0.5f;  // Diffusion limiter along minimal variations
-	static float a2          = 0.9f;  // Diffusion limiter along maximal variations
-	static int save          = 20;    // Iteration saving step
-	static boolean sstats    = false; // display xdt value in each iteration
-	static boolean tstats    = false; // measure needed runtime
-	static boolean add_labels    = false; // add labels to output stack
-	static float edgeheight  = 5;     // edge threshold
+	/** Number of iterations */
+	static int nb_iter       = 20;    
+	/** Number of smoothings per iteration */
+	static int nb_smoothings = 1;     
+	/** Adapting time step */
+	static double dt         = 20.0;  
+	/** Diffusion limiter along minimal variations */
+	static float a1          = 0.5f;  
+	/** Diffusion limiter along maximal variations */
+	static float a2          = 0.9f;  
+	/** Iteration saving step */
+	static int save          = 20;    
+	/** display xdt value in each iteration */
+	static boolean sstats    = false; 
+	/** measure needed runtime */
+	static boolean tstats    = false; 
+	/** add labels to output stack */
+	static boolean add_labels    = false;
+	/** edge threshold */
+	static float edgeheight  = 5;     
 
 	Color label_color;
 	Font font;
 	int font_size = 18;
 
-	int scount;   // number of stacks
+	/** number of stacks */
+	int scount;   
 
 	protected ImagePlus imp, imp2;
-	protected ImageStack stack, stack2;
+	protected ImageStack stack=null, stack2;
 
+	//-----------------------------------------------------------------------------------
+
+	public void setNumOfIterations(int nb_iter)
+	{
+		Anisotropic_Diffusion_2D.nb_iter = nb_iter;
+	}
+	public void setSaveSteps(int save)
+	{
+		Anisotropic_Diffusion_2D.save = save;
+	}
+	
+	public void setSmoothings(int nb_smoothings)
+	{
+		Anisotropic_Diffusion_2D.nb_smoothings = nb_smoothings;
+	}
+	
+	public void setTimeSteps(int dt)
+	{
+		Anisotropic_Diffusion_2D.dt = dt;
+	}
+	
+	public void setLimiterMinimalVariations(float a1)
+	{
+		Anisotropic_Diffusion_2D.a1 = a1;
+	}
+	
+	public void setLimiterMaximalVariations(float a2)
+	{
+		Anisotropic_Diffusion_2D.a2 = a2;
+	}
 	//-----------------------------------------------------------------------------------
 
 	public int setup(String arg, ImagePlus imp)
@@ -129,19 +169,30 @@ public class Anisotropic_Diffusion_2D implements PlugInFilter
 	//-----------------------------------------------------------------------------------
 
 	public void run(ImageProcessor ip)
-	{
+	{		
 		stack = imp.getStack();
 		scount = stack.getSize();
-		if (GUI()) runTD(ip);
+		
+		if (GUI())
+		{
+			ImagePlus result = runTD(ip);
+			if(null != result)
+				result.show();
+		}
 	} // end of 'run' method
 
 	//-----------------------------------------------------------------------------------
 
-	public void runTD(ImageProcessor ip)
+	public ImagePlus runTD(ImageProcessor ip)
 	{
 		Date d1, d2;
 		d1 = new Date();
 
+		if(null == stack)
+		{
+			stack = imp.getStack();
+			scount = stack.getSize();
+		}
 		IJ.showStatus("Initializing...");
 		IJ.showProgress(0.0);
 		if (sstats) IJ.log("\n--- "+imp.getShortTitle()+" --- a1="+a1+", a2 = "+a2+", dt = "+dt);
@@ -460,7 +511,6 @@ public class Anisotropic_Diffusion_2D implements PlugInFilter
 							stack2 = new ImageStack(ip2.getWidth(), ip2.getHeight());
 							stack2.addSlice("iter"+(iter+1), ip2);
 							imp2 = new ImagePlus(imp.getShortTitle()+"-iter"+(iter+1)+((breaked)?"-interrupted":""), stack2);
-							imp2.show();
 						} else {
 							stack2.addSlice("iter"+(iter+1), ip2);
 							imp2.setStack(null, stack2);
@@ -486,7 +536,7 @@ public class Anisotropic_Diffusion_2D implements PlugInFilter
 			imp2.setSlice(imp2.getStackSize());
 		}
 		IJ.showProgress(1.0);
-		if (scount>1) new ImagePlus(imp.getShortTitle()+"-iter"+nb_iter, stack2).show();
+		
 
 
 		if (tstats)
@@ -500,6 +550,11 @@ public class Anisotropic_Diffusion_2D implements PlugInFilter
 			IJ.log("\rupdate image = "+time[5]+" ms");
 		}
 
+		if (scount>1)
+			return new ImagePlus(imp.getShortTitle()+"-iter"+nb_iter, stack2);
+		
+		return imp2;
+		
 	} // end of 'runTD' method
 
 } // end of filter Class
