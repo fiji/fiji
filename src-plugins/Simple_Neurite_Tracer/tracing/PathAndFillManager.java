@@ -1294,7 +1294,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 	public static PathAndFillManager createFromTracesFile( String filename ) {
 		PathAndFillManager pafm = new PathAndFillManager();
-		if( pafm.load(filename) )
+		if( pafm.loadGuessingType(filename) )
 			return pafm;
 		else
 			return null;
@@ -1445,6 +1445,12 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	*/
 
 	public boolean importSWC( BufferedReader br, boolean assumeCoordinatesIndexVoxels ) throws IOException {
+		return importSWC( br, assumeCoordinatesIndexVoxels, 0, 0, 0, 1, 1, 1 );
+	}
+
+	public boolean importSWC( BufferedReader br, boolean assumeCoordinatesIndexVoxels,
+				  double x_offset, double y_offset, double z_offset,
+				  double x_scale, double y_scale, double z_scale ) throws IOException {
 
 		if( needImageDataFromTracesFile )
 			throw new RuntimeException( "[BUG] Trying to load SWC file while we still need image data information" );
@@ -1489,9 +1495,9 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			try {
 				int id = Integer.parseInt(fields[0]);
 				int type = Integer.parseInt(fields[1]);
-				double x = Double.parseDouble(fields[2]);
-				double y = Double.parseDouble(fields[3]);
-				double z = Double.parseDouble(fields[4]);
+				double x = x_scale * Double.parseDouble(fields[2]) + x_offset;
+				double y = y_scale * Double.parseDouble(fields[3]) + y_offset;
+				double z = z_scale * Double.parseDouble(fields[4]) + z_offset;
 				if( assumeCoordinatesIndexVoxels ) {
 					x *= x_spacing;
 					y *= y_spacing;
@@ -1627,6 +1633,12 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	}
 
 	public boolean importSWC( String filename, boolean ignoreCalibration ) {
+		return importSWC( filename, ignoreCalibration, 0, 0, 0, 1, 1, 1 );
+	}
+
+	public boolean importSWC( String filename, boolean ignoreCalibration,
+				  double x_offset, double y_offset, double z_offset,
+				  double x_scale, double y_scale, double z_scale ) {
 
 		File f = new File(filename);
 		if( ! f.exists() ) {
@@ -1642,7 +1654,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			is = new BufferedInputStream(new FileInputStream(filename));
 			BufferedReader br = new BufferedReader(new InputStreamReader(is,"UTF-8"));
 
-			result = importSWC(br,ignoreCalibration);
+			result = importSWC(br,ignoreCalibration,x_offset,y_offset,z_offset,x_scale,y_scale,z_scale);
 
 			if( is != null )
 				is.close();
@@ -1657,11 +1669,11 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 	}
 
-	public boolean load( String filename ) {
-		return load( filename, false );
-	}
+	public static final int TRACES_FILE_TYPE_COMPRESSED_XML = 1;
+	public static final int TRACES_FILE_TYPE_UNCOMPRESSED_XML = 2;
+	public static final int TRACES_FILE_TYPE_SWC = 3;
 
-	public boolean load( String filename, boolean ignoreCalibration ) {
+	public static int guessTracesFileType( String filename ) {
 
 		/* Look at the magic bytes at the start of the file:
 
@@ -1672,17 +1684,14 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
                    If it begins "<?xml", assume it's an uncompressed
                    traces file.
 
-		   Otherwise, try to import it as an SWC file.
+		   Otherwise, assum it's an SWC file.
 		*/
 
 		File f = new File(filename);
 		if( ! f.exists() ) {
 			IJ.error("The traces file '"+filename+"' does not exist.");
-			return false;
+			return -1;
 		}
-
-		boolean gzipped = false;
-		boolean uncompressedXML = false;
 
 		try {
 			InputStream is;
@@ -1692,46 +1701,55 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			is.close();
 			if (verbose) System.out.println("buf[0]: "+buf[0]+", buf[1]: "+buf[1]);
 			if( ((buf[0]&0xFF) == 0x1F) && ((buf[1]&0xFF) == 0x8B) )
-				gzipped = true;
+				return TRACES_FILE_TYPE_COMPRESSED_XML;
 			else if( ((buf[0] == '<') && (buf[1] == '?') &&
 				  (buf[2] == 'x') && (buf[3] == 'm') &&
 				  (buf[4] == 'l') && (buf[5] == ' ')) )
-				uncompressedXML = true;
+				return TRACES_FILE_TYPE_UNCOMPRESSED_XML;
 
 		} catch (IOException e) {
 			IJ.error("Couldn't read from file: "+filename);
-			return false;
+			return -1;
 		}
 
-		InputStream is = null;
-		boolean result = false;
+		return TRACES_FILE_TYPE_SWC;
+	}
 
+	public boolean loadCompressedXML( String filename ) {
 		try {
-
-			if( gzipped || uncompressedXML ) {
-				if( gzipped ) {
-					if (verbose) System.out.println("Loading gzipped file...");
-					is = new GZIPInputStream(new BufferedInputStream(new FileInputStream(filename)));
-				} else if( uncompressedXML ) {
-					if (verbose) System.out.println("Loading uncompressed file...");
-					is = new BufferedInputStream(new FileInputStream(filename));
-				}
-
-				result = load(is,null);
-
-				if( is != null )
-					is.close();
-			} else {
-				// Assume it's SWC:
-				result = importSWC( filename, ignoreCalibration );
-			}
-
+			if (verbose) System.out.println("Loading gzipped file...");
+			return load( new GZIPInputStream(new BufferedInputStream(new FileInputStream(filename))), null );
 		} catch( IOException ioe ) {
-			IJ.error("Couldn't open file '"+filename+"' for reading.");
+			IJ.error("Couldn't open file '"+filename+"' for reading\n(n.b. it was expected to be compressed XML)");
 			return false;
 		}
+	}
 
-		return result;
+	public boolean loadUncompressedXML( String filename ) {
+		try {
+			if (verbose) System.out.println("Loading uncompressed file...");
+			return load( new BufferedInputStream(new FileInputStream(filename)), null );
+		} catch( IOException ioe ) {
+			IJ.error("Couldn't open file '"+filename+"' for reading\n(n.b. it was expected to be XML)");
+			return false;
+		}
+	}
+
+	public boolean loadGuessingType( String filename ) {
+
+		int guessedType = guessTracesFileType( filename );
+		switch( guessedType ) {
+
+		case TRACES_FILE_TYPE_COMPRESSED_XML:
+			return loadCompressedXML(filename);
+		case TRACES_FILE_TYPE_UNCOMPRESSED_XML:
+			return loadUncompressedXML(filename);
+		case TRACES_FILE_TYPE_SWC:
+			return importSWC( filename, false, 0, 0, 0, 1, 1, 1 );
+		default:
+			IJ.error("guessTracesFileType() return an unknown type"+guessedType);
+			return false;
+		}
 	}
 
 	/* This method will set all the points in array that

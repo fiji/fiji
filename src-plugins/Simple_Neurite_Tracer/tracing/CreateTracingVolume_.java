@@ -89,7 +89,7 @@ public class CreateTracingVolume_ implements PlugIn {
 		// ------------------------------------------------------------------------
 		
 		PathAndFillManager manager=new PathAndFillManager();
-		manager.load(tracesFileName);
+		manager.loadGuessingType(tracesFileName);
 		ArrayList< Path > allPaths=manager.getAllPaths();
 		
                 Bookstein_From_Landmarks matcher=new Bookstein_From_Landmarks();

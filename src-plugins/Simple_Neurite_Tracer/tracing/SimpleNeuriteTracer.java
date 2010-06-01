@@ -375,7 +375,7 @@ synchronized public void loadLabels( ) {
 
 boolean loading = false;
 
-synchronized public void loadTracings( boolean ignoreCalibration ) {
+synchronized public void loadTracings( ) {
 
 	loading = true;
 
@@ -403,7 +403,7 @@ synchronized public void loadTracings( boolean ignoreCalibration ) {
 
 				if( d.yesPressed() ) {
 
-					if( pathAndFillManager.load(path, ignoreCalibration) )
+					if( pathAndFillManager.loadGuessingType(path) )
 						unsavedPaths = false;
 
 					loading = false;
@@ -432,11 +432,47 @@ synchronized public void loadTracings( boolean ignoreCalibration ) {
 
 	if( fileName != null ) {
 
-		if( pathAndFillManager.load( directory + fileName, ignoreCalibration ) )
-			unsavedPaths = false;
+		File chosenFile = new File( directory, fileName );
+		if( ! chosenFile.exists() ) {
+			IJ.error("The file '"+chosenFile.getAbsolutePath()+"' didn't exist");
+			loading = false;
+			return;
+		}
 
-		loading = false;
-		return;
+		int guessedType = PathAndFillManager.guessTracesFileType(chosenFile.getAbsolutePath());
+
+		switch (guessedType) {
+		case PathAndFillManager.TRACES_FILE_TYPE_SWC:
+		{
+			SWCImportOptionsDialog swcImportDialog = new SWCImportOptionsDialog(
+				"SWC import options for "+chosenFile.getName());
+			// FIXME: pop up a dialog to ask about options:
+			// .. and then call the full importSWC.=:
+			if( swcImportDialog.succeeded &&
+			    pathAndFillManager.importSWC(
+				    chosenFile.getAbsolutePath(),
+				    swcImportDialog.getIgnoreCalibration(),
+				    swcImportDialog.getXOffset(),
+				    swcImportDialog.getYOffset(),
+				    swcImportDialog.getZOffset(),
+				    swcImportDialog.getXScale(),
+				    swcImportDialog.getYScale(),
+				    swcImportDialog.getZScale()) )
+				unsavedPaths = false;
+			break;
+		}
+		case PathAndFillManager.TRACES_FILE_TYPE_COMPRESSED_XML:
+			if( pathAndFillManager.loadCompressedXML( chosenFile.getAbsolutePath() ) )
+				unsavedPaths = false;
+			break;
+		case PathAndFillManager.TRACES_FILE_TYPE_UNCOMPRESSED_XML:
+			if( pathAndFillManager.loadUncompressedXML( chosenFile.getAbsolutePath() ) )
+				unsavedPaths = false;
+			break;
+		default:
+			IJ.error("The file '"+chosenFile.getAbsolutePath()+"' was of unknown type ("+guessedType+")");
+			break;
+		}
 	}
 
 	loading = false;
@@ -1173,7 +1209,9 @@ public void showCorrespondencesTo( File tracesFile, Color c, double maxDistance 
 		(float)x_spacing, (float)y_spacing, (float)z_spacing,
 		spacing_units );
 
-	if( ! pafmTraces.load( tracesFile.getAbsolutePath() ) ) {
+	/* FIXME: may well want to odd SWC options here, which isn't
+	   done with the "loadGuessingType" method: */
+	if( ! pafmTraces.loadGuessingType( tracesFile.getAbsolutePath() ) ) {
 		IJ.error("Failed to load traces from: "+tracesFile.getAbsolutePath());
 		return;
 	}

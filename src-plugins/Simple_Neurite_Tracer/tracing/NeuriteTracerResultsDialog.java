@@ -837,8 +837,6 @@ public class NeuriteTracerResultsDialog
 
 		} else if( source == loadButton ) {
 
-			boolean ignoreCalibration = (e.getModifiers() & ActionEvent.CTRL_MASK) > 0;
-
 			if( plugin.pathsUnsaved() ) {
 				YesNoCancelDialog d = new YesNoCancelDialog( IJ.getInstance(), "Warning",
 									     "There are unsaved paths. Do you really want to load new traces?" );
@@ -849,7 +847,7 @@ public class NeuriteTracerResultsDialog
 
 			int preLoadingState = currentState;
 			changeState( LOADING );
-			plugin.loadTracings(ignoreCalibration);
+			plugin.loadTracings();
 			changeState( preLoadingState );
 
 		} else if( source == exportCSVButton ) {

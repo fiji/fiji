@@ -502,7 +502,7 @@ public class AnalyzeTracings_ implements PlugIn {
 		
 		String tracesFileName = imageFileName + ".traces";
 		PathAndFillManager manager=new PathAndFillManager();
-		manager.load(tracesFileName);
+		manager.loadGuessingType(tracesFileName);
 		return buildGraph( imageFileName, manager.getAllPaths() );
 	}
 	

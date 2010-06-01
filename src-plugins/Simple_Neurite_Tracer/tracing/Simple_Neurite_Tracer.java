@@ -449,7 +449,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer
 			if( macroTracesFilename != null ) {
 				tracesFileToLoad = new File( macroTracesFilename );
 				if( tracesFileToLoad.exists() )
-					pathAndFillManager.load( tracesFileToLoad.getAbsolutePath() );
+					pathAndFillManager.loadGuessingType( tracesFileToLoad.getAbsolutePath() );
 				else
 					IJ.error("The traces file suggested by the macro parameters ("+macroTracesFilename+") does not exist");
 			}
