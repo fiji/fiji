@@ -2106,7 +2106,7 @@ public class Weka_Segmentation implements PlugIn
 			{
 				//IJ.error("Error", "The feature stack has not been initialized yet, please train first.");
 				//return;
-				featureStack.updateFeaturesMT();
+				featureStack.updateFeaturesMT();				
 			}
 			
 			SaveDialog sd = new SaveDialog(title, "feature-stack", ".tif");
@@ -2400,6 +2400,7 @@ public class Weka_Segmentation implements PlugIn
 			featureStack.updateFeaturesMT();
 			updateFeatures = false;
 			IJ.log("Features stack is now updated.");
+			updateButtonsEnabling();
 		}
 		
 		Instances data = null;
