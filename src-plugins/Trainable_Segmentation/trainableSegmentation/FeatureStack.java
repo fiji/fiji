@@ -632,7 +632,10 @@ public class FeatureStack
 	public Callable<ImagePlus> getAnisotropicDiffusion(
 			final ImagePlus originalImage,
 			final int nb_iter, 
-			final int saveSteps)
+			final int saveSteps,
+			final int nb_smoothings,
+			final float a1,
+			final float a2)
 	{
 		return new Callable<ImagePlus>(){
 			public ImagePlus call(){
@@ -643,8 +646,28 @@ public class FeatureStack
 				
 				ad.setSaveSteps(saveSteps);
 				ad.setNumOfIterations(nb_iter);
+				ad.setLimiterMinimalVariations(a1);
+				ad.setLimiterMaximalVariations(a2);
+				ad.setSmoothings(nb_smoothings);
 				
-				return ad.runTD(originalImage.getProcessor());
+				final ImagePlus result = ad.runTD(originalImage.getProcessor());
+				
+				
+				if(result.getImageStackSize() == 1)
+				{
+					return new ImagePlus (availableFeatures[ANISOTROPIC_DIFFUSION] + "_" + nb_iter + "_" + nb_smoothings + "_" + a1 + "_" + a2, result.getProcessor());
+				}
+				else
+				{
+					final ImageStack slices = result.getImageStack();
+					slices.deleteSlice(1); // delete original image
+					for(int i = 1; i <= slices.getSize() ; i++)
+						slices.setSliceLabel(availableFeatures[ANISOTROPIC_DIFFUSION] + "_" + (saveSteps * i) + "_" + nb_smoothings + "_" + a1 + "_" + a2, i);
+					
+					return new ImagePlus("Anisotropic diffusion", slices);
+				}
+				
+ 
 			}
 		};
 	}
@@ -859,8 +882,11 @@ public class FeatureStack
 			
 			// Anisotropic Diffusion
 			if(enableFeatures[ANISOTROPIC_DIFFUSION])
-				futures.add(exe.submit( getAnisotropicDiffusion(originalImage, 60, 20) ) );
-		
+			{
+				for(int i = 1; i < 8; i += 3)
+					for(float j = 0.10f; j < 0.5f; j+= 0.25f)
+						futures.add(exe.submit( getAnisotropicDiffusion(originalImage, 20, 20, i, j, 0.9f) ) );
+			}
 			for (float i=1.0f; i<= FeatureStack.MAX_SIGMA; i*=2)
 			{
 				// Gaussian blur
