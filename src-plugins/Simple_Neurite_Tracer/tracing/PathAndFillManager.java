@@ -1480,6 +1480,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 		double minimumVoxelSpacing = Math.min(Math.abs(x_spacing),Math.min(Math.abs(y_spacing),Math.abs(z_spacing)));
 
+		int pointsOutsideImageRange = 0;
+
 		String line;
 		while( (line = br.readLine()) != null ) {
 			Matcher mComment = pComment.matcher(line);
@@ -1516,16 +1518,12 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				}
 				alreadySeen.add( id );
 
-				/* FIXME: this fudge is broken - should be checking if all of the points
-				   are outside the range, and negating all if so.  (There may be files
-				   that validly have points that lie outside the image stack.) */
-
-				if( (x < 0) && ! (x >= minX && x <= maxX) )
-					x = Math.abs( x );
-				if( (y < 0) && ! (y >= minY && y <= maxY) )
-					y = Math.abs( y );
-				if( (z < 0) && ! (z >= minZ && z <= maxZ) )
-					z = Math.abs( z );
+				if( x < minX || x > maxX )
+					++ pointsOutsideImageRange;
+				if( y < minY || y > maxY )
+					++ pointsOutsideImageRange;
+				if( z < minZ || z > maxZ )
+					++ pointsOutsideImageRange;
 
 				SWCPoint p = new SWCPoint( id, type, x, y, z, radius, previous );
 				idToSWCPoint.put( id, p );
@@ -1541,6 +1539,9 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				return false;
 			}
 		}
+
+		if( pointsOutsideImageRange > 0 )
+			IJ.log("Warning: "+pointsOutsideImageRange+" points were outside the image volume - you may need to change your SWC import options");
 
 		HashMap< SWCPoint, Path > pointToPath =
 			new HashMap< SWCPoint, Path >();
