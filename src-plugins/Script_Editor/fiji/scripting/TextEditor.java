@@ -89,7 +89,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		  openHelp, addImport, clearScreen, nextError, previousError,
 		  openHelpWithoutFrames, nextTab, previousTab,
 		  runSelection, extractSourceJar, toggleBookmark,
-		  listBookmarks, openSourceForClass, newPlugin;
+		  listBookmarks, openSourceForClass, newPlugin, installMacro;
 	JMenu tabsMenu;
 	int tabsMenuTabsStart;
 	Set<JMenuItem> tabsMenuItems;
@@ -207,6 +207,10 @@ public class TextEditor extends JFrame implements ActionListener,
 		runSelection = addToMenu(run, "Run selected code",
 				KeyEvent.VK_R, ctrl | shift);
 		runSelection.setMnemonic(KeyEvent.VK_S);
+
+		installMacro = addToMenu(run, "Install Macro",
+				KeyEvent.VK_I, ctrl);
+		installMacro.setMnemonic(KeyEvent.VK_I);
 
 		run.addSeparator();
 		nextError = addToMenu(run, "Next Error", KeyEvent.VK_F4, 0);
@@ -529,6 +533,8 @@ public class TextEditor extends JFrame implements ActionListener,
 			runText();
 		else if (source == runSelection)
 			runText(true);
+		else if (source == installMacro)
+			installMacro();
 		else if (source == nextError)
 			new Thread() {
 				public void run() {
@@ -974,6 +980,9 @@ public class TextEditor extends JFrame implements ActionListener,
 		addImport.setEnabled(isJava);
 		removeUnusedImports.setEnabled(isJava);
 		sortImports.setEnabled(isJava);
+
+		boolean isMacro = language.menuLabel.equals("ImageJ Macro");
+		installMacro.setEnabled(isMacro);
 	}
 
 	public void setFileName(String baseName) {
@@ -1259,6 +1268,10 @@ public class TextEditor extends JFrame implements ActionListener,
 		if (errorHandler == null)
 			errorHandler = new ErrorHandler(getCurrentLanguage(),
 				screen, compileStartPosition.getOffset());
+	}
+
+	public void installMacro() {
+		new MacroFunctions().installMacro(getTitle(), getEditorPane().getText());
 	}
 
 	public boolean nextError(boolean forward) {
