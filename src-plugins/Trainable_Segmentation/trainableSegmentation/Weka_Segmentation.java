@@ -2739,6 +2739,57 @@ public class Weka_Segmentation implements PlugIn
 		return true;
 	}
 	
+	public ImagePlus getProbability()
+	{
+		if(this.classifier == null)
+			return null;
+		
+		// Update features if necessary
+		if(featureStack.getSize() < 2)
+		{
+			IJ.log("Creating feature stack...");
+			featureStack.updateFeaturesMT();
+			updateFeatures = false;
+			updateWholeData = true;
+			IJ.log("Features stack is now updated.");
+		}
+		
+		if(updateWholeData)
+		{
+			updateTestSet();
+			IJ.log("Test dataset updated ("+ wholeImageData.numInstances() + " instances, " + wholeImageData.numAttributes() + " attributes).");
+		}
+		
+		final int width = this.trainingImage.getWidth();
+		final int height = this.trainingImage.getHeight();
+		
+		final ImageStack is = new ImageStack(width, height);
+		final double[][] classProb = new double[ wholeImageData.numClasses() ] [ width * height ];
+		
+		IJ.log("Calculating class probability for whole image...");
+		
+		for(int i = 0; i < is.getWidth(); i++)
+			for(int j = 0; j < is.getHeight(); j++)
+			{
+				try {
+					final int index = i + j * width;
+					double[] prob = this.classifier.distributionForInstance(wholeImageData.get(index));
+					for(int k = 0 ; k < wholeImageData.numClasses(); k++)
+						classProb[k][index] = prob[k];
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					return null;
+				}
+			}
+		
+		IJ.log("Done");
+		
+		for(int k = 0 ; k < wholeImageData.numClasses(); k++)
+			is.addSlice("class " + (k+1), new FloatProcessor(width, height, classProb[k]));
+		
+		return new ImagePlus("Class probabilities", is); 
+	}
 	
 	/**
 	 * Force segmentator to use all available features
