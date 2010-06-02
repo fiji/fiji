@@ -30,11 +30,15 @@ public class Context_Help implements KeyListener, PlugIn {
                         setActionsToHelp();
                 else {
                         resetActions();
-			IJ.showStatus("Opening help for " + arg + "...");
-                        new BrowserLauncher().run(url + arg.replace(' ', '_')
-				+ "?menuentry=yes");
+			action(arg);
                 }
         }
+
+	protected void action(String arg) {
+		IJ.showStatus("Opening help for " + arg + "...");
+		new BrowserLauncher().run(url + arg.replace(' ', '_')
+			+ "?menuentry=yes");
+	}
 
         protected String getHelpAction(Object key) {
                 return getClass().getName() + "(\"" + key + "\")";
