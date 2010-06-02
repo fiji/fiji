@@ -81,7 +81,7 @@ public class TextEditor extends JFrame implements ActionListener,
 	EditorPane editorPane;
 	JTabbedPane tabbed;
 	JTextArea screen;
-	JMenuItem newFile, open, save, saveas, compileAndRun, debug, close,
+	JMenuItem newFile, open, save, saveas, compileAndRun, compile, debug, close,
 		  undo, redo, cut, copy, paste, find, replace, selectAll,
 		  autocomplete, resume, terminate, kill, gotoLine,
 		  makeJar, makeJarWithSource, removeUnusedImports,
@@ -207,6 +207,10 @@ public class TextEditor extends JFrame implements ActionListener,
 		runSelection = addToMenu(run, "Run selected code",
 				KeyEvent.VK_R, ctrl | shift);
 		runSelection.setMnemonic(KeyEvent.VK_S);
+
+		compile = addToMenu(run, "Compile",
+				KeyEvent.VK_C, ctrl | shift);
+		compile.setMnemonic(KeyEvent.VK_C);
 
 		installMacro = addToMenu(run, "Install Macro",
 				KeyEvent.VK_I, ctrl);
@@ -531,6 +535,8 @@ public class TextEditor extends JFrame implements ActionListener,
 			makeJar(true);
 		else if (source == compileAndRun)
 			runText();
+		else if (source == compile)
+			compile();
 		else if (source == runSelection)
 			runText(true);
 		else if (source == installMacro)
@@ -973,6 +979,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		compileAndRun.setEnabled(language.isRunnable());
 		runSelection.setEnabled(language.isRunnable() &&
 				!language.isCompileable());
+		compile.setEnabled(language.isCompileable());
 		debug.setEnabled(language.isDebuggable());
 		makeJarWithSource.setEnabled(language.isCompileable());
 
@@ -1234,6 +1241,28 @@ public class TextEditor extends JFrame implements ActionListener,
 				markCompileEnd();
 			}
 		};
+	}
+
+	public void compile() {
+		if (!handleUnsavedChanges())
+			return;
+
+		final RefreshScripts interpreter = getCurrentLanguage().interpreter;
+		final JTextAreaOutputStream output = new JTextAreaOutputStream(screen);
+		interpreter.setOutputStreams(output, output);
+		if (interpreter instanceof Refresh_Javas) {
+			final Refresh_Javas java = (Refresh_Javas)interpreter;
+			final File file = getEditorPane().file;
+			final String sourcePath = file.getAbsolutePath();
+			markCompileStart();
+			new Thread() {
+				public void run() {
+					java.compileAndRun(sourcePath, true);
+					screen.insert("Compilation finished.\n", screen.getDocument().getLength());
+					markCompileEnd();
+				}
+			}.start();
+		}
 	}
 
 	public String getSelectedTextOrAsk(String label) {
