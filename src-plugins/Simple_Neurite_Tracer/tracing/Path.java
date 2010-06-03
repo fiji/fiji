@@ -756,20 +756,20 @@ public class Path implements Comparable {
 				if( (either_side >= 0) && (Math.abs(getYUnscaled(i) - slice) > either_side) )
 					continue;
 
-				int x = canvas.myScreenXD(getXUnscaled(i));
-				int y = canvas.myScreenYD(getZUnscaled(i));
+				int x = canvas.myScreenXD(getXUnscaledDouble(i));
+				int y = canvas.myScreenYD(getZUnscaledDouble(i));
 
 				if( ((i == 0) && (realStartJoins == null)) ||
 				    ((i == points - 1) && (realEndJoins == null)) ) {
 					// Then draw it as a rectangle...
-					g.fillRect( x - spotExtra, y - spotExtra, spotDiameter, spotDiameter );
+					g.fillRect( x - (spotDiameter / 2), y - (spotDiameter / 2), spotDiameter, spotDiameter );
 				} else if( ((i == 0) && (realStartJoins != null)) ||
 					   ((i == points - 1) && (realEndJoins != null)) ) {
 					// The draw it as an oval...
-					g.fillOval( x - spotExtra, y - spotExtra, spotDiameter, spotDiameter );
+					g.fillOval( x - (spotDiameter / 2), y - (spotDiameter / 2), spotDiameter, spotDiameter );
 				} else {
 					// Just draw normally...
-					g.fillRect( x, y, spotExtra, spotExtra );
+					g.fillRect( x - (spotExtra / 2), y - (spotExtra / 2), spotExtra, spotExtra );
 				}
 			}
 		}
@@ -781,20 +781,20 @@ public class Path implements Comparable {
 				if( (either_side >= 0) && (Math.abs(getXUnscaled(i) - slice) > either_side) )
 					continue;
 
-				int x = canvas.myScreenXD(getZUnscaled(i));
-				int y = canvas.myScreenYD(getYUnscaled(i));
+				int x = canvas.myScreenXD(getZUnscaledDouble(i));
+				int y = canvas.myScreenYD(getYUnscaledDouble(i));
 
 				if( ((i == 0) && (realStartJoins == null)) ||
 				    ((i == points - 1) && (realEndJoins == null)) ) {
 					// Then draw it as a rectangle...
-					g.fillRect( x - spotExtra, y - spotExtra, spotDiameter, spotDiameter );
+					g.fillRect( x - (spotDiameter / 2), y - (spotDiameter / 2), spotDiameter, spotDiameter );
 				} else if( ((i == 0) && (realStartJoins != null)) ||
 					   ((i == points - 1) && (realEndJoins != null)) ) {
 					// The draw it as an oval...
-					g.fillOval( x - spotExtra, y - spotExtra, spotDiameter, spotDiameter );
+					g.fillOval( x - (spotDiameter / 2), y - (spotDiameter / 2), spotDiameter, spotDiameter );
 				} else {
 					// Just draw normally...
-					g.fillRect( x, y, spotExtra, spotExtra );
+					g.fillRect( x - (spotExtra / 2), y - (spotExtra / 2), spotExtra, spotExtra );
 				}
 			}
 		}
