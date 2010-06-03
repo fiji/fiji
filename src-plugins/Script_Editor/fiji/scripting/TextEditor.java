@@ -250,12 +250,12 @@ public class TextEditor extends JFrame implements ActionListener,
 		extractSourceJar = addToMenu(tools,
 			"Extract source .jar...", 0, 0);
 		extractSourceJar.setMnemonic(KeyEvent.VK_E);
-		openSourceForClass = addToMenu(tools,
-			"Open .java file for class...", 0, 0);
-		openSourceForClass.setMnemonic(KeyEvent.VK_J);
 		newPlugin = addToMenu(tools,
 			"Create new plugin...", 0, 0);
 		newPlugin.setMnemonic(KeyEvent.VK_C);
+		openSourceForClass = addToMenu(tools,
+			"Open .java file for class...", 0, 0);
+		openSourceForClass.setMnemonic(KeyEvent.VK_J);
 		mbar.add(tools);
 
 		tabsMenu = new JMenu("Tabs");
