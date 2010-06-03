@@ -19,7 +19,7 @@
 
   In addition, as a special exception, the copyright holders give
   you permission to combine this program with free software programs or
-  libraries that are released under the Apache Public License. 
+  libraries that are released under the Apache Public License.
 
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
@@ -52,19 +52,19 @@ public class AutoSearchThread extends SearchThread {
 				AutoPoint startPoint,
 				float tubenessThreshold,
 				SinglePathsGraph previousPathGraph ) {
-		
+
 		super(
 			image,  // Image to trace
-			-1,     // stackMin (which we don't use at all in the automatic tracer) 
-			-1,     // stackMax (which we don't use at all in the automatic tracer) 
+			-1,     // stackMin (which we don't use at all in the automatic tracer)
+			-1,     // stackMax (which we don't use at all in the automatic tracer)
 			false,  // bidirectional
 			false,  // definedGoal
 			false,  // startPaused
 			0,      // timeoutSeconds
 			1000 ); // reportEveryMilliseconds
-		
+
 		this.verbose = false;
-		
+
 		this.tubeValues = tubeValues;
 		this.tubenessThreshold = tubenessThreshold;
 

@@ -19,7 +19,7 @@
 
   In addition, as a special exception, the copyright holders give
   you permission to combine this program with free software programs or
-  libraries that are released under the Apache Public License. 
+  libraries that are released under the Apache Public License.
 
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
@@ -148,13 +148,13 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 	public FillWindow(PathAndFillManager pathAndFillManager, SimpleNeuriteTracer plugin, int x, int y) {
 		super("All Fills");
 		this.plugin = plugin;
-		this.pathAndFillManager = pathAndFillManager;		
+		this.pathAndFillManager = pathAndFillManager;
 		setBounds(x,y,400,400);
 
 		setLayout(new GridBagLayout());
 
 		GridBagConstraints c = new GridBagConstraints();
-		
+
 		listModel = new DefaultListModel();
 		fillList = new JList(listModel);
 
@@ -305,7 +305,7 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 	}
 
 	public void setSelectedPaths( HashSet selectedPathSet, Object source ) {
-		
+
 	}
 
 	public void actionPerformed(ActionEvent ae) {
@@ -388,18 +388,18 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 	public void pointsInSearch( SearchThread source, int inOpen, int inClosed ) {
 		// Do nothing...
 	}
-	
+
 	public void finished( SearchThread source, boolean success ) {
 		// Do nothing...
 	}
-	
+
 	public void threadStatus( SearchThread source, int currentStatus ) {
 		switch(currentStatus) {
 		case FillerThread.STOPPING:
 			pauseOrRestartFilling.setLabel("Stopped");
 			pauseOrRestartFilling.setEnabled(false);
 			saveFill.setEnabled(false);
-			
+
 			break;
 		case FillerThread.PAUSED:
 			pauseOrRestartFilling.setLabel("Continue");
@@ -412,6 +412,6 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 		}
 		fillControlPanel.doLayout();
 	}
-	
+
 
 }
