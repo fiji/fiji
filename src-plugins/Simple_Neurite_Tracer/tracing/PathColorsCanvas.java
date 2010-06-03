@@ -19,7 +19,7 @@
 
   In addition, as a special exception, the copyright holders give
   you permission to combine this program with free software programs or
-  libraries that are released under the Apache Public License. 
+  libraries that are released under the Apache Public License.
 
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
@@ -59,7 +59,7 @@ public class PathColorsCanvas extends Canvas implements MouseListener {
 		g.setColor( selectedColor );
 		g.fillRect( 0, 0, leftWidth, height );
 		g.setColor( deselectedColor );
-		g.fillRect( leftWidth, 0, width - leftWidth, height );		
+		g.fillRect( leftWidth, 0, width - leftWidth, height );
 	}
 
 	public void mouseClicked(MouseEvent e) {

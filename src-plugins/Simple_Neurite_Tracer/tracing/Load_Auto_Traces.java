@@ -17,7 +17,7 @@
 
   In addition, as a special exception, the copyright holders give
   you permission to combine this program with free software programs or
-  libraries that are released under the Apache Public License. 
+  libraries that are released under the Apache Public License.
 
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
@@ -43,7 +43,7 @@ public class Load_Auto_Traces implements PlugIn, TraceLoaderListener {
 	float spacing_z = Float.MIN_VALUE;
 
 	byte [][] values = null;
-	
+
 	public void gotVertex( int vertexIndex,
 			       float x_scaled, float y_scaled, float z_scaled,
 			       int x_image, int y_image, int z_image ) {
@@ -97,22 +97,22 @@ public class Load_Auto_Traces implements PlugIn, TraceLoaderListener {
 
 	public void gotSpacingZ( float spacing_z ) {
 		this.spacing_z = spacing_z;
-	}	
+	}
 
 	public void run( String ignored ) {
 
                 OpenDialog od;
-		
+
                 od = new OpenDialog("Select traces.obj file...",
                                     null,
                                     null );
-		
+
                 String fileName = od.getFileName();
                 String directory = od.getDirectory();
-		
+
                 if( fileName == null )
 			return;
-		
+
 		System.out.println("Got "+fileName);
 
 		boolean success = SinglePathsGraph.loadWithListener( directory + fileName, this );

@@ -19,7 +19,7 @@
 
   In addition, as a special exception, the copyright holders give
   you permission to combine this program with free software programs or
-  libraries that are released under the Apache Public License. 
+  libraries that are released under the Apache Public License.
 
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
@@ -56,7 +56,7 @@ public class PointInImage {
 	public double distanceTo( PointInImage o ) {
 		double xdiff = x - o.x;
 		double ydiff = y - o.y;
-		double zdiff = z - o.z;		
+		double zdiff = z - o.z;
 		return Math.sqrt( xdiff * xdiff + ydiff * ydiff + zdiff * zdiff );
 	}
 
