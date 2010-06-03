@@ -1513,6 +1513,15 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 					   convention in the broken files that I've come across: */
 					radius *= minimumVoxelSpacing;
 				}
+
+				/* If the radius is set to near zero,
+				   then artificially set it to half of
+				   the voxel spacing so that
+				   *something* appears in the 3D Viewer */
+
+				if( Math.abs(radius) < 0.0000001 )
+					radius = minimumVoxelSpacing / 2;
+
 				int previous = Integer.parseInt(fields[6]);
 				if( alreadySeen.contains(id) ) {
 					IJ.error("Point with ID "+id+" found more than once");
