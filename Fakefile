@@ -167,6 +167,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/VIB_.jar \
 	plugins/Anisotropic_Diffusion_2D.jar \
 	plugins/Simple_Neurite_Tracer.jar \
+	plugins/SPIM_Registration.jar \
 	plugins/3D_Viewer.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS third-party-plugins
@@ -266,6 +267,7 @@ CLASSPATH(jars/VIB-lib.jar)=jars/Jama-1.0.2.jar:jars/junit-4.5.jar:jars/pal-opti
 CLASSPATH(plugins/Simple_Neurite_Tracer.jar)=jars/VIB-lib.jar:plugins/VIB_.jar:jars/pal-optimization.jar:jars/junit-4.5.jar:plugins/3D_Viewer.jar
 CLASSPATH(plugins/3D_Viewer.jar)=jars/VIB-lib.jar:jars/imglib.jar:jars/Jama-1.0.2.jar
 CLASSPATH(jars/jep.jar)=jars/Jama-1.0.2.jar:jars/junit-4.5.jar
+CLASSPATH(plugins/SPIM_Registration.jar)=jars/imglib.jar:jars/mpicbg.jar:plugins/3D_Viewer.jar:jars/weka.jar:jars/fiji-lib.jar:plugins/loci_tools.jar:plugins/Fiji_Plugins.jar
 
 # pre-Java5 generics ;-)
 
