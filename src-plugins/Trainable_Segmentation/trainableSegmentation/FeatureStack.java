@@ -11,6 +11,7 @@ package trainableSegmentation;
  * - Variance
  * - Minimum
  * - Maximum
+ * - Anisotropic diffusion
  * 
  * filters to come:
  * - make use of color channels
@@ -67,34 +68,51 @@ import ij.plugin.filter.Convolver;
 import ij.plugin.filter.RankFilters;
 
 
-
+/**
+ * This class stores the stacks of features that will be used during the trainable/weka segmentations.  
+ */
 public class FeatureStack 
 {
+	/** original input image */
 	private ImagePlus originalImage = null;
+	/** stack of feature images (created by filtering) */
 	private ImageStack wholeStack = null;
+	/** image width */
 	private int width = 0;
+	/** image height */
 	private int height = 0;
-	
+	/** maximum sigma/radius used in the filters */
 	private static final int MAX_SIGMA = 16;
 	
-	public static final int GAUSSIAN 	= 0;
-	public static final int SOBEL 		= 1;
-	public static final int HESSIAN 	= 2; 
-	public static final int DOG			= 3;
-	public static final int MEMBRANE	= 4;
-	public static final int VARIANCE	= 5;
-	public static final int MEAN		= 6;
-	public static final int MINIMUM		= 7;
-	public static final int MAXIMUM		= 8;
-	public static final int MEDIAN		= 9;
-	public static final int ANISOTROPIC_DIFFUSION = 10;
-	
+	/** Gaussian filter flag index */
+	public static final int GAUSSIAN 				=  0;
+	/** Sobel filter flag index */
+	public static final int SOBEL 					=  1;
+	/** Hessian filter flag index */
+	public static final int HESSIAN 				=  2;
+	/** Difference of Gaussians filter flag index */
+	public static final int DOG						=  3;
+	/** Membrane filter flag index */
+	public static final int MEMBRANE				=  4;
+	/** Variance filter flag index */
+	public static final int VARIANCE				=  5;
+	/** Mean filter flag index */
+	public static final int MEAN					=  6;
+	/** Minimum filter flag index */
+	public static final int MINIMUM					=  7;
+	/** Maximum filter flag index */
+	public static final int MAXIMUM					=  8;
+	/** Median filter flag index */
+	public static final int MEDIAN					=  9;
+	/** Anisotropic diffusion filter flag index */
+	public static final int ANISOTROPIC_DIFFUSION 	= 10;
+	/** names of available filters */
 	public static final String[] availableFeatures 
 		= new String[]{	"Gaussian_blur", "Sobel_filter", "Hessian", "Difference_of_gaussians", 
 					   	"Membrane_projections","Variance","Mean", "Minimum", "Maximum", "Median", "Anisotropic_diffusion"};
-	
+	/** flags of filters to be used */
 	private boolean[] enableFeatures = new boolean[]{true, true, true, true, true, false, false, false, false, false, false};
-	
+	/** normalization flag */
 	private boolean normalize = false;
 	
 	/**
@@ -110,27 +128,46 @@ public class FeatureStack
 		wholeStack.addSlice("original", originalImage.getProcessor().duplicate());
 	}
 
+	/**
+	 * Display feature stack
+	 */
 	public void show(){
 		ImagePlus showStack = new ImagePlus("featureStack", wholeStack);
 		showStack.show();
 	}
-	
+	/**
+	 * Get stack size
+	 * @return number of slices in the stack
+	 */
 	public int getSize(){
 		return wholeStack.getSize();
 	}
-	
+	/**
+	 * Get slice label
+	 * @param index slice index (from 1 to max size)
+	 * @return slice label
+	 */
 	public String getSliceLabel(int index){
 		return wholeStack.getSliceLabel(index);
 	}
-	
+	/**
+	 * Get stack height
+	 * @return stack height
+	 */
 	public int getHeight(){
 		return wholeStack.getHeight();
 	}
-	
+	/**
+	 * Get stack width
+	 * @return stack width
+	 */
 	public int getWidth(){
 		return wholeStack.getWidth();
 	}
-	
+	/**
+	 * Add Gaussian blur slice to current stack
+	 * @param sigma Gaussian radius
+	 */
 	public void addGaussianBlur(float sigma){
 		ImageProcessor ip = originalImage.getProcessor().duplicate();
 		GaussianBlur gs = new GaussianBlur();
@@ -158,7 +195,10 @@ public class FeatureStack
 		};
 	}
 	
-	
+	/**
+	 * Add variance-filtered image to the stack
+	 * @param radius variance filter radius
+	 */
 	public void addVariance(float radius)
 	{
 		final ImageProcessor ip = originalImage.getProcessor().duplicate();
@@ -166,7 +206,12 @@ public class FeatureStack
 		filter.rank(ip, radius, RankFilters.VARIANCE);
 		wholeStack.addSlice(availableFeatures[VARIANCE]+ "_"  + radius, ip);
 	}
-	
+	/**
+	 * Calculate variance filter concurrently
+	 * @param originalImage original input image
+	 * @param radius for variance filter
+	 * @return result image
+	 */
 	public Callable<ImagePlus> getVariance(
 			final ImagePlus originalImage,
 			final float radius)
@@ -566,7 +611,13 @@ public class FeatureStack
 		}
 	}
 	
-	
+	/**
+	 * Get membrane features (to be submitted in an ExecutorService)
+	 * @param originalImage input image
+	 * @param patchSize orientation kernel size
+	 * @param membraneSize
+	 * @return
+	 */
 	public Callable<ImagePlus> getMembraneFeatures(
 			final ImagePlus originalImage,
 			final int patchSize, 
@@ -596,11 +647,10 @@ public class FeatureStack
 				
 				// Rotate kernel 15 degrees up to 180
 				for (int i=0; i<12; i++)
-				{
+				{					
 					rotatedPatch = membranePatch.duplicate();
-					rotatedPatch.invert();
 					rotatedPatch.rotate(15*i);
-					rotatedPatch.invert();
+					
 					Convolver c = new Convolver();				
 			
 					float[] kernel = (float[]) rotatedPatch.getPixels();
@@ -628,7 +678,16 @@ public class FeatureStack
 		};
 	}
 	
-	
+	/**
+	 * Apply anisotropic diffusion in a concurrent way (to be submitted in an ExecutorService)
+	 * @param originalImage input image
+	 * @param nb_iter number of iterations
+	 * @param saveSteps number of steps after which we save the intermediate results
+	 * @param nb_smoothings number of smoothings per iteration
+	 * @param a1 diffusion limiter along minimal variations
+	 * @param a2 diffusion limiter along maximal variations
+	 * @return result image
+	 */
 	public Callable<ImagePlus> getAnisotropicDiffusion(
 			final ImagePlus originalImage,
 			final int nb_iter, 
@@ -701,7 +760,11 @@ public class FeatureStack
 		
 	}
 
-	
+	/**
+	 * Get slice image processor
+	 * @param index selected slice
+	 * @return slice image processor
+	 */
 	public ImageProcessor getProcessor(int index) {
 		return wholeStack.getProcessor(index);
 	}
