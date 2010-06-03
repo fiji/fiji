@@ -89,7 +89,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		  openHelp, addImport, clearScreen, nextError, previousError,
 		  openHelpWithoutFrames, nextTab, previousTab,
 		  runSelection, extractSourceJar, toggleBookmark,
-		  listBookmarks, openSourceForClass, newPlugin, installMacro;
+		  listBookmarks, openSourceForClass, newPlugin, installMacro,
+		  openSourceForMenuItem;
 	JMenu tabsMenu;
 	int tabsMenuTabsStart;
 	Set<JMenuItem> tabsMenuItems;
@@ -256,6 +257,9 @@ public class TextEditor extends JFrame implements ActionListener,
 		openSourceForClass = addToMenu(tools,
 			"Open .java file for class...", 0, 0);
 		openSourceForClass.setMnemonic(KeyEvent.VK_J);
+		openSourceForMenuItem = addToMenu(tools,
+			"Open .java file for menu item...", 0, 0);
+		openSourceForMenuItem.setMnemonic(KeyEvent.VK_M);
 		mbar.add(tools);
 
 		tabsMenu = new JMenu("Tabs");
@@ -639,6 +643,8 @@ public class TextEditor extends JFrame implements ActionListener,
 				error("Could not open source for class " + className);
 			}
 		}
+		else if (source == openSourceForMenuItem)
+			new OpenSourceForMenuItem().run(null);
 		else if (source == newPlugin)
 			new FileFunctions(this).newPlugin();
 		else if (source == nextTab)

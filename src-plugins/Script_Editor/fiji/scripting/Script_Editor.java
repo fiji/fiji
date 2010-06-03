@@ -19,6 +19,10 @@ import java.net.URLClassLoader;
 public class Script_Editor implements PlugIn {
 	protected static TextEditor instance;
 
+	public static TextEditor getInstance() {
+		return instance;
+	}
+
 	public void run(String path) {
 		String options = Macro.getOptions();
 		if (options != null) {
