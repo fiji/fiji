@@ -17,7 +17,9 @@ import javax.imageio.ImageIO;
 import javax.media.j3d.Appearance;
 import javax.media.j3d.BranchGroup;
 import javax.media.j3d.ColoringAttributes;
+import javax.media.j3d.Group;
 import javax.media.j3d.LineAttributes;
+import javax.media.j3d.Switch;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.TransformGroup;
 import javax.media.j3d.TransparencyAttributes;
@@ -149,12 +151,26 @@ public class Motion3D
 
 	public static void replaceTransformBranchGroup( final BranchGroup branchGroup, final Transform3D replacement )
 	{
-		Enumeration<TransformGroup> en = branchGroup.getAllChildren();
+		replaceTransformBranchGroup((Group)branchGroup, replacement);
+	}
+	
+	public static void replaceTransformBranchGroup( final Group branchGroup, final Transform3D replacement )
+	{
+		Enumeration<?> en = branchGroup.getAllChildren();
 		
 		while (en.hasMoreElements())
 		{
-			TransformGroup tg = en.nextElement();
-			tg.setTransform( new Transform3D( replacement ) );
+			Object o = en.nextElement();
+			
+			if ( o instanceof TransformGroup )
+			{
+				TransformGroup tg = (TransformGroup)o;
+				tg.setTransform( new Transform3D( replacement ) );
+			}
+			else if ( o instanceof Switch )
+			{
+				replaceTransformBranchGroup( (Switch)o, replacement );
+			}
 		}		
 	}
 	
