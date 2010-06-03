@@ -654,17 +654,7 @@ public class Path implements Comparable {
 		drawPathAsPoints( canvas, g, c, plane, 0, -1 );
 	}
 
-
-	/* This method violates "Don't Repeat Yourself" in a big way
-	   at the moment: FIXME should just use the same logic to draw on
-           each plane */
-
 	public void drawPathAsPoints( TracerCanvas canvas, Graphics g, java.awt.Color c, int plane, int slice, int either_side ) {
-
-		/* This is slightly ugly because we have to use
-		   InteractiveTracerCanvas.myScreenX and .myScreenY to
-		   find whether to actually draw on the Graphics in
-		   case we're zoomed. */
 
 		/* In addition, if this is a start or end point we
 		   want to represent that with a circle or a square
@@ -687,193 +677,133 @@ public class Path implements Comparable {
 
 		int startIndexOfLastDrawnLine = -1;
 
-		switch( plane ) {
+		for( int i = 0; i < points; ++i ) {
 
-		case ThreePanes.XY_PLANE:
-		{
-			for( int i = 0; i < points; ++i ) {
-				if( (either_side >= 0) && (Math.abs(getZUnscaled(i) - slice) > either_side) )
-					continue;
+			int x = Integer.MIN_VALUE;
+			int y = Integer.MIN_VALUE;
+			int previous_x_on_screen = Integer.MIN_VALUE;
+			int previous_y_on_screen = Integer.MIN_VALUE;
+			int next_x_on_screen = Integer.MIN_VALUE;
+			int next_y_on_screen = Integer.MIN_VALUE;
+			boolean notFirstPoint = i > 0;
+			boolean notLastPoint = i < points - 1;
+			int slice_of_point = Integer.MIN_VALUE;
 
-				int x = canvas.myScreenXD(getXUnscaledDouble(i));
-				int y = canvas.myScreenYD(getYUnscaledDouble(i));
-
-				if( drawDiameter ) {
-					// Cross the tangents with a unit z vector:
-					double n_x = 0;
-					double n_y = 0;
-					double n_z = 1;
-
-					double t_x = tangents_x[i];
-					double t_y = tangents_y[i];
-					double t_z = tangents_z[i];
-
-					double cross_x = n_y * t_z - n_z * t_y;
-					double cross_y = n_z * t_x - n_x * t_z;
-					double cross_z = n_x * t_y - n_y * t_x;
-
-					double sizeInPlane = Math.sqrt( cross_x * cross_x + cross_y * cross_y );
-					double normalized_cross_x = cross_x / sizeInPlane;
-					double normalized_cross_y = cross_y / sizeInPlane;
-
-					// g.setColor( Color.RED );
-
-					double left_x = precise_x_positions[i] + normalized_cross_x * radiuses[i];
-					double left_y = precise_y_positions[i] + normalized_cross_y * radiuses[i];
-
-					double right_x = precise_x_positions[i] - normalized_cross_x * radiuses[i];
-					double right_y = precise_y_positions[i] - normalized_cross_y * radiuses[i];
-
-					int left_x_on_screen = canvas.myScreenXD(left_x/x_spacing);
-					int left_y_on_screen = canvas.myScreenYD(left_y/y_spacing);
-
-					int right_x_on_screen = canvas.myScreenXD(right_x/x_spacing);
-					int right_y_on_screen = canvas.myScreenYD(right_y/y_spacing);
-
-					int x_on_screen = canvas.myScreenXD( precise_x_positions[i]/x_spacing );
-					int y_on_screen = canvas.myScreenYD( precise_y_positions[i]/y_spacing );
-
-					g.drawLine( x_on_screen, y_on_screen, left_x_on_screen, left_y_on_screen );
-					g.drawLine( x_on_screen, y_on_screen, right_x_on_screen, right_y_on_screen );
-
-					g.setColor( c );
+			switch( plane ) {
+			case ThreePanes.XY_PLANE:
+				x = canvas.myScreenXD(getXUnscaledDouble(i));
+				y = canvas.myScreenYD(getYUnscaledDouble(i));
+				if( notFirstPoint ) {
+					previous_x_on_screen = canvas.myScreenXD( precise_x_positions[i-1]/x_spacing );
+					previous_y_on_screen = canvas.myScreenYD( precise_y_positions[i-1]/y_spacing );
 				}
-
-				// If there was a previous point in this path, draw a line from there to here:
-				if( i >= 1 ) {
-
-					// Don't redraw the line if we drew it the previous time, though:
-					if( startIndexOfLastDrawnLine != i - 1 ) {
-
-						int previous_x_on_screen = canvas.myScreenXD( precise_x_positions[i-1]/x_spacing );
-						int previous_y_on_screen = canvas.myScreenYD( precise_y_positions[i-1]/y_spacing );
-
-						g.drawLine( previous_x_on_screen, previous_y_on_screen, x, y );
-						startIndexOfLastDrawnLine = i - 1;
-					}
+				if( notLastPoint ) {
+					next_x_on_screen = canvas.myScreenXD( precise_x_positions[i+1]/x_spacing );
+					next_y_on_screen = canvas.myScreenYD( precise_y_positions[i+1]/y_spacing );
 				}
-
-				// If there's a next point in this path, draw a line from here to there:
-				if( i < points - 1 ) {
-					int next_x_on_screen = canvas.myScreenXD( precise_x_positions[i+1]/x_spacing );
-					int next_y_on_screen = canvas.myScreenYD( precise_y_positions[i+1]/y_spacing );
-
-					g.drawLine( x, y, next_x_on_screen, next_y_on_screen );
-					startIndexOfLastDrawnLine = i;
+				slice_of_point = getZUnscaled(i);
+				break;
+			case ThreePanes.XZ_PLANE:
+				x = canvas.myScreenXD(getXUnscaledDouble(i));
+				y = canvas.myScreenYD(getZUnscaledDouble(i));
+				if( notFirstPoint ) {
+					previous_x_on_screen = canvas.myScreenXD( precise_x_positions[i-1]/x_spacing );
+					previous_y_on_screen = canvas.myScreenYD( precise_z_positions[i-1]/z_spacing );
 				}
+				if( notLastPoint ) {
+					next_x_on_screen = canvas.myScreenXD( precise_x_positions[i+1]/x_spacing );
+					next_y_on_screen = canvas.myScreenYD( precise_z_positions[i+1]/z_spacing );
+				}
+				slice_of_point = getYUnscaled(i);
+				break;
+			case ThreePanes.ZY_PLANE:
+				x = canvas.myScreenXD(getZUnscaledDouble(i));
+				y = canvas.myScreenYD(getYUnscaledDouble(i));
+				if( notFirstPoint ) {
+					previous_x_on_screen = canvas.myScreenXD( precise_z_positions[i-1]/z_spacing );
+					previous_y_on_screen = canvas.myScreenYD( precise_y_positions[i-1]/y_spacing );
+				}
+				if( notLastPoint ) {
+					next_x_on_screen = canvas.myScreenXD( precise_z_positions[i+1]/z_spacing );
+					next_y_on_screen = canvas.myScreenYD( precise_y_positions[i+1]/y_spacing );
+				}
+				slice_of_point = getXUnscaled(i);
+				break;
+			default:
+				throw new RuntimeException("BUG: Unknown plane! ("+plane+")");
+			}
 
-				if( ((i == 0) && (realStartJoins == null)) ||
-				    ((i == points - 1) && (realEndJoins == null)) ) {
-					// Then draw it as a rectangle...
-					g.fillRect( x - (spotDiameter / 2), y - (spotDiameter / 2), spotDiameter, spotDiameter );
-				} else if( ((i == 0) && (realStartJoins != null)) ||
-					   ((i == points - 1) && (realEndJoins != null)) ) {
-					// The draw it as an oval...
-					g.fillOval( x - (spotDiameter / 2), y - (spotDiameter / 2), spotDiameter, spotDiameter );
-				} else {
-					// Just draw normally...
-					g.fillRect( x - (spotExtra / 2), y - (spotExtra / 2), spotExtra, spotExtra );
+			/* If we've been asked to draw the diameters
+			   in the 2.5D view, just do it in XY - this is only
+			   really for debugging... */
+
+			if( plane == ThreePanes.XY_PLANE && drawDiameter ) {
+				// Cross the tangents with a unit z vector:
+				double n_x = 0;
+				double n_y = 0;
+				double n_z = 1;
+
+				double t_x = tangents_x[i];
+				double t_y = tangents_y[i];
+				double t_z = tangents_z[i];
+
+				double cross_x = n_y * t_z - n_z * t_y;
+				double cross_y = n_z * t_x - n_x * t_z;
+				double cross_z = n_x * t_y - n_y * t_x;
+
+				double sizeInPlane = Math.sqrt( cross_x * cross_x + cross_y * cross_y );
+				double normalized_cross_x = cross_x / sizeInPlane;
+				double normalized_cross_y = cross_y / sizeInPlane;
+
+				double left_x = precise_x_positions[i] + normalized_cross_x * radiuses[i];
+				double left_y = precise_y_positions[i] + normalized_cross_y * radiuses[i];
+
+				double right_x = precise_x_positions[i] - normalized_cross_x * radiuses[i];
+				double right_y = precise_y_positions[i] - normalized_cross_y * radiuses[i];
+
+				int left_x_on_screen = canvas.myScreenXD(left_x/x_spacing);
+				int left_y_on_screen = canvas.myScreenYD(left_y/y_spacing);
+
+				int right_x_on_screen = canvas.myScreenXD(right_x/x_spacing);
+				int right_y_on_screen = canvas.myScreenYD(right_y/y_spacing);
+
+				int x_on_screen = canvas.myScreenXD( precise_x_positions[i]/x_spacing );
+				int y_on_screen = canvas.myScreenYD( precise_y_positions[i]/y_spacing );
+
+				g.drawLine( x_on_screen, y_on_screen, left_x_on_screen, left_y_on_screen );
+				g.drawLine( x_on_screen, y_on_screen, right_x_on_screen, right_y_on_screen );
+			}
+
+			if( (either_side >= 0) && (Math.abs(slice_of_point - slice) > either_side) )
+				continue;
+
+			// If there was a previous point in this path, draw a line from there to here:
+			if( notFirstPoint ) {
+				// Don't redraw the line if we drew it the previous time, though:
+				if( startIndexOfLastDrawnLine != i - 1 ) {
+					g.drawLine( previous_x_on_screen, previous_y_on_screen, x, y );
+					startIndexOfLastDrawnLine = i - 1;
 				}
 			}
-		}
-		break;
 
-		case ThreePanes.XZ_PLANE:
-		{
-			for( int i = 0; i < points; ++i ) {
-				if( (either_side >= 0) && (Math.abs(getYUnscaled(i) - slice) > either_side) )
-					continue;
-
-				int x = canvas.myScreenXD(getXUnscaledDouble(i));
-				int y = canvas.myScreenYD(getZUnscaledDouble(i));
-
-				// If there was a previous point in this path, draw a line from there to here:
-				if( i >= 1 ) {
-
-					// Don't redraw the line if we drew it the previous time, though:
-					if( startIndexOfLastDrawnLine != i - 1 ) {
-
-						int previous_x_on_screen = canvas.myScreenXD( precise_x_positions[i-1]/x_spacing );
-						int previous_y_on_screen = canvas.myScreenYD( precise_z_positions[i-1]/z_spacing );
-
-						g.drawLine( previous_x_on_screen, previous_y_on_screen, x, y );
-						startIndexOfLastDrawnLine = i - 1;
-					}
-				}
-
-				// If there's a next point in this path, draw a line from here to there:
-				if( i < points - 1 ) {
-					int next_x_on_screen = canvas.myScreenXD( precise_x_positions[i+1]/x_spacing );
-					int next_y_on_screen = canvas.myScreenYD( precise_z_positions[i+1]/z_spacing );
-
-					g.drawLine( x, y, next_x_on_screen, next_y_on_screen );
-					startIndexOfLastDrawnLine = i;
-				}
-
-				if( ((i == 0) && (realStartJoins == null)) ||
-				    ((i == points - 1) && (realEndJoins == null)) ) {
-					// Then draw it as a rectangle...
-					g.fillRect( x - (spotDiameter / 2), y - (spotDiameter / 2), spotDiameter, spotDiameter );
-				} else if( ((i == 0) && (realStartJoins != null)) ||
-					   ((i == points - 1) && (realEndJoins != null)) ) {
-					// The draw it as an oval...
-					g.fillOval( x - (spotDiameter / 2), y - (spotDiameter / 2), spotDiameter, spotDiameter );
-				} else {
-					// Just draw normally...
-					g.fillRect( x - (spotExtra / 2), y - (spotExtra / 2), spotExtra, spotExtra );
-				}
+			// If there's a next point in this path, draw a line from here to there:
+			if( notLastPoint ) {
+				g.drawLine( x, y, next_x_on_screen, next_y_on_screen );
+				startIndexOfLastDrawnLine = i;
 			}
-		}
-		break;
 
-		case ThreePanes.ZY_PLANE:
-		{
-			for( int i = 0; i < points; ++i ) {
-				if( (either_side >= 0) && (Math.abs(getXUnscaled(i) - slice) > either_side) )
-					continue;
-
-				int x = canvas.myScreenXD(getZUnscaledDouble(i));
-				int y = canvas.myScreenYD(getYUnscaledDouble(i));
-
-				// If there was a previous point in this path, draw a line from there to here:
-				if( i >= 1 ) {
-
-					// Don't redraw the line if we drew it the previous time, though:
-					if( startIndexOfLastDrawnLine != i - 1 ) {
-
-						int previous_x_on_screen = canvas.myScreenXD( precise_z_positions[i-1]/z_spacing );
-						int previous_y_on_screen = canvas.myScreenYD( precise_y_positions[i-1]/y_spacing );
-
-						g.drawLine( previous_x_on_screen, previous_y_on_screen, x, y );
-						startIndexOfLastDrawnLine = i - 1;
-					}
-				}
-
-				// If there's a next point in this path, draw a line from here to there:
-				if( i < points - 1 ) {
-					int next_x_on_screen = canvas.myScreenXD( precise_z_positions[i+1]/z_spacing );
-					int next_y_on_screen = canvas.myScreenYD( precise_y_positions[i+1]/y_spacing );
-
-					g.drawLine( x, y, next_x_on_screen, next_y_on_screen );
-					startIndexOfLastDrawnLine = i;
-				}
-
-				if( ((i == 0) && (realStartJoins == null)) ||
-				    ((i == points - 1) && (realEndJoins == null)) ) {
-					// Then draw it as a rectangle...
-					g.fillRect( x - (spotDiameter / 2), y - (spotDiameter / 2), spotDiameter, spotDiameter );
-				} else if( ((i == 0) && (realStartJoins != null)) ||
-					   ((i == points - 1) && (realEndJoins != null)) ) {
-					// The draw it as an oval...
-					g.fillOval( x - (spotDiameter / 2), y - (spotDiameter / 2), spotDiameter, spotDiameter );
-				} else {
-					// Just draw normally...
-					g.fillRect( x - (spotExtra / 2), y - (spotExtra / 2), spotExtra, spotExtra );
-				}
+			if( ((i == 0) && (realStartJoins == null)) ||
+			    ((i == points - 1) && (realEndJoins == null)) ) {
+				// Then draw it as a rectangle...
+				g.fillRect( x - (spotDiameter / 2), y - (spotDiameter / 2), spotDiameter, spotDiameter );
+			} else if( ((i == 0) && (realStartJoins != null)) ||
+				   ((i == points - 1) && (realEndJoins != null)) ) {
+				// The draw it as an oval...
+				g.fillOval( x - (spotDiameter / 2), y - (spotDiameter / 2), spotDiameter, spotDiameter );
+			} else {
+				// Just draw normally...
+				g.fillRect( x - (spotExtra / 2), y - (spotExtra / 2), spotExtra, spotExtra );
 			}
-		}
-		break;
-
 		}
 
 	}
