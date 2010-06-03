@@ -1445,17 +1445,19 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	*/
 
 	public boolean importSWC( BufferedReader br, boolean assumeCoordinatesIndexVoxels ) throws IOException {
-		return importSWC( br, assumeCoordinatesIndexVoxels, 0, 0, 0, 1, 1, 1 );
+		return importSWC( br, assumeCoordinatesIndexVoxels, 0, 0, 0, 1, 1, 1, true );
 	}
 
 	public boolean importSWC( BufferedReader br, boolean assumeCoordinatesIndexVoxels,
 				  double x_offset, double y_offset, double z_offset,
-				  double x_scale, double y_scale, double z_scale ) throws IOException {
+				  double x_scale, double y_scale, double z_scale,
+				  boolean replaceAllPaths ) throws IOException {
 
 		if( needImageDataFromTracesFile )
 			throw new RuntimeException( "[BUG] Trying to load SWC file while we still need image data information" );
 
-		clearPathsAndFills( );
+		if( replaceAllPaths )
+			clearPathsAndFills( );
 
 		Pattern pEmpty = Pattern.compile("^\\s*$");
 		Pattern pComment = Pattern.compile("^([^#]*)#.*$");
@@ -1634,12 +1636,13 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	}
 
 	public boolean importSWC( String filename, boolean ignoreCalibration ) {
-		return importSWC( filename, ignoreCalibration, 0, 0, 0, 1, 1, 1 );
+		return importSWC( filename, ignoreCalibration, 0, 0, 0, 1, 1, 1, true );
 	}
 
 	public boolean importSWC( String filename, boolean ignoreCalibration,
 				  double x_offset, double y_offset, double z_offset,
-				  double x_scale, double y_scale, double z_scale ) {
+				  double x_scale, double y_scale, double z_scale,
+		                  boolean replaceAllPaths ) {
 
 		File f = new File(filename);
 		if( ! f.exists() ) {
@@ -1655,7 +1658,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			is = new BufferedInputStream(new FileInputStream(filename));
 			BufferedReader br = new BufferedReader(new InputStreamReader(is,"UTF-8"));
 
-			result = importSWC(br,ignoreCalibration,x_offset,y_offset,z_offset,x_scale,y_scale,z_scale);
+			result = importSWC(br,ignoreCalibration,x_offset,y_offset,z_offset,x_scale,y_scale,z_scale,replaceAllPaths);
 
 			if( is != null )
 				is.close();
@@ -1746,7 +1749,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		case TRACES_FILE_TYPE_UNCOMPRESSED_XML:
 			return loadUncompressedXML(filename);
 		case TRACES_FILE_TYPE_SWC:
-			return importSWC( filename, false, 0, 0, 0, 1, 1, 1 );
+			return importSWC( filename, false, 0, 0, 0, 1, 1, 1, true );
 		default:
 			IJ.error("guessTracesFileType() return an unknown type"+guessedType);
 			return false;

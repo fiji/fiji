@@ -49,6 +49,8 @@ public class SWCImportOptionsDialog extends Dialog implements WindowListener, Ac
 
 	boolean succeeded = false;
 
+	Checkbox replaceExistingPathsCheckbox = new Checkbox("Replace existing paths?");
+
 	Checkbox ignoreCalibrationCheckbox = new Checkbox("Ignore calibration; assume SWC uses image co-ordinates");
 
 	Checkbox applyOffsetCheckbox = new Checkbox("Apply offset to SWC file co-ordinates");
@@ -105,6 +107,9 @@ public class SWCImportOptionsDialog extends Dialog implements WindowListener, Ac
 
 		ignoreCalibrationCheckbox.setState(
 			Prefs.get("tracing.SWCImportOptionsDialog.ignoreCalibration","false").equals("true") );
+
+		replaceExistingPathsCheckbox.setState(
+			Prefs.get("tracing.SWCImportOptionsDialog.replaceExistingPaths","true").equals("true") );
 
 		updateEnabled();
 	}
@@ -179,6 +184,9 @@ public class SWCImportOptionsDialog extends Dialog implements WindowListener, Ac
 		Prefs.set( "tracing.SWCImportOptionsDialog.ignoreCalibration",
 			   ignoreCalibrationCheckbox.getState() );
 
+		Prefs.set( "tracing.SWCImportOptionsDialog.replaceExistingPaths",
+			   replaceExistingPathsCheckbox.getState() );
+
 		Prefs.savePreferences();
 	}
 
@@ -231,6 +239,9 @@ public class SWCImportOptionsDialog extends Dialog implements WindowListener, Ac
 		c.gridx = 0;
 		c.gridy = 0;
 		c.anchor = GridBagConstraints.LINE_START;
+		add( replaceExistingPathsCheckbox, c );
+
+		c.gridy ++;
 		add( ignoreCalibrationCheckbox, c );
 
 		c.gridy ++;
@@ -274,6 +285,10 @@ public class SWCImportOptionsDialog extends Dialog implements WindowListener, Ac
 
 	public boolean getIgnoreCalibration() {
 		return ignoreCalibrationCheckbox.getState();
+	}
+
+	public boolean getReplaceExistingPaths() {
+		return replaceExistingPathsCheckbox.getState();
 	}
 
 	public double getXOffset() {

@@ -457,7 +457,8 @@ synchronized public void loadTracings( ) {
 				    swcImportDialog.getZOffset(),
 				    swcImportDialog.getXScale(),
 				    swcImportDialog.getYScale(),
-				    swcImportDialog.getZScale()) )
+				    swcImportDialog.getZScale(),
+				    swcImportDialog.getReplaceExistingPaths() ) )
 				unsavedPaths = false;
 			break;
 		}
