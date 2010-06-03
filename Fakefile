@@ -331,6 +331,10 @@ LIBS(macosx)=-framework CoreFoundation -framework JavaVM
 
 fiji <- fiji.c
 
+CFLAGS(fiji-macosx)=$CFLAGS $MACOPTS(osx10.5)
+LDFLAGS(fiji-macosx)=$LDFLAGS $MACOPTS(osx10.5)
+fiji-macosx <- fiji.c
+
 CFLAGS(fiji-tiger)=$CFLAGS $MACOPTS(osx10.4)
 LDFLAGS(fiji-tiger)=$LDFLAGS $MACOPTS(osx10.4)
 fiji-tiger <- fiji.c
@@ -360,6 +364,7 @@ LAUNCHER(osx10.5)=precompiled/fiji-macosx precompiled/fiji-tiger
 precompile-fiji[] <- $LAUNCHER
 
 precompiled/fiji-tiger[bin/copy-file.py $PRE $TARGET] <- fiji-tiger
+precompiled/fiji-macosx[bin/copy-file.py $PRE $TARGET] <- fiji-macosx
 # this rule only matches precompiled/fiji-$PLATFORM
 precompiled/fiji-*[bin/copy-file.py $PRE $TARGET] <- fiji
 
