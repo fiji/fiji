@@ -2368,8 +2368,7 @@ public class Weka_Segmentation implements PlugIn
 			saveOK = false;
 		}
 		if (saveOK)
-			IJ.log("Saved model (" + filename
-					+ ") to file '" + sFile.getName() + "'");
+			IJ.log("Saved model into " + filename );
 
 		return saveOK;
 	}
@@ -2739,7 +2738,11 @@ public class Weka_Segmentation implements PlugIn
 		return true;
 	}
 	
-	public ImagePlus getProbability()
+	/**
+	 * Get probability distribution of each class for current classifier 
+	 * @return probability stack, one image per class
+	 */
+	public ImagePlus getProbabilityMaps()
 	{
 		if(this.classifier == null)
 			return null;
@@ -2777,7 +2780,6 @@ public class Weka_Segmentation implements PlugIn
 					for(int k = 0 ; k < wholeImageData.numClasses(); k++)
 						classProb[k][index] = prob[k];
 				} catch (Exception e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 					return null;
 				}
@@ -2790,6 +2792,141 @@ public class Weka_Segmentation implements PlugIn
 		
 		return new ImagePlus("Class probabilities", is); 
 	}
+	
+	/**
+	 * Get probability distribution of each class for current classifier (multi-thread version)
+	 * @return probability stack, one image per class
+	 */
+	public ImagePlus getProbabilityMapsMT()
+	{
+		if(this.classifier == null)
+			return null;
+		
+		// Update features if necessary
+		if(featureStack.getSize() < 2)
+		{
+			IJ.log("Creating feature stack...");
+			featureStack.updateFeaturesMT();
+			updateFeatures = false;
+			updateWholeData = true;
+			IJ.log("Features stack is now updated.");
+		}
+		
+		if(updateWholeData)
+		{
+			updateTestSet();
+			IJ.log("Test dataset updated ("+ wholeImageData.numInstances() + " instances, " + wholeImageData.numAttributes() + " attributes).");
+		}
+		
+		final int width = this.trainingImage.getWidth();
+		final int height = this.trainingImage.getHeight();
+		final int nClasses =  wholeImageData.numClasses();
+		
+		final ImageStack is = new ImageStack(width, height);
+		final FloatProcessor[] classProb = new FloatProcessor[ nClasses ];
+		for(int k = 0 ; k < nClasses; k++)
+			classProb[k] = new FloatProcessor(width, height);
+		
+		IJ.log("Calculating class probability for whole image...");
+		
+		
+		// Check the number of processors in the computer 
+		final int numOfProcessors = Runtime.getRuntime().availableProcessors();
+		
+		// Executor service to produce concurrent threads
+		final ExecutorService exe = Executors.newFixedThreadPool(numOfProcessors);
+
+		final ArrayList< Future<double[][]> > futures = new ArrayList< Future<double[][]> >();
+						
+		final Instances[] partialData = new Instances[numOfProcessors];
+		final int partialSize = wholeImageData.numInstances() / numOfProcessors;
+		final Rectangle[] rects = new Rectangle[numOfProcessors];
+		
+		ImagePlus result = null;
+		
+		try{
+			
+			int block_height = height / numOfProcessors;
+			if (height % 2 != 0) 
+				block_height++;
+		
+			for (int i=0; i<numOfProcessors; i++) 
+			{
+				if(i == numOfProcessors-1)
+				{
+					partialData[i] = new Instances(wholeImageData, i*partialSize, wholeImageData.numInstances()-i*partialSize);
+					block_height = height - i*block_height;
+				}
+				else
+				{
+					partialData[i] = new Instances(wholeImageData, i*partialSize, partialSize);
+				}
+
+				int y_start = i*block_height;
+				rects[i] = new Rectangle(0, y_start, width, block_height);
+				
+				futures.add( exe.submit(getDistributionForIntances(partialData[i], this.classifier)) );
+			}
+
+			for(int index = 0 ; index < futures.size(); index ++)
+			{
+				final double[][] partialProb = futures.get(index).get();
+				for(int k = 0 ; k < nClasses; k++)
+					classProb[k].insert( new FloatProcessor(width, block_height, partialProb[k]), rects[index].x, rects[index].y);
+			}
+		
+			for(int k = 0 ; k < nClasses; k++)
+				is.addSlice("class " + (k+1), classProb[k]);
+			
+			result = new ImagePlus("Class probabilities", is);
+			
+		}
+		catch(Exception ex)
+		{
+			IJ.log("Error when extracting probability maps!");
+		}
+		finally{
+			exe.shutdown();
+		}
+		
+		IJ.log("Done");
+		
+		
+		
+		return result; 
+	}
+	
+	/**
+	 * Get probability distribution for a set of instances (to be submitted in an ExecutorService)
+	 * @param instances set of instances to get the class distribution from
+	 * @param classifier current classifier
+	 * @return probability values for each instance and class
+	 */
+	public Callable<double[][]> getDistributionForIntances(
+			final Instances instances,
+			final AbstractClassifier classifier) 
+	{
+		return new Callable<double[][]>(){
+			public double[][] call(){
+				final int nClasses = instances.numClasses();
+				double[][] classProb = new double[nClasses][instances.numInstances()];
+				for(int i = 0; i < instances.numInstances(); i++)					
+				{
+					try {						
+						double[] prob = classifier.distributionForInstance(instances.get(i));
+						for(int k = 0 ; k < nClasses; k++)
+							classProb[k][i] = prob[k];
+					} catch (Exception e) {
+						e.printStackTrace();
+						return null;
+					}
+				}
+								
+				return classProb;
+			}
+		};
+	}
+	
 	
 	/**
 	 * Force segmentator to use all available features
