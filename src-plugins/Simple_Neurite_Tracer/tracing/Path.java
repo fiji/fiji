@@ -654,7 +654,10 @@ public class Path implements Comparable {
 		drawPathAsPoints( canvas, g, c, plane, 0, -1 );
 	}
 
-	/* FIXME: Should draw lines between points now, not just points... */
+
+	/* This method violates "Don't Repeat Yourself" in a big way
+	   at the moment: FIXME should just use the same logic to draw on
+           each plane */
 
 	public void drawPathAsPoints( TracerCanvas canvas, Graphics g, java.awt.Color c, int plane, int slice, int either_side ) {
 
@@ -681,6 +684,8 @@ public class Path implements Comparable {
 
 		Path realStartJoins = fittedVersionOf == null ? startJoins : fittedVersionOf.startJoins;
 		Path realEndJoins = fittedVersionOf == null ? endJoins : fittedVersionOf.endJoins;
+
+		int startIndexOfLastDrawnLine = -1;
 
 		switch( plane ) {
 
@@ -734,6 +739,29 @@ public class Path implements Comparable {
 					g.setColor( c );
 				}
 
+				// If there was a previous point in this path, draw a line from there to here:
+				if( i >= 1 ) {
+
+					// Don't redraw the line if we drew it the previous time, though:
+					if( startIndexOfLastDrawnLine != i - 1 ) {
+
+						int previous_x_on_screen = canvas.myScreenXD( precise_x_positions[i-1]/x_spacing );
+						int previous_y_on_screen = canvas.myScreenYD( precise_y_positions[i-1]/y_spacing );
+
+						g.drawLine( previous_x_on_screen, previous_y_on_screen, x, y );
+						startIndexOfLastDrawnLine = i - 1;
+					}
+				}
+
+				// If there's a next point in this path, draw a line from here to there:
+				if( i < points - 1 ) {
+					int next_x_on_screen = canvas.myScreenXD( precise_x_positions[i+1]/x_spacing );
+					int next_y_on_screen = canvas.myScreenYD( precise_y_positions[i+1]/y_spacing );
+
+					g.drawLine( x, y, next_x_on_screen, next_y_on_screen );
+					startIndexOfLastDrawnLine = i;
+				}
+
 				if( ((i == 0) && (realStartJoins == null)) ||
 				    ((i == points - 1) && (realEndJoins == null)) ) {
 					// Then draw it as a rectangle...
@@ -759,6 +787,29 @@ public class Path implements Comparable {
 				int x = canvas.myScreenXD(getXUnscaledDouble(i));
 				int y = canvas.myScreenYD(getZUnscaledDouble(i));
 
+				// If there was a previous point in this path, draw a line from there to here:
+				if( i >= 1 ) {
+
+					// Don't redraw the line if we drew it the previous time, though:
+					if( startIndexOfLastDrawnLine != i - 1 ) {
+
+						int previous_x_on_screen = canvas.myScreenXD( precise_x_positions[i-1]/x_spacing );
+						int previous_y_on_screen = canvas.myScreenYD( precise_z_positions[i-1]/z_spacing );
+
+						g.drawLine( previous_x_on_screen, previous_y_on_screen, x, y );
+						startIndexOfLastDrawnLine = i - 1;
+					}
+				}
+
+				// If there's a next point in this path, draw a line from here to there:
+				if( i < points - 1 ) {
+					int next_x_on_screen = canvas.myScreenXD( precise_x_positions[i+1]/x_spacing );
+					int next_y_on_screen = canvas.myScreenYD( precise_z_positions[i+1]/z_spacing );
+
+					g.drawLine( x, y, next_x_on_screen, next_y_on_screen );
+					startIndexOfLastDrawnLine = i;
+				}
+
 				if( ((i == 0) && (realStartJoins == null)) ||
 				    ((i == points - 1) && (realEndJoins == null)) ) {
 					// Then draw it as a rectangle...
@@ -783,6 +834,29 @@ public class Path implements Comparable {
 
 				int x = canvas.myScreenXD(getZUnscaledDouble(i));
 				int y = canvas.myScreenYD(getYUnscaledDouble(i));
+
+				// If there was a previous point in this path, draw a line from there to here:
+				if( i >= 1 ) {
+
+					// Don't redraw the line if we drew it the previous time, though:
+					if( startIndexOfLastDrawnLine != i - 1 ) {
+
+						int previous_x_on_screen = canvas.myScreenXD( precise_z_positions[i-1]/z_spacing );
+						int previous_y_on_screen = canvas.myScreenYD( precise_y_positions[i-1]/y_spacing );
+
+						g.drawLine( previous_x_on_screen, previous_y_on_screen, x, y );
+						startIndexOfLastDrawnLine = i - 1;
+					}
+				}
+
+				// If there's a next point in this path, draw a line from here to there:
+				if( i < points - 1 ) {
+					int next_x_on_screen = canvas.myScreenXD( precise_z_positions[i+1]/z_spacing );
+					int next_y_on_screen = canvas.myScreenYD( precise_y_positions[i+1]/y_spacing );
+
+					g.drawLine( x, y, next_x_on_screen, next_y_on_screen );
+					startIndexOfLastDrawnLine = i;
+				}
 
 				if( ((i == 0) && (realStartJoins == null)) ||
 				    ((i == points - 1) && (realEndJoins == null)) ) {
