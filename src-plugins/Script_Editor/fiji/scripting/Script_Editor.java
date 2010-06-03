@@ -20,7 +20,6 @@ public class Script_Editor implements PlugIn {
 	protected static TextEditor instance;
 
 	public void run(String path) {
-		addToolsJarToClassPath();
 		String options = Macro.getOptions();
 		if (options != null) {
 			if (path == null || path.equals(""))
@@ -35,6 +34,7 @@ public class Script_Editor implements PlugIn {
 			}
 		}
 		if (instance == null || !instance.isVisible()) {
+			addToolsJarToClassPath();
 			instance = new TextEditor(path);
 			instance.setVisible(true);
 		}
