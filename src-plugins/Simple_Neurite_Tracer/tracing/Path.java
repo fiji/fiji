@@ -2089,12 +2089,39 @@ public class Path implements Comparable {
 		System.arraycopy( z_points_d, 0, z_points_d_trimmed, 0, pointsToUse );
 		System.arraycopy( radiuses_d, 0, radiuses_d_trimmed, 0, pointsToUse );
 
+		/* Work out whether to resample or not.  I've found
+		   that the resampling is only really required in
+		   cases where the points are at adjacent voxels.  So,
+		   work out the mean distance between all the points
+		   but in image co-ordinates - if there are points
+		   only at adjacent voxels this will be between 1 and
+		   sqrt(3) ~= 1.73.  However, after the "fitting"
+		   process here, we might remove many of these points,
+		   so I'll say that we won't resample if the mean is
+		   rather higher - above 3.  Hopefully this is a
+		   good compromise... */
+
+		double total_length_in_image_space = 0;
+		for( int i = 1; i < pointsToUse; ++i ) {
+			double x_diff = (x_points_d_trimmed[i] - x_points_d_trimmed[i-1]) / x_spacing;
+			double y_diff = (y_points_d_trimmed[i] - y_points_d_trimmed[i-1]) / y_spacing;
+			double z_diff = (z_points_d_trimmed[i] - z_points_d_trimmed[i-1]) / z_spacing;
+			total_length_in_image_space += Math.sqrt(x_diff*x_diff +
+								 y_diff*y_diff +
+								 z_diff*z_diff);
+		}
+		double mean_inter_point_distance_in_image_space = total_length_in_image_space / (pointsToUse - 1);
+		if (verbose)
+			System.out.println("For path "+this+", got mean_inter_point_distance_in_image_space: "+mean_inter_point_distance_in_image_space);
+		boolean resample = mean_inter_point_distance_in_image_space < 3;
+
 		double [][][] allPoints = Pipe.makeTube(x_points_d_trimmed,
 							y_points_d_trimmed,
 							z_points_d_trimmed,
 							radiuses_d_trimmed,
-							2,       // resample - 1 means just "use mean distance between points", 3 is three times that, etc.
-							12);     // "parallels" (12 means cross-sections are dodecagons)
+							resample ? 2 : 1,       // resample - 1 means just "use mean distance between points", 3 is three times that, etc.
+							12,     // "parallels" (12 means cross-sections are dodecagons)
+							resample );
 		if( allPoints == null ) {
 			content3D = null;
 			content3DExtra = null;
