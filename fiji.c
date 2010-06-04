@@ -1694,6 +1694,8 @@ static void __attribute__((__noreturn__)) usage(void)
 		"--default-gc\n"
 		"\tdo not use advanced garbage collector settings by default\n"
 		"\t(-Xincgc -XX:PermSize=128m)\n"
+		"--gc-g1\n"
+		"\tuse the G1 garbage collector\n"
 		"\n"
 		"Options for ImageJ:\n"
 		"--allow-multiple\n"
@@ -2080,6 +2082,9 @@ static int start_ij(void)
 		}
 		else if (!strcmp("--default-gc", main_argv[i]))
 			advanced_gc = 0;
+		else if (!strcmp("--gc-g1", main_argv[i]) ||
+				!strcmp("--g1", main_argv[i]))
+			advanced_gc = 2;
 		else if (!strcmp("--help", main_argv[i]) ||
 				!strcmp("-h", main_argv[i]))
 			usage();
@@ -2131,9 +2136,18 @@ static int start_ij(void)
 	if (is_ipv6_broken())
 		add_option(&options, "-Djava.net.preferIPv4Stack=true", 0);
 
-	if (advanced_gc) {
+	if (advanced_gc == 1) {
 		add_option(&options, "-Xincgc", 0);
 		add_option(&options, "-XX:PermSize=128m", 0);
+	}
+	else if (advanced_gc == 2) {
+		add_option(&options, "-XX:PermSize=128m", 0);
+		add_option(&options, "-XX:+UseCompressedOops", 0);
+		add_option(&options, "-XX:+UnlockExperimentalVMOptions", 0);
+		add_option(&options, "-XX:+UseG1GC", 0);
+		add_option(&options, "-XX:+G1ParallelRSetUpdatingEnabled", 0);
+		add_option(&options, "-XX:+G1ParallelRSetScanningEnabled", 0);
+		add_option(&options, "-XX:NewRatio=5", 0);
 	}
 
 	if (!main_class) {
