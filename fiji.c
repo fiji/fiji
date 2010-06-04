@@ -2711,7 +2711,7 @@ static void find_newest(struct string *relative_path, int max_depth, const char 
 		if (entry->d_name[0] == '.')
 			continue;
 		string_append(relative_path, entry->d_name);
-		if (dir_exists(relative_path->buffer))
+		if (dir_exists(fiji_path(relative_path->buffer)))
 			find_newest(relative_path, max_depth - 1, file, result);
 		string_set_length(relative_path, len + 1);
 	}
