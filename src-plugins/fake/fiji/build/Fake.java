@@ -1286,7 +1286,7 @@ public class Fake {
 			}
 		}
 
-		class SubFake extends Rule {
+		public class SubFake extends Rule {
 			String jarName;
 			String baseName;
 			String source;
