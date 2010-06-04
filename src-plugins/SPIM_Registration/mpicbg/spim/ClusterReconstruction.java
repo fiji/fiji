@@ -87,11 +87,6 @@ public class ClusterReconstruction
         		e.printStackTrace();
         		System.exit(0);
         	}   
-        	
-        	File f = new File(jobFile);
-        	f.setReadable(true, false);
-        	f.setWritable(true, false);
-        	f.setExecutable(true, false);
         }
         
     	//
@@ -117,12 +112,6 @@ public class ClusterReconstruction
     		e.printStackTrace();
     		System.exit(0);
     	}
-        
-    	File f = new File(submissionFile);
-    	f.setReadable(true, false);
-    	f.setWritable(true, false);
-    	f.setExecutable(true, false);
-    	
 	}
 
 	protected static String getLibraries(String directory)
