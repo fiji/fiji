@@ -1852,7 +1852,7 @@ static int start_ij(void)
 	struct string *plugin_path = string_init(32);
 	int dashdash = 0;
 	int allow_multiple = 0, skip_build_classpath = 0;
-	int jdb = 0, add_class_path_option = 0, advanced_gc = 1, debug_gc = 1;
+	int jdb = 0, add_class_path_option = 0, advanced_gc = 1, debug_gc = 0;
 	size_t memory_size = 0;
 	int count = 1, i;
 
