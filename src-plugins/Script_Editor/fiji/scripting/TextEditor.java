@@ -1368,7 +1368,9 @@ public class TextEditor extends JFrame implements ActionListener,
 
 	boolean editorPaneContainsFile(EditorPane editorPane, File file) {
 		try {
-			return file.getCanonicalFile()
+			return file != null && editorPane != null &&
+				editorPane.file != null &&
+				file.getCanonicalFile()
 				.equals(editorPane.file.getCanonicalFile());
 		} catch (IOException e) {
 			return false;
