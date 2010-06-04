@@ -111,6 +111,7 @@ import weka.core.Instances;
 import weka.core.OptionHandler;
 import weka.core.SerializationHelper;
 import weka.core.Utils;
+import weka.core.converters.ArffSaver;
 import weka.core.pmml.PMMLFactory;
 import weka.core.pmml.PMMLModel;
 import weka.gui.GUIChooser;
@@ -941,19 +942,39 @@ public class Weka_Segmentation implements PlugIn
 	 * @param data set of instances
 	 * @param filename ARFF file name
 	 */
-	public void writeDataToARFF(Instances data, String filename){
+	public boolean writeDataToARFF(Instances data, String filename)
+	{
+		BufferedWriter out = null;
 		try{
-			BufferedWriter out = new BufferedWriter(
+			out = new BufferedWriter(
 					new OutputStreamWriter(
 							new FileOutputStream( filename ) ) );
-			try{	
-				out.write(data.toString());
-				out.close();
-			}
-			catch(IOException e){IJ.showMessage("IOException");}
+			
+			final Instances header = new Instances(data, 0);
+			out.write(header.toString());
+			
+			for(int i = 0; i < data.numInstances(); i++)
+			{
+				out.write(data.get(i).toString()+"\n");				
+			}			
 		}
-		catch(FileNotFoundException e){IJ.showMessage("File not found!");}
-
+		catch(Exception e)
+		{
+			IJ.log("Error: couldn't write instances into .ARFF file.");
+			IJ.showMessage("Exception while saving data as ARFF file");
+			e.printStackTrace();
+			return false;
+		}	
+		finally{
+			try {
+				out.close();
+			} catch (IOException e) {				
+				e.printStackTrace();
+			}
+		}
+		
+		return true;
+		 
 	}
 
 	/**
