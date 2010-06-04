@@ -1696,6 +1696,8 @@ static void __attribute__((__noreturn__)) usage(void)
 		"\t(-Xincgc -XX:PermSize=128m)\n"
 		"--gc-g1\n"
 		"\tuse the G1 garbage collector\n"
+		"--debug-gc\n"
+		"\tshow debug info about the garbage collector on stderr\n"
 		"\n"
 		"Options for ImageJ:\n"
 		"--allow-multiple\n"
@@ -1850,7 +1852,7 @@ static int start_ij(void)
 	struct string *plugin_path = string_init(32);
 	int dashdash = 0;
 	int allow_multiple = 0, skip_build_classpath = 0;
-	int jdb = 0, add_class_path_option = 0, advanced_gc = 1;
+	int jdb = 0, add_class_path_option = 0, advanced_gc = 1, debug_gc = 1;
 	size_t memory_size = 0;
 	int count = 1, i;
 
@@ -2085,6 +2087,8 @@ static int start_ij(void)
 		else if (!strcmp("--gc-g1", main_argv[i]) ||
 				!strcmp("--g1", main_argv[i]))
 			advanced_gc = 2;
+		else if (!strcmp("--debug-gc", main_argv[i]))
+			debug_gc = 1;
 		else if (!strcmp("--help", main_argv[i]) ||
 				!strcmp("-h", main_argv[i]))
 			usage();
@@ -2149,6 +2153,9 @@ static int start_ij(void)
 		add_option(&options, "-XX:+G1ParallelRSetScanningEnabled", 0);
 		add_option(&options, "-XX:NewRatio=5", 0);
 	}
+
+	if (debug_gc)
+		add_option(&options, "-verbose:gc", 0);
 
 	if (!main_class) {
 		const char *first = main_argv[1];
