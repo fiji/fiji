@@ -1,5 +1,7 @@
 package fiji.scripting;
 
+import fiji.build.Fake;
+
 import ij.IJ;
 
 import ij.gui.GenericDialog;
@@ -11,6 +13,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PrintStream;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -135,6 +138,34 @@ public class FileFunctions {
 				path = dir + "/" + className.replace('.', '/') + ".java";
 			}
 
+		// Try to find it with the help of the Fakefile
+		File fakefile = new File(fijiDir, "Fakefile");
+		if (fakefile.exists()) try {
+			Fake fake = new Fake();
+			if (parent != null) {
+				final JTextAreaOutputStream output = new JTextAreaOutputStream(parent.screen);
+				fake.out = new PrintStream(output);
+				fake.err = new PrintStream(output);
+			}
+			Fake.Parser parser = fake.parse(new FileInputStream(fakefile), new File(fijiDir));
+			parser.parseRules(null);
+			Fake.Parser.Rule rule = parser.getRule("plugins/" + baseName + ".jar");
+			if (rule == null)
+				rule = parser.getRule("jars/" + baseName + ".jar");
+			if (rule != null) {
+				String stripPath = (rule instanceof Fake.Parser.SubFake) ?
+					rule.getLastPrerequisite() : rule.getStripPath();
+				if (stripPath != null) {
+					dir = fijiDir + "/" + stripPath;
+					path = dir + "/" + className.replace('.', '/') + ".java";
+					if (new File(path).exists())
+						return path;
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
 		return null;
 	}
 
@@ -153,6 +184,7 @@ public class FileFunctions {
 			int offset = url.startsWith("jar:file:") ? 9 : 0;
 			return url.substring(offset, dotJar);
 		} catch (Exception e) {
+			e.printStackTrace();
 			return null;
 		}
 	}
