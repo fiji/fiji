@@ -1245,6 +1245,22 @@ public class Fake {
 			public String getPrerequisiteString() {
 				return prerequisiteString;
 			}
+
+			public String getStripPath() {
+				String s = prerequisiteString.trim();
+				if (s.startsWith("**/"))
+					return "";
+				int stars = s.indexOf("/**/");
+				if (stars < 0)
+					return "";
+				int space = s.indexOf(' ');
+				if (space > 0 && space < stars) {
+					if (s.charAt(space - 1) == '/')
+						return s.substring(0, space);
+					return "";
+				}
+				return s.substring(0, stars + 1);
+			}
 		}
 
 		class All extends Rule {
@@ -1534,22 +1550,6 @@ public class Fake {
 			String getMainClass() {
 				return getVariable("MAINCLASS", target);
 			}
-
-			String getStripPath() {
-				String s = prerequisiteString.trim();
-				if (s.startsWith("**/"))
-					return "";
-				int stars = s.indexOf("/**/");
-				if (stars < 0)
-					return "";
-				int space = s.indexOf(' ');
-				if (space > 0 && space < stars) {
-					if (s.charAt(space - 1) == '/')
-						return s.substring(0, space);
-					return "";
-				}
-				return s.substring(0, stars + 1);
-		}
 
 			protected void clean(boolean dry_run) {
 				super.clean(dry_run);
