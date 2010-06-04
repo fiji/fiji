@@ -160,6 +160,8 @@ public class Refresh_Javas extends RefreshScripts {
 		} catch (FileNotFoundException e) {
 			e.printStackTrace(new PrintStream(err));
 		}
+		if (parser != null && parser.getRule(target) == null)
+			target = "jars/" + base + ".jar";
 		if (parser == null || parser.getRule(target) == null) {
 			String rule = "all <- " + target + "\n"
 				+ "\n"
