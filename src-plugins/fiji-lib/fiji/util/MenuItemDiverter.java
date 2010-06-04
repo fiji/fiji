@@ -59,6 +59,15 @@ public abstract class MenuItemDiverter implements KeyListener, PlugIn {
 
                 actions = new Hashtable();
                 Hashtable table = Menus.getCommands();
+                if (table.size() == 0) {
+			IJ.error("No menu items found!");
+			return;
+                }
+
+                if (!"ij.plugin.Commands(\"quit\")".equals(table.get("Quit"))) {
+			IJ.error("Cannot install another menu item diverter!");
+			return;
+                }
                 for (Object key : table.keySet()) {
                         actions.put(key, table.get(key));
                         table.put(key, getAction(key));
