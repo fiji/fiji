@@ -1954,7 +1954,7 @@ static int start_ij(void)
 		else if (handle_one_option(&i, "--edit", arg))
 			for (;;) {
 				add_option(&options, "-eval", 1);
-				string_setf(buffer, "run(\"Script Editor\", \"%s\");", make_absolute_path(arg->buffer));
+				string_setf(buffer, "run(\"Script Editor\", \"%s\");", strncmp(arg->buffer, "class:", 6) ? make_absolute_path(arg->buffer) : arg->buffer);
 				add_option_string(&options, buffer, 1);
 				if (i + 1 >= main_argc)
 					break;

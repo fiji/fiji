@@ -766,6 +766,13 @@ public class TextEditor extends JFrame implements ActionListener,
 	}
 
 	public void open(String path) {
+		if (path.startsWith("class:")) try {
+			path = new FileFunctions(this).getSourcePath(path.substring(6));
+			if (path == null)
+				return;
+		} catch (ClassNotFoundException e) {
+			error("Could not find " + path);
+		}
 		try {
 			boolean wasNew =
 				editorPane != null && editorPane.isNew();
