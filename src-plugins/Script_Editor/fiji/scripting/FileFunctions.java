@@ -455,33 +455,62 @@ public class FileFunctions {
 		return result;
 	}
 
-	public boolean isInGit(File file) {
+	public File getGitDirectory(File file) {
 		if (file == null)
-			return false;
+			return null;
 		for (;;) {
 			file = file.getParentFile();
 			if (file == null)
-				return false;
-			if (new File(file, ".git").isDirectory())
-				return true;
+				return null;
+			File git = new File(file, ".git");
+			if (git.isDirectory())
+				return git;
+		}
+	}
+
+	public File getPluginRootDirectory(File file) {
+		if (file == null)
+			return null;
+		if (!file.isDirectory())
+			file = file.getParentFile();
+		if (file == null)
+			return null;
+
+		File git = new File(file, ".git");
+		if (git.isDirectory())
+			return file;
+
+		File backup = file;
+		for (;;) {
+			File parent = file.getParentFile();
+			if (parent == null)
+				return null;
+			git = new File(parent, ".git");
+			if (git.isDirectory())
+				return file.getName().equals("src-plugins") ?
+					backup : file;
+			backup = file;
+			file = parent;
 		}
 	}
 
 	public void showDiff(File file) {
 		if (file == null)
 			return;
+		File pluginRoot = getPluginRootDirectory(file);
 		DiffView diff = new DiffView();
 		try {
 			String[] cmdarray = {
 				"git", "diff", "--", "."
 			};
 			SimpleExecuter e = new SimpleExecuter(cmdarray,
-				diff, new DiffView.IJLog(), file.getParentFile());
+				diff, new DiffView.IJLog(), pluginRoot);
 		} catch (IOException e) {
 			IJ.handleException(e);
+			return;
 		}
 
-		JFrame frame = new JFrame("Unstaged differences for " + file);
+		JFrame frame = new JFrame("Unstaged differences for " + pluginRoot);
 		frame.setSize(640, 480);
 		frame.getContentPane().add(diff);
 		frame.pack();

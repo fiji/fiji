@@ -1003,7 +1003,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		boolean isMacro = language.menuLabel.equals("ImageJ Macro");
 		installMacro.setEnabled(isMacro);
 
-		boolean isInGit = new FileFunctions(this).isInGit(getEditorPane().file);
+		boolean isInGit = new FileFunctions(this).getGitDirectory(getEditorPane().file) != null;
 		showDiff.setEnabled(isInGit);
 	}
 
