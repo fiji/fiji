@@ -30,6 +30,9 @@ package tracing;
 import java.awt.Color;
 import java.awt.Graphics;
 
+import java.awt.image.IndexColorModel;
+import java.awt.image.ColorModel;
+
 import ij.gui.*;
 import ij.*;
 import ij.process.*;
@@ -1859,6 +1862,8 @@ public class Path implements Comparable {
 	int paths3DDisplay = 1;
 	Content content3D;
 	Content content3DExtra;
+	ImagePlus content3DMultiColored;
+	ImagePlus content3DExtraMultiColored;
 	String nameWhenAddedToViewer;
 	String nameWhenAddedToViewerExtra;
 
@@ -1871,7 +1876,13 @@ public class Path implements Comparable {
 	synchronized void updateContent3D( Image3DUniverse univ,
 					   boolean visible,
 					   int paths3DDisplay,
-					   Color3f color ) {
+					   Color3f color,
+					   ImagePlus colorImage ) {
+
+		if( verbose ) {
+			System.out.println("In updateContent3D, colorImage is: "+colorImage);
+			System.out.println("In updateContent3D, color is: "+color);
+		}
 
 		// So, go through each of the reasons why we might
 		// have to remove (and possibly add back) the path:
@@ -1901,26 +1912,55 @@ public class Path implements Comparable {
 			pathToUse = this;
 		}
 
-		// Is the color wrong?
-		if( (pathToUse.content3D != null && ! pathToUse.content3D.getColor().equals(color)) ||
-		    (pathToUse.content3DExtra != null && ! pathToUse.content3DExtra.getColor().equals(color))) {
-			pathToUse.removeFrom3DViewer(univ);
-			pathToUse.paths3DDisplay = paths3DDisplay;
-			pathToUse.addTo3DViewer(univ,color);
-			return;
+		if( verbose ) {
+			System.out.println("pathToUse is: "+pathToUse);
+			System.out.println("  pathToUse.content3D is: "+pathToUse.content3D);
+			System.out.println("  pathToUse.content3DExtra is: "+pathToUse.content3DExtra);
+			System.out.println("  pathToUse.content3DMultiColored: "+pathToUse.content3DMultiColored);
 		}
 
 		// Is the the display (lines-and-discs or surfaces) right?
 		if( pathToUse.paths3DDisplay != paths3DDisplay ) {
 			pathToUse.removeFrom3DViewer(univ);
 			pathToUse.paths3DDisplay = paths3DDisplay;
-			pathToUse.addTo3DViewer(univ,color);
+			pathToUse.addTo3DViewer(univ,color,colorImage);
+			return;
+		}
+
+		/* Are we now asked to use the color image, but
+		   previously were not? */
+
+		if( colorImage == null ) {
+			if( (paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_LINES_AND_DISCS
+			     && pathToUse.content3DExtraMultiColored != null) ||
+			    (paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_SURFACE
+			     && pathToUse.content3DMultiColored != null) ) {
+				pathToUse.removeFrom3DViewer(univ);
+				pathToUse.addTo3DViewer(univ,color,colorImage);
+				return;
+			}
+		} else {
+			if( (paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_LINES_AND_DISCS
+			     && pathToUse.content3DExtraMultiColored != colorImage) ||
+			    (paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_SURFACE
+			     && pathToUse.content3DMultiColored != colorImage) ) {
+				pathToUse.removeFrom3DViewer(univ);
+				pathToUse.addTo3DViewer(univ,color,colorImage);
+				return;
+			}
+		}
+
+		// Is the (flat) color wrong?
+		if( realColor == null || ! realColor.equals(color) ) {
+			pathToUse.removeFrom3DViewer(univ);
+			pathToUse.paths3DDisplay = paths3DDisplay;
+			pathToUse.addTo3DViewer(univ,color,colorImage);
 			return;
 		}
 
 		if( pathToUse.nameWhenAddedToViewer == null || ! univ.contains(pathToUse.nameWhenAddedToViewer) ) {
 			pathToUse.paths3DDisplay = paths3DDisplay;
-			pathToUse.addTo3DViewer(univ,color);
+			pathToUse.addTo3DViewer(univ,color,colorImage);
 		}
 	}
 
@@ -1949,53 +1989,66 @@ public class Path implements Comparable {
 		return linePoints;
 	}
 
-	public Content addAsLinesTo3DViewer(Image3DUniverse univ, Color c ) {
-		return addAsLinesTo3DViewer(univ,new Color3f(c));
+	public Content addAsLinesTo3DViewer(Image3DUniverse univ, Color c, ImagePlus colorImage ) {
+		return addAsLinesTo3DViewer(univ,new Color3f(c),colorImage);
 	}
 
-	public Content addAsLinesTo3DViewer(Image3DUniverse univ, Color3f c ) {
+	public Content addAsLinesTo3DViewer(Image3DUniverse univ, Color3f c, ImagePlus colorImage ) {
 		String safeName = univ.getSafeContentName(getName()+" as lines");
 		return univ.addLineMesh( getPoint3fList(), c, safeName, true );
 	}
 
-	public Content addDiscsTo3DViewer(Image3DUniverse univ, Color c) {
-		return addDiscsTo3DViewer(univ,new Color3f(c));
+	public Content addDiscsTo3DViewer(Image3DUniverse univ, Color c, ImagePlus colorImage ) {
+		return addDiscsTo3DViewer(univ,new Color3f(c),colorImage);
 	}
 
-	public Content addDiscsTo3DViewer(Image3DUniverse  univ, Color3f c ) {
+	public Content addDiscsTo3DViewer(Image3DUniverse  univ, Color3f c, ImagePlus colorImage ) {
 		if( ! hasCircles() )
 			return null;
+
+		Color3f [] originalColors = Pipe.getPointColors( precise_x_positions,
+								 precise_y_positions,
+								 precise_z_positions,
+								 c,
+								 colorImage );
+
+		List<Color3f> meshColors = new ArrayList<Color3f>();
 
 		int edges = 8;
 		List<Point3f> allTriangles = new ArrayList<Point3f>(edges*points);
 		for( int i = 0; i < points; ++i ) {
 			List<Point3f> discMesh =
 				MeshMaker.createDisc( precise_x_positions[i],
-						       precise_y_positions[i],
-						       precise_z_positions[i],
-						       tangents_x[i],
-						       tangents_y[i],
-						       tangents_z[i],
-						       radiuses[i],
-						       8 );
+						      precise_y_positions[i],
+						      precise_z_positions[i],
+						      tangents_x[i],
+						      tangents_y[i],
+						      tangents_z[i],
+						      radiuses[i],
+						      8 );
+			int pointsInDiscMesh = discMesh.size();
+			for( int j = 0; j < pointsInDiscMesh; ++j )
+				meshColors.add( originalColors[i] );
 			allTriangles.addAll(discMesh);
 		}
 		return univ.addTriangleMesh( allTriangles,
-					     c,
+					     meshColors,
 					     univ.getSafeContentName("Discs for path "+getName()) );
 	}
 
-	synchronized public void addTo3DViewer(Image3DUniverse univ, Color c) {
+	synchronized public void addTo3DViewer(Image3DUniverse univ, Color c, ImagePlus colorImage) {
 		if( c == null )
 			throw new RuntimeException("In addTo3DViewer, Color can no longer be null");
-		addTo3DViewer(univ, new Color3f(c));
+		addTo3DViewer(univ, new Color3f(c), colorImage);
 	}
 
-	synchronized public void addTo3DViewer(Image3DUniverse univ, Color3f c ) {
+	protected Color3f realColor;
+
+	synchronized public void addTo3DViewer(Image3DUniverse univ, Color3f c, ImagePlus colorImage ) {
 		if( c == null )
 			throw new RuntimeException("In addTo3DViewer, Color3f can no longer be null");
 
-		Color3f realColor = (c == null) ? new Color3f(Color.magenta) : c;
+		realColor = (c == null) ? new Color3f(Color.magenta) : c;
 
 		if(points <= 1) {
 			content3D = null;
@@ -2005,11 +2058,12 @@ public class Path implements Comparable {
 
 		if( paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_LINES ||
 		    paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_LINES_AND_DISCS ) {
-			content3D = addAsLinesTo3DViewer(univ,realColor);
+			content3D = addAsLinesTo3DViewer(univ,realColor,colorImage);
 			content3D.setLocked(true);
 			nameWhenAddedToViewer = content3D.getName();
 			if( paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_LINES_AND_DISCS ) {
-				content3DExtra = addDiscsTo3DViewer(univ,realColor);
+				content3DExtra = addDiscsTo3DViewer(univ,realColor,colorImage);
+				content3DExtraMultiColored = colorImage;
 				if( content3DExtra == null ) {
 					nameWhenAddedToViewerExtra = null;
 				} else {
@@ -2119,28 +2173,43 @@ public class Path implements Comparable {
 			System.out.println("For path "+this+", got mean_inter_point_distance_in_image_space: "+mean_inter_point_distance_in_image_space);
 		boolean resample = mean_inter_point_distance_in_image_space < 3;
 
+		if (verbose)
+			System.out.println("... so"+(resample?"":" not")+" resampling");
+
+		ArrayList tubeColors = new ArrayList<Color3f>();
+
 		double [][][] allPoints = Pipe.makeTube(x_points_d_trimmed,
 							y_points_d_trimmed,
 							z_points_d_trimmed,
 							radiuses_d_trimmed,
 							resample ? 2 : 1,       // resample - 1 means just "use mean distance between points", 3 is three times that, etc.
-							12,     // "parallels" (12 means cross-sections are dodecagons)
-							resample );
+							12,         // "parallels" (12 means cross-sections are dodecagons)
+							resample,   // do_resample
+							realColor,
+							colorImage,
+							tubeColors);
+
 		if( allPoints == null ) {
 			content3D = null;
 			content3DExtra = null;
 			return;
 		}
 
+		// Make tube adds an extra point at the beginning and end:
+
+		List vertexColorList = new ArrayList<Color3f>();
 		java.util.List triangles = Pipe.generateTriangles(allPoints,
-								  1); // scale
+								  1, // scale
+								  tubeColors,
+								  vertexColorList);
 
 		nameWhenAddedToViewer = univ.getSafeContentName( getName() );
 		// univ.resetView();
 		content3D = univ.addTriangleMesh(triangles,
-						 realColor,
+						 vertexColorList,
 						 nameWhenAddedToViewer);
 		content3D.setLocked(true);
+		content3DMultiColored = colorImage;
 
 		content3DExtra = null;
 		nameWhenAddedToViewerExtra = null;
