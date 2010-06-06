@@ -473,7 +473,7 @@ public class UpdateJava implements PlugIn {
 		if (!matcher.matches())
 			abort("Could not determine Java version");
 		String subDirectory = "java/"
-			+ (IJ.isWindows() ? (IJ.is64Bit() ? "win64" : "win32") : (IJ.is64Bit() ? "linux64" : "linux"))
+			+ (IJ.isWindows() ? (IJ.is64Bit() ? "win64" : "win32") : (IJ.is64Bit() ? "linux-amd64" : "linux"))
 			+ "/jdk1." + matcher.group(1) + ".0_" + matcher.group(2);
 		if (isJRE)
 			subDirectory += "/jre";

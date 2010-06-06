@@ -20,20 +20,43 @@ import java.util.Calendar;
 
 import java.util.zip.GZIPInputStream;
 
-fuzz = 0;
-if (bsh.args.length > 1 && bsh.args[0].equals("--fuzz")) {
-	fuzz = Integer.parseInt(bsh.args[1]);
-	args = new String[bsh.args.length - 2];
-	System.arraycopy(bsh.args, 2, args, 0, args.length);
-	bsh.args = args;
+usage() {
+	usage(null);
 }
 
-if (bsh.args.length == 0) {
+usage(message) {
+	if (message != null)
+		System.err.println(message);
 	System.err.println("Usage: " + this.interpreter.getSourceFileInfo()
 		+ " [--fuzz minutes-before]"
 		+ " <file.jar> [<file2.jar> ...]");
 	System.exit(1);
 }
+
+fuzz = 0;
+extraArgs = new ArrayList();
+
+while (bsh.args.length > 0 && bsh.args[0].startsWith("-")) {
+	handled = 1;
+	if (bsh.args[0].equals("--fuzz")) {
+		if (bsh.args.length < 2)
+			usage("--fuzz needs a number of minutes");
+		fuzz = Integer.parseInt(bsh.args[1]);
+		handled = 2;
+	}
+	else if (bsh.args[0].equals("-p") || bsh.args[0].equals("--color"))
+		extraArgs.add(bsh.args[0]);
+	else
+		usage("Unknown option: '" + bsh.args[0] + "'");
+
+	args = new String[bsh.args.length - handled];
+	if (args.length > 0)
+		System.arraycopy(bsh.args, handled, args, 0, args.length);
+	bsh.args = args;
+}
+
+if (bsh.args.length == 0)
+	usage();
 
 // Read the database
 
@@ -81,7 +104,10 @@ calendar = Calendar.getInstance();
 dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
 for (String arg : bsh.args) {
-	timestamp = plugins.getPlugin(arg).getTimestamp();
+	plugin = arg;
+	if (plugin.startsWith("precompiled/"))
+		plugin = plugin.substring(12);
+	timestamp = plugins.getPlugin(plugin).getTimestamp();
 	calendar.set((int)((timestamp / 10000000000l) % 10000),
 		(int)((timestamp / 100000000l) % 100) - 1,
 		(int)((timestamp / 1000000l) % 100),
@@ -97,14 +123,24 @@ for (String arg : bsh.args) {
 
 	System.out.println("*** Changes in " + arg + " since " + message + " ***");
 	since = "--since=" + since;
-	String[] cmdarray = {
-		"git", "log", since, "--", "."
-	};
+	String[] cmdarray = new String[5 + extraArgs.size()];
+	i = 0;
+	cmdarray[i++] = "git";
+	cmdarray[i++] = "log";
+	cmdarray[i++] = since;
+	for (String extra : extraArgs)
+		cmdarray[i++] = extra;
+	cmdarray[i++] = "--";
+	cmdarray[i++] = ".";
 
 	rule = parser.getRule(arg);
 	if (rule.getClass().getName().endsWith("SubFake"))
 		execute(cmdarray,
 			new File(fijiDir + rule.getLastPrerequisite()));
+	else if (arg.startsWith("precompiled/fiji-")) {
+		cmdarray[cmdarray.length - 1] = "fiji.c";
+		execute(cmdarray, new File(fijiDir));
+	}
 	else {
 		setAccessibility(true);
 		path = rule.prerequisiteString;
