@@ -70,6 +70,7 @@ import javax.swing.event.ChangeListener;
 
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
+import javax.swing.text.JTextComponent;
 import javax.swing.text.Position;
 
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
@@ -1234,6 +1235,20 @@ public class TextEditor extends JFrame implements ActionListener,
 			error("There is no interpreter for this language");
 			return;
 		}
+
+		/*
+		 * We need to remove RSyntaxTextArea's cached keymap before
+		 * instantiating a new text area from a different class loader,
+		 * otherwise the instanceof check will pretend that the new text
+		 * area is not an instance of RTextArea, and as a consequence,
+		 * no keyboard input will be possible.
+		 *
+		 * This affects only the caching of the keymap so that it
+		 * cannot be reused, but the already installed keymaps are not
+		 * affected.
+		 */
+		if (interpreter instanceof Refresh_Javas)
+			JTextComponent.removeKeymap("RTextAreaKeymap");
 
 		markCompileStart();
 		final JTextAreaOutputStream output = new JTextAreaOutputStream(screen);
