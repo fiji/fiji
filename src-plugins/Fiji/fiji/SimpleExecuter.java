@@ -2,6 +2,7 @@ package fiji;
 
 import ij.IJ;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -14,11 +15,19 @@ public class SimpleExecuter {
 	}
 
 	public SimpleExecuter(String[] cmdarray) throws IOException {
-		this(cmdarray, null, null);
+		this(cmdarray, null, null, null);
+	}
+
+	public SimpleExecuter(String[] cmdarray, File workingDirectory) throws IOException {
+		this(cmdarray, null, null, workingDirectory);
 	}
 
 	public SimpleExecuter(String[] cmdarray, LineHandler out, LineHandler err) throws IOException {
-		Process process = Runtime.getRuntime().exec(cmdarray);
+		this(cmdarray, out, err, null);
+	}
+
+	public SimpleExecuter(String[] cmdarray, LineHandler out, LineHandler err, File workingDirectory) throws IOException {
+		Process process = Runtime.getRuntime().exec(cmdarray, null, workingDirectory);
 		process.getOutputStream().close();
 		stderr = getDumper(err, process.getErrorStream());
 		stdout = getDumper(out, process.getInputStream());
