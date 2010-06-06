@@ -9,11 +9,19 @@ public class SimpleExecuter {
 	protected StreamDumper stdout, stderr;
 	protected int exitCode;
 
+	public static interface LineHandler {
+		public void handleLine(String line);
+	}
+
 	public SimpleExecuter(String[] cmdarray) throws IOException {
+		this(cmdarray, null, null);
+	}
+
+	public SimpleExecuter(String[] cmdarray, LineHandler out, LineHandler err) throws IOException {
 		Process process = Runtime.getRuntime().exec(cmdarray);
 		process.getOutputStream().close();
-		stderr = new StreamDumper(process.getErrorStream());
-		stdout = new StreamDumper(process.getInputStream());
+		stderr = getDumper(err, process.getErrorStream());
+		stdout = getDumper(out, process.getInputStream());
 		for (;;) try {
 			exitCode = process.waitFor();
 			break;
@@ -57,13 +65,44 @@ public class SimpleExecuter {
 					int count = in.read(buffer);
 					if (count < 0)
 						break;
-					out.append(new String(buffer, 0, count));
+					handle(buffer, 0, count);
 				}
 				in.close();
 			} catch (IOException e) {
 				stderr.out.append(e.toString());
 			}
 		}
+
+		protected void handle(byte[] buffer, int offset, int length) {
+			out.append(new String(buffer, offset, length));
+		}
+	}
+
+	protected class LineDumper extends StreamDumper {
+		protected LineHandler handler;
+
+		public LineDumper(LineHandler handler, InputStream in) {
+			super(in);
+			this.handler = handler;
+		}
+
+		protected void handle(byte[] buffer, int offset, int length) {
+			for (int i = 0; i < length; i++)
+				if (buffer[offset + i] == '\n') {
+					out.append(new String(buffer, offset, i));
+					handler.handleLine(out.toString());
+					out.setLength(0);
+
+					offset += i + 1;
+					length -= i + 1;
+					i = -1;
+				}
+			out.append(new String(buffer, offset, length));
+		}
+	}
+
+	protected StreamDumper getDumper(LineHandler handler, InputStream in) {
+		return handler != null ? new LineDumper(handler, in) : new StreamDumper(in);
 	}
 
 	public static void main(String[] args) {
