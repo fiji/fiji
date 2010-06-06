@@ -81,7 +81,10 @@ calendar = Calendar.getInstance();
 dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
 for (String arg : bsh.args) {
-	timestamp = plugins.getPlugin(arg).getTimestamp();
+	plugin = arg;
+	if (plugin.startsWith("precompiled/"))
+		plugin = plugin.substring(12);
+	timestamp = plugins.getPlugin(plugin).getTimestamp();
 	calendar.set((int)((timestamp / 10000000000l) % 10000),
 		(int)((timestamp / 100000000l) % 100) - 1,
 		(int)((timestamp / 1000000l) % 100),
@@ -105,6 +108,10 @@ for (String arg : bsh.args) {
 	if (rule.getClass().getName().endsWith("SubFake"))
 		execute(cmdarray,
 			new File(fijiDir + rule.getLastPrerequisite()));
+	else if (arg.startsWith("precompiled/fiji-")) {
+		cmdarray[cmdarray.length - 1] = "fiji.c";
+		execute(cmdarray, new File(fijiDir));
+	}
 	else {
 		setAccessibility(true);
 		path = rule.prerequisiteString;
