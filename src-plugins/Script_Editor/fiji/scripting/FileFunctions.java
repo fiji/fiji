@@ -1,5 +1,7 @@
 package fiji.scripting;
 
+import fiji.SimpleExecuter;
+
 import fiji.build.Fake;
 
 import ij.IJ;
@@ -27,6 +29,7 @@ import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
 public class FileFunctions {
@@ -346,7 +349,7 @@ public class FileFunctions {
 			String content = readStream(new FileInputStream(file));
 			if (content.startsWith(name) || content.indexOf("\n" + name) >= 0)
 				return false;
-	
+
 			FileOutputStream out = new FileOutputStream(file, true);
 			if (!content.endsWith("\n"))
 				out.write("\n".getBytes());
@@ -376,7 +379,7 @@ public class FileFunctions {
 			int offset = content.indexOf("\n\t" + name, start);
 			if (offset < end && offset > start)
 				return false;
-	
+
 			FileOutputStream out = new FileOutputStream(file);
 			out.write(content.substring(0, end).getBytes());
 			if (content.charAt(end - 1) != '\\')
@@ -385,7 +388,7 @@ public class FileFunctions {
 			out.write(name.getBytes());
 			out.write(content.substring(end).getBytes());
 			out.close();
-	
+
 			return true;
 		} catch (FileNotFoundException e) {
 			return false;
@@ -450,6 +453,39 @@ public class FileFunctions {
 		else
 			listFilesRecursively(new File(url), "", result);
 		return result;
+	}
+
+	public boolean isInGit(File file) {
+		if (file == null)
+			return false;
+		for (;;) {
+			file = file.getParentFile();
+			if (file == null)
+				return false;
+			if (new File(file, ".git").isDirectory())
+				return true;
+		}
+	}
+
+	public void showDiff(File file) {
+		if (file == null)
+			return;
+		DiffView diff = new DiffView();
+		try {
+			String[] cmdarray = {
+				"git", "diff", "--", "."
+			};
+			SimpleExecuter e = new SimpleExecuter(cmdarray,
+				diff, new DiffView.IJLog(), file.getParentFile());
+		} catch (IOException e) {
+			IJ.handleException(e);
+		}
+
+		JFrame frame = new JFrame("Unstaged differences for " + file);
+		frame.setSize(640, 480);
+		frame.getContentPane().add(diff);
+		frame.pack();
+		frame.setVisible(true);
 	}
 
 	protected boolean error(String message) {

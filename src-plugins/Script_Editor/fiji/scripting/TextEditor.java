@@ -91,7 +91,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		  openHelpWithoutFrames, nextTab, previousTab,
 		  runSelection, extractSourceJar, toggleBookmark,
 		  listBookmarks, openSourceForClass, newPlugin, installMacro,
-		  openSourceForMenuItem;
+		  openSourceForMenuItem, showDiff;
 	JMenu tabsMenu;
 	int tabsMenuTabsStart;
 	Set<JMenuItem> tabsMenuItems;
@@ -261,6 +261,9 @@ public class TextEditor extends JFrame implements ActionListener,
 		openSourceForMenuItem = addToMenu(tools,
 			"Open .java file for menu item...", 0, 0);
 		openSourceForMenuItem.setMnemonic(KeyEvent.VK_M);
+		showDiff = addToMenu(tools,
+			"Show diff...", 0, 0);
+		showDiff.setMnemonic(KeyEvent.VK_D);
 		mbar.add(tools);
 
 		tabsMenu = new JMenu("Tabs");
@@ -646,6 +649,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		}
 		else if (source == openSourceForMenuItem)
 			new OpenSourceForMenuItem().run(null);
+		else if (source == showDiff)
+			new FileFunctions(this).showDiff(getEditorPane().file);
 		else if (source == newPlugin)
 			new FileFunctions(this).newPlugin();
 		else if (source == nextTab)
@@ -997,6 +1002,9 @@ public class TextEditor extends JFrame implements ActionListener,
 
 		boolean isMacro = language.menuLabel.equals("ImageJ Macro");
 		installMacro.setEnabled(isMacro);
+
+		boolean isInGit = new FileFunctions(this).isInGit(getEditorPane().file);
+		showDiff.setEnabled(isInGit);
 	}
 
 	public void setFileName(String baseName) {
