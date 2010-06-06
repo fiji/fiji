@@ -501,7 +501,9 @@ public class FileFunctions {
 		DiffView diff = new DiffView();
 		try {
 			String[] cmdarray = {
-				"git", "diff", "--", "."
+				"git", "diff", "--", ".",
+				System.getProperty("fiji.dir") + "/staged-plugins/"
+				+ pluginRoot.getName() + ".config"
 			};
 			SimpleExecuter e = new SimpleExecuter(cmdarray,
 				diff, new DiffView.IJLog(), pluginRoot);
