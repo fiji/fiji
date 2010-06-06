@@ -34,16 +34,19 @@ usage(message) {
 }
 
 fuzz = 0;
+extraArgs = new ArrayList();
+
 while (bsh.args.length > 0 && bsh.args[0].startsWith("-")) {
-	handled = 0;
+	handled = 1;
 	if (bsh.args[0].equals("--fuzz")) {
 		if (bsh.args.length < 2)
 			usage("--fuzz needs a number of minutes");
 		fuzz = Integer.parseInt(bsh.args[1]);
 		handled = 2;
 	}
-
-	if (handled == 0)
+	else if (bsh.args[0].equals("-p") || bsh.args[0].equals("--color"))
+		extraArgs.add(bsh.args[0]);
+	else
 		usage("Unknown option: '" + bsh.args[0] + "'");
 
 	args = new String[bsh.args.length - handled];
@@ -120,9 +123,15 @@ for (String arg : bsh.args) {
 
 	System.out.println("*** Changes in " + arg + " since " + message + " ***");
 	since = "--since=" + since;
-	String[] cmdarray = {
-		"git", "log", since, "--", "."
-	};
+	String[] cmdarray = new String[5 + extraArgs.size()];
+	i = 0;
+	cmdarray[i++] = "git";
+	cmdarray[i++] = "log";
+	cmdarray[i++] = since;
+	for (String extra : extraArgs)
+		cmdarray[i++] = extra;
+	cmdarray[i++] = "--";
+	cmdarray[i++] = ".";
 
 	rule = parser.getRule(arg);
 	if (rule.getClass().getName().endsWith("SubFake"))
