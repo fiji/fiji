@@ -1,6 +1,7 @@
 package fiji.scripting;
 
 import fiji.SimpleExecuter;
+
 import fiji.SimpleExecuter.LineHandler;
 
 import ij.IJ;
@@ -21,11 +22,10 @@ import javax.swing.text.Document;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 
-
 public class DiffView extends JScrollPane implements LineHandler {
-	JPanel panel;
-	SimpleAttributeSet normal, italic, red, green;
-	Document document;
+	protected JPanel panel;
+	protected SimpleAttributeSet normal, italic, red, green;
+	protected Document document;
 
 	public DiffView() {
 		panel = new JPanel();
