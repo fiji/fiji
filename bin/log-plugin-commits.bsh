@@ -131,9 +131,23 @@ for (String arg : bsh.args) {
 		message += " (-" + fuzz + " minutes) = " + since;
 	}
 
+	rule = parser.getRule(arg);
+
+	extraFiles = new ArrayList();
+	if (!rule.getClass().getName().endsWith("SubFake")) {
+		baseName = plugin.substring(plugin.lastIndexOf('/') + 1);
+		if (baseName.endsWith(".jar"))
+			baseName = baseName.substring(0, baseName.length() - 4);
+		for (String file : new String[] {
+			"staged-plugins/" + baseName + ".config",
+			"staged-plugins/" + baseName + ".Fakefile"
+		})
+			extraFiles.add(file);
+	}
+
 	System.out.println("*** Changes in " + arg + " since " + message + " ***");
 	since = "--since=" + since;
-	String[] cmdarray = new String[5 + extraArgs.size()];
+	String[] cmdarray = new String[5 + extraArgs.size() + extraFiles.size()];
 	i = 0;
 	cmdarray[i++] = "git";
 	cmdarray[i++] = "log";
@@ -141,9 +155,10 @@ for (String arg : bsh.args) {
 	for (String extra : extraArgs)
 		cmdarray[i++] = extra;
 	cmdarray[i++] = "--";
+	for (String extra : extraFiles)
+		cmdarray[i++] = extra;
 	cmdarray[i++] = ".";
 
-	rule = parser.getRule(arg);
 	if (rule.getClass().getName().endsWith("SubFake"))
 		execute(cmdarray,
 			new File(fijiDir + "/" + rule.getLastPrerequisite()));
