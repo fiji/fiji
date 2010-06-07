@@ -618,7 +618,8 @@ public class FileFunctions {
 		try {
 			String fijiDir = System.getProperty("fiji.dir");
 			String[] cmdarray = {
-				fijiDir + "/bin/log-plugin-commits.bsh", "-p", plugin
+				fijiDir + "/bin/log-plugin-commits.bsh",
+				"-p", "--fuzz", "15", plugin
 			};
 			SimpleExecuter e = new SimpleExecuter(cmdarray,
 				diff, new DiffView.IJLog(), new File(fijiDir));
