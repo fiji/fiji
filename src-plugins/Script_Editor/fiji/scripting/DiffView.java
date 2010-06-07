@@ -26,6 +26,7 @@ public class DiffView extends JScrollPane implements LineHandler {
 	protected JPanel panel;
 	protected SimpleAttributeSet normal, italic, red, green;
 	protected Document document;
+	protected int adds, removes;
 
 	public DiffView() {
 		panel = new JPanel();
@@ -68,16 +69,32 @@ public class DiffView extends JScrollPane implements LineHandler {
 			styled(line, normal);
 		else if (line.startsWith(" "))
 			styled(line, normal);
-		else if (line.startsWith("+"))
+		else if (line.startsWith("+")) {
+			adds++;
 			styled(line, green);
-		else if (line.startsWith("-"))
+		}
+		else if (line.startsWith("-")) {
+			removes++;
 			styled(line, red);
+		}
 		else
 			styled(line, italic);
 		styled("\n", normal);
 	}
 
-	protected static class IJLog implements LineHandler {
+	public int getAdds() {
+		return adds;
+	}
+
+	public int getRemoves() {
+		return removes;
+	}
+
+	public int getChanges() {
+		return adds + removes;
+	}
+
+	public static class IJLog implements LineHandler {
 		public void handleLine(String line) {
 			IJ.log(line);
 		}
