@@ -91,7 +91,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		  openHelpWithoutFrames, nextTab, previousTab,
 		  runSelection, extractSourceJar, toggleBookmark,
 		  listBookmarks, openSourceForClass, newPlugin, installMacro,
-		  openSourceForMenuItem, showDiff;
+		  openSourceForMenuItem, showDiff, commit;
 	JMenu tabsMenu;
 	int tabsMenuTabsStart;
 	Set<JMenuItem> tabsMenuItems;
@@ -264,6 +264,9 @@ public class TextEditor extends JFrame implements ActionListener,
 		showDiff = addToMenu(tools,
 			"Show diff...", 0, 0);
 		showDiff.setMnemonic(KeyEvent.VK_D);
+		commit = addToMenu(tools,
+			"Commit...", 0, 0);
+		commit.setMnemonic(KeyEvent.VK_T);
 		mbar.add(tools);
 
 		tabsMenu = new JMenu("Tabs");
@@ -651,6 +654,8 @@ public class TextEditor extends JFrame implements ActionListener,
 			new OpenSourceForMenuItem().run(null);
 		else if (source == showDiff)
 			new FileFunctions(this).showDiff(getEditorPane().file);
+		else if (source == commit)
+			new FileFunctions(this).commit(getEditorPane().file);
 		else if (source == newPlugin)
 			new FileFunctions(this).newPlugin();
 		else if (source == nextTab)
@@ -1025,6 +1030,7 @@ public class TextEditor extends JFrame implements ActionListener,
 
 		boolean isInGit = new FileFunctions(this).getGitDirectory(getEditorPane().file) != null;
 		showDiff.setEnabled(isInGit);
+		commit.setEnabled(isInGit);
 	}
 
 	public void setFileName(String baseName) {

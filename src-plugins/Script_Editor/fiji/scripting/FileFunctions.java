@@ -8,6 +8,14 @@ import ij.IJ;
 
 import ij.gui.GenericDialog;
 
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -29,8 +37,14 @@ import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
+
+import javax.swing.text.BadLocationException;
 
 public class FileFunctions {
 	protected TextEditor parent;
@@ -495,10 +509,18 @@ public class FileFunctions {
 	}
 
 	public void showDiff(File file) {
+		showDiffOrCommit(file, true);
+	}
+
+	public void commit(File file) {
+		showDiffOrCommit(file, false);
+	}
+
+	public void showDiffOrCommit(File file, boolean diffOnly) {
 		if (file == null)
 			return;
-		File pluginRoot = getPluginRootDirectory(file);
-		DiffView diff = new DiffView();
+		final File pluginRoot = getPluginRootDirectory(file);
+		final DiffView diff = new DiffView();
 		try {
 			String[] cmdarray = {
 				"git", "diff", "--", ".",
@@ -512,9 +534,82 @@ public class FileFunctions {
 			return;
 		}
 
-		JFrame frame = new JFrame("Unstaged differences for " + pluginRoot);
-		frame.setSize(640, 480);
-		frame.getContentPane().add(diff);
+		if (diff.getChanges() == 0) {
+			error("No changes detected for " + pluginRoot);
+			return;
+		}
+
+		final JFrame frame = new JFrame((diffOnly ? "Unstaged differences for " : "Commit ") + pluginRoot);
+		frame.setSize(640, diffOnly ? 480 : 640);
+		if (diffOnly)
+			frame.getContentPane().add(diff);
+		else {
+			JPanel panel = new JPanel();
+			frame.getContentPane().add(panel);
+			panel.setLayout(new GridBagLayout());
+			GridBagConstraints c = new GridBagConstraints();
+
+			c.anchor = GridBagConstraints.NORTHWEST;
+			c.gridx = c.gridy = 0;
+			c.weightx = c.weighty = 0;
+			c.fill = GridBagConstraints.HORIZONTAL;
+			c.insets = new Insets(2, 2, 2, 2);
+			panel.add(new JLabel("Subject:"), c);
+			c.weightx = c.gridx = 1;
+			final JTextArea subject = new JTextArea(1, 76);
+			panel.add(subject, c);
+
+			c.weightx = c.gridx = 0; c.gridy = 1;
+			panel.add(new JLabel("Body:"), c);
+			c.fill = GridBagConstraints.BOTH;
+			c.weightx = c.weighty = c.gridx = 1;
+			final JTextArea body = new JTextArea(20, 76);
+			panel.add(body, c);
+
+			c.gridy= 2;
+			panel.add(diff, c);
+
+			JPanel buttons = new JPanel();
+			c.gridwidth = 2;
+			c.fill = GridBagConstraints.HORIZONTAL;
+			c.weightx = 1; c.weighty = c.gridx = 0; c.gridy = 3;
+			panel.add(buttons, c);
+
+			JButton commit = new JButton("Commit");
+			buttons.add(commit);
+			commit.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					String message = "";
+					try {
+						message = subject.getDocument().getText(0, subject.getDocument().getLength());
+						String bodyText = body.getDocument().getText(0, body.getDocument().getLength());
+						if (!bodyText.equals(""))
+							message += "\n\n" + bodyText;
+					} catch (BadLocationException e2) { /* ignore */ }
+					if (message.equals("")) {
+						error("Empty commit message");
+						return;
+					}
+
+					String config = System.getProperty("fiji.dir") + "/staged-plugins/"
+						+ pluginRoot.getName() + ".config";
+					String[] cmdarray = {
+						"git", "commit", "-s", "-F", "-", "--", ".",
+						new File(config).exists() ? config : "."
+					};
+					InputStream stdin = new ByteArrayInputStream(message.getBytes());
+					SimpleExecuter.LineHandler ijLog = new DiffView.IJLog();
+					try {
+						SimpleExecuter executer = new SimpleExecuter(cmdarray,
+							stdin, ijLog, ijLog, pluginRoot);
+						if (executer.getExitCode() == 0)
+							frame.dispose();
+					} catch (IOException e2) {
+						IJ.handleException(e2);
+					}
+				}
+			});
+		}
 		frame.pack();
 		frame.setVisible(true);
 	}
