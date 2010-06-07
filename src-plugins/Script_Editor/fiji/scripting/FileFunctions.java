@@ -613,6 +613,27 @@ public class FileFunctions {
 		frame.setVisible(true);
 	}
 
+	public void showPluginChangesSinceUpload(String plugin) {
+		final DiffView diff = new DiffView();
+		try {
+			String fijiDir = System.getProperty("fiji.dir");
+			String[] cmdarray = {
+				fijiDir + "/bin/log-plugin-commits.bsh", "-p", plugin
+			};
+			SimpleExecuter e = new SimpleExecuter(cmdarray,
+				diff, new DiffView.IJLog(), new File(fijiDir));
+		} catch (IOException e) {
+			IJ.handleException(e);
+			return;
+		}
+
+		final JFrame frame = new JFrame("Changes since last upload " + plugin);
+		frame.setSize(640, 640);
+		frame.getContentPane().add(diff);
+		frame.pack();
+		frame.setVisible(true);
+	}
+
 	protected boolean error(String message) {
 		JOptionPane.showMessageDialog(parent, message);
 		return false;
