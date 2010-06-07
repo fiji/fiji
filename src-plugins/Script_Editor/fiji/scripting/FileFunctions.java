@@ -581,12 +581,10 @@ public class FileFunctions {
 			commit.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					String message = "";
-					try {
-						message = subject.getText();
-						String bodyText = body.getDocument().getText(0, body.getDocument().getLength());
-						if (!bodyText.equals(""))
-							message += "\n\n" + bodyText;
-					} catch (BadLocationException e2) { /* ignore */ }
+					message = subject.getText();
+					String bodyText = body.getText();
+					if (!bodyText.equals(""))
+						message += "\n\n" + bodyText;
 					if (message.equals("")) {
 						error("Empty commit message");
 						return;
