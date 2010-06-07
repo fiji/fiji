@@ -3,7 +3,10 @@ package fiji.process;
 import ij.IJ;
 import ij.ImageListener;
 import ij.ImagePlus;
+import ij.ImageStack;
 import ij.WindowManager;
+import ij.plugin.RGBStackMerge;
+import ij.plugin.filter.RGBStackSplitter;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -603,9 +606,9 @@ public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implement
 			return;
 
 		// Collect input from GUI widgets while under the event dispatch thread
+		final Map<String, ImagePlus> imp_map = getImageMap();
 		final String expression	= getExpression();
-		final Map<String, ImagePlus> imp_map = getImageMap(); 
-
+		
 		// Fork a new process to carry on the bulk of the execution,
 		// freeing the event dispatch thread for other tasks like repainting windows
 		// and dispatching other events:
@@ -629,27 +632,102 @@ public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implement
 						image_expression_parser = new Image_Expression_Parser<T>();
 					}
 
-					Map<String, Image<T>> img_map = image_expression_parser.convertToImglib(imp_map);
-					image_expression_parser.setExpression(expression);
-					image_expression_parser.setImageMap(img_map);
+					Image<T> result_img = null;
 
-					// Call calculation
-					image_expression_parser.process();
-
-					// Collect result
-					Image<T> result_img = image_expression_parser.getResult();
-					if (target_imp == null) {
-						target_imp = ImageJFunctions.copyToImagePlus(result_img);
-						target_imp.show();
-					} else {
-						ImagePlus new_imp = ImageJFunctions.copyToImagePlus(result_img);
-						if (!target_imp.isVisible()) {
+					// Here, we check if we get a RGB image. They are handled in a special way: 
+					// They are converted to 3 8-bit images which are processed separately, and
+					// assembled back after processing.
+					boolean is_rgb_image = false;
+					for (String key : imp_map.keySet()) {
+						if (imp_map.get(key).getType() == ImagePlus.COLOR_RGB) {
+							is_rgb_image = true;
+						}
+					}
+					
+					if (is_rgb_image) {
+						
+						// Prepare holders
+						Map<String, ImagePlus> red_map = new HashMap<String, ImagePlus>();
+						Map<String, ImagePlus> green_map = new HashMap<String, ImagePlus>();
+						Map<String, ImagePlus> blue_map = new HashMap<String, ImagePlus>();
+						ArrayList<Map<String, ImagePlus>> map_array = new ArrayList<Map<String,ImagePlus>>(3);
+						map_array.add(red_map);
+						map_array.add(green_map);
+						map_array.add(blue_map);
+						
+						// Split stacks
+						RGBStackSplitter channel_splitter = new RGBStackSplitter();
+						ImagePlus current_imp = null;
+						for (String key : imp_map.keySet()) {
+							current_imp = imp_map.get(key);
+							// And stored individual channels in a new map
+							channel_splitter.split(current_imp.getImageStack(), true);
+							red_map.put  (key, new ImagePlus(current_imp.getShortTitle()+"-R", channel_splitter.red));
+							green_map.put(key, new ImagePlus(current_imp.getShortTitle()+"-G", channel_splitter.green));
+							blue_map.put (key, new ImagePlus(current_imp.getShortTitle()+"-B", channel_splitter.blue));
+						}
+						
+						// Prepare parser
+						image_expression_parser.setExpression(expression);
+						
+						// Have the parser process individual channel separately
+						Map<String, Image<T>> img_map;
+						ImageStack[] result_array = new ImageStack[3];
+						Image<T> tmp_image;
+						int index = 0;
+						for (Map<String, ImagePlus> current_map : map_array) {
+							img_map = image_expression_parser.convertToImglib(current_map);
+							image_expression_parser.setImageMap(img_map);
+							image_expression_parser.process();
+							// Collect results
+							tmp_image = image_expression_parser.getResult();
+							result_array[index] = ImageJFunctions.copyToImagePlus(tmp_image).getImageStack();
+							index++;
+						}
+						
+						// Merge back channels
+						RGBStackMerge rgb_merger = new RGBStackMerge();
+						ImagePlus new_imp = rgb_merger.createComposite(current_imp.getWidth(), current_imp.getHeight(), current_imp.getNSlices(), 
+								result_array, false);
+						new_imp.resetDisplayRange();
+						
+						if (target_imp == null) {
 							target_imp = new_imp;
 							target_imp.show();
 						} else {
-							target_imp.setStack(expression, new_imp.getStack());
+							if (!target_imp.isVisible()) {
+								target_imp = new_imp;
+								target_imp.show();
+							} else {
+								target_imp.setStack(expression, new_imp.getStack());
+							}
 						}
+
+					} else {
+
+
+						Map<String, Image<T>> img_map = image_expression_parser.convertToImglib(imp_map);
+						image_expression_parser.setImageMap(img_map);
+						// Call calculation
+						image_expression_parser.process();
+						// Collect result
+						result_img = image_expression_parser.getResult();
+
+						if (target_imp == null) {
+							target_imp = ImageJFunctions.copyToImagePlus(result_img);
+							target_imp.show();
+						} else {
+							ImagePlus new_imp = ImageJFunctions.copyToImagePlus(result_img);
+							if (!target_imp.isVisible()) {
+								target_imp = new_imp;
+								target_imp.show();
+							} else {
+								target_imp.setStack(expression, new_imp.getStack());
+							}
+						}
+						
 					}
+
 					target_imp.resetDisplayRange();
 					target_imp.updateAndDraw();
 
