@@ -23,6 +23,8 @@
 
 package fiji;
 
+import ij.IJ;
+
 import ij.plugin.BrowserLauncher;
 
 import java.net.URL;
@@ -85,6 +87,8 @@ public class MediaWikiClient {
 			if (!hasSessionKey()) {
 				sendRequest(getVars, postVars,
 						null, true);
+				if (IJ.debugMode)
+					debugShow(response);
 				if (!hasSessionKey()) {
 					System.err.println("Failed to "
 							+ "get session key!");
@@ -101,6 +105,8 @@ public class MediaWikiClient {
 			String response =
 				sendRequest(getVars, postVars);
 			loggedIn = response.indexOf("Login error:") < 0;
+			if (IJ.debugMode)
+				debugShow(response);
 			return loggedIn;
 		} catch (IOException e) { }
 		return false;
@@ -158,6 +164,8 @@ public class MediaWikiClient {
 			if (time == null || token == null || summary == null) {
 				System.err.println("time: " + time + ", token: "
 					+ token + ", summary: " + summary);
+				if (IJ.debugMode)
+					debugShow(response);
 				return null;
 			}
 
