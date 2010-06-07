@@ -35,7 +35,7 @@ public class DiffView extends JScrollPane implements LineHandler {
 		normal = getStyle(Color.black, false, false, "Courier", 12);
 		italic = getStyle(Color.black, true, false, "Courier", 12);
 		red = getStyle(Color.red, false, false, "Courier", 12);
-		green = getStyle(Color.green, false, false, "Courier", 12);
+		green = getStyle(new Color(0, 128, 32), false, false, "Courier", 12);
 
 		JTextPane current = new JTextPane();
 		current.setEditable(false);
