@@ -771,7 +771,7 @@ public class TextEditor extends JFrame implements ActionListener,
 	}
 
 	public void open(String path) {
-		if (path.startsWith("class:")) try {
+		if (path != null && path.startsWith("class:")) try {
 			path = new FileFunctions(this).getSourcePath(path.substring(6));
 			if (path == null)
 				return;
