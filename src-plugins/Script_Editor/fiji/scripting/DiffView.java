@@ -43,6 +43,8 @@ public class DiffView extends JScrollPane implements LineHandler {
 		current.setEditable(false);
 		document = current.getDocument();
 		panel.add(current);
+
+		getVerticalScrollBar().setUnitIncrement(10);
 	}
 
 	public static SimpleAttributeSet getStyle(Color color, boolean italic,
