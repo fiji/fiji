@@ -144,7 +144,7 @@ for (String arg : bsh.args) {
 	rule = parser.getRule(arg);
 	if (rule.getClass().getName().endsWith("SubFake"))
 		execute(cmdarray,
-			new File(fijiDir + rule.getLastPrerequisite()));
+			new File(fijiDir + "/" + rule.getLastPrerequisite()));
 	else if (arg.startsWith("precompiled/fiji-")) {
 		cmdarray[cmdarray.length - 1] = "fiji.c";
 		execute(cmdarray, new File(fijiDir));
