@@ -107,7 +107,12 @@ for (String arg : bsh.args) {
 	plugin = arg;
 	if (plugin.startsWith("precompiled/"))
 		plugin = plugin.substring(12);
-	timestamp = plugins.getPlugin(plugin).getTimestamp();
+	p = plugins.getPlugin(plugin);
+	if (p == null) {
+		System.out.println("Not uploaded: " + plugin);
+		continue;
+	}
+	timestamp = p.getTimestamp();
 	calendar.set((int)((timestamp / 10000000000l) % 10000),
 		(int)((timestamp / 100000000l) % 100) - 1,
 		(int)((timestamp / 1000000l) % 100),
