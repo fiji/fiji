@@ -24,9 +24,10 @@ import javax.swing.text.StyleConstants;
 
 public class DiffView extends JScrollPane implements LineHandler {
 	protected JPanel panel;
-	protected SimpleAttributeSet normal, bold, italic, red, green;
+	protected SimpleAttributeSet normal, bigBold, bold, italic, red, green;
 	protected Document document;
 	protected int adds, removes;
+	protected boolean inHeader = true;
 
 	public DiffView() {
 		panel = new JPanel();
@@ -34,6 +35,7 @@ public class DiffView extends JScrollPane implements LineHandler {
 		getViewport().setView(panel);
 
 		normal = getStyle(Color.black, false, false, "Courier", 12);
+		bigBold = getStyle(Color.blue, false, true, "Courier", 15);
 		bold = getStyle(Color.black, false, true, "Courier", 12);
 		italic = getStyle(Color.black, true, false, "Courier", 12);
 		red = getStyle(Color.red, false, false, "Courier", 12);
@@ -68,10 +70,12 @@ public class DiffView extends JScrollPane implements LineHandler {
 	}
 
 	public void handleLine(String line) {
-		if (line.startsWith("diff"))
+		if (line.startsWith("diff")) {
 			styled(line, bold);
+			inHeader = false;
+		}
 		else if (line.startsWith(" "))
-			styled(line, normal);
+			styled(line, inHeader && line.startsWith("    ") ? bigBold : normal);
 		else if (line.startsWith("+")) {
 			adds++;
 			styled(line, green);
@@ -80,8 +84,11 @@ public class DiffView extends JScrollPane implements LineHandler {
 			removes++;
 			styled(line, red);
 		}
-		else
+		else {
+			if (line.startsWith("commit"))
+				inHeader = true;
 			styled(line, italic);
+		}
 		styled("\n", normal);
 	}
 
