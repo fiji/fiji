@@ -1991,7 +1991,8 @@ public class Fake {
 			if (starstar && names[i].startsWith("."))
 				continue;
 			if (names[i].equals(".git") || names[i].endsWith(".swp")
-					|| names[i].endsWith(".swo"))
+					|| names[i].endsWith(".swo")
+					|| names[i].endsWith("~"))
 				continue;
 			File file = new File(makePath(cwd, path));
 			if (nextSlash < 0) {

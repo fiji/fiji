@@ -581,12 +581,10 @@ public class FileFunctions {
 			commit.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					String message = "";
-					try {
-						message = subject.getText();
-						String bodyText = body.getDocument().getText(0, body.getDocument().getLength());
-						if (!bodyText.equals(""))
-							message += "\n\n" + bodyText;
-					} catch (BadLocationException e2) { /* ignore */ }
+					message = subject.getText();
+					String bodyText = body.getText();
+					if (!bodyText.equals(""))
+						message += "\n\n" + bodyText;
 					if (message.equals("")) {
 						error("Empty commit message");
 						return;
@@ -611,6 +609,28 @@ public class FileFunctions {
 				}
 			});
 		}
+		frame.pack();
+		frame.setVisible(true);
+	}
+
+	public void showPluginChangesSinceUpload(String plugin) {
+		final DiffView diff = new DiffView();
+		try {
+			String fijiDir = System.getProperty("fiji.dir");
+			String[] cmdarray = {
+				fijiDir + "/bin/log-plugin-commits.bsh",
+				"-p", "--fuzz", "15", plugin
+			};
+			SimpleExecuter e = new SimpleExecuter(cmdarray,
+				diff, new DiffView.IJLog(), new File(fijiDir));
+		} catch (IOException e) {
+			IJ.handleException(e);
+			return;
+		}
+
+		final JFrame frame = new JFrame("Changes since last upload " + plugin);
+		frame.setSize(640, 640);
+		frame.getContentPane().add(diff);
 		frame.pack();
 		frame.setVisible(true);
 	}
