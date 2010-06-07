@@ -44,8 +44,11 @@ while (bsh.args.length > 0 && bsh.args[0].startsWith("-")) {
 		fuzz = Integer.parseInt(bsh.args[1]);
 		handled = 2;
 	}
-	else if (bsh.args[0].equals("-p") || bsh.args[0].equals("--color"))
+	else if (bsh.args[0].equals("-p") || bsh.args[0].equals("--color")) {
 		extraArgs.add(bsh.args[0]);
+		if (bsh.args[0].equals("-p"))
+			extraArgs.add("--ignore-space-at-eol");
+	}
 	else
 		usage("Unknown option: '" + bsh.args[0] + "'");
 
