@@ -430,7 +430,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		   update3DViewerContents: */
 		if( plugin != null && plugin.use3DViewer ) {
 			p.removeFrom3DViewer( plugin.univ );
-			p.addTo3DViewer( plugin.univ, plugin.deselectedColor3f );
+			p.addTo3DViewer( plugin.univ, plugin.deselectedColor3f, plugin.colorImage );
 		}
 		allPaths.add(p);
 		resetListeners( p );
@@ -1189,7 +1189,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				pathToAdd = p.fitted;
 			else
 				pathToAdd = p;
-			pathToAdd.addTo3DViewer(plugin.univ,plugin.deselectedColor);
+			pathToAdd.addTo3DViewer(plugin.univ,plugin.deselectedColor,plugin.colorImage);
 		}
 	}
 
@@ -2103,7 +2103,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				plugin.univ, // The appropriate 3D universe
 				(selected || ! showOnlySelectedPaths), // Visible at all?
 				plugin.getPaths3DDisplay(), // How to display?
-				selected ? plugin.selectedColor3f : plugin.deselectedColor3f ); // Colour?
+				selected ? plugin.selectedColor3f : plugin.deselectedColor3f,
+				plugin.colorImage ); // Colour?
 		}
 	}
 

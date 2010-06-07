@@ -573,7 +573,7 @@ synchronized public void setTemporaryPath( Path path ) {
 			oldTemporaryPath.removeFrom3DViewer(univ);
 		}
 		if( temporaryPath != null )
-			temporaryPath.addTo3DViewer(univ,Color.BLUE);
+			temporaryPath.addTo3DViewer(univ,Color.BLUE,null);
 	}
 }
 
@@ -596,7 +596,7 @@ synchronized public void setCurrentPath( Path path ) {
 			oldCurrentPath.removeFrom3DViewer(univ);
 		}
 		if( currentPath != null )
-			currentPath.addTo3DViewer(univ,Color.RED);
+			currentPath.addTo3DViewer(univ,Color.RED,null);
 	}
 }
 
@@ -1252,7 +1252,7 @@ public void showCorrespondencesTo( File tracesFile, Color c, double maxDistance 
 		if( p.getUseFitted() )
 			continue;
 		else
-			p.addAsLinesTo3DViewer(univ,c);
+			p.addAsLinesTo3DViewer(univ,c,null);
 	}
 	// univ.resetView();
 }
@@ -1288,6 +1288,8 @@ public Color3f deselectedColor3f = new Color3f( Color.magenta );
 public Color selectedColor = Color.GREEN;
 public Color deselectedColor = Color.MAGENTA;
 
+	public ImagePlus colorImage;
+
 public void setSelectedColor( Color newColor ) {
 	selectedColor = newColor;
 	selectedColor3f = new Color3f( newColor );
@@ -1301,6 +1303,11 @@ public void setDeselectedColor( Color newColor ) {
 	repaintAllPanes();
 	update3DViewerContents();
 }
+
+	public void setColorImage( ImagePlus newColorImage ) {
+		colorImage = newColorImage;
+		update3DViewerContents();
+	}
 
 private int paths3DDisplay = 1;
 
