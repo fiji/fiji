@@ -43,6 +43,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
+import javax.swing.JTextField;
 
 import javax.swing.text.BadLocationException;
 
@@ -556,7 +557,7 @@ public class FileFunctions {
 			c.insets = new Insets(2, 2, 2, 2);
 			panel.add(new JLabel("Subject:"), c);
 			c.weightx = c.gridx = 1;
-			final JTextArea subject = new JTextArea(1, 76);
+			final JTextField subject = new JTextField();
 			panel.add(subject, c);
 
 			c.weightx = c.gridx = 0; c.gridy = 1;
@@ -581,7 +582,7 @@ public class FileFunctions {
 				public void actionPerformed(ActionEvent e) {
 					String message = "";
 					try {
-						message = subject.getDocument().getText(0, subject.getDocument().getLength());
+						message = subject.getText();
 						String bodyText = body.getDocument().getText(0, body.getDocument().getLength());
 						if (!bodyText.equals(""))
 							message += "\n\n" + bodyText;
