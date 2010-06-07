@@ -24,7 +24,7 @@ import javax.swing.text.StyleConstants;
 
 public class DiffView extends JScrollPane implements LineHandler {
 	protected JPanel panel;
-	protected SimpleAttributeSet normal, italic, red, green;
+	protected SimpleAttributeSet normal, bold, italic, red, green;
 	protected Document document;
 	protected int adds, removes;
 
@@ -34,6 +34,7 @@ public class DiffView extends JScrollPane implements LineHandler {
 		getViewport().setView(panel);
 
 		normal = getStyle(Color.black, false, false, "Courier", 12);
+		bold = getStyle(Color.black, false, true, "Courier", 12);
 		italic = getStyle(Color.black, true, false, "Courier", 12);
 		red = getStyle(Color.red, false, false, "Courier", 12);
 		green = getStyle(new Color(0, 128, 32), false, false, "Courier", 12);
@@ -66,7 +67,7 @@ public class DiffView extends JScrollPane implements LineHandler {
 
 	public void handleLine(String line) {
 		if (line.startsWith("diff"))
-			styled(line, normal);
+			styled(line, bold);
 		else if (line.startsWith(" "))
 			styled(line, normal);
 		else if (line.startsWith("+")) {
