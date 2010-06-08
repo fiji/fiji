@@ -423,7 +423,7 @@ public class Directionality_ implements PlugIn {
 		double[] dir;
 		for (int i = 0; i < bins.length; i++) {
 			table.incrementCounter();
-			table.addValue("Direction (º)", bins[i]);
+			table.addValue("Direction (º)", Math.toDegrees(bins[i]));
 			for (int j = 0; j < names.length; j++) {
 				dir = histograms.get(j);
 				table.addValue(names[j], dir[i]);
@@ -506,17 +506,41 @@ public class Directionality_ implements PlugIn {
 		final String[] names = makeNames();
 		XYSeries series;
 		
+		// Shift histograms
+		
+		// Wrap shifting angle to [-90  90[
+		double wrapped_angle = ((bin_start+90)  % 180 + 180) % 180 - 90;
+		int wrap_index = 0;
+		for (int i = 0; i < bins.length; i++) {
+			if (wrapped_angle <= Math.toDegrees(bins[i])) {
+				wrap_index = i;
+				break;				
+			}
+		}
+		
+		// Wrap bins
+		double[] wrapped_bins = new double[nbins];
+		for (int i = 0; i < wrapped_bins.length; i++) {
+			wrapped_bins[i] = Math.toDegrees(bins[wrap_index] + (bins[1]-bins[0])*i);
+		}
+		
 		// This is where we shift histograms
 		double[] dir;
 		for (int i = 0; i < histograms.size(); i++) {
 			dir = histograms.get(i);
 			series = new XYSeries(names[i]);
-			for (int j = 0; j < nbins; j++) { // DO IT DO IT DO IT DO IT
-				series.add(bins[j], dir[j]);
+			int index = 0;
+			for (int j = wrap_index; j < nbins; j++) { 
+				series.add(wrapped_bins[index], dir[j]);
+				index++;
+			}
+			for (int j = 0; j < wrap_index; j++) { 
+				series.add(wrapped_bins[index], dir[j]);
+				index++;
 			}
 			histogram_plots.addSeries(series);
 		}
-		histogram_plots.setIntervalWidth(bins[1]-bins[0]);
+		histogram_plots.setIntervalWidth(Math.toDegrees(bins[1]-bins[0]));
 		
 		// Create chart with histograms
 		final JFreeChart chart = ChartFactory.createHistogram(
@@ -540,11 +564,12 @@ public class Directionality_ implements PlugIn {
 		plot.setRenderer(0, renderer);
 		
 		// Draw fit results
-		if (null == params_from_fit) {
+		if (null != params_from_fit) {
 			// Make new X
 			final double[] X = new double[bins.length*10]; // oversample 10 times
 			for (int i = 0; i < X.length; i++) {
-				X[i] = bins[0] + (bins[bins.length-1]-bins[0])/X.length * i;
+//				X[i] = bins[0] + (bins[bins.length-1]-bins[0])/X.length * i;
+				X[i] = (wrapped_bins[0] + (wrapped_bins[nbins-1]-wrapped_bins[0])/X.length * i);
 			}
 			// Create dataset
 			final XYSeriesCollection fits = new XYSeriesCollection();
@@ -557,7 +582,7 @@ public class Directionality_ implements PlugIn {
 				center = params[2];
 				fit_series = new XYSeries(names[i]);
 				for (int j = 0; j < X.length; j++) {
-					xn = X[j];
+					xn = Math.toRadians(X[j]); // back to radians, for the fit
 					if (Math.abs(xn-center) > half_range ) { // too far
 						if (xn>center) {
 							xn = xn - 2*half_range;							
@@ -578,7 +603,7 @@ public class Directionality_ implements PlugIn {
 			}
 			
 		}
-		plot.getDomainAxis().setRange(bins[0], bins[bins.length-1]);
+		plot.getDomainAxis().setRange(wrapped_bins[0], wrapped_bins[nbins-1]);
 		
 		final ChartPanel chartPanel = new ChartPanel(chart);
 		chartPanel.setPreferredSize(new java.awt.Dimension(500, 270));
@@ -693,8 +718,8 @@ public class Directionality_ implements PlugIn {
 		for (int i = 0; i < table_data.length; i++) {
 			analysis = fit_analysis.get(i);
 			table_data[i][0]	= names[i];
-			table_data[i][1]	= String.format("%.2f", analysis[0]); // peak center
-			table_data[i][2]	= String.format("%.2f", analysis[1]); // standard deviation
+			table_data[i][1]	= String.format("%.2f", Math.toDegrees(analysis[0])); // peak center
+			table_data[i][2]	= String.format("%.2f", Math.toDegrees(analysis[1])); // standard deviation
 			table_data[i][3] 	= String.format("%.2f", analysis[2]); // amount
 			table_data[i][4] 	= String.format("%.2f", analysis[3]); // goodness of fit
 		}
@@ -1597,59 +1622,71 @@ public class Directionality_ implements PlugIn {
 	
 	public static void main(String[] args) {
 		
-		// Generate a test image
-		ImagePlus imp = NewImage.createShortImage("Lines", 400, 400, 1, NewImage.FILL_BLACK);
-		ImageProcessor ip = imp.getProcessor();
-		ip.setLineWidth(4);
-		ip.setColor(Color.WHITE);
-		Line line_30deg 	= new Line(10.0, 412.0, 446.4102, 112.0); // 400px long line, 30º
-		Line line_30deg2 = new Line(10.0, 312.0, 446.4102, 12.0); // 400px long line, 30º
-		Line line_m60deg = new Line(10.0, 10, 300.0, 446.4102); // 400px long line, 60º
-		Line[] rois = new Line[] { line_30deg, line_30deg2, line_m60deg };
-		for ( Line roi : rois) {
-			ip.draw(roi);
-		}		
-		GaussianBlur smoother = new GaussianBlur();
-		smoother.blurGaussian(ip, 2.0, 2.0, 1e-2);		
-		imp.show();
+		float angle, wrapped_angle;
 		
-		AnalysisMethod method;
-		ArrayList<double[]> fit_results;
-		double center;
-		
-		Directionality_ da = new Directionality_();
-		da.setImagePlus(imp);
-		
-		da.setBinNumber(60);
-		da.setBinStart(-90);
-
-		da.setBuildOrientationMapFlag(true);
-		da.setDebugFlag(true);
+		for (int i = 0; i < 20; i++) {
+			angle = -110 + i*20;
+			wrapped_angle = ((angle+90)  % 180 + 180) % 180 - 90;
+			System.out.println(String.format("%.1f \t %.1f", angle, wrapped_angle));// DEBUG
+		}
 		
 		
-		method = AnalysisMethod.FOURIER_COMPONENTS;
-		da.setMethod(method);
-		da.computesHistograms();
-		fit_results = da.getFitParameters();
-		center = fit_results.get(0)[2];
-		System.out.println("With method: "+method);
-		System.out.println(String.format("Found maxima at %.1f, expected it at 30º.\n", center, 30));
-		new ImagePlus("Orientation map for "+imp.getShortTitle(),da.getOrientationMap()).show();
 		
-		/*
-		method = AnalysisMethod.LOCAL_GRADIENT_ORIENTATION;
-		da.setMethod(method);
-		da.computesHistograms();
-		fit_results = da.getFitParameters();
-		center = fit_results.get(0)[2];
-		System.out.println("With method: "+method);
-		System.out.println(String.format("Found maxima at %.1f, expected it at 30º.\n", center, 30));
-		new ImagePlus("Orientation map for "+imp.getShortTitle(),da.getOrientationMap()).show();
-		 */
-		
-		ImagePlus cw = generateColorWheel();
-		cw.show();
-		addColorMouseListener(cw.getCanvas());
+//		
+//		
+//		// Generate a test image
+//		ImagePlus imp = NewImage.createShortImage("Lines", 400, 400, 1, NewImage.FILL_BLACK);
+//		ImageProcessor ip = imp.getProcessor();
+//		ip.setLineWidth(4);
+//		ip.setColor(Color.WHITE);
+//		Line line_30deg 	= new Line(10.0, 412.0, 446.4102, 112.0); // 400px long line, 30º
+//		Line line_30deg2 = new Line(10.0, 312.0, 446.4102, 12.0); // 400px long line, 30º
+//		Line line_m60deg = new Line(10.0, 10, 300.0, 446.4102); // 400px long line, 60º
+//		Line[] rois = new Line[] { line_30deg, line_30deg2, line_m60deg };
+//		for ( Line roi : rois) {
+//			ip.draw(roi);
+//		}		
+//		GaussianBlur smoother = new GaussianBlur();
+//		smoother.blurGaussian(ip, 2.0, 2.0, 1e-2);		
+//		imp.show();
+//		
+//		AnalysisMethod method;
+//		ArrayList<double[]> fit_results;
+//		double center;
+//		
+//		Directionality_ da = new Directionality_();
+//		da.setImagePlus(imp);
+//		
+//		da.setBinNumber(60);
+//		da.setBinStart(-90);
+//
+//		da.setBuildOrientationMapFlag(true);
+//		da.setDebugFlag(true);
+//		
+//		
+//		method = AnalysisMethod.FOURIER_COMPONENTS;
+//		da.setMethod(method);
+//		da.computesHistograms();
+//		fit_results = da.getFitParameters();
+//		center = fit_results.get(0)[2];
+//		System.out.println("With method: "+method);
+//		System.out.println(String.format("Found maxima at %.1f, expected it at 30º.\n", center, 30));
+//		new ImagePlus("Orientation map for "+imp.getShortTitle(),da.getOrientationMap()).show();
+//		
+//		/*
+//		method = AnalysisMethod.LOCAL_GRADIENT_ORIENTATION;
+//		da.setMethod(method);
+//		da.computesHistograms();
+//		fit_results = da.getFitParameters();
+//		center = fit_results.get(0)[2];
+//		System.out.println("With method: "+method);
+//		System.out.println(String.format("Found maxima at %.1f, expected it at 30º.\n", center, 30));
+//		new ImagePlus("Orientation map for "+imp.getShortTitle(),da.getOrientationMap()).show();
+//		 */
+//		
+//		ImagePlus cw = generateColorWheel();
+//		cw.show();
+//		addColorMouseListener(cw.getCanvas());
 
 	}
 	
