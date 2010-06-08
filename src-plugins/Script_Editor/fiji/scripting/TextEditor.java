@@ -64,6 +64,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -780,16 +781,18 @@ public class TextEditor extends JFrame implements ActionListener,
 		}
 
 		/*
-		 * We need to remove RSyntaxTextArea's cached action map if
-		 * there is even the slightest chance that a new TextArea
-		 * is instantiated from a different class loader than the
-		 * map's actions.
+		 * We need to remove RSyntaxTextArea's cached key, input and
+		 * action map if there is even the slightest chance that a new
+		 * TextArea is instantiated from a different class loader than
+		 * the map's actions.
 		 *
 		 * Otherwise the instanceof check will pretend that the new text
 		 * area is not an instance of RTextArea, and as a consequence,
 		 * no keyboard input will be possible.
 		 */
 		JTextComponent.removeKeymap("RTextAreaKeymap");
+		UIManager.put("RSyntaxTextAreaUI.actionMap", null);
+		UIManager.put("RSyntaxTextAreaUI.inputMap", null);
 
 		try {
 			boolean wasNew =
