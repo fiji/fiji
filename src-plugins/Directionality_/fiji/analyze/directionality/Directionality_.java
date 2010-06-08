@@ -418,17 +418,44 @@ public class Directionality_ implements PlugIn {
 		if (null == histograms) 
 			return null;
 		
+		// Wrap shifting angle to [-90  90[
+		double wrapped_angle = ((bin_start+90)  % 180 + 180) % 180 - 90;
+		int wrap_index = 0;
+		for (int i = 0; i < bins.length; i++) {
+			if (wrapped_angle <= Math.toDegrees(bins[i])) {
+				wrap_index = i;
+				break;				
+			}
+		}
+		
+		double[] wrapped_bins = new double[nbins];
+		for (int i = 0; i < wrapped_bins.length; i++) {
+			wrapped_bins[i] = Math.toDegrees(bins[wrap_index] + (bins[1]-bins[0])*i);
+		}
+		
 		ResultsTable table = new ResultsTable();
 		String[] names = makeNames();
 		double[] dir;
-		for (int i = 0; i < bins.length; i++) {
+		int index = 0;
+		for (int i = wrap_index; i < bins.length; i++) {
 			table.incrementCounter();
-			table.addValue("Direction (º)", Math.toDegrees(bins[i]));
+			table.addValue("Direction (º)", wrapped_bins[index]);
 			for (int j = 0; j < names.length; j++) {
 				dir = histograms.get(j);
 				table.addValue(names[j], dir[i]);
 			}
+			index++;
 		}
+		for (int i = 0; i < wrap_index; i++) {
+			table.incrementCounter();
+			table.addValue("Direction (º)", wrapped_bins[index]);
+			for (int j = 0; j < names.length; j++) {
+				dir = histograms.get(j);
+				table.addValue(names[j], dir[i]);
+			}
+			index++;
+		}
+
 		return table;		
 	}
 	
@@ -568,7 +595,6 @@ public class Directionality_ implements PlugIn {
 			// Make new X
 			final double[] X = new double[bins.length*10]; // oversample 10 times
 			for (int i = 0; i < X.length; i++) {
-//				X[i] = bins[0] + (bins[bins.length-1]-bins[0])/X.length * i;
 				X[i] = (wrapped_bins[0] + (wrapped_bins[nbins-1]-wrapped_bins[0])/X.length * i);
 			}
 			// Create dataset
