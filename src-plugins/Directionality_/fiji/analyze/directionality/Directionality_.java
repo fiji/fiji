@@ -100,6 +100,30 @@ import org.jfree.data.xy.XYSeriesCollection;
  * with the same dimension that for the Fourier analysis.
  * 
  * 
+ * <h2>Orientation map</h2>
+ * 
+ * Since version 2.0, the plugin offers the possibility to generate an orientation map,
+ * where the image is colored according to its local directionality, or location orientation.
+ * This has a well an easily defined meaning in the case of the local gradient orientation 
+ * method, but things are a bit more complicated in the case of the Fourier component, which
+ * is a global method. 
+ * <p>
+ * In the later case, the image is filtered using the Fourier filters described above, and 
+ * transformed back using inverse Fourier transform. For each pixel, the direction retained
+ * is the one that has the strongest intensity when filtered in this orientation.
+ * <p> 
+ * To generate the orientation map image, a HSB image is made by taking
+ * <ul>
+ * 	<li> the local orientation as hue
+ * 	<li> the original image gray value as brightness
+ * 	<li> for saturation:
+ * 	<ul>
+ * 		<li> the power spectrum value for the Fourier component method
+ * 		<li> the gradient magnitude square for the Local gradient orientation method
+ * </ul>
+ * </ul>
+ * 
+ * 
  * <h2>Code structure</h2>
  * 
  * This plugin is written as a classical ImageJ plugin. It implements {@link PlugIn}. 
@@ -114,9 +138,52 @@ import org.jfree.data.xy.XYSeriesCollection;
  *  da.run("nbins=60, start=-90, method=gradient");
  *  </pre>
  * 
+ * It is also possible to run the plugin non-interactively from another class, or even in
+ * a script. For instance in Python:
+ * 
+ * 	<pre>
+ * 	import fiji.analyze.directionality.Directionality_
+ * 
+ * 	# Instantiate plugin
+ * 	dir = fiji.analyze.directionality.Directionality_()
+ * 
+ * 	# Set fields and settings
+ * 	dir.setImagePlus(WindowManager.getCurrentImage())
+ * 	# dir.setMethod(fiji.analyze.directionality.Directionality_.AnalysisMethod.LOCAL_GRADIENT_ORIENTATION)
+ * 	dir.setMethod(fiji.analyze.directionality.Directionality_.AnalysisMethod.FOURIER_COMPONENTS)
+ * 	dir.setBinNumber(30)
+ * 	dir.setBinStart(-60)
+ *	dir.setBuildOrientationMapFlag(True)
+ *
+ *	# Do calculation
+ *	dir.computeHistograms()
+ *	dir.fitHistograms()
+ *
+ *	# Display plot frame
+ *	plot_frame = dir.plotResults()
+ *	plot_frame.setVisible(True)
+ *
+ *	# Display fit analysis
+ *	data_frame = dir.displayFitAnalysis()
+ *	data_frame.setVisible(True) 
+ *
+ *	# Display results table
+ *	table = dir.displayResultsTable()
+ *	table.show("Directionality histograms")
+ *
+ *	# Display orientation map
+ *	stack = dir.getOrientationMap()
+ *	ImagePlus("Orientation map", stack).show()
+ *
+ *	# Generate a color wheel
+ *	fiji.analyze.directionality.Directionality_.generateColorWheel().show()
+ *</pre>
+ * 
  * <h2>Version history</h2>
  * 
  * <ul>
+ * <li> v2.0 - 2010-06-08: After a lot of mistakes and problems, each method now propose to 
+ * generate an orientation map, which colors the image according to the local directionality.
  * <li> v1.3 - 2010-03-17: Heavy refactoring, made it implement Plugin interface, so has to 
  * be conveniently called from a script.
  * <li> v1.2 - 2010-03-10: Added a new analysis method based on local gradient orientation.
@@ -306,7 +373,7 @@ public class Directionality_ implements PlugIn {
 		}
 		
 		// Launch analysis, this will set the directionality field
-		computesHistograms();
+		computeHistograms();
 		
 		// Fit histograms
 		fitHistograms();
@@ -366,7 +433,7 @@ public class Directionality_ implements PlugIn {
 	 * This method runs the analysis on all slices, and store resulting histograms in the 
 	 * {@link #histograms} fields. Calling this method resets the aforementioned field.
 	 */
-	public void computesHistograms() {
+	public void computeHistograms() {
 		if (null == imp) return;
 		
 		// Reset analysis fields
@@ -1706,7 +1773,7 @@ public class Directionality_ implements PlugIn {
 		
 		method = AnalysisMethod.FOURIER_COMPONENTS;
 		da.setMethod(method);
-		da.computesHistograms();
+		da.computeHistograms();
 		fit_results = da.getFitParameters();
 		center = fit_results.get(0)[2];
 		System.out.println("With method: "+method);
