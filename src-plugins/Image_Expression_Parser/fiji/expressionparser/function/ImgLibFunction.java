@@ -1,8 +1,10 @@
 package fiji.expressionparser.function;
 
+import org.nfunk.jep.function.PostfixMathCommandI;
+
 import mpicbg.imglib.type.numeric.RealType;
 
-public interface ImgLibFunction <T extends RealType<T>> {
+public interface ImgLibFunction <T extends RealType<T>> extends PostfixMathCommandI {
 
 	/**
 	 * Return a String describing this operator. Example: "Addition of two operands",
