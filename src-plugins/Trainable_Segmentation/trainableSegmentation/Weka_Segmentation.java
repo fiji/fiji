@@ -1666,6 +1666,7 @@ public class Weka_Segmentation implements PlugIn
 		{
 			IJ.error("Save Failed", "Error when saving classifier into a file");
 			saveOK = false;
+			e.printStackTrace();
 		}
 		if (saveOK)
 			IJ.log("Saved model (" + filename
