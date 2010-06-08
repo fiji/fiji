@@ -62,14 +62,6 @@ Depends: fiji-plugins (>= 20090429190853), fiji-imagej (>= 20100322143330)
 Description: [FIXME: please write a description for this Fiji package]
  [More description should go here.]
 
-Package: fiji-clojure-contrib
-Section: graphics
-Architecture: any
-Priority: extra
-Depends: fiji-plugins (>= 20091214231403)
-Description: [FIXME: please write a description for this Fiji package]
- [More description should go here.]
-
 Package: fiji-bunwarpj
 Section: graphics
 Architecture: any
@@ -252,7 +244,7 @@ Package: fiji
 Section: graphics
 Architecture: all
 Priority: extra
-Depends: fiji-jpedal (>= 20080801134354), fiji-examples (>= 20090919214431), fiji-zs (>= 20090429190902), fiji-base (>= 20100322143330), fiji-imagej (>= 20100322143330), fiji-loci-tools (>= 20100311140109), fiji-clojure-contrib (>= 20091214231403), fiji-bunwarpj (>= 20100323104929), fiji-color-histogram (>= 20081015122324), fiji-edu-mines-jtk (>= 20080801134354), fiji-trakem2 (>= 20100217110922), fiji-luts (>= 20090919121518), fiji-plugins (>= 20100325222935), fiji-scripting (>= 20100304153432), fiji-mip (>= 20090429190857), fiji-mpicbg (>= 20100322140540), fiji-lsm-toolbox (>= 20091014220327), fiji-view5d (>= 20090930194753), fiji-mtrack2 (>= 20090429190900), fiji-vib (>= 20100304153432), fiji-autocomplete (>= 20090524213156), fiji-ij-imageio (>= 20081218211215), fiji-jruby (>= 20080801134354), fiji-lsm-reader (>= 20100322140540), fiji-rsyntaxtextarea (>= 20090524213156), fiji-jai (>= 20080801134354), fiji-tcljava (>= 20081218211215), fiji-io (>= 20100205115132), fiji-barthel-plugins (>= 20081015122326)
+Depends: fiji-jpedal (>= 20080801134354), fiji-examples (>= 20090919214431), fiji-zs (>= 20090429190902), fiji-base (>= 20100322143330), fiji-imagej (>= 20100322143330), fiji-loci-tools (>= 20100311140109), fiji-bunwarpj (>= 20100323104929), fiji-color-histogram (>= 20081015122324), fiji-edu-mines-jtk (>= 20080801134354), fiji-trakem2 (>= 20100217110922), fiji-luts (>= 20090919121518), fiji-plugins (>= 20100325222935), fiji-scripting (>= 20100304153432), fiji-mip (>= 20090429190857), fiji-mpicbg (>= 20100322140540), fiji-lsm-toolbox (>= 20091014220327), fiji-view5d (>= 20090930194753), fiji-mtrack2 (>= 20090429190900), fiji-vib (>= 20100304153432), fiji-autocomplete (>= 20090524213156), fiji-ij-imageio (>= 20081218211215), fiji-jruby (>= 20080801134354), fiji-lsm-reader (>= 20100322140540), fiji-rsyntaxtextarea (>= 20090524213156), fiji-jai (>= 20080801134354), fiji-tcljava (>= 20081218211215), fiji-io (>= 20100205115132), fiji-barthel-plugins (>= 20081015122326)
 Description: A metapackage for the Fiji image processing suite (based on ImageJ)
  Fiji is a project aiming at simplifying:
     * the installation of ImageJ
