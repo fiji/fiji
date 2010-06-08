@@ -208,7 +208,7 @@ jars/batik.jar <- batik/
 jars/junit-4.5.jar <- junit/
 jars/rsyntaxtextarea.jar <- RSyntaxTextArea/
 jars/autocomplete.jar <- AutoComplete/
-jars/weka.jar <- weka/
+jars/weka.jar <- jars/Fiji.jar weka/
 jars/jython.jar <- jython/
 
 # From source
