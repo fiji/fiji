@@ -91,7 +91,6 @@ SUBMODULE_TARGETS=\
 	plugins/TrakEM2_.jar \
 	plugins/mpicbg_.jar \
 	jars/clojure.jar \
-	jars/clojure-contrib.jar \
 	plugins/ij-ImageIO_.jar \
 	jars/jacl.jar \
 	jars/batik.jar \
@@ -198,7 +197,6 @@ jars/mpicbg.jar <- mpicbg/
 CLASSPATH(jars/imglib.jar)=jars/mpicbg.jar
 jars/imglib.jar <- imglib/
 jars/clojure.jar <- clojure/
-jars/clojure-contrib.jar <- jars/clojure.jar clojure-contrib/
 plugins/loci_tools.jar <- bio-formats/
 CLASSPATH(jars/VectorString.jar)=jars/Jama-1.0.2.jar
 jars/VectorString.jar <- TrakEM2/
@@ -210,7 +208,7 @@ jars/batik.jar <- batik/
 jars/junit-4.5.jar <- junit/
 jars/rsyntaxtextarea.jar <- RSyntaxTextArea/
 jars/autocomplete.jar <- AutoComplete/
-jars/weka.jar <- weka/
+jars/weka.jar <- jars/Fiji.jar weka/
 jars/jython.jar <- jython/
 
 # From source
@@ -228,7 +226,7 @@ MAINCLASS(jars/javac.jar)=com.sun.tools.javac.Main
 CLASSPATH(jars/fiji-scripting.jar)=jars/jython.jar:jars/Fiji.jar
 CLASSPATH(plugins/Refresh_Javas.jar)=jars/fiji-scripting.jar:jars/fake.jar:jars/Fiji.jar
 CLASSPATH(plugins/Jython_Interpreter.jar)=jars/fiji-scripting.jar:jars/jython.jar
-CLASSPATH(plugins/Clojure_Interpreter.jar)=jars/fiji-scripting.jar:jars/clojure.jar:jars/clojure-contrib.jar
+CLASSPATH(plugins/Clojure_Interpreter.jar)=jars/fiji-scripting.jar:jars/clojure.jar
 CLASSPATH(plugins/JRuby_Interpreter.jar)=jars/fiji-scripting.jar
 CLASSPATH(plugins/BeanShell_Interpreter.jar)=jars/fiji-scripting.jar
 CLASSPATH(plugins/Javascript_.jar)=jars/fiji-scripting.jar
@@ -382,7 +380,6 @@ precompile-submodules[] <- \
 	precompiled/mpicbg_.jar \
 	precompiled/mpicbg.jar \
 	precompiled/clojure.jar \
-	precompiled/clojure-contrib.jar \
 	precompiled/ij-ImageIO_.jar \
 	precompiled/jacl.jar \
 	precompiled/batik.jar \
@@ -395,7 +392,6 @@ precompile-submodules[] <- \
 
 precompiled/ij.jar <- jars/ij.jar
 precompiled/clojure.jar <- jars/clojure.jar
-precompiled/clojure-contrib.jar <- jars/clojure.jar jars/clojure-contrib.jar
 precompiled/jacl.jar <- jars/jacl.jar
 precompiled/batik.jar <- jars/batik.jar
 precompiled/junit-4.5.jar <- jars/junit-4.5.jar
