@@ -132,7 +132,7 @@ import org.jfree.data.xy.XYSeriesCollection;
  * <p>
  * 
  * @author Jean-Yves Tinevez jeanyves.tinevez@gmail.com
- * @version 1.4
+ * @version 2.0
  */
 public class Directionality_ implements PlugIn {
 	
@@ -174,7 +174,24 @@ public class Directionality_ implements PlugIn {
 	/** How many sigmas away from the gaussian center we sum to get the amount value. */ 
 	private static final double SIGMA_NUMBER = 2;
 	private static final String PLUGIN_NAME = "Directionality analysis";
-	private static final String VERSION_STR = "1.4";
+	private static final String VERSION_STR = "2.0";
+	
+	
+	/* USER SETTING FIELDS, memorized between runs*/
+	private static boolean setting_debug = false;
+	/** The number of bins to create. */
+	private static int setting_nbins = 90;
+	/** The first bin in degrees when displaying the histogram, so that we are not forced to start at -90 */
+	private static double setting_bin_start = -90;
+	/** Method used for analysis, as set by the user. */
+	private static AnalysisMethod setting_method = AnalysisMethod.FOURIER_COMPONENTS;
+	/** If set true, will display a {@link ResultsTable} with the histogram at the end of processing. */
+	private static boolean setting_display_table = false;
+	/** If true, will calculate a map of orientation. */
+	private static boolean setting_build_orientation_map = false;
+	/** If true, will display a color wheel to interpret the orientation map. */
+	private static boolean setting_display_color_wheel = false;
+
 	
 	/* SETTING FIELDS, they determine results */
 	
@@ -960,13 +977,13 @@ public class Directionality_ implements PlugIn {
 		// Layout dialog
 		GenericDialog gd = new GenericDialog(PLUGIN_NAME + " v" + VERSION_STR);
 		gd.addMessage(current);
-		gd.addChoice("Method:", method_names, method.toString());
-		gd.addNumericField("Nbins: ", nbins, 0);
-		gd.addNumericField("Histogram start", bin_start , 0, 4, "º");
-		gd.addCheckbox("Build orientation map", build_orientation_map);
-		gd.addCheckbox("Display color wheel", display_color_wheel);
-		gd.addCheckbox("Display table", display_table);
-		gd.addCheckbox("Debug", debug);
+		gd.addChoice("Method:", method_names, setting_method.toString());
+		gd.addNumericField("Nbins: ", setting_nbins, 0);
+		gd.addNumericField("Histogram start", setting_bin_start , 0, 4, "º");
+		gd.addCheckbox("Build orientation map", setting_build_orientation_map);
+		gd.addCheckbox("Display color wheel", setting_display_color_wheel);
+		gd.addCheckbox("Display table", setting_display_table);
+		gd.addCheckbox("Debug", setting_debug);
 		gd.showDialog();
 
 		// Collect dialog settings
@@ -979,7 +996,8 @@ public class Directionality_ implements PlugIn {
 				break;
 			}
 		} 
-
+		setting_method = method;
+		
 		// Reflect user settings in fields
 		nbins = (int) gd.getNextNumber();
 		bin_start = gd.getNextNumber();
@@ -987,6 +1005,14 @@ public class Directionality_ implements PlugIn {
 		display_color_wheel = gd.getNextBoolean();
 		display_table = gd.getNextBoolean();
 		debug = gd.getNextBoolean();
+		
+		// Store last user selected settings in default
+		setting_nbins = nbins;
+		setting_bin_start = bin_start;
+		setting_build_orientation_map = build_orientation_map;
+		setting_display_color_wheel = display_color_wheel;
+		setting_display_table = display_table;
+		setting_debug = debug;
 	}
 	
 	/**
@@ -1648,71 +1674,59 @@ public class Directionality_ implements PlugIn {
 	
 	public static void main(String[] args) {
 		
-		float angle, wrapped_angle;
+		// Generate a test image
+		ImagePlus imp = NewImage.createShortImage("Lines", 400, 400, 1, NewImage.FILL_BLACK);
+		ImageProcessor ip = imp.getProcessor();
+		ip.setLineWidth(4);
+		ip.setColor(Color.WHITE);
+		Line line_30deg 	= new Line(10.0, 412.0, 446.4102, 112.0); // 400px long line, 30º
+		Line line_30deg2 = new Line(10.0, 312.0, 446.4102, 12.0); // 400px long line, 30º
+		Line line_m60deg = new Line(10.0, 10, 300.0, 446.4102); // 400px long line, 60º
+		Line[] rois = new Line[] { line_30deg, line_30deg2, line_m60deg };
+		for ( Line roi : rois) {
+			ip.draw(roi);
+		}		
+		GaussianBlur smoother = new GaussianBlur();
+		smoother.blurGaussian(ip, 2.0, 2.0, 1e-2);		
+		imp.show();
 		
-		for (int i = 0; i < 20; i++) {
-			angle = -110 + i*20;
-			wrapped_angle = ((angle+90)  % 180 + 180) % 180 - 90;
-			System.out.println(String.format("%.1f \t %.1f", angle, wrapped_angle));// DEBUG
-		}
+		AnalysisMethod method;
+		ArrayList<double[]> fit_results;
+		double center;
+		
+		Directionality_ da = new Directionality_();
+		da.setImagePlus(imp);
+		
+		da.setBinNumber(60);
+		da.setBinStart(-90);
+
+		da.setBuildOrientationMapFlag(true);
+		da.setDebugFlag(true);
 		
 		
+		method = AnalysisMethod.FOURIER_COMPONENTS;
+		da.setMethod(method);
+		da.computesHistograms();
+		fit_results = da.getFitParameters();
+		center = fit_results.get(0)[2];
+		System.out.println("With method: "+method);
+		System.out.println(String.format("Found maxima at %.1f, expected it at 30º.\n", center, 30));
+		new ImagePlus("Orientation map for "+imp.getShortTitle(),da.getOrientationMap()).show();
 		
-//		
-//		
-//		// Generate a test image
-//		ImagePlus imp = NewImage.createShortImage("Lines", 400, 400, 1, NewImage.FILL_BLACK);
-//		ImageProcessor ip = imp.getProcessor();
-//		ip.setLineWidth(4);
-//		ip.setColor(Color.WHITE);
-//		Line line_30deg 	= new Line(10.0, 412.0, 446.4102, 112.0); // 400px long line, 30º
-//		Line line_30deg2 = new Line(10.0, 312.0, 446.4102, 12.0); // 400px long line, 30º
-//		Line line_m60deg = new Line(10.0, 10, 300.0, 446.4102); // 400px long line, 60º
-//		Line[] rois = new Line[] { line_30deg, line_30deg2, line_m60deg };
-//		for ( Line roi : rois) {
-//			ip.draw(roi);
-//		}		
-//		GaussianBlur smoother = new GaussianBlur();
-//		smoother.blurGaussian(ip, 2.0, 2.0, 1e-2);		
-//		imp.show();
-//		
-//		AnalysisMethod method;
-//		ArrayList<double[]> fit_results;
-//		double center;
-//		
-//		Directionality_ da = new Directionality_();
-//		da.setImagePlus(imp);
-//		
-//		da.setBinNumber(60);
-//		da.setBinStart(-90);
-//
-//		da.setBuildOrientationMapFlag(true);
-//		da.setDebugFlag(true);
-//		
-//		
-//		method = AnalysisMethod.FOURIER_COMPONENTS;
-//		da.setMethod(method);
-//		da.computesHistograms();
-//		fit_results = da.getFitParameters();
-//		center = fit_results.get(0)[2];
-//		System.out.println("With method: "+method);
-//		System.out.println(String.format("Found maxima at %.1f, expected it at 30º.\n", center, 30));
-//		new ImagePlus("Orientation map for "+imp.getShortTitle(),da.getOrientationMap()).show();
-//		
-//		/*
-//		method = AnalysisMethod.LOCAL_GRADIENT_ORIENTATION;
-//		da.setMethod(method);
-//		da.computesHistograms();
-//		fit_results = da.getFitParameters();
-//		center = fit_results.get(0)[2];
-//		System.out.println("With method: "+method);
-//		System.out.println(String.format("Found maxima at %.1f, expected it at 30º.\n", center, 30));
-//		new ImagePlus("Orientation map for "+imp.getShortTitle(),da.getOrientationMap()).show();
-//		 */
-//		
-//		ImagePlus cw = generateColorWheel();
-//		cw.show();
-//		addColorMouseListener(cw.getCanvas());
+		/*
+		method = AnalysisMethod.LOCAL_GRADIENT_ORIENTATION;
+		da.setMethod(method);
+		da.computesHistograms();
+		fit_results = da.getFitParameters();
+		center = fit_results.get(0)[2];
+		System.out.println("With method: "+method);
+		System.out.println(String.format("Found maxima at %.1f, expected it at 30º.\n", center, 30));
+		new ImagePlus("Orientation map for "+imp.getShortTitle(),da.getOrientationMap()).show();
+		 */
+		
+		ImagePlus cw = generateColorWheel();
+		cw.show();
+		addColorMouseListener(cw.getCanvas());
 
 	}
 	
