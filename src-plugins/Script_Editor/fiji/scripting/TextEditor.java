@@ -92,7 +92,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		  runSelection, extractSourceJar, toggleBookmark,
 		  listBookmarks, openSourceForClass, newPlugin, installMacro,
 		  openSourceForMenuItem, showDiff, commit;
-	JMenu tabsMenu;
+	JMenu gitMenu, tabsMenu;
 	int tabsMenuTabsStart;
 	Set<JMenuItem> tabsMenuItems;
 	FindAndReplaceDialog findDialog;
@@ -261,13 +261,17 @@ public class TextEditor extends JFrame implements ActionListener,
 		openSourceForMenuItem = addToMenu(tools,
 			"Open .java file for menu item...", 0, 0);
 		openSourceForMenuItem.setMnemonic(KeyEvent.VK_M);
-		showDiff = addToMenu(tools,
+		mbar.add(tools);
+
+		gitMenu = new JMenu("Git");
+		gitMenu.setMnemonic(KeyEvent.VK_G);
+		showDiff = addToMenu(gitMenu,
 			"Show diff...", 0, 0);
 		showDiff.setMnemonic(KeyEvent.VK_D);
-		commit = addToMenu(tools,
+		commit = addToMenu(gitMenu,
 			"Commit...", 0, 0);
-		commit.setMnemonic(KeyEvent.VK_T);
-		mbar.add(tools);
+		commit.setMnemonic(KeyEvent.VK_C);
+		mbar.add(gitMenu);
 
 		tabsMenu = new JMenu("Tabs");
 		tabsMenu.setMnemonic(KeyEvent.VK_A);
@@ -1029,8 +1033,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		installMacro.setEnabled(isMacro);
 
 		boolean isInGit = new FileFunctions(this).getGitDirectory(getEditorPane().file) != null;
-		showDiff.setEnabled(isInGit);
-		commit.setEnabled(isInGit);
+		gitMenu.setVisible(isInGit);
 	}
 
 	public void setFileName(String baseName) {
