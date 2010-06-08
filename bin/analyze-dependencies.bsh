@@ -62,9 +62,6 @@ if (bsh.args.length > 0 && bsh.args[0].equals("--check-fakefile")) {
 
 		message = "";
 		for (String dependency : inFakefile) {
-			if (dependency.equals("jars/clojure-contrib.jar") &&
-					target.equals("plugins/Clojure_Interpreter.jar"))
-				continue;
 			if (dependency.endsWith("/tools.jar") &&
 					target.equals("plugins/Script_Editor.jar"))
 				continue;

@@ -107,7 +107,6 @@
 /plugins/Script_Editor.jar
 /plugins/3D_Objects_Counter.jar
 /plugins/Trainable_Segmentation.jar
-/jars/clojure-contrib.jar
 /jars/weka.jar
 /plugins/IsoData_Classifier.jar
 /plugins/RATS_.jar
@@ -154,7 +153,6 @@
 /bio-formats/components/ome-xml/build/
 /bio-formats/loci_tools.jar
 /clojure/classes/
-/clojure-contrib/classes/
 /ij-plugins/ij-ImageIO_.jar
 /junit/junit4.5/
 /junit/junit-4.5.jar
