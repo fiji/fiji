@@ -54,13 +54,14 @@ import fiji.expressionparser.ImgLibParser;
  * <p>
  * Variables can be added using +/- buttons. They are matched to opened images in ImageJ. 
  * <p>
- * When the user presses the OK or Cancel button, the GUI exits, and trigger an action wich code 
- * is the following:
+ * When the images are RGB images, they are processed in a special way:
  * <ul>
- * <li>If OK was pressed, an action with the text "OK", and ID flag {@link IepGui#OK} is triggered.
- * <li>If Canceled was pressed, an action with the text "Canceled", and ID flag {@link IepGui#CANCELED}
- * is triggered.
+ * 	<li> they are split in 3 RGB channels;
+ * 	<li> each channel is parsed and evaluated separately;
+ * 	<li> the 3 resulting images are put back together in a 3 channel composite image.
  * </ul>
+ * 
+ * <p>
  * The information the user entered can be retrieved afterwards with the following methods:
  * <ul>
  * <li>{@link #getExpression()} to retrieve the expression the user entered as a String
@@ -71,7 +72,7 @@ import fiji.expressionparser.ImgLibParser;
  * 
  * <p>
  * This GUI was built in part using Jigloo GUI builder http://www.cloudgarden.com/jigloo/.
- * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com>
+ * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com>, Albert Cardona <acardona@ini.phys.ethz.ch>
  */
 public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implements ImageListener, WindowListener {
 
@@ -89,7 +90,7 @@ public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implement
 	 * FIELDS
 	 */
 	
-	private static final String PLUGIN_VERSION = "v2.1";
+	private static final String PLUGIN_VERSION = "v2.2";
 	private static final String PLUGIN_NAME = "Image Expression Parser";
 	
 	/** The GUI fires an ActionEvent with this command String when the quit button is pressed. */

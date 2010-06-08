@@ -23,6 +23,10 @@ import org.nfunk.jep.ParseException;
 import fiji.expressionparser.ImgLibParser;
 
 /**
+ * <h1>Image expression parser</h1>
+ * 
+ * <h2>Usage</h2>
+ * 
  * This plugins parses mathematical expressions and compute results using images as variables. 
  * As of version 2.x, pixel per pixel based operations are supported and ImgLib algorithm
  * are supported.
@@ -42,7 +46,43 @@ import fiji.expressionparser.ImgLibParser;
  * 	<li> {@link #getResult()} to retrieve the resulting image
  * </ul>
  * 
- * versions:
+ * 
+ * <h2>Calling the plugin from elsewhere</h2>
+ * 
+ * It is possible to call the plugin from another class or in a scripting language. For instance in Python:
+ * 
+ * <pre>
+ * import mpicbg.imglib.image.ImagePlusAdapter
+ * import mpicbg.imglib.image.display.imagej.ImageJFunctions
+ * import fiji.process.Image_Expression_Parser
+ * 
+ * 
+ * # Make an ImgLib image from the current image
+ * imp = WindowManager.getCurrentImage()
+ * img = mpicbg.imglib.image.ImagePlusAdapter.wrap(imp)
+ * 
+ * # In python, the map can be a dictionary, relating 
+ * # variable names to images
+ * map = {'A': img}
+ * expression = 'A^2'
+ * 
+ * # Instantiate plugin
+ * parser = fiji.process.Image_Expression_Parser()
+ * 
+ * # Configure & execute
+ * parser.setImageMap(map)
+ * parser.setExpression(expression)
+ * parser.process()
+ * result = parser.getResult() # is an ImgLib image
+ * 
+ * # Copy result to an ImagePlus and display it
+ * result_imp = mpicbg.imglib.image.display.imagej.ImageJFunctions.copyToImagePlus(result)
+ * result_imp.show()
+ * result_imp.resetDisplayRange()
+ * result_imp.updateAndDraw()
+ * </pre>
+ * 
+ * <h2> Version history</h2>
  * <ul>
  * 	<li> v1.0 - Feb 2010 - First working version.
  * 	<li> v1.1 - Apr 2010 - Expression field now has a history.
@@ -52,9 +92,16 @@ import fiji.expressionparser.ImgLibParser;
  * 			<li> support for ImgLib algorithms and non pixel-based operations, such as gaussian convolution;
  * 			<li> faster evaluation, thanks to dealing with ImgLib images as objects within the parser instead of pixel per pixel evaluation.
  * 		</ul>
+ * <li>	v2.1 - June 2010 - Internal changes:
+ * 		<ul>
+ * 			<li> the GUI now generate a new separate thread for processing, freeing resources for the redraw 
+ * of the GUI panel itself (thanks to Albert Cardona and the Fijiers input);
+ * 			<li> RGB images are processed in a special way by the GUI: each of their channel is processed separately
+ * and put back together in a composite image.
+ * 		</ul> 
  * </ul>
  *   
- * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com>
+ * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com>, Albert Cardona <acardona@ini.phys.ethz.ch>
  */	
 public class Image_Expression_Parser<T extends RealType<T>> implements PlugIn, OutputAlgorithm<T> {
 	
