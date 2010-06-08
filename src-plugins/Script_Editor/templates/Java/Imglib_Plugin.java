@@ -43,5 +43,6 @@ public class Imglib_Plugin<T extends RealType<T>> implements PlugInFilter {
 			cursor.fwd();
 			cursor.getType().add(summand);
 		}
+		cursor.close();
 	}
 }
