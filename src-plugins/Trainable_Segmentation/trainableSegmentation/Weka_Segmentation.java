@@ -111,7 +111,6 @@ import weka.core.Instances;
 import weka.core.OptionHandler;
 import weka.core.SerializationHelper;
 import weka.core.Utils;
-import weka.core.converters.ArffSaver;
 import weka.core.pmml.PMMLFactory;
 import weka.core.pmml.PMMLModel;
 import weka.gui.GUIChooser;
@@ -221,6 +220,8 @@ public class Weka_Segmentation implements PlugIn
 	private int numOfTrees = 200;
 	/** current number of random features per tree in the fast random forest classifier */
 	private int randomFeatures = 2;
+	/** maximum depth per tree in the fast random forest classifier */
+	private int maxDepth = 0;
 	/** list of class names on the loaded data */
 	ArrayList<String> loadedClassNames = null;
 	/** executor service to launch threads for the plugin methods and events */
@@ -417,6 +418,11 @@ public class Weka_Segmentation implements PlugIn
 	 */
 	private class CustomCanvas extends OverlayedImageCanvas 
 	{
+		/**
+		 * default serial version UID
+		 */
+		private static final long serialVersionUID = 1L;
+
 		CustomCanvas(ImagePlus imp) 
 		{
 			super(imp);
@@ -478,6 +484,8 @@ public class Weka_Segmentation implements PlugIn
 	 */
 	private class CustomWindow extends ImageWindow 
 	{		
+		/** default serial version UID */
+		private static final long serialVersionUID = 1L;
 		/** layout for annotation panel */
 		GridBagLayout boxAnnotation = new GridBagLayout();
 		/** constraints for annotation panel */
@@ -764,7 +772,7 @@ public class Weka_Segmentation implements PlugIn
 		 * Set the image being displayed on the custom canvas
 		 * @param imp new image
 		 */
-		public void setImagePlus(ImagePlus imp)
+		public void setImagePlus(final ImagePlus imp)
 		{
 			super.imp = imp;
 			((CustomCanvas) super.getCanvas()).setImagePlus(imp);
@@ -1948,6 +1956,7 @@ public class Weka_Segmentation implements PlugIn
 			gd.addMessage("Fast Random Forest settings:");
 			gd.addNumericField("Number of trees:", numOfTrees, 0);
 			gd.addNumericField("Random features", randomFeatures, 0);
+			gd.addNumericField("Max depth", maxDepth, 0);
 		}
 		else
 		{
@@ -1957,12 +1966,7 @@ public class Weka_Segmentation implements PlugIn
 			gd.addMessage(classifierName + " settings");
 			gd.addButton("Set Weka classifier options", new ClassifierSettingsButtonListener(this.classifier));
 		}
-				
-		/*
-		final String[] options = this.classifier.getOptions();
-		for(int i = 0; i < options.length; i++)
-			IJ.log(options[i]);
-		*/
+
 		
 		gd.addMessage("Class names:");
 		for(int i = 0; i < numOfClasses; i++)
@@ -1998,10 +2002,14 @@ public class Weka_Segmentation implements PlugIn
 		{
 			final int newNumTrees = (int) gd.getNextNumber();
 			final int newRandomFeatures = (int) gd.getNextNumber();
+			final int newMaxDepth = (int) gd.getNextNumber();
 			
 			// Update random forest if necessary
-			if(newNumTrees != numOfTrees ||	newRandomFeatures != randomFeatures)
-				updateClassifier(newNumTrees, newRandomFeatures);
+			if(newNumTrees != numOfTrees 
+					||	newRandomFeatures != randomFeatures
+					||	newMaxDepth != maxDepth)
+				
+				updateClassifier(newNumTrees, newRandomFeatures, newMaxDepth);
 		}		
 		
 		boolean classNameChanged = false;
@@ -2154,17 +2162,23 @@ public class Weka_Segmentation implements PlugIn
 	 * 
 	 * @param newNumTrees new number of trees
 	 * @param newRandomFeatures new number of random features per tree
+	 * @param newMaxDepth new maximum depth per tree
 	 * @return false if error
 	 */
-	private boolean updateClassifier(int newNumTrees, int newRandomFeatures) 
+	private boolean updateClassifier(
+			int newNumTrees, 
+			int newRandomFeatures,
+			int newMaxDepth) 
 	{
-		if(newNumTrees < 1 || newRandomFeatures < 1)
+		if(newNumTrees < 1 || newRandomFeatures < 0)
 			return false;
 		numOfTrees = newNumTrees;
 		randomFeatures = newRandomFeatures;
+		maxDepth = newMaxDepth;
 		
 		rf.setNumTrees(numOfTrees);
 		rf.setNumFeatures(randomFeatures);
+		rf.setMaxDepth(maxDepth);
 		
 		return true;
 	}
