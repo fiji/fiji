@@ -613,15 +613,37 @@ public class FileFunctions {
 		frame.setVisible(true);
 	}
 
+	protected void addChangesActionLink(DiffView diff, String text, final String plugin, final int verboseLevel) {
+		diff.link(text, new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				showPluginChangesSinceUpload(plugin, verboseLevel);
+			}
+		});
+	}
+
 	public void showPluginChangesSinceUpload(String plugin) {
+		showPluginChangesSinceUpload(plugin, 0);
+	}
+
+	public void showPluginChangesSinceUpload(String plugin, int verboseLevel) {
 		final DiffView diff = new DiffView();
+		diff.normal("Verbose level: ");
+		addChangesActionLink(diff, "file names", plugin, 0);
+		diff.normal(" ");
+		addChangesActionLink(diff, "bytecode", plugin, 1);
+		diff.normal(" ");
+		addChangesActionLink(diff, "verbose bytecode", plugin, 2);
+		diff.normal("\n");
 		try {
 			String fijiDir = System.getProperty("fiji.dir");
-			String[] cmdarray = {
+			List<String> cmdarray = new ArrayList<String>(Arrays.asList(new String[] {
 				fijiDir + "/bin/log-plugin-commits.bsh",
-				"-p", "--fuzz", "15", plugin
-			};
-			SimpleExecuter e = new SimpleExecuter(cmdarray,
+				"-p", "--fuzz", "15"
+			}));
+			for (int i = 0; i < verboseLevel; i++)
+				cmdarray.add("-v");
+			cmdarray.add(plugin);
+			SimpleExecuter e = new SimpleExecuter(cmdarray.toArray(new String[cmdarray.size()]),
 				diff, new DiffView.IJLog(), new File(fijiDir));
 		} catch (IOException e) {
 			IJ.handleException(e);
