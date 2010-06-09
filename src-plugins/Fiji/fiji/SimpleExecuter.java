@@ -40,7 +40,9 @@ public class SimpleExecuter {
 		for (;;) try {
 			exitCode = process.waitFor();
 			break;
-		} catch (InterruptedException e) { /* ignore */ }
+		} catch (InterruptedException e) {
+			process.destroy();
+		}
 		for (;;) try {
 			stdout.join();
 			break;
