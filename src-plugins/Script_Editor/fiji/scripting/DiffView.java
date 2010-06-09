@@ -8,6 +8,11 @@ import ij.IJ;
 
 import java.awt.Color;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+
 import java.io.IOException;
 
 import javax.swing.BoxLayout;
@@ -19,8 +24,10 @@ import javax.swing.JTextPane;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
+import javax.swing.text.Element;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 
 public class DiffView extends JScrollPane implements LineHandler {
 	protected JPanel panel;
@@ -28,25 +35,38 @@ public class DiffView extends JScrollPane implements LineHandler {
 	protected Document document;
 	protected int adds, removes;
 	protected boolean inHeader = true;
+	protected final static String ACTION_ATTRIBUTE = "ACTION";
+	protected final static String font = "Courier";
+	protected final static int fontSize = 12, bigFontSize = 15;
 
 	public DiffView() {
 		panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
 		getViewport().setView(panel);
 
-		normal = getStyle(Color.black, false, false, "Courier", 12);
-		bigBold = getStyle(Color.blue, false, true, "Courier", 15);
-		bold = getStyle(Color.black, false, true, "Courier", 12);
-		italic = getStyle(Color.black, true, false, "Courier", 12);
-		red = getStyle(Color.red, false, false, "Courier", 12);
-		green = getStyle(new Color(0, 128, 32), false, false, "Courier", 12);
+		normal = getStyle(Color.black, false, false, font, fontSize);
+		bigBold = getStyle(Color.blue, false, true, font, bigFontSize);
+		bold = getStyle(Color.black, false, true, font, fontSize);
+		italic = getStyle(Color.black, true, false, font, fontSize);
+		red = getStyle(Color.red, false, false, font, fontSize);
+		green = getStyle(new Color(0, 128, 32), false, false, font, fontSize);
 
-		JTextPane current = new JTextPane();
+		final JTextPane current = new JTextPane();
 		current.setEditable(false);
 		document = current.getDocument();
 		panel.add(current);
 
 		getVerticalScrollBar().setUnitIncrement(10);
+
+		current.addMouseListener(new MouseAdapter() {
+			public void mouseClicked(MouseEvent event) {
+				StyledDocument document = current.getStyledDocument();
+				Element e = document.getCharacterElement(current.viewToModel(event.getPoint()));
+				ActionListener action = (ActionListener)e.getAttributes().getAttribute(ACTION_ATTRIBUTE);
+				if (action != null)
+					action.actionPerformed(new ActionEvent(DiffView.this, 0, "action"));
+			}
+		});
 	}
 
 	public static SimpleAttributeSet getStyle(Color color, boolean italic,
@@ -67,6 +87,20 @@ public class DiffView extends JScrollPane implements LineHandler {
 			e.printStackTrace();
 			throw new RuntimeException(e);
 		}
+	}
+
+	public static SimpleAttributeSet getActionStyle(ActionListener action) {
+		SimpleAttributeSet style = new SimpleAttributeSet();
+		StyleConstants.setForeground(style, Color.blue);
+		StyleConstants.setUnderline(style, true);
+		StyleConstants.setFontFamily(style, font);
+		StyleConstants.setFontSize(style, fontSize);
+		style.addAttribute(ACTION_ATTRIBUTE, action);
+		return style;
+	}
+
+	public void link(String text, ActionListener action) {
+		styled(text, getActionStyle(action));
 	}
 
 	public void handleLine(String line) {
