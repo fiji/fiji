@@ -26,6 +26,8 @@ public class Run_MyMacro implements PlugIn
         try {
             // get the text resource as a stream
             InputStream is = getClass().getResourceAsStream(path);
+            if (is==null)
+                is = getClass().getResourceAsStream("/" + path);
             if (is==null) {
                 //IJ.showMessage("JAR Demo", "File not found in JAR at "+path);
                 return "";
