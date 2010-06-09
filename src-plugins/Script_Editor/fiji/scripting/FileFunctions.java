@@ -689,4 +689,8 @@ public class FileFunctions {
 		JOptionPane.showMessageDialog(parent, message);
 		return false;
 	}
+
+	public static void main(String[] args) {
+		new FileFunctions(null).showPluginChangesSinceUpload("jars/javac.jar");
+	}
 }
