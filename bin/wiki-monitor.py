@@ -106,6 +106,7 @@ for line in response.split('\n'):
 			title = ' ->> ' + line[start:end]
 		result += '\t' + time + ' ' + title + ' (' + author + ')\n'
 
+firstLine = 'From ' + url + '/Special:RecentChanges\n'
 from java.lang import System
 backup = '.recent-changes.' + host
 if path.exists(backup):
@@ -124,8 +125,12 @@ if path.exists(backup):
 			if line.strip() == firstline:
 				break
 			else:
+				if firstLine != None:
+					System.out.println(firstLine)
+					firstLine = None
 				System.out.println(line)
 else:
+	System.out.println(firstLine)
 	System.out.println(result)
 
 f = open(backup, 'w')
