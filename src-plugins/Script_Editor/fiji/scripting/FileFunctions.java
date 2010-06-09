@@ -636,6 +636,8 @@ public class FileFunctions {
 		addChangesActionLink(diff, "bytecode", plugin, 1);
 		diff.normal(" ");
 		addChangesActionLink(diff, "verbose bytecode", plugin, 2);
+		diff.normal(" ");
+		addChangesActionLink(diff, "hexdump", plugin, 3);
 		diff.normal("\n");
 
 		final Thread thread = new Thread() {

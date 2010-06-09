@@ -15,6 +15,8 @@ import fiji.updater.Updater;
 import fiji.updater.logic.PluginCollection;
 import fiji.updater.logic.XMLFileReader;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -192,6 +194,13 @@ javap(String jar, String className, String outputFile) {
 	execute(toStringArray(args), null, new FileOutputStream(outputFile));
 }
 
+// file == outputFile is handled correctly, thanks to the byte array
+hexdump(String file, String outputFile) {
+	out = new ByteArrayOutputStream();
+	execute(new String[] { "hexdump", "-C", file }, null, out);
+	copyFile(new ByteArrayInputStream(out.toByteArray()), new FileOutputStream(outputFile));
+}
+
 void compareToUploaded(String plugin) {
 	p = plugins.getPlugin(plugin);
 	if (p == null) {
@@ -239,7 +248,11 @@ void compareToUploaded(String plugin) {
 						localVersion = CheckClassVersions.getClassVersion(new FileInputStream(localFile));
 						if (remoteVersion != localVersion)
 							System.out.println("class versions differ! remote: " + remoteVersion + ", local: " + localVersion);
-						if (e1.getName().endsWith(".class")) {
+						if (verbose > 2) {
+							hexdump(remoteFile, remoteFile);
+							hexdump(localFile, localFile);
+						}
+						else if (e1.getName().endsWith(".class")) {
 							className = e1.getName();
 							className = className.substring(0, className.length() - 6).replace('/', '.');
 							javap(tmpJar, className, remoteFile);
