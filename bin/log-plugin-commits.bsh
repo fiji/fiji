@@ -244,10 +244,12 @@ void compareToUploaded(String plugin) {
 						remoteFile = tmp + "/remote";
 						copyFile(new URL("jar:" + remoteURL + "!/" + e1.getName()).openStream(), new FileOutputStream(remoteFile));
 						copyFile(new URL("jar:" + localURL + "!/" + e1.getName()).openStream(), new FileOutputStream(localFile));
-						remoteVersion = CheckClassVersions.getClassVersion(new FileInputStream(remoteFile));
-						localVersion = CheckClassVersions.getClassVersion(new FileInputStream(localFile));
-						if (remoteVersion != localVersion)
-							System.out.println("class versions differ! remote: " + remoteVersion + ", local: " + localVersion);
+						if (e1.getName().endsWith(".class")) {
+							remoteVersion = CheckClassVersions.getClassVersion(new FileInputStream(remoteFile));
+							localVersion = CheckClassVersions.getClassVersion(new FileInputStream(localFile));
+							if (remoteVersion != localVersion)
+								System.out.println("class versions differ! remote: " + remoteVersion + ", local: " + localVersion);
+						}
 						if (verbose > 2) {
 							hexdump(remoteFile, remoteFile);
 							hexdump(localFile, localFile);
