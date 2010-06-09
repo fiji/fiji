@@ -224,6 +224,8 @@ void compareToUploaded(String plugin) {
 				h2 = e2.hashCode();
 				if (s1 != s2 || h1 != h2) {
 					System.out.println("Differences in " + e1);
+					System.out.println((s1 != s2 ? ("Size difference " + s1 + " != " + s2) : "")
+						+ " " + (h1 != h2 ? ("Hash difference " + h1 + " != " + h2) : ""));
 					if (verbose > 0) {
 						tmp = getTempDir();
 						tmpJar = tmp + "/tmp.jar";
