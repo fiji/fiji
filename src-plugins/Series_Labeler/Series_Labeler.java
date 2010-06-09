@@ -371,12 +371,12 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		
 		// add a panel for the series stamper start value
 		JPanel pStartup = createNumericFieldPanel("Startup",
-			start, 2);
+			start, 10);
 		pStartup.setLocation(left, 30);
 		
 		// add a panel for the interval settings
 		JPanel pInterval = createNumericFieldPanel("Interval",
-			interval, 2);
+			interval, 10);
 		intervalTextField = (TextField) gd.getNumericFields().lastElement();
 		pInterval.setLocation(left, 60);
 		
@@ -819,19 +819,19 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 					interval = imp.getCalibration().frameInterval;
 					// if frame interval property of image is zero, set it to one
 					interval = Math.abs(interval) < 0.0000001 ? 1.0 : interval;
-					intervalTextField.setText(IJ.d2s(interval, 2));
+					intervalTextField.setText(IJ.d2s(interval, 10));
 				}
 				// if its a z-stack then use pixel depth as the interval
 				else if (selectedStackType == stackTypes[1]){
 					interval = imp.getCalibration().pixelDepth;
 					// if frame interval property of image is zero, set it to one
 					interval = Math.abs(interval) < 0.0000001 ? 1.0 : interval;
-					intervalTextField.setText(IJ.d2s(interval, 2));
+					intervalTextField.setText(IJ.d2s(interval, 10));
 				}
 				// if its a spectral-stack then use 1 as the interval
 				else if (selectedStackType == stackTypes[2]){
 					interval = 1.0;
-					intervalTextField.setText(IJ.d2s(interval, 2));
+					intervalTextField.setText(IJ.d2s(interval, 10));
 				}
 			}
 		}
