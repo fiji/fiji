@@ -8,12 +8,15 @@ import ij.IJ;
 
 import ij.gui.GenericDialog;
 
+import java.awt.Cursor;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -613,30 +616,81 @@ public class FileFunctions {
 		frame.setVisible(true);
 	}
 
+	protected void addChangesActionLink(DiffView diff, String text, final String plugin, final int verboseLevel) {
+		diff.link(text, new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				showPluginChangesSinceUpload(plugin, verboseLevel);
+			}
+		});
+	}
+
 	public void showPluginChangesSinceUpload(String plugin) {
+		showPluginChangesSinceUpload(plugin, 0);
+	}
+
+	public void showPluginChangesSinceUpload(final String plugin, final int verboseLevel) {
 		final DiffView diff = new DiffView();
+		diff.normal("Verbose level: ");
+		addChangesActionLink(diff, "file names", plugin, 0);
+		diff.normal(" ");
+		addChangesActionLink(diff, "bytecode", plugin, 1);
+		diff.normal(" ");
+		addChangesActionLink(diff, "verbose bytecode", plugin, 2);
+		diff.normal(" ");
+		addChangesActionLink(diff, "hexdump", plugin, 3);
+		diff.normal("\n");
+
+		final Thread thread = new Thread() {
+			public void run() {
+				Cursor cursor = diff.getCursor();
+				diff.setCursor(new Cursor(Cursor.WAIT_CURSOR));
+				populateDiff(diff, plugin, verboseLevel);
+				diff.setCursor(cursor);
+			}
+		};
+		thread.start();
+		final JFrame frame = new JFrame("Changes since last upload " + plugin);
+		frame.getContentPane().add(diff);
+		frame.pack();
+		frame.setSize(640, 640);
+		frame.addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent e) {
+				thread.interrupt();
+				try {
+					thread.join();
+				} catch (InterruptedException e2) {
+					System.err.println("interrupted");
+				}
+			}
+		});
+		frame.setVisible(true);
+	}
+
+	protected void populateDiff(final DiffView diff, final String plugin, int verboseLevel) {
+		final String fijiDir = System.getProperty("fiji.dir");
+		List<String> cmdarray = new ArrayList<String>(Arrays.asList(new String[] {
+			fijiDir + "/bin/log-plugin-commits.bsh",
+			"-p", "--fuzz", "15"
+		}));
+		for (int i = 0; i < verboseLevel; i++)
+			cmdarray.add("-v");
+		cmdarray.add(plugin);
+		final String[] args = cmdarray.toArray(new String[cmdarray.size()]);
 		try {
-			String fijiDir = System.getProperty("fiji.dir");
-			String[] cmdarray = {
-				fijiDir + "/bin/log-plugin-commits.bsh",
-				"-p", "--fuzz", "15", plugin
-			};
-			SimpleExecuter e = new SimpleExecuter(cmdarray,
+			SimpleExecuter e = new SimpleExecuter(args,
 				diff, new DiffView.IJLog(), new File(fijiDir));
 		} catch (IOException e) {
 			IJ.handleException(e);
 			return;
 		}
-
-		final JFrame frame = new JFrame("Changes since last upload " + plugin);
-		frame.setSize(640, 640);
-		frame.getContentPane().add(diff);
-		frame.pack();
-		frame.setVisible(true);
 	}
 
 	protected boolean error(String message) {
 		JOptionPane.showMessageDialog(parent, message);
 		return false;
+	}
+
+	public static void main(String[] args) {
+		new FileFunctions(null).showPluginChangesSinceUpload("jars/javac.jar");
 	}
 }

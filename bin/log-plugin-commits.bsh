@@ -5,6 +5,9 @@
  * This script helps to identify the commits performed on plugins since they
  * were uploaded last time.
  */
+
+import fiji.CheckClassVersions;
+
 import fiji.build.Fake;
 
 import fiji.updater.Updater;
@@ -12,14 +15,19 @@ import fiji.updater.Updater;
 import fiji.updater.logic.PluginCollection;
 import fiji.updater.logic.XMLFileReader;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
 
 import java.net.URL;
 
 import java.text.SimpleDateFormat;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
@@ -43,6 +51,7 @@ usage(message) {
 }
 
 fuzz = 0;
+verbose = 0;
 extraArgs = new ArrayList();
 
 while (bsh.args.length > 0 && bsh.args[0].startsWith("-")) {
@@ -60,6 +69,8 @@ while (bsh.args.length > 0 && bsh.args[0].startsWith("-")) {
 			extraArgs.add("--ignore-space-at-eol");
 		}
 	}
+	else if (bsh.args[0].equals("-v") || bsh.args[0].equals("--verbose"))
+		verbose++;
 	else
 		usage("Unknown option: '" + bsh.args[0] + "'");
 
@@ -108,8 +119,16 @@ public class Outputter extends Thread {
 }
 
 int execute(String[] cmdarray, File directory) {
+	return execute(cmdarray, directory, System.out);
+}
+
+int execute(String[] cmdarray, File directory, OutputStream out) {
+	return execute(cmdarray, directory, new PrintStream(out));
+}
+
+int execute(String[] cmdarray, File directory, PrintStream outWriter) {
 	process = Runtime.getRuntime().exec(cmdarray, null, directory);
-	new Outputter(process.getInputStream(), System.out).start();
+	new Outputter(process.getInputStream(), outWriter).start();
 	new Outputter(process.getErrorStream(), System.err).start();
 	return process.waitFor();
 }
@@ -136,14 +155,64 @@ ArrayList getZipItems(URL url) {
 	return result;
 }
 
+tempDir = null;
+
+getTempDir() {
+	if (tempDir == null) {
+		file = File.createTempFile("jar-dir-", "");
+		file.delete();
+		file.mkdir();
+		tempDir = file.getAbsolutePath();
+	}
+	return tempDir;
+}
+
+void copyFile(InputStream in, OutputStream out) {
+	byte[] buffer = new byte[16384];
+	for (;;) {
+		count = in.read(buffer);
+		if (count < 0)
+			break;
+		out.write(buffer, 0, count);
+	}
+	in.close();
+	out.close();
+}
+
+toStringArray(list) {
+	return list.toArray(new String[list.size()]);
+}
+
+javap(String jar, String className, String outputFile) {
+	args = new ArrayList(Arrays.asList(new String[] {
+		System.getProperty("fiji.executable"),
+			"--javap", "-cp", jar, "-c",
+	}));
+	if (verbose > 1)
+		args.add("-verbose");
+	args.add(className);
+	execute(toStringArray(args), null, new FileOutputStream(outputFile));
+}
+
+// file == outputFile is handled correctly, thanks to the byte array
+hexdump(String file, String outputFile) {
+	out = new ByteArrayOutputStream();
+	execute(new String[] { "hexdump", "-C", file }, null, out);
+	copyFile(new ByteArrayInputStream(out.toByteArray()), new FileOutputStream(outputFile));
+}
+
 void compareToUploaded(String plugin) {
 	p = plugins.getPlugin(plugin);
 	if (p == null) {
 		System.out.println(plugin + " is not a Fiji component");
 		return;
 	}
-	remote = getZipItems(new URL(Updater.MAIN_URL + p.filename + "-" + p.timestamp));
-	local = getZipItems(new URL("file:" + System.getProperty("fiji.dir") + "/" + plugin));
+	remotePath = null;
+	remoteURL = Updater.MAIN_URL + p.filename + "-" + p.timestamp;
+	remote = getZipItems(new URL(remoteURL));
+	localPath = System.getProperty("fiji.dir") + "/" + plugin;
+	localURL = "file:" + localPath;
+	local = getZipItems(new URL(localURL));
 
 	System.out.println("Differences between the local and remote " + plugin);
 	int i = 0, j = 0;
@@ -162,8 +231,36 @@ void compareToUploaded(String plugin) {
 				s2 = e2.getSize();
 				h1 = e1.hashCode();
 				h2 = e2.hashCode();
-				if (s1 != s2 || h1 != h2)
+				if (s1 != s2 || h1 != h2) {
 					System.out.println("Differences in " + e1);
+					System.out.println((s1 != s2 ? ("Size difference " + s1 + " != " + s2) : "")
+						+ " " + (h1 != h2 ? ("Hash difference " + h1 + " != " + h2) : ""));
+					if (verbose > 0) {
+						tmp = getTempDir();
+						tmpJar = tmp + "/tmp.jar";
+						if (remotePath == null)
+							copyFile(new URL(remoteURL).openStream(), new FileOutputStream(tmpJar));
+						localFile = tmp + "/local";
+						remoteFile = tmp + "/remote";
+						copyFile(new URL("jar:" + remoteURL + "!/" + e1.getName()).openStream(), new FileOutputStream(remoteFile));
+						copyFile(new URL("jar:" + localURL + "!/" + e1.getName()).openStream(), new FileOutputStream(localFile));
+						remoteVersion = CheckClassVersions.getClassVersion(new FileInputStream(remoteFile));
+						localVersion = CheckClassVersions.getClassVersion(new FileInputStream(localFile));
+						if (remoteVersion != localVersion)
+							System.out.println("class versions differ! remote: " + remoteVersion + ", local: " + localVersion);
+						if (verbose > 2) {
+							hexdump(remoteFile, remoteFile);
+							hexdump(localFile, localFile);
+						}
+						else if (e1.getName().endsWith(".class")) {
+							className = e1.getName();
+							className = className.substring(0, className.length() - 6).replace('/', '.');
+							javap(tmpJar, className, remoteFile);
+							javap(localPath, className, localFile);
+						}
+						execute(new String[] { "git", "diff", "--no-index", remoteFile, localFile }, null);
+					}
+				}
 				i++; j++;
 			} else if (e1.getName().compareTo(e2.getName()) < 0) {
 				System.out.println("Remote file: " + remote.get(i));
@@ -248,3 +345,6 @@ for (String arg : bsh.args) {
 		execute(cmdarray, new File(fijiDir));
 	}
 }
+
+if (tempDir != null)
+	execute(new String[] { "rm", "-rf", tempDir }, null);
