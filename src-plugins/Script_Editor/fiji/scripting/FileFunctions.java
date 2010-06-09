@@ -8,6 +8,7 @@ import ij.IJ;
 
 import ij.gui.GenericDialog;
 
+import java.awt.Cursor;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -639,7 +640,10 @@ public class FileFunctions {
 
 		final Thread thread = new Thread() {
 			public void run() {
+				Cursor cursor = diff.getCursor();
+				diff.setCursor(new Cursor(Cursor.WAIT_CURSOR));
 				populateDiff(diff, plugin, verboseLevel);
+				diff.setCursor(cursor);
 			}
 		};
 		thread.start();
