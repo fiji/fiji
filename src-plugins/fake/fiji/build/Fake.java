@@ -1303,7 +1303,7 @@ public class Fake {
 				String[] paths =
 					split(getVar("CLASSPATH"), ":");
 				for (int i = 0; i < paths.length; i++)
-					prerequisites.add(paths[i]);
+					prerequisites.add(prerequisites.size() - 1, paths[i]);
 				if (!new File(makePath(cwd, directory)).exists())
 					err.println("Warning: " + directory
 						+ " does not exist!");
