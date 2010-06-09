@@ -5,6 +5,9 @@
  * This script helps to identify the commits performed on plugins since they
  * were uploaded last time.
  */
+
+import fiji.CheckClassVersions;
+
 import fiji.build.Fake;
 
 import fiji.updater.Updater;
@@ -228,14 +231,17 @@ void compareToUploaded(String plugin) {
 							copyFile(new URL(remoteURL).openStream(), new FileOutputStream(tmpJar));
 						localFile = tmp + "/local";
 						remoteFile = tmp + "/remote";
+						copyFile(new URL("jar:" + remoteURL + "!/" + e1.getName()).openStream(), new FileOutputStream(remoteFile));
+						copyFile(new URL("jar:" + localURL + "!/" + e1.getName()).openStream(), new FileOutputStream(localFile));
+						remoteVersion = CheckClassVersions.getClassVersion(new FileInputStream(remoteFile));
+						localVersion = CheckClassVersions.getClassVersion(new FileInputStream(localFile));
+						if (remoteVersion != localVersion)
+							System.out.println("class versions differ! remote: " + remoteVersion + ", local: " + localVersion);
 						if (e1.getName().endsWith(".class")) {
 							className = e1.getName();
 							className = className.substring(0, className.length() - 6).replace('/', '.');
 							javap(tmpJar, className, remoteFile);
 							javap(localPath, className, localFile);
-						} else {
-							copyFile(new URL("jar:" + remoteURL + "!/" + e1.getName()).openStream(), new FileOutputStream(remoteFile));
-							copyFile(new URL("jar:" + localURL + "!/" + e1.getName()).openStream(), new FileOutputStream(localFile));
 						}
 						execute(new String[] { "git", "diff", "--no-index", remoteFile, localFile }, null);
 					}
