@@ -438,6 +438,26 @@ public class Fake {
 				}
 			}
 
+			// add <name>-clean rules
+			List newSpecials = new ArrayList();
+			Iterator iter = allRules.keySet().iterator();
+			while (iter.hasNext()) {
+				final String key = (String)iter.next();
+				final String cleanKey = key + "-clean";
+				final Rule rule = getRule(key);
+				if (key.endsWith("-clean") ||
+						allRules.containsKey(cleanKey) ||
+						(rule instanceof Special))
+					continue;
+				// avoid concurrent modification
+				newSpecials.add(new Special(cleanKey) {
+					void action() { rule.clean(false); }
+				});
+			}
+			iter = newSpecials.iterator();
+			while (iter.hasNext())
+				addSpecialRule((Special)iter.next());
+
 			lineNumber = -1;
 
 			result = allRule;
