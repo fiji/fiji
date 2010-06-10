@@ -229,8 +229,8 @@ void compareToUploaded(String plugin) {
 			if (e1.getName().equals(e2.getName())) {
 				s1 = e1.getSize();
 				s2 = e2.getSize();
-				h1 = e1.hashCode();
-				h2 = e2.hashCode();
+				h1 = e1.getCrc();
+				h2 = e2.getCrc();
 				if (s1 != s2 || h1 != h2) {
 					System.out.println("Differences in " + e1);
 					System.out.println((s1 != s2 ? ("Size difference " + s1 + " != " + s2) : "")
