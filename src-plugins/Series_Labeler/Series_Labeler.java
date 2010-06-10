@@ -80,6 +80,7 @@ import ij.plugin.filter.ExtendedPlugInFilter;
 import ij.plugin.filter.PlugInFilterRunner;
 import ij.plugin.frame.ColorPicker;
 import ij.plugin.frame.Fonts;
+import ij.process.ColorProcessor;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import ij.ImageListener;
@@ -566,8 +567,15 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		 * what the current settings will lokk like.
 		 */
 		if (preview) {
-			ImageProcessor labelIP = new FloatProcessor(backgroundRectangle.width,
+			ImageProcessor labelIP;
+			if (imp.getType()==ImagePlus.COLOR_RGB){
+				labelIP = new ColorProcessor(backgroundRectangle.width,
 					backgroundRectangle.height);
+			} else {
+				labelIP = new FloatProcessor(backgroundRectangle.width,
+					backgroundRectangle.height);
+			}
+					
 			labelIP.setFont(font);
 			labelIP.setAntialiasedText(antiAliasedText);
 			labelIP.moveTo(0, backgroundRectangle.height);
