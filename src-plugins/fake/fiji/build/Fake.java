@@ -443,16 +443,22 @@ public class Fake {
 			Iterator iter = allRules.keySet().iterator();
 			while (iter.hasNext()) {
 				final String key = (String)iter.next();
-				final String cleanKey = key + "-clean";
 				final Rule rule = getRule(key);
 				if (key.endsWith("-clean") ||
-						allRules.containsKey(cleanKey) ||
+						key.endsWith("-clean-dry-run") ||
 						(rule instanceof Special))
 					continue;
+				final String cleanKey = key + "-clean";
 				// avoid concurrent modification
-				newSpecials.add(new Special(cleanKey) {
-					void action() { rule.clean(false); }
-				});
+				if (!allRules.containsKey(cleanKey))
+					newSpecials.add(new Special(cleanKey) {
+						void action() { rule.clean(false); }
+					});
+				final String dryRunCleanKey = cleanKey + "-dry-run";
+				if (!allRules.containsKey(dryRunCleanKey))
+					newSpecials.add(new Special(dryRunCleanKey) {
+						void action() { rule.clean(true); }
+					});
 			}
 			iter = newSpecials.iterator();
 			while (iter.hasNext())
