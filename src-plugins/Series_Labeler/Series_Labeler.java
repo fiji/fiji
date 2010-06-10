@@ -491,8 +491,11 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		gd.showDialog(); // shows the dialog GUI!
 
 		// handle the plug-in cancel button being pressed.
-		if (gd.wasCanceled())
+		if (gd.wasCanceled()){
+			// remove the preview overlay when cancel is clicked
+			imp.setOverlay(null);
 			return DONE;
+		}
 
 		/* if the ok button was pressed, we are really running the plug-in,
 		 * so later we can tell what label to make
