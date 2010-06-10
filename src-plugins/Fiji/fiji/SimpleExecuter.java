@@ -2,22 +2,47 @@ package fiji;
 
 import ij.IJ;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+
 
 public class SimpleExecuter {
 	protected StreamDumper stdout, stderr;
 	protected int exitCode;
 
+	public static interface LineHandler {
+		public void handleLine(String line);
+	}
+
 	public SimpleExecuter(String[] cmdarray) throws IOException {
-		Process process = Runtime.getRuntime().exec(cmdarray);
-		process.getOutputStream().close();
-		stderr = new StreamDumper(process.getErrorStream());
-		stdout = new StreamDumper(process.getInputStream());
+		this(cmdarray, null, null, null);
+	}
+
+	public SimpleExecuter(String[] cmdarray, File workingDirectory) throws IOException {
+		this(cmdarray, null, null, workingDirectory);
+	}
+
+	public SimpleExecuter(String[] cmdarray, LineHandler out, LineHandler err) throws IOException {
+		this(cmdarray, out, err, null);
+	}
+
+	public SimpleExecuter(String[] cmdarray, LineHandler out, LineHandler err, File workingDirectory) throws IOException {
+		this(cmdarray, null, out, err, workingDirectory);
+	}
+
+	public SimpleExecuter(String[] cmdarray, InputStream in, LineHandler out, LineHandler err, File workingDirectory) throws IOException {
+		Process process = Runtime.getRuntime().exec(cmdarray, null, workingDirectory);
+		stderr = getDumper(err, process.getErrorStream());
+		stdout = getDumper(out, process.getInputStream());
+		new StreamCopy(in, process.getOutputStream()).start();
 		for (;;) try {
 			exitCode = process.waitFor();
 			break;
-		} catch (InterruptedException e) { /* ignore */ }
+		} catch (InterruptedException e) {
+			process.destroy();
+		}
 		for (;;) try {
 			stdout.join();
 			break;
@@ -40,6 +65,35 @@ public class SimpleExecuter {
 		return stderr.out.toString();
 	}
 
+	protected class StreamCopy extends Thread {
+		protected InputStream in;
+		protected OutputStream out;
+
+		public StreamCopy(InputStream in, OutputStream out) {
+			this.in = in;
+			this.out = out;
+		}
+
+		public void run() {
+			try {
+				if (in != null) {
+					byte[] buffer = new byte[16384];
+					for (;;) {
+						int count = in.read(buffer);
+						if (count < 0)
+							break;
+						out.write(buffer, 0, count);
+					}
+					in.close();
+
+				}
+				out.close();
+			} catch (IOException e) {
+				IJ.handleException(e);
+			}
+		}
+	}
+
 	protected class StreamDumper extends Thread {
 		protected InputStream in;
 		public StringBuffer out;
@@ -57,13 +111,50 @@ public class SimpleExecuter {
 					int count = in.read(buffer);
 					if (count < 0)
 						break;
-					out.append(new String(buffer, 0, count));
+					handle(buffer, 0, count);
 				}
 				in.close();
 			} catch (IOException e) {
 				stderr.out.append(e.toString());
 			}
 		}
+
+		protected void handle(byte[] buffer, int offset, int length) {
+			out.append(new String(buffer, offset, length));
+		}
+	}
+
+	protected class LineDumper extends StreamDumper {
+		protected LineHandler handler;
+
+		public LineDumper(LineHandler handler, InputStream in) {
+			super(in);
+			this.handler = handler;
+		}
+
+		public void run() {
+			super.run();
+			if (out.length() > 0)
+				handler.handleLine(out.toString());
+		}
+
+		protected void handle(byte[] buffer, int offset, int length) {
+			for (int i = 0; i < length; i++)
+				if (buffer[offset + i] == '\n') {
+					out.append(new String(buffer, offset, i));
+					handler.handleLine(out.toString());
+					out.setLength(0);
+
+					offset += i + 1;
+					length -= i + 1;
+					i = -1;
+				}
+			out.append(new String(buffer, offset, length));
+		}
+	}
+
+	protected StreamDumper getDumper(LineHandler handler, InputStream in) {
+		return handler != null ? new LineDumper(handler, in) : new StreamDumper(in);
 	}
 
 	public static void main(String[] args) {

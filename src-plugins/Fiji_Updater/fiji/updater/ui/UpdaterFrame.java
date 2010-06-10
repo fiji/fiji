@@ -22,6 +22,8 @@ import ij.WindowManager;
 
 import ij.gui.GenericDialog;
 
+import ij.plugin.PlugIn;
+
 import java.awt.Container;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -250,6 +252,25 @@ public class UpdaterFrame extends JFrame
 				}
 			}, bottomPanel);
 			btnUpload.setEnabled(false);
+
+			try {
+				Class pluginChangesClass = Class.forName("fiji.scripting.ShowPluginChanges");
+				if (pluginChangesClass != null && new File(System.getProperty("fiji.dir"), ".git").isDirectory()) {
+					final PlugIn pluginChanges = (PlugIn)pluginChangesClass.newInstance();
+					bottomPanel.add(Box.createRigidArea(new Dimension(15,0)));
+					JButton showChanges = SwingTools.button("Show changes",
+							"Show the changes in Git since the last upload", new ActionListener() {
+						public void actionPerformed(ActionEvent e) {
+							new Thread() {
+								public void run() {
+									for (PluginObject plugin : table.getSelectedPlugins())
+										pluginChanges.run(plugin.filename);
+								}
+							}.start();
+						}
+					}, bottomPanel);
+				}
+			} catch (Exception e) { /* ignore */ }
 		}
 
 		// offer to update Java, but only on non-Macs

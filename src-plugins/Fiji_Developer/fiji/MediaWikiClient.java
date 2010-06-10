@@ -23,6 +23,8 @@
 
 package fiji;
 
+import ij.IJ;
+
 import ij.plugin.BrowserLauncher;
 
 import java.net.URL;
@@ -50,7 +52,7 @@ import javax.net.ssl.SSLSession;
 
 public class MediaWikiClient {
 	final String wikiBaseURI;
-	String sessionID, domain;
+	String sessionID, domain, loginToken;
 
 	public MediaWikiClient() {
 		this("http://pacific.mpi-cbg.de/wiki/index.php");
@@ -78,29 +80,31 @@ public class MediaWikiClient {
 				"action", "submitlogin",
 				"type", "login"
 			};
-			String[] postVars = {
-				"wpName", user,
-				"wpPassword", password
-			};
 			if (!hasSessionKey()) {
-				sendRequest(getVars, postVars,
+				String response = sendRequest(getVars, null /* postVars */,
 						null, true);
+				loginToken = getFormVariable(response, "wpLoginToken");
+				if (IJ.debugMode)
+					debugShow(response);
 				if (!hasSessionKey()) {
 					System.err.println("Failed to "
 							+ "get session key!");
 					return false;
 				}
 			}
-			if (domain != null)
-				postVars = new String[] {
-					"wpName", user,
-					"wpPassword", password,
-					"wpDomain", domain
-				};
+			String[] postVars = {
+				"wpName", user,
+				"wpPassword", password,
+				"wpDomain", domain,
+				"wpLoginToken", loginToken
+			};
 
 			String response =
 				sendRequest(getVars, postVars);
-			loggedIn = response.indexOf("Login error:") < 0;
+			loginToken = getFormVariable(response, "wpLoginToken");
+			loggedIn = response.indexOf("Login error") < 0;
+			if (IJ.debugMode)
+				debugShow(response);
 			return loggedIn;
 		} catch (IOException e) { }
 		return false;
@@ -134,6 +138,12 @@ public class MediaWikiClient {
 		matcher = pattern.matcher(html);
 		if (matcher.matches())
 			return matcher.group(1);
+		pattern = Pattern.compile(".*<input type=.hidden. "
+			+ "name=\"" + name + "\" value=\"([^\"]*)\" />.*",
+			Pattern.DOTALL);
+		matcher = pattern.matcher(html);
+		if (matcher.matches())
+			return matcher.group(1);
 		return null;
 	}
 
@@ -158,6 +168,8 @@ public class MediaWikiClient {
 			if (time == null || token == null || summary == null) {
 				System.err.println("time: " + time + ", token: "
 					+ token + ", summary: " + summary);
+				if (IJ.debugMode)
+					debugShow(response);
 				return null;
 			}
 
@@ -312,7 +324,8 @@ public class MediaWikiClient {
 				new PrintStream(conn.getOutputStream());
 			for (int i = 0; postVars != null &&
 					i + 1 < postVars.length; i += 2)
-				ps.print((i == 0 ? "" : "&")
+				if (postVars[i + 1] != null)
+					ps.print((i == 0 ? "" : "&")
 						+ urlEncode(postVars[i]) + "="
 						+ urlEncode(postVars[i + 1]));
 			ps.close();

@@ -19,7 +19,7 @@
 
   In addition, as a special exception, the copyright holders give
   you permission to combine this program with free software programs or
-  libraries that are released under the Apache Public License. 
+  libraries that are released under the Apache Public License.
 
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
@@ -430,7 +430,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		   update3DViewerContents: */
 		if( plugin != null && plugin.use3DViewer ) {
 			p.removeFrom3DViewer( plugin.univ );
-			p.addTo3DViewer( plugin.univ, plugin.deselectedColor3f );
+			p.addTo3DViewer( plugin.univ, plugin.deselectedColor3f, plugin.colorImage );
 		}
 		allPaths.add(p);
 		resetListeners( p );
@@ -1189,7 +1189,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				pathToAdd = p.fitted;
 			else
 				pathToAdd = p;
-			pathToAdd.addTo3DViewer(plugin.univ,plugin.deselectedColor);
+			pathToAdd.addTo3DViewer(plugin.univ,plugin.deselectedColor,plugin.colorImage);
 		}
 	}
 
@@ -1294,7 +1294,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 	public static PathAndFillManager createFromTracesFile( String filename ) {
 		PathAndFillManager pafm = new PathAndFillManager();
-		if( pafm.load(filename) )
+		if( pafm.loadGuessingType(filename) )
 			return pafm;
 		else
 			return null;
@@ -1445,11 +1445,19 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	*/
 
 	public boolean importSWC( BufferedReader br, boolean assumeCoordinatesIndexVoxels ) throws IOException {
+		return importSWC( br, assumeCoordinatesIndexVoxels, 0, 0, 0, 1, 1, 1, true );
+	}
+
+	public boolean importSWC( BufferedReader br, boolean assumeCoordinatesIndexVoxels,
+				  double x_offset, double y_offset, double z_offset,
+				  double x_scale, double y_scale, double z_scale,
+				  boolean replaceAllPaths ) throws IOException {
 
 		if( needImageDataFromTracesFile )
 			throw new RuntimeException( "[BUG] Trying to load SWC file while we still need image data information" );
 
-		clearPathsAndFills( );
+		if( replaceAllPaths )
+			clearPathsAndFills( );
 
 		Pattern pEmpty = Pattern.compile("^\\s*$");
 		Pattern pComment = Pattern.compile("^([^#]*)#.*$");
@@ -1474,6 +1482,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 		double minimumVoxelSpacing = Math.min(Math.abs(x_spacing),Math.min(Math.abs(y_spacing),Math.abs(z_spacing)));
 
+		int pointsOutsideImageRange = 0;
+
 		String line;
 		while( (line = br.readLine()) != null ) {
 			Matcher mComment = pComment.matcher(line);
@@ -1489,9 +1499,9 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			try {
 				int id = Integer.parseInt(fields[0]);
 				int type = Integer.parseInt(fields[1]);
-				double x = Double.parseDouble(fields[2]);
-				double y = Double.parseDouble(fields[3]);
-				double z = Double.parseDouble(fields[4]);
+				double x = x_scale * Double.parseDouble(fields[2]) + x_offset;
+				double y = y_scale * Double.parseDouble(fields[3]) + y_offset;
+				double z = z_scale * Double.parseDouble(fields[4]) + z_offset;
 				if( assumeCoordinatesIndexVoxels ) {
 					x *= x_spacing;
 					y *= y_spacing;
@@ -1503,6 +1513,15 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 					   convention in the broken files that I've come across: */
 					radius *= minimumVoxelSpacing;
 				}
+
+				/* If the radius is set to near zero,
+				   then artificially set it to half of
+				   the voxel spacing so that
+				   *something* appears in the 3D Viewer */
+
+				if( Math.abs(radius) < 0.0000001 )
+					radius = minimumVoxelSpacing / 2;
+
 				int previous = Integer.parseInt(fields[6]);
 				if( alreadySeen.contains(id) ) {
 					IJ.error("Point with ID "+id+" found more than once");
@@ -1510,16 +1529,12 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				}
 				alreadySeen.add( id );
 
-				/* FIXME: this fudge is broken - should be checking if all of the points
-				   are outside the range, and negating all if so.  (There may be files
-				   that validly have points that lie outside the image stack.) */
-
-				if( (x < 0) && ! (x >= minX && x <= maxX) )
-					x = Math.abs( x );
-				if( (y < 0) && ! (y >= minY && y <= maxY) )
-					y = Math.abs( y );
-				if( (z < 0) && ! (z >= minZ && z <= maxZ) )
-					z = Math.abs( z );
+				if( x < minX || x > maxX )
+					++ pointsOutsideImageRange;
+				if( y < minY || y > maxY )
+					++ pointsOutsideImageRange;
+				if( z < minZ || z > maxZ )
+					++ pointsOutsideImageRange;
 
 				SWCPoint p = new SWCPoint( id, type, x, y, z, radius, previous );
 				idToSWCPoint.put( id, p );
@@ -1535,6 +1550,9 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				return false;
 			}
 		}
+
+		if( pointsOutsideImageRange > 0 )
+			IJ.log("Warning: "+pointsOutsideImageRange+" points were outside the image volume - you may need to change your SWC import options");
 
 		HashMap< SWCPoint, Path > pointToPath =
 			new HashMap< SWCPoint, Path >();
@@ -1627,6 +1645,13 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	}
 
 	public boolean importSWC( String filename, boolean ignoreCalibration ) {
+		return importSWC( filename, ignoreCalibration, 0, 0, 0, 1, 1, 1, true );
+	}
+
+	public boolean importSWC( String filename, boolean ignoreCalibration,
+				  double x_offset, double y_offset, double z_offset,
+				  double x_scale, double y_scale, double z_scale,
+		                  boolean replaceAllPaths ) {
 
 		File f = new File(filename);
 		if( ! f.exists() ) {
@@ -1642,7 +1667,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			is = new BufferedInputStream(new FileInputStream(filename));
 			BufferedReader br = new BufferedReader(new InputStreamReader(is,"UTF-8"));
 
-			result = importSWC(br,ignoreCalibration);
+			result = importSWC(br,ignoreCalibration,x_offset,y_offset,z_offset,x_scale,y_scale,z_scale,replaceAllPaths);
 
 			if( is != null )
 				is.close();
@@ -1657,11 +1682,11 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 	}
 
-	public boolean load( String filename ) {
-		return load( filename, false );
-	}
+	public static final int TRACES_FILE_TYPE_COMPRESSED_XML = 1;
+	public static final int TRACES_FILE_TYPE_UNCOMPRESSED_XML = 2;
+	public static final int TRACES_FILE_TYPE_SWC = 3;
 
-	public boolean load( String filename, boolean ignoreCalibration ) {
+	public static int guessTracesFileType( String filename ) {
 
 		/* Look at the magic bytes at the start of the file:
 
@@ -1672,17 +1697,14 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
                    If it begins "<?xml", assume it's an uncompressed
                    traces file.
 
-		   Otherwise, try to import it as an SWC file.
+		   Otherwise, assum it's an SWC file.
 		*/
 
 		File f = new File(filename);
 		if( ! f.exists() ) {
 			IJ.error("The traces file '"+filename+"' does not exist.");
-			return false;
+			return -1;
 		}
-
-		boolean gzipped = false;
-		boolean uncompressedXML = false;
 
 		try {
 			InputStream is;
@@ -1692,46 +1714,55 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			is.close();
 			if (verbose) System.out.println("buf[0]: "+buf[0]+", buf[1]: "+buf[1]);
 			if( ((buf[0]&0xFF) == 0x1F) && ((buf[1]&0xFF) == 0x8B) )
-				gzipped = true;
+				return TRACES_FILE_TYPE_COMPRESSED_XML;
 			else if( ((buf[0] == '<') && (buf[1] == '?') &&
 				  (buf[2] == 'x') && (buf[3] == 'm') &&
 				  (buf[4] == 'l') && (buf[5] == ' ')) )
-				uncompressedXML = true;
+				return TRACES_FILE_TYPE_UNCOMPRESSED_XML;
 
 		} catch (IOException e) {
 			IJ.error("Couldn't read from file: "+filename);
-			return false;
+			return -1;
 		}
 
-		InputStream is = null;
-		boolean result = false;
+		return TRACES_FILE_TYPE_SWC;
+	}
 
+	public boolean loadCompressedXML( String filename ) {
 		try {
-
-			if( gzipped || uncompressedXML ) {
-				if( gzipped ) {
-					if (verbose) System.out.println("Loading gzipped file...");
-					is = new GZIPInputStream(new BufferedInputStream(new FileInputStream(filename)));
-				} else if( uncompressedXML ) {
-					if (verbose) System.out.println("Loading uncompressed file...");
-					is = new BufferedInputStream(new FileInputStream(filename));
-				}
-
-				result = load(is,null);
-
-				if( is != null )
-					is.close();
-			} else {
-				// Assume it's SWC:
-				result = importSWC( filename, ignoreCalibration );
-			}
-
+			if (verbose) System.out.println("Loading gzipped file...");
+			return load( new GZIPInputStream(new BufferedInputStream(new FileInputStream(filename))), null );
 		} catch( IOException ioe ) {
-			IJ.error("Couldn't open file '"+filename+"' for reading.");
+			IJ.error("Couldn't open file '"+filename+"' for reading\n(n.b. it was expected to be compressed XML)");
 			return false;
 		}
+	}
 
-		return result;
+	public boolean loadUncompressedXML( String filename ) {
+		try {
+			if (verbose) System.out.println("Loading uncompressed file...");
+			return load( new BufferedInputStream(new FileInputStream(filename)), null );
+		} catch( IOException ioe ) {
+			IJ.error("Couldn't open file '"+filename+"' for reading\n(n.b. it was expected to be XML)");
+			return false;
+		}
+	}
+
+	public boolean loadGuessingType( String filename ) {
+
+		int guessedType = guessTracesFileType( filename );
+		switch( guessedType ) {
+
+		case TRACES_FILE_TYPE_COMPRESSED_XML:
+			return loadCompressedXML(filename);
+		case TRACES_FILE_TYPE_UNCOMPRESSED_XML:
+			return loadUncompressedXML(filename);
+		case TRACES_FILE_TYPE_SWC:
+			return importSWC( filename, false, 0, 0, 0, 1, 1, 1, true );
+		default:
+			IJ.error("guessTracesFileType() return an unknown type"+guessedType);
+			return false;
+		}
 	}
 
 	/* This method will set all the points in array that
@@ -2072,7 +2103,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				plugin.univ, // The appropriate 3D universe
 				(selected || ! showOnlySelectedPaths), // Visible at all?
 				plugin.getPaths3DDisplay(), // How to display?
-				selected ? plugin.selectedColor3f : plugin.deselectedColor3f ); // Colour?
+				selected ? plugin.selectedColor3f : plugin.deselectedColor3f,
+				plugin.colorImage ); // Colour?
 		}
 	}
 

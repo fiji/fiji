@@ -1245,6 +1245,22 @@ public class Fake {
 			public String getPrerequisiteString() {
 				return prerequisiteString;
 			}
+
+			public String getStripPath() {
+				String s = prerequisiteString.trim();
+				if (s.startsWith("**/"))
+					return "";
+				int stars = s.indexOf("/**/");
+				if (stars < 0)
+					return "";
+				int space = s.indexOf(' ');
+				if (space > 0 && space < stars) {
+					if (s.charAt(space - 1) == '/')
+						return s.substring(0, space);
+					return "";
+				}
+				return s.substring(0, stars + 1);
+			}
 		}
 
 		class All extends Rule {
@@ -1270,7 +1286,7 @@ public class Fake {
 			}
 		}
 
-		class SubFake extends Rule {
+		public class SubFake extends Rule {
 			String jarName;
 			String baseName;
 			String source;
@@ -1287,7 +1303,7 @@ public class Fake {
 				String[] paths =
 					split(getVar("CLASSPATH"), ":");
 				for (int i = 0; i < paths.length; i++)
-					prerequisites.add(paths[i]);
+					prerequisites.add(prerequisites.size() - 1, paths[i]);
 				if (!new File(makePath(cwd, directory)).exists())
 					err.println("Warning: " + directory
 						+ " does not exist!");
@@ -1534,22 +1550,6 @@ public class Fake {
 			String getMainClass() {
 				return getVariable("MAINCLASS", target);
 			}
-
-			String getStripPath() {
-				String s = prerequisiteString.trim();
-				if (s.startsWith("**/"))
-					return "";
-				int stars = s.indexOf("/**/");
-				if (stars < 0)
-					return "";
-				int space = s.indexOf(' ');
-				if (space > 0 && space < stars) {
-					if (s.charAt(space - 1) == '/')
-						return s.substring(0, space);
-					return "";
-				}
-				return s.substring(0, stars + 1);
-		}
 
 			protected void clean(boolean dry_run) {
 				super.clean(dry_run);
@@ -1991,7 +1991,8 @@ public class Fake {
 			if (starstar && names[i].startsWith("."))
 				continue;
 			if (names[i].equals(".git") || names[i].endsWith(".swp")
-					|| names[i].endsWith(".swo"))
+					|| names[i].endsWith(".swo")
+					|| names[i].endsWith("~"))
 				continue;
 			File file = new File(makePath(cwd, path));
 			if (nextSlash < 0) {
@@ -2103,9 +2104,9 @@ public class Fake {
 		}
 	}
 
-	protected static String getPrefix(String path) {
+	protected String getPrefix(File cwd, String path) {
 		try {
-			InputStream input = new FileInputStream(path);
+			InputStream input = new FileInputStream(makePath(cwd, path));
 			InputStreamReader inputReader =
 				new InputStreamReader(input);
 			BufferedReader reader = new BufferedReader(inputReader);
@@ -2162,7 +2163,7 @@ public class Fake {
 					continue;
 				}
 				if (lastJava != null) {
-					String prefix = getPrefix(makePath(cwd, lastJava));
+					String prefix = getPrefix(cwd, lastJava);
 					if (prefix != null)
 						result.add(prefix);
 					else

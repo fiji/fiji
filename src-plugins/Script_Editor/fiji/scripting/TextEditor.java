@@ -35,22 +35,16 @@ import java.io.PipedOutputStream;
 import java.io.PrintWriter;
 
 import java.net.URL;
-import java.net.URLDecoder;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
+import java.util.Collections;
 import java.util.Date;
-import java.util.Dictionary;
-import java.util.Enumeration;
 import java.util.HashSet;
-import java.util.Hashtable;
 import java.util.List;
 import java.util.Set;
 import java.util.Vector;
 
 import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 
 import java.util.zip.ZipException;
@@ -70,12 +64,14 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
+import javax.swing.text.JTextComponent;
 import javax.swing.text.Position;
 
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
@@ -87,7 +83,7 @@ public class TextEditor extends JFrame implements ActionListener,
 	EditorPane editorPane;
 	JTabbedPane tabbed;
 	JTextArea screen;
-	JMenuItem newFile, open, save, saveas, compileAndRun, debug, close,
+	JMenuItem newFile, open, save, saveas, compileAndRun, compile, debug, close,
 		  undo, redo, cut, copy, paste, find, replace, selectAll,
 		  autocomplete, resume, terminate, kill, gotoLine,
 		  makeJar, makeJarWithSource, removeUnusedImports,
@@ -95,14 +91,14 @@ public class TextEditor extends JFrame implements ActionListener,
 		  openHelp, addImport, clearScreen, nextError, previousError,
 		  openHelpWithoutFrames, nextTab, previousTab,
 		  runSelection, extractSourceJar, toggleBookmark,
-		  listBookmarks, openSourceForClass, newPlugin;
-	JMenu tabsMenu;
+		  listBookmarks, openSourceForClass, newPlugin, installMacro,
+		  openSourceForMenuItem, showDiff, commit;
+	JMenu gitMenu, tabsMenu;
 	int tabsMenuTabsStart;
 	Set<JMenuItem> tabsMenuItems;
 	FindAndReplaceDialog findDialog;
 
-	String templateFolder = "templates/";
-	Set<String> templatePaths;
+	protected final String templateFolder = "templates/";
 	Languages.Language[] availableLanguages = Languages.getInstance().languages;
 
 	Position compileStartPosition;
@@ -201,8 +197,7 @@ public class TextEditor extends JFrame implements ActionListener,
 
 		JMenu templates = new JMenu("Templates");
 		templates.setMnemonic(KeyEvent.VK_T);
-		setupTemplatePaths();
-		populateTemplateMenu(templates);
+		addTemplates(templates);
 		mbar.add(templates);
 
 		JMenu run = new JMenu("Run");
@@ -215,6 +210,14 @@ public class TextEditor extends JFrame implements ActionListener,
 		runSelection = addToMenu(run, "Run selected code",
 				KeyEvent.VK_R, ctrl | shift);
 		runSelection.setMnemonic(KeyEvent.VK_S);
+
+		compile = addToMenu(run, "Compile",
+				KeyEvent.VK_C, ctrl | shift);
+		compile.setMnemonic(KeyEvent.VK_C);
+
+		installMacro = addToMenu(run, "Install Macro",
+				KeyEvent.VK_I, ctrl);
+		installMacro.setMnemonic(KeyEvent.VK_I);
 
 		run.addSeparator();
 		nextError = addToMenu(run, "Next Error", KeyEvent.VK_F4, 0);
@@ -250,13 +253,26 @@ public class TextEditor extends JFrame implements ActionListener,
 		extractSourceJar = addToMenu(tools,
 			"Extract source .jar...", 0, 0);
 		extractSourceJar.setMnemonic(KeyEvent.VK_E);
-		openSourceForClass = addToMenu(tools,
-			"Open .java file for class...", 0, 0);
-		openSourceForClass.setMnemonic(KeyEvent.VK_J);
 		newPlugin = addToMenu(tools,
 			"Create new plugin...", 0, 0);
 		newPlugin.setMnemonic(KeyEvent.VK_C);
+		openSourceForClass = addToMenu(tools,
+			"Open .java file for class...", 0, 0);
+		openSourceForClass.setMnemonic(KeyEvent.VK_J);
+		openSourceForMenuItem = addToMenu(tools,
+			"Open .java file for menu item...", 0, 0);
+		openSourceForMenuItem.setMnemonic(KeyEvent.VK_M);
 		mbar.add(tools);
+
+		gitMenu = new JMenu("Git");
+		gitMenu.setMnemonic(KeyEvent.VK_G);
+		showDiff = addToMenu(gitMenu,
+			"Show diff...", 0, 0);
+		showDiff.setMnemonic(KeyEvent.VK_D);
+		commit = addToMenu(gitMenu,
+			"Commit...", 0, 0);
+		commit.setMnemonic(KeyEvent.VK_C);
+		mbar.add(gitMenu);
 
 		tabsMenu = new JMenu("Tabs");
 		tabsMenu.setMnemonic(KeyEvent.VK_A);
@@ -409,209 +425,79 @@ public class TextEditor extends JFrame implements ActionListener,
 					triplet.key, triplet.modifiers, false);
 	}
 
-	/**
-	 * Gets the base path of the resources contained in this jar.
-	 */
-	private String getResourceBase() {
-		return Script_Editor.class.getName().replace(".", "/")+".class";
+	protected JMenu getMenu(JMenu root, String menuItemPath, boolean createIfNecessary) {
+		int gt = menuItemPath.indexOf('>');
+		if (gt < 0)
+			return root;
+
+		String menuLabel = menuItemPath.substring(0, gt);
+		String rest = menuItemPath.substring(gt + 1);
+		for (int i = 0; i < root.getItemCount(); i++) {
+			JMenuItem item = root.getItem(i);
+			if ((item instanceof JMenu) &&
+					menuLabel.equals(item.getLabel()))
+				return getMenu((JMenu)item, rest, createIfNecessary);
+		}
+		if (!createIfNecessary)
+			return null;
+		JMenu subMenu = new JMenu(menuLabel);
+		root.add(subMenu);
+		return getMenu(subMenu, rest, createIfNecessary);
 	}
 
 	/**
-	 * Initializes a member set with paths leading to templates.
+	 * Initializes the template menu.
 	 */
-	private void setupTemplatePaths() {
-		templatePaths = new HashSet<String>(); //avoid duplicates in case it is a subdirectory
-
-		URL dirURL = Script_Editor.class.getClassLoader().getResource( getResourceBase() );
-
-		// check if the resource has been found inside the jar
-		if (dirURL == null || dirURL.getProtocol() != "jar") {
+	protected void addTemplates(JMenu templatesMenu) {
+		String url = getClass().getResource("TextEditor.class").toString();
+		String classFilePath = "/" + getClass().getName().replace('.', '/') + ".class";
+		if (!url.endsWith(classFilePath))
 			return;
-		}
+		url = url.substring(0, url.length() - classFilePath.length() + 1) + templateFolder;
 
-		// modified version of http://www.uofr.net/~greg/java/get-resource-listing.html
-		String jarPath = dirURL.getPath().substring(5, dirURL.getPath().indexOf("!")); //strip out only the JAR file
+		List<String> templates = new FileFunctions(this).getResourceList(url);
+		Collections.sort(templates);
+		for (String template : templates) {
+			String path = template.replace('/', '>');
+			JMenu menu = getMenu(templatesMenu, path, true);
 
-		try {
-			JarFile jar = new JarFile(URLDecoder.decode(jarPath, "UTF-8"));
-			Enumeration<JarEntry> entries = jar.entries(); //gives ALL entries in jar
-
-			while(entries.hasMoreElements()) {
-				String name = entries.nextElement().getName();
-				if (name.startsWith(templateFolder)) { //filter according to the path
-					String entry = name.substring(templateFolder.length());
-					templatePaths.add(entry);
+			String label = path.substring(path.lastIndexOf('>') + 1).replace('_', ' ');
+			int dot = label.lastIndexOf('.');
+			if (dot > 0)
+				label = label.substring(0, dot);
+			final String templateURL = url + template;
+			JMenuItem item = new JMenuItem(label);
+			menu.add(item);
+			item.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					loadTemplate(templateURL);
 				}
-			}
-		}
-		catch (java.io.UnsupportedEncodingException e) {
-			e.printStackTrace();
-		}
-		catch (java.io.IOException e) {
-			e.printStackTrace();
+			});
 		}
 	}
 
 	/**
-	 * Populates the given menu with template files available in the
-	 * templates folder. The folder structure is reflected within the sub menus.
-	 */
-	private void populateTemplateMenu(JMenu menu) {
-		menu.removeAll();
-
-		// use a dictionary for keeping track of created menu items
-		Dictionary<String, JMenu> menuEntries = new Hashtable<String, JMenu>();
-
-		String[] paths =
-			templatePaths.toArray(new String[templatePaths.size()]);
-		Arrays.sort(paths, new Comparator<String>() {
-			public int compare(String s1, String s2) {
-				int slash1 = s1.lastIndexOf('/');
-				int slash2 = s2.lastIndexOf('/');
-				return s1.substring(slash1 + 1)
-					.compareTo(s2.substring(slash2 + 1));
-			}
-			public boolean equals(Object o) {
-				return false;
-			}
-		});
-		for (String t : paths)
-			reflectDirStructInMenu(menuEntries, menu, t, "");
-
-		// add a „none“ item if no template was found
-		if (menu.getItemCount() == 0) {
-			JMenuItem none_item = new JMenuItem("(none)");
-			none_item.setEnabled(false);
-			menu.add(none_item);
-		}
-	}
-
-	/**
-	 * Adds a menu item or a sub menu to the given menu, depending
-	 * on the path it should reflect.
-	 */
-	public void reflectDirStructInMenu(Dictionary<String, JMenu> menuEntries,
-			 JMenu menu, String res, String resPath) {
-		// Add menu items reflecting the files, i. e. the actual templates (typically on)
-		final boolean showFiles = true;
-		// Reflect tha dicetory structure within the menu
-		final boolean showFolders = false;
-		// The language of the template will be added the name (requires ShowFiles)
-		final boolean appendLang = true;
-		// Indicates that the language should be switched on template selection
-		final boolean switchLang = true;
-		// Show file name instead of stripped version
-		final boolean showFileName = false;
-
-		int checkSubdir = res.indexOf("/");
-		if (checkSubdir >= 0) {
-			// if it is a subdirectory, get the directory name
-			String name = res.substring(0, checkSubdir);
-			res = res.substring(checkSubdir + 1); // cut off the slash for next level
-
-			// remember the current level
-			resPath = resPath + name + "/";
-
-			if (showFolders) {
-				// create a new sub menu if not already there
-				JMenu subMenu = menuEntries.get(resPath);
-				if (subMenu == null) {
-					subMenu = new JMenu(name);
-					menuEntries.put(resPath, subMenu);
-					menu.add(subMenu);
-				}
-				menu = subMenu;
-			}
-
-			// recursively go througn the path
-			reflectDirStructInMenu(menuEntries, menu, res, resPath);
-		} else {
-			// res in now the file name and resPath is the path to it
-
-			if (showFiles) {
-				String name = res;
-				if (!showFileName) {
-					// replace uder scores with spaces
-					name = name.replace("_", " ");
-					// remove file extension, if any present
-					int dot = name.lastIndexOf(".");
-					if (dot >= 0)
-						name = name.substring(0, dot);
-				}
-
-				// Get sub folder name, which should
-				// represent language
-				String subFolderName = "";
-				int slash = resPath.indexOf("/");
-				if (slash >= 0) {
-					subFolderName = resPath.substring(0, slash);
-				}
-
-				// Try to mach sub folder name to
-				// available languges
-				Languages.Language templateLang = null;
-				for (final Languages.Language l : availableLanguages) {
-					// compare first sub folder (if any) to known
-					// languge names
-					if (l.menuLabel.equalsIgnoreCase(subFolderName)) {
-						templateLang = l;
-						break;
-					}
-				}
-
-				// if enabled, add laguge desription to label
-				if (appendLang) {
-					if (templateLang != null) {
-						name += " [" + templateLang.menuLabel + "]";
-					} else {
-						name += " [unknown]";
-					}
-				}
-
-				JMenuItem item = new JMenuItem(name);
-				menu.add(item);
-
-				// create final properties for inner class
-				final String resource = templateFolder + resPath + res;
-				final Languages.Language linkedLang = templateLang;
-
-				// add inner action listener class for item
-				item.addActionListener(new ActionListener() {
-					public void actionPerformed(ActionEvent e) {
-						// A template menu item opens a corresponding
-						// template file.
-						loadTemplate(resource, linkedLang, switchLang);
-					}});
-			}
-		}
-	}
-
-	/**
-	 * Loads a template file from the given resource out of the jar file and
-	 * optionally switches the langunge.
+	 * Loads a template file from the given resource
 	 *
-	 * @param resource The resource to load.
-	 * @param lang The language to optionally switch to or null
-	 * @param switchLang Whether the language should be switched or not.
+	 * @param url The resource to load.
 	 */
-	public void loadTemplate(String resource, Languages.Language lang, boolean switchLang) {
+	public void loadTemplate(String url) {
 		createNewDocument();
 
 		try {
 			// Load the template
-			InputStream is = Script_Editor.class.getClassLoader().getResourceAsStream(resource);
-			getTextArea().read(new BufferedReader(
-				new InputStreamReader(is)),
-				null);
+			InputStream in = new URL(url).openStream();
+			getTextArea().read(new BufferedReader(new InputStreamReader(in)), null);
 
-			// Switch the language
-			if (switchLang && lang != null) {
-				setLanguage(lang);
+			int dot = url.lastIndexOf('.');
+			if (dot > 0) {
+				Languages.Language language = Languages.get(url.substring(dot));
+				if (language != null)
+					setLanguage(language);
 			}
-		} catch (Exception ex) {
-			ex.printStackTrace();
-			error("The template '" + resource + "' was not found.");
-			return;
+		} catch (Exception e) {
+			e.printStackTrace();
+			error("The template '" + url + "' was not found.");
 		}
 	}
 
@@ -665,8 +551,12 @@ public class TextEditor extends JFrame implements ActionListener,
 			makeJar(true);
 		else if (source == compileAndRun)
 			runText();
+		else if (source == compile)
+			compile();
 		else if (source == runSelection)
 			runText(true);
+		else if (source == installMacro)
+			installMacro();
 		else if (source == nextError)
 			new Thread() {
 				public void run() {
@@ -765,6 +655,12 @@ public class TextEditor extends JFrame implements ActionListener,
 				error("Could not open source for class " + className);
 			}
 		}
+		else if (source == openSourceForMenuItem)
+			new OpenSourceForMenuItem().run(null);
+		else if (source == showDiff)
+			new FileFunctions(this).showDiff(getEditorPane().file);
+		else if (source == commit)
+			new FileFunctions(this).commit(getEditorPane().file);
 		else if (source == newPlugin)
 			new FileFunctions(this).newPlugin();
 		else if (source == nextTab)
@@ -880,6 +776,28 @@ public class TextEditor extends JFrame implements ActionListener,
 	}
 
 	public void open(String path) {
+		if (path != null && path.startsWith("class:")) try {
+			path = new FileFunctions(this).getSourcePath(path.substring(6));
+			if (path == null)
+				return;
+		} catch (ClassNotFoundException e) {
+			error("Could not find " + path);
+		}
+
+		/*
+		 * We need to remove RSyntaxTextArea's cached key, input and
+		 * action map if there is even the slightest chance that a new
+		 * TextArea is instantiated from a different class loader than
+		 * the map's actions.
+		 *
+		 * Otherwise the instanceof check will pretend that the new text
+		 * area is not an instance of RTextArea, and as a consequence,
+		 * no keyboard input will be possible.
+		 */
+		JTextComponent.removeKeymap("RTextAreaKeymap");
+		UIManager.put("RSyntaxTextAreaUI.actionMap", null);
+		UIManager.put("RSyntaxTextAreaUI.inputMap", null);
+
 		try {
 			boolean wasNew =
 				editorPane != null && editorPane.isNew();
@@ -1105,6 +1023,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		compileAndRun.setEnabled(language.isRunnable());
 		runSelection.setEnabled(language.isRunnable() &&
 				!language.isCompileable());
+		compile.setEnabled(language.isCompileable());
 		debug.setEnabled(language.isDebuggable());
 		makeJarWithSource.setEnabled(language.isCompileable());
 
@@ -1112,6 +1031,12 @@ public class TextEditor extends JFrame implements ActionListener,
 		addImport.setEnabled(isJava);
 		removeUnusedImports.setEnabled(isJava);
 		sortImports.setEnabled(isJava);
+
+		boolean isMacro = language.menuLabel.equals("ImageJ Macro");
+		installMacro.setEnabled(isMacro);
+
+		boolean isInGit = new FileFunctions(this).getGitDirectory(getEditorPane().file) != null;
+		gitMenu.setVisible(isInGit);
 	}
 
 	public void setFileName(String baseName) {
@@ -1365,6 +1290,28 @@ public class TextEditor extends JFrame implements ActionListener,
 		};
 	}
 
+	public void compile() {
+		if (!handleUnsavedChanges())
+			return;
+
+		final RefreshScripts interpreter = getCurrentLanguage().interpreter;
+		final JTextAreaOutputStream output = new JTextAreaOutputStream(screen);
+		interpreter.setOutputStreams(output, output);
+		if (interpreter instanceof Refresh_Javas) {
+			final Refresh_Javas java = (Refresh_Javas)interpreter;
+			final File file = getEditorPane().file;
+			final String sourcePath = file.getAbsolutePath();
+			markCompileStart();
+			new Thread() {
+				public void run() {
+					java.compileAndRun(sourcePath, true);
+					screen.insert("Compilation finished.\n", screen.getDocument().getLength());
+					markCompileEnd();
+				}
+			}.start();
+		}
+	}
+
 	public String getSelectedTextOrAsk(String label) {
 		String selection = getTextArea().getSelectedText();
 		if (selection == null) {
@@ -1397,6 +1344,10 @@ public class TextEditor extends JFrame implements ActionListener,
 		if (errorHandler == null)
 			errorHandler = new ErrorHandler(getCurrentLanguage(),
 				screen, compileStartPosition.getOffset());
+	}
+
+	public void installMacro() {
+		new MacroFunctions().installMacro(getTitle(), getEditorPane().getText());
 	}
 
 	public boolean nextError(boolean forward) {
@@ -1458,7 +1409,9 @@ public class TextEditor extends JFrame implements ActionListener,
 
 	boolean editorPaneContainsFile(EditorPane editorPane, File file) {
 		try {
-			return file.getCanonicalFile()
+			return file != null && editorPane != null &&
+				editorPane.file != null &&
+				file.getCanonicalFile()
 				.equals(editorPane.file.getCanonicalFile());
 		} catch (IOException e) {
 			return false;

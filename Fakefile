@@ -74,10 +74,10 @@ precompiledDirectory=precompiled/
 
 buildDir=build/
 
-FIJI_JAVA_HOME(linux)=java/linux/jdk1.6.0_16/jre
-FIJI_JAVA_HOME(linux64)=java/linux-amd64/jdk1.6.0_16/jre
-FIJI_JAVA_HOME(win32)=java/win32/jdk1.6.0_16/jre
-FIJI_JAVA_HOME(win64)=java/win64/jdk1.6.0_16/jre
+FIJI_JAVA_HOME(linux)=java/linux/jdk1.6.0_20/jre
+FIJI_JAVA_HOME(linux64)=java/linux-amd64/jdk1.6.0_20/jre
+FIJI_JAVA_HOME(win32)=java/win32/jdk1.6.0_20/jre
+FIJI_JAVA_HOME(win64)=java/win64/jdk1.6.0_20/jre
 FIJI_JAVA_HOME(macosx)=java/macosx-java3d
 JAVA_HOME=$FIJI_JAVA_HOME
 ENVOVERRIDES(JAVA_HOME)=true
@@ -91,7 +91,6 @@ SUBMODULE_TARGETS=\
 	plugins/TrakEM2_.jar \
 	plugins/mpicbg_.jar \
 	jars/clojure.jar \
-	jars/clojure-contrib.jar \
 	plugins/ij-ImageIO_.jar \
 	jars/jacl.jar \
 	jars/batik.jar \
@@ -168,6 +167,8 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/VIB_.jar \
 	plugins/Anisotropic_Diffusion_2D.jar \
 	plugins/Simple_Neurite_Tracer.jar \
+	plugins/SPIM_Registration.jar \
+	plugins/QuickPALM_.jar \
 	plugins/3D_Viewer.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS third-party-plugins
@@ -198,7 +199,6 @@ jars/mpicbg.jar <- mpicbg/
 CLASSPATH(jars/imglib.jar)=jars/mpicbg.jar
 jars/imglib.jar <- imglib/
 jars/clojure.jar <- clojure/
-jars/clojure-contrib.jar <- jars/clojure.jar clojure-contrib/
 plugins/loci_tools.jar <- bio-formats/
 CLASSPATH(jars/VectorString.jar)=jars/Jama-1.0.2.jar
 jars/VectorString.jar <- TrakEM2/
@@ -210,7 +210,7 @@ jars/batik.jar <- batik/
 jars/junit-4.5.jar <- junit/
 jars/rsyntaxtextarea.jar <- RSyntaxTextArea/
 jars/autocomplete.jar <- AutoComplete/
-jars/weka.jar <- weka/
+jars/weka.jar <- jars/Fiji.jar weka/
 jars/jython.jar <- jython/
 
 # From source
@@ -228,13 +228,13 @@ MAINCLASS(jars/javac.jar)=com.sun.tools.javac.Main
 CLASSPATH(jars/fiji-scripting.jar)=jars/jython.jar:jars/Fiji.jar
 CLASSPATH(plugins/Refresh_Javas.jar)=jars/fiji-scripting.jar:jars/fake.jar:jars/Fiji.jar
 CLASSPATH(plugins/Jython_Interpreter.jar)=jars/fiji-scripting.jar:jars/jython.jar
-CLASSPATH(plugins/Clojure_Interpreter.jar)=jars/fiji-scripting.jar:jars/clojure.jar:jars/clojure-contrib.jar
+CLASSPATH(plugins/Clojure_Interpreter.jar)=jars/fiji-scripting.jar:jars/clojure.jar
 CLASSPATH(plugins/JRuby_Interpreter.jar)=jars/fiji-scripting.jar
 CLASSPATH(plugins/BeanShell_Interpreter.jar)=jars/fiji-scripting.jar
 CLASSPATH(plugins/Javascript_.jar)=jars/fiji-scripting.jar
 CLASSPATH(plugins/CLI_.jar)=jars/fiji-scripting.jar
 MAINCLASS(plugins/Script_Editor.jar)=fiji.scripting.Script_Editor
-CLASSPATH(plugins/Script_Editor.jar)=jars/rsyntaxtextarea.jar:jars/autocomplete.jar:plugins/Clojure_Interpreter.jar:plugins/JRuby_Interpreter.jar:plugins/Javascript_.jar:plugins/Jython_Interpreter.jar:plugins/Refresh_Javas.jar:plugins/BeanShell_Interpreter.jar:plugins/CLI_.jar:jars/fiji-scripting.jar:jars/Fiji.jar:jars/imglib.jar:$JAVA_HOME/../lib/tools.jar
+CLASSPATH(plugins/Script_Editor.jar)=jars/rsyntaxtextarea.jar:jars/autocomplete.jar:plugins/Clojure_Interpreter.jar:plugins/JRuby_Interpreter.jar:plugins/Javascript_.jar:plugins/Jython_Interpreter.jar:plugins/Refresh_Javas.jar:plugins/BeanShell_Interpreter.jar:plugins/CLI_.jar:jars/fiji-scripting.jar:jars/Fiji.jar:jars/imglib.jar:jars/fiji-lib.jar:$JAVA_HOME/../lib/tools.jar
 NO_COMPILE(plugins/Script_Editor.jar)=src-plugins/Script_Editor/templates/**/*
 src-plugins/Script_Editor/icon.png[cp $PRE $TARGET] <- images/icon.png
 src-plugins/Script_Editor/var.png[cp $PRE $TARGET] <- images/var.png
@@ -255,7 +255,7 @@ CLASSPATH(plugins/LSM_Toolbox.jar)=plugins/LSM_Reader.jar
 MAINCLASS(plugins/LSM_Toolbox.jar)=org.imagearchive.lsm.toolbox.gui.AboutDialog
 MAINCLASS(plugins/Interactive_3D_Surface_Plot.jar)=Interactive_3D_Surface_Plot
 CLASSPATH(plugins/Stitching_.jar)=plugins/loci_tools.jar:jars/fiji-lib.jar
-CLASSPATH(plugins/Fiji_Plugins.jar)=jars/jsch-0.1.37.jar
+CLASSPATH(plugins/Fiji_Plugins.jar)=jars/jsch-0.1.37.jar:jars/fiji-lib.jar
 MAINCLASS(plugins/Fiji_Updater.jar)=fiji.updater.Main
 CLASSPATH(plugins/Fiji_Updater.jar)=jars/jsch-0.1.37.jar
 CLASSPATH(plugins/IO_.jar)=jars/batik.jar
@@ -267,6 +267,7 @@ CLASSPATH(jars/VIB-lib.jar)=jars/Jama-1.0.2.jar:jars/junit-4.5.jar:jars/pal-opti
 CLASSPATH(plugins/Simple_Neurite_Tracer.jar)=jars/VIB-lib.jar:plugins/VIB_.jar:jars/pal-optimization.jar:jars/junit-4.5.jar:plugins/3D_Viewer.jar
 CLASSPATH(plugins/3D_Viewer.jar)=jars/VIB-lib.jar:jars/imglib.jar:jars/Jama-1.0.2.jar
 CLASSPATH(jars/jep.jar)=jars/Jama-1.0.2.jar:jars/junit-4.5.jar
+CLASSPATH(plugins/SPIM_Registration.jar)=jars/imglib.jar:jars/mpicbg.jar:plugins/3D_Viewer.jar:jars/weka.jar:jars/fiji-lib.jar:plugins/loci_tools.jar:plugins/Fiji_Plugins.jar
 
 # pre-Java5 generics ;-)
 
@@ -330,6 +331,10 @@ LIBS(macosx)=-framework CoreFoundation -framework JavaVM
 
 fiji <- fiji.c
 
+CFLAGS(fiji-macosx)=$CFLAGS $MACOPTS(osx10.5)
+LDFLAGS(fiji-macosx)=$LDFLAGS $MACOPTS(osx10.5)
+fiji-macosx <- fiji.c
+
 CFLAGS(fiji-tiger)=$CFLAGS $MACOPTS(osx10.4)
 LDFLAGS(fiji-tiger)=$LDFLAGS $MACOPTS(osx10.4)
 fiji-tiger <- fiji.c
@@ -359,6 +364,7 @@ LAUNCHER(osx10.5)=precompiled/fiji-macosx precompiled/fiji-tiger
 precompile-fiji[] <- $LAUNCHER
 
 precompiled/fiji-tiger[bin/copy-file.py $PRE $TARGET] <- fiji-tiger
+precompiled/fiji-macosx[bin/copy-file.py $PRE $TARGET] <- fiji-macosx
 # this rule only matches precompiled/fiji-$PLATFORM
 precompiled/fiji-*[bin/copy-file.py $PRE $TARGET] <- fiji
 
@@ -376,7 +382,6 @@ precompile-submodules[] <- \
 	precompiled/mpicbg_.jar \
 	precompiled/mpicbg.jar \
 	precompiled/clojure.jar \
-	precompiled/clojure-contrib.jar \
 	precompiled/ij-ImageIO_.jar \
 	precompiled/jacl.jar \
 	precompiled/batik.jar \
@@ -389,7 +394,6 @@ precompile-submodules[] <- \
 
 precompiled/ij.jar <- jars/ij.jar
 precompiled/clojure.jar <- jars/clojure.jar
-precompiled/clojure-contrib.jar <- jars/clojure.jar jars/clojure-contrib.jar
 precompiled/jacl.jar <- jars/jacl.jar
 precompiled/batik.jar <- jars/batik.jar
 precompiled/junit-4.5.jar <- jars/junit-4.5.jar
@@ -405,7 +409,7 @@ precompile[] <- precompile-fiji precompile-fake precompile-submodules
 # precompiled fall back
 
 missingPrecompiledFallBack[./fiji --jar plugins/Fiji_Updater.jar --update $TARGET] <- \
-	misc/Fiji.jar plugins/Fiji_Updater.jar
+	jars/Fiji.jar plugins/Fiji_Updater.jar
 
 # Portable application/.app
 

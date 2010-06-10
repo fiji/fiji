@@ -19,7 +19,7 @@
 
   In addition, as a special exception, the copyright holders give
   you permission to combine this program with free software programs or
-  libraries that are released under the Apache Public License. 
+  libraries that are released under the Apache Public License.
 
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
@@ -449,7 +449,7 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer
 			if( macroTracesFilename != null ) {
 				tracesFileToLoad = new File( macroTracesFilename );
 				if( tracesFileToLoad.exists() )
-					pathAndFillManager.load( tracesFileToLoad.getAbsolutePath() );
+					pathAndFillManager.loadGuessingType( tracesFileToLoad.getAbsolutePath() );
 				else
 					IJ.error("The traces file suggested by the macro parameters ("+macroTracesFilename+") does not exist");
 			}

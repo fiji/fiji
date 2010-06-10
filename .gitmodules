@@ -55,9 +55,6 @@
 [submodule "live-helper"]
 	path = live-helper
 	url = git://git.debian.net/git/debian-live/live-helper.git
-[submodule "clojure-contrib"]
-	path = clojure-contrib
-	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/clojure-contrib/
 [submodule "weka"]
 	path = weka
 	url = ssh://contrib@pacific.mpi-cbg.de/srv/git/weka/

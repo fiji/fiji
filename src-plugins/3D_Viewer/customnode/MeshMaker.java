@@ -124,7 +124,7 @@ public class MeshMaker {
 
 	static public List createTube(final double[] x, final double[] y, final double[] z,
 			              final double[] r, final int parallels, final boolean do_resample) {
-		return Pipe.generateTriangles(Pipe.makeTube(x, y, z, r, 1, parallels, do_resample), 1);
+		return Pipe.generateTriangles(Pipe.makeTube(x, y, z, r, 1, parallels, do_resample, null, null, null), 1, null, null);
 	}
 
 	static public List createDisc(double x, double y, double z,

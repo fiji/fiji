@@ -40,6 +40,12 @@ esac
 test -z "$JAVA_HOME" &&
 JAVA_HOME="$("$CWD"/precompiled/fiji-"$platform" --print-java-home)"
 
+if test ! -d "$JAVA_HOME"
+then
+	JAVA_HOME="$CWD"/java/$java_submodule
+	JAVA_HOME="$JAVA_HOME"/"$(ls -t "$JAVA_HOME" | head -n 1)"
+fi
+
 # need to clone java submodule
 test -f "$JAVA_HOME/lib/tools.jar" || test -f "$JAVA_HOME/../lib/tools.jar" ||
 test -f java/"$java_submodule"/Home/lib/ext/vecmath.jar || {

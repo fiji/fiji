@@ -144,4 +144,14 @@ public class CheckClassVersions {
 		}
 		data.close();
 	}
+
+	public static float getClassVersion(InputStream stream) throws IOException {
+		DataInputStream data = new DataInputStream(stream);
+		if (data.readInt() != 0xcafebabe)
+			throw new RuntimeException("Not a class!");
+		int minor = data.readShort() & 0xffff;
+		int major = data.readShort() & 0xffff;
+		data.close();
+		return major + minor / 100000.0f;
+	}
 }
