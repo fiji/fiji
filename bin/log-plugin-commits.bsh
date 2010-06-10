@@ -52,6 +52,7 @@ usage(message) {
 
 fuzz = 0;
 verbose = 0;
+gui = false;
 extraArgs = new ArrayList();
 
 while (bsh.args.length > 0 && bsh.args[0].startsWith("-")) {
@@ -71,6 +72,8 @@ while (bsh.args.length > 0 && bsh.args[0].startsWith("-")) {
 	}
 	else if (bsh.args[0].equals("-v") || bsh.args[0].equals("--verbose"))
 		verbose++;
+	else if (bsh.args[0].equals("--gui"))
+		gui = true;
 	else
 		usage("Unknown option: '" + bsh.args[0] + "'");
 
@@ -278,6 +281,11 @@ calendar = Calendar.getInstance();
 dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
 for (String arg : bsh.args) {
+	if (gui) {
+		import fiji.scripting.FileFunctions;
+		new FileFunctions(null).showPluginChangesSinceUpload(arg, verbose);
+		continue;
+	}
 	plugin = arg;
 	if (plugin.startsWith("precompiled/"))
 		plugin = plugin.substring(12);
