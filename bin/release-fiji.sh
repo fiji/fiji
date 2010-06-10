@@ -182,12 +182,12 @@ do
 	win*)
 		launcher="$launcher.exe";;
 	esac
-	verify_archives $a "$launcher $java "
+	verify_archives $a "$launcher jars/fiji-lib.jar $java "
 done
 
-verify_archives nojre "Contents/MacOS/fiji-macosx Contents/MacOS/fiji-tiger fiji-linux fiji-linux64 fiji-win32.exe fiji-win64.exe "
+verify_archives nojre "Contents/MacOS/fiji-macosx Contents/MacOS/fiji-tiger fiji-linux fiji-linux64 fiji-win32.exe fiji-win64.exe jars/fiji-lib.jar "
 
-verify_archives all "Contents/MacOS/fiji-macosx Contents/MacOS/fiji-tiger fiji-linux fiji-linux64 fiji-win32.exe fiji-win64.exe java/linux java/linux-amd64 java/macosx-java3d java/win32 java/win64 "
+verify_archives all "Contents/MacOS/fiji-macosx Contents/MacOS/fiji-tiger fiji-linux fiji-linux64 fiji-win32.exe fiji-win64.exe jars/fiji-lib.jar java/linux java/linux-amd64 java/macosx-java3d java/win32 java/win64 "
 
 if test $errorcount -gt 0
 then
