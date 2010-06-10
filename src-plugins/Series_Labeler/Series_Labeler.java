@@ -1,18 +1,16 @@
 /**
- * This plugin is a merge of the Time_Stamper plugins from ImageJ
- * and from Tony Collins' plugin collection at macbiophotonics.
- * It aims to combine all the functionality of both plugins and
- * refine and enhance their functionality for instance by adding
- * the preview functionality suggested by Michael Weber.
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * It currently does not know about hyper stacks - multiple
- * channels... (i.e. only works as expected for normal stacks).
- * That means a single channel time series or z stack.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
  *
- * We might want to rename this tool "Series Labeler", since it
- * will handle labeling of Z stacks as well as time stacks, as
- * well as any other series of images contained in an imageJ
- * stack. Spectral series, etc.
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * The sequence of calls to an ExtendedPlugInFilter is the
  * following:
@@ -33,35 +31,14 @@
  *  - setup("final", imp): called only if flag FINAL_PROCESSING
  *    has been specified. Flag DONE stops this sequence of calls.
  *
- * We are using javas calendar for formatting the time stamps for
- * "digital" style, but this has limitations, as you can't count
- * over 59 min and the zero date is 01 01 1970, not zero.
- *
- * Here is a list (in no particular order) of requested and "would
- * be nice" features that could be added:
- *  - prevent longest label running off sides and top/bottom of
- *     image (done)
- *  - choose colour (done. uses imageJ builtin color chooser)
- *  - font selection (done, uses imageJ builtin font chooser
- *  - top left, bottom right etc.  drop down menu (done)
+ * "Missing" features list:
  *  - Hyperstacks z, t, c
- *  - read correct time / z units, start and intervals from image
- *    metadata. Get it from Image Properties?
- *  - every nth slice labelled (done)
- *  - label only slices where time became greater than multiples
- *     of some time eg every 5 min.
- *  - preview with live update when change GUI -ok, changes in
- *    GUI are read into the preview.
- *  - preview with stack slider in the GUI. - ok
- *  - Use Java Date for robust formatting of dates/times counted
- *    in milliseconds. (done, added hybrid date form at for
- *    versatile formatting of the digital time)
- *  - switch unit according to magnitude of number eg sec or min
- *    or nm or microns etc.
- *  - background colour for label (done)
- *
+ *  - Macro Recording Support - does not work because GUI generic
+ *   dialog is the non modal version.
+ * 
  * Dan White MPI-CBG , began hacking on 15.04.09. Work continued
- * from 02-2010 by Tomka and Dan
+ * from 02-2010 by Tom Kazimiers and Dan White.
+ * Pushed to Fiji contrib on 10 June 2010
  */
 
 import ij.IJ;
@@ -116,9 +93,23 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.event.DocumentListener;
 
+/**
+ * This plugin is inspired by the Time_Stamper plugins from ImageJ
+ * and from Tony Collins' plugin collection at macbiophotonics.
+ * It aims to combine all the functionality of both plugins and
+ * refine and enhance the functionality for instance by adding
+ * the preview functionality suggested by Michael Weber.
+ * Series Labeler is not a drop in replacement for Time Stamper,
+ * since it does not do hyperstacks or macro recording. 
+ *
+ * Series Labeler handles any kind of stack, t, z 
+ * or c (eg spectral series).
+ * @author Dan White and Tom Kazimiers
+ */
 public class Series_Labeler implements ExtendedPlugInFilter,
 		DialogListener, ImageListener {
 
+	// the image we are working on
 	ImagePlus imp;
 	// the distance from left of image in px to put the label. 
 	int x = 2;
@@ -126,10 +117,10 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	int y = 15;
 	// the font to draw the text with
 	Font font;
+	// the start time for the first frame 
 	double start = 1.0;
 	// the interval between two frames
 	double interval = 1.0;
-	double lastTime;
 	// the custom suffix, used if format supports it
 	String customSuffix = "";
 	/* the suffix to append to the label, used if
@@ -215,10 +206,6 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			"parsec", "light year"}, "Wavelength", false,
 			false),
 		new CustomLabelFormat() };
-
-	// the available kinds of stack we can label. 
-	//final String[] stackTypes = { "z-stack",
-	//	"time series or movie" }; //, "spectral series" };
 	
 	// the different types of stacks
 	final StackType[] stackTypes = {
@@ -669,7 +656,8 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		return createTextFieldPanel(labelText, defaultText, 100, 100);
 	}
 	
-	/* Generates gd awt string fields for use in a
+	/**
+	 * Generates gd awt string fields for use in a
 	 * different container later
 	 */
 	private JPanel createTextFieldPanel(String labelText,
@@ -702,7 +690,8 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		return createNumericFieldPanel(labelText, defaultValue, digits, 100, 100); 
 	}
 	
-	/* Generates gd awt numeric fields for use in a
+	/**
+	 * Generates gd awt numeric fields for use in a
 	 * different container later
 	 */
 	private JPanel createNumericFieldPanel(String labelText, double defaultValue, int digits, int labelWidth, int textFieldWidth) {
@@ -1008,7 +997,6 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 	/**
 	 * Creates a string array out of the names of the available formats.
 	 */
-
 	private String[] convertStackTypesToStrings(StackType[] types) {
 		String[] typeArray = new String[types.length];
 		int i = 0;
@@ -1564,4 +1552,3 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		
 	}
 } // thats the end of Series_Labeler
-
