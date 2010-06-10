@@ -1755,7 +1755,7 @@ public class Trainable_Segmentation implements PlugIn
 		
 		// Update list of names of loaded classes
 		loadedClassNames = new ArrayList<String>();
-		
+	
 		int j = 0;
 		while(classValues.hasMoreElements())
 		{
@@ -1781,8 +1781,8 @@ public class Trainable_Segmentation implements PlugIn
 			loadedTrainingData = null;
 			return false;
 		}
-		
-		IJ.log("Loaded data: " + loadedTrainingData.numInstances() + " instances, " + wholeImageData.numAttributes() + " attributes.");
+
+		IJ.log("Loaded data: " + loadedTrainingData.numInstances() + " instances, " + loadedTrainingData.numAttributes() + " attributes.");
 		
 		boolean featuresChanged = false;
 		final boolean[] oldEnableFeatures = this.featureStack.getEnableFeatures();
