@@ -52,6 +52,7 @@ checkout_and_build='
 		esac &&
 		test -z "$(ls $d/)" || break;
 	 done &&
+	 export VERSIONER_PERL_PREFER_32_BIT=yes &&
 	 ./bin/nightly-build.sh --stdout &&
 	 echo "Work around a Heisenbug" &&
 	 unzip plugins/loci_tools.jar META-INF/MANIFEST.MF &&
