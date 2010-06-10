@@ -284,7 +284,7 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		 */
 		selectedFormat = selectedStackType.getSupportedFormats()[0];
 		
-		imp.addImageListener(this);
+		ImagePlus.addImageListener(this);
 
 		// return supported flags
 		return flags;
@@ -489,7 +489,10 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 			updateUI();
 		}
 		gd.showDialog(); // shows the dialog GUI!
-
+		
+		// detach listener
+		ImagePlus.removeImageListener(this);
+		
 		// handle the plug-in cancel button being pressed.
 		if (gd.wasCanceled()){
 			// remove the preview overlay when cancel is clicked
@@ -502,9 +505,6 @@ public class Series_Labeler implements ExtendedPlugInFilter,
 		 * as its not the last as used by preview
 		 */
 		preview = !gd.wasOKed();
-		
-		// detach listener
-		imp.removeImageListener(this);
 
 		/* extendedpluginfilter showDialog method should
 		 * return a combination (bitwise OR) of the flags specified in
