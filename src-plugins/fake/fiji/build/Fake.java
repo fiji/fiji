@@ -1395,6 +1395,10 @@ public class Fake {
 			}
 
 			void action(String directory) throws FakeException {
+				action(directory, jarName);
+			}
+
+			void action(String directory, String subTarget) throws FakeException {
 				fakeOrMake(cwd, directory,
 					getVarBool("VERBOSE", directory),
 					getVarBool("IGNOREMISSINGFAKEFILES",
@@ -1404,7 +1408,7 @@ public class Fake {
 					getVar("PLUGINSCONFIGDIRECTORY")
 						+ "/" + baseName + ".Fakefile",
 					getBuildDir(),
-					jarName);
+					subTarget);
 			}
 
 			String getVarPath(String variable, String subkey) {
@@ -1425,16 +1429,14 @@ public class Fake {
 			}
 
 			protected void clean(boolean dry_run) {
-				File buildDir = getBuildDir();
-				if (buildDir == null) {
-					super.clean(dry_run);
-					return;
+				super.clean(dry_run);
+				clean(getLastPrerequisite() + jarName, dry_run);
+				if (new File(makePath(cwd, getLastPrerequisite()), "Fakefile").exists()) try {
+					action(getLastPrerequisite(), jarName + "-clean"
+						+ (dry_run ? "-dry-run" : ""));
+				} catch (FakeException e) {
+					e.printStackTrace(err);
 				}
-				if (dry_run)
-					out.println("rm -rf "
-							+ buildDir.getPath());
-				else if (buildDir.exists())
-					deleteRecursively(buildDir);
 			}
 		}
 
