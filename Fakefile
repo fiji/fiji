@@ -196,7 +196,7 @@ CLASSPATH(plugins/mpicbg_.jar)=jars/mpicbg.jar
 plugins/mpicbg_.jar <- mpicbg/
 jars/mpicbg.jar <- mpicbg/
 CLASSPATH(jars/imglib.jar)=jars/mpicbg.jar
-jars/imglib.jar <- imglib/
+jars/imglib.jar <- plugins/loci_tools.jar imglib/
 jars/clojure.jar <- clojure/
 plugins/loci_tools.jar <- bio-formats/
 CLASSPATH(jars/VectorString.jar)=jars/Jama-1.0.2.jar
