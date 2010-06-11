@@ -1057,7 +1057,7 @@ public class Trainable_Segmentation implements PlugIn
 		if(updateWholeData)
 		{
 			updateTestSet();
-			IJ.log("Test dataset updated ("+ wholeImageData.numInstances() + " instances)");
+			IJ.log("Test dataset updated ("+ wholeImageData.numInstances() + " instances, " + wholeImageData.numAttributes() + " attributes).");
 		}
 
 		IJ.log("Classifying whole image...");
@@ -1375,6 +1375,8 @@ public class Trainable_Segmentation implements PlugIn
 		
 		final Instances testData = testImageFeatures.createInstances(classNames);
 		testData.setClassIndex(testData.numAttributes() - 1);
+		
+		//IJ.log("Test data: " + testData.numInstances() + " instances, " + testData.numAttributes() + " attributes");
 
 		final ImagePlus testClassImage = applyClassifier(testData, testImage.getWidth(), testImage.getHeight());
 		testClassImage.setTitle("classified_" + testImage.getTitle());
@@ -1753,7 +1755,7 @@ public class Trainable_Segmentation implements PlugIn
 		
 		// Update list of names of loaded classes
 		loadedClassNames = new ArrayList<String>();
-		
+	
 		int j = 0;
 		while(classValues.hasMoreElements())
 		{
@@ -1779,8 +1781,8 @@ public class Trainable_Segmentation implements PlugIn
 			loadedTrainingData = null;
 			return false;
 		}
-		
-		IJ.log("Loaded data: " + loadedTrainingData.numInstances() + " instances");
+
+		IJ.log("Loaded data: " + loadedTrainingData.numInstances() + " instances, " + loadedTrainingData.numAttributes() + " attributes.");
 		
 		boolean featuresChanged = false;
 		final boolean[] oldEnableFeatures = this.featureStack.getEnableFeatures();

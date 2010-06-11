@@ -439,7 +439,7 @@ public class FeatureStack
 		wholeStack.addSlice("original", originalImage.getProcessor().duplicate());
 
 		int counter = 1;
-		for (float i=1.0f; i<= FeatureStack.MAX_SIGMA; i*=2)
+		for (float i=1.0f; i < FeatureStack.MAX_SIGMA; i*=2)
 		{
 			// Gaussian blur
 			if(enableFeatures[GAUSSIAN])

@@ -438,6 +438,32 @@ public class Fake {
 				}
 			}
 
+			// add <name>-clean rules
+			List newSpecials = new ArrayList();
+			Iterator iter = allRules.keySet().iterator();
+			while (iter.hasNext()) {
+				final String key = (String)iter.next();
+				final Rule rule = getRule(key);
+				if (key.endsWith("-clean") ||
+						key.endsWith("-clean-dry-run") ||
+						(rule instanceof Special))
+					continue;
+				final String cleanKey = key + "-clean";
+				// avoid concurrent modification
+				if (!allRules.containsKey(cleanKey))
+					newSpecials.add(new Special(cleanKey) {
+						void action() { rule.clean(false); }
+					});
+				final String dryRunCleanKey = cleanKey + "-dry-run";
+				if (!allRules.containsKey(dryRunCleanKey))
+					newSpecials.add(new Special(dryRunCleanKey) {
+						void action() { rule.clean(true); }
+					});
+			}
+			iter = newSpecials.iterator();
+			while (iter.hasNext())
+				addSpecialRule((Special)iter.next());
+
 			lineNumber = -1;
 
 			result = allRule;
@@ -1369,6 +1395,10 @@ public class Fake {
 			}
 
 			void action(String directory) throws FakeException {
+				action(directory, jarName);
+			}
+
+			void action(String directory, String subTarget) throws FakeException {
 				fakeOrMake(cwd, directory,
 					getVarBool("VERBOSE", directory),
 					getVarBool("IGNOREMISSINGFAKEFILES",
@@ -1378,7 +1408,7 @@ public class Fake {
 					getVar("PLUGINSCONFIGDIRECTORY")
 						+ "/" + baseName + ".Fakefile",
 					getBuildDir(),
-					jarName);
+					subTarget);
 			}
 
 			String getVarPath(String variable, String subkey) {
@@ -1399,16 +1429,14 @@ public class Fake {
 			}
 
 			protected void clean(boolean dry_run) {
-				File buildDir = getBuildDir();
-				if (buildDir == null) {
-					super.clean(dry_run);
-					return;
+				super.clean(dry_run);
+				clean(getLastPrerequisite() + jarName, dry_run);
+				if (new File(makePath(cwd, getLastPrerequisite()), "Fakefile").exists()) try {
+					action(getLastPrerequisite(), jarName + "-clean"
+						+ (dry_run ? "-dry-run" : ""));
+				} catch (FakeException e) {
+					e.printStackTrace(err);
 				}
-				if (dry_run)
-					out.println("rm -rf "
-							+ buildDir.getPath());
-				else if (buildDir.exists())
-					deleteRecursively(buildDir);
 			}
 		}
 
