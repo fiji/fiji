@@ -89,7 +89,7 @@ import org.jfree.data.xy.XYSeriesCollection;
  * This plugin chops the image into
  * square pieces, and computes their Fourier power spectra. The later are
  * analyzed in polar coordinates, and the power is measured for each angle using
- * the spatial filters proposed in [1]
+ * the spatial filters proposed in [1].
  * 
  * <h3>Local gradient orientation</h3>
  * 
@@ -1381,7 +1381,8 @@ public class Directionality_ implements PlugIn {
 					for (int i = 0; i < big_hue_px.length; i++) {
 						if ((255*saturation_px[i]/max_norm) >= big_saturation_px[i]) {
 							big_saturation_px[i] = (255*saturation_px[i]/max_norm);
-							big_hue_px[i] = (float) ( 255 *  ( ( 1 + hue_px[i]/Math.PI ) % 1 ) ); 
+//							big_hue_px[i] = (float) ( 255 *  ( ( 1 + hue_px[i]/Math.PI ) % 1 ) ); 
+							big_hue_px[i] = (float) ( 255 *  ( ( 0.5 + hue_px[i]/Math.PI )  ) ); 
 						}
 					}
 				}
@@ -1427,7 +1428,7 @@ public class Directionality_ implements PlugIn {
 		for (int i=1; i<= nbins; i++) {
 			
 			pixels = new float[pad_size*pad_size];
-			theta_c = bins[i-1];
+			theta_c = bins[i-1]+Math.PI/2;
 			
 			for (int index = 0; index < pixels.length; index++) {
 
