@@ -133,7 +133,7 @@ public class XMLFileReader extends DefaultHandler {
 				current.setStatus(Status.NEW);
 				current.setAction(current.isForThisPlatform() ?
 					PluginObject.Action.INSTALL :
-					PluginObject.Action.NOT_INSTALLED);
+					PluginObject.Action.NEW);
 			}
 			plugins.add(current);
 			current = null;
