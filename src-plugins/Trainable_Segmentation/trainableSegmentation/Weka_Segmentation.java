@@ -26,6 +26,7 @@ import ij.IJ;
 import ij.ImageStack;
 import ij.plugin.PlugIn;
 
+import ij.process.Blitter;
 import ij.process.FloatPolygon;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
@@ -40,6 +41,8 @@ import ij.ImagePlus;
 import ij.WindowManager;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Vector;
@@ -102,7 +105,10 @@ import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import javax.vecmath.Point3f;
 
+import util.FindConnectedRegions;
+import util.FindConnectedRegions.Results;
 import weka.classifiers.AbstractClassifier;
 import weka.classifiers.pmml.consumer.PMMLClassifier;
 import weka.core.Attribute;
@@ -2973,6 +2979,231 @@ public class Weka_Segmentation implements PlugIn
 		for (int i = 0; i < enableFeatures.length; i++)
 			enableFeatures[i] = true;
 		this.featureStack.setEnableFeatures(enableFeatures);
+	}
+	
+	// BLOTC methods
+	
+	public ImagePlus simplePointWarp2d(
+			ImagePlus source,
+			ImagePlus target,
+			ImagePlus mask,
+			double binaryThreshold)
+	{
+		if(binaryThreshold < 0 || binaryThreshold > 1)
+			binaryThreshold = 0.5;
+		
+		final ImagePlus targetAux = new ImagePlus("target_real", target.getProcessor().duplicate());
+		final ImagePlus sourceReal = new ImagePlus("source_real", source.getProcessor().duplicate());
+		
+		// make sure source and target are binary images
+		//IJ.setThreshold(sourceReal, 0, 0);
+		final float[] sourceRealPix = (float[])sourceReal.getProcessor().getPixels();
+		for(int i =0; i < sourceRealPix.length; i++)
+			if(sourceRealPix[i] > 0)
+				sourceRealPix[i] = 1.0f;
+		//IJ.setThreshold(targetAux, 0, binaryThreshold);
+		final float[] targetAuxPix = (float[])targetAux.getProcessor().getPixels();
+		for(int i =0; i < targetAuxPix.length; i++)
+			targetAuxPix[i] = (targetAuxPix[i] > binaryThreshold) ? 1.0f : 0.0f;
+				
+		
+		int width = targetAux.getWidth();
+		int height = targetAux.getHeight();
+		
+		// Resize canvas
+		IJ.run(targetAux, "Canvas Size...", "width="+ (width + 2) + " height=" + (height + 2) + " position=Center zero");
+		IJ.run(sourceReal, "Canvas Size...", "width="+ (width + 2) + " height=" + (height + 2) + " position=Center zero");
+		
+		double diff = Double.MIN_VALUE;
+		double diff_before = 0;
+		
+		while(true)
+		{
+			ImageProcessor missclass_points_image = sourceReal.getProcessor().duplicate();
+			missclass_points_image.copyBits(targetAux.getProcessor(), 0, 0, Blitter.DIFFERENCE);  
+			
+			diff_before = diff;
+			
+			float pixels[] = (float[]) missclass_points_image.getPixels();
+			
+			diff = 0;
+			for(int k = 0; k < pixels.length; k++)
+				if(pixels[k] != 0)
+					diff ++;
+						
+			
+			IJ.log("Difference = " + diff);
+		
+			if(diff == diff_before || diff == 0)
+				break;
+			
+			final ArrayList<Point3f> mismatches = new ArrayList<Point3f>();
+			
+			for(int x = 1; x < width+1; x++)
+				for(int y = 1; y < height+1; y++)
+				{
+					if(missclass_points_image.get(x, y) != 0)
+						mismatches.add(new Point3f(x , y , target.getProcessor().get(x, y)));
+				}
+			// Sort mismatches by real value
+			Collections.sort(mismatches,  new Comparator<Point3f>() {
+			    public int compare(Point3f o1, Point3f o2) {
+			        return (int)(o2.z - o1.z);
+			    }});
+			
+			for(final Point3f p : mismatches)
+			{
+				final int x = (int) p.x;
+				final int y = (int) p.y;
+				
+
+				double[] val = new double[]{ sourceReal.getProcessor().get(x-1, y-1),
+						sourceReal.getProcessor().get(x  , y-1),
+						sourceReal.getProcessor().get(x+1, y-1),
+						sourceReal.getProcessor().get(x-1, y  ),
+						sourceReal.getProcessor().get(x  , y  ),
+						sourceReal.getProcessor().get(x+1, y  ),
+						sourceReal.getProcessor().get(x-1, y+1),
+						sourceReal.getProcessor().get(x  , y+1),
+						sourceReal.getProcessor().get(x+1, y+1)};
+
+				final double pix = val[4];
+
+				final ImagePlus patch = new ImagePlus("patch", new FloatProcessor(3,3,val));
+				if( simple2D(patch, 4) )
+				{/*
+							for(int i=0; i<9;i++)
+								IJ.log(" " + val[i]);
+							IJ.log("pix = " + pix);*/
+					sourceReal.getProcessor().putPixelValue(x, y, pix > 0.0 ? 0.0 : 1.0 );
+					//IJ.log("flipping pixel x: " + x + " y: " + y + " to " + (pix > 0  ? 0.0 : 1.0));
+				}
+				
+			}
+			
+			
+		}
+		
+		IJ.run(sourceReal, "Canvas Size...", "width="+ width + " height=" + height + " position=Center zero");
+		return sourceReal;
+	}
+	
+	
+	
+	public boolean simple2D(ImagePlus im, int n)
+	{
+		final ImagePlus invertedIm = new ImagePlus("inverted", im.getProcessor().duplicate());
+		IJ.run(invertedIm, "Invert","");
+		switch (n)
+		{
+			case 4:
+				if ( topo(im,4)==1 && topo(invertedIm, 8)==1 )
+	            	return true;
+				else
+					return false;				
+			case 8:
+				if ( topo(im,8)==1 & topo(invertedIm, 4)==1 )
+					return true;
+				else
+					return false;
+			default:
+				IJ.error("Non valid adjacency value");
+				return false;
+		}
+	}
+	
+	
+	public int topo(final ImagePlus im, final int adjacency)
+	{
+		ImageProcessor components = null;
+		switch (adjacency)
+		{
+			case 4:
+				if( im.getStack().getSize() > 1 )
+				{
+					IJ.error("n=4 is valid for a 2d image");
+					return -1;
+				}
+				if( im.getProcessor().getWidth() > 3 || im.getProcessor().getHeight() > 3)
+				{
+					IJ.error("must be 3x3 image patch");
+					return -1;
+				}
+				// ignore the central point
+				im.getProcessor().set(1, 1, 0);
+				components = connectedComponents(im, adjacency).allRegions.getProcessor(); 
+				// zero out locations that are not in the four-neighborhood
+				components.set(0,0,0);
+				components.set(0,2,0);
+				components.set(1,1,0);
+				components.set(2,0,0);
+				components.set(2,2,0);
+				break;	
+			case 8:
+				if( im.getStack().getSize() > 1 )
+				{
+					IJ.error("n=8 is valid for a 2d image");
+					return -1;
+				}
+				if( im.getProcessor().getWidth() > 3 || im.getProcessor().getHeight() > 3)
+				{
+					IJ.error("must be 3x3 image patch");
+					return -1;
+				}
+				// ignore the central point
+				im.getProcessor().set(1, 1, 0);
+				components = connectedComponents(im, adjacency).allRegions.getProcessor();
+				break;
+			default:
+				IJ.error("Non valid adjacency value");
+				return -1;
+		}
+		
+		if(null == components)
+			return -1;
+		
+		int t = 0;
+		ArrayList<Integer> uniqueId = new ArrayList<Integer>();
+		for(int i = 0; i < 3; i++)
+			for(int j = 0; j < 3; j++)
+			{
+				if(( t = components.get(i, j) ) != 0)
+					if(!uniqueId.contains(t))
+						uniqueId.add(t);
+			}
+		
+		return uniqueId.size();
+		
+	}
+	
+	public Results connectedComponents(final ImagePlus im, final int adjacency)
+	{
+		if( adjacency != 4 && adjacency != 8 )
+			return null;
+		
+		final boolean diagonal = adjacency == 8 ? true : false;
+		
+		FindConnectedRegions fcr = new FindConnectedRegions();
+		try {
+			final Results r = fcr.run( im,
+				 diagonal,
+				 false,
+				 true,
+				 false,
+				 false,
+				 false,
+				 false,
+				 0,
+				 1,
+				 -1,
+				 true /* noUI */ );
+			return r;
+			
+		} catch( IllegalArgumentException iae ) {
+			IJ.error(""+iae);
+			return null;
+		}
+
 	}
 	
 }
