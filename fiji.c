@@ -201,6 +201,7 @@ static void string_append_at_most(struct string *string, const char *append, int
 	string_ensure_alloc(string, string->length + len);
 	memcpy(string->buffer + string->length, append, len + 1);
 	string->length += len;
+	string->buffer[string->length] = '\0';
 }
 
 static int number_length(unsigned long number, long base)
