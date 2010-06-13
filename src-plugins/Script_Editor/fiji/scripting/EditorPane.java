@@ -288,6 +288,9 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 		if (language == null)
 			language = Languages.get("");
 
+		if (fallBackBaseName != null && fallBackBaseName.endsWith(".txt"))
+			fallBackBaseName = fallBackBaseName.substring(0,
+				fallBackBaseName.length() - 4);
 		if (file != null) {
 			String name = file.getName();
 			if (!name.endsWith(language.extension) &&
@@ -296,6 +299,8 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 				if (name.endsWith(ext))
 					name = name.substring(0, name.length()
 							- ext.length());
+				else if (name.endsWith(".txt"))
+					name = name.substring(0, name.length() - 4);
 				file = new File(file.getParentFile(),
 						name + language.extension);
 				modifyCount = Integer.MIN_VALUE;

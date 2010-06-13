@@ -1,5 +1,7 @@
 package fiji.scripting;
 
+import common.RefreshScripts;
+
 import fiji.util.MenuItemDiverter;
 
 import ij.IJ;
@@ -20,16 +22,30 @@ public class OpenSourceForMenuItem extends MenuItemDiverter {
 		String action = (String)Menus.getCommands().get(arg);
 		if (action != null) try {
 			IJ.showStatus("Opening source for " + arg);
-			int paren = action.indexOf('(');
-			if (paren > 0)
-				action = action.substring(0, paren);
-			String path = new FileFunctions(Script_Editor.getInstance()).getSourcePath(action);
+			String path = getScriptPath(action);
+			if (path == null) {
+				int paren = action.indexOf('(');
+				if (paren > 0)
+					action = action.substring(0, paren);
+				path = new FileFunctions(Script_Editor.getInstance()).getSourcePath(action);
+			}
 			if (path != null) {
 				new Script_Editor().run(path);
 				return;
 			}
 		} catch (Exception e) { e.printStackTrace(); /* fallthru */ }
 		error("Could not get source for '" + arg + "'");
+	}
+
+	protected String getScriptPath(String action) {
+		int paren = action.indexOf("(\"");
+		if (paren < 0 || !action.endsWith("\")"))
+			return null;
+		try {
+			if (RefreshScripts.class.isAssignableFrom(getClass().getClassLoader().loadClass(action.substring(0, paren))))
+				return action.substring(paren + 2, action.length() - 2);
+		} catch (Exception e) { /* ignore */ }
+		return null;
 	}
 
 	protected void error(String message) {
