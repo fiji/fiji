@@ -233,7 +233,7 @@ CLASSPATH(plugins/BeanShell_Interpreter.jar)=jars/fiji-scripting.jar
 CLASSPATH(plugins/Javascript_.jar)=jars/fiji-scripting.jar
 CLASSPATH(plugins/CLI_.jar)=jars/fiji-scripting.jar
 MAINCLASS(plugins/Script_Editor.jar)=fiji.scripting.Script_Editor
-CLASSPATH(plugins/Script_Editor.jar)=jars/rsyntaxtextarea.jar:jars/autocomplete.jar:plugins/Clojure_Interpreter.jar:plugins/JRuby_Interpreter.jar:plugins/Javascript_.jar:plugins/Jython_Interpreter.jar:plugins/Refresh_Javas.jar:plugins/BeanShell_Interpreter.jar:plugins/CLI_.jar:jars/fiji-scripting.jar:jars/Fiji.jar:jars/imglib.jar:jars/fiji-lib.jar:$JAVA_HOME/../lib/tools.jar
+CLASSPATH(plugins/Script_Editor.jar)=jars/rsyntaxtextarea.jar:jars/autocomplete.jar:plugins/Clojure_Interpreter.jar:plugins/JRuby_Interpreter.jar:plugins/Javascript_.jar:plugins/Jython_Interpreter.jar:plugins/Refresh_Javas.jar:plugins/BeanShell_Interpreter.jar:plugins/CLI_.jar:jars/fiji-scripting.jar:jars/Fiji.jar:jars/imglib.jar:jars/fiji-lib.jar:jars/fake.jar:$JAVA_HOME/../lib/tools.jar
 NO_COMPILE(plugins/Script_Editor.jar)=src-plugins/Script_Editor/templates/**/*
 src-plugins/Script_Editor/icon.png[cp $PRE $TARGET] <- images/icon.png
 src-plugins/Script_Editor/var.png[cp $PRE $TARGET] <- images/var.png
@@ -242,7 +242,7 @@ src-plugins/Script_Editor/function.png[cp $PRE $TARGET] <- images/function.png
 CLASSPATH(jars/zs.jar)=jars/Jama-1.0.2.jar
 CLASSPATH(plugins/register_virtual_stack_slices.jar)=plugins/TrakEM2_.jar:jars/mpicbg.jar:plugins/bUnwarpJ_.jar:jars/fiji-lib.jar
 CLASSPATH(plugins/Siox_Segmentation.jar)=jars/fiji-lib.jar
-CLASSPATH(plugins/Image_Expression_Parser.jar)=jars/jep.jar:jars/imglib.jar
+CLASSPATH(plugins/Image_Expression_Parser.jar)=jars/jep.jar:jars/imglib.jar:jars/junit-4.5.jar
 
 CLASSPATH(plugins/Algorithm_Launcher.jar)=jars/imglib.jar
 plugins/Algorithm_Launcher.jar <- \
@@ -266,7 +266,7 @@ CLASSPATH(jars/VIB-lib.jar)=jars/Jama-1.0.2.jar:jars/junit-4.5.jar:jars/pal-opti
 CLASSPATH(plugins/Simple_Neurite_Tracer.jar)=jars/VIB-lib.jar:plugins/VIB_.jar:jars/pal-optimization.jar:jars/junit-4.5.jar:plugins/3D_Viewer.jar
 CLASSPATH(plugins/3D_Viewer.jar)=jars/VIB-lib.jar:jars/imglib.jar:jars/Jama-1.0.2.jar
 CLASSPATH(jars/jep.jar)=jars/Jama-1.0.2.jar:jars/junit-4.5.jar
-CLASSPATH(plugins/SPIM_Registration.jar)=jars/imglib.jar:jars/mpicbg.jar:plugins/3D_Viewer.jar:jars/weka.jar:jars/fiji-lib.jar:plugins/loci_tools.jar:plugins/Fiji_Plugins.jar
+CLASSPATH(plugins/SPIM_Registration.jar)=jars/imglib.jar:jars/mpicbg.jar:plugins/3D_Viewer.jar:jars/weka.jar:jars/fiji-lib.jar:plugins/loci_tools.jar:plugins/Fiji_Plugins.jar:jars/VIB-lib.jar:jars/Jama-1.0.2.jar
 
 # pre-Java5 generics ;-)
 
