@@ -9,6 +9,15 @@ of a big hackathon: Heidelberg. We were honored to have some Fiji developers
 invited by the EMBL in Heidelberg from March 15 -- 26, 2010, thanks to the
 generous support of Francesca Peri and Kota Miura.
 
+There have been 524190 lines added and 245463 removed since the previous
+release, with the help of (in alphabetical order): Albert Cardona, Andreas
+Wiese, Benjamin Schmid, Ben Tupper, Chris Elliott, Curtis Rueden, Daniel
+Hornung, Daniel James White, Davi Bock, Gabriel Landini, Gregory Jefferis,
+Ignacio Arganda-Carreras, Jacques Pecreaux, Jan Eglinger, Jean-Yves Tinevez,
+Johannes Schindelin, Larry Lindsey, Mark Longair, Nick Weiler, pixelhead,
+pogo, Ricardo Henriques, Stephan Preibisch, Stephan Saalfeld, Tom Kazimiers
+and Verena Kaynig.
+
 Changes since Fiji Plzeň:
 
 - There is a new plugin called Trainable Segmentation:
