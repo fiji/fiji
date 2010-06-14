@@ -1,7 +1,6 @@
 A loose TODO list for Fiji
 ==========================
 
-- freeline selection with thickness has a display bug
 - fix z-project, split channels for virtual stacks
 - fix substack maker for hyperstacks
 - provide preview for auto threshold plugin
@@ -13,18 +12,16 @@ A loose TODO list for Fiji
 - TrakEM2: use CommandListener to override the "File>Save" menu item
 - move Amira I/O into bio-formats already
 - headless: should we activate "batch"?
-- find a way to set cwd for sed.py in VIB
 - exclude ij.jar, headless.jar and precompiled/ij.jar from netbeans project
   (otherwise Netbeans will not use the ImageJ it compiled itself)
 - netbeans: exclude the classes found in src-plugins/ij/**/*.java from ImageJA/
 - test Bilateral Filter
 - Segmentation Editor fails
-- compile and test Java7 (has nasty bugs)
 - Building "jars/fake.jar" on Windows should warn and resort to making
   precompiled/fake.jar directly.  Same goes for the Fiji launcher.
 - add script recorder for the new scripting languages
 - check which Reader Plugins do not extend ImagePlus
-- extend GenericDialog to provide Help, Advanced, File button
+- extend GenericDialog to provide Help, Advanced button
 - GenericDialog.addToolText()
 - add tests (test that all plugins are found, test which image types
   they support, add regression tests, if file importers return ImagePlus)
@@ -32,7 +29,5 @@ A loose TODO list for Fiji
 - in ImageJA: what about a file extension based construct similar to
   HandleExtraFileTypes for save?  This would allow to work on top of custom
   file formats seamlessly.
-- make OpenDialog and SaveDialog more versatile by adding a KeyListener to
-  both list boxes (but verify that this does not break on Windows and MacOSX).
 - reimplement TransformJ (Stephan Preibisch)
 - look at ITK
