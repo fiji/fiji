@@ -74,7 +74,7 @@ case "$1" in
 		if test -d /var/www/update
 		then
 			(./bin/create-jnlp.sh &&
-			 ./bin/create-jnlp.sh --current ||
+			 ./bin/create-jnlp.sh --updater ||
 			 (echo "Java WebStart generation failed"; false)) &&
 			(./bin/javadoc-all.sh -d /var/www/javadoc \
 				> javadoc.out 2>&1 ||
