@@ -526,6 +526,10 @@ public class TextEditor extends JFrame implements ActionListener,
 		return false;
 	}
 
+	protected void grabFocus() {
+		toFront();
+	}
+
 	public void actionPerformed(ActionEvent ae) {
 		final Object source = ae.getSource();
 		if (source == newFile)
@@ -537,6 +541,7 @@ public class TextEditor extends JFrame implements ActionListener,
 				System.getProperty("fiji.dir");
 			OpenDialog dialog = new OpenDialog("Open...",
 					defaultDir, "");
+			grabFocus();
 			String name = dialog.getFileName();
 			if (name != null)
 				open(dialog.getDirectory() + name);
@@ -829,6 +834,7 @@ public class TextEditor extends JFrame implements ActionListener,
 	public boolean saveAs() {
 		SaveDialog sd = new SaveDialog("Save as ",
 				getEditorPane().getFileName() , "");
+		grabFocus();
 		String name = sd.getFileName();
 		if (name == null)
 			return false;
@@ -892,6 +898,7 @@ public class TextEditor extends JFrame implements ActionListener,
 			name += "_";
 		name += ".jar";
 		SaveDialog sd = new SaveDialog("Export ", name, ".jar");
+		grabFocus();
 		name = sd.getFileName();
 		if (name == null)
 			return false;
@@ -1507,6 +1514,7 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 
 	public void extractSourceJar() {
 		OpenDialog dialog = new OpenDialog("Open...", "");
+		grabFocus();
 		String name = dialog.getFileName();
 		if (name != null)
 			extractSourceJar(dialog.getDirectory() + name);
