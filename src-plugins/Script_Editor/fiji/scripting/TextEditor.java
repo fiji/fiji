@@ -888,6 +888,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		if (name.endsWith(currentLanguage.extension))
 			name = name.substring(0, name.length()
 				- currentLanguage.extension.length());
+		if (name.indexOf('_') < 0)
+			name += "_";
 		name += ".jar";
 		SaveDialog sd = new SaveDialog("Export ", name, ".jar");
 		name = sd.getFileName();
