@@ -16,7 +16,7 @@ Hornung, Daniel James White, Davi Bock, Gabriel Landini, Gregory Jefferis,
 Ignacio Arganda-Carreras, Jacques Pecreaux, Jan Eglinger, Jean-Yves Tinevez,
 Johannes Schindelin, Larry Lindsey, Mark Longair, Nick Weiler, pixelhead,
 pogo, Ricardo Henriques, Stephan Preibisch, Stephan Saalfeld, Tom Kazimiers
-and Verena Kaynig.
+and Verena Kaynig, and many other helpers.
 
 Changes since Fiji Plzeň:
 
@@ -30,7 +30,7 @@ Changes since Fiji Plzeň:
   While it is developed actively, it is already quite powerful and easily
   usable by non-programmers.
 
-- Fixed a critical bug in the Fiji Updater that affected MacOSX (symptom:
+- Fixed a critical bug in the Fiji Updater that affected MacOSX. Symptom:
   Fiji no longer starts after an update). If you have not updated between
   April 8, 2010 and June 3rd, 2010, this bug affects you and you have to
   follow the instructions at:
@@ -69,13 +69,16 @@ Other changes:
 - Auto Threshold was improved, and made accessible to other plugins (thanks
   Gabriel Landini).
 
-- implemented CLAHE, a filter for adaptive local contrast enhancement.
+- implemented CLAHE, a filter for adaptive local contrast enhancement
+  (thanks to Stephan Saalfeld).
 
-- removed dependency on Jama of mpicbg plugins.
+- removed dependency on Jama of mpicbg plugins (thanks to Stephan Saalfeld).
 
-- separated libraries from plugins, e.g. mpicbg plugins from mpicbg library.
+- separated libraries from plugins, e.g. mpicbg plugins from mpicbg library
+  (thanks to Stephan Saalfeld).
 
 - added several mpicbg library tools, many bug-fixes and improvements
+  (thanks to Stephan Saalfeld).
 
 - TrakEM2 was updated several times, with tons of new goodies (thanks Albert
   Cardona and Stephan Saalfeld). For example:
@@ -154,7 +157,7 @@ Other changes:
   Albert Cardona).
 
 - when using a .java plugin transparently (by putting it into
-  $FIJI_ROOT/plugins/), the error output will be shown now.
+  Fiji's plugins/ directory), the error output will be shown now.
 
 - The Script Editor offers tabs now.
 
@@ -319,7 +322,7 @@ Developer-visible changes:
   offering to search for the sources of a class).
 
 - If you have an account on the Fiji Wiki, you can easily add News entries
-  using the Plugins>Utilities>Fiji>New Fiji News menu item
+  using the Plugins>Utilities>Fiji>New Fiji News menu item.
 
 - There is a simple Object Inspector for Java objects now, accessible via
   fiji.debugging.Object_Inspector.openFrame(label, object).
