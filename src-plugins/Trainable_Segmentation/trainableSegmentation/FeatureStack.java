@@ -114,6 +114,8 @@ public class FeatureStack
 	private boolean[] enableFeatures = new boolean[]{true, true, true, true, true, false, false, false, false, false, false};
 	/** normalization flag */
 	private boolean normalize = false;
+	/** expected membrane thickness (in pixels) */
+	private int membraneSize = 1;
 	
 	/**
 	 * Construct object to store stack of image features
@@ -196,7 +198,7 @@ public class FeatureStack
 	}
 	
 	/**
-	 * Add variance-filtered image to the stack
+	 * Add variance-filtered image to the stack (single thread version)
 	 * @param radius variance filter radius
 	 */
 	public void addVariance(float radius)
@@ -511,7 +513,11 @@ public class FeatureStack
 		};
 	}
 	
-	
+	/**
+	 * Add difference of Gaussians to feature stack (single thread version)
+	 * @param sigma1 first Gaussian sigma
+	 * @param sigma2 second Gaussian sigma
+	 */
 	public void addDoG(float sigma1, float sigma2)
 	{
 		GaussianBlur gs = new GaussianBlur();
@@ -533,6 +539,13 @@ public class FeatureStack
 		wholeStack.addSlice(availableFeatures[DOG]+ "_"+sigma1+"_"+sigma2, ip);
 	}
 	
+	/**
+	 * Get difference of Gaussians (to be submitted to an ExecutorService)
+	 * @param originalImage input image
+	 * @param sigma1 first Gaussian sigma
+	 * @param sigma2 second Gaussian sigma
+	 * @return difference of Gaussians image
+	 */
 	public Callable<ImagePlus> getDoG(
 			final ImagePlus originalImage,
 			final float sigma1,
@@ -564,7 +577,11 @@ public class FeatureStack
 		};
 	}
 	
-	
+	/**
+	 * Add membrane features to the stack (single thread version)
+	 * @param patchSize size of the filter to be used
+	 * @param membraneSize expected membrane thickness
+	 */
 	public void addMembraneFeatures(int patchSize, int membraneSize){
 		//create membrane patch
 		ImageProcessor membranePatch = new FloatProcessor(patchSize, patchSize);
@@ -615,8 +632,8 @@ public class FeatureStack
 	 * Get membrane features (to be submitted in an ExecutorService)
 	 * @param originalImage input image
 	 * @param patchSize orientation kernel size
-	 * @param membraneSize
-	 * @return
+	 * @param membraneSize expected membrane thickness
+	 * @return image stack with elongated membrane projections using all methods ("Average Intensity", "Max Intensity", "Min Intensity", "Sum Slices", "Standard Deviation", "Median")
 	 */
 	public Callable<ImagePlus> getMembraneFeatures(
 			final ImagePlus originalImage,
@@ -673,7 +690,7 @@ public class FeatureStack
 					zp.doProjection();
 					membraneStack.addSlice(availableFeatures[MEMBRANE] + "_" +i+"_"+patchSize+"_"+membraneSize, zp.getProjection().getChannelProcessor());
 				}
-				return new ImagePlus ("hessian stack", membraneStack);
+				return new ImagePlus ("membrane stack", membraneStack);
 			}
 		};
 	}
@@ -744,7 +761,7 @@ public class FeatureStack
 		//float[] xcorr = CommonFunctions.multiply(fftImage.data, fftImage.data, false);
 		
 		//FloatArray2D xcorrImage = new FloatArray2D(xcorr, fftImage.width, fftImage.height);
-		//xcorrImage = CommonFunctions.com
+		//xcorrImage = CommonFunctions.comanyway, you talked about the time to change you
 		
 		//float[] pcm = CommonFunctions.computePhaseCorrelationMatrix(fftImagePadded.data, fftImagePadded.data, false);
 
@@ -780,7 +797,7 @@ public class FeatureStack
 	{
 		ArrayList<Attribute> attributes = new ArrayList<Attribute>();
 		for (int i=1; i<=wholeStack.getSize(); i++){
-			String attString = wholeStack.getSliceLabel(i) + " numeric";
+			String attString = wholeStack.getSliceLabel(i);
 			attributes.add(new Attribute(attString));
 		}
 		
@@ -1006,7 +1023,7 @@ public class FeatureStack
 			}
 			// Membrane projections
 			if(enableFeatures[MEMBRANE])
-				futures.add(exe.submit( getMembraneFeatures(originalImage, 19, 1) ));						
+				futures.add(exe.submit( getMembraneFeatures(originalImage, 19, membraneSize) ));						
 
 			for(Future<ImagePlus> f : futures)
 			{
@@ -1043,14 +1060,44 @@ public class FeatureStack
 		IJ.showStatus("Features stack is updated now!");
 	}
 	
+	/**
+	 * Set list of boolean flags for enabled features
+	 * @param enableFeatures list of boolean flags to enable features
+	 */
 	public void setEnableFeatures(boolean[] enableFeatures) {
 		this.enableFeatures = enableFeatures;
 	}
 
+	/**
+	 * Get the list of enabled features flags
+	 * @return list of boolean flags (true means the feature is selected)
+	 */
 	public boolean[] getEnableFeatures() {
 		return enableFeatures;
 	}
 	
+	/**
+	 * Get the current membrane thickness
+	 * @return expected membrane thickness
+	 */
+	public int getMembraneSize()
+	{
+		return this.membraneSize;
+	}
+	
+	/**
+	 * Set the expected membrane thickness
+	 * @param membraneSize membrane thickness
+	 */
+	public void setMembraneSize(int membraneSize)
+	{
+		this.membraneSize = membraneSize;
+	}
+	
+	/**
+	 * Check if the stack has been initialized or not
+	 * @return true if the features have not been calculated yet
+	 */
 	public boolean isEmpty()
 	{
 		return (null == this.wholeStack || this.wholeStack.getSize() < 2);
