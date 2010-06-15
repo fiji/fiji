@@ -2159,8 +2159,9 @@ static int start_ij(void)
 		add_option(&options, "-verbose:gc", 0);
 
 	if (!main_class) {
-		const char *first = main_argv[1];
-		int len = main_argc > 1 ? strlen(first) : 0;
+		int index = dashdash ? dashdash : 1;
+		const char *first = main_argv[index];
+		int len = main_argc > index ? strlen(first) : 0;
 
 		if (len > 1 && !strncmp(first, "--", 2))
 			len = 0;
