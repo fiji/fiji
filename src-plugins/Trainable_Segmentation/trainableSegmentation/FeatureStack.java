@@ -761,7 +761,7 @@ public class FeatureStack
 		//float[] xcorr = CommonFunctions.multiply(fftImage.data, fftImage.data, false);
 		
 		//FloatArray2D xcorrImage = new FloatArray2D(xcorr, fftImage.width, fftImage.height);
-		//xcorrImage = CommonFunctions.comanyway, you talked about the time to change you
+		//xcorrImage = CommonFunctions.com
 		
 		//float[] pcm = CommonFunctions.computePhaseCorrelationMatrix(fftImagePadded.data, fftImagePadded.data, false);
 
