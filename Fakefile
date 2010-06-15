@@ -86,6 +86,7 @@ ENVOVERRIDES(JAVA_HOME)=true
 
 SUBMODULE_TARGETS=\
 	jars/ij.jar \
+	misc/headless.jar \
 	plugins/loci_tools.jar \
 	jars/VectorString.jar \
 	plugins/TrakEM2_.jar \
@@ -193,6 +194,7 @@ jdk[bin/checkout-jdk.py $JDK] <-
 
 # From submodules
 jars/ij.jar <- jars/javac.jar ImageJA/
+misc/headless.jar <- jars/javac.jar ImageJA/
 CLASSPATH(plugins/mpicbg_.jar)=jars/mpicbg.jar
 plugins/mpicbg_.jar <- mpicbg/
 jars/mpicbg.jar <- mpicbg/
