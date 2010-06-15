@@ -858,7 +858,7 @@ public class Trainable_Segmentation implements PlugIn
 		
 		ArrayList<Attribute> attributes = new ArrayList<Attribute>();
 		for (int i=1; i<=featureStack.getSize(); i++){
-			String attString = featureStack.getSliceLabel(i) + " numeric";
+			String attString = featureStack.getSliceLabel(i);
 			attributes.add(new Attribute(attString));
 		}
 		
