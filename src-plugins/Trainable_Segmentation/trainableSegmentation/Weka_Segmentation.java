@@ -1974,7 +1974,9 @@ public class Weka_Segmentation implements PlugIn
 		}
 		
 		// Expected membrane thickness
-		gd.addNumericField("Membrane thickness:", membraneThickness, 0);		
+		gd.addNumericField("Membrane thickness:", membraneThickness, 0);
+		if(loadedTrainingData != null)
+			((TextField) gd.getNumericFields().get(0)).setEnabled(false);
 		
 		gd.addMessage("General options:");
 						
