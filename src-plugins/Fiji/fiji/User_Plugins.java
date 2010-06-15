@@ -266,6 +266,8 @@ public class User_Plugins implements PlugIn {
 	 */
 	protected static MenuItem getMenuItem(MenuBar menuBar, Menu menu,
 			String name, boolean createIfNecessary) {
+		if (menuBar == null && menu == null)
+			return null;
 		if (menuBar != null && name.equals("Help")) {
 			menu = menuBar.getHelpMenu();
 			if (menu == null && createIfNecessary) {
