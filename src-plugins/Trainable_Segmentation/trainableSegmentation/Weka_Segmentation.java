@@ -236,6 +236,8 @@ public class Weka_Segmentation implements PlugIn
 	/** GUI/no GUI flag */
 	private boolean useGUI = true;
 	
+	/** expected membrane thickness */
+	private int membraneThickness = 1;
 	
 	/**
 	 * Basic constructor
@@ -1778,6 +1780,7 @@ public class Weka_Segmentation implements PlugIn
 	public boolean adjustSegmentationStateToData(Instances data)
 	{
 		// Check the features that were used in the loaded data
+		boolean featuresChanged = false;		
 		Enumeration<Attribute> attributes = data.enumerateAttributes();
 		final int numFeatures = FeatureStack.availableFeatures.length;
 		boolean[] usedFeatures = new boolean[numFeatures];
@@ -1785,8 +1788,23 @@ public class Weka_Segmentation implements PlugIn
 		{
 			final Attribute a = attributes.nextElement();
 			for(int i = 0 ; i < numFeatures; i++)
+			{
 				if(a.name().startsWith(FeatureStack.availableFeatures[i]))
+				{
 					usedFeatures[i] = true;
+					if(i == FeatureStack.MEMBRANE)
+					{
+						final int index = a.name().lastIndexOf("_");
+						final int thickness = Integer.parseInt(a.name().substring(index+1));
+						if(thickness != membraneThickness)	
+						{
+							membraneThickness = thickness;
+							featuresChanged = true;
+						}
+						
+					}
+				}
+			}
 		}
 		
 		// Check if classes match
@@ -1826,7 +1844,7 @@ public class Weka_Segmentation implements PlugIn
 			return false;
 		}				
 		
-		boolean featuresChanged = false;
+		
 		final boolean[] oldEnableFeatures = this.featureStack.getEnableFeatures();
 		// Read checked features and check if any of them changed
 		for(int i = 0; i < numFeatures; i++)
@@ -1955,6 +1973,9 @@ public class Weka_Segmentation implements PlugIn
 			gd.addMessage("WARNING: no features are selectable while using loaded data");
 		}
 		
+		// Expected membrane thickness
+		gd.addNumericField("Membrane thickness:", membraneThickness, 0);		
+		
 		gd.addMessage("General options:");
 						
 		if( this.classifier instanceof FastRandomForest )
@@ -2002,6 +2023,13 @@ public class Weka_Segmentation implements PlugIn
 				featuresChanged = true;
 		}
 
+		final int newThickness = (int) gd.getNextNumber();
+		if(newThickness != membraneThickness)
+		{
+			featuresChanged = true;
+			membraneThickness = newThickness;
+			this.featureStack.setMembraneSize(membraneThickness);
+		}
 		
 		// Read fast random forest parameters and check if changed
 		if( this.classifier instanceof FastRandomForest )
@@ -2982,6 +3010,34 @@ public class Weka_Segmentation implements PlugIn
 	}
 	
 	// BLOTC methods
+	
+	public double warpingError(
+			ImagePlus label,
+			ImagePlus proposal,
+			ImagePlus mask,
+			double binaryThreshold)
+	{
+		ImagePlus warpedLabels = simplePointWarp2d(label, proposal, mask, binaryThreshold);
+		
+		final float[] thresholdedProposal = (float[])proposal.getProcessor().getPixels();
+		for(int i =0; i < thresholdedProposal.length; i++)
+			thresholdedProposal[i] = (thresholdedProposal[i] > binaryThreshold) ? 1.0f : 0.0f;
+		
+		float[] warpedPixels = (float[]) warpedLabels.getProcessor().getPixels();
+		
+		int error = 0;
+		int count = 0;
+		for(int i = 0; i < warpedPixels.length; i++)
+			if(warpedPixels[i] != 0)
+			{
+				count ++;
+				if (warpedPixels[i] != thresholdedProposal[i])
+					error++;
+			}
+		
+		return ( (double) error) / count;
+	}
+	
 	
 	public ImagePlus simplePointWarp2d(
 			ImagePlus source,
