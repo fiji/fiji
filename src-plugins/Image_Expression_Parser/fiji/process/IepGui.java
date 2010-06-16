@@ -632,6 +632,10 @@ public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implement
 					if (null == image_expression_parser) {
 						image_expression_parser = new Image_Expression_Parser<T>();
 					}
+					
+
+					// Prepare parser
+					image_expression_parser.setExpression(expression);
 
 					Image<T> result_img = null;
 
@@ -668,8 +672,6 @@ public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implement
 							blue_map.put (key, new ImagePlus(current_imp.getShortTitle()+"-B", channel_splitter.blue));
 						}
 						
-						// Prepare parser
-						image_expression_parser.setExpression(expression);
 						
 						// Have the parser process individual channel separately
 						Map<String, Image<T>> img_map;
