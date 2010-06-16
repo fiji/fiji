@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class Pixel_Summation<T extends RealType<T>> implements PlugIn {
+public class ColocImgLibGadgets<T extends RealType<T>> implements PlugIn {
 
   protected Image<T> img1, img2;
 
