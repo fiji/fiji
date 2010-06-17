@@ -90,13 +90,33 @@ public abstract class Result {
 		}
 	}
 
-	static class Histogram2DResult <T extends RealType<T>> extends Result{
-		Image<T> data;
+	/**
+	 * Represents a calibrated image result. Additional meta information
+	 * is kept in here. A typical example is the colocalisation image
+	 * where calibration information is available.
+	 *
+	 * @param <T>
+	 */
+	static class CalibratedImageResult <T extends RealType<T>> extends ImageResult<T> {
+
+		//TODO Add calibration/meta information
+		public CalibratedImageResult(String name, Image<T> data) {
+			super(name, data);
+		}
+	}
+
+	/**
+	 * Represents a 2D Histogram result. This is basically an image and
+	 * axis label information. A scatterplot could be stored in here.
+	 *
+	 * @param <T>
+	 */
+	static class Histogram2DResult <T extends RealType<T>> extends ImageResult<T>{
+		// Axis labels
 		String xLabel, yLabel;
 
 		public Histogram2DResult(String name, Image<T> data, String xLabel, String yLabel) {
-			super(name);
-			this.data = data;
+			super(name, data);
 			this.xLabel = xLabel;
 			this.yLabel = yLabel;
 		}
