@@ -156,4 +156,45 @@ public abstract class Result {
 			this.decimalPlaces = decimalPlaces;
 		}
 	}
+
+	/**
+	 * A simple result type which stores a double value along
+	 * with a number of decimal places.
+	 */
+	static class SimpleValueResult extends Result {
+		double value;
+		int decimalPlaces;
+
+		/**
+		 * Creates a new {@link SimpleValueResult} with a default number
+		 * of 6 decimal places.
+		 *
+		 * @param name The name of the new result
+		 * @param value The value of the new result
+		 */
+		public SimpleValueResult(String name, double value) {
+			this(name, value, 6);
+		}
+
+		/**
+		 * Creates a new {@link SimpleValueResult}.
+		 *
+		 * @param name The name of the new result
+		 * @param value The value of the new result
+		 * @param decimalPlaces The number of decimal places
+		 */
+		public SimpleValueResult(String name, double value, int decimalPlaces) {
+			super(name);
+			this.value = value;
+			this.decimalPlaces = decimalPlaces;
+		}
+
+		public double getValue() {
+			return value;
+		}
+
+		public int getDecimalPlaces() {
+			return decimalPlaces;
+		}
+	}
 }
