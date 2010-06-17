@@ -24,6 +24,20 @@ import java.io.*;
 public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 	static final int IMAGE_OPENED = -1;
 	static final int PLUGIN_NOT_FOUND = -2;
+	static final boolean LOCI_PRESENT = checkForLoci();
+
+	private static boolean checkForLoci() {
+		// This should run without exception in headless mode
+		boolean lociPresent=true;
+		try {
+			lociPresent = IJ.getClassLoader().loadClass("loci.plugins.LociImporter") != null;
+		}
+		catch (ClassNotFoundException e) {
+			lociPresent = false;
+		}
+		if(IJ.debugMode) IJ.log("HEFT: loci is"+(lociPresent?" ":" not ")+"present");
+		return lociPresent;
+	}
 
 	/** Called from io/Opener.java. */
 	public void run(String path) {
