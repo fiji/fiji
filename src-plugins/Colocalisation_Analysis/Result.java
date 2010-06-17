@@ -50,6 +50,14 @@ public abstract class Result {
 		}
 
 		/**
+		 * Creates an empty {@link CompositeResult}.
+		 * @param name The name of the new {@link CompositeResult}
+		 */
+		public CompositeResult(String name) {
+			super(name);
+		}
+
+		/**
 		 * Adds a {@link Collection} of results to the {@link CompositeResult}.
 		 *
 		 * @param results The results to add
