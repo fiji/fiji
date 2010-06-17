@@ -110,6 +110,7 @@ import javax.vecmath.Point3f;
 import util.FindConnectedRegions;
 import util.FindConnectedRegions.Results;
 import weka.classifiers.AbstractClassifier;
+import weka.classifiers.Evaluation;
 import weka.classifiers.pmml.consumer.PMMLClassifier;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
@@ -2593,6 +2594,115 @@ public class Weka_Segmentation implements PlugIn
 		return true;
 	}
 
+	/**
+	 * Add instances to a specific class from a label (binary) image.
+	 * White pixels will be added to the corresponding class 1 and 
+	 * black pixels will be added to class 2.
+	 *  
+	 * @param labelImage binary image 
+	 * @param featureStack corresponding feature stack
+	 * @param className1 name of the class which receives the white pixels
+	 * @param className2 name of the class which receives the black pixels
+	 * @return false if error
+	 */
+	public boolean addBinaryData(
+			ImagePlus labelImage,
+			FeatureStack featureStack,
+			String className1,
+			String className2)
+	{
+		// Update features if necessary
+		if(featureStack.getSize() < 2)
+		{
+			IJ.log("Creating feature stack...");
+			featureStack.updateFeaturesMT();
+			updateFeatures = false;
+			IJ.log("Features stack is now updated.");
+		}
+					
+		// Detect class indexes
+		int classIndex1 = 0;
+		for(classIndex1 = 0 ; classIndex1 < this.classLabels.length; classIndex1++)
+			if(className1.equalsIgnoreCase(this.classLabels[classIndex1]))
+				break;
+		if(classIndex1 == this.classLabels.length)
+		{
+			IJ.log("Error: class named '" + className1 + "' not found.");
+			return false;
+		}
+		int classIndex2 = 0;
+		for(classIndex2 = 0 ; classIndex2 < this.classLabels.length; classIndex2++)
+			if(className2.equalsIgnoreCase(this.classLabels[classIndex2]))
+				break;
+		if(classIndex2 == this.classLabels.length)
+		{
+			IJ.log("Error: class named '" + className2 + "' not found.");
+			return false;
+		}
+		
+		// Create loaded training data if it does not exist yet
+		if(null == loadedTrainingData)
+		{
+			IJ.log("Initializing loaded data...");
+			// Create instances
+			ArrayList<Attribute> attributes = new ArrayList<Attribute>();
+			for (int i=1; i<=featureStack.getSize(); i++){
+				String attString = featureStack.getSliceLabel(i);
+				attributes.add(new Attribute(attString));
+			}
+			// Update list of names of loaded classes
+			// (we assume the first two default class names)
+			loadedClassNames = new ArrayList<String>();						
+			for(int i = 0; i < numOfClasses ; i ++)
+				loadedClassNames.add(classLabels[i]);
+			attributes.add(new Attribute("class", loadedClassNames));
+			loadedTrainingData = new Instances("segment", attributes, 1);
+			
+			loadedTrainingData.setClassIndex(loadedTrainingData.numAttributes()-1);
+		}
+		
+			
+		
+		// Check all pixels different from black
+		final int width = labelImage.getWidth();
+		final int height = labelImage.getHeight();
+		final ImageProcessor img = labelImage.getProcessor();
+		int n1 = 0;
+		int n2 = 0;
+		int classIndex = -1;
+		for(int x = 0 ; x < width ; x++)
+			for(int y = 0 ; y < height; y++)
+			{
+				// White pixels are added to the class 1
+				// and black to class 2
+				if(img.getPixelValue(x, y) > 0)
+				{
+					classIndex = classIndex1;
+					n1++;
+				}
+				else
+				{
+					classIndex = classIndex2;
+					n2++;
+				}
+					
+				double[] values = new double[featureStack.getSize()+1];
+				for (int z=1; z<=featureStack.getSize(); z++)
+					values[z-1] = featureStack.getProcessor(z).getPixelValue(x, y);
+				values[featureStack.getSize()] = (double) classIndex;
+				loadedTrainingData.add(new DenseInstance(1.0, values));										
+			}
+		
+		
+		IJ.log("Added " + n1 + " instances of '" + className1 +"'.");
+		IJ.log("Added " + n2 + " instances of '" + className2 +"'.");
+		
+		IJ.log("Training dataset updated ("+ loadedTrainingData.numInstances() + 
+				" instances, " + loadedTrainingData.numAttributes() + 
+				" attributes, " + loadedTrainingData.numClasses() + " classes).");
+		
+		return true;
+	}
 
 	/**
 	 * Get current feature stack
@@ -2746,7 +2856,7 @@ public class Weka_Segmentation implements PlugIn
 		final ImagePlus blackIP = new ImagePlus ("black", labelImage.getProcessor().duplicate());
 		IJ.run(blackIP, "Invert","");
 		IJ.run(blackIP, "Skeletonize","");
-		// Add skeleton to white class
+		// Add skeleton to black class
 		if( false == this.addBinaryData(blackIP, featureStack, blackClassName))
 		{
 			IJ.log("Error while loading black class center-lines data.");
@@ -2754,7 +2864,53 @@ public class Weka_Segmentation implements PlugIn
 		}
 		return true;
 	}
+	/**
+	 * Add label image as binary data (for the first two classes)
+	 * 
+	 * @param labelImage binary label image
+	 * @param whiteClassName class name for the white pixels
+	 * @param blackClassName class name for the black pixels
+	 * @return false if error
+	 */
+	public boolean addBinaryData(
+			ImagePlus labelImage,
+			String whiteClassName,
+			String blackClassName)
+	{
+		// Update features if necessary
+		if(featureStack.getSize() < 2)
+		{
+			IJ.log("Creating feature stack...");
+			featureStack.updateFeaturesMT();
+			updateFeatures = false;
+			IJ.log("Features stack is now updated.");
+		}
+		
+		if(labelImage.getWidth() != this.trainingImage.getWidth()
+				|| labelImage.getHeight() != this.trainingImage.getHeight())
+		{
+			IJ.log("Error: label and training image sizes do not fit.");
+			return false;
+		}
+		
+		// Process label pixels
+		final ImagePlus labelIP = new ImagePlus ("white", labelImage.getProcessor().duplicate());
+		// Make sure it's binary
+		final byte[] pix = (byte[])labelIP.getProcessor().getPixels();
+		for(int i =0; i < pix.length; i++)
+			if(pix[i] > 0)
+				pix[i] = (byte)255;
 
+		
+		if( false == this.addBinaryData(labelIP, featureStack, whiteClassName, blackClassName) )
+		{
+			IJ.log("Error while loading binary label data.");
+			return false;
+		}
+		
+
+		return true;
+	}
 	
 	/**
 	 * Add eroded version of label image as binary data (for the first two classes)
@@ -2808,6 +2964,15 @@ public class Weka_Segmentation implements PlugIn
 			return false;
 		}
 		return true;
+	}
+
+	/**
+	 * Set pre-loaded training data (not from the user traces)
+	 * @param data new data
+	 */
+	public void setLoadedTrainingData(Instances data)
+	{
+		this.loadedTrainingData = data;
 	}
 	
 	/**
@@ -3012,8 +3177,116 @@ public class Weka_Segmentation implements PlugIn
 	}
 	
 	// BLOTC methods
+
+	public static FastRandomForest trainRandomForestBLOTC(
+			final ImagePlus image, 
+			final ImagePlus labels, 
+			final int numOfTrees,
+			final int randomFeatures,
+			final int maxDepth,
+			final int seed)
+	{
+		// Initialization of Fast Random Forest classifier
+		final FastRandomForest rf = new FastRandomForest();
+		rf.setNumTrees(numOfTrees);		
+		rf.setNumFeatures(randomFeatures);
+		rf.setMaxDepth(maxDepth);
+		rf.setSeed(seed);
+		
+		ImagePlus result = trainBLOTC(image, labels, rf);
+		result.show();
+		
+		return rf;
+	}
 	
-	public double warpingError(
+	/**
+	 * Train a classifier using BLOTC
+	 * 
+	 * @param image input image
+	 * @param labels binary labels
+	 * @param classifier Weka classifier
+	 * @return warped labels from applying BLOTC 
+	 */
+	public static ImagePlus trainBLOTC(
+			final ImagePlus image, 
+			final ImagePlus labels, 
+			final AbstractClassifier classifier)
+	{
+		ImagePlus warpedLabels = new ImagePlus("labels", labels.getProcessor().duplicate().convertToFloat());
+		
+		final Weka_Segmentation seg = new Weka_Segmentation(image);
+		
+		if( null != classifier )
+			seg.setClassifier(classifier);
+		
+		seg.useAllFeatures();
+		String firstClass = seg.classLabels[0];
+		String secondClass = seg.classLabels[1];
+		
+		double error = Double.MAX_VALUE;
+		
+		int iter = 1;
+		while(true)
+		{
+			IJ.log("BLOTC training...");
+			final ImagePlus binaryLabels = new ImagePlus("binary labels", warpedLabels.getProcessor().duplicate().convertToByte(true));
+			seg.addBinaryData(binaryLabels,	firstClass, secondClass);		
+						
+			seg.trainClassifier();
+			
+			double newError = seg.getTrainingError();
+			
+			IJ.log("BLOTC iteration " + iter + ": training error = " + newError);
+			
+			if(newError >= error)
+				break;
+			
+			error = newError;
+			
+			ImagePlus result = seg.getProbabilityMapsMT();
+						
+			ImagePlus proposal = new ImagePlus("proposal", result.getImageStack().getProcessor(1));
+			
+			warpedLabels = simplePointWarp2d(warpedLabels, proposal, null, 0.5);
+			// Empty data
+			seg.setLoadedTrainingData(null);
+			iter++;
+		}
+		return warpedLabels;
+	}
+	
+	/**
+	 * Get training error (from loaded data).
+	 * If the classifier is a FastRandomForest then it uses the out of bag error.
+	 * @return training error
+	 */
+	public double getTrainingError()
+	{
+		if(null == this.trainHeader)
+			return -1;
+		
+		if(this.classifier instanceof FastRandomForest)
+			return ((FastRandomForest)classifier).measureOutOfBagError();
+		
+		double error = -1;
+		try {
+			final Evaluation evaluation = new Evaluation(this.loadedTrainingData);
+			evaluation.evaluateModel(classifier, this.loadedTrainingData);
+			IJ.log(evaluation.toSummaryString());
+			error = evaluation.errorRate();
+		} catch (Exception e) {
+			
+			e.printStackTrace();
+		}
+		
+		return error;
+	}
+	
+	
+	/**
+	 * Warping error
+	 */
+	public static double warpingError(
 			ImagePlus label,
 			ImagePlus proposal,
 			ImagePlus mask,
@@ -3040,8 +3313,17 @@ public class Weka_Segmentation implements PlugIn
 		return ( (double) error) / count;
 	}
 	
-	
-	public ImagePlus simplePointWarp2d(
+	/**
+	 * Use simple point relaxation to warp 2D source into 2D target. 
+	 * Source is only modified at nonzero locations in the mask
+	 * 
+	 * @param source input image to be relaxed
+	 * @param target target image
+	 * @param mask image mask
+	 * @param binaryThreshold binarization threshold
+	 * @return warped source image
+	 */
+	public static ImagePlus simplePointWarp2d(
 			ImagePlus source,
 			ImagePlus target,
 			ImagePlus mask,
@@ -3065,8 +3347,8 @@ public class Weka_Segmentation implements PlugIn
 			targetAuxPix[i] = (targetAuxPix[i] > binaryThreshold) ? 1.0f : 0.0f;
 				
 		
-		int width = targetAux.getWidth();
-		int height = targetAux.getHeight();
+		final int width = target.getWidth();
+		final int height = target.getHeight();
 		
 		// Resize canvas
 		IJ.run(targetAux, "Canvas Size...", "width="+ (width + 2) + " height=" + (height + 2) + " position=Center zero");
@@ -3097,25 +3379,27 @@ public class Weka_Segmentation implements PlugIn
 			
 			final ArrayList<Point3f> mismatches = new ArrayList<Point3f>();
 			
+			// Sort mismatches by the absolute value of the target pixel value - threshold
 			for(int x = 1; x < width+1; x++)
 				for(int y = 1; y < height+1; y++)
 				{
 					if(missclass_points_image.get(x, y) != 0)
-						mismatches.add(new Point3f(x , y , target.getProcessor().get(x, y)));
-				}
-			// Sort mismatches by real value
+						mismatches.add(new Point3f(x , y , (float) Math.abs(targetAux.getProcessor().get(x, y) - binaryThreshold) ));
+				}			
 			Collections.sort(mismatches,  new Comparator<Point3f>() {
 			    public int compare(Point3f o1, Point3f o2) {
 			        return (int)(o2.z - o1.z);
 			    }});
 			
+			// Process mismatches
 			for(final Point3f p : mismatches)
 			{
 				final int x = (int) p.x;
 				final int y = (int) p.y;
 				
 
-				double[] val = new double[]{ sourceReal.getProcessor().get(x-1, y-1),
+				double[] val = new double[]{ 
+						sourceReal.getProcessor().get(x-1, y-1),
 						sourceReal.getProcessor().get(x  , y-1),
 						sourceReal.getProcessor().get(x+1, y-1),
 						sourceReal.getProcessor().get(x-1, y  ),
@@ -3147,8 +3431,13 @@ public class Weka_Segmentation implements PlugIn
 	}
 	
 	
-	
-	public boolean simple2D(ImagePlus im, int n)
+	/**
+	 * Check if a point is simple (in 2D)
+	 * @param im input patch
+	 * @param n neighbors
+	 * @return true if the center pixel of the patch is a simple point
+	 */
+	public static boolean simple2D(ImagePlus im, int n)
 	{
 		final ImagePlus invertedIm = new ImagePlus("inverted", im.getProcessor().duplicate());
 		IJ.run(invertedIm, "Invert","");
@@ -3169,9 +3458,17 @@ public class Weka_Segmentation implements PlugIn
 				return false;
 		}
 	}
-	
-	
-	public int topo(final ImagePlus im, final int adjacency)
+	/**
+	 * Computes topological numbers for the central point of an image patch.
+	 * These numbers can be used as the basis of a topological classification.
+	 * T_4 and T_8 are used when IM is a 2d image patch of size 3x3 
+	 * defined on p. 172 of Bertrand & Malandain, Patt. Recog. Lett. 15, 169-75 (1994).
+	 * 
+	 * @param im input image
+	 * @param adjacency number of neighbors
+	 * @return number of components in the patch excluding the center pixel
+	 */
+	public static int topo(final ImagePlus im, final int adjacency)
 	{
 		ImageProcessor components = null;
 		switch (adjacency)
@@ -3233,8 +3530,14 @@ public class Weka_Segmentation implements PlugIn
 		return uniqueId.size();
 		
 	}
-	
-	public Results connectedComponents(final ImagePlus im, final int adjacency)
+
+	/**
+	 * Connected components based on Find Connected Regions (from Mark Longair)
+	 * @param im input image
+	 * @param adjacency number of neighbors to check (4, 8...)
+	 * @return list of images per regsion, all-regions image and regions info 
+	 */
+	public static Results connectedComponents(final ImagePlus im, final int adjacency)
 	{
 		if( adjacency != 4 && adjacency != 8 )
 			return null;
