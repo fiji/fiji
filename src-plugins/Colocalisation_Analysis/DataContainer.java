@@ -24,7 +24,7 @@ public class DataContainer<T extends RealType<T>> implements Iterable<Result> {
 	 * one will NOT either. Pixels "in between (and including)" thresholds
 	 * do include the threshold values.
 	 */
-	T ch1MinThreshold, ch1MaxThreshold, ch2MinThreshold, ch2MaxThreshold;
+	double ch1MinThreshold, ch1MaxThreshold, ch2MinThreshold, ch2MaxThreshold;
 	// The container of the results
 	List<Result> resultsObjectList = new ArrayList<Result>();
 
@@ -42,6 +42,16 @@ public class DataContainer<T extends RealType<T>> implements Iterable<Result> {
 		sourceImage2 = src2;
 		this.ch1 = ch1;
 		this.ch2 = ch2;
+
+		// get min and max value of image1's data type
+		T dummyT = src1.createType();
+		ch1MinThreshold = dummyT.getMinValue();
+		ch1MaxThreshold = dummyT.getMaxValue();
+
+		// get min and max value of image2's data type
+		dummyT = src2.createType();
+		ch2MinThreshold = dummyT.getMinValue();
+		ch2MaxThreshold = dummyT.getMaxValue();
 	}
 
 	/**
@@ -49,7 +59,7 @@ public class DataContainer<T extends RealType<T>> implements Iterable<Result> {
 	 *
 	 * @param result The result to add.
 	 */
-	public void add(Result result){
+	public void add(Result result) {
 		resultsObjectList.add(result);
 	}
 
@@ -58,5 +68,53 @@ public class DataContainer<T extends RealType<T>> implements Iterable<Result> {
 	 */
 	public Iterator<Result> iterator() {
 		return resultsObjectList.iterator();
+	}
+
+	public Image<T> getSourceImage1() {
+		return sourceImage1;
+	}
+
+	public Image<T> getSourceImage2() {
+		return sourceImage2;
+	}
+
+	public int getCh1() {
+		return ch1;
+	}
+
+	public int getCh2() {
+		return ch2;
+	}
+
+	public synchronized double getCh1MinThreshold() {
+		return ch1MinThreshold;
+	}
+
+	public synchronized void setCh1MinThreshold(double ch1MinThreshold) {
+		this.ch1MinThreshold = ch1MinThreshold;
+	}
+
+	public synchronized double getCh1MaxThreshold() {
+		return ch1MaxThreshold;
+	}
+
+	public synchronized void setCh1MaxThreshold(double ch1MaxThreshold) {
+		this.ch1MaxThreshold = ch1MaxThreshold;
+	}
+
+	public synchronized double getCh2MinThreshold() {
+		return ch2MinThreshold;
+	}
+
+	public synchronized void setCh2MinThreshold(double ch2MinThreshold) {
+		this.ch2MinThreshold = ch2MinThreshold;
+	}
+
+	public synchronized double getCh2MaxThreshold() {
+		return ch2MaxThreshold;
+	}
+
+	public synchronized void setCh2MaxThreshold(double ch2MaxThreshold) {
+		this.ch2MaxThreshold = ch2MaxThreshold;
 	}
 }
