@@ -25,6 +25,10 @@ public abstract class Result {
 		this.name = name;
 	}
 
+	public String getName() {
+		return name;
+	}
+
 	/**
 	 * A {@link CompositeResult} can contain of several other
 	 * results and hence allows the encapsulation of Results
