@@ -1,3 +1,8 @@
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
+
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
 
@@ -20,6 +25,55 @@ public abstract class Result {
 		this.name = name;
 	}
 
+	/**
+	 * A {@link CompositeResult} can contain of several other
+	 * results and hence allows the encapsulation of Results
+	 * connected semantically.
+	 */
+	static class CompositeResult extends Result implements Iterable<Result> {
+
+		/* A list of composite results. It allows a combination
+		 * of results to be encapsulated within one object.
+		 */
+		List<Result> compositeResults = new ArrayList<Result>();
+
+		/**
+		 * Creates a new {@link CompositeResult} with a name and a list
+		 * of initial results to be contained in it.
+		 *
+		 * @param name The name of the {@link CompositeResult}
+		 * @param results The results to be contained in the {@link CompositeResult}
+		 */
+		public CompositeResult(String name, final Collection<Result> results) {
+			super(name);
+			addResults(results);
+		}
+
+		/**
+		 * Adds a {@link Collection} of results to the {@link CompositeResult}.
+		 *
+		 * @param results The results to add
+		 */
+		public void addResults(final Collection<Result> results) {
+			compositeResults.addAll(results);
+		}
+
+		/**
+		 * Adds one {@link Result} to the {@link CompositeResult}
+		 * @param result The result to add
+		 */
+		public void add(final Result result) {
+			compositeResults.add(result);
+		}
+
+		/**
+		 * Gets an iterator over the contents.
+		 */
+		public Iterator<Result> iterator() {
+			return compositeResults.iterator();
+		}
+
+	}
 
 	/**
 	 * Represents a {@link Result} that contains an {@link Image}.
