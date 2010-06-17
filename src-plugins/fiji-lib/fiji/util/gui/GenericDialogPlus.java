@@ -157,11 +157,11 @@ public class GenericDialogPlus extends GenericDialog {
 
 		public void actionPerformed(ActionEvent e) {
 
-		    JFileChooser fc = new JFileChooser();
-		    fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+			JFileChooser fc = new JFileChooser();
+			fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
-		    fc.showOpenDialog(null);
-		    File selFile = fc.getSelectedFile();
+			fc.showOpenDialog(null);
+			File selFile = fc.getSelectedFile();
 			text.setText( selFile.getAbsolutePath() );
 		}
 	}
