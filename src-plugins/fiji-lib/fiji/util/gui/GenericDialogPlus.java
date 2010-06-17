@@ -33,7 +33,7 @@ import javax.swing.JFileChooser;
 
 public class GenericDialogPlus extends GenericDialog {
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = 1L;
 
@@ -75,7 +75,7 @@ public class GenericDialogPlus extends GenericDialog {
 		layout.setConstraints(panel, constraints);
 		add(panel);
 	}
-	
+
 	public void addFileField(String label, String defaultPath) {
 		addFileField(label, defaultPath, 20);
 	}
@@ -99,30 +99,30 @@ public class GenericDialogPlus extends GenericDialog {
 		layout.setConstraints(panel, constraints);
 		add(panel);
 	}
-	
+
 	/**
 	 * Add button to the dialog
 	 * @param label button label
-	 * @param listener listener to handle the action when pressing the button 
+	 * @param listener listener to handle the action when pressing the button
 	 */
 	public void addButton(String label, ActionListener listener)
 	{
 		Button button = new Button(label);
 		button.addActionListener(listener);
-		
+
 		TextField text = (TextField)stringField.lastElement();
 		GridBagLayout layout = (GridBagLayout)getLayout();
 		GridBagConstraints constraints = layout.getConstraints(text);
-		
-		constraints.gridx = 0; 
+
+		constraints.gridx = 0;
 		constraints.anchor = GridBagConstraints.EAST;
 		constraints.gridwidth = 1;
-		constraints.insets = new Insets(0, 0, 3, 0);				
-		
+		constraints.insets = new Insets(0, 0, 3, 0);
+
 		Panel panel = new Panel();
 		panel.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
 		panel.add(button);
-		
+
 		layout.setConstraints(panel, constraints);
 		addPanel(panel);
 	}
@@ -145,7 +145,7 @@ public class GenericDialogPlus extends GenericDialog {
 			text.setText(directory + File.separator + fileName);
 		}
 	}
-	
+
 	static class DirectoryListener implements ActionListener {
 		String title;
 		TextField text;
@@ -156,12 +156,12 @@ public class GenericDialogPlus extends GenericDialog {
 		}
 
 		public void actionPerformed(ActionEvent e) {
-			
+
 		    JFileChooser fc = new JFileChooser();
 		    fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-		    
+
 		    fc.showOpenDialog(null);
-		    File selFile = fc.getSelectedFile();			
+		    File selFile = fc.getSelectedFile();
 			text.setText( selFile.getAbsolutePath() );
 		}
 	}
@@ -176,7 +176,7 @@ public class GenericDialogPlus extends GenericDialog {
 			throws IOException, UnsupportedFlavorException {
 		String text = null;
 		DataFlavor fileList = DataFlavor.javaFileListFlavor;
-		
+
 		if (event.isDataFlavorSupported(fileList)) {
 			event.acceptDrop(DnDConstants.ACTION_COPY);
 			List<File> list = (List<File>)event.getTransferable().getTransferData(fileList);
