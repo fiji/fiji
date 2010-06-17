@@ -98,7 +98,7 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 		width = PLUGIN_NOT_FOUND;
 
 		// Temporarily suppress "plugin not found" errors if LOCI Bio-Formats plugin is installed
-		if (Menus.getCommands().get("Bio-Formats Importer")!=null && IJ.getVersion().compareTo("1.37u")>=0)
+		if (IJ.getVersion().compareTo("1.37u")>=0 && LOCI_PRESENT)
 			IJ.suppressPluginNotFoundError();
 
 		// OK now we get to the interesting bit
