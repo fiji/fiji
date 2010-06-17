@@ -90,7 +90,6 @@ public abstract class Result {
 	 */
 	static class ImageResult <T extends RealType<T>> extends Result {
 		Image<T> data;
-		//Calibaration / MetaData info?
 
 		public ImageResult(String name, Image<T> data) {
 			super(name);
@@ -143,7 +142,7 @@ public abstract class Result {
 		}
 	}
 
-	static class ValueResult extends Result{
+	static class ValueResult extends Result {
 		double value;
 		double time;
 		double thresholds;
