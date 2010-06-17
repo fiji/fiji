@@ -137,11 +137,21 @@ public class GenericDialogPlus extends GenericDialog {
 		}
 
 		public void actionPerformed(ActionEvent e) {
-			OpenDialog dialog = new OpenDialog(title, null);
+			String fileName = null;
+			File dir = new File(text.getText());
+			if (!dir.isDirectory()) {
+				if (dir.exists())
+					fileName = dir.getName();
+				dir = dir.getParentFile();
+			}
+			while (dir != null && !dir.exists())
+				dir = dir.getParentFile();
+
+			OpenDialog dialog = new OpenDialog(title, dir.getAbsolutePath(), fileName);
 			String directory = dialog.getDirectory();
 			if (directory == null)
 				return;
-			String fileName = dialog.getFileName();
+			fileName = dialog.getFileName();
 			text.setText(directory + File.separator + fileName);
 		}
 	}
@@ -156,8 +166,11 @@ public class GenericDialogPlus extends GenericDialog {
 		}
 
 		public void actionPerformed(ActionEvent e) {
+			File directory = new File(text.getText());
+			while (directory != null && !directory.exists())
+				directory = directory.getParentFile();
 
-			JFileChooser fc = new JFileChooser();
+			JFileChooser fc = new JFileChooser(directory);
 			fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
 			fc.showOpenDialog(null);
