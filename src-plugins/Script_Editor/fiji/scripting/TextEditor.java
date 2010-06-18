@@ -653,6 +653,9 @@ public class TextEditor extends JFrame implements ActionListener,
 			extractSourceJar();
 		else if (source == openSourceForClass) {
 			String className = getSelectedTextOrAsk("Name of class");
+			if (className.indexOf('.') < 0)
+				className = getEditorPane().getClassNameFunctions()
+					.getFullName(className);
 			if (className != null) try {
 				String path = new FileFunctions(this).getSourcePath(className);
 				if (path != null)
