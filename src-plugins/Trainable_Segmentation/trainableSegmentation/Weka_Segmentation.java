@@ -3381,7 +3381,10 @@ public class Weka_Segmentation implements PlugIn
 			final ImagePlus labels, 
 			final AbstractClassifier classifier)
 	{
-		ImagePlus warpedLabels = new ImagePlus("labels", labels.getProcessor().duplicate().convertToFloat());
+		final ImageStack warpedLabelStack = new ImageStack(image.getWidth(), image.getHeight());
+		for(int i=1; i<=labels.getStackSize(); i++)
+			warpedLabelStack.addSlice("warped label " + i, labels.getStack().getProcessor(i).duplicate().convertToFloat());
+		ImagePlus warpedLabels = new ImagePlus("warped labels", warpedLabelStack);
 		
 		final Weka_Segmentation seg = new Weka_Segmentation(image);
 		
