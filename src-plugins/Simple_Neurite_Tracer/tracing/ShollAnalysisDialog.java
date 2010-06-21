@@ -48,6 +48,7 @@ import java.awt.event.WindowListener;
 import java.awt.event.TextListener;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemListener;
+import java.awt.BorderLayout;
 import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.image.IndexColorModel;
@@ -87,6 +88,8 @@ import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.chart.renderer.xy.StandardXYBarPainter;
 
 import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JButton;
 
 import org.w3c.dom.DOMImplementation;
 import org.apache.batik.dom.GenericDOMImplementation;
@@ -318,6 +321,106 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 				throw new RuntimeException("[BUG] Somehow there were no valid points found");
 		}
 
+		public static class GraphFrame extends JFrame implements ActionListener {
+			JButton exportButton;
+			JFreeChart chart;
+			ChartPanel chartPanel;
+			public GraphFrame( String title, JFreeChart chart ) {
+				super();
+
+				this.chart = chart;
+
+				chartPanel = new ChartPanel( chart );
+				chartPanel.setPreferredSize(new java.awt.Dimension(800,600));
+
+				JPanel mainPanel = new JPanel();
+				mainPanel.setLayout(new BorderLayout());
+
+				mainPanel.add(chartPanel,BorderLayout.CENTER);
+
+				JPanel buttonsPanel = new JPanel();
+				exportButton = new JButton("Export graph as SVG");
+				exportButton.addActionListener(this);
+				buttonsPanel.add(exportButton);
+				mainPanel.add(buttonsPanel,BorderLayout.SOUTH);
+
+				setContentPane(mainPanel);
+				validate();
+				setSize(new java.awt.Dimension(500, 270));
+				GUI.center(this);
+				setVisible(true);
+			}
+			public void actionPerformed( ActionEvent e ) {
+				Object source = e.getSource();
+				if( source == exportButton ) {
+					exportGraphAsSVG();
+				}
+			}
+			public void exportGraphAsSVG() {
+
+				SaveDialog sd = new SaveDialog("Export graph as...",
+							       "sholl",
+							       ".svg");
+
+				String savePath;
+				if(sd.getFileName()==null) {
+					return;
+				}
+
+				File saveFile = new File( sd.getDirectory(),
+							  sd.getFileName() );
+				if ((saveFile!=null)&&saveFile.exists()) {
+					if (!IJ.showMessageWithCancel(
+						    "Export graph...", "The file "+
+						    saveFile.getAbsolutePath()+" already exists.\n"+
+						    "Do you want to replace it?"))
+						return;
+				}
+
+				IJ.showStatus("Exporting graph to "+saveFile.getAbsolutePath());
+
+				try {
+					exportChartAsSVG( chart, chartPanel.getBounds(), saveFile );
+				} catch( IOException ioe) {
+					IJ.error("Saving to "+saveFile.getAbsolutePath()+" failed");
+					return;
+				}
+
+			}
+
+			/**
+			 * Exports a JFreeChart to a SVG file.
+			 *
+			 * @param chart JFreeChart to export
+			 * @param bounds the dimensions of the viewport
+			 * @param svgFile the output file.
+			 * @throws IOException if writing the svgFile fails.
+
+			 * This method is taken from:
+			 *    http://dolf.trieschnigg.nl/jfreechart/
+			 */
+			void exportChartAsSVG(JFreeChart chart, Rectangle bounds, File svgFile) throws IOException {
+
+				// Get a DOMImplementation and create an XML document
+				DOMImplementation domImpl =
+					GenericDOMImplementation.getDOMImplementation();
+				Document document = domImpl.createDocument(null, "svg", null);
+
+				// Create an instance of the SVG Generator
+				SVGGraphics2D svgGenerator = new SVGGraphics2D(document);
+
+				// draw the chart in the SVG generator
+				chart.draw(svgGenerator, bounds);
+
+				// Write svg file
+				OutputStream outputStream = new FileOutputStream(svgFile);
+				Writer out = new OutputStreamWriter(outputStream, "UTF-8");
+				svgGenerator.stream(out, true /* use css */);
+				outputStream.flush();
+				outputStream.close();
+			}
+		}
+
 		public void drawGraph() {
 
 			PrintWriter pw = null;
@@ -403,14 +506,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 
 			JFreeChart chart = new JFreeChart( description, plot );
 
-			final ChartPanel chartPanel = new ChartPanel(chart);
-			chartPanel.setPreferredSize(new java.awt.Dimension(800,600));
-
-			JFrame window = new JFrame(description);
-			window.add(chartPanel);
-			window.validate();
-			window.setSize(new java.awt.Dimension(500, 270));
-			window.setVisible(true);
+			new GraphFrame( description, chart );
 		}
 
 		public int crossingsAtDistanceSquared( double distanceSquared ) {
@@ -712,38 +808,4 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 	public void windowIconified( WindowEvent e ) { }
 	public void windowDeiconified( WindowEvent e ) { }
 
-	public static class ShollGraphFrame extends JFrame {
-
-	/**
-	 * Exports a JFreeChart to a SVG file.
-	 *
-	 * @param chart JFreeChart to export
-	 * @param bounds the dimensions of the viewport
-	 * @param svgFile the output file.
-	 * @throws IOException if writing the svgFile fails.
-
-	 * This method is taken from:
-	 *    http://dolf.trieschnigg.nl/jfreechart/
-	 */
-		void exportChartAsSVG(JFreeChart chart, Rectangle bounds, File svgFile) throws IOException {
-
-			// Get a DOMImplementation and create an XML document
-			DOMImplementation domImpl =
-				GenericDOMImplementation.getDOMImplementation();
-			Document document = domImpl.createDocument(null, "svg", null);
-
-			// Create an instance of the SVG Generator
-			SVGGraphics2D svgGenerator = new SVGGraphics2D(document);
-
-			// draw the chart in the SVG generator
-			chart.draw(svgGenerator, bounds);
-
-			// Write svg file
-			OutputStream outputStream = new FileOutputStream(svgFile);
-			Writer out = new OutputStreamWriter(outputStream, "UTF-8");
-			svgGenerator.stream(out, true /* use css */);
-			outputStream.flush();
-			outputStream.close();
-		}
-	}
 }
