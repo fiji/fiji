@@ -373,7 +373,7 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 					o = null; // invalid image
 				else
 					width = IMAGE_OPENED; // success
-		} else {
+		} else if (o != null) {
 			// plugin does not extend ImagePlus; assume success
 			width = IMAGE_OPENED;
 		}
