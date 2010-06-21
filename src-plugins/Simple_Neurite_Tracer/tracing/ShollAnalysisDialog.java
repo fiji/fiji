@@ -82,7 +82,9 @@ import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.axis.LogAxis;
 import org.jfree.chart.renderer.xy.XYBarRenderer;
+import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.jfree.chart.renderer.xy.StandardXYBarPainter;
 
 import javax.swing.JFrame;
 
@@ -141,7 +143,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 	public void textValueChanged( TextEvent e ) {
 		Object source = e.getSource();
 		if( source == sampleSeparation ) {
-	
+
 		}
 	}
 
@@ -179,7 +181,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		if( noNormalization.getState() )
 			normalization = NOT_NORMALIZED;
 		else if( normalizationForSphereVolume.getState() )
-			normalization = NORMALIZED_FOR_SPHERE_VOLUME;		
+			normalization = NORMALIZED_FOR_SPHERE_VOLUME;
 		else
 			throw new RuntimeException("BUG: somehow no normalization checkbox was selected");
 
@@ -224,6 +226,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		protected double sphereSeparation;
 		protected double [] x_graph_points;
 		protected double [] y_graph_points;
+		protected double minY;
 		protected double maxY;
 		protected int graphPoints;
 		protected String yAxisLabel;
@@ -290,76 +293,116 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 				for( int i = 0; i < graphPoints; ++i ) {
 					double x = x_graph_points[i];
 					double distanceSquared = x * x;
-					System.out.println("Will reduce y from: "+y_graph_points[i]);
 					if( twoDimensional )
 						y_graph_points[i] /= (Math.PI * distanceSquared);
 					else
 						y_graph_points[i] /= ((4.0 * Math.PI * x * distanceSquared) / 3.0);
-					System.out.println("... to:"+y_graph_points[i]);
 				}
-				if( twoDimensional ) 
+				if( twoDimensional )
 					xAxisLabel += " / area enclosed by circle";
 				else
 					yAxisLabel += " / volume enclosed by sphere";
 			}
 			maxY = Double.MIN_VALUE;
-			for( int i = 0; i < graphPoints; ++i )
-				if( y_graph_points[i] > maxY )
-					maxY = y_graph_points[i];
+			minY = Double.MAX_VALUE;
+			for( int i = 0; i < graphPoints; ++i ) {
+				double y = y_graph_points[i];
+				if( ! (Double.isInfinite(y) || Double.isNaN(y)) ) {
+					if( y > maxY )
+						maxY = y;
+					if( y < minY )
+						minY = y;
+				}
+			}
+			if( maxY == Double.MIN_VALUE )
+				throw new RuntimeException("[BUG] Somehow there were no valid points found");
 		}
 
 		public void drawGraph() {
-			final XYSeries series = new XYSeries("Intersections");
-			for( int i = 0; i < graphPoints; ++i ) {
-				series.add(x_graph_points[i],y_graph_points[i]);
+
+			PrintWriter pw = null;
+			boolean debug = true;
+
+			XYSeriesCollection data = null;
+
+			double minX = Double.MAX_VALUE;
+			double maxX = Double.MIN_VALUE;
+
+			try {
+				if (debug)
+					pw = new PrintWriter(new  FileWriter("/tmp/last-graph"));
+
+				final XYSeries series = new XYSeries("Intersections");
+				for( int i = 0; i < graphPoints; ++i ) {
+					double x = x_graph_points[i];
+					double y = y_graph_points[i];
+					if( Double.isInfinite(y) || Double.isNaN(y) )
+						continue;
+					if( axes == AXES_SEMI_LOG || axes == AXES_LOG_LOG ) {
+						if( y <= 0 )
+							continue;
+					}
+					if( axes == AXES_LOG_LOG ) {
+						if( x <= 0 )
+							continue;
+					}
+					if( x < minX )
+						minX = x;
+					if( x > maxX )
+						maxX = x;
+					series.add(x,y);
+					if (debug)
+						pw.print(x_graph_points[i]+"\t"+y+"\n");
+				}
+				data = new XYSeriesCollection(series);
+
+				if (debug)
+					pw.close();
+
+			} catch( IOException e ) {
+				IJ.error("Failed to write out the graph points");
+				return;
 			}
-			final XYSeriesCollection data = new XYSeriesCollection(series);
 
 			ValueAxis xAxis = null;
 			ValueAxis yAxis = null;
 			if( axes == AXES_NORMAL ) {
-				xAxis = new NumberAxis();
-				yAxis = new NumberAxis();
+				xAxis = new NumberAxis(xAxisLabel);
+				yAxis = new NumberAxis(yAxisLabel);
 			} else if( axes == AXES_SEMI_LOG ) {
-				xAxis = new NumberAxis();
-				yAxis = new LogAxis();
+				xAxis = new NumberAxis(xAxisLabel);
+				yAxis = new LogAxis(yAxisLabel);
 			} else if( axes == AXES_LOG_LOG ) {
-				xAxis = new LogAxis();
-				yAxis = new LogAxis();
+				xAxis = new LogAxis(xAxisLabel);
+				yAxis = new LogAxis(yAxisLabel);
+			}
+
+
+			System.out.println("Setting x axis range to: "+minX+" -> "+maxX);
+			xAxis.setRange(minX,maxX);
+			System.out.println("Setting y axis range to: "+minY+" -> "+maxY);
+			yAxis.setRange(minY,maxY);
+
+			XYItemRenderer renderer = null;
+			if( sphereSeparation > 0 ) {
+				renderer = new XYLineAndShapeRenderer();
+			} else {
+				XYBarRenderer barRenderer = new XYBarRenderer();
+				barRenderer.setShadowVisible(false);
+				barRenderer.setGradientPaintTransformer(null);
+				barRenderer.setDrawBarOutline(false);
+				barRenderer.setBarPainter(new StandardXYBarPainter());
+				renderer = barRenderer;
 			}
 
 			XYPlot plot = new XYPlot(
 				data,
 				xAxis,
 				yAxis,
-				( sphereSeparation > 0 ? new XYLineAndShapeRenderer() : new XYBarRenderer() ) );
-				  
+				renderer );
+
 			JFreeChart chart = new JFreeChart( description, plot );
 
-			// XYPlot();
-
-
-//			JFreeChart chart = ChartFactory.createHistogram(
-//				description,
-//				xAxisLabel,
-//				yAxisLabel,
-//				data,
-//				PlotOrientation.VERTICAL,
-//				true,
-//				true,
-//				false );
-
-/*
-			JFreeChart chart = ChartFactory.createXYLineChart(
-				description,
-				xAxisLabel,
-				yAxisLabel,
-				data,
-				PlotOrientation.VERTICAL,
-				true,
-				true,
-				false );
-*/
 			final ChartPanel chartPanel = new ChartPanel(chart);
 			chartPanel.setPreferredSize(new java.awt.Dimension(800,600));
 
@@ -406,7 +449,6 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			}
 			ImageStack stack = new ImageStack(width,height);
 			for( int z = 0; z < depth; ++z ) {
-				System.out.println("Doing slice: "+z);
 				short [] pixels = new short[width*height];
 				for( int y = 0; y < height; ++y ) {
 					for( int x = 0; x < width; ++x ) {
@@ -460,7 +502,6 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 						     double z_start,
 						     List<ShollPoint> shollPointsList ) {
 
-		System.out.println("Adding points from a path of with "+p.points+" points");
 		for( int i = 0; i < p.points - 1; ++i ) {
 			double xdiff_first = p.precise_x_positions[i] - x_start;
 			double ydiff_first = p.precise_y_positions[i] - y_start;
@@ -505,14 +546,10 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		int numberOfAllPaths = 0;
 		int numberOfSelectedPaths = 0;
 
-		System.out.println("Going to iterate through paths:");
-
 		Iterator<Path> pi = pafm.allPaths.iterator();
 		while( pi.hasNext() ) {
 			Path p = pi.next();
 			boolean selected = p.getSelected();
-			System.out.println("Trying path: "+p+", which has selected = "+selected);
-			System.out.println("  ... and p.getUseFitted() is: "+p.getUseFitted());
 			if( p.getUseFitted() ) {
 				p = p.fitted;
 			} else if( p.fittedVersionOf != null )
@@ -524,7 +561,6 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 						 shollPointsAllPaths);
 			++ numberOfAllPaths;
 			if( selected ) {
-				System.out.println("adding to selected paths");
 				addPathPointsToShollList(p,
 							 x_start,
 							 y_start,
@@ -588,7 +624,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 
 		++ c.gridy;
 		Panel buttonsPanel = new Panel();
-	
+
 		makeShollImageButton.addActionListener(this);
 		buttonsPanel.add(makeShollImageButton);
 
@@ -677,10 +713,10 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 	public void windowDeiconified( WindowEvent e ) { }
 
 	public static class ShollGraphFrame extends JFrame {
-		
+
 	/**
 	 * Exports a JFreeChart to a SVG file.
-	 * 
+	 *
 	 * @param chart JFreeChart to export
 	 * @param bounds the dimensions of the viewport
 	 * @param svgFile the output file.
@@ -695,17 +731,17 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			DOMImplementation domImpl =
 				GenericDOMImplementation.getDOMImplementation();
 			Document document = domImpl.createDocument(null, "svg", null);
-			
+
 			// Create an instance of the SVG Generator
 			SVGGraphics2D svgGenerator = new SVGGraphics2D(document);
-			
+
 			// draw the chart in the SVG generator
 			chart.draw(svgGenerator, bounds);
-			
+
 			// Write svg file
 			OutputStream outputStream = new FileOutputStream(svgFile);
 			Writer out = new OutputStreamWriter(outputStream, "UTF-8");
-			svgGenerator.stream(out, true /* use css */);						
+			svgGenerator.stream(out, true /* use css */);
 			outputStream.flush();
 			outputStream.close();
 		}
