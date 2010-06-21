@@ -1107,15 +1107,17 @@ public class Weka_Segmentation implements PlugIn
 							double y = y2-dx*width/2.0;
 							
 							int n2 = width;
-							do {								
-								double[] values = new double[featureStack.getSize()+1];
-								for (int z=1; z<=featureStack.getSize(); z++)
-									values[z-1] = featureStack.getProcessor(z).getInterpolatedValue(x, y);
-								values[featureStack.getSize()] = (double) l;
-								trainingData.add(new DenseInstance(1.0, values));
-								// increase number of instances for this class
-								nl ++;
-																
+							do {				
+								if(x >= 0 && x < featureStack.getWidth() && y >= 0 && y <featureStack.getHeight())
+								{
+									double[] values = new double[featureStack.getSize()+1];
+									for (int z=1; z<=featureStack.getSize(); z++)
+										values[z-1] = featureStack.getProcessor(z).getInterpolatedValue(x, y);
+									values[featureStack.getSize()] = (double) l;
+									trainingData.add(new DenseInstance(1.0, values));
+									// increase number of instances for this class
+									nl ++;
+								}								
 								x += dy;
 								y += dx;
 							} while (--n2>0);
@@ -1175,8 +1177,9 @@ public class Weka_Segmentation implements PlugIn
 		// Disable buttons until the training has finished
 		setButtonsEnabled(false);
 				
-		// Create feature stack if it was not created yet
-		if(featureStack.isEmpty() || updateFeatures)
+		// Create feature stack if necessary (training from traces
+		// and the features stack is empty or the settings changed)
+		if(nonEmpty > 1 && featureStack.isEmpty() || updateFeatures)
 		{
 			IJ.showStatus("Creating feature stack...");
 			IJ.log("Creating feature stack...");
@@ -3381,25 +3384,28 @@ public class Weka_Segmentation implements PlugIn
 			final ImagePlus labels, 
 			final AbstractClassifier classifier)
 	{
+		// Create a float copy of the labels
 		final ImageStack warpedLabelStack = new ImageStack(image.getWidth(), image.getHeight());
 		for(int i=1; i<=labels.getStackSize(); i++)
 			warpedLabelStack.addSlice("warped label " + i, labels.getStack().getProcessor(i).duplicate().convertToFloat());
 		ImagePlus warpedLabels = new ImagePlus("warped labels", warpedLabelStack);
 		
+		// Create segmentation project
 		final Weka_Segmentation seg = new Weka_Segmentation(image);
 		
 		if( null != classifier )
 			seg.setClassifier(classifier);
 		
+		// At the moment, use all features
 		seg.useAllFeatures();
 		String firstClass = seg.classLabels[0];
 		String secondClass = seg.classLabels[1];
 		
 		double error = Double.MAX_VALUE;
 		
-		final int subSetSize = image.getWidth() * image.getHeight();
+		final int numOfPixelsPerImage = image.getWidth() * image.getHeight();
 				
-		// add labels as binary data
+		// Add all labels as binary data (each input slice)
 		seg.addBinaryData(image, labels, firstClass, secondClass);
 		
 		int iter = 1;
@@ -3419,30 +3425,35 @@ public class Weka_Segmentation implements PlugIn
 			
 			error = newError;
 			
-			Instances instances = seg.getTrainingInstances();
-			ImageStack proposalStack = new ImageStack(image.getWidth(), image.getHeight());
+			final Instances instances = seg.getTrainingInstances();
+			final ImageStack proposalStack = new ImageStack(image.getWidth(), image.getHeight());
 			
 			for(int i=1; i<=image.getStackSize(); i++)
 			{
-				final Instances subDataSet = new Instances (instances, (i-1)*subSetSize, subSetSize); 
+				final Instances subDataSet = new Instances (instances, (i-1)*numOfPixelsPerImage, numOfPixelsPerImage); 
 				ImagePlus result = seg.getProbabilityMapsMT(subDataSet, image.getWidth(), image.getHeight());
 				proposalStack.addSlice("probability map " + i, result.getImageStack().getProcessor(1));
 			}
 									
-			ImagePlus proposal = new ImagePlus("proposal", proposalStack);
-			proposal.show();
+			final ImagePlus proposal = new ImagePlus("proposal", proposalStack);
+		
+			// Warp ground truth, relax original labels to proposal. Only simple
+			// points warping is allowed.
 			warpedLabels = simplePointWarp2d(warpedLabels, proposal, null, 0.5);
+
 			// Update training data with warped labels
 			seg.udpateDataClassification(warpedLabels, firstClass, secondClass);
-			warpedLabels.show();
 			iter++;
 		}
 		return warpedLabels;
 	}
 	
 	/**
+	 * Update the class attribute of "loadedTrainingData" from 
+	 * the input binary labels. The number of instances of "loadedTrainingData" 
+	 * must match the size of the input labels image (or stack)
 	 * 
-	 * @param labels
+	 * @param labels input binary labels (single image or stack) 
 	 */
 	public void udpateDataClassification(
 			ImagePlus labels,
@@ -3497,7 +3508,7 @@ public class Weka_Segmentation implements PlugIn
 	/**
 	 * Get training error (from loaded data).
 	 * If the classifier is a FastRandomForest then it uses the out of bag error.
-	 * @return training error
+	 * @return classifier error on the training data set.
 	 */
 	public double getTrainingError()
 	{
@@ -3523,7 +3534,12 @@ public class Weka_Segmentation implements PlugIn
 	
 	
 	/**
-	 * Warping error
+	 * Calculate warping error
+	 * 
+	 * @param label
+	 * @param proposal
+	 * @param mask
+	 * @param binaryThreshold
 	 */
 	public static double warpingError(
 			ImagePlus label,
@@ -3593,6 +3609,7 @@ public class Weka_Segmentation implements PlugIn
 		
 		return new ImagePlus("warped source", warpedSource);
 	}
+	
 	/**
 	 * Use simple point relaxation to warp 2D source into 2D target. 
 	 * Source is only modified at nonzero locations in the mask
