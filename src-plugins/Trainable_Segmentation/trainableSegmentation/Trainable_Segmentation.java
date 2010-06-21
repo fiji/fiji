@@ -935,14 +935,16 @@ public class Trainable_Segmentation implements PlugIn
 							
 							int n2 = width;
 							do {								
-								double[] values = new double[featureStack.getSize()+1];
-								for (int z=1; z<=featureStack.getSize(); z++)
-									values[z-1] = featureStack.getProcessor(z).getInterpolatedValue(x, y);
-								values[featureStack.getSize()] = (double) l;
-								trainingData.add(new DenseInstance(1.0, values));
-								// increase number of instances for this class
-								nl ++;
-																
+								if(x >= 0 && x < featureStack.getWidth() && y >= 0 && y <featureStack.getHeight())
+								{
+									double[] values = new double[featureStack.getSize()+1];
+									for (int z=1; z<=featureStack.getSize(); z++)
+										values[z-1] = featureStack.getProcessor(z).getInterpolatedValue(x, y);
+									values[featureStack.getSize()] = (double) l;
+									trainingData.add(new DenseInstance(1.0, values));
+									// increase number of instances for this class
+									nl ++;
+								}						
 								x += dy;
 								y += dx;
 							} while (--n2>0);
