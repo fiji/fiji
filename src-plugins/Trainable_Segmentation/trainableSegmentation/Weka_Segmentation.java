@@ -120,6 +120,8 @@ import weka.core.SerializationHelper;
 import weka.core.Utils;
 import weka.core.pmml.PMMLFactory;
 import weka.core.pmml.PMMLModel;
+import weka.filters.Filter;
+import weka.filters.supervised.instance.Resample;
 import weka.gui.GUIChooser;
 import weka.gui.GenericObjectEditor;
 import weka.gui.PropertyDialog;
@@ -172,9 +174,9 @@ public class Weka_Segmentation implements PlugIn
 	/** default classifier (Fast Random Forest) */
 	private FastRandomForest rf;
 	/** flag to update the whole set of instances (used when there is any change on the features or the classes) */
-	private boolean updateWholeData = true;
+	private boolean updateWholeData = false;
 	/** flag to update the feature stack (used when there is any change on the features) */
-	private boolean updateFeatures = true;
+	private boolean updateFeatures = false;
 	
 	/** train classifier button */
 	JButton trainButton;
@@ -1095,7 +1097,7 @@ public class Weka_Segmentation implements PlugIn
 						{
 							x1 = x2; 
 							y1 = y2;
-							x2  =p.xpoints[i]; 
+							x2 = p.xpoints[i]; 
 							y2 = p.ypoints[i];
 							
 							double dx = x2-x1;
@@ -2345,6 +2347,16 @@ public class Weka_Segmentation implements PlugIn
 	}
 	
 	/**
+	 * Get the current training header
+	 * 
+	 * @return training header (empty set of instances with the current attributes and classes)
+	 */
+	public Instances getTrainHeader()
+	{
+		return this.trainHeader;				
+	}
+	
+	/**
 	 * Read header classifier from a .model file
 	 * @param filename complete path and file name
 	 * @return false if error
@@ -3202,7 +3214,7 @@ public class Weka_Segmentation implements PlugIn
 	 * Get probability distribution of each class for current classifier 
 	 * and specific image data (multi-thread version)
 	 * 
-	 * @param input data set
+	 * @param data input data set
 	 * @param width image width
 	 * @param height image height
 	 * @return probability stack, one image per class
@@ -3348,6 +3360,7 @@ public class Weka_Segmentation implements PlugIn
 	 *  @param randomFeatures number of random features in the random forest
 	 *  @param maxDepth maximum depth allowed in the trees
 	 *  @param seed fast random forest seed
+	 *  @param resample flag to resample input data (to homogenize classes distribution)
 	 *  @return trained fast random forest classifier
 	 */
 	public static FastRandomForest trainRandomForestBLOTC(
@@ -3356,7 +3369,8 @@ public class Weka_Segmentation implements PlugIn
 			final int numOfTrees,
 			final int randomFeatures,
 			final int maxDepth,
-			final int seed)
+			final int seed,
+			final boolean resample)
 	{
 		// Initialization of Fast Random Forest classifier
 		final FastRandomForest rf = new FastRandomForest();
@@ -3365,24 +3379,119 @@ public class Weka_Segmentation implements PlugIn
 		rf.setMaxDepth(maxDepth);
 		rf.setSeed(seed);
 		
-		ImagePlus result = trainBLOTC(image, labels, rf);
+		ImagePlus result = trainBLOTC(image, labels, rf, resample);
 		result.show();
 		
 		return rf;
 	}
 	
 	/**
-	 * Train a classifier using BLOTC
+	 * Train current classifier using BLOTC (non-static method)
+	 * 
+	 * @param image input image
+	 * @param labels binary labels
+	 * @return warped labels from applying BLOTC 
+	 */
+	public ImagePlus trainBLOTC(
+			final ImagePlus image, 
+			final ImagePlus labels)
+	{
+		// Create a float copy of the labels
+		final ImageStack warpedLabelStack = new ImageStack(image.getWidth(), image.getHeight());
+		for(int i=1; i<=labels.getStackSize(); i++)
+			warpedLabelStack.addSlice("warped label " + i, labels.getStack().getProcessor(i).duplicate().convertToFloat());
+		ImagePlus warpedLabels = new ImagePlus("warped labels", warpedLabelStack);
+						
+		// At the moment, use all features
+		String firstClass = classLabels[0];
+		String secondClass = classLabels[1];
+		
+		double error = Double.MAX_VALUE;
+		
+		final int numOfPixelsPerImage = image.getWidth() * image.getHeight();
+				
+		IJ.log("Adding labels to training data set...");
+		
+		// Add all labels as binary data (each input slice)
+		addBinaryData(image, labels, firstClass, secondClass);
+		
+		int iter = 1;
+		while(true)
+		{
+			IJ.log("BLOTC training...");
+					
+			// Train classifier with current ground truth
+			trainClassifier();
+			
+			double newError = getTrainingError();
+			
+			IJ.log("BLOTC iteration " + iter + ": training error = " + newError);
+			
+			if(newError >= error)
+				break;
+			
+			error = newError;
+			
+			final Instances instances = getTrainingInstances();
+			final ImageStack proposalStack = new ImageStack(image.getWidth(), image.getHeight());
+			
+			for(int i=1; i<=image.getStackSize(); i++)
+			{
+				final Instances subDataSet = new Instances (instances, (i-1)*numOfPixelsPerImage, numOfPixelsPerImage); 
+				ImagePlus result = getProbabilityMapsMT(subDataSet, image.getWidth(), image.getHeight());
+				proposalStack.addSlice("probability map " + i, result.getImageStack().getProcessor(1));
+			}
+									
+			final ImagePlus proposal = new ImagePlus("proposal", proposalStack);
+		
+			// Warp ground truth, relax original labels to proposal. Only simple
+			// points warping is allowed.
+			warpedLabels = simplePointWarp2d(warpedLabels, proposal, null, 0.5);
+
+			// Update training data with warped labels
+			udpateDataClassification(warpedLabels, firstClass, secondClass);
+			iter++;
+		}
+		return warpedLabels;
+	}
+	
+	/**
+	 * 
+	 * @param trainingData
+	 * @return
+	 */
+	public static Instances homogenizeTrainingData(Instances trainingData)
+	{
+		final Resample filter = new Resample();
+		Instances filteredIns = null;
+		filter.setBiasToUniformClass(1.0);
+		try {
+			filter.setInputFormat(trainingData);
+			filter.setNoReplacement(false);
+			filter.setSampleSizePercent(100);
+			filteredIns = Filter.useFilter(trainingData, filter);			
+		} catch (Exception e) {
+			IJ.log("Error when resampling input data!");
+			e.printStackTrace();
+		}
+		return filteredIns;
+		
+	}
+	
+	/**
+	 * Train a classifier using BLOTC (static method)
 	 * 
 	 * @param image input image
 	 * @param labels binary labels
 	 * @param classifier Weka classifier
+	 * @param resample flag to resample input data (to homogenize classes distribution)
 	 * @return warped labels from applying BLOTC 
 	 */
 	public static ImagePlus trainBLOTC(
 			final ImagePlus image, 
 			final ImagePlus labels, 
-			final AbstractClassifier classifier)
+			final AbstractClassifier classifier,
+			final boolean resample)
 	{
 		// Create a float copy of the labels
 		final ImageStack warpedLabelStack = new ImageStack(image.getWidth(), image.getHeight());
@@ -3405,8 +3514,23 @@ public class Weka_Segmentation implements PlugIn
 		
 		final int numOfPixelsPerImage = image.getWidth() * image.getHeight();
 				
+		IJ.log("Adding labels to training data set...");
+		
 		// Add all labels as binary data (each input slice)
 		seg.addBinaryData(image, labels, firstClass, secondClass);
+		
+		final Instances originalData = seg.getTrainingInstances();
+		Instances trainingData = originalData;
+		
+		// homogenize classes if resample is true
+		if(resample)
+		{
+			// Copy input data (very expensive in terms in memory...)			
+			IJ.log("Resampling input data (to homogenize the class distributions)...");			
+			trainingData = homogenizeTrainingData(originalData);
+			
+			seg.setLoadedTrainingData(trainingData);
+		}
 		
 		int iter = 1;
 		while(true)
@@ -3424,13 +3548,12 @@ public class Weka_Segmentation implements PlugIn
 				break;
 			
 			error = newError;
-			
-			final Instances instances = seg.getTrainingInstances();
+						
 			final ImageStack proposalStack = new ImageStack(image.getWidth(), image.getHeight());
 			
 			for(int i=1; i<=image.getStackSize(); i++)
 			{
-				final Instances subDataSet = new Instances (instances, (i-1)*numOfPixelsPerImage, numOfPixelsPerImage); 
+				final Instances subDataSet = new Instances (originalData, (i-1)*numOfPixelsPerImage, numOfPixelsPerImage); 
 				ImagePlus result = seg.getProbabilityMapsMT(subDataSet, image.getWidth(), image.getHeight());
 				proposalStack.addSlice("probability map " + i, result.getImageStack().getProcessor(1));
 			}
@@ -3442,7 +3565,16 @@ public class Weka_Segmentation implements PlugIn
 			warpedLabels = simplePointWarp2d(warpedLabels, proposal, null, 0.5);
 
 			// Update training data with warped labels
-			seg.udpateDataClassification(warpedLabels, firstClass, secondClass);
+			if(!resample)
+				seg.udpateDataClassification(warpedLabels, firstClass, secondClass);
+			else
+			{
+				IJ.log("Resampling training data...");
+				updateDataClassification(originalData, warpedLabels, 0, 1);
+				trainingData = homogenizeTrainingData(originalData);
+				seg.setLoadedTrainingData(trainingData);
+			}
+				
 			iter++;
 		}
 		return warpedLabels;
@@ -3454,6 +3586,8 @@ public class Weka_Segmentation implements PlugIn
 	 * must match the size of the input labels image (or stack)
 	 * 
 	 * @param labels input binary labels (single image or stack) 
+	 * @param className1
+	 * @param className2
 	 */
 	public void udpateDataClassification(
 			ImagePlus labels,
@@ -3481,9 +3615,28 @@ public class Weka_Segmentation implements PlugIn
 			return;
 		}
 		
+		updateDataClassification(this.loadedTrainingData, labels, classIndex1, classIndex2);				
+	}
+	
+	/**
+	 * Update the class attribute of "data" from 
+	 * the input binary labels. The number of instances of "data" 
+	 * must match the size of the input labels image (or stack)
+	 * 
+	 * @param data input instances 
+	 * @param labels
+	 * @param classIndex1
+	 * @param classIndex2
+	 */
+	public static void updateDataClassification(
+			Instances data,
+			ImagePlus labels,
+			int classIndex1,
+			int classIndex2)
+	{
 		// Check sizes
 		final int size = labels.getWidth() * labels.getHeight() * labels.getStackSize();
-		if (size != this.loadedTrainingData.numInstances())
+		if (size != data.numInstances())
 		{
 			IJ.log("Error: labels size does not match loaded training data set size.");
 			return;
@@ -3498,12 +3651,11 @@ public class Weka_Segmentation implements PlugIn
 			final ImageProcessor slice = labels.getImageStack().getProcessor(z);			
 			for(int y=0; y<height; y++)
 				for(int x=0; x<width; x++, n++)
-					this.loadedTrainingData.get(n).setClassValue(slice.getPixel(x, y) > 0 ? classIndex1 : classIndex2);
+					data.get(n).setClassValue(slice.getPixel(x, y) > 0 ? classIndex1 : classIndex2);
 					
 		}
-		
-		
 	}
+	
 
 	/**
 	 * Get training error (from loaded data).
@@ -3536,36 +3688,45 @@ public class Weka_Segmentation implements PlugIn
 	/**
 	 * Calculate warping error
 	 * 
-	 * @param label
-	 * @param proposal
-	 * @param mask
-	 * @param binaryThreshold
+	 * @param label original labels (single image or stack)
+	 * @param proposal proposed new labels
+	 * @param mask image mask
+	 * @param binaryThreshold binary threshold to binarize proposal
+	 * @return total warping error
 	 */
 	public static double warpingError(
 			ImagePlus label,
 			ImagePlus proposal,
 			ImagePlus mask,
 			double binaryThreshold)
-	{
-		ImagePlus warpedLabels = simplePointWarp2d(label, proposal, mask, binaryThreshold);
+	{		
+		final ImagePlus warpedLabels = simplePointWarp2d(label, proposal, mask, binaryThreshold);
+	
+		if(null == warpedLabels)
+			return -1;				
+			
+		double error = 0;
+		double count = 0;
 		
-		final float[] thresholdedProposal = (float[])proposal.getProcessor().getPixels();
-		for(int i =0; i < thresholdedProposal.length; i++)
-			thresholdedProposal[i] = (thresholdedProposal[i] > binaryThreshold) ? 1.0f : 0.0f;
 		
-		float[] warpedPixels = (float[]) warpedLabels.getProcessor().getPixels();
-		
-		int error = 0;
-		int count = 0;
-		for(int i = 0; i < warpedPixels.length; i++)
-			if(warpedPixels[i] != 0)
+		for(int j=1; j<=proposal.getImageStackSize(); j++)
+		{
+			final float[] proposalPixels = (float[])proposal.getImageStack().getProcessor(j).getPixels();
+			final float[] warpedPixels = (float[])warpedLabels.getImageStack().getProcessor(j).getPixels();
+			for(int i=0; i<proposalPixels.length; i++)				
 			{
 				count ++;
-				if (warpedPixels[i] != thresholdedProposal[i])
+				final float thresholdedProposal = (proposalPixels[i] > binaryThreshold) ? 1.0f : 0.0f;
+				if (warpedPixels[i] != thresholdedProposal)
 					error++;
 			}
+			
+		}
 		
-		return ( (double) error) / count;
+		if(count != 0)
+			return error / count;
+		else
+			return -1;
 	}
 	
 	/**
@@ -3598,16 +3759,32 @@ public class Weka_Segmentation implements PlugIn
 		
 		final ImageStack warpedSource = new ImageStack(source.getWidth(), source.getHeight());
 		
+		double warpingError = 0;
 		for(int i = 1; i <= sourceSlices.getSize(); i++)
 		{
-			ImagePlus warpedSlice = simplePointWarp2d(sourceSlices.getProcessor(i), 
+			WarpingResults wr = simplePointWarp2d(sourceSlices.getProcessor(i), 
 					targetSlices.getProcessor(i), null != mask ? maskSlices.getProcessor(i) : null, 
 					binaryThreshold);
-			if(null != warpedSlice)
-				warpedSource.addSlice("warped source " + i, warpedSlice.getProcessor());				
+			if(null != wr.warpedSource)
+				warpedSource.addSlice("warped source " + i, wr.warpedSource.getProcessor());	
+			if(wr.warpingError != -1)
+				warpingError += wr.warpingError;
 		}
 		
+		IJ.log("Warping error = " + (warpingError / sourceSlices.getSize()));
+		
 		return new ImagePlus("warped source", warpedSource);
+	}
+	
+	/**
+	 * Results from simple point warping (2D)
+	 * 
+	 */
+	public static class WarpingResults{
+		/** warped source image after 2D simple point relaxation */
+		public ImagePlus warpedSource;
+		/** warping error */
+		public double warpingError;
 	}
 	
 	/**
@@ -3618,9 +3795,9 @@ public class Weka_Segmentation implements PlugIn
 	 * @param target target 2D image
 	 * @param mask 2D image mask
 	 * @param binaryThreshold binarization threshold
-	 * @return warped source image
+	 * @return warped source image and warping error
 	 */
-	public static ImagePlus simplePointWarp2d(
+	public static WarpingResults simplePointWarp2d(
 			ImageProcessor source,
 			ImageProcessor target,
 			ImageProcessor mask,
@@ -3724,7 +3901,11 @@ public class Weka_Segmentation implements PlugIn
 		}
 		
 		IJ.run(sourceReal, "Canvas Size...", "width="+ width + " height=" + height + " position=Center zero");
-		return sourceReal;
+		
+		WarpingResults result = new WarpingResults();
+		result.warpedSource = sourceReal;
+		result.warpingError = diff / sourceRealPix.length;
+		return result;
 	}
 	
 	
@@ -3755,6 +3936,7 @@ public class Weka_Segmentation implements PlugIn
 				return false;
 		}
 	}
+	
 	/**
 	 * Computes topological numbers for the central point of an image patch.
 	 * These numbers can be used as the basis of a topological classification.
