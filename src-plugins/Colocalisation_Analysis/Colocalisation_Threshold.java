@@ -673,10 +673,10 @@ public class Colocalisation_Threshold implements PlugIn {
 			}
 		}
 
-		pearsons1 = sumXY - (sumX*sumY/N);
-		pearsons2 = sumXX - (sumX*sumX/N);
-		pearsons3 = sumYY - (sumY*sumY/N);
-
+		//IJ.showMessage("Totoal"+N+"   N0:"+Nzero+" Nc :"+ Ncoloc);
+		pearsons1 = sumXY - (sumX*sumY/Ncoloc);
+		pearsons2 = sumXX - (sumX*sumX/Ncoloc);
+		pearsons3 = sumYY - (sumY*sumY/Ncoloc);
 
 		//Pearsons for coloclaised volume
 		double Rcoloc= pearsons1/(Math.sqrt(pearsons2*pearsons3));
