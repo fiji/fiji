@@ -1516,44 +1516,20 @@ public class Weka_Segmentation implements PlugIn
 
 		setButtonsEnabled(false);
 
-		if (testImage.getImageStackSize() == 1){
-			applyClassifierToTestImage(testImage).show();
-			testImage.show();
-		}
-		else{
-			ImageStack testImageStack = testImage.getStack();
-			ImageStack testStackClassified = new ImageStack(testImageStack.getWidth(), testImageStack.getHeight());
-			IJ.log("Size: " + testImageStack.getSize() + " " + testImageStack.getWidth() + " " + testImageStack.getHeight());
-			for (int i=1; i<=testImageStack.getSize(); i++){
-				IJ.log("Classifying image " + i + "...");
-				ImagePlus currentSlice = new ImagePlus(testImageStack.getSliceLabel(i),testImageStack.getProcessor(i).duplicate());
-				//applyClassifierToTestImage(currentSlice).show();
-				testStackClassified.addSlice(currentSlice.getTitle(), applyClassifierToTestImage(currentSlice).getProcessor().duplicate());
-			}
-			testImage.show();
-			ImagePlus showStack = new ImagePlus("Classified Stack", testStackClassified);
-			showStack.show();
-		}
+		applyClassifierToTestImage(testImage).show();
+		testImage.show();
 		
 		updateButtonsEnabling();		
 	}
 
 	/**
 	 * Apply current classifier to image
-	 * @param testImage test image
-	 * @return result image
+	 * 
+	 * @param testImage test image (2D single image or stack)
+	 * @return result image (classification)
 	 */
 	public ImagePlus applyClassifierToTestImage(ImagePlus testImage)
-	{
-		testImage.setProcessor(testImage.getProcessor().convertToByte(true));
-
-		// Create feature stack for test image
-		IJ.showStatus("Creating features for test image...");
-		final FeatureStack testImageFeatures = new FeatureStack(testImage);
-		// Use the same features as the current classifier
-		testImageFeatures.setEnableFeatures(featureStack.getEnableFeatures());
-		testImageFeatures.updateFeaturesMT();
-
+	{		
 		// Set proper class names (skip empty list ones)
 		ArrayList<String> classNames = new ArrayList<String>();
 		if( null == loadedClassNames )
@@ -1564,16 +1540,30 @@ public class Weka_Segmentation implements PlugIn
 		}
 		else
 			classNames = loadedClassNames;
-				
 		
-		final Instances testData = testImageFeatures.createInstances(classNames);
-		testData.setClassIndex(testData.numAttributes() - 1);
+		final ImageStack classified = new ImageStack(testImage.getWidth(), testImage.getHeight());
+		
+		for(int i=1; i<=testImage.getStackSize(); i++)
+		{
+			final ImagePlus testSlice = new ImagePlus(testImage.getImageStack().getSliceLabel(i), testImage.getImageStack().getProcessor(i).convertToByte(true));
+			// Create feature stack for test image
+			IJ.showStatus("Creating features for test image...");
+			IJ.log("Creating features for test image " + i +  "...");
+			final FeatureStack testImageFeatures = new FeatureStack(testSlice);
+			// Use the same features as the current classifier
+			testImageFeatures.setEnableFeatures(featureStack.getEnableFeatures());
+			testImageFeatures.updateFeaturesMT();
 
-		final ImagePlus testClassImage = applyClassifier(testData, testImage.getWidth(), testImage.getHeight());
-		testClassImage.setTitle("classified_" + testImage.getTitle());
-		testClassImage.setProcessor(testClassImage.getProcessor().convertToByte(true).duplicate());
+			final Instances testData = testImageFeatures.createInstances(classNames);
+			testData.setClassIndex(testData.numAttributes() - 1);
 
-		return testClassImage;
+			final ImagePlus testClassImage = applyClassifier(testData, testSlice.getWidth(), testSlice.getHeight());
+			testClassImage.setTitle("classified_" + testSlice.getTitle());
+			testClassImage.setProcessor(testClassImage.getProcessor().convertToByte(true).duplicate());
+			classified.addSlice(testClassImage.getTitle(), testClassImage.getProcessor());
+		}
+		
+		return new ImagePlus("Classification result", classified);
 	}
 
 	/**
