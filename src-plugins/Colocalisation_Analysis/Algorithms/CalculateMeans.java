@@ -11,7 +11,7 @@ import mpicbg.imglib.type.numeric.RealType;
  */
 public class CalculateMeans<T extends RealType<T>> extends Algorithm {
 
-	public void execute(DataContainer container) {
+	public void execute(DataContainer container) throws MissingPreconditionException {
 		// check if means have already been calculated
 		boolean ch1MeanCalculated = container.get(DataContainer.DataTags.MeanCh1) != null;
 		boolean ch2MeanCalculated = container.get(DataContainer.DataTags.MeanCh2) != null;

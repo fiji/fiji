@@ -9,5 +9,5 @@ public abstract class Algorithm {
 	/**
 	 * Executes the previously initialized {@link Algorithm}.
 	 */
-	public abstract void execute(DataContainer container);
+	public abstract void execute(DataContainer container) throws MissingPreconditionException;
 }
