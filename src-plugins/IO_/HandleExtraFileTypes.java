@@ -333,7 +333,9 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 		// if an image was returned, assume success
 		if (o instanceof ImagePlus) return (ImagePlus)o;
 
-		if (IMAGE_OPENED == width) return null; // assume success
+		// tryPlugIn sets width to IMAGE_OPENED when a plugin that does not
+		// extend ImagePlus successfully opens the image
+		if (width == IMAGE_OPENED) return null;
 
 		// try opening the file with LOCI Bio-Formats plugin - always check this last!
 		// Do not call Bio-Formats if File>Import>Image Sequence is opening this file.
@@ -374,9 +376,9 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 				else
 					width = IMAGE_OPENED; // success
 		} else if (o != null) {
-			// plugin does not extend ImagePlus; assume success
+			// plugin was run but does not extend ImagePlus; assume success
 			width = IMAGE_OPENED;
-		}
+		} // ... else plugin was not run/found
 		return o;
 	}
 
