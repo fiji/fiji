@@ -3403,7 +3403,7 @@ public class Weka_Segmentation implements PlugIn
 		IJ.log("Adding labels to training data set...");
 		
 		// Add all labels as binary data (each input slice)
-		addBinaryData(image, labels, firstClass, secondClass);
+		addBinaryData(image, labels, secondClass, firstClass);
 		
 		int iter = 1;
 		while(true)
@@ -3429,7 +3429,7 @@ public class Weka_Segmentation implements PlugIn
 			{
 				final Instances subDataSet = new Instances (instances, (i-1)*numOfPixelsPerImage, numOfPixelsPerImage); 
 				ImagePlus result = getProbabilityMapsMT(subDataSet, image.getWidth(), image.getHeight());
-				proposalStack.addSlice("probability map " + i, result.getImageStack().getProcessor(1));
+				proposalStack.addSlice("probability map " + i, result.getImageStack().getProcessor(2));
 			}
 									
 			final ImagePlus proposal = new ImagePlus("proposal", proposalStack);
@@ -3439,7 +3439,7 @@ public class Weka_Segmentation implements PlugIn
 			warpedLabels = simplePointWarp2d(warpedLabels, proposal, null, 0.5);
 
 			// Update training data with warped labels
-			udpateDataClassification(warpedLabels, firstClass, secondClass);
+			udpateDataClassification(warpedLabels, secondClass, firstClass);
 			iter++;
 		}
 		return warpedLabels;
@@ -3507,7 +3507,8 @@ public class Weka_Segmentation implements PlugIn
 		IJ.log("Adding labels to training data set...");
 		
 		// Add all labels as binary data (each input slice)
-		seg.addBinaryData(image, labels, firstClass, secondClass);
+		// class 2 = white, class 1 = black
+		seg.addBinaryData(image, labels, secondClass, firstClass);
 		
 		final Instances originalData = seg.getTrainingInstances();
 		Instances trainingData = originalData;
@@ -3544,23 +3545,28 @@ public class Weka_Segmentation implements PlugIn
 			for(int i=1; i<=image.getStackSize(); i++)
 			{
 				final Instances subDataSet = new Instances (originalData, (i-1)*numOfPixelsPerImage, numOfPixelsPerImage); 
+				//final ImagePlus result = seg.applyClassifier(subDataSet, image.getWidth(), image.getHeight());
+				//proposalStack.addSlice("classification result " + i, result.getProcessor().convertToFloat());
 				ImagePlus result = seg.getProbabilityMapsMT(subDataSet, image.getWidth(), image.getHeight());
-				proposalStack.addSlice("probability map " + i, result.getImageStack().getProcessor(1));
+				proposalStack.addSlice("probability map " + i, result.getImageStack().getProcessor(2));
 			}
 									
 			final ImagePlus proposal = new ImagePlus("proposal", proposalStack);
 		
+			//warpedLabels.show();
+			//proposal.show();
+			
 			// Warp ground truth, relax original labels to proposal. Only simple
 			// points warping is allowed.
 			warpedLabels = simplePointWarp2d(warpedLabels, proposal, null, 0.5);
 
 			// Update training data with warped labels
 			if(!resample)
-				seg.udpateDataClassification(warpedLabels, firstClass, secondClass);
+				seg.udpateDataClassification(warpedLabels, secondClass, firstClass);
 			else
 			{
 				IJ.log("Resampling training data...");
-				updateDataClassification(originalData, warpedLabels, 0, 1);
+				updateDataClassification(originalData, warpedLabels, 1, 0);
 				trainingData = homogenizeTrainingData(originalData);
 				seg.setLoadedTrainingData(trainingData);
 			}
@@ -3576,8 +3582,8 @@ public class Weka_Segmentation implements PlugIn
 	 * must match the size of the input labels image (or stack)
 	 * 
 	 * @param labels input binary labels (single image or stack) 
-	 * @param className1
-	 * @param className2
+	 * @param className1 name of the white (different from 0) class
+	 * @param className2 name of the black (0) class
 	 */
 	public void udpateDataClassification(
 			ImagePlus labels,
@@ -3614,9 +3620,9 @@ public class Weka_Segmentation implements PlugIn
 	 * must match the size of the input labels image (or stack)
 	 * 
 	 * @param data input instances 
-	 * @param labels
-	 * @param classIndex1
-	 * @param classIndex2
+	 * @param labels binary labels
+	 * @param classIndex1 index of the white (different from 0) class
+	 * @param classIndex2 index of the black (0) class
 	 */
 	public static void updateDataClassification(
 			Instances data,
@@ -3796,46 +3802,48 @@ public class Weka_Segmentation implements PlugIn
 		if(binaryThreshold < 0 || binaryThreshold > 1)
 			binaryThreshold = 0.5;
 		
-		final ImagePlus targetAux = new ImagePlus("target_real", target.duplicate());
-		final ImagePlus sourceReal = new ImagePlus("source_real", source.duplicate());
+		// Grayscale target
+		final ImagePlus targetReal = new ImagePlus("target_real", target.duplicate());
+		// Binarized target
+		final ImagePlus targetBin = new ImagePlus("target_aux", target.duplicate());
 		
-		// make sure source and target are binary images
-		//IJ.setThreshold(sourceReal, 0, 0);
-		final float[] sourceRealPix = (float[])sourceReal.getProcessor().getPixels();
-		for(int i =0; i < sourceRealPix.length; i++)
-			if(sourceRealPix[i] > 0)
-				sourceRealPix[i] = 1.0f;
-		//IJ.setThreshold(targetAux, 0, binaryThreshold);
-		final float[] targetAuxPix = (float[])targetAux.getProcessor().getPixels();
-		for(int i =0; i < targetAuxPix.length; i++)
-			targetAuxPix[i] = (targetAuxPix[i] > binaryThreshold) ? 1.0f : 0.0f;
-				
+		final ImagePlus sourceReal = new ImagePlus("source_real", source.duplicate());
 		
 		final int width = target.getWidth();
 		final int height = target.getHeight();
 		
-		// Resize canvas
-		IJ.run(targetAux, "Canvas Size...", "width="+ (width + 2) + " height=" + (height + 2) + " position=Center zero");
-		IJ.run(sourceReal, "Canvas Size...", "width="+ (width + 2) + " height=" + (height + 2) + " position=Center zero");
+		// Resize canvas to avoid checking the borders
+		IJ.run(targetReal, "Canvas Size...", "width="+ (width + 2) + " height=" + (height + 2) + " position=Center zero");
+		IJ.run(targetBin, "Canvas Size...", "width="+ (width + 2) + " height=" + (height + 2) + " position=Center zero");
+		IJ.run(sourceReal, "Canvas Size...", "width="+ (width + 2) + " height=" + (height + 2) + " position=Center zero");				
 		
+		// make sure source and target are binary images
+		final float[] sourceRealPix = (float[])sourceReal.getProcessor().getPixels();
+		for(int i=0; i < sourceRealPix.length; i++)
+			if(sourceRealPix[i] > 0)
+				sourceRealPix[i] = 1.0f;
+
+		final float[] targetBinPix = (float[])targetBin.getProcessor().getPixels();
+		for(int i=0; i < targetBinPix.length; i++)
+			targetBinPix[i] = (targetBinPix[i] > binaryThreshold) ? 1.0f : 0.0f;
+						
 		double diff = Double.MIN_VALUE;
 		double diff_before = 0;
 		
 		while(true)
 		{
 			ImageProcessor missclass_points_image = sourceReal.getProcessor().duplicate();
-			missclass_points_image.copyBits(targetAux.getProcessor(), 0, 0, Blitter.DIFFERENCE);  
+			missclass_points_image.copyBits(targetBin.getProcessor(), 0, 0, Blitter.DIFFERENCE);  
 			
 			diff_before = diff;
 			
-			float pixels[] = (float[]) missclass_points_image.getPixels();
-			
+			// Count missmatches
+			float pixels[] = (float[]) missclass_points_image.getPixels();			
 			diff = 0;
 			for(int k = 0; k < pixels.length; k++)
 				if(pixels[k] != 0)
 					diff ++;
-						
-			
+									
 			IJ.log("Difference = " + diff);
 		
 			if(diff == diff_before || diff == 0)
@@ -3843,16 +3851,20 @@ public class Weka_Segmentation implements PlugIn
 			
 			final ArrayList<Point3f> mismatches = new ArrayList<Point3f>();
 			
+			final float[] realTargetPix = (float[])targetReal.getProcessor().getPixels();
+			
 			// Sort mismatches by the absolute value of the target pixel value - threshold
 			for(int x = 1; x < width+1; x++)
 				for(int y = 1; y < height+1; y++)
 				{
-					if(missclass_points_image.get(x, y) != 0)
-						mismatches.add(new Point3f(x , y , (float) Math.abs(targetAux.getProcessor().get(x, y) - binaryThreshold) ));
-				}			
+					if(pixels[x+y*(width+2)] != 0)
+						mismatches.add(new Point3f(x , y , (float) Math.abs( realTargetPix[x+y*(width+2)] - binaryThreshold) ));
+				}									
+			
+			// Sort mismatches in descending order
 			Collections.sort(mismatches,  new Comparator<Point3f>() {
 			    public int compare(Point3f o1, Point3f o2) {
-			        return (int)(o2.z - o1.z);
+			        return (int)((o2.z - o1.z) *10000);
 			    }});
 			
 			// Process mismatches
@@ -3862,17 +3874,18 @@ public class Weka_Segmentation implements PlugIn
 				final int y = (int) p.y;
 				
 
-				double[] val = new double[]{ 
-						sourceReal.getProcessor().get(x-1, y-1),
-						sourceReal.getProcessor().get(x  , y-1),
-						sourceReal.getProcessor().get(x+1, y-1),
-						sourceReal.getProcessor().get(x-1, y  ),
-						sourceReal.getProcessor().get(x  , y  ),
-						sourceReal.getProcessor().get(x+1, y  ),
-						sourceReal.getProcessor().get(x-1, y+1),
-						sourceReal.getProcessor().get(x  , y+1),
-						sourceReal.getProcessor().get(x+1, y+1)};
-
+				double[] val = new double[]{
+						sourceRealPix[ (x-1) + (y-1) * (width+2) ],
+						sourceRealPix[ (x  ) + (y-1) * (width+2) ],
+						sourceRealPix[ (x+1) + (y-1) * (width+2) ],
+						sourceRealPix[ (x-1) + (y  ) * (width+2) ],
+						sourceRealPix[ (x  ) + (y  ) * (width+2) ],
+						sourceRealPix[ (x+1) + (y  ) * (width+2) ],
+						sourceRealPix[ (x-1) + (y+1) * (width+2) ],
+						sourceRealPix[ (x  ) + (y+1) * (width+2) ],
+						sourceRealPix[ (x+1) + (y+1) * (width+2) ]
+				};
+										
 				final double pix = val[4];
 
 				final ImagePlus patch = new ImagePlus("patch", new FloatProcessor(3,3,val));
@@ -3881,8 +3894,9 @@ public class Weka_Segmentation implements PlugIn
 							for(int i=0; i<9;i++)
 								IJ.log(" " + val[i]);
 							IJ.log("pix = " + pix);*/
-					sourceReal.getProcessor().putPixelValue(x, y, pix > 0.0 ? 0.0 : 1.0 );
+					sourceRealPix[ x + y * (width+2)] =  pix > 0.0 ? 0.0f : 1.0f ;
 					//IJ.log("flipping pixel x: " + x + " y: " + y + " to " + (pix > 0  ? 0.0 : 1.0));
+
 				}
 				
 			}
@@ -3894,7 +3908,7 @@ public class Weka_Segmentation implements PlugIn
 		
 		WarpingResults result = new WarpingResults();
 		result.warpedSource = sourceReal;
-		result.warpingError = diff / sourceRealPix.length;
+		result.warpingError = diff / (width * height);
 		return result;
 	}
 	
@@ -3908,7 +3922,11 @@ public class Weka_Segmentation implements PlugIn
 	public static boolean simple2D(ImagePlus im, int n)
 	{
 		final ImagePlus invertedIm = new ImagePlus("inverted", im.getProcessor().duplicate());
-		IJ.run(invertedIm, "Invert","");
+		//IJ.run(invertedIm, "Invert","");
+		final float[] pix = (float[])invertedIm.getProcessor().getPixels();
+		for(int i=0; i<pix.length; i++)
+			pix[i] = pix[i] == 0f ? 1f : 0f;
+		
 		switch (n)
 		{
 			case 4:
@@ -3917,7 +3935,7 @@ public class Weka_Segmentation implements PlugIn
 				else
 					return false;				
 			case 8:
-				if ( topo(im,8)==1 & topo(invertedIm, 4)==1 )
+				if ( topo(im,8)==1 && topo(invertedIm, 4)==1 )
 					return true;
 				else
 					return false;
@@ -3940,6 +3958,7 @@ public class Weka_Segmentation implements PlugIn
 	public static int topo(final ImagePlus im, final int adjacency)
 	{
 		ImageProcessor components = null;
+		final ImagePlus im2 = new ImagePlus("copy of im", im.getProcessor().duplicate());
 		switch (adjacency)
 		{
 			case 4:
@@ -3954,8 +3973,9 @@ public class Weka_Segmentation implements PlugIn
 					return -1;
 				}
 				// ignore the central point
-				im.getProcessor().set(1, 1, 0);
-				components = connectedComponents(im, adjacency).allRegions.getProcessor(); 
+				
+				im2.getProcessor().set(1, 1, 0);
+				components = connectedComponents(im2, adjacency).allRegions.getProcessor(); 
 				// zero out locations that are not in the four-neighborhood
 				components.set(0,0,0);
 				components.set(0,2,0);
@@ -3974,9 +3994,9 @@ public class Weka_Segmentation implements PlugIn
 					IJ.error("must be 3x3 image patch");
 					return -1;
 				}
-				// ignore the central point
-				im.getProcessor().set(1, 1, 0);
-				components = connectedComponents(im, adjacency).allRegions.getProcessor();
+				// ignore the central point				
+				im2.getProcessor().set(1, 1, 0);
+				components = connectedComponents(im2, adjacency).allRegions.getProcessor();
 				break;
 			default:
 				IJ.error("Non valid adjacency value");
