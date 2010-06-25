@@ -603,9 +603,9 @@ public class FeatureStack
 		for (int i=0; i<12; i++)
 		{
 			rotatedPatch = membranePatch.duplicate();
-			rotatedPatch.invert();
+			//rotatedPatch.invert();
 			rotatedPatch.rotate(15*i);
-			rotatedPatch.invert();
+			//rotatedPatch.invert();
 			Convolver c = new Convolver();				
 	
 			float[] kernel = (float[]) rotatedPatch.getPixels();
