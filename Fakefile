@@ -218,7 +218,7 @@ jars/jython.jar <- jython/
 # From source
 libs[] <- jars/test-fiji.jar jars/zs.jar jars/VIB-lib.jar jars/Jama-1.0.2.jar \
 	jars/fiji-scripting.jar jars/fiji-lib.jar jars/jep.jar \
-	jars/pal-optimization.jar
+	jars/pal-optimization.jar jars/MacOSX_Updater_Fix.jar
 
 plugins/Record_Screen.jar <- src-plugins/Record_Screen/ src-plugins/Record_Screen/**/*
 
@@ -282,6 +282,8 @@ src-plugins/VIB-lib/math3d/Eigensystem2x2Float.java[src-plugins/VIB-lib/sed.py $
 	src-plugins/VIB-lib/math3d/Eigensystem2x2Double.java
 
 MAINCLASS(jars/test-fiji.jar)=fiji.Tests
+
+MAINCLASS(jars/MacOSX_Updater_Fix.jar)=fiji.updater.Fix
 
 # the default rules
 
