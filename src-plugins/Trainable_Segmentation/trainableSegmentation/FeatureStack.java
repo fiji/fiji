@@ -436,6 +436,8 @@ public class FeatureStack
 		ImageProcessor ip = new FloatProcessor(width, height);
 		ImageProcessor ipTr = new FloatProcessor(width, height);
 		ImageProcessor ipDet = new FloatProcessor(width, height);
+		ImageProcessor ipEig1 = new FloatProcessor(width, height);
+		ImageProcessor ipEig2 = new FloatProcessor(width, height);
 				
 		for (int x=0; x<width; x++){
 			for (int y=0; y<height; y++){
@@ -445,12 +447,18 @@ public class FeatureStack
 				ip.setf(x,y, (float) Math.sqrt(s_xx*s_xx + s_xy*s_xy+ s_yy*s_yy));
 				ipTr.setf(x,y, (float) s_xx + s_yy);
 				ipDet.setf(x,y, (float) s_xx*s_yy-s_xy*s_xy);
+				// First eigenvalue
+				ipEig1.setf(x,y, (float) ( (s_xx+s_yy)/2.0 + Math.sqrt((4*s_xy*s_xy + (s_xx - s_yy)*(s_xx - s_yy)) / 2.0 ) ) );
+				// Second eigenvalue
+				ipEig2.setf(x,y, (float) ( (s_xx+s_yy)/2.0 - Math.sqrt((4*s_xy*s_xy + (s_xx - s_yy)*(s_xx - s_yy)) / 2.0 ) ) );
 			}
 		}
 		
 		wholeStack.addSlice(availableFeatures[HESSIAN] + "_"  + sigma, ip);
 		wholeStack.addSlice(availableFeatures[HESSIAN]+ "_Trace_"+sigma, ipTr);
 		wholeStack.addSlice(availableFeatures[HESSIAN]+ "_Determinant_"+sigma, ipDet);
+		wholeStack.addSlice(availableFeatures[HESSIAN]+ "_Eigenvalue_1_"+sigma, ipEig1);
+		wholeStack.addSlice(availableFeatures[HESSIAN]+ "_Eigenvalue_2_"+sigma, ipEig2);
 	}
 	
 	public Callable<ImagePlus> getHessian(
@@ -492,15 +500,24 @@ public class FeatureStack
 				ImageProcessor ip = new FloatProcessor(width, height);
 				ImageProcessor ipTr = new FloatProcessor(width, height);
 				ImageProcessor ipDet = new FloatProcessor(width, height);
+				ImageProcessor ipEig1 = new FloatProcessor(width, height);
+				ImageProcessor ipEig2 = new FloatProcessor(width, height);
 						
 				for (int x=0; x<width; x++){
 					for (int y=0; y<height; y++){
 						float s_xx = ip_xx.getf(x,y);
 						float s_xy = ip_xy.getf(x,y);
 						float s_yy = ip_yy.getf(x,y);
+						// Hessian
 						ip.setf(x,y, (float) Math.sqrt(s_xx*s_xx + s_xy*s_xy+ s_yy*s_yy));
+						// Trace
 						ipTr.setf(x,y, (float) s_xx + s_yy);
+						// Determinant
 						ipDet.setf(x,y, (float) s_xx*s_yy-s_xy*s_xy);
+						// First eigenvalue
+						ipEig1.setf(x,y, (float) ( (s_xx+s_yy)/2.0 + Math.sqrt((4*s_xy*s_xy + (s_xx - s_yy)*(s_xx - s_yy)) / 2.0 ) ) );
+						// Second eigenvalue
+						ipEig2.setf(x,y, (float) ( (s_xx+s_yy)/2.0 - Math.sqrt((4*s_xy*s_xy + (s_xx - s_yy)*(s_xx - s_yy)) / 2.0 ) ) );
 					}
 				}
 				
@@ -508,6 +525,8 @@ public class FeatureStack
 				hessianStack.addSlice(availableFeatures[HESSIAN] + "_"  + sigma, ip);
 				hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Trace_"+sigma, ipTr);
 				hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Determinant_"+sigma, ipDet);
+				hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Eigenvalue_1_"+sigma, ipEig1);
+				hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Eigenvalue_2_"+sigma, ipEig2);
 				return new ImagePlus ("hessian stack", hessianStack);
 			}
 		};
@@ -1123,6 +1142,21 @@ public class FeatureStack
 		//IJ.log("path = " + filename);
 		final FileSaver fs = new FileSaver(ip);
 		return fs.saveAsTiffStack(filename);
+	}
+
+	/**
+	 * Remove feature from stack
+	 * 
+	 * @param featureName complete name of the feature to remove
+	 */
+	public void removeFeature(String featureName) 
+	{
+		for(int n=1; n<=wholeStack.getSize(); n++)
+			if(featureName.equalsIgnoreCase(wholeStack.getSliceLabel(n)))
+			{
+				this.wholeStack.deleteSlice(n);
+				return;
+			}		
 	}
 	
 }
