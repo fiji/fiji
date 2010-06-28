@@ -716,8 +716,8 @@ public class Colocalisation_Threshold implements PlugIn {
 
 		//if (!useMask) maskName = "<none>";
 
-		str = fileName +"\t"+"ROI" + indexRoi+"\texcl.\t";
-		if (opt0) str = fileName +"\t"+str+"\tincl.\t";
+		str = fileName +"\t"+"ROI" + indexRoi+"\t";
+		str += opt0 ? "incl.\t" : "excl.\t";
 
 		if (opt2)	str+= df3.format(rTotal)+ "\t";
 		if (opt1a)	str+= df3.format(m)+ "\t "+df1.format(b)+ "\t";
