@@ -109,6 +109,8 @@ import javax.vecmath.Point3f;
 
 import util.FindConnectedRegions;
 import util.FindConnectedRegions.Results;
+import weka.attributeSelection.BestFirst;
+import weka.attributeSelection.CfsSubsetEval;
 import weka.classifiers.AbstractClassifier;
 import weka.classifiers.Evaluation;
 import weka.classifiers.pmml.consumer.PMMLClassifier;
@@ -121,6 +123,7 @@ import weka.core.Utils;
 import weka.core.pmml.PMMLFactory;
 import weka.core.pmml.PMMLModel;
 import weka.filters.Filter;
+import weka.filters.supervised.attribute.AttributeSelection;
 import weka.filters.supervised.instance.Resample;
 import weka.gui.GUIChooser;
 import weka.gui.GenericObjectEditor;
@@ -241,6 +244,9 @@ public class Weka_Segmentation implements PlugIn
 	
 	/** expected membrane thickness */
 	private int membraneThickness = 1;
+	
+	/** list of the names of features to use */
+	private ArrayList<String> featureNames = null;
 	
 	/**
 	 * Basic constructor
@@ -1186,6 +1192,7 @@ public class Weka_Segmentation implements PlugIn
 			IJ.showStatus("Creating feature stack...");
 			IJ.log("Creating feature stack...");
 			featureStack.updateFeaturesMT();
+			filterFeatureStackByList();
 			updateFeatures = false;
 			updateWholeData = true;
 			IJ.log("Features stack is now updated.");
@@ -1256,6 +1263,7 @@ public class Weka_Segmentation implements PlugIn
 			IJ.showStatus("Creating feature stack...");
 			IJ.log("Creating feature stack...");
 			featureStack.updateFeaturesMT();
+			filterFeatureStackByList();
 			updateFeatures = false;
 			updateWholeData = true;
 			IJ.log("Features stack is now updated.");
@@ -1553,6 +1561,7 @@ public class Weka_Segmentation implements PlugIn
 			// Use the same features as the current classifier
 			testImageFeatures.setEnableFeatures(featureStack.getEnableFeatures());
 			testImageFeatures.updateFeaturesMT();
+			filterFeatureStackByList(this.featureNames, testImageFeatures);
 
 			final Instances testData = testImageFeatures.createInstances(classNames);
 			testData.setClassIndex(testData.numAttributes() - 1);
@@ -1779,11 +1788,16 @@ public class Weka_Segmentation implements PlugIn
 		Enumeration<Attribute> attributes = data.enumerateAttributes();
 		final int numFeatures = FeatureStack.availableFeatures.length;
 		boolean[] usedFeatures = new boolean[numFeatures];
+		
+		// Initialize list of names for the features to use
+		this.featureNames = new ArrayList<String>();
+		
 		while(attributes.hasMoreElements())
 		{
 			final Attribute a = attributes.nextElement();
+			this.featureNames.add(a.name());
 			for(int i = 0 ; i < numFeatures; i++)
-			{
+			{				
 				if(a.name().startsWith(FeatureStack.availableFeatures[i]))
 				{
 					usedFeatures[i] = true;
@@ -2167,7 +2181,7 @@ public class Weka_Segmentation implements PlugIn
 			{
 				//IJ.error("Error", "The feature stack has not been initialized yet, please train first.");
 				//return;
-				featureStack.updateFeaturesMT();				
+				featureStack.updateFeaturesMT();					
 			}
 			
 			SaveDialog sd = new SaveDialog(title, "feature-stack", ".tif");
@@ -2474,6 +2488,7 @@ public class Weka_Segmentation implements PlugIn
 			setButtonsEnabled(false);
 			IJ.log("Creating feature stack...");
 			featureStack.updateFeaturesMT();
+			filterFeatureStackByList();
 			updateFeatures = false;
 			IJ.log("Features stack is now updated.");
 			updateButtonsEnabling();
@@ -2528,6 +2543,7 @@ public class Weka_Segmentation implements PlugIn
 		{
 			IJ.log("Creating feature stack...");
 			featureStack.updateFeaturesMT();
+			filterFeatureStackByList(this.featureNames, featureStack);
 			updateFeatures = false;
 			IJ.log("Features stack is now updated.");
 		}
@@ -2620,6 +2636,7 @@ public class Weka_Segmentation implements PlugIn
 		{
 			IJ.log("Creating feature stack...");
 			featureStack.updateFeaturesMT();
+			filterFeatureStackByList(this.featureNames, featureStack);
 			updateFeatures = false;
 			IJ.log("Features stack is now updated.");
 		}
@@ -2762,6 +2779,7 @@ public class Weka_Segmentation implements PlugIn
 		{
 			IJ.log("Creating feature stack...");
 			featureStack.updateFeaturesMT();
+			filterFeatureStackByList();
 			updateFeatures = false;
 			IJ.log("Features stack is now updated.");
 		}
@@ -2846,6 +2864,7 @@ public class Weka_Segmentation implements PlugIn
 		{
 			IJ.log("Creating feature stack...");
 			featureStack.updateFeaturesMT();
+			filterFeatureStackByList();
 			updateFeatures = false;
 			IJ.log("Features stack is now updated.");
 		}
@@ -2879,6 +2898,60 @@ public class Weka_Segmentation implements PlugIn
 		}
 		return true;
 	}
+	
+	/**
+	 * Filter feature stack based on the list of feature names to use
+	 */
+	public void filterFeatureStackByList()
+	{
+		if (null == this.featureNames)
+			return;
+				
+		for(int i=1; i<=this.featureStack.getSize(); i++)
+		{
+			final String featureName = this.featureStack.getSliceLabel(i);
+			if(false == this.featureNames.contains( featureName ) )
+			{
+				// Remove feature
+				this.featureStack.removeFeature( featureName );
+				// decrease i to avoid skipping any name
+				i--;
+			}
+		}
+		
+		this.featureStack.show();
+	}
+
+	
+	/**
+	 * Filter feature stack based on the list of feature names to use	
+	 * 
+	 * @param featureNames list of feature names to use
+	 * @param featureStack feature stack to filter
+	 */
+	public static void filterFeatureStackByList(
+			ArrayList<String> featureNames, 
+			FeatureStack featureStack)
+	{
+		if (null == featureNames)
+			return;					
+		
+		for(int i=1; i<=featureStack.getSize(); i++)
+		{			
+			final String featureName = featureStack.getSliceLabel(i);
+			IJ.log(" " + featureName + "...");
+			if(false == featureNames.contains( featureName ) )
+			{
+				// Remove feature
+				featureStack.removeFeature( featureName );
+				// decrease i to avoid skipping any name
+				i--;				
+			}
+		}		
+		
+		featureStack.show();
+	}
+	
 	/**
 	 * Add label image as binary data
 	 * 
@@ -2897,6 +2970,7 @@ public class Weka_Segmentation implements PlugIn
 		{
 			IJ.log("Creating feature stack...");
 			featureStack.updateFeaturesMT();
+			filterFeatureStackByList();
 			updateFeatures = false;
 			IJ.log("Features stack is now updated.");
 		}
@@ -2969,6 +3043,7 @@ public class Weka_Segmentation implements PlugIn
 			final FeatureStack featureStack = new FeatureStack(new ImagePlus("slice " + i, inputSlices.getProcessor(i)));
 			featureStack.setEnableFeatures(this.featureStack.getEnableFeatures());
 			featureStack.updateFeaturesMT();
+			filterFeatureStackByList(this.featureNames, featureStack);
 
 			if( false == this.addBinaryData(labelIP, featureStack, whiteClassName, blackClassName) )
 			{
@@ -2998,6 +3073,7 @@ public class Weka_Segmentation implements PlugIn
 		{
 			IJ.log("Creating feature stack...");
 			featureStack.updateFeaturesMT();
+			filterFeatureStackByList();
 			updateFeatures = false;
 			IJ.log("Features stack is now updated.");
 		}
@@ -3057,6 +3133,7 @@ public class Weka_Segmentation implements PlugIn
 		{
 			IJ.log("Creating feature stack...");
 			featureStack.updateFeaturesMT();
+			filterFeatureStackByList();
 			updateFeatures = false;
 			updateWholeData = true;
 			IJ.log("Features stack is now updated.");
@@ -3112,6 +3189,7 @@ public class Weka_Segmentation implements PlugIn
 		{
 			IJ.log("Creating feature stack...");
 			featureStack.updateFeaturesMT();
+			filterFeatureStackByList();
 			updateFeatures = false;
 			updateWholeData = true;
 			IJ.log("Features stack is now updated.");
@@ -3351,6 +3429,7 @@ public class Weka_Segmentation implements PlugIn
 	 *  @param maxDepth maximum depth allowed in the trees
 	 *  @param seed fast random forest seed
 	 *  @param resample flag to resample input data (to homogenize classes distribution)
+	 *  @param selectAttributes flag to select best attributes and reduce the data size
 	 *  @return trained fast random forest classifier
 	 */
 	public static FastRandomForest trainRandomForestBLOTC(
@@ -3360,7 +3439,8 @@ public class Weka_Segmentation implements PlugIn
 			final int randomFeatures,
 			final int maxDepth,
 			final int seed,
-			final boolean resample)
+			final boolean resample,
+			final boolean selectAttributes)
 	{
 		// Initialization of Fast Random Forest classifier
 		final FastRandomForest rf = new FastRandomForest();
@@ -3369,7 +3449,7 @@ public class Weka_Segmentation implements PlugIn
 		rf.setMaxDepth(maxDepth);
 		rf.setSeed(seed);
 		
-		ImagePlus result = trainBLOTC(image, labels, rf, resample);
+		ImagePlus result = trainBLOTC(image, labels, rf, resample, selectAttributes);
 		result.show();
 		
 		return rf;
@@ -3380,11 +3460,15 @@ public class Weka_Segmentation implements PlugIn
 	 * 
 	 * @param image input image
 	 * @param labels binary labels
+	 * @param resample flag to resample input data (to homogenize classes distribution)
+	 * @param selectAttributes flag to select best attributes and filter the data
 	 * @return warped labels from applying BLOTC 
 	 */
 	public ImagePlus trainBLOTC(
 			final ImagePlus image, 
-			final ImagePlus labels)
+			final ImagePlus labels,
+			final boolean resample,
+			final boolean selectAttributes)
 	{
 		// Create a float copy of the labels
 		final ImageStack warpedLabelStack = new ImageStack(image.getWidth(), image.getHeight());
@@ -3405,6 +3489,36 @@ public class Weka_Segmentation implements PlugIn
 		// Add all labels as binary data (each input slice)
 		addBinaryData(image, labels, secondClass, firstClass);
 		
+		Instances originalData = this.loadedTrainingData;
+		
+		// Reduce data size by selecting attributes
+		if(selectAttributes)
+		{
+			// Reduce size of data by attribute selection			
+			IJ.log("Selecting best attributes...");			
+			final long start = System.currentTimeMillis();									
+			originalData = selectAttributes(originalData);		
+			final long end = System.currentTimeMillis();
+			setLoadedTrainingData(originalData);
+			IJ.log("Filtered data: " + originalData.numInstances() 
+					+ " instances, " + originalData.numAttributes() 
+					+ " attributes, " + originalData.numClasses() + " classes.");
+			IJ.log("Filtering training data took: " + (end-start) + "ms");
+		}
+		
+		Instances trainingData = originalData;
+		
+		// homogenize classes if resample is true
+		if(resample)
+		{
+			// Resample data			
+			IJ.log("Resampling input data (to homogenize the class distributions)...");			
+			trainingData = homogenizeTrainingData(trainingData);			
+			setLoadedTrainingData(trainingData);
+		}
+		
+		// train BLOTC
+		
 		int iter = 1;
 		while(true)
 		{
@@ -3421,45 +3535,57 @@ public class Weka_Segmentation implements PlugIn
 				break;
 			
 			error = newError;
-			
-			final Instances instances = getTrainingInstances();
+						
 			final ImageStack proposalStack = new ImageStack(image.getWidth(), image.getHeight());
 			
 			for(int i=1; i<=image.getStackSize(); i++)
 			{
-				final Instances subDataSet = new Instances (instances, (i-1)*numOfPixelsPerImage, numOfPixelsPerImage); 
+				final Instances subDataSet = new Instances (originalData, (i-1)*numOfPixelsPerImage, numOfPixelsPerImage); 
 				ImagePlus result = getProbabilityMapsMT(subDataSet, image.getWidth(), image.getHeight());
 				proposalStack.addSlice("probability map " + i, result.getImageStack().getProcessor(2));
 			}
 									
 			final ImagePlus proposal = new ImagePlus("proposal", proposalStack);
 		
+			warpedLabels.show();
+			proposal.show();
+			
+			IJ.log("Warping ground truth...");
 			// Warp ground truth, relax original labels to proposal. Only simple
 			// points warping is allowed.
 			warpedLabels = simplePointWarp2d(warpedLabels, proposal, null, 0.5);
 
 			// Update training data with warped labels
-			udpateDataClassification(warpedLabels, secondClass, firstClass);
+			if(!resample)
+				udpateDataClassification(warpedLabels, secondClass, firstClass);
+			else
+			{
+				IJ.log("Resampling training data...");
+				updateDataClassification(originalData, warpedLabels, 1, 0);
+				trainingData = homogenizeTrainingData(originalData);
+				setLoadedTrainingData(trainingData);
+			}
 			iter++;
 		}
 		return warpedLabels;
 	}
 	
 	/**
+	 * Homogenize number of instances per class
 	 * 
-	 * @param trainingData
-	 * @return
+	 * @param data input set of instances
+	 * @return resampled set of instances
 	 */
-	public static Instances homogenizeTrainingData(Instances trainingData)
+	public static Instances homogenizeTrainingData(Instances data)
 	{
 		final Resample filter = new Resample();
 		Instances filteredIns = null;
 		filter.setBiasToUniformClass(1.0);
 		try {
-			filter.setInputFormat(trainingData);
+			filter.setInputFormat(data);
 			filter.setNoReplacement(false);
 			filter.setSampleSizePercent(100);
-			filteredIns = Filter.useFilter(trainingData, filter);			
+			filteredIns = Filter.useFilter(data, filter);			
 		} catch (Exception e) {
 			IJ.log("Error when resampling input data!");
 			e.printStackTrace();
@@ -3469,19 +3595,53 @@ public class Weka_Segmentation implements PlugIn
 	}
 	
 	/**
+	 * Select attributes to reduce the number of parameters per instance
+	 * 
+	 * @param data input set of instances
+	 * @return resampled set of instances
+	 */
+	public static Instances selectAttributes(Instances data)
+	{
+		final AttributeSelection filter = new AttributeSelection();
+		Instances filteredIns = null;
+		// Evaluator
+		final CfsSubsetEval evaluator = new CfsSubsetEval();
+		evaluator.setMissingSeparate(true);
+		// Assign evaluator to filter
+		filter.setEvaluator(evaluator);
+		// Search strategy: best first (default values)
+		final BestFirst search = new BestFirst();
+		filter.setSearch(search);
+		// Apply filter
+		try {
+			filter.setInputFormat(data);
+		
+			filteredIns = Filter.useFilter(data, filter);			
+		} catch (Exception e) {
+			IJ.log("Error when resampling input data with selected attributes!");
+			e.printStackTrace();
+		}
+		return filteredIns;
+		
+	}
+	
+	
+	/**
 	 * Train a classifier using BLOTC (static method)
 	 * 
 	 * @param image input image
 	 * @param labels binary labels
 	 * @param classifier Weka classifier
 	 * @param resample flag to resample input data (to homogenize classes distribution)
+	 * @param selectAttributes flag to select best attributes and filter the data
 	 * @return warped labels from applying BLOTC 
 	 */
 	public static ImagePlus trainBLOTC(
 			final ImagePlus image, 
 			final ImagePlus labels, 
 			final AbstractClassifier classifier,
-			final boolean resample)
+			final boolean resample,
+			final boolean selectAttributes)
 	{
 		// Create a float copy of the labels
 		final ImageStack warpedLabelStack = new ImageStack(image.getWidth(), image.getHeight());
@@ -3510,15 +3670,31 @@ public class Weka_Segmentation implements PlugIn
 		// class 2 = white, class 1 = black
 		seg.addBinaryData(image, labels, secondClass, firstClass);
 		
-		final Instances originalData = seg.getTrainingInstances();
+		Instances originalData = seg.getTrainingInstances();
+		
+		// Reduce data size by selecting attributes
+		if(selectAttributes)
+		{
+			// Reduce size of data by attribute selection			
+			IJ.log("Selecting best attributes...");			
+			final long start = System.currentTimeMillis();									
+			originalData = selectAttributes(originalData);		
+			final long end = System.currentTimeMillis();
+			seg.setLoadedTrainingData(originalData);
+			IJ.log("Filtered data: " + originalData.numInstances() 
+					+ " instances, " + originalData.numAttributes() 
+					+ " attributes, " + originalData.numClasses() + " classes.");
+			IJ.log("Filtering training data took: " + (end-start) + "ms");
+		}
+		
 		Instances trainingData = originalData;
 		
 		// homogenize classes if resample is true
 		if(resample)
 		{
-			// Copy input data (very expensive in terms in memory...)			
+			// Resample data			
 			IJ.log("Resampling input data (to homogenize the class distributions)...");			
-			trainingData = homogenizeTrainingData(originalData);
+			trainingData = homogenizeTrainingData(trainingData);
 			
 			seg.setLoadedTrainingData(trainingData);
 		}
@@ -3555,7 +3731,7 @@ public class Weka_Segmentation implements PlugIn
 		
 			//warpedLabels.show();
 			//proposal.show();
-			
+			IJ.log("Warping ground truth...");
 			// Warp ground truth, relax original labels to proposal. Only simple
 			// points warping is allowed.
 			warpedLabels = simplePointWarp2d(warpedLabels, proposal, null, 0.5);
@@ -3844,7 +4020,7 @@ public class Weka_Segmentation implements PlugIn
 				if(pixels[k] != 0)
 					diff ++;
 									
-			IJ.log("Difference = " + diff);
+			//IJ.log("Difference = " + diff);
 		
 			if(diff == diff_before || diff == 0)
 				break;
