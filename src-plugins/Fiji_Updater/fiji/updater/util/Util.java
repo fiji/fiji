@@ -238,7 +238,7 @@ public class Util {
 
 	public static boolean isLauncher(String filename) {
 		return Arrays.binarySearch(launchers,
-				stripPrefix(filename, fijiRoot)) >= 0;
+				stripPrefix(stripPrefix(filename, fijiRoot), "precompiled/")) >= 0;
 	}
 
 	public static String[] getLaunchers() {
