@@ -14,6 +14,8 @@ def getTimestamp(plugin, checksum):
 		from java.util.zip import GZIPInputStream
 		print 'Reading db.xml.gz'
 		XMLFileReader(GZIPInputStream(FileInputStream(dbPath)), 0)
+	if plugin.startswith('precompiled/'):
+		plugin = plugin[12:]
 	plugin = PluginCollection.getInstance().getPlugin(plugin)
 	if plugin.current != None and checksum == plugin.current.checksum:
 		return plugin.current.timestamp
