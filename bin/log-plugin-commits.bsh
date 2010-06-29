@@ -20,6 +20,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileNotFoundException;
 import java.io.PrintStream;
 
 import java.net.URL;
@@ -138,14 +139,18 @@ int execute(String[] cmdarray, File directory, PrintStream outWriter) {
 
 ArrayList getZipItems(URL url) {
 	result = new ArrayList();
-	in = new JarInputStream(url.openStream());
-	for (;;) {
-		entry = in.getNextEntry();
-		if (entry == null)
-			break;
-		result.add(entry);
+	try {
+		in = new JarInputStream(url.openStream());
+		for (;;) {
+			entry = in.getNextEntry();
+			if (entry == null)
+				break;
+			result.add(entry);
+		}
+		in.close();
+	} catch (FileNotFoundException e) {
+		return result;
 	}
-	in.close();
 	Collections.sort(result, new Comparator() {
 		public int compare(Object o1, Object o2) {
 			return ((ZipEntry)o1).getName().compareTo(((ZipEntry)o2).getName());
@@ -311,7 +316,7 @@ for (String arg : bsh.args) {
 	rule = parser.getRule(arg);
 
 	extraFiles = new ArrayList();
-	if (!rule.getClass().getName().endsWith("SubFake")) {
+	if (rule != null && !rule.getClass().getName().endsWith("SubFake")) {
 		baseName = plugin.substring(plugin.lastIndexOf('/') + 1);
 		if (baseName.endsWith(".jar"))
 			baseName = baseName.substring(0, baseName.length() - 4);
@@ -338,10 +343,10 @@ for (String arg : bsh.args) {
 		cmdarray[i++] = extra;
 	cmdarray[i++] = ".";
 
-	if (rule.getClass().getName().endsWith("SubFake"))
+	if (rule != null && rule.getClass().getName().endsWith("SubFake"))
 		execute(cmdarray,
 			new File(fijiDir + "/" + rule.getLastPrerequisite()));
-	else if (arg.startsWith("precompiled/fiji-")) {
+	else if (arg.startsWith("precompiled/fiji-") || arg.startsWith("fiji-")) {
 		cmdarray[cmdarray.length - 1] = "fiji.c";
 		execute(cmdarray, new File(fijiDir));
 	}
