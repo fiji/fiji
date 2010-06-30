@@ -34,6 +34,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		List<Algorithm> userSelectedJobs = new ArrayList<Algorithm>();
 
 		preprocessingJobs.add(new CalculateMeans());
+		preprocessingJobs.add(new CalculateMinMax());
 		userSelectedJobs.add(new PearsonsCorrelation(PearsonsCorrelation.Implementation.Fast));
 
 		try {

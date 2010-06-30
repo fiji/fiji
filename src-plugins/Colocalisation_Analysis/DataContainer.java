@@ -20,7 +20,7 @@ import mpicbg.imglib.type.numeric.RealType;
 public class DataContainer<T extends RealType<T>> implements Iterable<Result> {
 
 	// Tags for later finding the right piece of result data
-	enum DataTags { MeanCh1, MeanCh2 };
+	enum DataTags { MeanCh1, MeanCh2, MinCh1, MaxCh1, MinCh2, MaxCh2 };
 
 	// The source images that the results are based on
 	Image<T> sourceImage1, sourceImage2;
