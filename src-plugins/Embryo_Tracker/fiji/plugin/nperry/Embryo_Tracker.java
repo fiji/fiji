@@ -1,3 +1,8 @@
+/** 
+ * Author: Nick Perry
+ * Description: 
+ */
+
 package fiji.plugin.nperry;
 
 import ij.gui.GenericDialog;
@@ -7,6 +12,7 @@ import ij.process.ImageProcessor;
 import mpicbg.imglib.algorithm.gauss.GaussianConvolutionRealType;
 import mpicbg.imglib.algorithm.roi.MedianFilter;
 import mpicbg.imglib.cursor.Cursor;
+import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImagePlusAdapter;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
@@ -50,8 +56,10 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		
 		// 2 - Apply a median filter, to get rid of salt and pepper noise which could be mistaken for maxima in the algorithm:
 		StructuringElement strel;
-		if (img.getNumDimensions() == 3) {  // Need to figure out the dimensionality of the image in order to create a StructuringElement of the correct dimensionality (StructuringElement needs to have same dimensionality as the image).
-			strel = new StructuringElement(new int[]{3, 3, 1}, "3D Square");  // unoptimized shape for 3D case
+		
+		// 2.1 - Need to figure out the dimensionality of the image in order to create a StructuringElement of the correct dimensionality (StructuringElement needs to have same dimensionality as the image):
+		if (img.getNumDimensions() == 3) {  // 3D case
+			strel = new StructuringElement(new int[]{3, 3, 1}, "3D Square");  // unoptimized shape for 3D case. Note here that we manually are making this shape (not using a class method). This code is courtesy of Larry Lindsey
 			Cursor<BitType> c = strel.createCursor();  // in this case, the shape is manually made, so we have to manually set it, too.
 			while (c.hasNext()) 
 			{ 
@@ -59,9 +67,11 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			    c.getType().setOne(); 
 			} 
 			c.close(); 
-		} else {
-			strel = StructuringElement.createCube(2, 3);  // unoptimized shape for 2D case
+		} else {  							// 2D case
+			strel = StructuringElement.createCube(2, 3);  // unoptimized shape
 		}
+		
+		// 2.2 - Apply the median filter:
 		final MedianFilter<T> medFilt = new MedianFilter<T>(img, strel, new OutOfBoundsStrategyMirrorFactory<T>()); 
 		// ***note: add back medFilt.checkInput() when it's fixed ***
 		if (medFilt.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
@@ -71,7 +81,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	        return null;
 		}
 		
-		// 3 - Apply a Gaussian filter. Theoretically, this will make the center of blobs the brightest, and thus easier to find:
+		// 3 - Apply a Gaussian filter (code courtesy of Stephan Preibisch). Theoretically, this will make the center of blobs the brightest, and thus easier to find:
 		final GaussianConvolutionRealType<T> conv = new GaussianConvolutionRealType<T>(img, new OutOfBoundsStrategyMirrorFactory<T>(), 2.0f); // Use sigma of 2.0f, probably need a better way to do this
 		if (conv.checkInput() && conv.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
 			img = conv.getResult(); 
@@ -81,7 +91,8 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		}
 		
 		// 4 - Find maxima of newly convoluted image:
-		// to-do...
+		// LocalNeighborhoodCursor3D
+		findMaxima(img);
 		
 		// Return (for testing):
 		ImagePlus newImg = ImageJFunctions.copyToImagePlus(img, imp.getType());  	// convert Image<T> to ImagePlus
@@ -90,5 +101,15 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			newImgP.invertLut();
 		}
 		return new Object[]{"new", newImg};
+	}
+	
+	public void findMaxima(Image<T> img) {
+		final LocalizableByDimCursor<T> cur = img.createLocalizableByDimCursor();
+		final boolean localMaxima[] = new boolean[img.getNumPixels()];
+		final int[] max_position = img.createPositionArray();
+		while(cur.hasNext()) {      // iterate over all of the pixels in the image in order to search for maxima.
+			boolean isMax = true;   // potentially, the next pixel could be a maximum, so label it that way for now until we discover otherwise.
+			
+		}
 	}
 }
