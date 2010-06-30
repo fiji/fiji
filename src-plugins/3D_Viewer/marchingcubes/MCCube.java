@@ -64,7 +64,6 @@ public final class MCCube {
 
 		float t = (car.threshold - i1) / (float) (i2 - i1);
 		if (t >= 0 && t <= 1) {
-			t = Math.max(0.01f, Math.min(0.99f, t));
 			// v1 + t*(v2-v1)
 			result.set(v2);
 			result.sub(v1);
@@ -122,6 +121,7 @@ public final class MCCube {
 	private void getTriangles(List<Point3f> list, final Carrier car){
 		int cn = caseNumber(car);
 		boolean directTable = !(isAmbigous(cn));
+		directTable = true;
 
 		// address in the table
 		int offset = directTable ? cn*15 : (255-cn)*15;
@@ -158,7 +158,7 @@ public final class MCCube {
 	private static final class Carrier {
 		int w, h, d;
 		Volume volume;
-		int threshold;
+		float threshold;
 
 		final int intensity(final Point3f p) {
 			if(p.x < 0 || p.y < 0 || p.z < 0
@@ -181,7 +181,7 @@ public final class MCCube {
 		car.w = volume.xDim;
 		car.h = volume.yDim;
 		car.d = volume.zDim;
-		car.threshold = thresh;
+		car.threshold = thresh + 0.5f;
 		car.volume = volume;
 		MCCube cube = new MCCube();
 		for(int z = -1; z < car.d+1; z+=1){
