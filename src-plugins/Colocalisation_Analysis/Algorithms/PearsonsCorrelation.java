@@ -42,8 +42,8 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm {
 
 	public void classicPearsons(DataContainer container) throws MissingPreconditionException {
 		// get the means from the DataContainer
-		Result ch1MeanResult = container.get(DataContainer.DataTags.MeanCh1);
-		Result ch2MeanResult = container.get(DataContainer.DataTags.MeanCh2);
+		Result ch1MeanResult = container.get(DataContainer.DataTags.MeanCh1, Result.SimpleValueResult.class);
+		Result ch2MeanResult = container.get(DataContainer.DataTags.MeanCh2, Result.SimpleValueResult.class);
 
 		// check if means have already been calculated
 		boolean ch1MeanCalculated = ch1MeanResult != null;
@@ -59,17 +59,9 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm {
 			throw new MissingPreconditionException("Mean of channel 2 is not present in the DataContainer object.");
 		}
 
-		if (!(ch1MeanResult instanceof Result.SimpleValueResult)){
-			throw new MissingPreconditionException("Mean of channel 1 is not stored as a SimpleValueResult.");
-		}
-		if (!(ch2MeanResult instanceof Result.SimpleValueResult)){
-			throw new MissingPreconditionException("Mean of channel 2 is not stored as a SimpleValueResult.");
-		}
-
 		// Cast the results into SimpleValueResult type
 		double ch1Mean = ((Result.SimpleValueResult)ch1MeanResult).getValue();
 		double ch2Mean = ((Result.SimpleValueResult)ch2MeanResult).getValue();
-
 
 		// Do the Classic version of the Pearson's Correlation as per Manders/Costes articles.
 

@@ -1,3 +1,4 @@
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -105,6 +106,24 @@ public class DataContainer<T extends RealType<T>> implements Iterable<Result> {
 			return taggedResults.get(tag);
 		else
 			return null;
+	}
+
+	/**
+	 * Gets a stored result based on its tag
+	 * and allows one to pass a type as an argument
+	 * to check if the Result object is of the type passed
+	 * @param <ReturnType> is the type the returned type will be
+	 * @param tag is the tag of the result we are getting
+	 * @param cls the class object of the required type of the returned object
+	 * @return return the object with type ReturnType if its found, or null if it is not found.
+	 */
+	public <ReturnType extends Result> ReturnType get(DataTags tag, Class <ReturnType> cls) {
+		Result theResult = get(tag);
+		if (theResult == null)
+			return null;
+		else if (cls.isInstance(theResult))
+			return cls.cast(theResult);
+		else return null;
 	}
 
 	/**
