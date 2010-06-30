@@ -1,7 +1,9 @@
 import java.util.Iterator;
 
 import ij.IJ;
+import ij.ImagePlus;
 import ij.text.TextWindow;
+import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 
 public class EasyDisplay extends Display{
 
@@ -21,6 +23,10 @@ public class EasyDisplay extends Display{
 			if (r instanceof Result.SimpleValueResult){
 				Result.SimpleValueResult result = (Result.SimpleValueResult)r;
 				textWindow.getTextPanel().appendLine(result.getName() + "\t" + result.getValue() + "\n");
+			} else if ( r instanceof Result.Histogram2DResult) {
+				Result.Histogram2DResult result = (Result.Histogram2DResult)r;
+				ImagePlus imp = ImageJFunctions.displayAsVirtualStack( result.getData() );
+				imp.show();
 			}
 		}
 		IJ.selectWindow("Results");

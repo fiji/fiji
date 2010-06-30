@@ -99,6 +99,10 @@ public abstract class Result {
 			super(name);
 			this.data = data;
 		}
+
+		public Image<T> getData() {
+			return data;
+		}
 	}
 
 	/**
