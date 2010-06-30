@@ -42,6 +42,9 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm {
 
 	public void classicPearsons(DataContainer container) throws MissingPreconditionException {
 		// get the means from the DataContainer
+		// TODO explicitly name generic type args for method call???
+		//Result ch1MeanResult = container.<Result.SimpleValueResult>get(DataContainer.DataTags.MeanCh1, Result.SimpleValueResult.class);
+
 		Result ch1MeanResult = container.get(DataContainer.DataTags.MeanCh1, Result.SimpleValueResult.class);
 		Result ch2MeanResult = container.get(DataContainer.DataTags.MeanCh2, Result.SimpleValueResult.class);
 
