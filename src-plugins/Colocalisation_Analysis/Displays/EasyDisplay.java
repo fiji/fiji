@@ -5,13 +5,11 @@ import ij.ImagePlus;
 import ij.text.TextWindow;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 
-public class EasyDisplay extends Display{
+public class EasyDisplay implements Display {
 
 	protected static TextWindow textWindow;
 
-
-	//implement the abstract display method.
-	public void display(DataContainer container){
+	public void display(DataContainer container) {
 
 		//test if the results windows is already there, if so use it.
 		if (textWindow == null || !textWindow.isVisible())
