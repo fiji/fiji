@@ -5,7 +5,6 @@ import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
-import mpicbg.imglib.type.numeric.integer.ShortType;
 import mpicbg.imglib.type.numeric.real.FloatType;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 
@@ -17,9 +16,9 @@ import mpicbg.imglib.container.array.ArrayContainerFactory;
 public class Histogram2D<T extends RealType<T>> extends Algorithm {
 
 	// The width of the scatter-plot
-	protected final int width = 256;
+	protected final int xBins = 256;
 	// The height of the scatter-plot
-	protected final int height = 256;
+	protected final int yBins = 256;
 
 	public void execute(DataContainer container) throws MissingPreconditionException {
 		Result ch1MaxResult = container.get(DataContainer.DataTags.MaxCh1, Result.SimpleValueResult.class);
@@ -43,8 +42,8 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 		double ch1Max = ((Result.SimpleValueResult)ch1MaxResult).getValue();
 		double ch2Max = ((Result.SimpleValueResult)ch2MaxResult).getValue();
 
-		double ch1Scaling = (double) (width - 1) / (double)ch1Max;
-		double ch2Scaling = (double) (height - 1) / (double)ch2Max;
+		double ch1Scaling = (double) xBins / (double)(ch1Max + 1);
+		double ch2Scaling = (double) yBins / (double)(ch2Max + 1);
 
 		// get the 2 images for the calculation of Pearson's
 		Image<T> img1 = container.getSourceImage1();
@@ -55,12 +54,12 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 		Cursor<T> cursor2 = img2.createCursor();
 
 		// create a ImageFactory<Type<T>> put the scatter-plot in
-		final ImageFactory<ShortType> scatterFactory =
-			new ImageFactory<ShortType>(new ShortType(), new ArrayContainerFactory());
-		Image<ShortType> plotImage = scatterFactory.createImage(new int[] {width, height}, "2D Histogram / Scatterplot");
+		final ImageFactory<FloatType> scatterFactory =
+			new ImageFactory<FloatType>(new FloatType(), new ArrayContainerFactory());
+		Image<FloatType> plotImage = scatterFactory.createImage(new int[] {xBins, yBins}, "2D Histogram / Scatterplot");
 
 		// create access cursors
-		final LocalizableByDimCursor<ShortType> histogram2DCursor =
+		final LocalizableByDimCursor<FloatType> histogram2DCursor =
 			plotImage.createLocalizableByDimCursor();
 
 		// iterate over image
@@ -77,17 +76,14 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 			 * Moreover mirror the y value on the x axis.
 			 */
 			int scaledXvalue = (int)(ch1 * ch1Scaling);
-			int scaledYvalue = 255 - (int)(ch2 * ch2Scaling);
+			int scaledYvalue = (yBins - 1) - (int)(ch2 * ch2Scaling);
 			// set position of input/output cursor
 			histogram2DCursor.setPosition( new int[] {scaledXvalue, scaledYvalue});
 			// get current value at position and increment it
-			int count = histogram2DCursor.getType().getInteger();
+			float count = histogram2DCursor.getType().getRealFloat();
 			count++;
 
-			// write out new value if in range
-			if (count < 65535) {
-				histogram2DCursor.getType().set((short)count);
-			}
+			histogram2DCursor.getType().set(count);
 		}
 
 		Result result = new Result.Histogram2DResult("2D Histogram", plotImage, "Channel 1", "Channel 2");
