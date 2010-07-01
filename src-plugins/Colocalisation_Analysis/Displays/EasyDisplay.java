@@ -17,6 +17,9 @@ public class EasyDisplay extends Display{
 		if (textWindow == null || !textWindow.isVisible())
 			textWindow = new TextWindow("Results",
 				"Result\tValue\n", "", 400, 250);
+
+		printTextStatistics(container);
+
 		Iterator<Result> iterator = container.iterator();
 		while (iterator.hasNext()){
 			Result r = iterator.next();
@@ -30,5 +33,14 @@ public class EasyDisplay extends Display{
 			}
 		}
 		IJ.selectWindow("Results");
+	}
+
+	protected void printTextStatistics(DataContainer container){
+		textWindow.getTextPanel().appendLine("Ch1 Mean\t" + container.getMeanCh1() + "\n");
+		textWindow.getTextPanel().appendLine("Ch2 Mean\t" + container.getMeanCh2() + "\n");
+		textWindow.getTextPanel().appendLine("Ch1 Min\t" + container.getMinCh1() + "\n");
+		textWindow.getTextPanel().appendLine("Ch2 Min\t" + container.getMinCh2() + "\n");
+		textWindow.getTextPanel().appendLine("Ch1 Max\t" + container.getMaxCh1() + "\n");
+		textWindow.getTextPanel().appendLine("Ch2 Max\t" + container.getMaxCh2() + "\n");
 	}
 }
