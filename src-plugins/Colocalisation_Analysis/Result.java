@@ -29,6 +29,10 @@ public abstract class Result {
 		return name;
 	}
 
+	public String toString(){
+		return name;
+	}
+
 	/**
 	 * A {@link CompositeResult} can contain of several other
 	 * results and hence allows the encapsulation of Results
