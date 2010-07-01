@@ -6,16 +6,19 @@
 package fiji.plugin.nperry;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 import ij.*;
 import ij.process.ImageProcessor;
 import mpicbg.imglib.algorithm.gauss.GaussianConvolutionRealType;
+import mpicbg.imglib.algorithm.math.MathLib;
 import mpicbg.imglib.algorithm.roi.MedianFilter;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
-//import mpicbg.imglib.cursor.special.LocalNeighborhoodCursor;
+import mpicbg.imglib.cursor.LocalizableByDimCursor3D;
+import mpicbg.imglib.cursor.special.LocalNeighborhoodCursor;
 import mpicbg.imglib.cursor.special.LocalNeighborhoodCursor3D;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImagePlusAdapter;
@@ -68,7 +71,8 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		StructuringElement strel;
 		
 		// 2.1 - Need to figure out the dimensionality of the image in order to create a StructuringElement of the correct dimensionality (StructuringElement needs to have same dimensionality as the image):
-		if (img.getNumDimensions() == 3) {  // 3D case
+		int numDim = img.getNumDimensions();
+		/*if (numDim == 3) {  // 3D case
 			strel = new StructuringElement(new int[]{3, 3, 1}, "3D Square");  // unoptimized shape for 3D case. Note here that we manually are making this shape (not using a class method). This code is courtesy of Larry Lindsey
 			Cursor<BitType> c = strel.createCursor();  // in this case, the shape is manually made, so we have to manually set it, too.
 			while (c.hasNext()) 
@@ -89,21 +93,21 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		} else { 
 	        System.out.println(medFilt.getErrorMessage()); 
 	        return null;
-		}
+		}*/
 		
 		// 3 - Apply a Gaussian filter (code courtesy of Stephan Preibisch). Theoretically, this will make the center of blobs the brightest, and thus easier to find:
-		final GaussianConvolutionRealType<T> conv = new GaussianConvolutionRealType<T>(img, new OutOfBoundsStrategyMirrorFactory<T>(), 10.0f); // Use sigma of 10.0f, probably need a better way to do this
+		/*final GaussianConvolutionRealType<T> conv = new GaussianConvolutionRealType<T>(img, new OutOfBoundsStrategyMirrorFactory<T>(), 6.0f); // Use sigma of 10.0f, probably need a better way to do this
 		if (conv.checkInput() && conv.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
 			img = conv.getResult(); 
 		} else { 
 	        System.out.println(conv.getErrorMessage()); 
 	        return null;
-		}
+		}*/
 		
-		// 3.5 - Apply a Laplace transform
+		// 3.5 - Apply a Laplace transform?
 		
 		// 4 - Find maxima of newly convoluted image:
-		findMaxima(img);
+		findMaxima(img, numDim);
 		
 		// 5 - Return (for testing):
 		ImagePlus newImg = ImageJFunctions.copyToImagePlus(img, imp.getType());  	// convert Image<T> to ImagePlus
@@ -114,36 +118,45 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		return new Object[]{"new", newImg};
 	}
 	
-	public void findMaxima(Image<T> img) {
-		// 1 - Initialize local variables, cursors
-		final LocalizableByDimCursor<T> curr = img.createLocalizableByDimCursor(new OutOfBoundsStrategyMirrorFactory<T>());  // adding a OutOfBounds strategy because the cursor can be on the border, and the neighborhood cursor will search its nonexistent neighbors beyond the limits of the image.
-		/** Note: writing for 3D case only right now to test */
-		final LocalNeighborhoodCursor3D<T> neighbors = new LocalNeighborhoodCursor3D<T>(curr);
-		ArrayList< int[] > maxCoordinates = new ArrayList< int[] >();
-		T currentValue;  // holds the value of the current pixel's intensity
+	public void findMaxima(Image<T> img, int numDim) {
+		// 1 - Initialize local variables, cursors (cursors used depends on whether image is 2D or 3D).
+		final LocalizableByDimCursor<T> curr = img.createLocalizableByDimCursor(new OutOfBoundsStrategyMirrorFactory<T>());  // adding a OutOfBounds strategy because the cursor can be on the border, and the neighborhood cursor will search its nonexistent neighbors beyond the limits of the image.  
+		LocalNeighborhoodCursor<T> neighbors = new LocalNeighborhoodCursor3D<T>(curr);
+		ArrayList< int[] > maxCoordinates = new ArrayList< int[] >();  // holds the positions of the local maxima
+		T currentValue = img.createType();  // holds the value of the current pixel's intensity. We use createType() here because getType() gives us a pointer to the cursor's object, but since the neighborhood moves the parent cursor, when we check the neighbors, we actually change the object stored here, or the pixel we are trying to compare to. see fiji-devel list for further explanation.
 		T neighborValue; // holds the value of the neighbor's intensity
 		
-		// 2 - Search all pixels for LOCAL maxima. A local maximum is a pixel that is the brightest in its 3D neighborhood (so the pixel is brighter or as bright as the 26 direct neighbors of it's cube-shaped neighborhood.
+		// 2 - Search all pixels for LOCAL maxima. A local maximum is a pixel that is the brightest in its immediate neighborhood (so the pixel is brighter or as bright as the 26 direct neighbors of it's cube-shaped neighborhood if 3D).
+		int count = 0;
 		while(curr.hasNext()) {
 			curr.fwd();			 	// select the next pixel
 			boolean isMax = true;  	// this pixel could be a max
-			currentValue = curr.getType();
+			currentValue.set(curr.getType());
 			neighbors.update();
 			while(neighbors.hasNext()) {	//check this pixel's immediate neighbors
 				neighbors.fwd();
 				neighborValue = neighbors.getType();
-				if (neighborValue.compareTo(currentValue) > 0) {  // if the neighbor's value is greater than our pixel's value, our pixel can no longer be a maximum so set isMax to false.
+				if (neighborValue.compareTo(currentValue) >= 0) {  // if the neighbor's value is greater than our pixel's value, our pixel can no longer be a maximum so set isMax to false.
 					isMax = false;
-					break;
 				}
 			}
+			neighbors.reset();  // needed to get the outer cursor to work correctly;
 			if (isMax) {
-				maxCoordinates.add(curr.getPosition());
+				maxCoordinates.add(curr.getPosition());  // if this pixel isMax, then add it to our list of local maxima
 			}
-			// print out the list of maxima
-			// to-do...
+			count++;
 		}
 		curr.close();
 		neighbors.close();
+		
+		// 3 - Print out list of maxima:
+		IJ.log("Count:" + count);
+		String img_dim = MathLib.printCoordinates(img.getDimensions());
+		IJ.log(img_dim);
+		Iterator<int[]> itr = maxCoordinates.iterator();
+		while (itr.hasNext()) {
+			String pos_str = MathLib.printCoordinates(itr.next());
+			IJ.log(pos_str);
+		}
 	}
 }
