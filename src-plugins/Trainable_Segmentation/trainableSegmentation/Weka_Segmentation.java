@@ -248,6 +248,9 @@ public class Weka_Segmentation implements PlugIn
 	/** list of the names of features to use */
 	private ArrayList<String> featureNames = null;
 	
+	/** temporary folder name. It is used to stored intermediate results if different from null */
+	private String tempFolder = null;
+	
 	/**
 	 * Basic constructor
 	 */
@@ -1038,19 +1041,27 @@ public class Weka_Segmentation implements PlugIn
 			attributes.add(new Attribute(attString));
 		}
 		
-		final ArrayList<String> classes = new ArrayList<String>();
+		final ArrayList<String> classes;
 
 		int numOfInstances = 0;
 		int numOfUsedClasses = 0;
-		for(int i = 0; i < numOfClasses ; i ++)
+		if(null == this.loadedTrainingData)
 		{
-			// Do not add empty lists
-			if(examples[i].size() > 0)
+			classes = new ArrayList<String>();
+			for(int i = 0; i < numOfClasses ; i ++)
 			{
-				classes.add(classLabels[i]);
-				numOfUsedClasses++;
+				// Do not add empty lists
+				if(examples[i].size() > 0)
+				{
+					classes.add(classLabels[i]);
+					numOfUsedClasses++;
+				}
+				numOfInstances += examples[i].size();
 			}
-			numOfInstances += examples[i].size();
+		}
+		else
+		{
+			classes = this.loadedClassNames;
 		}
 
 				
@@ -1163,7 +1174,10 @@ public class Weka_Segmentation implements PlugIn
 
 		if (trainingData.numInstances() == 0)
 			return null;
-				
+			
+		// Set the index of the class attribute
+		trainingData.setClassIndex(featureStack.getSize());
+		
 		return trainingData;
 	}
 
@@ -1177,7 +1191,7 @@ public class Weka_Segmentation implements PlugIn
 		for(int i = 0; i < numOfClasses; i++)
 			if(examples[i].size() > 0)
 				nonEmpty++;
-		if (nonEmpty < 2 && loadedTrainingData==null){
+		if (nonEmpty < 2 && null == loadedTrainingData){
 			IJ.showMessage("Cannot train without at least 2 sets of examples!");
 			return false;
 		}
@@ -1200,15 +1214,14 @@ public class Weka_Segmentation implements PlugIn
 
 		IJ.showStatus("Training classifier...");
 		Instances data = null;
-		if (nonEmpty < 2)
+		if (nonEmpty < 1)
 			IJ.log("Training from loaded data only...");
 		else 
 		{
 			final long start = System.currentTimeMillis();
 			data = createTrainingInstances();
 			final long end = System.currentTimeMillis();
-			IJ.log("Creating training data took: " + (end-start) + "ms");
-			data.setClassIndex(data.numAttributes() - 1);
+			IJ.log("Creating training data took: " + (end-start) + "ms");			
 		}
 
 		if (loadedTrainingData != null && data != null){
@@ -1730,7 +1743,11 @@ public class Weka_Segmentation implements PlugIn
 		ImagePlus newImage = new ImagePlus(od.getDirectory() + od.getFileName());
 		
 		if( false == loadNewImage( newImage ) )
+		{
+			IJ.error("Error while loading new image!");
+			this.updateButtonsEnabling();
 			return;
+		}
 		
 		// Remove traces from the lists and ROI overlays
 		for(int i = 0; i < numOfClasses; i ++)
@@ -1870,6 +1887,33 @@ public class Weka_Segmentation implements PlugIn
 			updateFeatures = true;
 		}
 		
+		return true;
+	}
+	
+	/**
+	 * Set features to use during training
+	 * 
+	 * @param featureNames list of feature names to use
+	 * @return false if error
+	 */
+	public boolean setFeatures(ArrayList<String> featureNames)
+	{
+		if (null == featureNames)
+			return false;
+		
+		this.featureNames = featureNames;
+		
+		final int numFeatures = FeatureStack.availableFeatures.length;
+		boolean[] usedFeatures = new boolean[numFeatures];
+		for(final String name : featureNames)
+		{
+			for(int i = 0 ; i < numFeatures; i++)						
+				if(name.startsWith(FeatureStack.availableFeatures[i]))				
+					usedFeatures[i] = true;							
+		}
+		
+		this.featureStack.setEnableFeatures(usedFeatures);		
+				
 		return true;
 	}
 	
@@ -2917,9 +2961,7 @@ public class Weka_Segmentation implements PlugIn
 				// decrease i to avoid skipping any name
 				i--;
 			}
-		}
-		
-		this.featureStack.show();
+		}				
 	}
 
 	
@@ -2933,13 +2975,14 @@ public class Weka_Segmentation implements PlugIn
 			ArrayList<String> featureNames, 
 			FeatureStack featureStack)
 	{
+		IJ.log("Filtering feature stack by selected attributes...");
 		if (null == featureNames)
 			return;					
 		
 		for(int i=1; i<=featureStack.getSize(); i++)
 		{			
 			final String featureName = featureStack.getSliceLabel(i);
-			IJ.log(" " + featureName + "...");
+			//IJ.log(" " + featureName + "...");
 			if(false == featureNames.contains( featureName ) )
 			{
 				// Remove feature
@@ -2947,9 +2990,7 @@ public class Weka_Segmentation implements PlugIn
 				// decrease i to avoid skipping any name
 				i--;				
 			}
-		}		
-		
-		featureStack.show();
+		}				
 	}
 	
 	/**
@@ -3209,9 +3250,7 @@ public class Weka_Segmentation implements PlugIn
 		final FloatProcessor[] classProb = new FloatProcessor[ nClasses ];
 		for(int k = 0 ; k < nClasses; k++)
 			classProb[k] = new FloatProcessor(width, height);
-		
-		IJ.log("Calculating class probability for whole image...");
-		
+				
 		
 		// Check the number of processors in the computer 
 		final int numOfProcessors = Runtime.getRuntime().availableProcessors();
@@ -3301,10 +3340,7 @@ public class Weka_Segmentation implements PlugIn
 		final ImageStack is = new ImageStack(width, height);
 		final FloatProcessor[] classProb = new FloatProcessor[ nClasses ];
 		for(int k = 0 ; k < nClasses; k++)
-			classProb[k] = new FloatProcessor(width, height);
-		
-		IJ.log("Calculating class probability for whole image...");
-		
+			classProb[k] = new FloatProcessor(width, height);						
 		
 		// Check the number of processors in the computer 
 		final int numOfProcessors = Runtime.getRuntime().availableProcessors();
@@ -3414,6 +3450,15 @@ public class Weka_Segmentation implements PlugIn
 		this.featureStack.setEnableFeatures(enableFeatures);
 	}
 	
+	/**
+	 * Set the temporary folder
+	 * @param tempFolder complete path name for temporary folder 
+	 */
+	public void setTempFolder(final String tempFolder)
+	{
+		this.tempFolder = tempFolder;
+	}
+	
 	// BLOTC methods
 	/**
 	 * Train a FastRandomForest classifier using BLOTC:
@@ -3497,9 +3542,9 @@ public class Weka_Segmentation implements PlugIn
 			// Reduce size of data by attribute selection			
 			IJ.log("Selecting best attributes...");			
 			final long start = System.currentTimeMillis();									
-			originalData = selectAttributes(originalData);		
+			selectAttributes();		
 			final long end = System.currentTimeMillis();
-			setLoadedTrainingData(originalData);
+			originalData = this.loadedTrainingData;
 			IJ.log("Filtered data: " + originalData.numInstances() 
 					+ " instances, " + originalData.numAttributes() 
 					+ " attributes, " + originalData.numClasses() + " classes.");
@@ -3517,8 +3562,7 @@ public class Weka_Segmentation implements PlugIn
 			setLoadedTrainingData(trainingData);
 		}
 		
-		// train BLOTC
-		
+		// train BLOTC		
 		int iter = 1;
 		while(true)
 		{
@@ -3541,14 +3585,15 @@ public class Weka_Segmentation implements PlugIn
 			for(int i=1; i<=image.getStackSize(); i++)
 			{
 				final Instances subDataSet = new Instances (originalData, (i-1)*numOfPixelsPerImage, numOfPixelsPerImage); 
+				IJ.log("Calculating class probability for whole image " + i + "...");
 				ImagePlus result = getProbabilityMapsMT(subDataSet, image.getWidth(), image.getHeight());
 				proposalStack.addSlice("probability map " + i, result.getImageStack().getProcessor(2));
 			}
 									
 			final ImagePlus proposal = new ImagePlus("proposal", proposalStack);
 		
-			warpedLabels.show();
-			proposal.show();
+			//warpedLabels.show();
+			//proposal.show();
 			
 			IJ.log("Warping ground truth...");
 			// Warp ground truth, relax original labels to proposal. Only simple
@@ -3565,7 +3610,15 @@ public class Weka_Segmentation implements PlugIn
 				trainingData = homogenizeTrainingData(originalData);
 				setLoadedTrainingData(trainingData);
 			}
-			iter++;
+			
+			if(null != this.tempFolder)
+			{
+				final File temp = new File(tempFolder);
+				if(null != temp && temp.exists())
+					saveClassifier(tempFolder + "/classifier-" + iter + ".model");
+			}
+			
+			iter++;						
 		}
 		return warpedLabels;
 	}
@@ -3595,7 +3648,38 @@ public class Weka_Segmentation implements PlugIn
 	}
 	
 	/**
-	 * Select attributes to reduce the number of parameters per instance
+	 * Select attributes of current data by BestFirst search.
+	 * The data is reduced to the selected attributes (features).
+	 * 
+	 * @return false if the current dataset is empty
+	 */
+	public boolean selectAttributes()
+	{
+		if(null == loadedTrainingData)
+		{
+			IJ.error("There is no data so select attributes from.");
+			return false;		
+		}
+		// Select attributes by BestFirst
+		loadedTrainingData = selectAttributes(loadedTrainingData);
+		// Update list of features to use
+		this.featureNames = new ArrayList<String>();
+		IJ.log("Selected attributes:");
+		for(int i = 0; i < loadedTrainingData.numAttributes(); i++)
+		{
+			this.featureNames.add(loadedTrainingData.attribute(i).name());
+			IJ.log((i+1) + ": " + this.featureNames.get(i));
+		}
+		
+		// force data (ARFF) update
+		this.updateWholeData = true;
+		
+		return true;
+	}
+	
+	/**
+	 * Select attributes using BestFirst search to reduce 
+	 * the number of parameters per instance of a dataset
 	 * 
 	 * @param data input set of instances
 	 * @return resampled set of instances
@@ -3699,6 +3783,7 @@ public class Weka_Segmentation implements PlugIn
 			seg.setLoadedTrainingData(trainingData);
 		}
 		
+		// train using BLOTC
 		int iter = 1;
 		while(true)
 		{
@@ -3723,6 +3808,7 @@ public class Weka_Segmentation implements PlugIn
 				final Instances subDataSet = new Instances (originalData, (i-1)*numOfPixelsPerImage, numOfPixelsPerImage); 
 				//final ImagePlus result = seg.applyClassifier(subDataSet, image.getWidth(), image.getHeight());
 				//proposalStack.addSlice("classification result " + i, result.getProcessor().convertToFloat());
+				IJ.log("Calculating class probability for whole image " + i + "...");
 				ImagePlus result = seg.getProbabilityMapsMT(subDataSet, image.getWidth(), image.getHeight());
 				proposalStack.addSlice("probability map " + i, result.getImageStack().getProcessor(2));
 			}
