@@ -37,11 +37,17 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		
 		// 2 - Ask for parameters:
 		GenericDialog gd = new GenericDialog("Track");
+		gd.addNumericField("Average blob diameter (pixels):", 0, 0);  // get the expected blob size (in pixels).
+		gd.addChoice("Search type:", new String[] {"Maxima", "Minima"}, "Maxima");  // determines if we are searching for maxima, or minima.
 		gd.showDialog();
 		if (gd.wasCanceled()) return;
+
+		// 3 - Retrieve parameters from dialogue:
+		int diam = (int)gd.getNextNumber();
+		String searchType = gd.getNextString();
 		
-		// 3 - Execute!
-		Object[] result = exec(imp);
+		// 4 - Execute!
+		Object[] result = exec(imp, diam, searchType);
 		
 		// Display (for testing)
 		if (null != result) {
@@ -51,7 +57,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	}
 	
 	/** Execute the plugin functionality: apply a median filter (for salt and pepper noise), a Gaussian blur, and then find maxima. */
-	public Object[] exec(ImagePlus imp) {
+	public Object[] exec(ImagePlus imp, int diam, String searchType) {
 		// 0 - Check validity of parameters:
 		if (null == imp) return null;
 		
