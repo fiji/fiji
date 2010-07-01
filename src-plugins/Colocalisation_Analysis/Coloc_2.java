@@ -29,20 +29,13 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		// create a new container for the selected images and channels
 		DataContainer container = new DataContainer(img1, img2, theImg1Channel, theImg2Channel);
 
-		// these lists contain the algorithms that will be run when the user clicks ok
-		List<Algorithm> preprocessingJobs = new ArrayList<Algorithm>();
+		// this list contains the algorithms that will be run when the user clicks ok
 		List<Algorithm> userSelectedJobs = new ArrayList<Algorithm>();
 
-		preprocessingJobs.add(new CalculateMeans());
-		preprocessingJobs.add(new CalculateMinMax());
 		userSelectedJobs.add(new PearsonsCorrelation(PearsonsCorrelation.Implementation.Fast));
 		userSelectedJobs.add(new Histogram2D());
 
 		try {
-			for (Algorithm a : preprocessingJobs){
-				a.execute(container);
-			}
-
 			for (Algorithm a : userSelectedJobs){
 				a.execute(container);
 			}

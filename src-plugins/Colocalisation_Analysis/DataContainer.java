@@ -19,8 +19,7 @@ import mpicbg.imglib.type.numeric.RealType;
  */
 public class DataContainer<T extends RealType<T>> implements Iterable<Result> {
 
-	// Tags for later finding the right piece of result data
-	enum DataTags { MeanCh1, MeanCh2, MinCh1, MaxCh1, MinCh2, MaxCh2 };
+	double meanCh1, meanCh2, minCh1, maxCh1, minCh2, maxCh2;
 
 	// The source images that the results are based on
 	Image<T> sourceImage1, sourceImage2;
@@ -34,8 +33,6 @@ public class DataContainer<T extends RealType<T>> implements Iterable<Result> {
 	double ch1MinThreshold, ch1MaxThreshold, ch2MinThreshold, ch2MaxThreshold;
 	// The container of the results
 	List<Result> resultsObjectList = new ArrayList<Result>();
-	// Use a Map to make the connection between the results and the label we give the result to be tagged.
-	Map<DataTags, Result> taggedResults = Collections.synchronizedMap(new HashMap<DataTags, Result>());
 
 	/**
 	 * Creates a new {@link DataContainer} for a specific set of image and
@@ -63,6 +60,13 @@ public class DataContainer<T extends RealType<T>> implements Iterable<Result> {
 		dummyT = src2.createType();
 		ch2MinThreshold = dummyT.getMinValue();
 		ch2MaxThreshold = dummyT.getMaxValue();
+
+		meanCh1 = BasicImageStats.getImageMean(sourceImage1);
+		meanCh2 = BasicImageStats.getImageMean(sourceImage2);
+		minCh1 = BasicImageStats.getImageMin(sourceImage1);
+		minCh2 = BasicImageStats.getImageMin(sourceImage2);
+		maxCh1 = BasicImageStats.getImageMax(sourceImage1);
+		maxCh2 = BasicImageStats.getImageMax(sourceImage2);
 	}
 
 	/**
@@ -72,58 +76,6 @@ public class DataContainer<T extends RealType<T>> implements Iterable<Result> {
 	 */
 	public void add(Result result) {
 		resultsObjectList.add(result);
-	}
-
-	/**
-	 * Adds a {@link Result} to the container and tags
-	 * it with the given {@link DataTags} tag.
-	 * @param result The result to be stored
-	 * @param tag The tag for the new result
-	 * @return true if the result has been added, false otherwise
-	 */
-	public boolean add(Result result, DataTags tag) {
-		/* if a result tagged like this already exists
-		 * return false
-		 */
-		if (taggedResults.containsKey(tag)) {
-			return false;
-		}
-		// add result to the tagging map
-		taggedResults.put(tag, result);
-		// add result to the data store
-		add(result);
-
-		return true;
-	}
-
-	/**
-	 * Gets a stored result based on its tag.
-	 * @param tag The tag of the result looked for
-	 * @return The stored result or null if not found
-	 */
-	public Result get(DataTags tag) {
-		if (taggedResults.containsKey(tag))
-			return taggedResults.get(tag);
-		else
-			return null;
-	}
-
-	/**
-	 * Gets a stored result based on its tag
-	 * and allows one to pass a type as an argument
-	 * to check if the Result object is of the type passed
-	 * @param <ReturnType> is the type the returned type will be
-	 * @param tag is the tag of the result we are getting
-	 * @param cls the class object of the required type of the returned object
-	 * @return return the object with type ReturnType if its found, or null if it is not found.
-	 */
-	public <ReturnType extends Result> ReturnType get(DataTags tag, Class <ReturnType> cls) {
-		Result theResult = get(tag);
-		if (theResult == null)
-			return null;
-		else if (cls.isInstance(theResult))
-			return cls.cast(theResult);
-		else return null;
 	}
 
 	/**
@@ -179,5 +131,29 @@ public class DataContainer<T extends RealType<T>> implements Iterable<Result> {
 
 	public synchronized void setCh2MaxThreshold(double ch2MaxThreshold) {
 		this.ch2MaxThreshold = ch2MaxThreshold;
+	}
+
+	public double getMeanCh1() {
+		return meanCh1;
+	}
+
+	public double getMeanCh2() {
+		return meanCh2;
+	}
+
+	public double getMinCh1() {
+		return minCh1;
+	}
+
+	public double getMaxCh1() {
+		return maxCh1;
+	}
+
+	public double getMinCh2() {
+		return minCh2;
+	}
+
+	public double getMaxCh2() {
+		return maxCh2;
 	}
 }

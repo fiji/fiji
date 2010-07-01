@@ -21,26 +21,9 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 	protected final int yBins = 256;
 
 	public void execute(DataContainer container) throws MissingPreconditionException {
-		Result ch1MaxResult = container.get(DataContainer.DataTags.MaxCh1, Result.SimpleValueResult.class);
-		Result ch2MaxResult = container.get(DataContainer.DataTags.MaxCh2, Result.SimpleValueResult.class);
 
-		// check if maximum values have already been calculated
-		boolean ch1MaxCalculated = ch1MaxResult != null;
-		boolean ch2MaxCalculated = ch2MaxResult != null;
-
-		if (!ch1MaxCalculated) {
-			IJ.log("[Calculate Scatter-plot] The maximum value of channel 1 is not calculated already.");
-			throw new MissingPreconditionException("Max value of channel 1 is not present in the DataContainer object.");
-		}
-
-		if (!ch2MaxCalculated) {
-			IJ.log("[Calculate Scatter-plot] The maximum value of channel 2 is not calculated already.");
-			throw new MissingPreconditionException("Max of channel 2 is not present in the DataContainer object.");
-		}
-
-		// Cast the results into SimpleValueResult type
-		double ch1Max = ((Result.SimpleValueResult)ch1MaxResult).getValue();
-		double ch2Max = ((Result.SimpleValueResult)ch2MaxResult).getValue();
+		double ch1Max = container.getMaxCh1();
+		double ch2Max = container.getMaxCh2();
 
 		double ch1Scaling = (double) xBins / (double)(ch1Max + 1);
 		double ch2Scaling = (double) yBins / (double)(ch2Max + 1);
