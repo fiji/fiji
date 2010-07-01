@@ -19,6 +19,17 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 	protected final int xBins = 256;
 	// The height of the scatter-plot
 	protected final int yBins = 256;
+	// The name of the result 2D histogram to pass elsewhere
+	protected String title;
+
+
+	public Histogram2D(){
+		this("2D Histogram");
+	}
+
+	public Histogram2D(String title){
+		this.title = title;
+	}
 
 	public void execute(DataContainer container) throws MissingPreconditionException {
 
@@ -69,7 +80,7 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 			histogram2DCursor.getType().set(count);
 		}
 
-		Result result = new Result.Histogram2DResult("2D Histogram", plotImage, "Channel 1", "Channel 2");
+		Result result = new Result.Histogram2DResult(title, plotImage, "Channel 1", "Channel 2");
 		container.add(result);
 	}
 }
