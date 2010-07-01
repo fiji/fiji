@@ -5,6 +5,8 @@
 
 package fiji.plugin.nperry;
 
+import java.util.ArrayList;
+
 import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 import ij.*;
@@ -13,6 +15,8 @@ import mpicbg.imglib.algorithm.gauss.GaussianConvolutionRealType;
 import mpicbg.imglib.algorithm.roi.MedianFilter;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
+//import mpicbg.imglib.cursor.special.LocalNeighborhoodCursor;
+import mpicbg.imglib.cursor.special.LocalNeighborhoodCursor3D;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImagePlusAdapter;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
@@ -82,7 +86,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		}
 		
 		// 3 - Apply a Gaussian filter (code courtesy of Stephan Preibisch). Theoretically, this will make the center of blobs the brightest, and thus easier to find:
-		final GaussianConvolutionRealType<T> conv = new GaussianConvolutionRealType<T>(img, new OutOfBoundsStrategyMirrorFactory<T>(), 2.0f); // Use sigma of 2.0f, probably need a better way to do this
+		final GaussianConvolutionRealType<T> conv = new GaussianConvolutionRealType<T>(img, new OutOfBoundsStrategyMirrorFactory<T>(), 10.0f); // Use sigma of 10.0f, probably need a better way to do this
 		if (conv.checkInput() && conv.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
 			img = conv.getResult(); 
 		} else { 
@@ -90,11 +94,12 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	        return null;
 		}
 		
+		// 3.5 - Apply a Laplace transform
+		
 		// 4 - Find maxima of newly convoluted image:
-		// LocalNeighborhoodCursor3D
 		findMaxima(img);
 		
-		// Return (for testing):
+		// 5 - Return (for testing):
 		ImagePlus newImg = ImageJFunctions.copyToImagePlus(img, imp.getType());  	// convert Image<T> to ImagePlus
 		if (imp.isInvertedLut()) {													// if original image had inverted LUT, invert this new image's LUT also
 			ImageProcessor newImgP = newImg.getProcessor();
@@ -104,12 +109,35 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	}
 	
 	public void findMaxima(Image<T> img) {
-		final LocalizableByDimCursor<T> cur = img.createLocalizableByDimCursor();
-		final boolean localMaxima[] = new boolean[img.getNumPixels()];
-		final int[] max_position = img.createPositionArray();
-		while(cur.hasNext()) {      // iterate over all of the pixels in the image in order to search for maxima.
-			boolean isMax = true;   // potentially, the next pixel could be a maximum, so label it that way for now until we discover otherwise.
-			
+		// 1 - Initialize local variables, cursors
+		final LocalizableByDimCursor<T> curr = img.createLocalizableByDimCursor(new OutOfBoundsStrategyMirrorFactory<T>());  // adding a OutOfBounds strategy because the cursor can be on the border, and the neighborhood cursor will search its nonexistent neighbors beyond the limits of the image.
+		/** Note: writing for 3D case only right now to test */
+		final LocalNeighborhoodCursor3D<T> neighbors = new LocalNeighborhoodCursor3D<T>(curr);
+		ArrayList< int[] > maxCoordinates = new ArrayList< int[] >();
+		T currentValue;  // holds the value of the current pixel's intensity
+		T neighborValue; // holds the value of the neighbor's intensity
+		
+		// 2 - Search all pixels for LOCAL maxima. A local maximum is a pixel that is the brightest in its 3D neighborhood (so the pixel is brighter or as bright as the 26 direct neighbors of it's cube-shaped neighborhood.
+		while(curr.hasNext()) {
+			curr.fwd();			 	// select the next pixel
+			boolean isMax = true;  	// this pixel could be a max
+			currentValue = curr.getType();
+			neighbors.update();
+			while(neighbors.hasNext()) {	//check this pixel's immediate neighbors
+				neighbors.fwd();
+				neighborValue = neighbors.getType();
+				if (neighborValue.compareTo(currentValue) > 0) {  // if the neighbor's value is greater than our pixel's value, our pixel can no longer be a maximum so set isMax to false.
+					isMax = false;
+					break;
+				}
+			}
+			if (isMax) {
+				maxCoordinates.add(curr.getPosition());
+			}
+			// print out the list of maxima
+			// to-do...
 		}
+		curr.close();
+		neighbors.close();
 	}
 }
