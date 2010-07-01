@@ -34,6 +34,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 
 		userSelectedJobs.add(new PearsonsCorrelation(PearsonsCorrelation.Implementation.Fast));
 		userSelectedJobs.add(new Histogram2D());
+		userSelectedJobs.add(new Histogram2D("hello"));
 
 		try {
 			for (Algorithm a : userSelectedJobs){
@@ -44,7 +45,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 			System.out.println("Exception occured in Algorithm preconditions: " + e.getMessage());
 		}
 
-		Display theResultDisplay = new EasyDisplay();
+		Display theResultDisplay = new SingleWindowDisplay();
 		theResultDisplay.display(container);
 
 
