@@ -819,6 +819,9 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 				for( int i = 0; i < (n - 1); ++i ) {
 					double startXSquared = squaredRangeStarts[i];
 					double endXSquared = squaredRangeStarts[i+1];
+					// Omit the empty ranges, since they're not likely to matter to anyone:
+					if( endXSquared == startXSquared )
+						continue;
 					double startX = Math.sqrt(startXSquared);
 					double endX = Math.sqrt(endXSquared);
 					double midX = (startX + endX) / 2;
