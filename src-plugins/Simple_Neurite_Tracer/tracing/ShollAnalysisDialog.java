@@ -173,9 +173,9 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		if( chart == null )
 			return;
 		if( graphFrame == null )
-			graphFrame = new GraphFrame( chart );
+			graphFrame = new GraphFrame( chart, results.getSuggestedSuffix() );
 		else
-			graphFrame.updateWithNewChart( chart );
+			graphFrame.updateWithNewChart( chart, results.getSuggestedSuffix() );
 	}
 
 	public void itemStateChanged( ItemEvent e ) {
@@ -240,10 +240,12 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		JFreeChart chart = null;
 		ChartPanel chartPanel = null;
 		JPanel mainPanel;
-		public void updateWithNewChart( JFreeChart chart ) {
-			updateWithNewChart( chart, false );
+		String suggestedSuffix;
+		public void updateWithNewChart( JFreeChart chart, String suggestedSuffix ) {
+			updateWithNewChart( chart, suggestedSuffix, false );
 		}
-		synchronized public void updateWithNewChart( JFreeChart chart, boolean setSize ) {
+		synchronized public void updateWithNewChart( JFreeChart chart, String suggestedSuffix, boolean setSize ) {
+			this.suggestedSuffix = suggestedSuffix;
 			if( chartPanel != null )
 				remove(chartPanel);
 			chartPanel = null;
@@ -254,13 +256,15 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			mainPanel.add(chartPanel,BorderLayout.CENTER);
 			validate();
 		}
-		public GraphFrame( JFreeChart chart ) {
+		public GraphFrame( JFreeChart chart, String suggestedSuffix ) {
 			super();
+
+			this.suggestedSuffix = suggestedSuffix;
 
 			mainPanel = new JPanel();
 			mainPanel.setLayout(new BorderLayout());
 
-			updateWithNewChart( chart, true );
+			updateWithNewChart( chart, suggestedSuffix, true );
 
 			JPanel buttonsPanel = new JPanel();
 			exportButton = new JButton("Export graph as SVG");
@@ -282,7 +286,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		public void exportGraphAsSVG() {
 
 			SaveDialog sd = new SaveDialog("Export graph as...",
-						       "sholl",
+						       "sholl"+suggestedSuffix,
 						       ".svg");
 
 			String savePath;
@@ -348,8 +352,12 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 	public static final int AXES_SEMI_LOG = 2;
 	public static final int AXES_LOG_LOG  = 3;
 
-	public static final int NOT_NORMALIZED = 4;
-	public static final int NORMALIZED_FOR_SPHERE_VOLUME = 5;
+	public static final String [] axesParameters = { null, "normal", "semi-log", "log-log"  };
+
+	public static final int NOT_NORMALIZED = 1;
+	public static final int NORMALIZED_FOR_SPHERE_VOLUME = 2;
+
+	public static final String [] normalizationParameters = { null, "not-normalized", "normalized" };
 
 	public static class ShollResults {
 		protected double [] squaredRangeStarts;
@@ -372,6 +380,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		protected String xAxisLabel;
 		protected double regressionGradient = Double.MIN_VALUE;
 		protected double regressionIntercept = Double.MIN_VALUE;
+		String parametersSuffix;
 		public int getDendriteMaximum() {
 			return maxCrossings;
 		}
@@ -390,6 +399,9 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		public double getMaxDistanceSquared() {
 			return squaredRangeStarts[n-1];
 		}
+		public String getSuggestedSuffix() {
+			return parametersSuffix;
+		}
 		public ShollResults( List<ShollPoint> shollPoints,
 				     double x_start,
 				     double y_start,
@@ -399,6 +411,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 				     int normalization,
 				     double sphereSeparation,
 				     boolean twoDimensional ) {
+			parametersSuffix = "_"+axesParameters[axes]+"_"+normalizationParameters[normalization]+"_"+sphereSeparation;
 			this.x_start = x_start;
 			this.y_start = y_start;
 			this.z_start = z_start;
