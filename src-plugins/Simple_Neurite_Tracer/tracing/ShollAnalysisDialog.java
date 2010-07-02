@@ -149,18 +149,14 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 
 	public void textValueChanged( TextEvent e ) {
 		Object source = e.getSource();
-		System.out.println("Got text value changed: "+e);
 		if( source == sampleSeparation ) {
-			System.out.println("Yes, it was from sampleSeparation");
 			String sampleSeparationText = sampleSeparation.getText();
-			System.out.println("and the text was: "+sampleSeparationText);
 			float s;
 			try {
 				s = Float.parseFloat(sampleSeparationText);
 			} catch( NumberFormatException nfe ) {
 				return;
 			}
-			System.out.println("So got s: "+s);
 			if( s >= 0 )
 				updateResults();
 		}
@@ -179,7 +175,6 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 	}
 
 	public void itemStateChanged( ItemEvent e ) {
-		System.out.println("Got item state changed for: "+e);
 		updateResults();
 	}
 
@@ -436,6 +431,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 					maxCrossings = currentCrossings;
 					criticalValue = Math.sqrt(p.distanceSquared);
 				}
+				// System.out.println("Range starting at: "+Math.sqrt(p.distanceSquared)+" has crossings: "+currentCrossings);
 			}
 			xAxisLabel = "Distance in space from ( "+x_start+", "+y_start+", "+z_start+" )";
 			yAxisLabel = "Number of intersections";
@@ -569,9 +565,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			}
 
 
-			System.out.println("Setting x axis range to: "+minX+" -> "+maxX);
 			xAxis.setRange(minX,maxX);
-			System.out.println("Setting y axis range to: "+minY+" -> "+maxY);
 			yAxis.setRange(minY,maxY);
 
 			XYItemRenderer renderer = null;

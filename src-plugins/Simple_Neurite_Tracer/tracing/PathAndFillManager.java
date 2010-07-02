@@ -1976,10 +1976,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		if( s.indexOf(',') >= 0 )
 			quote = true;
 		if( s.indexOf('"') >= 0 ) {
-			System.out.println("ooh, got a quote..");
 			quote = true;
 			result = s.replaceAll("\"","\"\"");
-			System.out.println("result is now: "+result);
 		}
 		if( quote )
 			return "\"" + result + "\"";
