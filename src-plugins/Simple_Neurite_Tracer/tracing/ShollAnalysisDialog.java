@@ -108,7 +108,11 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 	protected Checkbox useSelectedPathsCheckbox = new Checkbox("Use only selected paths in analysis?", pathsGroup, true);
 	protected Button makeShollImageButton = new Button("Make Sholl image");
 	protected Button drawShollGraphButton = new Button("Draw Graph");
-	protected Button exportAsCSV = new Button("Export results as CSV");
+	protected Button exportDetailAsCSVButton = new Button("Export detailed results as CSV");
+	protected Button exportSummaryAsCSVButton = new Button("Export summary results as CSV");
+
+	protected int numberOfSelectedPaths;
+	protected int numberOfAllPaths;
 
 	protected CheckboxGroup axesGroup = new CheckboxGroup();
 	protected Checkbox normalAxes = new Checkbox("Use standard axes", axesGroup, true);
@@ -137,11 +141,43 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			IJ.error("The sphere separation field must be a number, not '"+sampleSeparation.getText()+"'");
 			return;
 		}
-
 		if( source == makeShollImageButton ) {
 			results.makeShollCrossingsImagePlus(originalImage);
-		} else if( source == exportAsCSV ) {
-			// results.makeShollCrossingsImagePlus(originalImage);
+		} else if( source == exportDetailAsCSVButton || source == exportSummaryAsCSVButton ) {
+
+			boolean detail = (source == exportDetailAsCSVButton);
+
+			SaveDialog sd = new SaveDialog("Export data as...",
+						       "sholl-"+(detail?"detail":"summary")+results.getSuggestedSuffix(),
+						       ".csv");
+
+			String savePath;
+			if(sd.getFileName()==null) {
+				return;
+			}
+
+			File saveFile = new File( sd.getDirectory(),
+						  sd.getFileName() );
+			if ((saveFile!=null)&&saveFile.exists()) {
+				if (!IJ.showMessageWithCancel(
+					    "Export data...", "The file "+
+					    saveFile.getAbsolutePath()+" already exists.\n"+
+					    "Do you want to replace it?"))
+					return;
+			}
+
+			IJ.showStatus("Exporting CSV data to "+saveFile.getAbsolutePath());
+
+			try {
+				if(detail)
+					results.exportDetailToCSV(saveFile);
+				else
+					results.exportSummaryToCSV(saveFile);
+			} catch( IOException ioe) {
+				IJ.error("Saving to "+saveFile.getAbsolutePath()+" failed");
+				return;
+			}
+
 		} else if( source == drawShollGraphButton ) {
 			graphFrame.setVisible(true);
 		}
@@ -182,12 +218,13 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		List<ShollPoint> pointsToUse;
 		String description = "Sholl analysis ";
 		String postDescription = " for "+originalImage.getTitle();
-		if( useSelectedPathsCheckbox.getState() ) {
-			pointsToUse = shollPointsSelectedPaths;
-			description += "of selected paths " + postDescription;
-		} else {
+		boolean useAllPaths = ! useSelectedPathsCheckbox.getState();
+		if( useAllPaths ) {
 			pointsToUse = shollPointsAllPaths;
 			description += "of all paths" + postDescription;
+		} else {
+			pointsToUse = shollPointsSelectedPaths;
+			description += "of selected paths " + postDescription;
 		}
 
 		int axes = 0;
@@ -218,6 +255,9 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		}
 
 		ShollResults results = new ShollResults( pointsToUse,
+							 originalImage,
+							 useAllPaths,
+							 useAllPaths ? numberOfAllPaths : numberOfSelectedPaths,
 							 x_start,
 							 y_start,
 							 z_start,
@@ -397,7 +437,14 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		public String getSuggestedSuffix() {
 			return parametersSuffix;
 		}
+		boolean twoDimensional;
+		ImagePlus originalImage;
+		boolean useAllPaths;
+		int numberOfPathsUsed;
 		public ShollResults( List<ShollPoint> shollPoints,
+				     ImagePlus originalImage,
+				     boolean useAllPaths,
+				     int numberOfPathsUsed,
 				     double x_start,
 				     double y_start,
 				     double z_start,
@@ -407,6 +454,9 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 				     double sphereSeparation,
 				     boolean twoDimensional ) {
 			parametersSuffix = "_"+axesParameters[axes]+"_"+normalizationParameters[normalization]+"_"+sphereSeparation;
+			this.originalImage = originalImage;
+			this.useAllPaths = useAllPaths;
+			this.numberOfPathsUsed = numberOfPathsUsed;
 			this.x_start = x_start;
 			this.y_start = y_start;
 			this.z_start = z_start;
@@ -414,6 +464,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			this.axes = axes;
 			this.normalization = normalization;
 			this.sphereSeparation = sphereSeparation;
+			this.twoDimensional = twoDimensional;
 			Collections.sort(shollPoints);
 			n = shollPoints.size();
 			squaredRangeStarts = new double[n];
@@ -458,7 +509,18 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			}
 			if( normalization == NORMALIZED_FOR_SPHERE_VOLUME ) {
 				for( int i = 0; i < graphPoints; ++i ) {
-					double x = x_graph_points[i];
+					double x;
+					if( sphereSeparation > 0 ) {
+						x = x_graph_points[i];
+					} else {
+						double startX = x_graph_points[i];
+						double endX;
+						if( i < graphPoints - 1 )
+							endX = x_graph_points[i+1];
+						else
+							endX = x_graph_points[i];
+						x = (startX + endX) / 2;
+					}
 					double distanceSquared = x * x;
 					if( twoDimensional )
 						y_graph_points[i] /= (Math.PI * distanceSquared);
@@ -610,6 +672,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			}
 			return crossingsPastEach[minIndex];
 		}
+
 		public ImagePlus makeShollCrossingsImagePlus(ImagePlus original) {
 			int width = original.getWidth();
 			int height = original.getHeight();
@@ -656,6 +719,126 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			if( c != null )
 				result.setCalibration(c);
 			return result;
+		}
+
+		public static void csvQuoteAndPrint(PrintWriter pw, Object o) {
+			pw.print(PathAndFillManager.stringForCSV(""+o));
+		}
+
+		public void exportSummaryToCSV( File outputFile ) throws IOException {
+			String [] headers = new String[]{ "Filename",
+							  "AllPathsUsed",
+							  "NumberOfPathsUsed",
+							  "SphereSeparation",
+							  "Normlization",
+							  "Axes",
+							  "CriticalValue",
+							  "DendriteMaximum",
+							  "ShollRegressionCoefficient",
+							  "RegressionGradient",
+							  "RegressionIntercept" };
+
+			PrintWriter pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(outputFile.getAbsolutePath()),"UTF-8"));
+			int columns = headers.length;
+			for( int c = 0; c < columns; ++c ) {
+				pw.print(PathAndFillManager.stringForCSV(headers[c]));
+				if( c < (columns - 1) )
+					pw.print(",");
+			}
+			pw.print("\r\n");
+			FileInfo originalFileInfo = originalImage.getOriginalFileInfo();
+			if( originalFileInfo.directory == null )
+				csvQuoteAndPrint(pw,"[unknown]");
+			else
+				csvQuoteAndPrint(pw,new File(originalFileInfo.directory,
+							  originalFileInfo.fileName).getAbsolutePath());
+			pw.print(",");
+			csvQuoteAndPrint(pw,useAllPaths);
+			pw.print(",");
+			csvQuoteAndPrint(pw,numberOfPathsUsed);
+			pw.print(",");
+			csvQuoteAndPrint(pw,sphereSeparation);
+			pw.print(",");
+			csvQuoteAndPrint(pw,normalizationParameters[normalization]);
+			pw.print(",");
+			csvQuoteAndPrint(pw,axesParameters[axes]);
+			pw.print(",");
+			csvQuoteAndPrint(pw,getCriticalValue());
+			pw.print(",");
+			csvQuoteAndPrint(pw,getDendriteMaximum());
+			pw.print(",");
+			csvQuoteAndPrint(pw,getShollRegressionCoefficient());
+			pw.print(",");
+			csvQuoteAndPrint(pw,getRegressionGradient());
+			pw.print(",");
+			csvQuoteAndPrint(pw,getRegressionIntercept());
+			pw.print("\r\n");
+
+			pw.close();
+		}
+
+		public void exportDetailToCSV( File outputFile ) throws IOException {
+			String [] headers;
+			if( sphereSeparation > 0 )
+				headers = new String[]{ "Radius",
+							"Crossings",
+							"NormalizedCrossings" };
+			else
+				headers = new String []{ "StartRadius",
+							 "EndRadius",
+							 "Crossings",
+							 "NormalizedCrossings" };
+
+			PrintWriter pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(outputFile.getAbsolutePath()),"UTF-8"));
+			int columns = headers.length;
+			for( int c = 0; c < columns; ++c ) {
+				csvQuoteAndPrint(pw,headers[c]);
+				if( c < (columns - 1) )
+					pw.print(",");
+			}
+			pw.print("\r\n");
+			if( sphereSeparation > 0 ) {
+				int graphPoints = (int)Math.ceil(Math.sqrt(getMaxDistanceSquared()) / sphereSeparation);
+				for( int i = 0; i < graphPoints; ++i ) {
+					double x = i * sphereSeparation;
+					double distanceSquared = x * x;
+					int crossings = crossingsAtDistanceSquared(distanceSquared);
+					double normalizedCrossings = - Double.MIN_VALUE;
+					if( twoDimensional )
+						normalizedCrossings = crossings / (Math.PI * distanceSquared);
+					else
+						normalizedCrossings = ((4.0 * Math.PI * x * distanceSquared) / 3.0);
+					csvQuoteAndPrint(pw,x);
+					pw.print(",");
+					csvQuoteAndPrint(pw,crossings);
+					pw.print(",");
+					csvQuoteAndPrint(pw,normalizedCrossings);
+					pw.print("\r\n");
+				}
+			} else {
+				for( int i = 0; i < (n - 1); ++i ) {
+					double startXSquared = squaredRangeStarts[i];
+					double endXSquared = squaredRangeStarts[i+1];
+					double startX = Math.sqrt(startXSquared);
+					double endX = Math.sqrt(endXSquared);
+					double midX = (startX + endX) / 2;
+					int crossings = crossingsAtDistanceSquared(midX*midX);
+					double normalizedCrossings = - Double.MIN_VALUE;
+					if( twoDimensional )
+						normalizedCrossings = crossings / (Math.PI * (midX * midX));
+					else
+						normalizedCrossings = ((4.0 * Math.PI * (midX * midX * midX)) / 3.0);
+					csvQuoteAndPrint(pw,startX);
+					pw.print(",");
+					csvQuoteAndPrint(pw,endX);
+					pw.print(",");
+					csvQuoteAndPrint(pw,crossings);
+					pw.print(",");
+					csvQuoteAndPrint(pw,normalizedCrossings);
+					pw.print("\r\n");
+				}
+			}
+			pw.close();
 		}
 	}
 
@@ -719,8 +902,8 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		shollPointsAllPaths = new ArrayList<ShollPoint>();
 		shollPointsSelectedPaths = new ArrayList<ShollPoint>();
 
-		int numberOfAllPaths = 0;
-		int numberOfSelectedPaths = 0;
+		numberOfAllPaths = 0;
+		numberOfSelectedPaths = 0;
 
 		Iterator<Path> pi = pafm.allPaths.iterator();
 		while( pi.hasNext() ) {
@@ -795,10 +978,12 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		normalizationForSphereVolume.addItemListener(this);
 
 		++ c.gridy;
-		add(new Label("Circle / sphere separation (0 for unsampled analysis)"),c);
+		c.gridx = 0;
+		Panel separationPanel = new Panel();
+		separationPanel.add(new Label("Circle / sphere separation (0 for unsampled analysis)"));
 		sampleSeparation.addTextListener(this);
-		c.gridx = 1;
-		add(sampleSeparation,c);
+		separationPanel.add(sampleSeparation);
+		add(separationPanel,c);
 
 		c.gridx = 0;
 		++ c.gridy;
@@ -807,15 +992,24 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 
 		++ c.gridy;
 		Panel buttonsPanel = new Panel();
+		buttonsPanel.setLayout(new BorderLayout());
+		Panel topRow = new Panel();
+		Panel bottomRow = new Panel();
 
+		topRow.add(makeShollImageButton);
 		makeShollImageButton.addActionListener(this);
-		buttonsPanel.add(makeShollImageButton);
 
-		buttonsPanel.add(exportAsCSV);
-		exportAsCSV.addActionListener(this);
-
-		buttonsPanel.add(drawShollGraphButton);
+		topRow.add(drawShollGraphButton);
 		drawShollGraphButton.addActionListener(this);
+
+		bottomRow.add(exportDetailAsCSVButton);
+		exportDetailAsCSVButton.addActionListener(this);
+
+		bottomRow.add(exportSummaryAsCSVButton);
+		exportSummaryAsCSVButton.addActionListener(this);
+
+		buttonsPanel.add(topRow,BorderLayout.NORTH);
+		buttonsPanel.add(bottomRow,BorderLayout.CENTER);
 
 		add(buttonsPanel,c);
 
