@@ -1955,7 +1955,7 @@ public class Path implements Comparable {
 		}
 
 		// Is the (flat) color wrong?
-		if( realColor == null || ! realColor.equals(color) ) {
+		if( pathToUse.realColor == null || ! pathToUse.realColor.equals(color) ) {
 			pathToUse.removeFrom3DViewer(univ);
 			pathToUse.paths3DDisplay = paths3DDisplay;
 			pathToUse.addTo3DViewer(univ,color,colorImage);
