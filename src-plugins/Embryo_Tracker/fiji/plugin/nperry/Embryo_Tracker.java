@@ -12,6 +12,7 @@ import java.util.ListIterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import ij.gui.GenericDialog;
+import ij.gui.PointRoi;
 import ij.plugin.PlugIn;
 import ij.*;
 import ij.process.ImageProcessor;
@@ -35,6 +36,13 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	/** Class/Instance variables */
 	protected Image<T> img;								// Stores the image used by Imglib
 
+	// delete me
+	int ox[];
+	int oy[];
+	int points;
+	// end delete me
+	
+	
 	/** Ask for parameters and then execute. */
 	public void run(String arg) {
 		// 1 - Obtain the currently active image:
@@ -59,6 +67,10 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		if (null != result) {
 			ImagePlus scaled = (ImagePlus) result[1];
 			scaled.show();
+
+			IJ.log("outputting points...");
+			imp.setRoi(new PointRoi(ox, oy, points));
+			imp.updateAndDraw();
 		}
 	}
 	
@@ -132,10 +144,10 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		ArrayList< int[] > maxCoordinates = new ArrayList< int[] >();  	// holds the positions of the local maxima
 		T currentValue = img.createType();  							// holds the value of the current pixel's intensity. We use createType() here because getType() gives us a pointer to the cursor's object, but since the neighborhood moves the parent cursor, when we check the neighbors, we actually change the object stored here, or the pixel we are trying to compare to. see fiji-devel list for further explanation.
 		T neighborValue; 												// holds the value of the neighbor's intensity
-		int width = img.getDimensions()[1];								// used for storing info in the visited and visitedLakeMember arrays correctly
+		int width = img.getDimensions()[0];								// used for storing info in the visited and visitedLakeMember arrays correctly
 		int numPixelsInXYPlane = img.getDimensions()[0] * width;		// used for storing info in the visited and visitedLakeMember arrays correctly
 		boolean visited[] = new boolean[img.getNumPixels()];			// array stores whether or not this pixel has been visited.
-		boolean visitedLakeMember[] = new boolean[img.getNumPixels()];	// any time a pixel is listed as 'visited' in the visited array, also listed as visited here. however, when searching a lake, we don't care if a pixel has been visited before, but rather if it's been visited in the current lake already. if it has, skip it when searching the lake. basically, this prevents the lake from being searched infinite times, while allowed previously visited pixels to be re-visited when searching lakes since they may determine whether the lake is a max or not.
+		boolean visitedLakeMember[];	// any time a pixel is listed as 'visited' in the visited array, also listed as visited here. however, when searching a lake, we don't care if a pixel has been visited before, but rather if it's been visited in the current lake already. if it has, skip it when searching the lake. basically, this prevents the lake from being searched infinite times, while allowed previously visited pixels to be re-visited when searching lakes since they may determine whether the lake is a max or not.
 		ConcurrentLinkedQueue< int[] > toSearch = new ConcurrentLinkedQueue< int[] >();	// holds the positions of pixels that belong to the current lake and need to have neighbors searched
 		ConcurrentLinkedQueue< int[] > searched = new ConcurrentLinkedQueue< int[] >();	// holds the positions of pixels that belong to the current lake and have already had neighbors searched
 		
@@ -155,6 +167,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			// 2.2 - Iterate through LL which contains the pixels of the "lake"
 			/** ArrayList< int[] > connectedComponent = getConnectedComponent(curr.getPosition()); */
 			//IJ.log("Connected Component:");
+			visitedLakeMember = new boolean[img.getNumPixels()];  // re-initialize to clear info from last lake
 			while (!toSearch.isEmpty()) {		// conceptually, we are searching the "lake of equal maximum value" here
 				int next[] = toSearch.poll();
 				//IJ.log(MathLib.printCoordinates(next));
@@ -167,7 +180,11 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 					searched.add(next);
 				}
 				local = img.createLocalizableByDimCursor(new OutOfBoundsStrategyMirrorFactory<T>());  // new cursor that will search this pixel
-				neighbors = new LocalNeighborhoodCursor3D<T>(local);	// new cursor that will search the above pixel's immediate neighbors
+				if (img.getNumDimensions() == 3) {
+					neighbors = new LocalNeighborhoodCursor3D<T>(local);	// new cursor that will search the above pixel's immediate neighbors
+				} else {
+					neighbors = new LocalNeighborhoodCursor<T>(local);
+				}
 				local.setPosition(next);
 				currentValue.set(local.getType());  // store the value of this pixel in a variable
 				neighbors.update();
@@ -196,10 +213,10 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 				neighbors.reset();  // needed to get the outer cursor to work correctly;		
 			}
 			if (isMax) {	// if we get here, we've searched the entire lake, so find the average point and call that a max by adding to results list
-				IJ.log("Lake not killed, so lake is a max!!");
+				//IJ.log("Lake not killed, so lake is a max!!");
 				while (!searched.isEmpty()) {
 					int max[] = searched.poll();
-					IJ.log("Adding " + MathLib.printCoordinates(max) + " to max list.");
+					//IJ.log("Adding " + MathLib.printCoordinates(max) + " to max list.");
 					maxCoordinates.add(max);	
 				}
 			} else {
@@ -209,13 +226,22 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		curr.close();
 		neighbors.close();
 		
+		
+		ox = new int[maxCoordinates.size()];
+		oy = new int[maxCoordinates.size()];
+		points = maxCoordinates.size();
+		int index = 0;
 		// 3 - Print out list of maxima (FOR TESTING):
 		String img_dim = MathLib.printCoordinates(img.getDimensions());
 		IJ.log("Image dimensions: " + img_dim);
 		Iterator<int[]> itr = maxCoordinates.iterator();
 		while (itr.hasNext()) {
-			String pos_str = MathLib.printCoordinates(itr.next());
+			int coords[] = itr.next();
+			ox[index] = coords[0];
+			oy[index] = coords[1];
+			String pos_str = MathLib.printCoordinates(coords);
 			IJ.log(pos_str);
+			index++;
 		}
 	}
 	
@@ -285,11 +311,12 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 */
 	public int getIndexOfPosition(int pos[], int width, int numPixelsInXYPlane) {
 		int z;
-		if (pos.length == 2) {	// if 2D, assign z to 1 since the pos array has length 2
+		if (img.getNumDimensions() == 2) {	// if 2D, assign z to 1 since the pos array has length 2
 			z = 0;
-		} else {				// otherwise, 3D
+		} else {							// otherwise, 3D
 			z = pos[2];
 		}
+		//IJ.log("x = " + pos[0] + ", y = " + pos[1] + ", z =" + z + ", width = " + width + ", numPixelsInXYPlane = " + numPixelsInXYPlane);
 		return pos[0] + width * pos[1] + numPixelsInXYPlane * z;
 	}
 }
