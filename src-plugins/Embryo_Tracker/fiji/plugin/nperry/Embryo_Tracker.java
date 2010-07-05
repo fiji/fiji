@@ -224,19 +224,37 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 * @param start
 	 * @return
 	 */
-	public ArrayList< int[] > getConnectedComponent(int start[]) {
-		//Initialize local cursors
+	public ArrayList< int[] > getConnectedComponent(int start[], int width, int numPixelsInXYPlane) {
+		// 0 - Initialize local variables, cursors
 		LocalNeighborhoodCursor<T> neighbors = null;
 		LocalizableByDimCursor<T> local = null;
-		
-		ArrayList< int[] > connectedComponent = new ArrayList< int[] >();	// list of indexes of pixels belonging to this connected component
-		connectedComponent.add(start);	// add the start index to this connected component
+		ArrayList< int[] > connectedComponent = new ArrayList< int[] >();				// list of indexes of pixels belonging to this connected component
 		ConcurrentLinkedQueue< int[] > toSearch = new ConcurrentLinkedQueue< int[] >();	// holds the pixels that need to be searched
-		toSearch.add(start);
+		boolean visited[] = new boolean[img.getNumPixels()];							// stores whether or not this pixel has been previously visited
+		T currentValue = img.createType();  							
+		T neighborValue; 
 		
-		while(!toSearch.isEmpty()) {
+		// Beginning from the start[] parameter, search for immediate neighbors with the same intensity value, and subsequently search any neighbors found. Repeat until no new neighbors of equal intensity found.
+		toSearch.add(start);
+		while(!toSearch.isEmpty()) {  // 1. search the list of pixels known to be in connected component
 			int curr[] = toSearch.poll();
-			
+			if (!visited[getIndexOfPosition(curr, width, numPixelsInXYPlane)]) {  // if we've never seen this pixel before: 
+				visited[getIndexOfPosition(curr, width, numPixelsInXYPlane)] = true;  // mark it as visited so we don't re-visit it later in this search
+				connectedComponent.add(curr);  // add it to the list of connected components.
+				local = img.createLocalizableByDimCursor(new OutOfBoundsStrategyMirrorFactory<T>());  // new cursor that will search this pixel
+				neighbors = new LocalNeighborhoodCursor3D<T>(local);	// new cursor that will search the above pixel's immediate neighbors
+				local.setPosition(curr); // search the current pixel's neighbors for neighbors of equal intensity
+				currentValue.set(local.getType());  // store the value of this pixel in a variable
+				neighbors.update();
+				while(neighbors.hasNext()) {  // 2. search the neighbors of our pixel for those with equal values. If any, they are 'connected' and therefore belong to the same connected component
+					neighbors.fwd();
+					neighborValue = neighbors.getType();
+					if (neighborValue.compareTo(currentValue) == 0 && isInner(local.getPosition())) {
+						toSearch.add(local.getPosition());  // add to LL using the iterator's 'add'; if we used the LL's 'add' we would break the itr
+					}
+				}
+				neighbors.reset();  // needed to get the outer cursor to work correctly;		
+			}
 		}
 		
 		return connectedComponent;
