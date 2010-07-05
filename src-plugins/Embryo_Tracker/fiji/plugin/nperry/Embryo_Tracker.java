@@ -154,7 +154,6 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		//ConcurrentLinkedQueue< int[] > searched = new ConcurrentLinkedQueue< int[] >();	// holds the positions of pixels that belong to the current lake and have already had neighbors searched
 		LinkedList< int[] > toSearch = new LinkedList< int[] >();	// holds the positions of pixels that belong to the current lake and need to have neighbors searched
 		LinkedList< int[] > searched = new LinkedList< int[] >();	// holds the positions of pixels that belong to the current lake and have already had neighbors searched
-		
 		boolean isMax;
 		int next[];
 		int averagedMaxPos[];
@@ -165,10 +164,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		} else {
 			neighbors = new LocalNeighborhoodCursor<T>(local);
 		}
-		
-		//long timeStart = System.currentTimeMillis();
-		//long deltaT = System.currentTimeMillis() - timeStart;
-		
+
 		// 3 - Search all pixels for LOCAL maxima. A local maximum is a pixel that is the brightest in its immediate neighborhood (so the pixel is brighter or as bright as the 26 direct neighbors of it's cube-shaped neighborhood if 3D). If a neighboring pixel has the same value as the current pixel, then the pixels are treated as a local "lake" as the lake is searched to determine whether it is a maximum "lake" or not.
 		
 		// 3.1 - Iterate over all pixels in the image.
@@ -186,7 +182,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 				//next = toSearch.poll();
 				if ((visited[getIndexOfPosition(next, width, numPixelsInXYPlane)] & VISITED) == 1) {	// prevents us from just searching the lake infinitely
 					continue;
-				} else {	// if we've never seen, add to both visited lists.
+				} else {	// if we've never seen, add to visited list, and add to searched list.
 					visited[getIndexOfPosition(next, width, numPixelsInXYPlane)] |= VISITED;	
 					searched.add(next);
 				}
@@ -219,7 +215,6 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		}
 		curr.close();
 		neighbors.close();
-		
 		
 		// 4 - Print out list of maxima, set up for point display (FOR TESTING):
 		ox = new int[maxCoordinates.size()];
@@ -299,6 +294,5 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		} else {							// otherwise, 3D
 			return pos[0] + width * pos[1] + numPixelsInXYPlane * pos[2];
 		}
-		
 	}
 }
