@@ -1817,6 +1817,10 @@ public class Path implements Comparable {
 		this.precise_z_positions = optimized_z.clone();
 	}
 
+	/** This toString() method shows details of the path which is
+            actually being displayed, not necessarily this path
+            object.  FIXME: this is probably horribly confusing. */
+
 	@Override
 	public String toString() {
 		if( useFitted )
