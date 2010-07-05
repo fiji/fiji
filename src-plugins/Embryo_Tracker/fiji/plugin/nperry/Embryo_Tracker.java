@@ -155,7 +155,9 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		LinkedList< int[] > toSearch = new LinkedList< int[] >();	// holds the positions of pixels that belong to the current lake and need to have neighbors searched
 		LinkedList< int[] > searched = new LinkedList< int[] >();	// holds the positions of pixels that belong to the current lake and have already had neighbors searched
 		boolean isMax;
-		int next[];
+		int nextCoords[];
+		int currCoords[];
+		int neighborCoords[];
 		int averagedMaxPos[];
 		
 		// 2 - Initialize the neighborhood cursor depending on whether the image is 2D or 3D
@@ -171,28 +173,30 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 
 		while(curr.hasNext()) { 
 			curr.fwd();
-			if ((visited[getIndexOfPosition(curr.getPosition(), width, numPixelsInXYPlane)] & VISITED) == 1) {	// if we've already seen this pixel and decided what it is, skip it
+			currCoords = curr.getPosition();
+			if ((visited[getIndexOfPosition(currCoords, width, numPixelsInXYPlane)] & VISITED) == 1) {	// if we've already seen this pixel and decided what it is, skip it
 				continue;
 			}
 			isMax = true;  				// this pixel could be a max
-			toSearch.add(curr.getPosition());  	// add this initial pixel to the queue of pixels we need to search (currently the only thing in the queue)
+			toSearch.add(currCoords);  	// add this initial pixel to the queue of pixels we need to search (currently the only thing in the queue)
 			// 3.2 - Iterate through queue which contains the pixels of the "lake"
 			//while (!toSearch.isEmpty()) {		// conceptually, we are searching the "lake of equal maximum value" here
-			while ((next = toSearch.poll()) != null) {
+			while ((nextCoords = toSearch.poll()) != null) {
 				//next = toSearch.poll();
-				if ((visited[getIndexOfPosition(next, width, numPixelsInXYPlane)] & VISITED) == 1) {	// prevents us from just searching the lake infinitely
+				if ((visited[getIndexOfPosition(nextCoords, width, numPixelsInXYPlane)] & VISITED) == 1) {	// prevents us from just searching the lake infinitely
 					continue;
 				} else {	// if we've never seen, add to visited list, and add to searched list.
-					visited[getIndexOfPosition(next, width, numPixelsInXYPlane)] |= VISITED;	
-					searched.add(next);
+					visited[getIndexOfPosition(nextCoords, width, numPixelsInXYPlane)] |= VISITED;	
+					searched.add(nextCoords);
 				}
-				local.setPosition(next);
+				local.setPosition(nextCoords);
 				currentValue.set(local.getType());  // store the value of this pixel in a variable
 				neighbors.update();
 				
 				// 3.3 - Iterate through immediate neighbors
 				while(neighbors.hasNext()) {
 					neighbors.fwd();
+					neighborCoords = local.getPosition();
 					neighborValue = neighbors.getType();
 					// Case 1: neighbor's value is strictly larger than ours, so ours cannot be a local maximum.
 					if (neighborValue.compareTo(currentValue) > 0) {
@@ -200,8 +204,8 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 					}
 					
 					// Case 2: neighbor's value is strictly equal to ours, which means we could still be at a maximum, but the max value is a blob, not just a single point. We must check the area.
-					else if (neighborValue.compareTo(currentValue) == 0 && isWithinImageBounds(local.getPosition())) {
-						toSearch.add(local.getPosition());  // add to LL using the iterator's 'add'; if we used the LL's 'add' we would break the itr
+					else if (neighborValue.compareTo(currentValue) == 0 && isWithinImageBounds(neighborCoords)) {
+						toSearch.add(neighborCoords);  // add to LL using the iterator's 'add'; if we used the LL's 'add' we would break the itr
 					}
 				}
 				neighbors.reset();  // needed to get the outer cursor to work correctly;		
