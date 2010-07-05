@@ -66,6 +66,8 @@ import ij.gui.GUI;
 import ij.measure.Calibration;
 import ij.process.ShortProcessor;
 import ij.process.ImageProcessor;
+import ij.measure.ResultsTable;
+import ij.plugin.filter.Analyzer;
 
 import java.text.DecimalFormat;
 
@@ -110,6 +112,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 	protected Button drawShollGraphButton = new Button("Draw Graph");
 	protected Button exportDetailAsCSVButton = new Button("Export detailed results as CSV");
 	protected Button exportSummaryAsCSVButton = new Button("Export summary results as CSV");
+	protected Button addToResultsTableButton = new Button("Add to Results Table");
 
 	protected int numberOfSelectedPaths;
 	protected int numberOfAllPaths;
@@ -180,6 +183,8 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 
 		} else if( source == drawShollGraphButton ) {
 			graphFrame.setVisible(true);
+		} else if( source == addToResultsTableButton ) {
+			results.addToResultsTable();
 		}
 	}
 
@@ -436,6 +441,34 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		}
 		public String getSuggestedSuffix() {
 			return parametersSuffix;
+		}
+		public void addToResultsTable() {
+			ResultsTable rt = Analyzer.getResultsTable();
+			String [] headings = {  };
+			rt.setHeading(0,  "Filename");
+			rt.setHeading(1,  "AllPathsUsed");
+			rt.setHeading(2,  "NumberOfPathsUsed");
+			rt.setHeading(3,  "SphereSeparation");
+			rt.setHeading(4,  "Normalization");
+			rt.setHeading(5,  "Axes");
+			rt.setHeading(6,  "CriticalValue");
+			rt.setHeading(7,  "DendriteMaximum");
+			rt.setHeading(8,  "ShollRegressionCoefficient");
+			rt.setHeading(9,  "RegressionGradient");
+			rt.setHeading(10, "RegressionIntercept");
+			rt.incrementCounter();
+			rt.addLabel("Filename",getOriginalFilename());
+			rt.addValue("AllPathsUsed",useAllPaths?1:0);
+			rt.addValue("NumberOfPathsUsed",numberOfPathsUsed);
+			rt.addValue("SphereSeparation",sphereSeparation);
+			rt.addValue("Normalization",normalization);
+			rt.addValue("Axes",axes);
+			rt.addValue("CriticalValue",getCriticalValue());
+			rt.addValue("DendriteMaximum",getDendriteMaximum());
+			rt.addValue("ShollRegressionCoefficient",getShollRegressionCoefficient());
+			rt.addValue("RegressionGradient",getRegressionGradient());
+			rt.addValue("RegressionIntercept",getRegressionIntercept());
+			rt.show("Results");
 		}
 		boolean twoDimensional;
 		ImagePlus originalImage;
@@ -1003,6 +1036,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		Panel buttonsPanel = new Panel();
 		buttonsPanel.setLayout(new BorderLayout());
 		Panel topRow = new Panel();
+		Panel middleRow = new Panel();
 		Panel bottomRow = new Panel();
 
 		topRow.add(makeShollImageButton);
@@ -1011,14 +1045,18 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		topRow.add(drawShollGraphButton);
 		drawShollGraphButton.addActionListener(this);
 
-		bottomRow.add(exportDetailAsCSVButton);
+		middleRow.add(exportDetailAsCSVButton);
 		exportDetailAsCSVButton.addActionListener(this);
 
-		bottomRow.add(exportSummaryAsCSVButton);
+		middleRow.add(exportSummaryAsCSVButton);
 		exportSummaryAsCSVButton.addActionListener(this);
 
+		bottomRow.add(addToResultsTableButton);
+		addToResultsTableButton.addActionListener(this);
+
 		buttonsPanel.add(topRow,BorderLayout.NORTH);
-		buttonsPanel.add(bottomRow,BorderLayout.CENTER);
+		buttonsPanel.add(middleRow,BorderLayout.CENTER);
+		buttonsPanel.add(bottomRow,BorderLayout.SOUTH);
 
 		add(buttonsPanel,c);
 
