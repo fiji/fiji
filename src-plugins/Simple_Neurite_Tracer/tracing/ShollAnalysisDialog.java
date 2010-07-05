@@ -725,6 +725,17 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			pw.print(PathAndFillManager.stringForCSV(""+o));
 		}
 
+		public String getOriginalFilename() {
+			FileInfo originalFileInfo = originalImage.getOriginalFileInfo();
+			if( originalFileInfo.directory == null )
+				return "[unknown]";
+			else
+				return new File(originalFileInfo.directory,
+						originalFileInfo.fileName).getAbsolutePath();
+
+
+		}
+
 		public void exportSummaryToCSV( File outputFile ) throws IOException {
 			String [] headers = new String[]{ "Filename",
 							  "AllPathsUsed",
@@ -746,12 +757,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 					pw.print(",");
 			}
 			pw.print("\r\n");
-			FileInfo originalFileInfo = originalImage.getOriginalFileInfo();
-			if( originalFileInfo.directory == null )
-				csvQuoteAndPrint(pw,"[unknown]");
-			else
-				csvQuoteAndPrint(pw,new File(originalFileInfo.directory,
-							  originalFileInfo.fileName).getAbsolutePath());
+			csvQuoteAndPrint(pw,getOriginalFilename());
 			pw.print(",");
 			csvQuoteAndPrint(pw,useAllPaths);
 			pw.print(",");
