@@ -8,7 +8,6 @@ package fiji.plugin.nperry;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.ListIterator;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import ij.gui.GenericDialog;
@@ -35,7 +34,7 @@ import mpicbg.imglib.algorithm.roi.StructuringElement;
 public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	/** Class/Instance variables */
 	protected Image<T> img;								// Stores the image used by Imglib
-
+	
 	final static byte VISITED = (byte)1;
 	final static byte FALSE = (byte)1;
 	
@@ -84,6 +83,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		
 		// 1 - Set up for use with Imglib:
 		img = ImagePlusAdapter.wrap(imp);
+		int numDimensions = img.getNumDimensions();
 		
 		// 2 - Apply a median filter, to get rid of salt and pepper noise which could be mistaken for maxima in the algorithm:
 		StructuringElement strel;
@@ -124,7 +124,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		// 3.5 - Apply a Laplace transform?
 		
 		// 4 - Find maxima of newly convoluted image:
-		findMaxima(img);
+		findMaxima(img, numDimensions);
 		
 		// 5 - Return (for testing):
 		ImagePlus newImg = ImageJFunctions.copyToImagePlus(img, imp.getType());  	// convert Image<T> to ImagePlus
@@ -139,7 +139,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 * 
 	 * @param img
 	 */
-	public void findMaxima(Image<T> img) {
+	public void findMaxima(Image<T> img, int numDimensions) {
 		// 1 - Initialize local variables, cursors
 		final LocalizableByDimCursor<T> curr = img.createLocalizableByDimCursor(new OutOfBoundsStrategyMirrorFactory<T>());  // this cursor is the main cursor which iterates over all the pixels in the image.  
 		LocalNeighborhoodCursor<T> neighbors = null;					// this cursor is used to search the immediate neighbors of a pixel
@@ -174,7 +174,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		while(curr.hasNext()) { 
 			curr.fwd();
 			currCoords = curr.getPosition();
-			if ((visited[getIndexOfPosition(currCoords, width, numPixelsInXYPlane)] & VISITED) == 1) {	// if we've already seen this pixel and decided what it is, skip it
+			if ((visited[getIndexOfPosition(currCoords, width, numPixelsInXYPlane, numDimensions)] & VISITED) == 1) {	// if we've already seen this pixel and decided what it is, skip it
 				continue;
 			}
 			isMax = true;  				// this pixel could be a max
@@ -183,10 +183,10 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			//while (!toSearch.isEmpty()) {		// conceptually, we are searching the "lake of equal maximum value" here
 			while ((nextCoords = toSearch.poll()) != null) {
 				//next = toSearch.poll();
-				if ((visited[getIndexOfPosition(nextCoords, width, numPixelsInXYPlane)] & VISITED) == 1) {	// prevents us from just searching the lake infinitely
+				if ((visited[getIndexOfPosition(nextCoords, width, numPixelsInXYPlane, numDimensions)] & VISITED) == 1) {	// prevents us from just searching the lake infinitely
 					continue;
 				} else {	// if we've never seen, add to visited list, and add to searched list.
-					visited[getIndexOfPosition(nextCoords, width, numPixelsInXYPlane)] |= VISITED;	
+					visited[getIndexOfPosition(nextCoords, width, numPixelsInXYPlane, numDimensions)] |= VISITED;	
 					searched.add(nextCoords);
 				}
 				local.setPosition(nextCoords);
@@ -204,14 +204,14 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 					}
 					
 					// Case 2: neighbor's value is strictly equal to ours, which means we could still be at a maximum, but the max value is a blob, not just a single point. We must check the area.
-					else if (neighborValue.compareTo(currentValue) == 0 && isWithinImageBounds(neighborCoords)) {
-						toSearch.add(neighborCoords);  // add to LL using the iterator's 'add'; if we used the LL's 'add' we would break the itr
+					else if (neighborValue.compareTo(currentValue) == 0 && isWithinImageBounds(neighborCoords, numDimensions)) {
+						toSearch.add(neighborCoords);  // add to queue using the iterator's 'add'; if we used the LL's 'add' we would break the itr
 					}
 				}
 				neighbors.reset();  // needed to get the outer cursor to work correctly;		
 			}
 			if (isMax) {	// if we get here, we've searched the entire lake, so find the average point and call that a max by adding to results list
-				averagedMaxPos = findAveragePosition(searched);
+				averagedMaxPos = findAveragePosition(searched, numDimensions);
 				maxCoordinates.add(averagedMaxPos);
 			} else {		// if isMax == false, then everything we've searched is not a max.
 				searched.clear();
@@ -227,7 +227,6 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		int index = 0;
 		String img_dim = MathLib.printCoordinates(img.getDimensions());
 		IJ.log("Image dimensions: " + img_dim);
-		IJ.log("x dimen: " + img.getDimension(0));
 		Iterator<int[]> itr = maxCoordinates.iterator();
 		while (itr.hasNext()) {
 			int coords[] = itr.next();
@@ -245,9 +244,10 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 * @return
 	 */
 	//public int[] findAveragePosition(ConcurrentLinkedQueue < int[] > searched) {
-	public int[] findAveragePosition(LinkedList < int[] > searched) {
+	public int[] findAveragePosition(LinkedList < int[] > searched, int numDimensions) {
 		int count = 0;
-		if (img.getNumDimensions() == 3) {
+		//if (img.getNumDimensions() == 3) {
+		if (numDimensions == 3) {
 			int avgX = 0, avgY = 0, avgZ = 0;
 			while(!searched.isEmpty()) {
 				int curr[] = searched.poll();
@@ -275,8 +275,9 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 * @param pos
 	 * @return
 	 */
-	public boolean isWithinImageBounds(int pos[]) {
-		if (pos.length == 2) {
+	public boolean isWithinImageBounds(int pos[], int numDimensions) {
+		//if (pos.length == 2) {
+		if (numDimensions == 2) {
 			return pos[0] > -1 && pos[0] < img.getDimension(0) && pos[1] > -1 && pos[1] < img.getDimension(1);
 		} else {
 			return pos[0] > -1 && pos[0] < img.getDimension(0) && pos[1] > -1 && pos[1] < img.getDimension(1) && pos[2] > -1 && pos[2] < img.getDimension(2);
@@ -292,8 +293,9 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 * @param numPixelsInXYPlane
 	 * @return
 	 */
-	public int getIndexOfPosition(int pos[], int width, int numPixelsInXYPlane) {
-		if (img.getNumDimensions() == 2) {	// if 2D, assign z to 1 since the pos array has length 2
+	public int getIndexOfPosition(int pos[], int width, int numPixelsInXYPlane, int numDimensions) {
+		//if (img.getNumDimensions() == 2) {	// if 2D, assign z to 1 since the pos array has length 2
+		if (numDimensions == 2) {
 			return pos[0] + width * pos[1];
 		} else {							// otherwise, 3D
 			return pos[0] + width * pos[1] + numPixelsInXYPlane * pos[2];
