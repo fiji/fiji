@@ -7,7 +7,6 @@ package fiji.plugin.nperry;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 import ij.gui.GenericDialog;
 import ij.gui.PointRoi;
@@ -82,13 +81,13 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		
 		// 1 - Set up for use with Imglib:
 		img = ImagePlusAdapter.wrap(imp);
-		int numDimensions = img.getNumDimensions();
+		int numDim = img.getNumDimensions();
 		
 		// 2 - Apply a median filter, to get rid of salt and pepper noise which could be mistaken for maxima in the algorithm:
-		StructuringElement strel;
+		/*StructuringElement strel;
 		
 		// 2.1 - Need to figure out the dimensionality of the image in order to create a StructuringElement of the correct dimensionality (StructuringElement needs to have same dimensionality as the image):
-		/*if (numDim == 3) {  // 3D case
+		if (numDim == 3) {  // 3D case
 			strel = new StructuringElement(new int[]{3, 3, 1}, "3D Square");  // unoptimized shape for 3D case. Note here that we manually are making this shape (not using a class method). This code is courtesy of Larry Lindsey
 			Cursor<BitType> c = strel.createCursor();  // in this case, the shape is manually made, so we have to manually set it, too.
 			while (c.hasNext()) 
@@ -109,10 +108,10 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		} else { 
 	        System.out.println(medFilt.getErrorMessage()); 
 	        return null;
-		}*/
+		}
 		
 		// 3 - Apply a Gaussian filter (code courtesy of Stephan Preibisch). Theoretically, this will make the center of blobs the brightest, and thus easier to find:
-		/*final GaussianConvolutionRealType<T> conv = new GaussianConvolutionRealType<T>(img, new OutOfBoundsStrategyMirrorFactory<T>(), 6.0f); // Use sigma of 10.0f, probably need a better way to do this
+		final GaussianConvolutionRealType<T> conv = new GaussianConvolutionRealType<T>(img, new OutOfBoundsStrategyMirrorFactory<T>(), 6.0f); // Use sigma of 10.0f, probably need a better way to do this
 		if (conv.checkInput() && conv.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
 			img = conv.getResult(); 
 		} else { 
@@ -123,7 +122,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		// 3.5 - Apply a Laplace transform?
 		
 		// 4 - Find maxima of newly convoluted image:
-		if (numDimensions == 2) {
+		if (numDim == 2) {
 			findMaxima2D(img);
 		} else {
 			findMaxima3D(img);
@@ -160,9 +159,9 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		int neighborCoords[] = new int[2];								// coords of neighbor
 		int averagedMaxPos[] = new int[2];								// for a local max lake, this stores the 'center' of the lake's position.
 
-		// 3 - Search all pixels for LOCAL maxima. A local maximum is a pixel that is the brightest in its immediate neighborhood (so the pixel is brighter or as bright as the 26 direct neighbors of it's cube-shaped neighborhood if 3D). If neighboring pixels have the same value as the current pixel, then the pixels are treated as a local "lake" and the lake is searched to determine whether it is a maximum "lake" or not.
+		// 2 - Search all pixels for LOCAL maxima. A local maximum is a pixel that is the brightest in its immediate neighborhood (so the pixel is brighter or as bright as the 26 direct neighbors of it's cube-shaped neighborhood if 3D). If neighboring pixels have the same value as the current pixel, then the pixels are treated as a local "lake" and the lake is searched to determine whether it is a maximum "lake" or not.
 		
-		// 3.1 - Iterate over all pixels in the image.
+		// 2.1 - Iterate over all pixels in the image.
 		while(curr.hasNext()) { 
 			curr.fwd();
 			curr.getPosition(currCoords);
@@ -172,7 +171,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			isMax = true;  				// this pixel could be a max
 			toSearch.add(currCoords);  	// add this initial pixel to the queue of pixels we need to search (currently the only thing in the queue). This queue represents the 'lake;' any group of pixels with the same value are stored here and searched completely.
 			
-			// 3.2 - Iterate through queue which contains the pixels of the "lake"
+			// 2.2 - Iterate through queue which contains the pixels of the "lake"
 			while ((nextCoords = toSearch.poll()) != null) {
 				if ((visited[getIndexOfPosition2D(nextCoords, width)] & VISITED) == 1) {	// prevents us from just searching the lake infinitely
 					continue;
@@ -184,7 +183,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 				currentValue.set(local.getType());  // store the value of this pixel in a variable
 				neighbors.update();					// needed to get the neighborhood cursor to function correctly
 				
-				// 3.3 - Iterate through immediate neighbors
+				// 2.3 - Iterate through immediate neighbors
 				while(neighbors.hasNext()) {
 					neighbors.fwd();
 					neighborCoords = local.getPosition();
@@ -212,7 +211,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		curr.close();
 		neighbors.close();
 		
-		// 4 - Print out list of maxima, set up for point display (FOR TESTING):
+		// 3 - Print out list of maxima, set up for point display (FOR TESTING):
 		ox = new int[maxCoordinates.size()];
 		oy = new int[maxCoordinates.size()];
 		points = maxCoordinates.size();
@@ -250,9 +249,9 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		int neighborCoords[] = new int[3];
 		int averagedMaxPos[] = new int[3];
 
-		// 3 - Search all pixels for LOCAL maxima.
+		// 2 - Search all pixels for LOCAL maxima.
 		
-		// 3.1 - Iterate over all pixels in the image.
+		// 2.1 - Iterate over all pixels in the image.
 		while(curr.hasNext()) { 
 			curr.fwd();
 			curr.getPosition(currCoords);
@@ -262,7 +261,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			isMax = true;
 			toSearch.add(currCoords);
 			
-			// 3.2 - Iterate through queue which contains the pixels of the "lake"		
+			// 2.2 - Iterate through queue which contains the pixels of the "lake"		
 			while ((nextCoords = toSearch.poll()) != null) {
 				if ((visited[getIndexOfPosition3D(nextCoords, width, numPixelsInXYPlane)] & VISITED) == 1) {
 					continue;
@@ -274,7 +273,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 				currentValue.set(local.getType());
 				neighbors.update();
 				
-				// 3.3 - Iterate through immediate neighbors
+				// 2.3 - Iterate through immediate neighbors
 				while(neighbors.hasNext()) {
 					neighbors.fwd();
 					neighborCoords = local.getPosition();
@@ -302,7 +301,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		curr.close();
 		neighbors.close();
 		
-		// 4 - Print out list of maxima, set up for point display (FOR TESTING):
+		// 3 - Print out list of maxima, set up for point display (FOR TESTING):
 		ox = new int[maxCoordinates.size()];
 		oy = new int[maxCoordinates.size()];
 		points = maxCoordinates.size();
@@ -353,7 +352,6 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 *
 	 * @param pos
 	 * @param width
-	 * @param numPixelsInXYPlane
 	 * @return
 	 */
 	public int getIndexOfPosition2D(int pos[], int width) {
