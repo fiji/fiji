@@ -53,30 +53,39 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		// currently, this information is not used.
 		GenericDialog gd = new GenericDialog("Track");
 		gd.addNumericField("Average blob diameter (pixels):", 0, 0);  // get the expected blob size (in pixels).
-		gd.addChoice("Search type:", new String[] {"Maxima", "Minima"}, "Maxima");  // determines if we are searching for maxima, or minima.
+		gd.addCheckbox("Use median filter:", false);
+		gd.addCheckbox("Allow edge maxima:", false);
+		//gd.addChoice("Search type:", new String[] {"Maxima", "Minima"}, "Maxima");  // determines if we are searching for maxima, or minima.
 		gd.showDialog();
 		if (gd.wasCanceled()) return;
 
 		// 3 - Retrieve parameters from dialogue:
 		int diam = (int)gd.getNextNumber();
-		String searchType = gd.getNextString();
+		boolean useMedFilt = (boolean)gd.getNextBoolean();
+		boolean allowEdgeMax = (boolean)gd.getNextBoolean();
+		//String searchType = gd.getNextString();
 		
 		// 4 - Execute!
-		Object[] result = exec(imp, diam, searchType);
+		//Object[] result = exec(imp, diam, useMedFilt, allowEdgeMax);
 		
 		// Display (for testing)
-		if (null != result) {
-			ImagePlus scaled = (ImagePlus) result[1];
-			scaled.show();
+		//if (null != result) {
+			//ImagePlus scaled = (ImagePlus) result[1];
+			//scaled.show();
 
-			IJ.log("outputting points...");
-			imp.setRoi(new PointRoi(ox, oy, points));
-			imp.updateAndDraw();
-		}
+			/** Display 3D view of the slices */
+			if (img.getNumDimensions() == 3) {
+				
+			}
+			
+			//IJ.log("outputting points...");
+			//imp.setRoi(new PointRoi(ox, oy, points));
+			//imp.updateAndDraw();
+		//}
 	}
 	
 	/** Execute the plugin functionality: apply a median filter (for salt and pepper noise), a Gaussian blur, and then find maxima. */
-	public Object[] exec(ImagePlus imp, int diam, String searchType) {
+	public Object[] exec(ImagePlus imp, int diam, boolean useMedFilt, boolean allowEdgeMax) {
 		// 0 - Check validity of parameters:
 		if (null == imp) return null;
 		
@@ -85,31 +94,33 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		int numDim = img.getNumDimensions();
 		
 		// 2 - Apply a median filter, to get rid of salt and pepper noise which could be mistaken for maxima in the algorithm:
-		IJ.log("Applying median filter...");
-		StructuringElement strel;
-		
-		// 2.1 - Need to figure out the dimensionality of the image in order to create a StructuringElement of the correct dimensionality (StructuringElement needs to have same dimensionality as the image):
-		if (numDim == 3) {  // 3D case
-			strel = new StructuringElement(new int[]{3, 3, 1}, "3D Square");  // unoptimized shape for 3D case. Note here that we manually are making this shape (not using a class method). This code is courtesy of Larry Lindsey
-			Cursor<BitType> c = strel.createCursor();  // in this case, the shape is manually made, so we have to manually set it, too.
-			while (c.hasNext()) 
-			{ 
-			    c.fwd(); 
-			    c.getType().setOne(); 
-			} 
-			c.close(); 
-		} else {  							// 2D case
-			strel = StructuringElement.createCube(2, 3);  // unoptimized shape
-		}
-		
-		// 2.2 - Apply the median filter:
-		final MedianFilter<T> medFilt = new MedianFilter<T>(img, strel, new OutOfBoundsStrategyMirrorFactory<T>()); 
-		// ***note: add back medFilt.checkInput() when it's fixed ***
-		if (medFilt.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
-			img = medFilt.getResult(); 
-		} else { 
-	        System.out.println(medFilt.getErrorMessage()); 
-	        return null;
+		if (useMedFilt) {
+			IJ.log("Applying median filter...");
+			StructuringElement strel;
+			
+			// 2.1 - Need to figure out the dimensionality of the image in order to create a StructuringElement of the correct dimensionality (StructuringElement needs to have same dimensionality as the image):
+			if (numDim == 3) {  // 3D case
+				strel = new StructuringElement(new int[]{3, 3, 1}, "3D Square");  // unoptimized shape for 3D case. Note here that we manually are making this shape (not using a class method). This code is courtesy of Larry Lindsey
+				Cursor<BitType> c = strel.createCursor();  // in this case, the shape is manually made, so we have to manually set it, too.
+				while (c.hasNext()) 
+				{ 
+				    c.fwd(); 
+				    c.getType().setOne(); 
+				} 
+				c.close(); 
+			} else {  			// 2D case
+				strel = StructuringElement.createCube(2, 3);  // unoptimized shape
+			}
+			
+			// 2.2 - Apply the median filter:
+			final MedianFilter<T> medFilt = new MedianFilter<T>(img, strel, new OutOfBoundsStrategyMirrorFactory<T>()); 
+			// ***note: add back medFilt.checkInput() when it's fixed ***
+			if (medFilt.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
+				img = medFilt.getResult(); 
+			} else { 
+		        System.out.println(medFilt.getErrorMessage()); 
+		        return null;
+			}
 		}
 		
 		// 3 - Apply a Gaussian filter (code courtesy of Stephan Preibisch). Theoretically, this will make the center of blobs the brightest, and thus easier to find:
@@ -122,14 +133,30 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	        return null;
 		}
 		
-		// 3.5 - Apply a Laplace transform?
-		
 		// 4 - Find maxima of newly convoluted image:
 		IJ.log("Finding maxima...");
+		ArrayList< int[] > maxima;
 		if (numDim == 2) {
-			findMaxima2D(img);
+			maxima = findMaxima2D(img, allowEdgeMax);
 		} else {
-			findMaxima3D(img);
+			maxima = findMaxima3D(img, allowEdgeMax);
+		}
+		
+		// deal with maxima for ROI
+		ox = new int[maxima.size()];
+		oy = new int[maxima.size()];
+		points = maxima.size();
+		int index = 0;
+		String img_dim = MathLib.printCoordinates(img.getDimensions());
+		IJ.log("Image dimensions: " + img_dim);
+		Iterator<int[]> itr = maxima.iterator();
+		while (itr.hasNext()) {
+			int coords[] = itr.next();
+			ox[index] = coords[0];
+			oy[index] = coords[1];
+			String pos_str = MathLib.printCoordinates(coords);
+			IJ.log(pos_str);
+			index++;
 		}
 		
 		// 5 - Return (for testing):
@@ -147,9 +174,11 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 * 
 	 * @param img
 	 */
-	public void findMaxima2D(Image<T> img) {
-	    long start = System.currentTimeMillis();
-		// 1 - Initialize local variables, cursors
+	public ArrayList< int[] > findMaxima2D(Image<T> img, boolean allowEdgeMax) {
+	    /** time trials */
+		long start = System.currentTimeMillis();
+		
+	    // 1 - Initialize local variables, cursors
 		final LocalizableByDimCursor<T> curr = img.createLocalizableByDimCursor(new OutOfBoundsStrategyMirrorFactory<T>()); // this cursor is the main cursor which iterates over all the pixels in the image.  
 		LocalizableByDimCursor<T> local = img.createLocalizableByDimCursor(new OutOfBoundsStrategyMirrorFactory<T>());		// this cursor is used to search a connected "lake" of pixels, or pixels with the same value
 		LocalNeighborhoodCursor<T> neighbors = new LocalNeighborhoodCursor<T>(local);										// this cursor is used to search the immediate neighbors of a pixel
@@ -157,7 +186,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		T currentValue = img.createType();  							// holds the value of the current pixel's intensity. We use createType() here because getType() gives us a pointer to the cursor's object, but since the neighborhood moves the parent cursor, when we check the neighbors, we actually change the object stored here, or the pixel we are trying to compare to. see fiji-devel list for further explanation.
 		T neighborValue; 												// holds the value of the neighbor's intensity
 		int width = img.getDimensions()[0];								// width of the image. needed for storing info in the visited and visitedLakeMember arrays correctly
-		byte visitedAndProcessed[] = new byte[img.getNumPixels()];					// stores whether or not this pixel has been searched either by the main cursor, or directly in a lake search.
+		byte visitedAndProcessed[] = new byte[img.getNumPixels()];		// stores whether or not this pixel has been searched either by the main cursor, or directly in a lake search.
 		LinkedList< int[] > toSearch = new LinkedList< int[] >();		// holds the positions of pixels that belong to the current lake and need to have neighbors searched
 		LinkedList< int[] > searched = new LinkedList< int[] >();		// holds the positions of pixels that belong to the current lake and have already had neighbors searched
 		boolean isMax;													// flag which tells us whether the current lake is a local max or not
@@ -184,7 +213,9 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 					continue;
 				} else {	// if we've never seen, add to visited list, and add to searched list.
 					visitedAndProcessed[getIndexOfPosition2D(nextCoords, width)] |= PROCESSED;	
-					searched.add(nextCoords);
+					if ((allowEdgeMax) || (!allowEdgeMax && !isEdgeMax2D(nextCoords))) {
+						searched.add(nextCoords);
+					}
 				}
 				local.setPosition(nextCoords);		// set the local cursors position to the next member of the lake, so that the neighborhood cursor can search its neighbors.
 				currentValue.set(local.getType());  // store the value of this pixel in a variable
@@ -210,8 +241,10 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 				neighbors.reset();  // needed to get the outer cursor to work correctly;
 			}
 			if (isMax) {	// if we get here, we've searched the entire lake, so find the average point and call that a max by adding to results list
-				averagedMaxPos = findAveragePosition2D(searched);
-				maxCoordinates.add(averagedMaxPos);
+				if (searched.size() > 0) { 
+					averagedMaxPos = findAveragePosition2D(searched);
+					maxCoordinates.add(averagedMaxPos);
+				}
 			} else {		// if isMax == false, then everything we've searched is not a max, so just get rid of it.
 				searched.clear();
 			}
@@ -220,27 +253,11 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		neighbors.close();
 		
 		long deltaT = System.currentTimeMillis() - start;
-		
-		// 3 - Print out list of maxima, set up for point display (FOR TESTING):
-		System.out.println("My way: " + deltaT);
-		ox = new int[maxCoordinates.size()];
-		oy = new int[maxCoordinates.size()];
-		points = maxCoordinates.size();
-		int index = 0;
-		String img_dim = MathLib.printCoordinates(img.getDimensions());
-		IJ.log("Image dimensions: " + img_dim);
-		Iterator<int[]> itr = maxCoordinates.iterator();
-		while (itr.hasNext()) {
-			int coords[] = itr.next();
-			ox[index] = coords[0];
-			oy[index] = coords[1];
-			String pos_str = MathLib.printCoordinates(coords);
-			IJ.log(pos_str);
-			index++;
-		}
+		return maxCoordinates;
+		//System.out.println("My way: " + deltaT);
 	}
 	
-	public void findMaxima3D(Image<T> img) {
+	public ArrayList< int[] > findMaxima3D(Image<T> img, boolean allowEdgeMax) {
 		long start = System.currentTimeMillis();
 		// **Note** See above 2D version for comments.
 		// 1 - Initialize local variables, cursors
@@ -279,7 +296,9 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 					continue;
 				} else {
 					visitedAndProcessed[getIndexOfPosition3D(nextCoords, width, numPixelsInXYPlane)] |= PROCESSED;	
-					searched.add(nextCoords);
+					if ((allowEdgeMax) || (!allowEdgeMax && !isEdgeMax3D(nextCoords))) {
+						searched.add(nextCoords);
+					}
 				}
 				local.setPosition(nextCoords);
 				currentValue.set(local.getType());
@@ -305,8 +324,10 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 				neighbors.reset();  // needed to get the outer cursor to work correctly;		
 			}
 			if (isMax) {
-				averagedMaxPos = findAveragePosition3D(searched);
-				maxCoordinates.add(averagedMaxPos);
+				if (searched.size() > 0) {
+					averagedMaxPos = findAveragePosition3D(searched);
+					maxCoordinates.add(averagedMaxPos);
+				}
 			} else {
 				searched.clear();
 			}
@@ -316,24 +337,16 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		
 		
 		long deltaT = System.currentTimeMillis() - start;
-
-		// 3 - Print out list of maxima, set up for point display (FOR TESTING):
-		System.out.println("My way: " + deltaT);		
-		ox = new int[maxCoordinates.size()];
-		oy = new int[maxCoordinates.size()];
-		points = maxCoordinates.size();
-		int index = 0;
-		String img_dim = MathLib.printCoordinates(img.getDimensions());
-		IJ.log("Image dimensions: " + img_dim);
-		Iterator<int[]> itr = maxCoordinates.iterator();
-		while (itr.hasNext()) {
-			int coords[] = itr.next();
-			ox[index] = coords[0];
-			oy[index] = coords[1];
-			String pos_str = MathLib.printCoordinates(coords);
-			IJ.log(pos_str);
-			index++;
-		}
+		return maxCoordinates;	
+	}
+	
+	/**
+	 * 
+	 * @param coords
+	 * @return
+	 */
+	public boolean isEdgeMax2D(int coords[]) {
+		return coords[0] == 0 || coords[0] == img.getDimension(0) - 1 || coords[1] == 0 || coords[1] == img.getDimension(1) - 1;
 	}
 	
 	/**
@@ -393,6 +406,15 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		return new int[] {avgX/count, avgY/count, avgZ/count};
 	}
 
+	/**
+	 * 
+	 * @param coords
+	 * @return
+	 */
+	public boolean isEdgeMax3D(int coords[]) {
+		return coords[0] == 0 || coords[0] == img.getDimension(0) - 1 || coords[1] == 0 || coords[1] == img.getDimension(1) - 1 || coords[2] == 0 || coords[2] == img.getDimension(2) - 1;
+	}
+	
 	/**
 	 * Given a position array, returns whether or not the position is within the bounds of the image, or out of bounds.
 	 * 
