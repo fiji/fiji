@@ -34,13 +34,12 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	protected Image<T> img;								// Stores the image used by Imglib
 	
 	final static byte VISITED = (byte)1;
-	final static byte FALSE = (byte)1;
 	
-	// delete me
+	// <delete me>
 	int ox[];
 	int oy[];
 	int points;
-	// end delete me
+	// </delete me>
 	
 	
 	/** Ask for parameters and then execute. */
@@ -50,6 +49,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		if (null == imp) return;
 		
 		// 2 - Ask for parameters:
+		// currently, this information is not used.
 		GenericDialog gd = new GenericDialog("Track");
 		gd.addNumericField("Average blob diameter (pixels):", 0, 0);  // get the expected blob size (in pixels).
 		gd.addChoice("Search type:", new String[] {"Maxima", "Minima"}, "Maxima");  // determines if we are searching for maxima, or minima.
