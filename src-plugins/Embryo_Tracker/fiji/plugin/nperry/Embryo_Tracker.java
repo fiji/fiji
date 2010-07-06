@@ -1,6 +1,5 @@
 /** 
- * Author: Nick Perry
- * Description: 
+ * Author: Nick Perry 
  */
 
 package fiji.plugin.nperry;
@@ -124,7 +123,11 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		// 3.5 - Apply a Laplace transform?
 		
 		// 4 - Find maxima of newly convoluted image:
-		findMaxima(img, numDimensions);
+		if (numDimensions == 2) {
+			findMaxima2D(img);
+		} else {
+			findMaxima3D(img);
+		}
 		
 		// 5 - Return (for testing):
 		ImagePlus newImg = ImageJFunctions.copyToImagePlus(img, imp.getType());  	// convert Image<T> to ImagePlus
@@ -139,58 +142,136 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 * 
 	 * @param img
 	 */
-	public void findMaxima(Image<T> img, int numDimensions) {
+	public void findMaxima2D(Image<T> img) {
 		// 1 - Initialize local variables, cursors
-		final LocalizableByDimCursor<T> curr = img.createLocalizableByDimCursor(new OutOfBoundsStrategyMirrorFactory<T>());  // this cursor is the main cursor which iterates over all the pixels in the image.  
-		LocalNeighborhoodCursor<T> neighbors = null;					// this cursor is used to search the immediate neighbors of a pixel
-		LocalizableByDimCursor<T> local = img.createLocalizableByDimCursor(new OutOfBoundsStrategyMirrorFactory<T>());							// this cursor is used to search a connected "lake" of pixels, or pixels with the same value
+		final LocalizableByDimCursor<T> curr = img.createLocalizableByDimCursor(new OutOfBoundsStrategyMirrorFactory<T>()); // this cursor is the main cursor which iterates over all the pixels in the image.  
+		LocalizableByDimCursor<T> local = img.createLocalizableByDimCursor(new OutOfBoundsStrategyMirrorFactory<T>());		// this cursor is used to search a connected "lake" of pixels, or pixels with the same value
+		LocalNeighborhoodCursor<T> neighbors = new LocalNeighborhoodCursor<T>(local);										// this cursor is used to search the immediate neighbors of a pixel
 		ArrayList< int[] > maxCoordinates = new ArrayList< int[] >();  	// holds the positions of the local maxima
 		T currentValue = img.createType();  							// holds the value of the current pixel's intensity. We use createType() here because getType() gives us a pointer to the cursor's object, but since the neighborhood moves the parent cursor, when we check the neighbors, we actually change the object stored here, or the pixel we are trying to compare to. see fiji-devel list for further explanation.
 		T neighborValue; 												// holds the value of the neighbor's intensity
-		int width = img.getDimensions()[0];								// used for storing info in the visited and visitedLakeMember arrays correctly
-		int numPixelsInXYPlane = img.getDimensions()[1] * width;		// used for storing info in the visited and visitedLakeMember arrays correctly
+		int width = img.getDimensions()[0];								// width of the image. needed for storing info in the visited and visitedLakeMember arrays correctly
 		byte visited[] = new byte[img.getNumPixels()];					// stores whether or not this pixel has been searched either by the main cursor, or directly in a lake search.
-		//ConcurrentLinkedQueue< int[] > toSearch = new ConcurrentLinkedQueue< int[] >();	// holds the positions of pixels that belong to the current lake and need to have neighbors searched
-		//ConcurrentLinkedQueue< int[] > searched = new ConcurrentLinkedQueue< int[] >();	// holds the positions of pixels that belong to the current lake and have already had neighbors searched
-		LinkedList< int[] > toSearch = new LinkedList< int[] >();	// holds the positions of pixels that belong to the current lake and need to have neighbors searched
-		LinkedList< int[] > searched = new LinkedList< int[] >();	// holds the positions of pixels that belong to the current lake and have already had neighbors searched
-		boolean isMax;
-		int nextCoords[];
-		int currCoords[];
-		int neighborCoords[];
-		int averagedMaxPos[];
-		
-		// 2 - Initialize the neighborhood cursor depending on whether the image is 2D or 3D
-		if (img.getNumDimensions() == 3) { 
-			neighbors = new LocalNeighborhoodCursor3D<T>(local);
-		} else {
-			neighbors = new LocalNeighborhoodCursor<T>(local);
-		}
+		LinkedList< int[] > toSearch = new LinkedList< int[] >();		// holds the positions of pixels that belong to the current lake and need to have neighbors searched
+		LinkedList< int[] > searched = new LinkedList< int[] >();		// holds the positions of pixels that belong to the current lake and have already had neighbors searched
+		boolean isMax;													// flag which tells us whether the current lake is a local max or not
+		int nextCoords[] = new int [2];									// keeping the array declarations outside the while loop to improve speed. coords of current lake member.
+		int currCoords[] = new int[2];									// coords of outer, main loop
+		int neighborCoords[] = new int[2];								// coords of neighbor
+		int averagedMaxPos[] = new int[2];								// for a local max lake, this stores the 'center' of the lake's position.
 
-		// 3 - Search all pixels for LOCAL maxima. A local maximum is a pixel that is the brightest in its immediate neighborhood (so the pixel is brighter or as bright as the 26 direct neighbors of it's cube-shaped neighborhood if 3D). If a neighboring pixel has the same value as the current pixel, then the pixels are treated as a local "lake" as the lake is searched to determine whether it is a maximum "lake" or not.
+		// 3 - Search all pixels for LOCAL maxima. A local maximum is a pixel that is the brightest in its immediate neighborhood (so the pixel is brighter or as bright as the 26 direct neighbors of it's cube-shaped neighborhood if 3D). If neighboring pixels have the same value as the current pixel, then the pixels are treated as a local "lake" and the lake is searched to determine whether it is a maximum "lake" or not.
 		
 		// 3.1 - Iterate over all pixels in the image.
-
 		while(curr.hasNext()) { 
 			curr.fwd();
-			currCoords = curr.getPosition();
-			if ((visited[getIndexOfPosition(currCoords, width, numPixelsInXYPlane, numDimensions)] & VISITED) == 1) {	// if we've already seen this pixel and decided what it is, skip it
+			curr.getPosition(currCoords);
+			if ((visited[getIndexOfPosition2D(currCoords, width)] & VISITED) == 1) {	// if we've already seen this pixel, then we've already decided if its a max or not, so skip it
 				continue;
 			}
 			isMax = true;  				// this pixel could be a max
-			toSearch.add(currCoords);  	// add this initial pixel to the queue of pixels we need to search (currently the only thing in the queue)
+			toSearch.add(currCoords);  	// add this initial pixel to the queue of pixels we need to search (currently the only thing in the queue). This queue represents the 'lake;' any group of pixels with the same value are stored here and searched completely.
+			
 			// 3.2 - Iterate through queue which contains the pixels of the "lake"
-			//while (!toSearch.isEmpty()) {		// conceptually, we are searching the "lake of equal maximum value" here
 			while ((nextCoords = toSearch.poll()) != null) {
-				//next = toSearch.poll();
-				if ((visited[getIndexOfPosition(nextCoords, width, numPixelsInXYPlane, numDimensions)] & VISITED) == 1) {	// prevents us from just searching the lake infinitely
+				if ((visited[getIndexOfPosition2D(nextCoords, width)] & VISITED) == 1) {	// prevents us from just searching the lake infinitely
 					continue;
 				} else {	// if we've never seen, add to visited list, and add to searched list.
-					visited[getIndexOfPosition(nextCoords, width, numPixelsInXYPlane, numDimensions)] |= VISITED;	
+					visited[getIndexOfPosition2D(nextCoords, width)] |= VISITED;	
+					searched.add(nextCoords);
+				}
+				local.setPosition(nextCoords);		// set the local cursors position to the next member of the lake, so that the neighborhood cursor can search its neighbors.
+				currentValue.set(local.getType());  // store the value of this pixel in a variable
+				neighbors.update();					// needed to get the neighborhood cursor to function correctly
+				
+				// 3.3 - Iterate through immediate neighbors
+				while(neighbors.hasNext()) {
+					neighbors.fwd();
+					neighborCoords = local.getPosition();
+					neighborValue = neighbors.getType();
+					
+					// Case 1: neighbor's value is strictly larger than ours, so ours cannot be a local maximum.
+					if (neighborValue.compareTo(currentValue) > 0) {
+						isMax = false;
+					}
+					
+					// Case 2: neighbor's value is strictly equal to ours, which means we could still be at a maximum, but the max value is a blob, not just a single point. We must check the area. In other words, we have a lake.
+					else if (neighborValue.compareTo(currentValue) == 0 && isWithinImageBounds2D(neighborCoords)) {
+						toSearch.add(neighborCoords);
+					}
+				}
+				neighbors.reset();  // needed to get the outer cursor to work correctly;
+			}
+			if (isMax) {	// if we get here, we've searched the entire lake, so find the average point and call that a max by adding to results list
+				averagedMaxPos = findAveragePosition2D(searched);
+				maxCoordinates.add(averagedMaxPos);
+			} else {		// if isMax == false, then everything we've searched is not a max, so just get rid of it.
+				searched.clear();
+			}
+		}
+		curr.close();
+		neighbors.close();
+		
+		// 4 - Print out list of maxima, set up for point display (FOR TESTING):
+		ox = new int[maxCoordinates.size()];
+		oy = new int[maxCoordinates.size()];
+		points = maxCoordinates.size();
+		int index = 0;
+		String img_dim = MathLib.printCoordinates(img.getDimensions());
+		IJ.log("Image dimensions: " + img_dim);
+		Iterator<int[]> itr = maxCoordinates.iterator();
+		while (itr.hasNext()) {
+			int coords[] = itr.next();
+			ox[index] = coords[0];
+			oy[index] = coords[1];
+			String pos_str = MathLib.printCoordinates(coords);
+			IJ.log(pos_str);
+			index++;
+		}
+	}
+	
+	public void findMaxima3D(Image<T> img) {
+		// **Note** See above 2D version for comments.
+		// 1 - Initialize local variables, cursors
+		final LocalizableByDimCursor<T> curr = img.createLocalizableByDimCursor(new OutOfBoundsStrategyMirrorFactory<T>());
+		LocalizableByDimCursor<T> local = img.createLocalizableByDimCursor(new OutOfBoundsStrategyMirrorFactory<T>());
+		LocalNeighborhoodCursor<T> neighbors = new LocalNeighborhoodCursor3D<T>(local);
+		ArrayList< int[] > maxCoordinates = new ArrayList< int[] >();
+		T currentValue = img.createType();
+		T neighborValue;
+		int width = img.getDimensions()[0];
+		int numPixelsInXYPlane = img.getDimensions()[1] * width;
+		byte visited[] = new byte[img.getNumPixels()];
+		LinkedList< int[] > toSearch = new LinkedList< int[] >();
+		LinkedList< int[] > searched = new LinkedList< int[] >();
+		boolean isMax;
+		int nextCoords[] = new int [3];
+		int currCoords[] = new int[3];
+		int neighborCoords[] = new int[3];
+		int averagedMaxPos[] = new int[3];
+
+		// 3 - Search all pixels for LOCAL maxima.
+		
+		// 3.1 - Iterate over all pixels in the image.
+		while(curr.hasNext()) { 
+			curr.fwd();
+			curr.getPosition(currCoords);
+			if ((visited[getIndexOfPosition3D(currCoords, width, numPixelsInXYPlane)] & VISITED) == 1) {
+				continue;
+			}
+			isMax = true;
+			toSearch.add(currCoords);
+			
+			// 3.2 - Iterate through queue which contains the pixels of the "lake"		
+			while ((nextCoords = toSearch.poll()) != null) {
+				if ((visited[getIndexOfPosition3D(nextCoords, width, numPixelsInXYPlane)] & VISITED) == 1) {
+					continue;
+				} else {
+					visited[getIndexOfPosition3D(nextCoords, width, numPixelsInXYPlane)] |= VISITED;	
 					searched.add(nextCoords);
 				}
 				local.setPosition(nextCoords);
-				currentValue.set(local.getType());  // store the value of this pixel in a variable
+				currentValue.set(local.getType());
 				neighbors.update();
 				
 				// 3.3 - Iterate through immediate neighbors
@@ -198,22 +279,23 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 					neighbors.fwd();
 					neighborCoords = local.getPosition();
 					neighborValue = neighbors.getType();
+					
 					// Case 1: neighbor's value is strictly larger than ours, so ours cannot be a local maximum.
 					if (neighborValue.compareTo(currentValue) > 0) {
 						isMax = false;
 					}
 					
 					// Case 2: neighbor's value is strictly equal to ours, which means we could still be at a maximum, but the max value is a blob, not just a single point. We must check the area.
-					else if (neighborValue.compareTo(currentValue) == 0 && isWithinImageBounds(neighborCoords, numDimensions)) {
-						toSearch.add(neighborCoords);  // add to queue using the iterator's 'add'; if we used the LL's 'add' we would break the itr
+					else if (neighborValue.compareTo(currentValue) == 0 && isWithinImageBounds3D(neighborCoords)) {
+						toSearch.add(neighborCoords);
 					}
 				}
 				neighbors.reset();  // needed to get the outer cursor to work correctly;		
 			}
-			if (isMax) {	// if we get here, we've searched the entire lake, so find the average point and call that a max by adding to results list
-				averagedMaxPos = findAveragePosition(searched, numDimensions);
+			if (isMax) {
+				averagedMaxPos = findAveragePosition3D(searched);
 				maxCoordinates.add(averagedMaxPos);
-			} else {		// if isMax == false, then everything we've searched is not a max.
+			} else {
 				searched.clear();
 			}
 		}
@@ -243,30 +325,16 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 * @param searched
 	 * @return
 	 */
-	//public int[] findAveragePosition(ConcurrentLinkedQueue < int[] > searched) {
-	public int[] findAveragePosition(LinkedList < int[] > searched, int numDimensions) {
+	public int[] findAveragePosition2D(LinkedList < int[] > searched) {
 		int count = 0;
-		//if (img.getNumDimensions() == 3) {
-		if (numDimensions == 3) {
-			int avgX = 0, avgY = 0, avgZ = 0;
-			while(!searched.isEmpty()) {
-				int curr[] = searched.poll();
-				avgX += curr[0];
-				avgY += curr[1];
-				avgZ += curr[2];
-				count++;
-			}
-			return new int[] {avgX/count, avgY/count, avgZ/count};
-		} else {
-			int avgX = 0, avgY = 0;
-			while(!searched.isEmpty()) {
-				int curr[] = searched.poll();
-				avgX += curr[0];
-				avgY += curr[1];
-				count++;
-			}
-			return new int[] {avgX/count, avgY/count};
+		int avgX = 0, avgY = 0;
+		while(!searched.isEmpty()) {
+			int curr[] = searched.poll();
+			avgX += curr[0];
+			avgY += curr[1];
+			count++;
 		}
+		return new int[] {avgX/count, avgY/count};
 	}
 
 	/**
@@ -275,13 +343,8 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 * @param pos
 	 * @return
 	 */
-	public boolean isWithinImageBounds(int pos[], int numDimensions) {
-		//if (pos.length == 2) {
-		if (numDimensions == 2) {
-			return pos[0] > -1 && pos[0] < img.getDimension(0) && pos[1] > -1 && pos[1] < img.getDimension(1);
-		} else {
-			return pos[0] > -1 && pos[0] < img.getDimension(0) && pos[1] > -1 && pos[1] < img.getDimension(1) && pos[2] > -1 && pos[2] < img.getDimension(2);
-		}
+	public boolean isWithinImageBounds2D(int pos[]) {
+		return pos[0] > -1 && pos[0] < img.getDimension(0) && pos[1] > -1 && pos[1] < img.getDimension(1);
 	}
 	
 	/**
@@ -293,12 +356,48 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 * @param numPixelsInXYPlane
 	 * @return
 	 */
-	public int getIndexOfPosition(int pos[], int width, int numPixelsInXYPlane, int numDimensions) {
-		//if (img.getNumDimensions() == 2) {	// if 2D, assign z to 1 since the pos array has length 2
-		if (numDimensions == 2) {
-			return pos[0] + width * pos[1];
-		} else {							// otherwise, 3D
-			return pos[0] + width * pos[1] + numPixelsInXYPlane * pos[2];
+	public int getIndexOfPosition2D(int pos[], int width) {
+		return pos[0] + width * pos[1];
+	}
+	
+	/**
+	 * 
+	 * @param searched
+	 * @return
+	 */
+	public int[] findAveragePosition3D(LinkedList < int[] > searched) {
+		int count = 0;
+		int avgX = 0, avgY = 0, avgZ = 0;
+		while(!searched.isEmpty()) {
+			int curr[] = searched.poll();
+			avgX += curr[0];
+			avgY += curr[1];
+			avgZ += curr[2];
+			count++;
 		}
+		return new int[] {avgX/count, avgY/count, avgZ/count};
+	}
+
+	/**
+	 * Given a position array, returns whether or not the position is within the bounds of the image, or out of bounds.
+	 * 
+	 * @param pos
+	 * @return
+	 */
+	public boolean isWithinImageBounds3D(int pos[]) {
+		return pos[0] > -1 && pos[0] < img.getDimension(0) && pos[1] > -1 && pos[1] < img.getDimension(1) && pos[2] > -1 && pos[2] < img.getDimension(2);
+	}
+	
+	/**
+	 * Given an array of a pixels position, the width of the image, and the number of pixels in a plane,
+	 * returns the index of the position in a linear array as calculated by x + width * y + numPixInPlane * z.
+	 *
+	 * @param pos
+	 * @param width
+	 * @param numPixelsInXYPlane
+	 * @return
+	 */
+	public int getIndexOfPosition3D(int pos[], int width, int numPixelsInXYPlane) {
+		return pos[0] + width * pos[1] + numPixelsInXYPlane * pos[2];
 	}
 }
