@@ -44,7 +44,7 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 	JLabel valueLabel, countLabel;
 
 	SingleWindowDisplay(){
-		super(NewImage.createRGBImage("Single Window Display", WIN_WIDTH, WIN_HEIGHT, 1, NewImage.FILL_WHITE));
+		super(NewImage.createFloatImage("Single Window Display", WIN_WIDTH, WIN_HEIGHT, 1, NewImage.FILL_WHITE));
 	}
 
 	public void setup() {
