@@ -5,14 +5,24 @@
 package fiji.plugin.nperry;
 
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Properties;
 
 import ij.gui.GenericDialog;
+import ij.gui.OvalRoi;
 import ij.gui.PointRoi;
+import ij.gui.Roi;
 import ij.plugin.PlugIn;
 import ij.*;
 import ij.process.ImageProcessor;
+import ij.process.LUT;
+import ij.process.StackConverter;
+import ij3d.Content;
+import ij3d.Image3DUniverse;
+import vib.PointList;
+import voltex.VoltexGroup;
 import mpicbg.imglib.algorithm.gauss.GaussianConvolutionRealType;
 import mpicbg.imglib.algorithm.math.MathLib;
 import mpicbg.imglib.algorithm.roi.MedianFilter;
@@ -32,7 +42,6 @@ import mpicbg.imglib.algorithm.roi.StructuringElement;
 public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	/** Class/Instance variables */
 	protected Image<T> img;								// Stores the image used by Imglib
-	
 	final static byte VISITED = (byte)1;
 	final static byte PROCESSED = (byte)2;
 	
@@ -50,42 +59,74 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		if (null == imp) return;
 		
 		// 2 - Ask for parameters:
-		// currently, this information is not used.
 		GenericDialog gd = new GenericDialog("Track");
 		gd.addNumericField("Average blob diameter (pixels):", 0, 0);  // get the expected blob size (in pixels).
+		//gd.addChoice("Unit of length:", new String[] {"um", "pixel"}, "um");
+		gd.addNumericField("Pixel width:", imp.getCalibration().pixelWidth, 3);
+		gd.addNumericField("Pixel height:", imp.getCalibration().pixelHeight, 3);
+		gd.addNumericField("Voxel depth:", imp.getCalibration().pixelDepth, 3);
 		gd.addCheckbox("Use median filter:", false);
 		gd.addCheckbox("Allow edge maxima:", false);
-		//gd.addChoice("Search type:", new String[] {"Maxima", "Minima"}, "Maxima");  // determines if we are searching for maxima, or minima.
 		gd.showDialog();
 		if (gd.wasCanceled()) return;
 
 		// 3 - Retrieve parameters from dialogue:
-		int diam = (int)gd.getNextNumber();
+		double diam = (double)gd.getNextNumber();
+		//String unitOfLength = (String)gd.getNextString();
+		double pixelWidth = (double)gd.getNextNumber();
+		double pixelHeight = (double)gd.getNextNumber();
+		double pixelDepth = (double)gd.getNextNumber();
 		boolean useMedFilt = (boolean)gd.getNextBoolean();
 		boolean allowEdgeMax = (boolean)gd.getNextBoolean();
-		//String searchType = gd.getNextString();
 		
 		// 4 - Execute!
-		//Object[] result = exec(imp, diam, useMedFilt, allowEdgeMax);
+		Object[] result = exec(imp, diam, useMedFilt, allowEdgeMax);
 		
-		// Display (for testing)
-		//if (null != result) {
-			//ImagePlus scaled = (ImagePlus) result[1];
-			//scaled.show();
+		// 5 - Display maxima on 3D rendering
+		if (null != result) {
+			ArrayList< int[] > maxima = (ArrayList< int[] >) result[0];
+			ImagePlus scaled = imp;
 
 			/** Display 3D view of the slices */
+			IJ.log("Displaying 3D rendering with maxima");
 			if (img.getNumDimensions() == 3) {
+				// Adjust image properties for 3D rendering
+				scaled.getCalibration().pixelWidth = pixelWidth;
+				scaled.getCalibration().pixelHeight = pixelHeight;
+				scaled.getCalibration().pixelDepth = pixelDepth;
 				
+				// Convert to a usable format
+				new StackConverter(scaled).convertToGray8();
+				
+				// Create a universe and show it
+				Image3DUniverse univ = new Image3DUniverse();
+				univ.show();
+				
+				// Add the image as a volume rendering
+				Content c = univ.addVoltex(scaled);
+
+				// Change the size of the points
+				float curr = c.getLandmarkPointSize();
+				c.setLandmarkPointSize(curr/9);
+				
+				// Retrieve the point list
+				PointList pl = c.getPointList();
+				
+				// Add maxima as points to the point list
+				Iterator< int[] > itr = maxima.listIterator();
+				while (itr.hasNext()) {
+					int maxCoords[] = itr.next();
+					pl.add(maxCoords[0] * pixelWidth, maxCoords[1] * pixelHeight, maxCoords[2] * pixelDepth);
+				}
+
+				// Make the point list visible
+				c.showPointList(true);
 			}
-			
-			//IJ.log("outputting points...");
-			//imp.setRoi(new PointRoi(ox, oy, points));
-			//imp.updateAndDraw();
-		//}
+		}
 	}
 	
 	/** Execute the plugin functionality: apply a median filter (for salt and pepper noise), a Gaussian blur, and then find maxima. */
-	public Object[] exec(ImagePlus imp, int diam, boolean useMedFilt, boolean allowEdgeMax) {
+	public Object[] exec(ImagePlus imp, double diam, boolean useMedFilt, boolean allowEdgeMax) {
 		// 0 - Check validity of parameters:
 		if (null == imp) return null;
 		
@@ -142,30 +183,14 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			maxima = findMaxima3D(img, allowEdgeMax);
 		}
 		
-		// deal with maxima for ROI
-		ox = new int[maxima.size()];
-		oy = new int[maxima.size()];
-		points = maxima.size();
-		int index = 0;
-		String img_dim = MathLib.printCoordinates(img.getDimensions());
-		IJ.log("Image dimensions: " + img_dim);
-		Iterator<int[]> itr = maxima.iterator();
-		while (itr.hasNext()) {
-			int coords[] = itr.next();
-			ox[index] = coords[0];
-			oy[index] = coords[1];
-			String pos_str = MathLib.printCoordinates(coords);
-			IJ.log(pos_str);
-			index++;
-		}
-		
 		// 5 - Return (for testing):
-		ImagePlus newImg = ImageJFunctions.copyToImagePlus(img, imp.getType());  	// convert Image<T> to ImagePlus
-		if (imp.isInvertedLut()) {													// if original image had inverted LUT, invert this new image's LUT also
-			ImageProcessor newImgP = newImg.getProcessor();
-			newImgP.invertLut();
-		}
-		return new Object[]{"new", newImg};
+		//ImagePlus newImg = ImageJFunctions.copyToImagePlus(img, imp.getType());  	// convert Image<T> to ImagePlus
+		//if (imp.isInvertedLut()) {													// if original image had inverted LUT, invert this new image's LUT also
+		//	ImageProcessor newImgP = newImg.getProcessor();
+		//	newImgP.invertLut();
+		//}
+		//return new Object[]{"new", newImg, maxima};
+		return new Object[]{maxima};
 	}
 	
 	
@@ -185,11 +210,11 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		ArrayList< int[] > maxCoordinates = new ArrayList< int[] >();  	// holds the positions of the local maxima
 		T currentValue = img.createType();  							// holds the value of the current pixel's intensity. We use createType() here because getType() gives us a pointer to the cursor's object, but since the neighborhood moves the parent cursor, when we check the neighbors, we actually change the object stored here, or the pixel we are trying to compare to. see fiji-devel list for further explanation.
 		T neighborValue; 												// holds the value of the neighbor's intensity
-		int width = img.getDimensions()[0];								// width of the image. needed for storing info in the visited and visitedLakeMember arrays correctly
-		byte visitedAndProcessed[] = new byte[img.getNumPixels()];		// stores whether or not this pixel has been searched either by the main cursor, or directly in a lake search.
+		int width = img.getDimensions()[0];								// width of the image. needed for storing info in the visitedAndProcessed array correctly (needed for 3D -> 1D calculation)
+		byte visitedAndProcessed[] = new byte[img.getNumPixels()];		// stores whether or not this pixel has been searched either by the main cursor or directly in a lake search (PROCESSED), or if it's just been added to the lake's toSearch list (VISITED).
 		LinkedList< int[] > toSearch = new LinkedList< int[] >();		// holds the positions of pixels that belong to the current lake and need to have neighbors searched
 		LinkedList< int[] > searched = new LinkedList< int[] >();		// holds the positions of pixels that belong to the current lake and have already had neighbors searched
-		boolean isMax;													// flag which tells us whether the current lake is a local max or not
+		boolean isMax;													// flag which tells us whether the current lake (held in the searched LL) is a local max or not
 		int nextCoords[] = new int [2];									// keeping the array declarations outside the while loop to improve speed. coords of current lake member.
 		int currCoords[] = new int[2];									// coords of outer, main loop
 		int neighborCoords[] = new int[2];								// coords of neighbor
