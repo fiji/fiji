@@ -15,6 +15,7 @@ import ij.process.StackConverter;
 import ij3d.Content;
 import ij3d.Image3DUniverse;
 import vib.PointList;
+import mpicbg.imglib.algorithm.gauss.DownSample;
 import mpicbg.imglib.algorithm.gauss.GaussianConvolutionRealType;
 import mpicbg.imglib.algorithm.math.MathLib;
 import mpicbg.imglib.algorithm.roi.MedianFilter;
@@ -28,6 +29,7 @@ import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.type.logic.BitType;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.algorithm.roi.StructuringElement;
+import mpicbg.imglib.algorithm.transformation.ImageTransform;
 
 public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	/** Class/Instance variables */
@@ -37,6 +39,8 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	/* Bitmasks used in the findMaxima algorithm to perform quick checks */
 	final static byte VISITED = (byte)1;	// pixel has been added to the lake, but not had neighbors inspected (explored, but not searched)
 	final static byte PROCESSED = (byte)2;	// pixel has been added to the lake, and had neighbors inspected (explored, and searched)
+	final static float GOAL_DOWNSAMPLED_BLOB_DIAM = 10f;
+	final static double IDEAL_SIGMA_FOR_DOWNSAMPLED_BLOB_DIAM = 1.55;
 	
 	/** Ask for parameters and then execute. */
 	public void run(String arg) {
@@ -46,8 +50,10 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		
 		// 2 - Ask for parameters:
 		GenericDialog gd = new GenericDialog("Track");
-		gd.addNumericField("Average blob diameter (pixels):", 0, 0);  				// get the expected blob size (in pixels).
+		gd.addNumericField("Average blob diameter (pixels):", 20, 0);  				// get the expected blob size (in pixels).
+		//gd.addNumericField("Sigma:", 2, 3);
 		//gd.addChoice("Unit of length:", new String[] {"um", "pixel"}, "um");
+		//gd.addNumericField("Downsampling factor", 0.5, 3);
 		gd.addNumericField("Pixel width:", imp.getCalibration().pixelWidth, 3);		// used to calibrate the image for 3D rendering
 		gd.addNumericField("Pixel height:", imp.getCalibration().pixelHeight, 3);	// used to calibrate the image for 3D rendering
 		gd.addNumericField("Voxel depth:", imp.getCalibration().pixelDepth, 3);		// used to calibrate the image for 3D rendering
@@ -58,7 +64,9 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 
 		// 3 - Retrieve parameters from dialogue:
 		double diam = (double)gd.getNextNumber();
+		//double sigma = (double)gd.getNextNumber();
 		//String unitOfLength = (String)gd.getNextString();
+		//float downsamplingFactor = (float)gd.getNextNumber();
 		double pixelWidth = (double)gd.getNextNumber();
 		double pixelHeight = (double)gd.getNextNumber();
 		double pixelDepth = (double)gd.getNextNumber();
@@ -66,17 +74,20 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		boolean allowEdgeMax = (boolean)gd.getNextBoolean();
 		
 		// 4 - Execute!
-		ArrayList< int[] > result = exec(imp, diam, useMedFilt, allowEdgeMax);
+		float downsamplingFactor = (float) 1f / ((float)diam / GOAL_DOWNSAMPLED_BLOB_DIAM);
+		ArrayList< int[] > result = exec(imp, diam, useMedFilt, allowEdgeMax, downsamplingFactor);
 		
 		// 5 - Display new image and overlay maxima
 		if (null != result) {
+			//ImageTransform imgTran = new ImageTransform(ImagePlusAdapter.wrap(imp), new TranslationModel3D(), );
 			ImagePlus scaled = imp;
-
+			// NEED TO MAKE COPY OF IMAGE!!!!
+			
 			// If original image is 3D, create a 3D rendering of the image and overlay maxima
 			if (img.getNumDimensions() == 3) {
 				IJ.log("Displaying 3D rendering with maxima...");
 				IJ.showStatus("Displaying 3D rendering with maxima overlayed...");
-				render3DAndOverlayMaxima(result, scaled, pixelWidth, pixelHeight, pixelDepth);
+				render3DAndOverlayMaxima(result, scaled, pixelWidth, pixelHeight, pixelDepth, downsamplingFactor);
 			} else {
 				
 			}
@@ -84,13 +95,27 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	}
 	
 	/** Execute the plugin functionality: apply a median filter (for salt and pepper noise), a Gaussian blur, and then find maxima. */
-	public ArrayList< int[] > exec(ImagePlus imp, double diam, boolean useMedFilt, boolean allowEdgeMax) {
+	public ArrayList< int[] > exec(ImagePlus imp, double diam, boolean useMedFilt, boolean allowEdgeMax, float downsamplingFactor) {
 		// 0 - Check validity of parameters:
 		if (null == imp) return null;
 		
-		// 1 - Set up for use with Imglib:
+		// 1 - Make a copy of the image, and prepare for use with Imglib:
 		img = ImagePlusAdapter.wrap(imp);
 		int numDim = img.getNumDimensions();
+		
+		// <try downsampling>
+		if (downsamplingFactor != 1) {
+			IJ.log("Downsampling...");
+			IJ.showStatus("Downsampling...");
+			final DownSample<T> downSampler = new DownSample<T>(img, downsamplingFactor);
+			if (downSampler.checkInput() && downSampler.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
+				img = downSampler.getResult(); 
+			} else { 
+		        System.out.println(downSampler.getErrorMessage()); 
+		        return null;
+			}
+		}
+		// </try downsampling>
 		
 		// 2 - Apply a median filter, to get rid of salt and pepper noise which could be mistaken for maxima in the algorithm:
 		if (useMedFilt) {
@@ -126,7 +151,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		// 3 - Apply a Gaussian filter (code courtesy of Stephan Preibisch). Theoretically, this will make the center of blobs the brightest, and thus easier to find:
 		IJ.log("Applying Gaussian filter...");
 		IJ.showStatus("Applying Gaussian filter...");
-		final GaussianConvolutionRealType<T> conv = new GaussianConvolutionRealType<T>(img, new OutOfBoundsStrategyMirrorFactory<T>(), 6.0f); // Use sigma of 6.0f, probably need a better way to do this
+		final GaussianConvolutionRealType<T> conv = new GaussianConvolutionRealType<T>(img, new OutOfBoundsStrategyMirrorFactory<T>(), IDEAL_SIGMA_FOR_DOWNSAMPLED_BLOB_DIAM);
 		if (conv.checkInput() && conv.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
 			img = conv.getResult(); 
 		} else { 
@@ -144,13 +169,6 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			maxima = findMaxima3D(img, allowEdgeMax);
 		}
 		
-		// 5 - Return (for testing):
-		//ImagePlus newImg = ImageJFunctions.copyToImagePlus(img, imp.getType());  	// convert Image<T> to ImagePlus
-		//if (imp.isInvertedLut()) {													// if original image had inverted LUT, invert this new image's LUT also
-		//	ImageProcessor newImgP = newImg.getProcessor();
-		//	newImgP.invertLut();
-		//}
-		//return new Object[]{"new", newImg, maxima};
 		return maxima;
 	}
 	
@@ -162,7 +180,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 * @param pixelHeight
 	 * @param pixelDepth
 	 */
-	public void render3DAndOverlayMaxima(ArrayList< int[] > maxima, ImagePlus scaled, double pixelWidth, double pixelHeight, double pixelDepth) {
+	public void render3DAndOverlayMaxima(ArrayList< int[] > maxima, ImagePlus scaled, double pixelWidth, double pixelHeight, double pixelDepth, float downsamplingFactor) {
 		// Adjust image properties for 3D rendering
 		scaled.getCalibration().pixelWidth = pixelWidth;
 		scaled.getCalibration().pixelHeight = pixelHeight;
@@ -189,7 +207,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		Iterator< int[] > itr = maxima.listIterator();
 		while (itr.hasNext()) {
 			int maxCoords[] = itr.next();
-			pl.add(maxCoords[0] * pixelWidth, maxCoords[1] * pixelHeight, maxCoords[2] * pixelDepth);
+			pl.add(maxCoords[0] / downsamplingFactor * pixelWidth, maxCoords[1] / downsamplingFactor * pixelHeight, maxCoords[2] / downsamplingFactor * pixelDepth);
 		}
 
 		// Make the point list visible
@@ -381,6 +399,16 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	public boolean isEdgeMax2D(int coords[]) {
 		return coords[0] == 0 || coords[0] == img.getDimension(0) - 1 || coords[1] == 0 || coords[1] == img.getDimension(1) - 1;
 	}
+
+
+	/**
+	 * 
+	 * @param coords
+	 * @return
+	 */
+	public boolean isEdgeMax3D(int coords[]) {
+		return coords[0] == 0 || coords[0] == img.getDimension(0) - 1 || coords[1] == 0 || coords[1] == img.getDimension(1) - 1 || coords[2] == 0 || coords[2] == img.getDimension(2) - 1;
+	}
 	
 	/**
 	 * 
@@ -400,28 +428,6 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	}
 
 	/**
-	 * Given a position array, returns whether or not the position is within the bounds of the image, or out of bounds.
-	 * 
-	 * @param pos
-	 * @return
-	 */
-	public boolean isWithinImageBounds2D(int pos[]) {
-		return pos[0] > -1 && pos[0] < img.getDimension(0) && pos[1] > -1 && pos[1] < img.getDimension(1);
-	}
-	
-	/**
-	 * Given an array of a pixels position, the width of the image, and the number of pixels in a plane,
-	 * returns the index of the position in a linear array as calculated by x + width * y + numPixInPlane * z.
-	 *
-	 * @param pos
-	 * @param width
-	 * @return
-	 */
-	public int getIndexOfPosition2D(int pos[], int width) {
-		return pos[0] + width * pos[1];
-	}
-	
-	/**
 	 * 
 	 * @param searched
 	 * @return
@@ -438,14 +444,15 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		}
 		return new int[] {avgX/count, avgY/count, avgZ/count};
 	}
-
+	
 	/**
+	 * Given a position array, returns whether or not the position is within the bounds of the image, or out of bounds.
 	 * 
-	 * @param coords
+	 * @param pos
 	 * @return
 	 */
-	public boolean isEdgeMax3D(int coords[]) {
-		return coords[0] == 0 || coords[0] == img.getDimension(0) - 1 || coords[1] == 0 || coords[1] == img.getDimension(1) - 1 || coords[2] == 0 || coords[2] == img.getDimension(2) - 1;
+	public boolean isWithinImageBounds2D(int pos[]) {
+		return pos[0] > -1 && pos[0] < img.getDimension(0) && pos[1] > -1 && pos[1] < img.getDimension(1);
 	}
 	
 	/**
@@ -464,6 +471,18 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 *
 	 * @param pos
 	 * @param width
+	 * @return
+	 */
+	public int getIndexOfPosition2D(int pos[], int width) {
+		return pos[0] + width * pos[1];
+	}
+
+	/**
+	 * Given an array of a pixels position, the width of the image, and the number of pixels in a plane,
+	 * returns the index of the position in a linear array as calculated by x + width * y + numPixInPlane * z.
+	 *
+	 * @param pos
+	 * @param width
 	 * @param numPixelsInXYPlane
 	 * @return
 	 */
@@ -472,10 +491,11 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	}
 }
 
-
+/** ---------------------------- */
 /**         archived code        */
 /** ---------------------------- */
 
+/** Tried implementing findMaxima using a trick from Michael Schmid's version of 'Find Maxima' that comes with ImageJ to speed my version up. Ultimately, my version above and "his version" (not quite his, but as best I could) produced the same performance.  */
 /*public void findMaxima2D(Image<T> img) {
 long start = System.currentTimeMillis();
 // 1 - Initialize local variables, cursors
