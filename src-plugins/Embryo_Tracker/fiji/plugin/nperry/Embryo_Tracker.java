@@ -103,7 +103,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		img = ImagePlusAdapter.wrap(imp);
 		int numDim = img.getNumDimensions();
 		
-		// <try downsampling>
+		// 2 - Downsample to improve run time. The image is downsampled by the factor necessary to achieve a resulting blob size of about 10 pixels (therefore, downsample factor depends on the blob size inputed by the user).
 		if (downsamplingFactor != 1) {
 			IJ.log("Downsampling...");
 			IJ.showStatus("Downsampling...");
@@ -115,15 +115,14 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		        return null;
 			}
 		}
-		// </try downsampling>
 		
-		// 2 - Apply a median filter, to get rid of salt and pepper noise which could be mistaken for maxima in the algorithm:
+		// 3 - Apply a median filter, to get rid of salt and pepper noise which could be mistaken for maxima in the algorithm:
 		if (useMedFilt) {
 			IJ.log("Applying median filter...");
 			IJ.showStatus("Applying median filter...");
 			StructuringElement strel;
 			
-			// 2.1 - Need to figure out the dimensionality of the image in order to create a StructuringElement of the correct dimensionality (StructuringElement needs to have same dimensionality as the image):
+			// 3.1 - Need to figure out the dimensionality of the image in order to create a StructuringElement of the correct dimensionality (StructuringElement needs to have same dimensionality as the image):
 			if (numDim == 3) {  // 3D case
 				strel = new StructuringElement(new int[]{3, 3, 1}, "3D Square");  // unoptimized shape for 3D case. Note here that we manually are making this shape (not using a class method). This code is courtesy of Larry Lindsey
 				Cursor<BitType> c = strel.createCursor();  // in this case, the shape is manually made, so we have to manually set it, too.
@@ -137,7 +136,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 				strel = StructuringElement.createCube(2, 3);  // unoptimized shape
 			}
 			
-			// 2.2 - Apply the median filter:
+			// 3.2 - Apply the median filter:
 			final MedianFilter<T> medFilt = new MedianFilter<T>(img, strel, new OutOfBoundsStrategyMirrorFactory<T>()); 
 			// ***note: add back medFilt.checkInput() when it's fixed ***
 			if (medFilt.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
@@ -148,7 +147,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			}
 		}
 		
-		// 3 - Apply a Gaussian filter (code courtesy of Stephan Preibisch). Theoretically, this will make the center of blobs the brightest, and thus easier to find:
+		// 4 - Apply a Gaussian filter (code courtesy of Stephan Preibisch). Theoretically, this will make the center of blobs the brightest, and thus easier to find:
 		IJ.log("Applying Gaussian filter...");
 		IJ.showStatus("Applying Gaussian filter...");
 		final GaussianConvolutionRealType<T> conv = new GaussianConvolutionRealType<T>(img, new OutOfBoundsStrategyMirrorFactory<T>(), IDEAL_SIGMA_FOR_DOWNSAMPLED_BLOB_DIAM);
@@ -159,7 +158,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	        return null;
 		}
 		
-		// 4 - Find maxima of newly convoluted image:
+		// 5 - Find maxima of newly convoluted image:
 		IJ.log("Finding maxima...");
 		IJ.showStatus("Finding maxima...");
 		ArrayList< int[] > maxima;
