@@ -36,8 +36,8 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 		double ch1Max = container.getMaxCh1();
 		double ch2Max = container.getMaxCh2();
 
-		double ch1Scaling = (double) xBins / (double)(ch1Max + 1);
-		double ch2Scaling = (double) yBins / (double)(ch2Max + 1);
+		double ch1BinWidth = (double) xBins / (double)(ch1Max + 1);
+		double ch2BinWidth = (double) yBins / (double)(ch2Max + 1);
 
 		// get the 2 images for the calculation of Pearson's
 		Image<T> img1 = container.getSourceImage1();
@@ -69,8 +69,8 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 			 * Scale values for both channels to fit in the range.
 			 * Moreover mirror the y value on the x axis.
 			 */
-			int scaledXvalue = (int)(ch1 * ch1Scaling);
-			int scaledYvalue = (yBins - 1) - (int)(ch2 * ch2Scaling);
+			int scaledXvalue = (int)(ch1 * ch1BinWidth);
+			int scaledYvalue = (yBins - 1) - (int)(ch2 * ch2BinWidth);
 			// set position of input/output cursor
 			histogram2DCursor.setPosition( new int[] {scaledXvalue, scaledYvalue});
 			// get current value at position and increment it
@@ -80,7 +80,7 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 			histogram2DCursor.getType().set(count);
 		}
 
-		Result result = new Result.Histogram2DResult(title, plotImage, "Channel 1", "Channel 2");
+		Result result = new Result.Histogram2DResult(title, plotImage, ch1BinWidth, ch2BinWidth, "Channel 1", "Channel 2");
 		container.add(result);
 	}
 }

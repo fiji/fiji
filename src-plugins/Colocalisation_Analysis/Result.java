@@ -133,11 +133,16 @@ public abstract class Result {
 	static class Histogram2DResult <T extends RealType<T>> extends ImageResult<T>{
 		// Axis labels
 		String xLabel, yLabel;
+		double ch1BinWidth, ch2BinWidth;
 
-		public Histogram2DResult(String name, Image<T> data, String xLabel, String yLabel) {
+		public Histogram2DResult(String name, Image<T> data,
+				double ch1BinWidth, double ch2BinWidth,
+				String xLabel, String yLabel) {
 			super(name, data);
 			this.xLabel = xLabel;
 			this.yLabel = yLabel;
+			this.ch1BinWidth = ch1BinWidth;
+			this.ch2BinWidth = ch2BinWidth;
 		}
 	}
 
