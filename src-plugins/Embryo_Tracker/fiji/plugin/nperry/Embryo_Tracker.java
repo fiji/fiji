@@ -5,35 +5,25 @@
 package fiji.plugin.nperry;
 
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.Properties;
 
 import ij.gui.GenericDialog;
-import ij.gui.OvalRoi;
-import ij.gui.PointRoi;
-import ij.gui.Roi;
 import ij.plugin.PlugIn;
 import ij.*;
-import ij.process.ImageProcessor;
-import ij.process.LUT;
 import ij.process.StackConverter;
 import ij3d.Content;
 import ij3d.Image3DUniverse;
 import vib.PointList;
-import voltex.VoltexGroup;
 import mpicbg.imglib.algorithm.gauss.GaussianConvolutionRealType;
 import mpicbg.imglib.algorithm.math.MathLib;
 import mpicbg.imglib.algorithm.roi.MedianFilter;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
-import mpicbg.imglib.cursor.LocalizableByDimCursor3D;
 import mpicbg.imglib.cursor.special.LocalNeighborhoodCursor;
 import mpicbg.imglib.cursor.special.LocalNeighborhoodCursor3D;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImagePlusAdapter;
-import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.type.logic.BitType;
 import mpicbg.imglib.type.numeric.RealType;
@@ -41,16 +31,12 @@ import mpicbg.imglib.algorithm.roi.StructuringElement;
 
 public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	/** Class/Instance variables */
-	protected Image<T> img;								// Stores the image used by Imglib
-	final static byte VISITED = (byte)1;
-	final static byte PROCESSED = (byte)2;
 	
-	// <delete me>
-	int ox[];
-	int oy[];
-	int points;
-	// </delete me>
-	
+	/* Stores the image used by Imglib */
+	protected Image<T> img;
+	/* Bitmasks used in the findMaxima algorithm to perform quick checks */
+	final static byte VISITED = (byte)1;	// pixel has been added to the lake, but not had neighbors inspected (explored, but not searched)
+	final static byte PROCESSED = (byte)2;	// pixel has been added to the lake, and had neighbors inspected (explored, and searched)
 	
 	/** Ask for parameters and then execute. */
 	public void run(String arg) {
@@ -60,11 +46,11 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		
 		// 2 - Ask for parameters:
 		GenericDialog gd = new GenericDialog("Track");
-		gd.addNumericField("Average blob diameter (pixels):", 0, 0);  // get the expected blob size (in pixels).
+		gd.addNumericField("Average blob diameter (pixels):", 0, 0);  				// get the expected blob size (in pixels).
 		//gd.addChoice("Unit of length:", new String[] {"um", "pixel"}, "um");
-		gd.addNumericField("Pixel width:", imp.getCalibration().pixelWidth, 3);
-		gd.addNumericField("Pixel height:", imp.getCalibration().pixelHeight, 3);
-		gd.addNumericField("Voxel depth:", imp.getCalibration().pixelDepth, 3);
+		gd.addNumericField("Pixel width:", imp.getCalibration().pixelWidth, 3);		// used to calibrate the image for 3D rendering
+		gd.addNumericField("Pixel height:", imp.getCalibration().pixelHeight, 3);	// used to calibrate the image for 3D rendering
+		gd.addNumericField("Voxel depth:", imp.getCalibration().pixelDepth, 3);		// used to calibrate the image for 3D rendering
 		gd.addCheckbox("Use median filter:", false);
 		gd.addCheckbox("Allow edge maxima:", false);
 		gd.showDialog();
@@ -80,53 +66,25 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		boolean allowEdgeMax = (boolean)gd.getNextBoolean();
 		
 		// 4 - Execute!
-		Object[] result = exec(imp, diam, useMedFilt, allowEdgeMax);
+		ArrayList< int[] > result = exec(imp, diam, useMedFilt, allowEdgeMax);
 		
-		// 5 - Display maxima on 3D rendering
+		// 5 - Display new image and overlay maxima
 		if (null != result) {
-			ArrayList< int[] > maxima = (ArrayList< int[] >) result[0];
 			ImagePlus scaled = imp;
 
-			/** Display 3D view of the slices */
-			IJ.log("Displaying 3D rendering with maxima");
+			// If original image is 3D, create a 3D rendering of the image and overlay maxima
 			if (img.getNumDimensions() == 3) {
-				// Adjust image properties for 3D rendering
-				scaled.getCalibration().pixelWidth = pixelWidth;
-				scaled.getCalibration().pixelHeight = pixelHeight;
-				scaled.getCalibration().pixelDepth = pixelDepth;
+				IJ.log("Displaying 3D rendering with maxima...");
+				IJ.showStatus("Displaying 3D rendering with maxima overlayed...");
+				render3DAndOverlayMaxima(result, scaled, pixelWidth, pixelHeight, pixelDepth);
+			} else {
 				
-				// Convert to a usable format
-				new StackConverter(scaled).convertToGray8();
-				
-				// Create a universe and show it
-				Image3DUniverse univ = new Image3DUniverse();
-				univ.show();
-				
-				// Add the image as a volume rendering
-				Content c = univ.addVoltex(scaled);
-
-				// Change the size of the points
-				float curr = c.getLandmarkPointSize();
-				c.setLandmarkPointSize(curr/9);
-				
-				// Retrieve the point list
-				PointList pl = c.getPointList();
-				
-				// Add maxima as points to the point list
-				Iterator< int[] > itr = maxima.listIterator();
-				while (itr.hasNext()) {
-					int maxCoords[] = itr.next();
-					pl.add(maxCoords[0] * pixelWidth, maxCoords[1] * pixelHeight, maxCoords[2] * pixelDepth);
-				}
-
-				// Make the point list visible
-				c.showPointList(true);
 			}
 		}
 	}
 	
 	/** Execute the plugin functionality: apply a median filter (for salt and pepper noise), a Gaussian blur, and then find maxima. */
-	public Object[] exec(ImagePlus imp, double diam, boolean useMedFilt, boolean allowEdgeMax) {
+	public ArrayList< int[] > exec(ImagePlus imp, double diam, boolean useMedFilt, boolean allowEdgeMax) {
 		// 0 - Check validity of parameters:
 		if (null == imp) return null;
 		
@@ -137,6 +95,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		// 2 - Apply a median filter, to get rid of salt and pepper noise which could be mistaken for maxima in the algorithm:
 		if (useMedFilt) {
 			IJ.log("Applying median filter...");
+			IJ.showStatus("Applying median filter...");
 			StructuringElement strel;
 			
 			// 2.1 - Need to figure out the dimensionality of the image in order to create a StructuringElement of the correct dimensionality (StructuringElement needs to have same dimensionality as the image):
@@ -166,6 +125,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		
 		// 3 - Apply a Gaussian filter (code courtesy of Stephan Preibisch). Theoretically, this will make the center of blobs the brightest, and thus easier to find:
 		IJ.log("Applying Gaussian filter...");
+		IJ.showStatus("Applying Gaussian filter...");
 		final GaussianConvolutionRealType<T> conv = new GaussianConvolutionRealType<T>(img, new OutOfBoundsStrategyMirrorFactory<T>(), 6.0f); // Use sigma of 6.0f, probably need a better way to do this
 		if (conv.checkInput() && conv.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
 			img = conv.getResult(); 
@@ -176,6 +136,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		
 		// 4 - Find maxima of newly convoluted image:
 		IJ.log("Finding maxima...");
+		IJ.showStatus("Finding maxima...");
 		ArrayList< int[] > maxima;
 		if (numDim == 2) {
 			maxima = findMaxima2D(img, allowEdgeMax);
@@ -190,14 +151,56 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		//	newImgP.invertLut();
 		//}
 		//return new Object[]{"new", newImg, maxima};
-		return new Object[]{maxima};
+		return maxima;
 	}
 	
-	
+	/**
+	 * 
+	 * @param maxima
+	 * @param scaled
+	 * @param pixelWidth
+	 * @param pixelHeight
+	 * @param pixelDepth
+	 */
+	public void render3DAndOverlayMaxima(ArrayList< int[] > maxima, ImagePlus scaled, double pixelWidth, double pixelHeight, double pixelDepth) {
+		// Adjust image properties for 3D rendering
+		scaled.getCalibration().pixelWidth = pixelWidth;
+		scaled.getCalibration().pixelHeight = pixelHeight;
+		scaled.getCalibration().pixelDepth = pixelDepth;
+		
+		// Convert to a usable format
+		new StackConverter(scaled).convertToGray8();
+		
+		// Create a universe and show it
+		Image3DUniverse univ = new Image3DUniverse();
+		univ.show();
+		
+		// Add the image as a volume rendering
+		Content c = univ.addVoltex(scaled);
+
+		// Change the size of the points
+		float curr = c.getLandmarkPointSize();
+		c.setLandmarkPointSize(curr/9);
+		
+		// Retrieve the point list
+		PointList pl = c.getPointList();
+		
+		// Add maxima as points to the point list
+		Iterator< int[] > itr = maxima.listIterator();
+		while (itr.hasNext()) {
+			int maxCoords[] = itr.next();
+			pl.add(maxCoords[0] * pixelWidth, maxCoords[1] * pixelHeight, maxCoords[2] * pixelDepth);
+		}
+
+		// Make the point list visible
+		c.showPointList(true);
+	}
 	
 	/**
 	 * 
 	 * @param img
+	 * @param allowEdgeMax
+	 * @return
 	 */
 	public ArrayList< int[] > findMaxima2D(Image<T> img, boolean allowEdgeMax) {
 	    /** time trials */
@@ -279,9 +282,14 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		
 		long deltaT = System.currentTimeMillis() - start;
 		return maxCoordinates;
-		//System.out.println("My way: " + deltaT);
 	}
 	
+	/**
+	 * 
+	 * @param img
+	 * @param allowEdgeMax
+	 * @return
+	 */
 	public ArrayList< int[] > findMaxima3D(Image<T> img, boolean allowEdgeMax) {
 		long start = System.currentTimeMillis();
 		// **Note** See above 2D version for comments.
@@ -545,7 +553,6 @@ neighbors.close();
 long deltaT = System.currentTimeMillis() - start;
 
 // 3 - Print out list of maxima, set up for point display (FOR TESTING):
-System.out.println("Michael's way: " + deltaT);
 ox = new int[maxCoordinates.size()];
 oy = new int[maxCoordinates.size()];
 points = maxCoordinates.size();
