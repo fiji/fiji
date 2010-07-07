@@ -367,6 +367,30 @@ static void string_replace(struct string *string, char from, char to)
 			string->buffer[j] = to;
 }
 
+static int string_read_file(struct string *string, const char *path) {
+	FILE *file = fopen(path, "rb");
+	char buffer[1024];
+	int result = 0;
+
+	if (!file) {
+		error("Could not open %s", path);
+		return -1;
+	}
+
+	for (;;) {
+		size_t count = fread(buffer, 1, sizeof(buffer), file);
+		string_ensure_alloc(string, string->length + count);
+		memcpy(string->buffer + string->length, buffer, count);
+		string->length += count;
+		if (count < sizeof(buffer))
+			break;
+	}
+	if (ferror(file) < 0)
+		result = -1;
+	fclose(file);
+	return result;
+}
+
 /*
  * If set, overrides the environment variable JAVA_HOME, which in turn
  * overrides relative_java_home.
@@ -501,11 +525,30 @@ size_t get_memory_size(int available_only)
 				host_info.wire_count) * (size_t)page_size);
 }
 #elif defined(linux)
+static size_t get_kB(struct string *string, const char *key)
+{
+	const char *p = strstr(string->buffer, key);
+	if (!p)
+		return 0;
+	while (*p && *p != ' ')
+		p++;
+	return (size_t)strtoul(p, NULL, 10);
+}
+
 size_t get_memory_size(int available_only)
 {
-	ssize_t page_size = sysconf(_SC_PAGESIZE);
-	ssize_t available_pages = sysconf(available_only ?
-			_SC_AVPHYS_PAGES : _SC_PHYS_PAGES);
+	ssize_t page_size, available_pages;
+	/* Avoid overallocation */
+	if (!available_only) {
+		struct string *string = string_init(32);
+		if (!string_read_file(string, "/proc/meminfo"))
+			return 1024 * (get_kB(string, "MemFree:")
+				+ get_kB(string, "Buffers:")
+				+ get_kB(string, "Cached:"));
+	}
+	page_size = sysconf(_SC_PAGESIZE);
+	available_pages = sysconf(available_only ?
+		_SC_AVPHYS_PAGES : _SC_PHYS_PAGES);
 	return page_size < 0 || available_pages < 0 ?
 		0 : (size_t)page_size * (size_t)available_pages;
 }
