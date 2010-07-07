@@ -21,27 +21,36 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 	protected final int yBins = 256;
 	// The name of the result 2D histogram to pass elsewhere
 	protected String title;
-
+	// Swap or not swap ch1 and ch2
+	boolean swapChannels = false;
+	// member variables for labeling
+	String ch1Label = "Channel 1";
+	String ch2Label = "Channel 2";
 
 	public Histogram2D(){
 		this("2D Histogram");
 	}
 
 	public Histogram2D(String title){
+		this(title, false);
+	}
+
+	public Histogram2D(String title, boolean swapChannels){
 		this.title = title;
+		this.swapChannels = swapChannels;
 	}
 
 	public void execute(DataContainer container) throws MissingPreconditionException {
 
-		double ch1Max = container.getMaxCh1();
-		double ch2Max = container.getMaxCh2();
+		double ch1Max = swapChannels ? container.getMaxCh2() : container.getMaxCh1();
+		double ch2Max = swapChannels ? container.getMaxCh1() : container.getMaxCh2();
 
 		double ch1BinWidth = (double) xBins / (double)(ch1Max + 1);
 		double ch2BinWidth = (double) yBins / (double)(ch2Max + 1);
 
 		// get the 2 images for the calculation of Pearson's
-		Image<T> img1 = container.getSourceImage1();
-		Image<T> img2 = container.getSourceImage2();
+		Image<T> img1 = swapChannels ? container.getSourceImage2() : container.getSourceImage1();
+		Image<T> img2 = swapChannels ? container.getSourceImage1() : container.getSourceImage2();
 
 		// get the cursors for iterating through pixels in images
 		Cursor<T> cursor1 = img1.createCursor();
@@ -80,7 +89,10 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 			histogram2DCursor.getType().set(count);
 		}
 
-		Result result = new Result.Histogram2DResult(title, plotImage, ch1BinWidth, ch2BinWidth, "Channel 1", "Channel 2");
+		String label1 = swapChannels ? ch2Label : ch1Label;
+		String label2 = swapChannels ? ch1Label : ch2Label;
+
+		Result result = new Result.Histogram2DResult(title, plotImage, ch1BinWidth, ch2BinWidth, label1, label2);
 		container.add(result);
 	}
 }

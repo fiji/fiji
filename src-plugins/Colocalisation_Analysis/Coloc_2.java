@@ -34,7 +34,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 
 		userSelectedJobs.add(new PearsonsCorrelation(PearsonsCorrelation.Implementation.Fast));
 		userSelectedJobs.add(new Histogram2D());
-		userSelectedJobs.add(new Histogram2D("hello"));
+		userSelectedJobs.add(new Histogram2D("hello", true));
 
 		try {
 			for (Algorithm a : userSelectedJobs){
