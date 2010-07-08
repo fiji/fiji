@@ -367,6 +367,7 @@ static void string_replace(struct string *string, char from, char to)
 			string->buffer[j] = to;
 }
 
+__attribute__((unused))
 static int string_read_file(struct string *string, const char *path) {
 	FILE *file = fopen(path, "rb");
 	char buffer[1024];
