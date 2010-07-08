@@ -22,10 +22,10 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 	// The name of the result 2D histogram to pass elsewhere
 	protected String title;
 	// Swap or not swap ch1 and ch2
-	boolean swapChannels = false;
+	protected boolean swapChannels = false;
 	// member variables for labeling
-	String ch1Label = "Channel 1";
-	String ch2Label = "Channel 2";
+	protected String ch1Label = "Channel 1";
+	protected String ch2Label = "Channel 2";
 
 	public Histogram2D(){
 		this("2D Histogram");
@@ -40,17 +40,83 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 		this.swapChannels = swapChannels;
 	}
 
+	/**
+	 * Gets the maximum of channel one. Takes channel
+	 * swapping into consideration and will return max
+	 * of channel two if swapped.
+	 *
+	 * @return The maximum of what is seen as channel one.
+	 */
+	protected double getMaxCh1(DataContainer container) {
+		return swapChannels ? container.getMaxCh2() : container.getMaxCh1();
+	}
+
+	/**
+	 * Gets the maximum of channel two. Takes channel
+	 * swapping into consideration and will return max
+	 * of channel one if swapped.
+	 *
+	 * @return The maximum of what is seen as channel two.
+	 */
+	protected double getMaxCh2(DataContainer container) {
+		return swapChannels ? container.getMaxCh1() : container.getMaxCh2();
+	}
+
+	/**
+	 * Gets the image of channel one. Takes channel
+	 * swapping into consideration and will return image
+	 * of channel two if swapped.
+	 *
+	 * @return The image of what is seen as channel one.
+	 */
+	protected Image<T> getImageCh1(DataContainer container) {
+		return swapChannels ? container.getSourceImage2() : container.getSourceImage1();
+	}
+
+	/**
+	 * Gets the image of channel two. Takes channel
+	 * swapping into consideration and will return image
+	 * of channel one if swapped.
+	 *
+	 * @return The image of what is seen as channel two.
+	 */
+	protected Image<T> getImageCh2(DataContainer container) {
+		return swapChannels ? container.getSourceImage1() : container.getSourceImage2();
+	}
+
+	/**
+	 * Gets the label of channel one. Takes channel
+	 * swapping into consideration and will return label
+	 * of channel two if swapped.
+	 *
+	 * @return The label of what is seen as channel one.
+	 */
+	protected String getLabelCh1() {
+		return swapChannels ? ch2Label : ch1Label;
+	}
+
+	/**
+	 * Gets the label of channel two. Takes channel
+	 * swapping into consideration and will return label
+	 * of channel one if swapped.
+	 *
+	 * @return The label of what is seen as channel two.
+	 */
+	protected String getLabelCh2() {
+		return swapChannels ? ch1Label : ch2Label;
+	}
+
 	public void execute(DataContainer container) throws MissingPreconditionException {
 
-		double ch1Max = swapChannels ? container.getMaxCh2() : container.getMaxCh1();
-		double ch2Max = swapChannels ? container.getMaxCh1() : container.getMaxCh2();
+		double ch1Max = getMaxCh1(container);
+		double ch2Max = getMaxCh2(container);
 
 		double ch1BinWidth = (double) xBins / (double)(ch1Max + 1);
 		double ch2BinWidth = (double) yBins / (double)(ch2Max + 1);
 
 		// get the 2 images for the calculation of Pearson's
-		Image<T> img1 = swapChannels ? container.getSourceImage2() : container.getSourceImage1();
-		Image<T> img2 = swapChannels ? container.getSourceImage1() : container.getSourceImage2();
+		Image<T> img1 = getImageCh1(container);
+		Image<T> img2 = getImageCh2(container);
 
 		// get the cursors for iterating through pixels in images
 		Cursor<T> cursor1 = img1.createCursor();
@@ -89,8 +155,8 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 			histogram2DCursor.getType().set(count);
 		}
 
-		String label1 = swapChannels ? ch2Label : ch1Label;
-		String label2 = swapChannels ? ch1Label : ch2Label;
+		String label1 = getLabelCh1();
+		String label2 = getLabelCh2();
 
 		Result result = new Result.Histogram2DResult(title, plotImage, ch1BinWidth, ch2BinWidth, label1, label2);
 		container.add(result);
