@@ -7,8 +7,12 @@ package fiji.plugin.nperry;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.ListIterator;
+
+import javax.media.j3d.Transform3D;
 
 import ij.gui.GenericDialog;
+import ij.gui.PointRoi;
 import ij.plugin.PlugIn;
 import ij.*;
 import ij.process.StackConverter;
@@ -25,6 +29,7 @@ import mpicbg.imglib.cursor.special.LocalNeighborhoodCursor;
 import mpicbg.imglib.cursor.special.LocalNeighborhoodCursor3D;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImagePlusAdapter;
+import mpicbg.imglib.interpolation.InterpolatorFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.type.logic.BitType;
 import mpicbg.imglib.type.numeric.RealType;
@@ -39,8 +44,10 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	/* Bitmasks used in the findMaxima algorithm to perform quick checks */
 	final static byte VISITED = (byte)1;	// pixel has been added to the lake, but not had neighbors inspected (explored, but not searched)
 	final static byte PROCESSED = (byte)2;	// pixel has been added to the lake, and had neighbors inspected (explored, and searched)
-	final static float GOAL_DOWNSAMPLED_BLOB_DIAM = 10f;
-	final static double IDEAL_SIGMA_FOR_DOWNSAMPLED_BLOB_DIAM = 1.55;
+	final static float GOAL_DOWNSAMPLED_BLOB_DIAM_3D = 10f;
+	final static float GOAL_DOWNSAMPLED_BLOB_DIAM_2D = 20f;
+	final static double IDEAL_SIGMA_FOR_DOWNSAMPLED_BLOB_DIAM_3D = 1.55f;
+	final static double IDEAL_SIGMA_FOR_DOWNSAMPLED_BLOB_DIAM_2D = 6f;
 	
 	/** Ask for parameters and then execute. */
 	public void run(String arg) {
@@ -51,51 +58,46 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		// 2 - Ask for parameters:
 		GenericDialog gd = new GenericDialog("Track");
 		gd.addNumericField("Average blob diameter (pixels):", 20, 0);  				// get the expected blob size (in pixels).
-		//gd.addNumericField("Sigma:", 2, 3);
-		//gd.addChoice("Unit of length:", new String[] {"um", "pixel"}, "um");
-		//gd.addNumericField("Downsampling factor", 0.5, 3);
 		gd.addNumericField("Pixel width:", imp.getCalibration().pixelWidth, 3);		// used to calibrate the image for 3D rendering
 		gd.addNumericField("Pixel height:", imp.getCalibration().pixelHeight, 3);	// used to calibrate the image for 3D rendering
 		gd.addNumericField("Voxel depth:", imp.getCalibration().pixelDepth, 3);		// used to calibrate the image for 3D rendering
-		gd.addCheckbox("Use median filter:", false);
-		gd.addCheckbox("Allow edge maxima:", false);
+		gd.addCheckbox("Use median filter", false);
+		gd.addCheckbox("Allow edge maxima", false);
 		gd.showDialog();
 		if (gd.wasCanceled()) return;
 
 		// 3 - Retrieve parameters from dialogue:
-		double diam = (double)gd.getNextNumber();
-		//double sigma = (double)gd.getNextNumber();
-		//String unitOfLength = (String)gd.getNextString();
-		//float downsamplingFactor = (float)gd.getNextNumber();
-		double pixelWidth = (double)gd.getNextNumber();
-		double pixelHeight = (double)gd.getNextNumber();
-		double pixelDepth = (double)gd.getNextNumber();
+		float diam = (float)gd.getNextNumber();
+		float pixelWidth = (float)gd.getNextNumber();
+		float pixelHeight = (float)gd.getNextNumber();
+		float pixelDepth = (float)gd.getNextNumber();
 		boolean useMedFilt = (boolean)gd.getNextBoolean();
 		boolean allowEdgeMax = (boolean)gd.getNextBoolean();
 		
 		// 4 - Execute!
-		float downsamplingFactor = (float) 1f / ((float)diam / GOAL_DOWNSAMPLED_BLOB_DIAM);
-		ArrayList< int[] > result = exec(imp, diam, useMedFilt, allowEdgeMax, downsamplingFactor);
+		float downsamplingFactor;
+		if(imp.getNDimensions() == 3) {
+			downsamplingFactor = (float) 1f / ((float)diam / GOAL_DOWNSAMPLED_BLOB_DIAM_3D);
+		} else {
+			downsamplingFactor = (float) 1f / ((float)diam / GOAL_DOWNSAMPLED_BLOB_DIAM_2D);
+		}
+		Object[] result = exec(imp, diam, useMedFilt, allowEdgeMax, downsamplingFactor, pixelWidth, pixelHeight, pixelDepth);
 		
 		// 5 - Display new image and overlay maxima
 		if (null != result) {
-			//ImageTransform imgTran = new ImageTransform(ImagePlusAdapter.wrap(imp), new TranslationModel3D(), );
-			ImagePlus scaled = imp;
-			// NEED TO MAKE COPY OF IMAGE!!!!
-			
-			// If original image is 3D, create a 3D rendering of the image and overlay maxima
-			if (img.getNumDimensions() == 3) {
-				IJ.log("Displaying 3D rendering with maxima...");
-				IJ.showStatus("Displaying 3D rendering with maxima overlayed...");
-				render3DAndOverlayMaxima(result, scaled, pixelWidth, pixelHeight, pixelDepth, downsamplingFactor);
+			if (img.getNumDimensions() == 3) {	// If original image is 3D, create a 3D rendering of the image and overlay maxima
+				Image3DUniverse univ = (Image3DUniverse) result[0];
+				univ.show();
 			} else {
-				
+				PointRoi roi = (PointRoi) result[0];
+				imp.setRoi(roi);
+				imp.updateAndDraw();
 			}
 		}
 	}
 	
 	/** Execute the plugin functionality: apply a median filter (for salt and pepper noise), a Gaussian blur, and then find maxima. */
-	public ArrayList< int[] > exec(ImagePlus imp, double diam, boolean useMedFilt, boolean allowEdgeMax, float downsamplingFactor) {
+	public Object[] exec(ImagePlus imp, double diam, boolean useMedFilt, boolean allowEdgeMax, float downsamplingFactor, float pixelWidth, float pixelHeight, float pixelDepth) {
 		// 0 - Check validity of parameters:
 		if (null == imp) return null;
 		
@@ -104,7 +106,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		int numDim = img.getNumDimensions();
 		
 		// 2 - Downsample to improve run time. The image is downsampled by the factor necessary to achieve a resulting blob size of about 10 pixels (therefore, downsample factor depends on the blob size inputed by the user).
-		if (downsamplingFactor != 1) {
+		if (downsamplingFactor != 1) {  // downsampling factor of 1 indicates no downsampling to be done
 			IJ.log("Downsampling...");
 			IJ.showStatus("Downsampling...");
 			final DownSample<T> downSampler = new DownSample<T>(img, downsamplingFactor);
@@ -150,7 +152,12 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		// 4 - Apply a Gaussian filter (code courtesy of Stephan Preibisch). Theoretically, this will make the center of blobs the brightest, and thus easier to find:
 		IJ.log("Applying Gaussian filter...");
 		IJ.showStatus("Applying Gaussian filter...");
-		final GaussianConvolutionRealType<T> conv = new GaussianConvolutionRealType<T>(img, new OutOfBoundsStrategyMirrorFactory<T>(), IDEAL_SIGMA_FOR_DOWNSAMPLED_BLOB_DIAM);
+		final GaussianConvolutionRealType<T> conv;
+		if (numDim == 3) {
+			conv = new GaussianConvolutionRealType<T>(img, new OutOfBoundsStrategyMirrorFactory<T>(), IDEAL_SIGMA_FOR_DOWNSAMPLED_BLOB_DIAM_3D);
+		} else {
+			conv = new GaussianConvolutionRealType<T>(img, new OutOfBoundsStrategyMirrorFactory<T>(), IDEAL_SIGMA_FOR_DOWNSAMPLED_BLOB_DIAM_2D);
+		}
 		if (conv.checkInput() && conv.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
 			img = conv.getResult(); 
 		} else { 
@@ -168,7 +175,38 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			maxima = findMaxima3D(img, allowEdgeMax);
 		}
 		
-		return maxima;
+		// 6 - Setup for displaying results
+		if (numDim == 3) {  // prepare 3D render
+			ImagePlus scaled = imp;
+			Image3DUniverse univ = 	render3DAndOverlayMaxima(maxima, scaled, pixelWidth, pixelHeight, pixelDepth, downsamplingFactor);
+			return new Object[]{univ};
+		} else {
+			PointRoi roi = preparePointRoi(maxima, downsamplingFactor);
+			return new Object[]{roi};
+		}
+		
+	}
+	
+	/**
+	 * 
+	 * @param maxima
+	 * @param downsamplingFactor
+	 * @return
+	 */
+	public PointRoi preparePointRoi (ArrayList< int[] > maxima, float downsamplingFactor) {
+		int numPoints = maxima.size();
+		int ox[] = new int[numPoints];
+		int oy[] = new int[numPoints];
+		ListIterator< int[] > itr = maxima.listIterator();
+		int index = 0;
+		while (itr.hasNext()) {
+			int curr[] = itr.next();
+			ox[index] = (int) (curr[0] / downsamplingFactor);
+			oy[index] = (int) (curr[1] / downsamplingFactor);
+			index++;
+		}
+		PointRoi roi = new PointRoi(ox, oy, numPoints);
+		return roi;
 	}
 	
 	/**
@@ -179,7 +217,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 * @param pixelHeight
 	 * @param pixelDepth
 	 */
-	public void render3DAndOverlayMaxima(ArrayList< int[] > maxima, ImagePlus scaled, double pixelWidth, double pixelHeight, double pixelDepth, float downsamplingFactor) {
+	public Image3DUniverse render3DAndOverlayMaxima(ArrayList< int[] > maxima, ImagePlus scaled, double pixelWidth, double pixelHeight, double pixelDepth, float downsamplingFactor) {
 		// Adjust image properties for 3D rendering
 		scaled.getCalibration().pixelWidth = pixelWidth;
 		scaled.getCalibration().pixelHeight = pixelHeight;
@@ -188,9 +226,8 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		// Convert to a usable format
 		new StackConverter(scaled).convertToGray8();
 		
-		// Create a universe and show it
+		// Create a universe, but do not show it
 		Image3DUniverse univ = new Image3DUniverse();
-		univ.show();
 		
 		// Add the image as a volume rendering
 		Content c = univ.addVoltex(scaled);
@@ -211,6 +248,8 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 
 		// Make the point list visible
 		c.showPointList(true);
+		
+		return univ;
 	}
 	
 	/**
