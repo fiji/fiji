@@ -47,6 +47,28 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 	}
 
 	/**
+	 * Gets the minimum of channel one. Takes channel
+	 * swapping into consideration and will return min
+	 * of channel two if swapped.
+	 *
+	 * @return The minimum of what is seen as channel one.
+	 */
+	protected double getMinCh1(DataContainer container) {
+		return swapChannels ? container.getMinCh2() : container.getMinCh1();
+	}
+
+	/**
+	 * Gets the minimum of channel two. Takes channel
+	 * swapping into consideration and will return min
+	 * of channel one if swapped.
+	 *
+	 * @return The minimum of what is seen as channel two.
+	 */
+	protected double getMinCh2(DataContainer container) {
+		return swapChannels ? container.getMinCh1() : container.getMinCh2();
+	}
+
+	/**
 	 * Gets the maximum of channel one. Takes channel
 	 * swapping into consideration and will return max
 	 * of channel two if swapped.
