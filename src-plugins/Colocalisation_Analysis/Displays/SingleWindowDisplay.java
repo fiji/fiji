@@ -15,6 +15,7 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 
+import mpicbg.imglib.algorithm.math.ImageStatistics;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 
 import ij.IJ;
@@ -133,7 +134,7 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 		ImagePlus imp = ImageJFunctions.displayAsVirtualStack( result.getData() );
 		this.imp.setProcessor(imp.getProcessor());
 		ImageProcessor ip = this.imp.getProcessor();
-		double max = BasicImageStats.getImageMax(result.getData());
+		double max = ImageStatistics.getImageMax(result.getData());
 		this.imp.setDisplayRange(0.0, max);
 		IJ.run(this.imp, "Fire", null);
 		this.imp.updateAndDraw();

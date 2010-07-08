@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import mpicbg.imglib.algorithm.math.ImageStatistics;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
 
@@ -61,12 +62,12 @@ public class DataContainer<T extends RealType<T>> implements Iterable<Result> {
 		ch2MinThreshold = dummyT.getMinValue();
 		ch2MaxThreshold = dummyT.getMaxValue();
 
-		meanCh1 = BasicImageStats.getImageMean(sourceImage1);
-		meanCh2 = BasicImageStats.getImageMean(sourceImage2);
-		minCh1 = BasicImageStats.getImageMin(sourceImage1);
-		minCh2 = BasicImageStats.getImageMin(sourceImage2);
-		maxCh1 = BasicImageStats.getImageMax(sourceImage1);
-		maxCh2 = BasicImageStats.getImageMax(sourceImage2);
+		meanCh1 = ImageStatistics.getImageMean(sourceImage1);
+		meanCh2 = ImageStatistics.getImageMean(sourceImage2);
+		minCh1 = ImageStatistics.getImageMin(sourceImage1);
+		minCh2 = ImageStatistics.getImageMin(sourceImage2);
+		maxCh1 = ImageStatistics.getImageMax(sourceImage1);
+		maxCh2 = ImageStatistics.getImageMax(sourceImage2);
 	}
 
 	/**
