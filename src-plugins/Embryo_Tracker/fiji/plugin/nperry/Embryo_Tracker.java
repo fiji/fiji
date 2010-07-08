@@ -13,6 +13,7 @@ import javax.media.j3d.Transform3D;
 
 import ij.gui.GenericDialog;
 import ij.gui.PointRoi;
+import ij.gui.WaitForUserDialog;
 import ij.plugin.PlugIn;
 import ij.*;
 import ij.process.StackConverter;
@@ -58,11 +59,12 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		// 2 - Ask for parameters:
 		GenericDialog gd = new GenericDialog("Track");
 		gd.addNumericField("Average blob diameter (pixels):", 20, 0);  				// get the expected blob size (in pixels).
+		gd.addCheckbox("Use median filter", false);
+		gd.addCheckbox("Allow edge maxima", false);
+		gd.addMessage("For 3D images, set calibration information for proper 3D rendering:");
 		gd.addNumericField("Pixel width:", imp.getCalibration().pixelWidth, 3);		// used to calibrate the image for 3D rendering
 		gd.addNumericField("Pixel height:", imp.getCalibration().pixelHeight, 3);	// used to calibrate the image for 3D rendering
 		gd.addNumericField("Voxel depth:", imp.getCalibration().pixelDepth, 3);		// used to calibrate the image for 3D rendering
-		gd.addCheckbox("Use median filter", false);
-		gd.addCheckbox("Allow edge maxima", false);
 		gd.showDialog();
 		if (gd.wasCanceled()) return;
 
@@ -74,8 +76,31 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		boolean useMedFilt = (boolean)gd.getNextBoolean();
 		boolean allowEdgeMax = (boolean)gd.getNextBoolean();
 		
+		// 3.5 - Allow user to draw blobs
+		
+		/** Render in 3D */
+		// Adjust image properties for 3D rendering
+		imp.getCalibration().pixelWidth = pixelWidth;
+		imp.getCalibration().pixelHeight = pixelHeight;
+		imp.getCalibration().pixelDepth = pixelDepth;
+		
+		// Convert to a usable format
+		new StackConverter(imp).convertToGray8();
+		
+		// Create a universe, but do not show it
+		Image3DUniverse univInit = new Image3DUniverse();
+		univInit.show();
+		
+		// Add the image as a volume rendering
+		Content c = univInit.addVoltex(imp);
+		
+		/** Display message */
+		IJ.showMessage("Using the 'Eliptical Selection Tool,' please indicate the shape of a typical blob you would like to segment.");
+		WaitForUserDialog wait = new WaitForUserDialog("Trace Shape of Blob");
+		
+		
 		// 4 - Execute!
-		float downsamplingFactor;
+		/*float downsamplingFactor;
 		if(imp.getNDimensions() == 3) {
 			downsamplingFactor = (float) 1f / ((float)diam / GOAL_DOWNSAMPLED_BLOB_DIAM_3D);
 		} else {
@@ -86,14 +111,14 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		// 5 - Display new image and overlay maxima
 		if (null != result) {
 			if (img.getNumDimensions() == 3) {	// If original image is 3D, create a 3D rendering of the image and overlay maxima
-				Image3DUniverse univ = (Image3DUniverse) result[0];
-				univ.show();
+				Image3DUniverse univFin = (Image3DUniverse) result[0];
+				univFin.show();
 			} else {
 				PointRoi roi = (PointRoi) result[0];
 				imp.setRoi(roi);
 				imp.updateAndDraw();
 			}
-		}
+		}*/
 	}
 	
 	/** Execute the plugin functionality: apply a median filter (for salt and pepper noise), a Gaussian blur, and then find maxima. */
