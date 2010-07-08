@@ -16,9 +16,9 @@ import mpicbg.imglib.container.array.ArrayContainerFactory;
 public class Histogram2D<T extends RealType<T>> extends Algorithm {
 
 	// The width of the scatter-plot
-	protected final int xBins = 256;
+	protected int xBins = 256;
 	// The height of the scatter-plot
-	protected final int yBins = 256;
+	protected int yBins = 256;
 	// The name of the result 2D histogram to pass elsewhere
 	protected String title;
 	// Swap or not swap ch1 and ch2
@@ -38,6 +38,12 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 	public Histogram2D(String title, boolean swapChannels){
 		this.title = title;
 		this.swapChannels = swapChannels;
+
+		if (swapChannels) {
+			int xBins = this.xBins;
+			this.xBins = this.yBins;
+			this.yBins = xBins;
+		}
 	}
 
 	/**
