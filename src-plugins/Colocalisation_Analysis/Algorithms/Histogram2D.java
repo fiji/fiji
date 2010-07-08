@@ -150,8 +150,8 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 			 * Scale values for both channels to fit in the range.
 			 * Moreover mirror the y value on the x axis.
 			 */
-			int scaledXvalue = (int)(ch1 * ch1BinWidth);
-			int scaledYvalue = (yBins - 1) - (int)(ch2 * ch2BinWidth);
+			int scaledXvalue = getXValue(ch1, ch1BinWidth, ch2, ch2BinWidth);
+			int scaledYvalue = getYValue(ch1, ch1BinWidth, ch2, ch2BinWidth);
 			// set position of input/output cursor
 			histogram2DCursor.setPosition( new int[] {scaledXvalue, scaledYvalue});
 			// get current value at position and increment it
@@ -166,5 +166,25 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 
 		Result result = new Result.Histogram2DResult(title, plotImage, ch1BinWidth, ch2BinWidth, label1, label2);
 		container.add(result);
+	}
+
+	/**
+	 * Calculates the locations x value.
+	 * @param ch1Val The intensity of channel one
+	 * @param ch1BinWidt The bin width for channel one
+	 * @return The x value of the data point location
+	 */
+	protected int getXValue(double ch1Val, int ch1BinWidth, double ch2Val, int ch2BinWidth) {
+		return (int)(ch1Val * ch1BinWidth);
+	}
+
+	/**
+	 * Calculates the locations y value.
+	 * @param ch2Val The intensity of channel one
+	 * @param ch2BinWidt The bin width for channel one
+	 * @return The x value of the data point location
+	 */
+	protected int getYValue(double ch1Val, int ch1BinWidth, double ch2Val, int ch2BinWidth) {
+		return (yBins - 1) - (int)(ch2Val * ch2BinWidth);
 	}
 }
