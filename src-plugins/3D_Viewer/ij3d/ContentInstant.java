@@ -197,7 +197,7 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 		visible = b;
 		whichChild.set(CO, b);
 		whichChild.set(CS, b && coordVisible);
-		whichChild.set(BB, b && bbVisible);
+// 		whichChild.set(BB, b && bbVisible);
 		// only if hiding, hide the point list
 		if(!b) {
 			showPointList(false);
