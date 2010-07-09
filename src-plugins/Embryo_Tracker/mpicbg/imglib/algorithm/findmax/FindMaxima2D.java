@@ -134,14 +134,14 @@ public class FindMaxima2D<T extends RealType<T>> implements Algorithm, Benchmark
 		final long startTime = System.currentTimeMillis();
 		
 		final LocalizableByDimCursor<T> curr = image.createLocalizableByDimCursor(outOfBoundsFactory);	// Used by step 2.1, the outer cursor
-		LocalizableByDimCursor<T> local = image.createLocalizableByDimCursor(outOfBoundsFactory);		// Used by step 2.2, the lake/connected component cursor
-		LocalNeighborhoodCursor<T> neighbors = new LocalNeighborhoodCursor<T>(local);				// Used by step 2.3, the neighbor searching cursor
+		final LocalizableByDimCursor<T> local = image.createLocalizableByDimCursor(outOfBoundsFactory);		// Used by step 2.2, the lake/connected component cursor
+		final LocalNeighborhoodCursor<T> neighbors = new LocalNeighborhoodCursor<T>(local);				// Used by step 2.3, the neighbor searching cursor
 		T currentValue = image.createType();							// holds the pixel intensity of the outer pixel/lake
 		T neighborValue;												// holds the pixel value of a neighbor, which is compared to currentValue
-		int width = image.getDimensions()[0];							// width of the image, used to map 3D coordinates to a 1D coordinate system for storing information about each pixel (visisted or not, etc)
-		byte visitedAndProcessed[] = new byte[image.getNumPixels()];	// holds information on whether the pixel has been added to the lake/connected component, or whether pixel has had neighbors directly searched already.
-		LinkedList< int[] > toSearch = new LinkedList< int[] >();		// pixels known to be in the lake/connected component that we have yet to search the neighbors of
-		LinkedList< int[] > searched = new LinkedList< int[] >();		// pixels in the lake/connected component that have had their neighbors searched.
+		final int width = image.getDimensions()[0];							// width of the image, used to map 3D coordinates to a 1D coordinate system for storing information about each pixel (visisted or not, etc)
+		final byte visitedAndProcessed[] = new byte[image.getNumPixels()];	// holds information on whether the pixel has been added to the lake/connected component, or whether pixel has had neighbors directly searched already.
+		final LinkedList< int[] > toSearch = new LinkedList< int[] >();		// pixels known to be in the lake/connected component that we have yet to search the neighbors of
+		final LinkedList< int[] > searched = new LinkedList< int[] >();		// pixels in the lake/connected component that have had their neighbors searched.
 		boolean isMax;													// stores whether our lake/connected component is a local maxima or not.
 		int nextCoords[] = new int [2];									// declare coordinate arrays outside while loops to speed up. holds the coordinates of pixel in step 2.2
 		int currCoords[] = new int[2];									// holds coordinates of pixel in step 2.1
