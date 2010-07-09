@@ -135,12 +135,8 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 	}
 
 	public void execute(DataContainer container) throws MissingPreconditionException {
-
-		double ch1Max = getMaxCh1(container);
-		double ch2Max = getMaxCh2(container);
-
-		double ch1BinWidth = (double) xBins / (double)(ch1Max + 1);
-		double ch2BinWidth = (double) yBins / (double)(ch2Max + 1);
+		double ch1BinWidth = getCh1BinWidth(container);
+		double ch2BinWidth = getCh2BinWidth(container);
 
 		// get the 2 images for the calculation of Pearson's
 		Image<T> img1 = getImageCh1(container);
@@ -188,6 +184,26 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 
 		Result result = new Result.Histogram2DResult(title, plotImage, ch1BinWidth, ch2BinWidth, label1, label2);
 		container.add(result);
+	}
+
+	/**
+	 * Calculates the bin width of one bin in x/ch1 direction.
+	 * @param container The container with images to work on
+	 * @return The width of one bin in x direction
+	 */
+	protected double getCh1BinWidth(DataContainer container) {
+		double ch1Max = getMaxCh1(container);
+		return (double) xBins / (double)(ch1Max + 1);
+	}
+
+	/**
+	 * Calculates the bin width of one bin in y/ch2 direction.
+	 * @param container The container with images to work on
+	 * @return The width of one bin in y direction
+	 */
+	protected double getCh2BinWidth(DataContainer container) {
+		double ch2Max = getMaxCh2(container);
+		return (double) yBins / (double)(ch2Max + 1);
 	}
 
 	/**
