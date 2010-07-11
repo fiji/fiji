@@ -115,8 +115,9 @@ public class FeatureStack
 	/** normalization flag */
 	private boolean normalize = false;
 	/** expected membrane thickness (in pixels) */
-	private int membraneSize = 1;
-	
+	private int membraneSize = 1;	
+	/** size of the patch to use to enhance membranes (in pixels, NxN) */
+	private int membranePatchSize = 19;
 	/**
 	 * Construct object to store stack of image features
 	 * @param image original image
@@ -166,6 +167,18 @@ public class FeatureStack
 	public int getWidth(){
 		return wholeStack.getWidth();
 	}
+	
+	/**
+	 * Set the membrane patch size (it must be an odd number)
+	 * @param patchSize membrane patch size
+	 */
+	public void setMembranePatchSize(int patchSize)
+	{
+		if(patchSize % 2 == 0)
+			patchSize ++;
+		this.membranePatchSize = patchSize;
+	}
+	
 	/**
 	 * Add Gaussian blur slice to current stack
 	 * @param sigma Gaussian radius
@@ -1042,7 +1055,7 @@ public class FeatureStack
 			}
 			// Membrane projections
 			if(enableFeatures[MEMBRANE])
-				futures.add(exe.submit( getMembraneFeatures(originalImage, 19, membraneSize) ));						
+				futures.add(exe.submit( getMembraneFeatures(originalImage, membranePatchSize, membraneSize) ));						
 
 			for(Future<ImagePlus> f : futures)
 			{
