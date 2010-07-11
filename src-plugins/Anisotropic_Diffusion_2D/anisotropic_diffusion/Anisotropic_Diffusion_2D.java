@@ -26,25 +26,35 @@ public class Anisotropic_Diffusion_2D implements PlugInFilter
 
 	// the following are the input parameters, with default values assigned to them
 	/** Number of iterations */
-	static int nb_iter       = 20;    
+	int nb_iter       = 20;    
+	static int stored_nb_iter = 20;
 	/** Number of smoothings per iteration */
-	static int nb_smoothings = 1;     
+	int nb_smoothings = 1;   
+	static int stored_nb_smoothings = 1;
 	/** Adapting time step */
-	static double dt         = 20.0;  
+	double dt         = 20.0;  
+	double stored_dt         = 20.0;
 	/** Diffusion limiter along minimal variations */
-	static float a1          = 0.5f;  
+	float a1          = 0.5f;
+	static float stored_a1          = 0.5f;  
 	/** Diffusion limiter along maximal variations */
-	static float a2          = 0.9f;  
+	float a2          = 0.9f;
+	static float stored_a2          = 0.9f;  
 	/** Iteration saving step */
-	static int save          = 20;    
+	int save          = 20; 
+	static int stored_save          = 20;    
 	/** display xdt value in each iteration */
-	static boolean sstats    = false; 
+	boolean sstats    = false; 
+	static boolean stored_sstats    = false;
 	/** measure needed runtime */
-	static boolean tstats    = false; 
+	boolean tstats    = false; 
+	static boolean stored_tstats    = false;
 	/** add labels to output stack */
-	static boolean add_labels    = false;
+	boolean add_labels    = false;
+	static boolean stored_add_labels    = false;
 	/** edge threshold */
-	static float edgeheight  = 5;     
+	float edgeheight  = 5;
+	static float stored_edgeheight  = 5;     
 
 	Color label_color;
 	Font font;
@@ -60,31 +70,31 @@ public class Anisotropic_Diffusion_2D implements PlugInFilter
 
 	public void setNumOfIterations(int nb_iter)
 	{
-		Anisotropic_Diffusion_2D.nb_iter = nb_iter;
+		this.nb_iter = nb_iter;
 	}
 	public void setSaveSteps(int save)
 	{
-		Anisotropic_Diffusion_2D.save = save;
+		this.save = save;
 	}
 	
 	public void setSmoothings(int nb_smoothings)
 	{
-		Anisotropic_Diffusion_2D.nb_smoothings = nb_smoothings;
+		this.nb_smoothings = nb_smoothings;
 	}
 	
 	public void setTimeSteps(int dt)
 	{
-		Anisotropic_Diffusion_2D.dt = dt;
+		this.dt = dt;
 	}
 	
 	public void setLimiterMinimalVariations(float a1)
 	{
-		Anisotropic_Diffusion_2D.a1 = a1;
+		this.a1 = a1;
 	}
 	
 	public void setLimiterMaximalVariations(float a2)
 	{
-		Anisotropic_Diffusion_2D.a2 = a2;
+		this.a2 = a2;
 	}
 	//-----------------------------------------------------------------------------------
 
@@ -117,19 +127,19 @@ public class Anisotropic_Diffusion_2D implements PlugInFilter
 	private boolean GUI()
 	{
 		GenericDialog gd = new GenericDialog("2D Anisotropic Diffusion Tschumperle-Deriche v"+ADTDVersion);
-		gd.addNumericField("Number of iterations", nb_iter, 0);
-		gd.addNumericField("Smoothings per iteration", nb_smoothings, 0);
+		gd.addNumericField("Number of iterations", stored_nb_iter, 0);
+		gd.addNumericField("Smoothings per iteration", stored_nb_smoothings, 0);
 		if (scount==1) {
 			if (save>nb_iter) save = nb_iter;
-			gd.addNumericField("Keep each ", save, 0, 2, "iteration");
+			gd.addNumericField("Keep each ", stored_save, 0, 2, "iteration");
 		}
-		gd.addNumericField("a1 (Diffusion limiter along minimal variations)", a1, 2);
-		gd.addNumericField("a2 (Diffusion limiter along maximal variations)", a2, 2);
-		gd.addNumericField("dt (Time step)", dt, 1);
-		gd.addNumericField("edge threshold height", edgeheight, 1);
+		gd.addNumericField("a1 (Diffusion limiter along minimal variations)", stored_a1, 2);
+		gd.addNumericField("a2 (Diffusion limiter along maximal variations)", stored_a2, 2);
+		gd.addNumericField("dt (Time step)", stored_dt, 1);
+		gd.addNumericField("edge threshold height", stored_edgeheight, 1);
 
         String[] labels = {"Show_filter stats", "Show_time stats", "Add labels"};
-		boolean[] values = {sstats, tstats, add_labels};
+		boolean[] values = {stored_sstats, stored_tstats, stored_add_labels};
 		gd.addCheckboxGroup(2, 2, labels, values);
 		gd.addMessage("Incorrect values will be replaced by defaults.\nLabels are drawn in the foreground color.\nPress Esc to stop processing.");
 		return getUserParams(gd);
@@ -144,24 +154,35 @@ public class Anisotropic_Diffusion_2D implements PlugInFilter
 		if (gd.wasCanceled()) return false;
 
 		nb_iter = (int) gd.getNextNumber();
+		stored_nb_iter = nb_iter;
 		if (nb_iter<1) nb_iter=1;
 
 		nb_smoothings = (int) gd.getNextNumber();
+		stored_nb_smoothings = nb_smoothings;
 		if (nb_smoothings<1) nb_smoothings=1;
 
 		if (scount==1)
 		{
 			save = (int) gd.getNextNumber();
-			if (save<1 || save>nb_iter) save=nb_iter;
+			stored_save = save;
+			if (save<1 || save>nb_iter) 
+				save=nb_iter;
 		} else
 			save = 0;
 		a1 = (float) gd.getNextNumber();
+		stored_a1 = a1;
 		a2 = (float) gd.getNextNumber();
+		stored_a2 = a2;
 		dt = (double) gd.getNextNumber();
+		stored_dt = dt;
 		edgeheight = (float) gd.getNextNumber();
+		stored_edgeheight = edgeheight;
 		sstats = (boolean) gd.getNextBoolean();
+		stored_sstats = sstats;
 		tstats = (boolean) gd.getNextBoolean();
+		stored_tstats = tstats;
 		add_labels = (boolean) gd.getNextBoolean();
+		stored_add_labels = add_labels;
 
 		return true;
 	} // end of 'getUserParams' method
