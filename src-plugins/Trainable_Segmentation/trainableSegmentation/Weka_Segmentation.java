@@ -41,6 +41,7 @@ import ij.ImagePlus;
 import ij.WindowManager;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
@@ -244,6 +245,7 @@ public class Weka_Segmentation implements PlugIn
 	
 	/** expected membrane thickness */
 	private int membraneThickness = 1;
+	private int membranePatchSize = 19;
 	
 	/** list of the names of features to use */
 	private ArrayList<String> featureNames = null;
@@ -1820,11 +1822,20 @@ public class Weka_Segmentation implements PlugIn
 					usedFeatures[i] = true;
 					if(i == FeatureStack.MEMBRANE)
 					{
-						final int index = a.name().lastIndexOf("_");
+						int index = a.name().indexOf("_");
+						final int patchSize = Integer.parseInt(a.name().substring(index+3));
+						if(patchSize != membranePatchSize)	
+						{
+							membranePatchSize = patchSize;
+							this.featureStack.setMembranePatchSize(patchSize);
+							featuresChanged = true;
+						}
+						index = a.name().lastIndexOf("_");
 						final int thickness = Integer.parseInt(a.name().substring(index+1));
 						if(thickness != membraneThickness)	
 						{
 							membraneThickness = thickness;
+							this.featureStack.setMembraneSize(thickness);
 							featuresChanged = true;
 						}
 						
@@ -2974,11 +2985,12 @@ public class Weka_Segmentation implements PlugIn
 	public static void filterFeatureStackByList(
 			ArrayList<String> featureNames, 
 			FeatureStack featureStack)
-	{
-		IJ.log("Filtering feature stack by selected attributes...");
+	{		
 		if (null == featureNames)
 			return;					
 		
+		IJ.log("Filtering feature stack by selected attributes...");
+	
 		for(int i=1; i<=featureStack.getSize(); i++)
 		{			
 			final String featureName = featureStack.getSliceLabel(i);
@@ -3350,8 +3362,7 @@ public class Weka_Segmentation implements PlugIn
 
 		final ArrayList< Future<double[][]> > futures = new ArrayList< Future<double[][]> >();
 						
-		final Instances[] partialData = new Instances[numOfProcessors];
-		final int partialSize = data.numInstances() / numOfProcessors;
+		final Instances[] partialData = new Instances[numOfProcessors];		
 		final Rectangle[] rects = new Rectangle[numOfProcessors];
 		
 		ImagePlus result = null;
@@ -3361,20 +3372,23 @@ public class Weka_Segmentation implements PlugIn
 			int block_height = height / numOfProcessors;
 			if (height % 2 != 0) 
 				block_height++;
-		
+			
+			int partialSize = block_height * width;
+			
 			for (int i=0; i<numOfProcessors; i++) 
 			{
+				int y_start = i*block_height;
+				
 				if(i == numOfProcessors-1)
-				{
-					partialData[i] = new Instances(data, i*partialSize, data.numInstances()-i*partialSize);
+				{	
 					block_height = height - i*block_height;
+					partialData[i] = new Instances(data, i*partialSize, data.numInstances()-i*partialSize);				
 				}
 				else
 				{
 					partialData[i] = new Instances(data, i*partialSize, partialSize);
 				}
-
-				int y_start = i*block_height;
+				
 				rects[i] = new Rectangle(0, y_start, width, block_height);
 				
 				futures.add( exe.submit(getDistributionForIntances(partialData[i], this.classifier)) );
@@ -3383,8 +3397,20 @@ public class Weka_Segmentation implements PlugIn
 			for(int index = 0 ; index < futures.size(); index ++)
 			{
 				final double[][] partialProb = futures.get(index).get();
+				if(null == partialProb)
+				{
+					IJ.log("Error while calculating probability map (part " + index + ")");
+					return null;
+				}
 				for(int k = 0 ; k < nClasses; k++)
-					classProb[k].insert( new FloatProcessor(width, block_height, partialProb[k]), rects[index].x, rects[index].y);
+				{
+					if(null == partialProb[k])
+					{
+						IJ.log("Error while calculating probability map (part " + index + ", class " + k + ")");
+						return null;
+					}
+					classProb[k].insert( new FloatProcessor(rects[index].width, rects[index].height, partialProb[k]), rects[index].x, rects[index].y);
+				}
 			}
 		
 			for(int k = 0 ; k < nClasses; k++)
@@ -3396,6 +3422,7 @@ public class Weka_Segmentation implements PlugIn
 		catch(Exception ex)
 		{
 			IJ.log("Error when extracting probability maps!");
+			ex.printStackTrace();
 		}
 		finally{
 			exe.shutdown();
@@ -3505,6 +3532,7 @@ public class Weka_Segmentation implements PlugIn
 	 * 
 	 * @param image input image
 	 * @param labels binary labels
+	 * @param mask binary mask to use in the warping
 	 * @param resample flag to resample input data (to homogenize classes distribution)
 	 * @param selectAttributes flag to select best attributes and filter the data
 	 * @return warped labels from applying BLOTC 
@@ -3512,6 +3540,7 @@ public class Weka_Segmentation implements PlugIn
 	public ImagePlus trainBLOTC(
 			final ImagePlus image, 
 			final ImagePlus labels,
+			final ImagePlus mask,
 			final boolean resample,
 			final boolean selectAttributes)
 	{
@@ -3598,7 +3627,7 @@ public class Weka_Segmentation implements PlugIn
 			IJ.log("Warping ground truth...");
 			// Warp ground truth, relax original labels to proposal. Only simple
 			// points warping is allowed.
-			warpedLabels = simplePointWarp2d(warpedLabels, proposal, null, 0.5);
+			warpedLabels = simplePointWarp2d(warpedLabels, proposal, mask, 0.5);
 
 			// Update training data with warped labels
 			if(!resample)
@@ -3646,6 +3675,27 @@ public class Weka_Segmentation implements PlugIn
 		return filteredIns;
 		
 	}
+
+	/**
+	 * Homogenize number of instances per class
+	 * 
+	 */
+	public void homogenizeTrainingData()
+	{
+		final Resample filter = new Resample();
+		Instances filteredIns = null;
+		filter.setBiasToUniformClass(1.0);
+		try {
+			filter.setInputFormat(this.loadedTrainingData);
+			filter.setNoReplacement(false);
+			filter.setSampleSizePercent(100);
+			filteredIns = Filter.useFilter(this.loadedTrainingData, filter);			
+		} catch (Exception e) {
+			IJ.log("Error when resampling input data!");
+			e.printStackTrace();
+		}
+		this.loadedTrainingData = filteredIns;		
+	}	
 	
 	/**
 	 * Select attributes of current data by BestFirst search.
@@ -4071,6 +4121,8 @@ public class Weka_Segmentation implements PlugIn
 		
 		final ImagePlus sourceReal = new ImagePlus("source_real", source.duplicate());
 		
+		final ImagePlus maskReal = (null != mask) ? new ImagePlus("mask_real", mask.duplicate()) : null;
+		
 		final int width = target.getWidth();
 		final int height = target.getHeight();
 		
@@ -4078,6 +4130,8 @@ public class Weka_Segmentation implements PlugIn
 		IJ.run(targetReal, "Canvas Size...", "width="+ (width + 2) + " height=" + (height + 2) + " position=Center zero");
 		IJ.run(targetBin, "Canvas Size...", "width="+ (width + 2) + " height=" + (height + 2) + " position=Center zero");
 		IJ.run(sourceReal, "Canvas Size...", "width="+ (width + 2) + " height=" + (height + 2) + " position=Center zero");				
+		if(null != maskReal)
+			IJ.run(maskReal, "Canvas Size...", "width="+ (width + 2) + " height=" + (height + 2) + " position=Center zero");	
 		
 		// make sure source and target are binary images
 		final float[] sourceRealPix = (float[])sourceReal.getProcessor().getPixels();
@@ -4099,11 +4153,15 @@ public class Weka_Segmentation implements PlugIn
 			
 			diff_before = diff;
 			
-			// Count missmatches
+			// Count mismatches
 			float pixels[] = (float[]) missclass_points_image.getPixels();			
+			float mask_pixels[] = (null != mask) ? (float[]) maskReal.getProcessor().getPixels() : new float[pixels.length];
+			if(null == mask)
+				Arrays.fill(mask_pixels, 1f);
+			
 			diff = 0;
 			for(int k = 0; k < pixels.length; k++)
-				if(pixels[k] != 0)
+				if(pixels[k] != 0 && mask_pixels[k] != 0)
 					diff ++;
 									
 			//IJ.log("Difference = " + diff);
@@ -4119,7 +4177,7 @@ public class Weka_Segmentation implements PlugIn
 			for(int x = 1; x < width+1; x++)
 				for(int y = 1; y < height+1; y++)
 				{
-					if(pixels[x+y*(width+2)] != 0)
+					if(pixels[x+y*(width+2)] != 0 && mask_pixels[x+y*(width+2)] != 0)
 						mismatches.add(new Point3f(x , y , (float) Math.abs( realTargetPix[x+y*(width+2)] - binaryThreshold) ));
 				}									
 			
