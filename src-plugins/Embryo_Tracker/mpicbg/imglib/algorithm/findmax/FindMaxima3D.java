@@ -27,12 +27,12 @@ import mpicbg.imglib.image.Image;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
 import mpicbg.imglib.type.numeric.RealType;
 
-public class FindMaxima3D<T extends RealType<T>> implements Algorithm, Benchmark
+public class FindMaxima3D<T extends RealType<T>> implements Algorithm, Benchmark, LocalMaximaFinder
 {
 	final protected Image<T> image;											// holds the image the algorithm is to be applied to
 	final protected OutOfBoundsStrategyFactory<T> outOfBoundsFactory;		// holds the outOfBoundsStrategy used by the cursors in this algorithm
 	final protected boolean allowEdgeMax;									// if true, maxima found on the edge of the images will be included in the results; if false, edge maxima are excluded
-	final protected ArrayList< int[] > maxima = new ArrayList< int[] >();	// an array list which holds the coordinates of the maxima found in the image.
+	final protected ArrayList< double[] > maxima = new ArrayList< double[] >();	// an array list which holds the coordinates of the maxima found in the image.
 	
 	private long processingTime;											// stores the run time of process() once the method is invoked.
 	private String errorMessage = "";										// stores any error messages.
@@ -147,7 +147,7 @@ public class FindMaxima3D<T extends RealType<T>> implements Algorithm, Benchmark
 		int nextCoords[] = new int [3];									// declare coordinate arrays outside while loops to speed up. holds the coordinates of pixel in step 2.2
 		int currCoords[] = new int[3];									// holds coordinates of pixel in step 2.1
 		int neighborCoords[] = new int[3];								// holds coordinates of pixel in step 2.3
-		int averagedMaxPos[] = new int[3];								// holds the averaged coordinates if our lake was a local maxima.
+		double averagedMaxPos[] = new double[3];								// holds the averaged coordinates if our lake was a local maxima.
 		final byte VISITED = (byte)1;	// pixel has been added to the lake, but not had neighbors inspected (explored, but not searched)
 		final byte PROCESSED = (byte)2;	// pixel has been added to the lake, and had neighbors inspected (explored, and searched)
 		
@@ -218,7 +218,7 @@ public class FindMaxima3D<T extends RealType<T>> implements Algorithm, Benchmark
 	 * 
 	 * @return
 	 */
-	public ArrayList< int[] > getResult() { return maxima;	}
+	public ArrayList< double[] > getLocalMaxima() { return maxima;	}
 	
 	/**
 	 * Determines whether the input coordinates are on the edge of the image or not.
@@ -236,9 +236,9 @@ public class FindMaxima3D<T extends RealType<T>> implements Algorithm, Benchmark
 	 * @param searched
 	 * @return
 	 */
-	final static protected int[] findAveragePosition(final LinkedList < int[] > searched) {
+	final static protected double[] findAveragePosition(final LinkedList < int[] > searched) {
 		int count = 0;
-		int avgX = 0, avgY = 0, avgZ = 0;
+		double avgX = 0, avgY = 0, avgZ = 0;
 		while(!searched.isEmpty()) {
 			int curr[] = searched.poll();
 			avgX += curr[0];
@@ -246,7 +246,7 @@ public class FindMaxima3D<T extends RealType<T>> implements Algorithm, Benchmark
 			avgZ += curr[2];
 			count++;
 		}
-		return new int[] {avgX/count, avgY/count, avgZ/count};
+		return new double[] {avgX/count, avgY/count, avgZ/count};
 	}
 	
 	/**

@@ -16,8 +16,8 @@ import ij.process.StackConverter;
 import ij3d.Content;
 import ij3d.Image3DUniverse;
 import vib.PointList;
-import mpicbg.imglib.algorithm.findmax.FindMaxima2D;
-import mpicbg.imglib.algorithm.findmax.FindMaxima3D;
+import mpicbg.imglib.algorithm.findmax.FindLocalMaximaFactory;
+import mpicbg.imglib.algorithm.findmax.LocalMaximaFinder;
 import mpicbg.imglib.algorithm.gauss.DownSample;
 import mpicbg.imglib.algorithm.gauss.GaussianConvolutionRealType;
 import mpicbg.imglib.algorithm.math.MathLib;
@@ -158,13 +158,13 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		// 5 - Find maxima of newly convoluted image:
 		IJ.log("Finding maxima...");
 		IJ.showStatus("Finding maxima...");
-		ArrayList< int[] > maxima;
-		if (numDim == 2) {
+		ArrayList< double[] > maxima;
+		/*if (numDim == 2) {
 			FindMaxima2D<T> findMax = new FindMaxima2D<T>(img, new OutOfBoundsStrategyMirrorFactory<T>(), allowEdgeMax);
 			if (findMax.checkInput() && findMax.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
 				maxima = findMax.getResult(); 
 			} else { 
-		        System.out.println(conv.getErrorMessage()); 
+		        System.out.println(findMax.getErrorMessage()); 
 		        return null;
 			}
 		} else {
@@ -172,9 +172,17 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			if (findMax.checkInput() && findMax.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
 				maxima = findMax.getResult(); 
 			} else { 
-		        System.out.println(conv.getErrorMessage()); 
+		        System.out.println(findMax.getErrorMessage()); 
 		        return null;
 			}
+		}*/
+		FindLocalMaximaFactory<T> maxFactory = new FindLocalMaximaFactory<T>();
+		LocalMaximaFinder findMax = maxFactory.createLocalMaximaFinder(img, new OutOfBoundsStrategyMirrorFactory<T>(), allowEdgeMax);
+		if (findMax.checkInput() && findMax.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
+			maxima = findMax.getLocalMaxima(); 
+		} else { 
+	        System.out.println(findMax.getErrorMessage()); 
+	        return null;
 		}
 		
 		// 6 - Setup for displaying results
@@ -204,14 +212,14 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 * @param downsamplingFactor
 	 * @return
 	 */
-	public PointRoi preparePointRoi (ArrayList< int[] > maxima, float downsamplingFactor) {
+	public PointRoi preparePointRoi (ArrayList< double[] > maxima, float downsamplingFactor) {
 		int numPoints = maxima.size();
 		int ox[] = new int[numPoints];
 		int oy[] = new int[numPoints];
-		ListIterator< int[] > itr = maxima.listIterator();
+		ListIterator< double[] > itr = maxima.listIterator();
 		int index = 0;
 		while (itr.hasNext()) {
-			int curr[] = itr.next();
+			double curr[] = itr.next();
 			ox[index] = (int) (curr[0] / downsamplingFactor);
 			oy[index] = (int) (curr[1] / downsamplingFactor);
 			index++;
@@ -228,7 +236,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 * @param pixelHeight
 	 * @param pixelDepth
 	 */
-	public Image3DUniverse render3DAndOverlayMaxima(ArrayList< int[] > maxima, ImagePlus scaled, double pixelWidth, double pixelHeight, double pixelDepth, float downsamplingFactor) {
+	public Image3DUniverse render3DAndOverlayMaxima(ArrayList< double[] > maxima, ImagePlus scaled, double pixelWidth, double pixelHeight, double pixelDepth, float downsamplingFactor) {
 		// Adjust image properties for 3D rendering
 		scaled.getCalibration().pixelWidth = pixelWidth;
 		scaled.getCalibration().pixelHeight = pixelHeight;
@@ -251,9 +259,9 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		PointList pl = c.getPointList();
 		
 		// Add maxima as points to the point list
-		Iterator< int[] > itr = maxima.listIterator();
+		Iterator< double[] > itr = maxima.listIterator();
 		while (itr.hasNext()) {
-			int maxCoords[] = itr.next();
+			double maxCoords[] = itr.next();
 			pl.add(maxCoords[0] / downsamplingFactor * pixelWidth, maxCoords[1] / downsamplingFactor * pixelHeight, maxCoords[2] / downsamplingFactor * pixelDepth);
 		}
 
