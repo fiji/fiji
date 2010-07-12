@@ -86,11 +86,11 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		// 0 - Check validity of parameters:
 		if (null == imp) return null;
 		
-		// 1 - Make a copy of the image, and prepare for use with Imglib:
+		// 1 - Prepare for use with Imglib:
 		img = ImagePlusAdapter.wrap(imp);
 		int numDim = img.getNumDimensions();
 		
-		// 2 - Downsample to improve run time. The image is downsampled by the factor necessary to achieve a resulting blob size of about 10 pixels (therefore, downsample factor depends on the blob size inputed by the user).
+		// 2 - Downsample to improve run time. The image is downsampled by the factor necessary to achieve a resulting blob size of about 10 pixels in all dimensions.
 		IJ.log("Downsampling...");
 		IJ.showStatus("Downsampling...");
 		int dim[] = img.getDimensions();
@@ -104,7 +104,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	        return null;
 		}
 		
-		// 3 - Apply a median filter, to get rid of salt and pepper noise which could be mistaken for maxima in the algorithm:
+		// 3 - Apply a median filter, to get rid of salt and pepper noise which could be mistaken for maxima in the algorithm (only applied if requested by user explicitly):
 		if (useMedFilt) {
 			IJ.log("Applying median filter...");
 			IJ.showStatus("Applying median filter...");
@@ -164,23 +164,25 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		if (numDim == 3) {  // prepare 3D render
 			ij.plugin.Duplicator d = new ij.plugin.Duplicator();  // Make a duplicate image so we don't alter the users image when displaying 3D (requires 8-bit, etc).
 			ImagePlus duplicated = d.run(imp);
-
 			Image3DUniverse univ = 	render3DAndOverlayMaxima(maxima, duplicated, pixelWidth, pixelHeight, pixelDepth, downsampleFactors);
 			return new Object[]{univ};
 		} else {
 			PointRoi roi = preparePointRoi(maxima, downsampleFactors, pixelWidth, pixelHeight);
 			return new Object[]{roi};
 		}
-		
 	}
 	
-	/* Current requirement: image is > 10x10x1 */
 	public float[] createDownsampledDim(float pixelWidth, float pixelHeight, float pixelDepth, float diam) {
 		float widthFactor, heightFactor, depthFactor;
-		//int dim[] = img.getDimensions();
-		widthFactor = (diam / pixelWidth) / GOAL_DOWNSAMPLED_BLOB_DIAM;		// the amount we need to scale width down to make the blobs 10 pixels wide
-		heightFactor = (diam / pixelHeight) / GOAL_DOWNSAMPLED_BLOB_DIAM;	// the amount we need to scale height down to make the blobs 10 pixels high
-		depthFactor = 1;													// initially, assume we don't need to scale depth
+		widthFactor = 1;  // initially, assume we don't need to scale the dimension
+		if ((diam / pixelWidth) > GOAL_DOWNSAMPLED_BLOB_DIAM) {	
+			widthFactor = (diam / pixelWidth) / GOAL_DOWNSAMPLED_BLOB_DIAM;		// the amount we need to scale width down to make the blobs 10 pixels wide
+		}
+		heightFactor = 1;
+		if ((diam / pixelHeight) > GOAL_DOWNSAMPLED_BLOB_DIAM) {	
+			heightFactor = (diam / pixelHeight) / GOAL_DOWNSAMPLED_BLOB_DIAM;	// the amount we need to scale height down to make the blobs 10 pixels high
+		}
+		depthFactor = 1;								
 		if (img.getNumDimensions() == 3 && (diam / pixelDepth) > GOAL_DOWNSAMPLED_BLOB_DIAM) {	// if, however, the blob diam in depth is greater than 10 pixels, we scale it. Otherwise, keep it as one (unscaled).
 			depthFactor = (diam / pixelDepth) / GOAL_DOWNSAMPLED_BLOB_DIAM;
 		}
