@@ -36,6 +36,9 @@ public class FindMaxima3D<T extends RealType<T>> implements Algorithm, Benchmark
 	
 	private long processingTime;											// stores the run time of process() once the method is invoked.
 	private String errorMessage = "";										// stores any error messages.
+	/* Bitmasks used in the findMaxima algorithm to perform quick checks */
+	final static byte VISITED = (byte)1;	// pixel has been added to the lake, but not had neighbors inspected (explored, but not searched)
+	final static byte PROCESSED = (byte)2;	// pixel has been added to the lake, and had neighbors inspected (explored, and searched)
 	
 	/**
 	 * Constructor for the FindMaxima3D class.
