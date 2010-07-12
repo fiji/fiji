@@ -1,5 +1,18 @@
-/** 
- * Author: Nick Perry 
+/**
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License 2
+ * as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ * 
+ * @author Nick Perry
  */
 
 package fiji.plugin.nperry;
@@ -32,12 +45,9 @@ import mpicbg.imglib.algorithm.roi.StructuringElement;
 
 public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	/** Class/Instance variables */
-	
-	/* Stores the image used by Imglib */
 	protected Image<T> img;
-
-	final static float GOAL_DOWNSAMPLED_BLOB_DIAM = 10f;
-	final static double IDEAL_SIGMA_FOR_DOWNSAMPLED_BLOB_DIAM = 1.55f;
+	final static protected float GOAL_DOWNSAMPLED_BLOB_DIAM = 10f;				  // trial and error showed that downsizing images so that the blobs have a diameter of 10 pixels performs best (least errors, and most correct finds, by eyeball analysis).
+	final static protected double IDEAL_SIGMA_FOR_DOWNSAMPLED_BLOB_DIAM = 1.55f;  // trial and error proved this to be approximately the best sigma for a blob of 10 pixels in diameter.
 	
 	/** Ask for parameters and then execute. */
 	public void run(String arg) {
@@ -47,7 +57,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		
 		// 2 - Ask for parameters:
 		GenericDialog gd = new GenericDialog("Track");
-		gd.addNumericField("Generic blob diameter:", 7.3, 2, 5, imp.getCalibration().getUnits());  				// get the expected blob size (in pixels).
+		gd.addNumericField("Generic blob diameter:", 7.3, 2, 5, imp.getCalibration().getUnits());  	// get the expected blob size (in pixels).
 		gd.addMessage("Verify calibration settings:");
 		gd.addNumericField("Pixel width:", imp.getCalibration().pixelWidth, 3);		// used to calibrate the image for 3D rendering
 		gd.addNumericField("Pixel height:", imp.getCalibration().pixelHeight, 3);	// used to calibrate the image for 3D rendering
@@ -90,7 +100,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		img = ImagePlusAdapter.wrap(imp);
 		int numDim = img.getNumDimensions();
 		
-		// 2 - Downsample to improve run time. The image is downsampled by the factor necessary to achieve a resulting blob size of about 10 pixels in all dimensions.
+		// 2 - Downsample to improve run time. The image is downsampled by the factor necessary to achieve a resulting blob size of about 10 pixels in diameter in all dimensions.
 		IJ.log("Downsampling...");
 		IJ.showStatus("Downsampling...");
 		int dim[] = img.getDimensions();
@@ -126,7 +136,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			
 			// 3.2 - Apply the median filter:
 			final MedianFilter<T> medFilt = new MedianFilter<T>(img, strel, new OutOfBoundsStrategyMirrorFactory<T>()); 
-			// ***note: add back medFilt.checkInput() when it's fixed ***
+			/** note: add back medFilt.checkInput() when it's fixed */
 			if (medFilt.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
 				img = medFilt.getResult(); 
 			} else { 
@@ -152,11 +162,11 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		IJ.showStatus("Finding maxima...");
 		ArrayList< double[] > maxima;
 		FindLocalMaximaFactory<T> maxFactory = new FindLocalMaximaFactory<T>();
-		LocalMaximaFinder findMax = maxFactory.createLocalMaximaFinder(img, new OutOfBoundsStrategyMirrorFactory<T>(), allowEdgeMax);
-		if (findMax.checkInput() && findMax.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
-			maxima = findMax.getLocalMaxima(); 
+		LocalMaximaFinder findMaxima = maxFactory.createLocalMaximaFinder(img, new OutOfBoundsStrategyMirrorFactory<T>(), allowEdgeMax);
+		if (findMaxima.checkInput() && findMaxima.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
+			maxima = findMaxima.getLocalMaxima(); 
 		} else { 
-	        System.out.println(findMax.getErrorMessage()); 
+	        System.out.println(findMaxima.getErrorMessage()); 
 	        return null;
 		}
 		
