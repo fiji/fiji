@@ -135,8 +135,8 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 	}
 
 	public void execute(DataContainer container) throws MissingPreconditionException {
-		double ch1BinWidth = getCh1BinWidth(container);
-		double ch2BinWidth = getCh2BinWidth(container);
+		double ch1BinWidth = getXBinWidth(container);
+		double ch2BinWidth = getYBinWidth(container);
 
 		// get the 2 images for the calculation of Pearson's
 		Image<T> img1 = getImageCh1(container);
@@ -191,7 +191,7 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 	 * @param container The container with images to work on
 	 * @return The width of one bin in x direction
 	 */
-	protected double getCh1BinWidth(DataContainer container) {
+	protected double getXBinWidth(DataContainer container) {
 		double ch1Max = getMaxCh1(container);
 		return (double) xBins / (double)(ch1Max + 1);
 	}
@@ -201,7 +201,7 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 	 * @param container The container with images to work on
 	 * @return The width of one bin in y direction
 	 */
-	protected double getCh2BinWidth(DataContainer container) {
+	protected double getYBinWidth(DataContainer container) {
 		double ch2Max = getMaxCh2(container);
 		return (double) yBins / (double)(ch2Max + 1);
 	}

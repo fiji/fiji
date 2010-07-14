@@ -25,16 +25,20 @@ public class LiHistogram2D<T extends RealType<T>> extends Histogram2D<T> {
 	// On execution these variables hold the scaling factors
 	double ch1Scaling, ch2Scaling;
 
-	public LiHistogram2D() {
-		this("Histogram 2D (Li)");
+	// boolean to test which channel we are using for eg. Li 2D histogram y axis
+	boolean useCh1 = true;
+
+	public LiHistogram2D(boolean useCh1) {
+		this("Histogram 2D (Li)", useCh1);
 	}
 
-	public LiHistogram2D(String title) {
-		this(title, false);
+	public LiHistogram2D(String title, boolean useCh1) {
+		this(title, false, useCh1);
 	}
 
-	public LiHistogram2D(String title, boolean swapChannels) {
+	public LiHistogram2D(String title, boolean swapChannels, boolean useCh1) {
 		super(title, swapChannels);
+		this.useCh1 = useCh1;
 	}
 
 	public void execute(DataContainer container) throws MissingPreconditionException {
@@ -84,9 +88,22 @@ public class LiHistogram2D<T extends RealType<T>> extends Histogram2D<T> {
 		super.execute(container);
 	}
 
+
 	@Override
-	protected double getCh1BinWidth(DataContainer container) {
+	protected double getXBinWidth(DataContainer container) {
 		return (double) xBins / (double)(liDiff + 1);
+	}
+
+	@Override
+	protected double getYBinWidth(DataContainer container) {
+		double max;
+		if (useCh1) {
+			max = getMaxCh1(container);
+		}
+		else {
+			max = getMaxCh2(container);
+		}
+		return (double) yBins / (double)(max + 1);
 	}
 
 	@Override
@@ -100,6 +117,9 @@ public class LiHistogram2D<T extends RealType<T>> extends Histogram2D<T> {
 
 	@Override
 	protected int getYValue(double ch1Val, double ch1BinWidth, double ch2Val, double ch2BinWidth) {
-		return (yBins - 1) - (int)(ch2Val * ch2BinWidth);
+		if (useCh1)
+			return (yBins - 1) - (int)(ch1Val * ch2BinWidth);
+		else
+			return (yBins - 1) - (int)(ch2Val * ch2BinWidth);
 	}
 }
