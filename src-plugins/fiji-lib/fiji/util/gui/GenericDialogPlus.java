@@ -31,10 +31,14 @@ import java.util.List;
 
 import javax.swing.JFileChooser;
 
+/**
+ * The GenericDialogPlus class enhances the GenericDialog by
+ * a few additional methods.
+ *
+ * It adds a method to add a file chooser, a dialog chooser,
+ * a button, and makes string (and file) fields drop targets.
+ */
 public class GenericDialogPlus extends GenericDialog {
-	/**
-	 *
-	 */
 	private static final long serialVersionUID = 1L;
 
 	public GenericDialogPlus(String title) {
