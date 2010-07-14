@@ -188,6 +188,8 @@ public class Weka_Segmentation implements PlugIn
 	JButton overlayButton;
 	/** create result button */
 	JButton resultButton;
+	/** get probability maps button */
+	JButton probabilityButton;
 	/** new image button */
 	JButton newImageButton;
 	/** apply classifier button */
@@ -253,8 +255,11 @@ public class Weka_Segmentation implements PlugIn
 	/** temporary folder name. It is used to stored intermediate results if different from null */
 	private String tempFolder = null;
 	
+	/** flag to set the resampling of the training data in order to guarantee the same number of instances per class */
+	private boolean homogenizeClasses = false;
+	
 	/**
-	 * Basic constructor
+	 * Basic constructor for graphical user interface use
 	 */
 	public Weka_Segmentation() 
 	{
@@ -291,6 +296,10 @@ public class Weka_Segmentation implements PlugIn
 		resultButton = new JButton("Create result");
 		resultButton.setToolTipText("Generate result image");
 		resultButton.setEnabled(false);
+		
+		probabilityButton = new JButton("Get probability");
+		probabilityButton.setToolTipText("Generate current probability maps");
+		probabilityButton.setEnabled(false);
 		
 		newImageButton = new JButton("New image");
 		newImageButton.setToolTipText("Load a new image to segment");
@@ -358,7 +367,7 @@ public class Weka_Segmentation implements PlugIn
 					if(e.getSource() == trainButton)
 					{
 						try{
-							if( trainClassifier() );
+							if( trainClassifier() )
 								applyClassifier();
 						}catch(Exception e){
 							e.printStackTrace();
@@ -369,6 +378,9 @@ public class Weka_Segmentation implements PlugIn
 					}
 					else if(e.getSource() == resultButton){
 						showClassificationImage();
+					}
+					else if(e.getSource() == probabilityButton){
+						showProbabilityImage();
 					}
 					else if(e.getSource() == newImageButton){
 						loadNewImage();
@@ -587,6 +599,7 @@ public class Weka_Segmentation implements PlugIn
 			trainButton.addActionListener(listener);
 			overlayButton.addActionListener(listener);
 			resultButton.addActionListener(listener);
+			probabilityButton.addActionListener(listener);
 			newImageButton.addActionListener(listener);
 			applyButton.addActionListener(listener);
 			loadClassifierButton.addActionListener(listener);
@@ -615,6 +628,8 @@ public class Weka_Segmentation implements PlugIn
 			trainingJPanel.add(overlayButton, trainingConstraints);
 			trainingConstraints.gridy++;
 			trainingJPanel.add(resultButton, trainingConstraints);
+			trainingConstraints.gridy++;
+			trainingJPanel.add(probabilityButton, trainingConstraints);
 			trainingConstraints.gridy++;
 			trainingJPanel.add(newImageButton, trainingConstraints);
 			trainingConstraints.gridy++;
@@ -718,6 +733,7 @@ public class Weka_Segmentation implements PlugIn
 					trainButton.removeActionListener(listener);
 					overlayButton.removeActionListener(listener);
 					resultButton.removeActionListener(listener);
+					probabilityButton.removeActionListener(listener);
 					newImageButton.removeActionListener(listener);
 					applyButton.removeActionListener(listener);
 					loadClassifierButton.removeActionListener(listener);
@@ -865,6 +881,7 @@ public class Weka_Segmentation implements PlugIn
 			trainButton.setEnabled(s);
 			overlayButton.setEnabled(s);
 			resultButton.setEnabled(s);
+			probabilityButton.setEnabled(s);
 			newImageButton.setEnabled(s);
 			applyButton.setEnabled(s);
 			loadClassifierButton.setEnabled(s);
@@ -900,6 +917,7 @@ public class Weka_Segmentation implements PlugIn
 			saveClassifierButton.setEnabled(resultExists);
 			overlayButton.setEnabled(resultExists);
 			resultButton.setEnabled(resultExists);
+			probabilityButton.setEnabled(resultExists);
 
 			newImageButton.setEnabled(true);
 			loadClassifierButton.setEnabled(true);		
@@ -1247,6 +1265,13 @@ public class Weka_Segmentation implements PlugIn
 		// Update train header
 		this.trainHeader = new Instances(data, 0);
 		
+		// Resample data if necessary
+		if(homogenizeClasses)
+		{
+			IJ.log("Homogenizing classes distribution...");
+			data = homogenizeTrainingData(data);		
+		}
+		
 		// Train the classifier on the current data
 		final long start = System.currentTimeMillis();
 		try{
@@ -1529,6 +1554,14 @@ public class Weka_Segmentation implements PlugIn
 		resultImage.show();
 	}
 
+	/**
+	 * Display the current probability maps 
+	 */
+	void showProbabilityImage(){
+		final ImagePlus probImage = this.getProbabilityMaps();
+		probImage.show();
+	}
+	
 	/**
 	 * Apply classifier to test data
 	 */
@@ -2076,6 +2109,7 @@ public class Weka_Segmentation implements PlugIn
 			gd.addStringField("Class "+(i+1), classLabels[i], 15);
 		
 		gd.addMessage("Advanced options:");
+		gd.addCheckbox("Homogenize classes", homogenizeClasses);
 		gd.addButton("Save feature stack", new SaveFeatureStackButtonListener("Select location to save feature stack", featureStack));
 		gd.addSlider("Result overlay opacity", 0, 100, overlayOpacity);
 		gd.addHelp("http://pacific.mpi-cbg.de/wiki/Trainable_Segmentation_Plugin");
@@ -2142,6 +2176,9 @@ public class Weka_Segmentation implements PlugIn
 
 			}
 		}
+		
+		// Update flag to homogenize number of class instances
+		homogenizeClasses = gd.getNextBoolean();
 		
 		// Update result overlay alpha
 		final int newOpacity = (int) gd.getNextNumber();
@@ -3234,8 +3271,11 @@ public class Weka_Segmentation implements PlugIn
 		
 		IJ.log("Done");
 		
+		final Attribute classAttribute = wholeImageData.classAttribute();
+		final Enumeration<String> classValues  = classAttribute.enumerateValues();
+		
 		for(int k = 0 ; k < wholeImageData.numClasses(); k++)
-			is.addSlice("class " + (k+1), new FloatProcessor(width, height, classProb[k]));
+			is.addSlice(classValues.nextElement().trim(), new FloatProcessor(width, height, classProb[k]));
 		
 		return new ImagePlus("Class probabilities", is); 
 	}
@@ -3689,8 +3729,7 @@ public class Weka_Segmentation implements PlugIn
 	}
 
 	/**
-	 * Homogenize number of instances per class
-	 * 
+	 * Homogenize number of instances per class (in the loaded training data) 
 	 */
 	public void homogenizeTrainingData()
 	{
