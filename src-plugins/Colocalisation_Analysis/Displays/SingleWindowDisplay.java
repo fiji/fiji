@@ -41,6 +41,7 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 
 	protected Rectangle frame = new Rectangle(XMARGIN, YMARGIN, HIST_WIDTH, HIST_HEIGHT);
 	protected List<Result.ImageResult> listOfImageResults = new ArrayList<Result.ImageResult>();
+	protected List<Result.Histogram2DResult> listOfHistograms = new ArrayList<Result.Histogram2DResult>();
 
 	// GUI elements
 	JButton listButton, copyButton, logButton;
@@ -102,6 +103,12 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 			} else if ( r instanceof Result.ImageResult) {
 				Result.ImageResult result = (Result.ImageResult)r;
 				listOfImageResults.add(result);
+
+				// if it is a histogram remember that as well
+				if ( r instanceof Result.Histogram2DResult) {
+					Result.Histogram2DResult histogram = (Result.Histogram2DResult)r;
+					listOfHistograms.add(histogram);
+				}
 			}
 		}
 
