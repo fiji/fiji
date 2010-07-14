@@ -513,6 +513,7 @@ public class FeatureStack
 				ImageProcessor ip = new FloatProcessor(width, height);
 				ImageProcessor ipTr = new FloatProcessor(width, height);
 				ImageProcessor ipDet = new FloatProcessor(width, height);
+				//ImageProcessor ipRatio = new FloatProcessor(width, height);
 				ImageProcessor ipEig1 = new FloatProcessor(width, height);
 				ImageProcessor ipEig2 = new FloatProcessor(width, height);
 						
@@ -524,9 +525,13 @@ public class FeatureStack
 						// Hessian
 						ip.setf(x,y, (float) Math.sqrt(s_xx*s_xx + s_xy*s_xy+ s_yy*s_yy));
 						// Trace
-						ipTr.setf(x,y, (float) s_xx + s_yy);
+						final float trace = (float) s_xx + s_yy;
+						ipTr.setf(x,y,  trace);
 						// Determinant
-						ipDet.setf(x,y, (float) s_xx*s_yy-s_xy*s_xy);
+						final float determinant = (float) s_xx*s_yy-s_xy*s_xy;
+						ipDet.setf(x,y, determinant);
+						// Ratio
+						//ipRatio.setf(x,y, (float)(trace*trace) / determinant);
 						// First eigenvalue
 						ipEig1.setf(x,y, (float) ( (s_xx+s_yy)/2.0 + Math.sqrt((4*s_xy*s_xy + (s_xx - s_yy)*(s_xx - s_yy)) / 2.0 ) ) );
 						// Second eigenvalue
@@ -538,6 +543,7 @@ public class FeatureStack
 				hessianStack.addSlice(availableFeatures[HESSIAN] + "_"  + sigma, ip);
 				hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Trace_"+sigma, ipTr);
 				hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Determinant_"+sigma, ipDet);
+				//hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Eignevalue_Ratio_"+sigma, ipRatio);
 				hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Eigenvalue_1_"+sigma, ipEig1);
 				hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Eigenvalue_2_"+sigma, ipEig2);
 				return new ImagePlus ("hessian stack", hessianStack);
