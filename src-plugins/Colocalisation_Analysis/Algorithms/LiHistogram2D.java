@@ -122,4 +122,20 @@ public class LiHistogram2D<T extends RealType<T>> extends Histogram2D<T> {
 		else
 			return (yBins - 1) - (int)(ch2Val * ch2BinWidth);
 	}
+
+	protected double getXMin(DataContainer container) {
+		return swapChannels ? (useCh1 ? container.getMinCh1(): container.getMinCh2()) : liMin;
+	}
+
+	protected double getXMax(DataContainer container) {
+		return swapChannels ? (useCh1 ? container.getMaxCh1(): container.getMaxCh2()) : liMax;
+	}
+
+	protected double getYMin(DataContainer container) {
+		return swapChannels ? liMin : (useCh1 ? container.getMinCh1(): container.getMinCh2());
+	}
+
+	protected double getYMax(DataContainer container) {
+		return swapChannels ? liMax : (useCh1 ? container.getMaxCh1(): container.getMaxCh2());
+	}
 }

@@ -182,7 +182,9 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 		String label1 = getLabelCh1();
 		String label2 = getLabelCh2();
 
-		Result result = new Result.Histogram2DResult(title, plotImage, ch1BinWidth, ch2BinWidth, label1, label2);
+		Result result = new Result.Histogram2DResult(title, plotImage,
+				ch1BinWidth, ch2BinWidth, label1, label2,
+				getXMin(container), getXMax(container), getYMin(container), getYMax(container));
 		container.add(result);
 	}
 
@@ -224,5 +226,21 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 	 */
 	protected int getYValue(double ch1Val, double ch1BinWidth, double ch2Val, double ch2BinWidth) {
 		return (yBins - 1) - (int)(ch2Val * ch2BinWidth);
+	}
+
+	protected double getXMin(DataContainer container) {
+		return swapChannels ? getMinCh2(container) : getMinCh1(container);
+	}
+
+	protected double getXMax(DataContainer container) {
+		return swapChannels ? getMaxCh2(container) : getMaxCh1(container);
+	}
+
+	protected double getYMin(DataContainer container) {
+		return swapChannels ? getMinCh1(container) : getMinCh2(container);
+	}
+
+	protected double getYMax(DataContainer container) {
+		return swapChannels ? getMaxCh1(container) : getMaxCh2(container);
 	}
 }

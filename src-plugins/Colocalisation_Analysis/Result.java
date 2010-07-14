@@ -134,15 +134,22 @@ public abstract class Result {
 		// Axis labels
 		String xLabel, yLabel;
 		double ch1BinWidth, ch2BinWidth;
+		// axis ranges
+		double xMin, xMax, yMin, yMax;
 
 		public Histogram2DResult(String name, Image<T> data,
 				double ch1BinWidth, double ch2BinWidth,
-				String xLabel, String yLabel) {
+				String xLabel, String yLabel,
+				double xMin, double xMax, double yMin, double yMax) {
 			super(name, data);
 			this.xLabel = xLabel;
 			this.yLabel = yLabel;
 			this.ch1BinWidth = ch1BinWidth;
 			this.ch2BinWidth = ch2BinWidth;
+			this.xMin = xMin;
+			this.xMax = xMax;
+			this.yMin = yMin;
+			this.yMax = yMax;
 		}
 	}
 
