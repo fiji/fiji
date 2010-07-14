@@ -1928,6 +1928,16 @@ public class Weka_Segmentation implements PlugIn
 		return true;
 	}
 	
+	/**
+	 * Set the membrane patch size (it must be an odd number)
+	 * @param patchSize membrane patch size
+	 */
+	public void setMembranePatchSize(int patchSize)
+	{		
+		this.membranePatchSize = patchSize;
+		this.featureStack.setMembranePatchSize(patchSize);
+	}
+	
 	
 	/**
 	 * Save training model into a file
@@ -3095,6 +3105,8 @@ public class Weka_Segmentation implements PlugIn
 
 			final FeatureStack featureStack = new FeatureStack(new ImagePlus("slice " + i, inputSlices.getProcessor(i)));
 			featureStack.setEnableFeatures(this.featureStack.getEnableFeatures());
+			featureStack.setMembranePatchSize(membranePatchSize);
+			featureStack.setMembraneSize(this.membraneThickness);
 			featureStack.updateFeaturesMT();
 			filterFeatureStackByList(this.featureNames, featureStack);
 
