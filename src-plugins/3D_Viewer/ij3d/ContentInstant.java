@@ -402,7 +402,7 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 	public void setColor(Color3f color) {
 		if ((this.color == null && color == null) ||
 				(this.color != null && color != null &&
-				 !this.color.equals(color)))
+				 this.color.equals(color)))
 			return;
 		this.color = color;
  		plShape.setColor(color);
