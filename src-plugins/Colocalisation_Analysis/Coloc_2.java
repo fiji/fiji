@@ -22,14 +22,14 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 
 	public void run(String arg0) {
 		// Development code
-		ImagePlus imp1 = IJ.openImage("/Users/dan/Documents/Dresden/ipf/colocPluginDesign/red.tif");
+		ImagePlus imp1 = WindowManager.getImage(1);
 		if (imp1 == null)
-			imp1 = WindowManager.getImage(1);
+			imp1 = IJ.openImage("/Users/dan/Documents/Dresden/ipf/colocPluginDesign/red.tif");
 		img1 = ImagePlusAdapter.wrap(imp1);
 
-		ImagePlus imp2 = IJ.openImage("/Users/dan/Documents/Dresden/ipf/colocPluginDesign/green.tif");
+		ImagePlus imp2 =  WindowManager.getImage(2);
 		if (imp2 == null)
-			imp2 = WindowManager.getImage(2);
+			imp2 =IJ.openImage("/Users/dan/Documents/Dresden/ipf/colocPluginDesign/green.tif");
 		img2 = ImagePlusAdapter.wrap(imp2);
 
 		int theImg1Channel = 1, theImg2Channel = 1;
