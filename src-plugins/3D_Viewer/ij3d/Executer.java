@@ -505,7 +505,8 @@ public class Executer {
 				gSlider.setEnabled(!cBox.getState());
 				bSlider.setEnabled(!cBox.getState());
 				ci.setColor(cBox.getState() ? null :
-					new Color3f(rSlider.getValue() / 255f,
+					new Color3f(
+						rSlider.getValue() / 255f,
 						gSlider.getValue() / 255f,
 						bSlider.getValue() / 255f));
 				gd.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
@@ -537,10 +538,7 @@ public class Executer {
 				}
 				// gd.wasOKed: apply to all time points
 				if(aBox.getState()) {
-					c.setColor(new Color3f(
-						rSlider.getValue() / 255f,
-						gSlider.getValue() / 255f,
-						bSlider.getValue() / 255f));
+					c.setColor(ci.getColor());
 				}
 				univ.fireContentChanged(c);
 				if(cBox.getState()){
