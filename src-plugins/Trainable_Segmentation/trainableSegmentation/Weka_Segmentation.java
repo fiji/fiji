@@ -1557,9 +1557,13 @@ public class Weka_Segmentation implements PlugIn
 	/**
 	 * Display the current probability maps 
 	 */
-	void showProbabilityImage(){
-		final ImagePlus probImage = this.getProbabilityMaps();
-		probImage.show();
+	void showProbabilityImage()
+	{
+		this.setButtonsEnabled(false);
+		final ImagePlus probImage = this.getProbabilityMapsMT();
+		if(null != probImage) 
+			probImage.show();
+		this.updateButtonsEnabling();
 	}
 	
 	/**
