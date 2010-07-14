@@ -1,4 +1,10 @@
+import mpicbg.imglib.container.array.ArrayContainerFactory;
+import mpicbg.imglib.cursor.Cursor;
+import mpicbg.imglib.cursor.LocalizableByDimCursor;
+import mpicbg.imglib.image.Image;
+import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.type.numeric.RealType;
+import mpicbg.imglib.type.numeric.real.FloatType;
 
 /**
  * Represents the creation of a 2D histogram between two images.
@@ -43,19 +49,38 @@ public class LiHistogram2D<T extends RealType<T>> extends Histogram2D<T> {
 
 		/* A scaling to the x bins has to be made:
 		 * For that to work we need the min and the
-		 * max value that could occur. That is
-		 * min: (mean1 - ch1max) * (mean2 - ch2max)
-		 * max: (mean1 - ch1min) * (mean2 - ch2min)
+		 * max value that could occur.
 		 */
-		liMin = (ch1Mean - ch1Max) * (ch2Mean - ch2Max);
-		liMax = (ch1Mean - ch1Min) * (ch2Mean - ch2Min);
-		if (liMin > liMax) {
-			double min = liMin;
-			liMin = liMax;
-			liMax = min;
+
+		// get the 2 images for the calculation of Pearson's
+		Image<T> img1 = getImageCh1(container);
+		Image<T> img2 = getImageCh2(container);
+
+		// get the cursors for iterating through pixels in images
+		Cursor<T> cursor1 = img1.createCursor();
+		Cursor<T> cursor2 = img2.createCursor();
+
+		// give liMin and liMax appropriate starting values at the top and bottom of the range
+		liMin = Double.MAX_VALUE;
+		liMax = Double.MIN_VALUE;
+
+		// iterate over image
+		while (cursor1.hasNext() && cursor2.hasNext()) {
+			cursor1.fwd();
+			cursor2.fwd();
+			T type1 = cursor1.getType();
+			double ch1 = type1.getRealDouble();
+			T type2 = cursor2.getType();
+			double ch2 = type2.getRealDouble();
+
+			double productOfDifferenceOfMeans = (ch1Mean - ch1) * (ch2Mean - ch2);
+
+			if (productOfDifferenceOfMeans < liMin)
+				liMin = productOfDifferenceOfMeans;
+			if (productOfDifferenceOfMeans > liMax)
+				liMax = productOfDifferenceOfMeans;
 		}
 		liDiff = Math.abs(liMax - liMin);
-
 		super.execute(container);
 	}
 
