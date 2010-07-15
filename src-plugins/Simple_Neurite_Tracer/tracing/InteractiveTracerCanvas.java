@@ -133,6 +133,31 @@ public class InteractiveTracerCanvas extends TracerCanvas implements KeyListener
 
 		}
 
+		int modifiers = e.getModifiersEx();
+		boolean shift_down = (modifiers & e.SHIFT_DOWN_MASK) > 0;
+		boolean control_down = (modifiers & e.CTRL_DOWN_MASK) > 0;
+		boolean alt_down = (modifiers & e.ALT_DOWN_MASK) > 0;
+
+		if( shift_down && (control_down || alt_down) && (keyCode == KeyEvent.VK_A) ) {
+			if( pathAndFillManager.anySelected() ) {
+				double [] p = new double[3];
+				System.out.println("last_x_in_pane is: "+last_x_in_pane_precise);
+				System.out.println("last_y_in_pane is: "+last_y_in_pane_precise);
+				tracerPlugin.findPointInStackPrecise( last_x_in_pane_precise, last_y_in_pane_precise, plane, p );
+				System.out.println("point in stack is: "+p[0]+", "+p[1]+", "+p[2]);
+				PointInImage pointInImage = pathAndFillManager.nearestJoinPointOnSelectedPaths( p[0], p[1], p[2] );
+				ShollAnalysisDialog sholl = new ShollAnalysisDialog(
+					"Sholl analysis for tracing of "+tracerPlugin.getImagePlus().getTitle(),
+					pointInImage.x,
+					pointInImage.y,
+					pointInImage.z,
+					pathAndFillManager,
+					tracerPlugin.getImagePlus());
+			} else {
+				IJ.error("You must have a path selected in order to start Sholl analysis");
+			}
+		}
+
 		e.consume();
 	}
 
