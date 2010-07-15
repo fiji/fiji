@@ -81,8 +81,10 @@ public class FeatureStack
 	private int width = 0;
 	/** image height */
 	private int height = 0;
+	/** minmum sigma/radius used in the filters */
+	private float minimumSigma = 1;
 	/** maximum sigma/radius used in the filters */
-	private static final int MAX_SIGMA = 16;
+	private float maximumSigma = 16;
 	
 	/** Gaussian filter flag index */
 	public static final int GAUSSIAN 				=  0;
@@ -251,6 +253,13 @@ public class FeatureStack
 		wholeStack.addSlice(availableFeatures[MEAN]+ "_"  + radius, ip);
 	}
 	
+	/**
+	 * Get original image after mean filtering (to be called from an ExecutorService)
+	 * 
+	 * @param originalImage input image
+	 * @param radius filter radius
+	 * @return filtered image
+	 */
 	public Callable<ImagePlus> getMean(
 			final ImagePlus originalImage,
 			final float radius)
@@ -274,6 +283,13 @@ public class FeatureStack
 		wholeStack.addSlice(availableFeatures[MINIMUM]+ "_"  + radius, ip);
 	}
 	
+	/**
+	 * Get original image after minimum filtering (to be called from an ExecutorService)
+	 * 
+	 * @param originalImage input image
+	 * @param radius filter radius
+	 * @return filtered image
+	 */
 	public Callable<ImagePlus> getMin(
 			final ImagePlus originalImage,
 			final float radius)
@@ -297,6 +313,13 @@ public class FeatureStack
 		wholeStack.addSlice(availableFeatures[MAXIMUM]+ "_"  + radius, ip);
 	}
 	
+	/**
+	 * Get original image after maximum filtering (to be called from an ExecutorService)
+	 * 
+	 * @param originalImage input image
+	 * @param radius filter radius
+	 * @return filtered image
+	 */
 	public Callable<ImagePlus> getMax(
 			final ImagePlus originalImage,
 			final float radius)
@@ -320,6 +343,13 @@ public class FeatureStack
 		wholeStack.addSlice(availableFeatures[MEDIAN]+ "_"  + radius, ip);
 	}
 	
+	/**
+	 * Get original image after median filtering (to be called from an ExecutorService)
+	 * 
+	 * @param originalImage input image
+	 * @param radius filter radius
+	 * @return filtered image
+	 */
 	public Callable<ImagePlus> getMedian(
 			final ImagePlus originalImage,
 			final float radius)
@@ -383,6 +413,13 @@ public class FeatureStack
 		wholeStack.addSlice(availableFeatures[SOBEL]+ "_"  +sigma, ip);
 	}
 	
+	/**
+	 * Get sobel filter version of the original image (to be called from an ExecutorService)
+	 * 
+	 * @param originalImage input image
+	 * @param sigma radius of the Gaussian blur applied previous to the sobel filtering
+	 * @return filtered image
+	 */
 	public Callable<ImagePlus> getGradient(
 			final ImagePlus originalImage,
 			final float sigma)
@@ -474,6 +511,15 @@ public class FeatureStack
 		wholeStack.addSlice(availableFeatures[HESSIAN]+ "_Eigenvalue_2_"+sigma, ipEig2);
 	}
 	
+	/**
+	 * Get Hessian features from original image (to be submitted in an ExecutorService).
+	 * The features include a scalar representing the Hessian, the trace, determinant, 
+	 * 1st eigenvalue and 2nd eigenvalue.
+	 * 
+	 * @param originalImage input image
+	 * @param sigma radius of the Gaussian filter to use
+	 * @return filtered image (stack: hessian, trace, determinant, 1st eigenvalue and 2nd eigenvalue) 
+	 */
 	public Callable<ImagePlus> getHessian(
 			final ImagePlus originalImage,
 			final float sigma)
@@ -870,7 +916,7 @@ public class FeatureStack
 	public void addDefaultFeatures()
 	{
 		int counter = 1;
-		for (float i=1.0f; i<FeatureStack.MAX_SIGMA; i*=2){
+		for (float i=1.0f; i<maximumSigma; i*=2){
 			IJ.showStatus("Creating feature stack...   " + counter);
 			this.addGaussianBlur(i); counter++;
 			IJ.showStatus("Creating feature stack...   " + counter);			
@@ -889,6 +935,7 @@ public class FeatureStack
 	
 	/**
 	 * Update features with current list
+	 * @deprecated
 	 */
 	public void updateFeatures()
 	{
@@ -896,7 +943,7 @@ public class FeatureStack
 		wholeStack.addSlice("original", originalImage.getProcessor().duplicate());
 
 		int counter = 1;
-		for (float i=1.0f; i<= FeatureStack.MAX_SIGMA; i*=2)
+		for (float i=1.0f; i<= maximumSigma; i*=2)
 		{
 			// Gaussian blur
 			if(enableFeatures[GAUSSIAN])
@@ -1005,7 +1052,7 @@ public class FeatureStack
 					for(float j = 0.10f; j < 0.5f; j+= 0.25f)
 						futures.add(exe.submit( getAnisotropicDiffusion(originalImage, 20, 20, i, j, 0.9f) ) );
 			}
-			for (float i=1.0f; i<= FeatureStack.MAX_SIGMA; i*=2)
+			for (float i=minimumSigma; i<= maximumSigma; i*=2)
 			{
 				// Gaussian blur
 				if(enableFeatures[GAUSSIAN])
@@ -1025,7 +1072,7 @@ public class FeatureStack
 				// Difference of gaussians
 				if(enableFeatures[DOG])
 				{
-					for (float j=1.0f; j<i; j*=2)
+					for (float j=minimumSigma; j<i; j*=2)
 					{
 						futures.add(exe.submit( getDoG(originalImage, i, j)) );
 					}
@@ -1063,6 +1110,7 @@ public class FeatureStack
 			if(enableFeatures[MEMBRANE])
 				futures.add(exe.submit( getMembraneFeatures(originalImage, membranePatchSize, membraneSize) ));						
 
+			// Wait for the jobs to be done
 			for(Future<ImagePlus> f : futures)
 			{
 				final ImagePlus res = f.get();
