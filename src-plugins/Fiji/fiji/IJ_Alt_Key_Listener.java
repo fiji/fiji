@@ -85,7 +85,7 @@ public class IJ_Alt_Key_Listener extends KeyAdapter implements FocusListener {
 		pressedKeys = 0;
 	}
 
-	static Runnable getOpener() {
+	public static Runnable getOpener() {
 		try {
 			return getX11Opener();
 		} catch (Exception e) { /* ignore */ }
