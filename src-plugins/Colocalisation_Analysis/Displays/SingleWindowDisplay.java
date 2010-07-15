@@ -126,7 +126,7 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 		this.show();
 	}
 
-	public void mouseMoved(int x, int y) {
+	public void mouseMoved( final int x, final int y) {
 	ImageJ ij = IJ.getInstance();
 	if (ij != null) {
 		/* If Alt key is not pressed, display the calibrated data.
@@ -140,10 +140,15 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 			if (currentlyDisplayedImageResult instanceof Result.Histogram2DResult) {
 				Result.Histogram2DResult histogram = (Result.Histogram2DResult)currentlyDisplayedImageResult;
 
-				// set position of output cursor
-				pixelAccessCursor.setPosition( new int[] {x, y});
-				// get current value at position
-				float val = pixelAccessCursor.getType().getRealFloat();
+				synchronized( pixelAccessCursor )
+				{
+					// set position of output cursor
+					pixelAccessCursor.setPosition(0, x);
+					pixelAccessCursor.setPosition(1, y);
+
+					// get current value at position
+					float val = pixelAccessCursor.getType().getRealFloat();
+				}
 
 				double calibratedXBinBottom = histogram.getHistXMin() + x / histogram.getXBinWidth();
 				double calibratedXBinTop = histogram.getHistXMin() + (x + 1) / histogram.getXBinWidth();
