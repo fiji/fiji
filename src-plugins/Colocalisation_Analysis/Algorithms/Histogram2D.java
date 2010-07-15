@@ -229,7 +229,7 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 	}
 
 	protected double getXMin(DataContainer container) {
-		return swapChannels ? getMinCh2(container) : getMinCh1(container);
+		return 0;
 	}
 
 	protected double getXMax(DataContainer container) {
@@ -237,7 +237,7 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 	}
 
 	protected double getYMin(DataContainer container) {
-		return swapChannels ? getMinCh1(container) : getMinCh2(container);
+		return 0;
 	}
 
 	protected double getYMax(DataContainer container) {
