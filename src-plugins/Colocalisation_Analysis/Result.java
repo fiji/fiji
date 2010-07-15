@@ -151,6 +151,30 @@ public abstract class Result {
 			this.yMin = yMin;
 			this.yMax = yMax;
 		}
+
+		double getXBinWidth() {
+			return ch1BinWidth;
+		}
+
+		double getYBinWidth() {
+			return ch2BinWidth;
+		}
+
+		public double getHistXMin() {
+			return xMin;
+		}
+
+		public double getHistXMax() {
+			return xMax;
+		}
+
+		public double getHistYMin() {
+			return yMin;
+		}
+
+		public double getHistYMax() {
+			return yMax;
+		}
 	}
 
 	static class ValueArrayResults extends Result{
