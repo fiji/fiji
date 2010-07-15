@@ -97,6 +97,8 @@ import org.apache.batik.dom.GenericDOMImplementation;
 import org.w3c.dom.Document;
 import org.apache.batik.svggen.SVGGraphics2D;
 
+import org.apache.commons.math.stat.regression.SimpleRegression;
+
 public class ShollAnalysisDialog extends Dialog implements WindowListener, ActionListener, TextListener, ItemListener {
 
 	protected double x_start, y_start, z_start;
@@ -123,6 +125,8 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 	protected ShollResults currentResults;
 	protected ImagePlus originalImage;
 
+	GraphFrame graphFrame;
+
 	public void actionPerformed( ActionEvent e ) {
 		Object source = e.getSource();
 		ShollResults results = null;
@@ -139,22 +143,43 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		} else if( source == exportAsCSV ) {
 			// results.makeShollCrossingsImagePlus(originalImage);
 		} else if( source == drawShollGraphButton ) {
-			results.drawGraph();
+			graphFrame.setVisible(true);
 		}
 	}
 
 	public void textValueChanged( TextEvent e ) {
 		Object source = e.getSource();
+		System.out.println("Got text value changed: "+e);
 		if( source == sampleSeparation ) {
-
+			System.out.println("Yes, it was from sampleSeparation");
+			String sampleSeparationText = sampleSeparation.getText();
+			System.out.println("and the text was: "+sampleSeparationText);
+			float s;
+			try {
+				s = Float.parseFloat(sampleSeparationText);
+			} catch( NumberFormatException nfe ) {
+				return;
+			}
+			System.out.println("So got s: "+s);
+			if( s >= 0 )
+				updateResults();
 		}
 	}
 
-	void updateResults() {
+	protected synchronized void updateResults() {
 		ShollResults results = getCurrentResults();
+		resultsPanel.updateFromResults(results);
+		JFreeChart chart = results.createGraph();
+		if( chart == null )
+			return;
+		if( graphFrame == null )
+			graphFrame = new GraphFrame( chart );
+		else
+			graphFrame.updateWithNewChart( chart );
 	}
 
 	public void itemStateChanged( ItemEvent e ) {
+		System.out.println("Got item state changed for: "+e);
 		updateResults();
 	}
 
@@ -210,6 +235,115 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		return results;
 	}
 
+	public static class GraphFrame extends JFrame implements ActionListener {
+		JButton exportButton;
+		JFreeChart chart = null;
+		ChartPanel chartPanel = null;
+		JPanel mainPanel;
+		public void updateWithNewChart( JFreeChart chart ) {
+			updateWithNewChart( chart, false );
+		}
+		synchronized public void updateWithNewChart( JFreeChart chart, boolean setSize ) {
+			if( chartPanel != null )
+				remove(chartPanel);
+			chartPanel = null;
+			this.chart = chart;
+			chartPanel = new ChartPanel( chart );
+			if( setSize )
+				chartPanel.setPreferredSize(new java.awt.Dimension(800,600));
+			mainPanel.add(chartPanel,BorderLayout.CENTER);
+			validate();
+		}
+		public GraphFrame( JFreeChart chart ) {
+			super();
+
+			mainPanel = new JPanel();
+			mainPanel.setLayout(new BorderLayout());
+
+			updateWithNewChart( chart, true );
+
+			JPanel buttonsPanel = new JPanel();
+			exportButton = new JButton("Export graph as SVG");
+			exportButton.addActionListener(this);
+			buttonsPanel.add(exportButton);
+			mainPanel.add(buttonsPanel,BorderLayout.SOUTH);
+
+			setContentPane(mainPanel);
+			validate();
+			setSize(new java.awt.Dimension(500, 270));
+			GUI.center(this);
+		}
+		public void actionPerformed( ActionEvent e ) {
+			Object source = e.getSource();
+			if( source == exportButton ) {
+				exportGraphAsSVG();
+			}
+		}
+		public void exportGraphAsSVG() {
+
+			SaveDialog sd = new SaveDialog("Export graph as...",
+						       "sholl",
+						       ".svg");
+
+			String savePath;
+			if(sd.getFileName()==null) {
+				return;
+			}
+
+			File saveFile = new File( sd.getDirectory(),
+						  sd.getFileName() );
+			if ((saveFile!=null)&&saveFile.exists()) {
+				if (!IJ.showMessageWithCancel(
+					    "Export graph...", "The file "+
+					    saveFile.getAbsolutePath()+" already exists.\n"+
+					    "Do you want to replace it?"))
+					return;
+			}
+
+			IJ.showStatus("Exporting graph to "+saveFile.getAbsolutePath());
+
+			try {
+				exportChartAsSVG( chart, chartPanel.getBounds(), saveFile );
+			} catch( IOException ioe) {
+				IJ.error("Saving to "+saveFile.getAbsolutePath()+" failed");
+				return;
+			}
+
+		}
+
+		/**
+		 * Exports a JFreeChart to a SVG file.
+		 *
+		 * @param chart JFreeChart to export
+		 * @param bounds the dimensions of the viewport
+		 * @param svgFile the output file.
+		 * @throws IOException if writing the svgFile fails.
+
+		 * This method is taken from:
+		 *    http://dolf.trieschnigg.nl/jfreechart/
+		 */
+		void exportChartAsSVG(JFreeChart chart, Rectangle bounds, File svgFile) throws IOException {
+
+			// Get a DOMImplementation and create an XML document
+			DOMImplementation domImpl =
+				GenericDOMImplementation.getDOMImplementation();
+			Document document = domImpl.createDocument(null, "svg", null);
+
+			// Create an instance of the SVG Generator
+			SVGGraphics2D svgGenerator = new SVGGraphics2D(document);
+
+			// draw the chart in the SVG generator
+			chart.draw(svgGenerator, bounds);
+
+			// Write svg file
+			OutputStream outputStream = new FileOutputStream(svgFile);
+			Writer out = new OutputStreamWriter(outputStream, "UTF-8");
+			svgGenerator.stream(out, true /* use css */);
+			outputStream.flush();
+			outputStream.close();
+		}
+	}
+
 	public static final int AXES_NORMAL   = 1;
 	public static final int AXES_SEMI_LOG = 2;
 	public static final int AXES_LOG_LOG  = 3;
@@ -222,7 +356,9 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		protected int [] crossingsPastEach;
 		protected int n;
 		protected double x_start, y_start, z_start;
+		/* maxCrossings is the same as the "Dendrite Maximum". */
 		protected int maxCrossings = Integer.MIN_VALUE;
+		protected double criticalValue = Double.MIN_VALUE;
 		protected String description;
 		protected int axes;
 		protected int normalization;
@@ -234,6 +370,23 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		protected int graphPoints;
 		protected String yAxisLabel;
 		protected String xAxisLabel;
+		protected double regressionGradient = Double.MIN_VALUE;
+		protected double regressionIntercept = Double.MIN_VALUE;
+		public int getDendriteMaximum() {
+			return maxCrossings;
+		}
+		public double getCriticalValue() {
+			return criticalValue;
+		}
+		public double getRegressionGradient() {
+			return regressionGradient;
+		}
+		public double getShollRegressionCoefficient() {
+			return - regressionGradient;
+		}
+		public double getRegressionIntercept() {
+			return regressionIntercept;
+		}
 		public double getMaxDistanceSquared() {
 			return squaredRangeStarts[n-1];
 		}
@@ -266,8 +419,10 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 					-- currentCrossings;
 				squaredRangeStarts[i] = p.distanceSquared;
 				crossingsPastEach[i] = currentCrossings;
-				if( currentCrossings > maxCrossings )
+				if( currentCrossings > maxCrossings ) {
 					maxCrossings = currentCrossings;
+					criticalValue = Math.sqrt(p.distanceSquared);
+				}
 			}
 			xAxisLabel = "Distance in space from ( "+x_start+", "+y_start+", "+z_start+" )";
 			yAxisLabel = "Number of intersections";
@@ -306,122 +461,42 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 				else
 					yAxisLabel += " / volume enclosed by sphere";
 			}
+
+			SimpleRegression regression = new SimpleRegression();
+
 			maxY = Double.MIN_VALUE;
 			minY = Double.MAX_VALUE;
 			for( int i = 0; i < graphPoints; ++i ) {
+				double x = x_graph_points[i];
 				double y = y_graph_points[i];
+				double x_for_regression = x;
+				double y_for_regression = y;
 				if( ! (Double.isInfinite(y) || Double.isNaN(y)) ) {
 					if( y > maxY )
 						maxY = y;
 					if( y < minY )
 						minY = y;
+					if( axes == AXES_SEMI_LOG ) {
+						if( y <= 0 )
+							continue;
+						y_for_regression = Math.log(y);
+					} else if( axes == AXES_LOG_LOG ) {
+						if( x <= 0 || y <= 0 )
+							continue;
+						x_for_regression = Math.log(x);
+						y_for_regression = Math.log(y);
+					}
+					regression.addData(x_for_regression,y_for_regression);
 				}
 			}
+			regressionGradient = regression.getSlope();
+			regressionIntercept = regression.getIntercept();
+
 			if( maxY == Double.MIN_VALUE )
 				throw new RuntimeException("[BUG] Somehow there were no valid points found");
 		}
 
-		public static class GraphFrame extends JFrame implements ActionListener {
-			JButton exportButton;
-			JFreeChart chart;
-			ChartPanel chartPanel;
-			public GraphFrame( String title, JFreeChart chart ) {
-				super();
-
-				this.chart = chart;
-
-				chartPanel = new ChartPanel( chart );
-				chartPanel.setPreferredSize(new java.awt.Dimension(800,600));
-
-				JPanel mainPanel = new JPanel();
-				mainPanel.setLayout(new BorderLayout());
-
-				mainPanel.add(chartPanel,BorderLayout.CENTER);
-
-				JPanel buttonsPanel = new JPanel();
-				exportButton = new JButton("Export graph as SVG");
-				exportButton.addActionListener(this);
-				buttonsPanel.add(exportButton);
-				mainPanel.add(buttonsPanel,BorderLayout.SOUTH);
-
-				setContentPane(mainPanel);
-				validate();
-				setSize(new java.awt.Dimension(500, 270));
-				GUI.center(this);
-				setVisible(true);
-			}
-			public void actionPerformed( ActionEvent e ) {
-				Object source = e.getSource();
-				if( source == exportButton ) {
-					exportGraphAsSVG();
-				}
-			}
-			public void exportGraphAsSVG() {
-
-				SaveDialog sd = new SaveDialog("Export graph as...",
-							       "sholl",
-							       ".svg");
-
-				String savePath;
-				if(sd.getFileName()==null) {
-					return;
-				}
-
-				File saveFile = new File( sd.getDirectory(),
-							  sd.getFileName() );
-				if ((saveFile!=null)&&saveFile.exists()) {
-					if (!IJ.showMessageWithCancel(
-						    "Export graph...", "The file "+
-						    saveFile.getAbsolutePath()+" already exists.\n"+
-						    "Do you want to replace it?"))
-						return;
-				}
-
-				IJ.showStatus("Exporting graph to "+saveFile.getAbsolutePath());
-
-				try {
-					exportChartAsSVG( chart, chartPanel.getBounds(), saveFile );
-				} catch( IOException ioe) {
-					IJ.error("Saving to "+saveFile.getAbsolutePath()+" failed");
-					return;
-				}
-
-			}
-
-			/**
-			 * Exports a JFreeChart to a SVG file.
-			 *
-			 * @param chart JFreeChart to export
-			 * @param bounds the dimensions of the viewport
-			 * @param svgFile the output file.
-			 * @throws IOException if writing the svgFile fails.
-
-			 * This method is taken from:
-			 *    http://dolf.trieschnigg.nl/jfreechart/
-			 */
-			void exportChartAsSVG(JFreeChart chart, Rectangle bounds, File svgFile) throws IOException {
-
-				// Get a DOMImplementation and create an XML document
-				DOMImplementation domImpl =
-					GenericDOMImplementation.getDOMImplementation();
-				Document document = domImpl.createDocument(null, "svg", null);
-
-				// Create an instance of the SVG Generator
-				SVGGraphics2D svgGenerator = new SVGGraphics2D(document);
-
-				// draw the chart in the SVG generator
-				chart.draw(svgGenerator, bounds);
-
-				// Write svg file
-				OutputStream outputStream = new FileOutputStream(svgFile);
-				Writer out = new OutputStreamWriter(outputStream, "UTF-8");
-				svgGenerator.stream(out, true /* use css */);
-				outputStream.flush();
-				outputStream.close();
-			}
-		}
-
-		public void drawGraph() {
+		public JFreeChart createGraph() {
 
 			PrintWriter pw = null;
 			boolean debug = true;
@@ -464,7 +539,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 
 			} catch( IOException e ) {
 				IJ.error("Failed to write out the graph points");
-				return;
+				return null;
 			}
 
 			ValueAxis xAxis = null;
@@ -504,9 +579,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 				yAxis,
 				renderer );
 
-			JFreeChart chart = new JFreeChart( description, plot );
-
-			new GraphFrame( description, chart );
+			return new JFreeChart( description, plot );
 		}
 
 		public int crossingsAtDistanceSquared( double distanceSquared ) {
@@ -680,25 +753,31 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		c.anchor = GridBagConstraints.LINE_START;
 		int margin = 10;
 		c.insets = new Insets( margin, margin, 0, margin );
+		useAllPathsCheckbox.addItemListener(this);
 		add(useAllPathsCheckbox,c);
 
 		++ c.gridy;
 		c.insets = new Insets( 0, margin, margin, margin );
 		add(useSelectedPathsCheckbox,c);
+		useSelectedPathsCheckbox.addItemListener(this);
 
 		++ c.gridy;
 		c.insets = new Insets( margin, margin, 0, margin );
 		add(normalAxes,c);
+		normalAxes.addItemListener(this);
 		++ c.gridy;
 		c.insets = new Insets( 0, margin, 0, margin );
 		add(semiLogAxes,c);
+		semiLogAxes.addItemListener(this);
 		++ c.gridy;
 		c.insets = new Insets( 0, margin, margin, margin );
 		add(logLogAxes,c);
+		logLogAxes.addItemListener(this);
 
 		++ c.gridy;
 		c.insets = new Insets( margin, margin, 0, margin );
 		add(noNormalization,c);
+		noNormalization.addItemListener(this);
 		++ c.gridy;
 		c.insets = new Insets( 0, margin, margin, margin );
 		if( twoDimensional )
@@ -706,6 +785,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		else
 			normalizationForSphereVolume.setLabel("Normalize for volume enclosed by circle");
 		add(normalizationForSphereVolume,c);
+		normalizationForSphereVolume.addItemListener(this);
 
 		++ c.gridy;
 		add(new Label("Circle / sphere separation (0 for unsampled analysis)"),c);
@@ -745,10 +825,9 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		String defaultText = "[Not calculated yet]";
 		Label criticalValuesLabel = new Label(defaultText);
 		Label dendriteMaximumLabel = new Label(defaultText);
-		Label schoenenRamificationIndexLabel = new Label(defaultText);
-		Label semiLogKLabel = new Label(defaultText);
-		Label logLogKLabel = new Label(defaultText);
-		Label modifiedShollMethodLabel = new Label(defaultText);
+		// Label schoenenRamificationIndexLabel = new Label(defaultText);
+		Label shollsRegressionCoefficientLabel = new Label(defaultText);
+		Label shollsRegressionInterceptLabel = new Label(defaultText);
 		public ResultsPanel() {
 			super();
 			setLayout(new GridBagLayout());
@@ -770,31 +849,28 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			add(new Label("Dendrite maximum:"),c);
 			c.gridx = 1;
 			add(dendriteMaximumLabel,c);
+			// c.gridx = 0;
+			// ++ c.gridy;
+			// add(new Label("Schoenen Ramification Index:"),c);
+			// c.gridx = 1;
+			// add(schoenenRamificationIndexLabel,c);
 			c.gridx = 0;
 			++ c.gridy;
-			add(new Label("Schoenen Ramification Index:"),c);
+			add(new Label("Sholl's Regression Coefficient:"),c);
 			c.gridx = 1;
-			add(schoenenRamificationIndexLabel,c);
+			add(shollsRegressionCoefficientLabel,c);
 			c.gridx = 0;
 			++ c.gridy;
-			add(new Label("Sholl's Regression Coefficient (Semi-Log):"),c);
+			add(new Label("Sholl's Regression Intercept:"),c);
 			c.gridx = 1;
-			add(semiLogKLabel,c);
-			c.gridx = 0;
-			++ c.gridy;
-			add(new Label("Sholl's Regression Coefficient (Log-Log):"),c);
-			c.gridx = 1;
-			add(logLogKLabel,c);
-			c.gridx = 0;
-			++ c.gridy;
-			add(new Label("Modified Sholl method:"),c);
-			c.gridx = 1;
-			add(modifiedShollMethodLabel,c);
+			add(shollsRegressionInterceptLabel,c);
 		}
 		public void updateFromResults( ShollResults results ) {
-			// FIXME: complete
+			dendriteMaximumLabel.setText(""+results.getDendriteMaximum());
+			criticalValuesLabel.setText(""+results.getCriticalValue());
+			shollsRegressionCoefficientLabel.setText(""+results.getShollRegressionCoefficient());
+			shollsRegressionInterceptLabel.setText(""+results.getRegressionIntercept());
 		}
-
 	}
 
 	public void windowClosing( WindowEvent e ) {
