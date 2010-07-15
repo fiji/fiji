@@ -197,7 +197,7 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 		visible = b;
 		whichChild.set(CO, b);
 		whichChild.set(CS, b && coordVisible);
-		whichChild.set(BB, b && bbVisible);
+// 		whichChild.set(BB, b && bbVisible);
 		// only if hiding, hide the point list
 		if(!b) {
 			showPointList(false);
@@ -402,7 +402,7 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 	public void setColor(Color3f color) {
 		if ((this.color == null && color == null) ||
 				(this.color != null && color != null &&
-				 !this.color.equals(color)))
+				 this.color.equals(color)))
 			return;
 		this.color = color;
  		plShape.setColor(color);

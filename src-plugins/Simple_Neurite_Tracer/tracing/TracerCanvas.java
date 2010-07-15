@@ -38,7 +38,7 @@ import stacks.ThreePanes;
 
 public class TracerCanvas extends ThreePanesCanvas {
 
-	private PathAndFillManager pathAndFillManager;
+	protected PathAndFillManager pathAndFillManager;
 
 	public TracerCanvas( ImagePlus imagePlus,
 			     PaneOwner owner,

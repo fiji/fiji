@@ -100,7 +100,6 @@ public class VoltexVolume extends Volume {
 		volRefPt.z = (maxCoord.z + minCoord.z) / 2;
 
 		initLoader2();
-
 		createImageComponents();
 		updateData();
 	}
@@ -151,7 +150,30 @@ public class VoltexVolume extends Volume {
 	 * average and data type.
 	 */
 	@Override
-	protected void initLoader() {}
+	protected void initLoader() {
+	}
+
+	@Override
+	public boolean setAverage(boolean average) {
+		if(super.setAverage(average)) {
+			initLoader2();
+			createImageComponents();
+			updateData();
+			return true;
+		}
+		return false;
+	}
+
+	@Override
+	public boolean setChannels(boolean[] ch) {
+		if(super.setChannels(ch)) {
+			initLoader2();
+			createImageComponents();
+			updateData();
+			return true;
+		}
+		return false;
+	}
 
 	private void initLoader2() {
 		boolean[] c = channels;
