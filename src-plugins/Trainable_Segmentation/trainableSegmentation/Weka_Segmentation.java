@@ -247,7 +247,13 @@ public class Weka_Segmentation implements PlugIn
 	
 	/** expected membrane thickness */
 	private int membraneThickness = 1;
+	/** size of the patch to use to enhance the membranes */
 	private int membranePatchSize = 19;
+	
+	/** minimum sigma to use on the filters */
+	private float minimumSigma = 1f;
+	/** maximum sigma to use on the filters */
+	private float maximumSigma = 16f;
 	
 	/** list of the names of features to use */
 	private ArrayList<String> featureNames = null;
@@ -1612,6 +1618,10 @@ public class Weka_Segmentation implements PlugIn
 			final FeatureStack testImageFeatures = new FeatureStack(testSlice);
 			// Use the same features as the current classifier
 			testImageFeatures.setEnableFeatures(featureStack.getEnableFeatures());
+			testImageFeatures.setMaximumSigma(maximumSigma);
+			testImageFeatures.setMinimumSigma(minimumSigma);
+			testImageFeatures.setMembranePatchSize(membranePatchSize);
+			testImageFeatures.setMembraneSize(membraneThickness);
 			testImageFeatures.updateFeaturesMT();
 			filterFeatureStackByList(this.featureNames, testImageFeatures);
 
@@ -1898,7 +1908,19 @@ public class Weka_Segmentation implements PlugIn
 			}
 		}
 		
-		IJ.log("max sigma = " + maxSigma + ", min sigma = " + minSigma);
+		IJ.log("Field of view: max sigma = " + maxSigma + ", min sigma = " + minSigma);
+		if(minSigma != this.minimumSigma)
+		{
+			this.minimumSigma = minSigma;
+			featuresChanged = true;
+			this.featureStack.setMinimumSigma(minSigma);
+		}
+		if(maxSigma != this.maximumSigma)
+		{
+			this.maximumSigma = maxSigma;
+			featuresChanged = true;
+			this.featureStack.setMaximumSigma(maxSigma);
+		}
 		
 		// Check if classes match
 		Attribute classAttribute = data.classAttribute();
@@ -2105,6 +2127,12 @@ public class Weka_Segmentation implements PlugIn
 		
 		// Expected membrane thickness
 		gd.addNumericField("Membrane thickness:", membraneThickness, 0);
+		// Membrane patch size
+		gd.addNumericField("Membrane patch size:", membranePatchSize, 0);
+		// Field of view
+		gd.addNumericField("Minimum sigma:", minimumSigma, 1);
+		gd.addNumericField("Maximum sigma:", maximumSigma, 1);
+		
 		if(loadedTrainingData != null)
 			((TextField) gd.getNumericFields().get(0)).setEnabled(false);
 		
@@ -2156,6 +2184,7 @@ public class Weka_Segmentation implements PlugIn
 				featuresChanged = true;
 		}
 
+		// Membrane thickness
 		final int newThickness = (int) gd.getNextNumber();
 		if(newThickness != membraneThickness)
 		{
@@ -2163,7 +2192,36 @@ public class Weka_Segmentation implements PlugIn
 			membraneThickness = newThickness;
 			this.featureStack.setMembraneSize(membraneThickness);
 		}
+		// Membrane patch size
+		final int newPatch = (int) gd.getNextNumber();
+		if(newPatch != membranePatchSize)
+		{
+			featuresChanged = true;
+			membranePatchSize = newPatch;
+			this.featureStack.setMembranePatchSize(newPatch);
+		}
+		// Field of view (minimum and maximum sigma/radius for the filters)
+		final float newMinSigma = (float) gd.getNextNumber();
+		if(newMinSigma != minimumSigma && newMinSigma > 0)
+		{
+			featuresChanged = true;
+			minimumSigma = newMinSigma;
+			this.featureStack.setMinimumSigma(newMinSigma);
+		}
 		
+		final float newMaxSigma = (float) gd.getNextNumber();
+		if(newMaxSigma != maximumSigma && newMaxSigma > minimumSigma)
+		{
+			featuresChanged = true;
+			maximumSigma = newMaxSigma;
+			this.featureStack.setMaximumSigma(newMaxSigma);
+		}
+		if(minimumSigma >= maximumSigma)
+		{
+			IJ.error("Error in the field of view parameters: they will be reset to default values");
+			minimumSigma = 0f;
+			maximumSigma = 16f;
+		}
 		// Read fast random forest parameters and check if changed
 		if( this.classifier instanceof FastRandomForest )
 		{
@@ -3167,6 +3225,8 @@ public class Weka_Segmentation implements PlugIn
 			featureStack.setEnableFeatures(this.featureStack.getEnableFeatures());
 			featureStack.setMembranePatchSize(membranePatchSize);
 			featureStack.setMembraneSize(this.membraneThickness);
+			featureStack.setMaximumSigma(this.maximumSigma);
+			featureStack.setMinimumSigma(this.minimumSigma);
 			featureStack.updateFeaturesMT();
 			filterFeatureStackByList(this.featureNames, featureStack);
 
