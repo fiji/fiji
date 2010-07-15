@@ -2016,6 +2016,16 @@ public class Weka_Segmentation implements PlugIn
 		this.featureStack.setMembranePatchSize(patchSize);
 	}
 	
+	/**
+	 * Set the maximum sigma to use in the features
+	 * @param sigma maximum sigma to use in the features filters
+	 */
+	public void setMaximumSigma(float sigma)
+	{		
+		this.maximumSigma = sigma;
+		this.featureStack.setMaximumSigma(sigma);
+	}
+	
 	
 	/**
 	 * Save training model into a file
