@@ -850,7 +850,7 @@ public class TextEditor extends JFrame implements ActionListener,
 	public boolean saveAs() {
 		SaveDialog sd = new SaveDialog("Save as ",
 				getEditorPane().getFileName() , "");
-		grabFocus();
+		grabFocus(2);
 		String name = sd.getFileName();
 		if (name == null)
 			return false;
@@ -914,7 +914,7 @@ public class TextEditor extends JFrame implements ActionListener,
 			name += "_";
 		name += ".jar";
 		SaveDialog sd = new SaveDialog("Export ", name, ".jar");
-		grabFocus();
+		grabFocus(2);
 		name = sd.getFileName();
 		if (name == null)
 			return false;
