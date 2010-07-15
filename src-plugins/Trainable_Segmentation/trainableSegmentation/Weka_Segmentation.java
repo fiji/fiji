@@ -1848,6 +1848,9 @@ public class Weka_Segmentation implements PlugIn
 		// Initialize list of names for the features to use
 		this.featureNames = new ArrayList<String>();
 		
+		float minSigma = Float.MAX_VALUE;
+		float maxSigma = Float.MIN_VALUE;
+		
 		while(attributes.hasMoreElements())
 		{
 			final Attribute a = attributes.nextElement();
@@ -1859,8 +1862,9 @@ public class Weka_Segmentation implements PlugIn
 					usedFeatures[i] = true;
 					if(i == FeatureStack.MEMBRANE)
 					{
-						int index = a.name().indexOf("_");
-						final int patchSize = Integer.parseInt(a.name().substring(index+3));
+						int index = a.name().indexOf("s_") + 4;
+						int index2 = a.name().indexOf("_", index+1 );
+						final int patchSize = Integer.parseInt(a.name().substring(index, index2));
 						if(patchSize != membranePatchSize)	
 						{
 							membranePatchSize = patchSize;
@@ -1877,9 +1881,24 @@ public class Weka_Segmentation implements PlugIn
 						}
 						
 					}
+					else if(i != FeatureStack.ANISOTROPIC_DIFFUSION)
+					{
+						String[] tokens = a.name().split("_"); 
+						for(int j=0; j<tokens.length; j++)
+							if(tokens[j].indexOf(".") != -1)
+							{
+								final float sigma = Float.parseFloat(tokens[j]);
+								if(sigma < minSigma)
+									minSigma = sigma;
+								if(sigma > maxSigma)
+									maxSigma = sigma;
+							}
+					}
 				}
 			}
 		}
+		
+		IJ.log("max sigma = " + maxSigma + ", min sigma = " + minSigma);
 		
 		// Check if classes match
 		Attribute classAttribute = data.classAttribute();
