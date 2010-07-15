@@ -1225,5 +1225,22 @@ public class FeatureStack
 				return;
 			}		
 	}
+
+	/**
+	 * Set the minimum sigma to use in the filters
+	 * @param minSigma sigma value
+	 */
+	public void setMinimumSigma(float minSigma) 
+	{
+		this.minimumSigma = minSigma;		
+	}
 	
+	/**
+	 * Set the maximum sigma to use in the filters
+	 * @param maxSigma sigma value
+	 */
+	public void setMaximumSigma(float maxSigma) 
+	{
+		this.maximumSigma = maxSigma;		
+	}
 }
