@@ -5,6 +5,8 @@ import java.awt.GridLayout;
 import java.awt.Label;
 import java.awt.Panel;
 import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
@@ -12,6 +14,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 
@@ -30,7 +33,7 @@ import ij.process.ImageProcessor;
  * and offers features like the use of different LUTs.
  *
  */
-public class SingleWindowDisplay extends ImageWindow implements Display, ItemListener {
+public class SingleWindowDisplay extends ImageWindow implements Display, ItemListener, ActionListener {
 	static final int WIN_WIDTH = 300;
 	static final int WIN_HEIGHT = 240;
 	static final int HIST_WIDTH = 256;
@@ -44,7 +47,8 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 	protected List<Result.Histogram2DResult> listOfHistograms = new ArrayList<Result.Histogram2DResult>();
 
 	// GUI elements
-	JButton listButton, copyButton, logButton;
+	JButton listButton, copyButton;
+	JCheckBox log;
 	JLabel valueLabel, countLabel;
 
 	SingleWindowDisplay(){
@@ -73,9 +77,13 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 		//copyButton.addActionListener(this);
 		buttons.add(copyButton);
 
-		logButton = new JButton("Log");
-		//logButton.addActionListener(this);
-		buttons.add(logButton);
+		/* We want the image to be log scale by default
+		 * so the user can see something.
+		 */
+		log = new JCheckBox("Log");
+		log.setSelected(true);
+		log.addActionListener(this);
+		buttons.add(log);
 
 		Panel valueAndCount = new Panel();
 		valueAndCount.setLayout(new GridLayout(2, 1));
@@ -115,6 +123,7 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 		setup();
 		if (listOfImageResults.size() > 0) {
 			drawImageResult(listOfImageResults.get(0));
+			toggleLogarithmic(log.isSelected());
 		}
 
 		this.show();
@@ -147,10 +156,43 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 		this.imp.updateAndDraw();
 	}
 
+	protected void adjustDisplayedImage (Result.ImageResult result) {
+		/* when changing the result image to display
+		 * need to set the image we were looking at
+		 * back to not log scale,
+		 * so we don't log it twice if its reselected.
+		 */
+		if (log.isSelected())
+			toggleLogarithmic(false);
+
+		drawImageResult(result);
+		toggleLogarithmic(log.isSelected());
+	}
+
 	public void itemStateChanged(ItemEvent e) {
 		if (e.getStateChange() == ItemEvent.SELECTED) {
+			// get current image result to view
 			Result.ImageResult result = (Result.ImageResult)(e.getItem());
-			drawImageResult(result);
+
+			adjustDisplayedImage(result);
+		}
+	}
+
+	protected void toggleLogarithmic(boolean enabled){
+		if (enabled){
+			this.imp.getProcessor().snapshot();
+			this.imp.getProcessor().log();
+			IJ.resetMinAndMax();
+		}
+		else {
+			this.imp.getProcessor().reset();
+		}
+		this.imp.updateAndDraw();
+	}
+
+	public void actionPerformed(ActionEvent e) {
+		if (e.getSource() == log) {
+			toggleLogarithmic(log.isSelected());
 		}
 	}
 }
