@@ -530,6 +530,19 @@ public class TextEditor extends JFrame implements ActionListener,
 		toFront();
 	}
 
+	protected void grabFocus(final int laterCount) {
+		if (laterCount == 0) {
+			grabFocus();
+			return;
+		}
+
+		SwingUtilities.invokeLater(new Thread() {
+			public void run() {
+				grabFocus(laterCount - 1);
+			}
+		});
+	}
+
 	public void actionPerformed(ActionEvent ae) {
 		final Object source = ae.getSource();
 		if (source == newFile)
@@ -541,7 +554,7 @@ public class TextEditor extends JFrame implements ActionListener,
 				System.getProperty("fiji.dir");
 			OpenDialog dialog = new OpenDialog("Open...",
 					defaultDir, "");
-			grabFocus();
+			grabFocus(2);
 			String name = dialog.getFileName();
 			if (name != null)
 				open(dialog.getDirectory() + name);
