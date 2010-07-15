@@ -93,7 +93,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		  openHelpWithoutFrames, nextTab, previousTab,
 		  runSelection, extractSourceJar, toggleBookmark,
 		  listBookmarks, openSourceForClass, newPlugin, installMacro,
-		  openSourceForMenuItem, showDiff, commit;
+		  openSourceForMenuItem, showDiff, commit, ijToFront;
 	JMenu gitMenu, tabsMenu;
 	int tabsMenuTabsStart;
 	Set<JMenuItem> tabsMenuItems;
@@ -257,6 +257,9 @@ public class TextEditor extends JFrame implements ActionListener,
 		newPlugin = addToMenu(tools,
 			"Create new plugin...", 0, 0);
 		newPlugin.setMnemonic(KeyEvent.VK_C);
+		ijToFront = addToMenu(tools,
+			"Focus on the main Fiji window", 0, 0);
+		ijToFront.setMnemonic(KeyEvent.VK_F);
 		openSourceForClass = addToMenu(tools,
 			"Open .java file for class...", 0, 0);
 		openSourceForClass.setMnemonic(KeyEvent.VK_J);
@@ -685,6 +688,8 @@ public class TextEditor extends JFrame implements ActionListener,
 			new FileFunctions(this).commit(getEditorPane().file);
 		else if (source == newPlugin)
 			new FileFunctions(this).newPlugin();
+		else if (source == ijToFront)
+			IJ.getInstance().toFront();
 		else if (source == nextTab)
 			switchTabRelative(1);
 		else if (source == previousTab)
