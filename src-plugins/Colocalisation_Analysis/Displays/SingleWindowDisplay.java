@@ -19,7 +19,9 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 
 import mpicbg.imglib.algorithm.math.ImageStatistics;
+import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
+import mpicbg.imglib.type.numeric.real.FloatType;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -27,6 +29,7 @@ import ij.gui.ImageWindow;
 import ij.gui.NewImage;
 import ij.measure.ResultsTable;
 import ij.process.ImageProcessor;
+import ij.ImageJ;
 
 /**
  * This class displays the container contents in one single window
@@ -46,10 +49,15 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 	protected List<Result.ImageResult> listOfImageResults = new ArrayList<Result.ImageResult>();
 	protected List<Result.Histogram2DResult> listOfHistograms = new ArrayList<Result.Histogram2DResult>();
 
+	// this is the image result that is currently selected by the drop down menu
+	protected Result.ImageResult currentlyDisplayedImageResult;
+
+	//make a cursor so we can get pixel values from the image
+	protected LocalizableByDimCursor<FloatType> pixelAccessCursor;
+
 	// GUI elements
 	JButton listButton, copyButton;
 	JCheckBox log;
-	JLabel valueLabel, countLabel;
 
 	SingleWindowDisplay(){
 		super(NewImage.createFloatImage("Single Window Display", WIN_WIDTH, WIN_HEIGHT, 1, NewImage.FILL_WHITE));
@@ -85,16 +93,6 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 		log.addActionListener(this);
 		buttons.add(log);
 
-		Panel valueAndCount = new Panel();
-		valueAndCount.setLayout(new GridLayout(2, 1));
-		valueLabel = new JLabel("                  "); //21
-		valueLabel.setFont(new Font("Monospaced", Font.PLAIN, 12));
-		valueAndCount.add(valueLabel);
-		countLabel = new JLabel("                  ");
-		countLabel.setFont(new Font("Monospaced", Font.PLAIN, 12));
-		valueAndCount.add(countLabel);
-		buttons.add(valueAndCount);
-
 		remove(ic);
 		add(imageSelectionPanel);
 		add(ic);
@@ -122,29 +120,50 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 
 		setup();
 		if (listOfImageResults.size() > 0) {
-			drawImageResult(listOfImageResults.get(0));
-			toggleLogarithmic(log.isSelected());
+			adjustDisplayedImage(listOfImageResults.get(0));
 		}
 
 		this.show();
 	}
 
 	public void mouseMoved(int x, int y) {
-		if (valueLabel==null || countLabel==null)
-			return;
-		if ((frame!=null) && x >= frame.x && x <= (frame.x + frame.width)) {
-			x = x - frame.x;
-			if (x>255) x = 255;
-			//int index = (int)(x*((double)histogram.length)/HIST_WIDTH);
-			//valueLabel.setText("  Value: " + ResultsTable.d2s(cal.getCValue(stats.histMin+index*stats.binSize), digits));
-			//countLabel.setText("  Count: " + histogram[index]);
-			valueLabel.setText("  Value: ...");
-			countLabel.setText("  Count: ...");
+	ImageJ ij = IJ.getInstance();
+	if (ij != null) {
+		/* If Alt key is not pressed, display the calibrated data.
+		 * If not, display image positions and data.
+		 * Non log image intensity from original image or 2D histogram result is always shown in status bar,
+		 * not the log intensity that might actually be displayed in the image.
+		 */
+		if (!IJ.altKeyDown()){
+
+			// the alt key is not pressed use x and y values that are bin widths or calibrated intensities not the x y image coordinates.
+			if (currentlyDisplayedImageResult instanceof Result.Histogram2DResult) {
+				Result.Histogram2DResult histogram = (Result.Histogram2DResult)currentlyDisplayedImageResult;
+
+				// set position of output cursor
+				pixelAccessCursor.setPosition( new int[] {x, y});
+				// get current value at position
+				float val = pixelAccessCursor.getType().getRealFloat();
+
+				double calibratedXBinBottom = histogram.getHistXMin() + x / histogram.getXBinWidth();
+				double calibratedXBinTop = histogram.getHistXMin() + (x + 1) / histogram.getXBinWidth();
+
+				double calibratedYBinBottom = histogram.getHistYMin() + y / histogram.getYBinWidth();
+				double calibratedYBinTop = histogram.getHistYMin() + (y + 1) / histogram.getYBinWidth();
+
+				IJ.showStatus("x = " + IJ.d2s(calibratedXBinBottom) + " to " + IJ.d2s(calibratedXBinTop) +
+						", y = " + IJ.d2s(calibratedYBinBottom) + " to " + IJ.d2s(calibratedYBinTop) + ", value = " + IJ.d2s(val) );
+			} else if (currentlyDisplayedImageResult instanceof Result.ImageResult) {
+				ImagePlus imp = ImageJFunctions.displayAsVirtualStack( currentlyDisplayedImageResult.getData() );
+				imp.mouseMoved(x, y);
+			}
 		} else {
-			valueLabel.setText("");
-			countLabel.setText("");
+			// alt key is down, so show the image coordinates for x y in status bar.
+			ImagePlus imp = ImageJFunctions.displayAsVirtualStack( currentlyDisplayedImageResult.getData() );
+			imp.mouseMoved(x, y);
 		}
 	}
+    }
 
 	protected void drawImageResult(Result.ImageResult result) {
 		ImagePlus imp = ImageJFunctions.displayAsVirtualStack( result.getData() );
@@ -165,6 +184,9 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 		if (log.isSelected())
 			toggleLogarithmic(false);
 
+		currentlyDisplayedImageResult = result;
+		pixelAccessCursor = result.getData().createLocalizableByDimCursor();
+
 		drawImageResult(result);
 		toggleLogarithmic(log.isSelected());
 	}
@@ -173,7 +195,6 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 		if (e.getStateChange() == ItemEvent.SELECTED) {
 			// get current image result to view
 			Result.ImageResult result = (Result.ImageResult)(e.getItem());
-
 			adjustDisplayedImage(result);
 		}
 	}
