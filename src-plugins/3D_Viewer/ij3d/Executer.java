@@ -40,6 +40,7 @@ import isosurface.MeshEditor;
 
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3f;
+import javax.vecmath.Vector3f;
 import javax.vecmath.Matrix4d;
 import javax.media.j3d.Transform3D;
 import javax.media.j3d.Background;
@@ -1124,6 +1125,33 @@ public class Executer {
 	public void stopAnimation() {
 		univ.pauseAnimation();
 		record(STOP_ANIMATE);
+	}
+
+	public void changeAnimationAxis() {
+		GenericDialog gd = new GenericDialog("Change animation axis");
+		String[] choices = new String[] {"x axis", "y axis", "z axis"};
+
+		Vector3f axis = new Vector3f();
+		univ.getRotationAxis(axis);
+		axis.normalize();
+
+		int idx = 0;
+		if(axis.x == 0 && axis.y == 1 && axis.z == 0)
+			idx = 1;
+		if(axis.x == 0 && axis.y == 0 && axis.z == 1)
+			idx = 2;
+		gd.addChoice("Rotate around", choices, choices[idx]);
+		gd.showDialog();
+		if(gd.wasCanceled())
+			return;
+
+		idx = gd.getNextChoiceIndex();
+		switch(idx) {
+			case 0: axis.x = 1; axis.y = 0; axis.z = 0; break;
+			case 1: axis.x = 0; axis.y = 1; axis.z = 0; break;
+			case 2: axis.x = 0; axis.y = 0; axis.z = 1; break;
+		}
+		univ.setRotationAxis(axis);
 	}
 
 	public void viewPreferences() {

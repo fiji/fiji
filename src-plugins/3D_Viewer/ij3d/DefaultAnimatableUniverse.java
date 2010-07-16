@@ -14,6 +14,7 @@ import javax.media.j3d.View;
 
 import javax.vecmath.AxisAngle4d;
 import javax.vecmath.Vector3d;
+import javax.vecmath.Vector3f;
 
 public abstract class DefaultAnimatableUniverse extends DefaultUniverse {
 
@@ -26,12 +27,6 @@ public abstract class DefaultAnimatableUniverse extends DefaultUniverse {
 	private Transform3D rotationXform = new Transform3D();
 	private Transform3D rotate = new Transform3D();
 	private Transform3D centerXformInv = new Transform3D();
-
-	/**
-	 * Flag indicating whether rotation should take place around the
-	 * view axis and not the vworld axis.
-	 */
-	private boolean rotateAroundViewAxis = true;
 
 	/**
 	 * A reference to the RotationInterpolator used for animation.
@@ -214,6 +209,20 @@ public abstract class DefaultAnimatableUniverse extends DefaultUniverse {
 			return null;
 		ImagePlus imp = new ImagePlus("Movie", stack);
 		return imp;
+	}
+
+	/**
+	 * Copy the current rotation axis into the given Vector3f.
+	 */
+	public void getRotationAxis(Vector3f ret) {
+		ret.set(rotationAxis);
+	}
+
+	/**
+	 * Set the rotation axis to the specified Vector3f.
+	 */
+	public void setRotationAxis(Vector3f a) {
+		rotationAxis.set(a);
 	}
 
 	/**
