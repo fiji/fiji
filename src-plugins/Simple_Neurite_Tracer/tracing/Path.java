@@ -1817,6 +1817,10 @@ public class Path implements Comparable {
 		this.precise_z_positions = optimized_z.clone();
 	}
 
+	/** This toString() method shows details of the path which is
+            actually being displayed, not necessarily this path
+            object.  FIXME: this is probably horribly confusing. */
+
 	@Override
 	public String toString() {
 		if( useFitted )
@@ -1951,7 +1955,7 @@ public class Path implements Comparable {
 		}
 
 		// Is the (flat) color wrong?
-		if( realColor == null || ! realColor.equals(color) ) {
+		if( pathToUse.realColor == null || ! pathToUse.realColor.equals(color) ) {
 			pathToUse.removeFrom3DViewer(univ);
 			pathToUse.paths3DDisplay = paths3DDisplay;
 			pathToUse.addTo3DViewer(univ,color,colorImage);

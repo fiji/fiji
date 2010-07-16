@@ -202,11 +202,19 @@ public class InteractiveBehavior extends Behavior {
 			OrthoGroup og = (OrthoGroup)c.getContent();
 			switch(code) {
 				case KeyEvent.VK_RIGHT:
-				case KeyEvent.VK_UP: og.increase(axis); return;
+				case KeyEvent.VK_UP:
+					og.increase(axis);
+					univ.fireContentChanged(c);
+					return;
 				case KeyEvent.VK_LEFT:
-				case KeyEvent.VK_DOWN:og.decrease(axis); return;
-				case KeyEvent.VK_SPACE: og.setVisible(axis,
-					!og.isVisible(axis)); return;
+				case KeyEvent.VK_DOWN:
+					og.decrease(axis);
+					univ.fireContentChanged(c);
+					return;
+				case KeyEvent.VK_SPACE:
+					og.setVisible(axis, !og.isVisible(axis));
+					univ.fireContentChanged(c);
+					return;
 			}
 		} else {
 			if(c != null && !c.isLocked())
@@ -306,6 +314,7 @@ public class InteractiveBehavior extends Behavior {
 					units = we.getUnitsToScroll();
 				if(units > 0) og.increase(axis);
 				else if(units < 0) og.decrease(axis);
+				univ.fireContentChanged(c);
 
 			} else {
 				viewTransformer.wheel_zoom(e);

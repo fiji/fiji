@@ -90,8 +90,8 @@ public class InteractiveTracerCanvas extends TracerCanvas implements KeyListener
 
 		boolean mac = IJ.isMacintosh();
 
-		boolean shift_down = (keyCode == KeyEvent.VK_SHIFT);
-		boolean join_modifier_down = mac ? keyCode == KeyEvent.VK_ALT : keyCode == KeyEvent.VK_CONTROL;
+		boolean shift_pressed = (keyCode == KeyEvent.VK_SHIFT);
+		boolean join_modifier_pressed = mac ? keyCode == KeyEvent.VK_ALT : keyCode == KeyEvent.VK_CONTROL;
 
 		if (verbose) System.out.println("keyCode=" + keyCode + " (" + KeyEvent.getKeyText(keyCode)
 						+ ") keyChar=\"" + keyChar + "\" (" + (int)keyChar + ") "
@@ -121,10 +121,38 @@ public class InteractiveTracerCanvas extends TracerCanvas implements KeyListener
 
 			just_near_slices = ! just_near_slices;
 
-		} else if( shift_down || join_modifier_down ) {
+		} else if( shift_pressed || join_modifier_pressed ) {
 
-			tracerPlugin.mouseMovedTo( last_x_in_pane, last_y_in_pane, plane, shift_down, join_modifier_down );
+			/* This case is just so that when someone
+			   starts holding down the modified they
+			   immediately see the effect, rather than
+			   having to wait for the next mouse move
+			   event. */
 
+			tracerPlugin.mouseMovedTo( last_x_in_pane_precise, last_y_in_pane_precise, plane, shift_pressed, join_modifier_pressed );
+
+		}
+
+		int modifiers = e.getModifiersEx();
+		boolean shift_down = (modifiers & e.SHIFT_DOWN_MASK) > 0;
+		boolean control_down = (modifiers & e.CTRL_DOWN_MASK) > 0;
+		boolean alt_down = (modifiers & e.ALT_DOWN_MASK) > 0;
+
+		if( shift_down && (control_down || alt_down) && (keyCode == KeyEvent.VK_A) ) {
+			if( pathAndFillManager.anySelected() ) {
+				double [] p = new double[3];
+				tracerPlugin.findPointInStackPrecise( last_x_in_pane_precise, last_y_in_pane_precise, plane, p );
+				PointInImage pointInImage = pathAndFillManager.nearestJoinPointOnSelectedPaths( p[0], p[1], p[2] );
+				ShollAnalysisDialog sholl = new ShollAnalysisDialog(
+					"Sholl analysis for tracing of "+tracerPlugin.getImagePlus().getTitle(),
+					pointInImage.x,
+					pointInImage.y,
+					pointInImage.z,
+					pathAndFillManager,
+					tracerPlugin.getImagePlus());
+			} else {
+				IJ.error("You must have a path selected in order to start Sholl analysis");
+			}
 		}
 
 		e.consume();
@@ -143,8 +171,8 @@ public class InteractiveTracerCanvas extends TracerCanvas implements KeyListener
 		int rawX = e.getX();
 		int rawY = e.getY();
 
-		double last_x_in_pane_precise = myOffScreenXD(rawX);
-		double last_y_in_pane_precise = myOffScreenYD(rawY);
+		last_x_in_pane_precise = myOffScreenXD(rawX);
+		last_y_in_pane_precise = myOffScreenYD(rawY);
 
 		boolean mac = IJ.isMacintosh();
 
@@ -154,8 +182,8 @@ public class InteractiveTracerCanvas extends TracerCanvas implements KeyListener
 		tracerPlugin.mouseMovedTo( last_x_in_pane_precise, last_y_in_pane_precise, plane, shift_key_down, joiner_modifier_down );
 	}
 
-	int last_x_in_pane;
-	int last_y_in_pane;
+	double last_x_in_pane_precise = Double.MIN_VALUE;
+	double last_y_in_pane_precise = Double.MIN_VALUE;
 
 	@Override
 	public void mouseClicked( MouseEvent e ) {

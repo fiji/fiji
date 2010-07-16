@@ -119,13 +119,7 @@ public class AppearanceCreator implements AxisConstants {
 		xTg.setPlaneT(new Vector4f(0f, 0f, v.zTexGenScale,
 				(float)(0.5f * v.pd * v.zTexGenScale)
 				-(float)(v.zTexGenScale * v.minCoord.z)));
-		boolean rgb = v.getDataType() == VoltexVolume.INT_DATA;
-
-		if(rgb) {
-			textureMode = opaque ? Texture.RGB : Texture.RGBA;
-		} else {
-			textureMode = opaque ? Texture.LUMINANCE : Texture.INTENSITY;
-		}
+		updateTextureMode();
 	}
 
 	/**
@@ -139,12 +133,20 @@ public class AppearanceCreator implements AxisConstants {
 	public void setOpaqueTextures(boolean opaque) {
 		if(this.opaque != opaque) {
 			this.opaque = opaque;
-			boolean rgb = volume.getDataType() == VoltexVolume.INT_DATA;
-			if(rgb)
-				textureMode = opaque ? Texture.RGB : Texture.RGBA;
-			else
-				textureMode = opaque ? Texture.LUMINANCE
-							: Texture.INTENSITY;
+			updateTextureMode();
+		}
+	}
+
+	/**
+	 * Update the texture mode, after the volume has changed.
+	 */
+	public void updateTextureMode() {
+		boolean rgb = volume.getDataType() == VoltexVolume.INT_DATA;
+
+		if(rgb) {
+			textureMode = opaque ? Texture.RGB : Texture.RGBA;
+		} else {
+			textureMode = opaque ? Texture.LUMINANCE : Texture.INTENSITY;
 		}
 	}
 
