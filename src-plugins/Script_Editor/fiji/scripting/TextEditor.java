@@ -93,7 +93,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		  openHelpWithoutFrames, nextTab, previousTab,
 		  runSelection, extractSourceJar, toggleBookmark,
 		  listBookmarks, openSourceForClass, newPlugin, installMacro,
-		  openSourceForMenuItem, showDiff, commit, ijToFront;
+		  openSourceForMenuItem, showDiff, commit, ijToFront,
+		  openMacroFunctions;
 	JMenu gitMenu, tabsMenu;
 	int tabsMenuTabsStart;
 	Set<JMenuItem> tabsMenuItems;
@@ -251,6 +252,9 @@ public class TextEditor extends JFrame implements ActionListener,
 		openHelp = addToMenu(tools,
 			"Open Help for Class (with frames)...", 0, 0);
 		openHelp.setMnemonic(KeyEvent.VK_P);
+		openMacroFunctions = addToMenu(tools,
+			"Open Help on Macro Functions...", 0, 0);
+		openMacroFunctions.setMnemonic(KeyEvent.VK_H);
 		extractSourceJar = addToMenu(tools,
 			"Extract source .jar...", 0, 0);
 		extractSourceJar.setMnemonic(KeyEvent.VK_E);
@@ -665,6 +669,8 @@ public class TextEditor extends JFrame implements ActionListener,
 			openHelp(null);
 		else if (source == openHelpWithoutFrames)
 			openHelp(null, false);
+		else if (source == openMacroFunctions)
+			IJ.run("Macro Functions...");
 		else if (source == extractSourceJar)
 			extractSourceJar();
 		else if (source == openSourceForClass) {
