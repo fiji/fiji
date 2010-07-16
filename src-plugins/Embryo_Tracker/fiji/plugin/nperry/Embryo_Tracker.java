@@ -4,31 +4,32 @@
 
 package fiji.plugin.nperry;
 
+import ij.IJ;
+import ij.ImagePlus;
+import ij.gui.GenericDialog;
+import ij.gui.PointRoi;
+import ij.plugin.PlugIn;
+import ij.process.StackConverter;
+import ij3d.Content;
+import ij3d.Image3DUniverse;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.ListIterator;
 
-import ij.gui.GenericDialog;
-import ij.gui.PointRoi;
-import ij.plugin.PlugIn;
-import ij.*;
-import ij.process.StackConverter;
-import ij3d.Content;
-import ij3d.Image3DUniverse;
-import vib.PointList;
 import mpicbg.imglib.algorithm.findmax.FindLocalMaximaFactory;
 import mpicbg.imglib.algorithm.findmax.LocalMaximaFinder;
 import mpicbg.imglib.algorithm.gauss.DownSample;
 import mpicbg.imglib.algorithm.gauss.GaussianConvolutionRealType;
-import mpicbg.imglib.algorithm.math.MathLib;
 import mpicbg.imglib.algorithm.roi.MedianFilter;
+import mpicbg.imglib.algorithm.roi.StructuringElement;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImagePlusAdapter;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.type.logic.BitType;
 import mpicbg.imglib.type.numeric.RealType;
-import mpicbg.imglib.algorithm.roi.StructuringElement;
+import vib.PointList;
 
 public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	/** Class/Instance variables */
@@ -151,8 +152,9 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		IJ.log("Finding maxima...");
 		IJ.showStatus("Finding maxima...");
 		ArrayList< double[] > maxima;
-		FindLocalMaximaFactory<T> maxFactory = new FindLocalMaximaFactory<T>();
-		LocalMaximaFinder findMax = maxFactory.createLocalMaximaFinder(img, new OutOfBoundsStrategyMirrorFactory<T>(), allowEdgeMax);
+		FindLocalMaximaFactory<T> maxFactory = new FindLocalMaximaFactory<T>(img, false);
+		LocalMaximaFinder<T> findMax = maxFactory.createLocalMaximaFinder();
+		findMax.allowEdgeExtrema(allowEdgeMax);
 		if (findMax.checkInput() && findMax.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
 			maxima = findMax.getLocalMaxima(); 
 		} else { 

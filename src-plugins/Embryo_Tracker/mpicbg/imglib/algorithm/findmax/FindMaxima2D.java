@@ -19,7 +19,6 @@ package mpicbg.imglib.algorithm.findmax;
 import java.util.ArrayList;
 import java.util.LinkedList;
 
-import mpicbg.imglib.algorithm.Algorithm;
 import mpicbg.imglib.algorithm.Benchmark;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.special.LocalNeighborhoodCursor;
@@ -27,12 +26,12 @@ import mpicbg.imglib.image.Image;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
 import mpicbg.imglib.type.numeric.RealType;
 
-public class FindMaxima2D<T extends RealType<T>> implements Algorithm, Benchmark, LocalMaximaFinder
+public class FindMaxima2D<T extends RealType<T>> extends AbstractLocalMaximaFinder<T> implements Benchmark
 {
-	final protected Image<T> image;											// holds the image the algorithm is to be applied to
-	final protected OutOfBoundsStrategyFactory<T> outOfBoundsFactory;		// holds the outOfBoundsStrategy used by the cursors in this algorithm
-	final protected boolean allowEdgeMax;									// if true, maxima found on the edge of the images will be included in the results; if false, edge maxima are excluded
-	final protected ArrayList< double[] > maxima = new ArrayList< double[] >();	// an array list which holds the coordinates of the maxima found in the image.
+
+	/*
+	 * FIELDS
+	 */
 	
 	private long processingTime;											// stores the run time of process() once the method is invoked.
 	private String errorMessage = "";										// stores any error messages.
@@ -42,20 +41,17 @@ public class FindMaxima2D<T extends RealType<T>> implements Algorithm, Benchmark
 	
 	/**
 	 * Constructor for the FindMaxima2D class.
-	 * 
-	 * Example usage: FindMaxima2D<T> findMax = new FindMaxima3D<T>(img, new OutOfBoundsStrategyMirrorFactory<T>(), false);
+	 * <p>
+	 * By default, the {@link OutOfBoundsStrategyFactory} is a constant value strategy, sets to 0,
+	 * so as to avoid nasty mirroring of periodic maxima effects. Edge maxima will be discarded by
+	 * default, and there will be no maxima interpolation.
 	 * 
 	 * @param image: the image to find the maxima of
-	 * @param outOfBoundsFactory: an outOfBoundsFactory to use when the cursors are on the borders of the image and actually overrun the image
-	 * @param allowEdgeMax: a boolean which decides whether maxima found on the direct edges of the image should be included.
 	 */
-	public FindMaxima2D( final Image<T> image, final OutOfBoundsStrategyFactory<T> outOfBoundsFactory, boolean allowEdgeMax)
+	public FindMaxima2D( final Image<T> image)
 	{
 		this.image = image;
-		this.allowEdgeMax = allowEdgeMax;
 		this.processingTime = -1;
-		
-		this.outOfBoundsFactory = outOfBoundsFactory;
 	}
 	
 	/**
@@ -272,5 +268,6 @@ public class FindMaxima2D<T extends RealType<T>> implements Algorithm, Benchmark
 	public int getIndexOfPosition(int pos[], int width) {
 		return pos[0] + width * pos[1];
 	}
+
 }
 
