@@ -19,7 +19,7 @@
 
   In addition, as a special exception, the copyright holders give
   you permission to combine this program with free software programs or
-  libraries that are released under the Apache Public License. 
+  libraries that are released under the Apache Public License.
 
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
@@ -44,9 +44,11 @@ import ij.gui.GenericDialog;
 
 import java.text.DecimalFormat;
 
+import ij.measure.Calibration;
+
 public class NeuriteTracerResultsDialog
 	extends Dialog
-	implements ActionListener, WindowListener, ItemListener, PathAndFillListener, TextListener, SigmaPalette.SigmaPaletteListener {
+	implements ActionListener, WindowListener, ItemListener, PathAndFillListener, TextListener, SigmaPalette.SigmaPaletteListener, ImageListener {
 
 	static final boolean verbose = SimpleNeuriteTracer.verbose;
 
@@ -104,6 +106,10 @@ public class NeuriteTracerResultsDialog
 
 	PathColorsCanvas pathColorsCanvas;
 
+	Choice colorImageChoice;
+	String noColorImageString = "[None]";
+	ImagePlus currentColorImage;
+
 	Checkbox justShowSelected;
 
 	Choice paths3DChoice;
@@ -138,6 +144,115 @@ public class NeuriteTracerResultsDialog
 
 	Button showOrHidePathList;
 	Button showOrHideFillList;
+
+	// ------------------------------------------------------------------------
+	// Implementing the ImageListener interface:
+
+	public void imageOpened(ImagePlus imp) {
+		updateColorImageChoice();
+	}
+
+	// Called when an image is closed
+	public void imageClosed(ImagePlus imp) {
+		updateColorImageChoice();
+	}
+
+	// Called when an image's pixel data is updated
+	public void imageUpdated(ImagePlus imp) {
+		updateColorImageChoice();
+	}
+
+	// ------------------------------------------------------------------------
+
+	public static final boolean onlySameSizedImages = false;
+
+	synchronized public void updateColorImageChoice() {
+
+		// Try to preserve the old selection:
+		String oldSelection = colorImageChoice.getSelectedItem();
+
+		colorImageChoice.removeAll();
+
+		int j = 0;
+		colorImageChoice.addItem(noColorImageString);
+
+		int selectedIndex = 0;
+
+		int[] wList = WindowManager.getIDList();
+		if (wList!=null) {
+			for (int i=0; i<wList.length; i++) {
+				ImagePlus imp = WindowManager.getImage(wList[i]);
+				if( (! onlySameSizedImages) ||
+				    ((imp.getWidth() == plugin.width) &&
+				     (imp.getHeight() == plugin.height) &&
+				     (imp.getStackSize() == plugin.depth)) ) {
+					j ++;
+					String title = imp.getTitle();
+					colorImageChoice.addItem(title);
+					if( title == oldSelection )
+						selectedIndex = j;
+				}
+			}
+		}
+
+		colorImageChoice.select(selectedIndex);
+		// This doesn't trigger an item event
+		checkForColorImageChange();
+	}
+
+	public static boolean similarCalibrations(Calibration a, Calibration b) {
+		double ax = 1, ay = 1, az = 1;
+		double bx = 1, by = 1, bz = 1;
+		if( a != null ) {
+			ax = a.pixelWidth;
+			ay = a.pixelHeight;
+			az = a.pixelDepth;
+		}
+		if( b != null ) {
+			bx = b.pixelWidth;
+			by = b.pixelHeight;
+			bz = b.pixelDepth;
+		}
+		double pixelWidthDifference = Math.abs( ax - bx );
+		double pixelHeightDifference = Math.abs( ay - by );
+		double pixelDepthDifference = Math.abs( az - bz );
+		double epsilon = 0.000001;
+		if( pixelWidthDifference > epsilon )
+			return false;
+		if( pixelHeightDifference > epsilon )
+			return false;
+		if( pixelDepthDifference > epsilon )
+			return false;
+		return true;
+	}
+
+	synchronized public void checkForColorImageChange() {
+		String selectedTitle = colorImageChoice.getSelectedItem();
+
+		ImagePlus intendedColorImage = null;
+		if( ! selectedTitle.equals(noColorImageString) ) {
+			intendedColorImage = WindowManager.getImage(selectedTitle);
+		}
+
+		if( intendedColorImage != currentColorImage ) {
+			if( intendedColorImage != null ) {
+				ImagePlus image = plugin.getImagePlus();
+				Calibration calibration = plugin.getImagePlus().getCalibration();
+				Calibration colorImageCalibration = intendedColorImage.getCalibration();
+				if( ! similarCalibrations( calibration,
+							   colorImageCalibration ) ) {
+					IJ.error("Warning: the calibration of '"+intendedColorImage.getTitle()+"' is different from the image you're tracing ('"+image.getTitle()+"')'\nThis may produce unexpected results.");
+				}
+				if( (! onlySameSizedImages) &&
+				    ! (intendedColorImage.getWidth() == image.getWidth() &&
+				       intendedColorImage.getHeight() == image.getHeight() &&
+				       intendedColorImage.getStackSize() == image.getStackSize()) )
+					IJ.error("Warning: the dimensions (in voxels) of '"+intendedColorImage.getTitle()+"' is different from the image you're tracing ('"+image.getTitle()+"')'\nThis may produce unexpected results.");
+			}
+			currentColorImage = intendedColorImage;
+			plugin.setColorImage(currentColorImage);
+		}
+	}
 
 	public void newSigmaSelected( double sigma ) {
 		setSigma( sigma, false );
@@ -567,7 +682,6 @@ public class NeuriteTracerResultsDialog
 			if( plugin != null && plugin.use3DViewer ) {
 				for( int choice = 1; choice < paths3DChoicesStrings.length; ++choice )
 					paths3DChoice.addItem(paths3DChoicesStrings[choice]);
-				paths3DChoice.addItemListener(this);
 
 				co.gridx = 0;
 				++ co.gridy;
@@ -575,26 +689,41 @@ public class NeuriteTracerResultsDialog
 				co.gridx = 1;
 				otherOptionsPanel.add(paths3DChoice,co);
 			}
+			paths3DChoice.addItemListener(this);
 
-			co.gridx = 0;
+			co.gridx = 1;
 			++ co.gridy;
-			co.gridwidth = 2;
-			co.anchor = GridBagConstraints.LINE_END;
+			co.gridwidth = 1;
+			co.anchor = GridBagConstraints.LINE_START;
 			otherOptionsPanel.add(nearbyPanel,co);
 
-			co.gridx = 0;
-			++ co.gridy;
-			co.gridwidth = 2;
-			co.anchor = GridBagConstraints.LINE_START;
-			otherOptionsPanel.add(new Label("Click to change Path colours:"),co);
 
-			pathColorsCanvas = new PathColorsCanvas( plugin, 150, 18 );
+			Panel colorOptionsPanel = new Panel();
+			{
+				Panel flatColorOptionsPanel = new Panel();
+				flatColorOptionsPanel.setLayout(new BorderLayout());
+				flatColorOptionsPanel.add( new Label("Click to change Path colours:"), BorderLayout.NORTH );
+				pathColorsCanvas = new PathColorsCanvas( plugin, 150, 18 );
+				flatColorOptionsPanel.add(pathColorsCanvas, BorderLayout.CENTER);
+
+				Panel imageColorOptionsPanel = new Panel();
+				imageColorOptionsPanel.setLayout(new BorderLayout());
+				imageColorOptionsPanel.add(new Label("Use colors / labels from:"),BorderLayout.NORTH);
+
+				colorImageChoice = new Choice();
+				updateColorImageChoice();
+				colorImageChoice.addItemListener(this);
+				imageColorOptionsPanel.add(colorImageChoice,BorderLayout.CENTER);
+				ImagePlus.addImageListener(this);
+
+				colorOptionsPanel.add(flatColorOptionsPanel);
+				colorOptionsPanel.add(imageColorOptionsPanel);
+			}
+
 			co.gridx = 0;
 			++ co.gridy;
 			co.gridwidth = 2;
-			co.anchor = GridBagConstraints.CENTER;
-			co.insets = new Insets( 3, 3, 3, 3 );
-			otherOptionsPanel.add(pathColorsCanvas,co);
+			otherOptionsPanel.add(colorOptionsPanel,co);
 
 			justShowSelected = new Checkbox( "Show only selected paths" );
 			justShowSelected.addItemListener( this );
@@ -837,8 +966,6 @@ public class NeuriteTracerResultsDialog
 
 		} else if( source == loadButton ) {
 
-			boolean ignoreCalibration = (e.getModifiers() & ActionEvent.CTRL_MASK) > 0;
-
 			if( plugin.pathsUnsaved() ) {
 				YesNoCancelDialog d = new YesNoCancelDialog( IJ.getInstance(), "Warning",
 									     "There are unsaved paths. Do you really want to load new traces?" );
@@ -849,7 +976,7 @@ public class NeuriteTracerResultsDialog
 
 			int preLoadingState = currentState;
 			changeState( LOADING );
-			plugin.loadTracings(ignoreCalibration);
+			plugin.loadTracings();
 			changeState( preLoadingState );
 
 		} else if( source == exportCSVButton ) {
@@ -1102,6 +1229,8 @@ public class NeuriteTracerResultsDialog
 			int selectedIndex = paths3DChoice.getSelectedIndex();
 			plugin.setPaths3DDisplay( selectedIndex + 1 );
 
+		} else if( source == colorImageChoice ) {
+			checkForColorImageChange();
 		}
 
 	}

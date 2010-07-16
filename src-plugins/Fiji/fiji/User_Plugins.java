@@ -83,6 +83,9 @@ public class User_Plugins implements PlugIn {
 
 		// make sure "Edit>Options>Memory & Threads runs Fiji's plugin
 		Menus.getCommands().put("Memory & Threads...", "fiji.Memory");
+
+		SampleImageLoader.install();
+		Main.installRecentCommands();
 	}
 
 	public static void install() {
@@ -263,6 +266,8 @@ public class User_Plugins implements PlugIn {
 	 */
 	protected static MenuItem getMenuItem(MenuBar menuBar, Menu menu,
 			String name, boolean createIfNecessary) {
+		if (menuBar == null && menu == null)
+			return null;
 		if (menuBar != null && name.equals("Help")) {
 			menu = menuBar.getHelpMenu();
 			if (menu == null && createIfNecessary) {

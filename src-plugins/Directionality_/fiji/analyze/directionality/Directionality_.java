@@ -89,7 +89,7 @@ import org.jfree.data.xy.XYSeriesCollection;
  * This plugin chops the image into
  * square pieces, and computes their Fourier power spectra. The later are
  * analyzed in polar coordinates, and the power is measured for each angle using
- * the spatial filters proposed in [1]
+ * the spatial filters proposed in [1].
  * 
  * <h3>Local gradient orientation</h3>
  * 
@@ -98,6 +98,30 @@ import org.jfree.data.xy.XYSeriesCollection;
  * is then used to build the histogram, by putting the square of the gradient norm 
  * in the adequate bin. The square of the norm was retained, so as to have an histogram 
  * with the same dimension that for the Fourier analysis.
+ * 
+ * 
+ * <h2>Orientation map</h2>
+ * 
+ * Since version 2.0, the plugin offers the possibility to generate an orientation map,
+ * where the image is colored according to its local directionality, or location orientation.
+ * This has a well an easily defined meaning in the case of the local gradient orientation 
+ * method, but things are a bit more complicated in the case of the Fourier component, which
+ * is a global method. 
+ * <p>
+ * In the later case, the image is filtered using the Fourier filters described above, and 
+ * transformed back using inverse Fourier transform. For each pixel, the direction retained
+ * is the one that has the strongest intensity when filtered in this orientation.
+ * <p> 
+ * To generate the orientation map image, a HSB image is made by taking
+ * <ul>
+ * 	<li> the local orientation as hue
+ * 	<li> the original image gray value as brightness
+ * 	<li> for saturation:
+ * 	<ul>
+ * 		<li> the power spectrum value for the Fourier component method
+ * 		<li> the gradient magnitude square for the Local gradient orientation method
+ * </ul>
+ * </ul>
  * 
  * 
  * <h2>Code structure</h2>
@@ -114,9 +138,52 @@ import org.jfree.data.xy.XYSeriesCollection;
  *  da.run("nbins=60, start=-90, method=gradient");
  *  </pre>
  * 
+ * It is also possible to run the plugin non-interactively from another class, or even in
+ * a script. For instance in Python:
+ * 
+ * 	<pre>
+ * 	import fiji.analyze.directionality.Directionality_
+ * 
+ * 	# Instantiate plugin
+ * 	dir = fiji.analyze.directionality.Directionality_()
+ * 
+ * 	# Set fields and settings
+ * 	dir.setImagePlus(WindowManager.getCurrentImage())
+ * 	# dir.setMethod(fiji.analyze.directionality.Directionality_.AnalysisMethod.LOCAL_GRADIENT_ORIENTATION)
+ * 	dir.setMethod(fiji.analyze.directionality.Directionality_.AnalysisMethod.FOURIER_COMPONENTS)
+ * 	dir.setBinNumber(30)
+ * 	dir.setBinStart(-60)
+ *	dir.setBuildOrientationMapFlag(True)
+ *
+ *	# Do calculation
+ *	dir.computeHistograms()
+ *	dir.fitHistograms()
+ *
+ *	# Display plot frame
+ *	plot_frame = dir.plotResults()
+ *	plot_frame.setVisible(True)
+ *
+ *	# Display fit analysis
+ *	data_frame = dir.displayFitAnalysis()
+ *	data_frame.setVisible(True) 
+ *
+ *	# Display results table
+ *	table = dir.displayResultsTable()
+ *	table.show("Directionality histograms")
+ *
+ *	# Display orientation map
+ *	stack = dir.getOrientationMap()
+ *	ImagePlus("Orientation map", stack).show()
+ *
+ *	# Generate a color wheel
+ *	fiji.analyze.directionality.Directionality_.generateColorWheel().show()
+ *</pre>
+ * 
  * <h2>Version history</h2>
  * 
  * <ul>
+ * <li> v2.0 - 2010-06-08: After a lot of mistakes and problems, each method now propose to 
+ * generate an orientation map, which colors the image according to the local directionality.
  * <li> v1.3 - 2010-03-17: Heavy refactoring, made it implement Plugin interface, so has to 
  * be conveniently called from a script.
  * <li> v1.2 - 2010-03-10: Added a new analysis method based on local gradient orientation.
@@ -132,7 +199,7 @@ import org.jfree.data.xy.XYSeriesCollection;
  * <p>
  * 
  * @author Jean-Yves Tinevez jeanyves.tinevez@gmail.com
- * @version 1.4
+ * @version 2.0
  */
 public class Directionality_ implements PlugIn {
 	
@@ -174,7 +241,24 @@ public class Directionality_ implements PlugIn {
 	/** How many sigmas away from the gaussian center we sum to get the amount value. */ 
 	private static final double SIGMA_NUMBER = 2;
 	private static final String PLUGIN_NAME = "Directionality analysis";
-	private static final String VERSION_STR = "1.4";
+	private static final String VERSION_STR = "2.0";
+	
+	
+	/* USER SETTING FIELDS, memorized between runs*/
+	private static boolean setting_debug = false;
+	/** The number of bins to create. */
+	private static int setting_nbins = 90;
+	/** The first bin in degrees when displaying the histogram, so that we are not forced to start at -90 */
+	private static double setting_bin_start = -90;
+	/** Method used for analysis, as set by the user. */
+	private static AnalysisMethod setting_method = AnalysisMethod.FOURIER_COMPONENTS;
+	/** If set true, will display a {@link ResultsTable} with the histogram at the end of processing. */
+	private static boolean setting_display_table = false;
+	/** If true, will calculate a map of orientation. */
+	private static boolean setting_build_orientation_map = false;
+	/** If true, will display a color wheel to interpret the orientation map. */
+	private static boolean setting_display_color_wheel = false;
+
 	
 	/* SETTING FIELDS, they determine results */
 	
@@ -285,11 +369,13 @@ public class Directionality_ implements PlugIn {
 				}
 			}
 		} else {
-			showDialog();
+			boolean userHasCanceled = showDialog();
+			if (userHasCanceled)
+				return;
 		}
 		
 		// Launch analysis, this will set the directionality field
-		computesHistograms();
+		computeHistograms();
 		
 		// Fit histograms
 		fitHistograms();
@@ -349,7 +435,7 @@ public class Directionality_ implements PlugIn {
 	 * This method runs the analysis on all slices, and store resulting histograms in the 
 	 * {@link #histograms} fields. Calling this method resets the aforementioned field.
 	 */
-	public void computesHistograms() {
+	public void computeHistograms() {
 		if (null == imp) return;
 		
 		// Reset analysis fields
@@ -418,17 +504,44 @@ public class Directionality_ implements PlugIn {
 		if (null == histograms) 
 			return null;
 		
+		// Wrap shifting angle to [-90  90[
+		double wrapped_angle = ((bin_start+90)  % 180 + 180) % 180 - 90;
+		int wrap_index = 0;
+		for (int i = 0; i < bins.length; i++) {
+			if (wrapped_angle <= Math.toDegrees(bins[i])) {
+				wrap_index = i;
+				break;				
+			}
+		}
+		
+		double[] wrapped_bins = new double[nbins];
+		for (int i = 0; i < wrapped_bins.length; i++) {
+			wrapped_bins[i] = Math.toDegrees(bins[wrap_index] + (bins[1]-bins[0])*i);
+		}
+		
 		ResultsTable table = new ResultsTable();
 		String[] names = makeNames();
 		double[] dir;
-		for (int i = 0; i < bins.length; i++) {
+		int index = 0;
+		for (int i = wrap_index; i < bins.length; i++) {
 			table.incrementCounter();
-			table.addValue("Direction (º)", bins[i]);
+			table.addValue("Direction (º)", wrapped_bins[index]);
 			for (int j = 0; j < names.length; j++) {
 				dir = histograms.get(j);
 				table.addValue(names[j], dir[i]);
 			}
+			index++;
 		}
+		for (int i = 0; i < wrap_index; i++) {
+			table.incrementCounter();
+			table.addValue("Direction (º)", wrapped_bins[index]);
+			for (int j = 0; j < names.length; j++) {
+				dir = histograms.get(j);
+				table.addValue(names[j], dir[i]);
+			}
+			index++;
+		}
+
 		return table;		
 	}
 	
@@ -506,17 +619,41 @@ public class Directionality_ implements PlugIn {
 		final String[] names = makeNames();
 		XYSeries series;
 		
+		// Shift histograms
+		
+		// Wrap shifting angle to [-90  90[
+		double wrapped_angle = ((bin_start+90)  % 180 + 180) % 180 - 90;
+		int wrap_index = 0;
+		for (int i = 0; i < bins.length; i++) {
+			if (wrapped_angle <= Math.toDegrees(bins[i])) {
+				wrap_index = i;
+				break;				
+			}
+		}
+		
+		// Wrap bins
+		double[] wrapped_bins = new double[nbins];
+		for (int i = 0; i < wrapped_bins.length; i++) {
+			wrapped_bins[i] = Math.toDegrees(bins[wrap_index] + (bins[1]-bins[0])*i);
+		}
+		
 		// This is where we shift histograms
 		double[] dir;
 		for (int i = 0; i < histograms.size(); i++) {
 			dir = histograms.get(i);
 			series = new XYSeries(names[i]);
-			for (int j = 0; j < nbins; j++) { // DO IT DO IT DO IT DO IT
-				series.add(bins[j], dir[j]);
+			int index = 0;
+			for (int j = wrap_index; j < nbins; j++) { 
+				series.add(wrapped_bins[index], dir[j]);
+				index++;
+			}
+			for (int j = 0; j < wrap_index; j++) { 
+				series.add(wrapped_bins[index], dir[j]);
+				index++;
 			}
 			histogram_plots.addSeries(series);
 		}
-		histogram_plots.setIntervalWidth(bins[1]-bins[0]);
+		histogram_plots.setIntervalWidth(Math.toDegrees(bins[1]-bins[0]));
 		
 		// Create chart with histograms
 		final JFreeChart chart = ChartFactory.createHistogram(
@@ -540,11 +677,11 @@ public class Directionality_ implements PlugIn {
 		plot.setRenderer(0, renderer);
 		
 		// Draw fit results
-		if (null == params_from_fit) {
+		if (null != params_from_fit) {
 			// Make new X
 			final double[] X = new double[bins.length*10]; // oversample 10 times
 			for (int i = 0; i < X.length; i++) {
-				X[i] = bins[0] + (bins[bins.length-1]-bins[0])/X.length * i;
+				X[i] = (wrapped_bins[0] + (wrapped_bins[nbins-1]-wrapped_bins[0])/X.length * i);
 			}
 			// Create dataset
 			final XYSeriesCollection fits = new XYSeriesCollection();
@@ -557,7 +694,7 @@ public class Directionality_ implements PlugIn {
 				center = params[2];
 				fit_series = new XYSeries(names[i]);
 				for (int j = 0; j < X.length; j++) {
-					xn = X[j];
+					xn = Math.toRadians(X[j]); // back to radians, for the fit
 					if (Math.abs(xn-center) > half_range ) { // too far
 						if (xn>center) {
 							xn = xn - 2*half_range;							
@@ -578,7 +715,7 @@ public class Directionality_ implements PlugIn {
 			}
 			
 		}
-		plot.getDomainAxis().setRange(bins[0], bins[bins.length-1]);
+		plot.getDomainAxis().setRange(wrapped_bins[0], wrapped_bins[nbins-1]);
 		
 		final ChartPanel chartPanel = new ChartPanel(chart);
 		chartPanel.setPreferredSize(new java.awt.Dimension(500, 270));
@@ -693,8 +830,8 @@ public class Directionality_ implements PlugIn {
 		for (int i = 0; i < table_data.length; i++) {
 			analysis = fit_analysis.get(i);
 			table_data[i][0]	= names[i];
-			table_data[i][1]	= String.format("%.2f", analysis[0]); // peak center
-			table_data[i][2]	= String.format("%.2f", analysis[1]); // standard deviation
+			table_data[i][1]	= String.format("%.2f", Math.toDegrees(analysis[0])); // peak center
+			table_data[i][2]	= String.format("%.2f", Math.toDegrees(analysis[1])); // standard deviation
 			table_data[i][3] 	= String.format("%.2f", analysis[2]); // amount
 			table_data[i][4] 	= String.format("%.2f", analysis[3]); // goodness of fit
 		}
@@ -896,8 +1033,9 @@ public class Directionality_ implements PlugIn {
 	 * Display the dialog when the plugin is launched from ImageJ. A successful interaction will
 	 * result in setting the {@link #nbins}, {@link #bin_start}, {@link #display_table} 
 	 * and {@link #debug} fields.
+	 * @return  true is the user has pressed the 'Cancel' button.
 	 */
-	private void showDialog() {
+	private boolean showDialog() {
 
 		// Prepare dialog
 		String current = imp.getTitle();
@@ -909,18 +1047,18 @@ public class Directionality_ implements PlugIn {
 		// Layout dialog
 		GenericDialog gd = new GenericDialog(PLUGIN_NAME + " v" + VERSION_STR);
 		gd.addMessage(current);
-		gd.addChoice("Method:", method_names, method.toString());
-		gd.addNumericField("Nbins: ", nbins, 0);
-		gd.addNumericField("Histogram start", bin_start , 0, 4, "º");
-		gd.addCheckbox("Build orientation map", build_orientation_map);
-		gd.addCheckbox("Display color wheel", display_color_wheel);
-		gd.addCheckbox("Display table", display_table);
-		gd.addCheckbox("Debug", debug);
+		gd.addChoice("Method:", method_names, setting_method.toString());
+		gd.addNumericField("Nbins: ", setting_nbins, 0);
+		gd.addNumericField("Histogram start", setting_bin_start , 0, 4, "º");
+		gd.addCheckbox("Build orientation map", setting_build_orientation_map);
+		gd.addCheckbox("Display color wheel", setting_display_color_wheel);
+		gd.addCheckbox("Display table", setting_display_table);
+		gd.addCheckbox("Debug", setting_debug);
 		gd.showDialog();
 
 		// Collect dialog settings
 		if (gd.wasCanceled())
-			return;
+			return true;
 		String chosen_method = gd.getNextChoice();
 		for (int i = 0; i < method_names.length; i++) {
 			if (chosen_method.equals(method_names[i])) {
@@ -928,7 +1066,8 @@ public class Directionality_ implements PlugIn {
 				break;
 			}
 		} 
-
+		setting_method = method;
+		
 		// Reflect user settings in fields
 		nbins = (int) gd.getNextNumber();
 		bin_start = gd.getNextNumber();
@@ -936,6 +1075,15 @@ public class Directionality_ implements PlugIn {
 		display_color_wheel = gd.getNextBoolean();
 		display_table = gd.getNextBoolean();
 		debug = gd.getNextBoolean();
+		
+		// Store last user selected settings in default
+		setting_nbins = nbins;
+		setting_bin_start = bin_start;
+		setting_build_orientation_map = build_orientation_map;
+		setting_display_color_wheel = display_color_wheel;
+		setting_display_table = display_table;
+		setting_debug = debug;
+		return false;
 	}
 	
 	/**
@@ -1233,7 +1381,8 @@ public class Directionality_ implements PlugIn {
 					for (int i = 0; i < big_hue_px.length; i++) {
 						if ((255*saturation_px[i]/max_norm) >= big_saturation_px[i]) {
 							big_saturation_px[i] = (255*saturation_px[i]/max_norm);
-							big_hue_px[i] = (float) ( 255 *  ( ( 1 + hue_px[i]/Math.PI ) % 1 ) ); 
+//							big_hue_px[i] = (float) ( 255 *  ( ( 1 + hue_px[i]/Math.PI ) % 1 ) ); 
+							big_hue_px[i] = (float) ( 255 *  ( ( 0.5 + hue_px[i]/Math.PI )  ) ); 
 						}
 					}
 				}
@@ -1279,7 +1428,7 @@ public class Directionality_ implements PlugIn {
 		for (int i=1; i<= nbins; i++) {
 			
 			pixels = new float[pad_size*pad_size];
-			theta_c = bins[i-1];
+			theta_c = bins[i-1]+Math.PI/2;
 			
 			for (int index = 0; index < pixels.length; index++) {
 
@@ -1629,7 +1778,7 @@ public class Directionality_ implements PlugIn {
 		
 		method = AnalysisMethod.FOURIER_COMPONENTS;
 		da.setMethod(method);
-		da.computesHistograms();
+		da.computeHistograms();
 		fit_results = da.getFitParameters();
 		center = fit_results.get(0)[2];
 		System.out.println("With method: "+method);

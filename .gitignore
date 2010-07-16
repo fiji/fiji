@@ -84,6 +84,7 @@
 /jars/junit-4.5.jar
 /plugins/MTrack2_.jar
 /plugins/Time_Stamper.jar
+/plugins/Series_Labeler.jar
 /plugins/Statistical_Region_Merging.jar
 /plugins/Refresh_Javas.jar
 /plugins/Auto_Threshold.jar
@@ -107,7 +108,6 @@
 /plugins/Script_Editor.jar
 /plugins/3D_Objects_Counter.jar
 /plugins/Trainable_Segmentation.jar
-/jars/clojure-contrib.jar
 /jars/weka.jar
 /plugins/IsoData_Classifier.jar
 /plugins/RATS_.jar
@@ -154,7 +154,6 @@
 /bio-formats/components/ome-xml/build/
 /bio-formats/loci_tools.jar
 /clojure/classes/
-/clojure-contrib/classes/
 /ij-plugins/ij-ImageIO_.jar
 /junit/junit4.5/
 /junit/junit-4.5.jar
@@ -169,3 +168,8 @@
 /weka/weka.jar
 /plugins/Simple_Neurite_Tracer.jar
 /plugins/3D_Viewer.jar
+/plugins/SPIM_Registration.jar
+/bin/apache-maven-*/
+/plugins/QuickPALM_.jar
+/misc/headless.jar
+/plugins/Embryo_Tracker.jar

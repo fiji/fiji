@@ -4,13 +4,13 @@
 
 /*
   This file is part of the ImageJ plugin "Simple Neurite Tracer".
-  
+
   The ImageJ plugin "Simple Neurite Tracer" is free software; you
   can redistribute it and/or modify it under the terms of the GNU
   General Public License as published by the Free Software
   Foundation; either version 3 of the License, or (at your option)
   any later version.
-  
+
   The ImageJ plugin "Simple Neurite Tracer" is distributed in the
   hope that it will be useful, but WITHOUT ANY WARRANTY; without
   even the implied warranty of MERCHANTABILITY or FITNESS FOR A
@@ -19,8 +19,8 @@
 
   In addition, as a special exception, the copyright holders give
   you permission to combine this program with free software programs or
-  libraries that are released under the Apache Public License. 
-  
+  libraries that are released under the Apache Public License.
+
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -34,16 +34,16 @@ import java.awt.*;
 import java.util.*;
 
 public class FillerThread extends SearchThread {
-	
+
 	static final boolean verbose = SimpleNeuriteTracer.verbose;
-	
+
 	/* You should synchronize on this object if you want to rely
 	 * on the pause status not changing.  (The run() method is not
 	 * synchronized itself, for possibly dubious performance
 	 * reasons.) */
-	
+
         boolean reciprocal;
-	
+
         double reciprocal_fudge = 0.5;
 
         public float getDistanceAtPoint( double xd, double yd, double zd ) {
@@ -55,31 +55,31 @@ public class FillerThread extends SearchThread {
                 SearchNode [] slice = nodes_as_image_from_start[z];
                 if( slice == null )
 			return -1.0f;
-		
+
 		SearchNode n = slice[y*width+x];
 		if( n == null )
 			return -1.0f;
 		else
 			return n.g;
-        }	
-	
+        }
+
         // FIXME: may be buggy, synchronization issues
-	
+
         Fill getFill( ) {
-		
+
                 Hashtable< SearchNode, Integer > h =
                         new Hashtable< SearchNode, Integer >();
-		
+
                 ArrayList< SearchNode > a =
                         new ArrayList< SearchNode >();
-		
+
                 // The tricky bit here is that we want to create a
                 // Fill object with index
-		
+
 		int openAtOrAbove;
-		
+
                 int i = 0;
-		
+
                 for( Iterator<SearchNode> j = closed_from_start.iterator();
                      j.hasNext(); ) {
                         SearchNode current = j.next();
@@ -89,11 +89,11 @@ public class FillerThread extends SearchThread {
 			++ i;
 			/* } */
                 }
-		
+
 		openAtOrAbove = i;
-		
+
 		if (verbose) System.out.println("openAtOrAbove is: "+openAtOrAbove);
-		
+
                 for( Iterator<SearchNode> j = open_from_start.iterator();
                      j.hasNext(); ) {
                         SearchNode current = j.next();
@@ -103,22 +103,22 @@ public class FillerThread extends SearchThread {
 			++ i;
 			/* } */
                 }
-		
+
                 Fill fill = new Fill();
-		
+
                 fill.setThreshold( threshold );
                 if( reciprocal )
                         fill.setMetric( "reciprocal-intensity-scaled" );
                 else
                         fill.setMetric( "256-minus-intensity-scaled" );
-		
+
                 fill.setSpacing( x_spacing,
                                  y_spacing,
                                  z_spacing,
                                  spacing_units );
-		
+
 		if (verbose) System.out.println("... out of a.size() "+a.size()+" entries");
-		
+
                 for( i = 0; i < a.size(); ++i ) {
                         SearchNode f = a.get(i);
                         int previousIndex = -1;
@@ -131,26 +131,26 @@ public class FillerThread extends SearchThread {
                         }
                         fill.add( f.x, f.y, f.z, f.g, previousIndex, i >= openAtOrAbove );
                 }
-		
+
                 if( sourcePaths != null ) {
                         fill.setSourcePaths( sourcePaths );
                 }
-		
+
                 return fill;
         }
-	
+
         Set< Path > sourcePaths;
-	
+
 	public static FillerThread fromFill( ImagePlus imagePlus,
 					     float stackMin,
 					     float stackMax,
 					     boolean startPaused,
 					     Fill fill ) {
-		
+
 		boolean reciprocal;
 		float initialThreshold;
 		String metric = fill.getMetric();
-		
+
 		if( metric.equals("reciprocal-intensity-scaled") ) {
 			reciprocal = true;
 		} else if( metric.equals("256-minus-intensity-scaled") ) {
@@ -159,9 +159,9 @@ public class FillerThread extends SearchThread {
 			IJ.error("Trying to load a fill with an unknown metric ('" + metric + "')");
 			return null;
 		}
-		
+
 		if (verbose) System.out.println("loading a fill with threshold: " + fill.getThreshold() );
-		
+
 		FillerThread result = new FillerThread( imagePlus,
 							stackMin,
 							stackMax,
@@ -169,22 +169,22 @@ public class FillerThread extends SearchThread {
 							reciprocal,
 							fill.getThreshold(),
 							5000 );
-		
+
 		ArrayList< SearchNode > tempNodes = new ArrayList< SearchNode >();
-		
+
                 for( Iterator it = fill.nodeList.iterator(); it.hasNext(); ) {
                         Fill.Node n = (Fill.Node)it.next();
-			
+
 			SearchNode s = new SearchNode( n.x,
 						       n.y,
 						       n.z,
 						       (float)n.distance,
-						       0,						       
+						       0,
 						       null,
 						       SearchThread.FREE );
 			tempNodes.add(s);
 		}
-		
+
 		for( int i = 0; i < tempNodes.size(); ++i ) {
 			Fill.Node n = fill.nodeList.get(i);
 			SearchNode s = tempNodes.get(i);
@@ -212,9 +212,9 @@ public class FillerThread extends SearchThread {
 	public float getThreshold( ) {
 		return threshold;
 	}
-	
+
         /* If you specify 0 for timeoutSeconds then there is no timeout. */
-	
+
         public FillerThread( ImagePlus imagePlus,
 			     float stackMin,
 			     float stackMax,
@@ -222,7 +222,7 @@ public class FillerThread extends SearchThread {
                              boolean reciprocal,
                              double initialThreshold,
 			     long reportEveryMilliseconds ) {
-		
+
 		super( imagePlus,
 		       stackMin,
 		       stackMax,
@@ -231,15 +231,15 @@ public class FillerThread extends SearchThread {
 		       startPaused,
 		       0,
 		       reportEveryMilliseconds );
-		
+
                 this.reciprocal = reciprocal;
                 setThreshold( initialThreshold );
-		
+
                 long lastThresholdChange = 0;
-		
+
 		setPriority( MIN_PRIORITY );
         }
-	
+
 	public void setSourcePaths( Set<Path> newSourcePaths ) {
 		sourcePaths = new HashSet<Path>();
 		sourcePaths.addAll(newSourcePaths);
@@ -258,9 +258,9 @@ public class FillerThread extends SearchThread {
                         }
 		}
 	}
-	
+
         public ImagePlus fillAsImagePlus( boolean realData ) {
-		
+
 		byte [][] new_slice_data_b = new byte[depth][];
 		short [][] new_slice_data_s = new short[depth][];
 		float [][] new_slice_data_f = new float[depth][];
@@ -279,16 +279,16 @@ public class FillerThread extends SearchThread {
 				break;
 			}
                 }
-		
+
                 ImageStack stack = new ImageStack(width,height);
-		
+
                 for( int z = 0; z < depth; ++z ) {
 			SearchNode [] nodes_this_slice=nodes_as_image_from_start[z];
 			if( nodes_this_slice != null )
 				for( int y = 0; y < height; ++y ) {
 					for( int x = 0; x < width; ++x ) {
 						SearchNode s = nodes_as_image_from_start[z][y*width+x];
-						if( (s != null) && (s.g <= threshold) ) {	
+						if( (s != null) && (s.g <= threshold) ) {
 							switch( imageType ) {
 							case ImagePlus.GRAY8:
 							case ImagePlus.COLOR_256:
@@ -329,26 +329,26 @@ public class FillerThread extends SearchThread {
 			}
 
                 }
-		
+
                 ImagePlus imp=new ImagePlus("filled neuron",stack);
-		
+
                 imp.setCalibration(imagePlus.getCalibration());
-		
+
 		return imp;
         }
-	
+
 	@Override
 	protected void reportPointsInSearch() {
-		
+
 		super.reportPointsInSearch();
-		
+
 		// Find the minimum distance in the open list.
 		SearchNode p = open_from_start.peek();
 		if( p == null )
 			return;
-		
+
 		float minimumDistanceInOpen = p.g;
-		
+
 		for (Iterator<SearchProgressCallback> j = progressListeners.iterator(); j.hasNext();) {
 			SearchProgressCallback progress = j.next();
 			if( progress instanceof FillerProgressCallback ) {
@@ -356,19 +356,19 @@ public class FillerThread extends SearchThread {
 				fillerProgress.maximumDistanceCompletelyExplored( this, minimumDistanceInOpen );
 			}
 		}
-		
+
 	}
-	
+
 
 	@Override
 	void drawProgressOnSlice( int plane,
 				  int currentSliceInPlane,
 				  TracerCanvas canvas,
 				  Graphics g )  {
-		
+
 		super.drawProgressOnSlice(plane,currentSliceInPlane,canvas,g);
 
 	}
 
-	
+
 }

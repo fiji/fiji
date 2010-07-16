@@ -37,7 +37,6 @@ build_dependencies = [ "debhelper (>= 5)",
                        "jython",
                        "libjzlib-java",
                        "clojure",
-                       # Annoyingly, clojure-contrib isn't yet in Ubuntu
                        "rhino",
                        "libxml-commons-external-java",
                        "libpg-java",
@@ -103,9 +102,6 @@ package_name_to_file_matchers = {
     "fiji-mpicbg" :
         [ "plugins/mpicbg_.jar",
           "jars/mpicbg.jar" ],
-
-    "fiji-clojure-contrib" :
-        [ "jars/clojure-contrib.jar" ],
 
     "fiji-ij-imageio":
         [ "plugins/ij-ImageIO_.jar" ],

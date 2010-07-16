@@ -4,13 +4,13 @@
 
 /*
   This file is part of the ImageJ plugin "Simple Neurite Tracer".
-  
+
   The ImageJ plugin "Simple Neurite Tracer" is free software; you
   can redistribute it and/or modify it under the terms of the GNU
   General Public License as published by the Free Software
   Foundation; either version 3 of the License, or (at your option)
   any later version.
-  
+
   The ImageJ plugin "Simple Neurite Tracer" is distributed in the
   hope that it will be useful, but WITHOUT ANY WARRANTY; without
   even the implied warranty of MERCHANTABILITY or FITNESS FOR A
@@ -19,8 +19,8 @@
 
   In addition, as a special exception, the copyright holders give
   you permission to combine this program with free software programs or
-  libraries that are released under the Apache Public License. 
-  
+  libraries that are released under the Apache Public License.
+
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -31,9 +31,9 @@ import java.util.*;
 import java.io.*;
 
 public class Fill {
-	
+
         public double distanceThreshold;
-	
+
         public class Node {
                 public int x;
                 public int y;
@@ -42,13 +42,13 @@ public class Fill {
                 public int previous;
 		public boolean open;
         }
-	
+
         ArrayList< Node > nodeList;
-	
+
         public Fill( ) {
                 nodeList = new ArrayList< Node >();
         }
-	
+
         public void add( int x, int y, int z, double distance, int previous, boolean open ) {
                 Node n = new Node();
                 n.x = x;
@@ -59,9 +59,9 @@ public class Fill {
 		n.open = open;
                 nodeList.add(n);
         }
-	
+
         Set< Path > sourcePaths;
-	
+
         public void setSourcePaths( Path [] newSourcePaths ) {
                 sourcePaths = new HashSet< Path >();
                 for( int i = 0; i < newSourcePaths.length; ++i ) {
@@ -73,37 +73,37 @@ public class Fill {
 		sourcePaths = new HashSet<Path>();
 		sourcePaths.addAll(newSourcePaths);
 	}
-	
+
         public String metric;
-	
+
         public void setMetric( String metric ) {
                 this.metric = metric;
         }
-	
+
         public String getMetric( ) {
                 return metric;
         }
-	
+
         public double x_spacing, y_spacing, z_spacing;
         public String spacing_units;
-	
+
         public void setSpacing( double x_spacing, double y_spacing, double z_spacing, String units ) {
                 this.x_spacing = x_spacing;
                 this.y_spacing = y_spacing;
                 this.z_spacing = z_spacing;
                 this.spacing_units = units;
         }
-	
+
         public void setThreshold( double threshold ) {
                 this.distanceThreshold = threshold;
         }
-	
+
         public double getThreshold( ) {
                 return distanceThreshold;
         }
-	
+
         public void writeNodesXML( PrintWriter pw ) {
-		
+
                 int i = 0;
                 for( Iterator it = nodeList.iterator(); it.hasNext(); ++i ) {
                         Node n = (Node)it.next();

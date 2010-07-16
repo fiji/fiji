@@ -667,7 +667,6 @@ String Percentile = ""+(iterations-colocCount)+"/"+iterations;
 		{ 
 		IJ.setColumnHeadings(Headings2);
 		headingsSet2 = true;
-	      	IJ.write(Headings2);
   		}	
 	IJ.write(fileName  +
 	

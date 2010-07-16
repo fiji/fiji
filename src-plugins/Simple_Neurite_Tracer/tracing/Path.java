@@ -19,7 +19,7 @@
 
   In addition, as a special exception, the copyright holders give
   you permission to combine this program with free software programs or
-  libraries that are released under the Apache Public License. 
+  libraries that are released under the Apache Public License.
 
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
@@ -29,6 +29,9 @@ package tracing;
 
 import java.awt.Color;
 import java.awt.Graphics;
+
+import java.awt.image.IndexColorModel;
+import java.awt.image.ColorModel;
 
 import ij.gui.*;
 import ij.*;
@@ -654,14 +657,7 @@ public class Path implements Comparable {
 		drawPathAsPoints( canvas, g, c, plane, 0, -1 );
 	}
 
-	/* FIXME: Should draw lines between points now, not just points... */
-
 	public void drawPathAsPoints( TracerCanvas canvas, Graphics g, java.awt.Color c, int plane, int slice, int either_side ) {
-
-		/* This is slightly ugly because we have to use
-		   InteractiveTracerCanvas.myScreenX and .myScreenY to
-		   find whether to actually draw on the Graphics in
-		   case we're zoomed. */
 
 		/* In addition, if this is a start or end point we
 		   want to represent that with a circle or a square
@@ -682,124 +678,135 @@ public class Path implements Comparable {
 		Path realStartJoins = fittedVersionOf == null ? startJoins : fittedVersionOf.startJoins;
 		Path realEndJoins = fittedVersionOf == null ? endJoins : fittedVersionOf.endJoins;
 
-		switch( plane ) {
+		int startIndexOfLastDrawnLine = -1;
 
-		case ThreePanes.XY_PLANE:
-		{
-			for( int i = 0; i < points; ++i ) {
-				if( (either_side >= 0) && (Math.abs(getZUnscaled(i) - slice) > either_side) )
-					continue;
+		for( int i = 0; i < points; ++i ) {
 
-				int x = canvas.myScreenXD(getXUnscaledDouble(i));
-				int y = canvas.myScreenYD(getYUnscaledDouble(i));
+			int x = Integer.MIN_VALUE;
+			int y = Integer.MIN_VALUE;
+			int previous_x_on_screen = Integer.MIN_VALUE;
+			int previous_y_on_screen = Integer.MIN_VALUE;
+			int next_x_on_screen = Integer.MIN_VALUE;
+			int next_y_on_screen = Integer.MIN_VALUE;
+			boolean notFirstPoint = i > 0;
+			boolean notLastPoint = i < points - 1;
+			int slice_of_point = Integer.MIN_VALUE;
 
-				if( drawDiameter ) {
-					// Cross the tangents with a unit z vector:
-					double n_x = 0;
-					double n_y = 0;
-					double n_z = 1;
-
-					double t_x = tangents_x[i];
-					double t_y = tangents_y[i];
-					double t_z = tangents_z[i];
-
-					double cross_x = n_y * t_z - n_z * t_y;
-					double cross_y = n_z * t_x - n_x * t_z;
-					double cross_z = n_x * t_y - n_y * t_x;
-
-					double sizeInPlane = Math.sqrt( cross_x * cross_x + cross_y * cross_y );
-					double normalized_cross_x = cross_x / sizeInPlane;
-					double normalized_cross_y = cross_y / sizeInPlane;
-
-					// g.setColor( Color.RED );
-
-					double left_x = precise_x_positions[i] + normalized_cross_x * radiuses[i];
-					double left_y = precise_y_positions[i] + normalized_cross_y * radiuses[i];
-
-					double right_x = precise_x_positions[i] - normalized_cross_x * radiuses[i];
-					double right_y = precise_y_positions[i] - normalized_cross_y * radiuses[i];
-
-					int left_x_on_screen = canvas.myScreenXD(left_x/x_spacing);
-					int left_y_on_screen = canvas.myScreenYD(left_y/y_spacing);
-
-					int right_x_on_screen = canvas.myScreenXD(right_x/x_spacing);
-					int right_y_on_screen = canvas.myScreenYD(right_y/y_spacing);
-
-					int x_on_screen = canvas.myScreenXD( precise_x_positions[i]/x_spacing );
-					int y_on_screen = canvas.myScreenYD( precise_y_positions[i]/y_spacing );
-
-					g.drawLine( x_on_screen, y_on_screen, left_x_on_screen, left_y_on_screen );
-					g.drawLine( x_on_screen, y_on_screen, right_x_on_screen, right_y_on_screen );
-
-					g.setColor( c );
+			switch( plane ) {
+			case ThreePanes.XY_PLANE:
+				x = canvas.myScreenXD(getXUnscaledDouble(i));
+				y = canvas.myScreenYD(getYUnscaledDouble(i));
+				if( notFirstPoint ) {
+					previous_x_on_screen = canvas.myScreenXD( precise_x_positions[i-1]/x_spacing );
+					previous_y_on_screen = canvas.myScreenYD( precise_y_positions[i-1]/y_spacing );
 				}
+				if( notLastPoint ) {
+					next_x_on_screen = canvas.myScreenXD( precise_x_positions[i+1]/x_spacing );
+					next_y_on_screen = canvas.myScreenYD( precise_y_positions[i+1]/y_spacing );
+				}
+				slice_of_point = getZUnscaled(i);
+				break;
+			case ThreePanes.XZ_PLANE:
+				x = canvas.myScreenXD(getXUnscaledDouble(i));
+				y = canvas.myScreenYD(getZUnscaledDouble(i));
+				if( notFirstPoint ) {
+					previous_x_on_screen = canvas.myScreenXD( precise_x_positions[i-1]/x_spacing );
+					previous_y_on_screen = canvas.myScreenYD( precise_z_positions[i-1]/z_spacing );
+				}
+				if( notLastPoint ) {
+					next_x_on_screen = canvas.myScreenXD( precise_x_positions[i+1]/x_spacing );
+					next_y_on_screen = canvas.myScreenYD( precise_z_positions[i+1]/z_spacing );
+				}
+				slice_of_point = getYUnscaled(i);
+				break;
+			case ThreePanes.ZY_PLANE:
+				x = canvas.myScreenXD(getZUnscaledDouble(i));
+				y = canvas.myScreenYD(getYUnscaledDouble(i));
+				if( notFirstPoint ) {
+					previous_x_on_screen = canvas.myScreenXD( precise_z_positions[i-1]/z_spacing );
+					previous_y_on_screen = canvas.myScreenYD( precise_y_positions[i-1]/y_spacing );
+				}
+				if( notLastPoint ) {
+					next_x_on_screen = canvas.myScreenXD( precise_z_positions[i+1]/z_spacing );
+					next_y_on_screen = canvas.myScreenYD( precise_y_positions[i+1]/y_spacing );
+				}
+				slice_of_point = getXUnscaled(i);
+				break;
+			default:
+				throw new RuntimeException("BUG: Unknown plane! ("+plane+")");
+			}
 
-				if( ((i == 0) && (realStartJoins == null)) ||
-				    ((i == points - 1) && (realEndJoins == null)) ) {
-					// Then draw it as a rectangle...
-					g.fillRect( x - (spotDiameter / 2), y - (spotDiameter / 2), spotDiameter, spotDiameter );
-				} else if( ((i == 0) && (realStartJoins != null)) ||
-					   ((i == points - 1) && (realEndJoins != null)) ) {
-					// The draw it as an oval...
-					g.fillOval( x - (spotDiameter / 2), y - (spotDiameter / 2), spotDiameter, spotDiameter );
-				} else {
-					// Just draw normally...
-					g.fillRect( x - (spotExtra / 2), y - (spotExtra / 2), spotExtra, spotExtra );
+			/* If we've been asked to draw the diameters
+			   in the 2.5D view, just do it in XY - this is only
+			   really for debugging... */
+
+			if( plane == ThreePanes.XY_PLANE && drawDiameter ) {
+				// Cross the tangents with a unit z vector:
+				double n_x = 0;
+				double n_y = 0;
+				double n_z = 1;
+
+				double t_x = tangents_x[i];
+				double t_y = tangents_y[i];
+				double t_z = tangents_z[i];
+
+				double cross_x = n_y * t_z - n_z * t_y;
+				double cross_y = n_z * t_x - n_x * t_z;
+				double cross_z = n_x * t_y - n_y * t_x;
+
+				double sizeInPlane = Math.sqrt( cross_x * cross_x + cross_y * cross_y );
+				double normalized_cross_x = cross_x / sizeInPlane;
+				double normalized_cross_y = cross_y / sizeInPlane;
+
+				double left_x = precise_x_positions[i] + normalized_cross_x * radiuses[i];
+				double left_y = precise_y_positions[i] + normalized_cross_y * radiuses[i];
+
+				double right_x = precise_x_positions[i] - normalized_cross_x * radiuses[i];
+				double right_y = precise_y_positions[i] - normalized_cross_y * radiuses[i];
+
+				int left_x_on_screen = canvas.myScreenXD(left_x/x_spacing);
+				int left_y_on_screen = canvas.myScreenYD(left_y/y_spacing);
+
+				int right_x_on_screen = canvas.myScreenXD(right_x/x_spacing);
+				int right_y_on_screen = canvas.myScreenYD(right_y/y_spacing);
+
+				int x_on_screen = canvas.myScreenXD( precise_x_positions[i]/x_spacing );
+				int y_on_screen = canvas.myScreenYD( precise_y_positions[i]/y_spacing );
+
+				g.drawLine( x_on_screen, y_on_screen, left_x_on_screen, left_y_on_screen );
+				g.drawLine( x_on_screen, y_on_screen, right_x_on_screen, right_y_on_screen );
+			}
+
+			if( (either_side >= 0) && (Math.abs(slice_of_point - slice) > either_side) )
+				continue;
+
+			// If there was a previous point in this path, draw a line from there to here:
+			if( notFirstPoint ) {
+				// Don't redraw the line if we drew it the previous time, though:
+				if( startIndexOfLastDrawnLine != i - 1 ) {
+					g.drawLine( previous_x_on_screen, previous_y_on_screen, x, y );
+					startIndexOfLastDrawnLine = i - 1;
 				}
 			}
-		}
-		break;
 
-		case ThreePanes.XZ_PLANE:
-		{
-			for( int i = 0; i < points; ++i ) {
-				if( (either_side >= 0) && (Math.abs(getYUnscaled(i) - slice) > either_side) )
-					continue;
-
-				int x = canvas.myScreenXD(getXUnscaled(i));
-				int y = canvas.myScreenYD(getZUnscaled(i));
-
-				if( ((i == 0) && (realStartJoins == null)) ||
-				    ((i == points - 1) && (realEndJoins == null)) ) {
-					// Then draw it as a rectangle...
-					g.fillRect( x - spotExtra, y - spotExtra, spotDiameter, spotDiameter );
-				} else if( ((i == 0) && (realStartJoins != null)) ||
-					   ((i == points - 1) && (realEndJoins != null)) ) {
-					// The draw it as an oval...
-					g.fillOval( x - spotExtra, y - spotExtra, spotDiameter, spotDiameter );
-				} else {
-					// Just draw normally...
-					g.fillRect( x, y, spotExtra, spotExtra );
-				}
+			// If there's a next point in this path, draw a line from here to there:
+			if( notLastPoint ) {
+				g.drawLine( x, y, next_x_on_screen, next_y_on_screen );
+				startIndexOfLastDrawnLine = i;
 			}
-		}
-		break;
 
-		case ThreePanes.ZY_PLANE:
-		{
-			for( int i = 0; i < points; ++i ) {
-				if( (either_side >= 0) && (Math.abs(getXUnscaled(i) - slice) > either_side) )
-					continue;
-
-				int x = canvas.myScreenXD(getZUnscaled(i));
-				int y = canvas.myScreenYD(getYUnscaled(i));
-
-				if( ((i == 0) && (realStartJoins == null)) ||
-				    ((i == points - 1) && (realEndJoins == null)) ) {
-					// Then draw it as a rectangle...
-					g.fillRect( x - spotExtra, y - spotExtra, spotDiameter, spotDiameter );
-				} else if( ((i == 0) && (realStartJoins != null)) ||
-					   ((i == points - 1) && (realEndJoins != null)) ) {
-					// The draw it as an oval...
-					g.fillOval( x - spotExtra, y - spotExtra, spotDiameter, spotDiameter );
-				} else {
-					// Just draw normally...
-					g.fillRect( x, y, spotExtra, spotExtra );
-				}
+			if( ((i == 0) && (realStartJoins == null)) ||
+			    ((i == points - 1) && (realEndJoins == null)) ) {
+				// Then draw it as a rectangle...
+				g.fillRect( x - (spotDiameter / 2), y - (spotDiameter / 2), spotDiameter, spotDiameter );
+			} else if( ((i == 0) && (realStartJoins != null)) ||
+				   ((i == points - 1) && (realEndJoins != null)) ) {
+				// The draw it as an oval...
+				g.fillOval( x - (spotDiameter / 2), y - (spotDiameter / 2), spotDiameter, spotDiameter );
+			} else {
+				// Just draw normally...
+				g.fillRect( x - (spotExtra / 2), y - (spotExtra / 2), spotExtra, spotExtra );
 			}
-		}
-		break;
-
 		}
 
 	}
@@ -1855,6 +1862,8 @@ public class Path implements Comparable {
 	int paths3DDisplay = 1;
 	Content content3D;
 	Content content3DExtra;
+	ImagePlus content3DMultiColored;
+	ImagePlus content3DExtraMultiColored;
 	String nameWhenAddedToViewer;
 	String nameWhenAddedToViewerExtra;
 
@@ -1867,7 +1876,13 @@ public class Path implements Comparable {
 	synchronized void updateContent3D( Image3DUniverse univ,
 					   boolean visible,
 					   int paths3DDisplay,
-					   Color3f color ) {
+					   Color3f color,
+					   ImagePlus colorImage ) {
+
+		if( verbose ) {
+			System.out.println("In updateContent3D, colorImage is: "+colorImage);
+			System.out.println("In updateContent3D, color is: "+color);
+		}
 
 		// So, go through each of the reasons why we might
 		// have to remove (and possibly add back) the path:
@@ -1897,26 +1912,55 @@ public class Path implements Comparable {
 			pathToUse = this;
 		}
 
-		// Is the color wrong?
-		if( (pathToUse.content3D != null && ! pathToUse.content3D.getColor().equals(color)) ||
-		    (pathToUse.content3DExtra != null && ! pathToUse.content3DExtra.getColor().equals(color))) {
-			pathToUse.removeFrom3DViewer(univ);
-			pathToUse.paths3DDisplay = paths3DDisplay;
-			pathToUse.addTo3DViewer(univ,color);
-			return;
+		if( verbose ) {
+			System.out.println("pathToUse is: "+pathToUse);
+			System.out.println("  pathToUse.content3D is: "+pathToUse.content3D);
+			System.out.println("  pathToUse.content3DExtra is: "+pathToUse.content3DExtra);
+			System.out.println("  pathToUse.content3DMultiColored: "+pathToUse.content3DMultiColored);
 		}
 
 		// Is the the display (lines-and-discs or surfaces) right?
 		if( pathToUse.paths3DDisplay != paths3DDisplay ) {
 			pathToUse.removeFrom3DViewer(univ);
 			pathToUse.paths3DDisplay = paths3DDisplay;
-			pathToUse.addTo3DViewer(univ,color);
+			pathToUse.addTo3DViewer(univ,color,colorImage);
+			return;
+		}
+
+		/* Are we now asked to use the color image, but
+		   previously were not? */
+
+		if( colorImage == null ) {
+			if( (paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_LINES_AND_DISCS
+			     && pathToUse.content3DExtraMultiColored != null) ||
+			    (paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_SURFACE
+			     && pathToUse.content3DMultiColored != null) ) {
+				pathToUse.removeFrom3DViewer(univ);
+				pathToUse.addTo3DViewer(univ,color,colorImage);
+				return;
+			}
+		} else {
+			if( (paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_LINES_AND_DISCS
+			     && pathToUse.content3DExtraMultiColored != colorImage) ||
+			    (paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_SURFACE
+			     && pathToUse.content3DMultiColored != colorImage) ) {
+				pathToUse.removeFrom3DViewer(univ);
+				pathToUse.addTo3DViewer(univ,color,colorImage);
+				return;
+			}
+		}
+
+		// Is the (flat) color wrong?
+		if( realColor == null || ! realColor.equals(color) ) {
+			pathToUse.removeFrom3DViewer(univ);
+			pathToUse.paths3DDisplay = paths3DDisplay;
+			pathToUse.addTo3DViewer(univ,color,colorImage);
 			return;
 		}
 
 		if( pathToUse.nameWhenAddedToViewer == null || ! univ.contains(pathToUse.nameWhenAddedToViewer) ) {
 			pathToUse.paths3DDisplay = paths3DDisplay;
-			pathToUse.addTo3DViewer(univ,color);
+			pathToUse.addTo3DViewer(univ,color,colorImage);
 		}
 	}
 
@@ -1945,53 +1989,66 @@ public class Path implements Comparable {
 		return linePoints;
 	}
 
-	public Content addAsLinesTo3DViewer(Image3DUniverse univ, Color c ) {
-		return addAsLinesTo3DViewer(univ,new Color3f(c));
+	public Content addAsLinesTo3DViewer(Image3DUniverse univ, Color c, ImagePlus colorImage ) {
+		return addAsLinesTo3DViewer(univ,new Color3f(c),colorImage);
 	}
 
-	public Content addAsLinesTo3DViewer(Image3DUniverse univ, Color3f c ) {
+	public Content addAsLinesTo3DViewer(Image3DUniverse univ, Color3f c, ImagePlus colorImage ) {
 		String safeName = univ.getSafeContentName(getName()+" as lines");
 		return univ.addLineMesh( getPoint3fList(), c, safeName, true );
 	}
 
-	public Content addDiscsTo3DViewer(Image3DUniverse univ, Color c) {
-		return addDiscsTo3DViewer(univ,new Color3f(c));
+	public Content addDiscsTo3DViewer(Image3DUniverse univ, Color c, ImagePlus colorImage ) {
+		return addDiscsTo3DViewer(univ,new Color3f(c),colorImage);
 	}
 
-	public Content addDiscsTo3DViewer(Image3DUniverse  univ, Color3f c ) {
+	public Content addDiscsTo3DViewer(Image3DUniverse  univ, Color3f c, ImagePlus colorImage ) {
 		if( ! hasCircles() )
 			return null;
+
+		Color3f [] originalColors = Pipe.getPointColors( precise_x_positions,
+								 precise_y_positions,
+								 precise_z_positions,
+								 c,
+								 colorImage );
+
+		List<Color3f> meshColors = new ArrayList<Color3f>();
 
 		int edges = 8;
 		List<Point3f> allTriangles = new ArrayList<Point3f>(edges*points);
 		for( int i = 0; i < points; ++i ) {
 			List<Point3f> discMesh =
 				MeshMaker.createDisc( precise_x_positions[i],
-						       precise_y_positions[i],
-						       precise_z_positions[i],
-						       tangents_x[i],
-						       tangents_y[i],
-						       tangents_z[i],
-						       radiuses[i],
-						       8 );
+						      precise_y_positions[i],
+						      precise_z_positions[i],
+						      tangents_x[i],
+						      tangents_y[i],
+						      tangents_z[i],
+						      radiuses[i],
+						      8 );
+			int pointsInDiscMesh = discMesh.size();
+			for( int j = 0; j < pointsInDiscMesh; ++j )
+				meshColors.add( originalColors[i] );
 			allTriangles.addAll(discMesh);
 		}
 		return univ.addTriangleMesh( allTriangles,
-					     c,
+					     meshColors,
 					     univ.getSafeContentName("Discs for path "+getName()) );
 	}
 
-	synchronized public void addTo3DViewer(Image3DUniverse univ, Color c) {
+	synchronized public void addTo3DViewer(Image3DUniverse univ, Color c, ImagePlus colorImage) {
 		if( c == null )
 			throw new RuntimeException("In addTo3DViewer, Color can no longer be null");
-		addTo3DViewer(univ, new Color3f(c));
+		addTo3DViewer(univ, new Color3f(c), colorImage);
 	}
 
-	synchronized public void addTo3DViewer(Image3DUniverse univ, Color3f c ) {
+	protected Color3f realColor;
+
+	synchronized public void addTo3DViewer(Image3DUniverse univ, Color3f c, ImagePlus colorImage ) {
 		if( c == null )
 			throw new RuntimeException("In addTo3DViewer, Color3f can no longer be null");
 
-		Color3f realColor = (c == null) ? new Color3f(Color.magenta) : c;
+		realColor = (c == null) ? new Color3f(Color.magenta) : c;
 
 		if(points <= 1) {
 			content3D = null;
@@ -2001,11 +2058,12 @@ public class Path implements Comparable {
 
 		if( paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_LINES ||
 		    paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_LINES_AND_DISCS ) {
-			content3D = addAsLinesTo3DViewer(univ,realColor);
+			content3D = addAsLinesTo3DViewer(univ,realColor,colorImage);
 			content3D.setLocked(true);
 			nameWhenAddedToViewer = content3D.getName();
 			if( paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_LINES_AND_DISCS ) {
-				content3DExtra = addDiscsTo3DViewer(univ,realColor);
+				content3DExtra = addDiscsTo3DViewer(univ,realColor,colorImage);
+				content3DExtraMultiColored = colorImage;
 				if( content3DExtra == null ) {
 					nameWhenAddedToViewerExtra = null;
 				} else {
@@ -2089,27 +2147,69 @@ public class Path implements Comparable {
 		System.arraycopy( z_points_d, 0, z_points_d_trimmed, 0, pointsToUse );
 		System.arraycopy( radiuses_d, 0, radiuses_d_trimmed, 0, pointsToUse );
 
+		/* Work out whether to resample or not.  I've found
+		   that the resampling is only really required in
+		   cases where the points are at adjacent voxels.  So,
+		   work out the mean distance between all the points
+		   but in image co-ordinates - if there are points
+		   only at adjacent voxels this will be between 1 and
+		   sqrt(3) ~= 1.73.  However, after the "fitting"
+		   process here, we might remove many of these points,
+		   so I'll say that we won't resample if the mean is
+		   rather higher - above 3.  Hopefully this is a
+		   good compromise... */
+
+		double total_length_in_image_space = 0;
+		for( int i = 1; i < pointsToUse; ++i ) {
+			double x_diff = (x_points_d_trimmed[i] - x_points_d_trimmed[i-1]) / x_spacing;
+			double y_diff = (y_points_d_trimmed[i] - y_points_d_trimmed[i-1]) / y_spacing;
+			double z_diff = (z_points_d_trimmed[i] - z_points_d_trimmed[i-1]) / z_spacing;
+			total_length_in_image_space += Math.sqrt(x_diff*x_diff +
+								 y_diff*y_diff +
+								 z_diff*z_diff);
+		}
+		double mean_inter_point_distance_in_image_space = total_length_in_image_space / (pointsToUse - 1);
+		if (verbose)
+			System.out.println("For path "+this+", got mean_inter_point_distance_in_image_space: "+mean_inter_point_distance_in_image_space);
+		boolean resample = mean_inter_point_distance_in_image_space < 3;
+
+		if (verbose)
+			System.out.println("... so"+(resample?"":" not")+" resampling");
+
+		ArrayList tubeColors = new ArrayList<Color3f>();
+
 		double [][][] allPoints = Pipe.makeTube(x_points_d_trimmed,
 							y_points_d_trimmed,
 							z_points_d_trimmed,
 							radiuses_d_trimmed,
-							2,       // resample - 1 means just "use mean distance between points", 3 is three times that, etc.
-							12);     // "parallels" (12 means cross-sections are dodecagons)
+							resample ? 2 : 1,       // resample - 1 means just "use mean distance between points", 3 is three times that, etc.
+							12,         // "parallels" (12 means cross-sections are dodecagons)
+							resample,   // do_resample
+							realColor,
+							colorImage,
+							tubeColors);
+
 		if( allPoints == null ) {
 			content3D = null;
 			content3DExtra = null;
 			return;
 		}
 
+		// Make tube adds an extra point at the beginning and end:
+
+		List vertexColorList = new ArrayList<Color3f>();
 		java.util.List triangles = Pipe.generateTriangles(allPoints,
-								  1); // scale
+								  1, // scale
+								  tubeColors,
+								  vertexColorList);
 
 		nameWhenAddedToViewer = univ.getSafeContentName( getName() );
 		// univ.resetView();
 		content3D = univ.addTriangleMesh(triangles,
-						 realColor,
+						 vertexColorList,
 						 nameWhenAddedToViewer);
 		content3D.setLocked(true);
+		content3DMultiColored = colorImage;
 
 		content3DExtra = null;
 		nameWhenAddedToViewerExtra = null;

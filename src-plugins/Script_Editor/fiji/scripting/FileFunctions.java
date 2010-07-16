@@ -1,9 +1,24 @@
 package fiji.scripting;
 
+import fiji.SimpleExecuter;
+
+import fiji.build.Fake;
+
 import ij.IJ;
 
 import ij.gui.GenericDialog;
 
+import java.awt.Cursor;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -11,6 +26,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.PrintStream;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,7 +40,15 @@ import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+
+import javax.swing.text.BadLocationException;
 
 public class FileFunctions {
 	protected TextEditor parent;
@@ -135,6 +159,34 @@ public class FileFunctions {
 				path = dir + "/" + className.replace('.', '/') + ".java";
 			}
 
+		// Try to find it with the help of the Fakefile
+		File fakefile = new File(fijiDir, "Fakefile");
+		if (fakefile.exists()) try {
+			Fake fake = new Fake();
+			if (parent != null) {
+				final JTextAreaOutputStream output = new JTextAreaOutputStream(parent.screen);
+				fake.out = new PrintStream(output);
+				fake.err = new PrintStream(output);
+			}
+			Fake.Parser parser = fake.parse(new FileInputStream(fakefile), new File(fijiDir));
+			parser.parseRules(null);
+			Fake.Parser.Rule rule = parser.getRule("plugins/" + baseName + ".jar");
+			if (rule == null)
+				rule = parser.getRule("jars/" + baseName + ".jar");
+			if (rule != null) {
+				String stripPath = (rule instanceof Fake.Parser.SubFake) ?
+					rule.getLastPrerequisite() : rule.getStripPath();
+				if (stripPath != null) {
+					dir = fijiDir + "/" + stripPath;
+					path = dir + "/" + className.replace('.', '/') + ".java";
+					if (new File(path).exists())
+						return path;
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
 		return null;
 	}
 
@@ -153,6 +205,7 @@ public class FileFunctions {
 			int offset = url.startsWith("jar:file:") ? 9 : 0;
 			return url.substring(offset, dotJar);
 		} catch (Exception e) {
+			e.printStackTrace();
 			return null;
 		}
 	}
@@ -314,7 +367,7 @@ public class FileFunctions {
 			String content = readStream(new FileInputStream(file));
 			if (content.startsWith(name) || content.indexOf("\n" + name) >= 0)
 				return false;
-	
+
 			FileOutputStream out = new FileOutputStream(file, true);
 			if (!content.endsWith("\n"))
 				out.write("\n".getBytes());
@@ -344,7 +397,7 @@ public class FileFunctions {
 			int offset = content.indexOf("\n\t" + name, start);
 			if (offset < end && offset > start)
 				return false;
-	
+
 			FileOutputStream out = new FileOutputStream(file);
 			out.write(content.substring(0, end).getBytes());
 			if (content.charAt(end - 1) != '\\')
@@ -353,7 +406,7 @@ public class FileFunctions {
 			out.write(name.getBytes());
 			out.write(content.substring(end).getBytes());
 			out.close();
-	
+
 			return true;
 		} catch (FileNotFoundException e) {
 			return false;
@@ -420,8 +473,224 @@ public class FileFunctions {
 		return result;
 	}
 
+	public File getGitDirectory(File file) {
+		if (file == null)
+			return null;
+		for (;;) {
+			file = file.getParentFile();
+			if (file == null)
+				return null;
+			File git = new File(file, ".git");
+			if (git.isDirectory())
+				return git;
+		}
+	}
+
+	public File getPluginRootDirectory(File file) {
+		if (file == null)
+			return null;
+		if (!file.isDirectory())
+			file = file.getParentFile();
+		if (file == null)
+			return null;
+
+		File git = new File(file, ".git");
+		if (git.isDirectory())
+			return file;
+
+		File backup = file;
+		for (;;) {
+			File parent = file.getParentFile();
+			if (parent == null)
+				return null;
+			git = new File(parent, ".git");
+			if (git.isDirectory())
+				return file.getName().equals("src-plugins") ?
+					backup : file;
+			backup = file;
+			file = parent;
+		}
+	}
+
+	public void showDiff(File file) {
+		showDiffOrCommit(file, true);
+	}
+
+	public void commit(File file) {
+		showDiffOrCommit(file, false);
+	}
+
+	public void showDiffOrCommit(File file, boolean diffOnly) {
+		if (file == null)
+			return;
+		final File pluginRoot = getPluginRootDirectory(file);
+		final DiffView diff = new DiffView();
+		try {
+			String[] cmdarray = {
+				"git", "diff", "--", ".",
+				System.getProperty("fiji.dir") + "/staged-plugins/"
+				+ pluginRoot.getName() + ".config"
+			};
+			SimpleExecuter e = new SimpleExecuter(cmdarray,
+				diff, new DiffView.IJLog(), pluginRoot);
+		} catch (IOException e) {
+			IJ.handleException(e);
+			return;
+		}
+
+		if (diff.getChanges() == 0) {
+			error("No changes detected for " + pluginRoot);
+			return;
+		}
+
+		final JFrame frame = new JFrame((diffOnly ? "Unstaged differences for " : "Commit ") + pluginRoot);
+		frame.setSize(640, diffOnly ? 480 : 640);
+		if (diffOnly)
+			frame.getContentPane().add(diff);
+		else {
+			JPanel panel = new JPanel();
+			frame.getContentPane().add(panel);
+			panel.setLayout(new GridBagLayout());
+			GridBagConstraints c = new GridBagConstraints();
+
+			c.anchor = GridBagConstraints.NORTHWEST;
+			c.gridx = c.gridy = 0;
+			c.weightx = c.weighty = 0;
+			c.fill = GridBagConstraints.HORIZONTAL;
+			c.insets = new Insets(2, 2, 2, 2);
+			panel.add(new JLabel("Subject:"), c);
+			c.weightx = c.gridx = 1;
+			final JTextField subject = new JTextField();
+			panel.add(subject, c);
+
+			c.weightx = c.gridx = 0; c.gridy = 1;
+			panel.add(new JLabel("Body:"), c);
+			c.fill = GridBagConstraints.BOTH;
+			c.weightx = c.weighty = c.gridx = 1;
+			final JTextArea body = new JTextArea(20, 76);
+			panel.add(body, c);
+
+			c.gridy= 2;
+			panel.add(diff, c);
+
+			JPanel buttons = new JPanel();
+			c.gridwidth = 2;
+			c.fill = GridBagConstraints.HORIZONTAL;
+			c.weightx = 1; c.weighty = c.gridx = 0; c.gridy = 3;
+			panel.add(buttons, c);
+
+			JButton commit = new JButton("Commit");
+			buttons.add(commit);
+			commit.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent e) {
+					String message = "";
+					message = subject.getText();
+					String bodyText = body.getText();
+					if (!bodyText.equals(""))
+						message += "\n\n" + bodyText;
+					if (message.equals("")) {
+						error("Empty commit message");
+						return;
+					}
+
+					String config = System.getProperty("fiji.dir") + "/staged-plugins/"
+						+ pluginRoot.getName() + ".config";
+					String[] cmdarray = {
+						"git", "commit", "-s", "-F", "-", "--", ".",
+						new File(config).exists() ? config : "."
+					};
+					InputStream stdin = new ByteArrayInputStream(message.getBytes());
+					SimpleExecuter.LineHandler ijLog = new DiffView.IJLog();
+					try {
+						SimpleExecuter executer = new SimpleExecuter(cmdarray,
+							stdin, ijLog, ijLog, pluginRoot);
+						if (executer.getExitCode() == 0)
+							frame.dispose();
+					} catch (IOException e2) {
+						IJ.handleException(e2);
+					}
+				}
+			});
+		}
+		frame.pack();
+		frame.setVisible(true);
+	}
+
+	protected void addChangesActionLink(DiffView diff, String text, final String plugin, final int verboseLevel) {
+		diff.link(text, new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				showPluginChangesSinceUpload(plugin, verboseLevel);
+			}
+		});
+	}
+
+	public void showPluginChangesSinceUpload(String plugin) {
+		showPluginChangesSinceUpload(plugin, 0);
+	}
+
+	public void showPluginChangesSinceUpload(final String plugin, final int verboseLevel) {
+		final DiffView diff = new DiffView();
+		diff.normal("Verbose level: ");
+		addChangesActionLink(diff, "file names", plugin, 0);
+		diff.normal(" ");
+		addChangesActionLink(diff, "bytecode", plugin, 1);
+		diff.normal(" ");
+		addChangesActionLink(diff, "verbose bytecode", plugin, 2);
+		diff.normal(" ");
+		addChangesActionLink(diff, "hexdump", plugin, 3);
+		diff.normal("\n");
+
+		final Thread thread = new Thread() {
+			public void run() {
+				Cursor cursor = diff.getCursor();
+				diff.setCursor(new Cursor(Cursor.WAIT_CURSOR));
+				populateDiff(diff, plugin, verboseLevel);
+				diff.setCursor(cursor);
+			}
+		};
+		thread.start();
+		final JFrame frame = new JFrame("Changes since last upload " + plugin);
+		frame.getContentPane().add(diff);
+		frame.pack();
+		frame.setSize(640, 640);
+		frame.addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent e) {
+				thread.interrupt();
+				try {
+					thread.join();
+				} catch (InterruptedException e2) {
+					System.err.println("interrupted");
+				}
+			}
+		});
+		frame.setVisible(true);
+	}
+
+	protected void populateDiff(final DiffView diff, final String plugin, int verboseLevel) {
+		final String fijiDir = System.getProperty("fiji.dir");
+		List<String> cmdarray = new ArrayList<String>(Arrays.asList(new String[] {
+			fijiDir + "/bin/log-plugin-commits.bsh",
+			"-p", "--fuzz", "15"
+		}));
+		for (int i = 0; i < verboseLevel; i++)
+			cmdarray.add("-v");
+		cmdarray.add(plugin);
+		final String[] args = cmdarray.toArray(new String[cmdarray.size()]);
+		try {
+			SimpleExecuter e = new SimpleExecuter(args,
+				diff, new DiffView.IJLog(), new File(fijiDir));
+		} catch (IOException e) {
+			IJ.handleException(e);
+			return;
+		}
+	}
+
 	protected boolean error(String message) {
 		JOptionPane.showMessageDialog(parent, message);
 		return false;
+	}
+
+	public static void main(String[] args) {
+		new FileFunctions(null).showPluginChangesSinceUpload("jars/javac.jar");
 	}
 }

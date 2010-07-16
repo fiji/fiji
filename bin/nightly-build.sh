@@ -73,9 +73,12 @@ case "$1" in
 		nightly_build &&
 		if test -d /var/www/update
 		then
-			./bin/javadoc-all.sh -d /var/www/javadoc \
+			(./bin/create-jnlp.sh &&
+			 ./bin/create-jnlp.sh --updater ||
+			 (echo "Java WebStart generation failed"; false)) &&
+			(./bin/javadoc-all.sh -d /var/www/javadoc \
 				> javadoc.out 2>&1 ||
-			(echo "JavaDoc failed"; false)
+			 (echo "JavaDoc failed"; false))
 		fi
 		;; # okay
 	*)

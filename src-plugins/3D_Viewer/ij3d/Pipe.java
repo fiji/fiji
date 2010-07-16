@@ -62,17 +62,46 @@ package ij3d;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import javax.vecmath.Point3f;
+import javax.vecmath.Color3f;
 
 import Jama.Matrix;
 
 import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.process.*;
+import ij.measure.Calibration;
+
+import java.awt.Color;
+import java.awt.image.IndexColorModel;
+import java.awt.image.ColorModel;
 
 public class Pipe {
 
-	/** Accepts an arrays as that returned from methods generateJoints and makeTube: first dimension is the list of points, second dimension is the number of vertices defining the circular cross section of the tube, and third dimension is the x,y,z of each vertex. */
 	static public List generateTriangles(final double[][][] all_points, final double scale) {
+		return generateTriangles(all_points,scale,null,null);
+	}
+
+	/** Accepts an arrays as that returned from methods
+	    generateJoints and makeTube: first dimension is the list of
+	    points, second dimension is the number of vertices defining
+	    the circular cross section of the tube, and third dimension
+	    is the x,y,z of each vertex.
+
+	    pointColorList is input, telling this method what the
+	    colour of each point along the path is, while
+	    vertexColorList should be an empty list used for output -
+	    the color of each vertex in the triangulation will be
+	    returned in there. */
+
+	static public List generateTriangles(final double[][][] all_points, final double scale, List pointColorList, List vertexColorList ) {
+		boolean outputColors = (pointColorList != null) && (vertexColorList != null);
+		if( outputColors && vertexColorList.size() > 0 )
+			throw new RuntimeException("vertexColorList in Pipe.generateTriangles() is only for output: should be empty");
+
 		int n = all_points.length;
 		final int parallels = all_points[0].length -1;
 		List list = new ArrayList();
@@ -87,16 +116,30 @@ public class Pipe {
 				list.add(new Point3f((float)(all_points[i+1][j][0] * scale), (float)(all_points[i+1][j][1] * scale), (float)(all_points[i+1][j][2] * scale)));
 				list.add(new Point3f((float)(all_points[i][j+1][0] * scale), (float)(all_points[i][j+1][1] * scale), (float)(all_points[i][j+1][2] * scale)));
 				list.add(new Point3f((float)(all_points[i+1][j+1][0] * scale), (float)(all_points[i+1][j+1][1] * scale), (float)(all_points[i+1][j+1][2] * scale)));
+
+				if( outputColors ) {
+					vertexColorList.add(pointColorList.get(i));
+					vertexColorList.add(pointColorList.get(i));
+					vertexColorList.add(pointColorList.get(i+1));
+
+					vertexColorList.add(pointColorList.get(i+1));
+					vertexColorList.add(pointColorList.get(i));
+					vertexColorList.add(pointColorList.get(i+1));
+				}
 			}
 		}
 		return list;
 	}
 
-	static public double[][][] makeTube(double[] px, double[] py, double[] pz, double[] p_width_i, final int resample, final int parallels) {
-		return makeTube(px, py, pz, p_width_i, resample, parallels, true);
-	}
+	static public double[][][] makeTube(double[] px, double[] py, double[] pz, double[] p_width_i, final int resample, final int parallels, final boolean do_resample, Color3f flatColor, ImagePlus colorImage, List outputColors) {
 
-	static public double[][][] makeTube(double[] px, double[] py, double[] pz, double[] p_width_i, final int resample, final int parallels, final boolean do_resample) {
+		boolean colorsSpecified = flatColor != null || colorImage != null;
+		if( colorsSpecified ) {
+			if( outputColors == null )
+				throw new RuntimeException("If you specify flatColor or colorImage in a call to makeTube(), then outputColors must be non-null");
+			if( outputColors.size() > 0 )
+				throw new RuntimeException("The outputColors list in makeTube should be empty; it's for output, not input");
+		}
 
 		int n = px.length;
 
@@ -115,6 +158,17 @@ public class Pipe {
 			} catch (Exception e) {
 				IJ.error(""+e);
 			}
+		}
+
+		if( colorsSpecified ) {
+			Color3f [] finalColors = getPointColors(px,py,pz,flatColor,colorImage);
+			/* This method adds an extra point at the
+			   beginning and end, so duplicate the colours
+			   at each: */
+			outputColors.add(finalColors[0]);
+			for( int i = 0; i < n; ++i )
+				outputColors.add(finalColors[i]);
+			outputColors.add(finalColors[n-1]);
 		}
 
 		double[][][] all_points = new double[n+2][parallels+1][3];
@@ -255,6 +309,139 @@ public class Pipe {
 		result.z += ((1-cos) * r.y * r.z + r.x * sin) * v.y;
 		result.z += (cos + (1-cos) * r.z * r.z) * v.z;
 		*/
+		return result;
+	}
+
+	public static final int enrangeInteger( float value, int mininum, int maximum ) {
+		return Math.max( mininum, Math.min( maximum, (int) Math.round( value ) ) );
+	}
+
+	public static final int enrangeInteger( double value, int mininum, int maximum ) {
+		return Math.max( mininum, Math.min( maximum, (int) Math.round( value ) ) );
+	}
+
+	public static Color3f [] getPointColors( double [] x_points,
+						 double [] y_points,
+						 double [] z_points,
+						 Color3f flatColor,
+						 ImagePlus colorImage ) {
+		int n = x_points.length;
+		Color3f [] result = new Color3f[x_points.length];
+		Arrays.fill( result, flatColor );
+		if( colorImage != null ) {
+			ImageStack stack = colorImage.getStack();
+			int width = colorImage.getWidth();
+			int height = colorImage.getHeight();
+			int depth = colorImage.getStackSize();
+			int type = colorImage.getType();
+
+			double x_spacing = 1;
+			double y_spacing = 1;
+			double z_spacing = 1;
+			Calibration calibration = colorImage.getCalibration();
+			if( calibration != null ) {
+				x_spacing = calibration.pixelWidth;
+				y_spacing = calibration.pixelHeight;
+				z_spacing = calibration.pixelDepth;
+			}
+
+			java.awt.image.ColorModel cm = colorImage.getProcessor().getCurrentColorModel();
+
+			byte [] reds = null;
+			byte [] greens = null;
+			byte [] blues = null;
+
+			int mapSize = -1;
+
+			if( cm != null && cm instanceof IndexColorModel ) {
+				java.awt.image.IndexColorModel icm = (IndexColorModel)cm;
+				mapSize = icm.getMapSize();
+				reds = new byte[mapSize];
+				greens = new byte[mapSize];
+				blues = new byte[mapSize];
+				System.out.println("setting reds, greens and blues with map size: "+mapSize);
+				icm.getReds(reds);
+				icm.getGreens(greens);
+				icm.getBlues(blues);
+			}
+
+			for( int i = 0; i < n; ++i ) {
+				int x = (int)Math.round(x_points[i] / x_spacing);
+				int y = (int)Math.round(y_points[i] / y_spacing);
+				int z = (int)Math.round(z_points[i] / z_spacing);
+				if( x < 0 )
+					x = 0;
+				else if( x >= width )
+					x = width - 1;
+				if( y < 0 )
+					y = 0;
+				else if( y >= height )
+					y = height - 1;
+				if( z < 0 )
+					z = 0;
+				else if( z >= depth )
+					z = depth - 1;
+				switch(type) {
+				case ImagePlus.COLOR_RGB:
+				{
+					ColorProcessor cp = (ColorProcessor)stack.getProcessor(z+1);
+					Color c = cp.getColor(x,y);
+					result[i] = new Color3f(c);
+				}
+				break;
+				case ImagePlus.GRAY8:
+				{
+					ByteProcessor bp = (ByteProcessor)stack.getProcessor(z+1);
+					int v = bp.getPixel(x,y);
+					if (cm == null) {
+						float fv = v / 255.0f;
+						result[i] = new Color3f(fv,fv,fv);
+					} else {
+						result[i] = new Color3f( (reds[v] & 0xFF) / 255.0f,
+									 (greens[v] & 0xFF) / 255.0f,
+									 (blues[v] & 0xFF) / 255.0f );
+					}
+				}
+				break;
+				case ImagePlus.COLOR_256:
+				{
+					ByteProcessor bp = (ByteProcessor)stack.getProcessor(z+1);
+					int v = bp.getPixel(x,y);
+					result [i] = new Color3f( (reds[v] & 0xFF) / 255.0f,
+								  (greens[v] & 0xFF) / 255.0f,
+								  (blues[v] & 0xFF) / 255.0f );
+				}
+				break;
+				case ImagePlus.GRAY16:
+				{
+					ShortProcessor sp = (ShortProcessor)stack.getProcessor(z+1);
+					int s = sp.getPixel(x,y);
+					int v = enrangeInteger( (s - sp.getMin()) * 255.0f / (sp.getMax() - sp.getMin()),
+								0,
+								255 );
+					result[i] = new Color3f( (reds[v] & 0xFF) / 255.0f,
+								 (greens[v] & 0xFF) / 255.0f,
+								 (blues[v] & 0xFF) / 255.0f );
+				}
+				break;
+				case ImagePlus.GRAY32:
+				{
+					FloatProcessor fp = (FloatProcessor)stack.getProcessor(z+1);
+					float f = fp.getf(x,y);
+					int v = enrangeInteger( (f - fp.getMin()) * 255 / (fp.getMax() - fp.getMin()),
+								0,
+								255 );
+					result[i] = new Color3f( (reds[v] & 0xFF) / 255.0f,
+								 (greens[v] & 0xFF) / 255.0f,
+								 (blues[v] & 0xFF) / 255.0f );
+				}
+				break;
+
+				default:
+					throw new RuntimeException("colorImage type: "+type+" is not supported yet");
+				}
+			}
+		}
 		return result;
 	}
 }

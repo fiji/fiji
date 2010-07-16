@@ -52,6 +52,7 @@ checkout_and_build='
 		esac &&
 		test -z "$(ls $d/)" || break;
 	 done &&
+	 export VERSIONER_PERL_PREFER_32_BIT=yes &&
 	 ./bin/nightly-build.sh --stdout &&
 	 echo "Work around a Heisenbug" &&
 	 unzip plugins/loci_tools.jar META-INF/MANIFEST.MF &&
@@ -80,11 +81,6 @@ build_rest='
 	 then
 		git commit -s -a -m "'"$COMMIT_MESSAGE"'"
 	 fi &&
-	 echo "Live images" &&
-	 sudo rm -rf livecd &&
-	 ./bin/make-livecd.sh &&
-	 sudo rm -rf livecd &&
-	 ./bin/make-livecd.sh --usb &&
 	 ./Build.sh all-tars all-zips all-7zs) >&2
 '
 errorcount=0
@@ -145,8 +141,6 @@ git rev-parse --verify refs/tags/Fiji-$RELEASE 2>/dev/null && {
 	exit 1
 }
 
-echo "Enter password for live CD procedure" &&
-sudo echo Okay &&
 echo "Building for MacOSX" &&
 if ! git push macosx10.5:$NIGHTLY_BUILD +$HEAD:$TMP_HEAD
 then
@@ -155,7 +149,6 @@ then
 fi &&
 macsums="$(ssh macosx10.5 "$checkout_and_build")" &&
 
-sudo -v &&
 echo "Building for non-MacOSX" &&
 git fetch macosx10.5:$NIGHTLY_BUILD master && # for fiji-macosx.7z
 if ! git push $HOME/$NIGHTLY_BUILD +FETCH_HEAD:$TMP_HEAD
@@ -173,7 +166,6 @@ then
 	git diff --no-index .git/macsums .git/thissums
 	exit 1
 fi &&
-sudo -v &&
 sh -c "$build_rest" || exit
 
 echo "Verifying"
@@ -190,12 +182,12 @@ do
 	win*)
 		launcher="$launcher.exe";;
 	esac
-	verify_archives $a "$launcher $java "
+	verify_archives $a "$launcher jars/fiji-lib.jar $java "
 done
 
-verify_archives nojre "Contents/MacOS/fiji-macosx Contents/MacOS/fiji-tiger fiji-linux fiji-linux64 fiji-win32.exe fiji-win64.exe "
+verify_archives nojre "Contents/MacOS/fiji-macosx Contents/MacOS/fiji-tiger fiji-linux fiji-linux64 fiji-win32.exe fiji-win64.exe jars/fiji-lib.jar "
 
-verify_archives all "Contents/MacOS/fiji-macosx Contents/MacOS/fiji-tiger fiji-linux fiji-linux64 fiji-win32.exe fiji-win64.exe java/linux java/linux-amd64 java/macosx-java3d java/win32 java/win64 "
+verify_archives all "Contents/MacOS/fiji-macosx Contents/MacOS/fiji-tiger fiji-linux fiji-linux64 fiji-win32.exe fiji-win64.exe jars/fiji-lib.jar java/linux java/linux-amd64 java/macosx-java3d java/win32 java/win64 "
 
 if test $errorcount -gt 0
 then

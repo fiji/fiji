@@ -330,8 +330,6 @@ public class Main implements AWTEventListener {
 	public static void setup() {
 		new User_Plugins().run(null);
 		if (IJ.getInstance() != null) {
-			SampleImageLoader.install();
-			installRecentCommands();
 			new Thread() {
 				public void run() {
 					/*

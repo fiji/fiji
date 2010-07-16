@@ -106,18 +106,31 @@ for line in response.split('\n'):
 			title = ' ->> ' + line[start:end]
 		result += '\t' + time + ' ' + title + ' (' + author + ')\n'
 
+firstLine = 'From ' + url + '/Special:RecentChanges\n'
 from java.lang import System
 backup = '.recent-changes.' + host
 if path.exists(backup):
 	f = open(backup, 'r')
 	firstline = f.readline().strip()
+	secondline = f.readline().strip()
 	f.close()
-	for line in result.split('\n'):
-		if line == firstline:
-			break
+	lines = result.split('\n')
+	if len(lines) > 0 and lines[0] == firstline:
+		if len(lines) > 1 and lines[1].strip() == secondline:
+			firstline = None
 		else:
-			System.out.println(line)
+			firstline = secondline
+	if firstline != None:
+		for line in lines:
+			if line.strip() == firstline:
+				break
+			else:
+				if firstLine != None:
+					System.out.println(firstLine)
+					firstLine = None
+				System.out.println(line)
 else:
+	System.out.println(firstLine)
 	System.out.println(result)
 
 f = open(backup, 'w')

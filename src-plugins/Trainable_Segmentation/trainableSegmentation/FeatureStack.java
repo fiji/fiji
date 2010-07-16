@@ -403,7 +403,7 @@ public class FeatureStack
 				data.add(new DenseInstance(1.0, values));
 			}
 		}
-		
+		IJ.showProgress(1.0);
 		return data;
 	}
 	
@@ -426,6 +426,8 @@ public class FeatureStack
 			}
 		}
 		this.addMembraneFeatures(19, 1);
+		
+		IJ.showProgress(1.0);
 	}
 	
 	/**
@@ -437,7 +439,7 @@ public class FeatureStack
 		wholeStack.addSlice("original", originalImage.getProcessor().duplicate());
 
 		int counter = 1;
-		for (float i=1.0f; i<= FeatureStack.MAX_SIGMA; i*=2)
+		for (float i=1.0f; i < FeatureStack.MAX_SIGMA; i*=2)
 		{
 			// Gaussian blur
 			if(enableFeatures[GAUSSIAN])
@@ -520,6 +522,7 @@ public class FeatureStack
 			IJ.run(imp, "Enhance Contrast", "saturated=0.1 normalize_all");
 		}
 		
+		IJ.showProgress(1.0);
 		IJ.showStatus("Features stack is updated now!");
 	}
 	

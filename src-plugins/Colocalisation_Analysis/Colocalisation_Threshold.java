@@ -1,7 +1,6 @@
 //22/4/5
 
 import java.awt.*;
-import java.io.*;
 import ij.*;
 import ij.gui.*;
 import ij.process.*;
@@ -11,11 +10,7 @@ import ij.measure.*;
 import ij.plugin.ContrastEnhancer;
 import java.text.DecimalFormat;
 import ij.measure.*;
-import ij.util.*;
-import java.util.*;
-
-
-
+import java.text.DecimalFormat;
 
 public class Colocalisation_Threshold implements PlugIn {
 	boolean headingsSetCTC;
@@ -25,14 +20,9 @@ public class Colocalisation_Threshold implements PlugIn {
 	private static boolean displayCounts;
 	private static boolean useMask;
 	private static boolean useRoi;
-	private Roi roi, roi2;
-	private ImagePlus imp1, imp2, impMask;
+	private ImagePlus imp1, imp2;
 	private static boolean threshold;
 	private int  ch1, ch2, ch3, nslices, width, height;
-	private int ch1Sum=0;
-	private int ch2Sum=0;
-	private int ch3Sum=0;
-	private int N=0;
 	private int indexRoi= (int)Prefs.get("CTC_indexRoi.int",0);
 	private DecimalFormat df4 = new DecimalFormat("##0.0000");
 	private DecimalFormat df3 = new DecimalFormat("##0.000");
@@ -97,7 +87,6 @@ public class Colocalisation_Threshold implements PlugIn {
 
 		displayCounts = false;
 		threshold = false;
-		int indexMask=0;
 		GenericDialog gd = new GenericDialog("Colocalisation Thresholds");
 		gd.addChoice("Channel_1", titles, titles[index1]);
 		gd.addChoice("Channel_2", titles, titles[index2]);
@@ -125,8 +114,7 @@ public class Colocalisation_Threshold implements PlugIn {
 		bScatter= gd.getNextBoolean();
 		opt0 =gd.getNextBoolean();
 		boolean options=gd.getNextBoolean();
-		String title1 = titles[index1];
-		String title2 = titles[index2];
+
 		imp1 = WindowManager.getImage(wList[index1]);
 		imp2 = WindowManager.getImage(wList[index2]);
 		useMask=false;
@@ -135,9 +123,8 @@ public class Colocalisation_Threshold implements PlugIn {
 
 		imp1 = WindowManager.getImage(wList[index1]);
 		imp2 = WindowManager.getImage(wList[index2]);
-		ImageWindow winimp1= imp1.getWindow();
-		ImageWindow winimp2= imp2.getWindow();
-		if (imp1.getType()!=imp1.GRAY8&&imp1.getType()!=imp1.GRAY16&&imp2.getType()!=imp2.GRAY16 &&imp2.getType()!=imp1.GRAY8) {
+
+		if (imp1.getType()!=ImagePlus.GRAY8&&imp1.getType()!=ImagePlus.GRAY16&&imp2.getType()!=ImagePlus.GRAY16 &&imp2.getType()!=ImagePlus.GRAY8) {
 			IJ.showMessage("Image Correlator", "Both images must be 8-bit or 16-bit grayscale.");
 			return false;
 		}
@@ -145,7 +132,7 @@ public class Colocalisation_Threshold implements PlugIn {
 		ip2 = imp2.getProcessor();
 		Roi roi1 = imp1.getRoi();
 		Roi roi2= imp2.getRoi();
-		boolean keepROIimage=true;
+
 		width = imp1.getWidth();
 		height = imp1.getHeight();
 		useRoi=true;
@@ -194,7 +181,6 @@ public class Colocalisation_Threshold implements PlugIn {
 			rheight  =rect.height;
 
 		}
-		//IJ.showMessage("Xoffset:"+xOffset+ " Yoffset:"+yOffset);
 
 		//if red-blue
 		if (dualChannelIndex==1) {
@@ -209,20 +195,6 @@ public class Colocalisation_Threshold implements PlugIn {
 			colIndex3=0;
 		}
 
-
-
-
-		boolean matchWidth=false;
-		boolean matchHeight=false;
-		boolean  matchSlice = false;
-		//if (imp1.getWidth()==imp2.getWidth()&&imp1.getWidth()==impMask.getWidth()) matchWidth = true;
-		//if (imp1.getHeight()==imp2.getHeight()&&imp1.getHeight()==impMask.getHeight()) matchHeight = true;
-		//if (imp1.getStackSize()==imp2.getStackSize()&&imp1.getStackSize()==impMask.getStackSize()) matchSlice = true;
-
-		//if (!(matchWidth&&matchHeight&&matchSlice))
-		//	{IJ.showMessage("Image mismatch","Images do not match. Exiting");
-		//	return false;
-		//	}
 		if (options) {
 			GenericDialog gd2 = new GenericDialog("Set Results Options");
 			gd2.addMessage("See online manual for detailed description of these values");
@@ -708,7 +680,6 @@ public class Colocalisation_Threshold implements PlugIn {
 		pearsons2 = sumXX - (sumX*sumX/N);
 		pearsons3 = sumYY - (sumY*sumY/N);
 
-
 		//Pearsons for coloclaised volume
 		double Rcoloc= pearsons1/(Math.sqrt(pearsons2*pearsons3));
 
@@ -747,8 +718,8 @@ public class Colocalisation_Threshold implements PlugIn {
 
 		//if (!useMask) maskName = "<none>";
 
-		str = fileName +"\t"+"ROI" + indexRoi+"\texcl.\t";
-		if (opt0) str = fileName +"\t"+str+"\tincl.\t";
+		str = fileName +"\t"+"ROI" + indexRoi+"\t";
+		str += opt0 ? "incl.\t" : "excl.\t";
 
 		if (opt2)	str+= df3.format(rTotal)+ "\t";
 		if (opt1a)	str+= df3.format(m)+ "\t "+df1.format(b)+ "\t";

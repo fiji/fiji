@@ -1,8 +1,12 @@
 package fiji.process;
 
+import ij.IJ;
 import ij.ImageListener;
 import ij.ImagePlus;
+import ij.ImageStack;
 import ij.WindowManager;
+import ij.plugin.RGBStackMerge;
+import ij.plugin.filter.RGBStackSplitter;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -34,9 +38,11 @@ import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
 import javax.swing.border.LineBorder;
 
-import org.nfunk.jep.JEP;
-import org.nfunk.jep.type.DoubleNumberFactory;
+import mpicbg.imglib.image.Image;
+import mpicbg.imglib.image.display.imagej.ImageJFunctions;
+import mpicbg.imglib.type.numeric.RealType;
 
+import fiji.expressionparser.ImgLibParser;
 
 /**
  * <h2>GUI for the plugin {@link Image_Expression_Parser}</h2>
@@ -48,25 +54,27 @@ import org.nfunk.jep.type.DoubleNumberFactory;
  * <p>
  * Variables can be added using +/- buttons. They are matched to opened images in ImageJ. 
  * <p>
- * When the user presses the OK or Cancel button, the GUI exits, and trigger an action wich code 
- * is the following:
+ * When the images are RGB images, they are processed in a special way:
  * <ul>
- * <li>If OK was pressed, an action with the text "OK", and ID flag {@link IepGui#OK} is triggered.
- * <li>If Canceled was pressed, an action with the text "Canceled", and ID flag {@link IepGui#CANCELED}
- * is triggered.
+ * 	<li> they are split in 3 RGB channels;
+ * 	<li> each channel is parsed and evaluated separately;
+ * 	<li> the 3 resulting images are put back together in a 3 channel composite image.
  * </ul>
+ * 
+ * <p>
  * The information the user entered can be retrieved afterwards with the following methods:
  * <ul>
  * <li>{@link #getExpression()} to retrieve the expression the user entered as a String
  * <li>{@link #getImageMap()} to retrieve the couples Variable names - Images set by the user.
  * </ul>
  * <p>
+ * See {@link Image_Expression_Parser} for more information.
  * 
  * <p>
- * It was built in part using Jigloo GUI builder http://www.cloudgarden.com/jigloo/.
- * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com>
+ * This GUI was built in part using Jigloo GUI builder http://www.cloudgarden.com/jigloo/.
+ * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com>, Albert Cardona <acardona@ini.phys.ethz.ch>
  */
-public class IepGui extends javax.swing.JFrame implements ImageListener, ActionListener, WindowListener {
+public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implements ImageListener, WindowListener {
 
 
 	{
@@ -82,7 +90,7 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 	 * FIELDS
 	 */
 	
-	private static final String PLUGIN_VERSION = "v1.1";
+	private static final String PLUGIN_VERSION = "v2.2";
 	private static final String PLUGIN_NAME = "Image Expression Parser";
 	
 	/** The GUI fires an ActionEvent with this command String when the quit button is pressed. */
@@ -97,13 +105,31 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 	 * in the info text box. */
 	public static final String[] MESSAGES = {		
 		"Enter an expression using canonical mathematical functions, and capital single " +
-		"letters as variable specifying the chosen image. Boolean operations are also supported.\n" +
+		"letters as variable specifying the chosen image.\n " +
+		"ImgLib algorithms are also supported. " +
 		"<p>" +
 		"Examples: <br>" +
 		"&nbsp&nbsp ■ 2*A<br>" +
 		"&nbsp&nbsp ■ A*(B+30)<br>" +
 		"&nbsp&nbsp ■ sqrt(A^2+B^2)*cos(C)<br>" +
 		"&nbsp&nbsp ■ A > B<br>" +
+		"&nbsp&nbsp ■ gauss(A, 0.8)<br>" +
+		"<p>" +
+		"<u>Supported ImgLib algorithms:</u><br>" +
+		"<table border=\"1\">" +
+		"<tr>" +
+		"<th>Description</th>" +
+		"<th>Syntax</th>" +
+		"</tr>"+
+		"<tr>"+
+		"<td>Gaussian convolution</td> <td>gauss(img, sigma)</td> "+
+		"</tr>"+
+		"<tr>"+
+		"<td>Floyd-Steinberg dithering</td> <td>dither(img)</td> "+
+		"</tr>"+
+		"<tr>"+
+		"<td>Image normalization (sum to 1)</td> <td>normalize(img)</td> "+
+		"</table> " +
 		"<p>" +
 		"<u>Supported functions:</u><br>" +
 		"<table border=\"1\">" +
@@ -151,19 +177,7 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 		"<td>Hyperbolic Tangent</td><td>tanh</td>" +
 		"</tr>"+
 		"<tr>" +
-		"<td>Hyperbolic Arc Sine</td><td>asinh</td>" +
-		"</tr>"+
-		"<tr>" +
-		"<td>Hyperbolic Arc Cosine</td><td>acosh</td>" +
-		"</tr>"+
-		"<tr>" +
-		"<td>Hyperbolic Arc Tangent</td><td>atanh</td>" +
-		"</tr>"+
-		"<tr>" +
-		"<td>Logarithm (base 10)</td><td>log</td>" +
-		"</tr>"+
-		"<tr>" +
-		"<td>Natural Logarithm</td><td>ln</td>" +
+		"<td>Natural Logarithm</td><td>log</td>" +
 		"</tr>"+
 		"<tr>" +
 		"<td>Exponential</td><td>exp</td>" +
@@ -178,24 +192,6 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 		"<td>Absolute Value</td><td>abs</td>" +
 		"</tr>"+
 		"<tr>" +
-		"<td>Modulus</td><td>mod</td>" +
-		"</tr>"+
-		"<tr>" +
-		"<td>Sum</td><td>sum</td>" +
-		"</tr>"+
-		"<tr>" +
-		"<td>Randon Number</td><td>rand</td>" +
-		"</tr>"+
-		"<tr>" +
-		"<td>'If' tests</td><td>if(condExpr,posExpr,negExpr)</td>" +
-		"</tr>"+
-		"<tr>" +
-		"<td>To String</td><td>str</td>" +
-		"</tr>"+
-		"<tr>" +
-		"<td>Binomial Function</td><td>binom(n,i)</td>" +
-		"</tr>"+
-		"<tr>" +
 		"<td>Round</td><td>round</td>" +
 		"</tr>"+
 		"<tr>" +
@@ -206,18 +202,10 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 		"</tr>"+
 		"<tr>" +
 		"<td>Boolean operators</td><td>!, &&, ||, <, >, !=, ==, >=, <=</td>" +	
-		"</tr>"+
-		"<tr>" +
-		"<td>Boolean true</td> <td>true</td>"+
-		"</tr>"+
-		"<tr>" +
-		"<td>Boolean false</td> <td>false</td>"+
 		"</table> ",
 		"No images are opened.",
 		"Image dimensions are incompatibles."
 		};
-	
-	private ArrayList<ActionListener> action_listeners = new ArrayList<ActionListener>();
 	
 	/** Number of image boxes currently displayed */
 	private int n_image_box = 0;
@@ -233,6 +221,11 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 	private String[] variables;
 	/** This is where we store the history of valid command. */
 	private DefaultComboBoxModel expression_history = new DefaultComboBoxModel();
+	/** The plugin that normally calls this GUI and is responsible for calculations. 
+	 * If null, it will be instantiated. */
+	private Image_Expression_Parser<T> image_expression_parser;
+	/** The ImagePlus that will be used to display results. */
+	private ImagePlus target_imp;
 	
 	private JPanel jPanelImages;
 	private JSplitPane jSplitPane1;
@@ -252,10 +245,14 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 	/**
 	 * Main method for debug
 	 */
-	public static void main(String[] args) {
+	public static <T extends RealType<T>> void main(String[] args) {
+		// Load an image
+		ImagePlus imp = IJ.openImage("http://rsb.info.nih.gov/ij/images/blobs.gif");
+		imp.show();
+		// Launch the GUI
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
-				IepGui inst = new IepGui();
+				IepGui<T> inst = new IepGui<T>();
 				inst.setLocationRelativeTo(null);
 				inst.setVisible(true);
 			}
@@ -275,11 +272,22 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 		jButtonMinus.setEnabled(false);
 		jTextAreaInfo.setText(MESSAGES[0]);
 		jTextAreaInfo.setCaretPosition(0);
+		ImagePlus.addImageListener(this);
 	}
 	
 	/*
 	 * PUBLIC METHODS
 	 */
+	
+	
+	/**
+	 * Store a link to the Image_Expression_Parser class that will be used for
+	 * computation.
+	 */
+	public void setIep(Image_Expression_Parser<T> iep) {
+		this.image_expression_parser = iep;
+	}
+		
 	
 	/**
 	 * Return a {@link Map} whose keys are the variable names as String, and the values
@@ -311,21 +319,10 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 	 * @see {@link #getImageMap()}  
 	 */
 	public String getExpression() {
-		return (String) expressionField.getSelectedItem();
+		String expression = (String) expressionField.getSelectedItem();
+		return expression.trim();
 	}
 	
-	public void addActionListener(ActionListener l) {
-		action_listeners.add(l);
-	}
-
-	public void removeActionListener(ActionListener l) {
-		action_listeners.remove(l);
-	}
-
-	public ActionListener[] getActionListeners() {
-		return (ActionListener[]) action_listeners.toArray();
-	}
-
 	/*
 	 * PRIVATE METHODS
 	 */
@@ -349,16 +346,6 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 			return imps;
 		} else {
 			return null;
-		}
-	}
-	
-	private synchronized void fireActionProperty(String command) {
-		ActionEvent action = new ActionEvent(this, ActionEvent.ACTION_PERFORMED, command);
-		for (ActionListener l : action_listeners) {
-			synchronized (l) {
-				l.notifyAll();
-				l.actionPerformed(action);
-			}
 		}
 	}
 	
@@ -444,14 +431,16 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 	/**
 	 * Called when the user type something in the expression area. 
 	 */
+	@SuppressWarnings("unchecked")
 	private String getExpressionError() {
-		final String expression = (String) expressionField.getSelectedItem();
+		final String expression = getExpression();
 		if ( (null == expression) || (expression.equals(""))  ) {
 			return "";
 		}
-		final JEP parser = new JEP(false, false, false, new DoubleNumberFactory());
+		final ImgLibParser parser = new ImgLibParser();
 		parser.addStandardConstants();
 		parser.addStandardFunctions();
+		parser.addImgLibAlgorithms();
 		for ( String var : variables ) {
 			parser.addVariable(var, null); // we do not care for value yet
 		}
@@ -593,40 +582,185 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 		for (int i=0; i < n_image_box; i++) {
 			char c = (char) ('A'+i);
 			variables[i] = String.valueOf(c);
-		}
+		}		
 	}
-	
-	/*
-	 * ACTIONLISTENER METHOD
+
+	/** 
+	 * Quit the GUI
 	 */
-	
-	public void actionPerformed(ActionEvent e) {
-		String command = e.getActionCommand();
+	private void quitGui() {
+		ImagePlus.removeImageListener(this);
+		this.removeWindowListener(this);
+		this.dispose();
+	}
+
+	/**
+	 * Invoked when an action occur. This causes the GUI to grab all input and to start
+	 * calculation.
+	 */
+	private void launchCalculation() {
+		// This method is called in the context of the event dispatch thread
+
+		// Check inputs
+		boolean is_valid = checkValid();
+		if (!is_valid) 
+			return;
+
+		// Collect input from GUI widgets while under the event dispatch thread
+		final Map<String, ImagePlus> imp_map = getImageMap();
+		final String expression	= getExpression();
 		
-		if (command.equals(PARSE_ACTION_COMMAND)) {
-			fireActionProperty(PARSE_ACTION_COMMAND);
-		
-		} else if (command.equals(QUIT_ACTION_COMMAND)) {
-			fireActionProperty(QUIT_ACTION_COMMAND);
-		
-		} else if (command.equals(Image_Expression_Parser.CALCULATION_DONE_COMMAND)) {
-			// Re-enable the GUI
-			this.toFront(); // Bring the GUI to front
-			expressionField.requestFocusInWindow(); // give focus to expression field
-			jButtonOK.setEnabled(true);
-			expressionField.setEnabled(true);
-			for (JComboBox box : image_boxes) {
-				box.setEnabled(true);
-			}
+		// Fork a new process to carry on the bulk of the execution,
+		// freeing the event dispatch thread for other tasks like repainting windows
+		// and dispatching other events:
+		new Thread() {
 			
-		} else if (command.equals(Image_Expression_Parser.CALCULATION_STARTED_COMMAND)) {
-			// Lock the GUI
-			jButtonOK.setEnabled(false);
-			expressionField.setEnabled(false);
-			for (JComboBox box : image_boxes) {
-				box.setEnabled(false);
+			{
+				// Reduce, at construction time, the priority of this Thread from ~15
+				// (that of the parent Thread, the AWT-EventQueue-0, aka Event Dispatch Thread)
+				// to a more suitable one that doesn't compete with event dispatch:
+				setPriority(Thread.NORM_PRIORITY);
 			}
-		}
+
+			public void run() {
+				
+				// Lock the GUI
+				IJ.showStatus("IEP parsing....");
+				setGUIEnabled(false);
+
+				try {
+					if (null == image_expression_parser) {
+						image_expression_parser = new Image_Expression_Parser<T>();
+					}
+					
+
+					// Prepare parser
+					image_expression_parser.setExpression(expression);
+
+					Image<T> result_img = null;
+
+					// Here, we check if we get a RGB image. They are handled in a special way: 
+					// They are converted to 3 8-bit images which are processed separately, and
+					// assembled back after processing.
+					boolean is_rgb_image = false;
+					for (String key : imp_map.keySet()) {
+						if (imp_map.get(key).getType() == ImagePlus.COLOR_RGB) {
+							is_rgb_image = true;
+						}
+					}
+					
+					if (is_rgb_image) {
+						
+						// Prepare holders
+						Map<String, ImagePlus> red_map = new HashMap<String, ImagePlus>();
+						Map<String, ImagePlus> green_map = new HashMap<String, ImagePlus>();
+						Map<String, ImagePlus> blue_map = new HashMap<String, ImagePlus>();
+						ArrayList<Map<String, ImagePlus>> map_array = new ArrayList<Map<String,ImagePlus>>(3);
+						map_array.add(red_map);
+						map_array.add(green_map);
+						map_array.add(blue_map);
+						
+						// Split stacks
+						RGBStackSplitter channel_splitter = new RGBStackSplitter();
+						ImagePlus current_imp = null;
+						for (String key : imp_map.keySet()) {
+							current_imp = imp_map.get(key);
+							// And stored individual channels in a new map
+							channel_splitter.split(current_imp.getImageStack(), true);
+							red_map.put  (key, new ImagePlus(current_imp.getShortTitle()+"-R", channel_splitter.red));
+							green_map.put(key, new ImagePlus(current_imp.getShortTitle()+"-G", channel_splitter.green));
+							blue_map.put (key, new ImagePlus(current_imp.getShortTitle()+"-B", channel_splitter.blue));
+						}
+						
+						
+						// Have the parser process individual channel separately
+						Map<String, Image<T>> img_map;
+						ImageStack[] result_array = new ImageStack[3];
+						Image<T> tmp_image;
+						int index = 0;
+						for (Map<String, ImagePlus> current_map : map_array) {
+							img_map = image_expression_parser.convertToImglib(current_map);
+							image_expression_parser.setImageMap(img_map);
+							image_expression_parser.process();
+							// Collect results
+							tmp_image = image_expression_parser.getResult();
+							result_array[index] = ImageJFunctions.copyToImagePlus(tmp_image).getImageStack();
+							index++;
+						}
+						
+						// Merge back channels
+						RGBStackMerge rgb_merger = new RGBStackMerge();
+						ImagePlus new_imp = rgb_merger.createComposite(current_imp.getWidth(), current_imp.getHeight(), current_imp.getNSlices(), 
+								result_array, false);
+						new_imp.resetDisplayRange();
+						
+						if (target_imp == null) {
+							target_imp = new_imp;
+							target_imp.show();
+						} else {
+							if (!target_imp.isVisible()) {
+								target_imp = new_imp;
+								target_imp.show();
+							} else {
+								target_imp.setStack(expression, new_imp.getStack());
+							}
+						}
+
+					} else {
+
+
+						Map<String, Image<T>> img_map = image_expression_parser.convertToImglib(imp_map);
+						image_expression_parser.setImageMap(img_map);
+						// Call calculation
+						image_expression_parser.process();
+						// Collect result
+						result_img = image_expression_parser.getResult();
+
+						if (target_imp == null) {
+							target_imp = ImageJFunctions.copyToImagePlus(result_img);
+							target_imp.show();
+						} else {
+							ImagePlus new_imp = ImageJFunctions.copyToImagePlus(result_img);
+							if (!target_imp.isVisible()) {
+								target_imp = new_imp;
+								target_imp.show();
+							} else {
+								target_imp.setStack(expression, new_imp.getStack());
+							}
+						}
+						
+					}
+
+					target_imp.resetDisplayRange();
+					target_imp.updateAndDraw();
+
+				} catch (Exception e) {
+					e.printStackTrace();
+					IJ.error("An error occurred: " + e);
+				} finally {
+					// Re-enable the GUI
+					IJ.showStatus("");
+					setGUIEnabled(true);
+				}
+			}
+		}.start();
+	}
+
+	/** Toggle GUI enabled/disabled via the event dispatch thread. */
+	protected void setGUIEnabled(final boolean enabled) {
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				jButtonOK.setEnabled(enabled);
+				expressionField.setEnabled(enabled);
+				for (JComboBox box : image_boxes) {
+					box.setEnabled(enabled);
+				}
+				if (enabled) {
+					toFront();
+					expressionField.requestFocusInWindow(); // give focus to expression field
+				}
+			}
+		});
 	}
 	
 	/*
@@ -672,14 +806,29 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 						jButtonCancel = new JButton();
 						jPanelRight.add(jButtonCancel, new GridBagConstraints(0, 3, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 10, 10, 0), 0, 0));
 						jButtonCancel.setText("Quit");
-						jButtonCancel.addActionListener(this);
+						jButtonCancel.addActionListener(new ActionListener() {							
+							// Close the GUI
+							@Override
+							public void actionPerformed(ActionEvent e) {
+								quitGui();
+							}
+						});
 					}
 					{
 						jButtonOK = new JButton();
 						jPanelRight.add(jButtonOK, new GridBagConstraints(2, 3, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 10, 10), 0, 0));
 						jButtonOK.setText("Parse");
 						jButtonOK.setEnabled(false);
-						jButtonOK.addActionListener(this);
+						jButtonOK.addActionListener(new ActionListener() {
+							@Override
+							public void actionPerformed(ActionEvent e) {
+								boolean valid = checkValid();
+								if (valid) {
+									addCurrentExpressionToHistory();
+									launchCalculation();
+								} 
+							}
+						});
 					}
 					{
 						jScrollPane1 = new JScrollPane();
@@ -723,17 +872,20 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 						expressionField.setBorder(new LineBorder(new java.awt.Color(252,117,0), 1, false));
 						expressionField.setSize(12, 18);
 						jPanelLeft.add(expressionField, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(10, 10, 10, 10), 0, 0));
-						expressionField.addActionListener(new ActionListener() {
+						expressionField.addActionListener(new ActionListener()  {
 							@Override
 							public void actionPerformed(ActionEvent e) {
-								if (e.getActionCommand().equals("comboBoxEdited")) {
+								// Two action events are fired on edit: one for editing the textfield, one for changing
+								// the combo box selection. We only catch the edition.								
+								if (e.getActionCommand().equalsIgnoreCase("comboBoxEdited")) { 
 									boolean valid = checkValid();
 									if (valid) {
 										addCurrentExpressionToHistory();
-										fireActionProperty(PARSE_ACTION_COMMAND);
+										launchCalculation();
 									}
 								}
 							}
+
 						});
 					}
 					{
@@ -807,9 +959,7 @@ public class IepGui extends javax.swing.JFrame implements ImageListener, ActionL
 	public void windowClosed(WindowEvent e) {	}
 
 	public void windowClosing(WindowEvent e) {	
-		ImagePlus.removeImageListener(this);
-		this.removeWindowListener(this);
-		this.dispose();
+		quitGui();
 	}
 
 	public void windowDeactivated(WindowEvent e) {	}

@@ -438,6 +438,32 @@ public class Fake {
 				}
 			}
 
+			// add <name>-clean rules
+			List newSpecials = new ArrayList();
+			Iterator iter = allRules.keySet().iterator();
+			while (iter.hasNext()) {
+				final String key = (String)iter.next();
+				final Rule rule = getRule(key);
+				if (key.endsWith("-clean") ||
+						key.endsWith("-clean-dry-run") ||
+						(rule instanceof Special))
+					continue;
+				final String cleanKey = key + "-clean";
+				// avoid concurrent modification
+				if (!allRules.containsKey(cleanKey))
+					newSpecials.add(new Special(cleanKey) {
+						void action() { rule.clean(false); }
+					});
+				final String dryRunCleanKey = cleanKey + "-dry-run";
+				if (!allRules.containsKey(dryRunCleanKey))
+					newSpecials.add(new Special(dryRunCleanKey) {
+						void action() { rule.clean(true); }
+					});
+			}
+			iter = newSpecials.iterator();
+			while (iter.hasNext())
+				addSpecialRule((Special)iter.next());
+
 			lineNumber = -1;
 
 			result = allRule;
@@ -1245,6 +1271,22 @@ public class Fake {
 			public String getPrerequisiteString() {
 				return prerequisiteString;
 			}
+
+			public String getStripPath() {
+				String s = prerequisiteString.trim();
+				if (s.startsWith("**/"))
+					return "";
+				int stars = s.indexOf("/**/");
+				if (stars < 0)
+					return "";
+				int space = s.indexOf(' ');
+				if (space > 0 && space < stars) {
+					if (s.charAt(space - 1) == '/')
+						return s.substring(0, space);
+					return "";
+				}
+				return s.substring(0, stars + 1);
+			}
 		}
 
 		class All extends Rule {
@@ -1270,7 +1312,7 @@ public class Fake {
 			}
 		}
 
-		class SubFake extends Rule {
+		public class SubFake extends Rule {
 			String jarName;
 			String baseName;
 			String source;
@@ -1287,7 +1329,7 @@ public class Fake {
 				String[] paths =
 					split(getVar("CLASSPATH"), ":");
 				for (int i = 0; i < paths.length; i++)
-					prerequisites.add(paths[i]);
+					prerequisites.add(prerequisites.size() - 1, paths[i]);
 				if (!new File(makePath(cwd, directory)).exists())
 					err.println("Warning: " + directory
 						+ " does not exist!");
@@ -1353,6 +1395,10 @@ public class Fake {
 			}
 
 			void action(String directory) throws FakeException {
+				action(directory, jarName);
+			}
+
+			void action(String directory, String subTarget) throws FakeException {
 				fakeOrMake(cwd, directory,
 					getVarBool("VERBOSE", directory),
 					getVarBool("IGNOREMISSINGFAKEFILES",
@@ -1362,7 +1408,7 @@ public class Fake {
 					getVar("PLUGINSCONFIGDIRECTORY")
 						+ "/" + baseName + ".Fakefile",
 					getBuildDir(),
-					jarName);
+					subTarget);
 			}
 
 			String getVarPath(String variable, String subkey) {
@@ -1383,16 +1429,14 @@ public class Fake {
 			}
 
 			protected void clean(boolean dry_run) {
-				File buildDir = getBuildDir();
-				if (buildDir == null) {
-					super.clean(dry_run);
-					return;
+				super.clean(dry_run);
+				clean(getLastPrerequisite() + jarName, dry_run);
+				if (new File(makePath(cwd, getLastPrerequisite()), "Fakefile").exists()) try {
+					action(getLastPrerequisite(), jarName + "-clean"
+						+ (dry_run ? "-dry-run" : ""));
+				} catch (FakeException e) {
+					e.printStackTrace(err);
 				}
-				if (dry_run)
-					out.println("rm -rf "
-							+ buildDir.getPath());
-				else if (buildDir.exists())
-					deleteRecursively(buildDir);
 			}
 		}
 
@@ -1534,22 +1578,6 @@ public class Fake {
 			String getMainClass() {
 				return getVariable("MAINCLASS", target);
 			}
-
-			String getStripPath() {
-				String s = prerequisiteString.trim();
-				if (s.startsWith("**/"))
-					return "";
-				int stars = s.indexOf("/**/");
-				if (stars < 0)
-					return "";
-				int space = s.indexOf(' ');
-				if (space > 0 && space < stars) {
-					if (s.charAt(space - 1) == '/')
-						return s.substring(0, space);
-					return "";
-				}
-				return s.substring(0, stars + 1);
-		}
 
 			protected void clean(boolean dry_run) {
 				super.clean(dry_run);
@@ -1991,7 +2019,8 @@ public class Fake {
 			if (starstar && names[i].startsWith("."))
 				continue;
 			if (names[i].equals(".git") || names[i].endsWith(".swp")
-					|| names[i].endsWith(".swo"))
+					|| names[i].endsWith(".swo")
+					|| names[i].endsWith("~"))
 				continue;
 			File file = new File(makePath(cwd, path));
 			if (nextSlash < 0) {

@@ -36,7 +36,7 @@ public class Languages {
 		        new Language(".py", SyntaxConstants.SYNTAX_STYLE_PYTHON, "Python", KeyEvent.VK_P, new Refresh_Jython_Scripts(), false, false),
 		        new Language(".rb", SyntaxConstants.SYNTAX_STYLE_RUBY, "Ruby", KeyEvent.VK_R, new Refresh_JRuby_Scripts(), false, false),
 		        new Language(".clj", null, "Clojure", KeyEvent.VK_C, new Refresh_Clojure_Scripts(), false, false),
-		        new Language(".m", null, "Matlab", KeyEvent.VK_M, null, false, false),
+		        /* new Language(".m", null, "Matlab", KeyEvent.VK_M, null, false, false), */
 		        new Language(".bsh", SyntaxConstants.SYNTAX_STYLE_JAVA, "BeanShell", KeyEvent.VK_B, new Refresh_BSH_Scripts(), false, false),
 		        new Language(".ijm", null, "ImageJ Macro", KeyEvent.VK_I, new Refresh_Macros(), false, false),
 		        new Language("", SyntaxConstants.SYNTAX_STYLE_NONE, "None", KeyEvent.VK_N, null, false, false)

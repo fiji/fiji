@@ -1,0 +1,87 @@
+setBatchMode(1);
+open(File.openDialog("Open particles file to sort (.tif)"));
+title = getTitle();
+
+showStatus("Sorting particles...");
+showProgress(0);
+max_distance=1000;
+
+selectImage(title);
+nresults = getHeight();
+nframes = 0;
+for (r=round(nresults*0.75);r<nresults;r++)
+{
+	selectImage(title);
+	f = getPixel(13, r)*1000000;
+	if (f>nframes) nframes=f;
+}
+
+counter = 0;
+sorted = newArray(nresults);
+
+first = 0;
+last_good_first = 0;
+last_good_frame = 0;
+for (f=1;f<=nframes;f++)
+{
+	if (f%100==0)
+	{
+		p = f/nframes;
+		showProgress(p*0.5);
+		showStatus("Sorted "+counter+"/"+nresults+" particles... ("+round(p*100)+"% done)");
+	}
+	if (first-max_distance>0) first = first - max_distance;
+	else first = 0;
+	
+	r=first;
+	start=first;
+	break = 1;
+	last = -1;
+	while ((r<nresults) && break)
+	{
+		selectImage(title);
+		if (f==round(getPixel(13,r)*1000000))
+		{
+			if (first==start)
+			{ 
+				first = r;
+				last_good_first = r;
+				last_good_frame = f;
+			}
+			last=r;
+			sorted[counter]=r;
+			counter++;
+		}
+		if ((last!=-1) && (r>(last+max_distance))) break=0;
+		else if ((last==-1) && (r>(last_good_first+(f-last_good_frame)*max_distance+max_distance))) break = 0;
+		r++;
+	}
+	if (max_distance<100) max_distance = 100;
+	else if (last!=-1) // particles found
+		max_distance = round(max_distance * 0.99 + ((last-first)) * 0.01);
+	//print(first, last, max_distance);
+}
+
+print("Lost particles while sorting: "+(nresults-counter)/nresults*100+"%");
+showStatus("Rebuilding particles table...");
+copy = "Copy"
+newImage(copy, "32-bit Black", 14, counter, 1);
+for (r=0;r<counter;r++)
+{
+	showProgress(r/counter*0.5+0.5);
+	for (x=0;x<14;x++)
+	{
+		selectImage(title);
+		v = getPixel(x, sorted[r]);
+		selectImage(copy);
+		setPixel(x, r, v);
+	}
+}
+showProgress(1);
+selectImage(title);
+close();
+selectImage(copy);
+rename(title);
+saveAs("tiff");
+close();
+showStatus("Done...");
