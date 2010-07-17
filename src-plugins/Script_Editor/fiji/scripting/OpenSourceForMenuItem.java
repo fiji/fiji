@@ -19,7 +19,11 @@ public class OpenSourceForMenuItem extends MenuItemDiverter {
 	public void setActions() {
 		super.setActions();
 		IJ.getInstance().toFront();
-		IJ_Alt_Key_Listener.getOpener().run();
+		try {
+			IJ_Alt_Key_Listener.getOpener().run();
+		} catch (NullPointerException e) {
+			/* no menu opener available */
+		}
 	}
 
 	protected String getTitle() {
