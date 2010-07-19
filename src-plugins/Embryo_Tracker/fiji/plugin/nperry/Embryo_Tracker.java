@@ -17,26 +17,29 @@
 
 package fiji.plugin.nperry;
 
+import ij.IJ;
+import ij.ImagePlus;
+import ij.gui.GenericDialog;
+import ij.gui.PointRoi;
+import ij.plugin.PlugIn;
+import ij.process.StackConverter;
+import ij3d.Content;
+import ij3d.Image3DUniverse;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.ListIterator;
 
-import ij.gui.GenericDialog;
-import ij.gui.PointRoi;
-import ij.plugin.PlugIn;
-import ij.*;
-import ij.process.StackConverter;
-import ij3d.Content;
-import ij3d.Image3DUniverse;
 import vib.PointList;
+
 import mpicbg.imglib.algorithm.findmax.FindLocalMaximaFactory;
-import mpicbg.imglib.algorithm.findmax.FindMinima3D;
 import mpicbg.imglib.algorithm.findmax.LocalMaximaFinder;
 import mpicbg.imglib.algorithm.gauss.DownSample;
 import mpicbg.imglib.algorithm.gauss.GaussianConvolutionRealType;
-import mpicbg.imglib.algorithm.math.MathLib;
 import mpicbg.imglib.algorithm.roi.DirectConvolution;
 import mpicbg.imglib.algorithm.roi.MedianFilter;
+import mpicbg.imglib.algorithm.roi.StructuringElement;
+
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
@@ -49,7 +52,7 @@ import mpicbg.imglib.type.logic.BitType;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.integer.ShortType;
 import mpicbg.imglib.type.numeric.real.FloatType;
-import mpicbg.imglib.algorithm.roi.StructuringElement;
+
 
 public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	/** Class/Instance variables */
@@ -176,20 +179,16 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		// 4.5 - Do some Laplace stuff...
 		IJ.log("Applying Laplacian convolution...");
 		IJ.showStatus("Applying Laplacian convolution...");
-		short laplacianArray[][][] = new short[][][]{ { {0,0,0},{0,1,0},{0,0,0} }, { {0,1,0}, {1,-6,1}, {0,1,0} }, { {0,0,0},{0,1,0},{0,0,0} } }; // laplace kernel found here: http://en.wikipedia.org/wiki/Discrete_Laplace_operator
+		// Laplacian kernel construction: everything is negative so that we can use the existing find maxima classes (otherwise, it would be creating minima, and we would need to use find minima). The kernel has everything divided by 18 because we want the highest value to be 1, so that numbers aren't created that beyond the capability of the image type. For example, in a short type, if we had the highest number * 18, the short type can't hold that, and the rest of the value is lost in conversion. This way, we won't create numbers larger than the respective types can hold.
+		short laplacianArray[][][] = new short[][][]{ { {0,-1/18,0},{-1/18,-1/18,-1/18},{0,-1/18,0} }, { {-1/18,-1/18,-1/18}, {-1/18,1,-1/18}, {-1/18,-1/18,-1/18} }, { {0,-1/18,0},{-1/18,-1/18,-1/18},{0,-1/18,0} } }; // laplace kernel found here: http://en.wikipedia.org/wiki/Discrete_Laplace_operator
 		ImageFactory<ShortType> factory = new ImageFactory<ShortType>(new ShortType(), new ArrayContainerFactory());
 		Image<ShortType> laplacianKernel = factory.createImage(new int[]{3, 3, 3}, "Laplacian");
 		quickKernel3D(laplacianArray, laplacianKernel);
-		Image<FloatType> imout;
-		DirectConvolution<T, ShortType, FloatType> convLaplacian = new DirectConvolution<T, ShortType, FloatType>(new FloatType(), img, laplacianKernel);;
+		Image<T> imout;
+		DirectConvolution<T, ShortType, T> convLaplacian = new DirectConvolution<T, ShortType, T>(img.createType(), img, laplacianKernel);;
 		//if(convLaplacian.checkInput() && convLaplacian.process()) {
 		if(convLaplacian.process()) {
 			imout = convLaplacian.getResult();
-			//imout.getDisplay().setMinMax();
-			//ImageJFunctions.displayAsVirtualStack(imout).show();
-			imout.getDisplay().setMinMax();
-			ImagePlus imp_result = ImageJFunctions.copyToImagePlus(imout);
-			imp_result.show();
 		} else {
 			System.out.println(convLaplacian.getErrorMessage());
 			System.out.println("Bye.");
@@ -205,25 +204,13 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		// 5 - Find maxima of newly convoluted image:
 		IJ.log("Finding maxima...");
 		IJ.showStatus("Finding maxima...");
-		ArrayList< double[] > maxima;
-		/** MAXIMA */
-		/*FindLocalMaximaFactory<T> maxFactory = new FindLocalMaximaFactory<T>();
-		LocalMaximaFinder findMaxima = maxFactory.createLocalMaximaFinder(img, new OutOfBoundsStrategyMirrorFactory<T>(), allowEdgeMax);
-		if (findMaxima.checkInput() && findMaxima.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
-			maxima = findMaxima.getLocalMaxima(); 
-		} else { 
-	        System.out.println(findMaxima.getErrorMessage());
-	        System.out.println("Bye.");
-	        return null;
-		}*/
-		/** MINIMA */
-		LocalMaximaFinder findMinima = new FindMinima3D<FloatType>(imout, new OutOfBoundsStrategyMirrorFactory<FloatType>(), allowEdgeMax);
-		if (findMinima.checkInput() && findMinima.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
-			maxima = findMinima.getLocalMaxima(); 
-		} else { 
-	        System.out.println(findMinima.getErrorMessage());
-	        System.out.println("Bye.");
-	        return null;
+		ArrayList< double[] > maxima = null;
+		//FindLocalMaximaFactory<T> maxFactory = new FindLocalMaximaFactory<T>(img, false);
+		FindLocalMaximaFactory<T> maxFactory = new FindLocalMaximaFactory<T>(imout, false);
+		LocalMaximaFinder<T> findMax = maxFactory.createLocalMaximaFinder();
+		findMax.allowEdgeExtrema(allowEdgeMax);
+		if (findMax.checkInput() && findMax.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
+			maxima = findMax.getLocalMaxima(); 
 		}
 		
 		// 6 - Setup for displaying results

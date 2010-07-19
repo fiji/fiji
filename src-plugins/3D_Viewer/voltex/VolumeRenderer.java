@@ -223,8 +223,10 @@ public class VolumeRenderer implements AxisConstants {
 	 * @param channels
 	 */
 	public void setChannels(boolean[] channels) {
-		if(volume.setChannels(channels))
+		if(volume.setChannels(channels)) {
+			appCreator.updateTextureMode();
 			fullReload();
+		}
 	}
 
 	/**
@@ -232,8 +234,10 @@ public class VolumeRenderer implements AxisConstants {
 	 * @param color
 	 */
 	public void setColor(Color3f color) {
-		if(volume.setAverage(color != null))
+		if(volume.setAverage(color != null)) {
+			appCreator.updateTextureMode();
 			fullReload();
+		}
 		Color3f c = color != null ? color : new Color3f(1f, 1f, 1f);
 		appCreator.setColor(c);
 	}

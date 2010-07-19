@@ -346,6 +346,15 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	}
 
 	/**
+	 * Get the graphs of the current skeletons
+	 * @return array of graphs (one per tree/skeleton)
+	 */
+	public Graph[] getGraphs()
+	{
+		return graph;
+	}
+	
+	/**
 	 * A simpler standalone running method, for analyzation without pruning
 	 * or showing images.
 	 * <p>

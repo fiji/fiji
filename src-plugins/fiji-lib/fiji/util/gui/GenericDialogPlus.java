@@ -1,5 +1,8 @@
 package fiji.util.gui;
 
+import ij.ImagePlus;
+import ij.WindowManager;
+
 import ij.gui.GenericDialog;
 
 import ij.io.OpenDialog;
@@ -31,11 +34,19 @@ import java.util.List;
 
 import javax.swing.JFileChooser;
 
+/**
+ * The GenericDialogPlus class enhances the GenericDialog by
+ * a few additional methods.
+ *
+ * It adds a method to add a file chooser, a dialog chooser,
+ * an image chooser, a button, and makes string (and file) fields
+ * drop targets.
+ */
 public class GenericDialogPlus extends GenericDialog {
-	/**
-	 *
-	 */
 	private static final long serialVersionUID = 1L;
+
+	protected int[] windowIDs;
+	protected String[] windowTitles;
 
 	public GenericDialogPlus(String title) {
 		super(title);
@@ -43,6 +54,22 @@ public class GenericDialogPlus extends GenericDialog {
 
 	public GenericDialogPlus(String title, Frame parent) {
 		super(title, parent);
+	}
+
+	public void addImageChoice(String label, String defaultImage) {
+		if (windowTitles == null) {
+			windowIDs = WindowManager.getIDList();
+			windowTitles = new String[windowIDs.length];
+			for (int i = 0; i < windowIDs.length; i++) {
+				ImagePlus image = WindowManager.getImage(windowIDs[i]);
+				windowTitles[i] = image == null ? "" : image.getTitle();
+			}
+		}
+		addChoice(label, windowTitles, defaultImage);
+	}
+
+	public ImagePlus getNextImage() {
+		return WindowManager.getImage(windowIDs[getNextChoiceIndex()]);
 	}
 
 	public void addStringField(String label, String defaultString, int columns) {

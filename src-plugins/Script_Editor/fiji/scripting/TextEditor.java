@@ -93,7 +93,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		  openHelpWithoutFrames, nextTab, previousTab,
 		  runSelection, extractSourceJar, toggleBookmark,
 		  listBookmarks, openSourceForClass, newPlugin, installMacro,
-		  openSourceForMenuItem, showDiff, commit;
+		  openSourceForMenuItem, showDiff, commit, ijToFront,
+		  openMacroFunctions;
 	JMenu gitMenu, tabsMenu;
 	int tabsMenuTabsStart;
 	Set<JMenuItem> tabsMenuItems;
@@ -251,12 +252,18 @@ public class TextEditor extends JFrame implements ActionListener,
 		openHelp = addToMenu(tools,
 			"Open Help for Class (with frames)...", 0, 0);
 		openHelp.setMnemonic(KeyEvent.VK_P);
+		openMacroFunctions = addToMenu(tools,
+			"Open Help on Macro Functions...", 0, 0);
+		openMacroFunctions.setMnemonic(KeyEvent.VK_H);
 		extractSourceJar = addToMenu(tools,
 			"Extract source .jar...", 0, 0);
 		extractSourceJar.setMnemonic(KeyEvent.VK_E);
 		newPlugin = addToMenu(tools,
 			"Create new plugin...", 0, 0);
 		newPlugin.setMnemonic(KeyEvent.VK_C);
+		ijToFront = addToMenu(tools,
+			"Focus on the main Fiji window", 0, 0);
+		ijToFront.setMnemonic(KeyEvent.VK_F);
 		openSourceForClass = addToMenu(tools,
 			"Open .java file for class...", 0, 0);
 		openSourceForClass.setMnemonic(KeyEvent.VK_J);
@@ -530,6 +537,19 @@ public class TextEditor extends JFrame implements ActionListener,
 		toFront();
 	}
 
+	protected void grabFocus(final int laterCount) {
+		if (laterCount == 0) {
+			grabFocus();
+			return;
+		}
+
+		SwingUtilities.invokeLater(new Thread() {
+			public void run() {
+				grabFocus(laterCount - 1);
+			}
+		});
+	}
+
 	public void actionPerformed(ActionEvent ae) {
 		final Object source = ae.getSource();
 		if (source == newFile)
@@ -541,7 +561,7 @@ public class TextEditor extends JFrame implements ActionListener,
 				System.getProperty("fiji.dir");
 			OpenDialog dialog = new OpenDialog("Open...",
 					defaultDir, "");
-			grabFocus();
+			grabFocus(2);
 			String name = dialog.getFileName();
 			if (name != null)
 				open(dialog.getDirectory() + name);
@@ -649,6 +669,8 @@ public class TextEditor extends JFrame implements ActionListener,
 			openHelp(null);
 		else if (source == openHelpWithoutFrames)
 			openHelp(null, false);
+		else if (source == openMacroFunctions)
+			IJ.run("Macro Functions...");
 		else if (source == extractSourceJar)
 			extractSourceJar();
 		else if (source == openSourceForClass) {
@@ -672,6 +694,8 @@ public class TextEditor extends JFrame implements ActionListener,
 			new FileFunctions(this).commit(getEditorPane().file);
 		else if (source == newPlugin)
 			new FileFunctions(this).newPlugin();
+		else if (source == ijToFront)
+			IJ.getInstance().toFront();
 		else if (source == nextTab)
 			switchTabRelative(1);
 		else if (source == previousTab)
@@ -837,7 +861,7 @@ public class TextEditor extends JFrame implements ActionListener,
 	public boolean saveAs() {
 		SaveDialog sd = new SaveDialog("Save as ",
 				getEditorPane().getFileName() , "");
-		grabFocus();
+		grabFocus(2);
 		String name = sd.getFileName();
 		if (name == null)
 			return false;
@@ -901,7 +925,7 @@ public class TextEditor extends JFrame implements ActionListener,
 			name += "_";
 		name += ".jar";
 		SaveDialog sd = new SaveDialog("Export ", name, ".jar");
-		grabFocus();
+		grabFocus(2);
 		name = sd.getFileName();
 		if (name == null)
 			return false;

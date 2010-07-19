@@ -1,8 +1,8 @@
 import os, stat, types
 import zipfile
 import sys
-from elementtree.ElementTree import *
-#from xml.etree.cElementTree import *
+#from elementtree.ElementTree import *
+from xml.etree.cElementTree import *
 
 
 """

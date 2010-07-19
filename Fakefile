@@ -102,7 +102,7 @@ SUBMODULE_TARGETS=\
 	jars/jython.jar \
 	jars/imglib.jar \
 	jars/mpicbg.jar \
-
+	jars/commons-math.jar
 
 PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Clojure_Interpreter.jar \
@@ -215,11 +215,12 @@ jars/rsyntaxtextarea.jar <- RSyntaxTextArea/
 jars/autocomplete.jar <- AutoComplete/
 jars/weka.jar <- jars/Fiji.jar weka/
 jars/jython.jar <- jython/
+jars/commons-math.jar <- commons-math/
 
 # From source
 libs[] <- jars/test-fiji.jar jars/zs.jar jars/VIB-lib.jar jars/Jama-1.0.2.jar \
 	jars/fiji-scripting.jar jars/fiji-lib.jar jars/jep.jar \
-	jars/pal-optimization.jar
+	jars/pal-optimization.jar jars/MacOSX_Updater_Fix.jar
 
 plugins/Record_Screen.jar <- src-plugins/Record_Screen/ src-plugins/Record_Screen/**/*
 
@@ -253,7 +254,7 @@ plugins/Algorithm_Launcher.jar <- \
 	src-plugins/Algorithm_Launcher/**/*.java \
 	src-plugins/Algorithm_Launcher/**/*.config
 
-CLASSPATH(plugins/Directionality_.jar)=jars/jfreechart-1.0.9.jar
+CLASSPATH(plugins/Directionality_.jar)=jars/jfreechart-1.0.13.jar
 CLASSPATH(plugins/LSM_Toolbox.jar)=plugins/LSM_Reader.jar
 MAINCLASS(plugins/LSM_Toolbox.jar)=org.imagearchive.lsm.toolbox.gui.AboutDialog
 MAINCLASS(plugins/Interactive_3D_Surface_Plot.jar)=Interactive_3D_Surface_Plot
@@ -267,15 +268,11 @@ CLASSPATH(plugins/Fiji_Developer.jar)=plugins/Script_Editor.jar:plugins/Fiji_Plu
 CLASSPATH(plugins/Trainable_Segmentation.jar)=jars/weka.jar:plugins/Stitching_.jar:jars/fiji-lib.jar
 CLASSPATH(plugins/VIB_.jar)=jars/VIB-lib.jar:jars/pal-optimization.jar:plugins/3D_Viewer.jar
 CLASSPATH(jars/VIB-lib.jar)=jars/Jama-1.0.2.jar:jars/junit-4.5.jar:jars/pal-optimization.jar
-CLASSPATH(plugins/Simple_Neurite_Tracer.jar)=jars/VIB-lib.jar:plugins/VIB_.jar:jars/pal-optimization.jar:jars/junit-4.5.jar:plugins/3D_Viewer.jar
+CLASSPATH(plugins/Simple_Neurite_Tracer.jar)=jars/VIB-lib.jar:plugins/VIB_.jar:jars/pal-optimization.jar:jars/junit-4.5.jar:plugins/3D_Viewer.jar:jars/commons-math.jar:jfreechart-1.0.13.jar:jars/jcommon-1.0.12.jar:jars/batik.jar
 CLASSPATH(plugins/3D_Viewer.jar)=jars/VIB-lib.jar:jars/imglib.jar:jars/Jama-1.0.2.jar
 CLASSPATH(jars/jep.jar)=jars/Jama-1.0.2.jar:jars/junit-4.5.jar
 CLASSPATH(plugins/SPIM_Registration.jar)=jars/imglib.jar:jars/mpicbg.jar:plugins/3D_Viewer.jar:jars/weka.jar:jars/fiji-lib.jar:plugins/loci_tools.jar:plugins/Fiji_Plugins.jar:jars/VIB-lib.jar:jars/Jama-1.0.2.jar
-
 CLASSPATH(plugins/Embryo_Tracker.jar)=plugins/3D_Viewer.jar
-
-
-
 # pre-Java5 generics ;-)
 
 src-plugins/VIB-lib/vib/FloatMatrix.java[src-plugins/VIB-lib/sed.py $PRE $TARGET] <- src-plugins/VIB-lib/vib/FastMatrix.java
@@ -287,6 +284,8 @@ src-plugins/VIB-lib/math3d/Eigensystem2x2Float.java[src-plugins/VIB-lib/sed.py $
 	src-plugins/VIB-lib/math3d/Eigensystem2x2Double.java
 
 MAINCLASS(jars/test-fiji.jar)=fiji.Tests
+
+MAINCLASS(jars/MacOSX_Updater_Fix.jar)=fiji.updater.Fix
 
 # the default rules
 
@@ -398,6 +397,7 @@ precompile-submodules[] <- \
 	precompiled/weka.jar \
 	precompiled/jython.jar \
 	precompiled/imglib.jar \
+	precompiled/commons-math.jar \
 
 precompiled/ij.jar <- jars/ij.jar
 precompiled/clojure.jar <- jars/clojure.jar
@@ -409,6 +409,7 @@ precompiled/autocomplete.jar <- jars/autocomplete.jar
 precompiled/weka.jar <- jars/weka.jar
 precompiled/jython.jar <- jars/jython.jar
 precompiled/imglib.jar <- jars/imglib.jar
+precompiled/commons-math.jar <- jars/commons-math.jar
 precompiled/* <- plugins/*
 
 precompile[] <- precompile-fiji precompile-fake precompile-submodules
