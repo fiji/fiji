@@ -604,6 +604,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			pw.println("  <!ATTLIST fill           frompaths         CDATA           #IMPLIED>");
 			pw.println("  <!ATTLIST fill           metric            CDATA           #REQUIRED>");
 			pw.println("  <!ATTLIST fill           threshold         CDATA           #REQUIRED>");
+			pw.println("  <!ATTLIST fill           volume            CDATA           #IMPLIED>");
 			pw.println("  <!ATTLIST node           id                CDATA           #REQUIRED>");
 			pw.println("  <!ATTLIST node           x                 CDATA           #REQUIRED>");
 			pw.println("  <!ATTLIST node           y                 CDATA           #REQUIRED>");

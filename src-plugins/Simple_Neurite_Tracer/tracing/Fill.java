@@ -123,6 +123,7 @@ public class Fill {
 			pw.print( getSourcePathsStringMachine() );
 			pw.print( "\"" );
 		}
+		pw.print( " volume=\"" + getVolume() + "\"" );
 		pw.println( " metric=\"" + getMetric() + "\" threshold=\"" + getThreshold() + "\">" );
 		writeNodesXML( pw );
 		pw.println( "  </fill>" );
