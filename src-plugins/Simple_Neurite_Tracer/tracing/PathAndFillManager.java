@@ -623,17 +623,6 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 			pw.println("  <imagesize width=\"" + width + "\" height=\"" + height + "\" depth=\"" + depth + "\"/>" );
 
-			Hashtable< Path, Integer > pathToID =
-				new Hashtable< Path, Integer >();
-
-			for( Iterator j = allPaths.iterator(); j.hasNext(); ) {
-				Path p = (Path)j.next();
-				int id = p.getID();
-				if( id < 0 )
-					throw new RuntimeException("In writeXML() there was a path with a negative ID (BUG)");
-				pathToID.put( p, id );
-			}
-
 			for( Iterator j = allPaths.iterator(); j.hasNext(); ) {
 				Path p = (Path)j.next();
 				// This probably should be a String returning
@@ -642,7 +631,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				String startsString = "";
 				String endsString = "";
 				if( p.startJoins != null ) {
-					int startPathID = ((pathToID.get(p.startJoins))).intValue();
+					int startPathID = p.startJoins.getID();
 					// Find the nearest index for backward compatability:
 					int nearestIndexOnStartPath = -1;
 					if( p.startJoins.size() > 0 ) {
@@ -659,7 +648,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 						startsString += " startsindex=\"" + nearestIndexOnStartPath + "\"";
 				}
 				if( p.endJoins != null ) {
-					int endPathID = ((pathToID.get(p.endJoins))).intValue();
+					int endPathID = p.endJoins.getID();
 					// Find the nearest index for backward compatability:
 					int nearestIndexOnEndPath = -1;
 					if( p.endJoins.size() > 0 ) {
@@ -715,7 +704,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			int fillIndex = 0;
 			for( Iterator j = allFills.iterator(); j.hasNext(); ) {
 				Fill f = (Fill) j.next();
-				f.writeXML( pw, fillIndex, pathToID );
+				f.writeXML( pw, fillIndex );
 				++ fillIndex;
 			}
 			pw.println("</tracings>");

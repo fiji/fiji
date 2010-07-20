@@ -116,7 +116,7 @@ public class Fill {
 		}
 	}
 
-	public void writeXML( PrintWriter pw, int fillIndex, Map<Path,Integer> pathToID ) {
+	public void writeXML( PrintWriter pw, int fillIndex ) {
 		pw.print( "  <fill id=\"" + fillIndex + "\""  );
 		if( (sourcePaths != null) && (sourcePaths.size() > 0) ) {
 			pw.print( " frompaths=\"" );
