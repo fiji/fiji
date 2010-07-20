@@ -316,16 +316,12 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 	public synchronized void resetListeners( Path justAdded, boolean expandAll ) {
 
-		Hashtable< Path, Integer > pathToID = new Hashtable< Path, Integer >();
-
 		ArrayList<String> pathListEntries = new ArrayList<String>();
 
 		Iterator<Path> pi = allPaths.iterator();
 		while( pi.hasNext() ) {
 			Path p = pi.next();
 			int pathID = p.getID();
-			// if (verbose) System.out.println("path " + i + " is " + (Object)p );
-			pathToID.put(p,new Integer(pathID));
 			if( p == null ) {
 				throw new RuntimeException("BUG: A path in allPaths was null!");
 			}
