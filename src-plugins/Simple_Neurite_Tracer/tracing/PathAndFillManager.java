@@ -1989,6 +1989,47 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			return result;
 	}
 
+
+
+	public static void csvQuoteAndPrint(PrintWriter pw, Object o) {
+		pw.print(PathAndFillManager.stringForCSV(""+o));
+	}
+
+	public void exportFillsAsCSV( File outputFile ) throws IOException {
+
+			String [] headers = new String[]{ "FillID",
+							  "SourcePaths",
+							  "Threshold",
+							  "Metric",
+							  "Volume",
+							  "LengthUnits" };
+
+			PrintWriter pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(outputFile.getAbsolutePath()),"UTF-8"));
+			int columns = headers.length;
+			for( int c = 0; c < columns; ++c ) {
+				csvQuoteAndPrint(pw,headers[c]);
+				if( c < (columns - 1) )
+					pw.print(",");
+			}
+			pw.print("\r\n");
+			for( int i = 0; i < allFills.size(); ++i ) {
+				Fill f = allFills.get(i);
+				csvQuoteAndPrint(pw,i);
+				pw.print(",");
+				csvQuoteAndPrint(pw,f.getSourcePathsStringMachine());
+				pw.print(",");
+				csvQuoteAndPrint(pw,f.getThreshold());
+				pw.print(",");
+				csvQuoteAndPrint(pw,f.getMetric());
+				pw.print(",");
+				csvQuoteAndPrint(pw,f.getVolume());
+				pw.print(",");
+				csvQuoteAndPrint(pw,f.spacing_units);
+				pw.print("\r\n");
+			}
+			pw.close();
+	}
+
 	/* Output some potentially useful information about the paths
 	   as a CSV (comma separated values) file. */
 
