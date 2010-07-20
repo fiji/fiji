@@ -141,4 +141,16 @@ public class Fill {
 		writeNodesXML( pw );
 		pw.println( "  </fill>" );
 	}
+
+	/** Assume that the volume is just the number of sub-threshold
+	    nodes multiplied by x_spacing * y_spacing * z_spacing */
+
+	public double getVolume() {
+		int subThresholdNodes = 0;
+		for( Node n : nodeList ) {
+			if( n.distance <= distanceThreshold )
+				++ subThresholdNodes;
+		}
+		return subThresholdNodes * x_spacing * y_spacing * z_spacing;
+	}
 }
