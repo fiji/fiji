@@ -10,9 +10,9 @@ import mpicbg.imglib.type.numeric.RealType;
 public abstract class AbstractRegionalMaximaFinder<T extends RealType<T>> implements RegionalMaximaFinder<T> {
 
 	protected OutOfBoundsStrategyFactory<T> outOfBoundsFactory = new OutOfBoundsStrategyValueFactory<T>();		// holds the outOfBoundsStrategy used by the cursors in this algorithm
-	protected boolean allowEdgeMax = false;						// if true, maxima found on the edge of the images will be included in the results; if false, edge maxima are excluded
+	protected boolean allowEdgeMax = false;		// if true, maxima found on the edge of the images will be included in the results; if false, edge maxima are excluded
 	protected boolean doInterpolate = false;
-	protected Image<T> image;											// holds the image the algorithm is to be applied to
+	protected Image<T> image;					// holds the image the algorithm is to be applied to
 	final protected ArrayList< ArrayList< int[] > > maxima = new ArrayList< ArrayList< int[] > >();	// an array list which holds the coordinates of the maxima found in the image.
 	
 	@Override

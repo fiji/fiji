@@ -24,6 +24,26 @@ import mpicbg.imglib.image.Image;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
 import mpicbg.imglib.type.numeric.RealType;
 
+/**
+ * <p>This class finds the regional maxima of a 2 dimensional image. A regional maximum is defined as follows:</p>
+ * 
+ * <p>"A regional maximum M of a grayscale image I is a connected components of pixels such that every pixel in 
+ * the neighborhood of M has a strictly lower value."</p>
+ * 
+ * <p>This class does not stipulate how much brighter a regional max must be from the neighboring pixels, but only
+ * requires that it is brighter. So a connected component of pixels that is 1 higher in intensity from its neighbors
+ * is treated the same as a connected component that is 100 higher in intensity than it's neighbors.</p>
+ * 
+ * <p>The {@link getRegionalMaxima} method returns an ArrayList of ArrayLists, where each inner ArrayLists represents
+ * a regional maximum and contains the coordinates of the pixels comprising that regional maximum.</p>
+ * 
+ * <p>Notably, this implementation does not allow for the identification of h-domes, as mentioned by Luc Vincent
+ * in his paper, "Morphological Grayscale Reconstruction in Image Analysis: Applications and Efficient Algorithms."</p>
+ * 
+ * @author Nick Perry
+ *
+ * @param <T> The image type.
+ */
 public class RegionalMaximaFinder2D<T extends RealType<T>> extends AbstractRegionalMaximaFinder<T>
 {
 
@@ -44,7 +64,7 @@ public class RegionalMaximaFinder2D<T extends RealType<T>> extends AbstractRegio
 	 * so as to avoid nasty mirroring of periodic maxima effects. Edge maxima will be discarded by
 	 * default, and there will be no maxima interpolation.
 	 * 
-	 * @param image: the image to find the maxima of
+	 * @param image the image to find the maxima of
 	 */
 	public RegionalMaximaFinder2D( final Image<T> image)
 	{
@@ -91,38 +111,32 @@ public class RegionalMaximaFinder2D<T extends RealType<T>> extends AbstractRegio
 	}
 	
 	/**
-	 * Finds the local maxima of the input image. 
+	 * <p>Finds the regional maxima of the input image.</p>
 	 * 
-	 * Algorithm: Step 2.1 iterates through all of the pixels in the image with an outer cursor.
+	 * <p><b>Algorithm:</b> Step 2.1 iterates through all of the pixels in the image with an outer cursor.
 	 * For each pixel, if we have not processed the pixel previously, we then declare isMax to be true
-	 * since the pixel could potentially be a max (innocent until proven guilty approach). We then
-	 * add this pixel's coordinates to a LinkedList. The reason for the LinkedList is the following: image
-	 * a pixel which has a value of 255 (it's very bright, if 255 is white in an 8-bit image). Image that
+	 * since the pixel could potentially be a regional max ('innocent until proven guilty' approach). We then
+	 * add this pixel's coordinates to an ArrayList. The reason for the ArrayList is the following: imagine
+	 * a pixel which has a value of 255 (it's very bright, if 255 is white in an 8-bit image), and that
 	 * 25 of his direct 3D neighbors are strictly less bright than him (<255), but that one of his neighbors
-	 * is also 255. Therefore, our pixel is not a strict local maxima, but this pixel and his bright neighbor
-	 * COULD be (all of the neighbor's neighboring pixels, besides our original one, are strictly less
-	 * bright). So we have a local maxima made up of 2 pixels with intensity 255. This is still a local
-	 * maxima, which is called in further comments a 'lake.' This is obviously a simple case, as lakes could be
-	 * many more than 2 pixels. Some lakes could be 100 pixels, but still be a 'local' maxima in that they
-	 * all have the same intensity value, but are brighter than anything around them. The LinkedList is used
-	 * to handle the occurance of a lake. In the event a direct neighbor of a pixel is found to have the same
-	 * intensity value, the neighboring pixel is added to the 'lake' represented by the LinkedList, and subsequently
-	 * his neighbors will be searched.
+	 * is also 255. Therefore, our pixel is not a regional maxima, but this pixel and his bright neighbor
+	 * COULD be. Remember, a regional max is a connected component of pixels where all neighboring pixels have strictly less intensity.
+	 * The ArrayList is therefore used to hold the coordinates of the pixels comprising regional maxima.</p>
 	 * 
-	 * So, step 2.2 is the iteration through the pixels in the lake. If a neighboring pixel is found to be brighter,
-	 * we continue iterating through the lake (which can also be though of as a connected component, where connection
-	 * is defined by having the same intensity as your connected neighbors) because we know that the lake cannot be
-	 * a local maximum. If the neighboring pixel is found to have the same intensity value, that pixel is added to the lake
-	 * and subsequently searched. We stop this iteration once nothing more is added to the lake (we've searched the entire
-	 * connected component of our initial pixel from step 2.1)
+	 * <p>So, step 2.2 is the iteration through the pixels in the potential regional maxima in the ArrayList. If a neighboring pixel is found 
+	 * to be strictly brighter, we mark isMax false, but continue iterating through the connected component because we know that the connected component cannot be
+	 * a regional maximum, but we can save time by marking the pixels in this connected component as visited while we are here. If a neighboring 
+	 * pixel is found to have the same intensity value, that pixel is added to the ArrayList and subsequently searched. 
+	 * We stop this iteration once nothing more is added to the ArrayList (we've searched the entire connected component of our initial 
+	 * pixel from step 2.1).</p>
 	 * 
-	 * Step 2.3 is the actual iteration through the neighbors of our current pixel from step 2.2. 
+	 * <p>Step 2.3 is the actual iteration through the neighbors of our current pixel from step 2.2.</p>
 	 * 
-	 * Once the lake/connected component is completely searched, if isMax == true, then we never found
-	 * a brighter pixel, so the whole lake is a local max and the point used to represent the lake is calculated by taking
-	 * the average of the coordinates of the pixels making up the lake (best approximation of the center of the lake). If
-	 * however isMax == false, we encountered a brighter pixel on the border of the lake, so the lake's pixels
-	 * are not local maxima and are just ignored, but marked as processed so we don't visit again.
+	 * <p>Once the connected component is completely searched, if isMax == true, then we never found
+	 * a brighter pixel, so the whole connected component is a regional max, and an ArrayList of the coordinates of the pixels
+	 * making up the connected component is stored in another ArrayList.  If however isMax == false, we encountered a brighter pixel on 
+	 * the border of the connected component, so the connected components pixels are not regional maxima and are just ignored, but marked as
+	 * processed so we don't visit again.</p>
 	 */
 	@Override
 	public boolean process()
@@ -160,7 +174,6 @@ public class RegionalMaximaFinder2D<T extends RealType<T>> extends AbstractRegio
 			toSearch.add(currCoords);
 			
 			// 2.2 - Iterate through queue which contains the pixels of the "lake"		
-			//while ((nextCoords = toSearch.poll()) != null) {
 			while (!toSearch.isEmpty()) {
 				nextCoords = toSearch.remove(0);
 				if ((visitedAndProcessed[getIndexOfPosition(nextCoords, width)] & PROCESSED) != 0) {  // if visited, skip
@@ -195,7 +208,6 @@ public class RegionalMaximaFinder2D<T extends RealType<T>> extends AbstractRegio
 			}
 			if (isMax) {  // If isMax is still true, then our lake/connected component is a local maximum, so find the averaged point in the center.
 				if (searched.size() > 0) {
-					//averagedMaxPos = findAveragePosition(searched);
 					maxima.add(searched);
 				}
 			} else {  // otherwise, get rid of the lake we searched, we don't need coordinates since not a local maximum.
@@ -211,12 +223,22 @@ public class RegionalMaximaFinder2D<T extends RealType<T>> extends AbstractRegio
 	}
 	
 	/**
-	 * Returns the ArrayList containing the coordinates of the local maxima found.
+	 * Returns the ArrayList containing the coordinates of the regional maxima found.
 	 * 
-	 * @return
+	 * @return the Arraylist of ArrayLists, which is interpreted as the ArrayList of regional maxima (stored in an ArrayList)
 	 */
 	public ArrayList< ArrayList< int[] > > getRegionalMaxima() { return maxima;	}
 	
+	/**
+	 * Takes an ArrayList which represents a regional maximum, and computes the averaged coordinate.
+	 * This average coordinate is returned, and represents the "center" of the regional maximum.
+	 * Note that this is not guaranteed to be in the regional maximum itself (imagine a regional maximum
+	 * that is a ring shape; the direct center is not part of the regional maximum itself, but is what
+	 * would be computed by this function).
+	 * 
+	 * @param
+	 * @return The coordinates of the "center pixel" of the regional maximum. 
+	 */
 	@Override
 	public ArrayList< double[] > getRegionalMaximaCenters(ArrayList< ArrayList< int[] > > regionalMaxima) {
 		ArrayList< double[] > centeredRegionalMaxima = new ArrayList< double[] >();
@@ -233,7 +255,7 @@ public class RegionalMaximaFinder2D<T extends RealType<T>> extends AbstractRegio
 	 * Determines whether the input coordinates are on the edge of the image or not.
 	 * 
 	 * @param coords
-	 * @return
+	 * @return true or false
 	 */
 	final protected boolean isEdgeMax(int coords[]) {
 		return coords[0] == 0 || coords[0] == image.getDimension(0) - 1 || coords[1] == 0 || coords[1] == image.getDimension(1) - 1;
@@ -245,11 +267,11 @@ public class RegionalMaximaFinder2D<T extends RealType<T>> extends AbstractRegio
 	 * @param searched
 	 * @return
 	 */
-	final static protected double[] findAveragePosition(ArrayList < int[] > searched) {
+	final static protected double[] findAveragePosition(ArrayList < int[] > coords) {
 		int count = 0;
 		double avgX = 0, avgY = 0;
-		while(!searched.isEmpty()) {
-			int curr[] = searched.remove(0);
+		while(!coords.isEmpty()) {
+			int curr[] = coords.remove(0);
 			avgX += curr[0];
 			avgY += curr[1];
 			count++;
@@ -280,11 +302,17 @@ public class RegionalMaximaFinder2D<T extends RealType<T>> extends AbstractRegio
 		return pos[0] + width * pos[1];
 	}
 
+	/**
+	 * Determines whether the coordinates should be interpolated or not.
+	 */
 	@Override
 	public void doInterpolate(boolean flag) {
 		this.doInterpolate = flag;
 	}
 	
+	/**
+	 * Determines whether or not extrema found on the edge of an image should be included.
+	 */
 	@Override
 	public void allowEdgeExtrema(boolean flag) {
 		allowEdgeMax = flag;
