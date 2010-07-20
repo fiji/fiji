@@ -167,6 +167,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		long overall = 0;
 		long numIterations = 1;
 		for (int i = 0; i < numIterations; i++) {
+			
 		/** Approach 1: L x (G x I ) */
 		long startTime = System.currentTimeMillis();
 
@@ -198,7 +199,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			System.out.println(convLaplacian.getErrorMessage());
 			System.out.println("Bye.");
 			return null;
-		}/*
+		}*/
 		
 		/** Approach 2: F(L) x F(G) x F(I) */
 		
@@ -212,7 +213,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			System.out.println( "Fourier Convolution failed: " + fConvGauss.getErrorMessage() );
 			return null;
 		}
-		img = fConvGauss.getResult();
+		imgClone = fConvGauss.getResult();
 		
 		// Laplace
 		IJ.log("Applying Laplacian convolution...");
@@ -227,7 +228,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			laplacianKernel = factory.createImage(new int[]{3, 3}, "Laplacian");
 			quickKernel2D(laplacianArray, laplacianKernel);
 		}
-		FourierConvolution<T, FloatType> fConvLaplacian = new FourierConvolution<T, FloatType>(img, laplacianKernel);
+		FourierConvolution<T, FloatType> fConvLaplacian = new FourierConvolution<T, FloatType>(imgClone, laplacianKernel);
 		if (!fConvLaplacian.checkInput() || !fConvLaplacian.process()) {
 			System.out.println( "Fourier Convolution failed: " + fConvLaplacian.getErrorMessage() );
 			return null;
@@ -235,7 +236,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		img = fConvLaplacian.getResult();
 		
 		long runTime = System.currentTimeMillis() - startTime;
-		System.out.println(runTime);
+		System.out.println("Gaussian/Laplacian Run Time: " + runTime);
 		
 		/** Approach 3: (L x G) x I */
 		/** Approach 4: DoG */
@@ -257,7 +258,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			maxima = findMax.getRegionalMaxima(); 
 		}
 		ArrayList< double[] > centeredMaxima = findMax.getRegionalMaximaCenters(maxima);
-		System.out.println(findMax.getProcessingTime());
+		System.out.println("Find Maxima Run Time: " + findMax.getProcessingTime());
 		
 		// 6 - Setup for displaying results
 		if (numDim == 3) {  // prepare 3D render

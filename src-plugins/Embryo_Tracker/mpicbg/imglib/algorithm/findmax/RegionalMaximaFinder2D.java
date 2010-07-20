@@ -138,6 +138,7 @@ public class RegionalMaximaFinder2D<T extends RealType<T>> extends AbstractRegio
 	 * the border of the connected component, so the connected components pixels are not regional maxima and are just ignored, but marked as
 	 * processed so we don't visit again.</p>
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public boolean process()
 	{
@@ -147,6 +148,8 @@ public class RegionalMaximaFinder2D<T extends RealType<T>> extends AbstractRegio
 		final LocalizableByDimCursor<T> curr = image.createLocalizableByDimCursor(outOfBoundsFactory);	// Used by step 2.1, the outer cursor
 		final LocalizableByDimCursor<T> local = image.createLocalizableByDimCursor(outOfBoundsFactory);		// Used by step 2.2, the lake/connected component cursor
 		final LocalNeighborhoodCursor<T> neighbors = new LocalNeighborhoodCursor<T>(local);				// Used by step 2.3, the neighbor searching cursor
+		final ArrayList< int[] > toSearch = new ArrayList< int[] >();	// pixels known to be in the lake/connected component that we have yet to search the neighbors of
+		final ArrayList< int[] > searched = new ArrayList< int[] >();	// pixels in the lake/connected component that have had their neighbors searched.
 		T currentValue = image.createType();							// holds the pixel intensity of the outer pixel/lake
 		T neighborValue;												// holds the pixel value of a neighbor, which is compared to currentValue
 		final int width = image.getDimensions()[0];							// width of the image, used to map 3D coordinates to a 1D coordinate system for storing information about each pixel (visisted or not, etc)
@@ -162,57 +165,59 @@ public class RegionalMaximaFinder2D<T extends RealType<T>> extends AbstractRegio
 		
 		// 2.1 - Iterate over all pixels in the image.
 		while(curr.hasNext()) { 
-			final ArrayList< int[] > toSearch = new ArrayList< int[] >();		// pixels known to be in the lake/connected component that we have yet to search the neighbors of
-			final ArrayList< int[] > searched = new ArrayList< int[] >();		// pixels in the lake/connected component that have had their neighbors searched.
 			curr.fwd();
 			curr.getPosition(currCoords);
 			if ((visitedAndProcessed[getIndexOfPosition(currCoords, width)] & PROCESSED) != 0) {  // prevents revisiting pixels, increases speed
 				continue;
 			}
 			isMax = true;
-			currentValue.set(curr.getType());  // Store the intensity of this lake/connected component.
+			currentValue.set(curr.getType());  // Store the intensity of this connected component.
 			toSearch.add(currCoords);
 			
-			// 2.2 - Iterate through queue which contains the pixels of the "lake"		
+			// 2.2 - Iterate through queue which contains the pixels of the connected component		
 			while (!toSearch.isEmpty()) {
 				nextCoords = toSearch.remove(0);
 				if ((visitedAndProcessed[getIndexOfPosition(nextCoords, width)] & PROCESSED) != 0) {  // if visited, skip
 					continue;
-				} else {  // if not visited, mark as processed (has had neighbors searched) and add him to the searched LinkedList.
+				} else {  // if not visited, mark as processed (has had neighbors searched) and add him to the searched ArrayList.
 					visitedAndProcessed[getIndexOfPosition(nextCoords, width)] |= PROCESSED; 
 					if ((allowEdgeMax) || (!allowEdgeMax && !isEdgeMax(nextCoords))) {
 						searched.add(nextCoords.clone());
 					}
 				}
-				local.setPosition(nextCoords);		// Set the location of the cursor to the pixel currently being searched in the lake. This cursor is essentially needed only so we can use the neighborhood cursor.
+				local.setPosition(nextCoords);		// Set the location of the cursor to the pixel currently being searched in the connected component. This cursor is essentially needed only so we can use the neighborhood cursor.
 				neighbors.update();					// Needed to get the neighborhood cursor to work properly.
 				
-				// 2.3 - Iterate through immediate neighbors
+				// 2.3 - Iterate through immediate neighbors, excluding out of bounds neighbors.
 				while(neighbors.hasNext()) {
 					neighbors.fwd();
-					neighborCoords = local.getPosition();
-					neighborValue = neighbors.getType();
-					
-					// Case 1: neighbor's value is strictly larger than ours, so ours cannot be a local maximum.
-					if (neighborValue.compareTo(currentValue) > 0) {
-						isMax = false;
-					}
-					
-					// Case 2: neighbor's value is strictly equal to ours, which means we could still be at a maximum, but the max value is a blob, not just a single point. We must check the area.
-					else if (neighborValue.compareTo(currentValue) == 0 && isWithinImageBounds(neighborCoords)  && (visitedAndProcessed[getIndexOfPosition(neighborCoords, width)] & VISITED) == 0) {
-						toSearch.add(neighborCoords);
-						visitedAndProcessed[getIndexOfPosition(neighborCoords, width)] |= VISITED;  // mark that this pixel has been added to the lake search list with VISITED (different than PROCESSED, which is used to say that a pixel has had his neighbor's searched.)
+					local.getPosition(neighborCoords);
+					if (isWithinImageBounds(neighborCoords)) {
+						neighborValue = neighbors.getType();
+						
+						// Case 1: neighbor's value is strictly larger than ours, so ours cannot be a regional maximum.
+						if (neighborValue.compareTo(currentValue) > 0) {
+							isMax = false;
+						}
+						
+						// Case 2: neighbor's value is strictly equal to ours, which means we could still be at a maximum, but the max value is a blob, not just a single point. We must check the area.
+						else if (neighborValue.compareTo(currentValue) == 0 && (visitedAndProcessed[getIndexOfPosition(neighborCoords, width)] & VISITED) == 0) {
+							toSearch.add(neighborCoords.clone());
+							visitedAndProcessed[getIndexOfPosition(neighborCoords, width)] |= VISITED;  // mark that this pixel has been added to the connected component search list with VISITED (different than PROCESSED, which is used to say that a pixel has had his neighbor's searched.)
+						}
+	
+						// Case 3: neighbor's value is strictly lower, so it can't be a regional max. Don't bother considering it as a regional max.
+						else {
+							visitedAndProcessed[getIndexOfPosition(neighborCoords, width)] |= PROCESSED; 
+						}
 					}
 				}
 				neighbors.reset();  // needed to get the outer cursor to work correctly;		
 			}
-			if (isMax) {  // If isMax is still true, then our lake/connected component is a local maximum, so find the averaged point in the center.
-				if (searched.size() > 0) {
-					maxima.add(searched);
-				}
-			} else {  // otherwise, get rid of the lake we searched, we don't need coordinates since not a local maximum.
-				searched.clear();
-			}
+			if (isMax) {  // If isMax is still true, then our connected component is a regional maximum, so store the coordinates of the pixels making up the regional maximum.
+				maxima.add((ArrayList<int[]>) searched.clone());
+			} 
+			searched.clear();
 		}
 		curr.close();
 		neighbors.close();
