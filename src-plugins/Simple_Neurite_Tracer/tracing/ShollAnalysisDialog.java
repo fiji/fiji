@@ -785,7 +785,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 			PrintWriter pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(outputFile.getAbsolutePath()),"UTF-8"));
 			int columns = headers.length;
 			for( int c = 0; c < columns; ++c ) {
-				pw.print(PathAndFillManager.stringForCSV(headers[c]));
+				csvQuoteAndPrint(pw,headers[c]);
 				if( c < (columns - 1) )
 					pw.print(",");
 			}
