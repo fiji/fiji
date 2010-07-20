@@ -736,6 +736,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			for( Iterator j = allFills.iterator(); j.hasNext(); ) {
 				Fill f = (Fill) j.next();
 				f.writeXML( pw, fillIndex, pathToID );
+				++ fillIndex;
 			}
 			pw.println("</tracings>");
 		} finally {
