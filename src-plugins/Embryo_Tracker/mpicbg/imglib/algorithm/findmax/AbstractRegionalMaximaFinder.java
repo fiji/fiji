@@ -14,12 +14,20 @@ public abstract class AbstractRegionalMaximaFinder<T extends RealType<T>> implem
 	protected boolean doInterpolate = false;
 	protected Image<T> image;					// holds the image the algorithm is to be applied to
 	final protected ArrayList< ArrayList< int[] > > maxima = new ArrayList< ArrayList< int[] > >();	// an array list which holds the coordinates of the maxima found in the image.
+	protected int sign = 1;				// causes the algorithm to find regional maxima by default (1 = maxima, -1 = minima)
 	
 	@Override
 	public void allowEdgeExtrema(boolean flag) {
 		this.allowEdgeMax = flag;
 	}
 
+	@Override
+	public void findMaxima(boolean flag) {
+		if (!flag) {
+			this.sign = -1;
+		}
+	}
+	
 	@Override
 	public void doInterpolate(boolean flag) {
 		this.doInterpolate = flag;

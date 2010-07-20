@@ -37,6 +37,7 @@ import mpicbg.imglib.algorithm.findmax.RegionalMaximaFactory;
 import mpicbg.imglib.algorithm.findmax.RegionalMaximaFinder;
 import mpicbg.imglib.algorithm.gauss.DownSample;
 import mpicbg.imglib.algorithm.gauss.GaussianConvolutionRealType;
+import mpicbg.imglib.algorithm.laplace.LoGKernelFactory;
 import mpicbg.imglib.algorithm.math.MathLib;
 import mpicbg.imglib.algorithm.roi.DirectConvolution;
 import mpicbg.imglib.algorithm.roi.MedianFilter;
@@ -163,9 +164,10 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		// #---------------------------------------#
 		// #------        Time Trials       -------#
 		// #---------------------------------------#
-		Image<T> imgClone = img.clone();
+		Image<T> imgClone = img.clone(); 
+		//Image<FloatType> imgClone = null;
 		long overall = 0;
-		long numIterations = 50;
+		long numIterations = 1;
 		for (int i = 0; i < numIterations; i++) {
 			long startTime = System.currentTimeMillis();	
 		/** Approach 1: L x (G x I ) */
@@ -234,31 +236,56 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		img = fConvLaplacian.getResult();
 		
 		long runTime = System.currentTimeMillis() - startTime;
-		//System.out.println("Gaussian/Laplacian Run Time: " + runTime);
 		*/
 		
 		/** Approach 3: (L x G) x I */
+		IJ.log("Applying LoG Convolution...");
+		Image<FloatType> logKern = LoGKernelFactory.createLoGKernel(IDEAL_SIGMA_FOR_DOWNSAMPLED_BLOB_DIAM, numDim, true, true);
+		IJ.log("Dimensions of LoG Kernel: " + MathLib.printCoordinates(logKern.getDimensions()));
+		DirectConvolution<T, FloatType, T> convLoG = new DirectConvolution<T, FloatType, T>(img.createType(), img, logKern);
+		//DirectConvolution<T, FloatType, FloatType> convLoG = new DirectConvolution<T, FloatType, FloatType>(new FloatType(), img, logKern);
+		if(convLoG.process()) {
+			imgClone = convLoG.getResult();
+			ImagePlus test = ImageJFunctions.copyToImagePlus(imgClone);
+			test.show();
+		} else {
+			System.out.println(convLoG.getErrorMessage());
+			System.out.println("Bye.");
+			return null;
+		}
+		long runTime = System.currentTimeMillis() - startTime;
+		IJ.log("Done with LoG.");
+		System.out.println("LoG Run Time: " + runTime);
+		
 		
 		/** Approach 4: DoG */
 		/** Approach 5: F(DoG) */
 		
-		if (i == 0) img = imgClone.clone();
-		overall += runTime;
+			//if (i == 0) img = imgClone.clone();
+			overall += runTime;
 		}
 		System.out.println("Average run time: " + (long)overall/numIterations);
-
+		// #----------------------------------------#
+		// #------        /Time Trials       -------#
+		// #----------------------------------------#
+		
+		
 		// 5 - Find maxima of newly convoluted image:
 		IJ.log("Finding maxima...");
 		IJ.showStatus("Finding maxima...");
 		ArrayList< ArrayList< int[]> > maxima = null;
-		RegionalMaximaFactory<T> maxFactory = new RegionalMaximaFactory<T>(img, false);
+		RegionalMaximaFactory<T> maxFactory = new RegionalMaximaFactory<T>(imgClone, false);
 		RegionalMaximaFinder<T> findMax = maxFactory.createRegionalMaximaFinder();
+		//RegionalMaximaFactory<FloatType> maxFactory = new RegionalMaximaFactory<FloatType>(imgClone, false);
+		//RegionalMaximaFinder<FloatType> findMax = maxFactory.createRegionalMaximaFinder();
 		findMax.allowEdgeExtrema(allowEdgeMax);
+		findMax.findMaxima(true);
 		if (findMax.checkInput() && findMax.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
 			maxima = findMax.getRegionalMaxima(); 
 		}
 		ArrayList< double[] > centeredMaxima = findMax.getRegionalMaximaCenters(maxima);
 		System.out.println("Find Maxima Run Time: " + findMax.getProcessingTime());
+		System.out.println("Num regional maxima: " + centeredMaxima.size());
 		
 		// 6 - Setup for displaying results
 		if (numDim == 3) {  // prepare 3D render

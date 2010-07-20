@@ -30,6 +30,13 @@ public interface RegionalMaximaFinder<T extends RealType<T>> extends Algorithm, 
 	public ArrayList< double[] > getRegionalMaximaCenters(ArrayList< ArrayList< int[] > > regionalMaxima);
 	
 	/**
+	 * If set to be true before the {@link #process()} method is called, then regional maxima
+	 * will be found. If false, regional minima will be found.
+	 * @param flag
+	 */
+	public void findMaxima(boolean flag);
+	
+	/**
 	 * If set to true before the {@link #process()} method is called, then extrema locations
 	 * will be interpolated using intensity interpolation by a paraboloid. 
 	 * @param flag

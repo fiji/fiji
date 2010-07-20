@@ -183,14 +183,16 @@ public class RegionalMaximaFinder3D<T extends RealType<T>> extends AbstractRegio
 					local.getPosition(neighborCoords);
 					if (isWithinImageBounds(neighborCoords)) {
 						neighborValue = neighbors.getType();
+						int compare = neighborValue.compareTo(currentValue);
 						
 						// Case 1: neighbor's value is strictly larger, so ours cannot be a regional maximum.
-						if (neighborValue.compareTo(currentValue) > 0) {
+						if ((sign * compare) > 0) {
+						//if (compare < 0) {
 							isMax = false;
 						}
 						
 						// Case 2: neighbor's value is strictly equal, which means we could still be at a maximum, but the max value is a blob, not just a single point. We must check the area.
-						else if (neighborValue.compareTo(currentValue) == 0 && (visitedAndProcessed[getIndexOfPosition(neighborCoords, width, numPixelsInXYPlane)] & VISITED) == 0) {
+						else if (compare == 0 && (visitedAndProcessed[getIndexOfPosition(neighborCoords, width, numPixelsInXYPlane)] & VISITED) == 0) {
 							toSearch.add(neighborCoords.clone());
 							visitedAndProcessed[getIndexOfPosition(neighborCoords, width, numPixelsInXYPlane)] |= VISITED;  // mark that this pixel has been added to the lake search list with VISITED (different than PROCESSED, which is used to say that a pixel has had his neighbor's searched.)
 						}
@@ -316,6 +318,13 @@ public class RegionalMaximaFinder3D<T extends RealType<T>> extends AbstractRegio
 	@Override
 	public void allowEdgeExtrema(boolean flag) {
 		allowEdgeMax = flag;
+	}
+	
+	@Override
+	public void findMaxima(boolean flag) {
+		if (!flag) {
+			sign = -1;
+		}
 	}
 
 }

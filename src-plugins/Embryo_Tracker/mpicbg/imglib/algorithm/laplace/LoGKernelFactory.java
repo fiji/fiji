@@ -25,15 +25,15 @@ public class LoGKernelFactory {
 	 * @param sigmaScaled  if true, the kernel will be multiplied by σ² 
 	 * @return  the LoG kernel, as a {@link FloatType} {@link Image}
 	 */
-	public static Image<FloatType> createLoGKernel(double sigma, int nDims, boolean sigmaScaled) {
+	public static Image<FloatType> createLoGKernel(double sigma, int nDims, boolean sigmaScaled, boolean invertSign) {
 		int size = MathLib.getSuggestedKernelDiameter(sigma);
 		switch (nDims) {
 		case 1:
-			return create1DLoGKernel(sigma, size, sigmaScaled);
+			return create1DLoGKernel(sigma, size, sigmaScaled, invertSign);
 		case 2:
-			return create2DLoGKernel(sigma, size, size, sigmaScaled);
+			return create2DLoGKernel(sigma, size, size, sigmaScaled, invertSign);
 		case 3:
-			return create3DLoGKernel(sigma, size, size, size, sigmaScaled);
+			return create3DLoGKernel(sigma, size, size, size, sigmaScaled, invertSign);
 		default:
 			throw new IllegalArgumentException("Kernel in dimension "+nDims+" are not implemented.");
 		}
@@ -47,9 +47,10 @@ public class LoGKernelFactory {
 	 * @param sigmaScaled  if true, the kernel will be multiplied by σ² 
 	 * @return  the LoG kernel, as a {@link FloatType} {@link Image}
 	 */
-	public static Image<FloatType> create1DLoGKernel(double sigma, int size, boolean sigmaScaled) {
+	public static Image<FloatType> create1DLoGKernel(double sigma, int size, boolean sigmaScaled, boolean invertSign) {
 		if (size % 2 == 0)
 			size++; // make it odd
+		final int sign = invertSign ? -1 : 1;
 		final ArrayContainerFactory containerFactory = new ArrayContainerFactory();
 		final ImageFactory<FloatType> factory = new ImageFactory<FloatType>(new FloatType(), containerFactory);
 		final Image<FloatType> img = factory.createImage(new int[] {size}, "LoG 1D kernel");
@@ -65,7 +66,7 @@ public class LoGKernelFactory {
 		while (cursor.hasNext()) {
 			cursor.fwd();
 			x = cursor.getPosition(0) - center;
-			cursor.getType().setReal( A * (x*x - sigma*sigma) * Math.exp(-x*x/(2*sigma*sigma) ));
+			cursor.getType().setReal( sign * A * (x*x - sigma*sigma) * Math.exp(-x*x/(2*sigma*sigma) ));
 		}
 		return img;
 	}
@@ -79,12 +80,13 @@ public class LoGKernelFactory {
 	 * @param sigmaScaled  if true, the kernel will be multiplied by σ² 
 	 * @return  the LoG kernel, as a {@link FloatType} {@link Image}
 	 */
-	public static Image<FloatType> create2DLoGKernel(double sigma, int xSize, int ySize, boolean sigmaScaled) {
+	public static Image<FloatType> create2DLoGKernel(double sigma, int xSize, int ySize, boolean sigmaScaled, boolean invertSign) {
 		int[] dims = new int[] {xSize, ySize};
 		for (int i = 0; i < dims.length; i++) {
 			if (dims[i] % 2 == 0)
 				dims[i]++; // make it odd
 		}
+		final int sign = invertSign ? -1 : 1;
 		final ArrayContainerFactory containerFactory = new ArrayContainerFactory();
 		final ImageFactory<FloatType> floatFactory = new ImageFactory<FloatType>(new FloatType(), containerFactory);
 		final Image<FloatType> img = floatFactory.createImage(dims,  "LoG 2D kernel");
@@ -102,7 +104,7 @@ public class LoGKernelFactory {
 			cursor.fwd();
 			x = cursor.getPosition(0) - xCenter;
 			y = cursor.getPosition(1) - yCenter;
-			cursor.getType().setReal(A * (x*x+y*y-2*sigma*sigma) * Math.exp(- (x*x+y*y) / (2*sigma*sigma) ) );
+			cursor.getType().setReal( sign * A * (x*x+y*y-2*sigma*sigma) * Math.exp(- (x*x+y*y) / (2*sigma*sigma) ) );
 		}
 		return img;
 	}
@@ -117,12 +119,13 @@ public class LoGKernelFactory {
 	 * @param sigmaScaled  if true, the kernel will be multiplied by σ² 
 	 * @return  the LoG kernel, as a {@link FloatType} {@link Image}
 	 */
-	public static Image<FloatType> create3DLoGKernel(double sigma, int xSize, int ySize, int zSize, boolean sigmaScaled) {
+	public static Image<FloatType> create3DLoGKernel(double sigma, int xSize, int ySize, int zSize, boolean sigmaScaled, boolean invertSign) {
 		int[] dims = new int[] {xSize, ySize, zSize};
 		for (int i = 0; i < dims.length; i++) {
 			if (dims[i] % 2 == 0)
 				dims[i]++; // make it odd
 		}
+		final int sign = invertSign ? -1 : 1;
 		final ArrayContainerFactory containerFactory = new ArrayContainerFactory();
 		final ImageFactory<FloatType> factory = new ImageFactory<FloatType>(new FloatType(), containerFactory);
 		final Image<FloatType> img = factory.createImage(dims, "LoG 3D kernel");
@@ -142,7 +145,7 @@ public class LoGKernelFactory {
 			x = cursor.getPosition(0) - xCenter;
 			y = cursor.getPosition(1) - yCenter;
 			z = cursor.getPosition(2) - zCenter;
-			cursor.getType().setReal( A * (x*x + y*y + z*z -3*sigma*sigma) * Math.exp(-(x*x + y*y + z*z) / (2*sigma*sigma) ) );
+			cursor.getType().setReal( sign * A * (x*x + y*y + z*z -3*sigma*sigma) * Math.exp(-(x*x + y*y + z*z) / (2*sigma*sigma) ) );
 		}
 		return img;
 	}
@@ -158,7 +161,7 @@ public class LoGKernelFactory {
 		double sigma = 0.5;
 		int size = 5;
 		System.out.println(String.format("1D LoG kernel with sigma = %.1f and of size %d", sigma, size) );
-		Image<FloatType> kernel1D = LoGKernelFactory.create1DLoGKernel(sigma, size, false);
+		Image<FloatType> kernel1D = LoGKernelFactory.create1DLoGKernel(sigma, size, false, false);
 		LocalizableByDimCursor<FloatType> c1 = kernel1D.createLocalizableByDimCursor();
 		for (int i = 0; i < c1.getDimensions()[0]; i++) {
 			c1.setPosition(i, 0);
@@ -170,7 +173,7 @@ public class LoGKernelFactory {
 		size = 9;
 		System.out.println(" ");
 		System.out.println(String.format("2D LoG kernel with sigma = %.1f and of size %d", sigma, size) );
-		Image<FloatType> kernel2D = LoGKernelFactory.create2DLoGKernel(sigma, size, size, false);
+		Image<FloatType> kernel2D = LoGKernelFactory.create2DLoGKernel(sigma, size, size, false, false);
 		LocalizableByDimCursor<FloatType> c2 = kernel2D.createLocalizableByDimCursor();
 		for (int i = 0; i < c2.getDimensions()[0]; i++) {
 			c2.setPosition(i, 0);
