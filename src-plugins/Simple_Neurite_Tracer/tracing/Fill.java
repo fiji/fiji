@@ -120,21 +120,7 @@ public class Fill {
 		pw.print( "  <fill id=\"" + fillIndex + "\""  );
 		if( (sourcePaths != null) && (sourcePaths.size() > 0) ) {
 			pw.print( " frompaths=\"" );
-			Iterator<Path> pi = sourcePaths.iterator();
-			boolean first = true;
-			while( pi.hasNext() ) {
-				Path p = pi.next();
-				if( first ) {
-					first = false;
-				} else
-					pw.print( ", " );
-
-				Integer fromPath = pathToID.get( p );
-				if( fromPath == null )
-					pw.print( "-1" );
-				else
-					pw.print( "" + fromPath.intValue() );
-			}
+			pw.print( getSourcePathsStringMachine() );
 			pw.print( "\"" );
 		}
 		pw.println( " metric=\"" + getMetric() + "\" threshold=\"" + getThreshold() + "\">" );

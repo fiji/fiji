@@ -363,23 +363,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			String name = "Fill (" + i + ")";
 
 			if( (f.sourcePaths != null) && (f.sourcePaths.size() > 0) ) {
-
-				name += " from paths: ";
-
-				Path [] sortedSourcePaths =f.sourcePaths.toArray( new Path[]{} );
-				Arrays.sort( sortedSourcePaths );
-
-				for( int j = 0; j < sortedSourcePaths.length; ++j ) {
-					Path p = sortedSourcePaths[j];
-					if( j != 0 )
-						name += ", ";
-					// if (verbose) System.out.println("source path " + j + " is " + (Object)p );
-					Integer fromPath = pathToID.get( p );
-					if( fromPath == null )
-						name += "(unknown)";
-					else
-						name += "(" + fromPath.intValue() + ")";
-				}
+				name += " from paths: " + f.getSourcePathsStringHuman();
 			}
 			fillListEntries[i] = name;
 		}
