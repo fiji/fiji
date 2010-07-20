@@ -20,12 +20,13 @@ package mpicbg.imglib.algorithm.findmax;
 import java.util.ArrayList;
 
 import mpicbg.imglib.algorithm.Algorithm;
+import mpicbg.imglib.algorithm.Benchmark;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.RealType;
 
-public interface RegionalMaximaFinder<T extends RealType<T>> extends Algorithm {
+public interface RegionalMaximaFinder<T extends RealType<T>> extends Algorithm, Benchmark {
 	
 	/**
 	 * Returns the ArrayList containing the coordinates of the local extrema found. Each 
@@ -34,7 +35,9 @@ public interface RegionalMaximaFinder<T extends RealType<T>> extends Algorithm {
 	 * 
 	 * @return  the ArrayList containing the extrema coordinates
 	 */
-	public ArrayList< double[] > getRegionalMaxima();
+	public ArrayList< ArrayList< int[] > > getRegionalMaxima();
+	
+	public ArrayList< double[] > getRegionalMaximaCenters(ArrayList< ArrayList< int[] > > regionalMaxima);
 	
 	/**
 	 * If set to true before the {@link #process()} method is called, then extrema locations

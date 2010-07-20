@@ -17,16 +17,14 @@
 package mpicbg.imglib.algorithm.findmax;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 
-import mpicbg.imglib.algorithm.Benchmark;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.special.LocalNeighborhoodCursor3D;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
 import mpicbg.imglib.type.numeric.RealType;
 
-public class RegionalMaximaFinder3D<T extends RealType<T>> extends AbstractRegionalMaximaFinder<T> implements Benchmark
+public class RegionalMaximaFinder3D<T extends RealType<T>> extends AbstractRegionalMaximaFinder<T>
 {
 	
 	/*
@@ -143,20 +141,19 @@ public class RegionalMaximaFinder3D<T extends RealType<T>> extends AbstractRegio
 		final int width = image.getDimensions()[0];							// width of the image, used to map 3D coordinates to a 1D coordinate system for storing information about each pixel (visisted or not, etc)
 		final int numPixelsInXYPlane = image.getDimensions()[1] * width;		// number of pixels in 1 stack, used to map 3D coordinates to a 1D coordinate system for storing information about each pixel (visisted or not, etc)
 		final byte visitedAndProcessed[] = new byte[image.getNumPixels()];	// holds information on whether the pixel has been added to the lake/connected component, or whether pixel has had neighbors directly searched already.
-		final LinkedList< int[] > toSearch = new LinkedList< int[] >();		// pixels known to be in the lake/connected component that we have yet to search the neighbors of
-		final LinkedList< int[] > searched = new LinkedList< int[] >();		// pixels in the lake/connected component that have had their neighbors searched.
 		boolean isMax;													// stores whether our lake/connected component is a local maxima or not.
 		int nextCoords[] = new int [3];									// declare coordinate arrays outside while loops to speed up. holds the coordinates of pixel in step 2.2
 		int currCoords[] = new int[3];									// holds coordinates of pixel in step 2.1
 		int neighborCoords[] = new int[3];								// holds coordinates of pixel in step 2.3
-		double averagedMaxPos[] = new double[3];								// holds the averaged coordinates if our lake was a local maxima.
 		final byte VISITED = (byte)1;	// pixel has been added to the lake, but not had neighbors inspected (explored, but not searched)
 		final byte PROCESSED = (byte)2;	// pixel has been added to the lake, and had neighbors inspected (explored, and searched)
 		
 		// 2 - Search all pixels for LOCAL maxima.
 		
 		// 2.1 - Iterate over all pixels in the image.
-		while(curr.hasNext()) { 
+		while(curr.hasNext()) {
+			final ArrayList< int[] > toSearch = new ArrayList< int[] >();		// pixels known to be in the lake/connected component that we have yet to search the neighbors of
+			final ArrayList< int[] > searched = new ArrayList< int[] >();		// pixels in the lake/connected component that have had their neighbors searched.
 			curr.fwd();
 			curr.getPosition(currCoords);
 			if ((visitedAndProcessed[getIndexOfPosition(currCoords, width, numPixelsInXYPlane)] & PROCESSED) != 0) {  // prevents revisiting pixels, increases speed
@@ -167,13 +164,15 @@ public class RegionalMaximaFinder3D<T extends RealType<T>> extends AbstractRegio
 			toSearch.add(currCoords);
 			
 			// 2.2 - Iterate through queue which contains the pixels of the "lake"		
-			while ((nextCoords = toSearch.poll()) != null) {
+			//while ((nextCoords = toSearch.poll()) != null) {
+			while (!toSearch.isEmpty()) {
+				nextCoords = toSearch.remove(0);
 				if ((visitedAndProcessed[getIndexOfPosition(nextCoords, width, numPixelsInXYPlane)] & PROCESSED) != 0) {  // if visited, skip
 					continue;
 				} else {  // if not visited, mark as processed (has had neighbors searched) and add him to the searched LinkedList.
 					visitedAndProcessed[getIndexOfPosition(nextCoords, width, numPixelsInXYPlane)] |= PROCESSED; 
 					if ((allowEdgeMax) || (!allowEdgeMax && !isEdgeMax(nextCoords))) {
-						searched.add(nextCoords);
+						searched.add(nextCoords.clone());
 					}
 				}
 				local.setPosition(nextCoords);		// Set the location of the cursor to the pixel currently being searched in the lake. This cursor is essentially needed only so we can use the neighborhood cursor.
@@ -200,8 +199,8 @@ public class RegionalMaximaFinder3D<T extends RealType<T>> extends AbstractRegio
 			}
 			if (isMax) {  // If isMax is still true, then our lake/connected component is a local maximum, so find the averaged point in the center.
 				if (searched.size() > 0) {
-					averagedMaxPos = findAveragePosition(searched);
-					maxima.add(averagedMaxPos);
+					//averagedMaxPos = findAveragePosition(searched);
+					maxima.add(searched);
 				}
 			} else {  // otherwise, get rid of the lake we searched, we don't need coordinates since not a local maximum.
 				searched.clear();
@@ -216,7 +215,19 @@ public class RegionalMaximaFinder3D<T extends RealType<T>> extends AbstractRegio
 	}
 
 	@Override
-	public ArrayList< double[] > getRegionalMaxima() { return maxima;	}
+	public ArrayList< ArrayList< int[] > > getRegionalMaxima() { return maxima;	}
+	
+	@Override
+	public ArrayList< double[] > getRegionalMaximaCenters(ArrayList< ArrayList< int[] > > regionalMaxima) {
+		ArrayList< double[] > centeredRegionalMaxima = new ArrayList< double[] >();
+		ArrayList< int[] > curr = null;
+		while (!regionalMaxima.isEmpty()) {
+			curr = regionalMaxima.remove(0);
+			double averagedCoord[] = findAveragePosition(curr);
+			centeredRegionalMaxima.add(averagedCoord);
+		}
+		return centeredRegionalMaxima;
+	}
 	
 	/**
 	 * Determines whether the input coordinates are on the edge of the image or not.
@@ -234,11 +245,11 @@ public class RegionalMaximaFinder3D<T extends RealType<T>> extends AbstractRegio
 	 * @param searched
 	 * @return
 	 */
-	final static protected double[] findAveragePosition(final LinkedList < int[] > searched) {
+	final static protected double[] findAveragePosition(final ArrayList < int[] > searched) {
 		int count = 0;
 		double avgX = 0, avgY = 0, avgZ = 0;
 		while(!searched.isEmpty()) {
-			int curr[] = searched.poll();
+			int curr[] = searched.remove(0);
 			avgX += curr[0];
 			avgY += curr[1];
 			avgZ += curr[2];

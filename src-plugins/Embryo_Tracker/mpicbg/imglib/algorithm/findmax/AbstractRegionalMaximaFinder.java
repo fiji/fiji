@@ -13,7 +13,7 @@ public abstract class AbstractRegionalMaximaFinder<T extends RealType<T>> implem
 	protected boolean allowEdgeMax = false;						// if true, maxima found on the edge of the images will be included in the results; if false, edge maxima are excluded
 	protected boolean doInterpolate = false;
 	protected Image<T> image;											// holds the image the algorithm is to be applied to
-	final protected ArrayList< double[] > maxima = new ArrayList< double[] >();	// an array list which holds the coordinates of the maxima found in the image.
+	final protected ArrayList< ArrayList< int[] > > maxima = new ArrayList< ArrayList< int[] > >();	// an array list which holds the coordinates of the maxima found in the image.
 	
 	@Override
 	public void allowEdgeExtrema(boolean flag) {
@@ -26,7 +26,7 @@ public abstract class AbstractRegionalMaximaFinder<T extends RealType<T>> implem
 	}
 
 	@Override
-	public ArrayList<double[]> getRegionalMaxima() {
+	public ArrayList< ArrayList< int[] > > getRegionalMaxima() {
 		return maxima;
 	}
 	
