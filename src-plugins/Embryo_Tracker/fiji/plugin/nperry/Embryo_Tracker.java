@@ -165,12 +165,10 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		// #---------------------------------------#
 		Image<T> imgClone = img.clone();
 		long overall = 0;
-		long numIterations = 1;
+		long numIterations = 50;
 		for (int i = 0; i < numIterations; i++) {
-			
+			long startTime = System.currentTimeMillis();	
 		/** Approach 1: L x (G x I ) */
-		long startTime = System.currentTimeMillis();
-
 		// 4 - Apply a Gaussian filter (code courtesy of Stephan Preibisch). Theoretically, this will make the center of blobs the brightest, and thus easier to find:
 		/*IJ.log("Applying Gaussian filter...");
 		IJ.showStatus("Applying Gaussian filter...");
@@ -183,7 +181,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	        return null;
 		}
 		
-		// 4.5 - Apply a Laplacian convolution to the image.
+		// 5 - Apply a Laplacian convolution to the image.
 		IJ.log("Applying Laplacian convolution...");
 		IJ.showStatus("Applying Laplacian convolution...");
 		// Laplacian kernel construction: everything is negative so that we can use the existing find maxima classes (otherwise, it would be creating minima, and we would need to use find minima). The kernel has everything divided by 18 because we want the highest value to be 1, so that numbers aren't created that beyond the capability of the image type. For example, in a short type, if we had the highest number * 18, the short type can't hold that, and the rest of the value is lost in conversion. This way, we won't create numbers larger than the respective types can hold.
@@ -202,7 +200,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		}*/
 		
 		/** Approach 2: F(L) x F(G) x F(I) */
-		
+		/*
 		// Gauss
 		IJ.log("Applying Gaussian filter...");
 		IJ.showStatus("Applying Gaussian filter...");
@@ -236,16 +234,18 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		img = fConvLaplacian.getResult();
 		
 		long runTime = System.currentTimeMillis() - startTime;
-		System.out.println("Gaussian/Laplacian Run Time: " + runTime);
+		//System.out.println("Gaussian/Laplacian Run Time: " + runTime);
+		*/
 		
 		/** Approach 3: (L x G) x I */
+		
 		/** Approach 4: DoG */
 		/** Approach 5: F(DoG) */
 		
-		//if (i == 0) img = imgClone.clone();
-		//overall += runTime;
+		if (i == 0) img = imgClone.clone();
+		overall += runTime;
 		}
-		//System.out.println("Average run time: " + (long)overall/numIterations);
+		System.out.println("Average run time: " + (long)overall/numIterations);
 
 		// 5 - Find maxima of newly convoluted image:
 		IJ.log("Finding maxima...");
@@ -272,24 +272,14 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		}
 	}
 	
-	protected static void quickKernel2D(float[][] vals, Image<FloatType> kern)
-	{
-		final LocalizableByDimCursor<FloatType> cursor = kern.createLocalizableByDimCursor();
-		final int[] pos = new int[2];
-
-		for (int i = 0; i < vals.length; ++i)
-		{
-			for (int j = 0; j < vals[i].length; ++j)
-			{
-				pos[0] = i;
-				pos[1] = j;
-				cursor.setPosition(pos);
-				cursor.getType().set(vals[i][j]);
-			}
-		}
-		cursor.close();		
-	}
-	
+	/**
+	 * 
+	 * @param pixelWidth
+	 * @param pixelHeight
+	 * @param pixelDepth
+	 * @param diam
+	 * @return
+	 */
 	public float[] createDownsampledDim(float pixelWidth, float pixelHeight, float pixelDepth, float diam) {
 		float widthFactor = (diam / pixelWidth) > GOAL_DOWNSAMPLED_BLOB_DIAM ? (diam / pixelWidth) / GOAL_DOWNSAMPLED_BLOB_DIAM : 1;
 		float heightFactor = (diam / pixelHeight) > GOAL_DOWNSAMPLED_BLOB_DIAM ? (diam / pixelHeight) / GOAL_DOWNSAMPLED_BLOB_DIAM : 1;
@@ -299,6 +289,11 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		return downsampleFactors;
 	}
 	
+	/**
+	 * 
+	 * @param vals
+	 * @param kern
+	 */
 	protected static void quickKernel3D(float[][][] vals, Image<FloatType> kern)
 	{
 		final LocalizableByDimCursor<FloatType> cursor = kern.createLocalizableByDimCursor();
@@ -316,6 +311,31 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 					cursor.setPosition(pos);
 					cursor.getType().set(vals[i][j][k]);
 				}
+			}
+		}
+		cursor.close();		
+	}
+	
+	/**
+	 * Code courtesy of Larry Lindsey. However, it is protected in the DirectConvolution class,
+	 * so I reproduced it here to avoid instantiating an object.
+	 * 
+	 * @param vals
+	 * @param kern
+	 */
+	protected static void quickKernel2D(float[][] vals, Image<FloatType> kern)
+	{
+		final LocalizableByDimCursor<FloatType> cursor = kern.createLocalizableByDimCursor();
+		final int[] pos = new int[2];
+
+		for (int i = 0; i < vals.length; ++i)
+		{
+			for (int j = 0; j < vals[i].length; ++j)
+			{
+				pos[0] = i;
+				pos[1] = j;
+				cursor.setPosition(pos);
+				cursor.getType().set(vals[i][j]);
 			}
 		}
 		cursor.close();		
