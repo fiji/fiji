@@ -341,7 +341,7 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 
 			plugin.setFillThreshold( maxThresholdValue );
 
-		} else if( source == setThreshold ) {
+		} else if( source == setThreshold || source == thresholdField ) {
 
 			try {
 				double t = Double.parseDouble( thresholdField.getText() );
