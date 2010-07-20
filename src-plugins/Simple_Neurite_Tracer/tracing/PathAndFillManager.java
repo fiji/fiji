@@ -1278,10 +1278,12 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			// Now turn the source paths into real paths...
 			for( int i = 0; i < allFills.size(); ++i ) {
 				Fill f = allFills.get(i);
+				Set<Path> realSourcePaths = new HashSet<Path>();
 				int [] sourcePathIDs = sourcePathIDForFills.get(i);
-				Path [] realSourcePaths = new Path[sourcePathIDs.length];
 				for( int j = 0; j < sourcePathIDs.length; ++j ) {
-					realSourcePaths[j] = getPathFromID(sourcePathIDs[j]);
+					Path sourcePath = getPathFromID(sourcePathIDs[j]);
+					if( sourcePath != null )
+						realSourcePaths.add( sourcePath );
 				}
 				f.setSourcePaths( realSourcePaths );
 			}
