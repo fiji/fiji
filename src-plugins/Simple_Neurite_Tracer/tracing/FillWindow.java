@@ -33,6 +33,7 @@ import ij.io.*;
 import javax.swing.*;
 
 import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
@@ -165,9 +166,13 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 		c.gridy = 0;
 		c.insets = new Insets( 8, 8, 1, 8 );
 		c.weightx = 1;
-		c.fill = GridBagConstraints.HORIZONTAL;
+		c.weighty = 1;
+		c.fill = GridBagConstraints.BOTH;
 
 		add( scrollPane, c );
+
+		c.weightx = 0;
+		c.weighty = 0;
 
 		{
 			JPanel fillListCommandsPanel = new JPanel();
@@ -199,7 +204,6 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 			cf.gridx = 0;
 			cf.gridy = 0;
 			cf.gridwidth = 4;
-			cf.weightx = 1;
 			cf.anchor = GridBagConstraints.LINE_START;
 			cf.fill = GridBagConstraints.HORIZONTAL;
 			fillStatus = new JLabel("(Not filling at the moment.)");
@@ -209,7 +213,6 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 			thresholdField.addActionListener(this);
 			cf.gridx = 0;
 			cf.gridy = 1;
-			cf.weightx = 0;
 			cf.gridwidth = 2;
 			cf.fill = GridBagConstraints.NONE;
 			fillingOptionsPanel.add(thresholdField,cf);
@@ -260,36 +263,39 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 			cf.anchor = GridBagConstraints.LINE_START;
 			fillingOptionsPanel.add(transparent,cf);
 
+			c.gridx = 0;
+			++ c.gridy;
+			c.insets = new Insets( 8, 8, 8, 8 );
+			c.fill = GridBagConstraints.NONE;
+			c.anchor = GridBagConstraints.LINE_START;
+			add(fillingOptionsPanel,c);
+
+
 			{
 				fillControlPanel = new JPanel();
-				fillControlPanel.setLayout(new BorderLayout());
+				fillControlPanel.setLayout(new FlowLayout());
 
 				pauseOrRestartFilling = new JButton("Pause");
 				currentlyFilling = true;
 				pauseOrRestartFilling.addActionListener(this);
-				fillControlPanel.add(pauseOrRestartFilling,BorderLayout.WEST);
+				fillControlPanel.add(pauseOrRestartFilling);
 
 				saveFill = new JButton("Save Fill");
 				saveFill.addActionListener(this);
-				fillControlPanel.add(saveFill,BorderLayout.CENTER);
+				fillControlPanel.add(saveFill);
 
 				discardFill = new JButton("Cancel Fill");
 				discardFill.addActionListener(this);
-				fillControlPanel.add(discardFill,BorderLayout.EAST);
+				fillControlPanel.add(discardFill);
 
-				cf.gridx = 0;
-				cf.gridy = 6;
-				cf.gridwidth = 3;
-				cf.fill = GridBagConstraints.HORIZONTAL;
-				cf.anchor = GridBagConstraints.LINE_START;
+				c.gridx = 0;
+				++ c.gridy;
+				c.fill = GridBagConstraints.HORIZONTAL;
+				c.anchor = GridBagConstraints.CENTER;
 
-				fillingOptionsPanel.add(fillControlPanel,cf);
+				add(fillControlPanel,c);
 			}
 
-			c.gridx = 0;
-			++ c.gridy;
-			c.insets = new Insets( 8, 8, 8, 8 );
-			add(fillingOptionsPanel,c);
 		}
 
 		deleteFills.addActionListener(this);
