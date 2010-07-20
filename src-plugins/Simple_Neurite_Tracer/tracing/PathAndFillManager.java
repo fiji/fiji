@@ -208,10 +208,10 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	   which paths are currently selected.  This is also
 	   propagated to:
 
-               (a) Each Path object (so that the 3D viewer can reflect
-               the change, for instance.)
+	       (a) Each Path object (so that the 3D viewer can reflect
+	       the change, for instance.)
 
-               (b) All the registered PathAndFillListener objects.
+	       (b) All the registered PathAndFillListener objects.
 	*/
 	public synchronized void setSelected( Path [] selectedPaths, Object sourceOfMessage ) {
 		selectedPathsSet.clear();
@@ -240,8 +240,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	/* This method returns an array of the "primary paths", which
 	   should be displayed at the top of a tree-like hierarchy.
 
-           The paths actually form a graph, of course, but most UIs
-           will want to display the graph as a tree. */
+	   The paths actually form a graph, of course, but most UIs
+	   will want to display the graph as a tree. */
 
 	public synchronized Path [] getPathsStructured() {
 
@@ -277,7 +277,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		}
 
 		for( int i = 0; i < primaryPaths.size(); ++i ) {
-		        primaryPath = primaryPaths.get(i);
+			primaryPath = primaryPaths.get(i);
 			primaryPath.setChildren(pathsLeft);
 		}
 
@@ -1004,7 +1004,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				if( useFittedString.equals("true") )
 					useFittedFields.put( id, true );
 				else if( useFittedString.equals("false") )
-				        useFittedFields.put( id, false );
+					useFittedFields.put( id, false );
 				else
 					throw new TracesFileFormatException("Unknown value for 'fitted' attribute: '"+useFittedString+"'");
 			}
@@ -1655,7 +1655,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	public boolean importSWC( String filename, boolean ignoreCalibration,
 				  double x_offset, double y_offset, double z_offset,
 				  double x_scale, double y_scale, double z_scale,
-		                  boolean replaceAllPaths ) {
+				  boolean replaceAllPaths ) {
 
 		File f = new File(filename);
 		if( ! f.exists() ) {
@@ -1698,8 +1698,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		   it's a compressed traces file - the native format
 		   of this plugin.
 
-                   If it begins "<?xml", assume it's an uncompressed
-                   traces file.
+		   If it begins "<?xml", assume it's an uncompressed
+		   traces file.
 
 		   Otherwise, assum it's an SWC file.
 		*/
