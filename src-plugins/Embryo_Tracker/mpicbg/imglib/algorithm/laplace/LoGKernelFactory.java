@@ -1,58 +1,85 @@
 package mpicbg.imglib.algorithm.laplace;
 
-import mpicbg.imglib.Factory;
 import mpicbg.imglib.algorithm.math.MathLib;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
-import mpicbg.imglib.type.numeric.RealType;
-import mpicbg.imglib.type.numeric.integer.LongType;
-import mpicbg.imglib.type.numeric.integer.ShortType;
 import mpicbg.imglib.type.numeric.real.FloatType;
 
-
+/**
+ * This utility class is dedicated to creating Laplacian of Gaussian (LoG) kernels. 
+ * @author Jean-Yves Tinevez <tinevez@pasteur.fr> - July 2010
+ *
+ */
 public class LoGKernelFactory {
 	
-	/*
-	 * STATIC METHODS
+	
+	/**
+	 * Return a LoG kernel, of dimension nDims, and of size automatically determined from
+	 * the value of sigma. Only 1D, 2D or 3D are supported. 
+	 * For convenient use in blob segmentation, a flag allow to scale the kernel by σ².
+	 * @param sigma  the sigma value of the gaussian 
+	 * @param nDims  the dimension array 
+	 * @param sigmaScaled  if true, the kernel will be multiplied by σ² 
+	 * @return  the LoG kernel, as a {@link FloatType} {@link Image}
 	 */
-	
-	
-	public static <R extends RealType<R>> Image<R> createLoGKernel(R type, double sigma, int nDims) {
+	public static Image<FloatType> createLoGKernel(double sigma, int nDims, boolean sigmaScaled) {
 		int size = MathLib.getSuggestedKernelDiameter(sigma);
 		switch (nDims) {
 		case 1:
-			return create1DLoGKernel(type, sigma, size);
+			return create1DLoGKernel(sigma, size, sigmaScaled);
 		case 2:
-			return create2DLoGKernel(type, sigma, size, size);
+			return create2DLoGKernel(sigma, size, size, sigmaScaled);
 		case 3:
-			return create3DLoGKernel(type, sigma, size, size, size);
+			return create3DLoGKernel(sigma, size, size, size, sigmaScaled);
 		default:
 			throw new IllegalArgumentException("Kernel in dimension "+nDims+" are not implemented.");
 		}
 	}
 	
-	public static <R extends RealType<R>> Image<R> create1DLoGKernel(R type, double sigma, int size) {
+	/**
+	 * Return a 1D LoG kernel, of dimension matching the nDims parameter. For convenient use 
+	 * in blob segmentation, a flag allow to scale the kernel by σ².
+	 * @param sigma  the sigma value of the gaussian 
+	 * @param size   the size of the kernel
+	 * @param sigmaScaled  if true, the kernel will be multiplied by σ² 
+	 * @return  the LoG kernel, as a {@link FloatType} {@link Image}
+	 */
+	public static Image<FloatType> create1DLoGKernel(double sigma, int size, boolean sigmaScaled) {
 		if (size % 2 == 0)
 			size++; // make it odd
 		final ArrayContainerFactory containerFactory = new ArrayContainerFactory();
-		final ImageFactory<R> factory = new ImageFactory<R>(type, containerFactory);
-		final Image<R> img = factory.createImage(new int[] {size}, "LoG 1D kernel");
+		final ImageFactory<FloatType> factory = new ImageFactory<FloatType>(new FloatType(), containerFactory);
+		final Image<FloatType> img = factory.createImage(new int[] {size}, "LoG 1D kernel");
 		final int center = (size-1)/2;
-		final LocalizableCursor<R> cursor = img.createLocalizableCursor();
+		final LocalizableCursor<FloatType> cursor = img.createLocalizableCursor();
 		int x;
-		final double A = -1/(sigma*sigma*sigma*sigma);
+		final double A;
+		if (sigmaScaled) {
+			A = 1/(Math.sqrt(2*Math.PI)*Math.pow(sigma, 3));
+		} else {
+			A = 1/(Math.sqrt(2*Math.PI)*Math.pow(sigma, 5));
+		}
 		while (cursor.hasNext()) {
 			cursor.fwd();
 			x = cursor.getPosition(0) - center;
-			cursor.getType().setReal( A * (x*x - sigma*sigma) * Math.exp(-x*x/2/sigma/sigma) );
+			cursor.getType().setReal( A * (x*x - sigma*sigma) * Math.exp(-x*x/(2*sigma*sigma) ));
 		}
 		return img;
 	}
 	
-	public static <R extends RealType<R>> Image<R> create2DLoGKernel(R type, double sigma, int xSize, int ySize) {
+	/**
+	 * Return a 2D LoG kernel, of dimension matching the nDims parameter. For convenient use 
+	 * in blob segmentation, a flag allow to scale the kernel by σ².
+	 * @param sigma  the sigma value of the gaussian 
+	 * @param xSize  the size in X of the kernel
+	 * @param ySize  the size in Y of the kernel
+	 * @param sigmaScaled  if true, the kernel will be multiplied by σ² 
+	 * @return  the LoG kernel, as a {@link FloatType} {@link Image}
+	 */
+	public static Image<FloatType> create2DLoGKernel(double sigma, int xSize, int ySize, boolean sigmaScaled) {
 		int[] dims = new int[] {xSize, ySize};
 		for (int i = 0; i < dims.length; i++) {
 			if (dims[i] % 2 == 0)
@@ -60,87 +87,62 @@ public class LoGKernelFactory {
 		}
 		final ArrayContainerFactory containerFactory = new ArrayContainerFactory();
 		final ImageFactory<FloatType> floatFactory = new ImageFactory<FloatType>(new FloatType(), containerFactory);
-		final Image<FloatType> img = floatFactory.createImage(dims, "Intermediate float image");
+		final Image<FloatType> img = floatFactory.createImage(dims,  "LoG 2D kernel");
 		final LocalizableByDimCursor<FloatType> cursor = img.createLocalizableByDimCursor();
 		final int xCenter = (dims[0]-1)/2;
 		final int yCenter = (dims[1]-1)/2;
 		int x, y;
-		// Calculate values
+		final double A;
+		if (sigmaScaled) {
+			A = 1/(Math.sqrt(2*Math.PI)*Math.pow(sigma, 4));
+		} else {
+			A = 1/(Math.sqrt(2*Math.PI)*Math.pow(sigma, 6));
+		}
 		while (cursor.hasNext()) {
 			cursor.fwd();
 			x = cursor.getPosition(0) - xCenter;
 			y = cursor.getPosition(1) - yCenter;
-//			cursor.getType().setReal((x*x+y*y-2*sigma*sigma) / (sigma*sigma*sigma*sigma) * Math.exp(-(x*x+y*y)/(2*sigma*sigma)));
-			cursor.getType().setReal((x*x+y*y-2*sigma*sigma) / (sigma*sigma) * Math.exp(-(x*x+y*y)/(2*sigma*sigma)));
+			cursor.getType().setReal(A * (x*x+y*y-2*sigma*sigma) * Math.exp(- (x*x+y*y) / (2*sigma*sigma) ) );
 		}
-		// Scale values so that border center is equal to 1
-		FloatType centerValue = img.createType();
-		int[] centerPosition = new int[2];
-		if (xSize > ySize) {
-			centerPosition[0] = xCenter;
-			centerPosition[0] = 0;			
-		} else {
-			centerPosition[0] = 0;
-			centerPosition[0] = yCenter;
-		}
-		cursor.setPosition(centerPosition);
-		centerValue.set(cursor.getType());
-		cursor.reset();
-		while (cursor.hasNext()) {
-			cursor.fwd();
-			cursor.getType().div(centerValue);
-		}
-		// Copy to kernel
-		final ImageFactory<R> factory = new ImageFactory<R>(type, containerFactory);
-		final Image<R> kernel = factory.createImage(dims, "LoG 2D kernel");
-		cursor.reset();
-		LocalizableByDimCursor<R> kernelCursor = kernel.createLocalizableByDimCursor();
-		while (cursor.hasNext()) {
-			cursor.fwd();
-			kernelCursor.setPosition(cursor);
-			kernelCursor.getType().setReal(cursor.getType().getRealDouble());
-		}
-		// Make the laplacian sum to 0
-//		R mean = kernel.createType();
-//		R area = kernel.createType();
-//		mean.setZero();
-//		area.setReal(dims[0]*dims[1]);
-//		kernelCursor.reset();
-//		while (kernelCursor.hasNext()) {
-//			kernelCursor.fwd();
-//			mean.add(kernelCursor.getType());
-//		}
-//		mean.div(area);
-//		kernelCursor.reset();
-//		while (kernelCursor.hasNext()) {
-//			kernelCursor.fwd();
-//			kernelCursor.getType().sub(mean);
-//		}
-		// Return kernel
-		return kernel;
+		return img;
 	}
 	
-	public static <R extends RealType<R>> Image<R> create3DLoGKernel(R type, double sigma, int xSize, int ySize, int zSize) {
+	/**
+	 * Return a 3D LoG kernel, of dimension matching the nDims parameter. For convenient use 
+	 * in blob segmentation, a flag allow to scale the kernel by σ².
+	 * @param sigma  the sigma value of the gaussian 
+	 * @param xSize  the size in X of the kernel
+	 * @param ySize  the size in Y of the kernel
+	 * @param zSize  the size in Y of the kernel
+	 * @param sigmaScaled  if true, the kernel will be multiplied by σ² 
+	 * @return  the LoG kernel, as a {@link FloatType} {@link Image}
+	 */
+	public static Image<FloatType> create3DLoGKernel(double sigma, int xSize, int ySize, int zSize, boolean sigmaScaled) {
 		int[] dims = new int[] {xSize, ySize, zSize};
 		for (int i = 0; i < dims.length; i++) {
 			if (dims[i] % 2 == 0)
 				dims[i]++; // make it odd
 		}
 		final ArrayContainerFactory containerFactory = new ArrayContainerFactory();
-		final ImageFactory<R> factory = new ImageFactory<R>(type, containerFactory);
-		final Image<R> img = factory.createImage(dims, "LoG 3D kernel");
-		final LocalizableCursor<R> cursor = img.createLocalizableCursor();
+		final ImageFactory<FloatType> factory = new ImageFactory<FloatType>(new FloatType(), containerFactory);
+		final Image<FloatType> img = factory.createImage(dims, "LoG 3D kernel");
+		final LocalizableCursor<FloatType> cursor = img.createLocalizableCursor();
 		final int xCenter = (dims[0]-1)/2;
 		final int yCenter = (dims[1]-1)/2;
 		final int zCenter = (dims[2]-1)/2;
 		int x, y, z;
-		final double A = 1/(sigma*sigma*sigma*sigma);
+		final double A;
+		if (sigmaScaled) {
+			A = 1/(Math.pow(2*Math.PI, 1.5)*Math.pow(sigma, 5));
+		} else {
+			A = 1/(Math.pow(2*Math.PI, 1.5)*Math.pow(sigma, 7));
+		}
 		while (cursor.hasNext()) {
 			cursor.fwd();
 			x = cursor.getPosition(0) - xCenter;
 			y = cursor.getPosition(1) - yCenter;
 			z = cursor.getPosition(2) - zCenter;
-			cursor.getType().setReal( A * (x*x + y*y + z*z -3*sigma*sigma) * Math.exp(-(x*x + y*y + z*z)/2/sigma/sigma));
+			cursor.getType().setReal( A * (x*x + y*y + z*z -3*sigma*sigma) * Math.exp(-(x*x + y*y + z*z) / (2*sigma*sigma) ) );
 		}
 		return img;
 	}
@@ -153,10 +155,10 @@ public class LoGKernelFactory {
 	 * For testing
 	 */
 	public static void main(String[] args) {
-		double sigma = 1.0;
+		double sigma = 0.5;
 		int size = 5;
 		System.out.println(String.format("1D LoG kernel with sigma = %.1f and of size %d", sigma, size) );
-		Image<FloatType> kernel1D = LoGKernelFactory.create1DLoGKernel(new FloatType(), sigma, size);
+		Image<FloatType> kernel1D = LoGKernelFactory.create1DLoGKernel(sigma, size, false);
 		LocalizableByDimCursor<FloatType> c1 = kernel1D.createLocalizableByDimCursor();
 		for (int i = 0; i < c1.getDimensions()[0]; i++) {
 			c1.setPosition(i, 0);
@@ -168,10 +170,8 @@ public class LoGKernelFactory {
 		size = 9;
 		System.out.println(" ");
 		System.out.println(String.format("2D LoG kernel with sigma = %.1f and of size %d", sigma, size) );
-		Image<FloatType> kernel2D = LoGKernelFactory.create2DLoGKernel(new FloatType(), sigma, size, size);
+		Image<FloatType> kernel2D = LoGKernelFactory.create2DLoGKernel(sigma, size, size, false);
 		LocalizableByDimCursor<FloatType> c2 = kernel2D.createLocalizableByDimCursor();
-//		Image<LongType> kernel2D = LoGKernelFactory.create2DLoGKernel(new LongType(), sigma, size, size);
-//		LocalizableByDimCursor<LongType> c2 = kernel2D.createLocalizableByDimCursor();
 		for (int i = 0; i < c2.getDimensions()[0]; i++) {
 			c2.setPosition(i, 0);
 			for (int j = 0; j < c2.getDimensions()[1]; j++) {
