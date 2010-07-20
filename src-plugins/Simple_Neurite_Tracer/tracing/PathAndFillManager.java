@@ -2005,7 +2005,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				      "StartZ",
 				      "EndX",
 				      "EndY",
-				      "EndZ" };
+				      "EndZ",
+				      "ApproximateFittedVolume" };
 
 		Path [] primaryPaths = getPathsStructured();
 		HashSet<Path> h = new HashSet<Path>();
@@ -2068,6 +2069,13 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			pw.print(""+endPoint[1]);
 			pw.print(",");
 			pw.print(""+endPoint[2]);
+
+			pw.print(",");
+			double fittedVolume = pForLengthAndName.getApproximateFittedVolume();
+			if( fittedVolume >= 0 )
+				pw.print(fittedVolume);
+			else
+				pw.print("");
 
 			pw.print("\r\n");
 			pw.flush();

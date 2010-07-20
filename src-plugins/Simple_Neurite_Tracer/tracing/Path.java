@@ -2239,6 +2239,47 @@ public class Path implements Comparable {
 		}
 	}
 
+	/** The volume of each part of the fitted path most accurately
+	    would be the volume of a convex hull of two arbitrarily
+	    oriented and sized circles in space.  This is tough to
+	    work out analytically, and this precision isn't really
+	    warranted given the errors introduced in the fitting
+	    process, the tracing in the first place, etc.  So, this
+	    method produces an approximate volume assuming that the
+	    volume of each of these parts is that of a truncated cone,
+	    with circles of the same size (i.e. as if the circles had
+	    simply been reoriented to be parallel and have a common
+	    normal vector)
+
+	    For more accurate measurements of the volumes of a neuron,
+	    you should use the filling interface. */
+
+	public double getApproximateFittedVolume() {
+		if( ! hasCircles() ) {
+			return -1;
+		}
+
+		double totalVolume = 0;
+
+		for( int i = 0; i < points - 1; ++i ) {
+
+			double xdiff = precise_x_positions[i+1] - precise_x_positions[i];
+			double ydiff = precise_y_positions[i+1] - precise_y_positions[i];
+			double zdiff = precise_z_positions[i+1] - precise_z_positions[i];
+			double h = Math.sqrt(
+				xdiff * xdiff +
+				ydiff * ydiff +
+				zdiff * zdiff );
+			double r1 = radiuses[i];
+			double r2 = radiuses[i+1];
+			// See http://en.wikipedia.org/wiki/Frustum
+			double partVolume = (Math.PI * h * (r1*r1 + r2*r2 + r1*r2)) / 3.0;
+			totalVolume += partVolume;
+		}
+
+		return totalVolume;
+	}
+
 	/* This doesn't deal with the startJoins, endJoins or fitted
 	   fields, since they involve other paths which were probably
 	   also transformed by the caller. */
