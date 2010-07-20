@@ -1113,8 +1113,9 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				}
 
 				if( fill_id != (last_fill_id + 1) ) {
-				       throw new TracesFileFormatException( "Out of order id in <fill> (" + fill_id +
-									    " when we were expecting " + (last_fill_id + 1) + ")" );
+					IJ.log("Out of order id in <fill> (" + fill_id +
+					       " when we were expecting " + (last_fill_id + 1) + ")");
+					fill_id = last_fill_id + 1;
 				}
 
 				int [] sourcePathIndices = new int[ sourcePaths.length ];
