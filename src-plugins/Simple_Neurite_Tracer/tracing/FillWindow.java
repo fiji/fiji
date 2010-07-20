@@ -53,6 +53,9 @@ import java.awt.Insets;
 import java.util.HashSet;
 import java.util.Iterator;
 
+import java.io.File;
+import java.io.IOException;
+
 public class FillWindow extends JFrame implements PathAndFillListener, ActionListener, ItemListener, FillerProgressCallback {
 
 	SimpleNeuriteTracer plugin;
@@ -90,6 +93,8 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 
 	JButton saveFill;
 	JButton discardFill;
+
+	JButton exportAsCSV;
 
 	public void setControlsEnabled( boolean enable ) {
 
@@ -296,6 +301,11 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 				add(fillControlPanel,c);
 			}
 
+			++ c.gridy;
+			c.fill = GridBagConstraints.NONE;
+			exportAsCSV = new JButton("Export as CSV");
+			exportAsCSV.addActionListener(this);
+			add(exportAsCSV,c);
 		}
 
 		deleteFills.addActionListener(this);
@@ -370,6 +380,37 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 		} else if( source == view3D ) {
 
 			plugin.viewFillIn3D( ! maskNotReal.isSelected() );
+
+		} else if( source == exportAsCSV ) {
+
+			SaveDialog sd = new SaveDialog("Export fill summary as...",
+						       "fills",
+						       ".csv");
+
+			String savePath;
+			if(sd.getFileName()==null) {
+				return;
+			}
+
+			File saveFile = new File( sd.getDirectory(),
+						  sd.getFileName() );
+			if ((saveFile!=null)&&saveFile.exists()) {
+				if (!IJ.showMessageWithCancel(
+					    "Export data...", "The file "+
+					    saveFile.getAbsolutePath()+" already exists.\n"+
+					    "Do you want to replace it?"))
+					return;
+			}
+
+			IJ.showStatus("Exporting CSV data to "+saveFile.getAbsolutePath());
+
+			try {
+				pathAndFillManager.exportFillsAsCSV( saveFile );
+
+			} catch( IOException ioe) {
+				IJ.error("Saving to "+saveFile.getAbsolutePath()+" failed");
+				return;
+			}
 
 		} else {
 			IJ.error("BUG: FillWindow received an event from an unknown source");
