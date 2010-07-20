@@ -153,4 +153,38 @@ public class Fill {
 		}
 		return subThresholdNodes * x_spacing * y_spacing * z_spacing;
 	}
+
+	// FIXME: the next two should just be one method, really:
+
+	public String getSourcePathsStringMachine() {
+
+		StringBuffer result = new StringBuffer("");
+
+		boolean first = true;
+		for( Path p : sourcePaths ) {
+			if( first ) {
+				first = false;
+			} else
+				result.append( ", " );
+			result.append( "" + p.getID() );
+		}
+
+		return result.toString();
+	}
+
+	public String getSourcePathsStringHuman() {
+
+		StringBuffer result = new StringBuffer( "" );
+		Path [] sortedSourcePaths = sourcePaths.toArray( new Path[]{} );
+		Arrays.sort( sortedSourcePaths );
+
+		for( int j = 0; j < sortedSourcePaths.length; ++j ) {
+			Path p = sortedSourcePaths[j];
+			if( j != 0 )
+				result.append( ", " );
+			result.append( "(" + p.getID() + ")" );
+		}
+
+		return result.toString();
+	}
 }
