@@ -25,9 +25,9 @@ public interface RegionalExtremaFinder<T extends RealType<T>> extends Algorithm,
 	 * 
 	 * @return  the ArrayList containing the extrema coordinates
 	 */
-	public ArrayList< ArrayList< int[] > > getRegionalMaxima();
+	public ArrayList< ArrayList< int[] > > getRegionalExtrema();
 	
-	public ArrayList< double[] > getRegionalMaximaCenters(ArrayList< ArrayList< int[] > > regionalMaxima);
+	public ArrayList< double[] > getRegionalExtremaCenters(ArrayList< ArrayList< int[] > > regionalMaxima);
 	
 	/**
 	 * If called, then regional <b>maxima</b> will be found.

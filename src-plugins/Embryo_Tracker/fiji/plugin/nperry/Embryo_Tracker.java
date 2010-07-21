@@ -64,6 +64,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		gd.addNumericField("Pixel width:", imp.getCalibration().pixelWidth, 3);		// used to calibrate the image for 3D rendering
 		gd.addNumericField("Pixel height:", imp.getCalibration().pixelHeight, 3);	// used to calibrate the image for 3D rendering
 		gd.addNumericField("Voxel depth:", imp.getCalibration().pixelDepth, 3);		// used to calibrate the image for 3D rendering
+		gd.addCheckbox("Over time", false);
 		gd.addCheckbox("Use median filter", false);
 		gd.addCheckbox("Allow edge maxima", false);
 		gd.showDialog();
@@ -74,11 +75,12 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		float pixelWidth = (float)gd.getNextNumber();
 		float pixelHeight = (float)gd.getNextNumber();
 		float pixelDepth = (float)gd.getNextNumber();
+		boolean overTime = (boolean)gd.getNextBoolean();
 		boolean useMedFilt = (boolean)gd.getNextBoolean();
 		boolean allowEdgeMax = (boolean)gd.getNextBoolean();
 
 		// 4 - Execute!
-		Object[] result = exec(imp, diam, useMedFilt, allowEdgeMax, pixelWidth, pixelHeight, pixelDepth);
+		Object[] result = exec(imp, diam, useMedFilt, allowEdgeMax, pixelWidth, pixelHeight, pixelDepth, overTime);
 		
 		// 5 - Display new image and overlay maxima
 		if (null != result) {
@@ -94,13 +96,17 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	}
 	
 	/** Execute the plugin functionality: apply a median filter (for salt and pepper noise), a Gaussian blur, and then find maxima. */
-	public Object[] exec(ImagePlus imp, float diam, boolean useMedFilt, boolean allowEdgeMax, float pixelWidth, float pixelHeight, float pixelDepth) {
+	public Object[] exec(ImagePlus imp, float diam, boolean useMedFilt, boolean allowEdgeMax, float pixelWidth, float pixelHeight, float pixelDepth, boolean overTime) {
 		// 0 - Check validity of parameters:
 		if (null == imp) return null;
 		
 		// 1 - Prepare for use with Imglib:
 		img = ImagePlusAdapter.wrap(imp);
 		int numDim = img.getNumDimensions();
+		IJ.log("Image Dimensions (before time correction): " + img.getNumDimensions());
+		if (overTime) numDim--;  //numDim stores physical # of dimensions only
+		IJ.log("Image Dimensions (after time correction): " + numDim);
+		if (1==1) return null;
 		
 		// 2 - Downsample to improve run time. The image is downsampled by the factor necessary to achieve a resulting blob size of about 10 pixels in diameter in all dimensions.
 		IJ.log("Downsampling...");
@@ -270,16 +276,16 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		IJ.log("Finding maxima...");
 		IJ.showStatus("Finding maxima...");
 		ArrayList< ArrayList< int[]> > maxima = null;
-		RegionalExtremaFactory<T> maxFactory = new RegionalExtremaFactory<T>(img, false);
+		RegionalExtremaFactory<T> maxFactory = new RegionalExtremaFactory<T>(img, overTime);
 		RegionalExtremaFinder<T> findMax = maxFactory.createRegionalMaximaFinder();
 		//RegionalMaximaFactory<FloatType> maxFactory = new RegionalMaximaFactory<FloatType>(imgClone, false);
 		//RegionalMaximaFinder<FloatType> findMax = maxFactory.createRegionalMaximaFinder();
 		findMax.allowEdgeExtrema(allowEdgeMax);
 		findMax.findMaxima();
 		if (findMax.checkInput() && findMax.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
-			maxima = findMax.getRegionalMaxima(); 
+			maxima = findMax.getRegionalExtrema(); 
 		}
-		ArrayList< double[] > centeredMaxima = findMax.getRegionalMaximaCenters(maxima);
+		ArrayList< double[] > centeredMaxima = findMax.getRegionalExtremaCenters(maxima);
 		System.out.println("Find Maxima Run Time: " + findMax.getProcessingTime());
 		System.out.println("Num regional maxima: " + centeredMaxima.size());
 

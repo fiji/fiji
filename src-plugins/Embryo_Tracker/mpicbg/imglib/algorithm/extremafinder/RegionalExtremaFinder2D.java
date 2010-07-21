@@ -9,17 +9,19 @@ import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
 import mpicbg.imglib.type.numeric.RealType;
 
 /**
- * <p>This class finds the regional maxima of a 2 dimensional image. A regional maximum is defined as follows:</p>
+ *  * <p>This class finds the regional extrema of a 3 dimensional image. A regional maxima is defined as follows:</p>
  * 
  * <p>"A regional maximum M of a grayscale image I is a connected components of pixels such that every pixel in 
  * the neighborhood of M has a strictly lower value."</p>
  * 
- * <p>This class does not stipulate how much brighter a regional max must be from the neighboring pixels, but only
- * requires that it is brighter. So a connected component of pixels that is 1 higher in intensity from its neighbors
+ * <p>The definition of a regional minimum is simply the opposite; the neighboring pixels must be strictly brighter.</p>
+ * 
+ * <p>This class does not stipulate how much brighter a regional extreme must be from the neighboring pixels, but only
+ * requires that it is brighter or dimmer. So a connected component of pixels that is 1 higher in intensity from its neighbors
  * is treated the same as a connected component that is 100 higher in intensity than it's neighbors.</p>
  * 
- * <p>The {@link getRegionalMaxima} method returns an ArrayList of ArrayLists, where each inner ArrayLists represents
- * a regional maximum and contains the coordinates of the pixels comprising that regional maximum.</p>
+ * <p>The {@link #getRegionalExtrema()} method returns an ArrayList of ArrayLists, where each inner ArrayLists represents
+ * a regional extreme and contains the coordinates of the pixels comprising that regional extreme.</p>
  * 
  * <p>Notably, this implementation does not allow for the identification of h-domes, as mentioned by Luc Vincent
  * in his paper, "Morphological Grayscale Reconstruction in Image Analysis: Applications and Efficient Algorithms."</p>
@@ -95,31 +97,31 @@ public class RegionalExtremaFinder2D<T extends RealType<T>> extends AbstractRegi
 	}
 	
 	/**
-	 * <p>Finds the regional maxima of the input image.</p>
+	 * <p>Finds the regional extrema of the input image.</p>
 	 * 
 	 * <p><b>Algorithm:</b> Step 2.1 iterates through all of the pixels in the image with an outer cursor.
-	 * For each pixel, if we have not processed the pixel previously, we then declare isMax to be true
-	 * since the pixel could potentially be a regional max ('innocent until proven guilty' approach). We then
-	 * add this pixel's coordinates to an ArrayList. The reason for the ArrayList is the following: imagine
+	 * For each pixel, if we have not processed the pixel previously, we then declare isExtrema to be true
+	 * since the pixel could potentially be a regional extreme ('innocent until proven guilty' approach). We then
+	 * add this pixel's coordinates to an ArrayList. The reason for the ArrayList is the following (example is for regional maxima): imagine
 	 * a pixel which has a value of 255 (it's very bright, if 255 is white in an 8-bit image), and that
 	 * 25 of his direct 3D neighbors are strictly less bright than him (<255), but that one of his neighbors
-	 * is also 255. Therefore, our pixel is not a regional maxima, but this pixel and his bright neighbor
+	 * is also 255. Therefore, our pixel is not a regional maximum, but this pixel and his bright neighbor
 	 * COULD be. Remember, a regional max is a connected component of pixels where all neighboring pixels have strictly less intensity.
-	 * The ArrayList is therefore used to hold the coordinates of the pixels comprising regional maxima.</p>
+	 * The ArrayList is therefore used to hold the coordinates of the pixels comprising regional extrema.</p>
 	 * 
-	 * <p>So, step 2.2 is the iteration through the pixels in the potential regional maxima in the ArrayList. If a neighboring pixel is found 
-	 * to be strictly brighter, we mark isMax false, but continue iterating through the connected component because we know that the connected component cannot be
-	 * a regional maximum, but we can save time by marking the pixels in this connected component as visited while we are here. If a neighboring 
+	 * <p>So, step 2.2 is the iteration through the pixels in the ArrayList. If a neighboring pixel is found 
+	 * to be strictly brighter (or lower), we mark isExtreme false, but continue iterating through the connected component because we know that the connected component cannot be
+	 * a regional extreme, but we can save time by marking the pixels in this connected component as visited while we are here. If a neighboring 
 	 * pixel is found to have the same intensity value, that pixel is added to the ArrayList and subsequently searched. 
 	 * We stop this iteration once nothing more is added to the ArrayList (we've searched the entire connected component of our initial 
 	 * pixel from step 2.1).</p>
 	 * 
 	 * <p>Step 2.3 is the actual iteration through the neighbors of our current pixel from step 2.2.</p>
 	 * 
-	 * <p>Once the connected component is completely searched, if isMax == true, then we never found
-	 * a brighter pixel, so the whole connected component is a regional max, and an ArrayList of the coordinates of the pixels
-	 * making up the connected component is stored in another ArrayList.  If however isMax == false, we encountered a brighter pixel on 
-	 * the border of the connected component, so the connected components pixels are not regional maxima and are just ignored, but marked as
+	 * <p>Once the connected component is completely searched, if isExtreme == true, then we never found
+	 * a brighter (or dimmer) pixel, so the whole connected component is a regional extreme, and an ArrayList of the coordinates of the pixels
+	 * making up the connected component is stored in another ArrayList.  If however isExtreme == false, we encountered a brighter (or dimmer) pixel on 
+	 * the border of the connected component, so the connected components pixels are not regional extrema and are just ignored, but marked as
 	 * processed so we don't visit again.</p>
 	 */
 	@SuppressWarnings("unchecked")
@@ -138,7 +140,7 @@ public class RegionalExtremaFinder2D<T extends RealType<T>> extends AbstractRegi
 		T neighborValue;												// holds the pixel value of a neighbor, which is compared to currentValue
 		final int width = image.getDimensions()[0];							// width of the image, used to map 3D coordinates to a 1D coordinate system for storing information about each pixel (visisted or not, etc)
 		final byte visitedAndProcessed[] = new byte[image.getNumPixels()];	// holds information on whether the pixel has been added to the lake/connected component, or whether pixel has had neighbors directly searched already.
-		boolean isMax;													// stores whether our lake/connected component is a local maxima or not.
+		boolean isExtreme;													// stores whether our lake/connected component is a local maxima or not.
 		int nextCoords[] = new int [2];									// declare coordinate arrays outside while loops to speed up. holds the coordinates of pixel in step 2.2
 		int currCoords[] = new int[2];									// holds coordinates of pixel in step 2.1
 		int neighborCoords[] = new int[2];								// holds coordinates of pixel in step 2.3
@@ -152,7 +154,7 @@ public class RegionalExtremaFinder2D<T extends RealType<T>> extends AbstractRegi
 			if ((visitedAndProcessed[getIndexOfPosition(currCoords, width)] & PROCESSED) != 0) {  // prevents revisiting pixels, increases speed
 				continue;
 			}
-			isMax = true;
+			isExtreme = true;
 			currentValue.set(curr.getType());  // Store the intensity of this connected component.
 			toSearch.add(currCoords);
 			
@@ -183,7 +185,7 @@ public class RegionalExtremaFinder2D<T extends RealType<T>> extends AbstractRegi
 						
 						// Case 1: neighbor's value is strictly larger than ours, so ours cannot be a regional maximum.
 						if ((sign * compare) > 0) {
-							isMax = false;
+							isExtreme = false;
 						}
 						
 						// Case 2: neighbor's value is strictly equal to ours, which means we could still be at a maximum, but the max value is a blob, not just a single point. We must check the area.
@@ -200,7 +202,7 @@ public class RegionalExtremaFinder2D<T extends RealType<T>> extends AbstractRegi
 				}
 				neighbors.reset();  // needed to get the outer cursor to work correctly;		
 			}
-			if (isMax) {  // If isMax is still true, then our connected component is a regional maximum, so store the coordinates of the pixels making up the regional maximum.
+			if (isExtreme) {  // If isMax is still true, then our connected component is a regional maximum, so store the coordinates of the pixels making up the regional maximum.
 				maxima.add((ArrayList<int[]>) searched.clone());
 			} 
 			searched.clear();
@@ -218,7 +220,7 @@ public class RegionalExtremaFinder2D<T extends RealType<T>> extends AbstractRegi
 	 * 
 	 * @return the Arraylist of ArrayLists, which is interpreted as the ArrayList of regional maxima (stored in an ArrayList)
 	 */
-	public ArrayList< ArrayList< int[] > > getRegionalMaxima() { return maxima;	}
+	public ArrayList< ArrayList< int[] > > getRegionalExtrema() { return maxima;	}
 	
 	/**
 	 * Takes an ArrayList which represents a regional maximum, and computes the averaged coordinate.
@@ -231,7 +233,7 @@ public class RegionalExtremaFinder2D<T extends RealType<T>> extends AbstractRegi
 	 * @return The coordinates of the "center pixel" of the regional maximum. 
 	 */
 	@Override
-	public ArrayList< double[] > getRegionalMaximaCenters(ArrayList< ArrayList< int[] > > regionalMaxima) {
+	public ArrayList< double[] > getRegionalExtremaCenters(ArrayList< ArrayList< int[] > > regionalMaxima) {
 		ArrayList< double[] > centeredRegionalMaxima = new ArrayList< double[] >();
 		ArrayList< int[] > curr = null;
 		while (!regionalMaxima.isEmpty()) {

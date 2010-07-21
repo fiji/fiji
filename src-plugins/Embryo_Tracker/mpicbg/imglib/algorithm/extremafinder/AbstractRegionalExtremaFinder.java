@@ -37,7 +37,7 @@ public abstract class AbstractRegionalExtremaFinder<T extends RealType<T>> imple
 	}
 
 	@Override
-	public ArrayList< ArrayList< int[] > > getRegionalMaxima() {
+	public ArrayList< ArrayList< int[] > > getRegionalExtrema() {
 		return maxima;
 	}
 	

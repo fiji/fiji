@@ -60,8 +60,9 @@ public class RegionalExtremaFactory<T extends RealType<T>> implements Factory {
     	case 3:
     	
     		if (overTime) {
-    			errorMessage = "3D over time is not implemented yet.";
-            	throw new IllegalArgumentException(errorMessage);    			
+    			//errorMessage = "3D over time is not implemented yet.";
+            	//throw new IllegalArgumentException(errorMessage);
+    			return new RegionalExtremaFinder3DOverTime<T>(image);
     		} else {    			
     			return new RegionalExtremaFinder3D<T>(image);
     		}
