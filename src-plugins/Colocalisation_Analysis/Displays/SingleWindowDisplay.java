@@ -21,6 +21,7 @@ import javax.swing.JLabel;
 import mpicbg.imglib.algorithm.math.ImageStatistics;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
+import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.real.FloatType;
 
 import ij.IJ;
@@ -148,16 +149,16 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 
 					// get current value at position
 					float val = pixelAccessCursor.getType().getRealFloat();
+
+					double calibratedXBinBottom = histogram.getHistXMin() + x / histogram.getXBinWidth();
+					double calibratedXBinTop = histogram.getHistXMin() + (x + 1) / histogram.getXBinWidth();
+
+					double calibratedYBinBottom = histogram.getHistYMin() + y / histogram.getYBinWidth();
+					double calibratedYBinTop = histogram.getHistYMin() + (y + 1) / histogram.getYBinWidth();
+
+					IJ.showStatus("x = " + IJ.d2s(calibratedXBinBottom) + " to " + IJ.d2s(calibratedXBinTop) +
+							", y = " + IJ.d2s(calibratedYBinBottom) + " to " + IJ.d2s(calibratedYBinTop) + ", value = " + IJ.d2s(val) );
 				}
-
-				double calibratedXBinBottom = histogram.getHistXMin() + x / histogram.getXBinWidth();
-				double calibratedXBinTop = histogram.getHistXMin() + (x + 1) / histogram.getXBinWidth();
-
-				double calibratedYBinBottom = histogram.getHistYMin() + y / histogram.getYBinWidth();
-				double calibratedYBinTop = histogram.getHistYMin() + (y + 1) / histogram.getYBinWidth();
-
-				IJ.showStatus("x = " + IJ.d2s(calibratedXBinBottom) + " to " + IJ.d2s(calibratedXBinTop) +
-						", y = " + IJ.d2s(calibratedYBinBottom) + " to " + IJ.d2s(calibratedYBinTop) + ", value = " + IJ.d2s(val) );
 			} else if (currentlyDisplayedImageResult instanceof Result.ImageResult) {
 				ImagePlus imp = ImageJFunctions.displayAsVirtualStack( currentlyDisplayedImageResult.getData() );
 				imp.mouseMoved(x, y);
@@ -174,7 +175,7 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 		ImagePlus imp = ImageJFunctions.displayAsVirtualStack( result.getData() );
 		this.imp.setProcessor(imp.getProcessor());
 		ImageProcessor ip = this.imp.getProcessor();
-		double max = ImageStatistics.getImageMax(result.getData());
+		double max = ImageStatistics.<RealType>getImageMax(result.getData()).getRealDouble();
 		this.imp.setDisplayRange(0.0, max);
 		IJ.run(this.imp, "Fire", null);
 		this.imp.updateAndDraw();
