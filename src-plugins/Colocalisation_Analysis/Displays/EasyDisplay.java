@@ -40,5 +40,7 @@ public class EasyDisplay implements Display {
 		textWindow.getTextPanel().appendLine("Ch2 Min\t" + container.getMinCh2() + "\n");
 		textWindow.getTextPanel().appendLine("Ch1 Max\t" + container.getMaxCh1() + "\n");
 		textWindow.getTextPanel().appendLine("Ch2 Max\t" + container.getMaxCh2() + "\n");
+		textWindow.getTextPanel().appendLine("Ch1 Max Threshold\t" + container.getCh1MaxThreshold() + "\n");
+		textWindow.getTextPanel().appendLine("Ch2 Max Threshold\t" + container.getCh2MaxThreshold() + "\n");
 	}
 }
