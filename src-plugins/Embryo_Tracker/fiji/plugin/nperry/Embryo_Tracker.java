@@ -16,8 +16,8 @@ import java.util.ListIterator;
 import vib.PointList;
 
 import mpicbg.imglib.algorithm.fft.FourierConvolution;
-import mpicbg.imglib.algorithm.findmax.RegionalExtremaFactory;
-import mpicbg.imglib.algorithm.findmax.RegionalExtremaFinder;
+import mpicbg.imglib.algorithm.extremafinder.RegionalExtremaFactory;
+import mpicbg.imglib.algorithm.extremafinder.RegionalExtremaFinder;
 import mpicbg.imglib.algorithm.gauss.DownSample;
 import mpicbg.imglib.algorithm.gauss.GaussianConvolutionRealType;
 import mpicbg.imglib.algorithm.laplace.LoGKernelFactory;
