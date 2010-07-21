@@ -38,7 +38,7 @@ public class RegionalMaximaFinder3D<T extends RealType<T>> extends AbstractRegio
 	private long processingTime;											// stores the run time of process() once the method is invoked.
 	private String errorMessage = "";										// stores any error messages.
 	/* Bitmasks used in the findMaxima algorithm to perform quick checks */
-	final static byte VISITED = (byte)1;	// pixel has been added to the lake, but not had neighbors inspected (explored, but not searched)
+	final static byte CC_MEMBER = (byte)1;	// pixel has been added to the lake, but not had neighbors inspected (explored, but not searched)
 	final static byte PROCESSED = (byte)2;	// pixel has been added to the lake, and had neighbors inspected (explored, and searched)
 	
 	/*
@@ -147,9 +147,7 @@ public class RegionalMaximaFinder3D<T extends RealType<T>> extends AbstractRegio
 		int nextCoords[] = new int [3];									// declare coordinate arrays outside while loops to speed up. holds the coordinates of pixel in step 2.2
 		int currCoords[] = new int[3];									// holds coordinates of pixel in step 2.1
 		int neighborCoords[] = new int[3];								// holds coordinates of pixel in step 2.3
-		final byte VISITED = (byte)1;	// pixel has been added to the lake, but not had neighbors inspected (explored, but not searched)
-		final byte PROCESSED = (byte)2;	// pixel has been added to the lake, and had neighbors inspected (explored, and searched)
-		
+
 		// 2 - Search all pixels for LOCAL maxima.
 		
 		// 2.1 - Iterate over all pixels in the image.
@@ -182,24 +180,26 @@ public class RegionalMaximaFinder3D<T extends RealType<T>> extends AbstractRegio
 					neighbors.fwd();
 					local.getPosition(neighborCoords);
 					if (isWithinImageBounds(neighborCoords)) {
+						if ((visitedAndProcessed[getIndexOfPosition(neighborCoords, width, numPixelsInXYPlane)] & CC_MEMBER) != 0) {  // We've already visited this neighbor before, and handled it accordingly, so skip it since it hasn't changed.
+							continue;
+						}	
 						neighborValue = neighbors.getType();
 						int compare = neighborValue.compareTo(currentValue);
 						
 						// Case 1: neighbor's value is strictly larger, so ours cannot be a regional maximum.
 						if ((sign * compare) > 0) {
-						//if (compare < 0) {
 							isMax = false;
 						}
 						
-						// Case 2: neighbor's value is strictly equal, which means we could still be at a maximum, but the max value is a blob, not just a single point. We must check the area.
-						else if (compare == 0 && (visitedAndProcessed[getIndexOfPosition(neighborCoords, width, numPixelsInXYPlane)] & VISITED) == 0) {
+						// Case 2: neighbor's value is strictly equal, which means this pixel belongs to the connected component.
+						else if (compare == 0 && (visitedAndProcessed[getIndexOfPosition(nextCoords, width, numPixelsInXYPlane)] & PROCESSED) != 0) {  // Note: don't re-add a PROCESSED pixel to CC list; it's already been there.
 							toSearch.add(neighborCoords.clone());
-							visitedAndProcessed[getIndexOfPosition(neighborCoords, width, numPixelsInXYPlane)] |= VISITED;  // mark that this pixel has been added to the lake search list with VISITED (different than PROCESSED, which is used to say that a pixel has had his neighbor's searched.)
+							visitedAndProcessed[getIndexOfPosition(neighborCoords, width, numPixelsInXYPlane)] |= CC_MEMBER;  // mark that this pixel has been added to the lake search list with VISITED (different than PROCESSED, which is used to say that a pixel has had his neighbor's searched.)
 						}
 						
 						// Case 3: neighbor's value is strictly lower, so it can't be a regional max.  Don't bother considering it as a regional max.
 						else {
-							visitedAndProcessed[getIndexOfPosition(neighborCoords, width, numPixelsInXYPlane)] |= PROCESSED; 
+							visitedAndProcessed[getIndexOfPosition(neighborCoords, width, numPixelsInXYPlane)] |= PROCESSED;
 						}
 					}
 				}
