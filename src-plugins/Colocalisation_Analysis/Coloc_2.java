@@ -41,8 +41,12 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		// this list contains the algorithms that will be run when the user clicks ok
 		List<Algorithm> userSelectedJobs = new ArrayList<Algorithm>();
 
-		userSelectedJobs.add(new PearsonsCorrelation(PearsonsCorrelation.Implementation.Fast));
+		// add some preprocessing jobs:
+		userSelectedJobs.add(new InputCheck());
 		userSelectedJobs.add(new AutoThresholdRegression());
+
+		// add user selected algorithms
+		userSelectedJobs.add(new PearsonsCorrelation(PearsonsCorrelation.Implementation.Fast));
 		userSelectedJobs.add(new LiHistogram2D("Li - Ch1", true));
 		userSelectedJobs.add(new LiHistogram2D("Li - Ch2", false));
 		userSelectedJobs.add(new Histogram2D("hello"));
