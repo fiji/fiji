@@ -36,11 +36,12 @@ public class RegionalExtremaFactory<T extends RealType<T>> implements Factory {
 	}
 	
 	/**
-	 * Return the adequate {@link LocalMaximaFinder}, given the dimensionality of the source image.
+	 * Return the adequate {@link RegionalExtremaFinder}, given the dimensionality of the source image.
 	 * Special cases of image over time will be addressed using the flag given in the constructor.  
-	 * @return  a new {@link LocalMaximaFinder} 
+	 * @param findMaxima  if true, will return a <b>maxima</b> finder, and a <b>minima</b> finder otherwise
+	 * @return  a new RegionalExtremaFinder
 	 */
-    public RegionalExtremaFinder<T> createRegionalMaximaFinder() {
+    public RegionalExtremaFinder<T> createRegionalMaximaFinder(boolean findMaxima) {
     	
     	switch ( image.getNumDimensions() ) {
     	
@@ -54,7 +55,7 @@ public class RegionalExtremaFactory<T extends RealType<T>> implements Factory {
     			errorMessage = "2D over time is not implemented yet."; 
             	throw new IllegalArgumentException(errorMessage);    			
     		} else {
-    			return new RegionalExtremaFinder2D<T>(image);    			
+    			return new RegionalExtremaFinder2D<T>(image, findMaxima);    			
     		}
     		
     	case 3:
@@ -62,9 +63,9 @@ public class RegionalExtremaFactory<T extends RealType<T>> implements Factory {
     		if (overTime) {
     			//errorMessage = "3D over time is not implemented yet.";
     			//throw new IllegalArgumentException(errorMessage);
-    			return new RegionalExtremaFinder3D<T>(image);
+    			return new RegionalExtremaFinder3D<T>(image, findMaxima);
     		} else {    			
-    			return new RegionalExtremaFinder3D<T>(image);
+    			return new RegionalExtremaFinder3D<T>(image, findMaxima);
     		}
         
     	default:

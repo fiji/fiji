@@ -20,37 +20,30 @@ public interface RegionalExtremaFinder<T extends RealType<T>> extends Algorithm,
 	
 	/**
 	 * Returns the ArrayList containing the coordinates of the local extrema found. Each 
-	 * element of the ArrayList is a double array, representing the coordinate of the found
+	 * element of the ArrayList is a int array, representing the coordinate of the found
 	 * extrema, in the same order that of the source {@link Image}.
 	 * 
 	 * @return  the ArrayList containing the extrema coordinates
 	 */
 	public ArrayList< ArrayList< int[] > > getRegionalExtrema();
 	
-	public ArrayList< double[] > getRegionalExtremaCenters(ArrayList< ArrayList< int[] > > regionalMaxima);
-	
 	/**
-	 * If called, then regional <b>maxima</b> will be found.
+	 * Computes the average coordinate of the extrema locations.
+	 * This average coordinates are returned, and represents the "center" of the regional maximum.
+	 * Note that this is not guaranteed to be in the regional maximum itself (imagine a regional maximum
+	 * that is a ring shape; the direct center is not part of the regional maximum itself, but is what
+	 * would be computed by this function). Return <code>null</code> if the {@link #process()} method
+	 * has not bee called.
 	 * 
+	 * @param  doInterpolate  if true, extrema positions will be interpolated to sub-pixel accuracy using 
+	 * neighborhood pixels
+	 * @return The coordinates of the "center pixel" of the regional maximum. 
 	 */
-	public void findMaxima();
-	
-	/**
-	 * If called, then regional <b>minima</b> will be found.
-	 * 
-	 */
-	public void findMinima();
-	
-	/**
-	 * If set to true before the {@link #process()} method is called, then extrema locations
-	 * will be interpolated using intensity interpolation by a paraboloid. 
-	 * @param flag
-	 */
-	public void doInterpolate(boolean flag);
+	public ArrayList< double[] > getRegionalExtremaCenters(boolean doInterpolate);
 	
 	/**
 	 * If set to true before the {@link #process()} method is called, then extrema found 
-	 * at the edges of the image bounds (including time edges) will not be priuned, and will
+	 * at the edges of the image bounds (including time edges) will not be pruned, and will
 	 * be included in the result array.
 	 * @param flag
 	 */

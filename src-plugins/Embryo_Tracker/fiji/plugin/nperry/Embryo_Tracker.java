@@ -304,15 +304,14 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			IJ.showStatus("Finding extrema...");
 			ArrayList< ArrayList< int[]> > extrema = null;
 			RegionalExtremaFactory<T> extremaFactory = new RegionalExtremaFactory<T>(img, overTime);
-			RegionalExtremaFinder<T> findExtrema = extremaFactory.createRegionalMaximaFinder();
+			RegionalExtremaFinder<T> findExtrema = extremaFactory.createRegionalMaximaFinder(true);
 			//RegionalMaximaFactory<FloatType> maxFactory = new RegionalMaximaFactory<FloatType>(imgClone, false);
 			//RegionalMaximaFinder<FloatType> findMax = maxFactory.createRegionalMaximaFinder();
 			findExtrema.allowEdgeExtrema(allowEdgeMax);
-			findExtrema.findMaxima();
 			if (findExtrema.checkInput() && findExtrema.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
 				extrema = findExtrema.getRegionalExtrema(); 
 			}
-			ArrayList< double[] > centeredExtrema = findExtrema.getRegionalExtremaCenters(extrema);
+			ArrayList< double[] > centeredExtrema = findExtrema.getRegionalExtremaCenters(false);
 			extremaAllFrames.add(centeredExtrema);
 			System.out.println("Find Maxima Run Time: " + findExtrema.getProcessingTime());
 			System.out.println("Num regional maxima: " + centeredExtrema.size());

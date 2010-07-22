@@ -37,6 +37,9 @@ public class RegionalExtremaFinder3D<T extends RealType<T>> extends AbstractRegi
 	 * FIELDS 
 	 */
 	
+	/** Causes the algorithm to find regional maxima by default (1 = maxima, -1 = minima). */
+	protected int sign;				
+
 	private long processingTime;											// stores the run time of process() once the method is invoked.
 	private String errorMessage = "";										// stores any error messages.
 	/* Bitmasks used in the findMaxima algorithm to perform quick checks */
@@ -48,7 +51,28 @@ public class RegionalExtremaFinder3D<T extends RealType<T>> extends AbstractRegi
 	 */
 	
 	/**
-	 * Constructor for the RegionalMaximaFinder2D class.
+	 * Constructor for the RegionalMaximaFinder3D class.
+	 * <p>
+	 * By default, the {@link OutOfBoundsStrategyFactory} is a constant value strategy, sets to 0,
+	 * so as to avoid nasty mirroring of periodic maxima effects. Edge maxima will be discarded by
+	 * default, and there will be no maxima interpolation.
+	 * 
+	 * @param image the image to find the maxima of
+	 * @param findMaxima  if true, will return a <b>maxima</b> finder, and a <b>minima</b> finder otherwise
+	 */
+	public RegionalExtremaFinder3D( final Image<T> image, final boolean findMaxima)
+	{
+		this.image = image;
+		this.processingTime = -1;
+		if (findMaxima) {
+			sign = 1;
+		} else {
+			sign = -1;
+		}
+	}
+	
+	/**
+	 * Constructor for the RegionalMaximaFinder3D class, returning a <b>maxima</b> finder.
 	 * <p>
 	 * By default, the {@link OutOfBoundsStrategyFactory} is a constant value strategy, sets to 0,
 	 * so as to avoid nasty mirroring of periodic maxima effects. Edge maxima will be discarded by
@@ -58,8 +82,7 @@ public class RegionalExtremaFinder3D<T extends RealType<T>> extends AbstractRegi
 	 */
 	public RegionalExtremaFinder3D( final Image<T> image)
 	{
-		this.image = image;
-		this.processingTime = -1;
+		this(image, true);
 	}
 	
 	/**
@@ -228,27 +251,6 @@ public class RegionalExtremaFinder3D<T extends RealType<T>> extends AbstractRegi
 	@Override
 	public ArrayList< ArrayList< int[] > > getRegionalExtrema() { return maxima;	}
 	
-	/**
-	 * Takes an ArrayList which represents a regional maximum, and computes the averaged coordinate.
-	 * This average coordinate is returned, and represents the "center" of the regional maximum.
-	 * Note that this is not guaranteed to be in the regional maximum itself (imagine a regional maximum
-	 * that is a ring shape; the direct center is not part of the regional maximum itself, but is what
-	 * would be computed by this function).
-	 * 
-	 * @param
-	 * @return The coordinates of the "center pixel" of the regional maximum. 
-	 */
-	@Override
-	public ArrayList< double[] > getRegionalExtremaCenters(ArrayList< ArrayList< int[] > > regionalMaxima) {
-		ArrayList< double[] > centeredRegionalMaxima = new ArrayList< double[] >();
-		ArrayList< int[] > curr = null;
-		while (!regionalMaxima.isEmpty()) {
-			curr = regionalMaxima.remove(0);
-			double averagedCoord[] = findAveragePosition(curr);
-			centeredRegionalMaxima.add(averagedCoord);
-		}
-		return centeredRegionalMaxima;
-	}
 	
 	/**
 	 * Determines whether the input coordinates are on the edge of the image or not.
@@ -259,26 +261,7 @@ public class RegionalExtremaFinder3D<T extends RealType<T>> extends AbstractRegi
 	final protected boolean isEdgeMax(final int[] coords) {
 		return coords[0] == 0 || coords[0] == image.getDimension(0) - 1 || coords[1] == 0 || coords[1] == image.getDimension(1) - 1 || coords[2] == 0 || coords[2] == image.getDimension(2) - 1;
 	}
-	
-	/**
-	 * Given an ArrayList of int[] (coordinates), computes the averaged coordinates and returns them.
-	 * 
-	 * @param searched
-	 * @return
-	 */
-	final static protected double[] findAveragePosition(final ArrayList < int[] > coords) {
-		int count = 0;
-		double avgX = 0, avgY = 0, avgZ = 0;
-		while(!coords.isEmpty()) {
-			int curr[] = coords.remove(0);
-			avgX += curr[0];
-			avgY += curr[1];
-			avgZ += curr[2];
-			count++;
-		}
-		return new double[] {avgX/count, avgY/count, avgZ/count};
-	}
-	
+		
 	/**
 	 * Given a position array, returns whether or not the position is within the bounds of the image, or out of bounds.
 	 * 
