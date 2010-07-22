@@ -23,7 +23,8 @@ public class EasyDisplay implements Display {
 			Result r = iterator.next();
 			if (r instanceof Result.SimpleValueResult){
 				Result.SimpleValueResult result = (Result.SimpleValueResult)r;
-				textWindow.getTextPanel().appendLine(result.getName() + "\t" + result.getValue() + "\n");
+				textWindow.getTextPanel().appendLine(result.getName() + "\t"
+						+ IJ.d2s(result.getValue(), result.getDecimalPlaces()) + "\n");
 			} else if ( r instanceof Result.Histogram2DResult) {
 				Result.Histogram2DResult result = (Result.Histogram2DResult)r;
 				ImagePlus imp = ImageJFunctions.displayAsVirtualStack( result.getData() );
