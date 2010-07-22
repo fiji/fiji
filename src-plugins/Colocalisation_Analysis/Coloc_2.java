@@ -60,8 +60,8 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 			System.out.println("Exception occured in Algorithm preconditions: " + e.getMessage());
 		}
 
-		//Display theResultDisplay = new SingleWindowDisplay();
-		Display theResultDisplay = new EasyDisplay();
+		Display theResultDisplay = new SingleWindowDisplay();
+		//Display theResultDisplay = new EasyDisplay();
 		theResultDisplay.display(container);
 
 
