@@ -16,6 +16,7 @@ import java.util.ListIterator;
 
 import vib.PointList;
 import view4d.Timeline;
+import view4d.TimelineGUI;
 
 import mpicbg.imglib.algorithm.fft.FourierConvolution;
 import mpicbg.imglib.algorithm.extremafinder.RegionalExtremaFactory;
@@ -54,6 +55,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	final static protected double IDEAL_SIGMA_FOR_DOWNSAMPLED_BLOB_DIAM = 1.55f;  // trial and error proved this to be approximately the best sigma for a blob of 10 pixels in diameter.
 	
 	/** Ask for parameters and then execute. */
+	@SuppressWarnings("unchecked")
 	public void run(String arg) {
 		// 1 - Obtain the currently active image:
 		ImagePlus imp = IJ.getImage();
@@ -86,19 +88,15 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		
 		// 5 - Display new image and overlay maxima
 		if (null != result) {
+			ArrayList< ArrayList<double[]> > extremaAllFrames = (ArrayList< ArrayList<double[]> >) result[0];
 			if (img.getNumDimensions() == 3) {	// If original image is 3D, create a 3D rendering of the image and overlay maxima
-				Image3DUniverse univFin = (Image3DUniverse) result[0];
-				univFin.show();
-				
-				// Get the Timeline object
-				Timeline tl = univFin.getTimeline();
-				
-				// Start playback
-				tl.record();
+				ij.plugin.Duplicator d = new ij.plugin.Duplicator();  // Make a duplicate image so we don't alter the users image when displaying 3D (requires 8-bit, etc).
+				ImagePlus duplicatedImp = d.run(imp);
+				render3DAndOverlayExtrema(extremaAllFrames, duplicatedImp, pixelWidth, pixelHeight, pixelDepth, createDownsampledDim(pixelWidth, pixelHeight, pixelDepth, diam), diam, overTime);
 			} else {
-				PointRoi roi = (PointRoi) result[0];
-				imp.setRoi(roi);
-				imp.updateAndDraw();
+				//PointRoi roi = (PointRoi) result[0];
+				//imp.setRoi(roi);
+				//imp.updateAndDraw();
 			}
 		}
 	}
@@ -110,20 +108,19 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		ArrayList< ArrayList <double[]> > extremaAllFrames = new ArrayList< ArrayList <double[]> >();
 		float downsampleFactors[] = null;
 		                        
-		// 1 - Create separate stacks for each frame
+		// 1 - Create separate ImagePlus's for each frame
 		ImageStack stack = imp.getImageStack();
 		int numSlices = imp.getNSlices();
 		int numFrames = 1;  // At least one frame, since an image is open.
 		if (overTime) {
 			numFrames = imp.getNFrames();
 		}
-		Object ret[] = new Object[numFrames];
 		
 		// For each frame...
 		for (int i = 0; i < numFrames; i++) {
 			ImageStack frame = imp.createEmptyStack();
 			
-			// ...create the slice by combining the ImageProcessors, one for each Z.
+			// ...create the slice by combining the ImageProcessors, one for each Z in the stack.
 			for (int j = 1; j <= numSlices; j++) {
 				frame.addSlice(Integer.toString(j + (i * numSlices)), stack.getProcessor(j + (i * numSlices)));
 			}
@@ -140,7 +137,6 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			IJ.showStatus("Downsampling...");
 			int dim[] = img.getDimensions();
 			downsampleFactors = createDownsampledDim(pixelWidth, pixelHeight, pixelDepth, diam);	// factors for x,y,z that we need for scaling image down
-			//IJ.log("Downsampling factors: " + MathLib.printCoordinates(downsampleFactors));
 			int downsampledDim[] = (numDim == 3) ? new int[]{(int)(dim[0] / downsampleFactors[0]), (int)(dim[1] / downsampleFactors[1]), (int)(dim[2] / downsampleFactors[2])} : new int[]{(int)(dim[0] / downsampleFactors[0]), (int)(dim[1] / downsampleFactors[1])};  // downsampled image dimensions once the downsampleFactors have been applied to their respective image dimensions
 			final DownSample<T> downsampler = new DownSample<T>(img, downsampledDim, 0.5f, 0.5f);	// optimal sigma is defined by 0.5f, as mentioned here: http://pacific.mpi-cbg.de/wiki/index.php/Downsample
 			if (downsampler.checkInput() && downsampler.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
@@ -186,8 +182,6 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			// #---------------------------------------#
 			// #------        Time Trials       -------#
 			// #---------------------------------------#
-			//Image<T> imgResult = img.clone(); 
-			//Image<FloatType> imgClone = null;
 			long overall = 0;
 			long numIterations = 1;
 			for (int k = 0; k < numIterations; k++) {
@@ -289,8 +283,6 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			
 			/** Approach 4: DoG */
 			/** Approach 5: F(DoG) */
-			
-				//if (k == 0) img = imgClone.clone();
 				overall += runTime;
 			}
 			System.out.println("Average run time: " + (long)overall/numIterations);
@@ -305,8 +297,6 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			ArrayList< ArrayList< int[]> > extrema = null;
 			RegionalExtremaFactory<T> extremaFactory = new RegionalExtremaFactory<T>(img, overTime);
 			RegionalExtremaFinder<T> findExtrema = extremaFactory.createRegionalMaximaFinder();
-			//RegionalMaximaFactory<FloatType> maxFactory = new RegionalMaximaFactory<FloatType>(imgClone, false);
-			//RegionalMaximaFinder<FloatType> findMax = maxFactory.createRegionalMaximaFinder();
 			findExtrema.allowEdgeExtrema(allowEdgeMax);
 			findExtrema.findMaxima();
 			if (findExtrema.checkInput() && findExtrema.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
@@ -320,17 +310,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 
 		}
 		
-		// 8 - Setup for displaying results
-		if (img.getNumDimensions() == 3) {  // prepare 3D render
-			ij.plugin.Duplicator d = new ij.plugin.Duplicator();  // Make a duplicate image so we don't alter the users image when displaying 3D (requires 8-bit, etc).
-			//ImagePlus duplicatedImp = d.run(imp);
-			//Image3DUniverse univ = 	render3DAndOverlayMaxima(extremaAllFrames, duplicatedImp, pixelWidth, pixelHeight, pixelDepth, downsampleFactors);
-			Image3DUniverse univ = 	render3DAndOverlayMaxima(extremaAllFrames, IJ.getImage(), pixelWidth, pixelHeight, pixelDepth, downsampleFactors);
-			return new Object[]{univ};
-		} else {
-			PointRoi roi = preparePointRoi(extremaAllFrames, downsampleFactors, pixelWidth, pixelHeight);
-			return new Object[]{roi};
-		}
+		return new Object[] {extremaAllFrames};
 	}
 	
 	/**
@@ -437,151 +417,56 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 * @param pixelHeight
 	 * @param pixelDepth
 	 */
-	public Image3DUniverse render3DAndOverlayMaxima(ArrayList< ArrayList<double[]> > maxima, ImagePlus scaled, float pixelWidth, float pixelHeight, float pixelDepth, float downsampleFactors[]) {
+	public void render3DAndOverlayExtrema(ArrayList< ArrayList<double[]> > maxima, ImagePlus dup, float pixelWidth, float pixelHeight, float pixelDepth, float downsampleFactors[], float diam, boolean overTime) {
 		// Adjust calibration
-		scaled.getCalibration().pixelWidth = pixelWidth;
-		scaled.getCalibration().pixelHeight = pixelHeight;
-		scaled.getCalibration().pixelDepth = pixelDepth;
+		dup.getCalibration().pixelWidth = pixelWidth;
+		dup.getCalibration().pixelHeight = pixelHeight;
+		dup.getCalibration().pixelDepth = pixelDepth;
 		
 		// Convert to a usable format
-		new StackConverter(scaled).convertToGray8();
+		new StackConverter(dup).convertToGray8();
 
 		// Create a universe, but do not show it
 		Image3DUniverse univ = new Image3DUniverse();
-
-		// Add the image as a volume rendering
-		Content c = univ.addVoltex(scaled);
+		univ.show();
 		
+		// Add the image as a volume rendering
+		Content c = univ.addVoltex(dup);
+		
+		if (overTime) {
+			// Get the Timeline object
+			Timeline tl = univ.getTimeline();
+			
+			// Get the TimelineGUI object
+			TimelineGUI gui = new TimelineGUI(tl);
+		}
+		//univ.
+		/*
 		// Change the size of the points
-		/*float curr = c.getLandmarkPointSize();
-		c.setLandmarkPointSize(curr/9);
+		float curr = c.getLandmarkPointSize();
+		//c.setLandmarkPointSize(curr/9);
+		c.setLandmarkPointSize(diam);
 		
 		// Retrieve the point list
 		PointList pl = c.getPointList();
 		
 		// Add maxima as points to the point list
-		Iterator< double[] > itr = maxima.listIterator();
-		while (itr.hasNext()) {
-			double maxCoords[] = itr.next();
-			//int debug[] = new int[] {(int)maxCoords[0], (int)maxCoords[1], (int)maxCoords[2]};
-			//IJ.log(MathLib.printCoordinates(debug));
-			pl.add(maxCoords[0] * downsampleFactors[0] * pixelWidth, maxCoords[1] * downsampleFactors[1] * pixelHeight, maxCoords[2] * downsampleFactors[2] * pixelDepth);
+		Iterator< ArrayList<double[]> > frameItr = maxima.listIterator();
+		int frameNum = 0;
+		while (frameItr.hasNext()) {
+			ArrayList<double[]> frame = frameItr.next();
+			Iterator<double[]> itr = frame.listIterator();
+			while (itr.hasNext()) {
+				double maxCoords[] = itr.next();
+				//int debug[] = new int[] {(int)maxCoords[0], (int)maxCoords[1], (int)maxCoords[2]};
+				//IJ.log(MathLib.printCoordinates(debug));
+				pl.add(maxCoords[0] * downsampleFactors[0] * pixelWidth, maxCoords[1] * downsampleFactors[1] * pixelHeight, maxCoords[2] * downsampleFactors[2] * pixelDepth);
+			}
+			frameNum++;
 		}
 
 		// Make the point list visible
-		c.showPointList(true);*/
-		
-		return univ;
+		c.showPointList(true);
+		*/
 	}
 }
-
-/** ---------------------------- */
-/**         archived code        */
-/** ---------------------------- */
-
-/** Tried implementing findMaxima using a trick from Michael Schmid's version of 'Find Maxima' that comes with ImageJ to speed my version up. Ultimately, my version above and "his version" (not quite his, but as best I could) produced the same performance.  */
-/*public void findMaxima2D(Image<T> img) {
-long start = System.currentTimeMillis();
-// 1 - Initialize local variables, cursors
-final LocalizableByDimCursor<T> curr = img.createLocalizableByDimCursor(new OutOfBoundsStrategyMirrorFactory<T>()); // this cursor is the main cursor which iterates over all the pixels in the image.  
-LocalizableByDimCursor<T> local = img.createLocalizableByDimCursor(new OutOfBoundsStrategyMirrorFactory<T>());		// this cursor is used to search a connected "lake" of pixels, or pixels with the same value
-LocalNeighborhoodCursor<T> neighbors = new LocalNeighborhoodCursor<T>(local);										// this cursor is used to search the immediate neighbors of a pixel
-ArrayList< int[] > maxCoordinates = new ArrayList< int[] >();  	// holds the positions of the local maxima
-T currentValue = img.createType();  							// holds the value of the current pixel's intensity. We use createType() here because getType() gives us a pointer to the cursor's object, but since the neighborhood moves the parent cursor, when we check the neighbors, we actually change the object stored here, or the pixel we are trying to compare to. see fiji-devel list for further explanation.
-T neighborValue; 												// holds the value of the neighbor's intensity
-int width = img.getDimensions()[0];								// width of the image. needed for storing info in the visited and visitedLakeMember arrays correctly
-byte visited[] = new byte[img.getNumPixels()];					// stores whether or not this pixel has been searched either by the main cursor, or directly in a lake search.
-boolean isMax;													// flag which tells us whether the current lake is a local max or not
-int currCoords[] = new int[2];									// coords of outer, main loop
-int neighborCoords[] = new int[2];								// coords of neighbor
-int averagedMaxPos[] = new int[2];								// for a local max lake, this stores the 'center' of the lake's position.
-
-int pList[] = new int[img.getNumPixels()];
-
-// 2 - Search all pixels for LOCAL maxima. A local maximum is a pixel that is the brightest in its immediate neighborhood (so the pixel is brighter or as bright as the 26 direct neighbors of it's cube-shaped neighborhood if 3D). If neighboring pixels have the same value as the current pixel, then the pixels are treated as a local "lake" and the lake is searched to determine whether it is a maximum "lake" or not.
-
-// 2.1 - Iterate over all pixels in the image.
-while(curr.hasNext()) { 
-	int listI = 0;
-	int listLen = 1;
-	curr.fwd();
-	curr.getPosition(currCoords);
-	if ((visited[getIndexOfPosition2D(currCoords, width)] & PROCESSED) != 0) {	// if we've already seen this pixel, then we've already decided if its a max or not, so skip it
-		continue;
-	}
-	isMax = true;  				// this pixel could be a max
-	pList[listI] = getIndexOfPosition2D(currCoords, width);
-	// 2.2 - Iterate through queue which contains the pixels of the "lake"
-	do {
-		int offset = pList[listI];
-		int x = offset % width;
-		int y = offset / width;
-		if ((visited[offset] & PROCESSED) != 0) {	// prevents us from just searching the lake infinitely
-			listI++;
-			continue;
-		} else {	// if we've never seen, add to visited list, and add to searched list.
-			visited[offset] |= PROCESSED;	
-		}
-		local.setPosition(new int[] {x, y});		// set the local cursors position to the next member of the lake, so that the neighborhood cursor can search its neighbors.
-		currentValue.set(local.getType());  // store the value of this pixel in a variable
-		neighbors.update();
-		while(neighbors.hasNext()) {
-			neighbors.fwd();
-			neighborCoords = local.getPosition();
-			neighborValue = neighbors.getType();
-			
-			// Case 1: neighbor's value is strictly larger than ours, so ours cannot be a local maximum.
-			if (neighborValue.compareTo(currentValue) > 0) {
-				isMax = false;
-			}
-			
-			// Case 2: neighbor's value is strictly equal to ours, which means we could still be at a maximum, but the max value is a blob, not just a single point. We must check the area. In other words, we have a lake.
-			else if (neighborValue.compareTo(currentValue) == 0 && isWithinImageBounds2D(neighborCoords) && (visited[getIndexOfPosition2D(neighborCoords, width)] & VISITED) == 0) {
-				pList[listLen] = getIndexOfPosition2D(neighborCoords, width);
-				visited[getIndexOfPosition2D(neighborCoords, width)] |= VISITED;  // prevents us from adding the same thing to the pList multiple times.
-				listLen++;
-			}
-		}
-		neighbors.reset();
-		listI++;
-	} while (listI < listLen);
-	if (isMax) {	// if we get here, we've searched the entire lake, so find the average point and call that a max by adding to results list
-		averagedMaxPos = findAveragePosition2D(pList, listLen, width);
-		maxCoordinates.add(averagedMaxPos);
-	}
-}
-//IJ.log("done searching!");
-curr.close();
-neighbors.close();
-
-long deltaT = System.currentTimeMillis() - start;
-
-// 3 - Print out list of maxima, set up for point display (FOR TESTING):
-ox = new int[maxCoordinates.size()];
-oy = new int[maxCoordinates.size()];
-points = maxCoordinates.size();
-int index = 0;
-String img_dim = MathLib.printCoordinates(img.getDimensions());
-IJ.log("Image dimensions: " + img_dim);
-Iterator<int[]> itr = maxCoordinates.iterator();
-while (itr.hasNext()) {
-	int coords[] = itr.next();
-	ox[index] = coords[0];
-	oy[index] = coords[1];
-	String pos_str = MathLib.printCoordinates(coords);
-	IJ.log(pos_str);
-	index++;
-}
-}*/
-
-/*public int[] findAveragePosition2D(int pList[], int listLen, int width) {
-int count = 0;
-int avgX = 0, avgY = 0;
-for (int i = 0; i < listLen; i++) {
-	int curr = pList[i];
-	avgX += curr % width;
-	avgY += curr / width;
-	count++;
-}
-return new int[] {avgX/count, avgY/count};
-}*/
