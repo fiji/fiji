@@ -141,8 +141,6 @@ public class ContentCreator {
 	 * @return
 	 */
 	public static ImagePlus[] getImages(ImagePlus imp) {
-		if(!imp.isHyperStack())
-			return new ImagePlus[] {imp};
 
 		int nChannels = imp.getNChannels();
 		int nSlices = imp.getNSlices();
