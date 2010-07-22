@@ -1,8 +1,11 @@
-import java.awt.Button;
+import ij.IJ;
+import ij.ImageJ;
+import ij.ImagePlus;
+import ij.gui.ImageWindow;
+import ij.gui.NewImage;
+import ij.process.ImageProcessor;
+
 import java.awt.FlowLayout;
-import java.awt.Font;
-import java.awt.GridLayout;
-import java.awt.Label;
 import java.awt.Panel;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
@@ -16,21 +19,12 @@ import java.util.List;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
-import javax.swing.JLabel;
 
 import mpicbg.imglib.algorithm.math.ImageStatistics;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.real.FloatType;
-
-import ij.IJ;
-import ij.ImagePlus;
-import ij.gui.ImageWindow;
-import ij.gui.NewImage;
-import ij.measure.ResultsTable;
-import ij.process.ImageProcessor;
-import ij.ImageJ;
 
 /**
  * This class displays the container contents in one single window
