@@ -2,6 +2,7 @@ package fiji.plugin.nperry;
 
 import ij.IJ;
 import ij.ImagePlus;
+import ij.ImageStack;
 import ij.gui.GenericDialog;
 import ij.gui.PointRoi;
 import ij.plugin.PlugIn;
@@ -14,6 +15,7 @@ import java.util.Iterator;
 import java.util.ListIterator;
 
 import vib.PointList;
+import view4d.Timeline;
 
 import mpicbg.imglib.algorithm.fft.FourierConvolution;
 import mpicbg.imglib.algorithm.extremafinder.RegionalExtremaFactory;
@@ -64,7 +66,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		gd.addNumericField("Pixel width:", imp.getCalibration().pixelWidth, 3);		// used to calibrate the image for 3D rendering
 		gd.addNumericField("Pixel height:", imp.getCalibration().pixelHeight, 3);	// used to calibrate the image for 3D rendering
 		gd.addNumericField("Voxel depth:", imp.getCalibration().pixelDepth, 3);		// used to calibrate the image for 3D rendering
-		gd.addCheckbox("Over time", false);
+		gd.addCheckbox("Over time", true);
 		gd.addCheckbox("Use median filter", false);
 		gd.addCheckbox("Allow edge maxima", false);
 		gd.showDialog();
@@ -87,6 +89,12 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			if (img.getNumDimensions() == 3) {	// If original image is 3D, create a 3D rendering of the image and overlay maxima
 				Image3DUniverse univFin = (Image3DUniverse) result[0];
 				univFin.show();
+				
+				// Get the Timeline object
+				Timeline tl = univFin.getTimeline();
+				
+				// Start playback
+				tl.record();
 			} else {
 				PointRoi roi = (PointRoi) result[0];
 				imp.setRoi(roi);
@@ -97,206 +105,230 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	
 	/** Execute the plugin functionality: apply a median filter (for salt and pepper noise), a Gaussian blur, and then find maxima. */
 	public Object[] exec(ImagePlus imp, float diam, boolean useMedFilt, boolean allowEdgeMax, float pixelWidth, float pixelHeight, float pixelDepth, boolean overTime) {
-		// 0 - Check validity of parameters:
+		// 0 - Check validity of parameters, initialize local variables:
 		if (null == imp) return null;
-		
-		// 1 - Prepare for use with Imglib:
-		img = ImagePlusAdapter.wrap(imp);
-		int numDim = img.getNumDimensions();
-		IJ.log("Image Dimensions (before time correction): " + img.getNumDimensions());
-		if (overTime) numDim--;  //numDim stores physical # of dimensions only
-		IJ.log("Image Dimensions (after time correction): " + numDim);
-		if (1==1) return null;
-		
-		// 2 - Downsample to improve run time. The image is downsampled by the factor necessary to achieve a resulting blob size of about 10 pixels in diameter in all dimensions.
-		IJ.log("Downsampling...");
-		IJ.showStatus("Downsampling...");
-		int dim[] = img.getDimensions();
-		float downsampleFactors[] = createDownsampledDim(pixelWidth, pixelHeight, pixelDepth, diam);	// factors for x,y,z that we need for scaling image down
-		//IJ.log("Downsampling factors: " + MathLib.printCoordinates(downsampleFactors));
-		int downsampledDim[] = (numDim == 3) ? new int[]{(int)(dim[0] / downsampleFactors[0]), (int)(dim[1] / downsampleFactors[1]), (int)(dim[2] / downsampleFactors[2])} : new int[]{(int)(dim[0] / downsampleFactors[0]), (int)(dim[1] / downsampleFactors[1])};  // downsampled image dimensions once the downsampleFactors have been applied to their respective image dimensions
-		final DownSample<T> downsampler = new DownSample<T>(img, downsampledDim, 0.5f, 0.5f);	// optimal sigma is defined by 0.5f, as mentioned here: http://pacific.mpi-cbg.de/wiki/index.php/Downsample
-		if (downsampler.checkInput() && downsampler.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
-			img = downsampler.getResult(); 
-		} else { 
-	        System.out.println(downsampler.getErrorMessage()); 
-	        System.out.println("Bye.");
-	        return null;
+		ArrayList< ArrayList <double[]> > extremaAllFrames = new ArrayList< ArrayList <double[]> >();
+		float downsampleFactors[] = null;
+		                        
+		// 1 - Create separate stacks for each frame
+		ImageStack stack = imp.getImageStack();
+		int numSlices = imp.getNSlices();
+		int numFrames = 1;  // At least one frame, since an image is open.
+		if (overTime) {
+			numFrames = imp.getNFrames();
 		}
+		Object ret[] = new Object[numFrames];
 		
-		// 3 - Apply a median filter, to get rid of salt and pepper noise which could be mistaken for maxima in the algorithm (only applied if requested by user explicitly):
-		if (useMedFilt) {
-			IJ.log("Applying median filter...");
-			IJ.showStatus("Applying median filter...");
-			StructuringElement strel;
+		// For each frame...
+		for (int i = 0; i < numFrames; i++) {
+			ImageStack frame = imp.createEmptyStack();
 			
-			// 3.1 - Need to figure out the dimensionality of the image in order to create a StructuringElement of the correct dimensionality (StructuringElement needs to have same dimensionality as the image):
-			if (numDim == 3) {  // 3D case
-				strel = new StructuringElement(new int[]{3, 3, 1}, "3D Square");  // unoptimized shape for 3D case. Note here that we manually are making this shape (not using a class method). This code is courtesy of Larry Lindsey
-				Cursor<BitType> c = strel.createCursor();  // in this case, the shape is manually made, so we have to manually set it, too.
-				while (c.hasNext()) 
-				{ 
-				    c.fwd(); 
-				    c.getType().setOne(); 
-				} 
-				c.close(); 
-			} else {  			// 2D case
-				strel = StructuringElement.createCube(2, 3);  // unoptimized shape
+			// ...create the slice by combining the ImageProcessors, one for each Z.
+			for (int j = 1; j <= numSlices; j++) {
+				frame.addSlice(Integer.toString(j + (i * numSlices)), stack.getProcessor(j + (i * numSlices)));
 			}
+			ImagePlus impSingleFrame = new ImagePlus("Frame " + Integer.toString(i + 1), frame);
 			
-			// 3.2 - Apply the median filter:
-			final MedianFilter<T> medFilt = new MedianFilter<T>(img, strel, new OutOfBoundsStrategyMirrorFactory<T>()); 
-			/** note: add back medFilt.checkInput() when it's fixed */
-			if (medFilt.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
-				img = medFilt.getResult(); 
+			// 2 - Prepare stack for use with Imglib
+			IJ.log("---Frame " + Integer.toString(i+1) + "---");
+			System.out.println("---Frame " + (i+1) + "---");
+			img = ImagePlusAdapter.wrap(impSingleFrame);
+			int numDim = img.getNumDimensions();
+		
+			// 3 - Downsample to improve run time. The image is downsampled by the factor necessary to achieve a resulting blob size of about 10 pixels in diameter in all dimensions.
+			IJ.log("Downsampling...");
+			IJ.showStatus("Downsampling...");
+			int dim[] = img.getDimensions();
+			downsampleFactors = createDownsampledDim(pixelWidth, pixelHeight, pixelDepth, diam);	// factors for x,y,z that we need for scaling image down
+			//IJ.log("Downsampling factors: " + MathLib.printCoordinates(downsampleFactors));
+			int downsampledDim[] = (numDim == 3) ? new int[]{(int)(dim[0] / downsampleFactors[0]), (int)(dim[1] / downsampleFactors[1]), (int)(dim[2] / downsampleFactors[2])} : new int[]{(int)(dim[0] / downsampleFactors[0]), (int)(dim[1] / downsampleFactors[1])};  // downsampled image dimensions once the downsampleFactors have been applied to their respective image dimensions
+			final DownSample<T> downsampler = new DownSample<T>(img, downsampledDim, 0.5f, 0.5f);	// optimal sigma is defined by 0.5f, as mentioned here: http://pacific.mpi-cbg.de/wiki/index.php/Downsample
+			if (downsampler.checkInput() && downsampler.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
+				img = downsampler.getResult(); 
 			} else { 
-		        System.out.println(medFilt.getErrorMessage()); 
+		        System.out.println(downsampler.getErrorMessage()); 
 		        System.out.println("Bye.");
 		        return null;
 			}
-		}
-		
-		// #---------------------------------------#
-		// #------        Time Trials       -------#
-		// #---------------------------------------#
-		Image<T> imgResult = img.clone(); 
-		//Image<FloatType> imgClone = null;
-		long overall = 0;
-		long numIterations = 1;
-		for (int i = 0; i < numIterations; i++) {
-			long startTime = System.currentTimeMillis();	
-		/** Approach 1: L x (G x I ) */
-		// 4 - Apply a Gaussian filter (code courtesy of Stephan Preibisch). Theoretically, this will make the center of blobs the brightest, and thus easier to find:
-		/*IJ.log("Applying Gaussian filter...");
-		IJ.showStatus("Applying Gaussian filter...");
-		final GaussianConvolutionRealType<T> convGaussian = new GaussianConvolutionRealType<T>(img, new OutOfBoundsStrategyMirrorFactory<T>(), IDEAL_SIGMA_FOR_DOWNSAMPLED_BLOB_DIAM);
-		if (convGaussian.checkInput() && convGaussian.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
-			img = convGaussian.getResult(); 
-		} else { 
-	        System.out.println(convGaussian.getErrorMessage()); 
-	        System.out.println("Bye.");
-	        return null;
-		}
-		
-		// 5 - Apply a Laplacian convolution to the image.
-		IJ.log("Applying Laplacian convolution...");
-		IJ.showStatus("Applying Laplacian convolution...");
-		// Laplacian kernel construction: everything is negative so that we can use the existing find maxima classes (otherwise, it would be creating minima, and we would need to use find minima). The kernel has everything divided by 18 because we want the highest value to be 1, so that numbers aren't created that beyond the capability of the image type. For example, in a short type, if we had the highest number * 18, the short type can't hold that, and the rest of the value is lost in conversion. This way, we won't create numbers larger than the respective types can hold.
-		DirectConvolution<T, FloatType, T> convLaplacian;
-		if (numDim == 3) {
-			float laplacianArray[][][] = new float[][][]{ { {0,-1/18,0},{-1/18,-1/18,-1/18},{0,-1/18,0} }, { {-1/18,-1/18,-1/18}, {-1/18,1,-1/18}, {-1/18,-1/18,-1/18} }, { {0,-1/18,0},{-1/18,-1/18,-1/18},{0,-1/18,0} } }; // laplace kernel found here: http://en.wikipedia.org/wiki/Discrete_Laplace_operator
+			
+			// 4 - Apply a median filter, to get rid of salt and pepper noise which could be mistaken for maxima in the algorithm (only applied if requested by user explicitly):
+			if (useMedFilt) {
+				IJ.log("Applying median filter...");
+				IJ.showStatus("Applying median filter...");
+				StructuringElement strel;
+				
+				// 4.1 - Need to figure out the dimensionality of the image in order to create a StructuringElement of the correct dimensionality (StructuringElement needs to have same dimensionality as the image):
+				if (numDim == 3) {  // 3D case
+					strel = new StructuringElement(new int[]{3, 3, 1}, "3D Square");  // unoptimized shape for 3D case. Note here that we manually are making this shape (not using a class method). This code is courtesy of Larry Lindsey
+					Cursor<BitType> c = strel.createCursor();  // in this case, the shape is manually made, so we have to manually set it, too.
+					while (c.hasNext()) 
+					{ 
+					    c.fwd(); 
+					    c.getType().setOne(); 
+					} 
+					c.close(); 
+				} else {  			// 2D case
+					strel = StructuringElement.createCube(2, 3);  // unoptimized shape
+				}
+				
+				// 4.2 - Apply the median filter:
+				final MedianFilter<T> medFilt = new MedianFilter<T>(img, strel, new OutOfBoundsStrategyMirrorFactory<T>()); 
+				/** note: add back medFilt.checkInput() when it's fixed */
+				if (medFilt.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
+					img = medFilt.getResult(); 
+				} else { 
+			        System.out.println(medFilt.getErrorMessage()); 
+			        System.out.println("Bye.");
+			        return null;
+				}
+			}
+			
+			// #---------------------------------------#
+			// #------        Time Trials       -------#
+			// #---------------------------------------#
+			//Image<T> imgResult = img.clone(); 
+			//Image<FloatType> imgClone = null;
+			long overall = 0;
+			long numIterations = 1;
+			for (int k = 0; k < numIterations; k++) {
+				long startTime = System.currentTimeMillis();	
+			/** Approach 1: L x (G x I ) */
+			// 5 - Apply a Gaussian filter (code courtesy of Stephan Preibisch). Theoretically, this will make the center of blobs the brightest, and thus easier to find:
+			/*IJ.log("Applying Gaussian filter...");
+			IJ.showStatus("Applying Gaussian filter...");
+			final GaussianConvolutionRealType<T> convGaussian = new GaussianConvolutionRealType<T>(img, new OutOfBoundsStrategyMirrorFactory<T>(), IDEAL_SIGMA_FOR_DOWNSAMPLED_BLOB_DIAM);
+			if (convGaussian.checkInput() && convGaussian.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
+				img = convGaussian.getResult(); 
+			} else { 
+		        System.out.println(convGaussian.getErrorMessage()); 
+		        System.out.println("Bye.");
+		        return null;
+			}
+			
+			// 6 - Apply a Laplacian convolution to the image.
+			IJ.log("Applying Laplacian convolution...");
+			IJ.showStatus("Applying Laplacian convolution...");
+			// Laplacian kernel construction: everything is negative so that we can use the existing find maxima classes (otherwise, it would be creating minima, and we would need to use find minima). The kernel has everything divided by 18 because we want the highest value to be 1, so that numbers aren't created that beyond the capability of the image type. For example, in a short type, if we had the highest number * 18, the short type can't hold that, and the rest of the value is lost in conversion. This way, we won't create numbers larger than the respective types can hold.
+			DirectConvolution<T, FloatType, T> convLaplacian;
+			if (numDim == 3) {
+				float laplacianArray[][][] = new float[][][]{ { {0,-1/18,0},{-1/18,-1/18,-1/18},{0,-1/18,0} }, { {-1/18,-1/18,-1/18}, {-1/18,1,-1/18}, {-1/18,-1/18,-1/18} }, { {0,-1/18,0},{-1/18,-1/18,-1/18},{0,-1/18,0} } }; // laplace kernel found here: http://en.wikipedia.org/wiki/Discrete_Laplace_operator
+				ImageFactory<FloatType> factory = new ImageFactory<FloatType>(new FloatType(), new ArrayContainerFactory());
+				Image<FloatType> laplacianKernel = factory.createImage(new int[]{3, 3, 3}, "Laplacian");
+				quickKernel3D(laplacianArray, laplacianKernel);
+				convLaplacian = new DirectConvolution<T, FloatType, T>(img.createType(), img, laplacianKernel);;
+			} else {
+				float laplacianArray[][] = new float[][]{ {-1/8,-1/8,-1/8},{-1/8,1,-1/8},{-1/8,-1/8,-1/8} }; // laplace kernel found here: http://en.wikipedia.org/wiki/Discrete_Laplace_operator
+				ImageFactory<FloatType> factory = new ImageFactory<FloatType>(new FloatType(), new ArrayContainerFactory());
+				Image<FloatType> laplacianKernel = factory.createImage(new int[]{3, 3}, "Laplacian");
+				quickKernel2D(laplacianArray, laplacianKernel);
+				convLaplacian = new DirectConvolution<T, FloatType, T>(img.createType(), img, laplacianKernel);;
+			}
+			//if(convLaplacian.checkInput() && convLaplacian.process()) {
+			if(convLaplacian.process()) {
+				img = convLaplacian.getResult();
+				//ImagePlus test = ImageJFunctions.copyToImagePlus(img);
+				//test.show();
+			} else {
+				System.out.println(convLaplacian.getErrorMessage());
+				System.out.println("Bye.");
+				return null;
+			}*/
+			
+			/** Approach 2: F(L) x F(G) x F(I) */
+			
+			// Gauss
+			IJ.log("Applying Gaussian filter...");
+			IJ.showStatus("Applying Gaussian filter...");
 			ImageFactory<FloatType> factory = new ImageFactory<FloatType>(new FloatType(), new ArrayContainerFactory());
-			Image<FloatType> laplacianKernel = factory.createImage(new int[]{3, 3, 3}, "Laplacian");
-			quickKernel3D(laplacianArray, laplacianKernel);
-			convLaplacian = new DirectConvolution<T, FloatType, T>(img.createType(), img, laplacianKernel);;
-		} else {
-			float laplacianArray[][] = new float[][]{ {-1/8,-1/8,-1/8},{-1/8,1,-1/8},{-1/8,-1/8,-1/8} }; // laplace kernel found here: http://en.wikipedia.org/wiki/Discrete_Laplace_operator
-			ImageFactory<FloatType> factory = new ImageFactory<FloatType>(new FloatType(), new ArrayContainerFactory());
-			Image<FloatType> laplacianKernel = factory.createImage(new int[]{3, 3}, "Laplacian");
-			quickKernel2D(laplacianArray, laplacianKernel);
-			convLaplacian = new DirectConvolution<T, FloatType, T>(img.createType(), img, laplacianKernel);;
-		}
-		//if(convLaplacian.checkInput() && convLaplacian.process()) {
-		if(convLaplacian.process()) {
-			img = convLaplacian.getResult();
-			//ImagePlus test = ImageJFunctions.copyToImagePlus(img);
-			//test.show();
-		} else {
-			System.out.println(convLaplacian.getErrorMessage());
-			System.out.println("Bye.");
-			return null;
-		}*/
-		
-		/** Approach 2: F(L) x F(G) x F(I) */
-		
-		// Gauss
-		IJ.log("Applying Gaussian filter...");
-		IJ.showStatus("Applying Gaussian filter...");
-		ImageFactory<FloatType> factory = new ImageFactory<FloatType>(new FloatType(), new ArrayContainerFactory());
-		Image<FloatType> gaussKernel = FourierConvolution.getGaussianKernel(factory, IDEAL_SIGMA_FOR_DOWNSAMPLED_BLOB_DIAM, numDim);
-		FourierConvolution<T, FloatType> fConvGauss = new FourierConvolution<T, FloatType>(img, gaussKernel);
-		if (!fConvGauss.checkInput() || !fConvGauss.process()) {
-			System.out.println( "Fourier Convolution failed: " + fConvGauss.getErrorMessage() );
-			return null;
-		}
-		img = fConvGauss.getResult();
-		
-		// Laplace
-		IJ.log("Applying Laplacian convolution...");
-		IJ.showStatus("Applying Laplacian convolution...");
-		Image<FloatType> laplacianKernel;
-		if (numDim == 3) {
-			float laplacianArray[][][] = new float[][][]{ { {0,-1/18,0},{-1/18,-1/18,-1/18},{0,-1/18,0} }, { {-1/18,-1/18,-1/18}, {-1/18,1,-1/18}, {-1/18,-1/18,-1/18} }, { {0,-1/18,0},{-1/18,-1/18,-1/18},{0,-1/18,0} } }; // laplace kernel found here: http://en.wikipedia.org/wiki/Discrete_Laplace_operator
-			laplacianKernel = factory.createImage(new int[]{3, 3, 3}, "Laplacian");
-			quickKernel3D(laplacianArray, laplacianKernel);
-		} else {
-			float laplacianArray[][] = new float[][]{ {-1/8,-1/8,-1/8},{-1/8,1,-1/8},{-1/8,-1/8,-1/8} }; // laplace kernel found here: http://en.wikipedia.org/wiki/Discrete_Laplace_operator
-			laplacianKernel = factory.createImage(new int[]{3, 3}, "Laplacian");
-			quickKernel2D(laplacianArray, laplacianKernel);
-		}
-		FourierConvolution<T, FloatType> fConvLaplacian = new FourierConvolution<T, FloatType>(img, laplacianKernel);
-		if (!fConvLaplacian.checkInput() || !fConvLaplacian.process()) {
-			System.out.println( "Fourier Convolution failed: " + fConvLaplacian.getErrorMessage() );
-			return null;
-		}
-		img = fConvLaplacian.getResult();		
-		
-		/** Approach 3: (L x G) x I */
-		/*IJ.log("Applying LoG Convolution...");
-		Image<FloatType> logKern = LoGKernelFactory.createLoGKernel(IDEAL_SIGMA_FOR_DOWNSAMPLED_BLOB_DIAM, numDim, true, true);
-		DirectConvolution<T, FloatType, T> convLoG = new DirectConvolution<T, FloatType, T>(img.createType(), img, logKern);
-		//DirectConvolution<T, FloatType, FloatType> convLoG = new DirectConvolution<T, FloatType, FloatType>(new FloatType(), img, logKern);
-		if(convLoG.process()) {
-			imgResult = convLoG.getResult();
-			ImagePlus test = ImageJFunctions.copyToImagePlus(imgResult);
-			test.show();
-		} else {
-			System.out.println(convLoG.getErrorMessage());
-			System.out.println("Bye.");
-			return null;
-		}*/
-		
-		long runTime = System.currentTimeMillis() - startTime;	
-		System.out.println("Laplacian/Gaussian Run Time: " + runTime);
-		
-		
-		/** Approach 4: DoG */
-		/** Approach 5: F(DoG) */
-		
-			//if (i == 0) img = imgClone.clone();
-			overall += runTime;
-		}
-		System.out.println("Average run time: " + (long)overall/numIterations);
-		// #----------------------------------------#
-		// #------        /Time Trials       -------#
-		// #----------------------------------------#
-		
-		
-		// 5 - Find maxima of newly convoluted image:
-		IJ.log("Finding maxima...");
-		IJ.showStatus("Finding maxima...");
-		ArrayList< ArrayList< int[]> > maxima = null;
-		RegionalExtremaFactory<T> maxFactory = new RegionalExtremaFactory<T>(img, overTime);
-		RegionalExtremaFinder<T> findMax = maxFactory.createRegionalMaximaFinder();
-		//RegionalMaximaFactory<FloatType> maxFactory = new RegionalMaximaFactory<FloatType>(imgClone, false);
-		//RegionalMaximaFinder<FloatType> findMax = maxFactory.createRegionalMaximaFinder();
-		findMax.allowEdgeExtrema(allowEdgeMax);
-		findMax.findMaxima();
-		if (findMax.checkInput() && findMax.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
-			maxima = findMax.getRegionalExtrema(); 
-		}
-		ArrayList< double[] > centeredMaxima = findMax.getRegionalExtremaCenters(maxima);
-		System.out.println("Find Maxima Run Time: " + findMax.getProcessingTime());
-		System.out.println("Num regional maxima: " + centeredMaxima.size());
+			Image<FloatType> gaussKernel = FourierConvolution.getGaussianKernel(factory, IDEAL_SIGMA_FOR_DOWNSAMPLED_BLOB_DIAM, numDim);
+			FourierConvolution<T, FloatType> fConvGauss = new FourierConvolution<T, FloatType>(img, gaussKernel);
+			if (!fConvGauss.checkInput() || !fConvGauss.process()) {
+				System.out.println( "Fourier Convolution failed: " + fConvGauss.getErrorMessage() );
+				return null;
+			}
+			img = fConvGauss.getResult();
+			
+			// Laplace
+			IJ.log("Applying Laplacian convolution...");
+			IJ.showStatus("Applying Laplacian convolution...");
+			Image<FloatType> laplacianKernel;
+			if (numDim == 3) {
+				float laplacianArray[][][] = new float[][][]{ { {0,-1/18,0},{-1/18,-1/18,-1/18},{0,-1/18,0} }, { {-1/18,-1/18,-1/18}, {-1/18,1,-1/18}, {-1/18,-1/18,-1/18} }, { {0,-1/18,0},{-1/18,-1/18,-1/18},{0,-1/18,0} } }; // laplace kernel found here: http://en.wikipedia.org/wiki/Discrete_Laplace_operator
+				laplacianKernel = factory.createImage(new int[]{3, 3, 3}, "Laplacian");
+				quickKernel3D(laplacianArray, laplacianKernel);
+			} else {
+				float laplacianArray[][] = new float[][]{ {-1/8,-1/8,-1/8},{-1/8,1,-1/8},{-1/8,-1/8,-1/8} }; // laplace kernel found here: http://en.wikipedia.org/wiki/Discrete_Laplace_operator
+				laplacianKernel = factory.createImage(new int[]{3, 3}, "Laplacian");
+				quickKernel2D(laplacianArray, laplacianKernel);
+			}
+			FourierConvolution<T, FloatType> fConvLaplacian = new FourierConvolution<T, FloatType>(img, laplacianKernel);
+			if (!fConvLaplacian.checkInput() || !fConvLaplacian.process()) {
+				System.out.println( "Fourier Convolution failed: " + fConvLaplacian.getErrorMessage() );
+				return null;
+			}
+			img = fConvLaplacian.getResult();		
+			
+			/** Approach 3: (L x G) x I */
+			/*IJ.log("Applying LoG Convolution...");
+			Image<FloatType> logKern = LoGKernelFactory.createLoGKernel(IDEAL_SIGMA_FOR_DOWNSAMPLED_BLOB_DIAM, numDim, true, true);
+			DirectConvolution<T, FloatType, T> convLoG = new DirectConvolution<T, FloatType, T>(img.createType(), img, logKern);
+			//DirectConvolution<T, FloatType, FloatType> convLoG = new DirectConvolution<T, FloatType, FloatType>(new FloatType(), img, logKern);
+			if(convLoG.process()) {
+				imgResult = convLoG.getResult();
+				ImagePlus test = ImageJFunctions.copyToImagePlus(imgResult);
+				test.show();
+			} else {
+				System.out.println(convLoG.getErrorMessage());
+				System.out.println("Bye.");
+				return null;
+			}*/
+			
+			long runTime = System.currentTimeMillis() - startTime;	
+			System.out.println("Laplacian/Gaussian Run Time: " + runTime);
+			
+			
+			/** Approach 4: DoG */
+			/** Approach 5: F(DoG) */
+			
+				//if (k == 0) img = imgClone.clone();
+				overall += runTime;
+			}
+			System.out.println("Average run time: " + (long)overall/numIterations);
+			// #----------------------------------------#
+			// #------        /Time Trials       -------#
+			// #----------------------------------------#
+			
+			
+			// 7 - Find extrema of newly convoluted image:
+			IJ.log("Finding extrema...");
+			IJ.showStatus("Finding extrema...");
+			ArrayList< ArrayList< int[]> > extrema = null;
+			RegionalExtremaFactory<T> extremaFactory = new RegionalExtremaFactory<T>(img, overTime);
+			RegionalExtremaFinder<T> findExtrema = extremaFactory.createRegionalMaximaFinder();
+			//RegionalMaximaFactory<FloatType> maxFactory = new RegionalMaximaFactory<FloatType>(imgClone, false);
+			//RegionalMaximaFinder<FloatType> findMax = maxFactory.createRegionalMaximaFinder();
+			findExtrema.allowEdgeExtrema(allowEdgeMax);
+			findExtrema.findMaxima();
+			if (findExtrema.checkInput() && findExtrema.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
+				extrema = findExtrema.getRegionalExtrema(); 
+			}
+			ArrayList< double[] > centeredExtrema = findExtrema.getRegionalExtremaCenters(extrema);
+			extremaAllFrames.add(centeredExtrema);
+			System.out.println("Find Maxima Run Time: " + findExtrema.getProcessingTime());
+			System.out.println("Num regional maxima: " + centeredExtrema.size());
+	
 
-		// 6 - Setup for displaying results
-		if (numDim == 3) {  // prepare 3D render
+		}
+		
+		// 8 - Setup for displaying results
+		if (img.getNumDimensions() == 3) {  // prepare 3D render
 			ij.plugin.Duplicator d = new ij.plugin.Duplicator();  // Make a duplicate image so we don't alter the users image when displaying 3D (requires 8-bit, etc).
-			ImagePlus duplicated = d.run(imp);
-			Image3DUniverse univ = 	render3DAndOverlayMaxima(centeredMaxima, duplicated, pixelWidth, pixelHeight, pixelDepth, downsampleFactors);
+			//ImagePlus duplicatedImp = d.run(imp);
+			//Image3DUniverse univ = 	render3DAndOverlayMaxima(extremaAllFrames, duplicatedImp, pixelWidth, pixelHeight, pixelDepth, downsampleFactors);
+			Image3DUniverse univ = 	render3DAndOverlayMaxima(extremaAllFrames, IJ.getImage(), pixelWidth, pixelHeight, pixelDepth, downsampleFactors);
 			return new Object[]{univ};
 		} else {
-			PointRoi roi = preparePointRoi(centeredMaxima, downsampleFactors, pixelWidth, pixelHeight);
+			PointRoi roi = preparePointRoi(extremaAllFrames, downsampleFactors, pixelWidth, pixelHeight);
 			return new Object[]{roi};
 		}
 	}
@@ -376,17 +408,22 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 * @param downsamplingFactor
 	 * @return
 	 */
-	public PointRoi preparePointRoi (ArrayList< double[] > maxima, float downsampleFactors[], float pixelWidth, float pixelHeight) {
-		int numPoints = maxima.size();
+	public PointRoi preparePointRoi (ArrayList< ArrayList< double[] > > extrema, float downsampleFactors[], float pixelWidth, float pixelHeight) {
+		int numPoints = extrema.size();
 		int ox[] = new int[numPoints];
 		int oy[] = new int[numPoints];
-		ListIterator< double[] > itr = maxima.listIterator();
-		int index = 0;
-		while (itr.hasNext()) {
-			double curr[] = itr.next();
-			ox[index] = (int) (curr[0] * downsampleFactors[0]);
-			oy[index] = (int) (curr[1] * downsampleFactors[1]);
-			index++;
+		ListIterator< ArrayList<double[]> > framesItr = extrema.listIterator();
+		
+		while (framesItr.hasNext()) {
+			ArrayList<double[]> frame= framesItr.next();
+			ListIterator< double[] > itr = frame.listIterator();
+			while (itr.hasNext()) {
+				int index = 0;
+				double curr[] = itr.next();
+				ox[index] = (int) (curr[0] * downsampleFactors[0]);
+				oy[index] = (int) (curr[1] * downsampleFactors[1]);
+				index++;
+			}
 		}
 		PointRoi roi = new PointRoi(ox, oy, numPoints);
 		return roi;
@@ -400,7 +437,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 * @param pixelHeight
 	 * @param pixelDepth
 	 */
-	public Image3DUniverse render3DAndOverlayMaxima(ArrayList< double[] > maxima, ImagePlus scaled, float pixelWidth, float pixelHeight, float pixelDepth, float downsampleFactors[]) {
+	public Image3DUniverse render3DAndOverlayMaxima(ArrayList< ArrayList<double[]> > maxima, ImagePlus scaled, float pixelWidth, float pixelHeight, float pixelDepth, float downsampleFactors[]) {
 		// Adjust calibration
 		scaled.getCalibration().pixelWidth = pixelWidth;
 		scaled.getCalibration().pixelHeight = pixelHeight;
@@ -408,15 +445,15 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		
 		// Convert to a usable format
 		new StackConverter(scaled).convertToGray8();
-		
+
 		// Create a universe, but do not show it
 		Image3DUniverse univ = new Image3DUniverse();
-		
+
 		// Add the image as a volume rendering
 		Content c = univ.addVoltex(scaled);
-
+		
 		// Change the size of the points
-		float curr = c.getLandmarkPointSize();
+		/*float curr = c.getLandmarkPointSize();
 		c.setLandmarkPointSize(curr/9);
 		
 		// Retrieve the point list
@@ -430,10 +467,9 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			//IJ.log(MathLib.printCoordinates(debug));
 			pl.add(maxCoords[0] * downsampleFactors[0] * pixelWidth, maxCoords[1] * downsampleFactors[1] * pixelHeight, maxCoords[2] * downsampleFactors[2] * pixelDepth);
 		}
-		
 
 		// Make the point list visible
-		c.showPointList(true);
+		c.showPointList(true);*/
 		
 		return univ;
 	}
