@@ -9,7 +9,7 @@ import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
 import mpicbg.imglib.type.numeric.RealType;
 
 /**
- *  * <p>This class finds the regional extrema of a 3 dimensional image. A regional maxima is defined as follows:</p>
+ * <p>This class finds the regional extrema of a 3 dimensional image. A regional maxima is defined as follows:</p>
  * 
  * <p>"A regional maximum M of a grayscale image I is a connected components of pixels such that every pixel in 
  * the neighborhood of M has a strictly lower value."</p>
