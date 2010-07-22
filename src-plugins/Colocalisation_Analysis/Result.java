@@ -245,4 +245,27 @@ public abstract class Result {
 			return decimalPlaces;
 		}
 	}
+
+	/**
+	 * A WarningResult is used to inform the user about
+	 * potential problems with the data or the calculations.
+	 * It should be treated in s special way by the displays.
+	 */
+	static class WarningResult extends Result {
+		// the warning message
+		protected String message;
+
+		public WarningResult(String message) {
+			this("Warning", message);
+		}
+
+		public WarningResult(String name, String message) {
+			super(name);
+			this.message = message;
+		}
+
+		public String getMessage() {
+			return message;
+		}
+	}
 }
