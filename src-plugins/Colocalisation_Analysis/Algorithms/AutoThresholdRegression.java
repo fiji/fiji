@@ -7,7 +7,11 @@ import mpicbg.imglib.type.numeric.RealType;
  * used for Person colocalisation calculation.
  */
 public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm {
-	protected boolean discardZeroPixels = true;
+	protected boolean discardZeroPixels = false;
+	/* the threshold for y-intercept to y-max to
+	 *  raise a warning about it being to high.
+	 */
+	final double warnYInterceptToYMaxRatioThreshold = 0.01;
 
 	@Override
 	public void execute(DataContainer container)
@@ -174,5 +178,14 @@ public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm {
 		container.setCh2MaxThreshold(ch2ThreshMax);
 		container.add( new Result.SimpleValueResult("m (slope)", m));
 		container.add( new Result.SimpleValueResult("b (y-intercept)", b));
+
+		double bToYMaxRatio = b / container.getMaxCh2();
+		container.add( new Result.SimpleValueResult("b to y-max ratio", bToYMaxRatio) );
+
+		// add warnings if values are not in tolerance range
+		if ( Math.abs(bToYMaxRatio) > warnYInterceptToYMaxRatioThreshold ) {
+			container.add( new Result.WarningResult("y-intercept high",
+					"The y-intercept of the auto threshold regression line is high. Maybe you should use a ROI.") );
+		}
 	}
 }
