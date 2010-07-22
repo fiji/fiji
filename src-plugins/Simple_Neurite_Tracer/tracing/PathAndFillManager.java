@@ -208,10 +208,10 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	   which paths are currently selected.  This is also
 	   propagated to:
 
-               (a) Each Path object (so that the 3D viewer can reflect
-               the change, for instance.)
+	       (a) Each Path object (so that the 3D viewer can reflect
+	       the change, for instance.)
 
-               (b) All the registered PathAndFillListener objects.
+	       (b) All the registered PathAndFillListener objects.
 	*/
 	public synchronized void setSelected( Path [] selectedPaths, Object sourceOfMessage ) {
 		selectedPathsSet.clear();
@@ -240,8 +240,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	/* This method returns an array of the "primary paths", which
 	   should be displayed at the top of a tree-like hierarchy.
 
-           The paths actually form a graph, of course, but most UIs
-           will want to display the graph as a tree. */
+	   The paths actually form a graph, of course, but most UIs
+	   will want to display the graph as a tree. */
 
 	public synchronized Path [] getPathsStructured() {
 
@@ -277,7 +277,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		}
 
 		for( int i = 0; i < primaryPaths.size(); ++i ) {
-		        primaryPath = primaryPaths.get(i);
+			primaryPath = primaryPaths.get(i);
 			primaryPath.setChildren(pathsLeft);
 		}
 
@@ -316,16 +316,12 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 	public synchronized void resetListeners( Path justAdded, boolean expandAll ) {
 
-		Hashtable< Path, Integer > pathToID = new Hashtable< Path, Integer >();
-
 		ArrayList<String> pathListEntries = new ArrayList<String>();
 
 		Iterator<Path> pi = allPaths.iterator();
 		while( pi.hasNext() ) {
 			Path p = pi.next();
 			int pathID = p.getID();
-			// if (verbose) System.out.println("path " + i + " is " + (Object)p );
-			pathToID.put(p,new Integer(pathID));
 			if( p == null ) {
 				throw new RuntimeException("BUG: A path in allPaths was null!");
 			}
@@ -363,23 +359,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			String name = "Fill (" + i + ")";
 
 			if( (f.sourcePaths != null) && (f.sourcePaths.size() > 0) ) {
-
-				name += " from paths: ";
-
-				Path [] sortedSourcePaths =f.sourcePaths.toArray( new Path[]{} );
-				Arrays.sort( sortedSourcePaths );
-
-				for( int j = 0; j < sortedSourcePaths.length; ++j ) {
-					Path p = sortedSourcePaths[j];
-					if( j != 0 )
-						name += ", ";
-					// if (verbose) System.out.println("source path " + j + " is " + (Object)p );
-					Integer fromPath = pathToID.get( p );
-					if( fromPath == null )
-						name += "(unknown)";
-					else
-						name += "(" + fromPath.intValue() + ")";
-				}
+				name += " from paths: " + f.getSourcePathsStringHuman();
 			}
 			fillListEntries[i] = name;
 		}
@@ -624,6 +604,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			pw.println("  <!ATTLIST fill           frompaths         CDATA           #IMPLIED>");
 			pw.println("  <!ATTLIST fill           metric            CDATA           #REQUIRED>");
 			pw.println("  <!ATTLIST fill           threshold         CDATA           #REQUIRED>");
+			pw.println("  <!ATTLIST fill           volume            CDATA           #IMPLIED>");
 			pw.println("  <!ATTLIST node           id                CDATA           #REQUIRED>");
 			pw.println("  <!ATTLIST node           x                 CDATA           #REQUIRED>");
 			pw.println("  <!ATTLIST node           y                 CDATA           #REQUIRED>");
@@ -643,17 +624,6 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 			pw.println("  <imagesize width=\"" + width + "\" height=\"" + height + "\" depth=\"" + depth + "\"/>" );
 
-			Hashtable< Path, Integer > pathToID =
-				new Hashtable< Path, Integer >();
-
-			for( Iterator j = allPaths.iterator(); j.hasNext(); ) {
-				Path p = (Path)j.next();
-				int id = p.getID();
-				if( id < 0 )
-					throw new RuntimeException("In writeXML() there was a path with a negative ID (BUG)");
-				pathToID.put( p, id );
-			}
-
 			for( Iterator j = allPaths.iterator(); j.hasNext(); ) {
 				Path p = (Path)j.next();
 				// This probably should be a String returning
@@ -662,7 +632,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				String startsString = "";
 				String endsString = "";
 				if( p.startJoins != null ) {
-					int startPathID = ((pathToID.get(p.startJoins))).intValue();
+					int startPathID = p.startJoins.getID();
 					// Find the nearest index for backward compatability:
 					int nearestIndexOnStartPath = -1;
 					if( p.startJoins.size() > 0 ) {
@@ -679,7 +649,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 						startsString += " startsindex=\"" + nearestIndexOnStartPath + "\"";
 				}
 				if( p.endJoins != null ) {
-					int endPathID = ((pathToID.get(p.endJoins))).intValue();
+					int endPathID = p.endJoins.getID();
 					// Find the nearest index for backward compatability:
 					int nearestIndexOnEndPath = -1;
 					if( p.endJoins.size() > 0 ) {
@@ -735,7 +705,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			int fillIndex = 0;
 			for( Iterator j = allFills.iterator(); j.hasNext(); ) {
 				Fill f = (Fill) j.next();
-				f.writeXML( pw, fillIndex, pathToID );
+				f.writeXML( pw, fillIndex );
+				++ fillIndex;
 			}
 			pw.println("</tracings>");
 		} finally {
@@ -1003,7 +974,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				if( useFittedString.equals("true") )
 					useFittedFields.put( id, true );
 				else if( useFittedString.equals("false") )
-				        useFittedFields.put( id, false );
+					useFittedFields.put( id, false );
 				else
 					throw new TracesFileFormatException("Unknown value for 'fitted' attribute: '"+useFittedString+"'");
 			}
@@ -1112,8 +1083,9 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				}
 
 				if( fill_id != (last_fill_id + 1) ) {
-				       throw new TracesFileFormatException( "Out of order id in <fill> (" + fill_id +
-									    " when we were expecting " + (last_fill_id + 1) + ")" );
+					IJ.log("Out of order id in <fill> (" + fill_id +
+					       " when we were expecting " + (last_fill_id + 1) + ")");
+					fill_id = last_fill_id + 1;
 				}
 
 				int [] sourcePathIndices = new int[ sourcePaths.length ];
@@ -1276,10 +1248,12 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			// Now turn the source paths into real paths...
 			for( int i = 0; i < allFills.size(); ++i ) {
 				Fill f = allFills.get(i);
+				Set<Path> realSourcePaths = new HashSet<Path>();
 				int [] sourcePathIDs = sourcePathIDForFills.get(i);
-				Path [] realSourcePaths = new Path[sourcePathIDs.length];
 				for( int j = 0; j < sourcePathIDs.length; ++j ) {
-					realSourcePaths[j] = getPathFromID(sourcePathIDs[j]);
+					Path sourcePath = getPathFromID(sourcePathIDs[j]);
+					if( sourcePath != null )
+						realSourcePaths.add( sourcePath );
 				}
 				f.setSourcePaths( realSourcePaths );
 			}
@@ -1651,7 +1625,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	public boolean importSWC( String filename, boolean ignoreCalibration,
 				  double x_offset, double y_offset, double z_offset,
 				  double x_scale, double y_scale, double z_scale,
-		                  boolean replaceAllPaths ) {
+				  boolean replaceAllPaths ) {
 
 		File f = new File(filename);
 		if( ! f.exists() ) {
@@ -1694,8 +1668,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		   it's a compressed traces file - the native format
 		   of this plugin.
 
-                   If it begins "<?xml", assume it's an uncompressed
-                   traces file.
+		   If it begins "<?xml", assume it's an uncompressed
+		   traces file.
 
 		   Otherwise, assum it's an SWC file.
 		*/
@@ -1985,6 +1959,47 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			return result;
 	}
 
+
+
+	public static void csvQuoteAndPrint(PrintWriter pw, Object o) {
+		pw.print(PathAndFillManager.stringForCSV(""+o));
+	}
+
+	public void exportFillsAsCSV( File outputFile ) throws IOException {
+
+			String [] headers = new String[]{ "FillID",
+							  "SourcePaths",
+							  "Threshold",
+							  "Metric",
+							  "Volume",
+							  "LengthUnits" };
+
+			PrintWriter pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(outputFile.getAbsolutePath()),"UTF-8"));
+			int columns = headers.length;
+			for( int c = 0; c < columns; ++c ) {
+				csvQuoteAndPrint(pw,headers[c]);
+				if( c < (columns - 1) )
+					pw.print(",");
+			}
+			pw.print("\r\n");
+			for( int i = 0; i < allFills.size(); ++i ) {
+				Fill f = allFills.get(i);
+				csvQuoteAndPrint(pw,i);
+				pw.print(",");
+				csvQuoteAndPrint(pw,f.getSourcePathsStringMachine());
+				pw.print(",");
+				csvQuoteAndPrint(pw,f.getThreshold());
+				pw.print(",");
+				csvQuoteAndPrint(pw,f.getMetric());
+				pw.print(",");
+				csvQuoteAndPrint(pw,f.getVolume());
+				pw.print(",");
+				csvQuoteAndPrint(pw,f.spacing_units);
+				pw.print("\r\n");
+			}
+			pw.close();
+	}
+
 	/* Output some potentially useful information about the paths
 	   as a CSV (comma separated values) file. */
 
@@ -2005,7 +2020,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				      "StartZ",
 				      "EndX",
 				      "EndY",
-				      "EndZ" };
+				      "EndZ",
+				      "ApproximateFittedVolume" };
 
 		Path [] primaryPaths = getPathsStructured();
 		HashSet<Path> h = new HashSet<Path>();
@@ -2068,6 +2084,13 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			pw.print(""+endPoint[1]);
 			pw.print(",");
 			pw.print(""+endPoint[2]);
+
+			pw.print(",");
+			double fittedVolume = pForLengthAndName.getApproximateFittedVolume();
+			if( fittedVolume >= 0 )
+				pw.print(fittedVolume);
+			else
+				pw.print("");
 
 			pw.print("\r\n");
 			pw.flush();

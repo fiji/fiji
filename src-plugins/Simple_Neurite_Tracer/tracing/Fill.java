@@ -32,113 +32,146 @@ import java.io.*;
 
 public class Fill {
 
-        public double distanceThreshold;
+	public double distanceThreshold;
 
-        public class Node {
-                public int x;
-                public int y;
-                public int z;
-                public double distance;
-                public int previous;
+	public class Node {
+		public int x;
+		public int y;
+		public int z;
+		public double distance;
+		public int previous;
 		public boolean open;
-        }
+	}
 
-        ArrayList< Node > nodeList;
+	ArrayList< Node > nodeList;
 
-        public Fill( ) {
-                nodeList = new ArrayList< Node >();
-        }
+	public Fill( ) {
+		nodeList = new ArrayList< Node >();
+	}
 
-        public void add( int x, int y, int z, double distance, int previous, boolean open ) {
-                Node n = new Node();
-                n.x = x;
-                n.y = y;
-                n.z = z;
-                n.distance = distance;
-                n.previous = previous;
+	public void add( int x, int y, int z, double distance, int previous, boolean open ) {
+		Node n = new Node();
+		n.x = x;
+		n.y = y;
+		n.z = z;
+		n.distance = distance;
+		n.previous = previous;
 		n.open = open;
-                nodeList.add(n);
-        }
+		nodeList.add(n);
+	}
 
-        Set< Path > sourcePaths;
+	Set< Path > sourcePaths;
 
-        public void setSourcePaths( Path [] newSourcePaths ) {
-                sourcePaths = new HashSet< Path >();
-                for( int i = 0; i < newSourcePaths.length; ++i ) {
-                        sourcePaths.add( newSourcePaths[i] );
-                }
-        }
+	public void setSourcePaths( Path [] newSourcePaths ) {
+		sourcePaths = new HashSet< Path >();
+		for( int i = 0; i < newSourcePaths.length; ++i ) {
+			sourcePaths.add( newSourcePaths[i] );
+		}
+	}
 
 	public void setSourcePaths( Set<Path> newSourcePaths ) {
 		sourcePaths = new HashSet<Path>();
 		sourcePaths.addAll(newSourcePaths);
 	}
 
-        public String metric;
+	public String metric;
 
-        public void setMetric( String metric ) {
-                this.metric = metric;
-        }
+	public void setMetric( String metric ) {
+		this.metric = metric;
+	}
 
-        public String getMetric( ) {
-                return metric;
-        }
+	public String getMetric( ) {
+		return metric;
+	}
 
-        public double x_spacing, y_spacing, z_spacing;
-        public String spacing_units;
+	public double x_spacing, y_spacing, z_spacing;
+	public String spacing_units;
 
-        public void setSpacing( double x_spacing, double y_spacing, double z_spacing, String units ) {
-                this.x_spacing = x_spacing;
-                this.y_spacing = y_spacing;
-                this.z_spacing = z_spacing;
-                this.spacing_units = units;
-        }
+	public void setSpacing( double x_spacing, double y_spacing, double z_spacing, String units ) {
+		this.x_spacing = x_spacing;
+		this.y_spacing = y_spacing;
+		this.z_spacing = z_spacing;
+		this.spacing_units = units;
+	}
 
-        public void setThreshold( double threshold ) {
-                this.distanceThreshold = threshold;
-        }
+	public void setThreshold( double threshold ) {
+		this.distanceThreshold = threshold;
+	}
 
-        public double getThreshold( ) {
-                return distanceThreshold;
-        }
+	public double getThreshold( ) {
+		return distanceThreshold;
+	}
 
-        public void writeNodesXML( PrintWriter pw ) {
+	public void writeNodesXML( PrintWriter pw ) {
 
-                int i = 0;
-                for( Iterator it = nodeList.iterator(); it.hasNext(); ++i ) {
-                        Node n = (Node)it.next();
-                        pw.println( "    <node id=\"" + i + "\" " +
-                                    "x=\"" + n.x + "\" " +
-                                    "y=\"" + n.y + "\" " +
-                                    "z=\"" + n.z + "\" " +
-                                    ((n.previous >= 0) ? "previousid=\"" + n.previous + "\" " : "") +
-                                    "distance=\"" + n.distance + "\" status=\"" + (n.open ? "open" : "closed") + "\"/>" );
-                }
-        }
+		int i = 0;
+		for( Iterator it = nodeList.iterator(); it.hasNext(); ++i ) {
+			Node n = (Node)it.next();
+			pw.println( "    <node id=\"" + i + "\" " +
+				    "x=\"" + n.x + "\" " +
+				    "y=\"" + n.y + "\" " +
+				    "z=\"" + n.z + "\" " +
+				    ((n.previous >= 0) ? "previousid=\"" + n.previous + "\" " : "") +
+				    "distance=\"" + n.distance + "\" status=\"" + (n.open ? "open" : "closed") + "\"/>" );
+		}
+	}
 
-	public void writeXML( PrintWriter pw, int fillIndex, Map<Path,Integer> pathToID ) {
+	public void writeXML( PrintWriter pw, int fillIndex ) {
 		pw.print( "  <fill id=\"" + fillIndex + "\""  );
 		if( (sourcePaths != null) && (sourcePaths.size() > 0) ) {
 			pw.print( " frompaths=\"" );
-			Iterator<Path> pi = sourcePaths.iterator();
-			boolean first = true;
-			while( pi.hasNext() ) {
-				Path p = pi.next();
-				if( first ) {
-					first = false;
-				} else
-					pw.print( ", " );
-
-				Integer fromPath = pathToID.get( p );
-				if( fromPath == null )
-					pw.print( "-1" );
-				else
-					pw.print( "" + fromPath.intValue() );
-			}
+			pw.print( getSourcePathsStringMachine() );
 			pw.print( "\"" );
 		}
+		pw.print( " volume=\"" + getVolume() + "\"" );
 		pw.println( " metric=\"" + getMetric() + "\" threshold=\"" + getThreshold() + "\">" );
 		writeNodesXML( pw );
 		pw.println( "  </fill>" );
+	}
+
+	/** Assume that the volume is just the number of sub-threshold
+	    nodes multiplied by x_spacing * y_spacing * z_spacing */
+
+	public double getVolume() {
+		int subThresholdNodes = 0;
+		for( Node n : nodeList ) {
+			if( n.distance <= distanceThreshold )
+				++ subThresholdNodes;
+		}
+		return subThresholdNodes * x_spacing * y_spacing * z_spacing;
+	}
+
+	// FIXME: the next two should just be one method, really:
+
+	public String getSourcePathsStringMachine() {
+
+		StringBuffer result = new StringBuffer("");
+
+		boolean first = true;
+		for( Path p : sourcePaths ) {
+			if( first ) {
+				first = false;
+			} else
+				result.append( ", " );
+			result.append( "" + p.getID() );
+		}
+
+		return result.toString();
+	}
+
+	public String getSourcePathsStringHuman() {
+
+		StringBuffer result = new StringBuffer( "" );
+		Path [] sortedSourcePaths = sourcePaths.toArray( new Path[]{} );
+		Arrays.sort( sortedSourcePaths );
+
+		for( int j = 0; j < sortedSourcePaths.length; ++j ) {
+			Path p = sortedSourcePaths[j];
+			if( j != 0 )
+				result.append( ", " );
+			result.append( "(" + p.getID() + ")" );
+		}
+
+		return result.toString();
 	}
 }

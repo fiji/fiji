@@ -246,6 +246,8 @@ public class FillerThread extends SearchThread {
 		Iterator<Path> pi = newSourcePaths.iterator();
 		while( pi.hasNext() ) {
 			Path p = pi.next();
+			if( p == null )
+				return;
                         for( int k = 0; k < p.size(); ++k ) {
                                 SearchNode f = new SearchNode( p.getXUnscaled(k),
                                                                p.getYUnscaled(k),

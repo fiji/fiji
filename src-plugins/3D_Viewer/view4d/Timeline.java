@@ -100,6 +100,7 @@ public class Timeline {
 		playing = new Thread(new Runnable() {
 			public void run() {
 				int inc = +1;
+				shouldPause = false;
 				while(!shouldPause) {
 					int next = univ.getCurrentTimepoint() + inc;
 					if(next > univ.getEndTime()) {
