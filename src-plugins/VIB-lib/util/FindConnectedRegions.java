@@ -92,7 +92,7 @@ class CancelDialog extends Dialog implements ActionListener {
 
 public class FindConnectedRegions {
 
-	boolean pleaseStop = false;
+	volatile boolean pleaseStop = false;
 
 	public void cancel() {
 		pleaseStop = true;
