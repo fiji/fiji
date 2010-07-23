@@ -11,6 +11,7 @@ import ij3d.Content;
 import ij3d.Image3DUniverse;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.ListIterator;
 
@@ -308,7 +309,6 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	
 
 		}
-		
 		return new Object[] {extremaAllFrames};
 	}
 	
