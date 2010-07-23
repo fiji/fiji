@@ -294,15 +294,14 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			// 7 - Find extrema of newly convoluted image:
 			IJ.log("Finding extrema...");
 			IJ.showStatus("Finding extrema...");
-			ArrayList< ArrayList< int[]> > extrema = null;
 			RegionalExtremaFactory<T> extremaFactory = new RegionalExtremaFactory<T>(img, overTime);
-			RegionalExtremaFinder<T> findExtrema = extremaFactory.createRegionalMaximaFinder();
+			RegionalExtremaFinder<T> findExtrema = extremaFactory.createRegionalMaximaFinder(true);
 			findExtrema.allowEdgeExtrema(allowEdgeMax);
-			findExtrema.findMaxima();
-			if (findExtrema.checkInput() && findExtrema.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
-				extrema = findExtrema.getRegionalExtrema(); 
+			if (!findExtrema.checkInput() || !findExtrema.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
+				System.out.println( "Extrema Finder failed: " + findExtrema.getErrorMessage() );
+				return null;
 			}
-			ArrayList< double[] > centeredExtrema = findExtrema.getRegionalExtremaCenters(extrema);
+			ArrayList< double[] > centeredExtrema = findExtrema.getRegionalExtremaCenters(false);
 			extremaAllFrames.add(centeredExtrema);
 			System.out.println("Find Maxima Run Time: " + findExtrema.getProcessingTime());
 			System.out.println("Num regional maxima: " + centeredExtrema.size());
@@ -432,15 +431,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		
 		// Add the image as a volume rendering
 		Content c = univ.addVoltex(dup);
-		
-		if (overTime) {
-			// Get the Timeline object
-			Timeline tl = univ.getTimeline();
-			
-			// Get the TimelineGUI object
-			TimelineGUI gui = new TimelineGUI(tl);
-		}
-		//univ.
+
 		/*
 		// Change the size of the points
 		float curr = c.getLandmarkPointSize();

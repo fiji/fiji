@@ -14,7 +14,6 @@ public abstract class AbstractRegionalExtremaFinder<T extends RealType<T>> imple
 	protected boolean doInterpolate = false;
 	protected Image<T> image;					// holds the image the algorithm is to be applied to
 	final protected ArrayList< ArrayList< int[] > > maxima = new ArrayList< ArrayList< int[] > >();	// an array list which holds the coordinates of the maxima found in the image.
-	protected int sign = 1;				// causes the algorithm to find regional maxima by default (1 = maxima, -1 = minima)
 	
 	@Override
 	public void allowEdgeExtrema(boolean flag) {
@@ -22,23 +21,47 @@ public abstract class AbstractRegionalExtremaFinder<T extends RealType<T>> imple
 	}
 
 	@Override
-	public void findMaxima() {
-		this.sign = 1;
-	}
-	
-	@Override
-	public void findMinima() {
-		this.sign = -1;
-	}
-	
-	@Override
-	public void doInterpolate(boolean flag) {
-		this.doInterpolate = flag;
-	}
-
-	@Override
 	public ArrayList< ArrayList< int[] > > getRegionalExtrema() {
 		return maxima;
+	}
+	
+	@Override
+	public ArrayList< double[] > getRegionalExtremaCenters(boolean doInterpolate)
+	{
+		ArrayList< double[] > centeredRegionalMaxima = new ArrayList< double[] >();
+		ArrayList< ArrayList< int[] >  > regionalMaxima = new ArrayList< ArrayList< int[] >  >(maxima); // make a copy
+		ArrayList< int[] > curr = null;
+		while (!regionalMaxima.isEmpty()) {
+			curr = regionalMaxima.remove(0);
+			double averagedCoord[] = findAveragePosition(curr);
+			centeredRegionalMaxima.add(averagedCoord);
+		}
+		return centeredRegionalMaxima;
+	}
+	
+	/**
+	 * Given an ArrayList of int[] (coordinates), computes the averaged coordinates and returns them.
+	 * 
+	 * @param searched
+	 * @return
+	 */
+	protected double[] findAveragePosition(ArrayList < int[] > coords) {
+		// Determine dimensionality
+		int[] firstArray = coords.get(0);
+		int nDims = firstArray.length;
+		double[] array = new double[nDims];
+		int count = 0;
+		while(!coords.isEmpty()) {
+			int curr[] = coords.remove(0);
+			for (int i = 0; i<nDims; i++) {
+				array[i] += curr[i];
+			}
+			count++;
+		}
+		for (int i = 0; i < array.length; i++) {
+			array[i] /= count;
+		}
+		return array;
 	}
 	
 	@Override
