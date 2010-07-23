@@ -12,6 +12,4 @@ public abstract class IndependentScorer implements Scorer {
 			score(spot);
 		}
 	}
-
-	
 }

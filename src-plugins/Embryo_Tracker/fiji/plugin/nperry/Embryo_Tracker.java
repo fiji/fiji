@@ -314,14 +314,20 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			System.out.println("Find Maxima Run Time: " + findExtrema.getProcessingTime());
 			System.out.println("Num regional maxima: " + centeredExtrema.size());
 		
-			// 7.5 Filter extrema based on quality
+			// 7.5 - Filter extrema based on quality
 			AverageScoreAggregator scoreAgg = new AverageScoreAggregator();
 			LoGScorer<T> logScore = new LoGScorer<T>(modImg);
-			// convert double[] to Spot objects
-			// add the scorer to the scoreAgg
-			// aggregate
+			ArrayList<Spot> spots = findExtrema.convertToSpots(centeredExtrema);
+			scoreAgg.add(logScore);
+			scoreAgg.aggregate(spots);
 			
-		
+			// 7.5.1 - Print out contents to terminal for testing
+			Iterator<Spot> itr = spots.iterator();
+			while (itr.hasNext()) {
+				Spot spot = itr.next();
+				double[] coords = spot.getCoordinates();
+				System.out.println("Coordinates: " + MathLib.printCoordinates(new float[] {(float)coords[0] * pixelWidth * downsampleFactors[0], (float)coords[1] * pixelHeight * downsampleFactors[1], (float)coords[2] * pixelDepth * downsampleFactors[2]}) + ", Overall score: " + spot.getAggregatedScore());
+			}
 		}
 		return new Object[] {extremaAllFrames};
 	}
@@ -430,27 +436,26 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 * @param pixelHeight
 	 * @param pixelDepth
 	 */
-	public void render3DAndOverlayExtrema(ArrayList< ArrayList<double[]> > extremaAllFrames, ImagePlus dup, float pixelWidth, float pixelHeight, float pixelDepth, float downsampleFactors[], float diam, boolean overTime) {
+	public void render3DAndOverlayExtrema(ArrayList< ArrayList<double[]> > extremaAllFrames, ImagePlus img, float pixelWidth, float pixelHeight, float pixelDepth, float downsampleFactors[], float diam, boolean overTime) {
 		// Adjust calibration
-		dup.getCalibration().pixelWidth = pixelWidth;
-		dup.getCalibration().pixelHeight = pixelHeight;
-		dup.getCalibration().pixelDepth = pixelDepth;
+		img.getCalibration().pixelWidth = pixelWidth;
+		img.getCalibration().pixelHeight = pixelHeight;
+		img.getCalibration().pixelDepth = pixelDepth;
 		
 		// Convert to a usable format
-		new StackConverter(dup).convertToGray8();
+		new StackConverter(img).convertToGray8();
 
-		// Create a universe, but do not show it
+		// Create a universe
 		Image3DUniverse univ = new Image3DUniverse();
 		univ.show();
 		
 		// Add the image as a volume rendering
-		Content c = univ.addVoltex(dup);
+		Content c = univ.addVoltex(img);
 
 		// Create ContentInstants for all time points
-		// Note: Bene said to do this, but apparently not necessary. Also, threw an exception.
 		/*for (int i = 0; i < extremaAllFrames.size(); i++) {
 			c.addInstant(new ContentInstant(Integer.toString(i + 1)), i);
-		}*/	
+		}*/
 		
 		// Change the size of the points
 		c.setLandmarkPointSize(diam / 2);  // radius is diam / 2
@@ -467,9 +472,13 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			while (itr.hasNext()) {
 				final double[] coords = itr.next();
 				final int[] intCoords = new int[coords.length];
+				
+				// Convert double -> int
 				for (int i = 0; i < intCoords.length; i++) {
 					intCoords[i] = (int) Math.round(coords[i]);
 				}
+				
+				// Add point
 				pl.add(intCoords[0] * (pixelWidth * downsampleFactors[0]), intCoords[1] * (pixelHeight * downsampleFactors[1]), intCoords[2] * (pixelDepth * downsampleFactors[2]));  // Scale/undo downsampling for each coordinate, since the coordinates are unscaled now and from the downsampled image.
 			}
 		}

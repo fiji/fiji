@@ -29,7 +29,9 @@ public class LoGScorer <T extends RealType<T>> extends IndependentScorer {
 			intCoords[i] = (int) Math.round(coords[i]);
 		}
 		cursor.setPosition(intCoords);
-		spot.addScore(SCORING_METHOD_NAME, cursor.getType().getRealDouble());		
+		spot.addScore(SCORING_METHOD_NAME, cursor.getType().getRealDouble());
+		//System.out.println("Scoring, coordinate " + MathLib.printCoordinates(intCoords) + "should have " + cursor.getType().getRealDouble()); //debug
+		//System.out.println("Spot contains this score for LoGScorer: " + spot.getScores().get("Quality"));//debug
 	}
 	
 	@Override

@@ -11,6 +11,11 @@ public class AverageScoreAggregator implements ScoreAggregator {
 
 	private ArrayList<Scorer> scorers;
 
+	/* Constructor */
+	public AverageScoreAggregator() {
+		scorers = new ArrayList<Scorer>();
+	}
+	
 	@Override
 	public void aggregate(Collection<Spot> spots) {
 		for (Scorer scorer : scorers) {
@@ -24,10 +29,12 @@ public class AverageScoreAggregator implements ScoreAggregator {
 				double currentScore;
 				for (Spot spot : spots) {
 					currentScore = spot.getScores().get(scorer.getName());
-					if (min < currentScore)
+					if (min > currentScore) {
 						min = currentScore;
-					if (max > currentScore)
+					}
+					if (max < currentScore) {
 						max = currentScore;
+					}
 				}
 				// Update scores for this scorer
 				double scaledScore;

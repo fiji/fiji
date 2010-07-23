@@ -2,6 +2,8 @@ package mpicbg.imglib.algorithm.extremafinder;
 
 import java.util.ArrayList;
 
+import fiji.plugin.nperry.Spot;
+
 import mpicbg.imglib.algorithm.Algorithm;
 import mpicbg.imglib.algorithm.Benchmark;
 import mpicbg.imglib.image.Image;
@@ -40,6 +42,16 @@ public interface RegionalExtremaFinder<T extends RealType<T>> extends Algorithm,
 	 * @return The coordinates of the "center pixel" of the regional maximum. 
 	 */
 	public ArrayList< double[] > getRegionalExtremaCenters(boolean doInterpolate);
+	
+	/**
+	 * Converts an ArrayList of coordinate arrays to be an ArrayList of Spot objects,
+	 * which can be used for scoring.
+	 * 
+	 * @param coords The ArrayList holding double arrays for coordinates
+	 * @return An ArrayList of the same length as the input ArrayList is returned, with coordinates
+	 * stored as Spot objects rather than double[].
+	 */
+	public ArrayList< Spot > convertToSpots(ArrayList< double[] > coords);
 	
 	/**
 	 * If set to true before the {@link #process()} method is called, then extrema found 
