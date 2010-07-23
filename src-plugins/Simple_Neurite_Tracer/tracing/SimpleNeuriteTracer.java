@@ -85,7 +85,7 @@ import features.TubenessProcessor;
 public class SimpleNeuriteTracer extends ThreePanes
 	implements SearchProgressCallback, FillerProgressCallback, GaussianGenerationCallback {
 
-	public static final String PLUGIN_VERSION = "1.7.0";
+	public static final String PLUGIN_VERSION = "1.8.0";
 	protected static final boolean verbose = false;
 
 	protected static final int DISPLAY_PATHS_SURFACE = 1;

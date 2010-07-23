@@ -307,9 +307,6 @@ public class FillWindow extends JFrame implements PathAndFillListener, ActionLis
 			exportAsCSV.addActionListener(this);
 			add(exportAsCSV,c);
 		}
-
-		deleteFills.addActionListener(this);
-		reloadFill.addActionListener(this);
 	}
 
 	public void setPathList( String [] pathList, Path justAdded, boolean expandAll ) { }

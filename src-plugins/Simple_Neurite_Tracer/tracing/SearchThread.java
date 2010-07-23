@@ -200,7 +200,7 @@ public abstract class SearchThread extends Thread {
 
 	/* This can only be changed in a block synchronized on this object */
 
-	private int threadStatus = PAUSED;
+	private volatile int threadStatus = PAUSED;
 
 	public static final int RUNNING  = 0;
 	public static final int PAUSED   = 1;
