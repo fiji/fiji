@@ -152,6 +152,7 @@
 /bio-formats/components/forks/poi/build/
 /bio-formats/components/loci-plugins/build/
 /bio-formats/components/ome-xml/build/
+/bio-formats/components/stubs/lwf-stubs/build/
 /bio-formats/loci_tools.jar
 /clojure/classes/
 /ij-plugins/ij-ImageIO_.jar
