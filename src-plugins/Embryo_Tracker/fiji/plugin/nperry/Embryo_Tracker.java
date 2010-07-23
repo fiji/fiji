@@ -11,6 +11,7 @@ import ij3d.Content;
 import ij3d.Image3DUniverse;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.ListIterator;
 
@@ -318,6 +319,9 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	
 
 		}
+		
+		HashMap<double[], Double> scores = new HashMap<double[], Double>();
+		
 		
 		// 8 - Setup for displaying results
 		if (img.getNumDimensions() == 3) {  // prepare 3D render
