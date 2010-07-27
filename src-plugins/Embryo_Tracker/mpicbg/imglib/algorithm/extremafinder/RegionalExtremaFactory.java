@@ -19,7 +19,6 @@ public class RegionalExtremaFactory<T extends RealType<T>> implements Factory {
 	 */
 	
 	private Image<T> image;
-	private boolean overTime;
 	private String errorMessage;
 
 	/**
@@ -30,9 +29,8 @@ public class RegionalExtremaFactory<T extends RealType<T>> implements Factory {
 	 * @param img
 	 * @param overTime
 	 */
-	public RegionalExtremaFactory(Image<T> img, boolean overTime) {
+	public RegionalExtremaFactory(Image<T> img) {
 		this.image = img;
-		this.overTime = overTime;
 	}
 	
 	/**
@@ -51,22 +49,22 @@ public class RegionalExtremaFactory<T extends RealType<T>> implements Factory {
     		
     	case 2:
     			
-    		if (overTime) {
+    		/*if (overTime) {
     			errorMessage = "2D over time is not implemented yet."; 
             	throw new IllegalArgumentException(errorMessage);    			
-    		} else {
+    		} else {*/
     			return new RegionalExtremaFinder2D<T>(image, findMaxima);    			
-    		}
+    		//}
     		
     	case 3:
     	
-    		if (overTime) {
+    		/*if (overTime) {
     			//errorMessage = "3D over time is not implemented yet.";
     			//throw new IllegalArgumentException(errorMessage);
     			return new RegionalExtremaFinder3D<T>(image, findMaxima);
-    		} else {    			
+    		} else {  */  			
     			return new RegionalExtremaFinder3D<T>(image, findMaxima);
-    		}
+    		//}
         
     	default:
     		errorMessage = "Dimensionality of " + image.getNumDimensions() + " is not implemented yet.";
@@ -83,7 +81,7 @@ public class RegionalExtremaFactory<T extends RealType<T>> implements Factory {
 	@Override
 	public void printProperties() {
 		System.out.println( this.getClass().getCanonicalName() + ": " );
-		System.out.println("Over time: "+overTime );
+		//System.out.println("Over time: "+overTime );
 		image.getContainerFactory().printProperties();
 	}
 

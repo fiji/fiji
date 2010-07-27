@@ -165,14 +165,14 @@ public class RegionalExtremaFinder2D<T extends RealType<T>> extends AbstractRegi
 		final int width = image.getDimensions()[0];							// width of the image, used to map 3D coordinates to a 1D coordinate system for storing information about each pixel (visisted or not, etc)
 		final byte visitedAndProcessed[] = new byte[image.getNumPixels()];	// holds information on whether the pixel has been added to the lake/connected component, or whether pixel has had neighbors directly searched already.
 		boolean isExtreme;													// stores whether our lake/connected component is a local maxima or not.
-		int nextCoords[] = new int [2];									// declare coordinate arrays outside while loops to speed up. holds the coordinates of pixel in step 2.2
-		int currCoords[] = new int[2];									// holds coordinates of pixel in step 2.1
-		int neighborCoords[] = new int[2];								// holds coordinates of pixel in step 2.3
+		int nextCoords[] = new int [3];									// declare coordinate arrays outside while loops to speed up. holds the coordinates of pixel in step 2.2
+		int currCoords[] = new int[3];									// holds coordinates of pixel in step 2.1
+		int neighborCoords[] = new int[3];								// holds coordinates of pixel in step 2.3
 
 		// 2 - Search all pixels for LOCAL maxima.
 		
 		// 2.1 - Iterate over all pixels in the image.
-		while(curr.hasNext()) { 
+		while(curr.hasNext()) {
 			curr.fwd();
 			curr.getPosition(currCoords);
 			if ((visitedAndProcessed[getIndexOfPosition(currCoords, width)] & PROCESSED) != 0) {  // prevents revisiting pixels, increases speed
@@ -207,28 +207,28 @@ public class RegionalExtremaFinder2D<T extends RealType<T>> extends AbstractRegi
 						neighborValue = neighbors.getType();
 						int compare = neighborValue.compareTo(currentValue);
 						
-						// Case 1: neighbor's value is strictly larger than ours, so ours cannot be a regional maximum.
+						// Case 1: neighbor's value is strictly larger, so ours cannot be a regional maximum.
 						if ((sign * compare) > 0) {
 							isExtreme = false;
 						}
 						
-						// Case 2: neighbor's value is strictly equal to ours, which means we could still be at a maximum, but the max value is a blob, not just a single point. We must check the area.
-						else if (compare == 0 && (visitedAndProcessed[getIndexOfPosition(neighborCoords, width)] & PROCESSED) != 0) {
+						// Case 2: neighbor's value is strictly equal, which means this pixel belongs to the connected component.
+						else if (compare == 0 && (visitedAndProcessed[getIndexOfPosition(nextCoords, width)] & PROCESSED) != 0) {  // Note: don't re-add a PROCESSED pixel to CC list; it's already been there.
 							toSearch.add(neighborCoords.clone());
-							visitedAndProcessed[getIndexOfPosition(neighborCoords, width)] |= CC_MEMBER;  // mark that this pixel has been added to the connected component search list with VISITED (different than PROCESSED, which is used to say that a pixel has had his neighbor's searched.)
+							visitedAndProcessed[getIndexOfPosition(neighborCoords, width)] |= CC_MEMBER;  // mark that this pixel has been added to the lake search list with VISITED (different than PROCESSED, which is used to say that a pixel has had his neighbor's searched.)
 						}
-	
-						// Case 3: neighbor's value is strictly lower, so it can't be a regional max. Don't bother considering it as a regional max.
+						
+						// Case 3: neighbor's value is strictly lower, so it can't be a regional max.  Don't bother considering it as a regional max.
 						else {
-							visitedAndProcessed[getIndexOfPosition(neighborCoords, width)] |= PROCESSED; 
+							visitedAndProcessed[getIndexOfPosition(neighborCoords, width)] |= PROCESSED;
 						}
 					}
 				}
 				neighbors.reset();  // needed to get the outer cursor to work correctly;		
 			}
-			if (isExtreme) {  // If isMax is still true, then our connected component is a regional maximum, so store the coordinates of the pixels making up the regional maximum.
+			if (isExtreme && searched.size() > 0) {  // If isMax is still true, then our connected component is a regional maximum, so store the coordinates of the pixels making up the regional maximum.
 				maxima.add((ArrayList<int[]>) searched.clone());
-			} 
+			}
 			searched.clear();
 		}
 		curr.close();

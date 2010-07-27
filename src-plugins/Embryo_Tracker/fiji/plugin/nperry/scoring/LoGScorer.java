@@ -7,13 +7,25 @@ import fiji.plugin.nperry.Spot;
 
 public class LoGScorer <T extends RealType<T>> extends IndependentScorer {
 
-	private static final String SCORING_METHOD_NAME = "Quality";
+	private static final String SCORING_METHOD_NAME = "LoGScorer";
 	private Image<T> img;
 	private LocalizableByDimCursor<T> cursor;
+	private double downsampleFactors[];
 
 	public LoGScorer(Image<T> filteredImage) {
 		this.img = filteredImage;
 		this.cursor = img.createLocalizableByDimCursor();
+		this.downsampleFactors = new double[filteredImage.getNumDimensions()];
+		
+		for (int i = 0; i < downsampleFactors.length; i++) {
+			downsampleFactors[i] = 1;
+		}
+	}
+	
+	public LoGScorer(Image<T> filteredImage, double downsampleFactors[]) {
+		this.img = filteredImage;
+		this.cursor = img.createLocalizableByDimCursor();
+		this.downsampleFactors = downsampleFactors;
 	}
 	
 	@Override
@@ -24,14 +36,11 @@ public class LoGScorer <T extends RealType<T>> extends IndependentScorer {
 	@Override
 	public void score(Spot spot) {
 		final double[] coords = spot.getCoordinates();
-		final int[] intCoords = new int[coords.length];
-		for (int i = 0; i < intCoords.length; i++) {
-			intCoords[i] = (int) Math.round(coords[i]);
-		}
+		final double[] scaledCoords = convertDownsampledImgCoordsToOriginalCoords(coords);
+		final int[] intCoords = doubleCoordsToIntCoords(scaledCoords);
+
 		cursor.setPosition(intCoords);
 		spot.addScore(SCORING_METHOD_NAME, cursor.getType().getRealDouble());
-		//System.out.println("Scoring, coordinate " + MathLib.printCoordinates(intCoords) + "should have " + cursor.getType().getRealDouble()); //debug
-		//System.out.println("Spot contains this score for LoGScorer: " + spot.getScores().get("Quality"));//debug
 	}
 	
 	@Override
@@ -39,4 +48,20 @@ public class LoGScorer <T extends RealType<T>> extends IndependentScorer {
 		return false;
 	}
 
+	// fix 2D case...
+	private double[] convertDownsampledImgCoordsToOriginalCoords(double downsizedCoords[]) {
+		double scaledCoords[] = new double[downsizedCoords.length];
+		for (int i = 0; i < downsizedCoords.length; i++) {
+			scaledCoords[i] = downsizedCoords[i] * downsampleFactors[i];
+		}
+		return scaledCoords;
+	}
+	
+	private int[] doubleCoordsToIntCoords(double doubleCoords[]) {
+		int intCoords[] = new int[doubleCoords.length];
+		for (int i = 0; i < doubleCoords.length; i++) {
+			intCoords[i] = (int) Math.round(doubleCoords[i]);
+		}
+		return intCoords;
+	}
 }
