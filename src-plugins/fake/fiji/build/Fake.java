@@ -2642,7 +2642,7 @@ public class Fake {
 		if (args[0].endsWith(".py")) {
 			String args0orig = args[0];
 			args[0] = makePath(dir, args[0]);
-			if (executePython(args))
+			if (executePython(args, out, err))
 				return;
 			if (verbose)
 				err.println("Falling back to Python ("
@@ -2710,9 +2710,9 @@ public class Fake {
 
 
 	protected static Constructor jythonCreate;
-	protected static Method jythonExec, jythonExecfile;
+	protected static Method jythonExec, jythonExecfile, jythonSetOut, jythonSetErr;
 
-	protected static boolean executePython(String[] args)
+	protected static boolean executePython(String[] args, PrintStream out, PrintStream err)
 			throws FakeException {
 		if (jythonExecfile == null) try {
 			discoverJython();
@@ -2725,6 +2725,9 @@ public class Fake {
 			jythonExec = main.getMethod("exec", argsType);
 			argsType = new Class[] { args[0].getClass() };
 			jythonExecfile = main.getMethod("execfile", argsType);
+			argsType = new Class[] { OutputStream.class };
+			jythonSetOut = main.getMethod("setOut", argsType);
+			jythonSetErr = main.getMethod("setErr", argsType);
 		} catch (Exception e) {
 			return false;
 		}
@@ -2732,6 +2735,8 @@ public class Fake {
 		try {
 			Object instance =
 				jythonCreate.newInstance(new Object[] { });
+			jythonSetOut.invoke(instance, new Object[] { out });
+			jythonSetErr.invoke(instance, new Object[] { err });
 			String init = "import sys\n" +
 				"sys.argv = [";
 			for (int i = 0; i < args.length; i++)
