@@ -22,7 +22,7 @@ BUILD_COMMAND := debian/build-command
 
 JAVA3D_JARS := /usr/share/java/vecmath.jar:/usr/share/java/j3dutils.jar:/usr/lib/jni/libj3dcore-ogl.so:/usr/share/java/j3dcore.jar
 
-INSTALLED_JVM_ROOT := /usr/lib/jvm/java-6-openjdk/
+INSTALLED_JVM_ROOT := $(cat debian/java-home)
 
 VERSION_IN_CHANGELOG=$(shell dpkg-parsechangelog | egrep ^Version: | sed "s/Version: //")
 PACKAGE_IN_CHANGELOG=$(shell dpkg-parsechangelog | egrep ^Source: | sed "s/Source: //")
