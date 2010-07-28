@@ -3,15 +3,22 @@ import ij.ImageJ;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
 import ij.gui.NewImage;
+import ij.measure.ResultsTable;
 import ij.process.ImageProcessor;
+import ij.text.TextWindow;
 
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Panel;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.ClipboardOwner;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.io.CharArrayWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
@@ -35,7 +42,7 @@ import mpicbg.imglib.type.numeric.real.FloatType;
  * and offers features like the use of different LUTs.
  *
  */
-public class SingleWindowDisplay extends ImageWindow implements Display, ItemListener, ActionListener {
+public class SingleWindowDisplay extends ImageWindow implements Display, ItemListener, ActionListener, ClipboardOwner {
 	static final int WIN_WIDTH = 350;
 	static final int WIN_HEIGHT = 240;
 
@@ -91,11 +98,21 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 		buttons.setLayout(new FlowLayout(FlowLayout.RIGHT));
 
 		listButton = new JButton("List");
-		//listButton.addActionListener(this);
+		listButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				showList();
+			}
+		});
 		buttons.add(listButton);
 
 		copyButton = new JButton("Copy");
-		//copyButton.addActionListener(this);
+		copyButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				copyToClipboard();
+			}
+		});
 		buttons.add(copyButton);
 
 		/* We want the image to be log scale by default
@@ -224,8 +241,108 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 	    return sout.toString();
 	}
 
+	/**
+	 * If the currently selected ImageResult is an HistrogramResult,
+	 * a table of x-values, y-values and the counts is generated and
+	 * returned as a string. If the current ImageResult is no
+	 * histogram, an empty string is returned.
+	 */
+	protected String getCurrentHistogramData() {
+		StringBuffer sb = new StringBuffer();
+		/* check if we are dealing with an histogram result
+		 * or a generic image result
+		 */
+		if (listOfHistograms.contains(currentlyDisplayedImageResult)) {
+			Result.Histogram2DResult hr = (Result.Histogram2DResult)currentlyDisplayedImageResult;
+			double xBinWidth = 1.0 / hr.getXBinWidth();
+			double yBinWidth = 1.0 / hr.getYBinWidth();
+			double xMin = hr.getHistXMin();
+			double yMin = hr.getHistYMin();
+			// check if we have bins of size one or other ones
+			boolean xBinWidthIsOne = Math.abs(xBinWidth - 1.0) < 0.00001;
+			boolean yBinWidthIsOne = Math.abs(yBinWidth - 1.0) < 0.00001;
+			// configure decimal places accordingly
+			int xDecimalPlaces = xBinWidthIsOne ? 0 : 3;
+			int yDecimalPlaces = yBinWidthIsOne ? 0 : 3;
+			// create a cursor to access the histogram data
+			LocalizableByDimCursor<FloatType> cursor = hr.getData().createLocalizableByDimCursor();;
+			// loop over 2D histogram
+			for (int i=0; i < hr.getData().getDimension(0); ++i) {
+				for (int j=0; j < hr.getData().getDimension(1); ++j) {
+					cursor.setPosition(i, 0);
+					cursor.setPosition(j, 1);
+					sb.append(
+							ResultsTable.d2s(xMin + (i * xBinWidth), xDecimalPlaces) + "\t" +
+							ResultsTable.d2s(yMin + (j * yBinWidth), yDecimalPlaces) + "\t" +
+							ResultsTable.d2s(cursor.getType().getRealDouble(), 0) + "\n");
+				}
+			}
+			cursor.close();
+		}
+		return sb.toString();
+	}
+
+	/**
+	 * If the currently selected ImageResult is an HistrogramResult,
+	 * a table of x-values, y-values and the counts.
+	 */
+	protected void showList() {
+		/* check if we are dealing with an histogram result
+		 * or a generic image result
+		 */
+		if (listOfHistograms.contains(currentlyDisplayedImageResult)) {
+			Result.Histogram2DResult hr = (Result.Histogram2DResult)currentlyDisplayedImageResult;
+			double xBinWidth = 1.0 / hr.getXBinWidth();
+			double yBinWidth = 1.0 / hr.getYBinWidth();
+			// check if we have bins of size one or other ones
+			boolean xBinWidthIsOne = Math.abs(xBinWidth - 1.0) < 0.00001;
+			boolean yBinWidthIsOne = Math.abs(yBinWidth - 1.0) < 0.00001;
+			// configure table headings accordingly
+			String vheadingX = xBinWidthIsOne ? "X value" : "X bin start";
+			String vheadingY = yBinWidthIsOne ? "Y value" : "Y bin start";
+			// get the actual histogram data
+			String histogramData = getCurrentHistogramData();
+
+			TextWindow tw = new TextWindow(getTitle(), vheadingX + "\t" + vheadingY + "\tcount", histogramData, 250, 400);
+		}
+	}
+
+	/**
+	 * If the currently selected ImageResult is an HistogramRestult,
+	 * this method copies its data into to the clipboard.
+	 */
+	protected void copyToClipboard() {
+		/* check if we are dealing with an histogram result
+		 * or a generic image result
+		 */
+		if (listOfHistograms.contains(currentlyDisplayedImageResult)) {
+			/* try to get the system clipboard and return
+			 * if we can't get it
+			 */
+			Clipboard systemClipboard = null;
+			try {
+				systemClipboard = getToolkit().getSystemClipboard();
+			} catch (Exception e) {
+				systemClipboard = null;
+			}
+
+			if (systemClipboard==null) {
+				IJ.error("Unable to copy to Clipboard.");
+				return;
+			}
+			// copy histogram values
+			IJ.showStatus("Copying histogram values...");
+
+			String text = getCurrentHistogramData();
+			StringSelection contents = new StringSelection( text );
+			systemClipboard.setContents(contents, this);
+
+			IJ.showStatus(text.length() + " characters copied to Clipboard");
+		}
+	}
+
 	public void mouseMoved( final int x, final int y) {
-	ImageJ ij = IJ.getInstance();
+	final ImageJ ij = IJ.getInstance();
 	if (ij != null) {
 		/* If Alt key is not pressed, display the calibrated data.
 		 * If not, display image positions and data.
@@ -290,6 +407,10 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 		currentlyDisplayedImageResult = result;
 		pixelAccessCursor = result.getData().createLocalizableByDimCursor();
 
+		// disable list and copy button if it is no histogram result
+		listButton.setEnabled( listOfHistograms.contains(result) );
+		copyButton.setEnabled( listOfHistograms.contains(result) );
+
 		drawImageResult(result);
 		toggleLogarithmic(log.isSelected());
 	}
@@ -318,5 +439,10 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 		if (e.getSource() == log) {
 			toggleLogarithmic(log.isSelected());
 		}
+	}
+
+	@Override
+	public void lostOwnership(Clipboard clipboard, Transferable contents) {
+		// nothing to do here
 	}
 }
