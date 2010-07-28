@@ -28,4 +28,4 @@ sh -x Fake.sh VERBOSE=true "CLASSPATH(plugins/VIB_.jar)=/usr/share/java/vecmath.
     "CLASSPATH(plugins/Simple_Neurite_Tracer.jar)=jars/VIB-lib.jar:plugins/VIB_.jar:jars/pal-optimization.jar:jars/junit-4.5.jar:plugins/3D_Viewer.jar" \
     "CLASSPATH(plugins/3D_Viewer.jar)=jars/VIB-lib.jar:jars/imglib.jar:jars/Jama-1.0.2.jar" \
     "CLASSPATH(jars/VIB-lib.jar)=jars/Jama-1.0.2.jar:jars/junit-4.5.jar:jars/pal-optimization.jar" \
-    "CLASSPATH(jars/VectorString.jar)=jars/Jama-1.0.2.jar:/usr/share/java/vecmath.jar"
+    "CLASSPATH(jars/VectorString.jar)=jars/Jama-1.0.2.jar:/usr/share/java/vecmath.jar:/usr/share/java/j3dcore.jar"
