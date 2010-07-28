@@ -241,8 +241,8 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 				synchronized( pixelAccessCursor )
 				{
 					// set position of output cursor
-					pixelAccessCursor.setPosition(0, x);
-					pixelAccessCursor.setPosition(1, y);
+					pixelAccessCursor.setPosition(x, 0);
+					pixelAccessCursor.setPosition(y, 1);
 
 					// get current value at position
 					float val = pixelAccessCursor.getType().getRealFloat();
