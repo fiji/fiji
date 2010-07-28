@@ -13,19 +13,15 @@ import ij.gui.PointRoi;
 import ij.plugin.PlugIn;
 import ij.process.StackConverter;
 import ij3d.Content;
-import ij3d.ContentInstant;
 import ij3d.Image3DUniverse;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.ListIterator;
 
 import javax.swing.JSlider;
 
 import vib.PointList;
-import view4d.Timeline;
-import view4d.TimelineGUI;
 
 import mpicbg.imglib.algorithm.fft.FourierConvolution;
 import mpicbg.imglib.algorithm.extremafinder.RegionalExtremaFactory;
@@ -59,7 +55,6 @@ import mpicbg.imglib.type.numeric.real.FloatType;
  */
 public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	/** Class/Instance variables */
-	//protected Image<T> img;
 	protected int numDim;
 	final static protected float GOAL_DOWNSAMPLED_BLOB_DIAM = 10f;				  // trial and error showed that downsizing images so that the blobs have a diameter of 10 pixels performs best (least errors, and most correct finds, by eyeball analysis).
 	final static protected double IDEAL_SIGMA_FOR_DOWNSAMPLED_BLOB_DIAM = 1.55f;  // trial and error proved this to be approximately the best sigma for a blob of 10 pixels in diameter.
@@ -99,10 +94,11 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		if (null != result) {
 			System.out.println("Rendering...!");
 			ArrayList< ArrayList<Spot> > extremaAllFrames = (ArrayList< ArrayList<Spot> >) result[0];
+			ArrayList<Double> thresholdsAllFrames = (ArrayList<Double>) result[1];
 			if (numDim == 3) {	// If original image is 3D, create a 3D rendering of the image and overlay maxima
 				ij.plugin.Duplicator d = new ij.plugin.Duplicator();  // Make a duplicate image so we don't alter the users image when displaying 3D (requires 8-bit, etc).
 				ImagePlus duplicatedImp = d.run(imp);
-				render3DAndOverlayExtrema(extremaAllFrames, duplicatedImp, pixelWidth, pixelHeight, pixelDepth, createDownsampledDim(pixelWidth, pixelHeight, pixelDepth, diam, numDim), diam);
+				render3D(extremaAllFrames, thresholdsAllFrames, duplicatedImp, pixelWidth, pixelHeight, pixelDepth, createDownsampledDim(pixelWidth, pixelHeight, pixelDepth, diam, numDim), diam);
 			
 				//final int FPS_MIN = 0;
 				//final int FPS_MAX = 1;
@@ -118,14 +114,15 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		}
 	}
 	
-	/** Execute the plugin functionality: apply a median filter (for salt and pepper noise), a Gaussian blur, and then find maxima. */
+	/** Execute the plugin functionality: apply a median filter (for salt and pepper noise, if user requests), a Gaussian blur, and then find maxima. */
 	public Object[] exec(ImagePlus imp, double diam, boolean useMedFilt, boolean allowEdgeMax, double pixelWidth, double pixelHeight, double pixelDepth) {
 		// 0 - Check validity of parameters, initialize local variables:
 		if (null == imp) return null;
 		ArrayList< ArrayList <Spot> > extremaAllFrames = new ArrayList< ArrayList <Spot> >();
+		ArrayList<Double> frameThresholds = new ArrayList<Double>();  // holds the thresholds for each frame's extrema.
 		double downsampleFactors[] = null;
 		                        
-		// 1 - Create separate ImagePlus's for each frame
+		/* 1 - Create separate ImagePlus's for each frame */
 		ImageStack stack = imp.getImageStack();
 		int numSlices = imp.getNSlices();
 		int numFrames = imp.getNFrames();
@@ -140,14 +137,14 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			}
 			ImagePlus impSingleFrame = new ImagePlus("Frame " + Integer.toString(i + 1), frame);
 			
-			// 2 - Prepare stack for use with Imglib
+			/* 2 - Prepare stack for use with Imglib */
 			IJ.log("---Frame " + Integer.toString(i+1) + "---");
 			System.out.println("---Frame " + (i+1) + "---");
 			Image<T> img = ImagePlusAdapter.wrap(impSingleFrame);
 			Image<T> modImg = img.clone();
 			numDim = img.getNumDimensions();
 		
-			// 3 - Downsample to improve run time. The image is downsampled by the factor necessary to achieve a resulting blob size of about 10 pixels in diameter in all dimensions.
+			/* 3 - Downsample to improve run time. The image is downsampled by the factor necessary to achieve a resulting blob size of about 10 pixels in diameter in all dimensions. */
 			IJ.log("Downsampling...");
 			IJ.showStatus("Downsampling...");
 			int dim[] = img.getDimensions();
@@ -162,13 +159,13 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		        return null;
 			}
 			
-			// 4 - Apply a median filter, to get rid of salt and pepper noise which could be mistaken for maxima in the algorithm (only applied if requested by user explicitly):
+			/* 4 - Apply a median filter, to get rid of salt and pepper noise which could be mistaken for maxima in the algorithm (only applied if requested by user explicitly) */
 			if (useMedFilt) {
 				IJ.log("Applying median filter...");
 				IJ.showStatus("Applying median filter...");
 				StructuringElement strel;
 				
-				// 4.1 - Need to figure out the dimensionality of the image in order to create a StructuringElement of the correct dimensionality (StructuringElement needs to have same dimensionality as the image):
+				// Need to figure out the dimensionality of the image in order to create a StructuringElement of the correct dimensionality (StructuringElement needs to have same dimensionality as the image):
 				if (numDim == 3) {  // 3D case
 					strel = new StructuringElement(new int[]{3, 3, 1}, "3D Square");  // unoptimized shape for 3D case. Note here that we manually are making this shape (not using a class method). This code is courtesy of Larry Lindsey
 					Cursor<BitType> c = strel.createCursor();  // in this case, the shape is manually made, so we have to manually set it, too.
@@ -182,7 +179,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 					strel = StructuringElement.createCube(2, 3);  // unoptimized shape
 				}
 				
-				// 4.2 - Apply the median filter:
+				// Apply the median filter:
 				final MedianFilter<T> medFilt = new MedianFilter<T>(modImg, strel, new OutOfBoundsStrategyMirrorFactory<T>()); 
 				/** note: add back medFilt.checkInput() when it's fixed */
 				if (medFilt.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
@@ -202,7 +199,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			for (int k = 0; k < numIterations; k++) {
 				long startTime = System.currentTimeMillis();	
 			/** Approach 1: L x (G x I ) */
-			// 5 - Apply a Gaussian filter (code courtesy of Stephan Preibisch). Theoretically, this will make the center of blobs the brightest, and thus easier to find:
+			/* 5 - Apply a Gaussian filter (code courtesy of Stephan Preibisch). Theoretically, this will make the center of blobs the brightest, and thus easier to find: */
 			/*IJ.log("Applying Gaussian filter...");
 			IJ.showStatus("Applying Gaussian filter...");
 			final GaussianConvolutionRealType<T> convGaussian = new GaussianConvolutionRealType<T>(modImg, new OutOfBoundsStrategyMirrorFactory<T>(), IDEAL_SIGMA_FOR_DOWNSAMPLED_BLOB_DIAM);
@@ -306,7 +303,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			// #----------------------------------------#
 			
 			
-			// 7 - Find extrema of newly convoluted image:
+			/* 7 - Find extrema of newly convoluted image */
 			IJ.log("Finding extrema...");
 			IJ.showStatus("Finding extrema...");
 			RegionalExtremaFactory<T> extremaFactory = new RegionalExtremaFactory<T>(modImg);
@@ -317,64 +314,40 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 				return null;
 			}
 			ArrayList< double[] > centeredExtrema = findExtrema.getRegionalExtremaCenters(false);
+			ArrayList<Spot> spots = findExtrema.convertToSpots(centeredExtrema);
+			extremaAllFrames.add(spots);
 			System.out.println("Find Maxima Run Time: " + findExtrema.getProcessingTime());
 			System.out.println("Num regional maxima: " + centeredExtrema.size());
 			
-			// 7.5 - Filter extrema based on quality
-			ArrayList<Spot> spots = findExtrema.convertToSpots(centeredExtrema);
+			/* 8 - Assess quality of extrema */
 			AverageScoreAggregator scoreAgg = new AverageScoreAggregator();
 			LoGScorer<T> logScore = new LoGScorer<T>(modImg);
 			BlobVarianceScorer<T> varScore = new BlobVarianceScorer<T>(img, diam, downsampleFactors);
-			//BlobBrightnessScorer<T> brightnessScore = new BlobBrightnessScorer<T>(img, diam);
+			BlobBrightnessScorer<T> brightnessScore = new BlobBrightnessScorer<T>(img, diam, downsampleFactors);
 			BlobContrastScorer<T> contrastScore = new BlobContrastScorer<T>(img, diam, downsampleFactors);
 			scoreAgg.add(logScore);
 			scoreAgg.add(varScore);
-			//scoreAgg.add(brightnessScore);
+			scoreAgg.add(brightnessScore);
 		    scoreAgg.add(contrastScore);
-			scoreAgg.aggregate(spots);
-			int threshold = doOtsuThreshold(spots);
-			System.out.println("Threshold = " + threshold);
+			scoreAgg.aggregate(spots);  // aggregate scores
 			
-			// 7.5.1 - Print out contents to terminal for testing
-			ArrayList< Spot > thresholdedExtrema = new ArrayList< Spot >();
-			Iterator<Spot> itr = spots.iterator();
-			while (itr.hasNext()) {
-				Spot spot = itr.next();
-				if ((0xFF & (int) (100 * spot.getAggregatedScore())) > threshold) {
-					double[] coords = spot.getCoordinates();
-					System.out.println("Coordinates: " + MathLib.printCoordinates(new float[] {(float)coords[0] * (float) pixelWidth * (float)downsampleFactors[0], (float)coords[1] * (float) pixelHeight * (float) downsampleFactors[1], (float)coords[2] * (float) pixelDepth * (float)downsampleFactors[2]}) + ", Overall score: " + spot.getAggregatedScore());
-					thresholdedExtrema.add(spot);
-				} else {
-					double[] coords = spot.getCoordinates();
-					System.out.println("Coordinates NOT added: " + MathLib.printCoordinates(new float[] {(float)coords[0] * (float) pixelWidth * (float)downsampleFactors[0], (float)coords[1] * (float) pixelHeight * (float) downsampleFactors[1], (float)coords[2] * (float) pixelDepth * (float)downsampleFactors[2]}) + ", Overall score: " + spot.getAggregatedScore());
-				}
-			}	
-			extremaAllFrames.add(thresholdedExtrema);
+			/* 9 - Calculate Thresholds */
+			double threshold = otsuThreshold(spots);  // determines best cutoff point between "good" and "bad" extrema.
+			frameThresholds.add(threshold);
 		}
-		return new Object[] {extremaAllFrames};
+		return new Object[] {extremaAllFrames, frameThresholds};
 	}
 	
 	// Code source: http://www.labbookpages.co.uk/software/imgProc/otsuThreshold.html
-	public int doOtsuThreshold(ArrayList<Spot> srcData)
+	public double otsuThreshold(ArrayList<Spot> srcData)
 	{
-		int histData[] = new int[101];
-		
-		// Calculate histogram and find the level with the max value
-		int ptr = 0;
-		while (ptr < srcData.size())
-		{
-			System.out.println("Aggregate score: " + srcData.get(ptr).getAggregatedScore());
-			System.out.println("Aggregate score cast as int: " + (int)(srcData.get(ptr).getAggregatedScore() * 100));
-			int h = 0xFF & (int) (100 * srcData.get(ptr).getAggregatedScore());  // applying by 100 to get the values above 1, so they can be cast to int
-			histData[h] ++;
-			ptr ++;
-		}
+		// Prepare histogram
+		int histData[] = histogram(srcData);
+		int count = srcData.size();
 
-		// Total number of pixels
-		int total = srcData.size();
-
+		// Thresholding
 		float sum = 0;
-		for (int t=0 ; t<101 ; t++) sum += t * histData[t];
+		for (int t=0 ; t<histData.length ; t++) sum += t * histData[t];
 
 		float sumB = 0;
 		int wB = 0;
@@ -382,13 +355,13 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 
 		float varMax = 0;
 		int threshold = 0;
-
-		for (int t=0 ; t<101 ; t++)
+		
+		for (int t=0 ; t<histData.length ; t++)
 		{
 			wB += histData[t];					// Weight Background
 			if (wB == 0) continue;
 
-			wF = total - wB;						// Weight Foreground
+			wF = count - wB;					// Weight Foreground
 			if (wF == 0) break;
 
 			sumB += (float) (t * histData[t]);
@@ -405,8 +378,51 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 				threshold = t;
 			}
 		}
+		
+		return (threshold + 1) * getRange(srcData)[0] / (double) histData.length;  // Convert the integer bin threshold to a value
+	}
+	
+	/** Histogram currently generated using nBins = n^(1/2) approach, also used by Excel. */
+	public int[] histogram (ArrayList<Spot> data) {
+		// Calculate number of bins
+		int size = data.size();
+		int nBins = (int) Math.ceil(Math.sqrt(size));  // nBins = n^(1/2)
 
-		return threshold;
+		// Create array for histrogram with nBins
+		int[] hist = new int[nBins];
+		
+		// Get data range
+		double[] range = getRange(data);
+		
+		// Populate the histogram with data
+		double binWidth = range[0] / nBins;
+		for (int i = 0; i < data.size(); i++) {
+			int index = Math.min((int) Math.floor((data.get(i).getAggregatedScore() - range[1]) / binWidth), nBins - 1); // the max value ends up being 1 higher than nBins, so put it in the last bin.
+			hist[index]++;
+		}
+		
+		return hist;
+	}
+	
+	/** Returns [range, min, max] */
+	public double[] getRange(ArrayList<Spot> data) {
+		double min = 0;
+		double max = 0;
+		
+		for (int i = 0; i < data.size(); i++) {
+			double value = data.get(i).getAggregatedScore();
+			if (i == 0) {
+				min = value;
+				max = value;
+			}
+			
+			else {
+				if (value < min) min = value;
+				if (value > max) max = value;
+			}
+		}
+		
+		return new double[] {(max-min), min, max};
 	}
 	
 	/**
@@ -513,7 +529,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 * @param pixelHeight
 	 * @param pixelDepth
 	 */
-	public void render3DAndOverlayExtrema(ArrayList< ArrayList<Spot> > extremaAllFrames, ImagePlus img, double pixelWidth, double pixelHeight, double pixelDepth, double downsampleFactors[], double diam) {
+	public void render3D(ArrayList< ArrayList<Spot> > extremaAllFrames, ArrayList<Double> thresholdsAllFrames, ImagePlus img, double pixelWidth, double pixelHeight, double pixelDepth, double downsampleFactors[], double diam) {
 		// Adjust calibration
 		img.getCalibration().pixelWidth = pixelWidth;
 		img.getCalibration().pixelHeight = pixelHeight;
@@ -534,22 +550,31 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		
 		/* Add extrema points to point lists of all time points */
 		
-		// For each time point
+		// For each frame
 		for (int j = 0; j < extremaAllFrames.size(); j++) {
 			PointList pl = c.getInstant(j).getPointList();
 			ArrayList<Spot> framej = extremaAllFrames.get(j);
-			Iterator<Spot> itr = framej.iterator();
+			Iterator<Spot> extremaItr = framej.iterator();
+			Iterator<Double> thresholdItr = thresholdsAllFrames.iterator();
+			final double threshold = thresholdItr.next().doubleValue();  // threshold for frame
+			System.out.println("Threshold: " + threshold);
 			
 			// Add the extrema coords to the pointlist
-			while (itr.hasNext()) {
-				final Spot spot = itr.next();
+			while (extremaItr.hasNext()) {
+				final Spot spot = extremaItr.next();
 				final double coords[] = spot.getCoordinates();
 				
-				final double scaledCoords[] = convertDownsampledImgCoordsToOriginalCoords(coords, downsampleFactors);
-				final int intCoords[] = doubleCoordsToIntCoords(scaledCoords);
-				
-				// Add point
-				pl.add(intCoords[0] * pixelWidth, intCoords[1] * pixelHeight, intCoords[2] * pixelDepth);  // Scale for each coordinate, since the coordinates are unscaled now and from the downsampled image.
+				if (spot.getAggregatedScore() > threshold) {  // if above the threshold
+					System.out.println("Downsized coords: " + MathLib.printCoordinates(new float[] {(float)coords[0], (float)coords[1], (float)coords[2]}));
+					final double scaledCoords[] = convertDownsampledImgCoordsToOriginalCoords(coords, downsampleFactors);
+					System.out.println("Original coords: " + MathLib.printCoordinates(new float[] {(float)scaledCoords[0]*(float)pixelWidth, (float)scaledCoords[1]*(float)pixelHeight, (float)scaledCoords[2]*(float)pixelDepth}));
+
+					final int intCoords[] = doubleCoordsToIntCoords(scaledCoords);
+					
+					// Add point
+					pl.add(intCoords[0] * pixelWidth, intCoords[1] * pixelHeight, intCoords[2] * pixelDepth);  // Scale for each dimension, since the coordinates are unscaled now and from the downsampled image.
+			
+				}
 			}
 		}
 		

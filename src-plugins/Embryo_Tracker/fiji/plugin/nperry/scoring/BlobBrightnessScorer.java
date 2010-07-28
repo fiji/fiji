@@ -1,25 +1,34 @@
 package fiji.plugin.nperry.scoring;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-
-import mpicbg.imglib.algorithm.math.MathLib;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.special.RegionOfInterestCursor;
 import mpicbg.imglib.image.Image;
+import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.RealType;
 import fiji.plugin.nperry.Spot;
 
 public class BlobBrightnessScorer <T extends RealType<T>> extends IndependentScorer {
 
-	private static final String SCORING_METHOD_NAME = "BlobVarianceScorer";
+	private static final String SCORING_METHOD_NAME = "BlobBrightnessScorer";
 	private Image<T> img;
-	private int rad;
+	private double diam;
+	private double[] downsampleFactors;
 	
-	public BlobBrightnessScorer(Image<T> filteredImage, double diam) {
-		this.img = filteredImage;
+	public BlobBrightnessScorer(Image<T> originalImage, double diam) {
+		this.img = originalImage;
 		
-		this.rad = (int) MathLib.round(diam/2);
+		this.diam = diam;
+		this.downsampleFactors = new double[originalImage.getNumDimensions()];
+		
+		for (int i = 0; i < downsampleFactors.length; i++) {
+			downsampleFactors[i] = 1.0;
+		}
+	}
+	
+	public BlobBrightnessScorer(Image<T> originalImage, double diam, double[] downsampleFactors) {
+		this.img = originalImage;
+		this.diam = diam;
+		this.downsampleFactors = downsampleFactors;
 	}
 	
 	@Override
@@ -34,42 +43,56 @@ public class BlobBrightnessScorer <T extends RealType<T>> extends IndependentSco
 
 	@Override
 	public void score(Spot spot) {
-		final LocalizableByDimCursor<T> cursor = img.createLocalizableByDimCursor();
+		final LocalizableByDimCursor<T> cursor = img.createLocalizableByDimCursor(new OutOfBoundsStrategyValueFactory<T>());
 		final double[] coords = spot.getCoordinates();
-		final int[] intCoords = new int[coords.length];
-		final ArrayList<Double> values = new ArrayList<Double>();
+		final double[] scaledCoords = convertDownsampledImgCoordsToOriginalCoords(coords);
+		final int[] intCoords = doubleCoordsToIntCoords(scaledCoords);
 		
-		// Convert spot's coords (double[]) to int[]
-		for (int i = 0; i < intCoords.length; i++) {
-			intCoords[i] = (int) Math.round(coords[i]) - rad;
-		}
+		// Calculate inscribed cube length for blob
+		double length = diam / Math.sqrt(2);
 		
 		// Create the size array for the ROI cursor
 		int size[] = new int[img.getNumDimensions()];
 		for (int i = 0; i < size.length; i++) {
-			size[i] = rad * 2;
+			size[i] = (int) length;
 		}
 
-		// Use ROI cursor to search a sphere around the spot's coordinates, and store the brightness of each pixel
+		// Adjust the integer coordinates of the spot to set the ROI correctly
+		for (int i = 0; i < intCoords.length; i++) {
+			intCoords[i] = intCoords[i] - (int) (length / 2);  
+		}
+		
+		// Use ROI cursor to search a sphere around the spot's coordinates
+		/* need to handle case where ROI is not in image anymore!! */
+		double sum = 0;
 		RegionOfInterestCursor<T> roi = cursor.createRegionOfInterestCursor(intCoords, size);
 		while (roi.hasNext()) {
 			roi.next();
-			values.add(roi.getType().getRealDouble());
+			sum += roi.getType().getRealDouble();
 		}
-		
-		// Compute the brightness for this blob.
-		double brightness = 0;
-		Iterator<Double> itr = values.iterator();
-		while (itr.hasNext()) {
-			brightness += itr.next().doubleValue();
-		}
-		
+
 		// Close cursors
 		roi.close();
 		cursor.close();
 		
-		// Add total brightness as the spot's score.
-		spot.addScore(SCORING_METHOD_NAME, brightness);
+		// Add total intensity.
+		spot.addScore(SCORING_METHOD_NAME, sum);
+	}
+	
+	private double[] convertDownsampledImgCoordsToOriginalCoords(double downsizedCoords[]) {
+		double scaledCoords[] = new double[downsizedCoords.length];
+		for (int i = 0; i < downsizedCoords.length; i++) {
+			scaledCoords[i] = downsizedCoords[i] * downsampleFactors[i];
+		}
+		return scaledCoords;
+	}
+	
+	private int[] doubleCoordsToIntCoords(double doubleCoords[]) {
+		int intCoords[] = new int[doubleCoords.length];
+		for (int i = 0; i < doubleCoords.length; i++) {
+			intCoords[i] = (int) Math.round(doubleCoords[i]);
+		}
+		return intCoords;
 	}
 
 }

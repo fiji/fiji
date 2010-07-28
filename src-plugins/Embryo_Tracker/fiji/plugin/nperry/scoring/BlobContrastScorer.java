@@ -6,6 +6,7 @@ import mpicbg.imglib.algorithm.math.MathLib;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.special.RegionOfInterestCursor;
 import mpicbg.imglib.image.Image;
+import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.RealType;
 import fiji.plugin.nperry.Spot;
 
@@ -47,8 +48,8 @@ public class BlobContrastScorer <T extends RealType<T>> extends IndependentScore
 
 	@Override
 	public void score(Spot spot) {
-		final LocalizableByDimCursor<T> cursorInner = img.createLocalizableByDimCursor();
-		final LocalizableByDimCursor<T> cursorOuter = img.createLocalizableByDimCursor();
+		final LocalizableByDimCursor<T> cursorInner = img.createLocalizableByDimCursor(new OutOfBoundsStrategyValueFactory<T>());
+		final LocalizableByDimCursor<T> cursorOuter = img.createLocalizableByDimCursor(new OutOfBoundsStrategyValueFactory<T>());
 		double[] origin = spot.getCoordinates();
 		final int[] innerCoords = new int[origin.length];
 		final int[] outerCoords = new int[origin.length];
@@ -85,14 +86,11 @@ public class BlobContrastScorer <T extends RealType<T>> extends IndependentScore
 		// Average intensity *inside* blob border
 		RegionOfInterestCursor<T> roiInner = cursorInner.createRegionOfInterestCursor(innerCoords, innerSize);
 
-		//System.out.println("###Inner###");
-		//System.out.println("Inner rad: " + innerRad + ", rad: " + rad);
 		while (roiInner.hasNext()) {
 			roiInner.next();
 			cursorInner.getPosition(curr);
 			if (isInRing(origin, curr, innerRad, rad)) {
 				innerRadiusValues.add(roiInner.getType().getRealDouble());
-				//System.out.println("Coords: " + MathLib.printCoordinates(curr));
 			}
 		}
 		
@@ -106,14 +104,11 @@ public class BlobContrastScorer <T extends RealType<T>> extends IndependentScore
 		// Average intensity *outside* blob border
 		RegionOfInterestCursor<T> roiOuter = cursorOuter.createRegionOfInterestCursor(outerCoords, outerSize);
 		
-		//System.out.println("###Outer###");
-		//System.out.println("rad + 1: " + (rad + 1) + ", Outer rad: " + outerRad);
 		while (roiOuter.hasNext()) {
 			roiOuter.next();
 			cursorOuter.getPosition(curr);
 			if (isInRing(origin, curr, rad + 1.0, outerRad)) {
 				outerRadiusValues.add(roiOuter.getType().getRealDouble());
-				//System.out.println("Coords: " + MathLib.printCoordinates(curr));
 			}
 		}
 		

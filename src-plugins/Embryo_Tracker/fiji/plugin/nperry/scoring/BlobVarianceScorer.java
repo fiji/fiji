@@ -6,6 +6,7 @@ import mpicbg.imglib.algorithm.math.MathLib;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.special.RegionOfInterestCursor;
 import mpicbg.imglib.image.Image;
+import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.RealType;
 import fiji.plugin.nperry.Spot;
 
@@ -44,7 +45,7 @@ public class BlobVarianceScorer <T extends RealType<T>> extends IndependentScore
 
 	@Override
 	public void score(Spot spot) {		
-		final LocalizableByDimCursor<T> cursor = img.createLocalizableByDimCursor();
+		final LocalizableByDimCursor<T> cursor = img.createLocalizableByDimCursor(new OutOfBoundsStrategyValueFactory<T>());
 		final double[] coords = spot.getCoordinates();
 		final double[] scaledCoords = convertDownsampledImgCoordsToOriginalCoords(coords);
 		final int[] intCoords = doubleCoordsToIntCoords(scaledCoords);
