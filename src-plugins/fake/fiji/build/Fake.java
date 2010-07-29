@@ -14,6 +14,8 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.ByteArrayInputStream;
+import java.io.FileReader;
+import java.io.Reader;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -141,6 +143,16 @@ public class Fake {
 		if (!new File(jythonJar).exists())
 			jythonJar = fijiHome + "/precompiled/jython.jar";
 		getClassLoader(jythonJar);
+	}
+
+	protected static void discoverBeanshell() throws IOException {
+		String bshJar = fijiHome + "/jars/bsh.jar";
+		if (!new File(bshJar).exists()) {
+			bshJar = fijiHome + "/jars/bsh-2.0b4.jar";
+			if (!new File(bshJar).exists())
+				bshJar = fijiHome + "/precompiled/bsh.jar";
+		}
+		getClassLoader(bshJar);
 	}
 
 	protected static void discoverJavac() throws IOException {
@@ -2642,11 +2654,22 @@ public class Fake {
 		if (args[0].endsWith(".py")) {
 			String args0orig = args[0];
 			args[0] = makePath(dir, args[0]);
-			if (executePython(args))
+			if (executePython(args, out, err))
 				return;
 			if (verbose)
 				err.println("Falling back to Python ("
 					+ "Jython was not found in classpath)");
+			args[0] = args0orig;
+		}
+
+		if (args[0].endsWith(".bsh")) {
+			String args0orig = args[0];
+			args[0] = makePath(dir, args[0]);
+			if (executeBeanshell(args, out, err))
+				return;
+			if (verbose)
+				err.println("Falling back to calling it with BeanShell ("
+					+ "bsh.jar was not found in classpath)");
 			args[0] = args0orig;
 		}
 
@@ -2710,9 +2733,9 @@ public class Fake {
 
 
 	protected static Constructor jythonCreate;
-	protected static Method jythonExec, jythonExecfile;
+	protected static Method jythonExec, jythonExecfile, jythonSetOut, jythonSetErr;
 
-	protected static boolean executePython(String[] args)
+	protected static boolean executePython(String[] args, PrintStream out, PrintStream err)
 			throws FakeException {
 		if (jythonExecfile == null) try {
 			discoverJython();
@@ -2725,6 +2748,9 @@ public class Fake {
 			jythonExec = main.getMethod("exec", argsType);
 			argsType = new Class[] { args[0].getClass() };
 			jythonExecfile = main.getMethod("execfile", argsType);
+			argsType = new Class[] { OutputStream.class };
+			jythonSetOut = main.getMethod("setOut", argsType);
+			jythonSetErr = main.getMethod("setErr", argsType);
 		} catch (Exception e) {
 			return false;
 		}
@@ -2732,6 +2758,8 @@ public class Fake {
 		try {
 			Object instance =
 				jythonCreate.newInstance(new Object[] { });
+			jythonSetOut.invoke(instance, new Object[] { out });
+			jythonSetErr.invoke(instance, new Object[] { err });
 			String init = "import sys\n" +
 				"sys.argv = [";
 			for (int i = 0; i < args.length; i++)
@@ -2747,6 +2775,45 @@ public class Fake {
 		} catch (InvocationTargetException e) {
 			e.getTargetException().printStackTrace();
 			throw new FakeException("Jython failed");
+		} catch (Exception e) {
+			return false;
+		}
+		return true;
+	}
+
+	protected static Constructor bshCreate;
+	protected static Method bshEvalString, bshEvalReader, bshSet;
+
+	protected static boolean executeBeanshell(String[] args, PrintStream out, PrintStream err)
+			throws FakeException {
+		if (bshCreate == null) try {
+			discoverBeanshell();
+			ClassLoader loader = getClassLoader();
+			String className = "bsh.Interpreter";
+			Class main = loader.loadClass(className);
+			Class[] argsType = new Class[] { Reader.class, PrintStream.class, PrintStream.class, boolean.class };
+			bshCreate = main.getConstructor(argsType);
+			argsType = new Class[] { String.class };
+			bshEvalString = main.getMethod("eval", argsType);
+			argsType = new Class[] { Reader.class };
+			bshEvalReader = main.getMethod("eval", argsType);
+			argsType = new Class[] { String.class, Object.class };
+			bshSet = main.getMethod("set", argsType);
+		} catch (Exception e) {
+			return false;
+		}
+
+		try {
+			Object instance =
+				bshCreate.newInstance(new Object[] { (Reader)null, out, err, Boolean.FALSE });
+			String path = args[0];
+			String[] bshArgs = new String[args.length - 1];
+			System.arraycopy(args, 1, bshArgs, 0, bshArgs.length);
+			bshSet.invoke(instance, new Object[] { "bsh.args", bshArgs });
+			bshEvalReader.invoke(instance, new Object[] { new FileReader(path) });
+		} catch (InvocationTargetException e) {
+			e.getTargetException().printStackTrace();
+			throw new FakeException("Beanshell failed");
 		} catch (Exception e) {
 			return false;
 		}
