@@ -88,7 +88,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 
 		// 4 - Execute!
 		Object[] result = exec(imp, diam, useMedFilt, allowEdgeMax, pixelWidth, pixelHeight, pixelDepth);
-		System.out.println("Done executing!");
+		System.out.println("Done executing!");	
 		
 		// 5 - Display new image and overlay maxima
 		if (null != result) {
@@ -96,16 +96,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			ArrayList< ArrayList<Spot> > extremaAllFrames = (ArrayList< ArrayList<Spot> >) result[0];
 			ArrayList<Double> thresholdsAllFrames = (ArrayList<Double>) result[1];
 			if (numDim == 3) {	// If original image is 3D, create a 3D rendering of the image and overlay maxima
-				ij.plugin.Duplicator d = new ij.plugin.Duplicator();  // Make a duplicate image so we don't alter the users image when displaying 3D (requires 8-bit, etc).
-				ImagePlus duplicatedImp = d.run(imp);
-				render3D(extremaAllFrames, thresholdsAllFrames, duplicatedImp, pixelWidth, pixelHeight, pixelDepth, createDownsampledDim(pixelWidth, pixelHeight, pixelDepth, diam, numDim), diam);
-			
-				//final int FPS_MIN = 0;
-				//final int FPS_MAX = 1;
-				//final int FPS_INIT = threshold;    //initial threshold
-
-				//JSlider framesPerSecond = new JSlider(JSlider.HORIZONTAL, FPS_MIN, FPS_MAX, FPS_INIT);
-			
+				render3D(extremaAllFrames, thresholdsAllFrames, imp, pixelWidth, pixelHeight, pixelDepth, createDownsampledDim(pixelWidth, pixelHeight, pixelDepth, diam, numDim), diam);
 			} else {
 				//PointRoi roi = (PointRoi) result[0];
 				//imp.setRoi(roi);
@@ -115,8 +106,8 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	}
 	
 	/** Execute the plugin functionality: apply a median filter (for salt and pepper noise, if user requests), a Gaussian blur, and then find maxima. */
-	public Object[] exec(ImagePlus imp, double diam, boolean useMedFilt, boolean allowEdgeMax, double pixelWidth, double pixelHeight, double pixelDepth) {
-		// 0 - Check validity of parameters, initialize local variables:
+	public Object[] exec(ImagePlus imp, double diam, boolean useMedFilt, boolean allowEdgeMax, double pixelWidth, double pixelHeight, double pixelDepth) {		
+		/* 0 - Check validity of parameters, initialize local variables */
 		if (null == imp) return null;
 		ArrayList< ArrayList <Spot> > extremaAllFrames = new ArrayList< ArrayList <Spot> >();
 		ArrayList<Double> frameThresholds = new ArrayList<Double>();  // holds the thresholds for each frame's extrema.
@@ -137,7 +128,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			}
 			ImagePlus impSingleFrame = new ImagePlus("Frame " + Integer.toString(i + 1), frame);
 			
-			/* 2 - Prepare stack for use with Imglib */
+			/* 2 - Prepare stack for use with Imglib. */
 			IJ.log("---Frame " + Integer.toString(i+1) + "---");
 			System.out.println("---Frame " + (i+1) + "---");
 			Image<T> img = ImagePlusAdapter.wrap(impSingleFrame);
@@ -151,13 +142,12 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			downsampleFactors = createDownsampledDim(pixelWidth, pixelHeight, pixelDepth, diam, numDim);	// factors for x,y,z that we need for scaling image down
 			int downsampledDim[] = (numDim == 3) ? new int[]{(int)(dim[0] / downsampleFactors[0]), (int)(dim[1] / downsampleFactors[1]), (int)(dim[2] / downsampleFactors[2])} : new int[]{(int)(dim[0] / downsampleFactors[0]), (int)(dim[1] / downsampleFactors[1])};  // downsampled image dimensions once the downsampleFactors have been applied to their respective image dimensions
 			final DownSample<T> downsampler = new DownSample<T>(modImg, downsampledDim, 0.5f, 0.5f);	// optimal sigma is defined by 0.5f, as mentioned here: http://pacific.mpi-cbg.de/wiki/index.php/Downsample
-			if (downsampler.checkInput() && downsampler.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
-				modImg = downsampler.getResult(); 
-			} else { 
-		        System.out.println(downsampler.getErrorMessage()); 
+			if (!downsampler.checkInput() && !downsampler.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
+				System.out.println(downsampler.getErrorMessage()); 
 		        System.out.println("Bye.");
 		        return null;
 			}
+			modImg = downsampler.getResult(); 
 			
 			/* 4 - Apply a median filter, to get rid of salt and pepper noise which could be mistaken for maxima in the algorithm (only applied if requested by user explicitly) */
 			if (useMedFilt) {
@@ -182,13 +172,12 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 				// Apply the median filter:
 				final MedianFilter<T> medFilt = new MedianFilter<T>(modImg, strel, new OutOfBoundsStrategyMirrorFactory<T>()); 
 				/** note: add back medFilt.checkInput() when it's fixed */
-				if (medFilt.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
-					modImg = medFilt.getResult(); 
-				} else { 
-			        System.out.println(medFilt.getErrorMessage()); 
+				if (!medFilt.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
+					System.out.println(medFilt.getErrorMessage()); 
 			        System.out.println("Bye.");
 			        return null;
-				}
+				} 
+				modImg = medFilt.getResult(); 
 			}
 			
 			// #---------------------------------------#
@@ -335,6 +324,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			double threshold = otsuThreshold(spots);  // determines best cutoff point between "good" and "bad" extrema.
 			frameThresholds.add(threshold);
 		}
+		
 		return new Object[] {extremaAllFrames, frameThresholds};
 	}
 	
@@ -529,57 +519,44 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 * @param pixelHeight
 	 * @param pixelDepth
 	 */
-	public void render3D(ArrayList< ArrayList<Spot> > extremaAllFrames, ArrayList<Double> thresholdsAllFrames, ImagePlus img, double pixelWidth, double pixelHeight, double pixelDepth, double downsampleFactors[], double diam) {
-		// Adjust calibration
-		img.getCalibration().pixelWidth = pixelWidth;
-		img.getCalibration().pixelHeight = pixelHeight;
-		img.getCalibration().pixelDepth = pixelDepth;
-		
+	public void render3D(ArrayList< ArrayList<Spot> > extremaAllFrames, ArrayList<Double> thresholdsAllFrames, ImagePlus imp, double pixelWidth, double pixelHeight, double pixelDepth, double downsampleFactors[], double diam) {
 		// Convert to a usable format
-		new StackConverter(img).convertToGray8();
+		new StackConverter(imp).convertToGray8();
 
 		// Create a universe
 		Image3DUniverse univ = new Image3DUniverse();
 		univ.show();
 		
 		// Add the image as a volume rendering
-		Content c = univ.addVoltex(img);
+		Content c = univ.addVoltex(imp);
 
-		// Change the size of the points
-		c.setLandmarkPointSize((float) diam / 2);  // radius is diam / 2
-		
-		/* Add extrema points to point lists of all time points */
-		
 		// For each frame
 		for (int j = 0; j < extremaAllFrames.size(); j++) {
 			PointList pl = c.getInstant(j).getPointList();
 			ArrayList<Spot> framej = extremaAllFrames.get(j);
-			Iterator<Spot> extremaItr = framej.iterator();
-			Iterator<Double> thresholdItr = thresholdsAllFrames.iterator();
-			final double threshold = thresholdItr.next().doubleValue();  // threshold for frame
+			final double threshold = thresholdsAllFrames.get(j);  // threshold for frame
+			Iterator<Spot> itr = framej.iterator();
 			System.out.println("Threshold: " + threshold);
 			
 			// Add the extrema coords to the pointlist
-			while (extremaItr.hasNext()) {
-				final Spot spot = extremaItr.next();
+			while (itr.hasNext()) {
+				final Spot spot = itr.next();
 				final double coords[] = spot.getCoordinates();
 				
 				if (spot.getAggregatedScore() > threshold) {  // if above the threshold
-					System.out.println("Downsized coords: " + MathLib.printCoordinates(new float[] {(float)coords[0], (float)coords[1], (float)coords[2]}));
 					final double scaledCoords[] = convertDownsampledImgCoordsToOriginalCoords(coords, downsampleFactors);
-					System.out.println("Original coords: " + MathLib.printCoordinates(new float[] {(float)scaledCoords[0]*(float)pixelWidth, (float)scaledCoords[1]*(float)pixelHeight, (float)scaledCoords[2]*(float)pixelDepth}));
 
-					final int intCoords[] = doubleCoordsToIntCoords(scaledCoords);
-					
 					// Add point
-					pl.add(intCoords[0] * pixelWidth, intCoords[1] * pixelHeight, intCoords[2] * pixelDepth);  // Scale for each dimension, since the coordinates are unscaled now and from the downsampled image.
-			
+					pl.add(scaledCoords[0] * pixelWidth, scaledCoords[1] * pixelHeight, scaledCoords[2] * pixelDepth);  // Scale for each dimension, since the coordinates are unscaled now and from the downsampled image.	
 				}
 			}
 		}
 		
 		// Make the point list visible
 		c.showPointList(true);
+		
+		// Change the size of the points
+		c.setLandmarkPointSize((float) diam / 2);  // radius is diam / 2
 	}
 	
 	private double[] convertDownsampledImgCoordsToOriginalCoords(double downsizedCoords[], double downsampleFactors[]) {
@@ -588,13 +565,5 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			scaledCoords[i] = downsizedCoords[i] * downsampleFactors[i];
 		}
 		return scaledCoords;
-	}
-	
-	private int[] doubleCoordsToIntCoords(double doubleCoords[]) {
-		int intCoords[] = new int[doubleCoords.length];
-		for (int i = 0; i < doubleCoords.length; i++) {
-			intCoords[i] = (int) Math.round(doubleCoords[i]);
-		}
-		return intCoords;
 	}
 }
