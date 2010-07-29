@@ -1324,7 +1324,7 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 			final PipedOutputStream po = new PipedOutputStream(pi);
 			new TextEditor.Executer(output) {
 				public void execute() {
-					interpreter.runScript(pi);
+					interpreter.runScript(pi, editorPane.getFileName());
 					output.flush();
 					markCompileEnd();
 				}
