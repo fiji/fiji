@@ -138,9 +138,11 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			/* 3 - Downsample to improve run time. The image is downsampled by the factor necessary to achieve a resulting blob size of about 10 pixels in diameter in all dimensions. */
 			IJ.log("Downsampling...");
 			IJ.showStatus("Downsampling...");
-			int dim[] = img.getDimensions();
-			int downsampledDim[] = (numDim == 3) ? new int[]{(int)(dim[0] / downsampleFactors[0]), (int)(dim[1] / downsampleFactors[1]), (int)(dim[2] / downsampleFactors[2])} : new int[]{(int)(dim[0] / downsampleFactors[0]), (int)(dim[1] / downsampleFactors[1])};  // downsampled image dimensions once the downsampleFactors have been applied to their respective image dimensions
-			final DownSample<T> downsampler = new DownSample<T>(modImg, downsampledDim, 0.5f, 0.5f);	// optimal sigma is defined by 0.5f, as mentioned here: http://pacific.mpi-cbg.de/wiki/index.php/Downsample
+			final int dim[] = img.getDimensions();
+			for (int j = 0; j < dim.length; j++) {
+				dim[j] = (int) (dim[j] / downsampleFactors[j]);
+			}
+			final DownSample<T> downsampler = new DownSample<T>(modImg, dim, 0.5f, 0.5f);	// optimal sigma is defined by 0.5f, as mentioned here: http://pacific.mpi-cbg.de/wiki/index.php/Downsample
 			if (!downsampler.checkInput() || !downsampler.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
 				System.out.println(downsampler.getErrorMessage()); 
 		        System.out.println("Bye.");
@@ -183,7 +185,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			// #------        Time Trials       -------#
 			// #---------------------------------------#
 			long overall = 0;
-			long numIterations = 1;
+			final long numIterations = 1;
 			for (int k = 0; k < numIterations; k++) {
 				long startTime = System.currentTimeMillis();	
 			/** Approach 1: L x (G x I ) */
@@ -233,9 +235,9 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			// Gauss
 			IJ.log("Applying Gaussian filter...");
 			IJ.showStatus("Applying Gaussian filter...");
-			ImageFactory<FloatType> factory = new ImageFactory<FloatType>(new FloatType(), new ArrayContainerFactory());
-			Image<FloatType> gaussKernel = FourierConvolution.getGaussianKernel(factory, IDEAL_SIGMA_FOR_DOWNSAMPLED_BLOB_DIAM, numDim);
-			FourierConvolution<T, FloatType> fConvGauss = new FourierConvolution<T, FloatType>(modImg, gaussKernel);
+			final ImageFactory<FloatType> factory = new ImageFactory<FloatType>(new FloatType(), new ArrayContainerFactory());
+			final Image<FloatType> gaussKernel = FourierConvolution.getGaussianKernel(factory, IDEAL_SIGMA_FOR_DOWNSAMPLED_BLOB_DIAM, numDim);
+			final FourierConvolution<T, FloatType> fConvGauss = new FourierConvolution<T, FloatType>(modImg, gaussKernel);
 			if (!fConvGauss.checkInput() || !fConvGauss.process()) {
 				System.out.println( "Fourier Convolution failed: " + fConvGauss.getErrorMessage() );
 				return null;
@@ -247,15 +249,15 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			IJ.showStatus("Applying Laplacian convolution...");
 			Image<FloatType> laplacianKernel;
 			if (numDim == 3) {
-				float laplacianArray[][][] = new float[][][]{ { {0,-1/18,0},{-1/18,-1/18,-1/18},{0,-1/18,0} }, { {-1/18,-1/18,-1/18}, {-1/18,1,-1/18}, {-1/18,-1/18,-1/18} }, { {0,-1/18,0},{-1/18,-1/18,-1/18},{0,-1/18,0} } }; // laplace kernel found here: http://en.wikipedia.org/wiki/Discrete_Laplace_operator
+				final float laplacianArray[][][] = new float[][][]{ { {0,-1/18,0},{-1/18,-1/18,-1/18},{0,-1/18,0} }, { {-1/18,-1/18,-1/18}, {-1/18,1,-1/18}, {-1/18,-1/18,-1/18} }, { {0,-1/18,0},{-1/18,-1/18,-1/18},{0,-1/18,0} } }; // laplace kernel found here: http://en.wikipedia.org/wiki/Discrete_Laplace_operator
 				laplacianKernel = factory.createImage(new int[]{3, 3, 3}, "Laplacian");
 				quickKernel3D(laplacianArray, laplacianKernel);
 			} else {
-				float laplacianArray[][] = new float[][]{ {-1/8,-1/8,-1/8},{-1/8,1,-1/8},{-1/8,-1/8,-1/8} }; // laplace kernel found here: http://en.wikipedia.org/wiki/Discrete_Laplace_operator
+				final float laplacianArray[][] = new float[][]{ {-1/8,-1/8,-1/8},{-1/8,1,-1/8},{-1/8,-1/8,-1/8} }; // laplace kernel found here: http://en.wikipedia.org/wiki/Discrete_Laplace_operator
 				laplacianKernel = factory.createImage(new int[]{3, 3}, "Laplacian");
 				quickKernel2D(laplacianArray, laplacianKernel);
 			}
-			FourierConvolution<T, FloatType> fConvLaplacian = new FourierConvolution<T, FloatType>(modImg, laplacianKernel);
+			final FourierConvolution<T, FloatType> fConvLaplacian = new FourierConvolution<T, FloatType>(modImg, laplacianKernel);
 			if (!fConvLaplacian.checkInput() || !fConvLaplacian.process()) {
 				System.out.println( "Fourier Convolution failed: " + fConvLaplacian.getErrorMessage() );
 				return null;
@@ -294,25 +296,25 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			/* 7 - Find extrema of newly convoluted image */
 			IJ.log("Finding extrema...");
 			IJ.showStatus("Finding extrema...");
-			RegionalExtremaFactory<T> extremaFactory = new RegionalExtremaFactory<T>(modImg);
-			RegionalExtremaFinder<T> findExtrema = extremaFactory.createRegionalMaximaFinder(true);
+			final RegionalExtremaFactory<T> extremaFactory = new RegionalExtremaFactory<T>(modImg);
+			final RegionalExtremaFinder<T> findExtrema = extremaFactory.createRegionalMaximaFinder(true);
 			findExtrema.allowEdgeExtrema(allowEdgeMax);
 			if (!findExtrema.checkInput() || !findExtrema.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
 				System.out.println( "Extrema Finder failed: " + findExtrema.getErrorMessage() );
 				return null;
 			}
-			ArrayList< double[] > centeredExtrema = findExtrema.getRegionalExtremaCenters(false);
-			ArrayList<Spot> spots = findExtrema.convertToSpots(centeredExtrema);
+			final ArrayList< double[] > centeredExtrema = findExtrema.getRegionalExtremaCenters(false);
+			final ArrayList<Spot> spots = findExtrema.convertToSpots(centeredExtrema);
 			extremaAllFrames.add(spots);
 			System.out.println("Find Maxima Run Time: " + findExtrema.getProcessingTime());
 			System.out.println("Num regional maxima: " + centeredExtrema.size());
 			
 			/* 8 - Assess quality of extrema */
-			AverageScoreAggregator scoreAgg = new AverageScoreAggregator();
-			LoGScorer<T> logScore = new LoGScorer<T>(modImg);
-			BlobVarianceScorer<T> varScore = new BlobVarianceScorer<T>(img, diam, downsampleFactors);
-			BlobBrightnessScorer<T> brightnessScore = new BlobBrightnessScorer<T>(img, diam, downsampleFactors);
-			BlobContrastScorer<T> contrastScore = new BlobContrastScorer<T>(img, diam, downsampleFactors);
+			final AverageScoreAggregator scoreAgg = new AverageScoreAggregator();
+			final LoGScorer<T> logScore = new LoGScorer<T>(modImg);
+			final BlobVarianceScorer<T> varScore = new BlobVarianceScorer<T>(img, diam, downsampleFactors);
+			final BlobBrightnessScorer<T> brightnessScore = new BlobBrightnessScorer<T>(img, diam, downsampleFactors);
+			final BlobContrastScorer<T> contrastScore = new BlobContrastScorer<T>(img, diam, downsampleFactors);
 			scoreAgg.add(logScore);
 			scoreAgg.add(varScore);
 			scoreAgg.add(brightnessScore);
@@ -320,7 +322,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			scoreAgg.aggregate(spots);  // aggregate scores
 			
 			/* 9 - Calculate Thresholds */
-			double threshold = otsuThreshold(spots);  // determines best cutoff point between "good" and "bad" extrema.
+			final double threshold = otsuThreshold(spots);  // determines best cutoff point between "good" and "bad" extrema.
 			frameThresholds.add(threshold);
 		}
 		
