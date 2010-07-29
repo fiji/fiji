@@ -661,7 +661,10 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 
 
 			xAxis.setRange(minX,maxX);
-			yAxis.setRange(minY,maxY);
+			if( axes == AXES_NORMAL )
+				yAxis.setRange(0,maxY);
+			else
+				yAxis.setRange(minY,maxY);
 
 			XYItemRenderer renderer = null;
 			if( sphereSeparation > 0 ) {
