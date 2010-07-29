@@ -96,7 +96,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			ArrayList< ArrayList<Spot> > extremaAllFrames = (ArrayList< ArrayList<Spot> >) result[0];
 			ArrayList<Double> thresholdsAllFrames = (ArrayList<Double>) result[1];
 			if (numDim == 3) {	// If original image is 3D, create a 3D rendering of the image and overlay maxima
-				render3D(extremaAllFrames, thresholdsAllFrames, imp, pixelWidth, pixelHeight, pixelDepth, createDownsampledDim(pixelWidth, pixelHeight, pixelDepth, diam, numDim), diam);
+				renderIn3DViewer(extremaAllFrames, thresholdsAllFrames, imp, pixelWidth, pixelHeight, pixelDepth, createDownsampledDim(pixelWidth, pixelHeight, pixelDepth, diam, numDim), diam);
 			} else {
 				//PointRoi roi = (PointRoi) result[0];
 				//imp.setRoi(roi);
@@ -111,7 +111,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		if (null == imp) return null;
 		ArrayList< ArrayList <Spot> > extremaAllFrames = new ArrayList< ArrayList <Spot> >();
 		ArrayList<Double> frameThresholds = new ArrayList<Double>();  // holds the thresholds for each frame's extrema.
-		double downsampleFactors[] = null;
+		final double downsampleFactors[] = createDownsampledDim(pixelWidth, pixelHeight, pixelDepth, diam, numDim);	// factors for x,y,z that we need for scaling image down;
 		                        
 		/* 1 - Create separate ImagePlus's for each frame */
 		ImageStack stack = imp.getImageStack();
@@ -139,10 +139,9 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			IJ.log("Downsampling...");
 			IJ.showStatus("Downsampling...");
 			int dim[] = img.getDimensions();
-			downsampleFactors = createDownsampledDim(pixelWidth, pixelHeight, pixelDepth, diam, numDim);	// factors for x,y,z that we need for scaling image down
 			int downsampledDim[] = (numDim == 3) ? new int[]{(int)(dim[0] / downsampleFactors[0]), (int)(dim[1] / downsampleFactors[1]), (int)(dim[2] / downsampleFactors[2])} : new int[]{(int)(dim[0] / downsampleFactors[0]), (int)(dim[1] / downsampleFactors[1])};  // downsampled image dimensions once the downsampleFactors have been applied to their respective image dimensions
 			final DownSample<T> downsampler = new DownSample<T>(modImg, downsampledDim, 0.5f, 0.5f);	// optimal sigma is defined by 0.5f, as mentioned here: http://pacific.mpi-cbg.de/wiki/index.php/Downsample
-			if (!downsampler.checkInput() && !downsampler.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
+			if (!downsampler.checkInput() || !downsampler.process()) {  // checkInput ensures the input is correct, and process runs the algorithm.
 				System.out.println(downsampler.getErrorMessage()); 
 		        System.out.println("Bye.");
 		        return null;
@@ -324,6 +323,9 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			double threshold = otsuThreshold(spots);  // determines best cutoff point between "good" and "bad" extrema.
 			frameThresholds.add(threshold);
 		}
+		
+		// Convert downsampled image coordinates to the coordinates on the original image
+		downsampledCoordsToOrigCoords(extremaAllFrames, downsampleFactors);
 		
 		return new Object[] {extremaAllFrames, frameThresholds};
 	}
@@ -519,7 +521,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 * @param pixelHeight
 	 * @param pixelDepth
 	 */
-	public void render3D(ArrayList< ArrayList<Spot> > extremaAllFrames, ArrayList<Double> thresholdsAllFrames, ImagePlus imp, double pixelWidth, double pixelHeight, double pixelDepth, double downsampleFactors[], double diam) {
+	public void renderIn3DViewer(ArrayList< ArrayList<Spot> > extremaAllFrames, ArrayList<Double> thresholdsAllFrames, ImagePlus imp, double pixelWidth, double pixelHeight, double pixelDepth, double downsampleFactors[], double diam) {
 		// Convert to a usable format
 		new StackConverter(imp).convertToGray8();
 
@@ -536,7 +538,6 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			ArrayList<Spot> framej = extremaAllFrames.get(j);
 			final double threshold = thresholdsAllFrames.get(j);  // threshold for frame
 			Iterator<Spot> itr = framej.iterator();
-			System.out.println("Threshold: " + threshold);
 			
 			// Add the extrema coords to the pointlist
 			while (itr.hasNext()) {
@@ -544,10 +545,8 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 				final double coords[] = spot.getCoordinates();
 				
 				if (spot.getAggregatedScore() > threshold) {  // if above the threshold
-					final double scaledCoords[] = convertDownsampledImgCoordsToOriginalCoords(coords, downsampleFactors);
-
 					// Add point
-					pl.add(scaledCoords[0] * pixelWidth, scaledCoords[1] * pixelHeight, scaledCoords[2] * pixelDepth);  // Scale for each dimension, since the coordinates are unscaled now and from the downsampled image.	
+					pl.add(coords[0] * pixelWidth, coords[1] * pixelHeight, coords[2] * pixelDepth);  // Scale for each dimension, since the coordinates are unscaled now and from the downsampled image.	
 				}
 			}
 		}
@@ -559,11 +558,23 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		c.setLandmarkPointSize((float) diam / 2);  // radius is diam / 2
 	}
 	
-	private double[] convertDownsampledImgCoordsToOriginalCoords(double downsizedCoords[], double downsampleFactors[]) {
-		double scaledCoords[] = new double[downsizedCoords.length];
-		for (int i = 0; i < downsizedCoords.length; i++) {
-			scaledCoords[i] = downsizedCoords[i] * downsampleFactors[i];
+	private void downsampledCoordsToOrigCoords(ArrayList< ArrayList <Spot> > extremaAllFrames, double downsampleFactors[]) {
+		Iterator<ArrayList<Spot>> frameItr = extremaAllFrames.iterator();
+		
+		// For all frames
+		while (frameItr.hasNext()) {
+			Iterator<Spot> spotItr = frameItr.next().iterator();
+			
+			// For all extrema
+			while (spotItr.hasNext()) {
+				Spot spot = spotItr.next();
+				double[] coords = spot.getCoordinates();
+				
+				// Undo downsampling
+				for (int i = 0; i < coords.length; i++) {
+					coords[i] = coords[i] * downsampleFactors[i];
+				}
+			}
 		}
-		return scaledCoords;
 	}
 }
