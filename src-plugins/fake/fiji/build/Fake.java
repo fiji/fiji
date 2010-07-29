@@ -640,6 +640,8 @@ public class Fake {
 		}
 
 		public boolean isVarName(String key, String name) {
+			if (key == null || name == null)
+				return false;
 			key = key.toUpperCase();
 			name = name.toUpperCase();
 			return key.equals(name) || key.startsWith(name + "(");
