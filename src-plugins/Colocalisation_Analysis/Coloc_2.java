@@ -49,6 +49,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		userSelectedJobs.add(new PearsonsCorrelation(PearsonsCorrelation.Implementation.Fast));
 		userSelectedJobs.add(new LiHistogram2D("Li - Ch1", true));
 		userSelectedJobs.add(new LiHistogram2D("Li - Ch2", false));
+		userSelectedJobs.add(new LiICQ());
 		userSelectedJobs.add(new Histogram2D("hello"));
 
 		try {
