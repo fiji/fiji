@@ -45,7 +45,7 @@ import org.fife.ui.rtextarea.ToolTipSupplier;
 public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 	TextEditor frame;
 	String fallBackBaseName;
-	File file;
+	File file, gitDirectory;
 	long fileLastModified;
 	Languages.Language currentLanguage;
 	AutoCompletion autocomp;
@@ -248,6 +248,7 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 
 	public void setFileName(File file) {
 		this.file = file;
+		updateGitDirectory();
 		setTitle();
 		if (file != null) {
 			setLanguageByExtension(getExtension(file.getName()));
@@ -255,6 +256,14 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 		}
 		fileLastModified = file == null || !file.exists() ? 0 :
 			file.lastModified();
+	}
+
+	protected void updateGitDirectory() {
+		gitDirectory = new FileFunctions(frame).getGitDirectory(file);
+	}
+
+	public File getGitDirectory() {
+		return gitDirectory;
 	}
 
 	protected String getFileName() {
@@ -303,6 +312,7 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 					name = name.substring(0, name.length() - 4);
 				file = new File(file.getParentFile(),
 						name + language.extension);
+				updateGitDirectory();
 				modifyCount = Integer.MIN_VALUE;
 			}
 		}

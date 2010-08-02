@@ -688,10 +688,14 @@ public class TextEditor extends JFrame implements ActionListener,
 		}
 		else if (source == openSourceForMenuItem)
 			new OpenSourceForMenuItem().run(null);
-		else if (source == showDiff)
-			new FileFunctions(this).showDiff(getEditorPane().file);
-		else if (source == commit)
-			new FileFunctions(this).commit(getEditorPane().file);
+		else if (source == showDiff) {
+			EditorPane pane = getEditorPane();
+			new FileFunctions(this).showDiff(pane.file, pane.getGitDirectory());
+		}
+		else if (source == commit) {
+			EditorPane pane = getEditorPane();
+			new FileFunctions(this).commit(pane.file, pane.getGitDirectory());
+		}
 		else if (source == newPlugin)
 			new FileFunctions(this).newPlugin();
 		else if (source == ijToFront)
@@ -1115,7 +1119,7 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 		boolean isMacro = language.menuLabel.equals("ImageJ Macro");
 		installMacro.setEnabled(isMacro);
 
-		boolean isInGit = new FileFunctions(this).getGitDirectory(getEditorPane().file) != null;
+		boolean isInGit = getEditorPane().getGitDirectory() != null;
 		gitMenu.setVisible(isInGit);
 	}
 
