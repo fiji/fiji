@@ -258,14 +258,17 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		}
 		else if (source == insertPluginInfobox) {
 			JTextArea textArea = editor.getTextArea();
+			Calendar now = Calendar.getInstance();
+			String today = new SimpleDateFormat("dd/MM/yyyy")
+				.format(Calendar.getInstance().getTime());
 			textArea.insert("{{Infobox Plugin\n"
 				+ "| software               = ImageJ\n"
 				+ "| name                   = \n"
 				+ "| maintainer             = [mailto:author_at_example_dot_com A U Thor]\n"
 				+ "| author                 = A U Thor\n"
 				+ "| source                 = \n"
-				+ "| released               = 15/06/2005\n"
-				+ "| latest version         = 12/08/2009\n"
+				+ "| released               = " + today + "\n"
+				+ "| latest version         = " + today + "\n"
 				+ "| status                 = \n"
 				+ "| category               = [[:Category:Plugins]]\n"
 				+ "| website                = \n"
