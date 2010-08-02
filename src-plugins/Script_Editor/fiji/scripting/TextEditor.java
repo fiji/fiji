@@ -674,10 +674,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		else if (source == extractSourceJar)
 			extractSourceJar();
 		else if (source == openSourceForClass) {
-			String className = getSelectedTextOrAsk("Name of class");
-			if (className.indexOf('.') < 0)
-				className = getEditorPane().getClassNameFunctions()
-					.getFullName(className);
+			String className = getSelectedClassNameOrAsk();
 			if (className != null) try {
 				String path = new FileFunctions(this).getSourcePath(className);
 				if (path != null)
@@ -1408,6 +1405,13 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 		return selection;
 	}
 
+	public String getSelectedClassNameOrAsk() {
+		String className = getSelectedTextOrAsk("Class name").trim();
+		if (className != null && className.indexOf('.') < 0)
+			className = getEditorPane().getClassNameFunctions().getFullName(className);
+		return className;
+	}
+
 	public void markCompileStart() {
 		errorHandler = null;
 
@@ -1520,12 +1524,7 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 
 	public void addImport(String className) {
 		if (className == null)
-			className = getSelectedTextOrAsk("Class name");
-		if (className == null)
-			return;
-		if (className.indexOf('.') < 0)
-			className = getEditorPane().getClassNameFunctions()
-				.getFullName(className);
+			className = getSelectedClassNameOrAsk();
 		if (className != null)
 			new TokenFunctions(getTextArea()).addImport(className.trim());
 	}
@@ -1536,11 +1535,8 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 
 	public void openHelp(String className, boolean withFrames) {
 		if (className == null)
-			className = getSelectedTextOrAsk("Class name");
-		if (className == null)
-			return;
-		getEditorPane().getClassNameFunctions()
-			.openHelpForClass(className, withFrames);
+			className = getSelectedClassNameOrAsk();
+		getEditorPane().getClassNameFunctions().openHelpForClass(className, withFrames);
 	}
 
 	public void extractSourceJar() {
