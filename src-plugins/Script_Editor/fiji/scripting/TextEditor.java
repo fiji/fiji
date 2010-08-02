@@ -1431,7 +1431,9 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 	}
 
 	public String getSelectedClassNameOrAsk() {
-		String className = getSelectedTextOrAsk("Class name").trim();
+		String className = getSelectedTextOrAsk("Class name");
+		if (className != null)
+			className = className.trim();
 		if (className != null && className.indexOf('.') < 0)
 			className = getEditorPane().getClassNameFunctions().getFullName(className);
 		return className;
