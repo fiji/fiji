@@ -3,11 +3,12 @@ package fiji.scripting;
 import fiji.scripting.completion.ClassCompletionProvider;
 import fiji.scripting.completion.DefaultProvider;
 
+import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
+import java.awt.Font;
 
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -18,7 +19,8 @@ import java.io.IOException;
 
 import java.util.Vector;
 
-import javax.swing.KeyStroke;
+import javax.swing.JScrollPane;
+import javax.swing.JViewport;
 import javax.swing.ToolTipManager;
 
 import javax.swing.event.DocumentEvent;
@@ -26,13 +28,13 @@ import javax.swing.event.DocumentListener;
 
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultEditorKit;
-import javax.swing.text.Document;
 
 import org.fife.ui.autocomplete.AutoCompletion;
 
 import org.fife.ui.rsyntaxtextarea.RSyntaxDocument;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
-import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
+import org.fife.ui.rsyntaxtextarea.Style;
+import org.fife.ui.rsyntaxtextarea.SyntaxScheme;
 
 import org.fife.ui.rtextarea.Gutter;
 import org.fife.ui.rtextarea.GutterIconInfo;
@@ -335,6 +337,38 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 
 		frame.setTitle();
 		frame.updateLanguageMenu(language);
+	}
+
+	public float getFontSize() {
+		return getFont().getSize2D();
+	}
+
+	public void setFontSize(float size) {
+		increaseFontSize(size / getFontSize());
+	}
+
+	public void increaseFontSize(float factor) {
+		if (factor == 1)
+			return;
+		SyntaxScheme scheme = getSyntaxScheme();
+		for (Style style : scheme.styles) {
+			if (style == null || style.font == null)
+				continue;
+			float size = (float)Math.max(5, style.font.getSize2D() * factor);
+			style.font = style.font.deriveFont(size);
+		}
+		Font font = getFont();
+		float size = (float)Math.max(5, font.getSize2D() * factor);
+		setFont(font.deriveFont(size));
+		setSyntaxScheme(scheme);
+		Component parent = getParent();
+		if (parent instanceof JViewport) {
+			parent = parent.getParent();
+			if (parent instanceof JScrollPane) {
+				parent.repaint();
+			}
+		}
+		parent.repaint();
 	}
 
 	protected RSyntaxDocument getRSyntaxDocument() {

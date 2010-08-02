@@ -94,7 +94,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		  runSelection, extractSourceJar, toggleBookmark,
 		  listBookmarks, openSourceForClass, newPlugin, installMacro,
 		  openSourceForMenuItem, showDiff, commit, ijToFront,
-		  openMacroFunctions;
+		  openMacroFunctions, decreaseFontSize, increaseFontSize;
 	JMenu gitMenu, tabsMenu;
 	int tabsMenuTabsStart;
 	Set<JMenuItem> tabsMenuItems;
@@ -160,6 +160,27 @@ public class TextEditor extends JFrame implements ActionListener,
 		listBookmarks = addToMenu(edit, "List Bookmarks", 0, 0);
 		listBookmarks.setMnemonic(KeyEvent.VK_O);
 		edit.addSeparator();
+
+		// Font adjustments
+		decreaseFontSize = addToMenu(edit, "Decrease font size", KeyEvent.VK_MINUS, ctrl);
+		decreaseFontSize.setMnemonic(KeyEvent.VK_D);
+		increaseFontSize = addToMenu(edit, "Increase font size", KeyEvent.VK_PLUS, ctrl);
+		increaseFontSize.setMnemonic(KeyEvent.VK_C);
+
+		JMenu fontSize = new JMenu("Font sizes");
+		fontSize.setMnemonic(KeyEvent.VK_Z);
+		for (final int size : new int[] { 8, 10, 12, 16, 20, 28, 42 } ) {
+			JMenuItem item = new JMenuItem("" + size + " pt");
+			item.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent event) {
+					getEditorPane().setFontSize(size);
+				}
+			});
+			fontSize.add(item);
+		}
+		edit.add(fontSize);
+		edit.addSeparator();
+
 		clearScreen = addToMenu(edit, "Clear output panel", 0, 0);
 		clearScreen.setMnemonic(KeyEvent.VK_L);
 		edit.addSeparator();
@@ -320,6 +341,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		addAccelerator(debug, KeyEvent.VK_F5, shift, true);
 		addAccelerator(nextTab, KeyEvent.VK_PAGE_DOWN, ctrl, true);
 		addAccelerator(previousTab, KeyEvent.VK_PAGE_UP, ctrl, true);
+
+		addAccelerator(increaseFontSize, KeyEvent.VK_EQUALS, ctrl | shift, true);
 
 		// make sure that the window is not closed by accident
 		addWindowListener(new WindowAdapter() {
@@ -697,6 +720,8 @@ public class TextEditor extends JFrame implements ActionListener,
 			new FileFunctions(this).newPlugin();
 		else if (source == ijToFront)
 			IJ.getInstance().toFront();
+		else if (source == increaseFontSize || source == decreaseFontSize)
+			getEditorPane().increaseFontSize((float)(source == increaseFontSize ? 1.2 : 1 / 1.2));
 		else if (source == nextTab)
 			switchTabRelative(1);
 		else if (source == previousTab)
