@@ -42,7 +42,7 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 	private MenuItem stopRecord;
 	private MenuItem startAnimation;
 	private MenuItem stopAnimation;
-	private MenuItem animationAxis;
+	private MenuItem animationOptions;
 	private MenuItem viewPreferences;
 	private MenuItem close;
 	private MenuItem setTransform;
@@ -335,9 +335,9 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 		stopAnimation.addActionListener(this);
 		view.add(stopAnimation);
 
-		animationAxis = new MenuItem("Change animation axis");
-		animationAxis.addActionListener(this);
-		view.add(animationAxis);
+		animationOptions = new MenuItem("Change animation options");
+		animationOptions.addActionListener(this);
+		view.add(animationOptions);
 
 		view.addSeparator();
 
@@ -517,8 +517,8 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 			executer.startAnimation();
 		else if(src == stopAnimation)
 			executer.stopAnimation();
-		else if(src == animationAxis)
-			executer.changeAnimationAxis();
+		else if(src == animationOptions)
+			executer.changeAnimationOptions();
 		else if(src == threshold)
 			executer.changeThreshold(univ.getSelected());
 		else if(src == displayAsVolume)
