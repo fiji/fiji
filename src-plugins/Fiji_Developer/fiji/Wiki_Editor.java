@@ -36,6 +36,7 @@ import ij.io.FileInfo;
 
 import ij.plugin.BrowserLauncher;
 import ij.plugin.JpegWriter;
+import ij.plugin.PNG_Writer;
 import ij.plugin.PlugIn;
 
 import java.awt.AWTException;
@@ -88,6 +89,13 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 	protected Mode mode;
 	protected ImagePlus screenshot;
 
+	protected final static int JPEG = 0;
+	protected final static int PNG = 1;
+	protected final String [] imageFormats = { "JPEG", "PNG" };
+	protected final String [] imageFormatExtensions = { ".jpg", ".png" };
+
+	protected int imageFormat = JPEG;
+
 	public void run(String arg) {
 		String dialogTitle = "Tutorial Maker";
 		String defaultTitle = "";
@@ -124,11 +132,13 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 
 		GenericDialog gd = new GenericDialog(dialogTitle);
 		gd.addStringField(label, defaultTitle, 20);
+		gd.addChoice("Image format",imageFormats,imageFormats[0]);
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return;
 
 		name = gd.getNextString();
+		imageFormat = gd.getNextChoiceIndex();
 		if (name.length() == 0)
 			return;
 		if (mode != Mode.SCREENSHOT)
@@ -136,9 +146,9 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		else {
 			new Prettify_Wiki_Screenshot().run(screenshot.getProcessor());
 			screenshot = IJ.getImage();
-			String imageTitle = name + "-snapshot.jpg";
+			String imageTitle = name + "-snapshot" + imageFormatExtensions[imageFormat];
 			for (int i = 2; wikiHasImage(imageTitle); i++)
-				imageTitle = name + "-snapshot-" + i + ".jpg";
+				imageTitle = name + "-snapshot-" + i + imageFormatExtensions[imageFormat];
 			screenshot.setTitle(imageTitle);
 		}
 
@@ -534,10 +544,28 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 				imp.changes = true;
 			}
 			if (imp.changes) {
-				JpegWriter.save(imp,
-					info.directory + "/" + info.fileName,
-					JpegWriter.DEFAULT_QUALITY);
-				imp.changes = false;
+				String fullFilename = info.directory + "/" + info.fileName;
+				switch (imageFormat) {
+				case JPEG:
+					JpegWriter.save(imp,
+							fullFilename,
+							JpegWriter.DEFAULT_QUALITY);
+					imp.changes = false;
+					break;
+				case PNG:
+					PNG_Writer pngWriter = new PNG_Writer();
+					try {
+						pngWriter.writeImage(imp,
+								     fullFilename,
+								     -1);
+						imp.changes = false;
+					} catch( Exception e ) {
+						IJ.error("PNG_Writer.writeImage failed to write to "+fullFilename);
+					}
+					break;
+				default:
+					IJ.error("[BUG] Unknown image format: "+imageFormat);
+				}
 			}
 			if (client != null) {
 				if (wikiHasImage(image))
@@ -781,7 +809,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 	protected String getSnapshotName() {
 		for (;;) {
 			String title = name
-				+ "-" + (++snapshotCounter) + ".jpg";
+				+ "-" + (++snapshotCounter) + imageFormatExtensions[imageFormat];
 			if (WindowManager.getImage(title) == null)
 				return title;
 		}
