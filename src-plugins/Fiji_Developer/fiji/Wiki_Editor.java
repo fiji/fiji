@@ -89,12 +89,45 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 	protected Mode mode;
 	protected ImagePlus screenshot;
 
-	protected final static int JPEG = 0;
-	protected final static int PNG = 1;
-	protected final String [] imageFormats = { "JPEG", "PNG" };
-	protected final String [] imageFormatExtensions = { ".jpg", ".png" };
+	protected enum Format {
+		JPEG(".jpg"),
+		PNG(".png");
 
-	protected int imageFormat = JPEG;
+		private String extension;
+		Format(String extension) {
+			this.extension = extension;
+		}
+
+		public void write(ImagePlus imp, String fullFilename) {
+			switch (this) {
+			case JPEG:
+				JpegWriter.save(imp, fullFilename, JpegWriter.DEFAULT_QUALITY);
+				imp.changes = false;
+				break;
+			case PNG:
+				PNG_Writer pngWriter = new PNG_Writer();
+				try {
+					pngWriter.writeImage(imp, fullFilename, -1);
+					imp.changes = false;
+				} catch(Exception e) {
+					IJ.error("PNG_Writer.writeImage failed to write to " + fullFilename);
+				}
+				break;
+			default:
+				IJ.error("[BUG] Unknown image format: " + name());
+			}
+		}
+	};
+
+	protected Format imageFormat = Format.JPEG;
+	protected final static String[] imageFormatNames;
+
+	static {
+		Format[] values = Format.values();
+		imageFormatNames = new String[values.length];
+		for (int i = 0; i < values.length; i++)
+			imageFormatNames[i] = values[i].name();
+	}
 
 	public void run(String arg) {
 		String dialogTitle = "Tutorial Maker";
@@ -132,13 +165,13 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 
 		GenericDialog gd = new GenericDialog(dialogTitle);
 		gd.addStringField(label, defaultTitle, 20);
-		gd.addChoice("Image format",imageFormats,imageFormats[0]);
+		gd.addChoice("Image_format", imageFormatNames, imageFormatNames[0]);
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return;
 
 		name = gd.getNextString();
-		imageFormat = gd.getNextChoiceIndex();
+		imageFormat = Format.valueOf(gd.getNextChoice());
 		if (name.length() == 0)
 			return;
 		if (mode != Mode.SCREENSHOT)
@@ -146,9 +179,9 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		else {
 			new Prettify_Wiki_Screenshot().run(screenshot.getProcessor());
 			screenshot = IJ.getImage();
-			String imageTitle = name + "-snapshot" + imageFormatExtensions[imageFormat];
+			String imageTitle = name + "-snapshot" + imageFormat.extension;
 			for (int i = 2; wikiHasImage(imageTitle); i++)
-				imageTitle = name + "-snapshot-" + i + imageFormatExtensions[imageFormat];
+				imageTitle = name + "-snapshot-" + i + imageFormat.extension;
 			screenshot.setTitle(imageTitle);
 		}
 
@@ -545,27 +578,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 			}
 			if (imp.changes) {
 				String fullFilename = info.directory + "/" + info.fileName;
-				switch (imageFormat) {
-				case JPEG:
-					JpegWriter.save(imp,
-							fullFilename,
-							JpegWriter.DEFAULT_QUALITY);
-					imp.changes = false;
-					break;
-				case PNG:
-					PNG_Writer pngWriter = new PNG_Writer();
-					try {
-						pngWriter.writeImage(imp,
-								     fullFilename,
-								     -1);
-						imp.changes = false;
-					} catch( Exception e ) {
-						IJ.error("PNG_Writer.writeImage failed to write to "+fullFilename);
-					}
-					break;
-				default:
-					IJ.error("[BUG] Unknown image format: "+imageFormat);
-				}
+				imageFormat.write(imp, fullFilename);
 			}
 			if (client != null) {
 				if (wikiHasImage(image))
@@ -809,7 +822,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 	protected String getSnapshotName() {
 		for (;;) {
 			String title = name
-				+ "-" + (++snapshotCounter) + imageFormatExtensions[imageFormat];
+				+ "-" + (++snapshotCounter) + imageFormat.extension;
 			if (WindowManager.getImage(title) == null)
 				return title;
 		}
