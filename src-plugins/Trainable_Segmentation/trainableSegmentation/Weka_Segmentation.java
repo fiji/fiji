@@ -3433,30 +3433,31 @@ public class Weka_Segmentation implements PlugIn
 		final ArrayList< Future<double[][]> > futures = new ArrayList< Future<double[][]> >();
 						
 		final Instances[] partialData = new Instances[numOfProcessors];
-		final int partialSize = wholeImageData.numInstances() / numOfProcessors;
+		int blockHeight = height / numOfProcessors;
+		final int partialSize = blockHeight * width;
 		final Rectangle[] rects = new Rectangle[numOfProcessors];
 		
 		ImagePlus result = null;
 		
 		try{
 			
-			int block_height = height / numOfProcessors;			
+						
 		
 			for (int i=0; i<numOfProcessors; i++) 
 			{
-				int y_start = i*block_height;
+				int y_start = i*blockHeight;
 				
 				if(i == numOfProcessors-1)
 				{
 					partialData[i] = new Instances(wholeImageData, i*partialSize, wholeImageData.numInstances()-i*partialSize);
-					block_height = height - i*block_height;
+					blockHeight = height - i*blockHeight;
 				}
 				else
 				{
 					partialData[i] = new Instances(wholeImageData, i*partialSize, partialSize);
 				}
 				
-				rects[i] = new Rectangle(0, y_start, width, block_height);
+				rects[i] = new Rectangle(0, y_start, width, blockHeight);
 				
 				futures.add( exe.submit(getDistributionForIntances(partialData[i], this.classifier)) );
 			}
@@ -3465,7 +3466,7 @@ public class Weka_Segmentation implements PlugIn
 			{
 				final double[][] partialProb = futures.get(index).get();
 				for(int k = 0 ; k < nClasses; k++)
-					classProb[k].insert( new FloatProcessor(width, block_height, partialProb[k]), rects[index].x, rects[index].y);
+					classProb[k].insert( new FloatProcessor(width, blockHeight, partialProb[k]), rects[index].x, rects[index].y);
 			}
 		
 			for(int k = 0 ; k < nClasses; k++)
