@@ -25,7 +25,6 @@ package trainableSegmentation;
 import ij.IJ;
 import ij.ImageStack;
 import ij.plugin.PlugIn;
-import ij.plugin.filter.GaussianBlur;
 
 import ij.process.Blitter;
 import ij.process.FloatPolygon;
@@ -918,13 +917,14 @@ public class Weka_Segmentation implements PlugIn
 			trainButton.setEnabled(classifierExists);		
 			applyButton.setEnabled(classifierExists);
 
-			final boolean resultExists = null != this.classifiedImage 
-			&& null != this.classifiedImage.getProcessor();
+			final boolean resultExists = null != this.classifiedImage && 
+										 null != this.classifiedImage.getProcessor();
 
 			saveClassifierButton.setEnabled(resultExists);
 			overlayButton.setEnabled(resultExists);
 			resultButton.setEnabled(resultExists);
-			probabilityButton.setEnabled(resultExists);
+			
+			probabilityButton.setEnabled(classifierExists);
 
 			newImageButton.setEnabled(true);
 			loadClassifierButton.setEnabled(true);		
@@ -1566,11 +1566,15 @@ public class Weka_Segmentation implements PlugIn
 	 */
 	void showProbabilityImage()
 	{
+		IJ.showStatus("Calculating probability maps...");
+		IJ.log("Calculating probability maps...");
 		this.setButtonsEnabled(false);
 		final ImagePlus probImage = this.getProbabilityMapsMT();
 		if(null != probImage) 
 			probImage.show();
 		this.updateButtonsEnabling();
+		IJ.showStatus("Done.");
+		IJ.log("Done");
 	}
 	
 	/**
@@ -3436,12 +3440,12 @@ public class Weka_Segmentation implements PlugIn
 		
 		try{
 			
-			int block_height = height / numOfProcessors;
-			if (height % 2 != 0) 
-				block_height++;
+			int block_height = height / numOfProcessors;			
 		
 			for (int i=0; i<numOfProcessors; i++) 
 			{
+				int y_start = i*block_height;
+				
 				if(i == numOfProcessors-1)
 				{
 					partialData[i] = new Instances(wholeImageData, i*partialSize, wholeImageData.numInstances()-i*partialSize);
@@ -3451,8 +3455,7 @@ public class Weka_Segmentation implements PlugIn
 				{
 					partialData[i] = new Instances(wholeImageData, i*partialSize, partialSize);
 				}
-
-				int y_start = i*block_height;
+				
 				rects[i] = new Rectangle(0, y_start, width, block_height);
 				
 				futures.add( exe.submit(getDistributionForIntances(partialData[i], this.classifier)) );
@@ -3474,6 +3477,7 @@ public class Weka_Segmentation implements PlugIn
 		catch(Exception ex)
 		{
 			IJ.log("Error when extracting probability maps!");
+			ex.printStackTrace();
 		}
 		finally{
 			exe.shutdown();
