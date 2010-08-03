@@ -5,6 +5,7 @@ import fiji.plugin.nperry.scoring.BlobBrightnessScorer;
 import fiji.plugin.nperry.scoring.BlobContrastScorer;
 import fiji.plugin.nperry.scoring.BlobVarianceScorer;
 import fiji.plugin.nperry.scoring.LoGScorer;
+import fiji.plugin.nperry.scoring.OverlapScorer;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -13,7 +14,10 @@ import ij.gui.PointRoi;
 import ij.plugin.PlugIn;
 import ij.process.StackConverter;
 import ij3d.Content;
+import ij3d.ContentInstant;
+import ij3d.Image3DMenubar;
 import ij3d.Image3DUniverse;
+//import ij3d.Executer.SliderAdjuster;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -62,11 +66,11 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	/** Ask for parameters and then execute. */
 	@SuppressWarnings("unchecked")
 	public void run(String arg) {
-		// 1 - Obtain the currently active image:
+		/* 1 - Obtain the currently active image */
 		ImagePlus imp = IJ.getImage();
 		if (null == imp) return;
 		
-		// 2 - Ask for parameters:
+		/* 2 - Ask for parameters */
 		GenericDialog gd = new GenericDialog("Track");
 		gd.addNumericField("Generic blob diameter:", 7.3, 2, 5, imp.getCalibration().getUnits());  	// get the expected blob size (in pixels).
 		gd.addMessage("Verify calibration settings:");
@@ -78,25 +82,26 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		gd.showDialog();
 		if (gd.wasCanceled()) return;
 
-		// 3 - Retrieve parameters from dialogue:
+		/* 3 - Retrieve parameters from dialogue */
 		double diam = (float)gd.getNextNumber();
 		double pixelWidth = (double)gd.getNextNumber();
 		double pixelHeight = (double)gd.getNextNumber();
 		double pixelDepth = (double)gd.getNextNumber();
 		boolean useMedFilt = (boolean)gd.getNextBoolean();
 		boolean allowEdgeMax = (boolean)gd.getNextBoolean();
+		double[] calibration = new double[] {pixelWidth, pixelHeight, pixelDepth};
 
-		// 4 - Execute!
-		Object[] result = exec(imp, diam, useMedFilt, allowEdgeMax, pixelWidth, pixelHeight, pixelDepth);
+		/* 4 - Execute! */
+		Object[] result = exec(imp, diam, useMedFilt, allowEdgeMax, calibration);
 		System.out.println("Done executing!");	
 		
-		// 5 - Display new image and overlay maxima
+		/* 5 - Display new image and overlay maxima */
 		if (null != result) {
 			System.out.println("Rendering...!");
 			ArrayList< ArrayList<Spot> > extremaAllFrames = (ArrayList< ArrayList<Spot> >) result[0];
 			ArrayList<Double> thresholdsAllFrames = (ArrayList<Double>) result[1];
 			if (numDim == 3) {	// If original image is 3D, create a 3D rendering of the image and overlay maxima
-				renderIn3DViewer(extremaAllFrames, thresholdsAllFrames, imp, pixelWidth, pixelHeight, pixelDepth, createDownsampledDim(pixelWidth, pixelHeight, pixelDepth, diam, numDim), diam);
+				renderIn3DViewer(extremaAllFrames, thresholdsAllFrames, imp, calibration, diam);
 			} else {
 				//PointRoi roi = (PointRoi) result[0];
 				//imp.setRoi(roi);
@@ -106,12 +111,12 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	}
 	
 	/** Execute the plugin functionality: apply a median filter (for salt and pepper noise, if user requests), a Gaussian blur, and then find maxima. */
-	public Object[] exec(ImagePlus imp, double diam, boolean useMedFilt, boolean allowEdgeMax, double pixelWidth, double pixelHeight, double pixelDepth) {		
+	public Object[] exec(ImagePlus imp, double diam, boolean useMedFilt, boolean allowEdgeMax, double[] calibration) {		
 		/* 0 - Check validity of parameters, initialize local variables */
 		if (null == imp) return null;
 		ArrayList< ArrayList <Spot> > extremaAllFrames = new ArrayList< ArrayList <Spot> >();
 		ArrayList<Double> frameThresholds = new ArrayList<Double>();  // holds the thresholds for each frame's extrema.
-		final double downsampleFactors[] = createDownsampledDim(pixelWidth, pixelHeight, pixelDepth, diam, numDim);	// factors for x,y,z that we need for scaling image down;
+		final double downsampleFactors[] = createDownsampledDim(calibration, diam, numDim);	// factors for x,y,z that we need for scaling image down;
 		                        
 		/* 1 - Create separate ImagePlus's for each frame */
 		ImageStack stack = imp.getImageStack();
@@ -129,6 +134,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			ImagePlus impSingleFrame = new ImagePlus("Frame " + Integer.toString(i + 1), frame);
 			
 			/* 2 - Prepare stack for use with Imglib. */
+			System.out.println();
 			IJ.log("---Frame " + Integer.toString(i+1) + "---");
 			System.out.println("---Frame " + (i+1) + "---");
 			Image<T> img = ImagePlusAdapter.wrap(impSingleFrame);
@@ -305,20 +311,23 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			}
 			final ArrayList< double[] > centeredExtrema = findExtrema.getRegionalExtremaCenters(false);
 			final ArrayList<Spot> spots = findExtrema.convertToSpots(centeredExtrema);
+			downsampledCoordsToOrigCoords(spots, downsampleFactors);
 			extremaAllFrames.add(spots);
 			System.out.println("Find Maxima Run Time: " + findExtrema.getProcessingTime());
 			System.out.println("Num regional maxima: " + centeredExtrema.size());
 			
 			/* 8 - Assess quality of extrema */
 			final AverageScoreAggregator scoreAgg = new AverageScoreAggregator();
-			final LoGScorer<T> logScore = new LoGScorer<T>(modImg);
-			final BlobVarianceScorer<T> varScore = new BlobVarianceScorer<T>(img, diam, downsampleFactors);
-			final BlobBrightnessScorer<T> brightnessScore = new BlobBrightnessScorer<T>(img, diam, downsampleFactors);
-			final BlobContrastScorer<T> contrastScore = new BlobContrastScorer<T>(img, diam, downsampleFactors);
+			final LoGScorer<T> logScore = new LoGScorer<T>(modImg, downsampleFactors);
+			final BlobVarianceScorer<T> varScore = new BlobVarianceScorer<T>(img, diam, calibration);
+			final BlobBrightnessScorer<T> brightnessScore = new BlobBrightnessScorer<T>(img, diam, calibration);
+			final BlobContrastScorer<T> contrastScore = new BlobContrastScorer<T>(img, diam, calibration);
+			final OverlapScorer<T> overlapScore = new OverlapScorer<T>(diam, calibration, spots);
 			scoreAgg.add(logScore);
 			scoreAgg.add(varScore);
 			scoreAgg.add(brightnessScore);
 		    scoreAgg.add(contrastScore);
+		    scoreAgg.add(overlapScore);
 			scoreAgg.aggregate(spots);  // aggregate scores
 			
 			/* 9 - Calculate Thresholds */
@@ -327,7 +336,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		}
 		
 		// Convert downsampled image coordinates to the coordinates on the original image
-		downsampledCoordsToOrigCoords(extremaAllFrames, downsampleFactors);
+		//downsampledCoordsToOrigCoords(extremaAllFrames, downsampleFactors);
 		
 		return new Object[] {extremaAllFrames, frameThresholds};
 	}
@@ -419,28 +428,15 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		return new double[] {(max-min), min, max};
 	}
 	
-	/**
-	 * 
-	 * @param pixelWidth
-	 * @param pixelHeight
-	 * @param pixelDepth
-	 * @param diam
-	 * @return
-	 */
-	public double[] createDownsampledDim(double pixelWidth, double pixelHeight, double pixelDepth, double diam, int numDim) {
-		double widthFactor = (diam / pixelWidth) > GOAL_DOWNSAMPLED_BLOB_DIAM ? (diam / pixelWidth) / GOAL_DOWNSAMPLED_BLOB_DIAM : 1;
-		double heightFactor = (diam / pixelHeight) > GOAL_DOWNSAMPLED_BLOB_DIAM ? (diam / pixelHeight) / GOAL_DOWNSAMPLED_BLOB_DIAM : 1;
-		double depthFactor = (numDim == 3 && (diam / pixelDepth) > GOAL_DOWNSAMPLED_BLOB_DIAM) ? (diam / pixelDepth) / GOAL_DOWNSAMPLED_BLOB_DIAM : 1;								
+	public double[] createDownsampledDim(double[] calibration, double diam, int numDim) {
+		double widthFactor = (diam / calibration[0]) > GOAL_DOWNSAMPLED_BLOB_DIAM ? (diam / calibration[0]) / GOAL_DOWNSAMPLED_BLOB_DIAM : 1;
+		double heightFactor = (diam / calibration[1]) > GOAL_DOWNSAMPLED_BLOB_DIAM ? (diam / calibration[1]) / GOAL_DOWNSAMPLED_BLOB_DIAM : 1;
+		double depthFactor = (numDim == 3 && (diam / calibration[2]) > GOAL_DOWNSAMPLED_BLOB_DIAM) ? (diam / calibration[2]) / GOAL_DOWNSAMPLED_BLOB_DIAM : 1;								
 		double downsampleFactors[] = new double[]{widthFactor, heightFactor, depthFactor};
 		
 		return downsampleFactors;
 	}
 	
-	/**
-	 * 
-	 * @param vals
-	 * @param kern
-	 */
 	protected static void quickKernel3D(float[][][] vals, Image<FloatType> kern)
 	{
 		final LocalizableByDimCursor<FloatType> cursor = kern.createLocalizableByDimCursor();
@@ -488,12 +484,6 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		cursor.close();		
 	}
 	
-	/**
-	 * 
-	 * @param maxima
-	 * @param downsamplingFactor
-	 * @return
-	 */
 	public PointRoi preparePointRoi (ArrayList< ArrayList< double[] > > extrema, float downsampleFactors[], float pixelWidth, float pixelHeight) {
 		int numPoints = extrema.size();
 		int ox[] = new int[numPoints];
@@ -514,16 +504,10 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		PointRoi roi = new PointRoi(ox, oy, numPoints);
 		return roi;
 	}
-	
-	/**
-	 * 
-	 * @param maxima
-	 * @param scaled
-	 * @param pixelWidth
-	 * @param pixelHeight
-	 * @param pixelDepth
-	 */
-	public void renderIn3DViewer(ArrayList< ArrayList<Spot> > extremaAllFrames, ArrayList<Double> thresholdsAllFrames, ImagePlus imp, double pixelWidth, double pixelHeight, double pixelDepth, double downsampleFactors[], double diam) {
+
+	public void renderIn3DViewer(ArrayList< ArrayList<Spot> > extremaAllFrames, ArrayList<Double> thresholdsAllFrames, ImagePlus imp, double[] calibration, double diam) {
+		/* 1 - Render ImagePlus using 3D Viewer */
+		
 		// Convert to a usable format
 		new StackConverter(imp).convertToGray8();
 
@@ -548,7 +532,8 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 				
 				if (spot.getAggregatedScore() > threshold) {  // if above the threshold
 					// Add point
-					pl.add(coords[0] * pixelWidth, coords[1] * pixelHeight, coords[2] * pixelDepth);  // Scale for each dimension, since the coordinates are unscaled now and from the downsampled image.	
+					pl.add(coords[0] * calibration[0], coords[1] * calibration[1], coords[2] * calibration[2]);  // Scale for each dimension, since the coordinates are unscaled now and from the downsampled image.	
+					//System.out.println("Point [" + coords[0] * pixelWidth + ", " + coords[1] * pixelHeight + ", " + coords[2] * pixelDepth + "] has score: " + spot.getAggregatedScore());
 				}
 			}
 		}
@@ -558,24 +543,31 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		
 		// Change the size of the points
 		c.setLandmarkPointSize((float) diam / 2);  // radius is diam / 2
+		
+		/* 2 - Allow the user to interact with the rendering */
+		//univ.setInteractiveBehavior(new ThresholdAdjuster(univ, c));
+		//univ.getExecuter().changeThreshold(univ.getSelected());
+		univ.getExecuter().changeThreshold(c);
+		
+		/*final ContentInstant ci = c.getCurrent();
+		final SliderAdjuster thresh_adjuster = new SliderAdjuster() {
+			public synchronized final void setValue(ContentInstant ci, int v) {
+				ci.setThreshold(v);
+				univ.fireContentChanged(c);
+			}
+		};*/
+		
 	}
 	
-	private void downsampledCoordsToOrigCoords(ArrayList< ArrayList <Spot> > extremaAllFrames, double downsampleFactors[]) {
-		Iterator<ArrayList<Spot>> frameItr = extremaAllFrames.iterator();
-		
-		// For all frames
-		while (frameItr.hasNext()) {
-			Iterator<Spot> spotItr = frameItr.next().iterator();
+	private void downsampledCoordsToOrigCoords(ArrayList<Spot> spots, double downsampleFactors[]) {
+		Iterator<Spot> itr = spots.iterator();
+		while (itr.hasNext()) {
+			Spot spot = itr.next();
+			double[] coords = spot.getCoordinates();
 			
-			// For all extrema
-			while (spotItr.hasNext()) {
-				Spot spot = spotItr.next();
-				double[] coords = spot.getCoordinates();
-				
-				// Undo downsampling
-				for (int i = 0; i < coords.length; i++) {
-					coords[i] = coords[i] * downsampleFactors[i];
-				}
+			// Undo downsampling
+			for (int i = 0; i < coords.length; i++) {
+				coords[i] = coords[i] * downsampleFactors[i];
 			}
 		}
 	}

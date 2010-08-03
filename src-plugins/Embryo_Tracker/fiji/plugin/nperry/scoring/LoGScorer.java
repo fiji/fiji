@@ -36,9 +36,9 @@ public class LoGScorer <T extends RealType<T>> extends IndependentScorer {
 	@Override
 	public void score(Spot spot) {
 		final double[] coords = spot.getCoordinates();
-		final double[] scaledCoords = convertDownsampledImgCoordsToOriginalCoords(coords);
+		final double[] scaledCoords = toDownsampledCoords(coords);
 		final int[] intCoords = doubleCoordsToIntCoords(scaledCoords);
-
+		
 		cursor.setPosition(intCoords);
 		spot.addScore(SCORING_METHOD_NAME, cursor.getType().getRealDouble());
 	}
@@ -49,10 +49,10 @@ public class LoGScorer <T extends RealType<T>> extends IndependentScorer {
 	}
 
 	// fix 2D case...
-	private double[] convertDownsampledImgCoordsToOriginalCoords(double downsizedCoords[]) {
+	private double[] toDownsampledCoords(double downsizedCoords[]) {
 		double scaledCoords[] = new double[downsizedCoords.length];
 		for (int i = 0; i < downsizedCoords.length; i++) {
-			scaledCoords[i] = downsizedCoords[i] * downsampleFactors[i];
+			scaledCoords[i] = downsizedCoords[i] / downsampleFactors[i];
 		}
 		return scaledCoords;
 	}

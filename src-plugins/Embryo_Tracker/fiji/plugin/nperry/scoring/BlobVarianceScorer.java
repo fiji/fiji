@@ -15,22 +15,12 @@ public class BlobVarianceScorer <T extends RealType<T>> extends IndependentScore
 	private static final String SCORING_METHOD_NAME = "BlobVarianceScorer";
 	private Image<T> img;
 	private double diam;
-	private double[] downsampleFactors;
+	private double[] calibration;
 	
-	public BlobVarianceScorer(Image<T> originalImage, double diam) {
+	public BlobVarianceScorer(Image<T> originalImage, double diam, double[] calibration) {
 		this.img = originalImage;
 		this.diam = diam;
-		this.downsampleFactors = new double[originalImage.getNumDimensions()];
-		
-		for (int i = 0; i < downsampleFactors.length; i++) {
-			downsampleFactors[i] = 1.0;
-		}
-	}
-	
-	public BlobVarianceScorer(Image<T> originalImage, double diam, double[] downsampleFactors) {
-		this.img = originalImage;
-		this.diam = diam;
-		this.downsampleFactors = downsampleFactors;
+		this.calibration = calibration;
 	}
 	
 	@Override
@@ -47,30 +37,28 @@ public class BlobVarianceScorer <T extends RealType<T>> extends IndependentScore
 	public void score(Spot spot) {		
 		final LocalizableByDimCursor<T> cursor = img.createLocalizableByDimCursor(new OutOfBoundsStrategyValueFactory<T>());
 		final double[] coords = spot.getCoordinates();
-		final double[] scaledCoords = convertDownsampledImgCoordsToOriginalCoords(coords);
-		final int[] intCoords = doubleCoordsToIntCoords(scaledCoords);
+		final int[] intCoords = doubleCoordsToIntCoords(coords);
 		final ArrayList<Double> values = new ArrayList<Double>();
-		
-		// Calculate inscribed cube length for blob
-		double length = diam / Math.sqrt(2);
-		
+
 		// Create the size array for the ROI cursor
 		int size[] = new int[img.getNumDimensions()];
 		for (int i = 0; i < size.length; i++) {
-			size[i] = (int) length;
+			size[i] = (int) (diam / calibration[i]);
 		}
 
 		// Adjust the integer coordinates of the spot to set the ROI correctly
+		int[] roiCoords = new int[img.getNumDimensions()];
 		for (int i = 0; i < intCoords.length; i++) {
-			intCoords[i] = intCoords[i] - (int) (length / 2);  
+			roiCoords[i] = intCoords[i] - (int) (size[i] / 2);  
 		}
 		
 		// Use ROI cursor to search a sphere around the spot's coordinates
-		/* need to handle case where ROI is not in image anymore!! */
-		RegionOfInterestCursor<T> roi = cursor.createRegionOfInterestCursor(intCoords, size);
+		RegionOfInterestCursor<T> roi = cursor.createRegionOfInterestCursor(roiCoords, size);
 		while (roi.hasNext()) {
 			roi.next();
-			values.add(roi.getType().getRealDouble());
+			if (inBlob(cursor.getPosition(), intCoords)) {
+				values.add(roi.getType().getRealDouble());
+			}
 		}
 		
 		// Compute variance for this blob.
@@ -93,12 +81,11 @@ public class BlobVarianceScorer <T extends RealType<T>> extends IndependentScore
 		spot.addScore(SCORING_METHOD_NAME, 1/var);
 	}
 	
-	private double[] convertDownsampledImgCoordsToOriginalCoords(double downsizedCoords[]) {
-		double scaledCoords[] = new double[downsizedCoords.length];
-		for (int i = 0; i < downsizedCoords.length; i++) {
-			scaledCoords[i] = downsizedCoords[i] * downsampleFactors[i];
+	private boolean inBlob(int[] pos, int[] center) {
+		for (int i = 0; i < pos.length; i++) {
+			if (Math.abs((double) pos[i] - (double) center[i]) / (diam / calibration[i] / 2) > 1) return false; 
 		}
-		return scaledCoords;
+		return true;
 	}
 	
 	private int[] doubleCoordsToIntCoords(double doubleCoords[]) {
