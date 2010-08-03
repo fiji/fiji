@@ -3043,6 +3043,10 @@ public class Weka_Segmentation implements PlugIn
 		final boolean[] enabledFeatures = featureStack.getEnableFeatures();
 		featureStack = new FeatureStack(trainingImage);
 		featureStack.setEnableFeatures(enabledFeatures);
+		featureStack.setMaximumSigma(this.maximumSigma);
+		featureStack.setMinimumSigma(this.minimumSigma);
+		featureStack.setMembranePatchSize(this.membranePatchSize);
+		featureStack.setMembraneSize(this.membraneThickness);
 		updateFeatures = true;
 		updateWholeData = true;
 		
