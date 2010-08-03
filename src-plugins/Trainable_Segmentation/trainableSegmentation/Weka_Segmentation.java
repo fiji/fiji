@@ -25,6 +25,7 @@ package trainableSegmentation;
 import ij.IJ;
 import ij.ImageStack;
 import ij.plugin.PlugIn;
+import ij.plugin.filter.GaussianBlur;
 
 import ij.process.Blitter;
 import ij.process.FloatPolygon;
@@ -2017,13 +2018,23 @@ public class Weka_Segmentation implements PlugIn
 	}
 	
 	/**
-	 * Set the maximum sigma to use in the features
+	 * Set the maximum sigma/radius to use in the features
 	 * @param sigma maximum sigma to use in the features filters
 	 */
 	public void setMaximumSigma(float sigma)
 	{		
 		this.maximumSigma = sigma;
 		this.featureStack.setMaximumSigma(sigma);
+	}
+	
+	/**
+	 * Set the minimum sigma (radius) to use in the features
+	 * @param sigma minimum sigma (radius) to use in the features filters
+	 */
+	public void setMinimumSigma(float sigma)
+	{		
+		this.minimumSigma = sigma;
+		this.featureStack.setMinimumSigma(sigma);
 	}
 	
 	
@@ -3772,7 +3783,7 @@ public class Weka_Segmentation implements PlugIn
 			IJ.log("Warping ground truth...");
 			// Warp ground truth, relax original labels to proposal. Only simple
 			// points warping is allowed.
-			warpedLabels = simplePointWarp2d(warpedLabels, proposal, mask, 0.5);
+			warpedLabels = simplePointWarp2dMT(warpedLabels, proposal, mask, 0.5);
 
 			// Update training data with warped labels
 			if(!resample)
@@ -4014,7 +4025,7 @@ public class Weka_Segmentation implements PlugIn
 			IJ.log("Warping ground truth...");
 			// Warp ground truth, relax original labels to proposal. Only simple
 			// points warping is allowed.
-			warpedLabels = simplePointWarp2d(warpedLabels, proposal, null, 0.5);
+			warpedLabels = seg.simplePointWarp2dMT(warpedLabels, proposal, null, 0.5);
 
 			// Update training data with warped labels
 			if(!resample)
@@ -4227,6 +4238,99 @@ public class Weka_Segmentation implements PlugIn
 		
 		return new ImagePlus("warped source", warpedSource);
 	}
+
+	/**
+	 * Use simple point relaxation to warp 2D source into 2D target. 
+	 * Source is only modified at nonzero locations in the mask 
+	 * (multi-thread version)
+	 * 
+	 * @param source input image to be relaxed
+	 * @param target target image
+	 * @param mask image mask
+	 * @param binaryThreshold binarization threshold
+	 * @return warped source image
+	 */
+	public ImagePlus simplePointWarp2dMT(
+			ImagePlus source,
+			ImagePlus target,
+			ImagePlus mask,
+			double binaryThreshold)
+	{
+		if(source.getWidth() != target.getWidth()
+				|| source.getHeight() != target.getHeight()
+				|| source.getImageStackSize() != target.getImageStackSize())
+		{
+			IJ.log("Error: label and training image sizes do not fit.");
+			return null;
+		}
+		
+		final ImageStack sourceSlices = source.getImageStack();
+		final ImageStack targetSlices = target.getImageStack();
+		final ImageStack maskSlices = (null != mask) ? mask.getImageStack() : null;
+		
+		final ImageStack warpedSource = new ImageStack(source.getWidth(), source.getHeight());
+		
+		// Executor service to produce concurrent threads
+		final ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
+		final ArrayList< Future<WarpingResults> > futures = new ArrayList< Future<WarpingResults> >();
+		
+		try{
+			for(int i = 1; i <= sourceSlices.getSize(); i++)
+			{
+				futures.add(exe.submit( simplePointWarp2DConcurrent(sourceSlices.getProcessor(i), 
+						targetSlices.getProcessor(i), null != mask ? maskSlices.getProcessor(i) : null, 
+								binaryThreshold ) ) );
+			}
+			
+			double warpingError = 0;
+			int i = 0;
+			// Wait for the jobs to be done
+			for(Future<WarpingResults> f : futures)
+			{
+				final WarpingResults wr = f.get();
+				if(null != wr.warpedSource)
+					warpedSource.addSlice("warped source " + i, wr.warpedSource.getProcessor());	
+				if(wr.warpingError != -1)
+					warpingError += wr.warpingError;
+				i++;
+			}
+			IJ.log("Warping error = " + (warpingError / sourceSlices.getSize()));
+		}
+		catch(Exception ex)
+		{
+			IJ.log("Error when warping ground truth in a concurrent way.");
+		}
+		finally{
+			exe.shutdown();
+		}
+		
+		return new ImagePlus("warped source", warpedSource);
+	}
+	
+	
+	/**
+	 * 
+	 * @param source
+	 * @param target
+	 * @param mask
+	 * @param binaryThreshold
+	 * @return
+	 */
+	public Callable<WarpingResults> simplePointWarp2DConcurrent(
+			final ImageProcessor source,
+			final ImageProcessor target,
+			final ImageProcessor mask,
+			final double binaryThreshold)
+	{
+		return new Callable<WarpingResults>(){
+			public WarpingResults call(){
+		
+				return simplePointWarp2d(source, target, mask, binaryThreshold);
+			}
+		};
+	}
+	
 	
 	/**
 	 * Results from simple point warping (2D)
