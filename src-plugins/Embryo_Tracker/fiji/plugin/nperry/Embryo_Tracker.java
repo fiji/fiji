@@ -317,7 +317,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			System.out.println("Find Maxima Run Time: " + findExtrema.getProcessingTime());
 			System.out.println("Num regional maxima: " + centeredExtrema.size());
 			
-			/* 8 - Assess quality of extrema */
+			/* 8 - Apply score to extrema */
 			final AverageScoreAggregator scoreAgg = new AverageScoreAggregator();
 			final LoGScorer<T> logScore = new LoGScorer<T>(modImg, downsampleFactors);
 			final BlobVarianceScorer<T> varScore = new BlobVarianceScorer<T>(img, diam, calibration);
@@ -325,9 +325,9 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			final BlobContrastScorer<T> contrastScore = new BlobContrastScorer<T>(img, diam, calibration);
 			final OverlapScorer<T> overlapScore = new OverlapScorer<T>(diam, calibration, spots);
 			scoreAgg.add(logScore);
-			scoreAgg.add(varScore);
+			//scoreAgg.add(varScore);
 			//scoreAgg.add(brightnessScore);
-		    //scoreAgg.add(contrastScore);
+		    scoreAgg.add(contrastScore);
 		    //scoreAgg.add(overlapScore);
 			scoreAgg.aggregate(spots);  // aggregate scores
 			
