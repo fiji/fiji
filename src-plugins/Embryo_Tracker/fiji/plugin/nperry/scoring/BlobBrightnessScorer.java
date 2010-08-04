@@ -51,10 +51,14 @@ public class BlobBrightnessScorer <T extends RealType<T>> extends IndependentSco
 		/* need to handle case where ROI is not in image anymore!! */
 		double sum = 0;
 		RegionOfInterestCursor<T> roi = cursor.createRegionOfInterestCursor(roiCoords, size);
+		//System.out.println();
+		//System.out.println("Maximum: " + origin[0] + ", " + origin[1] + ", " + origin[2] + "; ");
+		//System.out.println();
 		while (roi.hasNext()) {
 			roi.next();
 			if (inSphere(origin, cursor.getPosition(), diam / 2)) {
 				sum += roi.getType().getRealDouble();
+				//System.out.print(cursor.getPosition()[0] + ", " + cursor.getPosition()[1] + ", " + cursor.getPosition()[2] + "; ");
 			}
 		}
 

@@ -325,7 +325,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			final BlobContrastScorer<T> contrastScore = new BlobContrastScorer<T>(img, diam, calibration);
 			final OverlapScorer<T> overlapScore = new OverlapScorer<T>(diam, calibration, spots);
 			scoreAgg.add(logScore);
-			//scoreAgg.add(varScore);
+			scoreAgg.add(varScore);
 			//scoreAgg.add(brightnessScore);
 		    //scoreAgg.add(contrastScore);
 		    //scoreAgg.add(overlapScore);

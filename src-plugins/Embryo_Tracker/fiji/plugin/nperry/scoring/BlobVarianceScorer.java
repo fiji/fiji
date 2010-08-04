@@ -53,10 +53,14 @@ public class BlobVarianceScorer <T extends RealType<T>> extends IndependentScore
 		
 		// Use ROI cursor to search a sphere around the spot's coordinates
 		RegionOfInterestCursor<T> roi = cursor.createRegionOfInterestCursor(roiCoords, size);
+		//System.out.println();
+		//System.out.println("Maximum: " + origin[0] + ", " + origin[1] + ", " + origin[2] + "; ");
+		//System.out.println();
 		while (roi.hasNext()) {
 			roi.next();
 			if (inSphere(origin, cursor.getPosition(), diam / 2)) {
 				values.add(roi.getType().getRealDouble());
+				//System.out.print(cursor.getPosition()[0] + ", " + cursor.getPosition()[1] + ", " + cursor.getPosition()[2] + "; ");
 			}
 		}
 		
