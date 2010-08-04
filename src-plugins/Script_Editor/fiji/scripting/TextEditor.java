@@ -94,7 +94,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		  runSelection, extractSourceJar, toggleBookmark,
 		  listBookmarks, openSourceForClass, newPlugin, installMacro,
 		  openSourceForMenuItem, showDiff, commit, ijToFront,
-		  openMacroFunctions, decreaseFontSize, increaseFontSize;
+		  openMacroFunctions, decreaseFontSize, increaseFontSize,
+		  chooseTabSize;
 	JMenu gitMenu, tabsMenu, tabSizeMenu;
 	int tabsMenuTabsStart;
 	Set<JMenuItem> tabsMenuItems;
@@ -185,16 +186,23 @@ public class TextEditor extends JFrame implements ActionListener,
 		tabSizeMenu = new JMenu("Tab sizes");
 		tabSizeMenu.setMnemonic(KeyEvent.VK_T);
 		ButtonGroup bg = new ButtonGroup();
-		for (final int size : new int[] {2, 4, 6, 8, 10}) {
+		for (final int size : new int[] { 2, 4, 8 }) {
 			JRadioButtonMenuItem item = new JRadioButtonMenuItem("" + size, size == 8);
 			item.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent event) {
 					getEditorPane().setTabSize(size);
+					updateTabSize(false);
 				}
 			});
+			item.setMnemonic(KeyEvent.VK_0 + (size % 10));
 			bg.add(item);
 			tabSizeMenu.add(item);
 		}
+		chooseTabSize = new JRadioButtonMenuItem("Other...", false);
+		chooseTabSize.setMnemonic(KeyEvent.VK_O);
+		chooseTabSize.addActionListener(this);
+		bg.add(chooseTabSize);
+		tabSizeMenu.add(chooseTabSize);
 		edit.add(tabSizeMenu);
 		edit.addSeparator();
 
@@ -685,6 +693,13 @@ public class TextEditor extends JFrame implements ActionListener,
 			getTextArea().setCaretPosition(0);
 			getTextArea().moveCaretPosition(getTextArea().getDocument().getLength());
 		}
+		else if (source == chooseTabSize) {
+			int tabSize = (int)IJ.getNumber("Tab size", getEditorPane().getTabSize());
+			if (tabSize != IJ.CANCELED) {
+				getEditorPane().setTabSize(tabSize);
+				updateTabSize(false);
+			}
+		}
 		else if (source == addImport)
 			addImport(null);
 		else if (source == removeUnusedImports)
@@ -1171,9 +1186,17 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 		if (setByLanguage)
 			pane.setTabSize(pane.currentLanguage.menuLabel.equals("Python") ? 4 : 8);
 		int tabSize = pane.getTabSize();
+		boolean defaultSize = false;
 		for (int i = 0; i < tabSizeMenu.getItemCount(); i++) {
 			JMenuItem item = tabSizeMenu.getItem(i);
-			item.setSelected(tabSize == Integer.parseInt(item.getLabel()));
+			if (item == chooseTabSize) {
+				item.setSelected(!defaultSize);
+				item.setLabel("Other" + (defaultSize ? "" : " (" + tabSize + ")") + "...");
+			}
+			else if (tabSize == Integer.parseInt(item.getLabel())) {
+				item.setSelected(true);
+				defaultSize = true;
+			}
 		}
 	}
 
