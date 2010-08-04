@@ -1,5 +1,6 @@
 import java.util.ArrayList;
 import java.util.List;
+import java.awt.Rectangle;
 import java.io.File;
 
 import mpicbg.imglib.image.Image;
@@ -8,6 +9,7 @@ import mpicbg.imglib.type.numeric.RealType;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
+import ij.gui.Roi;
 import ij.plugin.PlugIn;
 
 /**
@@ -16,6 +18,11 @@ import ij.plugin.PlugIn;
  * @param <T>
  */
 public class Coloc_2<T extends RealType<T>> implements PlugIn {
+
+	// Allowed types of ROI configuration
+	protected enum RoiConfiguration {None, Img1, Img2};
+	// indicates if a ROI should be used
+	boolean useRoi = false;
 
 	// the images to work on
 	Image<T> img1, img2;
@@ -33,10 +40,36 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		img2 = ImagePlusAdapter.wrap(imp2);
 
 		int theImg1Channel = 1, theImg2Channel = 1;
+
+
+		// configure the ROI
+		RoiConfiguration roiConfig = RoiConfiguration.Img1;
+
 		// Development code end
 
+		// configure the ROI
+		Rectangle roi = null;
+		/* check if we have a valid ROI for the selected configuration
+		 * and if so, get the ROI's bounds. Currently, only rectangular
+		 * ROIs are supported.
+		 */
+		if (roiConfig == RoiConfiguration.Img1 && hasValidRoi(imp1)) {
+			roi = imp1.getRoi().getBounds();
+		} else if (roiConfig == RoiConfiguration.Img2 && hasValidRoi(imp2)) {
+			roi = imp2.getRoi().getBounds();
+		}
+		useRoi = (roi != null);
+
 		// create a new container for the selected images and channels
-		DataContainer container = new DataContainer(img1, img2, theImg1Channel, theImg2Channel);
+		DataContainer container;
+		if (useRoi) {
+			int roiOffset[] = new int[] {roi.x, roi.y};
+			int roiSize[] = new int[] {roi.width, roi.height};
+			container = new DataContainer(img1, img2, theImg1Channel, theImg2Channel,
+					roiOffset, roiSize);
+		} else {
+			container = new DataContainer(img1, img2, theImg1Channel, theImg2Channel);
+		}
 
 		// this list contains the algorithms that will be run when the user clicks ok
 		List<Algorithm> userSelectedJobs = new ArrayList<Algorithm>();
@@ -66,5 +99,22 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		theResultDisplay.display(container);
 
 
+	}
+
+	/**
+	 * Returns true if a custom ROI has been selected, i.e if the current
+	 * ROI does not have the extent of the whole image.
+	 * @return true if custom ROI selected, false otherwise
+	 */
+	protected boolean hasValidRoi(ImagePlus imp) {
+		Roi roi = imp.getRoi();
+		if (roi == null)
+			return false;
+
+		Rectangle theROI = roi.getBounds();
+
+		// if the ROI is the same size as the image (default ROI), return false
+		return (theROI.height != imp.getHeight()
+					|| theROI.width != imp.getWidth());
 	}
 }
