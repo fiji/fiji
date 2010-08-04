@@ -95,7 +95,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		  listBookmarks, openSourceForClass, newPlugin, installMacro,
 		  openSourceForMenuItem, showDiff, commit, ijToFront,
 		  openMacroFunctions, decreaseFontSize, increaseFontSize;
-	JMenu gitMenu, tabsMenu;
+	JMenu gitMenu, tabsMenu, tabSizeMenu;
 	int tabsMenuTabsStart;
 	Set<JMenuItem> tabsMenuItems;
 	FindAndReplaceDialog findDialog;
@@ -182,8 +182,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		edit.addSeparator();
 
 		// Add tab size adjusting menu
-		JMenu tabsizeMenu = new JMenu("Tab sizes");
-		tabsizeMenu.setMnemonic(KeyEvent.VK_T);
+		tabSizeMenu = new JMenu("Tab sizes");
+		tabSizeMenu.setMnemonic(KeyEvent.VK_T);
 		ButtonGroup bg = new ButtonGroup();
 		for (final int size : new int[] {2, 4, 6, 8, 10}) {
 			JRadioButtonMenuItem item = new JRadioButtonMenuItem("" + size, size == 8);
@@ -193,9 +193,9 @@ public class TextEditor extends JFrame implements ActionListener,
 				}
 			});
 			bg.add(item);
-			tabsizeMenu.add(item);
+			tabSizeMenu.add(item);
 		}
-		edit.add(tabsizeMenu);
+		edit.add(tabSizeMenu);
 		edit.addSeparator();
 
 		clearScreen = addToMenu(edit, "Clear output panel", 0, 0);
@@ -1160,6 +1160,12 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 
 		boolean isInGit = getEditorPane().getGitDirectory() != null;
 		gitMenu.setVisible(isInGit);
+
+		int tabSize = getEditorPane().getTabSize();
+		for (int i = 0; i < tabSizeMenu.getItemCount(); i++) {
+			JMenuItem item = tabSizeMenu.getItem(i);
+			item.setSelected(tabSize == Integer.parseInt(item.getLabel()));
+		}
 	}
 
 	public void setFileName(String baseName) {
