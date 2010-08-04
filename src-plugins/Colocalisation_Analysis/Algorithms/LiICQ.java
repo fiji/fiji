@@ -1,4 +1,3 @@
-import weka.gui.experiment.ResultsPanel;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
