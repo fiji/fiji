@@ -37,46 +37,42 @@ public class BlobContrastScorer <T extends RealType<T>> extends IndependentScore
 
 	@Override
 	public void score(Spot spot) {
-		final LocalizableByDimCursor<T> cursorInner = img.createLocalizableByDimCursor(new OutOfBoundsStrategyValueFactory<T>());
-		final LocalizableByDimCursor<T> cursorOuter = img.createLocalizableByDimCursor(new OutOfBoundsStrategyValueFactory<T>());
-		double[] origin = spot.getCoordinates();
-		final int[] innerCoords = new int[origin.length];
-		final int[] outerCoords = new int[origin.length];
-		final ArrayList<Double> innerRadiusValues = new ArrayList<Double>();
-		final ArrayList<Double> outerRadiusValues = new ArrayList<Double>();
-
+		final LocalizableByDimCursor<T> cursorInner = img.createLocalizableByDimCursor(new OutOfBoundsStrategyValueFactory<T>());	// ROI cursor which searches the pixels inside the blob's border
+		final LocalizableByDimCursor<T> cursorOuter = img.createLocalizableByDimCursor(new OutOfBoundsStrategyValueFactory<T>());	// ROI cursor which searches the pixels outside the blob's border
+		double[] origin = spot.getCoordinates();								// The coordinates for the center of the blob
+		int innerSize[] = new int[img.getNumDimensions()];						// The size of the ROI for the inner ROI cursor
+		int outerSize[] = new int[img.getNumDimensions()];						// The size of the ROI for the outer ROI cursor
+		final int[] innerROICoords = new int[origin.length];					// The starting position for the inner ROI cursor
+		final int[] outerROICoords = new int[origin.length];					// The starting position for the outer ROI cursor
+		final ArrayList<Double> innerRadiusValues = new ArrayList<Double>();	// The intensities for pixels found just inside the blob's border
+		final ArrayList<Double> outerRadiusValues = new ArrayList<Double>();	// The intensities for pixels found just outside the blob's border 
+		int[] curr = new int[origin.length];
+		
+		// --------------------- //
+		// ------  Inside ------ //
+		// --------------------- //
+		
 		// Create the size array for the ROI Inner cursor
-		int innerSize[] = new int[img.getNumDimensions()];
 		for (int i = 0; i < innerSize.length; i++) {
 			innerSize[i] = (int) (diam / calibration[i]);
 		}
 		
-		// Create the size array for the ROI Outer cursor
-		int outerSize[] = new int[img.getNumDimensions()];
-		for (int i = 0; i < outerSize.length; i++) {
-			outerSize[i] = (int) ( (diam + diam * RAD_PERCENTAGE) / calibration[i] );
+		// Convert spot's coordinates (which are a double[]) to int[], and reposition for ROI cursor
+		for (int i = 0; i < innerROICoords.length; i++) {
+			innerROICoords[i] = (int) Math.round(origin[i] - innerSize[i] / 2);
 		}
 		
-		// Convert spot's coords (double[]) to int[], and reposition for ROI cursor
-		for (int i = 0; i < innerCoords.length; i++) {
-			innerCoords[i] = (int) Math.round(origin[i] - innerSize[i] / 2);
-		}
-		for (int i = 0; i < outerCoords.length; i++) {
-			outerCoords[i] = (int) Math.round(origin[i] - outerSize[i] / 2);
-		}
-		
-		int[] curr = new int[origin.length];
-		// Average intensity *inside* blob border
-		RegionOfInterestCursor<T> roiInner = cursorInner.createRegionOfInterestCursor(innerCoords, innerSize);
-
+		// Find points just inside the blob's border (must be less than radius from center, but further than 0.8 * radius from center)
+		RegionOfInterestCursor<T> roiInner = cursorInner.createRegionOfInterestCursor(innerROICoords, innerSize);
 		while (roiInner.hasNext()) {
 			roiInner.next();
 			cursorInner.getPosition(curr);
-			if (inside(origin, curr, diam / 2) && outside(origin, curr, (diam / 2) - (diam / 2) * RAD_PERCENTAGE)) {
+			if (inRing(origin, curr, diam / 2, (diam - diam * RAD_PERCENTAGE) / 2)) {
 				innerRadiusValues.add(roiInner.getType().getRealDouble());
 			}
 		}
 		
+		// Compute the average intensity for the pixels in this ring.
 		double[] innerRadiusValuesArr = new double[innerRadiusValues.size()];
 		for (int i = 0; i < innerRadiusValues.size(); i++) {
 			innerRadiusValuesArr[i] = innerRadiusValues.get(i).doubleValue();
@@ -84,17 +80,32 @@ public class BlobContrastScorer <T extends RealType<T>> extends IndependentScore
 		double innerAvg = MathLib.computeAverage(innerRadiusValuesArr);
 		roiInner.close();
 		
-		// Average intensity *outside* blob border
-		RegionOfInterestCursor<T> roiOuter = cursorOuter.createRegionOfInterestCursor(outerCoords, outerSize);
+		// ---------------------- //
+		// ------  Outside ------ //
+		// ---------------------- //
 		
+		// Create the size array for the ROI Outer cursor
+		for (int i = 0; i < outerSize.length; i++) {
+			outerSize[i] = (int) ( (diam + diam * RAD_PERCENTAGE) / calibration[i] );
+		}
+		
+		// Convert spot's coordinates (which are a double[]) to int[], and reposition for ROI cursor
+
+		for (int i = 0; i < outerROICoords.length; i++) {
+			outerROICoords[i] = (int) Math.round(origin[i] - outerSize[i] / 2);
+		}
+		
+		// Find points just outside the blob's border
+		RegionOfInterestCursor<T> roiOuter = cursorOuter.createRegionOfInterestCursor(outerROICoords, outerSize);
 		while (roiOuter.hasNext()) {
 			roiOuter.next();
 			cursorOuter.getPosition(curr);
-			if (outside(origin, curr, diam / 2) && inside(origin, curr, (diam / 2) + (diam / 2) * RAD_PERCENTAGE)) {
+			if (inRing(origin, curr, (diam + diam * RAD_PERCENTAGE) / 2, diam / 2)) {
 				outerRadiusValues.add(roiOuter.getType().getRealDouble());
 			}
 		}
 		
+		// Compute the average intensity for the pixels in this ring.
 		double[] outerRadiusValuesArr = new double[outerRadiusValues.size()];
 		for (int i = 0; i < outerRadiusValues.size(); i++) {
 			outerRadiusValuesArr[i] = outerRadiusValues.get(i).doubleValue();
@@ -105,18 +116,24 @@ public class BlobContrastScorer <T extends RealType<T>> extends IndependentScore
 		// Add average contrast different along border as the spot's score.
 		spot.addScore(SCORING_METHOD_NAME, Math.abs(innerAvg - outerAvg));
 	}
-
-	private boolean inside(double[] origin, int[] coords, double rad) {
+	
+	/**
+	 * Determines if the coordinate coords is at least min distance away from the
+	 * origin, but within max distance. The distance metric used is Euclidean
+	 * distance.
+	 * 
+	 * @param origin 
+	 * @param coords
+	 * @param max
+	 * @param min
+	 * @return
+	 */
+	private boolean inRing(double[] origin, int[] coords, double max, double min) {
+		double euclDist = 0;
 		for (int i = 0; i < coords.length; i++) {
-			if (Math.abs(coords[i] - origin[i]) / (rad / calibration[i]) > 1) return false; 
+			euclDist += Math.pow((origin[i] - (double) coords[i]) * calibration[i], 2);
 		}
-		return true;
-	}
-
-	private boolean outside(double[] origin, int[] coords, double rad) {
-		for (int i = 0; i < coords.length; i++) {
-			if (Math.abs(coords[i] - origin[i]) / (rad / calibration[i]) <= 1) return false; 
-		}
-		return true;
+		euclDist = Math.sqrt(euclDist);
+		return euclDist >= min && euclDist <= max;
 	}
 }

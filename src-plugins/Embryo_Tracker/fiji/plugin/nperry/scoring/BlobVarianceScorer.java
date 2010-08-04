@@ -36,10 +36,9 @@ public class BlobVarianceScorer <T extends RealType<T>> extends IndependentScore
 	@Override
 	public void score(Spot spot) {		
 		final LocalizableByDimCursor<T> cursor = img.createLocalizableByDimCursor(new OutOfBoundsStrategyValueFactory<T>());
-		final double[] coords = spot.getCoordinates();
-		final int[] intCoords = doubleCoordsToIntCoords(coords);
+		final double[] origin = spot.getCoordinates();
 		final ArrayList<Double> values = new ArrayList<Double>();
-
+		
 		// Create the size array for the ROI cursor
 		int size[] = new int[img.getNumDimensions()];
 		for (int i = 0; i < size.length; i++) {
@@ -48,15 +47,15 @@ public class BlobVarianceScorer <T extends RealType<T>> extends IndependentScore
 
 		// Adjust the integer coordinates of the spot to set the ROI correctly
 		int[] roiCoords = new int[img.getNumDimensions()];
-		for (int i = 0; i < intCoords.length; i++) {
-			roiCoords[i] = intCoords[i] - (int) (size[i] / 2);  
+		for (int i = 0; i < origin.length; i++) {
+			roiCoords[i] = (int) (origin[i] - (size[i] / 2));  
 		}
 		
 		// Use ROI cursor to search a sphere around the spot's coordinates
 		RegionOfInterestCursor<T> roi = cursor.createRegionOfInterestCursor(roiCoords, size);
 		while (roi.hasNext()) {
 			roi.next();
-			if (inBlob(cursor.getPosition(), intCoords)) {
+			if (inSphere(origin, cursor.getPosition(), diam / 2)) {
 				values.add(roi.getType().getRealDouble());
 			}
 		}
@@ -81,19 +80,23 @@ public class BlobVarianceScorer <T extends RealType<T>> extends IndependentScore
 		spot.addScore(SCORING_METHOD_NAME, 1/var);
 	}
 	
-	private boolean inBlob(int[] pos, int[] center) {
-		for (int i = 0; i < pos.length; i++) {
-			if (Math.abs((double) pos[i] - (double) center[i]) / (diam / calibration[i] / 2) > 1) return false; 
+	/**
+	 * Determines if the coordinate coords is at least min distance away from the
+	 * origin, but within max distance. The distance metric used is Euclidean
+	 * distance.
+	 * 
+	 * @param origin 
+	 * @param coords
+	 * @param max
+	 * @param min
+	 * @return
+	 */
+	private boolean inSphere(double[] origin, int[] coords, double rad) {
+		double euclDist = 0;
+		for (int i = 0; i < coords.length; i++) {
+			euclDist += Math.pow((origin[i] - (double) coords[i]) * calibration[i], 2);
 		}
-		return true;
+		euclDist = Math.sqrt(euclDist);
+		return euclDist <= rad;
 	}
-	
-	private int[] doubleCoordsToIntCoords(double doubleCoords[]) {
-		int intCoords[] = new int[doubleCoords.length];
-		for (int i = 0; i < doubleCoords.length; i++) {
-			intCoords[i] = (int) Math.round(doubleCoords[i]);
-		}
-		return intCoords;
-	}
-
 }

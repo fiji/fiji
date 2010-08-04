@@ -12,6 +12,7 @@ import ij.ImageStack;
 import ij.gui.GenericDialog;
 import ij.gui.PointRoi;
 import ij.plugin.PlugIn;
+import ij.process.ImageProcessor;
 import ij.process.StackConverter;
 import ij3d.Content;
 import ij3d.ContentInstant;
@@ -67,16 +68,16 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	@SuppressWarnings("unchecked")
 	public void run(String arg) {
 		/* 1 - Obtain the currently active image */
-		ImagePlus imp = IJ.getImage();
-		if (null == imp) return;
+		ImagePlus ip = IJ.getImage();
+		if (null == ip) return;
 		
 		/* 2 - Ask for parameters */
 		GenericDialog gd = new GenericDialog("Track");
-		gd.addNumericField("Generic blob diameter:", 7.3, 2, 5, imp.getCalibration().getUnits());  	// get the expected blob size (in pixels).
+		gd.addNumericField("Generic blob diameter:", 7.3, 2, 5, ip.getCalibration().getUnits());  	// get the expected blob size (in pixels).
 		gd.addMessage("Verify calibration settings:");
-		gd.addNumericField("Pixel width:", imp.getCalibration().pixelWidth, 3);		// used to calibrate the image for 3D rendering
-		gd.addNumericField("Pixel height:", imp.getCalibration().pixelHeight, 3);	// used to calibrate the image for 3D rendering
-		gd.addNumericField("Voxel depth:", imp.getCalibration().pixelDepth, 3);		// used to calibrate the image for 3D rendering
+		gd.addNumericField("Pixel width:", ip.getCalibration().pixelWidth, 3);		// used to calibrate the image for 3D rendering
+		gd.addNumericField("Pixel height:", ip.getCalibration().pixelHeight, 3);	// used to calibrate the image for 3D rendering
+		gd.addNumericField("Voxel depth:", ip.getCalibration().pixelDepth, 3);		// used to calibrate the image for 3D rendering
 		gd.addCheckbox("Use median filter", false);
 		gd.addCheckbox("Allow edge maxima", false);
 		gd.showDialog();
@@ -92,7 +93,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		double[] calibration = new double[] {pixelWidth, pixelHeight, pixelDepth};
 
 		/* 4 - Execute! */
-		Object[] result = exec(imp, diam, useMedFilt, allowEdgeMax, calibration);
+		Object[] result = exec(ip, diam, useMedFilt, allowEdgeMax, calibration);
 		System.out.println("Done executing!");	
 		
 		/* 5 - Display new image and overlay maxima */
@@ -101,7 +102,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			ArrayList< ArrayList<Spot> > extremaAllFrames = (ArrayList< ArrayList<Spot> >) result[0];
 			ArrayList<Double> thresholdsAllFrames = (ArrayList<Double>) result[1];
 			if (numDim == 3) {	// If original image is 3D, create a 3D rendering of the image and overlay maxima
-				renderIn3DViewer(extremaAllFrames, thresholdsAllFrames, imp, calibration, diam);
+				renderIn3DViewer(extremaAllFrames, thresholdsAllFrames, ip, calibration, diam);
 			} else {
 				//PointRoi roi = (PointRoi) result[0];
 				//imp.setRoi(roi);
@@ -111,33 +112,33 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	}
 	
 	/** Execute the plugin functionality: apply a median filter (for salt and pepper noise, if user requests), a Gaussian blur, and then find maxima. */
-	public Object[] exec(ImagePlus imp, double diam, boolean useMedFilt, boolean allowEdgeMax, double[] calibration) {		
+	public Object[] exec(ImagePlus ip, double diam, boolean useMedFilt, boolean allowEdgeMax, double[] calibration) {		
 		/* 0 - Check validity of parameters, initialize local variables */
-		if (null == imp) return null;
+		if (null == ip) return null;
 		ArrayList< ArrayList <Spot> > extremaAllFrames = new ArrayList< ArrayList <Spot> >();
 		ArrayList<Double> frameThresholds = new ArrayList<Double>();  // holds the thresholds for each frame's extrema.
 		final double downsampleFactors[] = createDownsampledDim(calibration, diam, numDim);	// factors for x,y,z that we need for scaling image down;
 		                        
 		/* 1 - Create separate ImagePlus's for each frame */
-		ImageStack stack = imp.getImageStack();
-		int numSlices = imp.getNSlices();
-		int numFrames = imp.getNFrames();
+		ImageStack stack = ip.getImageStack();
+		int numSlices = ip.getNSlices();
+		int numFrames = ip.getNFrames();
 		
 		// For each frame...
 		for (int i = 0; i < numFrames; i++) {
-			ImageStack frame = imp.createEmptyStack();
+			ImageStack frame = ip.createEmptyStack();
 			
 			// ...create the slice by combining the ImageProcessors, one for each Z in the stack.
 			for (int j = 1; j <= numSlices; j++) {
 				frame.addSlice(Integer.toString(j + (i * numSlices)), stack.getProcessor(j + (i * numSlices)));
 			}
-			ImagePlus impSingleFrame = new ImagePlus("Frame " + Integer.toString(i + 1), frame);
+			ImagePlus ipSingleFrame = new ImagePlus("Frame " + Integer.toString(i + 1), frame);
 			
 			/* 2 - Prepare stack for use with Imglib. */
 			System.out.println();
 			IJ.log("---Frame " + Integer.toString(i+1) + "---");
 			System.out.println("---Frame " + (i+1) + "---");
-			Image<T> img = ImagePlusAdapter.wrap(impSingleFrame);
+			Image<T> img = ImagePlusAdapter.wrap(ipSingleFrame);
 			Image<T> modImg = img.clone();
 			numDim = img.getNumDimensions();
 		
@@ -324,19 +325,16 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			final BlobContrastScorer<T> contrastScore = new BlobContrastScorer<T>(img, diam, calibration);
 			final OverlapScorer<T> overlapScore = new OverlapScorer<T>(diam, calibration, spots);
 			scoreAgg.add(logScore);
-			scoreAgg.add(varScore);
-			scoreAgg.add(brightnessScore);
-		    scoreAgg.add(contrastScore);
-		    scoreAgg.add(overlapScore);
+			//scoreAgg.add(varScore);
+			//scoreAgg.add(brightnessScore);
+		    //scoreAgg.add(contrastScore);
+		    //scoreAgg.add(overlapScore);
 			scoreAgg.aggregate(spots);  // aggregate scores
 			
 			/* 9 - Calculate Thresholds */
 			final double threshold = otsuThreshold(spots);  // determines best cutoff point between "good" and "bad" extrema.
 			frameThresholds.add(threshold);
 		}
-		
-		// Convert downsampled image coordinates to the coordinates on the original image
-		//downsampledCoordsToOrigCoords(extremaAllFrames, downsampleFactors);
 		
 		return new Object[] {extremaAllFrames, frameThresholds};
 	}

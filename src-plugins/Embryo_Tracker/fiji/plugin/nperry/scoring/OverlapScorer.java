@@ -37,10 +37,11 @@ public class OverlapScorer <T extends RealType<T>> extends IndependentScorer {
 			for (int i = 0; i < coords.length; i++) {
 				if (Math.abs(coords[i] - otherSpot.getCoordinates()[i]) < (diam / calibration[i])) {
 					counter++;
-					}
+				}
 			}
 			if (counter == coords.length) {
 				numWithinDiam++;
+				//System.out.println("[" + coords[0] + ", " + coords[1] + ", " + coords[2] + "]" + " overlaps with " + "[" + otherSpot.getCoordinates()[0] + ", " + otherSpot.getCoordinates()[1] + ", " + otherSpot.getCoordinates()[2] + "]");
 			}
 		}
 		
