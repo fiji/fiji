@@ -1,3 +1,4 @@
+import ij.IJ;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
@@ -85,17 +86,17 @@ public class InputCheck<T extends RealType<T>> extends Algorithm {
 		if ( Math.abs(zeroZeroRatio) > maxZeroZeroRatio ) {
 			container.add( new Result.WarningResult("zero-zero ratio too high",
 					"The ratio between zero-zero pixels and other pixels is larger "
-					+ zeroZeroRatio + ". Maybe you should use a ROI.") );
+					+ IJ.d2s(zeroZeroRatio, 2) + ". Maybe you should use a ROI.") );
 		}
 		if ( Math.abs(ch1SaturatedRatio) > maxSaturatedRatio ) {
 			container.add( new Result.WarningResult("saturated ch1 ratio too high",
 					"The ratio between saturated pixels and other pixels in channel one is larger "
-					+ maxSaturatedRatio + ". Maybe you should use a ROI.") );
+					+ IJ.d2s(maxSaturatedRatio, 2) + ". Maybe you should use a ROI.") );
 		}
 		if ( Math.abs(ch1SaturatedRatio) > maxSaturatedRatio ) {
 			container.add( new Result.WarningResult("saturated ch2 ratio too high",
 					"The ratio between saturated pixels and other pixels in channel two is larger "
-					+ maxSaturatedRatio + ". Maybe you should use a ROI.") );
+					+ IJ.d2s(maxSaturatedRatio, 2) + ". Maybe you should use a ROI.") );
 		}
 	}
 
