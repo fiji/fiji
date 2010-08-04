@@ -174,7 +174,11 @@ public class GenericDialogPlus extends GenericDialog {
 			while (dir != null && !dir.exists())
 				dir = dir.getParentFile();
 
-			OpenDialog dialog = new OpenDialog(title, dir.getAbsolutePath(), fileName);
+			OpenDialog dialog;
+			if (dir == null)
+				dialog = new OpenDialog(title, fileName);
+			else
+				dialog = new OpenDialog(title, dir.getAbsolutePath(), fileName);
 			String directory = dialog.getDirectory();
 			if (directory == null)
 				return;
