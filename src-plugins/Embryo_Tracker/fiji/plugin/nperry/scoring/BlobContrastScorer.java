@@ -64,13 +64,19 @@ public class BlobContrastScorer <T extends RealType<T>> extends IndependentScore
 		
 		// Find points just inside the blob's border (must be less than radius from center, but further than 0.8 * radius from center)
 		RegionOfInterestCursor<T> roiInner = cursorInner.createRegionOfInterestCursor(innerROICoords, innerSize);
+		//System.out.println();
+		//System.out.println("Maximum: " + origin[0] + ", " + origin[1] + ", " + origin[2] + "; ");
+		//System.out.println("INNER");
 		while (roiInner.hasNext()) {
 			roiInner.next();
 			cursorInner.getPosition(curr);
 			if (inRing(origin, curr, diam / 2, (diam - diam * RAD_PERCENTAGE) / 2)) {
 				innerRadiusValues.add(roiInner.getType().getRealDouble());
+				//System.out.print(curr[0] + ", " + curr[1] + ", " + curr[2] + "; ");
 			}
 		}
+		System.out.println();
+		System.out.println("OUTER");
 		
 		// Compute the average intensity for the pixels in this ring.
 		double[] innerRadiusValuesArr = new double[innerRadiusValues.size()];
@@ -102,6 +108,7 @@ public class BlobContrastScorer <T extends RealType<T>> extends IndependentScore
 			cursorOuter.getPosition(curr);
 			if (inRing(origin, curr, (diam + diam * RAD_PERCENTAGE) / 2, diam / 2)) {
 				outerRadiusValues.add(roiOuter.getType().getRealDouble());
+				//System.out.print(curr[0] + ", " + curr[1] + ", " + curr[2] + "; ");
 			}
 		}
 		
