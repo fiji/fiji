@@ -94,8 +94,9 @@ public class TextEditor extends JFrame implements ActionListener,
 		  runSelection, extractSourceJar, toggleBookmark,
 		  listBookmarks, openSourceForClass, newPlugin, installMacro,
 		  openSourceForMenuItem, showDiff, commit, ijToFront,
-		  openMacroFunctions, decreaseFontSize, increaseFontSize;
-	JMenu gitMenu, tabsMenu;
+		  openMacroFunctions, decreaseFontSize, increaseFontSize,
+		  chooseTabSize;
+	JMenu gitMenu, tabsMenu, tabSizeMenu;
 	int tabsMenuTabsStart;
 	Set<JMenuItem> tabsMenuItems;
 	FindAndReplaceDialog findDialog;
@@ -179,6 +180,30 @@ public class TextEditor extends JFrame implements ActionListener,
 			fontSize.add(item);
 		}
 		edit.add(fontSize);
+		edit.addSeparator();
+
+		// Add tab size adjusting menu
+		tabSizeMenu = new JMenu("Tab sizes");
+		tabSizeMenu.setMnemonic(KeyEvent.VK_T);
+		ButtonGroup bg = new ButtonGroup();
+		for (final int size : new int[] { 2, 4, 8 }) {
+			JRadioButtonMenuItem item = new JRadioButtonMenuItem("" + size, size == 8);
+			item.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent event) {
+					getEditorPane().setTabSize(size);
+					updateTabSize(false);
+				}
+			});
+			item.setMnemonic(KeyEvent.VK_0 + (size % 10));
+			bg.add(item);
+			tabSizeMenu.add(item);
+		}
+		chooseTabSize = new JRadioButtonMenuItem("Other...", false);
+		chooseTabSize.setMnemonic(KeyEvent.VK_O);
+		chooseTabSize.addActionListener(this);
+		bg.add(chooseTabSize);
+		tabSizeMenu.add(chooseTabSize);
+		edit.add(tabSizeMenu);
 		edit.addSeparator();
 
 		clearScreen = addToMenu(edit, "Clear output panel", 0, 0);
@@ -668,6 +693,13 @@ public class TextEditor extends JFrame implements ActionListener,
 			getTextArea().setCaretPosition(0);
 			getTextArea().moveCaretPosition(getTextArea().getDocument().getLength());
 		}
+		else if (source == chooseTabSize) {
+			int tabSize = (int)IJ.getNumber("Tab size", getEditorPane().getTabSize());
+			if (tabSize != IJ.CANCELED) {
+				getEditorPane().setTabSize(tabSize);
+				updateTabSize(false);
+			}
+		}
 		else if (source == addImport)
 			addImport(null);
 		else if (source == removeUnusedImports)
@@ -868,6 +900,7 @@ public class TextEditor extends JFrame implements ActionListener,
 				addDefaultAccelerators();
 			}
 			editorPane.setFile("".equals(path) ? null : path);
+			updateTabSize(true);
 			if (wasNew) {
 				int index = tabbed.getSelectedIndex()
 					+ tabsMenuTabsStart;
@@ -1118,6 +1151,7 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 
 	void setLanguage(Languages.Language language) {
 		getEditorPane().setLanguage(language);
+		updateTabSize(true);
 	}
 
 	void updateLanguageMenu(Languages.Language language) {
@@ -1143,6 +1177,27 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 
 		boolean isInGit = getEditorPane().getGitDirectory() != null;
 		gitMenu.setVisible(isInGit);
+
+		updateTabSize(false);
+	}
+
+	protected void updateTabSize(boolean setByLanguage) {
+		EditorPane pane = getEditorPane();
+		if (setByLanguage)
+			pane.setTabSize(pane.currentLanguage.menuLabel.equals("Python") ? 4 : 8);
+		int tabSize = pane.getTabSize();
+		boolean defaultSize = false;
+		for (int i = 0; i < tabSizeMenu.getItemCount(); i++) {
+			JMenuItem item = tabSizeMenu.getItem(i);
+			if (item == chooseTabSize) {
+				item.setSelected(!defaultSize);
+				item.setLabel("Other" + (defaultSize ? "" : " (" + tabSize + ")") + "...");
+			}
+			else if (tabSize == Integer.parseInt(item.getLabel())) {
+				item.setSelected(true);
+				defaultSize = true;
+			}
+		}
 	}
 
 	public void setFileName(String baseName) {
