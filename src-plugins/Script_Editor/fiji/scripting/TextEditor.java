@@ -885,6 +885,7 @@ public class TextEditor extends JFrame implements ActionListener,
 				addDefaultAccelerators();
 			}
 			editorPane.setFile("".equals(path) ? null : path);
+			updateTabSize(true);
 			if (wasNew) {
 				int index = tabbed.getSelectedIndex()
 					+ tabsMenuTabsStart;
@@ -1135,6 +1136,7 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 
 	void setLanguage(Languages.Language language) {
 		getEditorPane().setLanguage(language);
+		updateTabSize(true);
 	}
 
 	void updateLanguageMenu(Languages.Language language) {
@@ -1161,7 +1163,14 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 		boolean isInGit = getEditorPane().getGitDirectory() != null;
 		gitMenu.setVisible(isInGit);
 
-		int tabSize = getEditorPane().getTabSize();
+		updateTabSize(false);
+	}
+
+	protected void updateTabSize(boolean setByLanguage) {
+		EditorPane pane = getEditorPane();
+		if (setByLanguage)
+			pane.setTabSize(pane.currentLanguage.menuLabel.equals("Python") ? 4 : 8);
+		int tabSize = pane.getTabSize();
 		for (int i = 0; i < tabSizeMenu.getItemCount(); i++) {
 			JMenuItem item = tabSizeMenu.getItem(i);
 			item.setSelected(tabSize == Integer.parseInt(item.getLabel()));
