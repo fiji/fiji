@@ -181,6 +181,23 @@ public class TextEditor extends JFrame implements ActionListener,
 		edit.add(fontSize);
 		edit.addSeparator();
 
+		// Add tab size adjusting menu
+		JMenu tabsizeMenu = new JMenu("Tab sizes");
+		tabsizeMenu.setMnemonic(KeyEvent.VK_T);
+		ButtonGroup bg = new ButtonGroup();
+		for (final int size : new int[] {2, 4, 6, 8, 10}) {
+			JRadioButtonMenuItem item = new JRadioButtonMenuItem("" + size, size == 8);
+			item.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent event) {
+					getEditorPane().setTabSize(size);
+				}
+			});
+			bg.add(item);
+			tabsizeMenu.add(item);
+		}
+		edit.add(tabsizeMenu);
+		edit.addSeparator();
+
 		clearScreen = addToMenu(edit, "Clear output panel", 0, 0);
 		clearScreen.setMnemonic(KeyEvent.VK_L);
 		edit.addSeparator();
