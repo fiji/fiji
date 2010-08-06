@@ -1410,12 +1410,6 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	   The broken files also seem to require that you scale the
 	   radius by the minimum voxel separation (!) so that flag
 	   also turns on that workaround.
-
-	   In interactive use, you can enable this flag by holding
-	   down "Control" while clicking on the "Load Traces / SWC
-	   File" button.  In programmatic use, the developer is
-	   expected to figure out whether then need to set this flag
-	   or not.
 	*/
 
 	public boolean importSWC( BufferedReader br, boolean assumeCoordinatesIndexVoxels ) throws IOException {
