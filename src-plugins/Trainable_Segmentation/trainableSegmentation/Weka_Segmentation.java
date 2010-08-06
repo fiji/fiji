@@ -4288,8 +4288,9 @@ public class Weka_Segmentation implements PlugIn
 			for(int i = 1; i <= sourceSlices.getSize(); i++)
 			{
 				futures.add(exe.submit( simplePointWarp2DConcurrent(sourceSlices.getProcessor(i), 
-						targetSlices.getProcessor(i), null != mask ? maskSlices.getProcessor(i) : null, 
-								binaryThreshold ) ) );
+										targetSlices.getProcessor(i), 
+										null != maskSlices ? maskSlices.getProcessor(i) : null, 
+										binaryThreshold ) ) );
 			}
 			
 			double warpingError = 0;
@@ -4309,6 +4310,7 @@ public class Weka_Segmentation implements PlugIn
 		catch(Exception ex)
 		{
 			IJ.log("Error when warping ground truth in a concurrent way.");
+			ex.printStackTrace();
 		}
 		finally{
 			exe.shutdown();
@@ -4363,9 +4365,9 @@ public class Weka_Segmentation implements PlugIn
 	 * @return warped source image and warping error
 	 */
 	public static WarpingResults simplePointWarp2d(
-			ImageProcessor source,
-			ImageProcessor target,
-			ImageProcessor mask,
+			final ImageProcessor source,
+			final ImageProcessor target,
+			final ImageProcessor mask,
 			double binaryThreshold)
 	{
 		if(binaryThreshold < 0 || binaryThreshold > 1)
@@ -4378,7 +4380,7 @@ public class Weka_Segmentation implements PlugIn
 		
 		final ImagePlus sourceReal = new ImagePlus("source_real", source.duplicate());
 		
-		final ImagePlus maskReal = (null != mask) ? new ImagePlus("mask_real", mask.duplicate()) : null;
+		final ImagePlus maskReal = (null != mask) ? new ImagePlus("mask_real", mask.duplicate().convertToFloat()) : null;
 		
 		final int width = target.getWidth();
 		final int height = target.getHeight();
@@ -4412,8 +4414,8 @@ public class Weka_Segmentation implements PlugIn
 			
 			// Count mismatches
 			float pixels[] = (float[]) missclass_points_image.getPixels();			
-			float mask_pixels[] = (null != mask) ? (float[]) maskReal.getProcessor().getPixels() : new float[pixels.length];
-			if(null == mask)
+			float mask_pixels[] = (null != maskReal) ? (float[]) maskReal.getProcessor().getPixels() : new float[pixels.length];
+			if(null == maskReal)
 				Arrays.fill(mask_pixels, 1f);
 			
 			diff = 0;
