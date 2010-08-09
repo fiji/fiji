@@ -42,6 +42,7 @@ public class Downloader extends Progressable {
 	}
 
 	public void start(Iterable<FileDownload> files) throws IOException {
+		Util.useSystemProxies();
 		cancelled = false;
 
 		count = total = itemCount = itemTotal = 0;

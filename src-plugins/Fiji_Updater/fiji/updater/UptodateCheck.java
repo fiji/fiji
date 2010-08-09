@@ -29,6 +29,7 @@ public class UptodateCheck implements PlugIn {
 	final static long reminderInterval = 86400 * 7; // one week
 
 	public void run(String arg) {
+		Util.useSystemProxies();
 		if ("quick".equals(arg))
 			checkOrShowDialog();
 		else if ("verbose".equals(arg)) {
