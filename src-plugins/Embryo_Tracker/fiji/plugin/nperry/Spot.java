@@ -3,18 +3,13 @@ package fiji.plugin.nperry;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Spot implements Comparable<Spot> {
+public class Spot {
 	
 	/*
 	 * FIELDS
 	 */
 	
-	/** Overall score of this spot, as defined by some quality of segmentation, calculated by average
-	 *  of all scores.*/
-	private double score;
-	/** Store the individual scores, indexed by the name of the scorer that generated the score. */
-	//private Map<String, Double> scores = new HashMap<String, Double>();
-	
+	/** Store the individual features, and their values. */
 	private Map<Feature, Double> features = new HashMap<Feature, Double>();
 	/** Physical coordinates of this spot. Can have a time component. */
 	private double[] coordinates; 
@@ -23,36 +18,13 @@ public class Spot implements Comparable<Spot> {
 	 * CONSTRUCTORS
 	 */
 	
-	public Spot(double[] coordinates, double score) {
-		this.coordinates = coordinates;
-		this.score = score;
-	}
-	
 	public Spot(double[] coordinates) {
-		this(coordinates, Double.NaN);
+		this.coordinates = coordinates;
 	}
-	
 	
 	/*
 	 * PUBLIC METHODS
 	 */
-
-	/**
-	 * Compare this Spot overall score to the spot overall score given in argument.
-	 */
-	@Override
-	public int compareTo(Spot o) {
-		return (int) (this.score - o.getAggregatedScore());
-	}
-	
-	
-	public double getAggregatedScore() {
-		return score;
-	}
-
-	public void setAggregatedScore(double overallScore) {
-		this.score = overallScore;
-	}
 	
 	/**
 	 * Return a reference to the coordinate array of this Spot.

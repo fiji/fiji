@@ -19,6 +19,10 @@ public interface FeatureAnalyzer {
 	 */
 	public void process(Spot spot);
 
+	/**
+	 * Return the enum Feature for this feature.
+	 * @return
+	 */
 	public Feature getFeature();
 	
 	/**
