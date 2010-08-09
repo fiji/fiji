@@ -1,6 +1,5 @@
 package fiji.plugin.nperry;
 
-import fiji.plugin.nperry.scoring.AverageScoreAggregator;
 import fiji.plugin.nperry.features.BlobBrightnessScorer;
 import fiji.plugin.nperry.features.BlobContrastScorer;
 import fiji.plugin.nperry.features.BlobVarianceScorer;
@@ -317,7 +316,6 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			System.out.println("Num regional maxima: " + centeredExtrema.size());
 			
 			/* 8 - Extract features for maxima */
-			final AverageScoreAggregator scoreAgg = new AverageScoreAggregator();
 			final LoGScorer<T> logScore = new LoGScorer<T>(modImg, downsampleFactors);
 			final BlobVarianceScorer<T> varScore = new BlobVarianceScorer<T>(img, diam, calibration);
 			final BlobBrightnessScorer<T> brightnessScore = new BlobBrightnessScorer<T>(img, diam, calibration);
@@ -326,17 +324,10 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			varScore.process(spots);
 			brightnessScore.process(spots);
 			contrastScore.process(spots);
-			
-			/* 9 - Threshold extrema by scoring features */
-			scoreAgg.add(logScore.getFeature());
-			scoreAgg.add(varScore.getFeature());
-			scoreAgg.add(brightnessScore.getFeature());
-		    scoreAgg.add(contrastScore.getFeature());
-			scoreAgg.scoreFeatures(spots);  // aggregate scores
-			
+
 			/* 9 - Calculate Thresholds */
-			final double threshold = otsuThreshold(spots);  // determines best cutoff point between "good" and "bad" extrema.
-			frameThresholds.add(threshold);
+			//final double threshold = otsuThreshold(spots);  // determines best cutoff point between "good" and "bad" extrema.
+			//frameThresholds.add(threshold);
 		}
 		
 		return new Object[] {extremaAllFrames, frameThresholds};
@@ -523,7 +514,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		for (int j = 0; j < extremaAllFrames.size(); j++) {
 			PointList pl = c.getInstant(j).getPointList();
 			ArrayList<Spot> framej = extremaAllFrames.get(j);
-			final double threshold = thresholdsAllFrames.get(j);  // threshold for frame
+			//final double threshold = thresholdsAllFrames.get(j);  // threshold for frame
 			Iterator<Spot> itr = framej.iterator();
 			
 			// Add the extrema coords to the pointlist
@@ -531,11 +522,11 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 				final Spot spot = itr.next();
 				final double coords[] = spot.getCoordinates();
 				
-				if (spot.getAggregatedScore() > threshold) {  // if above the threshold
+				//if (spot.getAggregatedScore() > threshold) {  // if above the threshold
 					// Add point
 					pl.add(coords[0] * calibration[0], coords[1] * calibration[1], coords[2] * calibration[2]);  // Scale for each dimension, since the coordinates are unscaled now and from the downsampled image.	
 					//System.out.println("Point [" + coords[0] * pixelWidth + ", " + coords[1] * pixelHeight + ", " + coords[2] * pixelDepth + "] has score: " + spot.getAggregatedScore());
-				}
+				//}
 			}
 		}
 		
