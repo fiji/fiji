@@ -3792,7 +3792,7 @@ public class Weka_Segmentation implements PlugIn
 			IJ.log("Warping ground truth...");
 			// Warp ground truth, relax original labels to proposal. Only simple
 			// points warping is allowed.
-			warpedLabels = simplePointWarp2dMT(warpedLabels, proposal, mask, 0.5);
+			warpedLabels = simplePointWarp2d(warpedLabels, proposal, mask, 0.5);
 
 			// Update training data with warped labels
 			if(!resample)
@@ -4034,7 +4034,7 @@ public class Weka_Segmentation implements PlugIn
 			IJ.log("Warping ground truth...");
 			// Warp ground truth, relax original labels to proposal. Only simple
 			// points warping is allowed.
-			warpedLabels = seg.simplePointWarp2dMT(warpedLabels, proposal, null, 0.5);
+			warpedLabels = seg.simplePointWarp2d(warpedLabels, proposal, null, 0.5);
 
 			// Update training data with warped labels
 			if(!resample)
