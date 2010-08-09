@@ -56,6 +56,13 @@ public class Spot {
 	public void addFeature(Feature feature, double score) {
 		this.features.put(feature, score);
 	}
+
+	public int compareTo(double[] o) {
+		for (int i = 0; i < coordinates.length; i++) {
+			if (Double.compare(coordinates[i], o[i]) != 0) return -1;
+		}
+		return 0;
+	}
 	
 	
 }
