@@ -34,6 +34,12 @@ import javax.swing.*;
 
 import java.awt.BorderLayout;
 
+import java.io.File;
+import java.io.PrintWriter;
+import java.io.OutputStreamWriter;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.MutableTreeNode;
@@ -50,6 +56,7 @@ import java.awt.event.ActionEvent;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.ArrayList;
 
 public class PathWindow extends JFrame implements PathAndFillListener, TreeSelectionListener, ActionListener {
 
@@ -118,6 +125,48 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 			pathsExplored.add(p);
 			p.unsetPrimaryForConnected(pathsExplored);
 			pathAndFillManager.resetListeners(null);
+		} else if( source == exportAsSWCButton ) {
+			ArrayList<SWCPoint> swcPoints = null;
+			try {
+				swcPoints = pathAndFillManager.getSWCFor(selectedPaths);
+			} catch( SWCExportException see ) {
+				IJ.error(""+see.getMessage());
+				return;
+			}
+
+			SaveDialog sd = new SaveDialog("Export SWC file ...",
+						       plugin.getImagePlus().getShortTitle(),
+						       ".swc");
+
+			String savePath;
+			if(sd.getFileName()==null) {
+				return;
+			}
+
+			File saveFile = new File( sd.getDirectory(),
+						  sd.getFileName() );
+			if ((saveFile!=null)&&saveFile.exists()) {
+				if (!IJ.showMessageWithCancel(
+					    "Export data...", "The file "+
+					    saveFile.getAbsolutePath()+" already exists.\n"+
+					    "Do you want to replace it?"))
+					return;
+			}
+
+			IJ.showStatus("Exporting SWC data to "+saveFile.getAbsolutePath());
+
+			try {
+				PrintWriter pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(saveFile),"UTF-8"));
+				pw.println("# Exported from \"Simple Neurite Tracer\" version "+SimpleNeuriteTracer.PLUGIN_VERSION);
+				for( SWCPoint p : swcPoints )
+					p.println(pw);
+				pw.close();
+
+			} catch( IOException ioe) {
+				IJ.error("Saving to "+saveFile.getAbsolutePath()+" failed");
+				return;
+			}
+
 		} else if( source == fillOutButton ) {
 			if( selectedPaths.size() < 1 ) {
 				IJ.error("You must have one or more paths in the list selected");
@@ -197,6 +246,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		fillOutButton.setEnabled(false);
 		makePrimaryButton.setEnabled(false);
 		deleteButton.setEnabled(false);
+		exportAsSWCButton.setEnabled(false);
 	}
 
 	public void updateButtonsOneSelected( Path p ) {
@@ -209,6 +259,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		fillOutButton.setEnabled(true);
 		makePrimaryButton.setEnabled(true);
 		deleteButton.setEnabled(true);
+		exportAsSWCButton.setEnabled(true);
 	}
 
 	public boolean allSelectedUsingFittedVersion() {
@@ -235,6 +286,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		fillOutButton.setEnabled(true);
 		makePrimaryButton.setEnabled(false);
 		deleteButton.setEnabled(true);
+		exportAsSWCButton.setEnabled(true);
 	}
 
 	public void valueChanged( TreeSelectionEvent e ) {
@@ -270,6 +322,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 	JButton fillOutButton;
 	JButton makePrimaryButton;
 	JButton deleteButton;
+	JButton exportAsSWCButton;
 
 	SimpleNeuriteTracer plugin;
 	PathAndFillManager pathAndFillManager;
@@ -284,7 +337,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		this.pathAndFillManager = pathAndFillManager;
 		this.plugin = plugin;
 
-		setBounds(x,y,600,300);
+		setBounds(x,y,700,300);
 		root = new DefaultMutableTreeNode("All Paths");
 		tree = new HelpfulJTree(root);
 		// tree.setRootVisible(false);
@@ -300,18 +353,21 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		fillOutButton = new JButton("Fill Out");
 		makePrimaryButton = new JButton("Make Primary");
 		deleteButton = new JButton("Delete");
+		exportAsSWCButton = new JButton("Export as SWC");
 
 		buttonPanel.add(renameButton);
 		buttonPanel.add(fitVolumeButton);
 		buttonPanel.add(fillOutButton);
 		buttonPanel.add(makePrimaryButton);
 		buttonPanel.add(deleteButton);
+		buttonPanel.add(exportAsSWCButton);
 
 		renameButton.addActionListener(this);
 		fitVolumeButton.addActionListener(this);
 		fillOutButton.addActionListener(this);
 		makePrimaryButton.addActionListener(this);
 		deleteButton.addActionListener(this);
+		exportAsSWCButton.addActionListener(this);
 
 		add(buttonPanel, BorderLayout.PAGE_END);
 
@@ -323,6 +379,7 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 		fillOutButton.setEnabled(enable);
 		makePrimaryButton.setEnabled(enable);
 		deleteButton.setEnabled(enable);
+		exportAsSWCButton.setEnabled(enable);
 	}
 
 	void getExpandedPaths( HelpfulJTree tree, TreeModel model, MutableTreeNode node, HashSet set ) {

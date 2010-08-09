@@ -28,12 +28,14 @@
 package tracing;
 
 import java.util.ArrayList;
+import java.io.PrintWriter;
 
 public class SWCPoint implements Comparable {
 	ArrayList<SWCPoint> nextPoints;
 	SWCPoint previousPoint;
 	int id, type, previous;
 	double x, y, z, radius;
+	Path fromPath = null;
 	public SWCPoint( int id, int type, double x, double y, double z, double radius, int previous ) {
 		nextPoints = new ArrayList<SWCPoint>();
 		this.id = id;
@@ -63,5 +65,8 @@ public class SWCPoint implements Comparable {
 	public int compareTo( Object o ) {
 		int oid = ((SWCPoint)o).id;
 		return (id < oid) ? -1 : ((id > oid) ? 1 : 0);
+	}
+	public void println(PrintWriter pw) {
+		pw.println(""+id+" "+type+" "+x+" "+y+" "+z+" "+radius+" "+previous);
 	}
 }
