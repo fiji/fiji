@@ -5,53 +5,54 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
+import fiji.plugin.nperry.Feature;
 import fiji.plugin.nperry.Spot;
 
-public class AverageScoreAggregator implements ScoreAggregator {
+public class AverageScoreAggregator implements FeatureScorer {
 
-	private ArrayList<Scorer> scorers;
+	private ArrayList<Feature> features;
 
 	/* Constructor */
 	public AverageScoreAggregator() {
-		scorers = new ArrayList<Scorer>();
+		features = new ArrayList<Feature>();
 	}
 	
 	@Override
-	public void aggregate(Collection<Spot> spots) {
-		for (Scorer scorer : scorers) {
-			scorer.score(spots);
+	public void scoreFeatures(Collection<Spot> spots) {
+		Collection<Spot> normalized = new ArrayList<Spot>(spots); // clone the collection
+		for (Feature feature : features) {
 			
-			// If needed, scale scores to the range 0-1
-			if (!scorer.isNormalized()) {
-				// Find min - max over the colletion of spots, for this scorer
-				double min = Double.POSITIVE_INFINITY;
-				double max = Double.NEGATIVE_INFINITY;
-				double currentScore;
-				for (Spot spot : spots) {
-					currentScore = spot.getScores().get(scorer.getName());
-					if (min > currentScore) {
-						min = currentScore;
-					}
-					if (max < currentScore) {
-						max = currentScore;
-					}
+			// Find min - max over the colletion of spots, for this feature
+			double min = Double.POSITIVE_INFINITY;
+			double max = Double.NEGATIVE_INFINITY;
+			double currentScore;
+			for (Spot spot : normalized) {
+				currentScore = spot.getFeatures().get(feature);
+				currentScore = feature.getScore(currentScore);
+				if (min > currentScore) {
+					min = currentScore;
 				}
-				// Update scores for this scorer
-				double scaledScore;
-				for (Spot spot : spots) {
-					currentScore = spot.getScores().get(scorer.getName());
-					scaledScore = (currentScore - min) / (max - min);
-					spot.getScores().put(scorer.getName(), scaledScore);
+				if (max < currentScore) {
+					max = currentScore;
 				}
 			}
-			
+			// Update scores for this scorer
+			double scaledScore;
+			for (Spot spot : normalized) {
+				currentScore = spot.getFeatures().get(feature);
+				currentScore = feature.getScore(currentScore);
+				scaledScore = (currentScore - min) / (max - min);
+				spot.getFeatures().put(feature, scaledScore);
+			}
 		}
+		
 		// Average score
-		for (Spot spot : spots) {
+		for (Spot spot : normalized) {
 			double mean = 0.0;
 			int counter = 0;
-			Iterator<Double> it = spot.getScores().values().iterator();
+			Iterator<Double> it = spot.getFeatures().values().iterator();  // getFeatures() instead of getScores()
 			while (it.hasNext()) {
+				
 				mean += it.next();
 				counter++;
 			}
@@ -59,75 +60,7 @@ public class AverageScoreAggregator implements ScoreAggregator {
 		}
 	}
 	
-	
-	
-	/*
-	 * COLLECTION METHODS
-	 */
-
-	@Override
-	public boolean add(Scorer o) {
-		return scorers.add(o);
+	public void add(Feature feature) {
+		features.add(feature);
 	}
-
-	@Override
-	public boolean addAll(Collection<? extends Scorer> c) {
-		return scorers.addAll(c);
-	}
-
-	@Override
-	public void clear() {
-		scorers.clear();
-	}
-
-	@Override
-	public boolean contains(Object o) {
-		return scorers.contains(o);
-	}
-
-	@Override
-	public boolean containsAll(Collection<?> c) {
-		return scorers.containsAll(c);
-	}
-
-	@Override
-	public boolean isEmpty() {
-		return scorers.isEmpty();
-	}
-
-	@Override
-	public Iterator<Scorer> iterator() {
-		return scorers.iterator();
-	}
-
-	@Override
-	public boolean remove(Object o) {
-		return scorers.remove(o);
-	}
-
-	@Override
-	public boolean removeAll(Collection<?> c) {
-		return scorers.removeAll(c);
-	}
-
-	@Override
-	public boolean retainAll(Collection<?> c) {
-		return scorers.retainAll(c);
-	}
-
-	@Override
-	public int size() {
-		return scorers.size();
-	}
-
-	@Override
-	public Object[] toArray() {
-		return scorers.toArray();
-	}
-
-	@Override
-	public <T> T[] toArray(T[] a) {
-		return scorers.toArray(a);
-	}
-
 }

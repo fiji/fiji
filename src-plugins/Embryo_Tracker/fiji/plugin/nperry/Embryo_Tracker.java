@@ -1,11 +1,10 @@
 package fiji.plugin.nperry;
 
 import fiji.plugin.nperry.scoring.AverageScoreAggregator;
-import fiji.plugin.nperry.scoring.BlobBrightnessScorer;
-import fiji.plugin.nperry.scoring.BlobContrastScorer;
-import fiji.plugin.nperry.scoring.BlobVarianceScorer;
-import fiji.plugin.nperry.scoring.LoGScorer;
-import fiji.plugin.nperry.scoring.OverlapScorer;
+import fiji.plugin.nperry.features.BlobBrightnessScorer;
+import fiji.plugin.nperry.features.BlobContrastScorer;
+import fiji.plugin.nperry.features.BlobVarianceScorer;
+import fiji.plugin.nperry.features.LoGScorer;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -317,19 +316,23 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			System.out.println("Find Maxima Run Time: " + findExtrema.getProcessingTime());
 			System.out.println("Num regional maxima: " + centeredExtrema.size());
 			
-			/* 8 - Apply score to extrema */
+			/* 8 - Extract features for maxima */
 			final AverageScoreAggregator scoreAgg = new AverageScoreAggregator();
 			final LoGScorer<T> logScore = new LoGScorer<T>(modImg, downsampleFactors);
 			final BlobVarianceScorer<T> varScore = new BlobVarianceScorer<T>(img, diam, calibration);
 			final BlobBrightnessScorer<T> brightnessScore = new BlobBrightnessScorer<T>(img, diam, calibration);
 			final BlobContrastScorer<T> contrastScore = new BlobContrastScorer<T>(img, diam, calibration);
-			final OverlapScorer<T> overlapScore = new OverlapScorer<T>(diam, calibration, spots);
-			scoreAgg.add(logScore);
-			//scoreAgg.add(varScore);
-			//scoreAgg.add(brightnessScore);
-		    scoreAgg.add(contrastScore);
-		    //scoreAgg.add(overlapScore);
-			scoreAgg.aggregate(spots);  // aggregate scores
+			logScore.process(spots);
+			varScore.process(spots);
+			brightnessScore.process(spots);
+			contrastScore.process(spots);
+			
+			/* 9 - Threshold extrema by scoring features */
+			scoreAgg.add(logScore.getFeature());
+			scoreAgg.add(varScore.getFeature());
+			scoreAgg.add(brightnessScore.getFeature());
+		    scoreAgg.add(contrastScore.getFeature());
+			scoreAgg.scoreFeatures(spots);  // aggregate scores
 			
 			/* 9 - Calculate Thresholds */
 			final double threshold = otsuThreshold(spots);  // determines best cutoff point between "good" and "bad" extrema.

@@ -13,7 +13,9 @@ public class Spot implements Comparable<Spot> {
 	 *  of all scores.*/
 	private double score;
 	/** Store the individual scores, indexed by the name of the scorer that generated the score. */
-	private Map<String, Double> scores = new HashMap<String, Double>();
+	//private Map<String, Double> scores = new HashMap<String, Double>();
+	
+	private Map<Feature, Double> features = new HashMap<Feature, Double>();
 	/** Physical coordinates of this spot. Can have a time component. */
 	private double[] coordinates; 
 	
@@ -62,8 +64,12 @@ public class Spot implements Comparable<Spot> {
 	/**
 	 * Return the scores Map.
 	 */
-	public Map<String, Double> getScores() {
-		return this.scores;
+	//public Map<String, Double> getScores() {
+	//	return this.scores;
+	//}
+	
+	public Map<Feature, Double> getFeatures() {
+		return this.features;
 	}
 	
 	/**
@@ -71,8 +77,12 @@ public class Spot implements Comparable<Spot> {
 	 * @param scoringMethodName the name of the scoring method used to compute the score
 	 * @param score the score itself
 	 */
-	public void addScore(String scoringMethodName, double score) {
-		this.scores.put(scoringMethodName, score);
+	//public void addScore(String scoringMethodName, double score) {
+	//	this.scores.put(scoringMethodName, score);
+	//}
+	
+	public void addFeature(Feature feature, double score) {
+		this.features.put(feature, score);
 	}
 	
 	
