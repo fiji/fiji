@@ -1308,7 +1308,7 @@ public class Executer {
 	/* **********************************************************
 	 * Thread which handles the updates of sliders
 	 * *********************************************************/
-	private abstract class SliderAdjuster extends Thread {
+	public abstract class SliderAdjuster extends Thread {
 		boolean go = false;
 		int newV;
 		ContentInstant content;
