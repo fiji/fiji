@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.Comparator;
 
 import java.util.jar.JarInputStream;
+import java.util.jar.Manifest;
 
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
@@ -239,6 +240,10 @@ void showManifestDiff(remoteURL, localURL) {
 	localIn = new JarInputStream(new URL(localURL).openStream());
 	remoteManifest = remoteIn.getManifest();
 	localManifest = localIn.getManifest();
+	if (remoteManifest == null)
+		remoteManifest = new Manifest();
+	if (localManifest == null)
+		localManifest = new Manifest();
 	showMapDiff("manifest", remoteManifest.getEntries(), localManifest.getEntries());
 	showMapDiff("main attribute", remoteManifest.getMainAttributes(), localManifest.getMainAttributes());
 	remoteIn.close();
