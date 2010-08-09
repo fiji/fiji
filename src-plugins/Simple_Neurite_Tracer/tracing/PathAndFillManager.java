@@ -1345,43 +1345,6 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		resetListeners( null );
 	}
 
-	private static class SWCPoint implements Comparable {
-		ArrayList<SWCPoint> nextPoints;
-		SWCPoint previousPoint;
-		int id, type, previous;
-		double x, y, z, radius;
-		public SWCPoint( int id, int type, double x, double y, double z, double radius, int previous ) {
-			nextPoints = new ArrayList<SWCPoint>();
-			this.id = id;
-			this.type = type;
-			this.x = x;
-			this.y = y;
-			this.z = z;
-			this.radius = radius;
-			this.previous = previous;
-		}
-		public PointInImage getPointInImage() {
-			return new PointInImage( x, y, z );
-		}
-		public void addNextPoint( SWCPoint p ) {
-			if( ! nextPoints.contains( p ) )
-				nextPoints.add( p );
-		}
-		public void setPreviousPoint( SWCPoint p ) {
-			previousPoint = p;
-		}
-		public String toString( ) {
-			return "SWCPoint ["+id+"] "+Path.swcTypeNames[type]+" "+
-				"("+x+","+y+","+z+") "+
-				"radius: "+radius+", "+
-				"[previous: "+ previous+"]";
-		}
-		public int compareTo( Object o ) {
-			int oid = ((SWCPoint)o).id;
-			return (id < oid) ? -1 : ((id > oid) ? 1 : 0);
-		}
-	}
-
 	/* The two useful documents about the SWC file formats are:
 
 	   doi:10.1016/S0165-0270(98)00091-0
