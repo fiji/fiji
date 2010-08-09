@@ -1,8 +1,5 @@
 package fiji.plugin.nperry.features;
 
-import java.util.ArrayList;
-
-import mpicbg.imglib.algorithm.math.MathLib;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.special.RegionOfInterestCursor;
 import mpicbg.imglib.image.Image;
@@ -11,14 +8,14 @@ import mpicbg.imglib.type.numeric.RealType;
 import fiji.plugin.nperry.Feature;
 import fiji.plugin.nperry.Spot;
 
-public class BlobVarianceScorer <T extends RealType<T>> extends IndependentFeatureAnalyzer {
+public class BlobBrightness <T extends RealType<T>> extends IndependentFeatureAnalyzer {
 
-	private static final Feature FEATURE = Feature.VARIANCE;
+	private static final Feature FEATURE = Feature.BRIGHTNESS;
 	private Image<T> img;
 	private double diam;
 	private double[] calibration;
 	
-	public BlobVarianceScorer(Image<T> originalImage, double diam, double[] calibration) {
+	public BlobBrightness(Image<T> originalImage, double diam, double[] calibration) {
 		this.img = originalImage;
 		this.diam = diam;
 		this.calibration = calibration;
@@ -35,11 +32,10 @@ public class BlobVarianceScorer <T extends RealType<T>> extends IndependentFeatu
 	}
 
 	@Override
-	public void process(Spot spot) {		
+	public void process(Spot spot) {
 		final LocalizableByDimCursor<T> cursor = img.createLocalizableByDimCursor(new OutOfBoundsStrategyValueFactory<T>());
 		final double[] origin = spot.getCoordinates();
-		final ArrayList<Double> values = new ArrayList<Double>();
-		
+
 		// Create the size array for the ROI cursor
 		int size[] = new int[img.getNumDimensions()];
 		for (int i = 0; i < size.length; i++) {
@@ -53,6 +49,8 @@ public class BlobVarianceScorer <T extends RealType<T>> extends IndependentFeatu
 		}
 		
 		// Use ROI cursor to search a sphere around the spot's coordinates
+		/* need to handle case where ROI is not in image anymore!! */
+		double sum = 0;
 		RegionOfInterestCursor<T> roi = cursor.createRegionOfInterestCursor(roiCoords, size);
 		//System.out.println();
 		//System.out.println("Maximum: " + origin[0] + ", " + origin[1] + ", " + origin[2] + "; ");
@@ -60,30 +58,18 @@ public class BlobVarianceScorer <T extends RealType<T>> extends IndependentFeatu
 		while (roi.hasNext()) {
 			roi.next();
 			if (inSphere(origin, cursor.getPosition(), diam / 2)) {
-				values.add(roi.getType().getRealDouble());
+				sum += roi.getType().getRealDouble();
 				//System.out.print(cursor.getPosition()[0] + ", " + cursor.getPosition()[1] + ", " + cursor.getPosition()[2] + "; ");
 			}
 		}
-		
-		// Compute variance for this blob.
-		double[] valuesArr = new double[values.size()];
-		for (int i = 0; i < values.size(); i++) {
-			valuesArr[i] = values.get(i).doubleValue();
-		}
-		double avg = MathLib.computeAverage(valuesArr);
-		double var = 0;
-		for (int j = 0; j < valuesArr.length; j++) {
-			var += Math.pow(valuesArr[j] - avg, 2);
-		}
-		var /= valuesArr.length;
 
 		// Close cursors
 		roi.close();
 		cursor.close();
 		
-		// Add variance as the spot's score. Apply inverse so lower variance receives a higher score.
-		spot.addFeature(FEATURE, var);
-		//spot.addScore(FEATURE_NAME, 1/var);
+		// Add total intensity.
+		spot.addFeature(FEATURE, sum);
+		//spot.addScore(FEATURE_NAME, sum);
 	}
 	
 	/**

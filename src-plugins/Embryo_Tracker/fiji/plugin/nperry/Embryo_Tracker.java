@@ -1,9 +1,9 @@
 package fiji.plugin.nperry;
 
-import fiji.plugin.nperry.features.BlobBrightnessScorer;
-import fiji.plugin.nperry.features.BlobContrastScorer;
-import fiji.plugin.nperry.features.BlobVarianceScorer;
-import fiji.plugin.nperry.features.LoGScorer;
+import fiji.plugin.nperry.features.BlobBrightness;
+import fiji.plugin.nperry.features.BlobContrast;
+import fiji.plugin.nperry.features.BlobVariance;
+import fiji.plugin.nperry.features.LoG;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -316,10 +316,10 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			System.out.println("Num regional maxima: " + centeredExtrema.size());
 			
 			/* 8 - Extract features for maxima */
-			final LoGScorer<T> logScore = new LoGScorer<T>(modImg, downsampleFactors);
-			final BlobVarianceScorer<T> varScore = new BlobVarianceScorer<T>(img, diam, calibration);
-			final BlobBrightnessScorer<T> brightnessScore = new BlobBrightnessScorer<T>(img, diam, calibration);
-			final BlobContrastScorer<T> contrastScore = new BlobContrastScorer<T>(img, diam, calibration);
+			final LoG<T> logScore = new LoG<T>(modImg, downsampleFactors);
+			final BlobVariance<T> varScore = new BlobVariance<T>(img, diam, calibration);
+			final BlobBrightness<T> brightnessScore = new BlobBrightness<T>(img, diam, calibration);
+			final BlobContrast<T> contrastScore = new BlobContrast<T>(img, diam, calibration);
 			logScore.process(spots);
 			varScore.process(spots);
 			brightnessScore.process(spots);

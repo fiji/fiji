@@ -12,7 +12,7 @@ import fiji.plugin.nperry.Feature;
 import fiji.plugin.nperry.Spot;
 
 
-public class BlobContrastScorer <T extends RealType<T>> extends IndependentFeatureAnalyzer {
+public class BlobContrast <T extends RealType<T>> extends IndependentFeatureAnalyzer {
 
 	private static final Feature FEATURE = Feature.CONTRAST;
 	private static final double RAD_PERCENTAGE = .6;  // Percentage of radius we should average around the border to decide the contrast different. For example, if this is set to .1, then .1 * rad pixels within the radius of the blob is treated as the blob's internal edge, while .1 * rad pixels are considered the outside.
@@ -20,7 +20,7 @@ public class BlobContrastScorer <T extends RealType<T>> extends IndependentFeatu
 	private double diam;
 	private double[] calibration;
 	
-	public BlobContrastScorer(Image<T> originalImage, double diam, double[] calibration) {
+	public BlobContrast(Image<T> originalImage, double diam, double[] calibration) {
 		this.img = originalImage;
 		this.diam = diam;
 		this.calibration = calibration;

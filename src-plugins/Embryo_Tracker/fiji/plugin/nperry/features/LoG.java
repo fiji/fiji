@@ -6,14 +6,14 @@ import mpicbg.imglib.type.numeric.RealType;
 import fiji.plugin.nperry.Feature;
 import fiji.plugin.nperry.Spot;
 
-public class LoGScorer <T extends RealType<T>> extends IndependentFeatureAnalyzer {
+public class LoG <T extends RealType<T>> extends IndependentFeatureAnalyzer {
 
 	private static final Feature FEATURE = Feature.LOG_VALUE;
 	private Image<T> img;
 	private LocalizableByDimCursor<T> cursor;
 	private double downsampleFactors[];
 
-	public LoGScorer(Image<T> filteredImage) {
+	public LoG(Image<T> filteredImage) {
 		this.img = filteredImage;
 		this.cursor = img.createLocalizableByDimCursor();
 		this.downsampleFactors = new double[filteredImage.getNumDimensions()];
@@ -23,7 +23,7 @@ public class LoGScorer <T extends RealType<T>> extends IndependentFeatureAnalyze
 		}
 	}
 	
-	public LoGScorer(Image<T> filteredImage, double downsampleFactors[]) {
+	public LoG(Image<T> filteredImage, double downsampleFactors[]) {
 		this.img = filteredImage;
 		this.cursor = img.createLocalizableByDimCursor();
 		this.downsampleFactors = downsampleFactors;
