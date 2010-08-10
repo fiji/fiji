@@ -391,7 +391,8 @@ public class TextEditor extends JFrame implements ActionListener,
 
 		addWindowFocusListener(new WindowAdapter() {
 			public void windowGainedFocus(WindowEvent e) {
-				getEditorPane().checkForOutsideChanges();
+				if (editorPane != null)
+					editorPane.checkForOutsideChanges();
 			}
 		});
 
@@ -403,7 +404,8 @@ public class TextEditor extends JFrame implements ActionListener,
 
 		setLocationRelativeTo(null); // center on screen
 
-		editorPane.requestFocus();
+		if (editorPane != null)
+			editorPane.requestFocus();
 	}
 
 	public TextEditor(String title, String text) {
@@ -462,6 +464,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		}
 
 		RSyntaxTextArea textArea = getTextArea();
+		if (textArea == null)
+			return;
 		textArea.getInputMap().put(KeyStroke.getKeyStroke(key,
 					modifiers), component);
 		if (textArea.getActionMap().get(component) != null)
@@ -918,7 +922,11 @@ public class TextEditor extends JFrame implements ActionListener,
 				addDefaultAccelerators();
 			}
 			editorPane.setFile("".equals(path) ? null : path);
-			updateTabSize(true);
+			try {
+				updateTabSize(true);
+			} catch (NullPointerException e) {
+				/* ignore */
+			}
 			if (wasNew) {
 				int index = tabbed.getSelectedIndex()
 					+ tabsMenuTabsStart;
