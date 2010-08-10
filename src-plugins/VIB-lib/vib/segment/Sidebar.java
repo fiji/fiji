@@ -141,7 +141,7 @@ public class Sidebar extends Panel implements CustomCanvas.CanvasListener, ItemL
 			return;
 		}
 		selected -= labelImages.size();
-	    String materials = (String)defaultMaterials.get(selected);
+		String materials = (String)defaultMaterials.get(selected);
 		if (!currentLabelsAreNew)
 			setLabelImage(null);
 		ImagePlus labels = cc.getLabels();
@@ -202,6 +202,18 @@ public class Sidebar extends Panel implements CustomCanvas.CanvasListener, ItemL
 			labelImagesChoice.add(image.getTitle());
 			labelImages.add(image);
 		}
+		labelImagesChoice.add("<new>");
+		defaultMaterials.add("Parameters {\n"
+				                + "\tMaterials {\n"
+				                + "\t\tExterior {\n"
+				                + "\t\t\tColor 0.0 0.0 0.0\n"
+				                + "\t\t}\n"
+				                + "\t\tInterior {\n"
+				                + "\t\t\tColor 1.0 0.0 0.0\n"
+				                + "\t\t}\n"
+				                + "\t}\n"
+				                + "}\n");
+
 //		URL materials = getClass().getResource("materials/");
 //		File folder = materials != null ?
 //			new File(materials.getPath()).getParentFile() : null;
@@ -223,19 +235,7 @@ public class Sidebar extends Panel implements CustomCanvas.CanvasListener, ItemL
 		String contents = readURL(materials);
 		defaultMaterials.add(contents);
 		labelImagesChoice.add("CompactStandard");
-		
-		labelImagesChoice.add("<new>");
-		defaultMaterials.add("Parameters {\n"
-				                + "\tMaterials {\n"
-				                + "\t\tExterior {\n"
-				                + "\t\t\tColor 0.0 0.0 0.0\n"
-				                + "\t\t}\n"
-				                + "\t\tInterior {\n"
-				                + "\t\t\tColor 1.0 0.0 0.0\n"
-				                + "\t\t}\n"
-				                + "\t}\n"
-				                + "}\n");
-		
+
 		labelImagesChoice.addItemListener(this);
 		return labelImagesChoice;
 	}
