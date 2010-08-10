@@ -503,6 +503,10 @@ public class SimpleNeuriteTracer extends ThreePanes
 		int iy = (int)Math.round(y);
 		int iz = (int)Math.round(z);
 
+		double x_scaled = ix * x_spacing;
+		double y_scaled = iy * y_spacing;
+		double z_scaled = iz * z_spacing;
+
 		if( shift_key_down )
 			setSlicesAllPanes( ix, iy, iz );
 
@@ -511,7 +515,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 		    ((zy_tracer_canvas != null) || single_pane) ) {
 
 
-			String statusMessage = "Crosshairs nearest to: ("+ix+","+iy+","+iz+")";
+			String statusMessage = "world: ("+x_scaled+","+y_scaled+","+z_scaled+") image: ("+ix+","+iy+","+iz+")";
 			setCrosshair( x, y, z );
 			if( labelData != null ) {
 
