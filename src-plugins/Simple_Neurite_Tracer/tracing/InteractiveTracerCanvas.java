@@ -179,6 +179,8 @@ public class InteractiveTracerCanvas extends TracerCanvas implements KeyListener
 		boolean shift_key_down = (e.getModifiersEx() & InputEvent.SHIFT_DOWN_MASK) != 0;
 		boolean joiner_modifier_down = mac ? ((e.getModifiersEx() & InputEvent.ALT_DOWN_MASK) != 0) : ((e.getModifiersEx() & InputEvent.CTRL_DOWN_MASK) != 0);
 
+		super.mouseMoved(e);
+
 		tracerPlugin.mouseMovedTo( last_x_in_pane_precise, last_y_in_pane_precise, plane, shift_key_down, joiner_modifier_down );
 	}
 
