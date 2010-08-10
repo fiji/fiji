@@ -274,7 +274,7 @@ os.chdir(source_directory)
 
 if options.add_changelog_template:
     suggest_new_version = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
-    git_rev = Popen(["git","rev-parse","HEAD"],stdout=PIPE).communicate()[0].strip()
+    git_rev = Popen(["git","rev-parse","--verify","HEAD"],stdout=PIPE).communicate()[0].strip()
     fp = open("debian/changelog")
     old_changelog = fp.read()
     fp.close()
