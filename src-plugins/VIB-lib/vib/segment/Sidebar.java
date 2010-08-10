@@ -23,14 +23,13 @@ import vib.InterpolatedImage;
 
 /**
  * Sidebar: 
- * This class build all the interface of the SegmentationEditor. It handle the
+ * This class builds all the interface of the SegmentationEditor. It handles the
  * listeners too.
  * 
  * @author Francois KUSZTOS
  * @version 5
  */
-public class Sidebar extends Panel implements CustomCanvas.CanvasListener, 
-												ItemListener {
+public class Sidebar extends Panel implements CustomCanvas.CanvasListener, ItemListener {
 
 	private CustomCanvas cc;
 	
@@ -66,10 +65,10 @@ public class Sidebar extends Panel implements CustomCanvas.CanvasListener,
 		constr.gridwidth = GridBagConstraints.REMAINDER;
 		constr.insets = new Insets(0, 5, 0, 5);
 		
-		addLabel("Labels:");
+		addLabel("Label sets:");
 		add(addLabelImageChoice(), constr);
 		
-		addLabel("Materials:");
+		addLabel("Labels:");
 		materials = new MaterialList(cc);
 		add(materials, constr);
 
