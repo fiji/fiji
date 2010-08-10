@@ -3,7 +3,7 @@ package fiji.plugin.nperry;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Spot {
+public class Spot implements Comparable<Spot> {
 	
 	/*
 	 * FIELDS
@@ -14,12 +14,19 @@ public class Spot {
 	/** Physical coordinates of this spot. Can have a time component. */
 	private double[] coordinates; 
 	
+	private String name;
+	
 	/*
 	 * CONSTRUCTORS
 	 */
 	
-	public Spot(double[] coordinates) {
+	public Spot(double[] coordinates, String name) {
 		this.coordinates = coordinates;
+		this.name = name;
+	}
+	
+	public Spot(double[] coordinates) {
+		this(coordinates, null);
 	}
 	
 	/*
@@ -31,6 +38,14 @@ public class Spot {
 	 */
 	public double[] getCoordinates() {
 		return this.coordinates;
+	}
+	
+	public String getName() {
+		return this.name;
+	}
+	
+	public void setName(String name) {
+		this.name = name;
 	}
 	
 	/**
@@ -62,6 +77,11 @@ public class Spot {
 			if (Double.compare(coordinates[i], o[i]) != 0) return -1;
 		}
 		return 0;
+	}
+
+	@Override
+	public int compareTo(Spot o) {
+		return this.features.get(Feature.LOG_VALUE).compareTo(o.getFeatures().get(Feature.LOG_VALUE));
 	}
 	
 	

@@ -26,11 +26,15 @@ import java.awt.event.AdjustmentListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.ListIterator;
+import java.util.Stack;
 
 import javax.swing.JSlider;
 
+import vib.BenesNamedPoint;
 import vib.PointList;
 
 import mpicbg.imglib.algorithm.fft.FourierConvolution;
@@ -335,10 +339,10 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	}
 	
 	// Code source: http://www.labbookpages.co.uk/software/imgProc/otsuThreshold.html
-	public double otsuThreshold(ArrayList<Spot> srcData)
+	public double otsuThreshold(ArrayList<Spot> srcData, Feature feature)
 	{
 		// Prepare histogram
-		int histData[] = histogram(srcData);
+		int histData[] = histogram(srcData, feature);
 		int count = srcData.size();
 
 		// Thresholding
@@ -375,11 +379,11 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			}
 		}
 		
-		return (threshold + 1) * getRange(srcData, Feature.LOG_VALUE)[0] / (double) histData.length;  // Convert the integer bin threshold to a value
+		return (threshold + 1) * getRange(srcData, feature)[0] / (double) histData.length;  // Convert the integer bin threshold to a value
 	}
 	
 	/** Histogram currently generated using nBins = n^(1/2) approach, also used by Excel. */
-	public int[] histogram (ArrayList<Spot> data) {
+	public int[] histogram (ArrayList<Spot> data, Feature feature) {
 		// Calculate number of bins
 		int size = data.size();
 		int nBins = (int) Math.ceil(Math.sqrt(size));  // nBins = n^(1/2)
@@ -388,12 +392,12 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		int[] hist = new int[nBins];
 		
 		// Get data range
-		double[] range = getRange(data, Feature.LOG_VALUE);
+		double[] range = getRange(data, feature);
 		
 		// Populate the histogram with data
 		double binWidth = range[0] / nBins;
 		for (int i = 0; i < data.size(); i++) {
-			int index = Math.min((int) Math.floor((data.get(i).getFeatures().get(Feature.LOG_VALUE) - range[1]) / binWidth), nBins - 1); // the max value ends up being 1 higher than nBins, so put it in the last bin.
+			int index = Math.min((int) Math.floor((data.get(i).getFeatures().get(feature) - range[1]) / binWidth), nBins - 1); // the max value ends up being 1 higher than nBins, so put it in the last bin.
 			hist[index]++;
 		}
 		
@@ -499,7 +503,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	}
 
 	public void renderIn3DViewer(ArrayList< ArrayList<Spot> > extremaAllFrames, ImagePlus imp, double[] calibration, double diam) {
-		ArrayList<Double> thresholdsAllFrames = new ArrayList<Double>();
+		ArrayList< HashMap<Feature, Double> > thresholdsAllFrames = new ArrayList< HashMap<Feature, Double> >();
 		
 		/* 1 - Render ImagePlus using 3D Viewer */
 		
@@ -514,45 +518,80 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		Content c = univ.addVoltex(imp);
 
 		// For each frame
+		
+		//test
+		ArrayList< ArrayList< ArrayList<Spot> > > displayed = new ArrayList< ArrayList< ArrayList<Spot> > >();
 		for (int j = 0; j < extremaAllFrames.size(); j++) {
+			
+			//test
+			displayed.add(new ArrayList< ArrayList<Spot> >());
+			ArrayList<Spot> shown = new ArrayList<Spot>();
+			ArrayList<Spot> notShown = new ArrayList<Spot>();
+			
 			PointList pl = c.getInstant(j).getPointList();
 			ArrayList<Spot> framej = extremaAllFrames.get(j);
-			final double threshold = otsuThreshold(framej);  // threshold for frame
-			thresholdsAllFrames.add(threshold);
-			Iterator<Spot> itr = framej.iterator();
+			
+			// Calculate thresholds for each feature of interest.
+			HashMap<Feature, Double> thresholds = new HashMap<Feature, Double>();
+			final double logThreshold = otsuThreshold(framej, Feature.LOG_VALUE);  // threshold for frame
+			final double brightnessThreshold = otsuThreshold(framej, Feature.BRIGHTNESS);
+			final double contrastThreshold = otsuThreshold(framej, Feature.CONTRAST);
+			final double varThreshold = otsuThreshold(framej, Feature.VARIANCE);
+			thresholds.put(Feature.LOG_VALUE, logThreshold);
+			thresholds.put(Feature.BRIGHTNESS, brightnessThreshold);
+			thresholds.put(Feature.CONTRAST, contrastThreshold);
+			thresholds.put(Feature.VARIANCE, varThreshold);
+			thresholdsAllFrames.add(thresholds);
 			
 			// Add the extrema coords to the pointlist
+			Iterator<Spot> itr = framej.iterator();
+			int counter = 0;
 			while (itr.hasNext()) {
 				final Spot spot = itr.next();
 				final double coords[] = spot.getCoordinates();
 				
-				if (spot.getFeatures().get(Feature.LOG_VALUE) > threshold) {  // if above the threshold
+				if (spot.getFeatures().get(Feature.LOG_VALUE) > logThreshold) {  // if above the threshold
 					// Add point
-					pl.add(coords[0] * calibration[0], coords[1] * calibration[1], coords[2] * calibration[2]);  // Scale for each dimension, since the coordinates are unscaled now and from the downsampled image.	
+					
+					//test
+					spot.setName(Integer.toString(counter));
+					
+					pl.add(spot.getName(), coords[0] * calibration[0], coords[1] * calibration[1], coords[2] * calibration[2]);  // Scale for each dimension, since the coordinates are unscaled now and from the downsampled image.	
+					
+					//test
+					shown.add(spot);
+					
 					//System.out.println("Point [" + coords[0] * pixelWidth + ", " + coords[1] * pixelHeight + ", " + coords[2] * pixelDepth + "] has score: " + spot.getAggregatedScore());
 				}
+				
+				//test
+				else{
+					spot.setName(Integer.toString(counter));
+					notShown.add(spot);
+				}
+				
+				counter++;
+				
+				//test
+				//pl.add(4,4,4);
 			}
+			
+			//test
+			displayed.get(0).add(shown);
+			displayed.get(0).add(notShown);
+			
 		}
 		
 		// Make the point list visible
 		c.showPointList(true);
+		univ.getPointListDialog().setVisible(false);
 		
 		// Change the size of the points
 		c.setLandmarkPointSize((float) diam / 2);  // radius is diam / 2
 		
 		/* 2 - Allow the user to interact with the rendering */
-		//univ.setInteractiveBehavior(new ThresholdAdjuster(univ, c));
-		//univ.getExecuter().changeThreshold(univ.getSelected());
-		//univ.getExecuter().changeThreshold(c);
 		
-		/*final ContentInstant ci = c.getCurrent();
-		final SliderAdjuster thresh_adjuster = new SliderAdjuster() {
-			public synchronized final void setValue(ContentInstant ci, int v) {
-				ci.setThreshold(v);
-				univ.fireContentChanged(c);
-			}
-		};*/
-		
+		thresholdAdjusters(c, univ, thresholdsAllFrames.get(0).get(Feature.LOG_VALUE), getRange(extremaAllFrames.get(0), Feature.LOG_VALUE), displayed.get(0), calibration);
 	}
 	
 	private void downsampledCoordsToOrigCoords(ArrayList<Spot> spots, double downsampleFactors[]) {
@@ -568,21 +607,64 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		}
 	}
 	
-	public void thresholdAdjusters(final Content c, final Image3DUniverse univ) {
+	public void thresholdAdjusters(final Content c, final Image3DUniverse univ, double threshold, double[] range, ArrayList< ArrayList<Spot> > displayed, double[] calibration) {
 		// Grab the current CI in the universe
 		final ContentInstant ci = c.getCurrent();
 		
+		Object[] shownArr = displayed.get(0).toArray();
+		Object[] notShownArr = displayed.get(1).toArray();
+		Arrays.sort(shownArr);
+		Arrays.sort(notShownArr);
+		Stack<Spot> shown = new Stack<Spot>();
+		Stack<Spot> notShown = new Stack<Spot>();
+		for (int i = shownArr.length - 1; i >= 0; i--) {
+			shown.push((Spot) shownArr[i]);
+		}
+		for (int j = 0; j < notShownArr.length; j++) {
+			notShown.push((Spot) notShownArr[j]);
+		}
+		
+		
 		// Set up the threshold adjuster
-		final SliderAdjuster thresh_adjuster = new SliderAdjuster() {
-			public synchronized final void setValue(ContentInstant ci, int v) {
-				// here is probably where the updating of PL needs to happen...
-				ci.setThreshold(v);
+		final SliderAdjuster thresh_adjuster = new SliderAdjuster (displayed, calibration, threshold, shown, notShown) {
+			public synchronized final void setValue(ContentInstant ci, double threshold, Stack<Spot> shown, Stack<Spot> notShown, double[] calibration) {
+
+				/*System.out.println("Sorted spots:");
+				for (int i = 0; i < shownArr.length; i++) {
+					System.out.println("LoG: "+shownArr[i].getFeatures().get(Feature.LOG_VALUE));
+				}*/
+				//if (1==1) return;
+				
+ 				PointList pl = ci.getPointList();
+				if (larger) {
+					while(!shown.empty()) {
+						if (shown.peek().getFeatures().get(Feature.LOG_VALUE) < threshold) {
+							Spot spot = shown.pop();
+							pl.remove(pl.get(spot.getName()));
+							notShown.push(spot);
+						} else {
+							break;
+						}
+					}
+				} else {
+
+					while(!notShown.empty()) {
+						if (notShown.peek().getFeatures().get(Feature.LOG_VALUE) > threshold) {
+							Spot spot = notShown.pop();
+							double[] coords = spot.getCoordinates();
+							pl.add(spot.getName(), coords[0] * calibration[0], coords[1] * calibration[1], coords[2] * calibration[2]);
+							shown.push(spot);
+						} else {
+							break;
+						}
+					}
+				}
 				univ.fireContentChanged(c);
 			}
 		};
 		
 		// Stuff for surface plots
-		final int oldTr = (int)(ci.getThreshold());
+		final double oldTr = threshold;
 		/*if(c.getType() == Content.SURFACE) {
 			final GenericDialog gd = new GenericDialog(
 				"Adjust threshold ...", univ.getWindow());
@@ -604,22 +686,23 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			return;
 		}*/
 		
+		
 		// in case we've not a mesh, change it interactively
-		final GenericDialog gd = new GenericDialog("Adjust threshold...");
-		gd.addSlider("Threshold", 0, 255, oldTr);
+		final GenericDialog gd = new GenericDialog("Adjust LoG threshold...");
+		gd.addSlider("Threshold", range[1], range[2], oldTr);
 		((Scrollbar)gd.getSliders().get(0)).
 			addAdjustmentListener(new AdjustmentListener() {
 			public void adjustmentValueChanged(final AdjustmentEvent e) {
 				// start adjuster and request an action
 				if(!thresh_adjuster.go)
 					thresh_adjuster.start();
-				thresh_adjuster.exec((int)e.getValue(), ci, univ);
+				thresh_adjuster.exec(e.getValue(), ci, univ);
 			}
 		});
-		gd.addCheckbox("Apply to all timepoints", true);
-		final Checkbox aBox = (Checkbox)gd.getCheckboxes().get(0);
+		//gd.addCheckbox("Apply to all timepoints", true);
+		//final Checkbox aBox = (Checkbox)gd.getCheckboxes().get(0);
 		gd.setModal(false);
-		gd.addWindowListener(new WindowAdapter() {
+		/*gd.addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosed(WindowEvent e) {
 				try {
@@ -644,7 +727,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 						thresh_adjuster.quit();
 				}
 			}
-		});
+		});*/
 		gd.showDialog();
 	}
 	
@@ -656,12 +739,23 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		int newV;
 		ContentInstant content;
 		Image3DUniverse univ;
+		ArrayList< ArrayList<Spot> > displayed;
+		double[] calibration;
+		double tr;
+		boolean larger;
+		Stack<Spot> shown;
+		Stack<Spot> notShown;
 		final Object lock = new Object();
 
-		SliderAdjuster() {
+		SliderAdjuster(ArrayList< ArrayList<Spot> > displayed, double[] calibration, double origTr, Stack<Spot> shown, Stack<Spot> notShown) {
 			super("VIB-SliderAdjuster");
 			setPriority(Thread.NORM_PRIORITY);
 			setDaemon(true);
+			this.displayed = displayed;
+			this.calibration = calibration;
+			this.tr = origTr;
+			this.shown = shown;
+			this.notShown = notShown;
 		}
 
 		/*
@@ -670,6 +764,12 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		void exec(final int newV, final ContentInstant content, final Image3DUniverse univ) {
 			synchronized (lock) {
 				this.newV = newV;
+				if (newV >= tr) {
+					this.larger = true;
+				} else {
+					this.larger = false;
+				}
+				this.tr = newV;
 				this.content = content;
 				this.univ = univ;
 			}
@@ -685,7 +785,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		 * This class has to be implemented by subclasses, to define
 		 * the specific updating function.
 		 */
-		protected abstract void setValue(final ContentInstant c, final int v);
+		protected abstract void setValue(final ContentInstant c, final double v, Stack<Spot> shown, Stack<Spot> notShown, double[] calibration);
 
 		@Override
 		public void run() {
@@ -698,7 +798,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 					if (!go) return;
 					// 1 - cache vars, to free the lock very quickly
 					ContentInstant c;
-					int transp = 0;
+					double transp = 0;
 					Image3DUniverse u;
 					synchronized (lock) {
 						c = this.content;
@@ -707,7 +807,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 					}
 					// 2 - exec cached vars
 					if (null != c) {
-						setValue(c, transp);
+						setValue(c, transp, shown, notShown, calibration);
 					}
 					// 3 - done: reset only if no new request was put
 					synchronized (lock) {
