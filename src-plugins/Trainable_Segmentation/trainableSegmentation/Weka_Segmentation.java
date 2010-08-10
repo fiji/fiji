@@ -3792,7 +3792,7 @@ public class Weka_Segmentation implements PlugIn
 			IJ.log("Warping ground truth...");
 			// Warp ground truth, relax original labels to proposal. Only simple
 			// points warping is allowed.
-			warpedLabels = simplePointWarp2d(warpedLabels, proposal, mask, 0.5);
+			warpedLabels = simplePointWarp2dMT(warpedLabels, proposal, mask, 0.5);
 
 			// Update training data with warped labels
 			if(!resample)
@@ -4034,7 +4034,7 @@ public class Weka_Segmentation implements PlugIn
 			IJ.log("Warping ground truth...");
 			// Warp ground truth, relax original labels to proposal. Only simple
 			// points warping is allowed.
-			warpedLabels = seg.simplePointWarp2d(warpedLabels, proposal, null, 0.5);
+			warpedLabels = seg.simplePointWarp2dMT(warpedLabels, proposal, null, 0.5);
 
 			// Update training data with warped labels
 			if(!resample)
@@ -4374,23 +4374,41 @@ public class Weka_Segmentation implements PlugIn
 			binaryThreshold = 0.5;
 		
 		// Grayscale target
-		final ImagePlus targetReal = new ImagePlus("target_real", target.duplicate());
+		final ImagePlus targetReal;// = new ImagePlus("target_real", target.duplicate());
 		// Binarized target
-		final ImagePlus targetBin = new ImagePlus("target_aux", target.duplicate());
+		final ImagePlus targetBin; // = new ImagePlus("target_aux", target.duplicate());
 		
-		final ImagePlus sourceReal = new ImagePlus("source_real", source.duplicate());
+		final ImagePlus sourceReal; // = new ImagePlus("source_real", source.duplicate());
 		
-		final ImagePlus maskReal = (null != mask) ? new ImagePlus("mask_real", mask.duplicate().convertToFloat()) : null;
+		final ImagePlus maskReal; // = (null != mask) ? new ImagePlus("mask_real", mask.duplicate().convertToFloat()) : null;
 		
 		final int width = target.getWidth();
 		final int height = target.getHeight();
 		
 		// Resize canvas to avoid checking the borders
-		IJ.run(targetReal, "Canvas Size...", "width="+ (width + 2) + " height=" + (height + 2) + " position=Center zero");
-		IJ.run(targetBin, "Canvas Size...", "width="+ (width + 2) + " height=" + (height + 2) + " position=Center zero");
-		IJ.run(sourceReal, "Canvas Size...", "width="+ (width + 2) + " height=" + (height + 2) + " position=Center zero");				
-		if(null != maskReal)
-			IJ.run(maskReal, "Canvas Size...", "width="+ (width + 2) + " height=" + (height + 2) + " position=Center zero");	
+		//IJ.run(targetReal, "Canvas Size...", "width="+ (width + 2) + " height=" + (height + 2) + " position=Center zero");
+		ImageProcessor ip = target.createProcessor(width+2, height+2);
+		ip.insert(target, 1, 1);
+		targetReal = new ImagePlus("target_real", ip.duplicate());
+		
+		// IJ.run(targetBin, "Canvas Size...", "width="+ (width + 2) + " height=" + (height + 2) + " position=Center zero");		
+		targetBin = new ImagePlus("target_aux", ip.duplicate());
+		
+		// IJ.run(sourceReal, "Canvas Size...", "width="+ (width + 2) + " height=" + (height + 2) + " position=Center zero");
+		ip = target.createProcessor(width+2, height+2);
+		ip.insert(source, 1, 1);
+		sourceReal = new ImagePlus("source_real", ip.duplicate());
+		
+		if(null != mask)
+		{
+			//IJ.run(maskReal, "Canvas Size...", "width="+ (width + 2) + " height=" + (height + 2) + " position=Center zero");
+			ip = target.createProcessor(width+2, height+2);
+			ip.insert(mask, 1, 1);
+			maskReal = new ImagePlus("mask_real", ip.duplicate());			
+		}
+		else{
+			maskReal = null;
+		}
 		
 		// make sure source and target are binary images
 		final float[] sourceRealPix = (float[])sourceReal.getProcessor().getPixels();
@@ -4483,7 +4501,11 @@ public class Weka_Segmentation implements PlugIn
 			
 		}
 		
-		IJ.run(sourceReal, "Canvas Size...", "width="+ width + " height=" + height + " position=Center zero");
+		//IJ.run(sourceReal, "Canvas Size...", "width="+ width + " height=" + height + " position=Center zero");
+		ip = source.createProcessor(width, height);
+		ip.insert(sourceReal.getProcessor(), -1, -1);
+		sourceReal.setProcessor(ip.duplicate());
+		
 		
 		WarpingResults result = new WarpingResults();
 		result.warpedSource = sourceReal;
