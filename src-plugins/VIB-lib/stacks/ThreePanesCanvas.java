@@ -93,6 +93,8 @@ public class ThreePanesCanvas extends ImageCanvas {
 
 	public void mouseMoved(MouseEvent e) {
 
+		super.mouseMoved(e);
+
 		double off_screen_x = offScreenX(e.getX());
 		double off_screen_y = offScreenY(e.getY());
 
