@@ -342,7 +342,7 @@ public class FileFunctions {
 				+ "import ij.process.ImageProcessor;\n"
 				+ "\n"
 				+ "public class " + name + " implements PlugInFilter {\n"
-				+ "\tImagePlus image;\n"
+				+ "\tprotected ImagePlus image;\n"
 				+ "\n"
 				+ "\tpublic int setup(String arg, ImagePlus image) {\n"
 				+ "\t\tthis.image = image;\n"
