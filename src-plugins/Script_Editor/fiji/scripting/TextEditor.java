@@ -95,7 +95,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		  listBookmarks, openSourceForClass, newPlugin, installMacro,
 		  openSourceForMenuItem, showDiff, commit, ijToFront,
 		  openMacroFunctions, decreaseFontSize, increaseFontSize,
-		  chooseTabSize;
+		  chooseTabSize, gitGrep;
 	JMenu gitMenu, tabsMenu, tabSizeMenu;
 	int tabsMenuTabsStart;
 	Set<JMenuItem> tabsMenuItems;
@@ -326,6 +326,9 @@ public class TextEditor extends JFrame implements ActionListener,
 		commit = addToMenu(gitMenu,
 			"Commit...", 0, 0);
 		commit.setMnemonic(KeyEvent.VK_C);
+		gitGrep = addToMenu(gitMenu,
+			"Grep...", 0, 0);
+		gitGrep.setMnemonic(KeyEvent.VK_G);
 		mbar.add(gitMenu);
 
 		tabsMenu = new JMenu("Tabs");
@@ -747,6 +750,21 @@ public class TextEditor extends JFrame implements ActionListener,
 		else if (source == commit) {
 			EditorPane pane = getEditorPane();
 			new FileFunctions(this).commit(pane.file, pane.getGitDirectory());
+		}
+		else if (source == gitGrep) {
+			String searchTerm = getTextArea().getSelectedText();
+			File searchRoot = getEditorPane().file;
+			if (searchRoot == null)
+				error("File was not yet saved; no location known!");
+			searchRoot = searchRoot.getParentFile();
+
+			GenericDialog gd = new GenericDialog("Grep options");
+			gd.addStringField("Search_term", searchTerm == null ? "" : searchTerm, 20);
+			gd.addMessage("This search will be performed in\n\n\t" + searchRoot);
+			gd.showDialog();
+			grabFocus(2);
+			if (!gd.wasCanceled())
+				new FileFunctions(this).gitGrep(gd.getNextString(), searchRoot);
 		}
 		else if (source == newPlugin)
 			new FileFunctions(this).newPlugin();

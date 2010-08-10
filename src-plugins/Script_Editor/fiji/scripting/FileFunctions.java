@@ -40,6 +40,9 @@ import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -618,6 +621,46 @@ public class FileFunctions {
 		}
 		frame.pack();
 		frame.setVisible(true);
+	}
+
+	public class ScreenLineHandler implements SimpleExecuter.LineHandler {
+		public void handleLine(String line) {
+			parent.screen.insert(line + "\n", parent.screen.getDocument().getLength());
+		}
+	}
+
+	public static class GrepLineHandler implements SimpleExecuter.LineHandler {
+		protected static Pattern pattern = Pattern.compile("([A-Za-z]:[^:]*|[^:]+):([1-9][0-9]*):.*", Pattern.DOTALL);
+
+		public ErrorHandler errorHandler;
+		protected String directory;
+
+		public GrepLineHandler(JTextArea textArea, String directory) {
+			errorHandler = new ErrorHandler(textArea);
+			if (!directory.endsWith("/"))
+				directory += "/";
+			this.directory = directory;
+		}
+
+		public void handleLine(String line) {
+			Matcher matcher = pattern.matcher(line);
+			if (matcher.matches())
+				errorHandler.addError(directory + matcher.group(1), Integer.parseInt(matcher.group(2)), line);
+			else
+				errorHandler.addError(null, -1, line);
+		}
+	}
+
+	public void gitGrep(String searchTerm, File directory) {
+		GrepLineHandler handler = new GrepLineHandler(parent.screen, directory.getAbsolutePath());
+		try {
+			SimpleExecuter executer = new SimpleExecuter(new String[] {
+				"git", "grep", "-n", searchTerm
+			}, handler, handler, directory);
+			parent.errorHandler = handler.errorHandler;
+		} catch (IOException e) {
+			IJ.handleException(e);
+		}
 	}
 
 	protected String[] append(String[] array, String item) {
