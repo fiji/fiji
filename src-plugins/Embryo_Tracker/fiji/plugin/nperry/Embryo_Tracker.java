@@ -18,9 +18,12 @@ import ij3d.Image3DMenubar;
 import ij3d.Image3DUniverse;
 
 import java.awt.Checkbox;
+import java.awt.Panel;
 import java.awt.Scrollbar;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
@@ -29,8 +32,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.ListIterator;
 import java.util.Stack;
-
-import javax.swing.JSlider;
 
 import vib.BenesNamedPoint;
 import vib.PointList;
@@ -338,7 +339,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		ArrayList< ArrayList< ArrayList<Spot> > > selectedPoints = new ArrayList< ArrayList< ArrayList<Spot> > >();
 		Image3DUniverse univ = renderIn3DViewer(extremaAllFrames, ip, calibration, diam, originalThresholdsAllFrames, selectedPoints);
 		ArrayList< HashMap<Feature, Double> > userAdjustedThresholdsAllFrames = deepCopyThresholds(originalThresholdsAllFrames);
-		letUserAdjustThresholds(univ, ip.getTitle(), originalThresholdsAllFrames, userAdjustedThresholdsAllFrames, selectedPoints, extremaAllFrames, calibration);
+		letUserAdjustThresholds(univ, ip.getTitle(), originalThresholdsAllFrames, selectedPoints, extremaAllFrames, calibration);
 
 		return new Object[] {extremaAllFrames};
 	}
@@ -367,8 +368,6 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	// Code source: http://www.labbookpages.co.uk/software/imgProc/otsuThreshold.html
 	public double otsuThreshold(ArrayList<Spot> srcData, Feature feature)
 	{
-		System.out.println("Enter Otsu!");
-
 		// Prepare histogram
 		int histData[] = histogram(srcData, feature);
 		int count = srcData.size();
@@ -414,7 +413,6 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 * from the Freedman and Diaconis rule (bin_space = 2*IQR/n^(1/3)) 
 	 * */
 	public int[] histogram (ArrayList<Spot> data, Feature feature) {
-		System.out.println("Enter histogram!");
 
 		// Calculate number of bins
 		final int size = data.size();
@@ -428,7 +426,6 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		final double binWidth = 2 * iqr * Math.pow(size, -0.33);
 		final double[] range = getRange(data, feature);
 		final int nBins = (int) ( range[0] / binWidth + 1 ); 
-		System.out.println(String.format("ndata = %d, q1 = %.1f, q3 = %.1f, sqrt = %.1f", feature_values.length, q1, q3,  Math.pow(size, -0.33)));
 
 		// Create array for histrogram with nBins
 		final int[] hist = new int[nBins];
@@ -447,7 +444,6 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
      * in the <code>values</code> array. Taken from commons-math.
 	 */
 	private static final double getPercentile(final double[] values, final double p) {
-		System.out.println("Enter getPercentile!");
 
 		final int size = values.length;
 		if ((p > 1) || (p <= 0)) {
@@ -533,7 +529,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	
 	/**
 	 * Code courtesy of Larry Lindsey. However, it is protected in the DirectConvolution class,
-	 * so I reproduced it here to avoid instantiating an object.
+	 * so I reproduced it here.
 	 * 
 	 * @param vals
 	 * @param kern
@@ -580,7 +576,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	public Image3DUniverse renderIn3DViewer(ArrayList< ArrayList<Spot> > extremaAllFrames, ImagePlus ip, double[] calibration, double diam, ArrayList< HashMap<Feature, Double> > thresholdsAllFrames, ArrayList< ArrayList< ArrayList<Spot> > > selectedPoints) {
 		
 		// 1 - Display points
-		System.out.println("Rendering!");
+
 		// Convert to a usable format
 		new StackConverter(ip).convertToGray8();
 
@@ -677,8 +673,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		}
 	}
 	
-	public void letUserAdjustThresholds(final Image3DUniverse univ, final String contentName, ArrayList< HashMap<Feature, Double> > originalThresholdsAllFrames, ArrayList< HashMap<Feature, Double> > userAdjustedThresholdsAllFrames, ArrayList< ArrayList< ArrayList<Spot> > > selectedPoints, ArrayList< ArrayList< Spot > > extremaAllFrames, double[] calibration) {
-		System.out.println("Threshold stuff!");
+	public void letUserAdjustThresholds(final Image3DUniverse univ, final String contentName, ArrayList< HashMap<Feature, Double> > thresholdsAllFrames, ArrayList< ArrayList< ArrayList<Spot> > > selectedPoints, ArrayList< ArrayList< Spot > > extremaAllFrames, double[] calibration) {
 		
 		// Grab the Content of the universe, which has the name of the IP.
 		final Content c = univ.getContent(contentName);
@@ -693,19 +688,20 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		//add for loop for handling different frames
 		final int t = ci.getTimepoint();
 		int counter = 0;  // counter which allows us to attach AdjustmentListener to the correct JSlider
-		for (final Feature feature : originalThresholdsAllFrames.get(t).keySet()) {
+		for (final Feature feature : thresholdsAllFrames.get(t).keySet()) {
 			final int curr = counter;  // need this, because needs to be final in order to be used
 			
 			// Add slider for this Feature to dialog
-			final double tr = userAdjustedThresholdsAllFrames.get(t).get(feature);
+			final double tr =thresholdsAllFrames.get(t).get(feature);
 			double[] range = getRange(extremaAllFrames.get(t), feature);
 			gd.addSlider(feature.getName() + " Threshold", range[1], range[2], tr);
+			gd.addCheckbox("Auto", true);
 			
 			// Create a SliderAdjuster for this Feature
-			final SliderAdjuster thresh_adjuster = new SliderAdjuster (calibration, tr, selectedPoints.get(t).get(0), selectedPoints.get(t).get(1), userAdjustedThresholdsAllFrames) {
+			final SliderAdjuster thresh_adjuster = new SliderAdjuster (calibration, tr, selectedPoints.get(t).get(0), selectedPoints.get(t).get(1), thresholdsAllFrames) {
 				public synchronized final void setValue(ContentInstant ci, double threshold, ArrayList<Spot> shown, ArrayList<Spot> notShown, double[] calibration) {	
 	 				PointList pl = ci.getPointList();
-					userAdjustedThresholdsAllFrames.get(t).put(feature, threshold);  // store the user adjusted threshold value for this frame / feature combination
+					thresholdsAllFrames.get(t).put(feature, threshold);  // store the user adjusted threshold value for this frame / feature combination
 
 	 				// 1 - Threshold is higher than previously, we need to remove some points that are currently shown
 	 				if (larger) {
@@ -728,8 +724,8 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 						for (int i = 0; i < notShown.size(); i++) {
 							Spot spot = notShown.get(i);
 							boolean passedThresholds = true;  // initially, assume the point is above all the thresholds
-							for (Feature feature : userAdjustedThresholdsAllFrames.get(t).keySet()) {  // for each feature we threshold...
-								if (spot.getFeatures().get(feature) < userAdjustedThresholdsAllFrames.get(t).get(feature)) {  // if the spot has a lower value...
+							for (Feature feature : thresholdsAllFrames.get(t).keySet()) {  // for each feature we threshold...
+								if (spot.getFeatures().get(feature) < thresholdsAllFrames.get(t).get(feature)) {  // if the spot has a lower value...
 									passedThresholds = false;  // mark that it isn't above all the thresholds
 									break;
 								}	
@@ -752,6 +748,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			addAdjustmentListener(new AdjustmentListener() {
 				public void adjustmentValueChanged(final AdjustmentEvent e) {
 					// start adjuster and request an action
+					((Checkbox)gd.getCheckboxes().get(curr)).setState(false);  // uncheck the 'auto' box because no longer the automatically calculated threshold.
 					if (!((Scrollbar)gd.getSliders().get(curr)).getValueIsAdjusting()) { // If the slider is not adjusting...
 						if(!thresh_adjuster.go) {
 							thresh_adjuster.start();
@@ -760,12 +757,20 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 					}
 				}
 			});
+			((Checkbox)gd.getCheckboxes().get(curr)).
+			addItemListener(new ItemListener() {
+				@Override
+				public void itemStateChanged(ItemEvent e) {
+					if (e.getStateChange() == java.awt.event.ItemEvent.SELECTED) { // if the checkbox was selected, change the threshold to the original.
+						((Scrollbar)gd.getSliders().get(curr)).setValue((int)tr);
+						
+						thresh_adjuster.exec((int)tr, ci, univ);
+					}
+				}
+			});
 			
 			counter++;
 		}
-	
-		//gd.addCheckbox("Apply to all timepoints", true);
-		//final Checkbox aBox = (Checkbox)gd.getCheckboxes().get(0);
 		gd.setModal(false);
 		// Handle when window closed... (see original changeThreshold code in Executer.class)
 		gd.showDialog();
@@ -784,10 +789,10 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		boolean larger;
 		ArrayList<Spot> shown;
 		ArrayList<Spot> notShown;
-		ArrayList<HashMap<Feature, Double> > userAdjustedThresholdsAllFrames;
+		ArrayList<HashMap<Feature, Double> > thresholdsAllFrames;
 		final Object lock = new Object();
 
-		SliderAdjuster(double[] calibration, double origTr, ArrayList<Spot> shown, ArrayList<Spot> notShown, ArrayList<HashMap<Feature, Double> > userAdjustedThresholdsAllFrames) {
+		SliderAdjuster(double[] calibration, double origTr, ArrayList<Spot> shown, ArrayList<Spot> notShown, ArrayList<HashMap<Feature, Double> > thresholdsAllFrames) {
 			super("VIB-SliderAdjuster");
 			setPriority(Thread.NORM_PRIORITY);
 			setDaemon(true);
@@ -795,7 +800,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			this.tr = origTr;
 			this.shown = shown;
 			this.notShown = notShown;
-			this.userAdjustedThresholdsAllFrames = userAdjustedThresholdsAllFrames;
+			this.thresholdsAllFrames = thresholdsAllFrames;
 		}
 
 		/*
