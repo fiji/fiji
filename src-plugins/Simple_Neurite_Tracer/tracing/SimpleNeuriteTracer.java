@@ -30,27 +30,15 @@ package tracing;
 import ij.*;
 import ij.process.*;
 import ij.gui.*;
-import ij.plugin.*;
-import ij.plugin.filter.*;
 import ij.text.*;
-import ij.measure.Calibration;
 import ij.io.*;
 
 import ij3d.Image3DUniverse;
-import ij3d.Image3DMenubar;
 import ij3d.Content;
-import ij3d.Pipe;
 import ij3d.MeshMaker;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point3f;
-import ij.gui.GUI;
-
-import java.applet.Applet;
-
 import java.awt.*;
-import java.awt.event.*;
-import java.awt.image.IndexColorModel;
-
 import java.io.*;
 
 import java.util.Set;
@@ -61,8 +49,6 @@ import java.util.List;
 import client.ArchiveClient;
 
 import stacks.ThreePanes;
-
-import util.BatchOpener;
 
 import features.GaussianGenerationCallback;
 import features.ComputeCurvatures;
@@ -308,8 +294,6 @@ public class SimpleNeuriteTracer extends ThreePanes
 		// We need to get the AmiraParameters object for that image...
 
 		AmiraParameters parameters = d.parameters;
-
-		int materials = parameters.getMaterialCount();
 
 		materialList = parameters.getMaterialList();
 
@@ -1069,7 +1053,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 	synchronized public void startFillingPaths( Set<Path> fromPaths ) {
 
 		// currentlyFilling = true;
-		resultsDialog.fw.pauseOrRestartFilling.setLabel("Pause");
+		resultsDialog.fw.pauseOrRestartFilling.setText("Pause");
 
 		filler = new FillerThread( xy,
 					   stackMin,
@@ -1241,7 +1225,7 @@ public class SimpleNeuriteTracer extends ThreePanes
 							   (float)np.closestIntersection.z));
 
 				String ballName = univ.getSafeContentName("ball "+done);
-				List sphere = MeshMaker.createSphere( np.nearX,
+				List<Point3f> sphere = MeshMaker.createSphere( np.nearX,
 								      np.nearY,
 								      np.nearZ,
 								      Math.abs(x_spacing/2) );

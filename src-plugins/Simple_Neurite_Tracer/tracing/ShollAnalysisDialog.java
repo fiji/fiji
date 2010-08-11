@@ -154,7 +154,6 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 						       "sholl-"+(detail?"detail":"summary")+results.getSuggestedSuffix(),
 						       ".csv");
 
-			String savePath;
 			if(sd.getFileName()==null) {
 				return;
 			}
@@ -329,7 +328,6 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 						       "sholl"+suggestedSuffix,
 						       ".svg");
 
-			String savePath;
 			if(sd.getFileName()==null) {
 				return;
 			}

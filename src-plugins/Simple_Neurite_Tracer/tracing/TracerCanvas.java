@@ -34,7 +34,6 @@ import ij.ImagePlus;
 
 import stacks.ThreePanesCanvas;
 import stacks.PaneOwner;
-import stacks.ThreePanes;
 
 public class TracerCanvas extends ThreePanesCanvas {
 
