@@ -16,8 +16,6 @@ import ij3d.Content;
 import ij3d.ContentInstant;
 import ij3d.Image3DMenubar;
 import ij3d.Image3DUniverse;
-import ij3d.Executer.SliderAdjuster;
-//import ij3d.Executer.SliderAdjuster;
 
 import java.awt.Checkbox;
 import java.awt.Scrollbar;
@@ -336,17 +334,41 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		}
 		
 		// Render 3D to adjust thresholds...
-		ArrayList< HashMap<Feature, Double> > thresholdsAllFrames = new ArrayList< HashMap<Feature, Double> >();
+		ArrayList< HashMap<Feature, Double> > originalThresholdsAllFrames = new ArrayList< HashMap<Feature, Double> >();
 		ArrayList< ArrayList< ArrayList<Spot> > > selectedPoints = new ArrayList< ArrayList< ArrayList<Spot> > >();
-		Image3DUniverse univ = renderIn3DViewer(extremaAllFrames, ip, calibration, diam, thresholdsAllFrames, selectedPoints);
-		letUserAdjustThresholds(univ, ip.getTitle(), thresholdsAllFrames, selectedPoints, extremaAllFrames, calibration);
+		Image3DUniverse univ = renderIn3DViewer(extremaAllFrames, ip, calibration, diam, originalThresholdsAllFrames, selectedPoints);
+		ArrayList< HashMap<Feature, Double> > userAdjustedThresholdsAllFrames = deepCopyThresholds(originalThresholdsAllFrames);
+		letUserAdjustThresholds(univ, ip.getTitle(), originalThresholdsAllFrames, userAdjustedThresholdsAllFrames, selectedPoints, extremaAllFrames, calibration);
 
 		return new Object[] {extremaAllFrames};
 	}
 	
+	/**
+	 * Deep copies the ArrayList of HashMaps, where each HashMap represents a frame, and
+	 * contains the Feature as a key, and the threshold for that feature as a value.
+	 * 
+	 * @param thresh The ArrayList< HashMap< Feature, Double> > object to be deep copied.
+	 * @return A deep copy of the ArrayList< HashMap< Feature, Double> > parameter.
+	 */
+	private ArrayList< HashMap<Feature, Double> > deepCopyThresholds(ArrayList< HashMap<Feature, Double> > toCopy) {
+		ArrayList< HashMap<Feature, Double> > copy = new ArrayList< HashMap<Feature, Double> >();
+		for (HashMap<Feature, Double> frame : toCopy) {
+			HashMap<Feature, Double> frameCopy = new HashMap<Feature, Double>();
+			for (Feature feature : frame.keySet()) {
+				frameCopy.put(feature, frame.get(feature));
+			}
+			copy.add(frameCopy);
+		}
+		
+		return copy;
+	}
+	
+	
 	// Code source: http://www.labbookpages.co.uk/software/imgProc/otsuThreshold.html
 	public double otsuThreshold(ArrayList<Spot> srcData, Feature feature)
 	{
+		System.out.println("Enter Otsu!");
+
 		// Prepare histogram
 		int histData[] = histogram(srcData, feature);
 		int count = srcData.size();
@@ -392,6 +414,8 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 * from the Freedman and Diaconis rule (bin_space = 2*IQR/n^(1/3)) 
 	 * */
 	public int[] histogram (ArrayList<Spot> data, Feature feature) {
+		System.out.println("Enter histogram!");
+
 		// Calculate number of bins
 		final int size = data.size();
 		final double[] feature_values = new double[size];
@@ -404,6 +428,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		final double binWidth = 2 * iqr * Math.pow(size, -0.33);
 		final double[] range = getRange(data, feature);
 		final int nBins = (int) ( range[0] / binWidth + 1 ); 
+		System.out.println(String.format("ndata = %d, q1 = %.1f, q3 = %.1f, sqrt = %.1f", feature_values.length, q1, q3,  Math.pow(size, -0.33)));
 
 		// Create array for histrogram with nBins
 		final int[] hist = new int[nBins];
@@ -422,9 +447,10 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
      * in the <code>values</code> array. Taken from commons-math.
 	 */
 	private static final double getPercentile(final double[] values, final double p) {
+		System.out.println("Enter getPercentile!");
 
 		final int size = values.length;
-		if ((p > 100) || (p <= 0)) {
+		if ((p > 1) || (p <= 0)) {
             throw new IllegalArgumentException("invalid quantile value: " + p);
         }
         if (size == 0) {
@@ -434,7 +460,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
             return values[0]; // always return single value for n = 1
         }
         double n = (double) size;
-        double pos = p * (n + 1) / 100;
+        double pos = p * (n + 1);
         double fpos = Math.floor(pos);
         int intPos = (int) fpos;
         double dif = pos - fpos;
@@ -554,7 +580,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	public Image3DUniverse renderIn3DViewer(ArrayList< ArrayList<Spot> > extremaAllFrames, ImagePlus ip, double[] calibration, double diam, ArrayList< HashMap<Feature, Double> > thresholdsAllFrames, ArrayList< ArrayList< ArrayList<Spot> > > selectedPoints) {
 		
 		// 1 - Display points
-
+		System.out.println("Rendering!");
 		// Convert to a usable format
 		new StackConverter(ip).convertToGray8();
 
@@ -575,6 +601,8 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			ArrayList<Spot> framej = extremaAllFrames.get(j);
 			
 			// Calculate thresholds for each feature of interest.
+			System.out.println("Calculating thresholds!");
+
 			HashMap<Feature, Double> thresholds = new HashMap<Feature, Double>();
 			final double logThreshold = otsuThreshold(framej, Feature.LOG_VALUE);  // threshold for frame
 			final double brightnessThreshold = otsuThreshold(framej, Feature.BRIGHTNESS);
@@ -585,6 +613,9 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			thresholds.put(Feature.CONTRAST, contrastThreshold);
 			thresholds.put(Feature.VARIANCE, varThreshold);
 			thresholdsAllFrames.add(thresholds);
+			
+			System.out.println("Done calculating thresholds!");
+
 			
 			// Add the extrema coords to the pointlist
 			for (int i = 0; i < framej.size(); i++) {
@@ -646,7 +677,9 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		}
 	}
 	
-	public void letUserAdjustThresholds(final Image3DUniverse univ, final String contentName, ArrayList< HashMap<Feature, Double> > thresholdsAllFrames, ArrayList< ArrayList< ArrayList<Spot> > > selectedPoints, ArrayList< ArrayList< Spot > > extremaAllFrames, double[] calibration) {
+	public void letUserAdjustThresholds(final Image3DUniverse univ, final String contentName, ArrayList< HashMap<Feature, Double> > originalThresholdsAllFrames, ArrayList< HashMap<Feature, Double> > userAdjustedThresholdsAllFrames, ArrayList< ArrayList< ArrayList<Spot> > > selectedPoints, ArrayList< ArrayList< Spot > > extremaAllFrames, double[] calibration) {
+		System.out.println("Threshold stuff!");
+		
 		// Grab the Content of the universe, which has the name of the IP.
 		final Content c = univ.getContent(contentName);
 		
@@ -658,21 +691,22 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		final GenericDialog gd = new GenericDialog("Adjust Thresholds");
 		
 		//add for loop for handling different frames
-		int t = ci.getTimepoint();
+		final int t = ci.getTimepoint();
 		int counter = 0;  // counter which allows us to attach AdjustmentListener to the correct JSlider
-		for (Feature feature : thresholdsAllFrames.get(t).keySet()) {
+		for (final Feature feature : originalThresholdsAllFrames.get(t).keySet()) {
 			final int curr = counter;  // need this, because needs to be final in order to be used
 			
 			// Add slider for this Feature to dialog
-			final double tr = thresholdsAllFrames.get(t).get(feature);
+			final double tr = userAdjustedThresholdsAllFrames.get(t).get(feature);
 			double[] range = getRange(extremaAllFrames.get(t), feature);
 			gd.addSlider(feature.getName() + " Threshold", range[1], range[2], tr);
 			
 			// Create a SliderAdjuster for this Feature
-			final SliderAdjuster thresh_adjuster = new SliderAdjuster (calibration, tr, selectedPoints.get(t).get(0), selectedPoints.get(t).get(1), feature) {
+			final SliderAdjuster thresh_adjuster = new SliderAdjuster (calibration, tr, selectedPoints.get(t).get(0), selectedPoints.get(t).get(1), userAdjustedThresholdsAllFrames) {
 				public synchronized final void setValue(ContentInstant ci, double threshold, ArrayList<Spot> shown, ArrayList<Spot> notShown, double[] calibration) {	
 	 				PointList pl = ci.getPointList();
-					
+					userAdjustedThresholdsAllFrames.get(t).put(feature, threshold);  // store the user adjusted threshold value for this frame / feature combination
+
 	 				// 1 - Threshold is higher than previously, we need to remove some points that are currently shown
 	 				if (larger) {
 						ci.showPointList(false);
@@ -693,8 +727,14 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 				else {
 						for (int i = 0; i < notShown.size(); i++) {
 							Spot spot = notShown.get(i);
-							// Need to make sure they are above other thresholds...
-							if (spot.getFeatures().get(feature) > threshold) {
+							boolean passedThresholds = true;  // initially, assume the point is above all the thresholds
+							for (Feature feature : userAdjustedThresholdsAllFrames.get(t).keySet()) {  // for each feature we threshold...
+								if (spot.getFeatures().get(feature) < userAdjustedThresholdsAllFrames.get(t).get(feature)) {  // if the spot has a lower value...
+									passedThresholds = false;  // mark that it isn't above all the thresholds
+									break;
+								}	
+							}	
+							if (passedThresholds) {  // to get past this point, a spot had to have thresholds above all the current threshold values
 								notShown.remove(i);
 								i--;  // the remove() call above shifted all the remaining elements
 								double[] coords = spot.getCoordinates();
@@ -744,10 +784,10 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		boolean larger;
 		ArrayList<Spot> shown;
 		ArrayList<Spot> notShown;
-		Feature feature;
+		ArrayList<HashMap<Feature, Double> > userAdjustedThresholdsAllFrames;
 		final Object lock = new Object();
 
-		SliderAdjuster(double[] calibration, double origTr, ArrayList<Spot> shown, ArrayList<Spot> notShown, Feature feature) {
+		SliderAdjuster(double[] calibration, double origTr, ArrayList<Spot> shown, ArrayList<Spot> notShown, ArrayList<HashMap<Feature, Double> > userAdjustedThresholdsAllFrames) {
 			super("VIB-SliderAdjuster");
 			setPriority(Thread.NORM_PRIORITY);
 			setDaemon(true);
@@ -755,7 +795,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			this.tr = origTr;
 			this.shown = shown;
 			this.notShown = notShown;
-			this.feature = feature;
+			this.userAdjustedThresholdsAllFrames = userAdjustedThresholdsAllFrames;
 		}
 
 		/*
@@ -798,16 +838,16 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 					if (!go) return;
 					// 1 - cache vars, to free the lock very quickly
 					ContentInstant c;
-					double transp = 0;
+					double v = 0;
 					Image3DUniverse u;
 					synchronized (lock) {
 						c = this.content;
-						transp = this.newV;
+						v = this.newV;
 						u = this.univ;
 					}
 					// 2 - exec cached vars
 					if (null != c) {
-						setValue(c, transp, shown, notShown, calibration);
+						setValue(c, v, shown, notShown, calibration);
 					}
 					// 3 - done: reset only if no new request was put
 					synchronized (lock) {
