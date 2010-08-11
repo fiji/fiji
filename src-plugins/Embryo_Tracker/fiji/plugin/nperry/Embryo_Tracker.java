@@ -388,26 +388,69 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		return (threshold + 1) * getRange(srcData, feature)[0] / (double) histData.length;  // Convert the integer bin threshold to a value
 	}
 	
-	/** Histogram currently generated using nBins = n^(1/2) approach, also used by Excel. */
+	/** Generate a histogram of the specified feature, with a number of bins determined 
+	 * from the Freedman and Diaconis rule (bin_space = 2*IQR/n^(1/3)) 
+	 * */
 	public int[] histogram (ArrayList<Spot> data, Feature feature) {
 		// Calculate number of bins
-		int size = data.size();
-		int nBins = (int) Math.ceil(Math.sqrt(size));  // nBins = n^(1/2)
+		final int size = data.size();
+		final double[] feature_values = new double[size];
+		for (int i = 0; i < feature_values.length; i++) {
+			feature_values[i] = data.get(i).getFeatures().get(feature);
+		}
+		final double q1 = getPercentile(feature_values, 0.25);
+		final double q3 = getPercentile(feature_values, 0.75);
+		final double iqr = q3 - q1;
+		final double binWidth = 2 * iqr * Math.pow(size, -0.33);
+		final double[] range = getRange(data, feature);
+		final int nBins = (int) ( range[0] / binWidth + 1 ); 
 
 		// Create array for histrogram with nBins
-		int[] hist = new int[nBins];
-		
-		// Get data range
-		double[] range = getRange(data, feature);
-		
+		final int[] hist = new int[nBins];
+		int index;
 		// Populate the histogram with data
-		double binWidth = range[0] / nBins;
-		for (int i = 0; i < data.size(); i++) {
-			int index = Math.min((int) Math.floor((data.get(i).getFeatures().get(feature) - range[1]) / binWidth), nBins - 1); // the max value ends up being 1 higher than nBins, so put it in the last bin.
+		for (int i = 0; i < feature_values.length; i++) {
+			index = Math.min((int) Math.floor((feature_values[i] - range[1]) / binWidth), nBins - 1); // the max value ends up being 1 higher than nBins, so put it in the last bin.
 			hist[index]++;
 		}
-		
 		return hist;
+	}
+	
+	
+	/**
+     * Returns an estimate of the <code>p</code>th percentile of the values
+     * in the <code>values</code> array. Taken from commons-math.
+	 */
+	private static final double getPercentile(final double[] values, final double p) {
+
+		final int size = values.length;
+		if ((p > 100) || (p <= 0)) {
+            throw new IllegalArgumentException("invalid quantile value: " + p);
+        }
+        if (size == 0) {
+            return Double.NaN;
+        }
+        if (size == 1) {
+            return values[0]; // always return single value for n = 1
+        }
+        double n = (double) size;
+        double pos = p * (n + 1) / 100;
+        double fpos = Math.floor(pos);
+        int intPos = (int) fpos;
+        double dif = pos - fpos;
+        double[] sorted = new double[size];
+        System.arraycopy(values, 0, sorted, 0, size);
+        Arrays.sort(sorted);
+
+        if (pos < 1) {
+            return sorted[0];
+        }
+        if (pos >= n) {
+            return sorted[size - 1];
+        }
+        double lower = sorted[intPos - 1];
+        double upper = sorted[intPos];
+        return lower + dif * (upper - lower);
 	}
 	
 	/** Returns [range, min, max] */
