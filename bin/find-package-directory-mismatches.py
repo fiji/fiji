@@ -1,4 +1,5 @@
-#!/usr/bin/python2.6
+#!/bin/sh
+''''exec "$(dirname "$0")"/../fiji --jython "$0" "$@" # (call again with fiji)'''
 
 import os
 import re
