@@ -3,9 +3,20 @@
 import os
 import re
 
+submodules = set()
+
+def is_in_submodule(name):
+    for submodule in submodules:
+        if name.startswith(submodule):
+            return True
+    return False
+
 for root, dirs, files in os.walk('.'):
+    if is_in_submodule(root):
+        continue
     if not root == '.' and '.git' in dirs:
         print 'Skipping submodule', root
+        submodules.add(root + '/')
         continue
     for filename in [ x for x in files if re.search('\.java$',x) ]:
         package = None
