@@ -20,4 +20,19 @@ public enum Feature {
 				return 0;
 		}
 	}
+	
+	public String getName() {
+		switch(this) {
+		case VARIANCE:
+			return "Variance";
+		case LOG_VALUE:
+			return "LoG Value";
+		case BRIGHTNESS:
+			return "Brightness";
+		case CONTRAST:
+			return "Contrast";
+		default:
+			return null;
+		}
+	}
 }
