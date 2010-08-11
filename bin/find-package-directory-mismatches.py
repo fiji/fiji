@@ -9,12 +9,11 @@ for root, dirs, files in os.walk('.'):
         continue
     for filename in [ x for x in files if re.search('\.java$',x) ]:
         package = None
-        with open(os.path.join(root,filename)) as f:
-            for line in f:
-                m = re.search('^\s*package\s*([\S^;]+)\s*;',line)
-                if m:
-                    package = m.group(1)
-                    break
+        for line in open(os.path.join(root,filename)):
+            m = re.search('^\s*package\s*([\S^;]+)\s*;',line)
+            if m:
+                package = m.group(1)
+                break
         if package:
             package_parts = package.split('.')
             directory_left = root[:]
