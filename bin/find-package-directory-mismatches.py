@@ -4,7 +4,8 @@ import os
 import re
 
 for root, dirs, files in os.walk('.'):
-    if re.search('^./java/',root):
+    if not root == '.' and '.git' in dirs:
+        print 'Skipping submodule', root
         continue
     for filename in [ x for x in files if re.search('\.java$',x) ]:
         package = None
