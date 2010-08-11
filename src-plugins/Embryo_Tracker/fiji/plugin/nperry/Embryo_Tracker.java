@@ -337,9 +337,9 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		
 		// Render 3D to adjust thresholds...
 		ArrayList< HashMap<Feature, Double> > thresholdsAllFrames = new ArrayList< HashMap<Feature, Double> >();
-		ArrayList< ArrayList< ArrayList<Spot> > > pointsShownVsNotShown = new ArrayList< ArrayList< ArrayList<Spot> > >();
-		Image3DUniverse univ = renderIn3DViewer(extremaAllFrames, ip, calibration, diam, thresholdsAllFrames, pointsShownVsNotShown);
-		letUserAdjustThresholds(univ, ip.getTitle(), thresholdsAllFrames, pointsShownVsNotShown, extremaAllFrames, calibration);
+		ArrayList< ArrayList< ArrayList<Spot> > > selectedPoints = new ArrayList< ArrayList< ArrayList<Spot> > >();
+		Image3DUniverse univ = renderIn3DViewer(extremaAllFrames, ip, calibration, diam, thresholdsAllFrames, selectedPoints);
+		letUserAdjustThresholds(univ, ip.getTitle(), thresholdsAllFrames, selectedPoints, extremaAllFrames, calibration);
 
 		return new Object[] {extremaAllFrames};
 	}
@@ -508,7 +508,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		return roi;
 	}
 
-	public Image3DUniverse renderIn3DViewer(ArrayList< ArrayList<Spot> > extremaAllFrames, ImagePlus ip, double[] calibration, double diam, ArrayList< HashMap<Feature, Double> > thresholdsAllFrames, ArrayList< ArrayList< ArrayList<Spot> > > pointsShownVsNotShown) {
+	public Image3DUniverse renderIn3DViewer(ArrayList< ArrayList<Spot> > extremaAllFrames, ImagePlus ip, double[] calibration, double diam, ArrayList< HashMap<Feature, Double> > thresholdsAllFrames, ArrayList< ArrayList< ArrayList<Spot> > > selectedPoints) {
 		
 		// 1 - Display points
 
@@ -563,10 +563,10 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			}
 			
 			// Add the shown and notShown lists of points to the overall list
-			ArrayList<ArrayList<Spot> > pointsShownVsNotShownInFrame = new ArrayList<ArrayList<Spot> >();
-			pointsShownVsNotShownInFrame.add(shown);
-			pointsShownVsNotShownInFrame.add(notShown);
-			pointsShownVsNotShown.add(pointsShownVsNotShownInFrame);
+			ArrayList<ArrayList<Spot> > selectedPointsInFrame = new ArrayList<ArrayList<Spot> >();
+			selectedPointsInFrame.add(shown);
+			selectedPointsInFrame.add(notShown);
+			selectedPoints.add(selectedPointsInFrame);
 		}
 		
 		// Make the point list visible
@@ -603,7 +603,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		}
 	}
 	
-	public void letUserAdjustThresholds(final Image3DUniverse univ, final String contentName, ArrayList< HashMap<Feature, Double> > thresholdsAllFrames, ArrayList< ArrayList< ArrayList<Spot> > > pointsShownVsNotShown, ArrayList< ArrayList< Spot > > extremaAllFrames, double[] calibration) {
+	public void letUserAdjustThresholds(final Image3DUniverse univ, final String contentName, ArrayList< HashMap<Feature, Double> > thresholdsAllFrames, ArrayList< ArrayList< ArrayList<Spot> > > selectedPoints, ArrayList< ArrayList< Spot > > extremaAllFrames, double[] calibration) {
 		// Grab the Content of the universe, which has the name of the IP.
 		final Content c = univ.getContent(contentName);
 		
@@ -626,7 +626,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			gd.addSlider(feature.getName() + " Threshold", range[1], range[2], tr);
 			
 			// Create a SliderAdjuster for this Feature
-			final SliderAdjuster thresh_adjuster = new SliderAdjuster (calibration, tr, pointsShownVsNotShown.get(t).get(0), pointsShownVsNotShown.get(t).get(1), feature) {
+			final SliderAdjuster thresh_adjuster = new SliderAdjuster (calibration, tr, selectedPoints.get(t).get(0), selectedPoints.get(t).get(1), feature) {
 				public synchronized final void setValue(ContentInstant ci, double threshold, ArrayList<Spot> shown, ArrayList<Spot> notShown, double[] calibration) {	
 	 				PointList pl = ci.getPointList();
 					
