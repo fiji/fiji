@@ -4,7 +4,8 @@ public enum Feature {
 	VARIANCE,
 	LOG_VALUE,
 	BRIGHTNESS,
-	CONTRAST;
+	CONTRAST,
+	ESTIMATED_DIAMETER;
 	
 	public double getScore(double value) {
 		switch (this) {
@@ -15,6 +16,8 @@ public enum Feature {
 			case BRIGHTNESS:
 				return value;
 			case CONTRAST:
+				return value;
+			case ESTIMATED_DIAMETER:
 				return value;
 			default:
 				return 0;
@@ -31,6 +34,9 @@ public enum Feature {
 			return "Brightness";
 		case CONTRAST:
 			return "Contrast";
+		case ESTIMATED_DIAMETER:
+			return "Estimated diameter";
+		
 		default:
 			return null;
 		}
