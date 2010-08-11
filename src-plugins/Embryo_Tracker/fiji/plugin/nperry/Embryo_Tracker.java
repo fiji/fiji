@@ -503,10 +503,10 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	}
 
 	public void renderIn3DViewer(ArrayList< ArrayList<Spot> > extremaAllFrames, ImagePlus imp, double[] calibration, double diam) {
+		
+		// 1 - Display points
 		ArrayList< HashMap<Feature, Double> > thresholdsAllFrames = new ArrayList< HashMap<Feature, Double> >();
-		
-		/* 1 - Render ImagePlus using 3D Viewer */
-		
+
 		// Convert to a usable format
 		new StackConverter(imp).convertToGray8();
 
@@ -517,14 +517,10 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		// Add the image as a volume rendering
 		Content c = univ.addVoltex(imp);
 
-		// For each frame
-		
-		//test
-		ArrayList< ArrayList< ArrayList<Spot> > > displayed = new ArrayList< ArrayList< ArrayList<Spot> > >();
+		// Calculate thresholds, store which points are shown vs. not shown, and add points to the ContentInstant's PointList
+		ArrayList< ArrayList< ArrayList<Spot> > > pointsShownVsNotShown = new ArrayList< ArrayList< ArrayList<Spot> > >();
 		for (int j = 0; j < extremaAllFrames.size(); j++) {
 			
-			//test
-			displayed.add(new ArrayList< ArrayList<Spot> >());
 			ArrayList<Spot> shown = new ArrayList<Spot>();
 			ArrayList<Spot> notShown = new ArrayList<Spot>();
 			
@@ -544,54 +540,51 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			thresholdsAllFrames.add(thresholds);
 			
 			// Add the extrema coords to the pointlist
-			Iterator<Spot> itr = framej.iterator();
-			int counter = 0;
-			while (itr.hasNext()) {
-				final Spot spot = itr.next();
+			for (int i = 0; i < framej.size(); i++) {
+				final Spot spot = framej.get(i);
 				final double coords[] = spot.getCoordinates();
 				
-				if (spot.getFeatures().get(Feature.LOG_VALUE) > logThreshold) {  // if above the threshold
-					// Add point
-					
-					//test
-					spot.setName(Integer.toString(counter));
-					
+				// 1. If the spot passes the threshold
+				if (aboveThresholds(spot, thresholds)) {
+					spot.setName(Integer.toString(i));
 					pl.add(spot.getName(), coords[0] * calibration[0], coords[1] * calibration[1], coords[2] * calibration[2]);  // Scale for each dimension, since the coordinates are unscaled now and from the downsampled image.	
-					
-					//test
 					shown.add(spot);
-					
-					//System.out.println("Point [" + coords[0] * pixelWidth + ", " + coords[1] * pixelHeight + ", " + coords[2] * pixelDepth + "] has score: " + spot.getAggregatedScore());
 				}
 				
-				//test
+				// 2. If spot doesn't pass threshold
 				else{
-					spot.setName(Integer.toString(counter));
+					spot.setName(Integer.toString(i));
 					notShown.add(spot);
 				}
-				
-				counter++;
-				
-				//test
-				//pl.add(4,4,4);
 			}
 			
-			//test
-			displayed.get(0).add(shown);
-			displayed.get(0).add(notShown);
-			
+			// Add the shown and notShown lists of points to the overall list
+			ArrayList<ArrayList<Spot> > pointsShownVsNotShownInFrame = new ArrayList<ArrayList<Spot> >();
+			pointsShownVsNotShownInFrame.add(shown);
+			pointsShownVsNotShownInFrame.add(notShown);
+			pointsShownVsNotShown.add(pointsShownVsNotShownInFrame);
 		}
 		
 		// Make the point list visible
 		c.showPointList(true);
-		univ.getPointListDialog().setVisible(false);
+		
+		// Make point list window invisible (potentially slowing down thresholding...)
+		//univ.getPointListDialog().setVisible(false);
 		
 		// Change the size of the points
-		c.setLandmarkPointSize((float) diam / 2);  // radius is diam / 2
+		c.setLandmarkPointSize((float) diam / 2);  // Point size determined by radius
 		
-		/* 2 - Allow the user to interact with the rendering */
-		
-		thresholdAdjusters(c, univ, thresholdsAllFrames.get(0).get(Feature.LOG_VALUE), getRange(extremaAllFrames.get(0), Feature.LOG_VALUE), displayed.get(0), calibration);
+		// 2- Allow thresholds to be adjusted.
+		thresholdAdjusters(c, univ, thresholdsAllFrames.get(0).get(Feature.LOG_VALUE), getRange(extremaAllFrames.get(0), Feature.LOG_VALUE), pointsShownVsNotShown.get(0), calibration);
+	}
+	
+	private boolean aboveThresholds(Spot spot, HashMap<Feature, Double> thresholds) {
+		for (Feature feature : thresholds.keySet()) {
+			if (spot.getFeatures().get(feature) < thresholds.get(feature)) {
+				return false;
+			}
+		}
+		return true;
 	}
 	
 	private void downsampledCoordsToOrigCoords(ArrayList<Spot> spots, double downsampleFactors[]) {
@@ -627,19 +620,11 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		
 		// Set up the threshold adjuster
 		final SliderAdjuster thresh_adjuster = new SliderAdjuster (displayed, calibration, threshold, shown, notShown) {
-			public synchronized final void setValue(ContentInstant ci, double threshold, Stack<Spot> shown, Stack<Spot> notShown, double[] calibration) {
-
-				/*System.out.println("Sorted spots:");
-				for (int i = 0; i < shownArr.length; i++) {
-					System.out.println("LoG: "+shownArr[i].getFeatures().get(Feature.LOG_VALUE));
-				}*/
-				//if (1==1) return;
-				
+			public synchronized final void setValue(ContentInstant ci, double threshold, Stack<Spot> shown, Stack<Spot> notShown, double[] calibration) {	
  				PointList pl = ci.getPointList();
 				if (larger) {
 					while(!shown.empty()) {
-						if (shown.peek().getFeatures().get(Feature.LOG_VALUE) < threshold) {
-							Spot spot = shown.pop();
+						if (shown.peek().getFeatures().get(Feature.LOG_VALUE) < threshold) {							Spot spot = shown.pop();
 							pl.remove(pl.get(spot.getName()));
 							notShown.push(spot);
 						} else {
@@ -665,27 +650,6 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		
 		// Stuff for surface plots
 		final double oldTr = threshold;
-		/*if(c.getType() == Content.SURFACE) {
-			final GenericDialog gd = new GenericDialog(
-				"Adjust threshold ...", univ.getWindow());
-			final int old = (int)ci.getThreshold();
-			gd.addNumericField("Threshold", old, 0);
-			gd.addCheckbox("Apply to all timepoints", true);
-			gd.showDialog();
-			if(gd.wasCanceled())
-				return;
-			int th = (int)gd.getNextNumber();
-			th = Math.max(0, th);
-			th = Math.min(th, 255);
-			if(gd.getNextBoolean())
-				c.setThreshold(th);
-			else
-				ci.setThreshold(th);
-			univ.fireContentChanged(c);
-			record(SET_THRESHOLD, Integer.toString(th));
-			return;
-		}*/
-		
 		
 		// in case we've not a mesh, change it interactively
 		final GenericDialog gd = new GenericDialog("Adjust LoG threshold...");
