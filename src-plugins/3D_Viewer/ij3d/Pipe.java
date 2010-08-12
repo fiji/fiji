@@ -143,6 +143,8 @@ public class Pipe {
 
 		int n = px.length;
 
+		assert(n >= 2);
+
 		// Resampling to get a smoother pipe
 		if (do_resample) {
 			try {
@@ -158,6 +160,7 @@ public class Pipe {
 			} catch (Exception e) {
 				IJ.error(""+e);
 			}
+			assert(n >= 2);
 		}
 
 		if( colorsSpecified ) {
@@ -183,94 +186,113 @@ public class Pipe {
 		}
 		double angle = 2*Math.PI/parallels; //Math.toRadians(30);
 
-		Vector3 v3_P12;
-		Vector3 v3_PR;
+		Vector3 betweenPoints = new Vector3();
+		Vector3 lastFirstSpoke = null;
 		Vector3[] circle = new Vector3[parallels+1];
-		double sinn, coss;
-		int half_parallels = parallels/2;
-		for (int i=0; i<n-1; i++) {
-			//System.out.println(i + " : " + px[i] + ", " + py[i] + ", " + pz[i]);
-			//First vector: from one realpoint to the next
-			//v3_P12 = new Vector3(p_i[0][i+1] - p_i[0][i], p_i[1][i+1] - p_i[1][i], z_values[i+1] - z_values[i]);
-			v3_P12 = new Vector3(px[i+1] - px[i], py[i+1] - py[i], pz[i+1] - pz[i]);
+		Vector3 intersection = new Vector3();
+		Vector3 crossForOffset = new Vector3();
 
-			//Second vector: ortogonal to v3_P12, made by cross product between v3_P12 and a modifies v3_P12 (either y or z set to 0)
+		// Pre-compute the sin and cos of each angle:
+		double [] sinn = new double[parallels];
+		double [] cosn = new double[parallels];
+		for (int q=0; q<parallels; q++) {
+			sinn[q] = Math.sin(angle*q);
+			cosn[q] = Math.cos(angle*q);
+		}
 
-			//checking that v3_P12 has not z set to 0, in which case it woundn´t be different and then the cross product not give an ortogonal vector as output
+		final double epsilon = 0.0000000001;
 
-			//chosen random vector: the same vector, but with x = 0;
-			/* matrix:
-				1 1 1		1 1 1				1 1 1				1 1 1
-				v1 v2 v3	P12[0] P12[1] P12[2]		P12[0] P12[1] P12[2]		P12[0] P12[1] P12[2]
-				w1 w2 w3	P12[0]+1 P12[1] P12[2]		P12[0]+1 P12[1]+1 P12[2]+1	P12[0] P12[1] P12[2]+1
+		Vector3 unit_y = new Vector3(0,1,0);
+		Vector3 unit_z = new Vector3(0,0,1);
 
-			   cross product: v ^ w = (v2*w3 - w2*v3, v3*w1 - v1*w3, v1*w2 - w1*v2);
+		for (int i=0; i<n; i++) {
 
-			   cross product of second: v ^ w = (b*(c+1) - c*(b+1), c*(a+1) - a*(c+1) , a*(b+1) - b*(a+1))
-							  = ( b - c           , c - a             , a - b            )
-
-			   cross product of third: v ^ w = (b*(c+1) - b*c, c*a - a*(c+1), a*b - b*a)
-							   (b		 ,-a            , 0);
-							   (v3_P12.y	 ,-v3_P12.x     , 0);
-
-
-			Reasons why I use the third:
-				-Using the first one modifies the x coord, so it generates a plane the ortogonal of which will be a few degrees different when z != 0 and when z =0,
-				 thus responsible for soft shiftings at joints where z values change
-				-Adding 1 to the z value will produce the same plane whatever the z value, thus avoiding soft shiftings at joints where z values are different
-				-Then, the third allows for very fine control of the direction that the ortogonal vector takes: simply manipulating the x coord of v3_PR, voilà.
-
-			*/
-
-			// BELOW if-else statements needed to correct the orientation of vectors, so there's no discontinuity
-			if (v3_P12.y < 0) {
-				v3_PR = new Vector3(v3_P12.y, -v3_P12.x, 0);
-				v3_PR = v3_PR.normalize(v3_PR);
-				v3_PR = v3_PR.scale(p_width_i[i], v3_PR);
-
-				//vectors are perfectly normalized and scaled
-				//The problem then must be that they are not properly ortogonal and so appear to have a smaller width.
-				//   -not only not ortogonal but actually messed up in some way, i.e. bad coords.
-
-				circle[half_parallels] = v3_PR;
-				for (int q=half_parallels+1; q<parallels+1; q++) {
-					sinn = Math.sin(angle*(q-half_parallels));
-					coss = Math.cos(angle*(q-half_parallels));
-					circle[q] = rotate_v_around_axis(v3_PR, v3_P12, sinn, coss);
-				}
-				circle[0] = circle[parallels];
-				for (int qq=1; qq<half_parallels; qq++) {
-					sinn = Math.sin(angle*(qq+half_parallels));
-					coss = Math.cos(angle*(qq+half_parallels));
-					circle[qq] = rotate_v_around_axis(v3_PR, v3_P12, sinn, coss);
-				}
-			} else {
-				v3_PR = new Vector3(-v3_P12.y, v3_P12.x, 0);           //thining problems disappear when both types of y coord are equal, but then shifting appears
-				/*
-				Observations:
-					-if y coord shifted, then no thinnings but yes shiftings
-					-if x coord shifted, THEN PERFECT
-					-if both shifted, then both thinnings and shiftings
-					-if none shifted, then no shiftings but yes thinnings
-				*/
-
-				v3_PR = v3_PR.normalize(v3_PR);
-				if (null == v3_PR) {
-					System.out.println("vp_3r is null: most likely a point was repeated in the list, and thus the vector has length zero.");
-					return null;
-				}
-				v3_PR = v3_PR.scale(
-						p_width_i[i],
-						v3_PR);
-
-				circle[0] = v3_PR;
-				for (int q=1; q<parallels; q++) {
-					sinn = Math.sin(angle*q);
-					coss = Math.cos(angle*q);
-					circle[q] = rotate_v_around_axis(v3_PR, v3_P12, sinn, coss);
-				}
-				circle[parallels] = v3_PR;
+			// The vector from point i to the next one:
+			if( i < n - 1 )
+				betweenPoints.set(px[i+1] - px[i], py[i+1] - py[i], pz[i+1] - pz[i]);
+			else {
+				// Just reuse the previous vector...
 			}
+
+			/* Two adjacent points can't be the same - FIXME: this should be ensured
+			 * by callers - check that this is actually the case, and that the resampling
+			 * can't produce two identical points. */
+			if (betweenPoints.isZero(epsilon))
+				throw new RuntimeException("Two points on the path were the same");
+
+			/* If this is the first time through, there will be no lastFirstSpoke,
+			 * so pick an arbitrary vector in the plane orthogonal to betweenPoints:
+			 */
+			if (lastFirstSpoke == null) {
+				lastFirstSpoke = new Vector3();
+				betweenPoints.crossWith(unit_z, lastFirstSpoke);
+				if( lastFirstSpoke.isZero(epsilon) ) {
+					betweenPoints.crossWith(unit_y, lastFirstSpoke);
+				}
+			}
+
+			lastFirstSpoke.normalize(lastFirstSpoke);
+
+			/* tangent1 and tangent2 are the tangents to the path at point i and at point
+			 * i + 1.  Make these the vectors between the points on either side, if possible.
+			 */
+			int t1_a = Math.max( 0,   i-1 );
+			int t1_b = Math.min( n-1, i+1 );
+			int t2_a = Math.min( n-2,   i );
+			int t2_b = Math.min( n-1, i+2 );
+
+			Vector3 tangent1 = new Vector3( px[t1_b] - px[t1_a], py[t1_b] - py[t1_a], pz[t1_b] - pz[t1_a] );
+			Vector3 tangent2 = new Vector3( px[t2_b] - px[t2_a], py[t2_b] - py[t2_a], pz[t2_b] - pz[t2_a] );
+
+			/* Now if we imagine the two planes defined by those tangents are overlaid
+			 * then we want the vector of their line of intersection, which will be
+			 * the cross product of the two tangents.  This intersection vector will
+			 * be the vector of a spoke which is in both discs:
+			 */
+			tangent1.crossWith(tangent2,intersection);
+
+			/* We're trying to make sure that the intersection vector for each pair of
+			 * disks is matched up.  This amounts to finding out the offset angle to start at.
+			 * If the intersection vector is 0, that means the two tangents are parallel,
+			 * so make the offset 0 and pretend the intersection vector is the lastFirstSpoke
+			 */
+
+			int offset;
+			if( intersection.isZero(epsilon) ) {
+				offset = 0;
+				intersection.setFrom(lastFirstSpoke);
+			} else {
+				/* Otherwise, we should find out the angle between the intersection
+				 * and the last first spoke.  Then we start at the same offset. */
+				intersection.normalize(intersection);
+
+				/* Both intersection and lastFirstSpoke are normalized, so the dot
+				 * product gives us the cosine of the angle between them */
+				double offsetAngle = Math.acos( intersection.dotWith(lastFirstSpoke) );
+
+				/* But we don't know if the angle from intersection to lastFirstSpoke
+				 * is clockwise or anti-clockwise in the disk.  Take the cross product
+				 * and test whether it is parallel or anti-parallel to tangent1 to find out:
+				 */
+				intersection.crossWith(lastFirstSpoke, crossForOffset);
+				if( crossForOffset.dotWith(tangent1) < 0 ) {
+					offsetAngle = 2 * Math.PI - offsetAngle;
+				}
+
+				/* Now turn that angle into an offset: */
+				offset = (int)Math.round(offsetAngle / angle);
+				offset = offset % parallels;
+			}
+
+			intersection.scale(p_width_i[i], intersection);
+
+			for( int q = 0; q < parallels; ++q ) {
+				int a = (q + offset) % parallels;
+				circle[q] = rotate_v_around_axis(intersection,tangent1,sinn[a],cosn[a]);
+			}
+			circle[parallels] = circle[0];
+			lastFirstSpoke.setFrom(circle[0]);
+
 			// Adding points to main array
 			for (int j=0; j<parallels+1; j++) {
 				all_points[i+extra][j][0] = /*p_i[0][i]*/ px[i] + circle[j].x;
@@ -278,11 +300,7 @@ public class Pipe {
 				all_points[i+extra][j][2] = /*z_values[i]*/ pz[i] + circle[j].z;
 			}
 		}
-		for (int k=0; k<parallels+1; k++) {
-			all_points[n-1+extra][k][0] = /*p_i[0][n-1]*/ px[n-1] + circle[k].x;
-			all_points[n-1+extra][k][1] = /*p_i[1][n-1]*/ py[n-1] + circle[k].y;
-			all_points[n-1+extra][k][2] = /*z_values[n-1]*/ pz[n-1] + circle[k].z;
-		}
+
 		return all_points;
 	}
 

@@ -69,4 +69,37 @@ class Vector3 {
 		this.z = z;
 		return this;
 	}
+	public void setFrom(Vector3 other) {
+		this.x = other.x;
+		this.y = other.y;
+		this.z = other.z;
+	}
+	public Vector3 crossWith(Vector3 other,Vector3 result) {
+		if( result == null )
+			result = new Vector3();
+		double x2 = other.x;
+		double y2 = other.y;
+		double z2 = other.z;
+		result.set(y * z2 - z * y2,
+			   z * x2 - x * z2,
+			   x * y2 - y * x2);
+		return result;
+	}
+	public double dotWith(Vector3 other) {
+		return x * other.x + y * other.y + z * other.z;
+	}
+	public boolean isZero(double epsilon) {
+		if (Math.abs(x) > epsilon)
+			return false;
+		else if (Math.abs(y) > epsilon)
+			return false;
+		else if (Math.abs(z) > epsilon)
+			return false;
+		else
+			return true;
+	}
+	@Override
+	public String toString() {
+		return "("+x+","+y+","+z+")";
+	}
 }
