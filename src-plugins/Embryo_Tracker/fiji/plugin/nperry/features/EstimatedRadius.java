@@ -1,7 +1,13 @@
 package fiji.plugin.nperry.features;
 
+import java.awt.Graphics2D;
+import java.awt.geom.Ellipse2D;
+import java.util.ArrayList;
+
 import ij.ImagePlus;
+import mpicbg.imglib.algorithm.math.MathLib;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
+import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
@@ -79,6 +85,97 @@ public class EstimatedRadius <T extends RealType<T>> extends BlobContrast<T> {
 		spot.addFeature(FEATURE, bestDiameter);		
 	}
 
+	@Override
+	protected double getContrast(Spot spot, double diameter) {
+		
+		return 0;
+	}
+	
+	
+	private static final ArrayList<int[]> createPositionsInCircle(int[] center, int rmax) {
+		final ArrayList<int[]> positions = new ArrayList<int[]>( (int) (4/3.0 *Math.PI * rmax *rmax*rmax ) );
+		final int cx = center[0];
+		final int cy = center[1];
+		final int cz = center[2];
+		
+		double ox2, oz2;
+		int iz, iy, ix, ry, rz ;
+		
+		/*
+		 *  Middle Z
+		 */
+				
+		// Middle Z - Middle Y - All Xs
+		for (ix = -rmax; ix <= rmax; ix++) 			
+			positions.add(new int[] { cx + ix, cy, cz});
+		
+		// Middle Z - Other Ys - All Xs
+		for (iy = 1; iy <= rmax; iy++) {
+			
+			// Middle Z - Other Ys - Middle X
+			positions.add(new int[] { cx, cy + iy, cz});
+			positions.add(new int[] { cx, cy - iy, cz});
+			
+			ox2 = rmax*rmax - iy*iy;
+			ry = (int) Math.sqrt(ox2);
+			
+			// Middle Z - Other Ys - Other Xs			
+			for (ix = 1; ix <= ry; ix++) {
+			
+				positions.add(new int[] { cx + ix, cy + iy, cz});
+				positions.add(new int[] { cx - ix, cy + iy, cz});
+				positions.add(new int[] { cx + ix, cy - iy, cz});
+				positions.add(new int[] { cx - ix, cy - iy, cz});
+				
+			}
+		}
+		
+		/*
+		 *  Other Zs
+		 */
+		
+		for (iz = 1; iz <= rmax; iz++) {
+
+			oz2 = rmax*rmax - iz*iz;
+			rz = (int) Math.sqrt(oz2);
+
+			// Other Zs - Middle Y - All Xs
+			for (ix = -rz; ix <= rz; ix++) {
+				positions.add(new int[] { cx + ix, cy, cz + iz});
+				positions.add(new int[] { cx + ix, cy, cz - iz});
+			}
+			
+			for (iy = 1; iy <= rz; iy++) {
+		
+				ox2 = rz*rz - iy*iy;
+				ry = (int) Math.sqrt(ox2);
+				
+				// Other Zs - Other Ys - Middle X
+				positions.add(new int[] { cx, cy + iy, cz + iz});
+				positions.add(new int[] { cx, cy + iy, cz - iz});
+				positions.add(new int[] { cx, cy - iy, cz + iz});
+				positions.add(new int[] { cx, cy - iy, cz - iz});
+				
+				// Other Zs - Other Ys - Other Xs
+				for (ix = 1; ix <= ry; ix++) {
+				
+					positions.add(new int[] { cx + ix, cy + iy, cz + iz});
+					positions.add(new int[] { cx - ix, cy + iy, cz + iz});
+					positions.add(new int[] { cx + ix, cy - iy, cz + iz});
+					positions.add(new int[] { cx - ix, cy - iy, cz + iz});
+					
+					positions.add(new int[] { cx + ix, cy + iy, cz - iz});
+					positions.add(new int[] { cx - ix, cy + iy, cz - iz});
+					positions.add(new int[] { cx + ix, cy - iy, cz - iz});
+					positions.add(new int[] { cx - ix, cy - iy, cz - iz});
+					
+				}
+			}
+		}
+		
+		return positions;
+	}
+	
 	private static final double quadratic1DInterpolation(double x1, double y1, double x2, double y2, double x3, double y3) {
 		final double d2 = 2 * ( (y3-y2)/(x3-x2) - (y2-y1)/(x2-x1) ) / (x3-x1);
 		if (d2==0)
@@ -129,10 +226,22 @@ public class EstimatedRadius <T extends RealType<T>> extends BlobContrast<T> {
 					new UnsignedByteType(),
 					new ArrayContainerFactory()
 				).createImage(new int[] {80, 80, 160});
+
+		LocalizableByDimCursor<UnsignedByteType> lbdc = testImage.createLocalizableByDimCursor();
+		ArrayList<int[]> positions = createPositionsInCircle(new int[] {40, 40, 40}, 20);
+		for(int[] pos : positions) {
+			lbdc.setPosition(pos);
+			lbdc.getType().inc();
+		}
+		lbdc.close();
+		ImagePlus imp = ImageJFunctions.copyToImagePlus(testImage);
+		imp.show();
 		
+		
+		/*
 		LocalizableCursor<UnsignedByteType> cursor = testImage.createLocalizableCursor();
 		int[] position = new int[3];
-		
+
 		Spot s;
 		double r;
 		while(cursor.hasNext()) {
@@ -167,6 +276,8 @@ public class EstimatedRadius <T extends RealType<T>> extends BlobContrast<T> {
 			es.process(s);
 			System.out.println(String.format("For spot %d, found diameter %.1f, real value was %.1f.", i, s.getFeatures().get(FEATURE), 2*r));
 		}
+		
+		*/
 		
 	}
 }
