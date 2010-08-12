@@ -97,14 +97,14 @@ public class Pipe {
 	    the color of each vertex in the triangulation will be
 	    returned in there. */
 
-	static public List generateTriangles(final double[][][] all_points, final double scale, List pointColorList, List vertexColorList ) {
+	static public List<Point3f> generateTriangles(final double[][][] all_points, final double scale, List<Color3f> pointColorList, List<Color3f> vertexColorList ) {
 		boolean outputColors = (pointColorList != null) && (vertexColorList != null);
 		if( outputColors && vertexColorList.size() > 0 )
 			throw new RuntimeException("vertexColorList in Pipe.generateTriangles() is only for output: should be empty");
 
 		int n = all_points.length;
 		final int parallels = all_points[0].length -1;
-		List list = new ArrayList();
+		List<Point3f> list = new ArrayList<Point3f>();
 		for (int i=0; i<n-1; i++) { //minus one since last is made with previous
 			for (int j=0; j<parallels; j++) { //there are 12+12 triangles for each joint //it's up to 12+1 because first point is repeated at the end
 				// first triangle in the quad
@@ -131,7 +131,7 @@ public class Pipe {
 		return list;
 	}
 
-	static public double[][][] makeTube(double[] px, double[] py, double[] pz, double[] p_width_i, final int resample, final int parallels, final boolean do_resample, Color3f flatColor, ImagePlus colorImage, List outputColors) {
+	static public double[][][] makeTube(double[] px, double[] py, double[] pz, double[] p_width_i, final int resample, final int parallels, final boolean do_resample, Color3f flatColor, ImagePlus colorImage, List<Color3f> outputColors) {
 
 		boolean colorsSpecified = flatColor != null || colorImage != null;
 		if( colorsSpecified ) {
