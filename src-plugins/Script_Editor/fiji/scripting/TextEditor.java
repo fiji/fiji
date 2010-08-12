@@ -95,8 +95,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		  listBookmarks, openSourceForClass, newPlugin, installMacro,
 		  openSourceForMenuItem, showDiff, commit, ijToFront,
 		  openMacroFunctions, decreaseFontSize, increaseFontSize,
-		  chooseTabSize, gitGrep;
-	JMenu gitMenu, tabsMenu, tabSizeMenu;
+		  chooseTabSize, gitGrep, loadToolsJar;
+	JMenu gitMenu, tabsMenu, tabSizeMenu, toolsMenu;
 	int tabsMenuTabsStart;
 	Set<JMenuItem> tabsMenuItems;
 	FindAndReplaceDialog findDialog;
@@ -290,33 +290,33 @@ public class TextEditor extends JFrame implements ActionListener,
 		terminate.setMnemonic(KeyEvent.VK_T);
 		mbar.add(run);
 
-		JMenu tools = new JMenu("Tools");
-		tools.setMnemonic(KeyEvent.VK_O);
-		openHelpWithoutFrames = addToMenu(tools,
+		toolsMenu = new JMenu("Tools");
+		toolsMenu.setMnemonic(KeyEvent.VK_O);
+		openHelpWithoutFrames = addToMenu(toolsMenu,
 			"Open Help for Class...", 0, 0);
 		openHelpWithoutFrames.setMnemonic(KeyEvent.VK_O);
-		openHelp = addToMenu(tools,
+		openHelp = addToMenu(toolsMenu,
 			"Open Help for Class (with frames)...", 0, 0);
 		openHelp.setMnemonic(KeyEvent.VK_P);
-		openMacroFunctions = addToMenu(tools,
+		openMacroFunctions = addToMenu(toolsMenu,
 			"Open Help on Macro Functions...", 0, 0);
 		openMacroFunctions.setMnemonic(KeyEvent.VK_H);
-		extractSourceJar = addToMenu(tools,
+		extractSourceJar = addToMenu(toolsMenu,
 			"Extract source .jar...", 0, 0);
 		extractSourceJar.setMnemonic(KeyEvent.VK_E);
-		newPlugin = addToMenu(tools,
+		newPlugin = addToMenu(toolsMenu,
 			"Create new plugin...", 0, 0);
 		newPlugin.setMnemonic(KeyEvent.VK_C);
-		ijToFront = addToMenu(tools,
+		ijToFront = addToMenu(toolsMenu,
 			"Focus on the main Fiji window", 0, 0);
 		ijToFront.setMnemonic(KeyEvent.VK_F);
-		openSourceForClass = addToMenu(tools,
+		openSourceForClass = addToMenu(toolsMenu,
 			"Open .java file for class...", 0, 0);
 		openSourceForClass.setMnemonic(KeyEvent.VK_J);
-		openSourceForMenuItem = addToMenu(tools,
+		openSourceForMenuItem = addToMenu(toolsMenu,
 			"Open .java file for menu item...", 0, 0);
 		openSourceForMenuItem.setMnemonic(KeyEvent.VK_M);
-		mbar.add(tools);
+		mbar.add(toolsMenu);
 
 		gitMenu = new JMenu("Git");
 		gitMenu.setMnemonic(KeyEvent.VK_G);
@@ -780,8 +780,14 @@ public class TextEditor extends JFrame implements ActionListener,
 			switchTabRelative(1);
 		else if (source == previousTab)
 			switchTabRelative(-1);
+		else if (source == loadToolsJar)
+			new Script_Editor().addToolsJarToClassPath();
 		else if (handleTabsMenu(source))
 			return;
+	}
+
+	public void installDebugSupportMenuItem() {
+		loadToolsJar = addToMenu(toolsMenu, "Load debugging support via internet", 0, 0);
 	}
 
 	protected boolean handleTabsMenu(Object source) {
