@@ -125,6 +125,7 @@ public class Script_Editor implements PlugIn {
 					+ "/lib/tools.jar");
 			}
 			URL[] urls = new URL[] { url };
+			IJ.showStatus("Adding tools.jar from " + url);
 			loader.addFallBack(new URLClassLoader(urls));
 			return;
 		} catch (Exception e) { e.printStackTrace(); }

@@ -652,6 +652,7 @@ public class TextEditor extends JFrame implements ActionListener,
 			}.start();
 		else if (source == debug) {
 			try {
+				new Script_Editor().addToolsJarToClassPath();
 				getEditorPane().startDebugging();
 			} catch (Exception e) {
 				error("No debug support for this language");
