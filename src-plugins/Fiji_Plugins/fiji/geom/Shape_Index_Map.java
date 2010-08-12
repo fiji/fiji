@@ -97,7 +97,7 @@ public class Shape_Index_Map implements PlugInFilter {
 				float dny_y = -dyy.getf(i, j);
 				double D = Math.sqrt((dnx_x - dny_y) * (dnx_x - dny_y) + 4 * dnx_y * dny_x);
 				float s = factor * (float)Math.atan((dnx_x + dny_y) / D);
-				fp.setf(i, j, s);
+				fp.setf(i, j, Float.isNaN(s) ? 0 : s);
 			}
 		return fp;
 	}
