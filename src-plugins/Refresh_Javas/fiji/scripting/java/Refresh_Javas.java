@@ -71,6 +71,12 @@ public class Refresh_Javas extends RefreshScripts {
 						runPlugin(result[1], result[0], true);
 					return;
 				}
+			} catch (Fake.FakeException e) {
+				try {
+					err.write(e.getMessage().getBytes());
+				} catch (IOException e2) {
+					e.printStackTrace();
+				}
 			} catch (Exception e) {
 				e.printStackTrace(new PrintStream(err));
 				return;

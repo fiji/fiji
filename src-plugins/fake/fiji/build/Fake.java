@@ -639,6 +639,14 @@ public class Fake {
 			return -1;
 		}
 
+		public boolean isVarName(String key, String name) {
+			if (key == null || name == null)
+				return false;
+			key = key.toUpperCase();
+			name = name.toUpperCase();
+			return key.equals(name) || key.startsWith(name + "(");
+		}
+
 		public int getVariableNameEnd(String value, int offset) {
 			while (offset < value.length()) {
 				char c = value.charAt(offset);
@@ -707,7 +715,7 @@ public class Fake {
 				return;
 			}
 
-			if (name.equals("CLASSPATH"))
+			if (isVarName(name, "CLASSPATH"))
 				value = prefixPaths(cwd, value, true);
 
 			value = expandVariables(value, paren < 0 ? null :
@@ -715,7 +723,7 @@ public class Fake {
 
 			if (value.indexOf('*') >= 0 ||
 					value.indexOf('?') >= 0) {
-				String separator = name.equals("CLASSPATH") ?
+				String separator = isVarName(name, "CLASSPATH") ?
 					":" : " ";
 				List files = new ArrayList();
 				StringTokenizer tokenizer = new
@@ -1428,6 +1436,7 @@ public class Fake {
 				if (value == null)
 					return null;
 
+				// Skip empty elements
 				String result = "";
 				StringTokenizer tokenizer =
 					new StringTokenizer(value,
@@ -1496,8 +1505,8 @@ public class Fake {
 
 			public String getVar(String var) {
 				String value = super.getVar(var);
-				if (var.toUpperCase().equals("CLASSPATH")) {
-					if( classPath != null ) {
+				if (isVarName(value, "CLASSPATH")) {
+					if (classPath != null) {
 						return (value == null) ? classPath
 							: (value + ":" + classPath);
 					}
@@ -2030,7 +2039,9 @@ public class Fake {
 			String path = parentPath + names[i];
 			if (starstar && names[i].startsWith("."))
 				continue;
-			if (names[i].equals(".git") || names[i].endsWith(".swp")
+			if (names[i].equals(".git")
+					|| name.equals(".DS_Store")
+					|| names[i].endsWith(".swp")
 					|| names[i].endsWith(".swo")
 					|| names[i].endsWith("~"))
 				continue;

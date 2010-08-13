@@ -1127,13 +1127,14 @@ public class Executer {
 		record(STOP_ANIMATE);
 	}
 
-	public void changeAnimationAxis() {
+	public void changeAnimationOptions() {
 		GenericDialog gd = new GenericDialog("Change animation axis");
 		String[] choices = new String[] {"x axis", "y axis", "z axis"};
 
 		Vector3f axis = new Vector3f();
 		univ.getRotationAxis(axis);
 		axis.normalize();
+		float interval = univ.getRotationInterval();
 
 		int idx = 0;
 		if(axis.x == 0 && axis.y == 1 && axis.z == 0)
@@ -1141,6 +1142,8 @@ public class Executer {
 		if(axis.x == 0 && axis.y == 0 && axis.z == 1)
 			idx = 2;
 		gd.addChoice("Rotate around", choices, choices[idx]);
+		gd.addNumericField("Rotation interval", interval, 2, 6, "degree");
+
 		gd.showDialog();
 		if(gd.wasCanceled())
 			return;
@@ -1151,7 +1154,9 @@ public class Executer {
 			case 1: axis.x = 0; axis.y = 1; axis.z = 0; break;
 			case 2: axis.x = 0; axis.y = 0; axis.z = 1; break;
 		}
+		interval = (float)gd.getNextNumber();
 		univ.setRotationAxis(axis);
+		univ.setRotationInterval(interval);
 	}
 
 	public void viewPreferences() {

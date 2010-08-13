@@ -1,6 +1,6 @@
 /* -*- mode: java; c-basic-offset: 8; indent-tabs-mode: t; tab-width: 8 -*- */
 
-/* Copyright 2006, 2007, 2008, 2009 Mark Longair */
+/* Copyright 2006, 2007, 2008, 2009, 2010 Mark Longair */
 
 /*
   This file is part of the ImageJ plugin "Auto Tracer".
@@ -24,16 +24,6 @@
 */
 
 package tracing;
-
-import ij.*;
-import ij.plugin.*;
-import ij.gui.*;
-import ij.io.*;
-import ij.process.*;
-
-import java.io.*;
-import java.awt.*;
-import java.util.StringTokenizer;
 
 public interface TraceLoaderListener {
 

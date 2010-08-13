@@ -1,6 +1,6 @@
 /* -*- mode: java; c-basic-offset: 8; indent-tabs-mode: t; tab-width: 8 -*- */
 
-/* Copyright 2006, 2007, 2008, 2009 Mark Longair */
+/* Copyright 2006, 2007, 2008, 2009, 2010 Mark Longair */
 
 /*
   This file is part of the ImageJ plugin "Simple Neurite Tracer".
@@ -250,9 +250,9 @@ public class TracerThread extends SearchThread {
 					double e1 = hessianEigenValues[1];
 					double e2 = hessianEigenValues[2];
 
-					if( real && (hessianEigenValues[1] < 0) && (hessianEigenValues[2] < 0) ) {
+					if( real && (e1 < 0) && (e2 < 0) ) {
 
-						double measure = Math.sqrt( hessianEigenValues[1] * hessianEigenValues[2] );
+						double measure = Math.sqrt( e1 * e2 );
 
 						if( measure == 0 ) // This should never happen in practice...
 							measure = 0.2;

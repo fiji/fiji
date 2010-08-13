@@ -155,6 +155,9 @@
 /bio-formats/components/stubs/lwf-stubs/build/
 /bio-formats/loci_tools.jar
 /clojure/classes/
+/commons-math/commons-math.jar
+/commons-math/lib/
+/commons-math/target/
 /ij-plugins/ij-ImageIO_.jar
 /junit/junit4.5/
 /junit/junit-4.5.jar

@@ -40,6 +40,9 @@ import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -339,7 +342,7 @@ public class FileFunctions {
 				+ "import ij.process.ImageProcessor;\n"
 				+ "\n"
 				+ "public class " + name + " implements PlugInFilter {\n"
-				+ "\tImagePlus image;\n"
+				+ "\tprotected ImagePlus image;\n"
 				+ "\n"
 				+ "\tpublic int setup(String arg, ImagePlus image) {\n"
 				+ "\t\tthis.image = image;\n"
@@ -512,38 +515,43 @@ public class FileFunctions {
 		}
 	}
 
-	public void showDiff(File file) {
-		showDiffOrCommit(file, true);
+	public void showDiff(File file, File gitDirectory) {
+		showDiffOrCommit(file, gitDirectory, true);
 	}
 
-	public void commit(File file) {
-		showDiffOrCommit(file, false);
+	public void commit(File file, File gitDirectory) {
+		showDiffOrCommit(file, gitDirectory, false);
 	}
 
-	public void showDiffOrCommit(File file, boolean diffOnly) {
-		if (file == null)
+	public void showDiffOrCommit(File file, File gitDirectory, boolean diffOnly) {
+		if (file == null || gitDirectory == null)
 			return;
-		final File pluginRoot = getPluginRootDirectory(file);
+		boolean isInFijiGit = gitDirectory.equals(new File(System.getProperty("fiji.dir"), ".git"));
+		final File root = isInFijiGit ? getPluginRootDirectory(file) : gitDirectory.getParentFile();
 		final DiffView diff = new DiffView();
+		String configPath = System.getProperty("fiji.dir") + "/staged-plugins/"
+			+ root.getName() + ".config";
+		// only include .config file if gitDirectory is fiji.dir/.git
+		final String config = isInFijiGit && new File(configPath).exists() ? configPath : null;
 		try {
 			String[] cmdarray = {
-				"git", "diff", "--", ".",
-				System.getProperty("fiji.dir") + "/staged-plugins/"
-				+ pluginRoot.getName() + ".config"
+				"git", "diff", "--", "."
 			};
+			if (config != null)
+				cmdarray = append(cmdarray, config);
 			SimpleExecuter e = new SimpleExecuter(cmdarray,
-				diff, new DiffView.IJLog(), pluginRoot);
+				diff, new DiffView.IJLog(), root);
 		} catch (IOException e) {
 			IJ.handleException(e);
 			return;
 		}
 
 		if (diff.getChanges() == 0) {
-			error("No changes detected for " + pluginRoot);
+			error("No changes detected for " + root);
 			return;
 		}
 
-		final JFrame frame = new JFrame((diffOnly ? "Unstaged differences for " : "Commit ") + pluginRoot);
+		final JFrame frame = new JFrame((diffOnly ? "Unstaged differences for " : "Commit ") + root);
 		frame.setSize(640, diffOnly ? 480 : 640);
 		if (diffOnly)
 			frame.getContentPane().add(diff);
@@ -593,17 +601,16 @@ public class FileFunctions {
 						return;
 					}
 
-					String config = System.getProperty("fiji.dir") + "/staged-plugins/"
-						+ pluginRoot.getName() + ".config";
 					String[] cmdarray = {
-						"git", "commit", "-s", "-F", "-", "--", ".",
-						new File(config).exists() ? config : "."
+						"git", "commit", "-s", "-F", "-", "--", "."
 					};
+					if (config != null)
+						cmdarray = append(cmdarray, config);
 					InputStream stdin = new ByteArrayInputStream(message.getBytes());
 					SimpleExecuter.LineHandler ijLog = new DiffView.IJLog();
 					try {
 						SimpleExecuter executer = new SimpleExecuter(cmdarray,
-							stdin, ijLog, ijLog, pluginRoot);
+							stdin, ijLog, ijLog, root);
 						if (executer.getExitCode() == 0)
 							frame.dispose();
 					} catch (IOException e2) {
@@ -614,6 +621,53 @@ public class FileFunctions {
 		}
 		frame.pack();
 		frame.setVisible(true);
+	}
+
+	public class ScreenLineHandler implements SimpleExecuter.LineHandler {
+		public void handleLine(String line) {
+			parent.screen.insert(line + "\n", parent.screen.getDocument().getLength());
+		}
+	}
+
+	public static class GrepLineHandler implements SimpleExecuter.LineHandler {
+		protected static Pattern pattern = Pattern.compile("([A-Za-z]:[^:]*|[^:]+):([1-9][0-9]*):.*", Pattern.DOTALL);
+
+		public ErrorHandler errorHandler;
+		protected String directory;
+
+		public GrepLineHandler(JTextArea textArea, String directory) {
+			errorHandler = new ErrorHandler(textArea);
+			if (!directory.endsWith("/"))
+				directory += "/";
+			this.directory = directory;
+		}
+
+		public void handleLine(String line) {
+			Matcher matcher = pattern.matcher(line);
+			if (matcher.matches())
+				errorHandler.addError(directory + matcher.group(1), Integer.parseInt(matcher.group(2)), line);
+			else
+				errorHandler.addError(null, -1, line);
+		}
+	}
+
+	public void gitGrep(String searchTerm, File directory) {
+		GrepLineHandler handler = new GrepLineHandler(parent.screen, directory.getAbsolutePath());
+		try {
+			SimpleExecuter executer = new SimpleExecuter(new String[] {
+				"git", "grep", "-n", searchTerm
+			}, handler, handler, directory);
+			parent.errorHandler = handler.errorHandler;
+		} catch (IOException e) {
+			IJ.handleException(e);
+		}
+	}
+
+	protected String[] append(String[] array, String item) {
+		String[] result = new String[array.length + 1];
+		System.arraycopy(array, 0, result, 0, array.length);
+		result[array.length] = item;
+		return result;
 	}
 
 	protected void addChangesActionLink(DiffView diff, String text, final String plugin, final int verboseLevel) {

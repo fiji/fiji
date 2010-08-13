@@ -62,13 +62,9 @@ die () {
 test $# = 0 && die "Usage: $0 (gitignore | submodule) [<submodule>...]"
 
 case "$1" in
-gitignore)
-	shift &&
-	mode=gitignore
-	;;
-submodule)
-	shift &&
-	mode=submodule
+gitignore|submodule|ignoredirty)
+	mode="$1" &&
+	shift
 	;;
 *)
 	die "Need to know what to update: 'gitignore' or 'submodule'"
@@ -89,6 +85,9 @@ do
 			;;
 		submodule)
 			update_submodules_exclude "$submodule"
+			;;
+		ignoredirty)
+			git config submodule."$submodule".ignore dirty
 			;;
 		*)
 			false

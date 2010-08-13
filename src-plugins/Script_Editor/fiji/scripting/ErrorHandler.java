@@ -11,6 +11,7 @@ import javax.swing.JTextArea;
 
 import javax.swing.text.BadLocationException;
 import javax.swing.text.DefaultHighlighter;
+import javax.swing.text.Document;
 import javax.swing.text.Position;
 
 
@@ -88,6 +89,23 @@ public class ErrorHandler {
 		public Error(String path, int line) {
 			this.path = path;
 			this.line = line;
+		}
+	}
+
+	public void addError(String path, int line, String text) {
+		try {
+			Document document = textArea.getDocument();
+			int offset = document.getLength();
+			if (!text.endsWith("\n"))
+				text += "\n";
+			textArea.insert(text, offset);
+			if (path == null || line < 0)
+				return;
+			Error error = new Error(path, line);
+			error.position = document.createPosition(offset + 1);
+			list.add(error);
+		} catch (BadLocationException e) {
+			e.printStackTrace();
 		}
 	}
 

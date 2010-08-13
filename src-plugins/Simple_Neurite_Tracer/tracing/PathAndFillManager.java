@@ -1,6 +1,6 @@
 /* -*- mode: java; c-basic-offset: 8; indent-tabs-mode: t; tab-width: 8 -*- */
 
-/* Copyright 2006, 2007, 2008, 2009 Mark Longair */
+/* Copyright 2006, 2007, 2008, 2009, 2010 Mark Longair */
 
 /*
   This file is part of the ImageJ plugin "Simple Neurite Tracer".
@@ -71,6 +71,12 @@ import util.XMLFunctions;
 
 class TracesFileFormatException extends SAXException {
 	public TracesFileFormatException(String message) {
+		super(message);
+	}
+}
+
+class SWCExportException extends Exception {
+	public SWCExportException(String message) {
 		super(message);
 	}
 }
@@ -308,6 +314,180 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		}
 
 		return primaryPaths.toArray(new Path[]{});
+	}
+
+	public synchronized ArrayList<SWCPoint> getSWCFor( Set<Path> selectedPaths ) throws SWCExportException {
+
+		/* Turn the primary paths into a Set.  This call also
+		   ensures that the Path.children and
+		   Path.somehowJoins relationships are set up
+		   correctly: */
+		Set structuredPathSet = new HashSet(Arrays.asList(getPathsStructured()));
+
+		/* Check that there's only one primary path in
+		   selectedPaths by taking the intersection and
+		   checking there's exactly one element in it: */
+
+		structuredPathSet.retainAll(selectedPaths);
+
+		if( structuredPathSet.size() == 0 )
+			throw new SWCExportException("The paths you select for SWC export must include a primary path\n(i.e. one at the top level in the Path Window's tree)");
+		if( structuredPathSet.size() > 1 )
+			throw new SWCExportException("You can only select one connected set of paths for SWC export");
+
+		/* So now we definitely only have one primary path.
+		   All the connected paths must also be selected, but
+		   we'll check that as we go along: */
+
+		ArrayList<SWCPoint> result = new ArrayList<SWCPoint>();
+
+		int currentPointID = 1;
+
+		/* nextPathsToAdd is the queue of Paths to add points
+		   from, and pathsAlreadyDone is the set of Paths that
+		   have already had their points added */
+
+		LinkedList<Path> nextPathsToAdd = new LinkedList<Path>();
+		Set<Path> pathsAlreadyDone = new HashSet<Path>();
+
+		Path firstPath = (Path)structuredPathSet.iterator().next();
+		if( firstPath.size() == 0 )
+			throw new SWCExportException("The primary path contained no points!");
+		nextPathsToAdd.add( firstPath );
+
+		while( nextPathsToAdd.size() > 0 ) {
+
+			Path currentPath = nextPathsToAdd.removeFirst();
+
+			if( ! selectedPaths.contains(currentPath) )
+				throw new SWCExportException("The path \""+currentPath+"\" is connected to other selected paths, but wasn't itself selected");
+
+			/* The paths we're dealing with specify
+			   connectivity, but we might be using the
+			   fitted versions - take them for the point
+			   positions: */
+
+			Path pathToUse = currentPath;
+			if( currentPath.getUseFitted() ) {
+				pathToUse = currentPath.fitted;
+			}
+
+			Path parent = null;
+
+			for( Path possibleParent : currentPath.somehowJoins ) {
+				if( pathsAlreadyDone.contains( possibleParent ) ) {
+					parent = possibleParent;
+					break;
+				}
+			}
+
+			int indexToStartAt = 0;
+			int nearestParentSWCPointID = -1;
+			PointInImage connectingPoint = null;
+			if( parent != null ) {
+				if( currentPath.startJoins != null &&
+				    currentPath.startJoins == parent )
+					connectingPoint = currentPath.startJoinsPoint;
+				else if( currentPath.endJoins != null &&
+					 currentPath.endJoins == parent )
+					connectingPoint = currentPath.endJoinsPoint;
+				else if( parent.startJoins != null &&
+					 parent.startJoins == currentPath )
+					connectingPoint = parent.startJoinsPoint;
+				else if( parent.endJoins != null &&
+					 parent.endJoins == currentPath )
+					connectingPoint = parent.endJoinsPoint;
+				else
+					throw new SWCExportException("Couldn't find the link between parent \""+parent+"\"\nand child \""+currentPath+"\" which are somehow joined");
+
+				/* Find the SWC point ID on the parent which is nearest: */
+
+				double distanceSquaredToNearestParentPoint = Double.MAX_VALUE;
+				for( SWCPoint s : result ) {
+					if( s.fromPath != parent )
+						continue;
+					double distanceSquared = connectingPoint.distanceSquaredTo(s.x, s.y, s.z);
+					if( distanceSquared < distanceSquaredToNearestParentPoint ) {
+						nearestParentSWCPointID = s.id;
+						distanceSquaredToNearestParentPoint = distanceSquared;
+					}
+				}
+
+				/* Now find the index of the point on this path which is nearest */
+				indexToStartAt = pathToUse.indexNearestTo( connectingPoint.x,
+									   connectingPoint.y,
+									   connectingPoint.z );
+			}
+
+			SWCPoint firstSWCPoint = null;
+
+			boolean realRadius = pathToUse.hasCircles();
+			for( int i = indexToStartAt; i < pathToUse.points; ++i ) {
+				double radius = 0;
+				if( realRadius )
+					radius = pathToUse.radiuses[i];
+				SWCPoint swcPoint = new SWCPoint(currentPointID,
+								 Path.SWC_UNDEFINED,
+								 pathToUse.precise_x_positions[i],
+								 pathToUse.precise_y_positions[i],
+								 pathToUse.precise_z_positions[i],
+								 radius,
+								 firstSWCPoint == null ?  nearestParentSWCPointID : currentPointID - 1);
+				swcPoint.fromPath = currentPath;
+				result.add(swcPoint);
+				++ currentPointID;
+				if( firstSWCPoint == null )
+					firstSWCPoint = swcPoint;
+			}
+
+			boolean firstOfOtherBranch = true;
+			for( int i = indexToStartAt - 1; i >= 0; --i ) {
+				int previousPointID = currentPointID - 1;
+				if( firstOfOtherBranch ) {
+					firstOfOtherBranch = false;
+					previousPointID = firstSWCPoint.id;
+				}
+				double radius = 0;
+				if( realRadius )
+					radius = pathToUse.radiuses[i];
+				SWCPoint swcPoint = new SWCPoint(currentPointID,
+								 Path.SWC_UNDEFINED,
+								 pathToUse.precise_x_positions[i],
+								 pathToUse.precise_y_positions[i],
+								 pathToUse.precise_z_positions[i],
+								 radius,
+								 previousPointID);
+				swcPoint.fromPath = currentPath;
+				result.add(swcPoint);
+				++ currentPointID;
+			}
+
+			pathsAlreadyDone.add( currentPath );
+
+			/* Add all the connected paths that aren't already in pathsAlreadyDone */
+
+			for( Path connectedPath : currentPath.somehowJoins ) {
+				if( ! pathsAlreadyDone.contains( connectedPath ) ) {
+					nextPathsToAdd.add( connectedPath );
+				}
+			}
+		}
+
+		// Now check that all selectedPaths are in pathsAlreadyDone, otherwise give an error:
+
+		Path disconnectedExample = null;
+		int selectedAndNotConnected = 0;
+		for( Path selectedPath : selectedPaths ) {
+			if( ! pathsAlreadyDone.contains(selectedPath) ) {
+				++ selectedAndNotConnected;
+				if( disconnectedExample == null )
+					disconnectedExample = selectedPath;
+			}
+		}
+		if( selectedAndNotConnected > 0 )
+			throw new SWCExportException("You must select all the connected paths\n("+selectedAndNotConnected+" paths (e.g. \""+disconnectedExample+"\") were not connected.)");
+
+		return result;
 	}
 
 	public synchronized void resetListeners( Path justAdded ) {
@@ -1345,43 +1525,6 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		resetListeners( null );
 	}
 
-	private static class SWCPoint implements Comparable {
-		ArrayList<SWCPoint> nextPoints;
-		SWCPoint previousPoint;
-		int id, type, previous;
-		double x, y, z, radius;
-		public SWCPoint( int id, int type, double x, double y, double z, double radius, int previous ) {
-			nextPoints = new ArrayList<SWCPoint>();
-			this.id = id;
-			this.type = type;
-			this.x = x;
-			this.y = y;
-			this.z = z;
-			this.radius = radius;
-			this.previous = previous;
-		}
-		public PointInImage getPointInImage() {
-			return new PointInImage( x, y, z );
-		}
-		public void addNextPoint( SWCPoint p ) {
-			if( ! nextPoints.contains( p ) )
-				nextPoints.add( p );
-		}
-		public void setPreviousPoint( SWCPoint p ) {
-			previousPoint = p;
-		}
-		public String toString( ) {
-			return "SWCPoint ["+id+"] "+Path.swcTypeNames[type]+" "+
-				"("+x+","+y+","+z+") "+
-				"radius: "+radius+", "+
-				"[previous: "+ previous+"]";
-		}
-		public int compareTo( Object o ) {
-			int oid = ((SWCPoint)o).id;
-			return (id < oid) ? -1 : ((id > oid) ? 1 : 0);
-		}
-	}
-
 	/* The two useful documents about the SWC file formats are:
 
 	   doi:10.1016/S0165-0270(98)00091-0
@@ -1410,12 +1553,6 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	   The broken files also seem to require that you scale the
 	   radius by the minimum voxel separation (!) so that flag
 	   also turns on that workaround.
-
-	   In interactive use, you can enable this flag by holding
-	   down "Control" while clicking on the "Load Traces / SWC
-	   File" button.  In programmatic use, the developer is
-	   expected to figure out whether then need to set this flag
-	   or not.
 	*/
 
 	public boolean importSWC( BufferedReader br, boolean assumeCoordinatesIndexVoxels ) throws IOException {

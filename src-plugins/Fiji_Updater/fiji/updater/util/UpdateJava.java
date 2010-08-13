@@ -167,6 +167,7 @@ public class UpdateJava implements PlugIn {
 	}
 
 	protected InputStream openURL(String url) throws IOException {
+		Util.useSystemProxies();
 		if (url.startsWith("http://") || url.startsWith("https://")) try {
 			HttpURLConnection http = (HttpURLConnection)new URL(url).openConnection();
 			progress.addItem("Downloading " + url);

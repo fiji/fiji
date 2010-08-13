@@ -1,0 +1,52 @@
+#!/bin/sh
+// 2>&1 | :; exec "$(dirname "$0")"/../fiji "$0" "$@" # exec with fiji
+
+import com.lowagie.text.Document;
+
+import com.lowagie.text.pdf.PdfReader;
+import com.lowagie.text.pdf.PdfCopy;
+import com.lowagie.text.pdf.SimpleBookmark;
+
+import java.io.FileOutputStream;
+
+import java.util.ArrayList;
+
+if (bsh.args.length != 2) {
+	System.err.println("Usage: " + this.interpreter.getSourceFileInfo()
+		+ " <input> <output>");
+	System.exit(1);
+}
+
+copy = null;
+all_bookmarks = new ArrayList();
+page_offset = 0;
+
+reader = new PdfReader(bsh.args[0]);
+reader.consolidateNamedDestinations();
+bookmarks = SimpleBookmark.getBookmark(reader);
+if (bookmarks != null) {
+	if (page_offset != 0)
+		SimpleBookmark.shiftPageNumbers(bookmarks, page_offset, null);
+	all_bookmarks.add(bookmarks);
+}
+
+page_count = reader.getNumberOfPages();
+page_offset += page_offset;
+
+document = new Document(reader.getPageSizeWithRotation(1));
+output = new FileOutputStream(bsh.args[1]);
+copy = new PdfCopy(document, output);
+document.open();
+
+print("Reversing " + page_count + " pages");
+
+for (k = page_count; k > 0; k--)
+	copy.addPage(copy.getImportedPage(reader, k));
+
+if (reader.getAcroForm() != null)
+	copy.copyAcroForm(reader);
+
+if (!all_bookmarks.isEmpty())
+	copy.setOutlines(all_bookmarks);
+
+document.close();

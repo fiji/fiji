@@ -183,7 +183,7 @@ public class SPIM_Registration extends SPIMRegistrationAbstract
 			conf.minPeakValue = 0.001f;
 		else if ( beadBrightness == 1 )
 			conf.minPeakValue = 0.008f;
-		else if ( beadBrightness == 1 )
+		else if ( beadBrightness == 2 )
 			conf.minPeakValue = 0.03f;
 		else
 			conf.minPeakValue = 0.1f;

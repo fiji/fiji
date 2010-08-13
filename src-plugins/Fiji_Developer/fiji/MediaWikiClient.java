@@ -80,7 +80,7 @@ public class MediaWikiClient {
 				"action", "submitlogin",
 				"type", "login"
 			};
-			if (!hasSessionKey()) {
+			if (!hasSessionKey() || loginToken == null) {
 				String response = sendRequest(getVars, null /* postVars */,
 						null, true);
 				loginToken = getFormVariable(response, "wpLoginToken");
@@ -101,7 +101,7 @@ public class MediaWikiClient {
 
 			String response =
 				sendRequest(getVars, postVars);
-			loginToken = getFormVariable(response, "wpLoginToken");
+			loginToken = null;
 			loggedIn = response.indexOf("Login error") < 0;
 			if (IJ.debugMode)
 				debugShow(response);

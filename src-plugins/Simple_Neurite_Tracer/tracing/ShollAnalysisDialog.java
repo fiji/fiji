@@ -1,6 +1,6 @@
 /* -*- mode: java; c-basic-offset: 8; indent-tabs-mode: t; tab-width: 8 -*- */
 
-/* Copyright 2006, 2007, 2008, 2009 Mark Longair */
+/* Copyright 2006, 2007, 2008, 2009, 2010 Mark Longair */
 
 /*
   This file is part of the ImageJ plugin "Simple Neurite Tracer".
@@ -154,7 +154,6 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 						       "sholl-"+(detail?"detail":"summary")+results.getSuggestedSuffix(),
 						       ".csv");
 
-			String savePath;
 			if(sd.getFileName()==null) {
 				return;
 			}
@@ -329,7 +328,6 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 						       "sholl"+suggestedSuffix,
 						       ".svg");
 
-			String savePath;
 			if(sd.getFileName()==null) {
 				return;
 			}

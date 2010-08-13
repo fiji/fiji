@@ -20,6 +20,17 @@ from subprocess import call, check_call, Popen, PIPE
 #   libj3dcore-ogl.so =>    libjava3d-jni
 #   libj3dcore-ogl-cg.so => [missing - probably not needed?]
 
+# We can't expect any of this to work without the basic build
+# dependencies for the Debian package in place.  (It might look odd
+# having this run every time, sometimes with the git committed
+# dependencies and sometimes with the rebuilt control file, but in
+# either case it's an error to be missing any build dependency.)
+#
+# FIXME: keep the build dependencies in a separate file, make sure
+# that they're committed in the git version as well.
+
+check_call(["dpkg-checkbuilddeps","debian/control"])
+
 build_dependencies = [ "debhelper (>= 5)",
                        "gcc",
                        "lsb-release",
@@ -263,7 +274,7 @@ os.chdir(source_directory)
 
 if options.add_changelog_template:
     suggest_new_version = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
-    git_rev = Popen(["git","rev-parse","HEAD"],stdout=PIPE).communicate()[0].strip()
+    git_rev = Popen(["git","rev-parse","--verify","HEAD"],stdout=PIPE).communicate()[0].strip()
     fp = open("debian/changelog")
     old_changelog = fp.read()
     fp.close()

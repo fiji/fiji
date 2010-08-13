@@ -94,8 +94,9 @@ public class TextEditor extends JFrame implements ActionListener,
 		  runSelection, extractSourceJar, toggleBookmark,
 		  listBookmarks, openSourceForClass, newPlugin, installMacro,
 		  openSourceForMenuItem, showDiff, commit, ijToFront,
-		  openMacroFunctions;
-	JMenu gitMenu, tabsMenu;
+		  openMacroFunctions, decreaseFontSize, increaseFontSize,
+		  chooseTabSize, gitGrep, loadToolsJar;
+	JMenu gitMenu, tabsMenu, tabSizeMenu, toolsMenu;
 	int tabsMenuTabsStart;
 	Set<JMenuItem> tabsMenuItems;
 	FindAndReplaceDialog findDialog;
@@ -160,6 +161,51 @@ public class TextEditor extends JFrame implements ActionListener,
 		listBookmarks = addToMenu(edit, "List Bookmarks", 0, 0);
 		listBookmarks.setMnemonic(KeyEvent.VK_O);
 		edit.addSeparator();
+
+		// Font adjustments
+		decreaseFontSize = addToMenu(edit, "Decrease font size", KeyEvent.VK_MINUS, ctrl);
+		decreaseFontSize.setMnemonic(KeyEvent.VK_D);
+		increaseFontSize = addToMenu(edit, "Increase font size", KeyEvent.VK_PLUS, ctrl);
+		increaseFontSize.setMnemonic(KeyEvent.VK_C);
+
+		JMenu fontSize = new JMenu("Font sizes");
+		fontSize.setMnemonic(KeyEvent.VK_Z);
+		for (final int size : new int[] { 8, 10, 12, 16, 20, 28, 42 } ) {
+			JMenuItem item = new JMenuItem("" + size + " pt");
+			item.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent event) {
+					getEditorPane().setFontSize(size);
+				}
+			});
+			fontSize.add(item);
+		}
+		edit.add(fontSize);
+		edit.addSeparator();
+
+		// Add tab size adjusting menu
+		tabSizeMenu = new JMenu("Tab sizes");
+		tabSizeMenu.setMnemonic(KeyEvent.VK_T);
+		ButtonGroup bg = new ButtonGroup();
+		for (final int size : new int[] { 2, 4, 8 }) {
+			JRadioButtonMenuItem item = new JRadioButtonMenuItem("" + size, size == 8);
+			item.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent event) {
+					getEditorPane().setTabSize(size);
+					updateTabSize(false);
+				}
+			});
+			item.setMnemonic(KeyEvent.VK_0 + (size % 10));
+			bg.add(item);
+			tabSizeMenu.add(item);
+		}
+		chooseTabSize = new JRadioButtonMenuItem("Other...", false);
+		chooseTabSize.setMnemonic(KeyEvent.VK_O);
+		chooseTabSize.addActionListener(this);
+		bg.add(chooseTabSize);
+		tabSizeMenu.add(chooseTabSize);
+		edit.add(tabSizeMenu);
+		edit.addSeparator();
+
 		clearScreen = addToMenu(edit, "Clear output panel", 0, 0);
 		clearScreen.setMnemonic(KeyEvent.VK_L);
 		edit.addSeparator();
@@ -244,33 +290,33 @@ public class TextEditor extends JFrame implements ActionListener,
 		terminate.setMnemonic(KeyEvent.VK_T);
 		mbar.add(run);
 
-		JMenu tools = new JMenu("Tools");
-		tools.setMnemonic(KeyEvent.VK_O);
-		openHelpWithoutFrames = addToMenu(tools,
+		toolsMenu = new JMenu("Tools");
+		toolsMenu.setMnemonic(KeyEvent.VK_O);
+		openHelpWithoutFrames = addToMenu(toolsMenu,
 			"Open Help for Class...", 0, 0);
 		openHelpWithoutFrames.setMnemonic(KeyEvent.VK_O);
-		openHelp = addToMenu(tools,
+		openHelp = addToMenu(toolsMenu,
 			"Open Help for Class (with frames)...", 0, 0);
 		openHelp.setMnemonic(KeyEvent.VK_P);
-		openMacroFunctions = addToMenu(tools,
+		openMacroFunctions = addToMenu(toolsMenu,
 			"Open Help on Macro Functions...", 0, 0);
 		openMacroFunctions.setMnemonic(KeyEvent.VK_H);
-		extractSourceJar = addToMenu(tools,
+		extractSourceJar = addToMenu(toolsMenu,
 			"Extract source .jar...", 0, 0);
 		extractSourceJar.setMnemonic(KeyEvent.VK_E);
-		newPlugin = addToMenu(tools,
+		newPlugin = addToMenu(toolsMenu,
 			"Create new plugin...", 0, 0);
 		newPlugin.setMnemonic(KeyEvent.VK_C);
-		ijToFront = addToMenu(tools,
+		ijToFront = addToMenu(toolsMenu,
 			"Focus on the main Fiji window", 0, 0);
 		ijToFront.setMnemonic(KeyEvent.VK_F);
-		openSourceForClass = addToMenu(tools,
+		openSourceForClass = addToMenu(toolsMenu,
 			"Open .java file for class...", 0, 0);
 		openSourceForClass.setMnemonic(KeyEvent.VK_J);
-		openSourceForMenuItem = addToMenu(tools,
+		openSourceForMenuItem = addToMenu(toolsMenu,
 			"Open .java file for menu item...", 0, 0);
 		openSourceForMenuItem.setMnemonic(KeyEvent.VK_M);
-		mbar.add(tools);
+		mbar.add(toolsMenu);
 
 		gitMenu = new JMenu("Git");
 		gitMenu.setMnemonic(KeyEvent.VK_G);
@@ -280,6 +326,9 @@ public class TextEditor extends JFrame implements ActionListener,
 		commit = addToMenu(gitMenu,
 			"Commit...", 0, 0);
 		commit.setMnemonic(KeyEvent.VK_C);
+		gitGrep = addToMenu(gitMenu,
+			"Grep...", 0, 0);
+		gitGrep.setMnemonic(KeyEvent.VK_G);
 		mbar.add(gitMenu);
 
 		tabsMenu = new JMenu("Tabs");
@@ -321,6 +370,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		addAccelerator(nextTab, KeyEvent.VK_PAGE_DOWN, ctrl, true);
 		addAccelerator(previousTab, KeyEvent.VK_PAGE_UP, ctrl, true);
 
+		addAccelerator(increaseFontSize, KeyEvent.VK_EQUALS, ctrl | shift, true);
+
 		// make sure that the window is not closed by accident
 		addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
@@ -340,7 +391,8 @@ public class TextEditor extends JFrame implements ActionListener,
 
 		addWindowFocusListener(new WindowAdapter() {
 			public void windowGainedFocus(WindowEvent e) {
-				getEditorPane().checkForOutsideChanges();
+				if (editorPane != null)
+					editorPane.checkForOutsideChanges();
 			}
 		});
 
@@ -352,7 +404,8 @@ public class TextEditor extends JFrame implements ActionListener,
 
 		setLocationRelativeTo(null); // center on screen
 
-		editorPane.requestFocus();
+		if (editorPane != null)
+			editorPane.requestFocus();
 	}
 
 	public TextEditor(String title, String text) {
@@ -411,6 +464,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		}
 
 		RSyntaxTextArea textArea = getTextArea();
+		if (textArea == null)
+			return;
 		textArea.getInputMap().put(KeyStroke.getKeyStroke(key,
 					modifiers), component);
 		if (textArea.getActionMap().get(component) != null)
@@ -597,6 +652,7 @@ public class TextEditor extends JFrame implements ActionListener,
 			}.start();
 		else if (source == debug) {
 			try {
+				new Script_Editor().addToolsJarToClassPath();
 				getEditorPane().startDebugging();
 			} catch (Exception e) {
 				error("No debug support for this language");
@@ -645,6 +701,13 @@ public class TextEditor extends JFrame implements ActionListener,
 			getTextArea().setCaretPosition(0);
 			getTextArea().moveCaretPosition(getTextArea().getDocument().getLength());
 		}
+		else if (source == chooseTabSize) {
+			int tabSize = (int)IJ.getNumber("Tab size", getEditorPane().getTabSize());
+			if (tabSize != IJ.CANCELED) {
+				getEditorPane().setTabSize(tabSize);
+				updateTabSize(false);
+			}
+		}
 		else if (source == addImport)
 			addImport(null);
 		else if (source == removeUnusedImports)
@@ -674,10 +737,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		else if (source == extractSourceJar)
 			extractSourceJar();
 		else if (source == openSourceForClass) {
-			String className = getSelectedTextOrAsk("Name of class");
-			if (className.indexOf('.') < 0)
-				className = getEditorPane().getClassNameFunctions()
-					.getFullName(className);
+			String className = getSelectedClassNameOrAsk();
 			if (className != null) try {
 				String path = new FileFunctions(this).getSourcePath(className);
 				if (path != null)
@@ -688,20 +748,47 @@ public class TextEditor extends JFrame implements ActionListener,
 		}
 		else if (source == openSourceForMenuItem)
 			new OpenSourceForMenuItem().run(null);
-		else if (source == showDiff)
-			new FileFunctions(this).showDiff(getEditorPane().file);
-		else if (source == commit)
-			new FileFunctions(this).commit(getEditorPane().file);
+		else if (source == showDiff) {
+			EditorPane pane = getEditorPane();
+			new FileFunctions(this).showDiff(pane.file, pane.getGitDirectory());
+		}
+		else if (source == commit) {
+			EditorPane pane = getEditorPane();
+			new FileFunctions(this).commit(pane.file, pane.getGitDirectory());
+		}
+		else if (source == gitGrep) {
+			String searchTerm = getTextArea().getSelectedText();
+			File searchRoot = getEditorPane().file;
+			if (searchRoot == null)
+				error("File was not yet saved; no location known!");
+			searchRoot = searchRoot.getParentFile();
+
+			GenericDialog gd = new GenericDialog("Grep options");
+			gd.addStringField("Search_term", searchTerm == null ? "" : searchTerm, 20);
+			gd.addMessage("This search will be performed in\n\n\t" + searchRoot);
+			gd.showDialog();
+			grabFocus(2);
+			if (!gd.wasCanceled())
+				new FileFunctions(this).gitGrep(gd.getNextString(), searchRoot);
+		}
 		else if (source == newPlugin)
 			new FileFunctions(this).newPlugin();
 		else if (source == ijToFront)
 			IJ.getInstance().toFront();
+		else if (source == increaseFontSize || source == decreaseFontSize)
+			getEditorPane().increaseFontSize((float)(source == increaseFontSize ? 1.2 : 1 / 1.2));
 		else if (source == nextTab)
 			switchTabRelative(1);
 		else if (source == previousTab)
 			switchTabRelative(-1);
+		else if (source == loadToolsJar)
+			new Script_Editor().addToolsJarToClassPath();
 		else if (handleTabsMenu(source))
 			return;
+	}
+
+	public void installDebugSupportMenuItem() {
+		loadToolsJar = addToMenu(toolsMenu, "Load debugging support via internet", 0, 0);
 	}
 
 	protected boolean handleTabsMenu(Object source) {
@@ -842,6 +929,11 @@ public class TextEditor extends JFrame implements ActionListener,
 				addDefaultAccelerators();
 			}
 			editorPane.setFile("".equals(path) ? null : path);
+			try {
+				updateTabSize(true);
+			} catch (NullPointerException e) {
+				/* ignore */
+			}
 			if (wasNew) {
 				int index = tabbed.getSelectedIndex()
 					+ tabsMenuTabsStart;
@@ -1092,6 +1184,7 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 
 	void setLanguage(Languages.Language language) {
 		getEditorPane().setLanguage(language);
+		updateTabSize(true);
 	}
 
 	void updateLanguageMenu(Languages.Language language) {
@@ -1115,8 +1208,29 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 		boolean isMacro = language.menuLabel.equals("ImageJ Macro");
 		installMacro.setEnabled(isMacro);
 
-		boolean isInGit = new FileFunctions(this).getGitDirectory(getEditorPane().file) != null;
+		boolean isInGit = getEditorPane().getGitDirectory() != null;
 		gitMenu.setVisible(isInGit);
+
+		updateTabSize(false);
+	}
+
+	protected void updateTabSize(boolean setByLanguage) {
+		EditorPane pane = getEditorPane();
+		if (setByLanguage)
+			pane.setTabSize(pane.currentLanguage.menuLabel.equals("Python") ? 4 : 8);
+		int tabSize = pane.getTabSize();
+		boolean defaultSize = false;
+		for (int i = 0; i < tabSizeMenu.getItemCount(); i++) {
+			JMenuItem item = tabSizeMenu.getItem(i);
+			if (item == chooseTabSize) {
+				item.setSelected(!defaultSize);
+				item.setLabel("Other" + (defaultSize ? "" : " (" + tabSize + ")") + "...");
+			}
+			else if (tabSize == Integer.parseInt(item.getLabel())) {
+				item.setSelected(true);
+				defaultSize = true;
+			}
+		}
 	}
 
 	public void setFileName(String baseName) {
@@ -1404,6 +1518,15 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 		return selection;
 	}
 
+	public String getSelectedClassNameOrAsk() {
+		String className = getSelectedTextOrAsk("Class name");
+		if (className != null)
+			className = className.trim();
+		if (className != null && className.indexOf('.') < 0)
+			className = getEditorPane().getClassNameFunctions().getFullName(className);
+		return className;
+	}
+
 	public void markCompileStart() {
 		errorHandler = null;
 
@@ -1516,12 +1639,7 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 
 	public void addImport(String className) {
 		if (className == null)
-			className = getSelectedTextOrAsk("Class name");
-		if (className == null)
-			return;
-		if (className.indexOf('.') < 0)
-			className = getEditorPane().getClassNameFunctions()
-				.getFullName(className);
+			className = getSelectedClassNameOrAsk();
 		if (className != null)
 			new TokenFunctions(getTextArea()).addImport(className.trim());
 	}
@@ -1532,11 +1650,8 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 
 	public void openHelp(String className, boolean withFrames) {
 		if (className == null)
-			className = getSelectedTextOrAsk("Class name");
-		if (className == null)
-			return;
-		getEditorPane().getClassNameFunctions()
-			.openHelpForClass(className, withFrames);
+			className = getSelectedClassNameOrAsk();
+		getEditorPane().getClassNameFunctions().openHelpForClass(className, withFrames);
 	}
 
 	public void extractSourceJar() {

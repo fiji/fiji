@@ -36,6 +36,7 @@ import ij.io.FileInfo;
 
 import ij.plugin.BrowserLauncher;
 import ij.plugin.JpegWriter;
+import ij.plugin.PNG_Writer;
 import ij.plugin.PlugIn;
 
 import java.awt.AWTException;
@@ -88,6 +89,46 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 	protected Mode mode;
 	protected ImagePlus screenshot;
 
+	protected enum Format {
+		JPEG(".jpg"),
+		PNG(".png");
+
+		private String extension;
+		Format(String extension) {
+			this.extension = extension;
+		}
+
+		public void write(ImagePlus imp, String fullFilename) {
+			switch (this) {
+			case JPEG:
+				JpegWriter.save(imp, fullFilename, JpegWriter.DEFAULT_QUALITY);
+				imp.changes = false;
+				break;
+			case PNG:
+				PNG_Writer pngWriter = new PNG_Writer();
+				try {
+					pngWriter.writeImage(imp, fullFilename, -1);
+					imp.changes = false;
+				} catch(Exception e) {
+					IJ.error("PNG_Writer.writeImage failed to write to " + fullFilename);
+				}
+				break;
+			default:
+				IJ.error("[BUG] Unknown image format: " + name());
+			}
+		}
+	};
+
+	protected Format imageFormat = Format.JPEG;
+	protected final static String[] imageFormatNames;
+
+	static {
+		Format[] values = Format.values();
+		imageFormatNames = new String[values.length];
+		for (int i = 0; i < values.length; i++)
+			imageFormatNames[i] = values[i].name();
+	}
+
 	public void run(String arg) {
 		String dialogTitle = "Tutorial Maker";
 		String defaultTitle = "";
@@ -124,11 +165,13 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 
 		GenericDialog gd = new GenericDialog(dialogTitle);
 		gd.addStringField(label, defaultTitle, 20);
+		gd.addChoice("Image_format", imageFormatNames, imageFormatNames[0]);
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return;
 
 		name = gd.getNextString();
+		imageFormat = Format.valueOf(gd.getNextChoice());
 		if (name.length() == 0)
 			return;
 		if (mode != Mode.SCREENSHOT)
@@ -136,9 +179,9 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		else {
 			new Prettify_Wiki_Screenshot().run(screenshot.getProcessor());
 			screenshot = IJ.getImage();
-			String imageTitle = name + "-snapshot.jpg";
+			String imageTitle = name + "-snapshot" + imageFormat.extension;
 			for (int i = 2; wikiHasImage(imageTitle); i++)
-				imageTitle = name + "-snapshot-" + i + ".jpg";
+				imageTitle = name + "-snapshot-" + i + imageFormat.extension;
 			screenshot.setTitle(imageTitle);
 		}
 
@@ -258,14 +301,17 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		}
 		else if (source == insertPluginInfobox) {
 			JTextArea textArea = editor.getTextArea();
+			Calendar now = Calendar.getInstance();
+			String today = new SimpleDateFormat("dd/MM/yyyy")
+				.format(Calendar.getInstance().getTime());
 			textArea.insert("{{Infobox Plugin\n"
 				+ "| software               = ImageJ\n"
 				+ "| name                   = \n"
 				+ "| maintainer             = [mailto:author_at_example_dot_com A U Thor]\n"
 				+ "| author                 = A U Thor\n"
 				+ "| source                 = \n"
-				+ "| released               = 15/06/2005\n"
-				+ "| latest version         = 12/08/2009\n"
+				+ "| released               = " + today + "\n"
+				+ "| latest version         = " + today + "\n"
 				+ "| status                 = \n"
 				+ "| category               = [[:Category:Plugins]]\n"
 				+ "| website                = \n"
@@ -482,6 +528,19 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		return false;
 	}
 
+	protected String normalizeImageTitle(String title) {
+		title = title.replace(' ', '_');
+		if (title.length() > 0)
+			title = capitalize(title);
+		for (;;) {
+			int colon = title.indexOf(':');
+			if (colon < 0)
+				break;
+			title = title.substring(0, colon) + title.substring(colon + 1);
+		}
+		return title;
+	}
+
 	protected boolean saveOrUploadImages(GraphicalMediaWikiClient client,
 			List<String> images) {
 		int i = 0, total = images.size() * 2 + 1;
@@ -489,11 +548,11 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 			ImagePlus imp = WindowManager.getImage(image);
 			if (imp == null)
 				return error("There is no image " + image);
-			if (image.indexOf(' ') >= 0) {
-				String newTitle = image.replace(' ', '_');
+			String newTitle = normalizeImageTitle(image);
+			if (!image.equals(newTitle)) {
 				if (!IJ.showMessageWithCancel("Rename Image",
 						"Image title '" + image
-						+ "' contains spaces; fix?"))
+						+ "' is invalid; fix?"))
 					return error("Aborted");
 				imp.setTitle(newTitle);
 				rename(image, newTitle);
@@ -518,10 +577,8 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 				imp.changes = true;
 			}
 			if (imp.changes) {
-				JpegWriter.save(imp,
-					info.directory + "/" + info.fileName,
-					JpegWriter.DEFAULT_QUALITY);
-				imp.changes = false;
+				String fullFilename = info.directory + "/" + info.fileName;
+				imageFormat.write(imp, fullFilename);
 			}
 			if (client != null) {
 				if (wikiHasImage(image))
@@ -765,7 +822,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 	protected String getSnapshotName() {
 		for (;;) {
 			String title = name
-				+ "-" + (++snapshotCounter) + ".jpg";
+				+ "-" + (++snapshotCounter) + imageFormat.extension;
 			if (WindowManager.getImage(title) == null)
 				return title;
 		}

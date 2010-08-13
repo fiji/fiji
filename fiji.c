@@ -2479,7 +2479,7 @@ static int is_intel(void)
 
 	if (sysctl(mib, 2, result, &len, NULL, 0) < 0)
 		return 0;
-	return !strcmp(result, "i386");
+	return !strcmp(result, "i386") || !strncmp(result, "x86", 3);
 }
 
 static void set_path_to_JVM(void)

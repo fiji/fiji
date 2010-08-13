@@ -1,6 +1,6 @@
 /* -*- mode: java; c-basic-offset: 8; indent-tabs-mode: t; tab-width: 8 -*- */
 
-/* Copyright 2006, 2007, 2008, 2009 Mark Longair */
+/* Copyright 2006, 2007, 2008, 2009, 2010 Mark Longair */
 
 /*
   This file is part of the ImageJ plugin "Simple Neurite Tracer".
@@ -31,48 +31,23 @@ import ij.*;
 import ij.process.*;
 import ij.gui.*;
 import ij.plugin.*;
-import ij.plugin.filter.*;
-import ij.text.*;
 import ij.measure.Calibration;
-import ij.io.*;
-
 import ij3d.Image3DUniverse;
-import ij3d.Image3DMenubar;
 import ij3d.Content;
-import ij3d.Pipe;
-import ij3d.Mesh_Maker;
 import javax.vecmath.Color3f;
-import javax.vecmath.Point3f;
 import ij.gui.GUI;
 
 import java.applet.Applet;
 
 import java.awt.*;
-import java.awt.event.*;
 import java.awt.image.IndexColorModel;
 
 import java.io.*;
 
-import java.util.Set;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-
 import client.ArchiveClient;
-
-import stacks.ThreePanes;
 
 import util.BatchOpener;
 import util.RGB_to_Luminance;
-
-import features.GaussianGenerationCallback;
-import features.ComputeCurvatures;
-
-import amira.AmiraMeshDecoder;
-import amira.AmiraParameters;
-
-import features.Sigma_Palette;
-import features.TubenessProcessor;
 
 /* Note on terminology:
 
@@ -233,8 +208,6 @@ public class Simple_Neurite_Tracer extends SimpleNeuriteTracer
 									IJ.error("The tubeness file must be a 32 bit float image - "+tubesFile.getAbsolutePath()+" was not.");
 									return;
 								}
-								int width = tubenessImage.getWidth();
-								int height = tubenessImage.getHeight();
 								int depth = tubenessImage.getStackSize();
 								ImageStack tubenessStack = tubenessImage.getStack();
 								tubeness = new float[depth][];

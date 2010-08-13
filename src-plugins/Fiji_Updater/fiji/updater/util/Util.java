@@ -258,4 +258,8 @@ public class Util {
 				+ object.toString());
 		return builder.toString();
 	}
+
+	public static void useSystemProxies() {
+		System.setProperty("java.net.useSystemProxies", "true");
+	}
 }

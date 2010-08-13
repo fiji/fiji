@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.Comparator;
 
 import java.util.jar.JarInputStream;
+import java.util.jar.Manifest;
 
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
@@ -209,6 +210,46 @@ hexdump(String file, String outputFile) {
 	copyFile(new ByteArrayInputStream(out.toByteArray()), new FileOutputStream(outputFile));
 }
 
+String toString(Map map, String key) {
+	return "'" + key + "' => '" + map.get(key) + "'";
+}
+
+void showMapDiff(String label, Map remoteMap, localMap) {
+	remote = new ArrayList(remoteMap.keySet());
+	local = new ArrayList(localMap.keySet());
+
+	int i = 0, j = 0;
+	while (i < remote.size() || j < local.size())
+		if (i == remote.size() || (j < local.size() && remote.get(i).toString().compareTo(local.get(j).toString()) > 0)) {
+			System.out.println("Local " + label + ": " + toString(localMap, local.get(j)));
+			j++;
+		} else if (j == local.size() || (i < remote.size() && remote.get(i).toString().compareTo(local.get(j).toString()) < 0)) {
+			System.out.println("Remote " + label + ": " + toString(remoteMap, remote.get(i)));
+			i++;
+		} else {
+			e1 = remoteMap.get(local.get(j));
+			e2 = localMap.get(local.get(j));
+			if (!e1.equals(e2))
+				System.out.println("Differences in " + label + ": '" + local.get(j) + "' => '" + e1 + "' != '" + e2 + "'");
+			i++; j++;
+		}
+}
+
+void showManifestDiff(remoteURL, localURL) {
+	remoteIn = new JarInputStream(new URL(remoteURL).openStream());
+	localIn = new JarInputStream(new URL(localURL).openStream());
+	remoteManifest = remoteIn.getManifest();
+	localManifest = localIn.getManifest();
+	if (remoteManifest == null)
+		remoteManifest = new Manifest();
+	if (localManifest == null)
+		localManifest = new Manifest();
+	showMapDiff("manifest", remoteManifest.getEntries(), localManifest.getEntries());
+	showMapDiff("main attribute", remoteManifest.getMainAttributes(), localManifest.getMainAttributes());
+	remoteIn.close();
+	localIn.close();
+}
+
 void compareToUploaded(String plugin) {
 	p = plugins.getPlugin(plugin);
 	if (p == null) {
@@ -223,6 +264,8 @@ void compareToUploaded(String plugin) {
 	local = getZipItems(new URL(localURL));
 
 	System.out.println("Differences between the local and remote " + plugin);
+	showManifestDiff(remoteURL, localURL);
+
 	int i = 0, j = 0;
 	while (i < remote.size() || j < local.size())
 		if (i == remote.size()) {
