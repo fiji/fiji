@@ -665,9 +665,10 @@ public class Path implements Comparable {
 
 		g.setColor( c );
 
-		int pixel_size = (int)canvas.getMagnification();
-		if( pixel_size < 1 )
-			pixel_size = 1;
+		double magnification = canvas.getMagnification();
+		int pixel_size = magnification < 1 ? 1 : (int)magnification;
+		if( magnification >= 4 )
+			pixel_size = (int) (magnification / 2);
 
 		int spotExtra = pixel_size;
 		int spotDiameter = pixel_size * 3;
