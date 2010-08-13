@@ -75,7 +75,7 @@ void generateJarProject(CompileJar rule) {
 		+ "\t<classpathentry including=\"" + including + "\" "
 		+ (excluding == null ? "" : "excluding=\"" + excluding + "\" ")
 		+ "kind=\"src\" path=\"" + name + "\"/>\n"
-		+ "\t<classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6\"/>\n"
+		+ "\t<classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER\"/>\n"
 		+ "\t<classpathentry kind=\"output\" path=\".build\"/>\n"
 		+ "</classpath>\n");
 
