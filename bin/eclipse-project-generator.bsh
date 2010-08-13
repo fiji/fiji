@@ -52,8 +52,8 @@ void generateJarProject(CompileJar rule) {
 	String stripPath = rule.getStripPath();
 	if (including != null)
 		including = fake.stripPrefix(including, stripPath);
-	String excluding = rule.getVar("EXCLUDE");
-	String noCompile = rule.getVar("NO_COMPILE");
+	String excluding = rule.getVar("EXCLUDE_UNEXPANDED");
+	String noCompile = rule.getVar("NO_COMPILE_UNEXPANDED");
 	if (noCompile != null)
 		excluding = (excluding == null ? "" : excluding + ":") + noCompile;
 	if (excluding != null)
