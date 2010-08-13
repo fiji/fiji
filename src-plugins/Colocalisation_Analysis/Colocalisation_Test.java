@@ -20,6 +20,8 @@ import ij.plugin.filter.*;
 import ij.measure.Calibration;
 import ij.measure.*;
 
+import ij.text.TextWindow;
+
 public class Colocalisation_Test implements PlugIn
     {static boolean headingsSet2;
     private static int index1=0;
@@ -57,6 +59,7 @@ public class Colocalisation_Test implements PlugIn
     boolean Fay = false; 
     boolean vanS = false;
     boolean rBlocks= false;
+    protected static TextWindow textWindow;
 
     public void run(String arg) 
 	{startTime = System.currentTimeMillis();
@@ -663,12 +666,7 @@ String Percentile = ""+(iterations-colocCount)+"/"+iterations;
 
 	String strPSF = "na";
 	if (Costes||rBlocks) strPSF =  df3.format(psf*pixelSize*2)+ " µm ("+df0.format(psf*2)+" pix.)" ;
-	if ((!headingsSet2))
-		{ 
-		IJ.setColumnHeadings(Headings2);
-		headingsSet2 = true;
-  		}	
-	IJ.write(fileName  +
+	String str = fileName  +
 	
 		"\t"+df3.format(r)+
 		"\t" +df3.format(r2mean) + "±"+ df3.format(r2sd)+
@@ -676,8 +674,14 @@ String Percentile = ""+(iterations-colocCount)+"/"+iterations;
 		"\t" + (Percentile )+
 		"\t" +df0.format(iterations)+
 		"\t" + randMethod+
-		"\t" +strPSF
-		);
+		"\t" +strPSF;
+	if (textWindow == null)
+		textWindow = new TextWindow("Results",
+		Headings2, str, 400, 250);
+	else {
+		textWindow.getTextPanel().setColumnHeadings(Headings2);
+		textWindow.getTextPanel().appendLine(str);
+	}
 
 	IJ.selectWindow("Results");
 	if (showR) new TextWindow( "Random R values", "R(rand)", rVals.toString(),300, 400);
