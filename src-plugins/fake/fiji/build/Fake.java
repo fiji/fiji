@@ -1183,6 +1183,9 @@ public class Fake {
 			}
 
 			public File getBuildDir() {
+				String prebuilt = getVar("prebuiltdir");
+				if (prebuilt != null)
+					return new File(makePath(cwd, prebuilt));
 				String dir = getVar("builddir");
 				if (dir == null || dir.equals(""))
 					return null;
@@ -1526,8 +1529,8 @@ public class Fake {
 					expandToSet(getVar("NO_COMPILE"), cwd);
 				Set exclude =
 					expandToSet(getVar("EXCLUDE"), cwd);
-				compileJavas(prerequisites, buildDir, exclude,
-					noCompile);
+				if (getVar("PREBUILTDIR") == null)
+					compileJavas(prerequisites, buildDir, exclude, noCompile);
 				List files = java2classFiles(prerequisites,
 					cwd, buildDir, exclude, noCompile);
 				if (getVarBool("includeSource"))
