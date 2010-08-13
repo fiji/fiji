@@ -2039,9 +2039,7 @@ public class Fake {
 			String path = parentPath + names[i];
 			if (starstar && names[i].startsWith("."))
 				continue;
-			if (names[i].equals(".git")
-					|| name.equals(".DS_Store")
-					|| names[i].endsWith(".swp")
+			if (names[i].equals(".git") || names[i].endsWith(".swp")
 					|| names[i].endsWith(".swo")
 					|| names[i].endsWith("~"))
 				continue;
