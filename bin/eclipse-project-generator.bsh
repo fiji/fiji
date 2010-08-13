@@ -92,7 +92,7 @@ void generateJarProject(CompileJar rule) {
 
 		+ "\t\t<buildCommand>\n"
 		+ "\t\t\t<name>org.eclipse.ui.externaltools.ExternalToolBuilder</name>\n"
-		+ "\t\t\t<triggers>full,incremental,</triggers>\n"
+		+ "\t\t\t<triggers>incremental,</triggers>\n"
 		+ "\t\t\t<arguments>\n"
 		+ "\t\t\t\t<dictionary>\n"
 		+ "\t\t\t\t\t<key>LaunchConfigHandle</key>\n"
@@ -119,9 +119,8 @@ void generateJarProject(CompileJar rule) {
 	File fakeLaunchFile = new File(launchDirectory, "Fake.launch");
 	saveFile(fakeLaunchFile, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
 		+ "<launchConfiguration type=\"org.eclipse.ui.externaltools.ProgramBuilderLaunchConfigurationType\">\n"
-		+ "<booleanAttribute key=\"org.eclipse.debug.ui.ATTR_LAUNCH_IN_BACKGROUND\" value=\"false\"/>\n"
 		+ "<stringAttribute key=\"org.eclipse.ui.externaltools.ATTR_LOCATION\" value=\"${system_path:java}\"/>\n"
-		+ "<stringAttribute key=\"org.eclipse.ui.externaltools.ATTR_RUN_BUILD_KINDS\" value=\"full,incremental,\"/>\n"
+		+ "<stringAttribute key=\"org.eclipse.ui.externaltools.ATTR_RUN_BUILD_KINDS\" value=\"incremental,\"/>\n"
 		+ "<stringAttribute key=\"org.eclipse.ui.externaltools.ATTR_TOOL_ARGUMENTS\" value=\"-jar "
 			+ fijiPath("jars/fake.jar") + " PREBUILTDIR(" + rule.target + ")="
 			+ new File(projectDirectory, ".build").getAbsolutePath() + " " + rule.target + "\"/>\n"
