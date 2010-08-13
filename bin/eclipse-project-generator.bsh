@@ -128,6 +128,17 @@ void generateJarProject(CompileJar rule) {
 		+ "<booleanAttribute key=\"org.eclipse.ui.externaltools.ATTR_TRIGGERS_CONFIGURED\" value=\"true\"/>\n"
 		+ "<stringAttribute key=\"org.eclipse.ui.externaltools.ATTR_WORKING_DIRECTORY\" value=\"" + fijiDir.getAbsolutePath() + "\"/>\n"
 		+ "</launchConfiguration>\n");
+
+	File settingsDirectory = new File(projectDirectory, ".settings");
+	settingsDirectory.mkdirs();
+	File encodingFile = new File(settingsDirectory, "org.eclipse.core.resources.prefs");
+	saveFile(encodingFile, "# Written by Fiji\n"
+		+ "eclipse.preferences.version=1\n"
+		+ "encoding/<project>=UTF-8\n");
+	File lineEndingsFile = new File(settingsDirectory, "org.eclipse.core.runtime.prefs");
+	saveFile(lineEndingsFile, "#Written by Fiji\n"
+		+ "eclipse.preferences.version=1\n"
+		+ "line.separator=\\n\n");
 }
 
 for (String target : parser.allRules.keySet()) {
