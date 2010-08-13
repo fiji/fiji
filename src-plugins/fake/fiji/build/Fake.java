@@ -2044,6 +2044,8 @@ public class Fake {
 					|| names[i].equals(".classpath")
 					|| names[i].equals(".project")
 					|| names[i].equals(".settings")
+					|| names[i].equals(".directory")
+					|| names[i].endsWith(".form")
 					|| names[i].endsWith(".swp")
 					|| names[i].endsWith(".swo")
 					|| names[i].endsWith("~"))
