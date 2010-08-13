@@ -15,6 +15,8 @@ setAccessibility(true);
 
 File fijiDir = new File(System.getProperty("fiji.dir"));
 String fijiPath(String name) {
+	if (new File(name).isAbsolute())
+		return name;
 	return new File(fijiDir, name).getAbsolutePath();
 }
 
@@ -53,11 +55,15 @@ void generateJarProject(CompileJar rule) {
 	String excluding = rule.getVar("EXCLUDE");
 	if (excluding != null)
 		excluding = fake.stripPrefix(excluding.replace(' ', '|'), stripPath);
-	String libs = "";
+	String libs = "", projects = "";
 	String classpath = rule.getVar("CLASSPATH");
 	classpath = (classpath == null ? "" : classpath + ":") + "jars/ij.jar";
-	for (String path : fake.split(classpath, ":"))
+	for (String path : fake.split(classpath, ":")) {
+		path = fake.stripPrefix(path, fijiDir.getAbsolutePath() + File.separator);
 		libs += "\t<classpathentry kind=\"lib\" path=\"" + fijiPath(path) + "\"/>\n";
+		if (parser.getRule(path) != null)
+			projects += "\t\t<project>" + getBaseName(path, ".jar") + "</project>\n";
+	}
 
 	File classpathFile = new File(projectDirectory, ".classpath");
 	saveFile(classpathFile, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
@@ -75,6 +81,7 @@ void generateJarProject(CompileJar rule) {
 		+ "\t<name>" + name + "</name>\n"
 		+ "\t<comment></comment>\n"
 		+ "\t<projects>\n"
+		+ projects
 		+ "\t</projects>\n"
 		+ "\t<buildSpec>\n"
 		+ "\t\t<buildCommand>\n"
@@ -123,4 +130,8 @@ void generateJarProject(CompileJar rule) {
 		+ "</launchConfiguration>\n");
 }
 
-generateJarProject(parser.getRule("plugins/Arrow_.jar"));
+for (String target : parser.allRules.keySet()) {
+	Rule rule = parser.getRule(target);
+	if (rule instanceof CompileJar)
+		generateJarProject(rule);
+}
