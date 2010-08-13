@@ -3,6 +3,7 @@
 .DS_Store
 .project
 .metadata
+.checksums
 /build/
 /make-targets
 /fiji.o
