@@ -27,6 +27,7 @@ public class Snapshot extends Thread {
 	protected long delay;
 	protected Frame whiteBackground;
 	protected Window window;
+	protected Point location;
 
 	public Snapshot(long delay) {
 		this.delay = delay;
@@ -48,22 +49,41 @@ public class Snapshot extends Thread {
 		panel.setBackground(Color.WHITE);
 		whiteBackground.add(panel);
 		whiteBackground.pack();
-		whiteBackground.setSize(screenSize);
+		whiteBackground.setExtendedState(Frame.MAXIMIZED_BOTH);
 		whiteBackground.setVisible(true);
-		EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				Thread.sleep(100);
-				toFrontAndSnap();
-			}
-		});
+		toFrontAndSnap(window);
 	}
 
-	public void toFrontAndSnap() {
+	public void toFront(Window window) {
+		// work around Metacity (GNOME) problem as per
+		// http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6472274
+		if (window.isActive())
+			return;
+		if (location == null)
+			location = window.getLocationOnScreen();
+		window.setVisible(false);
 		window.toFront();
+		window.setVisible(true);
+		window.setLocation(0, 0);
+		window.setLocation(location.x, location.y);
+	}
+
+	public void toFrontAndSnap(Window window) {
+		toFront(window);
+		Thread.sleep(200);
+		snapLater(4);
+	}
+
+	public void snapLater(/* final */ int manana) {
+		toFront(window);
+		if (manana <= 0) {
+			Thread.sleep(100);
+			snap();
+			return;
+		}
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
-				Thread.sleep(100);
-				snap();
+				snapLater(manana - 1);
 			}
 		});
 	}
