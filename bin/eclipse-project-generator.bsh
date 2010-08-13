@@ -131,6 +131,8 @@ void generateJarProject(CompileJar rule) {
 }
 
 for (String target : parser.allRules.keySet()) {
+	if (target.equals("jars/javac.jar"))
+		continue; // Eclipse has too many problems with that
 	Rule rule = parser.getRule(target);
 	if (rule instanceof CompileJar)
 		generateJarProject(rule);
