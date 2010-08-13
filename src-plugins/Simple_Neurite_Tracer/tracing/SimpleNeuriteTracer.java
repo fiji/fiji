@@ -390,6 +390,9 @@ public class SimpleNeuriteTracer extends ThreePanes
 						if( pathAndFillManager.loadGuessingType(path) )
 							unsavedPaths = false;
 
+						Prefs.set("tracing.Simple_Neurite_Tracer.lastTracesLoadDirectory",directory);
+						Prefs.savePreferences();
+
 						loading = false;
 						return;
 
@@ -402,6 +405,10 @@ public class SimpleNeuriteTracer extends ThreePanes
 				}
 			}
 		}
+
+		directory = Prefs.get("tracing.Simple_Neurite_Tracer.lastTracesLoadDirectory", null);
+		if( directory == null && file_info != null && file_info.directory != null )
+			directory = file_info.directory;
 
 		//  Presumably "No" was pressed...
 
@@ -422,6 +429,9 @@ public class SimpleNeuriteTracer extends ThreePanes
 				loading = false;
 				return;
 			}
+
+			Prefs.set("tracing.Simple_Neurite_Tracer.lastTracesLoadDirectory",directory);
+			Prefs.savePreferences();
 
 			int guessedType = PathAndFillManager.guessTracesFileType(chosenFile.getAbsolutePath());
 
