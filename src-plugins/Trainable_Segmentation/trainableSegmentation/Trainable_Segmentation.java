@@ -100,11 +100,13 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.File;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JFileChooser;
 import javax.swing.SwingUtilities;
 
 import weka.classifiers.AbstractClassifier;
@@ -1064,7 +1066,7 @@ public class Trainable_Segmentation implements PlugIn
 
 		IJ.log("Classifying whole image...");
 
-		classifiedImage = applyClassifier(wholeImageData, trainingImage.getWidth(), trainingImage.getHeight());
+		classifiedImage = applyClassifier(wholeImageData, trainingImage.getWidth(), trainingImage.getHeight(), true);
 
 		IJ.log("Finished segmentation of whole image.");
 		
@@ -1117,13 +1119,18 @@ public class Trainable_Segmentation implements PlugIn
 	 * @param h image height
 	 * @return result image
 	 */
-	public ImagePlus applyClassifier(final Instances data, int w, int h)
+	public ImagePlus applyClassifier(final Instances data, int w, int h, boolean parallelise)
 	{
 		IJ.showStatus("Classifying image...");
 						
 		final long start = System.currentTimeMillis();
 
-		final int numOfProcessors = Runtime.getRuntime().availableProcessors();
+		final int numOfProcessors;
+		if (parallelise) {
+			numOfProcessors = Runtime.getRuntime().availableProcessors();
+		} else {
+			numOfProcessors = 1;
+		}
 		final ExecutorService exe = Executors.newFixedThreadPool(numOfProcessors);
 		final double[][] results = new double[numOfProcessors][];
 		final Instances[] partialData = new Instances[numOfProcessors];
@@ -1322,13 +1329,100 @@ public class Trainable_Segmentation implements PlugIn
 	 */
 	public void applyClassifierToTestData()
 	{
-		ImagePlus testImage = IJ.openImage();
-		if (null == testImage) return; // user canceled open dialog
+		// array of files to process
+		File[] imageFiles;
+
+		// create a file chooser for the image files
+		JFileChooser fileChooser = new JFileChooser("/home/jan/workspace/mpi/yolk/data/downsampled/2010-04-02 histon");
+		fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+		fileChooser.setMultiSelectionEnabled(true);
+
+		// get selected files or abort if no file has been selected
+		int returnVal = fileChooser.showOpenDialog(null);
+		if(returnVal == JFileChooser.APPROVE_OPTION) {
+			imageFiles = fileChooser.getSelectedFiles();
+		} else {
+			return;
+		}
+
+		boolean showResults = true;
+		boolean storeResults = false;
+
+		if (imageFiles.length >= 3) {
+
+			int decision = JOptionPane.showConfirmDialog(null, "You decided to process three or more image files. Do you want the results to be stored on the disk instead of opening them in Fiji?", "Save results?", JOptionPane.YES_NO_OPTION);
+
+			if (decision == JOptionPane.YES_OPTION) {
+				showResults  = false;
+				storeResults = true;
+			}
+		}
+
+		final int numProcessors = Runtime.getRuntime().availableProcessors();
+
+		IJ.log("Processing " + imageFiles.length + " image files in " + numProcessors + " threads....");
 
 		setButtonsEnabled(false);
 
-		applyClassifierToTestImage(testImage).show();
-		testImage.show();
+		Thread[] threads = new Thread[numProcessors];
+
+		class ImageProcessingThread extends Thread {
+
+			final int     numThread;
+			final int     numProcessors;
+			final File[]  imageFiles;
+			final boolean storeResults;
+			final boolean showResults;
+
+			public ImageProcessingThread(int numThread, int numProcessors,
+			                             File[] imageFiles,
+			                             boolean storeResults, boolean showResults) {
+				this.numThread     = numThread;
+				this.numProcessors = numProcessors;
+				this.imageFiles    = imageFiles;
+				this.storeResults  = storeResults;
+				this.showResults   = showResults;
+			}
+
+			public void run() {
+
+				for (int i = numThread; i < imageFiles.length; i += numProcessors) {
+
+					File file = imageFiles[i];
+
+					ImagePlus testImage = IJ.openImage(file.getPath());
+
+					IJ.log("Processing image " + file.getName() + " in thread " + numThread);
+
+					ImagePlus segmentation = applyClassifierToTestImage(testImage, false);
+
+					if (showResults) {
+						segmentation.show();
+						testImage.show();
+					}
+
+					if (storeResults) {
+						IJ.save(segmentation, file.getPath() + "seg.tif");
+						segmentation.close();
+						testImage.close();
+					}
+				}
+			}
+		}
+
+		// start threads
+		for (int i = 0; i < numProcessors; i++) {
+
+			threads[i] = new ImageProcessingThread(i, numProcessors, imageFiles, storeResults, showResults);
+			threads[i].start();
+		}
+
+		// join all threads
+		for (Thread thread : threads) {
+			try {
+				thread.join();
+			} catch (InterruptedException e) {}
+		}
 		
 		setButtonsEnabled(true);
 	}
@@ -1339,7 +1433,7 @@ public class Trainable_Segmentation implements PlugIn
 	 * @param testImage test image (2D single image or stack)
 	 * @return result image (classification)
 	 */
-	public ImagePlus applyClassifierToTestImage(ImagePlus testImage)
+	public ImagePlus applyClassifierToTestImage(ImagePlus testImage, boolean parallelise)
 	{		
 		// Set proper class names (skip empty list ones)
 		ArrayList<String> classNames = new ArrayList<String>();
@@ -1368,7 +1462,7 @@ public class Trainable_Segmentation implements PlugIn
 			final Instances testData = testImageFeatures.createInstances(classNames);
 			testData.setClassIndex(testData.numAttributes() - 1);
 
-			final ImagePlus testClassImage = applyClassifier(testData, testSlice.getWidth(), testSlice.getHeight());
+			final ImagePlus testClassImage = applyClassifier(testData, testSlice.getWidth(), testSlice.getHeight(), parallelise);
 			testClassImage.setTitle("classified_" + testSlice.getTitle());
 			testClassImage.setProcessor(testClassImage.getProcessor().convertToByte(true).duplicate());
 			classified.addSlice(testClassImage.getTitle(), testClassImage.getProcessor());
