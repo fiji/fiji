@@ -2040,7 +2040,7 @@ public class Fake {
 			if (starstar && names[i].startsWith("."))
 				continue;
 			if (names[i].equals(".git")
-					|| name.equals(".DS_Store")
+					|| names[i].equals(".DS_Store")
 					|| names[i].endsWith(".swp")
 					|| names[i].endsWith(".swo")
 					|| names[i].endsWith("~"))
