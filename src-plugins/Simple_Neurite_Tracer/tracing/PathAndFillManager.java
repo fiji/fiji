@@ -536,13 +536,6 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		for( PathAndFillListener pafl : listeners )
 			pafl.setFillList( fillListEntries );
 
-	private int pathToIndex( Path p ) {
-		for( int i = 0; i < allPaths.size(); ++i ) {
-			Path toCompare = allPaths.get(i);
-			if( p == toCompare )
-				return i;
-		}
-		return -1;
 	}
 
 	public void addPath( Path p ) {
