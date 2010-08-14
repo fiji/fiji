@@ -29,7 +29,6 @@ package tracing;
 
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Arrays;
 import java.util.Set;
@@ -42,7 +41,6 @@ import java.io.*;
 
 import ij.*;
 
-import client.ArchiveClient;
 import ij.measure.Calibration;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -60,22 +58,21 @@ import java.util.regex.Pattern;
 import java.util.Map;
 import java.util.HashMap;
 
-import java.awt.Color;
-
 import javax.media.j3d.View;
-import javax.vecmath.Color3f;
 import ij3d.Content;
 import ij3d.UniverseListener;
 
 import util.Bresenham3D;
 import util.XMLFunctions;
 
+@SuppressWarnings("serial")
 class TracesFileFormatException extends SAXException {
 	public TracesFileFormatException(String message) {
 		super(message);
 	}
 }
 
+@SuppressWarnings("serial")
 class SWCExportException extends Exception {
 	public SWCExportException(String message) {
 		super(message);
@@ -97,7 +94,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		allPaths = new ArrayList< Path >();
 		allFills = new ArrayList< Fill >();
 		listeners = new ArrayList< PathAndFillListener >();
-		selectedPathsSet = new HashSet();
+		selectedPathsSet = new HashSet<Path>();
 		needImageDataFromTracesFile = true;
 		this.imagePlus = null;
 		this.x_spacing = Double.MIN_VALUE;
@@ -318,7 +315,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		   ensures that the Path.children and
 		   Path.somehowJoins relationships are set up
 		   correctly: */
-		Set structuredPathSet = new HashSet(Arrays.asList(getPathsStructured()));
+		Set<Path> structuredPathSet = new HashSet<Path>(Arrays.asList(getPathsStructured()));
 
 		/* Check that there's only one primary path in
 		   selectedPaths by taking the intersection and
@@ -2036,7 +2033,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		return points;
 	}
 
-	public class AllPointsIterator implements java.util.Iterator {
+	public class AllPointsIterator implements Iterator<PointInImage> {
 
 		public AllPointsIterator() {
 			numberOfPaths = allPaths.size();
@@ -2103,7 +2100,6 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		ArrayList< NearPoint > result = new ArrayList< NearPoint >();
 
 		AllPointsIterator i = allPointsIterator();
-		int numberFromIterator = 0;
 		while( i.hasNext() ) {
 			PointInImage p = i.next();
 			NearPoint np = other.nearestPointOnAnyPath(
