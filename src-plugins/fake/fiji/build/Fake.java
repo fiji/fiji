@@ -706,6 +706,7 @@ public class Fake {
 
 		public void setVariable(String key, String value)
 				throws FakeException {
+			String origValue = value;
 			int paren = key.indexOf('(');
 			String name = (paren < 0 ? key :
 				key.substring(0, paren)).toUpperCase();
@@ -746,6 +747,10 @@ public class Fake {
 						quoteArg((String)iter.next());
 			}
 
+			String origName = name.toUpperCase() + "_UNEXPANDED"
+				+ (paren < 0 ? "" : key.substring(paren));
+			if (!variables.containsKey(origName))
+				variables.put(origName, origValue);
 			name = name.toUpperCase() + (paren < 0 ?
 				"" : key.substring(paren));
 			variables.put(name, value);
@@ -802,6 +807,7 @@ public class Fake {
 				String key = (String)iter.next();
 				int paren = key.indexOf('(');
 				if (paren < 0 || !key.endsWith(")") ||
+						key.startsWith("ENVOVERRIDES_UNEXPANDED(") ||
 						key.startsWith("ENVOVERRIDES("))
 					continue;
 				String name = key.substring(paren + 1,
@@ -1183,6 +1189,9 @@ public class Fake {
 			}
 
 			public File getBuildDir() {
+				String prebuilt = getVar("prebuiltdir");
+				if (prebuilt != null)
+					return new File(makePath(cwd, prebuilt));
 				String dir = getVar("builddir");
 				if (dir == null || dir.equals(""))
 					return null;
@@ -1526,8 +1535,8 @@ public class Fake {
 					expandToSet(getVar("NO_COMPILE"), cwd);
 				Set exclude =
 					expandToSet(getVar("EXCLUDE"), cwd);
-				compileJavas(prerequisites, buildDir, exclude,
-					noCompile);
+				if (getVar("PREBUILTDIR") == null)
+					compileJavas(prerequisites, buildDir, exclude, noCompile);
 				List files = java2classFiles(prerequisites,
 					cwd, buildDir, exclude, noCompile);
 				if (getVarBool("includeSource"))
