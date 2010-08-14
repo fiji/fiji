@@ -67,6 +67,7 @@ import javax.vecmath.Color3f;
 import ij3d.Content;
 import ij3d.UniverseListener;
 
+import util.Bresenham3D;
 import util.XMLFunctions;
 
 class TracesFileFormatException extends SAXException {
@@ -1878,14 +1879,74 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 	/* This method will set all the points in array that
 	 * correspond to points on one of the paths to 255, leaving
-	 * everything else as it is. */
+	 * everything else as it is.  This is useful for creating
+	 * stacks that can be used in skeleton analysis plugins that
+	 * expect a stack of this kind. */
 
 	synchronized void setPathPointsInVolume( byte [][] slices, int width, int height, int depth ) {
-		for( Iterator j = allPaths.iterator(); j.hasNext(); ) {
-			Path p = (Path)j.next();
-			for( int i = 0; i < p.size(); ++i ) {
-				slices[p.getZUnscaled(i)][p.getYUnscaled(i) * width + p.getXUnscaled(i)] =
-					(byte)255;
+		for( Path topologyPath : allPaths ) {
+			Path p = topologyPath;
+			if( topologyPath.getUseFitted() ) {
+				p = topologyPath.fitted;
+			}
+			if( topologyPath.fittedVersionOf != null )
+				continue;
+
+			int n = p.size();
+
+			ArrayList<Bresenham3D.IntegerPoint> pointsToJoin = new ArrayList<Bresenham3D.IntegerPoint>();
+
+			if( p.startJoins != null ) {
+				PointInImage s = p.startJoinsPoint;
+				Path sp = p.startJoins;
+				int spi = sp.indexNearestTo(s.x, s.y, s.z);
+				pointsToJoin.add(new Bresenham3D.IntegerPoint(
+						sp.getXUnscaled(spi),
+						sp.getYUnscaled(spi),
+						sp.getZUnscaled(spi)));
+			}
+
+			for( int i = 0; i < n; ++i ) {
+				pointsToJoin.add(new Bresenham3D.IntegerPoint(
+						p.getXUnscaled(i),
+						p.getYUnscaled(i),
+						p.getZUnscaled(i)));
+			}
+
+			if( p.endJoins != null ) {
+				PointInImage s = p.endJoinsPoint;
+				Path sp = p.endJoins;
+				int spi = sp.indexNearestTo(s.x, s.y, s.z);
+				pointsToJoin.add(new Bresenham3D.IntegerPoint(
+						sp.getXUnscaled(spi),
+						sp.getYUnscaled(spi),
+						sp.getZUnscaled(spi)));
+			}
+
+			Bresenham3D.IntegerPoint previous = null;
+			for( Bresenham3D.IntegerPoint current : pointsToJoin ) {
+				if( previous == null ) {
+					previous = current;
+					continue;
+				}
+
+				/* If we don't actually need to draw a line,
+				 * just put a point: */
+				if( current.diagonallyAdjacentOrEqual(previous) ) {
+					slices[current.z][current.y * width + current.x] = (byte)255;
+				} else {
+					/* Otherwise draw a line with the 3D version
+					 * of Bresenham's algorithm:
+					 */
+					List<Bresenham3D.IntegerPoint> pointsToDraw =
+						Bresenham3D.bresenham3D(previous, current);
+					System.out.println("Drawing "+pointsToDraw.size()+" to "+current);
+					for( Bresenham3D.IntegerPoint ip : pointsToDraw ) {
+						slices[ip.z][ip.y * width + ip.x] = (byte)255;
+					}
+				}
+
+				previous = current;
 			}
 		}
 	}
