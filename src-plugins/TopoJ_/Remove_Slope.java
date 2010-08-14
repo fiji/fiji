@@ -16,7 +16,7 @@ import Jama.Matrix;
  * Time: 10:31:30 AM
  * To change this template use File | Settings | File Templates.
  */
-public class Level_ implements PlugInFilter {
+public class Remove_Slope implements PlugInFilter {
 
     protected ImagePlus imagePlus;
     public int setup(String string, ImagePlus imagePlus) {
