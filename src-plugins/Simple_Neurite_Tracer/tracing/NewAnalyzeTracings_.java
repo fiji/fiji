@@ -145,10 +145,7 @@ public class NewAnalyzeTracings_ implements PlugIn, TraceLoaderListener {
 		// First reset all the search parameters:
 		{
 			Collection<NewGraphNode> c = positionToNode.values();
-			for( Iterator<NewGraphNode> i = c.iterator();
-			     i.hasNext(); ) {
-
-				NewGraphNode n = i.next();
+			for( NewGraphNode n : c ) {
 				n.g = 0;
 				n.h = 0;
 				n.previous = null;
@@ -564,9 +561,7 @@ public class NewAnalyzeTracings_ implements PlugIn, TraceLoaderListener {
 
 		// Now we want to index by position rather than vertex index:
 		boolean first = true;
-		for( Iterator<NewGraphNode> nodeIterator = verticesInObjOrder.iterator();
-		     nodeIterator.hasNext(); ) {
-			NewGraphNode n = nodeIterator.next();
+		for( NewGraphNode n : verticesInObjOrder ) {
 			if( first ) { first = false; continue; }
 			int k = positionToKey( n.x, n.y, n.z );
 			positionToNode.put( k, n );
@@ -713,10 +708,7 @@ public class NewAnalyzeTracings_ implements PlugIn, TraceLoaderListener {
 				if( potentialEndPoints.size() == 0 )
 					continue;
 
-				for( Iterator<NewGraphNode> startIterator = startPoints.iterator();
-				     startIterator.hasNext(); ) {
-
-					NewGraphNode startPoint = startIterator.next();
+				for( NewGraphNode startPoint : startPoints ) {
 
 					System.out.println("  Starting from point "+startPoint+" ("+labelName+" looking for material: "+materialNames[endM]);
 
@@ -759,26 +751,19 @@ public class NewAnalyzeTracings_ implements PlugIn, TraceLoaderListener {
 				out.write( "        node [fontname=\"DejaVuSans\",style=filled];\n");
 
 				HashSet<Integer> materialsInGraph = new HashSet<Integer>();
-				for( Iterator<PathWithLength> pathIterator=paths.iterator();
-				     pathIterator.hasNext(); ) {
-
-					PathWithLength p = pathIterator.next();
+				for( PathWithLength p : paths ) {
 					materialsInGraph.add(p.startNeuropilRegion);
 					materialsInGraph.add(p.endNeuropilRegion);
 				}
 
-				for( Iterator<Integer> materialIterator = materialsInGraph.iterator();
-				     materialIterator.hasNext(); ) {
-					int m = materialIterator.next();
+				for( int m : materialsInGraph ) {
 					String name = materialNames[m];
 					out.write( "        \"" + name + "\" [fillcolor=\"" + colorString(name) + "\"];\n" );
 				}
 
 				HashSet<String> connectionsDone=new HashSet<String>();
 
-				for( Iterator<PathWithLength> pathIterator=paths.iterator();
-				     pathIterator.hasNext(); ) {
-					PathWithLength p = pathIterator.next();
+				for( PathWithLength p : paths ) {
 					String dotLine = "        \"" + materialNames[p.startNeuropilRegion] + "\" -- \"" + materialNames[p.endNeuropilRegion] + "\";\n";
 					if( ! connectionsDone.contains(dotLine) ) {
 						out.write(dotLine);
@@ -852,17 +837,11 @@ public class NewAnalyzeTracings_ implements PlugIn, TraceLoaderListener {
 		linec61.baseNames.add("c061AU");
 		lines.add(linec61);
 
-		for( Iterator<ImagesFromLine> lineIterator = lines.iterator();
-		     lineIterator.hasNext(); ) {
-
-			ImagesFromLine line = lineIterator.next();
+		for( ImagesFromLine line : lines ) {
 
 			System.out.println("Looking at line: "+line.lineName);
 
-			for( Iterator<String> baseNameIterator = line.baseNames.iterator();
-			     baseNameIterator.hasNext(); ) {
-
-				String baseName = baseNameIterator.next();
+			for( String baseName : line.baseNames ) {
 
 				System.out.println("  Image basename: "+baseName );
 

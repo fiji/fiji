@@ -95,10 +95,8 @@ public abstract class SearchThread extends Thread {
 	   SearchProgressCallback provides. */
 
 	protected void reportPointsInSearch( ) {
-		for (Iterator<SearchProgressCallback> j = progressListeners.iterator(); j.hasNext();) {
-			SearchProgressCallback progress = j.next();
+		for( SearchProgressCallback progress : progressListeners )
 			progress.pointsInSearch(this, open_from_start.size() + (bidirectional ? open_from_goal.size() : 0), closed_from_start.size() + (bidirectional ? closed_from_goal.size() : 0));
-		}
 	}
 
 	public int pointsConsideredInSearch( ) {
@@ -234,17 +232,13 @@ public abstract class SearchThread extends Thread {
 	protected void addingNode( SearchNode n ) { }
 
 	public void reportThreadStatus( ) {
-		for( Iterator<SearchProgressCallback> j = progressListeners.iterator(); j.hasNext(); ) {
-			SearchProgressCallback progress = j.next();
+		for( SearchProgressCallback progress : progressListeners )
 			progress.threadStatus( this, threadStatus );
-		}
 	}
 
 	public void reportFinished( boolean success ) {
-		for( Iterator<SearchProgressCallback> j = progressListeners.iterator(); j.hasNext(); ) {
-			SearchProgressCallback progress = j.next();
+		for( SearchProgressCallback progress : progressListeners )
 			progress.finished( this, success );
-		}
 	}
 
 	// Toggles the paused or unpaused status of the thread.

@@ -580,11 +580,8 @@ public class AnalyzeTracings_ implements PlugIn {
 						}
 					}
 				}
-				String node_name;
-				for( Iterator setIterator = reflexive.iterator(); setIterator.hasNext();  ) {
-					node_name=(String)setIterator.next();
+				for( String node_name : reflexive )
 					out.write( "        \"" +  node_name + "\" -- \"" + node_name + "\";\n" );
-				}
 
 				out.write( "}" );
 
@@ -639,11 +636,8 @@ public class AnalyzeTracings_ implements PlugIn {
 						}
 					}
 				}
-				String node_name;
-				for( Iterator setIterator = reflexive.iterator(); setIterator.hasNext();  ) {
-					node_name=(String)setIterator.next();
+				for( String node_name : reflexive )
 					out.write( "        \"" +  node_name + "\" -- \"" + node_name + "\";\n" );
-				}
 
 				out.write( "}" );
 
@@ -810,12 +804,8 @@ public class AnalyzeTracings_ implements PlugIn {
 			out.write( "        graph [overlap=scale,splines=true];\n");
 			out.write( "        node [fontname=\"DejaVuSans\",style=filled];\n");
 
-			for( Iterator i = nonExteriorMaterials.iterator(); i.hasNext(); ) {
-				String material_name = (String)i.next();
+			for( String material_name : nonExteriorMaterials )
 				out.write( "        \"" + material_name + "\" [fillcolor=\"" + lastConnectivity.colorString(material_name) + "\"];\n" );
-			}
-
-
 
 			for( Enumeration e = connectionCounts.keys(); e.hasMoreElements(); ) {
 				String connection_string = (String)e.nextElement();

@@ -483,11 +483,8 @@ public class PathWindow extends JFrame implements PathAndFillListener, TreeSelec
 	public void addNode( MutableTreeNode parent, Path childPath, DefaultTreeModel model ) {
 		MutableTreeNode newNode = new DefaultMutableTreeNode(childPath);
 		model.insertNodeInto(newNode, parent, parent.getChildCount());
-		Iterator<Path> ci = childPath.children.iterator();
-		while( ci.hasNext() ) {
-			Path p = ci.next();
+		for( Path p : childPath.children )
 			addNode( newNode, p, model );
-		}
 	}
 
 	public void setFillList( String [] fillList ) {

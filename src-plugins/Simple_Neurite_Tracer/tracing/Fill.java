@@ -105,14 +105,14 @@ public class Fill {
 	public void writeNodesXML( PrintWriter pw ) {
 
 		int i = 0;
-		for( Iterator it = nodeList.iterator(); it.hasNext(); ++i ) {
-			Node n = (Node)it.next();
+		for( Node n : nodeList ) {
 			pw.println( "    <node id=\"" + i + "\" " +
 				    "x=\"" + n.x + "\" " +
 				    "y=\"" + n.y + "\" " +
 				    "z=\"" + n.z + "\" " +
 				    ((n.previous >= 0) ? "previousid=\"" + n.previous + "\" " : "") +
 				    "distance=\"" + n.distance + "\" status=\"" + (n.open ? "open" : "closed") + "\"/>" );
+			++ i;
 		}
 	}
 

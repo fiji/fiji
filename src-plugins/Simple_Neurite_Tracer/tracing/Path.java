@@ -163,19 +163,14 @@ public class Path implements Comparable {
 	public void setChildren( Set<Path> pathsLeft ) {
 		// Set the children of this path in a breadth first fashion:
 		children.clear();
-		Iterator<Path> ci = somehowJoins.iterator();
-		while( ci.hasNext() ) {
-			Path c = ci.next();
+		for( Path c : somehowJoins ) {
 			if( pathsLeft.contains(c) ) {
 				children.add(c);
 				pathsLeft.remove(c);
 			}
 		}
-		ci = children.iterator();
-		while( ci.hasNext() ) {
-			Path c = ci.next();
+		for( Path c : children )
 			c.setChildren( pathsLeft );
-		}
 	}
 
 /*
@@ -237,9 +232,7 @@ public class Path implements Comparable {
 		   from other's somehowJoins and other from this's
 		   somehowJoins.
 		*/
-		Iterator<Path> i = somehowJoins.iterator();
-		while( i.hasNext() ) {
-			Path other = i.next();
+		for( Path other : somehowJoins ) {
 			if( other.startJoins != null && other.startJoins == this ) {
 				other.startJoins = null;
 				other.startJoinsPoint = null;
@@ -621,9 +614,7 @@ public class Path implements Comparable {
 	}
 
 	void unsetPrimaryForConnected( HashSet<Path> pathsExplored ) {
-		Iterator<Path> i = somehowJoins.iterator();
-		while( i.hasNext() ) {
-			Path p = i.next();
+		for( Path p : somehowJoins ) {
 			if( pathsExplored.contains(p) )
 				continue;
 			p.setPrimary(false);

@@ -186,9 +186,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		return getPathFromName( name, true );
 	}
 	public synchronized Path getPathFromName( String name, boolean caseSensitive ) {
-		Iterator<Path> pi = allPaths.iterator();
-		while( pi.hasNext() ) {
-			Path p = pi.next();
+		for( Path p : allPaths ) {
 			if( caseSensitive ) {
 				if( name.equals(p.getName()) )
 					return p;
@@ -201,9 +199,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	}
 
 	public synchronized Path getPathFromID( int id ) {
-		Iterator<Path> pi = allPaths.iterator();
-		while( pi.hasNext() ) {
-			Path p = pi.next();
+		for( Path p : allPaths ) {
 			if( id == p.getID() ) {
 				return p;
 			}
@@ -224,8 +220,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		selectedPathsSet.clear();
 		for( int i = 0; i < selectedPaths.length; ++i )
 			selectedPathsSet.add( selectedPaths[i] );
-		for( Iterator<PathAndFillListener> i = listeners.iterator(); i.hasNext(); ) {
-			PathAndFillListener pafl = i.next();
+		for( PathAndFillListener pafl : listeners ) {
 			if( pafl != sourceOfMessage )
 				// The source of the message already knows the states:
 				pafl.setSelectedPaths( selectedPathsSet, this );
@@ -499,9 +494,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 		ArrayList<String> pathListEntries = new ArrayList<String>();
 
-		Iterator<Path> pi = allPaths.iterator();
-		while( pi.hasNext() ) {
-			Path p = pi.next();
+		for( Path p : allPaths ) {
 			int pathID = p.getID();
 			if( p == null ) {
 				throw new RuntimeException("BUG: A path in allPaths was null!");
@@ -520,10 +513,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			pathListEntries.add( name );
 		}
 
-		for( Iterator i = listeners.iterator(); i.hasNext(); ) {
-			PathAndFillListener listener = (PathAndFillListener)(i.next());
+		for( PathAndFillListener listener : listeners )
 			listener.setPathList( pathListEntries.toArray( new String[]{} ), justAdded, expandAll );
-		}
 
 		int fills = allFills.size();
 
@@ -545,11 +536,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			fillListEntries[i] = name;
 		}
 
-		for( Iterator i = listeners.iterator(); i.hasNext(); ) {
-			((PathAndFillListener)(i.next())).setFillList( fillListEntries );
-		}
-
-	}
+		for( PathAndFillListener pafl : listeners )
+			pafl.setFillList( fillListEntries );
 
 	private int pathToIndex( Path p ) {
 		for( int i = 0; i < allPaths.size(); ++i ) {
@@ -648,8 +636,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		// We don't just delete; have to fix up the references
 		// in other paths (for start and end joins):
 
-		for( Iterator i = allPaths.iterator(); i.hasNext(); ) {
-			Path p = (Path)i.next();
+		for( Path p : allPaths ) {
 			if( p.startJoins == unfittedPathToDelete ) {
 				p.startJoins = null;
 				p.startJoinsPoint = null;
@@ -805,8 +792,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 			pw.println("  <imagesize width=\"" + width + "\" height=\"" + height + "\" depth=\"" + depth + "\"/>" );
 
-			for( Iterator j = allPaths.iterator(); j.hasNext(); ) {
-				Path p = (Path)j.next();
+			for( Path p : allPaths ) {
 				// This probably should be a String returning
 				// method of Path.
 				pw.print("  <path id=\"" + p.getID() + "\"" );
@@ -884,8 +870,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			}
 			// Now output the fills:
 			int fillIndex = 0;
-			for( Iterator j = allFills.iterator(); j.hasNext(); ) {
-				Fill f = (Fill) j.next();
+			for( Fill f : allFills ) {
 				f.writeXML( pw, fillIndex );
 				++ fillIndex;
 			}
@@ -1515,11 +1500,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	void clearPathsAndFills( ) {
 		maxUsedID = -1;
 		if( plugin != null && plugin.use3DViewer ) {
-			for( Iterator< Path > i = allPaths.iterator();
-			     i.hasNext(); ) {
-				Path p = i.next();
+			for( Path p : allPaths )
 				p.removeFrom3DViewer( plugin.univ );
-			}
 		}
 		allPaths.clear();
 		allFills.clear();
@@ -1672,11 +1654,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		PriorityQueue< SWCPoint > backtrackTo =
 			new PriorityQueue< SWCPoint >();
 
-		for( Iterator< SWCPoint > pi = primaryPoints.iterator();
-		     pi.hasNext(); ) {
-			SWCPoint start = pi.next();
+		for( SWCPoint start : primaryPoints )
 			backtrackTo.add( start );
-		}
 
 		HashMap< Path, SWCPoint > pathStartsOnSWCPoint =
 			new HashMap< Path, SWCPoint >();
@@ -1732,18 +1711,15 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 		if( alreadySeen.size() > 0 ) {
 			IJ.error( "Malformed file: there are some misconnected points" );
-			for( Iterator<Integer> i = alreadySeen.iterator();
-			     i.hasNext(); ) {
-				SWCPoint p = idToSWCPoint.get( i.next() );
+			for( int i : alreadySeen ) {
+				SWCPoint p = idToSWCPoint.get( i );
 				System.out.println( "  Misconnected: " + p);
 			}
 			return false;
 		}
 
 		// Set the start joins:
-		for( Iterator<Path> i = allPaths.iterator();
-		     i.hasNext(); ) {
-			Path p = i.next();
+		for( Path p : allPaths ) {
 			SWCPoint swcPoint = pathStartsOnSWCPoint.get( p );
 			if( swcPoint == null )
 				continue;
@@ -2015,9 +1991,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 		PriorityQueue< NearPoint > pq = new PriorityQueue< NearPoint >();
 
-		for( Iterator< Path > i = allPaths.iterator();
-		     i.hasNext(); ) {
-			Path path = i.next();
+		for( Path path : allPaths ) {
 			if( ! path.versionInUse() )
 				continue;
 			for( int j = 0; j < path.size(); ++j ) {
@@ -2234,9 +2208,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				pw.print(",");
 		}
 		pw.print("\r\n");
-		Iterator<Path> pi = allPaths.iterator();
-		while( pi.hasNext() ) {
-			Path p = pi.next();
+		for( Path p : allPaths ) {
 			Path pForLengthAndName = p;
 			if( p.getUseFitted() ) {
 				pForLengthAndName = p.fitted;
@@ -2308,10 +2280,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			return;
 		boolean showOnlySelectedPaths = plugin.getShowOnlySelectedPaths();
 		// Now iterate over all the paths:
-		Iterator<Path> pi = allPaths.iterator();
-		while( pi.hasNext() ) {
-
-			Path p = pi.next();
+		for( Path p : allPaths ) {
 
 			if( p.fittedVersionOf != null )
 				continue;
