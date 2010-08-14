@@ -59,10 +59,8 @@ String getBaseName(String name, String suffix) {
 	return name.substring(name.lastIndexOf('/') + 1);
 }
 
-File getEclipseProjectDirectory(String name) {
-	File workspaceDirectory = new File(fijiDir, "eclipse");
-	workspaceDirectory.mkdirs();
-
+File getProjectDirectory(String rootName, String name) {
+	File workspaceDirectory = new File(fijiDir, rootName);
 	File result = new File(workspaceDirectory, name);
 	result.mkdirs();
 	return result;
@@ -70,7 +68,7 @@ File getEclipseProjectDirectory(String name) {
 
 void generateEclipseJarProject(CompileJar rule) {
 	String name = getBaseName(rule.target, ".jar");
-	File projectDirectory = getEclipseProjectDirectory(name);
+	File projectDirectory = getProjectDirectory("eclipse", name);
 
 	String including = rule.getPrerequisiteString().replace(' ', '|');
 	String stripPath = rule.getStripPath();
@@ -436,6 +434,183 @@ void generateEclipseJarProject(CompileJar rule) {
 		+ "formatter_settings_version=11\n");
 }
 
+ArrayList projects = new ArrayList();
+
+void writeIntelliJWorkspace() {
+	File root = new File(fijiDir, "intellij");
+	root.mkdirs();
+	File rootIML = new File(root, "intellij.iml");
+	saveFile(rootIML, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+		+ "<module type=\"JAVA_MODULE\" version=\"4\">\n"
+		+ "  <component name=\"NewModuleRootManager\" inherit-compiler-output=\"true\">\n"
+		+ "    <exclude-output />\n"
+		+ "    <content url=\"file://$MODULE_DIR$\" />\n"
+		+ "    <orderEntry type=\"inheritedJdk\" />\n"
+		+ "    <orderEntry type=\"sourceFolder\" forTests=\"false\" />\n"
+		+ "  </component>\n"
+		+ "</module>\n");
+
+	File idea = new File(root, ".idea");
+	idea.mkdirs();
+	File ant = new File(idea, "ant.xml");
+	saveFile(ant, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+		+ "<project version=\"4\">\n"
+		+ "  <component name=\"AntConfiguration\">\n"
+		+ "    <defaultAnt bundledAnt=\"true\" />\n"
+		+ "  </component>\n"
+		+ "</project>\n");
+	File compiler = new File(idea, "compiler.xml");
+	saveFile(compiler, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+		+ "<project version=\"4\">\n"
+		+ "  <component name=\"CompilerConfiguration\">\n"
+		+ "    <option name=\"DEFAULT_COMPILER\" value=\"Javac\" />\n"
+		+ "    <resourceExtensions>\n"
+		+ "      <entry name=\".+\\.(properties|xml|html|dtd|tld)\" />\n"
+		+ "      <entry name=\".+\\.(gif|png|jpeg|jpg)\" />\n"
+		+ "    </resourceExtensions>\n"
+		+ "    <wildcardResourcePatterns>\n"
+		+ "      <entry name=\"?*.properties\" />\n"
+		+ "      <entry name=\"?*.xml\" />\n"
+		+ "      <entry name=\"?*.gif\" />\n"
+		+ "      <entry name=\"?*.png\" />\n"
+		+ "      <entry name=\"?*.jpeg\" />\n"
+		+ "      <entry name=\"?*.jpg\" />\n"
+		+ "      <entry name=\"?*.html\" />\n"
+		+ "      <entry name=\"?*.dtd\" />\n"
+		+ "      <entry name=\"?*.tld\" />\n"
+		+ "      <entry name=\"?*.ftl\" />\n"
+		+ "    </wildcardResourcePatterns>\n"
+		+ "    <annotationProcessing enabled=\"false\" useClasspath=\"true\" />\n"
+		+ "  </component>\n"
+		+ "</project>\n");
+	File encodings = new File(idea, "encodings.xml");
+	saveFile(encodings, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                + "<project version=\"4\">\n"
+                + "  <component name=\"Encoding\" useUTFGuessing=\"true\" native2AsciiForPropertiesFiles=\"false\" />\n"
+                + "</project>\n"
+                + "\n");
+	File misc = new File(idea, "misc.xml");
+	saveFile(misc, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                + "<project version=\"4\">\n"
+                + "  <component name=\"DependencyValidationManager\">\n"
+                + "    <option name=\"SKIP_IMPORT_STATEMENTS\" value=\"false\" />\n"
+                + "  </component>\n"
+                + "  <component name=\"JavadocGenerationManager\">\n"
+                + "    <option name=\"OUTPUT_DIRECTORY\" />\n"
+                + "    <option name=\"OPTION_SCOPE\" value=\"protected\" />\n"
+                + "    <option name=\"OPTION_HIERARCHY\" value=\"true\" />\n"
+                + "    <option name=\"OPTION_NAVIGATOR\" value=\"true\" />\n"
+                + "    <option name=\"OPTION_INDEX\" value=\"true\" />\n"
+                + "    <option name=\"OPTION_SEPARATE_INDEX\" value=\"true\" />\n"
+                + "    <option name=\"OPTION_DOCUMENT_TAG_USE\" value=\"false\" />\n"
+                + "    <option name=\"OPTION_DOCUMENT_TAG_AUTHOR\" value=\"false\" />\n"
+                + "    <option name=\"OPTION_DOCUMENT_TAG_VERSION\" value=\"false\" />\n"
+                + "    <option name=\"OPTION_DOCUMENT_TAG_DEPRECATED\" value=\"true\" />\n"
+                + "    <option name=\"OPTION_DEPRECATED_LIST\" value=\"true\" />\n"
+                + "    <option name=\"OTHER_OPTIONS\" value=\"\" />\n"
+                + "    <option name=\"HEAP_SIZE\" />\n"
+                + "    <option name=\"LOCALE\" />\n"
+                + "    <option name=\"OPEN_IN_BROWSER\" value=\"true\" />\n"
+                + "  </component>\n"
+                + "  <component name=\"ProjectRootManager\" version=\"2\" languageLevel=\"JDK_1_6\" assert-keyword=\"true\" jdk-15=\"true\" project-jdk-name=\"1.6\" project-jdk-type=\"JavaSDK\">\n"
+                + "    <output url=\"file://$PROJECT_DIR$/out\" />\n"
+                + "  </component>\n"
+                + "  <component name=\"SvnBranchConfigurationManager\">\n"
+                + "    <option name=\"mySupportsUserInfoFilter\" value=\"true\" />\n"
+                + "  </component>\n"
+                + "</project>\n"
+                + "\n");
+	File vcs = new File(idea, "vcs.xml");
+	saveFile(vcs, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                + "<project version=\"4\">\n"
+                + "  <component name=\"VcsDirectoryMappings\">\n"
+                + "    <mapping directory=\"\" vcs=\"\" />\n"
+                + "  </component>\n"
+                + "</project>\n"
+                + "\n");
+	String mods = "";
+	for (String mod : projects)
+		mods += "      <module fileurl=\"file://$PROJECT_DIR$/" + mod + "/" + mod + ".iml\" filepath=\"$PROJECT_DIR$/" + mod + "/" + mod + ".iml\" />\n";
+	File modules = new File(idea, "modules.xml");
+	saveFile(modules, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                + "<project version=\"4\">\n"
+                + "  <component name=\"ProjectModuleManager\">\n"
+                + "    <modules>\n"
+		+ mods
+                + "      <module fileurl=\"file://$PROJECT_DIR$/intellij.iml\" filepath=\"$PROJECT_DIR$/intellij.iml\" />\n"
+                + "    </modules>\n"
+                + "  </component>\n"
+                + "</project>\n"
+                + "\n");
+}
+
+void generateIntelliJJarProject(CompileJar rule) {
+	String name = getBaseName(rule.target, ".jar");
+	projects.add(name);
+
+	String stripPath = rule.getStripPath();
+	String libs = "", deps = "";
+	String classpath = rule.getVar("CLASSPATH");
+	classpath = (classpath == null ? "" : classpath + ":") + "jars/ij.jar";
+	for (String path : fake.split(classpath, ":")) {
+		path = fake.stripPrefix(path, fijiDir.getAbsolutePath() + File.separator);
+		Rule dependency = parser.getRule(path);
+		if (dependency != null && (dependency instanceof CompileJar))
+			deps += "    <orderEntry type=\"module\" module-name=\"" + getBaseName(dependency.target, ".jar") + "\" />\n";
+		else
+			libs += "          <root url=\"jar://" + fijiPath(path) + "!/\" />\n";
+	}
+	String excluding = rule.getVar("EXCLUDE_UNEXPANDED");
+	String noCompile = rule.getVar("NO_COMPILE_UNEXPANDED");
+	if (noCompile != null)
+		excluding = (excluding == null ? "" : excluding + ":") + noCompile;
+	String excludes = "";
+	if (excluding != null)
+		for (String entry : fake.split(excluding, " "))
+			if (entry.endsWith("/**/*"))
+				excludes += "      <excludeFolder url=\"file://" + fake.stripSuffix(entry, "/**/*") + "\" />\n";
+
+	File projectDirectory = getProjectDirectory("intellij", name);
+	File iml = new File(projectDirectory, name + ".iml");
+	saveFile(iml, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                + "<module type=\"JAVA_MODULE\" version=\"4\">\n"
+                + "  <component name=\"NewModuleRootManager\" inherit-compiler-output=\"true\">\n"
+		+ "    <output url=\"file://" + fijiPath("build/" + name) + "\" />\n"
+                + "    <exclude-output />\n"
+                + "    <content url=\"file://" + fijiPath(stripPath) + "\">\n"
+                + "      <sourceFolder url=\"file://" + fijiPath(stripPath) + "\" isTestSource=\"false\" />\n"
+		+ excludes
+                + "    </content>\n"
+                + "    <orderEntry type=\"inheritedJdk\" />\n"
+                + "    <orderEntry type=\"sourceFolder\" forTests=\"false\" />\n"
+                + "    <orderEntry type=\"module-library\">\n"
+                + "      <library>\n"
+                + "        <CLASSES>\n"
+		+ libs
+                + "        </CLASSES>\n"
+                + "        <JAVADOC />\n"
+                + "        <SOURCES />\n"
+                + "      </library>\n"
+                + "    </orderEntry>\n"
+		+ deps
+                + "  </component>\n"
+                + "</module>\n"
+                + "\n");
+
+	File artifacts = getProjectDirectory("intellij", ".idea/artifacts");
+	artifacts.mkdirs();
+	File target = new File(fijiPath(rule.target));
+	File artifact = new File(artifacts, name + ".xml");
+	saveFile(artifact, "<component name=\"ArtifactManager\">\n"
+                + "  <artifact type=\"jar\" build-on-make=\"true\" name=\"" + name + "\">\n"
+                + "    <output-path>" + target.getParentFile().getAbsolutePath() + "</output-path>\n"
+                + "    <root id=\"archive\" name=\"" + target.getName() + "\">\n"
+                + "      <element id=\"module-output\" name=\"" + name + "\" />\n"
+                + "    </root>\n"
+                + "  </artifact>\n"
+                + "</component>\n");
+}
+
 for (String target : parser.allRules.keySet()) {
 	if (target.equals("jars/javac.jar"))
 		continue; // Eclipse has too many problems with that
@@ -443,5 +618,10 @@ for (String target : parser.allRules.keySet()) {
 	if (rule instanceof CompileJar) {
 		if (mode == ECLIPSE)
 			generateEclipseJarProject(rule);
+		if (mode == INTELLIJ)
+			generateIntelliJJarProject(rule);
 	}
 }
+
+if (mode == INTELLIJ)
+	writeIntelliJWorkspace();
