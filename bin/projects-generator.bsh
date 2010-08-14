@@ -10,6 +10,7 @@ import java.io.FileInputStream;
 import java.io.FileWriter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 int ECLIPSE = 1;
 int INTELLIJ = 2;
@@ -611,6 +612,152 @@ void generateIntelliJJarProject(CompileJar rule) {
                 + "</component>\n");
 }
 
+void generateNetbeansJarProject(rule) {
+	String name = getBaseName(rule.target, ".jar");
+	String stripPath = rule.getStripPath();
+	String libs = "", refs = "", refs2 = "", refs3 = "", deps = "", deps2 = "";
+	String classpath = rule.getVar("CLASSPATH");
+	classpath = (classpath == null ? "" : classpath + ":") + "jars/ij.jar";
+	String[] list = fake.split(classpath, ":");
+	Arrays.sort(list);
+	for (String path : list) {
+		path = fake.stripPrefix(path, fijiDir.getAbsolutePath() + File.separator);
+		Rule dependency = parser.getRule(path);
+		if (dependency != null && (dependency instanceof CompileJar)) {
+			String base = getBaseName(dependency.target, ".jar");
+			String base2 = base.replace('.', '_');
+			deps += "project." + base2 + "=../" + base + "\n";
+			refs2 += "\\\n    ${reference." + base2 + ".jar}:";
+			deps2 += "            <reference>\n"
+				+ "                <foreign-project>" + base2 + "</foreign-project>\n"
+				+ "                <artifact-type>jar</artifact-type>\n"
+				+ "                <script>build.xml</script>\n"
+				+ "                <target>jar</target>\n"
+				+ "                <clean-target>clean</clean-target>\n"
+				+ "                <id>jar</id>\n"
+				+ "            </reference>\n";
+			refs3 += "reference." + base2 + ".jar=" + fijiPath(dependency.target) + "\n";
+		}
+		else {
+			String base = path.replace('/', '-');
+			libs += "file.reference." + base + "=" + fijiPath(path) + "\n";
+			refs += "\\\n    ${file.reference." + base + "}:";
+		}
+	}
+	refs = fake.stripSuffix(refs + refs2, ":");
+	String excluding = rule.getVar("EXCLUDE_UNEXPANDED");
+	String noCompile = rule.getVar("NO_COMPILE_UNEXPANDED");
+	if (noCompile != null)
+		excluding = (excluding == null ? "" : excluding + ":") + noCompile;
+	String excludes = "";
+	if (excluding != null)
+		for (String entry : fake.split(excluding, " "))
+			if (entry.endsWith("/**/*"))
+				excludes += "      <excludeFolder url=\"file://" + fake.stripSuffix(entry, "/**/*") + "\" />\n";
+
+	File target = new File(fijiPath(rule.target));
+
+	File projectDirectory = getProjectDirectory("netbeans", name);
+	projectDirectory.mkdirs();
+	File manifest = new File(projectDirectory, "manifest.mf");
+	saveFile(manifest, "Manifest-Version: 1.0\n"
+                + "X-COMMENT: Main-Class will be added automatically by build\n"
+                + "\n");
+	File nbProject = new File(projectDirectory, "nbproject");
+	nbProject.mkdirs();
+	File projectProperties = new File(nbProject, "project.properties");
+	saveFile(projectProperties, "application.title=" + name.replace('.', '_') + "\n"
+		+ "application.vendor=fiji\n"
+		+ "build.classes.dir=${build.dir}/classes\n"
+                + "build.classes.excludes=**/*.java,**/*.form\n"
+                + "# This directory is removed when the project is cleaned:\n"
+                + "build.dir=build\n"
+                + "build.generated.dir=${build.dir}/generated\n"
+                + "build.generated.sources.dir=${build.dir}/generated-sources\n"
+                + "# Only compile against the classpath explicitly listed here:\n"
+                + "build.sysclasspath=ignore\n"
+                + "build.test.classes.dir=${build.dir}/test/classes\n"
+                + "build.test.results.dir=${build.dir}/test/results\n"
+                + "# Uncomment to specify the preferred debugger connection transport:\n"
+                + "#debug.transport=dt_socket\n"
+                + "debug.classpath=\\\n"
+                + "    ${run.classpath}\n"
+                + "debug.test.classpath=\\\n"
+                + "    ${run.test.classpath}\n"
+                + "# This directory is removed when the project is cleaned:\n"
+                + "dist.dir=" + target.getParentFile().getAbsolutePath() + "\n"
+                + "dist.jar=${dist.dir}/" + target.getName() + "\n"
+                + "dist.javadoc.dir=${dist.dir}/javadoc\n"
+		+ "endorsed.classpath=\n"
+                + "excludes=\n"
+		+ libs
+                + "file.reference." + rule.target.replace('/', '.') + "=" + fijiPath(stripPath) + "\n"
+                + "includes=**\n"
+                + "jar.compress=false\n"
+                + "javac.classpath=" + refs + "\n"
+                + "# Space-separated list of extra javac options\n"
+                + "javac.compilerargs=\n"
+                + "javac.deprecation=false\n"
+                + "javac.source=1.6\n"
+                + "javac.target=1.6\n"
+                + "javac.test.classpath=\\\n"
+                + "    ${javac.classpath}:\\\n"
+                + "    ${build.classes.dir}:\\\n"
+                + "    ${libs.junit.classpath}:\\\n"
+                + "    ${libs.junit_4.classpath}\n"
+                + "javadoc.additionalparam=\n"
+                + "javadoc.author=false\n"
+                + "javadoc.encoding=${source.encoding}\n"
+                + "javadoc.noindex=false\n"
+                + "javadoc.nonavbar=false\n"
+                + "javadoc.notree=false\n"
+                + "javadoc.private=false\n"
+                + "javadoc.splitindex=true\n"
+                + "javadoc.use=true\n"
+                + "javadoc.version=false\n"
+                + "javadoc.windowtitle=\n"
+                + "main.class=\n"
+                + "manifest.file=manifest.mf\n"
+                + "meta.inf.dir=${src.dir}/META-INF\n"
+                + "platform.active=default_platform\n"
+		+ deps
+                + "run.classpath=\\\n"
+                + "    ${javac.classpath}:\\\n"
+                + "    ${build.classes.dir}\n"
+                + "# Space-separated list of JVM arguments used when running the project\n"
+                + "# (you may also define separate properties like run-sys-prop.name=value instead of -Dname=value\n"
+                + "# or test-sys-prop.name=value to set system properties for unit tests):\n"
+                + "run.jvmargs=\n"
+                + "run.test.classpath=\\\n"
+                + "    ${javac.test.classpath}:\\\n"
+                + "    ${build.test.classes.dir}\n"
+                + "source.encoding=UTF-8\n"
+                + "src.dir=${file.reference." + rule.target.replace('/', '.') + "}\n");
+	File projectXml = new File(nbProject, "project.xml");
+	saveFile(projectXml, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                + "<project xmlns=\"http://www.netbeans.org/ns/project/1\">\n"
+                + "    <type>org.netbeans.modules.java.j2seproject</type>\n"
+                + "    <configuration>\n"
+                + "        <data xmlns=\"http://www.netbeans.org/ns/j2se-project/3\">\n"
+                + "            <name>" + name + "</name>\n"
+                + "            <source-roots>\n"
+                + "                <root id=\"src.dir\"/>\n"
+                + "            </source-roots>\n"
+                + "            <test-roots/>\n"
+                + "        </data>\n"
+		+ "        <references xmlns=\"http://www.netbeans.org/ns/ant-project-references/1\">\n"
+		+ deps2
+		+ "        </references>\n"
+                + "    </configuration>\n"
+                + "</project>\n");
+	if (!refs3.equals("")) {
+		File privateDirectory = new File(nbProject, "private");
+		privateDirectory.mkdirs();
+		File privateProperties = new File(privateDirectory, "private.properties");
+		saveFile(privateProperties, refs3);
+	}
+}
+
 for (String target : parser.allRules.keySet()) {
 	if (target.equals("jars/javac.jar"))
 		continue; // Eclipse has too many problems with that
@@ -618,8 +765,10 @@ for (String target : parser.allRules.keySet()) {
 	if (rule instanceof CompileJar) {
 		if (mode == ECLIPSE)
 			generateEclipseJarProject(rule);
-		if (mode == INTELLIJ)
+		else if (mode == INTELLIJ)
 			generateIntelliJJarProject(rule);
+		else if (mode == NETBEANS)
+			generateNetbeansJarProject(rule);
 	}
 }
 
