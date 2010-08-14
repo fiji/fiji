@@ -32,16 +32,16 @@ public class Compute_Topography implements PlugInFilter {
     protected int medianFilterIncrement;
 
     public int setup(String string, ImagePlus imagePlus) {
-        this.sourceImagePlus = imagePlus;
+        sourceImagePlus = imagePlus;
+        return DOES_16 + STACK_REQUIRED + NO_CHANGES;  //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public void run(ImageProcessor imageProcessor) {
         stackTitle = sourceImagePlus.getTitle();
         stack = sourceImagePlus.getStack();
         isHyperstack = sourceImagePlus.isHyperStack();
         Dimensions = sourceImagePlus.getDimensions();
         myCal = sourceImagePlus.getCalibration();
-        return DOES_16 + STACK_REQUIRED + NO_CHANGES;  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    public void run(ImageProcessor imageProcessor) {
 
         //Some defaults
 
