@@ -3,6 +3,10 @@
 .DS_Store
 .project
 .metadata
+/eclipse/
+/intellij/
+/netbeans/
+/build.xml
 .checksums
 /build/
 /make-targets

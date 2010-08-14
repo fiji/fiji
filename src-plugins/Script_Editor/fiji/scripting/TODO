@@ -3,6 +3,12 @@
 
 - add Tools>Open gitweb for class...
 
+- finally fix the Add import extra empty lines
+
+- Identify non-explicit imports and add an option to make them explicit.
+
+- enable Add import for all languages
+
 - BeanShell seems not to import the second time a BeanShell interpreter is
   opened (reported by Stephan Saalfeld).
 
@@ -14,5 +20,3 @@
 
 - when debugging finished, give the user a chance to save resulting images
   or some such before closing the debuggee.
-
-- Identify non-explicit imports and add an option to make them explicit.

@@ -233,9 +233,10 @@ public class InteractiveTracerCanvas extends TracerCanvas implements KeyListener
 
 		super.drawOverlay(g);
 
-		int pixel_size = (int)getMagnification();
-		if( pixel_size < 1 )
-			pixel_size = 1;
+		double magnification = getMagnification();
+		int pixel_size = magnification < 1 ? 1 : (int)magnification;
+		if( magnification >= 4 )
+			pixel_size = (int) (magnification / 2);
 
 		int spotDiameter = 5 * pixel_size;
 
