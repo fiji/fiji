@@ -1,7 +1,7 @@
 package fiji.plugin.nperry.features;
 
 import mpicbg.imglib.container.array.ArrayContainerFactory;
-import mpicbg.imglib.cursor.special.Ball3DCursor;
+import mpicbg.imglib.cursor.special.SphereCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.type.numeric.RealType;
@@ -54,11 +54,11 @@ public class EstimatedRadius <T extends RealType<T>> extends BlobContrast<T> {
 		double[] diameters = prepareDiameters(diam, nDiameters);
 		
 		// Calculate total intensity in balls
-		Ball3DCursor<T> cursor;
+		SphereCursor<T> cursor;
 		double[] total_intensities = new double[diameters.length + 1];
 		total_intensities[0] = 0;
 		for (int i = 1; i <= diameters.length; i++) {
-			cursor = new Ball3DCursor<T>(img, spot.getCoordinates(), diameters[i-1]/2, calibration);
+			cursor = new SphereCursor<T>(img, spot.getCoordinates(), diameters[i-1]/2, calibration);
 			total_intensities[i] = 0;
 			while(cursor.hasNext()) 
 				total_intensities[i] += cursor.next().getRealDouble();
@@ -160,10 +160,10 @@ public class EstimatedRadius <T extends RealType<T>> extends BlobContrast<T> {
 					new ArrayContainerFactory()
 				).createImage(new int[] {200, 200, 400});
 
-		Ball3DCursor<UnsignedByteType> cursor;
+		SphereCursor<UnsignedByteType> cursor;
 		int index = 0;
 		for (Spot s : spots) {
-			cursor = new Ball3DCursor<UnsignedByteType>(
+			cursor = new SphereCursor<UnsignedByteType>(
 					testImage,
 					s.getCoordinates(),
 					radiuses[index],
