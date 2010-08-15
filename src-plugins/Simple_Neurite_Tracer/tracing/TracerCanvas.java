@@ -86,8 +86,8 @@ public class TracerCanvas extends ThreePanesCanvas {
 		int current_z = imp.getCurrentSlice() - 1;
 
 		synchronized (searchThreads) {
-			for( Iterator<SearchThread> i = searchThreads.iterator(); i.hasNext(); )
-				i.next().drawProgressOnSlice( plane, current_z, this, g );
+			for( SearchThread st : searchThreads )
+				st.drawProgressOnSlice( plane, current_z, this, g );
 		}
 
 		boolean showOnlySelectedPaths = pathAndFillManager.plugin.getShowOnlySelectedPaths();
