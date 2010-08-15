@@ -38,14 +38,14 @@ import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
  * @param <T>
  */
 public class Ball3DCursor<T extends Type<T>> implements Cursor<T> {
-	
+
 	private final Image<T> img;
 	private final int[] icenter;
-	private final double radius;
+	private final float radius;
 	private final LocalizableByDimCursor<T> cursor;
 	private final int[] position;
 	/** The spatial calibration. */
-	private final double[] calibration;
+	private final float[] calibration;
 
 	private boolean hasNext;
 	/** The state of the cursor. */
@@ -53,38 +53,45 @@ public class Ball3DCursor<T extends Type<T>> implements Cursor<T> {
 	/** Store the position index. */
 	/** For mirroring, indicate if we must take the mirror in the Z direction. */
 	private boolean mirrorZ;
-	/** The line half-length. */
+	/** When drawing a line, the line length. */
 	private int rx;
 	/** The XY circle radius at height Z. */
 	private int ry;
+	/** Store XY circle radiuses for all Z */
+	private int[] rys;
+	/** Store X line bounds for all Y */
+	private int[] rxs;
 	/** Indicate whether we finished all Z planes. */
 	private boolean doneZ = false;
+	/** Is true when all Z and Y have been done, just the last line si to be drawn. */
+	private boolean allDone;
 	/**
 	 * Indicates what state the cursor is currently in, so as to choose the right routine 
 	 * to get coordinates */
- 	private enum CursorState {
- 		DRAWING_LINE					,
+	private enum CursorState {
+		DRAWING_LINE					,
 		INITIALIZED						,
 		INCREMENT_Y						,
 		MIRROR_Y						,
 		INCREMENT_Z						,
 		FINISHED						;
 	}
-	
-	
-	
+
+
+
 	/*
 	 * CONSTRUCTORS
 	 */
-	
+
 	/**
 	 * Construct a {@link Ball3DCursor} on a 3D image with a given spatial calibration.
 	 * @param img  the image, must be 3D
 	 * @param center  the ball center, in physical units
 	 * @param radius  the ball radius, in physical units
-	 * @param calibration  the spatial calibration (pixel size)
+	 * @param calibration  the spatial calibration (pixel size); if <code>null</code>, 
+	 * a calibration of 1 in all directions will be used
 	 */
-	public Ball3DCursor(final Image<T> img, final double[] center, double radius, final double[] calibration) {
+	public Ball3DCursor(final Image<T> img, final float[] center, float radius, final float[] calibration) {
 		if (img.getDimensions().length != 3) 
 			throw new IllegalArgumentException(
 					String.format("Ball3DCursor: must get a 3D image, got a %dD image.", img.getDimensions().length));
@@ -94,16 +101,42 @@ public class Ball3DCursor<T extends Type<T>> implements Cursor<T> {
 		this.hasNext = true;
 		this.state = CursorState.INITIALIZED;
 		this.position = new int[] {0, 0, 0};
-		this.calibration = calibration;
+		if (null == calibration) 
+			this.calibration = new float[] {1, 1, 1};
+		else 
+			this.calibration = calibration;
 		this.icenter = new int[] {
-				(int) (center[0] / calibration[0]), 
-				(int) (center[1] / calibration[1]), 
-				(int) (center[2] / calibration[2]) };
+				(int) (center[0] / this.calibration[0]), 
+				(int) (center[1] / this.calibration[1]), 
+				(int) (center[2] / this.calibration[2]) };
 		cursor.setPosition(icenter);
 		mirrorZ = false;
 		doneZ = false;
+		allDone = false;
 	}
-	
+
+	public Ball3DCursor(final Image<T> img, final double[] center, double radius, final double[] calibration) {
+		// Simply cast to float
+		this(img, 
+				new float[] {(float)center[0], (float) center[1], (float) center[2]}, 
+				(float) radius, 
+				new float[] {(float) calibration[0], (float) calibration[1], (float) calibration[2] } );
+	}
+
+	/**
+	 * Construct a {@link Ball3DCursor} on a 3D image, using the spatial calibration
+	 * stored in the image {@link #img}.
+	 * 
+	 * @param img  the image, must be 3D
+	 * @param center  the ball center, in physical units
+	 * @param radius  the ball radius, in physical units
+	 * @see Image#setCalibration(float[])
+	 */
+	public Ball3DCursor(final Image<T> img, final float[] center, float radius) {
+		this(img, center, radius, 
+				new float[] {img.getCalibration(0), img.getCalibration(1), img.getCalibration(2)});
+	}
+
 	/**
 	 * Construct a {@link Ball3DCursor} on a 3D image, using the spatial calibration
 	 * stored in the image {@link #img}.
@@ -114,20 +147,27 @@ public class Ball3DCursor<T extends Type<T>> implements Cursor<T> {
 	 * @see Image#setCalibration(float[])
 	 */
 	public Ball3DCursor(final Image<T> img, final double[] center, double radius) {
-		this(img, center, radius, 
-				new double[] {img.getCalibration(0), img.getCalibration(1), img.getCalibration(2)});
+		// Simply cast to float
+		this(img, 
+				new float[] {(float)center[0], (float) center[1], (float) center[2]}, 
+				(float) radius, 
+				new float[] {img.getCalibration(0), img.getCalibration(1), img.getCalibration(2)});
 	}
-	
+
+	/*
+	 * METHODS
+	 */
+
 	/**
 	 * Return the square distance measured from the center of the ball to the current
 	 * cursor position, in physical units.
 	 */
 	public final double getDistanceSquared() {
 		return position[0] * position[0] * calibration[0] * calibration[0] + 
-				position[1] * position[1] * calibration[1] * calibration[1] +
-				position[2] * position[2] * calibration[2] * calibration[2];  
+		position[1] * position[1] * calibration[1] * calibration[1] +
+		position[2] * position[2] * calibration[2] * calibration[2];  
 	}
-	
+
 	/**
 	 * Store the relative position of the current cursor with respect to the ball center in 
 	 * the array given in argument. The position is returned in <b>pixel units</b> and as
@@ -138,7 +178,7 @@ public class Ball3DCursor<T extends Type<T>> implements Cursor<T> {
 		position[1] = this.position[1];
 		position[2] = this.position[2];
 	}
-	
+
 	/**
 	 * Return the relative calibrated position of this cursor in physical units.
 	 */
@@ -147,98 +187,209 @@ public class Ball3DCursor<T extends Type<T>> implements Cursor<T> {
 		coordinates[1] = position[1] / calibration[1];
 		coordinates[2] = position[2] / calibration[2];
 	}
-	
+
+	/**
+	 * Midpoint circle algorithm: store the bounds of a circle in the given array. From
+	 * {@link http://en.wikipedia.org/wiki/Midpoint_circle_algorithm}
+	 * @param radius  the radius of the circle
+	 * @param lineBounds  the array to store bounds in
+	 */
+	@SuppressWarnings("unused")
+	private static final void getXYCircleBounds(int radius, int[] lineBounds)	{
+		int f = 1 - radius;
+		int ddF_x = 1;
+		int ddF_y = -2 * radius;
+		int x = 0;
+		int y = radius;
+
+		lineBounds[0] = radius;
+
+		while(x < y) 		  {
+			// ddF_x == 2 * x + 1;
+			// ddF_y == -2 * y;
+			// f == x*x + y*y - radius*radius + 2*x - y + 1;
+			if(f >= 0)  {
+				y--;
+				ddF_y += 2;
+				f += ddF_y;
+			}
+			x++;
+			ddF_x += 2;
+			f += ddF_x;  
+			lineBounds[y] = x;
+			lineBounds[x] = y;
+		}
+	}
+
+	/** 
+	 * Store the half-widths of a X line to scan to fill an ellipse of given axis lengths.
+	 * The parameter <code>a</code> is the axis half-length in the X direction, and <code>b</code>
+	 * is the axis half-length in the Y direction. 
+	 * <p>
+	 * The half-widhts will be stored in the array <code>lineBounds</code>, which must be of size equal
+	 * to at least <code>b+1</code>.
+	 * <p>
+	 * This is an implementation of the McIlroy's algorithm, adapted freely from 
+	 * {@link http://enchantia.com/software/graphapp/doc/tech/ellipses.html}.
+	 * 
+	 * @param a  half-length of the ellipse in the X direction
+	 * @param b  half-length of the ellipse in the Y direction
+	 * @param lineBounds  will store the half-length of the ellipse lines in the X direction
+	 */
+	private static final void getXYEllipseBounds(int a, int b, int[] lineBounds) {
+		/* e(x,y) = b^2*x^2 + a^2*y^2 - a^2*b^2 */
+		int x = 0, y = b;
+		int width = 0;
+		long a2 = (long)a*a, b2 = (long)b*b;
+		long crit1 = -(a2/4 + a%2 + b2);
+		long crit2 = -(b2/4 + b%2 + a2);
+		long crit3 = -(b2/4 + b%2);
+		long t = -a2*y; /* e(x+1/2,y-1/2) - (a^2+b^2)/4 */
+		long dxt = 2*b2*x, dyt = -2*a2*y;
+		long d2xt = 2*b2, d2yt = 2*a2;
+
+		while (y>=0 && x<=a) {
+			if (t + b2*x <= crit1 ||     /* e(x+1,y-1/2) <= 0 */
+					t + a2*y <= crit3) {     /* e(x+1/2,y) <= 0 */
+				x++; dxt += d2xt; t += dxt;// incx();
+				width += 1;
+			}
+			else if (t - a2*y > crit2) { /* e(x+1/2,y-1) > 0 */
+				lineBounds[y] = width; //row(y, width);
+				//					if (y!=0)
+				//						row(xc-x, yc+y, width);
+				y--; dyt += d2yt; t += dyt; // incy();
+			}
+			else {
+				lineBounds[y] = width; // row(y, width);
+				//					if (y!=0)
+				//						row(xc-x, yc+y, width);
+				x++; dxt += d2xt; t += dxt; //incx();
+				y--; dyt += d2yt; t += dyt; //incy();
+				width += 1;
+			}
+		}
+		if (b == 0)
+			lineBounds[0] = a; //row(0, 2*a+1);
+	}
+
+
 	@Override
 	public void fwd() {
-		
+
 		switch(state) {
-		
+
 		case DRAWING_LINE:
-			
+
+			cursor.fwd(0);
+			position[0]++;
 			if (position[0] >= rx) {
 				state = nextState;
-				fwd();
-			} else {
-				cursor.fwd(0);
-				position[0]++;				
+				if (allDone)
+					hasNext = false;
 			}
 			break;
-		
+
 		case INITIALIZED:
+
+			// Compute XY circle radiuses for all Z in advance
+			rys = new int[Math.round(radius/calibration[2])+1];
+			getXYEllipseBounds(Math.round(radius/calibration[1]), Math.round(radius/calibration[2]), rys); 
+			ry = rys[0] ;
 			
-			// Will draw the line a z=0, y=0 with x from -radius to +radius
-			rx = (int) (radius / calibration[0]);
+			rxs = new int[Math.round(ry/calibration[1])+1]; 
+			getXYEllipseBounds(Math.round(radius/calibration[0]), Math.round(radius/calibration[1]), rxs); 
+			rx = rxs[0] ; 
 			cursor.setPosition(icenter[0] - rx, 0);
 			position[0] = -rx;
 			state = CursorState.DRAWING_LINE;
 			nextState = CursorState.INCREMENT_Y;
-			ry = (int) (radius / calibration[1]);
 			break;
-		
+
 		case INCREMENT_Y:
-			
+
 			position[1] = -position[1] + 1; // y should be negative (coming from mirroring or init = 0)
+			rx = rxs[position[1]];
+
 			cursor.setPosition(icenter[1] + position[1], 1);
 			state = CursorState.DRAWING_LINE;
-			rx = (int) ( Math.sqrt( ry * ry - position[1] * position[1]) * calibration[1] / calibration[0] );
 			position[0] = -rx;
 			cursor.setPosition(icenter[0] - rx, 0);
 			nextState = CursorState.MIRROR_Y;
 			break;
-			
+
 		case MIRROR_Y:
-			
+
 			position[0] = -rx;
 			position[1] = - position[1];
 			cursor.setPosition(icenter[1] + position[1], 1);
 			cursor.setPosition(icenter[0] - rx, 0);
 			state = CursorState.DRAWING_LINE;
-			if (position[1] <= - ry) 
-				nextState = CursorState.INCREMENT_Z;
+			if (position[1] <= - ry) {
+				if (doneZ) {
+					nextState = CursorState.FINISHED;
+					allDone  = true ;
+				} else
+					nextState = CursorState.INCREMENT_Z;
+			}
 			else 
 				nextState = CursorState.INCREMENT_Y;
 			break;
-			
+
 		case INCREMENT_Z:
+
+			if (doneZ) {
+				state = CursorState.FINISHED;
+				fwd();
+				break;
+			}
 
 			if (mirrorZ) {
 
 				position[2] = - position[2];
 				mirrorZ = false;
+				if (position[2] <= - radius) 
+					doneZ = true;
 
 			} else {
-				
+
 				position[2] = - position[2] + 1;
-				if (position[2] >= radius / calibration[2]) 
-					doneZ = true;
+				ry = rys[position[2]];
 				mirrorZ = true;
 			}
-			if (doneZ) {
-				if (!mirrorZ)
-					nextState = CursorState.FINISHED;
-			} else {
-				nextState = CursorState.INCREMENT_Y;
-			}
+
+
+			rxs = new int[Math.round(ry/calibration[1])+1]; 
+			getXYEllipseBounds(Math.round(ry*calibration[1]/calibration[0]), Math.round(ry), rxs); 
+			rx = rxs[0] ; 
 			
-			position[1] = 0;
-			ry = (int) ( Math.sqrt(radius * radius - position[2] * position[2] * calibration[2] * calibration[2]) / calibration[1] );
-			rx = (int) (ry * calibration[1] / calibration[0]); // We start at middle Y
 			cursor.setPosition(icenter[0]-rx, 0);
 			cursor.setPosition(icenter[1], 1);
 			cursor.setPosition(icenter[2] + position[2], 2);
 			position[0] = -rx;
+			position[1] = 0;
 			state = CursorState.DRAWING_LINE;
+			nextState = CursorState.INCREMENT_Y;
 			break;
-			
+
 		case FINISHED:
-			
+
 			hasNext = false;
+			System.out.println("RYs:");
+			for (int i = 0; i < rys.length; i++) {
+				System.out.print(rys[i]+" ");
+			}
+			System.out.println("\nRXs:");
+			for (int i = 0; i < rxs.length; i++) {
+				System.out.print(rxs[i]+" ");
+			}
+			System.out.println("\nCursor position: "+cursor.toString());
 			break;
 
 		}
-		
+
 	}
-	
+
 
 	@Override
 	public void close() {
@@ -339,34 +490,99 @@ public class Ball3DCursor<T extends Type<T>> implements Cursor<T> {
 	public int getNumDimensions() {
 		return 3;
 	}
-	
-	
-	
+
+
+
 	/*
 	 * Testing
 	 */
 
 	public static void main(String[] args) {
+
+		/*
+		// Check circle routine
+		int radius = 9;
+		int[] lineBounds = new int[radius+1];
+		Ball3DCursor.getXYCircleBounds(radius, lineBounds);
+
+		for (int i = radius; i >= 0; i--) {
+			for (int ix = 0; ix < radius-lineBounds[i]; ix++) 
+				System.out.print(' ');
+			for (int ix = -lineBounds[i]; ix <= lineBounds[i]; ix++) 
+				System.out.print(Math.abs(ix));
+			System.out.print('\n');
+
+		}
+		for (int i = 1; i <= radius; i++) {
+			for (int ix = 0; ix < radius-lineBounds[i]; ix++) 
+				System.out.print(' ');
+			for (int ix = -lineBounds[i]; ix <= lineBounds[i]; ix++) 
+				System.out.print(Math.abs(ix));
+			System.out.print('\n');	
+		}
+		 */
+
+		/*
+		// Check ellipse routine
+		int radiusY = 3;
+		int radiusX = 9;
+		int[] lineBounds = new int[radiusY+1];
+		Ball3DCursor.getXYEllipseBounds(radiusX, radiusY, lineBounds);
+
+		for (int i = radiusY; i >= 0; i--) {
+			for (int ix = 0; ix < radiusX-lineBounds[i]; ix++) 
+				System.out.print(' ');
+			for (int ix = -lineBounds[i]; ix <= lineBounds[i]; ix++) 
+				System.out.print(Math.abs(ix));
+			System.out.print('\n');
+
+		}
+		for (int i = 1; i <= radiusY; i++) {
+			for (int ix = 0; ix < radiusX-lineBounds[i]; ix++) 
+				System.out.print(' ');
+			for (int ix = -lineBounds[i]; ix <= lineBounds[i]; ix++) 
+				System.out.print(Math.abs(ix));
+			System.out.print('\n');
+		}
+		 */
+
 		
-		ij.ImageJ.main(args);
-		
-		// Create 3 spots image
 		Image<UnsignedByteType> testImage = new ImageFactory<UnsignedByteType>(
-					new UnsignedByteType(),
-					new ArrayContainerFactory()
-				).createImage(new int[] {80, 80, 40}); // 40µm x 40µm x 40µm
-		
-		double[] calibration = new double[] {0.5, 0.5, 1}; 
+				new UnsignedByteType(),
+				new ArrayContainerFactory()
+		).createImage(new int[] {80, 80, 40}); // 40µm x 40µm x 40µm
+
+		float radius = 10;
+		float[] calibration = new float[] {0.5f, 0.5f, 1}; 
 		Ball3DCursor<UnsignedByteType> cursor = new Ball3DCursor<UnsignedByteType>(
 				testImage, 
-				new double[] {20, 20, 20}, // in units
-				10, // µm
+				new float[] {20, 20, 20}, // in units
+				radius, // µm
 				calibration);
+		int volume = 0;
 		while(cursor.hasNext) {
+			volume++;
 			cursor.fwd();
 //			cursor.getType().set((int) cursor.getDistanceSquared()); // to check we paint a sphere in physical coordinates
 			cursor.getType().inc(); // to check we did not walk multiple times on a single pixel
 		}
+		cursor.close();
+
+		int  maxPixelValue = 0;
+		Cursor<UnsignedByteType> c = testImage.createCursor();
+		while(c.hasNext()) {
+			c.fwd();
+			if (c.getType().get() > maxPixelValue) 
+				maxPixelValue = c.getType().get();
+		}
+		c.close();
+
+		System.out.println(String.format("Cursor for a shpere of radius %.1f", radius));
+		System.out.println(String.format("Iterated over %d pixels, real volume is: %.1f", volume, 4/3.0*Math.PI*radius*radius*radius));
+		System.out.println(String.format("Each pixel have been walked on at most %d times.", maxPixelValue));
+
+		// Visualize results
+		ij.ImageJ.main(args);
 
 		ImagePlus imp = ImageJFunctions.copyToImagePlus(testImage);
 		imp.getCalibration().pixelWidth = calibration[0];
@@ -374,6 +590,7 @@ public class Ball3DCursor<T extends Type<T>> implements Cursor<T> {
 		imp.getCalibration().pixelDepth = calibration[2];
 		imp.getCalibration().setUnit("um");
 		imp.show();
+		 
 	}
-	
+
 }
