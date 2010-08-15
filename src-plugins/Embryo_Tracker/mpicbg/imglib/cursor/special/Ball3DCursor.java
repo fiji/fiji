@@ -155,9 +155,10 @@ public class Ball3DCursor<T extends Type<T>> implements Cursor<T> {
 		
 		case DRAWING_LINE:
 			
-			if (position[0] >= rx) 
+			if (position[0] >= rx) {
 				state = nextState;
-			else {
+				fwd();
+			} else {
 				cursor.fwd(0);
 				position[0]++;				
 			}
@@ -363,7 +364,8 @@ public class Ball3DCursor<T extends Type<T>> implements Cursor<T> {
 				calibration);
 		while(cursor.hasNext) {
 			cursor.fwd();
-			cursor.getType().set((int) cursor.getDistanceSquared());
+//			cursor.getType().set((int) cursor.getDistanceSquared()); // to check we paint a sphere in physical coordinates
+			cursor.getType().inc(); // to check we did not walk multiple times on a single pixel
 		}
 
 		ImagePlus imp = ImageJFunctions.copyToImagePlus(testImage);
