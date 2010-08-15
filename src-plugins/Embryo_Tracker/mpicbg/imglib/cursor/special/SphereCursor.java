@@ -8,6 +8,7 @@ import mpicbg.imglib.container.Container;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
+import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
@@ -18,7 +19,7 @@ import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
  * This class implements a {@link Cursor} that iterates over all the pixel within the volume
  * of a 3D ball, whose center and radius are given at construction. It is made so that
  * if the ball volume is made of N pixels, this cursor will go exactly over N iterations 
- * before exhausting. The ball iterated is symmetrical along X, Y and Z equatorial planes.
+ * before exhausting. 
  * <p>
  * It takes a spatial calibration into account, which may be non isotropic.
  * <p>
@@ -28,16 +29,17 @@ import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
  * The iteration order is always the same. Iteration starts from the middle Z plane, and fill circles
  * away from this plane in alternating fashion: <code>Z = 0, 1, -1, 2, -2, ...</code>. For each 
  * circle, lines are drawn in the X positive direction from the middle line and away from it also in
- * an alternating fashion: <code>Y = 0, 1, -1, 2, -2, ...</code>
+ * an alternating fashion: <code>Y = 0, 1, -1, 2, -2, ...</code>. To parse all the pixels,
+ * a line-scan algorithm is used, relying on McIlroy's algorithm to compute ellipse bounds.
  * <p>
  * Internally, this cursor relies on a {@link LocalizableByDimCursor}. It makes intensive use
- * of states to avoid calling the {@link Math#sqrt(double)} method too often. 
+ * of states to avoid calling the {@link Math#sqrt(double)} method. 
  * 
  * @author Jean-Yves Tinevez (jeanyves.tinevez@gmail.com) -  August, 2010
  *
  * @param <T>
  */
-public class Ball3DCursor<T extends Type<T>> implements Cursor<T> {
+public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 
 	private final Image<T> img;
 	private final int[] icenter;
@@ -91,7 +93,7 @@ public class Ball3DCursor<T extends Type<T>> implements Cursor<T> {
 	 * @param calibration  the spatial calibration (pixel size); if <code>null</code>, 
 	 * a calibration of 1 in all directions will be used
 	 */
-	public Ball3DCursor(final Image<T> img, final float[] center, float radius, final float[] calibration) {
+	public SphereCursor(final Image<T> img, final float[] center, float radius, final float[] calibration) {
 		if (img.getDimensions().length != 3) 
 			throw new IllegalArgumentException(
 					String.format("Ball3DCursor: must get a 3D image, got a %dD image.", img.getDimensions().length));
@@ -115,7 +117,7 @@ public class Ball3DCursor<T extends Type<T>> implements Cursor<T> {
 		allDone = false;
 	}
 
-	public Ball3DCursor(final Image<T> img, final double[] center, double radius, final double[] calibration) {
+	public SphereCursor(final Image<T> img, final double[] center, double radius, final double[] calibration) {
 		// Simply cast to float
 		this(img, 
 				new float[] {(float)center[0], (float) center[1], (float) center[2]}, 
@@ -132,7 +134,7 @@ public class Ball3DCursor<T extends Type<T>> implements Cursor<T> {
 	 * @param radius  the ball radius, in physical units
 	 * @see Image#setCalibration(float[])
 	 */
-	public Ball3DCursor(final Image<T> img, final float[] center, float radius) {
+	public SphereCursor(final Image<T> img, final float[] center, float radius) {
 		this(img, center, radius, 
 				new float[] {img.getCalibration(0), img.getCalibration(1), img.getCalibration(2)});
 	}
@@ -146,7 +148,7 @@ public class Ball3DCursor<T extends Type<T>> implements Cursor<T> {
 	 * @param radius  the ball radius, in physical units
 	 * @see Image#setCalibration(float[])
 	 */
-	public Ball3DCursor(final Image<T> img, final double[] center, double radius) {
+	public SphereCursor(final Image<T> img, final double[] center, double radius) {
 		// Simply cast to float
 		this(img, 
 				new float[] {(float)center[0], (float) center[1], (float) center[2]}, 
@@ -491,7 +493,29 @@ public class Ball3DCursor<T extends Type<T>> implements Cursor<T> {
 		return 3;
 	}
 
+	/*
+	 * LOCALIZABLE METHODS
+	 */
+	
+	@Override
+	public int[] getPosition() {
+		return cursor.getPosition();
+	}
 
+	@Override
+	public void getPosition(int[] position) {
+		cursor.getPosition(position);
+	}
+
+	@Override
+	public int getPosition(int dim) {
+		return cursor.getPosition(dim);
+	}
+
+	@Override
+	public String getPositionAsString() {
+		return cursor.getPositionAsString();
+	}
 
 	/*
 	 * Testing
@@ -554,7 +578,7 @@ public class Ball3DCursor<T extends Type<T>> implements Cursor<T> {
 
 		float radius = 10;
 		float[] calibration = new float[] {0.5f, 0.5f, 1}; 
-		Ball3DCursor<UnsignedByteType> cursor = new Ball3DCursor<UnsignedByteType>(
+		SphereCursor<UnsignedByteType> cursor = new SphereCursor<UnsignedByteType>(
 				testImage, 
 				new float[] {20, 20, 20}, // in units
 				radius, // µm
@@ -592,5 +616,6 @@ public class Ball3DCursor<T extends Type<T>> implements Cursor<T> {
 		imp.show();
 		 
 	}
+
 
 }
