@@ -1,5 +1,6 @@
 package fiji.plugin.nperry;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -15,6 +16,10 @@ public class Spot {
 	private double[] coordinates; 
 	/** A user-supplied name for this spot. */
 	private String name;
+	/** The parents of this Spot, once Spots have been linked. */
+	private ArrayList<Spot> parents;
+	/** The children of this Spot, once Spots have been linked. */
+	private ArrayList<Spot> children;
 	
 	/*
 	 * CONSTRUCTORS
@@ -23,10 +28,14 @@ public class Spot {
 	public Spot(double[] coordinates, String name) {
 		this.coordinates = coordinates;
 		this.name = name;
+		this.parents = new ArrayList<Spot>();
+		this.children = new ArrayList<Spot>();
 	}
 	
 	public Spot(double[] coordinates) {
 		this(coordinates, null);
+		this.parents = new ArrayList<Spot>();
+		this.children = new ArrayList<Spot>();
 	}
 	
 	/*
@@ -62,6 +71,15 @@ public class Spot {
 	 */
 	public Map<Feature, Double> getFeatures() {
 		return this.features;
+	}
+	
+	/**
+	 * Returns the {@link Double} value mapped to this {@link Feature}.
+	 * @param feature The {@link Feature} to retrieve the stored value for.
+	 * @return The {@link Double} value corresponding to this {@link Feature}. 
+	 */
+	public double getFeature(Feature feature) {
+		return this.features.get(feature).doubleValue();
 	}
 	
 	/**

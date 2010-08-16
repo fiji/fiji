@@ -4,6 +4,7 @@ import fiji.plugin.nperry.features.BlobBrightness;
 import fiji.plugin.nperry.features.BlobContrast;
 import fiji.plugin.nperry.features.BlobVariance;
 import fiji.plugin.nperry.features.LoG;
+import fiji.plugin.nperry.tracking.ObjectTracker;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -349,6 +350,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		for (ArrayList< ArrayList <Spot> > pointsInTimeFrame : selectedPoints) {
 			extremaPostThresholdingAllFrames.add(pointsInTimeFrame.get(0));
 		}
+		ObjectTracker track = new ObjectTracker(extremaPostThresholdingAllFrames);
 		
 		return new Object[] {extremaAllFrames};
 	}
@@ -427,7 +429,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		final int size = data.size();
 		final double[] feature_values = new double[size];
 		for (int i = 0; i < feature_values.length; i++) {
-			feature_values[i] = data.get(i).getFeatures().get(feature);
+			feature_values[i] = data.get(i).getFeature(feature);
 		}
 		final double q1 = getPercentile(feature_values, 0.25);
 		final double q3 = getPercentile(feature_values, 0.75);
@@ -490,7 +492,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		double max = 0;
 		
 		for (int i = 0; i < data.size(); i++) {
-			double value = data.get(i).getFeatures().get(feature);
+			double value = data.get(i).getFeature(feature);
 			if (i == 0) {
 				min = value;
 				max = value;
@@ -606,8 +608,6 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			ArrayList<Spot> framej = extremaAllFrames.get(j);
 			
 			// Calculate thresholds for each feature of interest.
-			System.out.println("Calculating thresholds!");
-
 			HashMap<Feature, Double> thresholds = new HashMap<Feature, Double>();
 			final double logThreshold = otsuThreshold(framej, Feature.LOG_VALUE);  // threshold for frame
 			final double brightnessThreshold = otsuThreshold(framej, Feature.BRIGHTNESS);
@@ -618,10 +618,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			thresholds.put(Feature.CONTRAST, contrastThreshold);
 			thresholds.put(Feature.VARIANCE, varThreshold);
 			thresholdsAllFrames.add(thresholds);
-			
-			System.out.println("Done calculating thresholds!");
 
-			
 			// Add the extrema coords to the pointlist
 			for (int i = 0; i < framej.size(); i++) {
 				final Spot spot = framej.get(i);
@@ -662,7 +659,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	
 	private boolean aboveThresholds(Spot spot, HashMap<Feature, Double> thresholds) {
 		for (Feature feature : thresholds.keySet()) {
-			if (spot.getFeatures().get(feature) < thresholds.get(feature)) {
+			if (spot.getFeature(feature) < thresholds.get(feature)) {
 				return false;
 			}
 		}
@@ -722,7 +719,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 							ci.showPointList(false);
 							for (int j = 0; j < shown.size(); j++) {
 								Spot spot = shown.get(j);
-								if (spot.getFeatures().get(feature) < threshold) {							
+								if (spot.getFeature(feature) < threshold) {							
 									shown.remove(j);
 									j--;  // the remove() call above shifted all the remaining elements, so we need to decrement j to not skip an element
 									pl.remove(pl.get(spot.getName()));
@@ -739,7 +736,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 								Spot spot = notShown.get(j);
 								boolean passedThresholds = true;  // initially, assume the point is above all the thresholds
 								for (Feature feature : thresholdsAllFrames.get(t).keySet()) {  // for each feature we threshold...
-									if (spot.getFeatures().get(feature) < thresholdsAllFrames.get(t).get(feature)) {  // if the spot has a lower value...
+									if (spot.getFeature(feature) < thresholdsAllFrames.get(t).get(feature)) {  // if the spot has a lower value...
 										passedThresholds = false;  // mark that it isn't above all the thresholds
 										break;
 									}	
