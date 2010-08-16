@@ -110,18 +110,20 @@ public class Spot {
 	/**
 	 * Returns the ArrayList holding the list of this Spot's parents.
 	 * @return An ArrayList which contains elements of type Spot. Each Spot in this
-	 * list is a child of this Spot.
+	 * list is a child of this Spot. Returns null if this Spot has no parents (a root).
 	 */
 	public ArrayList<Spot> getParents() {
+		if (parents.size() == 0) return null;
 		return this.parents;
 	}
 	
 	/** 
 	 * Returns the ArrayList holding the list of this Spot's children.
 	 * @return An ArrayList which contains elements of type Spot. Each Spot in this
-	 * list is a child of this Spot.
+	 * list is a child of this Spot. Returns null if this Spot has no children (a leaf).
 	 */
 	public ArrayList<Spot> getChildren() {
+		if (children.size() == 0) return null; 
 		return this.children;
 	}
 }
