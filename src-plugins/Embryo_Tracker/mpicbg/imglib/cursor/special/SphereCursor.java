@@ -139,7 +139,7 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 
 		// Instantiate it once, and with large size, so that we do not have to instantiate every time we move in Z
 		rxs = new int [ Math.max(Math.round(radius/calibration[1]), Math.round(radius/calibration[0]))  +  1 ];
-		rys = new int[Math.round(radius/calibration[2])+1];
+		rys = new int[(int) (Math.ceil(radius/calibration[2])+1)];
 		reset();
 	}
 	

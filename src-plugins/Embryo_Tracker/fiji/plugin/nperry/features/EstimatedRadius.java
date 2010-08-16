@@ -174,15 +174,15 @@ public class EstimatedRadius <T extends RealType<T>> extends BlobContrast<T> {
 			index++;			
 		}
 				
-//		ij.ImageJ.main(args);
-//		ij.ImagePlus imp = mpicbg.imglib.image.display.imagej.ImageJFunctions.copyToImagePlus(testImage);
-//		imp.show();
+		ij.ImageJ.main(args);
+		ij.ImagePlus imp = mpicbg.imglib.image.display.imagej.ImageJFunctions.copyToImagePlus(testImage);
+		imp.show();
 		
 		// Apply the estimator
 		EstimatedRadius<UnsignedByteType> es = new EstimatedRadius<UnsignedByteType>(
 				testImage, 
-				40, 
-				40, 
+				40.5, 
+				20, 
 				calibration);
 		
 		Spot s;
