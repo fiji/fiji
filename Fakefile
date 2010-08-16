@@ -87,7 +87,7 @@ FIJI_JAVA_EXT(macosx)=$FIJI_JAVA_HOME/Home/lib/ext
 JAVA3D_JARS=$FIJI_JAVA_EXT/j3dcore.jar:$FIJI_JAVA_EXT/j3dutils.jar:$FIJI_JAVA_EXT/vecmath.jar
 
 # tools.jar
-TOOLS_JAR=$FIJI_JAVA_HOME/../lib/tools.jar
+TOOLS_JAR=$JAVA_HOME/../lib/tools.jar
 TOOLS_JAR(macosx)=/System/Library/Frameworks/JavaVM.framework/Classes/classes.jar
 
 # the main target
