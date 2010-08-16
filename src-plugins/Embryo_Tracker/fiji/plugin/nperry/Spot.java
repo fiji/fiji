@@ -90,4 +90,38 @@ public class Spot {
 	public void addFeature(Feature feature, double value) {
 		this.features.put(feature, value);
 	}
+	
+	/**
+	 * Adds a reference to the parent Spot to this Spot's list of parents.
+	 * @param parent
+	 */
+	public void addParent(Spot parent) {
+		this.parents.add(parent);
+	}
+	
+	/**
+	 * Adds a reference to the child Spot to this Spot's list of children.
+	 * @param child
+	 */
+	public void addChild(Spot child) {
+		this.children.add(child);
+	}
+	
+	/**
+	 * Returns the ArrayList holding the list of this Spot's parents.
+	 * @return An ArrayList which contains elements of type Spot. Each Spot in this
+	 * list is a child of this Spot.
+	 */
+	public ArrayList<Spot> getParents() {
+		return this.parents;
+	}
+	
+	/** 
+	 * Returns the ArrayList holding the list of this Spot's children.
+	 * @return An ArrayList which contains elements of type Spot. Each Spot in this
+	 * list is a child of this Spot.
+	 */
+	public ArrayList<Spot> getChildren() {
+		return this.children;
+	}
 }
