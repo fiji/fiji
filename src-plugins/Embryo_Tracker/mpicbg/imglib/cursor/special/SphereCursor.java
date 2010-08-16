@@ -16,6 +16,7 @@ import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.Type;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
+import mpicbg.imglib.type.numeric.real.FloatType;
 
 /**
  * This class implements a {@link LocalizableCursor} that iterates over all the pixel within the volume
@@ -126,8 +127,6 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 		this.img = img;
 		this.radius = radius;
 		this.cursor = img.createLocalizableByDimCursor(outOfBoundsFactory);		
-		this.hasNext = true;
-		this.state = CursorState.INITIALIZED;
 		this.position = new int[] {0, 0, 0};
 		if (null == calibration) 
 			this.calibration = new float[] {1, 1, 1};
@@ -137,10 +136,11 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 				(int) (center[0] / this.calibration[0]), 
 				(int) (center[1] / this.calibration[1]), 
 				(int) (center[2] / this.calibration[2]) };
-		cursor.setPosition(icenter);
-		mirrorZ = false;
-		doneZ = false;
-		allDone = false;
+
+		// Instantiate it once, and with large size, so that we do not have to instantiate every time we move in Z
+		rxs = new int [ Math.max(Math.round(radius/calibration[1]), Math.round(radius/calibration[0]))  +  1 ];
+		rys = new int[Math.round(radius/calibration[2])+1];
+		reset();
 	}
 	
 	/**
@@ -224,23 +224,37 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 		this.img = img;
 		this.radius = radius;
 		this.cursor = img.createLocalizableByDimCursor(outOfBoundsFactory);		
-		this.hasNext = true;
-		this.state = CursorState.INITIALIZED;
 		this.position = new int[] {0, 0, 0};
 		if (null == calibration) 
 			this.calibration = new float[] {1, 1, 1};
 		else 
 			this.calibration = calibration;
 		this.icenter = centerCursor.getPosition();
-		cursor.setPosition(icenter);
-		mirrorZ = false;
-		doneZ = false;
-		allDone = false;
+		// Instantiate it once, and with large size, so that we do not have to instantiate every time we move in Z
+		rxs = new int [ Math.max(Math.round(radius/calibration[1]), Math.round(radius/calibration[0]))  +  1 ];
+		rys = new int[Math.round(radius/calibration[2])+1];
+		reset();
 	}
 	
 	/**
+	 * Construct a {@link SphereCursor} on a 3D image, using the given spatial calibration
+	 * and a default {@link OutOfBoundsStrategyValueFactory}
+	 * to handle off-bounds locations. The center of the sphere
+	 * is set by the {@link LocalizableCursor} given in argument.
+	 * 
+	 * @param img  the image, must be 3D
+	 * @param centerCursor  the cursor which position will set the sphere center 
+	 * @param radius  the ball radius, in physical units
+	 */
+	public SphereCursor(final Image<T> img, final LocalizableCursor<T> centerCursor, float radius, final float[] calibration) {
+		this(img, centerCursor, radius, calibration, new OutOfBoundsStrategyValueFactory<T>());
+	}
+	
+	
+	/**
 	 * Construct a {@link SphereCursor} on a 3D image, using the spatial calibration
-	 * stored in the image. The center of the sphere
+	 * stored in the image and a default {@link OutOfBoundsStrategyValueFactory}
+	 * to handle off-bounds locations. The center of the sphere
 	 * is set by the {@link LocalizableCursor} given in argument.
 	 * 
 	 * @param img  the image, must be 3D
@@ -259,7 +273,7 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 	 * Move the center of the sphere to the location specified by the {@link LocalizableCursor}. 
 	 * This <b>resets</b> this cursor.
 	 */
-	public void moveCenterTo(final LocalizableCursor<T> cursor) {
+	public final void moveCenterTo(final LocalizableCursor<T> cursor) {
 		cursor.getPosition(icenter);
 		reset();
 	}
@@ -278,7 +292,7 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 	 * taking the calibration into account. 
 	 * This <b>resets</b> this cursor.
 	 */
-	public void moveCenterToCoordinates(final float[] center) {
+	public final void moveCenterToCoordinates(final float[] center) {
 		this.icenter[0] = (int) (center[0] / calibration[0]);
 		this.icenter[1] = (int) (center[1] / calibration[1]);
 		this.icenter[2] = (int) (center[2] / calibration[2]);
@@ -289,8 +303,11 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 	 * Change the radius of the sphere this cursor iterates on.  This <b>resets</b> this cursor.
 	 * @param radius
 	 */
-	public void setRadis(float radius) {
+	public void setRadius(float radius) {
 		this.radius = radius;
+		// Instantiate it once, and with large size, so that we do not have to instantiate every time we move in Z
+		rxs = new int [ Math.max(Math.round(radius/calibration[1]), Math.round(radius/calibration[0]))  +  1 ];		
+		rys = new int[Math.round(radius/calibration[2])+1];
 		reset();
 	}
 	
@@ -428,14 +445,14 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 		case INITIALIZED:
 
 			// Compute XY circle radiuses for all Z in advance
-			rys = new int[Math.round(radius/calibration[2])+1];
 			getXYEllipseBounds(Math.round(radius/calibration[1]), Math.round(radius/calibration[2]), rys); 
 			ry = rys[0] ;
 			
-			rxs = new int[Math.round(ry/calibration[1])+1]; 
 			getXYEllipseBounds(Math.round(radius/calibration[0]), Math.round(radius/calibration[1]), rxs); 
 			rx = rxs[0] ; 
 			cursor.setPosition(icenter[0] - rx, 0);
+			cursor.setPosition(icenter[1], 1);
+			cursor.setPosition(icenter[2], 2);
 			position[0] = -rx;
 			state = CursorState.DRAWING_LINE;
 			nextState = CursorState.INCREMENT_Y;
@@ -486,8 +503,6 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 				mirrorZ = true;
 			}
 
-
-			rxs = new int[Math.round(ry/calibration[1])+1]; 
 			getXYEllipseBounds(Math.round(ry*calibration[1]/calibration[0]), Math.round(ry), rxs); 
 			rx = rxs[0] ; 
 			
@@ -552,9 +567,8 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 	}
 
 	@Override
-	public void reset() {
+	public final void reset() {
 		cursor.reset();
-		cursor.setPosition(icenter);
 		state = CursorState.INITIALIZED;
 		mirrorZ = false;
 		doneZ = false;
@@ -694,10 +708,10 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 		Image<UnsignedByteType> testImage = new ImageFactory<UnsignedByteType>(
 				new UnsignedByteType(),
 				new ArrayContainerFactory()
-		).createImage(new int[] {80, 80, 40}); // 40µm x 40µm x 40µm
+		).createImage(new int[] {40, 40, 40}); //{80, 80, 40}); // 40µm x 40µm x 40µm
 
 		float radius = 10;
-		float[] calibration = new float[] {0.5f, 0.5f, 1}; 
+		float[] calibration = new float[] {1, 1, 1}; //{0.5f, 0.5f, 1}; 
 		SphereCursor<UnsignedByteType> cursor = new SphereCursor<UnsignedByteType>(
 				testImage, 
 				new float[] {20, 20, 20}, // in units
@@ -735,43 +749,111 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 		imp.getCalibration().setUnit("um");
 		imp.show();
 		
+		float iRadius = 2;
 		
 		// Iterates over all pixels of the image, using the sphere cursor as a neighborhood cursor.
 		// We simply convolve.
 		
-		Image<mpicbg.imglib.type.numeric.real.FloatType> newImage = new ImageFactory<mpicbg.imglib.type.numeric.real.FloatType>(
-				new mpicbg.imglib.type.numeric.real.FloatType(),
+		Image<FloatType> newImage = new ImageFactory<FloatType>(
+				new FloatType(),
 				new ArrayContainerFactory()
 			).createImage(testImage.getDimensions());
-		float iRadius = 5;
 		LocalizableCursor<UnsignedByteType> mainCursor = testImage.createLocalizableCursor();
-		LocalizableByDimCursor<mpicbg.imglib.type.numeric.real.FloatType> destCursor = newImage.createLocalizableByDimCursor();
-		SphereCursor<UnsignedByteType> sphereCursor = new SphereCursor<UnsignedByteType>(testImage, mainCursor, radius);
-		System.out.println("\nUsing the sphere cursor to convolve the whole image with a sphere of radius " + iRadius);
+		LocalizableByDimCursor<FloatType> destCursor = newImage.createLocalizableByDimCursor();
+		SphereCursor<UnsignedByteType> sphereCursor = new SphereCursor<UnsignedByteType>(testImage, mainCursor, iRadius, calibration);
+		System.out.println("\nUsing the sphere cursor to convolve the whole image with a sphere of radius " + iRadius + "...");
 		int sum;
 		int pixelNumber = 0;
 		long start = System.currentTimeMillis();
 		while (mainCursor.hasNext()) {
 			mainCursor.fwd();
 			sphereCursor.moveCenterTo(mainCursor);
-			destCursor.setPosition(mainCursor);
 			sum = 0;
 			while (sphereCursor.hasNext()) {
 				sphereCursor.fwd();
 				sum += sphereCursor.getType().get();
 				pixelNumber++;
 			}
+			destCursor.setPosition(mainCursor);
 			destCursor.getType().set(sum);
 		}
 		sphereCursor.close();
 		mainCursor.close();
 		destCursor.close();
 		long end = System.currentTimeMillis();
-		System.out.println("Iterated over " + pixelNumber + " pixels in " + (end-start) +" ms.");
+		System.out.println(String.format("Iterated over %d pixels in %d ms: %.1e pixel/s.", pixelNumber, (end-start), pixelNumber/((float) (end-start)/1000) ));
 		
 		ImagePlus dest = ImageJFunctions.copyToImagePlus(newImage);
+		dest.getCalibration().pixelWidth = calibration[0];
+		dest.getCalibration().pixelHeight = calibration[1];
+		dest.getCalibration().pixelDepth = calibration[2];
+		dest.getCalibration().setUnit("um");
 		dest.show();
+		
+		
+		
+		// Compare with neighborhood cursor
+		Image<FloatType> newImage2 = new ImageFactory<FloatType>(
+				new FloatType(),
+				new ArrayContainerFactory()
+			).createImage(testImage.getDimensions());
+		LocalizableByDimCursor<FloatType> destCursor2 = newImage2.createLocalizableByDimCursor(new OutOfBoundsStrategyValueFactory<FloatType>());
+		
+		final int roioffsetX = (int) Math.ceil(radius/calibration[0]);
+		final int roioffsetY = (int) Math.ceil(radius/calibration[1]);
+		final int roioffsetZ = (int) Math.ceil(radius/calibration[2]);
+		final int roiSizeX = 2 * roioffsetX + 1;
+		final int roiSizeY = 2 * roioffsetY + 1;
+		final int roiSizeZ = 2 * roioffsetZ + 1;
+		LocalizableByDimCursor<UnsignedByteType> mainCursor2 = testImage.createLocalizableByDimCursor(new OutOfBoundsStrategyValueFactory<UnsignedByteType>());
+
+		RegionOfInterestCursor<UnsignedByteType> regionCursor = mainCursor2.createRegionOfInterestCursor( 
+				new int[] { -roioffsetX, -roioffsetY, -roioffsetZ}, 
+				new int[] { roiSizeX, roiSizeY, roiSizeZ} );
+		
+		int pixelNumber2 = 0;
+		long start2 = System.currentTimeMillis();
+		int sum2;
+		System.out.println("\nUsing a cube neighborhood cursor to convolve the whole image with a sphere of radius " + iRadius + "...");
+		int[] position = mainCursor2.createPositionArray();
+		int[] offsetPos = mainCursor2.createPositionArray();
+		int[] regPos = mainCursor2.createPositionArray();
+		double dist2;
+		final double radius2 = iRadius * iRadius; 
+		while (destCursor2.hasNext()) {
+			destCursor2.fwd();
+			destCursor2.getPosition(position);
+			offsetPos[0] = (int) (position[0] - roioffsetX );
+			offsetPos[1] = (int) (position[1] - roioffsetY );
+			offsetPos[2] = (int) (position[2] - roioffsetZ );
+			regionCursor.reset(offsetPos);
+			sum2 = 0;
+			while(regionCursor.hasNext()) {
+				regionCursor.fwd();
+				regionCursor.getPosition(regPos);
+				dist2 = (position[0]-regPos[0])*(position[0]-regPos[0]) * calibration[0] * calibration[0] +
+						(position[1]-regPos[1])*(position[1]-regPos[1]) * calibration[1] * calibration[1] +
+						(position[2]-regPos[2])*(position[2]-regPos[2]) * calibration[2] * calibration[2];
+				if (dist2 <= radius2) {
+					sum2 += regionCursor.getType().get();
+					pixelNumber2++;
+				}
+			}
+			destCursor2.getType().set(sum2);
+		}
+		long end2 = System.currentTimeMillis();
+		regionCursor.close();
+		destCursor2.close();
+		mainCursor2.close();
+		System.out.println(String.format("Iterated over %d pixels in %d ms: %.1e pixel/s.", pixelNumber2, (end2-start2), pixelNumber2/((float) (end2-start2)/1000) ));
+
+		
+		ImagePlus dest2 = ImageJFunctions.copyToImagePlus(newImage2);
+		dest2.getCalibration().pixelWidth = calibration[0];
+		dest2.getCalibration().pixelHeight = calibration[1];
+		dest2.getCalibration().pixelDepth = calibration[2];
+		dest2.getCalibration().setUnit("um");
+		dest2.show();
+		
 	}
-
-
 }
