@@ -3,7 +3,7 @@ package fiji.plugin.nperry;
 import java.util.HashMap;
 import java.util.Map;
 
-public class Spot implements Comparable<Spot> {
+public class Spot {
 	
 	/*
 	 * FIELDS
@@ -13,7 +13,7 @@ public class Spot implements Comparable<Spot> {
 	private Map<Feature, Double> features = new HashMap<Feature, Double>();
 	/** Physical coordinates of this spot. Can have a time component. */
 	private double[] coordinates; 
-	
+	/** A user-supplied name for this spot. */
 	private String name;
 	
 	/*
@@ -40,49 +40,36 @@ public class Spot implements Comparable<Spot> {
 		return this.coordinates;
 	}
 	
+	/**
+	 * Returns the name of this Spot.
+	 * @return The String name corresponding to this Spot.
+	 */
 	public String getName() {
 		return this.name;
 	}
 	
+	/**
+	 * Set the name of this Spot.
+	 * @param name
+	 */
 	public void setName(String name) {
 		this.name = name;
 	}
 	
 	/**
-	 * Return the scores Map.
+	 * Returns a map of {@link Feature}s for this Spot.
+	 * @return A map with a {@link Feature} as a key, and the value of the {@link Feature} as the value. 
 	 */
-	//public Map<String, Double> getScores() {
-	//	return this.scores;
-	//}
-	
 	public Map<Feature, Double> getFeatures() {
 		return this.features;
 	}
 	
 	/**
-	 * Add the score for a given scoring method.
-	 * @param scoringMethodName the name of the scoring method used to compute the score
-	 * @param score the score itself
+	 * Adds a {@link Feature} and it's corresponding value to this Spot's {@link Feature} list.
+	 * @param feature The {@link Feature}.
+	 * @param value The {@link Feature}'s associated value.
 	 */
-	//public void addScore(String scoringMethodName, double score) {
-	//	this.scores.put(scoringMethodName, score);
-	//}
-	
-	public void addFeature(Feature feature, double score) {
-		this.features.put(feature, score);
+	public void addFeature(Feature feature, double value) {
+		this.features.put(feature, value);
 	}
-
-	public int compareTo(double[] o) {
-		for (int i = 0; i < coordinates.length; i++) {
-			if (Double.compare(coordinates[i], o[i]) != 0) return -1;
-		}
-		return 0;
-	}
-
-	@Override
-	public int compareTo(Spot o) {
-		return this.features.get(Feature.LOG_VALUE).compareTo(o.getFeatures().get(Feature.LOG_VALUE));
-	}
-	
-	
 }
