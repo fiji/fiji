@@ -1,0 +1,776 @@
+#!/bin/sh
+// 2>&1 | :; exec "$(dirname "$0")"/../fiji "$0" "$@" # exec with fiji
+
+import fiji.build.Fake;
+import fiji.build.Fake.Parser.Rule;
+import fiji.build.Fake.Parser.CompileJar;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileWriter;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+
+int ECLIPSE = 1;
+int INTELLIJ = 2;
+int NETBEANS = 3;
+int ANT = 4;
+
+int mode = 0;
+
+for (int i = 0; i < bsh.args.length; i++)
+	if (!bsh.args[i].startsWith("--"))
+		break;
+	else if (bsh.args[i].equals("--eclipse"))
+		mode = ECLIPSE;
+	else if (bsh.args[i].equals("--intellij"))
+		mode = INTELLIJ;
+	else if (bsh.args[i].equals("--netbeans"))
+		mode = NETBEANS;
+	else if (bsh.args[i].equals("--ant"))
+		mode = ANT;
+
+if (mode == 0) {
+	System.err.println("Need --eclipse, --intellij, --netbeans or --ant");
+	System.exit(1);
+}
+
+setAccessibility(true);
+
+File fijiDir = new File(System.getProperty("fiji.dir"));
+String fijiPath(String name) {
+	if (new File(name).isAbsolute())
+		return name;
+	return new File(fijiDir, name).getAbsolutePath();
+}
+
+Fake fake = new Fake();
+Fake.Parser parser = fake.parse(new FileInputStream(new File(fijiDir, "Fakefile")), fijiDir);
+parser.parseRules(new ArrayList());
+
+void saveFile(File path, String contents) {
+	FileWriter writer = new FileWriter(path);
+	writer.write(contents);
+	writer.close();
+}
+
+String getBaseName(String name, String suffix) {
+	name = fake.stripSuffix(name, suffix);
+	return name.substring(name.lastIndexOf('/') + 1);
+}
+
+File getProjectDirectory(String rootName, String name) {
+	File workspaceDirectory = new File(fijiDir, rootName);
+	File result = new File(workspaceDirectory, name);
+	result.mkdirs();
+	return result;
+}
+
+void generateEclipseJarProject(CompileJar rule) {
+	String name = getBaseName(rule.target, ".jar");
+	File projectDirectory = getProjectDirectory("eclipse", name);
+
+	String including = rule.getPrerequisiteString().replace(' ', '|');
+	String stripPath = rule.getStripPath();
+	if (including != null)
+		including = fake.stripPrefix(including, stripPath);
+	String excluding = rule.getVar("EXCLUDE_UNEXPANDED");
+	String noCompile = rule.getVar("NO_COMPILE_UNEXPANDED");
+	if (noCompile != null)
+		excluding = (excluding == null ? "" : excluding + ":") + noCompile;
+	if (excluding != null)
+		excluding = fake.stripPrefix(excluding.replace(' ', '|'), stripPath);
+	String libs = "", projects = "";
+	String classpath = rule.getVar("CLASSPATH");
+	classpath = (classpath == null ? "" : classpath + ":") + "jars/ij.jar";
+	for (String path : fake.split(classpath, ":")) {
+		path = fake.stripPrefix(path, fijiDir.getAbsolutePath() + File.separator);
+		libs += "\t<classpathentry kind=\"lib\" path=\"" + fijiPath(path) + "\"/>\n";
+		if (parser.getRule(path) != null)
+			projects += "\t\t<project>" + getBaseName(path, ".jar") + "</project>\n";
+	}
+
+	File classpathFile = new File(projectDirectory, ".classpath");
+	saveFile(classpathFile, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+		+ "<classpath>\n"
+		+ libs
+		+ "\t<classpathentry including=\"" + including + "\" "
+		+ (excluding == null ? "" : "excluding=\"" + excluding + "\" ")
+		+ "kind=\"src\" path=\"" + name + "\"/>\n"
+		+ "\t<classpathentry kind=\"con\" path=\"org.eclipse.jdt.launching.JRE_CONTAINER\"/>\n"
+		+ "\t<classpathentry kind=\"output\" path=\".build\"/>\n"
+		+ "</classpath>\n");
+
+	File projectFile = new File(projectDirectory, ".project");
+	saveFile(projectFile, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+		+ "<projectDescription>\n"
+		+ "\t<name>" + name + "</name>\n"
+		+ "\t<comment></comment>\n"
+		+ "\t<projects>\n"
+		+ projects
+		+ "\t</projects>\n"
+		+ "\t<buildSpec>\n"
+		+ "\t\t<buildCommand>\n"
+		+ "\t\t\t<name>org.eclipse.jdt.core.javabuilder</name>\n"
+		+ "\t\t\t<arguments>\n"
+		+ "\t\t\t</arguments>\n"
+		+ "\t\t</buildCommand>\n"
+
+		+ "\t\t<buildCommand>\n"
+		+ "\t\t\t<name>org.eclipse.ui.externaltools.ExternalToolBuilder</name>\n"
+		+ "\t\t\t<triggers>auto,full,incremental,</triggers>\n"
+		+ "\t\t\t<arguments>\n"
+		+ "\t\t\t\t<dictionary>\n"
+		+ "\t\t\t\t\t<key>LaunchConfigHandle</key>\n"
+		+ "\t\t\t\t\t<value>&lt;project&gt;/.externalToolBuilders/Fake.launch</value>\n"
+		+ "\t\t\t\t</dictionary>\n"
+		+ "\t\t\t</arguments>\n"
+		+ "\t\t</buildCommand>\n"
+
+		+ "\t</buildSpec>\n"
+		+ "\t<natures>\n"
+		+ "\t\t<nature>org.eclipse.jdt.core.javanature</nature>\n"
+		+ "\t</natures>\n"
+		+ "\t<linkedResources>\n"
+		+ "\t\t<link>\n"
+		+ "\t\t\t<name>" + name + "</name>\n"
+		+ "\t\t\t<type>2</type>\n"
+		+ "\t\t\t<location>" + fijiPath(stripPath) + "</location>\n"
+		+ "\t\t</link>\n"
+		+ "\t</linkedResources>\n"
+		+ "</projectDescription>\n");
+
+	File launchDirectory = new File(projectDirectory, ".externalToolBuilders");
+	launchDirectory.mkdirs();
+	File fakeLaunchFile = new File(launchDirectory, "Fake.launch");
+	saveFile(fakeLaunchFile, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+		+ "<launchConfiguration type=\"org.eclipse.ui.externaltools.ProgramBuilderLaunchConfigurationType\">\n"
+		+ "<booleanAttribute key=\"org.eclipse.debug.ui.ATTR_CONSOLE_OUTPUT_ON\" value=\"false\"/>\n"
+		+ "<booleanAttribute key=\"org.eclipse.debug.ui.ATTR_LAUNCH_IN_BACKGROUND\" value=\"false\"/>\n"
+		+ "<stringAttribute key=\"org.eclipse.ui.externaltools.ATTR_LOCATION\" value=\"${system_path:java}\"/>\n"
+		+ "<stringAttribute key=\"org.eclipse.ui.externaltools.ATTR_RUN_BUILD_KINDS\" value=\"auto,full,incremental,\"/>\n"
+		+ "<stringAttribute key=\"org.eclipse.ui.externaltools.ATTR_TOOL_ARGUMENTS\" value=\"-jar "
+			+ fijiPath("jars/fake.jar") + " PREBUILTDIR(" + rule.target + ")="
+			+ new File(projectDirectory, ".build").getAbsolutePath() + " " + rule.target + "\"/>\n"
+		+ "<booleanAttribute key=\"org.eclipse.ui.externaltools.ATTR_TRIGGERS_CONFIGURED\" value=\"true\"/>\n"
+		+ "<stringAttribute key=\"org.eclipse.ui.externaltools.ATTR_WORKING_DIRECTORY\" value=\"" + fijiDir.getAbsolutePath() + "\"/>\n"
+		+ "</launchConfiguration>\n");
+
+	File settingsDirectory = new File(projectDirectory, ".settings");
+	settingsDirectory.mkdirs();
+	File encodingFile = new File(settingsDirectory, "org.eclipse.core.resources.prefs");
+	saveFile(encodingFile, "# Written by Fiji\n"
+		+ "eclipse.preferences.version=1\n"
+		+ "encoding/<project>=UTF-8\n");
+	File lineEndingsFile = new File(settingsDirectory, "org.eclipse.core.runtime.prefs");
+	saveFile(lineEndingsFile, "# Written by Fiji\n"
+		+ "eclipse.preferences.version=1\n"
+		+ "line.separator=\\n\n");
+	File codeStyleFile = new File(settingsDirectory, "org.eclipse.jdt.core.prefs");
+	saveFile(codeStyleFile, "# Written by Fiji\n"
+		+ "eclipse.preferences.version=1\n"
+		+ "org.eclipse.jdt.core.formatter.align_type_members_on_columns=false\n"
+		+ "org.eclipse.jdt.core.formatter.alignment_for_arguments_in_allocation_expression=16\n"
+		+ "org.eclipse.jdt.core.formatter.alignment_for_arguments_in_enum_constant=16\n"
+		+ "org.eclipse.jdt.core.formatter.alignment_for_arguments_in_explicit_constructor_call=16\n"
+		+ "org.eclipse.jdt.core.formatter.alignment_for_arguments_in_method_invocation=16\n"
+		+ "org.eclipse.jdt.core.formatter.alignment_for_arguments_in_qualified_allocation_expression=16\n"
+		+ "org.eclipse.jdt.core.formatter.alignment_for_assignment=0\n"
+		+ "org.eclipse.jdt.core.formatter.alignment_for_binary_expression=16\n"
+		+ "org.eclipse.jdt.core.formatter.alignment_for_compact_if=16\n"
+		+ "org.eclipse.jdt.core.formatter.alignment_for_conditional_expression=80\n"
+		+ "org.eclipse.jdt.core.formatter.alignment_for_enum_constants=0\n"
+		+ "org.eclipse.jdt.core.formatter.alignment_for_expressions_in_array_initializer=16\n"
+		+ "org.eclipse.jdt.core.formatter.alignment_for_multiple_fields=16\n"
+		+ "org.eclipse.jdt.core.formatter.alignment_for_parameters_in_constructor_declaration=16\n"
+		+ "org.eclipse.jdt.core.formatter.alignment_for_parameters_in_method_declaration=16\n"
+		+ "org.eclipse.jdt.core.formatter.alignment_for_selector_in_method_invocation=16\n"
+		+ "org.eclipse.jdt.core.formatter.alignment_for_superclass_in_type_declaration=16\n"
+		+ "org.eclipse.jdt.core.formatter.alignment_for_superinterfaces_in_enum_declaration=16\n"
+		+ "org.eclipse.jdt.core.formatter.alignment_for_superinterfaces_in_type_declaration=16\n"
+		+ "org.eclipse.jdt.core.formatter.alignment_for_throws_clause_in_constructor_declaration=16\n"
+		+ "org.eclipse.jdt.core.formatter.alignment_for_throws_clause_in_method_declaration=16\n"
+		+ "org.eclipse.jdt.core.formatter.blank_lines_after_imports=1\n"
+		+ "org.eclipse.jdt.core.formatter.blank_lines_after_package=1\n"
+		+ "org.eclipse.jdt.core.formatter.blank_lines_before_field=0\n"
+		+ "org.eclipse.jdt.core.formatter.blank_lines_before_first_class_body_declaration=0\n"
+		+ "org.eclipse.jdt.core.formatter.blank_lines_before_imports=1\n"
+		+ "org.eclipse.jdt.core.formatter.blank_lines_before_member_type=1\n"
+		+ "org.eclipse.jdt.core.formatter.blank_lines_before_method=1\n"
+		+ "org.eclipse.jdt.core.formatter.blank_lines_before_new_chunk=1\n"
+		+ "org.eclipse.jdt.core.formatter.blank_lines_before_package=0\n"
+		+ "org.eclipse.jdt.core.formatter.blank_lines_between_import_groups=1\n"
+		+ "org.eclipse.jdt.core.formatter.blank_lines_between_type_declarations=1\n"
+		+ "org.eclipse.jdt.core.formatter.brace_position_for_annotation_type_declaration=end_of_line\n"
+		+ "org.eclipse.jdt.core.formatter.brace_position_for_anonymous_type_declaration=end_of_line\n"
+		+ "org.eclipse.jdt.core.formatter.brace_position_for_array_initializer=end_of_line\n"
+		+ "org.eclipse.jdt.core.formatter.brace_position_for_block=end_of_line\n"
+		+ "org.eclipse.jdt.core.formatter.brace_position_for_block_in_case=end_of_line\n"
+		+ "org.eclipse.jdt.core.formatter.brace_position_for_constructor_declaration=end_of_line\n"
+		+ "org.eclipse.jdt.core.formatter.brace_position_for_enum_constant=end_of_line\n"
+		+ "org.eclipse.jdt.core.formatter.brace_position_for_enum_declaration=end_of_line\n"
+		+ "org.eclipse.jdt.core.formatter.brace_position_for_method_declaration=end_of_line\n"
+		+ "org.eclipse.jdt.core.formatter.brace_position_for_switch=end_of_line\n"
+		+ "org.eclipse.jdt.core.formatter.brace_position_for_type_declaration=end_of_line\n"
+		+ "org.eclipse.jdt.core.formatter.comment.clear_blank_lines_in_block_comment=false\n"
+		+ "org.eclipse.jdt.core.formatter.comment.clear_blank_lines_in_javadoc_comment=false\n"
+		+ "org.eclipse.jdt.core.formatter.comment.format_block_comments=true\n"
+		+ "org.eclipse.jdt.core.formatter.comment.format_header=false\n"
+		+ "org.eclipse.jdt.core.formatter.comment.format_html=true\n"
+		+ "org.eclipse.jdt.core.formatter.comment.format_javadoc_comments=true\n"
+		+ "org.eclipse.jdt.core.formatter.comment.format_line_comments=true\n"
+		+ "org.eclipse.jdt.core.formatter.comment.format_source_code=true\n"
+		+ "org.eclipse.jdt.core.formatter.comment.indent_parameter_description=true\n"
+		+ "org.eclipse.jdt.core.formatter.comment.indent_root_tags=true\n"
+		+ "org.eclipse.jdt.core.formatter.comment.insert_new_line_before_root_tags=insert\n"
+		+ "org.eclipse.jdt.core.formatter.comment.insert_new_line_for_parameter=insert\n"
+		+ "org.eclipse.jdt.core.formatter.comment.line_length=80\n"
+		+ "org.eclipse.jdt.core.formatter.compact_else_if=true\n"
+		+ "org.eclipse.jdt.core.formatter.continuation_indentation=8\n"
+		+ "org.eclipse.jdt.core.formatter.continuation_indentation_for_array_initializer=8\n"
+		+ "org.eclipse.jdt.core.formatter.format_guardian_clause_on_one_line=false\n"
+		+ "org.eclipse.jdt.core.formatter.indent_body_declarations_compare_to_annotation_declaration_header=true\n"
+		+ "org.eclipse.jdt.core.formatter.indent_body_declarations_compare_to_enum_constant_header=true\n"
+		+ "org.eclipse.jdt.core.formatter.indent_body_declarations_compare_to_enum_declaration_header=true\n"
+		+ "org.eclipse.jdt.core.formatter.indent_body_declarations_compare_to_type_header=true\n"
+		+ "org.eclipse.jdt.core.formatter.indent_breaks_compare_to_cases=true\n"
+		+ "org.eclipse.jdt.core.formatter.indent_empty_lines=false\n"
+		+ "org.eclipse.jdt.core.formatter.indent_statements_compare_to_block=true\n"
+		+ "org.eclipse.jdt.core.formatter.indent_statements_compare_to_body=true\n"
+		+ "org.eclipse.jdt.core.formatter.indent_switchstatements_compare_to_cases=true\n"
+		+ "org.eclipse.jdt.core.formatter.indent_switchstatements_compare_to_switch=false\n"
+		+ "org.eclipse.jdt.core.formatter.indentation.size=8\n"
+		+ "org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_local_variable=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_member=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_new_line_after_annotation_on_parameter=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_new_line_after_opening_brace_in_array_initializer=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_new_line_at_end_of_file_if_missing=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_new_line_before_catch_in_try_statement=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_new_line_before_closing_brace_in_array_initializer=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_new_line_before_else_in_if_statement=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_new_line_before_finally_in_try_statement=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_new_line_before_while_in_do_statement=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_new_line_in_empty_annotation_declaration=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_new_line_in_empty_anonymous_type_declaration=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_new_line_in_empty_block=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_new_line_in_empty_enum_constant=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_new_line_in_empty_enum_declaration=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_new_line_in_empty_method_body=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_new_line_in_empty_type_declaration=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_and_in_type_parameter=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_assignment_operator=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_at_in_annotation=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_at_in_annotation_type_declaration=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_binary_operator=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_closing_angle_bracket_in_type_arguments=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_closing_angle_bracket_in_type_parameters=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_closing_brace_in_block=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_closing_paren_in_cast=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_colon_in_assert=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_colon_in_case=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_colon_in_conditional=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_colon_in_for=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_colon_in_labeled_statement=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_allocation_expression=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_annotation=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_array_initializer=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_constructor_declaration_parameters=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_constructor_declaration_throws=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_enum_constant_arguments=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_enum_declarations=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_explicitconstructorcall_arguments=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_for_increments=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_for_inits=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_method_declaration_parameters=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_method_declaration_throws=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_method_invocation_arguments=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_multiple_field_declarations=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_multiple_local_declarations=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_parameterized_type_reference=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_superinterfaces=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_type_arguments=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_comma_in_type_parameters=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_ellipsis=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_opening_angle_bracket_in_parameterized_type_reference=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_opening_angle_bracket_in_type_arguments=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_opening_angle_bracket_in_type_parameters=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_opening_brace_in_array_initializer=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_opening_bracket_in_array_allocation_expression=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_opening_bracket_in_array_reference=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_opening_paren_in_annotation=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_opening_paren_in_cast=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_opening_paren_in_catch=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_opening_paren_in_constructor_declaration=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_opening_paren_in_enum_constant=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_opening_paren_in_for=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_opening_paren_in_if=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_opening_paren_in_method_declaration=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_opening_paren_in_method_invocation=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_opening_paren_in_parenthesized_expression=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_opening_paren_in_switch=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_opening_paren_in_synchronized=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_opening_paren_in_while=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_postfix_operator=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_prefix_operator=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_question_in_conditional=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_question_in_wildcard=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_semicolon_in_for=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_after_unary_operator=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_and_in_type_parameter=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_assignment_operator=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_at_in_annotation_type_declaration=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_binary_operator=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_closing_angle_bracket_in_parameterized_type_reference=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_closing_angle_bracket_in_type_arguments=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_closing_angle_bracket_in_type_parameters=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_closing_brace_in_array_initializer=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_closing_bracket_in_array_allocation_expression=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_closing_bracket_in_array_reference=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_closing_paren_in_annotation=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_closing_paren_in_cast=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_closing_paren_in_catch=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_closing_paren_in_constructor_declaration=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_closing_paren_in_enum_constant=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_closing_paren_in_for=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_closing_paren_in_if=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_closing_paren_in_method_declaration=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_closing_paren_in_method_invocation=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_closing_paren_in_parenthesized_expression=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_closing_paren_in_switch=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_closing_paren_in_synchronized=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_closing_paren_in_while=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_colon_in_assert=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_colon_in_case=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_colon_in_conditional=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_colon_in_default=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_colon_in_for=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_colon_in_labeled_statement=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_allocation_expression=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_annotation=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_array_initializer=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_constructor_declaration_parameters=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_constructor_declaration_throws=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_enum_constant_arguments=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_enum_declarations=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_explicitconstructorcall_arguments=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_for_increments=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_for_inits=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_method_declaration_parameters=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_method_declaration_throws=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_method_invocation_arguments=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_multiple_field_declarations=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_multiple_local_declarations=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_parameterized_type_reference=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_superinterfaces=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_type_arguments=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_comma_in_type_parameters=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_ellipsis=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_opening_angle_bracket_in_parameterized_type_reference=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_opening_angle_bracket_in_type_arguments=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_opening_angle_bracket_in_type_parameters=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_opening_brace_in_annotation_type_declaration=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_opening_brace_in_anonymous_type_declaration=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_opening_brace_in_array_initializer=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_opening_brace_in_block=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_opening_brace_in_constructor_declaration=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_opening_brace_in_enum_constant=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_opening_brace_in_enum_declaration=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_opening_brace_in_method_declaration=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_opening_brace_in_switch=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_opening_brace_in_type_declaration=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_opening_bracket_in_array_allocation_expression=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_opening_bracket_in_array_reference=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_opening_bracket_in_array_type_reference=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_annotation=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_annotation_type_member_declaration=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_catch=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_constructor_declaration=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_enum_constant=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_for=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_if=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_method_declaration=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_method_invocation=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_parenthesized_expression=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_switch=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_synchronized=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_opening_paren_in_while=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_parenthesized_expression_in_return=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_parenthesized_expression_in_throw=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_postfix_operator=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_prefix_operator=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_question_in_conditional=insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_question_in_wildcard=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_semicolon=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_semicolon_in_for=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_before_unary_operator=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_between_brackets_in_array_type_reference=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_between_empty_braces_in_array_initializer=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_between_empty_brackets_in_array_allocation_expression=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_between_empty_parens_in_annotation_type_member_declaration=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_between_empty_parens_in_constructor_declaration=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_between_empty_parens_in_enum_constant=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_between_empty_parens_in_method_declaration=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.insert_space_between_empty_parens_in_method_invocation=do not insert\n"
+		+ "org.eclipse.jdt.core.formatter.join_lines_in_comments=true\n"
+		+ "org.eclipse.jdt.core.formatter.join_wrapped_lines=true\n"
+		+ "org.eclipse.jdt.core.formatter.keep_else_statement_on_same_line=false\n"
+		+ "org.eclipse.jdt.core.formatter.keep_empty_array_initializer_on_one_line=false\n"
+		+ "org.eclipse.jdt.core.formatter.keep_imple_if_on_one_line=false\n"
+		+ "org.eclipse.jdt.core.formatter.keep_then_statement_on_same_line=false\n"
+		+ "org.eclipse.jdt.core.formatter.lineSplit=80\n"
+		+ "org.eclipse.jdt.core.formatter.never_indent_block_comments_on_first_column=false\n"
+		+ "org.eclipse.jdt.core.formatter.never_indent_line_comments_on_first_column=false\n"
+		+ "org.eclipse.jdt.core.formatter.number_of_blank_lines_at_beginning_of_method_body=0\n"
+		+ "org.eclipse.jdt.core.formatter.number_of_empty_lines_to_preserve=1\n"
+		+ "org.eclipse.jdt.core.formatter.put_empty_statement_on_new_line=true\n"
+		+ "org.eclipse.jdt.core.formatter.tabulation.char=tab\n"
+		+ "org.eclipse.jdt.core.formatter.tabulation.size=8\n"
+		+ "org.eclipse.jdt.core.formatter.use_tabs_only_for_leading_indentations=false\n"
+		+ "org.eclipse.jdt.core.formatter.wrap_before_binary_operator=true\n");
+	File codeStyleFile = new File(settingsDirectory, "org.eclipse.jdt.ui.prefs");
+	saveFile(codeStyleFile, "# Written by Fiji\n"
+		+ "eclipse.preferences.version=1\n"
+		+ "formatter_profile=_Dscho\n"
+		+ "formatter_settings_version=11\n");
+}
+
+ArrayList projects = new ArrayList();
+
+void writeIntelliJWorkspace() {
+	File root = new File(fijiDir, "intellij");
+	root.mkdirs();
+	File rootIML = new File(root, "intellij.iml");
+	saveFile(rootIML, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+		+ "<module type=\"JAVA_MODULE\" version=\"4\">\n"
+		+ "  <component name=\"NewModuleRootManager\" inherit-compiler-output=\"true\">\n"
+		+ "    <exclude-output />\n"
+		+ "    <content url=\"file://$MODULE_DIR$\" />\n"
+		+ "    <orderEntry type=\"inheritedJdk\" />\n"
+		+ "    <orderEntry type=\"sourceFolder\" forTests=\"false\" />\n"
+		+ "  </component>\n"
+		+ "</module>\n");
+
+	File idea = new File(root, ".idea");
+	idea.mkdirs();
+	File ant = new File(idea, "ant.xml");
+	saveFile(ant, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+		+ "<project version=\"4\">\n"
+		+ "  <component name=\"AntConfiguration\">\n"
+		+ "    <defaultAnt bundledAnt=\"true\" />\n"
+		+ "  </component>\n"
+		+ "</project>\n");
+	File compiler = new File(idea, "compiler.xml");
+	saveFile(compiler, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+		+ "<project version=\"4\">\n"
+		+ "  <component name=\"CompilerConfiguration\">\n"
+		+ "    <option name=\"DEFAULT_COMPILER\" value=\"Javac\" />\n"
+		+ "    <resourceExtensions>\n"
+		+ "      <entry name=\".+\\.(properties|xml|html|dtd|tld)\" />\n"
+		+ "      <entry name=\".+\\.(gif|png|jpeg|jpg)\" />\n"
+		+ "    </resourceExtensions>\n"
+		+ "    <wildcardResourcePatterns>\n"
+		+ "      <entry name=\"?*.properties\" />\n"
+		+ "      <entry name=\"?*.xml\" />\n"
+		+ "      <entry name=\"?*.gif\" />\n"
+		+ "      <entry name=\"?*.png\" />\n"
+		+ "      <entry name=\"?*.jpeg\" />\n"
+		+ "      <entry name=\"?*.jpg\" />\n"
+		+ "      <entry name=\"?*.html\" />\n"
+		+ "      <entry name=\"?*.dtd\" />\n"
+		+ "      <entry name=\"?*.tld\" />\n"
+		+ "      <entry name=\"?*.ftl\" />\n"
+		+ "    </wildcardResourcePatterns>\n"
+		+ "    <annotationProcessing enabled=\"false\" useClasspath=\"true\" />\n"
+		+ "  </component>\n"
+		+ "</project>\n");
+	File encodings = new File(idea, "encodings.xml");
+	saveFile(encodings, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                + "<project version=\"4\">\n"
+                + "  <component name=\"Encoding\" useUTFGuessing=\"true\" native2AsciiForPropertiesFiles=\"false\" />\n"
+                + "</project>\n"
+                + "\n");
+	File misc = new File(idea, "misc.xml");
+	saveFile(misc, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                + "<project version=\"4\">\n"
+                + "  <component name=\"DependencyValidationManager\">\n"
+                + "    <option name=\"SKIP_IMPORT_STATEMENTS\" value=\"false\" />\n"
+                + "  </component>\n"
+                + "  <component name=\"JavadocGenerationManager\">\n"
+                + "    <option name=\"OUTPUT_DIRECTORY\" />\n"
+                + "    <option name=\"OPTION_SCOPE\" value=\"protected\" />\n"
+                + "    <option name=\"OPTION_HIERARCHY\" value=\"true\" />\n"
+                + "    <option name=\"OPTION_NAVIGATOR\" value=\"true\" />\n"
+                + "    <option name=\"OPTION_INDEX\" value=\"true\" />\n"
+                + "    <option name=\"OPTION_SEPARATE_INDEX\" value=\"true\" />\n"
+                + "    <option name=\"OPTION_DOCUMENT_TAG_USE\" value=\"false\" />\n"
+                + "    <option name=\"OPTION_DOCUMENT_TAG_AUTHOR\" value=\"false\" />\n"
+                + "    <option name=\"OPTION_DOCUMENT_TAG_VERSION\" value=\"false\" />\n"
+                + "    <option name=\"OPTION_DOCUMENT_TAG_DEPRECATED\" value=\"true\" />\n"
+                + "    <option name=\"OPTION_DEPRECATED_LIST\" value=\"true\" />\n"
+                + "    <option name=\"OTHER_OPTIONS\" value=\"\" />\n"
+                + "    <option name=\"HEAP_SIZE\" />\n"
+                + "    <option name=\"LOCALE\" />\n"
+                + "    <option name=\"OPEN_IN_BROWSER\" value=\"true\" />\n"
+                + "  </component>\n"
+                + "  <component name=\"ProjectRootManager\" version=\"2\" languageLevel=\"JDK_1_6\" assert-keyword=\"true\" jdk-15=\"true\" project-jdk-name=\"1.6\" project-jdk-type=\"JavaSDK\">\n"
+                + "    <output url=\"file://$PROJECT_DIR$/out\" />\n"
+                + "  </component>\n"
+                + "  <component name=\"SvnBranchConfigurationManager\">\n"
+                + "    <option name=\"mySupportsUserInfoFilter\" value=\"true\" />\n"
+                + "  </component>\n"
+                + "</project>\n"
+                + "\n");
+	File vcs = new File(idea, "vcs.xml");
+	saveFile(vcs, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                + "<project version=\"4\">\n"
+                + "  <component name=\"VcsDirectoryMappings\">\n"
+                + "    <mapping directory=\"\" vcs=\"\" />\n"
+                + "  </component>\n"
+                + "</project>\n"
+                + "\n");
+	String mods = "";
+	for (String mod : projects)
+		mods += "      <module fileurl=\"file://$PROJECT_DIR$/" + mod + "/" + mod + ".iml\" filepath=\"$PROJECT_DIR$/" + mod + "/" + mod + ".iml\" />\n";
+	File modules = new File(idea, "modules.xml");
+	saveFile(modules, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                + "<project version=\"4\">\n"
+                + "  <component name=\"ProjectModuleManager\">\n"
+                + "    <modules>\n"
+		+ mods
+                + "      <module fileurl=\"file://$PROJECT_DIR$/intellij.iml\" filepath=\"$PROJECT_DIR$/intellij.iml\" />\n"
+                + "    </modules>\n"
+                + "  </component>\n"
+                + "</project>\n"
+                + "\n");
+}
+
+void generateIntelliJJarProject(CompileJar rule) {
+	String name = getBaseName(rule.target, ".jar");
+	projects.add(name);
+
+	String stripPath = rule.getStripPath();
+	String libs = "", deps = "";
+	String classpath = rule.getVar("CLASSPATH");
+	classpath = (classpath == null ? "" : classpath + ":") + "jars/ij.jar";
+	for (String path : fake.split(classpath, ":")) {
+		path = fake.stripPrefix(path, fijiDir.getAbsolutePath() + File.separator);
+		Rule dependency = parser.getRule(path);
+		if (dependency != null && (dependency instanceof CompileJar))
+			deps += "    <orderEntry type=\"module\" module-name=\"" + getBaseName(dependency.target, ".jar") + "\" />\n";
+		else
+			libs += "          <root url=\"jar://" + fijiPath(path) + "!/\" />\n";
+	}
+	String excluding = rule.getVar("EXCLUDE_UNEXPANDED");
+	String noCompile = rule.getVar("NO_COMPILE_UNEXPANDED");
+	if (noCompile != null)
+		excluding = (excluding == null ? "" : excluding + ":") + noCompile;
+	String excludes = "";
+	if (excluding != null)
+		for (String entry : fake.split(excluding, " "))
+			if (entry.endsWith("/**/*"))
+				excludes += "      <excludeFolder url=\"file://" + fake.stripSuffix(entry, "/**/*") + "\" />\n";
+
+	File projectDirectory = getProjectDirectory("intellij", name);
+	File iml = new File(projectDirectory, name + ".iml");
+	saveFile(iml, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                + "<module type=\"JAVA_MODULE\" version=\"4\">\n"
+                + "  <component name=\"NewModuleRootManager\" inherit-compiler-output=\"true\">\n"
+		+ "    <output url=\"file://" + fijiPath("build/" + name) + "\" />\n"
+                + "    <exclude-output />\n"
+                + "    <content url=\"file://" + fijiPath(stripPath) + "\">\n"
+                + "      <sourceFolder url=\"file://" + fijiPath(stripPath) + "\" isTestSource=\"false\" />\n"
+		+ excludes
+                + "    </content>\n"
+                + "    <orderEntry type=\"inheritedJdk\" />\n"
+                + "    <orderEntry type=\"sourceFolder\" forTests=\"false\" />\n"
+                + "    <orderEntry type=\"module-library\">\n"
+                + "      <library>\n"
+                + "        <CLASSES>\n"
+		+ libs
+                + "        </CLASSES>\n"
+                + "        <JAVADOC />\n"
+                + "        <SOURCES />\n"
+                + "      </library>\n"
+                + "    </orderEntry>\n"
+		+ deps
+                + "  </component>\n"
+                + "</module>\n"
+                + "\n");
+
+	File artifacts = getProjectDirectory("intellij", ".idea/artifacts");
+	artifacts.mkdirs();
+	File target = new File(fijiPath(rule.target));
+	File artifact = new File(artifacts, name + ".xml");
+	saveFile(artifact, "<component name=\"ArtifactManager\">\n"
+                + "  <artifact type=\"jar\" build-on-make=\"true\" name=\"" + name + "\">\n"
+                + "    <output-path>" + target.getParentFile().getAbsolutePath() + "</output-path>\n"
+                + "    <root id=\"archive\" name=\"" + target.getName() + "\">\n"
+                + "      <element id=\"module-output\" name=\"" + name + "\" />\n"
+                + "    </root>\n"
+                + "  </artifact>\n"
+                + "</component>\n");
+}
+
+void generateNetbeansJarProject(rule) {
+	String name = getBaseName(rule.target, ".jar");
+	String stripPath = rule.getStripPath();
+	String libs = "", refs = "", refs2 = "", refs3 = "", deps = "", deps2 = "";
+	String classpath = rule.getVar("CLASSPATH");
+	classpath = (classpath == null ? "" : classpath + ":") + "jars/ij.jar";
+	String[] list = fake.split(classpath, ":");
+	Arrays.sort(list);
+	for (String path : list) {
+		path = fake.stripPrefix(path, fijiDir.getAbsolutePath() + File.separator);
+		Rule dependency = parser.getRule(path);
+		if (dependency != null && (dependency instanceof CompileJar)) {
+			String base = getBaseName(dependency.target, ".jar");
+			String base2 = base.replace('.', '_');
+			deps += "project." + base2 + "=../" + base + "\n";
+			refs2 += "\\\n    ${reference." + base2 + ".jar}:";
+			deps2 += "            <reference>\n"
+				+ "                <foreign-project>" + base2 + "</foreign-project>\n"
+				+ "                <artifact-type>jar</artifact-type>\n"
+				+ "                <script>build.xml</script>\n"
+				+ "                <target>jar</target>\n"
+				+ "                <clean-target>clean</clean-target>\n"
+				+ "                <id>jar</id>\n"
+				+ "            </reference>\n";
+			refs3 += "reference." + base2 + ".jar=" + fijiPath(dependency.target) + "\n";
+		}
+		else {
+			String base = path.replace('/', '-');
+			libs += "file.reference." + base + "=" + fijiPath(path) + "\n";
+			refs += "\\\n    ${file.reference." + base + "}:";
+		}
+	}
+	refs = fake.stripSuffix(refs + refs2, ":");
+	String excluding = rule.getVar("EXCLUDE_UNEXPANDED");
+	String noCompile = rule.getVar("NO_COMPILE_UNEXPANDED");
+	if (noCompile != null)
+		excluding = (excluding == null ? "" : excluding + ":") + noCompile;
+	String excludes = "";
+	if (excluding != null)
+		for (String entry : fake.split(excluding, " "))
+			if (entry.endsWith("/**/*"))
+				excludes += "      <excludeFolder url=\"file://" + fake.stripSuffix(entry, "/**/*") + "\" />\n";
+
+	File target = new File(fijiPath(rule.target));
+
+	File projectDirectory = getProjectDirectory("netbeans", name);
+	projectDirectory.mkdirs();
+	File manifest = new File(projectDirectory, "manifest.mf");
+	saveFile(manifest, "Manifest-Version: 1.0\n"
+                + "X-COMMENT: Main-Class will be added automatically by build\n"
+                + "\n");
+	File nbProject = new File(projectDirectory, "nbproject");
+	nbProject.mkdirs();
+	File projectProperties = new File(nbProject, "project.properties");
+	saveFile(projectProperties, "application.title=" + name.replace('.', '_') + "\n"
+		+ "application.vendor=fiji\n"
+		+ "build.classes.dir=${build.dir}/classes\n"
+                + "build.classes.excludes=**/*.java,**/*.form\n"
+                + "# This directory is removed when the project is cleaned:\n"
+                + "build.dir=build\n"
+                + "build.generated.dir=${build.dir}/generated\n"
+                + "build.generated.sources.dir=${build.dir}/generated-sources\n"
+                + "# Only compile against the classpath explicitly listed here:\n"
+                + "build.sysclasspath=ignore\n"
+                + "build.test.classes.dir=${build.dir}/test/classes\n"
+                + "build.test.results.dir=${build.dir}/test/results\n"
+                + "# Uncomment to specify the preferred debugger connection transport:\n"
+                + "#debug.transport=dt_socket\n"
+                + "debug.classpath=\\\n"
+                + "    ${run.classpath}\n"
+                + "debug.test.classpath=\\\n"
+                + "    ${run.test.classpath}\n"
+                + "# This directory is removed when the project is cleaned:\n"
+                + "dist.dir=" + target.getParentFile().getAbsolutePath() + "\n"
+                + "dist.jar=${dist.dir}/" + target.getName() + "\n"
+                + "dist.javadoc.dir=${dist.dir}/javadoc\n"
+		+ "endorsed.classpath=\n"
+                + "excludes=\n"
+		+ libs
+                + "file.reference." + rule.target.replace('/', '.') + "=" + fijiPath(stripPath) + "\n"
+                + "includes=**\n"
+                + "jar.compress=false\n"
+                + "javac.classpath=" + refs + "\n"
+                + "# Space-separated list of extra javac options\n"
+                + "javac.compilerargs=\n"
+                + "javac.deprecation=false\n"
+                + "javac.source=1.6\n"
+                + "javac.target=1.6\n"
+                + "javac.test.classpath=\\\n"
+                + "    ${javac.classpath}:\\\n"
+                + "    ${build.classes.dir}:\\\n"
+                + "    ${libs.junit.classpath}:\\\n"
+                + "    ${libs.junit_4.classpath}\n"
+                + "javadoc.additionalparam=\n"
+                + "javadoc.author=false\n"
+                + "javadoc.encoding=${source.encoding}\n"
+                + "javadoc.noindex=false\n"
+                + "javadoc.nonavbar=false\n"
+                + "javadoc.notree=false\n"
+                + "javadoc.private=false\n"
+                + "javadoc.splitindex=true\n"
+                + "javadoc.use=true\n"
+                + "javadoc.version=false\n"
+                + "javadoc.windowtitle=\n"
+                + "main.class=\n"
+                + "manifest.file=manifest.mf\n"
+                + "meta.inf.dir=${src.dir}/META-INF\n"
+                + "platform.active=default_platform\n"
+		+ deps
+                + "run.classpath=\\\n"
+                + "    ${javac.classpath}:\\\n"
+                + "    ${build.classes.dir}\n"
+                + "# Space-separated list of JVM arguments used when running the project\n"
+                + "# (you may also define separate properties like run-sys-prop.name=value instead of -Dname=value\n"
+                + "# or test-sys-prop.name=value to set system properties for unit tests):\n"
+                + "run.jvmargs=\n"
+                + "run.test.classpath=\\\n"
+                + "    ${javac.test.classpath}:\\\n"
+                + "    ${build.test.classes.dir}\n"
+                + "source.encoding=UTF-8\n"
+                + "src.dir=${file.reference." + rule.target.replace('/', '.') + "}\n");
+	File projectXml = new File(nbProject, "project.xml");
+	saveFile(projectXml, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                + "<project xmlns=\"http://www.netbeans.org/ns/project/1\">\n"
+                + "    <type>org.netbeans.modules.java.j2seproject</type>\n"
+                + "    <configuration>\n"
+                + "        <data xmlns=\"http://www.netbeans.org/ns/j2se-project/3\">\n"
+                + "            <name>" + name + "</name>\n"
+                + "            <source-roots>\n"
+                + "                <root id=\"src.dir\"/>\n"
+                + "            </source-roots>\n"
+                + "            <test-roots/>\n"
+                + "        </data>\n"
+		+ "        <references xmlns=\"http://www.netbeans.org/ns/ant-project-references/1\">\n"
+		+ deps2
+		+ "        </references>\n"
+                + "    </configuration>\n"
+                + "</project>\n");
+	if (!refs3.equals("")) {
+		File privateDirectory = new File(nbProject, "private");
+		privateDirectory.mkdirs();
+		File privateProperties = new File(privateDirectory, "private.properties");
+		saveFile(privateProperties, refs3);
+	}
+}
+
+for (String target : parser.allRules.keySet()) {
+	if (target.equals("jars/javac.jar"))
+		continue; // Eclipse has too many problems with that
+	Rule rule = parser.getRule(target);
+	if (rule instanceof CompileJar) {
+		if (mode == ECLIPSE)
+			generateEclipseJarProject(rule);
+		else if (mode == INTELLIJ)
+			generateIntelliJJarProject(rule);
+		else if (mode == NETBEANS)
+			generateNetbeansJarProject(rule);
+	}
+}
+
+if (mode == INTELLIJ)
+	writeIntelliJWorkspace();

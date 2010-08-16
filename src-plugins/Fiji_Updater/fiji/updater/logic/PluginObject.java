@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 public class PluginObject {
-	public class Version {
+	public static class Version {
 		public String checksum;
 		// This timestamp is not a Unix epoch!
 		// Instead, it is Long.parseLong(Util.timestamp(epoch))
