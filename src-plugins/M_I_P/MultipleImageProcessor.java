@@ -449,6 +449,7 @@ public void run(String arg)
 
 /*-----------------------------------------------------------------------------------------------------------------*/ 
 public void convert(String dir1, String dir2,String original,String format, String blueremoval, String autoalign,String vhDataSet) {
+		IJ.resetEscape();
                 IJ.log("");
 		IJ.log("Converting to "+format);
 		if (!dir2.endsWith(File.separator))
