@@ -3809,7 +3809,10 @@ public class Weka_Segmentation implements PlugIn
 			{
 				final File temp = new File(tempFolder);
 				if(null != temp && temp.exists())
+				{
 					saveClassifier(tempFolder + "/classifier-" + iter + ".model");
+					IJ.saveAs(warpedLabels, "Tiff", tempFolder + "/warped-labels-" + iter + ".tif");	
+				}
 			}
 			
 			iter++;						
