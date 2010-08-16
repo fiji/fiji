@@ -67,10 +67,20 @@ import mpicbg.imglib.type.numeric.real.FloatType;
  * @param <T>
  */
 public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
-	/** Class/Instance variables */
+	
+	/** The number of dimensions in the image. */
 	protected int numDim;
-	final static protected float GOAL_DOWNSAMPLED_BLOB_DIAM = 10f;				  // trial and error showed that downsizing images so that the blobs have a diameter of 10 pixels performs best (least errors, and most correct finds, by eyeball analysis).
-	final static protected double IDEAL_SIGMA_FOR_DOWNSAMPLED_BLOB_DIAM = 1.55f;  // trial and error proved this to be approximately the best sigma for a blob of 10 pixels in diameter.
+	/** The goal diameter of blobs in <b>pixels</b> following downsizing. The image will be 
+	 * downsized such that the blob has this diameter (or smaller) in all directions. 
+	 * 10 pixels was chosen because trial and error showed that it gave good results.*/
+	final static protected float GOAL_DOWNSAMPLED_BLOB_DIAM = 10f;
+	/** This is the sigma which is used for the Gaussian convolution. Based on trial and error, it
+	 * performed best when applied to images with blobs of diameter 10 pixels. */
+	final static protected double IDEAL_SIGMA_FOR_DOWNSAMPLED_BLOB_DIAM = 1.55f;
+	/** The index of the <b>shown</b> points in the 3D rendering of all the extrema found in the selectedPoints ArrayList. */
+	final static protected int SHOWN = 0;
+	/** The index of the <b>not shown</b> points in the 3D rendering of all the extrema found in the selectedPoints ArrayList. */
+	final static protected int NOT_SHOWN = 1;
 	
 	/** Ask for parameters and then execute. */
 	@SuppressWarnings("unchecked")
@@ -332,9 +342,14 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		ArrayList< HashMap<Feature, Double> > originalThresholdsAllFrames = new ArrayList< HashMap<Feature, Double> >();
 		ArrayList< ArrayList< ArrayList<Spot> > > selectedPoints = new ArrayList< ArrayList< ArrayList<Spot> > >();
 		Image3DUniverse univ = renderIn3DViewer(extremaAllFrames, ip, calibration, diam, originalThresholdsAllFrames, selectedPoints);
-		ArrayList< HashMap<Feature, Double> > userAdjustedThresholdsAllFrames = deepCopyThresholds(originalThresholdsAllFrames);
 		letUserAdjustThresholds(univ, ip.getTitle(), originalThresholdsAllFrames, selectedPoints, extremaAllFrames, calibration);
 
+		/* 9 - Track */
+		ArrayList< ArrayList<Spot> > extremaPostThresholdingAllFrames = new ArrayList< ArrayList<Spot> >();
+		for (ArrayList< ArrayList <Spot> > pointsInTimeFrame : selectedPoints) {
+			extremaPostThresholdingAllFrames.add(pointsInTimeFrame.get(0));
+		}
+		
 		return new Object[] {extremaAllFrames};
 	}
 	
@@ -668,9 +683,6 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	}
 	
 	public void letUserAdjustThresholds(final Image3DUniverse univ, final String contentName, ArrayList< HashMap<Feature, Double> > thresholdsAllFrames, ArrayList< ArrayList< ArrayList<Spot> > > selectedPoints, ArrayList< ArrayList< Spot > > extremaAllFrames, double[] calibration) {
-		final int SHOWN = 0;
-		final int NOT_SHOWN = 1;
-		
 		
 		// Grab the Content of the universe, which has the name of the IP.
 		final Content c = univ.getContent(contentName);
@@ -685,10 +697,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		//add for loop for handling different frames
 		final int t = ci.getTimepoint();
 		int counter = 0;  // counter which allows us to attach AdjustmentListener to the correct JSlider
-		
-		System.out.println("Num frames in extremaAllFrames: " + extremaAllFrames.size());
-		System.out.println("Num frames in selectedPoints: " + selectedPoints.size());
-		
+
 		for (final Feature feature : thresholdsAllFrames.get(t).keySet()) {
 			final int curr = counter;  // need this, because needs to be final in order to be used
 			
@@ -701,12 +710,10 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			// Create a SliderAdjuster for this Feature
 			final SliderAdjuster thresh_adjuster = new SliderAdjuster (c, selectedPoints, calibration, tr, thresholdsAllFrames) {
 				public synchronized final void setValue(ContentInstant ci, double threshold, double[] calibration) {	
-					System.out.println("Num frames in thresholdsAllFrames: " + thresholdsAllFrames.size());
 
 					// for all frames
 					for (int i = 0; i < thresholdsAllFrames.size(); i++) {
 						PointList pl = c.getInstant(i).getPointList();
-						System.out.println("Timepoint: " + c.getInstant(i).getTimepoint());
 						thresholdsAllFrames.get(i).put(feature, threshold);
 						ArrayList<Spot> shown = selectedPoints.get(i).get(SHOWN);
 						ArrayList<Spot> notShown = selectedPoints.get(i).get(NOT_SHOWN);
@@ -717,7 +724,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 								Spot spot = shown.get(j);
 								if (spot.getFeatures().get(feature) < threshold) {							
 									shown.remove(j);
-									j--;  // the remove() call above shifted all the remaining elements
+									j--;  // the remove() call above shifted all the remaining elements, so we need to decrement j to not skip an element
 									pl.remove(pl.get(spot.getName()));
 									notShown.add(spot);
 								}
@@ -739,7 +746,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 								}	
 								if (passedThresholds) {  // to get past this point, a spot had to have thresholds above all the current threshold values
 									notShown.remove(j);
-									j--;  // the remove() call above shifted all the remaining elements
+									j--;  // the remove() call above shifted all the remaining elements, so we need to decrement j to not skip an element
 									double[] coords = spot.getCoordinates();
 									pl.add(spot.getName(), coords[0] * calibration[0], coords[1] * calibration[1], coords[2] * calibration[2]);
 									shown.add(spot);
@@ -748,48 +755,6 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 						}		
 					}
 					univ.fireContentChanged(c);
-					//PointList pl = ci.getPointList();
-					//thresholdsAllFrames.get(t).put(feature, threshold);  // store the user adjusted threshold value for this frame / feature combination
-					
-					/*
-	 				// 1 - Threshold is higher than previously, we need to remove some points that are currently shown
-	 				if (larger) {
-						ci.showPointList(false);
-						for (int i = 0; i < shown.size(); i++) {
-							Spot spot = shown.get(i);
-							if (spot.getFeatures().get(feature) < threshold) {							
-								shown.remove(i);
-								i--;  // the remove() call above shifted all the remaining elements
-								pl.remove(pl.get(spot.getName()));
-								notShown.add(spot);
-							}
-						}
-						ci.showPointList(true);
-						univ.getPointListDialog().setVisible(false);
-					} 
-	 				
-	 				// 2 - Threshold is lower than previously, we need to add some points that are now above the threshold
-	 				else {
-						for (int i = 0; i < notShown.size(); i++) {
-							Spot spot = notShown.get(i);
-							boolean passedThresholds = true;  // initially, assume the point is above all the thresholds
-							for (Feature feature : thresholdsAllFrames.get(t).keySet()) {  // for each feature we threshold...
-								if (spot.getFeatures().get(feature) < thresholdsAllFrames.get(t).get(feature)) {  // if the spot has a lower value...
-									passedThresholds = false;  // mark that it isn't above all the thresholds
-									break;
-								}	
-							}	
-							if (passedThresholds) {  // to get past this point, a spot had to have thresholds above all the current threshold values
-								notShown.remove(i);
-								i--;  // the remove() call above shifted all the remaining elements
-								double[] coords = spot.getCoordinates();
-								pl.add(spot.getName(), coords[0] * calibration[0], coords[1] * calibration[1], coords[2] * calibration[2]);
-								shown.add(spot);
-							}
-						}
-					}
-					univ.fireContentChanged(c);
-					*/
 				}
 			};
 			
@@ -807,6 +772,8 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 					}
 				}
 			});
+			
+			// Add an ItemListener to the 'auto' checkbox
 			((Checkbox)gd.getCheckboxes().get(curr)).
 			addItemListener(new ItemListener() {
 				@Override
