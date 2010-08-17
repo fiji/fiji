@@ -841,6 +841,8 @@ public class TextEditor extends JFrame implements ActionListener,
 	public void gotoLine() {
 		String line = JOptionPane.showInputDialog(this, "Line:",
 			"Goto line...", JOptionPane.QUESTION_MESSAGE);
+		if (line == null)
+			return;
 		try {
 			gotoLine(Integer.parseInt(line));
 		} catch (BadLocationException e) {
