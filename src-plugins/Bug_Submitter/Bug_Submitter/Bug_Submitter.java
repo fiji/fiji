@@ -30,7 +30,6 @@ import ij.text.TextWindow;
 import ij.plugin.BrowserLauncher;
 
 import java.net.URL;
-import java.net.URLConnection;
 import java.net.HttpURLConnection;
 import java.net.URLEncoder;
 
@@ -376,6 +375,7 @@ public class Bug_Submitter implements PlugIn {
 		}
 	}
 
+	@SuppressWarnings("serial")
 	class NewBugDialog extends JFrame implements ActionListener, WindowListener {
 
 		JButton bugzillaAccountCreation;
@@ -416,6 +416,7 @@ public class Bug_Submitter implements PlugIn {
 			public JTextAreaTabFocus( int rows, int columns ) {
 				super( rows, columns );
 			}
+			@Override
 			protected void processComponentKeyEvent( KeyEvent e ) {
 				if( e.getID() == KeyEvent.KEY_PRESSED &&
 				    e.getKeyCode() == KeyEvent.VK_TAB ) {
@@ -468,12 +469,14 @@ public class Bug_Submitter implements PlugIn {
 		boolean askedToSubmit = false;
 		boolean alreadyDisposed = false;
 
+		@Override
 		public void setVisible(boolean visible) {
 			if (visible)
 				WindowManager.addWindow(this);
 			super.setVisible(visible);
 		}
 
+		@Override
 		public synchronized void show() {
 			WindowManager.addWindow(this);
 			super.show();
@@ -482,6 +485,7 @@ public class Bug_Submitter implements PlugIn {
 			} catch (InterruptedException e) { }
 		}
 
+		@Override
 		public synchronized void dispose() {
 			WindowManager.removeWindow(this);
 			notify();
@@ -664,7 +668,7 @@ public class Bug_Submitter implements PlugIn {
 					IJ.error("You must supply a username");
 					return;
 				}
-				if( password.getText().length() == 0 ) {
+				if( password.getPassword().length == 0 ) {
 					IJ.error("You must supply a password");
 					return;
 				}
@@ -728,7 +732,7 @@ public class Bug_Submitter implements PlugIn {
 			Prefs.set( usernamePreferenceKey, username );
 			Prefs.savePreferences();
 
-			String password = dialog.password.getText();
+			String password = new String(dialog.password.getPassword());
 			if( dialog.rememberPassword.isSelected() )
 				Prefs.set( passwordPreferenceKey, rot13(password) );
 			else
@@ -776,10 +780,11 @@ public class Bug_Submitter implements PlugIn {
 	 * This method adds a keystroke to the input map of a container that
 	 * sends an action event with the given source to the given listener.
 	 */
-        public static void addAccelerator(final Component source,
+	@SuppressWarnings("serial")
+	public static void addAccelerator(final Component source,
 			final JComponent container,
 			final ActionListener listener, int key, int modifiers) {
-                container.getInputMap(container.WHEN_IN_FOCUSED_WINDOW)
+                container.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
 			.put(KeyStroke.getKeyStroke(key, modifiers), source);
                 if (container.getActionMap().get(source) != null)
                         return;
