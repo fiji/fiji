@@ -310,7 +310,7 @@ public class FileFunctions {
 	}
 
 	public boolean newPlugin(String name) {
-		String originalName = name;
+		String originalName = name.replace('_', ' ');
 
 		name = name.replace(' ', '_');
 		if (name.indexOf('_') < 0)
