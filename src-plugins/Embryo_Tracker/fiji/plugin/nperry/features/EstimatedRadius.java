@@ -50,60 +50,51 @@ public class EstimatedRadius <T extends RealType<T>> extends BlobContrast<T> {
 	@Override
 	public void process(Spot spot) {
 		
-		// Get diameter array
-		double[] diameters = prepareDiameters(diam, nDiameters);
+		// Get diameter array and radius squared
+		final double[] diameters = prepareDiameters(diam, nDiameters);
+		final double[] r2 = new double[nDiameters];
+		for (int i = 0; i < r2.length; i++) 
+			r2[i] = diameters[i] * diameters[i] / 4 ;
 		
 		// Calculate total intensity in balls
-		SphereCursor<T> cursor;
-		double[] total_intensities = new double[diameters.length + 1];
-		total_intensities[0] = 0;
-		for (int i = 1; i <= diameters.length; i++) {
-			cursor = new SphereCursor<T>(img, spot.getCoordinates(), diameters[i-1]/2, calibration);
-			total_intensities[i] = 0;
-			while(cursor.hasNext()) 
-				total_intensities[i] += cursor.next().getRealDouble();
-			cursor.close();
-		}
-		
-		// Calculate diff intensities -> will get intensities in rings
-		double[] diff_intensities = new double[diameters.length];
-		for (int i = 0; i < diff_intensities.length; i++) 
-			diff_intensities[i] = total_intensities[i+1] - total_intensities[i];
-		
-		// Prepare radius array
-		double[] radiuses = new double[diameters.length+1];
-		radiuses[0] = 0;
-		for (int i = 1; i <= diameters.length; i++) {
-			radiuses[i] = diameters[i-1];
+		final double[] ring_intensities = new double[nDiameters];
+		final int[]    ring_volumes = new int[nDiameters];
+
+		final SphereCursor<T> cursor = new SphereCursor<T>(img, spot.getCoordinates(), diameters[nDiameters-2]/2, calibration); // sphere over the largest radius
+		double d2;
+		int i;
+		while(cursor.hasNext())  {
+			cursor.fwd();
+			d2 = cursor.getDistanceSquared();
+			for(i = 0 ; i < nDiameters-1 && d2 > r2[i] ; i++) {}
+			ring_intensities[i] += cursor.getType().getRealDouble();
+			ring_volumes[i]++;
 		}
 
 		// Calculate mean intensities from ring volumes
-		double[] mean_intensities = new double[diameters.length];
-		for (int i = 0; i < mean_intensities.length; i++) {
-			mean_intensities[i] = diff_intensities[i] / 
-				( 4/3.0 * Math.PI * 
-						(radiuses[i+1]*radiuses[i+1]*radiuses[i+1] - radiuses[i]*radiuses[i]*radiuses[i]) ); 
-		}
+		final double[] mean_intensities = new double[diameters.length];
+		for (int j = 0; j < mean_intensities.length; j++) 
+			mean_intensities[j] = ring_intensities[j] / ring_volumes[j];
 		
 		// Calculate contrasts as minus difference between outer and inner rings mean intensity
-		double[] contrasts = new double[diameters.length - 1];
-		for (int i = 0; i < contrasts.length; i++) {
-			contrasts[i] = - ( mean_intensities[i+1] - mean_intensities[i] );
-//			System.out.println(String.format("For diameter %.1f, found constrat of %.1f", diameters[i], contrasts[i])); 
+		final double[] contrasts = new double[diameters.length - 1];
+		for (int j = 0; j < contrasts.length; j++) {
+			contrasts[j] = - ( mean_intensities[j+1] - mean_intensities[j] );
+//			System.out.println(String.format("For diameter %.1f, found constrat of %.1f", diameters[j], contrasts[j])); 
 		}
 		
 		// Find max contrast
 		double maxConstrast = Double.NEGATIVE_INFINITY;
 		int maxIndex = 0;
-		for (int i = 0; i < contrasts.length; i++) {
-			if (contrasts[i] > maxConstrast) {
-				maxConstrast = contrasts[i];
-				maxIndex = i;
+		for (int j = 0; j < contrasts.length; j++) {
+			if (contrasts[j] > maxConstrast) {
+				maxConstrast = contrasts[j];
+				maxIndex = j;
 			}
 		}
 		
 		double bestDiameter;
-		if ( 0 == maxIndex || contrasts.length-1 == maxIndex) {
+		if ( 1 >= maxIndex || contrasts.length-1 == maxIndex) {
 			bestDiameter = diameters[maxIndex];
 		} else {
 			bestDiameter = quadratic1DInterpolation(
@@ -151,8 +142,8 @@ public class EstimatedRadius <T extends RealType<T>> extends BlobContrast<T> {
 		Spot s2 = new Spot(new double[] {100, 100, 200});
 		Spot s3 = new Spot(new double[] {100, 100, 300});
 		Spot[] spots = new Spot[] {s1, s2, s3};
-		double[] radiuses = new double[] {12, 20, 32};
-		double[] calibration = new double[] {1, 1, 1};
+		double[] radiuses = new double[]  {12, 20, 32};
+		double[] calibration = null; //new double[] {1, 1, 1};
 		
 		// Create 3 spots image
 		Image<UnsignedByteType> testImage = new ImageFactory<UnsignedByteType>(
