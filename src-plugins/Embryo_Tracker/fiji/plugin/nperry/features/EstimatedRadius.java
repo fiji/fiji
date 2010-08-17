@@ -9,13 +9,16 @@ import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import fiji.plugin.nperry.Feature;
 import fiji.plugin.nperry.Spot;
 
-public class EstimatedRadius <T extends RealType<T>> extends BlobContrast<T> {
+public class EstimatedRadius <T extends RealType<T>> extends IndependentFeatureAnalyzer {
 
 	private static final double MIN_DIAMETER_RATIO = 0.4;
 	private static final double MAX_DIAMETER_RATIO = 2;
 	
 	/** The number of different diameters to try. */
 	private int nDiameters;
+	private Image<T> img;
+	private double diam;
+	private double[] calibration;
 
 	/**
 	 * Create a feature analyzer that will return the best estimated diameter for a 
@@ -31,8 +34,10 @@ public class EstimatedRadius <T extends RealType<T>> extends BlobContrast<T> {
 	 * @param calibration  the spatial calibration array containing the pixel size in X, Y, Z
 	 */
 	public EstimatedRadius(Image<T> originalImage, double diameter, int nDiameters,  double[] calibration) {
-		super(originalImage, diameter, calibration);
+		this.img = originalImage;
+		this.diam = diameter;
 		this.nDiameters = nDiameters;
+		this.calibration = calibration;
 	}
 
 	private static final Feature FEATURE = Feature.ESTIMATED_DIAMETER;
@@ -104,13 +109,6 @@ public class EstimatedRadius <T extends RealType<T>> extends BlobContrast<T> {
 		}
 		spot.addFeature(FEATURE, bestDiameter);		
 	}
-
-	@Override
-	protected double getContrast(Spot spot, double diameter) {
-		
-		return 0;
-	}
-	
 	
 	private static final double quadratic1DInterpolation(double x1, double y1, double x2, double y2, double x3, double y3) {
 		final double d2 = 2 * ( (y3-y2)/(x3-x2) - (y2-y1)/(x2-x1) ) / (x3-x1);
