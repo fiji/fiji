@@ -55,6 +55,10 @@ public class Checksummer extends Progressable {
 		}
 	}
 
+	public Map<String, PluginObject.Version> getCachedChecksums() {
+		return cachedChecksums;
+	}
+
 	protected List<StringPair> queue;
 	protected String fijiRoot;
 
