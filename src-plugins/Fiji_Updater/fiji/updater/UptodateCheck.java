@@ -56,7 +56,7 @@ public class UptodateCheck implements PlugIn {
 		if (isBatchMode())
 			return "No check will be performed in batch mode";
 		if (!canWrite())
-			return "Your Fiji is read-onyl!";
+			return "Your Fiji is read-only!";
 		if (!haveNetworkConnection())
 			return "No network connection available!";
 		localLastModified = getLocalLastModified();
