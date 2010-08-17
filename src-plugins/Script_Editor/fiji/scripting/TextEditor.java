@@ -1677,6 +1677,17 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 		}
 	}
 
+	/**
+	 * Write a message to the output screen
+	 *
+	 * @param message The text to write
+	 */
+	public void write(String message) {
+		if (!message.endsWith("\n"))
+			message += "\n";
+		screen.insert(message, screen.getDocument().getLength());
+	}
+
 	protected void error(String message) {
 		JOptionPane.showMessageDialog(this, message);
 	}
