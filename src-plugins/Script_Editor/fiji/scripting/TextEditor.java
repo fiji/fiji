@@ -776,7 +776,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		}
 		else if (source == openInGitweb) {
 			EditorPane editorPane = getEditorPane();
-			new FileFunctions(this).openInGitweb(editorPane.file, editorPane.gitDirectory, editorPane.getCaretLineNumber());
+			new FileFunctions(this).openInGitweb(editorPane.file, editorPane.gitDirectory, editorPane.getCaretLineNumber() + 1);
 		}
 		else if (source == newPlugin)
 			new FileFunctions(this).newPlugin();
