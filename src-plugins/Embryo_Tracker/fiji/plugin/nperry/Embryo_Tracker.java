@@ -351,6 +351,8 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			extremaPostThresholdingAllFrames.add(pointsInTimeFrame.get(0));
 		}
 		ObjectTracker track = new ObjectTracker(extremaPostThresholdingAllFrames);
+		track.process();
+		track.getResults(); // TODO
 		
 		return new Object[] {extremaAllFrames};
 	}
@@ -787,7 +789,11 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		}
 		gd.setModal(false);
 		// Handle when window closed... (see original changeThreshold code in Executer.class)
+		
 		gd.showDialog();
+		while (!gd.wasOKed()) {  // stay here until the user selects 'ok,' or 'cancels'
+			if (gd.wasCanceled()) return;  /* FIX: if canceled, reset to auto-thresholds! */
+		}
 	}
 	
 	/* **********************************************************
