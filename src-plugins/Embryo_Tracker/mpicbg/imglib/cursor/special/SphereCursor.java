@@ -330,14 +330,33 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 	public final void getRelativePosition(int[] position) {
 		System.arraycopy(this.position, 0, position, 0, 3);
 	}
+	
+	/**
+	 * Return the current inclination with respect to this sphere center. Will be in
+	 * the range ]-π/2, π/2].
+	 */
+	public final double getTheta() {
+		return Math.acos( position[2] * calibration[2] / Math.sqrt(
+				position[2] * calibration[2] * position[2] * calibration[2] +
+				position[1] * calibration[1] * position[1] * calibration[1] +
+				position[0] * calibration[0] * position[0] * calibration[0] ));
+	}
+	
+	/**
+	 * Return the azimuth of the spherical coordinates of this cursor, with respect 
+	 * to its center. Will be in the range ]-π, π].
+	 */
+	public final double getPhi() {
+		return Math.atan2(position[1]*calibration[1], position[0]*calibration[0]);
+	}
 
 	/**
 	 * Return the relative calibrated position of this cursor in physical units.
 	 */
 	public final void getPhysicalRelativeCoordinates(double[] coordinates) {
-		coordinates[0] = position[0] / calibration[0];
-		coordinates[1] = position[1] / calibration[1];
-		coordinates[2] = position[2] / calibration[2];
+		coordinates[0] = position[0] * calibration[0];
+		coordinates[1] = position[1] * calibration[1];
+		coordinates[2] = position[2] * calibration[2];
 	}
 
 	/**
