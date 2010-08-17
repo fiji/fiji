@@ -8,6 +8,8 @@ import ij.IJ;
 
 import ij.gui.GenericDialog;
 
+import ij.plugin.BrowserLauncher;
+
 import java.awt.Cursor;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -27,6 +29,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
+
+import java.net.URL;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -663,10 +667,86 @@ public class FileFunctions {
 		}
 	}
 
+	public void openInGitweb(File file, File gitDirectory) {
+		if (file == null || gitDirectory == null) {
+			error("No file or git directory");
+			return;
+		}
+		String url = getGitwebURL(file, gitDirectory);
+		if (url == null)
+			error("Could not get gitweb URL for " + file);
+		else
+			new BrowserLauncher().run(url);
+	}
+
+	public String git(File gitDirectory, File workingDirectory, String... args) {
+		try {
+			args = append(gitDirectory == null ? new String[] { "git" } :
+				new String[] { "git", "--git-dir=" + gitDirectory.getAbsolutePath()}, args);
+			SimpleExecuter gitConfig = new SimpleExecuter(args, workingDirectory);
+			if (gitConfig.getExitCode() == 0)
+				return stripSuffix(gitConfig.getOutput(), "\n");
+			parent.write(gitConfig.getError());
+		} catch (IOException e) {
+			parent.write(e.getMessage());
+		}
+		return null;
+	}
+
+	public String git(File gitDirectory, String... args) {
+		return git(gitDirectory, (File)null, args);
+	}
+
+	public String gitConfig(File gitDirectory, String key) {
+		return git(gitDirectory, "config", key);
+	}
+
+	public String getGitwebURL(File file, File gitDirectory) {
+		String url = gitConfig(gitDirectory, "remote.origin.url");
+		if (url == null) {
+			String remote = gitConfig(gitDirectory, "branch.master.remote");
+			if (remote != null)
+				url = gitConfig(gitDirectory, "remote." + remote + ".url");
+			if (url == null)
+				return null;
+		}
+		if (url.startsWith("repo.or.cz:") || url.startsWith("ssh://repo.or.cz/")) {
+			int index = url.indexOf("/srv/git/") + "/srv/git/".length();
+			url = "http://repo.or.cz/w/" + url.substring(index);
+		}
+		else if (url.startsWith("git://repo.or.cz/"))
+			url = "http://repo.or.cz/w/" + url.substring("git://repo.or.cz/".length());
+		else {
+			url = stripSuffix(url, "/");
+			int slash = url.lastIndexOf('/');
+			if (url.endsWith("/.git"))
+				slash = url.lastIndexOf('/', slash - 1);
+			String project = url.substring(slash + 1);
+			if (!project.endsWith(".git"))
+				project += "/.git";
+			if (project.equals("imageja.git"))
+				project = "ImageJA.git";
+			url = "http://pacific.mpi-cbg.de/cgi-bin/gitweb.cgi?p=" + project;
+		}
+		String head = git(gitDirectory, "rev-parse", "--symbolic-full-name", "HEAD");
+		String path = git(null /* ls-files does not work with --git-dir */,
+			file.getParentFile(), "ls-files", "--full-name", file.getName());
+		if (url == null || head == null || path == null)
+			return null;
+		return url + ";a=blob;f=" + path + ";hb=" + head;
+	}
+
 	protected String[] append(String[] array, String item) {
 		String[] result = new String[array.length + 1];
 		System.arraycopy(array, 0, result, 0, array.length);
 		result[array.length] = item;
+		return result;
+	}
+
+	protected String[] append(String[] array, String[] append ) {
+		String[] result = new String[array.length + append.length];
+		System.arraycopy(array, 0, result, 0, array.length);
+		System.arraycopy(append, 0, result, array.length, append.length);
 		return result;
 	}
 
@@ -739,12 +819,19 @@ public class FileFunctions {
 		}
 	}
 
+	protected String stripSuffix(String string, String suffix) {
+		if (string.endsWith(suffix))
+			return string.substring(0, string.length() - suffix.length());
+		return string;
+	}
+
 	protected boolean error(String message) {
 		JOptionPane.showMessageDialog(parent, message);
 		return false;
 	}
 
 	public static void main(String[] args) {
-		new FileFunctions(null).showPluginChangesSinceUpload("jars/javac.jar");
+		String root = System.getProperty("fiji.dir");
+		new FileFunctions(null).openInGitweb(new File(root + "/src-plugins/Arrow_/fiji/util/ArrowTool.java"), new File(root + "/.git"));
 	}
 }

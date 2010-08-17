@@ -95,7 +95,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		  listBookmarks, openSourceForClass, newPlugin, installMacro,
 		  openSourceForMenuItem, showDiff, commit, ijToFront,
 		  openMacroFunctions, decreaseFontSize, increaseFontSize,
-		  chooseTabSize, gitGrep, loadToolsJar;
+		  chooseTabSize, gitGrep, loadToolsJar, openInGitweb;
 	JMenu gitMenu, tabsMenu, tabSizeMenu, toolsMenu;
 	int tabsMenuTabsStart;
 	Set<JMenuItem> tabsMenuItems;
@@ -329,6 +329,9 @@ public class TextEditor extends JFrame implements ActionListener,
 		gitGrep = addToMenu(gitMenu,
 			"Grep...", 0, 0);
 		gitGrep.setMnemonic(KeyEvent.VK_G);
+		openInGitweb = addToMenu(gitMenu,
+			"Open in gitweb", 0, 0);
+		openInGitweb.setMnemonic(KeyEvent.VK_W);
 		mbar.add(gitMenu);
 
 		tabsMenu = new JMenu("Tabs");
@@ -771,6 +774,8 @@ public class TextEditor extends JFrame implements ActionListener,
 			if (!gd.wasCanceled())
 				new FileFunctions(this).gitGrep(gd.getNextString(), searchRoot);
 		}
+		else if (source == openInGitweb)
+			new FileFunctions(this).openInGitweb(getEditorPane().file, getEditorPane().gitDirectory);
 		else if (source == newPlugin)
 			new FileFunctions(this).newPlugin();
 		else if (source == ijToFront)
