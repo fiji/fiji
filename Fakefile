@@ -178,7 +178,8 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Simple_Neurite_Tracer.jar \
 	plugins/SPIM_Registration.jar \
 	plugins/QuickPALM_.jar \
-	plugins/3D_Viewer.jar
+	plugins/3D_Viewer.jar \
+	plugins/CPU_Meter.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS third-party-plugins
 
