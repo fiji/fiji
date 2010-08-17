@@ -1,7 +1,3 @@
-import com.sun.jna.Library;
-import com.sun.jna.Native;
-import com.sun.jna.Platform;
-
 import ij.IJ;
 import ij.ImagePlus;
 
@@ -17,21 +13,19 @@ import ij.process.ImageProcessor;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
+
+
 
 
 public class CPU_Meter implements PlugIn {
-	public interface CLibrary extends Library {
-		CLibrary INSTANCE = (CLibrary)
-			Native.loadLibrary(Platform.isWindows() ? "msvcrt" : "c", CLibrary.class);
-
-		int getloadavg(double[] loadavg, int nelem);
-	}
-
 	public void run(String arg) {
 		new CPUMeter().start();
 	}
 
 	public class CPUMeter extends Thread {
+		OperatingSystemMXBean osBean;
 		protected double[] avg = new double[3];
 		protected double[] x, y;
 		protected long msecsBetweenUpdates;
@@ -42,6 +36,7 @@ public class CPU_Meter implements PlugIn {
 		}
 
 		public CPUMeter(int ticks, long msecsBetweenUpdates) {
+			osBean = ManagementFactory.getOperatingSystemMXBean();
 			x = new double[ticks];
 			y = new double[ticks];
 			this.msecsBetweenUpdates = msecsBetweenUpdates;
@@ -60,7 +55,7 @@ public class CPU_Meter implements PlugIn {
 
 		protected void update() {
 			System.arraycopy(y, 1, y, 0, y.length - 1);
-			double load = CLibrary.INSTANCE.getloadavg(avg, 1) == 1 ? avg[0] : 0;
+			double load = osBean.getSystemLoadAverage();
 			y[y.length - 1] = load;
 
 			double yMin = y[0], yMax = y[0];
