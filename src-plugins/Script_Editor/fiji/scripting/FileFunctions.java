@@ -667,12 +667,12 @@ public class FileFunctions {
 		}
 	}
 
-	public void openInGitweb(File file, File gitDirectory) {
+	public void openInGitweb(File file, File gitDirectory, int line) {
 		if (file == null || gitDirectory == null) {
 			error("No file or git directory");
 			return;
 		}
-		String url = getGitwebURL(file, gitDirectory);
+		String url = getGitwebURL(file, gitDirectory, line);
 		if (url == null)
 			error("Could not get gitweb URL for " + file);
 		else
@@ -701,7 +701,7 @@ public class FileFunctions {
 		return git(gitDirectory, "config", key);
 	}
 
-	public String getGitwebURL(File file, File gitDirectory) {
+	public String getGitwebURL(File file, File gitDirectory, int line) {
 		String url = gitConfig(gitDirectory, "remote.origin.url");
 		if (url == null) {
 			String remote = gitConfig(gitDirectory, "branch.master.remote");
@@ -733,7 +733,8 @@ public class FileFunctions {
 			file.getParentFile(), "ls-files", "--full-name", file.getName());
 		if (url == null || head == null || path == null)
 			return null;
-		return url + ";a=blob;f=" + path + ";hb=" + head;
+		return url + ";a=blob;f=" + path + ";hb=" + head
+			+ (line < 0 ? "" : "#l" + line);
 	}
 
 	protected String[] append(String[] array, String item) {
@@ -832,6 +833,6 @@ public class FileFunctions {
 
 	public static void main(String[] args) {
 		String root = System.getProperty("fiji.dir");
-		new FileFunctions(null).openInGitweb(new File(root + "/src-plugins/Arrow_/fiji/util/ArrowTool.java"), new File(root + "/.git"));
+		new FileFunctions(null).openInGitweb(new File(root + "/src-plugins/Arrow_/fiji/util/ArrowTool.java"), new File(root + "/.git"), -1);
 	}
 }
