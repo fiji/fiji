@@ -25,9 +25,13 @@ package Bug_Submitter;
 
 import ij.IJ;
 import ij.WindowManager;
+
+import ij.gui.GUI;
+
 import ij.plugin.PlugIn;
-import ij.text.TextWindow;
 import ij.plugin.BrowserLauncher;
+
+import ij.text.TextWindow;
 
 import java.net.URL;
 import java.net.HttpURLConnection;
@@ -84,6 +88,11 @@ import java.awt.GridBagLayout;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import java.awt.Toolkit;
+
+import fiji.updater.logic.Checksummer;
+import fiji.updater.logic.PluginObject;
+import fiji.updater.ui.ProgressDialog;
+import fiji.updater.util.Canceled;
 
 public class Bug_Submitter implements PlugIn {
 
@@ -180,6 +189,34 @@ public class Bug_Submitter implements PlugIn {
 		}
 
 		return result.toString();
+	}
+
+	protected String getInstalledVersions() {
+
+		ProgressDialog progress = new ProgressDialog(IJ.getInstance(),"Finding installed plugin versions...");
+		Checksummer checksummer = new Checksummer(progress);
+		try {
+				checksummer.updateFromLocal();
+		} catch (Canceled e) {
+			checksummer.done();
+			IJ.error("Canceled");
+			return null;
+		}
+
+		Map<String, PluginObject.Version> checksums =
+			checksummer.getCachedChecksums();
+
+		StringBuffer sb = new StringBuffer();
+
+		for (Map.Entry<String, PluginObject.Version> entry : checksums.entrySet()) {
+			    String file = entry.getKey();
+			    PluginObject.Version version = entry.getValue();
+			    sb.append("  ").append(version.checksum).append(" ");
+			    sb.append(version.timestamp).append(" ");
+			    sb.append(file).append("\n");
+		}
+
+		return sb.toString();
 	}
 
 	/** If the bug is submitted successfully, the URL for the bug
@@ -710,8 +747,10 @@ public class Bug_Submitter implements PlugIn {
 		String summary = dummyBugTextSummary;
 		String description = dummyBugTextDescription+"\n"+
 			"\nInformation about your version of Java - "+
-			"this information is useful for the Fiji developers:\n"+
-			getUsefulSystemInformation();
+			"this information is useful for the Fiji developers:\n\n"+
+			getUsefulSystemInformation()+
+			"\nInformation about the version of each plugin:\n\n"+
+			getInstalledVersions();
 
 		while( true ) {
 
