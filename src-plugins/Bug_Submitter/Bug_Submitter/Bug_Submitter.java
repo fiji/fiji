@@ -762,6 +762,7 @@ public class Bug_Submitter implements PlugIn {
 				suggestedPassword = rot13( suggestedPassword );
 
 			NewBugDialog dialog = new NewBugDialog( suggestedUsername, suggestedPassword, summary, description );
+			GUI.center(dialog);
 			dialog.show();
 
 			if( ! dialog.askedToSubmit )
