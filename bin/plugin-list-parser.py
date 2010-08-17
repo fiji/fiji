@@ -4,13 +4,12 @@
 import os, stat, types
 import zipfile
 import sys
-#from elementtree.ElementTree import *
 from xml.etree.cElementTree import *
 
 
 """
-This script parses the plugins folder content, and try to build a list 
-of Fiji plugins from it, formatted to be pasted in MediaWiki. 
+This script parses the plugins folder content, and tries to build a list
+of Fiji plugins from it, formatted to be pasted in MediaWiki.
 
 It fetches information on menu item position and files called by
 parsing jars and the staged-plugins.
@@ -18,11 +17,10 @@ parsing jars and the staged-plugins.
 J.Y. Tinevez - 2009
 """
 
-
 def walktree(top = ".", depthfirst = True):
     """Walk the directory tree, starting from top. Credit to Noah Spurrier and Doug Fort."""
     import os, stat, types
-    names = os.listdir(top)    
+    names = os.listdir(top)
     if not depthfirst:
         yield top, names
     for name in names:
@@ -42,7 +40,7 @@ def branchTree(branch, list):
     to avoid duplicate branches.
     Returns the element leaf."""
     # Remove all empty strings elements
-    while True:    
+    while True:
         try:
             list.remove('')
         except ValueError:
@@ -51,8 +49,8 @@ def branchTree(branch, list):
     new_list = []
     for l in list:
       new_list.append(l.replace(' ',''))
-    unique_tag = [reduce(lambda x,y: x + '>' + y, new_list[:n+1]) for n in range(len(new_list))] 
-    menu_path = [reduce(lambda x,y: x + ' > ' + y, list[:n+1]) for n in range(len(list))] 
+    unique_tag = [reduce(lambda x,y: x + '>' + y, new_list[:n+1]) for n in range(len(new_list))]
+    menu_path = [reduce(lambda x,y: x + ' > ' + y, list[:n+1]) for n in range(len(list))]
 
     current_branch = branch
     for el in unique_tag:
@@ -63,7 +61,7 @@ def branchTree(branch, list):
         # print('Trying to find "' + el + '" in "' + current_branch.tag + '"')
         # print('Content of ' + current_branch.tag)
         # for i in current_branch:
-        #  print('\t"' + i.tag +'"') 
+        #  print('\t"' + i.tag +'"')
         new_branch = current_branch.find(el)
         if new_branch is None:
         #    print('Not found')
@@ -91,7 +89,7 @@ def appendPluginToTree(root_tree, path, plugin_filename, type):
     rel_path.insert(0, PLUGINS_MENU_NAME,)
     leaf = branchTree(root_tree, rel_path)
     name = plugin_filename.split('.')[0].replace('_',' ').strip()
-    leaf.attrib[name] = {'file':plugin_filename, 'package':'', 'type':type}        
+    leaf.attrib[name] = {'file':plugin_filename, 'package':'', 'type':type}
 
 def appendConfigFile(root_tree, config_file_iterable, package_name, type):
     """Analyze the content of a .config file and append its  indexed compenents
@@ -99,7 +97,7 @@ def appendConfigFile(root_tree, config_file_iterable, package_name, type):
     for line in config_file_iterable:
         if line.startswith('#'):      continue # Comment
         elif len(line.strip()) == 0:  continue # Empty, or so
-        
+
         # The rest, should be formatted as MainMenu>SubMenu, "Plugin Name in menu", path.to.class.in.jar.file
         line_parts = line.split(',')
         if len(line_parts) < 3:
@@ -116,8 +114,8 @@ def appendJarWithStagedConfigFile(root_tree, config_file_path, type):
     package_name = os.path.split(config_file_path)[-1].split('.')[0]
     file = open(config_file_path);
     appendConfigFile(root_tree, file, package_name, type)
-    
-    
+
+
 def appendJarWithConfigFile(root_tree, jarfile_path, type):
     """Analyze the content of a plugins.config embeded in a jar, and get the
     location of its indexed compenents."""
@@ -127,7 +125,7 @@ def appendJarWithConfigFile(root_tree, jarfile_path, type):
     jar.close()
     lines = config_file.split('\n')
     appendConfigFile(root_tree, lines, package_name, type)
-    
+
 def hasConfigFileInJar(jarfile_path):
     """Returns true if the jar file whose path is given in argument has a file
     called plugins.congi in it."""
@@ -137,32 +135,32 @@ def hasConfigFileInJar(jarfile_path):
     jar.close();
     if PLUGINS_CONFIG_FILENAME in files_in_jar: return True
     return False
-    
-    
-    
+
+
+
 def createPluginsTree(fiji_folder):
-    
+
     plugins_location = os.path.join(fiji_folder, PLUGINS_FOLDER)
     staged_plugins_location = os.path.join(fiji_folder, STAGED_PLUGINS_FOLDER)
-    
+
     # Initiate the tree
     tree = Element('root')
     # Immediatly add a 'Plugins' branch to it
     plugin_branch = SubElement(tree, PLUGINS_MENU_NAME)
-    
+
     top = plugins_location
     for top, names in walktree(top):
         for name in names:
-            
+
             # Get filename and type
             split_filename = os.path.splitext(name)
             file_extension = split_filename[1]
             file_name = split_filename[0]
             type = PLUGINS_TYPE.get(file_extension)
-            
+
             if type == None: # Folders or gremlins
                 continue
-            
+
             elif type == PLUGINS_TYPE.get(JAR_EXTENSION): # Look for location in case of jar file
                 config_file_path = os.path.join(staged_plugins_location,file_name+'.config')
                 jar_file_path = os.path.join(plugins_location, name)
@@ -172,12 +170,12 @@ def createPluginsTree(fiji_folder):
                 elif hasConfigFileInJar(jar_file_path):
                     # look for a plugins.config file within the jar
                     appendJarWithConfigFile(tree, jar_file_path, type)
-                else: # Append a jar as it is 
+                else: # Append a jar as it is
                     appendPluginToTree(tree, top, name, type)
-                                
+
             else: # Plain plugin
                 appendPluginToTree(tree, top, name, type)
-    
+
     return tree
 
 def outputNode(node, level=0):
@@ -233,7 +231,8 @@ if len(sys.argv) < 2:
 else:
     fiji_folder = sys.argv[1]
 
-# Create the tree    
+# Create the tree
 plugins_tree = createPluginsTree(fiji_folder)
+
 # Output it
 outputPluginsTree(plugins_tree)
