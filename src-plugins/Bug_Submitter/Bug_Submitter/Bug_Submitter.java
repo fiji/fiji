@@ -89,6 +89,7 @@ import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import java.awt.Toolkit;
 
+import fiji.updater.UptodateCheck;
 import fiji.updater.logic.Checksummer;
 import fiji.updater.logic.PluginObject;
 import fiji.updater.ui.ProgressDialog;
@@ -749,6 +750,7 @@ public class Bug_Submitter implements PlugIn {
 			"\nInformation about your version of Java - "+
 			"this information is useful for the Fiji developers:\n\n"+
 			getUsefulSystemInformation()+
+			"\nThe up-to-date check says: "+(new UptodateCheck()).check()+"\n"+
 			"\nInformation about the version of each plugin:\n\n"+
 			getInstalledVersions();
 
