@@ -50,7 +50,7 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 	protected List<Result.Histogram2DResult> listOfHistograms = new ArrayList<Result.Histogram2DResult>();
 	protected List<Result.WarningResult> listOfWarnings = new ArrayList<Result.WarningResult>();
 	protected List<Result.SimpleValueResult> listOfSimpleValues = new ArrayList<Result.SimpleValueResult>();
-
+	protected List<Result.CompositeImageResult> listOfImageComposites = new ArrayList<Result.CompositeImageResult>();
 
 	// this is the image result that is currently selected by the drop down menu
 	protected Result.ImageResult currentlyDisplayedImageResult;
@@ -132,34 +132,55 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
     }
 
 	public void display(DataContainer container) {
+		// save a reference to the container
 		dataContainer = container;
-		Iterator<Result> iterator = container.iterator();
-		while (iterator.hasNext()){
-			Result r = iterator.next();
-			if (r instanceof Result.SimpleValueResult){
-				Result.SimpleValueResult result = (Result.SimpleValueResult)r;
-				listOfSimpleValues.add(result);
-			} else if ( r instanceof Result.ImageResult) {
-				Result.ImageResult result = (Result.ImageResult)r;
-				listOfImageResults.add(result);
-
-				// if it is a histogram remember that as well
-				if ( r instanceof Result.Histogram2DResult) {
-					Result.Histogram2DResult histogram = (Result.Histogram2DResult)r;
-					listOfHistograms.add(histogram);
-				}
-			} else if ( r instanceof Result.WarningResult ) {
-				Result.WarningResult result = (Result.WarningResult)r;
-				listOfWarnings.add(result);
-			}
-		}
-
+		// parse the results
+		parseResults( container.iterator() );
+		// set up the GUI
 		setup();
+		// display the first image available, if any
 		if (listOfImageResults.size() > 0) {
 			adjustDisplayedImage(listOfImageResults.get(0));
 		}
 
 		this.show();
+	}
+
+	/**
+	 * Iterates over results and passes the results to
+	 * the parseResult method.
+	 */
+	protected void parseResults(Iterator<Result> iterator) {
+		while (iterator.hasNext()){
+			parseResult( iterator.next() );
+		}
+	}
+
+	/**
+	 * Adds the passed Result to the appropiate list.
+	 */
+	protected void parseResult(Result r) {
+		if (r instanceof Result.SimpleValueResult){
+			Result.SimpleValueResult result = (Result.SimpleValueResult)r;
+			listOfSimpleValues.add(result);
+		} else if ( r instanceof Result.ImageResult) {
+			Result.ImageResult result = (Result.ImageResult)r;
+			listOfImageResults.add(result);
+
+			// if it is a histogram remember that as well
+			if ( r instanceof Result.Histogram2DResult) {
+				Result.Histogram2DResult histogram = (Result.Histogram2DResult)r;
+				listOfHistograms.add(histogram);
+			}
+		} else if ( r instanceof Result.CompositeImageResult ) {
+			Result.CompositeImageResult result = (Result.CompositeImageResult)r;
+			listOfImageComposites.add( result );
+			// parse the image data to put the image in the correct list
+			parseResult( result.getImageResult() );
+		} else if ( r instanceof Result.WarningResult ) {
+			Result.WarningResult result = (Result.WarningResult)r;
+			listOfWarnings.add(result);
+		}
 	}
 
 	/**
