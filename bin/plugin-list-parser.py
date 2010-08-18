@@ -21,6 +21,7 @@ def walktree(top = ".", depthfirst = True):
     """Walk the directory tree, starting from top. Credit to Noah Spurrier and Doug Fort."""
     import os, stat, types
     names = os.listdir(top)
+    names.sort()
     if not depthfirst:
         yield top, names
     for name in names:
