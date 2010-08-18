@@ -1,6 +1,7 @@
 #!/bin/sh
 ''''exec "$(dirname "$0")"/../fiji --headless --jython "$0" "$@" # (call again with fiji)'''
 
+from ij import IJ
 import os, stat, types
 import zipfile
 import sys
@@ -302,14 +303,16 @@ if uploadToWiki:
         if not client.isLoggedIn():
             if user != None and password != None:
                 client.logIn(user, password)
+		        response = client.uploadPage(PAGE, result, 'Updated by plugin-list-parser')
+		        if client.isLoggedIn():
+		            client.logOut()
+		        if not response:
+		            print 'There was a problem with uploading', PAGE
+		            if IJ.getInstance() == None:
+			            sys.exit(1)
             else:
                 print 'No .netrc entry for', URL
-                sys.exit(1)
-        response = client.uploadPage(PAGE, result, 'Updated by plugin-list-parser')
-        if client.isLoggedIn():
-            client.logOut()
-        if not response:
-            print 'There was a problem with uploading', PAGE
-            sys.exit(1)
+                if IJ.getInstance() == None:
+	                sys.exit(1)
 else:
     print result
