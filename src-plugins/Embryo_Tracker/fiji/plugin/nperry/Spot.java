@@ -13,7 +13,7 @@ public class Spot {
 	/** Store the individual features, and their values. */
 	private Map<Feature, Double> features = new HashMap<Feature, Double>();
 	/** Physical coordinates of this spot. Can have a time component. */
-	private double[] coordinates; 
+	private float[] coordinates; 
 	/** A user-supplied name for this spot. */
 	private String name;
 	/** The parents of this Spot, once Spots have been linked. */
@@ -25,14 +25,14 @@ public class Spot {
 	 * CONSTRUCTORS
 	 */
 	
-	public Spot(double[] coordinates, String name) {
+	public Spot(float[] coordinates, String name) {
 		this.coordinates = coordinates;
 		this.name = name;
 		this.parents = new ArrayList<Spot>();
 		this.children = new ArrayList<Spot>();
 	}
 	
-	public Spot(double[] coordinates) {
+	public Spot(float[] coordinates) {
 		this(coordinates, null);
 		this.parents = new ArrayList<Spot>();
 		this.children = new ArrayList<Spot>();
@@ -45,7 +45,7 @@ public class Spot {
 	/**
 	 * Return a reference to the coordinate array of this Spot.
 	 */
-	public double[] getCoordinates() {
+	public float[] getCoordinates() {
 		return this.coordinates;
 	}
 	
