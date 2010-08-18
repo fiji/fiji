@@ -23,6 +23,7 @@ sh -x Fake.sh VERBOSE=true "CLASSPATH(plugins/VIB_.jar)=/usr/share/java/vecmath.
     "CLASSPATH(plugins/Directionality_.jar)=/usr/share/java/jfreechart.jar:/usr/share/java/jcommon.jar" \
     "CLASSPATH(plugins/Fiji_Plugins.jar)=/usr/share/java/jsch.jar:jars/fiji-lib.jar" \
     "CLASSPATH(misc/Fiji.jar)=/usr/share/java/jsch.jar" \
+    "CLASSPATH(jars/jep.jar)=/usr/share/java/jama.jar:/usr/share/java/junit4.jar" \
     "CLASSPATH(plugins/Javascript_.jar)=/usr/share/java/js.jar" \
     "CLASSPATH(plugins/Fiji_Updater.jar)=/usr/share/java/jsch.jar" \
     "CLASSPATH(jars/pal-optimization.jar)=/usr/share/java/junit4.jar" \
