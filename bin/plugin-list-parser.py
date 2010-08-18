@@ -9,13 +9,17 @@ from xml.etree.cElementTree import *
 
 """
 This script parses the plugins folder content, and tries to build a list
-of Fiji plugins from it, formatted to be pasted in MediaWiki.
+of Fiji plugins from it, formatted to be pasted in MediaWiki. Optionally,
+it can upload the changes right away.
 
 It fetches information on menu item position and files called by
 parsing jars and the staged-plugins.
 
 J.Y. Tinevez - 2009
 """
+
+URL = 'http://pacific.mpi-cbg.de/wiki/index.php'
+PAGE = 'Template:PluginList'
 
 def walktree(top = ".", depthfirst = True):
     """Walk the directory tree, starting from top. Credit to Noah Spurrier and Doug Fort."""
@@ -179,12 +183,19 @@ def createPluginsTree(fiji_folder):
 
     return tree
 
-def outputNode(node, level=0):
+firstNode = True
+
+def nodeToString(node, level=0):
+    result = ''
     title_tag = (2+level)*'='
-    title_string = (4-level)*'\n' + title_tag + ' ' + node.get('tittle_string','Plugins') + ' ' + title_tag + '\n'
-    # title_string = (4-level)*'\n' + title_tag + ' ' + node.tag + ' ' + title_tag + '\n'
+    title_string = title_tag + ' ' + node.get('tittle_string','Plugins') + ' ' + title_tag + '\n'
     # Echo section title
-    print(title_string)
+    global firstNode
+    if firstNode:
+        firstNode = False
+    else:
+        result += (4-level)*'\n'
+    result += title_string + '\n'
     # Echo content
     keys = node.attrib.keys()
     for key in keys:
@@ -194,18 +205,27 @@ def outputNode(node, level=0):
         if node.get('package','#') != '#':
             plugin_line += ' in package ' + "'''[[" + node.get(key,{}).get('package','#') +"]]'''"
         plugin_line += "  -- ''" + node.get(key,{}).get('type','#') + "''"
-        
-        print plugin_line 
+
+        if plugin_line != '':
+            result += plugin_line + '\n'
     # Recursive into children
     for child in node.getchildren():
-        outputNode(child, level+1)
+        result += nodeToString(child, level+1)
+        if result == '\n' or result == '\n\n' or result == '\n\n\n' or result == '\n\n\n\n':
+             print 'child', child
+    return result
 
-def outputPluginsTree(tree):
+def pluginsTreeToString(tree):
+    global firstNode
+    firstNode = True
+    result = ''
     nodes = tree.getchildren()
     for node in nodes:
-        print 5*'\n'
-        outputNode(node)
-        
+        if result != '':
+		result += 3*'\n'
+        result += nodeToString(node)
+    return result
+
 
 
 # -------------------------------
@@ -227,6 +247,11 @@ STAGED_PLUGINS_FOLDER = 'staged-plugins'
 PLUGINS_MENU_NAME = 'Plugins'
 PLUGINS_CONFIG_FILENAME = 'plugins.config'
 
+uploadToWiki = False
+if len(sys.argv) > 1 and sys.argv[1] == '--upload-to-wiki':
+    uploadToWiki = True
+    sys.argv = sys.argv[:1] + sys.argv[2:]
+
 if len(sys.argv) < 2:
     fiji_folder = os.path.curdir
 else:
@@ -236,4 +261,55 @@ else:
 plugins_tree = createPluginsTree(fiji_folder)
 
 # Output it
-outputPluginsTree(plugins_tree)
+result = pluginsTreeToString(plugins_tree)
+if uploadToWiki:
+    from fiji import MediaWikiClient
+
+    client = MediaWikiClient(URL)
+    wiki = client.sendRequest(['title', PAGE, 'action', 'edit'], None)
+    if wiki != result:
+        # get username and password
+        user = None
+        password = None
+        from os import getenv, path
+        home = getenv('HOME')
+        if home != None and path.exists(home + '/.netrc'):
+            host = URL
+            if host.startswith('http://'):
+                host = host[7:]
+            elif host.startswith('https://'):
+                host = host[8:]
+            slash = host.find('/')
+            if slash > 0:
+                host = host[:slash]
+
+            found = False
+            f = open(home + '/.netrc')
+            for line in f.readlines():
+                line = line.strip()
+                if line == 'machine ' + host:
+                    found = True
+                elif found == False:
+                    continue
+                elif line.startswith('login '):
+                    user = line[6:]
+                elif line.startswith('password '):
+                    password = line[9:]
+                elif line.startswith('machine '):
+                    break
+            f.close()
+
+        if not client.isLoggedIn():
+            if user != None and password != None:
+                client.logIn(user, password)
+            else:
+                print 'No .netrc entry for', URL
+                sys.exit(1)
+        response = client.uploadPage(PAGE, result, 'Updated by plugin-list-parser')
+        if client.isLoggedIn():
+            client.logOut()
+        if not response:
+            print 'There was a problem with uploading', PAGE
+            sys.exit(1)
+else:
+    print result
