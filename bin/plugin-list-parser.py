@@ -267,7 +267,7 @@ if uploadToWiki:
 
     client = MediaWikiClient(URL)
     wiki = client.sendRequest(['title', PAGE, 'action', 'edit'], None)
-    if wiki != result:
+    if wiki.replace('&lt;', '<') != result:
         # get username and password
         user = None
         password = None
