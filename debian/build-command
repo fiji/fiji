@@ -17,7 +17,6 @@ sh -x Fake.sh VERBOSE=true "CLASSPATH(plugins/VIB_.jar)=/usr/share/java/vecmath.
     "CLASSPATH(plugins/BeanShell_Interpreter.jar)=/usr/share/java/bsh.jar" \
     "CLASSPATH(plugins/IO_.jar)=/usr/share/java/batik-all.jar:/usr/share/java/xml-apis-ext.jar" \
     "CLASSPATH(jars/zs.jar)=/usr/share/java/jama.jar" \
-    "CLASSPATH(plugins/Trainable_Segmentation.jar)=jars/weka.jar:plugins/Stitching_.jar" \
     "CLASSPATH(plugins/Jython_Interpreter.jar)=/usr/share/java/jython.jar:jars/fiji-scripting.jar" \
     "CLASSPATH(plugins/Clojure_Interpreter.jar)=/usr/share/java/clojure.jar" \
     "CLASSPATH(plugins/IO_.jar)=/usr/share/java/itext1.jar:/usr/share/java/batik-all.jar:/usr/share/java/xml-apis-ext.jar:/usr/share/java/jzlib.jar" \
