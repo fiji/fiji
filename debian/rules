@@ -22,7 +22,7 @@ BUILD_COMMAND := debian/build-command
 
 JAVA3D_JARS := /usr/share/java/vecmath.jar:/usr/share/java/j3dutils.jar:/usr/lib/jni/libj3dcore-ogl.so:/usr/share/java/j3dcore.jar
 
-INSTALLED_JVM_ROOT := $(cat debian/java-home)
+INSTALLED_JVM_ROOT := $(shell cat debian/java-home)
 
 VERSION_IN_CHANGELOG=$(shell dpkg-parsechangelog | egrep ^Version: | sed "s/Version: //")
 PACKAGE_IN_CHANGELOG=$(shell dpkg-parsechangelog | egrep ^Source: | sed "s/Source: //")
@@ -68,7 +68,7 @@ clean : prebuild-actions
 	dh_testroot
 	rm -f build-arch-stamp build-indep-stamp configure-stamp install-arch-stamp install-indep-stamp
 	rm -f $(INDEP_STAMPS) $(ARCH_STAMPS)
-	JAVA_HOME=$(INSTALLED_JVM_ROOT) sh -x Fake.sh clean
+	$(BUILD_COMMAND) clean
 	rm -f fjij fiji.o
 	dh_clean
 
