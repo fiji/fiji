@@ -20,8 +20,6 @@ CWD := $(shell pwd)
 
 BUILD_COMMAND := debian/build-command
 
-JAVA3D_JARS := /usr/share/java/vecmath.jar:/usr/share/java/j3dutils.jar:/usr/lib/jni/libj3dcore-ogl.so:/usr/share/java/j3dcore.jar
-
 INSTALLED_JVM_ROOT := $(shell cat debian/java-home)
 
 VERSION_IN_CHANGELOG=$(shell dpkg-parsechangelog | egrep ^Version: | sed "s/Version: //")
