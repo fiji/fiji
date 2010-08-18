@@ -351,7 +351,7 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 	
 	/**
 	 * Return the current inclination with respect to this sphere center. Will be in
-	 * the range ]-π/2, π/2]. 
+	 * the range ]0, π]. 
 	 * <p>
 	 * In spherical coordinates, the inclination is the angle 
 	 * between the Z axis and the line OM where O is the sphere center and M is 
