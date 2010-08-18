@@ -115,8 +115,7 @@ public class SinglePathsGraph {
 		Set<Integer> keySet=fromPosition.keySet();
 
 		int counter = 1;
-		for(Iterator<Integer> i=keySet.iterator();i.hasNext();) {
-			int k=i.next();
+		for( int k : keySet ) {
 			wavefrontToKey.put(k,counter);
 			int x = k % width;
 			int y = ( k / width ) % height;
@@ -125,9 +124,7 @@ public class SinglePathsGraph {
 			++counter;
 		}
 
-		for( Iterator<Long> links = directedLinks.iterator();
-		     links.hasNext(); ) {
-			long l = links.next();
+		for( long l : directedLinks ) {
 			long from = l >> 32;
 			long to = l & 0xFFFFFFFF;
 			int from_k = (int)from;

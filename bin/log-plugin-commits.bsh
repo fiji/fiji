@@ -210,7 +210,7 @@ hexdump(String file, String outputFile) {
 	copyFile(new ByteArrayInputStream(out.toByteArray()), new FileOutputStream(outputFile));
 }
 
-String toString(Map map, String key) {
+String toString(Map map, Object key) {
 	return "'" + key + "' => '" + map.get(key) + "'";
 }
 

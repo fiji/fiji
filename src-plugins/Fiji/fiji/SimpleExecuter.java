@@ -3,6 +3,7 @@ package fiji;
 import ij.IJ;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -33,6 +34,15 @@ public class SimpleExecuter {
 	}
 
 	public SimpleExecuter(String[] cmdarray, InputStream in, LineHandler out, LineHandler err, File workingDirectory) throws IOException {
+		if (IJ.isWindows()) {
+			String interpreter = getInterpreter(cmdarray[0]);
+			if (interpreter != null) {
+				String[] newArray = new String[cmdarray.length + 1];
+				newArray[0] = interpreter;
+				System.arraycopy(cmdarray, 0, newArray, 1, cmdarray.length);
+				cmdarray = newArray;
+			}
+		}
 		Process process = Runtime.getRuntime().exec(cmdarray, null, workingDirectory);
 		stderr = getDumper(err, process.getErrorStream());
 		stdout = getDumper(out, process.getInputStream());
@@ -155,6 +165,16 @@ public class SimpleExecuter {
 
 	protected StreamDumper getDumper(LineHandler handler, InputStream in) {
 		return handler != null ? new LineDumper(handler, in) : new StreamDumper(in);
+	}
+
+	protected String getInterpreter(String path) {
+		String lower = path.toLowerCase();
+		if (lower.endsWith(".exe"))
+			return null;
+		if (lower.endsWith(".bsh") || lower.endsWith(".bs") || lower.endsWith(".py") || lower.endsWith(".rb") || lower.endsWith(".clj"))
+			return System.getProperty("fiji.executable");
+		// TODO: handle #! lines (needs command line splitting)
+		return null;
 	}
 
 	public static void main(String[] args) {

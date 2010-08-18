@@ -42,9 +42,12 @@ import ij.plugin.PlugIn;
 import java.awt.AWTException;
 import java.awt.Button;
 import java.awt.Choice;
+import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.Image;
+import java.awt.Panel;
 import java.awt.Rectangle;
 import java.awt.Robot;
 import java.awt.TextField;
@@ -54,6 +57,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -195,7 +199,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 
 	protected TextEditor editor;
 	protected JMenuItem upload, preview, toBackToggle, renameImage,
-		changeURL, insertPluginInfobox;
+		changeURL, insertPluginInfobox, whiteImage;
 
 	protected void addEditor() {
 		editor = new TextEditor(null);
@@ -210,6 +214,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		if (mode == Mode.TUTORIAL_MAKER) {
 			toBackToggle = editor.addToMenu(menu, "", 0, 0);
 			renameImage = editor.addToMenu(menu, "Rename Image", KeyEvent.VK_I, ctrl);
+			whiteImage = editor.addToMenu(menu, "Make white background image", 0, 0);
 			toBackToggleSetLabel();
 			insertPluginInfobox = editor.addToMenu(menu,
 					"Insert Plugin Infobox", 0, 0);
@@ -283,6 +288,8 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 			preview();
 		else if (source == renameImage)
 			renameImage();
+		else if (source == whiteImage)
+			makeWhiteBackgroundImage();
 		else if (source == toBackToggle) {
 			putSnapshotsToBack = !putSnapshotsToBack;
 			toBackToggleSetLabel();
@@ -723,6 +730,37 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		}
 		image.setTitle(newTitle);
 		rename(oldTitle, newTitle);
+	}
+
+	protected void makeWhiteBackgroundImage() {
+		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+		final Frame white = new Frame("White");
+		white.setUndecorated(true);
+		Panel panel = new Panel();
+		panel.setSize(screenSize);
+		panel.setMinimumSize(screenSize);
+		panel.setBackground(Color.WHITE);
+		white.add(panel);
+		white.pack();
+		white.setExtendedState(Frame.MAXIMIZED_BOTH);
+		WindowManager.addWindow(white);
+		KeyAdapter listener = new KeyAdapter() {
+			public void keyPressed(KeyEvent e) {
+				int key = e.getKeyCode();
+				if (key == e.VK_ENTER)
+					IJ.getInstance().requestFocus();
+				else if (key == e.VK_ESCAPE || key == e.VK_W) {
+					WindowManager.removeWindow(white);
+					white.dispose();
+				}
+				else if (key == e.VK_SPACE)
+					white.toBack();
+			}
+		};
+		white.addKeyListener(listener);
+		panel.addKeyListener(listener);
+		white.setVisible(true);
+		white.requestFocus();
 	}
 
 	protected Frame snapshotFrame;

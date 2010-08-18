@@ -95,7 +95,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		  listBookmarks, openSourceForClass, newPlugin, installMacro,
 		  openSourceForMenuItem, showDiff, commit, ijToFront,
 		  openMacroFunctions, decreaseFontSize, increaseFontSize,
-		  chooseTabSize, gitGrep, loadToolsJar;
+		  chooseTabSize, gitGrep, loadToolsJar, openInGitweb;
 	JMenu gitMenu, tabsMenu, tabSizeMenu, toolsMenu;
 	int tabsMenuTabsStart;
 	Set<JMenuItem> tabsMenuItems;
@@ -329,6 +329,9 @@ public class TextEditor extends JFrame implements ActionListener,
 		gitGrep = addToMenu(gitMenu,
 			"Grep...", 0, 0);
 		gitGrep.setMnemonic(KeyEvent.VK_G);
+		openInGitweb = addToMenu(gitMenu,
+			"Open in gitweb", 0, 0);
+		openInGitweb.setMnemonic(KeyEvent.VK_W);
 		mbar.add(gitMenu);
 
 		tabsMenu = new JMenu("Tabs");
@@ -771,6 +774,10 @@ public class TextEditor extends JFrame implements ActionListener,
 			if (!gd.wasCanceled())
 				new FileFunctions(this).gitGrep(gd.getNextString(), searchRoot);
 		}
+		else if (source == openInGitweb) {
+			EditorPane editorPane = getEditorPane();
+			new FileFunctions(this).openInGitweb(editorPane.file, editorPane.gitDirectory, editorPane.getCaretLineNumber() + 1);
+		}
 		else if (source == newPlugin)
 			new FileFunctions(this).newPlugin();
 		else if (source == ijToFront)
@@ -841,6 +848,8 @@ public class TextEditor extends JFrame implements ActionListener,
 	public void gotoLine() {
 		String line = JOptionPane.showInputDialog(this, "Line:",
 			"Goto line...", JOptionPane.QUESTION_MESSAGE);
+		if (line == null)
+			return;
 		try {
 			gotoLine(Integer.parseInt(line));
 		} catch (BadLocationException e) {
@@ -1673,6 +1682,17 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 			error("There was a problem opening " + path
 				+ ": " + e.getMessage());
 		}
+	}
+
+	/**
+	 * Write a message to the output screen
+	 *
+	 * @param message The text to write
+	 */
+	public void write(String message) {
+		if (!message.endsWith("\n"))
+			message += "\n";
+		screen.insert(message, screen.getDocument().getLength());
 	}
 
 	protected void error(String message) {

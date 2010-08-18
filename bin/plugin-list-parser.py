@@ -1,13 +1,16 @@
+#!/bin/sh
+''''exec "$(dirname "$0")"/../fiji --headless --jython "$0" "$@" # (call again with fiji)'''
+
 import os, stat, types
 import zipfile
 import sys
-#from elementtree.ElementTree import *
 from xml.etree.cElementTree import *
 
 
 """
-This script parses the plugins folder content, and try to build a list 
-of Fiji plugins from it, formatted to be pasted in MediaWiki. 
+This script parses the plugins folder content, and tries to build a list
+of Fiji plugins from it, formatted to be pasted in MediaWiki. Optionally,
+it can upload the changes right away.
 
 It fetches information on menu item position and files called by
 parsing jars and the staged-plugins.
@@ -15,11 +18,14 @@ parsing jars and the staged-plugins.
 J.Y. Tinevez - 2009
 """
 
+URL = 'http://pacific.mpi-cbg.de/wiki/index.php'
+PAGE = 'Template:PluginList'
 
 def walktree(top = ".", depthfirst = True):
     """Walk the directory tree, starting from top. Credit to Noah Spurrier and Doug Fort."""
     import os, stat, types
-    names = os.listdir(top)    
+    names = os.listdir(top)
+    names.sort()
     if not depthfirst:
         yield top, names
     for name in names:
@@ -39,7 +45,7 @@ def branchTree(branch, list):
     to avoid duplicate branches.
     Returns the element leaf."""
     # Remove all empty strings elements
-    while True:    
+    while True:
         try:
             list.remove('')
         except ValueError:
@@ -48,8 +54,8 @@ def branchTree(branch, list):
     new_list = []
     for l in list:
       new_list.append(l.replace(' ',''))
-    unique_tag = [reduce(lambda x,y: x + '>' + y, new_list[:n+1]) for n in range(len(new_list))] 
-    menu_path = [reduce(lambda x,y: x + ' > ' + y, list[:n+1]) for n in range(len(list))] 
+    unique_tag = [reduce(lambda x,y: x + '>' + y, new_list[:n+1]) for n in range(len(new_list))]
+    menu_path = [reduce(lambda x,y: x + ' > ' + y, list[:n+1]) for n in range(len(list))]
 
     current_branch = branch
     for el in unique_tag:
@@ -60,7 +66,7 @@ def branchTree(branch, list):
         # print('Trying to find "' + el + '" in "' + current_branch.tag + '"')
         # print('Content of ' + current_branch.tag)
         # for i in current_branch:
-        #  print('\t"' + i.tag +'"') 
+        #  print('\t"' + i.tag +'"')
         new_branch = current_branch.find(el)
         if new_branch is None:
         #    print('Not found')
@@ -88,7 +94,7 @@ def appendPluginToTree(root_tree, path, plugin_filename, type):
     rel_path.insert(0, PLUGINS_MENU_NAME,)
     leaf = branchTree(root_tree, rel_path)
     name = plugin_filename.split('.')[0].replace('_',' ').strip()
-    leaf.attrib[name] = {'file':plugin_filename, 'package':'', 'type':type}        
+    leaf.attrib[name] = {'file':plugin_filename, 'package':'', 'type':type}
 
 def appendConfigFile(root_tree, config_file_iterable, package_name, type):
     """Analyze the content of a .config file and append its  indexed compenents
@@ -96,7 +102,7 @@ def appendConfigFile(root_tree, config_file_iterable, package_name, type):
     for line in config_file_iterable:
         if line.startswith('#'):      continue # Comment
         elif len(line.strip()) == 0:  continue # Empty, or so
-        
+
         # The rest, should be formatted as MainMenu>SubMenu, "Plugin Name in menu", path.to.class.in.jar.file
         line_parts = line.split(',')
         if len(line_parts) < 3:
@@ -113,8 +119,8 @@ def appendJarWithStagedConfigFile(root_tree, config_file_path, type):
     package_name = os.path.split(config_file_path)[-1].split('.')[0]
     file = open(config_file_path);
     appendConfigFile(root_tree, file, package_name, type)
-    
-    
+
+
 def appendJarWithConfigFile(root_tree, jarfile_path, type):
     """Analyze the content of a plugins.config embeded in a jar, and get the
     location of its indexed compenents."""
@@ -124,7 +130,7 @@ def appendJarWithConfigFile(root_tree, jarfile_path, type):
     jar.close()
     lines = config_file.split('\n')
     appendConfigFile(root_tree, lines, package_name, type)
-    
+
 def hasConfigFileInJar(jarfile_path):
     """Returns true if the jar file whose path is given in argument has a file
     called plugins.congi in it."""
@@ -134,32 +140,32 @@ def hasConfigFileInJar(jarfile_path):
     jar.close();
     if PLUGINS_CONFIG_FILENAME in files_in_jar: return True
     return False
-    
-    
-    
+
+
+
 def createPluginsTree(fiji_folder):
-    
+
     plugins_location = os.path.join(fiji_folder, PLUGINS_FOLDER)
     staged_plugins_location = os.path.join(fiji_folder, STAGED_PLUGINS_FOLDER)
-    
+
     # Initiate the tree
     tree = Element('root')
     # Immediatly add a 'Plugins' branch to it
     plugin_branch = SubElement(tree, PLUGINS_MENU_NAME)
-    
+
     top = plugins_location
     for top, names in walktree(top):
         for name in names:
-            
+
             # Get filename and type
             split_filename = os.path.splitext(name)
             file_extension = split_filename[1]
             file_name = split_filename[0]
             type = PLUGINS_TYPE.get(file_extension)
-            
+
             if type == None: # Folders or gremlins
                 continue
-            
+
             elif type == PLUGINS_TYPE.get(JAR_EXTENSION): # Look for location in case of jar file
                 config_file_path = os.path.join(staged_plugins_location,file_name+'.config')
                 jar_file_path = os.path.join(plugins_location, name)
@@ -169,20 +175,27 @@ def createPluginsTree(fiji_folder):
                 elif hasConfigFileInJar(jar_file_path):
                     # look for a plugins.config file within the jar
                     appendJarWithConfigFile(tree, jar_file_path, type)
-                else: # Append a jar as it is 
+                else: # Append a jar as it is
                     appendPluginToTree(tree, top, name, type)
-                                
+
             else: # Plain plugin
                 appendPluginToTree(tree, top, name, type)
-    
+
     return tree
 
-def outputNode(node, level=0):
+firstNode = True
+
+def nodeToString(node, level=0):
+    result = ''
     title_tag = (2+level)*'='
-    title_string = (4-level)*'\n' + title_tag + ' ' + node.get('tittle_string','Plugins') + ' ' + title_tag + '\n'
-    # title_string = (4-level)*'\n' + title_tag + ' ' + node.tag + ' ' + title_tag + '\n'
+    title_string = title_tag + ' ' + node.get('tittle_string','Plugins') + ' ' + title_tag + '\n'
     # Echo section title
-    print(title_string)
+    global firstNode
+    if firstNode:
+        firstNode = False
+    else:
+        result += (4-level)*'\n'
+    result += title_string + '\n'
     # Echo content
     keys = node.attrib.keys()
     for key in keys:
@@ -192,18 +205,27 @@ def outputNode(node, level=0):
         if node.get('package','#') != '#':
             plugin_line += ' in package ' + "'''[[" + node.get(key,{}).get('package','#') +"]]'''"
         plugin_line += "  -- ''" + node.get(key,{}).get('type','#') + "''"
-        
-        print plugin_line 
+
+        if plugin_line != '':
+            result += plugin_line + '\n'
     # Recursive into children
     for child in node.getchildren():
-        outputNode(child, level+1)
+        result += nodeToString(child, level+1)
+        if result == '\n' or result == '\n\n' or result == '\n\n\n' or result == '\n\n\n\n':
+             print 'child', child
+    return result
 
-def outputPluginsTree(tree):
+def pluginsTreeToString(tree):
+    global firstNode
+    firstNode = True
+    result = ''
     nodes = tree.getchildren()
     for node in nodes:
-        print 5*'\n'
-        outputNode(node)
-        
+        if result != '':
+		result += 3*'\n'
+        result += nodeToString(node)
+    return result
+
 
 
 # -------------------------------
@@ -225,12 +247,69 @@ STAGED_PLUGINS_FOLDER = 'staged-plugins'
 PLUGINS_MENU_NAME = 'Plugins'
 PLUGINS_CONFIG_FILENAME = 'plugins.config'
 
+uploadToWiki = False
+if len(sys.argv) > 1 and sys.argv[1] == '--upload-to-wiki':
+    uploadToWiki = True
+    sys.argv = sys.argv[:1] + sys.argv[2:]
+
 if len(sys.argv) < 2:
     fiji_folder = os.path.curdir
 else:
     fiji_folder = sys.argv[1]
 
-# Create the tree    
+# Create the tree
 plugins_tree = createPluginsTree(fiji_folder)
+
 # Output it
-outputPluginsTree(plugins_tree)
+result = pluginsTreeToString(plugins_tree)
+if uploadToWiki:
+    from fiji import MediaWikiClient
+
+    client = MediaWikiClient(URL)
+    wiki = client.sendRequest(['title', PAGE, 'action', 'edit'], None)
+    if wiki.replace('&lt;', '<') != result:
+        # get username and password
+        user = None
+        password = None
+        from os import getenv, path
+        home = getenv('HOME')
+        if home != None and path.exists(home + '/.netrc'):
+            host = URL
+            if host.startswith('http://'):
+                host = host[7:]
+            elif host.startswith('https://'):
+                host = host[8:]
+            slash = host.find('/')
+            if slash > 0:
+                host = host[:slash]
+
+            found = False
+            f = open(home + '/.netrc')
+            for line in f.readlines():
+                line = line.strip()
+                if line == 'machine ' + host:
+                    found = True
+                elif found == False:
+                    continue
+                elif line.startswith('login '):
+                    user = line[6:]
+                elif line.startswith('password '):
+                    password = line[9:]
+                elif line.startswith('machine '):
+                    break
+            f.close()
+
+        if not client.isLoggedIn():
+            if user != None and password != None:
+                client.logIn(user, password)
+            else:
+                print 'No .netrc entry for', URL
+                sys.exit(1)
+        response = client.uploadPage(PAGE, result, 'Updated by plugin-list-parser')
+        if client.isLoggedIn():
+            client.logOut()
+        if not response:
+            print 'There was a problem with uploading', PAGE
+            sys.exit(1)
+else:
+    print result

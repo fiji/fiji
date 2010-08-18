@@ -76,6 +76,8 @@ case "$1" in
 			(./bin/create-jnlp.sh &&
 			 ./bin/create-jnlp.sh --updater ||
 			 (echo "Java WebStart generation failed"; false)) &&
+			(./bin/plugin-list-parser.py --upload-to-wiki ||
+			 (echo "PluginList generation failed"; false)) &&
 			(./bin/javadoc-all.sh -d /var/www/javadoc \
 				> javadoc.out 2>&1 ||
 			 (echo "JavaDoc failed"; false))

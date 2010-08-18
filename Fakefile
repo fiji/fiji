@@ -87,7 +87,7 @@ FIJI_JAVA_EXT(macosx)=$FIJI_JAVA_HOME/Home/lib/ext
 JAVA3D_JARS=$FIJI_JAVA_EXT/j3dcore.jar:$FIJI_JAVA_EXT/j3dutils.jar:$FIJI_JAVA_EXT/vecmath.jar
 
 # tools.jar
-TOOLS_JAR=$FIJI_JAVA_HOME/../lib/tools.jar
+TOOLS_JAR=$JAVA_HOME/../lib/tools.jar
 TOOLS_JAR(macosx)=/System/Library/Frameworks/JavaVM.framework/Classes/classes.jar
 
 # the main target
@@ -179,7 +179,9 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/SPIM_Registration.jar \
 	plugins/QuickPALM_.jar \
 	plugins/Embryo_Tracker.jar \
-	plugins/3D_Viewer.jar
+	plugins/3D_Viewer.jar \
+	plugins/CPU_Meter.jar \
+	plugins/TopoJ_.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS third-party-plugins
 
@@ -282,6 +284,8 @@ CLASSPATH(plugins/3D_Viewer.jar)=jars/VIB-lib.jar:jars/imglib.jar:jars/Jama-1.0.
 CLASSPATH(jars/jep.jar)=jars/Jama-1.0.2.jar:jars/junit-4.5.jar
 CLASSPATH(plugins/Embryo_Tracker.jar)=plugins/3D_Viewer.jar
 CLASSPATH(plugins/SPIM_Registration.jar)=$JAVA3D_JARS:jars/imglib.jar:jars/mpicbg.jar:plugins/3D_Viewer.jar:jars/weka.jar:jars/fiji-lib.jar:plugins/loci_tools.jar:plugins/Fiji_Plugins.jar:jars/VIB-lib.jar:jars/Jama-1.0.2.jar
+CLASSPATH(plugins/Bug_Submitter.jar)=plugins/Fiji_Updater.jar
+CLASSPATH(plugins/TopoJ_.jar)=jars/Jama-1.0.2.jar
 
 # pre-Java5 generics ;-)
 

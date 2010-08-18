@@ -28,15 +28,10 @@
 package tracing;
 
 import ij.*;
-import ij.gui.*;
-
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
 
-import stacks.ThreePanesCanvas;
-import stacks.ThreePanes;
-
+@SuppressWarnings("serial")
 public class InteractiveTracerCanvas extends TracerCanvas implements KeyListener {
 
 	static final boolean verbose = SimpleNeuriteTracer.verbose;
@@ -134,16 +129,16 @@ public class InteractiveTracerCanvas extends TracerCanvas implements KeyListener
 		}
 
 		int modifiers = e.getModifiersEx();
-		boolean shift_down = (modifiers & e.SHIFT_DOWN_MASK) > 0;
-		boolean control_down = (modifiers & e.CTRL_DOWN_MASK) > 0;
-		boolean alt_down = (modifiers & e.ALT_DOWN_MASK) > 0;
+		boolean shift_down = (modifiers & InputEvent.SHIFT_DOWN_MASK) > 0;
+		boolean control_down = (modifiers & InputEvent.CTRL_DOWN_MASK) > 0;
+		boolean alt_down = (modifiers & InputEvent.ALT_DOWN_MASK) > 0;
 
 		if( shift_down && (control_down || alt_down) && (keyCode == KeyEvent.VK_A) ) {
 			if( pathAndFillManager.anySelected() ) {
 				double [] p = new double[3];
 				tracerPlugin.findPointInStackPrecise( last_x_in_pane_precise, last_y_in_pane_precise, plane, p );
 				PointInImage pointInImage = pathAndFillManager.nearestJoinPointOnSelectedPaths( p[0], p[1], p[2] );
-				ShollAnalysisDialog sholl = new ShollAnalysisDialog(
+				new ShollAnalysisDialog(
 					"Sholl analysis for tracing of "+tracerPlugin.getImagePlus().getTitle(),
 					pointInImage.x,
 					pointInImage.y,

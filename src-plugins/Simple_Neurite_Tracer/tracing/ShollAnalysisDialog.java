@@ -948,9 +948,7 @@ public class ShollAnalysisDialog extends Dialog implements WindowListener, Actio
 		numberOfAllPaths = 0;
 		numberOfSelectedPaths = 0;
 
-		Iterator<Path> pi = pafm.allPaths.iterator();
-		while( pi.hasNext() ) {
-			Path p = pi.next();
+		for( Path p : pafm.allPaths ) {
 			boolean selected = p.getSelected();
 			if( p.getUseFitted() ) {
 				p = p.fitted;
