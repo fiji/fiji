@@ -176,6 +176,8 @@ public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm {
 		// tell the data container about the new results
 		container.setCh1MaxThreshold(ch1ThreshMax);
 		container.setCh2MaxThreshold(ch2ThreshMax);
+		container.setAutoThresholdSlope(m);
+		container.setAutoThresholdIntercept(b);
 		container.add( new Result.SimpleValueResult("m (slope)", m));
 		container.add( new Result.SimpleValueResult("b (y-intercept)", b));
 
