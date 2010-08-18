@@ -449,6 +449,7 @@ public void run(String arg)
 
 /*-----------------------------------------------------------------------------------------------------------------*/ 
 public void convert(String dir1, String dir2,String original,String format, String blueremoval, String autoalign,String vhDataSet) {
+		IJ.resetEscape();
                 IJ.log("");
 		IJ.log("Converting to "+format);
 		if (!dir2.endsWith(File.separator))
@@ -477,7 +478,7 @@ public void convert(String dir1, String dir2,String original,String format, Stri
 			IJ.showStatus(i+"/"+list.length);
 			File f = new File(dir1+list[i]);
 			//if (!f.isDirectory() && (list[i].endsWith("raw" ) || list[i].endsWith("RAW" )) ) {
-			if (!f.isDirectory() && (list[i].endsWith("jpeg" ) || list[i].endsWith("JPEG") || list[i].endsWith("jpg" ) || list[i].endsWith("JPG") || list[i].endsWith("bmp" ) || list[i].endsWith("BMP") || list[i].endsWith("gif" ) || list[i].endsWith("GIF") || list[i].endsWith("tiff" ) || list[i].endsWith("TIFF") || list[i].endsWith("tif" ) || list[i].endsWith("TIF") ) ) {
+			if (!f.isDirectory() && (list[i].endsWith("jpeg" ) || list[i].endsWith("JPEG") || list[i].endsWith("jpg" ) || list[i].endsWith("JPG") || list[i].endsWith("bmp" ) || list[i].endsWith("BMP") || list[i].endsWith("gif" ) || list[i].endsWith("GIF") || list[i].endsWith("tiff" ) || list[i].endsWith("TIFF") || list[i].endsWith("tif" ) || list[i].endsWith("TIF") || list[i].endsWith("pgm") || list[i].endsWith("PGM") ) ) {
 
 							
 				ImagePlus img = new ImagePlus(dir1+"/"+list[i]);

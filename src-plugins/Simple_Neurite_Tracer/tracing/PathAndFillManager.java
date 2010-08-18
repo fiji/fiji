@@ -29,7 +29,6 @@ package tracing;
 
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Arrays;
 import java.util.Set;
@@ -42,7 +41,6 @@ import java.io.*;
 
 import ij.*;
 
-import client.ArchiveClient;
 import ij.measure.Calibration;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -60,21 +58,21 @@ import java.util.regex.Pattern;
 import java.util.Map;
 import java.util.HashMap;
 
-import java.awt.Color;
-
 import javax.media.j3d.View;
-import javax.vecmath.Color3f;
 import ij3d.Content;
 import ij3d.UniverseListener;
 
+import util.Bresenham3D;
 import util.XMLFunctions;
 
+@SuppressWarnings("serial")
 class TracesFileFormatException extends SAXException {
 	public TracesFileFormatException(String message) {
 		super(message);
 	}
 }
 
+@SuppressWarnings("serial")
 class SWCExportException extends Exception {
 	public SWCExportException(String message) {
 		super(message);
@@ -96,7 +94,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		allPaths = new ArrayList< Path >();
 		allFills = new ArrayList< Fill >();
 		listeners = new ArrayList< PathAndFillListener >();
-		selectedPathsSet = new HashSet();
+		selectedPathsSet = new HashSet<Path>();
 		needImageDataFromTracesFile = true;
 		this.imagePlus = null;
 		this.x_spacing = Double.MIN_VALUE;
@@ -185,9 +183,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		return getPathFromName( name, true );
 	}
 	public synchronized Path getPathFromName( String name, boolean caseSensitive ) {
-		Iterator<Path> pi = allPaths.iterator();
-		while( pi.hasNext() ) {
-			Path p = pi.next();
+		for( Path p : allPaths ) {
 			if( caseSensitive ) {
 				if( name.equals(p.getName()) )
 					return p;
@@ -200,9 +196,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	}
 
 	public synchronized Path getPathFromID( int id ) {
-		Iterator<Path> pi = allPaths.iterator();
-		while( pi.hasNext() ) {
-			Path p = pi.next();
+		for( Path p : allPaths ) {
 			if( id == p.getID() ) {
 				return p;
 			}
@@ -223,8 +217,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		selectedPathsSet.clear();
 		for( int i = 0; i < selectedPaths.length; ++i )
 			selectedPathsSet.add( selectedPaths[i] );
-		for( Iterator<PathAndFillListener> i = listeners.iterator(); i.hasNext(); ) {
-			PathAndFillListener pafl = i.next();
+		for( PathAndFillListener pafl : listeners ) {
 			if( pafl != sourceOfMessage )
 				// The source of the message already knows the states:
 				pafl.setSelectedPaths( selectedPathsSet, this );
@@ -322,7 +315,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		   ensures that the Path.children and
 		   Path.somehowJoins relationships are set up
 		   correctly: */
-		Set structuredPathSet = new HashSet(Arrays.asList(getPathsStructured()));
+		Set<Path> structuredPathSet = new HashSet<Path>(Arrays.asList(getPathsStructured()));
 
 		/* Check that there's only one primary path in
 		   selectedPaths by taking the intersection and
@@ -498,9 +491,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 		ArrayList<String> pathListEntries = new ArrayList<String>();
 
-		Iterator<Path> pi = allPaths.iterator();
-		while( pi.hasNext() ) {
-			Path p = pi.next();
+		for( Path p : allPaths ) {
 			int pathID = p.getID();
 			if( p == null ) {
 				throw new RuntimeException("BUG: A path in allPaths was null!");
@@ -519,10 +510,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			pathListEntries.add( name );
 		}
 
-		for( Iterator i = listeners.iterator(); i.hasNext(); ) {
-			PathAndFillListener listener = (PathAndFillListener)(i.next());
+		for( PathAndFillListener listener : listeners )
 			listener.setPathList( pathListEntries.toArray( new String[]{} ), justAdded, expandAll );
-		}
 
 		int fills = allFills.size();
 
@@ -544,19 +533,9 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			fillListEntries[i] = name;
 		}
 
-		for( Iterator i = listeners.iterator(); i.hasNext(); ) {
-			((PathAndFillListener)(i.next())).setFillList( fillListEntries );
-		}
+		for( PathAndFillListener pafl : listeners )
+			pafl.setFillList( fillListEntries );
 
-	}
-
-	private int pathToIndex( Path p ) {
-		for( int i = 0; i < allPaths.size(); ++i ) {
-			Path toCompare = allPaths.get(i);
-			if( p == toCompare )
-				return i;
-		}
-		return -1;
 	}
 
 	public void addPath( Path p ) {
@@ -647,8 +626,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		// We don't just delete; have to fix up the references
 		// in other paths (for start and end joins):
 
-		for( Iterator i = allPaths.iterator(); i.hasNext(); ) {
-			Path p = (Path)i.next();
+		for( Path p : allPaths ) {
 			if( p.startJoins == unfittedPathToDelete ) {
 				p.startJoins = null;
 				p.startJoinsPoint = null;
@@ -804,8 +782,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 			pw.println("  <imagesize width=\"" + width + "\" height=\"" + height + "\" depth=\"" + depth + "\"/>" );
 
-			for( Iterator j = allPaths.iterator(); j.hasNext(); ) {
-				Path p = (Path)j.next();
+			for( Path p : allPaths ) {
 				// This probably should be a String returning
 				// method of Path.
 				pw.print("  <path id=\"" + p.getID() + "\"" );
@@ -883,8 +860,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			}
 			// Now output the fills:
 			int fillIndex = 0;
-			for( Iterator j = allFills.iterator(); j.hasNext(); ) {
-				Fill f = (Fill) j.next();
+			for( Fill f : allFills ) {
 				f.writeXML( pw, fillIndex );
 				++ fillIndex;
 			}
@@ -1514,11 +1490,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 	void clearPathsAndFills( ) {
 		maxUsedID = -1;
 		if( plugin != null && plugin.use3DViewer ) {
-			for( Iterator< Path > i = allPaths.iterator();
-			     i.hasNext(); ) {
-				Path p = i.next();
+			for( Path p : allPaths )
 				p.removeFrom3DViewer( plugin.univ );
-			}
 		}
 		allPaths.clear();
 		allFills.clear();
@@ -1671,11 +1644,8 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		PriorityQueue< SWCPoint > backtrackTo =
 			new PriorityQueue< SWCPoint >();
 
-		for( Iterator< SWCPoint > pi = primaryPoints.iterator();
-		     pi.hasNext(); ) {
-			SWCPoint start = pi.next();
+		for( SWCPoint start : primaryPoints )
 			backtrackTo.add( start );
-		}
 
 		HashMap< Path, SWCPoint > pathStartsOnSWCPoint =
 			new HashMap< Path, SWCPoint >();
@@ -1731,18 +1701,15 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 		if( alreadySeen.size() > 0 ) {
 			IJ.error( "Malformed file: there are some misconnected points" );
-			for( Iterator<Integer> i = alreadySeen.iterator();
-			     i.hasNext(); ) {
-				SWCPoint p = idToSWCPoint.get( i.next() );
+			for( int i : alreadySeen ) {
+				SWCPoint p = idToSWCPoint.get( i );
 				System.out.println( "  Misconnected: " + p);
 			}
 			return false;
 		}
 
 		// Set the start joins:
-		for( Iterator<Path> i = allPaths.iterator();
-		     i.hasNext(); ) {
-			Path p = i.next();
+		for( Path p : allPaths ) {
 			SWCPoint swcPoint = pathStartsOnSWCPoint.get( p );
 			if( swcPoint == null )
 				continue;
@@ -1878,14 +1845,74 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 	/* This method will set all the points in array that
 	 * correspond to points on one of the paths to 255, leaving
-	 * everything else as it is. */
+	 * everything else as it is.  This is useful for creating
+	 * stacks that can be used in skeleton analysis plugins that
+	 * expect a stack of this kind. */
 
 	synchronized void setPathPointsInVolume( byte [][] slices, int width, int height, int depth ) {
-		for( Iterator j = allPaths.iterator(); j.hasNext(); ) {
-			Path p = (Path)j.next();
-			for( int i = 0; i < p.size(); ++i ) {
-				slices[p.getZUnscaled(i)][p.getYUnscaled(i) * width + p.getXUnscaled(i)] =
-					(byte)255;
+		for( Path topologyPath : allPaths ) {
+			Path p = topologyPath;
+			if( topologyPath.getUseFitted() ) {
+				p = topologyPath.fitted;
+			}
+			if( topologyPath.fittedVersionOf != null )
+				continue;
+
+			int n = p.size();
+
+			ArrayList<Bresenham3D.IntegerPoint> pointsToJoin = new ArrayList<Bresenham3D.IntegerPoint>();
+
+			if( p.startJoins != null ) {
+				PointInImage s = p.startJoinsPoint;
+				Path sp = p.startJoins;
+				int spi = sp.indexNearestTo(s.x, s.y, s.z);
+				pointsToJoin.add(new Bresenham3D.IntegerPoint(
+						sp.getXUnscaled(spi),
+						sp.getYUnscaled(spi),
+						sp.getZUnscaled(spi)));
+			}
+
+			for( int i = 0; i < n; ++i ) {
+				pointsToJoin.add(new Bresenham3D.IntegerPoint(
+						p.getXUnscaled(i),
+						p.getYUnscaled(i),
+						p.getZUnscaled(i)));
+			}
+
+			if( p.endJoins != null ) {
+				PointInImage s = p.endJoinsPoint;
+				Path sp = p.endJoins;
+				int spi = sp.indexNearestTo(s.x, s.y, s.z);
+				pointsToJoin.add(new Bresenham3D.IntegerPoint(
+						sp.getXUnscaled(spi),
+						sp.getYUnscaled(spi),
+						sp.getZUnscaled(spi)));
+			}
+
+			Bresenham3D.IntegerPoint previous = null;
+			for( Bresenham3D.IntegerPoint current : pointsToJoin ) {
+				if( previous == null ) {
+					previous = current;
+					continue;
+				}
+
+				/* If we don't actually need to draw a line,
+				 * just put a point: */
+				if( current.diagonallyAdjacentOrEqual(previous) ) {
+					slices[current.z][current.y * width + current.x] = (byte)255;
+				} else {
+					/* Otherwise draw a line with the 3D version
+					 * of Bresenham's algorithm:
+					 */
+					List<Bresenham3D.IntegerPoint> pointsToDraw =
+						Bresenham3D.bresenham3D(previous, current);
+					System.out.println("Drawing "+pointsToDraw.size()+" to "+current);
+					for( Bresenham3D.IntegerPoint ip : pointsToDraw ) {
+						slices[ip.z][ip.y * width + ip.x] = (byte)255;
+					}
+				}
+
+				previous = current;
 			}
 		}
 	}
@@ -1954,9 +1981,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 
 		PriorityQueue< NearPoint > pq = new PriorityQueue< NearPoint >();
 
-		for( Iterator< Path > i = allPaths.iterator();
-		     i.hasNext(); ) {
-			Path path = i.next();
+		for( Path path : allPaths ) {
 			if( ! path.versionInUse() )
 				continue;
 			for( int j = 0; j < path.size(); ++j ) {
@@ -2001,7 +2026,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		return points;
 	}
 
-	public class AllPointsIterator implements java.util.Iterator {
+	public class AllPointsIterator implements Iterator<PointInImage> {
 
 		public AllPointsIterator() {
 			numberOfPaths = allPaths.size();
@@ -2068,7 +2093,6 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 		ArrayList< NearPoint > result = new ArrayList< NearPoint >();
 
 		AllPointsIterator i = allPointsIterator();
-		int numberFromIterator = 0;
 		while( i.hasNext() ) {
 			PointInImage p = i.next();
 			NearPoint np = other.nearestPointOnAnyPath(
@@ -2173,9 +2197,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 				pw.print(",");
 		}
 		pw.print("\r\n");
-		Iterator<Path> pi = allPaths.iterator();
-		while( pi.hasNext() ) {
-			Path p = pi.next();
+		for( Path p : allPaths ) {
 			Path pForLengthAndName = p;
 			if( p.getUseFitted() ) {
 				pForLengthAndName = p.fitted;
@@ -2247,10 +2269,7 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 			return;
 		boolean showOnlySelectedPaths = plugin.getShowOnlySelectedPaths();
 		// Now iterate over all the paths:
-		Iterator<Path> pi = allPaths.iterator();
-		while( pi.hasNext() ) {
-
-			Path p = pi.next();
+		for( Path p : allPaths ) {
 
 			if( p.fittedVersionOf != null )
 				continue;

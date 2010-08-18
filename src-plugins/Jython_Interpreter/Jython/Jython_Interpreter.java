@@ -80,7 +80,7 @@ public class Jython_Interpreter extends AbstractInterpreter {
 
 	/** Evaluate python code. */
 	protected Object eval(String text) {
-		pi.exec(fix(text));
+		pi.exec(text);
 		return null;
 	}
 

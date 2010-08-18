@@ -1219,10 +1219,8 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 		// Now find corresponding points from the first one, and draw lines to them:
 		ArrayList< NearPoint > cp = pathAndFillManager.getCorrespondences( pafmTraces, 2.5 );
-		Iterator< NearPoint > i = cp.iterator();
 		int done = 0;
-		while( i.hasNext() ) {
-			NearPoint np = i.next();
+		for( NearPoint np : cp ) {
 			if( np != null ) {
 				// System.out.println("Drawing:");
 				// System.out.println(np.toString());

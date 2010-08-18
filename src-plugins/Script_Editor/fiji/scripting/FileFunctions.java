@@ -8,7 +8,11 @@ import ij.IJ;
 
 import ij.gui.GenericDialog;
 
+import ij.plugin.BrowserLauncher;
+
+import java.awt.Color;
 import java.awt.Cursor;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -50,8 +54,14 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
+import javax.swing.text.JTextComponent;
 
 public class FileFunctions {
 	protected TextEditor parent;
@@ -306,7 +316,7 @@ public class FileFunctions {
 	}
 
 	public boolean newPlugin(String name) {
-		String originalName = name;
+		String originalName = name.replace('_', ' ');
 
 		name = name.replace(' ', '_');
 		if (name.indexOf('_') < 0)
@@ -561,6 +571,8 @@ public class FileFunctions {
 			panel.setLayout(new GridBagLayout());
 			GridBagConstraints c = new GridBagConstraints();
 
+			Font monospaced = new Font("Monospaced", Font.PLAIN, 12);
+
 			c.anchor = GridBagConstraints.NORTHWEST;
 			c.gridx = c.gridy = 0;
 			c.weightx = c.weighty = 0;
@@ -569,6 +581,9 @@ public class FileFunctions {
 			panel.add(new JLabel("Subject:"), c);
 			c.weightx = c.gridx = 1;
 			final JTextField subject = new JTextField();
+			subject.setFont(monospaced);
+			subject.setColumns(76);
+			subject.getDocument().addDocumentListener(new LengthWarner(76, subject));
 			panel.add(subject, c);
 
 			c.weightx = c.gridx = 0; c.gridy = 1;
@@ -576,6 +591,9 @@ public class FileFunctions {
 			c.fill = GridBagConstraints.BOTH;
 			c.weightx = c.weighty = c.gridx = 1;
 			final JTextArea body = new JTextArea(20, 76);
+			body.setFont(monospaced);
+			body.setColumns(76);
+			body.getDocument().addDocumentListener(new TextWrapper(76));
 			panel.add(body, c);
 
 			c.gridy= 2;
@@ -623,6 +641,81 @@ public class FileFunctions {
 		frame.setVisible(true);
 	}
 
+	public class LengthWarner implements DocumentListener {
+		protected int width;
+		protected JTextComponent component;
+		protected Color normal, warn;
+
+		public LengthWarner(int width, JTextComponent component) {
+			this.width = width;
+			this.component = component;
+			normal = component.getForeground();
+			warn = Color.red;
+		}
+
+		public void changedUpdate(DocumentEvent e) { }
+
+		public void insertUpdate(DocumentEvent e) {
+			updateColor();
+		}
+
+		public void removeUpdate(DocumentEvent e) {
+			updateColor();
+		}
+
+		public void updateColor() {
+			component.setForeground(component.getDocument().getLength() <= width ? normal : warn);
+		}
+	}
+
+	public class TextWrapper implements DocumentListener {
+		protected int width;
+
+		public TextWrapper(int width) {
+			this.width = width;
+		}
+
+		public void changedUpdate(DocumentEvent e) { }
+		public void insertUpdate(DocumentEvent e) {
+			final Document document = e.getDocument();
+			int offset = e.getOffset() + e.getLength();
+			if (offset <= width)
+				return;
+			try {
+				String text = document.getText(0, offset);
+				int newLine = text.lastIndexOf('\n');
+				if (offset - newLine <= width)
+					return;
+				int additional = 0;
+				while (offset - newLine > width) {
+					int remove = 0;
+					int space = text.lastIndexOf(' ', newLine + width);
+					if (space > 0) {
+						int first = space;
+						while (first > newLine + 1 && text.charAt(first - 1) == ' ')
+							first--;
+						remove = space + 1 - first;
+						newLine = first;
+					}
+					else
+						newLine += width;
+
+					final int removeCount = remove, at = newLine;
+					SwingUtilities.invokeLater(new Runnable() {
+						public void run() {
+							try {
+								if (removeCount > 0)
+									document.remove(at, removeCount);
+								document.insertString(at, "\n", null);
+							} catch (BadLocationException e2) { /* ignore */ }
+						}
+					});
+				}
+			} catch (BadLocationException e2) { /* ignore */ }
+		}
+		public void removeUpdate(DocumentEvent e) { }
+	}
+
 	public class ScreenLineHandler implements SimpleExecuter.LineHandler {
 		public void handleLine(String line) {
 			parent.screen.insert(line + "\n", parent.screen.getDocument().getLength());
@@ -663,10 +756,87 @@ public class FileFunctions {
 		}
 	}
 
+	public void openInGitweb(File file, File gitDirectory, int line) {
+		if (file == null || gitDirectory == null) {
+			error("No file or git directory");
+			return;
+		}
+		String url = getGitwebURL(file, gitDirectory, line);
+		if (url == null)
+			error("Could not get gitweb URL for " + file);
+		else
+			new BrowserLauncher().run(url);
+	}
+
+	public String git(File gitDirectory, File workingDirectory, String... args) {
+		try {
+			args = append(gitDirectory == null ? new String[] { "git" } :
+				new String[] { "git", "--git-dir=" + gitDirectory.getAbsolutePath()}, args);
+			SimpleExecuter gitConfig = new SimpleExecuter(args, workingDirectory);
+			if (gitConfig.getExitCode() == 0)
+				return stripSuffix(gitConfig.getOutput(), "\n");
+			parent.write(gitConfig.getError());
+		} catch (IOException e) {
+			parent.write(e.getMessage());
+		}
+		return null;
+	}
+
+	public String git(File gitDirectory, String... args) {
+		return git(gitDirectory, (File)null, args);
+	}
+
+	public String gitConfig(File gitDirectory, String key) {
+		return git(gitDirectory, "config", key);
+	}
+
+	public String getGitwebURL(File file, File gitDirectory, int line) {
+		String url = gitConfig(gitDirectory, "remote.origin.url");
+		if (url == null) {
+			String remote = gitConfig(gitDirectory, "branch.master.remote");
+			if (remote != null)
+				url = gitConfig(gitDirectory, "remote." + remote + ".url");
+			if (url == null)
+				return null;
+		}
+		if (url.startsWith("repo.or.cz:") || url.startsWith("ssh://repo.or.cz/")) {
+			int index = url.indexOf("/srv/git/") + "/srv/git/".length();
+			url = "http://repo.or.cz/w/" + url.substring(index);
+		}
+		else if (url.startsWith("git://repo.or.cz/"))
+			url = "http://repo.or.cz/w/" + url.substring("git://repo.or.cz/".length());
+		else {
+			url = stripSuffix(url, "/");
+			int slash = url.lastIndexOf('/');
+			if (url.endsWith("/.git"))
+				slash = url.lastIndexOf('/', slash - 1);
+			String project = url.substring(slash + 1);
+			if (!project.endsWith(".git"))
+				project += "/.git";
+			if (project.equals("imageja.git"))
+				project = "ImageJA.git";
+			url = "http://pacific.mpi-cbg.de/cgi-bin/gitweb.cgi?p=" + project;
+		}
+		String head = git(gitDirectory, "rev-parse", "--symbolic-full-name", "HEAD");
+		String path = git(null /* ls-files does not work with --git-dir */,
+			file.getParentFile(), "ls-files", "--full-name", file.getName());
+		if (url == null || head == null || path == null)
+			return null;
+		return url + ";a=blob;f=" + path + ";hb=" + head
+			+ (line < 0 ? "" : "#l" + line);
+	}
+
 	protected String[] append(String[] array, String item) {
 		String[] result = new String[array.length + 1];
 		System.arraycopy(array, 0, result, 0, array.length);
 		result[array.length] = item;
+		return result;
+	}
+
+	protected String[] append(String[] array, String[] append ) {
+		String[] result = new String[array.length + append.length];
+		System.arraycopy(array, 0, result, 0, array.length);
+		System.arraycopy(append, 0, result, array.length, append.length);
 		return result;
 	}
 
@@ -739,12 +909,19 @@ public class FileFunctions {
 		}
 	}
 
+	protected String stripSuffix(String string, String suffix) {
+		if (string.endsWith(suffix))
+			return string.substring(0, string.length() - suffix.length());
+		return string;
+	}
+
 	protected boolean error(String message) {
 		JOptionPane.showMessageDialog(parent, message);
 		return false;
 	}
 
 	public static void main(String[] args) {
-		new FileFunctions(null).showPluginChangesSinceUpload("jars/javac.jar");
+		String root = System.getProperty("fiji.dir");
+		new FileFunctions(null).commit(new File(root + "/src-plugins/Script_Editor/fiji/scripting/TextEditor.java"), new File(root + "/.git"));
 	}
 }
