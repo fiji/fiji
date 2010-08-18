@@ -184,6 +184,19 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 	}
 
 	/**
+	 * This method searches for the the composite image result
+	 * containing the passed result r. It returns null if none
+	 * has been found.
+	 */
+	protected Result.CompositeImageResult getComposite(Result.ImageResult r) {
+		for ( Result.CompositeImageResult cir : listOfImageComposites) {
+			if (cir.getImageResult() == r)
+				return cir;
+		}
+		return null;
+	}
+
+	/**
 	 * This method creates CSS formatted HTML source out of the
 	 * results stored in the member variables and adds some
 	 * image statistics found in the data container.
