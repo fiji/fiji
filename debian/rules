@@ -94,7 +94,6 @@ install-arch-stamp : build-arch-stamp
 	install -m 755 fiji $(DESTDIR)/usr/lib/fiji/
 	< debian/simple-launcher sed \
 		-e 's,@@INSTALLED_JVM_ROOT@@,$(INSTALLED_JVM_ROOT),' \
-		-e 's,@@JAVA_3D_JARS@@,$(INSTALLED_BUNDLED_JAVA3D_JARS),' \
 		-e 's,@@LD_LIBRARY_PATH@@,$(NEW_LD_LIBRARY_PATH),' > $(DESTDIR)/usr/bin/fiji
 	chmod 755 $(DESTDIR)/usr/bin/fiji
 
