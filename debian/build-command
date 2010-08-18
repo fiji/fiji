@@ -13,7 +13,7 @@ fi
 sh -x Fake.sh VERBOSE=true "CLASSPATH(plugins/VIB_.jar)=/usr/share/java/vecmath.jar:/usr/share/java/j3dutils.jar:/usr/lib/jni/libj3dcore-ogl.so:/usr/share/java/j3dcore.jar:/usr/share/java/jama.jar:/usr/share/java/junit4.jar:/usr/share/java/jzlib.jar:jars/VIB-lib.jar:jars/pal-optimization.jar:plugins/3D_Viewer.jar" \
     "CLASSPATH(plugins/mpicbg_.jar)=:/usr/share/java/jama.jar" \
     "CLASSPATH(plugins/TrakEM2_.jar)=plugins/VIB_.jar:plugins/loci_tools.jar:plugins/mpicbg_.jar:plugins/level_sets.jar:plugins/bUnwarpJ_.jar:plugins/Fiji_Plugins.jar:/usr/share/java/vecmath.jar:/usr/share/java/j3dutils.jar:/usr/lib/jni/libj3dcore-ogl.so:/usr/share/java/j3dcore.jar:/usr/share/java/jama.jar:/usr/share/java/jfreechart.jar:/usr/share/java/postgresql.jar:plugins/Simple_Neurite_Tracer.jar:plugins/3D_Viewer.jar" \
-    "CLASSPATH(jars/fiji-scripting.jar)=/usr/share/java/jython.jar:/usr/share/java/bsh.jar" \
+    "CLASSPATH(jars/fiji-scripting.jar)=/usr/share/java/jython.jar:/usr/share/java/bsh.jar:/usr/share/java/js.jar" \
     "CLASSPATH(plugins/BeanShell_Interpreter.jar)=/usr/share/java/bsh.jar" \
     "CLASSPATH(plugins/IO_.jar)=/usr/share/java/batik-all.jar:/usr/share/java/xml-apis-ext.jar" \
     "CLASSPATH(jars/zs.jar)=/usr/share/java/jama.jar" \
