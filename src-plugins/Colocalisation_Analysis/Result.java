@@ -205,6 +205,25 @@ public abstract class Result {
 		}
 	}
 
+	static class LineResult extends Result {
+		// the slope and intercept of the line
+		double slope, intercept;
+
+		public LineResult(String name, double slope, double intercept) {
+			super(name);
+			this.slope = slope;
+			this.intercept = intercept;
+		}
+
+		public double getSlope() {
+			return slope;
+		}
+
+		public double getIntercept() {
+			return intercept;
+		}
+	}
+
 	/**
 	 * A simple result type which stores a double value along
 	 * with a number of decimal places.
