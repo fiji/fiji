@@ -10,7 +10,9 @@ import ij.gui.GenericDialog;
 
 import ij.plugin.BrowserLauncher;
 
+import java.awt.Color;
 import java.awt.Cursor;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -29,8 +31,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
-
-import java.net.URL;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,8 +54,14 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
+import javax.swing.text.JTextComponent;
 
 public class FileFunctions {
 	protected TextEditor parent;
@@ -565,6 +571,8 @@ public class FileFunctions {
 			panel.setLayout(new GridBagLayout());
 			GridBagConstraints c = new GridBagConstraints();
 
+			Font monospaced = new Font("Monospaced", Font.PLAIN, 12);
+
 			c.anchor = GridBagConstraints.NORTHWEST;
 			c.gridx = c.gridy = 0;
 			c.weightx = c.weighty = 0;
@@ -573,6 +581,9 @@ public class FileFunctions {
 			panel.add(new JLabel("Subject:"), c);
 			c.weightx = c.gridx = 1;
 			final JTextField subject = new JTextField();
+			subject.setFont(monospaced);
+			subject.setColumns(76);
+			subject.getDocument().addDocumentListener(new LengthWarner(76, subject));
 			panel.add(subject, c);
 
 			c.weightx = c.gridx = 0; c.gridy = 1;
@@ -580,6 +591,9 @@ public class FileFunctions {
 			c.fill = GridBagConstraints.BOTH;
 			c.weightx = c.weighty = c.gridx = 1;
 			final JTextArea body = new JTextArea(20, 76);
+			body.setFont(monospaced);
+			body.setColumns(76);
+			body.getDocument().addDocumentListener(new TextWrapper(76));
 			panel.add(body, c);
 
 			c.gridy= 2;
@@ -625,6 +639,81 @@ public class FileFunctions {
 		}
 		frame.pack();
 		frame.setVisible(true);
+	}
+
+	public class LengthWarner implements DocumentListener {
+		protected int width;
+		protected JTextComponent component;
+		protected Color normal, warn;
+
+		public LengthWarner(int width, JTextComponent component) {
+			this.width = width;
+			this.component = component;
+			normal = component.getForeground();
+			warn = Color.red;
+		}
+
+		public void changedUpdate(DocumentEvent e) { }
+
+		public void insertUpdate(DocumentEvent e) {
+			updateColor();
+		}
+
+		public void removeUpdate(DocumentEvent e) {
+			updateColor();
+		}
+
+		public void updateColor() {
+			component.setForeground(component.getDocument().getLength() <= width ? normal : warn);
+		}
+	}
+
+	public class TextWrapper implements DocumentListener {
+		protected int width;
+
+		public TextWrapper(int width) {
+			this.width = width;
+		}
+
+		public void changedUpdate(DocumentEvent e) { }
+		public void insertUpdate(DocumentEvent e) {
+			final Document document = e.getDocument();
+			int offset = e.getOffset() + e.getLength();
+			if (offset <= width)
+				return;
+			try {
+				String text = document.getText(0, offset);
+				int newLine = text.lastIndexOf('\n');
+				if (offset - newLine <= width)
+					return;
+				int additional = 0;
+				while (offset - newLine > width) {
+					int remove = 0;
+					int space = text.lastIndexOf(' ', newLine + width);
+					if (space > 0) {
+						int first = space;
+						while (first > newLine + 1 && text.charAt(first - 1) == ' ')
+							first--;
+						remove = space + 1 - first;
+						newLine = first;
+					}
+					else
+						newLine += width;
+
+					final int removeCount = remove, at = newLine;
+					SwingUtilities.invokeLater(new Runnable() {
+						public void run() {
+							try {
+								if (removeCount > 0)
+									document.remove(at, removeCount);
+								document.insertString(at, "\n", null);
+							} catch (BadLocationException e2) { /* ignore */ }
+						}
+					});
+				}
+			} catch (BadLocationException e2) { /* ignore */ }
+		}
+		public void removeUpdate(DocumentEvent e) { }
 	}
 
 	public class ScreenLineHandler implements SimpleExecuter.LineHandler {
@@ -833,6 +922,6 @@ public class FileFunctions {
 
 	public static void main(String[] args) {
 		String root = System.getProperty("fiji.dir");
-		new FileFunctions(null).openInGitweb(new File(root + "/src-plugins/Arrow_/fiji/util/ArrowTool.java"), new File(root + "/.git"), -1);
+		new FileFunctions(null).commit(new File(root + "/src-plugins/Script_Editor/fiji/scripting/TextEditor.java"), new File(root + "/.git"));
 	}
 }
