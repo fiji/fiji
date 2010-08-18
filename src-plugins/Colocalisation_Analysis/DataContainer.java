@@ -20,7 +20,10 @@ import mpicbg.imglib.type.numeric.RealType;
  */
 public class DataContainer<T extends RealType<T>> implements Iterable<Result> {
 
+	// some general image statistics
 	double meanCh1, meanCh2, minCh1, maxCh1, minCh2, maxCh2;
+	// some threshold obtaining parameters
+	double autoThresholdSlope, autoThresholdIntercept;
 
 	// The source images that the results are based on
 	Image<T> sourceImage1, sourceImage2;
@@ -176,5 +179,21 @@ public class DataContainer<T extends RealType<T>> implements Iterable<Result> {
 
 	public double getMaxCh2() {
 		return maxCh2;
+	}
+
+	public void setAutoThresholdSlope(double slope) {
+		this.autoThresholdSlope = slope;
+	}
+
+	public double getAutoThresholdSlope() {
+		return autoThresholdSlope;
+	}
+
+	public void setAutoThresholdIntercept(double intercept) {
+		this.autoThresholdIntercept = intercept;
+	}
+
+	public double getAutoThresholdIntercept() {
+		return autoThresholdIntercept;
 	}
 }
