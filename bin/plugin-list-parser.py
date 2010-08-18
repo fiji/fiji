@@ -160,7 +160,7 @@ allElements = dict()
 allElements[''] = []
 
 uploadToWiki = False
-compareToWiki = not False
+compareToWiki = False
 if len(sys.argv) > 1 and sys.argv[1] == '--upload-to-wiki':
     uploadToWiki = True
     sys.argv = sys.argv[:1] + sys.argv[2:]

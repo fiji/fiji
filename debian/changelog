@@ -1,3 +1,10 @@
+fiji (20100818180832) unstable; urgency=low
+
+  * Based on fiji.git at 57992a60c0837295838647a9c924defcfbb0271e
+    [Fill in the rest of the commit message here.]
+
+ -- Mark Longair <mhl@pobox.com>  Wed, 18 Aug 2010 16:08:32 +0000
+
 fiji (20100607155455) unstable; urgency=low
 
   * Based on fiji.git at 824f3363d87db57962dcaea5ba22cdaf69f702ed
