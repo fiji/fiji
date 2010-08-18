@@ -2,6 +2,7 @@ package fiji.plugin.nperry;
 
 import fiji.plugin.nperry.features.BlobBrightness;
 import fiji.plugin.nperry.features.BlobContrast;
+import fiji.plugin.nperry.features.BlobMorphology;
 import fiji.plugin.nperry.features.BlobVariance;
 import fiji.plugin.nperry.features.LoG;
 import fiji.plugin.nperry.tracking.ObjectTracker;
@@ -135,7 +136,8 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		if (null == ip) return null;
 		ArrayList< ArrayList <Spot> > extremaAllFrames = new ArrayList< ArrayList <Spot> >();
 		final double downsampleFactors[] = createDownsampledDim(calibration, diam, numDim);	// factors for x,y,z that we need for scaling image down;
-		                        
+		final ArrayList< Image<T> > frames = new ArrayList< Image<T> >();
+		
 		/* 1 - Create separate ImagePlus's for each frame */
 		ImageStack stack = ip.getImageStack();
 		int numSlices = ip.getNSlices();
@@ -155,6 +157,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			System.out.println();
 			System.out.println("---Frame " + (i+1) + "---");
 			Image<T> img = ImagePlusAdapter.wrap(ipSingleFrame);
+			frames.add(img);
 			Image<T> modImg = img.clone();
 			numDim = img.getNumDimensions();
 		
@@ -333,10 +336,12 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			final BlobVariance<T> var = new BlobVariance<T>(img, diam, calibration);
 			final BlobBrightness<T> brightness = new BlobBrightness<T>(img, diam, calibration);
 			final BlobContrast<T> contrast = new BlobContrast<T>(img, diam, calibration);
+			final BlobMorphology<T> morphology = new BlobMorphology<T>(img, diam, calibration);
 			log.process(spots);
 			var.process(spots);
 			brightness.process(spots);
 			contrast.process(spots);
+			//morphology.process(spots);
 		}
 		
 		// Render 3D to adjust thresholds...
@@ -350,33 +355,34 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		for (ArrayList< ArrayList <Spot> > pointsInTimeFrame : selectedPoints) {
 			extremaPostThresholdingAllFrames.add(pointsInTimeFrame.get(0));
 		}
+		
+		
+		// <debug>
+		int counter = 1;
+		for (ArrayList<Spot> spots : extremaPostThresholdingAllFrames) {
+			BlobMorphology<T> morph = new BlobMorphology<T>(frames.get(counter - 1), diam, calibration);
+			System.out.println("--- Frame " + counter + " ---");
+			for (Spot spot : spots) {
+				double[] coords = spot.getCoordinates();
+				System.out.println("[" + coords[0] + ", " + coords[1] + ", " + coords[2] + "] (" + coords[0] * .2 + ", " + coords[1] * .2 + ", " + coords[2] + ")");
+				morph.process(spot);
+			
+			}
+			counter++;
+			System.out.println();
+		}
+
+		// </debug>
+		
+		
+		
+		
 		ObjectTracker track = new ObjectTracker(extremaPostThresholdingAllFrames);
 		track.process();
 		track.getResults(); // TODO
 		
 		return new Object[] {extremaAllFrames};
 	}
-	
-	/**
-	 * Deep copies the ArrayList of HashMaps, where each HashMap represents a frame, and
-	 * contains the Feature as a key, and the threshold for that feature as a value.
-	 * 
-	 * @param thresh The ArrayList< HashMap< Feature, Double> > object to be deep copied.
-	 * @return A deep copy of the ArrayList< HashMap< Feature, Double> > parameter.
-	 */
-	private ArrayList< HashMap<Feature, Double> > deepCopyThresholds(ArrayList< HashMap<Feature, Double> > toCopy) {
-		ArrayList< HashMap<Feature, Double> > copy = new ArrayList< HashMap<Feature, Double> >();
-		for (HashMap<Feature, Double> frame : toCopy) {
-			HashMap<Feature, Double> frameCopy = new HashMap<Feature, Double>();
-			for (Feature feature : frame.keySet()) {
-				frameCopy.put(feature, frame.get(feature));
-			}
-			copy.add(frameCopy);
-		}
-		
-		return copy;
-	}
-	
 	
 	// Code source: http://www.labbookpages.co.uk/software/imgProc/otsuThreshold.html
 	public double otsuThreshold(ArrayList<Spot> srcData, Feature feature)
@@ -794,6 +800,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		while (!gd.wasOKed()) {  // stay here until the user selects 'ok,' or 'cancels'
 			if (gd.wasCanceled()) return;  /* FIX: if canceled, reset to auto-thresholds! */
 		}
+		univ.close();
 	}
 	
 	/* **********************************************************

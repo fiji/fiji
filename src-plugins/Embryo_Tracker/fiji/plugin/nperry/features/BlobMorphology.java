@@ -1,5 +1,6 @@
 package fiji.plugin.nperry.features;
 
+import mpicbg.imglib.algorithm.math.MathLib;
 import mpicbg.imglib.cursor.special.SphereCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
@@ -12,7 +13,7 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 	 * Fields
 	 */
 	
-	private static final double SIGNIFICANCE_FACTOR = 2.0;
+	private static final double SIGNIFICANCE_FACTOR = 5.0;
 	private static final Feature FEATURE = Feature.MORPHOLOGY;
 	private static final double ELLIPSOID = 1;
 	private static final double SPHERICAL = 0;
@@ -83,6 +84,7 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 			fOrigin[i] = (float) origin[i];
 		}
 		final SphereCursor<T> cursor = new SphereCursor<T>(img, fOrigin, diam / 2, calibration);
+		System.out.println(MathLib.printCoordinates(calibration));
 		
 		// 2 - Iterate over pixels in sphere, assign to an octant by azimuth and then by inclination.
 		while (cursor.hasNext()) {
@@ -92,6 +94,8 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 			azOctant = getAzimuthOctantIndex(phi);
 			incOctant = getInclinationOctantIndex(theta, phi);
 			val = cursor.getType().getRealDouble();
+			//System.out.println("Coords: " + MathLib.printCoordinates(cursor.getPosition()));
+			//System.out.println("Val: " + val);
 			azimuthOctants[azOctant] += val;
 			inclinationOctants[incOctant] += val;
 			azCounts[azOctant]++;  //debug, for counting how many pixels belong to this octant
@@ -106,8 +110,19 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 		aggregateOctantPairs(azimuthOctants, azimuthOctantPairs);
 		aggregateOctantPairs(inclinationOctants, inclinationOctantPairs);
 		
+		//<debug>
+		System.out.println("--- New Spot ---");
+		System.out.println("Coordinates: " + MathLib.printCoordinates(fOrigin));
+		System.out.println("Azimuth intensities: " + azimuthOctants[0] + ", " + azimuthOctants[1] + ", " + azimuthOctants[2] + ", " + azimuthOctants[3] + ", " + azimuthOctants[4] + ", " + azimuthOctants[5] + ", " + azimuthOctants[6] + ", " + azimuthOctants[7]);
+		System.out.println("Azimuth pair intensities: " + azimuthOctantPairs[0] + ", " + azimuthOctantPairs[1] + ", " + azimuthOctantPairs[2] + ", " + azimuthOctantPairs[3]);
+		System.out.println("Inclination intensities: " + inclinationOctants[0] + ", " + inclinationOctants[1] + ", " + inclinationOctants[2] + ", " + inclinationOctants[3] + ", " + inclinationOctants[4] + ", " + inclinationOctants[5] + ", " + inclinationOctants[6] + ", " + inclinationOctants[7]);
+		System.out.println("Inclination pair intensities: " + azimuthOctantPairs[0] + ", " + azimuthOctantPairs[1] + ", " + azimuthOctantPairs[2] + ", " + azimuthOctantPairs[3]);
+		System.out.println();
+		//</debug>
+		
+		
 		// 3.2 - Search for significantly brighter octant pairs as compared to other pairs.
-		if (checkForBrighterOctantPair(azimuthOctantPairs) || checkForBrighterOctantPair(inclinationOctantPairs)) {
+		if (brighterOctantPairExists(azimuthOctantPairs) || brighterOctantPairExists(inclinationOctantPairs)) {
 			spot.addFeature(Feature.MORPHOLOGY, ELLIPSOID);  // 1 signifies ellipsoid
 		} else {
 			spot.addFeature(Feature.MORPHOLOGY, SPHERICAL);  // 0 signifies spherical
@@ -125,7 +140,7 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 	 * @return Returns <code>true</code> if any pair is significant brigher than another pair, or <code>
 	 * false</code> otherwise.
 	 */
-	private final boolean checkForBrighterOctantPair(double[] octantPairs) {
+	private final boolean brighterOctantPairExists(double[] octantPairs) {
 		boolean brighterPairExists = false;
 		for (int i = 0; i < octantPairs.length; i++) {
 			for (int j = 0; j < octantPairs.length; j++) {
