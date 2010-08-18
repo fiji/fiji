@@ -29,24 +29,30 @@ public abstract class AbstractRegionalExtremaFinder<T extends RealType<T>> imple
 	}
 	
 	@Override
-	public ArrayList< double[] > getRegionalExtremaCenters(boolean doInterpolate)
+	public ArrayList< float[] > getRegionalExtremaCenters(boolean doInterpolate)
 	{
-		ArrayList< double[] > centeredRegionalMaxima = new ArrayList< double[] >();
+		ArrayList< float[] > centeredRegionalMaxima = new ArrayList< float[] >();
 		ArrayList< ArrayList< int[] >  > regionalMaxima = new ArrayList< ArrayList< int[] >  >(maxima); // make a copy
 		ArrayList< int[] > curr = null;
 		while (!regionalMaxima.isEmpty()) {
 			curr = regionalMaxima.remove(0);
-			double averagedCoord[] = findAveragePosition(curr);
+			float averagedCoord[] = findAveragePosition(curr);
 			centeredRegionalMaxima.add(averagedCoord);
 		}
 		return centeredRegionalMaxima;
 	}
 	
-	public ArrayList< Spot > convertToSpots(ArrayList< double[] > coords) {
+	// spot coordinates are physical (calibrated) coordinates.
+	public ArrayList< Spot > convertToSpots(ArrayList< float[] > coords, float[] calibration) {
 		ArrayList< Spot > spots = new ArrayList< Spot >();
-		Iterator< double[] > itr = coords.iterator();
+		Iterator< float[] > itr = coords.iterator();
 		while (itr.hasNext()) {
-			Spot spot = new Spot(itr.next());
+			float[] coord = itr.next();
+			float[] calibrated = new float[coord.length];
+			for (int i = 0; i < calibrated.length; i++) {
+				calibrated[i] = coord[i] * calibration[i];
+			}
+			Spot spot = new Spot(calibrated);
 			spots.add(spot);
 		}
 		return spots;
@@ -58,11 +64,11 @@ public abstract class AbstractRegionalExtremaFinder<T extends RealType<T>> imple
 	 * @param searched
 	 * @return
 	 */
-	protected double[] findAveragePosition(ArrayList < int[] > coords) {
+	protected float[] findAveragePosition(ArrayList < int[] > coords) {
 		// Determine dimensionality
 		int[] firstArray = coords.get(0);
 		int nDims = firstArray.length;
-		double[] array = new double[nDims];
+		float[] array = new float[nDims];
 		int count = 0;
 		while(!coords.isEmpty()) {
 			int curr[] = coords.remove(0);
