@@ -1906,7 +1906,6 @@ public class PathAndFillManager extends DefaultHandler implements UniverseListen
 					 */
 					List<Bresenham3D.IntegerPoint> pointsToDraw =
 						Bresenham3D.bresenham3D(previous, current);
-					System.out.println("Drawing "+pointsToDraw.size()+" to "+current);
 					for( Bresenham3D.IntegerPoint ip : pointsToDraw ) {
 						slices[ip.z][ip.y * width + ip.x] = (byte)255;
 					}

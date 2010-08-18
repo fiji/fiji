@@ -377,7 +377,6 @@ public class Pipe {
 				reds = new byte[mapSize];
 				greens = new byte[mapSize];
 				blues = new byte[mapSize];
-				System.out.println("setting reds, greens and blues with map size: "+mapSize);
 				icm.getReds(reds);
 				icm.getGreens(greens);
 				icm.getBlues(blues);
