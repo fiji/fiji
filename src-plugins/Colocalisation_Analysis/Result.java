@@ -92,6 +92,25 @@ public abstract class Result {
 	}
 
 	/**
+	 * Represents a {@link CompositeResult} that contains an {@link ImageResukt}
+	 * and additional related results.
+	 *
+	 * @param <T>
+	 */
+	static class CompositeImageResult <T extends RealType<T>> extends CompositeResult {
+		Result.ImageResult<T> image;
+
+		public CompositeImageResult(String name, Result.ImageResult<T> image) {
+			super(name);
+			this.image = image;
+		}
+
+		public Result.ImageResult<T> getImageResult() {
+			return image;
+		}
+	}
+
+	/**
 	 * Represents a {@link Result} that contains an {@link Image}.
 	 *
 	 * @param <T>
