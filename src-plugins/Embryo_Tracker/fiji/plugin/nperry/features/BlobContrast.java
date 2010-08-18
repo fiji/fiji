@@ -1,17 +1,10 @@
 package fiji.plugin.nperry.features;
 
-import java.util.ArrayList;
-
-import mpicbg.imglib.algorithm.math.MathLib;
-import mpicbg.imglib.cursor.LocalizableByDimCursor;
-import mpicbg.imglib.cursor.special.RegionOfInterestCursor;
 import mpicbg.imglib.cursor.special.SphereCursor;
 import mpicbg.imglib.image.Image;
-import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.RealType;
 import fiji.plugin.nperry.Feature;
 import fiji.plugin.nperry.Spot;
-
 
 public class BlobContrast <T extends RealType<T>> extends IndependentFeatureAnalyzer {
 
@@ -51,8 +44,8 @@ public class BlobContrast <T extends RealType<T>> extends IndependentFeatureAnal
 	 */
 	protected float getContrast(final Spot spot, float diameter) {
 		SphereCursor<T> cursor = new SphereCursor<T>(img, spot.getCoordinates(), diameter/2 * (1+RAD_PERCENTAGE), calibration);
-		int innerRingVolume;
-		int outerRingVolume;
+		int innerRingVolume = 0;
+		int outerRingVolume = 0 ;
 		float radius2 = diameter * diameter / 4;
 		float innerRadius2 = radius2 * (1-RAD_PERCENTAGE) * (1-RAD_PERCENTAGE);
 		float innerTotalIntensity = 0;
