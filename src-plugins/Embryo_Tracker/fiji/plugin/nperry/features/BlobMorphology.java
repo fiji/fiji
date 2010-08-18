@@ -12,7 +12,10 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 	 * Fields
 	 */
 	
+	private static final double SIGNIFICANCE_FACTOR = 2.0;
 	private static final Feature FEATURE = Feature.MORPHOLOGY;
+	private static final double ELLIPSOID = 1;
+	private static final double SPHERICAL = 0;
 	private Image<T> img;
 	private float diam;
 	private float[] calibration;
@@ -93,6 +96,67 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 			inclinationOctants[incOctant] += val;
 			azCounts[azOctant]++;  //debug, for counting how many pixels belong to this octant
 			incCounts[incOctant]++;  //debug, for counting how many pixels belong to this octant
+		}
+		
+		// 3 - Determine the shape of the object.
+		
+		// 3.1 - Aggregate octant pair intensities (a pair consists of two directly opposing octants).
+		double[] azimuthOctantPairs = new double[4];
+		double[] inclinationOctantPairs = new double[4];
+		aggregateOctantPairs(azimuthOctants, azimuthOctantPairs);
+		aggregateOctantPairs(inclinationOctants, inclinationOctantPairs);
+		
+		// 3.2 - Search for significantly brighter octant pairs as compared to other pairs.
+		if (checkForBrighterOctantPair(azimuthOctantPairs) || checkForBrighterOctantPair(inclinationOctantPairs)) {
+			spot.addFeature(Feature.MORPHOLOGY, ELLIPSOID);  // 1 signifies ellipsoid
+		} else {
+			spot.addFeature(Feature.MORPHOLOGY, SPHERICAL);  // 0 signifies spherical
+		}
+	}
+	
+	/**
+	 * Compares the total intensity of each octant pair to the other octant pairs. If the total intensity
+	 * of any pair is greater than <code>SIGNIFICANCE_FACTOR * intensity</code> (SIGNIFICANCE_FACTOR default set
+	 * to <code>2.0</code>) of another pair, the object is considered to be an ellipsoid, since a sphere would not exhibit
+	 * that behavior.
+	 * 
+	 * @param octantPairs An array of length 4 which contains the summed intensities of the octant pairs (which are defined
+	 * in {@link aggregateOctantPairs}.
+	 * @return Returns <code>true</code> if any pair is significant brigher than another pair, or <code>
+	 * false</code> otherwise.
+	 */
+	private final boolean checkForBrighterOctantPair(double[] octantPairs) {
+		boolean brighterPairExists = false;
+		for (int i = 0; i < octantPairs.length; i++) {
+			for (int j = 0; j < octantPairs.length; j++) {
+				if (i ==j) continue;
+				if (octantPairs[i] >= SIGNIFICANCE_FACTOR * octantPairs[j]) brighterPairExists = true;  // if any pair is found to be significantly greater than another pair, we consider it non-spherical.
+			}
+		}
+		return brighterPairExists;
+	}
+	
+	/**
+	 * Sums the intensities from opposing octants into a single value.
+	 * 
+	 * @param octants An array of length 8, where each index stores the total intensity of the pixels belonging to that octant.
+	 * @param octantPairs An array of length 4 which is used to store the summed intensities of directly opposing octants.
+	 */
+	/*
+	 * For help with above:
+	 *       _________     
+	 *      / \3 | 4/ \    
+	 *     / 2 \ | / 5 \   
+	 *    |_____\|/_____|  
+	 *     \ 1  /|\  6 /   
+	 *      \ /  |  \ /    
+	 *	     \_0_|_7_/     
+	 *
+	 * Opposing octants: (0,4), (1,5), (2,6), (3,7)
+	 */
+	public final void aggregateOctantPairs(double[] octants, double[] octantPairs) {
+		for (int i = 0; i < 4; i++) {
+			octantPairs[i] = octants[i] + octants[i + 4];
 		}
 	}
 
