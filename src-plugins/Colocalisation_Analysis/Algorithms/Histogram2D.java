@@ -135,6 +135,18 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 	}
 
 	public void execute(DataContainer container) throws MissingPreconditionException {
+		// add histogram to composite result
+		Result.ImageResult imgResult = getHistogramImage(container);
+		Result.CompositeImageResult result = new Result.CompositeImageResult(title + " composite", imgResult);
+
+		// add overlay line to composite result
+		result.add( new Result.LineResult(title + " overlay line", container.getAutoThresholdSlope(),
+			container.getAutoThresholdIntercept()) );
+
+		container.add(result);
+	}
+
+	protected Result.ImageResult getHistogramImage(DataContainer container) {
 		double ch1BinWidth = getXBinWidth(container);
 		double ch2BinWidth = getYBinWidth(container);
 
@@ -182,10 +194,9 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 		String label1 = getLabelCh1();
 		String label2 = getLabelCh2();
 
-		Result result = new Result.Histogram2DResult(title, plotImage,
+		return new Result.Histogram2DResult(title, plotImage,
 				ch1BinWidth, ch2BinWidth, label1, label2,
 				getXMin(container), getXMax(container), getYMin(container), getYMax(container));
-		container.add(result);
 	}
 
 	/**

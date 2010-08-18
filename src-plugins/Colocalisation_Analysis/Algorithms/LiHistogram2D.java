@@ -85,7 +85,10 @@ public class LiHistogram2D<T extends RealType<T>> extends Histogram2D<T> {
 				liMax = productOfDifferenceOfMeans;
 		}
 		liDiff = Math.abs(liMax - liMin);
-		super.execute(container);
+
+		// get the histogram image
+		Result.ImageResult imgResult = getHistogramImage(container);
+		container.add(imgResult);
 	}
 
 
