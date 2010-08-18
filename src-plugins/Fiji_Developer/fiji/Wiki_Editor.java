@@ -692,10 +692,10 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 			while (!stack.empty()) {
 				Element e = stack.pop();
 				String name = e.getName();
-				if (name.equals("head") || name.equals("br") || name.equals("comment"))
+				if (name.equals("head") || name.equals("br") || name.equals("comment") || name.equals("form") || name.equals("script"))
 					continue;
 
-				if (name.equals("html") || name.equals("body") || name.equals("p") || name.equals("p-implied") || name.equals("div")) {
+				if (name.equals("html") || name.equals("body") || name.equals("p") || name.equals("p-implied") || name.equals("div") || name.equals("center")) {
 					for (int i = e.getElementCount() - 1; i >= 0; i--)
 						stack.push(e.getElement(i));
 					continue;
@@ -710,13 +710,28 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 					else
 						buffer.append(content);
 				}
+				else if (name.equals("table")) {
+					// TODO: allow nested tables, allow images inside
+					buffer.append("{|\n");
+					for (int i = 0; i < e.getElementCount(); i++) {
+						if (i > 0)
+							buffer.append("|-\n");
+						Element e2 = e.getElement(i);
+						for (int j = 0; j < e2.getElementCount(); j++)
+							buffer.append("| " + getContent(e2.getElement(j))).append("\n");
+					}
+					buffer.append("|}\n");
+				}
 				else if (name.equals("ul")) {
 					// TODO: handle nested lists
 					for (int i = 0; i < e.getElementCount(); i++)
 						buffer.append("* " + getContent(e.getElement(i))).append("\n");
 				}
-				else if (name.equals("blockquote"))
+				else if (name.equals("blockquote")) {
+					for (int i = e.getElementCount() - 1; i >= 0; i--)
+						stack.push(e.getElement(i));
 					buffer.append(";").append(content.replaceAll("\n", "\n;"));
+				}
 				else if (name.equals("img")) {
 					String src;
 					if ((src = (String)getAttribute(e, Attribute.SRC)) != null) {
