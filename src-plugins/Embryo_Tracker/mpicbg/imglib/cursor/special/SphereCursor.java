@@ -7,6 +7,7 @@ import java.util.Iterator;
 import mpicbg.imglib.container.Container;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.Cursor;
+import mpicbg.imglib.cursor.Localizable;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
@@ -69,12 +70,14 @@ import mpicbg.imglib.type.numeric.real.FloatType;
 public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 
 	private final Image<T> img;
-	private final int[] icenter;
 	private float radius;
 	private final LocalizableByDimCursor<T> cursor;
-	private final int[] position;
+	/** Store the sphere center in pixel coordinates. */
+	private int icenterX, icenterY, icenterZ;
+	/** Cursor relative position. */
+	private int positionX, positionY, positionZ;
 	/** The spatial calibration. */
-	private final float[] calibration;
+	private final float calibrationX, calibrationY, calibrationZ; 
 
 	private boolean hasNext;
 	/** The state of the cursor. */
@@ -92,7 +95,7 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 	private int[] rxs;
 	/** Indicate whether we finished all Z planes. */
 	private boolean doneZ = false;
-	/** Is true when all Z and Y have been done, just the last line si to be drawn. */
+	/** Is true when all Z and Y have been done, just the last line is to be drawn. */
 	private boolean allDone;
 	/**
 	 * Indicates what state the cursor is currently in, so as to choose the right routine 
@@ -127,19 +130,22 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 		this.img = img;
 		this.radius = radius;
 		this.cursor = img.createLocalizableByDimCursor(outOfBoundsFactory);		
-		this.position = new int[] {0, 0, 0};
-		if (null == calibration) 
-			this.calibration = new float[] {1, 1, 1};
-		else 
-			this.calibration = calibration;
-		this.icenter = new int[] {
-				(int) (center[0] / this.calibration[0]), 
-				(int) (center[1] / this.calibration[1]), 
-				(int) (center[2] / this.calibration[2]) };
+		if (null == calibration) { 
+			this.calibrationX = 1f;
+			this.calibrationY = 1f;
+			this.calibrationZ = 1f;
+		} else { 
+			this.calibrationX = calibration[0];
+			this.calibrationY = calibration[1];
+			this.calibrationZ = calibration[2];
+		}
+		this.icenterX = Math.round(center[0] / this.calibrationX); 
+		this.icenterY = Math.round(center[1] / this.calibrationY); 
+		this.icenterZ = Math.round(center[2] / this.calibrationZ); 
 
 		// Instantiate it once, and with large size, so that we do not have to instantiate every time we move in Z
-		rxs = new int [ (int) (Math.max(Math.ceil(radius/this.calibration[1]), Math.ceil(radius/this.calibration[0]))  +  1) ];
-		rys = new int[(int) (Math.ceil(radius/this.calibration[2])+1)];
+		rxs = new int [ (int) (Math.max(Math.ceil(radius/this.calibrationY), Math.ceil(radius/this.calibrationX))  +  1) ];
+		rys = new int[(int) (Math.ceil(radius/this.calibrationZ)+1)];
 		reset();
 	}
 	
@@ -208,15 +214,15 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 	/**
 	 * Construct a {@link SphereCursor} on a 3D image with a given spatial calibration
 	 * and a given {@link OutOfBoundsStrategyFactory} to handle off-bounds locations.
- 	 * The center of the sphere is set by the {@link LocalizableCursor} given in argument.
+ 	 * The center of the sphere is set by the {@link Localizable} given in argument.
 	 * 
 	 * @param img  the image, must be 3D
-	 * @param centerCursor  the cursor which position will set the sphere center 
+	 * @param centerCursor  the localizable object which position will set the sphere center 
 	 * @param radius  the ball radius, in physical units
 	 * @param calibration  the spatial calibration (pixel size); if <code>null</code>, 
 	 * a calibration of 1 in all directions will be used
 	 */
-	public SphereCursor(final Image<T> img, final LocalizableCursor<T> centerCursor, float radius, final float[] calibration,
+	public SphereCursor(final Image<T> img, final Localizable centerCursor, float radius, final float[] calibration,
 			OutOfBoundsStrategyFactory<T> outOfBoundsFactory) {
 		if (img.getDimensions().length != 3) 
 			throw new IllegalArgumentException(
@@ -224,15 +230,21 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 		this.img = img;
 		this.radius = radius;
 		this.cursor = img.createLocalizableByDimCursor(outOfBoundsFactory);		
-		this.position = new int[] {0, 0, 0};
-		if (null == calibration) 
-			this.calibration = new float[] {1, 1, 1};
-		else 
-			this.calibration = calibration;
-		this.icenter = centerCursor.getPosition();
+		if (null == calibration) { 
+			this.calibrationX = 1f;
+			this.calibrationY = 1f;
+			this.calibrationZ = 1f;
+		} else { 
+			this.calibrationX = calibration[0];
+			this.calibrationY = calibration[1];
+			this.calibrationZ = calibration[2];
+		}
+		this.icenterX = centerCursor.getPosition(0);
+		this.icenterY = centerCursor.getPosition(1);
+		this.icenterZ = centerCursor.getPosition(2);
 		// Instantiate it once, and with large size, so that we do not have to instantiate every time we move in Z
-		rxs = new int [ Math.max(Math.round(radius/calibration[1]), Math.round(radius/calibration[0]))  +  1 ];
-		rys = new int[Math.round(radius/calibration[2])+1];
+		rxs = new int [ Math.max(Math.round(radius/calibrationY), Math.round(radius/calibrationX))  +  1 ];
+		rys = new int[Math.round(radius/calibrationZ)+1];
 		reset();
 	}
 	
@@ -240,13 +252,13 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 	 * Construct a {@link SphereCursor} on a 3D image, using the given spatial calibration
 	 * and a default {@link OutOfBoundsStrategyValueFactory}
 	 * to handle off-bounds locations. The center of the sphere
-	 * is set by the {@link LocalizableCursor} given in argument.
+	 * is set by the {@link Localizable} given in argument.
 	 * 
 	 * @param img  the image, must be 3D
 	 * @param centerCursor  the cursor which position will set the sphere center 
 	 * @param radius  the ball radius, in physical units
 	 */
-	public SphereCursor(final Image<T> img, final LocalizableCursor<T> centerCursor, float radius, final float[] calibration) {
+	public SphereCursor(final Image<T> img, final Localizable centerCursor, float radius, final float[] calibration) {
 		this(img, centerCursor, radius, calibration, new OutOfBoundsStrategyValueFactory<T>());
 	}
 	
@@ -255,26 +267,28 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 	 * Construct a {@link SphereCursor} on a 3D image, using the spatial calibration
 	 * stored in the image and a default {@link OutOfBoundsStrategyValueFactory}
 	 * to handle off-bounds locations. The center of the sphere
-	 * is set by the {@link LocalizableCursor} given in argument.
+	 * is set by the {@link Localizable} given in argument.
 	 * 
 	 * @param img  the image, must be 3D
-	 * @param centerCursor  the cursor which position will set the sphere center 
+	 * @param centerCursor  the localizable object which position will set the sphere center 
 	 * @param radius  the ball radius, in physical units
 	 */
-	public SphereCursor(final Image<T> img, final LocalizableCursor<T> centerCursor, float radius) {
+	public SphereCursor(final Image<T> img, final Localizable centerCursor, float radius) {
 		this(img, centerCursor, radius, img.getCalibration(), new OutOfBoundsStrategyValueFactory<T>());
 	}
 	
 	/*
-	 * SPECIFIC METHODS
+	 * SPECIFIC SPHEREVOLUME METHODS
 	 */
 	
 	/**
-	 * Move the center of the sphere to the location specified by the {@link LocalizableCursor}. 
+	 * Move the center of the sphere to the location specified by the {@link Localizable} object. 
 	 * This <b>resets</b> this cursor.
 	 */
-	public final void moveCenterTo(final LocalizableCursor<T> cursor) {
-		cursor.getPosition(icenter);
+	public final void moveCenterTo(final Localizable cursor) {
+		icenterX = cursor.getPosition(0);
+		icenterY = cursor.getPosition(1);
+		icenterZ = cursor.getPosition(2);
 		reset();
 	}
 	
@@ -283,7 +297,9 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 	 * This <b>resets</b> this cursor.
 	 */
 	public final void moveCenterToPosition(final int[] icenter) {
-		System.arraycopy(icenter, 0, this.icenter, 0, 3);
+		icenterX = icenter[0];
+		icenterY = icenter[1];
+		icenterZ = icenter[2];
 		reset();
 	}
 	
@@ -293,9 +309,9 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 	 * This <b>resets</b> this cursor.
 	 */
 	public final void moveCenterToCoordinates(final float[] center) {
-		this.icenter[0] = (int) (center[0] / calibration[0]);
-		this.icenter[1] = (int) (center[1] / calibration[1]);
-		this.icenter[2] = (int) (center[2] / calibration[2]);
+		icenterX = Math.round(center[0] / calibrationX);
+		icenterY = Math.round(center[1] / calibrationY);
+		icenterZ = Math.round(center[2] / calibrationZ);
 		reset();
 	}
 	
@@ -306,8 +322,8 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 	public void setRadius(float radius) {
 		this.radius = radius;
 		// Instantiate it once, and with large size, so that we do not have to instantiate every time we move in Z
-		rxs = new int [ Math.max(Math.round(radius/calibration[1]), Math.round(radius/calibration[0]))  +  1 ];		
-		rys = new int[Math.round(radius/calibration[2])+1];
+		rxs = new int [ Math.max(Math.round(radius/calibrationY), Math.round(radius/calibrationX))  +  1 ];		
+		rys = new int[Math.round(radius/calibrationZ)+1];
 		reset();
 	}
 	
@@ -317,9 +333,9 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 	 * cursor position, in physical units.
 	 */
 	public final double getDistanceSquared() {
-		return position[0] * position[0] * calibration[0] * calibration[0] + 
-		position[1] * position[1] * calibration[1] * calibration[1] +
-		position[2] * position[2] * calibration[2] * calibration[2];  
+		return positionX * positionX * calibrationX * calibrationX +
+			positionY * positionY * calibrationY * calibrationY +
+			positionZ * positionZ * calibrationZ * calibrationZ;
 	}
 
 	/**
@@ -328,35 +344,45 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 	 * such, is stored in an <code>int</code> array.
 	 */
 	public final void getRelativePosition(int[] position) {
-		System.arraycopy(this.position, 0, position, 0, 3);
+		position[0] = icenterX;
+		position[1] = icenterY;
+		position[2] = icenterZ;
 	}
 	
 	/**
 	 * Return the current inclination with respect to this sphere center. Will be in
-	 * the range ]-π/2, π/2].
+	 * the range ]-π/2, π/2]. 
+	 * <p>
+	 * In spherical coordinates, the inclination is the angle 
+	 * between the Z axis and the line OM where O is the sphere center and M is 
+	 * the point location.
 	 */
 	public final double getTheta() {
-		return Math.acos( position[2] * calibration[2] / Math.sqrt(
-				position[2] * calibration[2] * position[2] * calibration[2] +
-				position[1] * calibration[1] * position[1] * calibration[1] +
-				position[0] * calibration[0] * position[0] * calibration[0] ));
+		return Math.acos( positionZ * calibrationZ / Math.sqrt(
+				positionZ * calibrationZ * positionZ * calibrationZ +
+				positionY * calibrationY * positionY * calibrationY +
+				positionX * calibrationX * positionX * calibrationX ));
 	}
 	
 	/**
 	 * Return the azimuth of the spherical coordinates of this cursor, with respect 
 	 * to its center. Will be in the range ]-π, π].
+	 * <p>
+	 * In spherical coordinates, the azimuth is the angle measured in the plane XY between 
+	 * the X axis and the line OH where O is the sphere center and H is the orthogonal 
+	 * projection of the point M on the XY plane.
 	 */
 	public final double getPhi() {
-		return Math.atan2(position[1]*calibration[1], position[0]*calibration[0]);
+		return Math.atan2(positionY*calibrationY, positionX*calibrationX);
 	}
 
 	/**
 	 * Return the relative calibrated position of this cursor in physical units.
 	 */
 	public final void getPhysicalRelativeCoordinates(double[] coordinates) {
-		coordinates[0] = position[0] * calibration[0];
-		coordinates[1] = position[1] * calibration[1];
-		coordinates[2] = position[2] * calibration[2];
+		coordinates[0] = positionX * calibrationX;
+		coordinates[1] = positionY * calibrationY;
+		coordinates[2] = positionZ * calibrationZ;
 	}
 
 	/**
@@ -453,8 +479,8 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 		case DRAWING_LINE:
 
 			cursor.fwd(0);
-			position[0]++;
-			if (position[0] >= rx) {
+			positionX++;
+			if (positionX >= rx) {
 				state = nextState;
 				if (allDone)
 					hasNext = false;
@@ -464,39 +490,39 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 		case INITIALIZED:
 
 			// Compute XY circle radiuses for all Z in advance
-			getXYEllipseBounds(Math.round(radius/calibration[1]), Math.round(radius/calibration[2]), rys); 
+			getXYEllipseBounds(Math.round(radius/calibrationY), Math.round(radius/calibrationZ), rys); 
 			ry = rys[0] ;
 			
-			getXYEllipseBounds(Math.round(radius/calibration[0]), Math.round(radius/calibration[1]), rxs); 
+			getXYEllipseBounds(Math.round(radius/calibrationX), Math.round(radius/calibrationY), rxs); 
 			rx = rxs[0] ; 
-			cursor.setPosition(icenter[0] - rx, 0);
-			cursor.setPosition(icenter[1], 1);
-			cursor.setPosition(icenter[2], 2);
-			position[0] = -rx;
+			cursor.setPosition(icenterX - rx, 0);
+			cursor.setPosition(icenterY, 1);
+			cursor.setPosition(icenterZ, 2);
+			positionX = -rx;
 			state = CursorState.DRAWING_LINE;
 			nextState = CursorState.INCREMENT_Y;
 			break;
 
 		case INCREMENT_Y:
 
-			position[1] = -position[1] + 1; // y should be negative (coming from mirroring or init = 0)
-			rx = rxs[position[1]];
+			positionY = -positionY + 1; // y should be negative (coming from mirroring or init = 0)
+			rx = rxs[positionY];
 
-			cursor.setPosition(icenter[1] + position[1], 1);
+			cursor.setPosition(icenterY + positionY, 1);
 			state = CursorState.DRAWING_LINE;
-			position[0] = -rx;
-			cursor.setPosition(icenter[0] - rx, 0);
+			positionX = -rx;
+			cursor.setPosition(icenterX - rx, 0);
 			nextState = CursorState.MIRROR_Y;
 			break;
 
 		case MIRROR_Y:
 
-			position[0] = -rx;
-			position[1] = - position[1];
-			cursor.setPosition(icenter[1] + position[1], 1);
-			cursor.setPosition(icenter[0] - rx, 0);
+			positionX = -rx;
+			positionY = - positionY;
+			cursor.setPosition(icenterY + positionY, 1);
+			cursor.setPosition(icenterX - rx, 0);
 			state = CursorState.DRAWING_LINE;
-			if (position[1] <= - ry) {
+			if (positionY <= - ry) {
 				if (doneZ) 
 					allDone  = true ;
 				else
@@ -510,26 +536,26 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 
 			if (mirrorZ) {
 
-				position[2] = - position[2];
+				positionZ = - positionZ;
 				mirrorZ = false;
-				if (position[2] <= - radius) 
+				if (positionZ <= - Math.round(radius/calibrationZ)) 
 					doneZ = true;
 
 			} else {
 
-				position[2] = - position[2] + 1;
-				ry = rys[position[2]];
+				positionZ = - positionZ + 1;
+				ry = rys[positionZ];
 				mirrorZ = true;
 			}
 
-			getXYEllipseBounds(Math.round(ry*calibration[1]/calibration[0]), Math.round(ry), rxs); 
+			getXYEllipseBounds(Math.round(ry*calibrationY/calibrationX), Math.round(ry), rxs); 
 			rx = rxs[0] ; 
 			
-			cursor.setPosition(icenter[0]-rx, 0);
-			cursor.setPosition(icenter[1], 1);
-			cursor.setPosition(icenter[2] + position[2], 2);
-			position[0] = -rx;
-			position[1] = 0;
+			cursor.setPosition(icenterX-rx, 0);
+			cursor.setPosition(icenterY, 1);
+			cursor.setPosition(icenterZ + positionZ, 2);
+			positionX = -rx;
+			positionY = 0;
 			state = CursorState.DRAWING_LINE;
 			nextState = CursorState.INCREMENT_Y;
 			break;
@@ -592,9 +618,9 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 		mirrorZ = false;
 		doneZ = false;
 		allDone = false;
-		position[0] = 0;
-		position[1] = 0;
-		position[2] = 0;
+		positionX = 0;
+		positionY = 0;
+		positionZ = 0;
 		hasNext = true;
 	}
 
@@ -842,17 +868,20 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 		while (destCursor2.hasNext()) {
 			destCursor2.fwd();
 			destCursor2.getPosition(position);
-			offsetPos[0] = (int) (position[0] - roioffsetX );
-			offsetPos[1] = (int) (position[1] - roioffsetY );
-			offsetPos[2] = (int) (position[2] - roioffsetZ );
+			offsetPos[0] = position[0];
+			offsetPos[1] = position[1];
+			offsetPos[2] = position[2];
+//			offsetPos[0] = (int) (position[0] - roioffsetX );
+//			offsetPos[1] = (int) (position[1] - roioffsetY );
+//			offsetPos[2] = (int) (position[2] - roioffsetZ );
 			regionCursor.reset(offsetPos);
 			sum2 = 0;
 			while(regionCursor.hasNext()) {
 				regionCursor.fwd();
 				regionCursor.getPosition(regPos);
 				dist2 = (position[0]-regPos[0])*(position[0]-regPos[0]) * calibration[0] * calibration[0] +
-						(position[1]-regPos[1])*(position[1]-regPos[1]) * calibration[1] * calibration[1] +
-						(position[2]-regPos[2])*(position[2]-regPos[2]) * calibration[2] * calibration[2];
+					(position[1]-regPos[1])*(position[1]-regPos[1]) * calibration[1] * calibration[1] +
+					(position[2]-regPos[2])*(position[2]-regPos[2]) * calibration[2] * calibration[2];
 				if (dist2 <= radius2) {
 					sum2 += regionCursor.getType().get();
 					pixelNumber2++;
