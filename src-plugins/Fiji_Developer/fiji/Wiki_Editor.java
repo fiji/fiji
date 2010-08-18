@@ -131,6 +131,17 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 				IJ.error("[BUG] Unknown image format: " + name());
 			}
 		}
+
+		public static Format byExtension(String extension) {
+			int dot = extension.lastIndexOf('.');
+			if (dot < 0)
+				return null;
+			extension = extension.substring(dot);
+			for (Format format : Format.values())
+				if (extension.equals(format.extension))
+					return format;
+			return null;
+		}
 	};
 
 	protected Format imageFormat = Format.JPEG;
@@ -612,6 +623,9 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 			}
 			if (imp.changes) {
 				String fullFilename = info.directory + "/" + info.fileName;
+				Format imageFormat = Format.byExtension(fullFilename);
+				if (imageFormat == null)
+					imageFormat = this.imageFormat;
 				imageFormat.write(imp, fullFilename);
 			}
 			if (client != null) {
