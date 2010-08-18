@@ -445,8 +445,9 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		int start = html.indexOf("<div class='previewnote'>");
 		start = html.indexOf("</div>", start) + 6;
 		int end = html.indexOf("<div id='toolbar'>");
-		html = "<html>\n<head>\n<title>Preview of " + name
-			+ "</title>\n</head>\n<body>\n"
+		html = "<html>\n<head>\n<title>Preview of " + name + "</title>\n"
+			+ "<meta http-equiv='Content-Type' "
+			+ "content='text/html; charset=utf-8'/>\n</head>\n<body>\n"
 			+ html.substring(start, end)
 			+ "</body>\n</html>\n";
 		Pattern imagePattern = Pattern.compile("<a href=[^>]*DestFile=",
