@@ -1,3 +1,6 @@
+#!/bin/sh
+''''exec "$(dirname "$0")"/../fiji --jython "$0" "$@" # (call again with fiji)'''
+
 import os, stat, types
 import zipfile
 import sys
