@@ -183,7 +183,7 @@ package_name_to_file_matchers = {
         [ "jars/weka.jar" ],
 
     "fiji-tracer" :
-        [ "plugins/Simple_Neurite_Tracer" ]
+        [ "plugins/Simple_Neurite_Tracer.jar" ]
 
 }
 
