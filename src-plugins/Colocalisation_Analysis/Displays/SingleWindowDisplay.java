@@ -2,9 +2,15 @@ import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
+import ij.gui.ImageRoi;
 import ij.gui.NewImage;
+import ij.gui.Overlay;
+import ij.gui.Toolbar;
+import ij.gui.Line;
 import ij.measure.ResultsTable;
 import ij.process.ImageProcessor;
+import ij.process.ColorProcessor;
+import ij.process.FloatProcessor;
 import ij.text.TextWindow;
 
 import java.awt.Dimension;
@@ -419,14 +425,81 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 	}
     }
 
+	/**
+	 * Draws the passed ImageResult on the ImagePlus of this class.
+	 * If the image is part of a CompositeImageResult then contained
+	 * lines will also be drawn
+	 */
 	protected void drawImageResult(Result.ImageResult result) {
+		// remove potentially added overlay
+		imp.setOverlay(null);
+		// get Imglib image as ImageJ image
 		ImagePlus imp = ImageJFunctions.displayAsVirtualStack( result.getData() );
 		this.imp.setProcessor(imp.getProcessor());
 		ImageProcessor ip = this.imp.getProcessor();
+		// set the display range
 		double max = ImageStatistics.<RealType>getImageMax(result.getData()).getRealDouble();
 		this.imp.setDisplayRange(0.0, max);
+		// select "Fire" look up table
 		IJ.run(this.imp, "Fire", null);
+
+		// check if there is some additional data to display
+		Result.CompositeImageResult cir = getComposite(result);
+		if ( cir != null ) {
+			Overlay overlay = new Overlay();
+			// go through the contained results
+			Iterator<Result> it = cir.iterator();
+			while ( it.hasNext() ) {
+				Result containedResult = it.next();
+				// draw a LineResult as overlay
+				if (containedResult instanceof Result.LineResult) {
+					Result.LineResult line = (Result.LineResult)containedResult;
+					drawLineResult(overlay, result, line);
+				}
+			}
+			overlay.setStrokeColor(java.awt.Color.WHITE);
+			this.imp.setOverlay(overlay);
+		}
+
 		this.imp.updateAndDraw();
+	}
+
+	/**
+	 * Draws the line represented as LineResult on the ImageProcessor
+	 * that is based on the passed ImageResult.
+	 */
+	protected void drawLineResult(Overlay overlay, Result.ImageResult img, Result.LineResult line) {
+		double startX, startY, endX, endY;
+		int imgWidth = img.getData().getDimension(0);
+		int imgHeight = img.getData().getDimension(1);
+		/* since we want to draw the line over the whole image
+		 * we can directly use screen coordinates for x values.
+		 */
+		startX = 0.0;
+		endX = imgWidth;
+
+		// check if we can get some exta information for drawing
+		if (img instanceof Result.Histogram2DResult) {
+			Result.Histogram2DResult histogram = (Result.Histogram2DResult)img;
+			// get calibrated start y coordinates
+			double calibratedStartY = line.getSlope() * histogram.getHistXMin() + line.getIntercept();
+			double calibratedEndY = line.getSlope() * histogram.getHistXMax() + line.getIntercept();
+			// convert calibrated coordinates to screen coordinates
+			startY = calibratedStartY * histogram.getYBinWidth();
+			endY = calibratedEndY * histogram.getYBinWidth();
+		} else {
+			startY = line.getSlope() * startX + line.getIntercept();
+			endY = line.getSlope() * endX + line.getIntercept();
+		}
+
+		/* since the screen origin is in the top left
+		 * of the image, we need to x-mirror our line
+		 */
+		 startY = ( imgHeight - 1 ) - startY;
+		 endY = ( imgHeight - 1 ) - endY;
+		// create the line ROI and add it to the overlay
+		Line lineROI = new Line(startX, startY, endX, endY);
+		overlay.add(lineROI);
 	}
 
 	protected void adjustDisplayedImage (Result.ImageResult result) {
