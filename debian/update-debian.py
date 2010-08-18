@@ -177,7 +177,14 @@ package_name_to_file_matchers = {
         [ "plugins/M_I_P.jar" ],
 
     "fiji-io" :
-        [ "plugins/IO_.jar" ]
+        [ "plugins/IO_.jar" ],
+
+    "fiji-weka" :
+        [ "jars/weka.jar" ],
+
+    "fiji-tracer" :
+        [ "plugins/Simple_Neurite_Tracer" ]
+
 }
 
 file_to_package_name_dictionary = {}
