@@ -437,7 +437,7 @@ if options.clean:
 
     # Also remove submodules which are now provided by external dependencies:
     to_remove.append("batik")
-    to_remove.append("weka")
+    # to_remove.append("weka") # Actually we need a more recent weka
     to_remove.append("java/linux")
     to_remove.append("java/linux-amd64")
     to_remove.append("java/macosx-java3d")
@@ -458,7 +458,7 @@ if options.clean:
     to_remove.append("jars/ant*.jar")
     to_remove.append("jars/batik.jar")
     to_remove.append("jars/junit*.jar")
-    to_remove.append("jars/weka.jar")
+    # to_remove.append("jars/weka.jar")
 
     for f in to_remove:
         call(["rm -rf "+f],shell=True)
@@ -475,8 +475,8 @@ if options.clean:
             continue
         if re.search("TransformJ_",line):
             continue
-        if re.search("(^\s*jars|precompiled)/weka.jar",line):
-            continue
+        # if re.search("(^\s*jars|precompiled)/weka.jar",line):
+        #     continue
         if re.search("(^\s*jars|precompiled)/jython.jar",line):
             continue
         if re.search("(^\s*jars|precompiled)/clojure.jar",line):
