@@ -18,4 +18,4 @@ echo ==== Cleaning again:
 debian/update-debian.py --clean
 
 echo ==== Finally, building the packages:
-dpkg-buildpackage -I.git -rfakeroot -us -uc
+dpkg-buildpackage -I.git -Iwekadocs -Ibio-formats/dist -rfakeroot -us -uc
