@@ -9,6 +9,8 @@ Package: fiji-tracer
 Section: graphics
 Architecture: any
 Priority: extra
+Replaces: fiji (<= 20090513)
+Conflicts: fiji (<= 20090513)
 Depends: fiji-plugins (>= 20100818134817), fiji-vib (>= 20100818134817), fiji-imagej (>= 20100813145758)
 Description: [FIXME: please write a description for this Fiji package]
  [More description should go here.]
@@ -17,6 +19,8 @@ Package: fiji-jpedal
 Section: graphics
 Architecture: any
 Priority: extra
+Replaces: fiji (<= 20090513)
+Conflicts: fiji (<= 20090513)
 Depends: fiji-jai (>= 20080801134354)
 Description: [FIXME: please write a description for this Fiji package]
  [More description should go here.]
@@ -25,6 +29,8 @@ Package: fiji-examples
 Section: graphics
 Architecture: any
 Priority: extra
+Replaces: fiji (<= 20090513)
+Conflicts: fiji (<= 20090513)
 Depends: 
 Description: [FIXME: please write a description for this Fiji package]
  [More description should go here.]
@@ -33,6 +39,8 @@ Package: fiji-base
 Section: graphics
 Architecture: any
 Priority: extra
+Replaces: fiji (<= 20090513)
+Conflicts: fiji (<= 20090513)
 Depends: fiji-imagej (>= 20100813145758)
 Description: Core components of Fiji
  [Fill in some more description here, indented by one space.]
@@ -42,6 +50,8 @@ Package: fiji-imagej
 Section: graphics
 Architecture: any
 Priority: extra
+Replaces: fiji (<= 20090513)
+Conflicts: fiji (<= 20090513)
 Depends: 
 Description: [FIXME: please write a description for this Fiji package]
  [More description should go here.]
@@ -50,6 +60,8 @@ Package: fiji-loci-tools
 Section: graphics
 Architecture: any
 Priority: extra
+Replaces: fiji (<= 20090513)
+Conflicts: fiji (<= 20090513)
 Depends: fiji-imagej (>= 20100813145758)
 Description: [FIXME: please write a description for this Fiji package]
  [More description should go here.]
@@ -58,6 +70,8 @@ Package: fiji-bunwarpj
 Section: graphics
 Architecture: any
 Priority: extra
+Replaces: fiji (<= 20090513)
+Conflicts: fiji (<= 20090513)
 Depends: fiji-imagej (>= 20100813145758)
 Description: [FIXME: please write a description for this Fiji package]
  [More description should go here.]
@@ -66,6 +80,8 @@ Package: fiji-color-histogram
 Section: graphics
 Architecture: any
 Priority: extra
+Replaces: fiji (<= 20090513)
+Conflicts: fiji (<= 20090513)
 Depends: fiji-imagej (>= 20100813145758)
 Description: [FIXME: please write a description for this Fiji package]
  [More description should go here.]
@@ -74,6 +90,8 @@ Package: fiji-edu-mines-jtk
 Section: graphics
 Architecture: any
 Priority: extra
+Replaces: fiji (<= 20090513)
+Conflicts: fiji (<= 20090513)
 Depends: 
 Description: [FIXME: please write a description for this Fiji package]
  [More description should go here.]
@@ -82,6 +100,8 @@ Package: fiji-trakem2
 Section: graphics
 Architecture: any
 Priority: extra
+Replaces: fiji (<= 20090513)
+Conflicts: fiji (<= 20090513)
 Depends: fiji-mpicbg (>= 20100812201753), fiji-bunwarpj (>= 20100417005423), fiji-imglib (>= 20100629163441), fiji-tracer (>= 20100818134817), fiji-jai (>= 20080801134354), fiji-vib (>= 20100818134817), fiji-edu-mines-jtk (>= 20080801134354), fiji-imagej (>= 20100813145758), fiji-loci-tools (>= 20100814020501), fiji-plugins (>= 20100818200853)
 Description: [FIXME: please write a description for this Fiji package]
  [More description should go here.]
@@ -90,6 +110,8 @@ Package: fiji-luts
 Section: graphics
 Architecture: any
 Priority: extra
+Replaces: fiji (<= 20090513)
+Conflicts: fiji (<= 20090513)
 Depends: 
 Description: [FIXME: please write a description for this Fiji package]
  [More description should go here.]
@@ -98,6 +120,8 @@ Package: fiji-plugins
 Section: graphics
 Architecture: any
 Priority: extra
+Replaces: fiji (<= 20090513)
+Conflicts: fiji (<= 20090513)
 Depends: fiji-mpicbg (>= 20100812201753), fiji-bunwarpj (>= 20100417005423), fiji-imglib (>= 20100629163441), fiji-weka (>= 20100609224141), fiji-vib (>= 20100818134817), fiji-base (>= 20100804172048), fiji-edu-mines-jtk (>= 20080801134354), fiji-imagej (>= 20100813145758), fiji-loci-tools (>= 20100814020501), fiji-trakem2 (>= 20100727171101)
 Description: [FIXME: please write a description for this Fiji package]
  [More description should go here.]
@@ -106,6 +130,8 @@ Package: fiji-scripting
 Section: graphics
 Architecture: any
 Priority: extra
+Replaces: fiji (<= 20090513)
+Conflicts: fiji (<= 20090513)
 Depends: fiji-imglib (>= 20100629163441), fiji-rsyntaxtextarea (>= 20090524213156), fiji-vib (>= 20100813145758), fiji-base (>= 20100818200853), fiji-autocomplete (>= 20090524213156), fiji-imagej (>= 20100813145758), fiji-plugins (>= 20100818200853), fiji-jruby (>= 20080801134354)
 Description: [FIXME: please write a description for this Fiji package]
  [More description should go here.]
@@ -114,6 +140,8 @@ Package: fiji-mpicbg
 Section: graphics
 Architecture: any
 Priority: extra
+Replaces: fiji (<= 20090513)
+Conflicts: fiji (<= 20090513)
 Depends: fiji-imagej (>= 20100813145758)
 Description: [FIXME: please write a description for this Fiji package]
  [More description should go here.]
@@ -122,6 +150,8 @@ Package: fiji-lsm-toolbox
 Section: graphics
 Architecture: any
 Priority: extra
+Replaces: fiji (<= 20090513)
+Conflicts: fiji (<= 20090513)
 Depends: fiji-lsm-reader (>= 20100322140540), fiji-imagej (>= 20100813145758)
 Description: [FIXME: please write a description for this Fiji package]
  [More description should go here.]
@@ -130,6 +160,8 @@ Package: fiji-view5d
 Section: graphics
 Architecture: any
 Priority: extra
+Replaces: fiji (<= 20090513)
+Conflicts: fiji (<= 20090513)
 Depends: fiji-imagej (>= 20100813145758)
 Description: [FIXME: please write a description for this Fiji package]
  [More description should go here.]
@@ -138,6 +170,8 @@ Package: fiji-imglib
 Section: graphics
 Architecture: any
 Priority: extra
+Replaces: fiji (<= 20090513)
+Conflicts: fiji (<= 20090513)
 Depends: fiji-mpicbg (>= 20100812201753), fiji-edu-mines-jtk (>= 20080801134354), fiji-imagej (>= 20100813145758), fiji-loci-tools (>= 20100814020501)
 Description: [FIXME: please write a description for this Fiji package]
  [More description should go here.]
@@ -146,6 +180,8 @@ Package: fiji-mtrack2
 Section: graphics
 Architecture: any
 Priority: extra
+Replaces: fiji (<= 20090513)
+Conflicts: fiji (<= 20090513)
 Depends: fiji-imagej (>= 20100813145758)
 Description: [FIXME: please write a description for this Fiji package]
  [More description should go here.]
@@ -154,6 +190,8 @@ Package: fiji-vib
 Section: graphics
 Architecture: any
 Priority: extra
+Replaces: fiji (<= 20090513)
+Conflicts: fiji (<= 20090513)
 Depends: fiji-plugins (>= 20100818134817), fiji-imglib (>= 20100629163441), fiji-imagej (>= 20100813145758)
 Description: Fiji components previous from the VIB repository
  This package includes many useful Fiji plugins, including the 3D
@@ -164,6 +202,8 @@ Package: fiji-autocomplete
 Section: graphics
 Architecture: any
 Priority: extra
+Replaces: fiji (<= 20090513)
+Conflicts: fiji (<= 20090513)
 Depends: fiji-rsyntaxtextarea (>= 20090524213156)
 Description: a Java library providing IDE-like autocompletion
  AutoComplete is a library allowing you to add IDE-like
@@ -174,6 +214,8 @@ Package: fiji-ij-imageio
 Section: graphics
 Architecture: any
 Priority: extra
+Replaces: fiji (<= 20090513)
+Conflicts: fiji (<= 20090513)
 Depends: fiji-jai (>= 20080801134354), fiji-imagej (>= 20100813145758)
 Description: [FIXME: please write a description for this Fiji package]
  [More description should go here.]
@@ -182,6 +224,8 @@ Package: fiji-jruby
 Section: graphics
 Architecture: any
 Priority: extra
+Replaces: fiji (<= 20090513)
+Conflicts: fiji (<= 20090513)
 Depends: 
 Description: [FIXME: please write a description for this Fiji package]
  [More description should go here.]
@@ -190,6 +234,8 @@ Package: fiji-lsm-reader
 Section: graphics
 Architecture: any
 Priority: extra
+Replaces: fiji (<= 20090513)
+Conflicts: fiji (<= 20090513)
 Depends: fiji-imagej (>= 20100813145758)
 Description: [FIXME: please write a description for this Fiji package]
  [More description should go here.]
@@ -198,6 +244,8 @@ Package: fiji-rsyntaxtextarea
 Section: graphics
 Architecture: any
 Priority: extra
+Replaces: fiji (<= 20090513)
+Conflicts: fiji (<= 20090513)
 Depends: 
 Description: a syntax highlighting text component for Java Swing
  RSyntaxTextArea is a syntax highlighting text component for Java
@@ -210,6 +258,8 @@ Package: fiji-jai
 Section: graphics
 Architecture: any
 Priority: extra
+Replaces: fiji (<= 20090513)
+Conflicts: fiji (<= 20090513)
 Depends: fiji-loci-tools (>= 20100814020501)
 Description: [FIXME: please write a description for this Fiji package]
  [More description should go here.]
@@ -218,6 +268,8 @@ Package: fiji-weka
 Section: graphics
 Architecture: any
 Priority: extra
+Replaces: fiji (<= 20090513)
+Conflicts: fiji (<= 20090513)
 Depends: 
 Description: [FIXME: please write a description for this Fiji package]
  [More description should go here.]
@@ -226,6 +278,8 @@ Package: fiji-mip
 Section: graphics
 Architecture: any
 Priority: extra
+Replaces: fiji (<= 20090513)
+Conflicts: fiji (<= 20090513)
 Depends: fiji-imagej (>= 20100813145758)
 Description: [FIXME: please write a description for this Fiji package]
  [More description should go here.]
@@ -234,6 +288,8 @@ Package: fiji-io
 Section: graphics
 Architecture: any
 Priority: extra
+Replaces: fiji (<= 20090513)
+Conflicts: fiji (<= 20090513)
 Depends: fiji-jpedal (>= 20080801134354), fiji-imagej (>= 20100813145758)
 Description: [FIXME: please write a description for this Fiji package]
  [More description should go here.]
@@ -242,6 +298,8 @@ Package: fiji-barthel-plugins
 Section: graphics
 Architecture: any
 Priority: extra
+Replaces: fiji (<= 20090513)
+Conflicts: fiji (<= 20090513)
 Depends: fiji-imagej (>= 20100813145758)
 Description: ImageJ plugins written by Kai Uwe Barthel
  This package includes several ImageJ plugins written
@@ -252,8 +310,6 @@ Package: fiji
 Section: graphics
 Architecture: all
 Priority: extra
-Replaces: fiji (<= 20090513)
-Conflicts: fiji (<= 20090513)
 Depends: fiji-tracer (>= 20100818134817), fiji-jpedal (>= 20080801134354), fiji-examples (>= 20100813144310), fiji-base (>= 20100818200853), fiji-imagej (>= 20100813145758), fiji-loci-tools (>= 20100814020501), fiji-bunwarpj (>= 20100417005423), fiji-color-histogram (>= 20100607205357), fiji-edu-mines-jtk (>= 20080801134354), fiji-trakem2 (>= 20100727171101), fiji-luts (>= 20100610024221), fiji-plugins (>= 20100818200853), fiji-scripting (>= 20100818200853), fiji-mpicbg (>= 20100812201753), fiji-lsm-toolbox (>= 20100813145758), fiji-view5d (>= 20100609192927), fiji-imglib (>= 20100629163441), fiji-mtrack2 (>= 20100607205357), fiji-vib (>= 20100818134817), fiji-autocomplete (>= 20090524213156), fiji-ij-imageio (>= 20081218211215), fiji-jruby (>= 20080801134354), fiji-lsm-reader (>= 20100322140540), fiji-rsyntaxtextarea (>= 20090524213156), fiji-jai (>= 20080801134354), fiji-weka (>= 20100609224141), fiji-mip (>= 20100818200853), fiji-io (>= 20100628114332), fiji-barthel-plugins (>= 20100607205357)
 Description: A metapackage for the Fiji image processing suite (based on ImageJ)
  Fiji is a project aiming at simplifying:
