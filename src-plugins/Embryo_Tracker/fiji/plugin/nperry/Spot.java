@@ -3,6 +3,9 @@ package fiji.plugin.nperry;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeSet;
+
+import mpicbg.imglib.algorithm.math.MathLib;
 
 public class Spot {
 	
@@ -66,6 +69,44 @@ public class Spot {
 	}
 	
 	/**
+	 * Return a string representation of this spot, with calculated features.
+	 */
+	@Override
+	public String toString() {
+		StringBuilder s = new StringBuilder();
+		if (null == name) 
+			s.append("Spot: <no name>\n");
+		else
+			s.append("Spot: "+name+"\n");
+		if (null == coordinates)
+			s.append("Position: <no coordinates>\n");
+		else
+			s.append("Position: "+MathLib.printCoordinates(coordinates)+"\n");
+		if (null == features || features.size() < 1) 
+			s.append("No features calculated\n");
+		else {
+			s.append("Feature list:\n");
+			float val;
+			for (Feature key : new TreeSet<Feature>(features.keySet())) {
+				s.append("\t"+key.getName()+": ");
+				val = features.get(key);
+				if (val >= 1e4)
+					s.append(String.format("%.1g", val));
+				else
+					s.append(String.format("%.1f", val));
+				s.append('\n');
+			}
+		}
+		return s.toString();
+	}
+	
+	
+	/*
+	 * FEATURE RELATED METHODS
+	 */
+	
+	
+	/**
 	 * Returns a map of {@link Feature}s for this Spot.
 	 * @return A map with a {@link Feature} as a key, and the value of the {@link Feature} as the value. 
 	 */
@@ -90,6 +131,11 @@ public class Spot {
 	public void addFeature(Feature feature, float value) {
 		this.features.put(feature, value);
 	}
+	
+	
+	/*
+	 * TRACKING RELATED METHODS
+	 */
 	
 	/**
 	 * Adds a reference to the parent Spot to this Spot's list of parents.
