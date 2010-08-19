@@ -1,6 +1,5 @@
 package fiji.plugin.nperry.features;
 
-import mpicbg.imglib.algorithm.math.MathLib;
 import mpicbg.imglib.cursor.special.SphereCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
@@ -58,13 +57,13 @@ public class BlobBrightness <T extends RealType<T>> extends IndependentFeatureAn
 		
 		// 2 - Iterate pixels in sphere, and aggregate total intensity.
 		float intensity = 0;
-		System.out.println();
-		System.out.println("New max: " + MathLib.printCoordinates(spot.getCoordinates()));
-		System.out.println();
+		//System.out.println();
+		//System.out.println("New max: " + MathLib.printCoordinates(spot.getCoordinates()));
+		//System.out.println();
 		while (cursor.hasNext()) {
 			cursor.next();
 			int[] pos = cursor.getPosition();
-			System.out.print(pos[0] + ", " + pos[1] + ", " + pos[2] + "; ");
+			//System.out.print(pos[0] + ", " + pos[1] + ", " + pos[2] + "; ");
 			intensity += cursor.getType().getRealFloat();
 		}
 		
