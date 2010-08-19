@@ -19,6 +19,7 @@ with open(os.path.join(script_directory,'build-dependencies')) as f:
 
 # chroot_path = os.path.join(script_directory,"i386-chroot")
 chroot_path = "/var/chroot/squeeze-i386"
+home_in_chroot = os.path.join(chroot_path,"home/mark")
 
 if os.path.exists(chroot_path):
     print >> sys.stderr, "The path "+chroot_path+" already exists."
@@ -27,7 +28,8 @@ if os.path.exists(chroot_path):
 files_to_copy = [ "etc/passwd", "etc/shadow", "etc/group" ]
 
 check_call(["mkdir",chroot_path])
-check_call(["mkdir","-p",os.path.join(chroot_path,"home/mark")])
+check_call(["mkdir","-p",home_in_chroot])
+check_call(["chown","-R","mark.mark",home_in_chroot])
 
 for f in files_to_copy:
     check_call(["cp","-a","/"+f,os.path.join(chroot_path,f)])
