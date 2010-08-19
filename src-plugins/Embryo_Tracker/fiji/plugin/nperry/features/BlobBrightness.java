@@ -10,10 +10,22 @@ import fiji.plugin.nperry.Spot;
 
 public class BlobBrightness <T extends RealType<T>> extends IndependentFeatureAnalyzer {
 
+	/*
+	 * FIELDS
+	 */
+	
+	/** The {@link Feature} that this FeatureAnalyzer extracts. */
 	private static final Feature FEATURE = Feature.BRIGHTNESS;
+	/** The original image that is analyzed. */
 	private Image<T> img;
+	/** The diameter of the blob, in physical units. */
 	private float diam;
+	/** The calibration of the image, used to convert from physical units to pixel units. */
 	private float[] calibration;
+	
+	/*
+	 * CONSTRUCTORS
+	 */
 	
 	public BlobBrightness(Image<T> originalImage, float diam, float[] calibration) {
 		this.img = originalImage;
@@ -21,6 +33,10 @@ public class BlobBrightness <T extends RealType<T>> extends IndependentFeatureAn
 		this.calibration = calibration;
 	}
 
+	/*
+	 * PUBLIC METHODS
+	 */
+	
 	@Override
 	public Feature getFeature() {
 		return FEATURE;
@@ -34,7 +50,13 @@ public class BlobBrightness <T extends RealType<T>> extends IndependentFeatureAn
 	@Override
 	public void process(Spot spot) {
 		final LocalizableByDimCursor<T> cursor = img.createLocalizableByDimCursor(new OutOfBoundsStrategyValueFactory<T>());
-		final float[] origin = spot.getCoordinates();
+		final float[] origin = spot.getCoordinates();  // physical coordinates
+		
+		// Convert physical coordinates to pixel coordinates
+		final int[] pOrigin = new int[origin.length];
+		for (int i = 0; i < pOrigin.length; i++) {
+			pOrigin[i] = (int) (origin[i] / calibration[i]);
+		}
 
 		// Create the size array for the ROI cursor
 		int size[] = new int[img.getNumDimensions()];
@@ -57,7 +79,7 @@ public class BlobBrightness <T extends RealType<T>> extends IndependentFeatureAn
 		//System.out.println();
 		while (roi.hasNext()) {
 			roi.next();
-			if (inSphere(origin, cursor.getPosition(), diam / 2)) {
+			if (inSphere(pOrigin, cursor.getPosition())) {
 				sum += roi.getType().getRealDouble();
 				//System.out.print(cursor.getPosition()[0] + ", " + cursor.getPosition()[1] + ", " + cursor.getPosition()[2] + "; ");
 			}
@@ -69,7 +91,6 @@ public class BlobBrightness <T extends RealType<T>> extends IndependentFeatureAn
 		
 		// Add total intensity.
 		spot.addFeature(FEATURE, sum);
-		//spot.addScore(FEATURE_NAME, sum);
 	}
 	
 	/**
@@ -83,12 +104,12 @@ public class BlobBrightness <T extends RealType<T>> extends IndependentFeatureAn
 	 * @param min
 	 * @return
 	 */
-	private boolean inSphere(float[] origin, int[] coords, float rad) {
+	private boolean inSphere(int[] pOrigin, int[] coords) {
 		double euclDist = 0;
 		for (int i = 0; i < coords.length; i++) {
-			euclDist += Math.pow((origin[i] - (float) coords[i]) * calibration[i], 2);
+			euclDist += Math.pow((pOrigin[i] - coords[i]), 2);
 		}
 		euclDist = Math.sqrt(euclDist);
-		return euclDist <= rad;
+		return euclDist <= (diam / 2);
 	}
 }
