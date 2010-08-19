@@ -619,11 +619,11 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			
 			// Calculate thresholds for each feature of interest.
 			HashMap<Feature, Float> thresholds = new HashMap<Feature, Float>();
-			final float logThreshold = otsuThreshold(framej, Feature.LOG_VALUE);  // threshold for frame
+			//final float logThreshold = otsuThreshold(framej, Feature.LOG_VALUE);  // threshold for frame
 			//final float brightnessThreshold = otsuThreshold(framej, Feature.BRIGHTNESS);
 			//final float contrastThreshold = otsuThreshold(framej, Feature.CONTRAST);
 			//final float varThreshold = otsuThreshold(framej, Feature.VARIANCE);
-			thresholds.put(Feature.LOG_VALUE, logThreshold);
+			//thresholds.put(Feature.LOG_VALUE, logThreshold);
 			//thresholds.put(Feature.BRIGHTNESS, brightnessThreshold);
 			//thresholds.put(Feature.CONTRAST, contrastThreshold);
 			//thresholds.put(Feature.VARIANCE, varThreshold);
@@ -635,17 +635,17 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 				final float coords[] = spot.getCoordinates();
 				
 				// 1. If the spot passes the threshold
-				if (aboveThresholds(spot, thresholds)) {
+				//if (aboveThresholds(spot, thresholds)) {
 					spot.setName(Integer.toString(i));
 					pl.add(spot.getName(), coords[0], coords[1], coords[2]);	
 					shown.add(spot);
-				}
+				//}
 				
 				// 2. If spot doesn't pass threshold
-				else{
-					spot.setName(Integer.toString(i));
-					notShown.add(spot);
-				}
+				//else{
+				//	spot.setName(Integer.toString(i));
+				//	notShown.add(spot);
+				//}
 			}
 			
 			// Add the shown and notShown lists of points to the overall list

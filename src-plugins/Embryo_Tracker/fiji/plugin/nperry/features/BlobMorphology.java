@@ -1,8 +1,11 @@
 package fiji.plugin.nperry.features;
 
+import ij.IJ;
+import ij.ImagePlus;
 import mpicbg.imglib.algorithm.math.MathLib;
 import mpicbg.imglib.cursor.special.SphereCursor;
 import mpicbg.imglib.image.Image;
+import mpicbg.imglib.image.ImagePlusAdapter;
 import mpicbg.imglib.type.numeric.RealType;
 import fiji.plugin.nperry.Feature;
 import fiji.plugin.nperry.Spot;
@@ -292,5 +295,10 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 		}
 		
 		return index;
+	}
+	
+	public static void main(String[] args) {
+		
+
 	}
 }
