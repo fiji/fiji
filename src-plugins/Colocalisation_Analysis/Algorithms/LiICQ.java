@@ -9,6 +9,8 @@ import mpicbg.imglib.type.numeric.RealType;
  * @param <T>
  */
 public class LiICQ<T extends RealType<T>> extends Algorithm {
+	// the resulting ICQ value
+	double icqValue;
 
 	@Override
 	public void execute(DataContainer container)
@@ -21,10 +23,7 @@ public class LiICQ<T extends RealType<T>> extends Algorithm {
 		Image<T> img2 = container.getSourceImage2();
 
 		// calculate ICQ value
-		double icqValue = calculateLisICQ(img1, mean1, img2, mean2);
-
-		// save the result in the container
-		container.add( new Result.SimpleValueResult("Li's ICQ", icqValue));
+		icqValue = calculateLisICQ(img1, mean1, img2, mean2);
 	}
 
 	/**
@@ -73,5 +72,9 @@ public class LiICQ<T extends RealType<T>> extends Algorithm {
 		 * total number of pixels. Then shift it in the -0.5,0.5 range.
 		 */
 		return ( (double) numPositiveProducts / (double) (numNegariveProducts + numPositiveProducts) ) - 0.5;
+	}
+
+	public double getIcqValue() {
+		return icqValue;
 	}
 }

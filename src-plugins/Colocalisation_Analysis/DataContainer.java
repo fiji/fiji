@@ -1,7 +1,10 @@
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Dictionary;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -12,31 +15,34 @@ import mpicbg.imglib.type.numeric.RealType;
 
 /**
  * The DataContainer keeps all the source data, pre-processing results and
- * algorithm results. It allows a client to iterate over its
- * contents and makes the source image and channel information available
+ * algorithms that have been executed. It allows a client to get most its
+ * content and makes the source image and channel information available
  * to a client.
 
  * @param <T>
  */
-public class DataContainer<T extends RealType<T>> implements Iterable<Result> {
+public class DataContainer<T extends RealType<T>> {
 
 	// some general image statistics
 	double meanCh1, meanCh2, minCh1, maxCh1, minCh2, maxCh2;
-	// some threshold obtaining parameters
-	double autoThresholdSlope, autoThresholdIntercept;
-
 	// The source images that the results are based on
 	Image<T> sourceImage1, sourceImage2;
 	// The channels of the source images that the result relate to
 	int ch1, ch2;
-	/* The thresholds for both image channels. Pixels below a lower
-	 * threshold do NOT include the threshold and pixels above an upper
-	 * one will NOT either. Pixels "in between (and including)" thresholds
-	 * do include the threshold values.
+
+	/* Supported algorithms
+	 * If they are null, they are seen as not executed
 	 */
-	double ch1MinThreshold, ch1MaxThreshold, ch2MinThreshold, ch2MaxThreshold;
-	// The container of the results
-	List<Result> resultsObjectList = new ArrayList<Result>();
+	InputCheck inputCheck = null;
+	AutoThresholdRegression autoThreshold = null;
+	PearsonsCorrelation pearsonsCorrelation = null;
+	LiHistogram2D liHistogramCh1 = null;
+	LiHistogram2D liHistogramCh2 = null;
+	LiICQ liICQ = null;
+	MandersCorrelation<T> mandersCorrelation = null;
+	Histogram2D histogram2D = null;
+	// a list that contains all added algorithms
+	List< Algorithm > algorithms = new ArrayList< Algorithm >();
 
 	/**
 	 * Creates a new {@link DataContainer} for a specific set of image and
@@ -54,16 +60,6 @@ public class DataContainer<T extends RealType<T>> implements Iterable<Result> {
 		sourceImage2 = src2;
 		this.ch1 = ch1;
 		this.ch2 = ch2;
-
-		// get min and max value of image1's data type
-		T dummyT = src1.createType();
-		ch1MinThreshold = dummyT.getMinValue();
-		ch1MaxThreshold = dummyT.getMaxValue();
-
-		// get min and max value of image2's data type
-		dummyT = src2.createType();
-		ch2MinThreshold = dummyT.getMinValue();
-		ch2MaxThreshold = dummyT.getMaxValue();
 
 		meanCh1 = ImageStatistics.getImageMean(sourceImage1);
 		meanCh2 = ImageStatistics.getImageMean(sourceImage2);
@@ -93,22 +89,6 @@ public class DataContainer<T extends RealType<T>> implements Iterable<Result> {
 			 ch1, ch2);
 	}
 
-	/**
-	 * Adds a {@link Result} to the container.
-	 *
-	 * @param result The result to add.
-	 */
-	public void add(Result result) {
-		resultsObjectList.add(result);
-	}
-
-	/**
-	 * Gets an iterator over the contained results.
-	 */
-	public Iterator<Result> iterator() {
-		return resultsObjectList.iterator();
-	}
-
 	public Image<T> getSourceImage1() {
 		return sourceImage1;
 	}
@@ -124,39 +104,6 @@ public class DataContainer<T extends RealType<T>> implements Iterable<Result> {
 	public int getCh2() {
 		return ch2;
 	}
-
-	public synchronized double getCh1MinThreshold() {
-		return ch1MinThreshold;
-	}
-
-	public synchronized void setCh1MinThreshold(double ch1MinThreshold) {
-		this.ch1MinThreshold = ch1MinThreshold;
-	}
-
-	public synchronized double getCh1MaxThreshold() {
-		return ch1MaxThreshold;
-	}
-
-	public synchronized void setCh1MaxThreshold(double ch1MaxThreshold) {
-		this.ch1MaxThreshold = ch1MaxThreshold;
-	}
-
-	public synchronized double getCh2MinThreshold() {
-		return ch2MinThreshold;
-	}
-
-	public synchronized void setCh2MinThreshold(double ch2MinThreshold) {
-		this.ch2MinThreshold = ch2MinThreshold;
-	}
-
-	public synchronized double getCh2MaxThreshold() {
-		return ch2MaxThreshold;
-	}
-
-	public synchronized void setCh2MaxThreshold(double ch2MaxThreshold) {
-		this.ch2MaxThreshold = ch2MaxThreshold;
-	}
-
 	public double getMeanCh1() {
 		return meanCh1;
 	}
@@ -181,19 +128,106 @@ public class DataContainer<T extends RealType<T>> implements Iterable<Result> {
 		return maxCh2;
 	}
 
-	public void setAutoThresholdSlope(double slope) {
-		this.autoThresholdSlope = slope;
+	// algorithm access
+
+	/**
+	 * Registers an algorithm with the class.
+	 */
+	protected Algorithm registerAlgorithm(Algorithm a) {
+		algorithms.add( a );
+		return a;
 	}
 
-	public double getAutoThresholdSlope() {
-		return autoThresholdSlope;
+	public List< Algorithm > getRegistredAlgorithms() {
+		return algorithms;
 	}
 
-	public void setAutoThresholdIntercept(double intercept) {
-		this.autoThresholdIntercept = intercept;
+	/**
+	 * Gets the accumulated warnings of the algorithms run.
+	 */
+	public Dictionary<String, String> getWarnings() {
+		Dictionary<String, String> warnings =
+			new Hashtable<String, String>();
+
+		for (Algorithm a : algorithms) {
+			 for (Enumeration<String> e = a.getWarningns().keys(); e.hasMoreElements();) {
+				String key = e.nextElement();
+				warnings.put(key, a.getWarningns().get(key));
+			}
+		}
+
+		return warnings;
 	}
 
-	public double getAutoThresholdIntercept() {
-		return autoThresholdIntercept;
+	public InputCheck getInputCheck() {
+		return inputCheck;
+	}
+
+	public Algorithm setInputCheck(InputCheck inputCheck) {
+		this.inputCheck = inputCheck;
+		return registerAlgorithm( inputCheck );
+	}
+
+	public AutoThresholdRegression getAutoThreshold() {
+		return autoThreshold;
+	}
+
+	public Algorithm setAutoThreshold(AutoThresholdRegression autoThreshold) {
+		this.autoThreshold = autoThreshold;
+		return registerAlgorithm( autoThreshold );
+	}
+
+	public PearsonsCorrelation getPearsonsCorrelation() {
+		return pearsonsCorrelation;
+	}
+
+	public Algorithm setPearsonsCorrelation(PearsonsCorrelation pearsonsCorrelation) {
+		this.pearsonsCorrelation = pearsonsCorrelation;
+		return registerAlgorithm( pearsonsCorrelation );
+	}
+
+	public LiHistogram2D getLiHistogramCh1() {
+		return liHistogramCh1;
+	}
+
+	public Algorithm setLiHistogramCh1(LiHistogram2D liHistogramCh1) {
+		this.liHistogramCh1 = liHistogramCh1;
+		return registerAlgorithm( liHistogramCh1 );
+	}
+
+	public LiHistogram2D getLiHistogramCh2() {
+		return liHistogramCh2;
+	}
+
+	public Algorithm setLiHistogramCh2(LiHistogram2D liHistogramCh2) {
+		this.liHistogramCh2 = liHistogramCh2;
+		return liHistogramCh2;
+	}
+
+	public LiICQ getLiICQ() {
+		return liICQ;
+	}
+
+	public Algorithm setLiICQ(LiICQ liICQ) {
+		this.liICQ = liICQ;
+		return registerAlgorithm( liICQ );
+	}
+
+	public MandersCorrelation<T> getMandersCorrelation() {
+		return mandersCorrelation;
+	}
+
+	public Algorithm setMandersCorrelation(MandersCorrelation<T> mandersCorrelation) {
+		this.mandersCorrelation = mandersCorrelation;
+		return registerAlgorithm( mandersCorrelation );
+	}
+
+	public Histogram2D getHistogram2D() {
+		return histogram2D;
+	}
+
+	public Algorithm setHistogram2D(Histogram2D histogram2D) {
+		this.histogram2D = histogram2D;
+		return registerAlgorithm( histogram2D );
 	}
 }

@@ -15,7 +15,8 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm {
 	enum Implementation {Classic, Fast};
 	// The member variable to store the implementation of the Pearson's Coefficient calculation used.
 	Implementation theImplementation = Implementation.Fast;
-
+	// resulting Pearsing value
+	double pearsonsCorrelationValue;
 
 	/**
 	 * Creates a new Pearson's Correlation and allows us to define
@@ -75,8 +76,7 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm {
 		cursor2.close();
 
 		//put the result into the DataContainer
-		Result result = new Result.SimpleValueResult("Pearson's Correlation (Classic)", pearsonDenominator / pearsonNumerator);
-		container.add(result);
+		pearsonsCorrelationValue = pearsonDenominator / pearsonNumerator;
 	}
 
 	public void fastPearsons(DataContainer container) {
@@ -84,11 +84,7 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm {
 		Image<T> img1 = container.getSourceImage1();
 		Image<T> img2 = container.getSourceImage2();
 
-		double r = fastPearsons(img1, img2);
-
-		//put the result into the DataContainer
-		Result result = new Result.SimpleValueResult("Pearson's Correlation (Fast)", r);
-		container.add(result);
+		pearsonsCorrelationValue = fastPearsons(img1, img2);
 	}
 
 	public static <T extends RealType<T>> double fastPearsons(Image<T> img1, Image<T> img2) {
@@ -192,5 +188,9 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm {
 		double pearsonsR = pearsons1/(Math.sqrt(pearsons2*pearsons3));
 
 		return pearsonsR;
+	}
+
+	public double getPearsonsCorrelationValue() {
+		return pearsonsCorrelationValue;
 	}
 }

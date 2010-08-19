@@ -17,6 +17,12 @@ public class InputCheck<T extends RealType<T>> extends Algorithm {
 	 * normal pixels within a channel
 	 */
 	protected final double maxSaturatedRatio = 0.1f;
+	// the zero-zero pixel ratio
+	double zeroZeroPixelRatio;
+	// the saturated pixel ratio of channel 1
+	double saturatedRatioCh1;
+	// the saturated pixel ratio of channel 2
+	double saturatedRatioCh2;
 
 	@Override
 	public void execute(DataContainer container)
@@ -74,30 +80,50 @@ public class InputCheck<T extends RealType<T>> extends Algorithm {
 		double ch1SaturatedRatio = (double)NsaturatedCh1 / ( (double)N *0.5);
 		double ch2SaturatedRatio = (double)NsaturatedCh2 / ( (double)N * 0.5);
 
-		/* add results to data container
-		 * Percentage results need to be multiplied by 100 before
-		 * they are added as result.
+		/* save results
+		 * Percentage results need to be multiplied by 100
 		 */
-		container.add( new Result.SimpleValueResult("% zero-zero pixels", zeroZeroRatio * 100.0, 3));
-		container.add( new Result.SimpleValueResult("% saturated ch1 pixels", ch1SaturatedRatio * 100.0, 3));
-		container.add( new Result.SimpleValueResult("% saturated ch2 pixels", ch2SaturatedRatio * 100.0, 3));
+		zeroZeroPixelRatio = zeroZeroRatio * 100.0;
+		saturatedRatioCh1 = ch1SaturatedRatio * 100.0;
+		saturatedRatioCh2 = ch2SaturatedRatio * 100.0;
 
 		// add warnings if values are not in tolerance range
 		if ( Math.abs(zeroZeroRatio) > maxZeroZeroRatio ) {
-			container.add( new Result.WarningResult("zero-zero ratio too high",
-					"The ratio between zero-zero pixels and other pixels is larger "
-					+ IJ.d2s(zeroZeroRatio, 2) + ". Maybe you should use a ROI.") );
+
+			warnings.put("zero-zero ratio too high",
+				"The ratio between zero-zero pixels and other pixels is larger "
+				+ IJ.d2s(zeroZeroRatio, 2) + ". Maybe you should use a ROI.");
 		}
 		if ( Math.abs(ch1SaturatedRatio) > maxSaturatedRatio ) {
-			container.add( new Result.WarningResult("saturated ch1 ratio too high",
-					"The ratio between saturated pixels and other pixels in channel one is larger "
-					+ IJ.d2s(maxSaturatedRatio, 2) + ". Maybe you should use a ROI.") );
+			warnings.put("saturated ch1 ratio too high",
+				"The ratio between saturated pixels and other pixels in channel one is larger "
+				+ IJ.d2s(maxSaturatedRatio, 2) + ". Maybe you should use a ROI.");
 		}
 		if ( Math.abs(ch1SaturatedRatio) > maxSaturatedRatio ) {
-			container.add( new Result.WarningResult("saturated ch2 ratio too high",
-					"The ratio between saturated pixels and other pixels in channel two is larger "
-					+ IJ.d2s(maxSaturatedRatio, 2) + ". Maybe you should use a ROI.") );
+			warnings.put("saturated ch2 ratio too high",
+				"The ratio between saturated pixels and other pixels in channel two is larger "
+				+ IJ.d2s(maxSaturatedRatio, 2) + ". Maybe you should use a ROI.");
 		}
+	}
+
+	public double getMaxZeroZeroRatio() {
+		return maxZeroZeroRatio;
+	}
+
+	public double getMaxSaturatedRatio() {
+		return maxSaturatedRatio;
+	}
+
+	public double getZeroZeroPixelRatio() {
+		return zeroZeroPixelRatio;
+	}
+
+	public double getSaturatedRatioCh1() {
+		return saturatedRatioCh1;
+	}
+
+	public double getSaturatedRatioCh2() {
+		return saturatedRatioCh2;
 	}
 
 }

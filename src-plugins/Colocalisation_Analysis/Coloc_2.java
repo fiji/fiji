@@ -75,16 +75,24 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		List<Algorithm> userSelectedJobs = new ArrayList<Algorithm>();
 
 		// add some preprocessing jobs:
-		userSelectedJobs.add(new InputCheck());
-		userSelectedJobs.add(new AutoThresholdRegression());
+		userSelectedJobs.add( container.setInputCheck(
+			new InputCheck()) );
+		userSelectedJobs.add( container.setAutoThreshold(
+			new AutoThresholdRegression()) );
 
 		// add user selected algorithms
-		userSelectedJobs.add(new PearsonsCorrelation(PearsonsCorrelation.Implementation.Fast));
-		userSelectedJobs.add(new LiHistogram2D("Li - Ch1", true));
-		userSelectedJobs.add(new LiHistogram2D("Li - Ch2", false));
-		userSelectedJobs.add(new LiICQ());
-		userSelectedJobs.add(new MandersCorrelation<T>());
-		userSelectedJobs.add(new Histogram2D("hello"));
+		userSelectedJobs.add( container.setPearsonsCorrelation(
+			new PearsonsCorrelation(PearsonsCorrelation.Implementation.Fast) ) );
+		userSelectedJobs.add( container.setLiHistogramCh1(
+			new LiHistogram2D("Li - Ch1", true)) );
+		userSelectedJobs.add( container.setLiHistogramCh2(
+			new LiHistogram2D("Li - Ch2", false)) );
+		userSelectedJobs.add( container.setLiICQ(
+			new LiICQ()) );
+		userSelectedJobs.add( container.setMandersCorrelation(
+			new MandersCorrelation<T>()) );
+		userSelectedJobs.add( container.setHistogram2D(
+			new Histogram2D("hello")) );
 
 		try {
 			for (Algorithm a : userSelectedJobs){
@@ -98,8 +106,6 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		Display theResultDisplay = new SingleWindowDisplay();
 		//Display theResultDisplay = new EasyDisplay();
 		theResultDisplay.display(container);
-
-
 	}
 
 	/**

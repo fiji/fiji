@@ -12,6 +12,16 @@ public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm {
 	 *  raise a warning about it being to high.
 	 */
 	final double warnYInterceptToYMaxRatioThreshold = 0.01;
+	// the slope and and intercept of the regression line
+	double autoThresholdSlope = 0.0, autoThresholdIntercept = 0.0;
+	/* The thresholds for both image channels. Pixels below a lower
+	 * threshold do NOT include the threshold and pixels above an upper
+	 * one will NOT either. Pixels "in between (and including)" thresholds
+	 * do include the threshold values.
+	 */
+	double ch1MinThreshold = 0.0, ch1MaxThreshold = 0.0, ch2MinThreshold = 0.0, ch2MaxThreshold = 0.0;
+	// additional information
+	double bToYMaxRatio = 0.0;
 
 	@Override
 	public void execute(DataContainer container)
@@ -33,6 +43,16 @@ public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm {
 		double ch1MeanDiffSum = 0.0, ch2MeanDiffSum = 0.0, combinedMeanDiffSum = 0.0;
 		double combinedSum = 0.0;
 		int N = 0, NZero = 0;
+
+		// get min and max value of image1's data type
+		T dummyT = img1.createType();
+		ch1MinThreshold = dummyT.getMinValue();
+		ch1MaxThreshold = dummyT.getMaxValue();
+
+		// get min and max value of image2's data type
+		dummyT = img2.createType();
+		ch2MinThreshold = dummyT.getMinValue();
+		ch2MaxThreshold = dummyT.getMaxValue();
 
 		while (cursor1.hasNext() && cursor2.hasNext()) {
 			cursor1.fwd();
@@ -173,21 +193,51 @@ public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm {
 		ch1ThreshMax = Math.round( ch1BestThreshold );
 		ch2ThreshMax = Math.round( (ch1BestThreshold * m) + b );
 
-		// tell the data container about the new results
-		container.setCh1MaxThreshold(ch1ThreshMax);
-		container.setCh2MaxThreshold(ch2ThreshMax);
-		container.setAutoThresholdSlope(m);
-		container.setAutoThresholdIntercept(b);
-		container.add( new Result.SimpleValueResult("m (slope)", m));
-		container.add( new Result.SimpleValueResult("b (y-intercept)", b));
-
-		double bToYMaxRatio = b / container.getMaxCh2();
-		container.add( new Result.SimpleValueResult("b to y-max ratio", bToYMaxRatio) );
+		// store the new results
+		ch1MinThreshold = 0.0;
+		ch1MaxThreshold = ch1ThreshMax;
+		ch2MinThreshold = 0.0;
+		ch2MaxThreshold = ch2ThreshMax;
+		autoThresholdSlope = m;
+		autoThresholdIntercept = b;
+		bToYMaxRatio = b / container.getMaxCh2();
 
 		// add warnings if values are not in tolerance range
 		if ( Math.abs(bToYMaxRatio) > warnYInterceptToYMaxRatioThreshold ) {
-			container.add( new Result.WarningResult("y-intercept high",
-					"The y-intercept of the auto threshold regression line is high. Maybe you should use a ROI.") );
+			warnings.put("y-intercept high",
+				"The y-intercept of the auto threshold regression line is high. Maybe you should use a ROI.");
 		}
+	}
+
+	public double getBToYMaxRatio() {
+		return bToYMaxRatio;
+	}
+
+	public double getWarnYInterceptToYMaxRatioThreshold() {
+		return warnYInterceptToYMaxRatioThreshold;
+	}
+
+	public double getAutoThresholdSlope() {
+		return autoThresholdSlope;
+	}
+
+	public double getAutoThresholdIntercept() {
+		return autoThresholdIntercept;
+	}
+
+	public double getCh1MinThreshold() {
+		return ch1MinThreshold;
+	}
+
+	public double getCh1MaxThreshold() {
+		return ch1MaxThreshold;
+	}
+
+	public double getCh2MinThreshold() {
+		return ch2MinThreshold;
+	}
+
+	public double getCh2MaxThreshold() {
+		return ch2MaxThreshold;
 	}
 }

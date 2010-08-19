@@ -6,6 +6,7 @@ import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.real.FloatType;
+import mpicbg.imglib.type.numeric.integer.LongType;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 
 /**
@@ -20,12 +21,24 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 	// The height of the scatter-plot
 	protected int yBins = 256;
 	// The name of the result 2D histogram to pass elsewhere
-	protected String title;
+	protected String title = "";
 	// Swap or not swap ch1 and ch2
 	protected boolean swapChannels = false;
 	// member variables for labeling
 	protected String ch1Label = "Channel 1";
 	protected String ch2Label = "Channel 2";
+
+	// Result keeping members
+
+	// the generated plot image
+	private Image<LongType> plotImage;
+	// the bin widths for each channel
+	private double xBinWidth = 0.0, yBinWidth = 0.0;
+	// labels for the axes
+	private String xLabel = "", yLabel = "";
+	// ranges for the axes
+	private double xMin = 0.0, xMax = 0.0, yMin = 0.0, yMax = 0.0;
+
 
 	public Histogram2D(){
 		this("2D Histogram");
@@ -135,18 +148,10 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 	}
 
 	public void execute(DataContainer container) throws MissingPreconditionException {
-		// add histogram to composite result
-		Result.ImageResult imgResult = getHistogramImage(container);
-		Result.CompositeImageResult result = new Result.CompositeImageResult(title + " composite", imgResult);
-
-		// add overlay line to composite result
-		result.add( new Result.LineResult(title + " overlay line", container.getAutoThresholdSlope(),
-			container.getAutoThresholdIntercept()) );
-
-		container.add(result);
+		generateHistogramData(container);
 	}
 
-	protected Result.ImageResult getHistogramImage(DataContainer container) {
+	protected void generateHistogramData(DataContainer container) {
 		double ch1BinWidth = getXBinWidth(container);
 		double ch2BinWidth = getYBinWidth(container);
 
@@ -159,12 +164,12 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 		Cursor<T> cursor2 = img2.createCursor();
 
 		// create a ImageFactory<Type<T>> put the scatter-plot in
-		final ImageFactory<FloatType> scatterFactory =
-			new ImageFactory<FloatType>(new FloatType(), new ArrayContainerFactory());
-		Image<FloatType> plotImage = scatterFactory.createImage(new int[] {xBins, yBins}, "2D Histogram / Scatterplot");
+		final ImageFactory<LongType> scatterFactory =
+			new ImageFactory<LongType>(new LongType(), new ArrayContainerFactory());
+		plotImage = scatterFactory.createImage(new int[] {xBins, yBins}, "2D Histogram / Scatterplot");
 
 		// create access cursors
-		final LocalizableByDimCursor<FloatType> histogram2DCursor =
+		final LocalizableByDimCursor<LongType> histogram2DCursor =
 			plotImage.createLocalizableByDimCursor();
 
 		// iterate over image
@@ -185,18 +190,20 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 			// set position of input/output cursor
 			histogram2DCursor.setPosition( new int[] {scaledXvalue, scaledYvalue});
 			// get current value at position and increment it
-			float count = histogram2DCursor.getType().getRealFloat();
+			long count = histogram2DCursor.getType().getIntegerLong();
 			count++;
 
 			histogram2DCursor.getType().set(count);
 		}
 
-		String label1 = getLabelCh1();
-		String label2 = getLabelCh2();
-
-		return new Result.Histogram2DResult(title, plotImage,
-				ch1BinWidth, ch2BinWidth, label1, label2,
-				getXMin(container), getXMax(container), getYMin(container), getYMax(container));
+		xBinWidth = ch1BinWidth;
+		yBinWidth = ch2BinWidth;
+		xLabel = getLabelCh1();
+		yLabel = getLabelCh2();
+		xMin = getXMin(container);
+		xMax = getXMax(container);
+		yMin = getYMin(container);
+		yMax = getYMax(container);
 	}
 
 	/**
@@ -253,5 +260,47 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 
 	protected double getYMax(DataContainer container) {
 		return swapChannels ? getMaxCh1(container) : getMaxCh2(container);
+	}
+
+	// Result access methods
+
+	public Image<LongType> getPlotImage() {
+		return plotImage;
+	}
+
+	public double getXBinWidth() {
+		return xBinWidth;
+	}
+
+	public double getYBinWidth() {
+		return yBinWidth;
+	}
+
+	public String getXLabel() {
+		return xLabel;
+	}
+
+	public String getYLabel() {
+		return yLabel;
+	}
+
+	public double getXMin() {
+		return xMin;
+	}
+
+	public double getXMax() {
+		return xMax;
+	}
+
+	public double getYMin() {
+		return yMin;
+	}
+
+	public double getYMax() {
+		return yMax;
+	}
+
+	public String getTitle() {
+		return title;
 	}
 }

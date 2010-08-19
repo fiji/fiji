@@ -13,6 +13,8 @@ import mpicbg.imglib.type.numeric.RealType;
  * @param <T>
  */
 public class MandersCorrelation<T extends RealType<T>> extends Algorithm {
+	// Manders M1 and M2 value
+	double mandersM1, mandersM2;
 
 	/**
 	 * A result containter for Manders' calculations.
@@ -32,9 +34,9 @@ public class MandersCorrelation<T extends RealType<T>> extends Algorithm {
 		// calculate Mander's values
 		MandersResults results = calculateMandersCorrelation(img1, img2);
 
-		// save the result in the container
-		container.add( new Result.SimpleValueResult("Manders' M1", results.m1));
-		container.add( new Result.SimpleValueResult("Manders' M2", results.m2));
+		// save the results
+		mandersM1 = results.m1;
+		mandersM2 = results.m2;
 	}
 
 	/**
@@ -87,5 +89,13 @@ public class MandersCorrelation<T extends RealType<T>> extends Algorithm {
 		results.m2 = m2Nominator / sumCh2;
 
 		return results;
+	}
+
+	public double getMandersM1() {
+		return mandersM1;
+	}
+
+	public double getMandersM2() {
+		return mandersM2;
 	}
 }

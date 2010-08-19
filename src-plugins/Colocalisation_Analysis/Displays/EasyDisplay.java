@@ -4,8 +4,10 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.text.TextWindow;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
+import mpicbg.imglib.image.Image;
+import mpicbg.imglib.type.numeric.RealType;
 
-public class EasyDisplay implements Display {
+public class EasyDisplay<T extends RealType<T>> implements Display {
 
 	protected static TextWindow textWindow;
 
@@ -18,20 +20,34 @@ public class EasyDisplay implements Display {
 
 		printTextStatistics(container);
 
-		Iterator<Result> iterator = container.iterator();
-		while (iterator.hasNext()){
-			Result r = iterator.next();
-			if (r instanceof Result.SimpleValueResult){
-				Result.SimpleValueResult result = (Result.SimpleValueResult)r;
-				textWindow.getTextPanel().appendLine(result.getName() + "\t"
-						+ IJ.d2s(result.getValue(), result.getDecimalPlaces()) + "\n");
-			} else if ( r instanceof Result.Histogram2DResult) {
-				Result.Histogram2DResult result = (Result.Histogram2DResult)r;
-				ImagePlus imp = ImageJFunctions.displayAsVirtualStack( result.getData() );
-				imp.show();
-			}
+		// 2D Histogram
+		if (container.getHistogram2D() != null)
+			showImage( container.getHistogram2D().getPlotImage() );
+
+		// Two Li Histograms
+		if (container.getLiHistogramCh1() != null)
+			showImage( container.getLiHistogramCh1().getPlotImage() );
+		if (container.getLiHistogramCh2() != null)
+			showImage( container.getLiHistogramCh2().getPlotImage() );
+
+		AutoThresholdRegression autoThreshold = container.getAutoThreshold();
+		if (autoThreshold != null) {
+			showValue( "m (slope)", autoThreshold.getAutoThresholdSlope() , 2 );
+			showValue( "b (y-intercept)", autoThreshold.getAutoThresholdIntercept(), 2 );
+			showValue( "b to y-max ratio", autoThreshold.getBToYMaxRatio(), 2 );
 		}
+
 		IJ.selectWindow("Results");
+	}
+
+	protected void showImage(Image<T> img) {
+		ImagePlus imp = ImageJFunctions.displayAsVirtualStack( img );
+		imp.show();
+	}
+
+	protected void showValue(String name, double value, int decimalPlaces) {
+		textWindow.getTextPanel().appendLine(name + "\t"
+			+ IJ.d2s(value, decimalPlaces) + "\n");
 	}
 
 	protected void printTextStatistics(DataContainer container){
@@ -41,7 +57,11 @@ public class EasyDisplay implements Display {
 		textWindow.getTextPanel().appendLine("Ch2 Min\t" + container.getMinCh2() + "\n");
 		textWindow.getTextPanel().appendLine("Ch1 Max\t" + container.getMaxCh1() + "\n");
 		textWindow.getTextPanel().appendLine("Ch2 Max\t" + container.getMaxCh2() + "\n");
-		textWindow.getTextPanel().appendLine("Ch1 Max Threshold\t" + container.getCh1MaxThreshold() + "\n");
-		textWindow.getTextPanel().appendLine("Ch2 Max Threshold\t" + container.getCh2MaxThreshold() + "\n");
+
+		AutoThresholdRegression autoThreshold = container.getAutoThreshold();
+		if (autoThreshold != null) {
+			textWindow.getTextPanel().appendLine("Ch1 Max Threshold\t" + autoThreshold.getCh1MaxThreshold() + "\n");
+			textWindow.getTextPanel().appendLine("Ch2 Max Threshold\t" + autoThreshold.getCh2MaxThreshold() + "\n");
+		}
 	}
 }

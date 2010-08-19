@@ -28,8 +28,12 @@ import java.io.CharArrayWriter;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Dictionary;
+import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -41,28 +45,29 @@ import mpicbg.imglib.algorithm.math.ImageStatistics;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.type.numeric.RealType;
+import mpicbg.imglib.type.numeric.integer.LongType;
 import mpicbg.imglib.type.numeric.real.FloatType;
+import mpicbg.imglib.image.Image;
+import mpicbg.imglib.image.ImagePlusAdapter;
 
 /**
  * This class displays the container contents in one single window
  * and offers features like the use of different LUTs.
  *
  */
-public class SingleWindowDisplay extends ImageWindow implements Display, ItemListener, ActionListener, ClipboardOwner {
+public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow implements Display, ItemListener, ActionListener, ClipboardOwner {
 	static final int WIN_WIDTH = 350;
 	static final int WIN_HEIGHT = 240;
 
-	protected List<Result.ImageResult> listOfImageResults = new ArrayList<Result.ImageResult>();
-	protected List<Result.Histogram2DResult> listOfHistograms = new ArrayList<Result.Histogram2DResult>();
-	protected List<Result.WarningResult> listOfWarnings = new ArrayList<Result.WarningResult>();
-	protected List<Result.SimpleValueResult> listOfSimpleValues = new ArrayList<Result.SimpleValueResult>();
-	protected List<Result.CompositeImageResult> listOfImageComposites = new ArrayList<Result.CompositeImageResult>();
+	// this is the image currently selected by the drop down menu
+	protected Image<?> currentlyDisplayedImageResult;
 
-	// this is the image result that is currently selected by the drop down menu
-	protected Result.ImageResult currentlyDisplayedImageResult;
+	// a list of the available result images, no matter what specific kinds
+	protected List<Image<?>> listOfImages = new ArrayList<Image<?>>();
+	protected Map<Image<LongType>, Histogram2D<T>> mapOf2DHistograms = new HashMap<Image<LongType>, Histogram2D<T>>();
 
 	//make a cursor so we can get pixel values from the image
-	protected LocalizableByDimCursor<FloatType> pixelAccessCursor;
+	protected LocalizableByDimCursor<?> pixelAccessCursor;
 
 	// GUI elements
 	JButton listButton, copyButton;
@@ -80,8 +85,8 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 		imageSelectionPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 
 		JComboBox dropDownList = new JComboBox();
-		for(Result.ImageResult r : listOfImageResults) {
-			dropDownList.addItem(r);
+		for(Image<?> img : listOfImages) {
+			dropDownList.addItem(img);
 		}
 		dropDownList.addItemListener(this);
 		imageSelectionPanel.add(dropDownList);
@@ -90,15 +95,15 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 		textPanel.setLayout(new FlowLayout(FlowLayout.CENTER));
 
 		// Create something to display it in
-	    final JEditorPane editor = new JEditorPane();
-	    editor.setEditable(false);				// we're browsing not editing
-	    editor.setContentType("text/html");		// must specify HTML text
-	    editor.setText(makeHtmlText());			// specify the text to display
+		final JEditorPane editor = new JEditorPane();
+		editor.setEditable(false);				// we're browsing not editing
+		editor.setContentType("text/html");		// must specify HTML text
+		editor.setText(makeHtmlText());			// specify the text to display
 
 		// Put the JEditorPane in a scrolling window and add it
-	    JScrollPane sp = new JScrollPane(editor);
-	    sp.setPreferredSize(new Dimension(256, 150));
-	    textPanel.add(sp);
+		JScrollPane sp = new JScrollPane(editor);
+		sp.setPreferredSize(new Dimension(256, 150));
+		textPanel.add(sp);
 
 		Panel buttons = new Panel();
 		buttons.setLayout(new FlowLayout(FlowLayout.RIGHT));
@@ -140,66 +145,57 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 	public void display(DataContainer container) {
 		// save a reference to the container
 		dataContainer = container;
-		// parse the results
-		parseResults( container.iterator() );
+		// see what images we have got
+		makeImageList();
 		// set up the GUI
 		setup();
 		// display the first image available, if any
-		if (listOfImageResults.size() > 0) {
-			adjustDisplayedImage(listOfImageResults.get(0));
+		if (listOfImages.size() > 0) {
+			adjustDisplayedImage(listOfImages.get(0));
 		}
 
 		this.show();
 	}
 
 	/**
-	 * Iterates over results and passes the results to
-	 * the parseResult method.
+	 * Tests what image producing algorithms have been run and stores the
+	 * images in a list field.
+	 *
+	 * @param container The data container to get data from
 	 */
-	protected void parseResults(Iterator<Result> iterator) {
-		while (iterator.hasNext()){
-			parseResult( iterator.next() );
-		}
+	protected void makeImageList() {
+		if (dataContainer.getLiHistogramCh1() != null)
+			addHistogram2D( dataContainer.getLiHistogramCh1() );
+		if (dataContainer.getLiHistogramCh2() != null)
+			addHistogram2D( dataContainer.getLiHistogramCh2() );
+		if (dataContainer.getHistogram2D() != null)
+			addHistogram2D( dataContainer.getHistogram2D() );
+	}
+
+	protected void addHistogram2D (Histogram2D<T> histogram) {
+		listOfImages.add(histogram.getPlotImage());
+		mapOf2DHistograms.put(histogram.getPlotImage(), histogram);
 	}
 
 	/**
-	 * Adds the passed Result to the appropiate list.
+	 * Prints an HTML table entry onto the stream.
 	 */
-	protected void parseResult(Result r) {
-		if (r instanceof Result.SimpleValueResult){
-			Result.SimpleValueResult result = (Result.SimpleValueResult)r;
-			listOfSimpleValues.add(result);
-		} else if ( r instanceof Result.ImageResult) {
-			Result.ImageResult result = (Result.ImageResult)r;
-			listOfImageResults.add(result);
-
-			// if it is a histogram remember that as well
-			if ( r instanceof Result.Histogram2DResult) {
-				Result.Histogram2DResult histogram = (Result.Histogram2DResult)r;
-				listOfHistograms.add(histogram);
-			}
-		} else if ( r instanceof Result.CompositeImageResult ) {
-			Result.CompositeImageResult result = (Result.CompositeImageResult)r;
-			listOfImageComposites.add( result );
-			// parse the image data to put the image in the correct list
-			parseResult( result.getImageResult() );
-		} else if ( r instanceof Result.WarningResult ) {
-			Result.WarningResult result = (Result.WarningResult)r;
-			listOfWarnings.add(result);
-		}
+	protected void printTableRow(PrintWriter out, String name, String text) {
+		out.print("<TR><TD>" + name + "</TD><TD>" + text + "</TD></TR");
 	}
 
 	/**
-	 * This method searches for the the composite image result
-	 * containing the passed result r. It returns null if none
-	 * has been found.
+	 * Prints an HTML table entry onto the stream.
 	 */
-	protected Result.CompositeImageResult getComposite(Result.ImageResult r) {
-		for ( Result.CompositeImageResult cir : listOfImageComposites) {
-			if (cir.getImageResult() == r)
-				return cir;
-		}
-		return null;
+	protected void printTableRow(PrintWriter out, String name, double number) {
+		printTableRow(out, name, number, 3);
+	}
+
+	/**
+	 * Prints an HTML table entry onto the stream.
+	 */
+	protected void printTableRow(PrintWriter out, String name, double number, int decimalPlaces) {
+		printTableRow(out, name, IJ.d2s(number, decimalPlaces));
 	}
 
 	/**
@@ -227,51 +223,72 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 	    out.print("</head>");
 
 	    // print out warnings, if any
-	    if ( listOfWarnings.size() > 0 ) {
+	    Dictionary<String, String> warnings = dataContainer.getWarnings();
+	    if ( warnings.size() > 0 ) {
 		    out.print("<H1 class=\"warn\">Warnings</H1>");
 		    // Print out the table
 		    out.print("<TABLE class=\"warn\"><TR>");
 		    out.print("<TH>Type</TH><TH>Message</TH></TR>");
-		    for (Result.WarningResult r : listOfWarnings) {
-		      out.println("<TR><TD>" + r.getName() +
-				  "</TD><TD>" + r.getMessage() +
-				  "</TD></TR>");
+		    for (Enumeration<String> e = warnings.keys(); e.hasMoreElements();) {
+				String key = e.nextElement();
+				printTableRow(out, key, warnings.get(key));
 		    }
 		    out.println("</TABLE>");
 	    } else {
 		out.print("<H1 class=\"nowarn\">No warnings occured</H1>");
 	    }
 
-	    // print out simple value results, if anny
-	    if ( listOfSimpleValues.size() > 0 ) {
-		    out.print("<H1>Results</H1>");
-		    // Print out the table
-		    out.print("<TABLE><TR>");
-		    out.print("<TH>Name</TH><TH>Result</TH></TR>");
-		    for (Result.SimpleValueResult r : listOfSimpleValues) {
-		      out.println("<TR><TD>" + r.getName() +
-				  "</TD><TD>" + IJ.d2s(r.getValue(), r.getDecimalPlaces()) +
-				  "</TD></TR>");
-		    }
-		    out.println("</TABLE>");
-	    } else {
-		out.print("<H1 class=\"warn\">No results generated</H1>");
+	    // print out simple value results
+	    out.print("<H1>Results</H1>");
+	    // Print out the table
+	    out.print("<TABLE><TR>");
+	    out.print("<TH>Name</TH><TH>Result</TH></TR>");
+
+	    InputCheck inputCheck = dataContainer.getInputCheck();
+	    if (inputCheck != null) {
+		    printTableRow(out, "% zero-zero pixels", inputCheck.getZeroZeroPixelRatio());
+		    printTableRow(out, "% saturated ch1 pixels", inputCheck.getSaturatedRatioCh1());
+		    printTableRow(out, "% saturated ch2 pixels", inputCheck.getSaturatedRatioCh2());
 	    }
+
+	    AutoThresholdRegression autoThreshold = dataContainer.getAutoThreshold();
+	    if (autoThreshold != null) {
+		    printTableRow(out, "Auto threshold slope", autoThreshold.getAutoThresholdSlope());
+		    printTableRow(out, "Auto threshold intercept", autoThreshold.getAutoThresholdIntercept());
+	    }
+
+	    PearsonsCorrelation pearsons = dataContainer.getPearsonsCorrelation();
+	    if (pearsons != null) {
+		    printTableRow(out, "Pearson's R value", pearsons.getPearsonsCorrelationValue());
+	    }
+
+	    LiICQ liIcq = dataContainer.getLiICQ();
+	    if (liIcq != null) {
+		    printTableRow(out, "Li's ICQ value", liIcq.getIcqValue());
+	    }
+
+	    MandersCorrelation manders = dataContainer.getMandersCorrelation();
+	    if (manders != null) {
+		    printTableRow(out, "Manders M1", manders.getMandersM1());
+		    printTableRow(out, "Manders M2", manders.getMandersM2());
+	    }
+
+	    out.println("</TABLE>");
 
 	    // print some image statistics
 	    out.print("<H1>Image statistics</H1>");
 	    out.print("<TABLE>");
-	    out.print("<TR><TD>Min channel 1</TD><TD>" + dataContainer.getMinCh1() + "</TD></TR");
-	    out.print("<TR><TD>Max channel 1</TD><TD>" + dataContainer.getMaxCh1() + "</TD></TR");
-	    out.print("<TR><TD>Mean channel 1</TD><TD>" + dataContainer.getMeanCh1() + "</TD></TR");
-	    out.print("<TR><TD>Min threshold channel 1</TD><TD>" + dataContainer.getCh1MinThreshold() + "</TD></TR");
-	    out.print("<TR><TD>Max threshold channel 1</TD><TD>" + dataContainer.getCh1MaxThreshold() + "</TD></TR");
+	    printTableRow(out, "Min channel 1",  dataContainer.getMinCh1());
+	    printTableRow(out, "Max channel 1",  dataContainer.getMaxCh1());
+	    printTableRow(out, "Mean channel 1", dataContainer.getMeanCh1());
+	    printTableRow(out, "Min threshold channel 1", autoThreshold.getCh1MinThreshold());
+	    printTableRow(out, "Max threshold channel 1", autoThreshold.getCh1MaxThreshold());
 
-	    out.print("<TR><TD>Min channel 2</TD><TD>" + dataContainer.getMinCh2() + "</TD></TR");
-	    out.print("<TR><TD>Max channel 2</TD><TD>" + dataContainer.getMaxCh2() + "</TD></TR");
-	    out.print("<TR><TD>Mean channel 2</TD><TD>" + dataContainer.getMeanCh2() + "</TD></TR");
-	    out.print("<TR><TD>Min threshold channel 2</TD><TD>" + dataContainer.getCh2MinThreshold() + "</TD></TR");
-	    out.print("<TR><TD>Max threshold channel 2</TD><TD>" + dataContainer.getCh2MaxThreshold() + "</TD></TR");
+	    printTableRow(out, "Min channel 2", dataContainer.getMinCh2());
+	    printTableRow(out, "Max channel 2", dataContainer.getMaxCh2());
+	    printTableRow(out, "Mean channel 2", dataContainer.getMeanCh2());
+	    printTableRow(out, "Min threshold channel 2", autoThreshold.getCh2MinThreshold());
+	    printTableRow(out, "Max threshold channel 2", autoThreshold.getCh2MaxThreshold());
 	    out.println("</TABLE>");
 
 	    out.print("</html>");
@@ -292,12 +309,13 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 		/* check if we are dealing with an histogram result
 		 * or a generic image result
 		 */
-		if (listOfHistograms.contains(currentlyDisplayedImageResult)) {
-			Result.Histogram2DResult hr = (Result.Histogram2DResult)currentlyDisplayedImageResult;
+		if (isHistogram(currentlyDisplayedImageResult)) {
+			Histogram2D hr = mapOf2DHistograms.get(currentlyDisplayedImageResult);
+			Image<LongType> histogramImage = (Image<LongType>) currentlyDisplayedImageResult;
 			double xBinWidth = 1.0 / hr.getXBinWidth();
 			double yBinWidth = 1.0 / hr.getYBinWidth();
-			double xMin = hr.getHistXMin();
-			double yMin = hr.getHistYMin();
+			double xMin = hr.getXMin();
+			double yMin = hr.getYMin();
 			// check if we have bins of size one or other ones
 			boolean xBinWidthIsOne = Math.abs(xBinWidth - 1.0) < 0.00001;
 			boolean yBinWidthIsOne = Math.abs(yBinWidth - 1.0) < 0.00001;
@@ -305,10 +323,10 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 			int xDecimalPlaces = xBinWidthIsOne ? 0 : 3;
 			int yDecimalPlaces = yBinWidthIsOne ? 0 : 3;
 			// create a cursor to access the histogram data
-			LocalizableByDimCursor<FloatType> cursor = hr.getData().createLocalizableByDimCursor();;
+			LocalizableByDimCursor<LongType> cursor = histogramImage.createLocalizableByDimCursor();
 			// loop over 2D histogram
-			for (int i=0; i < hr.getData().getDimension(0); ++i) {
-				for (int j=0; j < hr.getData().getDimension(1); ++j) {
+			for (int i=0; i < histogramImage.getDimension(0); ++i) {
+				for (int j=0; j < histogramImage.getDimension(1); ++j) {
 					cursor.setPosition(i, 0);
 					cursor.setPosition(j, 1);
 					sb.append(
@@ -330,20 +348,20 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 		/* check if we are dealing with an histogram result
 		 * or a generic image result
 		 */
-		if (listOfHistograms.contains(currentlyDisplayedImageResult)) {
-			Result.Histogram2DResult hr = (Result.Histogram2DResult)currentlyDisplayedImageResult;
+		if (isHistogram(currentlyDisplayedImageResult)) {
+			Histogram2D hr = mapOf2DHistograms.get(currentlyDisplayedImageResult);
 			double xBinWidth = 1.0 / hr.getXBinWidth();
 			double yBinWidth = 1.0 / hr.getYBinWidth();
 			// check if we have bins of size one or other ones
 			boolean xBinWidthIsOne = Math.abs(xBinWidth - 1.0) < 0.00001;
 			boolean yBinWidthIsOne = Math.abs(yBinWidth - 1.0) < 0.00001;
 			// configure table headings accordingly
-			String vheadingX = xBinWidthIsOne ? "X value" : "X bin start";
-			String vheadingY = yBinWidthIsOne ? "Y value" : "Y bin start";
+			String vHeadingX = xBinWidthIsOne ? "X value" : "X bin start";
+			String vHeadingY = yBinWidthIsOne ? "Y value" : "Y bin start";
 			// get the actual histogram data
 			String histogramData = getCurrentHistogramData();
 
-			TextWindow tw = new TextWindow(getTitle(), vheadingX + "\t" + vheadingY + "\tcount", histogramData, 250, 400);
+			TextWindow tw = new TextWindow(getTitle(), vHeadingX + "\t" + vHeadingY + "\tcount", histogramData, 250, 400);
 		}
 	}
 
@@ -355,7 +373,7 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 		/* check if we are dealing with an histogram result
 		 * or a generic image result
 		 */
-		if (listOfHistograms.contains(currentlyDisplayedImageResult)) {
+		if (isHistogram(currentlyDisplayedImageResult)) {
 			/* try to get the system clipboard and return
 			 * if we can't get it
 			 */
@@ -392,8 +410,8 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 		if (!IJ.altKeyDown()){
 
 			// the alt key is not pressed use x and y values that are bin widths or calibrated intensities not the x y image coordinates.
-			if (currentlyDisplayedImageResult instanceof Result.Histogram2DResult) {
-				Result.Histogram2DResult histogram = (Result.Histogram2DResult)currentlyDisplayedImageResult;
+			if (isHistogram(currentlyDisplayedImageResult)) {
+				Histogram2D histogram = mapOf2DHistograms.get(currentlyDisplayedImageResult);
 
 				synchronized( pixelAccessCursor )
 				{
@@ -402,24 +420,25 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 					pixelAccessCursor.setPosition(y, 1);
 
 					// get current value at position
-					float val = pixelAccessCursor.getType().getRealFloat();
+					LocalizableByDimCursor<LongType> cursor = (LocalizableByDimCursor<LongType>)pixelAccessCursor;
+					long val = cursor.getType().getIntegerLong();
 
-					double calibratedXBinBottom = histogram.getHistXMin() + x / histogram.getXBinWidth();
-					double calibratedXBinTop = histogram.getHistXMin() + (x + 1) / histogram.getXBinWidth();
+					double calibratedXBinBottom = histogram.getXMin() + x / histogram.getXBinWidth();
+					double calibratedXBinTop = histogram.getXMin() + (x + 1) / histogram.getXBinWidth();
 
-					double calibratedYBinBottom = histogram.getHistYMin() + y / histogram.getYBinWidth();
-					double calibratedYBinTop = histogram.getHistYMin() + (y + 1) / histogram.getYBinWidth();
+					double calibratedYBinBottom = histogram.getYMin() + y / histogram.getYBinWidth();
+					double calibratedYBinTop = histogram.getYMin() + (y + 1) / histogram.getYBinWidth();
 
 					IJ.showStatus("x = " + IJ.d2s(calibratedXBinBottom) + " to " + IJ.d2s(calibratedXBinTop) +
-							", y = " + IJ.d2s(calibratedYBinBottom) + " to " + IJ.d2s(calibratedYBinTop) + ", value = " + IJ.d2s(val) );
+							", y = " + IJ.d2s(calibratedYBinBottom) + " to " + IJ.d2s(calibratedYBinTop) + ", value = " + val );
 				}
-			} else if (currentlyDisplayedImageResult instanceof Result.ImageResult) {
-				ImagePlus imp = ImageJFunctions.displayAsVirtualStack( currentlyDisplayedImageResult.getData() );
+			} else {
+				ImagePlus imp = ImageJFunctions.displayAsVirtualStack( currentlyDisplayedImageResult );
 				imp.mouseMoved(x, y);
 			}
 		} else {
 			// alt key is down, so show the image coordinates for x y in status bar.
-			ImagePlus imp = ImageJFunctions.displayAsVirtualStack( currentlyDisplayedImageResult.getData() );
+			ImagePlus imp = ImageJFunctions.displayAsVirtualStack( currentlyDisplayedImageResult );
 			imp.mouseMoved(x, y);
 		}
 	}
@@ -430,33 +449,40 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 	 * If the image is part of a CompositeImageResult then contained
 	 * lines will also be drawn
 	 */
-	protected void drawImageResult(Result.ImageResult result) {
+	protected void drawImage(Image<?> img) {
 		// remove potentially added overlay
 		imp.setOverlay(null);
 		// get Imglib image as ImageJ image
-		ImagePlus imp = ImageJFunctions.displayAsVirtualStack( result.getData() );
+		ImagePlus imp = ImageJFunctions.displayAsVirtualStack( img );
 		this.imp.setProcessor(imp.getProcessor());
 		ImageProcessor ip = this.imp.getProcessor();
 		// set the display range
-		double max = ImageStatistics.<RealType>getImageMax(result.getData()).getRealDouble();
+		double max = 0;
+		if (isHistogram(currentlyDisplayedImageResult)) {
+			max = ImageStatistics.<LongType>getImageMax((Image<LongType>)img).getRealDouble();
+		} else {
+			max = ImageStatistics.<T>getImageMax((Image<T>)img).getRealDouble();
+		}
 		this.imp.setDisplayRange(0.0, max);
 		// select "Fire" look up table
 		IJ.run(this.imp, "Fire", null);
 
-		// check if there is some additional data to display
-		Result.CompositeImageResult cir = getComposite(result);
-		if ( cir != null ) {
-			Overlay overlay = new Overlay();
-			// go through the contained results
-			Iterator<Result> it = cir.iterator();
-			while ( it.hasNext() ) {
-				Result containedResult = it.next();
-				// draw a LineResult as overlay
-				if (containedResult instanceof Result.LineResult) {
-					Result.LineResult line = (Result.LineResult)containedResult;
-					drawLineResult(overlay, result, line);
-				}
+		boolean overlayModified = false;
+		Overlay overlay = new Overlay();
+
+		// if it is the 2d histogram, we want to show the regression line
+		Histogram2D histogram = dataContainer.getHistogram2D();
+		AutoThresholdRegression autoThreshold = dataContainer.getAutoThreshold();
+		if (histogram != null && autoThreshold != null) {
+			if (img == histogram.getPlotImage()) {
+				drawLine(overlay, img,
+						autoThreshold.getAutoThresholdSlope(),
+						autoThreshold.getAutoThresholdIntercept());
+				overlayModified = true;
 			}
+		}
+
+		if (overlayModified) {
 			overlay.setStrokeColor(java.awt.Color.WHITE);
 			this.imp.setOverlay(overlay);
 		}
@@ -465,13 +491,21 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 	}
 
 	/**
-	 * Draws the line represented as LineResult on the ImageProcessor
-	 * that is based on the passed ImageResult.
+	 * Tests whether the given image is a histogram or not.
+	 * @param img The image to test
+	 * @return true if histogram, false otherwise
 	 */
-	protected void drawLineResult(Overlay overlay, Result.ImageResult img, Result.LineResult line) {
+	protected boolean isHistogram(Image<?> img) {
+		return mapOf2DHistograms.containsKey(img);
+	}
+
+	/**
+	 * Draws the line on the overlay.
+	 */
+	protected void drawLine(Overlay overlay, Image<?> img, double slope, double intercept) {
 		double startX, startY, endX, endY;
-		int imgWidth = img.getData().getDimension(0);
-		int imgHeight = img.getData().getDimension(1);
+		int imgWidth = img.getDimension(0);
+		int imgHeight = img.getDimension(1);
 		/* since we want to draw the line over the whole image
 		 * we can directly use screen coordinates for x values.
 		 */
@@ -479,17 +513,17 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 		endX = imgWidth;
 
 		// check if we can get some exta information for drawing
-		if (img instanceof Result.Histogram2DResult) {
-			Result.Histogram2DResult histogram = (Result.Histogram2DResult)img;
+		if (isHistogram(img)) {
+			Histogram2D histogram = mapOf2DHistograms.get(img);
 			// get calibrated start y coordinates
-			double calibratedStartY = line.getSlope() * histogram.getHistXMin() + line.getIntercept();
-			double calibratedEndY = line.getSlope() * histogram.getHistXMax() + line.getIntercept();
+			double calibratedStartY = slope * histogram.getXMin() + intercept;
+			double calibratedEndY = slope * histogram.getXMax() + intercept;
 			// convert calibrated coordinates to screen coordinates
 			startY = calibratedStartY * histogram.getYBinWidth();
 			endY = calibratedEndY * histogram.getYBinWidth();
 		} else {
-			startY = line.getSlope() * startX + line.getIntercept();
-			endY = line.getSlope() * endX + line.getIntercept();
+			startY = slope * startX + intercept;
+			endY = slope * endX + intercept;
 		}
 
 		/* since the screen origin is in the top left
@@ -502,7 +536,7 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 		overlay.add(lineROI);
 	}
 
-	protected void adjustDisplayedImage (Result.ImageResult result) {
+	protected void adjustDisplayedImage (Image<?> img) {
 		/* when changing the result image to display
 		 * need to set the image we were looking at
 		 * back to not log scale,
@@ -511,22 +545,25 @@ public class SingleWindowDisplay extends ImageWindow implements Display, ItemLis
 		if (log.isSelected())
 			toggleLogarithmic(false);
 
-		currentlyDisplayedImageResult = result;
-		pixelAccessCursor = result.getData().createLocalizableByDimCursor();
+		currentlyDisplayedImageResult = img;
+		if (pixelAccessCursor != null){
+			pixelAccessCursor.close();
+		}
+		pixelAccessCursor = img.createLocalizableByDimCursor();
 
+		// Currently disabled, due to lag of non-histograms :-)
 		// disable list and copy button if it is no histogram result
-		listButton.setEnabled( listOfHistograms.contains(result) );
-		copyButton.setEnabled( listOfHistograms.contains(result) );
+		listButton.setEnabled( isHistogram(img) );
+		copyButton.setEnabled( isHistogram(img) );
 
-		drawImageResult(result);
+		drawImage(img);
 		toggleLogarithmic(log.isSelected());
 	}
 
 	public void itemStateChanged(ItemEvent e) {
 		if (e.getStateChange() == ItemEvent.SELECTED) {
-			// get current image result to view
-			Result.ImageResult result = (Result.ImageResult)(e.getItem());
-			adjustDisplayedImage(result);
+			Image<?> img = (Image<?>)(e.getItem());
+			adjustDisplayedImage(img);
 		}
 	}
 

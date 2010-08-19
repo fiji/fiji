@@ -86,9 +86,7 @@ public class LiHistogram2D<T extends RealType<T>> extends Histogram2D<T> {
 		}
 		liDiff = Math.abs(liMax - liMin);
 
-		// get the histogram image
-		Result.ImageResult imgResult = getHistogramImage(container);
-		container.add(imgResult);
+		generateHistogramData(container);
 	}
 
 
@@ -126,6 +124,7 @@ public class LiHistogram2D<T extends RealType<T>> extends Histogram2D<T> {
 			return (yBins - 1) - (int)(ch2Val * ch2BinWidth);
 	}
 
+	@Override
 	protected double getXMin(DataContainer container) {
 		return swapChannels ? (useCh1 ? container.getMinCh1(): container.getMinCh2()) : liMin;
 	}
