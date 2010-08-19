@@ -334,7 +334,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			System.out.println("Num regional maxima: " + centeredExtrema.size());
 			
 			/* 8 - Extract features for maxima */
-			final LoG<T> log = new LoG<T>(modImg, downsampleFactors);
+			final LoG<T> log = new LoG<T>(modImg, downsampleFactors, calibration);
 			//final BlobVariance<T> var = new BlobVariance<T>(img, diam, calibration);
 			final BlobBrightness<T> brightness = new BlobBrightness<T>(img, diam, calibration);
 			//final BlobContrast<T> contrast = new BlobContrast<T>(img, diam, calibration);
@@ -699,18 +699,16 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		final ContentInstant ci = c.getCurrent();
 		
 		// Set up dialog
-
 		final GenericDialog gd = new GenericDialog("Adjust Thresholds");
-		
-		//add for loop for handling different frames
-		final int t = ci.getTimepoint();
-		int counter = 0;  // counter which allows us to attach AdjustmentListener to the correct JSlider
+		final int t = ci.getTimepoint();	// store the timepoint, which is the for the thresholds, and point lists
+		int counter = 0;  					// counter which allows us to attach AdjustmentListener to the correct JSlider
 
+		// For every feature, create a slider that is used to threshold Spots based on that feature
 		for (final Feature feature : thresholdsAllFrames.get(t).keySet()) {
 			final int curr = counter;  // need this, because needs to be final in order to be used
 			
 			// Add slider for this Feature to dialog
-			final float tr =thresholdsAllFrames.get(t).get(feature);
+			final float tr = thresholdsAllFrames.get(t).get(feature);
 			double[] range = getRange(extremaAllFrames.get(t), feature);
 			gd.addSlider(feature.getName() + " Threshold", range[1], range[2], tr);
 			gd.addCheckbox("Auto", true);
@@ -765,7 +763,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 					univ.fireContentChanged(c);
 				}
 			};
-			
+
 			// Add an AdjustmentListener to the slider
 			((Scrollbar)gd.getSliders().get(curr)).
 			addAdjustmentListener(new AdjustmentListener() {
@@ -780,7 +778,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 					}
 				}
 			});
-			
+
 			// Add an ItemListener to the 'auto' checkbox
 			((Checkbox)gd.getCheckboxes().get(curr)).
 			addItemListener(new ItemListener() {
