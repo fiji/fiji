@@ -58,11 +58,5 @@ for a in architectures:
     pacific_directory = os.path.join(pacific_root,"binary-"+a)
     copy_to_directory( binary_files, pacific_directory )
 
-for tmp, real in updated_directories:
-    stmp = shellquote(tmp)
-    sreal = shellquote(real)
-    sbackup = shellquote(real+".moved")
-    if not ssh("mv "+sreal+" "+sbackup+" && mv "+stmp+" "+sreal+" && rm -rf "+sbackup):
-        raise Exception, "Failed to replace old versions with new ones"
-    if not ssh("/usr/local/bin/update-apt-repository"):
-        raise Exception, "Failed to update the Packages.gz and Sources.gz files"
+if not ssh("/usr/local/bin/rotate-apt-experimental"):
+    raise Exception, "Failed to update the Packages.gz and Sources.gz files"
