@@ -18,4 +18,4 @@ echo ==== Cleaning again:
 debian/update-debian.py --clean
 
 echo ==== Finally, building the packages:
-dpkg-buildpackage -rfakeroot -b -us -uc
+dpkg-buildpackage -rfakeroot -us -uc
