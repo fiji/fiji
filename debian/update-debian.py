@@ -29,11 +29,11 @@ from subprocess import call, check_call, Popen, PIPE
 # FIXME: keep the build dependencies in a separate file, make sure
 # that they're committed in the git version as well.
 
-check_call(["dpkg-checkbuilddeps","debian/control"])
-
 script_directory = sys.path[0]
 if not script_directory:
     raise Exception, "Couldn't find the directory in which the script lives"
+
+check_call(["dpkg-checkbuilddeps",os.path.join(script_directory,"control")])
 
 build_dependencies = []
 with open(os.path.join(script_directory,'build-dependencies')) as f:
