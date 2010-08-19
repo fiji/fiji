@@ -396,6 +396,11 @@ if options.clean_untracked:
     sys.exit(0)
 
 if options.clean:
+    # Make sure that the excludes in the submodules are
+    # up to date:
+    check_call([os.path.join(script_directory,"..","bin","gitignore-in-submodules.sh"),
+                "submodule"])
+
     clean_aggressively(source_directory)
 
     # Now remove some non-free parts of the Fiji distribution:
