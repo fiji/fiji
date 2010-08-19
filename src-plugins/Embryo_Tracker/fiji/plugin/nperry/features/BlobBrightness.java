@@ -12,10 +12,10 @@ public class BlobBrightness <T extends RealType<T>> extends IndependentFeatureAn
 
 	private static final Feature FEATURE = Feature.BRIGHTNESS;
 	private Image<T> img;
-	private double diam;
-	private double[] calibration;
+	private float diam;
+	private float[] calibration;
 	
-	public BlobBrightness(Image<T> originalImage, double diam, double[] calibration) {
+	public BlobBrightness(Image<T> originalImage, float diam, float[] calibration) {
 		this.img = originalImage;
 		this.diam = diam;
 		this.calibration = calibration;
@@ -34,12 +34,12 @@ public class BlobBrightness <T extends RealType<T>> extends IndependentFeatureAn
 	@Override
 	public void process(Spot spot) {
 		final LocalizableByDimCursor<T> cursor = img.createLocalizableByDimCursor(new OutOfBoundsStrategyValueFactory<T>());
-		final double[] origin = spot.getCoordinates();
+		final float[] origin = spot.getCoordinates();
 
 		// Create the size array for the ROI cursor
 		int size[] = new int[img.getNumDimensions()];
 		for (int i = 0; i < size.length; i++) {
-			size[i] = (int) (diam / calibration[i]);
+			size[i] = (int) (diam / calibration[i]);  // convert back to pixel units
 		}
 
 		// Adjust the integer coordinates of the spot to set the ROI correctly
@@ -83,10 +83,10 @@ public class BlobBrightness <T extends RealType<T>> extends IndependentFeatureAn
 	 * @param min
 	 * @return
 	 */
-	private boolean inSphere(double[] origin, int[] coords, double rad) {
+	private boolean inSphere(float[] origin, int[] coords, float rad) {
 		double euclDist = 0;
 		for (int i = 0; i < coords.length; i++) {
-			euclDist += Math.pow((origin[i] - (double) coords[i]) * calibration[i], 2);
+			euclDist += Math.pow((origin[i] - (float) coords[i]) * calibration[i], 2);
 		}
 		euclDist = Math.sqrt(euclDist);
 		return euclDist <= rad;
