@@ -37,7 +37,7 @@ public class BlobVariance <T extends RealType<T>> extends IndependentFeatureAnal
 	@Override
 	public void process(Spot spot) {		
 		final LocalizableByDimCursor<T> cursor = img.createLocalizableByDimCursor(new OutOfBoundsStrategyValueFactory<T>());
-		final double[] origin = spot.getCoordinates();
+		final float[] origin = spot.getCoordinates();
 		final ArrayList<Double> values = new ArrayList<Double>();
 		
 		// Create the size array for the ROI cursor
@@ -71,7 +71,7 @@ public class BlobVariance <T extends RealType<T>> extends IndependentFeatureAnal
 			valuesArr[i] = values.get(i).doubleValue();
 		}
 		double avg = MathLib.computeAverage(valuesArr);
-		double var = 0;
+		float var = 0;
 		for (int j = 0; j < valuesArr.length; j++) {
 			var += Math.pow(valuesArr[j] - avg, 2);
 		}
@@ -97,7 +97,7 @@ public class BlobVariance <T extends RealType<T>> extends IndependentFeatureAnal
 	 * @param min
 	 * @return
 	 */
-	private boolean inSphere(double[] origin, int[] coords, double rad) {
+	private boolean inSphere(float[] origin, int[] coords, double rad) {
 		double euclDist = 0;
 		for (int i = 0; i < coords.length; i++) {
 			euclDist += Math.pow((origin[i] - (double) coords[i]) * calibration[i], 2);

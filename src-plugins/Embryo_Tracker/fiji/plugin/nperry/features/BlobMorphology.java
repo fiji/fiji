@@ -13,10 +13,10 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 	 * Fields
 	 */
 	
-	private static final double SIGNIFICANCE_FACTOR = 5.0;
+	private static final double SIGNIFICANCE_FACTOR = 3.0;
 	private static final Feature FEATURE = Feature.MORPHOLOGY;
-	private static final double ELLIPSOID = 1;
-	private static final double SPHERICAL = 0;
+	private static final int ELLIPSOID = 1;
+	private static final int SPHERICAL = 0;
 	private Image<T> img;
 	private float diam;
 	private float[] calibration;
@@ -76,19 +76,16 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 		// 1 - Initialize local variables
 		final double[] azimuthOctants = new double[8];
 		final double[] inclinationOctants = new double[8];
-		final double[] origin = spot.getCoordinates();
-		final float[] fOrigin = new float[3];
+		final float[] origin = spot.getCoordinates();
 		int azOctant, incOctant;
 		double phi, theta, val;
-		for (int i = 0; i < origin.length; i++) {
-			fOrigin[i] = (float) origin[i];
-		}
-		final SphereCursor<T> cursor = new SphereCursor<T>(img, fOrigin, diam / 2, calibration);
-		System.out.println(MathLib.printCoordinates(calibration));
+		final SphereCursor<T> cursor = new SphereCursor<T>(img, origin, diam / 2, new float[] {1,1,1});
 		
 		// 2 - Iterate over pixels in sphere, assign to an octant by azimuth and then by inclination.
+		int counter = 0;
 		while (cursor.hasNext()) {
 			cursor.next();
+			counter++;
 			phi = cursor.getPhi();
 			theta = cursor.getTheta();
 			azOctant = getAzimuthOctantIndex(phi);
@@ -110,23 +107,32 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 		aggregateOctantPairs(azimuthOctants, azimuthOctantPairs);
 		aggregateOctantPairs(inclinationOctants, inclinationOctantPairs);
 		
-		//<debug>
-		System.out.println("--- New Spot ---");
-		System.out.println("Coordinates: " + MathLib.printCoordinates(fOrigin));
-		System.out.println("Azimuth intensities: " + azimuthOctants[0] + ", " + azimuthOctants[1] + ", " + azimuthOctants[2] + ", " + azimuthOctants[3] + ", " + azimuthOctants[4] + ", " + azimuthOctants[5] + ", " + azimuthOctants[6] + ", " + azimuthOctants[7]);
-		System.out.println("Azimuth pair intensities: " + azimuthOctantPairs[0] + ", " + azimuthOctantPairs[1] + ", " + azimuthOctantPairs[2] + ", " + azimuthOctantPairs[3]);
-		System.out.println("Inclination intensities: " + inclinationOctants[0] + ", " + inclinationOctants[1] + ", " + inclinationOctants[2] + ", " + inclinationOctants[3] + ", " + inclinationOctants[4] + ", " + inclinationOctants[5] + ", " + inclinationOctants[6] + ", " + inclinationOctants[7]);
-		System.out.println("Inclination pair intensities: " + azimuthOctantPairs[0] + ", " + azimuthOctantPairs[1] + ", " + azimuthOctantPairs[2] + ", " + azimuthOctantPairs[3]);
-		System.out.println();
-		//</debug>
-		
-		
 		// 3.2 - Search for significantly brighter octant pairs as compared to other pairs.
 		if (brighterOctantPairExists(azimuthOctantPairs) || brighterOctantPairExists(inclinationOctantPairs)) {
 			spot.addFeature(Feature.MORPHOLOGY, ELLIPSOID);  // 1 signifies ellipsoid
 		} else {
 			spot.addFeature(Feature.MORPHOLOGY, SPHERICAL);  // 0 signifies spherical
 		}
+		
+		//<debug>
+		System.out.println("--- New Spot ---");
+		System.out.println("Coordinates: " + MathLib.printCoordinates(origin) + "(" + origin[0] *.2 + ", " + origin[1] * .2 + ", " + origin[2] + ")");
+		System.out.println("Number pixels in sphere: " + counter);
+		System.out.println("Azimuth count: " + azCounts[0] + ", " + azCounts[1] + ", " + azCounts[2] + ", " + azCounts[3] + ", " + azCounts[4] + ", " + azCounts[5] + ", " + azCounts[6] + ", " + azCounts[7]);
+		System.out.println("Azimuth intensities: " + azimuthOctants[0] + ", " + azimuthOctants[1] + ", " + azimuthOctants[2] + ", " + azimuthOctants[3] + ", " + azimuthOctants[4] + ", " + azimuthOctants[5] + ", " + azimuthOctants[6] + ", " + azimuthOctants[7]);
+		System.out.println("Azimuth pair intensities: " + azimuthOctantPairs[0] + ", " + azimuthOctantPairs[1] + ", " + azimuthOctantPairs[2] + ", " + azimuthOctantPairs[3]);
+		System.out.println("Inclination count: " + incCounts[0] + ", " + incCounts[1] + ", " + incCounts[2] + ", " + incCounts[3] + ", " + incCounts[4] + ", " + incCounts[5] + ", " + incCounts[6] + ", " + incCounts[7]);
+		System.out.println("Inclination intensities: " + inclinationOctants[0] + ", " + inclinationOctants[1] + ", " + inclinationOctants[2] + ", " + inclinationOctants[3] + ", " + inclinationOctants[4] + ", " + inclinationOctants[5] + ", " + inclinationOctants[6] + ", " + inclinationOctants[7]);
+		System.out.println("Inclination pair intensities: " + inclinationOctantPairs[0] + ", " + inclinationOctantPairs[1] + ", " + inclinationOctantPairs[2] + ", " + inclinationOctantPairs[3]);
+		if (brighterOctantPairExists(azimuthOctantPairs) || brighterOctantPairExists(inclinationOctantPairs)) {
+			System.out.println("ELLIPSE");
+		} else {
+			System.out.println("SPHERE");
+		}
+		System.out.println();
+		//</debug>
+		
+		
 	}
 	
 	/**
@@ -266,16 +272,16 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 	 */
 	private final int getInclinationOctantIndex(double theta, double phi) {
 		int index;
-		if (theta >= 0) {
-			if (theta >= (Math.PI / 4)) {		// [45, 90] 
+		if (theta >= Math.PI / 2) {
+			if (theta >= (3 * Math.PI / 4)) {	// [135, 180] 
 				index = 3;
-			} else {							// [0, 45)
+			} else {							// [90, 135)
 				index = 2;
 			}
 		} else {
-			if (theta >= ( - Math.PI / 4)) {	// [-45, 0)
+			if (theta >= (Math.PI / 4)) {		// [45, 90)
 				index = 1;
-			} else {							// [-90, -45)
+			} else {							// [0, 45)
 				index = 0;
 			}
 		}

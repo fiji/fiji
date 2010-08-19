@@ -36,13 +36,13 @@ public class LoG <T extends RealType<T>> extends IndependentFeatureAnalyzer {
 
 	@Override
 	public void process(Spot spot) {
-		final double[] coords = spot.getCoordinates();
+		final float[] coords = spot.getCoordinates();
 		final double[] scaledCoords = toDownsampledCoords(coords);
 		final int[] intCoords = doubleCoordsToIntCoords(scaledCoords);
 		
 		cursor.setPosition(intCoords);
 		//spot.addScore(FEATURE_NAME, cursor.getType().getRealDouble());
-		spot.addFeature(FEATURE, cursor.getType().getRealDouble());
+		spot.addFeature(FEATURE, (float) cursor.getType().getRealDouble());
 	}
 	
 	@Override
@@ -50,7 +50,7 @@ public class LoG <T extends RealType<T>> extends IndependentFeatureAnalyzer {
 		return false;
 	}
 
-	private double[] toDownsampledCoords(double downsizedCoords[]) {
+	private double[] toDownsampledCoords(float downsizedCoords[]) {
 		double scaledCoords[] = new double[downsizedCoords.length];
 		for (int i = 0; i < downsizedCoords.length; i++) {
 			scaledCoords[i] = downsizedCoords[i] / downsampleFactors[i];

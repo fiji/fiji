@@ -32,7 +32,7 @@ public class BlobContrast <T extends RealType<T>> extends IndependentFeatureAnal
 
 	@Override
 	public void process(Spot spot) {
-		double contrast = getContrast(spot, diam);
+		float contrast = getContrast(spot, diam);
 		spot.addFeature(FEATURE, Math.abs(contrast));
 	}
 
