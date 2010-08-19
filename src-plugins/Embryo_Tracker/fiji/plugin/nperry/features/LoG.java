@@ -8,27 +8,49 @@ import fiji.plugin.nperry.Spot;
 
 public class LoG <T extends RealType<T>> extends IndependentFeatureAnalyzer {
 
+	/*
+	 * FIELDS
+	 */
+	
 	private static final Feature FEATURE = Feature.LOG_VALUE;
 	private Image<T> img;
 	private LocalizableByDimCursor<T> cursor;
-	private double downsampleFactors[];
-
+	private float[] downsampleFactors;
+	private float[] calibration;
+	
+	/*
+	 * CONSTRUCTORS
+	 */
+	
 	public LoG(Image<T> filteredImage) {
 		this.img = filteredImage;
 		this.cursor = img.createLocalizableByDimCursor();
-		this.downsampleFactors = new double[filteredImage.getNumDimensions()];
+		this.calibration = filteredImage.getCalibration();
+		this.downsampleFactors = new float[filteredImage.getNumDimensions()];
 		
 		for (int i = 0; i < downsampleFactors.length; i++) {
 			downsampleFactors[i] = 1;
 		}
 	}
 	
-	public LoG(Image<T> filteredImage, double downsampleFactors[]) {
+	public LoG(Image<T> filteredImage, float[] downsampleFactors) {
 		this.img = filteredImage;
 		this.cursor = img.createLocalizableByDimCursor();
 		this.downsampleFactors = downsampleFactors;
+		this.calibration = filteredImage.getCalibration();
+	}
+	
+	public LoG(Image<T> filteredImage, float[] downsampleFactors, float[] calibration) {
+		this.img = filteredImage;
+		this.downsampleFactors = downsampleFactors;
+		this.cursor = img.createLocalizableByDimCursor();
+		this.calibration = calibration;
 	}
 
+	/*
+	 * PUBLIC METHODS 
+	 */
+	
 	@Override
 	public Feature getFeature() {
 		return FEATURE;
@@ -36,33 +58,31 @@ public class LoG <T extends RealType<T>> extends IndependentFeatureAnalyzer {
 
 	@Override
 	public void process(Spot spot) {
-		final float[] coords = spot.getCoordinates();
-		final double[] scaledCoords = toDownsampledCoords(coords);
-		final int[] intCoords = doubleCoordsToIntCoords(scaledCoords);
+		final float[] coords = spot.getCoordinates().clone();
 		
+		// 1 - Convert physical coords to pixel coords
+		for (int i = 0; i < coords.length; i++) {
+			coords[i] = coords[i] / calibration[i];
+		}
+		
+		// 2 - Downsample pixel coords, since we are using the downsampled image.
+		for (int i = 0; i < coords.length; i++) {
+			coords[i] = coords[i] / downsampleFactors[i];
+		}
+		
+		// 3 - Store the float[] coords as a int[] to set the cursor with
+		final int[] intCoords = new int[coords.length];
+		for (int i = 0; i < intCoords.length; i++) {
+			intCoords[i] = (int) coords[i];
+		}
+		
+		// 4 - Get the intensity at the spot's coordinates
 		cursor.setPosition(intCoords);
-		//spot.addScore(FEATURE_NAME, cursor.getType().getRealDouble());
-		spot.addFeature(FEATURE, (float) cursor.getType().getRealDouble());
+		spot.addFeature(FEATURE, cursor.getType().getRealFloat());
 	}
 	
 	@Override
 	public boolean isNormalized() {
 		return false;
-	}
-
-	private double[] toDownsampledCoords(float downsizedCoords[]) {
-		double scaledCoords[] = new double[downsizedCoords.length];
-		for (int i = 0; i < downsizedCoords.length; i++) {
-			scaledCoords[i] = downsizedCoords[i] / downsampleFactors[i];
-		}
-		return scaledCoords;
-	}
-	
-	private int[] doubleCoordsToIntCoords(double doubleCoords[]) {
-		int intCoords[] = new int[doubleCoords.length];
-		for (int i = 0; i < doubleCoords.length; i++) {
-			intCoords[i] = (int) Math.round(doubleCoords[i]);
-		}
-		return intCoords;
 	}
 }
