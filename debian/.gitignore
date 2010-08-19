@@ -1,4 +1,5 @@
 /fiji-*
+!/fiji-*.copyright
 *.log
 /fiji
 *.substvars
