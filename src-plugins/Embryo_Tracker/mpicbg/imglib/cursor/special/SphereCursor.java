@@ -281,6 +281,62 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 	 * SPECIFIC SPHEREVOLUME METHODS
 	 */
 	
+	
+	/**
+	 * Return the number of pixels this cursor will iterate on (or, the number of iterations
+	 * it will do before exhausting). This can be seen as an approximation of the sphere volume
+	 * (though, in pixel coordinates), and is useful when one needs to know 
+	 * the number of pixel iterated on in advance. For instance:
+	 * <pre>
+	 * SphereCursor<T> sc = new SphereCursor(img, center, 5);
+	 * int arrraySize = sc.getNPixels();
+	 * float[] pixelVal = new float[arraySize];
+	 * int index = 0;
+	 * while (sc.hasNext()) {
+	 * 	sc.fwd();
+	 * 	pixelVal[index] = sc.getType().getRealFloat();
+	 * 	index++;
+	 * }
+	 * </pre>
+	 */
+	public int getNPixels() {
+		int pixel_count = 0;
+		final int nzplanes = Math.round(radius/calibrationX); // half nbr of planes
+		final int[] local_rys = new int[nzplanes+1];
+		final int[] local_rxs = new int [ Math.max(Math.round(radius/calibrationY), Math.round(radius/calibrationX))  +  1 ];
+		int local_ry, local_rx;
+
+		// Get all XY circles radiuses
+		getXYEllipseBounds(Math.round(radius/calibrationY), Math.round(radius/calibrationZ), local_rys); 
+		
+		// Deal with plane Z = 0
+		getXYEllipseBounds(Math.round(radius/calibrationX), Math.round(radius/calibrationY), local_rxs);
+		local_ry = local_rys[0];
+		local_rx = local_rxs[0]; // middle line
+		pixel_count += 2 * local_rx + 1;
+		for (int i = 1; i <= local_ry; i++) {
+			local_rx = local_rxs[i];
+			pixel_count += 2 * (2 * local_rx + 1); // Twice because we mirror
+		}
+		
+		// Deal with other planes
+		for (int j = 1; j <= nzplanes; j++) {
+			local_ry = local_rys[j];
+			if (local_ry ==0) 
+				continue;
+			getXYEllipseBounds(Math.round(local_ry*calibrationY/calibrationX), local_ry, local_rxs); 
+			local_rx = local_rxs[0]; // middle line
+			pixel_count += 2 * (2 * local_rx + 1); // twice we mirror in Z
+			for (int i = 1; i <= local_ry; i++) {
+				local_rx = local_rxs[i];
+				pixel_count += 4 * (2 * local_rx + 1); // 4 times because we mirror in Z and in Y
+			}
+		}
+		
+		return pixel_count;
+		
+	}
+	
 	/**
 	 * Move the center of the sphere to the location specified by the {@link Localizable} object. 
 	 * This <b>resets</b> this cursor.
@@ -509,10 +565,13 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 			rx = rxs[positionY];
 
 			cursor.setPosition(icenterY + positionY, 1);
-			state = CursorState.DRAWING_LINE;
 			positionX = -rx;
 			cursor.setPosition(icenterX - rx, 0);
 			nextState = CursorState.MIRROR_Y;
+			if (rx ==0)
+				state = CursorState.MIRROR_Y;
+			else
+				state = CursorState.DRAWING_LINE;				
 			break;
 
 		case MIRROR_Y:
@@ -521,7 +580,6 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 			positionY = - positionY;
 			cursor.setPosition(icenterY + positionY, 1);
 			cursor.setPosition(icenterX - rx, 0);
-			state = CursorState.DRAWING_LINE;
 			if (positionY <= - ry) {
 				if (doneZ) 
 					allDone  = true ;
@@ -530,6 +588,14 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 			}
 			else 
 				nextState = CursorState.INCREMENT_Y;
+			if (rx ==0)
+				if (allDone)
+					hasNext = false;
+				else
+					state = nextState;
+			else
+				state = CursorState.DRAWING_LINE;
+
 			break;
 
 		case INCREMENT_Z:
@@ -548,7 +614,7 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 				mirrorZ = true;
 			}
 
-			getXYEllipseBounds(Math.round(ry*calibrationY/calibrationX), Math.round(ry), rxs); 
+			getXYEllipseBounds(Math.round(ry*calibrationY/calibrationX), ry, rxs); 
 			rx = rxs[0] ; 
 			
 			cursor.setPosition(icenterX-rx, 0);
@@ -753,17 +819,17 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 		Image<UnsignedByteType> testImage = new ImageFactory<UnsignedByteType>(
 				new UnsignedByteType(),
 				new ArrayContainerFactory()
-		).createImage(new int[] {40, 40, 40}); //{80, 80, 40}); // 40µm x 40µm x 40µm
+		).createImage(new int[] {80, 80, 40}); // 40µm x 40µm x 40µm
 
-		float radius = 10;
-		float[] calibration = new float[] {1, 1, 1}; //{0.5f, 0.5f, 1}; 
+		float radius = 5; // µm
+		float[] calibration = new float[] {0.5f, 0.5f, 1}; 
 		SphereCursor<UnsignedByteType> cursor = new SphereCursor<UnsignedByteType>(
 				testImage, 
-				new float[] {20, 20, 20}, // in units
+				new float[] {20, 20, 20}, // in µm
 				radius, // µm
 				calibration);
 		int volume = 0;
-		while(cursor.hasNext) {
+		while(cursor.hasNext()) {
 			volume++;
 			cursor.fwd();
 //			cursor.getType().set((int) cursor.getDistanceSquared()); // to check we paint a sphere in physical coordinates
@@ -781,9 +847,11 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 		c.close();
 
 		System.out.println(String.format("Cursor for a shpere of radius %.1f", radius));
-		System.out.println(String.format("Iterated over %d pixels, real volume is: %.1f", volume, 4/3.0*Math.PI*radius*radius*radius));
+		System.out.println(String.format("Volume iterated prediction: %d pixels.", cursor.getNPixels()));
+		System.out.println(String.format("Iterated actually over %d pixels, real volume is: %.1f", volume, 4/3.0*Math.PI*radius*radius*radius));
 		System.out.println(String.format("Each pixel have been walked on at most %d times.", maxPixelValue));
 
+		
 		// Visualize results
 		ij.ImageJ.main(args);
 
@@ -793,6 +861,7 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 		imp.getCalibration().pixelDepth = calibration[2];
 		imp.getCalibration().setUnit("um");
 		imp.show();
+		
 		
 		float iRadius = 2;
 		
@@ -826,7 +895,7 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 		mainCursor.close();
 		destCursor.close();
 		long end = System.currentTimeMillis();
-		System.out.println(String.format("Iterated over %d pixels in %d ms: %.1e pixel/s.", pixelNumber, (end-start), pixelNumber/((float) (end-start)/1000) ));
+		System.out.println(String.format("Iterated over in total %d pixels in %d ms: %.1e pixel/s.", pixelNumber, (end-start), pixelNumber/((float) (end-start)/1000) ));
 		
 		ImagePlus dest = ImageJFunctions.copyToImagePlus(newImage);
 		dest.getCalibration().pixelWidth = calibration[0];
@@ -835,7 +904,7 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 		dest.getCalibration().setUnit("um");
 		dest.show();
 		
-		
+		/*
 		
 		// Compare with neighborhood cursor
 		Image<FloatType> newImage2 = new ImageFactory<FloatType>(
@@ -903,5 +972,6 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 		dest2.getCalibration().setUnit("um");
 		dest2.show();
 		
+		*/
 	}
 }
