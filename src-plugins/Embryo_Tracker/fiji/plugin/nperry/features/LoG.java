@@ -58,7 +58,7 @@ public class LoG <T extends RealType<T>> extends IndependentFeatureAnalyzer {
 
 	@Override
 	public void process(Spot spot) {
-		final float[] coords = spot.getCoordinates();
+		final float[] coords = spot.getCoordinates().clone();
 		
 		// 1 - Convert physical coords to pixel coords
 		for (int i = 0; i < coords.length; i++) {
