@@ -27,7 +27,7 @@ PACKAGE_IN_CHANGELOG=$(shell dpkg-parsechangelog | egrep ^Source: | sed "s/Sourc
 
 ADDITIONAL_JARS=$(shell debian/find-non-fiji-jars.py)
 
-CWD_BASENAME=$(shell basename `realpath .`)
+CWD_BASENAME=$(shell basename `readlink -n -f .`)
 REQUIRED_DIRECTORY_NAME=${PACKAGE_IN_CHANGELOG}-${VERSION_IN_CHANGELOG}
 
 prebuild-actions :
