@@ -5,6 +5,14 @@ Maintainer: Mark Longair <mhl@pobox.com>
 Build-Depends: debhelper (>= 5), gcc, lsb-release, dpkg-dev, openjdk-6-jdk, libjama-java (>= 1.0.2), ant, ant-optional, bsh, libbatik-java, libxml-commons-external-java, junit4 (>= 4.3), weka, libitext1-java, jython, libjzlib-java, clojure, rhino, libxml-commons-external-java, libpg-java, libjsch-java, libjcommon-java, libjfreechart-java, libjava3d-java, libvecmath-java, libjava3d-jni
 Standards-Version: 3.7.2
 
+Package: fiji-tracer
+Section: graphics
+Architecture: any
+Priority: extra
+Depends: fiji-plugins (>= 20100818134817), fiji-vib (>= 20100818134817), fiji-imagej (>= 20100813145758)
+Description: [FIXME: please write a description for this Fiji package]
+ [More description should go here.]
+
 Package: fiji-jpedal
 Section: graphics
 Architecture: any
@@ -74,7 +82,7 @@ Package: fiji-trakem2
 Section: graphics
 Architecture: any
 Priority: extra
-Depends: fiji-mpicbg (>= 20100812201753), fiji-bunwarpj (>= 20100417005423), fiji-imglib (>= 20100629163441), fiji-jai (>= 20080801134354), fiji-vib (>= 20100818134817), fiji-edu-mines-jtk (>= 20080801134354), fiji-imagej (>= 20100813145758), fiji-loci-tools (>= 20100814020501), fiji-plugins (>= 20100818200853)
+Depends: fiji-mpicbg (>= 20100812201753), fiji-bunwarpj (>= 20100417005423), fiji-imglib (>= 20100629163441), fiji-tracer (>= 20100818134817), fiji-jai (>= 20080801134354), fiji-vib (>= 20100818134817), fiji-edu-mines-jtk (>= 20080801134354), fiji-imagej (>= 20100813145758), fiji-loci-tools (>= 20100814020501), fiji-plugins (>= 20100818200853)
 Description: [FIXME: please write a description for this Fiji package]
  [More description should go here.]
 
@@ -90,7 +98,7 @@ Package: fiji-plugins
 Section: graphics
 Architecture: any
 Priority: extra
-Depends: fiji-mpicbg (>= 20100812201753), fiji-bunwarpj (>= 20100417005423), fiji-imglib (>= 20100629163441), fiji-vib (>= 20100818134817), fiji-weka (>= 20100609224141), fiji-base (>= 20100804172048), fiji-edu-mines-jtk (>= 20080801134354), fiji-imagej (>= 20100813145758), fiji-loci-tools (>= 20100814020501), fiji-trakem2 (>= 20100727171101)
+Depends: fiji-mpicbg (>= 20100812201753), fiji-bunwarpj (>= 20100417005423), fiji-imglib (>= 20100629163441), fiji-weka (>= 20100609224141), fiji-vib (>= 20100818134817), fiji-base (>= 20100804172048), fiji-edu-mines-jtk (>= 20080801134354), fiji-imagej (>= 20100813145758), fiji-loci-tools (>= 20100814020501), fiji-trakem2 (>= 20100727171101)
 Description: [FIXME: please write a description for this Fiji package]
  [More description should go here.]
 
@@ -157,8 +165,10 @@ Section: graphics
 Architecture: any
 Priority: extra
 Depends: fiji-rsyntaxtextarea (>= 20090524213156)
-Description: [FIXME: please write a description for this Fiji package]
- [More description should go here.]
+Description: a Java library providing IDE-like autocompletion
+ AutoComplete is a library allowing you to add IDE-like
+ auto-completion (aka "code completion" or "Intellisense") to any
+ Swing JTextComponent.  http://fifesoft.com/autocomplete/
 
 Package: fiji-ij-imageio
 Section: graphics
@@ -189,8 +199,12 @@ Section: graphics
 Architecture: any
 Priority: extra
 Depends: 
-Description: [FIXME: please write a description for this Fiji package]
- [More description should go here.]
+Description: a syntax highlighting text component for Java Swing
+ RSyntaxTextArea is a syntax highlighting text component for Java
+ Swing. It extends JTextComponent so it integrates completely with the
+ standard javax.swing.text package. It is fast and efficient, and can
+ be used in any application that needs to edit or view source code.
+ http://fifesoft.com/rsyntaxtextarea/
 
 Package: fiji-jai
 Section: graphics
@@ -229,14 +243,16 @@ Section: graphics
 Architecture: any
 Priority: extra
 Depends: fiji-imagej (>= 20100813145758)
-Description: [FIXME: please write a description for this Fiji package]
- [More description should go here.]
+Description: ImageJ plugins written by Kai Uwe Barthel
+ This package includes several ImageJ plugins written
+ by Kai Uwe Barthel, including Color_Inspector_3D,
+ Interactive_3D_Surface_Plot and Volume_Viewer.
 
 Package: fiji
 Section: graphics
 Architecture: all
 Priority: extra
-Depends: fiji-jpedal (>= 20080801134354), fiji-examples (>= 20100813144310), fiji-base (>= 20100818200853), fiji-imagej (>= 20100813145758), fiji-loci-tools (>= 20100814020501), fiji-bunwarpj (>= 20100417005423), fiji-color-histogram (>= 20100607205357), fiji-edu-mines-jtk (>= 20080801134354), fiji-trakem2 (>= 20100727171101), fiji-luts (>= 20100610024221), fiji-plugins (>= 20100818200853), fiji-scripting (>= 20100818200853), fiji-mpicbg (>= 20100812201753), fiji-lsm-toolbox (>= 20100813145758), fiji-view5d (>= 20100609192927), fiji-imglib (>= 20100629163441), fiji-mtrack2 (>= 20100607205357), fiji-vib (>= 20100818134817), fiji-autocomplete (>= 20090524213156), fiji-ij-imageio (>= 20081218211215), fiji-jruby (>= 20080801134354), fiji-lsm-reader (>= 20100322140540), fiji-rsyntaxtextarea (>= 20090524213156), fiji-jai (>= 20080801134354), fiji-weka (>= 20100609224141), fiji-mip (>= 20100818200853), fiji-io (>= 20100628114332), fiji-barthel-plugins (>= 20100607205357)
+Depends: fiji-tracer (>= 20100818134817), fiji-jpedal (>= 20080801134354), fiji-examples (>= 20100813144310), fiji-base (>= 20100818200853), fiji-imagej (>= 20100813145758), fiji-loci-tools (>= 20100814020501), fiji-bunwarpj (>= 20100417005423), fiji-color-histogram (>= 20100607205357), fiji-edu-mines-jtk (>= 20080801134354), fiji-trakem2 (>= 20100727171101), fiji-luts (>= 20100610024221), fiji-plugins (>= 20100818200853), fiji-scripting (>= 20100818200853), fiji-mpicbg (>= 20100812201753), fiji-lsm-toolbox (>= 20100813145758), fiji-view5d (>= 20100609192927), fiji-imglib (>= 20100629163441), fiji-mtrack2 (>= 20100607205357), fiji-vib (>= 20100818134817), fiji-autocomplete (>= 20090524213156), fiji-ij-imageio (>= 20081218211215), fiji-jruby (>= 20080801134354), fiji-lsm-reader (>= 20100322140540), fiji-rsyntaxtextarea (>= 20090524213156), fiji-jai (>= 20080801134354), fiji-weka (>= 20100609224141), fiji-mip (>= 20100818200853), fiji-io (>= 20100628114332), fiji-barthel-plugins (>= 20100607205357)
 Description: A metapackage for the Fiji image processing suite (based on ImageJ)
  Fiji is a project aiming at simplifying:
     * the installation of ImageJ
