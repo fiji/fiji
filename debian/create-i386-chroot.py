@@ -28,7 +28,8 @@ files_to_copy = [ "etc/passwd", "etc/shadow", "etc/group" ]
 
 check_call(["mkdir",chroot_path])
 check_call(["mkdir","-p",home_in_chroot])
-check_call(["chown","-R","mark.mark",home_in_chroot])
+check_call(["mkdir",os.path.join(chroot_path,"etc")])
+check_call(["chown","-R",owner_and_group,home_in_chroot])
 
 for f in files_to_copy:
     check_call(["cp","-a","/"+f,os.path.join(chroot_path,f)])
