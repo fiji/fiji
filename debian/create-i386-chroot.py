@@ -18,6 +18,7 @@ with open(os.path.join(script_directory,'build-dependencies')) as f:
         line = re.sub(' .*','',line.rstrip())
         build_dependencies.append(line)
 
+build_dependencies.append("fakeroot")
 
 if os.path.exists(chroot_path):
     print >> sys.stderr, "The path "+chroot_path+" already exists."
