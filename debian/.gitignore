@@ -1,5 +1,6 @@
 /fiji-*
 !/fiji-*.copyright
+!/fiji-*.README.Debian
 *.log
 /fiji
 *.substvars
