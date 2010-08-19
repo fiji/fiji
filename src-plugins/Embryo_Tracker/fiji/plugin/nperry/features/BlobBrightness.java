@@ -65,7 +65,7 @@ public class BlobBrightness <T extends RealType<T>> extends IndependentFeatureAn
 		//System.out.println();
 		while (cursor.hasNext()) {
 			cursor.next();
-			int[] pos = cursor.getPosition();
+			//int[] pos = cursor.getPosition();
 			//System.out.print(pos[0] + ", " + pos[1] + ", " + pos[2] + "; ");
 			intensity += cursor.getType().getRealFloat();
 		}

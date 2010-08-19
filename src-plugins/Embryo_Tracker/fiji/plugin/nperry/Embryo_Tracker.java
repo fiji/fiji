@@ -335,15 +335,15 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			
 			/* 8 - Extract features for maxima */
 			final LoG<T> log = new LoG<T>(modImg, downsampleFactors);
-			final BlobVariance<T> var = new BlobVariance<T>(img, diam, calibration);
+			//final BlobVariance<T> var = new BlobVariance<T>(img, diam, calibration);
 			final BlobBrightness<T> brightness = new BlobBrightness<T>(img, diam, calibration);
-			final BlobContrast<T> contrast = new BlobContrast<T>(img, diam, calibration);
+			//final BlobContrast<T> contrast = new BlobContrast<T>(img, diam, calibration);
 			//final BlobMorphology<T> morphology = new BlobMorphology<T>(img, diam, calibration);
-			final BlobMorphology<T> morphology = new BlobMorphology<T>(img, diam, new double[] {1,1,1});
+			//final BlobMorphology<T> morphology = new BlobMorphology<T>(img, diam, new double[] {1,1,1});
 			log.process(spots);
-			var.process(spots);
-			brightness.process(spots);
-			contrast.process(spots);
+			//var.process(spots);
+			//brightness.process(spots);
+			//contrast.process(spots);
 			//morphology.process(spots);
 		}
 		
@@ -361,19 +361,19 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		
 		
 		// <debug>
-		int counter = 1;
-		for (ArrayList<Spot> spots : extremaPostThresholdingAllFrames) {
-			BlobMorphology<T> morph = new BlobMorphology<T>(frames.get(counter - 1), diam, new double[] {1,1,1});
-			System.out.println("--- Frame " + counter + " ---");
-			for (Spot spot : spots) {
-				//double[] coords = spot.getCoordinates();
-				//System.out.println("[" + coords[0] + ", " + coords[1] + ", " + coords[2] + "] (" + coords[0] * .2 + ", " + coords[1] * .2 + ", " + coords[2] + ")");
-				morph.process(spot);
-			
-			}
-			counter++;
-			System.out.println();
-		}
+//		int counter = 1;
+//		for (ArrayList<Spot> spots : extremaPostThresholdingAllFrames) {
+//			BlobMorphology<T> morph = new BlobMorphology<T>(frames.get(counter - 1), diam, new double[] {1,1,1});
+//			System.out.println("--- Frame " + counter + " ---");
+//			for (Spot spot : spots) {
+//				//double[] coords = spot.getCoordinates();
+//				//System.out.println("[" + coords[0] + ", " + coords[1] + ", " + coords[2] + "] (" + coords[0] * .2 + ", " + coords[1] * .2 + ", " + coords[2] + ")");
+//				morph.process(spot);
+//			
+//			}
+//			counter++;
+//			System.out.println();
+//		}
 
 		// </debug>
 		
@@ -621,13 +621,13 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			// Calculate thresholds for each feature of interest.
 			HashMap<Feature, Float> thresholds = new HashMap<Feature, Float>();
 			final float logThreshold = otsuThreshold(framej, Feature.LOG_VALUE);  // threshold for frame
-			final float brightnessThreshold = otsuThreshold(framej, Feature.BRIGHTNESS);
-			final float contrastThreshold = otsuThreshold(framej, Feature.CONTRAST);
-			final float varThreshold = otsuThreshold(framej, Feature.VARIANCE);
+			//final float brightnessThreshold = otsuThreshold(framej, Feature.BRIGHTNESS);
+			//final float contrastThreshold = otsuThreshold(framej, Feature.CONTRAST);
+			//final float varThreshold = otsuThreshold(framej, Feature.VARIANCE);
 			thresholds.put(Feature.LOG_VALUE, logThreshold);
-			thresholds.put(Feature.BRIGHTNESS, brightnessThreshold);
-			thresholds.put(Feature.CONTRAST, contrastThreshold);
-			thresholds.put(Feature.VARIANCE, varThreshold);
+			//thresholds.put(Feature.BRIGHTNESS, brightnessThreshold);
+			//thresholds.put(Feature.CONTRAST, contrastThreshold);
+			//thresholds.put(Feature.VARIANCE, varThreshold);
 			thresholdsAllFrames.add(thresholds);
 
 			// Add the extrema coords to the pointlist
@@ -638,7 +638,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 				// 1. If the spot passes the threshold
 				if (aboveThresholds(spot, thresholds)) {
 					spot.setName(Integer.toString(i));
-					pl.add(spot.getName(), coords[0] * calibration[0], coords[1] * calibration[1], coords[2] * calibration[2]);  // Scale for each dimension, since the coordinates are unscaled now and from the downsampled image.	
+					pl.add(spot.getName(), coords[0], coords[1], coords[2]);	
 					shown.add(spot);
 				}
 				
@@ -756,7 +756,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 									notShown.remove(j);
 									j--;  // the remove() call above shifted all the remaining elements, so we need to decrement j to not skip an element
 									float[] coords = spot.getCoordinates();
-									pl.add(spot.getName(), coords[0] * calibration[0], coords[1] * calibration[1], coords[2] * calibration[2]);
+									pl.add(spot.getName(), coords[0], coords[1], coords[2]);
 									shown.add(spot);
 								}
 							}
