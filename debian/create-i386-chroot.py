@@ -4,6 +4,7 @@ import re
 import os
 import sys
 from subprocess import check_call
+from common import *
 
 script_directory = sys.path[0]
 if not script_directory:
@@ -17,9 +18,6 @@ with open(os.path.join(script_directory,'build-dependencies')) as f:
         line = re.sub(' .*','',line.rstrip())
         build_dependencies.append(line)
 
-# chroot_path = os.path.join(script_directory,"i386-chroot")
-chroot_path = "/var/chroot/squeeze-i386"
-home_in_chroot = os.path.join(chroot_path,"home/mark")
 
 if os.path.exists(chroot_path):
     print >> sys.stderr, "The path "+chroot_path+" already exists."

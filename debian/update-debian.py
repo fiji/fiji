@@ -11,6 +11,7 @@ import time
 from optparse import OptionParser
 from lxml import etree
 from subprocess import call, check_call, Popen, PIPE
+from common import *
 
 # On Ubuntu and Debian, the required Java3D jars are in these packages:
 #
@@ -275,21 +276,7 @@ if options.add_changelog_template:
     fp.close()
     sys.exit(0)
 
-# Find the version from the changelog:
-p = Popen(["dpkg-parsechangelog","-l"+os.path.join(script_directory,"changelog")],stdout=PIPE)
-changelog = p.communicate()[0]
-if p.returncode != 0:
-    raise Exception, "Failed to parse debian/changelog"
-
-version_match = re.search("(?ims)Version: (\S+)",changelog)
-if not version_match:
-    raise Exception, "Failed to find the Version field"
-
-version_from_changelog = version_match.group(1)
-
-if not re.match('^\d{14}$',version_from_changelog):
-    print >> sys.stderr, "Error: The version number is not of the form YYYYMMDDHHMMSS"
-    sys.exit(6)
+version_from_changelog = get_version_from_changelog(os.path.join(script_directory,"changelog"))
 
 source_directory_leafname = os.path.split(source_directory)[1]
 
