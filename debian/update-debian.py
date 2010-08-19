@@ -31,36 +31,16 @@ from subprocess import call, check_call, Popen, PIPE
 
 check_call(["dpkg-checkbuilddeps","debian/control"])
 
-build_dependencies = [ "debhelper (>= 5)",
-                       "gcc",
-                       "lsb-release",
-                       "dpkg-dev",
-                       "openjdk-6-jdk",
-                       "libjama-java (>= 1.0.2)",
-                       "ant",
-                       "ant-optional",
-                       "bsh",
-                       "libbatik-java",
-                       "libxml-commons-external-java",
-                       "junit4 (>= 4.3)",
-                       "weka",
-                       "libitext1-java",
-                       "jython",
-                       "libjzlib-java",
-                       "clojure",
-                       "rhino",
-                       "libxml-commons-external-java",
-                       "libpg-java",
-                       "libjsch-java",
-                       "libjcommon-java",
-                       "libjfreechart-java",
-                       "libjava3d-java",
-                       "libvecmath-java",
-                       "libjava3d-jni" ]
-
 script_directory = sys.path[0]
 if not script_directory:
     raise Exception, "Couldn't find the directory in which the script lives"
+
+build_dependencies = []
+with open(os.path.join(script_directory,'build-dependencies')) as f:
+    for line in f:
+        if re.search('^\s*$',line):
+            continue
+        build_dependencies.append(line.strip())
 
 default_package = "fiji-plugins"
 
