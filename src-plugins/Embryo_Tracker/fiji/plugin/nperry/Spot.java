@@ -11,7 +11,7 @@ public class Spot {
 	 */
 	
 	/** Store the individual features, and their values. */
-	private Map<Feature, Double> features = new HashMap<Feature, Double>();
+	private Map<Feature, Float> features = new HashMap<Feature, Float>();
 	/** Physical coordinates of this spot. Can have a time component. */
 	private float[] coordinates; 
 	/** A user-supplied name for this spot. */
@@ -69,7 +69,7 @@ public class Spot {
 	 * Returns a map of {@link Feature}s for this Spot.
 	 * @return A map with a {@link Feature} as a key, and the value of the {@link Feature} as the value. 
 	 */
-	public Map<Feature, Double> getFeatures() {
+	public Map<Feature, Float> getFeatures() {
 		return this.features;
 	}
 	
@@ -87,7 +87,7 @@ public class Spot {
 	 * @param feature The {@link Feature}.
 	 * @param value The {@link Feature}'s associated value.
 	 */
-	public void addFeature(Feature feature, double value) {
+	public void addFeature(Feature feature, float value) {
 		this.features.put(feature, value);
 	}
 	
