@@ -1,2 +1,4 @@
-Description: [FIXME: please write a description for this Fiji package]
- [More description should go here.]
+Description: a Java library providing IDE-like autocompletion
+ AutoComplete is a library allowing you to add IDE-like
+ auto-completion (aka "code completion" or "Intellisense") to any
+ Swing JTextComponent.  http://fifesoft.com/autocomplete/
