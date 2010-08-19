@@ -79,7 +79,7 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 		final float[] origin = spot.getCoordinates();
 		int azOctant, incOctant;
 		double phi, theta, val;
-		final SphereCursor<T> cursor = new SphereCursor<T>(img, origin, diam / 2, new float[] {1,1,1});
+		final SphereCursor<T> cursor = new SphereCursor<T>(img, origin, diam / 2, calibration);
 		
 		// 2 - Iterate over pixels in sphere, assign to an octant by azimuth and then by inclination.
 		int counter = 0;
@@ -116,7 +116,7 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 		
 		//<debug>
 		System.out.println("--- New Spot ---");
-		System.out.println("Coordinates: " + MathLib.printCoordinates(origin) + "(" + origin[0] *.2 + ", " + origin[1] * .2 + ", " + origin[2] + ")");
+		System.out.println("Coordinates: " + MathLib.printCoordinates(origin));
 		System.out.println("Number pixels in sphere: " + counter);
 		System.out.println("Azimuth count: " + azCounts[0] + ", " + azCounts[1] + ", " + azCounts[2] + ", " + azCounts[3] + ", " + azCounts[4] + ", " + azCounts[5] + ", " + azCounts[6] + ", " + azCounts[7]);
 		System.out.println("Azimuth intensities: " + azimuthOctants[0] + ", " + azimuthOctants[1] + ", " + azimuthOctants[2] + ", " + azimuthOctants[3] + ", " + azimuthOctants[4] + ", " + azimuthOctants[5] + ", " + azimuthOctants[6] + ", " + azimuthOctants[7]);

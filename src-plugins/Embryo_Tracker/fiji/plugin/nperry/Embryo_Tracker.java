@@ -338,8 +338,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			//final BlobVariance<T> var = new BlobVariance<T>(img, diam, calibration);
 			final BlobBrightness<T> brightness = new BlobBrightness<T>(img, diam, calibration);
 			//final BlobContrast<T> contrast = new BlobContrast<T>(img, diam, calibration);
-			//final BlobMorphology<T> morphology = new BlobMorphology<T>(img, diam, calibration);
-			//final BlobMorphology<T> morphology = new BlobMorphology<T>(img, diam, new double[] {1,1,1});
+			final BlobMorphology<T> morphology = new BlobMorphology<T>(img, diam, calibration);
 			log.process(spots);
 			//var.process(spots);
 			//brightness.process(spots);
@@ -361,19 +360,19 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		
 		
 		// <debug>
-//		int counter = 1;
-//		for (ArrayList<Spot> spots : extremaPostThresholdingAllFrames) {
-//			BlobMorphology<T> morph = new BlobMorphology<T>(frames.get(counter - 1), diam, new double[] {1,1,1});
-//			System.out.println("--- Frame " + counter + " ---");
-//			for (Spot spot : spots) {
-//				//double[] coords = spot.getCoordinates();
-//				//System.out.println("[" + coords[0] + ", " + coords[1] + ", " + coords[2] + "] (" + coords[0] * .2 + ", " + coords[1] * .2 + ", " + coords[2] + ")");
-//				morph.process(spot);
-//			
-//			}
-//			counter++;
-//			System.out.println();
-//		}
+		int counter = 1;
+		for (ArrayList<Spot> spots : extremaPostThresholdingAllFrames) {
+			BlobMorphology<T> morph = new BlobMorphology<T>(frames.get(counter - 1), diam, new double[] {1,1,1});
+			System.out.println("--- Frame " + counter + " ---");
+			for (Spot spot : spots) {
+				//double[] coords = spot.getCoordinates();
+				//System.out.println("[" + coords[0] + ", " + coords[1] + ", " + coords[2] + "] (" + coords[0] * .2 + ", " + coords[1] * .2 + ", " + coords[2] + ")");
+				morph.process(spot);
+			
+			}
+			counter++;
+			System.out.println();
+		}
 
 		// </debug>
 		
