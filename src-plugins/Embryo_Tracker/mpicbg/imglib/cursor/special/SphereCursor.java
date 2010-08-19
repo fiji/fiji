@@ -819,10 +819,10 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 		Image<UnsignedByteType> testImage = new ImageFactory<UnsignedByteType>(
 				new UnsignedByteType(),
 				new ArrayContainerFactory()
-		).createImage(new int[] {80, 80, 40}); // 40µm x 40µm x 40µm
+		).createImage(new int[] {40, 40, 40}); //{80, 80, 40}); // 40µm x 40µm x 40µm
 
 		float radius = 5; // µm
-		float[] calibration = new float[] {0.5f, 0.5f, 1}; 
+		float[] calibration = new float[] {1, 1, 1}; //{0.5f, 0.5f, 1}; 
 		SphereCursor<UnsignedByteType> cursor = new SphereCursor<UnsignedByteType>(
 				testImage, 
 				new float[] {20, 20, 20}, // in µm
@@ -863,7 +863,7 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 		imp.show();
 		
 		
-		float iRadius = 2;
+		float iRadius = 5;
 		
 		// Iterates over all pixels of the image, using the sphere cursor as a neighborhood cursor.
 		// We simply convolve.
@@ -903,6 +903,40 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 		dest.getCalibration().pixelDepth = calibration[2];
 		dest.getCalibration().setUnit("um");
 		dest.show();
+		
+		// Compare with HyperSphereIterator
+		// Compare with neighborhood cursor
+		Image<FloatType> newImage3 = new ImageFactory<FloatType>(
+				new FloatType(),
+				new ArrayContainerFactory()
+			).createImage(testImage.getDimensions());
+		LocalizableByDimCursor<FloatType> destCursor3 = newImage3.createLocalizableByDimCursor(new OutOfBoundsStrategyValueFactory<FloatType>());
+		
+		System.out.println("\nUsing the hyper-sphere cursor to convolve the whole image with a sphere of radius " + iRadius + "...");
+		pixelNumber = 0;
+		start = System.currentTimeMillis();
+		while (destCursor3.hasNext()) {
+			destCursor3.fwd();
+			final HyperSphereIterator<UnsignedByteType> hsc = new HyperSphereIterator<UnsignedByteType>(testImage, destCursor3, (int) iRadius, new OutOfBoundsStrategyValueFactory<UnsignedByteType>());
+			sum = 0;
+			while (hsc.hasNext()) {
+				hsc.fwd();
+				sum += hsc.getType().get();
+				pixelNumber++;
+			}
+			hsc.close();
+			destCursor3.getType().set(sum);
+		}
+		destCursor3.close();
+		end = System.currentTimeMillis();
+		System.out.println(String.format("Iterated over in total %d pixels in %d ms: %.1e pixel/s.", pixelNumber, (end-start), pixelNumber/((float) (end-start)/1000) ));
+		
+		ImagePlus dest3 = ImageJFunctions.copyToImagePlus(newImage3);
+		dest3.getCalibration().pixelWidth = calibration[0];
+		dest3.getCalibration().pixelHeight = calibration[1];
+		dest3.getCalibration().pixelDepth = calibration[2];
+		dest3.getCalibration().setUnit("um");
+		dest3.show();
 		
 		/*
 		
