@@ -1,20 +1,12 @@
 package fiji.plugin.nperry.features;
 
-import javax.media.j3d.Transform3D;
-import javax.vecmath.AxisAngle4f;
-import javax.vecmath.Point3f;
+import java.util.ArrayList;
+
 import javax.vecmath.Vector3d;
 
-import mpicbg.imglib.algorithm.math.MathLib;
-import mpicbg.imglib.container.array.ArrayContainerFactory;
-import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.special.SphereCursor;
 import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.ImageFactory;
-import mpicbg.imglib.image.display.imagej.ImageJFunctions;
-import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.RealType;
-import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import fiji.plugin.nperry.Feature;
 import fiji.plugin.nperry.Spot;
 
@@ -67,6 +59,30 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 	/*
 	 * PUBLIC METHODS
 	 */
+	
+	private static  ArrayList<Vector3d> prepareUnitVectors(double spacing) {
+		double radius;
+		double theta; // Angle measured from X axis to current point in the XZ plane
+		double phi; // Angle measured from the X axis to the current point in the XY plane
+		double x, y, z; // Coordinates of the unit vector
+		final ArrayList<Vector3d> unit_vectors = new ArrayList<Vector3d>();
+		for (theta = 0; theta <= Math.PI/2; theta += spacing) {
+			radius = Math.cos(theta);
+			z = Math.sin(theta);
+			for (phi = 0; phi < 2*Math.PI; phi += spacing/radius) {				
+				x = radius * Math.cos(phi);
+				y = radius * Math.sin(phi);
+				unit_vectors.add(new Vector3d(x, y, z));				
+			}
+		}
+		return unit_vectors;
+		
+		
+	}
+	
+	
+	
+	
 	
 	@Override
 	public Feature getFeature() {
@@ -417,56 +433,9 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 	
 	public static void main(String[] args) {
 
-		// Parameters
-		int size_x = 200;
-		int size_y = 200;
-		int size_z = 200;
-		float radius = 10;
-		float scale_x = 1;
-		float scale_y = 1;
-		float scale_z = 3;
-		float angle = (float) Math.toRadians(45);
-		float max_radius = radius * Math.max(scale_x, Math.max(scale_y, scale_z));
-		
-		// Create blank image
-		Image<UnsignedByteType> img = new ImageFactory<UnsignedByteType>(
-				new UnsignedByteType(),
-				new ArrayContainerFactory()
-			).createImage(new int[] {200, 200, 200});
-		final byte on = (byte) 255;
-		
-		// Scale
-		Transform3D transform = new Transform3D();
-		transform.setScale(new Vector3d(scale_x, scale_y, scale_z));
-//		transform.setRotation(new AxisAngle4f(0, 0, 1, angle));
-		transform.setRotation(new AxisAngle4f(1, 0, 0, angle));
-		
-		// Create an ellipse by transforming an ellipse
-		float[] center = new float[] { size_x/2, size_y/2, size_z/2 };
-		SphereCursor<UnsignedByteType> sc = new SphereCursor<UnsignedByteType>(img, center, radius);
-		LocalizableByDimCursor<UnsignedByteType> cursor = img.createLocalizableByDimCursor(new OutOfBoundsStrategyValueFactory<UnsignedByteType>());
-		Point3f p3 = new Point3f();
-		while (sc.hasNext()) {
-			sc.fwd();
-			p3.x = sc.getPosition(0) - center[0];
-			p3.y = sc.getPosition(1) - center[1];
-			p3.z = sc.getPosition(2) - center[2];
-			transform.transform(p3);
-			cursor.setPosition( (int) (p3.x + center[0]), 0);
-			cursor.setPosition( (int) (p3.y + center[1]), 1);
-			cursor.setPosition( (int) (p3.z + center[2]), 2);
-			cursor.getType().set(on);
+		ArrayList<Vector3d> uvs = prepareUnitVectors(Math.PI/4);
+		for (Vector3d uv : uvs) {
+			System.out.println(uv);
 		}
-		sc.close();
-		cursor.close();
-		
-		ij.ImageJ.main(args);
-		img.getDisplay().setMinMax();
-		ImageJFunctions.copyToImagePlus(img).show();
-		
-		BlobMorphology<UnsignedByteType> bm = new BlobMorphology<UnsignedByteType>(img, 2*max_radius);
-		Spot spot = new Spot(center);
-		bm.process(spot);
-		
 	}
 }
