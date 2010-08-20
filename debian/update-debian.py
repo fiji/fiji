@@ -12,6 +12,7 @@ from optparse import OptionParser
 from lxml import etree
 from subprocess import call, check_call, Popen, PIPE
 from common import *
+import textwrap
 
 # On Ubuntu and Debian, the required Java3D jars are in these packages:
 #
@@ -652,7 +653,12 @@ Standards-Version: 3.7.2""" % (", ".join(build_dependencies),))
             print "package "+p
             files = package_name_to_files[p]
             required_packages = {}
+            full_description = ""
+            descriptions_found = 0
+            first_description = None
+            readable_names = []
             for x in files:
+                readable_names.append( re.sub('_',' ',re.sub('\.[^\.]+$','',os.path.basename(x))).strip() )
                 if x not in filename_to_object:
                     print >> sys.stderr, "Warning: couldn't find dependencies for "+x
                     continue
@@ -660,6 +666,19 @@ Standards-Version: 3.7.2""" % (", ".join(build_dependencies),))
                 x_timestamp = filename_to_object[x].timestamp
                 if x_timestamp > most_recent_package_version[p]:
                     most_recent_package_version[p]  = x_timestamp
+                x_description = filename_to_object[x].description
+                if x_description:
+                    descriptions_found += 1
+                    if not first_description:
+                        first_description = x_description
+                    full_description += " .\n"
+                    x_description = decode_htmlentities(x_description)
+                    # Carriage return is used to separate paragraphs in the Fiji
+                    # descriptions.  Turn them into a paragraph mark:
+                    x_description = re.sub('(?ims)\s*\r\s*',u' \u00b6 ',x_description)
+                    wrapped_lines = textwrap.wrap( x + ": " + x_description, 72 )
+                    for line in wrapped_lines:
+                        full_description += " " + line + "\n"
                 # So for each file in this package, find its dependent
                 # files:
                 for d in filename_to_object[x].depends_on:
@@ -692,14 +711,29 @@ Standards-Version: 3.7.2""" % (", ".join(build_dependencies),))
             control_fp.write("Conflicts: fiji (<= 20090513)\n")
             # control_fp.write("Version: "+version_from_changelog+"\n")
             control_fp.write("Depends: "+", ".join(dependencies)+"\n")
-            description_filename = os.path.join(source_directory,"debian","package-extras","default-description")
-            ideal_description_filename = os.path.join(source_directory,"debian","package-extras",p,"description")
-            if os.path.exists(ideal_description_filename):
-                description_filename = ideal_description_filename
-            fp = open(description_filename)
-            description = fp.read().strip()
-            fp.close()
-            control_fp.write(description)
+            if False:
+                description_filename = os.path.join(source_directory,"debian","package-extras","default-description")
+                ideal_description_filename = os.path.join(source_directory,"debian","package-extras",p,"description")
+                if os.path.exists(ideal_description_filename):
+                    description_filename = ideal_description_filename
+                fp = open(description_filename)
+                description = fp.read().strip()
+                fp.close()
+                control_fp.write(description)
+            else:
+                synopsis = None
+                if descriptions_found == 1:
+                    synopsis = first_description
+                else:
+                    synopsis = "components from Fiji, including: "+", ".join(readable_names)
+                synopsis = re.sub('\s+',' ',synopsis)
+                control_fp.write('Description: '+trim_line(synopsis,70)+"\n")
+                if full_description:
+                    if descriptions_found == 1:
+                        control_fp.write(" Description from the Fiji database:\n")
+                    else:
+                        control_fp.write(" Descriptions from the Fiji database:\n")
+                    control_fp.write(full_description.encode('UTF-8'))
 
         control_fp.write("\n\nPackage: fiji\n")
         control_fp.write("Section: graphics\n")
