@@ -723,7 +723,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 					buffer.append("|}\n");
 				}
 				else if (name.equals("ul")) {
-					// TODO: handle nested lists
+					// TODO: handle nested lists, probably by getting rid of the Stack and doing proper recursion
 					for (int i = 0; i < e.getElementCount(); i++)
 						buffer.append("* " + getContent(e.getElement(i))).append("\n");
 				}
@@ -735,6 +735,8 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 				else if (name.equals("img")) {
 					String src;
 					if ((src = (String)getAttribute(e, Attribute.SRC)) != null) {
+						// TODO: just save it as-is, to avoid re-saving
+						// TODO: verify that the Wiki does not have the name yet (and modify otherwise)
 						ImagePlus image = new ImagePlus(new URL(url, (String)src).toString());
 						image.show();
 						// force saving to a temporary file
