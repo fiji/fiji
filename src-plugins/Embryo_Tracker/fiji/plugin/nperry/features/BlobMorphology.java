@@ -1,12 +1,20 @@
 package fiji.plugin.nperry.features;
 
-import ij.IJ;
-import ij.ImagePlus;
+import javax.media.j3d.Transform3D;
+import javax.vecmath.AxisAngle4f;
+import javax.vecmath.Point3f;
+import javax.vecmath.Vector3d;
+
 import mpicbg.imglib.algorithm.math.MathLib;
+import mpicbg.imglib.container.array.ArrayContainerFactory;
+import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.special.SphereCursor;
 import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.ImagePlusAdapter;
+import mpicbg.imglib.image.ImageFactory;
+import mpicbg.imglib.image.display.imagej.ImageJFunctions;
+import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.RealType;
+import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import fiji.plugin.nperry.Feature;
 import fiji.plugin.nperry.Spot;
 
@@ -77,8 +85,8 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 		final int[] incCounts = new int[8];
 		
 		// 1 - Initialize local variables
-		final double[] azimuthOctants = new double[8];
-		final double[] inclinationOctants = new double[8];
+		final float[] azimuthOctants = new float[8];
+		final float[] inclinationOctants = new float[8];
 		final float[] origin = spot.getCoordinates();
 		int azOctant, incOctant;
 		double phi, theta, val;
@@ -102,40 +110,148 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 			incCounts[incOctant]++;  //debug, for counting how many pixels belong to this octant
 		}
 		
+		// 2.5 Normalize to get mean intensities
+		for (int i = 0; i < inclinationOctants.length; i++) 
+			inclinationOctants[i] /= incCounts[i];
+		for (int i = 0; i < azimuthOctants.length; i++) {
+			azimuthOctants[i] /= azCounts[i];
+		}
+		
 		// 3 - Determine the shape of the object.
 		
 		// 3.1 - Aggregate octant pair intensities (a pair consists of two directly opposing octants).
-		double[] azimuthOctantPairs = new double[4];
-		double[] inclinationOctantPairs = new double[4];
+		float[] azimuthOctantPairs = new float[4];
+		float[] inclinationOctantPairs = new float[4];
 		aggregateOctantPairs(azimuthOctants, azimuthOctantPairs);
 		aggregateOctantPairs(inclinationOctants, inclinationOctantPairs);
 		
-		// 3.2 - Search for significantly brighter octant pairs as compared to other pairs.
-		if (brighterOctantPairExists(azimuthOctantPairs) || brighterOctantPairExists(inclinationOctantPairs)) {
-			spot.addFeature(Feature.MORPHOLOGY, ELLIPSOID);  // 1 signifies ellipsoid
-		} else {
-			spot.addFeature(Feature.MORPHOLOGY, SPHERICAL);  // 0 signifies spherical
-		}
 		
 		//<debug>
-		System.out.println("--- New Spot ---");
-		System.out.println("Coordinates: " + MathLib.printCoordinates(origin));
+		System.out.println(spot);
+
 		System.out.println("Number pixels in sphere: " + counter);
-		System.out.println("Azimuth count: " + azCounts[0] + ", " + azCounts[1] + ", " + azCounts[2] + ", " + azCounts[3] + ", " + azCounts[4] + ", " + azCounts[5] + ", " + azCounts[6] + ", " + azCounts[7]);
-		System.out.println("Azimuth intensities: " + azimuthOctants[0] + ", " + azimuthOctants[1] + ", " + azimuthOctants[2] + ", " + azimuthOctants[3] + ", " + azimuthOctants[4] + ", " + azimuthOctants[5] + ", " + azimuthOctants[6] + ", " + azimuthOctants[7]);
-		System.out.println("Azimuth pair intensities: " + azimuthOctantPairs[0] + ", " + azimuthOctantPairs[1] + ", " + azimuthOctantPairs[2] + ", " + azimuthOctantPairs[3]);
-		System.out.println("Inclination count: " + incCounts[0] + ", " + incCounts[1] + ", " + incCounts[2] + ", " + incCounts[3] + ", " + incCounts[4] + ", " + incCounts[5] + ", " + incCounts[6] + ", " + incCounts[7]);
-		System.out.println("Inclination intensities: " + inclinationOctants[0] + ", " + inclinationOctants[1] + ", " + inclinationOctants[2] + ", " + inclinationOctants[3] + ", " + inclinationOctants[4] + ", " + inclinationOctants[5] + ", " + inclinationOctants[6] + ", " + inclinationOctants[7]);
-		System.out.println("Inclination pair intensities: " + inclinationOctantPairs[0] + ", " + inclinationOctantPairs[1] + ", " + inclinationOctantPairs[2] + ", " + inclinationOctantPairs[3]);
-		if (brighterOctantPairExists(azimuthOctantPairs) || brighterOctantPairExists(inclinationOctantPairs)) {
+		
+		System.out.print("Azimuth count: \t\t");
+		for (int i = 0; i < azCounts.length; i++) 
+			System.out.print("\t\t"+azCounts[i]);
+		System.out.println();
+		
+		System.out.print("Azimuth intensities: \t");
+		for (int i = 0; i < azimuthOctants.length; i++) 
+			System.out.print(String.format("\t\t%.1e", azimuthOctants[i]));
+		System.out.println();
+		
+		System.out.print("Azimuth pair intensities: ");
+		for (int i = 0; i < azimuthOctantPairs.length; i++) 
+			System.out.print(String.format("\t\t%.1e", azimuthOctantPairs[i]));
+		System.out.println();
+		
+		System.out.print("Inclination count: \t");
+		for (int i = 0; i < incCounts.length; i++) 
+			System.out.print("\t\t"+incCounts[i]);
+		System.out.println();
+		
+		System.out.print("Inclination intensities: ");
+		for (int i = 0; i < inclinationOctants.length; i++) 
+			System.out.print(String.format("\t\t%.1e", inclinationOctants[i]));
+		System.out.println();
+		
+		System.out.print("Inclination pair intensities: ");
+		for (int i = 0; i < inclinationOctantPairs.length; i++) 
+			System.out.print(String.format("\t\t%.1e", inclinationOctantPairs[i]));
+		System.out.println();
+
+		
+		int maxAzIndex = 0;
+		float maxAz = Float.NEGATIVE_INFINITY;
+		for (int i = 0; i < azimuthOctantPairs.length; i++)
+			if (azimuthOctantPairs[i] > maxAz) {
+				maxAz = azimuthOctantPairs[i];
+				maxAzIndex = i;
+			}
+		
+		float interpolatedAngle;
+		float[] azAngles = new float[] {-67, -22, 22, 67 };
+		if (maxAzIndex == 0) {
+			interpolatedAngle = quadratic1DInterpolation(
+					azAngles[3]-180, azimuthOctantPairs[3], 
+					azAngles[0], azimuthOctantPairs[0], 
+					azAngles[1], azimuthOctantPairs[1]); 
+		} else if (maxAzIndex == 3) {
+			interpolatedAngle = quadratic1DInterpolation(
+					azAngles[2], azimuthOctantPairs[2], 
+					azAngles[3], azimuthOctantPairs[3], 
+					azAngles[0]+180, azimuthOctantPairs[0]); 
+		} else {
+			interpolatedAngle = quadratic1DInterpolation(
+					azAngles[maxAzIndex-1], azimuthOctantPairs[maxAzIndex-1], 
+					azAngles[maxAzIndex], azimuthOctantPairs[maxAzIndex], 
+					azAngles[maxAzIndex+1], azimuthOctantPairs[maxAzIndex+1]); 
+		}
+		
+		System.out.println(String.format("Interpolated azimuth: %.1f", interpolatedAngle+90));
+		
+		
+
+		int maxIncIndex = 0;
+		float maxInc = Float.NEGATIVE_INFINITY;
+		for (int i = 0; i < inclinationOctantPairs.length; i++)
+			if (inclinationOctantPairs[i] > maxInc) {
+				maxInc = inclinationOctantPairs[i];
+				maxIncIndex = i;
+			}
+		
+		float interpolatedIncAngle;
+		float[] incAngles = new float[] {22, 67, 113, 157 };
+		if (maxIncIndex == 0) {
+			interpolatedIncAngle = quadratic1DInterpolation(
+					incAngles[3]-180, inclinationOctantPairs[3], 
+					incAngles[0], inclinationOctantPairs[0], 
+					incAngles[1], inclinationOctantPairs[1]); 
+		} else if (maxIncIndex == 3) {
+			interpolatedIncAngle = quadratic1DInterpolation(
+					incAngles[2], inclinationOctantPairs[2], 
+					incAngles[3], inclinationOctantPairs[3], 
+					incAngles[0]+180, inclinationOctantPairs[0]); 
+		} else {
+			interpolatedIncAngle = quadratic1DInterpolation(
+					incAngles[maxIncIndex-1], inclinationOctantPairs[maxIncIndex-1], 
+					incAngles[maxIncIndex], inclinationOctantPairs[maxIncIndex], 
+					incAngles[maxIncIndex+1], inclinationOctantPairs[maxIncIndex+1]); 
+		}
+		
+		System.out.println(String.format("Interpolated inclination: %.1f", 180 - interpolatedIncAngle));
+		
+		
+		int azimuthIndex = brighterOctantPairExists(azimuthOctantPairs);
+		int inclinationIndex = brighterOctantPairExists(inclinationOctantPairs);
+		if (azimuthIndex >= 0  || inclinationIndex >= 0) {
 			System.out.println("ELLIPSE");
+			System.out.println("with azimuth index " + azimuthIndex);
+			System.out.println("and inclination index " + inclinationIndex);
 		} else {
 			System.out.println("SPHERE");
 		}
 		System.out.println();
 		//</debug>
 		
+		// 3.2 - Search for significantly brighter octant pairs as compared to other pairs.
+		if (azimuthIndex >= 0  || inclinationIndex >= 0) {
+			spot.addFeature(Feature.MORPHOLOGY, ELLIPSOID);  // 1 signifies ellipsoid
+		} else {
+			spot.addFeature(Feature.MORPHOLOGY, SPHERICAL);  // 0 signifies spherical
+		}
 		
+	}
+	
+	private static final float quadratic1DInterpolation(float x1, float y1, float x2, float y2, float x3, float y3) {
+		final float d2 = 2 * ( (y3-y2)/(x3-x2) - (y2-y1)/(x2-x1) ) / (x3-x1);
+		if (d2==0)
+			return x2;
+		else {
+			final float d1 = (y3-y2)/(x3-x2) - d2/2 * (x3-x2);
+			return x2 -d1/d2;
+		}
 	}
 	
 	/**
@@ -146,18 +262,19 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 	 * 
 	 * @param octantPairs An array of length 4 which contains the summed intensities of the octant pairs (which are defined
 	 * in {@link aggregateOctantPairs}.
-	 * @return Returns <code>true</code> if any pair is significant brigher than another pair, or <code>
-	 * false</code> otherwise.
+	 * @return Returns the octant pair index if any pair is significant brigher than another pair, or 
+ 	 * -1 otherwise.
 	 */
-	private final boolean brighterOctantPairExists(double[] octantPairs) {
-		boolean brighterPairExists = false;
+	private final int brighterOctantPairExists(float[] octantPairs) {
+		int octantPairFound = -1;
 		for (int i = 0; i < octantPairs.length; i++) {
 			for (int j = 0; j < octantPairs.length; j++) {
 				if (i ==j) continue;
-				if (octantPairs[i] >= SIGNIFICANCE_FACTOR * octantPairs[j]) brighterPairExists = true;  // if any pair is found to be significantly greater than another pair, we consider it non-spherical.
+				if (octantPairs[i] >= SIGNIFICANCE_FACTOR * octantPairs[j]) 
+					octantPairFound = i;  // if any pair is found to be significantly greater than another pair, we consider it non-spherical.
 			}
 		}
-		return brighterPairExists;
+		return octantPairFound;
 	}
 	
 	/**
@@ -178,7 +295,7 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 	 *
 	 * Opposing octants: (0,4), (1,5), (2,6), (3,7)
 	 */
-	public final void aggregateOctantPairs(double[] octants, double[] octantPairs) {
+	public final void aggregateOctantPairs(float[] octants, float[] octantPairs) {
 		for (int i = 0; i < 4; i++) {
 			octantPairs[i] = octants[i] + octants[i + 4];
 		}
@@ -264,13 +381,14 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 	 */
 	/*
 	 * For help with above:
-	 *       _________     
+	 *        _______
+	 *       /   |   \     
 	 *      / \3 | 4/ \    
 	 *     / 2 \ | / 5 \   
 	 *    |_____\|/_____|  
 	 *     \ 1  /|\  6 /   
-	 *      \ /  |  \ /    
-	 *	     \_0_|_7_/     
+	 *      \ /0 |7 \ /    
+	 *	     \___|___/     
 	 *
 	 */
 	private final int getInclinationOctantIndex(double theta, double phi) {
@@ -298,7 +416,57 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 	}
 	
 	public static void main(String[] args) {
-		
 
+		// Parameters
+		int size_x = 200;
+		int size_y = 200;
+		int size_z = 200;
+		float radius = 10;
+		float scale_x = 1;
+		float scale_y = 1;
+		float scale_z = 3;
+		float angle = (float) Math.toRadians(45);
+		float max_radius = radius * Math.max(scale_x, Math.max(scale_y, scale_z));
+		
+		// Create blank image
+		Image<UnsignedByteType> img = new ImageFactory<UnsignedByteType>(
+				new UnsignedByteType(),
+				new ArrayContainerFactory()
+			).createImage(new int[] {200, 200, 200});
+		final byte on = (byte) 255;
+		
+		// Scale
+		Transform3D transform = new Transform3D();
+		transform.setScale(new Vector3d(scale_x, scale_y, scale_z));
+//		transform.setRotation(new AxisAngle4f(0, 0, 1, angle));
+		transform.setRotation(new AxisAngle4f(1, 0, 0, angle));
+		
+		// Create an ellipse by transforming an ellipse
+		float[] center = new float[] { size_x/2, size_y/2, size_z/2 };
+		SphereCursor<UnsignedByteType> sc = new SphereCursor<UnsignedByteType>(img, center, radius);
+		LocalizableByDimCursor<UnsignedByteType> cursor = img.createLocalizableByDimCursor(new OutOfBoundsStrategyValueFactory<UnsignedByteType>());
+		Point3f p3 = new Point3f();
+		while (sc.hasNext()) {
+			sc.fwd();
+			p3.x = sc.getPosition(0) - center[0];
+			p3.y = sc.getPosition(1) - center[1];
+			p3.z = sc.getPosition(2) - center[2];
+			transform.transform(p3);
+			cursor.setPosition( (int) (p3.x + center[0]), 0);
+			cursor.setPosition( (int) (p3.y + center[1]), 1);
+			cursor.setPosition( (int) (p3.z + center[2]), 2);
+			cursor.getType().set(on);
+		}
+		sc.close();
+		cursor.close();
+		
+		ij.ImageJ.main(args);
+		img.getDisplay().setMinMax();
+		ImageJFunctions.copyToImagePlus(img).show();
+		
+		BlobMorphology<UnsignedByteType> bm = new BlobMorphology<UnsignedByteType>(img, 2*max_radius);
+		Spot spot = new Spot(center);
+		bm.process(spot);
+		
 	}
 }
