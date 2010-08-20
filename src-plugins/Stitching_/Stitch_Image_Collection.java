@@ -182,7 +182,7 @@ public class Stitch_Image_Collection implements PlugIn
 			computePhaseCorrelations(overlappingTiles, handleRGB);
 			
 			// compute the model
-			newImageInformationList = optimize(overlappingTiles);
+			newImageInformationList = optimize( overlappingTiles, imageInformationList.get( 0 ) );
 			
 			if(newImageInformationList == null)
 				return null;
@@ -968,7 +968,7 @@ public class Stitch_Image_Collection implements PlugIn
 		return max;
 	}
 	
-	private ArrayList<ImageInformation> optimize(final ArrayList<OverlapProperties> overlappingTiles)
+	private ArrayList<ImageInformation> optimize(final ArrayList<OverlapProperties> overlappingTiles, final ImageInformation firstImage)
 	{
 		boolean redo;
 		TileConfiguration tc;
@@ -1013,10 +1013,19 @@ public class Stitch_Image_Collection implements PlugIn
 			}
 			IJ.log("Tile size: " + tiles.size());
 			
-			if(tiles.size() == 0)
+			if( tiles.size() == 0 )
 			{
-				IJ.error("No correlated tiles found!");
-				return null;
+				IJ.log("Error: No correlated tiles found, setting the first tile to (0,0,0).");
+				
+				for ( int d = 0; d < firstImage.position.length; ++d )
+					firstImage.position[ d ] = 0;
+				
+				ArrayList<ImageInformation> imageInformationList = new ArrayList<ImageInformation>();
+				imageInformationList.add( firstImage );
+				
+				IJ.log(" image information list size =" + imageInformationList.size());
+				
+				return imageInformationList;
 			}						
 			
 			// trash everything but the largest graph			
