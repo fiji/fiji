@@ -19,7 +19,6 @@ public class RegionalExtremaFactory<T extends RealType<T>> implements Factory {
 	 */
 	
 	private Image<T> image;
-	private float[] calibration;
 	private String errorMessage;
 
 	/**
@@ -30,9 +29,8 @@ public class RegionalExtremaFactory<T extends RealType<T>> implements Factory {
 	 * @param img
 	 * @param overTime
 	 */
-	public RegionalExtremaFactory(Image<T> img, float[] calibration) {
+	public RegionalExtremaFactory(Image<T> img) {
 		this.image = img;
-		this.calibration = calibration;
 	}
 	
 	/**

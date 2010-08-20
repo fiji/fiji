@@ -43,13 +43,14 @@ public interface RegionalExtremaFinder<T extends RealType<T>> extends Algorithm,
 	 */
 	public ArrayList< float[] > getRegionalExtremaCenters(boolean doInterpolate);
 	
+
 	/**
-	 * Converts an ArrayList of coordinate arrays to be an ArrayList of Spot objects,
-	 * which can be used for scoring.
-	 * 
-	 * @param coords The ArrayList holding double arrays for coordinates
-	 * @return An ArrayList of the same length as the input ArrayList is returned, with coordinates
-	 * stored as Spot objects rather than double[].
+	 * Create a {@link Spot} ArrayList from a list of coordinates. Since the spot 
+	 * coordinates are expected to be in physical units, a calibration array
+	 * is used to translate the pixel coordinates in physical coordinates.
+	 * @param  coords  the coordinates in pixel units
+	 * @param  calibration  the calibration array that stores pixel size
+	 * @return  spots with coordinates in physical units 
 	 */
 	public ArrayList< Spot > convertToSpots(ArrayList< float[] > coords, float[] calibration);
 	

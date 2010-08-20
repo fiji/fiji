@@ -42,7 +42,7 @@ public abstract class AbstractRegionalExtremaFinder<T extends RealType<T>> imple
 		return centeredRegionalMaxima;
 	}
 	
-	// spot coordinates are physical (calibrated) coordinates.
+	@Override
 	public ArrayList< Spot > convertToSpots(ArrayList< float[] > coords, float[] calibration) {
 		ArrayList< Spot > spots = new ArrayList< Spot >();
 		Iterator< float[] > itr = coords.iterator();
@@ -64,22 +64,17 @@ public abstract class AbstractRegionalExtremaFinder<T extends RealType<T>> imple
 	 * @param searched
 	 * @return
 	 */
-	protected float[] findAveragePosition(ArrayList < int[] > coords) {
-		// Determine dimensionality
-		int[] firstArray = coords.get(0);
-		int nDims = firstArray.length;
-		float[] array = new float[nDims];
-		int count = 0;
-		while(!coords.isEmpty()) {
-			int curr[] = coords.remove(0);
-			for (int i = 0; i<nDims; i++) {
+	protected float[] findAveragePosition(final ArrayList < int[] > coords) {
+		int nDims = coords.get(0).length;
+		final float[] array = new float[nDims];
+		int[] curr;
+		for (int j = 0; j < coords.size(); j++) {
+			curr = coords.get(j);
+			for (int i = 0; i<nDims; i++) 
 				array[i] += curr[i];
-			}
-			count++;
 		}
-		for (int i = 0; i < array.length; i++) {
-			array[i] /= count;
-		}
+		for (int i = 0; i < array.length; i++)
+			array[i] /= coords.size();
 		return array;
 	}
 	

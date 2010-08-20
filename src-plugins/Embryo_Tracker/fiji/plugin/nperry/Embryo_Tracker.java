@@ -1,8 +1,6 @@
 package fiji.plugin.nperry;
 
-import fiji.plugin.nperry.features.BlobMorphology;
 import fiji.plugin.nperry.features.LoG;
-import fiji.plugin.nperry.tracking.ObjectTracker;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.GenericDialog;
@@ -186,7 +184,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			/* 6 - Find extrema of newly convoluted image */
 			
 			IJ.showStatus("Finding extrema...");
-			final RegionalExtremaFactory<T> extremaFactory = new RegionalExtremaFactory<T>(filteredImg, calibration);
+			final RegionalExtremaFactory<T> extremaFactory = new RegionalExtremaFactory<T>(filteredImg);
 			final RegionalExtremaFinder<T> findExtrema = extremaFactory.createRegionalMaximaFinder(true);
 			findExtrema.allowEdgeExtrema(allowEdgeMax);
 			if (!findExtrema.checkInput() || !findExtrema.process()) { 
@@ -630,7 +628,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			this.go = false;
 			synchronized (this) { notify(); }
 		}
-		
+
 		/*
 		 * This class has to be implemented by subclasses, to define
 		 * the specific updating function.
