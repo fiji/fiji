@@ -730,9 +730,9 @@ Standards-Version: 3.7.2""" % (", ".join(build_dependencies),))
                 control_fp.write('Description: '+trim_line(synopsis,70)+"\n")
                 if full_description:
                     if descriptions_found == 1:
-                        control_fp.write(" Description from the Fiji database:\n")
+                        control_fp.write(" The description below is extracted from the Fiji Updater database.\n")
                     else:
-                        control_fp.write(" Descriptions from the Fiji database:\n")
+                        control_fp.write(" The descriptions below are extracted from the Fiji Updater database:\n")
                     control_fp.write(full_description.encode('UTF-8'))
 
         control_fp.write("\n\nPackage: fiji\n")
