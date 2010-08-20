@@ -30,17 +30,24 @@ public class UptodateCheck implements PlugIn {
 
 	public void run(String arg) {
 		Util.useSystemProxies();
-		if ("quick".equals(arg))
+		if ("quick".equals(arg)) {
+			// "quick" is used on startup; don't produce an error in the Debian packaged version
+			if (Updater.isDebian())
+				return;
 			checkOrShowDialog();
-		else if ("verbose".equals(arg)) {
-			String result = checkOrShowDialog();
-			if (result != null)
-				JOptionPane.showMessageDialog(IJ.getInstance(),
-					result, "Up-to-date check",
-					JOptionPane.INFORMATION_MESSAGE);
+		} else {
+			if (Updater.errorIfDebian())
+				return;
+			if ("verbose".equals(arg)) {
+				String result = checkOrShowDialog();
+				if (result != null)
+					JOptionPane.showMessageDialog(IJ.getInstance(),
+						result, "Up-to-date check",
+						JOptionPane.INFORMATION_MESSAGE);
+			}
+			else if ("config".equals(arg) && !isBatchMode())
+				config();
 		}
-		else if ("config".equals(arg) && !isBatchMode())
-			config();
 	}
 
 	public String checkOrShowDialog() {
