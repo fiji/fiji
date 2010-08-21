@@ -169,6 +169,30 @@ package_name_to_file_matchers = {
 
 }
 
+map_to_external_dependencies = {
+    'jars/batik\.jar' : ( 'libbatik-java', ),
+    'jars/jython\.jar' : ( 'jython', ),
+    'jars/bsh.*\.jar' : ('bsh', ),
+    'jars/clojure.*\.jar' : ( 'clojure', ),
+    'jars/junit.*\.jar' : ( 'junit', ),
+    'jars/js\.jar' : ( 'rhino', ),
+    'jars/Jama.*\.jar': ( 'libjama-java', ),
+    'jars/itext.*\.jar' : ( 'libitext1-java', ),
+    'jars/jzlib.*\.jar' : ( 'libjzlib-java', ),
+    'jars/jfreechart.*\.jar' : ( 'libjfreechart-java', ),
+    'jars/jcommon.*\.jar' : ( 'libjcommon-java', ),
+    'jars/jsch.*\.jar' : ( 'libjsch-java', ),
+    'jars/postgresql.*\.jar' : ( 'libpg-java', ),
+    'jars/ant.*\.jar' : ( 'ant', 'ant-optional' ),
+    'jars/jruby.*\.jar' : ( 'jruby', )
+}
+
+def replacement_dependencies(fiji_file):
+    for r in map_to_external_dependencies:
+        if re.search(r,fiji_file):
+            return map_to_external_dependencies[r]
+    return None
+
 file_to_package_name_dictionary = {}
 regular_expressions_to_package = []
 
@@ -368,6 +392,12 @@ def absolute_submodule_paths(top_level_working_directory):
             result.append(os.path.join(top_level_working_directory,m.group(2)))
     return result
 
+def package_version_to_string(package,version):
+    if version:
+        return package + " (>= "+version+")"
+    else:
+        return package
+
 def check_git_status_clean(top_level_working_directory):
     os.chdir(top_level_working_directory)
     if 0 != call("git rev-parse --is-inside-work-tree > /dev/null",shell=True):
@@ -429,6 +459,8 @@ if options.clean:
     to_remove.append("clojure")
     to_remove.append("junit")
     to_remove.append("jars/js.jar")
+    to_remove.append("jars/bsh*.jar")
+    to_remove.append("jars/Jama*.jar")
     to_remove.append("jars/itext*.jar")
     to_remove.append("jars/jzlib*.jar")
     to_remove.append("jars/jcommon*.jar")
@@ -682,26 +714,34 @@ Standards-Version: 3.7.2""" % (", ".join(build_dependencies),))
                 # So for each file in this package, find its dependent
                 # files:
                 for d in filename_to_object[x].depends_on:
-                    if not os.path.exists(d.filename):
-                        print >> sys.stderr, "        Skipping dependent file %s since it doesn't exist"
-                        continue
-                    other_package = filename_to_package(d.filename)
-                    print "        ("+x+" => "+d.filename+" ["+other_package+"])"
-                    # If the dependent file is actually in the same
-                    # package then just ignore it:
-                    if other_package == p:
-                        continue
-                    required_packages.setdefault(other_package,d.timestamp)
-                    if d.timestamp > required_packages[other_package]:
-                        required_packages[other_package] = d.timestamp
+                    package_replacements = replacement_dependencies(d.filename)
+                    if package_replacements:
+                        print >> sys.stderr, "        Using external dependencies for %s" % (d,)
+                        for pr in package_replacements:
+                            print >> sys.stderr, "            Adding a dependency on %s" % (pr,)
+                            # Don't specify a particular version - might want
+                            # to change this...
+                            required_packages.setdefault(pr,None)
+                    else:
+                        if os.path.exists(d.filename):
+                            other_package = filename_to_package(d.filename)
+                            print "        ("+x+" => "+d.filename+" ["+other_package+"])"
+                            # If the dependent file is actually in the same
+                            # package then just ignore it:
+                            if other_package == p:
+                                continue
+                            required_packages.setdefault(other_package,d.timestamp)
+                            if d.timestamp > required_packages[other_package]:
+                                required_packages[other_package] = d.timestamp
+                        else:
+                            print >> sys.stderr, "        Skipping dependent file %s since it doesn't exist, and there's no replacement package" % (d.filename)
             for package_name, most_recent_requirement in required_packages.items():
-                print "   requires "+package_name+" >= "+most_recent_requirement
+                print "   requires "+ package_version_to_string(package_name,most_recent_requirement)
 
             dependencies = []
             if required_packages:
                 for dependent_package, timestamp in required_packages.items():
-                    s = dependent_package+" (>= "+timestamp+")"
-                    dependencies.append(s)
+                    dependencies.append(package_version_to_string(dependent_package,timestamp))
 
             control_fp.write("\n\nPackage: "+p+"\n")
             control_fp.write("Section: graphics\n")
