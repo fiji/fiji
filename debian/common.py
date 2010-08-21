@@ -52,3 +52,15 @@ def trim_line(s,max_length):
     else:
         substitution = " [...]"
         return rs[0:(max_length-len(substitution))].rstrip() + substitution
+
+def classpath_definitions_from(filename):
+    result = {}
+    with open(filename) as f:
+        for line in f:
+            matches = re.findall('CLASSPATH\((.*?)\)=([\w\.\:/\-]+)',line)
+            for m in matches:
+                target_filename = m[0]
+                result.setdefault(target_filename,[])
+                for j in m[1].split(':'):
+                    result[target_filename].append(j)
+    return result
