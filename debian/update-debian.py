@@ -301,6 +301,21 @@ if options.add_changelog_template:
     fp.close()
     sys.exit(0)
 
+# Extract the Java 3D dependencies from the build-command script:
+
+additional_java3d_dependencies = {}
+build_command_script = os.path.join(script_directory,"build-command")
+classpath_definitions = classpath_definitions_from(build_command_script)
+
+for file_to_build, dependents in classpath_definitions.items():
+    for j in dependents:
+        if re.search('(j3dcore|j3dutils)\.jar',j):
+            additional_java3d_dependencies.setdefault(file_to_build,set([]))
+            additional_java3d_dependencies[file_to_build].add('libjava3d-java')
+        elif re.search('vecmath\.jar',j):
+            additional_java3d_dependencies.setdefault(file_to_build,set([]))
+            additional_java3d_dependencies[file_to_build].add('libvecmath-java')
+
 version_from_changelog = get_version_from_changelog(os.path.join(script_directory,"changelog"))
 
 source_directory_leafname = os.path.split(source_directory)[1]
@@ -689,7 +704,10 @@ Standards-Version: 3.7.2""" % (", ".join(build_dependencies),))
             descriptions_found = 0
             first_description = None
             readable_names = []
+            java3d_dependencies = set([])
             for x in files:
+                if x in additional_java3d_dependencies:
+                    java3d_dependencies.update(additional_java3d_dependencies[x])
                 readable_names.append( re.sub('_',' ',re.sub('\.[^\.]+$','',os.path.basename(x))).strip() )
                 if x not in filename_to_object:
                     print >> sys.stderr, "Warning: couldn't find dependencies for "+x
@@ -735,6 +753,8 @@ Standards-Version: 3.7.2""" % (", ".join(build_dependencies),))
                                 required_packages[other_package] = d.timestamp
                         else:
                             print >> sys.stderr, "        Skipping dependent file %s since it doesn't exist, and there's no replacement package" % (d.filename)
+            for j in java3d_dependencies:
+                required_packages.setdefault(j,None)
             for package_name, most_recent_requirement in required_packages.items():
                 print "   requires "+ package_version_to_string(package_name,most_recent_requirement)
 
