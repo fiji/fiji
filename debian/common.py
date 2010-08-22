@@ -57,7 +57,7 @@ def classpath_definitions_from(filename):
     result = {}
     with open(filename) as f:
         for line in f:
-            matches = re.findall('CLASSPATH\((.*?)\)=([\w\.\:/\-]+)',line)
+            matches = re.findall('CLASSPATH\((.*?)\)=([\w\.\:/\-\$]+)',line)
             for m in matches:
                 target_filename = m[0]
                 result.setdefault(target_filename,[])
