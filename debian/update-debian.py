@@ -164,6 +164,9 @@ package_name_to_file_matchers = {
     "fiji-weka" :
         [ "jars/weka.jar" ],
 
+    "fiji-3d-viewer" :
+        [ "plugins/3D_Viewer.jar" ],
+
     "fiji-tracer" :
         [ "plugins/Simple_Neurite_Tracer.jar" ]
 
