@@ -20,6 +20,7 @@ sh -x Fake.sh FALLBACK=false VERBOSE=true "CLASSPATH(plugins/VIB_.jar)=/usr/shar
     "CLASSPATH(plugins/IO_.jar)=/usr/share/java/batik-all.jar:/usr/share/java/xml-apis-ext.jar" \
     "CLASSPATH(jars/zs.jar)=/usr/share/java/jama.jar" \
     "CLASSPATH(plugins/Jython_Interpreter.jar)=/usr/share/java/jython.jar:jars/fiji-scripting.jar" \
+    "CLASSPATH(plugins/JRuby_Interpreter.jar)=/usr/share/java/jruby.jar:jars/fiji-scripting.jar" \
     "CLASSPATH(plugins/Clojure_Interpreter.jar)=/usr/share/java/clojure.jar" \
     "CLASSPATH(plugins/IO_.jar)=/usr/share/java/itext1.jar:/usr/share/java/batik-all.jar:/usr/share/java/xml-apis-ext.jar:/usr/share/java/jzlib.jar" \
     "CLASSPATH(plugins/Directionality_.jar)=/usr/share/java/jfreechart.jar:/usr/share/java/jcommon.jar" \

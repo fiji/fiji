@@ -488,6 +488,7 @@ if options.clean:
     to_remove.append("jars/ant*.jar")
     to_remove.append("jars/batik.jar")
     to_remove.append("jars/junit*.jar")
+    to_remove.append("jars/jruby*.jar")
     # to_remove.append("jars/weka.jar")
 
     for f in to_remove:
