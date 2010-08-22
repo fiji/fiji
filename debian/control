@@ -605,16 +605,6 @@ Description: ij-ImageIO plugins add support for additional image file formats [.
  16bit and 32bit images.
 
 
-Package: fiji-jruby
-Section: graphics
-Architecture: any
-Priority: extra
-Replaces: fiji (<= 20090513)
-Conflicts: fiji (<= 20090513)
-Depends: 
-Description: components from Fiji, including: jruby
-
-
 Package: fiji-lsm-reader
 Section: graphics
 Architecture: any
@@ -747,7 +737,7 @@ Package: fiji
 Section: graphics
 Architecture: all
 Priority: extra
-Depends: fiji-tracer (>= 20100818134817), fiji-jpedal (>= 20080801134354), fiji-examples (>= 20100813144310), fiji-base (>= 20100818200853), fiji-imagej (>= 20100813145758), fiji-loci-tools (>= 20100814020501), fiji-bunwarpj (>= 20100417005423), fiji-color-histogram (>= 20100607205357), fiji-edu-mines-jtk (>= 20080801134354), fiji-trakem2 (>= 20100821163944), fiji-luts (>= 20100610024221), fiji-plugins (>= 20100820145305), fiji-scripting (>= 20100818200853), fiji-mpicbg (>= 20100812201753), fiji-lsm-toolbox (>= 20100813145758), fiji-view5d (>= 20100609192927), fiji-imglib (>= 20100629163441), fiji-mtrack2 (>= 20100607205357), fiji-vib (>= 20100820121053), fiji-autocomplete (>= 20090524213156), fiji-ij-imageio (>= 20081218211215), fiji-jruby (>= 20080801134354), fiji-lsm-reader (>= 20100322140540), fiji-rsyntaxtextarea (>= 20090524213156), fiji-jai (>= 20080801134354), fiji-weka (>= 20100609224141), fiji-mip (>= 20100818200853), fiji-3d-viewer (>= 20100818134817), fiji-io (>= 20100628114332), fiji-barthel-plugins (>= 20100607205357)
+Depends: fiji-tracer (>= 20100818134817), fiji-jpedal (>= 20080801134354), fiji-examples (>= 20100813144310), fiji-base (>= 20100818200853), fiji-imagej (>= 20100813145758), fiji-loci-tools (>= 20100814020501), fiji-bunwarpj (>= 20100417005423), fiji-color-histogram (>= 20100607205357), fiji-edu-mines-jtk (>= 20080801134354), fiji-trakem2 (>= 20100821163944), fiji-luts (>= 20100610024221), fiji-plugins (>= 20100820145305), fiji-scripting (>= 20100818200853), fiji-mpicbg (>= 20100812201753), fiji-lsm-toolbox (>= 20100813145758), fiji-view5d (>= 20100609192927), fiji-imglib (>= 20100629163441), fiji-mtrack2 (>= 20100607205357), fiji-vib (>= 20100820121053), fiji-autocomplete (>= 20090524213156), fiji-ij-imageio (>= 20081218211215), fiji-lsm-reader (>= 20100322140540), fiji-rsyntaxtextarea (>= 20090524213156), fiji-jai (>= 20080801134354), fiji-weka (>= 20100609224141), fiji-mip (>= 20100818200853), fiji-3d-viewer (>= 20100818134817), fiji-io (>= 20100628114332), fiji-barthel-plugins (>= 20100607205357)
 Description: A metapackage for the Fiji image processing suite (based on ImageJ)
  Fiji is a project aiming at simplifying:
     * the installation of ImageJ
