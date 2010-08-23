@@ -1,5 +1,6 @@
 package fiji.plugin.nperry;
 
+import fiji.plugin.nperry.features.BlobMorphology;
 import fiji.plugin.nperry.features.LoG;
 import ij.IJ;
 import ij.ImagePlus;
@@ -34,11 +35,63 @@ import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.real.FloatType;
+import sun.awt.windows.ThemeReader;
 import vib.PointList;
 
 /**
+ * <p>The Embryo_Tracker class runs on the currently active time lapse image (2D or 3D) of embryo development
+ * and both identifies and tracks fluorescently stained nuclei over time.</p>
  * 
- * @author Nick Perry
+ * <p><b>Required input:</b> A 2D or 3D time-lapse image of embryo development.</p>
+ * <p><b>Output:</b> Detailed information regarding embryo development. TODO add more</p>
+ * 
+ * <p>There are two landmark steps for the Embryo_Tracker class:</p>
+ * 
+ * <ol>
+ * <li>Segmentation (nuclei/object detection).</li>
+ * <li>Object tracking.</li>
+ * </ol>
+ * 
+ * <p><u>Segmentation:</u><p>
+ * <p>The segmentation step includes many pre-processing techniques before the actual object-detection
+ * algorithm is run.</p>
+ * 
+ * <ol>
+ * <li>The image is down-sampled in order to: [a] reduce the processing time of the other pre-processing
+ * techniques; and [b] reduce the scale of the 'objects' (in our case, nuclei) to be a uniform diameter in
+ * all dimensions. Thus, each dimension is scaled separately to reduce the diameter in that dimension
+ * to the uniform diameter (default, 10 pixels), if possible, since it is possible the original diameter
+ * is less than 10 pixels to start, in which case no down-sampling is performed in that dimension.</li>
+ * 
+ * <li>An optional median filter is applied to reduce salt-and-pepper noise in hopes
+ * of false-positive reduction (the user specifies whether to run a median filter).</li>
+ * 
+ * <li>The newly down-sized, and optionally median filtered, image is then convolved with a Gaussian kernel,
+ * with <code>sigma = 1.55</code>. Using this <code>sigma</code>, the Gaussian kernel is about the size of our objects (nuclei)
+ * in volume, and therefore will (hopefully) make the center of the nuclei the brightest pixel in the convolved 
+ * image, while at the same time further eliminating noise. The convolution itself is performed using the Fourier Transform
+ * approach to convolution, which resulted in a faster computation.</li>
+ * 
+ * <li>The image is then convoluted with a modified Laplacian kernel (again, via a Fourier Transform). The kernel is modified
+ * such that the center matrix cell is actually positive, and the surrounding cells are negative. The result of this
+ * modification is an image where the brightest regions in the input image are also the brightest regions in the output image.
+ * The purpose of this convolution is to accentuate the areas on the image where the bright pixels are "flowing," which should
+ * represent object centers following the Gaussian convolution.</li>
+ * 
+ * <li>Finally, the entire, newly processed image is searched for regional maxima, which are defined as pixels (or groups of equally-valued
+ * intensity pixels) that are strictly brighter than their adjacent neighbors. Following the pre-processing steps above,
+ * these regional maxima likely represent the center of the objects we would like to find and track (the nuclei).</li>
+ * 
+ * <li>Because of the presence of noise, it is possible that some of the regional maxima found in the preivous step have
+ * identified noise, rather than objects of interest. As such, we allow the user at this stage to 'threshold' the identified
+ * objects based on different features that were extracted from the object's location in the image. Example features include:
+ * value of the maxima following the LoG; total brightness in the object's volume; contrast at the object's edges, etc.</li>
+ * </ol>
+ * 
+ * <p><u>Object Tracking:</u><p>
+ * TODO write a description of the object tracking
+ * 
+ * @author nperry
  *
  * @param <T>
  */
@@ -101,13 +154,15 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		
 	}
 	
+	
 	/** 
 	 * Execute the plugin functionality: 
-	 * <ul>
-	 * 	<li>apply a median filter (for salt and pepper noise, if user requests), 
-	 * 	<li>LoG filter
-	 * 	<li>and then find maxima.
-	 * </ul>
+	 * <ol>
+	 * 	<li>Downsample the image</li>
+	 * 	<li>Apply a median filter (for salt and pepper noise, if user requests)</li>
+	 * 	<li>LoG filter</li>
+	 * 	<li>Find maxima</li>
+	 * </ol>
 	 */
 	public Object[] exec(ImagePlus imp, float diam, boolean useMedFilt, boolean allowEdgeMax, float[] calibration) {
 		
@@ -123,6 +178,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		final ImageFactory<FloatType> factory = new ImageFactory<FloatType>(new FloatType(), new ArrayContainerFactory());
 		final Image<FloatType> gaussKernel = FourierConvolution.getGaussianKernel(factory, IDEAL_SIGMA_FOR_DOWNSAMPLED_BLOB_DIAM, numDim);
 		final Image<FloatType> laplacianKernel = Utils.createLaplacianKernel(numDim);
+		final ArrayList< HashMap<Feature, Float> > thresholdsAllFrames = new ArrayList< HashMap<Feature, Float> >();
 
 				
 		// For each frame...
@@ -153,7 +209,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 				IJ.showStatus("Applying median filter...");
 				System.out.println("Applying median filter...");
 				final MedianFilter<T> medFilt = new MedianFilter<T>(filteredImg, strel, new OutOfBoundsStrategyMirrorFactory<T>()); 
-				/** TODO note: add back medFilt.checkInput() when it's fixed */
+				//TODO note: add back medFilt.checkInput() when it's fixed
 				if (!medFilt.process()) {
 					System.out.println(medFilt.getErrorMessage()); 
 					System.out.println("Bye.");
@@ -206,13 +262,26 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			final LoG<T> log = new LoG<T>(filteredImg, downsampleFactors, calibration);
 			log.process(spots);
 			
+			/* 8 - Threshold maxima based on extracted features. */
+			// TODO fix so that will work with one maxima.
+			HashMap<Feature, Float> thresholds = new HashMap<Feature, Float>();
+			//final float logThreshold = otsuThreshold(framej, Feature.LOG_VALUE);  // threshold for frame
+			//final float brightnessThreshold = otsuThreshold(framej, Feature.BRIGHTNESS);
+			//final float contrastThreshold = otsuThreshold(framej, Feature.CONTRAST);
+			//final float varThreshold = otsuThreshold(framej, Feature.VARIANCE);
+			//thresholds.put(Feature.LOG_VALUE, logThreshold);
+			//thresholds.put(Feature.BRIGHTNESS, brightnessThreshold);
+			//thresholds.put(Feature.CONTRAST, contrastThreshold);
+			//thresholds.put(Feature.VARIANCE, varThreshold);
+			thresholdsAllFrames.add(thresholds);
+			
+			
 		} // Finished looping over frames 
 		
 		// Render 3D to adjust thresholds...
-		ArrayList< HashMap<Feature, Float> > originalThresholdsAllFrames = new ArrayList< HashMap<Feature, Float> >();
 		ArrayList< ArrayList< ArrayList<Spot> > > selectedPoints = new ArrayList< ArrayList< ArrayList<Spot> > >();
-		Image3DUniverse univ = renderIn3DViewer(extremaAllFrames, imp, calibration, diam, originalThresholdsAllFrames, selectedPoints);
-		letUserAdjustThresholds(univ, imp.getTitle(), originalThresholdsAllFrames, selectedPoints, extremaAllFrames, calibration);
+		Image3DUniverse univ = renderIn3DViewer(extremaAllFrames, imp, calibration, diam, thresholdsAllFrames, selectedPoints);
+		letUserAdjustThresholds(univ, imp.getTitle(), thresholdsAllFrames, selectedPoints, extremaAllFrames, calibration);
 
 		
 		/* 8 - Track */
@@ -224,6 +293,18 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		return new Object[] {extremaAllFrames};
 	}
 	
+	
+	/**
+	 * Given a list of {@link Spots}, and a {@link Feature}, this method automatically
+	 * thresholds the Spots based on the value stored for that Feature. The threshold
+	 * is performed using the Otsu Threshold Method.
+	 * 
+	 * @param srcData An ArrayList containing the Spots to threshold.
+	 * @param feature The Feature to threshold.
+	 * @return A float value representing the value to threshold on based on the Otsu Thresholding Method.
+	 * @see Spots
+	 * @see Feature
+	 */
 	// Code source: http://www.labbookpages.co.uk/software/imgProc/otsuThreshold.html
 	public float otsuThreshold(ArrayList<Spot> srcData, Feature feature)	{
 		// Prepare histogram
@@ -267,9 +348,10 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		return (threshold + 1) * (float) getRange(srcData, feature)[0] / (float) histData.length;  // Convert the integer bin threshold to a value
 	}
 	
+	
 	/** Generate a histogram of the specified feature, with a number of bins determined 
 	 * from the Freedman and Diaconis rule (bin_space = 2*IQR/n^(1/3)) 
-	 * */
+	 */
 	public int[] histogram (ArrayList<Spot> data, Feature feature) {
 
 		// Calculate number of bins
@@ -333,7 +415,15 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
         return lower + dif * (upper - lower);
 	}
 	
-	/** Returns [range, min, max] */
+	
+	/** Returns <code>[range, min, max]</code> of the values for the {@link Feature} <code>feature</code>
+	 * in the list of {@link Spots}
+	 * 
+	 * @param An ArrayList of Spots to find the <code>range</code>, <code>min</code> and <code>max</code>
+	 * for.
+	 * @param The Feature of the Spots to compute the statistics for.
+	 * @return A double[] of length 3, where index 0 is the range, index 1 is the min, and index 2 is the max.
+	 */
 	public double[] getRange(ArrayList<Spot> data, Feature feature) {
 		double min = 0;
 		double max = 0;
@@ -355,7 +445,14 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	}
 
 
-	
+	/**
+	 * TODO
+	 * @param extrema
+	 * @param downsampleFactors
+	 * @param pixelWidth
+	 * @param pixelHeight
+	 * @return
+	 */
 	public PointRoi preparePointRoi (ArrayList< ArrayList< double[] > > extrema, float downsampleFactors[], float pixelWidth, float pixelHeight) {
 		int numPoints = extrema.size();
 		int ox[] = new int[numPoints];
@@ -377,6 +474,23 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		return roi;
 	}
 
+	
+	/**
+	 * This method takes an {@link ArrayList} of {@link Spots}, and displays them as points
+	 * in a 3D rendering of {@link ImagePlus} <code>imp</code>. The imp is rendered in 3D
+	 * using the {@link ij3d} package. The thresholds calculated for each {@link Feature} in the <code>exec()</code>
+	 * method are used to determine which Spots should be shown in the 3D rendering, and which shouldn't be. The points
+	 * that are selected to be shown are then stored in a separate ArrayList for later use, as are the points that
+	 * are not selected to be shown. 
+	 * 
+	 * @param extremaAllFrames The list of Spots that are to be thresholded and displayed in the 3D rendering of the image (only points above the thresholds are shown).
+	 * @param imp The image to render in 3D.
+	 * @param calibration The calibration of the image, necessary to properly render the ImagePlus in 3D.
+	 * @param diam The estimated diameter of the Spots (to size the displayed points accordingly in the 3D rendering).
+	 * @param thresholdsAllFrames The thresholds for the different features across all frames.
+	 * @param selectedPoints An Arraylist, which for each frame stores an ArrayList of the Spots shown and not shown in a given frame.
+	 * @return A reference to the {@link Image3DUniverse} used for the 3D rendered image.
+	 */
 	public Image3DUniverse renderIn3DViewer(ArrayList< ArrayList<Spot> > extremaAllFrames, ImagePlus imp, float[] calibration, float diam, ArrayList< HashMap<Feature, Float> > thresholdsAllFrames, ArrayList< ArrayList< ArrayList<Spot> > > selectedPoints) {
 		
 		// 1 - Display points
@@ -392,26 +506,12 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		// Add the image as a volume rendering
 		Content content = univ.addVoltex(imp);
 
-		// Calculate thresholds, store which points are shown vs. not shown, and add points to the ContentInstant's PointList
+		// Determine which points are "shown" vs. "not shown," store them accordingly for future use, and add the "shown" points to the ContentInstant's PointList
 		for (int j = 0; j < extremaAllFrames.size(); j++) {
-			
-			ArrayList<Spot> shown = new ArrayList<Spot>();
-			ArrayList<Spot> notShown = new ArrayList<Spot>();
-			
-			PointList pointList = content.getInstant(j).getPointList();
-			ArrayList<Spot> framej = extremaAllFrames.get(j);
-			
-			// Calculate thresholds for each feature of interest.
-			HashMap<Feature, Float> thresholds = new HashMap<Feature, Float>();
-			final float logThreshold = otsuThreshold(framej, Feature.LOG_VALUE);  // threshold for frame
-			//final float brightnessThreshold = otsuThreshold(framej, Feature.BRIGHTNESS);
-			//final float contrastThreshold = otsuThreshold(framej, Feature.CONTRAST);
-			//final float varThreshold = otsuThreshold(framej, Feature.VARIANCE);
-			thresholds.put(Feature.LOG_VALUE, logThreshold);
-			//thresholds.put(Feature.BRIGHTNESS, brightnessThreshold);
-			//thresholds.put(Feature.CONTRAST, contrastThreshold);
-			//thresholds.put(Feature.VARIANCE, varThreshold);
-			thresholdsAllFrames.add(thresholds);
+			final ArrayList<Spot> shown = new ArrayList<Spot>();
+			final ArrayList<Spot> notShown = new ArrayList<Spot>();
+			final PointList pointList = content.getInstant(j).getPointList();
+			final ArrayList<Spot> framej = extremaAllFrames.get(j);
 
 			// Add the extrema coords to the pointlist
 			for (int i = 0; i < framej.size(); i++) {
@@ -448,6 +548,17 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		return univ;
 	}
 	
+	
+	/**
+	 * This method returns <code>true</code> if all of the {@link Features} of the {@link Spot} have values
+	 * above the thresholds for each Feature in the HashMap, or <code>false</code> otherwise. Conversely, if
+	 * any Feature of the Spot has a value less than the threshold for that Feature, <code>false</code> is returned.
+	 * 
+	 * @param spot The Spot for which all Features being thresholded are checked.
+	 * @param thresholds A HashMap containing Feature -> Value pairs, where the value is the threshold for the Feature.
+	 * @return <code>true</code> if all Features in the Spot are greater than or equal to their respective thresholds, 
+	 * <code>false</code> otherwise.
+	 */
 	private boolean aboveThresholds(Spot spot, HashMap<Feature, Float> thresholds) {
 		for (Feature feature : thresholds.keySet()) {
 			if (spot.getFeature(feature) < thresholds.get(feature)) {
@@ -457,6 +568,14 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		return true;
 	}
 	
+	
+	/**
+	 * Takes the down-sampled coordinates of a list of {@link Spots}, and scales them back to be coordinates of the
+	 * original image using the downsample factors.
+	 * 
+	 * @param spots The list of Spots to convert the coordinates for.
+	 * @param downsampleFactors The downsample factors used for each dimension.
+	 */
 	private void downsampledCoordsToOrigCoords(ArrayList<Spot> spots, float downsampleFactors[]) {
 		Iterator<Spot> itr = spots.iterator();
 		while (itr.hasNext()) {
@@ -470,6 +589,16 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		}
 	}
 	
+	
+	/**
+	 * TODO
+	 * @param univ
+	 * @param contentName
+	 * @param thresholdsAllFrames
+	 * @param selectedPoints
+	 * @param extremaAllFrames
+	 * @param calibration
+	 */
 	public void letUserAdjustThresholds(final Image3DUniverse univ, final String contentName, ArrayList< HashMap<Feature, Float> > thresholdsAllFrames, ArrayList< ArrayList< ArrayList<Spot> > > selectedPoints, ArrayList< ArrayList< Spot > > extremaAllFrames, float[] calibration) {
 		
 		// Grab the Content of the universe, which has the name of the IP.
@@ -584,6 +713,12 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		univ.close();
 	}
 	
+	
+	/**
+	 * TODO
+	 * @author nperry
+	 *
+	 */
 	/* **********************************************************
 	 * Thread which handles the updates of sliders
 	 * *********************************************************/
