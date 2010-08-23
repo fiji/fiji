@@ -400,24 +400,21 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 	 * such, is stored in an <code>int</code> array.
 	 */
 	public final void getRelativePosition(int[] position) {
-		position[0] = icenterX;
-		position[1] = icenterY;
-		position[2] = icenterZ;
+		position[0] = positionX;
+		position[1] = positionY;
+		position[2] = positionZ;
 	}
 	
 	/**
 	 * Return the current inclination with respect to this sphere center. Will be in
-	 * the range ]0, π]. 
+	 * the range [0, π]. 
 	 * <p>
 	 * In spherical coordinates, the inclination is the angle 
 	 * between the Z axis and the line OM where O is the sphere center and M is 
 	 * the point location.
 	 */
 	public final double getTheta() {
-		return Math.acos( positionZ * calibrationZ / Math.sqrt(
-				positionZ * calibrationZ * positionZ * calibrationZ +
-				positionY * calibrationY * positionY * calibrationY +
-				positionX * calibrationX * positionX * calibrationX ));
+		return Math.acos( positionZ * calibrationZ / Math.sqrt( getDistanceSquared() ) );
 	}
 	
 	/**
