@@ -1,0 +1,16 @@
+Only fiji-base should be in 'i386' and 'amd64' - everything else
+   should be in 'all'
+
+Could we use the packaged commons-math?
+  http://packages.debian.org/squeeze/libcommons-math-java
+  http://packages.ubuntu.com/lucid/libcommons-math-java
+
+Need all the LICENSES and AUTHORS files
+
+FALLBACK=false doesn't seem to be working - some things still being
+   downloaded...
+
+Allow a per-user plugins directory as well as the system-wide one.
+
+bio-formats includes lots of jars in the source archive - there's a
+   dependency tangle to be sorted out there
