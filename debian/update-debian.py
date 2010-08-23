@@ -786,6 +786,9 @@ Standards-Version: 3.7.2""" % (", ".join(build_dependencies),))
 
         for p in package_name_to_files:
             print "package "+p
+            architecture = "all"
+            if p == "fiji-base":
+                architecture = "any"
             files = package_name_to_files[p]
             required_packages = {}
             full_description = ""
@@ -858,7 +861,7 @@ Standards-Version: 3.7.2""" % (", ".join(build_dependencies),))
 
             control_fp.write("\n\nPackage: "+p+"\n")
             control_fp.write("Section: graphics\n")
-            control_fp.write("Architecture: any\n")
+            control_fp.write("Architecture: %s\n"%(architecture,))
             control_fp.write("Priority: extra\n")
             control_fp.write("Replaces: %s\n"%(replace_and_conflict_with_string,))
             control_fp.write("Conflicts: %s\n"%(replace_and_conflict_with_string,))
