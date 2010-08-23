@@ -173,7 +173,7 @@ package_name_to_file_matchers = {
 }
 
 map_to_external_dependencies = {
-    'jars/batik\.jar' : ( 'libbatik-java', ),
+    'jars/batik\.jar' : ( 'libbatik-java', 'libxml-commons-external-java' ),
     'jars/jython\.jar' : ( 'jython', ),
     'jars/bsh.*\.jar' : ('bsh', ),
     'jars/clojure.*\.jar' : ( 'clojure', ),
@@ -191,7 +191,7 @@ map_to_external_dependencies = {
 }
 
 replacement_files =  {
-    'jars/batik.jar' : ( '/usr/share/java/batik-all.jar', ),
+    'jars/batik.jar' : ( '/usr/share/java/batik-all.jar', '/usr/share/java/xml-apis-ext.jar' ),
     'jars/bsh-2.0b4.jar' : ( '/usr/share/java/bsh.jar', ),
     'jars/clojure.jar' : ( '/usr/share/java/clojure.jar', ),
     'jars/itext-1.3.jar' : ( '/usr/share/java/itext1.jar', ),
