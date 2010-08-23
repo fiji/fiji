@@ -115,12 +115,12 @@ public class Spot {
 	}
 	
 	/**
-	 * Returns the {@link Double} value mapped to this {@link Feature}.
+	 * Returns the value mapped to this {@link Feature}.
 	 * @param feature The {@link Feature} to retrieve the stored value for.
-	 * @return The {@link Double} value corresponding to this {@link Feature}. 
+	 * @return The value corresponding to this {@link Feature}. 
 	 */
-	public double getFeature(Feature feature) {
-		return this.features.get(feature).doubleValue();
+	public float getFeature(Feature feature) {
+		return this.features.get(feature);
 	}
 	
 	/**
