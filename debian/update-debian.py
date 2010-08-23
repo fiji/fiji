@@ -172,6 +172,10 @@ package_name_to_file_matchers = {
 
 }
 
+conflicts_and_replaces = {
+    'fiji-3d-viewer' : ( 'fiji-plugins (< 20100823181328)', )
+}
+
 map_to_external_dependencies = {
     'jars/batik\.jar' : ( 'libbatik-java', 'libxml-commons-external-java' ),
     'jars/jython\.jar' : ( 'jython', ),
@@ -847,12 +851,17 @@ Standards-Version: 3.7.2""" % (", ".join(build_dependencies),))
                 for dependent_package, timestamp in required_packages.items():
                     dependencies.append(package_version_to_string(dependent_package,timestamp))
 
+            replace_and_conflict_with = [ 'fiji (<= 20090513)' ]
+            if p in conflicts_and_replaces:
+                replace_and_conflict_with += conflicts_and_replaces[p]
+            replace_and_conflict_with_string = ", ".join(replace_and_conflict_with)
+
             control_fp.write("\n\nPackage: "+p+"\n")
             control_fp.write("Section: graphics\n")
             control_fp.write("Architecture: any\n")
             control_fp.write("Priority: extra\n")
-            control_fp.write("Replaces: fiji (<= 20090513)\n")
-            control_fp.write("Conflicts: fiji (<= 20090513)\n")
+            control_fp.write("Replaces: %s\n"%(replace_and_conflict_with_string,))
+            control_fp.write("Conflicts: %s\n"%(replace_and_conflict_with_string,))
             # control_fp.write("Version: "+version_from_changelog+"\n")
             control_fp.write("Depends: "+", ".join(dependencies)+"\n")
             if False:
