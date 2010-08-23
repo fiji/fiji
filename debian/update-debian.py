@@ -209,6 +209,10 @@ replacement_files =  {
     '$JAVA3D_JARS' : ('/usr/share/java/j3dcore.jar', '/usr/share/java/vecmath.jar', '/usr/share/java/j3dutils.jar', )
 }
 
+missing_dependecies_in_fakefile = {
+    'plugins/TrakEM2_.jar' : ( '/usr/share/java/postgresql.jar', '/usr/share/java/jfreechart.jar' )
+}
+
 def replacement_dependencies(fiji_file):
     for r in map_to_external_dependencies:
         if re.search(r,fiji_file):
@@ -345,6 +349,9 @@ if options.generate_build_command:
                 raise Exception, 'No replacement file found for %s, but it would be replaced by packages: %s' % (d,', '.join(replacement_dependencies(d)))
             else:
                 new_classpath.add(d)
+        if file_to_build in missing_dependecies_in_fakefile:
+            anything_changed = True
+            new_classpath.update(missing_dependecies_in_fakefile[file_to_build])
         if anything_changed:
             new_classpaths[file_to_build] = new_classpath
     # Now write out the file:
