@@ -873,6 +873,11 @@ public class Stitch_Image_Collection implements PlugIn
 		return min;
 	}
 
+	final private static int round( final float value )
+	{
+		return (int)( value + (0.5f * Math.signum( value ) ) );
+	}	
+
 	final private static int getImagesAtCoordinate(final ArrayList<ImageInformation> imageInformationList, final ImageInformation indices[], final int[] pos)
 	{
 		int num = 0;
@@ -882,7 +887,7 @@ public class Stitch_Image_Collection implements PlugIn
 			// check if pixel is inside the image
 			boolean isInside = true;
 			for (int dim = 0; dim < iI.dim && isInside; dim++)
-				if ( !(pos[dim] >= Math.round(iI.position[dim]) && pos[dim] < Math.round(iI.position[dim] + iI.size[dim]) ) )
+				if ( !(pos[dim] >= round(iI.position[dim]) && pos[dim] < round(iI.position[dim] + iI.size[dim]) ) )
 					isInside = false;
 			
 			if (isInside)
