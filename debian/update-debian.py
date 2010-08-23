@@ -173,7 +173,7 @@ package_name_to_file_matchers = {
 }
 
 conflicts_and_replaces = {
-    'fiji-3d-viewer' : ( 'fiji-plugins (< 20100823181328)', )
+    'fiji-3d-viewer' : ( 'fiji-plugins (< 20100821202529)', )
 }
 
 map_to_external_dependencies = {
