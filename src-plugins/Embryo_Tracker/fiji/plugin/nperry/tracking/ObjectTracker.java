@@ -40,11 +40,20 @@ public class ObjectTracker {
 //			System.out.println("--- Frame " + counter + " ---");
 //			for (Spot spot : spots) {
 //				double[] coords = spot.getCoordinates();
-//				System.out.println("[" + coords[0] + ", " + coords[1] + ", " + coords[2] + "] (" + coords[0] * .2 + ", " + coords[1] * .2 + ", " + coords[2] + ")");
+//				String morphology;
+//				if (Double.compare(spot.getFeature(Feature.MORPHOLOGY), 0) == 0) {
+//					morphology = "Spherical";
+//				} else {
+//					morphology = "Ellipsoid";
+//				}
+//				System.out.println("[" + coords[0] + ", " + coords[1] + ", " + coords[2] + "] (" + coords[0] * .2 + ", " + coords[1] * .2 + ", " + coords[2] + "), Morphology: " + morphology);
 //			}
 //			counter++;
 //			System.out.println();
 //		}
+		
+		
+		
 //		ArrayList<Spot> frame = null;
 //		ArrayList<Spot> nextFrame = null;
 //		for (int i = 0; i < extrema.size() - 1; i++) {  // -1 here, because the last frame can't be linked to any subsequent frames.
