@@ -133,6 +133,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			
 			System.out.println();
 			System.out.println("---Frame " + (i+1) + "---");
+			System.out.println("Creating frame...");
 			Image<T> img = Utils.getSingleFrameAsImage(imp, i);
 			frames.add(img);
 		
@@ -149,9 +150,10 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			 * 		mistaken for maxima in the algorithm (only applied if requested by user explicitly) */
 			
 			if (useMedFilt) {
-				IJ.showStatus("Applying median filter...");				
+				IJ.showStatus("Applying median filter...");
+				System.out.println("Applying median filter...");
 				final MedianFilter<T> medFilt = new MedianFilter<T>(filteredImg, strel, new OutOfBoundsStrategyMirrorFactory<T>()); 
-				/** note: add back medFilt.checkInput() when it's fixed */
+				/** TODO note: add back medFilt.checkInput() when it's fixed */
 				if (!medFilt.process()) {
 					System.out.println(medFilt.getErrorMessage()); 
 					System.out.println("Bye.");
@@ -165,6 +167,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			 * 		(Preibisch one in SPIMRegistration might be faster) */
 			
 			IJ.showStatus("Applying Gaussian filter...");
+			System.out.println("Applying Gaussian filter...");
 			final FourierConvolution<T, FloatType> fConvGauss = new FourierConvolution<T, FloatType>(filteredImg, gaussKernel);
 			if (!fConvGauss.checkInput() || !fConvGauss.process()) {
 				System.out.println( "Fourier Convolution failed: " + fConvGauss.getErrorMessage() );
@@ -173,6 +176,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			filteredImg = fConvGauss.getResult();
 			
 			IJ.showStatus("Applying Laplacian convolution...");
+			System.out.println("Applying Laplacian convolution...");
 			final FourierConvolution<T, FloatType> fConvLaplacian = new FourierConvolution<T, FloatType>(filteredImg, laplacianKernel);
 			if (!fConvLaplacian.checkInput() || !fConvLaplacian.process()) {
 				System.out.println( "Fourier Convolution failed: " + fConvLaplacian.getErrorMessage() );
@@ -184,6 +188,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			/* 6 - Find extrema of newly convoluted image */
 			
 			IJ.showStatus("Finding extrema...");
+			System.out.println("Finding extrema...");
 			final RegionalExtremaFactory<T> extremaFactory = new RegionalExtremaFactory<T>(filteredImg);
 			final RegionalExtremaFinder<T> findExtrema = extremaFactory.createRegionalMaximaFinder(true);
 			findExtrema.allowEdgeExtrema(allowEdgeMax);
