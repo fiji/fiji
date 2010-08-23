@@ -7,7 +7,7 @@ Standards-Version: 3.7.2
 
 Package: fiji-tracer
 Section: graphics
-Architecture: any
+Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
@@ -21,7 +21,7 @@ Description: Semi-automatic tracing, analysis and visualization of neurons, f [.
 
 Package: fiji-jpedal
 Section: graphics
-Architecture: any
+Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
@@ -31,7 +31,7 @@ Description: components from Fiji, including: jpedalSTD
 
 Package: fiji-examples
 Section: graphics
-Architecture: any
+Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
@@ -85,7 +85,7 @@ Description: components from Fiji, including: fiji, Fiji, fake, fiji-logo-32x [.
 
 Package: fiji-imagej
 Section: graphics
-Architecture: any
+Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
@@ -106,7 +106,7 @@ Description: components from Fiji, including: ij, javac, headless
 
 Package: fiji-loci-tools
 Section: graphics
-Architecture: any
+Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
@@ -125,7 +125,7 @@ Description: loci_tools.jar is a bundle containing the functionality of Bio-F [.
 
 Package: fiji-bunwarpj
 Section: graphics
-Architecture: any
+Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
@@ -145,7 +145,7 @@ Description: bUnwarpJ allows simultaneous and consistent registration of two [..
 
 Package: fiji-color-histogram
 Section: graphics
-Architecture: any
+Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
@@ -159,7 +159,7 @@ Description: This plugin displays histograms in three different channels (Red [.
 
 Package: fiji-edu-mines-jtk
 Section: graphics
-Architecture: any
+Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
@@ -169,11 +169,11 @@ Description: components from Fiji, including: edu mines jtk
 
 Package: fiji-trakem2
 Section: graphics
-Architecture: any
+Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
-Depends: fiji-mpicbg (>= 20100812201753), libpg-java, libjava3d-java, fiji-imglib (>= 20100629163441), fiji-tracer (>= 20100818134817), fiji-bunwarpj (>= 20100417005423), fiji-jai (>= 20080801134354), fiji-vib (>= 20100820121053), fiji-edu-mines-jtk (>= 20080801134354), fiji-imagej (>= 20100822145051), libvecmath-java, fiji-loci-tools (>= 20100814020501), fiji-3d-viewer (>= 20100818134817), fiji-plugins (>= 20100818200853), libjfreechart-java, libjama-java
+Depends: fiji-mpicbg (>= 20100812201753), libpg-java, libjava3d-java, fiji-imglib (>= 20100629163441), fiji-tracer (>= 20100818134817), fiji-bunwarpj (>= 20100417005423), fiji-jai (>= 20080801134354), fiji-vib (>= 20100820121053), fiji-edu-mines-jtk (>= 20080801134354), libjama-java, libvecmath-java, fiji-loci-tools (>= 20100814020501), fiji-3d-viewer (>= 20100818134817), fiji-plugins (>= 20100818200853), libjfreechart-java, fiji-imagej (>= 20100822145051)
 Description: TrakEM2 is a program to model from images, it is used for morpho [...]
  The description below is extracted from the Fiji Updater database.
  .
@@ -189,7 +189,7 @@ Description: TrakEM2 is a program to model from images, it is used for morpho [.
 
 Package: fiji-luts
 Section: graphics
-Architecture: any
+Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
@@ -199,7 +199,7 @@ Description: components from Fiji, including: unionjack, 6 shades, brgbcmyw, [..
 
 Package: fiji-plugins
 Section: graphics
-Architecture: any
+Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
@@ -426,7 +426,7 @@ Description: components from Fiji, including: ToAST, PIV analyser, RATS, Trai [.
 
 Package: fiji-scripting
 Section: graphics
-Architecture: any
+Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
@@ -479,7 +479,7 @@ Description: components from Fiji, including: Script Editor, Javascript, JRub [.
 
 Package: fiji-mpicbg
 Section: graphics
-Architecture: any
+Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
@@ -497,7 +497,7 @@ Description: components from Fiji, including: mpicbg, mpicbg
 
 Package: fiji-lsm-toolbox
 Section: graphics
-Architecture: any
+Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
@@ -513,7 +513,7 @@ Description: The LSM_Toolbox is a project aiming at the integration of common [.
 
 Package: fiji-view5d
 Section: graphics
-Architecture: any
+Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
@@ -528,7 +528,7 @@ Description: The program View5D interactively displays of up to 5 dimensional [.
 
 Package: fiji-imglib
 Section: graphics
-Architecture: any
+Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
@@ -543,7 +543,7 @@ Description: A generic, Open Source library for image access to arbitrary dim [.
 
 Package: fiji-mtrack2
 Section: graphics
-Architecture: any
+Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
@@ -562,7 +562,7 @@ Description: MTrack2 is used for tracking objects in 2D over time. It will id [.
 
 Package: fiji-vib
 Section: graphics
-Architecture: any
+Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
@@ -581,7 +581,7 @@ Description: components from Fiji, including: VIB, VIB-lib
 
 Package: fiji-autocomplete
 Section: graphics
-Architecture: any
+Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
@@ -591,7 +591,7 @@ Description: components from Fiji, including: autocomplete
 
 Package: fiji-ij-imageio
 Section: graphics
-Architecture: any
+Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
@@ -607,7 +607,7 @@ Description: ij-ImageIO plugins add support for additional image file formats [.
 
 Package: fiji-lsm-reader
 Section: graphics
-Architecture: any
+Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
@@ -617,7 +617,7 @@ Description: components from Fiji, including: LSM Reader
 
 Package: fiji-rsyntaxtextarea
 Section: graphics
-Architecture: any
+Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
@@ -627,7 +627,7 @@ Description: components from Fiji, including: rsyntaxtextarea
 
 Package: fiji-jai
 Section: graphics
-Architecture: any
+Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
@@ -637,7 +637,7 @@ Description: components from Fiji, including: clibwrapper jiio, jai core, jai co
 
 Package: fiji-weka
 Section: graphics
-Architecture: any
+Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
@@ -647,7 +647,7 @@ Description: components from Fiji, including: weka
 
 Package: fiji-mip
 Section: graphics
-Architecture: any
+Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
@@ -663,10 +663,10 @@ Description: This is the Multiple Image Processor plugin, where it is able to [.
 
 Package: fiji-3d-viewer
 Section: graphics
-Architecture: any
+Architecture: all
 Priority: extra
-Replaces: fiji (<= 20090513), fiji-plugins (< 20100823181328)
-Conflicts: fiji (<= 20090513), fiji-plugins (< 20100823181328)
+Replaces: fiji (<= 20090513), fiji-plugins (< 20100821202529)
+Conflicts: fiji (<= 20090513), fiji-plugins (< 20100821202529)
 Depends: libjava3d-java, fiji-imglib (>= 20100629163441), fiji-vib (>= 20100820121053), fiji-imagej (>= 20100822145051), libjama-java, libvecmath-java
 Description: A hardware-accelerated 3D/4D viewer offering volume rendering, o [...]
  The description below is extracted from the Fiji Updater database.
@@ -677,7 +677,7 @@ Description: A hardware-accelerated 3D/4D viewer offering volume rendering, o [.
 
 Package: fiji-io
 Section: graphics
-Architecture: any
+Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
@@ -700,7 +700,7 @@ Description: The plugin allows one to: - Import and save PDF file format - Ex [.
 
 Package: fiji-barthel-plugins
 Section: graphics
-Architecture: any
+Architecture: all
 Priority: extra
 Replaces: fiji (<= 20090513)
 Conflicts: fiji (<= 20090513)
