@@ -869,6 +869,13 @@ public class Fake {
 			return allRules;
 		}
 
+		public Rule getDefaultRule() {
+			for (Rule rule : allRules.values())
+				if (rule instanceof All)
+					return rule;
+			return null;
+		}
+
 		// the different rule types
 
 		public abstract class Rule {
