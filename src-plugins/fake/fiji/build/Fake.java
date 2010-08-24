@@ -6,7 +6,6 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -16,6 +15,7 @@ import java.io.PrintWriter;
 import java.io.ByteArrayInputStream;
 import java.io.FileReader;
 import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -30,7 +30,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -38,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.TreeMap;
 
 import java.util.jar.Manifest;
 import java.util.jar.JarEntry;
@@ -59,7 +59,12 @@ public class Fake {
 	public static void main(String[] args) {
 		if (runPrecompiledFakeIfNewer(args))
 			return;
-		new Fake().make(null, null, args);
+		try {
+			new Fake().make(null, null, args);
+		} catch (FakeException e) {
+			System.err.println("Could not instantiate Fiji Build:");
+			e.printStackTrace();
+		}
 	}
 
 	public static boolean runPrecompiledFakeIfNewer(String[] args) {
@@ -82,9 +87,9 @@ public class Fake {
 		return true;
 	}
 
-	final static Set variableNames = new HashSet();
+	final static Set<String> variableNames = new HashSet<String>();
 
-	public Fake() {
+	public Fake() throws FakeException {
 		variableNames.add("DEBUG");
 		variableNames.add("JAVAVERSION");
 		variableNames.add("SHOWDEPRECATION");
@@ -100,9 +105,14 @@ public class Fake {
 
 	protected static String fijiHome;
 
-	protected String discoverFijiHome() {
+	protected String discoverFijiHome() throws FakeException {
 		URL url = getClass().getResource("Fake.class");
-		String fijiHome = URLDecoder.decode(url.toString());
+		String fijiHome;
+		try {
+			fijiHome = URLDecoder.decode(url.toString(), "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			throw new FakeException("Could not discover the Fiji root directory");
+		}
 		if (getPlatform().startsWith("win"))
 			fijiHome = fijiHome.replace('\\', '/');
 		if (!fijiHome.endsWith("/Fake.class"))
@@ -162,8 +172,8 @@ public class Fake {
 		getClassLoader(path);
 	}
 
-	protected List discoverJars() throws FakeException {
-		List jars = new ArrayList();
+	protected List<String> discoverJars() throws FakeException {
+		List<String> jars = new ArrayList<String>();
 		File cwd = new File(".");
 		/*
 		 * Since View5D contains an ImageCanvas (d'oh!) which would
@@ -188,13 +198,7 @@ public class Fake {
 	}
 
 	protected String discoverClassPath() throws FakeException {
-		Iterator iter = discoverJars().iterator();
-		String classPath = "";
-		while (iter.hasNext())
-			classPath += (classPath.equals("") ?
-					"" : File.pathSeparator)
-				+ iter.next();
-		return classPath;
+		return join(discoverJars(), File.pathSeparator);
 	}
 
 	/* input defaults to reading the Fakefile, cwd to "." */
@@ -213,9 +217,9 @@ public class Fake {
 					args[firstArg].indexOf('=') >= 0)
 				firstArg++;
 
-			List list = null;
+			List<String> list = null;
 			if (args.length > firstArg) {
-				list = new ArrayList();
+				list = new ArrayList<String>();
 				for (int i = firstArg; i < args.length; i++)
 					list.add(args[i]);
 			}
@@ -258,9 +262,9 @@ public class Fake {
 		String line;
 		int lineNumber;
 		File cwd;
-		protected Map allRules = new HashMap();
-		protected Set allPrerequisites = new HashSet();
-		protected Set allPlatforms;
+		protected Map<String, Rule> allRules = new HashMap<String, Rule>();
+		protected Set<String> allPrerequisites = new HashSet<String>();
+		protected Set<String> allPlatforms;
 		protected Rule allRule;
 		protected String buildDir;
 
@@ -288,7 +292,7 @@ public class Fake {
 			this.cwd = cwd != null ? cwd : new File(".");
 
 			if (allPlatforms == null) {
-				allPlatforms = new HashSet();
+				allPlatforms = new HashSet<String>();
 				allPlatforms.add("linux");
 				allPlatforms.add("linux64");
 				allPlatforms.add("win32");
@@ -300,12 +304,8 @@ public class Fake {
 				allPlatforms.add("osx10.4");
 				allPlatforms.add("osx10.5");
 				allPlatforms.add("osx10.6");
-				Iterator iter = allPlatforms.iterator();
-				while (iter.hasNext()) {
-					String platform = (String)iter.next();
-					setVariable("platform(" + platform
-						+ ")", platform);
-				}
+				for (String platform : allPlatforms)
+					setVariable("platform(" + platform + ")", platform);
 			}
 
 			setVariable("platform", getPlatform());
@@ -337,32 +337,22 @@ public class Fake {
 			});
 		}
 
-		protected void showMap(Map map, boolean showKeys) {
-			List list = new ArrayList(map.keySet());
+		protected<T> void showMap(Map<String, T> map, boolean showKeys) {
+			List<String> list = new ArrayList<String>(map.keySet());
 			Collections.sort(list);
-			Iterator iter = list.iterator();
-			while (iter.hasNext()) {
-				Object key = iter.next();
+			for (String key : list)
 				out.println((showKeys ?
 						key.toString() + " = " : "")
 					+ map.get(key));
-			}
 		}
 
 		protected void cleanAll(boolean dry_run) {
-			Iterator iter = allRules.keySet().iterator();
-			while (iter.hasNext()) {
-				Rule rule = (Rule)allRules.get(iter.next());
+			for (Rule rule : allRules.values())
 				rule.clean(dry_run);
-			}
 		}
 
 		protected void check() {
-			List list = new ArrayList(allRules.keySet());
-			Collections.sort(list);
-			Iterator iter = list.iterator();
-			while (iter.hasNext()) {
-				Rule rule = (Rule)allRules.get(iter.next());
+			for (Rule rule : new TreeMap<String, Rule>(allRules).values()) {
 				if (rule instanceof All)
 					continue;
 				if (rule instanceof Special)
@@ -392,7 +382,7 @@ public class Fake {
 		}
 
 
-		public Rule parseRules(List targets) throws FakeException {
+		public Rule parseRules(List<String> targets) throws FakeException {
 			Rule result = null;
 
 			for (;;) {
@@ -451,10 +441,7 @@ public class Fake {
 			}
 
 			// add <name>-clean rules
-			List newSpecials = new ArrayList();
-			Iterator iter = allRules.keySet().iterator();
-			while (iter.hasNext()) {
-				final String key = (String)iter.next();
+			for (String key : new ArrayList<String>(allRules.keySet())) {
 				final Rule rule = getRule(key);
 				if (key.endsWith("-clean") ||
 						key.endsWith("-clean-dry-run") ||
@@ -463,18 +450,15 @@ public class Fake {
 				final String cleanKey = key + "-clean";
 				// avoid concurrent modification
 				if (!allRules.containsKey(cleanKey))
-					newSpecials.add(new Special(cleanKey) {
+					addSpecialRule(new Special(cleanKey) {
 						void action() { rule.clean(false); }
 					});
 				final String dryRunCleanKey = cleanKey + "-dry-run";
 				if (!allRules.containsKey(dryRunCleanKey))
-					newSpecials.add(new Special(dryRunCleanKey) {
+					addSpecialRule(new Special(dryRunCleanKey) {
 						void action() { rule.clean(true); }
 					});
 			}
-			iter = newSpecials.iterator();
-			while (iter.hasNext())
-				addSpecialRule((Special)iter.next());
 
 			lineNumber = -1;
 
@@ -502,22 +486,19 @@ public class Fake {
 					target = target.substring(0, bracket);
 				}
 				GlobFilter filter = new GlobFilter(target);
-				Iterator iter = new ArrayList(allPrerequisites)
-					.iterator();
-				while (iter.hasNext()) {
-					target = (String)iter.next();
-					if (allRules.containsKey(target))
+				for (String prereq : new ArrayList<String>(allPrerequisites)) {
+					if (allRules.containsKey(prereq))
 						continue;
-					if (!filter.accept(null, target))
+					if (!filter.accept(null, prereq))
 						continue;
-					rule = addRule(target
+					rule = addRule(prereq
 						+ filter.replace(program),
 						filter.replace(prerequisites));
 				}
 				return rule;
 			}
 
-			List list = new ArrayList();
+			List<String> list = new ArrayList<String>();
 			StringTokenizer tokenizer = new
 				StringTokenizer(expandVariables(prerequisites,
 							target), " \t\n");
@@ -533,7 +514,7 @@ public class Fake {
 			}
 
 			String lastPrereq = list.size() == 0 ? null :
-				(String)list.get(list.size() - 1);
+				list.get(list.size() - 1);
 
 			if (allRule == null)
 				rule = allRule = new All(target, list);
@@ -571,9 +552,8 @@ public class Fake {
 
 			allRules.put(target, rule);
 
-			Iterator iter = list.iterator();
-			while (iter.hasNext())
-				allPrerequisites.add(iter.next());
+			for (String prereq : list)
+				allPrerequisites.add(prereq);
 
 			return rule;
 		}
@@ -587,14 +567,12 @@ public class Fake {
 				 allRules.get(stripSuffix(directory, "/")) == null);
 		}
 
-		int addMatchingTargets(String glob, List sortedPrereqs) {
+		int addMatchingTargets(String glob, List<String> sortedPrereqs) {
 			if (glob.indexOf('*') < 0)
 				return 0;
 			int count = 0;
 			GlobFilter filter = new GlobFilter(glob);
-			Iterator iter = allRules.keySet().iterator();
-			while (iter.hasNext()) {
-				String target = (String)iter.next();
+			for (String target : new ArrayList<String>(allRules.keySet())) {
 				Rule rule = (Rule)allRules.get(target);
 				if (rule instanceof Special || rule instanceof All)
 					continue;
@@ -623,7 +601,7 @@ public class Fake {
 
 		// the variables
 
-		protected Map variables = new HashMap();
+		protected Map<String, String> variables = new HashMap<String, String>();
 
 		public int getClosingParenthesis(String value, int offset) {
 			char closing;
@@ -676,7 +654,7 @@ public class Fake {
 				throws FakeException {
 			/* get all variable names */
 			int offset = 0;
-			Set variableNames = new HashSet();
+			Set<String> variableNames = new HashSet<String>();
 			for (;;) {
 				int dollar = value.indexOf('$', offset);
 				if (dollar < 0)
@@ -686,22 +664,15 @@ public class Fake {
 							offset).toUpperCase());
 			}
 			key = key.toUpperCase();
-			Set subkeys = new HashSet();
-			Iterator iter = variables.keySet().iterator();
-			while (iter.hasNext()) {
-				String var = (String)iter.next();
+			for (String var : new ArrayList<String>(variables.keySet())) {
 				int paren = var.indexOf('(');
 				if (paren < 0)
 					continue;
 				String name = var.substring(0, paren);
 				if (!variableNames.contains(name))
 					continue;
-				subkeys.add(var.substring(paren));
+				setVariable(key + var.substring(paren), value);
 			}
-			/* 3rd loop to avoid concurrent modification */
-			iter = subkeys.iterator();
-			while (iter.hasNext())
-				setVariable(key + iter.next(), value);
 		}
 
 		public void setVariable(String key, String value)
@@ -726,7 +697,7 @@ public class Fake {
 					value.indexOf('?') >= 0) {
 				String separator = isVarName(name, "CLASSPATH") ?
 					":" : " ";
-				List files = new ArrayList();
+				List<String> files = new ArrayList<String>();
 				StringTokenizer tokenizer = new
 					StringTokenizer(value.replace('\t',
 							' '), separator);
@@ -741,10 +712,8 @@ public class Fake {
 				value = "";
 				if (separator.equals(":"))
 					separator = File.separator;
-				Iterator iter = files.iterator();
-				while (iter.hasNext())
-					value += separator +
-						quoteArg((String)iter.next());
+				for (String file : files)
+					value += separator + quoteArg(file);
 			}
 
 			String origName = name.toUpperCase() + "_UNEXPANDED"
@@ -802,9 +771,7 @@ public class Fake {
 		}
 
 		public void checkVariableNames() throws FakeException {
-			Iterator iter = variables.keySet().iterator();
-			while (iter.hasNext()) {
-				String key = (String)iter.next();
+			for (String key : variables.keySet()) {
 				int paren = key.indexOf('(');
 				if (paren < 0 || !key.endsWith(")") ||
 						key.startsWith("ENVOVERRIDES_UNEXPANDED(") ||
@@ -867,12 +834,9 @@ public class Fake {
 
 		public void dumpVariables() {
 			err.println("Variable dump:");
-			Iterator iter = variables.keySet().iterator();
-			while (iter.hasNext()) {
-				String key = (String)iter.next();
+			for (String key : variables.keySet())
 				err.println(key + " = "
 						+ variables.get(key));
-			}
 		}
 
 		public boolean getBool(String string) {
@@ -896,10 +860,10 @@ public class Fake {
 		}
 
 		public Rule getRule(String rule) {
-			return (Rule)allRules.get(rule);
+			return allRules.get(rule);
 		}
 
-		public Map getAllRules() {
+		public Map<String, Rule> getAllRules() {
 			return allRules;
 		}
 
@@ -908,7 +872,7 @@ public class Fake {
 		public abstract class Rule {
 			protected String target;
 			protected String prerequisiteString;
-			protected List prerequisites, nonUpToDates;
+			protected List<String> prerequisites, nonUpToDates;
 			protected boolean wasAlreadyInvoked;
 			protected boolean wasAlreadyChecked;
 
@@ -920,7 +884,7 @@ public class Fake {
 			 */
 			protected int upToDateStage;
 
-			Rule(String target, List prerequisites) {
+			Rule(String target, List<String> prerequisites) {
 				this.target = target;
 				this.prerequisites = prerequisites;
 				try {
@@ -965,10 +929,8 @@ public class Fake {
 						return upToDateError(new File(fijiBuildJar), file);
 				}
 
-				nonUpToDates = new ArrayList();
-				Iterator iter = prerequisites.iterator();
-				while (iter.hasNext()) {
-					String prereq = (String)iter.next();
+				nonUpToDates = new ArrayList<String>();
+				for (String prereq : prerequisites) {
 					String path = makePath(cwd, prereq);
 					if (new File(path).lastModified()
 							> targetModifiedTime)
@@ -1063,10 +1025,8 @@ public class Fake {
 			}
 
 			void setUpToDate() throws IOException {
-				Iterator iter = prerequisites.iterator();
-				while (iter.hasNext()) {
-					Rule rule =
-						getRule((String)iter.next());
+				for (String prereq : prerequisites) {
+					Rule rule = getRule(prereq);
 					if (rule != null && rule != this)
 						rule.setUpToDate();
 				}
@@ -1118,9 +1078,7 @@ public class Fake {
 			}
 
 			public void makePrerequisites() throws FakeException {
-				Iterator iter = prerequisites.iterator();
-				while (iter.hasNext()) {
-					String prereq = (String)iter.next();
+				for (String prereq : prerequisites) {
 					Rule rule = getRule(prereq);
 					if (rule == null) {
 						if (this instanceof All)
@@ -1135,7 +1093,7 @@ public class Fake {
 
 			public String getLastPrerequisite() {
 				int index = prerequisites.size() - 1;
-				return (String)prerequisites.get(index);
+				return prerequisites.get(index);
 			}
 
 			public String toString() {
@@ -1159,10 +1117,7 @@ public class Fake {
 					target += "[" +
 						((ExecuteProgram)this).program
 						+ "]";
-				result += target + " <-";
-				Iterator iter = prerequisites.iterator();
-				while (iter.hasNext())
-					result += " " + iter.next();
+				result += target + " <- " + join(prerequisites, " ");
 				if (maxCharacters > 0 && result.length()
 						> maxCharacters)
 					result = result.substring(0,
@@ -1200,8 +1155,8 @@ public class Fake {
 						".class"), ".jar")));
 			}
 
-			List compileJavas(List javas, File buildDir,
-					Set exclude, Set noCompile)
+			List<String> compileJavas(List<String> javas, File buildDir,
+					Set<String> exclude, Set<String> noCompile)
 					throws FakeException {
 				toolsPath = getVar("TOOLSPATH");
 				return Fake.this.compileJavas(javas, cwd, buildDir,
@@ -1319,7 +1274,7 @@ public class Fake {
 		}
 
 		class All extends Rule {
-			All(String target, List prerequisites) {
+			All(String target, List<String> prerequisites) {
 				super(target, prerequisites);
 			}
 
@@ -1333,7 +1288,7 @@ public class Fake {
 
 		abstract class Special extends Rule {
 			Special(String target) {
-				super(target, new ArrayList());
+				super(target, new ArrayList<String>());
 			}
 
 			boolean checkUpToDate() {
@@ -1347,7 +1302,7 @@ public class Fake {
 			String source;
 			String configPath;
 
-			SubFake(String target, List prerequisites) {
+			SubFake(String target, List<String> prerequisites) {
 				super(target, prerequisites);
 				jarName = new File(target).getName();
 				String directory = getLastPrerequisite();
@@ -1368,12 +1323,9 @@ public class Fake {
 				if (!upToDate(configPath))
 					return false;
 				File target = new File(this.target);
-				Iterator iter = prerequisites.iterator();
-				while (iter.hasNext()) {
-					String directory = (String)iter.next();
+				for (String directory : prerequisites)
 					if (!checkUpToDate(directory, target))
 						return false;
-				}
 				return true;
 			}
 
@@ -1397,9 +1349,8 @@ public class Fake {
 			}
 
 			void action() throws FakeException {
-				Iterator iter = prerequisites.iterator();
-				while (iter.hasNext())
-					action((String)iter.next());
+				for (String prereq : prerequisites)
+					action(prereq);
 
 				File file = new File(makePath(cwd, source));
 				if (getVarBool("IGNOREMISSINGFAKEFILES") &&
@@ -1472,7 +1423,7 @@ public class Fake {
 
 		class CopyJar extends Rule {
 			String source, configPath;
-			CopyJar(String target, List prerequisites) {
+			CopyJar(String target, List<String> prerequisites) {
 				super(target, prerequisites);
 				source = getLastPrerequisite();
 				configPath = getPluginsConfig();
@@ -1496,12 +1447,10 @@ public class Fake {
 			String configPath;
 			String classPath;
 
-			CompileJar(String target, List prerequisites) {
+			CompileJar(String target, List<String> prerequisites) {
 				super(target, uniq(prerequisites));
 				configPath = getPluginsConfig();
-				Iterator iter = prerequisites.iterator();
-				while (iter.hasNext()) {
-					String prereq = (String)iter.next();
+				for (String prereq : prerequisites) {
 					if (!prereq.endsWith(".jar/"))
 						continue;
 					prereq = stripSuffix(prereq, "/");
@@ -1531,13 +1480,13 @@ public class Fake {
 					maybeMake((Rule)allRules.get(paths[i]));
 
 				File buildDir = getBuildDir();
-				Set noCompile =
+				Set<String> noCompile =
 					expandToSet(getVar("NO_COMPILE"), cwd);
-				Set exclude =
+				Set<String> exclude =
 					expandToSet(getVar("EXCLUDE"), cwd);
 				if (getVar("PREBUILTDIR") == null)
 					compileJavas(prerequisites, buildDir, exclude, noCompile);
-				List files = java2classFiles(prerequisites,
+				List<String> files = java2classFiles(prerequisites,
 					cwd, buildDir, exclude, noCompile);
 				if (getVarBool("includeSource"))
 					addSources(files);
@@ -1546,13 +1495,10 @@ public class Fake {
 					getVarBool("VERBOSE"));
 			}
 
-			void addSources(List files) {
-				Iterator iter = prerequisites.iterator();
-				while (iter.hasNext()) {
-					String file = (String)iter.next();
+			void addSources(List<String> files) {
+				for (String file : prerequisites)
 					if (file.endsWith(".java"))
 						files.add(file);
-				}
 			}
 
 			void maybeMake(Rule rule) throws FakeException {
@@ -1573,9 +1519,7 @@ public class Fake {
 
 			boolean checkUpToDate() {
 				// handle xyz[from/here] targets
-				Iterator iter = prerequisites.iterator();
-				while (iter.hasNext()) {
-					String path = (String)iter.next();
+				for (String path : prerequisites) {
 					int bracket = path.indexOf('[');
 					if (bracket < 0 || !path.endsWith("]"))
 						continue;
@@ -1620,42 +1564,34 @@ public class Fake {
 						deleteRecursively(buildDir);
 					return;
 				}
-				List javas = new ArrayList();
-				Iterator iter = prerequisites.iterator();
-				while (iter.hasNext()) {
-					String path = (String)iter.next();
-					if (path.endsWith(".java"))
-						javas.add(path);
-				}
+				List<String> javas = new ArrayList<String>();
+				addSources(javas);
 
 				try {
-					Set exclude = expandToSet(
+					Set<String> exclude = expandToSet(
 						getVar("EXCLUDE"), cwd);
-					Set noCompile = expandToSet(
+					Set<String> noCompile = expandToSet(
 						getVar("NO_COMPILE"), cwd);
 					exclude.addAll(noCompile);
-					iter = java2classFiles(javas,
-						cwd, getBuildDir(),
-						exclude, noCompile).iterator();
+					for (String file : java2classFiles(javas, cwd, getBuildDir(), exclude, noCompile))
+						clean(file, dry_run);
 				} catch (FakeException e) {
 					err.println("Warning: could not "
 						+ "find required .class files: "
 						+ this);
 					return;
 				}
-				while (iter.hasNext())
-					clean((String)iter.next(), dry_run);
 			}
 		}
 
 		class CompileClass extends Rule {
-			CompileClass(String target, List prerequisites) {
+			CompileClass(String target, List<String> prerequisites) {
 				super(target, prerequisites);
 			}
 
 			void action() throws FakeException {
 				compileJavas(prerequisites, getBuildDir(),
-					new HashSet(), new HashSet());
+					new HashSet<String>(), new HashSet<String>());
 
 				// copy class files, if necessary
 				int slash = target.lastIndexOf('/') + 1;
@@ -1665,13 +1601,9 @@ public class Fake {
 				slash = prefix.lastIndexOf('/') + 1;
 				prefix = prefix.substring(0, slash);
 
-				Set exclude = expandToSet(getVar("NO_COMPILE"),
+				Set<String> exclude = expandToSet(getVar("NO_COMPILE"),
 					cwd);
-				Iterator iter = java2classFiles(prerequisites,
-					cwd, getBuildDir(),
-					exclude, new HashSet()).iterator();
-				while (iter.hasNext()) {
-					String source = (String)iter.next();
+				for (String source : java2classFiles(prerequisites, cwd, getBuildDir(), exclude, new HashSet<String>())) {
 					if (!source.startsWith(prefix))
 						continue;
 					int slash2 = source.lastIndexOf('/');
@@ -1684,7 +1616,7 @@ public class Fake {
 		class CompileCProgram extends Rule {
 			boolean linkCPlusPlus = false;
 
-			CompileCProgram(String target, List prerequisites) {
+			CompileCProgram(String target, List<String> prerequisites) {
 				super(target, prerequisites);
 				if (getPlatform().startsWith("win"))
 					this.target += ".exe";
@@ -1692,17 +1624,16 @@ public class Fake {
 
 			void action() throws FakeException {
 				try {
-					action(prerequisites.iterator());
+					action(prerequisites);
 				} catch (IOException e) {
 					fallBackToPrecompiled(e.getMessage());
 				}
 			}
 
-			void action(Iterator iter)
+			void action(Iterable<String> paths)
 					throws IOException, FakeException {
-				List out = new ArrayList();
-				while (iter.hasNext()) {
-					String path = (String)iter.next();
+				List<String> out = new ArrayList<String>();
+				for (String path : paths) {
 					if (path.endsWith(".c")) {
 						out.add(compileC(path));
 					}
@@ -1716,7 +1647,7 @@ public class Fake {
 			}
 
 			void addFlags(String variable, String path,
-					List arguments) throws FakeException {
+					List<String> arguments) throws FakeException {
 				String value = getVariable(variable,
 						path, target);
 				arguments.addAll(splitCommandLine(value));
@@ -1736,7 +1667,7 @@ public class Fake {
 			String compile(String path, String compiler,
 					String flags)
 					throws IOException, FakeException {
-				List arguments = new ArrayList();
+				List<String> arguments = new ArrayList<String>();
 				arguments.add(compiler);
 				if (getVarBool("DEBUG"))
 					arguments.add("-g");
@@ -1753,7 +1684,7 @@ public class Fake {
 				}
 			}
 
-			void link(String target, List objects)
+			void link(String target, List<String> objects)
 					throws FakeException {
 				File file = new File(target);
 				try {
@@ -1761,7 +1692,7 @@ public class Fake {
 				} catch(FakeException e) {
 					file = moveToUpdateDirectory(file);
 				}
-				List arguments = new ArrayList();
+				List<String> arguments = new ArrayList<String>();
 				arguments.add(linkCPlusPlus ? gxx() : gcc());
 				arguments.add("-o");
 				arguments.add(file.getAbsolutePath());
@@ -1832,7 +1763,7 @@ public class Fake {
 		class ExecuteProgram extends Rule {
 			String program;
 
-			ExecuteProgram(String target, List prerequisites,
+			ExecuteProgram(String target, List<String> prerequisites,
 					String program) {
 				super(target, prerequisites);
 				this.program = program;
@@ -1848,9 +1779,7 @@ public class Fake {
 				 * Ignore prerequisites if none of them
 				 * exist as files.
 				 */
-				Iterator iter = prerequisites.iterator();
-				while (iter.hasNext()) {
-					String prereq = (String)iter.next();
+				for (String prereq : prerequisites) {
 					if (new File(makePath(cwd,
 							prereq)).exists())
 						return true;
@@ -1985,16 +1914,15 @@ public class Fake {
 					+ wildcardPattern.length()));
 		}
 
-		public List replace(List names) throws FakeException {
-			List result = new ArrayList();
-			Iterator iter = names.iterator();
-			while (iter.hasNext())
-				result.add(replace((String)iter.next()));
+		public List<String> replace(List<String> names) throws FakeException {
+			List<String> result = new ArrayList<String>();
+			for (String string : names)
+				result.add(replace(string));
 			return result;
 		}
 	}
 
-	protected int expandGlob(String glob, Collection list, File cwd,
+	protected int expandGlob(String glob, Collection<String> list, File cwd,
 			long newerThan, String buildDir) throws FakeException {
 		if (glob == null)
 			return 0;
@@ -2074,8 +2002,8 @@ public class Fake {
 		return count;
 	}
 
-	Set expandToSet(String glob, File cwd) throws FakeException {
-		Set result = new HashSet();
+	Set<String> expandToSet(String glob, File cwd) throws FakeException {
+		Set<String> result = new HashSet<String>();
 		String[] globs = split(glob, " ");
 		for (int i = 0; i < globs.length; i++)
 			expandGlob(globs[i], result, cwd, 0, null);
@@ -2088,22 +2016,22 @@ public class Fake {
 	 * Due to the recursive nature of java2classFiles(), the sorting of
 	 * the glob expansion is not enough.
 	 */
-	protected void sortClassesAtEnd(List list) {
+	protected void sortClassesAtEnd(List<String> list) {
 		int size = list.size();
 		if (size == 0 || !isClass(list, size - 1))
 			return;
 		int start = size - 1;
 		while (start > 0 && isClass(list, start - 1))
 			start--;
-		List classes = new ArrayList();
+		List<String> classes = new ArrayList<String>();
 		classes.addAll(list.subList(start, size));
 		Collections.sort(classes);
 		while (size > start)
 			list.remove(--size);
 		list.addAll(classes);
 	}
-	final protected boolean isClass(List list, int index) {
-		return ((String)list.get(index)).endsWith(".class");
+	final protected boolean isClass(List<String> list, int index) {
+		return list.get(index).endsWith(".class");
 	}
 
 
@@ -2114,7 +2042,7 @@ public class Fake {
 	 * in the same class path.
 	 */
 	protected void java2classFiles(String java, File cwd,
-			File buildDir, List result, Set all) {
+			File buildDir, List<String> result, Set<String> all) {
 		if (java.endsWith(".java"))
 			java = java.substring(0, java.length() - 5) + ".class";
 		else if (!java.endsWith(".class")) {
@@ -2139,9 +2067,7 @@ public class Fake {
 			throw new RuntimeException("Huh? " + fullClass
 					+ " is not a suffix of " + java);
 		java = java.substring(0, java.length() - fullClass.length());
-		Iterator iter = analyzer.getClassNames();
-		while (iter.hasNext()) {
-			String className = (String)iter.next();
+		for (String className : analyzer.getClassNames()) {
 			String path = java + className + ".class";
 			if (new File(makePath(cwd, path)).exists() &&
 					!all.contains(path)) {
@@ -2153,7 +2079,7 @@ public class Fake {
 		}
 	}
 
-	protected static void addRecursively(File dir, List result, Set all) {
+	protected static void addRecursively(File dir, List<String> result, Set<String> all) {
 		String[] files = dir.list();
 		if (files == null || files.length == 0)
 			return;
@@ -2206,19 +2132,17 @@ public class Fake {
 	}
 
 	/* discovers all the .class files for a given set of .java files */
-	protected List java2classFiles(List javas, File cwd,
-			File buildDir, Set exclude, Set noCompile)
+	protected List<String> java2classFiles(List<String> javas, File cwd,
+			File buildDir, Set<String> exclude, Set<String> noCompile)
 			throws FakeException {
-		List result = new ArrayList();
-		Set all = new HashSet();
+		List<String> result = new ArrayList<String>();
+		Set<String> all = new HashSet<String>();
 		if (buildDir != null) {
 			addRecursively(buildDir, result, all);
 			Collections.sort(result);
 		}
 		String lastJava = null;
-		Iterator iter = javas.iterator();
-		while (iter.hasNext()) {
-			String file = (String)iter.next();
+		for (String file : javas) {
 			if (exclude.contains(file))
 				continue;
 			boolean dontCompile = noCompile.contains(file);
@@ -2260,8 +2184,8 @@ public class Fake {
 				JarClassLoader loader = (JarClassLoader)
 					getClassLoader(toolsPath);
 				String className = "com.sun.tools.javac.Main";
-				Class main = loader.forceLoadClass(className);
-				Class[] argsType = new Class[] {
+				Class<?> main = loader.forceLoadClass(className);
+				Class<?>[] argsType = new Class[] {
 					arguments.getClass(),
 					PrintWriter.class
 				};
@@ -2297,12 +2221,12 @@ public class Fake {
 
 	// returns all .java files in the list, and returns a list where
 	// all the .java files have been replaced by their .class files.
-	protected List compileJavas(List javas, File cwd, File buildDir,
+	protected List<String> compileJavas(List<String> javas, File cwd, File buildDir,
 			String javaVersion, boolean debug, boolean verbose,
 			boolean showDeprecation, String extraClassPath,
-			Set exclude, Set noCompile)
+			Set<String> exclude, Set<String> noCompile)
 			throws FakeException {
-		List arguments = new ArrayList();
+		List<String> arguments = new ArrayList<String>();
 		arguments.add("-encoding");
 		arguments.add("UTF8");
 		if (debug)
@@ -2336,19 +2260,15 @@ public class Fake {
 		}
 
 		int optionCount = arguments.size();
-		Iterator iter = javas.iterator();
-		while (iter.hasNext()) {
-			String path = (String)iter.next();
-
+		for (String path : javas)
 			if (path.endsWith(".java") && !exclude.contains(path))
 				arguments.add(makePath(cwd, path));
-		}
 
 		/* Do nothing if there is nothing to do ;-) */
 		if (optionCount == arguments.size())
 			return javas;
 
-		String[] args = (String[])arguments.toArray(new
+		String[] args = arguments.toArray(new
 				String[arguments.size()]);
 
 		if (verbose) {
@@ -2367,7 +2287,7 @@ public class Fake {
 			throw new FakeException("Compile error: " + e);
 		}
 
-		List result = java2classFiles(javas, cwd, buildDir, exclude,
+		List<String> result = java2classFiles(javas, cwd, buildDir, exclude,
 			noCompile);
 		return result;
 	}
@@ -2385,7 +2305,7 @@ public class Fake {
 	}
 
 	// TODO: we really need string pairs; real path and desired path.
-	protected void makeJar(String path, String mainClass, List files,
+	protected void makeJar(String path, String mainClass, List<String> files,
 			File cwd, File buildDir, String configPath,
 			String stripPath, boolean verbose) throws FakeException {
 		path = makePath(cwd, path);
@@ -2394,9 +2314,8 @@ public class Fake {
 			if (mainClass != null)
 				output += " with main-class " + mainClass;
 			output += " from";
-			Iterator iter = files.iterator();
-			while (iter.hasNext())
-				output += " " + iter.next();
+			for (String file : files)
+				output += " " + file;
 			err.println(output);
 		}
 		Manifest manifest = null;
@@ -2433,9 +2352,7 @@ public class Fake {
 
 			addPluginsConfigToJar(jar, configPath);
 			String lastBase = stripPath;
-			Iterator iter = files.iterator();
-			while (iter.hasNext()) {
-				String realName = (String)iter.next();
+			for (String realName : files) {
 				if (realName.endsWith(".jar/")) {
 					copyJar(stripSuffix(makePath(cwd,
 						realName), "/"), jar,
@@ -2650,7 +2567,7 @@ public class Fake {
 	}
 
 	// the parameter "file" is only used to set the cwd
-	protected void execute(List arguments, String file,
+	protected void execute(List<String> arguments, String file,
 			boolean verbose) throws IOException, FakeException {
 		execute(arguments, new File(file).getParentFile(), verbose);
 	}
@@ -2660,7 +2577,7 @@ public class Fake {
 		execute(args, new File(file).getParentFile(), verbose);
 	}
 
-	protected void execute(List arguments, File dir, boolean verbose)
+	protected void execute(List<String> arguments, File dir, boolean verbose)
 			throws IOException, FakeException {
 		String[] args = new String[arguments.size()];
 		arguments.toArray(args);
@@ -2757,7 +2674,7 @@ public class Fake {
 	}
 
 
-	protected static Constructor jythonCreate;
+	protected static Constructor<?> jythonCreate;
 	protected static Method jythonExec, jythonExecfile, jythonSetOut, jythonSetErr;
 
 	protected static boolean executePython(String[] args, PrintStream out, PrintStream err)
@@ -2766,8 +2683,8 @@ public class Fake {
 			discoverJython();
 			ClassLoader loader = getClassLoader();
 			String className = "org.python.util.PythonInterpreter";
-			Class main = loader.loadClass(className);
-			Class[] argsType = new Class[] { };
+			Class<?> main = loader.loadClass(className);
+			Class<?>[] argsType = new Class[] { };
 			jythonCreate = main.getConstructor(argsType);
 			argsType = new Class[] { args[0].getClass() };
 			jythonExec = main.getMethod("exec", argsType);
@@ -2806,7 +2723,7 @@ public class Fake {
 		return true;
 	}
 
-	protected static Constructor bshCreate;
+	protected static Constructor<?> bshCreate;
 	protected static Method bshEvalString, bshEvalReader, bshSet;
 
 	protected static boolean executeBeanshell(String[] args, PrintStream out, PrintStream err)
@@ -2815,8 +2732,8 @@ public class Fake {
 			discoverBeanshell();
 			ClassLoader loader = getClassLoader();
 			String className = "bsh.Interpreter";
-			Class main = loader.loadClass(className);
-			Class[] argsType = new Class[] { Reader.class, PrintStream.class, PrintStream.class, boolean.class };
+			Class<?> main = loader.loadClass(className);
+			Class<?>[] argsType = new Class[] { Reader.class, PrintStream.class, PrintStream.class, boolean.class };
 			bshCreate = main.getConstructor(argsType);
 			argsType = new Class[] { String.class };
 			bshEvalString = main.getMethod("eval", argsType);
@@ -2925,9 +2842,7 @@ public class Fake {
 			return true;
 		}
 
-		Enumeration iter = sourceJar.entries();
-		while (iter.hasMoreElements()) {
-			JarEntry entry = (JarEntry)iter.nextElement();
+		for (JarEntry entry : Collections.list(sourceJar.entries())) {
 			JarEntry other =
 				(JarEntry)targetJar.getEntry(entry.getName());
 			if (other == null) {
@@ -2953,9 +2868,9 @@ public class Fake {
 		return true;
 	}
 
-	protected static List splitCommandLine(String program)
+	protected static List<String> splitCommandLine(String program)
 			throws FakeException {
-		List result = new ArrayList();
+		List<String> result = new ArrayList<String>();
 		if (program == null)
 			return result;
 		int len = program.length();
@@ -3090,7 +3005,7 @@ public class Fake {
 			endOffset = offset;
 		}
 
-		class ClassNameIterator implements Iterator {
+		class ClassNameIterator implements Iterator<String> {
 			int index;
 
 			ClassNameIterator() {
@@ -3108,7 +3023,7 @@ public class Fake {
 				return index < poolOffsets.length;
 			}
 
-			public Object next() {
+			public String next() {
 				int offset = poolOffsets[index];
 				findNext();
 				return getString(dereferenceOffset(offset + 1));
@@ -3120,8 +3035,12 @@ public class Fake {
 			}
 		}
 
-		public Iterator getClassNames() {
-			return new ClassNameIterator();
+		public Iterable<String> getClassNames() {
+			return new Iterable<String>() {
+				public Iterator<String> iterator() {
+					return new ClassNameIterator();
+				}
+			};
 		}
 
 		public String toString() {
@@ -3220,24 +3139,24 @@ public class Fake {
 	}
 
 	private static class JarClassLoader extends ClassLoader {
-		Map jarFilesMap;
-		List jarFilesNames;
-		List jarFilesObjects;
-		Map cache;
+		Map<String, JarFile> jarFilesMap;
+		List<String> jarFilesNames;
+		List<JarFile> jarFilesObjects;
+		HashMap<String, Class<?>> cache;
 
 		JarClassLoader() {
 			super(Thread.currentThread().getContextClassLoader());
-			jarFilesMap = new HashMap();
-			jarFilesNames = new ArrayList(10);
-			jarFilesObjects = new ArrayList(10);
-			cache = new HashMap();
+			jarFilesMap = new HashMap<String, JarFile>();
+			jarFilesNames = new ArrayList<String>(10);
+			jarFilesObjects = new ArrayList<JarFile>(10);
+			cache = new HashMap<String, Class<?>>();
 		}
 
 		public URL getResource(String name) {
 			int n = jarFilesNames.size();
 			for (int i = n - 1; i >= 0; --i) {
-				JarFile jar = (JarFile)jarFilesObjects.get(i);
-				String file = (String)jarFilesNames.get(i);
+				JarFile jar = jarFilesObjects.get(i);
+				String file = jarFilesNames.get(i);
 				if (jar.getEntry(name) == null)
 					continue;
 				String url = "file:///"
@@ -3258,7 +3177,7 @@ public class Fake {
 				boolean nonSystemOnly) {
 			int n = jarFilesNames.size();
 			for (int i = n - 1; i >= 0; --i) {
-				JarFile jar = (JarFile)jarFilesObjects.get(i);
+				JarFile jar = jarFilesObjects.get(i);
 				JarEntry entry = jar.getJarEntry(name);
 				if (entry == null)
 					continue;
@@ -3271,28 +3190,28 @@ public class Fake {
 			return super.getResourceAsStream(name);
 		}
 
-		public Class forceLoadClass(String name)
+		public Class<?> forceLoadClass(String name)
 				throws ClassNotFoundException {
 			return loadClass(name, true, true);
 		}
 
-		public Class loadClass(String name)
+		public Class<?> loadClass(String name)
 				throws ClassNotFoundException {
 			return loadClass(name, true);
 		}
 
-		public synchronized Class loadClass(String name,
+		public synchronized Class<?> loadClass(String name,
 				boolean resolve) throws ClassNotFoundException {
 			return loadClass(name, resolve, false);
 		}
 
-		public synchronized Class loadClass(String name,
+		public synchronized Class<?> loadClass(String name,
 					boolean resolve, boolean forceReload)
 				throws ClassNotFoundException {
-			Object cached = forceReload ? null : cache.get(name);
+			Class<?> cached = forceReload ? null : cache.get(name);
 			if (cached != null)
-				return (Class)cached;
-			Class result;
+				return cached;
+			Class<?> result;
 			try {
 				if (!forceReload) {
 					result = super.loadClass(name, resolve);
@@ -3370,21 +3289,11 @@ public class Fake {
 		return newBuffer;
 	}
 
-	public static List uniq(List list) {
-		Set set = new HashSet();
-		List result = new ArrayList();
-		Iterator iter = list.iterator();
-		while (iter.hasNext()) {
-			Object key = iter.next();
-			if (set.contains(key))
-				continue;
-			result.add(key);
-			set.add(key);
-		}
-		return result;
+	public static List<String> uniq(List<String> list) {
+		return new ArrayList<String>(new HashSet<String>(list));
 	}
 
-	public static String join(List list) {
+	public static String join(List<String> list) {
 		return join(list, " ");
 	}
 
@@ -3409,8 +3318,8 @@ public class Fake {
 		return string.substring(0, string.length() - suffix.length());
 	}
 
-	public static String join(List list, String separator) {
-		Iterator iter = list.iterator();
+	public static String join(List<String> list, String separator) {
+		Iterator<String> iter = list.iterator();
 		String result = iter.hasNext() ? iter.next().toString() : "";
 		while (iter.hasNext())
 			result += separator + iter.next();
@@ -3427,7 +3336,7 @@ public class Fake {
 	public static String[] split(String string, String delimiter) {
 		if (string == null || string.equals(""))
 			return new String[0];
-		List list = new ArrayList();
+		List<String> list = new ArrayList<String>();
 		int offset = 0;
 		for (;;) {
 			int nextOffset = string.indexOf(delimiter, offset);
@@ -3440,7 +3349,7 @@ public class Fake {
 		}
 		String[] result = new String[list.size()];
 		for (int i = 0; i < result.length; i++)
-			result[i] = (String)list.get(i);
+			result[i] = list.get(i);
 		return result;
 	}
 
