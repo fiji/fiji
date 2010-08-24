@@ -2113,6 +2113,7 @@ static int start_ij(void)
 			string_append_path_list(class_path, "/usr/share/java/ant.jar");
 			string_append_path_list(class_path, "/usr/share/java/ant-launcher.jar");
 			string_append_path_list(class_path, "/usr/share/java/ant-nodeps.jar");
+			string_append_path_list(class_path, "/usr/share/java/ant-junit.jar");
 		}
 		else if (!strcmp(main_argv[i], "--retrotranslator") ||
 				!strcmp(main_argv[i], "--retro"))
