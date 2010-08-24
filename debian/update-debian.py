@@ -209,8 +209,7 @@ map_to_external_dependencies = {
     'jars/jcommon.*\.jar' : ( 'libjcommon-java', ),
     'jars/jsch.*\.jar' : ( 'libjsch-java', ),
     'jars/postgresql.*\.jar' : ( 'libpg-java', ),
-    'jars/ant.*\.jar' : ( 'ant', 'ant-optional' ),
-    'jars/jruby.*\.jar' : ( 'jruby', )
+    'jars/ant.*\.jar' : ( 'ant', 'ant-optional' )
 }
 
 # A dictionary that maps a file in the Fiji build tree to tuples of
@@ -224,7 +223,6 @@ replacement_files =  {
     'jars/Jama-1.0.2.jar' : ( '/usr/share/java/jama.jar', ),
     'jars/jcommon-1.0.12.jar' : ( '/usr/share/java/jcommon.jar', ),
     'jars/jfreechart-1.0.13.jar' : ( '/usr/share/java/jfreechart.jar', ),
-    'jars/jruby.jar' : ( '/usr/share/java/jruby.jar', ),
     'jars/js.jar' : ( '/usr/share/java/js.jar', ),
     'jars/jsch-0.1.37.jar' : ( '/usr/share/java/jsch.jar', ),
     'jars/junit-4.5.jar' : ( '/usr/share/java/junit4.jar', ),
@@ -639,7 +637,6 @@ if options.clean:
     to_remove.append("jars/ant*.jar")
     to_remove.append("jars/batik.jar")
     to_remove.append("jars/junit*.jar")
-    to_remove.append("jars/jruby*.jar")
 
     for f in to_remove:
         call(["rm -rf "+f],shell=True)
