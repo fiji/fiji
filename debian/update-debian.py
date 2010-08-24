@@ -553,6 +553,7 @@ if options.clean:
     to_remove.append("java/linux")
     to_remove.append("java/linux-amd64")
     to_remove.append("java/macosx-java3d")
+    to_remove.append("src-plugins/Jama-1.0.2")
     to_remove.append("java/win32")
     to_remove.append("java/win64")
     to_remove.append("livehelper")
