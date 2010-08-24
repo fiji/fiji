@@ -2,18 +2,18 @@
 package fiji.build;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
-import java.io.ByteArrayInputStream;
-import java.io.FileReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 
@@ -39,15 +39,15 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 
-import java.util.jar.Manifest;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
 import java.util.jar.JarOutputStream;
-
-import java.util.zip.ZipException;
+import java.util.jar.Manifest;
 
 import java.util.regex.Pattern;
+
+import java.util.zip.ZipException;
 
 public class Fake {
 	protected static Method javac;
