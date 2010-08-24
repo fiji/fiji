@@ -1,3 +1,11 @@
+fiji (20100824113541) unstable; urgency=low
+
+  * Based on fiji.git at a8df3f71d49b294b99378336e248e2a078b6b8ab
+    The release before annoucing the apt-experimental repository
+    on fiji-devel
+
+ -- Mark Longair <mhl@pobox.com>  Tue, 24 Aug 2010 09:35:41 +0000
+
 fiji (20100824001747) unstable; urgency=low
 
   * Based on fiji.git at 3ca7b92512101b4f7c4c17eecb11f1ed4ed38f14
