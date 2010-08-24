@@ -1,3 +1,10 @@
+fiji (20100824163202) unstable; urgency=low
+
+  * Based on fiji.git at 248327e63e6da7d807f04dd227e9af434bc3e28d
+    Switch back to fiji-jruby from jruby (in non-free)
+
+ -- Mark Longair <mhl@pobox.com>  Tue, 24 Aug 2010 14:32:02 +0000
+
 fiji (20100824113541) unstable; urgency=low
 
   * Based on fiji.git at a8df3f71d49b294b99378336e248e2a078b6b8ab
