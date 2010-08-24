@@ -584,8 +584,13 @@ if options.clean:
     oldlines = fp.readlines()
     fp.close()
 
+    skip_next_line = False
+
     fp = open("Fakefile","w")
     for line in oldlines:
+        if skip_next_line:
+            skip_next_line = False
+            continue
         if re.search("TurboReg_",line):
             continue
         if re.search("TransformJ_",line):
@@ -597,6 +602,9 @@ if options.clean:
         if re.search("(^\s*jars|precompiled)/clojure.jar",line):
             continue
         if re.search("(^\s*jars|precompiled)/junit-4.5.jar",line):
+            continue
+        if re.search("^\s*missingPrecompiledFallBack",line):
+            skip_next_line = True
             continue
         fp.write(line)
     fp.close()
