@@ -33,6 +33,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -335,6 +336,16 @@ public class Fake {
 			addSpecialRule(new Special("check") {
 				void action() { check(); }
 			});
+
+			addSpecialRule(new Special("dependency-map") {
+				void action() {
+					List<Rule> targets = new ArrayList<Rule>();
+					for (Rule target : allRules.values())
+						if (!(target instanceof Special) && !target.target.equals(""))
+							targets.add(target);
+					showMap(buildDependencyMap(targets));
+				}
+			});
 		}
 
 		protected<T> void showMap(Map<String, T> map, boolean showKeys) {
@@ -344,6 +355,17 @@ public class Fake {
 				out.println((showKeys ?
 						key.toString() + " = " : "")
 					+ map.get(key));
+		}
+
+		protected void showMap(Map<Rule, List<Rule>> map) {
+			for (Map.Entry<Rule, List<Rule>> pair : map.entrySet()) {
+				String neededBy = "";
+				for (Rule rule : pair.getValue())
+					if (rule != null)
+						neededBy += " " + rule.target;
+				out.println(pair.getKey().target + (neededBy.equals("") ?
+					"" : " needed by" + neededBy));
+			}
 		}
 
 		protected void cleanAll(boolean dry_run) {
@@ -381,6 +403,48 @@ public class Fake {
 			}
 		}
 
+		public Map<Rule, List<Rule>> buildDependencyMap() {
+			return buildDependencyMap(Collections.singletonList(getDefaultRule()));
+		}
+
+		public Map<Rule, List<Rule>> buildDependencyMap(String[] targets) throws FakeException {
+			List<Rule> rules = new ArrayList<Rule>();
+			for (String target : targets) {
+				Rule rule = getRule(target);
+				if (rule == null)
+					throw new FakeException("Rule for target '" + target + "' not found!");
+				rules.add(rule);
+			}
+			return buildDependencyMap(rules);
+		}
+
+		/**
+		 * Builds a dependency map of the given targets.
+		 *
+		 * This guarantees that the order of the keySet is suitable for building, i.e. all
+		 * rules depending on a given rule will be returned later by keySet().iterator().
+		 */
+		public Map<Rule, List<Rule>> buildDependencyMap(List<Rule> targets) {
+			LinkedHashMap<Rule, List<Rule>> result = new LinkedHashMap<Rule, List<Rule>>();
+			for (Rule target : targets)
+				buildDependencyMap(result, target, null);
+			return result;
+		}
+
+		protected void buildDependencyMap(Map<Rule, List<Rule>> map, Rule target, Rule neededBy) {
+			List<Rule> depending = map.get(target);
+			if (depending != null) {
+				if (neededBy != null)
+					depending.add(neededBy);
+				return;
+			}
+
+			for (Rule rule : target.getDependenciesWithRules())
+				buildDependencyMap(map, rule, target);
+
+			List<Rule> list = neededBy == null ? Collections.<Rule>emptyList() : Collections.singletonList(neededBy);
+			map.put(target, new ArrayList<Rule>(list));
+		}
 
 		public Rule parseRules(List<String> targets) throws FakeException {
 			Rule result = null;
@@ -440,7 +504,7 @@ public class Fake {
 				}
 			}
 
-			// add <name>-clean rules
+			// add special <target>-<suffix> rules (-clean, -clean-dry-run, etc)
 			for (String key : new ArrayList<String>(allRules.keySet())) {
 				final Rule rule = getRule(key);
 				if (key.endsWith("-clean") ||
@@ -457,6 +521,13 @@ public class Fake {
 				if (!allRules.containsKey(dryRunCleanKey))
 					addSpecialRule(new Special(dryRunCleanKey) {
 						void action() { rule.clean(true); }
+					});
+				final String dependencyMapKey = key + "-dependency-map";
+				if (!allRules.containsKey(dependencyMapKey))
+					addSpecialRule(new Special(dependencyMapKey) {
+						void action() {
+							showMap(buildDependencyMap(Collections.singletonList(rule)));
+						}
 					});
 			}
 
