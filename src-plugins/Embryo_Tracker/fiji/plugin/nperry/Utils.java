@@ -1,5 +1,8 @@
 package fiji.plugin.nperry;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+
 import ij.ImagePlus;
 import ij.ImageStack;
 import mpicbg.imglib.algorithm.gauss.DownSample;
@@ -93,6 +96,26 @@ public class Utils {
 	        return null;
 		}
 		return downsampler.getResult();
+	}
+	
+	/**
+	 * Takes the down-sampled coordinates of a list of {@link Spots}, and scales them back to be coordinates of the
+	 * original image using the downsample factors.
+	 * 
+	 * @param spots The list of Spots to convert the coordinates for.
+	 * @param downsampleFactors The downsample factors used for each dimension.
+	 */
+	public static void downsampledCoordsToOrigCoords(ArrayList<Spot> spots, float downsampleFactors[]) {
+		Iterator<Spot> itr = spots.iterator();
+		while (itr.hasNext()) {
+			Spot spot = itr.next();
+			float[] coords = spot.getCoordinates();
+			
+			// Undo downsampling
+			for (int i = 0; i < coords.length; i++) {
+				coords[i] = coords[i] * downsampleFactors[i];
+			}
+		}
 	}
 	
 	/**
