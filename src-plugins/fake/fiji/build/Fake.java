@@ -468,8 +468,10 @@ public class Fake {
 
 			checkVariableNames();
 
-			if (targets != null)
-				return new All("", targets);
+			if (targets != null) {
+				result = new All("", targets);
+				allRules.put("", result);
+			}
 
 			return result;
 		}
