@@ -609,6 +609,12 @@ if options.clean:
         if re.search("^\s*missingPrecompiledFallBack",line):
             skip_next_line = True
             continue
+        # grrr, src-plugins/Jama-1.0.2 seems particularly awkward to
+        # get rid of.  Probably should do everything like this, just
+        # rewrite the Fakefile entirely, with a proper parser of the
+        # format.  FIXME FIXME FIXME
+        line = re.sub('\s+jars/Jama-1\.0\.2\.jar\s+',' ',line)
+        line = re.sub('jars/Jama-1\.0\.2\.jar','/usr/share/java/jama.jar',line)
         fp.write(line)
     fp.close()
 
