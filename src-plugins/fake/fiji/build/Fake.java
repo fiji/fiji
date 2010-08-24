@@ -1105,6 +1105,22 @@ public class Fake {
 				return prerequisites.get(index);
 			}
 
+			public List<String> getDependencies() {
+				List<String> dependencies = new ArrayList(prerequisites);
+				Collections.addAll(dependencies, split(getVar("CLASSPATH"), ":"));
+				return dependencies;
+			}
+
+			public List<Rule> getDependenciesWithRules() {
+				List<Rule> result = new ArrayList<Rule>();
+				for (String dependency : getDependencies()) {
+					Rule rule = getRule(dependency);
+					if (rule != null)
+						result.add(rule);
+				}
+				return result;
+			}
+
 			public String toString() {
 				return toString("2".equals(getVar("VERBOSE")) ?
 						0 : 60);
