@@ -603,6 +603,8 @@ if options.clean:
             continue
         if re.search("(^\s*jars|precompiled)/junit-4.5.jar",line):
             continue
+        if re.search("(^\s*jars|precompiled)/batik.jar",line):
+            continue
         if re.search("^\s*missingPrecompiledFallBack",line):
             skip_next_line = True
             continue
