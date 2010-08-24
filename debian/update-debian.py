@@ -27,9 +27,6 @@ import textwrap
 # having this run every time, sometimes with the git committed
 # dependencies and sometimes with the rebuilt control file, but in
 # either case it's an error to be missing any build dependency.)
-#
-# FIXME: keep the build dependencies in a separate file, make sure
-# that they're committed in the git version as well.
 
 script_directory = sys.path[0]
 if not script_directory:
