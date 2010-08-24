@@ -143,11 +143,11 @@ public class GraphCut {
 		reverseEdge.setNext(node2.getFirstOutgoing());
 		node2.setFirstOutgoing(reverseEdge);
 
-		// set node2 as target of edge
+		// set targets of edges
 		edge.setHead(node2);
 		reverseEdge.setHead(node1);
 
-		// set node1 as target of reverseEdge
+		// set residual capacities
 		edge.setResidualCapacity(weight1to2);
 		reverseEdge.setResidualCapacity(weight2to1);
 	}
@@ -200,7 +200,7 @@ public class GraphCut {
 						Node headNode = edge.getHead();
 
 						if (headNode.getParent() == null) {
-
+							// free node found, add to source tree
 							headNode.setInSink(false);
 							headNode.setParent(edge.getSister());
 							headNode.setTimestamp(activeNode.getTimestamp());
@@ -209,29 +209,29 @@ public class GraphCut {
 							addToChangedList(headNode);
 
 						} else if (headNode.isInSink()) {
-
+							// node is not free and belongs to other tree - path
+							// via edge found
 							break;
 
 						} else if (headNode.getTimestamp() <= activeNode.getTimestamp() &&
 						           headNode.getDistance()  >  activeNode.getDistance()) {
-
-							// heuristic - reduce the distance from headNode to
-							// the source
+							// node is not free and belongs to our tree - try to
+							// shorten its distance to the source
 							headNode.setParent(edge.getSister());
 							headNode.setTimestamp(activeNode.getTimestamp());
 							headNode.setDistance(activeNode.getDistance() + 1);
 						}
 					}
 				}
-			} else {// activeNode is in sink
-				// grow sink tree
+			} else {
+				// activeNode is in sink, grow sink tree
 				for (edge = activeNode.getFirstOutgoing(); edge != null; edge = edge.getNext()) {
 					if (edge.getSister().getResidualCapacity() != 0) {
 
 						Node headNode = edge.getHead();
 
 						if (headNode.getParent() == null) {
-
+							// free node found, add to sink tree
 							headNode.setInSink(true);
 							headNode.setParent(edge.getSister());
 							headNode.setTimestamp(activeNode.getTimestamp());
@@ -240,15 +240,15 @@ public class GraphCut {
 							addToChangedList(headNode);
 
 						} else if (!headNode.isInSink()) {
-
+							// node is not free and belongs to other tree - path
+							// via edge's sister found
 							edge = edge.getSister();
 							break;
 
 						} else if (headNode.getTimestamp() <= activeNode.getTimestamp() &&
 						           headNode.getDistance()  >  activeNode.getDistance()) {
-
-							// heuristic - reduce the distance from headNode to
-							// the sink
+							// node is not free and belongs to our tree - try to
+							// shorten its distance to the sink
 							headNode.setParent(edge.getSister());
 							headNode.setTimestamp(activeNode.getTimestamp());
 							headNode.setDistance(activeNode.getDistance() + 1);
@@ -260,6 +260,7 @@ public class GraphCut {
 			time++;
 
 			if (edge != null) {
+				// we found a path via edge
 
 				// set active flag
 				activeNode.setNext(activeNode);
@@ -276,8 +277,10 @@ public class GraphCut {
 					else
 						processSourceOrphan(orphan);
 				}
-			} else
+			} else {
+				// no path found
 				currentNode = null;
+			}
 		}
 
 		maxflowIteration++;
@@ -386,7 +389,6 @@ public class GraphCut {
 			node = activeQueueFirst[0];
 
 			if (node == null) {
-
 				// queue 0 was empty, try other one
 				node = activeQueueFirst[1];
 
@@ -606,8 +608,10 @@ public class GraphCut {
 
 			edge = node.getParent();
 
-			if (edge == Edge.TERMINAL)
+			if (edge == Edge.TERMINAL) {
+				// end of path
 				break;
+			}
 			edge.setResidualCapacity(edge.getResidualCapacity() + bottleneck);
 			edge.getSister().setResidualCapacity(edge.getSister().getResidualCapacity() - bottleneck);
 			if (edge.getSister().getResidualCapacity() == 0)
@@ -622,8 +626,10 @@ public class GraphCut {
 
 			edge = node.getParent();
 
-			if (edge == Edge.TERMINAL)
+			if (edge == Edge.TERMINAL) {
+				// end of path
 				break;
+			}
 			edge.getSister().setResidualCapacity(edge.getSister().getResidualCapacity() + bottleneck);
 			edge.setResidualCapacity(edge.getResidualCapacity() - bottleneck);
 			if (edge.getResidualCapacity() == 0)
@@ -689,7 +695,7 @@ public class GraphCut {
 			}
 
 		orphan.setParent(bestEdge);
-		if (bestEdge == null) {
+		if (bestEdge != null) {
 			orphan.setTimestamp(time);
 			orphan.setDistance(minDistance + 1);
 		} else {
@@ -766,7 +772,7 @@ public class GraphCut {
 			}
 
 		orphan.setParent(bestEdge);
-		if (bestEdge == null) {
+		if (bestEdge != null) {
 			orphan.setTimestamp(time);
 			orphan.setDistance(minDistance + 1);
 		} else {
