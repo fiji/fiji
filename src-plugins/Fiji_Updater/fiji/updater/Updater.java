@@ -142,7 +142,7 @@ public class Updater implements PlugIn {
 		// If this is the Debian / Ubuntu packaged version, then
 		// insist that the user uses apt-get / synaptic instead:
 		if (isDebian()) {
-			String message = "You are using the Debian packaged version of Fiji.";
+			String message = "You are using the Debian packaged version of Fiji.\n";
 			message += "You should update Fiji with your system's usual package manager instead.";
 			IJ.error(message);
 			return true;
