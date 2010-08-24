@@ -26,6 +26,8 @@ AutoComplete and RSyntaxTextArea can usefully be non-Fiji jars,
 
 The menu icon seems to have stopped working at some point
 
+The upload-to-pacific.py script should use an SSH control master
+
 Need to document and enforce the right submodules being present.  At
    the moment I think the required minimum is:
 
