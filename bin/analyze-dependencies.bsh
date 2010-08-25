@@ -74,8 +74,7 @@ if (bsh.args.length > 0 && bsh.args[0].equals("--check-fakefile")) {
 
 		message = "";
 		for (String dependency : analyzed)
-			if (!dependency.equals("jars/ij.jar") &&
-					!inFakefile.contains(dependency) &&
+			if (!inFakefile.contains(dependency) &&
 					parser.getRule(dependency) != null)
 				message += " " + dependency;
 		if (!message.equals(""))
