@@ -19,7 +19,6 @@
 
 
 import java.awt.AlphaComposite;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Composite;
 import java.awt.Dimension;
@@ -56,10 +55,15 @@ import fiji.util.gui.OverlayedImageCanvas;
 
 import ij.IJ;
 import ij.ImagePlus;
+import ij.ImageStack;
 import ij.WindowManager;
 
 import ij.gui.ImageWindow;
 
+import ij.io.FileInfo;
+
+
+import ij.plugin.HyperStackReducer;
 import ij.plugin.PlugIn;
 
 import ij.process.ImageProcessor;
@@ -71,6 +75,7 @@ import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImagePlusAdapter;
 
 import mpicbg.imglib.type.numeric.RealType;
+
 
 
 /**
@@ -269,7 +274,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			super(imp, new CustomCanvas(imp));
 	
 			applyButton = new JButton ("Segment image");
-			applyButton.setToolTipText("Load data and apply current classifier");
+			applyButton.setToolTipText("Start the min-cut computation");
 			applyButton.setEnabled(true);
 	
 			overlayButton = new JButton ("Toggle overlay");
@@ -460,6 +465,44 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			IJ.showMessage("Please open an image first.");
 			return;
 		}
+		if (imp.getNChannels() > 1) {
+
+			int width = imp.getWidth();
+			int height = imp.getHeight();
+			int channels = imp.getNChannels();
+			int slices = imp.getNSlices();
+			int frames = imp.getNFrames();
+			int size = slices*frames;
+
+			int channel = 0;
+			while (channel <= 0 || channel > channels)
+				channel = (int)IJ.getNumber("Please give the number of the channel you wish to consider for the segmentation (1 - "  + channels + "):", 1);
+
+			FileInfo fileInfo         = imp.getOriginalFileInfo();
+			HyperStackReducer reducer = new HyperStackReducer(imp);
+
+			// create empty stack
+			ImageStack stack2 = new ImageStack(width, height, size);
+			// add first slice (just to create an ImagePlus)
+			stack2.setPixels(imp.getProcessor().getPixels(), 1); 
+			// create new ImagePlus for selected channel
+			ImagePlus imp2 = new ImagePlus("C" + channel + "-" + imp.getTitle(), stack2);
+			// remove content again
+			stack2.setPixels(null, 1);
+
+			// select desired channel in source image
+			imp.setPosition(channel, 1, 1);
+			// set number of channels, slices, and frames
+			imp2.setDimensions(1, slices, frames);
+
+			reducer.reduce(imp2);
+			imp2.setOpenAsHyperStack(true);
+			imp2.setFileInfo(fileInfo);
+
+			// make this channel image the new working image
+			imp = imp2;
+		}
+
 		image = ImagePlusAdapter.wrap(imp);
 
 		// get some statistics
