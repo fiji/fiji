@@ -188,15 +188,17 @@ public class NearestNeighborLinker {
 		for (int i = 0; i < t0.size(); i++) {	// For all Spots in t
 			currCoords = t0.get(i).getCoordinates();
 			HashMap<Spot, Float> distMap = new HashMap<Spot, Float>();	// store the relevant distances we calculate for this Spot to Spots in t+1
+			ArrayList<Spot> currLinks = new ArrayList<Spot>();
 			for (int j = 0; j < t1.size(); j++) {	// For all Spots in t+1
 				potentialCoords = t1.get(j).getCoordinates();
 				dist = getEucDistSq(currCoords, potentialCoords);
 				if (dist <= maxDistSq) {
-					links.get(i).add(t1.get(j));	// Add this Spot j in t+1 as a link to our Spot i in t
+					currLinks.add(t1.get(j));	// Add this Spot j in t+1 as a link to our Spot i in t
 					incrementCount(numLinks, t1.get(j));
 					distMap.put(t1.get(j), dist);
 				}
 			}
+			links.add(currLinks);
 			distances.add(distMap);	// Store the distances for each Spot in t+1 linked to the current Spot in t.
 		}
 		
@@ -212,11 +214,11 @@ public class NearestNeighborLinker {
 					ArrayList<Spot> linked = links.get(i);
 					ArrayList<Spot> dup = new ArrayList<Spot>(linked);
 					linked.clear();
-					HashMap<Spot, Float> distMapNotLinkedAnymore = distances.get(i);
+					HashMap<Spot, Float> distMapNotLinkedAnymore = new HashMap<Spot, Float>(distances.get(i));
 					HashMap<Spot, Float> distMapLinked = new HashMap<Spot, Float>();
 					
 					// Add back only the Spots that are not linked to anything else
-					for (int j = 0; i < dup.size(); j++) {
+					for (int j = 0; j < dup.size(); j++) {
 						Spot s = dup.get(j);
 						if (numLinks.get(s) == 1) {	// If == 1, then this Spot in t+1 is only linked to the current Spot in t.
 							linked.add(s);
@@ -329,11 +331,15 @@ public class NearestNeighborLinker {
 		t1.add(new Spot(new float[] {30.96f, 43.66f, 18f}));
 		t1.add(new Spot(new float[] {27.79f, 33.54f, 18f}));
 		t1.add(new Spot(new float[] {52.40f, 10.32f, 10f}));
+		t1.add(new Spot(new float[] {50.40f, 10.32f, 10f}));
+		t1.add(new Spot(new float[] {48.40f, 10.32f, 10f}));
+		t1.add(new Spot(new float[] {46.40f, 10.32f, 10f}));
+		t1.add(new Spot(new float[] {44.40f, 10.32f, 10f}));
 		
 		/*
 		 * Execute linker!
 		 */
-		NearestNeighborLinker linker = new NearestNeighborLinker(t0, t1, 3, 10f);
+		NearestNeighborLinker linker = new NearestNeighborLinker(t0, t1, 3, 10f);  // max of 3 links, 10f max dist away
 		if (!linker.checkInput() || !linker.process()) {
 			System.out.println("Linker failed with error: " + linker.getErrorMessage());
 		}
