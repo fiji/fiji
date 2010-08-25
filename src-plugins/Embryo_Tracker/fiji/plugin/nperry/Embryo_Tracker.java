@@ -254,7 +254,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			}
 			final ArrayList< float[] > centeredExtrema = findExtrema.getRegionalExtremaCenters(false);
 			final ArrayList<Spot> spots = findExtrema.convertToSpots(centeredExtrema, calibration);
-			downsampledCoordsToOrigCoords(spots, downsampleFactors);
+			Utils.downsampledCoordsToOrigCoords(spots, downsampleFactors);
 			extremaAllFrames.add(spots);
 			
 			
@@ -569,26 +569,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	}
 	
 	
-	/**
-	 * Takes the down-sampled coordinates of a list of {@link Spots}, and scales them back to be coordinates of the
-	 * original image using the downsample factors.
-	 * 
-	 * @param spots The list of Spots to convert the coordinates for.
-	 * @param downsampleFactors The downsample factors used for each dimension.
-	 */
-	private void downsampledCoordsToOrigCoords(ArrayList<Spot> spots, float downsampleFactors[]) {
-		Iterator<Spot> itr = spots.iterator();
-		while (itr.hasNext()) {
-			Spot spot = itr.next();
-			float[] coords = spot.getCoordinates();
-			
-			// Undo downsampling
-			for (int i = 0; i < coords.length; i++) {
-				coords[i] = coords[i] * downsampleFactors[i];
-			}
-		}
-	}
-	
+
 	
 	/**
 	 * TODO
@@ -599,6 +580,8 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 * @param extremaAllFrames
 	 * @param calibration
 	 */
+	
+	// TODO: make a method for creating the sliders (swing), and a separate method for staying there until continue/cancel selected.
 	public void letUserAdjustThresholds(final Image3DUniverse univ, final String contentName, ArrayList< HashMap<Feature, Float> > thresholdsAllFrames, ArrayList< ArrayList< ArrayList<Spot> > > selectedPoints, ArrayList< ArrayList< Spot > > extremaAllFrames, float[] calibration) {
 		
 		// Grab the Content of the universe, which has the name of the IP.
@@ -707,7 +690,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		// Handle when window closed... (see original changeThreshold code in Executer.class)
 		
 		gd.showDialog();
-		while (!gd.wasOKed()) {  // stay here until the user selects 'ok,' or 'cancels'
+		while (!gd.wasOKed()) {  // stay here in code until the user selects 'ok,' or 'cancels' then continue executing
 			if (gd.wasCanceled()) return;  /* FIX: if canceled, reset to auto-thresholds! */
 		}
 		univ.close();
