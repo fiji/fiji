@@ -912,18 +912,18 @@ public class SphereCursor<T extends Type<T>> implements LocalizableCursor<T> {
 		System.out.println("\nUsing the hyper-sphere cursor to convolve the whole image with a sphere of radius " + iRadius + "...");
 		pixelNumber = 0;
 		start = System.currentTimeMillis();
-		while (destCursor3.hasNext()) {
-			destCursor3.fwd();
-			final HyperSphereIterator<UnsignedByteType> hsc = new HyperSphereIterator<UnsignedByteType>(testImage, destCursor3, (int) iRadius, new OutOfBoundsStrategyValueFactory<UnsignedByteType>());
-			sum = 0;
-			while (hsc.hasNext()) {
-				hsc.fwd();
-				sum += hsc.getType().get();
-				pixelNumber++;
-			}
-			hsc.close();
-			destCursor3.getType().set(sum);
-		}
+//		while (destCursor3.hasNext()) {
+//			destCursor3.fwd();
+//			final HyperSphereIterator<UnsignedByteType> hsc = new HyperSphereIterator<UnsignedByteType>(testImage, destCursor3, (int) iRadius, new OutOfBoundsStrategyValueFactory<UnsignedByteType>());
+//			sum = 0;
+//			while (hsc.hasNext()) {
+//				hsc.fwd();
+//				sum += hsc.getType().get();
+//				pixelNumber++;
+//			}
+//			hsc.close();
+//			destCursor3.getType().set(sum);
+//		}
 		destCursor3.close();
 		end = System.currentTimeMillis();
 		System.out.println(String.format("Iterated over in total %d pixels in %d ms: %.1e pixel/s.", pixelNumber, (end-start), pixelNumber/((float) (end-start)/1000) ));
