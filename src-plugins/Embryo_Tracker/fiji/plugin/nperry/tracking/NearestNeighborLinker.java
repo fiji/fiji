@@ -2,6 +2,9 @@ package fiji.plugin.nperry.tracking;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.TreeMap;
 
 import fiji.plugin.nperry.Spot;
 
@@ -149,13 +152,18 @@ public class NearestNeighborLinker {
 
 	public boolean process()
 	{
-		// Ensure that checkInput() was run before executing
+		/*
+		 *  Ensure that checkInput() was run before executing
+		 */
 		if (!inputChecked) {
 			errorMessage = "checkInput() was never run.";
 			return false;
 		}
 		
-		// Initialize local vars
+		
+		/*
+		 *  Initialize local vars
+		 */
 		final float maxDistSq = maxDist * maxDist;								// Prevents us from using the costly Math.sqrt() function for Euclidean distance checks
 		final HashMap<Spot, Integer> numLinks = new HashMap<Spot, Integer>();	// A HashMap to keep track of how many times Spots in t+1 have been linked to Spots in t. 
 		final ArrayList< HashMap<Spot, Float> > distances = new ArrayList< HashMap<Spot, Float> >();  // For the points we add as links in part (1) below, store the distances we calculate for later pruning
@@ -163,12 +171,18 @@ public class NearestNeighborLinker {
 		float[] potentialCoords = new float[t0.get(1).getCoordinates().length];
 		float dist;
 		
-		// Add all Spots from t1 into the numLinks hashmap, with an initial count of 0 (they are all unlinked at this point).
+		
+		/*
+		 *  Add all Spots from t1 into the numLinks hashmap, with an initial count of 0 (they are all unlinked at this point).
+		 */
 		for (int i = 0; i < t1.size(); i++) {
 			numLinks.put(t1.get(i), 0);
 		}
 		
-		// For each Spot in t, find *all* potential Spots in t+1 within maxDist to link to (could be > nLinks).
+		
+		/*
+		 *  For each Spot in t, find *all* potential Spots in t+1 within maxDist to link to (could be > nLinks).
+		 */
 		for (int i = 0; i < t0.size(); i++) {	// For all Spots in t
 			currCoords = t0.get(i).getCoordinates();
 			HashMap<Spot, Float> distMap = new HashMap<Spot, Float>();	// store the relevant distances we calculate for this Spot to Spots in t+1
@@ -184,42 +198,84 @@ public class NearestNeighborLinker {
 			distances.add(distMap);	// Store the distances for each Spot in t+1 linked to the current Spot in t.
 		}
 		
-		// Trim down the number of Spots in t+1 linked to Spot in t to <= nLinks, if nLinks specified
+		
+		/*
+		 *  Trim down the number of Spots in t+1 linked to Spot in t to <= nLinks, if nLinks specified
+		 */
 		if (nLinks > 0) {
 			for (int i = 0; i < links.size(); i++) {	// For all Spots in t...
 				if (links.get(i).size() > nLinks) {		// If there are more than nLinks for this Spot...
 					
 					// Create a duplicate list, and clear the real one
-					ArrayList<Spot> curr = links.get(i);
-					ArrayList<Spot> dup = new ArrayList<Spot>(curr);
-					curr.clear();
+					ArrayList<Spot> linked = links.get(i);
+					ArrayList<Spot> dup = new ArrayList<Spot>(linked);
+					linked.clear();
+					HashMap<Spot, Float> distMapNotLinkedAnymore = distances.get(i);
+					HashMap<Spot, Float> distMapLinked = new HashMap<Spot, Float>();
 					
 					// Add back only the Spots that are not linked to anything else
 					for (int j = 0; i < dup.size(); j++) {
 						Spot s = dup.get(j);
 						if (numLinks.get(s) == 1) {	// If == 1, then this Spot in t+1 is only linked to the current Spot in t.
-							curr.add(s);
-							dup.remove(s); // Keep track of the Spots that aren't linked anymore
+							linked.add(s);
+							distMapLinked.put(s, distMapNotLinkedAnymore.get(s));	// Add, so we keep track of the distances of each Spot in case we later have too many
+							distMapNotLinkedAnymore.remove(s);						// Remove, so that distMap has only Spots that aren't linked anymore
+							
 						}
 					}
 					
 					// We might have the right number now.
-					if (curr.size() == nLinks) continue;	
+					if (linked.size() == nLinks) continue;	
 					
-					// If not, check to see if we are over or under quota.
-					if (curr.size() > nLinks) {	// Over, so remove those that are farthest away
-						//TODO
+					// If not, check to see if we are over or under quota, and act appropriately.
+				
+					// Case 1 - Too many links still, so remove those farthest away.
+					if (linked.size() > nLinks) {	
+						// Make a new map, with keys as floats, and values as Spots, so that there is a natural ordering
+						TreeMap<Float, Spot> invertedDistMap = invertMap(distMapLinked);
+						
+						// Remove farthest spots in t+1
+						while (linked.size() > nLinks) {
+							Float toRemove = invertedDistMap.lastKey();	// This is the smallest distance
+							linked.remove(invertedDistMap.get(toRemove));		// Add the corresponding Spot to the linked list
+							invertedDistMap.remove(toRemove);				// So we don't add it again
+						}
+						
 					}
 					
-					else {						// Under, so add back the next closest
-						//TODO
+					// Case 2 - Not enough links, add the next closest until we have enough
+					else {
+						// Make a new map, with keys as floats, and values as Spots, so that there is a natural ordering
+						TreeMap<Float, Spot> invertedDistMap = invertMap(distMapNotLinkedAnymore);
+						
+						// Add back closest spots in t+1
+						while (linked.size() < nLinks) {
+							Float toAdd = invertedDistMap.firstKey();	// This is the smallest distance
+							linked.add(invertedDistMap.get(toAdd));		// Add the corresponding Spot to the linked list
+							invertedDistMap.remove(toAdd);				// So we don't add it again
+						}
 					}
 				}
 			}
 		}
 		
-		// Process() finished
+		
+		/*
+		 *  Process() finished
+		 */
 		return true;
+	}
+	
+	private static TreeMap<Float, Spot> invertMap(HashMap<Spot, Float> hash)
+	{
+		Set<Spot> spots = hash.keySet();
+		TreeMap<Float, Spot> inverted = new TreeMap<Float, Spot>();
+		Iterator<Spot> itr = spots.iterator();
+		while (itr.hasNext()) {
+			Spot spot = itr.next();
+			inverted.put(hash.get(spot), spot);
+		}
+		return inverted;
 	}
 	
 	/**
@@ -247,6 +303,10 @@ public class NearestNeighborLinker {
 			total += ((a[i] - b[i]) * (a[i] - b[i]));
 		}
 		return total;
+	}
+	
+	public static void main(String[] args) {
+		
 	}
 }
 
