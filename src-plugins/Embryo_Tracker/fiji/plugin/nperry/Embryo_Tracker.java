@@ -2,6 +2,7 @@ package fiji.plugin.nperry;
 
 import fiji.plugin.nperry.features.BlobMorphology;
 import fiji.plugin.nperry.features.LoG;
+import fiji.plugin.nperry.tracking.ObjectTracker;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.GenericDialog;
@@ -265,11 +266,11 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			/* 8 - Threshold maxima based on extracted features. */
 			// TODO fix so that will work with one maxima.
 			HashMap<Feature, Float> thresholds = new HashMap<Feature, Float>();
-			//final float logThreshold = otsuThreshold(framej, Feature.LOG_VALUE);  // threshold for frame
+			final float logThreshold = otsuThreshold(spots, Feature.LOG_VALUE);  // threshold for frame
 			//final float brightnessThreshold = otsuThreshold(framej, Feature.BRIGHTNESS);
 			//final float contrastThreshold = otsuThreshold(framej, Feature.CONTRAST);
 			//final float varThreshold = otsuThreshold(framej, Feature.VARIANCE);
-			//thresholds.put(Feature.LOG_VALUE, logThreshold);
+			thresholds.put(Feature.LOG_VALUE, logThreshold);
 			//thresholds.put(Feature.BRIGHTNESS, brightnessThreshold);
 			//thresholds.put(Feature.CONTRAST, contrastThreshold);
 			//thresholds.put(Feature.VARIANCE, varThreshold);
@@ -285,10 +286,15 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 
 		
 		/* 8 - Track */
-//		ArrayList< ArrayList<Spot> > extremaPostThresholdingAllFrames = new ArrayList< ArrayList<Spot> >();
-//		for (ArrayList< ArrayList <Spot> > pointsInTimeFrame : selectedPoints) {
-//			extremaPostThresholdingAllFrames.add(pointsInTimeFrame.get(0));
-//		}
+		ArrayList< ArrayList<Spot> > extremaPostThresholdingAllFrames = new ArrayList< ArrayList<Spot> >();
+		for (ArrayList< ArrayList <Spot> > pointsInTimeFrame : selectedPoints) {
+			extremaPostThresholdingAllFrames.add(pointsInTimeFrame.get(SHOWN));
+		}
+		ObjectTracker tracker = new ObjectTracker(extremaPostThresholdingAllFrames);
+		if (!tracker.checkInput() || !tracker.process()) {
+			System.out.println("Tracking failed: " + tracker.getErrorMessage());
+		}
+		
 		
 		return new Object[] {extremaAllFrames};
 	}
@@ -519,17 +525,17 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 				final float coords[] = spot.getCoordinates();
 				
 				// 1. If the spot passes the threshold
-				//if (aboveThresholds(spot, thresholds)) {
+				if (aboveThresholds(spot, thresholdsAllFrames.get(j))) {
 					spot.setName(Integer.toString(i));
 					pointList.add(spot.getName(), coords[0], coords[1], coords[2]);	
 					shown.add(spot);
-				//}
+				}
 				
 				// 2. If spot doesn't pass threshold
-				//else{
-				//	spot.setName(Integer.toString(i));
-				//	notShown.add(spot);
-				//}
+				else{
+					spot.setName(Integer.toString(i));
+					notShown.add(spot);
+				}
 			}
 			
 			// Add the shown and notShown lists of points to the overall list
@@ -693,7 +699,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		while (!gd.wasOKed()) {  // stay here in code until the user selects 'ok,' or 'cancels' then continue executing
 			if (gd.wasCanceled()) return;  /* FIX: if canceled, reset to auto-thresholds! */
 		}
-		univ.close();
+		//univ.close();
 	}
 	
 	

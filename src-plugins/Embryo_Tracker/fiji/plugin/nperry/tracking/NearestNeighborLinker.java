@@ -120,6 +120,7 @@ public class NearestNeighborLinker {
 	
 	/**
 	 * Call this method before calling process, in order to guarantee that all of the required input is correct.
+	 * @return true if no errors, false otherwise.
 	 */
 	public boolean checkInput()
 	{
