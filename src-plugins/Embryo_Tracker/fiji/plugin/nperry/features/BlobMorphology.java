@@ -64,11 +64,9 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 		this(img, (float) diam, img.getCalibration());
 	}
 	
-	
-	
-	
-	
-	
+	/*
+	 * PUBLIC METHODS
+	 */
 	
 	@Override
 	public Feature getFeature() {
