@@ -2342,17 +2342,9 @@ public class Fake {
 			arguments.add("-deprecation");
 			arguments.add("-Xlint:unchecked");
 		}
-		String classPath = discoverClassPath();
 		if (extraClassPath != null && !extraClassPath.equals("")) {
-			StringTokenizer tokenizer =
-				new StringTokenizer(extraClassPath, ":");
-			while (tokenizer.hasMoreElements())
-				classPath += File.pathSeparator
-					+ tokenizer.nextToken();
-		}
-		if (classPath != null && !classPath.equals("")) {
 			arguments.add("-classpath");
-			arguments.add(classPath);
+			arguments.add(join(split(extraClassPath, ":"), File.pathSeparator));
 		}
 
 		int optionCount = arguments.size();
