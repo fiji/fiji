@@ -231,10 +231,12 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 						if(e.getSource() == applyButton)
 						{
 							try{
+								applyButton.setEnabled(false);
 								processSingleChannelImage(pottsWeight);
 								createSegmentationImage();
 								showColorOverlay = false;
 								toggleOverlay();
+								applyButton.setEnabled(true);
 							}catch(Exception e){
 								e.printStackTrace();
 							}
@@ -284,20 +286,21 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 	
 			resultOverlay = new ImageOverlay();
 	
-			// add result overlay
-			final Color[] colors = new Color[]{Color.red, Color.green, Color.blue,
-			                                   Color.cyan, Color.magenta};
-			final byte[] red = new byte[256];
+			// create the color look up table
+			final byte[] red   = new byte[256];
 			final byte[] green = new byte[256];
-			final byte[] blue = new byte[256];
-			final int shift = 127;
+			final byte[] blue  = new byte[256];
 			for(int i = 0 ; i < 256; i++)
 			{
-				final int colorIndex = i / (shift+1);
-				//IJ.log("i = " + i + " color index = " + colorIndex);
-				red[i] = (byte) colors[colorIndex].getRed();
-				green[i] = (byte) colors[colorIndex].getGreen();
-				blue[i] = (byte) colors[colorIndex].getBlue();
+				if (i < 128) {
+					red[i]   = (byte)255;
+					green[i] = 0;
+					blue[i]  = 0;
+				} else {
+					red[i]   = 0;
+					green[i] = (byte)255;
+					blue[i]  = 0;
+				}
 			}
 			overlayLUT = new LUT(red, green, blue);
 
@@ -453,16 +456,24 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 
 		// read image
 		imp   = WindowManager.getCurrentImage();
+		if (imp == null) {
+			IJ.showMessage("Please open an image first.");
+			return;
+		}
 		image = ImagePlusAdapter.wrap(imp);
 
-		// initialise graph cut
-		init();
+		// get some statistics
+		numNodes   = image.size();
+		dimensions = image.getDimensions();
+		numEdges   = 0;
+		for (int d = 0; d < dimensions.length; d++)
+			numEdges += numNodes - numNodes/dimensions[d];
 
 		// prepare segmentation image
 		int[] segDimensions = new int[3];
-		segDimensions[0] = 0;
-		segDimensions[1] = 0;
-		segDimensions[2] = 0;
+		segDimensions[0] = 1;
+		segDimensions[1] = 1;
+		segDimensions[2] = 1;
 		for (int d = 0; d < dimensions.length; d++)
 			segDimensions[d] = dimensions[d];
 
@@ -506,18 +517,6 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 		seg.show();
 		seg.updateAndDraw();
 	}
-
-	private void init() {
-
-		numNodes   = image.size();
-		dimensions       = image.getDimensions();
-
-		numEdges = 0;
-
-		for (int d = 0; d < dimensions.length; d++)
-			numEdges += numNodes - numNodes/dimensions[d];
-	}
-
 
 	/**
 	 * Processes a single channel image.
