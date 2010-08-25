@@ -6,6 +6,8 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeMap;
 
+import mpicbg.imglib.algorithm.math.MathLib;
+
 import fiji.plugin.nperry.Spot;
 
 /**
@@ -266,6 +268,12 @@ public class NearestNeighborLinker {
 		return true;
 	}
 	
+	/**
+	 * Takes a hash map, and creates a new tree map with the keys in the hash map as values, and 
+	 * the values as keys.
+	 * @param hash The hash map to invert.
+	 * @return A tree map with the hash map's values as keys, and the hash map's keys as values.
+	 */
 	private static TreeMap<Float, Spot> invertMap(HashMap<Spot, Float> hash)
 	{
 		Set<Spot> spots = hash.keySet();
@@ -306,6 +314,42 @@ public class NearestNeighborLinker {
 	}
 	
 	public static void main(String[] args) {
+		/*
+		 * Set up params
+		 */
+		ArrayList<Spot> t0 = new ArrayList<Spot>();
+		ArrayList<Spot> t1 = new ArrayList<Spot>();
+		
+		// T0
+		t0.add(new Spot(new float[] {27.39f, 39.69f, 20f}));
+		t0.add(new Spot(new float[] {9.12f, 18.66f, 20f}));
+		t0.add(new Spot(new float[] {52.99f, 8.53f, 12f}));
+		
+		// T1
+		t1.add(new Spot(new float[] {30.96f, 43.66f, 18f}));
+		t1.add(new Spot(new float[] {27.79f, 33.54f, 18f}));
+		t1.add(new Spot(new float[] {52.40f, 10.32f, 10f}));
+		
+		/*
+		 * Execute linker!
+		 */
+		NearestNeighborLinker linker = new NearestNeighborLinker(t0, t1, 3, 10f);
+		if (!linker.checkInput() || !linker.process()) {
+			System.out.println("Linker failed with error: " + linker.getErrorMessage());
+		}
+		ArrayList< ArrayList<Spot> > links = linker.getResult();
+		System.out.println("Results:");
+		System.out.println("________________");
+		System.out.println();
+		for (int i = 0; i < links.size(); i++) {
+			ArrayList<Spot> spot = links.get(i);
+			System.out.println("Spot at " + MathLib.printCoordinates(t0.get(i).getCoordinates()) + " is linked to: ");
+			for (int j = 0; j < spot.size(); j++) {
+				System.out.println(MathLib.printCoordinates(spot.get(j).getCoordinates()));
+			}
+			System.out.println();
+		}
+		
 		
 	}
 }
