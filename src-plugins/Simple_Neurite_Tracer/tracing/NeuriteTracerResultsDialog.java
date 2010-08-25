@@ -131,8 +131,9 @@ public class NeuriteTracerResultsDialog
 	Button sigmaWizard;
 
 	Button loadLabelsButton;
-
 	Button exportCSVButton;
+	Button makeLineStackButton;
+
 	Button showCorrespondencesToButton;
 
 	Button saveButton;
@@ -828,8 +829,12 @@ public class NeuriteTracerResultsDialog
 				exportCSVButton = new Button("Export as CSV");
 				exportCSVButton.addActionListener( this );
 
+				makeLineStackButton = new Button("Make Line Stack");
+				makeLineStackButton.addActionListener( this );
+
 				otherImportExportPanel.add(loadLabelsButton);
 				otherImportExportPanel.add(exportCSVButton);
+				otherImportExportPanel.add(makeLineStackButton);
 			}
 			add(otherImportExportPanel,c);
 
@@ -1072,6 +1077,14 @@ public class NeuriteTracerResultsDialog
 		} else if( source == loadLabelsButton ) {
 
 			plugin.loadLabels();
+
+		} else if( source == makeLineStackButton ) {
+
+			if( pathAndFillManager.size() == 0 ) {
+				IJ.error("There are no paths traced yet - the stack would be empty");
+			} else {
+				plugin.makePathVolume();
+			}
 
 		} else if( source == cancelSearch ) {
 

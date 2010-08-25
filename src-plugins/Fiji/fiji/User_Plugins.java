@@ -34,16 +34,22 @@ import java.util.jar.JarFile;
  */
 public class User_Plugins implements PlugIn {
 	public String path, menuPath;
+	protected boolean stripPluginsPrefix;
 
 	public User_Plugins() {
-		this(getDefaultPath(), getDefaultMenuPath());
+		this(true);
 	}
 
-	public User_Plugins(String path, String menuPath) {
+	public User_Plugins(boolean stripPluginsPrefix) {
+		this(getDefaultPath(), getDefaultMenuPath(), stripPluginsPrefix);
+	}
+
+	public User_Plugins(String path, String menuPath, boolean stripPluginsPrefix) {
 		this.path = path;
 		if (menuPath.endsWith(">"))
 			menuPath = menuPath.substring(0, menuPath.length() - 1);
 		this.menuPath = menuPath;
+		this.stripPluginsPrefix = stripPluginsPrefix;
 	}
 
 	public void run(String arg) {
@@ -155,7 +161,11 @@ public class User_Plugins implements PlugIn {
 			if (name.endsWith("plugins.config"))
 				return parsePluginsConfig(jar
 					.getInputStream(entry), menuPath);
-			if (name.indexOf('_') < 0)
+			if (name.indexOf('_') < 0 || name.indexOf('$') >= 0)
+				continue;
+			if (name.endsWith(".class"))
+				name = name.substring(0, name.length() - 6).replace('/', '.');
+			else
 				continue;
 			String[] item = new String[3];
 			item[0] = menuPath;
@@ -202,7 +212,9 @@ public class User_Plugins implements PlugIn {
 		return className.replace('_', ' ');
 	}
 
-	protected static String makeMenuPath(String original, String menuPath) {
+	protected String makeMenuPath(String original, String menuPath) {
+		if (!stripPluginsPrefix)
+			return original;
 		if (original.equals("Plugins"))
 			return menuPath;
 		if (original.startsWith("Plugins>"))

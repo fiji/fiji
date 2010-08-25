@@ -209,13 +209,13 @@ misc/headless.jar <- jars/javac.jar ImageJA/
 CLASSPATH(plugins/mpicbg_.jar)=jars/mpicbg.jar
 plugins/mpicbg_.jar <- mpicbg/
 jars/mpicbg.jar <- mpicbg/
-CLASSPATH(jars/imglib.jar)=jars/mpicbg.jar
+CLASSPATH(jars/imglib.jar)=jars/mpicbg.jar:$JAVA3D_JARS
 jars/imglib.jar <- plugins/loci_tools.jar imglib/
 jars/clojure.jar <- clojure/
 plugins/loci_tools.jar <- bio-formats/
-CLASSPATH(jars/VectorString.jar)=jars/Jama-1.0.2.jar
+CLASSPATH(jars/VectorString.jar)=jars/Jama-1.0.2.jar:$JAVA3D_JARS
 jars/VectorString.jar <- TrakEM2/
-CLASSPATH(plugins/TrakEM2_.jar)=plugins/VIB_.jar:jars/mpicbg.jar:plugins/loci_tools.jar:plugins/bUnwarpJ_.jar:plugins/level_sets.jar:plugins/Fiji_Plugins.jar:jars/Jama-1.0.2.jar:jars/imglib.jar:plugins/Simple_Neurite_Tracer.jar:plugins/3D_Viewer.jar
+CLASSPATH(plugins/TrakEM2_.jar)=plugins/VIB_.jar:jars/mpicbg.jar:plugins/loci_tools.jar:plugins/bUnwarpJ_.jar:plugins/level_sets.jar:plugins/Fiji_Plugins.jar:jars/Jama-1.0.2.jar:jars/imglib.jar:plugins/Simple_Neurite_Tracer.jar:plugins/3D_Viewer.jar:$JAVA3D_JARS
 plugins/TrakEM2_.jar <- jars/ij.jar plugins/VIB_.jar jars/mpicbg.jar plugins/bUnwarpJ_.jar plugins/level_sets.jar plugins/Fiji_Plugins.jar jars/imglib.jar jars/VectorString.jar TrakEM2/
 plugins/ij-ImageIO_.jar <- ij-plugins/
 jars/jacl.jar <- tcljava/
@@ -485,5 +485,4 @@ check-*[bin/up-to-date-check.py * precompiled/*_.jar] <-
 # Fake itself
 
 MAINCLASS(jars/fake.jar)=fiji.build.Fake
-JAVAVERSION(jars/fake.jar)=1.3
 jars/fake.jar <- src-plugins/fake/**/*.java

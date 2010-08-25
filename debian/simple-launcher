@@ -20,5 +20,4 @@ fi
 
 export LD_LIBRARY_PATH=@@LD_LIBRARY_PATH@@:$(cat /usr/lib/fiji/jni/*.conf 2> /dev/null | tr '\n' ':')
 
-/usr/lib/fiji/fiji --class-path @@JAVA_3D_JARS@@:/usr/share/java/jama.jar:/usr/share/java/bsh.jar:/usr/share/java/batik-all.jar:/usr/share/java/xml-apis-ext.jar --fiji-dir /usr/lib/fiji/ "$@"
-
+/usr/lib/fiji/fiji -Dfiji.debian=true --class-path @@ADDITIONAL_JARS@@ --fiji-dir /usr/lib/fiji/ -- "$@"

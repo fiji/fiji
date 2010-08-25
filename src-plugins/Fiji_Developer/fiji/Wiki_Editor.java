@@ -67,7 +67,6 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 
 import java.net.URL;
 
@@ -76,6 +75,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Stack;
 
 import java.util.regex.Pattern;
 
@@ -83,6 +83,16 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JTextArea;
+
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Element;
+
+import javax.swing.text.html.HTML.Attribute;
+import javax.swing.text.html.HTML.Tag;
+
+import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.HTMLEditorKit;
 
 public class Wiki_Editor implements PlugIn, ActionListener {
 	protected String name;
@@ -120,6 +130,17 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 			default:
 				IJ.error("[BUG] Unknown image format: " + name());
 			}
+		}
+
+		public static Format byExtension(String extension) {
+			int dot = extension.lastIndexOf('.');
+			if (dot < 0)
+				return null;
+			extension = extension.substring(dot);
+			for (Format format : Format.values())
+				if (extension.equals(format.extension))
+					return format;
+			return null;
 		}
 	};
 
@@ -199,7 +220,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 
 	protected TextEditor editor;
 	protected JMenuItem upload, preview, toBackToggle, renameImage,
-		changeURL, insertPluginInfobox, whiteImage;
+		changeURL, insertPluginInfobox, whiteImage, importHTML;
 
 	protected void addEditor() {
 		editor = new TextEditor(null);
@@ -221,6 +242,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		}
 
 		changeURL = editor.addToMenu(menu, "Change Wiki URL", 0, 0);
+		importHTML = editor.addToMenu(menu, "Import HTML from URL...", 0, 0);
 
 		for (int i = 0; i < menu.getItemCount(); i++)
 			menu.getItem(i).addActionListener(this);
@@ -304,6 +326,18 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 				if (off > 0)
 					URL = URL.substring(0, off + 1);
 				client = null;
+			}
+		}
+		else if (source == importHTML) {
+			GenericDialog gd = new GenericDialog("Import HTML from URL");
+			gd.addStringField("URL", "", 40);
+			gd.showDialog();
+			if (!gd.wasCanceled()) {
+				String url = gd.getNextString();
+				if (url.startsWith("http://") || url.startsWith("https://"))
+					importHTML(url);
+				else
+					IJ.error("Invalid URL: " + url);
 			}
 		}
 		else if (source == insertPluginInfobox) {
@@ -411,8 +445,9 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		int start = html.indexOf("<div class='previewnote'>");
 		start = html.indexOf("</div>", start) + 6;
 		int end = html.indexOf("<div id='toolbar'>");
-		html = "<html>\n<head>\n<title>Preview of " + name
-			+ "</title>\n</head>\n<body>\n"
+		html = "<html>\n<head>\n<title>Preview of " + name + "</title>\n"
+			+ "<meta http-equiv='Content-Type' "
+			+ "content='text/html; charset=utf-8'/>\n</head>\n<body>\n"
 			+ html.substring(start, end)
 			+ "</body>\n</html>\n";
 		Pattern imagePattern = Pattern.compile("<a href=[^>]*DestFile=",
@@ -548,6 +583,17 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		return title;
 	}
 
+	protected FileInfo setTmpFileInfo(ImagePlus imp, String fileName) {
+		FileInfo info = new FileInfo();
+		info.width = imp.getWidth();
+		info.height = imp.getHeight();
+		info.directory = IJ.getDirectory("temp");
+		info.fileName = fileName;
+		imp.changes = true;
+		imp.setFileInfo(info);
+		return info;
+	}
+
 	protected boolean saveOrUploadImages(GraphicalMediaWikiClient client,
 			List<String> images) {
 		int i = 0, total = images.size() * 2 + 1;
@@ -566,15 +612,8 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 				images.set(i, newTitle);
 			}
 			FileInfo info = imp.getOriginalFileInfo();
-			if (info == null) {
-				info = new FileInfo();
-				info.width = imp.getWidth();
-				info.height = imp.getHeight();
-				info.directory = IJ.getDirectory("temp");
-				info.fileName = image;
-				imp.changes = true;
-				imp.setFileInfo(info);
-			}
+			if (info == null)
+				info = setTmpFileInfo(imp, image);
 			if (info.directory == null) {
 				info.directory = IJ.getDirectory("temp");
 				imp.changes = true;
@@ -585,6 +624,9 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 			}
 			if (imp.changes) {
 				String fullFilename = info.directory + "/" + info.fileName;
+				Format imageFormat = Format.byExtension(fullFilename);
+				if (imageFormat == null)
+					imageFormat = this.imageFormat;
 				imageFormat.write(imp, fullFilename);
 			}
 			if (client != null) {
@@ -610,6 +652,119 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 				IJ.showProgress(++i, total);
 		}
 		return true;
+	}
+
+	protected String getContent(Element e) {
+		try {
+			int start = e.getStartOffset();
+			int end = e.getEndOffset();
+			String content = e.getDocument().getText(start, end - start);
+			if (content.endsWith("\n"))
+				content = content.substring(0, content.length() - 1);
+			return content;
+		} catch(BadLocationException e2) {
+			return "";
+		}
+	}
+
+	protected Object getAttribute(Object element, Object key) {
+		if (element instanceof AttributeSet)
+			return ((AttributeSet)element).getAttribute(key);
+		return null;
+	}
+
+	/**
+	 * The only purpose of this method is to take away all excuses from Bene
+	 */
+	protected void importHTML(String urlString) {
+		try {
+			StringBuffer buffer = new StringBuffer();
+
+			HTMLDocument html = new HTMLDocument();
+			html.putProperty("IgnoreCharsetDirective", new Boolean(true));
+			HTMLEditorKit kit = new HTMLEditorKit();
+			URL url = new URL(urlString);
+			kit.read(url.openStream(), html, 0);
+
+			Stack<Element> stack = new Stack<Element>();
+			stack.push(html.getDefaultRootElement());
+
+			while (!stack.empty()) {
+				Element e = stack.pop();
+				String name = e.getName();
+				if (name.equals("head") || name.equals("br") || name.equals("comment") || name.equals("form") || name.equals("script"))
+					continue;
+
+				if (name.equals("html") || name.equals("body") || name.equals("p") || name.equals("p-implied") || name.equals("div") || name.equals("center")) {
+					for (int i = e.getElementCount() - 1; i >= 0; i--)
+						stack.push(e.getElement(i));
+					continue;
+				}
+
+				String content = getContent(e);
+
+				if (name.equals("content")) {
+					Object a = getAttribute(e, Tag.A), href;
+					if (a != null && (href = getAttribute(a, Attribute.HREF)) != null)
+						buffer.append("[" + new URL(url, (String)href) + " " + content + "]");
+					else
+						buffer.append(content);
+				}
+				else if (name.equals("table")) {
+					// TODO: allow nested tables, allow images inside
+					buffer.append("{|\n");
+					for (int i = 0; i < e.getElementCount(); i++) {
+						if (i > 0)
+							buffer.append("|-\n");
+						Element e2 = e.getElement(i);
+						for (int j = 0; j < e2.getElementCount(); j++)
+							buffer.append("| " + getContent(e2.getElement(j))).append("\n");
+					}
+					buffer.append("|}\n");
+				}
+				else if (name.equals("ul")) {
+					// TODO: handle nested lists, probably by getting rid of the Stack and doing proper recursion
+					for (int i = 0; i < e.getElementCount(); i++)
+						buffer.append("* " + getContent(e.getElement(i))).append("\n");
+				}
+				else if (name.equals("blockquote")) {
+					for (int i = e.getElementCount() - 1; i >= 0; i--)
+						stack.push(e.getElement(i));
+					buffer.append(";").append(content.replaceAll("\n", "\n;"));
+				}
+				else if (name.equals("img")) {
+					String src;
+					if ((src = (String)getAttribute(e, Attribute.SRC)) != null) {
+						// TODO: just save it as-is, to avoid re-saving
+						// TODO: verify that the Wiki does not have the name yet (and modify otherwise)
+						ImagePlus image = new ImagePlus(new URL(url, (String)src).toString());
+						image.show();
+						// force saving to a temporary file
+						String baseName = src.substring(src.lastIndexOf('/') + 1);
+						setTmpFileInfo(image, baseName);
+						buffer.append("[[Image:" + baseName + "]]");
+					}
+				}
+				else if (name.equals("h1"))
+					buffer.append("= " + content + " =\n");
+				else if (name.equals("h2"))
+					buffer.append("== " + content + " ==\n");
+				else if (name.equals("h3"))
+					buffer.append("=== " + content + " ===\n");
+				else if (name.equals("h4"))
+					buffer.append("==== " + content + " ====\n");
+				else {
+					IJ.log("Unhandled tag: " + name);
+					continue;
+				}
+				buffer.append("\n");
+			}
+
+			JTextArea pane = editor.getEditorPane();
+			pane.insert(buffer.toString(), pane.getCaretPosition());
+		} catch (Exception e) {
+			IJ.error("Could not open " + urlString + ":\n \n" + e.getMessage());
+		}
 	}
 
 	protected boolean wikiHasImage(String image) {

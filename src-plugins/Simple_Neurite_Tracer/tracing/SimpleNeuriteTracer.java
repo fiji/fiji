@@ -770,6 +770,10 @@ public class SimpleNeuriteTracer extends ThreePanes
 			return;
 		}
 
+		if( temporaryPath.endJoins != null ) {
+			temporaryPath.unsetEndJoin();
+		}
+
 		setTemporaryPath( null );
 
 		endJoin = null;
@@ -780,6 +784,13 @@ public class SimpleNeuriteTracer extends ThreePanes
 	}
 
 	synchronized public void cancelPath( ) {
+
+		if( currentPath != null ) {
+			if( currentPath.startJoins != null )
+				currentPath.unsetStartJoin();
+			if( currentPath.endJoins != null )
+				currentPath.unsetEndJoin();
+		}
 
 		setCurrentPath( null );
 		setTemporaryPath( null );

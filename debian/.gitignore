@@ -1,4 +1,8 @@
+/fiji-*
+!/fiji-*.copyright
+!/fiji-*.README.Debian
 *.log
+*.pyc
 /fiji
 *.substvars
 *.debhelper

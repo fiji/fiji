@@ -8,6 +8,9 @@ debian/update-debian.py --check-git-clean
 echo === Cleaning the tree:
 debian/update-debian.py --clean
 
+echo === Generating a new build-command from the Fakefile
+debian/update-debian.py --generate-build-command
+
 echo ==== Building the tree:
 debian/build-command
 
@@ -18,4 +21,4 @@ echo ==== Cleaning again:
 debian/update-debian.py --clean
 
 echo ==== Finally, building the packages:
-dpkg-buildpackage -rfakeroot -b -us -uc
+dpkg-buildpackage -I.git -Iwekadocs -Ibio-formats/dist -rfakeroot -us -uc
