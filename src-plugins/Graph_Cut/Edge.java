@@ -59,8 +59,7 @@ public class Edge {
 	 *
 	 * @return The head, i.e., the node this edge points to.
 	 */
-	public Node getHead()
-	{
+	public Node getHead() {
 		return this.head;
 	}
 
@@ -69,8 +68,7 @@ public class Edge {
 	 *
 	 * @param head The head, i.e., the node this edge shall point to.
 	 */
-	public void setHead(Node head)
-	{
+	public void setHead(Node head) {
 		this.head = head;
 	}
 
@@ -79,8 +77,7 @@ public class Edge {
 	 *
 	 * @param next The next edge.
 	 */
-	public void setNext(Edge next)
-	{
+	public void setNext(Edge next) {
 		this.next = next;
 	}
 
@@ -89,8 +86,7 @@ public class Edge {
 	 *
 	 * @param sister The sister.
 	 */
-	public void setSister(Edge sister)
-	{
+	public void setSister(Edge sister) {
 		this.sister = sister;
 	}
 
@@ -99,8 +95,7 @@ public class Edge {
 	 *
 	 * @param residualCapacity The residual capacity.
 	 */
-	public void setResidualCapacity(float residualCapacity)
-	{
+	public void setResidualCapacity(float residualCapacity) {
 		this.residualCapacity = residualCapacity;
 	}
 
@@ -109,8 +104,7 @@ public class Edge {
 	 *
 	 * @return The residualCapacity.
 	 */
-	public float getResidualCapacity()
-	{
+	public float getResidualCapacity() {
 		return this.residualCapacity;
 	}
 
@@ -119,8 +113,7 @@ public class Edge {
 	 *
 	 * @return The sister.
 	 */
-	public Edge getSister()
-	{
+	public Edge getSister() {
 		return this.sister;
 	}
 
@@ -129,9 +122,7 @@ public class Edge {
 	 *
 	 * @return The next.
 	 */
-	public Edge getNext()
-	{
+	public Edge getNext() {
 		return this.next;
 	}
 }
-

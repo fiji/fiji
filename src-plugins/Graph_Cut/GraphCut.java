@@ -35,19 +35,29 @@ import java.util.List;
  */
 enum Terminal {
 
-	FOREGROUND,	// a.k.a. the source
-	BACKGROUND;	// a.k.a. the sink
+	FOREGROUND, // a.k.a. the source
+	BACKGROUND; // a.k.a. the sink
 }
 
+/**
+ * Class implementing the grach cut algorithm.
+ */
 public class GraphCut {
 
+	// number of nodes
 	private int numNodes;
+
+	// maximum number of edges
 	private int numEdges;
 
+	// list of all nodes in the graph
 	private Node[] nodes;
+
+	// list of all edges in the graph
 	private Edge[] edges;
 
 
+	// internal counter for edge creation
 	private int edgeNum;
 
 	// the total flow in the whole graph
@@ -56,25 +66,37 @@ public class GraphCut {
 	// counter for the numbers of iterations to maxflow
 	private int maxflowIteration;
 
-	// lists of active nodes
+	// Lists of active nodes: activeQueueFirst points to first
+	// elements of the lists, activeQueueLast to the last ones.
+	// In between, nodes are connected via reference to next node
+	// in each node.
 	private Node[] activeQueueFirst;
 	private Node[] activeQueueLast;
 
 	// list of orphans
 	private LinkedList<Node> orphans;
 
+	// counter for iterations of main loop
 	private int time;
 
-
+	/**
+	 * Initialises the graph cut implementation and allocates the memory needed
+	 * for the given number of nodes and edges.
+	 *
+	 * @param numNodes The number of nodes that should be created.
+	 * @param numEdges The number of edges that you can add. A directed edge and its 
+	 *                 counterpart (i.e., the directed edge in the other
+	 *                 direction) count as one edge.
+	 */
 	public GraphCut(int numNodes, int numEdges) {
 
-		this.numNodes = numNodes;
-		this.numEdges = numEdges;
+		this.numNodes  = numNodes;
+		this.numEdges  = numEdges;
 
-		this.nodes    = new Node[numNodes];
-		this.edges    = new Edge[2*numEdges];
+		this.nodes     = new Node[numNodes];
+		this.edges     = new Edge[2*numEdges];
 
-		this.edgeNum  = 0;
+		this.edgeNum   = 0;
 
 		this.totalFlow = 0;
 
@@ -91,6 +113,14 @@ public class GraphCut {
 			nodes[i] = new Node();
 	}
 
+	/**
+	 * Set the affinity for one node to belong to the foreground (i.e., source)
+	 * or background (i.e., sink).
+	 *
+	 * @param nodeId The number of the node.
+	 * @param source The affinity of this node to the foreground (i.e., source)
+	 * @param sink   The affinity of this node to the background (i.e., sink)
+	 */
 	public void setTerminalWeights(int nodeId, float source, float sink) {
 
 		assert(nodeId >= 0 && nodeId < numNodes);
@@ -107,11 +137,34 @@ public class GraphCut {
 		nodes[nodeId].setResidualCapacity(source - sink);
 	}
 
-	public void setEdgeWeight(int nodeId1, int nodeId2, float weight1to2) {
+	/**
+	 * Set the edge weight of an undirected edge between two nodes.
+	 *
+	 * Please note that you cannot call any <tt>setEdgeWeight</tt> more often
+	 * than the number of edges you specified at the time of construction!
+	 *
+	 * @param nodeId1 The first node.
+	 * @param nodeId2 The second node.
+	 * @param weight  The weight (i.e., the cost) of the connecting edge.
+	 */
+	public void setEdgeWeight(int nodeId1, int nodeId2, float weight) {
 
-		setEdgeWeight(nodeId1, nodeId2, weight1to2, weight1to2);
+		setEdgeWeight(nodeId1, nodeId2, weight, weight);
 	}
 
+	/**
+	 * Set the edge weight of a pair of directed edges between two nodes.
+	 *
+	 * Please note that you cannot call any <tt>setEdgeWeight</tt> more often
+	 * than the number of edges you specified at the time of construction!
+	 *
+	 * @param nodeId1    The first node.
+	 * @param nodeId2    The second node.
+	 * @param weight1to2 The weight (i.e., the cost) of the directed edge from
+	 *                   node1 to node2.
+	 * @param weight2to1 The weight (i.e., the cost) of the directed edge from
+	 *                   node2 to node1.
+	 */
 	public void setEdgeWeight(int nodeId1, int nodeId2, float weight1to2, float weight2to1) {
 
 		assert(nodeId1 >= 0 && nodeId1 < numNodes);
@@ -121,7 +174,7 @@ public class GraphCut {
 		assert(weight2to1 >= 0);
 		assert(edgeNum < numEdges - 2);
 
-		// get the next free edges
+		// create new edges
 		Edge edge        = new Edge();
 		edges[edgeNum]   = edge; edgeNum++;
 		Edge reverseEdge = new Edge();
@@ -155,10 +208,10 @@ public class GraphCut {
 	/**
 	 * Performs the actual max-flow/min-cut computation.
 	 *
-	 * @param reuseTrees	reuse trees of a previos call
-	 * @param changedNodes	list of nodes that potentially changed their
-	 *                      segmentation compared to a previous call, can be set
-	 *                      to <tt>null</tt>
+	 * @param reuseTrees   reuse trees of a previos call
+	 * @param changedNodes list of nodes that potentially changed their
+	 *                     segmentation compared to a previous call, can be set
+	 *                     to <tt>null</tt>
 	 */
 	public float computeMaximumFlow(boolean reuseTrees, List<Integer> changedNodes) {
 
@@ -298,9 +351,12 @@ public class GraphCut {
 
 	/**
 	 * Get the segmentation, i.e., the terminal node that is connected to the
-	 * specified node.
+	 * specified node. If there are several min-cut solutions, free nodes are
+	 * assigned to the background.
 	 *
-	 * @param nodeId	the node to check
+	 * @param nodeId the node to check
+	 * @return Either <tt>Terminal.FOREGROUND</tt> or
+	 *         <tt>Terminal.BACKGROUND</tt>
 	 */
 	public Terminal getTerminal(int nodeId) {
 
@@ -319,8 +375,7 @@ public class GraphCut {
 	 *
 	 * @return The number of nodes
 	 */
-	public int getNumNodes()
-	{
+	public int getNumNodes() {
 		return this.numNodes;
 	}
 
@@ -329,8 +384,7 @@ public class GraphCut {
 	 *
 	 * @return The number of edges.
 	 */
-	public int getNumEdges()
-	{
+	public int getNumEdges() {
 		return this.numEdges;
 	}
 
@@ -344,7 +398,7 @@ public class GraphCut {
 	 * A node has to be considered changed if any of its adjacent edges changed
 	 * its weight.
 	 *
-	 * @param nodeId	the node that changed
+	 * @param nodeId The node that changed.
 	 */
 	public void markNode(int nodeId) {
 
@@ -365,8 +419,13 @@ public class GraphCut {
 		node.setMarked(true);
 	}
 
-	/* private methods */
-	
+	/*
+	 * PRIVATE METHODS
+	 */
+
+	/**
+	 * Marks a node as being active and adds it to second queue of active nodes.
+	 */
 	private void setNodeActive(Node node) {
 
 		if (node.getNext() == null) {
@@ -380,6 +439,11 @@ public class GraphCut {
 		}
 	}
 
+	/**
+	 * Gets the next active node, that is, the first node of the first queue of
+	 * active nodes. If this queue is empty, the second queue is used. Returns
+	 * <tt>nyll</tt>, if no active node is left.
+	 */
 	private Node getNextActiveNode() {
 
 		Node node;
@@ -420,6 +484,9 @@ public class GraphCut {
 		}
 	}
 
+	/**
+	 * Mark a node as orphan and add it to the front of the queue.
+	 */
 	private void addOrphanAtFront(Node node) {
 
 		node.setParent(Edge.ORPHAN);
@@ -427,6 +494,9 @@ public class GraphCut {
 		orphans.addFirst(node);
 	}
 
+	/**
+	 * Mark a node as orphan and add it to the back of the queue.
+	 */
 	private void addOrphanAtBack(Node node) {
 
 		node.setParent(Edge.ORPHAN);
@@ -434,12 +504,19 @@ public class GraphCut {
 		orphans.addLast(node);
 	}
 
+	/**
+	 * Add a node to the list of potentially changed nodes.
+	 */
 	private void addToChangedList(Node node) {
 
 		node.setInChangedList(true);
 	}
 
-	// only called if <tt>reuse</tt> is false
+	/**
+	 * Initialise the algorithm.
+	 *
+	 * Only called if <tt>reuseTrees</tt> is false.
+	 */
 	private void maxflowInit() {
 
 		activeQueueFirst[0] = null;
@@ -476,7 +553,11 @@ public class GraphCut {
 		}
 	}
 
-	// only called if <tt>reuse</tt> is true
+	/**
+	 * Initialise the algorithm.
+	 *
+	 * Only called if <tt>reuseTrees</tt> is true.
+	 */
 	private void maxflowReuseTreesInit() {
 
 		Node node1;
@@ -562,6 +643,11 @@ public class GraphCut {
 		}
 	}
 
+	/**
+	 * Perform the augmentation step of the graph cut algorithm.
+	 *
+	 * This is done whenever a path between the source and the sink was found.
+	 */
 	private void augment(Edge middle) {
 
 		Node node;
@@ -642,6 +728,9 @@ public class GraphCut {
 		totalFlow += bottleneck;
 	}
 
+	/**
+	 * Adopt an orphan.
+	 */
 	private void processSourceOrphan(Node orphan) {
 
 		Edge bestEdge    = null;
@@ -719,6 +808,9 @@ public class GraphCut {
 
 	}
 
+	/**
+	 * Adopt an orphan.
+	 */
 	private void processSinkOrphan(Node orphan) {
 
 		Edge bestEdge    = null;
@@ -754,8 +846,8 @@ public class GraphCut {
 						// otherwise, proceed to the next node
 						node = parentEdge.getHead();
 					}
-					if (distance < Integer.MAX_VALUE) { // node originates from the sink
-
+					if (distance < Integer.MAX_VALUE) {
+						// node originates from the sink
 						if (distance < minDistance) {
 							bestEdge    = orphanEdge;
 							minDistance = distance;
@@ -793,6 +885,5 @@ public class GraphCut {
 				}
 			}
 		}
-
 	}
 }

@@ -18,7 +18,9 @@
  */
 
 
+import java.awt.AlphaComposite;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Composite;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -69,8 +71,6 @@ import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImagePlusAdapter;
 
 import mpicbg.imglib.type.numeric.RealType;
-import java.awt.AlphaComposite;
-import java.awt.Component;
 
 
 /**
@@ -94,7 +94,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 	private ImagePlus seg;
 
 	// image dimensions
-	private int[]    dimensions;
+	private int[] dimensions;
 
 	// the graph cut implementation
 	private GraphCut graphCut;
@@ -117,38 +117,50 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 	// the GUI window
 	private GraphCutWindow win;
 
+	// the segmentation overlay
 	private ImageOverlay resultOverlay;
 
+	// color look up table for the segmentation overlay
 	private LUT overlayLUT;
 
+	// the image to show in the GUI
 	private ImagePlus displayImage;
 
+	// trasparency of the overlay
 	private float overlayAlpha = 0.5f;
 
+	// show the segmentation overlay?
 	private boolean showColorOverlay = false;
 
+	// the whole GUI
 	private Panel all = new Panel();
 
+	// panel for the left side of the GUI
 	private JPanel applyPanel;
 
+	// panel containing all buttons
 	private JPanel buttonsPanel;
 
+	// panel containing the potts slider
 	private JPanel pottsPanel;
 
+	// start graph cut button
 	private JButton applyButton;
 
+	// toggle segmentation overlay button
 	private JButton overlayButton;
 
+	// slider to adjust the potts weight
 	private JSlider pottsSlider;
 
 	/**
-	 * Custom canvas to deal with zooming an panning
+	 * Custom canvas to deal with zooming an panning.
+	 *
+	 * (shamelessly stolen from the Trainable_Segmentation plugin)
 	 */
 	@SuppressWarnings("serial")
-	private class CustomCanvas extends OverlayedImageCanvas 
-	{
-		CustomCanvas(ImagePlus imp) 
-		{
+	private class CustomCanvas extends OverlayedImageCanvas {
+		CustomCanvas(ImagePlus imp) {
 			super(imp);
 			Dimension dim = new Dimension(Math.min(512, imp.getWidth()), Math.min(512, imp.getHeight()));
 			setMinimumSize(dim);
@@ -202,8 +214,8 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 	 * Custom window to define the graph cut GUI
 	 */
 	@SuppressWarnings("serial")
-	private class GraphCutWindow extends ImageWindow 
-	{
+	private class GraphCutWindow extends ImageWindow {
+
 		// executor service to launch threads for the plugin methods and events
 		final ExecutorService exec = Executors.newFixedThreadPool(1);
 	
@@ -245,11 +257,14 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			}
 		};
 
+		/**
+		 * Creates the GUI
+		 *
+		 * @param imp The image that should be processed.
+		 */
 		GraphCutWindow(ImagePlus imp) {
 
 			super(imp, new CustomCanvas(imp));
-	
-			final CustomCanvas canvas = (CustomCanvas) getCanvas();
 	
 			applyButton = new JButton ("Segment image");
 			applyButton.setToolTipText("Load data and apply current classifier");
@@ -285,6 +300,8 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 				blue[i] = (byte) colors[colorIndex].getBlue();
 			}
 			overlayLUT = new LUT(red, green, blue);
+
+			// add the overlay with transparency
 			Composite composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, overlayAlpha);
 			resultOverlay.setComposite(composite);
 			((OverlayedImageCanvas)ic).addOverlay(resultOverlay);
@@ -350,7 +367,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			buttonsConstraints.gridy++;
 			buttonsConstraints.insets = new Insets(5, 5, 6, 6);
 
-			// everythin panel
+			// everything panel
 			GridBagLayout layout = new GridBagLayout();
 			GridBagConstraints allConstraints = new GridBagConstraints();
 			all.setLayout(layout);
@@ -369,6 +386,8 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 
 			allConstraints.weightx = 1;
 			allConstraints.weighty = 1;
+
+			final CustomCanvas canvas = (CustomCanvas) getCanvas();
 			all.add(canvas, allConstraints);
 	
 			GridBagLayout wingb = new GridBagLayout();
@@ -407,12 +426,10 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 		/**
 		 * Toggle between overlay and original image
 		 */
-		void toggleOverlay()
-		{
+		void toggleOverlay() {
 			showColorOverlay = !showColorOverlay;
 	
-			if (showColorOverlay)
-			{
+			if (showColorOverlay) {
 				
 				ImageProcessor overlay = seg.getProcessor().duplicate();
 				
@@ -450,7 +467,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			segDimensions[d] = dimensions[d];
 
 		seg = IJ.createImage("GraphCut segmentation", "8-bit",
-							 segDimensions[0], segDimensions[1], segDimensions[2]);
+		                     segDimensions[0], segDimensions[1], segDimensions[2]);
 		segmentation = ImagePlusAdapter.wrap(seg);
 
 		// start GUI
@@ -517,7 +534,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 		int[] imagePosition              = new int[dimensions.length];
 
 		// create a new graph cut instance
-		// TODO: use the old one
+		// TODO: reuse an old one
 		IJ.log("Creating graph structure of " + numNodes + " nodes and " + numEdges + " edges...");
 		graphCut = new GraphCut(numNodes, numEdges);
 		IJ.log("...done.");
