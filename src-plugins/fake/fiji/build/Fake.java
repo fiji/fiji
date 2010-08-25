@@ -1913,24 +1913,24 @@ public class Fake {
 
 	// several utility functions
 
-	static class GlobFilter implements FilenameFilter {
+	public static class GlobFilter implements FilenameFilter {
 		Pattern pattern;
 		long newerThan;
 		String glob;
 		String lastMatch;
 
-		GlobFilter(String glob) {
+		public GlobFilter(String glob) {
 			this(glob, 0);
 		}
 
-		GlobFilter(String glob, long newerThan) {
+		public GlobFilter(String glob, long newerThan) {
 			this.glob = glob;
 			String regex = "^" + replaceSpecials(glob) + "$";
 			pattern = Pattern.compile(regex);
 			this.newerThan = newerThan;
 		}
 
-		String replaceSpecials(String glob) {
+		public static String replaceSpecials(String glob) {
 			StringBuffer result = new StringBuffer();
 			char[] array = glob.toCharArray();
 			int len = array.length;
@@ -2552,7 +2552,7 @@ public class Fake {
 		}
 	}
 
-	static byte[] readFile(String fileName) {
+	public static byte[] readFile(String fileName) {
 		try {
 			if (fileName.startsWith("jar:file:")) {
 				URL url = new URL(fileName);
