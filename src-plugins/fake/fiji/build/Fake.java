@@ -1390,13 +1390,13 @@ public class Fake {
 			}
 
 			public List<Rule> getDependenciesWithRules() {
-				List<Rule> result = new ArrayList<Rule>();
+				Set<Rule> result = new LinkedHashSet<Rule>();
 				for (String dependency : getDependencies()) {
 					Rule rule = getRule(dependency);
 					if (rule != null)
 						result.add(rule);
 				}
-				return result;
+				return new ArrayList<Rule>(result);
 			}
 
 			public String toString() {
