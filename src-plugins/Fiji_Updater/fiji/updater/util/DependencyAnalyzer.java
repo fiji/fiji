@@ -6,16 +6,20 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
+import java.net.URL;
+
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-/*
+/**
  * This class generates a list of dependencies for a given plugin. The
  * dependencies are based on the existing plugins in the user's Fiji
  * directories.
@@ -23,6 +27,12 @@ import java.util.jar.JarFile;
  * It uses the static class ByteCodeAnalyzer to analyze every single class file
  * in the given JAR file, which will determine the classes relied on ==> And in
  * turn their JAR files, i.e.: The dependencies themselves
+ *
+ * This class is needed to avoid running out of PermGen space (which happens
+ * if you load a ton of classes into a classloader).
+ *
+ * The magic numbers and offsets are taken from
+ * http://java.sun.com/docs/books/jvms/second_edition/html/ClassFile.doc.html
  */
 public class DependencyAnalyzer {
 	private Class2JarFilesMap map;
@@ -37,6 +47,7 @@ public class DependencyAnalyzer {
 			return null;
 
 		Set<String> result = new LinkedHashSet<String>();
+		Set<String> handled = new HashSet<String>();
 
 		final JarFile jar = new JarFile(filename);
 		filename = Util.stripPrefix(filename, Util.fijiRoot);
@@ -48,7 +59,11 @@ public class DependencyAnalyzer {
 			byte[] code = Compressor.readStream(input);
 			ByteCodeAnalyzer analyzer = new ByteCodeAnalyzer(code);
 
-			for (String name : analyzer) {
+			Set<String> allClassNames = new HashSet<String>();
+			for (String name : analyzer)
+				addClassAndInterfaces(allClassNames, handled, name);
+
+			for (String name : allClassNames) {
 				if (IJ.debugMode)
 					IJ.log("Considering name from analyzer: "+name);
 				List<String> allJars = map.get(name);
@@ -76,6 +91,22 @@ public class DependencyAnalyzer {
 		return result;
 	}
 
+	protected void addClassAndInterfaces(Set<String> allClassNames, Set<String> handled, String className) {
+		if (className == null || className.startsWith("[") || handled.contains(className))
+			return;
+		handled.add(className);
+		String resourceName = "/" + className.replace('.', '/') + ".class";
+		if (false && ClassLoader.getSystemClassLoader().getResource(resourceName) != null)
+			return;
+		allClassNames.add(className);
+		try {
+			byte[] buffer = Compressor.readStream(getClass().getResourceAsStream(resourceName));
+			ByteCodeAnalyzer analyzer = new ByteCodeAnalyzer(buffer);
+			for (String iface : analyzer.getInterfaces())
+				addClassAndInterfaces(allClassNames, handled, iface);
+		} catch (Exception e) { /* ignore */ }
+	}
+
 	static class ByteCodeAnalyzer implements Iterable<String> {
 		byte[] buffer;
 		int[] poolOffsets;
@@ -93,6 +124,17 @@ public class DependencyAnalyzer {
 			if (getU1(thisOffset) != 7)
 				throw new RuntimeException("Parse error");
 			return getString(dereferenceOffset(thisOffset + 1));
+		}
+
+		public String getClassNameConstant(int index) {
+			int offset = poolOffsets[index - 1];
+			if (getU1(offset) != 7)
+				throw new RuntimeException("Constant " + index + " does not refer to a class");
+			return getStringConstant(getU2(offset + 1)).replace('/', '.');
+		}
+
+		public String getStringConstant(int index) {
+			return getString(poolOffsets[index - 1]);
 		}
 
 		int dereferenceOffset(int offset) {
@@ -130,24 +172,24 @@ public class DependencyAnalyzer {
 			int index;
 
 			ClassNameIterator() {
-				index = -1;
+				index = 0;
 				findNext();
 			}
 
 			void findNext() {
-				while (++index < poolOffsets.length)
-					if (getU1(poolOffsets[index]) == 7)
+				while (++index <= poolOffsets.length)
+					if (getU1(poolOffsets[index - 1]) == 7)
 						break;
 			}
 
 			public boolean hasNext() {
-				return index < poolOffsets.length;
+				return index <= poolOffsets.length;
 			}
 
 			public String next() {
-				int offset = poolOffsets[index];
+				int current = index;
 				findNext();
-				return getString(dereferenceOffset(offset + 1)).replace('/', '.');
+				return getClassNameConstant(current);
 			}
 
 			public void remove() throws UnsupportedOperationException {
@@ -157,6 +199,35 @@ public class DependencyAnalyzer {
 
 		public Iterator<String> iterator() {
 			return new ClassNameIterator();
+		}
+
+		class InterfaceIterator implements Iterator<String> {
+			int index, count;
+
+			InterfaceIterator() {
+				index = 0;
+				count = getU2(endOffset + 6);
+			}
+
+			public boolean hasNext() {
+				return index < count;
+			}
+
+			public String next() {
+				return getClassNameConstant(getU2(endOffset + 8 + index++ * 2));
+			}
+
+			public void remove() throws UnsupportedOperationException {
+				throw new UnsupportedOperationException();
+			}
+		}
+
+		public Iterable<String> getInterfaces() {
+			return new Iterable<String>() {
+				public Iterator<String> iterator() {
+					return new InterfaceIterator();
+				}
+			};
 		}
 
 		public String toString() {
