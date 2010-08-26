@@ -74,9 +74,11 @@ if (bsh.args.length > 0 && (bsh.args[0].equals("--check-fakefile") || bsh.args[0
 		for (i = 1; i < bsh.args.length; i++)
 			targets.add(bsh.args[i]);
 	else
-		for (String target : parser.getAllRules().keySet())
-			if (parser.getRule(target).getClass().getName().endsWith("CompileJar"))
+		for (String target : parser.getAllRules().keySet()) {
+			String className = parser.getRule(target).getClass().getName();
+			if (className.endsWith("CompileJar") || className.endsWith("CompileClass") || className.endsWith("SubFake"))
 				targets.add(target);
+		}
 
 	if (fix)
 		contents = new String(fake.readFile(fijiDir + "Fakefile"));
