@@ -241,9 +241,10 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 								createSegmentationImage();
 								showColorOverlay = false;
 								toggleOverlay();
-								applyButton.setEnabled(true);
 							}catch(Exception e){
 								e.printStackTrace();
+							}finally{
+								applyButton.setEnabled(true);
 							}
 						}
 						else if(e.getSource() == overlayButton){
