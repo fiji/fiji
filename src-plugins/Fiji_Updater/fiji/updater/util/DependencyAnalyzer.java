@@ -96,12 +96,13 @@ public class DependencyAnalyzer {
 			return;
 		handled.add(className);
 		String resourceName = "/" + className.replace('.', '/') + ".class";
-		if (false && ClassLoader.getSystemClassLoader().getResource(resourceName) != null)
+		if (ClassLoader.getSystemClassLoader().getResource(resourceName) != null)
 			return;
 		allClassNames.add(className);
 		try {
 			byte[] buffer = Compressor.readStream(getClass().getResourceAsStream(resourceName));
 			ByteCodeAnalyzer analyzer = new ByteCodeAnalyzer(buffer);
+			addClassAndInterfaces(allClassNames, handled, analyzer.getSuperclass());
 			for (String iface : analyzer.getInterfaces())
 				addClassAndInterfaces(allClassNames, handled, iface);
 		} catch (Exception e) { /* ignore */ }
@@ -228,6 +229,13 @@ public class DependencyAnalyzer {
 					return new InterfaceIterator();
 				}
 			};
+		}
+
+		public String getSuperclass() {
+			int index = getU2(endOffset + 4);
+			if (index == 0)
+				return null;
+			return getClassNameConstant(index);
 		}
 
 		public String toString() {
