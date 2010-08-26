@@ -9,8 +9,7 @@ import java.io.InputStream;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 import java.util.jar.JarEntry;
@@ -37,8 +36,7 @@ public class DependencyAnalyzer {
 		if (!filename.endsWith(".jar") || !new File(filename).exists())
 			return null;
 
-		Map<String, Object> result =
-			new LinkedHashMap<String, Object>();
+		Set<String> result = new LinkedHashSet<String>();
 
 		final JarFile jar = new JarFile(filename);
 		filename = Util.stripPrefix(filename, Util.fijiRoot);
@@ -66,7 +64,7 @@ public class DependencyAnalyzer {
 					IJ.log("... adding all as dependency.");
 				}
 				for (String j : allJars) {
-					result.put(j, (Object)null);
+					result.add(j);
 					if (IJ.debugMode)
 						IJ.log("... adding dep "
 							+ j + " for " + filename
@@ -75,7 +73,7 @@ public class DependencyAnalyzer {
 				}
 			}
 		}
-		return result.keySet();
+		return result;
 	}
 
 	static class ByteCodeAnalyzer implements Iterable<String> {
