@@ -36,14 +36,18 @@ import ij.io.FileInfo;
 
 import ij.plugin.BrowserLauncher;
 import ij.plugin.JpegWriter;
+import ij.plugin.PNG_Writer;
 import ij.plugin.PlugIn;
 
 import java.awt.AWTException;
 import java.awt.Button;
 import java.awt.Choice;
+import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.Image;
+import java.awt.Panel;
 import java.awt.Rectangle;
 import java.awt.Robot;
 import java.awt.TextField;
@@ -53,6 +57,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -62,7 +67,6 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 
 import java.net.URL;
 
@@ -71,6 +75,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Stack;
 
 import java.util.regex.Pattern;
 
@@ -78,6 +83,16 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JTextArea;
+
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Element;
+
+import javax.swing.text.html.HTML.Attribute;
+import javax.swing.text.html.HTML.Tag;
+
+import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.HTMLEditorKit;
 
 public class Wiki_Editor implements PlugIn, ActionListener {
 	protected String name;
@@ -87,6 +102,57 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 	protected enum Mode { TUTORIAL_MAKER, NEWS, SCREENSHOT };
 	protected Mode mode;
 	protected ImagePlus screenshot;
+
+	protected enum Format {
+		JPEG(".jpg"),
+		PNG(".png");
+
+		private String extension;
+		Format(String extension) {
+			this.extension = extension;
+		}
+
+		public void write(ImagePlus imp, String fullFilename) {
+			switch (this) {
+			case JPEG:
+				JpegWriter.save(imp, fullFilename, JpegWriter.DEFAULT_QUALITY);
+				imp.changes = false;
+				break;
+			case PNG:
+				PNG_Writer pngWriter = new PNG_Writer();
+				try {
+					pngWriter.writeImage(imp, fullFilename, -1);
+					imp.changes = false;
+				} catch(Exception e) {
+					IJ.error("PNG_Writer.writeImage failed to write to " + fullFilename);
+				}
+				break;
+			default:
+				IJ.error("[BUG] Unknown image format: " + name());
+			}
+		}
+
+		public static Format byExtension(String extension) {
+			int dot = extension.lastIndexOf('.');
+			if (dot < 0)
+				return null;
+			extension = extension.substring(dot);
+			for (Format format : Format.values())
+				if (extension.equals(format.extension))
+					return format;
+			return null;
+		}
+	};
+
+	protected Format imageFormat = Format.JPEG;
+	protected final static String[] imageFormatNames;
+
+	static {
+		Format[] values = Format.values();
+		imageFormatNames = new String[values.length];
+		for (int i = 0; i < values.length; i++)
+			imageFormatNames[i] = values[i].name();
+	}
 
 	public void run(String arg) {
 		String dialogTitle = "Tutorial Maker";
@@ -124,11 +190,13 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 
 		GenericDialog gd = new GenericDialog(dialogTitle);
 		gd.addStringField(label, defaultTitle, 20);
+		gd.addChoice("Image_format", imageFormatNames, imageFormatNames[0]);
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return;
 
 		name = gd.getNextString();
+		imageFormat = Format.valueOf(gd.getNextChoice());
 		if (name.length() == 0)
 			return;
 		if (mode != Mode.SCREENSHOT)
@@ -136,9 +204,9 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		else {
 			new Prettify_Wiki_Screenshot().run(screenshot.getProcessor());
 			screenshot = IJ.getImage();
-			String imageTitle = name + "-snapshot.jpg";
+			String imageTitle = name + "-snapshot" + imageFormat.extension;
 			for (int i = 2; wikiHasImage(imageTitle); i++)
-				imageTitle = name + "-snapshot-" + i + ".jpg";
+				imageTitle = name + "-snapshot-" + i + imageFormat.extension;
 			screenshot.setTitle(imageTitle);
 		}
 
@@ -152,7 +220,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 
 	protected TextEditor editor;
 	protected JMenuItem upload, preview, toBackToggle, renameImage,
-		changeURL, insertPluginInfobox;
+		changeURL, insertPluginInfobox, whiteImage, importHTML;
 
 	protected void addEditor() {
 		editor = new TextEditor(null);
@@ -167,12 +235,14 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		if (mode == Mode.TUTORIAL_MAKER) {
 			toBackToggle = editor.addToMenu(menu, "", 0, 0);
 			renameImage = editor.addToMenu(menu, "Rename Image", KeyEvent.VK_I, ctrl);
+			whiteImage = editor.addToMenu(menu, "Make white background image", 0, 0);
 			toBackToggleSetLabel();
 			insertPluginInfobox = editor.addToMenu(menu,
 					"Insert Plugin Infobox", 0, 0);
 		}
 
 		changeURL = editor.addToMenu(menu, "Change Wiki URL", 0, 0);
+		importHTML = editor.addToMenu(menu, "Import HTML from URL...", 0, 0);
 
 		for (int i = 0; i < menu.getItemCount(); i++)
 			menu.getItem(i).addActionListener(this);
@@ -240,6 +310,8 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 			preview();
 		else if (source == renameImage)
 			renameImage();
+		else if (source == whiteImage)
+			makeWhiteBackgroundImage();
 		else if (source == toBackToggle) {
 			putSnapshotsToBack = !putSnapshotsToBack;
 			toBackToggleSetLabel();
@@ -256,16 +328,31 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 				client = null;
 			}
 		}
+		else if (source == importHTML) {
+			GenericDialog gd = new GenericDialog("Import HTML from URL");
+			gd.addStringField("URL", "", 40);
+			gd.showDialog();
+			if (!gd.wasCanceled()) {
+				String url = gd.getNextString();
+				if (url.startsWith("http://") || url.startsWith("https://"))
+					importHTML(url);
+				else
+					IJ.error("Invalid URL: " + url);
+			}
+		}
 		else if (source == insertPluginInfobox) {
 			JTextArea textArea = editor.getTextArea();
+			Calendar now = Calendar.getInstance();
+			String today = new SimpleDateFormat("dd/MM/yyyy")
+				.format(Calendar.getInstance().getTime());
 			textArea.insert("{{Infobox Plugin\n"
 				+ "| software               = ImageJ\n"
 				+ "| name                   = \n"
 				+ "| maintainer             = [mailto:author_at_example_dot_com A U Thor]\n"
 				+ "| author                 = A U Thor\n"
 				+ "| source                 = \n"
-				+ "| released               = 15/06/2005\n"
-				+ "| latest version         = 12/08/2009\n"
+				+ "| released               = " + today + "\n"
+				+ "| latest version         = " + today + "\n"
 				+ "| status                 = \n"
 				+ "| category               = [[:Category:Plugins]]\n"
 				+ "| website                = \n"
@@ -358,8 +445,9 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		int start = html.indexOf("<div class='previewnote'>");
 		start = html.indexOf("</div>", start) + 6;
 		int end = html.indexOf("<div id='toolbar'>");
-		html = "<html>\n<head>\n<title>Preview of " + name
-			+ "</title>\n</head>\n<body>\n"
+		html = "<html>\n<head>\n<title>Preview of " + name + "</title>\n"
+			+ "<meta http-equiv='Content-Type' "
+			+ "content='text/html; charset=utf-8'/>\n</head>\n<body>\n"
 			+ html.substring(start, end)
 			+ "</body>\n</html>\n";
 		Pattern imagePattern = Pattern.compile("<a href=[^>]*DestFile=",
@@ -482,6 +570,30 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		return false;
 	}
 
+	protected String normalizeImageTitle(String title) {
+		title = title.replace(' ', '_');
+		if (title.length() > 0)
+			title = capitalize(title);
+		for (;;) {
+			int colon = title.indexOf(':');
+			if (colon < 0)
+				break;
+			title = title.substring(0, colon) + title.substring(colon + 1);
+		}
+		return title;
+	}
+
+	protected FileInfo setTmpFileInfo(ImagePlus imp, String fileName) {
+		FileInfo info = new FileInfo();
+		info.width = imp.getWidth();
+		info.height = imp.getHeight();
+		info.directory = IJ.getDirectory("temp");
+		info.fileName = fileName;
+		imp.changes = true;
+		imp.setFileInfo(info);
+		return info;
+	}
+
 	protected boolean saveOrUploadImages(GraphicalMediaWikiClient client,
 			List<String> images) {
 		int i = 0, total = images.size() * 2 + 1;
@@ -489,26 +601,19 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 			ImagePlus imp = WindowManager.getImage(image);
 			if (imp == null)
 				return error("There is no image " + image);
-			if (image.indexOf(' ') >= 0) {
-				String newTitle = image.replace(' ', '_');
+			String newTitle = normalizeImageTitle(image);
+			if (!image.equals(newTitle)) {
 				if (!IJ.showMessageWithCancel("Rename Image",
 						"Image title '" + image
-						+ "' contains spaces; fix?"))
+						+ "' is invalid; fix?"))
 					return error("Aborted");
 				imp.setTitle(newTitle);
 				rename(image, newTitle);
 				images.set(i, newTitle);
 			}
 			FileInfo info = imp.getOriginalFileInfo();
-			if (info == null) {
-				info = new FileInfo();
-				info.width = imp.getWidth();
-				info.height = imp.getHeight();
-				info.directory = IJ.getDirectory("temp");
-				info.fileName = image;
-				imp.changes = true;
-				imp.setFileInfo(info);
-			}
+			if (info == null)
+				info = setTmpFileInfo(imp, image);
 			if (info.directory == null) {
 				info.directory = IJ.getDirectory("temp");
 				imp.changes = true;
@@ -518,10 +623,11 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 				imp.changes = true;
 			}
 			if (imp.changes) {
-				JpegWriter.save(imp,
-					info.directory + "/" + info.fileName,
-					JpegWriter.DEFAULT_QUALITY);
-				imp.changes = false;
+				String fullFilename = info.directory + "/" + info.fileName;
+				Format imageFormat = Format.byExtension(fullFilename);
+				if (imageFormat == null)
+					imageFormat = this.imageFormat;
+				imageFormat.write(imp, fullFilename);
 			}
 			if (client != null) {
 				if (wikiHasImage(image))
@@ -546,6 +652,119 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 				IJ.showProgress(++i, total);
 		}
 		return true;
+	}
+
+	protected String getContent(Element e) {
+		try {
+			int start = e.getStartOffset();
+			int end = e.getEndOffset();
+			String content = e.getDocument().getText(start, end - start);
+			if (content.endsWith("\n"))
+				content = content.substring(0, content.length() - 1);
+			return content;
+		} catch(BadLocationException e2) {
+			return "";
+		}
+	}
+
+	protected Object getAttribute(Object element, Object key) {
+		if (element instanceof AttributeSet)
+			return ((AttributeSet)element).getAttribute(key);
+		return null;
+	}
+
+	/**
+	 * The only purpose of this method is to take away all excuses from Bene
+	 */
+	protected void importHTML(String urlString) {
+		try {
+			StringBuffer buffer = new StringBuffer();
+
+			HTMLDocument html = new HTMLDocument();
+			html.putProperty("IgnoreCharsetDirective", new Boolean(true));
+			HTMLEditorKit kit = new HTMLEditorKit();
+			URL url = new URL(urlString);
+			kit.read(url.openStream(), html, 0);
+
+			Stack<Element> stack = new Stack<Element>();
+			stack.push(html.getDefaultRootElement());
+
+			while (!stack.empty()) {
+				Element e = stack.pop();
+				String name = e.getName();
+				if (name.equals("head") || name.equals("br") || name.equals("comment") || name.equals("form") || name.equals("script"))
+					continue;
+
+				if (name.equals("html") || name.equals("body") || name.equals("p") || name.equals("p-implied") || name.equals("div") || name.equals("center")) {
+					for (int i = e.getElementCount() - 1; i >= 0; i--)
+						stack.push(e.getElement(i));
+					continue;
+				}
+
+				String content = getContent(e);
+
+				if (name.equals("content")) {
+					Object a = getAttribute(e, Tag.A), href;
+					if (a != null && (href = getAttribute(a, Attribute.HREF)) != null)
+						buffer.append("[" + new URL(url, (String)href) + " " + content + "]");
+					else
+						buffer.append(content);
+				}
+				else if (name.equals("table")) {
+					// TODO: allow nested tables, allow images inside
+					buffer.append("{|\n");
+					for (int i = 0; i < e.getElementCount(); i++) {
+						if (i > 0)
+							buffer.append("|-\n");
+						Element e2 = e.getElement(i);
+						for (int j = 0; j < e2.getElementCount(); j++)
+							buffer.append("| " + getContent(e2.getElement(j))).append("\n");
+					}
+					buffer.append("|}\n");
+				}
+				else if (name.equals("ul")) {
+					// TODO: handle nested lists, probably by getting rid of the Stack and doing proper recursion
+					for (int i = 0; i < e.getElementCount(); i++)
+						buffer.append("* " + getContent(e.getElement(i))).append("\n");
+				}
+				else if (name.equals("blockquote")) {
+					for (int i = e.getElementCount() - 1; i >= 0; i--)
+						stack.push(e.getElement(i));
+					buffer.append(";").append(content.replaceAll("\n", "\n;"));
+				}
+				else if (name.equals("img")) {
+					String src;
+					if ((src = (String)getAttribute(e, Attribute.SRC)) != null) {
+						// TODO: just save it as-is, to avoid re-saving
+						// TODO: verify that the Wiki does not have the name yet (and modify otherwise)
+						ImagePlus image = new ImagePlus(new URL(url, (String)src).toString());
+						image.show();
+						// force saving to a temporary file
+						String baseName = src.substring(src.lastIndexOf('/') + 1);
+						setTmpFileInfo(image, baseName);
+						buffer.append("[[Image:" + baseName + "]]");
+					}
+				}
+				else if (name.equals("h1"))
+					buffer.append("= " + content + " =\n");
+				else if (name.equals("h2"))
+					buffer.append("== " + content + " ==\n");
+				else if (name.equals("h3"))
+					buffer.append("=== " + content + " ===\n");
+				else if (name.equals("h4"))
+					buffer.append("==== " + content + " ====\n");
+				else {
+					IJ.log("Unhandled tag: " + name);
+					continue;
+				}
+				buffer.append("\n");
+			}
+
+			JTextArea pane = editor.getEditorPane();
+			pane.insert(buffer.toString(), pane.getCaretPosition());
+		} catch (Exception e) {
+			IJ.error("Could not open " + urlString + ":\n \n" + e.getMessage());
+		}
 	}
 
 	protected boolean wikiHasImage(String image) {
@@ -668,6 +887,37 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 		rename(oldTitle, newTitle);
 	}
 
+	protected void makeWhiteBackgroundImage() {
+		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+		final Frame white = new Frame("White");
+		white.setUndecorated(true);
+		Panel panel = new Panel();
+		panel.setSize(screenSize);
+		panel.setMinimumSize(screenSize);
+		panel.setBackground(Color.WHITE);
+		white.add(panel);
+		white.pack();
+		white.setExtendedState(Frame.MAXIMIZED_BOTH);
+		WindowManager.addWindow(white);
+		KeyAdapter listener = new KeyAdapter() {
+			public void keyPressed(KeyEvent e) {
+				int key = e.getKeyCode();
+				if (key == e.VK_ENTER)
+					IJ.getInstance().requestFocus();
+				else if (key == e.VK_ESCAPE || key == e.VK_W) {
+					WindowManager.removeWindow(white);
+					white.dispose();
+				}
+				else if (key == e.VK_SPACE)
+					white.toBack();
+			}
+		};
+		white.addKeyListener(listener);
+		panel.addKeyListener(listener);
+		white.setVisible(true);
+		white.requestFocus();
+	}
+
 	protected Frame snapshotFrame;
 
 	public void showSnapshotFrame() {
@@ -765,7 +1015,7 @@ public class Wiki_Editor implements PlugIn, ActionListener {
 	protected String getSnapshotName() {
 		for (;;) {
 			String title = name
-				+ "-" + (++snapshotCounter) + ".jpg";
+				+ "-" + (++snapshotCounter) + imageFormat.extension;
 			if (WindowManager.getImage(title) == null)
 				return title;
 		}

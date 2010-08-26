@@ -1478,16 +1478,19 @@ public class ComputeCurvatures implements Runnable
      */
     public FloatArray3D StackToFloatArray(ImageStack stack)
     {
-        Object[] imageStack = stack.getImageArray();
         int width = stack.getWidth();
         int height = stack.getHeight();
         int nstacks = stack.getSize();
+        Object[] imageStack = new Object[nstacks];
 
-        if (imageStack == null || imageStack.length == 0)
+        if (nstacks == 0)
         {
             IJ.error("Image Stack is empty.");
             return null;
         }
+
+	for( int z = 0; z < nstacks; ++z )
+		imageStack[z] = stack.getPixels(z+1);
 
         if (imageStack[0] instanceof int[])
         {

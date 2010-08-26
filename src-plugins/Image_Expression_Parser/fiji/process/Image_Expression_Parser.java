@@ -3,33 +3,33 @@ package fiji.process;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.plugin.PlugIn;
+import ij.process.FloatProcessor;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import mpicbg.imglib.container.imageplus.ImagePlusContainerFactory;
-import mpicbg.imglib.cursor.Cursor;
-import mpicbg.imglib.cursor.LocalizableByDimCursor;
-import mpicbg.imglib.cursor.LocalizableCursor;
+import mpicbg.imglib.algorithm.OutputAlgorithm;
 import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.image.ImagePlusAdapter;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.type.numeric.RealType;
-import mpicbg.imglib.type.numeric.real.FloatType;
 
-import org.nfunk.jep.JEP;
-import org.nfunk.jep.type.DoubleNumberFactory;
+import org.nfunk.jep.Node;
+import org.nfunk.jep.ParseException;
+
+import fiji.expressionparser.ImgLibParser;
 
 /**
+ * <h1>Image expression parser</h1>
+ * 
+ * <h2>Usage</h2>
+ * 
  * This plugins parses mathematical expressions and compute results using images as variables. 
- * As of version 1.x, only pixel per pixel based operations are supported.
+ * As of version 2.x, pixel per pixel based operations are supported and ImgLib algorithm
+ * are supported.
  * <p>
  * The parsing ability is provided by the JEP library: Java Expression Parser v.jep-2.4.1-ext-1.1.1-gpl.
  * This is the last version released under the GPL by its authors Nathan Funk and Richard Morris,
@@ -46,15 +46,64 @@ import org.nfunk.jep.type.DoubleNumberFactory;
  * 	<li> {@link #getResult()} to retrieve the resulting image
  * </ul>
  * 
- * versions:
+ * 
+ * <h2>Calling the plugin from elsewhere</h2>
+ * 
+ * It is possible to call the plugin from another class or in a scripting language. For instance in Python:
+ * 
+ * <pre>
+ * import mpicbg.imglib.image.ImagePlusAdapter
+ * import mpicbg.imglib.image.display.imagej.ImageJFunctions
+ * import fiji.process.Image_Expression_Parser
+ * 
+ * 
+ * # Make an ImgLib image from the current image
+ * imp = WindowManager.getCurrentImage()
+ * img = mpicbg.imglib.image.ImagePlusAdapter.wrap(imp)
+ * 
+ * # In python, the map can be a dictionary, relating 
+ * # variable names to images
+ * map = {'A': img}
+ * expression = 'A^2'
+ * 
+ * # Instantiate plugin
+ * parser = fiji.process.Image_Expression_Parser()
+ * 
+ * # Configure & execute
+ * parser.setImageMap(map)
+ * parser.setExpression(expression)
+ * parser.process()
+ * result = parser.getResult() # is an ImgLib image
+ * 
+ * # Copy result to an ImagePlus and display it
+ * result_imp = mpicbg.imglib.image.display.imagej.ImageJFunctions.copyToImagePlus(result)
+ * result_imp.show()
+ * result_imp.resetDisplayRange()
+ * result_imp.updateAndDraw()
+ * </pre>
+ * 
+ * <h2> Version history</h2>
  * <ul>
  * 	<li> v1.0 - Feb 2010 - First working version.
  * 	<li> v1.1 - Apr 2010 - Expression field now has a history.
+ * 	<li> v2.0 - May 2010 - Complete logic rewrite:
+ * 		<ul>
+ * 			<li> functions are now handled by code specific for ImgLib;
+ * 			<li> support for ImgLib algorithms and non pixel-based operations, such as gaussian convolution;
+ * 			<li> faster evaluation, thanks to dealing with ImgLib images as objects within the parser instead of pixel per pixel evaluation.
+ * 		</ul>
+ * <li>	v2.1 - June 2010 - Internal changes:
+ * 		<ul>
+ * 			<li> the GUI now generate a new separate thread for processing, freeing resources for the redraw 
+ * of the GUI panel itself (thanks to Albert Cardona and the Fijiers input);
+ * 			<li> RGB images are processed in a special way by the GUI: each of their channel is processed separately
+ * and put back together in a composite image.
+ * 		</ul> 
  * </ul>
  *   
- * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com>
+ * @author Jean-Yves Tinevez <jeanyves.tinevez@gmail.com>, Albert Cardona <acardona@ini.phys.ethz.ch>
  */	
-public class Image_Expression_Parser<T extends RealType<T>> implements PlugIn, ActionListener {
+public class Image_Expression_Parser<T extends RealType<T>> implements PlugIn, OutputAlgorithm<T> {
 	
 	protected boolean user_has_canceled = false;
 	/** Array of Imglib images, on which calculations will be done */
@@ -62,17 +111,9 @@ public class Image_Expression_Parser<T extends RealType<T>> implements PlugIn, A
 	/** The expression to evaluate */
 	protected String expression;
 	/** Here is stored the result of the evaluation */
-	protected Image<FloatType> result = null;
+	protected Image<T> result = null;
 	/** If an error occurred, an error message is put here	 */
 	protected String error_message = "";
-	
-	private ArrayList<ActionListener> action_listeners = new ArrayList<ActionListener>();
-	
-	/** This plugin sends a ActionEvent with this command when the external calculation is over. */
-	public static final String CALCULATION_DONE_COMMAND	= "CalculationDone";
-	/** This plugin sends a ActionEvent with this command when the external calculation is over. */
-	public static final String CALCULATION_STARTED_COMMAND	= "CalculationStarted";
-
 	
 	/*
 	 * RUN METHOD
@@ -80,96 +121,37 @@ public class Image_Expression_Parser<T extends RealType<T>> implements PlugIn, A
 	
 	/**
 	 * Launch the interactive version if this plugin. This is made by first
-	 * displaying the GUI, then looping, waiting for the user to press the 
-	 * compute button. When it does so, initiate calculation, and resume wait mode.
-	 *  Must be launched from ImageJ.
+	 * displaying the GUI, which will take all user interaction work.
+	 * Calculations will be later delegated by the GUI to <b>this</b> instance.
 	 */
-	public synchronized void run(String arg) {
-		// Launch GUI and wait for user 
-		IepGui gui = displayGUI();		
-		addActionListener(gui);
-		ImagePlus target_imp = null;
-		while (true) {
-			
-			try {
-				this.wait();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}			
-			if (user_has_canceled) {
-				gui.removeActionListener(this);
-				ImagePlus.removeImageListener(gui);
-				gui.dispose();
-				return;
-			}
-
-			// Get user settings
-			expression 	= gui.getExpression();
-			Map<String,ImagePlus> imp_map = gui.getImageMap(); 
-			convertToImglib(imp_map); // will set #images field 
-
-			// Check inputs (this should be done in the GUI)
-			if (!dimensionsAreValid()) {
-				error_message = "Input images do not have all the same dimensions.";
-				IJ.error(error_message);
-			} else {
-
-				// Check if expression is valid (this too)
-				Object[] validity = isExpressionValid();
-				boolean is_valid = (Boolean) validity[0];
-				String error_msg = (String) validity[1];
-				if (!is_valid) {
-					error_message = "Expression is invalid:\n"+error_msg; 
-					IJ.error(error_message);
-					return;
-				}
-
-				// Exec
-				IJ.showStatus("IEP parsing....");
-				fireActionProperty(CALCULATION_STARTED_COMMAND);
-				exec();
-
-				if (target_imp == null) {
-					target_imp = ImageJFunctions.copyToImagePlus(result);
-					target_imp.show();
-				} else {
-					ImagePlus new_imp = ImageJFunctions.copyToImagePlus(result);
-					if (!target_imp.isVisible()) {
-						target_imp = new_imp;
-						target_imp.show();
-					} else {
-						target_imp.setStack(expression, new_imp.getStack());
-					}
-				}
-				target_imp.resetDisplayRange();
-				target_imp.updateAndDraw();
-				IJ.showStatus("");
-				fireActionProperty(CALCULATION_DONE_COMMAND);
-			}
-		}
+	public void run(String arg) {
+		// Launch GUI and delegate work to it
+		IepGui<T> gui = displayGUI();		
+		gui.setIep(this);
 	}
+	
+	
 
 	/*
 	 * PUBLIC METHODS
 	 */
 	
 	/**
-	 * Execute calculation, given the expression, variable list and image list set for
-	 * this instance. The resulting image can be accessed afterwards by using {@link #getResult()}.
+	 * Check that inputs are valid. Namely, that all input images have
+	 * the same dimensions, and the expression to evaluate is valid, 
+	 * using the JEP parser. 
 	 * <p>
-	 * If the expression is invalid or if the image dimensions mismatch, and error
-	 * is thrown and the field {@link #result} is set to <code>null</code>. In this
-	 * case, an explanatory error message can be obtained by {@link #getErrorMessage()}.
-	 * @see {@link #setExpression(String)}, {@link #setImageMap(Map)}, {@link #getErrorMessage()}, {@link #getResult()}
+	 * If one of the input is not valid, the boolean false is returned, 
+	 * and the method {@link #getErrorMessage()} will return an 
+	 * explanatory message.
+	 * 
+	 * @return  a boolean, true if inputs are valid
 	 */
-	public void exec() {
-		
-		result = null;
-
+	public boolean checkInput() {
 		// Check inputs 
 		if (!dimensionsAreValid()) {
 			error_message = "Input images do not have all the same dimensions.";
-			return;
+			return false;
 		}
 		
 		// Check if expression is valid 
@@ -178,119 +160,52 @@ public class Image_Expression_Parser<T extends RealType<T>> implements PlugIn, A
 		String error_msg = (String) validity[1];
 		if (!is_valid) {
 			error_message = "Expression is invalid:\n"+error_msg;
-			return;
+			return false;
+		}
+		
+		return true;
+	}
+	
+	/**
+	 * Execute calculation, given the expression, variable list and image list set for
+	 * this instance. The resulting image can be accessed afterwards by using {@link #getResult()}.
+	 * <p>
+	 * If the expression is invalid or if the image dimensions mismatch, an error
+	 * is thrown and the field {@link #result} is set to <code>null</code>. In this
+	 * case, an explanatory error message can be obtained by {@link #getErrorMessage()}.
+	 * @see {@link #setExpression(String)}, {@link #setImageMap(Map)}, {@link #getErrorMessage()}, {@link #getResult()}
+	 */
+	@SuppressWarnings("unchecked")
+	public boolean process() {
+		
+		result = null;
+		boolean valid = checkInput();
+		if (!valid) {
+			return false;
 		}
 		
 		// Instantiate and prepare parser
-		final JEP parser = new JEP(false, false, false, new DoubleNumberFactory());
+		final ImgLibParser<T> parser = new ImgLibParser<T>();
 		parser.addStandardConstants();
 		parser.addStandardFunctions();
+		parser.addImgLibAlgorithms();
 		Set<String> variables = image_map.keySet();
 		for (String var : variables) {
-			parser.addVariable(var, null);
-		}
-		parser.parseExpression(expression);
-		
-		// Extract the first image, will be privileged. Might leave the temp array empty, but who cares.
-		Iterator<String> it = variables.iterator();
-		String first_var = it.next();
-		Image<T> first_im = image_map.get(first_var);
-		
-		// Prepare new image
-		Image<FloatType> result_im = new ImageFactory<FloatType>(new FloatType(), new ImagePlusContainerFactory())
-			.createImage(first_im.getDimensions(), expression);
-		
-		// Check if all Containers are compatibles
-		boolean compatible_containers = true;
-		Image<T> previous_im = first_im;
-		while (it.hasNext()) {
-			if ( previous_im.getContainer().compareStorageContainerCompatibility(image_map.get(it.next()).getContainer())) {
-				continue;
-			} else {
-				compatible_containers = false;
-				break;
-			}
-		}		
-		if (!result_im.getContainer().compareStorageContainerCompatibility(first_im.getContainer())) {
-			compatible_containers = false;
-		}
-
-		if (compatible_containers) {
-			// Optimized cursors
-		
-			// Create cursors for other input images
-			HashMap<String, Cursor<T>> cursors = new HashMap<String, Cursor<T>>(image_map.size());
-			it = variables.iterator();
-			String var;
-			while (it.hasNext()) {
-				var = it.next();
-				cursors.put(var, image_map.get(var).createCursor());
-			}
-
-			// Create cursor for new image
-			Cursor<FloatType> result_cursor = result_im.createCursor();
-			
-			// Iterate over cursors.
-			// We iterate using the first cursor. The other ones are moved according to this one
-			float local_value, result_value;
-			Cursor<T> cursor;
-			while (result_cursor.hasNext()) {
-				result_cursor.fwd();
-				// other input cursors
-				it = variables.iterator();
-				while (it.hasNext()) {
-					var = it.next();
-					cursor = cursors.get(var);
-					cursor.fwd(); // since we are compatible, we are sure that they will iterate the same way
-					local_value = cursor.getType().getRealFloat();
-					parser.addVariable(var, local_value);
-				}
-				// Assign output value
-				result_value = (float) parser.getValue();
-				result_cursor.getType().set(result_value);
-			}
-				
-		} else {
-			// Non-optimized cursors.
-			
-			// Create cursor for new image
-			LocalizableCursor<FloatType> result_cursor = result_im.createLocalizableCursor();
-			
-			// Create cursors for input images
-			HashMap<String, LocalizableByDimCursor<T>> cursors = new HashMap<String, LocalizableByDimCursor<T>>(image_map.size());
-			it = variables.iterator();
-			String var;
-			while (it.hasNext()) {
-				var = it.next();
-				cursors.put(var, image_map.get(var).createLocalizableByDimCursor());
-			}
-
-			// Iterate over cursors.
-			// We iterate using the output cursor. The other ones are moved according to this one
-			float local_value, result_value;
-			LocalizableByDimCursor<T> cursor;
-			while (result_cursor.hasNext()) {
-				// output cursor
-				result_cursor.fwd();
-				// other input cursors
-				it = variables.iterator();
-				while (it.hasNext()) {
-					var = it.next();
-					cursor = cursors.get(var);
-					cursor.setPosition(result_cursor); // the result cursor dictates its position to other cursors
-					local_value = cursor.getType().getRealFloat();
-					parser.addVariable(var, local_value);
-				}
-				// Assign output value
-				result_value = (float) parser.getValue();
-				result_cursor.getType().set(result_value);
-			}
-			
+			parser.addVariable(var, image_map.get(var));
 		}
 		
-		// Done!
-		error_message = "";
-		result = result_im;	
+		try {
+			Node root_node = parser.parse(expression);
+			result = (Image<T>) parser.evaluate(root_node);
+			result.setName(expression);
+			error_message = "";
+			return true;
+
+		} catch (ParseException e) {
+			error_message = e.getErrorInfo();
+			return false;
+		}
+		
 	}
 	
 	
@@ -304,7 +219,7 @@ public class Image_Expression_Parser<T extends RealType<T>> implements PlugIn, A
 	 * Return the result of the last evaluation of the expression over the images given.
 	 * Is <code>null</code> if {@link #exec()} was not called before.
 	 */
-	public Image<FloatType> getResult()  {
+	public Image<T> getResult()  {
 		return this.result;
 	}
 	
@@ -339,37 +254,15 @@ public class Image_Expression_Parser<T extends RealType<T>> implements PlugIn, A
 	 * PRIVATE METHODS
 	 */
 	
-	private synchronized void fireActionProperty(String command) {
-		ActionEvent action = new ActionEvent(this, ActionEvent.ACTION_PERFORMED, command);
-		for (ActionListener l : action_listeners) {
-			synchronized (l) {
-				l.actionPerformed(action);
-			}
-		}
-	}
-	
-	public void addActionListener(ActionListener l) {
-		action_listeners.add(l);
-	}
-
-	public void removeActionListener(ActionListener l) {
-		action_listeners.remove(l);
-	}
-
-	public ActionListener[] getActionListeners() {
-		return (ActionListener[]) action_listeners.toArray();
-	}
 	
 	/**
 	 * Launch and display the GUI. Returns a reference to it that can be used
 	 * to retrieve settings.
 	 */
-	private IepGui displayGUI() {
-		IepGui gui = new IepGui();
+	private IepGui<T> displayGUI() {
+		IepGui<T> gui = new IepGui<T>();
 		gui.setLocationRelativeTo(null);
-		gui.setVisible(true);
-		ImagePlus.addImageListener(gui);
-		gui.addActionListener(this);
+		gui.setVisible(true);		
 		return gui;
 	}
 
@@ -404,9 +297,10 @@ public class Image_Expression_Parser<T extends RealType<T>> implements PlugIn, A
 	 * </ul>
 	 */
 	private Object[] isExpressionValid() {
-		final JEP parser = new JEP(false, false, false, new DoubleNumberFactory());
+		final ImgLibParser<T> parser = new ImgLibParser<T>();
 		parser.addStandardConstants();
 		parser.addStandardFunctions();
+		parser.addImgLibAlgorithms();
 		Set<String> variables = image_map.keySet();
 		for ( String var : variables ) {
 			parser.addVariable(var, null); // we do not care for value yet
@@ -431,29 +325,17 @@ public class Image_Expression_Parser<T extends RealType<T>> implements PlugIn, A
 	 * Warning: executing this method resets the {@link #image_map} field.
 	 * @param imp_map  the <String, ImagePlus> map to convert
 	 */
-	private void convertToImglib(Map<String, ImagePlus> imp_map) {
-		image_map = new HashMap<String, Image<T>>(imp_map.size());
+	public Map<String, Image<T>> convertToImglib(Map<String, ImagePlus> imp_map) {
+		Map<String, Image<T>> map = new HashMap<String, Image<T>>(imp_map.size());
 		Image<T> img;
 		Set<String> variables = imp_map.keySet();
 		for (String var : variables) {
 			img = ImagePlusAdapter.wrap(imp_map.get(var));
-			image_map.put(var, img);
+			map.put(var, img);
 		}
+		return map;
 	}
-	
-	/*
-	 * ACTIONLISTENER METHOD
-	 */
-
-	public synchronized void actionPerformed(ActionEvent e) {
-		String command = e.getActionCommand();
 		
-		if (command.equals(IepGui.QUIT_ACTION_COMMAND)) {
-			user_has_canceled = true;
-		} else if (command.equals(IepGui.PARSE_ACTION_COMMAND)) {
-			user_has_canceled = false;
-		}
-	}
 	
 	/*
 	 * MAIN METHOD
@@ -469,12 +351,24 @@ public class Image_Expression_Parser<T extends RealType<T>> implements PlugIn, A
 		HashMap<String, Image<T>> map = new HashMap<String, Image<T>>(1);
 		map.put("A", img);
 		iep.setImageMap(map);
-		iep.exec();
-		Image<FloatType> result = iep.getResult();
-		if (null != result) {
+		boolean everything_went_fine = iep.process();
+		Image<T> result = iep.getResult();
+		if (everything_went_fine) {
 			ImagePlus result_imp = ImageJFunctions.copyToImagePlus(result);
-			result_imp.getProcessor().resetMinAndMax();
-			result_imp.show();			
+
+			float max = Float.NEGATIVE_INFINITY;
+			float min = Float.POSITIVE_INFINITY;
+			for (int i = 0; i < result_imp.getStackSize(); i++) {
+				FloatProcessor fp = (FloatProcessor) result_imp.getStack().getProcessor(i+1);
+				float[] arr = (float[]) fp.getPixels();
+				for (int j = 0; j < arr.length; j++) {
+					if (arr[j] > max) max = arr[j];
+					if (arr[j] < min) min = arr[j];
+				}
+			}
+			result_imp.show();	
+			result_imp.setDisplayRange(min, max);
+			result_imp.updateAndDraw();
 		} else {
 			System.err.println("Could not evaluate expression:");
 			System.err.println(iep.getErrorMessage());

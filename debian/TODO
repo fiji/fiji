@@ -1,0 +1,45 @@
+Could we use the packaged commons-math?
+  http://packages.debian.org/squeeze/libcommons-math-java
+  http://packages.ubuntu.com/lucid/libcommons-math-java
+
+jna.jar is packaged in libjna-java - should use that
+
+Need all the fiji-*.copyright files - needs more detail than in
+   LICENSES, with the source of the information and a link
+   to the full license in /usr/share/common-licenses/ where possible.
+
+Allow a per-user plugins directory as well as the system-wide one.
+
+bio-formats includes lots of jars in the source archive - there's a
+   dependency tangle to be sorted out there
+
+fiji-plugins is still plugin soup - more packages need to be separated
+   out from there over time
+
+debian/update-debian.py has a lot of hard-coded data, which should be
+   tidied up and extracted out.  (Some doesn't need to be hard-coded
+   at all.)  In general, that's now very hacky - especially the
+   cleaning steps and rewriting of the Fakefile.)
+
+AutoComplete and RSyntaxTextArea can usefully be non-Fiji jars,
+   i.e. just a jar in /usr/share/java/
+
+The menu icon seems to have stopped working at some point
+
+The upload-to-pacific.py script should use an SSH control master
+
+Need to document and enforce the right submodules being present.  At
+   the moment I think the required minimum is:
+
+       AutoComplete
+       ImageJA
+       RSyntaxTextArea
+       Retrotranslator
+       TrakEM2
+       bio-formats
+       commons-math
+       ij-plugins
+       imglib
+       live-helper
+       mpicbg
+       tcljava

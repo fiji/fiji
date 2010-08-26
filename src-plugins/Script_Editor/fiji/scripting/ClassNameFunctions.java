@@ -43,6 +43,9 @@ public class ClassNameFunctions {
 	 * name.
 	 */
 	public String getFullName(String className) {
+		if (className.indexOf('.') > 0)
+			return className;
+
 		List<String> list = names.getFullPackageNames(className);
 		if (list.size() == 0) {
 			JOptionPane.showMessageDialog(parent, "Class '"

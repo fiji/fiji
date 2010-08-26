@@ -3,6 +3,11 @@
 .DS_Store
 .project
 .metadata
+/eclipse/
+/intellij/
+/netbeans/
+/build.xml
+.checksums
 /build/
 /make-targets
 /fiji.o
@@ -84,6 +89,7 @@
 /jars/junit-4.5.jar
 /plugins/MTrack2_.jar
 /plugins/Time_Stamper.jar
+/plugins/Series_Labeler.jar
 /plugins/Statistical_Region_Merging.jar
 /plugins/Refresh_Javas.jar
 /plugins/Auto_Threshold.jar
@@ -107,7 +113,6 @@
 /plugins/Script_Editor.jar
 /plugins/3D_Objects_Counter.jar
 /plugins/Trainable_Segmentation.jar
-/jars/clojure-contrib.jar
 /jars/weka.jar
 /plugins/IsoData_Classifier.jar
 /plugins/RATS_.jar
@@ -152,9 +157,12 @@
 /bio-formats/components/forks/poi/build/
 /bio-formats/components/loci-plugins/build/
 /bio-formats/components/ome-xml/build/
+/bio-formats/components/stubs/lwf-stubs/build/
 /bio-formats/loci_tools.jar
 /clojure/classes/
-/clojure-contrib/classes/
+/commons-math/commons-math.jar
+/commons-math/lib/
+/commons-math/target/
 /ij-plugins/ij-ImageIO_.jar
 /junit/junit4.5/
 /junit/junit-4.5.jar
@@ -169,3 +177,11 @@
 /weka/weka.jar
 /plugins/Simple_Neurite_Tracer.jar
 /plugins/3D_Viewer.jar
+/plugins/SPIM_Registration.jar
+/bin/apache-maven-*/
+/plugins/QuickPALM_.jar
+/misc/headless.jar
+/jars/commons-math.jar
+/plugins/CPU_Meter.jar
+/plugins/TopoJ_.jar
+/plugins/Graph_Cut.jar

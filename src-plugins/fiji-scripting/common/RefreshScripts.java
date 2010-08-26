@@ -386,6 +386,12 @@ abstract public class RefreshScripts implements PlugIn {
 		return file_name.replace('_',' ');
 	}
 
+	/** Run the script of the given name in a new thread. */
+	public void runScript(InputStream istream, String fileName) {
+		// by default, ignore the file name
+		runScript(istream);
+	}
+
 	/** Run the script in a new thread. */
 	abstract public void runScript(InputStream istream);
 

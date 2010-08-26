@@ -977,6 +977,28 @@ public class Image3DUniverse extends DefaultAnimatableUniverse {
 	}
 
 	/**
+	 * Add a custom mesh, in particular a triangle mesh, to the universe.
+	 * With this method, the color of each vertex may be set to produce
+	 * multi-colored meshes.
+	 *
+	 * For more details on custom meshes, read the package API docs of
+	 * the package customnode.
+	 *
+	 * @param mesh a list of points which make up the mesh. The number of
+	 *        points must be devidable by 3. 3 successive points make up one
+	 *        triangle.
+	 * @param colors a List of the colors at each vertex in the mesh
+	 * @param name a name for the added Content
+	 * @return the connected Content.
+	 */
+	public Content addTriangleMesh(List<Point3f> mesh,
+			    List<Color3f> colors, String name) {
+		CustomTriangleMesh tmesh = new CustomTriangleMesh(mesh);
+		tmesh.setColor(colors);
+		return addCustomMesh(tmesh, name);
+	}
+
+	/**
 	 * @deprecated This method will not be supported in the future.
 	 * The specified 'scale' will be ignored, and the applied scale
 	 * will be calculated automatically from the minimum and maximum

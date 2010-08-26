@@ -316,10 +316,10 @@ public class LevelSet implements PlugIn {
 		
 
 		GenericDialog gd = new GenericDialog("Level Set Segmentation");
-		gd.addCheckbox("Use Fast Marching", fast_marching);
-		gd.addNumericField("Grey value threshold", fm_grey, 0);
-		gd.addNumericField("Distance threshold", fm_dist, 2);
-		gd.addCheckbox("Use Level Sets", level_sets);
+		gd.addCheckbox("Use_Fast_Marching", fast_marching);
+		gd.addNumericField("Grey_value_threshold", fm_grey, 0);
+		gd.addNumericField("Distance_threshold", fm_dist, 2);
+		gd.addCheckbox("Use_Level_Sets", level_sets);
 		gd.addChoice("Method", levelsetList, levelsetList[0]);
 		gd.addMessage("(Not all parameters used in all methods)");
 		gd.addMessage("Level set weigths (0 = don't use)");
@@ -337,7 +337,7 @@ public class LevelSet implements PlugIn {
 
 		// not yet implemented
 		// gd.addChoice("Shape guidance stack", shapeList, shapeList[0]);
-		gd.addMessage("Leve set convergence criterion");
+		gd.addMessage("Level set convergence criterion");
 		gd.addNumericField("Convergence", ((Double) lf.getParameterValue(Parameter.CONVERGENCE)).doubleValue(), 4);
 		gd.addChoice("Region expands to ", expansionList, expansionList[expansion_choice]);
 		gd.addMessage("");

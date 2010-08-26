@@ -1,15 +1,15 @@
 /* -*- mode: java; c-basic-offset: 8; indent-tabs-mode: t; tab-width: 8 -*- */
 
-/* Copyright 2006, 2007, 2008, 2009 Mark Longair */
+/* Copyright 2006, 2007, 2008, 2009, 2010 Mark Longair */
 
 /*
   This file is part of the ImageJ plugin "Auto Tracer".
-  
+
   The ImageJ plugin "Auto Tracer" is free software; you can
   redistribute it and/or modify it under the terms of the GNU General
   Public License as published by the Free Software Foundation; either
   version 3 of the License, or (at your option) any later version.
-  
+
   The ImageJ plugin "Auto Tracer" is distributed in the hope that it
   will be useful, but WITHOUT ANY WARRANTY; without even the implied
   warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
@@ -17,8 +17,8 @@
 
   In addition, as a special exception, the copyright holders give
   you permission to combine this program with free software programs or
-  libraries that are released under the Apache Public License. 
-  
+  libraries that are released under the Apache Public License.
+
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
@@ -43,7 +43,7 @@ import java.awt.*;
 import java.util.StringTokenizer;
 
 public class SinglePathsGraph {
-	
+
 	int width, height, depth;
 	float spacing_x, spacing_y, spacing_z;
 
@@ -58,12 +58,12 @@ public class SinglePathsGraph {
 
 	// For fast lookup from positions:
 	Hashtable<Integer,AutoPoint> fromPosition=new Hashtable<Integer,AutoPoint>();
-	
+
 	public AutoPoint get( int x, int y, int z ) {
 		int k = x + y * width + z * width * height;
 		return fromPosition.get(k);
 	}
-	
+
 	public void addPoint( AutoPoint p, AutoPoint previous ) {
 		int k = (int)p.x + (int)p.y * width + (int)p.z * width * height;
 		AutoPoint existingPoint=fromPosition.get( k );
@@ -106,7 +106,7 @@ public class SinglePathsGraph {
 		pw.println("# spacing_x: "+spacing_x);
 		pw.println("# spacing_y: "+spacing_y);
 		pw.println("# spacing_z: "+spacing_z);
-		
+
 
 		/* First build a map from keys to wavefront indices: */
 
@@ -115,8 +115,7 @@ public class SinglePathsGraph {
 		Set<Integer> keySet=fromPosition.keySet();
 
 		int counter = 1;
-		for(Iterator<Integer> i=keySet.iterator();i.hasNext();) {
-			int k=i.next();
+		for( int k : keySet ) {
 			wavefrontToKey.put(k,counter);
 			int x = k % width;
 			int y = ( k / width ) % height;
@@ -124,17 +123,15 @@ public class SinglePathsGraph {
 			pw.println("v "+(x * spacing_x)+" "+(y * spacing_y)+" "+(z * spacing_z));
 			++counter;
 		}
-		
-		for( Iterator<Long> links = directedLinks.iterator();
-		     links.hasNext(); ) {
-			long l = links.next();
+
+		for( long l : directedLinks ) {
 			long from = l >> 32;
 			long to = l & 0xFFFFFFFF;
 			int from_k = (int)from;
 			int to_k = (int)to;
 			int from_vertex = wavefrontToKey.get(from_k);
 			int to_vertex = wavefrontToKey.get(to_k);
-			pw.println("l "+from_vertex+" "+to_vertex);			
+			pw.println("l "+from_vertex+" "+to_vertex);
 		}
 
 		pw.print("g");
@@ -184,7 +181,7 @@ public class SinglePathsGraph {
 			BufferedReader br = new BufferedReader(new FileReader(inputFilename));
 			String lastLine;
 			while( null != (lastLine = br.readLine()) ) {
-				
+
 				if( lastLine.startsWith(widthPrefix) ) {
 					width = getNonNegativeIntAfterPrefix(lastLine, widthPrefix);
 					listener.gotWidth(width);
@@ -211,9 +208,9 @@ public class SinglePathsGraph {
 				}
 
 				if( lastLine.startsWith(vertexPrefix) ) {
-						
+
 					StringTokenizer tokenizer=new StringTokenizer(lastLine.substring(vertexPrefix.length())," ");
-					
+
 					float [] vertex = new float[3];
 
 					int i = 0;
@@ -262,7 +259,7 @@ public class SinglePathsGraph {
 		PrintWriter pw = null;
 
 		boolean compress = false;
-		
+
 		try {
 			if( compress ) {
 				System.out.println("Creating, with compression...");
@@ -273,7 +270,7 @@ public class SinglePathsGraph {
 				pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(outputFilename),"UTF-8"));
 				System.out.println("Created, pw is: "+pw);
 			}
-			
+
 			pw.println("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
 			pw.println("<!DOCTYPE connections [");
 			pw.println("  <!ELEMENT tracings       (samplespacing,imagesize,path*,fill*)>");
@@ -312,9 +309,9 @@ public class SinglePathsGraph {
 			pw.println("  <!ATTLIST node           status        (open|closed)   #REQUIRED>");
 			pw.println("]>");
 			pw.println("");
-			
+
 			pw.println("<tracings>");
-			
+
 			// FIXME: implement
 
 			pw.println("</tracings>");

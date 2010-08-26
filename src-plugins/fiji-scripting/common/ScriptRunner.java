@@ -43,7 +43,7 @@ public class ScriptRunner {
 			System.out.println("ScriptRunner.run: cannot find script extension in path " + path);
 			return false;
 		}
-		String ext = path.substring(i + 1);
+		String ext = path.substring(i + 1).toLowerCase();
 		try {
 			return (Boolean) methods.get(ext).invoke(null, path, vars);
 		} catch (Throwable e) {

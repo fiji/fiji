@@ -20,14 +20,14 @@ CWD := $(shell pwd)
 
 BUILD_COMMAND := debian/build-command
 
-JAVA3D_JARS := /usr/share/java/vecmath.jar:/usr/share/java/j3dutils.jar:/usr/lib/jni/libj3dcore-ogl.so:/usr/share/java/j3dcore.jar
-
-INSTALLED_JVM_ROOT := /usr/lib/jvm/java-6-openjdk/
+INSTALLED_JVM_ROOT := $(shell cat debian/java-home)
 
 VERSION_IN_CHANGELOG=$(shell dpkg-parsechangelog | egrep ^Version: | sed "s/Version: //")
 PACKAGE_IN_CHANGELOG=$(shell dpkg-parsechangelog | egrep ^Source: | sed "s/Source: //")
 
-CWD_BASENAME=$(shell basename `realpath .`)
+ADDITIONAL_JARS=$(shell debian/find-non-fiji-jars.py)
+
+CWD_BASENAME=$(shell basename `readlink -n -f .`)
 REQUIRED_DIRECTORY_NAME=${PACKAGE_IN_CHANGELOG}-${VERSION_IN_CHANGELOG}
 
 prebuild-actions :
@@ -68,7 +68,7 @@ clean : prebuild-actions
 	dh_testroot
 	rm -f build-arch-stamp build-indep-stamp configure-stamp install-arch-stamp install-indep-stamp
 	rm -f $(INDEP_STAMPS) $(ARCH_STAMPS)
-	JAVA_HOME=$(INSTALLED_JVM_ROOT) sh -x Fake.sh clean
+	$(BUILD_COMMAND) clean
 	rm -f fjij fiji.o
 	dh_clean
 
@@ -94,7 +94,7 @@ install-arch-stamp : build-arch-stamp
 	install -m 755 fiji $(DESTDIR)/usr/lib/fiji/
 	< debian/simple-launcher sed \
 		-e 's,@@INSTALLED_JVM_ROOT@@,$(INSTALLED_JVM_ROOT),' \
-		-e 's,@@JAVA_3D_JARS@@,$(INSTALLED_BUNDLED_JAVA3D_JARS),' \
+		-e 's,@@ADDITIONAL_JARS@@,$(ADDITIONAL_JARS),' \
 		-e 's,@@LD_LIBRARY_PATH@@,$(NEW_LD_LIBRARY_PATH),' > $(DESTDIR)/usr/bin/fiji
 	chmod 755 $(DESTDIR)/usr/bin/fiji
 

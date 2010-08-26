@@ -201,6 +201,7 @@ static void string_append_at_most(struct string *string, const char *append, int
 	string_ensure_alloc(string, string->length + len);
 	memcpy(string->buffer + string->length, append, len + 1);
 	string->length += len;
+	string->buffer[string->length] = '\0';
 }
 
 static int number_length(unsigned long number, long base)
@@ -366,6 +367,31 @@ static void string_replace(struct string *string, char from, char to)
 			string->buffer[j] = to;
 }
 
+__attribute__((unused))
+static int string_read_file(struct string *string, const char *path) {
+	FILE *file = fopen(path, "rb");
+	char buffer[1024];
+	int result = 0;
+
+	if (!file) {
+		error("Could not open %s", path);
+		return -1;
+	}
+
+	for (;;) {
+		size_t count = fread(buffer, 1, sizeof(buffer), file);
+		string_ensure_alloc(string, string->length + count);
+		memcpy(string->buffer + string->length, buffer, count);
+		string->length += count;
+		if (count < sizeof(buffer))
+			break;
+	}
+	if (ferror(file) < 0)
+		result = -1;
+	fclose(file);
+	return result;
+}
+
 /*
  * If set, overrides the environment variable JAVA_HOME, which in turn
  * overrides relative_java_home.
@@ -500,11 +526,30 @@ size_t get_memory_size(int available_only)
 				host_info.wire_count) * (size_t)page_size);
 }
 #elif defined(linux)
+static size_t get_kB(struct string *string, const char *key)
+{
+	const char *p = strstr(string->buffer, key);
+	if (!p)
+		return 0;
+	while (*p && *p != ' ')
+		p++;
+	return (size_t)strtoul(p, NULL, 10);
+}
+
 size_t get_memory_size(int available_only)
 {
-	ssize_t page_size = sysconf(_SC_PAGESIZE);
-	ssize_t available_pages = sysconf(available_only ?
-			_SC_AVPHYS_PAGES : _SC_PHYS_PAGES);
+	ssize_t page_size, available_pages;
+	/* Avoid overallocation */
+	if (!available_only) {
+		struct string *string = string_init(32);
+		if (!string_read_file(string, "/proc/meminfo"))
+			return 1024 * (get_kB(string, "MemFree:")
+				+ get_kB(string, "Buffers:")
+				+ get_kB(string, "Cached:"));
+	}
+	page_size = sysconf(_SC_PAGESIZE);
+	available_pages = sysconf(available_only ?
+		_SC_AVPHYS_PAGES : _SC_PHYS_PAGES);
 	return page_size < 0 || available_pages < 0 ?
 		0 : (size_t)page_size * (size_t)available_pages;
 }
@@ -1694,6 +1739,10 @@ static void __attribute__((__noreturn__)) usage(void)
 		"--default-gc\n"
 		"\tdo not use advanced garbage collector settings by default\n"
 		"\t(-Xincgc -XX:PermSize=128m)\n"
+		"--gc-g1\n"
+		"\tuse the G1 garbage collector\n"
+		"--debug-gc\n"
+		"\tshow debug info about the garbage collector on stderr\n"
 		"\n"
 		"Options for ImageJ:\n"
 		"--allow-multiple\n"
@@ -1848,7 +1897,7 @@ static int start_ij(void)
 	struct string *plugin_path = string_init(32);
 	int dashdash = 0;
 	int allow_multiple = 0, skip_build_classpath = 0;
-	int jdb = 0, add_class_path_option = 0, advanced_gc = 1;
+	int jdb = 0, add_class_path_option = 0, advanced_gc = 1, debug_gc = 0;
 	size_t memory_size = 0;
 	int count = 1, i;
 
@@ -1950,7 +1999,7 @@ static int start_ij(void)
 		else if (handle_one_option(&i, "--edit", arg))
 			for (;;) {
 				add_option(&options, "-eval", 1);
-				string_setf(buffer, "run(\"Script Editor\", \"%s\");", make_absolute_path(arg->buffer));
+				string_setf(buffer, "run(\"Script Editor\", \"%s\");", *arg->buffer && strncmp(arg->buffer, "class:", 6) ? make_absolute_path(arg->buffer) : arg->buffer);
 				add_option_string(&options, buffer, 1);
 				if (i + 1 >= main_argc)
 					break;
@@ -2064,6 +2113,7 @@ static int start_ij(void)
 			string_append_path_list(class_path, "/usr/share/java/ant.jar");
 			string_append_path_list(class_path, "/usr/share/java/ant-launcher.jar");
 			string_append_path_list(class_path, "/usr/share/java/ant-nodeps.jar");
+			string_append_path_list(class_path, "/usr/share/java/ant-junit.jar");
 		}
 		else if (!strcmp(main_argv[i], "--retrotranslator") ||
 				!strcmp(main_argv[i], "--retro"))
@@ -2080,6 +2130,11 @@ static int start_ij(void)
 		}
 		else if (!strcmp("--default-gc", main_argv[i]))
 			advanced_gc = 0;
+		else if (!strcmp("--gc-g1", main_argv[i]) ||
+				!strcmp("--g1", main_argv[i]))
+			advanced_gc = 2;
+		else if (!strcmp("--debug-gc", main_argv[i]))
+			debug_gc = 1;
 		else if (!strcmp("--help", main_argv[i]) ||
 				!strcmp("-h", main_argv[i]))
 			usage();
@@ -2131,14 +2186,27 @@ static int start_ij(void)
 	if (is_ipv6_broken())
 		add_option(&options, "-Djava.net.preferIPv4Stack=true", 0);
 
-	if (advanced_gc) {
+	if (advanced_gc == 1) {
 		add_option(&options, "-Xincgc", 0);
 		add_option(&options, "-XX:PermSize=128m", 0);
 	}
+	else if (advanced_gc == 2) {
+		add_option(&options, "-XX:PermSize=128m", 0);
+		add_option(&options, "-XX:+UseCompressedOops", 0);
+		add_option(&options, "-XX:+UnlockExperimentalVMOptions", 0);
+		add_option(&options, "-XX:+UseG1GC", 0);
+		add_option(&options, "-XX:+G1ParallelRSetUpdatingEnabled", 0);
+		add_option(&options, "-XX:+G1ParallelRSetScanningEnabled", 0);
+		add_option(&options, "-XX:NewRatio=5", 0);
+	}
+
+	if (debug_gc)
+		add_option(&options, "-verbose:gc", 0);
 
 	if (!main_class) {
-		const char *first = main_argv[1];
-		int len = main_argc > 1 ? strlen(first) : 0;
+		int index = dashdash ? dashdash : 1;
+		const char *first = main_argv[index];
+		int len = main_argc > index ? strlen(first) : 0;
 
 		if (len > 1 && !strncmp(first, "--", 2))
 			len = 0;
@@ -2412,7 +2480,7 @@ static int is_intel(void)
 
 	if (sysctl(mib, 2, result, &len, NULL, 0) < 0)
 		return 0;
-	return !strcmp(result, "i386");
+	return !strcmp(result, "i386") || !strncmp(result, "x86", 3);
 }
 
 static void set_path_to_JVM(void)
@@ -2711,7 +2779,7 @@ static void find_newest(struct string *relative_path, int max_depth, const char 
 		if (entry->d_name[0] == '.')
 			continue;
 		string_append(relative_path, entry->d_name);
-		if (dir_exists(relative_path->buffer))
+		if (dir_exists(fiji_path(relative_path->buffer)))
 			find_newest(relative_path, max_depth - 1, file, result);
 		string_set_length(relative_path, len + 1);
 	}

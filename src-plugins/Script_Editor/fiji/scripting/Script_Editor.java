@@ -19,8 +19,11 @@ import java.net.URLClassLoader;
 public class Script_Editor implements PlugIn {
 	protected static TextEditor instance;
 
+	public static TextEditor getInstance() {
+		return instance;
+	}
+
 	public void run(String path) {
-		addToolsJarToClassPath();
 		String options = Macro.getOptions();
 		if (options != null) {
 			if (path == null || path.equals(""))
@@ -36,6 +39,8 @@ public class Script_Editor implements PlugIn {
 		}
 		if (instance == null || !instance.isVisible()) {
 			instance = new TextEditor(path);
+			if (!isToolsJarAvailable())
+				instance.installDebugSupportMenuItem();
 			instance.setVisible(true);
 		}
 		else {
@@ -86,11 +91,20 @@ public class Script_Editor implements PlugIn {
 		return "";
 	}
 
-	public void addToolsJarToClassPath() {
+	public static boolean isToolsJarAvailable() {
+		ClassLoader loader = IJ.getClassLoader();
 		try {
-			if (Class.forName("com.sun.jdi.VirtualMachine") != null)
-				return;
-		} catch (ClassNotFoundException e) { }
+			if (loader != null)
+				return loader.loadClass("com.sun.jdi.VirtualMachine") != null;
+			return Class.forName("com.sun.jdi.VirtualMachine") != null;
+		} catch (ClassNotFoundException e) {
+			return false;
+		}
+	}
+
+	public void addToolsJarToClassPath() {
+		if (isToolsJarAvailable())
+			return;
 
 		try {
 			// make sure it is a FijiClassLoader
@@ -111,6 +125,7 @@ public class Script_Editor implements PlugIn {
 					+ "/lib/tools.jar");
 			}
 			URL[] urls = new URL[] { url };
+			IJ.showStatus("Adding tools.jar from " + url);
 			loader.addFallBack(new URLClassLoader(urls));
 			return;
 		} catch (Exception e) { e.printStackTrace(); }

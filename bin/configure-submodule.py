@@ -34,7 +34,6 @@ targets = {
   'batik':'jars/batik.jar',
   'bio-formats':'plugins/loci_tools.jar',
   'clojure':'jars/clojure.jar',
-  'clojure-contrib':'jars/clojure-contrib.jar',
   'ij-plugins':'plugins/ij-ImageIO_.jar',
   'imglib':'jars/imglib.jar',
   'junit':'jars/junit-4.5.jar',

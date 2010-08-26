@@ -346,6 +346,15 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	}
 
 	/**
+	 * Get the graphs of the current skeletons
+	 * @return array of graphs (one per tree/skeleton)
+	 */
+	public Graph[] getGraphs()
+	{
+		return graph;
+	}
+	
+	/**
 	 * A simpler standalone running method, for analyzation without pruning
 	 * or showing images.
 	 * <p>
@@ -435,6 +444,9 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		
 		// Calculate number of junctions (skipping neighbor junction voxels)
 		groupJunctions(treeIS);						
+		
+		// Mark all unvisited
+		resetVisited();
 		
 		// Visit skeleton and measure distances.
 		for(int i = 0; i < this.numOfTrees; i++)
@@ -795,23 +807,20 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		final String[] head = {"Skeleton", "# Branches","# Junctions", "# End-point voxels",
 						 "# Junction voxels","# Slab voxels","Average Branch Length", 
 						 "# Triple points", "# Quadruple points", "Maximum Branch Length"};
-		
-		for (int i = 1; i < head.length; i++)
-			rt.setHeading(i,head[i]);	
-		
+				
 		for(int i = 0 ; i < this.numOfTrees; i++)
 		{
 			rt.incrementCounter();
 
-			rt.addValue(1, this.numberOfBranches[i]);        
-			rt.addValue(2, this.numberOfJunctions[i]);
-			rt.addValue(3, this.numberOfEndPoints[i]);
-			rt.addValue(4, this.numberOfJunctionVoxels[i]);
-			rt.addValue(5, this.numberOfSlabs[i]);
-			rt.addValue(6, this.averageBranchLength[i]);
-			rt.addValue(7, this.numberOfTriplePoints[i]);
-			rt.addValue(8, this.numberOfQuadruplePoints[i]);
-			rt.addValue(9, this.maximumBranchLength[i]);
+			rt.addValue(head[1], this.numberOfBranches[i]);        
+			rt.addValue(head[2], this.numberOfJunctions[i]);
+			rt.addValue(head[3], this.numberOfEndPoints[i]);
+			rt.addValue(head[4], this.numberOfJunctionVoxels[i]);
+			rt.addValue(head[5], this.numberOfSlabs[i]);
+			rt.addValue(head[6], this.averageBranchLength[i]);
+			rt.addValue(head[7], this.numberOfTriplePoints[i]);
+			rt.addValue(head[8], this.numberOfQuadruplePoints[i]);
+			rt.addValue(head[9], this.maximumBranchLength[i]);
 
 			if (0 == i % 100) 
 				rt.show("Results");
@@ -828,8 +837,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 							"Branch length","V1 x", "V1 y",
 							"V1 z","V2 x","V2 y", "V2 z", "Euclidean distance"};
 			
-			for (int i = 1; i < extra_head.length; i++)
-				extra_rt.setHeading(i,extra_head[i]);	
+	
 			// Edge comparator (by branch length)
 			Comparator<Edge> comp = new Comparator<Edge>(){
 				public int compare(Edge o1, Edge o2)
@@ -856,16 +864,17 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 				for(final Edge e : listEdges)
 				{
 					extra_rt.incrementCounter();
-					extra_rt.addValue(1, i+1);
-					extra_rt.addValue(2, e.getLength());
-					extra_rt.addValue(3, e.getV1().getPoints().get(0).x * this.imRef.getCalibration().pixelWidth);
-					extra_rt.addValue(4, e.getV1().getPoints().get(0).y * this.imRef.getCalibration().pixelHeight);
-					extra_rt.addValue(5, e.getV1().getPoints().get(0).z * this.imRef.getCalibration().pixelDepth);
-					extra_rt.addValue(6, e.getV2().getPoints().get(0).x * this.imRef.getCalibration().pixelWidth);
-					extra_rt.addValue(7, e.getV2().getPoints().get(0).y * this.imRef.getCalibration().pixelHeight);
-					extra_rt.addValue(8, e.getV2().getPoints().get(0).z * this.imRef.getCalibration().pixelDepth);
-					extra_rt.addValue(9, this.calculateDistance(e.getV1().getPoints().get(0), e.getV2().getPoints().get(0)));
-				}								
+					extra_rt.addValue(extra_head[1], i+1);
+					extra_rt.addValue(extra_head[2], e.getLength());
+					extra_rt.addValue(extra_head[3], e.getV1().getPoints().get(0).x * this.imRef.getCalibration().pixelWidth);
+					extra_rt.addValue(extra_head[4], e.getV1().getPoints().get(0).y * this.imRef.getCalibration().pixelHeight);
+					extra_rt.addValue(extra_head[5], e.getV1().getPoints().get(0).z * this.imRef.getCalibration().pixelDepth);
+					extra_rt.addValue(extra_head[6], e.getV2().getPoints().get(0).x * this.imRef.getCalibration().pixelWidth);
+					extra_rt.addValue(extra_head[7], e.getV2().getPoints().get(0).y * this.imRef.getCalibration().pixelHeight);
+					extra_rt.addValue(extra_head[8], e.getV2().getPoints().get(0).z * this.imRef.getCalibration().pixelDepth);
+					extra_rt.addValue(extra_head[9], this.calculateDistance(e.getV1().getPoints().get(0), e.getV2().getPoints().get(0)));
+				}		
+											
 			}
 			extra_rt.show("Branch information");
 		}
@@ -1056,7 +1065,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 			this.slabList = new ArrayList<Point>();
 					 
 			// Otherwise, visit branch until next junction or end point.
-			final double length = visitBranch(endPointCoord, iTree);
+			double length = visitBranch(endPointCoord, iTree);
 						
 			// If length is 0, it means the tree is formed by only one voxel.
 			if(length == 0)
@@ -1066,9 +1075,28 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 				continue;
 			}
 			
+			// If the final point is a slab, then we add the path to the
+			// neighbor junction voxel not belonging to the initial vertex
+			// (unless it is a self loop)
+			if(isSlab(this.auxPoint))
+			{
+				final Point aux = this.auxPoint;
+				//IJ.log("Looking for " + this.auxPoint + " in the list of vertices...");
+				this.auxPoint = getVisitedJunctionNeighbor(this.auxPoint, v1);
+				this.auxFinalVertex = findPointVertex(this.junctionVertex[iTree], this.auxPoint);
+				if(this.auxPoint == null)
+				{
+					//IJ.log("Point "+ aux + " has not neighbor end junction! (inner loop)");
+					// Inner loop
+					this.auxFinalVertex = v1;
+					this.auxPoint = aux;
+				}
+				length += calculateDistance(this.auxPoint, aux);
+			}
+			
 			// Add branch to graph			
 			if(debug)
-				IJ.log("adding branch from " + v1.getPoints().get(0) + " to " + this.auxFinalVertex.getPoints().get(0));
+				IJ.log("adding branch from " + v1.getPoints().get(0) + " to " + this.auxFinalVertex.getPoints().get(0) +  ", aux point = " + this.auxPoint);
 			this.graph[iTree].addVertex(this.auxFinalVertex);
 			this.graph[iTree].addEdge(new Edge(v1, this.auxFinalVertex, this.slabList, length));
 			
@@ -1095,7 +1123,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 			IJ.log( " --------------------------- ");
 		
 		// Now visit branches starting at junctions
-		// 08/26/2009 Changed the loop to visit first the junction voxel that are
+		// 08/26/2009 Changed the loop to visit first the junction voxels that are
 		//            forming a single junction.
 		for(int i = 0; i < this.junctionVertex[iTree].length; i++)
 		{			
@@ -1159,7 +1187,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 								this.auxFinalVertex = findPointVertex(this.junctionVertex[iTree], this.auxPoint);
 								if(this.auxPoint == null)
 								{
-									//IJ.error("Point "+ aux + " has not neighbor end junction!");
+									//IJ.log("Point "+ aux + " has not neighbor end junction! (inner loop)");
 									// Inner loop
 									this.auxFinalVertex = initialVertex;
 									this.auxPoint = aux;
@@ -1580,10 +1608,13 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 			
 			// Move in the graph
 			previousPoint = nextPoint;			
+			if (debug)
+				IJ.log("visiting " + previousPoint);
 			nextPoint = getNextUnvisitedVoxel(previousPoint);			
 		}
 		
-		
+		// If we find an unvisited end-point or junction, we set it
+		// as final vertex of the branch
 		if(nextPoint != null)
 		{
 			// Add distance to last point
@@ -1595,11 +1626,15 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 			// Mark final vertex
 			if(isEndPoint(nextPoint))
 			{
+				if(debug)
+					IJ.log("found unvisited end point: " + nextPoint);
 				this.auxFinalVertex = new Vertex();
 				this.auxFinalVertex.addPoint(nextPoint);
 			}
 			else if(isJunction(nextPoint))
 			{
+				if(debug)
+					IJ.log("found unvisited junction point: " + nextPoint);
 				this.auxFinalVertex = findPointVertex(this.junctionVertex[iTree], nextPoint);
 				/*
 				int j = 0;

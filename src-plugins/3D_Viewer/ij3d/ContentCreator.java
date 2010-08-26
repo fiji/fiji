@@ -141,8 +141,6 @@ public class ContentCreator {
 	 * @return
 	 */
 	public static ImagePlus[] getImages(ImagePlus imp) {
-		if(!imp.isHyperStack())
-			return new ImagePlus[] {imp};
 
 		int nChannels = imp.getNChannels();
 		int nSlices = imp.getNSlices();
@@ -161,10 +159,10 @@ public class ContentCreator {
 		for(int i = 0; i < nFrames; i++) {
 			ImageStack newStack = new ImageStack(w, h);
 			for(int j = 0; j < nSlices; j++) {
-				int index = imp.getStackIndex(1, j, i);
+				int index = imp.getStackIndex(1, j+1, i+1);
 				Object pixels;
 				if (nChannels > 1) {
-					imp.setPositionWithoutUpdate(1, j, i);
+					imp.setPositionWithoutUpdate(1, j+1, i+1);
 					pixels = new ColorProcessor(imp
 						.getImage()).getPixels();
 				}

@@ -1,5 +1,8 @@
 package fiji.util.gui;
 
+import ij.ImagePlus;
+import ij.WindowManager;
+
 import ij.gui.GenericDialog;
 
 import ij.io.OpenDialog;
@@ -30,11 +33,19 @@ import java.util.List;
 
 import javax.swing.JFileChooser;
 
+/**
+ * The GenericDialogPlus class enhances the GenericDialog by
+ * a few additional methods.
+ *
+ * It adds a method to add a file chooser, a dialog chooser,
+ * an image chooser, a button, and makes string (and file) fields
+ * drop targets.
+ */
 public class GenericDialogPlus extends GenericDialog {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1L;
+
+	protected int[] windowIDs;
+	protected String[] windowTitles;
 
 	public GenericDialogPlus(String title) {
 		super(title);
@@ -42,6 +53,22 @@ public class GenericDialogPlus extends GenericDialog {
 
 	public GenericDialogPlus(String title, Frame parent) {
 		super(title, parent);
+	}
+
+	public void addImageChoice(String label, String defaultImage) {
+		if (windowTitles == null) {
+			windowIDs = WindowManager.getIDList();
+			windowTitles = new String[windowIDs.length];
+			for (int i = 0; i < windowIDs.length; i++) {
+				ImagePlus image = WindowManager.getImage(windowIDs[i]);
+				windowTitles[i] = image == null ? "" : image.getTitle();
+			}
+		}
+		addChoice(label, windowTitles, defaultImage);
+	}
+
+	public ImagePlus getNextImage() {
+		return WindowManager.getImage(windowIDs[getNextChoiceIndex()]);
 	}
 
 	public void addStringField(String label, String defaultString, int columns) {
@@ -74,7 +101,7 @@ public class GenericDialogPlus extends GenericDialog {
 		layout.setConstraints(panel, constraints);
 		add(panel);
 	}
-	
+
 	public void addFileField(String label, String defaultPath) {
 		addFileField(label, defaultPath, 20);
 	}
@@ -98,11 +125,11 @@ public class GenericDialogPlus extends GenericDialog {
 		layout.setConstraints(panel, constraints);
 		add(panel);
 	}
-	
+
 	/**
 	 * Add button to the dialog
 	 * @param label button label
-	 * @param listener listener to handle the action when pressing the button 
+	 * @param listener listener to handle the action when pressing the button
 	 */
 	public void addButton(String label, ActionListener listener)
 	{
@@ -126,15 +153,29 @@ public class GenericDialogPlus extends GenericDialog {
 		}
 
 		public void actionPerformed(ActionEvent e) {
-			OpenDialog dialog = new OpenDialog(title, null);
+			String fileName = null;
+			File dir = new File(text.getText());
+			if (!dir.isDirectory()) {
+				if (dir.exists())
+					fileName = dir.getName();
+				dir = dir.getParentFile();
+			}
+			while (dir != null && !dir.exists())
+				dir = dir.getParentFile();
+
+			OpenDialog dialog;
+			if (dir == null)
+				dialog = new OpenDialog(title, fileName);
+			else
+				dialog = new OpenDialog(title, dir.getAbsolutePath(), fileName);
 			String directory = dialog.getDirectory();
 			if (directory == null)
 				return;
-			String fileName = dialog.getFileName();
+			fileName = dialog.getFileName();
 			text.setText(directory + File.separator + fileName);
 		}
 	}
-	
+
 	static class DirectoryListener implements ActionListener {
 		String title;
 		TextField text;
@@ -145,12 +186,15 @@ public class GenericDialogPlus extends GenericDialog {
 		}
 
 		public void actionPerformed(ActionEvent e) {
-			
-		    JFileChooser fc = new JFileChooser();
-		    fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-		    
-		    fc.showOpenDialog(null);
-		    File selFile = fc.getSelectedFile();			
+			File directory = new File(text.getText());
+			while (directory != null && !directory.exists())
+				directory = directory.getParentFile();
+
+			JFileChooser fc = new JFileChooser(directory);
+			fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+			fc.showOpenDialog(null);
+			File selFile = fc.getSelectedFile();
 			text.setText( selFile.getAbsolutePath() );
 		}
 	}
@@ -165,7 +209,7 @@ public class GenericDialogPlus extends GenericDialog {
 			throws IOException, UnsupportedFlavorException {
 		String text = null;
 		DataFlavor fileList = DataFlavor.javaFileListFlavor;
-		
+
 		if (event.isDataFlavorSupported(fileList)) {
 			event.acceptDrop(DnDConstants.ACTION_COPY);
 			List<File> list = (List<File>)event.getTransferable().getTransferData(fileList);

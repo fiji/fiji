@@ -6,8 +6,14 @@ import fiji.updater.util.Progress;
 import fiji.updater.util.Progressable;
 import fiji.updater.util.Util;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
+
+import java.security.NoSuchAlgorithmException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,6 +21,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import java.util.zip.ZipException;
 
@@ -33,6 +40,7 @@ import java.util.zip.ZipException;
  */
 public class Checksummer extends Progressable {
 	int counter, total;
+	Map<String, PluginObject.Version> cachedChecksums;
 
 	public Checksummer(Progress progress) {
 		addProgress(progress);
@@ -45,6 +53,10 @@ public class Checksummer extends Progressable {
 			this.path = path;
 			this.realPath = realPath;
 		}
+	}
+
+	public Map<String, PluginObject.Version> getCachedChecksums() {
+		return cachedChecksums;
 	}
 
 	protected List<StringPair> queue;
@@ -114,8 +126,8 @@ public class Checksummer extends Progressable {
 		String checksum = null;
 		long timestamp = 0;
 		if (new File(realPath).exists()) try {
-			checksum = Util.getDigest(path, realPath);
 			timestamp = Util.getTimestamp(realPath);
+			checksum = getDigest(path, realPath, timestamp);
 		} catch (ZipException e) {
 			System.err.println("Problem digesting " + realPath);
 		} catch (Exception e) { e.printStackTrace(); }
@@ -143,8 +155,8 @@ public class Checksummer extends Progressable {
 			plugin.setLocalVersion(checksum, timestamp);
 			if (plugin.getStatus() == Status.OBSOLETE_UNINSTALLED)
 				plugin.setStatus(Status.OBSOLETE);
-			counter += (int)Util.getFilesize(realPath);
 		}
+		counter += (int)Util.getFilesize(realPath);
 		itemDone(path);
 		setCount(counter, total);
 	}
@@ -157,6 +169,7 @@ public class Checksummer extends Progressable {
 		for (StringPair pair : queue)
 			handle(pair);
 		done();
+		writeCachedChecksums();
 	}
 
 	public void updateFromLocal(List<String> files) {
@@ -226,5 +239,62 @@ public class Checksummer extends Progressable {
 	public void updateFromLocal() {
 		initializeQueue();
 		handleQueue();
+	}
+
+	protected void readCachedChecksums() {
+		cachedChecksums = new TreeMap<String, PluginObject.Version>();
+		File file = new File(Util.prefix(".checksums"));
+		if (!file.exists())
+			return;
+		try {
+			BufferedReader reader = new BufferedReader(new FileReader(file));
+			String line;
+			while ((line = reader.readLine()) != null) try {
+				int space = line.indexOf(' ');
+				if (space < 0)
+					continue;
+				String checksum = line.substring(0, space);
+				int space2 = line.indexOf(' ', space + 1);
+				if (space2 < 0)
+					continue;
+				long timestamp = Long.parseLong(line.substring(space + 1, space2));
+				String filename = line.substring(space2 + 1);
+				cachedChecksums.put(filename, new PluginObject.Version(checksum, timestamp));
+			} catch (NumberFormatException e) {
+				/* ignore line */
+			}
+			reader.close();
+		} catch (IOException e) {
+			// ignore
+		}
+	}
+
+	protected void writeCachedChecksums() {
+		if (cachedChecksums == null)
+			return;
+		File file = new File(Util.prefix(".checksums"));
+		// file.canWrite() not applicable, as the file need not exist
+		try {
+			Writer writer = new FileWriter(file);
+			for (String filename : cachedChecksums.keySet())
+				if (new File(Util.prefix(filename)).exists()) {
+					PluginObject.Version version = cachedChecksums.get(filename);
+					writer.write(version.checksum + " " + version.timestamp + " " + filename + "\n");
+				}
+			writer.close();
+		} catch (IOException e) {
+			// ignore
+		}
+	}
+
+	protected String getDigest(String path, String realPath, long timestamp) throws IOException, NoSuchAlgorithmException, ZipException {
+		if (cachedChecksums == null)
+			readCachedChecksums();
+		PluginObject.Version version = cachedChecksums.get(path);
+		if (version != null && timestamp == version.timestamp)
+			return version.checksum;
+		String checksum = Util.getDigest(path, realPath);
+		cachedChecksums.put(path, new PluginObject.Version(checksum, timestamp));
+		return checksum;
 	}
 }

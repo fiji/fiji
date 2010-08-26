@@ -1,6 +1,6 @@
 /* -*- mode: java; c-basic-offset: 8; indent-tabs-mode: t; tab-width: 8 -*- */
 
-/* Copyright 2006, 2007, 2008, 2009 Mark Longair */
+/* Copyright 2006, 2007, 2008, 2009, 2010 Mark Longair */
 
 /*
   This file is part of the ImageJ plugin "Simple Neurite Tracer".
@@ -19,7 +19,7 @@
 
   In addition, as a special exception, the copyright holders give
   you permission to combine this program with free software programs or
-  libraries that are released under the Apache Public License. 
+  libraries that are released under the Apache Public License.
 
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
@@ -34,11 +34,10 @@ import ij.ImagePlus;
 
 import stacks.ThreePanesCanvas;
 import stacks.PaneOwner;
-import stacks.ThreePanes;
 
 public class TracerCanvas extends ThreePanesCanvas {
 
-	private PathAndFillManager pathAndFillManager;
+	protected PathAndFillManager pathAndFillManager;
 
 	public TracerCanvas( ImagePlus imagePlus,
 			     PaneOwner owner,
@@ -87,8 +86,8 @@ public class TracerCanvas extends ThreePanesCanvas {
 		int current_z = imp.getCurrentSlice() - 1;
 
 		synchronized (searchThreads) {
-			for( Iterator<SearchThread> i = searchThreads.iterator(); i.hasNext(); )
-				i.next().drawProgressOnSlice( plane, current_z, this, g );
+			for( SearchThread st : searchThreads )
+				st.drawProgressOnSlice( plane, current_z, this, g );
 		}
 
 		boolean showOnlySelectedPaths = pathAndFillManager.plugin.getShowOnlySelectedPaths();

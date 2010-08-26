@@ -1,6 +1,6 @@
 /* -*- mode: java; c-basic-offset: 8; indent-tabs-mode: t; tab-width: 8 -*- */
 
-/* Copyright 2006, 2007, 2008, 2009 Mark Longair */
+/* Copyright 2006, 2007, 2008, 2009, 2010 Mark Longair */
 
 /*
   This file is part of the ImageJ plugin "Simple Neurite Tracer".
@@ -19,7 +19,7 @@
 
   In addition, as a special exception, the copyright holders give
   you permission to combine this program with free software programs or
-  libraries that are released under the Apache Public License. 
+  libraries that are released under the Apache Public License.
 
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
@@ -95,10 +95,8 @@ public abstract class SearchThread extends Thread {
 	   SearchProgressCallback provides. */
 
 	protected void reportPointsInSearch( ) {
-		for (Iterator<SearchProgressCallback> j = progressListeners.iterator(); j.hasNext();) {
-			SearchProgressCallback progress = j.next();
+		for( SearchProgressCallback progress : progressListeners )
 			progress.pointsInSearch(this, open_from_start.size() + (bidirectional ? open_from_goal.size() : 0), closed_from_start.size() + (bidirectional ? closed_from_goal.size() : 0));
-		}
 	}
 
 	public int pointsConsideredInSearch( ) {
@@ -200,7 +198,7 @@ public abstract class SearchThread extends Thread {
 
 	/* This can only be changed in a block synchronized on this object */
 
-	private int threadStatus = PAUSED;
+	private volatile int threadStatus = PAUSED;
 
 	public static final int RUNNING  = 0;
 	public static final int PAUSED   = 1;
@@ -234,17 +232,13 @@ public abstract class SearchThread extends Thread {
 	protected void addingNode( SearchNode n ) { }
 
 	public void reportThreadStatus( ) {
-		for( Iterator<SearchProgressCallback> j = progressListeners.iterator(); j.hasNext(); ) {
-			SearchProgressCallback progress = j.next();
+		for( SearchProgressCallback progress : progressListeners )
 			progress.threadStatus( this, threadStatus );
-		}
 	}
 
 	public void reportFinished( boolean success ) {
-		for( Iterator<SearchProgressCallback> j = progressListeners.iterator(); j.hasNext(); ) {
-			SearchProgressCallback progress = j.next();
+		for( SearchProgressCallback progress : progressListeners )
 			progress.finished( this, success );
-		}
 	}
 
 	// Toggles the paused or unpaused status of the thread.

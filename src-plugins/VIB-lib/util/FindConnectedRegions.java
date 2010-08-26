@@ -92,7 +92,7 @@ class CancelDialog extends Dialog implements ActionListener {
 
 public class FindConnectedRegions {
 
-	boolean pleaseStop = false;
+	volatile boolean pleaseStop = false;
 
 	public void cancel() {
 		pleaseStop = true;
@@ -157,14 +157,14 @@ public class FindConnectedRegions {
 	private static final byte ADDED_TO_CURRENT_REGION = 2;
 	private static final byte IN_PREVIOUS_REGION = 3;
 
-	IndexColorModel backgroundAndSpectrum() {
+	public static IndexColorModel backgroundAndSpectrum() {
 		return backgroundAndSpectrum(255);
 	}
 
 	/* This method returns an IndexColorModel where 0 is black
 	   (background) and 1 to min(maximum,255) inclusive are spread
 	   through the spectrum.  Any higher values are set to white. */
-	IndexColorModel backgroundAndSpectrum(int maximum) {
+	public static IndexColorModel backgroundAndSpectrum(int maximum) {
 		if( maximum > 255 )
 			maximum = 255;
 		byte [] reds = new byte[256];

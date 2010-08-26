@@ -24,6 +24,20 @@ import java.io.*;
 public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 	static final int IMAGE_OPENED = -1;
 	static final int PLUGIN_NOT_FOUND = -2;
+	static final boolean LOCI_PRESENT = checkForLoci();
+
+	private static boolean checkForLoci() {
+		// This should run without exception in headless mode
+		boolean lociPresent=true;
+		try {
+			lociPresent = IJ.getClassLoader().loadClass("loci.plugins.LociImporter") != null;
+		}
+		catch (ClassNotFoundException e) {
+			lociPresent = false;
+		}
+		if(IJ.debugMode) IJ.log("HEFT: loci is"+(lociPresent?" ":" not ")+"present");
+		return lociPresent;
+	}
 
 	/** Called from io/Opener.java. */
 	public void run(String path) {
@@ -84,7 +98,7 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 		width = PLUGIN_NOT_FOUND;
 
 		// Temporarily suppress "plugin not found" errors if LOCI Bio-Formats plugin is installed
-		if (Menus.getCommands().get("Bio-Formats Importer")!=null && IJ.getVersion().compareTo("1.37u")>=0)
+		if (IJ.getVersion().compareTo("1.37u")>=0 && LOCI_PRESENT)
 			IJ.suppressPluginNotFoundError();
 
 		// OK now we get to the interesting bit
@@ -319,6 +333,10 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 		// if an image was returned, assume success
 		if (o instanceof ImagePlus) return (ImagePlus)o;
 
+		// tryPlugIn sets width to IMAGE_OPENED when a plugin that does not
+		// extend ImagePlus successfully opens the image
+		if (width == IMAGE_OPENED) return null;
+
 		// try opening the file with LOCI Bio-Formats plugin - always check this last!
 		// Do not call Bio-Formats if File>Import>Image Sequence is opening this file.
 		if (o==null && (IJ.getVersion().compareTo("1.38j")<0||!IJ.redirectingErrorMessages()) && (new File(path).exists())) {
@@ -344,9 +362,7 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 	} // openImage
 
 	/**
-	* Attempts to open the specified path with the given plugin. If the
-	* plugin extends the ImagePlus class (e.g., BioRad_Reader), set
-	* extendsImagePlus to true, otherwise (e.g., LSM_Reader) set it to false.
+	* Attempts to open the specified path with the given plugin.
 	*
 	* @return A reference to the plugin, if it was successful.
 	*/
@@ -359,10 +375,10 @@ public class HandleExtraFileTypes extends ImagePlus implements PlugIn {
 					o = null; // invalid image
 				else
 					width = IMAGE_OPENED; // success
-		} else {
-			// plugin does not extend ImagePlus; assume success
+		} else if (o != null) {
+			// plugin was run but does not extend ImagePlus; assume success
 			width = IMAGE_OPENED;
-		}
+		} // ... else plugin was not run/found
 		return o;
 	}
 

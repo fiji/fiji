@@ -181,7 +181,17 @@ public class Circle_Fitter implements PlugInFilter {
 	public float getDefaultThreshold() {
 		if (ip==null) { return Float.NaN; }
 		int w = ip.getWidth(), h = ip.getHeight();
-		float min = (float)ip.getMin(), max = (float)ip.getMax();
+		float min, max;
+		min = max = ip.getf(0, 0);
+		// We cannot trust ip.getMin()!
+		for (int j = 0; j < h; j++)
+			for (int i = 0; i < w; i++) {
+				float v = ip.getf(i, j);
+				if (min > v)
+					min = v;
+				else if (max < v)
+					max = v;
+			}
 		float[] histogram = new float[256];
 
 		for (int j = 0; j < h; j++)

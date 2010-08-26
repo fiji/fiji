@@ -29,8 +29,7 @@ import javax.naming.OperationNotSupportedException;
 
 import amira.AmiraParameters;
 
-public class MaterialList extends ScrollPane implements ActionListener,
-					ItemListener {
+public class MaterialList extends ScrollPane implements ActionListener, ItemListener {
 	PopupMenu popup;
 
 	ImagePlus labels;

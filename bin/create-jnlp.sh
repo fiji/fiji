@@ -4,23 +4,25 @@
 #    name="jnlp"
 #    value="http://pacific.mpi-cbg.de/webstart/fiji/plugins/VIB_.jar"/>
 
-RELATIVE_PATH="webstart/fiji"
-FIJIPATH="/var/www/$RELATIVE_PATH"
-CODEBASE="http://pacific.mpi-cbg.de/$RELATIVE_PATH"
-JNLP_NAME="Fiji.jnlp"
-EXCLUDES="plugins/Fiji_Updater.jar"
-
 mode=current
+RELATIVE_PATH="webstart/fiji"
+JNLP_NAME="../Fiji.jnlp"
 case "$1" in
 --updater)
 	mode=updater
+	RELATIVE_PATH="webstart/fiji-stable"
+	JNLP_NAME="../Fiji-stable.jnlp"
 	;;
 esac
+
+FIJIPATH="/var/www/$RELATIVE_PATH"
+CODEBASE="http://pacific.mpi-cbg.de/$RELATIVE_PATH"
+EXCLUDES="plugins/Fiji_Updater.jar"
 
 plugins=
 jars=
 files=
-outpath="$FIJIPATH/../$JNLP_NAME"
+outpath="$FIJIPATH/$JNLP_NAME"
 
 test -d $FIJIPATH ||
 mkdir -p $FIJIPATH ||
@@ -83,7 +85,7 @@ zip -9r configs.jar plugins.config class.map
 files="$files configs.jar"
 plugins="$plugins $CODEBASE/configs.jar"
 
-test -e ImageJA/.jarsignerrc && (
+test -e ImageJA/.git/jarsignerrc && (
 	cd ImageJA &&
 	for jar in $files
 	do
@@ -103,7 +105,7 @@ test -e ImageJA/.jarsignerrc && (
 			;;
 		esac &&
 		echo "Signing $target..." &&
-		jarsigner -signedjar $FIJIPATH/$target $(cat .jarsignerrc) \
+		jarsigner -signedjar $FIJIPATH/$target $(cat .git/jarsignerrc) \
 			$jar dscho || break
 	done
 ) || {

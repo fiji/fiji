@@ -699,12 +699,6 @@ public abstract class AbstractInterpreter implements PlugIn {
 	/** Executed inside the executer thread right before the thread will die. */
 	protected void threadQuitting() {}
 
-	/** Enable tab chars in the prompt. */
-	protected String fix(String text) {
-		return text.replaceAll("\\\\n", "\n")
-			   .replaceAll("\\\\t", "\t");
-	}
-
 	/** Insert a tab in the prompt (in replacement for Component focus)*/
 	synchronized protected void doTab(ActionEvent ae) {
 		String prompt_text = prompt.getText();

@@ -1,6 +1,6 @@
 /* -*- mode: java; c-basic-offset: 8; indent-tabs-mode: t; tab-width: 8 -*- */
 
-/* Copyright 2006, 2007, 2008, 2009 Mark Longair */
+/* Copyright 2006, 2007, 2008, 2009, 2010 Mark Longair */
 
 /*
   This file is part of the ImageJ plugin "Auto Tracer".
@@ -17,23 +17,13 @@
 
   In addition, as a special exception, the copyright holders give
   you permission to combine this program with free software programs or
-  libraries that are released under the Apache Public License. 
+  libraries that are released under the Apache Public License.
 
   You should have received a copy of the GNU General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 package tracing;
-
-import ij.*;
-import ij.plugin.*;
-import ij.gui.*;
-import ij.io.*;
-import ij.process.*;
-
-import java.io.*;
-import java.awt.*;
-import java.util.StringTokenizer;
 
 public interface TraceLoaderListener {
 
@@ -50,5 +40,5 @@ public interface TraceLoaderListener {
     public void gotSpacingX( float spacing_x );
     public void gotSpacingY( float spacing_y );
     public void gotSpacingZ( float spacing_z );
-    
+
 }

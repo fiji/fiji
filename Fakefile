@@ -1,4 +1,3 @@
-
 # This is a configuration file for Fiji mAKE ("fake")
 #
 # The syntax of a Fakefile is meant to be very simple.
@@ -74,24 +73,33 @@ precompiledDirectory=precompiled/
 
 buildDir=build/
 
-FIJI_JAVA_HOME(linux)=java/linux/jdk1.6.0_16/jre
-FIJI_JAVA_HOME(linux64)=java/linux-amd64/jdk1.6.0_16/jre
-FIJI_JAVA_HOME(win32)=java/win32/jdk1.6.0_16/jre
-FIJI_JAVA_HOME(win64)=java/win64/jdk1.6.0_16/jre
+FIJI_JAVA_HOME(linux)=java/linux/jdk1.6.0_20/jre
+FIJI_JAVA_HOME(linux64)=java/linux-amd64/jdk1.6.0_20/jre
+FIJI_JAVA_HOME(win32)=java/win32/jdk1.6.0_20/jre
+FIJI_JAVA_HOME(win64)=java/win64/jdk1.6.0_20/jre
 FIJI_JAVA_HOME(macosx)=java/macosx-java3d
 JAVA_HOME=$FIJI_JAVA_HOME
 ENVOVERRIDES(JAVA_HOME)=true
+
+# Java 3D
+FIJI_JAVA_EXT=$FIJI_JAVA_HOME/lib/ext
+FIJI_JAVA_EXT(macosx)=$FIJI_JAVA_HOME/Home/lib/ext
+JAVA3D_JARS=$FIJI_JAVA_EXT/j3dcore.jar:$FIJI_JAVA_EXT/j3dutils.jar:$FIJI_JAVA_EXT/vecmath.jar
+
+# tools.jar
+TOOLS_JAR=$JAVA_HOME/../lib/tools.jar
+TOOLS_JAR(macosx)=/System/Library/Frameworks/JavaVM.framework/Classes/classes.jar
 
 # the main target
 
 SUBMODULE_TARGETS=\
 	jars/ij.jar \
+	misc/headless.jar \
 	plugins/loci_tools.jar \
 	jars/VectorString.jar \
 	plugins/TrakEM2_.jar \
 	plugins/mpicbg_.jar \
 	jars/clojure.jar \
-	jars/clojure-contrib.jar \
 	plugins/ij-ImageIO_.jar \
 	jars/jacl.jar \
 	jars/batik.jar \
@@ -102,7 +110,7 @@ SUBMODULE_TARGETS=\
 	jars/jython.jar \
 	jars/imglib.jar \
 	jars/mpicbg.jar \
-
+	jars/commons-math.jar
 
 PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Clojure_Interpreter.jar \
@@ -139,6 +147,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/ToAST_.jar \
 	plugins/MTrack2_.jar \
 	plugins/Time_Stamper.jar \
+        plugins/Series_Labeler.jar \
 	plugins/Statistical_Region_Merging.jar \
 	plugins/Refresh_Javas.jar \
 	plugins/Auto_Threshold.jar \
@@ -167,7 +176,12 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/VIB_.jar \
 	plugins/Anisotropic_Diffusion_2D.jar \
 	plugins/Simple_Neurite_Tracer.jar \
-	plugins/3D_Viewer.jar
+	plugins/SPIM_Registration.jar \
+	plugins/QuickPALM_.jar \
+	plugins/3D_Viewer.jar \
+	plugins/CPU_Meter.jar \
+	plugins/Graph_Cut.jar \
+	plugins/TopoJ_.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS third-party-plugins
 
@@ -191,17 +205,17 @@ jdk[bin/checkout-jdk.py $JDK] <-
 
 # From submodules
 jars/ij.jar <- jars/javac.jar ImageJA/
+misc/headless.jar <- jars/javac.jar ImageJA/
 CLASSPATH(plugins/mpicbg_.jar)=jars/mpicbg.jar
 plugins/mpicbg_.jar <- mpicbg/
 jars/mpicbg.jar <- mpicbg/
-CLASSPATH(jars/imglib.jar)=jars/mpicbg.jar
-jars/imglib.jar <- imglib/
+CLASSPATH(jars/imglib.jar)=jars/mpicbg.jar:$JAVA3D_JARS
+jars/imglib.jar <- plugins/loci_tools.jar imglib/
 jars/clojure.jar <- clojure/
-jars/clojure-contrib.jar <- jars/clojure.jar clojure-contrib/
 plugins/loci_tools.jar <- bio-formats/
-CLASSPATH(jars/VectorString.jar)=jars/Jama-1.0.2.jar
+CLASSPATH(jars/VectorString.jar)=jars/Jama-1.0.2.jar:$JAVA3D_JARS
 jars/VectorString.jar <- TrakEM2/
-CLASSPATH(plugins/TrakEM2_.jar)=plugins/VIB_.jar:jars/mpicbg.jar:plugins/loci_tools.jar:plugins/bUnwarpJ_.jar:plugins/level_sets.jar:plugins/Fiji_Plugins.jar:jars/Jama-1.0.2.jar:jars/imglib.jar:plugins/Simple_Neurite_Tracer.jar:plugins/3D_Viewer.jar
+CLASSPATH(plugins/TrakEM2_.jar)=plugins/VIB_.jar:jars/mpicbg.jar:plugins/loci_tools.jar:plugins/bUnwarpJ_.jar:plugins/level_sets.jar:plugins/Fiji_Plugins.jar:jars/Jama-1.0.2.jar:jars/imglib.jar:plugins/Simple_Neurite_Tracer.jar:plugins/3D_Viewer.jar:$JAVA3D_JARS
 plugins/TrakEM2_.jar <- jars/ij.jar plugins/VIB_.jar jars/mpicbg.jar plugins/bUnwarpJ_.jar plugins/level_sets.jar plugins/Fiji_Plugins.jar jars/imglib.jar jars/VectorString.jar TrakEM2/
 plugins/ij-ImageIO_.jar <- ij-plugins/
 jars/jacl.jar <- tcljava/
@@ -209,13 +223,14 @@ jars/batik.jar <- batik/
 jars/junit-4.5.jar <- junit/
 jars/rsyntaxtextarea.jar <- RSyntaxTextArea/
 jars/autocomplete.jar <- AutoComplete/
-jars/weka.jar <- weka/
+jars/weka.jar <- jars/Fiji.jar weka/
 jars/jython.jar <- jython/
+jars/commons-math.jar <- commons-math/
 
 # From source
 libs[] <- jars/test-fiji.jar jars/zs.jar jars/VIB-lib.jar jars/Jama-1.0.2.jar \
 	jars/fiji-scripting.jar jars/fiji-lib.jar jars/jep.jar \
-	jars/pal-optimization.jar
+	jars/pal-optimization.jar jars/MacOSX_Updater_Fix.jar
 
 plugins/Record_Screen.jar <- src-plugins/Record_Screen/ src-plugins/Record_Screen/**/*
 
@@ -226,16 +241,16 @@ src-plugins/Fiji/icon.png[cp $PRE $TARGET] <- images/icon.png
 
 MAINCLASS(jars/javac.jar)=com.sun.tools.javac.Main
 
-CLASSPATH(jars/fiji-scripting.jar)=jars/jython.jar:jars/Fiji.jar
+CLASSPATH(jars/fiji-scripting.jar)=jars/jython.jar:jars/Fiji.jar:jars/bsh-2.0b4.jar:jars/js.jar
 CLASSPATH(plugins/Refresh_Javas.jar)=jars/fiji-scripting.jar:jars/fake.jar:jars/Fiji.jar
 CLASSPATH(plugins/Jython_Interpreter.jar)=jars/fiji-scripting.jar:jars/jython.jar
-CLASSPATH(plugins/Clojure_Interpreter.jar)=jars/fiji-scripting.jar:jars/clojure.jar:jars/clojure-contrib.jar
-CLASSPATH(plugins/JRuby_Interpreter.jar)=jars/fiji-scripting.jar
-CLASSPATH(plugins/BeanShell_Interpreter.jar)=jars/fiji-scripting.jar
-CLASSPATH(plugins/Javascript_.jar)=jars/fiji-scripting.jar
+CLASSPATH(plugins/Clojure_Interpreter.jar)=jars/fiji-scripting.jar:jars/clojure.jar
+CLASSPATH(plugins/JRuby_Interpreter.jar)=jars/fiji-scripting.jar:jars/jruby.jar
+CLASSPATH(plugins/BeanShell_Interpreter.jar)=jars/fiji-scripting.jar:jars/bsh-2.0b4.jar
+CLASSPATH(plugins/Javascript_.jar)=jars/fiji-scripting.jar:jars/js.jar
 CLASSPATH(plugins/CLI_.jar)=jars/fiji-scripting.jar
 MAINCLASS(plugins/Script_Editor.jar)=fiji.scripting.Script_Editor
-CLASSPATH(plugins/Script_Editor.jar)=jars/rsyntaxtextarea.jar:jars/autocomplete.jar:plugins/Clojure_Interpreter.jar:plugins/JRuby_Interpreter.jar:plugins/Javascript_.jar:plugins/Jython_Interpreter.jar:plugins/Refresh_Javas.jar:plugins/BeanShell_Interpreter.jar:plugins/CLI_.jar:jars/fiji-scripting.jar:jars/Fiji.jar:jars/imglib.jar:$JAVA_HOME/../lib/tools.jar
+CLASSPATH(plugins/Script_Editor.jar)=jars/rsyntaxtextarea.jar:jars/autocomplete.jar:plugins/Clojure_Interpreter.jar:plugins/JRuby_Interpreter.jar:plugins/Javascript_.jar:plugins/Jython_Interpreter.jar:plugins/Refresh_Javas.jar:plugins/BeanShell_Interpreter.jar:plugins/CLI_.jar:jars/fiji-scripting.jar:jars/Fiji.jar:jars/imglib.jar:jars/fiji-lib.jar:jars/fake.jar:$TOOLS_JAR
 NO_COMPILE(plugins/Script_Editor.jar)=src-plugins/Script_Editor/templates/**/*
 src-plugins/Script_Editor/icon.png[cp $PRE $TARGET] <- images/icon.png
 src-plugins/Script_Editor/var.png[cp $PRE $TARGET] <- images/var.png
@@ -243,23 +258,24 @@ src-plugins/Script_Editor/function.png[cp $PRE $TARGET] <- images/function.png
 
 CLASSPATH(jars/zs.jar)=jars/Jama-1.0.2.jar
 CLASSPATH(plugins/register_virtual_stack_slices.jar)=plugins/TrakEM2_.jar:jars/mpicbg.jar:plugins/bUnwarpJ_.jar:jars/fiji-lib.jar
+CLASSPATH(plugins/registration_3d.jar)=jars/edu_mines_jtk.jar
 CLASSPATH(plugins/Siox_Segmentation.jar)=jars/fiji-lib.jar
-CLASSPATH(plugins/Image_Expression_Parser.jar)=jars/jep.jar:jars/imglib.jar
+CLASSPATH(plugins/Image_Expression_Parser.jar)=jars/jep.jar:jars/imglib.jar:jars/junit-4.5.jar
 
 CLASSPATH(plugins/Algorithm_Launcher.jar)=jars/imglib.jar
 plugins/Algorithm_Launcher.jar <- \
 	src-plugins/Algorithm_Launcher/**/*.java \
 	src-plugins/Algorithm_Launcher/**/*.config
 
-CLASSPATH(plugins/Directionality_.jar)=jars/jfreechart-1.0.9.jar
+CLASSPATH(plugins/Directionality_.jar)=jars/jfreechart-1.0.13.jar:jars/jcommon-1.0.12.jar
 CLASSPATH(plugins/LSM_Toolbox.jar)=plugins/LSM_Reader.jar
 MAINCLASS(plugins/LSM_Toolbox.jar)=org.imagearchive.lsm.toolbox.gui.AboutDialog
 MAINCLASS(plugins/Interactive_3D_Surface_Plot.jar)=Interactive_3D_Surface_Plot
-CLASSPATH(plugins/Stitching_.jar)=plugins/loci_tools.jar:jars/fiji-lib.jar
-CLASSPATH(plugins/Fiji_Plugins.jar)=jars/jsch-0.1.37.jar
+CLASSPATH(plugins/Stitching_.jar)=plugins/loci_tools.jar:jars/fiji-lib.jar:jars/imglib.jar:jars/edu_mines_jtk.jar
+CLASSPATH(plugins/Fiji_Plugins.jar)=jars/jsch-0.1.37.jar:jars/fiji-lib.jar
 MAINCLASS(plugins/Fiji_Updater.jar)=fiji.updater.Main
 CLASSPATH(plugins/Fiji_Updater.jar)=jars/jsch-0.1.37.jar
-CLASSPATH(plugins/IO_.jar)=jars/batik.jar
+CLASSPATH(plugins/IO_.jar)=jars/batik.jar:jars/jpedalSTD.jar:jars/itext-1.3.jar:jars/jzlib-1.0.7.jar
 CLASSPATH(plugins/Sync_Win.jar)=plugins/Image_5D.jar
 CLASSPATH(plugins/Fiji_Developer.jar)=plugins/Script_Editor.jar:plugins/Fiji_Plugins.jar:jars/rsyntaxtextarea.jar:plugins/3D_Viewer.jar
 CLASSPATH(plugins/Trainable_Segmentation.jar)=jars/weka.jar:plugins/Stitching_.jar:jars/fiji-lib.jar:plugins/Anisotropic_Diffusion_2D.jar:jars/VIB-lib.jar
@@ -268,6 +284,9 @@ CLASSPATH(jars/VIB-lib.jar)=jars/Jama-1.0.2.jar:jars/junit-4.5.jar:jars/pal-opti
 CLASSPATH(plugins/Simple_Neurite_Tracer.jar)=jars/VIB-lib.jar:plugins/VIB_.jar:jars/pal-optimization.jar:jars/junit-4.5.jar:plugins/3D_Viewer.jar
 CLASSPATH(plugins/3D_Viewer.jar)=jars/VIB-lib.jar:jars/imglib.jar:jars/Jama-1.0.2.jar
 CLASSPATH(jars/jep.jar)=jars/Jama-1.0.2.jar:jars/junit-4.5.jar
+CLASSPATH(plugins/SPIM_Registration.jar)=$JAVA3D_JARS:jars/imglib.jar:jars/mpicbg.jar:plugins/3D_Viewer.jar:jars/weka.jar:jars/fiji-lib.jar:plugins/loci_tools.jar:plugins/Fiji_Plugins.jar:jars/VIB-lib.jar:jars/Jama-1.0.2.jar
+CLASSPATH(plugins/Bug_Submitter.jar)=plugins/Fiji_Updater.jar
+CLASSPATH(plugins/TopoJ_.jar)=jars/Jama-1.0.2.jar
 
 # pre-Java5 generics ;-)
 
@@ -280,6 +299,9 @@ src-plugins/VIB-lib/math3d/Eigensystem2x2Float.java[src-plugins/VIB-lib/sed.py $
 	src-plugins/VIB-lib/math3d/Eigensystem2x2Double.java
 
 MAINCLASS(jars/test-fiji.jar)=fiji.Tests
+CLASSPATH(jars/test-fiji.jar)=jars/junit-4.5.jar
+
+MAINCLASS(jars/MacOSX_Updater_Fix.jar)=fiji.updater.Fix
 
 # the default rules
 
@@ -314,7 +336,7 @@ CFLAGS(win64)=$CFLAGS $WINOPTS
 # and only on MacOSX
 MACOPTS(osx10.3)=-I/System/Library/Frameworks/JavaVM.Framework/Headers \
 	-DMACOSX
-MACOPTS(osx10.4)=$MACOPTS(osx10.3) -mmacosx-version-min=10.3 -arch i386
+MACOPTS(osx10.4)=$MACOPTS(osx10.3) -mmacosx-version-min=10.3 -arch i386 -arch ppc
 MACOPTS(osx10.5)=$MACOPTS(osx10.4) -arch x86_64
 
 CFLAGS(linux)=$CFLAGS -DIPV6_MAYBE_BROKEN
@@ -330,6 +352,10 @@ LIBS(linux64)=-ldl
 LIBS(macosx)=-framework CoreFoundation -framework JavaVM
 
 fiji <- fiji.c
+
+CFLAGS(fiji-macosx)=$CFLAGS $MACOPTS(osx10.5)
+LDFLAGS(fiji-macosx)=$LDFLAGS $MACOPTS(osx10.5)
+fiji-macosx <- fiji.c
 
 CFLAGS(fiji-tiger)=$CFLAGS $MACOPTS(osx10.4)
 LDFLAGS(fiji-tiger)=$LDFLAGS $MACOPTS(osx10.4)
@@ -360,6 +386,7 @@ LAUNCHER(osx10.5)=precompiled/fiji-macosx precompiled/fiji-tiger
 precompile-fiji[] <- $LAUNCHER
 
 precompiled/fiji-tiger[bin/copy-file.py $PRE $TARGET] <- fiji-tiger
+precompiled/fiji-macosx[bin/copy-file.py $PRE $TARGET] <- fiji-macosx
 # this rule only matches precompiled/fiji-$PLATFORM
 precompiled/fiji-*[bin/copy-file.py $PRE $TARGET] <- fiji
 
@@ -377,7 +404,6 @@ precompile-submodules[] <- \
 	precompiled/mpicbg_.jar \
 	precompiled/mpicbg.jar \
 	precompiled/clojure.jar \
-	precompiled/clojure-contrib.jar \
 	precompiled/ij-ImageIO_.jar \
 	precompiled/jacl.jar \
 	precompiled/batik.jar \
@@ -387,10 +413,10 @@ precompile-submodules[] <- \
 	precompiled/weka.jar \
 	precompiled/jython.jar \
 	precompiled/imglib.jar \
+	precompiled/commons-math.jar \
 
 precompiled/ij.jar <- jars/ij.jar
 precompiled/clojure.jar <- jars/clojure.jar
-precompiled/clojure-contrib.jar <- jars/clojure.jar jars/clojure-contrib.jar
 precompiled/jacl.jar <- jars/jacl.jar
 precompiled/batik.jar <- jars/batik.jar
 precompiled/junit-4.5.jar <- jars/junit-4.5.jar
@@ -399,6 +425,7 @@ precompiled/autocomplete.jar <- jars/autocomplete.jar
 precompiled/weka.jar <- jars/weka.jar
 precompiled/jython.jar <- jars/jython.jar
 precompiled/imglib.jar <- jars/imglib.jar
+precompiled/commons-math.jar <- jars/commons-math.jar
 precompiled/* <- plugins/*
 
 precompile[] <- precompile-fiji precompile-fake precompile-submodules
@@ -406,7 +433,7 @@ precompile[] <- precompile-fiji precompile-fake precompile-submodules
 # precompiled fall back
 
 missingPrecompiledFallBack[./fiji --jar plugins/Fiji_Updater.jar --update $TARGET] <- \
-	misc/Fiji.jar plugins/Fiji_Updater.jar
+	jars/Fiji.jar plugins/Fiji_Updater.jar
 
 # Portable application/.app
 
@@ -459,5 +486,4 @@ check-*[bin/up-to-date-check.py * precompiled/*_.jar] <-
 # Fake itself
 
 MAINCLASS(jars/fake.jar)=fiji.build.Fake
-JAVAVERSION(jars/fake.jar)=1.3
 jars/fake.jar <- src-plugins/fake/**/*.java
