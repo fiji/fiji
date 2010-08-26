@@ -15,8 +15,10 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm {
 	enum Implementation {Classic, Fast};
 	// The member variable to store the implementation of the Pearson's Coefficient calculation used.
 	Implementation theImplementation = Implementation.Fast;
-	// resulting Pearsing value
+	// resulting Pearsing value without thresholds
 	double pearsonsCorrelationValue;
+	// resulting Pearsons value with thresholds
+	double pearsonsCorrelationValueThr;
 
 	/**
 	 * Creates a new Pearson's Correlation and allows us to define
@@ -85,6 +87,12 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm {
 		Image<T> img2 = container.getSourceImage2();
 
 		pearsonsCorrelationValue = fastPearsons(img1, img2);
+
+		AutoThresholdRegression autoThreshold = container.getAutoThreshold();
+		if (autoThreshold != null ) {
+			pearsonsCorrelationValueThr = fastPearsons(img1, img2,
+					autoThreshold.getCh1MaxThreshold(), autoThreshold.getCh2MaxThreshold(), false);
+		}
 	}
 
 	public static <T extends RealType<T>> double fastPearsons(Image<T> img1, Image<T> img2) {
@@ -192,5 +200,9 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm {
 
 	public double getPearsonsCorrelationValue() {
 		return pearsonsCorrelationValue;
+	}
+
+	public double getThresholdedPearsonsCorrelationValue() {
+		return pearsonsCorrelationValueThr;
 	}
 }

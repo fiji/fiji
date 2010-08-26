@@ -37,6 +37,12 @@ public class EasyDisplay<T extends RealType<T>> implements Display {
 			showValue( "b to y-max ratio", autoThreshold.getBToYMaxRatio(), 2 );
 		}
 
+		PearsonsCorrelation pearsons = container.getPearsonsCorrelation();
+		if (pearsons != null) {
+			showValue("Pearson's R value (no threshold)", pearsons.getPearsonsCorrelationValue(), 2);
+			showValue("Pearson's R value (threshold)", pearsons.getThresholdedPearsonsCorrelationValue(), 2);
+		}
+
 		IJ.selectWindow("Results");
 	}
 
