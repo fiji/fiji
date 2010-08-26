@@ -483,5 +483,4 @@ check-*[bin/up-to-date-check.py * precompiled/*_.jar] <-
 # Fake itself
 
 MAINCLASS(jars/fake.jar)=fiji.build.Fake
-JAVAVERSION(jars/fake.jar)=1.3
 jars/fake.jar <- src-plugins/fake/**/*.java
