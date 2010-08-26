@@ -358,7 +358,7 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 
 	public void mouseMoved( final int x, final int y) {
 	final ImageJ ij = IJ.getInstance();
-	if (ij != null) {
+	if (ij != null && currentlyDisplayedImageResult != null) {
 		/* If Alt key is not pressed, display the calibrated data.
 		 * If not, display image positions and data.
 		 * Non log image intensity from original image or 2D histogram result is always shown in status bar,
