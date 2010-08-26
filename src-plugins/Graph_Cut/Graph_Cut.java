@@ -276,11 +276,9 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 	
 			applyButton = new JButton ("Segment image");
 			applyButton.setToolTipText("Start the min-cut computation");
-			applyButton.setEnabled(true);
 	
 			overlayButton = new JButton ("Toggle overlay");
 			overlayButton.setToolTipText("Toggle the segmentation overlay in the image");
-			overlayButton.setEnabled(true);
 
 			pottsSlider = new JSlider(JSlider.HORIZONTAL, POTTS_MIN, POTTS_MAX, POTTS_INIT);
 			pottsSlider.setToolTipText("Adjust the influence of the Potts term");
@@ -288,7 +286,6 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			pottsSlider.setMinorTickSpacing(1);
 			pottsSlider.setPaintTicks(true);
 			pottsSlider.setPaintLabels(true);
-			pottsSlider.setEnabled(true);
 	
 			resultOverlay = new ImageOverlay();
 	
