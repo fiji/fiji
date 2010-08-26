@@ -2272,34 +2272,36 @@ public class Fake {
 	}
 
 	// this function handles the javac singleton
-	protected synchronized void callJavac(String[] arguments,
+	protected void callJavac(String[] arguments,
 			boolean verbose) throws FakeException {
-		try {
-			if (javac == null) {
-				discoverJavac();
-				JarClassLoader loader = (JarClassLoader)
-					getClassLoader(toolsPath);
-				String className = "com.sun.tools.javac.Main";
-				Class<?> main = loader.forceLoadClass(className);
-				Class<?>[] argsType = new Class[] {
-					arguments.getClass(),
-					PrintWriter.class
-				};
-				javac = main.getMethod("compile", argsType);
-			}
+		synchronized(this) {
+			try {
+				if (javac == null) {
+					discoverJavac();
+					JarClassLoader loader = (JarClassLoader)
+						getClassLoader(toolsPath);
+					String className = "com.sun.tools.javac.Main";
+					Class<?> main = loader.forceLoadClass(className);
+					Class<?>[] argsType = new Class[] {
+						arguments.getClass(),
+						PrintWriter.class
+					};
+					javac = main.getMethod("compile", argsType);
+				}
 
-			Object result = javac.invoke(null,
-					new Object[] { arguments, new PrintWriter(err) });
-			if (!result.equals(new Integer(0)))
-				throw new FakeException("Compile error");
-			return;
-		} catch (FakeException e) {
-			/* was compile error */
-			throw e;
-		} catch (Exception e) {
-			err.println("Could not find javac " + e
-				+ " (tools path = " + toolsPath + "), "
-				+ "falling back to system javac");
+				Object result = javac.invoke(null,
+						new Object[] { arguments, new PrintWriter(err) });
+				if (!result.equals(new Integer(0)))
+					throw new FakeException("Compile error");
+				return;
+			} catch (FakeException e) {
+				/* was compile error */
+				throw e;
+			} catch (Exception e) {
+				err.println("Could not find javac " + e
+					+ " (tools path = " + toolsPath + "), "
+					+ "falling back to system javac");
+			}
 		}
 
 		// fall back to calling javac
