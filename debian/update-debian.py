@@ -27,9 +27,6 @@ import textwrap
 # having this run every time, sometimes with the git committed
 # dependencies and sometimes with the rebuilt control file, but in
 # either case it's an error to be missing any build dependency.)
-#
-# FIXME: keep the build dependencies in a separate file, make sure
-# that they're committed in the git version as well.
 
 script_directory = sys.path[0]
 if not script_directory:
@@ -44,10 +41,20 @@ with open(os.path.join(script_directory,'build-dependencies')) as f:
             continue
         build_dependencies.append(line.strip())
 
+# This is the package that will contain all files that haven't been
+# assigned to a package in package_name_to_file_matchers
 default_package = "fiji-plugins"
 
+# Where most of the Fiji files will ultimately be installed to in the
+# packaged version:
 destination_fiji_prefix = "usr/lib/fiji/"
 
+# This dictionary specifies which files are contained in particular
+# packages.  If you add a file to a package that was previously in
+# another package you will need to add a conflict of the new package
+# with the old one in the "conflicts_and_replaces" dictionary below.
+# Otherwise, you will get errors that one package is trying to
+# overwrite a file in another package on upgrade.
 package_name_to_file_matchers = {
 
     "fiji-imagej" :
@@ -172,10 +179,22 @@ package_name_to_file_matchers = {
 
 }
 
+# Here you should specify packages that conflict with an earlier
+# version of another package - this is almost always because a file
+# has been moved from one package to another.
 conflicts_and_replaces = {
     'fiji-3d-viewer' : ( 'fiji-plugins (< 20100821202529)', )
 }
 
+# A dictionary whose keys are regular expressions that match files in
+# the Fiji build tree, and whose values are tuples of the external
+# Debian packages that contain the replacement jar files that should
+# be used instead:
+#
+# FIXME: in fact, this could be calculated from the replacement files
+# has below and repeated invocations of dpkg --search, since all the
+# build-dependencies should be installed.  That would be slow, but
+# less brittle.
 map_to_external_dependencies = {
     'jars/batik\.jar' : ( 'libbatik-java', 'libxml-commons-external-java' ),
     'jars/jython\.jar' : ( 'jython', ),
@@ -190,10 +209,12 @@ map_to_external_dependencies = {
     'jars/jcommon.*\.jar' : ( 'libjcommon-java', ),
     'jars/jsch.*\.jar' : ( 'libjsch-java', ),
     'jars/postgresql.*\.jar' : ( 'libpg-java', ),
-    'jars/ant.*\.jar' : ( 'ant', 'ant-optional' ),
-    'jars/jruby.*\.jar' : ( 'jruby', )
+    'jars/ant.*\.jar' : ( 'ant', 'ant-optional' )
 }
 
+# A dictionary that maps a file in the Fiji build tree to tuples of
+# replacement files to use, where that file has now been replaced by
+# an external dependency.
 replacement_files =  {
     'jars/batik.jar' : ( '/usr/share/java/batik-all.jar', '/usr/share/java/xml-apis-ext.jar' ),
     'jars/bsh-2.0b4.jar' : ( '/usr/share/java/bsh.jar', ),
@@ -202,7 +223,6 @@ replacement_files =  {
     'jars/Jama-1.0.2.jar' : ( '/usr/share/java/jama.jar', ),
     'jars/jcommon-1.0.12.jar' : ( '/usr/share/java/jcommon.jar', ),
     'jars/jfreechart-1.0.13.jar' : ( '/usr/share/java/jfreechart.jar', ),
-    'jars/jruby.jar' : ( '/usr/share/java/jruby.jar', ),
     'jars/js.jar' : ( '/usr/share/java/js.jar', ),
     'jars/jsch-0.1.37.jar' : ( '/usr/share/java/jsch.jar', ),
     'jars/junit-4.5.jar' : ( '/usr/share/java/junit4.jar', ),
@@ -213,21 +233,25 @@ replacement_files =  {
     '$JAVA3D_JARS' : ('/usr/share/java/j3dcore.jar', '/usr/share/java/vecmath.jar', '/usr/share/java/j3dutils.jar', )
 }
 
+# Fake adds the jar files in "jars" to the classpath implicitly, so we
+# need to explicitly add a couple of jars for classpaths here:
 missing_dependecies_in_fakefile = {
     'plugins/TrakEM2_.jar' : ( '/usr/share/java/postgresql.jar', '/usr/share/java/jfreechart.jar' )
 }
 
+# Given a filename in the Fiji build tree, return a tuple of the
+# external Debian package names that contain replacement jars, or
+# return None if there is no such replacement:
 def replacement_dependencies(fiji_file):
     for r in map_to_external_dependencies:
         if re.search(r,fiji_file):
             return map_to_external_dependencies[r]
     return None
 
+# These dictionaries will contain the reverse mapping of the
+# dictionary "package_name_to_file_matcher":
 file_to_package_name_dictionary = {}
 regular_expressions_to_package = []
-
-# This is filled in when we actually list the files:
-package_name_to_files = {}
 
 for package_name, contents in package_name_to_file_matchers.items():
     for f in contents:
@@ -238,6 +262,7 @@ for package_name, contents in package_name_to_file_matchers.items():
         elif hasattr(f,'pattern'):
             regular_expressions_to_package.append( (f,package_name) )
 
+# Given a filename, return the package that should contain it:
 def filename_to_package(filename):
     global file_to_package_name_dictionary, regular_expressions_to_package, default_package
     if filename in file_to_package_name_dictionary:
@@ -249,6 +274,7 @@ def filename_to_package(filename):
         return default_package
 
 # ========================================================================
+# Parse the command-line options:
 
 usage_message = "Usage: %prog [OPTIONS]"
 parser = OptionParser(usage=usage_message)
@@ -321,6 +347,10 @@ options,args = parser.parse_args()
 source_directory = os.path.split(script_directory)[0]
 os.chdir(source_directory)
 
+# ========================================================================
+# Fill in some template information at the top of the changelog, including
+# the current git HEAD:
+
 if options.add_changelog_template:
     suggest_new_version = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
     git_rev = Popen(["git","rev-parse","--verify","HEAD"],stdout=PIPE).communicate()[0].strip()
@@ -336,6 +366,13 @@ if options.add_changelog_template:
     fp.write(old_changelog)
     fp.close()
     sys.exit(0)
+
+# ========================================================================
+
+# The debian/build-command file is generated by finding all
+# CLASSPATH() definitions in the Fakefile that contain jar files that
+# are now replaced with Debian-packaged versions, and overriding those
+# CLASSPATH()s on the command line.
 
 if options.generate_build_command:
     new_classpaths = {}
@@ -389,6 +426,8 @@ sh -x Fake.sh FALLBACK=false VERBOSE=true \\
     sys.exit(0)
 
 # Extract the Java 3D dependencies from the build-command script:
+# FIXME: this could now be discovered from the Fakefile in the code
+# above, without reparsing the file we've just generated...
 
 additional_java3d_dependencies = {}
 build_command_script = os.path.join(script_directory,"build-command")
@@ -402,6 +441,10 @@ for file_to_build, dependents in classpath_definitions.items():
         elif re.search('vecmath\.jar',j):
             additional_java3d_dependencies.setdefault(file_to_build,set([]))
             additional_java3d_dependencies[file_to_build].add('libvecmath-java')
+
+# The Debian package building scripts care deeply that the name of the
+# directory that you're building in matches the most recent version in
+# the changelog.
 
 version_from_changelog = get_version_from_changelog(os.path.join(script_directory,"changelog"))
 
@@ -423,10 +466,17 @@ if expected_directory_name != realpath_source_directory_leafname:
 
 # ========================================================================
 
+# This dictionary is filled in when we actually list the files; it
+# needs a built tree in order to discover which are actually present:
+package_name_to_files = {}
+
+# These options all assume you have a built tree:
 if options.install or options.generate_complete_control or options.generate_source_control:
 
     os.chdir(source_directory)
 
+    # Walk these directories of the built tree to discover which files
+    # are present and should be installed:
     directories_to_walk = [ "plugins",
                             "misc",
                             "jars",
@@ -459,6 +509,8 @@ def install_file(source_filename,destination_filename):
     if 0 != call(["cp",source_filename,destination_filename]):
         raise Exception, "Failed to copy '"+source_filename+"' to '"+destination_filename+"'"
 
+# The --install option is used from debian/rules to actually put the
+# files in the right subdirectory of debian/
 if options.install:
     for f in all_files_to_install:
         print "Trying to install: "+f
@@ -466,12 +518,15 @@ if options.install:
         destination_filename = os.path.join(source_directory,"debian",package,destination_fiji_prefix,f)
         install_file(f,destination_filename)
 
+# Remove all files that are listed as untracked.  (This doesn't
+# include ignored files.)
 def clean_untracked(top_level_working_directory):
     os.chdir(top_level_working_directory)
     call("git ls-files --others --directory -z | xargs -0 rm -rf",shell=True)
     for s in absolute_submodule_paths(top_level_working_directory):
         clean_untracked(s)
 
+# Remove all files that are listed as untracked AND ignored files
 def clean_aggressively(top_level_working_directory):
     os.chdir(top_level_working_directory)
     call("git ls-files --others --directory --no-empty-directory --exclude-standard -z | xargs -0 rm -rf",shell=True)
@@ -479,6 +534,8 @@ def clean_aggressively(top_level_working_directory):
     for s in absolute_submodule_paths(top_level_working_directory):
         clean_aggressively(s)
 
+# Find the absolute paths of all submodules by parsing the output of
+# "git submodule status" and prefixing them with the working directory:
 def absolute_submodule_paths(top_level_working_directory):
     result = []
     for line in Popen(["git","submodule","status"],stdout=PIPE).communicate()[0].split('\n'):
@@ -494,12 +551,16 @@ def absolute_submodule_paths(top_level_working_directory):
             result.append(os.path.join(top_level_working_directory,m.group(2)))
     return result
 
-def package_version_to_string(package,version):
+# Take a package name and an optional minimum version and produce a
+# string that can be used in debian/control fields:
+def package_version_to_string(package,version=None):
     if version:
         return package + " (>= "+version+")"
     else:
         return package
 
+# This method raises an exception unless "git status" is clean in the
+# top level directory and in every submodule:
 def check_git_status_clean(top_level_working_directory):
     os.chdir(top_level_working_directory)
     if 0 != call("git rev-parse --is-inside-work-tree > /dev/null",shell=True):
@@ -549,7 +610,6 @@ if options.clean:
 
     # Also remove submodules which are now provided by external dependencies:
     to_remove.append("batik")
-    # to_remove.append("weka") # Actually we need a more recent weka
     to_remove.append("java/linux")
     to_remove.append("java/linux-amd64")
     to_remove.append("java/macosx-java3d")
@@ -561,6 +621,10 @@ if options.clean:
     to_remove.append("jython")
     to_remove.append("clojure")
     to_remove.append("junit")
+
+    # Remove files that are now provided by external dependencies.
+    # FIXME: This list could (and should) be taken from the keys of
+    # map_to_external_dependencies above:
     to_remove.append("jars/js.jar")
     to_remove.append("jars/bsh*.jar")
     to_remove.append("jars/Jama*.jar")
@@ -573,13 +637,14 @@ if options.clean:
     to_remove.append("jars/ant*.jar")
     to_remove.append("jars/batik.jar")
     to_remove.append("jars/junit*.jar")
-    to_remove.append("jars/jruby*.jar")
-    # to_remove.append("jars/weka.jar")
 
     for f in to_remove:
         call(["rm -rf "+f],shell=True)
 
-    # Now rewrite the Fakefile to remove these plugins:
+    # Now rewrite the Fakefile to remove references to some of these
+    # plugins.  This is an effort to make everything build cleanly,
+    # despite some items in the Fakefile being impossible to override
+    # from the command line, it seems.
 
     fp = open("Fakefile")
     oldlines = fp.readlines()
@@ -596,8 +661,6 @@ if options.clean:
             continue
         if re.search("TransformJ_",line):
             continue
-        # if re.search("(^\s*jars|precompiled)/weka.jar",line):
-        #     continue
         if re.search("(^\s*jars|precompiled)/jython.jar",line):
             continue
         if re.search("(^\s*jars|precompiled)/clojure.jar",line):
@@ -618,16 +681,19 @@ if options.clean:
         fp.write(line)
     fp.close()
 
+    # Remove all the files in precompiled - we want to build
+    # everything from source:
     call("rm -rfv precompiled/*",shell=True)
     sys.exit(0)
 
 if options.generate_complete_control or options.all_dependencies or options.depended_on_by or options.depends_on:
 
-    # Check that the source:
+    # We need to fetch the current db.xml.gz to get the most accurate
+    # dependencies.  (The file-based dependencies db.xml.gz are
+    # generated by looking at which classes are referenced in each jar
+    # file, and finding the jar that contains those classes.)
 
     package_url = 'http://pacific.mpi-cbg.de/update/db.xml.gz'
-
-    # Fetch a new db.xml:
 
     if True:
         f = urllib2.urlopen(package_url)
@@ -648,6 +714,9 @@ if options.generate_complete_control or options.all_dependencies or options.depe
 
     root = etree.fromstring(plain_text)
 
+    # Build up a dictionary that maps filenames to a FileVersion
+    # object, with all the metadata about the file that's contained in
+    # db.xml.gz:
     filename_to_object = {}
 
     class FileVersion(object):
@@ -699,13 +768,18 @@ if options.generate_complete_control or options.all_dependencies or options.depe
                 sys.exit(1)
 
     # Now make sure there are bidirectional dependency relationships
-    # between all the objects:
+    # between all the objects, so we can traverse the graph in either direction:
 
     for filename, o in filename_to_object.items():
         o.update_dependency_list(filename_to_object)
 
     def strip_extension(filename):
         return re.sub('\..*$','',filename)
+
+    # It's sometimes useful to generate a dependency graph - this
+    # generates the source for such a graph in the graphviz .dot
+    # format.  (This isn't used at the moment, but it's here for
+    # debugging purposes.)
 
     def generate_dependency_graph(filename_to_object_dictionary,graph_basename):
 
@@ -725,6 +799,7 @@ if options.generate_complete_control or options.all_dependencies or options.depe
         fp.write("\n}\n")
         fp.close()
 
+    # A helper method to find all file-based dependencies of a particular file:
     def dependencies_of_file(filename_to_object_dictionary,dependent_file,reverse=False):
         start_object = filename_to_object_dictionary[dependent_file]
         done = set([])
@@ -777,6 +852,7 @@ if options.generate_complete_control or options.all_dependencies or options.depe
         if False:
             print "Established that "+str(node)+" is not in a cycle."
 
+    # Check that there are no cyclical dependencies:
     cycle_element = find_cycle(NODES,EDGES,READY)
     if cycle_element:
         print >> sys.stderr, "Found a cycle in the dependencies, containing: "+str(cycle_element)
@@ -792,7 +868,7 @@ Priority: extra
 Maintainer: Mark Longair <mhl@pobox.com>
 Build-Depends: %s
 Standards-Version: 3.7.2""" % (", ".join(build_dependencies),))
-        # FIXME: also add a meta-package here...
+        # FIXME: also add a meta-package here.  (Really?)
         control_fp.close()
 
     if options.generate_complete_control:
@@ -804,6 +880,7 @@ Standards-Version: 3.7.2""" % (", ".join(build_dependencies),))
         for p in package_name_to_files:
             print "package "+p
             architecture = "all"
+            # It's only fiji-base that has any native code at the moment, I think:
             if p == "fiji-base":
                 architecture = "any"
             files = package_name_to_files[p]
@@ -884,6 +961,9 @@ Standards-Version: 3.7.2""" % (", ".join(build_dependencies),))
             control_fp.write("Conflicts: %s\n"%(replace_and_conflict_with_string,))
             # control_fp.write("Version: "+version_from_changelog+"\n")
             control_fp.write("Depends: "+", ".join(dependencies)+"\n")
+            # FIXME: it may still be useful at some point to be able
+            # to override the generated descriptions, so leave this
+            # code here for the moment:
             if False:
                 description_filename = os.path.join(source_directory,"debian","package-extras","default-description")
                 ideal_description_filename = os.path.join(source_directory,"debian","package-extras",p,"description")
@@ -953,55 +1033,3 @@ Standards-Version: 3.7.2""" % (", ".join(build_dependencies),))
 
     if False:
         generate_dependency_graph(filename_to_object,"fiji-dependencies")
-
-# Group these files into their Debian packages:
-
-# Undecided:
-
-# == plugins/AnalyzeSkeleton_.jar
-# == plugins/Analyze_Reader_Writer.jar
-# == plugins/Arrow_.jar
-# == plugins/Auto_Threshold.jar
-# == plugins/Colocalisation_Analysis.jar
-# == plugins/Daltonize_.jar
-# == plugins/Fiji_Plugins.jar
-# == plugins/FlowJ_.jar
-# == plugins/Gray_Morphology.jar
-# == plugins/IJ_Robot.jar
-# == plugins/Image_5D.jar
-# == plugins/PIV_analyser.jar
-# == plugins/Record_Screen.jar
-# == plugins/Skeletonize3D_.jar
-# == plugins/SplineDeformationGenerator_.jar
-# == plugins/Stack_Manipulation.jar
-# == plugins/Statistical_Region_Merging.jar
-# == plugins/Stitching_.jar
-# == plugins/Time_Stamper.jar
-# == plugins/ToAST_.jar
-# == plugins/View5D_.jar
-# == plugins/level_sets.jar
-# == plugins/registration_3d.jar
-# == plugins/Calculator_Plus.jar
-# == plugins/Sync_Win.jar
-# == plugins/Macros/Bulls_Eye.txt
-# == plugins/Macros/About_Plugin_Macros.txt
-# == plugins/Macros/batch_convert_any_to_tif.txt
-# == plugins/Macros/RGB_Histogram.txt
-# == plugins/Macros/Polygon_.txt
-# == plugins/Utilities/Close_All_Without_Saving.txt
-# == plugins/Analyze/Measure_RGB.txt
-# == macros/listManagement.txt
-# == macros/toolsets/Drawing Tools.txt
-# == plugins/Analyze/Dynamic_ROI_Profiler.clj
-# == scripts/Record_Desktop.py
-# == scripts/Record_Window.py
-# == macros/spirals.txt
-# == plugins/Manual_Tracking.jar
-# == plugins/3D_Objects_Counter.jar
-# == plugins/LocalThickness_.jar
-# == plugins/Siox_Segmentation.jar
-# == jars/VectorString.jar
-# == plugins/RATS_.jar
-# == plugins/Directionality_.jar
-# == plugins/Video_Editing.jar
-# == plugins/register_virtual_stack_slices.jar
