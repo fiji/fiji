@@ -15,6 +15,8 @@ import mpicbg.imglib.type.numeric.RealType;
 public class MandersCorrelation<T extends RealType<T>> extends Algorithm {
 	// Manders M1 and M2 value
 	double mandersM1, mandersM2;
+	// thresholded Manders M1 and M2 values
+	double mandersThresholdedM1, mandersThresholdedM2;
 
 	/**
 	 * A result containter for Manders' calculations.
@@ -37,6 +39,18 @@ public class MandersCorrelation<T extends RealType<T>> extends Algorithm {
 		// save the results
 		mandersM1 = results.m1;
 		mandersM2 = results.m2;
+
+		// calculate the thresholded values, if possible
+		AutoThresholdRegression autoThreshold = container.getAutoThreshold();
+		if (autoThreshold != null ) {
+			// calculate Mander's values
+			results = calculateMandersCorrelation(img1, img2,
+					autoThreshold.getCh1MaxThreshold(), autoThreshold.getCh2MaxThreshold() );
+
+			// save the results
+			mandersThresholdedM1 = results.m1;
+			mandersThresholdedM2 = results.m2;
+		}
 	}
 
 	/**
@@ -91,11 +105,79 @@ public class MandersCorrelation<T extends RealType<T>> extends Algorithm {
 		return results;
 	}
 
+	/**
+	 * Calculates Manders' split M1 and M2 values from image
+	 * values above certain thresholds.
+	 *
+	 * @param img1 The first image
+	 * @param img2 The second image
+	 * @return Both Manders' M1 and M2 values
+	 */
+	public MandersResults calculateMandersCorrelation(Image<T> img1, Image<T> img2,
+			double ch1ThreshMax, double ch2ThreshMax) {
+		// get the cursors for iterating through pixels in images
+		Cursor<T> cursor1 = img1.createCursor();
+		Cursor<T> cursor2 = img2.createCursor();
+
+		double m1Nominator = 0;
+		double m2Nominator = 0;
+		double sumCh1 = 0;
+		double sumCh2 = 0;
+
+		// iterate over images
+		while (cursor1.hasNext() && cursor2.hasNext()) {
+			cursor1.fwd();
+			cursor2.fwd();
+			T type1 = cursor1.getType();
+			double ch1 = type1.getRealDouble();
+			T type2 = cursor2.getType();
+			double ch2 = type2.getRealDouble();
+
+			// are channel one or channel two within the limits?
+			if ( ch1 > ch1ThreshMax ) {
+				// if ch2 is non-zero, increase ch1 nominator
+				if (Math.abs(ch2) > 0.00001) {
+					m1Nominator += ch1;
+				}
+			}
+
+			sumCh1 += ch1;
+
+			if ( ch2 > ch2ThreshMax ) {
+				// if ch1 is non-zero, increase ch2 nominator
+				if (Math.abs(ch1) > 0.00001) {
+					m2Nominator += ch2;
+				}
+			}
+
+			sumCh2 += ch2;
+		}
+
+		// close the cursors
+		cursor1.close();
+		cursor2.close();
+
+		MandersResults results = new MandersResults();
+		// calculate the results
+		results.m1 = m1Nominator / sumCh1;
+		results.m2 = m2Nominator / sumCh2;
+
+		return results;
+	}
+
 	public double getMandersM1() {
 		return mandersM1;
 	}
 
 	public double getMandersM2() {
 		return mandersM2;
+	}
+
+	public double getMandersThresholdedM1() {
+		return mandersThresholdedM1;
+	}
+
+	public double getMandersThresholdedM2() {
+		return mandersThresholdedM2;
 	}
 }
