@@ -338,7 +338,7 @@ public class Fake {
 			});
 
 			addSpecialRule(new Special("dependency-map") {
-				void action() {
+				void action() throws FakeException {
 					List<Rule> targets = new ArrayList<Rule>();
 					for (Rule target : allRules.values())
 						if (!(target instanceof Special) && !target.target.equals(""))
@@ -403,7 +403,7 @@ public class Fake {
 			}
 		}
 
-		public Map<Rule, List<Rule>> buildDependencyMap() {
+		public Map<Rule, List<Rule>> buildDependencyMap() throws FakeException {
 			return buildDependencyMap(Collections.singletonList(getDefaultRule()));
 		}
 
@@ -424,14 +424,14 @@ public class Fake {
 		 * This guarantees that the order of the keySet is suitable for building, i.e. all
 		 * rules depending on a given rule will be returned later by keySet().iterator().
 		 */
-		public Map<Rule, List<Rule>> buildDependencyMap(List<Rule> targets) {
+		public Map<Rule, List<Rule>> buildDependencyMap(List<Rule> targets) throws FakeException {
 			LinkedHashMap<Rule, List<Rule>> result = new LinkedHashMap<Rule, List<Rule>>();
 			for (Rule target : targets)
-				buildDependencyMap(result, target, null);
+				buildDependencyMap(result, target, null, new HashMap<Rule, Integer>(), 0);
 			return result;
 		}
 
-		protected void buildDependencyMap(Map<Rule, List<Rule>> map, Rule target, Rule neededBy) {
+		protected void buildDependencyMap(Map<Rule, List<Rule>> map, Rule target, Rule neededBy, Map<Rule, Integer> degrees, int degree) throws FakeException {
 			List<Rule> depending = map.get(target);
 			if (depending != null) {
 				if (neededBy != null)
@@ -439,11 +439,44 @@ public class Fake {
 				return;
 			}
 
+			if (degrees.get(target) != null)
+				throw new FakeException("Cycle detected: " + getCycle(target, map, degree - degrees.get(target).intValue()));
+			degrees.put(target, new Integer(degree));
+
 			for (Rule rule : target.getDependenciesWithRules())
-				buildDependencyMap(map, rule, target);
+				buildDependencyMap(map, rule, target, degrees, degree + 1);
 
 			List<Rule> list = neededBy == null ? Collections.<Rule>emptyList() : Collections.singletonList(neededBy);
 			map.put(target, new ArrayList<Rule>(list));
+			degrees.remove(target);
+		}
+
+		/**
+		 * Given a graph, find a cycle of a given distance.
+		 *
+		 * This does a standard backtrack search. Likely has a horrible runtime, but it is probably not worth optimizing for.
+		 */
+		protected String getCycle(Rule target, Map<Rule, List<Rule>> map, int distance) {
+			Stack<Rule> stack = new Stack<Rule>();
+			stack.push(target);
+			getCycle(stack, map, distance);
+
+			String result = stack.pop().target;
+			while (!stack.empty())
+				result += " -> " + stack.pop().target;
+			return result;
+		}
+
+		protected Stack<Rule> getCycle(Stack<Rule> partialCycle, Map<Rule, List<Rule>> map, int distance) {
+			if (distance == 0 && partialCycle.get(0) == partialCycle.peek())
+				return partialCycle;
+			for (Rule rule : partialCycle.peek().getDependenciesWithRules()) {
+				partialCycle.push(rule);
+				if (getCycle(partialCycle, map, distance - 1) != null)
+					return partialCycle;
+				partialCycle.pop();
+			}
+			return null;
 		}
 
 		public Rule parseRules(List<String> targets) throws FakeException {
@@ -525,7 +558,7 @@ public class Fake {
 				final String dependencyMapKey = key + "-dependency-map";
 				if (!allRules.containsKey(dependencyMapKey))
 					addSpecialRule(new Special(dependencyMapKey) {
-						void action() {
+						void action() throws FakeException {
 							showMap(buildDependencyMap(Collections.singletonList(rule)));
 						}
 					});
