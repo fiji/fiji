@@ -202,6 +202,13 @@ JDK(macosx)=java/macosx-java3d
 # Call the Jython script to ensure that the JDK is checked out (from Git)
 jdk[bin/checkout-jdk.py $JDK] <-
 
+# Prebuilt (needed to unconfuse Fiji Build and analyze-dependencies)
+jars/edu_mines_jtk.jar[] <-
+jars/jcommon-1.0.12.jar[] <-
+jars/jfreechart-1.0.13.jar[] <-
+jars/jna.jar[] <-
+jars/postgresql-8.2-506.jdbc3.jar[] <-
+
 # From submodules
 jars/ij.jar <- jars/javac.jar ImageJA/
 misc/headless.jar <- jars/javac.jar ImageJA/
