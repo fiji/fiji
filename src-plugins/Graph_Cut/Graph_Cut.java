@@ -281,7 +281,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			overlayButton.setToolTipText("Toggle the segmentation overlay in the image");
 
 			pottsSlider = new JSlider(JSlider.HORIZONTAL, POTTS_MIN, POTTS_MAX, POTTS_INIT);
-			pottsSlider.setToolTipText("Adjust the influence of the Potts term");
+			pottsSlider.setToolTipText("Adjust the smoothness of the segmentation.");
 			pottsSlider.setMajorTickSpacing(500);
 			pottsSlider.setMinorTickSpacing(1);
 			pottsSlider.setPaintTicks(true);
@@ -344,7 +344,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			GridBagLayout pottsLayout = new GridBagLayout();
 			GridBagConstraints pottsConstraints = new GridBagConstraints();
 			pottsPanel = new JPanel();
-			pottsPanel.setBorder(BorderFactory.createTitledBorder("Potts weight"));
+			pottsPanel.setBorder(BorderFactory.createTitledBorder("Smoothness"));
 			pottsPanel.setLayout(pottsLayout);
 			pottsConstraints.anchor = GridBagConstraints.NORTHWEST;
 			pottsConstraints.fill = GridBagConstraints.HORIZONTAL;
