@@ -145,15 +145,12 @@ public class DataContainer<T extends RealType<T>> {
 	/**
 	 * Gets the accumulated warnings of the algorithms run.
 	 */
-	public Dictionary<String, String> getWarnings() {
-		Dictionary<String, String> warnings =
-			new Hashtable<String, String>();
+	public List<Warning> getWarnings() {
+		List<Warning> warnings =
+			new ArrayList<Warning>();
 
 		for (Algorithm a : algorithms) {
-			 for (Enumeration<String> e = a.getWarningns().keys(); e.hasMoreElements();) {
-				String key = e.nextElement();
-				warnings.put(key, a.getWarningns().get(key));
-			}
+			warnings.addAll(a.getWarningns());
 		}
 
 		return warnings;

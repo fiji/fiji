@@ -204,7 +204,7 @@ public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm {
 
 		// add warnings if values are not in tolerance range
 		if ( Math.abs(bToYMaxRatio) > warnYInterceptToYMaxRatioThreshold ) {
-			warnings.put("y-intercept high",
+			addWarning("y-intercept high",
 				"The y-intercept of the auto threshold regression line is high. Maybe you should use a ROI.");
 		}
 	}

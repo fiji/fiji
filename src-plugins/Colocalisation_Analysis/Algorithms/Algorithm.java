@@ -1,7 +1,7 @@
 import java.util.ArrayList;
-import java.util.Dictionary;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * An algorithm is an abstraction of techniques like the
@@ -14,7 +14,7 @@ public abstract class Algorithm {
 	/* a list of warnings that can be filled by the
 	 *  execute method
 	 */
-	Dictionary<String, String> warnings = new Hashtable<String, String>();
+	List<Warning> warnings = new ArrayList<Warning>();
 
 	/**
 	 * Executes the previously initialized {@link Algorithm}.
@@ -26,7 +26,17 @@ public abstract class Algorithm {
 	 *
 	 * @return A reference to the warnings list
 	 */
-	public Dictionary<String, String> getWarningns() {
+	public List<Warning> getWarningns() {
 		return warnings;
+	}
+
+	/**
+	 * Adds a warning to the list of warnings.
+	 *
+	 * @param shortMsg A short descriptive message
+	 * @param longMsg A long message
+	 */
+	protected void addWarning(String shortMsg, String longMsg) {
+		warnings.add( new Warning(shortMsg, longMsg) );
 	}
 }

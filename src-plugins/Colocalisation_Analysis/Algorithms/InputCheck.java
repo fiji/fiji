@@ -90,17 +90,17 @@ public class InputCheck<T extends RealType<T>> extends Algorithm {
 		// add warnings if values are not in tolerance range
 		if ( Math.abs(zeroZeroRatio) > maxZeroZeroRatio ) {
 
-			warnings.put("zero-zero ratio too high",
+			addWarning("zero-zero ratio too high",
 				"The ratio between zero-zero pixels and other pixels is larger "
 				+ IJ.d2s(zeroZeroRatio, 2) + ". Maybe you should use a ROI.");
 		}
 		if ( Math.abs(ch1SaturatedRatio) > maxSaturatedRatio ) {
-			warnings.put("saturated ch1 ratio too high",
+			addWarning("saturated ch1 ratio too high",
 				"The ratio between saturated pixels and other pixels in channel one is larger "
 				+ IJ.d2s(maxSaturatedRatio, 2) + ". Maybe you should use a ROI.");
 		}
 		if ( Math.abs(ch1SaturatedRatio) > maxSaturatedRatio ) {
-			warnings.put("saturated ch2 ratio too high",
+			addWarning("saturated ch2 ratio too high",
 				"The ratio between saturated pixels and other pixels in channel two is larger "
 				+ IJ.d2s(maxSaturatedRatio, 2) + ". Maybe you should use a ROI.");
 		}

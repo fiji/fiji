@@ -223,15 +223,14 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 	    out.print("</head>");
 
 	    // print out warnings, if any
-	    Dictionary<String, String> warnings = dataContainer.getWarnings();
+	    List<Warning> warnings = dataContainer.getWarnings();
 	    if ( warnings.size() > 0 ) {
 		    out.print("<H1 class=\"warn\">Warnings</H1>");
 		    // Print out the table
 		    out.print("<TABLE class=\"warn\"><TR>");
 		    out.print("<TH>Type</TH><TH>Message</TH></TR>");
-		    for (Enumeration<String> e = warnings.keys(); e.hasMoreElements();) {
-				String key = e.nextElement();
-				printTableRow(out, key, warnings.get(key));
+		    for (Warning w : warnings) {
+				printTableRow(out, w.getShortMessage(), w.getLongMessage());
 		    }
 		    out.println("</TABLE>");
 	    } else {
