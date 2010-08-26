@@ -259,7 +259,7 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 	    PearsonsCorrelation pearsons = dataContainer.getPearsonsCorrelation();
 	    if (pearsons != null) {
 		    printTableRow(out, "Pearson's R value (no threshold)", pearsons.getPearsonsCorrelationValue());
-		    printTableRow(out, "Pearson's R value (threshold)", pearsons.getThresholdedPearsonsCorrelationValue());
+		    printTableRow(out, "Pearson's R value (< threshold)", pearsons.getThresholdedPearsonsCorrelationValue());
 	    }
 
 	    LiICQ liIcq = dataContainer.getLiICQ();
@@ -269,8 +269,10 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 
 	    MandersCorrelation manders = dataContainer.getMandersCorrelation();
 	    if (manders != null) {
-		    printTableRow(out, "Manders M1", manders.getMandersM1());
-		    printTableRow(out, "Manders M2", manders.getMandersM2());
+		    printTableRow(out, "Manders M1 (no threshold)", manders.getMandersM1());
+		    printTableRow(out, "Manders M2 (no threshold)", manders.getMandersM2());
+		    printTableRow(out, "Manders M1 (threshold)", manders.getMandersThresholdedM1());
+		    printTableRow(out, "Manders M2 (threshold)", manders.getMandersThresholdedM2());
 	    }
 
 	    out.println("</TABLE>");
@@ -415,12 +417,7 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 		this.imp.setProcessor(imp.getProcessor());
 		ImageProcessor ip = this.imp.getProcessor();
 		// set the display range
-		double max = 0;
-		if (isHistogram(currentlyDisplayedImageResult)) {
-			max = ImageStatistics.getImageMax((Image<LongType>)img).getRealDouble();
-		} else {
-			max = ImageStatistics.getImageMax((Image<T>)img).getRealDouble();
-		}
+		double max = ImageStatistics.getImageMax((Image<T>)img).getRealDouble();
 		this.imp.setDisplayRange(0.0, max);
 		// select "Fire" look up table
 		IJ.run(this.imp, "Fire", null);
