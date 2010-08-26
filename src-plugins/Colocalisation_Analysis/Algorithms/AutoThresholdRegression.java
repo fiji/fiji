@@ -207,6 +207,12 @@ public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm {
 			addWarning("y-intercept high",
 				"The y-intercept of the auto threshold regression line is high. Maybe you should use a ROI.");
 		}
+
+		// add warnings if values are not in tolerance range
+		if ( ch1MaxThreshold < 0.00001 || ch2MaxThreshold < 0.00001 ) {
+			addWarning("thresholds too low",
+				"The auto threshold method could not find a positive threshold.");
+		}
 	}
 
 	public double getBToYMaxRatio() {
