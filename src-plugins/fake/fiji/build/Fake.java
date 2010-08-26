@@ -34,11 +34,19 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
+
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
 
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
@@ -232,7 +240,11 @@ public class Fake {
 						args[i].substring(equal + 1));
 			}
 
-			all.make();
+			String parallel = all.getVar("parallel");
+			if (parallel != null)
+				all.makeParallel(Integer.parseInt(parallel));
+			else
+				all.make();
 
 			/*
 			 * By definition, everything is up-to-date now, but for
@@ -477,6 +489,148 @@ public class Fake {
 				partialCycle.pop();
 			}
 			return null;
+		}
+
+		protected class ParallelMaker {
+			protected ExecutorService pool;
+			protected Map<Rule, FutureTask<FakeException>> futures;
+			protected Map<Rule, List<Rule>> dependencyMap;
+			protected Map<Rule, FakeException> results;
+
+			protected final FakeException success = new FakeException("Dummy for success");
+
+			public ParallelMaker(int maxThreads, List<Rule> targets) throws FakeException {
+				pool = Executors.newFixedThreadPool(maxThreads);
+				futures = new HashMap<Rule, FutureTask<FakeException>>();
+				results = new LinkedHashMap<Rule, FakeException>();
+
+				dependencyMap = buildDependencyMap(targets);
+			}
+
+			public Map<Rule, FakeException> run() {
+				// First, make sure that jars/javac.jar is built
+				Rule javac = getRule("jars/javac.jar");
+				if (javac != null && dependencyMap.containsKey(javac)) try {
+					javac.make();
+					results.put(javac, success);
+				} catch (FakeException e) {
+					results.put(javac, e);
+				}
+
+				synchronized(futures) {
+					for (Rule rule : dependencyMap.keySet())
+						submitTaskIfReady(rule);
+				}
+
+				for (Rule rule : dependencyMap.keySet()) try {
+					FakeException e = futures.get(rule).get();
+				} catch (InterruptedException e) {
+					results.put(rule, new FakeException("Interrupted"));
+				} catch (ExecutionException e) {
+					results.put(rule, new FakeException("Execution error: " + e));
+				}
+
+				pool.shutdown();
+
+				for (Rule rule : new ArrayList<Rule>(results.keySet()))
+					if (results.get(rule) == success) try {
+						rule.setUpToDate();
+						results.remove(rule);
+					} catch (IOException e) {
+						results.put(rule, new FakeException("Could not set up-to=date: " + e));
+					}
+
+				return results;
+			}
+
+			/**
+			 * Schedule a rule for building if all dependencies were done already.
+			 *
+			 * This should only ever be called from a synchronized(futures) block.
+			 */
+			protected void submitTaskIfReady(final Rule rule) {
+				if (!allDependenciesDone(rule))
+					return;
+				FutureTask<FakeException> future = new FutureTask<FakeException>(new Callable<FakeException>() {
+					public FakeException call() {
+						return make(rule);
+					}
+				});
+				futures.put(rule, future);
+				pool.submit(future);
+			}
+
+			protected FakeException make(Rule rule) {
+				FakeException e = results.get(rule);
+				if (e == success)
+					return e;
+				if (e == null) try {
+					// make(rule) must _only_ be called when all dependency rules have been handled
+					// Therefore, no need to synchronize here.
+					List<Rule> failedDependencies = new ArrayList<Rule>();
+					for (Rule dependency : rule.getDependenciesWithRules())
+						if (results.get(dependency) != success)
+							failedDependencies.add(dependency);
+					if (failedDependencies.size() > 0)
+						e = new DependencyFakeException(failedDependencies);
+					else {
+						rule.make(false);
+						e = success;
+					}
+				} catch (FakeException e2) {
+					err.println("Failed: " + rule.target);
+					e = e2;
+				}
+				synchronized(futures) {
+					results.put(rule, e);
+
+					for (Rule neededBy : dependencyMap.get(rule))
+						submitTaskIfReady(neededBy);
+				}
+				return e;
+			}
+
+			/* This method _must_ be called in a synchronized(futures) block */
+			public boolean allDependenciesDone(final Rule rule) {
+				for (Rule dependency : rule.getDependenciesWithRules())
+					if (results.get(dependency) == null)
+						return false;
+				return true;
+			}
+
+			protected class DependencyFakeException extends FakeException {
+				public DependencyFakeException(List<Rule> rules) {
+					super("Problem in dependenc" + (rules.size() == 1 ? "y" : "ies")
+						+ " " + ParallelMaker.this.toString(rules));
+				}
+			}
+
+			/* Must be called in a synchronized(futures) block */
+			protected List<Rule> unfinished() {
+				List<Rule> result = new ArrayList<Rule>();
+				for (Rule rule : dependencyMap.keySet())
+					if (results.get(rule) == null)
+						result.add(rule);
+				return result;
+			}
+
+			public List<Rule> unfinishedBecause(Rule rule) {
+				List<Rule> result = new ArrayList<Rule>();
+				for (Rule dependency : rule.getDependenciesWithRules())
+					if (results.get(dependency) == null)
+						result.add(dependency);
+				return result;
+			}
+
+			public String toString(Iterable<Rule> rules) {
+				StringBuffer buffer = new StringBuffer();
+				Iterator<Rule> iter = rules.iterator();
+				if (iter.hasNext())
+					buffer.append(iter.next().target);
+				while (iter.hasNext())
+					buffer.append(" ").append(iter.next().target);
+				return buffer.toString();
+			}
 		}
 
 		public Rule parseRules(List<String> targets) throws FakeException {
@@ -957,6 +1111,7 @@ public class Fake {
 			if (fallBack == null)
 				throw new FakeException("No precompiled and "
 					+ "no fallback for " + target + "!");
+			// TODO: clone it
 			synchronized(fallBack) {
 				String save = fallBack.target;
 				fallBack.target = target;
@@ -1106,17 +1261,36 @@ public class Fake {
 				return true;
 			}
 
+			public void makeParallel(int maxThreads) throws FakeException {
+				ParallelMaker make = new ParallelMaker(maxThreads, Collections.singletonList(this));
+				Map<Rule, FakeException> result = make.run();
+				if (result.size() == 1)
+					throw result.values().iterator().next();
+				if (result.size() > 0) {
+					String message = "";
+					for (Map.Entry<Parser.Rule, FakeException> pair : result.entrySet())
+						message += "Target " + pair.getKey().target + " was not made: " + pair.getValue() + "\n";
+					throw new FakeException(message);
+				}
+			}
+
 			public void make() throws FakeException {
+				make(true);
+			}
+
+			public void make(boolean makePrerequisitesFirst) throws FakeException {
 				if (wasAlreadyChecked)
 					return;
 				wasAlreadyChecked = true;
 				if (wasAlreadyInvoked)
 					error("Dependency cycle detected!");
 				wasAlreadyInvoked = true;
+
 				try {
 					verbose("Checking prerequisites of "
 						+ this);
-					makePrerequisites();
+					if (makePrerequisitesFirst)
+						makePrerequisites();
 
 					if (upToDate())
 						return;
