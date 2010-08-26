@@ -299,48 +299,6 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 
 	/**
 	 * If the currently selected ImageResult is an HistrogramResult,
-	 * a table of x-values, y-values and the counts is generated and
-	 * returned as a string. If the current ImageResult is no
-	 * histogram, an empty string is returned.
-	 */
-	protected String getCurrentHistogramData() {
-		StringBuffer sb = new StringBuffer();
-		/* check if we are dealing with an histogram result
-		 * or a generic image result
-		 */
-		if (isHistogram(currentlyDisplayedImageResult)) {
-			Histogram2D hr = mapOf2DHistograms.get(currentlyDisplayedImageResult);
-			Image<LongType> histogramImage = (Image<LongType>) currentlyDisplayedImageResult;
-			double xBinWidth = 1.0 / hr.getXBinWidth();
-			double yBinWidth = 1.0 / hr.getYBinWidth();
-			double xMin = hr.getXMin();
-			double yMin = hr.getYMin();
-			// check if we have bins of size one or other ones
-			boolean xBinWidthIsOne = Math.abs(xBinWidth - 1.0) < 0.00001;
-			boolean yBinWidthIsOne = Math.abs(yBinWidth - 1.0) < 0.00001;
-			// configure decimal places accordingly
-			int xDecimalPlaces = xBinWidthIsOne ? 0 : 3;
-			int yDecimalPlaces = yBinWidthIsOne ? 0 : 3;
-			// create a cursor to access the histogram data
-			LocalizableByDimCursor<LongType> cursor = histogramImage.createLocalizableByDimCursor();
-			// loop over 2D histogram
-			for (int i=0; i < histogramImage.getDimension(0); ++i) {
-				for (int j=0; j < histogramImage.getDimension(1); ++j) {
-					cursor.setPosition(i, 0);
-					cursor.setPosition(j, 1);
-					sb.append(
-							ResultsTable.d2s(xMin + (i * xBinWidth), xDecimalPlaces) + "\t" +
-							ResultsTable.d2s(yMin + (j * yBinWidth), yDecimalPlaces) + "\t" +
-							ResultsTable.d2s(cursor.getType().getRealDouble(), 0) + "\n");
-				}
-			}
-			cursor.close();
-		}
-		return sb.toString();
-	}
-
-	/**
-	 * If the currently selected ImageResult is an HistrogramResult,
 	 * a table of x-values, y-values and the counts.
 	 */
 	protected void showList() {
@@ -358,7 +316,7 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 			String vHeadingX = xBinWidthIsOne ? "X value" : "X bin start";
 			String vHeadingY = yBinWidthIsOne ? "Y value" : "Y bin start";
 			// get the actual histogram data
-			String histogramData = getCurrentHistogramData();
+			String histogramData = hr.getData();
 
 			TextWindow tw = new TextWindow(getTitle(), vHeadingX + "\t" + vHeadingY + "\tcount", histogramData, 250, 400);
 		}
@@ -390,7 +348,7 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 			// copy histogram values
 			IJ.showStatus("Copying histogram values...");
 
-			String text = getCurrentHistogramData();
+			String text = mapOf2DHistograms.get(currentlyDisplayedImageResult).getData();
 			StringSelection contents = new StringSelection( text );
 			systemClipboard.setContents(contents, this);
 

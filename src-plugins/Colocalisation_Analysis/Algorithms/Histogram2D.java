@@ -1,4 +1,5 @@
 import ij.IJ;
+import ij.measure.ResultsTable;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
@@ -204,6 +205,44 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 		xMax = getXMax(container);
 		yMin = getYMin(container);
 		yMax = getYMax(container);
+	}
+
+	/**
+	 * A table of x-values, y-values and the counts is generated and
+	 * returned as a string. The single fields in one row (X Y Count)
+	 * are separated by tabs.
+	 *
+	 * @return A String representation of the histogram data.
+	 */
+	public String getData() {
+		StringBuffer sb = new StringBuffer();
+
+		double xBinWidth = 1.0 / getXBinWidth();
+		double yBinWidth = 1.0 / getYBinWidth();
+		double xMin = getXMin();
+		double yMin = getYMin();
+		// check if we have bins of size one or other ones
+		boolean xBinWidthIsOne = Math.abs(xBinWidth - 1.0) < 0.00001;
+		boolean yBinWidthIsOne = Math.abs(yBinWidth - 1.0) < 0.00001;
+		// configure decimal places accordingly
+		int xDecimalPlaces = xBinWidthIsOne ? 0 : 3;
+		int yDecimalPlaces = yBinWidthIsOne ? 0 : 3;
+		// create a cursor to access the histogram data
+		LocalizableByDimCursor<LongType> cursor = plotImage.createLocalizableByDimCursor();
+		// loop over 2D histogram
+		for (int i=0; i < plotImage.getDimension(0); ++i) {
+			for (int j=0; j < plotImage.getDimension(1); ++j) {
+				cursor.setPosition(i, 0);
+				cursor.setPosition(j, 1);
+				sb.append(
+						ResultsTable.d2s(xMin + (i * xBinWidth), xDecimalPlaces) + "\t" +
+						ResultsTable.d2s(yMin + (j * yBinWidth), yDecimalPlaces) + "\t" +
+						ResultsTable.d2s(cursor.getType().getRealDouble(), 0) + "\n");
+			}
+		}
+		cursor.close();
+
+		return sb.toString();
 	}
 
 	/**
