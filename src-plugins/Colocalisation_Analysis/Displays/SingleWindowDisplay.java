@@ -416,9 +416,9 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 		// set the display range
 		double max = 0;
 		if (isHistogram(currentlyDisplayedImageResult)) {
-			max = ImageStatistics.<LongType>getImageMax((Image<LongType>)img).getRealDouble();
+			max = ImageStatistics.getImageMax((Image<LongType>)img).getRealDouble();
 		} else {
-			max = ImageStatistics.<T>getImageMax((Image<T>)img).getRealDouble();
+			max = ImageStatistics.getImageMax((Image<T>)img).getRealDouble();
 		}
 		this.imp.setDisplayRange(0.0, max);
 		// select "Fire" look up table
