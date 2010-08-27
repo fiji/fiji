@@ -259,8 +259,8 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			/* 7 - Extract features for the spot collection */
 			
 			final FeatureFacade<T> featureCalculator = new FeatureFacade<T>(img, filteredImg, diam, calibration);
-			//featureCalculator.processAllFeatures(spots);
-			featureCalculator.processFeature(Feature.LOG_VALUE, spots);  // only log, because the slowness of the 3d renderer makes anything else impossible
+			featureCalculator.processAllFeatures(spots);
+			//featureCalculator.processFeature(Feature.LOG_VALUE, spots);  // only log, because the slowness of the 3d renderer makes anything else impossible
 			
 			/* 8 - Threshold maxima based on extracted features. */
 			
@@ -652,7 +652,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 //								if (spot.getFeature(feature) < threshold) {							
 //									shown.remove(j);
 //									j--;  // the remove() call above shifted all the remaining elements, so we need to decrement j to not skip an element
-//									pl.remove(pl.get(spot.getName()));
+									//pl.remove(pl.get(spot.getName()));
 //									notShown.add(spot);
 //								}
 //							}
