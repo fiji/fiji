@@ -54,10 +54,11 @@ public class NearestNeighborLinker {
 	/** Used to store whether checkInput() was run or not. */
 	private boolean inputChecked = false;
 	
+	
 	/*
 	 * CONSTRUCTORS
 	 */
-
+	
 	public NearestNeighborLinker(ArrayList<Spot> t0, ArrayList<Spot> t1, int nLinks, float maxDist)
 	{
 		this.t0 = t0;
@@ -67,17 +68,20 @@ public class NearestNeighborLinker {
 		this.links = new ArrayList< ArrayList<Spot> >();
 	}
 	
+	
 	public NearestNeighborLinker(ArrayList<Spot> t0, ArrayList<Spot> t1, int nLinks)
 	{
 		this(t0, t1, nLinks, Float.POSITIVE_INFINITY);
 		this.links = new ArrayList< ArrayList<Spot> >();
 	}
 	
+	
 	public NearestNeighborLinker(ArrayList<Spot> t0, ArrayList<Spot> t1, float maxDist)
 	{
 		this(t0, t1, 0, maxDist);
 		this.links = new ArrayList< ArrayList<Spot> >();
 	}
+	
 	
 	/*
 	 * PUBLIC METHODS
@@ -92,6 +96,7 @@ public class NearestNeighborLinker {
 		return this.nLinks;
 	}
 	
+	
 	/**
 	 * 
 	 * @return The maximum distance between potentially link-able Spots.
@@ -100,6 +105,7 @@ public class NearestNeighborLinker {
 	{
 		return this.maxDist;
 	}
+	
 	
 	/**
 	 * 
@@ -110,6 +116,7 @@ public class NearestNeighborLinker {
 		return this.links;
 	}
 	
+	
 	/**
 	 * Returns any error messages that develop during the use of this class.
 	 * @return The error message.
@@ -117,6 +124,7 @@ public class NearestNeighborLinker {
 	public String getErrorMessage() {
 		return this.errorMessage;
 	}
+	
 	
 	/**
 	 * Call this method before calling process, in order to guarantee that all of the required input is correct.
@@ -153,39 +161,127 @@ public class NearestNeighborLinker {
 		return true;
 	}
 
+	
+	/**
+	 * Executes the functionality of the class - link Spots in time point t to Spots in t+1 based on the parameters
+	 * passed at construction (only consider Spots within a certain distance, and limit the number of links made).
+	 * @return True if the method runs successfully, false otherwise.
+	 */
 	public boolean process()
 	{
-		/*
-		 *  Ensure that checkInput() was run before executing
-		 */
+		// Ensure that checkInput() was run before executing
 		if (!inputChecked) {
 			errorMessage = "checkInput() was never run.";
 			return false;
 		}
 		
-		
-		/*
-		 *  Initialize local vars
-		 */
+		//Initialize local vars
 		final float maxDistSq = maxDist * maxDist;								// Prevents us from using the costly Math.sqrt() function for Euclidean distance checks
-		final HashMap<Spot, Integer> numLinks = new HashMap<Spot, Integer>();	// A HashMap to keep track of how many times Spots in t+1 have been linked to Spots in t. 
+		final HashMap<Spot, Integer> numTimesLinked = new HashMap<Spot, Integer>();	// A HashMap to keep track of how many times Spots in t+1 have been linked to Spots in t. 
 		final ArrayList< HashMap<Spot, Float> > distances = new ArrayList< HashMap<Spot, Float> >();  // For the points we add as links in part (1) below, store the distances we calculate for later pruning
-		float[] currCoords = new float[t0.get(1).getCoordinates().length];			// We are guaranteed the existence of at least one Spot in t0, because of checkInput.
-		float[] potentialCoords = new float[t0.get(1).getCoordinates().length];
-		float dist;
 		
-		
-		/*
-		 *  Add all Spots from t1 into the numLinks hashmap, with an initial count of 0 (they are all unlinked at this point).
-		 */
+		//Add all Spots from t1 into the numLinks hashmap, with an initial count of 0 (they are all unlinked at this point).
 		for (int i = 0; i < t1.size(); i++) {
-			numLinks.put(t1.get(i), 0);
+			numTimesLinked.put(t1.get(i), 0);
 		}
 		
+		//For each Spot in t, find *all* potential Spots in t+1 within maxDist to link to (could be > nLinks).
+		linkAllSpotsWithinMaxDistance(maxDistSq, numTimesLinked, distances);
 		
-		/*
-		 *  For each Spot in t, find *all* potential Spots in t+1 within maxDist to link to (could be > nLinks).
-		 */
+		// Trim down the number of Spots in t+1 linked to Spot in t to <= nLinks, if nLinks specified
+		if (nLinks > 0) {
+			for (int i = 0; i < links.size(); i++) {	// For all Spots in t...
+				if (links.get(i).size() > nLinks) {		// If there are more than nLinks for this Spot...
+					reduceNumberOfLinksForSpot(links.get(i), numTimesLinked, distances.get(i));
+				}
+			}
+		}
+		
+		// Process() finished
+		return true;
+	}
+	
+	
+	/**
+	 * <p>Reduces the number of Spots in t+1 that a Spot in t is linked to, based on the following (ordered by important) 
+	 * priorities:<p>
+	 * 
+	 * <ol>
+	 * <li>Spots in t+1 not linked to any other Spots in t are preferentially kept.</li>
+	 * <li>The nearest Spots are kept.</li>
+	 * </ol>
+	 * 
+	 * @param linked A list of Spots in t+1 that the current Spot is linked to.
+	 * @param numTimesLinked A map pairing Spots in t+1 and how many times they've been linked to Spots in t.
+	 * @param distances A map pairing Spots in t+1 and their distance from the Spot in t.
+	 */
+	private void reduceNumberOfLinksForSpot(ArrayList<Spot> linked, HashMap<Spot, Integer> numTimesLinked, HashMap<Spot, Float> distances)
+	{
+		// Create a duplicate list, and clear the real one
+		ArrayList<Spot> dup = new ArrayList<Spot>(linked);
+		linked.clear();
+		HashMap<Spot, Float> distMapNotLinkedAnymore = new HashMap<Spot, Float>(distances);
+		HashMap<Spot, Float> distMapLinked = new HashMap<Spot, Float>();
+		
+		// Add back only the Spots that are not linked to anything else
+		for (int j = 0; j < dup.size(); j++) {
+			Spot s = dup.get(j);
+			if (numTimesLinked.get(s) == 1) {	// If == 1, then this Spot in t+1 is only linked to the current Spot in t.
+				linked.add(s);
+				distMapLinked.put(s, distMapNotLinkedAnymore.get(s));	// Add, so we keep track of the distances of each Spot in case we later have too many
+				distMapNotLinkedAnymore.remove(s);						// Remove, so that distMap has only Spots that aren't linked anymore
+				
+			}
+		}
+		
+		// We might have the right number now.
+		if (linked.size() == nLinks) return;	
+		
+		// If not, check to see if we are over or under quota, and act appropriately.
+	
+		// Case 1 - Too many links still, so remove those farthest away.
+		if (linked.size() > nLinks) {	
+			// Make a new map, with keys as floats, and values as Spots, so that there is a natural ordering
+			TreeMap<Float, Spot> invertedDistMap = invertMap(distMapLinked);
+			
+			// Remove farthest spots in t+1
+			while (linked.size() > nLinks) {
+				Float toRemove = invertedDistMap.lastKey();	// This is the smallest distance
+				linked.remove(invertedDistMap.get(toRemove));		// Add the corresponding Spot to the linked list
+				invertedDistMap.remove(toRemove);				// So we don't add it again
+			}
+			
+		}
+		
+		// Case 2 - Not enough links, add the next closest until we have enough
+		else {
+			// Make a new map, with keys as floats, and values as Spots, so that there is a natural ordering
+			TreeMap<Float, Spot> invertedDistMap = invertMap(distMapNotLinkedAnymore);
+			
+			// Add back closest spots in t+1
+			while (linked.size() < nLinks) {
+				Float toAdd = invertedDistMap.firstKey();	// This is the smallest distance
+				linked.add(invertedDistMap.get(toAdd));		// Add the corresponding Spot to the linked list
+				invertedDistMap.remove(toAdd);				// So we don't add it again
+			}
+		}
+	}
+
+	
+	/**
+	 * Links all the Spots in t+1 that are within maxDist to each Spot in t. Note, this could be more than nLinks.
+	 * 
+	 * @param maxDistSq The maxDist parameter, provided at construction, squared so we can avoid the costly Math.sqrt.
+	 * @param numTimesLinked A HashMap recording for each Spot in t+1 how many times it was linked.
+	 * @param distances For each Spot in t, stores a map which holds all Spots it's linked to in t+1 plus their distance away.
+	 */
+	private void linkAllSpotsWithinMaxDistance(float maxDistSq, HashMap<Spot, Integer> numTimesLinked, ArrayList< HashMap<Spot, Float> > distances)
+	{
+		// Initialize variables so we don't recreate them every iteration
+		float[] currCoords = new float[t0.get(1).getCoordinates().length];		// We are guaranteed the existence of at least one Spot in t0, because of checkInput.
+		float[] potentialCoords = new float[t0.get(1).getCoordinates().length];
+		float dist = 0;
+		
 		for (int i = 0; i < t0.size(); i++) {	// For all Spots in t
 			currCoords = t0.get(i).getCoordinates();
 			HashMap<Spot, Float> distMap = new HashMap<Spot, Float>();	// store the relevant distances we calculate for this Spot to Spots in t+1
@@ -195,81 +291,15 @@ public class NearestNeighborLinker {
 				dist = getEucDistSq(currCoords, potentialCoords);
 				if (dist <= maxDistSq) {
 					currLinks.add(t1.get(j));	// Add this Spot j in t+1 as a link to our Spot i in t
-					incrementCount(numLinks, t1.get(j));
+					incrementCount(numTimesLinked, t1.get(j));
 					distMap.put(t1.get(j), dist);
 				}
 			}
 			links.add(currLinks);
 			distances.add(distMap);	// Store the distances for each Spot in t+1 linked to the current Spot in t.
 		}
-		
-		
-		/*
-		 *  Trim down the number of Spots in t+1 linked to Spot in t to <= nLinks, if nLinks specified
-		 */
-		if (nLinks > 0) {
-			for (int i = 0; i < links.size(); i++) {	// For all Spots in t...
-				if (links.get(i).size() > nLinks) {		// If there are more than nLinks for this Spot...
-					
-					// Create a duplicate list, and clear the real one
-					ArrayList<Spot> linked = links.get(i);
-					ArrayList<Spot> dup = new ArrayList<Spot>(linked);
-					linked.clear();
-					HashMap<Spot, Float> distMapNotLinkedAnymore = new HashMap<Spot, Float>(distances.get(i));
-					HashMap<Spot, Float> distMapLinked = new HashMap<Spot, Float>();
-					
-					// Add back only the Spots that are not linked to anything else
-					for (int j = 0; j < dup.size(); j++) {
-						Spot s = dup.get(j);
-						if (numLinks.get(s) == 1) {	// If == 1, then this Spot in t+1 is only linked to the current Spot in t.
-							linked.add(s);
-							distMapLinked.put(s, distMapNotLinkedAnymore.get(s));	// Add, so we keep track of the distances of each Spot in case we later have too many
-							distMapNotLinkedAnymore.remove(s);						// Remove, so that distMap has only Spots that aren't linked anymore
-							
-						}
-					}
-					
-					// We might have the right number now.
-					if (linked.size() == nLinks) continue;	
-					
-					// If not, check to see if we are over or under quota, and act appropriately.
-				
-					// Case 1 - Too many links still, so remove those farthest away.
-					if (linked.size() > nLinks) {	
-						// Make a new map, with keys as floats, and values as Spots, so that there is a natural ordering
-						TreeMap<Float, Spot> invertedDistMap = invertMap(distMapLinked);
-						
-						// Remove farthest spots in t+1
-						while (linked.size() > nLinks) {
-							Float toRemove = invertedDistMap.lastKey();	// This is the smallest distance
-							linked.remove(invertedDistMap.get(toRemove));		// Add the corresponding Spot to the linked list
-							invertedDistMap.remove(toRemove);				// So we don't add it again
-						}
-						
-					}
-					
-					// Case 2 - Not enough links, add the next closest until we have enough
-					else {
-						// Make a new map, with keys as floats, and values as Spots, so that there is a natural ordering
-						TreeMap<Float, Spot> invertedDistMap = invertMap(distMapNotLinkedAnymore);
-						
-						// Add back closest spots in t+1
-						while (linked.size() < nLinks) {
-							Float toAdd = invertedDistMap.firstKey();	// This is the smallest distance
-							linked.add(invertedDistMap.get(toAdd));		// Add the corresponding Spot to the linked list
-							invertedDistMap.remove(toAdd);				// So we don't add it again
-						}
-					}
-				}
-			}
-		}
-		
-		
-		/*
-		 *  Process() finished
-		 */
-		return true;
 	}
+	
 	
 	/**
 	 * Takes a hash map, and creates a new tree map with the keys in the hash map as values, and 
@@ -289,6 +319,7 @@ public class NearestNeighborLinker {
 		return inverted;
 	}
 	
+	
 	/**
 	 * Helper method which increments the count of links made to this Spot.
 	 * @param numLinks The HashMap storing the number of links made to each Spot.
@@ -300,6 +331,7 @@ public class NearestNeighborLinker {
 		count++;
 		numLinks.put(spot, count);
 	}
+	
 	
 	/**
 	 * This method returns the (Euclidean distance)^2 between two points.
@@ -316,6 +348,11 @@ public class NearestNeighborLinker {
 		return total;
 	}
 	
+	
+	/**
+	 * For testing
+	 * @param args
+	 */
 	public static void main(String[] args) {
 		/*
 		 * Set up params
