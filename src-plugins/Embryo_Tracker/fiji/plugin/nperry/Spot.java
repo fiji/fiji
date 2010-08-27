@@ -1,6 +1,5 @@
 package fiji.plugin.nperry;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeSet;
@@ -19,10 +18,7 @@ public class Spot {
 	private float[] coordinates; 
 	/** A user-supplied name for this spot. */
 	private String name;
-	/** The parents of this Spot, once Spots have been linked. */
-	private ArrayList<Spot> parents;
-	/** The children of this Spot, once Spots have been linked. */
-	private ArrayList<Spot> children;
+
 	
 	/*
 	 * CONSTRUCTORS
@@ -31,14 +27,10 @@ public class Spot {
 	public Spot(float[] coordinates, String name) {
 		this.coordinates = coordinates;
 		this.name = name;
-		this.parents = new ArrayList<Spot>();
-		this.children = new ArrayList<Spot>();
 	}
 	
 	public Spot(float[] coordinates) {
 		this(coordinates, null);
-		this.parents = new ArrayList<Spot>();
-		this.children = new ArrayList<Spot>();
 	}
 	
 	/*
@@ -130,46 +122,5 @@ public class Spot {
 	 */
 	public void putFeature(Feature feature, float value) {
 		this.features.put(feature, value);
-	}
-	
-	
-	/*
-	 * TRACKING RELATED METHODS
-	 */
-	
-	/**
-	 * Adds a reference to the parent Spot to this Spot's list of parents.
-	 * @param parent
-	 */
-	public void addParent(Spot parent) {
-		this.parents.add(parent);
-	}
-	
-	/**
-	 * Adds a reference to the child Spot to this Spot's list of children.
-	 * @param child
-	 */
-	public void addChild(Spot child) {
-		this.children.add(child);
-	}
-	
-	/**
-	 * Returns the ArrayList holding the list of this Spot's parents.
-	 * @return An ArrayList which contains elements of type Spot. Each Spot in this
-	 * list is a child of this Spot. Returns null if this Spot has no parents (a root).
-	 */
-	public ArrayList<Spot> getParents() {
-		if (parents.size() == 0) return null;
-		return this.parents;
-	}
-	
-	/** 
-	 * Returns the ArrayList holding the list of this Spot's children.
-	 * @return An ArrayList which contains elements of type Spot. Each Spot in this
-	 * list is a child of this Spot. Returns null if this Spot has no children (a leaf).
-	 */
-	public ArrayList<Spot> getChildren() {
-		if (children.size() == 0) return null; 
-		return this.children;
 	}
 }
