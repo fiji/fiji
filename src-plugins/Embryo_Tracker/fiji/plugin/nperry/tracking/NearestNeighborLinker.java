@@ -88,7 +88,7 @@ public class NearestNeighborLinker {
 	 */
 	
 	/**
-	 * 
+	 * Returns the max number of Spots in t+1 to which a Spot in t can be linked.
 	 * @return The max number of links.
 	 */
 	public int getNLinks()
@@ -98,7 +98,8 @@ public class NearestNeighborLinker {
 	
 	
 	/**
-	 * 
+	 * Returns the maximum distance parameter which determines how far away a Spot in t+1 can be from a Spot in t in
+	 * order to be linked.
 	 * @return The maximum distance between potentially link-able Spots.
 	 */
 	public float getMaxDist()
@@ -108,12 +109,19 @@ public class NearestNeighborLinker {
 	
 	
 	/**
-	 * 
-	 * @return The computed list of links for each object in time t.
+	 * Returns a map, where keys are Spots in t, and values are a list of Spots in t+1 that have been linked to the
+	 * Spot in t.
+	 * @return The computed list of links for each object in time t as a map.
 	 */
-	public ArrayList< ArrayList<Spot> > getResult()
+	public HashMap< Spot, ArrayList<Spot> > getResult()
 	{
-		return this.links;
+		HashMap< Spot, ArrayList<Spot> > result = new HashMap< Spot, ArrayList<Spot> >();
+		
+		for (int i = 0; i < t0.size(); i++) {
+			result.put(t0.get(i), links.get(i));
+		}
+		
+		return result;
 	}
 	
 	
@@ -381,7 +389,7 @@ public class NearestNeighborLinker {
 		if (!linker.checkInput() || !linker.process()) {
 			System.out.println("Linker failed with error: " + linker.getErrorMessage());
 		}
-		ArrayList< ArrayList<Spot> > links = linker.getResult();
+		HashMap< Spot, ArrayList<Spot> > links = linker.getResult();
 		System.out.println("Results:");
 		System.out.println("________________");
 		System.out.println();

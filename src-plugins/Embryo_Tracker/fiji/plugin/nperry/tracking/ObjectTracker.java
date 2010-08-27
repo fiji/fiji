@@ -1,6 +1,9 @@
 package fiji.plugin.nperry.tracking;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Set;
 
 import mpicbg.imglib.algorithm.math.MathLib;
 
@@ -54,6 +57,7 @@ public class ObjectTracker {
 		return this.errorMessage;
 	}
 	
+	
 	/**
 	 * Call this method before calling process, in order to guarantee that all of the required input is correct.
 	 * @return true if no errors, false otherwise.
@@ -69,46 +73,75 @@ public class ObjectTracker {
 		return true;
 	}
 	
-
-	public boolean process()
-	{
-		/*
-		 * Make sure checkInput() has been called first.
-		 */
-		if (!inputChecked){
-			errorMessage = "checkInput() was not run before calling process()!";
-			return false;
-		}
-		
-		for (int i = 0; i < points.size() - 1; i++) {
-			 NearestNeighborLinker linker = new NearestNeighborLinker(points.get(i), points.get(i+1), nLinks, maxDist);
-			 if (!linker.checkInput() || !linker.process()) {
-				 System.out.println("NearestNeighborLinker failure: " + linker.getErrorMessage());
-			 }
-			 ArrayList< ArrayList<Spot> > links = linker.getResult();
-			 
-			 // <debug>
-			 System.out.println("Frame " + (i + 1));
-			 System.out.println("------------------");
-			 for (int j = 0; j < links.size(); j++) {
-				 ArrayList<Spot> linked = links.get(j);
-				 System.out.println("Spot " + MathLib.printCoordinates(points.get(i).get(j).getCoordinates()) + " is linked to: ");
-				 for (int k = 0; k < linked.size(); k++) {
-					 System.out.println(MathLib.printCoordinates(linked.get(k).getCoordinates()));
-				 }
-			 }
-			 // </debug>
-		}
-		
-		
-		
-		return true;
-	}
-	
 	
 	public void getResults()
 	{
 		
 	}
+	
+
+	public boolean process()
+	{
+		//Make sure checkInput() has been called first.
+		if (!inputChecked){
+			errorMessage = "checkInput() was not run before calling process()!";
+			return false;
+		}
+		
+		// For each time frame pair t and t+1, link Spots
+		for (int i = 0; i < points.size() - 1; i++) {
+			 NearestNeighborLinker linker = new NearestNeighborLinker(points.get(i), points.get(i+1), nLinks, maxDist);
+			 if (!linker.checkInput() || !linker.process()) {
+				 System.out.println("NearestNeighborLinker failure: " + linker.getErrorMessage());
+			 }
+			 HashMap< Spot, ArrayList<Spot> > links = linker.getResult();
+			 
+			 // <debug>
+			 System.out.println("Frame " + (i + 1));
+			 System.out.println("------------------");
+			 Set<Spot> keys = links.keySet();
+			 Iterator<Spot> itr = keys.iterator();
+			 while(itr.hasNext()) {
+				 Spot curr = itr.next();
+				 ArrayList<Spot> linked = links.get(curr);
+				 System.out.println("Spot " + MathLib.printCoordinates(curr.getCoordinates()) + " is linked to: ");
+				 for (int k = 0; k < linked.size(); k++) {
+					 System.out.println(MathLib.printCoordinates(linked.get(k).getCoordinates()));
+				 }
+			 }
+			 // </debug>
+			 
+			 // Use scoring criterion to move from potential links to a finalized link configuration
+			 assignFinalLinkConfiguration(links);
+		}
+		
+		// Process() finished
+		return true;
+	}
+	
+	
+	/**
+	 * Use a scoring system to decide on the finalized link configurations for each Spot in t to Spots in t+1.
+	 * 
+	 * The input is an list of Spots in t+1 for each Spot in t, where each Spot in t+1 has been identified as the potential
+	 * child Spot in t+1 of the Spot in t. To determine the optimal configuration of assignments, a scoring system will
+	 * be used to identify the optimal assignment of the following biologically defined links to each Spot in t:
+	 * 
+	 * <ul>
+	 * <li>One-to-one: Spot in t assigned to a single Spot in t+1</li>
+	 * <li>Division: Spot in t assigned to a two Spots in t+1</li>
+	 * <li>Cell death: Spot in t assigned to no Spot in t+1</li>
+	 * <li>Merge: Two Spots in t assigned to a single Spot in t+1</li>
+	 * </ul>
+	 * 
+	 * A DFS, tree-approach is used to search the entire search space of this problem.
+	 * 
+	 * @param links A list containing the potential child Spots in t+1 for each Spot in t.
+	 */
+	private void assignFinalLinkConfiguration(HashMap< Spot, ArrayList<Spot> > links)
+	{
+		
+	}
+	
 	
 }
