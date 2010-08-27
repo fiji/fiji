@@ -3790,9 +3790,12 @@ public class Weka_Segmentation implements PlugIn
 			//proposal.show();
 			
 			IJ.log("Warping ground truth...");
+			
+			final ArrayList<Point3f>[] mismatches = new ArrayList[image.getStackSize()];
+			
 			// Warp ground truth, relax original labels to proposal. Only simple
 			// points warping is allowed.
-			warpedLabels = simplePointWarp2dMT(warpedLabels, proposal, mask, 0.5);
+			warpedLabels = simplePointWarp2dMT(warpedLabels, proposal, mask, 0.5, mismatches);
 
 			// Update training data with warped labels
 			if(!resample)
@@ -3800,7 +3803,7 @@ public class Weka_Segmentation implements PlugIn
 			else
 			{
 				IJ.log("Resampling training data...");
-				updateDataClassification(originalData, warpedLabels, 1, 0);
+				updateDataClassification(originalData, warpedLabels, 1, 0, mismatches);
 				trainingData = homogenizeTrainingData(originalData);
 				setLoadedTrainingData(trainingData);
 			}
@@ -4035,9 +4038,12 @@ public class Weka_Segmentation implements PlugIn
 			//warpedLabels.show();
 			//proposal.show();
 			IJ.log("Warping ground truth...");
+			
+			final ArrayList<Point3f>[] mismatches = new ArrayList[image.getStackSize()];
+			
 			// Warp ground truth, relax original labels to proposal. Only simple
 			// points warping is allowed.
-			warpedLabels = seg.simplePointWarp2dMT(warpedLabels, proposal, null, 0.5);
+			warpedLabels = seg.simplePointWarp2dMT(warpedLabels, proposal, null, 0.5, mismatches);
 
 			// Update training data with warped labels
 			if(!resample)
@@ -4129,6 +4135,58 @@ public class Weka_Segmentation implements PlugIn
 					data.get(n).setClassValue(slice.getPixel(x, y) > 0 ? classIndex1 : classIndex2);
 					
 		}
+	}
+
+	/**
+	 * Update the class attribute of "data" from 
+	 * the input binary labels. The number of instances of "data" 
+	 * must match the size of the input labels image (or stack)
+	 * 
+	 * @param data input instances 
+	 * @param labels binary labels
+	 * @param classIndex1 index of the white (different from 0) class
+	 * @param classIndex2 index of the black (0) class
+	 */
+	public static void updateDataClassification(
+			Instances data,
+			ImagePlus labels,
+			int classIndex1,
+			int classIndex2,
+			ArrayList<Point3f>[] mismatches)
+	{
+		// Check sizes
+		final int size = labels.getWidth() * labels.getHeight() * labels.getStackSize();
+		if (size != data.numInstances())
+		{
+			IJ.log("Error: labels size does not match loaded training data set size.");
+			return;
+		}
+		
+		final int width = labels.getWidth();
+		final int height = labels.getHeight();
+		final int depth = labels.getStackSize();
+		// Update class with new labels
+		for(int n=0, z=1; z <= depth; z++)
+		{
+			final ImageProcessor slice = labels.getImageStack().getProcessor(z);			
+			for(int y=0; y<height; y++)
+				for(int x=0; x<width; x++, n++)
+					data.get(n).setClassValue(slice.getPixel(x, y) > 0 ? classIndex1 : classIndex2);
+					
+		}
+		if(null !=  mismatches)
+			for(int i=0; i<depth; i++)
+			{
+				IJ.log("slice " + i + ": " + mismatches[i].size() + " mismatches");
+				
+				for(Point3f p : mismatches[i])
+				{
+					//IJ.log("point = " + p);
+					final int n = (int) p.x + ((int) p.y -1) * width + i * (width*height);
+					double weight = data.get(n).weight();
+					data.get(n).setWeight(++weight);
+				}
+			}
 	}
 	
 
@@ -4266,7 +4324,8 @@ public class Weka_Segmentation implements PlugIn
 			ImagePlus source,
 			ImagePlus target,
 			ImagePlus mask,
-			double binaryThreshold)
+			double binaryThreshold,
+			ArrayList<Point3f>[] mismatches)
 	{
 		if(source.getWidth() != target.getWidth()
 				|| source.getHeight() != target.getHeight()
@@ -4276,11 +4335,15 @@ public class Weka_Segmentation implements PlugIn
 			return null;
 		}
 		
+				
 		final ImageStack sourceSlices = source.getImageStack();
 		final ImageStack targetSlices = target.getImageStack();
 		final ImageStack maskSlices = (null != mask) ? mask.getImageStack() : null;
 		
 		final ImageStack warpedSource = new ImageStack(source.getWidth(), source.getHeight());
+		
+		if(null == mismatches)
+			mismatches = new ArrayList[sourceSlices.getSize()];
 		
 		// Executor service to produce concurrent threads
 		final ExecutorService exe = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
@@ -4306,6 +4369,8 @@ public class Weka_Segmentation implements PlugIn
 					warpedSource.addSlice("warped source " + i, wr.warpedSource.getProcessor());	
 				if(wr.warpingError != -1)
 					warpingError += wr.warpingError;
+				if(null != wr.mismatches)
+					mismatches[i] = wr.mismatches;				
 				i++;
 			}
 			IJ.log("Warping error = " + (warpingError / sourceSlices.getSize()));
@@ -4324,12 +4389,13 @@ public class Weka_Segmentation implements PlugIn
 	
 	
 	/**
-	 * 
-	 * @param source
-	 * @param target
-	 * @param mask
-	 * @param binaryThreshold
-	 * @return
+	 * Calculate the simple point warping in a concurrent way
+	 * (to be submitted to an Executor Service)
+	 * @param source moving image
+	 * @param target fixed image
+	 * @param mask mask image
+	 * @param binaryThreshold binary threshold to use
+	 * @return warping results (warped labels, warping error value and mismatching points)
 	 */
 	public Callable<WarpingResults> simplePointWarp2DConcurrent(
 			final ImageProcessor source,
@@ -4355,6 +4421,8 @@ public class Weka_Segmentation implements PlugIn
 		public ImagePlus warpedSource;
 		/** warping error */
 		public double warpingError;
+		
+		public ArrayList<Point3f> mismatches;
 	}
 	
 	/**
@@ -4425,6 +4493,8 @@ public class Weka_Segmentation implements PlugIn
 						
 		double diff = Double.MIN_VALUE;
 		double diff_before = 0;
+		
+		final WarpingResults result = new WarpingResults();
 		
 		while(true)
 		{
@@ -4501,6 +4571,8 @@ public class Weka_Segmentation implements PlugIn
 				
 			}
 			
+			result.mismatches = mismatches;
+			
 			
 		}
 		
@@ -4509,8 +4581,7 @@ public class Weka_Segmentation implements PlugIn
 		ip.insert(sourceReal.getProcessor(), -1, -1);
 		sourceReal.setProcessor(ip.duplicate());
 		
-		
-		WarpingResults result = new WarpingResults();
+				
 		result.warpedSource = sourceReal;
 		result.warpingError = diff / (width * height);
 		return result;
