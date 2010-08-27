@@ -226,6 +226,11 @@ public class NearestNeighborLinker {
 	}
 	
 	
+	/*
+	 * PRIVATE METHODS
+	 */
+	
+	
 	/**
 	 * <p>Reduces the number of Spots in t+1 that a Spot in t is linked to, based on the following (ordered by important) 
 	 * priorities:<p>

@@ -124,6 +124,11 @@ public class ObjectTracker {
 	}
 	
 	
+	/*
+	 * PRIVATE METHODS
+	 */
+	
+	
 	/**
 	 * Use a scoring system to decide on the finalized link configurations for each Spot in t to Spots in t+1.
 	 * 
