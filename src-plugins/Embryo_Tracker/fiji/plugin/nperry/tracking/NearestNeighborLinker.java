@@ -59,6 +59,11 @@ public class NearestNeighborLinker {
 	 * CONSTRUCTORS
 	 */
 	
+	/**
+	 * Instantiate by providing the Spots in time point t and Spots in time point t+1, as well as a maximum
+	 * number of Spots in t+1 to link to for any Spot in t, and a maximum distance away that a Spot in t+1
+	 * can be from a Spot in t in order to be linked.
+	 */
 	public NearestNeighborLinker(ArrayList<Spot> t0, ArrayList<Spot> t1, int nLinks, float maxDist)
 	{
 		this.t0 = t0;
@@ -69,6 +74,12 @@ public class NearestNeighborLinker {
 	}
 	
 	
+	/**
+	 * Instantiate by providing the Spots in time point t and Spots in time point t+1, as well as a maximum
+	 * number of Spots in t+1 to link to for any Spot in t. There is no maximum distance away in this instance
+	 * that Spots in t+1 can be from t in order to consider them for linking (any Spot in t+1 can be considered
+	 * as link-able to a Spot in t).
+	 */
 	public NearestNeighborLinker(ArrayList<Spot> t0, ArrayList<Spot> t1, int nLinks)
 	{
 		this(t0, t1, nLinks, Float.POSITIVE_INFINITY);
@@ -76,6 +87,11 @@ public class NearestNeighborLinker {
 	}
 	
 	
+	/**
+	 * Instantiate by providing the Spots in time point t and Spots in time point t+1, as well as a maximum
+	 * distance away that a Spot in t+1 can be from a Spot in t in order to be linked. There is no upper limit to the number
+	 * of Spots in t+1 within this maximum distance that can be linked to a Spot in t.
+	 */
 	public NearestNeighborLinker(ArrayList<Spot> t0, ArrayList<Spot> t1, float maxDist)
 	{
 		this(t0, t1, 0, maxDist);
