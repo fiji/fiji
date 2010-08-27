@@ -46,11 +46,6 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 		return Feature.MEAN_INTENSITY;
 	}
 
-	@Override
-	public boolean isNormalized() {
-		return false;
-	}
-
 	/**
 	 * Compute descriptive statistics items for this spot. Implementation follows
 	 * {@link http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance}.
@@ -112,15 +107,15 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 		float kurtosis = (n*M4) / (M2*M2) - 3;
 		float skewness = (float) ( Math.sqrt(n) * M3 / Math.pow(M2, 3/2.0) );
 		
-		spot.addFeature(Feature.MEDIAN_INTENSITY, median);
-		spot.addFeature(Feature.MIN_INTENSITY, min);
-		spot.addFeature(Feature.MAX_INTENSITY, max);
-		spot.addFeature(Feature.MEAN_INTENSITY, mean);
-		spot.addFeature(Feature.VARIANCE, variance);
-		spot.addFeature(Feature.STANDARD_DEVIATION, (float) Math.sqrt(variance));
-		spot.addFeature(Feature.TOTAL_INTENSITY, sum);
-		spot.addFeature(Feature.KURTOSIS, kurtosis);
-		spot.addFeature(Feature.SKEWNESS, skewness);
+		spot.putFeature(Feature.MEDIAN_INTENSITY, median);
+		spot.putFeature(Feature.MIN_INTENSITY, min);
+		spot.putFeature(Feature.MAX_INTENSITY, max);
+		spot.putFeature(Feature.MEAN_INTENSITY, mean);
+		spot.putFeature(Feature.VARIANCE, variance);
+		spot.putFeature(Feature.STANDARD_DEVIATION, (float) Math.sqrt(variance));
+		spot.putFeature(Feature.TOTAL_INTENSITY, sum);
+		spot.putFeature(Feature.KURTOSIS, kurtosis);
+		spot.putFeature(Feature.SKEWNESS, skewness);
 	}
 	
 	public static void main(String[] args) {

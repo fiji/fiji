@@ -74,11 +74,6 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 	}
 	
 	@Override
-	public boolean isNormalized() {
-		return false;
-	}
-
-	@Override
 	public void process(Spot spot) {
 		final SphereCursor<T> cursor = new SphereCursor<T>(img, spot.getCoordinates(), diam/2);
 		double x, y, z;
@@ -146,9 +141,9 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 			if (phi > Math.PI/2 ) 
 				phi -= Math.PI; 
 			
-			spot.addFeature(featurelist_sa[i], (float) semiaxes[i]);
-			spot.addFeature(featurelist_phi[i], (float) phi);
-			spot.addFeature(featurelist_theta[i], (float) theta);
+			spot.putFeature(featurelist_sa[i], (float) semiaxes[i]);
+			spot.putFeature(featurelist_phi[i], (float) phi);
+			spot.putFeature(featurelist_theta[i], (float) theta);
 		}
 		
 	}
