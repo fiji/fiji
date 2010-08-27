@@ -262,16 +262,13 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 
 			
 			/* 8 - Threshold maxima based on extracted features. */
-			// TODO fix so that will work with one maxima.
+			Feature[] features = new Feature[] {Feature.LOG_VALUE, Feature.CONTRAST, Feature.MEAN_INTENSITY, Feature.VARIANCE};
 			HashMap<Feature, Float> thresholds = new HashMap<Feature, Float>();
-			final float logThreshold = otsuThreshold(spots, Feature.LOG_VALUE);  // threshold for frame
-			//final float brightnessThreshold = otsuThreshold(framej, Feature.BRIGHTNESS);
-			//final float contrastThreshold = otsuThreshold(framej, Feature.CONTRAST);
-			//final float varThreshold = otsuThreshold(framej, Feature.VARIANCE);
-			thresholds.put(Feature.LOG_VALUE, logThreshold);
-			//thresholds.put(Feature.BRIGHTNESS, brightnessThreshold);
-			//thresholds.put(Feature.CONTRAST, contrastThreshold);
-			//thresholds.put(Feature.VARIANCE, varThreshold);
+			thresholdFeatures(features, thresholds, spots);
+			
+			// TODO fix so that will work with one maxima. (thresholding alg throws error when only a single maxima)
+		
+		
 			thresholdsAllFrames.add(thresholds);
 			
 			
@@ -299,6 +296,20 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	
 	
 	/**
+	 * Given an array of {@link Features}, this method thresholds a list of {@link Spots} by serving as a wrapper for the
+	 * {@link #otsuThreshold(ArrayList, Feature)} method.
+	 * @param features The features of interest to threshold
+	 * @param thresholds A HashMap to store the computed threshold for each Feature (Feature->Threshold Value map)
+	 * @param spots The Spots to be used for the threshold calculation
+	 */
+	private void thresholdFeatures(Feature[] features, HashMap<Feature, Float> thresholds, ArrayList<Spot> spots) {
+		for (Feature feature : features) {
+			final float threshold = otsuThreshold(spots, feature);
+			thresholds.put(feature, threshold);
+		}
+	}
+	
+	/**
 	 * Given a list of {@link Spots}, and a {@link Feature}, this method automatically
 	 * thresholds the Spots based on the value stored for that Feature. The threshold
 	 * is performed using the Otsu Threshold Method.
@@ -310,7 +321,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 * @see Feature
 	 */
 	// Code source: http://www.labbookpages.co.uk/software/imgProc/otsuThreshold.html
-	public float otsuThreshold(ArrayList<Spot> srcData, Feature feature)	{
+	private float otsuThreshold(ArrayList<Spot> srcData, Feature feature)	{
 		// Prepare histogram
 		int histData[] = histogram(srcData, feature);
 		int count = srcData.size();
@@ -356,7 +367,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	/** Generate a histogram of the specified feature, with a number of bins determined 
 	 * from the Freedman and Diaconis rule (bin_space = 2*IQR/n^(1/3)) 
 	 */
-	public int[] histogram (ArrayList<Spot> data, Feature feature) {
+	private int[] histogram (ArrayList<Spot> data, Feature feature) {
 
 		// Calculate number of bins
 		final int size = data.size();
@@ -428,7 +439,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 * @param The Feature of the Spots to compute the statistics for.
 	 * @return A double[] of length 3, where index 0 is the range, index 1 is the min, and index 2 is the max.
 	 */
-	public double[] getRange(ArrayList<Spot> data, Feature feature) {
+	private double[] getRange(ArrayList<Spot> data, Feature feature) {
 		double min = 0;
 		double max = 0;
 		
@@ -457,7 +468,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 * @param pixelHeight
 	 * @return
 	 */
-	public PointRoi preparePointRoi (ArrayList< ArrayList< double[] > > extrema, float downsampleFactors[], float pixelWidth, float pixelHeight) {
+	private PointRoi preparePointRoi (ArrayList< ArrayList< double[] > > extrema, float downsampleFactors[], float pixelWidth, float pixelHeight) {
 		int numPoints = extrema.size();
 		int ox[] = new int[numPoints];
 		int oy[] = new int[numPoints];
@@ -495,7 +506,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 * @param selectedPoints An Arraylist, which for each frame stores an ArrayList of the Spots shown and not shown in a given frame.
 	 * @return A reference to the {@link Image3DUniverse} used for the 3D rendered image.
 	 */
-	public Image3DUniverse renderIn3DViewer(ArrayList< ArrayList<Spot> > extremaAllFrames, ImagePlus imp, float[] calibration, float diam, ArrayList< HashMap<Feature, Float> > thresholdsAllFrames, ArrayList< ArrayList< ArrayList<Spot> > > selectedPoints) {
+	private Image3DUniverse renderIn3DViewer(ArrayList< ArrayList<Spot> > extremaAllFrames, ImagePlus imp, float[] calibration, float diam, ArrayList< HashMap<Feature, Float> > thresholdsAllFrames, ArrayList< ArrayList< ArrayList<Spot> > > selectedPoints) {
 		
 		// 1 - Display points
 
@@ -586,7 +597,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 */
 	
 	// TODO: make a method for creating the sliders (swing), and a separate method for staying there until continue/cancel selected.
-	public void letUserAdjustThresholds(final Image3DUniverse univ, final String contentName, ArrayList< HashMap<Feature, Float> > thresholdsAllFrames, ArrayList< ArrayList< ArrayList<Spot> > > selectedPoints, ArrayList< ArrayList< Spot > > extremaAllFrames, float[] calibration) {
+	private void letUserAdjustThresholds(final Image3DUniverse univ, final String contentName, ArrayList< HashMap<Feature, Float> > thresholdsAllFrames, ArrayList< ArrayList< ArrayList<Spot> > > selectedPoints, ArrayList< ArrayList< Spot > > extremaAllFrames, float[] calibration) {
 		
 		// Grab the Content of the universe, which has the name of the IP.
 		final Content c = univ.getContent(contentName);
@@ -709,7 +720,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	/* **********************************************************
 	 * Thread which handles the updates of sliders
 	 * *********************************************************/
-	public abstract class SliderAdjuster extends Thread {
+	private abstract class SliderAdjuster extends Thread {
 		boolean go = false;
 		int newV;
 		ContentInstant content;
