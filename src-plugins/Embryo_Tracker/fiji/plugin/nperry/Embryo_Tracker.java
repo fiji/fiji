@@ -120,13 +120,13 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		/* 2 - Ask for parameters */
 		int nslices = imp.getNSlices();
 		GenericDialog gd = new GenericDialog("Embryo Tracker");
-		gd.addNumericField("Expected blob diameter:", 7.3, 2, 5, imp.getCalibration().getUnits());  	// get the expected blob size (in pixels).
+		gd.addNumericField("Expected blob diameter:", 6.5, 2, 5, imp.getCalibration().getUnits());  	// get the expected blob size (in pixels).
 		gd.addMessage("Verify calibration settings:");
 		gd.addNumericField("Pixel width:", imp.getCalibration().pixelWidth, 3);		// used to calibrate the image for 3D rendering
 		gd.addNumericField("Pixel height:", imp.getCalibration().pixelHeight, 3);	// used to calibrate the image for 3D rendering
 		if (nslices > 1)
 			gd.addNumericField("Voxel depth:", imp.getCalibration().pixelDepth, 3);		// used to calibrate the image for 3D rendering
-		gd.addCheckbox("Use median filter", false);
+		gd.addCheckbox("Use median filter", true);
 		gd.addCheckbox("Allow edge maxima", false);
 		gd.showDialog();
 		if (gd.wasCanceled()) return;
@@ -257,41 +257,74 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			
 			
 			/* 7 - Extract features for the spot collection */
+			
 			final FeatureFacade<T> featureCalculator = new FeatureFacade<T>(img, filteredImg, diam, calibration);
-			featureCalculator.processFeature(Feature.LOG_VALUE, spots); // only log value for now
-
+			//featureCalculator.processAllFeatures(spots);
+			featureCalculator.processFeature(Feature.LOG_VALUE, spots);  // only log, because the slowness of the 3d renderer makes anything else impossible
 			
 			/* 8 - Threshold maxima based on extracted features. */
-			Feature[] features = new Feature[] {Feature.LOG_VALUE, Feature.CONTRAST, Feature.MEAN_INTENSITY, Feature.VARIANCE};
-			HashMap<Feature, Float> thresholds = new HashMap<Feature, Float>();
-			thresholdFeatures(features, thresholds, spots);
 			
-			// TODO fix so that will work with one maxima. (thresholding alg throws error when only a single maxima)
-		
-		
+			//Feature[] features = new Feature[] {Feature.LOG_VALUE, Feature.CONTRAST, Feature.MEAN_INTENSITY, Feature.VARIANCE};
+			Feature[] features = new Feature[] {Feature.LOG_VALUE};
+			HashMap<Feature, Float> thresholds = new HashMap<Feature, Float>();
+			thresholdFeatures(features, thresholds, spots);		
 			thresholdsAllFrames.add(thresholds);
 			
 			
 		} // Finished looping over frames 
 		
-		// Render 3D to adjust thresholds...
-		ArrayList< ArrayList< ArrayList<Spot> > > selectedPoints = new ArrayList< ArrayList< ArrayList<Spot> > >();
-		Image3DUniverse univ = renderIn3DViewer(extremaAllFrames, imp, calibration, diam, thresholdsAllFrames, selectedPoints);
-		letUserAdjustThresholds(univ, imp.getTitle(), thresholdsAllFrames, selectedPoints, extremaAllFrames, calibration);
+		/* 9 Render 3D to adjust thresholds... */
+		ArrayList< ArrayList< ArrayList<Spot> > > pointSelectionStatus = applyThresholds(extremaAllFrames, thresholdsAllFrames);
+		Image3DUniverse univ = renderIn3DViewer(imp, diam, pointSelectionStatus);
+		letUserAdjustThresholds(univ, imp.getTitle(), thresholdsAllFrames, pointSelectionStatus, extremaAllFrames, calibration);
 
 		
-		/* 8 - Track */
-		ArrayList< ArrayList<Spot> > extremaPostThresholdingAllFrames = new ArrayList< ArrayList<Spot> >();
-		for (ArrayList< ArrayList <Spot> > pointsInTimeFrame : selectedPoints) {
-			extremaPostThresholdingAllFrames.add(pointsInTimeFrame.get(SHOWN));
-		}
-		ObjectTracker tracker = new ObjectTracker(extremaPostThresholdingAllFrames);
-		if (!tracker.checkInput() || !tracker.process()) {
-			System.out.println("Tracking failed: " + tracker.getErrorMessage());
-		}
+		/* 10 - Track */
+//		ArrayList< ArrayList<Spot> > extremaPostThresholdingAllFrames = new ArrayList< ArrayList<Spot> >();
+//		for (ArrayList< ArrayList <Spot> > pointsInTimeFrame : pointSelectionStatus) {
+//			extremaPostThresholdingAllFrames.add(pointsInTimeFrame.get(SHOWN));
+//		}
+//		ObjectTracker tracker = new ObjectTracker(extremaPostThresholdingAllFrames);
+//		if (!tracker.checkInput() || !tracker.process()) {
+//			System.out.println("Tracking failed: " + tracker.getErrorMessage());
+//		}
 		
 		
 		return new Object[] {extremaAllFrames};
+	}
+
+	private ArrayList< ArrayList< ArrayList<Spot> > > applyThresholds(ArrayList< ArrayList<Spot> > extremaAllFrames, ArrayList< HashMap<Feature, Float> > thresholdsAllFrames) {
+		ArrayList< ArrayList< ArrayList<Spot> > > pointSelectionStatus = new ArrayList< ArrayList< ArrayList<Spot> > >();
+		
+		for (int j = 0; j < extremaAllFrames.size(); j++) {	// For all frames
+			final ArrayList<Spot> shown = new ArrayList<Spot>();
+			final ArrayList<Spot> notShown = new ArrayList<Spot>();
+			final ArrayList<Spot> framej = extremaAllFrames.get(j);
+
+			for (int i = 0; i < framej.size(); i++) {	// For all Spots in this frame
+				final Spot spot = framej.get(i);
+				
+				// 1. If the spot features above all the thresholds (*VERY STRICT* requirement)
+				if (aboveThresholds(spot, thresholdsAllFrames.get(j))) {
+					spot.setName(Integer.toString(i));	// For use with sliders
+					shown.add(spot);
+				}
+				
+				// 2. If spot doesn't pass threshold
+				else{
+					spot.setName(Integer.toString(i));	// For use with sliders
+					notShown.add(spot);
+				}
+			}
+			
+			// Add the shown and notShown lists of points to the overall list
+			ArrayList<ArrayList<Spot> > pointSelectionStatusInFrame = new ArrayList<ArrayList<Spot> >();
+			pointSelectionStatusInFrame.add(shown);
+			pointSelectionStatusInFrame.add(notShown);
+			pointSelectionStatus.add(pointSelectionStatusInFrame);
+		}
+		
+		return pointSelectionStatus;
 	}
 	
 	
@@ -305,6 +338,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	private void thresholdFeatures(Feature[] features, HashMap<Feature, Float> thresholds, ArrayList<Spot> spots) {
 		for (Feature feature : features) {
 			final float threshold = otsuThreshold(spots, feature);
+			System.out.println(String.format("Feature: %s, Value: %f", feature.getName(), threshold));
 			thresholds.put(feature, threshold);
 		}
 	}
@@ -320,6 +354,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 * @see Spots
 	 * @see Feature
 	 */
+	// TODO fix so that will work with one maxima. (thresholding alg throws error when only a single maxima)
 	// Code source: http://www.labbookpages.co.uk/software/imgProc/otsuThreshold.html
 	private float otsuThreshold(ArrayList<Spot> srcData, Feature feature)	{
 		// Prepare histogram
@@ -493,10 +528,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	/**
 	 * This method takes an {@link ArrayList} of {@link Spots}, and displays them as points
 	 * in a 3D rendering of {@link ImagePlus} <code>imp</code>. The imp is rendered in 3D
-	 * using the {@link ij3d} package. The thresholds calculated for each {@link Feature} in the <code>exec()</code>
-	 * method are used to determine which Spots should be shown in the 3D rendering, and which shouldn't be. The points
-	 * that are selected to be shown are then stored in a separate ArrayList for later use, as are the points that
-	 * are not selected to be shown. 
+	 * using the {@link ij3d} package. 
 	 * 
 	 * @param extremaAllFrames The list of Spots that are to be thresholded and displayed in the 3D rendering of the image (only points above the thresholds are shown).
 	 * @param imp The image to render in 3D.
@@ -506,9 +538,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 * @param selectedPoints An Arraylist, which for each frame stores an ArrayList of the Spots shown and not shown in a given frame.
 	 * @return A reference to the {@link Image3DUniverse} used for the 3D rendered image.
 	 */
-	private Image3DUniverse renderIn3DViewer(ArrayList< ArrayList<Spot> > extremaAllFrames, ImagePlus imp, float[] calibration, float diam, ArrayList< HashMap<Feature, Float> > thresholdsAllFrames, ArrayList< ArrayList< ArrayList<Spot> > > selectedPoints) {
-		
-		// 1 - Display points
+	private Image3DUniverse renderIn3DViewer(ImagePlus imp, float diam, ArrayList< ArrayList< ArrayList<Spot> > > pointSelectionStatus) {
 
 		// Convert to a usable format
 		if (imp.getType() != ImagePlus.GRAY8)
@@ -521,37 +551,15 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		// Add the image as a volume rendering
 		Content content = univ.addVoltex(imp);
 
-		// Determine which points are "shown" vs. "not shown," store them accordingly for future use, and add the "shown" points to the ContentInstant's PointList
-		for (int j = 0; j < extremaAllFrames.size(); j++) {
-			final ArrayList<Spot> shown = new ArrayList<Spot>();
-			final ArrayList<Spot> notShown = new ArrayList<Spot>();
+		for (int j = 0; j < pointSelectionStatus.size(); j++) {	// For all frames
 			final PointList pointList = content.getInstant(j).getPointList();
-			final ArrayList<Spot> framej = extremaAllFrames.get(j);
+			final ArrayList<Spot> shown = pointSelectionStatus.get(j).get(SHOWN);
 
-			// Add the extrema coords to the pointlist
-			for (int i = 0; i < framej.size(); i++) {
-				final Spot spot = framej.get(i);
+			for (int i = 0; i < shown.size(); i++) {	// Add all points in the frame to the PointList for the frame's content
+				final Spot spot = shown.get(i);
 				final float coords[] = spot.getCoordinates();
-				
-				// 1. If the spot passes the threshold
-				if (aboveThresholds(spot, thresholdsAllFrames.get(j))) {
-					spot.setName(Integer.toString(i));
-					pointList.add(spot.getName(), coords[0], coords[1], coords[2]);	
-					shown.add(spot);
-				}
-				
-				// 2. If spot doesn't pass threshold
-				else{
-					spot.setName(Integer.toString(i));
-					notShown.add(spot);
-				}
+				pointList.add(spot.getName(), coords[0], coords[1], coords[2]);	
 			}
-			
-			// Add the shown and notShown lists of points to the overall list
-			ArrayList<ArrayList<Spot> > selectedPointsInFrame = new ArrayList<ArrayList<Spot> >();
-			selectedPointsInFrame.add(shown);
-			selectedPointsInFrame.add(notShown);
-			selectedPoints.add(selectedPointsInFrame);
 		}
 		
 		// Change the size of the points
@@ -576,10 +584,16 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 */
 	private boolean aboveThresholds(Spot spot, HashMap<Feature, Float> thresholds) {
 		for (Feature feature : thresholds.keySet()) {
-			if (spot.getFeature(feature) < thresholds.get(feature)) {
+//			System.out.println(String.format("Feature: %s, Thresholds: %f", feature.getName(), thresholds.get(feature)));
+//			
+//			System.out.println(String.format("What the fuck is going on?! value: %f, threshold: %f", spot.getFeature(feature), thresholds.get(feature)));
+//
+//			
+			if (spot.getFeature(feature) < thresholds.get(feature)) {	
 				return false;
 			}
 		}
+//		System.out.println(spot.toString());
 		return true;
 	}
 	
@@ -618,55 +632,80 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			final float tr = thresholdsAllFrames.get(t).get(feature);
 			double[] range = getRange(extremaAllFrames.get(t), feature);
 			gd.addSlider(feature.getName() + " Threshold", range[1], range[2], tr);
-			gd.addCheckbox("Auto", true);
+//			gd.addCheckbox("Auto", true);
 			
 			// Create a SliderAdjuster for this Feature
 			final SliderAdjuster thresh_adjuster = new SliderAdjuster (c, selectedPoints, calibration, tr, thresholdsAllFrames) {
 				public synchronized final void setValue(ContentInstant ci, float threshold, float[] calibration) {	
 
-					// for all frames
+//					// for all frames
+//					for (int i = 0; i < thresholdsAllFrames.size(); i++) {
+//						PointList pl = c.getInstant(i).getPointList();
+//						thresholdsAllFrames.get(i).put(feature, threshold);
+//						ArrayList<Spot> shown = selectedPoints.get(i).get(SHOWN);
+//						ArrayList<Spot> notShown = selectedPoints.get(i).get(NOT_SHOWN);
+//						
+//						if (larger) {
+//							ci.showPointList(false);
+//							for (int j = 0; j < shown.size(); j++) {
+//								Spot spot = shown.get(j);
+//								if (spot.getFeature(feature) < threshold) {							
+//									shown.remove(j);
+//									j--;  // the remove() call above shifted all the remaining elements, so we need to decrement j to not skip an element
+//									pl.remove(pl.get(spot.getName()));
+//									notShown.add(spot);
+//								}
+//							}
+//							ci.showPointList(true);
+//							univ.getPointListDialog().setVisible(false);
+//						} 
+//		 				
+//		 				// 2 - Threshold is lower than previously, we need to add some points that are now above the threshold
+//		 				else {
+//							for (int j = 0; j < notShown.size(); j++) {
+//								Spot spot = notShown.get(j);
+//								boolean passedThresholds = true;  // initially, assume the point is above all the thresholds
+//								for (Feature feature : thresholdsAllFrames.get(t).keySet()) {  // for each feature we threshold...
+//									if (spot.getFeature(feature) < thresholdsAllFrames.get(t).get(feature)) {  // if the spot has a lower value...
+//										passedThresholds = false;  // mark that it isn't above all the thresholds
+//										break;
+//									}	
+//								}	
+//								if (passedThresholds) {  // to get past this point, a spot had to have thresholds above all the current threshold values
+//									notShown.remove(j);
+//									j--;  // the remove() call above shifted all the remaining elements, so we need to decrement j to not skip an element
+//									float[] coords = spot.getCoordinates();
+//									pl.add(spot.getName(), coords[0], coords[1], coords[2]);
+//									shown.add(spot);
+//								}
+//							}
+//						}		
+//					}
+					
+					// i am not dealing with the poor performance of the points in the 3d rendering. brute force search time. no more dynamic search.
 					for (int i = 0; i < thresholdsAllFrames.size(); i++) {
 						PointList pl = c.getInstant(i).getPointList();
+						ci.showPointList(false);
+						pl.clear();
 						thresholdsAllFrames.get(i).put(feature, threshold);
 						ArrayList<Spot> shown = selectedPoints.get(i).get(SHOWN);
 						ArrayList<Spot> notShown = selectedPoints.get(i).get(NOT_SHOWN);
 						
-						if (larger) {
-							ci.showPointList(false);
-							for (int j = 0; j < shown.size(); j++) {
-								Spot spot = shown.get(j);
-								if (spot.getFeature(feature) < threshold) {							
-									shown.remove(j);
-									j--;  // the remove() call above shifted all the remaining elements, so we need to decrement j to not skip an element
-									pl.remove(pl.get(spot.getName()));
-									notShown.add(spot);
-								}
+						for (Spot spot : shown) {
+							if (aboveThresholds(spot, thresholdsAllFrames.get(i))) {
+								float[] coords = spot.getCoordinates();
+								pl.add(spot.getName(), coords[0], coords[1], coords[2]);	
 							}
-							ci.showPointList(true);
-							univ.getPointListDialog().setVisible(false);
-						} 
-		 				
-		 				// 2 - Threshold is lower than previously, we need to add some points that are now above the threshold
-		 				else {
-							for (int j = 0; j < notShown.size(); j++) {
-								Spot spot = notShown.get(j);
-								boolean passedThresholds = true;  // initially, assume the point is above all the thresholds
-								for (Feature feature : thresholdsAllFrames.get(t).keySet()) {  // for each feature we threshold...
-									if (spot.getFeature(feature) < thresholdsAllFrames.get(t).get(feature)) {  // if the spot has a lower value...
-										passedThresholds = false;  // mark that it isn't above all the thresholds
-										break;
-									}	
-								}	
-								if (passedThresholds) {  // to get past this point, a spot had to have thresholds above all the current threshold values
-									notShown.remove(j);
-									j--;  // the remove() call above shifted all the remaining elements, so we need to decrement j to not skip an element
-									float[] coords = spot.getCoordinates();
-									pl.add(spot.getName(), coords[0], coords[1], coords[2]);
-									shown.add(spot);
-								}
+						}
+						for (Spot spot : notShown) {
+							if (aboveThresholds(spot, thresholdsAllFrames.get(i))) {
+								float[] coords = spot.getCoordinates();
+								pl.add(spot.getName(), coords[0], coords[1], coords[2]);	
 							}
-						}		
+						}
+						ci.showPointList(true);
 					}
+					
 					univ.fireContentChanged(c);
 				}
 			};
@@ -686,18 +725,18 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 				}
 			});
 
-			// Add an ItemListener to the 'auto' checkbox
-			((Checkbox)gd.getCheckboxes().get(curr)).
-			addItemListener(new ItemListener() {
-				@Override
-				public void itemStateChanged(ItemEvent e) {
-					if (e.getStateChange() == java.awt.event.ItemEvent.SELECTED) { // if the checkbox was selected, change the threshold to the original.
-						((Scrollbar)gd.getSliders().get(curr)).setValue((int)tr);
-						
-						thresh_adjuster.exec((int)tr, ci, univ);
-					}
-				}
-			});
+//			// Add an ItemListener to the 'auto' checkbox
+//			((Checkbox)gd.getCheckboxes().get(curr)).
+//			addItemListener(new ItemListener() {
+//				@Override
+//				public void itemStateChanged(ItemEvent e) {
+//					if (e.getStateChange() == java.awt.event.ItemEvent.SELECTED) { // if the checkbox was selected, change the threshold to the original.
+//						((Scrollbar)gd.getSliders().get(curr)).setValue((int)tr);
+//						
+//						thresh_adjuster.exec((int)tr, ci, univ);
+//					}
+//				}
+//			});
 			
 			counter++;
 		}

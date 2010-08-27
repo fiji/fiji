@@ -97,6 +97,7 @@ public class LoGValue <T extends RealType<T>> extends IndependentFeatureAnalyzer
 		
 		// 4 - Get the intensity at the spot's coordinates
 		cursor.setPosition(intCoords);
+		System.out.println("LoG: " + cursor.getType().getRealFloat());
 		spot.putFeature(FEATURE, cursor.getType().getRealFloat());
 	}
 	
