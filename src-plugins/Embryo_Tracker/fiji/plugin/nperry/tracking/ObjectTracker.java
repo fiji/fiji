@@ -39,6 +39,10 @@ public class ObjectTracker {
 	 * CONSTRUCTORS
 	 */
 	
+	/**
+	 * Instantiate by providing the lists of points in each time point. The outer ArrayList represents each frame
+	 * in the movie, while the inner ArrayList contains the points belonging to that time point.
+	 */
 	public ObjectTracker(ArrayList< ArrayList<Spot> > points)
 	{
 		this.points = points;
