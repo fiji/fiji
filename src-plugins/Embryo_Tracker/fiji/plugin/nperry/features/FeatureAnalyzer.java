@@ -23,12 +23,6 @@ public interface FeatureAnalyzer {
 	 * Return the enum Feature for this feature.
 	 * @return
 	 */
-	public Feature getFeature();
-	
-	/**
-	 * Return true if this scorer is normalized, that is, if the scores it returns are between
-	 * 0 and 1, 1 being the best score.
-	 */
-	public boolean isNormalized();
+	public Feature getFeature();	
 	
 }

@@ -128,7 +128,7 @@ public class Spot {
 	 * @param feature The {@link Feature}.
 	 * @param value The {@link Feature}'s associated value.
 	 */
-	public void addFeature(Feature feature, float value) {
+	public void putFeature(Feature feature, float value) {
 		this.features.put(feature, value);
 	}
 	

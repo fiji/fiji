@@ -9,7 +9,7 @@ import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import fiji.plugin.nperry.Feature;
 import fiji.plugin.nperry.Spot;
 
-public class EstimatedRadius <T extends RealType<T>> extends IndependentFeatureAnalyzer {
+public class RadiusEstimator <T extends RealType<T>> extends IndependentFeatureAnalyzer {
 
 	private static final float MIN_DIAMETER_RATIO = 0.4f;
 	private static final float MAX_DIAMETER_RATIO = 2;
@@ -33,7 +33,7 @@ public class EstimatedRadius <T extends RealType<T>> extends IndependentFeatureA
 	 * @param nDiameters  the number of different diameter to compute
 	 * @param calibration  the spatial calibration array containing the pixel size in X, Y, Z
 	 */
-	public EstimatedRadius(Image<T> originalImage, float diameter, int nDiameters,  float[] calibration) {
+	public RadiusEstimator(Image<T> originalImage, float diameter, int nDiameters,  float[] calibration) {
 		this.img = originalImage;
 		this.diam = diameter;
 		this.nDiameters = nDiameters;
@@ -45,11 +45,6 @@ public class EstimatedRadius <T extends RealType<T>> extends IndependentFeatureA
 	@Override
 	public Feature getFeature() {
 		return FEATURE;
-	}
-
-	@Override
-	public boolean isNormalized() {
-		return false;
 	}
 
 	@Override
@@ -107,7 +102,7 @@ public class EstimatedRadius <T extends RealType<T>> extends IndependentFeatureA
 					diameters[maxIndex], contrasts[maxIndex],
 					diameters[maxIndex+1], contrasts[maxIndex+1]);
 		}
-		spot.addFeature(FEATURE, bestDiameter);		
+		spot.putFeature(FEATURE, bestDiameter);		
 	}
 	
 	private static final float quadratic1DInterpolation(float x1, float y1, float x2, float y2, float x3, float y3) {
@@ -168,7 +163,7 @@ public class EstimatedRadius <T extends RealType<T>> extends IndependentFeatureA
 		imp.show();
 		
 		// Apply the estimator
-		EstimatedRadius<UnsignedByteType> es = new EstimatedRadius<UnsignedByteType>(
+		RadiusEstimator<UnsignedByteType> es = new RadiusEstimator<UnsignedByteType>(
 				testImage, 
 				40.5f, 
 				20, 

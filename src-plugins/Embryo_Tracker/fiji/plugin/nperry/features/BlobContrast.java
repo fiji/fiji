@@ -26,14 +26,9 @@ public class BlobContrast <T extends RealType<T>> extends IndependentFeatureAnal
 	}
 
 	@Override
-	public boolean isNormalized() {
-		return false;
-	}
-
-	@Override
 	public void process(Spot spot) {
 		float contrast = getContrast(spot, diam);
-		spot.addFeature(FEATURE, Math.abs(contrast));
+		spot.putFeature(FEATURE, Math.abs(contrast));
 	}
 
 	/**

@@ -2,7 +2,6 @@ package fiji.plugin.nperry;
 
 public enum Feature {
 	LOG_VALUE,
-	BRIGHTNESS,
 	CONTRAST,
 	ESTIMATED_DIAMETER,
 	MORPHOLOGY,
@@ -25,31 +24,12 @@ public enum Feature {
 	ELLIPSOIDFIT_AXISTHETA_B,
 	ELLIPSOIDFIT_AXISTHETA_C	;
 	
-	public double getValue(double value) {
-		switch (this) {
-			case VARIANCE:
-				return 1/value;
-			case LOG_VALUE:
-				return value;
-			case BRIGHTNESS:
-				return value;
-			case CONTRAST:
-				return value;
-			case ESTIMATED_DIAMETER:
-				return value;
-			default:
-				return Double.NaN; // for non implemented
-		}
-	}
-	
 	public String getName() {
 		switch(this) {
 		case VARIANCE:
 			return "Variance";
 		case LOG_VALUE:
 			return "LoG Value";
-		case BRIGHTNESS:
-			return "Brightness";
 		case CONTRAST:
 			return "Contrast";
 		case ESTIMATED_DIAMETER:

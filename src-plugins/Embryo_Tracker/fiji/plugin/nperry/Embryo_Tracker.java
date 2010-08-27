@@ -1,7 +1,6 @@
 package fiji.plugin.nperry;
 
-import fiji.plugin.nperry.features.BlobMorphology;
-import fiji.plugin.nperry.features.LoG;
+import fiji.plugin.nperry.features.FeatureFacade;
 import fiji.plugin.nperry.tracking.ObjectTracker;
 import ij.IJ;
 import ij.ImagePlus;
@@ -22,7 +21,6 @@ import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.ListIterator;
 
 import mpicbg.imglib.algorithm.extremafinder.RegionalExtremaFactory;
@@ -36,7 +34,6 @@ import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.real.FloatType;
-import sun.awt.windows.ThemeReader;
 import vib.PointList;
 
 /**
@@ -259,9 +256,10 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			extremaAllFrames.add(spots);
 			
 			
-			/* 7 - Extract features for maxima */
-			final LoG<T> log = new LoG<T>(filteredImg, downsampleFactors, calibration);
-			log.process(spots);
+			/* 7 - Extract features for the spot collection */
+			final FeatureFacade<T> featureCalculator = new FeatureFacade<T>(img, filteredImg, diam, calibration);
+			featureCalculator.processFeature(Feature.LOG_VALUE, spots); // only log value for now
+
 			
 			/* 8 - Threshold maxima based on extracted features. */
 			// TODO fix so that will work with one maxima.
