@@ -181,6 +181,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Embryo_Tracker.jar \
 	plugins/3D_Viewer.jar \
 	plugins/CPU_Meter.jar \
+	plugins/Graph_Cut.jar \
 	plugins/TopoJ_.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS third-party-plugins

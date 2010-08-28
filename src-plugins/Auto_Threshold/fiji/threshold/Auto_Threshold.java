@@ -339,7 +339,7 @@ public class Auto_Threshold implements PlugIn {
 		return new Object[] {threshold, imp};
 	}
 
-	int IJDefault(int [] data ) {
+	public static int IJDefault(int [] data ) {
 		// Original IJ implementation for compatibility.
 		int level;
 		int maxValue = data.length - 1;
@@ -378,7 +378,7 @@ public class Auto_Threshold implements PlugIn {
 	}
 
 
-	int Huang(int [] data ) {
+	public static int Huang(int [] data ) {
 		// Implements Huang's fuzzy thresholding method 
 		// Uses Shannon's entropy function (one can also use Yager's entropy function) 
 		// Huang L.-K. and Wang M.-J.J. (1995) "Image Thresholding by Minimizing  
@@ -463,7 +463,7 @@ public class Auto_Threshold implements PlugIn {
 		return threshold;
 	}
 
-	boolean bimodalTest(double [] y) {
+	public static boolean bimodalTest(double [] y) {
 		int len=y.length;
 		boolean b = false;
 		int modes = 0;
@@ -480,7 +480,7 @@ public class Auto_Threshold implements PlugIn {
 		return b;
 	}
 
-	int Intermodes(int [] data ) {
+	public static int Intermodes(int [] data ) {
 		// J. M. S. Prewitt and M. L. Mendelsohn, "The analysis of cell images," in
 		// Annals of the New York Academy of Sciences, vol. 128, pp. 1035-1053, 1966.
 		// ported to ImageJ plugin by G.Landini from Antti Niemisto's Matlab code (GPL)
@@ -529,7 +529,7 @@ public class Auto_Threshold implements PlugIn {
 		return threshold;
 	}
 
-	int IsoData(int [] data ) {
+	public static int IsoData(int [] data ) {
 		// Also called intermeans
 		// Iterative procedure based on the isodata algorithm [T.W. Ridler, S. Calvard, Picture 
 		// thresholding using an iterative selection method, IEEE Trans. System, Man and 
@@ -589,7 +589,7 @@ public class Auto_Threshold implements PlugIn {
 		return g;
 	}
 
-	int Li(int [] data ) {
+	public static int Li(int [] data ) {
 		// Implements Li's Minimum Cross Entropy thresholding method
 		// This implementation is based on the iterative version (Ref. 2) of the algorithm.
 		// 1) Li C.H. and Lee C.K. (1993) "Minimum Cross Entropy Thresholding" 
@@ -671,7 +671,7 @@ public class Auto_Threshold implements PlugIn {
 		return threshold;
 	}
 
-	int MaxEntropy(int [] data ) {
+	public static int MaxEntropy(int [] data ) {
 		// Implements Kapur-Sahoo-Wong (Maximum Entropy) thresholding method
 		// Kapur J.N., Sahoo P.K., and Wong A.K.C. (1985) "A New Method for
 		// Gray-Level Picture Thresholding Using the Entropy of the Histogram"
@@ -756,7 +756,7 @@ public class Auto_Threshold implements PlugIn {
 		return threshold;
 	}
 
-	int Mean(int [] data ) {
+	public static int Mean(int [] data ) {
 		// C. A. Glasbey, "An analysis of histogram-based thresholding algorithms,"
 		// CVGIP: Graphical Models and Image Processing, vol. 55, pp. 532-537, 1993.
 		//
@@ -771,7 +771,7 @@ public class Auto_Threshold implements PlugIn {
 		return threshold;
 	}
 
-	int MinErrorI(int [] data ) {
+	public static int MinErrorI(int [] data ) {
 		  // Kittler and J. Illingworth, "Minimum error thresholding," Pattern Recognition, vol. 19, pp. 41-47, 1986.
 		 // C. A. Glasbey, "An analysis of histogram-based thresholding algorithms," CVGIP: Graphical Models and Image Processing, vol. 55, pp. 532-537, 1993.
 		// Ported to ImageJ plugin by G.Landini from Antti Niemisto's Matlab code (GPL)
@@ -819,28 +819,28 @@ public class Auto_Threshold implements PlugIn {
 		return threshold;
 	}
 
-	double A(int [] y, int j) {
+	protected static double A(int [] y, int j) {
 		double x = 0;
 		for (int i=0;i<=j;i++)
 			x+=y[i];
 		return x;
 	}
 
-	double B(int [] y, int j) {
+	protected static double B(int [] y, int j) {
 		double x = 0;
 		for (int i=0;i<=j;i++)
 			x+=i*y[i];
 		return x;
 	}
 
-	double C(int [] y, int j) {
+	protected static double C(int [] y, int j) {
 		double x = 0;
 		for (int i=0;i<=j;i++)
 			x+=i*i*y[i];
 		return x;
 	}
 
-	int Minimum(int [] data ) {
+	public static int Minimum(int [] data ) {
 		// J. M. S. Prewitt and M. L. Mendelsohn, "The analysis of cell images," in
 		// Annals of the New York Academy of Sciences, vol. 128, pp. 1035-1053, 1966.
 		// ported to ImageJ plugin by G.Landini from Antti Niemisto's Matlab code (GPL)
@@ -885,7 +885,7 @@ public class Auto_Threshold implements PlugIn {
 		return threshold;
 	}
 
-	int Moments(int [] data ) {
+	public static int Moments(int [] data ) {
 		//  W. Tsai, "Moment-preserving thresholding: a new approach," Computer Vision,
 		// Graphics, and Image Processing, vol. 29, pp. 377-393, 1985.
 		// Ported to ImageJ plugin by G.Landini from the the open source project FOURIER 0.8
@@ -937,7 +937,7 @@ public class Auto_Threshold implements PlugIn {
 		return threshold;
 	}
 
-	int Otsu(int [] data ) {
+	public static int Otsu(int [] data ) {
 		// Otsu's threshold algorithm
 		// C++ code by Jordan Bevik <Jordan.Bevic@qtiworld.com>
 		// ported to ImageJ plugin by G.Landini
@@ -990,7 +990,7 @@ public class Auto_Threshold implements PlugIn {
 	}
 
 
-	int Percentile(int [] data ) {
+	public static int Percentile(int [] data ) {
 		// W. Doyle, "Operation useful for similarity-invariant pattern recognition,"
 		// Journal of the Association for Computing Machinery, vol. 9,pp. 259-267, 1962.
 		// ported to ImageJ plugin by G.Landini from Antti Niemisto's Matlab code (GPL)
@@ -1020,7 +1020,7 @@ public class Auto_Threshold implements PlugIn {
 	}
 
 
-	double partialSum(int [] y, int j) {
+	protected static double partialSum(int [] y, int j) {
 		double x = 0;
 		for (int i=0;i<=j;i++)
 			x+=y[i];
@@ -1028,7 +1028,7 @@ public class Auto_Threshold implements PlugIn {
 	}
 
 
-	int RenyiEntropy(int [] data ) {
+	public static int RenyiEntropy(int [] data ) {
 		// Kapur J.N., Sahoo P.K., and Wong A.K.C. (1985) "A New Method for
 		// Gray-Level Picture Thresholding Using the Entropy of the Histogram"
 		// Graphical Models and Image Processing, 29(3): 273-285
@@ -1229,7 +1229,7 @@ public class Auto_Threshold implements PlugIn {
 	}
 
 
-	int Shanbhag(int [] data ) {
+	public static int Shanbhag(int [] data ) {
 		// Shanhbag A.G. (1994) "Utilization of Information Measure as a Means of
 		//  Image Thresholding" Graphical Models and Image Processing, 56(5): 414-419
 		// Ported to ImageJ plugin by G.Landini from E Celebi's fourier_0.8 routines
@@ -1312,7 +1312,7 @@ public class Auto_Threshold implements PlugIn {
 	}
 
 
-	int Triangle(int [] data ) {
+	public static int Triangle(int [] data ) {
 		//  Zack, G. W., Rogers, W. E. and Latt, S. A., 1977,
 		//  Automatic Measurement of Sister Chromatid Exchange Frequency,
 		// Journal of Histochemistry and Cytochemistry 25 (7), pp. 741-753
@@ -1415,7 +1415,7 @@ public class Auto_Threshold implements PlugIn {
 	}
 
 
-	int Yen(int [] data ) {
+	public static int Yen(int [] data ) {
 		// Implements Yen  thresholding method
 		// 1) Yen J.C., Chang F.J., and Chang S. (1995) "A New Criterion 
 		//    for Automatic Multilevel Thresholding" IEEE Trans. on Image 
@@ -1469,4 +1469,3 @@ public class Auto_Threshold implements PlugIn {
 		return threshold;
 	}
 }
-

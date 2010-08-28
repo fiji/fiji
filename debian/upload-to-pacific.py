@@ -29,34 +29,54 @@ source_files = [ dsc_file, tar_file ]
 def shellquote(s):
     return "'" + s.replace("'", "'\\''") + "'"
 
-def ssh( command ):
-    return 0 == call(["ssh","longair@pacific.mpi-cbg.de",command])
+ssh_control_file = "/tmp/ssh-%h-%p-%r.control"
+
+def ssh( command, master=False, control_command=None ):
+    if master and control_command:
+        raise Exception, "You can't specify a control command when creating a control master"
+    options = [ "-o", "ControlPath="+ssh_control_file ]
+    if master:
+        options += [ "-N", "-f", "-o", "ControlMaster=yes" ]
+    if control_command:
+        options += [ "-O", control_command ]
+    full_command = ["ssh"]+options+["longair@pacific.mpi-cbg.de"]
+    if command:
+        full_command.append(command)
+    return 0 == call(full_command)
 
 def scp( src_paths, dst_path ):
-    return 0 == call(["scp"]+src_paths+["longair@pacific.mpi-cbg.de:"+shellquote(dst_path)])
+    return 0 == call(["scp","-o","ControlPath="+ssh_control_file]+src_paths+["longair@pacific.mpi-cbg.de:"+shellquote(dst_path)])
 
-updated_directories = []
+# Just set up the control master:
+ssh( None, master=True )
 
-def copy_to_directory( files, pacific_directory ):
-    global updated_directories
-    if not ssh("mkdir -p "+shellquote(pacific_directory)):
-        raise Exception, "Failed to ensure that "+pacific_directory+" on pacific exists"    
-    pacific_directory_new = pacific_directory+".new"
-    if not ssh("mkdir -p "+shellquote(pacific_directory_new)):
-        raise Exception, "Failed to ensure that "+pacific_directory_new+" on pacific exists"    
-    if not scp( files, pacific_directory_new ):
-        raise Exception, "scp to "+pacific_directory_new+" failed"
-    updated_directories.append( (pacific_directory_new, pacific_directory) )
+try:
 
-pacific_directory = os.path.join(pacific_root,"source")
-copy_to_directory( source_files, pacific_directory )
+    updated_directories = []
 
-for a in architectures:
-    binary_file_path = architectures[a]
-    pattern = os.path.join(binary_file_path,"fiji*"+version+"_"+a+".deb")
-    binary_files = glob(pattern)
-    pacific_directory = os.path.join(pacific_root,"binary-"+a)
-    copy_to_directory( binary_files, pacific_directory )
+    def copy_to_directory( files, pacific_directory ):
+        global updated_directories
+        if not ssh("mkdir -p "+shellquote(pacific_directory)):
+            raise Exception, "Failed to ensure that "+pacific_directory+" on pacific exists"
+        pacific_directory_new = pacific_directory+".new"
+        if not ssh("mkdir -p "+shellquote(pacific_directory_new)):
+            raise Exception, "Failed to ensure that "+pacific_directory_new+" on pacific exists"
+        if not scp( files, pacific_directory_new ):
+            raise Exception, "scp to "+pacific_directory_new+" failed"
+        updated_directories.append( (pacific_directory_new, pacific_directory) )
 
-if not ssh("/usr/local/bin/rotate-apt-experimental"):
-    raise Exception, "Failed to update the Packages.gz and Sources.gz files"
+    pacific_directory = os.path.join(pacific_root,"source")
+    copy_to_directory( source_files, pacific_directory )
+
+    for a in architectures:
+        binary_file_path = architectures[a]
+        pattern = os.path.join(binary_file_path,"fiji*"+version+"_"+a+".deb")
+        binary_files = glob(pattern)
+        pacific_directory = os.path.join(pacific_root,"binary-"+a)
+        copy_to_directory( binary_files, pacific_directory )
+
+    if not ssh("/usr/local/bin/rotate-apt-experimental"):
+        raise Exception, "Failed to update the Packages.gz and Sources.gz files"
+
+finally:
+    ssh(None,control_command="exit")

@@ -445,6 +445,9 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		// Calculate number of junctions (skipping neighbor junction voxels)
 		groupJunctions(treeIS);						
 		
+		// Mark all unvisited
+		resetVisited();
+		
 		// Visit skeleton and measure distances.
 		for(int i = 0; i < this.numOfTrees; i++)
 			visitSkeleton(taggedImage, treeIS, i+1);
@@ -870,7 +873,8 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 					extra_rt.addValue(extra_head[7], e.getV2().getPoints().get(0).y * this.imRef.getCalibration().pixelHeight);
 					extra_rt.addValue(extra_head[8], e.getV2().getPoints().get(0).z * this.imRef.getCalibration().pixelDepth);
 					extra_rt.addValue(extra_head[9], this.calculateDistance(e.getV1().getPoints().get(0), e.getV2().getPoints().get(0)));
-				}								
+				}		
+											
 			}
 			extra_rt.show("Branch information");
 		}
@@ -1061,7 +1065,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 			this.slabList = new ArrayList<Point>();
 					 
 			// Otherwise, visit branch until next junction or end point.
-			final double length = visitBranch(endPointCoord, iTree);
+			double length = visitBranch(endPointCoord, iTree);
 						
 			// If length is 0, it means the tree is formed by only one voxel.
 			if(length == 0)
@@ -1071,9 +1075,28 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 				continue;
 			}
 			
+			// If the final point is a slab, then we add the path to the
+			// neighbor junction voxel not belonging to the initial vertex
+			// (unless it is a self loop)
+			if(isSlab(this.auxPoint))
+			{
+				final Point aux = this.auxPoint;
+				//IJ.log("Looking for " + this.auxPoint + " in the list of vertices...");
+				this.auxPoint = getVisitedJunctionNeighbor(this.auxPoint, v1);
+				this.auxFinalVertex = findPointVertex(this.junctionVertex[iTree], this.auxPoint);
+				if(this.auxPoint == null)
+				{
+					//IJ.log("Point "+ aux + " has not neighbor end junction! (inner loop)");
+					// Inner loop
+					this.auxFinalVertex = v1;
+					this.auxPoint = aux;
+				}
+				length += calculateDistance(this.auxPoint, aux);
+			}
+			
 			// Add branch to graph			
 			if(debug)
-				IJ.log("adding branch from " + v1.getPoints().get(0) + " to " + this.auxFinalVertex.getPoints().get(0));
+				IJ.log("adding branch from " + v1.getPoints().get(0) + " to " + this.auxFinalVertex.getPoints().get(0) +  ", aux point = " + this.auxPoint);
 			this.graph[iTree].addVertex(this.auxFinalVertex);
 			this.graph[iTree].addEdge(new Edge(v1, this.auxFinalVertex, this.slabList, length));
 			
@@ -1100,7 +1123,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 			IJ.log( " --------------------------- ");
 		
 		// Now visit branches starting at junctions
-		// 08/26/2009 Changed the loop to visit first the junction voxel that are
+		// 08/26/2009 Changed the loop to visit first the junction voxels that are
 		//            forming a single junction.
 		for(int i = 0; i < this.junctionVertex[iTree].length; i++)
 		{			
@@ -1164,7 +1187,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 								this.auxFinalVertex = findPointVertex(this.junctionVertex[iTree], this.auxPoint);
 								if(this.auxPoint == null)
 								{
-									//IJ.error("Point "+ aux + " has not neighbor end junction!");
+									//IJ.log("Point "+ aux + " has not neighbor end junction! (inner loop)");
 									// Inner loop
 									this.auxFinalVertex = initialVertex;
 									this.auxPoint = aux;
@@ -1585,10 +1608,13 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 			
 			// Move in the graph
 			previousPoint = nextPoint;			
+			if (debug)
+				IJ.log("visiting " + previousPoint);
 			nextPoint = getNextUnvisitedVoxel(previousPoint);			
 		}
 		
-		
+		// If we find an unvisited end-point or junction, we set it
+		// as final vertex of the branch
 		if(nextPoint != null)
 		{
 			// Add distance to last point
@@ -1600,11 +1626,15 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 			// Mark final vertex
 			if(isEndPoint(nextPoint))
 			{
+				if(debug)
+					IJ.log("found unvisited end point: " + nextPoint);
 				this.auxFinalVertex = new Vertex();
 				this.auxFinalVertex.addPoint(nextPoint);
 			}
 			else if(isJunction(nextPoint))
 			{
+				if(debug)
+					IJ.log("found unvisited junction point: " + nextPoint);
 				this.auxFinalVertex = findPointVertex(this.junctionVertex[iTree], nextPoint);
 				/*
 				int j = 0;
