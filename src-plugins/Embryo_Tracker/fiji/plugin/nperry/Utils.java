@@ -299,28 +299,74 @@ public class Utils {
 		return (int) ( range[0] / binWidth + 1 ); 
 	}
 	
+
+	/**
+	 * Create a histogram from the data given.
+	 */
+	public static final int[] histogram(final double data[], final int nBins) {
+		final double[] range = Utils.getRange(data);
+		final double binWidth = range[0]/nBins;
+		final int[] hist = new int[nBins];
+		int index;
+
+		for (int i = 0; i < data.length; i++) {
+			index = Math.min((int) Math.floor((data[i] - range[1]) / binWidth), nBins - 1);
+			hist[index]++;
+		}
+		return hist;
+	}
+	
+	/**
+	 * Create a histogram from the data given, with a default number of bins given by {@link #getNBins(double[])}.
+	 * @param data
+	 * @return
+	 */
+	public static final int[] histogram(final double data[]) {
+		return histogram(data, getNBins(data));
+	}
+	
+	/**
+	 * Return a threshold for the given data, using an Otsu histogram thresholding method.
+	 */
+	public static final double otsuThreshold(double[] data) {
+		return otsuThreshold(data, getNBins(data));
+	}
+	
+	/**
+	 * Return a threshold for the given data, using an Otsu histogram thresholding method with a given bin number.
+	 */
+	public static final double otsuThreshold(double[] data, int nBins) {
+		final int[] hist = histogram(data, nBins);
+		final int thresholdIndex = otsuThresholdIndex(hist, data.length);
+		double[] range = getRange(data);
+		double binWidth = range[0] / nBins;
+		return 	range[1] + binWidth * thresholdIndex;
+	}
+	
 	/**
 	 * Given a histogram array <code>hist</code>, built with an initial amount of <code>nPoints</code>
-	 * data item, this method return a threshold for the histogram. The threshold
-	 * is performed using the Otsu Threshold Method, {@link http://www.labbookpages.co.uk/software/imgProc/otsuThreshold.html}.
+	 * data item, this method return the bin index that thresholds the histogram in 2 classes. 
+	 * The threshold is performed using the Otsu Threshold Method, 
+	 * {@link http://www.labbookpages.co.uk/software/imgProc/otsuThreshold.html}.
 	 * @param hist  the histogram array
 	 * @param nPoints  the number of data items this histogram was built on
-	 * @return a threshold value that separates the histogram in two classes
+	 * @return the bin index of the histogram that thresholds it
 	 */
-	public static final double otsuThreshold(final int[] hist, final int nPoints)	{
+	public static final int otsuThresholdIndex(final int[] hist, final int nPoints)	{
 		int total = nPoints;
 
 		double sum = 0;
-		for (int t=0 ; t<256 ; t++) sum += t * hist[t];
+		for (int t = 0 ; t < hist.length ; t++) 
+			sum += t * hist[t];
 
 		double sumB = 0;
 		int wB = 0;
 		int wF = 0;
 
 		double varMax = 0;
-		double threshold = 0;
+		int threshold = 0;
 
-		for (int t=0 ; t<256 ; t++) {
+		for (int t = 0 ; t < hist.length ; t++) {
 			wB += hist[t];               // Weight Background
 			if (wB == 0) continue;
 

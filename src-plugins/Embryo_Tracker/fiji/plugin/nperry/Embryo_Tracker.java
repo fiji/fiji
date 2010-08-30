@@ -337,33 +337,11 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 */
 	private void thresholdFeatures(Feature[] features, HashMap<Feature, Float> thresholds, ArrayList<Spot> spots) {
 		for (Feature feature : features) {
-			final float threshold = (float) Utils.otsuThreshold(histogram(spots, feature), spots.size());
+			final float threshold = (float) Utils.otsuThreshold(Utils.getFeature(spots, feature));
 			System.out.println(String.format("Feature: %s, Value: %f", feature.toString(), threshold));
 			thresholds.put(feature, threshold);
 		}
 	}
-	
-	/** Generate a histogram of the specified feature, with a number of bins determined 
-	 * from the Freedman and Diaconis rule (bin_space = 2*IQR/n^(1/3)) 
-	 */
-	private int[] histogram (ArrayList<Spot> spots, Feature feature) {
-
-		double[] values = Utils.getFeature(spots, feature);
-		int nBins = Utils.getNBins(values);
-		double[] range = Utils.getRange(values);
-		double binWidth = range[0]/nBins;
-		
-		// Create array for histrogram with nBins
-		final int[] hist = new int[nBins];
-		int index;
-		// Populate the histogram with data
-		for (int i = 0; i < values.length; i++) {
-			index = Math.min((int) Math.floor((values[i] - range[1]) / binWidth), nBins - 1); // the max value ends up being 1 higher than nBins, so put it in the last bin.
-			hist[index]++;
-		}
-		return hist;
-	}
-	
 
 	/**
 	 * TODO
