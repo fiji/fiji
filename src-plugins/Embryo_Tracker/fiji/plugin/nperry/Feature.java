@@ -1,5 +1,6 @@
 package fiji.plugin.nperry;
 
+
 public enum Feature {
 	LOG_VALUE,
 	CONTRAST,
@@ -24,7 +25,7 @@ public enum Feature {
 	ELLIPSOIDFIT_AXISTHETA_B,
 	ELLIPSOIDFIT_AXISTHETA_C	;
 	
-	public String getName() {
+	public String toString() {
 		switch(this) {
 		case VARIANCE:
 			return "Variance";
@@ -52,8 +53,27 @@ public enum Feature {
 			return "Total intensity";
 		case STANDARD_DEVIATION:
 			return "Standard deviation";
+		case ELLIPSOIDFIT_AXISPHI_A:
+			return "Ellipsoid A axis φ azimuth (rad)";
+		case ELLIPSOIDFIT_AXISPHI_B:
+			return "Ellipsoid B axis φ azimuth (rad)";
+		case ELLIPSOIDFIT_AXISPHI_C:
+			return "Ellipsoid C axis φ azimuth (rad)";
+		case ELLIPSOIDFIT_AXISTHETA_A:
+			return "Ellipsoid A axis θ zenith (rad)";
+		case ELLIPSOIDFIT_AXISTHETA_B:
+			return "Ellipsoid B axis θ zenith (rad)";
+		case ELLIPSOIDFIT_AXISTHETA_C:
+			return "Ellipsoid C axis θ zenith (rad)";
+		case ELLIPSOIDFIT_SEMIAXISLENGTH_A:
+			return "Ellipsoid A semi-axis length";
+		case ELLIPSOIDFIT_SEMIAXISLENGTH_B:
+			return "Ellipsoid B semi-axis length";
+		case ELLIPSOIDFIT_SEMIAXISLENGTH_C:
+			return "Ellipsoid C semi-axis length";
 		default:
 			return null;
 		}
 	}
+
 }

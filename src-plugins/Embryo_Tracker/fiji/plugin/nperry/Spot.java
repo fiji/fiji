@@ -80,7 +80,7 @@ public class Spot {
 			s.append("Feature list:\n");
 			float val;
 			for (Feature key : new TreeSet<Feature>(features.keySet())) {
-				s.append("\t"+key.getName()+": ");
+				s.append("\t"+key.toString()+": ");
 				val = features.get(key);
 				if (val >= 1e4)
 					s.append(String.format("%.1g", val));
