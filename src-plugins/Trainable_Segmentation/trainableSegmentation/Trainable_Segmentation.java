@@ -1658,6 +1658,7 @@ public class Trainable_Segmentation implements PlugIn
 					}
 
 					if (storeResults) {
+						IJ.save(probImage, file.getPath() + "prob.tif");
 						probImage.close();
 						testImage.close();
 					}
