@@ -1,6 +1,7 @@
 package fiji.plugin.nperry;
 
 import fiji.plugin.nperry.features.FeatureFacade;
+import fiji.plugin.nperry.features.LoGValue;
 import fiji.plugin.nperry.tracking.ObjectTracker;
 import ij.IJ;
 import ij.ImagePlus;
@@ -258,9 +259,11 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			
 			/* 7 - Extract features for the spot collection */
 			
-			final FeatureFacade<T> featureCalculator = new FeatureFacade<T>(img, filteredImg, diam, calibration);
-			featureCalculator.processAllFeatures(spots);
+//			final FeatureFacade<T> featureCalculator = new FeatureFacade<T>(img, filteredImg, diam, calibration);
+//			featureCalculator.processAllFeatures(spots);
 			//featureCalculator.processFeature(Feature.LOG_VALUE, spots);  // only log, because the slowness of the 3d renderer makes anything else impossible
+			LoGValue<T> analyzer = new LoGValue<T>(filteredImg, downsampleFactors, calibration);
+			analyzer.process(spots);
 			
 			/* 8 - Threshold maxima based on extracted features. */
 			
@@ -276,7 +279,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		/* 9 Render 3D to adjust thresholds... */
 		ArrayList< ArrayList< ArrayList<Spot> > > pointSelectionStatus = applyThresholds(extremaAllFrames, thresholdsAllFrames);
 		Image3DUniverse univ = renderIn3DViewer(imp, diam, pointSelectionStatus);
-		letUserAdjustThresholds(univ, imp.getTitle(), thresholdsAllFrames, pointSelectionStatus, extremaAllFrames, calibration);
+		//letUserAdjustThresholds(univ, imp.getTitle(), thresholdsAllFrames, pointSelectionStatus, extremaAllFrames, calibration);
 
 		
 		/* 10 - Track */
@@ -682,29 +685,29 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 //						}		
 //					}
 					
-					// i am not dealing with the poor performance of the points in the 3d rendering. brute force search time. no more dynamic search.
-					for (int i = 0; i < thresholdsAllFrames.size(); i++) {
-						PointList pl = c.getInstant(i).getPointList();
-						ci.showPointList(false);
-						pl.clear();
-						thresholdsAllFrames.get(i).put(feature, threshold);
-						ArrayList<Spot> shown = selectedPoints.get(i).get(SHOWN);
-						ArrayList<Spot> notShown = selectedPoints.get(i).get(NOT_SHOWN);
-						
-						for (Spot spot : shown) {
-							if (aboveThresholds(spot, thresholdsAllFrames.get(i))) {
-								float[] coords = spot.getCoordinates();
-								pl.add(spot.getName(), coords[0], coords[1], coords[2]);	
-							}
-						}
-						for (Spot spot : notShown) {
-							if (aboveThresholds(spot, thresholdsAllFrames.get(i))) {
-								float[] coords = spot.getCoordinates();
-								pl.add(spot.getName(), coords[0], coords[1], coords[2]);	
-							}
-						}
-						ci.showPointList(true);
-					}
+//					// i am not dealing with the poor performance of the points in the 3d rendering. brute force search time. no more dynamic search.
+//					for (int i = 0; i < thresholdsAllFrames.size(); i++) {
+//						PointList pl = c.getInstant(i).getPointList();
+//						ci.showPointList(false);
+//						pl.clear();
+//						thresholdsAllFrames.get(i).put(feature, threshold);
+//						ArrayList<Spot> shown = selectedPoints.get(i).get(SHOWN);
+//						ArrayList<Spot> notShown = selectedPoints.get(i).get(NOT_SHOWN);
+//						
+//						for (Spot spot : shown) {
+//							if (aboveThresholds(spot, thresholdsAllFrames.get(i))) {
+//								float[] coords = spot.getCoordinates();
+//								pl.add(spot.getName(), coords[0], coords[1], coords[2]);	
+//							}
+//						}
+//						for (Spot spot : notShown) {
+//							if (aboveThresholds(spot, thresholdsAllFrames.get(i))) {
+//								float[] coords = spot.getCoordinates();
+//								pl.add(spot.getName(), coords[0], coords[1], coords[2]);	
+//							}
+//						}
+//						ci.showPointList(true);
+//					}
 					
 					univ.fireContentChanged(c);
 				}
