@@ -1,25 +1,23 @@
 package fiji.plugin.nperry.gui;
 import java.awt.BorderLayout;
 import java.awt.Component;
-
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EmptyStackException;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Random;
 import java.util.Stack;
 
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
-
-import javax.swing.Box;
-import javax.swing.WindowConstants;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.WindowConstants;
 
 import fiji.plugin.nperry.Feature;
 import fiji.plugin.nperry.Spot;
@@ -34,12 +32,15 @@ public class ThresholdGuiPanel extends javax.swing.JPanel {
 	private JButton jButtonAddThreshold;
 	private JPanel jPanelButtons;
 
-	private Stack<ThresholdPanel> thresholdPanels = new Stack<ThresholdPanel>();
+	private Stack<ThresholdPanel<Feature>> thresholdPanels = new Stack<ThresholdPanel<Feature>>();
 	private Stack<Component> struts = new Stack<Component>();
 	private Collection<Spot> spots;
-	private HashMap<Feature, double[]> featureValues = new HashMap<Feature, double[]>(Feature.values().length);
+	private EnumMap<Feature, double[]> featureValues = new EnumMap<Feature, double[]>(Feature.class);
 	private int newFeatureIndex;
 
+	/*
+	 * CONSTRUCTOR
+	 */
 	
 	public ThresholdGuiPanel(Collection<Spot> spots) {
 		super();
@@ -69,7 +70,7 @@ public class ThresholdGuiPanel extends javax.swing.JPanel {
 	}
 	
 	private void addThresholdPanel() {
-		ThresholdPanel tp = new ThresholdPanel(featureValues, Feature.values()[newFeatureIndex]);
+		ThresholdPanel<Feature> tp = new ThresholdPanel<Feature>(featureValues, Feature.values()[newFeatureIndex]);
 		newFeatureIndex++;
 		if (newFeatureIndex >= Feature.values().length) 
 			newFeatureIndex = 0;
@@ -83,7 +84,7 @@ public class ThresholdGuiPanel extends javax.swing.JPanel {
 	
 	private void removeThresholdPanel() {
 		try {
-			ThresholdPanel tp = thresholdPanels.pop();
+			ThresholdPanel<Feature> tp = thresholdPanels.pop();
 			Component strut = struts.pop();
 			jPanelAllThresholds.remove(strut);
 			jPanelAllThresholds.remove(tp);
