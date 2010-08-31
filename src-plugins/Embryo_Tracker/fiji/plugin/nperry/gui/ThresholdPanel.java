@@ -4,8 +4,6 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -34,8 +32,7 @@ import javax.swing.border.LineBorder;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.annotations.TextAnnotation;
-import org.jfree.chart.annotations.XYTextAnnotation;
+import org.jfree.chart.annotations.XYTextSimpleAnnotation;
 import org.jfree.chart.plot.IntervalMarker;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
@@ -61,7 +58,8 @@ import fiji.plugin.nperry.Utils;
 public class ThresholdPanel extends javax.swing.JPanel {
 	
 	private static final Font smallFont = new Font(Font.SANS_SERIF, Font.PLAIN, 10);
-	private static final Font boldFont = smallFont.deriveFont(Font.BOLD);
+	private static final Font boldFont = smallFont; //.deriveFont(Font.BOLD);
+	private static final Color annotationColor = new java.awt.Color(252,117,0);
 	private static final long serialVersionUID = 1L;
 	private static final String DATA_SERIES_NAME = "Data";
 	private JComboBox jComboBoxFeature;
@@ -78,6 +76,7 @@ public class ThresholdPanel extends javax.swing.JPanel {
 	private Map<Feature, double[]> featureValues;
 	/** Ordered feature array, as they are displayed in the combo-box. */
 	private Feature[] features;
+	private XYTextSimpleAnnotation annotation;
 	
 	
 	
@@ -155,7 +154,7 @@ public class ThresholdPanel extends javax.swing.JPanel {
 			this.setLayout(thisLayout);
 			this.setPreferredSize(panelSize);
 			this.setMaximumSize(panelMaxSize);
-			this.setBorder(new LineBorder(new java.awt.Color(252,117,0), 1, true));
+			this.setBorder(new LineBorder(annotationColor, 1, true));
 			{
 				String[] featureNames = new String[features.length];
 				for (int i = 0; i < features.length; i++) 
@@ -278,7 +277,12 @@ public class ThresholdPanel extends javax.swing.JPanel {
 				threshold = getXFromChartEvent(e);
 				redrawThresholdMarker();
 			}
-		});		
+		});
+		
+		annotation = new XYTextSimpleAnnotation();
+		annotation.setFont(smallFont);
+		annotation.setColor(annotationColor.darker());
+		plot.addAnnotation(annotation);
 	}
 	
 	private double getXFromChartEvent(MouseEvent mouseEvent) {
@@ -295,23 +299,14 @@ public class ThresholdPanel extends javax.swing.JPanel {
 			intervalMarker.setStartValue(plot.getDomainAxis().getLowerBound());
 			intervalMarker.setEndValue(threshold);
 		}
-		double x, y;
+		float x, y;
 		if (threshold > 0.9 * plot.getDomainAxis().getUpperBound()) 
-			x = threshold - 0.10 * plot.getDomainAxis().getRange().getLength();
+			x = (float) (threshold - 0.10 * plot.getDomainAxis().getRange().getLength());
 		else 
-			x = threshold + 0.05 * plot.getDomainAxis().getRange().getLength();
-		y = 0.9 * plot.getRangeAxis().getUpperBound();
-		double sx = plot.getDomainAxis().valueToJava2D(x, chartPanel.getScreenDataArea(), plot.getDomainAxisEdge());
-		double sy = plot.getRangeAxis().valueToJava2D(y, chartPanel.getScreenDataArea(), plot.getRangeAxisEdge());
-
-//		Point2D p = chartPanel.translateJava2DToScreen(new Point2D.Double(sx, sy));
-		Graphics g = chartPanel.getGraphics();
-		if (null == g) 
-			return;
-		System.out.println(sx +", "+sy);
-		g.drawString(String.format("%.1f", threshold), (int)sx, (int)sy);
-		((Graphics2D) g).drawString("PIF!", (int)sx, (int)sy);
-		((Graphics2D) g).drawRect((int)sx, (int)sy, 100, 100);
+			x = (float) (threshold + 0.05 * plot.getDomainAxis().getRange().getLength());
+		y = (float) (0.9 * plot.getRangeAxis().getUpperBound());
+		annotation.setText(String.format("%.1f", threshold));
+		annotation.setLocation(x, y);
 	}
 	
 	private void resetAxes() {
