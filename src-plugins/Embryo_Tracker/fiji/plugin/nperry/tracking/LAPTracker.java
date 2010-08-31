@@ -179,7 +179,31 @@ public class LAPTracker implements ObjectTracker {
 	public boolean checkInput() {
 		// TODO Auto-generated method stub
 		if (automatic) {
-			//check spots not null
+			
+			// Check that the objects list itself isn't null
+			if (null == objects) {
+				errorMessage = "The objects list is null.";
+				return false;
+			}
+			
+			// Check that the objects list contains inner collections.
+			if (objects.isEmpty()) {
+				errorMessage = "The objects list is empty.";
+				return false;
+			}
+			
+			// Check that at least one inner collection contains an object.
+			boolean empty = true;
+			for (Collection<Spot> c : objects) {
+				if (!c.isEmpty()) {
+					empty = false;
+					break;
+				}
+			}
+			if (empty) {
+				errorMessage = "The objects list is empty.";
+				return false;
+			}
 		}
 		
 		inputChecked = true;
