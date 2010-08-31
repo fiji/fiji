@@ -13,10 +13,8 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.geom.Rectangle2D;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.EnumMap;
 import java.util.Random;
-import java.util.TreeSet;
 
 import javax.swing.ButtonGroup;
 import javax.swing.ComboBoxModel;
@@ -39,22 +37,12 @@ import org.jfree.chart.renderer.xy.StandardXYBarPainter;
 import org.jfree.chart.renderer.xy.XYBarRenderer;
 import org.jfree.data.statistics.HistogramDataset;
 
-import fiji.plugin.nperry.Feature;
 import fiji.plugin.nperry.Utils;
 
 /**
-* This code was edited or generated using CloudGarden's Jigloo
-* SWT/Swing GUI Builder, which is free for non-commercial
-* use. If Jigloo is being used commercially (ie, by a corporation,
-* company or business for any purpose whatever) then you
-* should purchase a license for each developer using Jigloo.
-* Please visit www.cloudgarden.com for details.
-* Use of Jigloo implies acceptance of these licensing terms.
-* A COMMERCIAL LICENSE HAS NOT BEEN PURCHASED FOR
-* THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
-* LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
-*/
-public class ThresholdPanel extends javax.swing.JPanel {
+ * 
+ */
+public class ThresholdPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 	
 	private static final Font smallFont = new Font(Font.SANS_SERIF, Font.PLAIN, 10);
 	private static final Font boldFont = smallFont; //.deriveFont(Font.BOLD);
@@ -71,11 +59,10 @@ public class ThresholdPanel extends javax.swing.JPanel {
 	private XYPlot plot;
 	private IntervalMarker intervalMarker;
 	private double threshold;
-	private Feature feature;
-	private Map<Feature, double[]> featureValues;
-	/** Ordered feature array, as they are displayed in the combo-box. */
-	private Feature[] features;
+	private EnumMap<K, double[]> valuesMap;
 	private XYTextSimpleAnnotation annotation;
+	private K key;
+	private K[] allKeys;
 	
 	
 	
@@ -83,17 +70,17 @@ public class ThresholdPanel extends javax.swing.JPanel {
 	 * CONSTRUCTOR
 	 */
 	
-	public ThresholdPanel(Map<Feature, double[]> featureValues, Feature selectedFeature) {
+	public ThresholdPanel(EnumMap<K, double[]> valuesMap, K selectedKey) {
 		super();
-		this.featureValues = featureValues;
-		features = new TreeSet<Feature>(featureValues.keySet()).toArray(new Feature[0]); // Using a treeset will ensure the feature are sorted by the Feature enum order 
+		this.valuesMap = valuesMap;		
+		this.allKeys = selectedKey.getDeclaringClass().getEnumConstants(); // get all enum values
 		initGUI();
-		jComboBoxFeature.setSelectedItem(selectedFeature.toString());
+		jComboBoxFeature.setSelectedItem(selectedKey.toString());
 
 	}
 	
-	public ThresholdPanel(Map<Feature, double[]> featureValues) {
-		this(featureValues, featureValues.keySet().toArray(new Feature[0])[0]);
+	public ThresholdPanel(EnumMap<K, double[]> valuesMap) {
+		this(valuesMap, valuesMap.keySet().iterator().next());
 	}
 	
 	/*
@@ -117,7 +104,7 @@ public class ThresholdPanel extends javax.swing.JPanel {
 	/** 
 	 * Return the {@link Feature} selected in this panel.
 	 */
-	public Feature getFeature() { return feature; }
+	public K getKey() { return key; }
 	
 	
 	/*
@@ -125,20 +112,30 @@ public class ThresholdPanel extends javax.swing.JPanel {
 	 */
 	
 	private void comboBoxSelectionChanged() {
-		Feature selectedFeature = features[jComboBoxFeature.getSelectedIndex()];
-		double[] values = featureValues.get(selectedFeature);
-		int nBins = Utils.getNBins(values);
-		dataset = new HistogramDataset();
-		dataset.addSeries(DATA_SERIES_NAME, values, nBins);
+		K selectedFeature = allKeys[jComboBoxFeature.getSelectedIndex()];
+		double[] values = valuesMap.get(selectedFeature);
+		if (null == values) {
+			dataset = new HistogramDataset();
+			threshold = Double.NaN;
+			annotation.setLocation(0.5f, 0.5f);
+			annotation.setText("No data");
+		} else {
+			int nBins = Utils.getNBins(values);
+			dataset = new HistogramDataset();
+			dataset.addSeries(DATA_SERIES_NAME, values, nBins);
+		}
 		plot.setDataset(dataset);
 		resetAxes();
-		autoThreshold();		
+		autoThreshold();
 	}
 	
 	private void autoThreshold() {
-		Feature selectedFeature = features[jComboBoxFeature.getSelectedIndex()];
-		threshold = Utils.otsuThreshold(featureValues.get(selectedFeature));
-		redrawThresholdMarker();
+		K selectedFeature = allKeys[jComboBoxFeature.getSelectedIndex()];
+		double[] values = valuesMap.get(selectedFeature);
+		if (null != values) {
+			threshold = Utils.otsuThreshold(valuesMap.get(selectedFeature));
+			redrawThresholdMarker();
+		}
 	}
 
 	private void initGUI() {
@@ -155,10 +152,10 @@ public class ThresholdPanel extends javax.swing.JPanel {
 			this.setMaximumSize(panelMaxSize);
 			this.setBorder(new LineBorder(annotationColor, 1, true));
 			{
-				String[] featureNames = new String[features.length];
-				for (int i = 0; i < features.length; i++) 
-					featureNames[i] = features[i].toString();
-				ComboBoxModel jComboBoxFeatureModel = new DefaultComboBoxModel(featureNames);
+				String[] keyNames = new String[allKeys.length];
+				for (int i = 0; i < keyNames.length; i++) 
+					keyNames[i] = allKeys[i].toString();
+				ComboBoxModel jComboBoxFeatureModel = new DefaultComboBoxModel(keyNames);
 				jComboBoxFeature = new JComboBox();
 				this.add(jComboBoxFeature, new GridBagConstraints(0, 0, 3, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(2, 5, 2, 5), 0, 0));
 				jComboBoxFeature.setModel(jComboBoxFeatureModel);
@@ -290,6 +287,11 @@ public class ThresholdPanel extends javax.swing.JPanel {
 	}
 	
 	private void redrawThresholdMarker() {
+		K selectedFeature = allKeys[jComboBoxFeature.getSelectedIndex()];
+		double[] values = valuesMap.get(selectedFeature);
+		if (null == values)
+			return;
+		
 		if (jRadioButtonAbove.isSelected()) {
 			intervalMarker.setStartValue(threshold);
 			intervalMarker.setEndValue(plot.getDomainAxis().getUpperBound());
@@ -329,9 +331,12 @@ public class ThresholdPanel extends javax.swing.JPanel {
 		final int N_ITEMS = 100;
 		final Random ran = new Random();
 		double mean;
-		Feature[] features = new Feature[] { Feature.CONTRAST, Feature.ELLIPSOIDFIT_AXISPHI_A, Feature.MEAN_INTENSITY };
-		Map<Feature, double[]> fv = new HashMap<Feature, double[]>(features.length);
-		for (Feature feature : features) {
+		fiji.plugin.nperry.Feature[] features = new fiji.plugin.nperry.Feature[] { 
+				fiji.plugin.nperry.Feature.CONTRAST, 
+				fiji.plugin.nperry.Feature.ELLIPSOIDFIT_AXISPHI_A, 
+				fiji.plugin.nperry.Feature.MEAN_INTENSITY };
+		EnumMap<fiji.plugin.nperry.Feature, double[]> fv = new EnumMap<fiji.plugin.nperry.Feature, double[]>(fiji.plugin.nperry.Feature.class);
+		for (fiji.plugin.nperry.Feature feature : features) {
 			double[] val = new double[N_ITEMS];
 			mean = ran.nextDouble() * 10;
 			for (int j = 0; j < val.length; j++) 
@@ -340,7 +345,7 @@ public class ThresholdPanel extends javax.swing.JPanel {
 		}
 		
 		// Create GUI
-		ThresholdPanel tp = new ThresholdPanel(fv);
+		ThresholdPanel<fiji.plugin.nperry.Feature> tp = new ThresholdPanel<fiji.plugin.nperry.Feature>(fv);
 		tp.resetAxes();
 		JFrame frame = new JFrame();
 		frame.getContentPane().add(tp);
