@@ -1,6 +1,11 @@
 package fiji.plugin.nperry.tracking;
 
+import java.util.ArrayList;
 import java.util.Collection;
+
+import Jama.Matrix;
+
+import mpicbg.imglib.algorithm.math.MathLib;
 
 import fiji.plugin.nperry.Spot;
 
@@ -71,13 +76,22 @@ import fiji.plugin.nperry.Spot;
  * @author nperry
  */
 public class LAPTracker implements ObjectTracker {
-
+	
+	/** The maximum distance away two Spots in consecutive frames can be in order 
+	 * to be linked. */
+	protected static final double maxDist = 5.0f;
+	/** The factor used to create d and b in the paper, the alternative costs to linking
+	 * objects. */
+	protected static final double ALTERNATIVE_OBJECT_LINKING_COST_FACTOR = 1.5f;
+	/** Used to prevent this assignment from being made during Hungarian Algorithm. */
+	protected static final double BLOCKED = Double.POSITIVE_INFINITY;
+	
 	/** The cost matrix for linking individual objects (step 1) */
-	protected float[][] objectLinkingCosts;
+	protected ArrayList<double[][]> objectLinkingCosts;
 	/** The cost matrix for linking individual track segments (step 2). */
 	protected float[][] segmentLinkingCosts;
 	/** Stores the objects to track as a list of Spots per frame.  */
-	protected Collection< Collection<Spot> > objects;
+	protected ArrayList< ArrayList<Spot> > objects;
 	/** Stores a message describing an error incurred during use of the class. */
 	protected String errorMessage;
 	/** Stores whether the user will provide cost matrices or not. If automatic,
@@ -99,7 +113,12 @@ public class LAPTracker implements ObjectTracker {
 	 * @param objects Holds the list of Spots belonging to each frame in the movie.
 	 */
 	public LAPTracker (Collection< Collection<Spot> > objects) {
-		this.objects = objects;
+		ArrayList< Collection<Spot> > temp = new ArrayList< Collection<Spot> >(objects);
+		this.objects = new ArrayList< ArrayList<Spot> >();
+		
+		for (int i = 0; i < temp.size(); i++) {
+			this.objects.add(new ArrayList<Spot>(temp.get(i)));
+		}
 	}
 	
 	
@@ -129,7 +148,7 @@ public class LAPTracker implements ObjectTracker {
 	 * @param costs The properly formatted cost matrix for step (1). See
 	 * {@link LAPTracker} for details on proper formatting.
 	 */
-	public void setObjectCostMatrix(float[][] costs) {
+	public void setObjectCostMatrix(ArrayList<double[][]> costs) {
 		objectLinkingCosts = costs;
 		objectCostsSet = true;
 	}
@@ -140,7 +159,7 @@ public class LAPTracker implements ObjectTracker {
 	 * in step (1).
 	 * @return The cost matrix used for linking objects to track segments in step (1).
 	 */
-	public float[][] getObjectCostMatrix() {
+	public ArrayList<double[][]> getObjectCostMatrix() {
 		return objectLinkingCosts;
 	}
 	
@@ -177,37 +196,33 @@ public class LAPTracker implements ObjectTracker {
 	
 	@Override
 	public boolean checkInput() {
-		// TODO Auto-generated method stub
-		if (automatic) {
-			
-			// Check that the objects list itself isn't null
-			if (null == objects) {
-				errorMessage = "The objects list is null.";
-				return false;
+		// Check that the objects list itself isn't null
+		if (null == objects) {
+			errorMessage = "The objects list is null.";
+			return false;
+		}
+		
+		// Check that the objects list contains inner collections.
+		if (objects.isEmpty()) {
+			errorMessage = "The objects list is empty.";
+			return false;
+		}
+		
+		// Check that at least one inner collection contains an object.
+		boolean empty = true;
+		for (Collection<Spot> c : objects) {
+			if (!c.isEmpty()) {
+				empty = false;
+				break;
 			}
-			
-			// Check that the objects list contains inner collections.
-			if (objects.isEmpty()) {
-				errorMessage = "The objects list is empty.";
-				return false;
-			}
-			
-			// Check that at least one inner collection contains an object.
-			boolean empty = true;
-			for (Collection<Spot> c : objects) {
-				if (!c.isEmpty()) {
-					empty = false;
-					break;
-				}
-			}
-			if (empty) {
-				errorMessage = "The objects list is empty.";
-				return false;
-			}
+		}
+		if (empty) {
+			errorMessage = "The objects list is empty.";
+			return false;
 		}
 		
 		inputChecked = true;
-		return false;
+		return true;
 	}
 
 	
@@ -227,7 +242,9 @@ public class LAPTracker implements ObjectTracker {
 		
 		// Step 1
 		createDefaultObjectCosts();
-		computeTrackSegments();
+		for (int i = 0; i < objects.size(); i++) {
+			computeTrackSegments();
+		}
 		
 		// Step 2
 		createDefaultTrackSegmentCosts();
@@ -276,20 +293,163 @@ public class LAPTracker implements ObjectTracker {
 	/**
 	 * Uses the scores defined in the paper for creating {@link LAPTracker#objectLinkingCosts}.
 	 */
-	public void createDefaultObjectCosts() {
-		// check spots exist
+	public boolean createDefaultObjectCosts() {
+		// check inputs
+		if (!inputChecked) {
+			errorMessage = "checkInput() must be executed before createDefaultObjectCosts().";
+			return false;
+		}
+		
+		// initialize cost matrices container
+		objectLinkingCosts = new ArrayList<double[][]>();
+		
+		// create cost matrices
+		for (int i = 0; i < objects.size() - 1; i++) {
+			ArrayList<Spot> t0 = new ArrayList<Spot>(objects.get(i));
+			ArrayList<Spot> t1 = new ArrayList<Spot>(objects.get(i+1));
+			Matrix costs = fillInObjectCostMatrix(t0, t1, t0.size() + t1.size());
+			objectLinkingCosts.add(costs.getArray());
+		}
 		
 		objectCostsSet = true;
+		return true;
 	}
 	
 	
 	/**
 	 * Uses the scores defined in the paper for creating {@link LAPTracker#segmentLinkingCosts}.
 	 */
-	public void createDefaultTrackSegmentCosts() {
+	public boolean createDefaultTrackSegmentCosts() {
 		// check track segments exist
 		
 		segmentCostsSet = true;
+		return true;
 	}
 	
+	/**
+	 * This function can be used for equations (3) and (4) in the paper.
+	 * 
+	 * @param i Spot i
+	 * @param j Spot j
+	 * @return The Euclidean distance between Spots i and j.
+	 */
+	private double euclideanDistance(Spot i, Spot j) {
+		final float[] coordsI = i.getCoordinates();
+		final float[] coordsJ = j.getCoordinates();
+		double eucD = 0;
+
+		for (int k = 0; k < coordsI.length; k++) {
+			eucD += (coordsI[k] - coordsJ[k]) * (coordsI[k] - coordsJ[k]);
+		}
+		eucD = Math.sqrt(eucD);
+
+		return eucD;
+	}
+	
+	
+	/**
+	 * <p>Returns a filled-in Matrix to be used to link objects between frame t and frame t+1.
+	 * 
+	 * <p>For a description of the scores used in this matrix, please see Supplementary Note
+	 * 3 of the paper.
+	 * @param t0 The Spots belonging to frame t.
+	 * @param t1 The Spots belonging to frame t+1.
+	 * @param length The length of one of the Matrix's sides (square matrix).
+	 * @return A reference to the filled in cost matrix.
+	 */
+	public Matrix fillInObjectCostMatrix(ArrayList<Spot> t0, ArrayList<Spot> t1, int length) {
+		double maxScore = Double.NEGATIVE_INFINITY;							// Will hold the maximum score of all links
+		
+		// Initialize parent matrix and sub matrices
+		Matrix costs = new Matrix(length, length);
+		Matrix topLeftQuadrant = new Matrix(t0.size(), t1.size());			// Linking
+		Matrix topRightQuadrant = new Matrix(t0.size(), t0.size());			// No linking (objects in t)
+		Matrix bottomLeftQuadrant =  new Matrix(t1.size(), t1.size());		// No linking (objects in t+1)
+		Matrix bottomRightQuadrant = new Matrix(t1.size(), t0.size());		// Nothing, but mathematically required for LAP
+		
+		// Fill in top left quadrant
+		Spot s0 = null;
+		Spot s1 = null;
+		for (int i = 0; i < t0.size(); i++) {
+			s0 = t0.get(i);
+			for (int j = 0; j < t1.size(); j++) {
+				s1 = t1.get(j);
+				double d = euclideanDistance(s0, s1);
+				if (d < maxDist) {
+					topLeftQuadrant.set(i, j, d);
+					if (d > maxScore) {
+						maxScore = d;
+					}
+				} else {
+					topLeftQuadrant.set(i, j, BLOCKED);
+				}
+			}
+		}
+		
+		// Fill in top right quadrant
+		for (int i = 0; i < t0.size(); i++) {
+			for (int j = 0; j < t0.size(); j++) {
+				if (i == j) {
+					topRightQuadrant.set(i, j, ALTERNATIVE_OBJECT_LINKING_COST_FACTOR * maxScore);
+				} else {
+					topRightQuadrant.set(i, j, BLOCKED);
+				}
+				
+			}
+		}
+		
+		// Fill in bottom left quadrant
+		for (int i = 0; i < t1.size(); i++) {
+			for (int j = 0; j < t1.size(); j++) {
+				if (i == j) {
+					bottomLeftQuadrant.set(i, j, ALTERNATIVE_OBJECT_LINKING_COST_FACTOR * maxScore);
+				} else {
+					bottomLeftQuadrant.set(i, j, BLOCKED);
+				}
+				
+			}
+		}
+
+		// Fill in bottom right quadrant
+		for (int i = 0; i < t1.size(); i++) {
+			for (int j = 0; j < t0.size(); j++) {
+				if (topLeftQuadrant.get(j, i) < maxScore) {
+					bottomRightQuadrant.set(i, j, Double.MIN_VALUE);
+				} else {
+					bottomRightQuadrant.set(i, j, BLOCKED);
+				}
+			}
+		}
+		
+		// Set submatrices of parent matrix with the submatrices we calculated separately
+		costs.setMatrix(0, t0.size() - 1, 0, t1.size() - 1, topLeftQuadrant);
+		costs.setMatrix(t0.size(), costs.getRowDimension() - 1, t1.size(), costs.getColumnDimension() - 1, bottomRightQuadrant);
+		costs.setMatrix(0, t0.size() - 1, t1.size(), costs.getColumnDimension() - 1, topRightQuadrant);
+		costs.setMatrix(t0.size(), costs.getRowDimension() - 1, 0, t1.size() - 1, bottomLeftQuadrant);
+		
+		return costs;
+	}
+	
+	// For testing!
+	public static void main(String args[]) {
+		ArrayList<Spot> t0 = new ArrayList<Spot>();
+		ArrayList<Spot> t1 = new ArrayList<Spot>();
+		
+		t0.add(new Spot(new float[] {0,0,0}));
+		t0.add(new Spot(new float[] {1,1,1}));
+		t0.add(new Spot(new float[] {2,2,2}));
+		t0.add(new Spot(new float[] {3,3,3}));
+		t0.add(new Spot(new float[] {4,4,4}));
+		t0.add(new Spot(new float[] {5,5,5}));
+		
+		t1.add(new Spot(new float[] {1.5f,1.5f,1.5f}));
+		t1.add(new Spot(new float[] {2.5f,2.5f,2.5f}));
+		t1.add(new Spot(new float[] {3.5f,3.5f,3.5f}));
+		t1.add(new Spot(new float[] {4.5f,4.5f,4.5f}));
+	
+		LAPTracker lap = new LAPTracker();
+		Matrix test = lap.fillInObjectCostMatrix(t0, t1, t0.size() + t1.size());
+		test.print(4, 2);
+	}
 }
+
