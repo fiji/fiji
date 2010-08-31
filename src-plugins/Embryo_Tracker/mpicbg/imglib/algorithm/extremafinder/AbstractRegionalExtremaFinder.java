@@ -1,10 +1,6 @@
 package mpicbg.imglib.algorithm.extremafinder;
 
 import java.util.ArrayList;
-import java.util.Iterator;
-
-import fiji.plugin.nperry.Spot;
-
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
@@ -42,22 +38,7 @@ public abstract class AbstractRegionalExtremaFinder<T extends RealType<T>> imple
 		return centeredRegionalMaxima;
 	}
 	
-	@Override
-	public ArrayList< Spot > convertToSpots(ArrayList< float[] > coords, float[] calibration) {
-		ArrayList< Spot > spots = new ArrayList< Spot >();
-		Iterator< float[] > itr = coords.iterator();
-		while (itr.hasNext()) {
-			float[] coord = itr.next();
-			float[] calibrated = new float[coord.length];
-			for (int i = 0; i < calibrated.length; i++) {
-				calibrated[i] = coord[i] * calibration[i];
-			}
-			Spot spot = new Spot(calibrated);
-			spots.add(spot);
-		}
-		return spots;
-	}
-	
+
 	/**
 	 * Given an ArrayList of int[] (coordinates), computes the averaged coordinates and returns them.
 	 * 

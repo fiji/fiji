@@ -2,8 +2,6 @@ package mpicbg.imglib.algorithm.extremafinder;
 
 import java.util.ArrayList;
 
-import fiji.plugin.nperry.Spot;
-
 import mpicbg.imglib.algorithm.Algorithm;
 import mpicbg.imglib.algorithm.Benchmark;
 import mpicbg.imglib.image.Image;
@@ -42,18 +40,7 @@ public interface RegionalExtremaFinder<T extends RealType<T>> extends Algorithm,
 	 * @return The coordinates of the "center pixel" of the regional maximum. 
 	 */
 	public ArrayList< float[] > getRegionalExtremaCenters(boolean doInterpolate);
-	
-
-	/**
-	 * Create a {@link Spot} ArrayList from a list of coordinates. Since the spot 
-	 * coordinates are expected to be in physical units, a calibration array
-	 * is used to translate the pixel coordinates in physical coordinates.
-	 * @param  coords  the coordinates in pixel units
-	 * @param  calibration  the calibration array that stores pixel size
-	 * @return  spots with coordinates in physical units 
-	 */
-	public ArrayList< Spot > convertToSpots(ArrayList< float[] > coords, float[] calibration);
-	
+		
 	/**
 	 * If set to true before the {@link #process()} method is called, then extrema found 
 	 * at the edges of the image bounds (including time edges) will not be pruned, and will

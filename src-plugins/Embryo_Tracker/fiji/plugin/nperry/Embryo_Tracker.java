@@ -22,6 +22,7 @@ import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.ListIterator;
 
 import mpicbg.imglib.algorithm.extremafinder.RegionalExtremaFactory;
@@ -165,120 +166,48 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 */
 	public Object[] exec(ImagePlus imp, float diam, boolean useMedFilt, boolean allowEdgeMax, float[] calibration) {
 		
-		/* 1 - Check validity of parameters, initialize local variables */
-		
 		if (null == imp) return null;
-		final float[] downsampleFactors = Utils.createDownsampledDim(calibration, diam);	// factors for x,y,z that we need for scaling image down;
-		final ArrayList< ArrayList <Spot> > extremaAllFrames = new ArrayList< ArrayList <Spot> >();
+		
+		
+		/* 1 -- Initialize local variables */
 		final int numFrames = imp.getNFrames();
-		final ArrayList< Image<T> > frames = new ArrayList< Image<T> >(numFrames);
-		final int numDim = imp.getNSlices() > 1 ? 3 : 2; // will we get 2D or 3D frames?
-		final StructuringElement strel = Utils.makeSquareStrel(numDim);
-		final ImageFactory<FloatType> factory = new ImageFactory<FloatType>(new FloatType(), new ArrayContainerFactory());
-		final Image<FloatType> gaussKernel = FourierConvolution.getGaussianKernel(factory, IDEAL_SIGMA_FOR_DOWNSAMPLED_BLOB_DIAM, numDim);
-		final Image<FloatType> laplacianKernel = Utils.createLaplacianKernel(numDim);
-		final ArrayList< HashMap<Feature, Float> > thresholdsAllFrames = new ArrayList< HashMap<Feature, Float> >();
-
-				
+		final SpotSegmenter<T> segmenter = new SpotSegmenter<T>(null, diam, calibration, useMedFilt, allowEdgeMax);				
+		final ArrayList<Image<T>> frames = new ArrayList<Image<T>>(numFrames);
+		final ArrayList<List<Spot>> spotsAllFrames = new ArrayList<List<Spot>>(numFrames);
+		List<Spot> spots;
+		Image<T> filteredImage;
+		
 		// For each frame...
 		for (int i = 0; i < numFrames; i++) {
 			
 			
-			/* 2 - Prepare stack for use with Imglib. */
+			/* 1 - Prepare stack for use with Imglib. */
 			
-			System.out.println();
-			System.out.println("---Frame " + (i+1) + "---");
-			System.out.println("Creating frame...");
+			IJ.showStatus("---Frame " + (i+1) + "---");
 			Image<T> img = Utils.getSingleFrameAsImage(imp, i);
 			frames.add(img);
+			
+			/* 2 Segment it */
 		
-			
-			/* 3 - 	Downsample to improve run time. The image is downsampled by the 
-			 * 		factor necessary to achieve a resulting blob size of about 10 pixels 
-			 * 		in diameter in all dimensions. */
-			
-			IJ.showStatus("Downsampling...");
-			Image<T> filteredImg = Utils.downSampleByFactor(img, downsampleFactors);
-			
-			
-			/* 4 - 	Apply a median filter, to get rid of salt and pepper noise which could be 
-			 * 		mistaken for maxima in the algorithm (only applied if requested by user explicitly) */
-			
-			if (useMedFilt) {
-				IJ.showStatus("Applying median filter...");
-				System.out.println("Applying median filter...");
-				final MedianFilter<T> medFilt = new MedianFilter<T>(filteredImg, strel, new OutOfBoundsStrategyMirrorFactory<T>()); 
-				//TODO note: add back medFilt.checkInput() when it's fixed
-				if (!medFilt.process()) {
-					System.out.println(medFilt.getErrorMessage()); 
-					System.out.println("Bye.");
-					return null;
-				} 
-				filteredImg = medFilt.getResult(); 
-			}
-			
-			
-			/* 5 - 	Apply the LoG filter - current homemade implementation 
-			 * 		(Preibisch one in SPIMRegistration might be faster) */
-			
-			IJ.showStatus("Applying Gaussian filter...");
-			System.out.println("Applying Gaussian filter...");
-			final FourierConvolution<T, FloatType> fConvGauss = new FourierConvolution<T, FloatType>(filteredImg, gaussKernel);
-			if (!fConvGauss.checkInput() || !fConvGauss.process()) {
-				System.out.println( "Fourier Convolution failed: " + fConvGauss.getErrorMessage() );
+			segmenter.setImage(img);
+			if (segmenter.checkInput() && segmenter.process()) {
+				filteredImage = segmenter.getFilteredImage();
+				spots = segmenter.getResult();
+				spotsAllFrames.add(spots);
+			} else {
+				IJ.error(segmenter.getErrorMessage());
 				return null;
 			}
-			filteredImg = fConvGauss.getResult();
 			
-			IJ.showStatus("Applying Laplacian convolution...");
-			System.out.println("Applying Laplacian convolution...");
-			final FourierConvolution<T, FloatType> fConvLaplacian = new FourierConvolution<T, FloatType>(filteredImg, laplacianKernel);
-			if (!fConvLaplacian.checkInput() || !fConvLaplacian.process()) {
-				System.out.println( "Fourier Convolution failed: " + fConvLaplacian.getErrorMessage() );
-				return null;
-			}
-			filteredImg = fConvLaplacian.getResult();	
+			/* 3 - Extract features for the spot collection */
 			
-			
-			/* 6 - Find extrema of newly convoluted image */
-			
-			IJ.showStatus("Finding extrema...");
-			System.out.println("Finding extrema...");
-			final RegionalExtremaFactory<T> extremaFactory = new RegionalExtremaFactory<T>(filteredImg);
-			final RegionalExtremaFinder<T> findExtrema = extremaFactory.createRegionalMaximaFinder(true);
-			findExtrema.allowEdgeExtrema(allowEdgeMax);
-			if (!findExtrema.checkInput() || !findExtrema.process()) { 
-				System.out.println( "Extrema Finder failed: " + findExtrema.getErrorMessage() );
-				return null;
-			}
-			final ArrayList< float[] > centeredExtrema = findExtrema.getRegionalExtremaCenters(false);
-			final ArrayList<Spot> spots = findExtrema.convertToSpots(centeredExtrema, calibration);
-			Utils.downsampledCoordsToOrigCoords(spots, downsampleFactors);
-			extremaAllFrames.add(spots);
-			
-			
-			/* 7 - Extract features for the spot collection */
-			
-//			final FeatureFacade<T> featureCalculator = new FeatureFacade<T>(img, filteredImg, diam, calibration);
-//			featureCalculator.processAllFeatures(spots);
-			//featureCalculator.processFeature(Feature.LOG_VALUE, spots);  // only log, because the slowness of the 3d renderer makes anything else impossible
-			LoGValue<T> analyzer = new LoGValue<T>(filteredImg, downsampleFactors, calibration);
-			analyzer.process(spots);
-			
-			/* 8 - Threshold maxima based on extracted features. */
-			
-			//Feature[] features = new Feature[] {Feature.LOG_VALUE, Feature.CONTRAST, Feature.MEAN_INTENSITY, Feature.VARIANCE};
-			Feature[] features = new Feature[] {Feature.LOG_VALUE};
-			HashMap<Feature, Float> thresholds = new HashMap<Feature, Float>();
-			thresholdFeatures(features, thresholds, spots);		
-			thresholdsAllFrames.add(thresholds);
-			
+			final FeatureFacade<T> featureCalculator = new FeatureFacade<T>(img, filteredImage, diam, calibration);
+			featureCalculator.processAllFeatures(spots);
 			
 		} // Finished looping over frames 
 		
 		/* 9 Render 3D to adjust thresholds... */
-		ArrayList< ArrayList< ArrayList<Spot> > > pointSelectionStatus = applyThresholds(extremaAllFrames, thresholdsAllFrames);
-		Image3DUniverse univ = renderIn3DViewer(imp, diam, pointSelectionStatus);
+		Image3DUniverse univ = renderIn3DViewer(imp, diam, spotsAllFrames);
 		//letUserAdjustThresholds(univ, imp.getTitle(), thresholdsAllFrames, pointSelectionStatus, extremaAllFrames, calibration);
 
 		
@@ -293,7 +222,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 //		}
 		
 		
-		return new Object[] {extremaAllFrames};
+		return new Object[] {spotsAllFrames};
 	}
 
 	private ArrayList< ArrayList< ArrayList<Spot> > > applyThresholds(ArrayList< ArrayList<Spot> > extremaAllFrames, ArrayList< HashMap<Feature, Float> > thresholdsAllFrames) {
@@ -377,7 +306,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 
 	
 	/**
-	 * This method takes an {@link ArrayList} of {@link Spots}, and displays them as points
+	 * This method takes an {@link List} of {@link Spots}, and displays them as points
 	 * in a 3D rendering of {@link ImagePlus} <code>imp</code>. The imp is rendered in 3D
 	 * using the {@link ij3d} package. 
 	 * 
@@ -386,10 +315,10 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	 * @param calibration The calibration of the image, necessary to properly render the ImagePlus in 3D.
 	 * @param diam The estimated diameter of the Spots (to size the displayed points accordingly in the 3D rendering).
 	 * @param thresholdsAllFrames The thresholds for the different features across all frames.
-	 * @param selectedPoints An Arraylist, which for each frame stores an ArrayList of the Spots shown and not shown in a given frame.
+	 * @param selectedPoints A List, which for each frame stores an ArrayList of the Spots shown and not shown in a given frame.
 	 * @return A reference to the {@link Image3DUniverse} used for the 3D rendered image.
 	 */
-	private Image3DUniverse renderIn3DViewer(ImagePlus imp, float diam, ArrayList< ArrayList< ArrayList<Spot> > > pointSelectionStatus) {
+	private Image3DUniverse renderIn3DViewer(ImagePlus imp, float diam, List<List<Spot>> spots) {
 
 		// Convert to a usable format
 		if (imp.getType() != ImagePlus.GRAY8)
@@ -402,9 +331,9 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		// Add the image as a volume rendering
 		Content content = univ.addVoltex(imp);
 
-		for (int j = 0; j < pointSelectionStatus.size(); j++) {	// For all frames
+		for (int j = 0; j < spots.size(); j++) {	// For all frames
 			final PointList pointList = content.getInstant(j).getPointList();
-			final ArrayList<Spot> shown = pointSelectionStatus.get(j).get(SHOWN);
+			final List<Spot> shown = spots.get(j);
 
 			for (int i = 0; i < shown.size(); i++) {	// Add all points in the frame to the PointList for the frame's content
 				final Spot spot = shown.get(i);
