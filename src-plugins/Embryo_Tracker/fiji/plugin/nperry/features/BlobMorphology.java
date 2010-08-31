@@ -20,9 +20,9 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 	 * Fields
 	 */
 	
-	private final static Feature[] featurelist_sa 	= {Feature.ELLIPSOIDFIT_SEMIAXISLENGTH_A, 	Feature.ELLIPSOIDFIT_SEMIAXISLENGTH_B, 	Feature.ELLIPSOIDFIT_SEMIAXISLENGTH_C};
-	private final static Feature[] featurelist_phi 	= {Feature.ELLIPSOIDFIT_AXISPHI_A, 			Feature.ELLIPSOIDFIT_AXISPHI_B, 		Feature.ELLIPSOIDFIT_AXISPHI_C };
-	private final static Feature[] featurelist_theta = {Feature.ELLIPSOIDFIT_AXISTHETA_A, 		Feature.ELLIPSOIDFIT_AXISTHETA_B, 		Feature.ELLIPSOIDFIT_AXISTHETA_C}; 
+	private final static Feature[] featurelist_sa 	= {Feature.ELLIPSOIDFIT_SEMIAXISLENGTH_C, 	Feature.ELLIPSOIDFIT_SEMIAXISLENGTH_B, 	Feature.ELLIPSOIDFIT_SEMIAXISLENGTH_A};
+	private final static Feature[] featurelist_phi 	= {Feature.ELLIPSOIDFIT_AXISPHI_C, 			Feature.ELLIPSOIDFIT_AXISPHI_B, 		Feature.ELLIPSOIDFIT_AXISPHI_A };
+	private final static Feature[] featurelist_theta = {Feature.ELLIPSOIDFIT_AXISTHETA_C, 		Feature.ELLIPSOIDFIT_AXISTHETA_B, 		Feature.ELLIPSOIDFIT_AXISTHETA_A}; 
 	
 	private static final double SIGNIFICANCE_FACTOR = 1.5;
 	private static final Feature FEATURE = Feature.MORPHOLOGY;
@@ -109,10 +109,8 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 		mat.timesEquals(1/totalmass);
 		EigenvalueDecomposition eigdec = mat.eig();
 		double[] eigenvalues = eigdec.getRealEigenvalues();
-		double[] eigenvalues_copy = eigenvalues.clone();
 		Matrix eigenvectors = eigdec.getV();
 		
-		Arrays.sort(eigenvalues_copy); // TODO use this for classification
 		double I1 = eigenvalues[0];
 		double I2 = eigenvalues[1];
 		double I3 = eigenvalues[2];
@@ -121,11 +119,21 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 		double c = Math.sqrt( 2.5 *(I1+I2-I3) );
 		double[] semiaxes = new double[] {a, b, c};
 		
+		// Sort semi-axes by ascendent order and get the sorting index
+		double[] semiaxes_ordered = semiaxes.clone();
+		Arrays.sort(semiaxes_ordered);
+		int[] order = new int[3];
+		for (int i = 0; i < semiaxes_ordered.length; i++) 
+			for (int j = 0; j < semiaxes.length; j++) 
+				if (semiaxes_ordered[i] == semiaxes[j])
+					order[i] = j;
+		
+		// Get the sorted eigenvalues
 		double[][] uvectors = new double[3][3];
 		for (int i = 0; i < eigenvalues.length; i++) {
-			uvectors[i][0] = eigenvectors.get(0, i);
-			uvectors[i][1] = eigenvectors.get(1, i);
-			uvectors[i][2] = eigenvectors.get(2, i);
+			uvectors[i][0] = eigenvectors.get(0, order[i]);
+			uvectors[i][1] = eigenvectors.get(1, order[i]);
+			uvectors[i][2] = eigenvectors.get(2, order[i]);
 		}
 			
 		// Store in the Spot object
@@ -141,7 +149,8 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 			if (phi > Math.PI/2 ) 
 				phi -= Math.PI; 
 			
-			spot.putFeature(featurelist_sa[i], (float) semiaxes[i]);
+			// Store in descending order
+			spot.putFeature(featurelist_sa[i], (float) semiaxes_ordered[i]);
 			spot.putFeature(featurelist_phi[i], (float) phi);
 			spot.putFeature(featurelist_theta[i], (float) theta);
 		}
@@ -159,7 +168,7 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 		
 		float a = 10;
 		float b = 5;
-		float c = 5;
+		float c = 7;
 		float theta_r = (float) Math.toRadians(0); // I am unable to have it working for theta_r != 0
 		float phi_r = (float) Math.toRadians(45);
 
@@ -219,6 +228,7 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 			System.out.println(String.format("For axis of semi-length %.1f, orientation is phi = %.1f°, theta = %.1f°",
 					lv, Math.toDegrees(phiv), Math.toDegrees(thetav)));
 		}
+		System.out.println(spot);
 	}
 
 }
