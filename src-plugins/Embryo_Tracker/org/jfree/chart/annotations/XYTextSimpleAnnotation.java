@@ -6,6 +6,7 @@ import java.awt.Graphics2D;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 
+import org.jfree.chart.ChartPanel;
 import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.plot.PlotRenderingInfo;
 import org.jfree.chart.plot.XYPlot;
@@ -16,6 +17,12 @@ public class XYTextSimpleAnnotation implements XYAnnotation {
 	private String text;
 	private Font font;
 	private Color color;
+	private ChartPanel chartPanel;
+	
+	
+	public XYTextSimpleAnnotation(ChartPanel chartPanel) {
+		this.chartPanel = chartPanel;
+	}
 	
 	/*
 	 * PUBLIC METHOD
@@ -27,8 +34,8 @@ public class XYTextSimpleAnnotation implements XYAnnotation {
 			ValueAxis domainAxis, ValueAxis rangeAxis, int rendererIndex,
 			PlotRenderingInfo info) {
 		
-		float sx = (float) plot.getDomainAxis().valueToJava2D(x, dataArea, plot.getDomainAxisEdge());
-		float sy = (float) plot.getRangeAxis().valueToJava2D(y, dataArea, plot.getRangeAxisEdge());
+		float sx = (float) plot.getDomainAxis().valueToJava2D(x, chartPanel.getScreenDataArea(), plot.getDomainAxisEdge());
+		float sy = (float) plot.getRangeAxis().valueToJava2D(y, chartPanel.getScreenDataArea(), plot.getRangeAxisEdge());
 		g2.setTransform(new AffineTransform());
 		g2.setColor(color);
 		g2.setFont(font);

@@ -12,7 +12,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
-import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.HashMap;
 import java.util.Map;
@@ -279,16 +278,15 @@ public class ThresholdPanel extends javax.swing.JPanel {
 			}
 		});
 		
-		annotation = new XYTextSimpleAnnotation();
-		annotation.setFont(smallFont);
+		annotation = new XYTextSimpleAnnotation(chartPanel);
+		annotation.setFont(smallFont.deriveFont(Font.BOLD));
 		annotation.setColor(annotationColor.darker());
 		plot.addAnnotation(annotation);
 	}
 	
 	private double getXFromChartEvent(MouseEvent mouseEvent) {
-		Point2D p = chartPanel.translateScreenToJava2D(mouseEvent.getPoint());
 		Rectangle2D plotArea = chartPanel.getScreenDataArea();
-		return plot.getDomainAxis().java2DToValue(p.getX(), plotArea, plot.getDomainAxisEdge());
+		return plot.getDomainAxis().java2DToValue(mouseEvent.getX(), plotArea, plot.getDomainAxisEdge());
 	}
 	
 	private void redrawThresholdMarker() {
@@ -300,11 +298,11 @@ public class ThresholdPanel extends javax.swing.JPanel {
 			intervalMarker.setEndValue(threshold);
 		}
 		float x, y;
-		if (threshold > 0.9 * plot.getDomainAxis().getUpperBound()) 
-			x = (float) (threshold - 0.10 * plot.getDomainAxis().getRange().getLength());
+		if (threshold > 0.85 * plot.getDomainAxis().getUpperBound()) 
+			x = (float) (threshold - 0.15 * plot.getDomainAxis().getRange().getLength());
 		else 
 			x = (float) (threshold + 0.05 * plot.getDomainAxis().getRange().getLength());
-		y = (float) (0.9 * plot.getRangeAxis().getUpperBound());
+		y = (float) (0.85 * plot.getRangeAxis().getUpperBound());
 		annotation.setText(String.format("%.1f", threshold));
 		annotation.setLocation(x, y);
 	}

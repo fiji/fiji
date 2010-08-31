@@ -24,18 +24,7 @@ import javax.swing.JScrollPane;
 import fiji.plugin.nperry.Feature;
 import fiji.plugin.nperry.Spot;
 
-/**
-* This code was edited or generated using CloudGarden's Jigloo
-* SWT/Swing GUI Builder, which is free for non-commercial
-* use. If Jigloo is being used commercially (ie, by a corporation,
-* company or business for any purpose whatever) then you
-* should purchase a license for each developer using Jigloo.
-* Please visit www.cloudgarden.com for details.
-* Use of Jigloo implies acceptance of these licensing terms.
-* A COMMERCIAL LICENSE HAS NOT BEEN PURCHASED FOR
-* THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
-* LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
-*/
+
 public class ThresholdGuiPanel extends javax.swing.JPanel {
 	private static final long serialVersionUID = 1L;
 	private JScrollPane jScrollPaneThresholds;
@@ -49,6 +38,7 @@ public class ThresholdGuiPanel extends javax.swing.JPanel {
 	private Stack<Component> struts = new Stack<Component>();
 	private Collection<Spot> spots;
 	private HashMap<Feature, double[]> featureValues = new HashMap<Feature, double[]>(Feature.values().length);
+	private int newFeatureIndex;
 
 	
 	public ThresholdGuiPanel(Collection<Spot> spots) {
@@ -56,6 +46,7 @@ public class ThresholdGuiPanel extends javax.swing.JPanel {
 		this.spots = spots;
 		prepareDataArrays();
 		initGUI();
+		addThresholdPanel();
 	}
 	
 	
@@ -78,7 +69,10 @@ public class ThresholdGuiPanel extends javax.swing.JPanel {
 	}
 	
 	private void addThresholdPanel() {
-		ThresholdPanel tp = new ThresholdPanel(featureValues);
+		ThresholdPanel tp = new ThresholdPanel(featureValues, Feature.values()[newFeatureIndex]);
+		newFeatureIndex++;
+		if (newFeatureIndex >= Feature.values().length) 
+			newFeatureIndex = 0;
 		Component strut = Box.createVerticalStrut(5);
 		struts.push(strut);
 		thresholdPanels.push(tp);
