@@ -1,8 +1,6 @@
 package fiji.plugin.nperry;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.TreeSet;
+import java.util.EnumMap;
 
 import mpicbg.imglib.algorithm.math.MathLib;
 
@@ -13,7 +11,7 @@ public class Spot {
 	 */
 	
 	/** Store the individual features, and their values. */
-	private Map<Feature, Float> features = new HashMap<Feature, Float>();
+	private EnumMap<Feature, Float> features = new EnumMap<Feature, Float>(Feature.class);
 	/** Physical coordinates of this spot. Can have a time component. */
 	private float[] coordinates; 
 	/** A user-supplied name for this spot. */
@@ -81,7 +79,7 @@ public class Spot {
 		else {
 			s.append("Feature list:\n");
 			float val;
-			for (Feature key : new TreeSet<Feature>(features.keySet())) {
+			for (Feature key : features.keySet()) {
 				s.append("\t"+key.toString()+": ");
 				val = features.get(key);
 				if (val >= 1e4)
@@ -108,10 +106,10 @@ public class Spot {
 	
 	
 	/**
-	 * Returns a map of {@link Feature}s for this Spot.
-	 * @return A map with a {@link Feature} as a key, and the value of the {@link Feature} as the value. 
+	 * Returns an {@link EnumMap} of {@link Feature}s for this Spot.
+	 * @return A EnumMap with a {@link Feature} as a key, and the value of the {@link Feature} as the value. 
 	 */
-	public Map<Feature, Float> getFeatures() {
+	public EnumMap<Feature, Float> getFeatures() {
 		return this.features;
 	}
 	
