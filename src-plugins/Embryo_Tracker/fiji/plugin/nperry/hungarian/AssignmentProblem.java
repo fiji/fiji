@@ -13,17 +13,17 @@ package fiji.plugin.nperry.hungarian;
  */
 public class AssignmentProblem {
 
-    private final float[][] costMatrix;
+    private final double[][] costMatrix;
 
-    public AssignmentProblem(float[][] aCostMatrix) {
+    public AssignmentProblem(double[][] aCostMatrix) {
         costMatrix = aCostMatrix;
     }
 
-    private float[][] copyOfMatrix() {
+    private double[][] copyOfMatrix() {
         // make a copy of the passed array
-        float[][] retval = new float[costMatrix.length][];
+        double[][] retval = new double[costMatrix.length][];
         for (int i = 0; i < costMatrix.length; i++) {
-            retval[i] = new float[costMatrix[i].length];
+            retval[i] = new double[costMatrix[i].length];
             System.arraycopy(costMatrix[i], 0, retval[i], 0, costMatrix[i].length);
         }
         return retval;
@@ -32,7 +32,7 @@ public class AssignmentProblem {
 
     public int[][] solve(AssignmentAlgorithm anAlgorithm) {
 
-        float[][] costMatrix = copyOfMatrix();
+        double[][] costMatrix = copyOfMatrix();
         return anAlgorithm.computeAssignments(costMatrix);
 
     }

@@ -8,6 +8,6 @@ package fiji.plugin.nperry.hungarian;
 public interface AssignmentAlgorithm {
 
 
-    int[][] computeAssignments(float[][] costMatrix);
+    int[][] computeAssignments(double[][] costMatrix);
 
 }
