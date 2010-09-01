@@ -18,6 +18,8 @@ public class Spot {
 	private float[] coordinates; 
 	/** A user-supplied name for this spot. */
 	private String name;
+	/** The frame to which this Spot belongs. (Same as a t coordinate) */
+	private int frame;
 
 	
 	/*
@@ -92,6 +94,13 @@ public class Spot {
 		return s.toString();
 	}
 	
+	public void setFrame(int frame) {
+		this.frame = frame;
+	}
+	
+	public int getFrame() {
+		return this.frame;
+	}
 	
 	/*
 	 * FEATURE RELATED METHODS
