@@ -63,11 +63,21 @@ public class TrackSegmentCostMatrixCreator implements CostMatrixCreator {
 			return false;
 		}
 		
-		// 1 - Initialize parent matrix and submatrices
+		// 0 - Set various variables to help in the following steps.
 		int numTrackSegmentPoints = countTrackSegmentPoints(trackSegments);
 		int numTrackSegments = trackSegments.size();
 		int length = 2 * numTrackSegments + numTrackSegmentPoints;
-		costs = new Matrix(length, length);																// Overall matrix
+		int colOne = 0;
+		int colTwo = numTrackSegments;
+		int colThree = numTrackSegments + numTrackSegmentPoints;
+		int colThreeEnd  = 2 * numTrackSegments + numTrackSegmentPoints - 1;
+		int rowOne = 0;
+		int rowTwo = numTrackSegments;
+		int rowThree = numTrackSegments + numTrackSegmentPoints;
+		int rowThreeEnd = 2 * numTrackSegments + numTrackSegmentPoints - 1;
+		
+		// 1 - Initialize parent matrix and submatrices
+		costs = new Matrix(length, length);																		// Overall matrix
 		Matrix topLeft = new Matrix(numTrackSegments, numTrackSegments);										// Gap closing
 		Matrix topMiddle = new Matrix(numTrackSegments, numTrackSegmentPoints);									// Merging
 		Matrix topRight = new Matrix (numTrackSegments, numTrackSegments);										// Terminating
@@ -79,60 +89,12 @@ public class TrackSegmentCostMatrixCreator implements CostMatrixCreator {
 		Matrix bottomRight = new Matrix(numTrackSegments, numTrackSegments);									// Lower right block (nothing)
 		
 		// 2 - Fill in submatrices
-		
-		// Top left
-		ArrayList<Spot> seg1, seg2;
-		Spot end, start;
-		double d, score;
-		
-		for (int i = 0; i < numTrackSegments; i++) {
-			for (int j = 0; j < numTrackSegments; j++) {
-				
-				// If i and j are the same track segment, block it
-				if (i == j) {
-					topLeft.set(i, j, BLOCKED);
-					continue;
-				}
-				
-				seg1 = trackSegments.get(i);
-				seg2 = trackSegments.get(j);
-				end = seg1.get(seg1.size() - 1);	// get last Spot of seg1
-				start = seg2.get(0);				// get first Spot of seg2
-				
-				// Check to see if i and j are within the allowed time window for gap closing
-				if (Math.abs(end.getFrame() - start.getFrame()) > GAP_CLOSING_TIME_WINDOW ) {
-					topLeft.set(i, j, BLOCKED);
-					continue;
-				}
-				
-				// Check to see if i and j are within radius requirements
-				d = euclideanDistance(end, start);
-				if (d > MAX_DIST_SEGMENTS) {
-					topLeft.set(i, j, BLOCKED);
-					continue;
-				}
-				
-				score = d*d;
-				topLeft.set(i, j, score);
-				
-			}
-		}
-		
-		// Top middle
+		fillInTopLeft(topLeft, numTrackSegments);
+		fillInTopMiddle(topMiddle);
 		
 		
 		// 3 - Fill in cost matrix with submatrices
-		
-		// To make setting submatrices easier, define indices
-		int colOne = 0;
-		int colTwo = numTrackSegments;
-		int colThree = numTrackSegments + numTrackSegmentPoints;
-		int colThreeEnd  = 2 * numTrackSegments + numTrackSegmentPoints - 1;
-		int rowOne = 0;
-		int rowTwo = numTrackSegments;
-		int rowThree = numTrackSegments + numTrackSegmentPoints;
-		int rowThreeEnd = 2 * numTrackSegments + numTrackSegmentPoints - 1;
-		
+
 		// Set top row
 		costs.setMatrix(rowOne, rowTwo - 1, colOne, colTwo - 1, topLeft);
 		costs.setMatrix(rowOne, rowTwo - 1, colTwo, colThree - 1, topMiddle);
@@ -150,17 +112,68 @@ public class TrackSegmentCostMatrixCreator implements CostMatrixCreator {
 		
 		costs.print(4, 2);
 		
-		
 		return true;
 	}
 
+	/*
+	 * Fills in the Gap Closing submatrix described in the paper (upper left).
+	 * The score used in this matrix is the same as the one described in the paper:
+	 * If the start of a track and the end of another are within the frame distance
+	 * maximum, as well as a radius distance, their score is the square of the distance
+	 * between the two.
+	 */
+	private void fillInTopLeft(Matrix topLeft, int numTrackSegments) {
+		ArrayList<Spot> seg1, seg2;
+		Spot end, start;
+		double d, score, intensityRatio;
+		
+		
+		for (int i = 0; i < numTrackSegments; i++) {
+			for (int j = 0; j < numTrackSegments; j++) {
+				
+				// If i and j are the same track segment, block it
+				if (i == j) {
+					topLeft.set(i, j, BLOCKED);
+					continue;
+				}
+				
+				seg1 = trackSegments.get(i);
+				seg2 = trackSegments.get(j);
+				end = seg1.get(seg1.size() - 1);	// get last Spot of seg1
+				start = seg2.get(0);				// get first Spot of seg2
+				
+				// Frame cutoff
+				if (Math.abs(end.getFrame() - start.getFrame()) > GAP_CLOSING_TIME_WINDOW ) {
+					topLeft.set(i, j, BLOCKED);
+					continue;
+				}
+				
+				// Radius cutoff
+				d = euclideanDistance(end, start);
+				if (d > MAX_DIST_SEGMENTS) {
+					topLeft.set(i, j, BLOCKED);
+					continue;
+				}
+				
+				intensityRatio = 
+				
+				
+				// Intensity cutoff
+				
+				
+				score = d*d;
+				topLeft.set(i, j, score);
+			}
+		}
+	}
 	
-	/**
+	
+	private void fillInTopMiddle(Matrix topMiddle) {
+		
+	}
+	
+	/*
 	 * This function can be used for equations (3) and (4) in the paper.
-	 * 
-	 * @param i Spot i
-	 * @param j Spot j
-	 * @return The Euclidean distance between Spots i and j.
 	 */
 	private double euclideanDistance(Spot i, Spot j) {
 		final float[] coordsI = i.getCoordinates();
