@@ -1,8 +1,10 @@
-package fiji.plugin.nperry;
+package fiji.plugin.nperry.segmentation;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
+import fiji.plugin.nperry.Spot;
 
 import mpicbg.imglib.algorithm.Algorithm;
 import mpicbg.imglib.algorithm.extremafinder.RegionalExtremaFactory;
@@ -27,6 +29,8 @@ public class SpotSegmenter <T extends RealType<T> >implements Algorithm {
 	 * down-sized such that the blob has this diameter (or smaller) in all directions. 
 	 * 10 pixels was chosen because trial and error showed that it gave good results.*/
 	public final static float GOAL_DOWNSAMPLED_BLOB_DIAM = 10f;
+	
+	private final static String BASE_ERROR_MESSAGE = "SpotSegmenter: ";
 	
 	private Image<T> img;
 	private float diameter;
@@ -98,10 +102,13 @@ public class SpotSegmenter <T extends RealType<T> >implements Algorithm {
 	 */
 	public void setImage(Image<T> image) {
 		if  ( (null == img ) || (img.getNumDimensions() != image.getNumDimensions()) ) {
-				createLaplacianKernel(); // instantiate laplacian kernel if needed
-				createGaussianKernel();
-				createSquareStrel();
-				sigma = (float) (diameter / Math.sqrt(img.getNumDimensions())); // optimal sigma for LoG approach and dimensionality
+			if (image == null)
+				return;
+			this.img = image;
+			createLaplacianKernel(); // instantiate laplacian kernel if needed
+			createGaussianKernel();
+			createSquareStrel();
+			sigma = (float) (diameter / Math.sqrt(img.getNumDimensions())); // optimal sigma for LoG approach and dimensionality
 		}
 		this.spots = null;
 		this.filteredImage = null;
@@ -115,24 +122,24 @@ public class SpotSegmenter <T extends RealType<T> >implements Algorithm {
 	@Override
 	public boolean checkInput() {
 		if (null == img) {
-			errorMessage = "Image is null.";
+			errorMessage = BASE_ERROR_MESSAGE + "Image is null.";
 			return false;
 		}
-		if (!(img.getNumDimensions() == 2 && img.getNumDimensions() == 3)) {
-			errorMessage = "Image must be 2D or 3D, got " + img.getNumDimensions() +"D.";
+		if (!(img.getNumDimensions() == 2 || img.getNumDimensions() == 3)) {
+			errorMessage = BASE_ERROR_MESSAGE + "Image must be 2D or 3D, got " + img.getNumDimensions() +"D.";
 			return false;
 		}
 		if (diameter <= 0) {
-			errorMessage = "Search diameter is negative or 0.";
+			errorMessage = BASE_ERROR_MESSAGE + "Search diameter is negative or 0.";
 			return false;
 		}
 		if (calibration == null) {
-			errorMessage = "Calibration array is null";
+			errorMessage = BASE_ERROR_MESSAGE + "Calibration array is null";
 			return false;
 		}
 		for (int i = 0; i < calibration.length; i++) {
 			if (calibration[i] <= 0) {
-				errorMessage = "Calibration array has negative or 0 elements.";
+				errorMessage = BASE_ERROR_MESSAGE + "Calibration array has negative or 0 elements.";
 				return false;
 			}
 		}
@@ -152,7 +159,17 @@ public class SpotSegmenter <T extends RealType<T> >implements Algorithm {
 		 * 		in diameter in all dimensions. */
 		
 		final float[] downsampleFactors = createDownsampledDim(calibration, diameter);	// factors for x,y,z that we need for scaling image down;
-		filteredImage = downSampleByFactor(img, downsampleFactors);
+		
+		final int dim[] = img.getDimensions();
+		for (int j = 0; j < dim.length; j++)
+			dim[j] = (int) (dim[j] / downsampleFactors[j]);
+	
+		final DownSample<T> downsampler = new DownSample<T>(img, dim, 0.5f, 0.5f);	// optimal sigma is defined by 0.5f, as mentioned here: http://pacific.mpi-cbg.de/wiki/index.php/Downsample
+		if (!downsampler.checkInput() || !downsampler.process()) {
+			errorMessage = BASE_ERROR_MESSAGE + "Filed to down-sample source image:\n"  + downsampler.getErrorMessage();
+	        return false;
+		}
+		filteredImage = downsampler.getResult();
 		
 		
 		/* 2 - 	Apply a median filter, to get rid of salt and pepper noise which could be 
@@ -161,7 +178,7 @@ public class SpotSegmenter <T extends RealType<T> >implements Algorithm {
 		if (useMedianFilter) {
 			final MedianFilter<T> medFilt = new MedianFilter<T>(filteredImage, strel, new OutOfBoundsStrategyMirrorFactory<T>()); 
 			if (!medFilt.process()) {
-				errorMessage = "Failed in applying median filter";
+				errorMessage = BASE_ERROR_MESSAGE + "Failed in applying median filter";
 				return false;
 			}
 			filteredImage = medFilt.getResult(); 
@@ -172,14 +189,14 @@ public class SpotSegmenter <T extends RealType<T> >implements Algorithm {
 		
 		final FourierConvolution<T, FloatType> fConvGauss = new FourierConvolution<T, FloatType>(filteredImage, gaussianKernel);
 		if (!fConvGauss.checkInput() || !fConvGauss.process()) {
-			errorMessage = "Fourier convolution failed: " + fConvGauss.getErrorMessage() ;
+			errorMessage = BASE_ERROR_MESSAGE + "Fourier convolution with Gaussian failed:\n" + fConvGauss.getErrorMessage() ;
 			return false;
 		}
 		filteredImage = fConvGauss.getResult();
 		
 		final FourierConvolution<T, FloatType> fConvLaplacian = new FourierConvolution<T, FloatType>(filteredImage, laplacianKernel);
 		if (!fConvLaplacian.checkInput() || !fConvLaplacian.process()) {
-			errorMessage = "Fourier Convolution failed: " + fConvLaplacian.getErrorMessage() ;
+			errorMessage = BASE_ERROR_MESSAGE + "Fourier Convolution with Laplacian failed:\n" + fConvLaplacian.getErrorMessage() ;
 			return false;
 		}
 		filteredImage = fConvLaplacian.getResult();	
@@ -190,7 +207,7 @@ public class SpotSegmenter <T extends RealType<T> >implements Algorithm {
 		final RegionalExtremaFinder<T> findExtrema = extremaFactory.createRegionalMaximaFinder(true);
 		findExtrema.allowEdgeExtrema(allowEdgeExtrema);
 		if (!findExtrema.checkInput() || !findExtrema.process()) { 
-			errorMessage = "Extrema Finder failed: " + findExtrema.getErrorMessage();
+			errorMessage = BASE_ERROR_MESSAGE + "Extrema Finder failed:\n" + findExtrema.getErrorMessage();
 			return false;
 		}
 		final ArrayList< float[] > centeredExtrema = findExtrema.getRegionalExtremaCenters(false);
@@ -305,25 +322,6 @@ public class SpotSegmenter <T extends RealType<T> >implements Algorithm {
 		}
 		float downsampleFactors[] = new float[]{widthFactor, heightFactor, depthFactor};
 		return downsampleFactors;
-	}
-	
-	/**
-	 * Return a down-sampled copy of the source image, where every dimension has been shrunk 
-	 * by the down-sampling factors given in argument.
-	 * @param source  the image to down-sample
-	 * @param downsampleFactors  the shrinking factor
-	 * @return  a down-sampled copy of the source image
-	 * @see #createDownsampledDim(float[], float)
-	 */
-	private static <T extends RealType<T>> Image<T> downSampleByFactor(final Image<T> source, final float[] downsampleFactors) {
-		final int dim[] = source.getDimensions();
-		for (int j = 0; j < dim.length; j++)
-			dim[j] = (int) (dim[j] / downsampleFactors[j]);
-	
-		final DownSample<T> downsampler = new DownSample<T>(source, dim, 0.5f, 0.5f);	// optimal sigma is defined by 0.5f, as mentioned here: http://pacific.mpi-cbg.de/wiki/index.php/Downsample
-		if (!downsampler.checkInput() || !downsampler.process()) 
-	        return null;
-		return downsampler.getResult();
 	}
 	
 	/**

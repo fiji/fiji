@@ -1,8 +1,7 @@
 package fiji.plugin.nperry;
 
 import fiji.plugin.nperry.features.FeatureFacade;
-import fiji.plugin.nperry.features.LoGValue;
-import fiji.plugin.nperry.tracking.ObjectTracker;
+import fiji.plugin.nperry.segmentation.SpotSegmenter;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.GenericDialog;
@@ -17,25 +16,13 @@ import java.awt.Checkbox;
 import java.awt.Scrollbar;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
 
-import mpicbg.imglib.algorithm.extremafinder.RegionalExtremaFactory;
-import mpicbg.imglib.algorithm.extremafinder.RegionalExtremaFinder;
-import mpicbg.imglib.algorithm.fft.FourierConvolution;
-import mpicbg.imglib.algorithm.roi.MedianFilter;
-import mpicbg.imglib.algorithm.roi.StructuringElement;
-import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.image.Image;
-import mpicbg.imglib.image.ImageFactory;
-import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
 import mpicbg.imglib.type.numeric.RealType;
-import mpicbg.imglib.type.numeric.real.FloatType;
 import vib.PointList;
 
 /**
@@ -97,21 +84,10 @@ import vib.PointList;
  */
 public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	
-	/** The number of dimensions in the image. */
-//	protected int numDim;
-	/** The goal diameter of blobs in <b>pixels</b> following downsizing. The image will be 
-	 * downsized such that the blob has this diameter (or smaller) in all directions. 
-	 * 10 pixels was chosen because trial and error showed that it gave good results.*/
-	final static public float GOAL_DOWNSAMPLED_BLOB_DIAM = 10f;
-	/** This is the sigma which is used for the Gaussian convolution. Based on trial and error, it
-	 * performed best when applied to images with blobs of diameter 10 pixels. */
-	final static protected double IDEAL_SIGMA_FOR_DOWNSAMPLED_BLOB_DIAM = 1.55f;
 	/** The index of the <b>shown</b> points in the 3D rendering of all the extrema found in the selectedPoints ArrayList. */
 	final static protected int SHOWN = 0;
 	/** The index of the <b>not shown</b> points in the 3D rendering of all the extrema found in the selectedPoints ArrayList. */
 	final static protected int NOT_SHOWN = 1;
-	
-	//protected float[] calibration;
 	
 	/** Ask for parameters and then execute. */
 	public void run(String arg) {
@@ -157,12 +133,6 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	
 	/** 
 	 * Execute the plugin functionality: 
-	 * <ol>
-	 * 	<li>Downsample the image</li>
-	 * 	<li>Apply a median filter (for salt and pepper noise, if user requests)</li>
-	 * 	<li>LoG filter</li>
-	 * 	<li>Find maxima</li>
-	 * </ol>
 	 */
 	public Object[] exec(ImagePlus imp, float diam, boolean useMedFilt, boolean allowEdgeMax, float[] calibration) {
 		
