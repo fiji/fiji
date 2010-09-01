@@ -163,6 +163,9 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			if (segmenter.checkInput() && segmenter.process()) {
 				filteredImage = segmenter.getFilteredImage();
 				spots = segmenter.getResult();
+				for (Spot spot : spots) {
+					spot.setFrame(i);
+				}
 				spotsAllFrames.add(spots);
 			} else {
 				IJ.error(segmenter.getErrorMessage());
