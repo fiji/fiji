@@ -87,6 +87,12 @@ public class LAPTracker implements ObjectTracker {
 	protected static final double ALTERNATIVE_OBJECT_LINKING_COST_FACTOR = 1.5f;
 	/** Used to prevent this assignment from being made during Hungarian Algorithm. */
 	protected static final double BLOCKED = Double.POSITIVE_INFINITY;
+	/** Used as a flag when building track segments to indicate a Spot is unlinked to
+	 * the next frame. */
+	protected static final int NOT_LINKED = -2;
+	/** Used as a flag when building the track segments to indicate a track segment with
+	 * only a single Spot. */
+	protected static final int SEGMENT_OF_SIZE_ONE = -1;
 	
 	/** The cost matrix for linking individual objects (step 1) */
 	protected ArrayList<double[][]> objectLinkingCosts;
@@ -107,7 +113,7 @@ public class LAPTracker implements ObjectTracker {
 	 * or not. */
 	protected boolean segmentCostsSet = false;
 	/** Stores the track segments computed during step (1) of the algorithm */
-	protected ArrayList< ArrayList<Spot> > trackSegments;
+	protected ArrayList< ArrayList<Spot> > trackSegments = null;
 	
 	
 	/**
@@ -188,6 +194,8 @@ public class LAPTracker implements ObjectTracker {
 	
 	/**
 	 * Returns the track segments computed from step (1).
+	 * @return Returns a reference to the track segments, or null if {@link #computeTrackSegments()}
+	 * hasn't been executed.
 	 */
 	public ArrayList< ArrayList<Spot> > getTrackSegments() {
 		return this.trackSegments;
@@ -337,7 +345,13 @@ public class LAPTracker implements ObjectTracker {
 	 * Uses the scores defined in the paper for creating {@link LAPTracker#segmentLinkingCosts}.
 	 */
 	public boolean createTrackSegmentCosts() {
-		// check track segments exist
+		// Check inputs
+		if (null == getTrackSegments()) {
+			errorMessage = "Track segments do not exist.";
+			return false;
+		}
+		
+		//segmentLinkingCosts = new double[][];
 		
 		segmentCostsSet = true;
 		return true;
@@ -463,19 +477,28 @@ public class LAPTracker implements ObjectTracker {
 		for (int i = 0; i < trackSegments.size(); i++) {						// For all frames
 			int[] currFrame = trackSegments.get(i);
 			for (int j = 0; j < currFrame.length; j++) {						// For all Spots in frame
-				if (currFrame[j] != -1) {										// If this Spot in linked to something in the next frame (!= -1)
+				if (currFrame[j] != NOT_LINKED) {								// If this Spot in linked to something in the next frame (!= -1)
 					ArrayList<Spot> trackSegment = new ArrayList<Spot>();		// Start a new track segment
 					
-					// DFS
-					int currIndex = j;											// Record the current index
-					int frame = i;												// Record the current frame
-					int prevIndex = 0;
-					while (currIndex != -1) {									
-						trackSegment.add(objects.get(frame).get(currIndex));	// Add the current Spot at the current index/frame to the track segment
-						prevIndex = currIndex;									// Save the location of the current index, so we can set it to -1 after incrementing.
-						currIndex = trackSegments.get(frame)[currIndex];		// Update the current index to be the Spot pointed to by the Spot we just added to the track segment
-						trackSegments.get(frame)[prevIndex] = -1;				// Set the Spot's value to -1 so we don't use it again
-						frame++;												// Increment the frame number
+					// Our spot is just in it's own segment
+					if (currFrame[j] == SEGMENT_OF_SIZE_ONE) {
+						trackSegment.add(objects.get(i).get(j));
+					}
+					
+					// Spot is beginning of a segment
+					else {
+						
+						// DFS
+						int currIndex = j;											// Record the current index
+						int frame = i;												// Record the current frame
+						int prevIndex = 0;
+						while (currIndex != NOT_LINKED) {									
+							trackSegment.add(objects.get(frame).get(currIndex));	// Add the current Spot at the current index/frame to the track segment
+							prevIndex = currIndex;									// Save the location of the current index, so we can set it to -1 after incrementing.
+							currIndex = trackSegments.get(frame)[currIndex];		// Update the current index to be the Spot pointed to by the Spot we just added to the track segment
+							trackSegments.get(frame)[prevIndex] = NOT_LINKED;		// Set the Spot's value to -1 so we don't use it again
+							frame++;												// Increment the frame number
+						}
 					}
 					
 					this.trackSegments.add(trackSegment);						// When we're here, eventually the current index was -1, so the track ended. Add the track to the list of tracks.
@@ -507,14 +530,25 @@ public class LAPTracker implements ObjectTracker {
 	 * This method creates an ArrayList< int[] > mimic of the ArrayList< ArrayList<Spot> > variable 'objects.'
 	 * Thus, each internal int[] has the same length as the the corresponding ArrayList<Spot>.
 	 * 
-	 * The default value for each int[] is set to -1.
+	 * The default value for each int[] is set to NOT_LINKED, unless it's the first frame
+	 * (index 0), in which case we set it equal to SEGMENT_OF_SIZE_ONE. Normally, when
+	 * a solution is in the top right quadrant, it signifies a segment ends, which is the 
+	 * same in our case as leaving the value as -1. However, in the first round,
+	 * if the solution is in the top right (object in t not paired with anything in t+1)
+	 * we still should consider it to be a segment, thus we set everything to 
+	 * SEGMENT_OF_SIZE_ONE in the first frame, and overwrite as we find links to the next
+	 * frame.
 	 */
 	private ArrayList< int[] > initializeTrackSegments() {
 		ArrayList< int[] > trackSegments = new ArrayList< int[] >();
 		for (int i = 0; i < objects.size(); i++) {						
 			int[] arr = new int[objects.get(i).size()];
 			for (int j = 0; j < arr.length; j++) {						
-				arr[j] = -1;
+				if (i == 0) {
+					arr[j] = SEGMENT_OF_SIZE_ONE;
+				} else {
+					arr[j] = NOT_LINKED;
+				}
 			}
 			trackSegments.add(arr);
 		}
@@ -546,10 +580,17 @@ public class LAPTracker implements ObjectTracker {
 		for (int j = 0; j < solutions.length; j++) {
 			int[] solution = solutions[j];
 			
-			// If the solution coordinates belong to the upper left quadrant, record the pairing.
-			if (solution[0] < t0.length && solution[1] < t1.length) {
-				t0[solution[0]] = solution[1];
+			// If the solution coordinates belong to the upper left quadrant
+			if (solution[0] < t0.length) {
+				if (solution[1] < t1.length) {
+					t0[solution[0]] = solution[1];
+				} 
 			} 
+			
+			// If the solution coordinates belong to the lower left quadrant
+			else if (solution[1] < t1.length) {
+				t1[solution[1]] = SEGMENT_OF_SIZE_ONE;
+			}
 		}
 	}
 	
@@ -572,6 +613,7 @@ public class LAPTracker implements ObjectTracker {
 		t1.add(new Spot(new float[] {4.5f,4.5f,4.5f}));
 		
 		t2.add(new Spot(new float[] {1.5f,1.5f,1.5f}));
+		t2.add(new Spot(new float[] {10f,10f,10f}));
 	
 		ArrayList<ArrayList<Spot>> wrap = new ArrayList<ArrayList<Spot>>();
 		wrap.add(t0);
