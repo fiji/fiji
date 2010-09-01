@@ -5,8 +5,6 @@ import java.util.Collection;
 
 import mpicbg.imglib.algorithm.math.MathLib;
 
-import Jama.Matrix;
-
 import fiji.plugin.nperry.Spot;
 import fiji.plugin.nperry.hungarian.AssignmentProblem;
 import fiji.plugin.nperry.hungarian.HungarianAlgorithm;
@@ -79,21 +77,16 @@ import fiji.plugin.nperry.hungarian.HungarianAlgorithm;
  */
 public class LAPTracker implements ObjectTracker {
 	
-	/** The maximum distance away two Spots in consecutive frames can be in order 
-	 * to be linked. */
-	protected static final double maxDist = 5.0f;
-	/** The factor used to create d and b in the paper, the alternative costs to linking
-	 * objects. */
-	protected static final double ALTERNATIVE_OBJECT_LINKING_COST_FACTOR = 1.5f;
-	/** Used to prevent this assignment from being made during Hungarian Algorithm. */
-	protected static final double BLOCKED = Double.POSITIVE_INFINITY;
 	/** Used as a flag when building track segments to indicate a Spot is unlinked to
 	 * the next frame. */
 	protected static final int NOT_LINKED = -2;
 	/** Used as a flag when building the track segments to indicate a track segment with
 	 * only a single Spot. */
 	protected static final int SEGMENT_OF_SIZE_ONE = -1;
-	
+	/** To throw out spurious segments, only include those with a length strictly larger
+	 * than this value. */
+	protected static final int MINIMUM_SEGMENT_LENGTH = 1; // TODO use this, make user input
+
 	/** The cost matrix for linking individual objects (step 1) */
 	protected ArrayList<double[][]> objectLinkingCosts;
 	/** The cost matrix for linking individual track segments (step 2). */
@@ -248,13 +241,26 @@ public class LAPTracker implements ObjectTracker {
 			return false;
 		}
 		
-		// Step 1
-		createObjectCosts();
-		computeTrackSegments();
+		// Step 1 - Make object cost matrices for all pairs t and t+1
+		objectLinkingCosts = new ArrayList<double[][]>();	
+		for (int i = 0; i < objects.size() - 1; i++) {
+			ObjectCostMatrixCreator objCosts = new ObjectCostMatrixCreator(new ArrayList<Spot>(objects.get(i)), new ArrayList<Spot>(objects.get(i + 1)));
+			if (!objCosts.checkInput() || !objCosts.process()) {
+				System.out.println(objCosts.getErrorMessage());
+				return false;
+			}
+			objectLinkingCosts.add(objCosts.getCostMatrix());
+		}
+		solveLAPForTrackSegments();
 		
-		// Step 2
-		createTrackSegmentCosts();
-		computeFinalTracks();
+		// Step 2 - Make a single track segment cost matrix
+		TrackSegmentCostMatrixCreator segCosts = new TrackSegmentCostMatrixCreator(trackSegments);
+		if (!segCosts.checkInput() || !segCosts.process()) {
+			System.out.println(segCosts.getErrorMessage());
+			return false;
+		}
+		segmentLinkingCosts = segCosts.getCostMatrix();
+		solveLAPForFinalTracks();
 		
 		return true;
 	}
@@ -265,35 +271,26 @@ public class LAPTracker implements ObjectTracker {
 	 * {@link LAPTracker#objectLinkingCosts}.
 	 * @return True if executes correctly, false otherwise.
 	 */
-	public boolean computeTrackSegments() {
-		if (!objectCostsSet) {
-			errorMessage = "The object cost matrix for step (1) has not been created.";
-			return false;
-		}
-		
-		else {
-			
-			/* This local copy of trackSegments will store the relationships between segments.
-			 * It will later be converted into an ArrayList< ArrayList<Spot> > to explicitly
-			 * store the segments themselves as a list of Spots.
-			 */
-			ArrayList< int[] > trackSegments = initializeTrackSegments();
+	public boolean solveLAPForTrackSegments() {
 
-			for (int i = 0; i < objectLinkingCosts.size(); i++) {
-				
-				// Solve the LAP using the Hungarian Algorithm
-				AssignmentProblem hung = new AssignmentProblem(objectLinkingCosts.get(i));
-				int[][] solution = hung.solve(new HungarianAlgorithm());
-				
-				// Extend track segments using solutions
-				extendTrackSegments(trackSegments, solution, i);
+		/* This local copy of trackSegments will store the relationships between segments.
+		 * It will later be converted into an ArrayList< ArrayList<Spot> > to explicitly
+		 * store the segments themselves as a list of Spots.
+		 */
+		ArrayList< int[] > trackSegments = initializeTrackSegments();
+
+		for (int i = 0; i < objectLinkingCosts.size(); i++) {
 			
-//				Matrix s = new Matrix(convertToDouble(solution));
-//				s.print(4, 1);
-			}
+			// Solve the LAP using the Hungarian Algorithm
+			AssignmentProblem hung = new AssignmentProblem(objectLinkingCosts.get(i));
+			int[][] solution = hung.solve(new HungarianAlgorithm());
 			
-			compileTrackSegments(trackSegments);
+			// Extend track segments using solutions
+			extendTrackSegments(trackSegments, solution, i);
+		
 		}
+		compileTrackSegments(trackSegments);
+
 		return true;
 	}
 	
@@ -303,167 +300,9 @@ public class LAPTracker implements ObjectTracker {
 	 * {@link LAPTracker#segmentLinkingCosts}.
 	 * @return True if executes correctly, false otherwise.
 	 */
-	public boolean computeFinalTracks() {
-		if (!segmentCostsSet) {
-			errorMessage = "The segment cost matrix for step (2) has not been created.";
-			return false;
-		}
-		
-		else {
-			return true;
-		}
-	}
-	
-	
-	/**
-	 * Uses the scores defined in the paper for creating {@link LAPTracker#objectLinkingCosts}.
-	 */
-	public boolean createObjectCosts() {
-		// Check inputs
-		if (!inputChecked) {
-			errorMessage = "checkInput() must be executed before createDefaultObjectCosts().";
-			return false;
-		}
-		
-		// Initialize cost matrices container
-		objectLinkingCosts = new ArrayList<double[][]>();
-		
-		// Create all cost matrices, one for every i, i+1 frame pair (there are objects.size() - 1 such pairs)
-		for (int i = 0; i < objects.size() - 1; i++) {
-			ArrayList<Spot> t0 = new ArrayList<Spot>(objects.get(i));
-			ArrayList<Spot> t1 = new ArrayList<Spot>(objects.get(i+1));
-			Matrix costs = fillInObjectCostMatrix(t0, t1, t0.size() + t1.size());
-			objectLinkingCosts.add(costs.getArray());
-		}
-		
-		objectCostsSet = true;
+	public boolean solveLAPForFinalTracks() {
 		return true;
 	}
-	
-	
-	/**
-	 * Uses the scores defined in the paper for creating {@link LAPTracker#segmentLinkingCosts}.
-	 */
-	public boolean createTrackSegmentCosts() {
-		// Check inputs
-		if (null == getTrackSegments()) {
-			errorMessage = "Track segments do not exist.";
-			return false;
-		}
-		
-		//segmentLinkingCosts = new double[][];
-		
-		segmentCostsSet = true;
-		return true;
-	}
-	
-	
-	/**
-	 * <p>Returns a filled-in Matrix to be used to link objects between frame t and frame t+1.
-	 * 
-	 * <p>For a description of the scores used in this matrix, please see Supplementary Note
-	 * 3 of the paper.
-	 * @param t0 The Spots belonging to frame t.
-	 * @param t1 The Spots belonging to frame t+1.
-	 * @param length The length of one of the Matrix's sides (square matrix).
-	 * @return A reference to the filled in cost matrix.
-	 */
-	public Matrix fillInObjectCostMatrix(ArrayList<Spot> t0, ArrayList<Spot> t1, int length) {
-		
-		// Initialize parent matrix and sub matrices
-		Matrix costs = new Matrix(length, length);
-		Matrix topLeftQuadrant = new Matrix(t0.size(), t1.size());			// Linking
-		Matrix topRightQuadrant = new Matrix(t0.size(), t0.size());			// No linking (objects in t)
-		Matrix bottomLeftQuadrant =  new Matrix(t1.size(), t1.size());		// No linking (objects in t+1)
-		Matrix bottomRightQuadrant = new Matrix(t1.size(), t0.size());		// Nothing, but mathematically required for LAP
-		
-		// Top left quadrant
-		double maxScore = Double.NEGATIVE_INFINITY;		// Will hold the maximum score of all links in top left quadrant
-		Spot s0 = null;									// Spot in t0
-		Spot s1 = null;									// Spot in t1
-		double d = 0;									// Holds Euclidean distance between s0 and s1
-		for (int i = 0; i < t0.size(); i++) {
-			s0 = t0.get(i);
-			for (int j = 0; j < t1.size(); j++) {
-				s1 = t1.get(j);
-				d = euclideanDistance(s0, s1);
-				if (d < maxDist) {
-					topLeftQuadrant.set(i, j, d);
-					if (d > maxScore) {
-						maxScore = d;
-					}
-				} else {
-					topLeftQuadrant.set(i, j, BLOCKED);
-				}
-			}
-		}
-		
-		// Top right quadrant
-		for (int i = 0; i < t0.size(); i++) {
-			for (int j = 0; j < t0.size(); j++) {
-				if (i == j) {
-					topRightQuadrant.set(i, j, ALTERNATIVE_OBJECT_LINKING_COST_FACTOR * maxScore);
-				} else {
-					topRightQuadrant.set(i, j, BLOCKED);
-				}
-				
-			}
-		}
-		
-		// Bottom left quadrant
-		for (int i = 0; i < t1.size(); i++) {
-			for (int j = 0; j < t1.size(); j++) {
-				if (i == j) {
-					bottomLeftQuadrant.set(i, j, ALTERNATIVE_OBJECT_LINKING_COST_FACTOR * maxScore);
-				} else {
-					bottomLeftQuadrant.set(i, j, BLOCKED);
-				}
-				
-			}
-		}
-
-		// Bottom right quadrant
-		for (int i = 0; i < t1.size(); i++) {
-			for (int j = 0; j < t0.size(); j++) {
-				if (topLeftQuadrant.get(j, i) < maxScore) {
-					bottomRightQuadrant.set(i, j, Double.MIN_VALUE);
-				} else {
-					bottomRightQuadrant.set(i, j, BLOCKED);
-				}
-			}
-		}
-		
-		// Set submatrices of parent matrix with the submatrices we calculated separately
-		costs.setMatrix(0, t0.size() - 1, 0, t1.size() - 1, topLeftQuadrant);
-		costs.setMatrix(t0.size(), costs.getRowDimension() - 1, t1.size(), costs.getColumnDimension() - 1, bottomRightQuadrant);
-		costs.setMatrix(0, t0.size() - 1, t1.size(), costs.getColumnDimension() - 1, topRightQuadrant);
-		costs.setMatrix(t0.size(), costs.getRowDimension() - 1, 0, t1.size() - 1, bottomLeftQuadrant);
-		
-		return costs;
-	}
-	
-	
-	
-	/**
-	 * This function can be used for equations (3) and (4) in the paper.
-	 * 
-	 * @param i Spot i
-	 * @param j Spot j
-	 * @return The Euclidean distance between Spots i and j.
-	 */
-	private double euclideanDistance(Spot i, Spot j) {
-		final float[] coordsI = i.getCoordinates();
-		final float[] coordsJ = j.getCoordinates();
-		double eucD = 0;
-
-		for (int k = 0; k < coordsI.length; k++) {
-			eucD += (coordsI[k] - coordsJ[k]) * (coordsI[k] - coordsJ[k]);
-		}
-		eucD = Math.sqrt(eucD);
-
-		return eucD;
-	}
-	
 	
 	/*
 	 * Uses DFS approach to create ArrayList<Spot> track segments from the overall 
@@ -480,7 +319,7 @@ public class LAPTracker implements ObjectTracker {
 				if (currFrame[j] != NOT_LINKED) {								// If this Spot in linked to something in the next frame (!= -1)
 					ArrayList<Spot> trackSegment = new ArrayList<Spot>();		// Start a new track segment
 					
-					// Our spot is just in it's own segment
+					// Our spot is just in it's own segment of size one
 					if (currFrame[j] == SEGMENT_OF_SIZE_ONE) {
 						trackSegment.add(objects.get(i).get(j));
 					}
@@ -501,13 +340,14 @@ public class LAPTracker implements ObjectTracker {
 						}
 					}
 					
-					this.trackSegments.add(trackSegment);						// When we're here, eventually the current index was -1, so the track ended. Add the track to the list of tracks.
+					if (trackSegment.size() > MINIMUM_SEGMENT_LENGTH) {
+						this.trackSegments.add(trackSegment);						// When we're here, eventually the current index was -1, so the track ended. Add the track to the list of tracks.
+					}
 				}
 			}
 		}
 		
 	}
-	
 	
 	
 //	/**
@@ -593,6 +433,7 @@ public class LAPTracker implements ObjectTracker {
 			}
 		}
 	}
+	
 	
 	// For testing!
 	public static void main(String args[]) {
