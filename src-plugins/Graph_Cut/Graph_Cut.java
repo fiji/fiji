@@ -237,7 +237,10 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 						{
 							try{
 								applyButton.setEnabled(false);
+								final long start = System.currentTimeMillis();
 								processSingleChannelImage(pottsWeight);
+								final long end = System.currentTimeMillis();
+								IJ.log("Total time: " + (end - start) + "ms");
 								createSegmentationImage();
 								showColorOverlay = false;
 								toggleOverlay();
@@ -576,11 +579,14 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 		// create a new graph cut instance
 		// TODO: reuse an old one
 		IJ.log("Creating graph structure of " + numNodes + " nodes and " + numEdges + " edges...");
+		long start = System.currentTimeMillis();
 		graphCut = new GraphCut(numNodes, numEdges);
-		IJ.log("...done.");
+		long end   = System.currentTimeMillis();
+		IJ.log("...done. (" + (end - start) + "ms)");
 
 		// set terminal weights, i.e., segmentation probabilities
 		IJ.log("Setting terminal weights...");
+		start = System.currentTimeMillis();
 		while (cursor.hasNext()) {
 
 			cursor.fwd();
@@ -593,13 +599,15 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 
 			graphCut.setTerminalWeights(nodeNum, value, 255.0f - value);
 		}
-		IJ.log("...done.");
+		end = System.currentTimeMillis();
+		IJ.log("...done. (" + (end - start) + "ms)");
 
 		// set edge weights
 		IJ.log("Setting edge weights to " + pottsWeight + "...");
 		cursor   = image.createLocalizableByDimCursor();
 		int[] neighborPosition = new int[dimensions.length];
 		int e = 0;
+		start = System.currentTimeMillis();
 		while (cursor.hasNext()) {
 
 			cursor.fwd();
@@ -623,12 +631,15 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 				neighborPosition[d] += 1;
 			}
 		}
-		IJ.log("...done inserting " + e + " edges.");
+		end = System.currentTimeMillis();
+		IJ.log("...done inserting " + e + " edges. (" + (end - start) + "ms)");
 
 		// calculate max flow
 		IJ.log("Calculating max flow...");
+		start = System.currentTimeMillis();
 		float maxFlow = graphCut.computeMaximumFlow(false, null);
-		IJ.log("...done. Max flow is " + maxFlow);
+		end = System.currentTimeMillis();
+		IJ.log("...done. Max flow is " + maxFlow + ". (" + (end - start) + "ms)");
 	}
 
 	private int listPosition(int[] imagePosition) {
