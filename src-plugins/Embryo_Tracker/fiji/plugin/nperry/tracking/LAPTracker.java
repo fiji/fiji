@@ -5,6 +5,7 @@ import java.util.Collection;
 
 import mpicbg.imglib.algorithm.math.MathLib;
 
+import fiji.plugin.nperry.Feature;
 import fiji.plugin.nperry.Spot;
 import fiji.plugin.nperry.hungarian.AssignmentProblem;
 import fiji.plugin.nperry.hungarian.HungarianAlgorithm;
@@ -85,7 +86,7 @@ public class LAPTracker implements ObjectTracker {
 	protected static final int SEGMENT_OF_SIZE_ONE = -1;
 	/** To throw out spurious segments, only include those with a length strictly larger
 	 * than this value. */
-	protected static final int MINIMUM_SEGMENT_LENGTH = 1; // TODO use this, make user input
+	protected static final int MINIMUM_SEGMENT_LENGTH = 3; // TODO use this, make user input. Also, needs to be something to have a sensible merging/splitting section (need a middle...)
 
 	/** The cost matrix for linking individual objects (step 1) */
 	protected ArrayList<double[][]> objectLinkingCosts;
@@ -235,13 +236,16 @@ public class LAPTracker implements ObjectTracker {
 	
 	@Override
 	public boolean process() {
+		
 		// Make sure checkInput() has been executed.
 		if (!inputChecked) {
 			errorMessage = "checkInput() must be executed before process().";
 			return false;
 		}
 		
+		
 		// Step 1 - Make object cost matrices for all pairs t and t+1
+		System.out.println("Step one");
 		objectLinkingCosts = new ArrayList<double[][]>();	
 		for (int i = 0; i < objects.size() - 1; i++) {
 			ObjectCostMatrixCreator objCosts = new ObjectCostMatrixCreator(new ArrayList<Spot>(objects.get(i)), new ArrayList<Spot>(objects.get(i + 1)));
@@ -251,16 +255,31 @@ public class LAPTracker implements ObjectTracker {
 			}
 			objectLinkingCosts.add(objCosts.getCostMatrix());
 		}
-		solveLAPForTrackSegments();
+		System.out.println("Cost matrix created for frame-to-frame linking successfully.");
+		ArrayList< int[] > trackSegmentStructure = solveLAPForTrackSegments();
+		System.out.println("LAP for frame-to-frame linking solved.");
+		compileTrackSegments(trackSegmentStructure);
+		
+		//debug
+		for (ArrayList<Spot> trackSegment : trackSegments) {
+			System.out.println("New Segment:");
+			for (Spot spot : trackSegment) {
+				System.out.println(MathLib.printCoordinates(spot.getCoordinates()));
+			}
+		}
 		
 		// Step 2 - Make a single track segment cost matrix
+		System.out.println("Step two");
 		TrackSegmentCostMatrixCreator segCosts = new TrackSegmentCostMatrixCreator(trackSegments);
 		if (!segCosts.checkInput() || !segCosts.process()) {
 			System.out.println(segCosts.getErrorMessage());
 			return false;
 		}
 		segmentLinkingCosts = segCosts.getCostMatrix();
-		solveLAPForFinalTracks();
+		System.out.println("Cost matrix for track segments created successfully.");
+		int[][] finalTrackSolutions = solveLAPForFinalTracks();
+		System.out.println("LAP for track segments solved.");
+		compileFinalTracks(finalTrackSolutions, segCosts.getMiddlePoints());
 		
 		return true;
 	}
@@ -271,27 +290,25 @@ public class LAPTracker implements ObjectTracker {
 	 * {@link LAPTracker#objectLinkingCosts}.
 	 * @return True if executes correctly, false otherwise.
 	 */
-	public boolean solveLAPForTrackSegments() {
+	public ArrayList< int[] > solveLAPForTrackSegments() {
 
 		/* This local copy of trackSegments will store the relationships between segments.
 		 * It will later be converted into an ArrayList< ArrayList<Spot> > to explicitly
 		 * store the segments themselves as a list of Spots.
 		 */
-		ArrayList< int[] > trackSegments = initializeTrackSegments();
+		ArrayList< int[] > trackSegmentStructure = initializeTrackSegments();
 
 		for (int i = 0; i < objectLinkingCosts.size(); i++) {
 			
 			// Solve the LAP using the Hungarian Algorithm
 			AssignmentProblem hung = new AssignmentProblem(objectLinkingCosts.get(i));
-			int[][] solution = hung.solve(new HungarianAlgorithm());
+			int[][] solutions = hung.solve(new HungarianAlgorithm());
 			
 			// Extend track segments using solutions
-			extendTrackSegments(trackSegments, solution, i);
-		
+			extendTrackSegments(trackSegmentStructure, solutions, i);
 		}
-		compileTrackSegments(trackSegments);
 
-		return true;
+		return trackSegmentStructure;
 	}
 	
 	
@@ -300,8 +317,12 @@ public class LAPTracker implements ObjectTracker {
 	 * {@link LAPTracker#segmentLinkingCosts}.
 	 * @return True if executes correctly, false otherwise.
 	 */
-	public boolean solveLAPForFinalTracks() {
-		return true;
+	public int[][] solveLAPForFinalTracks() {
+		// Solve the LAP using the Hungarian Algorithm
+		AssignmentProblem hung = new AssignmentProblem(segmentLinkingCosts);
+		int[][] solutions = hung.solve(new HungarianAlgorithm());
+		
+		return solutions;
 	}
 	
 	/*
@@ -340,13 +361,65 @@ public class LAPTracker implements ObjectTracker {
 						}
 					}
 					
-					if (trackSegment.size() > MINIMUM_SEGMENT_LENGTH) {
+					if (trackSegment.size() >= MINIMUM_SEGMENT_LENGTH) {
+						// TODO probably incorporate this above, but this is faster to implement.
+						// Link segment Spots to each other
+						Spot prev, curr;
+						prev = trackSegment.get(0);
+						for (int h = 1; h < trackSegment.size(); h++) {
+							curr = trackSegment.get(h);
+							prev.addNext(curr);
+							curr.addPrev(prev);
+							prev = curr;
+						}
+						
 						this.trackSegments.add(trackSegment);						// When we're here, eventually the current index was -1, so the track ended. Add the track to the list of tracks.
 					}
 				}
 			}
 		}
 		
+	}
+	
+	private void compileFinalTracks(int[][] finalTrackSolutions, ArrayList<Spot> middlePoints) {
+		final int numTrackSegments = trackSegments.size();
+		final int numMiddlePoints = middlePoints.size();
+		
+		for (int[] solution : finalTrackSolutions) {
+			int i = solution[0];
+			int j = solution[1];
+			if (i < numTrackSegments) {
+				
+				// Case 1: Gap closing
+				if (j < numTrackSegments) {
+					ArrayList<Spot> segmentEnd = trackSegments.get(i);
+					ArrayList<Spot> segmentStart = trackSegments.get(j);
+					Spot end = segmentEnd.get(segmentEnd.size() - 1);
+					Spot start = segmentStart.get(0);
+					end.addNext(start);
+					start.addPrev(end);
+				} 
+				
+				// Case 2: Merging
+				else if (j < (numTrackSegments + numMiddlePoints)) {
+					ArrayList<Spot> segmentEnd = trackSegments.get(i);
+					Spot end =  segmentEnd.get(segmentEnd.size() - 1);
+					Spot middle = middlePoints.get(j - numTrackSegments);
+					end.addNext(middle);
+					middle.addPrev(end);
+				}
+			} else if (i < (numTrackSegments + numMiddlePoints)) {
+				
+				// Case 3: Splitting
+				if (j < numTrackSegments) {
+					Spot middle = middlePoints.get(i - numTrackSegments);
+					ArrayList<Spot> segmentStart = trackSegments.get(j);
+					Spot start = segmentStart.get(0);
+					start.addNext(middle);
+					middle.addPrev(start);
+				}
+			}
+		}
 	}
 	
 	
@@ -440,7 +513,10 @@ public class LAPTracker implements ObjectTracker {
 		ArrayList<Spot> t0 = new ArrayList<Spot>();
 		ArrayList<Spot> t1 = new ArrayList<Spot>();
 		ArrayList<Spot> t2 = new ArrayList<Spot>();
-		
+		ArrayList<Spot> t3 = new ArrayList<Spot>();
+		ArrayList<Spot> t4 = new ArrayList<Spot>();
+		ArrayList<Spot> t5 = new ArrayList<Spot>();
+
 		t0.add(new Spot(new float[] {0,0,0}));
 		t0.add(new Spot(new float[] {1,1,1}));
 		t0.add(new Spot(new float[] {2,2,2}));
@@ -454,12 +530,39 @@ public class LAPTracker implements ObjectTracker {
 		t1.add(new Spot(new float[] {4.5f,4.5f,4.5f}));
 		
 		t2.add(new Spot(new float[] {1.5f,1.5f,1.5f}));
+		t2.add(new Spot(new float[] {2.5f,2.5f,2.5f}));
+		t2.add(new Spot(new float[] {3.5f,3.5f,3.5f}));
+		t2.add(new Spot(new float[] {4.5f,4.5f,4.5f}));
 		t2.add(new Spot(new float[] {10f,10f,10f}));
+		
+		t3.add(new Spot(new float[] {2.6f,2.6f,2.6f}));
+		t3.add(new Spot(new float[] {2.4f,2.4f,2.4f}));
+		
+		t4.add(new Spot(new float[] {2.8f,2.8f,2.8f}));
+		t4.add(new Spot(new float[] {2.2f,2.2f,2.2f}));
+		
+		t5.add(new Spot(new float[] {2.8f,2.8f,2.8f}));
+		t5.add(new Spot(new float[] {2.2f,2.2f,2.2f}));
 	
 		ArrayList<ArrayList<Spot>> wrap = new ArrayList<ArrayList<Spot>>();
 		wrap.add(t0);
 		wrap.add(t1);
 		wrap.add(t2);
+		wrap.add(t3);
+		wrap.add(t4);
+		wrap.add(t5);
+		
+		// add intensity
+		int count = 0;
+		int frame = 0;
+		for (ArrayList<Spot> spots : wrap) {
+			for (Spot spot : spots) {
+				spot.putFeature(Feature.MEAN_INTENSITY, count);
+				spot.setFrame(frame);
+				count++;
+			}
+			frame++;
+		}
 		
 		LAPTracker lap = new LAPTracker(wrap);
 		if (!lap.checkInput() || !lap.process()) {
