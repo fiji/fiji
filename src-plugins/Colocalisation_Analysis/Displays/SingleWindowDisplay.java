@@ -60,14 +60,14 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 	static final int WIN_HEIGHT = 240;
 
 	// this is the image currently selected by the drop down menu
-	protected Image<?> currentlyDisplayedImageResult;
+	protected Image<? extends RealType> currentlyDisplayedImageResult;
 
 	// a list of the available result images, no matter what specific kinds
-	protected List<Image<?>> listOfImages = new ArrayList<Image<?>>();
+	protected List<Image<? extends RealType>> listOfImages = new ArrayList<Image<? extends RealType>>();
 	protected Map<Image<LongType>, Histogram2D<T>> mapOf2DHistograms = new HashMap<Image<LongType>, Histogram2D<T>>();
 
 	//make a cursor so we can get pixel values from the image
-	protected LocalizableByDimCursor<?> pixelAccessCursor;
+	protected LocalizableByDimCursor<? extends RealType> pixelAccessCursor;
 
 	// GUI elements
 	JButton listButton, copyButton;
@@ -409,7 +409,7 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 	 * If the image is part of a CompositeImageResult then contained
 	 * lines will also be drawn
 	 */
-	protected void drawImage(Image<?> img) {
+	protected void drawImage(Image<? extends RealType> img) {
 		// remove potentially added overlay
 		imp.setOverlay(null);
 		// get Imglib image as ImageJ image
@@ -450,14 +450,14 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 	 * @param img The image to test
 	 * @return true if histogram, false otherwise
 	 */
-	protected boolean isHistogram(Image<?> img) {
+	protected boolean isHistogram(Image<? extends RealType> img) {
 		return mapOf2DHistograms.containsKey(img);
 	}
 
 	/**
 	 * Draws the line on the overlay.
 	 */
-	protected void drawLine(Overlay overlay, Image<?> img, double slope, double intercept) {
+	protected void drawLine(Overlay overlay, Image<? extends RealType> img, double slope, double intercept) {
 		double startX, startY, endX, endY;
 		int imgWidth = img.getDimension(0);
 		int imgHeight = img.getDimension(1);
@@ -491,7 +491,7 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 		overlay.add(lineROI);
 	}
 
-	protected void adjustDisplayedImage (Image<?> img) {
+	protected void adjustDisplayedImage (Image<? extends RealType> img) {
 		/* when changing the result image to display
 		 * need to set the image we were looking at
 		 * back to not log scale,
@@ -517,7 +517,7 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 
 	public void itemStateChanged(ItemEvent e) {
 		if (e.getStateChange() == ItemEvent.SELECTED) {
-			Image<?> img = (Image<?>)(e.getItem());
+			Image<? extends RealType> img = (Image<? extends RealType>)(e.getItem());
 			adjustDisplayedImage(img);
 		}
 	}
