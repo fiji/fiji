@@ -140,7 +140,7 @@ public class Spot {
 		this.features.put(feature, value);
 	}
 
-	public void setPrev(Spot prev) {
+	public void addPrev(Spot prev) {
 		this.prev.add(prev);
 	}
 
@@ -148,7 +148,7 @@ public class Spot {
 		return prev;
 	}
 
-	public void setNext(Spot next) {
+	public void addNext(Spot next) {
 		this.next.add(next);
 	}
 
