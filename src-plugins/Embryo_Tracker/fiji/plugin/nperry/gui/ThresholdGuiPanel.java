@@ -23,8 +23,9 @@ import fiji.plugin.nperry.Feature;
 import fiji.plugin.nperry.Spot;
 
 
-public class ThresholdGuiPanel extends javax.swing.JPanel {
+public class ThresholdGuiPanel extends javax.swing.JPanel implements ActionListener {
 	private static final long serialVersionUID = 1L;
+
 	private JScrollPane jScrollPaneThresholds;
 	private JButton jButtonRemoveThreshold;
 	private JButton jButtonNext;
@@ -37,40 +38,141 @@ public class ThresholdGuiPanel extends javax.swing.JPanel {
 	private Collection<Spot> spots;
 	private EnumMap<Feature, double[]> featureValues = new EnumMap<Feature, double[]>(Feature.class);
 	private int newFeatureIndex;
+	
+	private Feature[] features = new Feature[0];
+	private double[] thresholds = new double[0];
+	private boolean[] isAbove = new boolean[0];
+	private ArrayList<ActionListener> listeners = new ArrayList<ActionListener>();
 
 	/*
 	 * CONSTRUCTOR
 	 */
 	
-	public ThresholdGuiPanel(Collection<Spot> spots) {
+	public ThresholdGuiPanel(Collection<Spot> spots, Feature selectedFeature) {
 		super();
+		newFeatureIndex = selectedFeature.ordinal();
 		this.spots = spots;
 		prepareDataArrays();
 		initGUI();
 		addThresholdPanel();
 	}
+
+	public ThresholdGuiPanel(Collection<Spot> spots) {
+		super();
+		this.spots = spots;
+		prepareDataArrays();
+		initGUI();
+	}
 	
+	/*
+	 * PUBLIC METHODS
+	 */
+
+	/**
+	 * Called when one of the {@link ThresholdPanel} is changed by the user.
+	 */
+	@Override
+	public void actionPerformed(ActionEvent ae) {
+		thresholds = new double[thresholdPanels.size()];
+		isAbove = new boolean[thresholdPanels.size()];
+		features = new Feature[thresholdPanels.size()];
+		int index = 0;
+		for (ThresholdPanel<Feature> tp : thresholdPanels) {
+			features[index] = tp.getKey();
+			thresholds[index] = tp.getThreshold();
+			isAbove[index] = tp.isAboveThreshold();
+			index++;
+		}
+		fireThresholdChanged(ae);
+	}
+
+	/**
+	 * Return the threshold values set under this panel.
+	 * @see {@link #getIsAbove()}, {@link #getFeatures()}
+	 */
+	public double[] getThresholds() {
+		return thresholds;
+	}
+	
+	/**
+	 * Return whether each threshold shown under this panel is meant to
+	 * be a threshold <i>above<i>. 
+	 * @see {@link #getThresholds()}, {@link #getFeatures()}
+	 */
+	public boolean[] getIsAbove() {
+		return isAbove;
+	}
+	
+	/**
+	 * Return the selected {@link Feature} thresholded under this panel.
+	 * @see {@link #getThresholds()}, {@link #getIsAbove()}
+	 */
+	public Feature[] getFeatures() {
+		return features;
+	}
+	
+	/**
+	 * Add an {@link ActionListener} to this panel. The {@link ActionListener} will
+	 * be notified when a change happens to the thresholds displayed by this panel, whether
+	 * due to the slider being move, the auto-threshold button being pressed, or
+	 * the combo-box selection being changed.
+	 */
+	public void addActionListener(ActionListener listener) {
+		listeners.add(listener);
+	}
+	
+	/**
+	 * Remove an ActionListener. 
+	 * @return true if the listener was in listener collection of this instance.
+	 */
+	public boolean removeActionListener(ActionListener listener) {
+		return listeners.remove(listener);
+	}
+	
+	public Collection<ActionListener> getActionListeners() {
+		return listeners;
+	}
 	
 	/*
 	 * PRIVATE METHODS
 	 */
 	
+	private void fireThresholdChanged(ActionEvent ae) {
+		for (ActionListener al : listeners) 
+			al.actionPerformed(ae);
+	}
+	
 	private void prepareDataArrays() {
 		int index;
+		Float val;
+		boolean noDataFlag = true;
 		for(Feature feature : Feature.values()) {
 			// Make a double array to comply to JFreeChart histograms
 			double[] values = new double[spots.size()];
 			index = 0;
 			for (Spot spot : spots) {
-				values[index] = spot.getFeature(feature);
+				val = spot.getFeature(feature);
+				if (null == val)
+					continue;
+				values[index] = val; 
 				index++;
+				noDataFlag = false;
 			}
-			featureValues.put(feature, values);
+			if (noDataFlag)
+				featureValues.put(feature, null);
+			else 
+				featureValues.put(feature, values);
 		}
 	}
 	
-	private void addThresholdPanel() {
-		ThresholdPanel<Feature> tp = new ThresholdPanel<Feature>(featureValues, Feature.values()[newFeatureIndex]);
+	
+	public void addThresholdPanel() {
+		addThresholdPanel(Feature.values()[newFeatureIndex]);		
+	}
+	
+	public void addThresholdPanel(Feature feature) {
+		ThresholdPanel<Feature> tp = new ThresholdPanel<Feature>(featureValues, feature);
+		tp.addActionListener(this);
 		newFeatureIndex++;
 		if (newFeatureIndex >= Feature.values().length) 
 			newFeatureIndex = 0;
@@ -80,15 +182,20 @@ public class ThresholdGuiPanel extends javax.swing.JPanel {
 		jPanelAllThresholds.add(tp);
 		jPanelAllThresholds.add(strut);
 		jPanelAllThresholds.revalidate();
+		ActionEvent ae = new ActionEvent(this, 0, "ThresholdPanelAdded");
+		fireThresholdChanged(ae);
 	}
 	
 	private void removeThresholdPanel() {
 		try {
 			ThresholdPanel<Feature> tp = thresholdPanels.pop();
+			tp.removeActionListener(this);
 			Component strut = struts.pop();
 			jPanelAllThresholds.remove(strut);
 			jPanelAllThresholds.remove(tp);
 			jPanelAllThresholds.repaint();
+			ActionEvent ae = new ActionEvent(this, 0, "ThresholdPanelReomved");
+			fireThresholdChanged(ae);
 		} catch (EmptyStackException ese) {	}
 	}
 	
@@ -179,5 +286,7 @@ public class ThresholdGuiPanel extends javax.swing.JPanel {
 		frame.pack();
 		frame.setVisible(true);
 	}
+
+
 
 }

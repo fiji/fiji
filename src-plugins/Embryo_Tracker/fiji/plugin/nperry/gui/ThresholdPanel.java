@@ -13,6 +13,8 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumMap;
 import java.util.Random;
 
@@ -64,6 +66,7 @@ public class ThresholdPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 	private K key;
 	private K[] allKeys;
 	
+	private ArrayList<ActionListener> listeners = new ArrayList<ActionListener>();
 	
 	
 	/*
@@ -88,13 +91,13 @@ public class ThresholdPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 	 */
 	
 	/**
-	 * Return the threshold currently selected for the feature displayed in this panel.
+	 * Return the threshold currently selected for the data displayed in this panel.
 	 * @see #isAboveThreshold()
 	 */
 	public double getThreshold() { return threshold; }
 	
 	/**
-	 * Return true if the user selected the above threshold option for the feature displayed 
+	 * Return true if the user selected the above threshold option for the data displayed 
 	 * in this panel.
 	 * @see #getThreshold()
 	 */
@@ -102,31 +105,60 @@ public class ThresholdPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 	
 
 	/** 
-	 * Return the {@link Feature} selected in this panel.
+	 * Return the Enum constant selected in this panel.
 	 */
 	public K getKey() { return key; }
 	
+	/**
+	 * Add an {@link ActionListener} to this panel. The {@link ActionListener} will
+	 * be notified when a change happens to the threshold displayed by this panel, whether
+	 * due to the slider being move, the auto-threshold button being pressed, or
+	 * the combo-box selection being changed.
+	 */
+	public void addActionListener(ActionListener listener) {
+		listeners.add(listener);
+	}
+	
+	/**
+	 * Remove an ActionListener. 
+	 * @return true if the listener was in listener collection of this instance.
+	 */
+	public boolean removeActionListener(ActionListener listener) {
+		return listeners.remove(listener);
+	}
+	
+	public Collection<ActionListener> getActionListeners() {
+		return listeners;
+	}
 	
 	/*
 	 * PRIVATE METHODS
 	 */
 	
+	private void fireThresholdChanged() {
+		ActionEvent ae = new ActionEvent(this, 0, "ThresholdChanged");
+		for (ActionListener al : listeners) 
+			al.actionPerformed(ae);
+	}
+	
 	private void comboBoxSelectionChanged() {
-		K selectedFeature = allKeys[jComboBoxFeature.getSelectedIndex()];
-		double[] values = valuesMap.get(selectedFeature);
+		key = allKeys[jComboBoxFeature.getSelectedIndex()];
+		double[] values = valuesMap.get(key);
 		if (null == values) {
 			dataset = new HistogramDataset();
 			threshold = Double.NaN;
 			annotation.setLocation(0.5f, 0.5f);
 			annotation.setText("No data");
+			fireThresholdChanged();
 		} else {
 			int nBins = Utils.getNBins(values);
 			dataset = new HistogramDataset();
-			dataset.addSeries(DATA_SERIES_NAME, values, nBins);
+			if (nBins > 1)
+				dataset.addSeries(DATA_SERIES_NAME, values, nBins);
 		}
 		plot.setDataset(dataset);
 		resetAxes();
-		autoThreshold();
+		autoThreshold(); // Will fire the fireThresholdChanged();
 	}
 	
 	private void autoThreshold() {
@@ -307,6 +339,7 @@ public class ThresholdPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 		y = (float) (0.85 * plot.getRangeAxis().getUpperBound());
 		annotation.setText(String.format("%.1f", threshold));
 		annotation.setLocation(x, y);
+		fireThresholdChanged();
 	}
 	
 	private void resetAxes() {
