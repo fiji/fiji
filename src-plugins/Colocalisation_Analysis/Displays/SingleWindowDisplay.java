@@ -259,7 +259,8 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 	    PearsonsCorrelation pearsons = dataContainer.getPearsonsCorrelation();
 	    if (pearsons != null) {
 		    printTableRow(out, "Pearson's R value (no threshold)", pearsons.getPearsonsCorrelationValue());
-		    printTableRow(out, "Pearson's R value (< threshold)", pearsons.getThresholdedPearsonsCorrelationValue());
+		    printTableRow(out, "Pearson's R value (below threshold)", pearsons.getPearsonsCorrelationBelowThreshold());
+		    printTableRow(out, "Pearson's R value (above threshold)", pearsons.getPearsonsCorrelationAboveThreshold());
 	    }
 
 	    LiICQ liIcq = dataContainer.getLiICQ();

@@ -144,7 +144,7 @@ public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm {
 			// backup last Person's R value
 			lastPersonsR = currentPersonsR;
 			// do persons calculation within the limits
-			currentPersonsR = PearsonsCorrelation.fastPearsons(img1, img2, ch1ThreshMax, ch2ThreshMax);
+			currentPersonsR = PearsonsCorrelation.fastPearsons(img1, img2, ch1ThreshMax, ch2ThreshMax, false);
 
 			// indicates if we have actually found a real number
 			boolean badResult = Double.isNaN(currentPersonsR);

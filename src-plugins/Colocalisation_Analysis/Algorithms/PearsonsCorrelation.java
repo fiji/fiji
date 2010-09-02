@@ -17,8 +17,10 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm {
 	Implementation theImplementation = Implementation.Fast;
 	// resulting Pearsing value without thresholds
 	double pearsonsCorrelationValue;
-	// resulting Pearsons value with thresholds
-	double pearsonsCorrelationValueThr;
+	// resulting Pearsons value below threshold
+	double pearsonsCorrelationValueBelowThr;
+	// resulting Pearsons value above threshold
+	double pearsonsCorrelationValueAboveThr;
 
 	/**
 	 * Creates a new Pearson's Correlation and allows us to define
@@ -88,11 +90,14 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm {
 
 		pearsonsCorrelationValue = fastPearsons(img1, img2);
 
-		AutoThresholdRegression autoThreshold = container.getAutoThreshold();
+		AutoThresholdRegression<T> autoThreshold = container.getAutoThreshold();
 		if (autoThreshold != null ) {
-			pearsonsCorrelationValueThr = fastPearsons(img1, img2,
+			pearsonsCorrelationValueBelowThr = fastPearsons(img1, img2,
 					autoThreshold.getCh1MaxThreshold(),
-					autoThreshold.getCh2MaxThreshold());
+					autoThreshold.getCh2MaxThreshold(), false);
+			pearsonsCorrelationValueAboveThr = fastPearsons(img1, img2,
+					autoThreshold.getCh1MaxThreshold(),
+					autoThreshold.getCh2MaxThreshold(), true);
 		}
 	}
 
@@ -137,40 +142,61 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm {
 	/**
 	 * Calculates Person's R value by using a fast implementation of the
 	 * algorithm. This method allows the specification of upper limits for
-	 * the pixel values for each channel. One can also define if pixels
-	 * that are zero in both channels should be discarded or not.
+	 * the pixel values for each channel. One can also define if one wants
+	 * Pearson's correlation value above or below the threshold.
 	 *
 	 * @param <T> The image base type
 	 * @param img1 Channel one
 	 * @param img2 Channel two
 	 * @param ch1ThreshMax Upper limit of channel one
 	 * @param ch2ThreshMax Upper limit of channel two
-	 * @param discardZeroPixels defines if zero pixels should be discarded
+	 * @param aboveThr use pixels above (true) or below (false) threshold
 	 * @return Person's R value
 	 */
 	public static <T extends RealType<T>> double fastPearsons(Image<T> img1, Image<T> img2,
-			double ch1ThreshMax, double ch2ThreshMax) {
+			double ch1ThreshMax, double ch2ThreshMax, boolean aboveThr) {
 		// get the cursors for iterating through pixels in images
 		Cursor<T> cursor1 = img1.createCursor();
 		Cursor<T> cursor2 = img2.createCursor();
 		double sum1 = 0.0, sum2 = 0.0, sumProduct1_2 = 0.0, sum1squared= 0.0, sum2squared = 0.0;
 		// the total amount of pixels that have been taken into consideration
 		int N = 0;
-		while (cursor1.hasNext() && cursor2.hasNext()) {
-			cursor1.fwd();
-			cursor2.fwd();
-			T type1 = cursor1.getType();
-			double ch1 = type1.getRealDouble();
-			T type2 = cursor2.getType();
-			double ch2 = type2.getRealDouble();
-			// is either channel one or channel two within the limits?
-			if ( (ch1 < ch1ThreshMax) || (ch2 < ch2ThreshMax)) {
-				sum1 += ch1;
-				sumProduct1_2 += (ch1 * ch2);
-				sum1squared += (ch1 * ch1);
-				sum2squared += (ch2 *ch2);
-				sum2 += ch2;
-				N++;
+
+		if (aboveThr) {
+			while (cursor1.hasNext() && cursor2.hasNext()) {
+				cursor1.fwd();
+				cursor2.fwd();
+				T type1 = cursor1.getType();
+				double ch1 = type1.getRealDouble();
+				T type2 = cursor2.getType();
+				double ch2 = type2.getRealDouble();
+				// is either channel one or channel two within the limits?
+				if ( (ch1 > ch1ThreshMax) || (ch2 > ch2ThreshMax)) {
+					sum1 += ch1;
+					sumProduct1_2 += (ch1 * ch2);
+					sum1squared += (ch1 * ch1);
+					sum2squared += (ch2 *ch2);
+					sum2 += ch2;
+					N++;
+				}
+			}
+		} else {
+			while (cursor1.hasNext() && cursor2.hasNext()) {
+				cursor1.fwd();
+				cursor2.fwd();
+				T type1 = cursor1.getType();
+				double ch1 = type1.getRealDouble();
+				T type2 = cursor2.getType();
+				double ch2 = type2.getRealDouble();
+				// is either channel one or channel two within the limits?
+				if ( (ch1 < ch1ThreshMax) || (ch2 < ch2ThreshMax)) {
+					sum1 += ch1;
+					sumProduct1_2 += (ch1 * ch2);
+					sum1squared += (ch1 * ch1);
+					sum2squared += (ch2 *ch2);
+					sum2 += ch2;
+					N++;
+				}
 			}
 		}
 
@@ -193,7 +219,11 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm {
 		return pearsonsCorrelationValue;
 	}
 
-	public double getThresholdedPearsonsCorrelationValue() {
-		return pearsonsCorrelationValueThr;
+	public double getPearsonsCorrelationBelowThreshold() {
+		return pearsonsCorrelationValueBelowThr;
+	}
+
+	public double getPearsonsCorrelationAboveThreshold() {
+		return pearsonsCorrelationValueAboveThr;
 	}
 }

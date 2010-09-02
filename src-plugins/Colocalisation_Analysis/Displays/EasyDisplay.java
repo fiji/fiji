@@ -40,7 +40,8 @@ public class EasyDisplay<T extends RealType<T>> implements Display {
 		PearsonsCorrelation pearsons = container.getPearsonsCorrelation();
 		if (pearsons != null) {
 			showValue("Pearson's R value (no threshold)", pearsons.getPearsonsCorrelationValue(), 2);
-			showValue("Pearson's R value (threshold)", pearsons.getThresholdedPearsonsCorrelationValue(), 2);
+			showValue("Pearson's R value (below threshold)", pearsons.getPearsonsCorrelationBelowThreshold(), 2);
+			showValue("Pearson's R value (above threshold)", pearsons.getPearsonsCorrelationAboveThreshold(), 2);
 		}
 
 		IJ.selectWindow("Results");
