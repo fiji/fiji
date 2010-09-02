@@ -125,6 +125,12 @@ public class SpotDisplayer {
 		}
 	}
 	
+
+	public void resetTresholds() {
+		for (SpotContent blob : blobs)
+			blob.setVisible(true);
+	}
+	
 	
 	/*
 	 * PRIVATE METHODS
@@ -152,9 +158,5 @@ public class SpotDisplayer {
 		}
 	}
 
-	public void resetTresholds() {
-		for (SpotContent blob : blobs)
-			blob.setVisible(true);
-	}
 
 }

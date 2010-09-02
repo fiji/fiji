@@ -79,6 +79,7 @@ public class Spot {
 			s.append("Spot: <no name>\n");
 		else
 			s.append("Spot: "+name+"\n");
+		s.append("Frame: "+frame+'\n');
 		if (null == coordinates)
 			s.append("Position: <no coordinates>\n");
 		else

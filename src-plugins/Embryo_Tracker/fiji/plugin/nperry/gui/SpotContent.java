@@ -16,9 +16,9 @@ import customnode.MeshMaker;
 
 public class SpotContent extends Content {
 	
-	private static final float DEFAULT_RADIUS = 5;
+	private static final float DEFAULT_RADIUS = 20;
 	static final Color3f DEFAULT_COLOR = new Color3f(Color.RED);
-	private static final float DEFAULT_TRANSPARENCY = 0.5f;
+	private static final float DEFAULT_TRANSPARENCY = 0;
 	
 	private Spot spot;
 	private float radius = DEFAULT_RADIUS;

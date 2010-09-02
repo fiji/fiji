@@ -1,20 +1,11 @@
-package fiji.plugin.nperry.gui;
+package fiji.plugin.nperry;
 
-import fiji.plugin.nperry.Feature;
-import fiji.plugin.nperry.Spot;
-import fiji.plugin.nperry.features.FeatureFacade;
 import ij.ImagePlus;
 import ij.process.StackConverter;
 import ij3d.Install_J3D;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Random;
-
-import javax.swing.JFrame;
-import javax.swing.WindowConstants;
 
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.special.SphereCursor;
@@ -23,18 +14,17 @@ import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 
-public class SpotDisplayerTestDrive {
+public class Embryo_Tracker_TestDrive {
 
 	public static void main(String[] args) {
 
-		System.out.println(Install_J3D.getJava3DVersion());
-		
+		System.out.println("Java3D version: "+Install_J3D.getJava3DVersion());
 		
 		final int N_BLOBS = 20;
-		final float RADIUS = 5; // µm
+		final float RADIUS = 20; // µm
 		final Random RAN = new Random();
-		final float WIDTH = 100; // µm
-		final float HEIGHT = 100; // µm
+		final float WIDTH = 200; // µm
+		final float HEIGHT = 200; // µm
 		final float DEPTH = 50; // µm
 		final float[] CALIBRATION = new float[] {0.5f, 0.5f, 1}; 
 		
@@ -68,9 +58,6 @@ public class SpotDisplayerTestDrive {
 		}
 		cursor.close();
 		
-		// Start ImageJ
-		ij.ImageJ.main(args);
-		
 		// Cast the Image the ImagePlus and convert to 8-bit
 		ImagePlus imp = ImageJFunctions.copyToImagePlus(img);
 		if (imp.getType() != ImagePlus.GRAY8)
@@ -80,52 +67,9 @@ public class SpotDisplayerTestDrive {
 		imp.getCalibration().pixelHeight	= CALIBRATION[1];
 		imp.getCalibration().pixelDepth 	= CALIBRATION[2];
 		imp.setTitle("3D blobs");
-
-		// Create a Spot arrays
-		Collection<Spot> spots = new ArrayList<Spot>(N_BLOBS);
-		Spot spot;
-		for (int i = 0; i < N_BLOBS; i++)  {
-			spot = new Spot(centers.get(i), "Spot "+i);
-			spot.setFrame(0);
-			spots.add(spot);
-		}
 		
-		System.out.println("Grabbing features...");
-		new FeatureFacade<UnsignedByteType>(img, img, 2*RADIUS, CALIBRATION).processFeature(Feature.MEAN_INTENSITY, spots);
-		for (Spot s : spots) 
-			System.out.println(s);
-
-		// Launch renderer
-		final SpotDisplayer displayer = new SpotDisplayer(spots, imp);
-		displayer.render().show();
-		
-		// Launch threshold GUI
-		final ThresholdGuiPanel gui = new ThresholdGuiPanel(spots);
-
-		// Set listeners
-		gui.addActionListener(new ActionListener() {
-			private double[] t = null;
-			private boolean[] is = null;
-			private Feature[] f = null;
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				f = gui.getFeatures();
-				is = gui.getIsAbove();
-				t = gui.getThresholds();				
-				displayer.threshold(f, t, is);
-			}
-		});
-		
-		// Display GUI
-		JFrame frame = new JFrame();
-		frame.getContentPane().add(gui);
-		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-		frame.pack();
-		frame.setVisible(true);
-
-		// Add a panel
-		gui.addThresholdPanel(Feature.MEAN_INTENSITY);
-		
+		ij.ImageJ.main(args);
+		imp.show();
+		new Embryo_Tracker<UnsignedByteType>().run("diameter=20");
 	}
-	
 }
