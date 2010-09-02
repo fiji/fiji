@@ -260,6 +260,13 @@ public class LAPTracker implements ObjectTracker {
 		System.out.println("LAP for frame-to-frame linking solved.");
 		compileTrackSegments(trackSegmentStructure);
 		
+		//debug
+		for (ArrayList<Spot> trackSegment : trackSegments) {
+			System.out.println("New Segment:");
+			for (Spot spot : trackSegment) {
+				System.out.println(MathLib.printCoordinates(spot.getCoordinates()));
+			}
+		}
 		
 		// Step 2 - Make a single track segment cost matrix
 		System.out.println("Step two");

@@ -17,7 +17,8 @@ public class TrackSegmentCostMatrixCreator implements CostMatrixCreator {
 	 * objects. */
 	protected static final double ALTERNATIVE_OBJECT_LINKING_COST_FACTOR = 1.05f;	// TODO make user input
 	/** Used to prevent this assignment from being made during Hungarian Algorithm. */
-	protected static final double BLOCKED = Double.POSITIVE_INFINITY;
+	//protected static final double BLOCKED = Double.POSITIVE_INFINITY;
+	protected static final double BLOCKED = Double.NaN;
 	/** The maximum number of frames apart two segments can be 'gap closed.' */
 	protected static final int GAP_CLOSING_TIME_WINDOW = 3; // TODO make user input.
 	/** The minimum and maximum allowable intensity ratio cutoffs for merging and splitting. */
@@ -172,7 +173,7 @@ public class TrackSegmentCostMatrixCreator implements CostMatrixCreator {
 	 * Middle
 	 */
 	private void fillInMiddle(int numMiddlePoints, int[] rows, int[] cols) {
-		final Matrix middle = new Matrix(numMiddlePoints, numMiddlePoints, Double.POSITIVE_INFINITY);
+		final Matrix middle = new Matrix(numMiddlePoints, numMiddlePoints, BLOCKED);
 		costs.setMatrix(rows[1], rows[2] - 1, cols[1], cols[2] - 1, middle);
 	}
 	

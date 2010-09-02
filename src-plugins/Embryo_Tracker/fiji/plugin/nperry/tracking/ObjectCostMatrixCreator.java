@@ -15,7 +15,8 @@ public class ObjectCostMatrixCreator implements CostMatrixCreator {
 	 * objects. */
 	protected static final double ALTERNATIVE_OBJECT_LINKING_COST_FACTOR = 1.05d;	// TODO make user input
 	/** Used to prevent this assignment from being made during Hungarian Algorithm. */
-	protected static final double BLOCKED = Double.POSITIVE_INFINITY;
+	//protected static final double BLOCKED = Double.POSITIVE_INFINITY;
+	protected static final double BLOCKED = Double.NaN;
 	/** The highest link score made across all frames. */
 	protected static double MAX_SCORE = Double.NEGATIVE_INFINITY;
 
