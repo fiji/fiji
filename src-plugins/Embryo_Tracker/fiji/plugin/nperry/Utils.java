@@ -136,10 +136,11 @@ public class Utils {
 		final int[] hist = new int[nBins];
 		int index;
 
-		for (int i = 0; i < data.length; i++) {
-			index = Math.min((int) Math.floor((data[i] - range[1]) / binWidth), nBins - 1);
-			hist[index]++;
-		}
+		if (nBins > 0)
+			for (int i = 0; i < data.length; i++) {
+				index = Math.min((int) Math.floor((data[i] - range[1]) / binWidth), nBins - 1);
+				hist[index]++;
+			}
 		return hist;
 	}
 	

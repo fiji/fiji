@@ -119,7 +119,7 @@ public class Spot {
 	 * @return A EnumMap with a {@link Feature} as a key, and the value of the {@link Feature} as the value. 
 	 */
 	public EnumMap<Feature, Float> getFeatures() {
-		return this.features;
+		return features;
 	}
 	
 	/**
@@ -127,8 +127,8 @@ public class Spot {
 	 * @param feature The {@link Feature} to retrieve the stored value for.
 	 * @return The value corresponding to this {@link Feature}. 
 	 */
-	public float getFeature(Feature feature) {
-		return this.features.get(feature);
+	public final Float getFeature(final Feature feature) {
+		return features.get(feature);
 	}
 	
 	/**
@@ -136,8 +136,8 @@ public class Spot {
 	 * @param feature The {@link Feature}.
 	 * @param value The {@link Feature}'s associated value.
 	 */
-	public void putFeature(Feature feature, float value) {
-		this.features.put(feature, value);
+	public final void putFeature(final Feature feature, final float value) {
+		features.put(feature, value);
 	}
 
 	public void addPrev(Spot prev) {
