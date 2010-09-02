@@ -21,7 +21,7 @@ public class Embryo_Tracker_TestDrive {
 		System.out.println("Java3D version: "+Install_J3D.getJava3DVersion());
 		
 		final int N_BLOBS = 20;
-		final float RADIUS = 20; // µm
+		final float RADIUS = 5; // µm
 		final Random RAN = new Random();
 		final float WIDTH = 200; // µm
 		final float HEIGHT = 200; // µm
@@ -70,6 +70,7 @@ public class Embryo_Tracker_TestDrive {
 		
 		ij.ImageJ.main(args);
 		imp.show();
-		new Embryo_Tracker<UnsignedByteType>().run("diameter=20");
+		new Embryo_Tracker<UnsignedByteType>().run("diameter="+(2*(int)RADIUS));
+		
 	}
 }

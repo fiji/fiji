@@ -341,12 +341,15 @@ public class SpotSegmenter <T extends RealType<T> >implements Algorithm {
 	private static ArrayList< Spot > convertToSpots(List< float[] > coords, float[] calibration, float[] downsampleFactors) {
 		ArrayList<Spot> spots = new ArrayList<Spot>();
 		Iterator< float[] > itr = coords.iterator();
+		int index = 0;
 		while (itr.hasNext()) {
 			float[] coord = itr.next();
 			float[] calibrated = new float[coord.length];
 			for (int i = 0; i < calibrated.length; i++) 
 				calibrated[i] = coord[i] * calibration[i] * downsampleFactors[i];
 			Spot spot = new Spot(calibrated);
+			spot.setName("Spot "+index);
+			index++;
 			spots.add(spot);
 		}
 		return spots;

@@ -153,6 +153,7 @@ public class SpotDisplayer {
 		int index = 0;
 		for (Spot spot : spots) {
 			blob = new SpotContent(spot);
+			blob.setRadius(spot.getDisplayRadius());
 			blobs.add(blob);
 			index++;
 		}

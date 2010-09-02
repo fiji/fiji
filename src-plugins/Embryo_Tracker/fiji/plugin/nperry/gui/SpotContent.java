@@ -16,9 +16,9 @@ import customnode.MeshMaker;
 
 public class SpotContent extends Content {
 	
-	private static final float DEFAULT_RADIUS = 20;
+	private static final float DEFAULT_RADIUS = 5;
 	static final Color3f DEFAULT_COLOR = new Color3f(Color.RED);
-	private static final float DEFAULT_TRANSPARENCY = 0;
+	private static final float DEFAULT_TRANSPARENCY = 0.8f;
 	
 	private Spot spot;
 	private float radius = DEFAULT_RADIUS;
@@ -39,6 +39,10 @@ public class SpotContent extends Content {
 		return spot.getFeature(feature);
 	}
 	
+	public void setRadius(float radius) {
+		this.radius = radius;
+		makeMesh();
+	}
 	
 	/*
 	 * PRIVATE METHODS
@@ -53,7 +57,7 @@ public class SpotContent extends Content {
 		List<Point3f> list = MeshMaker.createSphere(x, y, z, radius);
 		CustomTriangleMesh mesh = new CustomTriangleMesh(list, color, 0);
 		setColor(color);
-		setTransparency(transparency);
+		setTransparency(transparency); // FIXME that does not work
 		setShaded(false);
 		showCoordinateSystem(false);
 		display(new CustomMeshNode(mesh));

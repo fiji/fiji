@@ -2,7 +2,6 @@ package fiji.plugin.nperry;
 
 import fiji.plugin.nperry.features.FeatureFacade;
 import fiji.plugin.nperry.gui.SpotDisplayer;
-import fiji.plugin.nperry.gui.ThresholdGuiPanel;
 import fiji.plugin.nperry.segmentation.SpotSegmenter;
 import fiji.util.SplitString;
 import ij.IJ;
@@ -11,16 +10,11 @@ import ij.gui.GenericDialog;
 import ij.plugin.PlugIn;
 import ij3d.Image3DUniverse;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import javax.swing.JFrame;
-import javax.swing.WindowConstants;
 
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
@@ -195,8 +189,10 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			if (segmenter.checkInput() && segmenter.process()) {
 				filteredImage = segmenter.getFilteredImage();
 				spots = segmenter.getResult();
-				for (Spot spot : spots) 
+				for (Spot spot : spots) {
 					spot.setFrame(i);
+					spot.setDisplayRadius(diam/2);
+				}
 				spotsAllFrames.addAll(spots);
 			} else {
 				IJ.error(segmenter.getErrorMessage());
@@ -213,36 +209,8 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		// Launch renderer
 		IJ.showStatus("Found "+spotsAllFrames.size() +" spots. Preparing renderer...");
 		final SpotDisplayer displayer = new SpotDisplayer(spotsAllFrames, imp);
+
 		Image3DUniverse universe = displayer.render();
-		
-		// Launch threshold GUI
-		final ThresholdGuiPanel gui = new ThresholdGuiPanel(spotsAllFrames);
-
-		// Set listeners
-		gui.addActionListener(new ActionListener() {
-			private double[] t = null;
-			private boolean[] is = null;
-			private Feature[] f = null;
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				f = gui.getFeatures();
-				is = gui.getIsAbove();
-				t = gui.getThresholds();				
-				displayer.threshold(f, t, is);
-			}
-		});
-		
-		// Display GUI
-		JFrame frame = new JFrame();
-		frame.getContentPane().add(gui);
-		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-		frame.pack();
-		frame.setVisible(true);
-
-		// Add a panel
-		gui.addThresholdPanel(Feature.MEAN_INTENSITY);
-		gui.actionPerformed(new ActionEvent(this, 0, "refresh"));
-		
 		universe.show();
 		
 		return new Object[] {spotsAllFrames};
