@@ -1,5 +1,6 @@
 package fiji.plugin.nperry;
 
+import java.util.ArrayList;
 import java.util.EnumMap;
 
 import mpicbg.imglib.algorithm.math.MathLib;
@@ -18,6 +19,10 @@ public class Spot {
 	private String name;
 	/** The frame to which this Spot belongs. (Same as a t coordinate) */
 	private int frame;
+	/** A reference to the previous Spots belonging to the same track. */
+	private ArrayList<Spot> prev;
+	/** A reference to the subsequent Spots belonging to the same track. */
+	private ArrayList<Spot> next;
 
 	
 	/*
@@ -129,5 +134,21 @@ public class Spot {
 	 */
 	public void putFeature(Feature feature, float value) {
 		this.features.put(feature, value);
+	}
+
+	public void setPrev(Spot prev) {
+		this.prev.add(prev);
+	}
+
+	public ArrayList<Spot> getPrev() {
+		return prev;
+	}
+
+	public void setNext(Spot next) {
+		this.next.add(next);
+	}
+
+	public ArrayList<Spot> getNext() {
+		return next;
 	}
 }
