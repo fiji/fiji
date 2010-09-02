@@ -10,15 +10,14 @@ public class ObjectCostMatrixCreator implements CostMatrixCreator {
 
 	/** The maximum distance away two Spots in consecutive frames can be in order 
 	 * to be linked. */
-	protected static final double MAX_DIST_OBJECTS = 5.0f;	// TODO make user input
-	/** The maximum distance away two Spots in consecutive frames can be in order 
-	 * to be linked. */
-	protected static final double MAX_DIST_SEGMENTS = 5.0f;	// TODO make user input
+	protected static final double MAX_DIST_OBJECTS = 1.0d;	// TODO make user input
 	/** The factor used to create d and b in the paper, the alternative costs to linking
 	 * objects. */
-	protected static final double ALTERNATIVE_OBJECT_LINKING_COST_FACTOR = 1.05f;	// TODO make user input
+	protected static final double ALTERNATIVE_OBJECT_LINKING_COST_FACTOR = 1.05d;	// TODO make user input
 	/** Used to prevent this assignment from being made during Hungarian Algorithm. */
 	protected static final double BLOCKED = Double.POSITIVE_INFINITY;
+	/** The highest link score made across all frames. */
+	protected static double MAX_SCORE = Double.NEGATIVE_INFINITY;
 
 	/** The cost matrix. */
 	protected Matrix costs;
@@ -75,7 +74,7 @@ public class ObjectCostMatrixCreator implements CostMatrixCreator {
 		Matrix bottomRight = new Matrix(t1.size(), t0.size());		// Nothing, but mathematically required for LAP
 				
 		// Top left quadrant
-		double maxScore = Double.NEGATIVE_INFINITY;		// Will hold the maximum score of all links in top left quadrant
+		//double maxScore = Double.NEGATIVE_INFINITY;		// Will hold the maximum score of all links in top left quadrant
 		Spot s0 = null;									// Spot in t0
 		Spot s1 = null;									// Spot in t1
 		double d = 0;									// Holds Euclidean distance between s0 and s1
@@ -85,11 +84,12 @@ public class ObjectCostMatrixCreator implements CostMatrixCreator {
 			for (int j = 0; j < t1.size(); j++) {
 				s1 = t1.get(j);
 				d = euclideanDistance(s0, s1);
+
 				if (d < MAX_DIST_OBJECTS) {
-					score = d*d;
+					score = d*d + 2*Double.MIN_VALUE;		// score cannot be 0 in order to solve LAP, so add a small amount
 					topLeft.set(i, j, score);
-					if (score > maxScore) {
-						maxScore = score;
+					if (score > MAX_SCORE) {
+						MAX_SCORE = score;
 					}
 				} else {
 					topLeft.set(i, j, BLOCKED);
@@ -101,7 +101,7 @@ public class ObjectCostMatrixCreator implements CostMatrixCreator {
 		for (int i = 0; i < t0.size(); i++) {
 			for (int j = 0; j < t0.size(); j++) {
 				if (i == j) {
-					topRight.set(i, j, ALTERNATIVE_OBJECT_LINKING_COST_FACTOR * maxScore);
+					topRight.set(i, j, ALTERNATIVE_OBJECT_LINKING_COST_FACTOR * MAX_SCORE);
 				} else {
 					topRight.set(i, j, BLOCKED);
 				}
@@ -113,7 +113,7 @@ public class ObjectCostMatrixCreator implements CostMatrixCreator {
 		for (int i = 0; i < t1.size(); i++) {
 			for (int j = 0; j < t1.size(); j++) {
 				if (i == j) {
-					bottomLeft.set(i, j, ALTERNATIVE_OBJECT_LINKING_COST_FACTOR * maxScore);
+					bottomLeft.set(i, j, ALTERNATIVE_OBJECT_LINKING_COST_FACTOR * MAX_SCORE);
 				} else {
 					bottomLeft.set(i, j, BLOCKED);
 				}
@@ -125,11 +125,12 @@ public class ObjectCostMatrixCreator implements CostMatrixCreator {
 		bottomRight = topLeft.transpose().copy();
 		for (int i = 0; i < t1.size(); i++) {
 			for (int j = 0; j < t0.size(); j++) {
-				if (bottomRight.get(i, j) <= maxScore) {
+				if (bottomRight.get(i, j) < BLOCKED) {
 					bottomRight.set(i, j, Double.MIN_VALUE);
 				}
 			}
 		}
+
 		
 		// Set submatrices of parent matrix with the submatrices we calculated separately
 		costs.setMatrix(0, t0.size() - 1, 0, t1.size() - 1, topLeft);
@@ -137,7 +138,6 @@ public class ObjectCostMatrixCreator implements CostMatrixCreator {
 		costs.setMatrix(0, t0.size() - 1, t1.size(), costs.getColumnDimension() - 1, topRight);
 		costs.setMatrix(t0.size(), costs.getRowDimension() - 1, 0, t1.size() - 1, bottomLeft);
 		
-		costs.print(4, 2);
 		return true;
 	}
 	
