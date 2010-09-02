@@ -91,7 +91,8 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm {
 		AutoThresholdRegression autoThreshold = container.getAutoThreshold();
 		if (autoThreshold != null ) {
 			pearsonsCorrelationValueThr = fastPearsons(img1, img2,
-					autoThreshold.getCh1MaxThreshold(), autoThreshold.getCh2MaxThreshold(), false);
+					autoThreshold.getCh1MaxThreshold(),
+					autoThreshold.getCh2MaxThreshold());
 		}
 	}
 
@@ -148,15 +149,13 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm {
 	 * @return Person's R value
 	 */
 	public static <T extends RealType<T>> double fastPearsons(Image<T> img1, Image<T> img2,
-			double ch1ThreshMax, double ch2ThreshMax, boolean discardZeroPixels) {
+			double ch1ThreshMax, double ch2ThreshMax) {
 		// get the cursors for iterating through pixels in images
 		Cursor<T> cursor1 = img1.createCursor();
 		Cursor<T> cursor2 = img2.createCursor();
 		double sum1 = 0.0, sum2 = 0.0, sumProduct1_2 = 0.0, sum1squared= 0.0, sum2squared = 0.0;
 		// the total amount of pixels that have been taken into consideration
 		int N = 0;
-		// the amount of pixels that are zero in both channels
-		int Nzero = 0;
 		while (cursor1.hasNext() && cursor2.hasNext()) {
 			cursor1.fwd();
 			cursor2.fwd();
@@ -166,10 +165,6 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm {
 			double ch2 = type2.getRealDouble();
 			// is either channel one or channel two within the limits?
 			if ( (ch1 < ch1ThreshMax) || (ch2 < ch2ThreshMax)) {
-				// is the current pixels combination a zero pixel?
-				if (Math.abs(ch1 + ch2) < 0.00001)
-					Nzero++;
-
 				sum1 += ch1;
 				sumProduct1_2 += (ch1 * ch2);
 				sum1squared += (ch1 * ch1);
@@ -182,10 +177,6 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm {
 		// close the cursors
 		cursor1.close();
 		cursor2.close();
-
-		// if told to do so, discard the zero pixels
-		if (discardZeroPixels)
-			N = N - Nzero;
 
 		// for faster computation, have the inverse of N available
 		double invN = 1.0 / N;

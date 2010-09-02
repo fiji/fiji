@@ -7,7 +7,6 @@ import mpicbg.imglib.type.numeric.RealType;
  * used for Person colocalisation calculation.
  */
 public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm {
-	protected boolean discardZeroPixels = false;
 	/* the threshold for y-intercept to y-max to
 	 *  raise a warning about it being to high.
 	 */
@@ -80,9 +79,6 @@ public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm {
 			N++;
 		}
 
-		if (discardZeroPixels)
-			N = N - NZero;
-
 		double ch1Variance = ch1MeanDiffSum / (N - 1);
 		double ch2Variance = ch2MeanDiffSum / (N - 1);
 		double combinedVariance = combinedMeanDiffSum / (N - 1.0);
@@ -148,7 +144,7 @@ public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm {
 			// backup last Person's R value
 			lastPersonsR = currentPersonsR;
 			// do persons calculation within the limits
-			currentPersonsR = PearsonsCorrelation.fastPearsons(img1, img2, ch1ThreshMax, ch2ThreshMax, discardZeroPixels);
+			currentPersonsR = PearsonsCorrelation.fastPearsons(img1, img2, ch1ThreshMax, ch2ThreshMax);
 
 			// indicates if we have actually found a real number
 			boolean badResult = Double.isNaN(currentPersonsR);
