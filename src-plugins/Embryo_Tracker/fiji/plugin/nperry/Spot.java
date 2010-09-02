@@ -32,10 +32,14 @@ public class Spot {
 	public Spot(float[] coordinates, String name) {
 		this.coordinates = coordinates;
 		this.name = name;
+		this.prev = new ArrayList<Spot>();
+		this.next = new ArrayList<Spot>();
 	}
 	
 	public Spot(float[] coordinates) {
 		this(coordinates, null);
+		this.prev = new ArrayList<Spot>();
+		this.next = new ArrayList<Spot>();
 	}
 	
 	/*
