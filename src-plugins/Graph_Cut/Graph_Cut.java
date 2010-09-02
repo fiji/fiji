@@ -1,22 +1,3 @@
-/**
- * Graph_Cut plugin
- *
- * This is the interface plugin to the graph cut algorithm for images as
- * proposed by Boykkov and Kolmogorov in:
- *
- *		"An Experimental Comparison of Min-Cut/Max-Flow Algorithms for Energy
- *		Minimization in Vision."
- *		Yuri Boykov and Vladimir Kolmogorov
- *		In IEEE Transactions on Pattern Analysis and Machine
- *		Intelligence (PAMI),
- *		September 2004
- *
- * The GUI implementation reuses code/ideas of the Trainable Segmentation
- * plugin.
- *
- * @author Jan Funke <jan.funke@inf.tu-dresden.de>
- */
-
 
 import java.awt.AlphaComposite;
 import java.awt.Component;
@@ -39,11 +20,15 @@ import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
+import java.io.File;
+
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSlider;
 import javax.swing.SwingUtilities;
@@ -76,6 +61,27 @@ import mpicbg.imglib.image.ImagePlusAdapter;
 
 import mpicbg.imglib.type.numeric.RealType;
 
+/**
+ * Graph_Cut plugin
+ *
+ * This is the interface plugin to the graph cut algorithm for images as
+ * proposed by Boykkov and Kolmogorov in:
+ *
+ *		"An Experimental Comparison of Min-Cut/Max-Flow Algorithms for Energy
+ *		Minimization in Vision."
+ *		Yuri Boykov and Vladimir Kolmogorov
+ *		In IEEE Transactions on Pattern Analysis and Machine
+ *		Intelligence (PAMI),
+ *		September 2004
+ *
+ * The GUI implementation reuses code/ideas of the Trainable Segmentation
+ * plugin.
+ *
+ * @author Jan Funke <jan.funke@inf.tu-dresden.de>
+ */
+
+
+
 
 
 /**
@@ -86,29 +92,11 @@ import mpicbg.imglib.type.numeric.RealType;
  */
 public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 
-	// the image to process
-	private Image<T> image;
-
-	// the ImagePlus version of it
+	// the image the gui was started with
 	private ImagePlus imp;
 
-	// the segmentation image
-	private Image<T> segmentation;
-
-	// the ImagePlus version of it
+	// the segmentation image for the gui
 	private ImagePlus seg;
-
-	// image dimensions
-	private int[] dimensions;
-
-	// the graph cut implementation
-	private GraphCut graphCut;
-
-	// the number of nodes
-	private int numNodes;
-
-	// the number of edges
-	private int numEdges;
 
 	// the potts weight
 	private float pottsWeight = POTTS_INIT;
@@ -151,6 +139,9 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 
 	// start graph cut button
 	private JButton applyButton;
+
+	// start graph cut on several files
+	private JButton batchButton;
 
 	// toggle segmentation overlay button
 	private JButton overlayButton;
@@ -238,10 +229,11 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 							try{
 								applyButton.setEnabled(false);
 								final long start = System.currentTimeMillis();
-								processSingleChannelImage(pottsWeight);
+								updateSegmentationImage();
 								final long end = System.currentTimeMillis();
+								seg.show();
+								seg.updateAndDraw();
 								IJ.log("Total time: " + (end - start) + "ms");
-								createSegmentationImage();
 								showColorOverlay = false;
 								toggleOverlay();
 							}catch(Exception e){
@@ -252,6 +244,8 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 						}
 						else if(e.getSource() == overlayButton){
 							toggleOverlay();
+						} else if (e.getSource() == batchButton) {
+							batchProcessImages();
 						}
 					}
 				});
@@ -279,6 +273,9 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 	
 			applyButton = new JButton ("Segment image");
 			applyButton.setToolTipText("Start the min-cut computation");
+	
+			batchButton = new JButton ("Batch process");
+			batchButton.setToolTipText("Apply the plugin to several images");
 	
 			overlayButton = new JButton ("Toggle overlay");
 			overlayButton.setToolTipText("Toggle the segmentation overlay in the image");
@@ -321,6 +318,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			setTitle("Graph Cut");
 			
 			applyButton.addActionListener(actionListener);
+			batchButton.addActionListener(actionListener);
 			overlayButton.addActionListener(actionListener);
 			pottsSlider.addChangeListener(changeListener);
 	
@@ -339,6 +337,8 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			applyPanel.setLayout(applyLayout);
 			
 			applyPanel.add(applyButton, applyConstraints);
+			applyConstraints.gridy++;
+			applyPanel.add(batchButton, applyConstraints);
 			applyConstraints.gridy++;
 			applyPanel.add(overlayButton, applyConstraints);
 			applyConstraints.gridy++;
@@ -419,6 +419,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 				public void windowClosing(WindowEvent e) {
 					exec.shutdownNow();
 					applyButton.removeActionListener(actionListener);
+					batchButton.removeActionListener(actionListener);
 					overlayButton.removeActionListener(actionListener);
 					pottsSlider.removeChangeListener(changeListener);
 				}
@@ -466,64 +467,15 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			IJ.showMessage("Please open an image first.");
 			return;
 		}
-		if (imp.getNChannels() > 1) {
-
-			int width = imp.getWidth();
-			int height = imp.getHeight();
-			int channels = imp.getNChannels();
-			int slices = imp.getNSlices();
-			int frames = imp.getNFrames();
-			int size = slices*frames;
+		int channels = imp.getNChannels();
+		if (channels > 1) {
 
 			int channel = 0;
 			while (channel <= 0 || channel > channels)
 				channel = (int)IJ.getNumber("Please give the number of the channel you wish to consider for the segmentation (1 - "  + channels + "):", 1);
 
-			FileInfo fileInfo         = imp.getOriginalFileInfo();
-			HyperStackReducer reducer = new HyperStackReducer(imp);
-
-			// create empty stack
-			ImageStack stack2 = new ImageStack(width, height, size);
-			// add first slice (just to create an ImagePlus)
-			stack2.setPixels(imp.getProcessor().getPixels(), 1); 
-			// create new ImagePlus for selected channel
-			ImagePlus imp2 = new ImagePlus("C" + channel + "-" + imp.getTitle(), stack2);
-			// remove content again
-			stack2.setPixels(null, 1);
-
-			// select desired channel in source image
-			imp.setPosition(channel, 1, 1);
-			// set number of channels, slices, and frames
-			imp2.setDimensions(1, slices, frames);
-
-			reducer.reduce(imp2);
-			imp2.setOpenAsHyperStack(true);
-			imp2.setFileInfo(fileInfo);
-
-			// make this channel image the new working image
-			imp = imp2;
+			imp = extractChannel(imp, channel);
 		}
-
-		image = ImagePlusAdapter.wrap(imp);
-
-		// get some statistics
-		numNodes   = image.size();
-		dimensions = image.getDimensions();
-		numEdges   = 0;
-		for (int d = 0; d < dimensions.length; d++)
-			numEdges += numNodes - numNodes/dimensions[d];
-
-		// prepare segmentation image
-		int[] segDimensions = new int[3];
-		segDimensions[0] = 1;
-		segDimensions[1] = 1;
-		segDimensions[2] = 1;
-		for (int d = 0; d < dimensions.length; d++)
-			segDimensions[d] = dimensions[d];
-
-		seg = IJ.createImage("GraphCut segmentation", "8-bit",
-		                     segDimensions[0], segDimensions[1], segDimensions[2]);
-		segmentation = ImagePlusAdapter.wrap(seg);
 
 		// start GUI
 		displayImage = new ImagePlus();
@@ -540,28 +492,6 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 				});
 	}
 
-	private void createSegmentationImage() {
-
-		// create segmentation image
-		LocalizableByDimCursor<T> cursor = segmentation.createLocalizableByDimCursor();
-		int[] imagePosition = new int[dimensions.length];
-		while (cursor.hasNext()) {
-
-			cursor.fwd();
-
-			cursor.getPosition(imagePosition);
-
-			int nodeNum = listPosition(imagePosition);
-
-			if (graphCut.getTerminal(nodeNum) == Terminal.FOREGROUND)
-				cursor.getType().setReal(255.0);
-			else
-				cursor.getType().setReal(0.0);
-		}
-		seg.show();
-		seg.updateAndDraw();
-	}
-
 	/**
 	 * Processes a single channel image.
 	 *
@@ -569,9 +499,158 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 	 * pixel to belong to the foreground. The potts weight represents an
 	 * isotropic edge weight.
 	 *
+	 * @param imp         The image to process
 	 * @param pottsWeight Isotropic edge weights.
+	 * @return A binary segmentation image
 	 */
-	public void processSingleChannelImage(float pottsWeight) {
+	public ImagePlus processSingleChannelImage(ImagePlus imp, float pottsWeight) {
+		
+		// prepare segmentation image
+		int[] dimensions    = imp.getDimensions();
+		int width   = dimensions[0];
+		int height  = dimensions[1];
+		int zslices = dimensions[3];
+		ImagePlus seg = IJ.createImage(imp.getTitle() + " GraphCut segmentation", "8-bit",
+		                               width, height, zslices);
+
+		// fill it with the segmentation
+		processSingleChannelImage(imp, pottsWeight, seg);
+
+		return seg;
+	}
+
+	/**
+	 * Apply graph cut to several images
+	 */
+	public void batchProcessImages()
+	{
+		// array of files to process
+		File[] imageFiles;
+		String storeDir = "";
+
+		// create a file chooser for the image files
+		JFileChooser fileChooser = new JFileChooser(".");
+		fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+		fileChooser.setMultiSelectionEnabled(true);
+
+		// get selected files or abort if no file has been selected
+		int returnVal = fileChooser.showOpenDialog(null);
+		if(returnVal == JFileChooser.APPROVE_OPTION) {
+			imageFiles = fileChooser.getSelectedFiles();
+		} else {
+			return;
+		}
+
+		boolean showResults = true;
+		boolean storeResults = false;
+
+		if (imageFiles.length >= 3) {
+
+			int decision = JOptionPane.showConfirmDialog(null, "You decided to process three or more image files. Do you want the results to be stored on the disk instead of opening them in Fiji?", "Save results?", JOptionPane.YES_NO_OPTION);
+
+			if (decision == JOptionPane.YES_OPTION) {
+				// ask for the directory to store the results
+				fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+				fileChooser.setMultiSelectionEnabled(false);
+				returnVal = fileChooser.showOpenDialog(null);
+				if(returnVal == JFileChooser.APPROVE_OPTION) {
+					storeDir = fileChooser.getSelectedFile().getPath();
+				} else {
+					return;
+				}
+				showResults  = false;
+				storeResults = true;
+			}
+		}
+
+		final int numProcessors = Runtime.getRuntime().availableProcessors();
+
+		IJ.log("Processing " + imageFiles.length + " image files in " + numProcessors + " threads....");
+
+		setButtonsEnabled(false);
+
+		Thread[] threads = new Thread[numProcessors];
+
+		class ImageProcessingThread extends Thread {
+
+			final int     numThread;
+			final int     numProcessors;
+			final File[]  imageFiles;
+			final boolean storeResults;
+			final boolean showResults;
+			final String  storeDir;
+
+			public ImageProcessingThread(int numThread, int numProcessors,
+			                             File[] imageFiles,
+			                             boolean storeResults, boolean showResults,
+			                             String storeDir) {
+				this.numThread     = numThread;
+				this.numProcessors = numProcessors;
+				this.imageFiles    = imageFiles;
+				this.storeResults  = storeResults;
+				this.showResults   = showResults;
+				this.storeDir      = storeDir;
+			}
+
+			public void run() {
+
+				for (int i = numThread; i < imageFiles.length; i += numProcessors) {
+
+					File file = imageFiles[i];
+
+					ImagePlus batchImage = IJ.openImage(file.getPath());
+
+					// take first channel only if image has several channels
+					if (batchImage.getNChannels() > 1)
+						batchImage = extractChannel(batchImage, 1);
+
+					IJ.log("Processing image " + file.getName() + " in thread " + numThread);
+
+					ImagePlus segmentation = processSingleChannelImage(batchImage, pottsWeight);
+
+					if (showResults) {
+						segmentation.show();
+						batchImage.show();
+					}
+
+					if (storeResults) {
+						String filename = storeDir + File.separator + file.getName();
+						IJ.log("Saving results to " + filename);
+						IJ.save(segmentation, filename);
+						segmentation.close();
+						batchImage.close();
+					}
+				}
+			}
+		}
+
+		// start threads
+		for (int i = 0; i < numProcessors; i++) {
+
+			threads[i] = new ImageProcessingThread(i, numProcessors, imageFiles, storeResults, showResults, storeDir);
+			threads[i].start();
+		}
+
+		// join all threads
+		for (Thread thread : threads) {
+			try {
+				thread.join();
+			} catch (InterruptedException e) {}
+		}
+
+		setButtonsEnabled(true);
+	}
+
+	private void processSingleChannelImage(ImagePlus imp, float pottsWeight, ImagePlus seg) {
+
+		Image<T> image = ImagePlusAdapter.wrap(imp);
+
+		// get some statistics
+		int[] dimensions = image.getDimensions();
+		int   numNodes   = image.size();
+		int   numEdges   = 0;
+		for (int d = 0; d < dimensions.length; d++)
+			numEdges += numNodes - numNodes/dimensions[d];
 
 		LocalizableByDimCursor<T> cursor = image.createLocalizableByDimCursor();
 		int[] imagePosition              = new int[dimensions.length];
@@ -580,7 +659,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 		// TODO: reuse an old one
 		IJ.log("Creating graph structure of " + numNodes + " nodes and " + numEdges + " edges...");
 		long start = System.currentTimeMillis();
-		graphCut = new GraphCut(numNodes, numEdges);
+		GraphCut graphCut = new GraphCut(numNodes, numEdges);
 		long end   = System.currentTimeMillis();
 		IJ.log("...done. (" + (end - start) + "ms)");
 
@@ -592,7 +671,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			cursor.fwd();
 			cursor.getPosition(imagePosition);
 
-			int nodeNum = listPosition(imagePosition);
+			int nodeNum = listPosition(imagePosition, dimensions);
 			
 			T type = cursor.getType();
 			float value = type.getRealFloat();
@@ -614,7 +693,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 
 			// image position
 			cursor.getPosition(imagePosition);
-			int nodeNum = listPosition(imagePosition);
+			int nodeNum = listPosition(imagePosition, dimensions);
 
 			neighborPosition = imagePosition;
 
@@ -624,7 +703,7 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 
 				if (neighborPosition[d] >= 0) {
 
-					int neighborNum = listPosition(neighborPosition);
+					int neighborNum = listPosition(neighborPosition, dimensions);
 					graphCut.setEdgeWeight(nodeNum, neighborNum, pottsWeight);
 					e++;
 				}
@@ -640,9 +719,68 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 		float maxFlow = graphCut.computeMaximumFlow(false, null);
 		end = System.currentTimeMillis();
 		IJ.log("...done. Max flow is " + maxFlow + ". (" + (end - start) + "ms)");
+
+		Image<T> segmentation = ImagePlusAdapter.wrap(seg);
+
+		// create segmentation image
+		cursor = segmentation.createLocalizableByDimCursor();
+		imagePosition = new int[dimensions.length];
+		while (cursor.hasNext()) {
+
+			cursor.fwd();
+
+			cursor.getPosition(imagePosition);
+
+			int nodeNum = listPosition(imagePosition, dimensions);
+
+			if (graphCut.getTerminal(nodeNum) == Terminal.FOREGROUND)
+				cursor.getType().setReal(255.0);
+			else
+				cursor.getType().setReal(0.0);
+		}
 	}
 
-	private int listPosition(int[] imagePosition) {
+	private ImagePlus extractChannel(ImagePlus imp, int channel) {
+
+		int width    = imp.getWidth();
+		int height   = imp.getHeight();
+		int slices   = imp.getNSlices();
+		int frames   = imp.getNFrames();
+		int size     = slices*frames;
+
+		FileInfo fileInfo         = imp.getOriginalFileInfo();
+		HyperStackReducer reducer = new HyperStackReducer(imp);
+
+		// create empty stack
+		ImageStack stack2 = new ImageStack(width, height, size);
+		// add first slice (just to create an ImagePlus)
+		stack2.setPixels(imp.getProcessor().getPixels(), 1); 
+		// create new ImagePlus for selected channel
+		ImagePlus imp2 = new ImagePlus("C" + channel + "-" + imp.getTitle(), stack2);
+		// remove content again
+		stack2.setPixels(null, 1);
+
+		// select desired channel in source image
+		imp.setPosition(channel, 1, 1);
+		// set number of channels, slices, and frames
+		imp2.setDimensions(1, slices, frames);
+
+		reducer.reduce(imp2);
+		imp2.setOpenAsHyperStack(true);
+		imp2.setFileInfo(fileInfo);
+
+		return imp2;
+	}
+
+	private void updateSegmentationImage() {
+
+		if (seg == null)
+			seg = processSingleChannelImage(imp, pottsWeight);
+		else
+			processSingleChannelImage(imp, pottsWeight, seg);
+	}
+
+	private int listPosition(int[] imagePosition, int[] dimensions) {
 
 		int pos = 0;
 		int fac = 1;
@@ -651,5 +789,11 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 			fac *= dimensions[d];
 		}
 		return pos;
+	}
+
+	private void setButtonsEnabled(boolean enabled) {
+		applyButton.setEnabled(enabled);
+		batchButton.setEnabled(enabled);
+		overlayButton.setEnabled(enabled);
 	}
 }
