@@ -1,4 +1,4 @@
-package fiji.plugin.nperry.gui;
+package fiji.plugin.nperry.visualization;
 
 import fiji.plugin.nperry.Feature;
 import fiji.plugin.nperry.Spot;

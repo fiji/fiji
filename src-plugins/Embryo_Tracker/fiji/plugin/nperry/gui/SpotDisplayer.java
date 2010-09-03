@@ -8,8 +8,10 @@ import java.util.Collection;
 
 import javax.vecmath.Color3f;
 
+
 import fiji.plugin.nperry.Feature;
 import fiji.plugin.nperry.Spot;
+import fiji.plugin.nperry.visualization.SpotContent;
 
 public class SpotDisplayer {
 	
@@ -83,33 +85,33 @@ public class SpotDisplayer {
 		}
 	}
 	
-	public final void setColoringBy(final Feature feature) {
-		if (null == feature) 
-			for (SpotContent blob : blobs)
-				blob.setColor(SpotContent.DEFAULT_COLOR);
-		else {
-			Float min = Float.POSITIVE_INFINITY;
-			Float max = Float.NEGATIVE_INFINITY;
-			Float val;
-			for (SpotContent blob : blobs) {
-				val = blob.getFeature(feature);
-				if (null == val)
-					continue;
-				if (val < min) min = val;
-				if (val > max) max = val;
-			}
-			Color3f color;
-			float hue;
-			for (SpotContent blob : blobs) {
-				val = blob.getFeature(feature);
-				if (null == val)
-					continue;
-				hue = (val-min) / (max - min);
-				color = new Color3f(new Color(Color.HSBtoRGB(hue, 1, 1)));
-				blob.setColor(color);
-			}
-		}
-	}
+//	public final void setColoringBy(final Feature feature) {
+//		if (null == feature) 
+//			for (SpotContent blob : blobs)
+//				blob.setColor(SpotContent.DEFAULT_COLOR);
+//		else {
+//			Float min = Float.POSITIVE_INFINITY;
+//			Float max = Float.NEGATIVE_INFINITY;
+//			Float val;
+//			for (SpotContent blob : blobs) {
+//				val = blob.getFeature(feature);
+//				if (null == val)
+//					continue;
+//				if (val < min) min = val;
+//				if (val > max) max = val;
+//			}
+//			Color3f color;
+//			float hue;
+//			for (SpotContent blob : blobs) {
+//				val = blob.getFeature(feature);
+//				if (null == val)
+//					continue;
+//				hue = (val-min) / (max - min);
+//				color = new Color3f(new Color(Color.HSBtoRGB(hue, 1, 1)));
+//				blob.setColor(color);
+//			}
+//		}
+//	}
 	
 
 	public void resetTresholds() {
