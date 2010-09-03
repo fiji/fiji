@@ -18,13 +18,17 @@ import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.WindowConstants;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import fiji.plugin.nperry.Feature;
 import fiji.plugin.nperry.Spot;
 
 
-public class ThresholdGuiPanel extends javax.swing.JPanel implements ActionListener {
+public class ThresholdGuiPanel extends javax.swing.JPanel implements ChangeListener {
 	private static final long serialVersionUID = 1L;
+
+	private final ChangeEvent CHANGE_EVENT = new ChangeEvent(this);
 
 	private JScrollPane jScrollPaneThresholds;
 	private JButton jButtonRemoveThreshold;
@@ -42,8 +46,18 @@ public class ThresholdGuiPanel extends javax.swing.JPanel implements ActionListe
 	private Feature[] features = new Feature[0];
 	private double[] thresholds = new double[0];
 	private boolean[] isAbove = new boolean[0];
-	private ArrayList<ActionListener> listeners = new ArrayList<ActionListener>();
-
+	private ArrayList<ActionListener> actionListeners = new ArrayList<ActionListener>();
+	private ArrayList<ChangeListener> changeListeners = new ArrayList<ChangeListener>();
+	
+	{
+		//Set Look & Feel
+		try {
+			javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
 	/*
 	 * CONSTRUCTOR
 	 */
@@ -72,7 +86,7 @@ public class ThresholdGuiPanel extends javax.swing.JPanel implements ActionListe
 	 * Called when one of the {@link ThresholdPanel} is changed by the user.
 	 */
 	@Override
-	public void actionPerformed(ActionEvent ae) {
+	public void stateChanged(ChangeEvent e) {
 		thresholds = new double[thresholdPanels.size()];
 		isAbove = new boolean[thresholdPanels.size()];
 		features = new Feature[thresholdPanels.size()];
@@ -83,7 +97,7 @@ public class ThresholdGuiPanel extends javax.swing.JPanel implements ActionListe
 			isAbove[index] = tp.isAboveThreshold();
 			index++;
 		}
-		fireThresholdChanged(ae);
+		fireThresholdChanged(e);
 	}
 
 	/**
@@ -112,34 +126,54 @@ public class ThresholdGuiPanel extends javax.swing.JPanel implements ActionListe
 	}
 	
 	/**
-	 * Add an {@link ActionListener} to this panel. The {@link ActionListener} will
+	 * Add an {@link ChangeListener} to this panel. The {@link ChangeListener} will
 	 * be notified when a change happens to the thresholds displayed by this panel, whether
 	 * due to the slider being move, the auto-threshold button being pressed, or
 	 * the combo-box selection being changed.
 	 */
-	public void addActionListener(ActionListener listener) {
-		listeners.add(listener);
+	public void addChangeListener(ChangeListener listener) {
+		changeListeners.add(listener);
 	}
 	
 	/**
-	 * Remove an ActionListener. 
+	 * Remove a ChangeListener from this panel. 
 	 * @return true if the listener was in listener collection of this instance.
 	 */
+	public boolean removeChangeListener(ChangeListener listener) {
+		return changeListeners.remove(listener);
+	}
+	
+	public Collection<ChangeListener> getChangeListeners() {
+		return changeListeners;
+	}
+	
+	/**
+	 * Add an {@link ActionListener} to this panel. These listeners will be notfied when
+	 * a button is pushed.
+	 */
+	public void addActionListener(ActionListener listener) {
+		actionListeners.add(listener);
+	}
+	
+	/**
+	 * Remove an ActionListener from this panel. 
+	 * @return true if the listener was in the ActionListener collection of this instance.
+	 */
 	public boolean removeActionListener(ActionListener listener) {
-		return listeners.remove(listener);
+		return actionListeners.remove(listener);
 	}
 	
 	public Collection<ActionListener> getActionListeners() {
-		return listeners;
+		return actionListeners;
 	}
 	
 	/*
 	 * PRIVATE METHODS
 	 */
 	
-	private void fireThresholdChanged(ActionEvent ae) {
-		for (ActionListener al : listeners) 
-			al.actionPerformed(ae);
+	private void fireThresholdChanged(ChangeEvent e) {
+		for (ChangeListener cl : changeListeners) 
+			cl.stateChanged(e);
 	}
 	
 	private void prepareDataArrays() {
@@ -172,7 +206,7 @@ public class ThresholdGuiPanel extends javax.swing.JPanel implements ActionListe
 	
 	public void addThresholdPanel(Feature feature) {
 		ThresholdPanel<Feature> tp = new ThresholdPanel<Feature>(featureValues, feature);
-		tp.addActionListener(this);
+		tp.addChangeListener(this);
 		newFeatureIndex++;
 		if (newFeatureIndex >= Feature.values().length) 
 			newFeatureIndex = 0;
@@ -182,20 +216,18 @@ public class ThresholdGuiPanel extends javax.swing.JPanel implements ActionListe
 		jPanelAllThresholds.add(tp);
 		jPanelAllThresholds.add(strut);
 		jPanelAllThresholds.revalidate();
-		ActionEvent ae = new ActionEvent(this, 0, "ThresholdPanelAdded");
-		fireThresholdChanged(ae);
+		fireThresholdChanged(CHANGE_EVENT);
 	}
 	
 	private void removeThresholdPanel() {
 		try {
 			ThresholdPanel<Feature> tp = thresholdPanels.pop();
-			tp.removeActionListener(this);
+			tp.addChangeListener(this);
 			Component strut = struts.pop();
 			jPanelAllThresholds.remove(strut);
 			jPanelAllThresholds.remove(tp);
 			jPanelAllThresholds.repaint();
-			ActionEvent ae = new ActionEvent(this, 0, "ThresholdPanelReomved");
-			fireThresholdChanged(ae);
+			fireThresholdChanged(CHANGE_EVENT);
 		} catch (EmptyStackException ese) {	}
 	}
 	
@@ -287,6 +319,7 @@ public class ThresholdGuiPanel extends javax.swing.JPanel implements ActionListe
 		frame.setVisible(true);
 	}
 
+	
 
 
 }

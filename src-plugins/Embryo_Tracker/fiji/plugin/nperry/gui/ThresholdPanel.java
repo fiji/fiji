@@ -27,6 +27,8 @@ import javax.swing.JFrame;
 import javax.swing.JRadioButton;
 import javax.swing.WindowConstants;
 import javax.swing.border.LineBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -51,6 +53,7 @@ public class ThresholdPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 	private static final Color annotationColor = new java.awt.Color(252,117,0);
 	private static final long serialVersionUID = 1L;
 	private static final String DATA_SERIES_NAME = "Data";
+	private final ChangeEvent CHANGE_EVENT = new ChangeEvent(this);
 	private JComboBox jComboBoxFeature;
 	private ChartPanel chartPanel;
 	private JButton jButtonAutoThreshold;
@@ -66,8 +69,16 @@ public class ThresholdPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 	private K key;
 	private K[] allKeys;
 	
-	private ArrayList<ActionListener> listeners = new ArrayList<ActionListener>();
+	private ArrayList<ChangeListener> listeners = new ArrayList<ChangeListener>();
 	
+	{
+		//Set Look & Feel
+		try {
+			javax.swing.UIManager.setLookAndFeel(javax.swing.UIManager.getSystemLookAndFeelClassName());
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+	}
 	
 	/*
 	 * CONSTRUCTOR
@@ -110,24 +121,24 @@ public class ThresholdPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 	public K getKey() { return key; }
 	
 	/**
-	 * Add an {@link ActionListener} to this panel. The {@link ActionListener} will
+	 * Add an {@link ChangeListener} to this panel. The {@link ChangeListener} will
 	 * be notified when a change happens to the threshold displayed by this panel, whether
 	 * due to the slider being move, the auto-threshold button being pressed, or
 	 * the combo-box selection being changed.
 	 */
-	public void addActionListener(ActionListener listener) {
+	public void addChangeListener(ChangeListener listener) {
 		listeners.add(listener);
 	}
 	
 	/**
-	 * Remove an ActionListener. 
+	 * Remove an ChangeListener. 
 	 * @return true if the listener was in listener collection of this instance.
 	 */
-	public boolean removeActionListener(ActionListener listener) {
+	public boolean removeChangeListener(ChangeListener listener) {
 		return listeners.remove(listener);
 	}
 	
-	public Collection<ActionListener> getActionListeners() {
+	public Collection<ChangeListener> getChangeListeners() {
 		return listeners;
 	}
 	
@@ -136,9 +147,8 @@ public class ThresholdPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 	 */
 	
 	private void fireThresholdChanged() {
-		ActionEvent ae = new ActionEvent(this, 0, "ThresholdChanged");
-		for (ActionListener al : listeners) 
-			al.actionPerformed(ae);
+		for (ChangeListener al : listeners) 
+			al.stateChanged(CHANGE_EVENT);
 	}
 	
 	private void comboBoxSelectionChanged() {

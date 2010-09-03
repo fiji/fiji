@@ -8,14 +8,14 @@ import ij.process.StackConverter;
 import ij3d.Image3DUniverse;
 import ij3d.Install_J3D;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Random;
 
 import javax.swing.JFrame;
 import javax.swing.WindowConstants;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.special.SphereCursor;
@@ -97,7 +97,7 @@ public class SpotDisplayerTestDrive {
 			System.out.println(s);
 
 		// Launch renderer
-		Image3DUniverse universe = new Image3DUniverse();
+		final Image3DUniverse universe = new Image3DUniverse();
 		final SpotDisplayer displayer = new SpotDisplayer(spots);
 		displayer.render(universe);
 		universe.addVoltex(imp);
@@ -107,16 +107,17 @@ public class SpotDisplayerTestDrive {
 		final ThresholdGuiPanel gui = new ThresholdGuiPanel(spots);
 
 		// Set listeners
-		gui.addActionListener(new ActionListener() {
+		gui.addChangeListener(new ChangeListener() {
 			private double[] t = null;
 			private boolean[] is = null;
 			private Feature[] f = null;
 			@Override
-			public void actionPerformed(ActionEvent e) {
+			public void stateChanged(ChangeEvent e) {
 				f = gui.getFeatures();
 				is = gui.getIsAbove();
 				t = gui.getThresholds();				
 				displayer.threshold(f, t, is);
+				universe.getCurrentTimepoint();
 			}
 		});
 		
