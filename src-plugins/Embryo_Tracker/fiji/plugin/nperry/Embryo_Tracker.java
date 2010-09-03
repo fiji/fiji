@@ -208,9 +208,11 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 				
 		// Launch renderer
 		IJ.showStatus("Found "+spotsAllFrames.size() +" spots. Preparing renderer...");
-		final SpotDisplayer displayer = new SpotDisplayer(spotsAllFrames, imp);
+		final SpotDisplayer displayer = new SpotDisplayer(spotsAllFrames);
 
-		Image3DUniverse universe = displayer.render();
+		Image3DUniverse universe = new Image3DUniverse();
+		displayer.render(universe);
+		universe.addVoltex(imp);
 		universe.show();
 		
 		return new Object[] {spotsAllFrames};

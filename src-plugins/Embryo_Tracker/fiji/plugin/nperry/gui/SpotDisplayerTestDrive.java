@@ -5,6 +5,7 @@ import fiji.plugin.nperry.Spot;
 import fiji.plugin.nperry.features.FeatureFacade;
 import ij.ImagePlus;
 import ij.process.StackConverter;
+import ij3d.Image3DUniverse;
 import ij3d.Install_J3D;
 
 import java.awt.event.ActionEvent;
@@ -96,8 +97,11 @@ public class SpotDisplayerTestDrive {
 			System.out.println(s);
 
 		// Launch renderer
-		final SpotDisplayer displayer = new SpotDisplayer(spots, imp);
-		displayer.render().show();
+		Image3DUniverse universe = new Image3DUniverse();
+		final SpotDisplayer displayer = new SpotDisplayer(spots);
+		displayer.render(universe);
+		universe.addVoltex(imp);
+		universe.show();
 		
 		// Launch threshold GUI
 		final ThresholdGuiPanel gui = new ThresholdGuiPanel(spots);

@@ -1,11 +1,5 @@
 package fiji.plugin.nperry.gui;
 
-import fiji.plugin.nperry.Feature;
-import fiji.plugin.nperry.Spot;
-import ij.ImagePlus;
-import ij.plugin.Duplicator;
-import ij3d.Content;
-import ij3d.ContentCreator;
 import ij3d.Image3DUniverse;
 
 import java.awt.Color;
@@ -14,20 +8,19 @@ import java.util.Collection;
 
 import javax.vecmath.Color3f;
 
+import fiji.plugin.nperry.Feature;
+import fiji.plugin.nperry.Spot;
+
 public class SpotDisplayer {
 	
-	private ImagePlus imp;
-	private Content imageContent;
 	private ArrayList<SpotContent> blobs;
+	private float transparency = 0.5f;
+	private Color3f color = new Color3f(Color.YELLOW);
+	private float radius = 5;
 
 	
-	public SpotDisplayer(Collection<Spot> spots, ImagePlus imp) {
-		setSpots(spots);
-		setImagePlus(imp);
-	}
-	
 	public SpotDisplayer(Collection<Spot> spots) {
-		this(spots, null);
+		setSpots(spots);
 	}
 	
 	
@@ -35,16 +28,9 @@ public class SpotDisplayer {
 	 * PUBLIC METHODS
 	 */
 	
-	public Image3DUniverse render() {
-		Image3DUniverse univ = new Image3DUniverse();
-		if (imp != null) {
-			imageContent = univ.addVoltex(imp);
-			imageContent.setLocked(true);
-		}
-		
+	public void render(Image3DUniverse universe) {
 		for (SpotContent blob : blobs)
-			univ.addContentLater(blob);
-		return univ;		
+			universe.addContentLater(blob);
 	}
 	
 	public final void threshold(final Feature[] features, double[] thresholds, boolean[] isAboves) {
@@ -136,24 +122,13 @@ public class SpotDisplayer {
 	 * PRIVATE METHODS
 	 */
 	
-
-	private void setImagePlus(final ImagePlus imp) {
-		if (null == imp) { 
-			this.imp = null;
-			return;
-		}
-		ImagePlus copy = new Duplicator().run(imp, 1, imp.getNSlices());
-		ContentCreator.convert(copy);
-		this.imp = copy;
-	}
 	
 	private void setSpots(Collection<Spot> spots) {
 		blobs = new ArrayList<SpotContent>(spots.size());
 		SpotContent blob;
 		int index = 0;
 		for (Spot spot : spots) {
-			blob = new SpotContent(spot);
-			blob.setRadius(spot.getDisplayRadius());
+			blob = new SpotContent(spot, radius, color, transparency);
 			blobs.add(blob);
 			index++;
 		}

@@ -25,7 +25,7 @@ public class SpotContent extends Content {
 	private Color3f color = DEFAULT_COLOR;
 	private float transparency = DEFAULT_TRANSPARENCY;
 
-	public SpotContent(Spot spot) {
+	public SpotContent(Spot spot, float radius, Color3f color, float transparency) {
 		super(spot.getName(), spot.getFrame());
 		this.spot = spot;
 		makeMesh();
@@ -44,6 +44,11 @@ public class SpotContent extends Content {
 		makeMesh();
 	}
 	
+//	@Override
+//	public void setVisible(boolean visible) {
+//
+//	}
+	
 	/*
 	 * PRIVATE METHODS
 	 */
@@ -55,10 +60,7 @@ public class SpotContent extends Content {
 		float y = center[1];
 		float z = center[2];
 		List<Point3f> list = MeshMaker.createSphere(x, y, z, radius);
-		CustomTriangleMesh mesh = new CustomTriangleMesh(list, color, 0);
-		setColor(color);
-		setTransparency(transparency); // FIXME that does not work
-		setShaded(false);
+		CustomTriangleMesh mesh = new CustomTriangleMesh(list, color, transparency);
 		showCoordinateSystem(false);
 		display(new CustomMeshNode(mesh));
 	}
