@@ -23,6 +23,7 @@ public class UniverseSettings {
 	public static boolean showGlobalCoordinateSystem           = false;
 	public static boolean showLocalCoordinateSystemsByDefault  = false;
 	public static boolean showScalebar                         = false;
+	public static boolean showSelectionBox                     = true;
 	public static Color3f defaultBackground                    = new Color3f();
 
 	public static void save() {
