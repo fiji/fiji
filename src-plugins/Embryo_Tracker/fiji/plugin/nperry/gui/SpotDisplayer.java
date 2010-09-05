@@ -1,22 +1,28 @@
 package fiji.plugin.nperry.gui;
 
+import ij3d.Content;
+import ij3d.ContentInstant;
 import ij3d.Image3DUniverse;
 
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.TreeMap;
 
 import javax.vecmath.Color3f;
+import javax.vecmath.Point4f;
 
 
 import fiji.plugin.nperry.Feature;
 import fiji.plugin.nperry.Spot;
-import fiji.plugin.nperry.visualization.SpotContent;
+import fiji.plugin.nperry.visualization.SpotGroupNode;
 
 public class SpotDisplayer {
 	
-	private ArrayList<SpotContent> blobs;
-	private float transparency = 0.5f;
+	private SpotGroupNode<Spot> blobs;
+	private Collection<Spot> spots;
+	
 	private Color3f color = new Color3f(Color.YELLOW);
 	private float radius = 5;
 
@@ -31,8 +37,12 @@ public class SpotDisplayer {
 	 */
 	
 	public void render(Image3DUniverse universe) {
-		for (SpotContent blob : blobs)
-			universe.addContentLater(blob);
+		ContentInstant ci = new ContentInstant("t0"); // TODO other instants, frames?
+		ci.display(blobs);
+		TreeMap<Integer, ContentInstant> instants = new TreeMap<Integer, ContentInstant>();
+		instants.put(0, ci);
+		Content c = new Content("instants", instants);
+		universe.addContentLater(c);
 	}
 	
 	public final void threshold(final Feature[] features, double[] thresholds, boolean[] isAboves) {
@@ -40,14 +50,11 @@ public class SpotDisplayer {
 		boolean isAbove;
 		Feature feature;
 		Float val;
+	
+		ArrayList<Spot> blobToShow = new ArrayList<Spot>(spots);
+		ArrayList<Spot> blobToHide = new ArrayList<Spot>(spots.size());
 		
-		for (SpotContent blob : blobs)
-			blob.setVisible(true);
-
-		ArrayList<SpotContent> blobCopy = new ArrayList<SpotContent>(blobs);
-		ArrayList<SpotContent> blobToRemove = new ArrayList<SpotContent>(blobs);
-		
-		SpotContent blob;
+		Spot blob;
 		
 		for (int i = 0; i < features.length; i++) {
 
@@ -55,68 +62,37 @@ public class SpotDisplayer {
 			feature = features[i];
 			isAbove = isAboves[i];
 
-			blobToRemove.clear();
+			blobToHide.clear();
 			if (isAbove) {
-				for (int j = 0; j < blobCopy.size(); j++) {
-					blob = blobCopy.get(j);
+				for (int j = 0; j < blobToShow.size(); j++) {
+					blob = blobToShow.get(j);
 					val = blob.getFeature(feature);
 					if (null == val)
 						continue;
 					if ( val < threshold) {
-						blobToRemove.add(blob); 
-						blob.setVisible(false);
+						blobToHide.add(blob);
 					}
 				}
 
 			} else {
-				for (int j = 0; j < blobCopy.size(); j++) {
-					blob = blobCopy.get(j);
+				for (int j = 0; j < blobToShow.size(); j++) {
+					blob = blobToShow.get(j);
 					val = blob.getFeature(feature);
 					if (null == val)
 						continue;
 					if ( val > threshold) {
-						blobToRemove.add(blob); 
-						blob.setVisible(false);
+						blobToHide.add(blob); 
 					}
 				}
 				
 			}
-			blobCopy.removeAll(blobToRemove);
+			blobToShow.removeAll(blobToHide); // no need to treat them multiple times
 		}
-	}
-	
-//	public final void setColoringBy(final Feature feature) {
-//		if (null == feature) 
-//			for (SpotContent blob : blobs)
-//				blob.setColor(SpotContent.DEFAULT_COLOR);
-//		else {
-//			Float min = Float.POSITIVE_INFINITY;
-//			Float max = Float.NEGATIVE_INFINITY;
-//			Float val;
-//			for (SpotContent blob : blobs) {
-//				val = blob.getFeature(feature);
-//				if (null == val)
-//					continue;
-//				if (val < min) min = val;
-//				if (val > max) max = val;
-//			}
-//			Color3f color;
-//			float hue;
-//			for (SpotContent blob : blobs) {
-//				val = blob.getFeature(feature);
-//				if (null == val)
-//					continue;
-//				hue = (val-min) / (max - min);
-//				color = new Color3f(new Color(Color.HSBtoRGB(hue, 1, 1)));
-//				blob.setColor(color);
-//			}
-//		}
-//	}
-	
+		blobs.setVisible(blobToShow);
+	}	
 
 	public void resetTresholds() {
-		for (SpotContent blob : blobs)
-			blob.setVisible(true);
+		blobs.setVisible(true);
 	}
 	
 	
@@ -126,14 +102,16 @@ public class SpotDisplayer {
 	
 	
 	private void setSpots(Collection<Spot> spots) {
-		blobs = new ArrayList<SpotContent>(spots.size());
-		SpotContent blob;
-		int index = 0;
-		for (Spot spot : spots) {
-			blob = new SpotContent(spot, radius, color, transparency);
-			blobs.add(blob);
-			index++;
+		HashMap<Spot, Point4f> centers = new HashMap<Spot, Point4f>(spots.size());
+		float[] pos;
+		float[] coords;
+		for(Spot spot : spots) {
+			coords = spot.getCoordinates();
+			pos = new float[] {coords[0], coords[1], coords[2], radius};
+			centers.put(spot, new Point4f(pos));
 		}
+		blobs = new SpotGroupNode<Spot>(centers, color);
+		this.spots = spots;
 	}
 
 
