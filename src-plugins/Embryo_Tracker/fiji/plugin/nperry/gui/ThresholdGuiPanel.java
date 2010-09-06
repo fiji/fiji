@@ -5,6 +5,7 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EmptyStackException;
@@ -102,22 +103,41 @@ public class ThresholdGuiPanel extends javax.swing.JPanel implements ChangeListe
 	public ThresholdGuiPanel(Collection<Spot> spots, Feature selectedFeature) {
 		super();
 		newFeatureIndex = selectedFeature.ordinal();
-		this.spots = spots;
-		prepareDataArrays();
+		setSpots(spots);
 		initGUI();
-		addThresholdPanel();
+		if (null != spots)
+			addThresholdPanel();
 	}
 
 	public ThresholdGuiPanel(Collection<Spot> spots) {
-		super();
-		this.spots = spots;
-		prepareDataArrays();
-		initGUI();
+		this(spots, Feature.values()[0]);
+	}
+	
+	public ThresholdGuiPanel() {
+		this(null);
 	}
 	
 	/*
 	 * PUBLIC METHODS
 	 */
+	
+	/**
+	 * Set the Spot collection displayed in this GUI.
+	 * <p>
+	 * Calling this method causes the individual threshold panel to be all 
+	 * removed.
+	 */
+	public void setSpots(Collection<Spot> spots) {
+		for(ThresholdPanel<Feature> tp : thresholdPanels)
+			jPanelAllThresholds.remove(tp);
+		for(Component strut : struts)
+			jPanelAllThresholds.remove(strut);
+		if (null != jPanelAllThresholds)
+			jPanelAllThresholds.repaint();
+		this.spots = spots;
+		prepareDataArrays();
+	}
+	
 
 	/**
 	 * Called when one of the {@link ThresholdPanel} is changed by the user.
@@ -236,6 +256,8 @@ public class ThresholdGuiPanel extends javax.swing.JPanel implements ChangeListe
 	}
 	
 	private void prepareDataArrays() {
+		if (null == spots)
+			return;
 		int index;
 		Float val;
 		boolean noDataFlag = true;
@@ -264,6 +286,8 @@ public class ThresholdGuiPanel extends javax.swing.JPanel implements ChangeListe
 	}
 	
 	public void addThresholdPanel(Feature feature) {
+		if (null == featureValues)
+			return;
 		ThresholdPanel<Feature> tp = new ThresholdPanel<Feature>(featureValues, feature);
 		tp.addChangeListener(this);
 		newFeatureIndex++;
@@ -403,8 +427,9 @@ public class ThresholdGuiPanel extends javax.swing.JPanel implements ChangeListe
 	/**
 	* Auto-generated main method to display this 
 	* JPanel inside a new JFrame.
+	 * @throws IOException 
 	*/
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException {
 		// Generate fake Spot data
 		final int NSPOT = 100;
 		final Random rn = new Random();
@@ -418,11 +443,17 @@ public class ThresholdGuiPanel extends javax.swing.JPanel implements ChangeListe
 		}
 		
 		// Generate GUI
+		ThresholdGuiPanel gui = new ThresholdGuiPanel();
 		JFrame frame = new JFrame();
-		frame.getContentPane().add(new ThresholdGuiPanel(spots));
+		frame.getContentPane().add(gui);
 		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		frame.pack();
 		frame.setVisible(true);
+		
+		System.out.println("Type <Enter> to ad spots to this");
+		System.in.read();
+		gui.setSpots(spots);
+		
 	}
 
 	
