@@ -2,6 +2,7 @@ package fiji.plugin.nperry.gui;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -13,8 +14,12 @@ import java.util.Stack;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.ComboBoxModel;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.WindowConstants;
@@ -25,10 +30,39 @@ import fiji.plugin.nperry.Feature;
 import fiji.plugin.nperry.Spot;
 
 
-public class ThresholdGuiPanel extends javax.swing.JPanel implements ChangeListener {
-	private static final long serialVersionUID = 1L;
 
+/**
+* This code was edited or generated using CloudGarden's Jigloo
+* SWT/Swing GUI Builder, which is free for non-commercial
+* use. If Jigloo is being used commercially (ie, by a corporation,
+* company or business for any purpose whatever) then you
+* should purchase a license for each developer using Jigloo.
+* Please visit www.cloudgarden.com for details.
+* Use of Jigloo implies acceptance of these licensing terms.
+* A COMMERCIAL LICENSE HAS NOT BEEN PURCHASED FOR
+* THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
+* LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
+*/
+public class ThresholdGuiPanel extends javax.swing.JPanel implements ChangeListener {
+	/**
+	 * This action is fired when the "Next >>" button is pressed.
+	 */
+	public final ActionEvent NEXT_BUTTON_PRESSED = new ActionEvent(this, 0, "NextButtonPressed");
+	/**
+	 * This action is fired when the feature to color in the "Set color by feature"
+	 * JComboBox is changed.
+	 */
+	public final ActionEvent COLOR_FEATURE_CHANGED = new ActionEvent(this, 1, "ColorFeatureChanged");
 	private final ChangeEvent CHANGE_EVENT = new ChangeEvent(this);
+	
+	private static final long serialVersionUID = 1L;
+	private static final Font smallFont = new Font(Font.SANS_SERIF, Font.PLAIN, 10);
+
+	
+	private JLabel jLabelSetColorBy;
+	private JComboBox jComboBoxSetColorBy;
+	private JPanel jPanelByFeature;
+	private JPanel jPanelBottom;
 
 	private JScrollPane jScrollPaneThresholds;
 	private JButton jButtonRemoveThreshold;
@@ -48,6 +82,9 @@ public class ThresholdGuiPanel extends javax.swing.JPanel implements ChangeListe
 	private boolean[] isAbove = new boolean[0];
 	private ArrayList<ActionListener> actionListeners = new ArrayList<ActionListener>();
 	private ArrayList<ChangeListener> changeListeners = new ArrayList<ChangeListener>();
+	
+	private String[] featureStringList;
+	private Feature setColorByFeature;
 	
 	{
 		//Set Look & Feel
@@ -109,6 +146,14 @@ public class ThresholdGuiPanel extends javax.swing.JPanel implements ChangeListe
 	}
 	
 	/**
+	 * Return the feature selected in the "Set color by feature" comb-box. 
+	 * Return <code>null</code> if the item "Default" is selected.
+	 */
+	public Feature getColorByFeature() {
+		return setColorByFeature;
+	}
+	
+	/**
 	 * Return whether each threshold shown under this panel is meant to
 	 * be a threshold <i>above<i>. 
 	 * @see {@link #getThresholds()}, {@link #getFeatures()}
@@ -148,8 +193,8 @@ public class ThresholdGuiPanel extends javax.swing.JPanel implements ChangeListe
 	}
 	
 	/**
-	 * Add an {@link ActionListener} to this panel. These listeners will be notfied when
-	 * a button is pushed.
+	 * Add an {@link ActionListener} to this panel. These listeners will be notified when
+	 * a button is pushed or when the feature to color is changed.
 	 */
 	public void addActionListener(ActionListener listener) {
 		actionListeners.add(listener);
@@ -170,6 +215,20 @@ public class ThresholdGuiPanel extends javax.swing.JPanel implements ChangeListe
 	/*
 	 * PRIVATE METHODS
 	 */
+	
+	private void setColorByFeature() {
+		int selection = jComboBoxSetColorBy.getSelectedIndex();
+		if (selection == 0) 
+			setColorByFeature = null;
+		else
+			setColorByFeature = Feature.values()[selection-1];
+		fireAction(COLOR_FEATURE_CHANGED);
+	}
+	
+	private void fireAction(ActionEvent e) {
+		for (ActionListener l : actionListeners)
+			l.actionPerformed(e);
+	}
 	
 	private void fireThresholdChanged(ChangeEvent e) {
 		for (ChangeListener cl : changeListeners) 
@@ -250,39 +309,86 @@ public class ThresholdGuiPanel extends javax.swing.JPanel implements ChangeListe
 				}
 			}
 			{
-				jPanelButtons = new JPanel();
-				BoxLayout jPanelButtonsLayout = new BoxLayout(jPanelButtons, javax.swing.BoxLayout.X_AXIS);
-				jPanelButtons.setLayout(jPanelButtonsLayout);
-				this.add(jPanelButtons, BorderLayout.SOUTH);
-				jPanelButtons.setPreferredSize(new java.awt.Dimension(250, 41));
+				jPanelBottom = new JPanel();
+				BorderLayout jPanelBottomLayout = new BorderLayout();
+				jPanelBottom.setLayout(jPanelBottomLayout);
+				this.add(jPanelBottom, BorderLayout.SOUTH);
+				jPanelBottom.setPreferredSize(new java.awt.Dimension(270, 80));
 				{
-					jPanelButtons.add(Box.createHorizontalStrut(5));
-					jButtonAddThreshold = new JButton();
-					jPanelButtons.add(jButtonAddThreshold);
-					jButtonAddThreshold.setText("+");
-					jButtonAddThreshold.addActionListener(new ActionListener() {
-						public void actionPerformed(ActionEvent e) {
-							addThresholdPanel();
-						}
-					});
+					jPanelButtons = new JPanel();
+					jPanelBottom.add(jPanelButtons, BorderLayout.SOUTH);
+					BoxLayout jPanelButtonsLayout = new BoxLayout(jPanelButtons, javax.swing.BoxLayout.X_AXIS);
+					jPanelButtons.setLayout(jPanelButtonsLayout);
+					jPanelButtons.setPreferredSize(new java.awt.Dimension(270, 36));
+					{
+						jPanelButtons.add(Box.createHorizontalStrut(5));
+						jButtonAddThreshold = new JButton();
+						jPanelButtons.add(jButtonAddThreshold);
+						jButtonAddThreshold.setText("+");
+						jButtonAddThreshold.setFont(smallFont);
+						jButtonAddThreshold.addActionListener(new ActionListener() {
+							public void actionPerformed(ActionEvent e) {
+								addThresholdPanel();
+							}
+						});
+					}
+					{
+						jPanelButtons.add(Box.createHorizontalStrut(5));
+						jButtonRemoveThreshold = new JButton();
+						jPanelButtons.add(jButtonRemoveThreshold);
+						jButtonRemoveThreshold.setText("-");
+						jButtonRemoveThreshold.setFont(smallFont);
+						jButtonRemoveThreshold.addActionListener(new ActionListener() {
+							public void actionPerformed(ActionEvent e) {
+								removeThresholdPanel();
+							}
+						});
+					}
+					{
+						jPanelButtons.add(Box.createHorizontalGlue());
+						jButtonNext = new JButton();
+						jPanelButtons.add(jButtonNext);
+						jButtonNext.setText("Next >>");
+						jButtonNext.addActionListener(new ActionListener() {
+							public void actionPerformed(ActionEvent e) {
+								fireAction(NEXT_BUTTON_PRESSED);
+							}
+						});
+						jPanelButtons.add(Box.createHorizontalStrut(5));
+					}
 				}
 				{
-					jPanelButtons.add(Box.createHorizontalStrut(5));
-					jButtonRemoveThreshold = new JButton();
-					jPanelButtons.add(jButtonRemoveThreshold);
-					jButtonRemoveThreshold.setText("-");
-					jButtonRemoveThreshold.addActionListener(new ActionListener() {
-						public void actionPerformed(ActionEvent e) {
-							removeThresholdPanel();
-						}
-					});
-				}
-				{
-					jPanelButtons.add(Box.createHorizontalGlue());
-					jButtonNext = new JButton();
-					jPanelButtons.add(jButtonNext);
-					jButtonNext.setText("Next >>");
-					jPanelButtons.add(Box.createHorizontalStrut(5));
+					jPanelByFeature = new JPanel();
+					BoxLayout jPanelByFeatureLayout = new BoxLayout(jPanelByFeature, javax.swing.BoxLayout.X_AXIS);
+					jPanelByFeature.setLayout(jPanelByFeatureLayout);
+					jPanelBottom.add(jPanelByFeature, BorderLayout.CENTER);
+					jPanelByFeature.setPreferredSize(new java.awt.Dimension(270, 43));
+					{
+						jPanelByFeature.add(Box.createHorizontalStrut(5));
+						jLabelSetColorBy = new JLabel();
+						jPanelByFeature.add(jLabelSetColorBy);
+						jLabelSetColorBy.setText("Set color by");
+						jLabelSetColorBy.setFont(smallFont);
+					}
+					{
+						Feature[] allFeatures = Feature.values();
+						featureStringList = new String[allFeatures.length+1];
+						featureStringList[0] = "Default";
+						for (int i = 0; i < allFeatures.length; i++) 
+							featureStringList[i+1] = allFeatures[i].toString();
+						ComboBoxModel jComboBoxSetColorByModel = new DefaultComboBoxModel(featureStringList);
+						jComboBoxSetColorBy = new JComboBox();
+						jPanelByFeature.add(Box.createHorizontalStrut(5));
+						jPanelByFeature.add(jComboBoxSetColorBy);
+						jPanelByFeature.add(Box.createHorizontalStrut(5));
+						jComboBoxSetColorBy.setModel(jComboBoxSetColorByModel);
+						jComboBoxSetColorBy.setFont(smallFont);
+						jComboBoxSetColorBy.addActionListener(new ActionListener() {
+							public void actionPerformed(ActionEvent e) {
+								setColorByFeature();
+							}
+						});
+					}
 				}
 			}
 		} catch (Exception e) {

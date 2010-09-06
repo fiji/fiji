@@ -45,8 +45,6 @@ public class StartDialogPanel extends javax.swing.JPanel {
 		}
 	}
 
-	
-
 	private static final long serialVersionUID = 1L;
 	private static final float DEFAULT_BLOB_DIAMETER  = 10;
 	private static final boolean DEFAULT_MEDIAN_FILTER = false;
