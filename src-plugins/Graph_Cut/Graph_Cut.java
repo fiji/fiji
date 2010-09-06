@@ -47,8 +47,6 @@ import ij.gui.ImageWindow;
 
 import ij.io.FileInfo;
 
-
-import ij.plugin.HyperStackReducer;
 import ij.plugin.PlugIn;
 
 import ij.process.ImageProcessor;
@@ -744,29 +742,28 @@ public class Graph_Cut<T extends RealType<T>> implements PlugIn {
 
 		int width    = imp.getWidth();
 		int height   = imp.getHeight();
-		int slices   = imp.getNSlices();
+		int zslices  = imp.getNSlices();
 		int frames   = imp.getNFrames();
-		int size     = slices*frames;
 
 		FileInfo fileInfo         = imp.getOriginalFileInfo();
-		HyperStackReducer reducer = new HyperStackReducer(imp);
 
 		// create empty stack
-		ImageStack stack2 = new ImageStack(width, height, size);
-		// add first slice (just to create an ImagePlus)
-		stack2.setPixels(imp.getProcessor().getPixels(), 1); 
+		ImageStack stack2 = new ImageStack(width, height);
 		// create new ImagePlus for selected channel
-		ImagePlus imp2 = new ImagePlus("C" + channel + "-" + imp.getTitle(), stack2);
-		// remove content again
-		stack2.setPixels(null, 1);
+		ImagePlus imp2 = new ImagePlus();
+		imp2.setTitle("C" + channel + "-" + imp.getTitle());
 
-		// select desired channel in source image
-		imp.setPosition(channel, 1, 1);
-		// set number of channels, slices, and frames
-		imp2.setDimensions(1, slices, frames);
+		// copy slices
+		for (int t = 1; t <= frames; t++)
+			for (int z = 1; z <= zslices; z++) {
+				int slice = imp.getStackIndex(channel, z, t);
+				stack2.addSlice("", imp.getStack().getProcessor(slice));
+			}
 
-		reducer.reduce(imp2);
-		imp2.setOpenAsHyperStack(true);
+		imp2.setStack(stack2);
+		imp2.setDimensions(1, zslices, frames);
+		if (zslices*frames > 1)
+			imp2.setOpenAsHyperStack(true);
 		imp2.setFileInfo(fileInfo);
 
 		return imp2;
