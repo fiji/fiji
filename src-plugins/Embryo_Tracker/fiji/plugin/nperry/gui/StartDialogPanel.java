@@ -1,6 +1,7 @@
 package fiji.plugin.nperry.gui;
 
 import ij.ImagePlus;
+import ij.WindowManager;
 import ij.gui.NewImage;
 import ij.gui.Roi;
 
@@ -50,7 +51,7 @@ public class StartDialogPanel extends javax.swing.JPanel {
 	private static final boolean DEFAULT_MEDIAN_FILTER = false;
 	private static final boolean DEFAULT_ALLOW_EDGE = false;
 
-	private static final Dimension TEXTFIELD_DIMENSION = new Dimension(30,22);
+	private static final Dimension TEXTFIELD_DIMENSION = new Dimension(40,22);
 	
 	
 	private JLabel jLabelExpectedDiameter;
@@ -96,10 +97,9 @@ public class StartDialogPanel extends javax.swing.JPanel {
 	private ArrayList<ActionListener> listeners = new ArrayList<ActionListener>();
 
 	
-	public StartDialogPanel(ImagePlus imp) {
+	public StartDialogPanel() {
 		super();
 		initGUI();
-		this.imp = imp;
 		refresh();
 	}
 	
@@ -135,6 +135,7 @@ public class StartDialogPanel extends javax.swing.JPanel {
 	 * Fill the text fields with parameters grabbed from current ImagePlus.
 	 */
 	private void refresh() {
+		imp = WindowManager.getCurrentImage();
 		if (null == imp)
 			return;
 		jLabelImageName.setText(imp.getShortTitle());
@@ -393,7 +394,7 @@ public class StartDialogPanel extends javax.swing.JPanel {
 		imp.getCalibration().pixelHeight = 0.4;
 		imp.getCalibration().pixelWidth = 0.4;
 		imp.setRoi(new Roi(10, 20, 5, 60));
-		frame.getContentPane().add(new StartDialogPanel(imp));
+		frame.getContentPane().add(new StartDialogPanel());
 		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		frame.pack();
 		frame.setVisible(true);
