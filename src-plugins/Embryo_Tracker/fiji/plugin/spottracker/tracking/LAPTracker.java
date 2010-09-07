@@ -5,8 +5,6 @@ import java.util.Collection;
 
 import Jama.Matrix;
 
-import mpicbg.imglib.algorithm.math.MathLib;
-
 import fiji.plugin.spottracker.Feature;
 import fiji.plugin.spottracker.Spot;
 import fiji.plugin.spottracker.hungarian.AssignmentProblem;
@@ -250,7 +248,7 @@ public class LAPTracker implements ObjectTracker {
 		System.out.println("--- Step one ---");
 		objectLinkingCosts = new ArrayList<double[][]>();	
 		for (int i = 0; i < objects.size() - 1; i++) {
-			ObjectCostMatrixCreator objCosts = new ObjectCostMatrixCreator(new ArrayList<Spot>(objects.get(i)), new ArrayList<Spot>(objects.get(i + 1)));
+			LinkingCostMatrixCreator objCosts = new LinkingCostMatrixCreator(new ArrayList<Spot>(objects.get(i)), new ArrayList<Spot>(objects.get(i + 1)));
 			if (!objCosts.checkInput() || !objCosts.process()) {
 				System.out.println(objCosts.getErrorMessage());
 				return false;
