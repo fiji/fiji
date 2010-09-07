@@ -16,7 +16,7 @@ public class ObjectCostMatrixCreator implements CostMatrixCreator {
 	protected static final double ALTERNATIVE_OBJECT_LINKING_COST_FACTOR = 1.05d;	// TODO make user input
 	/** Used to prevent this assignment from being made during Hungarian Algorithm. */
 	//protected static final double BLOCKED = Double.POSITIVE_INFINITY;
-	protected static final double BLOCKED = Double.NaN;
+	protected static final double BLOCKED = Double.MAX_VALUE;
 	/** The highest link score made across all frames. */
 	protected static double MAX_SCORE = Double.NEGATIVE_INFINITY;
 
@@ -75,7 +75,6 @@ public class ObjectCostMatrixCreator implements CostMatrixCreator {
 		Matrix bottomRight = new Matrix(t1.size(), t0.size());		// Nothing, but mathematically required for LAP
 				
 		// Top left quadrant
-		//double maxScore = Double.NEGATIVE_INFINITY;		// Will hold the maximum score of all links in top left quadrant
 		Spot s0 = null;									// Spot in t0
 		Spot s1 = null;									// Spot in t1
 		double d = 0;									// Holds Euclidean distance between s0 and s1

@@ -3,6 +3,8 @@ package fiji.plugin.nperry.tracking;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import Jama.Matrix;
+
 import mpicbg.imglib.algorithm.math.MathLib;
 
 import fiji.plugin.nperry.Feature;
@@ -245,7 +247,7 @@ public class LAPTracker implements ObjectTracker {
 		
 		
 		// Step 1 - Make object cost matrices for all pairs t and t+1
-		System.out.println("Step one");
+		System.out.println("--- Step one ---");
 		objectLinkingCosts = new ArrayList<double[][]>();	
 		for (int i = 0; i < objects.size() - 1; i++) {
 			ObjectCostMatrixCreator objCosts = new ObjectCostMatrixCreator(new ArrayList<Spot>(objects.get(i)), new ArrayList<Spot>(objects.get(i + 1)));
@@ -257,19 +259,11 @@ public class LAPTracker implements ObjectTracker {
 		}
 		System.out.println("Cost matrix created for frame-to-frame linking successfully.");
 		ArrayList< int[] > trackSegmentStructure = solveLAPForTrackSegments();
-		System.out.println("LAP for frame-to-frame linking solved.");
+		System.out.println("LAP for frame-to-frame linking solved.\n");
 		compileTrackSegments(trackSegmentStructure);
 		
-		//debug
-		for (ArrayList<Spot> trackSegment : trackSegments) {
-			System.out.println("New Segment:");
-			for (Spot spot : trackSegment) {
-				System.out.println(MathLib.printCoordinates(spot.getCoordinates()));
-			}
-		}
-		
 		// Step 2 - Make a single track segment cost matrix
-		System.out.println("Step two");
+		System.out.println("--- Step two ---");
 		TrackSegmentCostMatrixCreator segCosts = new TrackSegmentCostMatrixCreator(trackSegments);
 		if (!segCosts.checkInput() || !segCosts.process()) {
 			System.out.println(segCosts.getErrorMessage());
@@ -278,8 +272,25 @@ public class LAPTracker implements ObjectTracker {
 		segmentLinkingCosts = segCosts.getCostMatrix();
 		System.out.println("Cost matrix for track segments created successfully.");
 		int[][] finalTrackSolutions = solveLAPForFinalTracks();
-		System.out.println("LAP for track segments solved.");
+		System.out.println("LAP for track segments solved.\n");
 		compileFinalTracks(finalTrackSolutions, segCosts.getMiddlePoints());
+		
+		
+		
+		System.out.println("SOLUTIONS!!");
+		for (int[] solution : finalTrackSolutions) {
+			System.out.println(String.format("[%d, %d]\n", solution[0], solution[1]));
+		}
+		
+		Matrix debug = new Matrix(segmentLinkingCosts);
+		for (int i = 0; i < debug.getRowDimension(); i++) {
+			for (int j = 0; j < debug.getColumnDimension(); j++) {
+				if (Double.compare(Double.MAX_VALUE, debug.get(i,j)) == 0) {
+					debug.set(i, j, Double.NaN);
+				}
+			}
+		}
+		debug.print(4,2);
 		
 		return true;
 	}
@@ -361,10 +372,11 @@ public class LAPTracker implements ObjectTracker {
 						}
 					}
 					
-					if (trackSegment.size() >= MINIMUM_SEGMENT_LENGTH) {
+					if (trackSegment.size() >= MINIMUM_SEGMENT_LENGTH) {		
 						// TODO probably incorporate this above, but this is faster to implement.
 						// Link segment Spots to each other
-						Spot prev, curr;
+						Spot prev = null;
+						Spot curr = null;
 						prev = trackSegment.get(0);
 						for (int h = 1; h < trackSegment.size(); h++) {
 							curr = trackSegment.get(h);
@@ -388,6 +400,8 @@ public class LAPTracker implements ObjectTracker {
 		for (int[] solution : finalTrackSolutions) {
 			int i = solution[0];
 			int j = solution[1];
+//			//debug
+//			System.out.println(String.format("i = %d, j = %d", i, j));
 			if (i < numTrackSegments) {
 				
 				// Case 1: Gap closing
@@ -396,8 +410,18 @@ public class LAPTracker implements ObjectTracker {
 					ArrayList<Spot> segmentStart = trackSegments.get(j);
 					Spot end = segmentEnd.get(segmentEnd.size() - 1);
 					Spot start = segmentStart.get(0);
-					end.addNext(start);
-					start.addPrev(end);
+					
+//					//debug
+					System.out.println("### Gap Closing: ###");
+//					System.out.println(end.toString());
+//					System.out.println(start.toString());
+					
+					end.addPrev(start);
+					start.addNext(end);
+					
+//					// debug 
+//					System.out.println(end.toString());
+//					System.out.println(start.toString());
 				} 
 				
 				// Case 2: Merging
@@ -405,8 +429,18 @@ public class LAPTracker implements ObjectTracker {
 					ArrayList<Spot> segmentEnd = trackSegments.get(i);
 					Spot end =  segmentEnd.get(segmentEnd.size() - 1);
 					Spot middle = middlePoints.get(j - numTrackSegments);
+					
+//					//debug
+					System.out.println("### Merging: ###");
+//					System.out.println(end.toString());
+//					System.out.println(middle.toString());
+					
 					end.addNext(middle);
 					middle.addPrev(end);
+					
+//					//debug
+//					System.out.println(end.toString());
+//					System.out.println(middle.toString());
 				}
 			} else if (i < (numTrackSegments + numMiddlePoints)) {
 				
@@ -415,28 +449,22 @@ public class LAPTracker implements ObjectTracker {
 					Spot middle = middlePoints.get(i - numTrackSegments);
 					ArrayList<Spot> segmentStart = trackSegments.get(j);
 					Spot start = segmentStart.get(0);
-					start.addNext(middle);
-					middle.addPrev(start);
+					
+//					//debug
+					System.out.println("### Splitting: ###");
+//					System.out.println(start.toString());
+//					System.out.println(middle.toString());
+					
+					start.addPrev(middle);
+					middle.addNext(start);
+	
+//					// debug
+//					System.out.println(start.toString());
+//					System.out.println(middle.toString());
 				}
 			}
 		}
 	}
-	
-	
-//	/**
-//	 * Converts an int[][] to a double[][]
-//	 * @param i The int[][] to convert.
-//	 * @return The double[][] conversion of the int[][] parameter.
-//	 */
-//	private double[][] convertToDouble(int[][] i) {
-//		double[][] d = new double[i.length][i[0].length];
-//		for (int j = 0; j < i.length; j++) {
-//			for (int k = 0; k < i[0].length; k++) {
-//				d[j][k] = (double) i[j][k];
-//			}
-//		}
-//		return d;
-//	}
 	
 	
 	/*
@@ -524,10 +552,22 @@ public class LAPTracker implements ObjectTracker {
 		t0.add(new Spot(new float[] {4,4,4}));
 		t0.add(new Spot(new float[] {5,5,5}));
 		
+		t0.get(0).putFeature(Feature.MEAN_INTENSITY, 100);
+		t0.get(1).putFeature(Feature.MEAN_INTENSITY, 200);
+		t0.get(2).putFeature(Feature.MEAN_INTENSITY, 300);
+		t0.get(3).putFeature(Feature.MEAN_INTENSITY, 400);
+		t0.get(4).putFeature(Feature.MEAN_INTENSITY, 500);
+		t0.get(5).putFeature(Feature.MEAN_INTENSITY, 600);
+		
 		t1.add(new Spot(new float[] {1.5f,1.5f,1.5f}));
 		t1.add(new Spot(new float[] {2.5f,2.5f,2.5f}));
 		t1.add(new Spot(new float[] {3.5f,3.5f,3.5f}));
 		t1.add(new Spot(new float[] {4.5f,4.5f,4.5f}));
+		
+		t1.get(0).putFeature(Feature.MEAN_INTENSITY, 200);
+		t1.get(1).putFeature(Feature.MEAN_INTENSITY, 300);
+		t1.get(2).putFeature(Feature.MEAN_INTENSITY, 400);
+		t1.get(3).putFeature(Feature.MEAN_INTENSITY, 500);
 		
 		t2.add(new Spot(new float[] {1.5f,1.5f,1.5f}));
 		t2.add(new Spot(new float[] {2.5f,2.5f,2.5f}));
@@ -535,14 +575,29 @@ public class LAPTracker implements ObjectTracker {
 		t2.add(new Spot(new float[] {4.5f,4.5f,4.5f}));
 		t2.add(new Spot(new float[] {10f,10f,10f}));
 		
+		t2.get(0).putFeature(Feature.MEAN_INTENSITY, 200);
+		t2.get(1).putFeature(Feature.MEAN_INTENSITY, 300);
+		t2.get(2).putFeature(Feature.MEAN_INTENSITY, 400);
+		t2.get(3).putFeature(Feature.MEAN_INTENSITY, 500);
+		t2.get(4).putFeature(Feature.MEAN_INTENSITY, 100);
+		
 		t3.add(new Spot(new float[] {2.6f,2.6f,2.6f}));
 		t3.add(new Spot(new float[] {2.4f,2.4f,2.4f}));
+		
+		t3.get(0).putFeature(Feature.MEAN_INTENSITY, 300);
+		t3.get(1).putFeature(Feature.MEAN_INTENSITY, 300);
 		
 		t4.add(new Spot(new float[] {2.8f,2.8f,2.8f}));
 		t4.add(new Spot(new float[] {2.2f,2.2f,2.2f}));
 		
+		t4.get(0).putFeature(Feature.MEAN_INTENSITY, 300);
+		t4.get(1).putFeature(Feature.MEAN_INTENSITY, 300);
+		
 		t5.add(new Spot(new float[] {2.8f,2.8f,2.8f}));
 		t5.add(new Spot(new float[] {2.2f,2.2f,2.2f}));
+		
+		t5.get(0).putFeature(Feature.MEAN_INTENSITY, 300);
+		t5.get(1).putFeature(Feature.MEAN_INTENSITY, 300);
 	
 		ArrayList<ArrayList<Spot>> wrap = new ArrayList<ArrayList<Spot>>();
 		wrap.add(t0);
@@ -552,38 +607,40 @@ public class LAPTracker implements ObjectTracker {
 		wrap.add(t4);
 		wrap.add(t5);
 		
-		// add intensity
 		int count = 0;
-		int frame = 0;
 		for (ArrayList<Spot> spots : wrap) {
 			for (Spot spot : spots) {
-				spot.putFeature(Feature.MEAN_INTENSITY, count);
-				spot.setFrame(frame);
-				count++;
+				spot.setFrame(count);
 			}
-			frame++;
+			count++;
 		}
 		
 		LAPTracker lap = new LAPTracker(wrap);
 		if (!lap.checkInput() || !lap.process()) {
 			System.out.println(lap.getErrorMessage());
 		}
-		//Matrix test = lap.fillInObjectCostMatrix(t0, t1, t0.size() + t1.size());
+
+//		// Print out track segments
+//		ArrayList<ArrayList<Spot>> trackSegments = lap.getTrackSegments();
+//		for (ArrayList<Spot> trackSegment : trackSegments) {
+//			System.out.println("-*-*-*-*-* New Segment *-*-*-*-*-");
+//			for (Spot spot : trackSegment) {
+//				System.out.println(spot.toString());
+//			}
+//		}
 		
-		//LAPTracker lap2 = new LAPTracker(wrap);
-		//ArrayList< double[][] > wtf = new ArrayList< double[][] >();
-		//wtf.add(test.getArray());
-		//lap2.setObjectCostMatrix(wtf);
-		//lap2.computeTrackSegments();
-		
-		ArrayList<ArrayList<Spot>> trackSegments = lap.getTrackSegments();
-		for (ArrayList<Spot> trackSegment : trackSegments) {
-			System.out.println("New Segment:");
-			for (Spot spot : trackSegment) {
-				System.out.println(MathLib.printCoordinates(spot.getCoordinates()));
+		// Print out final tracks.
+		int counter = 1;
+		System.out.println();
+		for (ArrayList<Spot> spots : wrap) {
+			System.out.println("--- Frame " + counter + " ---");
+			System.out.println("Number of Spots in this frame: " + spots.size());
+			for (Spot spot : spots) {
+				System.out.println(spot.toString());
 			}
+			System.out.println();
+			counter++;
 		}
-		//test.print(4, 2);
 	}
 }
 
