@@ -12,6 +12,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
 
@@ -113,7 +114,9 @@ public class SpotDisplayerTestDrive {
 		universe.show();
 		
 		// Launch threshold GUI
-		final ThresholdGuiPanel gui = new ThresholdGuiPanel(spots);
+		List<Collection<Spot>> allSpots = new ArrayList<Collection<Spot>>();
+		allSpots.add(spots);
+		final ThresholdGuiPanel gui = new ThresholdGuiPanel(allSpots);
 
 		// Set listeners
 		gui.addChangeListener(new ChangeListener() {

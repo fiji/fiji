@@ -1,14 +1,25 @@
 package fiji.plugin.spottracker.gui;
+import ij3d.Image3DUniverse;
+
 import java.awt.CardLayout;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.TreeMap;
+import java.util.concurrent.ExecutionException;
 
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
+import fiji.plugin.spottracker.Feature;
 import fiji.plugin.spottracker.Logger;
 import fiji.plugin.spottracker.Settings;
+import fiji.plugin.spottracker.Spot;
 import fiji.plugin.spottracker.Spot_Tracker;
 
 
@@ -47,6 +58,8 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 	private Spot_Tracker spotTracker;
 	private LogPanel logPanel;
 	private Logger logger;
+	private List<Collection<Spot>> spots;
+	private List<Collection<Spot>> selectedSpots;
 	
 	{
 		//Set Look & Feel
@@ -88,7 +101,7 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 							logPanel.jButtonNext.setEnabled(false);
 							spotTracker.execSegmentation(settings);
 						} catch (Exception e) {
-							logger.error("An error occured:\n"+e.getMessage());
+							logger.error("An error occured:\n"+e.getMessage()+'\n');
 						} finally {
 							logPanel.jButtonNext.setEnabled(true);
 							long end = System.currentTimeMillis();
@@ -99,17 +112,73 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 				break;
 				
 			case SEGMENTING:
+				spots = spotTracker.getSpots();
+				
+				// Launch renderer
+				logger.log("Rendering results...\n",Logger.GREEN_COLOR);
+				TreeMap<Integer, Collection<Spot>> spotsOverTime = new TreeMap<Integer, Collection<Spot>>();
+				for(int i = 0; i < spots.size(); i++) 
+					spotsOverTime.put(i, spots.get(i));
+				
+				final Image3DUniverse universe = new Image3DUniverse();
+				final SpotDisplayer displayer = new SpotDisplayer(spotsOverTime, settings.expectedDiameter/2); // TODO still too big to see
+				try {
+					displayer.render(universe);
+				} catch (InterruptedException e1) {
+					e1.printStackTrace();
+				} catch (ExecutionException e1) {
+					e1.printStackTrace();
+				}
+				universe.addVoltex(settings.imp); // TODO generate a bug if its not 8-bit
+				universe.show();
+				logger.log("Rendering done.\n", Logger.GREEN_COLOR);
+				
 				cardLayout.show(getContentPane(), THRESHOLD_GUI_KEY);
+				thresholdGuiPanel.setSpots(spots);
+				thresholdGuiPanel.addThresholdPanel(Feature.MEAN_INTENSITY);
+				thresholdGuiPanel.addChangeListener(new ChangeListener() {
+					private double[] t = null;
+					private boolean[] is = null;
+					private Feature[] f = null;
+					@Override
+					public void stateChanged(ChangeEvent e) {
+						f = thresholdGuiPanel.getFeatures();
+						is = thresholdGuiPanel.getIsAbove();
+						t = thresholdGuiPanel.getThresholds();				
+						displayer.threshold(f, t, is);
+					}
+				});
+				thresholdGuiPanel.addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent e) {
+						if (e == thresholdGuiPanel.COLOR_FEATURE_CHANGED) {
+							Feature feature = thresholdGuiPanel.getColorByFeature();
+							displayer.setColorByFeature(feature);
+						}
+					}
+				});
+				
+				state = GuiState.THRESHOLD_BLOBS;
 				break;
 				
 			case THRESHOLD_BLOBS:
+				cardLayout.show(getContentPane(), LOG_PANEL_KEY);
+				logger.log("Thresholding spots...\n", Logger.BLUE_COLOR);
+				logPanel.jButtonNext.setEnabled(false);
+				new Thread() {					
+					public void run() {
+						Feature[] features = thresholdGuiPanel.getFeatures();
+						double[] values = thresholdGuiPanel.getThresholds();
+						boolean[] isAbove = thresholdGuiPanel.getIsAbove();
+						for (int i = 0; i < features.length; i++)
+							spotTracker.addThreshold(features[i], (float) values[i], isAbove[i]);
+						selectedSpots = spotTracker.getSelectedSpots();
+						logger.log("Thresholding done.\n", Logger.BLUE_COLOR);
+						logPanel.jButtonNext.setEnabled(true);
+					}
+				}.start();
 				break;
 				
 		}
-	}
-	
-	private void recolorBlobs() {
-		// TODO
 	}
 	
 	private void initGUI() {
@@ -146,8 +215,6 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 					public void actionPerformed(ActionEvent e) {
 						if (e == thresholdGuiPanel.NEXT_BUTTON_PRESSED)
 							next();
-						else
-							recolorBlobs();
 					}
 				});
 				getContentPane().add(thresholdGuiPanel, THRESHOLD_GUI_KEY);
