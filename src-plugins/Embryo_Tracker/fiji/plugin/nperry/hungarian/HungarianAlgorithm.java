@@ -5,8 +5,13 @@ import java.util.*;
 /**
  * An implementation of the classic hungarian algorithm for the assignment problem.
  *
+ * Modified by nperry to allow for 'blocking.' An assignment can be blocked, making
+ * it impossible for it to be a solution. A blocked assignment contains the value
+ * Double.MAX_VALUE.
+ *
  * Copyright 2007 Gary Baker (GPL v3)
  * @author gbaker
+ * @author nperry
  */
 public class HungarianAlgorithm implements AssignmentAlgorithm {
 
@@ -96,7 +101,7 @@ public class HungarianAlgorithm implements AssignmentAlgorithm {
         for (int i = 0; i < matrix.length; i++) {
 
             // find the min value in the row
-            double minValInRow = Float.MAX_VALUE;
+            double minValInRow = Double.MAX_VALUE;
             for (int j = 0; j < matrix[i].length; j++) {
                 if (minValInRow > matrix[i][j]) {
                     minValInRow = matrix[i][j];
@@ -110,7 +115,7 @@ public class HungarianAlgorithm implements AssignmentAlgorithm {
         }
 
         for (int i = 0; i < matrix[0].length; i++) {
-            double minValInCol = Float.MAX_VALUE;
+            double minValInCol = Double.MAX_VALUE;
             for (int j = 0; j < matrix.length; j++) {
                 if (minValInCol > matrix[j][i]) {
                     minValInCol = matrix[j][i];
@@ -246,7 +251,7 @@ public class HungarianAlgorithm implements AssignmentAlgorithm {
     private void makeMoreZeroes(double[][] matrix, int[] coveredRows, int[] coveredCols) {
 
         // find the minimum uncovered value
-        double minUncoveredValue = Float.MAX_VALUE;
+        double minUncoveredValue = Double.MAX_VALUE;
         for (int i = 0; i < matrix.length; i++) {
             if (0 == coveredRows[i]) {
                 for (int j = 0; j < matrix[i].length; j++) {
