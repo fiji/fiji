@@ -76,15 +76,23 @@ public class Spot {
 	@Override
 	public String toString() {
 		StringBuilder s = new StringBuilder();
+		
+		// Name
 		if (null == name) 
 			s.append("Spot: <no name>\n");
 		else
 			s.append("Spot: "+name+"\n");
+		
+		// Frame
 		s.append("Frame: "+frame+'\n');
+
+		// Coordinates
 		if (null == coordinates)
 			s.append("Position: <no coordinates>\n");
 		else
 			s.append("Position: "+MathLib.printCoordinates(coordinates)+"\n");
+		
+		// Feature list
 		if (null == features || features.size() < 1) 
 			s.append("No features calculated\n");
 		else {
@@ -100,6 +108,37 @@ public class Spot {
 				s.append('\n');
 			}
 		}
+		
+		// Parents
+		if (null == prev || prev.size() < 1) {
+			s.append("No parent Spots\n");
+		} else {
+			s.append("Parent list:\n");
+			
+			// Print parents as a list of coordinates
+			for (Spot par : prev) {
+				if (null == par.getCoordinates())
+					s.append("Position: <no coordinates>\n");
+				else
+					s.append("Position: "+MathLib.printCoordinates(par.getCoordinates())+"\n");
+			}
+		}
+		
+		// Children
+		if (null == next || next.size() < 1) {
+			s.append("No child Spots\n");
+		} else {
+			s.append("Child list:\n");
+			
+			// Print children as a list of coordinates
+			for (Spot child : next) {
+				if (null == child.getCoordinates())
+					s.append("Position: <no coordinates>\n");
+				else
+					s.append("Position: "+MathLib.printCoordinates(child.getCoordinates())+"\n");
+			}
+		}
+		
 		return s.toString();
 	}
 	
