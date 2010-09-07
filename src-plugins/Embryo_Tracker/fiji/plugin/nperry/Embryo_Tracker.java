@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import javax.swing.JFrame;
 import javax.swing.WindowConstants;
@@ -92,6 +93,7 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 	private static final String MEDIAN_FILTER_KEY = "median";
 	private static final String ALLOW_EDGE_KEY = "edge";
 	private static final Map<String, String> settings = new HashMap<String, String>();
+	private ArrayList<Spot> spots;
 	{
 		settings.put(DIAMETER_KEY, "6.5");
 		settings.put(MEDIAN_FILTER_KEY, "false");
@@ -160,8 +162,6 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		
 		/* 4 - Execute! */
 		exec(imp, diam, useMedFilt, allowEdgeMax, calibration);
-		System.out.println("Done executing!");	
-		
 	}
 	
 	
@@ -176,8 +176,8 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		/* 1 -- Initialize local variables */
 		final int numFrames = imp.getNFrames();
 		final SpotSegmenter<T> segmenter = new SpotSegmenter<T>(null, diam, calibration, useMedFilt, allowEdgeMax);				
-		final ArrayList<Spot> spotsAllFrames = new ArrayList<Spot>(numFrames);
-		List<Spot> spots;
+		spots = new ArrayList<Spot>(numFrames);
+		List<Spot> spotsThisFrame;
 		Image<T> filteredImage;
 		
 		// For each frame...
@@ -194,12 +194,11 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			segmenter.setImage(img);
 			if (segmenter.checkInput() && segmenter.process()) {
 				filteredImage = segmenter.getFilteredImage();
-				spots = segmenter.getResult();
-				for (Spot spot : spots) {
+				spotsThisFrame = segmenter.getResult();
+				for (Spot spot : spotsThisFrame) {
 					spot.setFrame(i);
-					spot.setDisplayRadius(diam/2);
 				}
-				spotsAllFrames.addAll(spots);
+				spots.addAll(spotsThisFrame);
 			} else {
 				IJ.error(segmenter.getErrorMessage());
 				return null;
@@ -208,20 +207,28 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 			/* 3 - Extract features for the spot collection */
 			IJ.showStatus("Frame "+(i+1)+": Calculating features...");
 			final FeatureFacade<T> featureCalculator = new FeatureFacade<T>(img, filteredImage, diam, calibration);
-			featureCalculator.processFeature(Feature.MEAN_INTENSITY, spots);
+			featureCalculator.processFeature(Feature.MEAN_INTENSITY, spotsThisFrame);
 			
 		} // Finished looping over frames
 				
 		// Launch renderer
-		IJ.showStatus("Found "+spotsAllFrames.size() +" spots. Preparing renderer...");
-		final SpotDisplayer displayer = new SpotDisplayer(spotsAllFrames);
+		IJ.showStatus("Found "+spots.size() +" spots. Preparing renderer...");
+		final SpotDisplayer displayer = new SpotDisplayer(spots);
 
 		final Image3DUniverse universe = new Image3DUniverse();
-		displayer.render(universe);
+		try {
+			displayer.render(universe);
+		} catch (InterruptedException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (ExecutionException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		universe.addVoltex(imp);
 		
 		// Launch threshold GUI
-		final ThresholdGuiPanel gui = new ThresholdGuiPanel(spotsAllFrames);
+		final ThresholdGuiPanel gui = new ThresholdGuiPanel(spots);
 
 		// Set listeners
 		gui.addChangeListener(new ChangeListener() {
@@ -250,7 +257,15 @@ public class Embryo_Tracker<T extends RealType<T>> implements PlugIn {
 		
 		universe.show();
 		
-		return new Object[] {spotsAllFrames};
+		return new Object[] { spots };
+	}
+	
+	/*
+	 * GETTERS / SETTERS
+	 */
+	
+	public ArrayList<Spot> getSpots() {
+		return spots;
 	}
 
 	

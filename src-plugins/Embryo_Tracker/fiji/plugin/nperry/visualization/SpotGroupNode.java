@@ -30,7 +30,7 @@ public class SpotGroupNode <K extends Object> extends ContentNode {
 	private static final int DEFAULT_PARALLEL_NUMBER = 12;
 	
 	/**
-	 * Hold the center and radois position of all spots.
+	 * Hold the center and radius position of all spots.
 	 */
 	protected Map<K, Point4f>  centers;
 	/**
@@ -47,7 +47,7 @@ public class SpotGroupNode <K extends Object> extends ContentNode {
 	 */
 	protected Switch spotSwitch;
 	/**
-	 * Boolean set that controls the visibility of eahc spot.
+	 * Boolean set that controls the visibility of each spot.
 	 */
 	protected BitSet switchMask;
 	/**
@@ -181,6 +181,14 @@ public class SpotGroupNode <K extends Object> extends ContentNode {
 			return;
 		switchMask.set(index, visible);
 		spotSwitch.setChildMask(switchMask);
+	}
+	
+	/**
+	 * Set the color of all spots.
+	 */
+	public void setColor(Color3f color) {
+		for (CustomTriangleMesh mesh : meshes.values()) 
+			mesh.setColor(color);
 	}
 	
 	/**
@@ -435,6 +443,8 @@ public class SpotGroupNode <K extends Object> extends ContentNode {
 			Thread.sleep(2000/100);
 		}
 	}
+
+
 
 
 }

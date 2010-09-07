@@ -8,9 +8,12 @@ import ij.process.StackConverter;
 import ij3d.Image3DUniverse;
 import ij3d.Install_J3D;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Random;
+import java.util.concurrent.ExecutionException;
 
 import javax.swing.JFrame;
 import javax.swing.WindowConstants;
@@ -99,7 +102,15 @@ public class SpotDisplayerTestDrive {
 		// Launch renderer
 		final Image3DUniverse universe = new Image3DUniverse();
 		final SpotDisplayer displayer = new SpotDisplayer(spots);
-		displayer.render(universe);
+		try {
+			displayer.render(universe);
+		} catch (InterruptedException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (ExecutionException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 		universe.addVoltex(imp);
 		universe.show();
 		
@@ -117,7 +128,14 @@ public class SpotDisplayerTestDrive {
 				is = gui.getIsAbove();
 				t = gui.getThresholds();				
 				displayer.threshold(f, t, is);
-				universe.getCurrentTimepoint();
+			}
+		});
+		gui.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if (e == gui.COLOR_FEATURE_CHANGED) {
+					Feature feature = gui.getColorByFeature();
+					displayer.setColorByFeature(feature);
+				}
 			}
 		});
 		
@@ -129,7 +147,7 @@ public class SpotDisplayerTestDrive {
 		frame.setVisible(true);
 
 		// Add a panel
-		gui.addThresholdPanel(Feature.MEAN_INTENSITY);
+		gui.addThresholdPanel(Feature.MEAN_INTENSITY);		
 		
 	}
 	

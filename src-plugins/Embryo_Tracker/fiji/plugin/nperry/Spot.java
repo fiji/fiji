@@ -23,8 +23,6 @@ public class Spot {
 	private ArrayList<Spot> prev;
 	/** A reference to the subsequent Spots belonging to the same track. */
 	private ArrayList<Spot> next;
-	/** Display radius for use in displayers. */
-	private float displayRadius = 5;
 
 	
 	/*
@@ -71,19 +69,6 @@ public class Spot {
 		this.name = name;
 	}
 	
-	/**
-	 * Set the radius to use to display this spot in displayers. 
-	 */
-	public void setDisplayRadius(float radius) {
-		displayRadius = radius;
-	}
-	
-	/**
-	 * Get the radius to display this spot in displayers.
-	 */
-	public float getDisplayRadius() {
-		return displayRadius;
-	}
 	
 	/**
 	 * Return a string representation of this spot, with calculated features.
@@ -100,10 +85,7 @@ public class Spot {
 		
 		// Frame
 		s.append("Frame: "+frame+'\n');
-		
-		//Radius
-		s.append("Display radius: "+String.format("%.1f", displayRadius)+"\n");
-		
+
 		// Coordinates
 		if (null == coordinates)
 			s.append("Position: <no coordinates>\n");
