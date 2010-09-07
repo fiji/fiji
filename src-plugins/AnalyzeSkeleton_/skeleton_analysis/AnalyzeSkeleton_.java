@@ -391,6 +391,9 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	
 		if(shortPath)
 		{
+			if(debug)
+				IJ.log("Calculating longest shortest paths...");
+			
 			// Copy input image
 			this.shortPathImage = new ImageStack(this.width, this.height, this.inputImage.getColorModel());
 			for(int i=1; i<=this.inputImage.getSize(); i++)
@@ -460,16 +463,27 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	 */
 	private void pruneEndBranches(ImageStack stack, ImageStack taggedImage) 
 	{
+		if(debug)
+			IJ.log("Pruning end-point branches...");
 		for (int t = 0; t < this.numOfTrees; t++)
 		{
+			if(debug)
+				IJ.log("Pruning tree #" + t);
+			
 			Graph g = graph[t];
 			ArrayList<Vertex> vertices = g.getVertices();
 			ListIterator<Vertex> vit = vertices.listIterator();
+			
+			if(debug)
+				IJ.log("Initial number of vertices: " + graph[t].getVertices().size());
+			
 			while (vit.hasNext())
 			{
 				Vertex v = vit.next();
 				if (v.getBranches().size() == 1)
 				{
+					if(debug)
+						IJ.log("Pruning branch starting at " + v.getPoints().get(0));
 					// Remove end point voxels
 					ArrayList<Point> points = v.getPoints();
 					final int nPoints = points.size();
@@ -510,20 +524,22 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 								pit.remove();
 								break;
 							}
-						}
-						// remove the Edge from the Graph
-						ArrayList<Edge> gEdges = graph[t].getEdges();
-						Iterator<Edge> git = gEdges.listIterator();
-						while (git.hasNext())
+						}						
+					}
+					
+					// remove the Edge from the Graph
+					ArrayList<Edge> gEdges = graph[t].getEdges();
+					Iterator<Edge> git = gEdges.listIterator();
+					while (git.hasNext())
+					{
+						Edge e = git.next();
+						if (e.equals(branch))
 						{
-							Edge e = git.next();
-							if (e.equals(branch))
-							{
-								git.remove();
-								break;
-							}
+							git.remove();
+							break;
 						}
 					}
+					
 					// remove the Edge from the opposite Vertex
 					Vertex opp = branch.getOppositeVertex(v);
 					ArrayList<Edge> oppBranches = opp.getBranches();
@@ -545,7 +561,11 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 					vit.remove();
 				}
 			}						
+			
+			if(debug)
+				IJ.log("Final number of vertices: " + graph[t].getVertices().size());
 		}
+						
 		return;
 	}
 	
