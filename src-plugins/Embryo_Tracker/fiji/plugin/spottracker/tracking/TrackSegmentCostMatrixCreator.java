@@ -13,47 +13,36 @@ import fiji.plugin.spottracker.Utils;
  * @author nperry
  *
  */
-public class TrackSegmentCostMatrixCreator implements CostMatrixCreator {
+public class TrackSegmentCostMatrixCreator extends AbstractCostMatrixCreator {
 
 	/** The maximum distance away two Spots in consecutive frames can be in order 
 	 * to be linked. */
-	protected static final double MAX_DIST_SEGMENTS = 1.0f;	// TODO make user input
+	protected static final double MAX_DIST_SEGMENTS = 1.0d;	// TODO make user input
 	/** The factor used to create d and b in the paper, the alternative costs to linking
 	 * objects. */
-	protected static final double ALTERNATIVE_OBJECT_LINKING_COST_FACTOR = 1.05f;	// TODO make user input
-	/** Used to prevent this assignment from being made during Hungarian Algorithm. */
-	protected static final double BLOCKED = Double.MAX_VALUE;
+	protected static final double ALTERNATIVE_OBJECT_LINKING_COST_FACTOR = 1.05d;	// TODO make user input
 	/** The maximum number of frames apart two segments can be 'gap closed.' */
 	protected static final int GAP_CLOSING_TIME_WINDOW = 3; // TODO make user input.
 	/** The minimum and maximum allowable intensity ratio cutoffs for merging and splitting. */
 	protected static final double[] INTENSITY_RATIO_CUTOFFS = new double[] {0.5d, 4d}; // TODO make user input.
 	/** The percentile used to calculate d and b cutoffs in the paper. */
-	protected static final double CUTOFF_PERCENTILE = 0.9d;
+	protected static final double CUTOFF_PERCENTILE = 0.9d;	// TODO make user input.
 	
 	/** The track segments. */
 	protected ArrayList< ArrayList<Spot> > trackSegments;
-	/** The cost matrix for the gap closing / merging / splitting step */
-	protected Matrix costs;
-	/** Stores a message describing an error incurred during use of the class. */
-	protected String errorMessage;
-	/** Stores whether the user has run checkInput() or not. */
-	protected boolean inputChecked = false;
 	/** Holds the scores for gap closing, merging, and splitting to calculate cutoffs
 	 * for alternatives. */
 	protected ArrayList<Double> scores;
 	/** Holds the Spots in the middle of track segments (not at end or start). */
 	protected ArrayList<Spot> middlePoints;
 	
+	
 	public TrackSegmentCostMatrixCreator(ArrayList< ArrayList<Spot> > trackSegments) {
 		this.trackSegments = trackSegments;
 		scores = new ArrayList<Double>();
 	}
 	
-	@Override
-	public double[][] getCostMatrix() {
-		return costs.getArray();
-	}
-
+	
 	@Override
 	public boolean checkInput() {
 		if (trackSegments.isEmpty()) {
@@ -65,15 +54,12 @@ public class TrackSegmentCostMatrixCreator implements CostMatrixCreator {
 		return true;
 	}
 
-	@Override
-	public String getErrorMessage() {
-		return errorMessage;
-	}
 	
 	public ArrayList<Spot> getMiddlePoints() {
 		return middlePoints;
 	}
 
+	
 	@Override
 	public boolean process() {
 		
@@ -100,8 +86,8 @@ public class TrackSegmentCostMatrixCreator implements CostMatrixCreator {
 		Matrix splittingScores = getSplittingScores(numMiddlePoints, numTrackSegments);
 		double cutoff = getEndPointCutoff();
 		Matrix middle = new Matrix(numMiddlePoints, numMiddlePoints, BLOCKED);
-		Matrix terminatingSplittingAlternativeScores = getTerminatingSplittingAlternativeScores(numStartMerge, cutoff);
-		Matrix initiatingMergingAlternativeScores = getInitiatingMergingAlternativeScores(numEndSplit, cutoff);
+		Matrix terminatingSplittingAlternativeScores = getAlternativeScores(numStartMerge, cutoff);
+		Matrix initiatingMergingAlternativeScores = getAlternativeScores(numEndSplit, cutoff);
 
 		// 4 - Fill in complete cost matrix using the submatrices just calculated
 		costs.setMatrix(0, numTrackSegments - 1, 0, numTrackSegments - 1, gapClosingScores);							// Gap closing
@@ -175,6 +161,7 @@ public class TrackSegmentCostMatrixCreator implements CostMatrixCreator {
 		
 		return gapClosingScores;
 	}
+	
 	
 	/*
 	 * Sets the scores for merging. Iterates through each pair of starts and all middle points for all
@@ -289,54 +276,7 @@ public class TrackSegmentCostMatrixCreator implements CostMatrixCreator {
 		return splittingScores;
 	}
 	
-	
-	private Matrix getTerminatingSplittingAlternativeScores(int n, double cutoff) {
-		final Matrix terminatingSplittingAlternativeScores = new Matrix(n, n, BLOCKED);
-		setDiagonalValue(terminatingSplittingAlternativeScores, cutoff);
-		return terminatingSplittingAlternativeScores;
-	}
-	
-	private Matrix getInitiatingMergingAlternativeScores(int n, double cutoff) {
-		final Matrix initiatingMergingAlternativeScores = new Matrix(n, n, BLOCKED);
-		setDiagonalValue(initiatingMergingAlternativeScores, cutoff);
-		return initiatingMergingAlternativeScores;
-	}
-	
-	private void setDiagonalValue(Matrix m, Double v) {
-		for (int i = 0; i < m.getRowDimension(); i++) {
-			m.set(i, i, v);
-		}
-	}
 
-	private Matrix getLowerRight(int numEndSplit, int numStartMerge, double cutoff) {
-		Matrix lowerRight = costs.getMatrix(0, numEndSplit - 1, 0, numStartMerge - 1);
-		lowerRight = lowerRight.transpose();
-		for (int i = 0; i < lowerRight.getRowDimension(); i++) {
-			for (int j = 0; j < lowerRight.getColumnDimension(); j++) {
-				if (lowerRight.get(i, j) < BLOCKED) {
-					lowerRight.set(i, j, cutoff);
-				}
-			}
-		}
-		return lowerRight;
-	}
-	
-	/*
-	 * This function can be used for equations (3) and (4) in the paper.
-	 */
-	private double euclideanDistance(Spot i, Spot j) {
-		final float[] coordsI = i.getCoordinates();
-		final float[] coordsJ = j.getCoordinates();
-		double eucD = 0;
-
-		for (int k = 0; k < coordsI.length; k++) {
-			eucD += (coordsI[k] - coordsJ[k]) * (coordsI[k] - coordsJ[k]);
-		}
-		eucD = Math.sqrt(eucD);
-
-		return eucD;
-	}
-	
 	
 	/*
 	 * Creates ArrayList of middle points in all track segments. A middle point is a point
@@ -376,5 +316,4 @@ public class TrackSegmentCostMatrixCreator implements CostMatrixCreator {
 		double cutoff = Utils.getPercentile(scoreArr, CUTOFF_PERCENTILE); 
 		return ALTERNATIVE_OBJECT_LINKING_COST_FACTOR * cutoff;
 	}
-	
 }
