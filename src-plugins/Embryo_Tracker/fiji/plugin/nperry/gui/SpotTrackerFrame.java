@@ -1,5 +1,6 @@
 package fiji.plugin.nperry.gui;
 import java.awt.CardLayout;
+import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -21,6 +22,10 @@ import javax.swing.WindowConstants;
 */
 public class SpotTrackerFrame extends javax.swing.JFrame {
 
+	static final Font FONT = new Font("Arial", Font.PLAIN, 11);
+	static final Font SMALL_FONT = FONT.deriveFont(10f);
+
+	
 	private static final long serialVersionUID = 1L;
 	private static final String START_DIALOG_KEY = "Start";
 	private static final String THRESHOLD_GUI_KEY = "Threshold";

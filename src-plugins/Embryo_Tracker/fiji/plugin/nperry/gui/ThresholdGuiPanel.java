@@ -2,7 +2,6 @@ package fiji.plugin.nperry.gui;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -29,6 +28,9 @@ import javax.swing.event.ChangeListener;
 
 import fiji.plugin.nperry.Feature;
 import fiji.plugin.nperry.Spot;
+
+import static fiji.plugin.nperry.gui.SpotTrackerFrame.FONT;
+import static fiji.plugin.nperry.gui.SpotTrackerFrame.SMALL_FONT;
 
 
 
@@ -57,7 +59,6 @@ public class ThresholdGuiPanel extends javax.swing.JPanel implements ChangeListe
 	private final ChangeEvent CHANGE_EVENT = new ChangeEvent(this);
 	
 	private static final long serialVersionUID = 1L;
-	private static final Font smallFont = new Font(Font.SANS_SERIF, Font.PLAIN, 10);
 
 	
 	private JLabel jLabelSetColorBy;
@@ -349,7 +350,7 @@ public class ThresholdGuiPanel extends javax.swing.JPanel implements ChangeListe
 						jButtonAddThreshold = new JButton();
 						jPanelButtons.add(jButtonAddThreshold);
 						jButtonAddThreshold.setText("+");
-						jButtonAddThreshold.setFont(smallFont);
+						jButtonAddThreshold.setFont(SMALL_FONT);
 						jButtonAddThreshold.addActionListener(new ActionListener() {
 							public void actionPerformed(ActionEvent e) {
 								addThresholdPanel();
@@ -361,7 +362,7 @@ public class ThresholdGuiPanel extends javax.swing.JPanel implements ChangeListe
 						jButtonRemoveThreshold = new JButton();
 						jPanelButtons.add(jButtonRemoveThreshold);
 						jButtonRemoveThreshold.setText("-");
-						jButtonRemoveThreshold.setFont(smallFont);
+						jButtonRemoveThreshold.setFont(SMALL_FONT);
 						jButtonRemoveThreshold.addActionListener(new ActionListener() {
 							public void actionPerformed(ActionEvent e) {
 								removeThresholdPanel();
@@ -373,6 +374,7 @@ public class ThresholdGuiPanel extends javax.swing.JPanel implements ChangeListe
 						jButtonNext = new JButton();
 						jPanelButtons.add(jButtonNext);
 						jButtonNext.setText("Next >>");
+						jButtonNext.setFont(FONT);
 						jButtonNext.addActionListener(new ActionListener() {
 							public void actionPerformed(ActionEvent e) {
 								fireAction(NEXT_BUTTON_PRESSED);
@@ -392,7 +394,7 @@ public class ThresholdGuiPanel extends javax.swing.JPanel implements ChangeListe
 						jLabelSetColorBy = new JLabel();
 						jPanelByFeature.add(jLabelSetColorBy);
 						jLabelSetColorBy.setText("Set color by");
-						jLabelSetColorBy.setFont(smallFont);
+						jLabelSetColorBy.setFont(SMALL_FONT);
 					}
 					{
 						Feature[] allFeatures = Feature.values();
@@ -406,7 +408,7 @@ public class ThresholdGuiPanel extends javax.swing.JPanel implements ChangeListe
 						jPanelByFeature.add(jComboBoxSetColorBy);
 						jPanelByFeature.add(Box.createHorizontalStrut(5));
 						jComboBoxSetColorBy.setModel(jComboBoxSetColorByModel);
-						jComboBoxSetColorBy.setFont(smallFont);
+						jComboBoxSetColorBy.setFont(SMALL_FONT);
 						jComboBoxSetColorBy.addActionListener(new ActionListener() {
 							public void actionPerformed(ActionEvent e) {
 								setColorByFeature();

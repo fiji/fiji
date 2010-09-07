@@ -48,8 +48,9 @@ import fiji.plugin.nperry.Utils;
  */
 public class ThresholdPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 	
-	private static final Font smallFont = new Font(Font.SANS_SERIF, Font.PLAIN, 10);
-	private static final Font boldFont = smallFont; //.deriveFont(Font.BOLD);
+	static final Font FONT = new Font("Arial", Font.PLAIN, 11);
+	static final Font SMALL_FONT = FONT.deriveFont(10f);
+
 	private static final Color annotationColor = new java.awt.Color(252,117,0);
 	private static final long serialVersionUID = 1L;
 	private static final String DATA_SERIES_NAME = "Data";
@@ -201,7 +202,7 @@ public class ThresholdPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 				jComboBoxFeature = new JComboBox();
 				this.add(jComboBoxFeature, new GridBagConstraints(0, 0, 3, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(2, 5, 2, 5), 0, 0));
 				jComboBoxFeature.setModel(jComboBoxFeatureModel);
-				jComboBoxFeature.setFont(boldFont);
+				jComboBoxFeature.setFont(FONT);
 				jComboBoxFeature.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
@@ -219,7 +220,7 @@ public class ThresholdPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 				jButtonAutoThreshold = new JButton();
 				this.add(jButtonAutoThreshold, new GridBagConstraints(2, 2, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
 				jButtonAutoThreshold.setText("Auto");
-				jButtonAutoThreshold.setFont(smallFont);
+				jButtonAutoThreshold.setFont(SMALL_FONT);
 				jButtonAutoThreshold.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
 						autoThreshold();
@@ -230,7 +231,7 @@ public class ThresholdPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 				jRadioButtonAbove = new JRadioButton();
 				this.add(jRadioButtonAbove, new GridBagConstraints(0, 2, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 10, 0, 0), 0, 0));
 				jRadioButtonAbove.setText("Above");
-				jRadioButtonAbove.setFont(smallFont);
+				jRadioButtonAbove.setFont(SMALL_FONT);
 				jRadioButtonAbove.addActionListener(new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
@@ -248,7 +249,7 @@ public class ThresholdPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 						redrawThresholdMarker();
 					}
 				});
-				jRadioButtonBelow.setFont(smallFont);
+				jRadioButtonBelow.setFont(SMALL_FONT);
 			}
 			{
 				ButtonGroup buttonGroup = new ButtonGroup();
@@ -318,7 +319,7 @@ public class ThresholdPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 		});
 		
 		annotation = new XYTextSimpleAnnotation(chartPanel);
-		annotation.setFont(smallFont.deriveFont(Font.BOLD));
+		annotation.setFont(SMALL_FONT.deriveFont(Font.BOLD));
 		annotation.setColor(annotationColor.darker());
 		plot.addAnnotation(annotation);
 	}
