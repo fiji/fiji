@@ -18,7 +18,7 @@ import fiji.plugin.spottracker.tracking.costfunction.LinkingCostFunction;
  * (allows no links to be made for objects), and the bottom right corner is mathematically
  * required for solving an LAP.
  * 
- * @author nperry
+ * @author Nicholas Perry
  *
  */
 public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {

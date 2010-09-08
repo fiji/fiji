@@ -6,7 +6,7 @@ import Jama.Matrix;
  * Interface for cost function classes, which take a {@link Matrix} and
  * fill in values according to the cost function.
  * 
- * @author nperry
+ * @author Nicholas Perry
  *
  */
 public interface CostFunctions {

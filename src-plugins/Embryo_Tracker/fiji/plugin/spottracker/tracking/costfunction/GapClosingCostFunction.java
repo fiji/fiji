@@ -21,7 +21,7 @@ import fiji.plugin.spottracker.tracking.LAPTracker;
  * 
  * See equation (4) in the paper.
  * 
- * @author nperry
+ * @author Nicholas Perry
  *
  */
 public class GapClosingCostFunction extends LAPTrackerCostFunction {

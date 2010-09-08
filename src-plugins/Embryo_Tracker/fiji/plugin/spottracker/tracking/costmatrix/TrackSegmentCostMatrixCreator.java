@@ -76,7 +76,7 @@ import fiji.plugin.spottracker.tracking.costfunction.SplittingCostFunction;
  * </li>
  * </ul>
  *
- * @author nperry
+ * @author Nicholas Perry
  *
  */
 public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {

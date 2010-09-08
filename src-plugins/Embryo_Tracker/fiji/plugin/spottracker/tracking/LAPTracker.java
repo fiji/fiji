@@ -97,7 +97,7 @@ import fiji.plugin.spottracker.tracking.hungarian.HungarianAlgorithm;
  * 	<li>Run {@link #linkTrackSegmentsToFinalTracks(ArrayList)} to compute the final tracks.</li>
  * </ol>
  * 
- * @author nperry
+ * @author Nicholas Perry
  */
 public class LAPTracker implements ObjectTracker {
 	

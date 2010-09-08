@@ -29,7 +29,7 @@ import Jama.Matrix;
  * 
  * See equations (5) and (6) in the paper.
  * 
- * @author nperry
+ * @author Nicholas Perry
  *
  */
 public class MergingCostFunction implements CostFunctions {

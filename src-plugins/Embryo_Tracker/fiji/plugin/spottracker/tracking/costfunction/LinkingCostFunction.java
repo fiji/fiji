@@ -20,7 +20,7 @@ import fiji.plugin.spottracker.tracking.LAPTracker;
  *  
  *  See equation (3) in the paper.
  *  
- * @author nperry
+ * @author Nicholas Perry
  *
  */
 public class LinkingCostFunction extends LAPTrackerCostFunction {

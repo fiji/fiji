@@ -7,7 +7,7 @@ import Jama.Matrix;
  * cost matrix classes {@link LinkingCostMatrixCreator} and {@link TrackSegmentCostMatrixCreator}
  * that are used with the {@link LAPTracker} class..
  * 
- * @author nperry
+ * @author Nicholas Perry
  *
  */
 public abstract class LAPTrackerCostMatrixCreator implements CostMatrixCreator {

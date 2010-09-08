@@ -3,6 +3,11 @@ package fiji.plugin.spottracker.tracking.costfunction;
 import fiji.plugin.spottracker.Spot;
 import fiji.plugin.spottracker.tracking.costmatrix.LAPTrackerCostMatrixCreator;
 
+/**
+ * 
+ * @author Nicholas Perry
+ *
+ */
 public abstract class LAPTrackerCostFunction implements CostFunctions {
 
 	/** Used to prevent this assignment from being made during Hungarian Algorithm. */
