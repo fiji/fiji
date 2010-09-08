@@ -108,7 +108,7 @@ public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	private Matrix getLinkingCostSubMatrix() {
 		Matrix linkingScores = new Matrix(t0.size(), t1.size());
 		//CostFunctions.linkingScores(linkingScores, t0, t1, MAX_DIST_OBJECTS);
-		LinkingCostFunction linkingCosts = new LinkingCostFunction(linkingScores, t0, t1, MAX_DIST_OBJECTS);
+		LinkingCostFunction linkingCosts = new LinkingCostFunction(linkingScores, t0, t1, MAX_DIST_OBJECTS, BLOCKED);
 		linkingCosts.applyCostFunction();
 		return linkingScores;
 	}

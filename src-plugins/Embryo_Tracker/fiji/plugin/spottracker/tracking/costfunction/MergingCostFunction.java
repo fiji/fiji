@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import fiji.plugin.spottracker.Feature;
 import fiji.plugin.spottracker.Spot;
 import fiji.plugin.spottracker.tracking.LAPTracker;
-import fiji.plugin.spottracker.tracking.costmatrix.LAPTrackerCostMatrixCreator;
 
 import Jama.Matrix;
 
@@ -33,21 +32,26 @@ import Jama.Matrix;
  *
  */
 public class MergingCostFunction implements CostFunctions {
-
-	protected final static double BLOCKED = LAPTrackerCostMatrixCreator.BLOCKED;
-
 	
+	/** The cost matrix. */
 	protected Matrix m;
+	/** The distance threshold. */
 	protected double maxDist;
+	/** The value used to block an assignment in the cost matrix. */
+	protected double blocked;
+	/** The list of track segments. */
 	protected ArrayList< ArrayList<Spot> > trackSegments;
+	/** The list of middle points. */
 	protected ArrayList<Spot> middlePoints;
+	/** Thresholds for the intensity ratios. */
 	protected double[] intensityThresholds;
 	
-	public MergingCostFunction(Matrix m, ArrayList< ArrayList<Spot> > trackSegments, ArrayList<Spot> middlePoints, double maxDist, double[] intensityThresholds) {
+	public MergingCostFunction(Matrix m, ArrayList< ArrayList<Spot> > trackSegments, ArrayList<Spot> middlePoints, double maxDist, double blocked, double[] intensityThresholds) {
 		this.m = m;
 		this.trackSegments = trackSegments;
 		this.middlePoints = middlePoints;
 		this.maxDist = maxDist;
+		this.blocked = blocked;
 		this.intensityThresholds = intensityThresholds;
 	}
 	
@@ -65,14 +69,14 @@ public class MergingCostFunction implements CostFunctions {
 				
 				// Frame threshold - middle Spot must be one frame ahead of the end Spot
 				if (middle.getFrame() != end.getFrame() + 1) {
-					m.set(i, j, BLOCKED);
+					m.set(i, j, blocked);
 					continue;
 				}
 				
 				// Radius threshold
 				d = euclideanDistance(end, middle);
 				if (d > maxDist) {
-					m.set(i, j, BLOCKED);
+					m.set(i, j, blocked);
 					continue;
 				}
 
@@ -80,7 +84,7 @@ public class MergingCostFunction implements CostFunctions {
 				
 				// Intensity threshold -  must be within INTENSITY_RATIO_CUTOFFS ([min, max])
 				if (iRatio > intensityThresholds[1] || iRatio < intensityThresholds[0]) {
-					m.set(i, j, BLOCKED);
+					m.set(i, j, blocked);
 					continue;
 				}
 				
@@ -90,6 +94,7 @@ public class MergingCostFunction implements CostFunctions {
 					s = d * d * ( 1 / (iRatio * iRatio) );
 				}
 
+				// Set score
 				m.set(i, j, s);
 			}
 		}

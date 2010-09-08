@@ -7,7 +7,6 @@ import mpicbg.imglib.algorithm.math.MathLib;
 
 import fiji.plugin.spottracker.Feature;
 import fiji.plugin.spottracker.Spot;
-import fiji.plugin.spottracker.tracking.costmatrix.CostMatrixCreator;
 import fiji.plugin.spottracker.tracking.costmatrix.LinkingCostMatrixCreator;
 import fiji.plugin.spottracker.tracking.costmatrix.TrackSegmentCostMatrixCreator;
 import fiji.plugin.spottracker.tracking.hungarian.AssignmentProblem;

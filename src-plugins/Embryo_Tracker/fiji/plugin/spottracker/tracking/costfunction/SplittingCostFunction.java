@@ -33,17 +33,25 @@ import Jama.Matrix;
  */
 public class SplittingCostFunction extends LAPTrackerCostFunction {
 
+	/** The cost matrix. */
 	protected Matrix m;
+	/** The distance threshold. */
 	protected double maxDist;
+	/** The value used to block an assignment in the cost matrix. */
+	protected double blocked;
+	/** The list of track segments. */
 	protected ArrayList< ArrayList<Spot> > trackSegments;
+	/** The list of middle points. */
 	protected ArrayList<Spot> middlePoints;
+	/** Thresholds for the intensity ratios. */
 	protected double[] intensityThresholds;
 	
-	public SplittingCostFunction(Matrix m, ArrayList< ArrayList<Spot> > trackSegments, ArrayList<Spot> middlePoints, double maxDist, double[] intensityThresholds) {
+	public SplittingCostFunction(Matrix m, ArrayList< ArrayList<Spot> > trackSegments, ArrayList<Spot> middlePoints, double maxDist, double blocked, double[] intensityThresholds) {
 		this.m = m;
 		this.trackSegments = trackSegments;
 		this.middlePoints = middlePoints;
 		this.maxDist = maxDist;
+		this.blocked = blocked;
 		this.intensityThresholds = intensityThresholds;
 	}
 	
@@ -60,14 +68,14 @@ public class SplittingCostFunction extends LAPTrackerCostFunction {
 				
 				// Frame threshold - middle Spot must be one frame behind of the start Spot
 				if (middle.getFrame() != start.getFrame() - 1) {
-					m.set(i, j, BLOCKED);
+					m.set(i, j, blocked);
 					continue;
 				}
 				
 				// Radius threshold
 				d = euclideanDistance(start, middle);
 				if (d > maxDist) {
-					m.set(i, j, BLOCKED);
+					m.set(i, j, blocked);
 					continue;
 				}
 
@@ -75,10 +83,12 @@ public class SplittingCostFunction extends LAPTrackerCostFunction {
 				
 				// Intensity threshold -  must be within INTENSITY_RATIO_CUTOFFS ([min, max])
 				if (iRatio > intensityThresholds[1] || iRatio < intensityThresholds[0]) {
-					m.set(i, j, BLOCKED);
+					m.set(i, j, blocked);
 					continue;
 				}
 
+				
+				// Set score
 				if (iRatio >= 1) {
 					s = d * d * iRatio;
 				} else {

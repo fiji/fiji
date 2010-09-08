@@ -32,11 +32,14 @@ public class GapClosingCostFunction extends LAPTrackerCostFunction {
 	protected double frameCutoff, maxDist;
 	/** The list of track segments, where each segment is a list of Spots. */
 	protected ArrayList< ArrayList<Spot> > trackSegments;
+	/** The value to use to block an assignment in the cost matrix. */
+	protected double blocked;
 	
-	public GapClosingCostFunction(Matrix m, double frameCutoff, double maxDist, ArrayList< ArrayList<Spot> > trackSegments) {
+	public GapClosingCostFunction(Matrix m, double frameCutoff, double maxDist, double blocked, ArrayList< ArrayList<Spot> > trackSegments) {
 		this.m = m;
 		this.frameCutoff = frameCutoff;
 		this.maxDist = maxDist;
+		this.blocked = blocked;
 		this.trackSegments = trackSegments;
 	}
 	
@@ -53,7 +56,7 @@ public class GapClosingCostFunction extends LAPTrackerCostFunction {
 				
 				// If i and j are the same track segment, block it
 				if (i == j) {
-					m.set(i, j, BLOCKED);
+					m.set(i, j, blocked);
 					continue;
 				}
 				
@@ -64,17 +67,18 @@ public class GapClosingCostFunction extends LAPTrackerCostFunction {
 				
 				// Frame cutoff
 				if (Math.abs(end.getFrame() - start.getFrame()) > frameCutoff || end.getFrame() > start.getFrame()) {
-					m.set(i, j, BLOCKED);
+					m.set(i, j, blocked);
 					continue;
 				}
 				
 				// Radius cutoff
 				d = euclideanDistance(end, start);
 				if (d > maxDist) {
-					m.set(i, j, BLOCKED);
+					m.set(i, j, blocked);
 					continue;
 				}
 				
+				// Set score
 				score = d*d;
 				m.set(i, j, score);
 			}

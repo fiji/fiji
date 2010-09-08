@@ -213,7 +213,7 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	 */
 	private Matrix getGapClosingCostSubMatrix(int n) {
 		final Matrix gapClosingScores = new Matrix(n, n);
-		GapClosingCostFunction gapClosing = new GapClosingCostFunction(gapClosingScores, GAP_CLOSING_TIME_WINDOW, MAX_DIST_SEGMENTS, trackSegments);
+		GapClosingCostFunction gapClosing = new GapClosingCostFunction(gapClosingScores, GAP_CLOSING_TIME_WINDOW, MAX_DIST_SEGMENTS, BLOCKED, trackSegments);
 		gapClosing.applyCostFunction();
 		return gapClosingScores;
 	}
@@ -224,7 +224,7 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	 */
 	private Matrix getMergingScores(int n, int m) {
 		final Matrix mergingScores = new Matrix(n, m);	
-		MergingCostFunction merging = new MergingCostFunction(mergingScores, trackSegments, middlePoints, MAX_DIST_SEGMENTS, INTENSITY_RATIO_CUTOFFS);
+		MergingCostFunction merging = new MergingCostFunction(mergingScores, trackSegments, middlePoints, MAX_DIST_SEGMENTS, BLOCKED, INTENSITY_RATIO_CUTOFFS);
 		merging.applyCostFunction();
 		return mergingScores;
 	}
@@ -235,7 +235,7 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	 */
 	private Matrix getSplittingScores(int n, int m) {
 		final Matrix splittingScores = new Matrix(n, m);
-		SplittingCostFunction splitting = new SplittingCostFunction(splittingScores, trackSegments, middlePoints, MAX_DIST_SEGMENTS, INTENSITY_RATIO_CUTOFFS);
+		SplittingCostFunction splitting = new SplittingCostFunction(splittingScores, trackSegments, middlePoints, MAX_DIST_SEGMENTS, BLOCKED, INTENSITY_RATIO_CUTOFFS);
 		splitting.applyCostFunction();
 		return splittingScores;
 	}

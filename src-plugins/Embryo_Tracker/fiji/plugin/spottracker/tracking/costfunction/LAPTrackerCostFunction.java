@@ -11,7 +11,7 @@ import fiji.plugin.spottracker.tracking.costmatrix.LAPTrackerCostMatrixCreator;
 public abstract class LAPTrackerCostFunction implements CostFunctions {
 
 	/** Used to prevent this assignment from being made during Hungarian Algorithm. */
-	protected final static double BLOCKED = LAPTrackerCostMatrixCreator.BLOCKED;
+	//protected final static double BLOCKED = LAPTrackerCostMatrixCreator.BLOCKED;
 
 	/*
 	 * Determines the Euclidean distance between two Spots.
