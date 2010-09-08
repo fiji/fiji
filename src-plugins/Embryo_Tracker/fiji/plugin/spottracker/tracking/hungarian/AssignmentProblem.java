@@ -1,4 +1,4 @@
-package fiji.plugin.spottracker.hungarian;
+package fiji.plugin.spottracker.tracking.hungarian;
 
 
 /**
