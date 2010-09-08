@@ -34,6 +34,7 @@ import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.annotations.XYTextSimpleAnnotation;
+import org.jfree.chart.axis.LogarithmicAxis;
 import org.jfree.chart.plot.IntervalMarker;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
@@ -270,6 +271,9 @@ public class ThresholdPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 		chart = ChartFactory.createHistogram(null, null, null, dataset, PlotOrientation.VERTICAL, false, false, false);
 		
 		plot = chart.getXYPlot();
+//		LogarithmicAxis logAxis = new LogarithmicAxis("Log(n)");
+//		logAxis.setAllowNegativesFlag(true);
+//		plot.setRangeAxis(logAxis);
 		
 		XYBarRenderer renderer = (XYBarRenderer) plot.getRenderer();
 		renderer.setShadowVisible(false);

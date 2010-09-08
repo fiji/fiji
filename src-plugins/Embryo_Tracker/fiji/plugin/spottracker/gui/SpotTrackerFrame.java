@@ -1,11 +1,18 @@
 package fiji.plugin.spottracker.gui;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.plugin.Duplicator;
+import ij.plugin.filter.Duplicater;
+import ij.process.ColorProcessor;
+import ij.process.StackConverter;
+import ij3d.Content;
+import ij3d.ContentCreator;
 import ij3d.Image3DUniverse;
 
 import java.awt.CardLayout;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.TreeMap;
@@ -15,6 +22,8 @@ import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+
+import view4d.Timeline;
 
 import fiji.plugin.spottracker.Feature;
 import fiji.plugin.spottracker.Logger;
@@ -49,6 +58,9 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 	private static final String START_DIALOG_KEY = "Start";
 	private static final String THRESHOLD_GUI_KEY = "Threshold";
 	private static final String LOG_PANEL_KEY = "Log";
+	
+	protected static final int DEFAULT_RESAMPLING_FACTOR = 3;
+	protected static final int DEFAULT_THRESHOLD = 50;
 
 	private StartDialogPanel startDialogPanel;
 	private ThresholdGuiPanel thresholdGuiPanel;
@@ -60,6 +72,8 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 	private Logger logger;
 	private List<Collection<Spot>> spots;
 	private List<Collection<Spot>> selectedSpots;
+	private SpotDisplayer displayer;
+	private boolean is3D;
 	
 	{
 		//Set Look & Feel
@@ -91,6 +105,7 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 				state = GuiState.SEGMENTING;
 				cardLayout.show(getContentPane(), LOG_PANEL_KEY);
 				settings = startDialogPanel.updateSettings(settings);
+				is3D = settings.imp.getNSlices() > 1;
 				logger = logPanel.getLogger();
 				logger.log("Starting segmentation...\n", Logger.BLUE_COLOR);
 				new Thread() {					
@@ -116,47 +131,48 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 				
 				// Launch renderer
 				logger.log("Rendering results...\n",Logger.GREEN_COLOR);
-				TreeMap<Integer, Collection<Spot>> spotsOverTime = new TreeMap<Integer, Collection<Spot>>();
+				logPanel.jButtonNext.setEnabled(false);				
+				final TreeMap<Integer, Collection<Spot>> spotsOverTime = new TreeMap<Integer, Collection<Spot>>();
 				for(int i = 0; i < spots.size(); i++) 
 					spotsOverTime.put(i, spots.get(i));
-				
-				final Image3DUniverse universe = new Image3DUniverse();
-				final SpotDisplayer displayer = new SpotDisplayer(spotsOverTime, settings.expectedDiameter/2); // TODO still too big to see
-				try {
-					displayer.render(universe);
-				} catch (InterruptedException e1) {
-					e1.printStackTrace();
-				} catch (ExecutionException e1) {
-					e1.printStackTrace();
-				}
-				universe.addVoltex(settings.imp); // TODO generate a bug if its not 8-bit
-				universe.show();
-				logger.log("Rendering done.\n", Logger.GREEN_COLOR);
-				
-				cardLayout.show(getContentPane(), THRESHOLD_GUI_KEY);
-				thresholdGuiPanel.setSpots(spots);
-				thresholdGuiPanel.addThresholdPanel(Feature.MEAN_INTENSITY);
-				thresholdGuiPanel.addChangeListener(new ChangeListener() {
-					private double[] t = null;
-					private boolean[] is = null;
-					private Feature[] f = null;
+
+				// Thread for rendering
+				new Thread(new Runnable() {
 					@Override
-					public void stateChanged(ChangeEvent e) {
-						f = thresholdGuiPanel.getFeatures();
-						is = thresholdGuiPanel.getIsAbove();
-						t = thresholdGuiPanel.getThresholds();				
-						displayer.threshold(f, t, is);
-					}
-				});
-				thresholdGuiPanel.addActionListener(new ActionListener() {
-					public void actionPerformed(ActionEvent e) {
-						if (e == thresholdGuiPanel.COLOR_FEATURE_CHANGED) {
-							Feature feature = thresholdGuiPanel.getColorByFeature();
-							displayer.setColorByFeature(feature);
+					public void run() {
+						// Render image data
+						final Image3DUniverse universe = new Image3DUniverse();
+						universe.show();
+						ImagePlus[] images = makeImageForViewer(settings);
+						Content imageContent = ContentCreator.createContent(
+								settings.imp.getTitle(), 
+								images, 
+								Content.VOLUME, 
+								DEFAULT_RESAMPLING_FACTOR, 
+								0,
+								null, 
+								DEFAULT_THRESHOLD, 
+								new boolean[] {true, true, true});
+						// Render spots 
+						displayer = new SpotDisplayer(spotsOverTime, settings.expectedDiameter/8); // TODO otherwise too big 
+						thresholdGuiPanel.setSpots(spots);
+						thresholdGuiPanel.addThresholdPanel(Feature.MEAN_INTENSITY);
+						thresholdSpots();
+						try {	
+							universe.addContentLater(imageContent);
+							displayer.render(universe);
+						} catch (InterruptedException e1) {
+							logger.error("Error in rendering:\n"+e1.toString());
+						} catch (ExecutionException e1) {
+							logger.error("Error in rendering:\n"+e1.toString());
 						}
+						logger.log("Rendering done.\n", Logger.GREEN_COLOR);
+						logPanel.jButtonNext.setEnabled(true);
+						cardLayout.show(getContentPane(), THRESHOLD_GUI_KEY);
+
 					}
-				});
-				
+				}).start();
+
 				state = GuiState.THRESHOLD_BLOBS;
 				break;
 				
@@ -177,8 +193,68 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 					}
 				}.start();
 				break;
-				
 		}
+	}
+	
+	/**
+	 * Ensure an 8-bit gray image is sent to the 3D viewer.
+	 */
+	private ImagePlus[] makeImageForViewer(final Settings settings) {
+		final ImagePlus origImp = settings.imp;
+		final ImagePlus imp;
+		
+		if (origImp.getType() == ImagePlus.GRAY8)
+			imp = origImp;
+		else {
+			imp = new Duplicator().run(origImp);
+			new StackConverter(imp).convertToGray8();
+		}
+		
+		int nChannels = imp.getNChannels();
+		int nSlices = imp.getNSlices();
+		int nFrames = settings.tend - settings.tstart + 1;
+		ImagePlus[] ret = new ImagePlus[nFrames];
+		int w = imp.getWidth(), h = imp.getHeight();
+
+		ImageStack oldStack = imp.getStack();
+		String oldTitle = imp.getTitle();
+		
+		for(int i = 0; i < nFrames; i++) {
+			
+			ImageStack newStack = new ImageStack(w, h);
+			for(int j = 0; j < nSlices; j++) {
+				int index = imp.getStackIndex(1, j+1, i+settings.tstart+1);
+				Object pixels;
+				if (nChannels > 1) {
+					imp.setPositionWithoutUpdate(1, j+1, i+1);
+					pixels = new ColorProcessor(imp.getImage()).getPixels();
+				}
+				else
+					pixels = oldStack.getPixels(index);
+				newStack.addSlice(oldStack.getSliceLabel(index), pixels);
+			}
+			ret[i] = new ImagePlus(oldTitle	+ " (frame " + i + ")", newStack);
+			ret[i].setCalibration(imp.getCalibration().copy());
+			
+		}
+		return ret;
+	}
+
+	/**
+	 * Is called when the user change the color by feature combo box in the 
+	 * {@link ThresholdGuiPanel}.
+	 */
+	private void recolorSpots() {
+		Feature feature = thresholdGuiPanel.getColorByFeature();
+		displayer.setColorByFeature(feature);
+	}
+	
+	/**
+	 * Is called when the user change the threshold settings in the 
+	 * {@link ThresholdGuiPanel}.
+	 */
+	private void thresholdSpots() {
+		displayer.threshold(thresholdGuiPanel.getFeatures(), thresholdGuiPanel.getThresholds(), thresholdGuiPanel.getIsAbove());
 	}
 	
 	private void initGUI() {
@@ -215,6 +291,15 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 					public void actionPerformed(ActionEvent e) {
 						if (e == thresholdGuiPanel.NEXT_BUTTON_PRESSED)
 							next();
+						else if (e == thresholdGuiPanel.COLOR_FEATURE_CHANGED) {
+							recolorSpots();
+						} 
+					}
+				});
+				thresholdGuiPanel.addChangeListener(new ChangeListener() {
+					@Override
+					public void stateChanged(ChangeEvent e) {
+						thresholdSpots();
 					}
 				});
 				getContentPane().add(thresholdGuiPanel, THRESHOLD_GUI_KEY);
