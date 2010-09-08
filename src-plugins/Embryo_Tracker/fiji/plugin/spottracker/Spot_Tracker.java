@@ -254,8 +254,9 @@ public class Spot_Tracker implements PlugIn {
 			return;
 		}
 
+		int numFrames = settings.tend - settings.tstart + 1;
+
 		/* 0 -- Initialize local variables */
-		final int numFrames = imp.getNFrames();
 		final float[] calibration = new float[] {(float) imp.getCalibration().pixelWidth, (float) imp.getCalibration().pixelHeight, (float) imp.getCalibration().pixelDepth};
 		final float diam = settings.expectedDiameter;
 		final boolean useMedFilt = settings.useMedianFilter;
@@ -268,7 +269,7 @@ public class Spot_Tracker implements PlugIn {
 		Image<FloatType> filteredImage;
 		
 		// For each frame...
-		for (int i = 0; i < numFrames; i++) {
+		for (int i = settings.tstart-1; i < settings.tend; i++) {
 			
 			/* 1 - Prepare stack for use with Imglib. */
 			
@@ -278,14 +279,14 @@ public class Spot_Tracker implements PlugIn {
 			/* 2 Segment it */
 
 			logger.log("Frame "+(i+1)+": Segmenting...\n");
-			logger.setProgress((i+1) / (2f * numFrames + 1));
+			logger.setProgress((2*(i-settings.tstart)) / (2f * numFrames + 1));
 			segmenter.setImage(img);
 			if (segmenter.checkInput() && segmenter.process()) {
 				filteredImage = segmenter.getFilteredImage();
 				spotsThisFrame = segmenter.getResult();
 				for (Spot spot : spotsThisFrame)
 					spot.setFrame(i);
-				spots.add(i, spotsThisFrame);
+				spots.add(i-settings.tstart+1, spotsThisFrame);
 				logger.log("Frame "+(i+1)+": found "+spotsThisFrame.size()+" spots.\n");
 			} else {
 				logger.error(segmenter.getErrorMessage());
@@ -294,11 +295,12 @@ public class Spot_Tracker implements PlugIn {
 			
 			/* 3 - Extract features for the spot collection */
 			logger.log("Frame "+(i+1)+": Calculating features...\n");
-			logger.setProgress((i+2) / (2f * numFrames + 1));
+			logger.setProgress((2*(i-settings.tstart)+1) / (2f * numFrames + 1));
 			final FeatureFacade<FloatType> featureCalculator = new FeatureFacade<FloatType>(img, filteredImage, diam, calibration);
 			featureCalculator.processFeature(Feature.MEAN_INTENSITY, spotsThisFrame);
 			
 		} // Finished looping over frames
+		logger.setProgress(1);
 				
 		return;
 	}

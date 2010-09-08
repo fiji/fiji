@@ -19,5 +19,15 @@ public class Settings {
 	public boolean 	useMedianFilter = DEFAULT_USE_MEDIAN_FILTER;
 	/** If true, blob found at the edge of the image will not be discarded. */
 	public boolean 	allowEdgeMaxima = DEFAULT_ALLOW_EDGE_MAXIMA;
-	public static final Settings DEFAULT = new Settings(); 
+	
+	public int tstart;
+	public int tend;
+	public int xstart;
+	public int xend;
+	public int ystart;
+	public int yend;
+	public int zstart;
+	public int zend;
+	
+	public static final Settings DEFAULT = new Settings();
 }

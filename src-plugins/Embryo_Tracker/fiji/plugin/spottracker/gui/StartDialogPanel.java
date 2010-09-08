@@ -161,6 +161,16 @@ public class StartDialogPanel extends ActionListenablePanel {
 		settings.useMedianFilter = jCheckBoxUseMedianFilter.isSelected();
 		settings.allowEdgeMaxima = jCheckBoxAllowEdgeMaxima.isSelected();
 		settings.imp =  imp;
+		
+		settings.tstart = Integer.parseInt(jTextFieldTStart.getText());
+		settings.tend 	= Integer.parseInt(jTextFieldTEnd.getText());
+		settings.xstart = Integer.parseInt(jTextFieldXStart.getText());
+		settings.xend 	= Integer.parseInt(jTextFieldXEnd.getText());
+		settings.ystart = Integer.parseInt(jTextFieldYStart.getText());
+		settings.yend 	= Integer.parseInt(jTextFieldYEnd.getText());
+		settings.zstart = Integer.parseInt(jTextFieldZStart.getText());
+		settings.zend 	= Integer.parseInt(jTextFieldZEnd.getText());
+		
 		return settings;
 	}
 	

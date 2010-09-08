@@ -167,7 +167,7 @@ public class SpotSegmenter <T extends RealType<T> >implements Algorithm {
 	
 		final DownSample<T> downsampler = new DownSample<T>(img, dim, 0.5f, 0.5f);	// optimal sigma is defined by 0.5f, as mentioned here: http://pacific.mpi-cbg.de/wiki/index.php/Downsample
 		if (!downsampler.checkInput() || !downsampler.process()) {
-			errorMessage = BASE_ERROR_MESSAGE + "Filed to down-sample source image:\n"  + downsampler.getErrorMessage();
+			errorMessage = BASE_ERROR_MESSAGE + "Failed to down-sample source image:\n"  + downsampler.getErrorMessage();
 	        return false;
 		}
 		filteredImage = downsampler.getResult();
