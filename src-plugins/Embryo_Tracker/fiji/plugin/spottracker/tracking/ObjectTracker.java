@@ -11,6 +11,7 @@ import mpicbg.imglib.algorithm.Algorithm;
  */
 public interface ObjectTracker extends Algorithm {
 
+	/** Get the final tracks computed by the tracking algorithm. */
 	public void getTracks();
 
 }

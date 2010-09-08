@@ -3,6 +3,13 @@ package fiji.plugin.spottracker.tracking;
 import fiji.plugin.spottracker.Spot;
 import Jama.Matrix;
 
+/**
+ * Contains the mutually shared fields, private functions used by the two 
+ * cost matrix classes {@link LinkingCostMatrixCreator} and {@link TrackSegmentCostMatrixCreator}.
+ * 
+ * @author nperry
+ *
+ */
 public abstract class AbstractCostMatrixCreator implements CostMatrixCreator {
 
 	/** Used to prevent this assignment from being made during Hungarian Algorithm. */
@@ -29,7 +36,7 @@ public abstract class AbstractCostMatrixCreator implements CostMatrixCreator {
 	
 	
 	/*
-	 * This function can be used for equations (3) and (4) in the paper.
+	 * Determines the Euclidean distance between two Spots.
 	 */
 	protected double euclideanDistance(Spot i, Spot j) {
 		final float[] coordsI = i.getCoordinates();

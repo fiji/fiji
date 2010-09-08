@@ -3,10 +3,12 @@ package fiji.plugin.spottracker.tracking;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import mpicbg.imglib.algorithm.math.MathLib;
+
 import fiji.plugin.spottracker.Feature;
 import fiji.plugin.spottracker.Spot;
-import fiji.plugin.spottracker.hungarian.AssignmentProblem;
-import fiji.plugin.spottracker.hungarian.HungarianAlgorithm;
+import fiji.plugin.spottracker.tracking.hungarian.AssignmentProblem;
+import fiji.plugin.spottracker.tracking.hungarian.HungarianAlgorithm;
 
 /**
  * 
@@ -628,6 +630,10 @@ public class LAPTracker implements ObjectTracker {
 	
 	// For testing!
 	public static void main(String args[]) {
+		
+		final boolean useCustomCostMatrices = true;
+		
+		// 1 - Set up test spots
 		ArrayList<Spot> t0 = new ArrayList<Spot>();
 		ArrayList<Spot> t1 = new ArrayList<Spot>();
 		ArrayList<Spot> t2 = new ArrayList<Spot>();
@@ -705,32 +711,81 @@ public class LAPTracker implements ObjectTracker {
 			count++;
 		}
 		
-		LAPTracker lap = new LAPTracker(wrap);
-		if (!lap.checkInput() || !lap.process()) {
-			System.out.println(lap.getErrorMessage());
+		
+		// 2 - Track the test spots
+		
+		if (!useCustomCostMatrices) {
+			LAPTracker lap = new LAPTracker(wrap);
+			if (!lap.checkInput() || !lap.process()) {
+				System.out.println(lap.getErrorMessage());
+			}
+			
+			// Print out track segments
+//			ArrayList<ArrayList<Spot>> trackSegments = lap.getTrackSegments();
+//			for (ArrayList<Spot> trackSegment : trackSegments) {
+//				System.out.println("-*-*-*-*-* New Segment *-*-*-*-*-");
+//				for (Spot spot : trackSegment) {
+//					//System.out.println(spot.toString());
+//					System.out.println(MathLib.printCoordinates(spot.getCoordinates()));
+//				}
+//			}
+		} else {
+			
+			LAPTracker lap = new LAPTracker(wrap, false);
+			
+			// Get linking costs
+			ArrayList<double[][]> linkingCosts = new ArrayList<double[][]>();
+			for (int i = 0; i < wrap.size() - 1; i++) {
+				ArrayList<Spot> x = wrap.get(i);
+				ArrayList<Spot> y = wrap.get(i+1);
+				LinkingCostMatrixCreator l = new LinkingCostMatrixCreator(x, y);
+				l.checkInput();
+				l.process();
+				linkingCosts.add(l.getCostMatrix());
+			}
+			
+			// Link objects to track segments
+			lap.setLinkingCosts(linkingCosts);
+			lap.checkInput();
+			lap.linkObjectsToTrackSegments();
+			ArrayList< ArrayList<Spot> > tSegs = lap.getTrackSegments();
+			
+			// Print out track segments
+//			for (ArrayList<Spot> trackSegment : tSegs) {
+//				System.out.println("-*-*-*-*-* New Segment *-*-*-*-*-");
+//				for (Spot spot : trackSegment) {
+//					//System.out.println(spot.toString());
+//					System.out.println(MathLib.printCoordinates(spot.getCoordinates()));
+//				}
+//			}
+			
+			// Get segment costs
+			TrackSegmentCostMatrixCreator segCosts = new TrackSegmentCostMatrixCreator(tSegs);
+			segCosts.checkInput();
+			segCosts.process();
+			double[][] segmentCosts = segCosts.getCostMatrix();
+			
+			// Link track segments to final tracks
+			lap.setSegmentCosts(segmentCosts);
+			lap.linkTrackSegmentsToFinalTracks(segCosts.getMiddlePoints());
+			
 		}
 
-//		// Print out track segments
-//		ArrayList<ArrayList<Spot>> trackSegments = lap.getTrackSegments();
-//		for (ArrayList<Spot> trackSegment : trackSegments) {
-//			System.out.println("-*-*-*-*-* New Segment *-*-*-*-*-");
-//			for (Spot spot : trackSegment) {
-//				System.out.println(spot.toString());
-//			}
-//		}
+		
+		// 3 - Print out results for testing
 		
 		// Print out final tracks.
-		int counter = 1;
-		System.out.println();
-		for (ArrayList<Spot> spots : wrap) {
-			System.out.println("--- Frame " + counter + " ---");
-			System.out.println("Number of Spots in this frame: " + spots.size());
-			for (Spot spot : spots) {
-				System.out.println(spot.toString());
-			}
-			System.out.println();
-			counter++;
-		}
+//		int counter = 1;
+//		System.out.println();
+//		for (ArrayList<Spot> spots : wrap) {
+//			System.out.println("--- Frame " + counter + " ---");
+//			System.out.println("Number of Spots in this frame: " + spots.size());
+//			for (Spot spot : spots) {
+//				System.out.println(spot.toString());
+//			}
+//			System.out.println();
+//			counter++;
+//		}
 	}
 }
 

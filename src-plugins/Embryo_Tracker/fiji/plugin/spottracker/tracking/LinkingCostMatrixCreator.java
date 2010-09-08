@@ -6,6 +6,20 @@ import Jama.Matrix;
 
 import fiji.plugin.spottracker.Spot;
 
+/**
+ * <p>Creates the cost matrix described in Figure 1b in the paper.
+ * 
+ * <p>Jaqaman, K. et al. "Robust single-particle tracking in live-cell time-lapse sequences."
+ * Nature Methods, 2008.
+ * 
+ * <p>The top left quadrant corresponds to the cost of links objects between frames,
+ * the bottom left and top right quadrants correspond to alternative costs for linking
+ * (allows no links to be made for objects), and the bottom right corner is mathematically
+ * required for solving an LAP.
+ * 
+ * @author nperry
+ *
+ */
 public class LinkingCostMatrixCreator extends AbstractCostMatrixCreator {
 
 	/** The maximum distance away two Spots in consecutive frames can be in order 
@@ -24,6 +38,11 @@ public class LinkingCostMatrixCreator extends AbstractCostMatrixCreator {
 	/** The highest link score made across all frames. */
 	protected double MAX_SCORE = Double.NEGATIVE_INFINITY;
 	
+	/**
+	 * 
+	 * @param t0 The spots in frame t
+	 * @param t1 The spots in frame t+1
+	 */
 	public LinkingCostMatrixCreator(ArrayList<Spot> t0, ArrayList<Spot> t1) {
 		this.t0 = t0;
 		this.t1 = t1;
@@ -61,7 +80,7 @@ public class LinkingCostMatrixCreator extends AbstractCostMatrixCreator {
 		costs.setMatrix(t0.size(), costs.getRowDimension() - 1, t1.size(), costs.getColumnDimension() - 1, lowerRight);
 		costs.setMatrix(0, t0.size() - 1, t1.size(), costs.getColumnDimension() - 1, t0LinkingAlternatives);
 		costs.setMatrix(t0.size(), costs.getRowDimension() - 1, 0, t1.size() - 1, t1LinkingAlternatives);
-		
+
 		return true;
 	}
 	

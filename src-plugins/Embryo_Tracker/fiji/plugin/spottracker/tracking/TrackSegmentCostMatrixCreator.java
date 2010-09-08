@@ -9,7 +9,71 @@ import fiji.plugin.spottracker.Spot;
 import fiji.plugin.spottracker.Utils;
 
 /**
+ * <p>Creates the cost matrix <b>roughly</b> described in Figure 1c in the paper.
  * 
+ * <p>Jaqaman, K. et al. "Robust single-particle tracking in live-cell time-lapse sequences."
+ * Nature Methods, 2008.
+ * 
+ * <p>This matrix is notably different than the one described in the paper. This is because
+ * the cost matrix described in 1c in the paper <b>is not </b> the cost matrix they use in their
+ * matlab implementation.
+ * 
+ * <p>The cost matrix used in the matlab implementation by the authors, and used here, is described
+ * as follows:
+ * 
+ * <p> The overall matrix can be divided into <u>four quadrants</u>, outlined below. Each 
+ * quadrant has dimensions (number of track segments + number of middle points) x (number of track segments + number of middle points).
+ * A middle point is defined as a Spot in a track segment that is neither the start nor end. So a 
+ * track segment of length two has no middle points.
+ * 
+ * <ul>
+ * <li>
+ * <p><b>Top left</b>: Contains scores for gap closing, merging, splitting, and "blank" region.
+ * <br><br>
+ * <p>This quadrant can also be further subdivided into four smaller submatrices:
+ *
+ * <ul>
+ * <li><i>Gap closing (top left)</i>: has dimensions (number of track segments) x (number of track segments), 
+ * and contains the scores for linking the ends of track segments to the starts of other track segments
+ * as described in the paper.</li>
+ * 
+ * <li><i>Merging (top right)</i>: has (number of track segment) rows and (number of middle
+ * points) columns. Contains scores for linking the end of a track segment into the
+ * middle of another (a merge).</li>
+ * 
+ * <li><i>Splitting (top left)</i>: has (number of middle points) rows and (number of track
+ * segments columns). Contains scores for linking the start of a track segment into the
+ * middle of another (a split).</li>
+ * 
+ * <li><i>Empty (Bottom right)</i>: has dimensions (number of middle points) x (number of middle points), and is blocked, 
+ * so no solutions lie in this region.</li>
+ * </ul>
+ * <br>
+ * 
+ * </li>
+ * <li>Top right: Terminating and splitting alternatives.
+ * <br><br>
+ * <p>This quadrant contains alternative scores, and the scores are arranged along the
+ * diagonal (top left to bottom right). The score is a cutoff value, and is the same cutoff
+ * value used in the bottom left and bottom right quadrants.
+ * <br><br>
+ * </li>
+ * <li>Bottom left: Initiating and merging alternatives.
+ * <br><br>
+ * <p>This quadrant contains alternative scores, and the scores are arranged along the
+ * diagonal (top left to bottom right). The score is a cutoff value, and is the same cutoff
+ * value used in the top right and bottom right quadrants.
+ * <br><br>
+ * </li>
+ * <li>Bottom right: Mathematically required to solve LAP problems.
+ * <br><br>
+ * <p>This quadrant requires special formatting to allow the LAP to be solved. Essentially,
+ * the top left quadrant is inverted, and all non-blocked values are replaced with the cutoff
+ * value used in the bottom left and top right quadrants.
+ * <br><br>
+ * </li>
+ * </ul>
+ *
  * @author nperry
  *
  */
@@ -37,6 +101,11 @@ public class TrackSegmentCostMatrixCreator extends AbstractCostMatrixCreator {
 	protected ArrayList<Spot> middlePoints;
 	
 	
+	/**
+	 * 
+	 * @param trackSegments A list of track segments (each track segment is 
+	 * an <code>ArrayList</code> of <code>Spots</code>.
+	 */
 	public TrackSegmentCostMatrixCreator(ArrayList< ArrayList<Spot> > trackSegments) {
 		this.trackSegments = trackSegments;
 		scores = new ArrayList<Double>();
@@ -55,6 +124,14 @@ public class TrackSegmentCostMatrixCreator extends AbstractCostMatrixCreator {
 	}
 
 	
+	/**
+	 * Returns an Arraylist which holds references to all the middle points
+	 * within the track segments. Notably, these middle points are in the
+	 * same order here as they are referenced in the cost matrix (so, the 
+	 * first column index in the merging section, index 0, corresponds to
+	 * the Spot at index 0 in this ArrayList.
+	 * @return The <code>ArrayList</code> of middle <code>Spots</code>
+	 */
 	public ArrayList<Spot> getMiddlePoints() {
 		return middlePoints;
 	}
