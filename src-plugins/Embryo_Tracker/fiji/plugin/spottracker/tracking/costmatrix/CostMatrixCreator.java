@@ -1,4 +1,4 @@
-package fiji.plugin.spottracker.tracking;
+package fiji.plugin.spottracker.tracking.costmatrix;
 
 import mpicbg.imglib.algorithm.Algorithm;
 

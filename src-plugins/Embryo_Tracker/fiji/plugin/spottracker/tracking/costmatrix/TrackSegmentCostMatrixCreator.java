@@ -1,12 +1,14 @@
-package fiji.plugin.spottracker.tracking;
+package fiji.plugin.spottracker.tracking.costmatrix;
 
 import java.util.ArrayList;
 
 import Jama.Matrix;
 
-import fiji.plugin.spottracker.Feature;
 import fiji.plugin.spottracker.Spot;
 import fiji.plugin.spottracker.Utils;
+import fiji.plugin.spottracker.tracking.costfunction.GapClosingCostFunction;
+import fiji.plugin.spottracker.tracking.costfunction.MergingCostFunction;
+import fiji.plugin.spottracker.tracking.costfunction.SplittingCostFunction;
 
 /**
  * <p>Creates the cost matrix <b>roughly</b> described in Figure 1c in the paper.
@@ -77,7 +79,7 @@ import fiji.plugin.spottracker.Utils;
  * @author nperry
  *
  */
-public class TrackSegmentCostMatrixCreator extends AbstractCostMatrixCreator {
+public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 
 	/** The maximum distance away two Spots in consecutive frames can be in order 
 	 * to be linked. */
@@ -94,9 +96,6 @@ public class TrackSegmentCostMatrixCreator extends AbstractCostMatrixCreator {
 	
 	/** The track segments. */
 	protected ArrayList< ArrayList<Spot> > trackSegments;
-	/** Holds the scores for gap closing, merging, and splitting to calculate cutoffs
-	 * for alternatives. */
-	protected ArrayList<Double> scores;
 	/** Holds the Spots in the middle of track segments (not at end or start). */
 	protected ArrayList<Spot> middlePoints;
 	
@@ -108,7 +107,6 @@ public class TrackSegmentCostMatrixCreator extends AbstractCostMatrixCreator {
 	 */
 	public TrackSegmentCostMatrixCreator(ArrayList< ArrayList<Spot> > trackSegments) {
 		this.trackSegments = trackSegments;
-		scores = new ArrayList<Double>();
 	}
 	
 	
@@ -140,13 +138,13 @@ public class TrackSegmentCostMatrixCreator extends AbstractCostMatrixCreator {
 	@Override
 	public boolean process() {
 		
-		// Confirm that checkInput() has been executed already.
+		// 1 - Confirm that checkInput() has been executed already.
 		if (!inputChecked) {
 			errorMessage = "You must run checkInput() before running process().";
 			return false;
 		}
 		
-		// 1 - Set various variables to help in the subsequent steps.
+		// 2 - Set various variables to help in the subsequent steps.
 		final int numTrackSegments = trackSegments.size();						// Number of track segments
 		middlePoints = getTrackSegmentMiddlePoints(trackSegments);				// A list of track segment middle points
 		final int numMiddlePoints = middlePoints.size();						// Number of middle track segment Spots (not including start and end Spot)
@@ -154,19 +152,25 @@ public class TrackSegmentCostMatrixCreator extends AbstractCostMatrixCreator {
 		final int numStartMerge = numTrackSegments + numMiddlePoints;			// Number of start points + number of points considered for merging
 		final int totalLength = 2 * (numTrackSegments + numMiddlePoints);		// The total length of the final cost matrix
 
-		// 2 - Initialize overall cost matrix
+		// Initialize overall cost matrix
 		costs = new Matrix(totalLength, totalLength);
 		
-		// 3 - Fill in scoring submatrices
-		Matrix gapClosingScores = getGapClosingScores(numTrackSegments);
+		// 3 - Fill in cost matrix
+		
+		// Top left quadrant
+		Matrix gapClosingScores = getGapClosingCostSubMatrix(numTrackSegments);
 		Matrix mergingScores = getMergingScores(numTrackSegments, numMiddlePoints);
 		Matrix splittingScores = getSplittingScores(numMiddlePoints, numTrackSegments);
-		double cutoff = getEndPointCutoff();
+		double cutoff = getCutoff(gapClosingScores, mergingScores, splittingScores); //TODO fix
 		Matrix middle = new Matrix(numMiddlePoints, numMiddlePoints, BLOCKED);
+		
+		// Top right quadrant
 		Matrix terminatingSplittingAlternativeScores = getAlternativeScores(numStartMerge, cutoff);
+		
+		// Bottom left quadrant
 		Matrix initiatingMergingAlternativeScores = getAlternativeScores(numEndSplit, cutoff);
 
-		// 4 - Fill in complete cost matrix using the submatrices just calculated
+		// Fill in complete cost matrix using the submatrices just calculated
 		costs.setMatrix(0, numTrackSegments - 1, 0, numTrackSegments - 1, gapClosingScores);							// Gap closing
 		costs.setMatrix(0, numTrackSegments - 1, numTrackSegments, numStartMerge - 1, mergingScores);					// Merging
 		costs.setMatrix(numTrackSegments, numEndSplit - 1, 0, numTrackSegments - 1, splittingScores);					// Splitting
@@ -174,7 +178,7 @@ public class TrackSegmentCostMatrixCreator extends AbstractCostMatrixCreator {
 		costs.setMatrix(numEndSplit, totalLength - 1, 0, numStartMerge - 1, initiatingMergingAlternativeScores);		// Initiating and merging alternative
 		costs.setMatrix(0, numEndSplit - 1, numStartMerge, totalLength - 1, terminatingSplittingAlternativeScores);		// Terminating and splitting alternative
 		
-		// 5 - Set the lower right submatrix
+		// Bottom right quadrant (need costs to be filled in with other submatrices already)
 		Matrix lowerRight = getLowerRight(numEndSplit, numStartMerge, cutoff);
 		costs.setMatrix(numEndSplit, totalLength - 1, numStartMerge, totalLength - 1, lowerRight);						// Lower right (transpose of gap closing, mathematically required for LAP)
 		
@@ -205,196 +209,61 @@ public class TrackSegmentCostMatrixCreator extends AbstractCostMatrixCreator {
 
 
 	/*
-	 * Sets the scores for gap closing. Iterates through each pair of starts and ends for all
-	 * track segments, and determines if they are within thresholds for gap closing, and if
-	 * so calculates a score. 
-	 * 
-	 * The thresholds used are:
-	 * 1. Must be within a certain frame window
-	 * 2. Must be within a certain distance of each other
-	 * 
-	 * If a pair passes the thresholds, the score used is the Euclidean distance between
-	 * them squared.
+	 * Uses a gap closing cost function to fill in the gap closing costs submatrix.
 	 */
-	private Matrix getGapClosingScores(int n) {
-		
-		// Initialize local variables
+	private Matrix getGapClosingCostSubMatrix(int n) {
 		final Matrix gapClosingScores = new Matrix(n, n);
-		ArrayList<Spot> seg1, seg2;
-		Spot end, start;
-		double d, score;
-		
-		// Set the gap closing scores for each segment start and end pair
-		for (int i = 0; i < n; i++) {
-			for (int j = 0; j < n; j++) {
-				
-				// If i and j are the same track segment, block it
-				if (i == j) {
-					gapClosingScores.set(i, j, BLOCKED);
-					continue;
-				}
-				
-				seg1 = trackSegments.get(i);
-				seg2 = trackSegments.get(j);
-				end = seg1.get(seg1.size() - 1);	// get last Spot of seg1
-				start = seg2.get(0);				// get first Spot of seg2
-				
-				// Frame cutoff
-				if (Math.abs(end.getFrame() - start.getFrame()) > GAP_CLOSING_TIME_WINDOW || end.getFrame() > start.getFrame()) {
-					gapClosingScores.set(i, j, BLOCKED);
-					continue;
-				}
-				
-				// Radius cutoff
-				d = euclideanDistance(end, start);
-				if (d > MAX_DIST_SEGMENTS) {
-					gapClosingScores.set(i, j, BLOCKED);
-					continue;
-				}
-				
-				score = d*d;
-				scores.add(score);
-				gapClosingScores.set(i, j, score);
-			}
-		}
-		
+		GapClosingCostFunction gapClosing = new GapClosingCostFunction(gapClosingScores, GAP_CLOSING_TIME_WINDOW, MAX_DIST_SEGMENTS, trackSegments);
+		gapClosing.applyCostFunction();
 		return gapClosingScores;
 	}
 	
 	
 	/*
-	 * Sets the scores for merging. Iterates through each pair of starts and all middle points for all
-	 * track segments, and determines if they are within thresholds for merging, and if
-	 * so calculates a score. A middle point is a point within a track segment that is not a start nor
-	 * an end.
-	 * 
-	 * The thresholds used are:
-	 * 1. Must be within a certain frame window
-	 * 2. Must be within a certain distance of each other
-	 * 3. Must have a similar threshold ratio
-	 * 
-	 * If a pair passes the thresholds, the score used is defined by equation (5) in
-	 * the paper.
-	 * 
-	 * The intensity ratio is defined as equation (6) in the paper.
+	 * Uses a merging cost function to fill in the merging costs submatrix.
 	 */
 	private Matrix getMergingScores(int n, int m) {
-		
-		// Initialize local variables
 		final Matrix mergingScores = new Matrix(n, m);	
-		double iRatio, d, s;
-		int segLength;
-		Spot end, middle;
-		
-		for (int i = 0; i < trackSegments.size(); i++) {
-			for (int j = 0; j < middlePoints.size(); j++) {
-				segLength = trackSegments.get(i).size();
-				end = trackSegments.get(i).get(segLength - 1);
-				middle = middlePoints.get(j);
-				
-				// Frame threshold - middle Spot must be one frame ahead of the end Spot
-				if (middle.getFrame() != end.getFrame() + 1) {
-					mergingScores.set(i, j, BLOCKED);
-					continue;
-				}
-				
-				// Radius threshold
-				d = euclideanDistance(end, middle);
-				if (d > MAX_DIST_SEGMENTS) {
-					mergingScores.set(i, j, BLOCKED);
-					continue;
-				}
-
-				iRatio = middle.getFeature(Feature.MEAN_INTENSITY) / (middle.getPrev().get(0).getFeature(Feature.MEAN_INTENSITY) + end.getFeature(Feature.MEAN_INTENSITY));
-				
-				// Intensity threshold -  must be within INTENSITY_RATIO_CUTOFFS ([min, max])
-				if (iRatio > INTENSITY_RATIO_CUTOFFS[1] || iRatio < INTENSITY_RATIO_CUTOFFS[0]) {
-					mergingScores.set(i, j, BLOCKED);
-					continue;
-				}
-				
-				if (iRatio >= 1) {
-					s = d * d * iRatio;
-				} else {
-					s = d * d * ( 1 / (iRatio * iRatio) );
-				}
-				scores.add(s);
-				mergingScores.set(i, j, s);
-			}
-		}
-		
+		MergingCostFunction merging = new MergingCostFunction(mergingScores, trackSegments, middlePoints, MAX_DIST_SEGMENTS, INTENSITY_RATIO_CUTOFFS);
+		merging.applyCostFunction();
 		return mergingScores;
-		
 	}
 
-	
-	private Matrix getSplittingScores(int n, int m) {
-		
-		// Initialize local variables
-		final Matrix splittingScores = new Matrix(n, m);
-		double iRatio, d, s;
-		Spot start, middle;
-		
-		// Fill in splitting scores
-		for (int i = 0; i < middlePoints.size(); i++) {
-			for (int j = 0; j < trackSegments.size(); j++) {
-				start = trackSegments.get(j).get(0);
-				middle = middlePoints.get(i);
-				
-				// Frame threshold - middle Spot must be one frame behind of the start Spot
-				if (middle.getFrame() != start.getFrame() - 1) {
-					splittingScores.set(i, j, BLOCKED);
-					continue;
-				}
-				
-				// Radius threshold
-				d = euclideanDistance(start, middle);
-				if (d > MAX_DIST_SEGMENTS) {
-					splittingScores.set(i, j, BLOCKED);
-					continue;
-				}
-
-				iRatio = middle.getPrev().get(0).getFeature(Feature.MEAN_INTENSITY) / (middle.getFeature(Feature.MEAN_INTENSITY) + start.getFeature(Feature.MEAN_INTENSITY));
-				
-				// Intensity threshold -  must be within INTENSITY_RATIO_CUTOFFS ([min, max])
-				if (iRatio > INTENSITY_RATIO_CUTOFFS[1] || iRatio < INTENSITY_RATIO_CUTOFFS[0]) {
-					splittingScores.set(i, j, BLOCKED);
-					continue;
-				}
-
-				if (iRatio >= 1) {
-					s = d * d * iRatio;
-				} else {
-					s = d * d * ( 1 / (iRatio * iRatio) );
-				}
-				scores.add(s);
-				splittingScores.set(i, j, s);
-			}
-		}
-		
-		return splittingScores;
-	}
-	
-
-	
-	
-	
 	
 	/*
-	 * Calculates the CUTOFF_PERCENTILE score of all scores in gap closing, merging, and
-	 * splitting matrices to assign the top right and bottom left score matrices. See
-	 * b and d cutoffs in paper for gap closing / merging / splitting.
+	 * Uses a splitting cost function to fill in the splitting costs submatrix.
 	 */
-	private double getEndPointCutoff() {
-		ArrayList<Double> realScores = new ArrayList<Double>();
-		for (int i = 0; i < scores.size(); i++) {
-			if (Double.compare(scores.get(i), Double.NEGATIVE_INFINITY) != 0) {
-				realScores.add(scores.get(i));
+	private Matrix getSplittingScores(int n, int m) {
+		final Matrix splittingScores = new Matrix(n, m);
+		SplittingCostFunction splitting = new SplittingCostFunction(splittingScores, trackSegments, middlePoints, MAX_DIST_SEGMENTS, INTENSITY_RATIO_CUTOFFS);
+		splitting.applyCostFunction();
+		return splittingScores;
+	}
+
+	
+	/*
+	 * Calculates the CUTOFF_PERCENTILE cost of all costs in gap closing, merging, and
+	 * splitting matrices to assign the top right and bottom left score matrices.
+	 */
+	private double getCutoff(Matrix m, Matrix n, Matrix o) {
+		
+		// Get a list of all non-BLOCKED cost
+		ArrayList<Double> scores = new ArrayList<Double>();
+		Matrix[] matrices = new Matrix[] {m, n, o};
+		for (Matrix matrix : matrices) {
+			for (int i = 0; i < m.getRowDimension(); i++) {
+				for (int j = 0; j < m.getColumnDimension(); j++) {
+					if (matrix.get(i, j) < BLOCKED) {
+						scores.add(matrix.get(i, j));
+					}
+				}
 			}
 		}
-		double[] scoreArr = new double[realScores.size()];
-		for (int i = 0; i < realScores.size(); i++) {
-			scoreArr[i] = realScores.get(i);
+		
+		// Get the correct percentile of all non-BLOCKED cost values
+		double[] scoreArr = new double[scores.size()];
+		for (int i = 0; i < scores.size(); i++) {
+			scoreArr[i] = scores.get(i);
 		}
 		double cutoff = Utils.getPercentile(scoreArr, CUTOFF_PERCENTILE); 
 		return ALTERNATIVE_OBJECT_LINKING_COST_FACTOR * cutoff;

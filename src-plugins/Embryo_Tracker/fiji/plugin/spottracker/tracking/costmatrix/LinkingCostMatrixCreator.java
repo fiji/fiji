@@ -1,10 +1,11 @@
-package fiji.plugin.spottracker.tracking;
+package fiji.plugin.spottracker.tracking.costmatrix;
 
 import java.util.ArrayList;
 
 import Jama.Matrix;
 
 import fiji.plugin.spottracker.Spot;
+import fiji.plugin.spottracker.tracking.costfunction.LinkingCostFunction;
 
 /**
  * <p>Creates the cost matrix described in Figure 1b in the paper.
@@ -20,7 +21,7 @@ import fiji.plugin.spottracker.Spot;
  * @author nperry
  *
  */
-public class LinkingCostMatrixCreator extends AbstractCostMatrixCreator {
+public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 
 	/** The maximum distance away two Spots in consecutive frames can be in order 
 	 * to be linked. */
@@ -35,8 +36,6 @@ public class LinkingCostMatrixCreator extends AbstractCostMatrixCreator {
 	protected ArrayList<Spot> t1;
 	/** The total number of Spots in time frames t and t+1. */
 	protected int numSpots;
-	/** The highest link score made across all frames. */
-	protected double MAX_SCORE = Double.NEGATIVE_INFINITY;
 	
 	/**
 	 * 
@@ -70,10 +69,12 @@ public class LinkingCostMatrixCreator extends AbstractCostMatrixCreator {
 		}
 		
 		// Fill in scoring submatrices
-		Matrix linkingScores = getLinkingScores();
-		Matrix t0LinkingAlternatives = getAlternativeScores(t0.size(), ALTERNATIVE_OBJECT_LINKING_COST_FACTOR * MAX_SCORE);
-		Matrix t1LinkingAlternatives = getAlternativeScores(t1.size(), ALTERNATIVE_OBJECT_LINKING_COST_FACTOR * MAX_SCORE);
-		Matrix lowerRight = getLowerRight(t0.size(), t1.size(), ALTERNATIVE_OBJECT_LINKING_COST_FACTOR * MAX_SCORE);
+		Matrix linkingScores = getLinkingCostSubMatrix();
+		final double maxScore = getMaxScore(linkingScores);
+		final double cutoff = ALTERNATIVE_OBJECT_LINKING_COST_FACTOR * maxScore;
+		Matrix t0LinkingAlternatives = getAlternativeScores(t0.size(), cutoff);
+		Matrix t1LinkingAlternatives = getAlternativeScores(t1.size(), cutoff);
+		Matrix lowerRight = getLowerRight(t0.size(), t1.size(), cutoff);
 
 		// Fill in complete cost matrix using the submatrices just calculated
 		costs.setMatrix(0, t0.size() - 1, 0, t1.size() - 1, linkingScores);
@@ -84,31 +85,31 @@ public class LinkingCostMatrixCreator extends AbstractCostMatrixCreator {
 		return true;
 	}
 	
-	private Matrix getLinkingScores() {
-		Matrix linkingScores = new Matrix(t0.size(), t1.size());
-		Spot s0 = null;									// Spot in t0
-		Spot s1 = null;									// Spot in t1
-		double d = 0;									// Holds Euclidean distance between s0 and s1
-		double score;
+	/*
+	 * Gets the max score in a matrix m.
+	 */
+	private double getMaxScore(Matrix m) {
+		double max = Double.NEGATIVE_INFINITY;
 		
-		for (int i = 0; i < t0.size(); i++) {
-			s0 = t0.get(i);
-			for (int j = 0; j < t1.size(); j++) {
-				s1 = t1.get(j);
-				d = euclideanDistance(s0, s1);
-
-				if (d < MAX_DIST_OBJECTS) {
-					score = d*d + 2*Double.MIN_VALUE;		// score cannot be 0 in order to solve LAP, so add a small amount
-					linkingScores.set(i, j, score);
-					if (score > MAX_SCORE) {
-						MAX_SCORE = score;
-					}
-				} else {
-					linkingScores.set(i, j, BLOCKED);
+		for (int i = 0; i < m.getRowDimension(); i++) {
+			for (int j = 0; j < m.getColumnDimension(); j++) {
+				if (m.get(i, j) > max && m.get(i, j) < BLOCKED) {
+					max = m.get(i, j);
 				}
 			}
 		}
 		
+		return max;
+	}
+	
+	/*
+	 * Creates a submatrix which holds the linking scores between objects, and returns it.
+	 */
+	private Matrix getLinkingCostSubMatrix() {
+		Matrix linkingScores = new Matrix(t0.size(), t1.size());
+		//CostFunctions.linkingScores(linkingScores, t0, t1, MAX_DIST_OBJECTS);
+		LinkingCostFunction linkingCosts = new LinkingCostFunction(linkingScores, t0, t1, MAX_DIST_OBJECTS);
+		linkingCosts.applyCostFunction();
 		return linkingScores;
 	}
 }
