@@ -2,6 +2,8 @@ package fiji.plugin.spottracker.tracking;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Set;
+import java.util.TreeMap;
 
 import mpicbg.imglib.algorithm.math.MathLib;
 
@@ -115,6 +117,7 @@ public class LAPTracker implements ObjectTracker {
 	/** The cost matrix for linking individual track segments (step 2). */
 	protected double[][] segmentCosts = null;
 	/** Stores the objects to track as a list of Spots per frame.  */
+	//protected ArrayList< ArrayList<Spot> > objects;
 	protected ArrayList< ArrayList<Spot> > objects;
 	/** Stores a message describing an error incurred during use of the class. */
 	protected String errorMessage;
@@ -132,8 +135,11 @@ public class LAPTracker implements ObjectTracker {
 	 * for Brownian motion.
 	 * @param objects Holds a list of Spots for each frame in the time-lapse image.
 	 */
-	public LAPTracker (ArrayList< ArrayList<Spot> > objects) {
-		this.objects = objects;
+//	public LAPTracker (ArrayList< ArrayList<Spot> > objects) {
+//		this.objects = objects;
+//	}
+	public LAPTracker (TreeMap<Integer, ? extends Collection<Spot> > objects) {
+		this.objects = convertMapToArrayList(objects);
 	}
 	
 	
@@ -143,12 +149,16 @@ public class LAPTracker implements ObjectTracker {
 	 * @param objects Holds a list of Spots for each frame in the time-lapse image.
 	 * @param linkingCosts The cost matrix for step 1, linking objects
 	 */
-	public LAPTracker (ArrayList< ArrayList<Spot> > objects, ArrayList<double[][]> linkingCosts) {
-		this.objects = objects;
+//	public LAPTracker (ArrayList< ArrayList<Spot> > objects, ArrayList<double[][]> linkingCosts) {
+//		this.objects = objects;
+//		this.linkingCosts = linkingCosts;
+//		this.defaultCosts = false;
+//	}
+	public LAPTracker (TreeMap<Integer, ? extends Collection<Spot> > objects, ArrayList<double[][]> linkingCosts) {
+		this.objects = convertMapToArrayList(objects);
 		this.linkingCosts = linkingCosts;
 		this.defaultCosts = false;
 	}
-	
 	
 	/**
 	 * This constructor should be used when not providing the object cost matrix (step 1) at 
@@ -156,11 +166,14 @@ public class LAPTracker implements ObjectTracker {
 	 * @param objects Holds a list of Spots for each frame in the time-lapse image.
 	 * @param defaultCosts If true, the default matrices will be used. If false, the user must supply them.
 	 */
-	public LAPTracker (ArrayList< ArrayList<Spot> > objects, boolean defaultCosts) {
-		this.objects = objects;
+//	public LAPTracker (ArrayList< ArrayList<Spot> > objects, boolean defaultCosts) {
+//		this.objects = objects;
+//		this.defaultCosts = defaultCosts;
+//	}
+	public LAPTracker (TreeMap<Integer, ? extends Collection<Spot> > objects, boolean defaultCosts) {
+		this.objects = convertMapToArrayList(objects);
 		this.defaultCosts = defaultCosts;
 	}
-
 	
 	/**
 	 * Set the cost matrices used for step 1, linking objects into track segments.
@@ -234,7 +247,7 @@ public class LAPTracker implements ObjectTracker {
 		
 		// Check that at least one inner collection contains an object.
 		boolean empty = true;
-		for (Collection<Spot> c : objects) {
+		for (ArrayList<Spot> c : objects) {
 			if (!c.isEmpty()) {
 				empty = false;
 				break;
@@ -631,6 +644,15 @@ public class LAPTracker implements ObjectTracker {
 		}
 	}
 	
+	private ArrayList< ArrayList<Spot> > convertMapToArrayList(TreeMap< Integer, ? extends Collection<Spot> > objects) {
+		ArrayList< ArrayList<Spot> > newContainer = new ArrayList< ArrayList<Spot> >();
+		Set<Integer> keys = objects.keySet();
+		for (int key : keys) {
+			newContainer.add(new ArrayList<Spot>(objects.get(key)));
+		}
+		return newContainer;
+	}
+	
 	
 	// For testing!
 	public static void main(String args[]) {
@@ -699,16 +721,19 @@ public class LAPTracker implements ObjectTracker {
 		t5.get(0).putFeature(Feature.MEAN_INTENSITY, 300);
 		t5.get(1).putFeature(Feature.MEAN_INTENSITY, 300);
 	
-		ArrayList<ArrayList<Spot>> wrap = new ArrayList<ArrayList<Spot>>();
-		wrap.add(t0);
-		wrap.add(t1);
-		wrap.add(t2);
-		wrap.add(t3);
-		wrap.add(t4);
-		wrap.add(t5);
+		TreeMap<Integer, ArrayList<Spot>> wrap = new TreeMap<Integer, ArrayList<Spot>>();
+		//ArrayList<ArrayList<Spot>> wrap = new ArrayList<ArrayList<Spot>>();
+		wrap.put(0, t0);
+		wrap.put(1, t1);
+		wrap.put(2, t2);
+		wrap.put(3, t3);
+		wrap.put(4, t4);
+		wrap.put(5, t5);
 		
 		int count = 0;
-		for (ArrayList<Spot> spots : wrap) {
+		Set<Integer> keys = wrap.keySet();
+		for (int key : keys) {
+			ArrayList<Spot> spots = wrap.get(key);
 			for (Spot spot : spots) {
 				spot.setFrame(count);
 			}
