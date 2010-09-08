@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EmptyStackException;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Random;
 import java.util.Stack;
 
@@ -75,7 +76,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 
 	private Stack<ThresholdPanel<Feature>> thresholdPanels = new Stack<ThresholdPanel<Feature>>();
 	private Stack<Component> struts = new Stack<Component>();
-	private Collection<Spot> spots;
+	private List<Collection<Spot>> spots;
 	private EnumMap<Feature, double[]> featureValues = new EnumMap<Feature, double[]>(Feature.class);
 	private int newFeatureIndex;
 	
@@ -100,7 +101,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	 * CONSTRUCTOR
 	 */
 	
-	public ThresholdGuiPanel(Collection<Spot> spots, Feature selectedFeature) {
+	public ThresholdGuiPanel(List<Collection<Spot>> spots, Feature selectedFeature) {
 		super();
 		newFeatureIndex = selectedFeature.ordinal();
 		setSpots(spots);
@@ -109,7 +110,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 			addThresholdPanel();
 	}
 
-	public ThresholdGuiPanel(Collection<Spot> spots) {
+	public ThresholdGuiPanel(List<Collection<Spot>> spots) {
 		this(spots, Feature.values()[0]);
 	}
 	
@@ -127,7 +128,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	 * Calling this method causes the individual threshold panel to be all 
 	 * removed.
 	 */
-	public void setSpots(Collection<Spot> spots) {
+	public void setSpots(List<Collection<Spot>> spots) {
 		for(ThresholdPanel<Feature> tp : thresholdPanels)
 			jPanelAllThresholds.remove(tp);
 		for(Component strut : struts)
@@ -237,22 +238,29 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 		int index;
 		Float val;
 		boolean noDataFlag = true;
+		// Get the total quantity of spot we have
+		int spotNumber = 0;
+		for(Collection<Spot> collection : spots)
+			spotNumber += collection.size();
+		
 		for(Feature feature : Feature.values()) {
 			// Make a double array to comply to JFreeChart histograms
-			double[] values = new double[spots.size()];
+			double[] values = new double[spotNumber];
 			index = 0;
-			for (Spot spot : spots) {
-				val = spot.getFeature(feature);
-				if (null == val)
-					continue;
-				values[index] = val; 
-				index++;
-				noDataFlag = false;
+			for(Collection<Spot> collection : spots) {
+				for (Spot spot : collection) {
+					val = spot.getFeature(feature);
+					if (null == val)
+						continue;
+					values[index] = val; 
+					index++;
+					noDataFlag = false;
+				}
+				if (noDataFlag)
+					featureValues.put(feature, null);
+				else 
+					featureValues.put(feature, values);
 			}
-			if (noDataFlag)
-				featureValues.put(feature, null);
-			else 
-				featureValues.put(feature, values);
 		}
 	}
 	
@@ -429,7 +437,9 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 		
 		System.out.println("Type <Enter> to ad spots to this");
 		System.in.read();
-		gui.setSpots(spots);
+		List<Collection<Spot>> allSpots = new ArrayList<Collection<Spot>>();
+		allSpots.add(spots);
+		gui.setSpots(allSpots);
 		
 	}
 

@@ -26,7 +26,7 @@ public class Spot_Tracker_TestDrive {
 		final float WIDTH = 200; // µm
 		final float HEIGHT = 200; // µm
 		final float DEPTH = 50; // µm
-		final float[] CALIBRATION = new float[] {0.5f, 0.5f, 1}; 
+		final float[] CALIBRATION = new float[] {1f, 1f, 2}; 
 		
 		// Create 3D image
 		System.out.println("Creating image....");

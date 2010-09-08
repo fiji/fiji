@@ -138,14 +138,14 @@ public class Spot_Tracker implements PlugIn {
 		// Segment
 		execSegmentation(settings);
 		// Threshold
-		execThresholding(spots, thresholdFeatures, thresholdValues, thresholdAbove);
+		execThresholding();
 	}
 	
 	/*
 	 * PUBLIC METHODS
 	 */
 	
-	public void execThresholding(final List<Collection<Spot>> spots, final ArrayList<Feature> thresholdFeatures, final ArrayList<Float> thresholdValues, final ArrayList<Boolean> thesholdAbove) {
+	public void execThresholding() {
 		selectedSpots = new ArrayList<Collection<Spot>>(spots.size());
 		Collection<Spot> spotThisFrame, spotToKeep, spotToRemove;
 		
@@ -159,7 +159,7 @@ public class Spot_Tracker implements PlugIn {
 			spotThisFrame = spots.get(timepoint);
 			spotToKeep = new ArrayList<Spot>(spotThisFrame);
 			
-			if (null == thresholdFeatures || null == thresholdValues || null == thesholdAbove) {
+			if (null == thresholdFeatures || null == thresholdValues || null == thresholdAbove) {
 				selectedSpots.add(timepoint, spotToKeep);
 				continue;
 			}
@@ -170,7 +170,7 @@ public class Spot_Tracker implements PlugIn {
 
 				threshold = thresholdValues.get(i);
 				feature = thresholdFeatures.get(i);
-				isAbove = thesholdAbove.get(i);
+				isAbove = thresholdAbove.get(i);
 				spotToRemove.clear();
 
 				if (isAbove) {
