@@ -101,7 +101,7 @@ public class Refresh_Javas extends RefreshScripts {
 			while ((file = file.getParentFile()) != null &&
 					!file.equals(plugins))
 				c = file.getName() + "." + c;
-			if (file == null) {
+			if (!compileOnly && file == null) {
 				runOutOfTreePlugin(path);
 				return;
 			}
