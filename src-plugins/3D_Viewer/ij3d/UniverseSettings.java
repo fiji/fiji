@@ -11,8 +11,15 @@ import javax.vecmath.Point3d;
 
 public class UniverseSettings {
 
+	protected static String getPrefsDir() {
+		String env = System.getenv("IJ_PREFS_DIR");
+		if (env != null && !env.equals(""))
+                        return env;
+		return System.getProperty("user.home");
+	}
+
 	public static final File propsfile = new File(
-		System.getProperty("user.home"), ".ImageJ_3D_Viewer.props");
+		getPrefsDir(), ".ImageJ_3D_Viewer.props");
 
 	public static final int PERSPECTIVE = View.PERSPECTIVE_PROJECTION;
 	public static final int PARALLEL  = View.PARALLEL_PROJECTION;
