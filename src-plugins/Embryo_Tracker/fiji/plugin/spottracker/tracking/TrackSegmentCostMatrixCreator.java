@@ -103,6 +103,28 @@ public class TrackSegmentCostMatrixCreator extends AbstractCostMatrixCreator {
 		
 		return true;
 	}
+	
+	
+	/**
+	 * Creates ArrayList of middle points in all track segments. A middle point is a point
+	 * in a track segment that is neither a start nor an end point. So, track segments
+	 * of length 1 and 2 can have no middle points. Thus, we add middle points only for 
+	 * track segments of length 3 or larger. 
+	 * 
+	 * @param trackSegments An ArrayList of track segments, where each segment is its own ArrayList of Spots.
+	 * @return An ArrayList containing references to all the middle Spots in the track segments.
+	 */
+	public ArrayList<Spot> getTrackSegmentMiddlePoints(ArrayList< ArrayList<Spot> > trackSegments) {
+		ArrayList<Spot> middlePoints = new ArrayList<Spot>();
+		for (ArrayList<Spot> trackSegment : trackSegments) {
+			if (trackSegment.size() >= 3) {
+				for (int i = 1; i < trackSegment.size() - 1; i++) { 	// Extract middle Spots only.
+					middlePoints.add(trackSegment.get(i));
+				}
+			}
+		}
+		return middlePoints;
+	}
 
 
 	/*
@@ -278,23 +300,7 @@ public class TrackSegmentCostMatrixCreator extends AbstractCostMatrixCreator {
 	
 
 	
-	/*
-	 * Creates ArrayList of middle points in all track segments. A middle point is a point
-	 * in a track segment that is neither a start nor an end point. So, track segments
-	 * of length 1 and 2 can have no middle points. Thus, we add middle points only for 
-	 * track segments of length 3 or larger. 
-	 */
-	private ArrayList<Spot> getTrackSegmentMiddlePoints(ArrayList< ArrayList<Spot> > trackSegments) {
-		ArrayList<Spot> middlePoints = new ArrayList<Spot>();
-		for (ArrayList<Spot> trackSegment : trackSegments) {
-			if (trackSegment.size() >= 3) {
-				for (int i = 1; i < trackSegment.size() - 1; i++) { 	// Extract middle Spots only.
-					middlePoints.add(trackSegment.get(i));
-				}
-			}
-		}
-		return middlePoints;
-	}
+	
 	
 	
 	/*
