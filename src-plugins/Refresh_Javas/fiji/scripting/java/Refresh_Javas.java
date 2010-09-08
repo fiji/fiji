@@ -77,6 +77,7 @@ public class Refresh_Javas extends RefreshScripts {
 				} catch (IOException e2) {
 					e.printStackTrace();
 				}
+				return;
 			} catch (Exception e) {
 				e.printStackTrace(new PrintStream(err));
 				return;
