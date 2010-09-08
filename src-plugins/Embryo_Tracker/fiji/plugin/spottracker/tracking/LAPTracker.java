@@ -7,6 +7,9 @@ import mpicbg.imglib.algorithm.math.MathLib;
 
 import fiji.plugin.spottracker.Feature;
 import fiji.plugin.spottracker.Spot;
+import fiji.plugin.spottracker.tracking.costmatrix.CostMatrixCreator;
+import fiji.plugin.spottracker.tracking.costmatrix.LinkingCostMatrixCreator;
+import fiji.plugin.spottracker.tracking.costmatrix.TrackSegmentCostMatrixCreator;
 import fiji.plugin.spottracker.tracking.hungarian.AssignmentProblem;
 import fiji.plugin.spottracker.tracking.hungarian.HungarianAlgorithm;
 
@@ -33,7 +36,7 @@ import fiji.plugin.spottracker.tracking.hungarian.HungarianAlgorithm;
  * <p>
  * Both steps are treated as a linear assignment problem. To solve the problems, a cost
  * matrix is designed for each step, and the Hungarian Algorithm is used to determine
- * the cost-minimizing assignments. The result of the calculation is the complete
+ * the cost-minimizing assignments. The result of the calculation are the complete
  * tracks of the objects. For more details on the Hungarian Algorithm, see
  * http://en.wikipedia.org/wiki/Hungarian_algorithm.
  * 
@@ -42,7 +45,7 @@ import fiji.plugin.spottracker.tracking.hungarian.HungarianAlgorithm;
  * <p>
  * Since there are two discrete steps to tracking using this framework, two distinct
  * cost matrices are required to solve the problem. The user can either choose
- * to have the cost matrices / functions from the paper (for Brownian motion) used,
+ * to use the cost matrices / functions from the paper (for Brownian motion),
  * or can supply their own cost matrices.
  * 
  * <p>One matrix corresponds to step (1) above, and is used to assign individual objects 
@@ -58,7 +61,8 @@ import fiji.plugin.spottracker.tracking.hungarian.HungarianAlgorithm;
  * <li>Object in frame t+1 not linked to an object in frame t (track start)</li>
  * </ul>
  * 
- * <p>The cost matrix for this step is illustrated in Figure 1b in the paper.
+ * <p>The cost matrix for this step is illustrated in Figure 1b in the paper, and
+ * is described in more detail in {@link LinkingCostMatrixCreator}.
  * 
  * <p>The other matrix corresponds to step (2) above, and is used to link together
  * the various track segments previously calculated. Track segments can be:
@@ -71,7 +75,8 @@ import fiji.plugin.spottracker.tracking.hungarian.HungarianAlgorithm;
  * <li>Initiated (track starts)</li>
  * </ul>
  * 
- * <p>The cost matrix for this step is illustrated in Figure 1c in the paper.
+ * <p>The cost matrix for this step is illustrated in Figure 1c in the paper, and
+ * is described in more detail in {@link TrackSegmentCostMatrixCreator}.
  * 
  * <p>Solving both LAPs yields complete tracks.
  * 
@@ -241,6 +246,7 @@ public class LAPTracker implements ObjectTracker {
 			return false;
 		}
 		
+		// If not using the default costs, make sure the linking cost matrix exists
 		if (!defaultCosts) {
 			if (null == linkingCosts) {
 				errorMessage = "No linking costs have been provided!";
@@ -289,7 +295,6 @@ public class LAPTracker implements ObjectTracker {
 		
 		// 1.2 - Solve LAP
 		if (!linkObjectsToTrackSegments()) return false;
-		
 		
 		// Step 2 - Link track segments into final tracks
 		
@@ -376,7 +381,7 @@ public class LAPTracker implements ObjectTracker {
 	
 	/**
 	 * Compute the optimal track segments using the cost matrix 
-	 * {@link LAPTracker#objectLinkingCosts}.
+	 * {@link LAPTracker#linkingCosts}.
 	 * @return True if executes correctly, false otherwise.
 	 */
 	public ArrayList< int[] > solveLAPForTrackSegments() {
@@ -402,8 +407,8 @@ public class LAPTracker implements ObjectTracker {
 	
 	
 	/**
-	 * Compute the optimal track segments using the cost matrix 
-	 * {@link LAPTracker#segmentLinkingCosts}.
+	 * Compute the optimal final track using the cost matrix 
+	 * {@link LAPTracker#segmentCosts}.
 	 * @return True if executes correctly, false otherwise.
 	 */
 	public int[][] solveLAPForFinalTracks() {
@@ -631,7 +636,7 @@ public class LAPTracker implements ObjectTracker {
 	// For testing!
 	public static void main(String args[]) {
 		
-		final boolean useCustomCostMatrices = true;
+		final boolean useCustomCostMatrices = false;
 		
 		// 1 - Set up test spots
 		ArrayList<Spot> t0 = new ArrayList<Spot>();
@@ -726,7 +731,7 @@ public class LAPTracker implements ObjectTracker {
 //				System.out.println("-*-*-*-*-* New Segment *-*-*-*-*-");
 //				for (Spot spot : trackSegment) {
 //					//System.out.println(spot.toString());
-//					System.out.println(MathLib.printCoordinates(spot.getCoordinates()));
+//					System.out.println(MathLib.printCoordinates(spot.getCoordinates()) + ", Frame [" + spot.getFrame() + "]");
 //				}
 //			}
 		} else {
