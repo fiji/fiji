@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import Jama.Matrix;
 import fiji.plugin.spottracker.Spot;
+import fiji.plugin.spottracker.Utils;
 import fiji.plugin.spottracker.tracking.LAPTracker;
 
 /**
@@ -24,7 +25,7 @@ import fiji.plugin.spottracker.tracking.LAPTracker;
  * @author Nicholas Perry
  *
  */
-public class GapClosingCostFunction extends LAPTrackerCostFunction {
+public class GapClosingCostFunction implements CostFunctions {
 
 	/** The cost matrix. */
 	protected Matrix m;
@@ -72,7 +73,7 @@ public class GapClosingCostFunction extends LAPTrackerCostFunction {
 				}
 				
 				// Radius cutoff
-				d = euclideanDistance(end, start);
+				d = Utils.euclideanDistance(end, start);
 				if (d > maxDist) {
 					m.set(i, j, blocked);
 					continue;

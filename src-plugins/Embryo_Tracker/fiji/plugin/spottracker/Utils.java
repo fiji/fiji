@@ -217,4 +217,23 @@ public class Utils {
 		}
 		return threshold;
 	}
+	
+	/**
+	 * Computes the Euclidean distance between two Spots.
+	 * @param i Spot i.
+	 * @param j Spot j.
+	 * @return The Euclidean distance between Spots i and j.
+	 */
+	public static final double euclideanDistance(Spot i, Spot j) {
+		final float[] coordsI = i.getCoordinates();
+		final float[] coordsJ = j.getCoordinates();
+		double eucD = 0;
+
+		for (int k = 0; k < coordsI.length; k++) {
+			eucD += (coordsI[k] - coordsJ[k]) * (coordsI[k] - coordsJ[k]);
+		}
+		eucD = Math.sqrt(eucD);
+
+		return eucD;
+	}
 }
