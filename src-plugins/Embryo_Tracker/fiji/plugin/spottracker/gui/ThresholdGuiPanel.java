@@ -76,7 +76,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 
 	private Stack<ThresholdPanel<Feature>> thresholdPanels = new Stack<ThresholdPanel<Feature>>();
 	private Stack<Component> struts = new Stack<Component>();
-	private List<Collection<Spot>> spots;
+	private Collection<Collection<Spot>> spots;
 	private EnumMap<Feature, double[]> featureValues = new EnumMap<Feature, double[]>(Feature.class);
 	private int newFeatureIndex;
 	
@@ -128,7 +128,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	 * Calling this method causes the individual threshold panel to be all 
 	 * removed.
 	 */
-	public void setSpots(List<Collection<Spot>> spots) {
+	public void setSpots(Collection<Collection<Spot>> spots) {
 		for(ThresholdPanel<Feature> tp : thresholdPanels)
 			jPanelAllThresholds.remove(tp);
 		for(Component strut : struts)

@@ -2,9 +2,13 @@ package fiji.plugin.spottracker.features;
 
 import mpicbg.imglib.algorithm.math.MathLib;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
+import mpicbg.imglib.cursor.Cursor;
+import mpicbg.imglib.cursor.LocalizableByDimCursor;
+import mpicbg.imglib.cursor.special.HyperSphereIterator;
 import mpicbg.imglib.cursor.special.SphereCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
+import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import fiji.plugin.spottracker.Feature;
@@ -22,6 +26,8 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 	private float diam;
 	/** The calibration of the image, used to convert from physical units to pixel units. */
 	private float[] calibration;
+	/** The number of pixels in the sphere or disc that will be iterated through tp build statistics. */
+	private int npixels;
 	
 	/*
 	 * CONSTRUCTORS
@@ -31,6 +37,7 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 		this.img = originalImage;
 		this.diam = diam;
 		this.calibration = calibration;
+		this.npixels = computeNPixels(img, diam, calibration);
 	}
 
 	public BlobDescriptiveStatistics(Image<T> originalImage, float diam) {
@@ -52,8 +59,55 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 	 */
 	@Override
 	public void process(Spot spot) {
-		final SphereCursor<T> cursor = new SphereCursor<T>(img, spot.getCoordinates(), diam/2, calibration);
+		if (img.getNumDimensions() == 3) 
+			process3D(spot);
+		else 
+			process2D(spot);
+	}
 		
+	
+	
+	/*
+	 * PRIVATE METHODS
+	 */
+	
+	/**
+	 * Return the number of pixels of the sphere or disc that will be iterated through when
+	 * calculating feature.
+	 */
+	private final static <T extends RealType<T>> int computeNPixels(final Image<T> img, final float diameter, final float[] calibration) {
+		if (img.getNumDimensions() == 3) {
+			return new SphereCursor<T>(img, new float[] {0, 0, 0}, diameter/2, calibration).getNPixels();
+		} else {
+			LocalizableByDimCursor<T> center = img.createLocalizableByDimCursor();
+			center.setPosition(0, 0);
+			center.setPosition(0, 1);
+			final HyperSphereIterator<T> cursor = new HyperSphereIterator<T>(img, center, (int) (diameter/2));
+			int npixels = 0;
+			while (cursor.hasNext()) {
+				cursor.fwd();
+				npixels++;
+			}
+			return npixels;
+		}
+	}
+	
+	private final void process2D(final Spot spot) {
+		LocalizableByDimCursor<T> center = img.createLocalizableByDimCursor();
+		center.setPosition((int) (spot.getCoordinates()[0] / calibration[0]), 0);
+		center.setPosition((int) (spot.getCoordinates()[1] / calibration[1]), 0);
+		final HyperSphereIterator<T> cursor = new HyperSphereIterator<T>(img, center, (int) (diam/2), new OutOfBoundsStrategyValueFactory<T>());
+		processCursor(spot, cursor);
+	}
+	
+	
+		
+	private final void process3D(final Spot spot) {
+		final SphereCursor<T> cursor = new SphereCursor<T>(img, spot.getCoordinates(), diam/2, calibration);
+		processCursor(spot, cursor);
+	}
+		
+	private final void processCursor(final Spot spot, final Cursor<T> cursor) {
 		// For variance 
 		float sum = 0;
 		float sum_sqr = 0;
@@ -69,7 +123,6 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 		
 	    // Others
 		float val;
-		final int npixels = cursor.getNPixels();
 		final float[] pixel_values = new float[npixels];
 		int n = 0;
 		
