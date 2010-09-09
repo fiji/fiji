@@ -68,7 +68,7 @@ public class SpotDisplayer3DTestDrive {
 		// Put the blobs in the image
 		final SphereCursor<UnsignedByteType> cursor = new SphereCursor<UnsignedByteType>(img, centers.get(0), radiuses[0],	CALIBRATION);
 		for (int i = 0; i < N_BLOBS; i++) {
-			cursor.setRadius(radiuses[i]);
+			cursor.setSize(radiuses[i]);
 			cursor.moveCenterToCoordinates(centers.get(i));
 			while(cursor.hasNext()) 
 				cursor.next().set(intensities[i]);		

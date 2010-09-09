@@ -9,7 +9,7 @@ import fiji.plugin.spottracker.Spot;
 public class BlobContrast <T extends RealType<T>> extends IndependentFeatureAnalyzer {
 
 	private static final Feature FEATURE = Feature.CONTRAST;
-	protected static final float RAD_PERCENTAGE = .2f;  // Percentage of radius we should average around the border to decide the contrast different. For example, if this is set to .1, then .1 * rad pixels within the radius of the blob is treated as the blob's internal edge, while .1 * rad pixels are considered the outside.
+	protected static final float RAD_PERCENTAGE = .2f;  
 	protected Image<T> img;
 	protected float diam;
 	protected float[] calibration;

@@ -12,8 +12,6 @@ import java.util.concurrent.ExecutionException;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point4f;
 
-import org.jfree.chart.renderer.InterpolatePaintScale;
-
 import fiji.plugin.spottracker.Feature;
 import fiji.plugin.spottracker.Spot;
 import fiji.plugin.spottracker.visualization.SpotGroupNode;
@@ -22,8 +20,7 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	
 	private TreeMap<Integer,SpotGroupNode<Spot>> blobs;	
 	private Content spotContent;
-	private final static InterpolatePaintScale colorMap = InterpolatePaintScale.Jet;
-
+	
 	
 	public SpotDisplayer3D(Collection<Spot> spots, final float radius) {
 		TreeMap<Integer, Collection<Spot>> spotsOverTime = new TreeMap<Integer, Collection<Spot>>();

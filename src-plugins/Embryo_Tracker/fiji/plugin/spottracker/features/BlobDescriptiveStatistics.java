@@ -2,13 +2,11 @@ package fiji.plugin.spottracker.features;
 
 import mpicbg.imglib.algorithm.math.MathLib;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
-import mpicbg.imglib.cursor.Cursor;
-import mpicbg.imglib.cursor.LocalizableByDimCursor;
-import mpicbg.imglib.cursor.special.HyperSphereIterator;
+import mpicbg.imglib.cursor.special.DiscCursor;
+import mpicbg.imglib.cursor.special.DomainCursor;
 import mpicbg.imglib.cursor.special.SphereCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
-import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import fiji.plugin.spottracker.Feature;
@@ -22,22 +20,21 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 	
 	/** The original image that is analyzed. */
 	private Image<T> img;
-	/** The diameter of the blob, in physical units. */
-	private float diam;
-	/** The calibration of the image, used to convert from physical units to pixel units. */
-	private float[] calibration;
 	/** The number of pixels in the sphere or disc that will be iterated through tp build statistics. */
 	private int npixels;
+	private DomainCursor<T> cursor;
 	
 	/*
 	 * CONSTRUCTORS
 	 */
 	
-	public BlobDescriptiveStatistics(Image<T> originalImage, float diam, float[] calibration) {
+	public BlobDescriptiveStatistics(Image<T> originalImage, float diameter, float[] calibration) {
 		this.img = originalImage;
-		this.diam = diam;
-		this.calibration = calibration;
-		this.npixels = computeNPixels(img, diam, calibration);
+		if (img.getNumDimensions() == 3)
+			this.cursor = new SphereCursor<T>(img, new float[3], diameter/2, calibration);
+		else 
+			this.cursor = new DiscCursor<T>(img, new float[2], diameter/2, calibration);
+		this.npixels = cursor.getNPixels();
 	}
 
 	public BlobDescriptiveStatistics(Image<T> originalImage, float diam) {
@@ -59,60 +56,10 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 	 */
 	@Override
 	public void process(Spot spot) {
-		if (img.getNumDimensions() == 3) 
-			process3D(spot);
-		else 
-			process2D(spot);
-	}
-		
-	
-	
-	/*
-	 * PRIVATE METHODS
-	 */
-	
-	/**
-	 * Return the number of pixels of the sphere or disc that will be iterated through when
-	 * calculating feature.
-	 */
-	private final static <T extends RealType<T>> int computeNPixels(final Image<T> img, final float diameter, final float[] calibration) {
-		if (img.getNumDimensions() == 3) {
-			return new SphereCursor<T>(img, new float[] {0, 0, 0}, diameter/2, calibration).getNPixels();
-		} else {
-			LocalizableByDimCursor<T> center = img.createLocalizableByDimCursor();
-			center.setPosition(0, 0);
-			center.setPosition(0, 1);
-			final HyperSphereIterator<T> cursor = new HyperSphereIterator<T>(img, center, (int) (diameter/2));
-			int npixels = 0;
-			while (cursor.hasNext()) {
-				cursor.fwd();
-				npixels++;
-			}
-			return npixels;
-		}
-	}
-	
-	private final void process2D(final Spot spot) {
-		LocalizableByDimCursor<T> center = img.createLocalizableByDimCursor();
-		center.setPosition((int) (spot.getCoordinates()[0] / calibration[0]), 0);
-		center.setPosition((int) (spot.getCoordinates()[1] / calibration[1]), 0);
-		final HyperSphereIterator<T> cursor = new HyperSphereIterator<T>(img, center, (int) (diam/2), new OutOfBoundsStrategyValueFactory<T>());
-		processCursor(spot, cursor);
-	}
-	
-	
-		
-	private final void process3D(final Spot spot) {
-		final SphereCursor<T> cursor = new SphereCursor<T>(img, spot.getCoordinates(), diam/2, calibration);
-		processCursor(spot, cursor);
-	}
-		
-	private final void processCursor(final Spot spot, final Cursor<T> cursor) {
-		// For variance 
+		// For variance, kurtosis and skwness 
 		float sum = 0;
 		float sum_sqr = 0;
 		
-		// For kurtosis and skewness
 		float mean = 0;
 	    float M2 = 0;
 	    float M3 = 0;
@@ -127,6 +74,7 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 		int n = 0;
 		
 		// Main loop
+		cursor.moveCenterToCoordinates(spot.getCoordinates());
 		while (cursor.hasNext()) {
 			cursor.next();
 			val = cursor.getType().getRealFloat();
@@ -148,7 +96,6 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 			M4 = M4 + term1 * delta_n2 * (n*n - 3*n + 3) + 6 * delta_n2 * M2 - 4 * delta_n * M3;
 	        M3 = M3 + term1 * delta_n * (n - 2) - 3 * delta_n * M2;
 	        M2 = M2 + term1;
-
 		}
 		
 		MathLib.quicksort(pixel_values, 0, npixels-1);
@@ -156,7 +103,7 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 		float min = pixel_values[0];
 		float max = pixel_values[npixels-1];
 		mean = sum / npixels;
-		float variance = (sum_sqr - sum*mean) / (npixels-1);
+		float variance = M2 / (npixels-1);
 		float kurtosis = (n*M4) / (M2*M2) - 3;
 		float skewness = (float) ( Math.sqrt(n) * M3 / Math.pow(M2, 3/2.0) );
 		
@@ -170,7 +117,11 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 		spot.putFeature(Feature.KURTOSIS, kurtosis);
 		spot.putFeature(Feature.SKEWNESS, skewness);
 	}
-	
+		
+	/*
+	 * MAIN METHOD
+	 */
+
 	public static void main(String[] args) {
 
 		Image<UnsignedByteType> testImage = new ImageFactory<UnsignedByteType>(
@@ -180,7 +131,7 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 		
 		float[] center = new float[]  {20, 20, 20};
 		Spot s1 = new Spot(center);
-		float radius = 10;
+		float radius = 5;
 		s1.setName("Test spot with radius = "+radius);
 
 		float[] calibration = new float[] {0.2f, 0.2f, 1};
@@ -189,17 +140,18 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 				s1.getCoordinates(), 
 				radius, // µm
 				calibration);
-		int volume = 0;
 		while(cursor.hasNext()) {
-			volume++;
 			cursor.fwd();
-			cursor.getType().set((int) cursor.getDistanceSquared());
+			if (new java.util.Random().nextBoolean()) cursor.getType().set(1);
+//			cursor.getType().set(new java.util.Random().nextInt(101));
+//			cursor.getType().set((int) (100 + new java.util.Random().nextGaussian()*10));
 		}
 		cursor.close();
 		
 		BlobDescriptiveStatistics<UnsignedByteType> bb = new BlobDescriptiveStatistics<UnsignedByteType>(testImage, 2*radius, calibration);
 		bb.process(s1);
 		System.out.println(s1);
+		System.out.println("Volume parsed: "+cursor.getNPixels());
 		
 	}
 }
