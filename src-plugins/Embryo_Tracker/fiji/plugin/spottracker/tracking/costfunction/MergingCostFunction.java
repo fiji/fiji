@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import fiji.plugin.spottracker.Feature;
 import fiji.plugin.spottracker.Spot;
+import fiji.plugin.spottracker.Utils;
 import fiji.plugin.spottracker.tracking.LAPTracker;
 
 import Jama.Matrix;
@@ -74,7 +75,7 @@ public class MergingCostFunction implements CostFunctions {
 				}
 				
 				// Radius threshold
-				d = euclideanDistance(end, middle);
+				d = Utils.euclideanDistance(end, middle);
 				if (d > maxDist) {
 					m.set(i, j, blocked);
 					continue;
@@ -98,21 +99,5 @@ public class MergingCostFunction implements CostFunctions {
 				m.set(i, j, s);
 			}
 		}
-	}
-
-	/*
-	 * Determines the Euclidean distance between two Spots.
-	 */
-	private static double euclideanDistance(Spot i, Spot j) {
-		final float[] coordsI = i.getCoordinates();
-		final float[] coordsJ = j.getCoordinates();
-		double eucD = 0;
-
-		for (int k = 0; k < coordsI.length; k++) {
-			eucD += (coordsI[k] - coordsJ[k]) * (coordsI[k] - coordsJ[k]);
-		}
-		eucD = Math.sqrt(eucD);
-
-		return eucD;
 	}
 }
