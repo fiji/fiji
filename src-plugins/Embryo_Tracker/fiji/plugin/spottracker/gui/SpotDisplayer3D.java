@@ -20,28 +20,31 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	
 	private TreeMap<Integer,SpotGroupNode<Spot>> blobs;	
 	private Content spotContent;
+	private final Image3DUniverse universe;
 	
 	
-	public SpotDisplayer3D(Collection<Spot> spots, final float radius) {
+	public SpotDisplayer3D(Collection<Spot> spots, Image3DUniverse universe, final float radius) {
 		TreeMap<Integer, Collection<Spot>> spotsOverTime = new TreeMap<Integer, Collection<Spot>>();
 		spotsOverTime.put(0, spots);
 		this.radius = radius;
 		this.spots = spotsOverTime;
+		this.universe = universe;
 		spotContent = makeContent();
 	}
 	
-	public SpotDisplayer3D(TreeMap<Integer, Collection<Spot>> spots, final float radius) {
+	public SpotDisplayer3D(TreeMap<Integer, Collection<Spot>> spots, Image3DUniverse universe, final float radius) {
 		this.radius = radius;
 		this.spots = spots;
+		this.universe = universe;
 		spotContent = makeContent();
 	}
 	
-	public SpotDisplayer3D(TreeMap<Integer, Collection<Spot>> spots) {
-		this(spots, DEFAULT_DISPLAY_RADIUS);
+	public SpotDisplayer3D(TreeMap<Integer, Collection<Spot>> spots, Image3DUniverse universe) {
+		this(spots, universe, DEFAULT_DISPLAY_RADIUS);
 	}
 	
-	public SpotDisplayer3D(Collection<Spot> spots) {
-		this(spots, DEFAULT_DISPLAY_RADIUS);
+	public SpotDisplayer3D(Collection<Spot> spots, Image3DUniverse universe) {
+		this(spots, universe, DEFAULT_DISPLAY_RADIUS);
 	}
 
 	/*
@@ -49,8 +52,15 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	 */
 	
 
-	public void render(Image3DUniverse universe) throws InterruptedException, ExecutionException {
-		spotContent = universe.addContentLater(spotContent).get();
+	@Override
+	public void render()  {
+		try {
+			spotContent = universe.addContentLater(spotContent).get();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	@Override

@@ -35,6 +35,11 @@ public abstract class SpotDisplayer {
 	 */
 	
 	/**
+	 * Prepare this displayer and render it according to its concrete implementation.
+	 */
+	public abstract void render();
+	
+	/**
 	 * Color all displayed spots according to the feature given. 
 	 * If feature is <code>null</code>, then the default color is 
 	 * used.

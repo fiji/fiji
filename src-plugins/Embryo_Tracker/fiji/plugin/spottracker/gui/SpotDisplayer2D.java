@@ -37,7 +37,6 @@ public class SpotDisplayer2D extends SpotDisplayer {
 			setStroke(new BasicStroke(1));
 		}
 		
-
 		public void setTransparency(float transparency) {
 			setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1-transparency));
 		}
@@ -68,20 +67,30 @@ public class SpotDisplayer2D extends SpotDisplayer {
 	private float[] calibration;
 	private TreeMap<Integer, HashMap<Spot, SpotOverlay>> spotOverlays;
 
-	public SpotDisplayer2D(Collection<Spot> spots, final ImagePlus imp, final float radius) {
+	public SpotDisplayer2D(Collection<Spot> spots, final ImagePlus imp, final float radius, final float[] calibration) {
 		TreeMap<Integer, Collection<Spot>> spotsOverTime = new TreeMap<Integer, Collection<Spot>>();
 		spotsOverTime.put(0, spots);
 		this.radius = radius;
 		this.spots = spotsOverTime;
 		this.imp = imp;
-		this.calibration = new float[] {(float) imp.getCalibration().pixelWidth, (float) imp.getCalibration().pixelHeight };
+		this.calibration = calibration;
 	}
 	
-	public SpotDisplayer2D(TreeMap<Integer, Collection<Spot>> spots, ImagePlus imp, final float radius) {
+	public SpotDisplayer2D(Collection<Spot> spots, final ImagePlus imp, final float radius) {
+		this(spots, imp, radius, 
+				new float[] {(float) imp.getCalibration().pixelWidth, (float) imp.getCalibration().pixelHeight});
+	}
+	
+	public SpotDisplayer2D(TreeMap<Integer, Collection<Spot>> spots, ImagePlus imp, final float radius, float[] calibration) {
 		this.radius = radius;
 		this.spots = spots;
 		this.imp = imp;
-		this.calibration = new float[] {(float) imp.getCalibration().pixelWidth, (float) imp.getCalibration().pixelHeight };
+		this.calibration = calibration;
+	}
+	
+	public SpotDisplayer2D(TreeMap<Integer, Collection<Spot>> spots, ImagePlus imp, final float radius) {
+		this(spots, imp, radius, 
+				new float[] {(float) imp.getCalibration().pixelWidth, (float) imp.getCalibration().pixelHeight });
 	}
 	
 	public SpotDisplayer2D(TreeMap<Integer, Collection<Spot>> spots, final ImagePlus imp) {

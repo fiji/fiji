@@ -21,12 +21,10 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import mpicbg.imglib.container.array.ArrayContainerFactory;
-import mpicbg.imglib.cursor.LocalizableByDimCursor;
-import mpicbg.imglib.cursor.special.HyperSphereIterator;
+import mpicbg.imglib.cursor.special.DiscCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
-import mpicbg.imglib.outofbounds.OutOfBoundsStrategyValueFactory;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 
 public class SpotDisplayer2DTestDrive {
@@ -60,8 +58,7 @@ public class SpotDisplayer2DTestDrive {
 		}
 		
 		// Put the blobs in the image
-		final LocalizableByDimCursor<UnsignedByteType> centerCursor = img.createLocalizableByDimCursor();
-		HyperSphereIterator<UnsignedByteType> cursor;
+		DiscCursor<UnsignedByteType> cursor;
 		float[] center;
 		int intensity;
 		float radius;
@@ -69,9 +66,7 @@ public class SpotDisplayer2DTestDrive {
 			center = centers.get(i);
 			intensity = intensities[i];
 			radius = radiuses[i];
-			centerCursor.setPosition((int) (center[0]/CALIBRATION[0]), 0);
-			centerCursor.setPosition((int) (center[1]/CALIBRATION[1]), 1);
-			cursor = new HyperSphereIterator<UnsignedByteType>(img, centerCursor, (int) radius, new OutOfBoundsStrategyValueFactory<UnsignedByteType>());
+			cursor = new DiscCursor<UnsignedByteType>(img, center, radius, CALIBRATION);
 			while(cursor.hasNext()) 
 				cursor.next().set(intensity);		
 			cursor.close();		
@@ -83,7 +78,7 @@ public class SpotDisplayer2DTestDrive {
 		imp.show();
 		System.out.println("Creating image done.");
 		
-		SpotSegmenter<UnsignedByteType> segmenter = new SpotSegmenter<UnsignedByteType>(img, 2*RADIUS);
+		SpotSegmenter<UnsignedByteType> segmenter = new SpotSegmenter<UnsignedByteType>(img, 2*RADIUS, CALIBRATION);
 		Collection<Spot> spots;
 		System.out.println("Segmenting...");
 		if (segmenter.checkInput() && segmenter.process())
@@ -99,10 +94,12 @@ public class SpotDisplayer2DTestDrive {
 		
 		System.out.println("Calculating features..");
 		FeatureFacade<UnsignedByteType> featureCalculator = new FeatureFacade<UnsignedByteType>(img, segmenter.getFilteredImage(), 2*RADIUS, CALIBRATION);
-		featureCalculator.processFeature(Feature.CONTRAST, spots);
+		featureCalculator.processFeature(Feature.MEAN_INTENSITY, spots);
 		System.out.println("Features done.");
-		
-		final SpotDisplayer2D displayer = new SpotDisplayer2D(allSpots, imp, RADIUS);
+
+		imp.getCalibration().pixelWidth = CALIBRATION[0];
+		imp.getCalibration().pixelHeight = CALIBRATION[1];
+		final SpotDisplayer2D displayer = new SpotDisplayer2D(allSpots, imp, RADIUS, CALIBRATION);
 		displayer.render();
 		
 		System.out.println("Starting threshold GUI...");

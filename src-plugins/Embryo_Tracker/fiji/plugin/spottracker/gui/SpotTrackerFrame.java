@@ -2,7 +2,6 @@ package fiji.plugin.spottracker.gui;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.plugin.Duplicator;
-import ij.plugin.filter.Duplicater;
 import ij.process.ColorProcessor;
 import ij.process.StackConverter;
 import ij3d.Content;
@@ -16,14 +15,11 @@ import java.awt.event.ActionListener;
 import java.util.Collection;
 import java.util.List;
 import java.util.TreeMap;
-import java.util.concurrent.ExecutionException;
 
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
-import view4d.Timeline;
 
 import fiji.plugin.spottracker.Feature;
 import fiji.plugin.spottracker.Logger;
@@ -116,7 +112,8 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 							logPanel.jButtonNext.setEnabled(false);
 							spotTracker.execSegmentation(settings);
 						} catch (Exception e) {
-							logger.error("An error occured:\n"+e.getMessage()+'\n');
+							logger.error("An error occured:\n"+e+'\n');
+							e.printStackTrace();
 						} finally {
 							logPanel.jButtonNext.setEnabled(true);
 							long end = System.currentTimeMillis();
@@ -137,44 +134,57 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 					spotsOverTime.put(i, spots.get(i));
 
 				// Thread for rendering
-				new Thread(new Runnable() {
-					@Override
-					public void run() {
-						// Render image data
-						final Image3DUniverse universe = new Image3DUniverse();
-						universe.show();
-						ImagePlus[] images = makeImageForViewer(settings);
-						Content imageContent = ContentCreator.createContent(
-								settings.imp.getTitle(), 
-								images, 
-								Content.VOLUME, 
-								DEFAULT_RESAMPLING_FACTOR, 
-								0,
-								null, 
-								DEFAULT_THRESHOLD, 
-								new boolean[] {true, true, true});
-						// Render spots
-						/*
-						displayer = new SpotDisplayer(spotsOverTime, settings.expectedDiameter/8); // TODO otherwise too big 
-						thresholdGuiPanel.setSpots(spots);
-						thresholdGuiPanel.addThresholdPanel(Feature.MEAN_INTENSITY);
-						thresholdSpots();
-						try {	
+				Runnable renderingRunnable;
+				if (is3D) { 
+					renderingRunnable = new Runnable() {
+						public void run() {
+							// Render image data
+							final Image3DUniverse universe = new Image3DUniverse();
+							universe.show();
+							ImagePlus[] images = makeImageForViewer(settings);
+							Content imageContent = ContentCreator.createContent(
+									settings.imp.getTitle(), 
+									images, 
+									Content.VOLUME, 
+									DEFAULT_RESAMPLING_FACTOR, 
+									0,
+									null, 
+									DEFAULT_THRESHOLD, 
+									new boolean[] {true, true, true});
+							// Render spots
+							displayer = new SpotDisplayer3D(spotsOverTime, universe, settings.expectedDiameter/2); // TODO otherwise too big 							
 							universe.addContentLater(imageContent);
-							displayer.render(universe);
-						} catch (InterruptedException e1) {
-							logger.error("Error in rendering:\n"+e1.toString());
-						} catch (ExecutionException e1) {
-							logger.error("Error in rendering:\n"+e1.toString());
+
 						}
-						*/
-						logger.log("Rendering done.\n", Logger.GREEN_COLOR);
-						logPanel.jButtonNext.setEnabled(true);
-						cardLayout.show(getContentPane(), THRESHOLD_GUI_KEY);
+					};
+				} else {
+					renderingRunnable = new Runnable() {
+						public void run() {
+							final float[] calibration = new float[] {
+									(float) settings.imp.getCalibration().pixelWidth, 
+									(float) settings.imp.getCalibration().pixelHeight};
+							displayer = new SpotDisplayer2D(spotsOverTime, settings.imp, settings.expectedDiameter/2, calibration);
+						}
+					};
+				}
+				Thread renderingThread = new Thread(renderingRunnable);
 
-					}
-				}).start();
+				renderingThread.start();
+				try {
+					renderingThread.join();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 
+				displayer.render();
+				logger.log("Rendering done.\n", Logger.GREEN_COLOR);
+				logPanel.jButtonNext.setEnabled(true);
+				cardLayout.show(getContentPane(), THRESHOLD_GUI_KEY);
+				
+				thresholdGuiPanel.setSpots(spots);
+				thresholdGuiPanel.addThresholdPanel(Feature.MEAN_INTENSITY);
+				thresholdSpots();
 				state = GuiState.THRESHOLD_BLOBS;
 				break;
 				

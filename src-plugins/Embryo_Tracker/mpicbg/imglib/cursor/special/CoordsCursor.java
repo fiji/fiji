@@ -60,7 +60,7 @@ public abstract class CoordsCursor <T extends Type<T>> extends AbstractSpecialCu
 	 * This <b>resets</b> this cursor.
 	 */
 	public final void moveCenterToCoordinates(final float[] coords) {
-		for (int i = 0; i < coords.length; i++)
+		for (int i = 0; i < origin.length; i++)
 			origin[i] = Math.round(coords[i] / calibration[i]);
 		reset();
 	}
