@@ -321,7 +321,11 @@ public class SpotSegmenter <T extends RealType<T> >implements Algorithm {
 		} else {
 			depthFactor = 1;								
 		}
-		float downsampleFactors[] = new float[]{widthFactor, heightFactor, depthFactor};
+		float downsampleFactors[];
+		if (numDim ==3)
+			downsampleFactors = new float[]{widthFactor, heightFactor, depthFactor};
+		else
+			downsampleFactors = new float[]{widthFactor, heightFactor};
 		return downsampleFactors;
 	}
 	
@@ -345,8 +349,8 @@ public class SpotSegmenter <T extends RealType<T> >implements Algorithm {
 		int index = 0;
 		while (itr.hasNext()) {
 			float[] coord = itr.next();
-			float[] calibrated = new float[coord.length];
-			for (int i = 0; i < calibrated.length; i++) 
+			float[] calibrated = new float[calibration.length];
+			for (int i = 0; i < calibration.length; i++) 
 				calibrated[i] = coord[i] * calibration[i] * downsampleFactors[i];
 			Spot spot = new Spot(calibrated);
 			spot.setName("Spot "+index);

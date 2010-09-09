@@ -1,8 +1,10 @@
-package fiji.plugin.spottracker.gui;
+package fiji.plugin.spottracker.gui.test;
 
 import fiji.plugin.spottracker.Feature;
 import fiji.plugin.spottracker.Spot;
 import fiji.plugin.spottracker.features.FeatureFacade;
+import fiji.plugin.spottracker.gui.SpotDisplayer3D;
+import fiji.plugin.spottracker.gui.ThresholdGuiPanel;
 import ij.ImagePlus;
 import ij.process.StackConverter;
 import ij3d.Image3DUniverse;
@@ -28,7 +30,7 @@ import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 
-public class SpotDisplayerTestDrive {
+public class SpotDisplayer3DTestDrive {
 
 	public static void main(String[] args) {
 
@@ -102,7 +104,7 @@ public class SpotDisplayerTestDrive {
 
 		// Launch renderer
 		final Image3DUniverse universe = new Image3DUniverse();
-		final SpotDisplayer displayer = new SpotDisplayer(spots, RADIUS);
+		final SpotDisplayer3D displayer = new SpotDisplayer3D(spots, RADIUS);
 		try {
 			displayer.render(universe);
 		} catch (InterruptedException e1) {
@@ -128,7 +130,7 @@ public class SpotDisplayerTestDrive {
 				f = gui.getFeatures();
 				is = gui.getIsAbove();
 				t = gui.getThresholds();				
-				displayer.threshold(f, t, is);
+				displayer.refresh(f, t, is);
 			}
 		});
 		gui.addActionListener(new ActionListener() {

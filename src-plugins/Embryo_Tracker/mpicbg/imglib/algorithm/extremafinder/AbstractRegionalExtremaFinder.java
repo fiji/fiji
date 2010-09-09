@@ -20,16 +20,15 @@ public abstract class AbstractRegionalExtremaFinder<T extends RealType<T>> imple
 	}
 
 	@Override
-	public ArrayList< ArrayList< int[] > > getRegionalExtrema() {
+	public ArrayList< ArrayList<int[]>> getRegionalExtrema() {
 		return maxima;
 	}
 	
 	@Override
-	public ArrayList< float[] > getRegionalExtremaCenters(boolean doInterpolate)
-	{
-		ArrayList< float[] > centeredRegionalMaxima = new ArrayList< float[] >();
-		ArrayList< ArrayList< int[] >  > regionalMaxima = new ArrayList< ArrayList< int[] >  >(maxima); // make a copy
-		ArrayList< int[] > curr = null;
+	public ArrayList< float[] > getRegionalExtremaCenters(boolean doInterpolate) {
+		ArrayList<float[]> centeredRegionalMaxima = new ArrayList<float[]>();
+		ArrayList<ArrayList<int[]>> regionalMaxima = new ArrayList<ArrayList<int[]>>(maxima); // make a copy
+		ArrayList<int[]> curr = null;
 		while (!regionalMaxima.isEmpty()) {
 			curr = regionalMaxima.remove(0);
 			float averagedCoord[] = findAveragePosition(curr);
@@ -45,7 +44,7 @@ public abstract class AbstractRegionalExtremaFinder<T extends RealType<T>> imple
 	 * @param searched
 	 * @return
 	 */
-	protected float[] findAveragePosition(final ArrayList < int[] > coords) {
+	protected float[] findAveragePosition(final ArrayList<int[]> coords) {
 		int nDims = coords.get(0).length;
 		final float[] array = new float[nDims];
 		int[] curr;

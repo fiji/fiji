@@ -153,7 +153,8 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 								null, 
 								DEFAULT_THRESHOLD, 
 								new boolean[] {true, true, true});
-						// Render spots 
+						// Render spots
+						/*
 						displayer = new SpotDisplayer(spotsOverTime, settings.expectedDiameter/8); // TODO otherwise too big 
 						thresholdGuiPanel.setSpots(spots);
 						thresholdGuiPanel.addThresholdPanel(Feature.MEAN_INTENSITY);
@@ -166,6 +167,7 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 						} catch (ExecutionException e1) {
 							logger.error("Error in rendering:\n"+e1.toString());
 						}
+						*/
 						logger.log("Rendering done.\n", Logger.GREEN_COLOR);
 						logPanel.jButtonNext.setEnabled(true);
 						cardLayout.show(getContentPane(), THRESHOLD_GUI_KEY);
@@ -254,7 +256,7 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 	 * {@link ThresholdGuiPanel}.
 	 */
 	private void thresholdSpots() {
-		displayer.threshold(thresholdGuiPanel.getFeatures(), thresholdGuiPanel.getThresholds(), thresholdGuiPanel.getIsAbove());
+		displayer.refresh(thresholdGuiPanel.getFeatures(), thresholdGuiPanel.getThresholds(), thresholdGuiPanel.getIsAbove());
 	}
 	
 	private void initGUI() {
