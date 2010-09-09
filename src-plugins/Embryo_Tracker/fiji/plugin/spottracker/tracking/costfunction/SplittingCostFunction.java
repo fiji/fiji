@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import fiji.plugin.spottracker.Feature;
 import fiji.plugin.spottracker.Spot;
+import fiji.plugin.spottracker.Utils;
 import fiji.plugin.spottracker.tracking.LAPTracker;
 
 import Jama.Matrix;
@@ -31,7 +32,7 @@ import Jama.Matrix;
  * @author Nicholas Perry
  *
  */
-public class SplittingCostFunction extends LAPTrackerCostFunction {
+public class SplittingCostFunction implements CostFunctions {
 
 	/** The cost matrix. */
 	protected Matrix m;
@@ -73,7 +74,7 @@ public class SplittingCostFunction extends LAPTrackerCostFunction {
 				}
 				
 				// Radius threshold
-				d = euclideanDistance(start, middle);
+				d = Utils.euclideanDistance(start, middle);
 				if (d > maxDist) {
 					m.set(i, j, blocked);
 					continue;

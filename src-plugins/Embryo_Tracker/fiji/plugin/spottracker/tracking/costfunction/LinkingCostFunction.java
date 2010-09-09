@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import Jama.Matrix;
 import fiji.plugin.spottracker.Spot;
+import fiji.plugin.spottracker.Utils;
 import fiji.plugin.spottracker.tracking.LAPTracker;
 
 /**
@@ -23,7 +24,7 @@ import fiji.plugin.spottracker.tracking.LAPTracker;
  * @author Nicholas Perry
  *
  */
-public class LinkingCostFunction extends LAPTrackerCostFunction {
+public class LinkingCostFunction implements CostFunctions {
 	
 	/** The cost matrix. */
 	protected Matrix m;
@@ -53,7 +54,7 @@ public class LinkingCostFunction extends LAPTrackerCostFunction {
 			s0 = t0.get(i);
 			for (int j = 0; j < t1.size(); j++) {
 				s1 = t1.get(j);
-				d = euclideanDistance(s0, s1);
+				d = Utils.euclideanDistance(s0, s1);
 
 				// Distance threshold
 				if (d > maxDist) {

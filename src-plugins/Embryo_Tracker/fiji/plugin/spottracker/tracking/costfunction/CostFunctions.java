@@ -11,6 +11,8 @@ import Jama.Matrix;
  */
 public interface CostFunctions {
 
+	/** Fills in the supplied matrix using the information given at construction
+	 * and the cost function. */
 	public void applyCostFunction();
 	
 }
