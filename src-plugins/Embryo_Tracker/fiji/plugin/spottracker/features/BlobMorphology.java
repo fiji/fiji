@@ -23,18 +23,28 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 	private final static Feature[] featurelist_sa 	= {Feature.ELLIPSOIDFIT_SEMIAXISLENGTH_C, 	Feature.ELLIPSOIDFIT_SEMIAXISLENGTH_B, 	Feature.ELLIPSOIDFIT_SEMIAXISLENGTH_A};
 	private final static Feature[] featurelist_phi 	= {Feature.ELLIPSOIDFIT_AXISPHI_C, 			Feature.ELLIPSOIDFIT_AXISPHI_B, 		Feature.ELLIPSOIDFIT_AXISPHI_A };
 	private final static Feature[] featurelist_theta = {Feature.ELLIPSOIDFIT_AXISTHETA_C, 		Feature.ELLIPSOIDFIT_AXISTHETA_B, 		Feature.ELLIPSOIDFIT_AXISTHETA_A}; 
-	
-	private static final double SIGNIFICANCE_FACTOR = 1.5;
+	/** The Feature characteristics this class computes. */
 	private static final Feature FEATURE = Feature.MORPHOLOGY;
+	/** Stores that a Spot has an ellipsoid shape. */
 	private static final int ELLIPSOID = 1;
+	/** Stores that a Spot has a spherical shape. */
 	private static final int SPHERICAL = 0;
+	/** Significance factor to determine when a semiaxis length should be
+	 *  considered significantly larger than the others. */
+	private static final double SIGNIFICANCE_FACTOR = 1.2;
+	
+	/** The image to extract the Feature characteristics from. */
 	private Image<T> img;
+	/** The estimated diameter of the blob. */
 	private float diam;
+	/** The Image calibration information. */
 	private float[] calibration;
+	
 	
 	/*
 	 * CONSTRUCTORS
 	 */
+	
 	
 	public BlobMorphology (Image<T> img, float diam, float[] calibration) {
 		this.img = img;
@@ -42,9 +52,11 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 		this.calibration = calibration;
 	}
 	
+	
 	public BlobMorphology (Image<T> img, float diam) {
 		this(img, diam, img.getCalibration());
 	}
+	
 	
 	public BlobMorphology (Image<T> img, double diam, double[] calibration) {
 		
@@ -64,14 +76,17 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 		this(img, (float) diam, img.getCalibration());
 	}
 	
+	
 	/*
 	 * PUBLIC METHODS
 	 */
+	
 	
 	@Override
 	public Feature getFeature() {
 		return FEATURE;
 	}
+	
 	
 	@Override
 	public void process(Spot spot) {
@@ -155,9 +170,36 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 			spot.putFeature(featurelist_theta[i], (float) theta);
 		}
 		
+		// Store the Spot morphology (needs to be outside the above loop)
+		spot.putFeature(Feature.MORPHOLOGY, estimateMorphology(semiaxes));
+		
 	}
 	
 	
+	/**
+	 * Estimates whether a Spot's shape is ellipsoidal or spherical based on
+	 * the semiaxis lengths. If one or two of the semiaxis lengths are significantly
+	 * larger than the other(s), Ellipsoid is returned. Otherwise, spherical
+	 * is returned.
+	 * @param semiaxes The semiaxis lengths in any order.
+	 * @return 1 [Ellipsoid] if any semiaxis length(s) are significantly larger than the other(s). 0 [Spherical] otherwise. 
+	 */
+	private int estimateMorphology(double[] semiaxes) {
+		
+		// For each semiaxis length
+		for (int i = 0; i < semiaxes.length; i++) {
+			boolean significantlyLarger = false;	// False until proven otherwise
+			
+			// Compare to the others
+			for (int j = 0; j < semiaxes.length; j++) {
+				if (i==j) continue;
+				if (semiaxes[i] >= SIGNIFICANCE_FACTOR * semiaxes[j]) significantlyLarger = true;
+			}
+			if (significantlyLarger) return ELLIPSOID;
+		}
+		
+		return SPHERICAL;
+	}
 	
 	public static void main(String[] args) {
 
