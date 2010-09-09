@@ -395,7 +395,7 @@ public class SpotGroupNode <K extends Object> extends ContentNode {
 		}
 		
 		SpotGroupNode<Integer> sg = new SpotGroupNode<Integer>(centers, colors);
-		sg.setName("spots");
+		//sg.setName("spots");
 		ContentInstant ci = new ContentInstant("t0");
 		ci.display(sg);
 		TreeMap<Integer, ContentInstant> instants = new TreeMap<Integer, ContentInstant>();
