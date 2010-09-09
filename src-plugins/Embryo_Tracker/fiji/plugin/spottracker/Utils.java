@@ -115,15 +115,31 @@ public class Utils {
 	/**
 	 * Return the optimal bin number for a histogram of the data given in array, using the 
 	 * Freedman and Diaconis rule (bin_space = 2*IQR/n^(1/3)).
+	 * It is ensured that the bin number returned is not smaller and no bigger than the bounds given
+	 * in argument.
 	 */
-	public static final int getNBins(final double[] values) {
+	public static final int getNBins(final double[] values, int minBinNumber, int maxBinNumber) {
 		final int size = values.length;
 		final double q1 = Utils.getPercentile(values, 0.25);
 		final double q3 = Utils.getPercentile(values, 0.75);
 		final double iqr = q3 - q1;
 		final double binWidth = 2 * iqr * Math.pow(size, -0.33);
 		final double[] range = getRange(values);
-		return (int) ( range[0] / binWidth + 1 ); 
+		int nBin = (int) ( range[0] / binWidth + 1 );
+		if (nBin > maxBinNumber)
+			nBin = maxBinNumber;
+		else if (nBin < minBinNumber)
+			nBin = minBinNumber;
+		return  nBin;
+	}
+	
+	/**
+	 * Return the optimal bin number for a histogram of the data given in array, using the 
+	 * Freedman and Diaconis rule (bin_space = 2*IQR/n^(1/3)).
+	 * It is ensured that the bin number returned is not smaller than 8 and no bigger than 256.
+	 */
+	public static final int getNBins(final double[] values){
+		return getNBins(values, 8, 256);
 	}
 	
 
