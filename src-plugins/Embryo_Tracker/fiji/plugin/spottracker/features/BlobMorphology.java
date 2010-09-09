@@ -203,6 +203,15 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 	
 	public static void main(String[] args) {
 
+//		/* Testing estimateMorphology(); make 'public static' first */
+//		double[] sa = new double[] {11.9, 10.0, 10.0};
+//		int shape = BlobMorphology.estimateMorphology(sa);
+//		if (shape == ELLIPSOID) {
+//			System.out.println("Ellipsoid");
+//		} else {
+//			System.out.println("Spherical");
+//		}
+		
 		// Parameters
 		int size_x = 200;
 		int size_y = 200;
