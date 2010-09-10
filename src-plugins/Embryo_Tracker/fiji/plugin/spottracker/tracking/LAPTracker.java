@@ -5,7 +5,7 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.TreeMap;
 
-import mpicbg.imglib.algorithm.math.MathLib;
+import Jama.Matrix;
 
 import fiji.plugin.spottracker.Feature;
 import fiji.plugin.spottracker.Spot;
@@ -129,6 +129,18 @@ public class LAPTracker implements ObjectTracker {
 	protected boolean defaultCosts = true;
 	/** Holds references to the middle spots in the track segments. */
 	protected ArrayList<Spot> middlePoints;
+	/** Holds references to the middle spots considered for merging in
+	 * the track segments. */
+	protected ArrayList<Spot> mergingMiddlePoints;	
+	/** Holds references to the middle spots considered for splitting in 
+	 * the track segments. */
+	protected ArrayList<Spot> splittingMiddlePoints;
+	/** Each index corresponds to a Spot in middleMergingPoints, and holds
+	 * the track segment index that the middle point belongs to. */
+	protected int[] mergingMiddlePointsSegmentIndices;
+	/** Each index corresponds to a Spot in middleSplittingPoints, and holds
+	 * the track segment index that the middle point belongs to. */
+	protected int[] splittingMiddlePointsSegmentIndices;
 	
 	
 	/**
@@ -185,7 +197,6 @@ public class LAPTracker implements ObjectTracker {
 	/**
 	 * Set the cost matrix used for step 2, linking track segments into final tracks.
 	 * @param segmentCosts The cost matrix, with structure matching figure 1c in the paper.
-	 * TODO describe the cost matrix, since this doens't match the paper's anymore.
 	 */
 	public void setSegmentCosts(double[][] segmentCosts) {
 		this.segmentCosts = segmentCosts;
@@ -294,24 +305,26 @@ public class LAPTracker implements ObjectTracker {
 		System.out.println("--- Step two ---");
 		
 		// Create cost matrix
-		createTrackSegmentCostMatrix();
+		if (!createTrackSegmentCostMatrix()) return false;
 		System.out.println("Cost matrix for track segments created successfully.");
 		
 		// Solve LAP
-		if (!linkTrackSegmentsToFinalTracks(middlePoints)) return false;
+		if (!linkTrackSegmentsToFinalTracks()) return false;
 		
-		return true;
+		
 		
 		// Print step 2 cost matrix
-//		Matrix debug = new Matrix(segmentCosts);
-//		for (int i = 0; i < debug.getRowDimension(); i++) {
-//			for (int j = 0; j < debug.getColumnDimension(); j++) {
-//				if (Double.compare(Double.MAX_VALUE, debug.get(i,j)) == 0) {
-//					debug.set(i, j, Double.NaN);
-//				}
-//			}
-//		}
-//		debug.print(4,2);
+		Matrix debug = new Matrix(segmentCosts);
+		for (int i = 0; i < debug.getRowDimension(); i++) {
+			for (int j = 0; j < debug.getColumnDimension(); j++) {
+				if (Double.compare(Double.MAX_VALUE, debug.get(i,j)) == 0) {
+					debug.set(i, j, Double.NaN);
+				}
+			}
+		}
+		debug.print(4,2);
+		
+		return true;
 	}
 	
 	
@@ -344,7 +357,9 @@ public class LAPTracker implements ObjectTracker {
 			return false;
 		}
 		segmentCosts = segCosts.getCostMatrix();
-		middlePoints = segCosts.getMiddlePoints();
+		splittingMiddlePoints = segCosts.getSplittingMiddlePoints();
+		mergingMiddlePoints = segCosts.getMergingMiddlePoints();
+		//pruneSegmentCosts();
 		return true;
 	}
 	
@@ -372,7 +387,7 @@ public class LAPTracker implements ObjectTracker {
 	 * @param middlePoints A list of the middle points of the track segments. 
 	 * @return True if execution completes successfully, false otherwise.
 	 */
-	public boolean linkTrackSegmentsToFinalTracks(ArrayList<Spot> middlePoints) {
+	public boolean linkTrackSegmentsToFinalTracks() {
 		
 		// Check that there are track segments.
 		if (null == trackSegments || trackSegments.size() < 1) {
@@ -391,7 +406,7 @@ public class LAPTracker implements ObjectTracker {
 		System.out.println("LAP for track segments solved.\n");
 		
 		// Compile LAP solutions into final tracks
-		compileFinalTracks(finalTrackSolutions, middlePoints);
+		compileFinalTracks(finalTrackSolutions);
 		
 //		System.out.println("SOLUTIONS!!");
 //		for (int[] solution : finalTrackSolutions) {
@@ -501,6 +516,21 @@ public class LAPTracker implements ObjectTracker {
 	}
 	
 	
+
+//	private void pruneSegmentCosts() {
+//		// TODO make matrices for two different middle points
+//		// Remove empty merging columns
+//		for (int i = trackSegments.size(); i < (trackSegments.size() + middleMergingPoints.size()); i++) {
+//			
+//			for (int j = 0; j < trackSegments.size(); j++ ) {
+//				
+//			}
+//		}
+//		
+//		// Remove empty merging rows
+//	}
+	
+	
 	/*
 	 * Takes the solutions from the Hungarian algorithm, which are an int[][], and 
 	 * appripriately links the track segments. Before this method is called, the Spots in the
@@ -513,9 +543,10 @@ public class LAPTracker implements ObjectTracker {
 	 * Method: for each solution of the LAP, determine if it's a gap closing, merging, or
 	 * splitting event. If so, appropriately link the track segment Spots.
 	 */
-	private void compileFinalTracks(int[][] finalTrackSolutions, ArrayList<Spot> middlePoints) {
+	private void compileFinalTracks(int[][] finalTrackSolutions) {
 		final int numTrackSegments = trackSegments.size();
-		final int numMiddlePoints = middlePoints.size();
+		final int numMergingMiddlePoints = mergingMiddlePoints.size();
+		final int numSplittingMiddlePoints = splittingMiddlePoints.size();
 		
 		for (int[] solution : finalTrackSolutions) {
 			int i = solution[0];
@@ -545,10 +576,10 @@ public class LAPTracker implements ObjectTracker {
 				} 
 				
 				// Case 2: Merging
-				else if (j < (numTrackSegments + numMiddlePoints)) {
+				else if (j < (numTrackSegments + numMergingMiddlePoints)) {
 					ArrayList<Spot> segmentEnd = trackSegments.get(i);
 					Spot end =  segmentEnd.get(segmentEnd.size() - 1);
-					Spot middle = middlePoints.get(j - numTrackSegments);
+					Spot middle = mergingMiddlePoints.get(j - numTrackSegments);
 					
 //					//debug
 					System.out.println("### Merging: ###");
@@ -562,11 +593,11 @@ public class LAPTracker implements ObjectTracker {
 //					System.out.println(end.toString());
 //					System.out.println(middle.toString());
 				}
-			} else if (i < (numTrackSegments + numMiddlePoints)) {
+			} else if (i < (numTrackSegments + numSplittingMiddlePoints)) {
 				
 				// Case 3: Splitting
 				if (j < numTrackSegments) {
-					Spot middle = middlePoints.get(i - numTrackSegments);
+					Spot mother = splittingMiddlePoints.get(i - numTrackSegments);
 					ArrayList<Spot> segmentStart = trackSegments.get(j);
 					Spot start = segmentStart.get(0);
 					
@@ -575,8 +606,8 @@ public class LAPTracker implements ObjectTracker {
 //					System.out.println(start.toString());
 //					System.out.println(middle.toString());
 					
-					start.addPrev(middle);
-					middle.addNext(start);
+					start.addPrev(mother);
+					mother.addNext(start);
 	
 //					// debug
 //					System.out.println(start.toString());
@@ -807,7 +838,7 @@ public class LAPTracker implements ObjectTracker {
 			
 			// Link track segments to final tracks
 			lap.setSegmentCosts(segmentCosts);
-			lap.linkTrackSegmentsToFinalTracks(segCosts.getMiddlePoints());
+			lap.linkTrackSegmentsToFinalTracks();
 			
 		}
 
@@ -815,17 +846,18 @@ public class LAPTracker implements ObjectTracker {
 		// 3 - Print out results for testing
 		
 		// Print out final tracks.
-//		int counter = 1;
-//		System.out.println();
-//		for (ArrayList<Spot> spots : wrap) {
-//			System.out.println("--- Frame " + counter + " ---");
-//			System.out.println("Number of Spots in this frame: " + spots.size());
-//			for (Spot spot : spots) {
-//				System.out.println(spot.toString());
-//			}
-//			System.out.println();
-//			counter++;
-//		}
+		int counter = 1;
+		System.out.println();
+		for (int key : keys) {
+			ArrayList<Spot> spots = wrap.get(key);
+			System.out.println("--- Frame " + counter + " ---");
+			System.out.println("Number of Spots in this frame: " + spots.size());
+			for (Spot spot : spots) {
+				System.out.println(spot.toString());
+			}
+			System.out.println();
+			counter++;
+		}
 	}
 }
 

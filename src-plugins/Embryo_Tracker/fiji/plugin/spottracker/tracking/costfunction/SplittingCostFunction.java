@@ -43,14 +43,14 @@ public class SplittingCostFunction implements CostFunctions {
 	/** The list of track segments. */
 	protected ArrayList< ArrayList<Spot> > trackSegments;
 	/** The list of middle points. */
-	protected ArrayList<Spot> middlePoints;
+	protected ArrayList<Spot> splittingMiddlePoints;
 	/** Thresholds for the intensity ratios. */
 	protected double[] intensityThresholds;
 	
-	public SplittingCostFunction(Matrix m, ArrayList< ArrayList<Spot> > trackSegments, ArrayList<Spot> middlePoints, double maxDist, double blocked, double[] intensityThresholds) {
+	public SplittingCostFunction(Matrix m, ArrayList< ArrayList<Spot> > trackSegments, ArrayList<Spot> splittingMiddlePoints, double maxDist, double blocked, double[] intensityThresholds) {
 		this.m = m;
 		this.trackSegments = trackSegments;
-		this.middlePoints = middlePoints;
+		this.splittingMiddlePoints = splittingMiddlePoints;
 		this.maxDist = maxDist;
 		this.blocked = blocked;
 		this.intensityThresholds = intensityThresholds;
@@ -62,10 +62,10 @@ public class SplittingCostFunction implements CostFunctions {
 		Spot start, middle;
 		
 		// Fill in splitting scores
-		for (int i = 0; i < middlePoints.size(); i++) {
+		for (int i = 0; i < splittingMiddlePoints.size(); i++) {
 			for (int j = 0; j < trackSegments.size(); j++) {
 				start = trackSegments.get(j).get(0);
-				middle = middlePoints.get(i);
+				middle = splittingMiddlePoints.get(i);
 				
 				// Frame threshold - middle Spot must be one frame behind of the start Spot
 				if (middle.getFrame() != start.getFrame() - 1) {
@@ -80,7 +80,7 @@ public class SplittingCostFunction implements CostFunctions {
 					continue;
 				}
 
-				iRatio = middle.getPrev().get(0).getFeature(Feature.MEAN_INTENSITY) / (middle.getFeature(Feature.MEAN_INTENSITY) + start.getFeature(Feature.MEAN_INTENSITY));
+				iRatio = middle.getFeature(Feature.MEAN_INTENSITY) / (middle.getNext().get(0).getFeature(Feature.MEAN_INTENSITY) + start.getFeature(Feature.MEAN_INTENSITY));
 				
 				// Intensity threshold -  must be within INTENSITY_RATIO_CUTOFFS ([min, max])
 				if (iRatio > intensityThresholds[1] || iRatio < intensityThresholds[0]) {
