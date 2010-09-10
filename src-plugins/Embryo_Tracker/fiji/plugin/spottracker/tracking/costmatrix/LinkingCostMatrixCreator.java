@@ -68,19 +68,18 @@ public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 			return false;
 		}
 		
-		// Fill in scoring submatrices
-		Matrix linkingScores = getLinkingCostSubMatrix();
-		final double maxScore = getMaxScore(linkingScores);
-		final double cutoff = ALTERNATIVE_OBJECT_LINKING_COST_FACTOR * maxScore;
-		Matrix t0LinkingAlternatives = getAlternativeScores(t0.size(), cutoff);
-		Matrix t1LinkingAlternatives = getAlternativeScores(t1.size(), cutoff);
-		Matrix lowerRight = getLowerRight(t0.size(), t1.size(), cutoff);
+		// 1 - Fill in quadrants
+		Matrix topLeft = getLinkingCostSubMatrix();
+		final double cutoff = ALTERNATIVE_OBJECT_LINKING_COST_FACTOR * getMaxScore(topLeft);
+		Matrix topRight = getAlternativeScores(t0.size(), cutoff);
+		Matrix bottomLeft = getAlternativeScores(t1.size(), cutoff);
+		Matrix bottomRight = getLowerRight(topLeft, cutoff);
 
-		// Fill in complete cost matrix using the submatrices just calculated
-		costs.setMatrix(0, t0.size() - 1, 0, t1.size() - 1, linkingScores);
-		costs.setMatrix(t0.size(), costs.getRowDimension() - 1, t1.size(), costs.getColumnDimension() - 1, lowerRight);
-		costs.setMatrix(0, t0.size() - 1, t1.size(), costs.getColumnDimension() - 1, t0LinkingAlternatives);
-		costs.setMatrix(t0.size(), costs.getRowDimension() - 1, 0, t1.size() - 1, t1LinkingAlternatives);
+		// 2 - Fill in complete cost matrix by quadrant
+		costs.setMatrix(0, t0.size() - 1, 0, t1.size() - 1, topLeft);
+		costs.setMatrix(t0.size(), costs.getRowDimension() - 1, t1.size(), costs.getColumnDimension() - 1, bottomRight);
+		costs.setMatrix(0, t0.size() - 1, t1.size(), costs.getColumnDimension() - 1, topRight);
+		costs.setMatrix(t0.size(), costs.getRowDimension() - 1, 0, t1.size() - 1, bottomLeft);
 
 		return true;
 	}

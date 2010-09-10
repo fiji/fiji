@@ -99,9 +99,9 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	protected ArrayList< ArrayList<Spot> > trackSegments;
 	/** Holds the Spots in the middle of track segments (not at end or start). */
 	protected ArrayList<Spot> middlePoints;
-	
+	/** The list of middle Spots which can participate in merge events. */
 	protected ArrayList<Spot> mergingMiddlePoints;
-	
+	/** The list of middle Spots which can participate in splitting events. */
 	protected ArrayList<Spot> splittingMiddlePoints;
 	
 	
@@ -164,60 +164,51 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 			return false;
 		}
 		
-		// 2 - Set various variables to help in the subsequent steps.
-		final int numTrackSegments = trackSegments.size();						// Number of track segments
-		middlePoints = getTrackSegmentMiddlePoints(trackSegments);				// A list of track segment middle points
+		// 2 - Get a list of the middle points that can participate in merging and splitting
+		middlePoints = getTrackSegmentMiddlePoints(trackSegments);
 
+		// 3 - Create cost matrices by quadrant
 		
-		// Create top left quadrant
-		//Matrix topLeftQuadrant = createTopLeftSubmatrix();
-		
-		// Create submatrices for top left quadrant
-		Matrix gapClosingScores = getGapClosingCostSubMatrix(numTrackSegments);
-		Matrix mergingScores = getMergingScores(numTrackSegments);
-		Matrix splittingScores = getSplittingScores(numTrackSegments);
-		double cutoff = getCutoff(gapClosingScores, mergingScores, splittingScores); //TODO fix
-		Matrix middle = new Matrix(splittingMiddlePoints.size(), mergingMiddlePoints.size(), BLOCKED);
-		
-		final int numEndSplit = numTrackSegments + splittingMiddlePoints.size();			// Number of end points + number of points considered for splitting
-		final int numStartMerge = numTrackSegments + mergingMiddlePoints.size();			// Number of start points + number of points considered for merging
-		
-		// Create submatrices for top right quadrant
-		Matrix terminatingSplittingAlternativeScores = getAlternativeScores(numEndSplit, cutoff);
-		
-		// Create submatrices for bottom left quadrant
-		Matrix initiatingMergingAlternativeScores = getAlternativeScores(numStartMerge, cutoff);
+		// Top left quadrant
+		Matrix topLeft = createTopLeftQuadrant();
+		double cutoff = getCutoff(topLeft);
+		Matrix topRight = getAlternativeScores(topLeft.getRowDimension(), cutoff);
+		Matrix bottomLeft = getAlternativeScores(topLeft.getColumnDimension(), cutoff);
+		Matrix bottomRight = getLowerRight(topLeft, cutoff);
 
-		printMatrix(terminatingSplittingAlternativeScores, "term/split");
-		printMatrix(initiatingMergingAlternativeScores, "init/merge");
-		printMatrix(middle, "middle");
-		printMatrix(mergingScores, "merging");
-		printMatrix(splittingScores, "splitting");
-		printMatrix(gapClosingScores, "gap closing");
-		
-		// Fill in complete cost matrix using the submatrices just calculated
+		// 4 - Fill in complete cost matrix by quadrant
 		final int numCols = 2 * trackSegments.size() + splittingMiddlePoints.size() + mergingMiddlePoints.size();
 		final int numRows = 2 * trackSegments.size() + splittingMiddlePoints.size() + mergingMiddlePoints.size();
-		System.out.println(String.format("num cols = %d, num rows = %d", numCols, numRows));
-		System.out.println(String.format("tracksegments = %d, merging points = %d, splitting points = %d", trackSegments.size(), mergingMiddlePoints.size(), splittingMiddlePoints.size()));
-
 		costs = new Matrix(numRows, numCols, 0);
-		printMatrix(costs, "costs");
 
-		costs.setMatrix(0, numTrackSegments - 1, 0, numTrackSegments - 1, gapClosingScores);							// Gap closing
-		costs.setMatrix(0, numTrackSegments - 1, numTrackSegments, numStartMerge - 1, mergingScores);					// Merging
-		costs.setMatrix(numTrackSegments, numEndSplit - 1, 0, numTrackSegments - 1, splittingScores);					// Splitting
-		costs.setMatrix(numTrackSegments, numEndSplit - 1, numTrackSegments, numStartMerge - 1, middle);				// Middle (empty)
-		costs.setMatrix(numEndSplit, numRows - 1, 0, numStartMerge - 1, initiatingMergingAlternativeScores);		// Initiating and merging alternative
-		costs.setMatrix(0, numEndSplit - 1, numStartMerge, numCols - 1, terminatingSplittingAlternativeScores);		// Terminating and splitting alternative
-		
-		
-		
-		// Create submatrices for bottom right quadrant (need costs to be filled in with other submatrices already)
-		Matrix lowerRight = getLowerRight(numEndSplit, numStartMerge, cutoff);
-		//costs.setMatrix(numEndSplit, totalLength - 1, numStartMerge, totalLength - 1, lowerRight);						// Lower right (transpose of gap closing, mathematically required for LAP)
+		costs.setMatrix(0, topLeft.getRowDimension() - 1, 0, topLeft.getColumnDimension() - 1, topLeft);							// Gap closing
+		costs.setMatrix(topLeft.getRowDimension(), numRows - 1, 0, topLeft.getColumnDimension() - 1, bottomLeft);		// Initiating and merging alternative
+		costs.setMatrix(0, topLeft.getRowDimension() - 1, topLeft.getColumnDimension(), numCols - 1, topRight);		// Terminating and splitting alternative
+		costs.setMatrix(topLeft.getRowDimension(), numRows - 1, topLeft.getColumnDimension(), numCols - 1, bottomRight);						// Lower right (transpose of gap closing, mathematically required for LAP)		
 		
 		return true;
+	}
+	
+	private Matrix createTopLeftQuadrant() {
+		
+		// Create submatrices of top left quadrant (gap closing, merging, splitting, and empty middle
+		Matrix gapClosingScores = getGapClosingCostSubMatrix(trackSegments.size());
+		Matrix mergingScores = getMergingScores(trackSegments.size());
+		Matrix splittingScores = getSplittingScores(trackSegments.size());
+		Matrix middle = new Matrix(splittingMiddlePoints.size(), mergingMiddlePoints.size(), BLOCKED);
+		
+		// Initialize the top left quadrant
+		final int numRows = trackSegments.size() + splittingMiddlePoints.size();
+		final int numCols = trackSegments.size() + mergingMiddlePoints.size();
+		Matrix topLeft = new Matrix(numRows, numCols);
+		
+		// Fill in top left quadrant
+		topLeft.setMatrix(0, trackSegments.size() - 1, 0, trackSegments.size() - 1, gapClosingScores);
+		topLeft.setMatrix(trackSegments.size(), numRows - 1, 0, trackSegments.size() - 1, splittingScores);
+		topLeft.setMatrix(0, trackSegments.size() - 1, trackSegments.size(), numCols - 1, mergingScores);
+		topLeft.setMatrix(trackSegments.size(), numRows - 1, trackSegments.size(), numCols - 1, middle);
+		
+		return topLeft;
 	}
 	
 	private void printMatrix (Matrix m, String s) {
@@ -270,15 +261,10 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	 * Uses a merging cost function to fill in the merging costs submatrix.
 	 */
 	private Matrix getMergingScores(int n) {
-		//final Matrix mergingScores = new Matrix(n, m);	
 		final Matrix mergingScores = new Matrix(n, middlePoints.size());
-		//findParticipatingMergingMiddlePoints();	
-		//final Matrix mergingScores = new Matrix(n, mergingMiddlePoints.size());	
-		//MergingCostFunction merging = new MergingCostFunction(mergingScores, trackSegments, mergingMiddlePoints, MAX_DIST_SEGMENTS, BLOCKED, INTENSITY_RATIO_CUTOFFS);
 		MergingCostFunction merging = new MergingCostFunction(mergingScores, trackSegments, middlePoints, MAX_DIST_SEGMENTS, BLOCKED, INTENSITY_RATIO_CUTOFFS);
 		merging.applyCostFunction();
 		return pruneColumns(mergingScores, mergingMiddlePoints);
-		//return mergingScores;
 	}
 
 	private Matrix pruneColumns (Matrix m, ArrayList<Spot> keptMiddleSpots) {
@@ -349,15 +335,10 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	 * Uses a splitting cost function to fill in the splitting costs submatrix.
 	 */
 	private Matrix getSplittingScores(int n) {
-		//final Matrix splittingScores = new Matrix(n, m);
-		//findParticipatingSplittingMiddlePoints();	
-		//final Matrix splittingScores = new Matrix(splittingMiddlePoints.size(), n);	
 		final Matrix splittingScores = new Matrix(middlePoints.size(), n);	
 		SplittingCostFunction splitting = new SplittingCostFunction(splittingScores, trackSegments, middlePoints, MAX_DIST_SEGMENTS, BLOCKED, INTENSITY_RATIO_CUTOFFS);
-		//SplittingCostFunction splitting = new SplittingCostFunction(splittingScores, trackSegments, splittingMiddlePoints, MAX_DIST_SEGMENTS, BLOCKED, INTENSITY_RATIO_CUTOFFS);
 		splitting.applyCostFunction();
 		return pruneRows(splittingScores, splittingMiddlePoints);
-		//return splittingScores;
 	}
 	
 	
@@ -365,17 +346,14 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	 * Calculates the CUTOFF_PERCENTILE cost of all costs in gap closing, merging, and
 	 * splitting matrices to assign the top right and bottom left score matrices.
 	 */
-	private double getCutoff(Matrix m, Matrix n, Matrix o) {
+	private double getCutoff(Matrix m) {
 		
 		// Get a list of all non-BLOCKED cost
 		ArrayList<Double> scores = new ArrayList<Double>();
-		Matrix[] matrices = new Matrix[] {m, n, o};
-		for (Matrix matrix : matrices) {
-			for (int i = 0; i < matrix.getRowDimension(); i++) {
-				for (int j = 0; j < matrix.getColumnDimension(); j++) {
-					if (matrix.get(i, j) < BLOCKED) {
-						scores.add(matrix.get(i, j));
-					}
+		for (int i = 0; i < m.getRowDimension(); i++) {
+			for (int j = 0; j < m.getColumnDimension(); j++) {
+				if (m.get(i, j) < BLOCKED) {
+					scores.add(m.get(i, j));
 				}
 			}
 		}

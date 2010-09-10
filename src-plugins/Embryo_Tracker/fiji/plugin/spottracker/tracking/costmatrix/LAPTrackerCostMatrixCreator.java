@@ -43,8 +43,8 @@ public abstract class LAPTrackerCostMatrixCreator implements CostMatrixCreator {
 	 * but basically it has to be made this way so that the LAP is solvable
 	 * (mathematical requirement).
 	 */
-	protected Matrix getLowerRight(int numRows, int numCols, double cutoff) {
-		Matrix lowerRight = costs.getMatrix(0, numRows - 1, 0, numCols - 1);
+	protected Matrix getLowerRight(Matrix topLeft, double cutoff) {
+		Matrix lowerRight = topLeft.copy();
 		lowerRight = lowerRight.transpose();
 		for (int i = 0; i < lowerRight.getRowDimension(); i++) {
 			for (int j = 0; j < lowerRight.getColumnDimension(); j++) {
