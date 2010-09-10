@@ -2,6 +2,7 @@ import ij.IJ;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
+import imglib.mpicbg.imglib.cursor.special.TwinValueRangeCursor;
 
 /**
  * A class that represents the mean calculation of the two source
@@ -41,11 +42,13 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm {
 
 	public void execute(DataContainer container) throws MissingPreconditionException {
 		if (theImplementation == Implementation.Classic)
-			classicPearsons(container);
-		else fastPearsons(container);
+			pearsonsCorrelationValue = classicPearsons(container);
+		else {
+			fastPearsons(container);
+		}
 	}
 
-	public void classicPearsons(DataContainer container) throws MissingPreconditionException {
+	public double classicPearsons(DataContainer container) {
 		// get the means from the DataContainer
 		double ch1Mean = container.getMeanCh1();
 		double ch2Mean = container.getMeanCh2();
@@ -79,8 +82,7 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm {
 		cursor1.close();
 		cursor2.close();
 
-		//put the result into the DataContainer
-		pearsonsCorrelationValue = pearsonDenominator / pearsonNumerator;
+		return pearsonDenominator / pearsonNumerator;
 	}
 
 	public void fastPearsons(DataContainer container) {
@@ -203,6 +205,49 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm {
 		// close the cursors
 		cursor1.close();
 		cursor2.close();
+
+		// for faster computation, have the inverse of N available
+		double invN = 1.0 / N;
+
+		double pearsons1 = sumProduct1_2 - (sum1 * sum2 * invN);
+		double pearsons2 = sum1squared - (sum1 * sum1 * invN);
+		double pearsons3 = sum2squared - (sum2 * sum2 * invN);
+		double pearsonsR = pearsons1/(Math.sqrt(pearsons2*pearsons3));
+
+		return pearsonsR;
+	}
+
+	/**
+	 * Calculates Person's R value by using a fast implementation of the
+	 * algorithm. This method allows the specification of a TwinValueRangeCursor.
+	 * With such a cursor one for instance can combine different thresholding
+	 * conditions for each channel. The cursor is not closed in here.
+	 *
+	 * @param <T> The image base type
+	 * @param img1 Channel one
+	 * @param img2 Channel two
+	 * @param cursor The cursor that defines the walk over both images.
+	 * @return Person's R value
+	 */
+	public static <T extends RealType<T>> double fastPearsons(TwinValueRangeCursor<T> cursor) {
+		double sum1 = 0.0, sum2 = 0.0, sumProduct1_2 = 0.0, sum1squared= 0.0, sum2squared = 0.0;
+		// the total amount of pixels that have been taken into consideration
+		int N = 0;
+
+		while (cursor.hasNext()) {
+			cursor.fwd();
+			T type1 = cursor.getChannel1Type();
+			double ch1 = type1.getRealDouble();
+			T type2 = cursor.getChannel2Type();
+			double ch2 = type2.getRealDouble();
+
+			sum1 += ch1;
+			sumProduct1_2 += (ch1 * ch2);
+			sum1squared += (ch1 * ch1);
+			sum2squared += (ch2 *ch2);
+			sum2 += ch2;
+			N++;
+		}
 
 		// for faster computation, have the inverse of N available
 		double invN = 1.0 / N;
