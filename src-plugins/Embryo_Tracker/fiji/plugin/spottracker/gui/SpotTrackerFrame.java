@@ -9,6 +9,7 @@ import ij3d.ContentCreator;
 import ij3d.Image3DUniverse;
 
 import java.awt.CardLayout;
+import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -26,6 +27,7 @@ import fiji.plugin.spottracker.Logger;
 import fiji.plugin.spottracker.Settings;
 import fiji.plugin.spottracker.Spot;
 import fiji.plugin.spottracker.Spot_Tracker;
+import fiji.plugin.spottracker.tracking.LAPTracker;
 
 
 /**
@@ -66,8 +68,8 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 	private Spot_Tracker spotTracker;
 	private LogPanel logPanel;
 	private Logger logger;
-	private List<Collection<Spot>> spots;
-	private List<Collection<Spot>> selectedSpots;
+	private TreeMap<Integer,Collection<Spot>> spots;
+	private TreeMap<Integer,Collection<Spot>> selectedSpots;
 	private SpotDisplayer displayer;
 	private boolean is3D;
 	
@@ -181,7 +183,7 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 				logPanel.jButtonNext.setEnabled(true);
 				cardLayout.show(getContentPane(), THRESHOLD_GUI_KEY);
 				
-				thresholdGuiPanel.setSpots(spots);
+				thresholdGuiPanel.setSpots(spots.values());
 				thresholdGuiPanel.addThresholdPanel(Feature.MEAN_INTENSITY);
 				thresholdSpots();
 				state = GuiState.THRESHOLD_BLOBS;
@@ -198,11 +200,26 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 						boolean[] isAbove = thresholdGuiPanel.getIsAbove();
 						for (int i = 0; i < features.length; i++)
 							spotTracker.addThreshold(features[i], (float) values[i], isAbove[i]);
+						spotTracker.execThresholding();
 						selectedSpots = spotTracker.getSelectedSpots();
 						logger.log("Thresholding done.\n", Logger.BLUE_COLOR);
 						logPanel.jButtonNext.setEnabled(true);
+						
+						logger.log("Starting tracking.");
+						LAPTracker tracker = new LAPTracker(selectedSpots);
+						if (tracker.checkInput() && tracker.process()) {
+							logger.log("Tracking finished!", Color.GREEN);
+							for (int key : selectedSpots.keySet()) {
+								for (Spot spot : selectedSpots.get(key))
+									System.out.println(spot);// DEBUG
+							}
+						}
+						else 
+							logger.error("Problem occured in tracking:\n"+tracker.getErrorMessage());
 					}
 				}.start();
+				
+				
 				break;
 		}
 	}
