@@ -283,7 +283,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 		jPanelAllThresholds.add(tp);
 		jPanelAllThresholds.add(strut);
 		jPanelAllThresholds.revalidate();
-		fireThresholdChanged(CHANGE_EVENT);
+		stateChanged(CHANGE_EVENT);
 	}
 	
 	private void removeThresholdPanel() {

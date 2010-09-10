@@ -148,7 +148,7 @@ public class FeatureFacade <T extends RealType<T>> {
 		float[] downsamplingFactors = new float[filteredImage.getNumDimensions()];
 		for (int i = 0; i < downsamplingFactors.length; i++) 
 			downsamplingFactors[i] = (float) rawImage.getDimension(i) / filteredImage.getDimension(i);
-		this.logValue = new LoGValue<T>(filteredImage, downsamplingFactors);
+		this.logValue = new LoGValue<T>(filteredImage, downsamplingFactors, calibration);
 		
 		featureAnalyzers = new ArrayList<FeatureAnalyzer>();
 		featureAnalyzers.add(descriptiveStatistics);

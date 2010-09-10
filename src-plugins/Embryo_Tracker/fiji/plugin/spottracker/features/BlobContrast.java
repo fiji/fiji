@@ -1,5 +1,7 @@
 package fiji.plugin.spottracker.features;
 
+import mpicbg.imglib.cursor.special.DiscCursor;
+import mpicbg.imglib.cursor.special.DomainCursor;
 import mpicbg.imglib.cursor.special.SphereCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
@@ -38,7 +40,11 @@ public class BlobContrast <T extends RealType<T>> extends IndependentFeatureAnal
 	 * @return
 	 */
 	protected float getContrast(final Spot spot, float diameter) {
-		SphereCursor<T> cursor = new SphereCursor<T>(img, spot.getCoordinates(), diameter/2 * (1+RAD_PERCENTAGE), calibration);
+		final DomainCursor<T> cursor;
+		if (img.getNumDimensions() == 3) 
+			cursor = new SphereCursor<T>(img, spot.getCoordinates(), diameter/2 * (1+RAD_PERCENTAGE), calibration);
+		else
+			cursor = new DiscCursor<T>(img, spot.getCoordinates(), diameter/2 * (1+RAD_PERCENTAGE), calibration);
 		int innerRingVolume = 0;
 		int outerRingVolume = 0 ;
 		float radius2 = diameter * diameter / 4;
