@@ -187,6 +187,7 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 		costs.setMatrix(topLeft.getRowDimension(), numRows - 1, topLeft.getColumnDimension(), numCols - 1, bottomRight);						// Lower right (transpose of gap closing, mathematically required for LAP)		
 		
 		//printMatrix(costs, "Step 2 costs");
+		System.out.println(String.format("Width: %d, Height: %d", costs.getColumnDimension(), costs.getRowDimension()));
 		
 		return true;
 	}
