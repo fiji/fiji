@@ -36,8 +36,8 @@ import fiji.plugin.spottracker.tracking.hungarian.HungarianAlgorithm;
  * 
  * <p>
  * Both steps are treated as a linear assignment problem. To solve the problems, a cost
- * matrix is designed for each step, and the Hungarian Algorithm is used to determine
- * the cost-minimizing assignments. The result of the calculation are the complete
+ * matrix is created for each step, and the Hungarian Algorithm is used to determine
+ * the cost-minimizing assignments. The results of the calculations are the complete
  * tracks of the objects. For more details on the Hungarian Algorithm, see
  * http://en.wikipedia.org/wiki/Hungarian_algorithm.
  * 
@@ -45,7 +45,7 @@ import fiji.plugin.spottracker.tracking.hungarian.HungarianAlgorithm;
  * 
  * <p>
  * Since there are two discrete steps to tracking using this framework, two distinct
- * cost matrices are required to solve the problem. The user can either choose
+ * classes of cost matrices are required to solve the problem. The user can either choose
  * to use the cost matrices / functions from the paper (for Brownian motion),
  * or can supply their own cost matrices.
  * 
@@ -66,7 +66,7 @@ import fiji.plugin.spottracker.tracking.hungarian.HungarianAlgorithm;
  * is described in more detail in {@link LinkingCostMatrixCreator}.
  * 
  * <p>The other matrix corresponds to step (2) above, and is used to link together
- * the various track segments previously calculated. Track segments can be:
+ * the track segments into final tracks. Track segments can be:
  * 
  * <ul>
  * <li>Linked end-to-tail (gap closing)</li>
@@ -322,7 +322,7 @@ public class LAPTracker implements ObjectTracker {
 				}
 			}
 		}
-		debug.print(4,2);
+		//debug.print(4,2);
 		
 		return true;
 	}
@@ -359,7 +359,6 @@ public class LAPTracker implements ObjectTracker {
 		segmentCosts = segCosts.getCostMatrix();
 		splittingMiddlePoints = segCosts.getSplittingMiddlePoints();
 		mergingMiddlePoints = segCosts.getMergingMiddlePoints();
-		//pruneSegmentCosts();
 		return true;
 	}
 	
@@ -514,21 +513,6 @@ public class LAPTracker implements ObjectTracker {
 		}
 		
 	}
-	
-	
-
-//	private void pruneSegmentCosts() {
-//		// TODO make matrices for two different middle points
-//		// Remove empty merging columns
-//		for (int i = trackSegments.size(); i < (trackSegments.size() + middleMergingPoints.size()); i++) {
-//			
-//			for (int j = 0; j < trackSegments.size(); j++ ) {
-//				
-//			}
-//		}
-//		
-//		// Remove empty merging rows
-//	}
 	
 	
 	/*
@@ -686,6 +670,12 @@ public class LAPTracker implements ObjectTracker {
 		}
 	}
 	
+	
+	/*
+	 * Takes the TreeMap<Integer, Collection<Spot> > construction
+	 * parameter, and converts it to an ArrayList< ArrayList<Spot> >
+	 * for the use in this class.
+	 */
 	private ArrayList< ArrayList<Spot> > convertMapToArrayList(TreeMap< Integer, ? extends Collection<Spot> > objects) {
 		ArrayList< ArrayList<Spot> > newContainer = new ArrayList< ArrayList<Spot> >();
 		Set<Integer> keys = objects.keySet();

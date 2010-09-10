@@ -12,13 +12,13 @@ import fiji.plugin.spottracker.tracking.costfunction.MergingCostFunction;
 import fiji.plugin.spottracker.tracking.costfunction.SplittingCostFunction;
 
 /**
- * <p>Creates the cost matrix <b>roughly</b> described in Figure 1c in the paper.
+ * <p>Creates the cost matrix <b><u>roughly</u></b> described in Figure 1c in the paper:
  * 
  * <p>Jaqaman, K. et al. "Robust single-particle tracking in live-cell time-lapse sequences."
  * Nature Methods, 2008.
  * 
- * <p>This matrix is notably different than the one described in the paper. This is because
- * the cost matrix described in 1c in the paper <b>is not </b> the cost matrix they use in their
+ * <p>This matrix is notably <u>different</u> than the one described in the paper. This is because
+ * the cost matrix described in 1c in the paper <b>is not</b> the cost matrix they use in their
  * matlab implementation.
  * 
  * <p>The cost matrix used in the matlab implementation by the authors, and used here, is described
