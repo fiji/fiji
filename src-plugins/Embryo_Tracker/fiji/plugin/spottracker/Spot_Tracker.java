@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import javax.swing.SwingUtilities;
 
@@ -60,9 +61,9 @@ public class Spot_Tracker implements PlugIn {
 	}	
 	
 	/** Contain the segmentation result, un-filtered. See {@link #execSegmentation(ImagePlus, Settings)}*/
-	private List<Collection<Spot>> spots;
+	private TreeMap<Integer,Collection<Spot>> spots;
 	/** Contain the Spot retained for tracking, after thresholding by features. */
-	private List<Collection<Spot>> selectedSpots;
+	private TreeMap<Integer,Collection<Spot>> selectedSpots;
 	
 	private ArrayList<Feature> thresholdFeatures = new ArrayList<Feature>();
 	private ArrayList<Float> thresholdValues = new ArrayList<Float>();
@@ -146,7 +147,7 @@ public class Spot_Tracker implements PlugIn {
 	 */
 	
 	public void execThresholding() {
-		selectedSpots = new ArrayList<Collection<Spot>>(spots.size());
+		selectedSpots = new TreeMap<Integer, Collection<Spot>>();
 		Collection<Spot> spotThisFrame, spotToKeep, spotToRemove;
 		
 		float threshold;
@@ -154,13 +155,13 @@ public class Spot_Tracker implements PlugIn {
 		Feature feature;
 		boolean isAbove;
 		
-		for (int timepoint = 0; timepoint < spots.size(); timepoint++) {
+		for (int timepoint : spots.keySet()) {
 			
 			spotThisFrame = spots.get(timepoint);
 			spotToKeep = new ArrayList<Spot>(spotThisFrame);
 			
 			if (null == thresholdFeatures || null == thresholdValues || null == thresholdAbove) {
-				selectedSpots.add(timepoint, spotToKeep);
+				selectedSpots.put(timepoint, spotToKeep);
 				continue;
 			}
 			
@@ -193,7 +194,7 @@ public class Spot_Tracker implements PlugIn {
 				}
 				spotToKeep.removeAll(spotToRemove); // no need to treat them multiple times
 			}
-			selectedSpots.add(timepoint, spotToKeep);
+			selectedSpots.put(timepoint, spotToKeep);
 		}
 	}
 	
@@ -264,7 +265,7 @@ public class Spot_Tracker implements PlugIn {
 		
 		// Since we can't get the NumericType out of imp, we assume it is a FloatType.
 		final SpotSegmenter<FloatType> segmenter = new SpotSegmenter<FloatType>(null, diam, calibration, useMedFilt, allowEdgeMax);				
-		spots = new ArrayList<Collection<Spot>>(numFrames);
+		spots = new TreeMap<Integer, Collection<Spot>>();
 		Collection<Spot> spotsThisFrame;
 		Image<FloatType> filteredImage;
 		
@@ -286,7 +287,7 @@ public class Spot_Tracker implements PlugIn {
 				spotsThisFrame = segmenter.getResult();
 				for (Spot spot : spotsThisFrame)
 					spot.setFrame(i);
-				spots.add(i-settings.tstart+1, spotsThisFrame);
+				spots.put(i-settings.tstart+1, spotsThisFrame);
 				logger.log("Frame "+(i+1)+": found "+spotsThisFrame.size()+" spots.\n");
 			} else {
 				logger.error(segmenter.getErrorMessage());
@@ -321,7 +322,7 @@ public class Spot_Tracker implements PlugIn {
 	 * all spots. They are returned as a List of Collection, one item in the list per time-point, in order.
 	 * @see #execSegmentation(ImagePlus, Settings)
 	 */
-	public List<Collection<Spot>> getSpots() {
+	public TreeMap<Integer, Collection<Spot>> getSpots() {
 		return spots;
 	}
 
@@ -330,7 +331,7 @@ public class Spot_Tracker implements PlugIn {
 	 * @see #execSegmentation(ImagePlus, Settings)
 	 * @see #addThreshold(Feature, float, boolean)
 	 */
-	public List<Collection<Spot>> getSelectedSpots() {
+	public TreeMap<Integer, Collection<Spot>> getSelectedSpots() {
 		return selectedSpots;
 	}
 	
