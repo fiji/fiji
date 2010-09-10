@@ -1,6 +1,8 @@
 package fiji.plugin.spottracker.features;
 
 import mpicbg.imglib.container.array.ArrayContainerFactory;
+import mpicbg.imglib.cursor.special.DiscCursor;
+import mpicbg.imglib.cursor.special.DomainCursor;
 import mpicbg.imglib.cursor.special.SphereCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
@@ -60,7 +62,11 @@ public class RadiusEstimator <T extends RealType<T>> extends IndependentFeatureA
 		final float[] ring_intensities = new float[nDiameters];
 		final int[]    ring_volumes = new int[nDiameters];
 
-		final SphereCursor<T> cursor = new SphereCursor<T>(img, spot.getCoordinates(), diameters[nDiameters-2]/2, calibration); // sphere over the largest radius
+		final DomainCursor<T> cursor;
+		if (img.getNumDimensions() == 3)
+			cursor = new SphereCursor<T>(img, spot.getCoordinates(), diameters[nDiameters-2]/2, calibration);
+		else
+			cursor = new DiscCursor<T>(img, spot.getCoordinates(), diameters[nDiameters-2]/2, calibration);
 		double d2;
 		int i;
 		while(cursor.hasNext())  {

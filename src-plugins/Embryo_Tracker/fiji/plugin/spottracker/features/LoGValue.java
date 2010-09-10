@@ -80,24 +80,24 @@ public class LoGValue <T extends RealType<T>> extends IndependentFeatureAnalyzer
 		final float[] coords = spot.getCoordinates().clone();
 		
 		// 1 - Convert physical coords to pixel coords
-		for (int i = 0; i < coords.length; i++) {
+		for (int i = 0; i < downsampleFactors.length; i++) {
 			coords[i] = coords[i] / calibration[i];
 		}
 		
 		// 2 - Downsample pixel coords, since we are using the downsampled image.
-		for (int i = 0; i < coords.length; i++) {
+		for (int i = 0; i < downsampleFactors.length; i++) {
 			coords[i] = coords[i] / downsampleFactors[i];
 		}
 		
 		// 3 - Store the float[] coords as a int[] to set the cursor with
-		final int[] intCoords = new int[coords.length];
-		for (int i = 0; i < intCoords.length; i++) {
+		final int[] intCoords = new int[downsampleFactors.length];
+		for (int i = 0; i < downsampleFactors.length; i++) {
 			intCoords[i] = (int) coords[i];
 		}
 		
 		// 4 - Get the intensity at the spot's coordinates
 		cursor.setPosition(intCoords);
-		System.out.println("LoG: " + cursor.getType().getRealFloat());
+//		System.out.println("LoG: " + cursor.getType().getRealFloat()); // DEBUG
 		spot.putFeature(FEATURE, cursor.getType().getRealFloat());
 	}
 	

@@ -294,10 +294,17 @@ public class Spot_Tracker implements PlugIn {
 			}
 			
 			/* 3 - Extract features for the spot collection */
-			logger.log("Frame "+(i+1)+": Calculating features...\n");
+			logger.log("Frame "+(i+1)+": Calculating features:\n");
 			logger.setProgress((2*(i-settings.tstart)+1) / (2f * numFrames + 1));
 			final FeatureFacade<FloatType> featureCalculator = new FeatureFacade<FloatType>(img, filteredImage, diam, calibration);
+			logger.log("Frame "+(i+1)+":\tStatistics features\n");
 			featureCalculator.processFeature(Feature.MEAN_INTENSITY, spotsThisFrame);
+			logger.log("Frame "+(i+1)+":\tLoG feature\n");
+			featureCalculator.processFeature(Feature.LOG_VALUE, spotsThisFrame);
+			logger.log("Frame "+(i+1)+":\tBest diameter feature\n");
+			featureCalculator.processFeature(Feature.ESTIMATED_DIAMETER, spotsThisFrame);
+			logger.log("Frame "+(i+1)+":\tContrast feature\n");
+			featureCalculator.processFeature(Feature.CONTRAST, spotsThisFrame);
 			
 		} // Finished looping over frames
 		logger.setProgress(1);

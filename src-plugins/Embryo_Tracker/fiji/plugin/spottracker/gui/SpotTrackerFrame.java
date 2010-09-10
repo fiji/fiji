@@ -173,7 +173,6 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 				try {
 					renderingThread.join();
 				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 
@@ -211,7 +210,7 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 	/**
 	 * Ensure an 8-bit gray image is sent to the 3D viewer.
 	 */
-	private ImagePlus[] makeImageForViewer(final Settings settings) {
+	private static final ImagePlus[] makeImageForViewer(final Settings settings) {
 		final ImagePlus origImp = settings.imp;
 		final ImagePlus imp;
 		
