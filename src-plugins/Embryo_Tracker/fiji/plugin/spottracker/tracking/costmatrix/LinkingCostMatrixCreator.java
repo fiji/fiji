@@ -25,7 +25,7 @@ public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 
 	/** The maximum distance away two Spots in consecutive frames can be in order 
 	 * to be linked. */
-	protected static final double MAX_DIST_OBJECTS = 1.0d;	// TODO make user input
+	protected static final double MAX_DIST_OBJECTS = 10.0d;	// TODO make user input
 	/** The factor used to create d and b in the paper, the alternative costs to linking
 	 * objects. */
 	protected static final double ALTERNATIVE_OBJECT_LINKING_COST_FACTOR = 1.05d;	// TODO make user input
@@ -81,8 +81,25 @@ public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 		costs.setMatrix(0, t0.size() - 1, t1.size(), costs.getColumnDimension() - 1, topRight);
 		costs.setMatrix(t0.size(), costs.getRowDimension() - 1, 0, t1.size() - 1, bottomLeft);
 
+		//printMatrix(costs, "linking costs");
+		
 		return true;
 	}
+	
+	
+	private void printMatrix (Matrix m, String s) {
+		Matrix n = m.copy();
+		System.out.println(s);
+		for (int i = 0; i < n.getRowDimension(); i++) {
+			for (int j = 0; j < n.getColumnDimension(); j++) {
+				if (n.get(i, j) == Double.MAX_VALUE) {
+					n.set(i, j, Double.NaN);
+				}
+			}
+		}
+		n.print(4,2);
+	}
+	
 	
 	/*
 	 * Gets the max score in a matrix m.

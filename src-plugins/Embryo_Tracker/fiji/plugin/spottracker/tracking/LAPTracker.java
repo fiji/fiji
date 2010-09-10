@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.TreeMap;
 
+import mpicbg.imglib.algorithm.math.MathLib;
+
 import Jama.Matrix;
 
 import fiji.plugin.spottracker.Feature;
@@ -510,6 +512,15 @@ public class LAPTracker implements ObjectTracker {
 					}
 				}
 			}
+		}
+		
+		// debug
+		for (ArrayList<Spot> segment : this.trackSegments) {
+			System.out.println("-*-*-*-* New Segment *-*-*-*-");
+			for (Spot spot : segment) {
+				System.out.println(MathLib.printCoordinates(spot.getCoordinates()) + ", Frame: " + spot.getFrame());
+			}
+			System.out.println();
 		}
 		
 	}

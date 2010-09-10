@@ -82,9 +82,9 @@ import fiji.plugin.spottracker.tracking.costfunction.SplittingCostFunction;
  */
 public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 
-	/** The maximum distance away two Spots in consecutive frames can be in order 
+	/** The maximum distance away two Segments can be in order 
 	 * to be linked. */
-	protected static final double MAX_DIST_SEGMENTS = 1.0d;	// TODO make user input
+	protected static final double MAX_DIST_SEGMENTS = 10.0d;	// TODO make user input
 	/** The factor used to create d and b in the paper, the alternative costs to linking
 	 * objects. */
 	protected static final double ALTERNATIVE_OBJECT_LINKING_COST_FACTOR = 1.05d;	// TODO make user input
@@ -185,6 +185,8 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 		costs.setMatrix(topLeft.getRowDimension(), numRows - 1, 0, topLeft.getColumnDimension() - 1, bottomLeft);		// Initiating and merging alternative
 		costs.setMatrix(0, topLeft.getRowDimension() - 1, topLeft.getColumnDimension(), numCols - 1, topRight);		// Terminating and splitting alternative
 		costs.setMatrix(topLeft.getRowDimension(), numRows - 1, topLeft.getColumnDimension(), numCols - 1, bottomRight);						// Lower right (transpose of gap closing, mathematically required for LAP)		
+		
+		//printMatrix(costs, "Step 2 costs");
 		
 		return true;
 	}
@@ -326,7 +328,10 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 		for (int i = 0; i < usefulRows.size(); i++) {
 			pruned[i] = usefulRows.get(i);
 		}
-
+		
+		if (pruned.length == 0) {
+			return new Matrix(0,0);
+		}
 		return new Matrix(pruned);
 	}
 	
@@ -364,6 +369,9 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 			scoreArr[i] = scores.get(i);
 		}
 		double cutoff = Utils.getPercentile(scoreArr, CUTOFF_PERCENTILE); 
+		if (!(cutoff < BLOCKED)) {
+			cutoff = 10.0d; // TODO how to fix this?
+		}
 		return ALTERNATIVE_OBJECT_LINKING_COST_FACTOR * cutoff;
 	}
 }
