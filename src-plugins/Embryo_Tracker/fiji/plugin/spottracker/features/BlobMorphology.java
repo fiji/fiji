@@ -26,9 +26,9 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 	/** The Feature characteristics this class computes. */
 	private static final Feature FEATURE = Feature.MORPHOLOGY;
 	/** Stores that a Spot has an ellipsoid shape. */
-	private static final int ELLIPSOID = 1;
+	public static final int ELLIPSOID = 1;
 	/** Stores that a Spot has a spherical shape. */
-	private static final int SPHERICAL = 0;
+	public static final int SPHERICAL = 0;
 	/** Significance factor to determine when a semiaxis length should be
 	 *  considered significantly larger than the others. */
 	private static final double SIGNIFICANCE_FACTOR = 1.2;
