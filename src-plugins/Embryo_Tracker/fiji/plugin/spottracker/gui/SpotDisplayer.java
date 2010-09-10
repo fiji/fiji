@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.TreeMap;
 
+import org.jfree.chart.renderer.InterpolatePaintScale;
+
 import fiji.plugin.spottracker.Feature;
 import fiji.plugin.spottracker.Spot;
 
@@ -12,13 +14,17 @@ public abstract class SpotDisplayer {
 
 	/** The default display radius. */
 	protected static final float DEFAULT_DISPLAY_RADIUS = 5;
-	
+	/** The default color. */
+	protected static final Color DEFAULT_COLOR = new Color(1f, 0, 1f);
 	/** The display radius. */
 	protected float radius = DEFAULT_DISPLAY_RADIUS;
+	
+	/** The colorMap. */
+	protected InterpolatePaintScale colorMap = InterpolatePaintScale.Jet;
 	/** The spot collections emanating from segmentation. */
 	protected TreeMap<Integer,Collection<Spot>> spots;
 	/** The default color to paint the spots in. */ 
-	protected Color color = new Color(1f, 0, 1f);
+	protected Color color = DEFAULT_COLOR;
 
 
 	
@@ -27,6 +33,11 @@ public abstract class SpotDisplayer {
 	/*
 	 * ABSTRACT METHODS
 	 */
+	
+	/**
+	 * Prepare this displayer and render it according to its concrete implementation.
+	 */
+	public abstract void render();
 	
 	/**
 	 * Color all displayed spots according to the feature given. 

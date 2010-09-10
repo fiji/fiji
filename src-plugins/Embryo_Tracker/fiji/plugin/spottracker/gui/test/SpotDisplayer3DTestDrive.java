@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.ExecutionException;
 
 import javax.swing.JFrame;
 import javax.swing.WindowConstants;
@@ -68,7 +67,7 @@ public class SpotDisplayer3DTestDrive {
 		// Put the blobs in the image
 		final SphereCursor<UnsignedByteType> cursor = new SphereCursor<UnsignedByteType>(img, centers.get(0), radiuses[0],	CALIBRATION);
 		for (int i = 0; i < N_BLOBS; i++) {
-			cursor.setRadius(radiuses[i]);
+			cursor.setSize(radiuses[i]);
 			cursor.moveCenterToCoordinates(centers.get(i));
 			while(cursor.hasNext()) 
 				cursor.next().set(intensities[i]);		
@@ -104,14 +103,8 @@ public class SpotDisplayer3DTestDrive {
 
 		// Launch renderer
 		final Image3DUniverse universe = new Image3DUniverse();
-		final SpotDisplayer3D displayer = new SpotDisplayer3D(spots, RADIUS);
-		try {
-			displayer.render(universe);
-		} catch (InterruptedException e1) {
-			e1.printStackTrace();
-		} catch (ExecutionException e1) {
-			e1.printStackTrace();
-		}
+		final SpotDisplayer3D displayer = new SpotDisplayer3D(spots, universe, RADIUS);
+		displayer.render();
 		universe.addVoltex(imp);
 		universe.show();
 		

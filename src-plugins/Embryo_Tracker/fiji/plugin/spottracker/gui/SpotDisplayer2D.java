@@ -1,23 +1,19 @@
 package fiji.plugin.spottracker.gui;
 
 import ij.ImagePlus;
-
 import ij.gui.ImageWindow;
-import ij.gui.OvalRoi;
-import ij.gui.Roi;
 
 import java.awt.AlphaComposite;
-import java.awt.Color;
-import java.awt.Composite;
-import java.awt.Graphics;
+import java.awt.BasicStroke;
+import java.awt.Graphics2D;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.TreeMap;
 
 import fiji.plugin.spottracker.Feature;
 import fiji.plugin.spottracker.Spot;
+import fiji.util.gui.AbstractAnnotation;
 import fiji.util.gui.OverlayedImageCanvas;
-import fiji.util.gui.OverlayedImageCanvas.Overlay;
 
 public class SpotDisplayer2D extends SpotDisplayer {
 
@@ -25,42 +21,39 @@ public class SpotDisplayer2D extends SpotDisplayer {
 	 * INNER CLASS
 	 */
 	
-	public static class SpotOverlay implements Overlay {
+	public class SpotOverlay extends AbstractAnnotation {
 
-		private Composite composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.00f );
-		private Color color;
-		private double xcenter;
-		private double ycenter;
-		private double radius;
+		private float xcenter;
+		private float ycenter;
+		private float radius;
 		private boolean isVisible = true;
 		
-		public SpotOverlay(double xcenter, double ycenter, double radius) {
+		public SpotOverlay(float xcenter, float ycenter, float radius) {
 			this.xcenter = xcenter;
 			this.ycenter = ycenter;
 			this.radius = radius;
-		}
-		
-		@Override
-		public void paint(Graphics g, int x, int y, double magnification) {
-			// TODO Auto-generated method stub
-			
-		}
-
-		@Override
-		public void setComposite(Composite composite) {
-			this.composite = composite;			
+			setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.00f ));
+			setColor(SpotDisplayer2D.DEFAULT_COLOR);
+			setStroke(new BasicStroke(1));
 		}
 		
 		public void setTransparency(float transparency) {
-			this.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, transparency);
-		}
-		
-		public void setColor(Color color) {
-			this.color = color;
+			setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1-transparency));
 		}
 		
 		public void setVisible(boolean visible) {
 			this.isVisible   = visible;
+		}
+
+		@Override
+		public void draw(Graphics2D g2d) {
+			if (!isVisible)
+				return;
+			final int x = Math.round((xcenter - radius) / calibration[0]); // We use the calibration field of the outer instance 
+			final int y = Math.round((ycenter - radius) / calibration[1]);
+			final int width = Math.round(2 * radius / calibration[0]);
+			final int height = Math.round(2 * radius / calibration[1]);
+			g2d.drawOval(x, y, width, height);			
 		}
 		
 	}
@@ -71,19 +64,33 @@ public class SpotDisplayer2D extends SpotDisplayer {
 	
 	private final ImagePlus imp;
 	private OverlayedImageCanvas canvas;
+	private float[] calibration;
+	private TreeMap<Integer, HashMap<Spot, SpotOverlay>> spotOverlays;
 
-	public SpotDisplayer2D(Collection<Spot> spots, final ImagePlus imp, final float radius) {
+	public SpotDisplayer2D(Collection<Spot> spots, final ImagePlus imp, final float radius, final float[] calibration) {
 		TreeMap<Integer, Collection<Spot>> spotsOverTime = new TreeMap<Integer, Collection<Spot>>();
 		spotsOverTime.put(0, spots);
 		this.radius = radius;
 		this.spots = spotsOverTime;
 		this.imp = imp;
+		this.calibration = calibration;
 	}
 	
-	public SpotDisplayer2D(TreeMap<Integer, Collection<Spot>> spots, ImagePlus imp, final float radius) {
+	public SpotDisplayer2D(Collection<Spot> spots, final ImagePlus imp, final float radius) {
+		this(spots, imp, radius, 
+				new float[] {(float) imp.getCalibration().pixelWidth, (float) imp.getCalibration().pixelHeight});
+	}
+	
+	public SpotDisplayer2D(TreeMap<Integer, Collection<Spot>> spots, ImagePlus imp, final float radius, float[] calibration) {
 		this.radius = radius;
 		this.spots = spots;
 		this.imp = imp;
+		this.calibration = calibration;
+	}
+	
+	public SpotDisplayer2D(TreeMap<Integer, Collection<Spot>> spots, ImagePlus imp, final float radius) {
+		this(spots, imp, radius, 
+				new float[] {(float) imp.getCalibration().pixelWidth, (float) imp.getCalibration().pixelHeight });
 	}
 	
 	public SpotDisplayer2D(TreeMap<Integer, Collection<Spot>> spots, final ImagePlus imp) {
@@ -101,50 +108,84 @@ public class SpotDisplayer2D extends SpotDisplayer {
 	public void render() {
 		canvas = new OverlayedImageCanvas(imp);
 		new ImageWindow(imp, canvas);
+		
+		spotOverlays = new TreeMap<Integer, HashMap<Spot, SpotOverlay>>();
+		HashMap<Spot, SpotOverlay> map;
+		SpotOverlay overlay;
+		float[] coords;
+		for (int key : spots.keySet()) {
+			map = new  HashMap<Spot, SpotOverlay>(spots.size());
+			for (Spot spot : spots.get(key)) {
+				coords = spot.getCoordinates();
+				overlay = new SpotOverlay(coords[0], coords[1], radius);
+				canvas.addOverlay(overlay);
+				map.put(spot, overlay);
+			}
+			spotOverlays.put(key, map);			
+		}
 		refresh(null, null, null);
 	}
 	
 	
 	@Override
 	public void resetTresholds() {
-		// TODO Auto-generated method stub
-
+		refresh(null, null, null);
 	}
 
 	@Override
 	public void setColorByFeature(Feature feature) {
-		// TODO Auto-generated method stub
-
+		if (null == feature) {
+			for(int key : spotOverlays.keySet())
+				for (SpotOverlay overlay : spotOverlays.get(key).values())
+					overlay.setColor(color);
+		} else {
+			// Get min & max
+			float min = Float.POSITIVE_INFINITY;
+			float max = Float.NEGATIVE_INFINITY;
+			Float val;
+			for (int key : spots.keySet()) {
+				for (Spot spot : spots.get(key)) {
+					val = spot.getFeature(feature);
+					if (null == val)
+						continue;
+					if (val > max) max = val;
+					if (val < min) min = val;
+				}
+			}
+			// Color using LUT
+			Collection<Spot> spotThisFrame;
+			HashMap<Spot, SpotOverlay> spotOverlaysInFrame;
+			for (int key : spots.keySet()) {
+				spotThisFrame = spots.get(key);
+				spotOverlaysInFrame = spotOverlays.get(key);
+				for ( Spot spot : spotThisFrame) {
+					val = spot.getFeature(feature);
+					if (null == val) 
+						spotOverlaysInFrame.get(spot).setColor(color);
+					else
+						spotOverlaysInFrame.get(spot).setColor(colorMap.getPaint((val-min)/(max-min)));
+				}
+			}
+		}
+		imp.updateAndDraw();
 	}
 
 	@Override
 	public void refresh(Feature[] features, double[] thresholds, boolean[] isAboves) {
 		TreeMap<Integer, Collection<Spot>> spotsToShow = threshold(features, thresholds, isAboves);
-
+		// Make all overlays invisible
+		for (int key : spots.keySet()) 
+			for (Spot spot : spots.get(key))
+				spotOverlays.get(key).get(spot).setVisible(false);		
+		// Select the ones in the currently displayed frame 
 		final int frame = imp.getFrame();
 		final Collection<Spot> spotThisFrame = spotsToShow.get(frame-1);
-		if (null == spotThisFrame)
-			return;
-
-		final int width = (int) (2*radius);
-		final int height = (int) (2*radius);
-		final double pixelHeight = imp.getCalibration().pixelHeight;
-		final double pixelWidth = imp.getCalibration().pixelWidth;
-		
-		SpotOverlay overlay;
-		double x, y;
-		float[] coords;
-		
-		HashMap<Spot, SpotOverlay> overlays = new HashMap<Spot, SpotOverlay>(spots.size());
-		for (Spot spot : spotThisFrame) {
-			coords = spot.getCoordinates();
-			x = coords[0]*pixelWidth;
-			y = coords[1]*pixelHeight;
-			overlay = new SpotOverlay(x, y, radius);
-			canvas.addOverlay(overlay);
-		}
+		final HashMap<Spot, SpotOverlay> spotOverlayThisFrame = spotOverlays.get(frame-1);
+		// Resurrect selected spots
+		for (Spot spot : spotThisFrame) 
+			spotOverlayThisFrame.get(spot).setVisible(true);
+		// Refresh
 		imp.updateAndDraw();
-		
 	}
 
 }
