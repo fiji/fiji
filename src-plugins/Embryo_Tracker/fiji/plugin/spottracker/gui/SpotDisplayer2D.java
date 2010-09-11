@@ -12,6 +12,7 @@ import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.TreeMap;
@@ -24,8 +25,42 @@ import fiji.util.gui.OverlayedImageCanvas;
 public class SpotDisplayer2D extends SpotDisplayer {
 
 	/*
-	 * INNER CLASS
+	 * INNER CLASSES
 	 */
+	
+	public class TrackOverlay extends AbstractAnnotation {
+
+		private Spot spot;
+		
+		public TrackOverlay(Spot spot, Color color) {
+			this.spot = spot;
+			setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.00f ));
+			setColor(color);
+			setStroke(new BasicStroke(1));
+		}
+		
+		@Override
+		public void draw(Graphics2D g2d) {
+			ArrayList<Spot> prevSpots = spot.getPrev();
+			if (null == prevSpots)
+				return;
+			for(Spot toSpot : spot.getPrev())
+				draw(spot, toSpot, g2d);
+		}
+		
+		private final void draw(final Spot fromSpot, final Spot toSpot, final Graphics2D g2d) {
+			int x1 = (int) fromSpot.getCoordinates()[0];
+			int y1 = (int) fromSpot.getCoordinates()[1];
+			int x2 = (int) toSpot.getCoordinates()[0];
+			int y2 = (int) toSpot.getCoordinates()[1];
+			g2d.drawLine(x1, y1, x2, y2);
+			ArrayList<Spot> prevSpots = toSpot.getPrev();
+			if (null == prevSpots)
+				return;
+			for (Spot spot : prevSpots)
+				draw(toSpot, spot, g2d);
+		}
+	}
 	
 	public class SpotOverlay extends AbstractAnnotation {
 
@@ -119,6 +154,7 @@ public class SpotDisplayer2D extends SpotDisplayer {
 	 * PUBLIC METHODS
 	 */
 	
+	@Override
 	public void render() {
 		spotsToShow = spots;
 		canvas = new OverlayedImageCanvas(imp);
@@ -167,8 +203,6 @@ public class SpotDisplayer2D extends SpotDisplayer {
 		imp.updateAndDraw();
 	}
 		
-		
-
 	@Override
 	public void refresh(Feature[] features, double[] thresholds, boolean[] isAboves) {
 		spotsToShow = threshold(features, thresholds, isAboves);
@@ -202,6 +236,18 @@ public class SpotDisplayer2D extends SpotDisplayer {
 				overlay = new SpotOverlay(coords[0], coords[1], radius, colorMap.getPaint((val-featureMinValue)/(featureMaxValue-featureMinValue)));
 			canvas.addOverlay(overlay);
 			spotOverlays.put(spot, overlay);
+		}
+		
+		if (displayTracks) {
+			
+			if (frame == 0) 
+				return;
+			
+			TrackOverlay trackOverkay;
+			for (Spot spot : spotsThisFrame) {
+				trackOverkay = new TrackOverlay(spot, DEFAULT_COLOR);
+				canvas.addOverlay(trackOverkay);
+			}
 		}
 		
 	}

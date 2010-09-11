@@ -209,10 +209,7 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 						LAPTracker tracker = new LAPTracker(selectedSpots);
 						if (tracker.checkInput() && tracker.process()) {
 							logger.log("Tracking finished!", Color.GREEN);
-							for (int key : selectedSpots.keySet()) {
-								for (Spot spot : selectedSpots.get(key))
-									System.out.println(spot);// DEBUG
-							}
+							displayer.setDisplayTracks(true);
 						}
 						else 
 							logger.error("Problem occured in tracking:\n"+tracker.getErrorMessage());

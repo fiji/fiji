@@ -25,11 +25,14 @@ public abstract class SpotDisplayer {
 	protected TreeMap<Integer,Collection<Spot>> spots;
 	/** The default color to paint the spots in. */ 
 	protected Color color = DEFAULT_COLOR;
+	/** If true, tracks will be displayed. */
+	protected boolean displayTracks;
 
 
 	
-	
-	
+	public void setDisplayTracks(boolean displayTrack) {
+		this.displayTracks = displayTrack;
+	}	
 	/*
 	 * ABSTRACT METHODS
 	 */
@@ -60,6 +63,7 @@ public abstract class SpotDisplayer {
 	/*
 	 * PROTECTED METHODS
 	 */
+	
 	
 	/**
 	 * Return the subset of spots of this displayer that satisfy the threshold conditions given
