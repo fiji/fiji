@@ -4,6 +4,7 @@ import ij3d.Content;
 import ij3d.ContentInstant;
 import ij3d.Image3DUniverse;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.TreeMap;
@@ -12,19 +13,20 @@ import java.util.concurrent.ExecutionException;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point4f;
 
+import fiji.plugin.spottracker.Featurable;
 import fiji.plugin.spottracker.Feature;
-import fiji.plugin.spottracker.Spot;
+import fiji.plugin.spottracker.TrackNode;
 import fiji.plugin.spottracker.visualization.SpotGroupNode;
 
-public class SpotDisplayer3D extends SpotDisplayer {
+public class SpotDisplayer3D <K extends Featurable> extends SpotDisplayer<K> {
 	
-	private TreeMap<Integer,SpotGroupNode<Spot>> blobs;	
+	private TreeMap<Integer, SpotGroupNode<K>> blobs;	
 	private Content spotContent;
 	private final Image3DUniverse universe;
 	
 	
-	public SpotDisplayer3D(Collection<Spot> spots, Image3DUniverse universe, final float radius) {
-		TreeMap<Integer, Collection<Spot>> spotsOverTime = new TreeMap<Integer, Collection<Spot>>();
+	public SpotDisplayer3D(Collection<TrackNode<K>> spots, Image3DUniverse universe, final float radius) {
+		TreeMap<Integer, Collection<TrackNode<K>>> spotsOverTime = new TreeMap<Integer, Collection<TrackNode<K>>>();
 		spotsOverTime.put(0, spots);
 		this.radius = radius;
 		this.spots = spotsOverTime;
@@ -32,18 +34,18 @@ public class SpotDisplayer3D extends SpotDisplayer {
 		spotContent = makeContent();
 	}
 	
-	public SpotDisplayer3D(TreeMap<Integer, Collection<Spot>> spots, Image3DUniverse universe, final float radius) {
+	public SpotDisplayer3D(TreeMap<Integer, Collection<TrackNode<K>>> spots, Image3DUniverse universe, final float radius) {
 		this.radius = radius;
 		this.spots = spots;
 		this.universe = universe;
 		spotContent = makeContent();
 	}
 	
-	public SpotDisplayer3D(TreeMap<Integer, Collection<Spot>> spots, Image3DUniverse universe) {
+	public SpotDisplayer3D(TreeMap<Integer, Collection<TrackNode<K>>> spots, Image3DUniverse universe) {
 		this(spots, universe, DEFAULT_DISPLAY_RADIUS);
 	}
 	
-	public SpotDisplayer3D(Collection<Spot> spots, Image3DUniverse universe) {
+	public SpotDisplayer3D(Collection<TrackNode<K>> spots, Image3DUniverse universe) {
 		this(spots, universe, DEFAULT_DISPLAY_RADIUS);
 	}
 
@@ -74,8 +76,8 @@ public class SpotDisplayer3D extends SpotDisplayer {
 			float max = Float.NEGATIVE_INFINITY;
 			Float val;
 			for (int key : spots.keySet()) {
-				for (Spot spot : spots.get(key)) {
-					val = spot.getFeature(feature);
+				for (TrackNode<K> spot : spots.get(key)) {
+					val = spot.getObject().getFeature(feature);
 					if (null == val)
 						continue;
 					if (val > max) max = val;
@@ -83,17 +85,17 @@ public class SpotDisplayer3D extends SpotDisplayer {
 				}
 			}
 			// Color using LUT
-			Collection<Spot> spotThisFrame;
-			SpotGroupNode<Spot> spotGroup;
+			Collection<TrackNode<K>> spotThisFrame;
+			SpotGroupNode<K> spotGroup;
 			for (int key : blobs.keySet()) {
 				spotThisFrame = spots.get(key);
 				spotGroup = blobs.get(key);
-				for ( Spot spot : spotThisFrame) {
-					val = spot.getFeature(feature);
+				for ( TrackNode<K> node : spotThisFrame) {
+					val = node.getObject().getFeature(feature);
 					if (null == val) 
-						spotGroup.setColor(spot, new Color3f(color));
+						spotGroup.setColor(node.getObject(), new Color3f(color));
 					else
-						spotGroup.setColor(spot, new Color3f(colorMap.getPaint((val-min)/(max-min))));
+						spotGroup.setColor(node.getObject(), new Color3f(colorMap.getPaint((val-min)/(max-min))));
 				}
 			}
 		}
@@ -102,9 +104,16 @@ public class SpotDisplayer3D extends SpotDisplayer {
 
 	@Override
 	public final void refresh(final Feature[] features, double[] thresholds, boolean[] isAboves) {
-		TreeMap<Integer, Collection<Spot>> spotToShow = threshold(features, thresholds, isAboves);
-		for (int key : spotToShow.keySet())
-			blobs.get(key).setVisible(spotToShow.get(key));
+		TreeMap<Integer, Collection<TrackNode<K>>> allNodesToShow = threshold(features, thresholds, isAboves);
+		Collection<K> spotToShow;
+		Collection<TrackNode<K>> nodesToShow;
+		for(int key : allNodesToShow.keySet()){
+			nodesToShow = allNodesToShow.get(key);
+			spotToShow = new ArrayList<K>(nodesToShow.size());
+			for(TrackNode<K> node : nodesToShow)
+				spotToShow.add(node.getObject());
+			blobs.get(key).setVisible(spotToShow);
+		}
 	}	
 
 	@Override
@@ -120,23 +129,23 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	
 	private Content makeContent() {
 		
-		blobs = new TreeMap<Integer, SpotGroupNode<Spot>>();
-		Collection<Spot> spotsThisFrame; 
-		SpotGroupNode<Spot> spotGroup;
+		blobs = new TreeMap<Integer, SpotGroupNode<K>>();
+		Collection<TrackNode<K>> spotsThisFrame; 
+		SpotGroupNode<K> spotGroup;
 		ContentInstant contentThisFrame;
 		TreeMap<Integer, ContentInstant> contentAllFrames = new TreeMap<Integer, ContentInstant>();
 		
 		for(Integer i : spots.keySet()) {
 			spotsThisFrame = spots.get(i);
-			HashMap<Spot, Point4f> centers = new HashMap<Spot, Point4f>(spotsThisFrame.size());
+			HashMap<K, Point4f> centers = new HashMap<K, Point4f>(spotsThisFrame.size());
 			float[] pos;
-			float[] coords;
-			for(Spot spot : spotsThisFrame) {
-				coords = spot.getCoordinates();
+			float[] coords = new float[3];
+			for(TrackNode<K> spot : spotsThisFrame) {
+				spot.getObject().getPosition(coords);
 				pos = new float[] {coords[0], coords[1], coords[2], radius};
-				centers.put(spot, new Point4f(pos));
+				centers.put(spot.getObject(), new Point4f(pos));
 			}
-			spotGroup = new SpotGroupNode<Spot>(centers, new Color3f(color));
+			spotGroup = new SpotGroupNode<K>(centers, new Color3f(color));
 			contentThisFrame = new ContentInstant("Spots_frame_"+i);
 			contentThisFrame.display(spotGroup);
 			

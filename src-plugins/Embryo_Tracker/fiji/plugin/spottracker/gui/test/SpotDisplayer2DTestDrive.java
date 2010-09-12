@@ -1,7 +1,9 @@
 package fiji.plugin.spottracker.gui.test;
 
+import fiji.plugin.spottracker.Featurable;
 import fiji.plugin.spottracker.Feature;
-import fiji.plugin.spottracker.Spot;
+import fiji.plugin.spottracker.TrackNode;
+import fiji.plugin.spottracker.Utils;
 import fiji.plugin.spottracker.features.FeatureFacade;
 import fiji.plugin.spottracker.gui.SpotDisplayer2D;
 import fiji.plugin.spottracker.gui.ThresholdGuiPanel;
@@ -79,7 +81,7 @@ public class SpotDisplayer2DTestDrive {
 		System.out.println("Creating image done.");
 		
 		SpotSegmenter<UnsignedByteType> segmenter = new SpotSegmenter<UnsignedByteType>(img, 2*RADIUS, CALIBRATION);
-		Collection<Spot> spots;
+		Collection<Featurable> spots;
 		System.out.println("Segmenting...");
 		if (segmenter.checkInput() && segmenter.process())
 			spots = segmenter.getResult();
@@ -89,7 +91,7 @@ public class SpotDisplayer2DTestDrive {
 		}
 		System.out.println("Segmentation done. Found "+spots.size()+" spots.");
 		
-		TreeMap<Integer, Collection<Spot>> allSpots = new TreeMap<Integer, Collection<Spot>>();
+		TreeMap<Integer, Collection<Featurable>> allSpots = new TreeMap<Integer, Collection<Featurable>>();
 		allSpots.put(0, spots);
 		
 		System.out.println("Calculating features..");
@@ -99,7 +101,8 @@ public class SpotDisplayer2DTestDrive {
 
 		imp.getCalibration().pixelWidth = CALIBRATION[0];
 		imp.getCalibration().pixelHeight = CALIBRATION[1];
-		final SpotDisplayer2D displayer = new SpotDisplayer2D(allSpots, imp, RADIUS, CALIBRATION);
+		TreeMap<Integer, Collection<TrackNode<Featurable>>> allNodes = Utils.embed(allSpots);
+		final SpotDisplayer2D<Featurable> displayer = new SpotDisplayer2D<Featurable>(allNodes, imp, RADIUS, CALIBRATION);
 		displayer.render();
 		
 		System.out.println("Starting threshold GUI...");

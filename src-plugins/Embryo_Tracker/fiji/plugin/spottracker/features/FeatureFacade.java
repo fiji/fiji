@@ -3,8 +3,8 @@ package fiji.plugin.spottracker.features;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import fiji.plugin.spottracker.Featurable;
 import fiji.plugin.spottracker.Feature;
-import fiji.plugin.spottracker.Spot;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
 
@@ -94,7 +94,7 @@ public class FeatureFacade <T extends RealType<T>> {
 	/**
 	 * Compute all features for all the spots given.
 	 */
-	public void processAllFeatures(Collection<Spot> spots) {
+	public void processAllFeatures(Collection<Featurable> spots) {
 		for (FeatureAnalyzer analyzer : featureAnalyzers) 
 			analyzer.process(spots);
 	}
@@ -102,7 +102,7 @@ public class FeatureFacade <T extends RealType<T>> {
 	/**
 	 * Compute all features for the spot given.
 	 */
-	public void processAllFeatures(Spot spot) {
+	public void processAllFeatures(Featurable spot) {
 		for (FeatureAnalyzer analyzer : featureAnalyzers) 
 			analyzer.process(spot);
 	}
@@ -115,7 +115,7 @@ public class FeatureFacade <T extends RealType<T>> {
 	 * to the spots. However, it is ensured that the required feature will be 
 	 * processed by this method call.
 	 */
-	public void processFeature(Feature feature, Collection<Spot> spots) {
+	public void processFeature(Feature feature, Collection<? extends Featurable> spots) {
 		getAnalyzerForFeature(feature).process(spots);
 	}
 	
@@ -127,7 +127,7 @@ public class FeatureFacade <T extends RealType<T>> {
 	 * to the spots. However, it is ensured that the required feature will be 
 	 * processed by this method call.
 	 */
-	public void processFeatures(Feature feature, Spot spot) {
+	public void processFeatures(Feature feature, Featurable spot) {
 		getAnalyzerForFeature(feature).process(spot);
 	}
 	

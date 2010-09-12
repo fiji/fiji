@@ -3,7 +3,9 @@ package fiji.plugin.spottracker.tracking.costfunction;
 import java.util.ArrayList;
 
 import Jama.Matrix;
-import fiji.plugin.spottracker.Spot;
+import fiji.plugin.spottracker.Featurable;
+import fiji.plugin.spottracker.Feature;
+import fiji.plugin.spottracker.TrackNode;
 import fiji.plugin.spottracker.Utils;
 import fiji.plugin.spottracker.tracking.LAPTracker;
 
@@ -25,18 +27,18 @@ import fiji.plugin.spottracker.tracking.LAPTracker;
  * @author Nicholas Perry
  *
  */
-public class GapClosingCostFunction implements CostFunctions {
+public class GapClosingCostFunction<K extends Featurable> implements CostFunctions {
 
 	/** The cost matrix. */
 	protected Matrix m;
 	/** The frame cutoff, and distance cutoff, respectively */
 	protected double frameCutoff, maxDist;
 	/** The list of track segments, where each segment is a list of Spots. */
-	protected ArrayList< ArrayList<Spot> > trackSegments;
+	protected ArrayList< ArrayList<TrackNode<K>> > trackSegments;
 	/** The value to use to block an assignment in the cost matrix. */
 	protected double blocked;
 	
-	public GapClosingCostFunction(Matrix m, double frameCutoff, double maxDist, double blocked, ArrayList< ArrayList<Spot> > trackSegments) {
+	public GapClosingCostFunction(Matrix m, double frameCutoff, double maxDist, double blocked, ArrayList< ArrayList<TrackNode<K>> > trackSegments) {
 		this.m = m;
 		this.frameCutoff = frameCutoff;
 		this.maxDist = maxDist;
@@ -46,9 +48,11 @@ public class GapClosingCostFunction implements CostFunctions {
 	
 	@Override
 	public void applyCostFunction() {
-		ArrayList<Spot> seg1, seg2;
-		Spot end, start;
-		double d, score;
+		ArrayList<TrackNode<K>> seg1, seg2;
+		TrackNode<K> end, start;
+		K objEnd, objStart;
+		float tend, tstart;
+		double d2;
 		int n = m.getRowDimension();
 		
 		// Set the gap closing scores for each segment start and end pair
@@ -65,23 +69,26 @@ public class GapClosingCostFunction implements CostFunctions {
 				seg2 = trackSegments.get(j);
 				end = seg1.get(seg1.size() - 1);	// get last Spot of seg1
 				start = seg2.get(0);				// get first Spot of seg2
+				objEnd = end.getObject();
+				objStart = start.getObject();
+				tend = objEnd.getFeature(Feature.POSITION_T);
+				tstart = objStart.getFeature(Feature.POSITION_T);
 				
 				// Frame cutoff
-				if (Math.abs(end.getFrame() - start.getFrame()) > frameCutoff || end.getFrame() > start.getFrame()) {
+				if (Math.abs(tend-tstart) > frameCutoff || tend > tstart) {
 					m.set(i, j, blocked);
 					continue;
 				}
 				
 				// Radius cutoff
-				d = Utils.euclideanDistance(end, start);
-				if (d > maxDist) {
+				d2 = Utils.euclideanDistanceSquared(objEnd, objStart);
+				if (d2 > maxDist*maxDist) {
 					m.set(i, j, blocked);
 					continue;
 				}
 				
 				// Set score
-				score = d*d;
-				m.set(i, j, score);
+				m.set(i, j, d2);
 			}
 		}
 	}

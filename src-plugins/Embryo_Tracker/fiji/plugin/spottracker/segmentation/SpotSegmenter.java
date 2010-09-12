@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
+import fiji.plugin.spottracker.Featurable;
 import fiji.plugin.spottracker.Spot;
 
 import mpicbg.imglib.algorithm.Algorithm;
@@ -38,7 +39,7 @@ public class SpotSegmenter <T extends RealType<T> >implements Algorithm {
 	private boolean useMedianFilter;
 	private boolean allowEdgeExtrema;
 	private float[] calibration;
-	private ArrayList<Spot> spots = new ArrayList<Spot>(); // because this implementation is fast to add elements at the end of the list
+	private ArrayList<Featurable> spots = new ArrayList<Featurable>(); // because this implementation is fast to add elements at the end of the list
 	private String errorMessage = null;
 	private float sigma;
 	private Image<FloatType> laplacianKernel;
@@ -93,7 +94,7 @@ public class SpotSegmenter <T extends RealType<T> >implements Algorithm {
 	 * Return a collection (actually an ArrayList) of Spot resulting from the 
 	 * segmentation process 
 	 */
-	public Collection<Spot> getResult() {
+	public Collection<Featurable> getResult() {
 		return spots;
 	}
 
@@ -330,7 +331,8 @@ public class SpotSegmenter <T extends RealType<T> >implements Algorithm {
 	}
 	
 	/**
-	 * Create a {@link Spot} ArrayList from a list of down-sampled pixel coordinates. 
+	 * Create a {@link Featurable} ArrayList from a list of down-sampled pixel coordinates. 
+	 * Internally, we use the {@link Spot} concrete implementation of Featurable.
 	 * <p>
 	 * Since the spot 
 	 * coordinates are expected to be in physical units, a calibration array
@@ -341,10 +343,10 @@ public class SpotSegmenter <T extends RealType<T> >implements Algorithm {
 	 * @param  coords  the coordinates in pixel units
 	 * @param  calibration  the calibration array that stores pixel size
 	 * @param  downsampleFactors  the array containing the factors used to down-sample the source image
-	 * @return  spots with coordinates in physical units of the source image
+	 * @return  Featurable with coordinates in physical units of the source image
 	 */
-	private static ArrayList< Spot > convertToSpots(List< float[] > coords, float[] calibration, float[] downsampleFactors) {
-		ArrayList<Spot> spots = new ArrayList<Spot>();
+	private static ArrayList< Featurable > convertToSpots(List< float[] > coords, float[] calibration, float[] downsampleFactors) {
+		ArrayList<Featurable> spots = new ArrayList<Featurable>();
 		Iterator< float[] > itr = coords.iterator();
 		int index = 0;
 		while (itr.hasNext()) {

@@ -61,9 +61,9 @@ public class Spot_Tracker implements PlugIn {
 	}	
 	
 	/** Contain the segmentation result, un-filtered. See {@link #execSegmentation(ImagePlus, Settings)}*/
-	private TreeMap<Integer,Collection<Spot>> spots;
+	private TreeMap<Integer,Collection<Featurable>> spots;
 	/** Contain the Spot retained for tracking, after thresholding by features. */
-	private TreeMap<Integer,Collection<Spot>> selectedSpots;
+	private TreeMap<Integer,Collection<Featurable>> selectedSpots;
 	
 	private ArrayList<Feature> thresholdFeatures = new ArrayList<Feature>();
 	private ArrayList<Float> thresholdValues = new ArrayList<Float>();
@@ -147,8 +147,8 @@ public class Spot_Tracker implements PlugIn {
 	 */
 	
 	public void execThresholding() {
-		selectedSpots = new TreeMap<Integer, Collection<Spot>>();
-		Collection<Spot> spotThisFrame, spotToKeep, spotToRemove;
+		selectedSpots = new TreeMap<Integer, Collection<Featurable>>();
+		Collection<Featurable> spotThisFrame, spotToKeep, spotToRemove;
 		
 		float threshold;
 		Float val;
@@ -158,14 +158,14 @@ public class Spot_Tracker implements PlugIn {
 		for (int timepoint : spots.keySet()) {
 			
 			spotThisFrame = spots.get(timepoint);
-			spotToKeep = new ArrayList<Spot>(spotThisFrame);
+			spotToKeep = new ArrayList<Featurable>(spotThisFrame);
 			
 			if (null == thresholdFeatures || null == thresholdValues || null == thresholdAbove) {
 				selectedSpots.put(timepoint, spotToKeep);
 				continue;
 			}
 			
-			spotToRemove = new ArrayList<Spot>(spotThisFrame.size());
+			spotToRemove = new ArrayList<Featurable>(spotThisFrame.size());
 
 			for (int i = 0; i < thresholdFeatures.size(); i++) {
 
@@ -175,7 +175,7 @@ public class Spot_Tracker implements PlugIn {
 				spotToRemove.clear();
 
 				if (isAbove) {
-					for (Spot spot : spotToKeep) {
+					for (Featurable spot : spotToKeep) {
 						val = spot.getFeature(feature);
 						if (null == val)
 							continue;
@@ -184,7 +184,7 @@ public class Spot_Tracker implements PlugIn {
 					}
 
 				} else {
-					for (Spot spot : spotToKeep) {
+					for (Featurable spot : spotToKeep) {
 						val = spot.getFeature(feature);
 						if (null == val)
 							continue;
@@ -265,8 +265,8 @@ public class Spot_Tracker implements PlugIn {
 		
 		// Since we can't get the NumericType out of imp, we assume it is a FloatType.
 		final SpotSegmenter<FloatType> segmenter = new SpotSegmenter<FloatType>(null, diam, calibration, useMedFilt, allowEdgeMax);				
-		spots = new TreeMap<Integer, Collection<Spot>>();
-		Collection<Spot> spotsThisFrame;
+		spots = new TreeMap<Integer, Collection<Featurable>>();
+		Collection<Featurable> spotsThisFrame;
 		Image<FloatType> filteredImage;
 		
 		// For each frame...
@@ -285,8 +285,8 @@ public class Spot_Tracker implements PlugIn {
 			if (segmenter.checkInput() && segmenter.process()) {
 				filteredImage = segmenter.getFilteredImage();
 				spotsThisFrame = segmenter.getResult();
-				for (Spot spot : spotsThisFrame)
-					spot.setFrame(i);
+				for (Featurable spot : spotsThisFrame)
+					spot.putFeature(Feature.POSITION_T, i);
 				spots.put(i-settings.tstart+1, spotsThisFrame);
 				logger.log("Frame "+(i+1)+": found "+spotsThisFrame.size()+" spots.\n");
 			} else {
@@ -322,7 +322,7 @@ public class Spot_Tracker implements PlugIn {
 	 * all spots. They are returned as a List of Collection, one item in the list per time-point, in order.
 	 * @see #execSegmentation(ImagePlus, Settings)
 	 */
-	public TreeMap<Integer, Collection<Spot>> getSpots() {
+	public TreeMap<Integer, Collection<Featurable>> getSpots() {
 		return spots;
 	}
 
@@ -331,7 +331,7 @@ public class Spot_Tracker implements PlugIn {
 	 * @see #execSegmentation(ImagePlus, Settings)
 	 * @see #addThreshold(Feature, float, boolean)
 	 */
-	public TreeMap<Integer, Collection<Spot>> getSelectedSpots() {
+	public TreeMap<Integer, Collection<Featurable>> getSelectedSpots() {
 		return selectedSpots;
 	}
 	

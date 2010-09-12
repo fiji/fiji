@@ -13,6 +13,7 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.TreeMap;
@@ -22,11 +23,14 @@ import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import fiji.plugin.spottracker.Featurable;
 import fiji.plugin.spottracker.Feature;
 import fiji.plugin.spottracker.Logger;
 import fiji.plugin.spottracker.Settings;
 import fiji.plugin.spottracker.Spot;
 import fiji.plugin.spottracker.Spot_Tracker;
+import fiji.plugin.spottracker.TrackNode;
+import fiji.plugin.spottracker.TrackNodeI;
 import fiji.plugin.spottracker.tracking.LAPTracker;
 
 
@@ -68,8 +72,8 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 	private Spot_Tracker spotTracker;
 	private LogPanel logPanel;
 	private Logger logger;
-	private TreeMap<Integer,Collection<Spot>> spots;
-	private TreeMap<Integer,Collection<Spot>> selectedSpots;
+	private TreeMap<Integer,Collection<Featurable>> spots;
+	private TreeMap<Integer,Collection<Featurable>> selectedSpots;
 	private SpotDisplayer displayer;
 	private boolean is3D;
 	
@@ -205,8 +209,10 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 						logger.log("Thresholding done.\n", Logger.BLUE_COLOR);
 						logPanel.jButtonNext.setEnabled(true);
 						
+						trackParts = createTrackParts(selectedSpots);
+						
 						logger.log("Starting tracking.");
-						LAPTracker tracker = new LAPTracker(selectedSpots);
+						LAPTracker<Spot> tracker = new LAPTracker<Featurable>(selectedSpots);
 						if (tracker.checkInput() && tracker.process()) {
 							logger.log("Tracking finished!", Color.GREEN);
 							displayer.setDisplayTracks(true);
@@ -214,11 +220,29 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 						else 
 							logger.error("Problem occured in tracking:\n"+tracker.getErrorMessage());
 					}
+
+					
 				}.start();
 				
 				
 				break;
 		}
+	}
+	
+	/**
+	 * Embed all {@link Featurable} in the collection into {@link TrackNode} suitable for tracking
+	 */
+	private static final TreeMap<Integer, Collection<TrackNode<Featurable>>> createTrackParts(final TreeMap<Integer, Collection<Featurable>> featurables) {
+		TreeMap<Integer, Collection<TrackNode<Featurable>>> trackParts = new TreeMap<Integer, Collection<TrackNode<Featurable>>>();
+		ArrayList<TrackNode<Featurable>> trackPartsThisFrame;
+		Collection<Featurable> featurablesThisFrame;
+		for (int key : featurables.keySet()) {
+			featurablesThisFrame = featurables.get(key);
+			trackPartsThisFrame = new ArrayList<TrackNode<Featurable>>(featurablesThisFrame.size());
+			for (Featurable f : featurablesThisFrame)
+				trackPartsThisFrame.add(new TrackNodeI<Featurable>(f)); 
+		}
+		return trackParts;
 	}
 	
 	/**

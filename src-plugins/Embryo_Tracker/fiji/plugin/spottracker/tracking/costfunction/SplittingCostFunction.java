@@ -2,8 +2,9 @@ package fiji.plugin.spottracker.tracking.costfunction;
 
 import java.util.ArrayList;
 
+import fiji.plugin.spottracker.Featurable;
 import fiji.plugin.spottracker.Feature;
-import fiji.plugin.spottracker.Spot;
+import fiji.plugin.spottracker.TrackNode;
 import fiji.plugin.spottracker.Utils;
 import fiji.plugin.spottracker.tracking.LAPTracker;
 
@@ -32,7 +33,7 @@ import Jama.Matrix;
  * @author Nicholas Perry
  *
  */
-public class SplittingCostFunction implements CostFunctions {
+public class SplittingCostFunction <K extends Featurable> implements CostFunctions {
 
 	/** The cost matrix. */
 	protected Matrix m;
@@ -41,13 +42,20 @@ public class SplittingCostFunction implements CostFunctions {
 	/** The value used to block an assignment in the cost matrix. */
 	protected double blocked;
 	/** The list of track segments. */
-	protected ArrayList< ArrayList<Spot> > trackSegments;
+	protected ArrayList< ArrayList<TrackNode<K>> > trackSegments;
 	/** The list of middle points. */
-	protected ArrayList<Spot> splittingMiddlePoints;
+	protected ArrayList<TrackNode<K>> splittingMiddlePoints;
 	/** Thresholds for the intensity ratios. */
 	protected double[] intensityThresholds;
 	
-	public SplittingCostFunction(Matrix m, ArrayList< ArrayList<Spot> > trackSegments, ArrayList<Spot> splittingMiddlePoints, double maxDist, double blocked, double[] intensityThresholds) {
+	public SplittingCostFunction(
+			Matrix m, 
+			ArrayList< ArrayList<TrackNode<K>> > trackSegments, 
+			ArrayList<TrackNode<K>> splittingMiddlePoints, 
+			double maxDist, 
+			double blocked, 
+			double[] intensityThresholds) 
+	{
 		this.m = m;
 		this.trackSegments = trackSegments;
 		this.splittingMiddlePoints = splittingMiddlePoints;
@@ -58,8 +66,9 @@ public class SplittingCostFunction implements CostFunctions {
 	
 	@Override
 	public void applyCostFunction() {
-		double iRatio, d, s;
-		Spot start, middle;
+		double iRatio, d2, s;
+		TrackNode<K> start, middle;
+		float tstart, tmiddle;
 		
 		// Fill in splitting scores
 		for (int i = 0; i < splittingMiddlePoints.size(); i++) {
@@ -68,19 +77,22 @@ public class SplittingCostFunction implements CostFunctions {
 				middle = splittingMiddlePoints.get(i);
 				
 				// Frame threshold - middle Spot must be one frame behind of the start Spot
-				if (middle.getFrame() != start.getFrame() - 1) {
+				tstart = start.getObject().getFeature(Feature.POSITION_T);
+				tmiddle = middle.getObject().getFeature(Feature.POSITION_T);
+				if (tmiddle - tstart <  - 1) {
 					m.set(i, j, blocked);
 					continue;
 				}
 				
 				// Radius threshold
-				d = Utils.euclideanDistance(start, middle);
-				if (d > maxDist) {
+				d2 = Utils.euclideanDistanceSquared(start.getObject(), middle.getObject());
+				if (d2 > maxDist*maxDist) {
 					m.set(i, j, blocked);
 					continue;
 				}
 
-				iRatio = middle.getFeature(Feature.MEAN_INTENSITY) / (middle.getNext().get(0).getFeature(Feature.MEAN_INTENSITY) + start.getFeature(Feature.MEAN_INTENSITY));
+				K middleSpot = middle.getChildren().iterator().next().getObject(); 
+				iRatio = middle.getObject().getFeature(Feature.MEAN_INTENSITY) / (middleSpot.getFeature(Feature.MEAN_INTENSITY) + start.getObject().getFeature(Feature.MEAN_INTENSITY));
 				
 				// Intensity threshold -  must be within INTENSITY_RATIO_CUTOFFS ([min, max])
 				if (iRatio > intensityThresholds[1] || iRatio < intensityThresholds[0]) {
@@ -90,11 +102,10 @@ public class SplittingCostFunction implements CostFunctions {
 
 				
 				// Set score
-				if (iRatio >= 1) {
-					s = d * d * iRatio;
-				} else {
-					s = d * d * ( 1 / (iRatio * iRatio) );
-				}
+				if (iRatio >= 1)
+					s = d2 * iRatio;
+				else
+					s = d2 * ( 1 / (iRatio * iRatio) );
 				m.set(i, j, s);
 			}
 		}

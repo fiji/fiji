@@ -4,8 +4,8 @@ import java.util.ArrayList;
 
 import Jama.Matrix;
 
-import fiji.plugin.spottracker.Feature;
-import fiji.plugin.spottracker.Spot;
+import fiji.plugin.spottracker.Featurable;
+import fiji.plugin.spottracker.TrackNode;
 import fiji.plugin.spottracker.Utils;
 import fiji.plugin.spottracker.tracking.costfunction.GapClosingCostFunction;
 import fiji.plugin.spottracker.tracking.costfunction.MergingCostFunction;
@@ -80,7 +80,8 @@ import fiji.plugin.spottracker.tracking.costfunction.SplittingCostFunction;
  * @author Nicholas Perry
  *
  */
-public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
+
+public class TrackSegmentCostMatrixCreator<K extends Featurable> extends LAPTrackerCostMatrixCreator {
 
 	/** The maximum distance away two Segments can be in order 
 	 * to be linked. */
@@ -96,13 +97,13 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	protected static final double CUTOFF_PERCENTILE = 0.9d;	// TODO make user input.
 	
 	/** The track segments. */
-	protected ArrayList< ArrayList<Spot> > trackSegments;
+	protected ArrayList< ArrayList<TrackNode<K>> > trackSegments;
 	/** Holds the Spots in the middle of track segments (not at end or start). */
-	protected ArrayList<Spot> middlePoints;
+	protected ArrayList<TrackNode<K>> middlePoints;
 	/** The list of middle Spots which can participate in merge events. */
-	protected ArrayList<Spot> mergingMiddlePoints;
+	protected ArrayList<TrackNode<K>> mergingMiddlePoints;
 	/** The list of middle Spots which can participate in splitting events. */
-	protected ArrayList<Spot> splittingMiddlePoints;
+	protected ArrayList<TrackNode<K>> splittingMiddlePoints;
 	
 	
 	/**
@@ -110,10 +111,10 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	 * @param trackSegments A list of track segments (each track segment is 
 	 * an <code>ArrayList</code> of <code>Spots</code>.
 	 */
-	public TrackSegmentCostMatrixCreator(ArrayList< ArrayList<Spot> > trackSegments) {
+	public TrackSegmentCostMatrixCreator(ArrayList< ArrayList<TrackNode<K>> > trackSegments) {
 		this.trackSegments = trackSegments;
-		this.mergingMiddlePoints = new ArrayList<Spot>();
-		this.splittingMiddlePoints = new ArrayList<Spot>();
+		this.mergingMiddlePoints = new ArrayList<TrackNode<K>>();
+		this.splittingMiddlePoints = new ArrayList<TrackNode<K>>();
 	}
 	
 	
@@ -137,7 +138,7 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	 * the Spot at index 0 in this ArrayList.
 	 * @return The <code>ArrayList</code> of middle <code>Spots</code>
 	 */
-	public ArrayList<Spot> getSplittingMiddlePoints() {
+	public ArrayList<TrackNode<K>> getSplittingMiddlePoints() {
 		return splittingMiddlePoints;
 	}
 	
@@ -150,7 +151,7 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	 * the Spot at index 0 in this ArrayList.
 	 * @return The <code>ArrayList</code> of middle <code>Spots</code>
 	 */
-	public ArrayList<Spot> getMergingMiddlePoints() {
+	public ArrayList<TrackNode<K>> getMergingMiddlePoints() {
 		return mergingMiddlePoints;
 	}
 
@@ -214,6 +215,7 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 		return topLeft;
 	}
 	
+	@SuppressWarnings("unused")
 	private void printMatrix (Matrix m, String s) {
 		Matrix n = m.copy();
 		System.out.println(s);
@@ -236,9 +238,9 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	 * @param trackSegments An ArrayList of track segments, where each segment is its own ArrayList of Spots.
 	 * @return An ArrayList containing references to all the middle Spots in the track segments.
 	 */
-	public ArrayList<Spot> getTrackSegmentMiddlePoints(ArrayList< ArrayList<Spot> > trackSegments) {
-		ArrayList<Spot> middlePoints = new ArrayList<Spot>();
-		for (ArrayList<Spot> trackSegment : trackSegments) {
+	public ArrayList<TrackNode<K>> getTrackSegmentMiddlePoints(ArrayList< ArrayList<TrackNode<K>> > trackSegments) {
+		ArrayList<TrackNode<K>> middlePoints = new ArrayList<TrackNode<K>>();
+		for (ArrayList<TrackNode<K>> trackSegment : trackSegments) {
 			if (trackSegment.size() >= 3) {
 				for (int i = 1; i < trackSegment.size() - 1; i++) { 	// Extract middle Spots only.
 					middlePoints.add(trackSegment.get(i));
@@ -254,7 +256,7 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	 */
 	private Matrix getGapClosingCostSubMatrix(int n) {
 		final Matrix gapClosingScores = new Matrix(n, n);
-		GapClosingCostFunction gapClosing = new GapClosingCostFunction(gapClosingScores, GAP_CLOSING_TIME_WINDOW, MAX_DIST_SEGMENTS, BLOCKED, trackSegments);
+		GapClosingCostFunction<K> gapClosing = new GapClosingCostFunction<K>(gapClosingScores, GAP_CLOSING_TIME_WINDOW, MAX_DIST_SEGMENTS, BLOCKED, trackSegments);
 		gapClosing.applyCostFunction();
 		return gapClosingScores;
 	}
@@ -265,12 +267,12 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	 */
 	private Matrix getMergingScores(int n) {
 		final Matrix mergingScores = new Matrix(n, middlePoints.size());
-		MergingCostFunction merging = new MergingCostFunction(mergingScores, trackSegments, middlePoints, MAX_DIST_SEGMENTS, BLOCKED, INTENSITY_RATIO_CUTOFFS);
+		MergingCostFunction<K> merging = new MergingCostFunction<K>(mergingScores, trackSegments, middlePoints, MAX_DIST_SEGMENTS, BLOCKED, INTENSITY_RATIO_CUTOFFS);
 		merging.applyCostFunction();
 		return pruneColumns(mergingScores, mergingMiddlePoints);
 	}
 
-	private Matrix pruneColumns (Matrix m, ArrayList<Spot> keptMiddleSpots) {
+	private Matrix pruneColumns (Matrix m, ArrayList<TrackNode<K>> keptMiddleSpots) {
 
 		// Find all columns that contain a cost (a value != BLOCKED)
 		double[][] full = m.copy().getArray();
@@ -304,7 +306,7 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 		return new Matrix(pruned);
 	}
 
-	private Matrix pruneRows (Matrix m, ArrayList<Spot> keptMiddleSpots) {
+	private Matrix pruneRows (Matrix m, ArrayList<TrackNode<K>> keptMiddleSpots) {
 
 		// Find all rows that contain a cost (a value != BLOCKED)
 		double[][] full = m.copy().getArray();
@@ -342,7 +344,7 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	 */
 	private Matrix getSplittingScores(int n) {
 		final Matrix splittingScores = new Matrix(middlePoints.size(), n);	
-		SplittingCostFunction splitting = new SplittingCostFunction(splittingScores, trackSegments, middlePoints, MAX_DIST_SEGMENTS, BLOCKED, INTENSITY_RATIO_CUTOFFS);
+		SplittingCostFunction<K> splitting = new SplittingCostFunction<K>(splittingScores, trackSegments, middlePoints, MAX_DIST_SEGMENTS, BLOCKED, INTENSITY_RATIO_CUTOFFS);
 		splitting.applyCostFunction();
 		return pruneRows(splittingScores, splittingMiddlePoints);
 	}

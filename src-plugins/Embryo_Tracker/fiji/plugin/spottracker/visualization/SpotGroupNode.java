@@ -1,5 +1,7 @@
 package fiji.plugin.spottracker.visualization;
 
+import fiji.plugin.spottracker.Featurable;
+import fiji.plugin.spottracker.Spot;
 import ij3d.Content;
 import ij3d.ContentInstant;
 import ij3d.ContentNode;
@@ -24,7 +26,7 @@ import javax.vecmath.Tuple3d;
 import customnode.CustomTriangleMesh;
 import customnode.MeshMaker;
 
-public class SpotGroupNode <K extends Object> extends ContentNode {
+public class SpotGroupNode <K extends Featurable> extends ContentNode {
 
 	private static final int DEFAULT_MERIDIAN_NUMBER = 12;
 	private static final int DEFAULT_PARALLEL_NUMBER = 12;
@@ -378,23 +380,26 @@ public class SpotGroupNode <K extends Object> extends ContentNode {
 		final int RADIUS = 10;
 		
 		Random ran = new Random();
-		HashMap<Integer, Point4f>  centers = new HashMap<Integer, Point4f>(N_BLOBS);
-		HashMap<Integer, Color4f> colors = new HashMap<Integer, Color4f>(N_BLOBS);
+		HashMap<Spot, Point4f>  centers = new HashMap<Spot, Point4f>(N_BLOBS);
+		HashMap<Spot, Color4f> colors = new HashMap<Spot, Color4f>(N_BLOBS);
 		Point4f center;
 		Color4f color;
+		Spot spot;
+		float[] coords = new float[3];
 		for (int i = 0; i < N_BLOBS; i++) {
-			center = new Point4f(
-					WIDTH * ran.nextFloat(),
-					HEIGHT * ran.nextFloat(),
-					DEPTH * ran.nextFloat(),
-					(float) (RADIUS + ran.nextGaussian()));
+			coords[0] = WIDTH * ran.nextFloat();
+			coords[1] = HEIGHT * ran.nextFloat();
+			coords[2] = DEPTH * ran.nextFloat();
+			
+			center = new Point4f(coords[0], coords[1], coords[2], (float) (RADIUS + ran.nextGaussian()));
 			color = new Color4f(new Color(Color.HSBtoRGB(ran.nextFloat(), 1, 1)));
 			color.w = ran.nextFloat();
-			centers.put(i, center);
-			colors.put(i, color);
+			spot = new Spot(coords);
+			centers.put(spot, center);
+			colors.put(spot, color);
 		}
 		
-		SpotGroupNode<Integer> sg = new SpotGroupNode<Integer>(centers, colors);
+		SpotGroupNode<Spot> sg = new SpotGroupNode<Spot>(centers, colors);
 		//sg.setName("spots");
 		ContentInstant ci = new ContentInstant("t0");
 		ci.display(sg);
@@ -407,39 +412,41 @@ public class SpotGroupNode <K extends Object> extends ContentNode {
 		universe.addContentLater(c);
 		universe.show();
 		
-		for (Integer key : centers.keySet()) {
+		for (Spot key : centers.keySet()) {
 			sg.setVisible(key, false);
 			Thread.sleep(2000/N_BLOBS);
 		}
 		
-		for (Integer key : centers.keySet()) {
+		for (Spot key : centers.keySet()) {
 			sg.setVisible(key, true);
 			Thread.sleep(2000/N_BLOBS);
 		}
 		
+		Spot thisSpot = centers.keySet().iterator().next();
+		
 		for (int i = 1; i < WIDTH; i++) {
-			sg.setRadius(50, i);
+			sg.setRadius(thisSpot, i);
 			Thread.sleep(2000/WIDTH);
 		}
 		
-		Point4f p = centers.get(50);
+		Point4f p = centers.get(thisSpot);
 		for (int i = 0; i < WIDTH; i++) {
 			p.x = i;
 			p.y = i;
-			sg.setCenter(50, p);
+			sg.setCenter(thisSpot, p);
 			Thread.sleep(2000/WIDTH);
 		}
 		
 		for (int i = 1; i <= 100; i++) {
-			sg.setTransparency(50, (float)i/100);
+			sg.setTransparency(thisSpot, (float)i/100);
 			Thread.sleep(2000/100);
 		}
 		
-		Color4f col = colors.get(50);
+		Color4f col = colors.get(thisSpot);
 		for (int i = 100; i >= 1; i--) {
 			col.w =  (float)i/100;
 			col.x =  (float)i/100;
-			sg.setColor(50, col);
+			sg.setColor(thisSpot, col);
 			Thread.sleep(2000/100);
 		}
 	}

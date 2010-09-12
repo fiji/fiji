@@ -1,45 +1,36 @@
 package fiji.plugin.spottracker;
 
-import java.util.ArrayList;
 import java.util.EnumMap;
 
 import mpicbg.imglib.algorithm.math.MathLib;
 
-public class Spot {
+public class Spot implements Featurable {
 	
 	/*
 	 * FIELDS
 	 */
 	
+	
 	/** Store the individual features, and their values. */
 	private EnumMap<Feature, Float> features = new EnumMap<Feature, Float>(Feature.class);
-	/** Physical coordinates of this spot. Can have a time component. */
+	/** Physical coordinates of this spot.  */
 	private float[] coordinates; 
 	/** A user-supplied name for this spot. */
 	private String name;
-	/** The frame to which this Spot belongs. (Same as a t coordinate) */
-	private int frame;
-	/** A reference to the previous Spots belonging to the same track. */
-	private ArrayList<Spot> prev;
-	/** A reference to the subsequent Spots belonging to the same track. */
-	private ArrayList<Spot> next;
 
-	
 	/*
 	 * CONSTRUCTORS
 	 */
 	
 	public Spot(float[] coordinates, String name) {
 		this.coordinates = coordinates;
+		for (int i = 0; i < coordinates.length; i++)
+			putFeature(POSITION_FEATURES[i], coordinates[i]);
 		this.name = name;
-		this.prev = new ArrayList<Spot>();
-		this.next = new ArrayList<Spot>();
 	}
 	
 	public Spot(float[] coordinates) {
 		this(coordinates, null);
-		this.prev = new ArrayList<Spot>();
-		this.next = new ArrayList<Spot>();
 	}
 	
 	/*
@@ -47,10 +38,11 @@ public class Spot {
 	 */
 	
 	/**
-	 * Return a reference to the coordinate array of this Spot.
+	 * Convenience method that returns the X, Y and optionally Z feature in a float array.
 	 */
-	public float[] getCoordinates() {
-		return this.coordinates;
+	public void getCoordinates(float[] coords) {
+		for (int i = 0; i < coords.length; i++)
+			coords[i] = getFeature(POSITION_FEATURES[i]);
 	}
 	
 	/**
@@ -84,13 +76,13 @@ public class Spot {
 			s.append("Spot: "+name+"\n");
 		
 		// Frame
-		s.append("Frame: "+frame+'\n');
+		s.append("Frame: "+getFeature(Feature.POSITION_T)+'\n');
 
 		// Coordinates
 		if (null == coordinates)
 			s.append("Position: <no coordinates>\n");
-		else
-			s.append("Position: "+MathLib.printCoordinates(coordinates)+"\n");
+		else 
+			s.append("Position: "+MathLib.printCoordinates(getPosition(null))+"\n");
 		
 		// Feature list
 		if (null == features || features.size() < 1) 
@@ -108,46 +100,32 @@ public class Spot {
 				s.append('\n');
 			}
 		}
-		
-		// Parents
-		if (null == prev || prev.size() < 1) {
-			s.append("No parent Spots\n");
-		} else {
-			s.append("Parent list:\n");
-			
-			// Print parents as a list of coordinates
-			for (Spot par : prev) {
-				if (null == par.getCoordinates())
-					s.append("Position: <no coordinates>\n");
-				else
-					s.append("Position: "+MathLib.printCoordinates(par.getCoordinates())+"\n");
-			}
-		}
-		
-		// Children
-		if (null == next || next.size() < 1) {
-			s.append("No child Spots\n");
-		} else {
-			s.append("Child list:\n");
-			
-			// Print children as a list of coordinates
-			for (Spot child : next) {
-				if (null == child.getCoordinates())
-					s.append("Position: <no coordinates>\n");
-				else
-					s.append("Position: "+MathLib.printCoordinates(child.getCoordinates())+"\n");
-			}
-		}
-		
 		return s.toString();
 	}
 	
 	public void setFrame(int frame) {
-		this.frame = frame;
+		putFeature(Feature.POSITION_T, frame);
 	}
 	
-	public int getFrame() {
-		return this.frame;
+	@Override
+	public float[] getPosition(float[] position) {
+		if (null == position) {
+			int ndim = 0;
+			for (int i = 0; i < POSITION_FEATURES.length; i++)
+				if (features.get(POSITION_FEATURES[i]) != null)
+					ndim++;
+			position = new float[ndim];
+		}
+		Float val;
+		int index = 0;
+		for (int i = 0; i < position.length; i++) {
+			val = features.get(POSITION_FEATURES[i]);
+			if (null == val)
+				continue;
+			position[index] = getFeature(POSITION_FEATURES[i]);
+			index++;
+		}
+		return position;
 	}
 	
 	/*
@@ -155,45 +133,19 @@ public class Spot {
 	 */
 	
 	
-	/**
-	 * Returns an {@link EnumMap} of {@link Feature}s for this Spot.
-	 * @return A EnumMap with a {@link Feature} as a key, and the value of the {@link Feature} as the value. 
-	 */
+	@Override
 	public EnumMap<Feature, Float> getFeatures() {
 		return features;
 	}
 	
-	/**
-	 * Returns the value mapped to this {@link Feature}.
-	 * @param feature The {@link Feature} to retrieve the stored value for.
-	 * @return The value corresponding to this {@link Feature}. 
-	 */
+	@Override
 	public final Float getFeature(final Feature feature) {
 		return features.get(feature);
 	}
 	
-	/**
-	 * Adds a {@link Feature} and it's corresponding value to this Spot's {@link Feature} list.
-	 * @param feature The {@link Feature}.
-	 * @param value The {@link Feature}'s associated value.
-	 */
+	@Override
 	public final void putFeature(final Feature feature, final float value) {
 		features.put(feature, value);
 	}
 
-	public void addPrev(Spot prev) {
-		this.prev.add(prev);
-	}
-
-	public ArrayList<Spot> getPrev() {
-		return prev;
-	}
-
-	public void addNext(Spot next) {
-		this.next.add(next);
-	}
-
-	public ArrayList<Spot> getNext() {
-		return next;
-	}
 }

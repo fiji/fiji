@@ -8,6 +8,7 @@ import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
+import fiji.plugin.spottracker.Featurable;
 import fiji.plugin.spottracker.Feature;
 import fiji.plugin.spottracker.Spot;
 
@@ -21,6 +22,8 @@ public class RadiusEstimator <T extends RealType<T>> extends IndependentFeatureA
 	private Image<T> img;
 	private float diam;
 	private float[] calibration;
+	/** Utility holder. */
+	private float[] coords;
 
 	/**
 	 * Create a feature analyzer that will return the best estimated diameter for a 
@@ -40,6 +43,7 @@ public class RadiusEstimator <T extends RealType<T>> extends IndependentFeatureA
 		this.diam = diameter;
 		this.nDiameters = nDiameters;
 		this.calibration = calibration;
+		this.coords = new float[img.getNumDimensions()];
 	}
 
 	private static final Feature FEATURE = Feature.ESTIMATED_DIAMETER;
@@ -50,8 +54,10 @@ public class RadiusEstimator <T extends RealType<T>> extends IndependentFeatureA
 	}
 
 	@Override
-	public void process(Spot spot) {
-		
+	public void process(Featurable spot) {
+		for (int i = 0; i < coords.length; i++)
+			coords[i] = spot.getFeature(Featurable.POSITION_FEATURES[i]);
+
 		// Get diameter array and radius squared
 		final float[] diameters = prepareDiameters(diam, nDiameters);
 		final float[] r2 = new float[nDiameters];
@@ -64,9 +70,9 @@ public class RadiusEstimator <T extends RealType<T>> extends IndependentFeatureA
 
 		final DomainCursor<T> cursor;
 		if (img.getNumDimensions() == 3)
-			cursor = new SphereCursor<T>(img, spot.getCoordinates(), diameters[nDiameters-2]/2, calibration);
+			cursor = new SphereCursor<T>(img, coords, diameters[nDiameters-2]/2, calibration);
 		else
-			cursor = new DiscCursor<T>(img, spot.getCoordinates(), diameters[nDiameters-2]/2, calibration);
+			cursor = new DiscCursor<T>(img, coords, diameters[nDiameters-2]/2, calibration);
 		double d2;
 		int i;
 		while(cursor.hasNext())  {
@@ -86,7 +92,7 @@ public class RadiusEstimator <T extends RealType<T>> extends IndependentFeatureA
 		final float[] contrasts = new float[diameters.length - 1];
 		for (int j = 0; j < contrasts.length; j++) {
 			contrasts[j] = - ( mean_intensities[j+1] - mean_intensities[j] );
-//			System.out.println(String.format("For diameter %.1f, found constrat of %.1f", diameters[j], contrasts[j])); 
+//			System.out.println(String.format("For diameter %.1f, found contrast of %.1f", diameters[j], contrasts[j])); 
 		}
 		
 		// Find max contrast
@@ -155,7 +161,7 @@ public class RadiusEstimator <T extends RealType<T>> extends IndependentFeatureA
 		for (Spot s : spots) {
 			cursor = new SphereCursor<UnsignedByteType>(
 					testImage,
-					s.getCoordinates(),
+					s.getPosition(null),
 					radiuses[index],
 					calibration);
 			while (cursor.hasNext())

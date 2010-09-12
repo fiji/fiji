@@ -7,10 +7,11 @@ import java.util.TreeMap;
 
 import org.jfree.chart.renderer.InterpolatePaintScale;
 
+import fiji.plugin.spottracker.Featurable;
 import fiji.plugin.spottracker.Feature;
-import fiji.plugin.spottracker.Spot;
+import fiji.plugin.spottracker.TrackNode;
 
-public abstract class SpotDisplayer {
+public abstract class SpotDisplayer <K extends Featurable> {
 
 	/** The default display radius. */
 	protected static final float DEFAULT_DISPLAY_RADIUS = 5;
@@ -22,7 +23,7 @@ public abstract class SpotDisplayer {
 	/** The colorMap. */
 	protected InterpolatePaintScale colorMap = InterpolatePaintScale.Jet;
 	/** The spot collections emanating from segmentation. */
-	protected TreeMap<Integer,Collection<Spot>> spots;
+	protected TreeMap<Integer,Collection<TrackNode<K>>> spots;
 	/** The default color to paint the spots in. */ 
 	protected Color color = DEFAULT_COLOR;
 	/** If true, tracks will be displayed. */
@@ -69,7 +70,7 @@ public abstract class SpotDisplayer {
 	 * Return the subset of spots of this displayer that satisfy the threshold conditions given
 	 * in argument.
 	 */
-	protected TreeMap<Integer,Collection<Spot>> threshold(final Feature[] features, double[] thresholds, boolean[] isAboves) {
+	protected TreeMap<Integer,Collection<TrackNode<K>>> threshold(final Feature[] features, double[] thresholds, boolean[] isAboves) {
 		if (null == features || null == thresholds || null == isAboves)
 			return spots;
 		
@@ -77,16 +78,16 @@ public abstract class SpotDisplayer {
 		boolean isAbove;
 		Feature feature;
 		Float val;
-		Collection<Spot> spotThisFrame;
-		TreeMap<Integer,Collection<Spot>> spotsToshow = new TreeMap<Integer, Collection<Spot>>();
+		Collection<TrackNode<K>> spotThisFrame;
+		TreeMap<Integer,Collection<TrackNode<K>>> spotsToshow = new TreeMap<Integer, Collection<TrackNode<K>>>();
 
 		for (int key : spots.keySet()) {
 			
 			spotThisFrame = spots.get(key);
-			ArrayList<Spot> blobToShow = new ArrayList<Spot>(spotThisFrame);
-			ArrayList<Spot> blobToHide = new ArrayList<Spot>(spotThisFrame.size());
+			ArrayList<TrackNode<K>> blobToShow = new ArrayList<TrackNode<K>>(spotThisFrame);
+			ArrayList<TrackNode<K>> blobToHide = new ArrayList<TrackNode<K>>(spotThisFrame.size());
 
-			Spot blob;
+			TrackNode<K> blob;
 
 			for (int i = 0; i < features.length; i++) {
 
@@ -98,7 +99,7 @@ public abstract class SpotDisplayer {
 				if (isAbove) {
 					for (int j = 0; j < blobToShow.size(); j++) {
 						blob = blobToShow.get(j);
-						val = blob.getFeature(feature);
+						val = blob.getObject().getFeature(feature);
 						if (null == val)
 							continue;
 						if ( val < threshold) {
@@ -109,7 +110,7 @@ public abstract class SpotDisplayer {
 				} else {
 					for (int j = 0; j < blobToShow.size(); j++) {
 						blob = blobToShow.get(j);
-						val = blob.getFeature(feature);
+						val = blob.getObject().getFeature(feature);
 						if (null == val)
 							continue;
 						if ( val > threshold) {

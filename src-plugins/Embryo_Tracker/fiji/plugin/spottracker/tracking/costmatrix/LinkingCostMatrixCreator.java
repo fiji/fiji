@@ -4,7 +4,8 @@ import java.util.ArrayList;
 
 import Jama.Matrix;
 
-import fiji.plugin.spottracker.Spot;
+import fiji.plugin.spottracker.Featurable;
+import fiji.plugin.spottracker.TrackNode;
 import fiji.plugin.spottracker.tracking.costfunction.LinkingCostFunction;
 
 /**
@@ -21,7 +22,7 @@ import fiji.plugin.spottracker.tracking.costfunction.LinkingCostFunction;
  * @author Nicholas Perry
  *
  */
-public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
+public class LinkingCostMatrixCreator<K extends Featurable> extends LAPTrackerCostMatrixCreator {
 
 	/** The maximum distance away two Spots in consecutive frames can be in order 
 	 * to be linked. */
@@ -31,9 +32,9 @@ public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	protected static final double ALTERNATIVE_OBJECT_LINKING_COST_FACTOR = 1.05d;	// TODO make user input
 
 	/** The Spots belonging to time frame t. */
-	protected ArrayList<Spot> t0;
+	protected ArrayList<TrackNode<K>> t0;
 	/** The Spots belonging to time frame t+1. */
-	protected ArrayList<Spot> t1;
+	protected ArrayList<TrackNode<K>> t1;
 	/** The total number of Spots in time frames t and t+1. */
 	protected int numSpots;
 	
@@ -42,7 +43,7 @@ public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	 * @param t0 The spots in frame t
 	 * @param t1 The spots in frame t+1
 	 */
-	public LinkingCostMatrixCreator(ArrayList<Spot> t0, ArrayList<Spot> t1) {
+	public LinkingCostMatrixCreator(ArrayList<TrackNode<K>> t0, ArrayList<TrackNode<K>> t1) {
 		this.t0 = t0;
 		this.t1 = t1;
 		this.numSpots = t0.size() + t1.size();
@@ -87,6 +88,7 @@ public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	}
 	
 	
+	@SuppressWarnings("unused")
 	private void printMatrix (Matrix m, String s) {
 		Matrix n = m.copy();
 		System.out.println(s);
@@ -101,7 +103,7 @@ public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	}
 	
 	
-	/*
+	/**
 	 * Gets the max score in a matrix m.
 	 */
 	private double getMaxScore(Matrix m) {
@@ -118,13 +120,13 @@ public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 		return max;
 	}
 	
-	/*
+	/**
 	 * Creates a submatrix which holds the linking scores between objects, and returns it.
 	 */
 	private Matrix getLinkingCostSubMatrix() {
 		Matrix linkingScores = new Matrix(t0.size(), t1.size());
 		//CostFunctions.linkingScores(linkingScores, t0, t1, MAX_DIST_OBJECTS);
-		LinkingCostFunction linkingCosts = new LinkingCostFunction(linkingScores, t0, t1, MAX_DIST_OBJECTS, BLOCKED);
+		LinkingCostFunction<K> linkingCosts = new LinkingCostFunction<K>(linkingScores, t0, t1, MAX_DIST_OBJECTS, BLOCKED);
 		linkingCosts.applyCostFunction();
 		return linkingScores;
 	}

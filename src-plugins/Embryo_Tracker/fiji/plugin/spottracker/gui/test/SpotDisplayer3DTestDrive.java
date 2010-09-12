@@ -2,6 +2,8 @@ package fiji.plugin.spottracker.gui.test;
 
 import fiji.plugin.spottracker.Feature;
 import fiji.plugin.spottracker.Spot;
+import fiji.plugin.spottracker.TrackNode;
+import fiji.plugin.spottracker.Utils;
 import fiji.plugin.spottracker.features.FeatureFacade;
 import fiji.plugin.spottracker.gui.SpotDisplayer3D;
 import fiji.plugin.spottracker.gui.ThresholdGuiPanel;
@@ -103,13 +105,14 @@ public class SpotDisplayer3DTestDrive {
 
 		// Launch renderer
 		final Image3DUniverse universe = new Image3DUniverse();
-		final SpotDisplayer3D displayer = new SpotDisplayer3D(spots, universe, RADIUS);
+		Collection<TrackNode<Spot>> nodes = Utils.embed(spots);
+		final SpotDisplayer3D<Spot> displayer = new SpotDisplayer3D<Spot>(nodes, universe, RADIUS);
 		displayer.render();
 		universe.addVoltex(imp);
 		universe.show();
 		
 		// Launch threshold GUI
-		List<Collection<Spot>> allSpots = new ArrayList<Collection<Spot>>();
+		Collection<Collection<Spot>> allSpots = new ArrayList<Collection<Spot>>();
 		allSpots.add(spots);
 		final ThresholdGuiPanel gui = new ThresholdGuiPanel(allSpots);
 

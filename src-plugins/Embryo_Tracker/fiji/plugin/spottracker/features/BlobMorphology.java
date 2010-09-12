@@ -11,6 +11,7 @@ import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import Jama.EigenvalueDecomposition;
 import Jama.Matrix;
+import fiji.plugin.spottracker.Featurable;
 import fiji.plugin.spottracker.Feature;
 import fiji.plugin.spottracker.Spot;
 
@@ -39,7 +40,8 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 	private float diam;
 	/** The Image calibration information. */
 	private float[] calibration;
-	
+	/** Utility holder. */
+	private float[] coords;
 	
 	/*
 	 * CONSTRUCTORS
@@ -50,6 +52,7 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 		this.img = img;
 		this.diam = diam;
 		this.calibration = calibration;
+		this.coords = new float[img.getNumDimensions()];
 	}
 	
 	
@@ -70,6 +73,7 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 		this.img = img;
 		this.diam = (float) diam;
 		this.calibration = fCalibration;
+		this.coords = new float[img.getNumDimensions()];
 	}
 	
 	public BlobMorphology (Image<T> img, double diam) {
@@ -89,8 +93,11 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 	
 	
 	@Override
-	public void process(Spot spot) {
-		final SphereCursor<T> cursor = new SphereCursor<T>(img, spot.getCoordinates(), diam/2);
+	public void process(Featurable spot) {
+		for (int i = 0; i < coords.length; i++) 
+			coords[i] = spot.getFeature(Featurable.POSITION_FEATURES[i]);
+		
+		final SphereCursor<T> cursor = new SphereCursor<T>(img, coords, diam/2);
 		double x, y, z;
 		double x2, y2, z2;
 		double mass, totalmass = 0;

@@ -3,8 +3,10 @@ package fiji.plugin.spottracker;
 import ij.ImagePlus;
 import ij.ImageStack;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.TreeMap;
 
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImagePlusAdapter;
@@ -35,8 +37,27 @@ public class Utils {
 		return ImagePlusAdapter.wrap(ipSingleFrame);
 	}
 	
+	/**
+	 * Embed the given featurables into a TrackNode, suitable for tracking
+	 */
+	public static final <K extends Featurable> TreeMap<Integer, Collection<TrackNode<K>>> embed(TreeMap<Integer, Collection<K>> spots) {
+		TreeMap<Integer, Collection<TrackNode<K>>> nodes = new TreeMap<Integer,  Collection<TrackNode<K>>>();
+		for(int key : spots.keySet()) {
+			Collection<K> spotsThisFrame = spots.get(key);
+			nodes.put(key, embed(spotsThisFrame));
+		}
+		return nodes;
+	}
 	
-	
+	/**
+	 * Embed the given featurables into a TrackNode, suitable for tracking
+	 */
+	public static final <K extends Featurable> Collection<TrackNode<K>> embed(Collection<K> spots) {
+		ArrayList<TrackNode<K>> nodesThisFrame = new ArrayList<TrackNode<K>>(spots.size());
+		for(K spot : spots)
+			nodesThisFrame.add(new TrackNodeI<K>(spot));
+		return nodesThisFrame;
+	}
 
 	
 	
@@ -235,21 +256,30 @@ public class Utils {
 	}
 	
 	/**
-	 * Computes the Euclidean distance between two Spots.
+	 * Computes the square Euclidean distance between two Featurable.
 	 * @param i Spot i.
 	 * @param j Spot j.
-	 * @return The Euclidean distance between Spots i and j.
+	 * @return The Euclidean distance between Featurable i and j, based on their
+	 * position features X, Y, Z.
 	 */
-	public static final double euclideanDistance(Spot i, Spot j) {
-		final float[] coordsI = i.getCoordinates();
-		final float[] coordsJ = j.getCoordinates();
+	public static final double euclideanDistanceSquared(Featurable i, Featurable j) {
+		final Float xi, xj, yi, yj, zi, zj;
 		double eucD = 0;
+		xi = i.getFeature(Feature.POSITION_X);
+		xj = j.getFeature(Feature.POSITION_X);
+		yi = i.getFeature(Feature.POSITION_Y);
+		yj = j.getFeature(Feature.POSITION_Y);
+		zi = i.getFeature(Feature.POSITION_Z);
+		zj = j.getFeature(Feature.POSITION_Z);
 
-		for (int k = 0; k < coordsI.length; k++) {
-			eucD += (coordsI[k] - coordsJ[k]) * (coordsI[k] - coordsJ[k]);
-		}
-		eucD = Math.sqrt(eucD);
-
+		if (xj != null && xi != null)
+			eucD += (xj-xi)*(xj-xi);
+		if (yj != null && yi != null)
+			eucD += (yj-yi)*(yj-yi);
+		if (zj != null && zi != null)
+			eucD += (zj-zi)*(zj-zi);
 		return eucD;
 	}
+
+
 }

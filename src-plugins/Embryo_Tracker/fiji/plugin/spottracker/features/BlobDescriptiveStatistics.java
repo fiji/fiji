@@ -10,6 +10,7 @@ import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import fiji.plugin.spottracker.Feature;
+import fiji.plugin.spottracker.Featurable;
 import fiji.plugin.spottracker.Spot;
 
 public class BlobDescriptiveStatistics <T extends RealType<T>> extends IndependentFeatureAnalyzer {
@@ -23,6 +24,8 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 	/** The number of pixels in the sphere or disc that will be iterated through tp build statistics. */
 	private int npixels;
 	private DomainCursor<T> cursor;
+	/** Utility holder. */
+	private float[] coords;
 	
 	/*
 	 * CONSTRUCTORS
@@ -30,10 +33,13 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 	
 	public BlobDescriptiveStatistics(Image<T> originalImage, float diameter, float[] calibration) {
 		this.img = originalImage;
-		if (img.getNumDimensions() == 3)
+		if (img.getNumDimensions() == 3) {
 			this.cursor = new SphereCursor<T>(img, new float[3], diameter/2, calibration);
-		else 
+			coords = new float[3];
+		} else { 
 			this.cursor = new DiscCursor<T>(img, new float[2], diameter/2, calibration);
+			coords = new float[2];
+		}
 		this.npixels = cursor.getNPixels();
 	}
 
@@ -55,7 +61,7 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 	 * {@link http://en.wikipedia.org/wiki/Algorithms_for_calculating_variance}.
 	 */
 	@Override
-	public void process(Spot spot) {
+	public void process(Featurable spot) {
 		// For variance, kurtosis and skwness 
 		float sum = 0;
 		float sum_sqr = 0;
@@ -74,7 +80,10 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 		int n = 0;
 		
 		// Main loop
-		cursor.moveCenterToCoordinates(spot.getCoordinates());
+		for (int i = 0; i < coords.length; i++)
+			coords[i] = spot.getFeature(Featurable.POSITION_FEATURES[i]);
+		
+		cursor.moveCenterToCoordinates(coords);
 		while (cursor.hasNext()) {
 			cursor.next();
 			val = cursor.getType().getRealFloat();
@@ -137,7 +146,7 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 		float[] calibration = new float[] {0.2f, 0.2f, 1};
 		SphereCursor<UnsignedByteType> cursor = new SphereCursor<UnsignedByteType>(
 				testImage, 
-				s1.getCoordinates(), 
+				s1.getPosition(null), 
 				radius, // µm
 				calibration);
 		while(cursor.hasNext()) {

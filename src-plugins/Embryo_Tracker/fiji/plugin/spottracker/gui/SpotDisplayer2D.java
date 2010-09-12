@@ -12,28 +12,32 @@ import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Set;
 import java.util.TreeMap;
 
+import fiji.plugin.spottracker.Featurable;
 import fiji.plugin.spottracker.Feature;
-import fiji.plugin.spottracker.Spot;
+import fiji.plugin.spottracker.TrackNode;
 import fiji.util.gui.AbstractAnnotation;
 import fiji.util.gui.OverlayedImageCanvas;
 
-public class SpotDisplayer2D extends SpotDisplayer {
+public class SpotDisplayer2D <K extends Featurable> extends SpotDisplayer<K> {
 
 	/*
 	 * INNER CLASSES
 	 */
 	
-	public class TrackOverlay extends AbstractAnnotation {
+	public class TrackOverlay<L extends Featurable> extends AbstractAnnotation {
 
-		private Spot spot;
+		private TrackNode<L> node;
+		private float[] fCoords = new float[2];
+		private float[] tCoords = new float[2];
 		
-		public TrackOverlay(Spot spot, Color color) {
-			this.spot = spot;
+		
+		public TrackOverlay(TrackNode<L> node, Color color) {
+			this.node = node;
 			setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.00f ));
 			setColor(color);
 			setStroke(new BasicStroke(1));
@@ -41,24 +45,24 @@ public class SpotDisplayer2D extends SpotDisplayer {
 		
 		@Override
 		public void draw(Graphics2D g2d) {
-			ArrayList<Spot> prevSpots = spot.getPrev();
+			Set<TrackNode<L>> prevSpots = node.getParents();
 			if (null == prevSpots)
 				return;
-			for(Spot toSpot : spot.getPrev())
-				draw(spot, toSpot, g2d);
+			for(TrackNode<L> to : node.getParents())
+				draw(node, to, g2d);
 		}
 		
-		private final void draw(final Spot fromSpot, final Spot toSpot, final Graphics2D g2d) {
-			int x1 = (int) fromSpot.getCoordinates()[0];
-			int y1 = (int) fromSpot.getCoordinates()[1];
-			int x2 = (int) toSpot.getCoordinates()[0];
-			int y2 = (int) toSpot.getCoordinates()[1];
+		private final void draw(final TrackNode<L> from, final TrackNode<L> to, final Graphics2D g2d) {
+			from.getObject().getPosition(fCoords);
+			to.getObject().getPosition(tCoords);
+			int x1 = (int) fCoords[0];
+			int y1 = (int) fCoords[1];
+			int x2 = (int) tCoords[0];
+			int y2 = (int) tCoords[1];
 			g2d.drawLine(x1, y1, x2, y2);
-			ArrayList<Spot> prevSpots = toSpot.getPrev();
-			if (null == prevSpots)
-				return;
-			for (Spot spot : prevSpots)
-				draw(toSpot, spot, g2d);
+			Set<TrackNode<L>> parents = to.getParents();
+			for (TrackNode<L> node : parents)
+				draw(node, to, g2d);
 		}
 	}
 	
@@ -110,14 +114,14 @@ public class SpotDisplayer2D extends SpotDisplayer {
 	private final ImagePlus imp;
 	private OverlayedImageCanvas canvas;
 	private float[] calibration;
-	private HashMap<Spot, SpotOverlay> spotOverlays = new HashMap<Spot, SpotOverlay>();
-	private TreeMap<Integer, Collection<Spot>> spotsToShow = new TreeMap<Integer, Collection<Spot>>();
+	private HashMap<Featurable, SpotOverlay> spotOverlays = new HashMap<Featurable, SpotOverlay>();
+	private TreeMap<Integer, Collection<TrackNode<K>>> spotsToShow = new TreeMap<Integer, Collection<TrackNode<K>>>();
 	private Feature currentFeature;
 	private float featureMaxValue;
 	private float featureMinValue;
 
-	public SpotDisplayer2D(Collection<Spot> spots, final ImagePlus imp, final float radius, final float[] calibration) {
-		TreeMap<Integer, Collection<Spot>> spotsOverTime = new TreeMap<Integer, Collection<Spot>>();
+	public SpotDisplayer2D(Collection<TrackNode<K>> spots, final ImagePlus imp, final float radius, final float[] calibration) {
+		TreeMap<Integer, Collection<TrackNode<K>>> spotsOverTime = new TreeMap<Integer, Collection<TrackNode<K>>>();
 		spotsOverTime.put(0, spots);
 		this.radius = radius;
 		this.spots = spotsOverTime;
@@ -125,28 +129,28 @@ public class SpotDisplayer2D extends SpotDisplayer {
 		this.calibration = calibration;
 	}
 	
-	public SpotDisplayer2D(Collection<Spot> spots, final ImagePlus imp, final float radius) {
+	public SpotDisplayer2D(Collection<TrackNode<K>> spots, final ImagePlus imp, final float radius) {
 		this(spots, imp, radius, 
 				new float[] {(float) imp.getCalibration().pixelWidth, (float) imp.getCalibration().pixelHeight});
 	}
 	
-	public SpotDisplayer2D(TreeMap<Integer, Collection<Spot>> spots, ImagePlus imp, final float radius, float[] calibration) {
+	public SpotDisplayer2D(TreeMap<Integer, Collection<TrackNode<K>>> spots, ImagePlus imp, final float radius, float[] calibration) {
 		this.radius = radius;
 		this.spots = spots;
 		this.imp = imp;
 		this.calibration = calibration;
 	}
 	
-	public SpotDisplayer2D(TreeMap<Integer, Collection<Spot>> spots, ImagePlus imp, final float radius) {
+	public SpotDisplayer2D(TreeMap<Integer, Collection<TrackNode<K>>> spots, ImagePlus imp, final float radius) {
 		this(spots, imp, radius, 
 				new float[] {(float) imp.getCalibration().pixelWidth, (float) imp.getCalibration().pixelHeight });
 	}
 	
-	public SpotDisplayer2D(TreeMap<Integer, Collection<Spot>> spots, final ImagePlus imp) {
+	public SpotDisplayer2D(TreeMap<Integer, Collection<TrackNode<K>>> spots, final ImagePlus imp) {
 		this(spots, imp, DEFAULT_DISPLAY_RADIUS);
 	}
 	
-	public SpotDisplayer2D(Collection<Spot> spots, final ImagePlus imp) {
+	public SpotDisplayer2D(Collection<TrackNode<K>> spots, final ImagePlus imp) {
 		this(spots, imp, DEFAULT_DISPLAY_RADIUS);
 	}
 	
@@ -160,12 +164,13 @@ public class SpotDisplayer2D extends SpotDisplayer {
 		canvas = new OverlayedImageCanvas(imp);
 		StackWindow window = new StackWindow(imp, canvas);
 		ScrollbarWithLabel scrollbar = window.getZSelector();
-		scrollbar.addAdjustmentListener(new AdjustmentListener() {
-			@Override
-			public void adjustmentValueChanged(AdjustmentEvent e) {
-				displayFrame(imp.getFrame()-1);
-			}
-		});
+		if (null != scrollbar)
+			scrollbar.addAdjustmentListener(new AdjustmentListener() {
+				@Override
+				public void adjustmentValueChanged(AdjustmentEvent e) {
+					displayFrame(imp.getFrame()-1);
+				}
+			});
 		window.addMouseWheelListener(new MouseWheelListener() {
 			@Override
 			public void mouseWheelMoved(MouseWheelEvent e) {
@@ -189,8 +194,8 @@ public class SpotDisplayer2D extends SpotDisplayer {
 		float max = Float.NEGATIVE_INFINITY;
 		Float val;
 		for (int key : spots.keySet()) {
-			for (Spot spot : spots.get(key)) {
-				val = spot.getFeature(feature);
+			for (TrackNode<K> node : spots.get(key)) {
+				val = node.getObject().getFeature(feature);
 				if (null == val)
 					continue;
 				if (val > max) max = val;
@@ -219,23 +224,23 @@ public class SpotDisplayer2D extends SpotDisplayer {
 	 */
 	
 	private void displayFrame(int frame) {
-		final Collection<Spot> spotsThisFrame = spotsToShow.get(frame);		
+		final Collection<TrackNode<K>> spotsThisFrame = spotsToShow.get(frame);		
 		spotOverlays.clear();
 		canvas.clearOverlay();
 		if (null == spotsThisFrame)
 			return;
 		SpotOverlay overlay;
-		float[] coords;
+		float[] coords = new float[2];
 		Float val;
-		for (Spot spot : spotsThisFrame) {
-			coords = spot.getCoordinates();
-			val = spot.getFeature(currentFeature);
+		for (TrackNode<K> node : spotsThisFrame) {
+			node.getObject().getPosition(coords);
+			val = node.getObject().getFeature(currentFeature);
 			if (null == currentFeature || null == val)
 				overlay = new SpotOverlay(coords[0], coords[1], radius);
 			else
 				overlay = new SpotOverlay(coords[0], coords[1], radius, colorMap.getPaint((val-featureMinValue)/(featureMaxValue-featureMinValue)));
 			canvas.addOverlay(overlay);
-			spotOverlays.put(spot, overlay);
+			spotOverlays.put(node.getObject(), overlay);
 		}
 		
 		if (displayTracks) {
@@ -243,9 +248,9 @@ public class SpotDisplayer2D extends SpotDisplayer {
 			if (frame == 0) 
 				return;
 			
-			TrackOverlay trackOverkay;
-			for (Spot spot : spotsThisFrame) {
-				trackOverkay = new TrackOverlay(spot, DEFAULT_COLOR);
+			TrackOverlay<K> trackOverkay;
+			for (TrackNode<K> spot : spotsThisFrame) {
+				trackOverkay = new TrackOverlay<K>(spot, DEFAULT_COLOR);
 				canvas.addOverlay(trackOverkay);
 			}
 		}

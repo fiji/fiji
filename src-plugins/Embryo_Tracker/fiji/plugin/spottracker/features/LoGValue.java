@@ -4,7 +4,7 @@ import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
 import fiji.plugin.spottracker.Feature;
-import fiji.plugin.spottracker.Spot;
+import fiji.plugin.spottracker.Featurable;
 
 public class LoGValue <T extends RealType<T>> extends IndependentFeatureAnalyzer {
 
@@ -17,6 +17,8 @@ public class LoGValue <T extends RealType<T>> extends IndependentFeatureAnalyzer
 	private LocalizableByDimCursor<T> cursor;
 	private float[] downsampleFactors;
 	private float[] calibration;
+	/** Utility holder. */
+	private float[] coords;
 	
 	/*
 	 * CONSTRUCTORS
@@ -31,7 +33,7 @@ public class LoGValue <T extends RealType<T>> extends IndependentFeatureAnalyzer
 		this.cursor = img.createLocalizableByDimCursor();
 		this.calibration = filteredImage.getCalibration();
 		this.downsampleFactors = new float[filteredImage.getNumDimensions()];
-		
+		coords = new float[img.getNumDimensions()];
 		for (int i = 0; i < downsampleFactors.length; i++) {
 			downsampleFactors[i] = 1;
 		}
@@ -50,6 +52,7 @@ public class LoGValue <T extends RealType<T>> extends IndependentFeatureAnalyzer
 		this.cursor = img.createLocalizableByDimCursor();
 		this.downsampleFactors = downsampleFactors;
 		this.calibration = filteredImage.getCalibration();
+		coords = new float[img.getNumDimensions()];
 	}
 	
 	/**
@@ -64,6 +67,7 @@ public class LoGValue <T extends RealType<T>> extends IndependentFeatureAnalyzer
 		this.downsampleFactors = downsampleFactors;
 		this.cursor = img.createLocalizableByDimCursor();
 		this.calibration = calibration;
+		coords = new float[img.getNumDimensions()];
 	}
 
 	/*
@@ -76,8 +80,9 @@ public class LoGValue <T extends RealType<T>> extends IndependentFeatureAnalyzer
 	}
 
 	@Override
-	public void process(Spot spot) {
-		final float[] coords = spot.getCoordinates().clone();
+	public void process(Featurable spot) {
+		for (int i = 0; i < coords.length; i++) 
+			coords[i] = spot.getFeature(Featurable.POSITION_FEATURES[i]);
 		
 		// 1 - Convert physical coords to pixel coords
 		for (int i = 0; i < downsampleFactors.length; i++) {

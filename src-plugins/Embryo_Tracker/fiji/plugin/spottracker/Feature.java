@@ -15,6 +15,10 @@ public enum Feature {
 	STANDARD_DEVIATION,
 	KURTOSIS,
 	SKEWNESS,
+	POSITION_X,
+	POSITION_Y,
+	POSITION_Z,
+	POSITION_T,
 	ELLIPSOIDFIT_SEMIAXISLENGTH_A,
 	ELLIPSOIDFIT_SEMIAXISLENGTH_B,
 	ELLIPSOIDFIT_SEMIAXISLENGTH_C,
@@ -27,6 +31,14 @@ public enum Feature {
 	
 	public String toString() {
 		switch(this) {
+		case POSITION_X:
+			return "X";
+		case POSITION_Y:
+			return "Y";
+		case POSITION_Z:
+			return "Z";
+		case POSITION_T:
+			return "T";
 		case VARIANCE:
 			return "Variance";
 		case LOG_VALUE:

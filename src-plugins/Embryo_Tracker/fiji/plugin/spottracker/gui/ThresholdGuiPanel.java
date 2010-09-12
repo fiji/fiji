@@ -1,4 +1,5 @@
 package fiji.plugin.spottracker.gui;
+
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -27,6 +28,7 @@ import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import fiji.plugin.spottracker.Featurable;
 import fiji.plugin.spottracker.Feature;
 import fiji.plugin.spottracker.Spot;
 
@@ -76,7 +78,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 
 	private Stack<ThresholdPanel<Feature>> thresholdPanels = new Stack<ThresholdPanel<Feature>>();
 	private Stack<Component> struts = new Stack<Component>();
-	private Collection<Collection<Spot>> spots;
+	private Collection<? extends Collection<? extends Featurable>> spots;
 	private EnumMap<Feature, double[]> featureValues = new EnumMap<Feature, double[]>(Feature.class);
 	private int newFeatureIndex;
 	
@@ -101,7 +103,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	 * CONSTRUCTOR
 	 */
 	
-	public ThresholdGuiPanel(List<Collection<Spot>> spots, Feature selectedFeature) {
+	public ThresholdGuiPanel(List<Collection<? extends Featurable>> spots, Feature selectedFeature) {
 		super();
 		newFeatureIndex = selectedFeature.ordinal();
 		setSpots(spots);
@@ -110,7 +112,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 			addThresholdPanel();
 	}
 
-	public ThresholdGuiPanel(List<Collection<Spot>> spots) {
+	public ThresholdGuiPanel(List<Collection<? extends Featurable>> spots) {
 		this(spots, Feature.values()[0]);
 	}
 	
@@ -128,7 +130,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	 * Calling this method causes the individual threshold panel to be all 
 	 * removed.
 	 */
-	public void setSpots(Collection<Collection<Spot>> spots) {
+	public void setSpots(Collection<? extends Collection<? extends Featurable>> spots) {
 		for(ThresholdPanel<Feature> tp : thresholdPanels)
 			jPanelAllThresholds.remove(tp);
 		for(Component strut : struts)
@@ -240,15 +242,15 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 		boolean noDataFlag = true;
 		// Get the total quantity of spot we have
 		int spotNumber = 0;
-		for(Collection<Spot> collection : spots)
+		for(Collection<? extends Featurable> collection : spots)
 			spotNumber += collection.size();
 		
 		for(Feature feature : Feature.values()) {
 			// Make a double array to comply to JFreeChart histograms
 			double[] values = new double[spotNumber];
 			index = 0;
-			for(Collection<Spot> collection : spots) {
-				for (Spot spot : collection) {
+			for(Collection<? extends Featurable> collection : spots) {
+				for (Featurable spot : collection) {
 					val = spot.getFeature(feature);
 					if (null == val)
 						continue;
@@ -418,8 +420,8 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 		// Generate fake Spot data
 		final int NSPOT = 100;
 		final Random rn = new Random();
-		ArrayList<Spot> spots = new ArrayList<Spot>(NSPOT);
-		Spot spot;
+		ArrayList<Featurable> spots = new ArrayList<Featurable>(NSPOT);
+		Featurable spot;
 		for (int i = 0; i < NSPOT; i++) {
 			spot = new Spot(new float[] {0, 0, 0});
 			for (Feature feature : Feature.values())
@@ -437,13 +439,9 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 		
 		System.out.println("Type <Enter> to ad spots to this");
 		System.in.read();
-		List<Collection<Spot>> allSpots = new ArrayList<Collection<Spot>>();
+		List<Collection<Featurable>> allSpots = new ArrayList<Collection<Featurable>>();
 		allSpots.add(spots);
 		gui.setSpots(allSpots);
 		
 	}
-
-	
-
-
 }
