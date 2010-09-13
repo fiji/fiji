@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <CoreFoundation/CoreFoundation.h>
+#include <ApplicationServices/ApplicationServices.h>
 
 struct string;
 static void append_icon_path(struct string *str);
@@ -2149,7 +2150,7 @@ static int start_ij(void)
 
 	if (!headless &&
 #ifdef MACOSX
-			!getenv("SECURITYSESSIONID") && !getenv("DISPLAY")
+			!CGSessionCopyCurrentDictionary()
 #elif defined(__linux__)
 			!getenv("DISPLAY")
 #else

@@ -348,7 +348,8 @@ LDFLAGS(fiji)=$LDFLAGS $MACOPTS
 
 LIBS(linux)=-ldl
 LIBS(linux64)=-ldl
-LIBS(macosx)=-framework CoreFoundation -framework JavaVM
+LIBS(macosx)=-framework CoreFoundation -framework ApplicationServices \
+	-framework JavaVM
 
 fiji <- fiji.c
 
