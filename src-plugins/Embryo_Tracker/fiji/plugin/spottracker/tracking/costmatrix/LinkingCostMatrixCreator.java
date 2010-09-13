@@ -6,6 +6,7 @@ import Jama.Matrix;
 
 import fiji.plugin.spottracker.Featurable;
 import fiji.plugin.spottracker.TrackNode;
+import fiji.plugin.spottracker.tracking.LAPTracker.Settings;
 import fiji.plugin.spottracker.tracking.costfunction.LinkingCostFunction;
 
 /**
@@ -24,30 +25,26 @@ import fiji.plugin.spottracker.tracking.costfunction.LinkingCostFunction;
  */
 public class LinkingCostMatrixCreator<K extends Featurable> extends LAPTrackerCostMatrixCreator {
 
-	/** The maximum distance away two Spots in consecutive frames can be in order 
-	 * to be linked. */
-	protected static final double MAX_DIST_OBJECTS = 10.0d;	// TODO make user input
-	/** The factor used to create d and b in the paper, the alternative costs to linking
-	 * objects. */
-	protected static final double ALTERNATIVE_OBJECT_LINKING_COST_FACTOR = 1.05d;	// TODO make user input
-
 	/** The Spots belonging to time frame t. */
 	protected ArrayList<TrackNode<K>> t0;
 	/** The Spots belonging to time frame t+1. */
 	protected ArrayList<TrackNode<K>> t1;
 	/** The total number of Spots in time frames t and t+1. */
 	protected int numSpots;
+	/** User supplied settings for creating the cost matrix. */
+	protected Settings settings;
 	
 	/**
 	 * 
 	 * @param t0 The spots in frame t
 	 * @param t1 The spots in frame t+1
 	 */
-	public LinkingCostMatrixCreator(ArrayList<TrackNode<K>> t0, ArrayList<TrackNode<K>> t1) {
+	public LinkingCostMatrixCreator(ArrayList<TrackNode<K>> t0, ArrayList<TrackNode<K>> t1, Settings settings) {
 		this.t0 = t0;
 		this.t1 = t1;
 		this.numSpots = t0.size() + t1.size();
 		this.costs = new Matrix(numSpots, numSpots);
+		this.settings = settings;
 	}
 
 	@Override
@@ -71,7 +68,7 @@ public class LinkingCostMatrixCreator<K extends Featurable> extends LAPTrackerCo
 		
 		// 1 - Fill in quadrants
 		Matrix topLeft = getLinkingCostSubMatrix();
-		final double cutoff = ALTERNATIVE_OBJECT_LINKING_COST_FACTOR * getMaxScore(topLeft);
+		final double cutoff = settings.altLinkingCostFactor * getMaxScore(topLeft);
 		Matrix topRight = getAlternativeScores(t0.size(), cutoff);
 		Matrix bottomLeft = getAlternativeScores(t1.size(), cutoff);
 		Matrix bottomRight = getLowerRight(topLeft, cutoff);
@@ -88,19 +85,24 @@ public class LinkingCostMatrixCreator<K extends Featurable> extends LAPTrackerCo
 	}
 	
 	
-	@SuppressWarnings("unused")
-	private void printMatrix (Matrix m, String s) {
-		Matrix n = m.copy();
-		System.out.println(s);
-		for (int i = 0; i < n.getRowDimension(); i++) {
-			for (int j = 0; j < n.getColumnDimension(); j++) {
-				if (n.get(i, j) == Double.MAX_VALUE) {
-					n.set(i, j, Double.NaN);
-				}
-			}
-		}
-		n.print(4,2);
-	}
+
+	/* For debugging, use this to print a matrix where the max value
+	 * is NaN, and not Double.MAX_VALUE which makes displaying the matrix
+	 * impossible
+	 */
+//	private void printMatrix (Matrix m, String s) {
+//		Matrix n = m.copy();
+//		System.out.println(s);
+//		for (int i = 0; i < n.getRowDimension(); i++) {
+//			for (int j = 0; j < n.getColumnDimension(); j++) {
+//				if (n.get(i, j) == Double.MAX_VALUE) {
+//					n.set(i, j, Double.NaN);
+//				}
+//			}
+//		}
+//		n.print(4,2);
+//	}
+
 	
 	
 	/**
@@ -126,7 +128,7 @@ public class LinkingCostMatrixCreator<K extends Featurable> extends LAPTrackerCo
 	private Matrix getLinkingCostSubMatrix() {
 		Matrix linkingScores = new Matrix(t0.size(), t1.size());
 		//CostFunctions.linkingScores(linkingScores, t0, t1, MAX_DIST_OBJECTS);
-		LinkingCostFunction<K> linkingCosts = new LinkingCostFunction<K>(linkingScores, t0, t1, MAX_DIST_OBJECTS, BLOCKED);
+		LinkingCostFunction<K> linkingCosts = new LinkingCostFunction<K>(linkingScores, t0, t1, settings.maxDistObjects, BLOCKED);
 		linkingCosts.applyCostFunction();
 		return linkingScores;
 	}

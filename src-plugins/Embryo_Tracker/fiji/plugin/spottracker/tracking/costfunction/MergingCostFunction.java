@@ -46,15 +46,18 @@ public class MergingCostFunction <K extends Featurable> implements CostFunctions
 	/** The list of middle points. */
 	protected ArrayList<TrackNode<K>> middlePoints;
 	/** Thresholds for the intensity ratios. */
-	protected double[] intensityThresholds;
+	protected double minIntensityRatio;
+	/** Thresholds for the intensity ratios. */
+	protected double maxIntensityRatio;
 	
-	public MergingCostFunction(Matrix m, ArrayList< ArrayList<TrackNode<K>> > trackSegments, ArrayList<TrackNode<K>> middlePoints, double maxDist, double blocked, double[] intensityThresholds) {
+	public MergingCostFunction(Matrix m, ArrayList< ArrayList<TrackNode<K>> > trackSegments, ArrayList<TrackNode<K>> middlePoints, double maxDist, double blocked, double minIntensityRatio, double maxIntensityRatio) {
 		this.m = m;
 		this.trackSegments = trackSegments;
 		this.middlePoints = middlePoints;
 		this.maxDist = maxDist;
 		this.blocked = blocked;
-		this.intensityThresholds = intensityThresholds;
+		this.minIntensityRatio = minIntensityRatio;
+		this.maxIntensityRatio = maxIntensityRatio;
 	}
 	
 	@Override
@@ -88,8 +91,8 @@ public class MergingCostFunction <K extends Featurable> implements CostFunctions
 				K middleSpot = middle.getParents().iterator().next().getObject();
 				iRatio = middle.getObject().getFeature(Feature.MEAN_INTENSITY) / (middleSpot.getFeature(Feature.MEAN_INTENSITY) + end.getObject().getFeature(Feature.MEAN_INTENSITY));
 				
-				// Intensity threshold -  must be within INTENSITY_RATIO_CUTOFFS ([min, max])
-				if (iRatio > intensityThresholds[1] || iRatio < intensityThresholds[0]) {
+				// Intensity threshold -  must be within min and max intensity thresholds
+				if (iRatio > maxIntensityRatio || iRatio < minIntensityRatio) {
 					m.set(i, j, blocked);
 					continue;
 				}
