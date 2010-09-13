@@ -104,6 +104,42 @@ import fiji.plugin.spottracker.tracking.hungarian.HungarianAlgorithm;
  */
 public class LAPTracker implements ObjectTracker {
 	
+	public static class Settings {
+		
+		public static final Settings DEFAULT = new Settings();
+		
+		// Default settings
+		private static final int MINIMUM_SEGMENT_LENGTH = 3; 
+		private static final double MAX_DIST_OBJECTS = 15.0d;
+		private static final double ALTERNATIVE_OBJECT_LINKING_COST_FACTOR = 1.05d;
+		private static final double MAX_DIST_SEGMENTS = 15.0d;
+		private static final int GAP_CLOSING_TIME_WINDOW = 4;
+		private static final double MIN_INTENSITY_RATIO = 0.5d;
+		private static final double MAX_INTENSITY_RATIO = 4.0d;
+		private static final double CUTOFF_PERCENTILE = 0.9d;
+		
+		/** To throw out spurious segments, only include track segments with a length strictly larger
+		 * than this value. */
+		public int minSegmentLength = MINIMUM_SEGMENT_LENGTH;
+		/** The maximum distance away two Spots in consecutive frames can be in order 
+		 * to be linked. (Step 1 threshold) */
+		public double maxDistObjects = MAX_DIST_OBJECTS;
+		/** The maximum distance away two Segments can be in order 
+		 * to be linked. (Step 2 threshold) */
+		public double maxDistSegments = MAX_DIST_SEGMENTS;
+		/** The factor used to create d and b in the paper, the alternative costs to linking
+		 * objects. */
+		public double altLinkingCostFactor = ALTERNATIVE_OBJECT_LINKING_COST_FACTOR;
+		/** The maximum number of frames apart two segments can be 'gap closed.' */
+		public int gapClosingTimeWindow = GAP_CLOSING_TIME_WINDOW;
+		/** The minimum allowable intensity ratio for merging and splitting. */
+		public double minIntensityRatio = MIN_INTENSITY_RATIO;
+		/** The maximum allowable intensity ratio for merging and splitting. */
+		public double maxIntensityRatio = MAX_INTENSITY_RATIO;
+		/** The percentile used to calculate d and b cutoffs in the paper. */
+		public double cutoffPercentile = CUTOFF_PERCENTILE;
+	}
+	
 	/** Used as a flag when building track segments to indicate a Spot is unlinked to
 	 * the next frame. */
 	protected static final int NOT_LINKED = -2;
@@ -123,9 +159,6 @@ public class LAPTracker implements ObjectTracker {
 	protected boolean inputChecked = false;
 	/** Stores the track segments computed during step (1) of the algorithm */
 	protected ArrayList< ArrayList<Spot> > trackSegments = null;
-	/** Stores whether the default cost matrices from the paper should be used,
-	 * or if the user will supply their own. */
-	protected boolean defaultCosts = true;
 	/** Holds references to the middle spots in the track segments. */
 	protected ArrayList<Spot> middlePoints;
 	/** Holds references to the middle spots considered for merging in
@@ -140,40 +173,45 @@ public class LAPTracker implements ObjectTracker {
 	/** Each index corresponds to a Spot in middleSplittingPoints, and holds
 	 * the track segment index that the middle point belongs to. */
 	protected int[] splittingMiddlePointsSegmentIndices;
+	/** The settings to use for this tracker. */
+	private Settings settings = Settings.DEFAULT;
 	
 	
-	/**
-	 * Use this constructor to use the cost-matrices described in the paper
-	 * for Brownian motion.
-	 * @param objects Holds a list of Spots for each frame in the time-lapse image.
+	/*
+	 * CONSTRUCTORS
 	 */
-	public LAPTracker (TreeMap<Integer, ? extends Collection<Spot> > objects) {
-		this.objects = convertMapToArrayList(objects);
-	}
-	
 	
 	/** 
-	 * Use this constructor if you want to supply your own cost matrices, and want to supply
-	 * the linking cost matrix (step 1) at construction.
+	 * Default constructor.
+	 * 
 	 * @param objects Holds a list of Spots for each frame in the time-lapse image.
-	 * @param linkingCosts The cost matrix for step 1, linking objects
+	 * @param linkingCosts The cost matrix for step 1, linking objects.
+	 * @param settings The settings to use for this tracker.
 	 */
-	public LAPTracker (TreeMap<Integer, ? extends Collection<Spot> > objects, ArrayList<double[][]> linkingCosts) {
+	public LAPTracker(TreeMap<Integer, ? extends Collection<Spot> > objects, ArrayList<double[][]> linkingCosts, Settings settings) {
 		this.objects = convertMapToArrayList(objects);
 		this.linkingCosts = linkingCosts;
-		this.defaultCosts = false;
+		this.settings = settings;
+	}
+
+	
+	public LAPTracker(TreeMap<Integer, ? extends Collection<Spot> > objects, ArrayList<double[][]> linkingCosts) {
+		this(objects, linkingCosts, Settings.DEFAULT);
 	}
 	
-	/**
-	 * This constructor should be used when not providing the object cost matrix (step 1) at 
-	 * construction, but when planning to use non-default cost matrices.
-	 * @param objects Holds a list of Spots for each frame in the time-lapse image.
-	 * @param defaultCosts If true, the default matrices will be used. If false, the user must supply them.
-	 */
-	public LAPTracker (TreeMap<Integer, ? extends Collection<Spot> > objects, boolean defaultCosts) {
-		this.objects = convertMapToArrayList(objects);
-		this.defaultCosts = defaultCosts;
+	public LAPTracker(TreeMap<Integer, ? extends Collection<Spot> > objects, Settings settings) {
+		this(objects, null, settings);
 	}
+
+	public LAPTracker (TreeMap<Integer, ? extends Collection<Spot> > objects) {
+		this(objects, null, Settings.DEFAULT);
+	}
+	
+
+	/*
+	 * METHODS
+	 */
+	
 	
 	/**
 	 * Set the cost matrices used for step 1, linking objects into track segments.
@@ -257,14 +295,6 @@ public class LAPTracker implements ObjectTracker {
 			return false;
 		}
 		
-		// If not using the default costs, make sure the linking cost matrix exists
-		if (!defaultCosts) {
-			if (null == linkingCosts) {
-				errorMessage = "No linking costs have been provided!";
-				return false;
-			}
-		}
-		
 		inputChecked = true;
 		return true;
 	}
@@ -302,7 +332,7 @@ public class LAPTracker implements ObjectTracker {
 		
 		// Step 2 - Link track segments into final tracks
 		System.out.println("--- Step two ---");
-		
+
 		// Create cost matrix
 		if (!createTrackSegmentCostMatrix()) return false;
 		System.out.println("Cost matrix for track segments created successfully.");
@@ -334,7 +364,7 @@ public class LAPTracker implements ObjectTracker {
 	private boolean createLinkingCostMatrices() {
 		linkingCosts = new ArrayList<double[][]>();	
 		for (int i = 0; i < objects.size() - 1; i++) {
-			LinkingCostMatrixCreator objCosts = new LinkingCostMatrixCreator(new ArrayList<Spot>(objects.get(i)), new ArrayList<Spot>(objects.get(i + 1)));
+			LinkingCostMatrixCreator objCosts = new LinkingCostMatrixCreator(new ArrayList<Spot>(objects.get(i)), new ArrayList<Spot>(objects.get(i + 1)), settings);
 			if (!objCosts.checkInput() || !objCosts.process()) {
 				System.out.println(objCosts.getErrorMessage());
 				return false;
@@ -350,7 +380,7 @@ public class LAPTracker implements ObjectTracker {
 	 * @return True if executes successfully, false otherwise.
 	 */
 	private boolean createTrackSegmentCostMatrix() {
-		TrackSegmentCostMatrixCreator segCosts = new TrackSegmentCostMatrixCreator(trackSegments);
+		TrackSegmentCostMatrixCreator segCosts = new TrackSegmentCostMatrixCreator(trackSegments, settings);
 		if (!segCosts.checkInput() || !segCosts.process()) {
 			System.out.println(segCosts.getErrorMessage());
 			return false;
@@ -368,6 +398,11 @@ public class LAPTracker implements ObjectTracker {
 	 */
 	public boolean linkObjectsToTrackSegments() {
 
+		if (null == linkingCosts) {
+			errorMessage = "The linking cost matrix is null.";
+			return false;
+		}
+		
 		// Solve LAP
 		ArrayList< int[] > trackSegmentStructure = solveLAPForTrackSegments();
 		System.out.println("LAP for frame-to-frame linking solved.\n");
@@ -492,7 +527,7 @@ public class LAPTracker implements ObjectTracker {
 						}
 					}
 					
-					if (trackSegment.size() >= Settings.MINIMUM_SEGMENT_LENGTH) {		
+					if (trackSegment.size() >= settings .minSegmentLength) {		
 						// TODO probably incorporate this above, but this is faster to implement.
 						// Link segment Spots to each other
 						Spot prev = null;
@@ -800,14 +835,15 @@ public class LAPTracker implements ObjectTracker {
 //			}
 		} else {
 			
-			LAPTracker lap = new LAPTracker(wrap, false);
+			LAPTracker lap = new LAPTracker(wrap);
 			
 			// Get linking costs
 			ArrayList<double[][]> linkingCosts = new ArrayList<double[][]>();
+			Settings settings = new Settings();
 			for (int i = 0; i < wrap.size() - 1; i++) {
 				ArrayList<Spot> x = wrap.get(i);
 				ArrayList<Spot> y = wrap.get(i+1);
-				LinkingCostMatrixCreator l = new LinkingCostMatrixCreator(x, y);
+				LinkingCostMatrixCreator l = new LinkingCostMatrixCreator(x, y, settings);
 				l.checkInput();
 				l.process();
 				linkingCosts.add(l.getCostMatrix());
@@ -829,7 +865,7 @@ public class LAPTracker implements ObjectTracker {
 //			}
 			
 			// Get segment costs
-			TrackSegmentCostMatrixCreator segCosts = new TrackSegmentCostMatrixCreator(tSegs);
+			TrackSegmentCostMatrixCreator segCosts = new TrackSegmentCostMatrixCreator(tSegs, settings);
 			segCosts.checkInput();
 			segCosts.process();
 			double[][] segmentCosts = segCosts.getCostMatrix();

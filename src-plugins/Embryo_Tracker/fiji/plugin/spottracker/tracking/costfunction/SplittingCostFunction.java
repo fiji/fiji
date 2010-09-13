@@ -45,15 +45,18 @@ public class SplittingCostFunction implements CostFunctions {
 	/** The list of middle points. */
 	protected ArrayList<Spot> splittingMiddlePoints;
 	/** Thresholds for the intensity ratios. */
-	protected double[] intensityThresholds;
+	protected double minIntensityRatio;
+	/** Thresholds for the intensity ratios. */
+	protected double maxIntensityRatio;
 	
-	public SplittingCostFunction(Matrix m, ArrayList< ArrayList<Spot> > trackSegments, ArrayList<Spot> splittingMiddlePoints, double maxDist, double blocked, double[] intensityThresholds) {
+	public SplittingCostFunction(Matrix m, ArrayList< ArrayList<Spot> > trackSegments, ArrayList<Spot> splittingMiddlePoints, double maxDist, double blocked, double minIntensityRatio, double maxIntensityRatio) {
 		this.m = m;
 		this.trackSegments = trackSegments;
 		this.splittingMiddlePoints = splittingMiddlePoints;
 		this.maxDist = maxDist;
 		this.blocked = blocked;
-		this.intensityThresholds = intensityThresholds;
+		this.minIntensityRatio = minIntensityRatio;
+		this.maxIntensityRatio = maxIntensityRatio;
 	}
 	
 	@Override
@@ -82,8 +85,8 @@ public class SplittingCostFunction implements CostFunctions {
 
 				iRatio = middle.getFeature(Feature.MEAN_INTENSITY) / (middle.getNext().get(0).getFeature(Feature.MEAN_INTENSITY) + start.getFeature(Feature.MEAN_INTENSITY));
 				
-				// Intensity threshold -  must be within INTENSITY_RATIO_CUTOFFS ([min, max])
-				if (iRatio > intensityThresholds[1] || iRatio < intensityThresholds[0]) {
+				// Intensity threshold -  must be within mix and max intensity thresholds
+				if (iRatio > maxIntensityRatio || iRatio < minIntensityRatio) {
 					m.set(i, j, blocked);
 					continue;
 				}

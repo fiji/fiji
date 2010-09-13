@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import Jama.Matrix;
 
 import fiji.plugin.spottracker.Spot;
-import fiji.plugin.spottracker.tracking.ObjectTracker.Settings;
+import fiji.plugin.spottracker.tracking.LAPTracker.Settings;
 import fiji.plugin.spottracker.tracking.costfunction.LinkingCostFunction;
 
 /**
@@ -30,17 +30,20 @@ public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	protected ArrayList<Spot> t1;
 	/** The total number of Spots in time frames t and t+1. */
 	protected int numSpots;
+	/** User supplied settings for creating the cost matrix. */
+	protected Settings settings;
 	
 	/**
 	 * 
 	 * @param t0 The spots in frame t
 	 * @param t1 The spots in frame t+1
 	 */
-	public LinkingCostMatrixCreator(ArrayList<Spot> t0, ArrayList<Spot> t1) {
+	public LinkingCostMatrixCreator(ArrayList<Spot> t0, ArrayList<Spot> t1, Settings settings) {
 		this.t0 = t0;
 		this.t1 = t1;
 		this.numSpots = t0.size() + t1.size();
 		this.costs = new Matrix(numSpots, numSpots);
+		this.settings = settings;
 	}
 
 	@Override
@@ -64,7 +67,7 @@ public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 		
 		// 1 - Fill in quadrants
 		Matrix topLeft = getLinkingCostSubMatrix();
-		final double cutoff = Settings.ALTERNATIVE_OBJECT_LINKING_COST_FACTOR * getMaxScore(topLeft);
+		final double cutoff = settings.altLinkingCostFactor * getMaxScore(topLeft);
 		Matrix topRight = getAlternativeScores(t0.size(), cutoff);
 		Matrix bottomLeft = getAlternativeScores(t1.size(), cutoff);
 		Matrix bottomRight = getLowerRight(topLeft, cutoff);
@@ -122,7 +125,7 @@ public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	private Matrix getLinkingCostSubMatrix() {
 		Matrix linkingScores = new Matrix(t0.size(), t1.size());
 		//CostFunctions.linkingScores(linkingScores, t0, t1, MAX_DIST_OBJECTS);
-		LinkingCostFunction linkingCosts = new LinkingCostFunction(linkingScores, t0, t1, Settings.MAX_DIST_OBJECTS, BLOCKED);
+		LinkingCostFunction linkingCosts = new LinkingCostFunction(linkingScores, t0, t1, settings.maxDistObjects, BLOCKED);
 		linkingCosts.applyCostFunction();
 		return linkingScores;
 	}

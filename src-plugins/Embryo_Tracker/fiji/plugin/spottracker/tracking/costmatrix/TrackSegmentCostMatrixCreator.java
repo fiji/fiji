@@ -6,7 +6,7 @@ import Jama.Matrix;
 
 import fiji.plugin.spottracker.Spot;
 import fiji.plugin.spottracker.Utils;
-import fiji.plugin.spottracker.tracking.ObjectTracker.Settings;
+import fiji.plugin.spottracker.tracking.LAPTracker.Settings;
 import fiji.plugin.spottracker.tracking.costfunction.GapClosingCostFunction;
 import fiji.plugin.spottracker.tracking.costfunction.MergingCostFunction;
 import fiji.plugin.spottracker.tracking.costfunction.SplittingCostFunction;
@@ -90,17 +90,19 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	protected ArrayList<Spot> mergingMiddlePoints;
 	/** The list of middle Spots which can participate in splitting events. */
 	protected ArrayList<Spot> splittingMiddlePoints;
-	
+	/** User supplied settings for creating the cost matrix. */
+	protected Settings settings;
 	
 	/**
 	 * 
 	 * @param trackSegments A list of track segments (each track segment is 
 	 * an <code>ArrayList</code> of <code>Spots</code>.
 	 */
-	public TrackSegmentCostMatrixCreator(ArrayList< ArrayList<Spot> > trackSegments) {
+	public TrackSegmentCostMatrixCreator(ArrayList< ArrayList<Spot> > trackSegments, Settings settings) {
 		this.trackSegments = trackSegments;
 		this.mergingMiddlePoints = new ArrayList<Spot>();
 		this.splittingMiddlePoints = new ArrayList<Spot>();
+		this.settings = settings;
 	}
 	
 	
@@ -252,7 +254,7 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	 */
 	private Matrix getGapClosingCostSubMatrix(int n) {
 		final Matrix gapClosingScores = new Matrix(n, n);
-		GapClosingCostFunction gapClosing = new GapClosingCostFunction(gapClosingScores, Settings.GAP_CLOSING_TIME_WINDOW, Settings.MAX_DIST_SEGMENTS, BLOCKED, trackSegments);
+		GapClosingCostFunction gapClosing = new GapClosingCostFunction(gapClosingScores, settings.gapClosingTimeWindow, settings.maxDistSegments, BLOCKED, trackSegments);
 		gapClosing.applyCostFunction();
 		return gapClosingScores;
 	}
@@ -263,7 +265,7 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	 */
 	private Matrix getMergingScores(int n) {
 		final Matrix mergingScores = new Matrix(n, middlePoints.size());
-		MergingCostFunction merging = new MergingCostFunction(mergingScores, trackSegments, middlePoints, Settings.MAX_DIST_SEGMENTS, BLOCKED, Settings.INTENSITY_RATIO_CUTOFFS);
+		MergingCostFunction merging = new MergingCostFunction(mergingScores, trackSegments, middlePoints, settings.maxDistSegments, BLOCKED, settings.minIntensityRatio, settings.maxIntensityRatio);
 		merging.applyCostFunction();
 		return pruneColumns(mergingScores, mergingMiddlePoints);
 	}
@@ -352,7 +354,7 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	 */
 	private Matrix getSplittingScores(int n) {
 		final Matrix splittingScores = new Matrix(middlePoints.size(), n);	
-		SplittingCostFunction splitting = new SplittingCostFunction(splittingScores, trackSegments, middlePoints, Settings.MAX_DIST_SEGMENTS, BLOCKED, Settings.INTENSITY_RATIO_CUTOFFS);
+		SplittingCostFunction splitting = new SplittingCostFunction(splittingScores, trackSegments, middlePoints, settings.maxDistSegments, BLOCKED, settings.minIntensityRatio, settings.maxIntensityRatio);
 		splitting.applyCostFunction();
 		return pruneRows(splittingScores, splittingMiddlePoints);
 	}
@@ -379,10 +381,10 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 		for (int i = 0; i < scores.size(); i++) {
 			scoreArr[i] = scores.get(i);
 		}
-		double cutoff = Utils.getPercentile(scoreArr, Settings.CUTOFF_PERCENTILE); 
+		double cutoff = Utils.getPercentile(scoreArr, settings.cutoffPercentile); 
 		if (!(cutoff < BLOCKED)) {
-			cutoff = 10.0d; // TODO how to fix this?
+			cutoff = 10.0d; // TODO how to fix this? In this case, there are no costs in the matrix, so nothing to calculate the cutoff values from
 		}
-		return Settings.ALTERNATIVE_OBJECT_LINKING_COST_FACTOR * cutoff;
+		return settings.altLinkingCostFactor * cutoff;
 	}
 }
