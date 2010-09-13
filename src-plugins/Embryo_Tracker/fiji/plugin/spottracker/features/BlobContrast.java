@@ -36,7 +36,7 @@ public class BlobContrast <T extends RealType<T>> extends IndependentFeatureAnal
 		float contrast = getContrast(spot, diam);
 		spot.putFeature(FEATURE, Math.abs(contrast));
 	}
-
+	
 	/**
 	 * 
 	 * @param spot
@@ -45,13 +45,10 @@ public class BlobContrast <T extends RealType<T>> extends IndependentFeatureAnal
 	 */
 	protected float getContrast(final Featurable spot, float diameter) {
 		final DomainCursor<T> cursor;
-		for (int i = 0; i < coords.length; i++)
-			coords[i] = spot.getFeature(Featurable.POSITION_FEATURES[i]);
-
 		if (img.getNumDimensions() == 3) 
-			cursor = new SphereCursor<T>(img, coords, diameter/2 * (1+RAD_PERCENTAGE), calibration);
+			cursor = new SphereCursor<T>(img, spot.getPosition(coords), diameter/2 * (1+RAD_PERCENTAGE), calibration);
 		else
-			cursor = new DiscCursor<T>(img, coords, diameter/2 * (1+RAD_PERCENTAGE), calibration);
+			cursor = new DiscCursor<T>(img, spot.getPosition(coords), diameter/2 * (1+RAD_PERCENTAGE), calibration);
 		int innerRingVolume = 0;
 		int outerRingVolume = 0 ;
 		float radius2 = diameter * diameter / 4;
@@ -77,4 +74,5 @@ public class BlobContrast <T extends RealType<T>> extends IndependentFeatureAnal
 		float outerMeanIntensity = outerTotalIntensity / outerRingVolume;
 		return innerMeanIntensity - outerMeanIntensity;
 	}
+
 }

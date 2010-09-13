@@ -62,7 +62,7 @@ public class SpotDisplayer2D <K extends Featurable> extends SpotDisplayer<K> {
 			g2d.drawLine(x1, y1, x2, y2);
 			Set<TrackNode<L>> parents = to.getParents();
 			for (TrackNode<L> node : parents)
-				draw(node, to, g2d);
+				draw(to, node, g2d);
 		}
 	}
 	
@@ -124,7 +124,7 @@ public class SpotDisplayer2D <K extends Featurable> extends SpotDisplayer<K> {
 		TreeMap<Integer, Collection<TrackNode<K>>> spotsOverTime = new TreeMap<Integer, Collection<TrackNode<K>>>();
 		spotsOverTime.put(0, spots);
 		this.radius = radius;
-		this.spots = spotsOverTime;
+		this.tracks = spotsOverTime;
 		this.imp = imp;
 		this.calibration = calibration;
 	}
@@ -136,7 +136,7 @@ public class SpotDisplayer2D <K extends Featurable> extends SpotDisplayer<K> {
 	
 	public SpotDisplayer2D(TreeMap<Integer, Collection<TrackNode<K>>> spots, ImagePlus imp, final float radius, float[] calibration) {
 		this.radius = radius;
-		this.spots = spots;
+		this.tracks = spots;
 		this.imp = imp;
 		this.calibration = calibration;
 	}
@@ -160,7 +160,7 @@ public class SpotDisplayer2D <K extends Featurable> extends SpotDisplayer<K> {
 	
 	@Override
 	public void render() {
-		spotsToShow = spots;
+		spotsToShow = tracks;
 		canvas = new OverlayedImageCanvas(imp);
 		StackWindow window = new StackWindow(imp, canvas);
 		ScrollbarWithLabel scrollbar = window.getZSelector();
@@ -193,8 +193,8 @@ public class SpotDisplayer2D <K extends Featurable> extends SpotDisplayer<K> {
 		float min = Float.POSITIVE_INFINITY;
 		float max = Float.NEGATIVE_INFINITY;
 		Float val;
-		for (int key : spots.keySet()) {
-			for (TrackNode<K> node : spots.get(key)) {
+		for (int key : tracks.keySet()) {
+			for (TrackNode<K> node : tracks.get(key)) {
 				val = node.getObject().getFeature(feature);
 				if (null == val)
 					continue;
@@ -214,7 +214,7 @@ public class SpotDisplayer2D <K extends Featurable> extends SpotDisplayer<K> {
 		displayFrame(imp.getFrame() - 1); // refresh overlay -> it now only has the displayed spots
 		// Make all overlays invisible
 		final int frame = imp.getFrame() -1; // 0 - based
-		if (spots.get(frame) == null)
+		if (tracks.get(frame) == null)
 			return;
 		imp.updateAndDraw();
 	}

@@ -9,13 +9,10 @@ import ij3d.ContentCreator;
 import ij3d.Image3DUniverse;
 
 import java.awt.CardLayout;
-import java.awt.Color;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.TreeMap;
 
 import javax.swing.SwingUtilities;
@@ -27,10 +24,9 @@ import fiji.plugin.spottracker.Featurable;
 import fiji.plugin.spottracker.Feature;
 import fiji.plugin.spottracker.Logger;
 import fiji.plugin.spottracker.Settings;
-import fiji.plugin.spottracker.Spot;
 import fiji.plugin.spottracker.Spot_Tracker;
 import fiji.plugin.spottracker.TrackNode;
-import fiji.plugin.spottracker.TrackNodeI;
+import fiji.plugin.spottracker.Utils;
 import fiji.plugin.spottracker.tracking.LAPTracker;
 
 
@@ -74,7 +70,8 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 	private Logger logger;
 	private TreeMap<Integer,Collection<Featurable>> spots;
 	private TreeMap<Integer,Collection<Featurable>> selectedSpots;
-	private SpotDisplayer displayer;
+	private TreeMap<Integer,Collection<TrackNode<Featurable>>> tracks;
+	private SpotDisplayer<Featurable> displayer;
 	private boolean is3D;
 	
 	{
@@ -104,146 +101,142 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 	private void next() {
 		switch(state) {
 			case START:
+				execSegmentationStep();
 				state = GuiState.SEGMENTING;
-				cardLayout.show(getContentPane(), LOG_PANEL_KEY);
-				settings = startDialogPanel.updateSettings(settings);
-				is3D = settings.imp.getNSlices() > 1;
-				logger = logPanel.getLogger();
-				logger.log("Starting segmentation...\n", Logger.BLUE_COLOR);
-				new Thread() {					
-					public void run() {
-						long start = System.currentTimeMillis();
-						try {
-							spotTracker.setLogger(logger);
-							logPanel.jButtonNext.setEnabled(false);
-							spotTracker.execSegmentation(settings);
-						} catch (Exception e) {
-							logger.error("An error occured:\n"+e+'\n');
-							e.printStackTrace();
-						} finally {
-							logPanel.jButtonNext.setEnabled(true);
-							long end = System.currentTimeMillis();
-							logger.log(String.format("Segmentation done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);
-						}
-					}
-				}.start();
 				break;
 				
 			case SEGMENTING:
-				spots = spotTracker.getSpots();
-				
-				// Launch renderer
-				logger.log("Rendering results...\n",Logger.GREEN_COLOR);
-				logPanel.jButtonNext.setEnabled(false);				
-				final TreeMap<Integer, Collection<Spot>> spotsOverTime = new TreeMap<Integer, Collection<Spot>>();
-				for(int i = 0; i < spots.size(); i++) 
-					spotsOverTime.put(i, spots.get(i));
-
-				// Thread for rendering
-				Runnable renderingRunnable;
-				if (is3D) { 
-					renderingRunnable = new Runnable() {
-						public void run() {
-							// Render image data
-							final Image3DUniverse universe = new Image3DUniverse();
-							universe.show();
-							ImagePlus[] images = makeImageForViewer(settings);
-							Content imageContent = ContentCreator.createContent(
-									settings.imp.getTitle(), 
-									images, 
-									Content.VOLUME, 
-									DEFAULT_RESAMPLING_FACTOR, 
-									0,
-									null, 
-									DEFAULT_THRESHOLD, 
-									new boolean[] {true, true, true});
-							// Render spots
-							displayer = new SpotDisplayer3D(spotsOverTime, universe, settings.expectedDiameter/2); // TODO otherwise too big 							
-							universe.addContentLater(imageContent);
-
-						}
-					};
-				} else {
-					renderingRunnable = new Runnable() {
-						public void run() {
-							final float[] calibration = new float[] {
-									(float) settings.imp.getCalibration().pixelWidth, 
-									(float) settings.imp.getCalibration().pixelHeight};
-							displayer = new SpotDisplayer2D(spotsOverTime, settings.imp, settings.expectedDiameter/2, calibration);
-						}
-					};
-				}
-				Thread renderingThread = new Thread(renderingRunnable);
-
-				renderingThread.start();
-				try {
-					renderingThread.join();
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-
-				displayer.render();
-				logger.log("Rendering done.\n", Logger.GREEN_COLOR);
-				logPanel.jButtonNext.setEnabled(true);
-				cardLayout.show(getContentPane(), THRESHOLD_GUI_KEY);
-				
-				thresholdGuiPanel.setSpots(spots.values());
-				thresholdGuiPanel.addThresholdPanel(Feature.MEAN_INTENSITY);
-				thresholdSpots();
+				execThresholdingStep();
 				state = GuiState.THRESHOLD_BLOBS;
 				break;
 				
 			case THRESHOLD_BLOBS:
-				cardLayout.show(getContentPane(), LOG_PANEL_KEY);
-				logger.log("Thresholding spots...\n", Logger.BLUE_COLOR);
-				logPanel.jButtonNext.setEnabled(false);
-				new Thread() {					
-					public void run() {
-						Feature[] features = thresholdGuiPanel.getFeatures();
-						double[] values = thresholdGuiPanel.getThresholds();
-						boolean[] isAbove = thresholdGuiPanel.getIsAbove();
-						for (int i = 0; i < features.length; i++)
-							spotTracker.addThreshold(features[i], (float) values[i], isAbove[i]);
-						spotTracker.execThresholding();
-						selectedSpots = spotTracker.getSelectedSpots();
-						logger.log("Thresholding done.\n", Logger.BLUE_COLOR);
-						logPanel.jButtonNext.setEnabled(true);
-						
-						trackParts = createTrackParts(selectedSpots);
-						
-						logger.log("Starting tracking.");
-						LAPTracker<Spot> tracker = new LAPTracker<Featurable>(selectedSpots);
-						if (tracker.checkInput() && tracker.process()) {
-							logger.log("Tracking finished!", Color.GREEN);
-							displayer.setDisplayTracks(true);
-						}
-						else 
-							logger.error("Problem occured in tracking:\n"+tracker.getErrorMessage());
-					}
-
-					
-				}.start();
-				
-				
+				execTrackingStep();
 				break;
 		}
 	}
-	
-	/**
-	 * Embed all {@link Featurable} in the collection into {@link TrackNode} suitable for tracking
-	 */
-	private static final TreeMap<Integer, Collection<TrackNode<Featurable>>> createTrackParts(final TreeMap<Integer, Collection<Featurable>> featurables) {
-		TreeMap<Integer, Collection<TrackNode<Featurable>>> trackParts = new TreeMap<Integer, Collection<TrackNode<Featurable>>>();
-		ArrayList<TrackNode<Featurable>> trackPartsThisFrame;
-		Collection<Featurable> featurablesThisFrame;
-		for (int key : featurables.keySet()) {
-			featurablesThisFrame = featurables.get(key);
-			trackPartsThisFrame = new ArrayList<TrackNode<Featurable>>(featurablesThisFrame.size());
-			for (Featurable f : featurablesThisFrame)
-				trackPartsThisFrame.add(new TrackNodeI<Featurable>(f)); 
-		}
-		return trackParts;
+
+	private void execSegmentationStep() {
+		cardLayout.show(getContentPane(), LOG_PANEL_KEY);
+		settings = startDialogPanel.updateSettings(settings);
+		is3D = settings.imp.getNSlices() > 1;
+		logger = logPanel.getLogger();
+		logger.log("Starting segmentation...\n", Logger.BLUE_COLOR);
+		new Thread() {					
+			public void run() {
+				long start = System.currentTimeMillis();
+				try {
+					spotTracker.setLogger(logger);
+					logPanel.jButtonNext.setEnabled(false);
+					spotTracker.execSegmentation(settings);
+				} catch (Exception e) {
+					logger.error("An error occured:\n"+e+'\n');
+					e.printStackTrace();
+				} finally {
+					logPanel.jButtonNext.setEnabled(true);
+					long end = System.currentTimeMillis();
+					logger.log(String.format("Segmentation done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);
+				}
+			}
+		}.start();
 	}
+	
+	
+	private void execThresholdingStep() {
+		// Store results
+		spots = spotTracker.getSpots();
+		tracks = Utils.embed(spots);
+		
+		// Launch renderer
+		logger.log("Rendering results...\n",Logger.BLUE_COLOR);
+		logPanel.jButtonNext.setEnabled(false);				
+		
+		// Thread for rendering
+		Runnable renderingRunnable;
+		if (is3D) { 
+			renderingRunnable = new Runnable() {
+				public void run() {
+					// Render image data
+					final Image3DUniverse universe = new Image3DUniverse();
+					universe.show();
+					ImagePlus[] images = makeImageForViewer(settings);
+					Content imageContent = ContentCreator.createContent(
+							settings.imp.getTitle(), 
+							images, 
+							Content.VOLUME, 
+							DEFAULT_RESAMPLING_FACTOR, 
+							0,
+							null, 
+							DEFAULT_THRESHOLD, 
+							new boolean[] {true, true, true});
+					// Render spots
+					displayer = new SpotDisplayer3D<Featurable>(tracks, universe, settings.expectedDiameter/2); // TODO otherwise too big 							
+					universe.addContentLater(imageContent);
+
+				}
+			};
+		} else {
+			renderingRunnable = new Runnable() {
+				public void run() {
+					final float[] calibration = new float[] {
+							(float) settings.imp.getCalibration().pixelWidth, 
+							(float) settings.imp.getCalibration().pixelHeight};
+					displayer = new SpotDisplayer2D<Featurable>(tracks, settings.imp, settings.expectedDiameter/2, calibration);
+				}
+			};
+		}
+		Thread renderingThread = new Thread(renderingRunnable);
+
+		renderingThread.start();
+		try {
+			renderingThread.join();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+
+		displayer.render();
+		logger.log("Rendering done.\n", Logger.BLUE_COLOR);
+		logPanel.jButtonNext.setEnabled(true);
+		cardLayout.show(getContentPane(), THRESHOLD_GUI_KEY);
+		
+		thresholdGuiPanel.setSpots(spots.values());
+		thresholdGuiPanel.addThresholdPanel(Feature.MEAN_INTENSITY);
+		thresholdSpots();
+	}
+	
+	
+	private void execTrackingStep() {
+		cardLayout.show(getContentPane(), LOG_PANEL_KEY);
+		logger.log("Thresholding spots...\n", Logger.BLUE_COLOR);
+		logPanel.jButtonNext.setEnabled(false);
+		new Thread() {					
+			public void run() {
+				Feature[] features = thresholdGuiPanel.getFeatures();
+				double[] values = thresholdGuiPanel.getThresholds();
+				boolean[] isAbove = thresholdGuiPanel.getIsAbove();
+				for (int i = 0; i < features.length; i++)
+					spotTracker.addThreshold(features[i], (float) values[i], isAbove[i]);
+				spotTracker.execThresholding();
+				selectedSpots = spotTracker.getSelectedSpots();
+				logger.log("Thresholding done.\n", Logger.BLUE_COLOR);
+				logPanel.jButtonNext.setEnabled(true);
+				
+				tracks = Utils.embed(selectedSpots);
+				logger.log("Starting tracking.\n", Logger.BLUE_COLOR);
+				LAPTracker<Featurable> tracker = new LAPTracker<Featurable>(tracks);
+				if (tracker.checkInput() && tracker.process()) {
+					logger.log("Tracking finished!\n", Logger.BLUE_COLOR);
+					displayer.setTrackObjects(tracks);
+					displayer.setDisplayTracks(true);
+					displayer.refresh(thresholdGuiPanel.getFeatures(), thresholdGuiPanel.getThresholds(), thresholdGuiPanel.getIsAbove());
+				}
+				else {
+					logger.error("Problem occured in tracking:\n"+tracker.getErrorMessage());
+				}
+			}
+		}.start();
+	}
+	
 	
 	/**
 	 * Ensure an 8-bit gray image is sent to the 3D viewer.

@@ -29,14 +29,14 @@ public class SpotDisplayer3D <K extends Featurable> extends SpotDisplayer<K> {
 		TreeMap<Integer, Collection<TrackNode<K>>> spotsOverTime = new TreeMap<Integer, Collection<TrackNode<K>>>();
 		spotsOverTime.put(0, spots);
 		this.radius = radius;
-		this.spots = spotsOverTime;
+		this.tracks = spotsOverTime;
 		this.universe = universe;
 		spotContent = makeContent();
 	}
 	
 	public SpotDisplayer3D(TreeMap<Integer, Collection<TrackNode<K>>> spots, Image3DUniverse universe, final float radius) {
 		this.radius = radius;
-		this.spots = spots;
+		this.tracks = spots;
 		this.universe = universe;
 		spotContent = makeContent();
 	}
@@ -75,8 +75,8 @@ public class SpotDisplayer3D <K extends Featurable> extends SpotDisplayer<K> {
 			float min = Float.POSITIVE_INFINITY;
 			float max = Float.NEGATIVE_INFINITY;
 			Float val;
-			for (int key : spots.keySet()) {
-				for (TrackNode<K> spot : spots.get(key)) {
+			for (int key : tracks.keySet()) {
+				for (TrackNode<K> spot : tracks.get(key)) {
 					val = spot.getObject().getFeature(feature);
 					if (null == val)
 						continue;
@@ -88,7 +88,7 @@ public class SpotDisplayer3D <K extends Featurable> extends SpotDisplayer<K> {
 			Collection<TrackNode<K>> spotThisFrame;
 			SpotGroupNode<K> spotGroup;
 			for (int key : blobs.keySet()) {
-				spotThisFrame = spots.get(key);
+				spotThisFrame = tracks.get(key);
 				spotGroup = blobs.get(key);
 				for ( TrackNode<K> node : spotThisFrame) {
 					val = node.getObject().getFeature(feature);
@@ -135,8 +135,8 @@ public class SpotDisplayer3D <K extends Featurable> extends SpotDisplayer<K> {
 		ContentInstant contentThisFrame;
 		TreeMap<Integer, ContentInstant> contentAllFrames = new TreeMap<Integer, ContentInstant>();
 		
-		for(Integer i : spots.keySet()) {
-			spotsThisFrame = spots.get(i);
+		for(Integer i : tracks.keySet()) {
+			spotsThisFrame = tracks.get(i);
 			HashMap<K, Point4f> centers = new HashMap<K, Point4f>(spotsThisFrame.size());
 			float[] pos;
 			float[] coords = new float[3];

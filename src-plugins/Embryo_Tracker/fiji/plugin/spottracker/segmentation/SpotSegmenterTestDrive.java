@@ -6,8 +6,6 @@ import java.util.Random;
 
 import javax.vecmath.Point3f;
 
-import fiji.plugin.spottracker.Spot;
-
 import mpicbg.imglib.algorithm.math.MathLib;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.special.SphereCursor;
@@ -15,6 +13,7 @@ import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
+import fiji.plugin.spottracker.Featurable;
 
 /**
  * Test class for {@link SpotSegmenter}
@@ -70,7 +69,7 @@ public class SpotSegmenterTestDrive {
 			System.out.println(segmenter.getErrorMessage());
 			return;
 		}
-		Collection<Spot> spots = segmenter.getResult();
+		Collection<Featurable> spots = segmenter.getResult();
 		long end = System.currentTimeMillis();
 		
 		// Display image
@@ -84,16 +83,17 @@ public class SpotSegmenterTestDrive {
 		Point3f p1, p2;
 		float dist, min_dist;
 		int best_index = 0;
-		float[] coords, best_match;
-		ArrayList<Spot> spot_list = new ArrayList<Spot>(spots);
-		Spot best_spot = null;
+		float[] best_match;
+		ArrayList<Featurable> spot_list = new ArrayList<Featurable>(spots);
+		Featurable best_spot = null;
+		float[] coords = new float[3];
 
 		while (!spot_list.isEmpty()) {
 			
 			min_dist = Float.POSITIVE_INFINITY;
-			for (Spot s : spot_list) {
+			for (Featurable s : spot_list) {
 				
-				coords = s.getCoordinates();
+				s.getPosition(coords);
 				p1 = new Point3f(coords);
 
 				for (int j = 0; j < centers.size(); j++) {
@@ -109,7 +109,7 @@ public class SpotSegmenterTestDrive {
 			
 			spot_list.remove(best_spot);
 			best_match = centers.remove(best_index);
-			System.out.println("Blob coordinates: " + MathLib.printCoordinates(best_spot.getCoordinates()));
+			System.out.println("Blob coordinates: " + MathLib.printCoordinates(best_spot.getPosition(coords)));
 			System.out.println(String.format("  Best matching center at distance %.1f with coords: " + MathLib.printCoordinates(best_match), min_dist));			
 		}
 		System.out.println();

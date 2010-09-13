@@ -38,9 +38,9 @@ public class Utils {
 	}
 	
 	/**
-	 * Embed the given featurables into a TrackNode, suitable for tracking
+	 * Embed the given featurables into a TrackNode, suitable for tracking. Create a new holder.
 	 */
-	public static final <K extends Featurable> TreeMap<Integer, Collection<TrackNode<K>>> embed(TreeMap<Integer, Collection<K>> spots) {
+	public static final <K extends Featurable> TreeMap<Integer, Collection<TrackNode<K>>> embed(final TreeMap<Integer, Collection<K>> spots) {
 		TreeMap<Integer, Collection<TrackNode<K>>> nodes = new TreeMap<Integer,  Collection<TrackNode<K>>>();
 		for(int key : spots.keySet()) {
 			Collection<K> spotsThisFrame = spots.get(key);
@@ -52,7 +52,7 @@ public class Utils {
 	/**
 	 * Embed the given featurables into a TrackNode, suitable for tracking
 	 */
-	public static final <K extends Featurable> Collection<TrackNode<K>> embed(Collection<K> spots) {
+	public static final <K extends Featurable> Collection<TrackNode<K>> embed(final Collection<K> spots) {
 		ArrayList<TrackNode<K>> nodesThisFrame = new ArrayList<TrackNode<K>>(spots.size());
 		for(K spot : spots)
 			nodesThisFrame.add(new TrackNodeI<K>(spot));

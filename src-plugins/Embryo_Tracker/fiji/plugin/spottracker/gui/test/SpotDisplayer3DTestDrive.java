@@ -1,5 +1,6 @@
 package fiji.plugin.spottracker.gui.test;
 
+import fiji.plugin.spottracker.Featurable;
 import fiji.plugin.spottracker.Feature;
 import fiji.plugin.spottracker.Spot;
 import fiji.plugin.spottracker.TrackNode;
@@ -16,7 +17,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Random;
 
 import javax.swing.JFrame;
@@ -90,7 +90,7 @@ public class SpotDisplayer3DTestDrive {
 		imp.setTitle("3D blobs");
 
 		// Create a Spot arrays
-		Collection<Spot> spots = new ArrayList<Spot>(N_BLOBS);
+		Collection<Featurable> spots = new ArrayList<Featurable>(N_BLOBS);
 		Spot spot;
 		for (int i = 0; i < N_BLOBS; i++)  {
 			spot = new Spot(centers.get(i), "Spot "+i);
@@ -100,19 +100,19 @@ public class SpotDisplayer3DTestDrive {
 		
 		System.out.println("Grabbing features...");
 		new FeatureFacade<UnsignedByteType>(img, img, 2*RADIUS, CALIBRATION).processFeature(Feature.MEAN_INTENSITY, spots);
-		for (Spot s : spots) 
+		for (Featurable s : spots) 
 			System.out.println(s);
 
 		// Launch renderer
 		final Image3DUniverse universe = new Image3DUniverse();
-		Collection<TrackNode<Spot>> nodes = Utils.embed(spots);
-		final SpotDisplayer3D<Spot> displayer = new SpotDisplayer3D<Spot>(nodes, universe, RADIUS);
+		Collection<TrackNode<Featurable>> nodes = Utils.embed(spots);
+		final SpotDisplayer3D<Featurable> displayer = new SpotDisplayer3D<Featurable>(nodes, universe, RADIUS);
 		displayer.render();
 		universe.addVoltex(imp);
 		universe.show();
 		
 		// Launch threshold GUI
-		Collection<Collection<Spot>> allSpots = new ArrayList<Collection<Spot>>();
+		Collection<Collection<Featurable>> allSpots = new ArrayList<Collection<Featurable>>();
 		allSpots.add(spots);
 		final ThresholdGuiPanel gui = new ThresholdGuiPanel(allSpots);
 

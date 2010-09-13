@@ -7,7 +7,7 @@ import fiji.plugin.spottracker.Featurable;
 public abstract class IndependentFeatureAnalyzer implements FeatureAnalyzer {
 
 	@Override
-	public void process(Collection<Featurable> spots) {
+	public void process(Collection<? extends Featurable> spots) {
 		for (Featurable spot : spots)
 			process(spot);
 	}

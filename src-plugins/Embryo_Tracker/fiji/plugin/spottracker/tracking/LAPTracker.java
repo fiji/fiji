@@ -685,7 +685,7 @@ public class LAPTracker<K extends Featurable> implements ObjectTracker {
 	 * parameter, and converts it to an ArrayList< ArrayList<TrackNode<K>> >
 	 * for the use in this class.
 	 */
-	private ArrayList< ArrayList<TrackNode<K>> > convertMapToArrayList(TreeMap< Integer, ? extends Collection<TrackNode<K>> > objects) {
+	private final ArrayList< ArrayList<TrackNode<K>> > convertMapToArrayList(TreeMap< Integer, ? extends Collection<TrackNode<K>> > objects) {
 		ArrayList< ArrayList<TrackNode<K>> > newContainer = new ArrayList< ArrayList<TrackNode<K>> >(objects.size());
 		Set<Integer> keys = objects.keySet();
 		Collection<TrackNode<K>> spotThisFrame;
@@ -695,7 +695,7 @@ public class LAPTracker<K extends Featurable> implements ObjectTracker {
 			trackNodes = new ArrayList<TrackNode<K>>(spotThisFrame.size());
 			for (TrackNode<K> node : spotThisFrame)
 				trackNodes.add(node);
-			newContainer.add(trackNodes);
+			newContainer.add(key, trackNodes);
 		}
 		return newContainer;
 	}

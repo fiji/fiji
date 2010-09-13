@@ -22,8 +22,10 @@ public abstract class SpotDisplayer <K extends Featurable> {
 	
 	/** The colorMap. */
 	protected InterpolatePaintScale colorMap = InterpolatePaintScale.Jet;
-	/** The spot collections emanating from segmentation. */
-	protected TreeMap<Integer,Collection<TrackNode<K>>> spots;
+	/** The track collections emanating from segmentation or tracking. Because we
+	 * aim at plotting tracks as well, {@link Featurable} objects must be embeded 
+	 * in a {@link TrackNode}. */
+	protected TreeMap<Integer,Collection<TrackNode<K>>> tracks;
 	/** The default color to paint the spots in. */ 
 	protected Color color = DEFAULT_COLOR;
 	/** If true, tracks will be displayed. */
@@ -65,14 +67,17 @@ public abstract class SpotDisplayer <K extends Featurable> {
 	 * PROTECTED METHODS
 	 */
 	
+	public void setTrackObjects(TreeMap<Integer, Collection<TrackNode<K>>> tracks) {
+		this.tracks = tracks;
+	}
 	
 	/**
 	 * Return the subset of spots of this displayer that satisfy the threshold conditions given
-	 * in argument.
+	 * in argument. The collection returned is a new instance.
 	 */
 	protected TreeMap<Integer,Collection<TrackNode<K>>> threshold(final Feature[] features, double[] thresholds, boolean[] isAboves) {
 		if (null == features || null == thresholds || null == isAboves)
-			return spots;
+			return tracks;
 		
 		double threshold;
 		boolean isAbove;
@@ -81,9 +86,9 @@ public abstract class SpotDisplayer <K extends Featurable> {
 		Collection<TrackNode<K>> spotThisFrame;
 		TreeMap<Integer,Collection<TrackNode<K>>> spotsToshow = new TreeMap<Integer, Collection<TrackNode<K>>>();
 
-		for (int key : spots.keySet()) {
+		for (int key : tracks.keySet()) {
 			
-			spotThisFrame = spots.get(key);
+			spotThisFrame = tracks.get(key);
 			ArrayList<TrackNode<K>> blobToShow = new ArrayList<TrackNode<K>>(spotThisFrame);
 			ArrayList<TrackNode<K>> blobToHide = new ArrayList<TrackNode<K>>(spotThisFrame.size());
 
@@ -125,5 +130,7 @@ public abstract class SpotDisplayer <K extends Featurable> {
 		} // loop over time points
 		return spotsToshow;
 	}
+
+
 	
 }

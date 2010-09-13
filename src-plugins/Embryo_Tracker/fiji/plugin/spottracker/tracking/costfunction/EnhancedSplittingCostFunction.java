@@ -3,8 +3,9 @@ package fiji.plugin.spottracker.tracking.costfunction;
 import java.util.ArrayList;
 
 import Jama.Matrix;
+import fiji.plugin.spottracker.Featurable;
 import fiji.plugin.spottracker.Feature;
-import fiji.plugin.spottracker.Spot;
+import fiji.plugin.spottracker.TrackNode;
 import fiji.plugin.spottracker.Utils;
 import fiji.plugin.spottracker.features.BlobMorphology;
 
@@ -22,7 +23,7 @@ import fiji.plugin.spottracker.features.BlobMorphology;
  * @author Nicholas Perry
  *
  */
-public class EnhancedSplittingCostFunction implements CostFunctions {
+public class EnhancedSplittingCostFunction<K extends Featurable> implements CostFunctions {
 
 	/** The cost matrix. */
 	protected Matrix m;
@@ -31,9 +32,9 @@ public class EnhancedSplittingCostFunction implements CostFunctions {
 	/** The value used to block an assignment in the cost matrix. */
 	protected double blocked;
 	/** The list of track segments. */
-	protected ArrayList< ArrayList<Spot> > trackSegments;
+	protected ArrayList< ArrayList<TrackNode<K>> > trackSegments;
 	/** The list of middle points. */
-	protected ArrayList<Spot> middlePoints;
+	protected ArrayList<TrackNode<K>> middlePoints;
 	/** Thresholds for the intensity ratios. */
 	protected double[] intensityThresholds;
 	/** Has the same length as middlePoints, but stores which track segment
@@ -45,7 +46,7 @@ public class EnhancedSplittingCostFunction implements CostFunctions {
 	protected int noDivisionLimit;
 	
 	
-	public EnhancedSplittingCostFunction(Matrix m, ArrayList< ArrayList<Spot> > trackSegments, ArrayList<Spot> middlePoints, double maxDist, double blocked, double[] intensityThresholds, int[] middlePointSegmentIndices) {
+	public EnhancedSplittingCostFunction(Matrix m, ArrayList< ArrayList<TrackNode<K>> > trackSegments, ArrayList<TrackNode<K>> middlePoints, double maxDist, double blocked, double[] intensityThresholds, int[] middlePointSegmentIndices) {
 		this.m = m;
 		this.trackSegments = trackSegments;
 		this.middlePoints = middlePoints;
@@ -57,30 +58,38 @@ public class EnhancedSplittingCostFunction implements CostFunctions {
 	
 	@Override
 	public void applyCostFunction() {
-		double iRatio, dist, score, morphologyFactor, temporalFactor;
-		Spot start, mother, otherDaughter;
+		double iRatio, d2, score, morphologyFactor;
+		TrackNode<K> start, mother, otherDaughter;
+		K startObject, motherObject, otherObject;
+		float startTime, motherTime;
 		
 		// 1 - Fill in splitting scores
 		for (int i = 0; i < middlePoints.size(); i++) {
 			for (int j = 0; j < trackSegments.size(); j++) {
+				
 				start = trackSegments.get(j).get(0);
 				mother = middlePoints.get(i);
+				startObject = start.getObject();
+				motherObject = mother.getObject();
 				
 				// Frame threshold - middle Spot must be one frame behind of the start Spot
-				if (mother.getFrame() != start.getFrame() - 1) {
+				startTime = startObject.getFeature(Feature.POSITION_T);
+				motherTime = motherObject.getFeature(Feature.POSITION_T);
+				if (motherTime - startTime < - 1) {
 					m.set(i, j, blocked);
 					continue;
 				}
 				
 				// Radius threshold
-				dist = Utils.euclideanDistance(start, mother);
-				if (dist > maxDist) {
+				d2 = Utils.euclideanDistanceSquared(startObject, motherObject);
+				if (d2 > maxDist*maxDist) {
 					m.set(i, j, blocked);
 					continue;
 				}
 
-				otherDaughter = mother.getNext().get(0);
-				iRatio = mother.getFeature(Feature.MEAN_INTENSITY) / (otherDaughter.getFeature(Feature.MEAN_INTENSITY) + start.getFeature(Feature.MEAN_INTENSITY));
+				otherDaughter = mother.getChildren().iterator().next(); // Why this one?
+				otherObject = otherDaughter.getObject();
+				iRatio = motherObject.getFeature(Feature.MEAN_INTENSITY) / (otherObject.getFeature(Feature.MEAN_INTENSITY) + startObject.getFeature(Feature.MEAN_INTENSITY));
 				
 				// Intensity threshold -  must be within INTENSITY_RATIO_CUTOFFS ([min, max])
 				if (iRatio > intensityThresholds[1] || iRatio < intensityThresholds[0]) {
@@ -92,40 +101,40 @@ public class EnhancedSplittingCostFunction implements CostFunctions {
 				
 				// Mother's shape
 				morphologyFactor = 1.0;
-				if (mother.getFeature(Feature.MORPHOLOGY) == BlobMorphology.ELLIPSOID) {
+				if (motherObject.getFeature(Feature.MORPHOLOGY) == BlobMorphology.ELLIPSOID) {
 					morphologyFactor -= 0.05;
 				} else {
 					morphologyFactor += 0.05;
 				}
 				
 				// Daughter 1's shape
-				if (otherDaughter.getFeature(Feature.MORPHOLOGY) == BlobMorphology.ELLIPSOID) {
+				if (otherObject.getFeature(Feature.MORPHOLOGY) == BlobMorphology.ELLIPSOID) {
 					morphologyFactor -= 0.05;
 				} else {
 					morphologyFactor += 0.05;
 				}
 				
-				if (otherDaughter.getFeature(Feature.ESTIMATED_DIAMETER) < 0.95 * mother.getFeature(Feature.ESTIMATED_DIAMETER)) {
+				if (otherObject.getFeature(Feature.ESTIMATED_DIAMETER) < 0.95 * motherObject.getFeature(Feature.ESTIMATED_DIAMETER)) {
 					morphologyFactor -= 0.05;
 				} else {
 					morphologyFactor += 0.05;
 				}
 				
 				// Daughter 2's shape
-				if (start.getFeature(Feature.MORPHOLOGY) == BlobMorphology.ELLIPSOID) {
+				if (startObject.getFeature(Feature.MORPHOLOGY) == BlobMorphology.ELLIPSOID) {
 					morphologyFactor -= 0.05;
 				} else {
 					morphologyFactor += 0.05;
 				}
 				
-				if (start.getFeature(Feature.ESTIMATED_DIAMETER) < 0.95 * mother.getFeature(Feature.ESTIMATED_DIAMETER)) {
+				if (startObject.getFeature(Feature.ESTIMATED_DIAMETER) < 0.95 * motherObject.getFeature(Feature.ESTIMATED_DIAMETER)) {
 					morphologyFactor -= 0.05;
 				} else {
 					morphologyFactor += 0.05;
 				}
 				
 				// Intensity of daughters
-				double daughterIRatio = otherDaughter.getFeature(Feature.MEAN_INTENSITY) / start.getFeature(Feature.MEAN_INTENSITY);
+				double daughterIRatio = otherObject.getFeature(Feature.MEAN_INTENSITY) / startObject.getFeature(Feature.MEAN_INTENSITY);
 				if (daughterIRatio <= 1.1 && daughterIRatio >= 0.9) {  // difference <= 10%
 					morphologyFactor -= 0.05;
 				} else {
@@ -133,7 +142,7 @@ public class EnhancedSplittingCostFunction implements CostFunctions {
 				}
 				
 				// Diameter of daughters
-				double daughterDiamRatio = otherDaughter.getFeature(Feature.ESTIMATED_DIAMETER) / start.getFeature(Feature.ESTIMATED_DIAMETER);
+				double daughterDiamRatio = otherObject.getFeature(Feature.ESTIMATED_DIAMETER) / startObject.getFeature(Feature.ESTIMATED_DIAMETER);
 				if (daughterDiamRatio <= 1.1 && daughterDiamRatio >= 0.9) {	// difference <= 10%
 					morphologyFactor -= 0.05;
 				} else {
@@ -141,11 +150,10 @@ public class EnhancedSplittingCostFunction implements CostFunctions {
 				}
 
 				// Set score
-				if (iRatio >= 1) {
-					score = dist * dist * iRatio * morphologyFactor;
-				} else {
-					score = dist * dist * ( 1 / (iRatio * iRatio) ) * morphologyFactor;
-				}
+				if (iRatio >= 1)
+					score = d2 * iRatio * morphologyFactor;
+				else
+					score = d2 * ( 1 / (iRatio * iRatio) ) * morphologyFactor;
 				m.set(i, j, score);
 			}
 		}
@@ -155,9 +163,5 @@ public class EnhancedSplittingCostFunction implements CostFunctions {
 		// Penalize dividing too many times per approximately cell cycle length.
 		
 		// Penalize not dividing enough.
-	}
-	
-	public static void main (String[] args) {
-		
 	}
 }
