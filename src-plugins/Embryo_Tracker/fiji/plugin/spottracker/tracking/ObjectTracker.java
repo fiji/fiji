@@ -28,7 +28,7 @@ public interface ObjectTracker extends Algorithm {
 		 * to be linked. */
 		public static final double MAX_DIST_SEGMENTS = 15.0d;	// TODO make user input
 		/** The maximum number of frames apart two segments can be 'gap closed.' */
-		public static final int GAP_CLOSING_TIME_WINDOW = 2; // TODO make user input.
+		public static final int GAP_CLOSING_TIME_WINDOW = 4; // TODO make user input.
 		/** The minimum and maximum allowable intensity ratio cutoffs for merging and splitting. */
 		public static final double[] INTENSITY_RATIO_CUTOFFS = new double[] {0.5d, 4d}; // TODO make user input.
 		/** The percentile used to calculate d and b cutoffs in the paper. */
