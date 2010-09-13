@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import Jama.Matrix;
 
 import fiji.plugin.spottracker.Spot;
+import fiji.plugin.spottracker.tracking.ObjectTracker.Settings;
 import fiji.plugin.spottracker.tracking.costfunction.LinkingCostFunction;
 
 /**
@@ -22,14 +23,7 @@ import fiji.plugin.spottracker.tracking.costfunction.LinkingCostFunction;
  *
  */
 public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
-
-	/** The maximum distance away two Spots in consecutive frames can be in order 
-	 * to be linked. */
-	protected static final double MAX_DIST_OBJECTS = 10.0d;	// TODO make user input
-	/** The factor used to create d and b in the paper, the alternative costs to linking
-	 * objects. */
-	protected static final double ALTERNATIVE_OBJECT_LINKING_COST_FACTOR = 1.05d;	// TODO make user input
-
+	
 	/** The Spots belonging to time frame t. */
 	protected ArrayList<Spot> t0;
 	/** The Spots belonging to time frame t+1. */
@@ -70,7 +64,7 @@ public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 		
 		// 1 - Fill in quadrants
 		Matrix topLeft = getLinkingCostSubMatrix();
-		final double cutoff = ALTERNATIVE_OBJECT_LINKING_COST_FACTOR * getMaxScore(topLeft);
+		final double cutoff = Settings.ALTERNATIVE_OBJECT_LINKING_COST_FACTOR * getMaxScore(topLeft);
 		Matrix topRight = getAlternativeScores(t0.size(), cutoff);
 		Matrix bottomLeft = getAlternativeScores(t1.size(), cutoff);
 		Matrix bottomRight = getLowerRight(topLeft, cutoff);
@@ -87,18 +81,22 @@ public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	}
 	
 	
-	private void printMatrix (Matrix m, String s) {
-		Matrix n = m.copy();
-		System.out.println(s);
-		for (int i = 0; i < n.getRowDimension(); i++) {
-			for (int j = 0; j < n.getColumnDimension(); j++) {
-				if (n.get(i, j) == Double.MAX_VALUE) {
-					n.set(i, j, Double.NaN);
-				}
-			}
-		}
-		n.print(4,2);
-	}
+	/* For debugging, use this to print a matrix where the max value
+	 * is NaN, and not Double.MAX_VALUE which makes displaying the matrix
+	 * impossible
+	 */
+//	private void printMatrix (Matrix m, String s) {
+//		Matrix n = m.copy();
+//		System.out.println(s);
+//		for (int i = 0; i < n.getRowDimension(); i++) {
+//			for (int j = 0; j < n.getColumnDimension(); j++) {
+//				if (n.get(i, j) == Double.MAX_VALUE) {
+//					n.set(i, j, Double.NaN);
+//				}
+//			}
+//		}
+//		n.print(4,2);
+//	}
 	
 	
 	/*
@@ -124,7 +122,7 @@ public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	private Matrix getLinkingCostSubMatrix() {
 		Matrix linkingScores = new Matrix(t0.size(), t1.size());
 		//CostFunctions.linkingScores(linkingScores, t0, t1, MAX_DIST_OBJECTS);
-		LinkingCostFunction linkingCosts = new LinkingCostFunction(linkingScores, t0, t1, MAX_DIST_OBJECTS, BLOCKED);
+		LinkingCostFunction linkingCosts = new LinkingCostFunction(linkingScores, t0, t1, Settings.MAX_DIST_OBJECTS, BLOCKED);
 		linkingCosts.applyCostFunction();
 		return linkingScores;
 	}

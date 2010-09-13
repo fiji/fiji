@@ -110,9 +110,6 @@ public class LAPTracker implements ObjectTracker {
 	/** Used as a flag when building the track segments to indicate a track segment with
 	 * only a single Spot. */
 	protected static final int SEGMENT_OF_SIZE_ONE = -1;
-	/** To throw out spurious segments, only include those with a length strictly larger
-	 * than this value. */
-	protected static final int MINIMUM_SEGMENT_LENGTH = 3; // TODO use this, make user input. Also, needs to be something to have a sensible merging/splitting section (need a middle...)
 
 	/** The cost matrix for linking individual objects (step 1) */
 	protected ArrayList<double[][]> linkingCosts = null;
@@ -495,7 +492,7 @@ public class LAPTracker implements ObjectTracker {
 						}
 					}
 					
-					if (trackSegment.size() >= MINIMUM_SEGMENT_LENGTH) {		
+					if (trackSegment.size() >= Settings.MINIMUM_SEGMENT_LENGTH) {		
 						// TODO probably incorporate this above, but this is faster to implement.
 						// Link segment Spots to each other
 						Spot prev = null;
