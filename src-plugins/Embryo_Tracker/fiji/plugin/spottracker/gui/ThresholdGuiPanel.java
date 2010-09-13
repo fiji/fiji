@@ -1,8 +1,10 @@
 package fiji.plugin.spottracker.gui;
 
 import java.awt.BorderLayout;
+import java.awt.Canvas;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -68,10 +70,11 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	private JComboBox jComboBoxSetColorBy;
 	private JPanel jPanelByFeature;
 	private JPanel jPanelBottom;
+	private Canvas canvasColor;
+	private JPanel jPanelColor;
 
 	private JScrollPane jScrollPaneThresholds;
 	private JButton jButtonRemoveThreshold;
-	private JButton jButtonNext;
 	private JPanel jPanelAllThresholds;
 	private JButton jButtonAddThreshold;
 	private JPanel jPanelButtons;
@@ -228,6 +231,22 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 		fireAction(COLOR_FEATURE_CHANGED);
 	}
 	
+	private void repaintColorCanvas(Graphics g) {
+		if (null == setColorByFeature) {
+			g.clearRect(0, 0, canvasColor.getWidth(), canvasColor.getHeight());
+			return;
+		}
+		final double[] values = featureValues.get(setColorByFeature);
+		double max = Float.NEGATIVE_INFINITY;
+		double min = Float.POSITIVE_INFINITY;
+		double val;
+		for (int i = 0; i < values.length; i++) {
+				val = values[i];
+				if (val > max) max = val;
+				if (val < min) min = val;
+		}
+	}
+	
 	
 	private void fireThresholdChanged(ChangeEvent e) {
 		for (ChangeListener cl : changeListeners) 
@@ -323,19 +342,24 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 				BorderLayout jPanelBottomLayout = new BorderLayout();
 				jPanelBottom.setLayout(jPanelBottomLayout);
 				this.add(jPanelBottom, BorderLayout.SOUTH);
-				jPanelBottom.setPreferredSize(new java.awt.Dimension(270, 80));
+				jPanelBottom.setPreferredSize(new java.awt.Dimension(270, 71));
 				{
 					jPanelButtons = new JPanel();
-					jPanelBottom.add(jPanelButtons, BorderLayout.SOUTH);
+					jPanelBottom.add(jPanelButtons, BorderLayout.NORTH);
 					BoxLayout jPanelButtonsLayout = new BoxLayout(jPanelButtons, javax.swing.BoxLayout.X_AXIS);
 					jPanelButtons.setLayout(jPanelButtonsLayout);
-					jPanelButtons.setPreferredSize(new java.awt.Dimension(270, 30));
+					jPanelButtons.setPreferredSize(new java.awt.Dimension(270, 22));
+					jPanelButtons.setSize(270, 25);
+					jPanelButtons.setMaximumSize(new java.awt.Dimension(32767, 25));
 					{
 						jPanelButtons.add(Box.createHorizontalStrut(5));
 						jButtonAddThreshold = new JButton();
 						jPanelButtons.add(jButtonAddThreshold);
 						jButtonAddThreshold.setText("+");
 						jButtonAddThreshold.setFont(SMALL_FONT);
+						jButtonAddThreshold.setPreferredSize(new java.awt.Dimension(21, 22));
+						jButtonAddThreshold.setSize(20, 15);
+						jButtonAddThreshold.setMinimumSize(new java.awt.Dimension(10, 10));
 						jButtonAddThreshold.addActionListener(new ActionListener() {
 							public void actionPerformed(ActionEvent e) {
 								addThresholdPanel();
@@ -348,24 +372,15 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 						jPanelButtons.add(jButtonRemoveThreshold);
 						jButtonRemoveThreshold.setText("-");
 						jButtonRemoveThreshold.setFont(SMALL_FONT);
+						jButtonRemoveThreshold.setPreferredSize(new java.awt.Dimension(21, 22));
+						jButtonRemoveThreshold.setSize(20, 15);
+						jButtonRemoveThreshold.setMinimumSize(new java.awt.Dimension(10, 10));
 						jButtonRemoveThreshold.addActionListener(new ActionListener() {
 							public void actionPerformed(ActionEvent e) {
 								removeThresholdPanel();
 							}
 						});
-					}
-					{
 						jPanelButtons.add(Box.createHorizontalGlue());
-						jButtonNext = new JButton();
-						jPanelButtons.add(jButtonNext);
-						jButtonNext.setText("Next >>");
-						jButtonNext.setFont(FONT);
-						jButtonNext.addActionListener(new ActionListener() {
-							public void actionPerformed(ActionEvent e) {
-								fireAction(NEXT_BUTTON_PRESSED);
-							}
-						});
-						jPanelButtons.add(Box.createHorizontalStrut(10));
 					}
 				}
 				{
@@ -373,7 +388,9 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 					BoxLayout jPanelByFeatureLayout = new BoxLayout(jPanelByFeature, javax.swing.BoxLayout.X_AXIS);
 					jPanelByFeature.setLayout(jPanelByFeatureLayout);
 					jPanelBottom.add(jPanelByFeature, BorderLayout.CENTER);
-					jPanelByFeature.setPreferredSize(new java.awt.Dimension(270, 43));
+					jPanelByFeature.setPreferredSize(new java.awt.Dimension(270, 20));
+					jPanelByFeature.setMaximumSize(new java.awt.Dimension(32767, 50));
+					jPanelByFeature.setSize(270, 40);
 					{
 						jPanelByFeature.add(Box.createHorizontalStrut(5));
 						jLabelSetColorBy = new JLabel();
@@ -390,8 +407,8 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 						ComboBoxModel jComboBoxSetColorByModel = new DefaultComboBoxModel(featureStringList);
 						jComboBoxSetColorBy = new JComboBox();
 						jPanelByFeature.add(Box.createHorizontalStrut(5));
-						jPanelByFeature.add(jComboBoxSetColorBy);
 						jPanelByFeature.add(Box.createHorizontalStrut(5));
+						jPanelByFeature.add(jComboBoxSetColorBy);
 						jComboBoxSetColorBy.setModel(jComboBoxSetColorByModel);
 						jComboBoxSetColorBy.setFont(SMALL_FONT);
 						jComboBoxSetColorBy.addActionListener(new ActionListener() {
@@ -399,6 +416,24 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 								setColorByFeature();
 							}
 						});
+					}
+				}
+				{
+					jPanelColor = new JPanel();
+					BorderLayout jPanelColorLayout = new BorderLayout();
+					jPanelBottom.add(jPanelColor, BorderLayout.SOUTH);
+					jPanelColor.setLayout(jPanelColorLayout);
+					jPanelColor.setPreferredSize(new java.awt.Dimension(10, 20));
+					{
+						canvasColor = new Canvas() {
+							private static final long serialVersionUID = -2174317490066575040L;
+							@Override
+							public void paint(Graphics g) {
+								repaintColorCanvas(g);
+							}
+						};
+						jPanelColor.add(canvasColor, BorderLayout.CENTER);
+						canvasColor.setPreferredSize(new java.awt.Dimension(270, 20));
 					}
 				}
 			}
