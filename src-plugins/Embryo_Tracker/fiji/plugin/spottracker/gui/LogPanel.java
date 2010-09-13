@@ -1,16 +1,11 @@
 package fiji.plugin.spottracker.gui;
 
-import static fiji.plugin.spottracker.gui.SpotTrackerFrame.FONT;
 import static fiji.plugin.spottracker.gui.SpotTrackerFrame.SMALL_FONT;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
@@ -56,10 +51,7 @@ public class LogPanel extends ActionListenablePanel {
 	 */
 	public final ActionEvent NEXT_BUTTON_PRESSED = new ActionEvent(this, 0, "NextButtonPressed");
 	
-	JButton jButtonNext;
-
 	private JScrollPane jScrollPaneLog;
-	private JPanel jPanelButtons;
 	private JTextPane jTextPaneLog;
 	private JProgressBar jProgressBar;
 	private JPanel jPanelProgressBar;
@@ -146,27 +138,6 @@ public class LogPanel extends ActionListenablePanel {
 					jTextPaneLog.setFont(SMALL_FONT);
 					jScrollPaneLog.setViewportView(jTextPaneLog);
 					jTextPaneLog.setBackground(this.getBackground());
-				}
-			}
-			{
-				jPanelButtons = new JPanel();
-				BoxLayout jPanelButtonsLayout = new BoxLayout(jPanelButtons, javax.swing.BoxLayout.X_AXIS);
-				jPanelButtons.setLayout(jPanelButtonsLayout);
-				this.add(jPanelButtons, BorderLayout.SOUTH);
-				jPanelButtons.setPreferredSize(new java.awt.Dimension(270, 30));
-				{
-					jButtonNext = new JButton();
-					jPanelButtons.add(Box.createHorizontalGlue());
-					jPanelButtons.add(jButtonNext);
-					jPanelButtons.add(Box.createHorizontalStrut(10));
-					jButtonNext.setText("Next >>");
-					jButtonNext.setFont(FONT);
-					jButtonNext.addActionListener(new ActionListener() {						
-						@Override
-						public void actionPerformed(ActionEvent e) {
-							fireAction(NEXT_BUTTON_PRESSED);
-						}
-					});
 				}
 			}
 		} catch (Exception e) {

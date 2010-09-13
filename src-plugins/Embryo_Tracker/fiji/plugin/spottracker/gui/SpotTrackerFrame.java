@@ -7,6 +7,7 @@ import ij.process.StackConverter;
 import ij3d.Content;
 import ij3d.ContentCreator;
 import ij3d.Image3DUniverse;
+import java.awt.BorderLayout;
 
 import java.awt.CardLayout;
 import java.awt.Font;
@@ -14,6 +15,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
 import java.util.TreeMap;
+import javax.swing.JButton;
+import javax.swing.JPanel;
 
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
@@ -45,6 +48,9 @@ import fiji.plugin.spottracker.tracking.LAPTracker;
 public class SpotTrackerFrame extends javax.swing.JFrame {
 
 	static final Font FONT = new Font("Arial", Font.PLAIN, 11);
+	private JButton jButtonNext;
+	private JPanel jPanelButtons;
+	private JPanel jPanelMain;
 	static final Font SMALL_FONT = FONT.deriveFont(10f);
 	static enum GuiState {
 		START,
@@ -55,6 +61,9 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 	private static final long serialVersionUID = 1L;
 	private static final String START_DIALOG_KEY = "Start";
 	private static final String THRESHOLD_GUI_KEY = "Threshold";
+	private JButton jButtonSave;
+	private JButton jButtonLoad;
+	private JButton jButtonPrevious;
 	private static final String LOG_PANEL_KEY = "Log";
 	
 	protected static final int DEFAULT_RESAMPLING_FACTOR = 3;
@@ -98,6 +107,9 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 		this(new Spot_Tracker());
 	}
 	
+	/**
+	 * Called when the "Next >>" button is pressed.
+	 */
 	private void next() {
 		switch(state) {
 			case START:
@@ -115,25 +127,48 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 				break;
 		}
 	}
+	
+	/**
+	 * Called when the "<<" is pressed.
+	 */
+	private void previous() {		
+	}
+	
+	/**
+	 * Called when the "Load" button is pressed.
+	 */
+	private void load() {
+	}
+	
+	/**
+	 * Called when the "Save" button is pressed.
+	 */
+	private void save() {		
+	}
 
+	
+	/**
+	 * Switch to the log panel, and execute the segmentation step, which will be delegated to 
+	 * the {@link Spot_Tracker} glue class in a new Thread.
+	 */
 	private void execSegmentationStep() {
-		cardLayout.show(getContentPane(), LOG_PANEL_KEY);
+		cardLayout.show(jPanelMain, LOG_PANEL_KEY);
 		settings = startDialogPanel.updateSettings(settings);
 		is3D = settings.imp.getNSlices() > 1;
 		logger = logPanel.getLogger();
 		logger.log("Starting segmentation...\n", Logger.BLUE_COLOR);
-		new Thread() {					
+		new Thread("TrackMate segmentation thread") {					
 			public void run() {
 				long start = System.currentTimeMillis();
 				try {
 					spotTracker.setLogger(logger);
-					logPanel.jButtonNext.setEnabled(false);
+					jButtonNext.setEnabled(false);
 					spotTracker.execSegmentation(settings);
 				} catch (Exception e) {
 					logger.error("An error occured:\n"+e+'\n');
 					e.printStackTrace();
 				} finally {
-					logPanel.jButtonNext.setEnabled(true);
+					jButtonNext.setEnabled(true);
 					long end = System.currentTimeMillis();
 					logger.log(String.format("Segmentation done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);
 				}
@@ -141,7 +176,9 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 		}.start();
 	}
 	
-	
+	/**
+	 * Collect the segmentation result, render it in another thread, the switch to the thresholding panel. 
+	 */
 	private void execThresholdingStep() {
 		// Store results
 		spots = spotTracker.getSpots();
@@ -149,14 +186,13 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 		
 		// Launch renderer
 		logger.log("Rendering results...\n",Logger.BLUE_COLOR);
-		logPanel.jButtonNext.setEnabled(false);				
+		jButtonNext.setEnabled(false);				
 		
 		// Thread for rendering
-		Runnable renderingRunnable;
-		if (is3D) { 
-			renderingRunnable = new Runnable() {
-				public void run() {
-					// Render image data
+		new Thread("TrackMate rendering thread") {
+			public void run() {
+				// Render image data
+				if (is3D) { 
 					final Image3DUniverse universe = new Image3DUniverse();
 					universe.show();
 					ImagePlus[] images = makeImageForViewer(settings);
@@ -170,46 +206,35 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 							DEFAULT_THRESHOLD, 
 							new boolean[] {true, true, true});
 					// Render spots
-					displayer = new SpotDisplayer3D<Featurable>(tracks, universe, settings.expectedDiameter/2); // TODO otherwise too big 							
+					displayer = new SpotDisplayer3D<Featurable>(tracks, universe, settings.expectedDiameter/2); 							
 					universe.addContentLater(imageContent);
 
-				}
-			};
-		} else {
-			renderingRunnable = new Runnable() {
-				public void run() {
+				} else {
 					final float[] calibration = new float[] {
 							(float) settings.imp.getCalibration().pixelWidth, 
 							(float) settings.imp.getCalibration().pixelHeight};
 					displayer = new SpotDisplayer2D<Featurable>(tracks, settings.imp, settings.expectedDiameter/2, calibration);
 				}
-			};
-		}
-		Thread renderingThread = new Thread(renderingRunnable);
-
-		renderingThread.start();
-		try {
-			renderingThread.join();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-
-		displayer.render();
-		logger.log("Rendering done.\n", Logger.BLUE_COLOR);
-		logPanel.jButtonNext.setEnabled(true);
-		cardLayout.show(getContentPane(), THRESHOLD_GUI_KEY);
-		
-		thresholdGuiPanel.setSpots(spots.values());
-		thresholdGuiPanel.addThresholdPanel(Feature.MEAN_INTENSITY);
-		thresholdSpots();
+				displayer.render();
+				logger.log("Rendering done.\n", Logger.BLUE_COLOR);
+				cardLayout.show(jPanelMain, THRESHOLD_GUI_KEY);
+				
+				thresholdGuiPanel.setSpots(spots.values());
+				thresholdGuiPanel.addThresholdPanel(Feature.LOG_VALUE);
+				thresholdSpots();
+				jButtonNext.setEnabled(true);
+			}
+		}.start();
 	}
 	
-	
+	/**
+	 * Switch to the log panel, and execute the tracking part in another thread.
+	 */
 	private void execTrackingStep() {
-		cardLayout.show(getContentPane(), LOG_PANEL_KEY);
+		cardLayout.show(jPanelMain, LOG_PANEL_KEY);
 		logger.log("Thresholding spots...\n", Logger.BLUE_COLOR);
-		logPanel.jButtonNext.setEnabled(false);
-		new Thread() {					
+		jButtonNext.setEnabled(false);
+		new Thread("TrackMate tracking thread") {					
 			public void run() {
 				Feature[] features = thresholdGuiPanel.getFeatures();
 				double[] values = thresholdGuiPanel.getThresholds();
@@ -219,16 +244,19 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 				spotTracker.execThresholding();
 				selectedSpots = spotTracker.getSelectedSpots();
 				logger.log("Thresholding done.\n", Logger.BLUE_COLOR);
-				logPanel.jButtonNext.setEnabled(true);
 				
+				// Look how small it is to call the tracking part (however, we only have default cost matrices here...)
 				tracks = Utils.embed(selectedSpots);
 				logger.log("Starting tracking.\n", Logger.BLUE_COLOR);
 				LAPTracker<Featurable> tracker = new LAPTracker<Featurable>(tracks);
+				long start = System.currentTimeMillis();
 				if (tracker.checkInput() && tracker.process()) {
-					logger.log("Tracking finished!\n", Logger.BLUE_COLOR);
+					long end = System.currentTimeMillis();
+					logger.log(String.format("Tracking done in %.1f s.\n", (end-start)/1e3), Logger.BLUE_COLOR);
 					displayer.setTrackObjects(tracks);
 					displayer.setDisplayTracks(true);
 					displayer.refresh(thresholdGuiPanel.getFeatures(), thresholdGuiPanel.getThresholds(), thresholdGuiPanel.getIsAbove());
+					jButtonNext.setEnabled(true);
 				}
 				else {
 					logger.error("Problem occured in tracking:\n"+tracker.getErrorMessage());
@@ -303,9 +331,69 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 		try {
 			setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 			this.setTitle("Spot Tracker");
-			cardLayout = new CardLayout();
-			getContentPane().setLayout(cardLayout);
 			this.setResizable(false);
+			{
+				jPanelMain = new JPanel();
+				cardLayout = new CardLayout();
+				getContentPane().add(jPanelMain, BorderLayout.CENTER);
+				jPanelMain.setLayout(cardLayout);
+				jPanelMain.setPreferredSize(new java.awt.Dimension(300, 461));
+			}
+			{
+				jPanelButtons = new JPanel();
+				getContentPane().add(jPanelButtons, BorderLayout.SOUTH);
+				jPanelButtons.setLayout(null);
+				jPanelButtons.setSize(300, 30);
+				jPanelButtons.setPreferredSize(new java.awt.Dimension(300, 30));
+				{
+					jButtonNext = new JButton();
+					jPanelButtons.add(jButtonNext);
+					jButtonNext.setText("Next >>");
+					jButtonNext.setFont(FONT);
+					jButtonNext.setBounds(221, 0, 70, 25);
+					jButtonNext.addActionListener(new ActionListener() {
+						public void actionPerformed(ActionEvent e) {
+							next();
+						}
+					});
+				}
+				{
+					jButtonPrevious = new JButton();
+					jPanelButtons.add(jButtonPrevious);
+					jButtonPrevious.setText("<<");
+					jButtonPrevious.setFont(FONT);
+					jButtonPrevious.setBounds(181, 0, 40, 25);
+					jButtonPrevious.addActionListener(new ActionListener() {
+						public void actionPerformed(ActionEvent e) {
+							previous();
+						}
+					});
+				}
+				{
+					jButtonLoad = new JButton();
+					jPanelButtons.add(jButtonLoad);
+					jButtonLoad.setText("Load");
+					jButtonLoad.setFont(FONT);
+					jButtonLoad.setBounds(7, 0, 50, 25);
+					jButtonLoad.addActionListener(new ActionListener() {
+						public void actionPerformed(ActionEvent e) {
+							load();
+						}
+					});
+				}
+				{
+					jButtonSave = new JButton();
+					jPanelButtons.add(jButtonSave);
+					jButtonSave.setText("Save");
+					jButtonSave.setFont(FONT);
+					jButtonSave.setBounds(61, 0, 50, 25);
+					jButtonSave.addActionListener(new ActionListener() {
+						public void actionPerformed(ActionEvent e) {
+							save();
+						}
+					});
+				}
+			}
 			pack();
 			this.setSize(300, 520);
 			{
@@ -315,7 +403,7 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 						next();
 					}
 				});
-				getContentPane().add(startDialogPanel, START_DIALOG_KEY);
+				jPanelMain.add(startDialogPanel, START_DIALOG_KEY);
 			}
 			{
 				logPanel = new LogPanel();
@@ -324,29 +412,24 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 						next();
 					}
 				});
-				getContentPane().add(logPanel, LOG_PANEL_KEY);
+				jPanelMain.add(logPanel, LOG_PANEL_KEY);
 			}
 			{
 				thresholdGuiPanel = new ThresholdGuiPanel();
 				thresholdGuiPanel.addActionListener(new ActionListener() {
-					@Override
 					public void actionPerformed(ActionEvent e) {
-						if (e == thresholdGuiPanel.NEXT_BUTTON_PRESSED)
-							next();
-						else if (e == thresholdGuiPanel.COLOR_FEATURE_CHANGED) {
 							recolorSpots();
 						} 
-					}
-				});
+					});
 				thresholdGuiPanel.addChangeListener(new ChangeListener() {
 					@Override
 					public void stateChanged(ChangeEvent e) {
 						thresholdSpots();
 					}
 				});
-				getContentPane().add(thresholdGuiPanel, THRESHOLD_GUI_KEY);
+				jPanelMain.add(thresholdGuiPanel, THRESHOLD_GUI_KEY);
 			}
-			cardLayout.show(getContentPane(), START_DIALOG_KEY);
+			cardLayout.show(jPanelMain, START_DIALOG_KEY);
 			state = GuiState.START;
 		} catch (Exception e) {
 			e.printStackTrace();

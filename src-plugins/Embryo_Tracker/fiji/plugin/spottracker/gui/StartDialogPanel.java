@@ -67,7 +67,6 @@ public class StartDialogPanel extends ActionListenablePanel {
 	private JTextField jTextFieldXStart;
 	private JLabel jLabelCropSetting;
 	private JButton jButtonRefresh;
-	private JButton jButtonNext;
 	private JTextField jTextFieldTEnd;
 	private JLabel jLabelTo4;
 	private JTextField jTextFieldTStart;
@@ -395,23 +394,11 @@ public class StartDialogPanel extends ActionListenablePanel {
 				jTextFieldTEnd.setFont(SMALL_FONT);
 			}
 			{
-				jButtonNext = new JButton();
-				this.add(jButtonNext, new GridBagConstraints(1, 14, 2, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
-				jButtonNext.setText("Next >>");
-				jButtonNext.setFont(FONT);
-				jButtonNext.addActionListener(new ActionListener() {
-					public void actionPerformed(ActionEvent e) {
-						fireAction(e);
-					}
-				});
-			}
-			{
 				jButtonRefresh = new JButton();
 				this.add(jButtonRefresh, new GridBagConstraints(0, 14, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 10, 0, 0), 0, 0));
 				jButtonRefresh.setText("Refresh");
 				jButtonRefresh.setFont(FONT);
 				jButtonRefresh.addActionListener(new ActionListener() {
-
 					public void actionPerformed(ActionEvent e) {
 						refresh();
 					}
