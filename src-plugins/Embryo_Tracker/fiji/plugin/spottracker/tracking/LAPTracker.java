@@ -559,8 +559,8 @@ public class LAPTracker implements ObjectTracker {
 //					System.out.println(end.toString());
 //					System.out.println(start.toString());
 					
-					end.addPrev(start);
-					start.addNext(end);
+					end.addNext(start);
+					start.addPrev(end);
 					
 //					// debug 
 //					System.out.println(end.toString());
