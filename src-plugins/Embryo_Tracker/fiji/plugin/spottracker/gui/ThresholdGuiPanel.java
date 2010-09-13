@@ -2,9 +2,12 @@ package fiji.plugin.spottracker.gui;
 
 import java.awt.BorderLayout;
 import java.awt.Canvas;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -30,14 +33,13 @@ import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.jfree.chart.renderer.InterpolatePaintScale;
+
 import fiji.plugin.spottracker.Featurable;
 import fiji.plugin.spottracker.Feature;
 import fiji.plugin.spottracker.Spot;
 
-import static fiji.plugin.spottracker.gui.SpotTrackerFrame.FONT;
 import static fiji.plugin.spottracker.gui.SpotTrackerFrame.SMALL_FONT;
-
-
 
 /**
 * This code was edited or generated using CloudGarden's Jigloo
@@ -52,10 +54,7 @@ import static fiji.plugin.spottracker.gui.SpotTrackerFrame.SMALL_FONT;
 * LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
 */
 public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeListener {
-	/**
-	 * This action is fired when the "Next >>" button is pressed.
-	 */
-	public final ActionEvent NEXT_BUTTON_PRESSED = new ActionEvent(this, 0, "NextButtonPressed");
+	
 	/**
 	 * This action is fired when the feature to color in the "Set color by feature"
 	 * JComboBox is changed.
@@ -92,6 +91,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	
 	private String[] featureStringList;
 	private Feature setColorByFeature;
+	protected InterpolatePaintScale colorMap = InterpolatePaintScale.Jet;
 	
 	{
 		//Set Look & Feel
@@ -236,7 +236,12 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 			g.clearRect(0, 0, canvasColor.getWidth(), canvasColor.getHeight());
 			return;
 		}
+		
 		final double[] values = featureValues.get(setColorByFeature);
+		if (null == values) {
+			g.clearRect(0, 0, canvasColor.getWidth(), canvasColor.getHeight());
+			return;
+		}
 		double max = Float.NEGATIVE_INFINITY;
 		double min = Float.POSITIVE_INFINITY;
 		double val;
@@ -245,6 +250,22 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 				if (val > max) max = val;
 				if (val < min) min = val;
 		}
+		
+		final int width = canvasColor.getWidth();
+		final int height = canvasColor.getHeight();
+		float alpha;
+		for (int i = 0; i < width; i++) {
+			alpha = (float) i / (width-1);
+			g.setColor(colorMap.getPaint(alpha));
+			g.drawLine(i, 0, i, height);
+		}
+		g.setColor(Color.BLACK);
+		g.setFont(SMALL_FONT);
+		FontMetrics fm = g.getFontMetrics();
+		String minStr = String.format("%.1f", min);
+		String maxStr = String.format("%.1f", max);
+		g.drawString(minStr, 1, height/2 + fm.getHeight()/2);
+		g.drawString(maxStr, width - fm.stringWidth(maxStr)-1, height/2 + fm.getHeight()/2);
 	}
 	
 	
@@ -414,6 +435,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 						jComboBoxSetColorBy.addActionListener(new ActionListener() {
 							public void actionPerformed(ActionEvent e) {
 								setColorByFeature();
+								canvasColor.repaint();
 							}
 						});
 					}
