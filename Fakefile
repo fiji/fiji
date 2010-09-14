@@ -187,7 +187,8 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/MosaicJ_.jar \
 	plugins/PointPicker_.jar \
 	plugins/SheppLogan_.jar \
-	plugins/StackReg_.jar
+	plugins/StackReg_.jar \
+	plugins/UnwarpJ_.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS third-party-plugins
 
