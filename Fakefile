@@ -183,7 +183,8 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Graph_Cut.jar \
 	plugins/Macro_Examples.jar \
 	plugins/TopoJ_.jar \
-	plugins/Differentials_.jar
+	plugins/Differentials_.jar \
+	plugins/MosaicJ_.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS third-party-plugins
 

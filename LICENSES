@@ -56,6 +56,7 @@ Name					File					Author(s)						Contact								License
 * LOCI 					loci_tools.jar				Melissa Linkert, Curtis Rueden et al. 			ctrueden@wisc.edu 						GPL		
 * Macro Interpreter 			CLI_.jar				Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
 * Mines Java Toolkit 			edu_mines_jtk.jar 			Dave Hale 						http://www.mines.edu/~dhale/jtk/ 				CPL 1.0
+* MosaicJ				MosaicJ_.jar				Philippe Thevenaz					http://bigwww.epfl.ch/thevenaz/mosaicj/				BIG (see below)
 * MTrack2				MTrack2_.jar				Nico Stuurman						http://valelab.ucsf.edu/~nico/IJplugins/MTrack2.html		BSDR
 * Multiple Image Processor 		M_I_P.jar				Nathaniel Gonzalez Santiago				http://ciar.rcm.upr.edu/projects/imageprocessor/multiples/	GPL
 * PAL Optimization			pal-optimization.jar			Alexei Drummond et al					http://ftp.cse.sc.edu/bioinformatics/PAL/pal-1.4/doc/index.html	LGPL
