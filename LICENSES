@@ -61,6 +61,7 @@ Name					File					Author(s)						Contact								License
 * Multiple Image Processor 		M_I_P.jar				Nathaniel Gonzalez Santiago				http://ciar.rcm.upr.edu/projects/imageprocessor/multiples/	GPL
 * PAL Optimization			pal-optimization.jar			Alexei Drummond et al					http://ftp.cse.sc.edu/bioinformatics/PAL/pal-1.4/doc/index.html	LGPL
 * PDF Viewer 				PDF_Viewer.jar				Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
+* PointPicker				PointPicker_.jar			Philippe Thevenaz					http://bigwww.epfl.ch/thevenaz/pointpicker/			BIG (see below)
 * PostgreSQL JDBC 			postgresql-8.2-506.jdbc3.jar 		http://jdbc.postgresql.org/ 				http://jdbc.postgresql.org/					BSD
 * Register virtual stack slices 	register_virtual_stack_slices.jar 	Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
 * Substack Maker 			Substack_Maker.class 			Wayne Rasband 						http://rsb.info.nih.gov/ij/plugins/reverser.html 		PD
