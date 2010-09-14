@@ -31,6 +31,7 @@ Name					File					Author(s)						Contact								License
 * Clojure Interpreter			Clojure_Interpreter.jar 		Albert Cardona 						acardona@ini.phys.ethz.ch					GPL
 * Color Histogram 			Color_Histogram.jar			Dimiter Prodanov 					dimiterpp@gmail.com 						GPL 2
 * Color Inspector 3D 			Color_Inspector_3D.jar			Kai Uwe Barthel 					k.barthel@fhtw-berlin.de 					PD
+* Differentials				Differentials_.jar			Philippe Thevenaz					http://bigwww.epfl.ch/thevenaz/differentials/			BIG (see below)
 * Fiji_Plugins.jar 			Fiji_Plugins.jar 			Various authors 					http://pacific.mpi-cbg.de/contributors 				PD,GPL
 * Fiji as a framework																							GPL
 * Graph Cut				Graph_Cut.jar				Jan Funke						jan.funke@inf.tu-dresden.de					GPL 2
@@ -81,6 +82,18 @@ Note that this blessing is for the (re)distribution within Fiji only.
 
 JEP version included in Fiji is jep-2.4.1-ext-1.1.1-gpl. This version is the last to be distributed
 under GPL. Subsequent versions (>3.0) have a commercial license.
+
+BIG (Biomedical Imaging Group at the EPFL):
+	Date: Mon, 26 Jul 2010 10:58:20 +0200
+	From: Michael Unser <michael.unser@epfl.ch>
+
+	[...] we are happy that Fiji distributes our software: you have
+	my formal authorization for this (in my quality of lab chief).
+	"You'll be free to use this software for research purposes,  but you
+	must not transmit and distribute it without our consent":  this means
+	that from now on, you are authorized to distribute any ImageJ pluging
+	listed at http://bigwww.epfl.ch/algorithms.html since you have our
+	consent.
 
 Unresolved (TODO):
 * Example/ scripts folder
