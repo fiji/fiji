@@ -182,7 +182,13 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/CPU_Meter.jar \
 	plugins/Graph_Cut.jar \
 	plugins/Macro_Examples.jar \
-	plugins/TopoJ_.jar
+	plugins/TopoJ_.jar \
+	plugins/Differentials_.jar \
+	plugins/MosaicJ_.jar \
+	plugins/PointPicker_.jar \
+	plugins/SheppLogan_.jar \
+	plugins/StackReg_.jar \
+	plugins/UnwarpJ_.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS third-party-plugins
 
