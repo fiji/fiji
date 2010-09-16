@@ -178,7 +178,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Simple_Neurite_Tracer.jar \
 	plugins/SPIM_Registration.jar \
 	plugins/QuickPALM_.jar \
-	plugins/Embryo_Tracker.jar \
+	plugins/TrackMate_.jar \
 	plugins/3D_Viewer.jar \
 	plugins/CPU_Meter.jar \
 	plugins/Graph_Cut.jar \
@@ -284,7 +284,7 @@ CLASSPATH(jars/VIB-lib.jar)=jars/Jama-1.0.2.jar:jars/junit-4.5.jar:jars/pal-opti
 CLASSPATH(plugins/Simple_Neurite_Tracer.jar)=$JAVA3D_JARS:jars/VIB-lib.jar:plugins/VIB_.jar:jars/pal-optimization.jar:jars/junit-4.5.jar:plugins/3D_Viewer.jar:jars/commons-math.jar:jars/jfreechart-1.0.13.jar:jars/jcommon-1.0.12.jar:jars/batik.jar
 CLASSPATH(plugins/3D_Viewer.jar)=jars/VIB-lib.jar:jars/imglib.jar:jars/Jama-1.0.2.jar:$JAVA3D_JARS
 CLASSPATH(jars/jep.jar)=jars/Jama-1.0.2.jar:jars/junit-4.5.jar
-CLASSPATH(plugins/Embryo_Tracker.jar)=plugins/3D_Viewer.jar
+CLASSPATH(plugins/TrackMate_.jar)=plugins/3D_Viewer.jar
 CLASSPATH(plugins/SPIM_Registration.jar)=$JAVA3D_JARS:jars/imglib.jar:jars/mpicbg.jar:plugins/3D_Viewer.jar:jars/weka.jar:jars/fiji-lib.jar:plugins/loci_tools.jar:plugins/Fiji_Plugins.jar:jars/VIB-lib.jar:jars/Jama-1.0.2.jar
 CLASSPATH(plugins/Bug_Submitter.jar)=plugins/Fiji_Updater.jar
 CLASSPATH(plugins/TopoJ_.jar)=jars/Jama-1.0.2.jar
