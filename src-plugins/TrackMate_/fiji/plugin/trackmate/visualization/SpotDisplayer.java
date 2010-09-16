@@ -1,4 +1,4 @@
-package fiji.plugin.trackmate.gui;
+package fiji.plugin.trackmate.visualization;
 
 import java.awt.Color;
 import java.util.ArrayList;

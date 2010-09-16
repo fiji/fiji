@@ -31,6 +31,9 @@ import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.TrackNode;
 import fiji.plugin.trackmate.Utils;
 import fiji.plugin.trackmate.tracking.LAPTracker;
+import fiji.plugin.trackmate.visualization.SpotDisplayer;
+import fiji.plugin.trackmate.visualization.SpotDisplayer2D;
+import fiji.plugin.trackmate.visualization.SpotDisplayer3D;
 
 
 /**

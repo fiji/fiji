@@ -1,4 +1,4 @@
-package fiji.plugin.trackmate.gui;
+package fiji.plugin.trackmate.visualization;
 
 import ij3d.Content;
 import ij3d.ContentInstant;
@@ -16,7 +16,6 @@ import javax.vecmath.Point4f;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.TrackNode;
-import fiji.plugin.trackmate.visualization.SpotGroupNode;
 
 public class SpotDisplayer3D <K extends Spot> extends SpotDisplayer<K> {
 	

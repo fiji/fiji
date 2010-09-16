@@ -1,4 +1,4 @@
-package fiji.plugin.trackmate.gui;
+package fiji.plugin.trackmate.visualization;
 
 import ij.ImagePlus;
 import ij.gui.ScrollbarWithLabel;

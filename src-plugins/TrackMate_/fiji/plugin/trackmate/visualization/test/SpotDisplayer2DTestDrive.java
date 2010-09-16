@@ -1,13 +1,13 @@
-package fiji.plugin.trackmate.gui.test;
+package fiji.plugin.trackmate.visualization.test;
 
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.TrackNode;
 import fiji.plugin.trackmate.Utils;
 import fiji.plugin.trackmate.features.FeatureFacade;
-import fiji.plugin.trackmate.gui.SpotDisplayer2D;
 import fiji.plugin.trackmate.gui.ThresholdGuiPanel;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
+import fiji.plugin.trackmate.visualization.SpotDisplayer2D;
 import ij.ImagePlus;
 
 import java.awt.event.ActionEvent;
