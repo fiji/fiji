@@ -3,6 +3,7 @@ package fiji.plugin.trackmate;
 import fiji.plugin.trackmate.features.FeatureFacade;
 import fiji.plugin.trackmate.gui.SpotTrackerFrame;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
+import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.util.SplitString;
 import ij.IJ;
 import ij.ImagePlus;
@@ -52,6 +53,9 @@ public class TrackMate_ implements PlugIn {
 	private TreeMap<Integer,Collection<Spot>> spots;
 	/** Contain the Spot retained for tracking, after thresholding by features. */
 	private TreeMap<Integer,Collection<Spot>> selectedSpots;
+	/** The track nodes objects, after tracking. */
+	private TreeMap<Integer, Collection<TrackNode<Spot>>> tracks;
+
 	
 	private ArrayList<Feature> thresholdFeatures = new ArrayList<Feature>();
 	private ArrayList<Float> thresholdValues = new ArrayList<Float>();
@@ -139,7 +143,37 @@ public class TrackMate_ implements PlugIn {
 	 * PUBLIC METHODS
 	 */
 	
+	/**
+	 * Execute the tracking part.
+	 * <p>
+	 * This method links all the selected spots from the thresholding part using the selected tracking algorithm.
+	 * Spots are embedded in a {@link TrackNode} from which tracks info can be retrieved.
+	 * Tracks can be accessed when the tracking is over using the {@link #getTracks()} method.
+	 */
+	public void execTracking() {
+		tracks = Utils.embed(selectedSpots);
+		logger.log("Starting tracking.\n", Logger.BLUE_COLOR);
+		LAPTracker<Spot> tracker = new LAPTracker<Spot>(tracks);
+		long start = System.currentTimeMillis();
+		if (tracker.checkInput() && tracker.process()) {
+			long end = System.currentTimeMillis();
+			logger.log(String.format("Tracking done in %.1f s.\n", (end-start)/1e3), Logger.BLUE_COLOR);
+		}
+		else {
+			logger.error("Problem occured in tracking:\n"+tracker.getErrorMessage());
+		}
+	}
+	
+	/**
+	 * Execute the thresholding part.
+	 * <p>
+	 * This method simply takes all the segmented spots, and store in the field {@link #selectedSpots}
+	 * the spots whose features satisfy all of the thresholds entered with the method
+	 * {@link #addThreshold(Feature, float, boolean)}.
+	 */
 	public void execThresholding() {
+		logger.log("Thresholding spots...\n", Logger.BLUE_COLOR);
+
 		selectedSpots = new TreeMap<Integer, Collection<Spot>>();
 		Collection<Spot> spotThisFrame, spotToKeep, spotToRemove;
 		
@@ -189,6 +223,7 @@ public class TrackMate_ implements PlugIn {
 			}
 			selectedSpots.put(timepoint, spotToKeep);
 		}
+		logger.log("Thresholding done.\n", Logger.BLUE_COLOR);
 	}
 	
 	/** 
@@ -326,6 +361,14 @@ public class TrackMate_ implements PlugIn {
 	 */
 	public TreeMap<Integer, Collection<Spot>> getSelectedSpots() {
 		return selectedSpots;
+	}
+	
+	/**
+	 * Return the {@link TrackNode} objects after tracking, <code>null</code> if the method 
+	 * {@link #execTracking()} has not been executed yet.
+	 */
+	public TreeMap<Integer, Collection<TrackNode<Spot>>> getTracks() {
+		return tracks;
 	}
 	
 	/**

@@ -7,30 +7,29 @@ import ij.process.StackConverter;
 import ij3d.Content;
 import ij3d.ContentCreator;
 import ij3d.Image3DUniverse;
-import java.awt.BorderLayout;
 
+import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
 import java.util.TreeMap;
+
 import javax.swing.JButton;
 import javax.swing.JPanel;
-
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
+import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.TrackNode;
 import fiji.plugin.trackmate.Utils;
-import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
 import fiji.plugin.trackmate.visualization.SpotDisplayer2D;
 import fiji.plugin.trackmate.visualization.SpotDisplayer3D;
@@ -81,7 +80,6 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 	private LogPanel logPanel;
 	private Logger logger;
 	private TreeMap<Integer,Collection<Spot>> spots;
-	private TreeMap<Integer,Collection<Spot>> selectedSpots;
 	private TreeMap<Integer,Collection<TrackNode<Spot>>> tracks;
 	private SpotDisplayer<Spot> displayer;
 	private boolean is3D;
@@ -218,12 +216,18 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 							(float) settings.imp.getCalibration().pixelHeight};
 					displayer = new SpotDisplayer2D<Spot>(tracks, settings.imp, settings.expectedDiameter/2, calibration);
 				}
-				displayer.render();
 				logger.log("Rendering done.\n", Logger.BLUE_COLOR);
 				cardLayout.show(jPanelMain, THRESHOLD_GUI_KEY);
 				
 				thresholdGuiPanel.setSpots(spots.values());
 				thresholdGuiPanel.addThresholdPanel(Feature.LOG_VALUE);
+				displayer.render();
+				thresholdGuiPanel.addChangeListener(new ChangeListener() {
+					@Override
+					public void stateChanged(ChangeEvent e) {
+						thresholdSpots();
+					}
+				});
 				thresholdSpots();
 				jButtonNext.setEnabled(true);
 			}
@@ -235,35 +239,25 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 	 */
 	private void execTrackingStep() {
 		cardLayout.show(jPanelMain, LOG_PANEL_KEY);
-		logger.log("Thresholding spots...\n", Logger.BLUE_COLOR);
 		jButtonNext.setEnabled(false);
 		new Thread("TrackMate tracking thread") {					
 			public void run() {
+				// Threshold spots
 				Feature[] features = thresholdGuiPanel.getFeatures();
 				double[] values = thresholdGuiPanel.getThresholds();
 				boolean[] isAbove = thresholdGuiPanel.getIsAbove();
 				for (int i = 0; i < features.length; i++)
 					spotTracker.addThreshold(features[i], (float) values[i], isAbove[i]);
 				spotTracker.execThresholding();
-				selectedSpots = spotTracker.getSelectedSpots();
-				logger.log("Thresholding done.\n", Logger.BLUE_COLOR);
-				
-				// Look how small it is to call the tracking part (however, we only have default cost matrices here...)
-				tracks = Utils.embed(selectedSpots);
-				logger.log("Starting tracking.\n", Logger.BLUE_COLOR);
-				LAPTracker<Spot> tracker = new LAPTracker<Spot>(tracks);
-				long start = System.currentTimeMillis();
-				if (tracker.checkInput() && tracker.process()) {
-					long end = System.currentTimeMillis();
-					logger.log(String.format("Tracking done in %.1f s.\n", (end-start)/1e3), Logger.BLUE_COLOR);
-					displayer.setTrackObjects(tracks);
-					displayer.setDisplayTracks(true);
-					displayer.refresh(thresholdGuiPanel.getFeatures(), thresholdGuiPanel.getThresholds(), thresholdGuiPanel.getIsAbove());
-					jButtonNext.setEnabled(true);
-				}
-				else {
-					logger.error("Problem occured in tracking:\n"+tracker.getErrorMessage());
-				}
+				// Track
+				spotTracker.execTracking();
+				tracks = spotTracker.getTracks();
+				// Forward to displayer
+				displayer.setTrackObjects(tracks);
+				displayer.setDisplayTracks(true);
+				displayer.refresh(thresholdGuiPanel.getFeatures(), thresholdGuiPanel.getThresholds(), thresholdGuiPanel.getIsAbove());
+				// Re-enable the GUI
+				jButtonNext.setEnabled(true);
 			}
 		}.start();
 	}
@@ -423,13 +417,7 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 					public void actionPerformed(ActionEvent e) {
 							recolorSpots();
 						} 
-					});
-				thresholdGuiPanel.addChangeListener(new ChangeListener() {
-					@Override
-					public void stateChanged(ChangeEvent e) {
-						thresholdSpots();
-					}
-				});
+					});				
 				jPanelMain.add(thresholdGuiPanel, THRESHOLD_GUI_KEY);
 			}
 			cardLayout.show(jPanelMain, START_DIALOG_KEY);
