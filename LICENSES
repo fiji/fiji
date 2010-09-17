@@ -37,7 +37,7 @@ Name					File					Author(s)						Contact								License
 * Graph Cut				Graph_Cut.jar				Jan Funke						jan.funke@inf.tu-dresden.de					GPL 2
 * ij-ImageIO 				ij-ImageIO_.jar				Jarek Sacha 						jarek@ieee.org 							LGPL
 * ImageJA				ij.jar					Johannes Schindelin, Wayne Rasband			Johannes.Schindelin@gmx.de					PD
-* imagescience.jar 			imagescience.jar 			Erik Meijering 						meijering@imagescience.org 					Copyright © Erik Meijering. All rights reserved. See http://www.imagescience.org/meijering/software/transformj/
+* imagescience.jar 			imagescience.jar 			Erik Meijering 						meijering@imagescience.org 					imagescience (see below)
 * Interactive 3D Surface Plot 		Interactive_3D_Surface_Plot.jar		Kai Uwe Barthel 					k.barthel@fhtw-berlin.de 					PD
 * itext-1.3.jar 			itext-1.3.jar 				Bruno Lowagie, Paulo Soares 				http://www.lowagie.com/iText/ 					MPL/LGPL
 * IO package 				IO_.jar 				A. Cardona, S. Saalfeld, J. Schindelin, G. Jefferis 	acardona@ini.phys.ethz.ch 					GPL/public domain
@@ -99,6 +99,20 @@ BIG (Biomedical Imaging Group at the EPFL):
 	that from now on, you are authorized to distribute any ImageJ pluging
 	listed at http://bigwww.epfl.ch/algorithms.html since you have our
 	consent.
+
+imagescience (Erik Meijering; http://www.imagescience.org/meijering/software/):
+
+	Date: Fri, 17 Sep 2010 13:47:28 +0200
+	From: Erik Meijering <meijering@imagescience.org>
+
+	[...] Nice to hear from you. Yes, you have my permission to redistribute
+	TransformJ (and also FeatureJ and RandomJ if you're interested) as part of
+	Fiji. That would be great!
+
+	Best wishes,
+
+	Erik
+
 
 Unresolved (TODO):
 * Example/ scripts folder
