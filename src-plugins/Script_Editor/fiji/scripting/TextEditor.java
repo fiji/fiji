@@ -81,10 +81,10 @@ import org.fife.ui.rtextarea.RTextScrollPane;
 
 public class TextEditor extends JFrame implements ActionListener,
 	       ChangeListener {
-	EditorPane editorPane;
-	JTabbedPane tabbed;
-	JTextArea screen;
-	JMenuItem newFile, open, save, saveas, compileAndRun, compile, debug, close,
+	protected EditorPane editorPane;
+	protected JTabbedPane tabbed;
+	protected JTextArea screen;
+	protected JMenuItem newFile, open, save, saveas, compileAndRun, compile, debug, close,
 		  undo, redo, cut, copy, paste, find, replace, selectAll,
 		  autocomplete, resume, terminate, kill, gotoLine,
 		  makeJar, makeJarWithSource, removeUnusedImports,
@@ -96,16 +96,16 @@ public class TextEditor extends JFrame implements ActionListener,
 		  openSourceForMenuItem, showDiff, commit, ijToFront,
 		  openMacroFunctions, decreaseFontSize, increaseFontSize,
 		  chooseTabSize, gitGrep, loadToolsJar, openInGitweb;
-	JMenu gitMenu, tabsMenu, tabSizeMenu, toolsMenu;
-	int tabsMenuTabsStart;
-	Set<JMenuItem> tabsMenuItems;
-	FindAndReplaceDialog findDialog;
+	protected JMenu gitMenu, tabsMenu, tabSizeMenu, toolsMenu;
+	protected int tabsMenuTabsStart;
+	protected Set<JMenuItem> tabsMenuItems;
+	protected FindAndReplaceDialog findDialog;
 
 	protected final String templateFolder = "templates/";
-	Languages.Language[] availableLanguages = Languages.getInstance().languages;
+	protected Languages.Language[] availableLanguages = Languages.getInstance().languages;
 
-	Position compileStartPosition;
-	ErrorHandler errorHandler;
+	protected Position compileStartPosition;
+	protected ErrorHandler errorHandler;
 
 	public TextEditor(String path) {
 		super("Script Editor");
