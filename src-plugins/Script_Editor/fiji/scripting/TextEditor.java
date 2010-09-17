@@ -53,6 +53,7 @@ import java.util.zip.ZipException;
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -100,6 +101,7 @@ public class TextEditor extends JFrame implements ActionListener,
 	protected int tabsMenuTabsStart;
 	protected Set<JMenuItem> tabsMenuItems;
 	protected FindAndReplaceDialog findDialog;
+	protected JCheckBoxMenuItem autoSave;
 
 	protected final String templateFolder = "templates/";
 	protected Languages.Language[] availableLanguages = Languages.getInstance().languages;
@@ -262,6 +264,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		compile = addToMenu(run, "Compile",
 				KeyEvent.VK_C, ctrl | shift);
 		compile.setMnemonic(KeyEvent.VK_C);
+		autoSave = new JCheckBoxMenuItem("Auto-save before compiling");
+		run.add(autoSave);
 
 		installMacro = addToMenu(run, "Install Macro",
 				KeyEvent.VK_I, ctrl);
@@ -576,8 +580,17 @@ public class TextEditor extends JFrame implements ActionListener,
 	}
 
 	public boolean handleUnsavedChanges() {
+		return handleUnsavedChanged(false);
+	}
+
+	public boolean handleUnsavedChanges(boolean beforeCompiling) {
 		if (!fileChanged())
 			return true;
+
+		if (beforeCompiling && autoSave.getState()) {
+			save();
+			return true;
+		}
 
 		switch (JOptionPane.showConfirmDialog(this,
 				"Do you want to save changes?")) {
@@ -1014,8 +1027,8 @@ public class TextEditor extends JFrame implements ActionListener,
 	public boolean makeJar(boolean includeSources) {
 		File file = getEditorPane().file;
 		Languages.Language currentLanguage = getCurrentLanguage();
-		if ((file == null || currentLanguage.isCompileable())
-				&& !handleUnsavedChanges())
+		if ((file == null || currentLanguage.isCompileable()) {
+				&& !handleUnsavedChanges(true))
 			return false;
 
 		String name = getEditorPane().getFileName();
@@ -1423,7 +1436,7 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 				error("Cannot run selection of compiled language!");
 				return;
 			}
-			if (handleUnsavedChanges())
+			if (handleUnsavedChanges(true))
 				runScript();
 			return;
 		}
@@ -1494,7 +1507,7 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 	}
 
 	public void compile() {
-		if (!handleUnsavedChanges())
+		if (!handleUnsavedChanges(true))
 			return;
 
 		final RefreshScripts interpreter = getCurrentLanguage().interpreter;
