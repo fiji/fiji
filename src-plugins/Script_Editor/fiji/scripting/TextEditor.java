@@ -580,7 +580,7 @@ public class TextEditor extends JFrame implements ActionListener,
 	}
 
 	public boolean handleUnsavedChanges() {
-		return handleUnsavedChanged(false);
+		return handleUnsavedChanges(false);
 	}
 
 	public boolean handleUnsavedChanges(boolean beforeCompiling) {
@@ -1027,7 +1027,7 @@ public class TextEditor extends JFrame implements ActionListener,
 	public boolean makeJar(boolean includeSources) {
 		File file = getEditorPane().file;
 		Languages.Language currentLanguage = getCurrentLanguage();
-		if ((file == null || currentLanguage.isCompileable()) {
+		if ((file == null || currentLanguage.isCompileable())
 				&& !handleUnsavedChanges(true))
 			return false;
 
