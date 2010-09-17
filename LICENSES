@@ -32,6 +32,7 @@ Name					File					Author(s)						Contact								License
 * Color Histogram 			Color_Histogram.jar			Dimiter Prodanov 					dimiterpp@gmail.com 						GPL 2
 * Color Inspector 3D 			Color_Inspector_3D.jar			Kai Uwe Barthel 					k.barthel@fhtw-berlin.de 					PD
 * Differentials				Differentials_.jar			Philippe Thevenaz					http://bigwww.epfl.ch/thevenaz/differentials/			BIG (see below)
+* FeatureJ	 			FeatureJ_.jar	 			Erik Meijering	 					http://www.imagescience.org/meijering/software/featurej/	imagescience (see below)
 * Fiji_Plugins.jar 			Fiji_Plugins.jar 			Various authors 					http://pacific.mpi-cbg.de/contributors 				PD,GPL
 * Fiji as a framework																							GPL
 * Graph Cut				Graph_Cut.jar				Jan Funke						jan.funke@inf.tu-dresden.de					GPL 2
