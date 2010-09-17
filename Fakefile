@@ -192,7 +192,8 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/Snakuscule_.jar \
 	jars/imagescience.jar \
 	plugins/TransformJ_.jar \
-	plugins/FeatureJ_.jar
+	plugins/FeatureJ_.jar \
+	plugins/RandomJ_.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS
 
