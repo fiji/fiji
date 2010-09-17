@@ -1676,8 +1676,13 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 			FileFunctions functions = new FileFunctions(this);
 			List<String> paths = functions.extractSourceJar(path);
 			for (String file : paths)
-				if (!functions.isBinaryFile(file))
+				if (!functions.isBinaryFile(file)) {
 					open(file);
+					EditorPane pane = getEditorPane();
+					new TokenFunctions(pane).removeTrailingWhitespace();
+					if (pane.fileChanged())
+						save();
+				}
 		} catch (IOException e) {
 			error("There was a problem opening " + path
 				+ ": " + e.getMessage());
