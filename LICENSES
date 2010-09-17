@@ -68,7 +68,7 @@ Name					File					Author(s)						Contact								License
 * Stack Reverser 			Stack_Reverser.class 			Anthony Padua, Daniel Barboriak 			http://rsb.info.nih.gov/ij/plugins/substack-maker.html		PD
 * StackReg				StackReg_.jar				Philippe Thevenaz					http://bigwww.epfl.ch/thevenaz/stackreg/			BIG (see below)
 * Substack Maker 			Substack_Maker.class 			Wayne Rasband 						http://rsb.info.nih.gov/ij/plugins/reverser.html 		PD
-* TransformJ 				TransformJ_.jar 			Erik Meijering 						meijering@imagescience.org 					Copyright © Erik Meijering. All rights reserved. See http://www.imagescience.org/meijering/software/transformj/
+* TransformJ 				TransformJ_.jar 			Erik Meijering 						http://www.imagescience.org/meijering/software/transformj/	imagescience (see below)
 * TrakEM2				TrakEM2_.jar				Albert Cardona, Rodney Douglas				acardona@ini.phys.ethz.ch					GPL
 * TurboReg				TurboReg_.jar				Philippe Thévenaz					philippe.thevenaz@epfl.ch					Citationware (see below)
 * UnwarpJ				UnwarpJ_.jar				Carlos Oscar Sanchez Sorzano				http://bigwww.epfl.ch/thevenaz/UnwarpJ/				BIG (see below)

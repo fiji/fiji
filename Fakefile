@@ -190,9 +190,10 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/StackReg_.jar \
 	plugins/UnwarpJ_.jar \
 	plugins/Snakuscule_.jar \
-	jars/imagescience.jar
+	jars/imagescience.jar \
+	plugins/TransformJ_.jar
 
-all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS third-party-plugins
+all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS
 
 # The "run" rule just executes ./fiji (as long as the file "run" does not exist...)
 # It has items on the right side, because these would be passed to the executable.
@@ -315,14 +316,6 @@ MAINCLASS(jars/MacOSX_Updater_Fix.jar)=fiji.updater.Fix
 
 plugins/*.jar <- src-plugins/*/**/*
 jars/*.jar <- src-plugins/*/**/*
-
-# Third party plugins
-
-THIRD_PARTY_PLUGINS= \
-	plugins/TransformJ_.jar \
-
-third-party-plugins[] <- $THIRD_PARTY_PLUGINS
-plugins/*.jar <- staged-plugins/*.jar
 
 # Fiji launcher
 
