@@ -61,26 +61,7 @@ public class TrackMate_ implements PlugIn {
 	private ArrayList<Float> thresholdValues = new ArrayList<Float>();
 	private ArrayList<Boolean> thresholdAbove = new ArrayList<Boolean>();
 	
-	/*
-	 * INNER CLASSES
-	 */
-
-	/**
-	 * Logger used to append log message to. By default, they are appended 
-	 * to the console output, with no color. Progress values are ignored.
-	 */
-	private Logger logger = new Logger() {
-		@Override
-		public void log(String message, Color color) {
-			System.out.print(message);
-		}
-		@Override
-		public void error(String message) {
-			System.err.println(message);
-		}
-		@Override
-		public void setProgress(float val) {}
-	};
+	private Logger logger = Logger.DEFAULT_LOGGER;
 
 	/*
 	 * RUN METHOD
