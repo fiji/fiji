@@ -18,8 +18,6 @@ public class SpotImp implements Spot {
 	
 	/** Store the individual features, and their values. */
 	private EnumMap<Feature, Float> features = new EnumMap<Feature, Float>(Feature.class);
-	/** Physical coordinates of this spot.  */
-	private float[] coordinates; 
 	/** A user-supplied name for this spot. */
 	private String name;
 
@@ -27,9 +25,16 @@ public class SpotImp implements Spot {
 	 * CONSTRUCTORS
 	 */
 	
+	/**
+	 * Instantiate a Spot. 
+	 * <p>
+	 * The given coordinate float array <b>must</b> have 3 elements. If the 3rd one is not
+	 * used (2D case), it can be set to a constant value 0. This constructor ensures that
+	 * none of the {@link Spot#POSITION_FEATURES} will be <code>null</code>, and ensure relevance
+	 * when calculating distances and so on.
+	 */
 	public SpotImp(float[] coordinates, String name) {
-		this.coordinates = coordinates;
-		for (int i = 0; i < coordinates.length; i++)
+		for (int i = 0; i < POSITION_FEATURES.length; i++)
 			putFeature(POSITION_FEATURES[i], coordinates[i]);
 		this.name = name;
 	}
@@ -84,10 +89,11 @@ public class SpotImp implements Spot {
 		s.append("Frame: "+getFeature(Feature.POSITION_T)+'\n');
 
 		// Coordinates
+		float[] coordinates = getPosition(null);
 		if (null == coordinates)
 			s.append("Position: <no coordinates>\n");
 		else 
-			s.append("Position: "+MathLib.printCoordinates(getPosition(null))+"\n");
+			s.append("Position: "+MathLib.printCoordinates(coordinates)+"\n");
 		
 		// Feature list
 		if (null == features || features.size() < 1) 
@@ -114,22 +120,10 @@ public class SpotImp implements Spot {
 	
 	@Override
 	public float[] getPosition(float[] position) {
-		if (null == position) {
-			int ndim = 0;
-			for (int i = 0; i < POSITION_FEATURES.length; i++)
-				if (features.get(POSITION_FEATURES[i]) != null)
-					ndim++;
-			position = new float[ndim];
-		}
-		Float val;
-		int index = 0;
-		for (int i = 0; i < position.length; i++) {
-			val = features.get(POSITION_FEATURES[i]);
-			if (null == val)
-				continue;
-			position[index] = getFeature(POSITION_FEATURES[i]);
-			index++;
-		}
+		if (null == position) 
+			position = new float[3];
+		for (int i = 0; i < 3; i++) 
+			position[i] = getFeature(POSITION_FEATURES[i]);
 		return position;
 	}
 	
@@ -151,6 +145,24 @@ public class SpotImp implements Spot {
 	@Override
 	public final void putFeature(final Feature feature, final float value) {
 		features.put(feature, value);
+	}
+
+	@Override
+	public Float diffTo(Spot s, Feature feature) {
+		return getFeature(feature) - s.getFeature(feature);
+	}
+
+	@Override
+	public Float squareDistanceTo(Spot s) {
+		Float sumSquared = 0f;
+		Float thisVal, otherVal;
+		
+		for (Feature f : POSITION_FEATURES) {
+			thisVal = getFeature(f);
+			otherVal = s.getFeature(f);
+			sumSquared += ( otherVal - thisVal ) * ( otherVal - thisVal ); 
+		}
+		return sumSquared;
 	}
 
 }

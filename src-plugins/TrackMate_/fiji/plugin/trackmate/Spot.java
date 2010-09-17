@@ -35,9 +35,18 @@ public interface Spot {
 	public EnumMap<Feature, Float> getFeatures();
 	
 	/**
-	 * Utility method that store the position features in the given float array. 
-	 * Only the non-<code>null</code> position features are passed.
+	 * Utility method that store the position features in the 3 elements float array.
 	 * If the given array is <code>null</code>, a new array is created.
 	 */
 	public float[] getPosition(float[] position);
+	
+	/**
+	 * Return the square distance from this spot to another, using the position features
+	 */
+	public Float squareDistanceTo(Spot s);
+	
+	/**
+	 * Return the difference of the feature value of this spot with the one of the given spot.
+	 */
+	public Float diffTo(Spot s, Feature feature);
 }
