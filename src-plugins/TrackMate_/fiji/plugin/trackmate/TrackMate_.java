@@ -1,7 +1,7 @@
 package fiji.plugin.trackmate;
 
 import fiji.plugin.trackmate.features.FeatureFacade;
-import fiji.plugin.trackmate.gui.SpotTrackerFrame;
+import fiji.plugin.trackmate.gui.TrackMateFrame;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.util.SplitString;
@@ -97,7 +97,7 @@ public class TrackMate_ implements PlugIn {
 			SwingUtilities.invokeLater(new Runnable() {			
 				@Override
 				public void run() {
-					SpotTrackerFrame mainGui = new SpotTrackerFrame(instance);
+					TrackMateFrame mainGui = new TrackMateFrame(instance);
 					mainGui.setLocationRelativeTo(null);
 					mainGui.setVisible(true);
 				}
@@ -121,7 +121,7 @@ public class TrackMate_ implements PlugIn {
 					if (key.equals(setting))
 						optionStrings.put(key, options.get(key));
 		} catch (ParseException e) {
-			logger.error(e.toString());
+			e.printStackTrace(logger);
 		}
 		
 		Settings  settings = new Settings();

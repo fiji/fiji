@@ -38,7 +38,7 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.SpotImp;
 
-import static fiji.plugin.trackmate.gui.SpotTrackerFrame.SMALL_FONT;
+import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
 
 /**
 * This code was edited or generated using CloudGarden's Jigloo

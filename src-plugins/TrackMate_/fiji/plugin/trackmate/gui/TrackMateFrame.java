@@ -47,7 +47,7 @@ import fiji.plugin.trackmate.visualization.SpotDisplayer3D;
 * THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
 * LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
 */
-public class SpotTrackerFrame extends javax.swing.JFrame {
+public class TrackMateFrame extends javax.swing.JFrame {
 
 	static final Font FONT = new Font("Arial", Font.PLAIN, 11);
 	private JButton jButtonNext;
@@ -97,14 +97,14 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 	 * CONSTRUCTORS
 	 */
 	
-	public SpotTrackerFrame(TrackMate_ plugin) {
+	public TrackMateFrame(TrackMate_ plugin) {
 		if (null == plugin)
 			plugin = new TrackMate_();
 		this.spotTracker = plugin;
 		initGUI();
 	}
 	
-	public SpotTrackerFrame() {
+	public TrackMateFrame() {
 		this(new TrackMate_());
 	}
 	
@@ -167,7 +167,7 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 					spotTracker.execSegmentation(settings);
 				} catch (Exception e) {
 					logger.error("An error occured:\n"+e+'\n');
-					e.printStackTrace();
+					e.printStackTrace(logger);
 				} finally {
 					jButtonNext.setEnabled(true);
 					long end = System.currentTimeMillis();
@@ -436,7 +436,7 @@ public class SpotTrackerFrame extends javax.swing.JFrame {
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
-				SpotTrackerFrame inst = new SpotTrackerFrame();
+				TrackMateFrame inst = new TrackMateFrame();
 				inst.setLocationRelativeTo(null);
 				inst.setVisible(true);
 			}

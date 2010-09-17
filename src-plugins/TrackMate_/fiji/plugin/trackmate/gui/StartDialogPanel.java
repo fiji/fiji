@@ -1,7 +1,7 @@
 package fiji.plugin.trackmate.gui;
 
-import static fiji.plugin.trackmate.gui.SpotTrackerFrame.FONT;
-import static fiji.plugin.trackmate.gui.SpotTrackerFrame.SMALL_FONT;
+import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
+import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.NewImage;

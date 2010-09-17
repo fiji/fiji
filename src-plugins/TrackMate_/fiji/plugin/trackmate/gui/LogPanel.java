@@ -1,6 +1,6 @@
 package fiji.plugin.trackmate.gui;
 
-import static fiji.plugin.trackmate.gui.SpotTrackerFrame.SMALL_FONT;
+import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
