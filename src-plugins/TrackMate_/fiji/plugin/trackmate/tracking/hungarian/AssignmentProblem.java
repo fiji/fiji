@@ -4,12 +4,13 @@ package fiji.plugin.trackmate.tracking.hungarian;
 /**
  * an implementation of this: http://en.wikipedia.org/wiki/Hungarian_algorithm
  *
- * based loosely on Guy Robinson's description of the algorithm here: http://www.netlib.org/utk/lsi/pcwLSI/text/node222.html#SECTION001182000000000000000
- *
+ * based loosely on Guy Robinson's description of the algorithm here: 
+ * {@link http://www.netlib.org/utk/lsi/pcwLSI/text/node222.html#SECTION001182000000000000000}.
+ * <p>
  * In short, it finds the cheapest assignment pairs given a cost matrix.
- *
+ * <p>
  * Copyright 2007 Gary Baker (GPL v3)
- * @author gbaker
+ * @author Gary Baker
  */
 public class AssignmentProblem {
 

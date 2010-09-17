@@ -1,5 +1,9 @@
 package fiji.plugin.trackmate.tracking.costfunction;
 
+import java.util.List;
+
+import fiji.plugin.trackmate.Spot;
+
 import Jama.Matrix;
 
 /**
@@ -11,8 +15,13 @@ import Jama.Matrix;
  */
 public interface CostFunctions {
 
-	/** Fills in the supplied matrix using the information given at construction
-	 * and the cost function. */
-	public void applyCostFunction();
+	/** 
+	 * Return a cost matrix using the information given at construction for
+	 * the two Spot lists given here.
+	 * <p>
+	 * We need to use a list, for the matrix index will reflect the spot position
+	 * in the lists.
+	 */
+	public Matrix getCostFunction(final List<Spot> t0, final List<Spot> t1);
 	
 }

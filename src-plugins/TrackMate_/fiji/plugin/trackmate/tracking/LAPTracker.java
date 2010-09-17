@@ -2,10 +2,16 @@ package fiji.plugin.trackmate.tracking;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 
+import org.jgrapht.DirectedGraph;
+import org.jgrapht.graph.DefaultEdge;
+
 import Jama.Matrix;
+import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.SpotImp;
@@ -13,6 +19,7 @@ import fiji.plugin.trackmate.TrackNode;
 import fiji.plugin.trackmate.TrackNodeImp;
 import fiji.plugin.trackmate.tracking.costmatrix.LinkingCostMatrixCreator;
 import fiji.plugin.trackmate.tracking.costmatrix.TrackSegmentCostMatrixCreator;
+import fiji.plugin.trackmate.tracking.hungarian.AssignmentAlgorithm;
 import fiji.plugin.trackmate.tracking.hungarian.AssignmentProblem;
 import fiji.plugin.trackmate.tracking.hungarian.HungarianAlgorithm;
 
@@ -117,6 +124,9 @@ public class LAPTracker<K extends Spot> implements ObjectTracker {
 		private static final double MAX_INTENSITY_RATIO = 4.0d;
 		private static final double CUTOFF_PERCENTILE = 0.9d;
 		
+		
+		private DirectedGraph<Spot, DefaultEdge> trackGraph;
+		
 		/** To throw out spurious segments, only include track segments with a length strictly larger
 		 * than this value. */
 		public int minSegmentLength = MINIMUM_SEGMENT_LENGTH;
@@ -146,12 +156,12 @@ public class LAPTracker<K extends Spot> implements ObjectTracker {
 	 * only a single Spot. */
 	protected static final int SEGMENT_OF_SIZE_ONE = -1;
 
-	/** The cost matrix for linking individual objects (step 1) */
-	protected ArrayList<double[][]> linkingCosts = null;
+	/** The cost matrix for linking individual objects (step 1), indexed by the first frame index. */
+	protected TreeMap<Integer, double[][]> linkingCosts;
 	/** The cost matrix for linking individual track segments (step 2). */
 	protected double[][] segmentCosts = null;
 	/** Stores the objects to track as a list of Spots per frame.  */
-	protected ArrayList< ArrayList<TrackNode<K>> > objects;
+
 	/** Stores a message describing an error incurred during use of the class. */
 	protected String errorMessage;
 	/** Stores whether the user has run checkInput() or not. */
@@ -178,6 +188,13 @@ public class LAPTracker<K extends Spot> implements ObjectTracker {
 	/** The settings to use for this tracker. */
 	private Settings settings = Settings.DEFAULT;
 	
+	/** Stores the objects to track as a list of Spots per frame.  */
+	private TreeMap<Integer, List<Spot>> vertices;
+	
+	private Logger logger = Logger.DEFAULT_LOGGER;
+	
+	private final static String BASE_ERROR_MESSAGE = "LAPTracker: ";
+
 	
 	/*
 	 * CONSTRUCTORS
@@ -187,25 +204,25 @@ public class LAPTracker<K extends Spot> implements ObjectTracker {
 	 * Default constructor.
 	 * 
 	 * @param objects Holds a list of Spots for each frame in the time-lapse image.
-	 * @param linkingCosts The cost matrix for step 1, linking objects.
+	 * @param linkingCosts The cost matrix for step 1, linking objects, specified for every frame.
 	 * @param settings The settings to use for this tracker.
 	 */
-	public LAPTracker (TreeMap<Integer, ? extends Collection<TrackNode<K>> > objects, ArrayList<double[][]> linkingCosts, Settings settings) {
-		this.objects = convertMapToArrayList(objects);
+	public LAPTracker (TreeMap<Integer, List<Spot>> spots, TreeMap<Integer, double[][]> linkingCosts, Settings settings) {
+		this.vertices = spots;
 		this.linkingCosts = linkingCosts;
 		this.settings = settings;
 	}
 
-	public LAPTracker (TreeMap<Integer, ? extends Collection<TrackNode<K>> > objects, ArrayList<double[][]> linkingCosts) {
-		this(objects, linkingCosts, Settings.DEFAULT);
+	public LAPTracker (TreeMap<Integer, List<Spot>> spots, TreeMap<Integer, double[][]> linkingCosts) {
+		this(spots, linkingCosts, Settings.DEFAULT);
 	}
 	
-	public LAPTracker(TreeMap<Integer, ? extends Collection<TrackNode<K>> > objects, Settings settings) {
-		this(objects, null, settings);
+	public LAPTracker(TreeMap<Integer, List<Spot>> spots, Settings settings) {
+		this(spots, null, settings);
 	}
 
-	public LAPTracker (TreeMap<Integer, ? extends Collection<TrackNode<K>> > objects) {
-		this(objects, null, Settings.DEFAULT);
+	public LAPTracker (TreeMap<Integer, List<Spot>> spots) {
+		this(spots, null, Settings.DEFAULT);
 	}
 	
 
@@ -216,9 +233,13 @@ public class LAPTracker<K extends Spot> implements ObjectTracker {
 	
 	/**
 	 * Set the cost matrices used for step 1, linking objects into track segments.
+	 * <p>
+	 * The matrices are indexed by frame: if a matrix links spots at frame t0 with spots at frame t1,
+	 * then it will be put at index t0 in this {@link TreeMap}. The individual matrices must have 
+	 * the proper dimension, set by the number of spot in t0 and t1. 
 	 * @param linkingCosts The cost matrix, with structure matching figure 1b in the paper.
 	 */
-	public void setLinkingCosts(ArrayList<double[][]> linkingCosts) {
+	public void setLinkingCosts(TreeMap<Integer, double[][]> linkingCosts) {
 		this.linkingCosts = linkingCosts;
 	}
 	
@@ -227,7 +248,7 @@ public class LAPTracker<K extends Spot> implements ObjectTracker {
 	 * Get the cost matrices used for step 1, linking objects into track segments.
 	 * @return The cost matrices, with one <code>double[][]</code> in the ArrayList for each frame t, t+1 pair.
 	 */
-	public ArrayList<double[][]> getLinkingCosts() {
+	public TreeMap<Integer, double[][]> getLinkingCosts() {
 		return linkingCosts;
 	}
 	
@@ -272,27 +293,27 @@ public class LAPTracker<K extends Spot> implements ObjectTracker {
 	@Override
 	public boolean checkInput() {
 		// Check that the objects list itself isn't null
-		if (null == objects) {
-			errorMessage = "The objects list is null.";
+		if (null == vertices) {
+			errorMessage = BASE_ERROR_MESSAGE + "The spot list is null.";
 			return false;
 		}
 		
 		// Check that the objects list contains inner collections.
-		if (objects.isEmpty()) {
-			errorMessage = "The objects list is empty.";
+		if (vertices.isEmpty()) {
+			errorMessage = BASE_ERROR_MESSAGE + "The spot list is empty.";
 			return false;
 		}
 		
 		// Check that at least one inner collection contains an object.
 		boolean empty = true;
-		for (ArrayList<TrackNode<K>> c : objects) {
-			if (!c.isEmpty()) {
+		for (int key : vertices.keySet()) {
+			if (!vertices.get(key).isEmpty()) {
 				empty = false;
 				break;
 			}
 		}
 		if (empty) {
-			errorMessage = "The objects list is empty.";
+			errorMessage = BASE_ERROR_MESSAGE + "The spot list is empty.";
 			return false;
 		}
 		
@@ -315,7 +336,7 @@ public class LAPTracker<K extends Spot> implements ObjectTracker {
 		
 		// Make sure checkInput() has been executed.
 		if (!inputChecked) {
-			errorMessage = "checkInput() must be executed before process().";
+			errorMessage = BASE_ERROR_MESSAGE + "checkInput() must be executed before process().";
 			return false;
 		}
 		
@@ -359,21 +380,33 @@ public class LAPTracker<K extends Spot> implements ObjectTracker {
 	
 	
 	/**
-	 * Creates the cost matrices used to link objects (Step 1)
+	 * Creates the cost matrices used to link objects (Step 1) for each frame pair.
+	 * Calling this method resets the {@link #linkingCosts} field, which stores these 
+	 * matrices.
 	 * @return True if executes successfully, false otherwise.
 	 */
 	private boolean createLinkingCostMatrices() {
-		linkingCosts = new ArrayList<double[][]>();	
-		for (int i = 0; i < objects.size() - 1; i++) {
-			LinkingCostMatrixCreator<K> objCosts = new LinkingCostMatrixCreator<K>(
-					new ArrayList<TrackNode<K>>(objects.get(i)), 
-					new ArrayList<TrackNode<K>>(objects.get(i + 1)),
-					settings);
+		linkingCosts = new TreeMap<Integer, double[][]>();
+		List<Spot> t0, t1;
+		LinkingCostMatrixCreator objCosts; 
+
+		// Iterate properly over frame pair in order, not necessarily separated by 1.
+		Iterator<Integer> frameIterator = vertices.keySet().iterator(); 		
+		int frame0 = frameIterator.next();
+		int frame1;
+		while(frameIterator.hasNext()) { // ascending order
+			
+			frame1 = frameIterator.next();
+			t0 = vertices.get(frame0);
+			t1 = vertices.get(frame1);
+
+			objCosts = new LinkingCostMatrixCreator(t0, t1, settings);
 			if (!objCosts.checkInput() || !objCosts.process()) {
 				System.out.println(objCosts.getErrorMessage());
 				return false;
 			}
-			linkingCosts.add(objCosts.getCostMatrix());
+			linkingCosts.put(frame0, objCosts.getCostMatrix());
+			frame1 = frame0;
 		}
 		return true;
 	}
@@ -386,7 +419,7 @@ public class LAPTracker<K extends Spot> implements ObjectTracker {
 	private boolean createTrackSegmentCostMatrix() {
 		TrackSegmentCostMatrixCreator<K> segCosts = new TrackSegmentCostMatrixCreator<K>(trackSegments, settings);
 		if (!segCosts.checkInput() || !segCosts.process()) {
-			System.out.println(segCosts.getErrorMessage());
+			errorMessage = BASE_ERROR_MESSAGE + segCosts.getErrorMessage();
 			return false;
 		}
 		segmentCosts = segCosts.getCostMatrix();
@@ -408,7 +441,7 @@ public class LAPTracker<K extends Spot> implements ObjectTracker {
 		}
 		
 		// Solve LAP
-		ArrayList< int[] > trackSegmentStructure = solveLAPForTrackSegments();
+		TreeMap<Integer, int[]> trackSegmentStructure = solveLAPForTrackSegments();
 		System.out.println("LAP for frame-to-frame linking solved.\n");
 		
 		// Compile LAP solutions into track segments
@@ -455,26 +488,37 @@ public class LAPTracker<K extends Spot> implements ObjectTracker {
 
 	
 	/**
-	 * Compute the optimal track segments using the cost matrix 
-	 * {@link LAPTracker#linkingCosts}.
-	 * @return True if executes correctly, false otherwise.
+	 * Compute the optimal track segments using the cost matrix {@link LAPTracker#linkingCosts}.
+	 * 
+	 * @see LAPTracker#createLinkingCostMatrices()
 	 */
-	public ArrayList< int[] > solveLAPForTrackSegments() {
+	public TreeMap<Integer, int[]> solveLAPForTrackSegments() {
 
-		/* This local copy of trackSegments will store the relationships between segments.
-		 * It will later be converted into an ArrayList< ArrayList<K> > to explicitly
-		 * store the segments themselves as a list of Spots.
-		 */
-		ArrayList< int[] > trackSegmentStructure = initializeTrackSegments();
-
-		for (int i = 0; i < linkingCosts.size(); i++) {
+		final AssignmentAlgorithm solver = new HungarianAlgorithm();
+		// This variable here holds a list of links, specified as an int:
+		// If the spot number i is linked to the spot number j in the next frame,
+		// them the ith value of the int array is j.
+		TreeMap<Integer, int[]> trackSegmentStructure = initializeTrackSegments();
+		
+		// Iterate properly over frame pair in order, not necessarily separated by 1.
+		Iterator<Integer> frameIterator = vertices.keySet().iterator(); 		
+		int frame0 = frameIterator.next();
+		int frame1;
+		while(frameIterator.hasNext()) { // ascending order
+			frame1 = frameIterator.next();			
+			
+			int[] t0 = trackSegmentStructure.get(frame0);
+			int[] t1 = trackSegmentStructure.get(frame1);
 			
 			// Solve the LAP using the Hungarian Algorithm
-			AssignmentProblem hung = new AssignmentProblem(linkingCosts.get(i));
-			int[][] solutions = hung.solve(new HungarianAlgorithm());
+			AssignmentProblem hung = new AssignmentProblem(linkingCosts.get(frame0));
+			int[][] solutions = hung.solve(solver);
 			
 			// Extend track segments using solutions
-			extendTrackSegments(trackSegmentStructure, solutions, i);
+			extendTrackSegments(t0, t1, solutions);
+			
+			// Next frame pair
+			frame0 = frame1;
 		}
 
 		return trackSegmentStructure;
@@ -561,9 +605,9 @@ public class LAPTracker<K extends Spot> implements ObjectTracker {
 	}
 	
 	
-	/*
+	/**
 	 * Takes the solutions from the Hungarian algorithm, which are an int[][], and 
-	 * appripriately links the track segments. Before this method is called, the Spots in the
+	 * appropriately links the track segments. Before this method is called, the Spots in the
 	 * track segments are connected within themselves, but not between track segments.
 	 * 
 	 * Thus, we only care here if the result was a 'gap closing,' 'merging,' or 'splitting'
@@ -648,10 +692,11 @@ public class LAPTracker<K extends Spot> implements ObjectTracker {
 	}
 	
 	
-	/*
-	 * This method creates an ArrayList< int[] > mimic of the ArrayList< ArrayList<K> > variable 'objects.'
-	 * Thus, each internal int[] has the same length as the the corresponding ArrayList<K>.
-	 * 
+	/**
+	 * This method creates an Map of int[] mimic of the field {@link #vertices}
+	 * Thus, each internal int[] has the same length as the the corresponding List of Spot
+	 * at corresponding frame.
+	 * <p>
 	 * The default value for each int[] is set to NOT_LINKED, unless it's the first frame
 	 * (index 0), in which case we set it equal to SEGMENT_OF_SIZE_ONE. Normally, when
 	 * a solution is in the top right quadrant, it signifies a segment ends, which is the 
@@ -661,43 +706,45 @@ public class LAPTracker<K extends Spot> implements ObjectTracker {
 	 * SEGMENT_OF_SIZE_ONE in the first frame, and overwrite as we find links to the next
 	 * frame.
 	 */
-	private ArrayList< int[] > initializeTrackSegments() {
-		ArrayList< int[] > trackSegments = new ArrayList< int[] >();
-		for (int i = 0; i < objects.size(); i++) {						
-			int[] arr = new int[objects.get(i).size()];
-			for (int j = 0; j < arr.length; j++) {						
-				if (i == 0) {
+	private TreeMap<Integer, int[]> initializeTrackSegments() {
+		
+		TreeMap<Integer, int[]> trackSegments = new TreeMap<Integer, int[]>();
+		
+		Set<Integer> frames = vertices.keySet(); // might not start at 0
+		for (int i : frames) {
+			
+			int[] arr = new int[vertices.get(i).size()];
+			
+			for (int j = 0; j < arr.length; j++)					
+				if (i == 0)
 					arr[j] = SEGMENT_OF_SIZE_ONE;
-				} else {
+				else
 					arr[j] = NOT_LINKED;
-				}
-			}
-			trackSegments.add(arr);
+
+			trackSegments.put(i, arr);
 		}
 		return trackSegments;
 	}
 	
 	
-	/*
+	/**
 	 * This method takes a set of solutions from the Hungarian Algorithm (an int[][])
 	 * for the track segment step (step 1), and extends the track segments accordingly.
-	 * 
+	 * <p>
 	 * The trackSegments object is an ArrayList of integer arrays. Each array is the same
 	 * length as the number of Spots in the 'object' ArrayList at the same index. The way
 	 * track segments are recorded is as follows:
-	 * 
+	 * <p>
 	 * If a Spot in frame t points to another Spot in frame t+1, then the corresponding
 	 * integer array index (the same index as the Spot in frame t in the 'objects' ArrayList)
 	 * will hold the index of the Spot in frame t+1 that it points to. 
-	 * 
+	 *  <p>
 	 * Since the default value in all the int[] is -1, we can follow track segments by
 	 * searching for values of -1, which signify the current segment ends, or that this point
 	 * never points to anything else (never linked, or a segment of size one, which isn't
 	 * important).
 	 */
-	private void extendTrackSegments(ArrayList< int[] > trackSegments, int[][] solutions, int i) {
-		int[] t0 = trackSegments.get(i);
-		int[] t1 = trackSegments.get(i + 1);
+	private void extendTrackSegments(int[] t0, int[] t1, int[][] solutions) {
 		
 		for (int j = 0; j < solutions.length; j++) {
 			int[] solution = solutions[j];
@@ -722,7 +769,7 @@ public class LAPTracker<K extends Spot> implements ObjectTracker {
 	 * parameter, and converts it to an ArrayList< ArrayList<TrackNode<K>> >
 	 * for the use in this class.
 	 */
-	private final ArrayList< ArrayList<TrackNode<K>> > convertMapToArrayList(TreeMap< Integer, ? extends Collection<TrackNode<K>> > objects) {
+	private final ArrayList< ArrayList<TrackNode<K>> > convertVerticesList(TreeMap< Integer, ? extends Collection<TrackNode<K>> > objects) {
 		ArrayList< ArrayList<TrackNode<K>> > newContainer = new ArrayList< ArrayList<TrackNode<K>> >(objects.size());
 		Set<Integer> keys = objects.keySet();
 		Collection<TrackNode<K>> spotThisFrame;

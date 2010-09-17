@@ -1,11 +1,9 @@
 package fiji.plugin.trackmate.tracking.costmatrix;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import Jama.Matrix;
-
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackNode;
 import fiji.plugin.trackmate.tracking.LAPTracker.Settings;
 import fiji.plugin.trackmate.tracking.costfunction.LinkingCostFunction;
 
@@ -17,18 +15,18 @@ import fiji.plugin.trackmate.tracking.costfunction.LinkingCostFunction;
  * 
  * <p>The top left quadrant contains the costs to links objects between frames,
  * the bottom left and top right quadrants correspond to alternative costs for linking
- * (allows no links to be made betwen objects), and the bottom right corner is mathematically
+ * (allows no links to be made between objects), and the bottom right corner is mathematically
  * required for solving an LAP.
  * 
  * @author Nicholas Perry
  *
  */
-public class LinkingCostMatrixCreator<K extends Spot> extends LAPTrackerCostMatrixCreator {
+public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 
 	/** The Spots belonging to time frame t. */
-	protected ArrayList<TrackNode<K>> t0;
+	protected final List<Spot> t0;
 	/** The Spots belonging to time frame t+1. */
-	protected ArrayList<TrackNode<K>> t1;
+	protected final List<Spot> t1;
 	/** The total number of Spots in time frames t and t+1. */
 	protected int numSpots;
 	/** User supplied settings for creating the cost matrix. */
@@ -39,7 +37,7 @@ public class LinkingCostMatrixCreator<K extends Spot> extends LAPTrackerCostMatr
 	 * @param t0 The spots in frame t
 	 * @param t1 The spots in frame t+1
 	 */
-	public LinkingCostMatrixCreator(ArrayList<TrackNode<K>> t0, ArrayList<TrackNode<K>> t1, Settings settings) {
+	public LinkingCostMatrixCreator(final List<Spot> t0, final List<Spot> t1, final Settings settings) {
 		this.t0 = t0;
 		this.t1 = t1;
 		this.numSpots = t0.size() + t1.size();
@@ -123,13 +121,10 @@ public class LinkingCostMatrixCreator<K extends Spot> extends LAPTrackerCostMatr
 	}
 	
 	/**
-	 * Creates a submatrix which holds the linking scores between objects, and returns it.
+	 * Creates a sub-matrix which holds the linking scores between objects, and returns it.
 	 */
 	private Matrix getLinkingCostSubMatrix() {
-		Matrix linkingScores = new Matrix(t0.size(), t1.size());
-		//CostFunctions.linkingScores(linkingScores, t0, t1, MAX_DIST_OBJECTS);
-		LinkingCostFunction<K> linkingCosts = new LinkingCostFunction<K>(linkingScores, t0, t1, settings.maxDistObjects, BLOCKED);
-		linkingCosts.applyCostFunction();
-		return linkingScores;
+		LinkingCostFunction linkingCosts = new LinkingCostFunction(settings.maxDistObjects, BLOCKED);
+		return linkingCosts.getCostFunction(t0, t1);
 	}
 }
