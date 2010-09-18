@@ -1,17 +1,12 @@
 #!/bin/sh
 
 LIBS="avcodec avformat swscale avcore avdevice avfilter avutil"
-#LIBS="swscale"
-JNAERATOR_URL=http://jnaerator.googlecode.com/files/jnaerator-0.9.4.jar
 PARALLEL=-j20
 
 case "$(uname -s)" in
 Linux)
 	LIBEXT=.so
 	LIBPREFIX=lib
-	# TODO: find out how to ask gcc for these (probably -dumpmachine)
-	JNA_INCLUDES="-I/usr/include/linux/ -I/usr/lib/gcc/x86_64-linux-gnu/4.4/include/"
-	JNA_INCLUDES=""
 	;;
 Darwin)
 	LIBEXT=.dylib
@@ -62,9 +57,20 @@ pseudo_submodule_update () {
 *.[oad]
 *.pc
 *.so
+*.so.[0-9]
+*.so.[0-9][0-9]
 .config
 .version
 config.*
+*.ver
+/*_g
+/ffmpeg
+/ffplay
+/ffserver
+/ffprobe
+/version.h
+/libswscale/
+/libavutil/avconfig.h
 EOF
 	 (echo "$exclude"; echo "$exclude"; echo "$required_excludes") |
 		sort | uniq -u >> "$exclude_file" &&
@@ -85,7 +91,7 @@ pseudo_submodule_update ffmpeg/libswscale \
 
 # Build FFMPEG
 
-echo "Building FFMPEG if necessary" &&
+echo "Checking whether FFMPEG needs to be built" &&
 (cd ffmpeg &&
  uptodate=true &&
  for target in $TARGETS
@@ -107,55 +113,18 @@ echo "Building FFMPEG if necessary" &&
  fi &&
  if test false = "$uptodate"
  then
-	# let's make sure that everything is built from scratch
-	if test -f Makefile
+	echo "Building FFMPEG" &&
+	# make sure that everything is built from scratch
+	if test -f config.mak
 	then
 		make distclean || :
 	fi &&
-	./configure --enable-gpl --enable-shared &&
+	./configure --enable-gpl --enable-shared \
+		--extra-ldflags=-Wl,-R,"'$$$$ORIGIN/'" &&
 	make $PARALLEL
- fi) &&
+	# TODO: use install_name_tool -change <from> <to> <lib> on MacOSX
+ fi)
 
-# Get JNAerator source
+# TODO: call make_ffmpeg_jna_classes.bsh
 
-pseudo_submodule_update nativelibs4java \
-	contrib@pacific.mpi-cbg.de:/srv/git/nativelibs4java \
-	cc537ac9a9f3e43723c22e18fcae63e5d178e19c
-
-# Build JNAerator if necessary
-
-JNAERATOR_JAR=nativelibs4java/jnaerator/bin/jnaerator.jar
-if test ! -f "$JNAERATOR_JAR"
-then
-	(cd nativelibs4java &&
-	 "$(fiji --print-fiji-dir)/bin/maven.sh" install)
-fi &&
-
-## Get JNAerator binary
-#JNAERATOR_JAR=${JNAERATOR_URL##*/} &&
-#if test ! -f "$JNAERATOR_JAR"
-#then
-#	echo "Getting JNAerator" &&
-#	curl "$JNAERATOR_URL" > "$JNAERATOR_JAR"
-#fi &&
-
-# Run JNAerator
-
-echo "Running JNAerator" &&
-rm -rf jnaerated &&
-mkdir jnaerated &&
-(cd ffmpeg &&
- eval fiji --jar ../"$JNAERATOR_JAR" -- -o ../jnaerated -noComp \
-	-structsInLibrary -v $JNA_INCLUDES \
-	$(for lib in $LIBS
-	  do
-		echo "-library $lib lib$lib/$lib.h lib$lib/$LIBPREFIX$lib$LIBEXT"
-	  done) ) &&
-for file in $(find jnaerated -name \*.java)
-do
-	sed 's/\(static final \)int\( .* [<>]=\? [0-9][0-9]*);\)/\1boolean\2/' \
-		< $file > $file.tmp &&
-	mv $file.tmp $file || break
-done &&
-fiji --javac --cp "$JNAERATOR_JAR" \
-	-d jnaerated $(find jnaerated -name \*.java)
+# TODO: compile the plugin & bundle all (Fakefile)
