@@ -1923,8 +1923,7 @@ public class Path implements Comparable {
 			return;
 		}
 
-		/* Are we now asked to use the color image, but
-		   previously were not? */
+		/* Were we previously using a colour image, but now not? */
 
 		if( colorImage == null ) {
 			if( (paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_LINES_AND_DISCS
@@ -1935,6 +1934,11 @@ public class Path implements Comparable {
 				pathToUse.addTo3DViewer(univ,color,colorImage);
 				return;
 			}
+
+		/* ... or, should we now use a colour image, where
+		   previously we were using a different colour image
+		   or no colour image? */
+
 		} else {
 			if( (paths3DDisplay == SimpleNeuriteTracer.DISPLAY_PATHS_LINES_AND_DISCS
 			     && pathToUse.content3DExtraMultiColored != colorImage) ||
