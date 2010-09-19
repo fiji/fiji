@@ -171,7 +171,7 @@ public class GenerateFFMPEGClasses {
 			.replace("PARAMNAME", "IDENT(?:\\[[^\\]]*\\])*")
 			.replace("TYPE", "(?:unsigned |const )*(?:unsigned|void|char|short|int|long|float|double|u?int(?:8|16|32|64)_t|"
 				+ "enum IDENT|struct\\s+IDENT|AV[A-Za-z_0-9]+|"
-				+ "ReSampleContext|RcOverride|ByteIOContext|SwsVector|)\\**\\s*?(?:(?:const\\s*?)?\\*\\s*?)*")
+				+ "ReSampleContext|RcOverride|ByteIOContext|SwsVector|URLContext|)\\**\\s*?(?:(?:const\\s*?)?\\*\\s*?)*")
 			.replace("IDENT", "[A-Za-z_][A-Za-z_0-9]*")
 			.replace(" *", "\\s*")
 			.replace(" ", "\\s+")
@@ -215,7 +215,7 @@ public class GenerateFFMPEGClasses {
 		compile("^\\} *(IDENT)? *(?: DECLARE_ALIGNED\\([^\\)], *(IDENT)*\\) *)?(?:attribute_deprecated *)?;$");
 	Pattern privateStructs =
 		compile("^(?:struct )?(SwsContext|AVSHA|AVAES|ReSampleContext|AVResampleContext|AVMetadata"
-			+ "|AVMetadataConv|ByteIOContext)$");
+			+ "|AVMetadataConv|ByteIOContext|URLContext)$");
 
 	protected String commonFrame;
 
@@ -794,8 +794,10 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 
 		print("Generating " + libName);
 		File path = new File(pathToHeaders);
-		String[] list = libName.equals("AVUTIL") ? path.list()
-			: new String[] { libName.toLowerCase() + ".h" };
+		String[] list = libName.equals("AVUTIL") ? path.list() :
+			(libName.equals("AVFORMAT") ?
+			 new String[] { "avformat.h", "avio.h" } :
+			 new String[] { libName.toLowerCase() + ".h" });
 		Pattern ignorePattern =
 			compile("(internal|timer|colorspace|attributes|bswap|intmath|intreadwrite|libm|common"
 				+ "|error|crc|pixdesc|fifo|md5|tree|pca|sha1|x86_cpu|eval|mathematics)\\.h");
