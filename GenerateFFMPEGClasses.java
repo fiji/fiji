@@ -550,20 +550,27 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 			flushBitField(buf);
 			String type = matcher.group(1);
 			String suffix = matcher.group(3);
-			if (type.endsWith("*")) {
-				type = "Pointer /* " + type + suffix + " */";
-				suffix = "";
+			String originalType = type;
+			type = translateType(type, true);
+			if (!suffix.equals("")) {
+				// add [][][] to type, turn suffix into
+				String brackets = suffix.replaceAll("[^\\[\\]]", "");
+				if (type.endsWith("[]"))
+					type = "Pointer /* " + originalType + " */";
+				int space = type.indexOf(' ');
+				if (space < 0) {
+					suffix = " = new " + type + suffix;
+					type += brackets;
+				}
+				else {
+					suffix = " = new " + type.substring(0, space) + suffix;
+					type = type.substring(0, space) + brackets + type.substring(space);
+				}
 			}
-			else
-				type = translateType(type, true);
 
-			buf.append("public ").append(type);
-			if (!suffix.equals(""))
-				buf.append(suffix.replaceAll("[^\\[\\]]", ""));
-			buf.append(" ").append(matcher.group(2));
-			if (!suffix.equals(""))
-				buf.append(" = new ").append(type).append(suffix);
-			buf.append(";\n");
+			buf.append("public ").append(type)
+				.append(" ").append(matcher.group(2))
+				.append(suffix).append(";\n");
 		}
 		flushBitField(buf);
 		if (level == 0)
