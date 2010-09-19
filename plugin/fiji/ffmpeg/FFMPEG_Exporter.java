@@ -40,7 +40,7 @@ import fiji.ffmpeg.AVFORMAT.AVStream;
 public class FFMPEG_Exporter extends FFMPEG implements PlugIn {
 
 	double frame_rate;
-	final int STREAM_PIX_FMT = AVFORMAT.PIX_FMT_YUV420P;
+	final int STREAM_PIX_FMT = AVUTIL.PIX_FMT_YUV420P;
 
 	AVFrame picture, tmp_picture;
 	int frame_count, video_outbuf_size;
@@ -176,9 +176,9 @@ public class FFMPEG_Exporter extends FFMPEG implements PlugIn {
 		/* free the streams */
 		// TODO: free all streams
 		for (i = 0; i < oc.nb_streams; i++) {
-			AVStream tmp_stream = new AVStream(oc.streams0);
+			AVStream tmp_stream = new AVStream(oc.streams[0]);
 			AVUTIL.av_free(tmp_stream.codec);
-			AVUTIL.av_free(oc.streams0);
+			AVUTIL.av_free(oc.streams[0]);
 		}
 
 		if ((fmt.flags & AVFORMAT.AVFMT_NOFILE) == 0) {
@@ -200,7 +200,7 @@ public class FFMPEG_Exporter extends FFMPEG implements PlugIn {
 			   frames if using B frames, so we get the last frames by
 			   passing the same picture again */
 		} else {
-			if (c.pix_fmt == AVCODEC.PIX_FMT_RGB24)
+			if (c.pix_fmt == AVUTIL.PIX_FMT_RGB24)
 				fill_image(picture, frame_count,
 						c.width, c.height);
 			else {
@@ -209,12 +209,14 @@ public class FFMPEG_Exporter extends FFMPEG implements PlugIn {
 				 * must convert it to the codec pixel format
 				 * if needed.
 				 */
+/*
 				fill_image(tmp_picture, frame_count,
 						c.width, c.height);
 				AVCODEC.img_convert(picture, c.pix_fmt,
 						tmp_picture,
-						AVCODEC.PIX_FMT_RGB24,
+						AVUTIL.PIX_FMT_RGB24,
 						c.width, c.height);
+*/
 			}
 		}
 
@@ -223,12 +225,13 @@ public class FFMPEG_Exporter extends FFMPEG implements PlugIn {
 			/* raw video case. The API will change slightly in the near
 			   futur for that */
 			AVPacket pkt = new AVPacket();
-			AVFORMAT.av_init_packet(pkt);
+			AVCODEC.av_init_packet(pkt);
 
-			pkt.flags |= AVFORMAT.PKT_FLAG_KEY;
+			pkt.flags |= AVCODEC.PKT_FLAG_KEY;
 			pkt.stream_index = st.index;
-			pkt.data = picture.getPointer();
-			pkt.size = picture.size();
+			//pkt.data = picture.getPointer();
+			//pkt.size = picture.size();
+			if (true) throw new RuntimeException("TODO");
 
 			ret = AVFORMAT.av_write_frame(oc, pkt);
 		} else {
@@ -237,15 +240,15 @@ public class FFMPEG_Exporter extends FFMPEG implements PlugIn {
 			/* if zero size, it means the image was buffered */
 			if (out_size > 0) {
 				AVPacket pkt = new AVPacket();
-				AVFORMAT.av_init_packet(pkt);
+				AVCODEC.av_init_packet(pkt);
 
 				AVFrame tmp_frame = new AVFrame(c.coded_frame);
-				pkt.pts = AVUTILWorkarounds.av_rescale_q(tmp_frame.pts, c.time_base, st.time_base);
+				//pkt.pts = AVUTILWorkarounds.av_rescale_q(tmp_frame.pts, c.time_base, st.time_base);
 				//System.out.println("tmp_frame.pts=" + tmp_frame.pts + " c.time_base=" + c.time_base.num + "/" + c.time_base.den + " st.time_base=" + st.time_base.num + "/" + st.time_base.den + " pkt.pts=" + pkt.pts);
 				if (tmp_frame.key_frame == 1)
-					pkt.flags |= AVFORMAT.PKT_FLAG_KEY;
+					pkt.flags |= AVCODEC.PKT_FLAG_KEY;
 				pkt.stream_index = st.index;
-				pkt.data = video_outbuf;
+				//pkt.data = video_outbuf;
 				pkt.size = out_size;
 
 				/* write the compressed frame in the media file */
@@ -273,9 +276,9 @@ public class FFMPEG_Exporter extends FFMPEG implements PlugIn {
 		int i = 0;
 		for (int j = 0; j < width * height; j++) {
 			int v = pixels[j];
-			pict.data0.setByte(i++, (byte)((v >> 16) & 0xff));
-			pict.data0.setByte(i++, (byte)((v >> 8) & 0xff));
-			pict.data0.setByte(i++, (byte)(v & 0xff));
+			pict.data[0].setByte(i++, (byte)((v >> 16) & 0xff));
+			pict.data[0].setByte(i++, (byte)((v >> 8) & 0xff));
+			pict.data[0].setByte(i++, (byte)(v & 0xff));
 		}
 	}
 
@@ -319,8 +322,8 @@ public class FFMPEG_Exporter extends FFMPEG implements PlugIn {
 		   picture is needed too. It is then converted to the required
 		   output format */
 		tmp_picture = null;
-		if (c.pix_fmt != AVFORMAT.PIX_FMT_RGB24) {
-			tmp_picture = alloc_picture(AVFORMAT.PIX_FMT_RGB24, c.width, c.height);
+		if (c.pix_fmt != AVUTIL.PIX_FMT_RGB24) {
+			tmp_picture = alloc_picture(AVUTIL.PIX_FMT_RGB24, c.width, c.height);
 			if (tmp_picture == null) {
 				IJ.error("could not allocate temporary picture");
 				return false;
@@ -345,20 +348,19 @@ public class FFMPEG_Exporter extends FFMPEG implements PlugIn {
 			AVUTIL.av_free(picture.getPointer());
 			return null;
 		}
-		AVCODEC.avpicture_fill(picture, picture_buf, pix_fmt, width, height);
+		//AVCODEC.avpicture_fill(picture, picture_buf, pix_fmt, width, height);
 		return picture;
 	}
 
 	private void close_video(AVFormatContext oc, AVStream st) {
 		AVCodecContext tmp_codec = new AVCodecContext(st.codec);
 		AVCODEC.avcodec_close(tmp_codec);
-		AVUTIL.av_free(picture.data0);
+		AVUTIL.av_free(picture.data[0]);
 		AVUTIL.av_free(picture.getPointer());
 		if (tmp_picture != null) {
-			AVUTIL.av_free(tmp_picture.data0);
+			AVUTIL.av_free(tmp_picture.data[0]);
 			AVUTIL.av_free(tmp_picture.getPointer());
 		}
-		AVUTIL.av_free(video_outbuf);
 	}
 
 	private AVStream add_video_stream(AVFormatContext oc, int codec_id) {

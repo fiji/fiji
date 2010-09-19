@@ -97,8 +97,7 @@ public class FFMPEG_Importer extends ImagePlus implements PlugIn {
 		// Find the first video stream
 		int videoStream = -1;
 		for (int i = 0; i < formatContext.nb_streams; i++) {
-			final AVStream stream =
-				new AVStream(formatContext.getStreams()[i]);
+			final AVStream stream = new AVStream(formatContext.streams[i]);
 			final AVCodecContext codecContext =
 				new AVCodecContext(stream.codec);
 			if (codecContext.codec_type ==
@@ -114,7 +113,7 @@ public class FFMPEG_Importer extends ImagePlus implements PlugIn {
 
 		// Get a pointer to the codec context for the video stream
 		final Pointer pCodecContext =
-			new AVStream(formatContext.getStreams()[videoStream]).codec;
+			new AVStream(formatContext.streams[videoStream]).codec;
 		final AVCodecContext codecContext = new AVCodecContext(pCodecContext);
 
 		if (codecContext.codec_id == 0) {
@@ -143,6 +142,7 @@ public class FFMPEG_Importer extends ImagePlus implements PlugIn {
 			return;
 		}
 
+/*
 		// Allocate an AVFrame structure
 		final AVFrame frameRGB = AVCODEC.avcodec_alloc_frame();
 		if (frameRGB == null)
@@ -150,15 +150,16 @@ public class FFMPEG_Importer extends ImagePlus implements PlugIn {
 
 		// Determine required buffer size and allocate buffer
 		final int numBytes =
-			AVCODEC.avpicture_get_size(AVCODEC.PIX_FMT_RGB24,
+			AVCODEC.avpicture_get_size(AVUTIL.PIX_FMT_RGB24,
 					codecContext.width, codecContext.height);
 		final Pointer buffer = AVUTIL.av_malloc(numBytes);
 
 		// Assign appropriate parts of buffer to image planes
 		// in pFrameRGB
 		AVCODEC.avpicture_fill(frameRGB, buffer,
-				AVCODEC.PIX_FMT_RGB24,
+				AVUTIL.PIX_FMT_RGB24,
 				codecContext.width, codecContext.height);
+*/
 
 		ImageStack stack =
 			new ImageStack(codecContext.width, codecContext.height);
@@ -170,20 +171,20 @@ public class FFMPEG_Importer extends ImagePlus implements PlugIn {
 			if (packet.stream_index != videoStream)
 				continue;
 
-			final IntByReference frameFinished =
+			final IntByReference gotPicture =
 				new IntByReference();
 			// Decode video frame
-			AVCODEC.avcodec_decode_video(codecContext, frame,
-					frameFinished,
-					packet.data, packet.size);
+			AVCODEC.avcodec_decode_video2(codecContext, frame,
+					gotPicture, packet);
 
 			// Did we get a video frame?
-			if (frameFinished.getValue() == 0)
+			if (gotPicture.getValue() == 0)
 				continue;
 
+/*
 			// Convert the image from its native format to RGB
 			AVCODEC.img_convert(frameRGB,
-					AVCODEC.PIX_FMT_RGB24,
+					AVUTIL.PIX_FMT_RGB24,
 					frame, codecContext.pix_fmt,
 					codecContext.width,
 					codecContext.height);
@@ -197,6 +198,8 @@ public class FFMPEG_Importer extends ImagePlus implements PlugIn {
 			}
 			ImageProcessor ip = toSlice(frameRGB,
 					codecContext.width, codecContext.height);
+*/
+ImageProcessor ip = toSlice(frame, codecContext.width, codecContext.height);
 			stack.addSlice(null, ip);
 
 			// Free the packet that was allocated by av_read_frame
@@ -208,11 +211,10 @@ public class FFMPEG_Importer extends ImagePlus implements PlugIn {
 
 		}
 
+/*
 		// Free the RGB image
 		AVUTIL.av_free(frameRGB.getPointer());
-
-		// Free the YUV frame
-		AVUTIL.av_free(frame.getPointer());
+*/
 
 		// Close the codec
 		AVCODEC.avcodec_close(codecContext);
@@ -230,7 +232,7 @@ public class FFMPEG_Importer extends ImagePlus implements PlugIn {
 
 	static ColorProcessor toSlice(AVFrame frame, int width, int height) {
 		final int len = height * frame.linesize[0];
-		final byte[] data = frame.data0.getByteArray(0, len);
+		final byte[] data = frame.data[0].getByteArray(0, len);
 		int[] pixels = new int[width * height];
 		for (int j = 0; j < height; j++) {
 			final int off = j * frame.linesize[0];
