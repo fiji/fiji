@@ -812,17 +812,23 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 		e.printStackTrace();
 	}
 
+	public static String addSlash(String path) {
+		if (path.endsWith("/"))
+			return path;
+		return path + "/";
+	}
+
 	public static void main(String[] args) {
-		String ffmpegDir = "/home/gene099/fiji/work/fantana/ffmpeg/ffmpeg/";
-		String outDir = "/home/gene099/fiji/work/fantana/ffmpeg/classes/";
+		if (args.length != 2) {
+			print("Usage: generator <ffmpeg-dir> <output-dir>");
+			System.exit(1);
+		}
+		String ffmpegDir = addSlash(args[0]);
+		String outDir = addSlash(args[1]);
 
 		GenerateFFMPEGClasses generator = new GenerateFFMPEGClasses();
 
 		for (String lib : new String[] { "avutil", "avcore", "avdevice", "swscale", /* "avfilter", */ "avcodec", "avformat" }) {
-		//for (String lib : new String[] { "avcodec", "avformat" }) {
-			if (!ffmpegDir.endsWith("/"))
-				ffmpegDir += "/";
-
 			generator.currentLib = lib.toUpperCase();
 			try {
 				generator.handleHeaders(ffmpegDir + "lib" + lib, generator.currentLib, "fiji.ffmpeg", outDir);
