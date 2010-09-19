@@ -1,6 +1,4 @@
 /ffmpeg
-/classes
-/Generate.*class
 /build/
 /jna-wrapper.jar
 /FFMPEG_IO.jar
