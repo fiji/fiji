@@ -134,6 +134,7 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 		return evaluate(new StringReader(text));
 	}
 
+	/** Will consume and close the stream. */
 	public Object evaluate(final InputStream istream) throws Throwable {
 		return evaluate(new BufferedReader(new InputStreamReader(istream)));
 	}
@@ -146,7 +147,7 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 		} catch (Throwable t) {
 			if (!Thread.currentThread().isInterrupted()) t.printStackTrace();
 		}
-		ev.throwError(); // to be printed by super class wherever appropriate
+		ev.throwError(); // to be printed wherever appropriate
 		return ret;
 	}
 
