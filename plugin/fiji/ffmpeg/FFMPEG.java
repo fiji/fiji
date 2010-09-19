@@ -52,9 +52,9 @@ public class FFMPEG {
 			return false;
 
 		try {
-			AVUTIL = Native.loadLibrary("avutil", AVUTIL.class);
-			AVCODEC = Native.loadLibrary("avcodec", AVCODEC.class);
-			AVFORMAT = Native.loadLibrary("avformat", AVFORMAT.class);
+			AVUTIL = (AVUTIL)Native.loadLibrary("avutil", AVUTIL.class);
+			AVCODEC = (AVCODEC)Native.loadLibrary("avcodec", AVCODEC.class);
+			AVFORMAT = (AVFORMAT)Native.loadLibrary("avformat", AVFORMAT.class);
 		} catch (UnsatisfiedLinkError e) {
 			showException(e);
 			return false;
