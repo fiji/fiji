@@ -190,7 +190,7 @@ public class GenerateFFMPEGClasses {
 	Pattern staticVariablePattern =
 		compile("^static (TYPE) *(IDENT)( *\\[[^\\]]*\\])*( *=.*)?; *$");
 	Pattern functionPattern =
-		compile("^(?:extern )?(TYPE) *(IDENT)\\((void|((PARAMTYPE *(?:PARAMNAME)?, *)*PARAMTYPE *(?:PARAMNAME)?)?)\\) *(?:av_const *)?;$");
+		compile("^(?:extern )?(TYPE) *(IDENT)\\((void|((PARAMTYPE *(?:PARAMNAME)?, *)*PARAMTYPE *(?:PARAMNAME)?)?)\\) *(?:av_const *)?(?:av_malloc_attrib av_alloc_size\\(\\d+\\) *)?;$");
 	Pattern callbackPattern =
 		compile("^?(TYPE) *\\(\\*(IDENT)\\)\\((void|((PARAMTYPE *(?:PARAMNAME)?, *)*PARAMTYPE *(?:PARAMNAME)?)?)\\) *;$");
 	Pattern motionValTablePattern = 
@@ -202,7 +202,7 @@ public class GenerateFFMPEGClasses {
 		compile("^enum (IDENT)? *\\{([^\\}]*)\\};$");
 	Pattern skipDefine =
 		compile("^(?:AV_(?:STRINGIFY|TOSTRING|GLUE|JOIN|PRAGMA|VERSION_INT|VERSION_DOT|VERSION|NOPTS_VALUE|TIME_BASE_Q)"
-			+ "|PIX_FMT_NE|CodecType|CODEC_TYPE_UNKNOWN|"
+			+ "|PIX_FMT_NE|CodecType|CODEC_TYPE_UNKNOWN|av_malloc_attrib"
 			+ "|FF_MM_(?:FORCE|MMX|3DNOW|SSE|SSE2|SSE2SLOW|3DNOWEXT|SSE3|SSE3SLOW|SSSE3|SSE4|SSE42|IWMMXT|ALTIVEC)"
 			+ ")"); // + "|(?:INT64_MIN|UINT64_MAX|INT_BIT|offsetof|LABEL_MANGLE|LOCAL_MANGLE|MANGLE|dprintf))");
 	Pattern structPattern =
@@ -798,7 +798,7 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 			: new String[] { libName.toLowerCase() + ".h" };
 		Pattern ignorePattern =
 			compile("(internal|timer|colorspace|attributes|bswap|intmath|intreadwrite|libm|common"
-				+ "|error|crc|pixdesc|fifo|md5|tree|pca|sha1|x86_cpu|eval|mathematics|mem)\\.h");
+				+ "|error|crc|pixdesc|fifo|md5|tree|pca|sha1|x86_cpu|eval|mathematics)\\.h");
 		for (String file : list) {
 			if (!file.endsWith(".h") || match(ignorePattern, file) != null)
 				continue;
