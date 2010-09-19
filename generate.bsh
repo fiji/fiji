@@ -1,0 +1,10 @@
+#!/bin/sh
+// 2> /dev/null || exec fiji --bsh "$0" "$@"
+
+import java.io.File;
+
+print(this.interpreter.getSourceFileInfo());
+cwd = new File(bsh.cwd, this.interpreter.getSourceFileInfo()).getParent();
+
+addClassPath(cwd + "/generator.jar");
+GenerateFFMPEGClasses.main(new String[] { cwd + "/ffmpeg/", cwd + "/classes/" });
