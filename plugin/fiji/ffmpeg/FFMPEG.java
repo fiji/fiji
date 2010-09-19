@@ -22,15 +22,14 @@ import java.io.PrintWriter;
 
 import java.net.URL;
 
-import net.sf.ffmpeg_java.AVCodecLibrary;
-import net.sf.ffmpeg_java.AVFormatLibrary;
-import net.sf.ffmpeg_java.AVUtilLibrary;
+import fiji.ffmpeg.AVCODEC;
+import fiji.ffmpeg.AVFORMAT;
+import fiji.ffmpeg.AVUTIL;
 
 public class FFMPEG {
-
-	AVUtilLibrary AVUTIL;
-	AVCodecLibrary AVCODEC;
-	AVFormatLibrary AVFORMAT;
+	protected AVUTIL AVUTIL;
+	protected AVCODEC AVCODEC;
+	protected AVFORMAT AVFORMAT;
 	//SWScaleLibrary SWSCALE;
 
 	public boolean loadFFMPEG() {
@@ -53,9 +52,9 @@ public class FFMPEG {
 			return false;
 
 		try {
-			AVUTIL = AVUtilLibrary.INSTANCE;
-			AVCODEC = AVCodecLibrary.INSTANCE;
-			AVFORMAT = AVFormatLibrary.INSTANCE;
+			AVUTIL = Native.loadLibrary("avutil", AVUTIL.class);
+			AVCODEC = Native.loadLibrary("avcodec", AVCODEC.class);
+			AVFORMAT = Native.loadLibrary("avformat", AVFORMAT.class);
 		} catch (UnsatisfiedLinkError e) {
 			showException(e);
 			return false;

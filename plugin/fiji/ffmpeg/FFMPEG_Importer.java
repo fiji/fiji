@@ -18,15 +18,17 @@ import ij.process.ImageProcessor;
 
 import java.io.File;
 
-import net.sf.ffmpeg_java.AVCodecLibrary;
-import net.sf.ffmpeg_java.AVFormatLibrary;
-import net.sf.ffmpeg_java.AVUtilLibrary;
-import net.sf.ffmpeg_java.AVCodecLibrary.AVCodec;
-import net.sf.ffmpeg_java.AVCodecLibrary.AVCodecContext;
-import net.sf.ffmpeg_java.AVCodecLibrary.AVFrame;
-import net.sf.ffmpeg_java.AVFormatLibrary.AVFormatContext;
-import net.sf.ffmpeg_java.AVFormatLibrary.AVPacket;
-import net.sf.ffmpeg_java.AVFormatLibrary.AVStream;
+import fiji.ffmpeg.AVUTIL;
+
+import fiji.ffmpeg.AVCODEC;
+import fiji.ffmpeg.AVCODEC.AVCodec;
+import fiji.ffmpeg.AVCODEC.AVCodecContext;
+import fiji.ffmpeg.AVCODEC.AVFrame;
+import fiji.ffmpeg.AVCODEC.AVPacket;
+
+import fiji.ffmpeg.AVFORMAT;
+import fiji.ffmpeg.AVFORMAT.AVFormatContext;
+import fiji.ffmpeg.AVFORMAT.AVStream;
 
 /**
  * Based on the AVCodecSample example from ffmpeg-java by Ken Larson.
@@ -56,19 +58,19 @@ public class FFMPEG_Importer extends ImagePlus implements PlugIn {
 			return;
 		}
 
-		final AVUtilLibrary AVUTIL = ffmpeg.AVUTIL;
-		final AVCodecLibrary AVCODEC = ffmpeg.AVCODEC;
-		final AVFormatLibrary AVFORMAT = ffmpeg.AVFORMAT;
+		final AVUTIL AVUTIL = ffmpeg.AVUTIL;
+		final AVCODEC AVCODEC = ffmpeg.AVCODEC;
+		final AVFORMAT AVFORMAT = ffmpeg.AVFORMAT;
 
 		// not sure what the consequences of such a mismatch are,
 		// but it is worth logging a warning:
 		if (AVCODEC.avcodec_version() !=
-				AVCodecLibrary.LIBAVCODEC_VERSION_INT)
+				AVCODEC.LIBAVCODEC_VERSION_INT)
 			IJ.write("ffmpeg-java and ffmpeg versions do not match:"
 					+ " avcodec_version="
 					+ AVCODEC.avcodec_version()
 					+ " LIBAVCODEC_VERSION_INT="
-					+ AVCodecLibrary.LIBAVCODEC_VERSION_INT);
+					+ AVCODEC.LIBAVCODEC_VERSION_INT);
 
 		AVFORMAT.av_register_all();
 
@@ -100,7 +102,7 @@ public class FFMPEG_Importer extends ImagePlus implements PlugIn {
 			final AVCodecContext codecCtx =
 				new AVCodecContext(stream.codec);
 			if (codecCtx.codec_type ==
-					AVCodecLibrary.CODEC_TYPE_VIDEO) {
+					AVCODEC.CODEC_TYPE_VIDEO) {
 				videoStream = i;
 				break;
 			}
@@ -148,14 +150,14 @@ public class FFMPEG_Importer extends ImagePlus implements PlugIn {
 
 		// Determine required buffer size and allocate buffer
 		final int numBytes =
-			AVCODEC.avpicture_get_size(AVCodecLibrary.PIX_FMT_RGB24,
+			AVCODEC.avpicture_get_size(AVCODEC.PIX_FMT_RGB24,
 					codecCtx.width, codecCtx.height);
 		final Pointer buffer = AVUTIL.av_malloc(numBytes);
 
 		// Assign appropriate parts of buffer to image planes
 		// in pFrameRGB
 		AVCODEC.avpicture_fill(frameRGB, buffer,
-				AVCodecLibrary.PIX_FMT_RGB24,
+				AVCODEC.PIX_FMT_RGB24,
 				codecCtx.width, codecCtx.height);
 
 		ImageStack stack =
@@ -181,7 +183,7 @@ public class FFMPEG_Importer extends ImagePlus implements PlugIn {
 
 			// Convert the image from its native format to RGB
 			AVCODEC.img_convert(frameRGB,
-					AVCodecLibrary.PIX_FMT_RGB24,
+					AVCODEC.PIX_FMT_RGB24,
 					frame, codecCtx.pix_fmt,
 					codecCtx.width,
 					codecCtx.height);

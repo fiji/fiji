@@ -23,23 +23,24 @@ import ij.io.SaveDialog;
 
 import ij.plugin.PlugIn;
 
-import net.sf.ffmpeg_java.AVCodecLibrary;
-import net.sf.ffmpeg_java.AVFormatLibrary;
-import net.sf.ffmpeg_java.AVUtilLibrary;
-import net.sf.ffmpeg_java.AVUtilLibraryWorkarounds;
-import net.sf.ffmpeg_java.AVCodecLibrary.AVCodec;
-import net.sf.ffmpeg_java.AVCodecLibrary.AVCodecContext;
-import net.sf.ffmpeg_java.AVCodecLibrary.AVFrame;
-import net.sf.ffmpeg_java.AVFormatLibrary.AVFormatContext;
-import net.sf.ffmpeg_java.AVFormatLibrary.AVOutputFormat;
-import net.sf.ffmpeg_java.AVFormatLibrary.AVPacket;
-import net.sf.ffmpeg_java.AVFormatLibrary.AVStream;
-import net.sf.ffmpeg_java.AVFormatLibrary.ByteIOContext;
+import fiji.ffmpeg.AVUTIL;
+
+import fiji.ffmpeg.AVCODEC;
+import fiji.ffmpeg.AVCODEC.AVCodec;
+import fiji.ffmpeg.AVCODEC.AVCodecContext;
+import fiji.ffmpeg.AVCODEC.AVFrame;
+import fiji.ffmpeg.AVCODEC.AVPacket;
+
+import fiji.ffmpeg.AVFORMAT;
+import fiji.ffmpeg.AVFORMAT.AVFormatContext;
+import fiji.ffmpeg.AVFORMAT.AVOutputFormat;
+import fiji.ffmpeg.AVFORMAT.AVStream;
+//import fiji.ffmpeg.AVFORMAT.ByteIOContext;
 
 public class FFMPEG_Exporter extends FFMPEG implements PlugIn {
 
 	double frame_rate;
-	final int STREAM_PIX_FMT = AVFormatLibrary.PIX_FMT_YUV420P;
+	final int STREAM_PIX_FMT = AVFORMAT.PIX_FMT_YUV420P;
 
 	AVFrame picture, tmp_picture;
 	int frame_count, video_outbuf_size;
@@ -121,7 +122,7 @@ public class FFMPEG_Exporter extends FFMPEG implements PlugIn {
 		/* add the video stream using the default format
 		 * codec and initialize the codec */
 		video_st = null;
-		if (fmt.video_codec != AVCodecLibrary.CODEC_ID_NONE) {
+		if (fmt.video_codec != AVCODEC.CODEC_ID_NONE) {
 			video_st = add_video_stream(oc, fmt.video_codec);
 			if (video_st == null)
 				return;
@@ -140,10 +141,10 @@ public class FFMPEG_Exporter extends FFMPEG implements PlugIn {
 			return;
 
 		/* open the output file, if needed */
-		if ((fmt.flags & AVFormatLibrary.AVFMT_NOFILE) == 0) {
+		if ((fmt.flags & AVFORMAT.AVFMT_NOFILE) == 0) {
 			final PointerByReference p = new PointerByReference();
 			if (AVFORMAT.url_fopen(p, path,
-						AVFormatLibrary.URL_WRONLY) < 0) {
+						AVFORMAT.URL_WRONLY) < 0) {
 				IJ.error("Could not open " + path);
 				return;
 			}
@@ -180,7 +181,7 @@ public class FFMPEG_Exporter extends FFMPEG implements PlugIn {
 			AVUTIL.av_free(oc.streams0);
 		}
 
-		if ((fmt.flags & AVFormatLibrary.AVFMT_NOFILE) == 0) {
+		if ((fmt.flags & AVFORMAT.AVFMT_NOFILE) == 0) {
 			/* close the output file */
 			AVFORMAT.url_fclose(new ByteIOContext(oc.pb));
 		}
@@ -199,7 +200,7 @@ public class FFMPEG_Exporter extends FFMPEG implements PlugIn {
 			   frames if using B frames, so we get the last frames by
 			   passing the same picture again */
 		} else {
-			if (c.pix_fmt == AVCodecLibrary.PIX_FMT_RGB24)
+			if (c.pix_fmt == AVCODEC.PIX_FMT_RGB24)
 				fill_image(picture, frame_count,
 						c.width, c.height);
 			else {
@@ -212,19 +213,19 @@ public class FFMPEG_Exporter extends FFMPEG implements PlugIn {
 						c.width, c.height);
 				AVCODEC.img_convert(picture, c.pix_fmt,
 						tmp_picture,
-						AVCodecLibrary.PIX_FMT_RGB24,
+						AVCODEC.PIX_FMT_RGB24,
 						c.width, c.height);
 			}
 		}
 
 		AVOutputFormat tmp_fmt = new AVOutputFormat(oc.oformat);
-		if ((tmp_fmt.flags & AVFormatLibrary.AVFMT_RAWPICTURE) == 1) {
+		if ((tmp_fmt.flags & AVFORMAT.AVFMT_RAWPICTURE) == 1) {
 			/* raw video case. The API will change slightly in the near
 			   futur for that */
 			AVPacket pkt = new AVPacket();
 			AVFORMAT.av_init_packet(pkt);
 
-			pkt.flags |= AVFormatLibrary.PKT_FLAG_KEY;
+			pkt.flags |= AVFORMAT.PKT_FLAG_KEY;
 			pkt.stream_index = st.index;
 			pkt.data = picture.getPointer();
 			pkt.size = picture.size();
@@ -239,10 +240,10 @@ public class FFMPEG_Exporter extends FFMPEG implements PlugIn {
 				AVFORMAT.av_init_packet(pkt);
 
 				AVFrame tmp_frame = new AVFrame(c.coded_frame);
-				pkt.pts = AVUtilLibraryWorkarounds.av_rescale_q(tmp_frame.pts, c.time_base, st.time_base);
+				pkt.pts = AVUTILWorkarounds.av_rescale_q(tmp_frame.pts, c.time_base, st.time_base);
 				//System.out.println("tmp_frame.pts=" + tmp_frame.pts + " c.time_base=" + c.time_base.num + "/" + c.time_base.den + " st.time_base=" + st.time_base.num + "/" + st.time_base.den + " pkt.pts=" + pkt.pts);
 				if (tmp_frame.key_frame == 1)
-					pkt.flags |= AVFormatLibrary.PKT_FLAG_KEY;
+					pkt.flags |= AVFORMAT.PKT_FLAG_KEY;
 				pkt.stream_index = st.index;
 				pkt.data = video_outbuf;
 				pkt.size = out_size;
@@ -297,7 +298,7 @@ public class FFMPEG_Exporter extends FFMPEG implements PlugIn {
 
 		video_outbuf = null;
 		AVOutputFormat tmp_fmt = new AVOutputFormat(oc.oformat);
-		if ((tmp_fmt.flags & AVFormatLibrary.AVFMT_RAWPICTURE) == 0) {
+		if ((tmp_fmt.flags & AVFORMAT.AVFMT_RAWPICTURE) == 0) {
 			/* allocate output buffer */
 			/* buffers passed into lav* can be allocated any way you prefer,
 			   as long as they're aligned enough for the architecture, and
@@ -318,8 +319,8 @@ public class FFMPEG_Exporter extends FFMPEG implements PlugIn {
 		   picture is needed too. It is then converted to the required
 		   output format */
 		tmp_picture = null;
-		if (c.pix_fmt != AVFormatLibrary.PIX_FMT_RGB24) {
-			tmp_picture = alloc_picture(AVFormatLibrary.PIX_FMT_RGB24, c.width, c.height);
+		if (c.pix_fmt != AVFORMAT.PIX_FMT_RGB24) {
+			tmp_picture = alloc_picture(AVFORMAT.PIX_FMT_RGB24, c.width, c.height);
 			if (tmp_picture == null) {
 				IJ.error("could not allocate temporary picture");
 				return false;
@@ -370,7 +371,7 @@ public class FFMPEG_Exporter extends FFMPEG implements PlugIn {
 		}
 		AVCodecContext c = new AVCodecContext(st.codec);
 		c.codec_id = codec_id;
-		c.codec_type = AVCodecLibrary.CODEC_TYPE_VIDEO;
+		c.codec_type = AVCODEC.CODEC_TYPE_VIDEO;
 
 		/* put sample parameters */
 		c.bit_rate = 400000;
@@ -386,11 +387,11 @@ public class FFMPEG_Exporter extends FFMPEG implements PlugIn {
 		c.gop_size = 12;
 		c.pix_fmt = STREAM_PIX_FMT;
 
-		if (c.codec_id == AVCodecLibrary.CODEC_ID_MPEG2VIDEO) {
+		if (c.codec_id == AVCODEC.CODEC_ID_MPEG2VIDEO) {
 			/* just for testing, we also add B frames */
 			c.max_b_frames = 2;
 		}
-		if (c.codec_id == AVCodecLibrary.CODEC_ID_MPEG1VIDEO) {
+		if (c.codec_id == AVCODEC.CODEC_ID_MPEG1VIDEO) {
 			/* Needed to avoid using macroblocks in which some coeffs overflow.
 			   This does not happen with normal video, it just happens here as
 			   the motion of the chroma plane does not match the luma plane. */
@@ -399,7 +400,7 @@ public class FFMPEG_Exporter extends FFMPEG implements PlugIn {
 		// some formats want stream headers to be separate
 		AVOutputFormat tmp_fmt = new AVOutputFormat(oc.oformat);
 		if (tmp_fmt.name.equals("mp4") || tmp_fmt.name.equals("mov") || tmp_fmt.name.equals("3gp")) {
-			c.flags |= AVCodecLibrary.CODEC_FLAG_GLOBAL_HEADER;
+			c.flags |= AVCODEC.CODEC_FLAG_GLOBAL_HEADER;
 		}
 
 		c.write(); // very very important!!!
