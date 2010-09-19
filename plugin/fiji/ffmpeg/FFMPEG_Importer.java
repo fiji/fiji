@@ -62,15 +62,15 @@ public class FFMPEG_Importer extends ImagePlus implements PlugIn {
 		final AVCODEC AVCODEC = ffmpeg.AVCODEC;
 		final AVFORMAT AVFORMAT = ffmpeg.AVFORMAT;
 
-		// not sure what the consequences of such a mismatch are,
-		// but it is worth logging a warning:
 		if (AVCODEC.avcodec_version() !=
-				AVCODEC.LIBAVCODEC_VERSION_INT)
-			IJ.write("ffmpeg-java and ffmpeg versions do not match:"
-					+ " avcodec_version="
+				AVCODEC.LIBAVCODEC_VERSION_INT) {
+			IJ.error("ffmpeg versions mismatch:"
+					+ " native version: "
 					+ AVCODEC.avcodec_version()
-					+ " LIBAVCODEC_VERSION_INT="
+					+ " but the Java-bindings are for "
 					+ AVCODEC.LIBAVCODEC_VERSION_INT);
+			return;
+		}
 
 		AVFORMAT.av_register_all();
 
