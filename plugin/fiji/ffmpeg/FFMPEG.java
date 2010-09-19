@@ -1,4 +1,4 @@
-package ffmpeg;
+package fiji.ffmpeg;
 
 /*
  * Base class to handle loading the FFMPEG libraries.

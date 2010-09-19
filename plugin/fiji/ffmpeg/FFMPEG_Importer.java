@@ -1,4 +1,4 @@
-package ffmpeg;
+package fiji.ffmpeg;
 
 import com.sun.jna.NativeLibrary;
 import com.sun.jna.Pointer;

@@ -1,4 +1,4 @@
-package ffmpeg;
+package fiji.ffmpeg;
 
 /*
  * Simple movie writer for ImageJ using ffmpeg-java; based on Libavformat API
