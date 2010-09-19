@@ -553,7 +553,7 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 			else
 				type = translateType(type, true);
 
-			buf.append(type);
+			buf.append("public ").append(type);
 			if (!suffix.equals(""))
 				buf.append(suffix.replaceAll("[^\\[\\]]", ""));
 			buf.append(" ").append(matcher.group(2));
