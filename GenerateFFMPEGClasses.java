@@ -2,8 +2,6 @@
 // .h -> JNA converter as JNAerator tries to do.
 // It is meant to be just good enough for FFMPEG.
 
-import ij.IJ;
-
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -807,14 +805,11 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 	}
 
 	public static void print(String message) {
-		IJ.log(message);
+		System.err.println(message);
 	}
 
 	public static void handleException(Exception e) {
-		if (IJ.getInstance() != null)
-			IJ.handleException(e);
-		else
-			e.printStackTrace();
+		e.printStackTrace();
 	}
 
 	public static void main(String[] args) {
