@@ -569,7 +569,29 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 			prefix += "\n";
 
 		return indent(prefix + "public static class " + name + " extends Structure {\n"
-				+ "\tpublic static class ByValue extends " + name + " implements Structure.ByValue {}\n", level)
+				+ "\tpublic static class ByValue extends " + name + " implements Structure.ByValue {\n"
+				+ "\t\tpublic ByValue() {\n"
+				+ "\t\t\tsuper();\n"
+				+ "\t\t}\n"
+				+ "\n"
+				+ "\t\t// make a copy\n"
+				+ "\t\tpublic ByValue(" + name + " from) {\n"
+				+ "\t\t\tsuper();\n"
+				+ "\t\t\tbyte[] buffer = new byte[size()];\n"
+				+ "\t\t\tfrom.getPointer().read(0, buffer, 0, buffer.length);\n"
+				+ "\t\t\tgetPointer().write(0, buffer, 0, buffer.length);\n"
+				+ "\t\t\tread();\n"
+				+ "\t\t}\n"
+				+ "\t}\n"
+				+ "\n"
+				+ "\tpublic " + name + "() {\n"
+				+ "\t\tsuper();\n"
+				+ "\t}\n"
+				+ "\n"
+				+ "\tpublic " + name + "(Pointer p) {\n"
+				+ "\t\tsuper(p);\n"
+				+ "\t}\n"
+				+ "\n", level)
 			+ indent(buf.toString(), level + 1)
 			+ indent("}\n", level);
 	}
