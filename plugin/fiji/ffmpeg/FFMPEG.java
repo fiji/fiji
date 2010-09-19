@@ -27,13 +27,26 @@ import fiji.ffmpeg.AVFORMAT;
 import fiji.ffmpeg.AVUTIL;
 
 public class FFMPEG {
-	protected AVUTIL AVUTIL;
-	protected AVCODEC AVCODEC;
-	protected AVFORMAT AVFORMAT;
-	//SWScaleLibrary SWSCALE;
+	protected static AVUTIL AVUTIL;
+	protected static AVCORE AVCORE;
+	protected static AVDEVICE AVDEVICE;
+	protected static AVCODEC AVCODEC;
+	protected static AVFORMAT AVFORMAT;
+	//protected static SWScaleLibrary SWSCALE;
 
-	public boolean loadFFMPEG() {
-		return loadFFMPEG(true);
+	protected static File libraryDirectory;
+	protected static String baseURL;
+
+	public FFMPEG() {
+		if (baseURL == null) {
+			String classFile = "fiji/ffmpeg/FFMPEG.class";
+			URL url = getClass().getResource("/" + classFile);
+			if (url != null) {
+				String string = url.toString();
+				if (string.endsWith(classFile))
+					baseURL = string.substring(0, string.length() - classFile.length());
+			}
+		}
 	}
 
 	public static void showException(Throwable e) {
@@ -43,18 +56,21 @@ public class FFMPEG {
 		IJ.log(charArray.toString());
 	}
 
-	public boolean loadFFMPEG(boolean addSearchPath) {
-
+	public boolean loadFFMPEG() {
 		if (AVFORMAT != null)
 			return true;
 
-		if (addSearchPath && !addSearchPath())
-			return false;
-
 		try {
-			AVUTIL = (AVUTIL)Native.loadLibrary("avutil", AVUTIL.class);
-			AVCODEC = (AVCODEC)Native.loadLibrary("avcodec", AVCODEC.class);
-			AVFORMAT = (AVFORMAT)Native.loadLibrary("avformat", AVFORMAT.class);
+			AVUTIL = (AVUTIL)loadLibrary("avutil",
+				AVUTIL.LIBAVUTIL_VERSION_MAJOR, AVUTIL.class);
+			AVCORE = (AVCORE)loadLibrary("avcore",
+				AVCORE.LIBAVCORE_VERSION_MAJOR, AVCORE.class);
+			AVDEVICE = (AVDEVICE)loadLibrary("avdevice",
+				AVDEVICE.LIBAVDEVICE_VERSION_MAJOR, AVDEVICE.class);
+			AVCODEC = (AVCODEC)loadLibrary("avcodec",
+				AVCODEC.LIBAVCODEC_VERSION_MAJOR, AVCODEC.class);
+			AVFORMAT = (AVFORMAT)loadLibrary("avformat",
+				AVFORMAT.LIBAVFORMAT_VERSION_MAJOR, AVFORMAT.class);
 		} catch (UnsatisfiedLinkError e) {
 			showException(e);
 			return false;
@@ -62,68 +78,23 @@ public class FFMPEG {
 		return true;
 	}
 
-	private boolean addSearchPath() {
-		String platform = (IJ.isMacOSX() ? "macosx" :
-				(IJ.isWindows() ? "win"
-					+ (IJ.is64Bit() ? "64" : "32")
-				 : "linux" + (IJ.is64Bit() ? "64" : "")));
-		String extension = IJ.isMacOSX() ? "dylib" :
-			IJ.isWindows() ? "dll" : "so";
-		String[] libs = null;
-		String[] versions = null;
-		if (IJ.isMacOSX()) {
-			libs = new String[] { "libffmpeg" };
-		} else if (IJ.isWindows()) {
-			libs = new String[] {
-				"avutil", "avcodec", "avformat"
-			};
-			versions = new String[] { "-49", "-52", "-52" };
-		} else {
-			libs = new String[] {
-				"libavutil", "libavcodec", "libavformat"
-			};
-		}
-
-		String[] targets = new String[libs.length];
-		for (int i = 0; i < libs.length; i++) {
-			if (versions == null)
-				targets[i] = libs[i] + "." + extension;
-			else
-				targets[i] = libs[i] + versions[i]
-					+ "." + extension;
-			libs[i] = "/" + platform + "/" + libs[i]
-				+ "." + extension;
-		}
-
-		URL location = getClass().getResource(libs[0]);
-		if (location == null) {
-			String dir = IJ.getDirectory("imagej");
-			if (dir == null)
-				return false;
-			System.setProperty("jna.library.path", dir);
-			return true;
-		}
-		File tmp = getTempDirectory();
-		if (tmp == null)
-			return false;
-		if (!copyTempFile(location, new File(tmp, targets[0])))
-			return true;
-		for (int i = 1; i < libs.length; i++)
-			if (!copyTempFile(getClass().getResource(libs[i]),
-					new File(tmp, targets[i])))
-				return true;
-		System.setProperty("jna.library.path", tmp.getAbsolutePath());
-		if (IJ.isMacOSX()) {
-			String[] names = { "util", "codec", "format" };
-			for (int i = 0; i < names.length; i++)
-				symlink("libffmpeg.dylib", tmp.getAbsolutePath()
-						+ "/libav" + names[i]
-						+ ".dylib");
-		}
-		return true;
+	protected static String getPlatform() {
+		return IJ.isMacOSX() ? "macosx" :
+			(IJ.isWindows() ? "win"
+				+ (IJ.is64Bit() ? "64" : "32")
+			 : "linux" + (IJ.is64Bit() ? "64" : ""));
 	}
 
-	protected static File getTempDirectory() {
+	protected static String getLibraryName(String name, int version) {
+		return (IJ.isWindows() ? "" : "lib")
+			+ name
+			+ (IJ.isWindows() ? "-" + version : "")
+			+ "." + (IJ.isMacOSX() ? "dylib" :
+				IJ.isWindows() ? "dll" : "so");
+	}
+
+	protected static File getLibraryDirectory() {
+		// TODO: try to write into $IMAGEJ_ROOT/lib/$PLATFORM/ to avoid having to unpack all the time
 		try {
 			File tmp = File.createTempFile("ffmpeg", "");
 			if (!tmp.delete() || !tmp.mkdirs())
@@ -135,7 +106,30 @@ public class FFMPEG {
 		}
 	}
 
-	protected static boolean copyTempFile(URL source, File target) {
+	protected Object loadLibrary(String name, int version, Class libraryClass) {
+		if (libraryDirectory == null) {
+			libraryDirectory = getLibraryDirectory();
+			String path = System.getProperty("jna.library.path");
+			path = (path == null ? "" : path + File.pathSeparator) + libraryDirectory;
+			System.setProperty("jna.library.path", path);
+		}
+
+		String fileName = getLibraryName(name, version);
+		File file = new File(libraryDirectory, fileName);
+		if (!file.exists()) {
+			if (baseURL == null)
+				throw new RuntimeException("Could not determine .jar");
+			try {
+				copy(new URL(baseURL + getPlatform() + "/" + fileName), file);
+			} catch (Exception e) {
+				throw new RuntimeException("Could not extract " + fileName + ": " + e);
+			}
+		}
+
+		return Native.loadLibrary(name, libraryClass);
+	}
+
+	protected static boolean copy(URL source, File target) {
 		try {
 			InputStream in = source.openStream();
 			target.deleteOnExit();
@@ -156,7 +150,7 @@ public class FFMPEG {
 		}
 	}
 
-	interface libc extends Library {
+	protected interface libc extends Library {
 		int symlink(String source, String target);
 	}
 
