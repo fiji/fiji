@@ -1,11 +1,12 @@
 package fiji.plugin.trackmate.tracking.costmatrix;
 
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.SortedSet;
 
 import Jama.Matrix;
-
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.TrackNode;
 import fiji.plugin.trackmate.Utils;
 import fiji.plugin.trackmate.tracking.LAPTracker.Settings;
 import fiji.plugin.trackmate.tracking.costfunction.GapClosingCostFunction;
@@ -82,16 +83,16 @@ import fiji.plugin.trackmate.tracking.costfunction.SplittingCostFunction;
  *
  */
 
-public class TrackSegmentCostMatrixCreator<K extends Spot> extends LAPTrackerCostMatrixCreator {
+public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 
 	/** The track segments. */
-	protected ArrayList< ArrayList<TrackNode<K>> > trackSegments;
+	protected List<SortedSet<Spot>> trackSegments;
 	/** Holds the Spots in the middle of track segments (not at end or start). */
-	protected ArrayList<TrackNode<K>> middlePoints;
+	protected List<Spot> middlePoints;
 	/** The list of middle Spots which can participate in merge events. */
-	protected ArrayList<TrackNode<K>> mergingMiddlePoints;
+	protected List<Spot> mergingMiddlePoints;
 	/** The list of middle Spots which can participate in splitting events. */
-	protected ArrayList<TrackNode<K>> splittingMiddlePoints;
+	protected List<Spot> splittingMiddlePoints;
 	/** User supplied settings for creating the cost matrix. */
 	protected Settings settings;
 	
@@ -101,10 +102,10 @@ public class TrackSegmentCostMatrixCreator<K extends Spot> extends LAPTrackerCos
 	 * an <code>ArrayList</code> of <code>Spots</code>.
 	 */
 
-	public TrackSegmentCostMatrixCreator(ArrayList< ArrayList<TrackNode<K>> > trackSegments, Settings settings) {
+	public TrackSegmentCostMatrixCreator(List<SortedSet<Spot>> trackSegments, Settings settings) {
 		this.trackSegments = trackSegments;
-		this.mergingMiddlePoints = new ArrayList<TrackNode<K>>();
-		this.splittingMiddlePoints = new ArrayList<TrackNode<K>>();
+		this.mergingMiddlePoints = new ArrayList<Spot>();
+		this.splittingMiddlePoints =  new ArrayList<Spot>();
 		this.settings = settings;
 	}
 	
@@ -122,27 +123,28 @@ public class TrackSegmentCostMatrixCreator<K extends Spot> extends LAPTrackerCos
 
 	
 	/**
-	 * Returns an Arraylist which holds references to all the splitting middle points
-	 * within the track segments. Notably, these middle points are in the
+	 * Returns a list which holds references to all the splitting middle points
+	 * within all the track segments. Notably, these middle points are in the
 	 * same order here as they are referenced in the cost matrix (so, the 
 	 * first column index in the merging section, index 0, corresponds to
 	 * the Spot at index 0 in this ArrayList.
-	 * @return The <code>ArrayList</code> of middle <code>Spots</code>
+	 * @return 
+	 * @return The <code>List</code> of middle <code>Spots</code>
 	 */
-	public ArrayList<TrackNode<K>> getSplittingMiddlePoints() {
+	public List<Spot> getSplittingMiddlePoints() {
 		return splittingMiddlePoints;
 	}
 	
 	
 	/**
-	 * Returns an Arraylist which holds references to all the merging middle points
-	 * within the track segments. Notably, these middle points are in the
+	 * Returns a list which holds references to all the merging middle points
+	 * within all the track segments. Notably, these middle points are in the
 	 * same order here as they are referenced in the cost matrix (so, the 
 	 * first column index in the merging section, index 0, corresponds to
 	 * the Spot at index 0 in this ArrayList.
-	 * @return The <code>ArrayList</code> of middle <code>Spots</code>
+	 * @return The <code>List</code> of middle <code>Spots</code>
 	 */
-	public ArrayList<TrackNode<K>> getMergingMiddlePoints() {
+	public List<Spot> getMergingMiddlePoints() {
 		return mergingMiddlePoints;
 	}
 
@@ -186,22 +188,29 @@ public class TrackSegmentCostMatrixCreator<K extends Spot> extends LAPTrackerCos
 	
 	
 	/**
-	 * Creates ArrayList of middle points in all track segments. A middle point is a point
+	 * Create a List of middle points in all track segments. A middle point is a point
 	 * in a track segment that is neither a start nor an end point. So, track segments
 	 * of length 1 and 2 can have no middle points. Thus, we add middle points only for 
 	 * track segments of length 3 or larger. 
 	 * 
-	 * @param trackSegments An ArrayList of track segments, where each segment is its own ArrayList of Spots.
-	 * @return An ArrayList containing references to all the middle Spots in the track segments.
+	 * @param trackSegments A List of track segments, where each segment is its own List of Spots.
+	 * @return A List containing references to all the middle Spots in the track segments.
 	 */
-	public ArrayList<TrackNode<K>> getTrackSegmentMiddlePoints(ArrayList< ArrayList<TrackNode<K>> > trackSegments) {
-		ArrayList<TrackNode<K>> middlePoints = new ArrayList<TrackNode<K>>();
-		for (ArrayList<TrackNode<K>> trackSegment : trackSegments) {
+	public List<Spot> getTrackSegmentMiddlePoints(List<SortedSet<Spot>> trackSegments) {
+		List<Spot> middlePoints = new ArrayList<Spot>();
+		Spot current = null;
+		for (SortedSet<Spot> trackSegment : trackSegments) {
+			
 			if (trackSegment.size() >= 3) {
-				for (int i = 1; i < trackSegment.size() - 1; i++) { 	// Extract middle Spots only.
-					middlePoints.add(trackSegment.get(i));
+				Iterator<Spot> it = trackSegment.iterator();
+				it.next(); // Skip first one
+				while (it.hasNext()) {
+					current = it.next();
+					middlePoints.add(current);
 				}
+				middlePoints.remove(current); // Remove last one
 			}
+			
 		}
 		return middlePoints;
 	}
@@ -212,10 +221,10 @@ public class TrackSegmentCostMatrixCreator<K extends Spot> extends LAPTrackerCos
 	 * for gap closing, merging, and splitting (as well as the empty middle section).
 	 */
 	private Matrix createTopLeftQuadrant() {
-		// Create submatrices of top left quadrant (gap closing, merging, splitting, and empty middle
-		Matrix gapClosingScores = getGapClosingCostSubMatrix(trackSegments.size());
-		Matrix mergingScores = getMergingScores(trackSegments.size());
-		Matrix splittingScores = getSplittingScores(trackSegments.size());
+		// Create sub-matrices of top left quadrant (gap closing, merging, splitting, and empty middle
+		Matrix gapClosingScores = getGapClosingCostSubMatrix();
+		Matrix mergingScores = getMergingScores();
+		Matrix splittingScores = getSplittingScores();
 		Matrix middle = new Matrix(splittingMiddlePoints.size(), mergingMiddlePoints.size(), BLOCKED);
 		
 		// Initialize the top left quadrant
@@ -253,23 +262,20 @@ public class TrackSegmentCostMatrixCreator<K extends Spot> extends LAPTrackerCos
 //	}
 	
 	/**
-	 * Uses a gap closing cost function to fill in the gap closing costs submatrix.
+	 * Uses a gap closing cost function to fill in the gap closing costs sub-matrix.
 	 */
-	private Matrix getGapClosingCostSubMatrix(int n) {
-		final Matrix gapClosingScores = new Matrix(n, n);
-		GapClosingCostFunction<K> gapClosing = new GapClosingCostFunction<K>(gapClosingScores, settings.gapClosingTimeWindow, settings.maxDistSegments, BLOCKED, trackSegments);
-		gapClosing.applyCostFunction();
-		return gapClosingScores;
+	private Matrix getGapClosingCostSubMatrix() {
+		GapClosingCostFunction gapClosing = new GapClosingCostFunction(settings.gapClosingTimeWindow, settings.maxDistSegments, BLOCKED);
+		return gapClosing.getCostFunction(trackSegments);
 	}
 	
 	
-	/*
-	 * Uses a merging cost function to fill in the merging costs submatrix.
+	/**
+	 * Uses a merging cost function to fill in the merging costs sub-matrix.
 	 */
-	private Matrix getMergingScores(int n) {
-		final Matrix mergingScores = new Matrix(n, middlePoints.size());
-		MergingCostFunction<K> merging = new MergingCostFunction<K>(mergingScores, trackSegments, middlePoints, settings.maxDistSegments, BLOCKED, settings.minIntensityRatio, settings.maxIntensityRatio);
-		merging.applyCostFunction();
+	private Matrix getMergingScores() {
+		MergingCostFunction merging = new MergingCostFunction(settings.maxDistSegments, settings.gapClosingTimeWindow, BLOCKED, settings.maxIntensityRatio);
+		Matrix mergingScores = merging.getCostFunction(trackSegments, middlePoints);
 		return pruneColumns(mergingScores, mergingMiddlePoints);
 	}
 
@@ -279,7 +285,7 @@ public class TrackSegmentCostMatrixCreator<K extends Spot> extends LAPTrackerCos
 	 * that only contain BLOCKED (there are no useful columns with non-BLOCKED
 	 * values). Returns the pruned matrix with the empty columns.
 	 */
-	private Matrix pruneColumns (Matrix m, ArrayList<TrackNode<K>> keptMiddleSpots) {
+	private Matrix pruneColumns (Matrix m, List<Spot> keptMiddleSpots) {
 
 		// Find all columns that contain a cost (a value != BLOCKED)
 		double[][] full = m.copy().getArray();
@@ -318,7 +324,7 @@ public class TrackSegmentCostMatrixCreator<K extends Spot> extends LAPTrackerCos
 	 * that only contain BLOCKED (there are no useful rows with non-BLOCKED
 	 * values). Returns the pruned matrix with the empty rows.
 	 */
-	private Matrix pruneRows (Matrix m, ArrayList<TrackNode<K>> keptMiddleSpots) {
+	private Matrix pruneRows (Matrix m, List<Spot> keptMiddleSpots) {
 
 		// Find all rows that contain a cost (a value != BLOCKED)
 		double[][] full = m.copy().getArray();
@@ -354,15 +360,14 @@ public class TrackSegmentCostMatrixCreator<K extends Spot> extends LAPTrackerCos
 	/*
 	 * Uses a splitting cost function to fill in the splitting costs submatrix.
 	 */
-	private Matrix getSplittingScores(int n) {
-		final Matrix splittingScores = new Matrix(middlePoints.size(), n);	
-		SplittingCostFunction<K> splitting = new SplittingCostFunction<K>(splittingScores, trackSegments, middlePoints, settings.maxDistSegments, BLOCKED, settings.minIntensityRatio, settings.maxIntensityRatio);
-		splitting.applyCostFunction();
+	private Matrix getSplittingScores() {
+		SplittingCostFunction splitting = new SplittingCostFunction(settings.maxDistSegments, settings.gapClosingTimeWindow, BLOCKED, settings.maxIntensityRatio);
+		Matrix splittingScores = splitting.getCostFunction(trackSegments, middlePoints);
 		return pruneRows(splittingScores, splittingMiddlePoints);
 	}
 	
 	
-	/*
+	/**
 	 * Calculates the CUTOFF_PERCENTILE cost of all costs in gap closing, merging, and
 	 * splitting matrices to assign the top right and bottom left score matrices.
 	 */

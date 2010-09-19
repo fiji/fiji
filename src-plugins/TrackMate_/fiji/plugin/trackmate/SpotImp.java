@@ -151,6 +151,13 @@ public class SpotImp implements Spot {
 	public Float diffTo(Spot s, Feature feature) {
 		return getFeature(feature) - s.getFeature(feature);
 	}
+	
+	@Override
+	public Float normalizeDiffTo(Spot s, Feature feature) {
+		final Float a = getFeature(feature);
+		final Float b = s.getFeature(feature);
+		return Math.abs(a-b)/((a+b)/2);
+	}
 
 	@Override
 	public Float squareDistanceTo(Spot s) {

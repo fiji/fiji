@@ -1,10 +1,8 @@
 package fiji.plugin.trackmate.visualization.test;
 
-import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
-import fiji.plugin.trackmate.TrackNode;
-import fiji.plugin.trackmate.Utils;
 import fiji.plugin.trackmate.features.FeatureFacade;
 import fiji.plugin.trackmate.gui.ThresholdGuiPanel;
 import fiji.plugin.trackmate.visualization.SpotDisplayer3D;
@@ -16,8 +14,9 @@ import ij3d.Install_J3D;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.List;
 import java.util.Random;
+import java.util.TreeMap;
 
 import javax.swing.JFrame;
 import javax.swing.WindowConstants;
@@ -90,7 +89,7 @@ public class SpotDisplayer3DTestDrive {
 		imp.setTitle("3D blobs");
 
 		// Create a Spot arrays
-		Collection<Spot> spots = new ArrayList<Spot>(N_BLOBS);
+		List<Spot> spots = new ArrayList<Spot>(N_BLOBS);
 		SpotImp spot;
 		for (int i = 0; i < N_BLOBS; i++)  {
 			spot = new SpotImp(centers.get(i), "Spot "+i);
@@ -105,16 +104,16 @@ public class SpotDisplayer3DTestDrive {
 
 		// Launch renderer
 		final Image3DUniverse universe = new Image3DUniverse();
-		Collection<TrackNode<Spot>> nodes = Utils.embed(spots);
-		final SpotDisplayer3D<Spot> displayer = new SpotDisplayer3D<Spot>(nodes, universe, RADIUS);
+		TreeMap<Integer, List<Spot>> allSpots = new TreeMap<Integer, List<Spot>>();
+		allSpots.put(0, spots);
+		final SpotDisplayer3D displayer = new SpotDisplayer3D(universe, RADIUS);
+		displayer.setSpots(allSpots);
 		displayer.render();
 		universe.addVoltex(imp);
 		universe.show();
 		
 		// Launch threshold GUI
-		Collection<Collection<Spot>> allSpots = new ArrayList<Collection<Spot>>();
-		allSpots.add(spots);
-		final ThresholdGuiPanel gui = new ThresholdGuiPanel(allSpots);
+		final ThresholdGuiPanel gui = new ThresholdGuiPanel(allSpots.values());
 
 		// Set listeners
 		gui.addChangeListener(new ChangeListener() {

@@ -14,6 +14,7 @@ import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
+import java.util.List;
 import java.util.TreeMap;
 
 import javax.swing.JButton;
@@ -23,12 +24,14 @@ import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.SimpleGraph;
+
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.TrackNode;
 import fiji.plugin.trackmate.Utils;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
 import fiji.plugin.trackmate.visualization.SpotDisplayer2D;
@@ -79,8 +82,8 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	private TrackMate_ spotTracker;
 	private LogPanel logPanel;
 	private Logger logger;
-	private TreeMap<Integer,Collection<Spot>> spots;
-	private TreeMap<Integer,Collection<TrackNode<Spot>>> tracks;
+	private TreeMap<Integer, List<Spot>> spots;
+	private SimpleGraph<Spot, DefaultEdge> trackGraph;
 	private SpotDisplayer<Spot> displayer;
 	private boolean is3D;
 	
@@ -183,7 +186,6 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	private void execThresholdingStep() {
 		// Store results
 		spots = spotTracker.getSpots();
-		tracks = Utils.embed(spots);
 		
 		// Launch renderer
 		logger.log("Rendering results...\n",Logger.BLUE_COLOR);
@@ -207,7 +209,7 @@ public class TrackMateFrame extends javax.swing.JFrame {
 							DEFAULT_THRESHOLD, 
 							new boolean[] {true, true, true});
 					// Render spots
-					displayer = new SpotDisplayer3D<Spot>(tracks, universe, settings.expectedDiameter/2); 							
+					displayer = new SpotDisplayer3D<Spot>(universe, settings.expectedDiameter/2); 							
 					universe.addContentLater(imageContent);
 
 				} else {

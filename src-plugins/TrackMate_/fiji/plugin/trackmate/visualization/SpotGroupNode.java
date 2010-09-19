@@ -1,7 +1,5 @@
 package fiji.plugin.trackmate.visualization;
 
-import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.SpotImp;
 import ij3d.Content;
 import ij3d.ContentInstant;
 import ij3d.ContentNode;
@@ -26,7 +24,7 @@ import javax.vecmath.Tuple3d;
 import customnode.CustomTriangleMesh;
 import customnode.MeshMaker;
 
-public class SpotGroupNode <K extends Spot> extends ContentNode {
+public class SpotGroupNode <K> extends ContentNode {
 
 	private static final int DEFAULT_MERIDIAN_NUMBER = 12;
 	private static final int DEFAULT_PARALLEL_NUMBER = 12;
@@ -380,11 +378,11 @@ public class SpotGroupNode <K extends Spot> extends ContentNode {
 		final int RADIUS = 10;
 		
 		Random ran = new Random();
-		HashMap<SpotImp, Point4f>  centers = new HashMap<SpotImp, Point4f>(N_BLOBS);
-		HashMap<SpotImp, Color4f> colors = new HashMap<SpotImp, Color4f>(N_BLOBS);
+		HashMap<fiji.plugin.trackmate.SpotImp, Point4f>  centers = new HashMap<fiji.plugin.trackmate.SpotImp, Point4f>(N_BLOBS);
+		HashMap<fiji.plugin.trackmate.SpotImp, Color4f> colors = new HashMap<fiji.plugin.trackmate.SpotImp, Color4f>(N_BLOBS);
 		Point4f center;
 		Color4f color;
-		SpotImp spot;
+		fiji.plugin.trackmate.SpotImp spot;
 		float[] coords = new float[3];
 		for (int i = 0; i < N_BLOBS; i++) {
 			coords[0] = WIDTH * ran.nextFloat();
@@ -394,12 +392,12 @@ public class SpotGroupNode <K extends Spot> extends ContentNode {
 			center = new Point4f(coords[0], coords[1], coords[2], (float) (RADIUS + ran.nextGaussian()));
 			color = new Color4f(new Color(Color.HSBtoRGB(ran.nextFloat(), 1, 1)));
 			color.w = ran.nextFloat();
-			spot = new SpotImp(coords);
+			spot = new fiji.plugin.trackmate.SpotImp(coords);
 			centers.put(spot, center);
 			colors.put(spot, color);
 		}
 		
-		SpotGroupNode<SpotImp> sg = new SpotGroupNode<SpotImp>(centers, colors);
+		SpotGroupNode<fiji.plugin.trackmate.SpotImp> sg = new SpotGroupNode<fiji.plugin.trackmate.SpotImp>(centers, colors);
 		//sg.setName("spots");
 		ContentInstant ci = new ContentInstant("t0");
 		ci.display(sg);
@@ -412,17 +410,17 @@ public class SpotGroupNode <K extends Spot> extends ContentNode {
 		universe.addContentLater(c);
 		universe.show();
 		
-		for (SpotImp key : centers.keySet()) {
+		for (fiji.plugin.trackmate.SpotImp key : centers.keySet()) {
 			sg.setVisible(key, false);
 			Thread.sleep(2000/N_BLOBS);
 		}
 		
-		for (SpotImp key : centers.keySet()) {
+		for (fiji.plugin.trackmate.SpotImp key : centers.keySet()) {
 			sg.setVisible(key, true);
 			Thread.sleep(2000/N_BLOBS);
 		}
 		
-		SpotImp thisSpot = centers.keySet().iterator().next();
+		fiji.plugin.trackmate.SpotImp thisSpot = centers.keySet().iterator().next();
 		
 		for (int i = 1; i < WIDTH; i++) {
 			sg.setRadius(thisSpot, i);

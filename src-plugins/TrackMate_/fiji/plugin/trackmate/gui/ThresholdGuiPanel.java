@@ -105,7 +105,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	 * CONSTRUCTOR
 	 */
 	
-	public ThresholdGuiPanel(Collection<Collection<Spot>> spots, Feature selectedFeature) {
+	public ThresholdGuiPanel(Collection<List<Spot>> spots, Feature selectedFeature) {
 		super();
 		newFeatureIndex = selectedFeature.ordinal();
 		setSpots(spots);
@@ -114,7 +114,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 			addThresholdPanel();
 	}
 
-	public ThresholdGuiPanel(Collection<Collection<Spot>> allSpots) {
+	public ThresholdGuiPanel(Collection<List<Spot>> allSpots) {
 		this(allSpots, Feature.values()[0]);
 	}
 	

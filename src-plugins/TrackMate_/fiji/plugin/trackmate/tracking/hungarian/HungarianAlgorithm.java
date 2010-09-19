@@ -3,20 +3,18 @@ package fiji.plugin.trackmate.tracking.hungarian;
 import java.util.*;
 
 /**
- * An implementation of the classic hungarian algorithm for the assignment problem.
+ * An implementation of the classic Hungarian algorithm for the assignment problem.
  * <p>
- * Modified by nperry to allow for 'blocking.' An assignment can be blocked, making
+ * Modified by Nick Perry to allow for 'blocking.' An assignment can be blocked, making
  * it impossible for it to be a solution. A blocked assignment contains the value
  * Double.MAX_VALUE.
  * <p>
  * Copyright 2007 Gary Baker (GPL v3)
- * @author gbaker
- * @author nperry
+ * @author Gary Baker, Nick Perry
  */
 public class HungarianAlgorithm implements AssignmentAlgorithm {
 
-
-
+	@Override
     public int[][] computeAssignments(double[][] matrix) {
 
 

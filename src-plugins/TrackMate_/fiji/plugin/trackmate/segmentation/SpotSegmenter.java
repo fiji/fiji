@@ -1,7 +1,6 @@
 package fiji.plugin.trackmate.segmentation;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
@@ -38,8 +37,8 @@ public class SpotSegmenter <T extends RealType<T> >implements Algorithm {
 	private float diameter;
 	private boolean useMedianFilter;
 	private boolean allowEdgeExtrema;
-	private float[] calibration;
-	private ArrayList<Spot> spots = new ArrayList<Spot>(); // because this implementation is fast to add elements at the end of the list
+	private float[] calibration = new float[] {1, 1, 1}; // always 3d;
+	private List<Spot> spots = new ArrayList<Spot>(); // because this implementation is fast to add elements at the end of the list
 	private String errorMessage = null;
 	private float sigma;
 	private Image<FloatType> laplacianKernel;
@@ -57,7 +56,8 @@ public class SpotSegmenter <T extends RealType<T> >implements Algorithm {
 	public SpotSegmenter(Image<T> img, float diameter, float[] calibration, boolean useMedianFilter, boolean allowEdgeExtrema) {
 		setImage(img);
 		this.diameter = diameter;
-		this.calibration = calibration;
+		for (int i = 0; i < calibration.length; i++) 
+			this.calibration[i] = calibration[i];
 		this.useMedianFilter = useMedianFilter;
 		this.allowEdgeExtrema = allowEdgeExtrema;
 	}
@@ -94,7 +94,7 @@ public class SpotSegmenter <T extends RealType<T> >implements Algorithm {
 	 * Return a collection (actually an ArrayList) of Spot resulting from the 
 	 * segmentation process 
 	 */
-	public Collection<Spot> getResult() {
+	public List<Spot> getResult() {
 		return spots;
 	}
 
@@ -212,7 +212,7 @@ public class SpotSegmenter <T extends RealType<T> >implements Algorithm {
 			errorMessage = BASE_ERROR_MESSAGE + "Extrema Finder failed:\n" + findExtrema.getErrorMessage();
 			return false;
 		}
-		final ArrayList< float[] > centeredExtrema = findExtrema.getRegionalExtremaCenters(false);
+		final List<float[]> centeredExtrema = findExtrema.getRegionalExtremaCenters(false);
 		
 		spots = convertToSpots(centeredExtrema, calibration, downsampleFactors);
 		return true;
@@ -343,9 +343,9 @@ public class SpotSegmenter <T extends RealType<T> >implements Algorithm {
 	 * @param  coords  the coordinates in pixel units
 	 * @param  calibration  the calibration array that stores pixel size
 	 * @param  downsampleFactors  the array containing the factors used to down-sample the source image
-	 * @return  Featurable with coordinates in physical units of the source image
+	 * @return  Spot list  with coordinates in physical units of the source image
 	 */
-	private static ArrayList< Spot > convertToSpots(List< float[] > coords, float[] calibration, float[] downsampleFactors) {
+	private static List<Spot> convertToSpots(List< float[] > coords, float[] calibration, float[] downsampleFactors) {
 		ArrayList<Spot> spots = new ArrayList<Spot>();
 		Iterator< float[] > itr = coords.iterator();
 		int index = 0;

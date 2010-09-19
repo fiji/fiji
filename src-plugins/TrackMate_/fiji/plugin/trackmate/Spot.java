@@ -47,6 +47,18 @@ public interface Spot {
 	
 	/**
 	 * Return the difference of the feature value of this spot with the one of the given spot.
+	 * By construction, this operation is anti-symmetric (A.diffTo(B) = - B.diffTo(A)).
 	 */
 	public Float diffTo(Spot s, Feature feature);
+	
+	/**
+	 * Return the absolute normalized difference of the feature value of this spot 
+	 * with the one of the given spot.
+	 * <p>
+	 * If <code>a</code> and <code>b</code> are the feature values, then the absolute
+	 * normalized difference is dfefined as <code> Math.abs( a - b) / ( (a+b)/2 )</code>.
+	 * <p>
+	 * By construction, this operation is symmetric (A.normalizeDiffTo(B) = B.normalizeDiffTo(A)).
+	 */
+	public Float normalizeDiffTo(Spot s, Feature feature);
 }

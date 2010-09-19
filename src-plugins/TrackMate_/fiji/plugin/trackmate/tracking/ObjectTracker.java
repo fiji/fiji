@@ -1,5 +1,9 @@
 package fiji.plugin.trackmate.tracking;
 
+import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.SimpleGraph;
+
+import fiji.plugin.trackmate.Spot;
 import mpicbg.imglib.algorithm.Algorithm;
 
 /**
@@ -11,7 +15,9 @@ import mpicbg.imglib.algorithm.Algorithm;
  */
 public interface ObjectTracker extends Algorithm {
 
-	/** Get the final tracks computed by the tracking algorithm. */
-	public void getTracks();
+	/**
+	 * Returns the final tracks computed, as a directed Graph of spots.
+	 */
+	public SimpleGraph<Spot, DefaultEdge> getTrackGraph();
 	
 }

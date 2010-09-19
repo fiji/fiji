@@ -1,9 +1,7 @@
 package fiji.plugin.trackmate.visualization.test;
 
-import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.Feature;
-import fiji.plugin.trackmate.TrackNode;
-import fiji.plugin.trackmate.Utils;
+import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.features.FeatureFacade;
 import fiji.plugin.trackmate.gui.ThresholdGuiPanel;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
@@ -14,6 +12,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Random;
 import java.util.TreeMap;
 
@@ -34,7 +33,7 @@ public class SpotDisplayer2DTestDrive {
 	public static void main(String[] args) {
 		
 		final int N_BLOBS = 50;
-		final float RADIUS = 10; // µm
+		final float RADIUS = 5; // µm
 		final Random RAN = new Random();
 		final float WIDTH = 200; // µm
 		final float HEIGHT = 200; // µm
@@ -81,7 +80,7 @@ public class SpotDisplayer2DTestDrive {
 		System.out.println("Creating image done.");
 		
 		SpotSegmenter<UnsignedByteType> segmenter = new SpotSegmenter<UnsignedByteType>(img, 2*RADIUS, CALIBRATION);
-		Collection<Spot> spots;
+		List<Spot> spots;
 		System.out.println("Segmenting...");
 		if (segmenter.checkInput() && segmenter.process())
 			spots = segmenter.getResult();
@@ -101,8 +100,10 @@ public class SpotDisplayer2DTestDrive {
 
 		imp.getCalibration().pixelWidth = CALIBRATION[0];
 		imp.getCalibration().pixelHeight = CALIBRATION[1];
-		TreeMap<Integer, Collection<TrackNode<Spot>>> allNodes = Utils.embed(allSpots);
-		final SpotDisplayer2D<Spot> displayer = new SpotDisplayer2D<Spot>(allNodes, imp, RADIUS, CALIBRATION);
+		TreeMap<Integer, List<Spot>> allNodes = new TreeMap<Integer, List<Spot>>();
+		allNodes.put(0, spots);
+		final SpotDisplayer2D displayer = new SpotDisplayer2D(imp, RADIUS, CALIBRATION);
+		displayer.setSpots(allNodes);
 		displayer.render();
 		
 		System.out.println("Starting threshold GUI...");

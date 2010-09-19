@@ -35,7 +35,7 @@ public abstract class LAPTrackerCostMatrixCreator implements CostMatrixCreator {
 	}
 	
 	
-	/*
+	/**
 	 * Takes the submatrix of costs defined by rows 0 to numRows - 1 and columns
 	 * 0 to numCols - 1, inverts it, and sets any non-BLOCKED value to be cutoff.
 	 * 
@@ -57,7 +57,7 @@ public abstract class LAPTrackerCostMatrixCreator implements CostMatrixCreator {
 	}
 	
 	
-	/*
+	/**
 	 * Sets alternative scores in a new matrix along a diagonal. The new
 	 * matrix is n x n, and is set to BLOCKED everywhere except along
 	 * the diagonal that runs from top left to bottom right.

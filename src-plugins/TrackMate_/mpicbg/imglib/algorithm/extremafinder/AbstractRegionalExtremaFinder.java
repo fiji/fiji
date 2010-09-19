@@ -40,13 +40,14 @@ public abstract class AbstractRegionalExtremaFinder<T extends RealType<T>> imple
 
 	/**
 	 * Given an ArrayList of int[] (coordinates), computes the averaged coordinates and returns them.
+	 * This will always return a 3-elements arrays, even for 2D.
 	 * 
 	 * @param searched
 	 * @return
 	 */
 	protected float[] findAveragePosition(final ArrayList<int[]> coords) {
 		int nDims = coords.get(0).length;
-		final float[] array = new float[nDims];
+		final float[] array = new float[3];
 		int[] curr;
 		for (int j = 0; j < coords.size(); j++) {
 			curr = coords.get(j);

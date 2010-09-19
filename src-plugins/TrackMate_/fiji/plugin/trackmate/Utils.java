@@ -3,10 +3,8 @@ package fiji.plugin.trackmate;
 import ij.ImagePlus;
 import ij.ImageStack;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.TreeMap;
 
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImagePlusAdapter;
@@ -36,28 +34,7 @@ public class Utils {
 		ImagePlus ipSingleFrame = new ImagePlus(imp.getShortTitle()+"-Frame_" + Integer.toString(iFrame + 1), frame);
 		return ImagePlusAdapter.wrap(ipSingleFrame);
 	}
-	
-	/**
-	 * Embed the given featurables into a TrackNode, suitable for tracking. Create a new holder.
-	 */
-	public static final <K extends Spot> TreeMap<Integer, Collection<TrackNode<K>>> embed(final TreeMap<Integer, Collection<K>> spots) {
-		TreeMap<Integer, Collection<TrackNode<K>>> nodes = new TreeMap<Integer,  Collection<TrackNode<K>>>();
-		for(int key : spots.keySet()) {
-			Collection<K> spotsThisFrame = spots.get(key);
-			nodes.put(key, embed(spotsThisFrame));
-		}
-		return nodes;
-	}
-	
-	/**
-	 * Embed the given featurables into a TrackNode, suitable for tracking
-	 */
-	public static final <K extends Spot> Collection<TrackNode<K>> embed(final Collection<K> spots) {
-		ArrayList<TrackNode<K>> nodesThisFrame = new ArrayList<TrackNode<K>>(spots.size());
-		for(K spot : spots)
-			nodesThisFrame.add(new TrackNodeImp<K>(spot));
-		return nodesThisFrame;
-	}
+
 
 	
 	
