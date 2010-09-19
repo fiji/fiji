@@ -1,0 +1,881 @@
+// This class is not meant to be a fully-fledged
+// .h -> JNA converter as JNAerator tries to do.
+// It is meant to be just good enough for FFMPEG.
+
+import ij.IJ;
+
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+
+import java.util.Stack;
+import java.util.TreeMap;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public class GenerateFFMPEGClasses {
+	protected static class LineIterator {
+		protected String contents;
+		protected int offset, nextOffset;
+		protected boolean breakAtSpecials;
+		protected Stack<String> stack = new Stack<String>();
+
+		public LineIterator(String contents) {
+			this(contents, false);
+		}
+
+		public LineIterator(String contents, boolean breakAtSpecials) {
+			this.contents = contents;
+			this.breakAtSpecials = breakAtSpecials;
+			offset = 0;
+			nextOffset = -2;
+		}
+
+		public boolean next() {
+			if (!stack.isEmpty())
+				return true;
+			if (nextOffset == -1 || (nextOffset == contents.length() - 1 && contents.charAt(nextOffset) == '\n'))
+				return false;
+
+			offset = nextOffset < 0 ? 0 : nextOffset + (contents.charAt(nextOffset) == '\n' ? 1 : 0);
+			nextOffset = contents.indexOf('\n', offset);
+			if (breakAtSpecials) {
+				for (int off = offset + 1; off < nextOffset; off++) {
+					char c = contents.charAt(off);
+					if ("{;".indexOf(c) >= 0) {
+						nextOffset = off + 1;
+						break;
+					}
+				}
+			}
+			return true;
+		}
+
+		public String getLine() {
+			if (!stack.isEmpty())
+				return stack.pop();
+			if (nextOffset < 0)
+				return contents.substring(offset);
+			return contents.substring(offset, nextOffset);
+		}
+
+		public void push(String line) {
+			stack.push(line);
+		}
+	}
+
+	String filterOutIf0(String contents) {
+		StringBuffer buf = new StringBuffer();
+		LineIterator iter = new LineIterator(contents);
+		int nest = 0;
+		while (iter.next()) {
+			String line = iter.getLine();
+			if (nest > 0) {
+				if (line.trim().startsWith("#if"))
+					nest++;
+				else if (line.trim().startsWith("#endif"))
+					nest--;
+			}
+			else if (line.trim().startsWith("#if 0"))
+				nest++;
+			else
+				buf.append(line).append('\n');
+		}
+		return buf.toString();
+	}
+
+	String reduceEmptyLines(String contents) {
+		StringBuffer buf = new StringBuffer();
+		int offset = 0, length = contents.length();
+		while (offset < length && contents.charAt(offset) == '\n')
+			offset++;
+		for (; offset < length; offset++) {
+			char c = contents.charAt(offset);
+			if (offset + 1 < length && c == '\n' && contents.charAt(offset + 1) == '\n') {
+				offset++;
+				while (offset + 1 < length && contents.charAt(offset + 1) == '\n')
+					offset++;
+				if (offset + 1 < length)
+					buf.append(c);
+			}
+			buf.append(c);
+		}
+		return buf.toString();
+	}
+
+	String filterOutComments(String contents) {
+		StringBuffer buf = new StringBuffer();
+		int length = contents.length();
+		for (int offset = 0; offset < length; offset++) {
+			char c = contents.charAt(offset);
+			if (c == '"') {
+				buf.append(c);
+				while (++offset < length) {
+					c = contents.charAt(offset);
+					buf.append(c);
+					if (c == '\\')
+						buf.append(contents.charAt(++offset));
+					else if (c == '"')
+						break;
+				}
+				continue;
+			}
+			if (c == '/' && offset + 1 < length) {
+				switch (contents.charAt(offset + 1)) {
+					case '/':
+						offset++;
+						while (++offset < length)
+							if (contents.charAt(offset) == '\n')
+								break;
+						buf.append('\n');
+						break;
+					case '*':
+						offset++;
+						while (++offset < length)
+							if (offset + 2 > length ||
+									contents.substring(offset, offset + 2).equals("*/")) {
+								offset++;
+								break;
+							}
+						break;
+					default:
+						buf.append(c);
+				}
+			}
+			else
+				buf.append(c);
+		}
+		return buf.toString().trim();
+	}
+
+	String indent(String contents, int level) {
+		if (level < 1)
+			return contents;
+		String tabs = "\t";
+		while (level-- > 1)
+			tabs += "\t";
+		LineIterator iter = new LineIterator(contents);
+		StringBuffer buf = new StringBuffer();
+		while (iter.next()) {
+			String line = iter.getLine();
+			if (!line.equals(""))
+				buf.append(tabs);
+			buf.append(line).append("\n");
+		}
+		return buf.toString();
+	}
+
+	Pattern compile(String regex) {
+		return Pattern.compile(regex
+			.replace("PARAMTYPE", "(?:TYPE|TYPE *\\(\\*IDENT\\)\\([^\\)]*\\))")
+			.replace("PARAMNAME", "IDENT(?:\\[[^\\]]*\\])*")
+			.replace("TYPE", "(?:unsigned |const )*(?:unsigned|void|char|short|int|long|float|double|u?int(?:8|16|32|64)_t|"
+				+ "enum IDENT|struct\\s+IDENT|AV[A-Za-z_0-9]+|"
+				+ "ReSampleContext|RcOverride|ByteIOContext|SwsVector|)\\**\\s*?(?:(?:const\\s*?)?\\*\\s*?)*")
+			.replace("IDENT", "[A-Za-z_][A-Za-z_0-9]*")
+			.replace(" *", "\\s*")
+			.replace(" ", "\\s+")
+			.replace("SPACE", " "), Pattern.DOTALL);
+	}
+
+	Pattern guardPattern =
+		compile("^#ifndef (IDENT)[^\n]*\n"
+		+ " *#define (IDENT)[^\n]*\n"
+		+ "(.*\n|)"
+		+ " *#endif[^\n]*\n?$");
+	Pattern definePattern =
+		compile("^# *define (IDENT) *(.*) *$");
+	Pattern externVariablePattern =
+		compile("^extern (TYPE) *(IDENT); *$");
+	Pattern staticVariablePattern =
+		compile("^static (TYPE) *(IDENT)( *\\[[^\\]]*\\])*( *=.*)?; *$");
+	Pattern functionPattern =
+		compile("^(?:extern )?(TYPE) *(IDENT)\\((void|((PARAMTYPE *(?:PARAMNAME)?, *)*PARAMTYPE *(?:PARAMNAME)?)?)\\) *(?:av_const *)?;$");
+	Pattern callbackPattern =
+		compile("^?(TYPE) *\\(\\*(IDENT)\\)\\((void|((PARAMTYPE *(?:PARAMNAME)?, *)*PARAMTYPE *(?:PARAMNAME)?)?)\\) *;$");
+	Pattern motionValTablePattern = 
+		compile("^?(TYPE) *\\(\\*(IDENT)((?:\\[[^\\]]*\\])*)\\) *((?:\\[[^\\]]*\\])*);$");
+	Pattern parameterPattern =
+		compile("^(PARAMTYPE) *(PARAMNAME)?$");
+	Pattern enumPattern =
+		//compile("^enum (IDENT)? *\\{ *((IDENT( *= *-?\\d+)?,? *)*) *,? *\\};$");
+		compile("^enum (IDENT)? *\\{([^\\}]*)\\};$");
+	Pattern skipDefine =
+		compile("^(?:AV_(?:STRINGIFY|TOSTRING|GLUE|JOIN|PRAGMA|VERSION_INT|VERSION_DOT|VERSION|NOPTS_VALUE|TIME_BASE_Q)"
+			+ "|PIX_FMT_NE|CodecType|CODEC_TYPE_UNKNOWN|"
+			+ "|FF_MM_(?:FORCE|MMX|3DNOW|SSE|SSE2|SSE2SLOW|3DNOWEXT|SSE3|SSE3SLOW|SSSE3|SSE4|SSE42|IWMMXT|ALTIVEC)"
+			+ ")"); // + "|(?:INT64_MIN|UINT64_MAX|INT_BIT|offsetof|LABEL_MANGLE|LOCAL_MANGLE|MANGLE|dprintf))");
+	Pattern structPattern =
+		compile("^(?:typedef )?struct (IDENT)? *\\{$");
+	Pattern structMemberPattern =
+		compile("^(TYPE) *(IDENT(?: *, *IDENT)*)((?:\\[([^\\]]+)\\])*); *$");
+	Pattern bitFieldPattern =
+		compile("^(?:unsigned )?int (IDENT):(\\d+);$");
+	Pattern structEndPattern =
+		compile("^\\} *(IDENT)? *(?: DECLARE_ALIGNED\\([^\\)], *(IDENT)*\\) *)?(?:attribute_deprecated *)?;$");
+	Pattern privateStructs =
+		compile("^(?:struct )?(SwsContext|AVSHA|AVAES|ReSampleContext|AVResampleContext|AVMetadata"
+			+ "|AVMetadataConv|ByteIOContext)$");
+
+	protected String commonFrame;
+
+	String filterOutGuard(String contents) {
+		Matcher matcher = guardPattern.matcher(contents);
+		if (matcher.matches() && matcher.group(1).trim().equals(matcher.group(2).trim()))
+			return matcher.group(3);
+		return contents;
+	}
+
+	Matcher match(Pattern pattern, String line) {
+		Matcher matcher = pattern.matcher(line);
+		return matcher.matches() ? matcher : null;
+	}
+
+	String replace(String haystack, String needle, String replacement) {
+		int offset = haystack.indexOf(needle);
+		while (offset >= 0) {
+			haystack = haystack.substring(0, offset)
+				+ replacement
+				+ haystack.substring(offset + needle.length());
+			offset = haystack.indexOf(needle, offset + replacement.length());
+		}
+		return haystack;
+	}
+
+	String capitalize(String name) {
+		if (name.length() == 0)
+			return name;
+		return name.substring(0, 1).toUpperCase() + name.substring(1);
+	}
+
+	String camelCasify(String name) {
+		if (name.length() == 0)
+			return name;
+
+		name = capitalize(name);
+		for (int offset = name.indexOf('_', 1); offset > 0; offset = name.indexOf('_', offset))
+			name = name.substring(0, offset) + capitalize(name.substring(offset + 1));
+
+		return name;
+	}
+
+	String stripPrefix(String string, String prefix) {
+		return string.startsWith(prefix) ? string.substring(prefix.length()) : string;
+	}
+
+	String currentLib;
+	TreeMap<String, String> name2lib = new TreeMap<String, String>();
+
+	String addLibPrefix(String name) {
+		String lib = name2lib.get(name);
+		if (lib == null || lib.equals(currentLib))
+			return name;
+		return lib + "." + name;
+	}
+
+	String plusStars(String string, int stars) {
+		if (stars == 0)
+			return string;
+		String suffix = " ";
+		while (--stars >= 0)
+			suffix += "*";
+		return string + suffix;
+	}
+
+	String translateType(String type, boolean inStruct) {
+		if (type.equals("const char *"))
+			return "String";
+		if (type.startsWith("Pointer "))
+			return type;
+
+		type = type.replaceAll("\\s*const\\s*", " ").trim();
+		int stars = 0;
+		for (;;) {
+			if (type.endsWith("*"))
+				stars++;
+			else if (!type.endsWith(" "))
+				break;
+			type = type.substring(0, type.length() - 1);
+		}
+
+		if (!inStruct && stars == 1 && match(privateStructs, type) != null)
+			return "Pointer /* " + type + " * */";
+
+		if (type.startsWith("const "))
+			type = type.substring(6);
+		if (type.startsWith("struct ") || Character.isUpperCase(type.charAt(0))) {
+			type = stripPrefix(type, "struct ");
+			type = addLibPrefix(type);
+			if (inStruct) {
+				if (stars == 0)
+					return type;
+				return "PointerByReference /* " + plusStars(type, stars) + " */";
+			}
+			if (stars == 0)
+				return type + ".ByValue";
+			if (stars == 1)
+				return type;
+			return "PointerByReference /* " + plusStars(type, stars) + " */";
+		}
+		if (type.equals("unsigned"))
+			type = "int";
+		else if (type.startsWith("unsigned "))
+			type = type.substring(9);
+		if (type.equals("uint8_t") || type.equals("int8_t") || type.equals("char"))
+			type = "byte";
+		else if (type.equals("long"))
+			type = "NativeLong";
+		else if (type.equals("uint64_t") || type.equals("int64_t"))
+			type = "long";
+		else if (type.equals("uint32_t") || type.equals("int32_t") || type.equals("AVCRC"))
+			type = "int";
+		else if (type.equals("uint16_t") || type.equals("int16_t"))
+			type = "short";
+		else if (type.startsWith("enum "))
+			type = "int /* " + type + " */";
+		if (stars == 0)
+			return type;
+		if (stars == 1)
+			if (type.equals("byte"))
+				return "byte[]"; // assume that it's a buffer
+			else if (type.equals("void"))
+				return "Pointer";
+			else {
+				int space = type.indexOf(" ");
+				if (space < 0)
+					return capitalize(type) + "ByReference";
+				return capitalize(type.substring(0, space)) + "ByReference" + type.substring(space);
+			}
+		return "PointerByReference /* " + plusStars(type, stars) + " */";
+	}
+
+	boolean unbalancedParens(String line) {
+		int count = 0;
+		for (char c : line.toCharArray())
+			if (c == '(')
+				count++;
+			else if (c == ')')
+				if (--count < 0)
+					throw new RuntimeException("Negative paren balance: " + line);
+		return count > 0;
+	}
+
+	String functionParameters(String original) {
+		Matcher matcher;
+		StringBuffer buf = new StringBuffer();
+		int unnamedNumber = 1; // we call unnamed parameters param1, param2, etc
+		boolean first = true;
+		// Can't use 'for (param : ...)' since the split() can cut callbacks in the middle
+		String[] parameters = original.split("\\s*,\\s*");
+		for (int i = 0; i < parameters.length; i++) {
+			String parameter = parameters[i];
+			// Handle erroneously cut callbacks
+			while (unbalancedParens(parameter) && i < parameters.length)
+				parameter += parameters[++i];
+
+			if (first)
+				first = false;
+			else
+				buf.append(", ");
+			if (parameter.equals("void"))
+				continue;
+			if ((matcher = match(parameterPattern, parameter)) != null) {
+				String name = matcher.group(2);
+				if (name == null)
+					name = "param" + unnamedNumber++;
+				else if (name.startsWith("param")) try {
+					unnamedNumber = Math.max(unnamedNumber,
+						1 + Integer.parseInt(stripPrefix(name, "param")));
+				} catch (NumberFormatException e) { /* ignore */ }
+				String type = matcher.group(1);
+				if (type.indexOf('(') >= 0)
+					type = "Pointer /* " + type + " */";
+				else if (name.indexOf('[') >= 0) {
+					int offset = name.indexOf('[');
+					type = "Pointer /* " + type + name.substring(offset) + " */";
+					name = name.substring(0, offset);
+				}
+				else
+					type = translateType(type, false);
+				buf.append(type).append(" ").append(name);
+			}
+			else
+				buf.append("UNHANDLED parameter ").append(parameter);
+		}
+		return buf.toString();
+	}
+
+	protected int bitFieldBitCount = 0, bitFieldCount = 1;
+	protected StringBuffer bitFieldBuffer = new StringBuffer();
+
+	protected void flushBitField(StringBuffer out) {
+		if (bitFieldBitCount == 0)
+			return;
+		String name = "bitfield" + (bitFieldCount++);
+		out.append("public int[] ").append(name).append(" = new int[" + ((bitFieldCount + 31) / 32) + "];\n");
+		out.append(bitFieldBuffer.toString());
+		bitFieldBuffer.setLength(0);
+		bitFieldBitCount = 0;
+	}
+
+	protected String bitField(int shift, int bits) {
+		int index = shift / 32;
+		int left = shift - index * 32;
+		return (left > 0 ? "(" : "")
+			+ "(bitfield" + bitFieldCount + "[" + index + "] "
+			+ (left > 0 ? ">> " + left + ")": "")
+			+ " & 0x" + Integer.toHexString((int)((1l << bits) - 1)) + ")";
+	}
+
+	protected String setBitField(int shift, int bits) {
+		int index = shift / 32;
+		int left = shift - index * 32;
+		String mask = "0x" + Integer.toHexString(((1 << bits) - 1) << left);
+		String var = "bitfield" + bitFieldCount + "[" + index + "]";
+		return var + " = (" + var + " & ~" + mask
+			+ ") | (" + (left > 0 ? "(value << " + left + ")" : "value") + " & " + mask + ");\n";
+	}
+
+	protected void stageBitFieldEntry(String name, int bits) {
+		if (bits > 31)
+			throw new RuntimeException("Can only handle bitfield entries < 32 bit");
+		// TODO: handle signed
+		String var = "bitfield" + bitFieldCount;
+		String setter = "public void " + name + "(int /* int:" + bits + " */ value) {\n";
+		bitFieldBuffer.append("public int ").append(name).append("() {\n\treturn ");
+		int index = bitFieldBitCount / 32;
+		int left = 32 - index * 32;
+		if (left == 0)
+			left = 32;
+		while (bits > left) {
+			bitFieldBuffer.append(bitField(bitFieldBitCount, left) + " | ");
+			setter += "\t" + setBitField(bitFieldBitCount, left)
+				+ "\n\tvalue >>= " + left + ";\n";
+			bits -= left;
+			bitFieldBitCount += left;
+		}
+		bitFieldBuffer.append(bitField(bitFieldBitCount, bits) + ";\n}\n"
+			+ setter + "\t" + setBitField(bitFieldBitCount, bits) + "}\n");
+		bitFieldBitCount += bits;
+	}
+
+	String handleStruct(String line, int level, LineIterator iter) {
+if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields not flushed!");
+		Matcher matcher = match(structPattern, line);
+		if (matcher == null)
+			return null;
+		String name = matcher.group(1);
+		StringBuffer constants = new StringBuffer();
+		StringBuffer buf = new StringBuffer();
+		flushBitField(buf);
+		while (iter.next()) {
+			line = iter.getLine().trim();
+
+if (line.indexOf("AV_CPU_FLAG_FORCE") >= 0) print("1");
+			line = replace(line, "FF_COMMON_FRAME", commonFrame);
+
+			int semicolon = line.indexOf(';');
+			if (semicolon >= 0 && semicolon + 1 < line.length()) {
+				iter.push(line.substring(semicolon + 1));
+				line = line.substring(0, semicolon + 1);
+			}
+
+if (line.indexOf("AV_CPU_FLAG_FORCE") >= 0) print("2");
+			if ((matcher = match(structEndPattern, line)) != null) {
+				flushBitField(buf);
+				if (matcher.group(1) != null)
+					name = matcher.group(1);
+				else if (matcher.group(2) != null)
+					name = matcher.group(2);
+				break;
+			}
+
+if (line.indexOf("AV_CPU_FLAG_FORCE") >= 0) print("3");
+			if (level == 0 && (matcher = match(definePattern, line)) != null) {
+				constants.append("public static final int ").append(matcher.group(1))
+					.append(" = ").append(addLibPrefix(matcher.group(2))).append(";\n");
+if (matcher.group(1).equals("AV_CPU_FLAG_FORCE")) print("registering AV to " + currentLib);
+				name2lib.put(matcher.group(1), currentLib);
+				continue;
+			}
+
+if (line.indexOf("AV_CPU_FLAG_FORCE") >= 0) print("4");
+			String inner = handleStruct(line, level + 1, iter);
+			if (inner != null) {
+				flushBitField(buf);
+				buf.append(inner);
+				continue;
+			}
+
+if (line.indexOf("AV_CPU_FLAG_FORCE") >= 0) print("5");
+			// Make sure that callback declarations are complete
+			while (unbalancedParens(line))
+				if (iter.next())
+					line += iter.getLine();
+				else
+					throw new RuntimeException("EOF with unbalanced parens: " + line);
+
+if (line.indexOf("AV_CPU_FLAG_FORCE") >= 0) print("6");
+			if ((matcher = match(callbackPattern, line)) != null) {
+				flushBitField(buf);
+				String name2 = matcher.group(2);
+				String callback = camelCasify(name2);
+				buf.append("public static interface ").append(callback).append(" extends Callback {\n")
+					.append("\tpublic ").append(translateType(matcher.group(1), false))
+					.append(" callback(");
+				buf.append(functionParameters(matcher.group(3)));
+				buf.append(");\n}\npublic ").append(callback).append(" ").append(name2).append(";\n");
+				continue;
+			}
+
+			if ((matcher = match(motionValTablePattern, line)) != null) {
+				flushBitField(buf);
+				String name2 = matcher.group(2);
+				String suffix = matcher.group(3);
+				buf.append("public Pointer").append(suffix.replaceAll("[^\\[\\]]", ""))
+					.append(" ").append(name2).append(" = new Pointer").append(suffix)
+					.append("; // ").append(line).append("\n");
+				continue;
+			}
+
+			if ((matcher = match(bitFieldPattern, line)) != null) {
+				stageBitFieldEntry(matcher.group(1), Integer.parseInt(matcher.group(2)));
+				continue;
+			}
+
+			if ((matcher = match(structMemberPattern, line)) == null) {
+				flushBitField(buf);
+				if (!line.equals(""))
+					buf.append("UNHANDLED: ").append(line).append("\n");
+				continue;
+			}
+
+			flushBitField(buf);
+			String type = matcher.group(1);
+			String suffix = matcher.group(3);
+			if (type.endsWith("*")) {
+				type = "Pointer /* " + type + suffix + " */";
+				suffix = "";
+			}
+			else
+				type = translateType(type, true);
+
+			buf.append(type);
+			if (!suffix.equals(""))
+				buf.append(suffix.replaceAll("[^\\[\\]]", ""));
+			buf.append(" ").append(matcher.group(2));
+			if (!suffix.equals(""))
+				buf.append(" = new ").append(type).append(suffix);
+			buf.append(";\n");
+		}
+		flushBitField(buf);
+		if (level == 0)
+{ if (name == null) throw new RuntimeException("last line: " + line + ", so far:\n" + buf.toString());
+			name2lib.put(name, currentLib);
+}
+		String prefix = constants.toString();
+		if (!prefix.equals(""))
+			prefix += "\n";
+
+		return indent(prefix + "public static class " + name + " extends Structure {\n"
+				+ "\tpublic static class ByValue extends " + name + " implements Structure.ByValue {}\n", level)
+			+ indent(buf.toString(), level + 1)
+			+ indent("}\n", level);
+	}
+
+	String handleMacro(String value) {
+		String[] parameters = value.substring(value.indexOf('(') + 1, value.lastIndexOf(')')).split("\\s*,\\s*");
+		if (value.startsWith("AV_VERSION_INT(")) {
+			value = ")";
+			for (int i = parameters.length - 1; i >= 0; i--)
+				value = (i > 0 ? " | " : "") + parameters[i] + value;
+			return "(" + value;
+		}
+		if (value.startsWith("AV_VERSION(")) {
+			value = "\"\" + " + parameters[0];
+			for (int i = 1; i < parameters.length; i++)
+				value += " + \".\" + " + parameters[i];
+			return value;
+		}
+		if (value.startsWith("PIX_FMT_NE("))
+			return "PIX_FMT_" + parameters[0];
+		throw new RuntimeException("Don't know how to handle macro " + value);
+	}
+
+	String toJNA(String contents) {
+		Matcher matcher;
+		StringBuffer buf = new StringBuffer();
+		LineIterator iter = new LineIterator(contents, false);
+		while (iter.next()) {
+			String line = iter.getLine().trim();
+
+if (line.indexOf("AV_CPU_FLAG_FORCE") >= 0) print("7");
+			// Handle backslashes at the end of the line
+			while (line.endsWith("\\") && iter.next())
+				line = line.substring(0, line.length() - 1) + iter.getLine();
+
+			if (line.equals("")) {
+				buf.append("\n");
+				continue;
+			}
+
+if (line.indexOf("AV_CPU_FLAG_FORCE") >= 0) print("8");
+			if (line.charAt(0) == '#') {
+				if ((matcher = match(definePattern, line)) != null &&
+						!skipDefine.matcher(matcher.group(1)).matches()) {
+					if (matcher.group(2).startsWith("(") &&
+							line.charAt(line.indexOf(matcher.group(2)) - 1) != ' ')
+						continue; // cannot handle macros
+					String value = matcher.group(2).replaceAll("\\s+", " ")
+						.replace("AV_STRINGIFY(", "+ (");
+					if (matcher.group(1).equals("FF_COMMON_FRAME")) {
+						commonFrame = value;
+						continue;
+					}
+					String type = "int";
+					if (value.startsWith("AV_VERSION(") || value.startsWith("AV_VERSION_INT(") ||
+							value.startsWith("PIX_FMT_NE("))
+						value = handleMacro(value);
+					if (value.startsWith("\""))
+						type = "String";
+					else if (value.endsWith("LL") || value.endsWith("ll")) {
+						type = "long";
+						value = value.substring(0, value.length() - 1);
+					}
+					else if (value.endsWith("l"))
+						type = "NativeLong";
+					else if (value.startsWith("INT64_C(")) {
+						type = "long";
+						value = value.substring(8, value.length() - 1) + "l";
+					}
+					else if (value.indexOf('<') > 0 || value.indexOf('>') > 0 || value.indexOf("==") > 0)
+						type = "boolean";
+					else if (value.indexOf('.') >= 0)
+						type = value.endsWith("f") ? "float" : "double";
+					if (!value.equals("")) {
+if (matcher.group(1).equals("AV_CPU_FLAG_FORCE")) print("registering AV to " + currentLib);
+						name2lib.put(matcher.group(1), currentLib);
+if (value.equals("AV_CPU_FLAG_FORCE")) print("FOUND! " + addLibPrefix(value));
+						buf.append("public static final ").append(type).append(" ")
+							.append(matcher.group(1)).append(" = ").append(addLibPrefix(value)).append(";\n");
+					}
+				}
+				continue;
+			}
+
+			// Handle structs
+			String struct = handleStruct(line, 0, iter);
+			if (struct != null) {
+				buf.append(struct);
+				continue;
+			}
+
+			// Read until end of statement
+			while (!line.endsWith(";") && iter.next())
+				line += "\n" + iter.getLine();
+
+			int semicolon = line.indexOf(';');
+			if (semicolon >= 0 && semicolon + 1 < line.length()) {
+				iter.push(line.substring(semicolon + 1));
+				line = line.substring(0, semicolon + 1);
+			}
+
+			// Handle extern variables
+			if ((matcher = match(externVariablePattern, line)) != null)
+				continue; // TODO: handle via library.getFunction(name).getInt(0)
+
+			// Handle local variables
+			if ((matcher = match(staticVariablePattern, line)) != null)
+				continue;
+
+			// Handle deprecated
+			if (line.startsWith("attribute_deprecated")) {
+				//buf.append("@deprecated\n");
+				line = stripPrefix(line, "attribute_deprecated").trim();
+			}
+
+			// Make sure that function declarations are complete
+			if (line.indexOf('(') > 0)
+				while (line.indexOf(')') < 0 && iter.next())
+					line += iter.getLine();
+
+			// Handle function
+			if ((matcher = match(functionPattern, line)) != null) {
+				if (matcher.group(3).endsWith("va_list"))
+					buf.append("/* Skipping vararg function ").append(line).append(" */\n");
+				else
+					buf.append(translateType(matcher.group(1), false))
+					.append(" ").append(matcher.group(2))
+					.append("(").append(functionParameters(matcher.group(3))).append(");\n");
+				continue;
+			}
+
+if (line.indexOf("AV_CPU_FLAG_FORCE") >= 0) print("9");
+			// Handle enums
+			if ((matcher = match(enumPattern, line)) != null) {
+				buf.append("// enum ");
+				if (matcher.group(1) != null)
+					buf.append(matcher.group(1));
+				buf.append("\n");
+				int number = 0;
+				for (String item : matcher.group(2).split("\\s*,\\s*")) {
+					int equals = item.indexOf('=');
+					if (equals > 0) {
+						number = parseInt(item.substring(equals + 1).trim());
+						item = item.substring(0, equals);
+					}
+					item = item.trim();
+					buf.append("public static final int ").append(item).append(" = " + number++).append(";\n");
+					name2lib.put(item, currentLib);
+if (item.equals("AV_CPU_FLAG_FORCE")) print("registering AV to " + currentLib);
+				}
+				continue;
+			}
+
+if (line.indexOf("AV_CPU_FLAG_FORCE") >= 0) print("a");
+			buf.append("/* UNHANDLED: ").append(line).append(" */\n");
+		}
+		return buf.toString();
+	}
+
+	String readFile(File path) throws IOException {
+		FileReader reader = new FileReader(path);
+		StringBuffer buf = new StringBuffer();
+		char[] cBuf = new char[65536];
+		for (;;) {
+			int count = reader.read(cBuf);
+			if (count < 0)
+				break;
+			buf.append(cBuf, 0, count);
+		}
+		reader.close();
+		return buf.toString();
+	}
+
+	String preprocessWithoutDefines(String contents) {
+		StringBuffer buf = new StringBuffer();
+		LineIterator iter = new LineIterator(contents);
+		while (iter.next()) {
+			String line = iter.getLine();
+			while (line.endsWith("\\") && iter.next())
+				line = line.substring(0, line.length() - 1) + iter.getLine();
+			if (!line.startsWith("#") || definePattern.matcher(line).matches())
+				buf.append(line).append("\n");
+		}
+		return buf.toString();
+	}
+
+	void handleHeaders(String pathToHeaders, String libName, String packageName, String outDir) throws IOException {
+		File outFile = new File(outDir, packageName.replace('.', '/') + "/" + libName + ".java");
+		outFile.getParentFile().mkdirs();
+		FileWriter out = new FileWriter(outFile);
+
+		out.write("package " + packageName + ";\n\n");
+		for (String c : new String[] {
+				"Callback",
+				"Library",
+				"NativeLong",
+				"Pointer",
+				"Structure",
+				"ptr.IntByReference",
+				"ptr.LongByReference",
+				"ptr.PointerByReference",
+				"ptr.ShortByReference"
+		})
+			out.write("import com.sun.jna." + c + ";\n");
+		out.write("\n");
+		out.write("public interface " + libName + " extends Library {\n");
+
+		print("Generating " + libName);
+		File path = new File(pathToHeaders);
+		String[] list = libName.equals("AVUTIL") ? path.list()
+			: new String[] { libName.toLowerCase() + ".h" };
+		Pattern ignorePattern =
+			compile("(internal|timer|colorspace|attributes|bswap|intmath|intreadwrite|libm|common"
+				+ "|error|crc|pixdesc|fifo|md5|tree|pca|sha1|x86_cpu|eval|mathematics|mem)\\.h");
+		for (String file : list) {
+			if (!file.endsWith(".h") || match(ignorePattern, file) != null)
+				continue;
+			print("Translating " + file);
+			out.write("\n\t// Header: " + file + "\n");
+			String contents = readFile(new File(path, file));
+			contents = filterOutIf0(contents);
+			contents = filterOutComments(contents);
+			contents = filterOutGuard(contents).trim();
+			contents = reduceEmptyLines(contents);
+			contents = preprocessWithoutDefines(contents);
+			contents = toJNA(contents);
+			out.write(indent(contents, 1));
+		}
+
+		out.write("}\n");
+		out.close();
+	}
+
+	public static int parseInt(String number) {
+		if (number.startsWith("0x"))
+			return Integer.parseInt(number.substring(2), 16);
+		if (number.length() > 1 && number.startsWith("0"))
+			return Integer.parseInt(number.substring(1), 8);
+		return Integer.parseInt(number);
+	}
+
+	public static void print(String message) {
+		IJ.log(message);
+	}
+
+	public static void handleException(Exception e) {
+		if (IJ.getInstance() != null)
+			IJ.handleException(e);
+		else
+			e.printStackTrace();
+	}
+
+	public static void main(String[] args) {
+try {
+		String ffmpegDir = "/home/gene099/fiji/work/fantana/ffmpeg/ffmpeg/";
+		String outDir = "/home/gene099/fiji/work/fantana/ffmpeg/classes/";
+
+		GenerateFFMPEGClasses generator = new GenerateFFMPEGClasses();
+
+if (true) {
+	/*
+	print("" + generator.match(generator.parameterPattern,
+		"int (*cb)(void **mutex, UNHANDLED parameter enum AVLockOp op)"));
+	print("" + generator.match(generator.motionValTablePattern,
+		"int16_t (*motion_val[2])[2];"));
+	print("" + generator.match(generator.structMemberPattern,
+		"const struct AVCodecTag * const *codec_tag;"));
+	return;
+	*/
+}
+if (!true) try {
+	String contents = generator.readFile(new File(ffmpegDir, "libavcodec/vp56.h"));
+	//contents = "static const uint8_t dca_default_coeffs[16][5][2] = {\n1\n};";
+	print(generator.toJNA(generator.filterOutGuard(generator.filterOutComments(generator.filterOutIf0(contents))).trim()));
+	return;
+} catch (Exception e) {
+	handleException(e);
+	return;
+}
+
+		for (String lib : new String[] { "avutil", "avcore", "avdevice", "swscale", /* "avfilter", */ "avcodec", "avformat" }) {
+		//for (String lib : new String[] { "avcodec", "avformat" }) {
+			if (!ffmpegDir.endsWith("/"))
+				ffmpegDir += "/";
+
+			generator.currentLib = lib.toUpperCase();
+			try {
+				generator.handleHeaders(ffmpegDir + "lib" + lib, generator.currentLib, "fiji.ffmpeg", outDir);
+			} catch (IOException e) {
+				handleException(e);
+				print("Could not handle " + lib + ": " + e);
+			}
+		}
+} catch (Exception e) {
+	handleException(e);
+}
+	}
+}
