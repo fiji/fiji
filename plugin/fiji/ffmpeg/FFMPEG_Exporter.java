@@ -51,7 +51,7 @@ public class FFMPEG_Exporter extends FFMPEG implements PlugIn {
 	Pointer samples;
 
 	AVOutputFormat fmt = null;
-	AVFormatContext oc = null;
+	AVFormatContext formatContext = null;
 	AVStream video_st;
 	double video_pts;
 	int i;
@@ -111,33 +111,35 @@ public class FFMPEG_Exporter extends FFMPEG implements PlugIn {
 		}
 
 		/* allocate the output media context */
-		oc = AVFORMAT.av_alloc_format_context();
-		if (oc == null) {
+		formatContext = AVFORMAT.av_alloc_format_context();
+		if (formatContext == null) {
 			IJ.error("Memory error");
 			return;
 		}
-		oc.oformat = fmt.getPointer();
-		oc.filename = path.getBytes();
+		formatContext.oformat = fmt.getPointer();
+		byte[] filename = path.getBytes();
+		System.arraycopy(filename, 0, formatContext.filename, 0, filename.length);
+		filename[filename.length] = 0;
 
 		/* add the video stream using the default format
 		 * codec and initialize the codec */
 		video_st = null;
 		if (fmt.video_codec != AVCODEC.CODEC_ID_NONE) {
-			video_st = add_video_stream(oc, fmt.video_codec);
+			video_st = add_video_stream(formatContext, fmt.video_codec);
 			if (video_st == null)
 				return;
 		}
 
 		/* set the output parameters (mustbe done even if no
 		 * parameters). */
-		if (AVFORMAT.av_set_parameters(oc, null) < 0) {
+		if (AVFORMAT.av_set_parameters(formatContext, null) < 0) {
 			IJ.error("Invalid output format parameters.");
 			return;
 		}
 
 		/* now that all the parameters are set, we can open the
 		 * video codec and allocate the necessary encode buffer */
-		if (video_st != null && !open_video(oc, video_st))
+		if (video_st != null && !open_video(formatContext, video_st))
 			return;
 
 		/* open the output file, if needed */
@@ -148,10 +150,10 @@ public class FFMPEG_Exporter extends FFMPEG implements PlugIn {
 				IJ.error("Could not open " + path);
 				return;
 			}
-			oc.pb = p.getValue();
+			formatContext.pb = p.getValue();
 		}
 
-		AVFORMAT.av_write_header(oc);
+		AVFORMAT.av_write_header(formatContext);
 
 		while (frame_count < stack.getSize()) {
 			if (video_st != null)
@@ -162,36 +164,36 @@ public class FFMPEG_Exporter extends FFMPEG implements PlugIn {
 				video_pts = 0.0;
 
 			/* write video frame */
-			if (!write_video_frame(oc, video_st))
+			if (!write_video_frame(formatContext, video_st))
 				break;
 		}
 
 		/* close each codec */
 		if (video_st != null)
-			close_video(oc, video_st);
+			close_video(formatContext, video_st);
 
 		/* write the trailer, if any */
-		AVFORMAT.av_write_trailer(oc);
+		AVFORMAT.av_write_trailer(formatContext);
 
 		/* free the streams */
 		// TODO: free all streams
-		for (i = 0; i < oc.nb_streams; i++) {
-			AVStream tmp_stream = new AVStream(oc.streams[0]);
+		for (i = 0; i < formatContext.nb_streams; i++) {
+			AVStream tmp_stream = new AVStream(formatContext.streams[0]);
 			AVUTIL.av_free(tmp_stream.codec);
-			AVUTIL.av_free(oc.streams[0]);
+			AVUTIL.av_free(formatContext.streams[0]);
 		}
 
 		if ((fmt.flags & AVFORMAT.AVFMT_NOFILE) == 0) {
 			/* close the output file */
-			AVFORMAT.url_fclose(new ByteIOContext(oc.pb));
+			//AVFORMAT.url_fclose(new ByteIOContext(formatContext.pb));
 		}
 
 		/* free the stream */
-		AVUTIL.av_free(oc.getPointer());
+		AVUTIL.av_free(formatContext.getPointer());
 	}
 
-	private boolean write_video_frame(AVFormatContext oc, AVStream st) {
-		int out_size, ret;
+	private boolean write_video_frame(AVFormatContext formatContext, AVStream st) {
+		int out_size = 0, ret;
 		AVCodecContext c = new AVCodecContext(st.codec);
 		//SwsContext img_convert_ctx = null;
 
@@ -220,7 +222,7 @@ public class FFMPEG_Exporter extends FFMPEG implements PlugIn {
 			}
 		}
 
-		AVOutputFormat tmp_fmt = new AVOutputFormat(oc.oformat);
+		AVOutputFormat tmp_fmt = new AVOutputFormat(formatContext.oformat);
 		if ((tmp_fmt.flags & AVFORMAT.AVFMT_RAWPICTURE) == 1) {
 			/* raw video case. The API will change slightly in the near
 			   futur for that */
@@ -233,10 +235,10 @@ public class FFMPEG_Exporter extends FFMPEG implements PlugIn {
 			//pkt.size = picture.size();
 			if (true) throw new RuntimeException("TODO");
 
-			ret = AVFORMAT.av_write_frame(oc, pkt);
+			ret = AVFORMAT.av_write_frame(formatContext, pkt);
 		} else {
 			/* encode the image */
-			out_size = AVCODEC.avcodec_encode_video(c, video_outbuf, video_outbuf_size, picture);
+			//out_size = AVCODEC.avcodec_encode_video(c, video_outbuf, video_outbuf_size, picture);
 			/* if zero size, it means the image was buffered */
 			if (out_size > 0) {
 				AVPacket pkt = new AVPacket();
@@ -252,7 +254,7 @@ public class FFMPEG_Exporter extends FFMPEG implements PlugIn {
 				pkt.size = out_size;
 
 				/* write the compressed frame in the media file */
-				ret = AVFORMAT.av_write_frame(oc, pkt);
+				ret = AVFORMAT.av_write_frame(formatContext, pkt);
 
 				st.pts.val = pkt.pts; // necessary for calculation of video length
 			} else {
@@ -282,7 +284,7 @@ public class FFMPEG_Exporter extends FFMPEG implements PlugIn {
 		}
 	}
 
-	private boolean open_video(AVFormatContext oc, AVStream st) {
+	private boolean open_video(AVFormatContext formatContext, AVStream st) {
 		AVCodec codec;
 		AVCodecContext c = new AVCodecContext(st.codec);
 
@@ -300,7 +302,7 @@ public class FFMPEG_Exporter extends FFMPEG implements PlugIn {
 		}
 
 		video_outbuf = null;
-		AVOutputFormat tmp_fmt = new AVOutputFormat(oc.oformat);
+		AVOutputFormat tmp_fmt = new AVOutputFormat(formatContext.oformat);
 		if ((tmp_fmt.flags & AVFORMAT.AVFMT_RAWPICTURE) == 0) {
 			/* allocate output buffer */
 			/* buffers passed into lav* can be allocated any way you prefer,
@@ -352,7 +354,7 @@ public class FFMPEG_Exporter extends FFMPEG implements PlugIn {
 		return picture;
 	}
 
-	private void close_video(AVFormatContext oc, AVStream st) {
+	private void close_video(AVFormatContext formatContext, AVStream st) {
 		AVCodecContext tmp_codec = new AVCodecContext(st.codec);
 		AVCODEC.avcodec_close(tmp_codec);
 		AVUTIL.av_free(picture.data[0]);
@@ -363,10 +365,10 @@ public class FFMPEG_Exporter extends FFMPEG implements PlugIn {
 		}
 	}
 
-	private AVStream add_video_stream(AVFormatContext oc, int codec_id) {
+	private AVStream add_video_stream(AVFormatContext formatContext, int codec_id) {
 		AVStream st;
 
-		st = AVFORMAT.av_new_stream(oc, 0);
+		st = AVFORMAT.av_new_stream(formatContext, 0);
 		if (st == null) {
 			IJ.error("Could not alloc video stream.");
 			return null;
@@ -400,7 +402,7 @@ public class FFMPEG_Exporter extends FFMPEG implements PlugIn {
 			c.mb_decision = 2;
 		}
 		// some formats want stream headers to be separate
-		AVOutputFormat tmp_fmt = new AVOutputFormat(oc.oformat);
+		AVOutputFormat tmp_fmt = new AVOutputFormat(formatContext.oformat);
 		if (tmp_fmt.name.equals("mp4") || tmp_fmt.name.equals("mov") || tmp_fmt.name.equals("3gp")) {
 			c.flags |= AVCODEC.CODEC_FLAG_GLOBAL_HEADER;
 		}
