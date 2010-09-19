@@ -76,32 +76,32 @@ public class FFMPEG_Importer extends ImagePlus implements PlugIn {
 
 		// TODO: get number of frames, and show dialog for max_count
 
-		final PointerByReference ppFormatCtx = new PointerByReference();
+		final PointerByReference ppFormatContext = new PointerByReference();
 
 		// Open video file
-		if (AVFORMAT.av_open_input_file(ppFormatCtx,
+		if (AVFORMAT.av_open_input_file(ppFormatContext,
 					file.getAbsolutePath(), null, 0, null) != 0) {
 			IJ.error("Could not open " + file);
 			return;
 		}
 
-		final AVFormatContext formatCtx =
-			new AVFormatContext(ppFormatCtx.getValue());
+		final AVFormatContext formatContext =
+			new AVFormatContext(ppFormatContext.getValue());
 
 		// Retrieve stream information
-		if (AVFORMAT.av_find_stream_info(formatCtx) < 0) {
+		if (AVFORMAT.av_find_stream_info(formatContext) < 0) {
 			IJ.error("No stream in " + file);
 			return;
 		}
 
 		// Find the first video stream
 		int videoStream = -1;
-		for (int i = 0; i < formatCtx.nb_streams; i++) {
+		for (int i = 0; i < formatContext.nb_streams; i++) {
 			final AVStream stream =
-				new AVStream(formatCtx.getStreams()[i]);
-			final AVCodecContext codecCtx =
+				new AVStream(formatContext.getStreams()[i]);
+			final AVCodecContext codecContext =
 				new AVCodecContext(stream.codec);
-			if (codecCtx.codec_type ==
+			if (codecContext.codec_type ==
 					AVCODEC.CODEC_TYPE_VIDEO) {
 				videoStream = i;
 				break;
@@ -113,25 +113,25 @@ public class FFMPEG_Importer extends ImagePlus implements PlugIn {
 		}
 
 		// Get a pointer to the codec context for the video stream
-		final Pointer pCodecCtx =
-			new AVStream(formatCtx.getStreams()[videoStream]).codec;
-		final AVCodecContext codecCtx = new AVCodecContext(pCodecCtx);
+		final Pointer pCodecContext =
+			new AVStream(formatContext.getStreams()[videoStream]).codec;
+		final AVCodecContext codecContext = new AVCodecContext(pCodecContext);
 
-		if (codecCtx.codec_id == 0) {
+		if (codecContext.codec_id == 0) {
 			IJ.error("Codec not available");
 			return;
 		}
 
 		// Find the decoder for the video stream
 		final AVCodec codec =
-			AVCODEC.avcodec_find_decoder(codecCtx.codec_id);
+			AVCODEC.avcodec_find_decoder(codecContext.codec_id);
 		if (codec == null) {
 			IJ.error("Codec not available");
 			return;
 		}
 
 		// Open codec
-		if (AVCODEC.avcodec_open(codecCtx, codec) < 0) {
+		if (AVCODEC.avcodec_open(codecContext, codec) < 0) {
 			IJ.error("Codec not available");
 			return;
 		}
@@ -151,21 +151,21 @@ public class FFMPEG_Importer extends ImagePlus implements PlugIn {
 		// Determine required buffer size and allocate buffer
 		final int numBytes =
 			AVCODEC.avpicture_get_size(AVCODEC.PIX_FMT_RGB24,
-					codecCtx.width, codecCtx.height);
+					codecContext.width, codecContext.height);
 		final Pointer buffer = AVUTIL.av_malloc(numBytes);
 
 		// Assign appropriate parts of buffer to image planes
 		// in pFrameRGB
 		AVCODEC.avpicture_fill(frameRGB, buffer,
 				AVCODEC.PIX_FMT_RGB24,
-				codecCtx.width, codecCtx.height);
+				codecContext.width, codecContext.height);
 
 		ImageStack stack =
-			new ImageStack(codecCtx.width, codecCtx.height);
+			new ImageStack(codecContext.width, codecContext.height);
 
 		// Read frames and save first five frames to disk
 		final AVPacket packet = new AVPacket();
-		while (AVFORMAT.av_read_frame(formatCtx, packet) >= 0) {
+		while (AVFORMAT.av_read_frame(formatContext, packet) >= 0) {
 			// Is this a packet from the video stream?
 			if (packet.stream_index != videoStream)
 				continue;
@@ -173,7 +173,7 @@ public class FFMPEG_Importer extends ImagePlus implements PlugIn {
 			final IntByReference frameFinished =
 				new IntByReference();
 			// Decode video frame
-			AVCODEC.avcodec_decode_video(codecCtx, frame,
+			AVCODEC.avcodec_decode_video(codecContext, frame,
 					frameFinished,
 					packet.data, packet.size);
 
@@ -184,9 +184,9 @@ public class FFMPEG_Importer extends ImagePlus implements PlugIn {
 			// Convert the image from its native format to RGB
 			AVCODEC.img_convert(frameRGB,
 					AVCODEC.PIX_FMT_RGB24,
-					frame, codecCtx.pix_fmt,
-					codecCtx.width,
-					codecCtx.height);
+					frame, codecContext.pix_fmt,
+					codecContext.width,
+					codecContext.height);
 
 			if (stack.getSize() >= max_slice_count) {
 				IJ.error("Movie " + file.getName()
@@ -196,7 +196,7 @@ public class FFMPEG_Importer extends ImagePlus implements PlugIn {
 				break;
 			}
 			ImageProcessor ip = toSlice(frameRGB,
-					codecCtx.width, codecCtx.height);
+					codecContext.width, codecContext.height);
 			stack.addSlice(null, ip);
 
 			// Free the packet that was allocated by av_read_frame
@@ -215,10 +215,10 @@ public class FFMPEG_Importer extends ImagePlus implements PlugIn {
 		AVUTIL.av_free(frame.getPointer());
 
 		// Close the codec
-		AVCODEC.avcodec_close(codecCtx);
+		AVCODEC.avcodec_close(codecContext);
 
 		// Close the video file
-		AVFORMAT.av_close_input_file(formatCtx);
+		AVFORMAT.av_close_input_file(formatContext);
 
 		if (stack.getSize() > 0) {
 			setStack(file.getName(), stack);
