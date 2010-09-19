@@ -475,6 +475,7 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 			line = iter.getLine().trim();
 
 			line = replace(line, "FF_COMMON_FRAME", commonFrame);
+			line = replace(line, "unsigned char *buf_ptr, *buf_end;", "char *buf_ptr; char *buf_end;");
 
 			int semicolon = line.indexOf(';');
 			if (semicolon >= 0 && semicolon + 1 < line.length()) {
