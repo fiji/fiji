@@ -611,8 +611,13 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 		String[] parameters = value.substring(value.indexOf('(') + 1, value.lastIndexOf(')')).split("\\s*,\\s*");
 		if (value.startsWith("AV_VERSION_INT(")) {
 			value = ")";
-			for (int i = parameters.length - 1; i >= 0; i--)
-				value = (i > 0 ? " | " : "") + parameters[i] + value;
+			int shift = 0;
+			for (int i = parameters.length - 1; i >= 0; i--, shift += 8)
+				value = (i > 0 ? " | " : "")
+					+ (shift > 0 ? "(" : "")
+					+ parameters[i]
+					+ (shift > 0 ? " << " + shift + ")" : "")
+					+ value;
 			return "(" + value;
 		}
 		if (value.startsWith("AV_VERSION(")) {
@@ -670,7 +675,7 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 						type = "long";
 						value = value.substring(8, value.length() - 1) + "l";
 					}
-					else if (value.indexOf('<') > 0 || value.indexOf('>') > 0 || value.indexOf("==") > 0)
+					else if ((value.indexOf('<') > 0 || value.indexOf('>') > 0 || value.indexOf("==") > 0) && (value.indexOf("<<") < 0 && value.indexOf(">>") < 0))
 						type = "boolean";
 					else if (value.indexOf('.') >= 0)
 						type = value.endsWith("f") ? "float" : "double";
