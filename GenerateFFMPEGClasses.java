@@ -309,7 +309,7 @@ public class GenerateFFMPEGClasses {
 			if (inStruct) {
 				if (stars == 0)
 					return type;
-				return "PointerByReference /* " + plusStars(type, stars) + " */";
+				return "Pointer /* " + plusStars(type, stars) + " */";
 			}
 			if (stars == 0)
 				return type + ".ByValue";
@@ -336,8 +336,11 @@ public class GenerateFFMPEGClasses {
 		if (stars == 0)
 			return type;
 		if (stars == 1)
-			if (type.equals("byte"))
+			if (type.equals("byte")) {
+				if (inStruct)
+					return "Pointer";
 				return "byte[]"; // assume that it's a buffer
+			}
 			else if (type.equals("void"))
 				return "Pointer";
 			else {
