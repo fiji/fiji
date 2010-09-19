@@ -799,6 +799,7 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 				"NativeLong",
 				"Pointer",
 				"Structure",
+				"ptr.DoubleByReference",
 				"ptr.IntByReference",
 				"ptr.LongByReference",
 				"ptr.PointerByReference",
