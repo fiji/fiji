@@ -1,7 +1,7 @@
 #!/bin/sh
 
 LIBS="avcodec avformat swscale avcore avdevice avfilter avutil"
-PARALLEL=-j20
+PARALLEL=-j5
 
 case "$(uname -s)" in
 Linux)
@@ -125,6 +125,14 @@ echo "Checking whether FFMPEG needs to be built" &&
 	# TODO: use install_name_tool -change <from> <to> <lib> on MacOSX
  fi)
 
+# Discover Fiji
+
 # TODO: call make_ffmpeg_jna_classes.bsh
 
 # TODO: compile the plugin & bundle all (Fakefile)
+
+# package everything (the libraries into platform-specific directories)
+
+# jna.library.path should suffice, now that rpath is set correctly
+
+# make a VirtualStack
