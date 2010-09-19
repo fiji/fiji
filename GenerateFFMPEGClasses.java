@@ -473,7 +473,6 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 		while (iter.next()) {
 			line = iter.getLine().trim();
 
-if (line.indexOf("AV_CPU_FLAG_FORCE") >= 0) print("1");
 			line = replace(line, "FF_COMMON_FRAME", commonFrame);
 
 			int semicolon = line.indexOf(';');
@@ -482,7 +481,6 @@ if (line.indexOf("AV_CPU_FLAG_FORCE") >= 0) print("1");
 				line = line.substring(0, semicolon + 1);
 			}
 
-if (line.indexOf("AV_CPU_FLAG_FORCE") >= 0) print("2");
 			if ((matcher = match(structEndPattern, line)) != null) {
 				flushBitField(buf);
 				if (matcher.group(1) != null)
@@ -492,16 +490,13 @@ if (line.indexOf("AV_CPU_FLAG_FORCE") >= 0) print("2");
 				break;
 			}
 
-if (line.indexOf("AV_CPU_FLAG_FORCE") >= 0) print("3");
 			if (level == 0 && (matcher = match(definePattern, line)) != null) {
 				constants.append("public static final int ").append(matcher.group(1))
 					.append(" = ").append(addLibPrefix(matcher.group(2))).append(";\n");
-if (matcher.group(1).equals("AV_CPU_FLAG_FORCE")) print("registering AV to " + currentLib);
 				name2lib.put(matcher.group(1), currentLib);
 				continue;
 			}
 
-if (line.indexOf("AV_CPU_FLAG_FORCE") >= 0) print("4");
 			String inner = handleStruct(line, level + 1, iter);
 			if (inner != null) {
 				flushBitField(buf);
@@ -509,7 +504,6 @@ if (line.indexOf("AV_CPU_FLAG_FORCE") >= 0) print("4");
 				continue;
 			}
 
-if (line.indexOf("AV_CPU_FLAG_FORCE") >= 0) print("5");
 			// Make sure that callback declarations are complete
 			while (unbalancedParens(line))
 				if (iter.next())
@@ -517,7 +511,6 @@ if (line.indexOf("AV_CPU_FLAG_FORCE") >= 0) print("5");
 				else
 					throw new RuntimeException("EOF with unbalanced parens: " + line);
 
-if (line.indexOf("AV_CPU_FLAG_FORCE") >= 0) print("6");
 			if ((matcher = match(callbackPattern, line)) != null) {
 				flushBitField(buf);
 				String name2 = matcher.group(2);
@@ -572,9 +565,7 @@ if (line.indexOf("AV_CPU_FLAG_FORCE") >= 0) print("6");
 		}
 		flushBitField(buf);
 		if (level == 0)
-{ if (name == null) throw new RuntimeException("last line: " + line + ", so far:\n" + buf.toString());
 			name2lib.put(name, currentLib);
-}
 		String prefix = constants.toString();
 		if (!prefix.equals(""))
 			prefix += "\n";
@@ -611,7 +602,6 @@ if (line.indexOf("AV_CPU_FLAG_FORCE") >= 0) print("6");
 		while (iter.next()) {
 			String line = iter.getLine().trim();
 
-if (line.indexOf("AV_CPU_FLAG_FORCE") >= 0) print("7");
 			// Handle backslashes at the end of the line
 			while (line.endsWith("\\") && iter.next())
 				line = line.substring(0, line.length() - 1) + iter.getLine();
@@ -621,7 +611,6 @@ if (line.indexOf("AV_CPU_FLAG_FORCE") >= 0) print("7");
 				continue;
 			}
 
-if (line.indexOf("AV_CPU_FLAG_FORCE") >= 0) print("8");
 			if (line.charAt(0) == '#') {
 				if ((matcher = match(definePattern, line)) != null &&
 						!skipDefine.matcher(matcher.group(1)).matches()) {
@@ -655,9 +644,7 @@ if (line.indexOf("AV_CPU_FLAG_FORCE") >= 0) print("8");
 					else if (value.indexOf('.') >= 0)
 						type = value.endsWith("f") ? "float" : "double";
 					if (!value.equals("")) {
-if (matcher.group(1).equals("AV_CPU_FLAG_FORCE")) print("registering AV to " + currentLib);
 						name2lib.put(matcher.group(1), currentLib);
-if (value.equals("AV_CPU_FLAG_FORCE")) print("FOUND! " + addLibPrefix(value));
 						buf.append("public static final ").append(type).append(" ")
 							.append(matcher.group(1)).append(" = ").append(addLibPrefix(value)).append(";\n");
 					}
@@ -712,7 +699,6 @@ if (value.equals("AV_CPU_FLAG_FORCE")) print("FOUND! " + addLibPrefix(value));
 				continue;
 			}
 
-if (line.indexOf("AV_CPU_FLAG_FORCE") >= 0) print("9");
 			// Handle enums
 			if ((matcher = match(enumPattern, line)) != null) {
 				buf.append("// enum ");
@@ -729,12 +715,10 @@ if (line.indexOf("AV_CPU_FLAG_FORCE") >= 0) print("9");
 					item = item.trim();
 					buf.append("public static final int ").append(item).append(" = " + number++).append(";\n");
 					name2lib.put(item, currentLib);
-if (item.equals("AV_CPU_FLAG_FORCE")) print("registering AV to " + currentLib);
 				}
 				continue;
 			}
 
-if (line.indexOf("AV_CPU_FLAG_FORCE") >= 0) print("a");
 			buf.append("/* UNHANDLED: ").append(line).append(" */\n");
 		}
 		return buf.toString();
@@ -834,32 +818,10 @@ if (line.indexOf("AV_CPU_FLAG_FORCE") >= 0) print("a");
 	}
 
 	public static void main(String[] args) {
-try {
 		String ffmpegDir = "/home/gene099/fiji/work/fantana/ffmpeg/ffmpeg/";
 		String outDir = "/home/gene099/fiji/work/fantana/ffmpeg/classes/";
 
 		GenerateFFMPEGClasses generator = new GenerateFFMPEGClasses();
-
-if (true) {
-	/*
-	print("" + generator.match(generator.parameterPattern,
-		"int (*cb)(void **mutex, UNHANDLED parameter enum AVLockOp op)"));
-	print("" + generator.match(generator.motionValTablePattern,
-		"int16_t (*motion_val[2])[2];"));
-	print("" + generator.match(generator.structMemberPattern,
-		"const struct AVCodecTag * const *codec_tag;"));
-	return;
-	*/
-}
-if (!true) try {
-	String contents = generator.readFile(new File(ffmpegDir, "libavcodec/vp56.h"));
-	//contents = "static const uint8_t dca_default_coeffs[16][5][2] = {\n1\n};";
-	print(generator.toJNA(generator.filterOutGuard(generator.filterOutComments(generator.filterOutIf0(contents))).trim()));
-	return;
-} catch (Exception e) {
-	handleException(e);
-	return;
-}
 
 		for (String lib : new String[] { "avutil", "avcore", "avdevice", "swscale", /* "avfilter", */ "avcodec", "avformat" }) {
 		//for (String lib : new String[] { "avcodec", "avformat" }) {
@@ -874,8 +836,5 @@ if (!true) try {
 				print("Could not handle " + lib + ": " + e);
 			}
 		}
-} catch (Exception e) {
-	handleException(e);
-}
 	}
 }
