@@ -47,6 +47,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.Map;
+import java.util.HashMap;
 
 import common.AbstractInterpreter;
 
@@ -237,7 +238,7 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 			this.input_reader = input_reader;
 		}
 
-		/** Returns the result of execution, in text for for printing. */
+		/** Returns the result of execution, in text for printing. */
 		public String call() {
 			StringBuffer sb = null;
 			try {
@@ -246,6 +247,14 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 				this.t = t;
 				Var.pushThreadBindings(RT.map(stare, t));
 			}
+
+			// In case it was not closed (for example when an Exception is thrown):
+			try {
+				input_reader.close();
+			} catch (Throwable ioe) {
+				ioe.printStackTrace();
+			}
+
 			return null == sb ? "nil" : sb.toString();
 		}
 
@@ -285,13 +294,6 @@ public class Clojure_Interpreter extends AbstractInterpreter {
 			Var.pushThreadBindings(RT.map(star2, ob));
 			// The last returned object of whatever was executed gets set to star1
 			Var.pushThreadBindings(RT.map(star1, ret));
-
-			// In case it was not closed:
-			try {
-				input_reader.close();
-			} catch (Throwable ioe) {
-				ioe.printStackTrace();
-			}
 
 			return sw.getBuffer();
 		}
