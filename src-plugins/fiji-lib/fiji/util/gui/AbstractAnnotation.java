@@ -1,5 +1,7 @@
 package fiji.util.gui;
 
+import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Composite;
 import java.awt.Graphics;
@@ -25,9 +27,9 @@ import fiji.util.gui.OverlayedImageCanvas.Overlay;
  */
 public abstract class AbstractAnnotation implements Overlay {
 
-	private Composite composite;
-	private Color color;
-	private Stroke stroke;
+	protected Composite composite = AlphaComposite.getInstance(AlphaComposite.DST);
+	protected Color color = Color.YELLOW;
+	protected Stroke stroke = new BasicStroke(1);
 
 	@Override
 	public void paint(Graphics g, int x, int y, double magnification) {
@@ -37,6 +39,7 @@ public abstract class AbstractAnnotation implements Overlay {
 		final Composite originalComposite = g2d.getComposite();
 		final Stroke originalStroke = g2d.getStroke();
 		final Color originalColor = g2d.getColor();
+		g2d.setStroke(stroke);
 		// Move graphic device to image coordinates
 		final AffineTransform at = new AffineTransform();
 		at.scale( magnification, magnification );
@@ -46,7 +49,6 @@ public abstract class AbstractAnnotation implements Overlay {
 		// Change graphic device settings 
 		g2d.setComposite(composite);
 		g2d.setColor(color);
-		g2d.setStroke(stroke);
 		// Delegate drawing to concrete implementation
 		draw(g2d);
 		// Restore graphic device original settings
