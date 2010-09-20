@@ -12,15 +12,12 @@ import ij.ImageStack;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 
-import fiji.ffmpeg.AVUTIL;
-
-import fiji.ffmpeg.AVCODEC;
 import fiji.ffmpeg.AVCODEC.AVCodec;
 import fiji.ffmpeg.AVCODEC.AVCodecContext;
 import fiji.ffmpeg.AVCODEC.AVFrame;
 import fiji.ffmpeg.AVCODEC.AVPacket;
+import fiji.ffmpeg.AVCODEC.AVPicture;
 
-import fiji.ffmpeg.AVFORMAT;
 import fiji.ffmpeg.AVFORMAT.AVFormatContext;
 import fiji.ffmpeg.AVFORMAT.AVOutputFormat;
 import fiji.ffmpeg.AVFORMAT.AVStream;
@@ -87,30 +84,25 @@ public class IO extends FFMPEGSingle {
 		if (frame == null)
 			throw new OutOfMemoryError("Could not allocate frame");
 
-/*
 		// Allocate an AVFrame structure
 		final AVFrame frameRGB = AVCODEC.avcodec_alloc_frame();
 		if (frameRGB == null)
 			throw new RuntimeException("Could not allocate frame");
 
-		// Determine required buffer size and allocate buffer
-		final int numBytes =
-			AVCODEC.avpicture_get_size(AVUTIL.PIX_FMT_RGB24,
-					codecContext.width, codecContext.height);
-		final Pointer buffer = AVUTIL.av_malloc(numBytes);
-
-		// Assign appropriate parts of buffer to image planes
-		// in pFrameRGB
-		AVCODEC.avpicture_fill(frameRGB, buffer,
-				AVUTIL.PIX_FMT_RGB24,
-				codecContext.width, codecContext.height);
-*/
+		// Allocate buffer
+		if (AVCODEC.avpicture_alloc(new AVPicture(frameRGB.getPointer()),
+				AVUTIL.PIX_FMT_RGB24, codecContext.width, codecContext.height) < 0)
+			throw new OutOfMemoryError("Could not allocate tmp frame");
+		frameRGB.read();
 
 		ImageStack stack = new ImageStack(codecContext.width, codecContext.height);
 
 		// Read frames and save first five frames to disk
 		AVPacket packet = new AVPacket();
 		IntByReference gotPicture = new IntByReference();
+		Pointer swsContext = SWSCALE.sws_getContext(codecContext.width, codecContext.height, codecContext.pix_fmt,
+				codecContext.width, codecContext.height, AVUTIL.PIX_FMT_RGB24,
+				SWSCALE.SWS_BICUBIC, null, null, null);
 		while (AVFORMAT.av_read_frame(formatContext, packet) >= 0) {
 			// Is this a packet from the video stream?
 			if (packet.stream_index != videoStream)
@@ -123,25 +115,10 @@ public class IO extends FFMPEGSingle {
 			if (gotPicture.getValue() == 0)
 				continue;
 
-/*
 			// Convert the image from its native format to RGB
-			AVCODEC.img_convert(frameRGB,
-					AVUTIL.PIX_FMT_RGB24,
-					frame, codecContext.pix_fmt,
-					codecContext.width,
-					codecContext.height);
-
-			if (stack.getSize() >= max_slice_count) {
-				IJ.error("Movie " + path.getName()
-					+ " is too large!\n"
-					+ "Only imported the first "
-					+ max_slice_count + " frames!");
-				break;
-			}
-			ImageProcessor ip = toSlice(frameRGB,
-					codecContext.width, codecContext.height);
-*/
-ImageProcessor ip = toSlice(frame, codecContext.width, codecContext.height);
+			SWSCALE.sws_scale(swsContext, frame.data, frame.linesize, 0, codecContext.height, frameRGB.data, frameRGB.linesize);
+if (stack.getSize() >= 100) { IJ.error("TODO: make virtual stack!"); break; }
+			ImageProcessor ip = toSlice(frameRGB, codecContext.width, codecContext.height);
 			stack.addSlice(null, ip);
 
 			// Free the packet that was allocated by av_read_frame
@@ -156,10 +133,8 @@ ImageProcessor ip = toSlice(frame, codecContext.width, codecContext.height);
 		// TODO: refactor using the temporary frame
 		// TODO: read the last frame, too
 
-/*
 		// Free the RGB image
 		AVUTIL.av_free(frameRGB.getPointer());
-*/
 
 		// Close the codec
 		AVCODEC.avcodec_close(codecContext);
@@ -172,7 +147,6 @@ ImageProcessor ip = toSlice(frame, codecContext.width, codecContext.height);
 
 	protected static ColorProcessor toSlice(AVFrame frame, int width, int height) {
 		final int len = height * frame.linesize[0];
-System.err.println("width: " + width + ", linesize: " + frame.linesize[0]);
 		final byte[] data = frame.data[0].getByteArray(0, len);
 		int[] pixels = new int[width * height];
 		for (int j = 0; j < height; j++) {
