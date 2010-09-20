@@ -51,7 +51,7 @@ public class JNALibraryLoader {
 	protected static String getLibraryName(String name, int version) {
 		return (IJ.isWindows() ? "" : "lib")
 			+ name
-			+ (IJ.isWindows() ? "-" + version : "")
+			+ (IJ.isWindows() && version >= 0 ? "-" + version : "")
 			+ "." + (IJ.isMacOSX() ? "dylib" :
 				IJ.isWindows() ? "dll" : "so");
 	}

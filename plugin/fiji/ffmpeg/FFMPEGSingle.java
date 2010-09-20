@@ -19,7 +19,7 @@ public class FFMPEGSingle extends JNALibraryLoader {
 			return true;
 
 		try {
-			AVUTIL = (FFMPEG)loadLibrary("ffmpeg", 0, FFMPEG.class);
+			AVUTIL = (FFMPEG)loadLibrary("ffmpeg", -1, FFMPEG.class);
 			AVCORE = AVDEVICE = AVCODEC = AVFORMAT = AVUTIL;
 		} catch (UnsatisfiedLinkError e) {
 			showException(e);
