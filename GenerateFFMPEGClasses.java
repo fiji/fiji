@@ -171,7 +171,7 @@ public class GenerateFFMPEGClasses {
 			.replace("PARAMNAME", "IDENT(?:\\[[^\\]]*\\])*")
 			.replace("TYPE", "(?:unsigned |const )*(?:unsigned|void|char|short|int|long|float|double|u?int(?:8|16|32|64)_t|"
 				+ "enum IDENT|struct\\s+IDENT|AV[A-Za-z_0-9]+|"
-				+ "ReSampleContext|RcOverride|ByteIOContext|SwsFilter|SwsVector|URLContext|)\\**\\s*?(?:(?:const\\s*?)?\\*\\s*?)*")
+				+ "ReSampleContext|RcOverride|ByteIOContext|SwsContext|SwsFilter|SwsVector|URLContext|)\\**\\s*?(?:(?:const\\s*?)?\\*\\s*?(?:const\\s*?)?)*")
 			.replace("IDENT", "[A-Za-z_][A-Za-z_0-9]*")
 			.replace(" *", "\\s*")
 			.replace(" ", "\\s+")
@@ -395,7 +395,15 @@ public class GenerateFFMPEGClasses {
 					type = "Pointer /* " + type + " */";
 				else if (name.indexOf('[') >= 0) {
 					int offset = name.indexOf('[');
-					type = "Pointer /* " + type + name.substring(offset) + " */";
+					if (offset == name.length() - 2 && name.endsWith("[]")) {
+						if (type.startsWith("const "))
+							type = stripPrefix(type, "const ");
+						if (type.indexOf("*") >= 0)
+							type = "Pointer";
+						type = type + "[]";
+					}
+					else
+						type = "Pointer /* " + type + name.substring(offset) + " */";
 					name = name.substring(0, offset);
 				}
 				else
