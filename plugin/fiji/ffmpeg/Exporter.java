@@ -37,7 +37,7 @@ import fiji.ffmpeg.AVFORMAT.AVOutputFormat;
 import fiji.ffmpeg.AVFORMAT.AVStream;
 //import fiji.ffmpeg.AVFORMAT.ByteIOContext;
 
-public class FFMPEG_Exporter extends FFMPEG implements PlugIn {
+public class Exporter extends FFMPEG implements PlugIn {
 
 	double frame_rate;
 	final int STREAM_PIX_FMT = AVUTIL.PIX_FMT_YUV420P;

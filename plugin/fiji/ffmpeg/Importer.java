@@ -34,7 +34,7 @@ import fiji.ffmpeg.AVFORMAT.AVStream;
  * Based on the AVCodecSample example from ffmpeg-java by Ken Larson.
  */
 
-public class FFMPEG_Importer extends ImagePlus implements PlugIn {
+public class Importer extends ImagePlus implements PlugIn {
 	int max_slice_count = 124;
 
 	/** Takes path as argument, or asks for it and then open the image.*/
