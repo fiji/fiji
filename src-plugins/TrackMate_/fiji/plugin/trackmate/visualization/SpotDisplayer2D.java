@@ -5,7 +5,6 @@ import ij.gui.ScrollbarWithLabel;
 import ij.gui.StackWindow;
 
 import java.awt.AlphaComposite;
-import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.event.AdjustmentEvent;
@@ -40,15 +39,13 @@ public class SpotDisplayer2D extends SpotDisplayer {
 		private ArrayList<Float> T = new ArrayList<Float>();
 		
 		public TrackOverlay(Color color) {
-			setComposite(AlphaComposite.getInstance(AlphaComposite.SRC, 1));
-			setColor(color);
-			setStroke(new BasicStroke(1));
+			this.color = color;
 		}
 		
 		@Override
 		public void draw(Graphics2D g2d) {
 			for (int i = 0; i < X0.size(); i++) {
-				g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC, 1 - T.get(i)));
+				g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1 - T.get(i)));
 				g2d.drawLine(X0.get(i), Y0.get(i), X1.get(i), Y1.get(i));
 			}
 		}
@@ -74,9 +71,8 @@ public class SpotDisplayer2D extends SpotDisplayer {
 			this.xcenter = xcenter;
 			this.ycenter = ycenter;
 			this.radius = radius;
-			setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.00f ));
-			setColor(color);
-			setStroke(new BasicStroke(1));
+			this.color = color;
+			this.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER);
 		}
 		
 		public SpotOverlay(float xcenter, float ycenter, float radius) {
