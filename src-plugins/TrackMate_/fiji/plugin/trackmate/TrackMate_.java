@@ -137,10 +137,11 @@ public class TrackMate_ implements PlugIn {
 	public void execTracking() {
 		logger.log("Starting tracking.\n", Logger.BLUE_COLOR);
 		LAPTracker tracker = new LAPTracker(selectedSpots);
+		tracker.setLogger(logger);
 		long start = System.currentTimeMillis();
 		if (tracker.checkInput() && tracker.process()) {
 			long end = System.currentTimeMillis();
-			logger.log(String.format("Tracking done in %.1f s.\n", (end-start)/1e3), Logger.BLUE_COLOR);
+			logger.log(String.format("Tracking done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);
 			trackGraph = tracker.getTrackGraph();
 		}
 		else {
@@ -315,10 +316,6 @@ public class TrackMate_ implements PlugIn {
 			featureCalculator.processFeature(Feature.MEAN_INTENSITY, spotsThisFrame);
 			logger.log("Frame "+(i+1)+":\tLoG feature\n");
 			featureCalculator.processFeature(Feature.LOG_VALUE, spotsThisFrame);
-			logger.log("Frame "+(i+1)+":\tBest diameter feature\n");
-			featureCalculator.processFeature(Feature.ESTIMATED_DIAMETER, spotsThisFrame);
-			logger.log("Frame "+(i+1)+":\tContrast feature\n");
-			featureCalculator.processFeature(Feature.CONTRAST, spotsThisFrame);
 			
 		} // Finished looping over frames
 		logger.setProgress(1);

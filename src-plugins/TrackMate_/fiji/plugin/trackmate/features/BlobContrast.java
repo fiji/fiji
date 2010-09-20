@@ -23,7 +23,7 @@ public class BlobContrast <T extends RealType<T>> extends IndependentFeatureAnal
 		this.img = originalImage;
 		this.diam = diam;
 		this.calibration = calibration;
-		this.coords = new float[img.getNumDimensions()];
+		this.coords = new float[3];
 	}
 	
 	@Override

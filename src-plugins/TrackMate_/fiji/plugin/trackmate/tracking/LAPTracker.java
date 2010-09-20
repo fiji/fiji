@@ -265,6 +265,13 @@ public class LAPTracker implements ObjectTracker {
 		this.segmentCosts = segmentCosts;
 	}
 	
+	/**
+	 * Set the logger used to echo log messages.
+	 */
+	public void setLogger(Logger logger) {
+		this.logger = logger;
+	}
+	
 	
 	/**
 	 * Get the cost matrix used for step 2, linking track segments into final tracks.
@@ -335,6 +342,7 @@ public class LAPTracker implements ObjectTracker {
 	 */
 	@Override
 	public boolean process() {
+		long tend, tstart;
 		
 		// Make sure checkInput() has been executed.
 		if (!inputChecked) {
@@ -344,27 +352,33 @@ public class LAPTracker implements ObjectTracker {
 		
 		
 		// Step 1 - Link objects into track segments
-		logger.log("--- Step one ---\n");
 		
 		// Create cost matrices
+		tstart = System.currentTimeMillis();
 		if (!createLinkingCostMatrices()) return false;
-		logger.log("Cost matrix created for frame-to-frame linking successfully.\n");
+		tend = System.currentTimeMillis();
+		logger.log(String.format("  Cost matrix for frame-to-frame linking created in %.1f s.\n", (tend-tstart)/1e3f));
 		
 		// Solve LAP
+		tstart = System.currentTimeMillis();
 		if (!linkObjectsToTrackSegments()) return false;
+		tend = System.currentTimeMillis();
+		logger.log(String.format("  Frame to frame LAP solved in %.1f s.\n", (tend-tstart)/1e3f));
 		
 		
 		// Step 2 - Link track segments into final tracks
-		logger.log("--- Step two ---\n");
 
 		// Create cost matrix
+		tstart = System.currentTimeMillis();
 		if (!createTrackSegmentCostMatrix()) return false;
-		logger.log("Cost matrix for track segments created successfully.\n");
+		tend = System.currentTimeMillis();
+		logger.log(String.format("  Cost matrix for track segments created in %.1f s.\n", (tend-tstart)/1e3f));
 		
 		// Solve LAP
+		tstart = System.currentTimeMillis();
 		if (!linkTrackSegmentsToFinalTracks()) return false;
-		
-		
+		tend = System.currentTimeMillis();
+		logger.log(String.format("  Track segment LAP solved in %.1f s.\n", (tend-tstart)/1e3f));
 		
 		// Print step 2 cost matrix
 		Matrix debug = new Matrix(segmentCosts);
@@ -409,8 +423,6 @@ public class LAPTracker implements ObjectTracker {
 				return false;
 			}
 			costMatrix = objCosts.getCostMatrix();
-//			System.out.println("For "+t0.size()+" spots vs "+t1.size()+" spots:"); //DEBUG
-//			echoMatrix(costMatrix); // DEBUG
 			linkingCosts.put(frame0, costMatrix);
 			frame0 = frame1;
 		}
@@ -450,7 +462,6 @@ public class LAPTracker implements ObjectTracker {
 		
 		// Solve LAP
 		solveLAPForTrackSegments();
-		logger.log("LAP for frame-to-frame linking solved.\n");
 		
 		// Compile LAP solutions into track segments
 		compileTrackSegments();
@@ -481,15 +492,9 @@ public class LAPTracker implements ObjectTracker {
 
 		// Solve LAP
 		int[][] finalTrackSolutions = solveLAPForFinalTracks();
-		logger.log("LAP for track segments solved.\n");
 		
 		// Compile LAP solutions into final tracks
 		compileFinalTracks(finalTrackSolutions);
-		
-//		System.out.println("SOLUTIONS!!");
-//		for (int[] solution : finalTrackSolutions) {
-//			System.out.println(String.format("[%d, %d]\n", solution[0], solution[1]));
-//		}
 		
 		return true;
 	}
@@ -510,17 +515,10 @@ public class LAPTracker implements ObjectTracker {
 		int frame1;
 		while(frameIterator.hasNext()) { // ascending order
 			
-			frame1 = frameIterator.next();			
-			
-			// Solve the LAP using the Hungarian Algorithm
 			double[][] costMatrix = linkingCosts.get(frame0);
-//			System.out.println("Frame "+frame0+" vs "+frame1); // DEBUG
-//			echoMatrix(costMatrix);// DEBUG
-		
 			AssignmentProblem problem = new AssignmentProblem(costMatrix);
 			int[][] solutions = problem.solve(solver);			
-//			System.out.println("Solutions:");// DEBUG
-//			echoSolutions(solutions); // DEBUG
+			frame1 = frameIterator.next();			
 			
 			// Extend track segments using solutions: we update the graph edges
 			for (int i = 0; i < solutions.length; i++) {
@@ -553,7 +551,6 @@ public class LAPTracker implements ObjectTracker {
 		// Solve the LAP using the Hungarian Algorithm
 		AssignmentProblem hung = new AssignmentProblem(segmentCosts);
 		int[][] solutions = hung.solve(new HungarianAlgorithm());
-		
 		return solutions;
 	}
 	
@@ -602,16 +599,6 @@ public class LAPTracker implements ObjectTracker {
 			
 			trackSegments.add(trackSegment);
 		}
-		
-//		// DEBUG
-//		logger.log("Found "+trackSegments.size()+" track segments:\n\n");
-//		for (Collection<Spot> segment : trackSegments) {
-//			logger.log("-*-*-*-* New Segment *-*-*-*-\n");
-//			for (Spot spot : segment)
-//				logger.log(spot.toString());
-//			logger.log("\n");
-//		}
-		
 	}
 	
 	
@@ -628,7 +615,6 @@ public class LAPTracker implements ObjectTracker {
 	 * splitting event. If so, appropriately link the track segment Spots.
 	 */
 	private void compileFinalTracks(int[][] finalTrackSolutions) {
-		if(true) return;
 		final int numTrackSegments = trackSegments.size();
 		final int numMergingMiddlePoints = mergingMiddlePoints.size();
 		final int numSplittingMiddlePoints = splittingMiddlePoints.size();
@@ -636,8 +622,6 @@ public class LAPTracker implements ObjectTracker {
 		for (int[] solution : finalTrackSolutions) {
 			int i = solution[0];
 			int j = solution[1];
-//			//debug
-//			System.out.println(String.format("i = %d, j = %d", i, j));
 			if (i < numTrackSegments) {
 				
 				// Case 1: Gap closing
@@ -646,16 +630,7 @@ public class LAPTracker implements ObjectTracker {
 					SortedSet<Spot> segmentStart = trackSegments.get(j);
 					Spot end = segmentEnd.last();
 					Spot start = segmentStart.first();
-					
-					logger.log("### Gap Closing: ###\n"); // DEBUG
-//					System.out.println(end.toString());
-//					System.out.println(start.toString());
-					
 					trackGraph.addEdge(end, start);
-					
-//					// debug 
-//					System.out.println(end.toString());
-//					System.out.println(start.toString());
 				} 
 				
 				// Case 2: Merging
@@ -663,17 +638,7 @@ public class LAPTracker implements ObjectTracker {
 					SortedSet<Spot> segmentEnd = trackSegments.get(i);
 					Spot end =  segmentEnd.last();
 					Spot middle = mergingMiddlePoints.get(j - numTrackSegments);
-					
-//					//debug
-					logger.log("### Merging: ###\n"); // DEBUG
-//					System.out.println(end.toString());
-//					System.out.println(middle.toString());
-					
 					trackGraph.addEdge(end, middle);
-					
-//					//debug
-//					System.out.println(end.toString());
-//					System.out.println(middle.toString());
 				}
 			} else if (i < (numTrackSegments + numSplittingMiddlePoints)) {
 				
@@ -682,24 +647,14 @@ public class LAPTracker implements ObjectTracker {
 					SortedSet<Spot> segmentStart = trackSegments.get(j);
 					Spot start = segmentStart.first();
 					Spot mother = splittingMiddlePoints.get(i - numTrackSegments);
-					
-//					//debug
-					logger.log("### Splitting: ###\n"); // DEBUG
-//					System.out.println(start.toString());
-//					System.out.println(mother.toString());
-					
 					trackGraph.addEdge(start, mother);
-	
-//					// debug
-//					System.out.println(start.toString());
-//					System.out.println(middle.toString());
 				}
 			}
 		}
 	}
 	
 	/*
-	 * STATIC METHODS
+	 * STATIC METHODS - UTILS
 	 */
 	
 	@SuppressWarnings("unused")

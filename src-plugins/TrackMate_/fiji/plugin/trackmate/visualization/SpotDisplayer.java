@@ -2,10 +2,14 @@ package fiji.plugin.trackmate.visualization;
 
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import org.jfree.chart.renderer.InterpolatePaintScale;
+import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
 
@@ -23,21 +27,82 @@ public abstract class SpotDisplayer {
 	
 	/** The colorMap. */
 	protected InterpolatePaintScale colorMap = InterpolatePaintScale.Jet;
+	/** The default color to paint the spots and tracks. */ 
+	protected Color color = DEFAULT_COLOR;
+	
 	/** The track collections emanating from tracking. They are represented as a graph of Spot,
 	 * which must be the same objects as for {@link #spots}. */
 	protected SimpleGraph<Spot, DefaultEdge> trackGraph;
-	/** The default color to paint the spots in. */ 
-	protected Color color = DEFAULT_COLOR;
-	/** If true, tracks will be displayed. */
-	protected boolean displayTracks;
+	/** The individual tracks contained in the {@link #trackGraph}. */ 
+	protected List<Set<Spot>> tracks;
+	/** The track colors. */
+	protected Map<Set<Spot>, Color> trackColors;
 	/** The Spot lists emanating from segmentation, indexed by the frame index as Integer. */
 	protected TreeMap<Integer, List<Spot>> spots;
 
+	/** The display track mode. */
+	protected TrackDisplayMode trackDisplayMode = TrackDisplayMode.DO_NOT_DISPLAY;
+	/** The display depth: how many track segments will be shown on the track display. */
+	protected int trackDisplayDepth = Integer.MAX_VALUE; // by default, show all	
 
 	
-	public void setDisplayTracks(boolean displayTrack) {
-		this.displayTracks = displayTrack;
+	/*
+	 * ENUMS
+	 */
+	
+	public enum TrackDisplayMode {
+		DO_NOT_DISPLAY,
+		ALL_WHOLE_TRACKS,
+		LOCAL_WHOLE_TRACKS,
+		LOCAL_BACKWARD_TRACKS,
+		LOCAL_FORWARD_TRACKS;
+		
+		@Override
+		public String toString() {
+			switch(this) {
+			case DO_NOT_DISPLAY:
+				return "Do not display";
+			case ALL_WHOLE_TRACKS:
+				return "Show all entire tracks";
+			case LOCAL_WHOLE_TRACKS:
+				return "Show current tracks";
+			case LOCAL_BACKWARD_TRACKS:
+				return "Show current tracks, only backward";
+			case LOCAL_FORWARD_TRACKS:
+				return "Show current tracks, only forward";
+			}
+			return "Not implemented";
+		}
+		
+	}
+
+	
+	/*
+	 * PUBLIC METHODS
+	 */
+	
+	
+	public void setDisplayTrackMode(TrackDisplayMode mode, int displayDepth) {
+		this.trackDisplayMode = mode;
+		this.trackDisplayDepth = displayDepth;
 	}	
+	
+	public void setTrackGraph(SimpleGraph<Spot, DefaultEdge> trackGraph) {
+		this.trackGraph = trackGraph;
+		this.tracks = new ConnectivityInspector<Spot, DefaultEdge>(trackGraph).connectedSets();
+		this.trackColors = new HashMap<Set<Spot>, Color>(tracks.size());
+		int counter = 0;
+		int ntracks = tracks.size();
+		for(Set<Spot> track : tracks) {
+			trackColors.put(track, colorMap.getPaint((float) counter / (ntracks-1)));
+			counter++;
+		}
+	}
+	
+	public void setSpots(TreeMap<Integer, List<Spot>> spots) {
+		this.spots = spots;
+	}
+	
 	/*
 	 * ABSTRACT METHODS
 	 */
@@ -68,14 +133,6 @@ public abstract class SpotDisplayer {
 	/*
 	 * PROTECTED METHODS
 	 */
-	
-	public void setTrackGraph(SimpleGraph<Spot, DefaultEdge> trackGraph) {
-		this.trackGraph = trackGraph;
-	}
-	
-	public void setSpots(TreeMap<Integer, List<Spot>> spots) {
-		this.spots = spots;
-	}
 	
 	/**
 	 * Return the subset of spots of this displayer that satisfy the threshold conditions given

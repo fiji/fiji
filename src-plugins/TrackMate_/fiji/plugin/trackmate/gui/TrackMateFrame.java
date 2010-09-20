@@ -13,7 +13,6 @@ import java.awt.CardLayout;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collection;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -32,10 +31,10 @@ import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMate_;
-import fiji.plugin.trackmate.Utils;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
 import fiji.plugin.trackmate.visualization.SpotDisplayer2D;
 import fiji.plugin.trackmate.visualization.SpotDisplayer3D;
+import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
 
 
 /**
@@ -84,7 +83,7 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	private Logger logger;
 	private TreeMap<Integer, List<Spot>> spots;
 	private SimpleGraph<Spot, DefaultEdge> trackGraph;
-	private SpotDisplayer<Spot> displayer;
+	private SpotDisplayer displayer;
 	private boolean is3D;
 	
 	{
@@ -189,7 +188,7 @@ public class TrackMateFrame extends javax.swing.JFrame {
 		
 		// Launch renderer
 		logger.log("Rendering results...\n",Logger.BLUE_COLOR);
-		jButtonNext.setEnabled(false);				
+		jButtonNext.setEnabled(false);
 		
 		// Thread for rendering
 		new Thread("TrackMate rendering thread") {
@@ -209,15 +208,17 @@ public class TrackMateFrame extends javax.swing.JFrame {
 							DEFAULT_THRESHOLD, 
 							new boolean[] {true, true, true});
 					// Render spots
-					displayer = new SpotDisplayer3D<Spot>(universe, settings.expectedDiameter/2); 							
+					displayer = new SpotDisplayer3D(universe, settings.expectedDiameter/2); 							
 					universe.addContentLater(imageContent);
 
 				} else {
 					final float[] calibration = new float[] {
 							(float) settings.imp.getCalibration().pixelWidth, 
 							(float) settings.imp.getCalibration().pixelHeight};
-					displayer = new SpotDisplayer2D<Spot>(tracks, settings.imp, settings.expectedDiameter/2, calibration);
+					displayer = new SpotDisplayer2D(settings.imp, settings.expectedDiameter/2, calibration);
 				}
+				displayer.setSpots(spots);
+				displayer.render();
 				logger.log("Rendering done.\n", Logger.BLUE_COLOR);
 				cardLayout.show(jPanelMain, THRESHOLD_GUI_KEY);
 				
@@ -253,11 +254,12 @@ public class TrackMateFrame extends javax.swing.JFrame {
 				spotTracker.execThresholding();
 				// Track
 				spotTracker.execTracking();
-				tracks = spotTracker.getTracks();
+				trackGraph = spotTracker.getTrackGraph();
 				// Forward to displayer
-				displayer.setTrackObjects(tracks);
-				displayer.setDisplayTracks(true);
-				displayer.refresh(thresholdGuiPanel.getFeatures(), thresholdGuiPanel.getThresholds(), thresholdGuiPanel.getIsAbove());
+				displayer.setSpots(spotTracker.getSelectedSpots()); // tracked subset of spots 
+				displayer.setTrackGraph(trackGraph);
+				displayer.setDisplayTrackMode(TrackDisplayMode.LOCAL_WHOLE_TRACKS, 20);
+				displayer.resetTresholds();
 				// Re-enable the GUI
 				jButtonNext.setEnabled(true);
 			}

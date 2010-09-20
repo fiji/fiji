@@ -12,9 +12,13 @@ import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.TreeMap;
+
+import org.jgrapht.graph.DefaultEdge;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
@@ -26,6 +30,38 @@ public class SpotDisplayer2D extends SpotDisplayer {
 	/*
 	 * INNER CLASSES
 	 */
+	
+	public class TrackOverlay extends AbstractAnnotation {
+
+		private ArrayList<Integer> X0 = new ArrayList<Integer>();
+		private ArrayList<Integer> Y0 = new ArrayList<Integer>();
+		private ArrayList<Integer> X1 = new ArrayList<Integer>();
+		private ArrayList<Integer> Y1 = new ArrayList<Integer>();
+		private ArrayList<Float> T = new ArrayList<Float>();
+		
+		public TrackOverlay(Color color) {
+			setComposite(AlphaComposite.getInstance(AlphaComposite.SRC, 1));
+			setColor(color);
+			setStroke(new BasicStroke(1));
+		}
+		
+		@Override
+		public void draw(Graphics2D g2d) {
+			for (int i = 0; i < X0.size(); i++) {
+				g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC, 1 - T.get(i)));
+				g2d.drawLine(X0.get(i), Y0.get(i), X1.get(i), Y1.get(i));
+			}
+		}
+		
+		public void addEdge(int x0, int y0, int x1, int y1, float t) {
+			X0.add(x0);
+			Y0.add(y0);
+			X1.add(x1);
+			Y1.add(y1);
+			T.add(t);
+		}
+		
+	}
 		
 	public class SpotOverlay extends AbstractAnnotation {
 
@@ -186,10 +222,59 @@ public class SpotDisplayer2D extends SpotDisplayer {
 			spotOverlays.put(spot, overlay);
 		}
 		
-		if (displayTracks) {
+		switch (trackDisplayMode) {
+		
+		case DO_NOT_DISPLAY:
+			
+			return;
+			
+		case LOCAL_WHOLE_TRACKS:
+		case LOCAL_BACKWARD_TRACKS:
+		case LOCAL_FORWARD_TRACKS:
+			
+			Color trackColor = DEFAULT_COLOR;
+			for (Spot spot : spotsThisFrame) {
+				
+				// Find the track it belongs to
+				for(Set<Spot> track : tracks)
+					if (track.contains(spot)) {
+						trackColor = trackColors.get(track);
+						break;
+					}
+				TrackOverlay to = new TrackOverlay(trackColor);
+				walk(null, spot, to, 0);
+				canvas.addOverlay(to);
+			}
+			
+			break;
+			
+			
 			
 		}
 		
+	}
+	
+	private void walk(final Spot source, final Spot current, final TrackOverlay to, int level) {
+		if (level > trackDisplayDepth)
+			return;
+		Set<DefaultEdge> edges = trackGraph.edgesOf(current);
+		Spot target;
+		int x0, y0, x1, y1;
+		
+		for(DefaultEdge edge : edges) {
+			
+			target = trackGraph.getEdgeTarget(edge);
+			if (target == source || target == current)
+				continue;
+			x0 = Math.round(current.getFeature(Feature.POSITION_X) / calibration[0]);
+			y0 = Math.round(current.getFeature(Feature.POSITION_Y) / calibration[1]);
+			x1 = Math.round(target.getFeature(Feature.POSITION_X) / calibration[0]);
+			y1 = Math.round(target.getFeature(Feature.POSITION_Y) / calibration[1]);
+			to.addEdge(x0, y0, x1, y1, (float) level / trackDisplayDepth);
+			
+			int newlevel = level+1;
+			walk(current, target, to, newlevel);
+		}
 	}
 
 }
