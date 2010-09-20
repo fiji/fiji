@@ -597,10 +597,15 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 				+ "\n"
 				+ "\tpublic " + name + "() {\n"
 				+ "\t\tsuper();\n"
+				// need to calculate the size now, as array members are only initialized at this point
+				+ "\t\tensureAllocated();\n"
 				+ "\t}\n"
 				+ "\n"
 				+ "\tpublic " + name + "(Pointer p) {\n"
-				+ "\t\tsuper(p);\n"
+				// cannot use super(p); otherwise array members are not initialized and the wrong size is calculated!
+				+ "\t\tsuper();\n"
+				+ "\t\tuseMemory(p);\n"
+				+ "\t\tread();\n"
 				+ "\t}\n"
 				+ "\n", level)
 			+ indent(buf.toString(), level + 1)
