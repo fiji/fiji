@@ -94,20 +94,14 @@ pseudo_submodule_update ffmpeg/libswscale \
 echo "Checking whether FFMPEG needs to be built" &&
 (cd ffmpeg &&
  uptodate=true &&
- for target in $TARGETS
- do
-	if test ! -f "$target"
-	then
-		uptodate=false
-		break
-	fi
- done &&
+ TARGET=${LIBPREFIX}ffmpeg.$LIBEXT &&
+ if test ! -f $TARGET
+ then
+	uptodate=false
+	break
+ fi &&
  if test true = "$uptodate" &&
-	test ! -z "$(eval find -name '\\*.[ch]' -a \
-		$(for target in $TARGETS
-		  do
-			echo "-newer $target"
-		  done) )"
+	test ! -z "$(eval find -name '\\*.[ch]' -a -newer $TARGET)"
  then
 	uptodate=false
  fi &&
@@ -119,17 +113,16 @@ echo "Checking whether FFMPEG needs to be built" &&
 	then
 		make distclean || :
 	fi &&
-	./configure --enable-gpl --enable-shared \
-		--extra-ldflags=-Wl,-R,"'\\\$\\\$\\\$\\\$ORIGIN/'" &&
+	./configure --enable-gpl --enable-shared &&
 	: SYMVER breaks our one-single-library approach
-	sed 's/\( SYMVER.*\) 1$/\1 0/' < config.h > config.h.new &&
+	sed 's/\( HAVE_SYMVER.*\) 1$/\1 0/' < config.h > config.h.new &&
 	mv -f config.h.new config.h &&
 	make $PARALLEL &&
 	rm */*.so* &&
 	out="$(make V=1 | grep -ve '-o libavfilter' |
 		sed -n 's/^gcc .* -o lib[^ ]* //p' | tr ' ' '\n')" &&
-	gcc -shared -Wl,-soname,libffmpeg.so.0 -Wl,--warn-common \
-		-Wl,--as-needed -Wl,-Bsymbolic -o libffmpeg.so \
+	gcc -shared -Wl,-soname,$TARGET -Wl,--warn-common \
+		-Wl,--as-needed -Wl,-Bsymbolic -o $TARGET \
 		$(echo "$out" | grep -ve '^-' -e 'libavcodec/inverse\.o') \
 		$(echo "$out" | grep '^-' | grep -ve '^-lav' -e '^-lsw' |
 			sort | uniq)
