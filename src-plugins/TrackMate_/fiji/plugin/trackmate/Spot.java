@@ -61,4 +61,10 @@ public interface Spot {
 	 * By construction, this operation is symmetric (A.normalizeDiffTo(B) = B.normalizeDiffTo(A)).
 	 */
 	public Float normalizeDiffTo(Spot s, Feature feature);
+	
+	/**
+	 * Return the ID number of the spot, use for saving. 
+	 * This number should be unique.
+	 */
+	public int ID();
 }

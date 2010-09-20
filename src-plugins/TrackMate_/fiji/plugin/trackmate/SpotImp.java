@@ -15,11 +15,15 @@ public class SpotImp implements Spot {
 	 * FIELDS
 	 */
 	
+	public static int IDcounter = 0;
+	
 	
 	/** Store the individual features, and their values. */
 	private EnumMap<Feature, Float> features = new EnumMap<Feature, Float>(Feature.class);
 	/** A user-supplied name for this spot. */
 	private String name;
+	/** This spot ID */
+	private int ID;
 
 	/*
 	 * CONSTRUCTORS
@@ -37,6 +41,8 @@ public class SpotImp implements Spot {
 		for (int i = 0; i < POSITION_FEATURES.length; i++)
 			putFeature(POSITION_FEATURES[i], coordinates[i]);
 		this.name = name;
+		this.ID = IDcounter;
+		IDcounter++;
 	}
 	
 	public SpotImp(float[] coordinates) {
@@ -71,6 +77,10 @@ public class SpotImp implements Spot {
 		this.name = name;
 	}
 	
+	@Override
+	public int ID() {
+		return ID;
+	}
 	
 	/**
 	 * Return a string representation of this spot, with calculated features.
