@@ -171,7 +171,7 @@ public class GenerateFFMPEGClasses {
 			.replace("PARAMNAME", "IDENT(?:\\[[^\\]]*\\])*")
 			.replace("TYPE", "(?:unsigned |const )*(?:unsigned|void|char|short|int|long|float|double|u?int(?:8|16|32|64)_t|"
 				+ "enum IDENT|struct\\s+IDENT|AV[A-Za-z_0-9]+|"
-				+ "ReSampleContext|RcOverride|ByteIOContext|SwsVector|URLContext|)\\**\\s*?(?:(?:const\\s*?)?\\*\\s*?)*")
+				+ "ReSampleContext|RcOverride|ByteIOContext|SwsFilter|SwsVector|URLContext|)\\**\\s*?(?:(?:const\\s*?)?\\*\\s*?)*")
 			.replace("IDENT", "[A-Za-z_][A-Za-z_0-9]*")
 			.replace(" *", "\\s*")
 			.replace(" ", "\\s+")
