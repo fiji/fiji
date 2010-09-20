@@ -120,9 +120,19 @@ echo "Checking whether FFMPEG needs to be built" &&
 		make distclean || :
 	fi &&
 	./configure --enable-gpl --enable-shared \
-		--extra-ldflags=-Wl,-R,"'$$$$ORIGIN/'" &&
-	make $PARALLEL
-	# TODO: use install_name_tool -change <from> <to> <lib> on MacOSX
+		--extra-ldflags=-Wl,-R,"'\\\$\\\$\\\$\\\$ORIGIN/'" &&
+	: SYMVER breaks our one-single-library approach
+	sed 's/\( SYMVER.*\) 1$/\1 0/' < config.h > config.h.new &&
+	mv -f config.h.new config.h &&
+	make $PARALLEL &&
+	rm */*.so* &&
+	out="$(make V=1 | grep -ve '-o libavfilter' |
+		sed -n 's/^gcc .* -o lib[^ ]* //p' | tr ' ' '\n')" &&
+	gcc -shared -Wl,-soname,libffmpeg.so.0 -Wl,--warn-common \
+		-Wl,--as-needed -Wl,-Bsymbolic -o libffmpeg.so \
+		$(echo "$out" | grep -ve '^-' -e 'libavcodec/inverse\.o') \
+		$(echo "$out" | grep '^-' | grep -ve '^-lav' -e '^-lsw' |
+			sort | uniq)
  fi)
 
 # Discover Fiji
