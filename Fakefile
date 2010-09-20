@@ -8,6 +8,7 @@ FFMPEG_IO.jar <- plugin.jar/ jna-wrapper.jar/ \
 CLASSPATH(plugin.jar)=jna-wrapper.jar
 plugin.jar <- plugin/**/* 
 
+EXCLUDE(jna-wrapper.jar)=classes/.gitignore
 jna-wrapper.jar <- classes/**/*
 
 generate-classes[generate.bsh] <- generator.jar
