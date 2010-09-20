@@ -107,12 +107,8 @@ public class FFMPEG {
 	}
 
 	protected Object loadLibrary(String name, int version, Class libraryClass) {
-		if (libraryDirectory == null) {
+		if (libraryDirectory == null)
 			libraryDirectory = getLibraryDirectory();
-			String path = System.getProperty("jna.library.path");
-			path = (path == null ? "" : path + File.pathSeparator) + libraryDirectory;
-			System.setProperty("jna.library.path", path);
-		}
 
 		String fileName = getLibraryName(name, version);
 		File file = new File(libraryDirectory, fileName);
@@ -126,6 +122,7 @@ public class FFMPEG {
 			}
 		}
 
+		NativeLibrary.addSearchPath(name, libraryDirectory.getAbsolutePath());
 		return Native.loadLibrary(name, libraryClass);
 	}
 
