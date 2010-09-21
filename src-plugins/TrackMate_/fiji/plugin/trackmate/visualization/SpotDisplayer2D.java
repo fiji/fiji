@@ -228,9 +228,9 @@ public class SpotDisplayer2D extends SpotDisplayer {
 		case LOCAL_BACKWARD_TRACKS:
 		case LOCAL_FORWARD_TRACKS:
 			
-			Color trackColor = DEFAULT_COLOR;
 			for (Spot spot : spotsThisFrame) {
 				
+				Color trackColor = DEFAULT_COLOR;
 				// Find the track it belongs to
 				for(Set<Spot> track : tracks)
 					if (track.contains(spot)) {
@@ -238,12 +238,65 @@ public class SpotDisplayer2D extends SpotDisplayer {
 						break;
 					}
 				TrackOverlay to = new TrackOverlay(trackColor);
-				walk(null, spot, to, 0);
+				
+				switch (trackDisplayMode) {
+				
+				case LOCAL_WHOLE_TRACKS:
+					walk(null, spot, to, 0); // walk in both directions
+					break;
+				
+				case LOCAL_FORWARD_TRACKS:
+				case LOCAL_BACKWARD_TRACKS:
+					
+					Set<DefaultEdge> edges = trackGraph.edgesOf(spot);
+					List<Spot> targets = new ArrayList<Spot>(2);
+					
+					for(DefaultEdge edge : edges) {						
+					
+						targets.clear();
+						targets.add(trackGraph.getEdgeTarget(edge));
+						targets.add(trackGraph.getEdgeSource(edge));
+						
+						for (Spot target : targets) {
+						
+							if (target == spot )
+								continue;
+							
+							if (trackDisplayMode.equals(TrackDisplayMode.LOCAL_FORWARD_TRACKS) &&  
+									target.diffTo(spot, Feature.POSITION_T) < 0) // filter out targets 
+								continue;
+							
+							if (trackDisplayMode.equals(TrackDisplayMode.LOCAL_BACKWARD_TRACKS) && 
+									target.diffTo(spot, Feature.POSITION_T) > 0)
+								continue;
+							
+							int x0 = Math.round(spot.getFeature(Feature.POSITION_X) / calibration[0]);
+							int y0 = Math.round(spot.getFeature(Feature.POSITION_Y) / calibration[1]);
+							int x1 = Math.round(target.getFeature(Feature.POSITION_X) / calibration[0]);
+							int y1 = Math.round(target.getFeature(Feature.POSITION_Y) / calibration[1]);
+							to.addEdge(x0, y0, x1, y1, 0);
+							walk(spot, target, to, 1);							
+						}
+					}
+				}
 				canvas.addOverlay(to);
 			}
 			
-			break;
+			break; //case LOCAL_WHOLE_TRACKS: case LOCAL_BACKWARD_TRACKS: case LOCAL_FORWARD_TRACKS:
 			
+		case ALL_WHOLE_TRACKS:
+			
+			for (Set<Spot> track : tracks) {
+				Spot target = track.iterator().next(); // any will do				
+				Color trackColor = trackColors.get(target);
+				TrackOverlay to = new TrackOverlay(trackColor);
+				trackDisplayDepth = Integer.MAX_VALUE; // do not fade or stop
+				walk(null, target, to, 0);
+				canvas.addOverlay(to);
+			}
+			
+			
+			break;
 			
 			
 		}
@@ -254,22 +307,27 @@ public class SpotDisplayer2D extends SpotDisplayer {
 		if (level > trackDisplayDepth)
 			return;
 		Set<DefaultEdge> edges = trackGraph.edgesOf(current);
-		Spot target;
+		List<Spot> targets = new ArrayList<Spot>(2);
 		int x0, y0, x1, y1;
 		
 		for(DefaultEdge edge : edges) {
 			
-			target = trackGraph.getEdgeTarget(edge);
-			if (target == source || target == current)
-				continue;
-			x0 = Math.round(current.getFeature(Feature.POSITION_X) / calibration[0]);
-			y0 = Math.round(current.getFeature(Feature.POSITION_Y) / calibration[1]);
-			x1 = Math.round(target.getFeature(Feature.POSITION_X) / calibration[0]);
-			y1 = Math.round(target.getFeature(Feature.POSITION_Y) / calibration[1]);
-			to.addEdge(x0, y0, x1, y1, (float) level / trackDisplayDepth);
+			targets.clear();
+			targets.add(trackGraph.getEdgeTarget(edge));
+			targets.add(trackGraph.getEdgeSource(edge));
 			
-			int newlevel = level+1;
-			walk(current, target, to, newlevel);
+			for (Spot target : targets) {
+				if (target == source || target == current)
+					continue;
+				x0 = Math.round(current.getFeature(Feature.POSITION_X) / calibration[0]);
+				y0 = Math.round(current.getFeature(Feature.POSITION_Y) / calibration[1]);
+				x1 = Math.round(target.getFeature(Feature.POSITION_X) / calibration[0]);
+				y1 = Math.round(target.getFeature(Feature.POSITION_Y) / calibration[1]);
+				to.addEdge(x0, y0, x1, y1, (float) level / trackDisplayDepth);
+
+				int newlevel = level+1;
+				walk(current, target, to, newlevel);
+			}
 		}
 	}
 
