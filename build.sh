@@ -78,7 +78,7 @@ pseudo_submodule_update ffmpeg/libswscale \
 echo "Checking whether FFMPEG needs to be built" &&
 (cd ffmpeg &&
  uptodate=true &&
- TARGET=${LIBPREFIX}ffmpeg.$LIBEXT &&
+ TARGET=${LIBPREFIX}ffmpeg$LIBEXT &&
  if test ! -f $TARGET
  then
 	uptodate=false
@@ -97,12 +97,12 @@ echo "Checking whether FFMPEG needs to be built" &&
 	then
 		make distclean || :
 	fi &&
-	./configure --enable-gpl --enable-shared &&
+	./configure --enable-gpl --enable-shared $EXTRA_CONFIGURE &&
 	: SYMVER breaks our one-single-library approach
 	sed 's/\( HAVE_SYMVER.*\) 1$/\1 0/' < config.h > config.h.new &&
 	mv -f config.h.new config.h &&
 	make $PARALLEL &&
-	rm */*.so* &&
+	rm */*$LIBEXT* &&
 	out="$(make V=1 | grep -ve '-o libavfilter' |
 		sed -n 's/^gcc .* -o lib[^ ]* //p' | tr ' ' '\n')" &&
 	gcc -shared -Wl,-soname,$TARGET -Wl,--warn-common \
