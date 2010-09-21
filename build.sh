@@ -41,6 +41,8 @@ require_clean_working_directory () {
 	die "Not clean: $(pwd)"
 }
 
+default_excludes="*.[oad] *.pc *$LIBEXT *$LIBEXT.[0-9] *$LIBEXT.[0-9][0-9] .config .version config.* *.ver /*_g /ffmpeg /ffplay /ffserver /ffprobe /version.h /libswscale/ /libavutil/avconfig.h"
+
 pseudo_submodule_update () {
 	path=$1
 	url=$2
@@ -53,25 +55,7 @@ pseudo_submodule_update () {
 	(cd "$path" &&
 	 exclude_file="$(git rev-parse --git-dir)"/info/exclude &&
 	 exclude="$(cat "$exclude_file" 2> /dev/null)" &&
-	 required_excludes="$(cat << \EOF)" &&
-*.[oad]
-*.pc
-*.so
-*.so.[0-9]
-*.so.[0-9][0-9]
-.config
-.version
-config.*
-*.ver
-/*_g
-/ffmpeg
-/ffplay
-/ffserver
-/ffprobe
-/version.h
-/libswscale/
-/libavutil/avconfig.h
-EOF
+	 required_excludes="$(echo "$default_excludes" | tr ' ' '\n')" &&
 	 (echo "$exclude"; echo "$exclude"; echo "$required_excludes") |
 		sort | uniq -u >> "$exclude_file" &&
 	 require_clean_working_directory &&
