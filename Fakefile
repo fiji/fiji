@@ -189,9 +189,13 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/SheppLogan_.jar \
 	plugins/StackReg_.jar \
 	plugins/UnwarpJ_.jar \
-	plugins/Snakuscule_.jar
+	plugins/Snakuscule_.jar \
+	jars/imagescience.jar \
+	plugins/TransformJ_.jar \
+	plugins/FeatureJ_.jar \
+	plugins/RandomJ_.jar
 
-all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS third-party-plugins
+all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS
 
 # The "run" rule just executes ./fiji (as long as the file "run" does not exist...)
 # It has items on the right side, because these would be passed to the executable.
@@ -293,6 +297,7 @@ CLASSPATH(jars/jep.jar)=jars/Jama-1.0.2.jar:jars/junit-4.5.jar
 CLASSPATH(plugins/SPIM_Registration.jar)=$JAVA3D_JARS:jars/imglib.jar:jars/mpicbg.jar:plugins/3D_Viewer.jar:jars/weka.jar:jars/fiji-lib.jar:plugins/loci_tools.jar:plugins/Fiji_Plugins.jar:jars/VIB-lib.jar:jars/Jama-1.0.2.jar
 CLASSPATH(plugins/Bug_Submitter.jar)=plugins/Fiji_Updater.jar
 CLASSPATH(plugins/TopoJ_.jar)=jars/Jama-1.0.2.jar
+CLASSPATH(jars/imagescience.jar)=plugins/Image_5D.jar
 
 # pre-Java5 generics ;-)
 
@@ -313,14 +318,6 @@ MAINCLASS(jars/MacOSX_Updater_Fix.jar)=fiji.updater.Fix
 
 plugins/*.jar <- src-plugins/*/**/*
 jars/*.jar <- src-plugins/*/**/*
-
-# Third party plugins
-
-THIRD_PARTY_PLUGINS= \
-	plugins/TransformJ_.jar \
-
-third-party-plugins[] <- $THIRD_PARTY_PLUGINS
-plugins/*.jar <- staged-plugins/*.jar
 
 # Fiji launcher
 
