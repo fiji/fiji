@@ -14,6 +14,8 @@ import ij.io.SaveDialog;
 
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.GridBagLayout;
+import java.awt.GridBagConstraints;
 import java.awt.Toolkit;
 
 import java.awt.event.ActionEvent;
@@ -53,12 +55,14 @@ import java.util.zip.ZipException;
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
+import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JRadioButtonMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
@@ -84,7 +88,6 @@ public class TextEditor extends JFrame implements ActionListener,
 	       ChangeListener {
 	protected EditorPane editorPane;
 	protected JTabbedPane tabbed;
-	protected JTextArea screen;
 	protected JMenuItem newFile, open, save, saveas, compileAndRun, compile, debug, close,
 		  undo, redo, cut, copy, paste, find, replace, selectAll,
 		  autocomplete, resume, terminate, kill, gotoLine,
@@ -354,19 +357,14 @@ public class TextEditor extends JFrame implements ActionListener,
 		// Add the editor and output area
 		tabbed = new JTabbedPane();
 		tabbed.addChangeListener(this);
-		open(path);
+		open(path); // TODO
 
-		screen = new JTextArea();
-		screen.setEditable(false);
-		screen.setLineWrap(true);
-		Font font = new Font("Courier", Font.PLAIN, 12);
-		screen.setFont(font);
-		JScrollPane scroll = new JScrollPane(screen);
-		scroll.setPreferredSize(new Dimension(600, 80));
-
-		JSplitPane panel = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tabbed, scroll);
+		JPanel panel = new JPanel();
 		panel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
-		panel.setResizeWeight(350.0 / 430.0);
+		panel.setLayout(new GridBagLayout());
+		GridBagConstraints c = new GridBagConstraints();
+		c.fill = GridBagConstraints.BOTH;
+		panel.add(tabbed, c);
 		setContentPane(panel);
 
 		// for Eclipse and MS Visual Studio lovers
@@ -733,7 +731,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		else if (source == removeTrailingWhitespace)
 			new TokenFunctions(getTextArea()).removeTrailingWhitespace();
 		else if (source == clearScreen)
-			screen.setText("");
+			getTab().screen.setText("");
 		else if (source == autocomplete) {
 			try {
 				getEditorPane().autocomp.doCompletion();
@@ -841,9 +839,7 @@ public class TextEditor extends JFrame implements ActionListener,
 	}
 
 	public EditorPane getEditorPane(int index) {
-		RTextScrollPane scrollPane =
-			(RTextScrollPane)tabbed.getComponentAt(index);
-		return (EditorPane)scrollPane.getTextArea();
+		return getTab(index).editorPane;
 	}
 
 	public void findOrReplace(boolean replace) {
@@ -917,6 +913,85 @@ public class TextEditor extends JFrame implements ActionListener,
 		return false;
 	}
 
+	public Tab getTab() {
+		return (Tab)tabbed.getSelectedComponent();
+	}
+
+	public Tab getTab(int index) {
+		return (Tab)tabbed.getComponentAt(index);
+	}
+
+	public class Tab extends JSplitPane {
+
+		final EditorPane editorPane = new EditorPane(TextEditor.this);
+		final JTextArea screen = new JTextArea();
+
+		Tab() {
+			super(JSplitPane.VERTICAL_SPLIT);
+			super.setResizeWeight(350.0 / 430.0);
+
+			screen.setEditable(false);
+			screen.setLineWrap(true);
+			screen.setFont(new Font("Courier", Font.PLAIN, 12));
+
+			JPanel bottom = new JPanel();
+			bottom.setLayout(new GridBagLayout());
+			GridBagConstraints bc = new GridBagConstraints();
+
+			bc.gridx = 0;
+			bc.gridy = 0;
+			bc.weightx = 0;
+			bc.weighty = 0;
+			bc.anchor = GridBagConstraints.NORTHWEST;
+			bc.fill = GridBagConstraints.NONE;
+			JButton runit = new JButton("Run");
+			runit.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent ae) { runText(); }
+			});
+			bottom.add(runit, bc);
+
+			bc.gridx = 1;
+			JButton killit = new JButton("Kill");
+			killit.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent ae) { ij.IJ.showMessage("Kill it!"); }
+			});
+			bottom.add(killit, bc);
+
+			bc.gridx = 2;
+			bc.fill = GridBagConstraints.HORIZONTAL;
+			bc.weightx = 1;
+			bottom.add(new JPanel(), bc);
+
+			bc.gridx = 3;
+			bc.fill = GridBagConstraints.NONE;
+			bc.weightx = 0;
+			bc.anchor = GridBagConstraints.NORTHEAST;
+			JButton clear = new JButton("Clear");
+			clear.addActionListener(new ActionListener() {
+				public void actionPerformed(ActionEvent ae) { screen.setText(""); }
+			});
+			bottom.add(clear, bc);
+
+			bc.gridx = 0;
+			bc.gridy = 1;
+			bc.anchor = GridBagConstraints.NORTHWEST;
+			bc.fill = GridBagConstraints.BOTH;
+			bc.weightx = 1;
+			bc.weighty = 1;
+			bc.gridwidth = 4;
+			screen.setEditable(false);
+			screen.setLineWrap(true);
+			Font font = new Font("Courier", Font.PLAIN, 12);
+			screen.setFont(font);
+			JScrollPane scroll = new JScrollPane(screen);
+			scroll.setPreferredSize(new Dimension(600, 80));
+			bottom.add(scroll, bc);
+
+			super.setTopComponent(this.editorPane.embedWithScrollbars());
+			super.setBottomComponent(bottom);
+		}
+	}
+
 	public void open(String path) {
 		if (path != null && path.startsWith("class:")) try {
 			path = new FileFunctions(this).getSourcePath(path.substring(6));
@@ -941,16 +1016,16 @@ public class TextEditor extends JFrame implements ActionListener,
 		UIManager.put("RSyntaxTextAreaUI.inputMap", null);
 
 		try {
+			Tab tab = getTab();
 			boolean wasNew =
-				editorPane != null && editorPane.isNew();
+				tab != null && tab.editorPane.isNew();
 			if (!wasNew) {
-				editorPane = new EditorPane(this);
-				tabbed.addTab("",
-					editorPane.embedWithScrollbars());
+				tab = new Tab();
+				tabbed.addTab("", new Tab());
 				switchTo(tabbed.getTabCount() - 1);
 				addDefaultAccelerators();
 			}
-			editorPane.setFile("".equals(path) ? null : path);
+			tab.editorPane.setFile("".equals(path) ? null : path);
 			try {
 				updateTabSize(true);
 			} catch (NullPointerException e) {
@@ -960,11 +1035,11 @@ public class TextEditor extends JFrame implements ActionListener,
 				int index = tabbed.getSelectedIndex()
 					+ tabsMenuTabsStart;
 				tabsMenu.getItem(index)
-					.setText(editorPane.getFileName());
+					.setText(tab.editorPane.getFileName());
 			}
 			else
 				tabsMenuItems.add(addToMenu(tabsMenu,
-					editorPane.getFileName(), 0, 0));
+					tab.editorPane.getFileName(), 0, 0));
 		} catch (Exception e) {
 			e.printStackTrace();
 			error("The file '" + path + "' was not found.");
@@ -1448,7 +1523,7 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 		markCompileStart();
 		final RSyntaxTextArea textArea = getTextArea();
 		textArea.setEditable(false); // within event dispatch thread
-		final JTextAreaOutputStream output = new JTextAreaOutputStream(screen);
+		final JTextAreaOutputStream output = new JTextAreaOutputStream(getTab().screen);
 		try {
 			final RefreshScripts interpreter =
 				currentLanguage.interpreter;
@@ -1503,7 +1578,7 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 		}
 
 		markCompileStart();
-		final JTextAreaOutputStream output = new JTextAreaOutputStream(screen);
+		final JTextAreaOutputStream output = new JTextAreaOutputStream(getTab().screen);
 		interpreter.setOutputStreams(output, output);
 
 		final File file = getEditorPane().file;
@@ -1521,7 +1596,7 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 			return;
 
 		final RefreshScripts interpreter = getCurrentLanguage().interpreter;
-		final JTextAreaOutputStream output = new JTextAreaOutputStream(screen);
+		final JTextAreaOutputStream output = new JTextAreaOutputStream(getTab().screen);
 		interpreter.setOutputStreams(output, output);
 		if (interpreter instanceof Refresh_Javas) {
 			final Refresh_Javas java = (Refresh_Javas)interpreter;
@@ -1531,7 +1606,7 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 			new Thread() {
 				public void run() {
 					java.compileAndRun(sourcePath, true);
-					screen.insert("Compilation finished.\n", screen.getDocument().getLength());
+					getTab().screen.insert("Compilation finished.\n", getTab().screen.getDocument().getLength());
 					markCompileEnd();
 				}
 			}.start();
@@ -1562,11 +1637,12 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 	public void markCompileStart() {
 		errorHandler = null;
 
-		Document document = screen.getDocument();
+		Tab tab = getTab();
+		Document document = tab.screen.getDocument();
 		int offset = document.getLength();
-		screen.insert("Started " + editorPane.getFileName() + " at "
+		tab.screen.insert("Started " + editorPane.getFileName() + " at "
 			+ new Date() + "\n", offset);
-		screen.setCaretPosition(document.getLength());
+		tab.screen.setCaretPosition(document.getLength());
 		try {
 			compileStartPosition = document.createPosition(offset);
 		} catch (BadLocationException e) {
@@ -1578,7 +1654,7 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 	public void markCompileEnd() {
 		if (errorHandler == null)
 			errorHandler = new ErrorHandler(getCurrentLanguage(),
-				screen, compileStartPosition.getOffset());
+				getTab().screen, compileStartPosition.getOffset());
 	}
 
 	public void installMacro() {
@@ -1592,7 +1668,7 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 				file = getFileForBasename(file.getName());
 			switchTo(file, errorHandler.getLine());
 			errorHandler.markLine();
-			screen.repaint();
+			getTab().screen.repaint();
 			getEditorPane().repaint();
 			return true;
 		} catch (Exception e) {
@@ -1718,9 +1794,10 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 	 * @param message The text to write
 	 */
 	public void write(String message) {
+		Tab tab = getTab();
 		if (!message.endsWith("\n"))
 			message += "\n";
-		screen.insert(message, screen.getDocument().getLength());
+		tab.screen.insert(message, tab.screen.getDocument().getLength());
 	}
 
 	protected void error(String message) {
