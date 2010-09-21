@@ -1255,14 +1255,14 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 		String fileName = getEditorPane().getFileName();
 		final String title = (fileChanged ? "*" : "") + fileName
 			+ (executingTasks.isEmpty() ? "" : " (Running)");
-		SwingUtilities.invokeLater(new Thread() {
+		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				setTitle(title);
+				int index = tabbed.getSelectedIndex();
+				if (index >= 0)
+					tabbed.setTitleAt(index, title);
 			}
 		});
-		int index = tabbed.getSelectedIndex();
-		if (index >= 0)
-			tabbed.setTitleAt(index, title);
 	}
 
 	public synchronized void setTitle(String title) {
