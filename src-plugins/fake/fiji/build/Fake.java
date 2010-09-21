@@ -152,6 +152,7 @@ public class Fake {
 		String jythonJar = pythonHome + "/jython.jar";
 		if (!new File(jythonJar).exists())
 			jythonJar = fijiHome + "/precompiled/jython.jar";
+		getClassLoader(fijiHome + "/jna.jar");
 		getClassLoader(jythonJar);
 	}
 
