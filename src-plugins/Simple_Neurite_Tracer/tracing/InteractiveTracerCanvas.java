@@ -30,6 +30,7 @@ package tracing;
 import ij.*;
 import java.awt.*;
 import java.awt.event.*;
+import stacks.ThreePanes;
 
 @SuppressWarnings("serial")
 public class InteractiveTracerCanvas extends TracerCanvas implements KeyListener {
@@ -213,6 +214,36 @@ public class InteractiveTracerCanvas extends TracerCanvas implements KeyListener
 			IJ.error( "BUG: No operation chosen" );
 	}
 
+	protected void drawSquare( Graphics g,
+				   PointInImage p,
+				   Color fillColor, Color edgeColor,
+				   int side ) {
+
+		int x, y;
+
+		if( plane == ThreePanes.XY_PLANE ) {
+			x = myScreenXD(p.x/tracerPlugin.x_spacing);
+			y = myScreenYD(p.y/tracerPlugin.y_spacing);
+		} else if( plane == ThreePanes.XZ_PLANE ) {
+			x = myScreenXD(p.x/tracerPlugin.x_spacing);
+			y = myScreenYD(p.z/tracerPlugin.z_spacing);
+		} else { // plane is ThreePanes.ZY_PLANE
+			x = myScreenXD(p.z/tracerPlugin.z_spacing);
+			y = myScreenYD(p.y/tracerPlugin.y_spacing);
+		}
+
+		int rectX = x - side / 2;
+		int rectY = y - side / 2;
+
+		g.setColor(fillColor);
+		g.fillRect( rectX, rectY, side, side );
+
+		if( edgeColor != null ) {
+			g.setColor(edgeColor);
+			g.drawRect( rectX, rectY, side, side );
+		}
+	}
+
 	@Override
 	protected void drawOverlay(Graphics g) {
 
@@ -241,18 +272,8 @@ public class InteractiveTracerCanvas extends TracerCanvas implements KeyListener
 			if( unconfirmedSegment.endJoins != null ) {
 
 				int n = unconfirmedSegment.size();
-
-				int x = myScreenX(unconfirmedSegment.getXUnscaled(n-1));
-				int y = myScreenY(unconfirmedSegment.getYUnscaled(n-1));
-
-				int rectX = x - spotDiameter / 2;
-				int rectY = y - spotDiameter / 2;
-
-				g.setColor(Color.BLUE);
-				g.fillRect( rectX, rectY, spotDiameter, spotDiameter );
-
-				g.setColor(Color.GREEN);
-				g.drawRect( rectX, rectY, spotDiameter, spotDiameter );
+				PointInImage p = unconfirmedSegment.getPointInImage(n-1);
+				drawSquare( g, p, Color.BLUE, Color.GREEN, spotDiameter );
 			}
 		}
 
@@ -266,20 +287,15 @@ public class InteractiveTracerCanvas extends TracerCanvas implements KeyListener
 
 			if( lastPathUnfinished && currentPath.size() == 0 ) {
 
-				int x = myScreenX(tracerPlugin.last_start_point_x);
-				int y = myScreenY(tracerPlugin.last_start_point_y);
+				PointInImage p = new PointInImage( tracerPlugin.last_start_point_x * tracerPlugin.x_spacing,
+								   tracerPlugin.last_start_point_y * tracerPlugin.y_spacing,
+								   tracerPlugin.last_start_point_z * tracerPlugin.z_spacing);
 
-				int rectX = x - spotDiameter / 2;
-				int rectY = y - spotDiameter / 2;
+				Color edgeColour = null;
+				if( currentPathFromTracer.startJoins != null )
+					edgeColour = Color.GREEN;
 
-				g.setColor(Color.BLUE);
-				g.fillRect( rectX, rectY, spotDiameter, spotDiameter );
-
-				if( currentPathFromTracer.startJoins != null ) {
-					g.setColor(Color.GREEN);
-					g.drawRect( rectX, rectY, spotDiameter, spotDiameter );
-				}
-
+				drawSquare( g, p, Color.BLUE, edgeColour, spotDiameter );
 			}
 		}
 
