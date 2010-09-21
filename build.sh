@@ -118,15 +118,3 @@ echo "Checking whether FFMPEG needs to be built" &&
 		$(echo "$out" | grep '^-' | grep -ve '^-lav' -e '^-lsw' |
 			sort | uniq)
  fi)
-
-# Discover Fiji
-
-# TODO: call make_ffmpeg_jna_classes.bsh
-
-# TODO: compile the plugin & bundle all (Fakefile)
-
-# package everything (the libraries into platform-specific directories)
-
-# jna.library.path should suffice, now that rpath is set correctly
-
-# make a VirtualStack

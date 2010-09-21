@@ -1,10 +1,70 @@
 #!/bin/sh
 // 2> /dev/null || exec fiji --bsh "$0" "$@"
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.InputStream;
 
-print(this.interpreter.getSourceFileInfo());
-cwd = new File(bsh.cwd, this.interpreter.getSourceFileInfo()).getParent();
+File cwd = new File(bsh.cwd, this.interpreter.getSourceFileInfo())
+	.getParentFile();
 
-addClassPath(cwd + "/generator.jar");
-GenerateFFMPEGClasses.main(new String[] { cwd + "/ffmpeg/", cwd + "/classes/" });
+// TODO: use IJ.isMacOSX() and friends to do all this
+String platform = "macosx";
+String target = "libffmpeg.dylib";
+
+// Fake stuff
+
+addClassPath(System.getProperty("fiji.dir") + "/jars/fake.jar");
+import fiji.build.Fake.Parser;
+
+// Using fiji.build.Fake to avoid getting the Fake in the default package
+fiji.build.Fake fake = new fiji.build.Fake();
+Parser parse(String fakefile) {
+	return fake.parse(new ByteArrayInputStream(fakefile.getBytes()), cwd);
+}
+void make(String fakefile, String target) {
+	fake.make(new ByteArrayInputStream(fakefile.getBytes()), cwd,
+		new String[] { target });
+}
+
+String fakefilePrefix =
+	"buildDir=build/\n" +
+	"javaVersion=1.5\n";
+
+// TODO: pass platform and target and libext variables to build.sh
+String ffmpegFakefile = fakefilePrefix +
+	"all <- ffmpeg/" + target + "\n" +
+	"\n" +
+	"ffmpeg/" + target + "[sh build.sh] <- "
+		+ (new File(cwd, "ffmpeg").exists() ? "ffmpeg/**/*" : "");
+make(ffmpegFakefile, "all");
+
+String avformatTarget = "classes/fiji/ffmpeg/AVFORMAT.java";
+String generateClassesFakefile = fakefilePrefix +
+	"all <- " + avformatTarget + "\n" +
+	"\n" +
+	avformatTarget + "[generate-classes] <- ffmpeg/**/*.h\n" +
+	"\n" +
+	"generator.jar <- GenerateFFMPEGClasses.java\n";
+Parser parser = parse(generateClassesFakefile);
+if (!parser.getRule(avformatTarget).upToDate()) {
+	parser.getRule("generator.jar").make();
+	addClassPath(cwd + "/generator.jar");
+	GenerateFFMPEGClasses.main(new String[] {
+		cwd.getAbsolutePath() + "/ffmpeg/",
+		cwd.getAbsolutePath() + "/classes/"
+	});
+}
+
+String pluginFakefile = fakefilePrefix +
+	"all <- FFMPEG_IO.jar\n" +
+	"\n" +
+	"FFMPEG_IO.jar <- plugin.jar/ jna-wrapper.jar/ " +
+		platform + "/" + target + "[ffmpeg/" + target + "]\n" +
+	"\n" +
+	"CLASSPATH(plugin.jar)=jna-wrapper.jar\n" +
+	"plugin.jar <- plugin/**/*\n" +
+	"\n" +
+	"EXCLUDE(jna-wrapper.jar)=classes/.gitignore\n" +
+	"jna-wrapper.jar <- classes/**/*\n";
+make(pluginFakefile, "all");
