@@ -1460,13 +1460,9 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 			// The Executer creates a Thread that does the reading from PipedInputStream
 			new TextEditor.Executer(output) {
 				public void execute() {
-					try {
-						interpreter.runScript(pi, editorPane.getFileName());
-						output.flush();
-						markCompileEnd();
-					} catch (Throwable t) {
-						t.printStackTrace();
-					}
+					interpreter.runScript(pi, editorPane.getFileName());
+					output.flush();
+					markCompileEnd();
 				}
 			};
 			// Write into PipedOutputStream from the event dispatch thread
