@@ -11,6 +11,7 @@ import ij3d.Image3DUniverse;
 
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -54,17 +55,24 @@ public class TrackMateFrame extends javax.swing.JFrame {
 
 	static final Font FONT = new Font("Arial", Font.PLAIN, 11);
 	static final Font SMALL_FONT = FONT.deriveFont(9);
+	static final Dimension TEXTFIELD_DIMENSION = new Dimension(40,18);
+	
+
 	
 	private static enum GuiState {
 		START,
 		SEGMENTING,
-		THRESHOLD_BLOBS;
+		THRESHOLD_BLOBS,
+		TRACKING;
 	};
 	
 	private static final long serialVersionUID = 1L;
+
 	private static final String START_DIALOG_KEY = "Start";
 	private static final String THRESHOLD_GUI_KEY = "Threshold";
 	private static final String LOG_PANEL_KEY = "Log";
+	private static final String DISPLAYER_PANEL_KEY = "Displayer";
+	
 	private static final int DEFAULT_RESAMPLING_FACTOR = 3; // for the 3d viewer
 	private static final int DEFAULT_THRESHOLD = 50; // for the 3d viewer
 	private static final String DEFAULT_FILENAME = "TrackMateData.xml";
@@ -78,6 +86,7 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	private StartDialogPanel startDialogPanel;
 	private ThresholdGuiPanel thresholdGuiPanel;
 	private LogPanel logPanel;
+	private DisplayerPanel displayerPanel;
 	private CardLayout cardLayout;
 	private JButton jButtonSave;
 	private JButton jButtonLoad;
@@ -129,7 +138,13 @@ public class TrackMateFrame extends javax.swing.JFrame {
 				
 			case THRESHOLD_BLOBS:
 				execTrackingStep();
+				state = GuiState.TRACKING;
 				break;
+				
+			case TRACKING:
+				cardLayout.show(jPanelMain, DISPLAYER_PANEL_KEY);
+				break;
+				
 		}
 	}
 	
@@ -359,6 +374,11 @@ public class TrackMateFrame extends javax.swing.JFrame {
 		displayer.refresh(thresholdGuiPanel.getFeatures(), thresholdGuiPanel.getThresholds(), thresholdGuiPanel.getIsAbove());
 	}
 	
+	private void displayModeChanged() {
+		displayer.setDisplayTrackMode(displayerPanel.getTrackDisplayMode(), displayerPanel.getTrackDisplayDepth());
+	}
+	
+	
 	private void initGUI() {
 		try {
 			setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
@@ -444,6 +464,16 @@ public class TrackMateFrame extends javax.swing.JFrame {
 						} 
 					});				
 				jPanelMain.add(thresholdGuiPanel, THRESHOLD_GUI_KEY);
+			}
+			{
+				displayerPanel = new DisplayerPanel();
+				displayerPanel.addActionListener(new ActionListener() {
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						displayModeChanged();
+					}
+				});
+				jPanelMain.add(displayerPanel, DISPLAYER_PANEL_KEY);
 			}
 			cardLayout.show(jPanelMain, START_DIALOG_KEY);
 			state = GuiState.START;

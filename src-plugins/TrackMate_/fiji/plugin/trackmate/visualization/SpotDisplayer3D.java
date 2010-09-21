@@ -45,6 +45,9 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	 * PUBLIC METHODS
 	 */
 	
+	public void refresh() { //TODO 
+	}
+	
 
 	@Override
 	public void render()  {

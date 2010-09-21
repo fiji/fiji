@@ -85,6 +85,7 @@ public abstract class SpotDisplayer {
 	public void setDisplayTrackMode(TrackDisplayMode mode, int displayDepth) {
 		this.trackDisplayMode = mode;
 		this.trackDisplayDepth = displayDepth;
+		refresh();
 	}	
 	
 	public void setTrackGraph(SimpleGraph<Spot, DefaultEdge> trackGraph) {
@@ -129,6 +130,8 @@ public abstract class SpotDisplayer {
 	 */
 	public abstract void resetTresholds();
 	
+	
+	public abstract void refresh();
 	
 	/*
 	 * PROTECTED METHODS

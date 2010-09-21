@@ -40,7 +40,7 @@ import mpicbg.imglib.type.numeric.real.FloatType;
 public class TrackMate_ implements PlugIn {
 	
 	public static final String PLUGIN_NAME_STR = "Track Mate";
-	public static final String PLUGIN_NAME_VERSION = "alpha";
+	public static final String PLUGIN_NAME_VERSION = ".alpha";
 	
 	private static final String DIAMETER_KEY = "diameter";
 	private static final String MEDIAN_FILTER_KEY = "median";
@@ -52,7 +52,7 @@ public class TrackMate_ implements PlugIn {
 		optionStrings.put(ALLOW_EDGE_KEY, 		""+Settings.DEFAULT.allowEdgeMaxima);	
 	}	
 	
-	/** Contain the segmentation result, un-filtered. See {@link #execSegmentation(ImagePlus, Settings)}*/
+	/** Contain the segmentation result, un-filtered.*/
 	private TreeMap<Integer,List<Spot>> spots;
 	/** Contain the Spot retained for tracking, after thresholding by features. */
 	private TreeMap<Integer,List<Spot>> selectedSpots;

@@ -179,8 +179,8 @@ public class SpotDisplayer2D extends SpotDisplayer {
 		}
 		featureMinValue = min;
 		featureMaxValue = max;
-		displayFrame(imp.getFrame() - 1);
-		imp.updateAndDraw();
+		refresh();
+		
 	}
 		
 	@Override
@@ -191,6 +191,12 @@ public class SpotDisplayer2D extends SpotDisplayer {
 		final int frame = imp.getFrame() -1; // 0 - based
 		if (spots.get(frame) == null)
 			return;
+		imp.updateAndDraw();
+	}
+	
+	@Override
+	public void refresh() {
+		displayFrame(imp.getFrame() - 1);
 		imp.updateAndDraw();
 	}
 	

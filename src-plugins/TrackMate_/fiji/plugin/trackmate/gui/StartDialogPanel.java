@@ -2,12 +2,12 @@ package fiji.plugin.trackmate.gui;
 
 import static fiji.plugin.trackmate.gui.TrackMateFrame.FONT;
 import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
+import static fiji.plugin.trackmate.gui.TrackMateFrame.TEXTFIELD_DIMENSION;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.NewImage;
 import ij.gui.Roi;
 
-import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -48,14 +48,13 @@ public class StartDialogPanel extends ActionListenablePanel {
 			e.printStackTrace();
 		}
 	}
+	
+	
 
 	private static final long serialVersionUID = 1L;
 	private static final float DEFAULT_BLOB_DIAMETER  = 10;
 	private static final boolean DEFAULT_MEDIAN_FILTER = false;
 	private static final boolean DEFAULT_ALLOW_EDGE = false;
-
-	private static final Dimension TEXTFIELD_DIMENSION = new Dimension(40,18);
-	
 	
 	private JLabel jLabelExpectedDiameter;
 	private JLabel jLabelBlobDiameterUnit;
