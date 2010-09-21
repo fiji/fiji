@@ -538,6 +538,34 @@ public class FileFunctions {
 			return;
 		boolean isInFijiGit = gitDirectory.equals(new File(System.getProperty("fiji.dir"), ".git"));
 		final File root = isInFijiGit ? getPluginRootDirectory(file) : gitDirectory.getParentFile();
+
+		try {
+			String[] cmdarray = {
+				"git", "ls-files", "--exclude-standard", "--other", "."
+			};
+			SimpleExecuter e = new SimpleExecuter(cmdarray, root);
+			if (e.getExitCode() != 0) {
+				error("Could not determine whether there are untracked files");
+				return;
+			}
+			String out = e.getOutput();
+			if (!out.equals(""))
+				if (JOptionPane.showConfirmDialog(parent,
+						"Do you want to commit the following untracked files?\n\n" + out) == JOptionPane.YES_OPTION) {
+					cmdarray = new String[] {
+						"git", "add", "-N", "."
+					};
+					e = new SimpleExecuter(cmdarray, root);
+					if (e.getExitCode() != 0) {
+						error("Could not add untracked files:\n" + e.getError());
+						return;
+					}
+				}
+		} catch (IOException e) {
+			IJ.handleException(e);
+			return;
+		}
+
 		final DiffView diff = new DiffView();
 		String configPath = System.getProperty("fiji.dir") + "/staged-plugins/"
 			+ root.getName() + ".config";

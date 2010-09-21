@@ -53,6 +53,7 @@ import java.util.zip.ZipException;
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -81,10 +82,10 @@ import org.fife.ui.rtextarea.RTextScrollPane;
 
 public class TextEditor extends JFrame implements ActionListener,
 	       ChangeListener {
-	EditorPane editorPane;
-	JTabbedPane tabbed;
-	JTextArea screen;
-	JMenuItem newFile, open, save, saveas, compileAndRun, compile, debug, close,
+	protected EditorPane editorPane;
+	protected JTabbedPane tabbed;
+	protected JTextArea screen;
+	protected JMenuItem newFile, open, save, saveas, compileAndRun, compile, debug, close,
 		  undo, redo, cut, copy, paste, find, replace, selectAll,
 		  autocomplete, resume, terminate, kill, gotoLine,
 		  makeJar, makeJarWithSource, removeUnusedImports,
@@ -96,16 +97,17 @@ public class TextEditor extends JFrame implements ActionListener,
 		  openSourceForMenuItem, showDiff, commit, ijToFront,
 		  openMacroFunctions, decreaseFontSize, increaseFontSize,
 		  chooseTabSize, gitGrep, loadToolsJar, openInGitweb;
-	JMenu gitMenu, tabsMenu, tabSizeMenu, toolsMenu;
-	int tabsMenuTabsStart;
-	Set<JMenuItem> tabsMenuItems;
-	FindAndReplaceDialog findDialog;
+	protected JMenu gitMenu, tabsMenu, tabSizeMenu, toolsMenu;
+	protected int tabsMenuTabsStart;
+	protected Set<JMenuItem> tabsMenuItems;
+	protected FindAndReplaceDialog findDialog;
+	protected JCheckBoxMenuItem autoSave;
 
 	protected final String templateFolder = "templates/";
-	Languages.Language[] availableLanguages = Languages.getInstance().languages;
+	protected Languages.Language[] availableLanguages = Languages.getInstance().languages;
 
-	Position compileStartPosition;
-	ErrorHandler errorHandler;
+	protected Position compileStartPosition;
+	protected ErrorHandler errorHandler;
 
 	public TextEditor(String path) {
 		super("Script Editor");
@@ -262,6 +264,8 @@ public class TextEditor extends JFrame implements ActionListener,
 		compile = addToMenu(run, "Compile",
 				KeyEvent.VK_C, ctrl | shift);
 		compile.setMnemonic(KeyEvent.VK_C);
+		autoSave = new JCheckBoxMenuItem("Auto-save before compiling");
+		run.add(autoSave);
 
 		installMacro = addToMenu(run, "Install Macro",
 				KeyEvent.VK_I, ctrl);
@@ -576,8 +580,17 @@ public class TextEditor extends JFrame implements ActionListener,
 	}
 
 	public boolean handleUnsavedChanges() {
+		return handleUnsavedChanges(false);
+	}
+
+	public boolean handleUnsavedChanges(boolean beforeCompiling) {
 		if (!fileChanged())
 			return true;
+
+		if (beforeCompiling && autoSave.getState()) {
+			save();
+			return true;
+		}
 
 		switch (JOptionPane.showConfirmDialog(this,
 				"Do you want to save changes?")) {
@@ -1015,7 +1028,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		File file = getEditorPane().file;
 		Languages.Language currentLanguage = getCurrentLanguage();
 		if ((file == null || currentLanguage.isCompileable())
-				&& !handleUnsavedChanges())
+				&& !handleUnsavedChanges(true))
 			return false;
 
 		String name = getEditorPane().getFileName();
@@ -1423,7 +1436,7 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 				error("Cannot run selection of compiled language!");
 				return;
 			}
-			if (handleUnsavedChanges())
+			if (handleUnsavedChanges(true))
 				runScript();
 			return;
 		}
@@ -1508,7 +1521,7 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 	}
 
 	public void compile() {
-		if (!handleUnsavedChanges())
+		if (!handleUnsavedChanges(true))
 			return;
 
 		final RefreshScripts interpreter = getCurrentLanguage().interpreter;
@@ -1690,8 +1703,13 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 			FileFunctions functions = new FileFunctions(this);
 			List<String> paths = functions.extractSourceJar(path);
 			for (String file : paths)
-				if (!functions.isBinaryFile(file))
+				if (!functions.isBinaryFile(file)) {
 					open(file);
+					EditorPane pane = getEditorPane();
+					new TokenFunctions(pane).removeTrailingWhitespace();
+					if (pane.fileChanged())
+						save();
+				}
 		} catch (IOException e) {
 			error("There was a problem opening " + path
 				+ ": " + e.getMessage());
