@@ -66,6 +66,8 @@ public class TrackMate_ implements PlugIn {
 	
 	private Logger logger = Logger.DEFAULT_LOGGER;
 
+	private Settings settings = new Settings();
+
 	/*
 	 * RUN METHOD
 	 */
@@ -108,7 +110,6 @@ public class TrackMate_ implements PlugIn {
 			e.printStackTrace(logger);
 		}
 		
-		Settings  settings = new Settings();
 		settings.expectedDiameter 	= Float.parseFloat(optionStrings.get(DIAMETER_KEY));
 		settings.useMedianFilter 	= Boolean.parseBoolean(optionStrings.get(MEDIAN_FILTER_KEY));
 		settings.allowEdgeMaxima 	= Boolean.parseBoolean(optionStrings.get(ALLOW_EDGE_KEY));
@@ -118,7 +119,7 @@ public class TrackMate_ implements PlugIn {
 		settings.imp = imp;
 		
 		// Segment
-		execSegmentation(settings);
+		execSegmentation();
 		// Threshold
 		execThresholding();
 	}
@@ -262,7 +263,7 @@ public class TrackMate_ implements PlugIn {
 	 * @return  a list ({@link ArrayList}) of {@link SpotImp} collections. There is one collection in the list per time-point. Collections in the list are ordered 
 	 * by frame number (time-point 0 is item 0 in the list, etc...).   
 	 */
-	public void execSegmentation(final Settings settings) {
+	public void execSegmentation() {
 		final ImagePlus imp = settings.imp;
 		if (null == imp) {
 			logger.error("No image to operate on.");
@@ -378,5 +379,12 @@ public class TrackMate_ implements PlugIn {
 	 */
 	public void setLogger(Logger logger) {
 		this.logger = logger;
+	}
+	
+	/**
+	 * Return the {@link Settings} object that determines the behavior of this plugin.
+	 */
+	public Settings getSettings() {
+		return settings;
 	}
 }

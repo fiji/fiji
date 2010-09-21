@@ -1,4 +1,5 @@
 package fiji.plugin.trackmate.gui;
+
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.plugin.Duplicator;
@@ -13,24 +14,24 @@ import java.awt.CardLayout;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.List;
-import java.util.TreeMap;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
-import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.SimpleGraph;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
-import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.io.TmXmlWriter;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
 import fiji.plugin.trackmate.visualization.SpotDisplayer2D;
 import fiji.plugin.trackmate.visualization.SpotDisplayer3D;
@@ -52,11 +53,9 @@ import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
 public class TrackMateFrame extends javax.swing.JFrame {
 
 	static final Font FONT = new Font("Arial", Font.PLAIN, 11);
-	private JButton jButtonNext;
-	private JPanel jPanelButtons;
-	private JPanel jPanelMain;
-	static final Font SMALL_FONT = FONT.deriveFont(10f);
-	static enum GuiState {
+	static final Font SMALL_FONT = FONT.deriveFont(9);
+	
+	private static enum GuiState {
 		START,
 		SEGMENTING,
 		THRESHOLD_BLOBS;
@@ -65,26 +64,28 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	private static final long serialVersionUID = 1L;
 	private static final String START_DIALOG_KEY = "Start";
 	private static final String THRESHOLD_GUI_KEY = "Threshold";
+	private static final String LOG_PANEL_KEY = "Log";
+	private static final int DEFAULT_RESAMPLING_FACTOR = 3; // for the 3d viewer
+	private static final int DEFAULT_THRESHOLD = 50; // for the 3d viewer
+	private static final String DEFAULT_FILENAME = "TrackMateData.xml";
+
+	private TrackMate_ trackmate;
+	private GuiState state;
+	private Logger logger;
+	private SpotDisplayer displayer;
+	private File file;
+	
+	private StartDialogPanel startDialogPanel;
+	private ThresholdGuiPanel thresholdGuiPanel;
+	private LogPanel logPanel;
+	private CardLayout cardLayout;
 	private JButton jButtonSave;
 	private JButton jButtonLoad;
 	private JButton jButtonPrevious;
-	private static final String LOG_PANEL_KEY = "Log";
+	private JButton jButtonNext;
+	private JPanel jPanelButtons;
+	private JPanel jPanelMain;
 	
-	protected static final int DEFAULT_RESAMPLING_FACTOR = 3;
-	protected static final int DEFAULT_THRESHOLD = 50;
-
-	private StartDialogPanel startDialogPanel;
-	private ThresholdGuiPanel thresholdGuiPanel;
-	private CardLayout cardLayout;
-	private GuiState state;
-	private Settings settings;
-	private TrackMate_ spotTracker;
-	private LogPanel logPanel;
-	private Logger logger;
-	private TreeMap<Integer, List<Spot>> spots;
-	private SimpleGraph<Spot, DefaultEdge> trackGraph;
-	private SpotDisplayer displayer;
-	private boolean is3D;
 	
 	{
 		//Set Look & Feel
@@ -102,8 +103,9 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	public TrackMateFrame(TrackMate_ plugin) {
 		if (null == plugin)
 			plugin = new TrackMate_();
-		this.spotTracker = plugin;
+		this.trackmate = plugin;
 		initGUI();
+		logger = logPanel.getLogger();
 	}
 	
 	public TrackMateFrame() {
@@ -146,8 +148,37 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	/**
 	 * Called when the "Save" button is pressed.
 	 */
-	private void save() {		
+	private void save() {
+		jButtonSave.setEnabled(false);
+		if (null == file ) {
+			File folder = new File(System.getProperty("user.dir")).getParentFile().getParentFile();
+			file = new File(folder.getPath() + File.separator + DEFAULT_FILENAME);
+		}
+		JFileChooser fileChooser = new JFileChooser(file.getParent());
+		fileChooser.setSelectedFile(file);
+		FileNameExtensionFilter filter = new FileNameExtensionFilter("XML files", "xml");
+		fileChooser.setFileFilter(filter);
+
+		int returnVal = fileChooser.showSaveDialog(this);
+		if(returnVal == JFileChooser.APPROVE_OPTION) {
+			file = fileChooser.getSelectedFile();
+		} else {
+			logger.log("Save data aborted.");
+			return;  	    		
+		}
+		TmXmlWriter writer = new TmXmlWriter(trackmate);
+		try {
+			writer.writeToFile(file);
+			logger.log("Data saved to: "+file.toString());
+		} catch (FileNotFoundException e) {
+			logger.error("File not found:\n"+e.getMessage());
+		} catch (IOException e) {
+			logger.error("Input/Output error:\n"+e.getMessage());
+		} finally {
+			jButtonSave.setEnabled(true);
+		}
 	}
+
 
 	
 	/**
@@ -156,17 +187,16 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	 */
 	private void execSegmentationStep() {
 		cardLayout.show(jPanelMain, LOG_PANEL_KEY);
-		settings = startDialogPanel.updateSettings(settings);
-		is3D = settings.imp.getNSlices() > 1;
-		logger = logPanel.getLogger();
+		Settings settings = trackmate.getSettings();
+		startDialogPanel.updateSettings(settings);
 		logger.log("Starting segmentation...\n", Logger.BLUE_COLOR);
 		new Thread("TrackMate segmentation thread") {					
 			public void run() {
 				long start = System.currentTimeMillis();
 				try {
-					spotTracker.setLogger(logger);
+					trackmate.setLogger(logger);
 					jButtonNext.setEnabled(false);
-					spotTracker.execSegmentation(settings);
+					trackmate.execSegmentation();
 				} catch (Exception e) {
 					logger.error("An error occured:\n"+e+'\n');
 					e.printStackTrace(logger);
@@ -184,7 +214,7 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	 */
 	private void execThresholdingStep() {
 		// Store results
-		spots = spotTracker.getSpots();
+//		spots = trackmate.getSpots();
 		
 		// Launch renderer
 		logger.log("Rendering results...\n",Logger.BLUE_COLOR);
@@ -193,7 +223,9 @@ public class TrackMateFrame extends javax.swing.JFrame {
 		// Thread for rendering
 		new Thread("TrackMate rendering thread") {
 			public void run() {
+				Settings settings = trackmate.getSettings();
 				// Render image data
+				boolean is3D = settings.imp.getNSlices() > 1;
 				if (is3D) { 
 					final Image3DUniverse universe = new Image3DUniverse();
 					universe.show();
@@ -217,12 +249,12 @@ public class TrackMateFrame extends javax.swing.JFrame {
 							(float) settings.imp.getCalibration().pixelHeight};
 					displayer = new SpotDisplayer2D(settings.imp, settings.expectedDiameter/2, calibration);
 				}
-				displayer.setSpots(spots);
+				displayer.setSpots(trackmate.getSpots());
 				displayer.render();
 				logger.log("Rendering done.\n", Logger.BLUE_COLOR);
 				cardLayout.show(jPanelMain, THRESHOLD_GUI_KEY);
 				
-				thresholdGuiPanel.setSpots(spots.values());
+				thresholdGuiPanel.setSpots(trackmate.getSpots().values());
 				thresholdGuiPanel.addThresholdPanel(Feature.LOG_VALUE);
 				displayer.render();
 				thresholdGuiPanel.addChangeListener(new ChangeListener() {
@@ -250,14 +282,13 @@ public class TrackMateFrame extends javax.swing.JFrame {
 				double[] values = thresholdGuiPanel.getThresholds();
 				boolean[] isAbove = thresholdGuiPanel.getIsAbove();
 				for (int i = 0; i < features.length; i++)
-					spotTracker.addThreshold(features[i], (float) values[i], isAbove[i]);
-				spotTracker.execThresholding();
+					trackmate.addThreshold(features[i], (float) values[i], isAbove[i]);
+				trackmate.execThresholding();
 				// Track
-				spotTracker.execTracking();
-				trackGraph = spotTracker.getTrackGraph();
+				trackmate.execTracking();
 				// Forward to displayer
-				displayer.setSpots(spotTracker.getSelectedSpots()); // tracked subset of spots 
-				displayer.setTrackGraph(trackGraph);
+				displayer.setSpots(trackmate.getSelectedSpots()); // tracked subset of spots 
+				displayer.setTrackGraph(trackmate.getTrackGraph());
 				displayer.setDisplayTrackMode(TrackDisplayMode.LOCAL_WHOLE_TRACKS, 20);
 				displayer.resetTresholds();
 				// Re-enable the GUI
@@ -331,7 +362,7 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	private void initGUI() {
 		try {
 			setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-			this.setTitle("Spot Tracker");
+			this.setTitle(TrackMate_.PLUGIN_NAME_STR + " v"+TrackMate_.PLUGIN_NAME_VERSION);
 			this.setResizable(false);
 			{
 				jPanelMain = new JPanel();
@@ -399,20 +430,10 @@ public class TrackMateFrame extends javax.swing.JFrame {
 			this.setSize(300, 520);
 			{
 				startDialogPanel = new StartDialogPanel();
-				startDialogPanel.addActionListener(new ActionListener() {
-					public void actionPerformed(ActionEvent e) {
-						next();
-					}
-				});
 				jPanelMain.add(startDialogPanel, START_DIALOG_KEY);
 			}
 			{
 				logPanel = new LogPanel();
-				logPanel.addActionListener(new ActionListener() {
-					public void actionPerformed(ActionEvent e) {
-						next();
-					}
-				});
 				jPanelMain.add(logPanel, LOG_PANEL_KEY);
 			}
 			{
