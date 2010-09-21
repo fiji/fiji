@@ -3,14 +3,22 @@
 LIBS="avcodec avformat swscale avcore avdevice avfilter avutil"
 PARALLEL=-j5
 
+EXTRA_CONFIGURE=
+EXTRA_LDFLAGS=
 case "$(uname -s)" in
 Linux)
 	LIBEXT=.so
 	LIBPREFIX=lib
+	EXTRA_LDFLAGS="-Wl,-soname,libffmpeg.so -Wl,--warn-common -Wl,--as-needed -Wl,-Bsymbolic"
 	;;
 Darwin)
 	LIBEXT=.dylib
 	LIBPREFIX=lib
+	EXTRA_CONFIGURE="--disable-yasm --arch=x86_64 --target-os=darwin --enable-cross-compile"
+	EXTRA_LDFLAGS="-dynamiclib -Wl,-single_module -Wl,-install_name,/usr/local/lib/libffmpeg.dylib,,-compatibility_version,1 -Wl,-read_only_relocs,suppress"
+	# TODO: make fat binary
+	export CFLAGS="-arch x86_64 -m64"
+	export LDFLAGS="-arch x86_64 -m64"
 	;;
 MINGW*)
 	LIBEXT=.dll
@@ -105,8 +113,7 @@ echo "Checking whether FFMPEG needs to be built" &&
 	rm */*$LIBEXT* &&
 	out="$(make V=1 | grep -ve '-o libavfilter' |
 		sed -n 's/^gcc .* -o lib[^ ]* //p' | tr ' ' '\n')" &&
-	gcc -shared -Wl,-soname,$TARGET -Wl,--warn-common \
-		-Wl,--as-needed -Wl,-Bsymbolic -o $TARGET \
+	gcc -shared $EXTRA_LDFLAGS -o $TARGET \
 		$(echo "$out" | grep -ve '^-' -e 'libavcodec/inverse\.o') \
 		$(echo "$out" | grep '^-' | grep -ve '^-lav' -e '^-lsw' |
 			sort | uniq)
