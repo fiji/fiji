@@ -1767,6 +1767,10 @@ public class Fake {
 					String program) {
 				super(target, prerequisites);
 				this.program = program;
+				int space = program.indexOf(' ');
+				String argv0 = space < 0 ? program : program.substring(0, space);
+				if (argv0.endsWith(".py") && allRules.containsKey("jars/jython.jar"))
+					prerequisites.add("jars/jython.jar");
 			}
 
 			boolean checkUpToDate() {
