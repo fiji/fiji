@@ -1416,8 +1416,8 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 		runText(false);
 	}
 
-	public void runText(boolean selectionOnly) {
-		Languages.Language currentLanguage = getCurrentLanguage();
+	public void runText(final boolean selectionOnly) {
+		final Languages.Language currentLanguage = getCurrentLanguage();
 		if (currentLanguage.isCompileable()) {
 			if (selectionOnly) {
 				error("Cannot run selection of compiled language!");
@@ -1432,10 +1432,9 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 			// TODO guess the language, if possible.
 			return;
 		}
-
 		markCompileStart();
-		RSyntaxTextArea textArea = getTextArea();
-		textArea.setEditable(false);
+		final RSyntaxTextArea textArea = getTextArea();
+		textArea.setEditable(false); // within event dispatch thread
 		final JTextAreaOutputStream output = new JTextAreaOutputStream(screen);
 		try {
 			final RefreshScripts interpreter =
@@ -1445,28 +1444,40 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 			// Pipe current text into the runScript:
 			final PipedInputStream pi = new PipedInputStream();
 			final PipedOutputStream po = new PipedOutputStream(pi);
+			// The Executer creates a Thread that does the reading from PipedInputStream
 			new TextEditor.Executer(output) {
 				public void execute() {
-					interpreter.runScript(pi, editorPane.getFileName());
-					output.flush();
-					markCompileEnd();
+					try {
+						interpreter.runScript(pi, editorPane.getFileName());
+						output.flush();
+						markCompileEnd();
+					} catch (Throwable t) {
+						t.printStackTrace();
+					}
 				}
 			};
-			if (selectionOnly) {
-				String text = textArea.getSelectedText();
-				if (text == null)
-					error("Selection required!");
-				else
-					po.write(text.getBytes());
+			// Write into PipedOutputStream from the event dispatch thread
+			try {
+				if (selectionOnly) {
+					String text = textArea.getSelectedText();
+					if (text == null)
+						error("Selection required!");
+					else
+						new PrintWriter(po).print(text);
+				} else {
+					PrintWriter pw = new PrintWriter(po);
+					pw.write(textArea.getText());
+					pw.flush();
+				}
+			} catch (Throwable t) {
+				t.printStackTrace();
+			} finally {
+				try { po.close(); } catch (Throwable tt) { tt.printStackTrace(); }
+				// Re-enable when all text to send has been sent
+				textArea.setEditable(true);
 			}
-			else
-				textArea.write(new PrintWriter(po));
-			po.flush();
-			po.close();
 		} catch (Throwable t) {
 			t.printStackTrace();
-		} finally {
-			textArea.setEditable(true);
 		}
 	}
 
