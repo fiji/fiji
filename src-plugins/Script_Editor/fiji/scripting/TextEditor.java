@@ -1462,8 +1462,11 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 					String text = textArea.getSelectedText();
 					if (text == null)
 						error("Selection required!");
-					else
-						new PrintWriter(po).print(text);
+					else {
+						PrintWriter pw = new PrintWriter(po);
+						pw.print(text);
+						pw.flush();
+					}
 				} else {
 					PrintWriter pw = new PrintWriter(po);
 					pw.write(textArea.getText());
