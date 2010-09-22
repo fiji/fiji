@@ -917,6 +917,30 @@ public class TextEditor extends JFrame implements ActionListener,
 		return false;
 	}
 
+	public static boolean isBinary(String path) {
+		// heuristic: read the first up to 8000 bytes, and say that it is binary if it contains a NUL
+		try {
+			FileInputStream in = new FileInputStream(path);
+			int left = 8000;
+			byte[] buffer = new byte[left];
+			while (left > 0) {
+				int count = in.read(buffer, 0, left);
+				if (count < 0)
+					break;
+				for (int i = 0; i < count; i++)
+					if (buffer[i] == 0) {
+						in.close();
+						return true;
+					}
+				left -= count;
+			}
+			in.close();
+			return false;
+		} catch (IOException e) {
+			return false;
+		}
+	}
+
 	public void open(String path) {
 		if (path != null && path.startsWith("class:")) try {
 			path = new FileFunctions(this).getSourcePath(path.substring(6));
@@ -924,6 +948,11 @@ public class TextEditor extends JFrame implements ActionListener,
 				return;
 		} catch (ClassNotFoundException e) {
 			error("Could not find " + path);
+		}
+
+		if (isBinary(path)) {
+			IJ.open(path);
+			return;
 		}
 
 		/*
