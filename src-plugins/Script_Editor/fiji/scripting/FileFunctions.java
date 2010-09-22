@@ -533,6 +533,20 @@ public class FileFunctions {
 		showDiffOrCommit(file, gitDirectory, false);
 	}
 
+	public String firstNLines(String text, int maxLineCount) {
+		int offset = -1;
+		while (maxLineCount-- > 0) {
+			offset = text.indexOf('\n', offset + 1);
+			if (offset < 0)
+				return text;
+		}
+		int count = 0, next = offset;
+		while ((next = text.indexOf('\n', next + 1)) > 0)
+			count++;
+		return count == 0 ? text : text.substring(0, offset + 1)
+			+ "(" + count + " more line" + (count > 1 ? "s" : "") + ")...\n";
+	}
+
 	public void showDiffOrCommit(File file, File gitDirectory, boolean diffOnly) {
 		if (file == null || gitDirectory == null)
 			return;
@@ -551,7 +565,7 @@ public class FileFunctions {
 			String out = e.getOutput();
 			if (!out.equals(""))
 				if (JOptionPane.showConfirmDialog(parent,
-						"Do you want to commit the following untracked files?\n\n" + out) == JOptionPane.YES_OPTION) {
+						"Do you want to commit the following untracked files?\n\n" + firstNLines(out, 10)) == JOptionPane.YES_OPTION) {
 					cmdarray = new String[] {
 						"git", "add", "-N", "."
 					};
