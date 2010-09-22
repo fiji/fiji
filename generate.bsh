@@ -47,7 +47,7 @@ String avformatTarget = "classes/fiji/ffmpeg/AVFORMAT.java";
 String generateClassesFakefile = fakefilePrefix +
 	"all <- " + avformatTarget + "\n" +
 	"\n" +
-	avformatTarget + "[generate-classes] <- ffmpeg/**/*.h\n" +
+	avformatTarget + "[generate-classes] <- ffmpeg/**/*.h generator.jar\n" +
 	"\n" +
 	"generator.jar <- GenerateFFMPEGClasses.java\n";
 Parser parser = parse(generateClassesFakefile);
