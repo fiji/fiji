@@ -7,6 +7,8 @@ import java.io.InputStream;
 
 File cwd = new File(bsh.cwd, this.interpreter.getSourceFileInfo())
 	.getParentFile();
+if (cwd.getName().equals("."))
+	cwd = null;
 
 // TODO: use IJ.isMacOSX() and friends to do all this
 String platform = "macosx";
@@ -47,12 +49,14 @@ String generateClassesFakefile = fakefilePrefix +
 	"\n" +
 	"generator.jar <- GenerateFFMPEGClasses.java\n";
 Parser parser = parse(generateClassesFakefile);
-if (!parser.getRule(avformatTarget).upToDate()) {
+if (!parser.getRule(avformatTarget).upToDate() ||
+		!parser.getRule("generator.jar").upToDate()) {
 	parser.getRule("generator.jar").make();
-	addClassPath(cwd + "/generator.jar");
+	String cwd2 = cwd == null ? "" : cwd.getAbsolutePath() + "/";
+	addClassPath(cwd2 + "generator.jar");
 	GenerateFFMPEGClasses.main(new String[] {
-		cwd.getAbsolutePath() + "/ffmpeg/",
-		cwd.getAbsolutePath() + "/classes/"
+		cwd2 + "ffmpeg/",
+		cwd2 + "classes/"
 	});
 }
 
