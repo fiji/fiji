@@ -24,7 +24,7 @@ import mpicbg.imglib.type.numeric.RealType;
 public class DataContainer<T extends RealType<T>> {
 
 	// some general image statistics
-	double meanCh1, meanCh2, minCh1, maxCh1, minCh2, maxCh2;
+	double meanCh1, meanCh2, minCh1, maxCh1, minCh2, maxCh2, integralCh1, integralCh2;
 	// The source images that the results are based on
 	Image<T> sourceImage1, sourceImage2;
 	// The channels of the source images that the result relate to
@@ -67,6 +67,8 @@ public class DataContainer<T extends RealType<T>> {
 		minCh2 = ImageStatistics.getImageMin(sourceImage2).getRealDouble();
 		maxCh1 = ImageStatistics.getImageMax(sourceImage1).getRealDouble();
 		maxCh2 = ImageStatistics.getImageMax(sourceImage2).getRealDouble();
+		integralCh1 = ImageStatistics.getImageIntegral(sourceImage1);
+		integralCh2 = ImageStatistics.getImageIntegral(sourceImage2);
 	}
 
 	/**
@@ -126,6 +128,14 @@ public class DataContainer<T extends RealType<T>> {
 
 	public double getMaxCh2() {
 		return maxCh2;
+	}
+
+	public double getIntegralCh1() {
+		return integralCh1;
+	}
+
+	public double getIntegralCh2() {
+		return integralCh2;
 	}
 
 	// algorithm access
