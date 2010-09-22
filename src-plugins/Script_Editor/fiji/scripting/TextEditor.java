@@ -918,6 +918,8 @@ public class TextEditor extends JFrame implements ActionListener,
 	}
 
 	public static boolean isBinary(String path) {
+		if (path == null)
+			return false;
 		// heuristic: read the first up to 8000 bytes, and say that it is binary if it contains a NUL
 		try {
 			FileInputStream in = new FileInputStream(path);
