@@ -519,7 +519,7 @@ public class TextEditor extends JFrame implements ActionListener,
 	 * Initializes the template menu.
 	 */
 	protected void addTemplates(JMenu templatesMenu) {
-		String url = getClass().getResource("TextEditor.class").toString();
+		String url = TextEditor.class.getResource("TextEditor.class").toString();
 		String classFilePath = "/" + getClass().getName().replace('.', '/') + ".class";
 		if (!url.endsWith(classFilePath))
 			return;
