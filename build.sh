@@ -93,7 +93,7 @@ echo "Checking whether FFMPEG needs to be built" &&
 	break
  fi &&
  if test true = "$uptodate" &&
-	test ! -z "$(eval find -name '\\*.[ch]' -a -newer $TARGET)"
+	test ! -z "$(eval find . -name '\\*.[ch]' -a -newer $TARGET)"
  then
 	uptodate=false
  fi &&
