@@ -75,10 +75,11 @@ if (!parser.getRule(avformatTarget).upToDate() ||
 	});
 }
 
+String pluginName = "FFMPEG_" + platform + ".jar";
 String pluginFakefile = fakefilePrefix +
-	"all <- FFMPEG_IO.jar\n" +
+	"all <- " + pluginName + "\n" +
 	"\n" +
-	"FFMPEG_IO.jar <- plugin.jar/ jna-wrapper.jar/ " +
+	pluginName + " <- plugin.jar/ jna-wrapper.jar/ " +
 		platform + "/" + target + "[ffmpeg/" + target + "]\n" +
 	"\n" +
 	"CLASSPATH(plugin.jar)=jna-wrapper.jar\n" +
