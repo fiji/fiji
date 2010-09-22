@@ -765,12 +765,20 @@ public class TextEditor extends JFrame implements ActionListener,
 		else if (source == openSourceForMenuItem)
 			new OpenSourceForMenuItem().run(null);
 		else if (source == showDiff) {
-			EditorPane pane = getEditorPane();
-			new FileFunctions(this).showDiff(pane.file, pane.getGitDirectory());
+			new Thread() {
+				public void run() {
+					EditorPane pane = getEditorPane();
+					new FileFunctions(TextEditor.this).showDiff(pane.file, pane.getGitDirectory());
+				}
+			}.start();
 		}
 		else if (source == commit) {
-			EditorPane pane = getEditorPane();
-			new FileFunctions(this).commit(pane.file, pane.getGitDirectory());
+			new Thread() {
+				public void run() {
+					EditorPane pane = getEditorPane();
+					new FileFunctions(TextEditor.this).commit(pane.file, pane.getGitDirectory());
+				}
+			}.start();
 		}
 		else if (source == gitGrep) {
 			String searchTerm = getTextArea().getSelectedText();
