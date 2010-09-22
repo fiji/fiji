@@ -2623,12 +2623,19 @@ public class Fake {
 			if (args[0].startsWith("../"))
 				args[0] = new File(dir,
 						args[0]).getAbsolutePath();
-			else if (args[0].equals("bash") && getPlatform().equals("win64")) {
+			else if ((args[0].equals("bash") || args[0].equals("sh")) && getPlatform().equals("win64")) {
 				String[] newArgs = new String[args.length + 2];
 				newArgs[0] = System.getenv("WINDIR") + "\\SYSWOW64\\cmd.exe";
 				newArgs[1] = "/C";
 				System.arraycopy(args, 0, newArgs, 2, args.length);
 				args = newArgs;
+				if (verbose) {
+					String output = "Executing (win32 on win64 using SYSWOW64\\cmd.exe):";
+					for (int i = 0; i < args.length; i++)
+						output += " '" + args[i] + "'";
+					err.println(output);
+				}
+
 			}
 		}
 
