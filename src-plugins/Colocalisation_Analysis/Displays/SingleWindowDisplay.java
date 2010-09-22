@@ -59,6 +59,8 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 	static final int WIN_WIDTH = 350;
 	static final int WIN_HEIGHT = 240;
 
+	// indicates if original images should be displayed or not
+	boolean displayOriginalImages = false;
 
 	// this is the image currently selected by the drop down menu
 	protected Image<? extends RealType> currentlyDisplayedImageResult;
@@ -176,6 +178,11 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 			addHistogram2D( dataContainer.getLiHistogramCh2() );
 		if (dataContainer.getHistogram2D() != null)
 			addHistogram2D( dataContainer.getHistogram2D() );
+		if ( displayOriginalImages ) {
+			listOfImages.add( dataContainer.getSourceImage1() );
+			listOfImages.add( dataContainer.getSourceImage2() );
+		}
+
 	}
 
 	protected void addHistogram2D (Histogram2D<T> histogram) {
