@@ -59,12 +59,18 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 	static final int WIN_WIDTH = 350;
 	static final int WIN_HEIGHT = 240;
 
+
 	// this is the image currently selected by the drop down menu
 	protected Image<? extends RealType> currentlyDisplayedImageResult;
 
 	// a list of the available result images, no matter what specific kinds
 	protected List<Image<? extends RealType>> listOfImages = new ArrayList<Image<? extends RealType>>();
 	protected Map<Image<LongType>, Histogram2D<T>> mapOf2DHistograms = new HashMap<Image<LongType>, Histogram2D<T>>();
+
+	/* a map of images and corresponding LUTs. When an image is not in
+	 * there no LUT should be applied.
+	 */
+	protected Map<Object, String> listOfLUTs = new HashMap<Object, String>();
 
 	//make a cursor so we can get pixel values from the image
 	protected LocalizableByDimCursor<? extends RealType> pixelAccessCursor;
@@ -175,6 +181,8 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 	protected void addHistogram2D (Histogram2D<T> histogram) {
 		listOfImages.add(histogram.getPlotImage());
 		mapOf2DHistograms.put(histogram.getPlotImage(), histogram);
+		// link the histogram to a LUT
+		listOfLUTs.put(histogram.getPlotImage(), "Fire");
 	}
 
 	/**
@@ -420,8 +428,12 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 		// set the display range
 		double max = ImageStatistics.getImageMax((Image<T>)img).getRealDouble();
 		this.imp.setDisplayRange(0.0, max);
-		// select "Fire" look up table
-		IJ.run(this.imp, "Fire", null);
+
+		// check if a LUT should be applied
+		if ( listOfLUTs.containsKey(img) ) {
+			// select linked look up table
+			IJ.run(this.imp, listOfLUTs.get(img), null);
+		}
 
 		boolean overlayModified = false;
 		Overlay overlay = new Overlay();
