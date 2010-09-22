@@ -1,6 +1,8 @@
 #!/bin/sh
 // 2> /dev/null || exec fiji --bsh "$0" "$@"
 
+import ij.IJ;
+
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
@@ -10,9 +12,20 @@ File cwd = new File(bsh.cwd, this.interpreter.getSourceFileInfo())
 if (cwd.getName().equals("."))
 	cwd = null;
 
-// TODO: use IJ.isMacOSX() and friends to do all this
-String platform = "macosx";
-String target = "libffmpeg.dylib";
+String platform, target;
+
+if (IJ.isMacOSX()) {
+	platform = "macosx";
+	target = "libffmpeg.dylib";
+}
+else if (IJ.isLinux()) {
+	platform = "linux" + (IJ.is64Bit() ? "64" : "");
+	target = "libffmpeg.so";
+}
+else if (IJ.isWindows()) {
+	platform = "win" + (IJ.is64Bit() ? "64" : "32");
+	target = "ffmpeg.dll";
+}
 
 // Fake stuff
 
