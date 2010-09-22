@@ -900,7 +900,7 @@ public class Fake {
 
 			abstract void action() throws FakeException;
 
-			final boolean upToDate() {
+			public final boolean upToDate() {
 				if (upToDateStage == 1)
 					throw new RuntimeException("Circular "
 						+ "dependency detected in rule "
