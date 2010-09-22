@@ -160,8 +160,10 @@ public class SampleImageLoader implements PlugIn {
 			IJ.showStatus(message);
 		byte[] buffer = new byte[16384];
 		InputStream in = connection.getInputStream();
-		File tmp = File.createTempFile("sample-", ".sample",
-				destination.getParentFile());
+		File parent = destination.getParentFile();
+		if (!parent.exists() && !parent.mkdirs())
+			throw new IOException("Could not make directory " + parent);
+		File tmp = File.createTempFile("sample-", ".sample", parent);
 		FileOutputStream out = new FileOutputStream(tmp);
 		for (;;) {
 			int count = in.read(buffer);
