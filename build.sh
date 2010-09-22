@@ -3,8 +3,10 @@
 LIBS="avcodec avformat swscale avcore avdevice avfilter avutil"
 PARALLEL=-j5
 
+LDFLAGS=
 EXTRA_CONFIGURE=
 EXTRA_LDFLAGS=
+NEED_LIPO=false
 case "$(uname -s)" in
 Linux)
 	LIBEXT=.so
@@ -14,11 +16,9 @@ Linux)
 Darwin)
 	LIBEXT=.dylib
 	LIBPREFIX=lib
-	EXTRA_CONFIGURE="--disable-yasm --arch=x86_64 --target-os=darwin --enable-cross-compile"
-	EXTRA_LDFLAGS="-dynamiclib -Wl,-single_module -Wl,-install_name,/usr/local/lib/libffmpeg.dylib,,-compatibility_version,1 -Wl,-read_only_relocs,suppress"
-	# TODO: make fat binary
-	export CFLAGS="-arch x86_64 -m64"
-	export LDFLAGS="-arch x86_64 -m64"
+	EXTRA_CONFIGURE="--disable-yasm --target-os=darwin --enable-cross-compile"
+	EXTRA_LDFLAGS="-dynamiclib -Wl,-single_module -Wl,-install_name,libffmpeg.dylib,-compatibility_version,1 -Wl,-read_only_relocs,suppress"
+	NEED_LIPO=true
 	;;
 MINGW*)
 	LIBEXT=.dll
@@ -47,6 +47,25 @@ require_clean_working_directory () {
         git diff-files --quiet --ignore-submodules &&
         git diff-index --cached --quiet HEAD --ignore-submodules -- ||
 	die "Not clean: $(pwd)"
+}
+
+build_ffmpeg () {
+	if test -f config.mak
+	then
+		make distclean || :
+	fi &&
+	./configure --enable-gpl --enable-shared $EXTRA_CONFIGURE &&
+	: SYMVER breaks our one-single-library approach
+	sed 's/\( HAVE_SYMVER.*\) 1$/\1 0/' < config.h > config.h.new &&
+	mv -f config.h.new config.h &&
+	make $PARALLEL &&
+	rm */*$LIBEXT* &&
+	out="$(make V=1 | grep -ve '-o libavfilter' |
+		sed -n 's/^gcc .* -o lib[^ ]* //p' | tr ' ' '\n')" &&
+	gcc -shared $LDFLAGS $EXTRA_LDFLAGS -o $1 \
+		$(echo "$out" | grep -ve '^-' -e 'libavcodec/inverse\.o') \
+		$(echo "$out" | grep '^-' | grep -ve '^-lav' -e '^-lsw' |
+			sort | uniq)
 }
 
 default_excludes="*.[oad] *.pc *$LIBEXT *$LIBEXT.[0-9] *$LIBEXT.[0-9][0-9] .config .version config.* *.ver /*_g /ffmpeg /ffplay /ffserver /ffprobe /version.h /libswscale/ /libavutil/avconfig.h"
@@ -101,20 +120,23 @@ echo "Checking whether FFMPEG needs to be built" &&
  then
 	echo "Building FFMPEG" &&
 	# make sure that everything is built from scratch
-	if test -f config.mak
-	then
-		make distclean || :
-	fi &&
-	./configure --enable-gpl --enable-shared $EXTRA_CONFIGURE &&
-	: SYMVER breaks our one-single-library approach
-	sed 's/\( HAVE_SYMVER.*\) 1$/\1 0/' < config.h > config.h.new &&
-	mv -f config.h.new config.h &&
-	make $PARALLEL &&
-	rm */*$LIBEXT* &&
-	out="$(make V=1 | grep -ve '-o libavfilter' |
-		sed -n 's/^gcc .* -o lib[^ ]* //p' | tr ' ' '\n')" &&
-	gcc -shared $EXTRA_LDFLAGS -o $TARGET \
-		$(echo "$out" | grep -ve '^-' -e 'libavcodec/inverse\.o') \
-		$(echo "$out" | grep '^-' | grep -ve '^-lav' -e '^-lsw' |
-			sort | uniq)
+	case "$NEED_LIPO" in
+	true)
+		save="$EXTRA_CONFIGURE" &&
+		for cpu in i386 x86_64
+		do
+			bits=${cpu#*86} &&
+			bits=${bits#_} &&
+			bits=${bits:-32} &&
+			EXTRA_CONFIGURE="$save --arch=$cpu --target-path=out$bits" &&
+			export CFLAGS="-arch $cpu -m$bits" &&
+			export LDFLAGS="$CFLAGS" &&
+			build_ffmpeg lib$bits$LIBEXT || break
+		done &&
+		lipo -create lib32$LIBEXT lib64$LIBEXT -output $TARGET
+		;;
+	*)
+		build_ffmpeg $TARGET
+		;;
+	esac
  fi)
