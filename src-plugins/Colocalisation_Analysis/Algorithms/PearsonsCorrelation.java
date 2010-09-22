@@ -95,11 +95,11 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm {
 		AutoThresholdRegression<T> autoThreshold = container.getAutoThreshold();
 		if (autoThreshold != null ) {
 			pearsonsCorrelationValueBelowThr = fastPearsons(img1, img2,
-					autoThreshold.getCh1MaxThreshold(),
-					autoThreshold.getCh2MaxThreshold(), false);
+					autoThreshold.getCh1MaxThreshold().getRealDouble(),
+					autoThreshold.getCh2MaxThreshold().getRealDouble(), false);
 			pearsonsCorrelationValueAboveThr = fastPearsons(img1, img2,
-					autoThreshold.getCh1MaxThreshold(),
-					autoThreshold.getCh2MaxThreshold(), true);
+					autoThreshold.getCh1MaxThreshold().getRealDouble(),
+					autoThreshold.getCh2MaxThreshold().getRealDouble(), true);
 		}
 	}
 

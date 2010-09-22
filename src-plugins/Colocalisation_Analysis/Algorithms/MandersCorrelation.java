@@ -1,3 +1,6 @@
+import imglib.mpicbg.imglib.cursor.special.TwinValueRangeCursor;
+import imglib.mpicbg.imglib.cursor.special.meta.Predicate;
+import imglib.mpicbg.imglib.cursor.special.meta.AboveThresholdPredicate;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
@@ -41,11 +44,16 @@ public class MandersCorrelation<T extends RealType<T>> extends Algorithm {
 		mandersM2 = results.m2;
 
 		// calculate the thresholded values, if possible
-		AutoThresholdRegression autoThreshold = container.getAutoThreshold();
+		AutoThresholdRegression<T> autoThreshold = container.getAutoThreshold();
 		if (autoThreshold != null ) {
+			Predicate<T> img1Predicate =
+				new AboveThresholdPredicate<T>( autoThreshold.getCh1MaxThreshold() );
+			Predicate<T> img2Predicate =
+				new AboveThresholdPredicate<T>( autoThreshold.getCh2MaxThreshold() );
+			TwinValueRangeCursor<T> cursor =
+				new TwinValueRangeCursor<T>(img1.createCursor(), img2.createCursor(), img1Predicate, img2Predicate);
 			// calculate Mander's values
-			results = calculateMandersCorrelation(img1, img2,
-					autoThreshold.getCh1MaxThreshold(), autoThreshold.getCh2MaxThreshold() );
+			results = calculateMandersCorrelation(cursor, container.getIntegralCh1(), container.getIntegralCh2() );
 
 			// save the results
 			mandersThresholdedM1 = results.m1;
@@ -105,62 +113,48 @@ public class MandersCorrelation<T extends RealType<T>> extends Algorithm {
 		return results;
 	}
 
+
 	/**
 	 * Calculates Manders' split M1 and M2 values from image
 	 * values above certain thresholds.
 	 *
-	 * @param img1 The first image
-	 * @param img2 The second image
-	 * @return Both Manders' M1 and M2 values
+	 * @param cursor The cursor to walk over the images.
+	 * @param ch1Total Channel ones total sum of image values.
+	 * @param ch2Total Channel twos total sum of image values.
+	 * @return Both Manders M1 and M2 coefficients
 	 */
-	public MandersResults calculateMandersCorrelation(Image<T> img1, Image<T> img2,
-			double ch1ThreshMax, double ch2ThreshMax) {
-		// get the cursors for iterating through pixels in images
-		Cursor<T> cursor1 = img1.createCursor();
-		Cursor<T> cursor2 = img2.createCursor();
+	public MandersResults calculateMandersCorrelation(TwinValueRangeCursor<T> cursor,
+			double ch1Total, double ch2Total) {
 
 		double m1Nominator = 0;
 		double m2Nominator = 0;
-		double sumCh1 = 0;
-		double sumCh2 = 0;
 
 		// iterate over images
-		while (cursor1.hasNext() && cursor2.hasNext()) {
-			cursor1.fwd();
-			cursor2.fwd();
-			T type1 = cursor1.getType();
+		while ( cursor.hasNext() ) {
+			cursor.fwd();
+			T type1 = cursor.getChannel1Type();
 			double ch1 = type1.getRealDouble();
-			T type2 = cursor2.getType();
+			T type2 = cursor.getChannel2Type();
 			double ch2 = type2.getRealDouble();
 
-			// are channel one or channel two within the limits?
-			if ( ch1 > ch1ThreshMax ) {
-				// if ch2 is non-zero, increase ch1 nominator
-				if (Math.abs(ch2) > 0.00001) {
-					m1Nominator += ch1;
-				}
+			// if ch2 is non-zero, increase ch1 nominator
+			if (Math.abs(ch2) > 0.00001) {
+				m1Nominator += ch1;
 			}
 
-			sumCh1 += ch1;
-
-			if ( ch2 > ch2ThreshMax ) {
-				// if ch1 is non-zero, increase ch2 nominator
-				if (Math.abs(ch1) > 0.00001) {
-					m2Nominator += ch2;
-				}
+			// if ch1 is non-zero, increase ch2 nominator
+			if (Math.abs(ch1) > 0.00001) {
+				m2Nominator += ch2;
 			}
-
-			sumCh2 += ch2;
 		}
 
-		// close the cursors
-		cursor1.close();
-		cursor2.close();
+		// close the cursor
+		cursor.close();
 
 		MandersResults results = new MandersResults();
 		// calculate the results
-		results.m1 = m1Nominator / sumCh1;
-		results.m2 = m2Nominator / sumCh2;
+		results.m1 = m1Nominator / ch1Total;
+		results.m2 = m2Nominator / ch2Total;
 
 		return results;
 	}

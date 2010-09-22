@@ -18,7 +18,7 @@ public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm {
 	 * one will NOT either. Pixels "in between (and including)" thresholds
 	 * do include the threshold values.
 	 */
-	double ch1MinThreshold = 0.0, ch1MaxThreshold = 0.0, ch2MinThreshold = 0.0, ch2MaxThreshold = 0.0;
+	T ch1MinThreshold, ch1MaxThreshold, ch2MinThreshold, ch2MaxThreshold;
 	// additional information
 	double bToYMaxRatio = 0.0;
 
@@ -42,16 +42,6 @@ public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm {
 		double ch1MeanDiffSum = 0.0, ch2MeanDiffSum = 0.0, combinedMeanDiffSum = 0.0;
 		double combinedSum = 0.0;
 		int N = 0, NZero = 0;
-
-		// get min and max value of image1's data type
-		T dummyT = img1.createType();
-		ch1MinThreshold = dummyT.getMinValue();
-		ch1MaxThreshold = dummyT.getMaxValue();
-
-		// get min and max value of image2's data type
-		dummyT = img2.createType();
-		ch2MinThreshold = dummyT.getMinValue();
-		ch2MaxThreshold = dummyT.getMaxValue();
 
 		while (cursor1.hasNext() && cursor2.hasNext()) {
 			cursor1.fwd();
@@ -189,11 +179,39 @@ public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm {
 		ch1ThreshMax = Math.round( ch1BestThreshold );
 		ch2ThreshMax = Math.round( (ch1BestThreshold * m) + b );
 
-		// store the new results
-		ch1MinThreshold = 0.0;
-		ch1MaxThreshold = ch1ThreshMax;
-		ch2MinThreshold = 0.0;
-		ch2MaxThreshold = ch2ThreshMax;
+		/* Get min and max value of image data type. Since type of image
+		 * one and two are the same, we dont't need to distinguish them.
+		 */
+		T dummyT = img1.createType();
+		double minVal = dummyT.getMinValue();
+		double maxVal = dummyT.getMaxValue();
+
+		/* Store the new results. The lower thresholds are the types
+		 * min value for now. For the max threshold we do a clipping
+		 * to make it fit into the image type.
+		 */
+		ch1MinThreshold = img1.createType();
+		ch1MinThreshold.setReal(minVal);
+
+		ch1MaxThreshold = img1.createType();
+		if ( minVal > ch1ThreshMax )
+			ch1MaxThreshold.setReal( minVal );
+		else if ( maxVal < ch1ThreshMax )
+			ch1MaxThreshold.setReal( maxVal );
+		else
+			ch1MaxThreshold.setReal( ch1ThreshMax );
+
+		ch2MinThreshold = img2.createType();
+		ch2MinThreshold.setReal(minVal);
+
+		ch2MaxThreshold = img2.createType();
+		if ( minVal > ch2ThreshMax )
+			ch2MaxThreshold.setReal( minVal );
+		else if ( maxVal < ch2ThreshMax )
+			ch2MaxThreshold.setReal( maxVal );
+		else
+			ch2MaxThreshold.setReal( ch2ThreshMax );
+
 		autoThresholdSlope = m;
 		autoThresholdIntercept = b;
 		bToYMaxRatio = b / container.getMaxCh2();
@@ -227,19 +245,19 @@ public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm {
 		return autoThresholdIntercept;
 	}
 
-	public double getCh1MinThreshold() {
+	public T getCh1MinThreshold() {
 		return ch1MinThreshold;
 	}
 
-	public double getCh1MaxThreshold() {
+	public T getCh1MaxThreshold() {
 		return ch1MaxThreshold;
 	}
 
-	public double getCh2MinThreshold() {
+	public T getCh2MinThreshold() {
 		return ch2MinThreshold;
 	}
 
-	public double getCh2MaxThreshold() {
+	public T getCh2MaxThreshold() {
 		return ch2MaxThreshold;
 	}
 }

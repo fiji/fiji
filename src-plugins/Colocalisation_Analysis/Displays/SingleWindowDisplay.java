@@ -284,14 +284,14 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 	    printTableRow(out, "Min channel 1",  dataContainer.getMinCh1());
 	    printTableRow(out, "Max channel 1",  dataContainer.getMaxCh1());
 	    printTableRow(out, "Mean channel 1", dataContainer.getMeanCh1());
-	    printTableRow(out, "Min threshold channel 1", autoThreshold.getCh1MinThreshold());
-	    printTableRow(out, "Max threshold channel 1", autoThreshold.getCh1MaxThreshold());
+	    printTableRow(out, "Min threshold channel 1", autoThreshold.getCh1MinThreshold().getRealDouble());
+	    printTableRow(out, "Max threshold channel 1", autoThreshold.getCh1MaxThreshold().getRealDouble());
 
 	    printTableRow(out, "Min channel 2", dataContainer.getMinCh2());
 	    printTableRow(out, "Max channel 2", dataContainer.getMaxCh2());
 	    printTableRow(out, "Mean channel 2", dataContainer.getMeanCh2());
-	    printTableRow(out, "Min threshold channel 2", autoThreshold.getCh2MinThreshold());
-	    printTableRow(out, "Max threshold channel 2", autoThreshold.getCh2MaxThreshold());
+	    printTableRow(out, "Min threshold channel 2", autoThreshold.getCh2MinThreshold().getRealDouble());
+	    printTableRow(out, "Max threshold channel 2", autoThreshold.getCh2MaxThreshold().getRealDouble());
 	    out.println("</TABLE>");
 
 	    out.print("</html>");
