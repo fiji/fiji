@@ -22,7 +22,9 @@ import fiji.build.Fake.Parser;
 // Using fiji.build.Fake to avoid getting the Fake in the default package
 fiji.build.Fake fake = new fiji.build.Fake();
 Parser parse(String fakefile) {
-	return fake.parse(new ByteArrayInputStream(fakefile.getBytes()), cwd);
+	Parser parser = fake.parse(new ByteArrayInputStream(fakefile.getBytes()), cwd);
+	parser.parseRules(null);
+	return parser;
 }
 void make(String fakefile, String target) {
 	fake.make(new ByteArrayInputStream(fakefile.getBytes()), cwd,
