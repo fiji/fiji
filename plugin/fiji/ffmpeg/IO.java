@@ -8,6 +8,7 @@ import com.sun.jna.ptr.PointerByReference;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.VirtualStack;
 
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
@@ -30,6 +31,7 @@ public class IO extends FFMPEGSingle {
 	protected AVFormatContext formatContext;
 	protected AVCodecContext codecContext;
 	protected AVCodec codec;
+	protected IntByReference gotPicture = new IntByReference();
 	protected AVFrame frame, frameRGB;
 	protected Pointer swsContext;
 
@@ -42,7 +44,7 @@ public class IO extends FFMPEGSingle {
 	/**
 	 * Based on the AVCodecSample example from ffmpeg-java by Ken Larson.
 	 */
-	public ImagePlus readMovie(String path) throws IOException {
+	public ImagePlus readMovie(String path, boolean useVirtualStack) throws IOException {
 		/* Need to do this because we already extend ImagePlus */
 		if (!loadFFMPEG())
 			throw new IOException("Could not load the FFMPEG library!");
@@ -57,7 +59,7 @@ public class IO extends FFMPEGSingle {
 		final PointerByReference formatContextPointer = new PointerByReference();
 		if (AVFORMAT.av_open_input_file(formatContextPointer, path, null, 0, null) != 0)
 			throw new IOException("Could not open " + path);
-		AVFormatContext formatContext = new AVFormatContext(formatContextPointer.getValue());
+		formatContext = new AVFormatContext(formatContextPointer.getValue());
 
 		// Retrieve stream information
 		if (AVFORMAT.av_find_stream_info(formatContext) < 0)
@@ -86,39 +88,73 @@ public class IO extends FFMPEGSingle {
 
 		allocateFrames();
 
-		ImageStack stack = new ImageStack(codecContext.width, codecContext.height);
+		final AVPacket packet = new AVPacket();
+		// TODO: handle stream.duration == 0 by counting the frames
+		if (useVirtualStack) {
+			final AVStream stream = new AVStream(formatContext.streams[videoStream]);
+			final int videoStreamIndex = videoStream;
+			final long frameDuration = 40; // TODO: guess from the second frame - first frame pts
+			ImageStack stack = new VirtualStack(codecContext.width, codecContext.height, null, null) {
+				int previousSlice = -1;
 
-		// Read frames and save first five frames to disk
-		AVPacket packet = new AVPacket();
-		IntByReference gotPicture = new IntByReference();
+				public void finalize() {
+					free();
+				}
+
+				public int getSize() {
+					return (int)(stream.duration / frameDuration);
+				}
+
+				public String getSliceLabel(int slice) {
+					return ""; // maybe calculate the time?
+				}
+
+				// TODO: cache two
+				public ImageProcessor getProcessor(int slice) {
+					long time = (slice - 1) * frameDuration;
+					if (time > 0)
+						time -=  frameDuration / 2;
+					if (stream.start_time != 0x8000000000000000l /* TODO: AVUTIL.AV_NOPTS_VALUE */)
+						time += stream.start_time;
+					if (previousSlice != slice - 1)
+						AVFORMAT.av_seek_frame(formatContext, videoStreamIndex, time,
+								AVFORMAT.AVSEEK_FLAG_BACKWARD);
+					for (;;) {
+						if (AVFORMAT.av_read_frame(formatContext, packet) < 0) {
+							packet.data = null;
+							packet.size = 0;
+							break;
+						}
+						if (packet.stream_index != videoStreamIndex)
+							continue;
+						if (previousSlice == slice - 1 || packet.pts >= time)
+							break;
+						AVCODEC.avcodec_decode_video2(codecContext, frame, gotPicture, packet);
+					}
+					previousSlice = slice;
+					return readOneFrame(packet);
+				}
+			};
+			return new ImagePlus(path, stack);
+		}
+
+		ImageStack stack = new ImageStack(codecContext.width, codecContext.height);
 		while (AVFORMAT.av_read_frame(formatContext, packet) >= 0) {
 			// Is this a packet from the video stream?
 			if (packet.stream_index != videoStream)
 				continue;
 
-			// Decode video frame
-			AVCODEC.avcodec_decode_video2(codecContext, frame, gotPicture, packet);
-
-			// Did we get a video frame?
-			if (gotPicture.getValue() == 0)
-				continue;
-
-			// Convert the image from its native format to RGB
-			convertToRGB();
-			ImageProcessor ip = toSlice(frameRGB, codecContext.width, codecContext.height);
-			stack.addSlice(null, ip);
-
-			// Free the packet that was allocated by av_read_frame
-			// AVFORMAT.av_free_packet(packet.getPointer())
-			// - cannot be called because it is an inlined function.
-			// so we'll just do the JNA equivalent of the inline:
-			if (packet.destruct != null)
-				packet.destruct.callback(packet);
-
+			ImageProcessor ip = readOneFrame(packet);
+			if (ip != null)
+				stack.addSlice(null, ip);
 		}
 
-		// TODO: refactor using the temporary frame
-		// TODO: read the last frame, too
+		// Read the last frame
+		packet.data = null;
+		packet.size = 0;
+		ImageProcessor ip = readOneFrame(packet);
+		if (ip != null)
+			stack.addSlice(null, ip);
 
 		free();
 
@@ -153,6 +189,19 @@ public class IO extends FFMPEGSingle {
 			if (swsContext == null)
 				throw new OutOfMemoryError("Could not allocate swscale context");
 		}
+	}
+
+	protected ImageProcessor readOneFrame(AVPacket packet) {
+		// Decode video frame
+		AVCODEC.avcodec_decode_video2(codecContext, frame, gotPicture, packet);
+
+		// Did we get a video frame?
+		if (gotPicture.getValue() == 0)
+			return null;
+
+		// Convert the image from its native format to RGB
+		convertToRGB();
+		return toSlice(frameRGB, codecContext.width, codecContext.height);
 	}
 
 	protected void convertToRGB() {

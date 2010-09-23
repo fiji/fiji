@@ -29,7 +29,7 @@ public class Importer extends ImagePlus implements PlugIn {
 		IO io = null;
 		try {
 			io = new IO();
-			setStack(path, io.readMovie(path).getStack());
+			setStack(path, io.readMovie(path, true).getStack());
 			if (arg.equals(""))
 				show();
 		} catch (IOException e) {
