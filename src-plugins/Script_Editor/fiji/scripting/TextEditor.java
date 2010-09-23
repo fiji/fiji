@@ -54,6 +54,7 @@ import java.util.zip.ZipException;
 
 import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
@@ -359,13 +360,9 @@ public class TextEditor extends JFrame implements ActionListener,
 		tabbed.addChangeListener(this);
 		open(path); // TODO
 
-		JPanel panel = new JPanel();
-		panel.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
-		panel.setLayout(new GridBagLayout());
-		GridBagConstraints c = new GridBagConstraints();
-		c.fill = GridBagConstraints.BOTH;
-		panel.add(tabbed, c);
-		setContentPane(panel);
+		tabbed.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
+		getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
+		getContentPane().add(tabbed);
 
 		// for Eclipse and MS Visual Studio lovers
 		addAccelerator(compileAndRun, KeyEvent.VK_F11, 0, true);
