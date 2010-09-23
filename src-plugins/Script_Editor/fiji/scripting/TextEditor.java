@@ -999,6 +999,56 @@ public class TextEditor extends JFrame implements ActionListener,
 			super.setTopComponent(this.editorPane.embedWithScrollbars());
 			super.setBottomComponent(bottom);
 		}
+
+		/** Invoke in the context of the event dispatch thread. */
+		private void execute(final Languages.Language language,
+				final boolean selectionOnly) throws IOException {
+			this.editorPane.setEditable(false);
+			final JTextAreaOutputStream output =
+				new JTextAreaOutputStream(this.screen);
+			final RefreshScripts interpreter =
+				language.newInterpreter();
+			interpreter.setOutputStreams(output, output);
+			// Pipe current text into the runScript:
+			final PipedInputStream pi = new PipedInputStream();
+			final PipedOutputStream po = new PipedOutputStream(pi);
+			// The Executer creates a Thread that
+			// does the reading from PipedInputStream
+			this.executer = new TextEditor.Executer(output) {
+				public void execute() {
+					interpreter.runScript(pi,
+						editorPane.getFileName());
+					output.flush();
+					markCompileEnd();
+				}
+			};
+			// Write into PipedOutputStream
+			// from the event dispatch thread
+			try {
+				if (selectionOnly) {
+					String text = editorPane.getSelectedText();
+					if (text == null)
+						error("Selection required!");
+					else {
+						PrintWriter pw =
+							new PrintWriter(po);
+						pw.print(text);
+						pw.flush();
+					}
+				} else {
+					PrintWriter pw = new PrintWriter(po);
+					pw.write(editorPane.getText());
+					pw.flush();
+				}
+			} catch (Throwable t) {
+				t.printStackTrace();
+			} finally {
+				try { po.close(); }
+				catch (Throwable tt) { tt.printStackTrace(); }
+				// Re-enable when all text to send has been sent
+				editorPane.setEditable(true);
+			}
+		}
 	}
 
 	public static boolean isBinary(String path) {
@@ -1562,49 +1612,9 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 			return;
 		}
 		markCompileStart();
-		final RSyntaxTextArea textArea = getTextArea();
-		textArea.setEditable(false); // within event dispatch thread
-		final Tab tab = getTab();
-		final JTextAreaOutputStream output = new JTextAreaOutputStream(tab.screen);
-		try {
-			final RefreshScripts interpreter =
-				currentLanguage.newInterpreter();
-			interpreter.setOutputStreams(output, output);
 
-			// Pipe current text into the runScript:
-			final PipedInputStream pi = new PipedInputStream();
-			final PipedOutputStream po = new PipedOutputStream(pi);
-			// The Executer creates a Thread that does the reading from PipedInputStream
-			new TextEditor.Executer(output) {
-				public void execute() {
-					interpreter.runScript(pi, editorPane.getFileName());
-					output.flush();
-					markCompileEnd();
-				}
-			};
-			// Write into PipedOutputStream from the event dispatch thread
-			try {
-				if (selectionOnly) {
-					String text = textArea.getSelectedText();
-					if (text == null)
-						error("Selection required!");
-					else {
-						PrintWriter pw = new PrintWriter(po);
-						pw.print(text);
-						pw.flush();
-					}
-				} else {
-					PrintWriter pw = new PrintWriter(po);
-					pw.write(textArea.getText());
-					pw.flush();
-				}
-			} catch (Throwable t) {
-				t.printStackTrace();
-			} finally {
-				try { po.close(); } catch (Throwable tt) { tt.printStackTrace(); }
-				// Re-enable when all text to send has been sent
-				textArea.setEditable(true);
-			}
+		try {
+			getTab().execute(currentLanguage, selectionOnly);
 		} catch (Throwable t) {
 			t.printStackTrace();
 		}
