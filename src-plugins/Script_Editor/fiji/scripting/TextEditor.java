@@ -1463,16 +1463,19 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 	}
 
 	synchronized void setTitle() {
-		boolean fileChanged = getEditorPane().fileChanged();
-		String fileName = getEditorPane().getFileName();
+		final Tab tab = getTab();
+		final boolean fileChanged = tab.editorPane.fileChanged();
+		final String fileName = tab.editorPane.getFileName();
 		final String title = (fileChanged ? "*" : "") + fileName
 			+ (executingTasks.isEmpty() ? "" : " (Running)");
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
-				setTitle(title);
+				setTitle(title); // to the main window
 				int index = tabbed.getSelectedIndex();
-				if (index >= 0)
-					tabbed.setTitleAt(index, title);
+				// Update all tabs: could have changed
+				for (int i=0; i<tabbed.getTabCount(); i++)
+					tabbed.setTitleAt(i,
+						((Tab)tabbed.getComponentAt(i)).getTitle());
 			}
 		});
 	}
