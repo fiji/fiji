@@ -1515,10 +1515,18 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 					try {
 						execute();
 						// Wait until any children threads die:
-						while (Executer.this.activeCount() > 1) {
+						int activeCount = getThreadGroup().activeCount();
+						while (activeCount > 1) {
 							if (isInterrupted()) break;
 							try {
 								Thread.sleep(500);
+								List<Thread> ts = getAllThreads();
+								activeCount = ts.size();
+								if (activeCount <= 1) break;
+								System.out.println("Waiting for " + ts.size() + " threads to die");
+								for (Thread t : ts) {
+									System.out.println("THREAD: " + t.getName());
+								}
 							} catch (InterruptedException ie) {}
 						}
 					} catch (Throwable t) {
@@ -1545,8 +1553,9 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 		/** Fetch a list of all threads from all thread subgroups, recursively. */
 		List<Thread> getAllThreads() {
 			ArrayList<Thread> threads = new ArrayList<Thread>();
+			// From all subgroups:
 			ThreadGroup[] tgs = new ThreadGroup[activeGroupCount() * 2 + 100];
-			this.enumerate(tgs);
+			this.enumerate(tgs, true);
 			for (ThreadGroup tg : tgs) {
 				if (null == tg) continue;
 				Thread[] ts = new Thread[tg.activeCount() * 2 + 100];
@@ -1555,6 +1564,13 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 					if (null == t) continue;
 					threads.add(t);
 				}
+			}
+			// And from this group:
+			Thread[] ts = new Thread[activeCount() * 2 + 100];
+			this.enumerate(ts);
+			for (Thread t : ts) {
+				if (null == t) continue;
+				threads.add(t);
 			}
 			return threads;
 		}
