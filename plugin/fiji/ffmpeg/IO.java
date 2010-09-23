@@ -27,6 +27,12 @@ import java.io.File;
 import java.io.IOException;
 
 public class IO extends FFMPEGSingle {
+	protected AVFormatContext formatContext;
+	protected AVCodecContext codecContext;
+	protected AVCodec codec;
+	protected AVFrame frame, frameRGB;
+	protected Pointer swsContext;
+
 	public IO() throws IOException {
 		super();
 		if (!loadFFMPEG())
@@ -51,7 +57,7 @@ public class IO extends FFMPEGSingle {
 		final PointerByReference formatContextPointer = new PointerByReference();
 		if (AVFORMAT.av_open_input_file(formatContextPointer, path, null, 0, null) != 0)
 			throw new IOException("Could not open " + path);
-		final AVFormatContext formatContext = new AVFormatContext(formatContextPointer.getValue());
+		AVFormatContext formatContext = new AVFormatContext(formatContextPointer.getValue());
 
 		// Retrieve stream information
 		if (AVFORMAT.av_find_stream_info(formatContext) < 0)
@@ -59,7 +65,6 @@ public class IO extends FFMPEGSingle {
 
 		// Find the first video stream
 		int videoStream = -1;
-		AVCodecContext codecContext = null;
 		for (int i = 0; i < formatContext.nb_streams; i++) {
 			final AVStream stream = new AVStream(formatContext.streams[i]);
 			codecContext = new AVCodecContext(stream.codec);
@@ -75,34 +80,17 @@ public class IO extends FFMPEGSingle {
 			throw new IOException("Codec not available");
 
 		// Find and open the decoder for the video stream
-		final AVCodec codec = AVCODEC.avcodec_find_decoder(codecContext.codec_id);
+		codec = AVCODEC.avcodec_find_decoder(codecContext.codec_id);
 		if (codec == null || AVCODEC.avcodec_open(codecContext, codec) < 0)
 			throw new IOException("Codec not available");
 
-		// Allocate video frame
-		final AVFrame frame = AVCODEC.avcodec_alloc_frame();
-		if (frame == null)
-			throw new OutOfMemoryError("Could not allocate frame");
-
-		// Allocate an AVFrame structure
-		final AVFrame frameRGB = AVCODEC.avcodec_alloc_frame();
-		if (frameRGB == null)
-			throw new RuntimeException("Could not allocate frame");
-
-		// Allocate buffer
-		if (AVCODEC.avpicture_alloc(new AVPicture(frameRGB.getPointer()),
-				AVUTIL.PIX_FMT_RGB24, codecContext.width, codecContext.height) < 0)
-			throw new OutOfMemoryError("Could not allocate tmp frame");
-		frameRGB.read();
+		allocateFrames();
 
 		ImageStack stack = new ImageStack(codecContext.width, codecContext.height);
 
 		// Read frames and save first five frames to disk
 		AVPacket packet = new AVPacket();
 		IntByReference gotPicture = new IntByReference();
-		Pointer swsContext = SWSCALE.sws_getContext(codecContext.width, codecContext.height, codecContext.pix_fmt,
-				codecContext.width, codecContext.height, AVUTIL.PIX_FMT_RGB24,
-				SWSCALE.SWS_BICUBIC, null, null, null);
 		while (AVFORMAT.av_read_frame(formatContext, packet) >= 0) {
 			// Is this a packet from the video stream?
 			if (packet.stream_index != videoStream)
@@ -116,8 +104,7 @@ public class IO extends FFMPEGSingle {
 				continue;
 
 			// Convert the image from its native format to RGB
-			SWSCALE.sws_scale(swsContext, frame.data, frame.linesize, 0, codecContext.height, frameRGB.data, frameRGB.linesize);
-if (stack.getSize() >= 100) { IJ.error("TODO: make virtual stack!"); break; }
+			convertToRGB();
 			ImageProcessor ip = toSlice(frameRGB, codecContext.width, codecContext.height);
 			stack.addSlice(null, ip);
 
@@ -133,16 +120,68 @@ if (stack.getSize() >= 100) { IJ.error("TODO: make virtual stack!"); break; }
 		// TODO: refactor using the temporary frame
 		// TODO: read the last frame, too
 
-		// Free the RGB image
-		AVUTIL.av_free(frameRGB.getPointer());
-
-		// Close the codec
-		AVCODEC.avcodec_close(codecContext);
-
-		// Close the video file
-		AVFORMAT.av_close_input_file(formatContext);
+		free();
 
 		return new ImagePlus(path, stack);
+	}
+
+	protected void allocateFrames() {
+		// Allocate video frame
+		if (frame == null) {
+			frame = AVCODEC.avcodec_alloc_frame();
+			if (frame == null)
+				throw new OutOfMemoryError("Could not allocate frame");
+		}
+
+		// Allocate an AVFrame structure
+		if (frameRGB == null) {
+			frameRGB = AVCODEC.avcodec_alloc_frame();
+			if (frameRGB == null)
+				throw new RuntimeException("Could not allocate frame");
+
+			// Allocate buffer
+			if (AVCODEC.avpicture_alloc(new AVPicture(frameRGB.getPointer()),
+					AVUTIL.PIX_FMT_RGB24, codecContext.width, codecContext.height) < 0)
+				throw new OutOfMemoryError("Could not allocate tmp frame");
+			frameRGB.read();
+		}
+
+		if (swsContext == null) {
+			swsContext = SWSCALE.sws_getContext(codecContext.width, codecContext.height, codecContext.pix_fmt,
+					codecContext.width, codecContext.height, AVUTIL.PIX_FMT_RGB24,
+					SWSCALE.SWS_BICUBIC, null, null, null);
+			if (swsContext == null)
+				throw new OutOfMemoryError("Could not allocate swscale context");
+		}
+	}
+
+	protected void convertToRGB() {
+		SWSCALE.sws_scale(swsContext, frame.data, frame.linesize, 0, codecContext.height, frameRGB.data, frameRGB.linesize);
+	}
+
+	protected void free() {
+		// Free the RGB image
+		if (frameRGB != null) {
+			AVUTIL.av_free(frameRGB.getPointer());
+			frameRGB = null;
+		}
+
+		// Close the codec
+		if (codecContext != null) {
+			AVCODEC.avcodec_close(codecContext);
+			codecContext = null;
+		}
+
+		// Close the video file
+		if (formatContext != null) {
+			AVFORMAT.av_close_input_file(formatContext);
+			formatContext = null;
+		}
+
+		if (swsContext != null) {
+			SWSCALE.sws_freeContext(swsContext);
+			swsContext = null;
+		}
 	}
 
 	protected static ColorProcessor toSlice(AVFrame frame, int width, int height) {

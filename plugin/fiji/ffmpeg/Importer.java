@@ -26,12 +26,20 @@ public class Importer extends ImagePlus implements PlugIn {
 		}
 
 		String path = file.getAbsolutePath();
+		IO io = null;
 		try {
-			setStack(path, new IO().readMovie(path).getStack());
+			io = new IO();
+			setStack(path, io.readMovie(path).getStack());
 			if (arg.equals(""))
 				show();
 		} catch (IOException e) {
+			if (io != null)
+				io.free();
 			IJ.error("Could not read " + path + ": " + e);
+		} catch (OutOfMemoryError e) {
+			if (io != null)
+				io.free();
+			IJ.error("Ran out of memory while reading " + path);
 		}
 	}
 }
