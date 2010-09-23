@@ -933,6 +933,7 @@ public class TextEditor extends JFrame implements ActionListener,
 
 		final EditorPane editorPane = new EditorPane(TextEditor.this);
 		final JTextArea screen = new JTextArea();
+		private Executer executer;
 
 		Tab() {
 			super(JSplitPane.VERTICAL_SPLIT);
@@ -1184,7 +1185,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		File tmpDir = null, file = getEditorPane().file;
 		String sourceName = null;
 		Languages.Language currentLanguage = getCurrentLanguage();
-		if (!(currentLanguage.interpreter instanceof Refresh_Javas))
+		if (!(currentLanguage.interpreter_class == Refresh_Javas.class))
 			sourceName = file.getName();
 		if (!currentLanguage.menuLabel.equals("None")) try {
 			tmpDir = File.createTempFile("tmp", "");
@@ -1195,12 +1196,13 @@ public class TextEditor extends JFrame implements ActionListener,
 			Refresh_Javas java;
 			if (sourceName == null) {
 	 			sourcePath = file.getAbsolutePath();
-				java = (Refresh_Javas)currentLanguage.interpreter;
+				java = (Refresh_Javas)currentLanguage.newInterpreter();
 			}
 			else {
 				// this is a script, we need to generate a Java wrapper
-				sourcePath = generateScriptWrapper(tmpDir, sourceName, currentLanguage.interpreter);
-				java = (Refresh_Javas)Languages.get(".java").interpreter;
+				RefreshScripts interpreter = currentLanguage.newInterpreter();
+				sourcePath = generateScriptWrapper(tmpDir, sourceName, interpreter);
+				java = (Refresh_Javas)Languages.get(".java").newInterpreter();
 			}
 System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePath());
 			java.compile(sourcePath, tmpDir.getAbsolutePath());
@@ -1562,10 +1564,11 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 		markCompileStart();
 		final RSyntaxTextArea textArea = getTextArea();
 		textArea.setEditable(false); // within event dispatch thread
-		final JTextAreaOutputStream output = new JTextAreaOutputStream(getTab().screen);
+		final Tab tab = getTab();
+		final JTextAreaOutputStream output = new JTextAreaOutputStream(tab.screen);
 		try {
 			final RefreshScripts interpreter =
-				currentLanguage.interpreter;
+				currentLanguage.newInterpreter();
 			interpreter.setOutputStreams(output, output);
 
 			// Pipe current text into the runScript:
@@ -1609,7 +1612,7 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 
 	public void runScript() {
 		final RefreshScripts interpreter =
-			getCurrentLanguage().interpreter;
+			getCurrentLanguage().newInterpreter();
 
 		if (interpreter == null) {
 			error("There is no interpreter for this language");
@@ -1634,7 +1637,8 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 		if (!handleUnsavedChanges(true))
 			return;
 
-		final RefreshScripts interpreter = getCurrentLanguage().interpreter;
+		final RefreshScripts interpreter =
+			getCurrentLanguage().newInterpreter();
 		final JTextAreaOutputStream output = new JTextAreaOutputStream(getTab().screen);
 		interpreter.setOutputStreams(output, output);
 		if (interpreter instanceof Refresh_Javas) {
