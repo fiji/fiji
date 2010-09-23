@@ -934,6 +934,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		final EditorPane editorPane = new EditorPane(TextEditor.this);
 		final JTextArea screen = new JTextArea();
 		private Executer executer;
+		private final JButton runit, killit;
 
 		Tab() {
 			super(JSplitPane.VERTICAL_SPLIT);
@@ -953,16 +954,20 @@ public class TextEditor extends JFrame implements ActionListener,
 			bc.weighty = 0;
 			bc.anchor = GridBagConstraints.NORTHWEST;
 			bc.fill = GridBagConstraints.NONE;
-			JButton runit = new JButton("Run");
+			runit = new JButton("Run");
 			runit.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent ae) { runText(); }
 			});
 			bottom.add(runit, bc);
 
 			bc.gridx = 1;
-			JButton killit = new JButton("Kill");
+			killit = new JButton("Kill");
+			killit.setEnabled(false);
 			killit.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent ae) { ij.IJ.showMessage("Kill it!"); }
+				public void actionPerformed(ActionEvent ae) {
+					TextEditor.this.kill(Tab.this.executer);
+					restore();
+				}
 			});
 			bottom.add(killit, bc);
 
@@ -1000,10 +1005,33 @@ public class TextEditor extends JFrame implements ActionListener,
 			super.setBottomComponent(bottom);
 		}
 
+		private void prepare() {
+			editorPane.setEditable(false);
+			runit.setEnabled(false);
+			killit.setEnabled(true);
+		}
+
+		private void restore() {
+			editorPane.setEditable(true);
+			runit.setEnabled(true);
+			killit.setEnabled(false);
+			executer = null;
+		}
+
+		boolean isExecuting() {
+			return null != executer;
+		}
+
+		String getTitle() {
+			return (editorPane.fileChanged() ? "*" : "")
+				+ editorPane.getFileName()
+				+ (isExecuting() ? " (Running)" : "");
+		}
+
 		/** Invoke in the context of the event dispatch thread. */
 		private void execute(final Languages.Language language,
 				final boolean selectionOnly) throws IOException {
-			this.editorPane.setEditable(false);
+			prepare();
 			final JTextAreaOutputStream output =
 				new JTextAreaOutputStream(this.screen);
 			final RefreshScripts interpreter =
@@ -1016,10 +1044,15 @@ public class TextEditor extends JFrame implements ActionListener,
 			// does the reading from PipedInputStream
 			this.executer = new TextEditor.Executer(output) {
 				public void execute() {
-					interpreter.runScript(pi,
-						editorPane.getFileName());
-					output.flush();
-					markCompileEnd();
+					try {
+						interpreter.runScript(pi,
+							editorPane.getFileName());
+						output.flush();
+						markCompileEnd();
+					} finally {
+						restore();
+					}
+					System.out.println("execute ended");
 				}
 			};
 			// Write into PipedOutputStream
