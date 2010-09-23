@@ -21,12 +21,13 @@ import java.util.TreeMap;
 
 import javax.swing.SwingUtilities;
 
-import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.SimpleGraph;
-
 import mpicbg.imglib.algorithm.roi.MedianFilter;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.real.FloatType;
+
+import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.SimpleGraph;
+
 
 /**
  * <p>The TrackMate_ class runs on the currently active time lapse image (2D or 3D) 
@@ -55,18 +56,13 @@ public class TrackMate_ implements PlugIn {
 	/** Contain the segmentation result, un-filtered.*/
 	private TreeMap<Integer,List<Spot>> spots;
 	/** Contain the Spot retained for tracking, after thresholding by features. */
-	private TreeMap<Integer,List<Spot>> selectedSpots;
+	private TreeMap<Integer,List<Spot>> selectedSpots = new TreeMap<Integer, List<Spot>>();
 	/** The tracks as a graph. */
 	private SimpleGraph<Spot, DefaultEdge> trackGraph;
 
-	
-	private ArrayList<Feature> thresholdFeatures = new ArrayList<Feature>();
-	private ArrayList<Float> thresholdValues = new ArrayList<Float>();
-	private ArrayList<Boolean> thresholdAbove = new ArrayList<Boolean>();
-	
 	private Logger logger = Logger.DEFAULT_LOGGER;
-
 	private Settings settings = new Settings();
+	private List<FeatureThreshold> thresholds = new ArrayList<FeatureThreshold>();
 
 	/*
 	 * RUN METHOD
@@ -154,63 +150,12 @@ public class TrackMate_ implements PlugIn {
 	 * Execute the thresholding part.
 	 * <p>
 	 * This method simply takes all the segmented spots, and store in the field {@link #selectedSpots}
-	 * the spots whose features satisfy all of the thresholds entered with the method
-	 * {@link #addThreshold(Feature, float, boolean)}.
+	 * the spots whose features satisfy all of the thresholds entered with the method {@link #addThreshold(FeatureThreshold)}
+	 * @see TrackMate_#getSelectedSpots()
 	 */
 	public void execThresholding() {
-		logger.log("Thresholding spots...\n", Logger.BLUE_COLOR);
-
-		selectedSpots = new TreeMap<Integer, List<Spot>>();
-		Collection<Spot> spotThisFrame, spotToRemove;
-		List<Spot> spotToKeep;
+		selectedSpots = thresholdSpots(spots, thresholds);
 		
-		float threshold;
-		Float val;
-		Feature feature;
-		boolean isAbove;
-		
-		for (int timepoint : spots.keySet()) {
-			
-			spotThisFrame = spots.get(timepoint);
-			spotToKeep = new ArrayList<Spot>(spotThisFrame);
-			
-			if (null == thresholdFeatures || null == thresholdValues || null == thresholdAbove) {
-				selectedSpots.put(timepoint, spotToKeep);
-				continue;
-			}
-			
-			spotToRemove = new ArrayList<Spot>(spotThisFrame.size());
-
-			for (int i = 0; i < thresholdFeatures.size(); i++) {
-
-				threshold = thresholdValues.get(i);
-				feature = thresholdFeatures.get(i);
-				isAbove = thresholdAbove.get(i);
-				spotToRemove.clear();
-
-				if (isAbove) {
-					for (Spot spot : spotToKeep) {
-						val = spot.getFeature(feature);
-						if (null == val)
-							continue;
-						if ( val < threshold)
-							spotToRemove.add(spot);
-					}
-
-				} else {
-					for (Spot spot : spotToKeep) {
-						val = spot.getFeature(feature);
-						if (null == val)
-							continue;
-						if ( val > threshold)
-							spotToRemove.add(spot);
-					}
-				}
-				spotToKeep.removeAll(spotToRemove); // no need to treat them multiple times
-			}
-			selectedSpots.put(timepoint, spotToKeep);
-		}
-		logger.log("Thresholding done.\n", Logger.BLUE_COLOR);
 	}
 	
 	/** 
@@ -352,28 +297,13 @@ public class TrackMate_ implements PlugIn {
 	
 	/**
 	 * Add a threshold to the list of thresholds to deal with when executing {@link #execThresholding(List, ArrayList, ArrayList, ArrayList)}.
-	 * @param feature  the spot feature to threshold on
-	 * @param value  the value of the threshold
-	 * @param isAbove  should we threshold above the value?
 	 */
-	public void addThreshold(final Feature feature, final float value, final boolean isAbove) {
-		if (null == feature) 
-			return;
-		thresholdFeatures.add(feature);
-		thresholdValues.add(value);
-		thresholdAbove.add(isAbove);
-	}
+	public void addThreshold(final FeatureThreshold threshold) { thresholds .add(threshold); }
+	public void removeThreshold(final FeatureThreshold threshold) { thresholds .remove(threshold); }
+	public void clearTresholds() { thresholds.clear(); }
+	public List<FeatureThreshold> getFeatureThresholds() { return thresholds; }
+	public void setFeatureThresholds(List<FeatureThreshold> thresholds) { this.thresholds = thresholds; }
 	
-	public void clearTresholds() {
-		thresholdFeatures.clear();
-		thresholdValues.clear();
-		thresholdAbove.clear();
-	}
-	
-	public List<Feature> getThresholdFeatures() { return thresholdFeatures; }
-	public List<Float> getThresholdValues() { return thresholdValues; }
-	public List<Boolean> getThresholdAbove() { return thresholdAbove; }
-
 	/**
 	 * Set the logger that will receive the messages from the processes occuring within this plugin.
 	 */
@@ -387,4 +317,60 @@ public class TrackMate_ implements PlugIn {
 	public Settings getSettings() {
 		return settings;
 	}
+	
+	/*
+	 * STATIC METHODS
+	 */
+	
+	/**
+	 * Convenience static method that executes the thresholding part.
+	 * <p>
+	 * Given a list of spots, only spots with the feature satisfying <b>all</b> of the thresholds given
+	 * in argument are returned. 
+	 */
+	public static TreeMap<Integer, List<Spot>> thresholdSpots(final TreeMap<Integer, List<Spot>> spots, final List<FeatureThreshold> featureThresholds) {
+		TreeMap<Integer, List<Spot>> selectedSpots = new TreeMap<Integer, List<Spot>>();
+		Collection<Spot> spotThisFrame, spotToRemove;
+		List<Spot> spotToKeep;
+		Float val, tval;	
+		
+		for (int timepoint : spots.keySet()) {
+			
+			spotThisFrame = spots.get(timepoint);
+			spotToKeep = new ArrayList<Spot>(spotThisFrame);
+			spotToRemove = new ArrayList<Spot>(spotThisFrame.size());
+
+			for (FeatureThreshold threshold : featureThresholds) {
+
+				tval = threshold.value;
+				if (null == tval)
+					continue;
+				spotToRemove.clear();
+
+				if (threshold.isAbove) {
+					for (Spot spot : spotToKeep) {
+						val = spot.getFeature(threshold.feature);
+						if (null == val)
+							continue;
+						if ( val < tval)
+							spotToRemove.add(spot);
+					}
+
+				} else {
+					for (Spot spot : spotToKeep) {
+						val = spot.getFeature(threshold.feature);
+						if (null == val)
+							continue;
+						if ( val > tval)
+							spotToRemove.add(spot);
+					}
+				}
+				spotToKeep.removeAll(spotToRemove); // no need to treat them multiple times
+			}
+			selectedSpots.put(timepoint, spotToKeep);
+		}
+		return selectedSpots;
+	}
+	
+	
 }

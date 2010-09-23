@@ -114,6 +114,7 @@ public class DisplayerPanel extends ActionListenablePanel {
 				jComboBoxDisplayMode = new JComboBox();
 				this.add(jComboBoxDisplayMode);
 				jComboBoxDisplayMode.setModel(jComboBoxDisplayModeModel);
+				jComboBoxDisplayMode.setSelectedIndex(SpotDisplayer.DEFAULT_TRACK_DISPLAY_MODE.ordinal());
 				jComboBoxDisplayMode.setBounds(7, 32, 276, 27);
 				jComboBoxDisplayMode.setFont(SMALL_FONT);
 				jComboBoxDisplayMode.addActionListener(trackDisplayModeListener);
@@ -124,6 +125,7 @@ public class DisplayerPanel extends ActionListenablePanel {
 				jCheckBoxLimitDepth.setText("Limit frame depth");
 				jCheckBoxLimitDepth.setBounds(12, 62, 272, 23);
 				jCheckBoxLimitDepth.setFont(FONT);
+				jCheckBoxLimitDepth.setSelected(true);
 				jCheckBoxLimitDepth.addActionListener(trackDisplayModeListener);
 			}
 			{
@@ -140,6 +142,7 @@ public class DisplayerPanel extends ActionListenablePanel {
 				jTextFieldFrameDepth.setBounds(143, 86, 52, 28);
 				jTextFieldFrameDepth.setFont(SMALL_FONT);
 				jTextFieldFrameDepth.setSize(TEXTFIELD_DIMENSION);
+				jTextFieldFrameDepth.setText(""+SpotDisplayer.DEFAULT_TRACK_DISPLAY_DEPTH);
 				jTextFieldFrameDepth.addActionListener(trackDisplayModeListener);
 			}
 		} catch (Exception e) {

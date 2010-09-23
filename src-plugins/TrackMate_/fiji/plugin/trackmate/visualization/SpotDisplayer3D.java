@@ -45,7 +45,9 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	 * PUBLIC METHODS
 	 */
 	
-	public void refresh() { //TODO 
+	public void refresh() { 
+		for(int key : spotsToShow.keySet())
+			blobs.get(key).setVisible(spotsToShow.get(key)); // NPE if a spot from #spotsToShow does not belong to #spots 
 	}
 	
 
@@ -97,18 +99,18 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	}
 
 
-	@Override
-	public final void refresh(final Feature[] features, double[] thresholds, boolean[] isAboves) {
-		TreeMap<Integer, List<Spot>> allNodesToShow = threshold(features, thresholds, isAboves);
-		for(int key : allNodesToShow.keySet())
-			blobs.get(key).setVisible(allNodesToShow.get(key));
-	}	
-
-	@Override
-	public void resetTresholds() {
-		for(int key : blobs.keySet())
-			blobs.get(key).setVisible(true);
-	}
+//	@Override
+//	public final void refresh(final Feature[] features, double[] thresholds, boolean[] isAboves) {
+//		TreeMap<Integer, List<Spot>> allNodesToShow = threshold(features, thresholds, isAboves);
+//		for(int key : allNodesToShow.keySet())
+//			blobs.get(key).setVisible(allNodesToShow.get(key));
+//	}	
+//
+//	@Override
+//	public void resetTresholds() {
+//		for(int key : blobs.keySet())
+//			blobs.get(key).setVisible(true);
+//	}
 	
 	
 	/*

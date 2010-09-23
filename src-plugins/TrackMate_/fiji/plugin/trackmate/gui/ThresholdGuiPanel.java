@@ -36,6 +36,7 @@ import org.jfree.chart.renderer.InterpolatePaintScale;
 
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.FeatureThreshold;
 import fiji.plugin.trackmate.SpotImp;
 
 import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
@@ -83,9 +84,7 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	private EnumMap<Feature, double[]> featureValues = new EnumMap<Feature, double[]>(Feature.class);
 	private int newFeatureIndex;
 	
-	private Feature[] features = new Feature[0];
-	private double[] thresholds = new double[0];
-	private boolean[] isAbove = new boolean[0];
+	private List<FeatureThreshold> featureThresholds = new ArrayList<FeatureThreshold>();
 	private ArrayList<ChangeListener> changeListeners = new ArrayList<ChangeListener>();
 	
 	private String[] featureStringList;
@@ -149,26 +148,20 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	 */
 	@Override
 	public void stateChanged(ChangeEvent e) {
-		thresholds = new double[thresholdPanels.size()];
-		isAbove = new boolean[thresholdPanels.size()];
-		features = new Feature[thresholdPanels.size()];
-		int index = 0;
+		featureThresholds = new ArrayList<FeatureThreshold>(thresholdPanels.size());
 		for (ThresholdPanel<Feature> tp : thresholdPanels) {
-			features[index] = tp.getKey();
-			thresholds[index] = tp.getThreshold();
-			isAbove[index] = tp.isAboveThreshold();
-			index++;
+			featureThresholds.add(new FeatureThreshold(tp.getKey(), new Float(tp.getThreshold()), tp.isAboveThreshold()));
 		}
 		fireThresholdChanged(e);
 	}
 
 	/**
-	 * Return the threshold values set under this panel.
-	 * @see {@link #getIsAbove()}, {@link #getFeatures()}
+	 * Return the thresholds currently set by this GUI.
 	 */
-	public double[] getThresholds() {
-		return thresholds;
+	public List<FeatureThreshold> getFeatureThresholds() {
+		return featureThresholds;
 	}
+	
 	
 	/**
 	 * Return the feature selected in the "Set color by feature" comb-box. 
@@ -176,23 +169,6 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	 */
 	public Feature getColorByFeature() {
 		return setColorByFeature;
-	}
-	
-	/**
-	 * Return whether each threshold shown under this panel is meant to
-	 * be a threshold <i>above<i>. 
-	 * @see {@link #getThresholds()}, {@link #getFeatures()}
-	 */
-	public boolean[] getIsAbove() {
-		return isAbove;
-	}
-	
-	/**
-	 * Return the selected {@link Feature} thresholded under this panel.
-	 * @see {@link #getThresholds()}, {@link #getIsAbove()}
-	 */
-	public Feature[] getFeatures() {
-		return features;
 	}
 	
 	/**

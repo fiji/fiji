@@ -1,7 +1,6 @@
 package fiji.plugin.trackmate.visualization;
 
 import java.awt.Color;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +17,10 @@ import fiji.plugin.trackmate.Spot;
 
 public abstract class SpotDisplayer {
 
+	
+	public static final TrackDisplayMode DEFAULT_TRACK_DISPLAY_MODE = TrackDisplayMode.ALL_WHOLE_TRACKS;
+	public static final int DEFAULT_TRACK_DISPLAY_DEPTH 			= 10;
+	
 	/** The default display radius. */
 	protected static final float DEFAULT_DISPLAY_RADIUS = 5;
 	/** The default color. */
@@ -38,12 +41,14 @@ public abstract class SpotDisplayer {
 	/** The track colors. */
 	protected Map<Set<Spot>, Color> trackColors;
 	/** The Spot lists emanating from segmentation, indexed by the frame index as Integer. */
-	protected TreeMap<Integer, List<Spot>> spots;
+	protected TreeMap<Integer, List<Spot>> spots = new TreeMap<Integer, List<Spot>>();
+	/** The subset of Spots retained from {@link #spots} for displaying. */
+	protected TreeMap<Integer, List<Spot>> spotsToShow = new TreeMap<Integer, List<Spot>>();
 
 	/** The display track mode. */
-	protected TrackDisplayMode trackDisplayMode = TrackDisplayMode.DO_NOT_DISPLAY;
+	protected TrackDisplayMode trackDisplayMode = DEFAULT_TRACK_DISPLAY_MODE;
 	/** The display depth: how many track segments will be shown on the track display. */
-	protected int trackDisplayDepth = Integer.MAX_VALUE; // by default, show all	
+	protected int trackDisplayDepth = DEFAULT_TRACK_DISPLAY_DEPTH;
 
 	
 	/*
@@ -81,11 +86,14 @@ public abstract class SpotDisplayer {
 	 * PUBLIC METHODS
 	 */
 	
-	
+
+	/**
+	 * Set the display mode for tracks. The {@link #refresh()} method must be called to refresh
+	 * the display.
+	 */
 	public void setDisplayTrackMode(TrackDisplayMode mode, int displayDepth) {
 		this.trackDisplayMode = mode;
 		this.trackDisplayDepth = displayDepth;
-		refresh();
 	}	
 	
 	public void setTrackGraph(SimpleGraph<Spot, DefaultEdge> trackGraph) {
@@ -104,6 +112,11 @@ public abstract class SpotDisplayer {
 		this.spots = spots;
 	}
 	
+	public void setSpotsToShow(TreeMap<Integer, List<Spot>> spotsToShow) {
+		this.spotsToShow = spotsToShow;
+	}
+
+	
 	/*
 	 * ABSTRACT METHODS
 	 */
@@ -116,86 +129,11 @@ public abstract class SpotDisplayer {
 	/**
 	 * Color all displayed spots according to the feature given. 
 	 * If feature is <code>null</code>, then the default color is 
-	 * used.
+	 * used. The {@link #refresh()} method must be called for display.
 	 */
 	public abstract void setColorByFeature(final Feature feature);
 	
-	/**
-	 * Change the visibility of each spot according to the thresholds specified in argument.
-	 */
-	public abstract void refresh(final Feature[] features, double[] thresholds, boolean[] isAboves);
-	
-	/**
-	 * Make all spots visible.
-	 */
-	public abstract void resetTresholds();
-	
 	
 	public abstract void refresh();
-	
-	/*
-	 * PROTECTED METHODS
-	 */
-	
-	/**
-	 * Return the subset of spots of this displayer that satisfy the threshold conditions given
-	 * in argument. The collection returned is a new instance.
-	 */
-	protected TreeMap<Integer,List<Spot>> threshold(final Feature[] features, double[] thresholds, boolean[] isAboves) {
-		if (null == features || null == thresholds || null == isAboves)
-			return spots;
-		
-		double threshold;
-		boolean isAbove;
-		Feature feature;
-		Float val;
-		List<Spot> spotThisFrame;
-		TreeMap<Integer, List<Spot>> spotsToshow = new TreeMap<Integer, List<Spot>>();
-
-		for (int key : spots.keySet()) {
-			
-			spotThisFrame = spots.get(key);
-			ArrayList<Spot> blobToShow = new ArrayList<Spot>(spotThisFrame);
-			ArrayList<Spot> blobToHide = new ArrayList<Spot>(spotThisFrame.size());
-			Spot spot;
-
-			for (int i = 0; i < features.length; i++) {
-
-				threshold = thresholds[i];
-				feature = features[i];
-				isAbove = isAboves[i];
-
-				blobToHide.clear();
-				if (isAbove) {
-					for (int j = 0; j < blobToShow.size(); j++) {
-						spot = blobToShow.get(j);
-						val = spot.getFeature(feature);
-						if (null == val)
-							continue;
-						if ( val < threshold) {
-							blobToHide.add(spot);
-						}
-					}
-
-				} else {
-					for (int j = 0; j < blobToShow.size(); j++) {
-						spot = blobToShow.get(j);
-						val = spot.getFeature(feature);
-						if (null == val)
-							continue;
-						if ( val > threshold) {
-							blobToHide.add(spot); 
-						}
-					}
-
-				}
-				blobToShow.removeAll(blobToHide); // no need to treat them multiple times
-			} // loop over features to threshold
-			spotsToshow.put(key, blobToShow);
-		} // loop over time points
-		return spotsToshow;
-	}
-
-
 	
 }

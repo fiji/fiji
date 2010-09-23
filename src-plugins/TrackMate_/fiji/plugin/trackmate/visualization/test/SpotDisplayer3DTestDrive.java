@@ -3,6 +3,7 @@ package fiji.plugin.trackmate.visualization.test;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
+import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.features.FeatureFacade;
 import fiji.plugin.trackmate.gui.ThresholdGuiPanel;
 import fiji.plugin.trackmate.visualization.SpotDisplayer3D;
@@ -104,7 +105,7 @@ public class SpotDisplayer3DTestDrive {
 
 		// Launch renderer
 		final Image3DUniverse universe = new Image3DUniverse();
-		TreeMap<Integer, List<Spot>> allSpots = new TreeMap<Integer, List<Spot>>();
+		final TreeMap<Integer, List<Spot>> allSpots = new TreeMap<Integer, List<Spot>>();
 		allSpots.put(0, spots);
 		final SpotDisplayer3D displayer = new SpotDisplayer3D(universe, RADIUS);
 		displayer.setSpots(allSpots);
@@ -117,15 +118,10 @@ public class SpotDisplayer3DTestDrive {
 
 		// Set listeners
 		gui.addChangeListener(new ChangeListener() {
-			private double[] t = null;
-			private boolean[] is = null;
-			private Feature[] f = null;
 			@Override
 			public void stateChanged(ChangeEvent e) {
-				f = gui.getFeatures();
-				is = gui.getIsAbove();
-				t = gui.getThresholds();				
-				displayer.refresh(f, t, is);
+				displayer.setSpotsToShow(TrackMate_.thresholdSpots(allSpots, gui.getFeatureThresholds()));
+				displayer.refresh();
 			}
 		});
 		gui.addActionListener(new ActionListener() {
@@ -133,6 +129,7 @@ public class SpotDisplayer3DTestDrive {
 				if (e == gui.COLOR_FEATURE_CHANGED) {
 					Feature feature = gui.getColorByFeature();
 					displayer.setColorByFeature(feature);
+					displayer.refresh();
 				}
 			}
 		});

@@ -15,6 +15,8 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -53,6 +55,62 @@ import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
 */
 public class TrackMateFrame extends javax.swing.JFrame {
 
+	
+	/**
+	 * This is a helper class modified after a class by Albert Cardona
+	 */
+	private class DisplayUpdater extends Thread {
+		long request = 0;
+
+		// Constructor autostarts thread
+		DisplayUpdater() {
+			super("TrackMate displayer thread");
+			setPriority(Thread.NORM_PRIORITY);
+			start();
+		}
+
+		void doUpdate() {
+			if (isInterrupted())
+				return;
+			synchronized (this) {
+				request++;
+				notify();
+			}
+		}
+
+		void quit() {
+			interrupt();
+			synchronized (this) {
+				notify();
+			}
+		}
+
+		public void run() {
+			while (!isInterrupted()) {
+				try {
+					final long r;
+					synchronized (this) {
+						r = request;
+					}
+					// Call displayer update from this thread
+					if (r > 0)
+						displayer.refresh(); // Is likely to generate NPE
+					synchronized (this) {
+						if (r == request) {
+							request = 0; // reset
+							wait();
+						}
+						// else loop through to update again
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	
+	
+	
 	static final Font FONT = new Font("Arial", Font.PLAIN, 11);
 	static final Font SMALL_FONT = FONT.deriveFont(9);
 	static final Dimension TEXTFIELD_DIMENSION = new Dimension(40,18);
@@ -82,6 +140,7 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	private Logger logger;
 	private SpotDisplayer displayer;
 	private File file;
+	private DisplayUpdater updater = new DisplayUpdater();
 	
 	private StartDialogPanel startDialogPanel;
 	private ThresholdGuiPanel thresholdGuiPanel;
@@ -115,6 +174,12 @@ public class TrackMateFrame extends javax.swing.JFrame {
 		this.trackmate = plugin;
 		initGUI();
 		logger = logPanel.getLogger();
+		this.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent we) {
+				updater.quit();
+			}
+		});
 	}
 	
 	public TrackMateFrame() {
@@ -228,13 +293,9 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	 * Collect the segmentation result, render it in another thread, the switch to the thresholding panel. 
 	 */
 	private void execThresholdingStep() {
-		// Store results
-//		spots = trackmate.getSpots();
-		
 		// Launch renderer
 		logger.log("Rendering results...\n",Logger.BLUE_COLOR);
 		jButtonNext.setEnabled(false);
-		
 		// Thread for rendering
 		new Thread("TrackMate rendering thread") {
 			public void run() {
@@ -266,19 +327,23 @@ public class TrackMateFrame extends javax.swing.JFrame {
 				}
 				displayer.setSpots(trackmate.getSpots());
 				displayer.render();
-				logger.log("Rendering done.\n", Logger.BLUE_COLOR);
 				cardLayout.show(jPanelMain, THRESHOLD_GUI_KEY);
 				
 				thresholdGuiPanel.setSpots(trackmate.getSpots().values());
 				thresholdGuiPanel.addThresholdPanel(Feature.LOG_VALUE);
-				displayer.render();
 				thresholdGuiPanel.addChangeListener(new ChangeListener() {
 					@Override
 					public void stateChanged(ChangeEvent e) {
-						thresholdSpots();
+						// Threshold spots
+						trackmate.setFeatureThresholds(thresholdGuiPanel.getFeatureThresholds());
+						trackmate.execThresholding();
+						// Send to displayer
+						displayer.setSpotsToShow(trackmate.getSelectedSpots());
+						updater.doUpdate();
 					}
 				});
-				thresholdSpots();
+				thresholdGuiPanel.stateChanged(null);
+				logger.log("Rendering done.\n", Logger.BLUE_COLOR);
 				jButtonNext.setEnabled(true);
 			}
 		}.start();
@@ -292,20 +357,15 @@ public class TrackMateFrame extends javax.swing.JFrame {
 		jButtonNext.setEnabled(false);
 		new Thread("TrackMate tracking thread") {					
 			public void run() {
-				// Threshold spots
-				Feature[] features = thresholdGuiPanel.getFeatures();
-				double[] values = thresholdGuiPanel.getThresholds();
-				boolean[] isAbove = thresholdGuiPanel.getIsAbove();
-				for (int i = 0; i < features.length; i++)
-					trackmate.addThreshold(features[i], (float) values[i], isAbove[i]);
+				// Threshold
+				trackmate.setFeatureThresholds(thresholdGuiPanel.getFeatureThresholds());
 				trackmate.execThresholding();
+				displayer.setSpotsToShow(trackmate.getSelectedSpots());
 				// Track
 				trackmate.execTracking();
-				// Forward to displayer
-				displayer.setSpots(trackmate.getSelectedSpots()); // tracked subset of spots 
 				displayer.setTrackGraph(trackmate.getTrackGraph());
-				displayer.setDisplayTrackMode(TrackDisplayMode.LOCAL_WHOLE_TRACKS, 20);
-				displayer.resetTresholds();
+				displayer.setDisplayTrackMode(TrackDisplayMode.ALL_WHOLE_TRACKS, 20);
+				updater.doUpdate();
 				// Re-enable the GUI
 				jButtonNext.setEnabled(true);
 			}
@@ -362,20 +422,13 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	 * {@link ThresholdGuiPanel}.
 	 */
 	private void recolorSpots() {
-		Feature feature = thresholdGuiPanel.getColorByFeature();
-		displayer.setColorByFeature(feature);
-	}
-	
-	/**
-	 * Is called when the user change the threshold settings in the 
-	 * {@link ThresholdGuiPanel}.
-	 */
-	private void thresholdSpots() {
-		displayer.refresh(thresholdGuiPanel.getFeatures(), thresholdGuiPanel.getThresholds(), thresholdGuiPanel.getIsAbove());
+		displayer.setColorByFeature(thresholdGuiPanel.getColorByFeature());
+		updater.doUpdate();
 	}
 	
 	private void displayModeChanged() {
 		displayer.setDisplayTrackMode(displayerPanel.getTrackDisplayMode(), displayerPanel.getTrackDisplayDepth());
+		updater.doUpdate();
 	}
 	
 	

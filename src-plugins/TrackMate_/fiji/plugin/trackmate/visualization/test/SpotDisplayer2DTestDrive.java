@@ -2,6 +2,7 @@ package fiji.plugin.trackmate.visualization.test;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.features.FeatureFacade;
 import fiji.plugin.trackmate.gui.ThresholdGuiPanel;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
@@ -100,7 +101,7 @@ public class SpotDisplayer2DTestDrive {
 
 		imp.getCalibration().pixelWidth = CALIBRATION[0];
 		imp.getCalibration().pixelHeight = CALIBRATION[1];
-		TreeMap<Integer, List<Spot>> allNodes = new TreeMap<Integer, List<Spot>>();
+		final TreeMap<Integer, List<Spot>> allNodes = new TreeMap<Integer, List<Spot>>();
 		allNodes.put(0, spots);
 		final SpotDisplayer2D displayer = new SpotDisplayer2D(imp, RADIUS, CALIBRATION);
 		displayer.setSpots(allNodes);
@@ -119,7 +120,8 @@ public class SpotDisplayer2DTestDrive {
 		
 		gui.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent e) {
-				displayer.refresh(gui.getFeatures(), gui.getThresholds(), gui.getIsAbove());
+				displayer.setSpotsToShow(TrackMate_.thresholdSpots(allNodes, gui.getFeatureThresholds()));
+				displayer.refresh();
 			}
 		});
 		

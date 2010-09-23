@@ -1,16 +1,12 @@
 package fiji.plugin.trackmate.visualization;
 
 import ij.ImagePlus;
-import ij.gui.ScrollbarWithLabel;
 import ij.gui.StackWindow;
 
 import java.awt.AlphaComposite;
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.event.AdjustmentEvent;
-import java.awt.event.AdjustmentListener;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -18,6 +14,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.SimpleGraph;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
@@ -31,71 +28,121 @@ public class SpotDisplayer2D extends SpotDisplayer {
 	 */
 	
 	public class TrackOverlay extends AbstractAnnotation {
-
 		private ArrayList<Integer> X0 = new ArrayList<Integer>();
 		private ArrayList<Integer> Y0 = new ArrayList<Integer>();
 		private ArrayList<Integer> X1 = new ArrayList<Integer>();
 		private ArrayList<Integer> Y1 = new ArrayList<Integer>();
-		private ArrayList<Float> T = new ArrayList<Float>();
-		
+		private ArrayList<Integer> frames = new ArrayList<Integer>();
+
 		public TrackOverlay(Color color) {
 			this.color = color;
+			this.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER);
 		}
-		
+
 		@Override
 		public void draw(Graphics2D g2d) {
-			for (int i = 0; i < X0.size(); i++) {
-				g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1 - T.get(i)));
-				g2d.drawLine(X0.get(i), Y0.get(i), X1.get(i), Y1.get(i));
+			g2d.setStroke(new BasicStroke((float) (1 / canvas.getMagnification())));
+
+			switch (trackDisplayMode) {
+
+			case DO_NOT_DISPLAY:
+				return;
+
+			case ALL_WHOLE_TRACKS:
+				for (int i = 0; i < frames.size(); i++) 
+					g2d.drawLine(X0.get(i), Y0.get(i), X1.get(i), Y1.get(i));
+				break;
+
+			case LOCAL_WHOLE_TRACKS: {
+				final int currentFrame = imp.getFrame()-1;
+				int frameDist;
+				for (int i = 0; i < frames.size(); i++) {
+					frameDist = Math.abs(frames.get(i) - currentFrame); 
+					if (frameDist > trackDisplayDepth)
+						continue;
+					g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1 - (float) frameDist / trackDisplayDepth));
+					g2d.drawLine(X0.get(i), Y0.get(i), X1.get(i), Y1.get(i));
+				}				
+				break;
 			}
+
+			case LOCAL_FORWARD_TRACKS: {
+				final int currentFrame = imp.getFrame()-1;
+				int frameDist;
+				for (int i = 0; i < frames.size(); i++) {
+					frameDist = frames.get(i) - currentFrame; 
+					if (frameDist < 0 || frameDist > trackDisplayDepth)
+						continue;
+					g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1 - (float) frameDist / trackDisplayDepth));
+					g2d.drawLine(X0.get(i), Y0.get(i), X1.get(i), Y1.get(i));
+				}
+				break;
+			}
+
+			case LOCAL_BACKWARD_TRACKS: {
+				final int currentFrame = imp.getFrame()-1;
+				int frameDist;
+				for (int i = 0; i < frames.size(); i++) {
+					frameDist = currentFrame - frames.get(i); 
+					if (frameDist < 0 || frameDist > trackDisplayDepth)
+						continue;
+					g2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1  - (float) frameDist / trackDisplayDepth));
+					g2d.drawLine(X0.get(i), Y0.get(i), X1.get(i), Y1.get(i));
+				}
+				break;
+			}
+
+			}
+
 		}
 		
-		public void addEdge(int x0, int y0, int x1, int y1, float t) {
-			X0.add(x0);
-			Y0.add(y0);
-			X1.add(x1);
-			Y1.add(y1);
-			T.add(t);
+		public void addEdge(final Spot source, final Spot target, final int frame) {
+			X0.add(Math.round(source.getFeature(Feature.POSITION_X) / calibration[0]) );
+			Y0.add(Math.round(source.getFeature(Feature.POSITION_Y) / calibration[1]) );
+			X1.add(Math.round(target.getFeature(Feature.POSITION_X) / calibration[0]) );
+			Y1.add(Math.round(target.getFeature(Feature.POSITION_Y) / calibration[1]) );
+			frames.add(frame);
 		}
 		
 	}
 		
 	public class SpotOverlay extends AbstractAnnotation {
 
-		private float xcenter;
-		private float ycenter;
-		private float radius;
-		private boolean isVisible = true;
+		private TreeMap<Integer, List<Integer>> X = new TreeMap<Integer, List<Integer>>();
+		private TreeMap<Integer, List<Integer>> Y = new TreeMap<Integer, List<Integer>>();
+		private TreeMap<Integer, List<Integer>> R = new TreeMap<Integer, List<Integer>>();
+		private TreeMap<Integer, List<Color>> colors = new TreeMap<Integer, List<Color>>();
 		
-		public SpotOverlay(float xcenter, float ycenter, float radius, Color color) {
-			this.xcenter = xcenter;
-			this.ycenter = ycenter;
-			this.radius = radius;
-			this.color = color;
+		public SpotOverlay() {
 			this.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER);
-		}
-		
-		public SpotOverlay(float xcenter, float ycenter, float radius) {
-			this(xcenter, ycenter, radius, DEFAULT_COLOR);
-		}
-		
-		public void setTransparency(float transparency) {
-			setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1-transparency));
-		}
-		
-		public void setVisible(boolean visible) {
-			this.isVisible   = visible;
+			for (int i = 0; i < imp.getNFrames(); i++) {
+				X.put(i, new ArrayList<Integer>());
+				Y.put(i, new ArrayList<Integer>());
+				R.put(i, new ArrayList<Integer>());
+				colors.put(i, new ArrayList<Color>());
+			}
 		}
 
 		@Override
 		public void draw(Graphics2D g2d) {
-			if (!isVisible)
-				return;
-			final int x = Math.round((xcenter - radius) / calibration[0]); // We use the calibration field of the outer instance 
-			final int y = Math.round((ycenter - radius) / calibration[1]);
-			final int width = Math.round(2 * radius / calibration[0]);
-			final int height = Math.round(2 * radius / calibration[1]);
-			g2d.drawOval(x, y, width, height);			
+//			g2d.setStroke(new BasicStroke((float) (1 / canvas.getMagnification())));
+			final int frame = imp.getFrame()-1;
+			List<Color> c = colors.get(frame);
+			List<Integer> r = R.get(frame);
+			List<Integer> x = X.get(frame);
+			List<Integer> y = Y.get(frame);
+
+			for (int i = 0; i < c.size(); i++) {
+				g2d.setColor(c.get(i));
+				g2d.drawOval(x.get(i) - r.get(i), y.get(i) - r.get(i), 2 * r.get(i), 2 * r.get(i));			
+			}
+		}
+		
+		public void addSpot(final Spot spot, float radius, Color color, int frame) {
+			X.get(frame).add(Math.round(spot.getFeature(Feature.POSITION_X) / calibration[0] ));
+			Y.get(frame).add(Math.round(spot.getFeature(Feature.POSITION_Y) / calibration[1] ));
+			R.get(frame).add(Math.round(radius / calibration[0]));
+			colors.get(frame).add(color);
 		}
 		
 	}
@@ -107,8 +154,9 @@ public class SpotDisplayer2D extends SpotDisplayer {
 	private final ImagePlus imp;
 	private OverlayedImageCanvas canvas;
 	private float[] calibration;
-	private HashMap<Spot, SpotOverlay> spotOverlays = new HashMap<Spot, SpotOverlay>();
-	private TreeMap<Integer, List<Spot>> spotsToShow = new TreeMap<Integer, List<Spot>>();
+	private SpotOverlay spotOverlay;
+	/** Contains the track overlay objects. */
+	private HashMap<Set<Spot>, TrackOverlay> wholeTrackOverlays = new HashMap<Set<Spot>, TrackOverlay>();
 	private Feature currentFeature;
 	private float featureMaxValue;
 	private float featureMinValue;
@@ -135,32 +183,15 @@ public class SpotDisplayer2D extends SpotDisplayer {
 	
 	@Override
 	public void render() {
-		spotsToShow = spots;
 		canvas = new OverlayedImageCanvas(imp);
 		StackWindow window = new StackWindow(imp, canvas);
-		ScrollbarWithLabel scrollbar = window.getZSelector();
-		if (null != scrollbar)
-			scrollbar.addAdjustmentListener(new AdjustmentListener() {
-				@Override
-				public void adjustmentValueChanged(AdjustmentEvent e) {
-					displayFrame(imp.getFrame()-1);
-				}
-			});
-		window.addMouseWheelListener(new MouseWheelListener() {
-			@Override
-			public void mouseWheelMoved(MouseWheelEvent e) {
-				displayFrame(imp.getFrame() -1 );
-			}
-		});
-		displayFrame(imp.getFrame() - 1);
+		window.show();
+		prepareSpotOverlay();
+		prepareWholeTrackOverlay();
+		refresh();
 	}
 	
 	
-	@Override
-	public void resetTresholds() {
-		refresh(null, null, null);
-	}
-
 	@Override
 	public void setColorByFeature(Feature feature) {
 		currentFeature = feature;
@@ -179,162 +210,89 @@ public class SpotDisplayer2D extends SpotDisplayer {
 		}
 		featureMinValue = min;
 		featureMaxValue = max;
+		prepareSpotOverlay();
 		refresh();
-		
 	}
 		
 	@Override
-	public void refresh(Feature[] features, double[] thresholds, boolean[] isAboves) {
-		spotsToShow = threshold(features, thresholds, isAboves);
-		displayFrame(imp.getFrame() - 1); // refresh overlay -> it now only has the displayed spots
-		// Make all overlays invisible
-		final int frame = imp.getFrame() -1; // 0 - based
-		if (spots.get(frame) == null)
-			return;
+	public void refresh() {
 		imp.updateAndDraw();
+	}
+		
+	@Override
+	public void setTrackGraph(SimpleGraph<Spot, DefaultEdge> trackGraph) {
+		super.setTrackGraph(trackGraph);
+		prepareWholeTrackOverlay();
 	}
 	
 	@Override
-	public void refresh() {
-		displayFrame(imp.getFrame() - 1);
-		imp.updateAndDraw();
+	public void setSpotsToShow(TreeMap<Integer, List<Spot>> spotsToShow) {
+		super.setSpotsToShow(spotsToShow);
+		prepareSpotOverlay();
 	}
+	
 	
 	/*
 	 * PRIVATE METHODS
 	 */
 	
-	private void displayFrame(int frame) {
-		final List<Spot> spotsThisFrame = spotsToShow.get(frame);		
-		spotOverlays.clear();
-		canvas.clearOverlay();
-		if (null == spotsThisFrame)
+	private void prepareSpotOverlay() {
+		if (null == spotsToShow)
 			return;
-		SpotOverlay overlay;
-		float[] coords = new float[3];
+		canvas.removeOverlay(spotOverlay);
+		spotOverlay = new SpotOverlay();
+		Color spotColor;
 		Float val;
-		for (Spot spot : spotsThisFrame) {
-			spot.getPosition(coords);
-			val = spot.getFeature(currentFeature);
-			if (null == currentFeature || null == val)
-				overlay = new SpotOverlay(coords[0], coords[1], radius);
-			else
-				overlay = new SpotOverlay(coords[0], coords[1], radius, colorMap.getPaint((val-featureMinValue)/(featureMaxValue-featureMinValue)));
-			canvas.addOverlay(overlay);
-			spotOverlays.put(spot, overlay);
-		}
-		
-		switch (trackDisplayMode) {
-		
-		case DO_NOT_DISPLAY:
-			
-			return;
-			
-		case LOCAL_WHOLE_TRACKS:
-		case LOCAL_BACKWARD_TRACKS:
-		case LOCAL_FORWARD_TRACKS:
-			
-			for (Spot spot : spotsThisFrame) {
-				
-				Color trackColor = DEFAULT_COLOR;
-				// Find the track it belongs to
-				for(Set<Spot> track : tracks)
-					if (track.contains(spot)) {
-						trackColor = trackColors.get(track);
-						break;
-					}
-				TrackOverlay to = new TrackOverlay(trackColor);
-				
-				switch (trackDisplayMode) {
-				
-				case LOCAL_WHOLE_TRACKS:
-					walk(null, spot, to, 0); // walk in both directions
-					break;
-				
-				case LOCAL_FORWARD_TRACKS:
-				case LOCAL_BACKWARD_TRACKS:
-					
-					Set<DefaultEdge> edges = trackGraph.edgesOf(spot);
-					List<Spot> targets = new ArrayList<Spot>(2);
-					
-					for(DefaultEdge edge : edges) {						
-					
-						targets.clear();
-						targets.add(trackGraph.getEdgeTarget(edge));
-						targets.add(trackGraph.getEdgeSource(edge));
-						
-						for (Spot target : targets) {
-						
-							if (target == spot )
-								continue;
-							
-							if (trackDisplayMode.equals(TrackDisplayMode.LOCAL_FORWARD_TRACKS) &&  
-									target.diffTo(spot, Feature.POSITION_T) < 0) // filter out targets 
-								continue;
-							
-							if (trackDisplayMode.equals(TrackDisplayMode.LOCAL_BACKWARD_TRACKS) && 
-									target.diffTo(spot, Feature.POSITION_T) > 0)
-								continue;
-							
-							int x0 = Math.round(spot.getFeature(Feature.POSITION_X) / calibration[0]);
-							int y0 = Math.round(spot.getFeature(Feature.POSITION_Y) / calibration[1]);
-							int x1 = Math.round(target.getFeature(Feature.POSITION_X) / calibration[0]);
-							int y1 = Math.round(target.getFeature(Feature.POSITION_Y) / calibration[1]);
-							to.addEdge(x0, y0, x1, y1, 0);
-							walk(spot, target, to, 1);							
-						}
-					}
-				}
-				canvas.addOverlay(to);
+		for(int frame : spotsToShow.keySet()) {
+			List<Spot> spotThisFrame = spotsToShow.get(frame);
+			for(Spot spot : spotThisFrame) {
+				val = spot.getFeature(currentFeature);
+				if (null == currentFeature || null == val)
+					spotColor = color;
+				else
+					spotColor = colorMap.getPaint((val-featureMinValue)/(featureMaxValue-featureMinValue));
+				spotOverlay.addSpot(spot, radius, spotColor, frame);
 			}
-			
-			break; //case LOCAL_WHOLE_TRACKS: case LOCAL_BACKWARD_TRACKS: case LOCAL_FORWARD_TRACKS:
-			
-		case ALL_WHOLE_TRACKS:
-			
-			for (Set<Spot> track : tracks) {
-				Spot target = track.iterator().next(); // any will do				
-				Color trackColor = trackColors.get(target);
-				TrackOverlay to = new TrackOverlay(trackColor);
-				trackDisplayDepth = Integer.MAX_VALUE; // do not fade or stop
-				walk(null, target, to, 0);
-				canvas.addOverlay(to);
-			}
-			
-			
-			break;
-			
-			
 		}
-		
+		canvas.addOverlay(spotOverlay);
 	}
 	
-	private void walk(final Spot source, final Spot current, final TrackOverlay to, int level) {
-		if (level > trackDisplayDepth)
-			return;
-		Set<DefaultEdge> edges = trackGraph.edgesOf(current);
-		List<Spot> targets = new ArrayList<Spot>(2);
-		int x0, y0, x1, y1;
-		
-		for(DefaultEdge edge : edges) {
-			
-			targets.clear();
-			targets.add(trackGraph.getEdgeTarget(edge));
-			targets.add(trackGraph.getEdgeSource(edge));
-			
-			for (Spot target : targets) {
-				if (target == source || target == current)
-					continue;
-				x0 = Math.round(current.getFeature(Feature.POSITION_X) / calibration[0]);
-				y0 = Math.round(current.getFeature(Feature.POSITION_Y) / calibration[1]);
-				x1 = Math.round(target.getFeature(Feature.POSITION_X) / calibration[0]);
-				y1 = Math.round(target.getFeature(Feature.POSITION_Y) / calibration[1]);
-				to.addEdge(x0, y0, x1, y1, (float) level / trackDisplayDepth);
 
-				int newlevel = level+1;
-				walk(current, target, to, newlevel);
+	
+	private void prepareWholeTrackOverlay() {
+		if (null == tracks)
+			return;
+		for (TrackOverlay wto : wholeTrackOverlays.values()) 
+			canvas.removeOverlay(wto);
+		wholeTrackOverlays.clear();
+		for (Set<Spot> track : tracks)
+			wholeTrackOverlays.put(track, new TrackOverlay(trackColors.get(track)));
+		
+		Spot source, target;
+		Set<DefaultEdge> edges = trackGraph.edgeSet();
+		int frame;
+		
+		for (DefaultEdge edge : edges) {
+			source = trackGraph.getEdgeSource(edge);
+			target = trackGraph.getEdgeTarget(edge);
+			// Find to what frame it belongs to
+			frame = -1;
+			for (int key : spots.keySet())
+				if (spots.get(key).contains(source)) {
+					frame = key;
+					break;
+				}
+			// Find to what track it belongs to
+			for (Set<Spot> track : tracks) {
+				if (track.contains(source)) {
+					wholeTrackOverlays.get(track).addEdge(source, target, frame);
+					break;
+				}
 			}
 		}
+		
+		for (TrackOverlay wto : wholeTrackOverlays.values())
+			canvas.addOverlay(wto);
 	}
 
 }

@@ -16,6 +16,7 @@ import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 
 import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.FeatureThreshold;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMate_;
@@ -112,18 +113,14 @@ public class TmXmlWriter implements TmXmlKeys {
 	}
 	
 	private Element echoThresholds(Element root) {
-		List<Feature> thresholdFeatures = trackmate.getThresholdFeatures();
-		List<Float> thresholdValues = trackmate.getThresholdValues();
-		List<Boolean> thresholdAbove = trackmate.getThresholdAbove();
-		if (null == thresholdFeatures || null == thresholdValues || null == thresholdAbove)
-			return root;
+		List<FeatureThreshold> featureThresholds = trackmate.getFeatureThresholds();
 		
 		Element allTresholdElement = new Element(THRESHOLD_COLLECTION_ELEMENT_KEY);
-		for (int i = 0; i < thresholdAbove.size(); i++) {
+		for (FeatureThreshold threshold : featureThresholds) {
 			Element thresholdElement = new Element(THRESHOLD_ELEMENT_KEY);
-			thresholdElement.setAttribute(THRESHOLD_FEATURE_ATTRIBUTE_NAME, thresholdFeatures.get(i).name());
-			thresholdElement.setAttribute(THRESHOLD_VALUE_ATTRIBUTE_NAME, thresholdValues.get(i).toString());
-			thresholdElement.setAttribute(THRESHOLD_ABOVE_ATTRIBUTE_NAME, ""+thresholdAbove.get(i));
+			thresholdElement.setAttribute(THRESHOLD_FEATURE_ATTRIBUTE_NAME, threshold.feature.name());
+			thresholdElement.setAttribute(THRESHOLD_VALUE_ATTRIBUTE_NAME, threshold.value.toString());
+			thresholdElement.setAttribute(THRESHOLD_ABOVE_ATTRIBUTE_NAME, ""+threshold.isAbove);
 			allTresholdElement.addContent(thresholdElement);
 		}
 		root.addContent(allTresholdElement);
