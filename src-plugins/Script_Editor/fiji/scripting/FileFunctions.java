@@ -177,7 +177,7 @@ public class FileFunctions {
 		if (fakefile.exists()) try {
 			Fake fake = new Fake();
 			if (parent != null) {
-				final JTextAreaOutputStream output = new JTextAreaOutputStream(parent.screen);
+				final JTextAreaOutputStream output = new JTextAreaOutputStream(parent.getTab().screen);
 				fake.out = new PrintStream(output);
 				fake.err = new PrintStream(output);
 			}
@@ -760,7 +760,8 @@ public class FileFunctions {
 
 	public class ScreenLineHandler implements SimpleExecuter.LineHandler {
 		public void handleLine(String line) {
-			parent.screen.insert(line + "\n", parent.screen.getDocument().getLength());
+			TextEditor.Tab tab = parent.getTab();
+			tab.screen.insert(line + "\n", tab.screen.getDocument().getLength());
 		}
 	}
 
@@ -787,7 +788,7 @@ public class FileFunctions {
 	}
 
 	public void gitGrep(String searchTerm, File directory) {
-		GrepLineHandler handler = new GrepLineHandler(parent.screen, directory.getAbsolutePath());
+		GrepLineHandler handler = new GrepLineHandler(parent.getTab().screen, directory.getAbsolutePath());
 		try {
 			SimpleExecuter executer = new SimpleExecuter(new String[] {
 				"git", "grep", "-n", searchTerm
