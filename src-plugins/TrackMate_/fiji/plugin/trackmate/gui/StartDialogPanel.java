@@ -20,7 +20,6 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
-import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 
@@ -60,19 +59,19 @@ public class StartDialogPanel extends ActionListenablePanel {
 	private JLabel jLabelBlobDiameterUnit;
 	private JLabel jLabelUseMdianFilter;
 	private JLabel jLabelCheckCalibration;
-	private JTextField jTextFieldPixelWidth;
-	private JTextField jTextFieldZStart;
-	private JTextField jTextFieldYStart;
-	private JTextField jTextFieldXStart;
+	private JNumericTextField jTextFieldPixelWidth;
+	private JNumericTextField jTextFieldZStart;
+	private JNumericTextField jTextFieldYStart;
+	private JNumericTextField jTextFieldXStart;
 	private JLabel jLabelCropSetting;
 	private JButton jButtonRefresh;
-	private JTextField jTextFieldTEnd;
+	private JNumericTextField jTextFieldTEnd;
 	private JLabel jLabelTo4;
-	private JTextField jTextFieldTStart;
+	private JNumericTextField jTextFieldTStart;
 	private JLabel jLabelT;
-	private JTextField jTextFieldZEnd;
-	private JTextField jTextFieldYEnd;
-	private JTextField jTextFieldXEnd;
+	private JNumericTextField jTextFieldZEnd;
+	private JNumericTextField jTextFieldYEnd;
+	private JNumericTextField jTextFieldXEnd;
 	private JLabel jLabelTo3;
 	private JLabel jLabelTo2;
 	private JLabel jLabelTo1;
@@ -82,8 +81,8 @@ public class StartDialogPanel extends ActionListenablePanel {
 	private JLabel jLabelUnits3;
 	private JLabel jLabelUnits2;
 	private JLabel jLabelUnits1;
-	private JTextField jTextFieldVoxelDepth;
-	private JTextField jTextFieldPixelHeight;
+	private JNumericTextField jTextFieldVoxelDepth;
+	private JNumericTextField jTextFieldPixelHeight;
 	private JLabel jLabelVoxelDepth;
 	private JLabel jLabelPixelHeight;
 	private JLabel jLabelPixelWidth;
@@ -91,9 +90,13 @@ public class StartDialogPanel extends ActionListenablePanel {
 	private JCheckBox jCheckBoxAllowEdgeMaxima;
 	private JLabel jLabelAllowEdgeMaxima;
 	private JLabel jLabelImageName;
-	private JTextField jTextFieldExpectedBlobDiameter;
+	private JNumericTextField jTextFieldExpectedBlobDiameter;
 
 	private ImagePlus imp;
+	private JLabel jLabelTimeInterval;
+	private JNumericTextField jTextFieldTimeInterval;
+	private JLabel jLabelUnits4;
+	private GridBagLayout thisLayout;
 
 	
 	public StartDialogPanel() {
@@ -123,10 +126,12 @@ public class StartDialogPanel extends ActionListenablePanel {
 		jTextFieldPixelWidth.setText(String.format("%.1f", imp.getCalibration().pixelWidth));
 		jTextFieldPixelHeight.setText(String.format("%.1f", imp.getCalibration().pixelHeight));
 		jTextFieldVoxelDepth.setText(String.format("%.1f", imp.getCalibration().pixelDepth));
+		jTextFieldTimeInterval.setText(String.format("%.1f", imp.getCalibration().frameInterval));
 		jLabelBlobDiameterUnit.setText(imp.getCalibration().getUnit());
 		jLabelUnits1.setText(imp.getCalibration().getXUnit());
 		jLabelUnits2.setText(imp.getCalibration().getYUnit());
 		jLabelUnits3.setText(imp.getCalibration().getZUnit());
+		jLabelUnits4.setText(imp.getCalibration().getTimeUnit());
 		Roi roi = imp.getRoi();
 		if (null == roi)
 			roi = new Roi(0,0,imp.getWidth(),imp.getHeight());
@@ -177,9 +182,9 @@ public class StartDialogPanel extends ActionListenablePanel {
 	
 	private void initGUI() {
 		try {
-			GridBagLayout thisLayout = new GridBagLayout();
-			thisLayout.rowWeights = new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0};
-			thisLayout.rowHeights = new int[] {50, 25, 25, 25, 50, 25, 25, 25, 50, 20, 20, 20, 25, 7, 15};
+			thisLayout = new GridBagLayout();
+			thisLayout.rowWeights = new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0};
+			thisLayout.rowHeights = new int[] {50, 20, 20, 20, 50, 20, 20, 20, 20, 50, 20, 20, 20, 25, 7, 15};
 			thisLayout.columnWeights = new double[] {0.1, 0.0, 0.1};
 			thisLayout.columnWidths = new int[] {7, 50, 20};
 			this.setLayout(thisLayout);
@@ -195,31 +200,32 @@ public class StartDialogPanel extends ActionListenablePanel {
 				jLabelExpectedDiameter = new JLabel();
 				this.add(jLabelExpectedDiameter, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
 				jLabelExpectedDiameter.setText("Expected blob diameter:");
-				jLabelExpectedDiameter.setFont(FONT);
+				jLabelExpectedDiameter.setFont(SMALL_FONT);
 			}
 			{
-				jTextFieldExpectedBlobDiameter = new JTextField();
+				jTextFieldExpectedBlobDiameter = new JNumericTextField();
 				this.add(jTextFieldExpectedBlobDiameter, new GridBagConstraints(1, 1, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 10), 0, 0));
 				jTextFieldExpectedBlobDiameter.setText(String.format("%.1f", DEFAULT_BLOB_DIAMETER));
-				jTextFieldExpectedBlobDiameter.setFont(FONT);
+				jTextFieldExpectedBlobDiameter.setFont(SMALL_FONT);
+				jTextFieldExpectedBlobDiameter.setSize(TEXTFIELD_DIMENSION);
 			}
 			{
 				jLabelBlobDiameterUnit = new JLabel();
 				jLabelBlobDiameterUnit.setText("units");
-				jLabelBlobDiameterUnit.setFont(FONT);
+				jLabelBlobDiameterUnit.setFont(SMALL_FONT);
 				this.add(jLabelBlobDiameterUnit, new GridBagConstraints(2, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 			}
 			{
 				jLabelUseMdianFilter = new JLabel();
 				this.add(jLabelUseMdianFilter, new GridBagConstraints(0, 2, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
 				jLabelUseMdianFilter.setText("Use median filter:");
-				jLabelUseMdianFilter.setFont(FONT);
+				jLabelUseMdianFilter.setFont(SMALL_FONT);
 			}
 			{
 				jLabelAllowEdgeMaxima = new JLabel();
 				this.add(jLabelAllowEdgeMaxima, new GridBagConstraints(0, 3, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
 				jLabelAllowEdgeMaxima.setText("Allow edge maxima:");
-				jLabelAllowEdgeMaxima.setFont(FONT);
+				jLabelAllowEdgeMaxima.setFont(SMALL_FONT);
 			}
 			{
 				jCheckBoxAllowEdgeMaxima = new JCheckBox();
@@ -235,7 +241,7 @@ public class StartDialogPanel extends ActionListenablePanel {
 				jLabelCheckCalibration = new JLabel();
 				this.add(jLabelCheckCalibration, new GridBagConstraints(0, 4, 3, 1, 0.0, 0.0, GridBagConstraints.SOUTHWEST, GridBagConstraints.NONE, new Insets(0, 10, 10, 0), 0, 0));
 				jLabelCheckCalibration.setText("Calibration settings:");
-				jLabelCheckCalibration.setFont(FONT);
+				jLabelCheckCalibration.setFont(SMALL_FONT);
 			}
 			{
 				jLabelPixelWidth = new JLabel();
@@ -256,19 +262,30 @@ public class StartDialogPanel extends ActionListenablePanel {
 				jLabelVoxelDepth.setFont(SMALL_FONT);
 			}
 			{
-				jTextFieldPixelWidth = new JTextField();
+				jLabelTimeInterval = new JLabel();
+				this.add(jLabelTimeInterval, new GridBagConstraints(0, 8, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
+				jLabelTimeInterval.setText("Time interval:" );				
+				jLabelTimeInterval.setFont(SMALL_FONT);
+			}
+			{
+				jTextFieldPixelWidth = new JNumericTextField();
 				this.add(jTextFieldPixelWidth, new GridBagConstraints(1, 5, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 10), 0, 0));
 				jTextFieldPixelWidth.setFont(SMALL_FONT);
 			}
 			{
-				jTextFieldPixelHeight = new JTextField();
+				jTextFieldPixelHeight = new JNumericTextField();
 				this.add(jTextFieldPixelHeight, new GridBagConstraints(1, 6, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 10), 0, 0));
 				jTextFieldPixelHeight.setFont(SMALL_FONT);
 			}
 			{
-				jTextFieldVoxelDepth = new JTextField();
+				jTextFieldVoxelDepth = new JNumericTextField();
 				this.add(jTextFieldVoxelDepth, new GridBagConstraints(1, 7, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 10), 0, 0));
 				jTextFieldVoxelDepth.setFont(SMALL_FONT);
+			}
+			{
+				jTextFieldTimeInterval = new JNumericTextField();
+				this.add(jTextFieldTimeInterval, new GridBagConstraints(1, 8, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 10), 0, 0));
+				jTextFieldTimeInterval.setFont(SMALL_FONT);
 			}
 			{
 				jLabelUnits1 = new JLabel();
@@ -289,114 +306,120 @@ public class StartDialogPanel extends ActionListenablePanel {
 				jLabelUnits3.setFont(SMALL_FONT);
 			}
 			{
+				jLabelUnits4 = new JLabel();
+				this.add(jLabelUnits4, new GridBagConstraints(2, 8, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+				jLabelUnits4.setText("units");
+				jLabelUnits4.setFont(SMALL_FONT);
+			}
+			{
 				jLabelCropSetting = new JLabel();
-				this.add(jLabelCropSetting, new GridBagConstraints(0, 8, 3, 1, 0.0, 0.0, GridBagConstraints.SOUTHWEST, GridBagConstraints.NONE, new Insets(0, 10, 10, 0), 0, 0));
+				this.add(jLabelCropSetting, new GridBagConstraints(0, 9, 3, 1, 0.0, 0.0, GridBagConstraints.SOUTHWEST, GridBagConstraints.NONE, new Insets(0, 10, 10, 0), 0, 0));
 				jLabelCropSetting.setText("Crop settings (in pixels):");
-				jLabelCropSetting.setFont(FONT);
+				jLabelCropSetting.setFont(SMALL_FONT);
 			}
 			{
 				jLabelX = new JLabel();
-				this.add(jLabelX, new GridBagConstraints(0, 9, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+				this.add(jLabelX, new GridBagConstraints(0, 10, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 				jLabelX.setText("X");
 				jLabelX.setFont(SMALL_FONT);
 			}
 			{
 				jLabelY = new JLabel();
-				this.add(jLabelY, new GridBagConstraints(0, 10, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+				this.add(jLabelY, new GridBagConstraints(0, 11, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 				jLabelY.setText("Y");
 				jLabelY.setFont(SMALL_FONT);
 			}
 			{
 				jLabelZ = new JLabel();
-				this.add(jLabelZ, new GridBagConstraints(0, 11, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+				this.add(jLabelZ, new GridBagConstraints(0, 12, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 				jLabelZ.setText("Z");
 				jLabelZ.setFont(SMALL_FONT);
 			}
 			{
-				jTextFieldXStart = new JTextField();
-				this.add(jTextFieldXStart, new GridBagConstraints(0, 9, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
+				jTextFieldXStart = new JNumericTextField();
+				this.add(jTextFieldXStart, new GridBagConstraints(0, 10, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
 				jTextFieldXStart.setSize(30, 22);
 				jTextFieldXStart.setPreferredSize(TEXTFIELD_DIMENSION);
 				jTextFieldXStart.setFont(SMALL_FONT);
 			}
 			{
-				jTextFieldYStart = new JTextField();
-				this.add(jTextFieldYStart, new GridBagConstraints(0, 10, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
+				jTextFieldYStart = new JNumericTextField();
+				this.add(jTextFieldYStart, new GridBagConstraints(0, 11, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
 				jTextFieldYStart.setSize(30, 22);
 				jTextFieldYStart.setPreferredSize(TEXTFIELD_DIMENSION);
 				jTextFieldYStart.setFont(SMALL_FONT);
 			}
 			{
-				jTextFieldZStart = new JTextField();
-				this.add(jTextFieldZStart, new GridBagConstraints(0, 11, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
+				jTextFieldZStart = new JNumericTextField();
+				this.add(jTextFieldZStart, new GridBagConstraints(0, 12, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
 				jTextFieldZStart.setPreferredSize(TEXTFIELD_DIMENSION);
 				jTextFieldZStart.setFont(SMALL_FONT);
 			}
 			{
 				jLabelTo1 = new JLabel();
-				this.add(jLabelTo1, new GridBagConstraints(1, 9, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+				this.add(jLabelTo1, new GridBagConstraints(1, 10, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 				jLabelTo1.setText("to");
 				jLabelTo1.setFont(SMALL_FONT);
 			}
 			{
 				jLabelTo2 = new JLabel();
-				this.add(jLabelTo2, new GridBagConstraints(1, 10, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+				this.add(jLabelTo2, new GridBagConstraints(1, 11, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 				jLabelTo2.setText("to");
 				jLabelTo2.setFont(SMALL_FONT);
 			}
 			{
 				jLabelTo3 = new JLabel();
-				this.add(jLabelTo3, new GridBagConstraints(1, 11, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+				this.add(jLabelTo3, new GridBagConstraints(1, 12, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 				jLabelTo3.setText("to");
 				jLabelTo3.setFont(SMALL_FONT);
 			}
 			{
-				jTextFieldXEnd = new JTextField();
-				this.add(jTextFieldXEnd, new GridBagConstraints(2, 9, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+				jTextFieldXEnd = new JNumericTextField();
+				this.add(jTextFieldXEnd, new GridBagConstraints(2, 10, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 				jTextFieldXEnd.setPreferredSize(TEXTFIELD_DIMENSION);
 				jTextFieldXEnd.setFont(SMALL_FONT);
 			}
 			{
-				jTextFieldYEnd = new JTextField();
-				this.add(jTextFieldYEnd, new GridBagConstraints(2, 10, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+				jTextFieldYEnd = new JNumericTextField();
+				this.add(jTextFieldYEnd, new GridBagConstraints(2, 11, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 				jTextFieldYEnd.setPreferredSize(TEXTFIELD_DIMENSION);
 				jTextFieldYEnd.setFont(SMALL_FONT);
 			}
 			{
-				jTextFieldZEnd = new JTextField();
-				this.add(jTextFieldZEnd, new GridBagConstraints(2, 11, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+				jTextFieldZEnd = new JNumericTextField();
+				this.add(jTextFieldZEnd, new GridBagConstraints(2, 12, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 				jTextFieldZEnd.setPreferredSize(TEXTFIELD_DIMENSION);
 				jTextFieldZEnd.setFont(SMALL_FONT);
 			}
 			{
 				jLabelT = new JLabel();
-				this.add(jLabelT, new GridBagConstraints(0, 12, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+				this.add(jLabelT, new GridBagConstraints(0, 13, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 				jLabelT.setText("T");
 				jLabelT.setFont(SMALL_FONT);
 			}
 			{
-				jTextFieldTStart = new JTextField();
-				this.add(jTextFieldTStart, new GridBagConstraints(0, 12, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
+				jTextFieldTStart = new JNumericTextField();
+				this.add(jTextFieldTStart, new GridBagConstraints(0, 13, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
 				jTextFieldTStart.setPreferredSize(TEXTFIELD_DIMENSION);
 				jTextFieldTStart.setFont(SMALL_FONT);
 			}
 			{
 				jLabelTo4 = new JLabel();
-				this.add(jLabelTo4, new GridBagConstraints(1, 12, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+				this.add(jLabelTo4, new GridBagConstraints(1, 13, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 				jLabelTo4.setText("to");
 				jLabelTo4.setFont(SMALL_FONT);
 			}
 			{
-				jTextFieldTEnd = new JTextField();
-				this.add(jTextFieldTEnd, new GridBagConstraints(2, 12, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+				jTextFieldTEnd = new JNumericTextField();
+				this.add(jTextFieldTEnd, new GridBagConstraints(2, 13, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
 				jTextFieldTEnd.setPreferredSize(TEXTFIELD_DIMENSION);
 				jTextFieldTEnd.setFont(SMALL_FONT);
 			}
 			{
 				jButtonRefresh = new JButton();
-				this.add(jButtonRefresh, new GridBagConstraints(0, 14, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 10, 0, 0), 0, 0));
+				this.add(jButtonRefresh, new GridBagConstraints(0, 15, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 10, 0, 0), 0, 0));
 				jButtonRefresh.setText("Refresh");
-				jButtonRefresh.setFont(FONT);
+				jButtonRefresh.setFont(SMALL_FONT);
 				jButtonRefresh.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
 						refresh();
