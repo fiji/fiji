@@ -93,9 +93,9 @@ public class IO extends FFMPEGSingle {
 		final AVStream stream = new AVStream(formatContext.streams[videoStream]);
 		if (useVirtualStack && stream.duration > 0) {
 			final int videoStreamIndex = videoStream;
-			final long frameDuration = 40; // TODO: guess from the second frame - first frame pts
 			ImageStack stack = new VirtualStack(codecContext.width, codecContext.height, null, null) {
 				int previousSlice = -1;
+				long frameDuration = guessFrameDuration();
 
 				public void finalize() {
 					free();
@@ -107,6 +107,17 @@ public class IO extends FFMPEGSingle {
 
 				public String getSliceLabel(int slice) {
 					return ""; // maybe calculate the time?
+				}
+
+				public long guessFrameDuration() {
+					if (AVFORMAT.av_read_frame(formatContext, packet) < 0)
+						return 1;
+					long firstPTS = packet.pts;
+					int frameCount = 5;
+					for (int i = 0; i < frameCount; previousSlice = i++)
+						if (AVFORMAT.av_read_frame(formatContext, packet) < 0)
+							return 1;
+					return (packet.pts - firstPTS) / frameCount;
 				}
 
 				// TODO: cache two
