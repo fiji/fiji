@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <CoreFoundation/CoreFoundation.h>
+#include <ApplicationServices/ApplicationServices.h>
 
 struct string;
 static void append_icon_path(struct string *str);
@@ -1753,7 +1754,7 @@ static void __attribute__((__noreturn__)) usage(void)
 		"\trun <plugin> in ImageJ, optionally with arguments\n"
 		"--compile-and-run <path-to-.java-file>\n"
 		"\tcompile and run <plugin> in ImageJ\n"
-		"--edit <file>\n"
+		"--edit [<file>...]\n"
 		"\tedit the given file in the script editor\n"
 		"\n"
 		"Options to run programs other than ImageJ:\n"
@@ -1996,6 +1997,10 @@ static int start_ij(void)
 			add_option_string(&options, buffer, 1);
 			headless_argc++;
 		}
+		else if (i == main_argc - 1 && !strcmp(main_argv[i], "--edit")) {
+			add_option(&options, "-eval", 1);
+			add_option(&options, "run(\"Script Editor\");", 1);
+		}
 		else if (handle_one_option(&i, "--edit", arg))
 			for (;;) {
 				add_option(&options, "-eval", 1);
@@ -2145,7 +2150,7 @@ static int start_ij(void)
 
 	if (!headless &&
 #ifdef MACOSX
-			!getenv("SECURITYSESSIONID") && !getenv("DISPLAY")
+			!CGSessionCopyCurrentDictionary()
 #elif defined(__linux__)
 			!getenv("DISPLAY")
 #else

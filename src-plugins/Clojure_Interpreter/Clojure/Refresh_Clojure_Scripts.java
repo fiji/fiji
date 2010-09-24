@@ -21,19 +21,19 @@ public class Refresh_Clojure_Scripts extends RefreshScripts {
 	}
 
 	public boolean runScript(String path, Map<String,Object> vars) {
+		if (!path.endsWith(".clj") || !new File(path).exists()) {
+			IJ.log("Not a clojure script or not found: " + path);
+			return false;
+		}
+		Clojure_Interpreter ci = new Clojure_Interpreter();
+		PrintWriter pout = new PrintWriter(super.out);
 		try {
-			if (!path.endsWith(".clj") || !new File(path).exists()) {
-				IJ.log("Not a clojure script or not found: " + path);
-				return false;
-			}
 			if (IJ.isWindows()) path = path.replace('\\', '/');
-			Clojure_Interpreter ci = new Clojure_Interpreter();
 			ci.init();
 			if (null == vars) {
 				vars = new HashMap<String,Object>();
 			}
 			// Redirect output to whatever it was set to with super.setOutputStreams
-			PrintWriter pout = new PrintWriter(super.out);
 			vars.put("*out*", pout);
 			ci.pushThreadBindings(vars); // into clojure.core namespace
 			Object res = ci.evaluate(new StringBuilder("(load-file \"").append(path).append("\")").toString());
@@ -43,23 +43,24 @@ public class Refresh_Clojure_Scripts extends RefreshScripts {
 					IJ.log(s); // Not using pout.print(s); pout.flush(); because it will print all the declarations, and it's annoying.
 				}
 			}
-			ci.destroy();
 			return true;
 		} catch (Throwable error) {
 			printError(error);
 			return false;
+		} finally {
+			ci.destroy();
 		}
 	}
 
 	/** Will consume and close the stream. */
 	public void runScript(final InputStream istream) {
+		Clojure_Interpreter ci = new Clojure_Interpreter();
+		PrintWriter pout = new PrintWriter(super.out);
 		try {
-			Clojure_Interpreter ci = new Clojure_Interpreter();
 			ci.init();
 
 			// Redirect output to whatever it was set to with super.setOutputStreams
 			HashMap<String,Object> vars = new HashMap<String,Object>();
-			PrintWriter pout = new PrintWriter(super.out);
 			vars.put("*out*", pout);
 			ci.pushThreadBindings(vars); // into clojure.core namespace
 
@@ -70,9 +71,10 @@ public class Refresh_Clojure_Scripts extends RefreshScripts {
 					IJ.log(s);
 				}
 			}
-			ci.destroy();
 		} catch (Throwable error) {
 			printError(error);
+		} finally {
+			ci.destroy();
 		}
 	}
 }

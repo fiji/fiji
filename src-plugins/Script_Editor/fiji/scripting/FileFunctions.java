@@ -533,11 +533,53 @@ public class FileFunctions {
 		showDiffOrCommit(file, gitDirectory, false);
 	}
 
+	public String firstNLines(String text, int maxLineCount) {
+		int offset = -1;
+		while (maxLineCount-- > 0) {
+			offset = text.indexOf('\n', offset + 1);
+			if (offset < 0)
+				return text;
+		}
+		int count = 0, next = offset;
+		while ((next = text.indexOf('\n', next + 1)) > 0)
+			count++;
+		return count == 0 ? text : text.substring(0, offset + 1)
+			+ "(" + count + " more line" + (count > 1 ? "s" : "") + ")...\n";
+	}
+
 	public void showDiffOrCommit(File file, File gitDirectory, boolean diffOnly) {
 		if (file == null || gitDirectory == null)
 			return;
 		boolean isInFijiGit = gitDirectory.equals(new File(System.getProperty("fiji.dir"), ".git"));
 		final File root = isInFijiGit ? getPluginRootDirectory(file) : gitDirectory.getParentFile();
+
+		try {
+			String[] cmdarray = {
+				"git", "ls-files", "--exclude-standard", "--other", "."
+			};
+			SimpleExecuter e = new SimpleExecuter(cmdarray, root);
+			if (e.getExitCode() != 0) {
+				error("Could not determine whether there are untracked files");
+				return;
+			}
+			String out = e.getOutput();
+			if (!out.equals(""))
+				if (JOptionPane.showConfirmDialog(parent,
+						"Do you want to commit the following untracked files?\n\n" + firstNLines(out, 10)) == JOptionPane.YES_OPTION) {
+					cmdarray = new String[] {
+						"git", "add", "-N", "."
+					};
+					e = new SimpleExecuter(cmdarray, root);
+					if (e.getExitCode() != 0) {
+						error("Could not add untracked files:\n" + e.getError());
+						return;
+					}
+				}
+		} catch (IOException e) {
+			IJ.handleException(e);
+			return;
+		}
+
 		final DiffView diff = new DiffView();
 		String configPath = System.getProperty("fiji.dir") + "/staged-plugins/"
 			+ root.getName() + ".config";

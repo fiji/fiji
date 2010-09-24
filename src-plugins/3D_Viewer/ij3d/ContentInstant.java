@@ -220,7 +220,8 @@ public class ContentInstant extends BranchGroup implements UniverseListener, Con
 
 	public void setSelected(boolean selected) {
 		this.selected = selected;
-		whichChild.set(BS, selected);
+		boolean sb = selected && UniverseSettings.showSelectionBox;
+		whichChild.set(BS, sb);
 		bbSwitch.setChildMask(whichChild);
 	}
 

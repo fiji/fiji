@@ -53,6 +53,7 @@ public class PlugInExecutor {
 		for (int i = 0; i < urls.length; i++)
 			urls[i] = new File(paths[i]).toURI().toURL();
 		classLoader = new URLClassLoader(urls);
+		classLoader.setDefaultAssertionStatus(true);
 	}
 
 	/** Create a new object that runs the specified plugin

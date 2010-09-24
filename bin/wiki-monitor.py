@@ -55,7 +55,7 @@ from fiji import MediaWikiClient
 client = MediaWikiClient(url)
 if user != None and password != None and not client.isLoggedIn():
 	client.logIn(user, password)
-response = client.sendRequest(['title', 'Special:RecentChanges'], None)
+response = client.sendRequest(['title', 'Special:RecentChanges', 'hidebots', '0'], None)
 if client.isLoggedIn():
 	client.logOut()
 
@@ -107,7 +107,7 @@ for line in response.split('\n'):
 			title = ' ->> ' + line[start:end]
 		result += '\t' + time + ' ' + title + ' (' + author + ')\n'
 
-firstLine = 'From ' + url + '/Special:RecentChanges\n'
+firstLine = 'From ' + url + '/Special:RecentChanges?hidebots=0\n'
 from java.lang import System
 backup = '.recent-changes.' + host
 if path.exists(backup):
