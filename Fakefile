@@ -482,7 +482,7 @@ LAUNCHERS=$LAUNCHER(linux) $LAUNCHER(linux64) \
 	$LAUNCHER(win32) $LAUNCHER(win64) $LAUNCHER(macosx)
 check-launchers[bin/up-to-date-check.py fiji.c $LAUNCHERS] <-
 
-check-submodules[] <- check-ij check-VIB check-TrakEM2 check-mpicbg
+check-submodules[] <- check-ij check-TrakEM2 check-mpicbg
 
 check-ij[bin/up-to-date-check.py ImageJA precompiled/ij.jar] <-
 check-*[bin/up-to-date-check.py * precompiled/*_.jar] <-
