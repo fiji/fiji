@@ -90,8 +90,8 @@ public class IO extends FFMPEGSingle {
 
 		final AVPacket packet = new AVPacket();
 		// TODO: handle stream.duration == 0 by counting the frames
-		if (useVirtualStack) {
-			final AVStream stream = new AVStream(formatContext.streams[videoStream]);
+		final AVStream stream = new AVStream(formatContext.streams[videoStream]);
+		if (useVirtualStack && stream.duration > 0) {
 			final int videoStreamIndex = videoStream;
 			final long frameDuration = 40; // TODO: guess from the second frame - first frame pts
 			ImageStack stack = new VirtualStack(codecContext.width, codecContext.height, null, null) {
