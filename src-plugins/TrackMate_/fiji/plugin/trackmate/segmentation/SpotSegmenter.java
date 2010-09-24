@@ -32,6 +32,9 @@ public class SpotSegmenter <T extends RealType<T> >implements Algorithm {
 	public final static float GOAL_DOWNSAMPLED_BLOB_DIAM = 10f;
 	
 	private final static String BASE_ERROR_MESSAGE = "SpotSegmenter: ";
+
+	/** We smooth more than needed to discard secondary minima. */ // TODO this is very sub-optimal and dirty 
+	private static final float SMOOTH_FACTOR = 2;
 	
 	private Image<T> img;
 	private float diameter;
@@ -110,7 +113,7 @@ public class SpotSegmenter <T extends RealType<T> >implements Algorithm {
 			createLaplacianKernel(); // instantiate laplacian kernel if needed
 			createGaussianKernel();
 			createSquareStrel();
-			sigma = (float) (diameter / Math.sqrt(img.getNumDimensions())); // optimal sigma for LoG approach and dimensionality
+			sigma = (float) (SMOOTH_FACTOR * diameter / Math.sqrt(img.getNumDimensions())); // optimal sigma for LoG approach and dimensionality
 		}
 		this.spots = null;
 		this.filteredImage = null;

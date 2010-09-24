@@ -2,7 +2,6 @@ package fiji.plugin.trackmate.tracking;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.SortedSet;
@@ -565,19 +564,7 @@ public class LAPTracker implements ObjectTracker {
 	private void compileTrackSegments() {
 		
 		trackSegments = new ArrayList<SortedSet<Spot>>();
-		// A comparator used to store spots in time ascending order
-		Comparator<Spot> timeComparator = new Comparator<Spot>() {
-			@Override
-			public int compare(Spot o1, Spot o2) {
-				final float diff = o2.diffTo(o1, Feature.POSITION_T);
-				if (diff == 0) 
-					return 0;
-				else if (diff < 0)
-					return 1;
-				else 
-					return -1;
-			}
-		};
+		
 		Collection<Spot> spotPool = new ArrayList<Spot>();
 		for(int frame : spots.keySet())
 			spotPool.addAll(spots.get(frame)); // frame info lost
@@ -589,7 +576,7 @@ public class LAPTracker implements ObjectTracker {
 		while (!spotPool.isEmpty()) {
 			source = spotPool.iterator().next();
 			graphIterator = new DepthFirstIterator<Spot, DefaultEdge>(trackGraph, source); // restricted to connected components
-			trackSegment = new TreeSet<Spot>(timeComparator);
+			trackSegment = new TreeSet<Spot>(Spot.frameComparator);
 			
 			while(graphIterator.hasNext()) {
 				current = graphIterator.next();

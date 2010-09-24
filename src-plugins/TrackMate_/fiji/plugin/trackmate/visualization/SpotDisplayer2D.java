@@ -125,7 +125,7 @@ public class SpotDisplayer2D extends SpotDisplayer {
 
 		@Override
 		public void draw(Graphics2D g2d) {
-//			g2d.setStroke(new BasicStroke((float) (1 / canvas.getMagnification())));
+			g2d.setStroke(new BasicStroke((float) (1 / canvas.getMagnification())));
 			final int frame = imp.getFrame()-1;
 			List<Color> c = colors.get(frame);
 			List<Integer> r = R.get(frame);

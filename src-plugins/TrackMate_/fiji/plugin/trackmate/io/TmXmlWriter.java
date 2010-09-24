@@ -6,7 +6,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.TreeMap;
 
 import org.jdom.Attribute;
@@ -14,6 +16,9 @@ import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
+import org.jgrapht.alg.ConnectivityInspector;
+import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.SimpleGraph;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.FeatureThreshold;
@@ -46,9 +51,10 @@ public class TmXmlWriter implements TmXmlKeys {
 		Element root = new Element(ROOT_ELEMENT_KEY);
 		// Gather data
 		root = echoImageInfo(root);
-		root = echoAllSpots(root);
 		root = echoThresholds(root);
 		root = echoSpotSelection(root);
+		root = echoTracks(root);
+		root = echoAllSpots(root); // last one because it is a long list
 		
 		// Write to file
 		Document document = new Document(root);
@@ -62,6 +68,46 @@ public class TmXmlWriter implements TmXmlKeys {
 	 * PRIVATE METHODS
 	 */
 	
+	
+	private Element echoTracks(Element root) {
+		SimpleGraph<Spot, DefaultEdge> trackGraph = trackmate.getTrackGraph();
+		if (null == trackGraph)
+			return root;
+		
+		List<Set<Spot>> tracks = new ConnectivityInspector<Spot, DefaultEdge>(trackGraph).connectedSets();
+		Element allTracksElement = new Element(TRACK_COLLECTION_ELEMENT_KEY);
+		Element trackElement;
+		Element edgeElement;
+		HashMap<Set<Spot>, Element> trackElements = new HashMap<Set<Spot>, Element>(tracks.size());
+		for(Set<Spot> track : tracks) {
+			trackElement = new Element(TRACK_ELEMENT_KEY);
+			trackElements.put(track, trackElement);
+			allTracksElement.addContent(trackElement);
+		}
+		
+		Set<DefaultEdge> edges = trackGraph.edgeSet();
+		Spot source, target;
+		Set<Spot> track = null;
+		
+		for (DefaultEdge edge : edges) {
+			
+			source = trackGraph.getEdgeSource(edge);
+			target = trackGraph.getEdgeTarget(edge);
+			for (Set<Spot> t : tracks)
+				if (t.contains(source)) {
+					track = t;
+					break;
+				}
+				
+			edgeElement = new Element(TRACK_EDGE_ELEMENT_KEY);
+			edgeElement.setAttribute(TRACK_EDGE_SOURCE_ATTRIBUTE_NAME, ""+source.ID());
+			edgeElement.setAttribute(TRACK_EDGE_TARGET_ATTRIBUTE_NAME, ""+target.ID());
+			trackElements.get(track).addContent(edgeElement);
+		}
+
+		root.addContent(allTracksElement);
+		return root;
+	}
 	
 	private Element echoImageInfo(Element root) {
 		Settings settings = trackmate.getSettings();

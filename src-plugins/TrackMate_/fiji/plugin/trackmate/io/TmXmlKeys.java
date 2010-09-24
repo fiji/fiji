@@ -43,7 +43,7 @@ public interface TmXmlKeys {
 
 	public static final String SPOT_COLLECTION_ELEMENT_KEY 			= "AllSpots";
 	public static final String SPOT_FRAME_COLLECTION_ELEMENT_KEY 	= "SpotsInFrame"; 
-	public static final String SPOT_ELEMENT_KEY 		= "Spot"; 
+	public static final String SPOT_ELEMENT_KEY 					= "Spot"; 
 
 	
 	/*
@@ -64,6 +64,15 @@ public interface TmXmlKeys {
 	public static final String SELECTED_SPOT_COLLECTION_ELEMENT_KEY 	= "SelectedSpotsInFrame";
 	public static final String SPOT_ID_ELEMENT_KEY 						= "SpotID";
 
+	/*
+	 * TRACK elements
+	 */
+	
+	public static final String TRACK_COLLECTION_ELEMENT_KEY			= "AllTracks";
+	public static final String TRACK_ELEMENT_KEY 					= "Track";
+	public static final String TRACK_EDGE_ELEMENT_KEY				= "Edge";
+	public static final String TRACK_EDGE_SOURCE_ATTRIBUTE_NAME	 	= "sourceID";
+	public static final String TRACK_EDGE_TARGET_ATTRIBUTE_NAME	 	= "targetID";
 	
 	
 	

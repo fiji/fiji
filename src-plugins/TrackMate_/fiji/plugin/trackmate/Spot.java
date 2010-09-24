@@ -1,5 +1,6 @@
 package fiji.plugin.trackmate;
 
+import java.util.Comparator;
 import java.util.EnumMap;
 
 /**
@@ -12,6 +13,19 @@ public interface Spot {
 	/** The position features. */
 	public final static Feature[] POSITION_FEATURES = new Feature[] { Feature.POSITION_X, Feature.POSITION_Y, Feature.POSITION_Z };
 	
+	/** A comparator used to sort spots by ascending time feature. */ 
+	public final static Comparator<Spot> frameComparator = new Comparator<Spot>() {
+			@Override
+			public int compare(Spot o1, Spot o2) {
+				final float diff = o2.diffTo(o1, Feature.POSITION_T);
+				if (diff == 0) 
+					return 0;
+				else if (diff < 0)
+					return 1;
+				else 
+					return -1;
+			}
+		};
 	
 	/**
 	 * Adds a {@link Feature} and it's corresponding value to this object {@link Feature} list.
