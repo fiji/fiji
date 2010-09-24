@@ -962,8 +962,7 @@ public class TextEditor extends JFrame implements ActionListener,
 			killit.setEnabled(false);
 			killit.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent ae) {
-					TextEditor.this.kill(Tab.this.executer);
-					restore();
+					kill();
 				}
 			});
 			bottom.add(killit, bc);
@@ -1002,6 +1001,7 @@ public class TextEditor extends JFrame implements ActionListener,
 			super.setBottomComponent(bottom);
 		}
 
+		/** Invoke in the context of the event dispatch thread. */
 		private void prepare() {
 			editorPane.setEditable(false);
 			runit.setEnabled(false);
@@ -1009,10 +1009,14 @@ public class TextEditor extends JFrame implements ActionListener,
 		}
 
 		private void restore() {
-			editorPane.setEditable(true);
-			runit.setEnabled(true);
-			killit.setEnabled(false);
-			executer = null;
+			SwingUtilities.invokeLater(new Runnable() {
+				public void run() {
+					editorPane.setEditable(true);
+					runit.setEnabled(true);
+					killit.setEnabled(false);
+					executer = null;
+				}
+			});
 		}
 
 		boolean isExecuting() {
@@ -1078,6 +1082,26 @@ public class TextEditor extends JFrame implements ActionListener,
 				// Re-enable when all text to send has been sent
 				editorPane.setEditable(true);
 			}
+		}
+
+		protected void kill() {
+			if (null == executer) return;
+			// Graceful attempt:
+			executer.interrupt();
+			// Give it 3 seconds. Then, stop it.
+			final long now = System.currentTimeMillis();
+			new Thread() {
+				{ setPriority(Thread.NORM_PRIORITY); }
+				public void run() {
+					while (System.currentTimeMillis() - now < 3000)
+						try {
+							Thread.sleep(100);
+						} catch (InterruptedException e) {}
+					if (null != executer) executer.obliterate();
+					restore();
+
+				}
+			}.start();
 		}
 	}
 
@@ -1616,27 +1640,21 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 		if (gd.wasCanceled())
 			return;
 
-		Executer[] deaders = gd.getNextBoolean() ? executers :
-			new Executer[] { executers[gd.getNextChoiceIndex()] };
-		for (final Executer executer : deaders)
-			kill(executer);
-	}
-
-	protected void kill(final Executer executer) {
-		// Graceful attempt:
-		executer.interrupt();
-		// Give it 3 seconds. Then, stop it.
-		final long now = System.currentTimeMillis();
-		new Thread() {
-			{ setPriority(Thread.NORM_PRIORITY); }
-			public void run() {
-				while (System.currentTimeMillis() - now < 3000)
-					try {
-						Thread.sleep(100);
-					} catch (InterruptedException e) {}
-				executer.obliterate();
+		if (gd.getNextBoolean()) {
+			// Kill all
+			for (int i=0; i<tabbed.getTabCount(); i++)
+				((Tab)tabbed.getComponentAt(i)).kill();
+		} else {
+			// Kill selected only
+			Executer ex = executers[gd.getNextChoiceIndex()];
+			for (int i=0; i<tabbed.getTabCount(); i++) {
+				Tab tab = (Tab)tabbed.getComponentAt(i);
+				if (ex == tab.executer) {
+					tab.kill();
+					break;
+				}
 			}
-		}.start();
+		}
 	}
 
 	/** Run the text in the textArea without compiling it, only if it's not java. */
