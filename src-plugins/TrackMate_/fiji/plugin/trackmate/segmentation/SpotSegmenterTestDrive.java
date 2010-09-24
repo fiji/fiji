@@ -64,7 +64,7 @@ public class SpotSegmenterTestDrive {
 
 		// Segment it
 		long start = System.currentTimeMillis();
-		SpotSegmenter<UnsignedByteType> segmenter = new SpotSegmenter<UnsignedByteType>(img, 2*RADIUS, CALIBRATION, false, false);
+		SpotSegmenter<UnsignedByteType> segmenter = new SpotSegmenter<UnsignedByteType>(img, 2*RADIUS, CALIBRATION, 0, false, false);
 		if (!segmenter.checkInput() || !segmenter.process()) {
 			System.out.println(segmenter.getErrorMessage());
 			return;

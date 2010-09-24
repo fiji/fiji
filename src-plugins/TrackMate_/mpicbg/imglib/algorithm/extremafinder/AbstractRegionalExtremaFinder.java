@@ -13,6 +13,7 @@ public abstract class AbstractRegionalExtremaFinder<T extends RealType<T>> imple
 	protected boolean doInterpolate = false;
 	protected Image<T> image;					// holds the image the algorithm is to be applied to
 	final protected ArrayList< ArrayList< int[] > > maxima = new ArrayList< ArrayList< int[] > >();	// an array list which holds the coordinates of the maxima found in the image.
+	protected T threshold;
 	
 	@Override
 	public void allowEdgeExtrema(boolean flag) {
@@ -36,6 +37,10 @@ public abstract class AbstractRegionalExtremaFinder<T extends RealType<T>> imple
 		}
 		return centeredRegionalMaxima;
 	}
+
+	public void setThreshold(T threshold) {
+		this.threshold = threshold;
+	};
 	
 
 	/**

@@ -80,7 +80,7 @@ public class SpotDisplayer2DTestDrive {
 		imp.show();
 		System.out.println("Creating image done.");
 		
-		SpotSegmenter<UnsignedByteType> segmenter = new SpotSegmenter<UnsignedByteType>(img, 2*RADIUS, CALIBRATION);
+		SpotSegmenter<UnsignedByteType> segmenter = new SpotSegmenter<UnsignedByteType>(img, 2*RADIUS, CALIBRATION, 0);
 		List<Spot> spots;
 		System.out.println("Segmenting...");
 		if (segmenter.checkInput() && segmenter.process())

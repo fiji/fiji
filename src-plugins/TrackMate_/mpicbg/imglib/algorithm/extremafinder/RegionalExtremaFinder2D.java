@@ -175,9 +175,13 @@ public class RegionalExtremaFinder2D<T extends RealType<T>> extends AbstractRegi
 		while(curr.hasNext()) {
 			curr.fwd();
 			curr.getPosition(currCoords);
-			if ((visitedAndProcessed[getIndexOfPosition(currCoords, width)] & PROCESSED) != 0) {  // prevents revisiting pixels, increases speed
+			
+			if (null != threshold && sign * curr.getType().compareTo(threshold) < 0) // skip pixel with value lower than the threshold
 				continue;
-			}
+			
+			if ((visitedAndProcessed[getIndexOfPosition(currCoords, width)] & PROCESSED) != 0)   // prevents revisiting pixels, increases speed
+				continue;
+			
 			isExtreme = true;
 			currentValue.set(curr.getType());  // Store the intensity of this connected component.
 			toSearch.add(currCoords);

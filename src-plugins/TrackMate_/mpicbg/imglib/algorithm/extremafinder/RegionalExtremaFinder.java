@@ -18,6 +18,13 @@ import mpicbg.imglib.type.numeric.RealType;
  */
 public interface RegionalExtremaFinder<T extends RealType<T>> extends Algorithm, Benchmark {
 	
+	
+	/**
+	 * Set the threshold value under which (or over which, in the case of a minima finder) pixels are ignored.
+	 * If <code>null</code>, then all pixels are taken into account.
+	 */
+	public void setThreshold(T threshold);
+	
 	/**
 	 * Returns the ArrayList containing the coordinates of the local extrema found. Each 
 	 * element of the ArrayList is a int array, representing the coordinate of the found

@@ -222,9 +222,10 @@ public class TrackMate_ implements PlugIn {
 		final float diam = settings.expectedDiameter;
 		final boolean useMedFilt = settings.useMedianFilter;
 		final boolean allowEdgeMax = settings.allowEdgeMaxima;
+		final Float threshold = settings.threshold;
 		
 		// Since we can't get the NumericType out of imp, we assume it is a FloatType.
-		final SpotSegmenter<FloatType> segmenter = new SpotSegmenter<FloatType>(null, diam, calibration, useMedFilt, allowEdgeMax);				
+		final SpotSegmenter<FloatType> segmenter = new SpotSegmenter<FloatType>(null, diam, calibration, threshold, useMedFilt, allowEdgeMax);				
 		spots = new TreeMap<Integer, List<Spot>>();
 		List<Spot> spotsThisFrame;
 		Image<FloatType> filteredImage;

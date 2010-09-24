@@ -40,6 +40,7 @@ public class SpotSegmenter <T extends RealType<T> >implements Algorithm {
 	private float diameter;
 	private boolean useMedianFilter;
 	private boolean allowEdgeExtrema;
+	private float threshold;
 	private float[] calibration = new float[] {1, 1, 1}; // always 3d;
 	private List<Spot> spots = new ArrayList<Spot>(); // because this implementation is fast to add elements at the end of the list
 	private String errorMessage = null;
@@ -49,6 +50,7 @@ public class SpotSegmenter <T extends RealType<T> >implements Algorithm {
 	private StructuringElement strel;
 	private Image<T> filteredImage;
 
+
 	/*
 	 * CONSTRUCTORS
 	 */
@@ -56,21 +58,22 @@ public class SpotSegmenter <T extends RealType<T> >implements Algorithm {
 	/**
 	 * Instantiate a new {@link SpotSegmenter}.
 	 */
-	public SpotSegmenter(Image<T> img, float diameter, float[] calibration, boolean useMedianFilter, boolean allowEdgeExtrema) {
+	public SpotSegmenter(Image<T> img, float diameter, float[] calibration, float threshold, boolean useMedianFilter, boolean allowEdgeExtrema) {
 		setImage(img);
 		this.diameter = diameter;
 		for (int i = 0; i < calibration.length; i++) 
 			this.calibration[i] = calibration[i];
 		this.useMedianFilter = useMedianFilter;
 		this.allowEdgeExtrema = allowEdgeExtrema;
+		this.threshold = threshold;
 	}
 	
 	/**
 	 * Instantiate a new {@link SpotSegmenter}, with by default disallowing the edge extrema, 
 	 * and skipping the median filter.
 	 */
-	public SpotSegmenter(Image<T> img, float diameter, float[] calibration) {
-		this(img, diameter, calibration, false, false);
+	public SpotSegmenter(Image<T> img, float diameter, float[] calibration, float threshold) {
+		this(img, diameter, calibration, threshold, false, false);
 	}
 	
 	/**
@@ -78,7 +81,7 @@ public class SpotSegmenter <T extends RealType<T> >implements Algorithm {
 	 * skipping the median filter, and using the calibration stored in the {@link #img} object.
 	 */
 	public SpotSegmenter(Image<T> img, float diameter) {
-		this(img, diameter, img.getCalibration());
+		this(img, diameter, img.getCalibration(), 0);
 	}
 	
 	/*
@@ -211,6 +214,9 @@ public class SpotSegmenter <T extends RealType<T> >implements Algorithm {
 		final RegionalExtremaFactory<T> extremaFactory = new RegionalExtremaFactory<T>(filteredImage);
 		final RegionalExtremaFinder<T> findExtrema = extremaFactory.createRegionalMaximaFinder(true);
 		findExtrema.allowEdgeExtrema(allowEdgeExtrema);
+		T thresh = img.createType();
+		thresh .setReal(threshold);
+		findExtrema.setThreshold(thresh);
 		if (!findExtrema.checkInput() || !findExtrema.process()) { 
 			errorMessage = BASE_ERROR_MESSAGE + "Extrema Finder failed:\n" + findExtrema.getErrorMessage();
 			return false;

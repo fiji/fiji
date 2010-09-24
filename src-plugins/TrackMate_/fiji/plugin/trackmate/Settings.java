@@ -29,5 +29,7 @@ public class Settings {
 	public int zstart;
 	public int zend;
 	
+	public Float threshold = null;
+	
 	public static final Settings DEFAULT = new Settings();
 }

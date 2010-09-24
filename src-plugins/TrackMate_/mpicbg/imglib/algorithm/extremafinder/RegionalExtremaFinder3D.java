@@ -189,6 +189,10 @@ public class RegionalExtremaFinder3D<T extends RealType<T>> extends AbstractRegi
 			// 2.2 - Iterate through queue which contains the pixels of the connected component		
 			while (!toSearch.isEmpty()) {
 				nextCoords = toSearch.remove(0);
+				
+				if (null != threshold && sign * curr.getType().compareTo(threshold) < 0) // skip pixel with value lower than the threshold
+					continue;
+				
 				if ((visitedAndProcessed[getIndexOfPosition(nextCoords, width, numPixelsInXYPlane)] & PROCESSED) != 0) {  // if visited, skip
 					continue;
 				} else {  // if not visited, mark as processed (has had neighbors searched) and add him to the searched ArrayList.
