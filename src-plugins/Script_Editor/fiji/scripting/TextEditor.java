@@ -1053,7 +1053,6 @@ public class TextEditor extends JFrame implements ActionListener,
 					} finally {
 						restore();
 					}
-					System.out.println("execute ended");
 				}
 			};
 			// Write into PipedOutputStream
