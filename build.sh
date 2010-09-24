@@ -1,34 +1,75 @@
 #!/bin/sh
 
-LIBS="avcodec avformat swscale avcore avdevice avfilter avutil"
+if test $# != 2
+then
+	echo "Usage: $0 <platform> <target>" >&2
+	exit 1
+fi
+
+PLATFORM=
+case "$(uname -s)" in
+Linux)
+	if test "$(uname -m)" = i686
+	then
+		PLATFORM=linux
+	else
+		PLATFORM=linux64
+	fi
+	;;
+Darwin)
+	PLATFORM=macosx
+	;;
+MINGW*)
+	PLATFORM=win32
+	;;
+esac
+
+CONFIGURE_CROSS_COMPILE=
+CROSS_PREFIX=
+if test "$PLATFORM" != "$1"
+then
+	PLATFORM="$1"
+	ARCH="$(case "$PLATFORM" in *64) echo x86_64;; *) echo i686;; esac)"
+	# TODO: allow cross compilation of linux32, too
+	TARGET_OS="$(case "$PLATFORM" in win*) echo mingw32;; esac)"
+	CROSS_PREFIX=x86_64-w64-mingw32-
+	CFLAGS="-m$(case "$PLATFORM" in *64) echo 64;; *) echo 32;; esac)"
+	LDFLAGS="$CFLAGS"
+	export CFLAGS LDFLAGS
+
+	CONFIGURE_CROSS_COMPILE="--enable-cross-compile --cross-prefix=$CROSS_PREFIX --target-os=$TARGET_OS --arch=$ARCH"
+fi
+
+PLATFORM="$1"
+TARGET="$2"
+LIBPREFIX=${TARGET%ffmpeg.*}
+LIBEXT=${TARGET#*ffmpeg}
+
 PARALLEL=-j5
 
 LDFLAGS=
 EXTRA_CONFIGURE=
 EXTRA_LDFLAGS=
+EXTRA_LIBS=
 NEED_LIPO=false
-case "$(uname -s)" in
-Linux)
-	LIBEXT=.so
-	LIBPREFIX=lib
+case "$PLATFORM" in
+linux*)
 	EXTRA_LDFLAGS="-Wl,-soname,libffmpeg.so -Wl,--warn-common -Wl,--as-needed -Wl,-Bsymbolic"
 	;;
-Darwin)
-	LIBEXT=.dylib
-	LIBPREFIX=lib
+macosx)
 	EXTRA_CONFIGURE="--disable-yasm --target-os=darwin --enable-cross-compile"
 	EXTRA_LDFLAGS="-dynamiclib -Wl,-single_module -Wl,-install_name,libffmpeg.dylib,-compatibility_version,1 -Wl,-read_only_relocs,suppress"
 	NEED_LIPO=true
 	;;
-MINGW*)
-	LIBEXT=.dll
-	LIBPREFIX=
+win32)
+	EXTRA_CONFIGURE="--enable-memalign-hack"
+	EXTRA_LIBS="-lavicap32"
+	;;
+win64)
+	EXTRA_CONFIGURE="--disable-avisynth"
+	EXTRA_LIBS="-lavicap32"
 	;;
 esac
-TARGETS="$(for lib in $LIBS
-	do
-		echo lib$lib/$LIBPREFIX$lib$LIBEXT
-	done)"
 
 die () {
 	echo "$*" >&2
@@ -54,18 +95,19 @@ build_ffmpeg () {
 	then
 		make distclean || :
 	fi &&
-	./configure --enable-gpl --enable-shared $EXTRA_CONFIGURE &&
+	echo "$CONFIGURE_CROSS_COMPILE" > .cross-compile &&
+	./configure --enable-gpl --enable-shared $CONFIGURE_CROSS_COMPILE $EXTRA_CONFIGURE &&
 	: SYMVER breaks our one-single-library approach
 	sed 's/\( HAVE_SYMVER.*\) 1$/\1 0/' < config.h > config.h.new &&
 	mv -f config.h.new config.h &&
 	make $PARALLEL &&
 	rm */*$LIBEXT* &&
 	out="$(make V=1 | grep -ve '-o libavfilter' |
-		sed -n 's/^gcc .* -o lib[^ ]* //p' | tr ' ' '\n')" &&
-	gcc -shared $LDFLAGS $EXTRA_LDFLAGS -o $1 \
+		sed -n 's/^'$CROSS_PREFIX'gcc .* -o lib[^ ]* //p' | tr ' ' '\n')" &&
+	${CROSS_PREFIX}gcc -shared $LDFLAGS $EXTRA_LDFLAGS -o $1 \
 		$(echo "$out" | grep -ve '^-' -e 'libavcodec/inverse\.o') \
 		$(echo "$out" | grep '^-' | grep -ve '^-lav' -e '^-lsw' |
-			sort | uniq)
+			sort | uniq) $EXTRA_LIBS
 }
 
 default_excludes="*.[oad] *.pc *$LIBEXT *$LIBEXT.[0-9] *$LIBEXT.[0-9][0-9] .config .version config.* *.ver /*_g /ffmpeg /ffplay /ffserver /ffprobe /version.h /libswscale/ /libavutil/avconfig.h"
@@ -105,7 +147,10 @@ pseudo_submodule_update ffmpeg/libswscale \
 echo "Checking whether FFMPEG needs to be built" &&
 (cd ffmpeg &&
  uptodate=true &&
- TARGET=${LIBPREFIX}ffmpeg$LIBEXT &&
+ case "$(cat .cross-compile 2> /dev/null)" in
+ "$CONFIGURE_CROSS_COMPILE") ;;
+ *) uptodate=false;;
+ esac &&
  if test ! -f $TARGET
  then
 	uptodate=false
@@ -128,8 +173,7 @@ echo "Checking whether FFMPEG needs to be built" &&
 			bits=${cpu#*86} &&
 			bits=${bits#_} &&
 			bits=${bits:-32} &&
-			EXTRA_CONFIGURE="$save --arch=$cpu --target-path=out$bits" &&
-			export CFLAGS="-arch $cpu -m$bits" &&
+			export CFLAGS="$CFLAGS -arch $cpu -m$bits" &&
 			export LDFLAGS="$CFLAGS" &&
 			build_ffmpeg lib$bits$LIBEXT || break
 		done &&
