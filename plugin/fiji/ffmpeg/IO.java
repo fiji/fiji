@@ -339,7 +339,7 @@ public class IO extends FFMPEGSingle implements Progress {
 		/* allocate the output media context */
 		formatContext = AVFORMAT.av_alloc_format_context();
 		if (formatContext == null)
-			throw new IOException("Memory error");
+			throw new OutOfMemoryError("Could not allocate format context");
 		formatContext.oformat = fmt.getPointer();
 		strncpy(formatContext.filename, path);
 
