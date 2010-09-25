@@ -2,7 +2,7 @@
 
 extern void avSetLogCallback(void (*callback)(const char *));
 
-static void log_to_buffer(char *line, size_t size, void* ptr, int level, const char* fmt, va_list vl)
+static size_t log_to_buffer(char *line, size_t size, void* ptr, int level, const char* fmt, va_list vl)
 {
     AVClass* avc= ptr ? *(AVClass**)ptr : NULL;
     line[0]=0;
@@ -17,20 +17,26 @@ static void log_to_buffer(char *line, size_t size, void* ptr, int level, const c
         snprintf(line + strlen(line), size - strlen(line), "[%s @ %p] ", avc->item_name(ptr), ptr);
     }
 
-    vsnprintf(line + strlen(line), size - strlen(line), fmt, vl);
+    return strlen(line) + vsnprintf(line + strlen(line), size - strlen(line), fmt, vl);
 }
 
 static void (*line_log_callback)(const char *) = NULL;
 
 static void helper(void *ptr, int level, const char *fmt, va_list vl)
 {
-    static char line[1024];
+    static char line[16384];
+    static size_t offset;
     if(level>av_log_get_level())
         return;
 
-    log_to_buffer(line, sizeof(line), ptr, level, fmt, vl);
-    /* TODO: call only for full lines */
-    line_log_callback(line);
+    offset += log_to_buffer(line + offset, sizeof(line) - offset, ptr, level, fmt, vl);
+    /* Call only for full lines */
+    if (offset + 1 >= sizeof(line) ||
+		(offset > 0 && line[offset - 1] == '\n' &&
+			(line[offset - 1] = '\0') == '\0')) {
+        line_log_callback(line);
+        offset = 0;
+    }
 }
 
 void avSetLogCallback(void (*callback)(const char *))

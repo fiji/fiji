@@ -55,7 +55,11 @@ public class IO extends FFMPEGSingle implements Progress {
 		this.progress = progress;
 		AVUTIL.avSetLogCallback(new AVUTIL.AvLog() {
 			public void callback(String message) {
-				log(message);
+				try {
+					log(message);
+				} catch (Throwable t) {
+					t.printStackTrace();
+				}
 			}
 		});
 	}
