@@ -512,24 +512,6 @@ public class IO extends FFMPEGSingle implements Progress {
 
 		return true;
 	}
-
-	protected static AVFrame alloc_picture(int pix_fmt, int width, int height) {
-		AVFrame picture;
-		Pointer picture_buf;
-		int size;
-
-		picture = AVCODEC.avcodec_alloc_frame();
-		if (picture == null) {
-			return null;
-		}
-		size = AVCODEC.avpicture_get_size(pix_fmt, width, height);
-		picture_buf = AVUTIL.av_malloc(size);
-		if (picture_buf == null) {
-			AVUTIL.av_free(picture.getPointer());
-			return null;
-		}
-		//AVCODEC.avpicture_fill(picture, picture_buf, pix_fmt, width, height);
-		return picture;
 	}
 
 	protected static void close_video(AVFormatContext formatContext, AVStream st) {
