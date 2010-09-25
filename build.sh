@@ -91,15 +91,18 @@ require_clean_working_directory () {
 }
 
 build_ffmpeg () {
-	if test -f config.mak
+	if test -z "$DEBUG"
 	then
-		make distclean || :
+		if test -f config.mak
+		then
+			make distclean || :
+		fi &&
+		echo "$CONFIGURE_CROSS_COMPILE" > .cross-compile &&
+		./configure --enable-gpl --enable-shared $CONFIGURE_CROSS_COMPILE $EXTRA_CONFIGURE &&
+		: SYMVER breaks our one-single-library approach
+		sed 's/\( HAVE_SYMVER.*\) 1$/\1 0/' < config.h > config.h.new &&
+		mv -f config.h.new config.h
 	fi &&
-	echo "$CONFIGURE_CROSS_COMPILE" > .cross-compile &&
-	./configure --enable-gpl --enable-shared $CONFIGURE_CROSS_COMPILE $EXTRA_CONFIGURE &&
-	: SYMVER breaks our one-single-library approach
-	sed 's/\( HAVE_SYMVER.*\) 1$/\1 0/' < config.h > config.h.new &&
-	mv -f config.h.new config.h &&
 	make $PARALLEL &&
 	rm */*$LIBEXT* &&
 	out="$(make V=1 | grep -ve '-o libavfilter' |
@@ -127,7 +130,10 @@ pseudo_submodule_update () {
 	 required_excludes="$(echo "$default_excludes" | tr ' ' '\n')" &&
 	 (echo "$exclude"; echo "$exclude"; echo "$required_excludes") |
 		sort | uniq -u >> "$exclude_file" &&
-	 require_clean_working_directory &&
+	 if test -z "$DEBUG"
+	 then
+		require_clean_working_directory
+	 fi &&
 	 if test "$revision" != "$(git rev-parse HEAD)"
 	 then
 		git checkout "$revision"
