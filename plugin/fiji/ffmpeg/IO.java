@@ -356,6 +356,7 @@ public class IO extends FFMPEGSingle implements Progress {
 		if (AVFORMAT.av_set_parameters(formatContext, null) < 0)
 			throw new IOException("Invalid output format parameters.");
 
+AVFORMAT.dump_format(formatContext, 0, path, 1);
 		/* now that all the parameters are set, we can open the
 		 * video codec and allocate the necessary encode buffer */
 		step("Opening " + path, 0);
