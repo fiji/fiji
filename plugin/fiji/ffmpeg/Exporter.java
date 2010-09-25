@@ -25,7 +25,7 @@ public class Exporter implements PlugIn {
 	public void run(String arg) {
 		IO io;
 		try {
-			io = new IO();
+			io = new IO(new IJProgress());
 		} catch (IOException e) {
 			IJ.error("This plugin needs ffmpeg to be installed!");
 			return;
@@ -60,6 +60,7 @@ public class Exporter implements PlugIn {
 
 		try {
 			io.writeMovie(image, path, frameRate);
+			IJ.showStatus("Saved " + path + ".");
 		} catch (IOException e) {
 			IJ.error("Could not write " + path + ": " + e);
 		}

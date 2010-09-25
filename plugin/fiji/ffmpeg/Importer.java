@@ -28,7 +28,7 @@ public class Importer extends ImagePlus implements PlugIn {
 		String path = file.getAbsolutePath();
 		IO io = null;
 		try {
-			io = new IO();
+			io = new IO(new IJProgress());
 			setStack(path, io.readMovie(path, true).getStack());
 			if (arg.equals(""))
 				show();

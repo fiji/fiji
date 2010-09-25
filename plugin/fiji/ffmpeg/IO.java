@@ -28,7 +28,7 @@ import fiji.ffmpeg.AVFORMAT.AVStream;
 import java.io.File;
 import java.io.IOException;
 
-public class IO extends FFMPEGSingle {
+public class IO extends FFMPEGSingle implements Progress {
 	protected AVFormatContext formatContext;
 	protected AVCodecContext codecContext;
 	protected AVCodec codec;
@@ -37,11 +37,31 @@ public class IO extends FFMPEGSingle {
 	protected Pointer swsContext;
 	protected byte[] video_outbuf;
 	protected Memory video_outbuf_memory;
+	protected Progress progress;
 
 	public IO() throws IOException {
 		super();
 		if (!loadFFMPEG())
 			throw new IOException("Could not load the FFMPEG library!");
+	}
+
+	public IO(Progress progress) throws IOException {
+		this();
+		this.progress = progress;
+	}
+
+	public void setProgress(Progress progress) {
+		this.progress = progress;
+	}
+
+	public void step(String message, double progress) {
+		if (this.progress != null)
+			this.progress.step(message, progress);
+	}
+
+	public void done(String message) {
+		if (progress != null)
+			progress.done(message);
 	}
 
 	/**
@@ -56,9 +76,11 @@ public class IO extends FFMPEGSingle {
 			throw new IOException("ffmpeg versions mismatch: native " + AVCODEC.avcodec_version()
 					+ " != Java-bindings " + AVCODEC.LIBAVCODEC_VERSION_INT);
 
+		step("Initializing FFMPEG", 0);
 		AVFORMAT.av_register_all();
 
 		// Open video file
+		step("Opening " + path, 0);
 		final PointerByReference formatContextPointer = new PointerByReference();
 		if (AVFORMAT.av_open_input_file(formatContextPointer, path, null, 0, null) != 0)
 			throw new IOException("Could not open " + path);
@@ -149,15 +171,18 @@ public class IO extends FFMPEGSingle {
 					return readOneFrame(packet);
 				}
 			};
+			done("Opened " + path + " as virtual stack");
 			return new ImagePlus(path, stack);
 		}
 
+		double factor = stream.duration > 0 ? 1.0 / stream.duration : 0;
 		ImageStack stack = new ImageStack(codecContext.width, codecContext.height);
 		while (AVFORMAT.av_read_frame(formatContext, packet) >= 0) {
 			// Is this a packet from the video stream?
 			if (packet.stream_index != videoStream)
 				continue;
 
+			step("Reading frame " + stack.getSize() + 1, stack.getSize() * factor);
 			ImageProcessor ip = readOneFrame(packet);
 			if (ip != null)
 				stack.addSlice(null, ip);
@@ -172,6 +197,7 @@ public class IO extends FFMPEGSingle {
 
 		free();
 
+		done("Opened " + path);
 		return new ImagePlus(path, stack);
 	}
 
@@ -294,6 +320,7 @@ public class IO extends FFMPEGSingle {
 
 		stack = image.getStack();
 
+		step("Initializing FFMPEG", 0);
 		/* initialize libavcodec, and register all codecs and formats */
 		AVFORMAT.av_register_all();
 
@@ -336,6 +363,7 @@ public class IO extends FFMPEGSingle {
 
 		/* now that all the parameters are set, we can open the
 		 * video codec and allocate the necessary encode buffer */
+		step("Opening " + path, 0);
 		if (video_st != null && !open_video(formatContext, video_st))
 			throw new IOException("Could not open video");
 
@@ -366,6 +394,7 @@ public class IO extends FFMPEGSingle {
 
 		for (int frameCount = 1; frameCount <= stack.getSize(); frameCount++) {
 			/* write video frame */
+			step("Writing frame " + frameCount, frameCount / (double)stack.getSize());
 			write_video_frame(stack.getProcessor(frameCount + 1), formatContext, video_st);
 		}
 
@@ -426,6 +455,7 @@ public class IO extends FFMPEGSingle {
 				throw new IOException("Error while writing video frame");
 		} else {
 			/* encode the image */
+System.err.println("encoding " + frame + " at " + video_outbuf);
 			out_size = AVCODEC.avcodec_encode_video(codecContext, video_outbuf, video_outbuf.length, frame);
 			/* if zero size, it means the image was buffered */
 			if (out_size > 0) {
