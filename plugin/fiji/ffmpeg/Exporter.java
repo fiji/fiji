@@ -61,7 +61,11 @@ public class Exporter implements PlugIn {
 		try {
 			io.writeMovie(image, path, frameRate);
 			IJ.showStatus("Saved " + path + ".");
+		} catch (OutOfMemoryError e) {
+			io.free();
+			IJ.error("Could not write " + path + ": " + e);
 		} catch (IOException e) {
+			io.free();
 			IJ.error("Could not write " + path + ": " + e);
 		}
 	}
