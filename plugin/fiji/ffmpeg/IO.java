@@ -1,5 +1,6 @@
 package fiji.ffmpeg;
 
+import com.sun.jna.Memory;
 import com.sun.jna.NativeLibrary;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
@@ -34,6 +35,8 @@ public class IO extends FFMPEGSingle {
 	protected IntByReference gotPicture = new IntByReference();
 	protected AVFrame frame, frameRGB;
 	protected Pointer swsContext;
+	protected byte[] video_outbuf;
+	protected Memory video_outbuf_memory;
 
 	public IO() throws IOException {
 		super();
@@ -86,7 +89,7 @@ public class IO extends FFMPEGSingle {
 		if (codec == null || AVCODEC.avcodec_open(codecContext, codec) < 0)
 			throw new IOException("Codec not available");
 
-		allocateFrames();
+		allocateFrames(false);
 
 		final AVPacket packet = new AVPacket();
 		// TODO: handle stream.duration == 0 by counting the frames
@@ -172,12 +175,20 @@ public class IO extends FFMPEGSingle {
 		return new ImagePlus(path, stack);
 	}
 
-	protected void allocateFrames() {
+	protected void allocateFrames(boolean forEncoding) {
 		// Allocate video frame
 		if (frame == null) {
 			frame = AVCODEC.avcodec_alloc_frame();
 			if (frame == null)
 				throw new OutOfMemoryError("Could not allocate frame");
+
+			if (forEncoding) {
+				// Allocate buffer
+				if (AVCODEC.avpicture_alloc(new AVPicture(frame.getPointer()),
+						codecContext.pix_fmt, codecContext.width, codecContext.height) < 0)
+					throw new OutOfMemoryError("Could not allocate tmp frame");
+				frame.read();
+			}
 		}
 
 		// Allocate an AVFrame structure
@@ -194,8 +205,10 @@ public class IO extends FFMPEGSingle {
 		}
 
 		if (swsContext == null) {
-			swsContext = SWSCALE.sws_getContext(codecContext.width, codecContext.height, codecContext.pix_fmt,
-					codecContext.width, codecContext.height, AVUTIL.PIX_FMT_RGB24,
+			swsContext = SWSCALE.sws_getContext(codecContext.width, codecContext.height,
+					forEncoding ? AVUTIL.PIX_FMT_RGB24 : codecContext.pix_fmt,
+					codecContext.width, codecContext.height,
+					forEncoding ? codecContext.pix_fmt : AVUTIL.PIX_FMT_RGB24,
 					SWSCALE.SWS_BICUBIC, null, null, null);
 			if (swsContext == null)
 				throw new OutOfMemoryError("Could not allocate swscale context");
@@ -217,6 +230,10 @@ public class IO extends FFMPEGSingle {
 
 	protected void convertToRGB() {
 		SWSCALE.sws_scale(swsContext, frame.data, frame.linesize, 0, codecContext.height, frameRGB.data, frameRGB.linesize);
+	}
+
+	protected void convertFromRGB() {
+		SWSCALE.sws_scale(swsContext, frameRGB.data, frameRGB.linesize, 0, codecContext.height, frame.data, frame.linesize);
 	}
 
 	protected void free() {
@@ -266,12 +283,11 @@ public class IO extends FFMPEGSingle {
 		return len;
 	}
 
-	public static void writeMovie(ImagePlus image, String path, int frameRate) throws IOException {
+	public void writeMovie(ImagePlus image, String path, int frameRate) throws IOException {
 		final int STREAM_PIX_FMT = AVUTIL.PIX_FMT_YUV420P;
 
 		//int sws_flags = SWScaleLibrary.SWS_BICUBIC;
 		AVOutputFormat fmt = null;
-		AVFormatContext formatContext = null;
 		double video_pts;
 		int i;
 		ImageStack stack;
@@ -309,22 +325,9 @@ public class IO extends FFMPEGSingle {
 				throw new IOException("Could not add a video stream");
 		}
 
-		AVCodecContext c = new AVCodecContext(video_st.codec);
+		codecContext = new AVCodecContext(video_st.codec);
 
-		/* allocate the encoded raw picture */
-		AVFrame picture = alloc_picture(c.pix_fmt, c.width, c.height);
-		if (picture == null)
-			throw new OutOfMemoryError("could not allocate picture");
-
-		/* if the output format is not RGB24, then a temporary RGB24
-		   picture is needed too. It is then converted to the required
-		   output format */
-		AVFrame tmp_picture = null;
-		if (c.pix_fmt != AVUTIL.PIX_FMT_RGB24) {
-			tmp_picture = alloc_picture(AVUTIL.PIX_FMT_RGB24, c.width, c.height);
-			if (tmp_picture == null)
-				throw new OutOfMemoryError("could not allocate temporary picture");
-		}
+		allocateFrames(true);
 
 		/* set the output parameters (mustbe done even if no
 		 * parameters). */
@@ -336,8 +339,6 @@ public class IO extends FFMPEGSingle {
 		if (video_st != null && !open_video(formatContext, video_st))
 			throw new IOException("Could not open video");
 
-		int video_outbuf_size = 0;
-		Pointer video_outbuf = null;
 		AVOutputFormat tmp_fmt = new AVOutputFormat(formatContext.oformat);
 		if ((tmp_fmt.flags & AVFORMAT.AVFMT_RAWPICTURE) == 0) {
 			/* allocate output buffer */
@@ -345,8 +346,7 @@ public class IO extends FFMPEGSingle {
 			   as long as they're aligned enough for the architecture, and
 			   they're freed appropriately (such as using av_free for buffers
 			   allocated with av_malloc) */
-			video_outbuf_size = 200000;
-			video_outbuf = AVUTIL.av_malloc(video_outbuf_size);
+			video_outbuf = new byte[200000];
 		}
 
 		/* open the output file, if needed */
@@ -364,11 +364,13 @@ public class IO extends FFMPEGSingle {
 		else
 			video_pts = 0.0;
 
-		// TODO: clean up all resources when throwing exceptions
-		for (int frameCount = 0; frameCount <= stack.getSize(); frameCount++) {
+		for (int frameCount = 1; frameCount <= stack.getSize(); frameCount++) {
 			/* write video frame */
-			write_video_frame(frameCount < stack.getSize() ? stack.getProcessor(frameCount + 1) : null, picture, formatContext, video_st);
+			write_video_frame(stack.getProcessor(frameCount + 1), formatContext, video_st);
 		}
+
+		// flush last frame
+		write_video_frame(null, formatContext, video_st);
 
 		/* close codec */
 		close_video(formatContext, video_st);
@@ -377,32 +379,22 @@ public class IO extends FFMPEGSingle {
 		AVFORMAT.av_write_trailer(formatContext);
 
 		/* free the streams */
-		// TODO: free all streams
 		for (i = 0; i < formatContext.nb_streams; i++) {
-			AVStream tmp_stream = new AVStream(formatContext.streams[0]);
+			AVStream tmp_stream = new AVStream(formatContext.streams[i]);
 			AVUTIL.av_free(tmp_stream.codec);
-			AVUTIL.av_free(formatContext.streams[0]);
+			AVUTIL.av_free(formatContext.streams[i]);
 		}
 
 		if ((fmt.flags & AVFORMAT.AVFMT_NOFILE) == 0) {
 			/* close the output file */
-			//AVFORMAT.url_fclose(new ByteIOContext(formatContext.pb));
+			AVFORMAT.url_fclose(formatContext.pb);
 		}
 
-		/* free the stream */
-		AVUTIL.av_free(formatContext.getPointer());
-
-		AVUTIL.av_free(picture.data[0]);
-		AVUTIL.av_free(picture.getPointer());
-		if (tmp_picture != null) {
-			AVUTIL.av_free(tmp_picture.data[0]);
-			AVUTIL.av_free(tmp_picture.getPointer());
-		}
+		free();
 	}
 
-	protected static void write_video_frame(ImageProcessor ip, AVFrame picture, AVFormatContext formatContext, AVStream st) throws IOException {
+	protected void write_video_frame(ImageProcessor ip, AVFormatContext formatContext, AVStream st) throws IOException {
 		int out_size = 0;
-		AVCodecContext c = new AVCodecContext(st.codec);
 		//SwsContext img_convert_ctx = null;
 
 		if (ip == null) {
@@ -410,22 +402,11 @@ public class IO extends FFMPEGSingle {
 			   frames if using B frames, so we get the last frames by
 			   passing the same picture again */
 		} else {
-			if (c.pix_fmt == AVUTIL.PIX_FMT_RGB24)
-				fill_image(picture, ip);
+			if (codecContext.pix_fmt == AVUTIL.PIX_FMT_RGB24)
+				fill_image(frame, ip);
 			else {
-				/*
-				 * As we only generate a RGB24 picture, we
-				 * must convert it to the codec pixel format
-				 * if needed.
-				 */
-				/*
-				   fill_image(tmp_picture, frameCount,
-				   c.width, c.height);
-				   AVCODEC.img_convert(picture, c.pix_fmt,
-				   tmp_picture,
-				   AVUTIL.PIX_FMT_RGB24,
-				   c.width, c.height);
-				 */
+				fill_image(frameRGB, ip);
+				convertFromRGB();
 			}
 		}
 
@@ -438,27 +419,29 @@ public class IO extends FFMPEGSingle {
 
 			pkt.flags |= AVCODEC.PKT_FLAG_KEY;
 			pkt.stream_index = st.index;
-			//pkt.data = picture.getPointer();
-			//pkt.size = picture.size();
-if (true) throw new RuntimeException("TODO");
+			pkt.data = frame.getPointer();
+			pkt.size = frame.size();
 
 			if (AVFORMAT.av_write_frame(formatContext, pkt) != 0)
 				throw new IOException("Error while writing video frame");
 		} else {
 			/* encode the image */
-			//out_size = AVCODEC.avcodec_encode_video(c, video_outbuf, video_outbuf_size, picture);
+			out_size = AVCODEC.avcodec_encode_video(codecContext, video_outbuf, video_outbuf.length, frame);
 			/* if zero size, it means the image was buffered */
 			if (out_size > 0) {
 				AVPacket pkt = new AVPacket();
 				AVCODEC.av_init_packet(pkt);
 
-				AVFrame tmp_frame = new AVFrame(c.coded_frame);
-				//pkt.pts = AVUTILWorkarounds.av_rescale_q(tmp_frame.pts, c.time_base, st.time_base);
+				AVFrame tmp_frame = new AVFrame(codecContext.coded_frame);
+				pkt.pts = AVUTIL.av_rescale_q(tmp_frame.pts, new AVUTIL.AVRational.ByValue(codecContext.time_base), new AVUTIL.AVRational.ByValue(st.time_base));
 				//System.out.println("tmp_frame.pts=" + tmp_frame.pts + " c.time_base=" + c.time_base.num + "/" + c.time_base.den + " st.time_base=" + st.time_base.num + "/" + st.time_base.den + " pkt.pts=" + pkt.pts);
 				if (tmp_frame.key_frame == 1)
 					pkt.flags |= AVCODEC.PKT_FLAG_KEY;
 				pkt.stream_index = st.index;
-				//pkt.data = video_outbuf;
+				if (video_outbuf_memory == null)
+					video_outbuf_memory = new Memory(video_outbuf.length);
+				video_outbuf_memory.read(0, video_outbuf, 0, out_size);
+				pkt.data = video_outbuf_memory;
 				pkt.size = out_size;
 
 				/* write the compressed frame in the media file */
