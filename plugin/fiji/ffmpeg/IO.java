@@ -277,7 +277,8 @@ public class IO extends FFMPEGSingle implements Progress {
 
 		// Close the video file
 		if (formatContext != null) {
-			AVFORMAT.av_close_input_file(formatContext);
+			if (formatContext.iformat != null)
+				AVFORMAT.av_close_input_file(formatContext);
 			formatContext = null;
 		}
 
