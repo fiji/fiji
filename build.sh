@@ -99,7 +99,7 @@ build_ffmpeg () {
 		fi &&
 		echo "$CONFIGURE_CROSS_COMPILE" > .cross-compile &&
 		./configure --enable-gpl --enable-shared $CONFIGURE_CROSS_COMPILE $EXTRA_CONFIGURE &&
-		: SYMVER breaks our one-single-library approach
+		: SYMVER breaks our one-single-library approach &&
 		sed 's/\( HAVE_SYMVER.*\) 1$/\1 0/' < config.h > config.h.new &&
 		mv -f config.h.new config.h
 	fi &&
