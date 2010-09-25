@@ -9,5 +9,8 @@
 /mingw-w64
 /build-headers
 /build-crt
+/gmp-*
+/mpfr-*
+/mpc-*
 /gcc
 /build-gcc
