@@ -74,11 +74,11 @@ macosx)
 	NEED_LIPO=true
 	;;
 win32)
-	EXTRA_CONFIGURE="--enable-memalign-hack"
+	EXTRA_CONFIGURE="--enable-memalign-hack --disable-dxva2"
 	EXTRA_LIBS="-lavicap32"
 	;;
 win64)
-	EXTRA_CONFIGURE="--disable-avisynth"
+	EXTRA_CONFIGURE="--disable-avisynth --disable-dxva2"
 	EXTRA_LIBS="-lavicap32"
 	;;
 esac
