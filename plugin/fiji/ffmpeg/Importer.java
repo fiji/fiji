@@ -3,6 +3,8 @@ package fiji.ffmpeg;
 import ij.IJ;
 import ij.ImagePlus;
 
+import ij.gui.GenericDialog;
+
 import ij.io.OpenDialog;
 
 import ij.plugin.PlugIn;
@@ -25,11 +27,18 @@ public class Importer extends ImagePlus implements PlugIn {
 			file = new File(directory + "/" + od.getFileName());
 		}
 
+		GenericDialog gd = new GenericDialog("Import options");
+		gd.addCheckbox("Use_virtual_stack", true);
+		gd.showDialog();
+		if (gd.wasCanceled())
+			return;
+		boolean useVirtualStack = gd.getNextBoolean();
+
 		String path = file.getAbsolutePath();
 		IO io = null;
 		try {
 			io = new IO(new IJProgress());
-			setStack(path, io.readMovie(path, true).getStack());
+			setStack(path, io.readMovie(path, useVirtualStack).getStack());
 			if (arg.equals(""))
 				show();
 		} catch (IOException e) {

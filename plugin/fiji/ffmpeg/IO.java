@@ -128,9 +128,11 @@ public class IO extends FFMPEGSingle implements Progress {
 
 		allocateFrames(false);
 
-		// TODO: handle stream.duration == 0 by counting the frames
 		final AVStream stream = new AVStream(formatContext.streams[videoStream]);
-		if (useVirtualStack && stream.duration > 0) {
+		if (useVirtualStack) {
+			// TODO: handle stream.duration == 0 by counting the frames
+			if (stream.duration == 0)
+				throw new IOException("Cannot determine stack size (duration is 0)");
 			final int videoStreamIndex = videoStream;
 			ImageStack stack = new VirtualStack(codecContext.width, codecContext.height, null, null) {
 				int previousSlice = -1;
