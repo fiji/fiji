@@ -34,6 +34,10 @@ static void open_win_console();
 #define PATH_SEP ":"
 #endif
 
+#ifdef __linux__
+#include "glibc-compat.h"
+#endif
+
 static void error(const char *fmt, ...)
 {
 	va_list ap;
@@ -620,6 +624,9 @@ static int is_ipv6_broken(void)
 	return 0;
 #else
 	int sock = socket(AF_INET6, SOCK_STREAM, 0);
+	static const struct in6_addr in6addr_loopback = {
+		{ { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1 } }
+	};
 	struct sockaddr_in6 address = {
 		AF_INET6, 57294 + 7, 0, in6addr_loopback, 0
 	};
