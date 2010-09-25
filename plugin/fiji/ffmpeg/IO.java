@@ -389,7 +389,7 @@ AVFORMAT.dump_format(formatContext, 0, path, 1);
 		for (int frameCount = 1; frameCount <= stack.getSize(); frameCount++) {
 			/* write video frame */
 			step("Writing frame " + frameCount, frameCount / (double)stack.getSize());
-			write_video_frame(stack.getProcessor(frameCount + 1), formatContext, video_st);
+			write_video_frame(stack.getProcessor(frameCount), formatContext, video_st);
 		}
 
 		// flush last frame
