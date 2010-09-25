@@ -43,6 +43,13 @@ public class Exporter implements PlugIn {
 			return;
 		}
 
+		String name = IJ.getImage().getTitle();
+		SaveDialog sd = new SaveDialog("Export via FFMPEG",
+				name, ".mpg");
+		name = sd.getFileName();
+		String directory = sd.getDirectory();
+		String path = directory+name;
+
 		GenericDialog gd = new GenericDialog("FFMPEG Exporter");
 		gd.addNumericField("Framerate: ", 25, 0);
 		gd.showDialog();
@@ -50,13 +57,6 @@ public class Exporter implements PlugIn {
 			return;
 
 		int frameRate = (int)gd.getNextNumber();
-
-		String name = IJ.getImage().getTitle();
-		SaveDialog sd = new SaveDialog("Export via FFMPEG",
-				name, ".mpg");
-		name = sd.getFileName();
-		String directory = sd.getDirectory();
-		String path = directory+name;
 
 		try {
 			io.writeMovie(image, path, frameRate);
