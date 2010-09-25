@@ -450,7 +450,7 @@ public class IO extends FFMPEGSingle implements Progress {
 			packet.data = frame.getPointer();
 			packet.size = frame.size();
 
-			if (AVFORMAT.av_write_frame(formatContext, packet) != 0)
+			if (AVFORMAT.av_interleaved_write_frame(formatContext, packet) != 0)
 				throw new IOException("Error while writing video frame");
 		} else {
 			/* encode the image */
@@ -471,7 +471,7 @@ public class IO extends FFMPEGSingle implements Progress {
 				packet.size = out_size;
 
 				/* write the compressed frame in the media file */
-				if (AVFORMAT.av_write_frame(formatContext, packet) != 0)
+				if (AVFORMAT.av_interleaved_write_frame(formatContext, packet) != 0)
 					throw new IOException("Error while writing video frame");
 
 				st.pts.val = packet.pts; // necessary for calculation of video length
@@ -573,13 +573,10 @@ public class IO extends FFMPEGSingle implements Progress {
 			   the motion of the chroma plane does not match the luma plane. */
 			c.mb_decision = 2;
 		}
-		// some formats want stream headers to be separate
-		AVOutputFormat tmp_fmt = new AVOutputFormat(formatContext.oformat);
-		if (tmp_fmt.name.equals("mp4") || tmp_fmt.name.equals("mov") || tmp_fmt.name.equals("3gp")) {
-			c.flags |= AVCODEC.CODEC_FLAG_GLOBAL_HEADER;
-		}
 
-		c.write(); // very very important!!!
+		// some formats want stream headers to be separate
+		if ((new AVFORMAT.AVOutputFormat(formatContext.oformat).flags & AVFORMAT.AVFMT_GLOBALHEADER) != 0)
+			codecContext.flags |= AVFORMAT.CODEC_FLAG_GLOBAL_HEADER;
 
 		return st;
 	}
