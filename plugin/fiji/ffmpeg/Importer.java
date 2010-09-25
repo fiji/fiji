@@ -29,16 +29,20 @@ public class Importer extends ImagePlus implements PlugIn {
 
 		GenericDialog gd = new GenericDialog("Import options");
 		gd.addCheckbox("Use_virtual_stack", true);
+		gd.addNumericField("First_frame (0=first)", 0, 0);
+		gd.addNumericField("Last_frame (-1=last)", -1, 0);
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return;
 		boolean useVirtualStack = gd.getNextBoolean();
+		int first = (int)gd.getNextNumber();
+		int last = (int)gd.getNextNumber();
 
 		String path = file.getAbsolutePath();
 		IO io = null;
 		try {
 			io = new IO(new IJProgress());
-			setStack(path, io.readMovie(path, useVirtualStack).getStack());
+			setStack(path, io.readMovie(path, useVirtualStack, first, last).getStack());
 			if (arg.equals(""))
 				show();
 		} catch (IOException e) {

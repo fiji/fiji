@@ -82,7 +82,7 @@ public class IO extends FFMPEGSingle implements Progress {
 	/**
 	 * Based on the AVCodecSample example from ffmpeg-java by Ken Larson.
 	 */
-	public ImagePlus readMovie(String path, boolean useVirtualStack) throws IOException {
+	public ImagePlus readMovie(String path, boolean useVirtualStack, final int first, final int last) throws IOException {
 		/* Need to do this because we already extend ImagePlus */
 		if (!loadFFMPEG())
 			throw new IOException("Could not load the FFMPEG library!");
@@ -143,7 +143,12 @@ public class IO extends FFMPEGSingle implements Progress {
 				}
 
 				public int getSize() {
-					return (int)(stream.duration / frameDuration);
+					int size = (int)(stream.duration / frameDuration);
+					if (last >= 0)
+						size = Math.min(last, size);
+					if (first > 0)
+						size -= first;
+					return size;
 				}
 
 				public String getSliceLabel(int slice) {
@@ -163,7 +168,7 @@ public class IO extends FFMPEGSingle implements Progress {
 
 				// TODO: cache two
 				public ImageProcessor getProcessor(int slice) {
-					long time = (slice - 1) * frameDuration;
+					long time = (first + slice - 1) * frameDuration;
 					if (time > 0)
 						time -=  frameDuration / 2;
 					if (stream.start_time != 0x8000000000000000l /* TODO: AVUTIL.AV_NOPTS_VALUE */)
@@ -192,15 +197,19 @@ public class IO extends FFMPEGSingle implements Progress {
 		}
 
 		double factor = stream.duration > 0 ? 1.0 / stream.duration : 0;
+		if (last >= 0)
+			factor = 1.0 / last;
 		ImageStack stack = new ImageStack(codecContext.width, codecContext.height);
-		while (AVFORMAT.av_read_frame(formatContext, packet) >= 0) {
+		int frameCounter = 0;
+		while (AVFORMAT.av_read_frame(formatContext, packet) >= 0 &&
+				(last < 0 || frameCounter < last)) {
 			// Is this a packet from the video stream?
 			if (packet.stream_index != videoStream)
 				continue;
 
-			step("Reading frame " + stack.getSize() + 1, stack.getSize() * factor);
+			step("Reading frame " + (frameCounter + 1), frameCounter * factor);
 			ImageProcessor ip = readOneFrame(packet);
-			if (ip != null)
+			if (ip != null && frameCounter++ >= first)
 				stack.addSlice(null, ip);
 		}
 
