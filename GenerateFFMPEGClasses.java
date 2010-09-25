@@ -830,7 +830,7 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 			 new String[] { libName.toLowerCase() + ".h" });
 		Pattern ignorePattern =
 			compile("(internal|timer|colorspace|attributes|bswap|intmath|intreadwrite|libm|common"
-				+ "|error|crc|pixdesc|fifo|md5|tree|pca|sha1|x86_cpu|eval|mathematics)\\.h");
+				+ "|error|crc|pixdesc|fifo|md5|tree|pca|sha1|x86_cpu|eval)\\.h");
 		for (String file : list) {
 			if (!file.endsWith(".h") || match(ignorePattern, file) != null)
 				continue;
