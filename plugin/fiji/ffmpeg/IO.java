@@ -329,8 +329,7 @@ public class IO extends FFMPEGSingle implements Progress {
 		   mpeg. */
 		fmt = AVFORMAT.guess_format(null, new File(path).getName(), null);
 		if (fmt == null) {
-			IJ.log("Could not deduce output format from file"
-					+ " extension: using MPEG.");
+			IJ.log("Could not deduce output format from file extension: using MPEG.");
 			fmt = AVFORMAT.guess_format("mpeg2video", null, null);
 		}
 
