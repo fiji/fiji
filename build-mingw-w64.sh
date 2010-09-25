@@ -68,11 +68,10 @@ then
 			fi &&
 			tar $taropt $f &&
 			(cd $d &&
-			 echo ./configure --prefix="$SYSROOT" \
-				--enable-static --disable-shared &&
 			 CFLAGS="-I$SYSROOT/include" \
 			 LDFLAGS="-L$SYSROOT/lib" \
-			./configure --prefix="$SYSROOT" &&
+			./configure --prefix="$SYSROOT" \
+				--enable-static --disable-shared &&
 			 make $PARALLEL install) || break
 		fi || break
 	 done &&
