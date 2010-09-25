@@ -101,7 +101,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		  openSourceForMenuItem, showDiff, commit, ijToFront,
 		  openMacroFunctions, decreaseFontSize, increaseFontSize,
 		  chooseTabSize, gitGrep, loadToolsJar, openInGitweb;
-	protected JMenu gitMenu, tabsMenu, tabSizeMenu, toolsMenu;
+	protected JMenu gitMenu, tabsMenu, tabSizeMenu, toolsMenu, runMenu;
 	protected int tabsMenuTabsStart;
 	protected Set<JMenuItem> tabsMenuItems;
 	protected FindAndReplaceDialog findDialog;
@@ -214,9 +214,9 @@ public class TextEditor extends JFrame implements ActionListener,
 
 		clearScreen = addToMenu(edit, "Clear output panel", 0, 0);
 		clearScreen.setMnemonic(KeyEvent.VK_L);
-		edit.addSeparator();
-		autocomplete = addToMenu(edit, "Autocomplete", KeyEvent.VK_SPACE, ctrl);
-		autocomplete.setMnemonic(KeyEvent.VK_A);
+		//edit.addSeparator();
+		//autocomplete = addToMenu(edit, "Autocomplete", KeyEvent.VK_SPACE, ctrl);
+		//autocomplete.setMnemonic(KeyEvent.VK_A);
 		edit.addSeparator();
 		addImport = addToMenu(edit, "Add import...", 0, 0);
 		addImport.setMnemonic(KeyEvent.VK_I);
@@ -254,49 +254,48 @@ public class TextEditor extends JFrame implements ActionListener,
 		addTemplates(templates);
 		mbar.add(templates);
 
-		JMenu run = new JMenu("Run");
-		run.setMnemonic(KeyEvent.VK_R);
+		runMenu = new JMenu("Run");
+		runMenu.setMnemonic(KeyEvent.VK_R);
 
-		compileAndRun = addToMenu(run, "Compile and Run",
+		compileAndRun = addToMenu(runMenu, "Compile and Run",
 				KeyEvent.VK_R, ctrl);
 		compileAndRun.setMnemonic(KeyEvent.VK_R);
 
-		runSelection = addToMenu(run, "Run selected code",
+		runSelection = addToMenu(runMenu, "Run selected code",
 				KeyEvent.VK_R, ctrl | shift);
 		runSelection.setMnemonic(KeyEvent.VK_S);
 
-		compile = addToMenu(run, "Compile",
+		compile = addToMenu(runMenu, "Compile",
 				KeyEvent.VK_C, ctrl | shift);
 		compile.setMnemonic(KeyEvent.VK_C);
 		autoSave = new JCheckBoxMenuItem("Auto-save before compiling");
-		run.add(autoSave);
+		runMenu.add(autoSave);
 
-		installMacro = addToMenu(run, "Install Macro",
+		installMacro = addToMenu(runMenu, "Install Macro",
 				KeyEvent.VK_I, ctrl);
 		installMacro.setMnemonic(KeyEvent.VK_I);
 
-		run.addSeparator();
-		nextError = addToMenu(run, "Next Error", KeyEvent.VK_F4, 0);
+		runMenu.addSeparator();
+		nextError = addToMenu(runMenu, "Next Error", KeyEvent.VK_F4, 0);
 		nextError.setMnemonic(KeyEvent.VK_N);
-		previousError = addToMenu(run, "Previous Error", KeyEvent.VK_F4, shift);
+		previousError = addToMenu(runMenu, "Previous Error", KeyEvent.VK_F4, shift);
 		previousError.setMnemonic(KeyEvent.VK_P);
-		run.addSeparator();
-		debug = addToMenu(run, "Start Debugging", KeyEvent.VK_D, ctrl);
-		debug.setMnemonic(KeyEvent.VK_D);
 
-		run.addSeparator();
+		runMenu.addSeparator();
 
-		kill = addToMenu(run, "Kill running script...", 0, 0);
+		kill = addToMenu(runMenu, "Kill running script...", 0, 0);
 		kill.setMnemonic(KeyEvent.VK_K);
 		kill.setEnabled(false);
 
-		run.addSeparator();
+		runMenu.addSeparator();
 
-		resume = addToMenu(run, "Resume", 0, 0);
+		debug = addToMenu(runMenu, "Start Debugging", KeyEvent.VK_D, ctrl);
+		debug.setMnemonic(KeyEvent.VK_D);
+		resume = addToMenu(runMenu, "Resume", 0, 0);
 		resume.setMnemonic(KeyEvent.VK_R);
-		terminate = addToMenu(run, "Terminate", 0, 0);
+		terminate = addToMenu(runMenu, "Terminate", 0, 0);
 		terminate.setMnemonic(KeyEvent.VK_T);
-		mbar.add(run);
+		mbar.add(runMenu);
 
 		toolsMenu = new JMenu("Tools");
 		toolsMenu.setMnemonic(KeyEvent.VK_O);
@@ -812,6 +811,7 @@ public class TextEditor extends JFrame implements ActionListener,
 
 	public void installDebugSupportMenuItem() {
 		loadToolsJar = addToMenu(toolsMenu, "Load debugging support via internet", 0, 0);
+		loadToolsJar.setVisible(false);
 	}
 
 	protected boolean handleTabsMenu(Object source) {
@@ -1432,22 +1432,38 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 		if (!language.item.isSelected())
 			language.item.setSelected(true);
 
+		runMenu.setVisible(language.isRunnable());
 		compileAndRun.setLabel(language.isCompileable() ?
 			"Compile and Run" : "Run");
 		compileAndRun.setEnabled(language.isRunnable());
-		runSelection.setEnabled(language.isRunnable() &&
+		runSelection.setVisible(language.isRunnable() &&
 				!language.isCompileable());
-		compile.setEnabled(language.isCompileable());
-		debug.setEnabled(language.isDebuggable());
-		makeJarWithSource.setEnabled(language.isCompileable());
+		compile.setVisible(language.isCompileable());
+		autoSave.setVisible(language.isCompileable());
+		makeJarWithSource.setVisible(language.isCompileable());
+
+		debug.setVisible(language.isDebuggable());
+		if (loadToolsJar != null)
+			loadToolsJar.setVisible(language.isDebuggable());
+		debug.setVisible(language.isDebuggable());
+		resume.setVisible(language.isDebuggable());
+		terminate.setVisible(language.isDebuggable());
 
 		boolean isJava = language.menuLabel.equals("Java");
-		addImport.setEnabled(isJava);
-		removeUnusedImports.setEnabled(isJava);
-		sortImports.setEnabled(isJava);
+		addImport.setVisible(isJava);
+		removeUnusedImports.setVisible(isJava);
+		sortImports.setVisible(isJava);
+		openSourceForClass.setVisible(isJava);
+		openSourceForMenuItem.setVisible(isJava);
 
 		boolean isMacro = language.menuLabel.equals("ImageJ Macro");
-		installMacro.setEnabled(isMacro);
+		installMacro.setVisible(isMacro);
+		openMacroFunctions.setVisible(isMacro);
+
+		openHelp.setVisible(!isMacro && language.isRunnable());
+		openHelpWithoutFrames.setVisible(!isMacro && language.isRunnable());
+		nextError.setVisible(!isMacro && language.isRunnable());
+		previousError.setVisible(!isMacro && language.isRunnable());
 
 		boolean isInGit = getEditorPane().getGitDirectory() != null;
 		gitMenu.setVisible(isInGit);
