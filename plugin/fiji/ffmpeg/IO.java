@@ -259,6 +259,13 @@ public class IO extends FFMPEGSingle {
 		return new ColorProcessor(width, height, pixels);
 	}
 
+	public static int strncpy(byte[] dst, String src) {
+		int len = Math.min(src.length(), dst.length - 1);
+		System.arraycopy(src.getBytes(), 0, dst, 0, len);
+		dst[len] = 0;
+		return len;
+	}
+
 	public static void writeMovie(ImagePlus image, String path, int frameRate) throws IOException {
 		final int STREAM_PIX_FMT = AVUTIL.PIX_FMT_YUV420P;
 
@@ -291,9 +298,7 @@ public class IO extends FFMPEGSingle {
 		if (formatContext == null)
 			throw new IOException("Memory error");
 		formatContext.oformat = fmt.getPointer();
-		byte[] filename = path.getBytes();
-		System.arraycopy(filename, 0, formatContext.filename, 0, filename.length);
-		filename[filename.length] = 0;
+		strncpy(formatContext.filename, path);
 
 		/* add the video stream using the default format
 		 * codec and initialize the codec */
