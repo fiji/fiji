@@ -37,6 +37,7 @@ public class IO extends FFMPEGSingle implements Progress {
 	protected Pointer swsContext;
 	protected byte[] video_outbuf;
 	protected Memory video_outbuf_memory;
+	protected AVPacket packet = new AVPacket();
 	protected Progress progress;
 
 	public IO() throws IOException {
@@ -113,7 +114,6 @@ public class IO extends FFMPEGSingle implements Progress {
 
 		allocateFrames(false);
 
-		final AVPacket packet = new AVPacket();
 		// TODO: handle stream.duration == 0 by counting the frames
 		final AVStream stream = new AVStream(formatContext.streams[videoStream]);
 		if (useVirtualStack && stream.duration > 0) {
@@ -440,45 +440,41 @@ public class IO extends FFMPEGSingle implements Progress {
 		}
 
 		AVOutputFormat tmp_fmt = new AVOutputFormat(formatContext.oformat);
-		if ((tmp_fmt.flags & AVFORMAT.AVFMT_RAWPICTURE) == 1) {
+		if ((tmp_fmt.flags & AVFORMAT.AVFMT_RAWPICTURE) != 0) {
 			/* raw video case. The API will change slightly in the near
-			   futur for that */
-			AVPacket pkt = new AVPacket();
-			AVCODEC.av_init_packet(pkt);
+			   future for that */
+			AVCODEC.av_init_packet(packet);
 
-			pkt.flags |= AVCODEC.PKT_FLAG_KEY;
-			pkt.stream_index = st.index;
-			pkt.data = frame.getPointer();
-			pkt.size = frame.size();
+			packet.flags |= AVCODEC.PKT_FLAG_KEY;
+			packet.stream_index = st.index;
+			packet.data = frame.getPointer();
+			packet.size = frame.size();
 
-			if (AVFORMAT.av_write_frame(formatContext, pkt) != 0)
+			if (AVFORMAT.av_write_frame(formatContext, packet) != 0)
 				throw new IOException("Error while writing video frame");
 		} else {
 			/* encode the image */
-System.err.println("encoding " + frame + " at " + video_outbuf);
+			if (video_outbuf_memory == null)
+				video_outbuf_memory = new Memory(video_outbuf.length);
 			out_size = AVCODEC.avcodec_encode_video(codecContext, video_outbuf, video_outbuf.length, frame);
 			/* if zero size, it means the image was buffered */
 			if (out_size > 0) {
-				AVPacket pkt = new AVPacket();
-				AVCODEC.av_init_packet(pkt);
+				AVCODEC.av_init_packet(packet);
 
 				AVFrame tmp_frame = new AVFrame(codecContext.coded_frame);
-				pkt.pts = AVUTIL.av_rescale_q(tmp_frame.pts, new AVUTIL.AVRational.ByValue(codecContext.time_base), new AVUTIL.AVRational.ByValue(st.time_base));
-				//System.out.println("tmp_frame.pts=" + tmp_frame.pts + " c.time_base=" + c.time_base.num + "/" + c.time_base.den + " st.time_base=" + st.time_base.num + "/" + st.time_base.den + " pkt.pts=" + pkt.pts);
+				packet.pts = AVUTIL.av_rescale_q(tmp_frame.pts, new AVUTIL.AVRational.ByValue(codecContext.time_base), new AVUTIL.AVRational.ByValue(st.time_base));
 				if (tmp_frame.key_frame == 1)
-					pkt.flags |= AVCODEC.PKT_FLAG_KEY;
-				pkt.stream_index = st.index;
-				if (video_outbuf_memory == null)
-					video_outbuf_memory = new Memory(video_outbuf.length);
+					packet.flags |= AVCODEC.PKT_FLAG_KEY;
+				packet.stream_index = st.index;
 				video_outbuf_memory.read(0, video_outbuf, 0, out_size);
-				pkt.data = video_outbuf_memory;
-				pkt.size = out_size;
+				packet.data = video_outbuf_memory;
+				packet.size = out_size;
 
 				/* write the compressed frame in the media file */
-				if (AVFORMAT.av_write_frame(formatContext, pkt) != 0)
+				if (AVFORMAT.av_write_frame(formatContext, packet) != 0)
 					throw new IOException("Error while writing video frame");
 
-				st.pts.val = pkt.pts; // necessary for calculation of video length
+				st.pts.val = packet.pts; // necessary for calculation of video length
 			}
 		}
 	}
