@@ -104,11 +104,16 @@ build_ffmpeg () {
 		mv -f config.h.new config.h
 	fi &&
 	make $PARALLEL &&
+	rm libavutil/log.o &&
+	tmpcmd="$(make V=1 libavutil/log.o |
+		sed 's/libavutil\/log/..\/avlog/g')" &&
+	$tmpcmd &&
 	rm */*$LIBEXT* &&
 	out="$(make V=1 | grep -ve '-o libavfilter' |
 		sed -n 's/^'$CROSS_PREFIX'gcc .* -o lib[^ ]* //p' | tr ' ' '\n')" &&
 	${CROSS_PREFIX}gcc -shared $LDFLAGS $EXTRA_LDFLAGS -o $1 \
 		$(echo "$out" | grep -ve '^-' -e 'libavcodec/inverse\.o') \
+		../avlog.o \
 		$(echo "$out" | grep '^-' | grep -ve '^-lav' -e '^-lsw' |
 			sort | uniq) $EXTRA_LIBS
 }

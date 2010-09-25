@@ -13,5 +13,8 @@ public class IJProgress implements Progress {
 		IJ.showProgress(1, 1);
 		IJ.showStatus(message);
 	}
-}
 
+	public void log(String message) {
+		IJ.log(message);
+	}
+}

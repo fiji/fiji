@@ -48,11 +48,16 @@ public class IO extends FFMPEGSingle implements Progress {
 
 	public IO(Progress progress) throws IOException {
 		this();
-		this.progress = progress;
+		setProgress(progress);
 	}
 
 	public void setProgress(Progress progress) {
 		this.progress = progress;
+		AVUTIL.avSetLogCallback(new AVUTIL.AvLog() {
+			public void callback(String message) {
+				log(message);
+			}
+		});
 	}
 
 	public void step(String message, double progress) {
@@ -63,6 +68,11 @@ public class IO extends FFMPEGSingle implements Progress {
 	public void done(String message) {
 		if (progress != null)
 			progress.done(message);
+	}
+
+	public void log(String message) {
+		if (progress != null)
+			progress.log(message);
 	}
 
 	/**
@@ -356,12 +366,13 @@ public class IO extends FFMPEGSingle implements Progress {
 		if (AVFORMAT.av_set_parameters(formatContext, null) < 0)
 			throw new IOException("Invalid output format parameters.");
 
-AVFORMAT.dump_format(formatContext, 0, path, 1);
 		/* now that all the parameters are set, we can open the
 		 * video codec and allocate the necessary encode buffer */
 		step("Opening " + path, 0);
 		open_video(formatContext, video_st);
 
+		// Dump the format to stderr
+		AVFORMAT.dump_format(formatContext, 0, path, 1);
 
 		AVOutputFormat tmp_fmt = new AVOutputFormat(formatContext.oformat);
 		if ((tmp_fmt.flags & AVFORMAT.AVFMT_RAWPICTURE) == 0) {

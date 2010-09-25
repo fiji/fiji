@@ -846,6 +846,11 @@ if (level == 0 && bitFieldBitCount > 0) throw new RuntimeException("Bit fields n
 			out.write(indent(contents, 1));
 		}
 
+		if (libName.equals("AVUTIL"))
+			out.write(indent("public interface AvLog extends Callback {\n"
+				+ "\tpublic void callback(String string);\n"
+				+ "}\n"
+				+ "public void avSetLogCallback(AvLog callback);\n", 1));
 		out.write("}\n");
 		out.close();
 	}
