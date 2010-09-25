@@ -456,6 +456,7 @@ public class IO extends FFMPEGSingle implements Progress {
 			/* encode the image */
 			if (video_outbuf_memory == null)
 				video_outbuf_memory = new Memory(video_outbuf.length);
+			// TODO: special-case avcodec_encode_video() to take a Pointer to avoid frequent copying
 			out_size = AVCODEC.avcodec_encode_video(codecContext, video_outbuf, video_outbuf.length, frame);
 			/* if zero size, it means the image was buffered */
 			if (out_size > 0) {
@@ -466,7 +467,7 @@ public class IO extends FFMPEGSingle implements Progress {
 				if (tmp_frame.key_frame == 1)
 					packet.flags |= AVCODEC.PKT_FLAG_KEY;
 				packet.stream_index = st.index;
-				video_outbuf_memory.read(0, video_outbuf, 0, out_size);
+				video_outbuf_memory.write(0, video_outbuf, 0, out_size);
 				packet.data = video_outbuf_memory;
 				packet.size = out_size;
 
