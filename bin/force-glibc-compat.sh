@@ -13,6 +13,15 @@ cat << EOF > glibc-compat.h
 
 EOF
 
+case "$(uname -m)" in
+x86_64)
+	version_regex='2\.2\.5'
+	;;
+*)
+	version_regex='2\.0'
+	;;
+esac
 objdump -t fiji |
-sed -n -e 's/.* \([^ ]*\)\@\@\(GLIBC_2\.[^0].*\)/GLIBC_COMPAT_SYMBOL(\1);/p' \
+grep -v -e "GLIBC_$version_regex" |
+sed -n -e 's/.* \([^ ]*\)\@\@\(GLIBC_.*\)/GLIBC_COMPAT_SYMBOL(\1);/p' \
 >> glibc-compat.h
