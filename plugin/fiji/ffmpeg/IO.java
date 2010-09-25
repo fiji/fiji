@@ -345,16 +345,11 @@ public class IO extends FFMPEGSingle implements Progress {
 
 		/* add the video stream using the default format
 		 * codec and initialize the codec */
-		AVStream video_st = null;
-		if (fmt.video_codec != AVCODEC.CODEC_ID_NONE) {
-			video_st = add_video_stream(formatContext, fmt.video_codec, stack.getWidth(), stack.getHeight(), frameRate, STREAM_PIX_FMT);
-			if (video_st == null)
-				throw new IOException("Could not add a video stream");
-		}
-
-		codecContext = new AVCodecContext(video_st.codec);
-
-		allocateFrames(true);
+		if (fmt.video_codec == AVCODEC.CODEC_ID_NONE)
+			throw new IOException("Could not determine codec for " + path);
+		AVStream video_st = add_video_stream(formatContext, fmt.video_codec, stack.getWidth(), stack.getHeight(), frameRate, STREAM_PIX_FMT);
+		if (video_st == null)
+			throw new IOException("Could not add a video stream");
 
 		/* set the output parameters (mustbe done even if no
 		 * parameters). */
@@ -364,8 +359,7 @@ public class IO extends FFMPEGSingle implements Progress {
 		/* now that all the parameters are set, we can open the
 		 * video codec and allocate the necessary encode buffer */
 		step("Opening " + path, 0);
-		if (video_st != null && !open_video(formatContext, video_st))
-			throw new IOException("Could not open video");
+		open_video(formatContext, video_st);
 
 		AVOutputFormat tmp_fmt = new AVOutputFormat(formatContext.oformat);
 		if ((tmp_fmt.flags & AVFORMAT.AVFMT_RAWPICTURE) == 0) {
@@ -385,12 +379,11 @@ public class IO extends FFMPEGSingle implements Progress {
 			formatContext.pb = p.getValue();
 		}
 
+		allocateFrames(true);
+
 		AVFORMAT.av_write_header(formatContext);
 
-		if (video_st != null)
-			video_pts = (double)video_st.pts.val * video_st.time_base.num / video_st.time_base.den;
-		else
-			video_pts = 0.0;
+		video_pts = (double)video_st.pts.val * video_st.time_base.num / video_st.time_base.den;
 
 		for (int frameCount = 1; frameCount <= stack.getSize(); frameCount++) {
 			/* write video frame */
@@ -493,25 +486,17 @@ public class IO extends FFMPEGSingle implements Progress {
 		}
 	}
 
-	protected static boolean open_video(AVFormatContext formatContext, AVStream st) {
+	protected void open_video(AVFormatContext formatContext, AVStream st) throws IOException {
 		AVCodec codec;
-		AVCodecContext c = new AVCodecContext(st.codec);
 
 		/* find the video encoder */
-		codec = AVCODEC.avcodec_find_encoder(c.codec_id);
-		if (codec == null) {
-			IJ.error("video codec not found for codec id: " + c.codec_id);
-			return false;
-		}
+		codec = AVCODEC.avcodec_find_encoder(codecContext.codec_id);
+		if (codec == null)
+			throw new IOException("video codec not found for codec id: " + codecContext.codec_id);
 
 		/* open the codec */
-		if (AVCODEC.avcodec_open(c, codec) < 0) {
-			IJ.error("could not open video codec");
-			return false;
-		}
-
-		return true;
-	}
+		if (AVCODEC.avcodec_open(codecContext, codec) < 0)
+			throw new IOException("Could not open video codec");
 	}
 
 	protected static void close_video(AVFormatContext formatContext, AVStream st) {
@@ -519,7 +504,7 @@ public class IO extends FFMPEGSingle implements Progress {
 		AVCODEC.avcodec_close(tmp_codec);
 	}
 
-	protected static AVStream add_video_stream(AVFormatContext formatContext, int codec_id, int width, int height, int frameRate, int pixelFormat) {
+	protected AVStream add_video_stream(AVFormatContext formatContext, int codec_id, int width, int height, int frameRate, int pixelFormat) {
 		AVStream st;
 
 		st = AVFORMAT.av_new_stream(formatContext, 0);
@@ -527,33 +512,33 @@ public class IO extends FFMPEGSingle implements Progress {
 			IJ.error("Could not alloc video stream.");
 			return null;
 		}
-		AVCodecContext c = new AVCodecContext(st.codec);
-		c.codec_id = codec_id;
-		c.codec_type = AVCODEC.CODEC_TYPE_VIDEO;
+		codecContext = new AVCodecContext(st.codec);
+		codecContext.codec_id = codec_id;
+		codecContext.codec_type = AVCODEC.CODEC_TYPE_VIDEO;
 
 		/* put sample parameters */
-		c.bit_rate = 400000;
+		codecContext.bit_rate = 400000;
 		/* resolution must be a multiple of two */
-		c.width = width; //352;
-		c.height = height; //288;
+		codecContext.width = width; //352;
+		codecContext.height = height; //288;
 		/* time base: this is the fundamental unit of time (in seconds) in terms
 		   of which frame timestamps are represented. for fixed-fps content,
 		   timebase should be 1/framerate and timestamp increments should be
 		   identically 1. */
-		c.time_base.den = frameRate;
-		c.time_base.num = 1;
-		c.gop_size = 12;
-		c.pix_fmt = pixelFormat;
+		codecContext.time_base.den = frameRate;
+		codecContext.time_base.num = 1;
+		codecContext.gop_size = 12;
+		codecContext.pix_fmt = pixelFormat;
 
-		if (c.codec_id == AVCODEC.CODEC_ID_MPEG2VIDEO) {
+		if (codecContext.codec_id == AVCODEC.CODEC_ID_MPEG2VIDEO) {
 			/* just for testing, we also add B frames */
-			c.max_b_frames = 2;
+			codecContext.max_b_frames = 2;
 		}
-		if (c.codec_id == AVCODEC.CODEC_ID_MPEG1VIDEO) {
+		if (codecContext.codec_id == AVCODEC.CODEC_ID_MPEG1VIDEO) {
 			/* Needed to avoid using macroblocks in which some coeffs overflow.
 			   This does not happen with normal video, it just happens here as
 			   the motion of the chroma plane does not match the luma plane. */
-			c.mb_decision = 2;
+			codecContext.mb_decision = 2;
 		}
 
 		// some formats want stream headers to be separate
