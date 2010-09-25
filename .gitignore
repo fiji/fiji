@@ -3,3 +3,11 @@
 /jna-wrapper.jar
 /FFMPEG_IO.jar
 /avlog.[do]
+/sysroot
+/binutils
+/build-binutils
+/mingw-w64
+/build-headers
+/build-crt
+/gcc
+/build-gcc
