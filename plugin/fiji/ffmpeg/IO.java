@@ -310,7 +310,7 @@ public class IO extends FFMPEGSingle implements Progress {
 		return len;
 	}
 
-	public void writeMovie(ImagePlus image, String path, int frameRate) throws IOException {
+	public void writeMovie(ImagePlus image, String path, int frameRate, int bitRate) throws IOException {
 		final int STREAM_PIX_FMT = AVUTIL.PIX_FMT_YUV420P;
 
 		//int sws_flags = SWScaleLibrary.SWS_BICUBIC;
@@ -347,7 +347,7 @@ public class IO extends FFMPEGSingle implements Progress {
 		 * codec and initialize the codec */
 		if (fmt.video_codec == AVCODEC.CODEC_ID_NONE)
 			throw new IOException("Could not determine codec for " + path);
-		AVStream video_st = add_video_stream(formatContext, fmt.video_codec, stack.getWidth(), stack.getHeight(), frameRate, STREAM_PIX_FMT);
+		AVStream video_st = add_video_stream(formatContext, fmt.video_codec, stack.getWidth(), stack.getHeight(), frameRate, bitRate, STREAM_PIX_FMT);
 		if (video_st == null)
 			throw new IOException("Could not add a video stream");
 
@@ -361,6 +361,7 @@ AVFORMAT.dump_format(formatContext, 0, path, 1);
 		 * video codec and allocate the necessary encode buffer */
 		step("Opening " + path, 0);
 		open_video(formatContext, video_st);
+
 
 		AVOutputFormat tmp_fmt = new AVOutputFormat(formatContext.oformat);
 		if ((tmp_fmt.flags & AVFORMAT.AVFMT_RAWPICTURE) == 0) {
@@ -505,7 +506,7 @@ AVFORMAT.dump_format(formatContext, 0, path, 1);
 		AVCODEC.avcodec_close(tmp_codec);
 	}
 
-	protected AVStream add_video_stream(AVFormatContext formatContext, int codec_id, int width, int height, int frameRate, int pixelFormat) {
+	protected AVStream add_video_stream(AVFormatContext formatContext, int codec_id, int width, int height, int frameRate, int bitRate, int pixelFormat) {
 		AVStream st;
 
 		st = AVFORMAT.av_new_stream(formatContext, 0);
@@ -518,7 +519,7 @@ AVFORMAT.dump_format(formatContext, 0, path, 1);
 		codecContext.codec_type = AVCODEC.CODEC_TYPE_VIDEO;
 
 		/* put sample parameters */
-		codecContext.bit_rate = 400000;
+		codecContext.bit_rate = bitRate;
 		/* resolution must be a multiple of two */
 		codecContext.width = width; //352;
 		codecContext.height = height; //288;

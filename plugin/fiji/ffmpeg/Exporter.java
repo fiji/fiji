@@ -51,15 +51,17 @@ public class Exporter implements PlugIn {
 		String path = directory+name;
 
 		GenericDialog gd = new GenericDialog("FFMPEG Exporter");
-		gd.addNumericField("Framerate: ", 25, 0);
+		gd.addNumericField("Framerate", 25, 0);
+		gd.addNumericField("Bitrate", 400000, 0);
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return;
 
 		int frameRate = (int)gd.getNextNumber();
+		int bitRate = (int)gd.getNextNumber();
 
 		try {
-			io.writeMovie(image, path, frameRate);
+			io.writeMovie(image, path, frameRate, bitRate);
 			IJ.showStatus("Saved " + path + ".");
 		} catch (OutOfMemoryError e) {
 			io.free();
