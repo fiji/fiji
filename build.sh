@@ -24,15 +24,28 @@ MINGW*)
 	;;
 esac
 
+CFLAGS=
+LDFLAGS=
 CONFIGURE_CROSS_COMPILE=
 CROSS_PREFIX=
 if test "$PLATFORM" != "$1"
 then
 	PLATFORM="$1"
 	ARCH="$(case "$PLATFORM" in *64) echo x86_64;; *) echo i686;; esac)"
-	# TODO: allow cross compilation of linux32, too
-	TARGET_OS="$(case "$PLATFORM" in win*) echo mingw32;; esac)"
-	CROSS_PREFIX=x86_64-w64-mingw32-
+	case "$1" in
+	linux)
+		TARGET_OS="linux"
+		CROSS_PREFIX=
+		;;
+	win*)
+		TARGET_OS="$(case "$PLATFORM" in win*) echo mingw32;; esac)"
+		CROSS_PREFIX=x86_64-w64-mingw32-
+		;;
+	*)
+		echo "Unsupported cross compile target: $1" >&2
+		exit 1
+		;;
+	esac
 	CFLAGS="-m$(case "$PLATFORM" in *64) echo 64;; *) echo 32;; esac)"
 	LDFLAGS="$CFLAGS"
 	export CFLAGS LDFLAGS
@@ -47,7 +60,6 @@ LIBEXT=${TARGET#*ffmpeg}
 
 PARALLEL=-j5
 
-LDFLAGS=
 EXTRA_CONFIGURE=
 EXTRA_LDFLAGS=
 EXTRA_LIBS=
