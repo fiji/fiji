@@ -399,13 +399,13 @@ public class IO extends FFMPEGSingle implements Progress {
 		}
 
 		// flush last frame
-		write_video_frame(null, formatContext, video_st);
-
-		/* close codec */
-		close_video(formatContext, video_st);
+		//write_video_frame(null, formatContext, video_st);
 
 		/* write the trailer, if any */
 		AVFORMAT.av_write_trailer(formatContext);
+
+		/* close codec */
+		//close_video(formatContext, video_st);
 
 		/* free the streams */
 		for (i = 0; i < formatContext.nb_streams; i++) {
@@ -413,13 +413,12 @@ public class IO extends FFMPEGSingle implements Progress {
 			AVUTIL.av_free(tmp_stream.codec);
 			AVUTIL.av_free(formatContext.streams[i]);
 		}
-
 		if ((fmt.flags & AVFORMAT.AVFMT_NOFILE) == 0) {
 			/* close the output file */
 			AVFORMAT.url_fclose(formatContext.pb);
 		}
 
-		free();
+		//free();
 	}
 
 	protected void write_video_frame(ImageProcessor ip, AVFormatContext formatContext, AVStream st) throws IOException {
