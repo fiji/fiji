@@ -71,7 +71,7 @@ public class TrackMate_TestDrive {
 		ij.ImageJ.main(args);
 		imp.show();
 		
-		TrackMate_ st = new TrackMate_();
+		TrackMate_<UnsignedByteType> st = new TrackMate_<UnsignedByteType>();
 		System.out.println("Running the plugin...");
 		st.run(null); // launch the GUI;
 	}

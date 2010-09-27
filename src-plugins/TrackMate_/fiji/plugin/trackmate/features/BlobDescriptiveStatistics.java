@@ -62,7 +62,7 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 	 */
 	@Override
 	public void process(Spot spot) {
-		// For variance, kurtosis and skwness 
+		// For variance, kurtosis and skewness 
 		float sum = 0;
 		float sum_sqr = 0;
 		

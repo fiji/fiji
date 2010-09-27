@@ -38,7 +38,7 @@ public class SpotImp implements Spot {
 	 * when calculating distances and so on.
 	 */
 	public SpotImp(float[] coordinates, String name) {
-		for (int i = 0; i < POSITION_FEATURES.length; i++)
+		for (int i = 0; i < 3; i++)
 			putFeature(POSITION_FEATURES[i], coordinates[i]);
 		this.name = name;
 		this.ID = IDcounter;

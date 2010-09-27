@@ -2,6 +2,7 @@ package fiji.plugin.trackmate;
 
 import fiji.plugin.trackmate.features.FeatureFacade;
 import fiji.plugin.trackmate.gui.TrackMateFrame;
+import fiji.plugin.trackmate.segmentation.LogSegmenter;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.util.SplitString;
@@ -23,7 +24,7 @@ import javax.swing.SwingUtilities;
 
 import mpicbg.imglib.algorithm.roi.MedianFilter;
 import mpicbg.imglib.image.Image;
-import mpicbg.imglib.type.numeric.real.FloatType;
+import mpicbg.imglib.type.numeric.RealType;
 
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
@@ -38,19 +39,15 @@ import org.jgrapht.graph.SimpleGraph;
  * @author Nicholas Perry, Jean-Yves Tinevez - Institut Pasteur - July-Aug-Sep 2010
  *
  */
-public class TrackMate_ implements PlugIn {
+public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 	
 	public static final String PLUGIN_NAME_STR = "Track Mate";
 	public static final String PLUGIN_NAME_VERSION = ".alpha";
 	
 	private static final String DIAMETER_KEY = "diameter";
-	private static final String MEDIAN_FILTER_KEY = "median";
-	private static final String ALLOW_EDGE_KEY = "edge";
 	private static final Map<String, String> optionStrings = new HashMap<String, String>();
 	static {
 		optionStrings.put(DIAMETER_KEY, 		""+Settings.DEFAULT.expectedDiameter);
-		optionStrings.put(MEDIAN_FILTER_KEY, 	""+Settings.DEFAULT.useMedianFilter);
-		optionStrings.put(ALLOW_EDGE_KEY, 		""+Settings.DEFAULT.allowEdgeMaxima);	
 	}	
 	
 	/** Contain the segmentation result, un-filtered.*/
@@ -63,6 +60,7 @@ public class TrackMate_ implements PlugIn {
 	private Logger logger = Logger.DEFAULT_LOGGER;
 	private Settings settings = new Settings();
 	private List<FeatureThreshold> thresholds = new ArrayList<FeatureThreshold>();
+	private SpotSegmenter<T> segmenter = new LogSegmenter<T>();
 
 	/*
 	 * RUN METHOD
@@ -70,16 +68,16 @@ public class TrackMate_ implements PlugIn {
 	
 	/** 
 	 * If the <code>arg</code> is empty or <code>null</code>, simply launch the GUI.
-	 * Otherwise, parse it and execture the plugin without the GUI. 
+	 * Otherwise, parse it and execute the plugin without the GUI. 
 	 */
 	public void run(String arg) {
-		final TrackMate_ instance = this;
+		final TrackMate_<T> instance = this;
 		if (null == arg || arg.isEmpty()) {
 			// Launch the GUI 
 			SwingUtilities.invokeLater(new Runnable() {			
 				@Override
 				public void run() {
-					TrackMateFrame mainGui = new TrackMateFrame(instance);
+					TrackMateFrame<T> mainGui = new TrackMateFrame<T>(instance);
 					mainGui.setLocationRelativeTo(null);
 					mainGui.setVisible(true);
 				}
@@ -107,8 +105,6 @@ public class TrackMate_ implements PlugIn {
 		}
 		
 		settings.expectedDiameter 	= Float.parseFloat(optionStrings.get(DIAMETER_KEY));
-		settings.useMedianFilter 	= Boolean.parseBoolean(optionStrings.get(MEDIAN_FILTER_KEY));
-		settings.allowEdgeMaxima 	= Boolean.parseBoolean(optionStrings.get(ALLOW_EDGE_KEY));
 		
 		// Run plugin on current image
 		ImagePlus imp = WindowManager.getCurrentImage();
@@ -190,7 +186,7 @@ public class TrackMate_ implements PlugIn {
 	 * <li>Finally, the entire, newly processed image is searched for regional maxima, which are defined as pixels (or groups of equally-valued
 	 * intensity pixels) that are strictly brighter than their adjacent neighbors. Following the pre-processing steps above,
 	 * these regional maxima likely represent the center of the objects we would like to find and track.
-	 * See {@link SpotSegmenter}.
+	 * See {@link LogSegmenter}.
 	 * </li>
 	 * 
 	 * <li> This gives us a collection of spots, which at this stage simply wrap a physical center location. Features are then
@@ -201,12 +197,6 @@ public class TrackMate_ implements PlugIn {
 	 * Because of the presence of noise, it is possible that some of the regional maxima found in the previous step have
 	 * identified noise, rather than objects of interest. A thresholding operation based on the calculated features in this 
 	 * step should allow to rule them out.
-	 * 
-	 * @param imp  the {@link ImagePlus} to segment. Its physical calibration fields must be set correctly.
-	 * @param settings  the {@link Settings} for segmentation. Only the fields <code>expectedDiameter</code>, <code>useMedianFilter</code>
-	 * and <code>allowEdgeMaxima</code> are used here.
-	 * @return  a list ({@link ArrayList}) of {@link SpotImp} collections. There is one collection in the list per time-point. Collections in the list are ordered 
-	 * by frame number (time-point 0 is item 0 in the list, etc...).   
 	 */
 	public void execSegmentation() {
 		final ImagePlus imp = settings.imp;
@@ -220,15 +210,13 @@ public class TrackMate_ implements PlugIn {
 		/* 0 -- Initialize local variables */
 		final float[] calibration = new float[] {(float) imp.getCalibration().pixelWidth, (float) imp.getCalibration().pixelHeight, (float) imp.getCalibration().pixelDepth};
 		final float diam = settings.expectedDiameter;
-		final boolean useMedFilt = settings.useMedianFilter;
-		final boolean allowEdgeMax = settings.allowEdgeMaxima;
-		final Float threshold = settings.threshold;
+		segmenter.setEstimatedRadius(diam/2);
+		segmenter.setCalibration(calibration);
 		
 		// Since we can't get the NumericType out of imp, we assume it is a FloatType.
-		final SpotSegmenter<FloatType> segmenter = new SpotSegmenter<FloatType>(null, diam, calibration, threshold, useMedFilt, allowEdgeMax);				
 		spots = new TreeMap<Integer, List<Spot>>();
 		List<Spot> spotsThisFrame;
-		Image<FloatType> filteredImage;
+		Image<T> filteredImage;
 		
 		// For each frame...
 		for (int i = settings.tstart-1; i < settings.tend; i++) {
@@ -236,7 +224,7 @@ public class TrackMate_ implements PlugIn {
 			/* 1 - Prepare stack for use with Imglib. */
 			
 			logger.log("Frame "+(i+1)+": Converting to ImgLib...\n");
-			Image<FloatType> img = Utils.getSingleFrameAsImage(imp, i);
+			Image<T> img = Utils.getSingleFrameAsImage(imp, i);
 			
 			/* 2 Segment it */
 
@@ -244,7 +232,7 @@ public class TrackMate_ implements PlugIn {
 			logger.setProgress((2*(i-settings.tstart)) / (2f * numFrames + 1));
 			segmenter.setImage(img);
 			if (segmenter.checkInput() && segmenter.process()) {
-				filteredImage = segmenter.getFilteredImage();
+				filteredImage = segmenter.getIntermediateImage();
 				spotsThisFrame = segmenter.getResult();
 				for (Spot spot : spotsThisFrame)
 					spot.putFeature(Feature.POSITION_T, i);
@@ -258,7 +246,7 @@ public class TrackMate_ implements PlugIn {
 			/* 3 - Extract features for the spot collection */
 			logger.log("Frame "+(i+1)+": Calculating features:\n");
 			logger.setProgress((2*(i-settings.tstart)+1) / (2f * numFrames + 1));
-			final FeatureFacade<FloatType> featureCalculator = new FeatureFacade<FloatType>(img, filteredImage, diam, calibration);
+			final FeatureFacade<T> featureCalculator = new FeatureFacade<T>(img, filteredImage, diam, calibration);
 			logger.log("Frame "+(i+1)+":\tStatistics features\n");
 			featureCalculator.processFeature(Feature.MEAN_INTENSITY, spotsThisFrame);
 			logger.log("Frame "+(i+1)+":\tLoG feature\n");
@@ -273,6 +261,11 @@ public class TrackMate_ implements PlugIn {
 	/*
 	 * GETTERS / SETTERS
 	 */
+	
+	public void setSegmenter(SpotSegmenter<T> segmenter) {
+		this.segmenter = segmenter;
+	}
+	
 
 	public SimpleGraph<Spot,DefaultEdge> getTrackGraph() {
 		return trackGraph;

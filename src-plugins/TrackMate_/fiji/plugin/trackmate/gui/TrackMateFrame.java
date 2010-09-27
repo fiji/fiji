@@ -30,6 +30,9 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import mpicbg.imglib.type.numeric.RealType;
+import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
+
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
@@ -53,7 +56,7 @@ import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
 * THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
 * LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
 */
-public class TrackMateFrame extends javax.swing.JFrame {
+public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 
 	
 	/**
@@ -135,7 +138,7 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	private static final int DEFAULT_THRESHOLD = 50; // for the 3d viewer
 	private static final String DEFAULT_FILENAME = "TrackMateData.xml";
 
-	private TrackMate_ trackmate;
+	private TrackMate_<? extends RealType<?>> trackmate;
 	private GuiState state;
 	private Logger logger;
 	private SpotDisplayer displayer;
@@ -168,9 +171,9 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	 * CONSTRUCTORS
 	 */
 	
-	public TrackMateFrame(TrackMate_ plugin) {
+	public TrackMateFrame(TrackMate_<T> plugin) {
 		if (null == plugin)
-			plugin = new TrackMate_();
+			plugin = new TrackMate_<T>();
 		this.trackmate = plugin;
 		initGUI();
 		logger = logPanel.getLogger();
@@ -183,7 +186,7 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	}
 	
 	public TrackMateFrame() {
-		this(new TrackMate_());
+		this(new TrackMate_<T>());
 	}
 	
 	/**
@@ -544,7 +547,7 @@ public class TrackMateFrame extends javax.swing.JFrame {
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
-				TrackMateFrame inst = new TrackMateFrame();
+				TrackMateFrame<UnsignedByteType> inst = new TrackMateFrame<UnsignedByteType>();
 				inst.setLocationRelativeTo(null);
 				inst.setVisible(true);
 			}
