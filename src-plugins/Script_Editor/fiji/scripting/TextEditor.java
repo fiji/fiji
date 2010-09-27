@@ -87,7 +87,6 @@ import org.fife.ui.rtextarea.RTextScrollPane;
 
 public class TextEditor extends JFrame implements ActionListener,
 	       ChangeListener {
-	protected EditorPane editorPane;
 	protected JTabbedPane tabbed;
 	protected JMenuItem newFile, open, save, saveas, compileAndRun, compile, debug, close,
 		  undo, redo, cut, copy, paste, find, replace, selectAll,
@@ -392,6 +391,7 @@ public class TextEditor extends JFrame implements ActionListener,
 
 		addWindowFocusListener(new WindowAdapter() {
 			public void windowGainedFocus(WindowEvent e) {
+				final EditorPane editorPane = getEditorPane();
 				if (editorPane != null)
 					editorPane.checkForOutsideChanges();
 			}
@@ -405,12 +405,14 @@ public class TextEditor extends JFrame implements ActionListener,
 
 		setLocationRelativeTo(null); // center on screen
 
+		final EditorPane editorPane = getEditorPane();
 		if (editorPane != null)
 			editorPane.requestFocus();
 	}
 
 	public TextEditor(String title, String text) {
 		this(null);
+		final EditorPane editorPane = getEditorPane();
 		editorPane.setText(text);
 		editorPane.setLanguageByFileName(title);
 		setFileName(title);
@@ -422,7 +424,7 @@ public class TextEditor extends JFrame implements ActionListener,
 	}
 
 	public EditorPane getEditorPane() {
-		return editorPane;
+		return getTab().editorPane;
 	}
 
 	public Languages.Language getCurrentLanguage() {
@@ -619,6 +621,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		if (source == newFile)
 			createNewDocument();
 		else if (source == open) {
+			final EditorPane editorPane = getEditorPane();
 			String defaultDir =
 				editorPane != null && editorPane.file != null ?
 				editorPane.file.getParent() :
@@ -834,7 +837,7 @@ public class TextEditor extends JFrame implements ActionListener,
 			setTitle("");
 			return;
 		}
-		editorPane = getEditorPane(index);
+		final EditorPane editorPane = getEditorPane(index);
 		editorPane.requestFocus();
 		setTitle();
 		editorPane.setLanguageByFileName(editorPane.getFileName());
@@ -906,7 +909,7 @@ public class TextEditor extends JFrame implements ActionListener,
 			null, options, options[0])) {
 		case 0:
 			try {
-				editorPane.setFile(file.getPath());
+				getEditorPane().setFile(file.getPath());
 				return true;
 			} catch (IOException e) {
 				error("Could not reload " + file.getPath());
@@ -1775,7 +1778,7 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 		Tab tab = getTab();
 		Document document = tab.screen.getDocument();
 		int offset = document.getLength();
-		tab.screen.insert("Started " + editorPane.getFileName() + " at "
+		tab.screen.insert("Started " + getEditorPane().getFileName() + " at "
 			+ new Date() + "\n", offset);
 		tab.screen.setCaretPosition(document.getLength());
 		try {
@@ -1819,7 +1822,7 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 
 	public void switchTo(File file, int lineNumber)
 			throws BadLocationException {
-		if (!editorPaneContainsFile(editorPane, file))
+		if (!editorPaneContainsFile(getEditorPane(), file))
 			switchTo(file);
 		gotoLine(lineNumber);
 	}
