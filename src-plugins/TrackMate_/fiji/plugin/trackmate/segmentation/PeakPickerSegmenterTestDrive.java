@@ -15,13 +15,8 @@ import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
 import fiji.plugin.trackmate.Spot;
 
-/**
- * Test class for {@link SpotSegmenter}
- * @author Jean-Yves Tinevez
- *
- */
-public class SpotSegmenterTestDrive {
-	
+public class PeakPickerSegmenterTestDrive {
+
 	public static void main(String[] args) {
 
 		final int N_BLOBS = 20;
@@ -62,9 +57,14 @@ public class SpotSegmenterTestDrive {
 		}
 		cursor.close();
 
-		// Segment it
+		// Instantiate segmenter
+		SpotSegmenter<UnsignedByteType> segmenter = new PeakPickerSegmenter<UnsignedByteType>();
+		segmenter.setImage(img);
+		segmenter.setCalibration(CALIBRATION);
+		segmenter.setEstimatedRadius(RADIUS);
+		
+		// Segment
 		long start = System.currentTimeMillis();
-		SpotSegmenter<UnsignedByteType> segmenter = new SpotSegmenter<UnsignedByteType>(img, 2*RADIUS, CALIBRATION, 0, false, false);
 		if (!segmenter.checkInput() || !segmenter.process()) {
 			System.out.println(segmenter.getErrorMessage());
 			return;
@@ -88,7 +88,7 @@ public class SpotSegmenterTestDrive {
 		Spot best_spot = null;
 		float[] coords = new float[3];
 
-		while (!spot_list.isEmpty()) {
+		while (!spot_list.isEmpty() && !centers.isEmpty()) {
 			
 			min_dist = Float.POSITIVE_INFINITY;
 			for (Spot s : spot_list) {
@@ -112,12 +112,19 @@ public class SpotSegmenterTestDrive {
 			System.out.println("Blob coordinates: " + MathLib.printCoordinates(best_spot.getPosition(coords)));
 			System.out.println(String.format("  Best matching center at distance %.1f with coords: " + MathLib.printCoordinates(best_match), min_dist));			
 		}
+
 		System.out.println();
-		System.out.println("Unmatched centers:");
+		System.out.println("Unmatched real spots:");
 		for (int i = 0; i < centers.size(); i++) 
 			System.out.println("Center "+i+" at position: " + MathLib.printCoordinates(centers.get(i)));
-		
+
+		System.out.println();
+		System.out.println("Unmatched found blobs:");
+		for (int i = 0; i < spot_list.size(); i++) 
+			System.out.println("Center "+i+" at position: " + MathLib.printCoordinates(spot_list.get(i).getPosition(null)));
+
 		
 	}
 
+	
 }

@@ -48,7 +48,8 @@ public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter
 	 * Instantiate a new blank {@link LogSegmenter} with default settings.
 	 */
 	public LogSegmenter() {
-		settings = new LogSegmenterSettings(); 
+		settings = new LogSegmenterSettings();
+		baseErrorMessage = BASE_ERROR_MESSAGE;
 	}
 	
 	/*
@@ -81,31 +82,12 @@ public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter
 
 	@Override
 	public boolean checkInput() {
-		if (null == img) {
-			errorMessage = BASE_ERROR_MESSAGE + "Image is null.";
+		boolean isOk = super.checkInput();		
+		if (!isOk)
 			return false;
-		}
-		if (!(img.getNumDimensions() == 2 || img.getNumDimensions() == 3)) {
-			errorMessage = BASE_ERROR_MESSAGE + "Image must be 2D or 3D, got " + img.getNumDimensions() +"D.";
-			return false;
-		}
 		if (!(settings instanceof LogSegmenterSettings)) {
-			errorMessage = BASE_ERROR_MESSAGE + "Expected to have a LogSegmenterSettings as settings object, but got a " + settings.getClass().getSimpleName() + ".";
+			errorMessage = baseErrorMessage + "Expected to have a LogSegmenterSettings as settings object, but got a " + settings.getClass().getSimpleName() + ".";
 			return false;
-		}
-		if (radius <= 0) {
-			errorMessage = BASE_ERROR_MESSAGE + "Search diameter is negative or 0.";
-			return false;
-		}
-		if (calibration == null) {
-			errorMessage = BASE_ERROR_MESSAGE + "Calibration array is null";
-			return false;
-		}
-		for (int i = 0; i < calibration.length; i++) {
-			if (calibration[i] <= 0) {
-				errorMessage = BASE_ERROR_MESSAGE + "Calibration array has negative or 0 elements.";
-				return false;
-			}
 		}
 		return true;
 	}
@@ -132,7 +114,7 @@ public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter
 	
 		final DownSample<T> downsampler = new DownSample<T>(img, dim, 0.5f, 0.5f);	// optimal sigma is defined by 0.5f, as mentioned here: http://pacific.mpi-cbg.de/wiki/index.php/Downsample
 		if (!downsampler.checkInput() || !downsampler.process()) {
-			errorMessage = BASE_ERROR_MESSAGE + "Failed to down-sample source image:\n"  + downsampler.getErrorMessage();
+			errorMessage = baseErrorMessage + "Failed to down-sample source image:\n"  + downsampler.getErrorMessage();
 	        return false;
 		}
 		intermediateImage = downsampler.getResult();
@@ -144,7 +126,7 @@ public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter
 		if (useMedianFilter) {
 			final MedianFilter<T> medFilt = new MedianFilter<T>(intermediateImage, strel, new OutOfBoundsStrategyMirrorFactory<T>()); 
 			if (!medFilt.process()) {
-				errorMessage = BASE_ERROR_MESSAGE + "Failed in applying median filter";
+				errorMessage = baseErrorMessage + "Failed in applying median filter";
 				return false;
 			}
 			intermediateImage = medFilt.getResult(); 
@@ -154,14 +136,14 @@ public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter
 		
 		final FourierConvolution<T, FloatType> fConvGauss = new FourierConvolution<T, FloatType>(intermediateImage, gaussianKernel);
 		if (!fConvGauss.checkInput() || !fConvGauss.process()) {
-			errorMessage = BASE_ERROR_MESSAGE + "Fourier convolution with Gaussian failed:\n" + fConvGauss.getErrorMessage() ;
+			errorMessage = baseErrorMessage + "Fourier convolution with Gaussian failed:\n" + fConvGauss.getErrorMessage() ;
 			return false;
 		}
 		intermediateImage = fConvGauss.getResult();
 		
 		final FourierConvolution<T, FloatType> fConvLaplacian = new FourierConvolution<T, FloatType>(intermediateImage, laplacianKernel);
 		if (!fConvLaplacian.checkInput() || !fConvLaplacian.process()) {
-			errorMessage = BASE_ERROR_MESSAGE + "Fourier Convolution with Laplacian failed:\n" + fConvLaplacian.getErrorMessage() ;
+			errorMessage = baseErrorMessage + "Fourier Convolution with Laplacian failed:\n" + fConvLaplacian.getErrorMessage() ;
 			return false;
 		}
 		intermediateImage = fConvLaplacian.getResult();	
@@ -175,7 +157,7 @@ public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter
 		thresh .setReal(threshold);
 		findExtrema.setThreshold(thresh);
 		if (!findExtrema.checkInput() || !findExtrema.process()) { 
-			errorMessage = BASE_ERROR_MESSAGE + "Extrema Finder failed:\n" + findExtrema.getErrorMessage();
+			errorMessage = baseErrorMessage + "Extrema Finder failed:\n" + findExtrema.getErrorMessage();
 			return false;
 		}
 		final List<float[]> centeredExtrema = findExtrema.getRegionalExtremaCenters(false);

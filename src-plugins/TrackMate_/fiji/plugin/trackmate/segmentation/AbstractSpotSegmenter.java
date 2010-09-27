@@ -14,9 +14,12 @@ import mpicbg.imglib.type.numeric.RealType;
  */
 public abstract class AbstractSpotSegmenter <T extends RealType<T>> implements SpotSegmenter<T> {
 
+	protected String baseErrorMessage = "";
 	/*
 	 * PROTECTED FIELDS
 	 */
+	
+	
 	
 	/**
 	 * The image to segment. Will not modified.
@@ -53,6 +56,34 @@ public abstract class AbstractSpotSegmenter <T extends RealType<T>> implements S
 	/*
 	 * SPOTSEGMENTER METHODS
 	 */
+	@Override
+	public boolean checkInput() {
+		
+		if (null == img) {
+			errorMessage = baseErrorMessage + "Image is null.";
+			return false;
+		}
+		if (!(img.getNumDimensions() == 2 || img.getNumDimensions() == 3)) {
+			errorMessage = baseErrorMessage + "Image must be 2D or 3D, got " + img.getNumDimensions() +"D.";
+			return false;
+		}
+		if (radius <= 0) {
+			errorMessage = baseErrorMessage + "Search diameter is negative or 0.";
+			return false;
+		}
+		if (calibration == null) {
+			errorMessage = baseErrorMessage + "Calibration array is null";
+			return false;
+		}
+		for (int i = 0; i < calibration.length; i++) {
+			if (calibration[i] <= 0) {
+				errorMessage = baseErrorMessage + "Calibration array has negative or 0 elements.";
+				return false;
+			}
+		}
+		return true;
+	};
+	
 	
 	@Override
 	public void setSettings(SegmenterSettings settings) {
@@ -76,7 +107,7 @@ public abstract class AbstractSpotSegmenter <T extends RealType<T>> implements S
 	
 	@Override
 	public void setImage(Image<T> image) {
-		this.spots = null;
+		this.spots = new ArrayList<Spot>();
 		this.intermediateImage = null;
 		this.img = image;
 	}

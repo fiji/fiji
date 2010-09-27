@@ -6,6 +6,7 @@ import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.features.FeatureFacade;
 import fiji.plugin.trackmate.gui.ThresholdGuiPanel;
 import fiji.plugin.trackmate.segmentation.LogSegmenter;
+import fiji.plugin.trackmate.segmentation.PeakPickerSegmenter;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 import fiji.plugin.trackmate.visualization.SpotDisplayer2D;
 import ij.ImagePlus;
@@ -81,7 +82,8 @@ public class SpotDisplayer2DTestDrive {
 		imp.show();
 		System.out.println("Creating image done.");
 		
-		SpotSegmenter<UnsignedByteType> segmenter = new LogSegmenter<UnsignedByteType>();
+//		SpotSegmenter<UnsignedByteType> segmenter = new LogSegmenter<UnsignedByteType>();
+		SpotSegmenter<UnsignedByteType> segmenter = new PeakPickerSegmenter<UnsignedByteType>();
 		segmenter.setEstimatedRadius(RADIUS);
 		segmenter.setCalibration(CALIBRATION);
 		segmenter.setImage(img);
