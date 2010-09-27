@@ -105,7 +105,7 @@ public class ErrorHandler {
 			error.position = document.createPosition(offset + 1);
 			list.add(error);
 		} catch (BadLocationException e) {
-			e.printStackTrace();
+			IJ.handleException(e);
 		}
 	}
 
@@ -128,7 +128,7 @@ public class ErrorHandler {
 					.createPosition(start);
 				list.add(error);
 			} catch (BadLocationException e) {
-				e.printStackTrace();
+				IJ.handleException(e);
 			}
 		}
 	}

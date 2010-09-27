@@ -16,6 +16,8 @@ import common.RefreshScripts;
 
 import fiji.scripting.java.Refresh_Javas;
 
+import ij.IJ;
+
 import java.awt.event.KeyEvent;
 
 import java.util.HashMap;
@@ -124,9 +126,9 @@ public class Languages {
 			try {
 				return interpreter_class.newInstance();
 			} catch (InstantiationException ie) {
-				ie.printStackTrace();
+				IJ.handleException(ie);
 			} catch (IllegalAccessException iae) {
-				iae.printStackTrace();
+				IJ.handleException(iae);
 			}
 			return null;
 		}
