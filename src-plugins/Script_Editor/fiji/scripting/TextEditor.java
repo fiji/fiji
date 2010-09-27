@@ -929,12 +929,12 @@ public class TextEditor extends JFrame implements ActionListener,
 
 	public class Tab extends JSplitPane {
 
-		final EditorPane editorPane = new EditorPane(TextEditor.this);
-		final JTextArea screen = new JTextArea();
+		protected final EditorPane editorPane = new EditorPane(TextEditor.this);
+		protected final JTextArea screen = new JTextArea();
 		private Executer executer;
 		private final JButton runit, killit;
 
-		Tab() {
+		public Tab() {
 			super(JSplitPane.VERTICAL_SPLIT);
 			super.setResizeWeight(350.0 / 430.0);
 
@@ -998,7 +998,7 @@ public class TextEditor extends JFrame implements ActionListener,
 			scroll.setPreferredSize(new Dimension(600, 80));
 			bottom.add(scroll, bc);
 
-			super.setTopComponent(this.editorPane.embedWithScrollbars());
+			super.setTopComponent(editorPane.embedWithScrollbars());
 			super.setBottomComponent(bottom);
 		}
 
