@@ -2030,8 +2030,11 @@ static int start_ij(void)
 		else if (!strcmp(main_argv[i], "--jython")) {
 			main_class = "org.python.util.jython";
 			/* When running on Debian / Ubuntu we depend on the
-			   external version of jython, so add its jar: */
-			string_append_path_list(class_path, "/usr/share/java/jython.jar");
+			   external version of jython, so add its jar.
+			   Since that .jar does not contain the Lib/ folder,
+			   let's add that jar only if we do not have our own. */
+			if (!file_exists(fiji_path("jars/jython.jar")))
+				string_append_path_list(class_path, "/usr/share/java/jython.jar");
 		}
 		else if (!strcmp(main_argv[i], "--jruby"))
 			main_class = "org.jruby.Main";
