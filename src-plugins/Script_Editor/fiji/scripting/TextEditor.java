@@ -1291,7 +1291,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		File tmpDir = null, file = getEditorPane().file;
 		String sourceName = null;
 		Languages.Language currentLanguage = getCurrentLanguage();
-		if (!(currentLanguage.interpreter_class == Refresh_Javas.class))
+		if (!(currentLanguage.interpreterClass == Refresh_Javas.class))
 			sourceName = file.getName();
 		if (!currentLanguage.menuLabel.equals("None")) try {
 			tmpDir = File.createTempFile("tmp", "");

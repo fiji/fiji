@@ -90,25 +90,25 @@ public class Languages {
 		String syntaxStyle;
 		String menuLabel;
 		int shortCut;
-		Class<? extends RefreshScripts> interpreter_class;
+		Class<? extends RefreshScripts> interpreterClass;
 		boolean debuggable, compileable;
 
 		private JRadioButtonMenuItem item;
 
 		public Language(String extension, String style, String label,
-				int shortCut, Class<? extends RefreshScripts> interpreter_class,
+				int shortCut, Class<? extends RefreshScripts> interpreterClass,
 				boolean isDebuggable, boolean isCompileable) {
 			this.extension = extension;
 			syntaxStyle = style;
 			menuLabel = label;
 			this.shortCut = shortCut;
-			this.interpreter_class = interpreter_class;
+			this.interpreterClass = interpreterClass;
 			debuggable = isDebuggable;
 			compileable = isCompileable;
 		}
 
 		public boolean isRunnable() {
-			return interpreter_class != null;
+			return interpreterClass != null;
 		}
 
 		// TODO: add a proper interface so we can add other debuggers
@@ -121,10 +121,10 @@ public class Languages {
 		}
 
 		RefreshScripts newInterpreter() {
-			if (null == interpreter_class)
+			if (null == interpreterClass)
 				return null;
 			try {
-				return interpreter_class.newInstance();
+				return interpreterClass.newInstance();
 			} catch (InstantiationException ie) {
 				IJ.handleException(ie);
 			} catch (IllegalAccessException iae) {
@@ -145,8 +145,8 @@ public class Languages {
 
 		public String toString() {
 			return "(" + extension + "; interpreter: "
-				+ (interpreter_class == null ? "<none>" :
-				   interpreter_class.getSimpleName()) + "; "
+				+ (interpreterClass == null ? "<none>" :
+				   interpreterClass.getSimpleName()) + "; "
 				+ (isCompileable() ? "" : "not ")
 				+ "compileable; "
 				+ (isDebuggable() ? "" : "not ")
