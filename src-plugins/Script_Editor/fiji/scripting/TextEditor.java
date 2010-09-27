@@ -1002,10 +1002,12 @@ public class TextEditor extends JFrame implements ActionListener,
 			else
 				tabsMenuItems.add(addToMenu(tabsMenu,
 					editorPane.getFileName(), 0, 0));
-		} catch (Exception e) {
+		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			error("The file '" + path + "' was not found.");
-			return;
+		} catch (Exception e) {
+			e.printStackTrace();
+			error("There was an error while opening '" + path + "': " + e);
 		}
 	}
 
