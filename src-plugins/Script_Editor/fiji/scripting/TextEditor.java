@@ -1162,7 +1162,7 @@ public class TextEditor extends JFrame implements ActionListener,
 				tab != null && tab.editorPane.isNew();
 			if (!wasNew) {
 				tab = new Tab();
-				tabbed.addTab("", new Tab());
+				tabbed.addTab("", tab);
 				switchTo(tabbed.getTabCount() - 1);
 				addDefaultAccelerators();
 			}
