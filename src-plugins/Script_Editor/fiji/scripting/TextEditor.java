@@ -1310,7 +1310,6 @@ public class TextEditor extends JFrame implements ActionListener,
 				sourcePath = generateScriptWrapper(tmpDir, sourceName, interpreter);
 				java = (Refresh_Javas)Languages.get(".java").newInterpreter();
 			}
-System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePath());
 			java.compile(sourcePath, tmpDir.getAbsolutePath());
 			getClasses(tmpDir, paths, names);
 			if (includeSources) {
