@@ -34,6 +34,10 @@ static void open_win_console();
 #define PATH_SEP ":"
 #endif
 
+#ifdef __linux__
+#include "glibc-compat.h"
+#endif
+
 static void error(const char *fmt, ...)
 {
 	va_list ap;
@@ -620,6 +624,9 @@ static int is_ipv6_broken(void)
 	return 0;
 #else
 	int sock = socket(AF_INET6, SOCK_STREAM, 0);
+	static const struct in6_addr in6addr_loopback = {
+		{ { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1 } }
+	};
 	struct sockaddr_in6 address = {
 		AF_INET6, 57294 + 7, 0, in6addr_loopback, 0
 	};
@@ -2023,8 +2030,11 @@ static int start_ij(void)
 		else if (!strcmp(main_argv[i], "--jython")) {
 			main_class = "org.python.util.jython";
 			/* When running on Debian / Ubuntu we depend on the
-			   external version of jython, so add its jar: */
-			string_append_path_list(class_path, "/usr/share/java/jython.jar");
+			   external version of jython, so add its jar.
+			   Since that .jar does not contain the Lib/ folder,
+			   let's add that jar only if we do not have our own. */
+			if (!file_exists(fiji_path("jars/jython.jar")))
+				string_append_path_list(class_path, "/usr/share/java/jython.jar");
 		}
 		else if (!strcmp(main_argv[i], "--jruby"))
 			main_class = "org.jruby.Main";

@@ -245,7 +245,7 @@ public class TextEditor extends JFrame implements ActionListener,
 
 			group.add(item);
 			languages.add(item);
-			language.item = item;
+			language.setMenuItem(item);
 		}
 		mbar.add(languages);
 
@@ -412,8 +412,7 @@ public class TextEditor extends JFrame implements ActionListener,
 	public TextEditor(String title, String text) {
 		this(null);
 		editorPane.setText(text);
-		String extension = editorPane.getExtension(title);
-		editorPane.setLanguageByExtension(extension);
+		editorPane.setLanguageByFileName(title);
 		setFileName(title);
 		setTitle();
 	}
@@ -838,8 +837,7 @@ public class TextEditor extends JFrame implements ActionListener,
 		editorPane = getEditorPane(index);
 		editorPane.requestFocus();
 		setTitle();
-		String extension = editorPane.getExtension(editorPane.getFileName());
-		editorPane.setLanguageByExtension(extension);
+		editorPane.setLanguageByFileName(editorPane.getFileName());
 		editorPane.checkForOutsideChanges();
 	}
 
@@ -1183,10 +1181,12 @@ public class TextEditor extends JFrame implements ActionListener,
 			else
 				tabsMenuItems.add(addToMenu(tabsMenu,
 					tab.editorPane.getFileName(), 0, 0));
-		} catch (Exception e) {
+		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			error("The file '" + path + "' was not found.");
-			return;
+		} catch (Exception e) {
+			e.printStackTrace();
+			error("There was an error while opening '" + path + "': " + e);
 		}
 	}
 
@@ -1429,8 +1429,8 @@ System.err.println("source: " + sourcePath + ", output: " + tmpDir.getAbsolutePa
 	}
 
 	void updateLanguageMenu(Languages.Language language) {
-		if (!language.item.isSelected())
-			language.item.setSelected(true);
+		if (!language.getMenuItem().isSelected())
+			language.getMenuItem().setSelected(true);
 
 		runMenu.setVisible(language.isRunnable());
 		compileAndRun.setLabel(language.isCompileable() ?

@@ -28,6 +28,8 @@ import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
 public class Languages {
 	protected Language[] languages;
 	protected Map<String, Language> map;
+	public final static Language fakefile =
+		new Language("Fakefile", SyntaxConstants.SYNTAX_STYLE_NONE, "Fakefile", 0, Refresh_Javas.class, true, true);
 
 	protected Languages() {
 		languages = new Language[] {
@@ -81,7 +83,7 @@ public class Languages {
 	}
 
 	/* The class keeps information about particular language */
-	public class Language {
+	public static class Language {
 		String extension;
 		String syntaxStyle;
 		String menuLabel;
@@ -89,9 +91,9 @@ public class Languages {
 		Class<? extends RefreshScripts> interpreter_class;
 		boolean debuggable, compileable;
 
-		JRadioButtonMenuItem item;
+		private JRadioButtonMenuItem item;
 
-		Language(String extension, String style, String label,
+		public Language(String extension, String style, String label,
 				int shortCut, Class<? extends RefreshScripts> interpreter_class,
 				boolean isDebuggable, boolean isCompileable) {
 			this.extension = extension;
@@ -103,16 +105,16 @@ public class Languages {
 			compileable = isCompileable;
 		}
 
-		boolean isRunnable() {
+		public boolean isRunnable() {
 			return interpreter_class != null;
 		}
 
 		// TODO: add a proper interface so we can add other debuggers
-		boolean isDebuggable() {
+		public boolean isDebuggable() {
 			return debuggable;
 		}
 
-		boolean isCompileable() {
+		public boolean isCompileable() {
 			return compileable;
 		}
 
@@ -127,6 +129,16 @@ public class Languages {
 				iae.printStackTrace();
 			}
 			return null;
+		}
+
+		public void setMenuItem(JRadioButtonMenuItem item) {
+			this.item = item;
+			if (extension.equals(""))
+				fakefile.item = item;
+		}
+
+		public JRadioButtonMenuItem getMenuItem() {
+			return item;
 		}
 
 		public String toString() {
