@@ -376,6 +376,12 @@ public class TokenFunctions implements Iterable<Token> {
 	public void removeTrailingWhitespace() {
 		int end = textArea.getDocument().getLength();
 
+		// Turn CR and CRLF into LF
+		for (int i = end - 1; i >= 0; i--)
+			if (getText(i, i + 1).equals("\r"))
+				textArea.replaceRange("\n", i, i + 1
+					+ (i < end - 1 && getText(i + 1, i + 2).equals("\n") ? 1 : 0));
+
 		// remove trailing empty lines
 		int realEnd = end;
 		if (eolAt(end - 1)) {

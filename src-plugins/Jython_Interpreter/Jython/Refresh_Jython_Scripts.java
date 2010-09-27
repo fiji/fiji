@@ -57,6 +57,7 @@ public class Refresh_Jython_Scripts extends RefreshScripts {
 
 	/** Will consume and close the stream. */
 	public void runScript(InputStream istream) {
+		PythonInterpreter PI = null;
 		try {
 			ClassLoader classLoader = IJ.getClassLoader();
 			if (classLoader == null)
@@ -64,8 +65,7 @@ public class Refresh_Jython_Scripts extends RefreshScripts {
 			PySystemState.initialize(System.getProperties(), System.getProperties(), new String[] { }, classLoader);
 			PySystemState pystate = new PySystemState();
 			pystate.setClassLoader(classLoader);
-			PythonInterpreter PI =
-				new PythonInterpreter(new PyDictionary(), pystate);
+			PI = new PythonInterpreter(new PyDictionary(), pystate);
 			PI.setOut(this.out);
 			PI.setErr(this.err);
 			Jython_Interpreter.importAll(PI);
@@ -84,6 +84,11 @@ public class Refresh_Jython_Scripts extends RefreshScripts {
 			} catch (Exception e) {
 				System.out.println("Jython runScript could not close the stream!");
 				e.printStackTrace();
+			}
+			try {
+				if (null != PI) PI.cleanup();
+			} catch (Throwable t) {
+				t.printStackTrace();
 			}
 		}
 	}

@@ -225,12 +225,12 @@ public class User_Plugins implements PlugIn {
 	}
 
 	/* TODO: sorted */
-	protected void installPlugin(String menuPath, String name,
+	public static MenuItem installPlugin(String menuPath, String name,
 			String command) {
 		if (Menus.getCommands().get(name) != null) {
 			IJ.log("The user plugin " + name
 				+ " would override an existing command!");
-			return;
+			return null;
 		}
 
 		int croc = menuPath.lastIndexOf('>');
@@ -239,6 +239,7 @@ public class User_Plugins implements PlugIn {
 		menu.add(item);
 		item.addActionListener(IJ.getInstance());
 		Menus.getCommands().put(name, command);
+		return item;
 	}
 
 	protected static Menu getMenu(String menuPath) {

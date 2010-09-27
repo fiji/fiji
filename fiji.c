@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <CoreFoundation/CoreFoundation.h>
+#include <ApplicationServices/ApplicationServices.h>
 
 struct string;
 static void append_icon_path(struct string *str);
@@ -31,6 +32,10 @@ static void open_win_console();
 /* TODO: use dup2() and freopen() and a thread to handle the output */
 #else
 #define PATH_SEP ":"
+#endif
+
+#ifdef __linux__
+#include "glibc-compat.h"
 #endif
 
 static void error(const char *fmt, ...)
@@ -619,6 +624,9 @@ static int is_ipv6_broken(void)
 	return 0;
 #else
 	int sock = socket(AF_INET6, SOCK_STREAM, 0);
+	static const struct in6_addr in6addr_loopback = {
+		{ { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1 } }
+	};
 	struct sockaddr_in6 address = {
 		AF_INET6, 57294 + 7, 0, in6addr_loopback, 0
 	};
@@ -1753,7 +1761,7 @@ static void __attribute__((__noreturn__)) usage(void)
 		"\trun <plugin> in ImageJ, optionally with arguments\n"
 		"--compile-and-run <path-to-.java-file>\n"
 		"\tcompile and run <plugin> in ImageJ\n"
-		"--edit <file>\n"
+		"--edit [<file>...]\n"
 		"\tedit the given file in the script editor\n"
 		"\n"
 		"Options to run programs other than ImageJ:\n"
@@ -1996,6 +2004,10 @@ static int start_ij(void)
 			add_option_string(&options, buffer, 1);
 			headless_argc++;
 		}
+		else if (i == main_argc - 1 && !strcmp(main_argv[i], "--edit")) {
+			add_option(&options, "-eval", 1);
+			add_option(&options, "run(\"Script Editor\");", 1);
+		}
 		else if (handle_one_option(&i, "--edit", arg))
 			for (;;) {
 				add_option(&options, "-eval", 1);
@@ -2018,8 +2030,11 @@ static int start_ij(void)
 		else if (!strcmp(main_argv[i], "--jython")) {
 			main_class = "org.python.util.jython";
 			/* When running on Debian / Ubuntu we depend on the
-			   external version of jython, so add its jar: */
-			string_append_path_list(class_path, "/usr/share/java/jython.jar");
+			   external version of jython, so add its jar.
+			   Since that .jar does not contain the Lib/ folder,
+			   let's add that jar only if we do not have our own. */
+			if (!file_exists(fiji_path("jars/jython.jar")))
+				string_append_path_list(class_path, "/usr/share/java/jython.jar");
 		}
 		else if (!strcmp(main_argv[i], "--jruby"))
 			main_class = "org.jruby.Main";
@@ -2145,7 +2160,7 @@ static int start_ij(void)
 
 	if (!headless &&
 #ifdef MACOSX
-			!getenv("SECURITYSESSIONID") && !getenv("DISPLAY")
+			!CGSessionCopyCurrentDictionary()
 #elif defined(__linux__)
 			!getenv("DISPLAY")
 #else
