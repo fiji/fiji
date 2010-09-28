@@ -16,6 +16,8 @@ import common.RefreshScripts;
 
 import fiji.scripting.java.Refresh_Javas;
 
+import ij.IJ;
+
 import java.awt.event.KeyEvent;
 
 import java.util.HashMap;
@@ -29,18 +31,18 @@ public class Languages {
 	protected Language[] languages;
 	protected Map<String, Language> map;
 	public final static Language fakefile =
-		new Language("Fakefile", SyntaxConstants.SYNTAX_STYLE_NONE, "Fakefile", 0, new Refresh_Javas(), true, true);
+		new Language("Fakefile", SyntaxConstants.SYNTAX_STYLE_NONE, "Fakefile", 0, Refresh_Javas.class, true, true);
 
 	protected Languages() {
 		languages = new Language[] {
-		        new Language(".java", SyntaxConstants.SYNTAX_STYLE_JAVA, "Java", KeyEvent.VK_J, new Refresh_Javas(), true, true),
-		        new Language(".js", SyntaxConstants.SYNTAX_STYLE_JAVASCRIPT, "Javascript", KeyEvent.VK_S, new Refresh_Javascript_Scripts(), false, false),
-		        new Language(".py", SyntaxConstants.SYNTAX_STYLE_PYTHON, "Python", KeyEvent.VK_P, new Refresh_Jython_Scripts(), false, false),
-		        new Language(".rb", SyntaxConstants.SYNTAX_STYLE_RUBY, "Ruby", KeyEvent.VK_R, new Refresh_JRuby_Scripts(), false, false),
-		        new Language(".clj", null, "Clojure", KeyEvent.VK_C, new Refresh_Clojure_Scripts(), false, false),
+		        new Language(".java", SyntaxConstants.SYNTAX_STYLE_JAVA, "Java", KeyEvent.VK_J, Refresh_Javas.class, true, true),
+		        new Language(".js", SyntaxConstants.SYNTAX_STYLE_JAVASCRIPT, "Javascript", KeyEvent.VK_S, Refresh_Javascript_Scripts.class, false, false),
+		        new Language(".py", SyntaxConstants.SYNTAX_STYLE_PYTHON, "Python", KeyEvent.VK_P, Refresh_Jython_Scripts.class, false, false),
+		        new Language(".rb", SyntaxConstants.SYNTAX_STYLE_RUBY, "Ruby", KeyEvent.VK_R, Refresh_JRuby_Scripts.class, false, false),
+		        new Language(".clj", null, "Clojure", KeyEvent.VK_C, Refresh_Clojure_Scripts.class, false, false),
 		        /* new Language(".m", null, "Matlab", KeyEvent.VK_M, null, false, false), */
-		        new Language(".bsh", SyntaxConstants.SYNTAX_STYLE_JAVA, "BeanShell", KeyEvent.VK_B, new Refresh_BSH_Scripts(), false, false),
-		        new Language(".ijm", null, "ImageJ Macro", KeyEvent.VK_I, new Refresh_Macros(), false, false),
+		        new Language(".bsh", SyntaxConstants.SYNTAX_STYLE_JAVA, "BeanShell", KeyEvent.VK_B, Refresh_BSH_Scripts.class, false, false),
+		        new Language(".ijm", null, "ImageJ Macro", KeyEvent.VK_I, Refresh_Macros.class, false, false),
 		        new Language("", SyntaxConstants.SYNTAX_STYLE_NONE, "None", KeyEvent.VK_N, null, false, false)
 		};
 
@@ -79,7 +81,7 @@ public class Languages {
 	}
 
 	public RefreshScripts getInterpreter(String extension) {
-		return get(extension).interpreter;
+		return get(extension).newInterpreter();
 	}
 
 	/* The class keeps information about particular language */
@@ -88,25 +90,25 @@ public class Languages {
 		String syntaxStyle;
 		String menuLabel;
 		int shortCut;
-		RefreshScripts interpreter;
+		Class<? extends RefreshScripts> interpreterClass;
 		boolean debuggable, compileable;
 
 		private JRadioButtonMenuItem item;
 
 		public Language(String extension, String style, String label,
-				int shortCut, RefreshScripts interpreter,
+				int shortCut, Class<? extends RefreshScripts> interpreterClass,
 				boolean isDebuggable, boolean isCompileable) {
 			this.extension = extension;
 			syntaxStyle = style;
 			menuLabel = label;
 			this.shortCut = shortCut;
-			this.interpreter = interpreter;
+			this.interpreterClass = interpreterClass;
 			debuggable = isDebuggable;
 			compileable = isCompileable;
 		}
 
 		public boolean isRunnable() {
-			return interpreter != null;
+			return interpreterClass != null;
 		}
 
 		// TODO: add a proper interface so we can add other debuggers
@@ -116,6 +118,19 @@ public class Languages {
 
 		public boolean isCompileable() {
 			return compileable;
+		}
+
+		RefreshScripts newInterpreter() {
+			if (null == interpreterClass)
+				return null;
+			try {
+				return interpreterClass.newInstance();
+			} catch (InstantiationException ie) {
+				IJ.handleException(ie);
+			} catch (IllegalAccessException iae) {
+				IJ.handleException(iae);
+			}
+			return null;
 		}
 
 		public void setMenuItem(JRadioButtonMenuItem item) {
@@ -130,8 +145,8 @@ public class Languages {
 
 		public String toString() {
 			return "(" + extension + "; interpreter: "
-				+ (interpreter == null ? "<none>" :
-				   interpreter.getClass().getName()) + "; "
+				+ (interpreterClass == null ? "<none>" :
+				   interpreterClass.getSimpleName()) + "; "
 				+ (isCompileable() ? "" : "not ")
 				+ "compileable; "
 				+ (isDebuggable() ? "" : "not ")
