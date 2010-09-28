@@ -36,10 +36,12 @@ public class SPIM_Registration_File extends SPIMRegistrationAbstract
 	}
 	
 	@Override
-	protected void getParameters( final GenericDialogPlus gd )
+	protected boolean getParameters( final GenericDialogPlus gd )
 	{
 		configurationFile = gd.getNextString();
-		configurationFileStatic = configurationFile;		
+		configurationFileStatic = configurationFile;
+		
+		return true;
 	}
 	
 	@Override
