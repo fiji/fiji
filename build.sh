@@ -28,8 +28,9 @@ CFLAGS=
 LDFLAGS=
 CONFIGURE_CROSS_COMPILE=
 CROSS_PREFIX=
-if test "$PLATFORM" != "$1"
-then
+case "$1" in
+"$PLATFORM") ;;
+*)
 	PLATFORM="$1"
 	ARCH="$(case "$PLATFORM" in *64) echo x86_64;; *) echo i686;; esac)"
 	case "$1" in
@@ -51,7 +52,8 @@ then
 	export CFLAGS LDFLAGS
 
 	CONFIGURE_CROSS_COMPILE="--enable-cross-compile --cross-prefix=$CROSS_PREFIX --target-os=$TARGET_OS --arch=$ARCH"
-fi
+	;;
+esac
 
 PLATFORM="$1"
 TARGET="$2"
@@ -190,13 +192,15 @@ echo "Checking whether FFMPEG needs to be built" &&
 	case "$NEED_LIPO" in
 	true)
 		save="$EXTRA_CONFIGURE" &&
+		save_CFLAGS="$CFLAGS" &&
 		for cpu in i386 x86_64
 		do
 			bits=${cpu#*86} &&
 			bits=${bits#_} &&
 			bits=${bits:-32} &&
-			export CFLAGS="$CFLAGS -arch $cpu -m$bits" &&
+			export CFLAGS="$save_CFLAGS -arch $cpu -m$bits" &&
 			export LDFLAGS="$CFLAGS" &&
+			EXTRA_CONFIGURE="$save --arch=$cpu" \
 			build_ffmpeg lib$bits$LIBEXT || break
 		done &&
 		lipo -create lib32$LIBEXT lib64$LIBEXT -output $TARGET
