@@ -76,7 +76,7 @@ public class MultiChannel_SPIM_Registration extends SPIMRegistrationAbstract
 		gd.addNumericField( "Crop_Size_Output_Image_X", cropSizeXStatic, 0 );
 		gd.addNumericField( "Crop_Size_Output_Image_Y", cropSizeYStatic, 0 );
 		gd.addNumericField( "Crop_Size_Output_Image_Z", cropSizeZStatic, 0 );
-		gd.addCheckbox( "Display_fused_imageh", displayFusedImageStatic );
+		gd.addCheckbox( "Display_fused_image", displayFusedImageStatic );
 		return gd;
 	}
 
