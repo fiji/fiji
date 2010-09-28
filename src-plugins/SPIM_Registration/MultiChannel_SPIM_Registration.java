@@ -1,4 +1,5 @@
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Date;
 
 import ij.IJ;
@@ -11,20 +12,19 @@ import mpicbg.spim.io.SPIMConfiguration;
 
 import fiji.util.gui.GenericDialogPlus;
 
-public class SPIM_Registration extends SPIMRegistrationAbstract
-{
-	public static String[] beadBrightnessList = { "Very weak", "Weak", "Comparable to Sample", "Strong" };	
-	public static String[] fusionMethodList = { "Fuse all images at once", "Fuse images sequentially", "Create independent registered images" };	
-	
+public class MultiChannel_SPIM_Registration extends SPIMRegistrationAbstract
+{	
 	public static String spimDataDirectoryStatic = "";
-	public static String timepointsStatic = "18";
-	public static String fileNamePatternStatic = "spim_TL{t}_Angle{a}.lsm";
-	public static String anglesStatic = "0-270:45";
-	public static String beadBrightnessStatic = beadBrightnessList[ 1 ];
-	public int beadBrightness = 0;
-	public static String fusionMethodStatic = fusionMethodList[ 0 ];
+	public static String timepointsStatic = "1";
+	public static String fileNamePatternStatic = "spim_TL{t}_Angle{a}_Track{c}.lsm";
+	public static String anglesStatic = "0-315:45";
+	public static String channelsStatic = "0,1";
+	public static String beadBrightnessStatic = SPIM_Registration.beadBrightnessList[ 1 ];
+	public int beadBrightness;
+	public static String fusionMethodStatic = SPIM_Registration.fusionMethodList[ 0 ];
 	public int fusionMethod = 0;
 	
+	public static boolean overrideResStatic = false;
 	public static boolean timeLapseRegistrationStatic = false;
 	public static boolean loadSegmentationStatic = false;
 	public static boolean loadRegistrationStatic = false;
@@ -36,33 +36,37 @@ public class SPIM_Registration extends SPIMRegistrationAbstract
 
 	public static int referenceTimePointStatic = 1;
 	public static int outputImageScalingStatic = 1;
-	public static int cropOffsetXStatic = 285;
-	public static int cropOffsetYStatic = 353;
-	public static int cropOffsetZStatic = 375;
-	public static int cropSizeXStatic = 727;
-	public static int cropSizeYStatic = 395;
-	public static int cropSizeZStatic = 325;
+	public static int cropOffsetXStatic = 0;
+	public static int cropOffsetYStatic = 0;
+	public static int cropOffsetZStatic = 0;
+	public static int cropSizeXStatic = 0;
+	public static int cropSizeYStatic = 0;
+	public static int cropSizeZStatic = 0;
+	
+	public static double xyResStatic = 0.73;
+	public static double zResStatic = 2.00;
 	
 	@Override
 	protected GenericDialogPlus createGenericDialogPlus()
 	{
-		final GenericDialogPlus gd = new GenericDialogPlus( "SPIM Registration" );
+		final GenericDialogPlus gd = new GenericDialogPlus( "MulitChannel SPIM Registration" );
 		
 		gd.addDirectoryField( "SPIM_Data_Directory", spimDataDirectoryStatic );
 		gd.addStringField( "Timepoints_to_process", timepointsStatic );
 		gd.addStringField( "Pattern_of_SPIM_files", fileNamePatternStatic, 25 );
 		gd.addStringField( "Angles_to_process", anglesStatic );
+		gd.addStringField( "Channels_to_process", channelsStatic );
 		gd.addCheckbox( "Timelapse_registration", timeLapseRegistrationStatic );
 		gd.addNumericField( "Reference_Timepoint", referenceTimePointStatic, 0 );
-		gd.addMessage( "" );
+		gd.addCheckbox( "Override_file_dimensions", overrideResStatic );
+		gd.addNumericField( "xy_resolution (um/px)", xyResStatic, 3 );
+		gd.addNumericField( "z_resolution (um/px)", zResStatic, 3 );		
 		gd.addCheckbox( "Load_segmented_beads", loadSegmentationStatic );
-		gd.addChoice( "Bead_brightness", beadBrightnessList, beadBrightnessStatic );
-		gd.addMessage( "" );		
+		gd.addChoice( "Bead_brightness", SPIM_Registration.beadBrightnessList, beadBrightnessStatic );
 		gd.addCheckbox( "Load_registration", loadRegistrationStatic );
 		gd.addCheckbox( "Register_only (no fusion)", registrationOnlyStatic );
 		gd.addCheckbox( "Display_registration", displayRegistrationStatic );
-		gd.addMessage( "" );		
-		gd.addChoice( "Fusion_Method", fusionMethodList, fusionMethodStatic );
+		gd.addChoice( "Fusion_Method", SPIM_Registration.fusionMethodList, fusionMethodStatic );
 		gd.addCheckbox( "Fusion_Use_Blending", fusionUseBlendingStatic );
 		gd.addCheckbox( "Fusion_Use_Content_Based_Weightening", fusionUseContentBasedStatic );
 		gd.addNumericField( "Output_Image_Scaling", outputImageScalingStatic, 0 );
@@ -72,109 +76,25 @@ public class SPIM_Registration extends SPIMRegistrationAbstract
 		gd.addNumericField( "Crop_Size_Output_Image_X", cropSizeXStatic, 0 );
 		gd.addNumericField( "Crop_Size_Output_Image_Y", cropSizeYStatic, 0 );
 		gd.addNumericField( "Crop_Size_Output_Image_Z", cropSizeZStatic, 0 );
-		gd.addCheckbox( "Display_fused_image", displayFusedImageStatic );
-
-		/*
-		//
-		// disable timelapse registration if not selected
-		//
-		final Checkbox timeLapseController = (Checkbox)gd.getCheckboxes().get(0);
-		final ArrayList<Component> timeLapseComponents = new ArrayList<Component>();
-
-		timeLapseComponents.add( (Component)gd.getNumericFields().get(0) ); //reference timepoint
-		
-		enableChannelChoice( timeLapseController, timeLapseComponents );
-		
-		//
-		// disable bead options if beads are loaded
-		//
-		final Checkbox segmentationController = (Checkbox)gd.getCheckboxes().get(1);
-		final ArrayList<Component> segmentationComponents = new ArrayList<Component>();
-
-		segmentationComponents.add( (Component)gd.getChoices().get(0) ); //bead brightness
-		
-		enableInverseChannelChoice( segmentationController, segmentationComponents );
-		
-		//
-		// disable crop and scaling of output image is not created
-		//
-		final Checkbox fusionController = (Checkbox)gd.getCheckboxes().get(3);
-		final ArrayList<Component> fusionComponents = new ArrayList<Component>();
-		
-		fusionComponents.add( (Component)gd.getChoices().get(1) ); //fusion method
-		fusionComponents.add( (Component)gd.getCheckboxes().get(5) ); //use blending
-		fusionComponents.add( (Component)gd.getCheckboxes().get(6) ); //use content based
-		fusionComponents.add( (Component)gd.getNumericFields().get(1) ); //scaling
-		fusionComponents.add( (Component)gd.getNumericFields().get(2) ); //cropOffsetX
-		fusionComponents.add( (Component)gd.getNumericFields().get(3) ); //cropOffsetY
-		fusionComponents.add( (Component)gd.getNumericFields().get(4) ); //cropOffsetZ
-		fusionComponents.add( (Component)gd.getNumericFields().get(5) ); //cropSizeX
-		fusionComponents.add( (Component)gd.getNumericFields().get(6) ); //cropSizeY
-		fusionComponents.add( (Component)gd.getNumericFields().get(7) ); //cropSizeZ
-		
-		enableInverseChannelChoice( fusionController, fusionComponents );
-		*/
-		
+		gd.addCheckbox( "Display_fused_imageh", displayFusedImageStatic );
 		return gd;
 	}
-	/*
-	private final void enableInverseChannelChoice( final Checkbox controller, final ArrayList<Component> target )
-	{
-		enableChannelChoice( controller, target, true );
-	}
-
-	private final void enableChannelChoice( final Checkbox controller, final ArrayList<Component> target )
-	{
-		enableChannelChoice( controller, target, false );
-	}
-
-	private final void enableChannelChoice( final Checkbox controller, final ArrayList<Component> target, final boolean inverse )
-	{		
-		changeState( controller, target, inverse );
-
-		controller.addItemListener(new ItemListener()
-		{
-			public void itemStateChanged(ItemEvent ie)
-			{
-				changeState( controller, target, inverse );
-			}
-		});
-	}
-	
-	private void changeState( final Checkbox controller, final ArrayList<Component> target, final boolean inverse )
-	{
-		if ( controller.getState() )
-		{
-			if ( inverse )
-				setComponentState( target, false );
-			else
-				setComponentState( target, true );
-		}
-		else
-		{
-			if ( inverse )
-				setComponentState( target, true );
-			else
-				setComponentState( target, false );					
-		}		
-	}
-
-	private final void setComponentState( final ArrayList<Component> target, final boolean state )
-	{
-		for ( final Component comp : target )
-			comp.setEnabled( state );
-	}
-	*/
 
 	@Override
 	protected Reconstruction execute()
-	{
+	{	
 		SPIMConfiguration conf = new SPIMConfiguration( );
 		
 		conf.timepointPattern = timepointsStatic;	
 		conf.anglePattern = anglesStatic;
+		conf.channelPattern = channelsStatic;
 		conf.inputFilePattern = fileNamePatternStatic;
 		conf.inputdirectory = spimDataDirectoryStatic;
+		
+		conf.overrideImageZStretching = overrideResStatic;
+		
+		if ( conf.overrideImageZStretching )
+			conf.zStretching = zResStatic / xyResStatic;
 		
 		conf.timeLapseRegistration = timeLapseRegistrationStatic;
 		conf.referenceTimePoint = referenceTimePointStatic;
@@ -207,7 +127,7 @@ public class SPIM_Registration extends SPIMRegistrationAbstract
 		else
 			conf.multipleImageFusion = true;
 		
-		if ( conf.timeLapseRegistration || conf.multipleImageFusion || !displayFusedImageStatic  )
+		if ( conf.timeLapseRegistration || conf.multipleImageFusion || !displayFusedImageStatic )
 			conf.showOutputImage = false;
 		else
 			conf.showOutputImage = true;
@@ -221,7 +141,7 @@ public class SPIM_Registration extends SPIMRegistrationAbstract
 		conf.cropSizeX = cropSizeXStatic;
 		conf.cropSizeY = cropSizeYStatic;
 		conf.cropSizeZ = cropSizeZStatic;
-		conf.outputImageFactory = new CellContainerFactory( 256 );
+		conf.outputImageFactory = new CellContainerFactory( 256 );		
 		
 		// check the directory string
 		conf.inputdirectory = conf.inputdirectory.replace('\\', '/');
@@ -289,25 +209,30 @@ public class SPIM_Registration extends SPIMRegistrationAbstract
 	}
 
 	@Override
-	protected boolean getParameters(GenericDialogPlus gd)
+	protected boolean getParameters( final GenericDialogPlus gd )
 	{
 		spimDataDirectoryStatic = gd.getNextString();
 		timepointsStatic = gd.getNextString();
 		fileNamePatternStatic = gd.getNextString();
 		anglesStatic = gd.getNextString();
+		channelsStatic = gd.getNextString();
 		timeLapseRegistrationStatic = gd.getNextBoolean();
 		referenceTimePointStatic = (int)Math.round( gd.getNextNumber() );
 		
+		overrideResStatic = gd.getNextBoolean();
+		xyResStatic = gd.getNextNumber();
+		zResStatic = gd.getNextNumber();
+		
 		loadSegmentationStatic = gd.getNextBoolean();
 		beadBrightness = gd.getNextChoiceIndex();
-		beadBrightnessStatic = beadBrightnessList[ beadBrightness ];
+		beadBrightnessStatic = SPIM_Registration.beadBrightnessList[ beadBrightness ];
 		
 		loadRegistrationStatic = gd.getNextBoolean();
 		registrationOnlyStatic = gd.getNextBoolean();
 		displayRegistrationStatic = gd.getNextBoolean();
 		
 		fusionMethod = gd.getNextChoiceIndex();
-		fusionMethodStatic = fusionMethodList[ fusionMethod ];
+		fusionMethodStatic = SPIM_Registration.fusionMethodList[ fusionMethod ];
 		fusionUseBlendingStatic = gd.getNextBoolean();
 		fusionUseContentBasedStatic = gd.getNextBoolean();
 		outputImageScalingStatic = (int)Math.round( gd.getNextNumber() );
@@ -316,8 +241,32 @@ public class SPIM_Registration extends SPIMRegistrationAbstract
 		cropOffsetZStatic = (int)Math.round( gd.getNextNumber() );
 		cropSizeXStatic  = (int)Math.round( gd.getNextNumber() );
 		cropSizeYStatic = (int)Math.round( gd.getNextNumber() );
-		cropSizeZStatic = (int)Math.round( gd.getNextNumber() );
+		cropSizeZStatic = (int)Math.round( gd.getNextNumber() );		
 		displayFusedImageStatic = gd.getNextBoolean(); 
+		
+		ArrayList<Integer> channels = null;
+		
+		try
+		{
+			channels = SPIMConfiguration.parseIntegerString( channelsStatic );
+		}
+		catch (ConfigurationParserException e)
+		{
+			e.printStackTrace();
+			channels = null;
+		}
+		
+		if ( channels == null )
+		{
+			IJ.error( "Error parsing the channel information: '" + channelsStatic + "'" );
+			return false;
+		}
+		
+		if ( channels.size() == 0 )
+		{
+			IJ.error( "At least one channel is required, but is only: '" + channelsStatic + "'" );
+			return false;
+		}
 		
 		return true;
 	}

@@ -37,7 +37,11 @@ public abstract class SPIMRegistrationAbstract implements PlugIn
 		if ( gd.wasCanceled() )			
 			return;
 		
-		getParameters( gd );
+		if ( !getParameters( gd ) )
+		{
+			IJ.error( "An error occured parsing the parameters." );
+			return;
+		}
 		
 		final Reconstruction spimReconstruction = execute();
 		final SPIMConfiguration conf = spimReconstruction.getSPIMConfiguration();
@@ -49,7 +53,7 @@ public abstract class SPIMRegistrationAbstract implements PlugIn
 	}
 	
 	protected abstract Reconstruction execute();	
-	protected abstract void getParameters( final GenericDialogPlus gd );	
+	protected abstract boolean getParameters( final GenericDialogPlus gd );	
 	protected abstract GenericDialogPlus createGenericDialogPlus();
 
 	protected static final void addHyperLinkListener(final MultiLineLabel text, final String myURL)
