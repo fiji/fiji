@@ -80,8 +80,9 @@ if (ffmpegDir.exists()) {
 String ffmpegFakefile = fakefilePrefix +
 	"all <- ffmpeg/" + target + "\n" +
 	"\n" +
-	"ffmpeg/" + target + "[sh build.sh " + platform + " " + target + "] <- "
-		+ (ffmpegDir.exists() ? "ffmpeg/**/*" : "");
+	"ffmpeg/" + target + "[sh build.sh " + platform + " " + target + "] <-"
+		+ " avlog.c"
+		+ (ffmpegDir.exists() ? " ffmpeg/**/*" : "");
 make(ffmpegFakefile, "all");
 
 String avformatTarget = "classes/fiji/ffmpeg/AVFORMAT.java";

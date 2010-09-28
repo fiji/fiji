@@ -174,10 +174,9 @@ echo "Checking whether FFMPEG needs to be built" &&
  "$CONFIGURE_CROSS_COMPILE") ;;
  *) uptodate=false;;
  esac &&
- if test ! -f $TARGET
+ if test ! -f $TARGET || test ../avlog.c -nt $TARGET
  then
 	uptodate=false
-	break
  fi &&
  if test true = "$uptodate" &&
 	test ! -z "$(eval find . -name '\\*.[ch]' -a -newer $TARGET)"
