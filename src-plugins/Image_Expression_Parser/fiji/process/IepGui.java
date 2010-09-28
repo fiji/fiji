@@ -320,6 +320,7 @@ public class IepGui <T extends RealType<T>> extends javax.swing.JFrame implement
 	 */
 	public String getExpression() {
 		String expression = (String) expressionField.getSelectedItem();
+		if (null == expression) return null;
 		return expression.trim();
 	}
 	
