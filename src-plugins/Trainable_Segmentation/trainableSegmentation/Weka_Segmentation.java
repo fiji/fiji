@@ -1263,9 +1263,7 @@ public class Weka_Segmentation implements PlugIn
 			data = loadedTrainingData;
 			IJ.log("Taking loaded data as only data...");
 		}
-
-		IJ.showStatus("Training classifier...");
-		IJ.log("Training classifier...");
+		
 		if (null == data){
 			IJ.log("WTF");
 		}
@@ -1276,9 +1274,13 @@ public class Weka_Segmentation implements PlugIn
 		// Resample data if necessary
 		if(homogenizeClasses)
 		{
+			IJ.showStatus("Homogenizing classes distribution...");
 			IJ.log("Homogenizing classes distribution...");
 			data = homogenizeTrainingData(data);		
 		}
+
+		IJ.showStatus("Training classifier...");
+		IJ.log("Training classifier...");
 		
 		// Train the classifier on the current data
 		final long start = System.currentTimeMillis();
@@ -4282,6 +4284,7 @@ public class Weka_Segmentation implements PlugIn
 					data.get(n).setClassValue(slice.getPixel(x, y) > 0 ? classIndex1 : classIndex2);
 					
 		}
+		/*
 		if(null !=  mismatches)
 			for(int i=0; i<depth; i++)
 			{
@@ -4295,6 +4298,7 @@ public class Weka_Segmentation implements PlugIn
 					data.get(n).setWeight(++weight);
 				}
 			}
+			*/
 	}
 	
 
