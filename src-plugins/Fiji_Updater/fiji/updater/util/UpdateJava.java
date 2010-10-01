@@ -48,7 +48,7 @@ import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.parser.ParserDelegator;
 
 public class UpdateJava implements PlugIn {
-	public final static String mainURL = "http://java.sun.com/javase/downloads/index.jsp";
+	public final static String mainURL = "http://www.oracle.com/technetwork/java/javase/downloads/index.html";
 	protected String cookie;
 	protected int totalBytes, currentBytes;
 	protected Progress progress;
@@ -86,8 +86,9 @@ public class UpdateJava implements PlugIn {
 			+ (IJ.is64Bit() ? " x64" : "");
 		String ext = IJ.isLinux() ? "bin" : "exe";
 
-		String url = getLink("Download " + (isJRE ? "JRE" : "JDK"), mainURL);
-		Form form = getForm("post", url);
+		Form download = getForm("post", "Download " + (isJRE ? "JRE" : "JDK"), mainURL);
+		String url = download.url;
+		Form form = getForm("post", download.url, download.submit());
 		if (isJRE) {
 			form.variables.put(form.ids.get("dnld_platform"), platform);
 			form.variables.put(form.ids.get("dnld_license"), "true");
@@ -346,7 +347,16 @@ public class UpdateJava implements PlugIn {
 
 	public Form getForm(final String method, String url) {
 		try {
-			List<Form> list = getList(getFormParser(url, method), url);
+			return getForm(method, url, openURL(url));
+		} catch (IOException e) {
+			abort("Could not fetch " + url);
+			return null; // shut up javac
+		}
+	}
+
+	public Form getForm(final String method, String url, InputStream in) {
+		try {
+			List<Form> list = getList(in, getFormParser(url, method));
 			if (list.size() > 1)
 				for (int i = 1; i < list.size(); i++)
 					if (!list.get(i).url.equals(list.get(0).url))
@@ -360,10 +370,25 @@ public class UpdateJava implements PlugIn {
 		}
 	}
 
+	public Form getForm(final String method, String submitLabel, String url) {
+		try {
+			List<Form> list = getList(getFormParser(url, method), url);
+			for (int i = 0; i < list.size(); i++)
+				if (submitLabel.equals(list.get(i).submitLabel))
+					return list.get(i);
+			if (list.size() == 0)
+				abort("Could not find form of method '" + method + "' in " + url);
+			return list.get(0);
+		} catch (IOException e) {
+			abort("Could not fetch " + url);
+			return null; // shut up javac
+		}
+	}
+
 	protected class Form {
 		protected Map<String, String> variables = new HashMap<String, String>();
 		protected Map<String, String> ids = new HashMap<String, String>();
-		protected String name, method, url;
+		protected String name, method, url, submitLabel;
 
 		public String toString() {
 			String result = "FORM(" + name + "," + method + "," + url + ")";
@@ -391,7 +416,6 @@ public class UpdateJava implements PlugIn {
 					!(connection instanceof HttpURLConnection))
 				throw new IOException("Tried to " + method + ", but is not HTTP: " + url);
 			HttpURLConnection http = (HttpURLConnection)connection;
-			getOrSetCookies(http);
 			http.setRequestMethod(method.toUpperCase());
 			http.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
 			http.setUseCaches(false);
@@ -399,6 +423,7 @@ public class UpdateJava implements PlugIn {
 			http.setDoOutput(true);
 			http.setRequestProperty("Content-Length", "" + bytes.length);
 			OutputStream out = http.getOutputStream();
+			getOrSetCookies(http);
 			out.write(bytes);
 			out.close();
 
@@ -431,7 +456,7 @@ public class UpdateJava implements PlugIn {
 			Form form = new Form();
 			form.name = (String)a.getAttribute(HTML.Attribute.NAME);
 			form.method = (String)a.getAttribute(HTML.Attribute.METHOD);
-			form.url = (String)a.getAttribute(HTML.Attribute.ACTION);
+			form.url = makeFullURL((String)a.getAttribute(HTML.Attribute.ACTION));
 			return form;
 		}
 
@@ -451,16 +476,20 @@ public class UpdateJava implements PlugIn {
 				String id = (String)a.getAttribute(HTML.Attribute.ID);
 				String name = (String)a.getAttribute(HTML.Attribute.NAME);
 				String value = (String)a.getAttribute(HTML.Attribute.VALUE);
+				String type = (String)a.getAttribute(HTML.Attribute.TYPE);
 				if (name == null)
 					name = id;
 				if (value == null)
 					value = "";
+				if (type != null && type.equals("submit"))
+					current.submitLabel = value;
 				else try {
 					value = URLDecoder.decode(value, "UTF-8");
 				} catch (UnsupportedEncodingException e) {
 					IJ.handleException(e);
 				}
-				current.variables.put(name, value);
+				if (name != null)
+					current.variables.put(name, value);
 				if (id != null)
 					current.ids.put(id, name);
 			}
