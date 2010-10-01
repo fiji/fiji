@@ -921,7 +921,7 @@ public class Weka_Segmentation implements PlugIn
 			final boolean resultExists = null != this.classifiedImage && 
 										 null != this.classifiedImage.getProcessor();
 
-			saveClassifierButton.setEnabled(resultExists);
+			saveClassifierButton.setEnabled(classifierExists);
 			overlayButton.setEnabled(resultExists);
 			resultButton.setEnabled(resultExists);
 			
