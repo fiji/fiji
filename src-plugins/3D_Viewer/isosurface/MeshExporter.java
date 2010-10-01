@@ -3,6 +3,8 @@ package isosurface;
 
 import ij3d.Content;
 import ij3d.ContentNode;
+import customnode.CustomQuadMesh;
+import customnode.CustomTriangleMesh;
 import customnode.WavefrontExporter;
 import customnode.CustomMeshNode;
 import customnode.CustomMesh;
@@ -12,6 +14,7 @@ import ij.IJ;
 import ij.io.SaveDialog;
 import ij.gui.YesNoCancelDialog;
 
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.BufferedOutputStream;
 import java.io.OutputStreamWriter;
@@ -32,6 +35,8 @@ import javax.vecmath.Color3f;
 
 
 public class MeshExporter {
+
+	public static final int ASCII = 0, BINARY = 1; // output filetype flag
 
 	private MeshExporter() {}
 
@@ -159,6 +164,164 @@ public class MeshExporter {
 			writeTrianglesDXF(w, triangles, title, "" + mat.getAsSingle());
 		}
 		w.append("0\nENDSEC\n0\nEOF\n");         //TRAILER of the file
+	}
+
+static public void saveAsSTL(Collection meshgroups, int filetype) {
+		if (null == meshgroups || 0 == meshgroups.size())
+			return;
+		meshgroups = filterMeshes(meshgroups);
+		if (0 == meshgroups.size()) {
+			IJ.log("No meshes to export!");
+			return;
+		}
+		SaveDialog sd = new SaveDialog("Save as STL ("
+				+ ((filetype == ASCII) ? "ASCII" : "binary") + ")",
+				"untitled", ".stl");
+		String dir = sd.getDirectory();
+		if (null == dir)
+			return;
+		if (IJ.isWindows())
+			dir = dir.replace('\\', '/');
+		if (!dir.endsWith("/"))
+			dir += "/";
+		String stl_filename = sd.getFileName();
+		if (!stl_filename.toLowerCase().endsWith(".stl"))
+			stl_filename += ".stl";
+
+		File stl_file = new File(dir + "/" + stl_filename);
+		// check if file exists
+		if (!IJ.isMacOSX()) {
+			if (stl_file.exists()) {
+				YesNoCancelDialog yn = new YesNoCancelDialog(IJ.getInstance(),
+						"Overwrite?", "File  " + stl_filename
+								+ " exists!\nOverwrite?");
+				if (!yn.yesPressed())
+					return;
+			}
+		}
+
+		OutputStreamWriter dos = null;
+		DataOutputStream out = null;
+		try {
+			if (filetype == ASCII) {
+				dos = new OutputStreamWriter(new BufferedOutputStream(
+						new FileOutputStream(stl_file)), "8859_1");
+				writeAsciiSTL(meshgroups, dos, stl_filename);
+				dos.flush();
+			} else {
+				out = new DataOutputStream(new BufferedOutputStream(
+						new FileOutputStream(stl_file)));
+				writeBinarySTL(meshgroups, out);
+				out.flush();
+			}
+		} catch (IOException ioe) {
+			ioe.printStackTrace();
+		} finally {
+			try {
+				if (null != dos)
+					dos.close();
+				if (null != out)
+					out.close();
+			} catch (Exception e) {
+			}
+		}
+	}
+
+	private static void writeBinarySTL(Collection meshgroups,
+			DataOutputStream out) {
+		// TODO Auto-generated method stub
+
+	}
+
+	private static void writeAsciiSTL(Collection<Content> meshgroups,
+			OutputStreamWriter dos, String stl_filename) {
+		try {
+			dos.write(" solid ");
+			dos.write(stl_filename);
+
+			// get all the meshes and sort them into a hash
+			HashMap<String, CustomMesh> meshes = new HashMap<String, CustomMesh>();
+			for (Iterator<Content> it = meshgroups.iterator(); it.hasNext();) {
+				Content mob = (Content) it.next();
+
+				ContentNode node = mob.getContent();
+				// First CustomMultiMesh, which is also a CustomMeshNode:
+				if (node instanceof CustomMultiMesh) {
+					CustomMultiMesh multi = (CustomMultiMesh) node;
+					for (int i = 0; i < multi.size(); i++) {
+						meshes.put(mob.getName() + " [" + (i + 1) + "]", multi
+								.getMesh(i));
+					}
+					// Then CustomMeshNode (all custom meshes):
+				} else if (node instanceof CustomMeshNode) {
+					meshes
+							.put(mob.getName(), ((CustomMeshNode) node)
+									.getMesh());
+					// An image volume rendered as isosurface:
+				} else if (node instanceof MeshGroup) {
+					meshes.put(mob.getName(), ((MeshGroup) node).getMesh());
+				} else {
+					IJ.log("Ignoring " + mob.getName() + " with node of class "
+							+ node.getClass());
+					continue;
+				}
+			}
+
+			// go through all meshes and add them to STL file
+			for (String name : meshes.keySet()) {
+				CustomMesh cmesh = meshes.get(name);
+				if (cmesh.getClass() == CustomQuadMesh.class) {
+					IJ.log("Quad meshes are unsupported, can't save " + name
+							+ " as STL");
+					continue;
+				} else if (cmesh.getClass() != CustomTriangleMesh.class) {
+					IJ.log("Unsupported content type, can't save " + name
+							+ " as STL");
+					continue;
+				}
+				List<Point3f> vertices = cmesh.getMesh();
+				final int nPoints = vertices.size();
+				for (int p = 0; p < nPoints; p += 3) {
+					Point3f p0 = vertices.get(p);
+					Point3f p1 = vertices.get(p+1);
+					Point3f p2 = vertices.get(p+2);
+					
+					float nx = (p1.y-p0.y) * (p2.z-p0.z) - (p1.z-p0.z) * (p2.y-p0.y);
+					float ny = (p1.z-p0.z) * (p2.x-p0.x) - (p1.x-p0.x) * (p2.z-p0.z);
+					float nz = (p1.x-p0.x) * (p2.y-p0.y) - (p1.y-p0.y) * (p2.x-p0.x);
+					
+					float length = (float)Math.sqrt(nx * nx + ny * ny + nz* nz);
+					nx /= length;
+					ny /= length;
+					nz /= length;
+
+					final String e = "%E"; //Scientific format -3.141569E+03
+					dos.write("\nfacet normal ");
+					dos.write(String.format(e, nx)+" ");
+					dos.write(String.format(e, ny)+" ");
+					dos.write(String.format(e, nz)+"\n");
+					dos.write(" outer loop\n");
+					dos.write("  vertex ");
+					dos.write(String.format(e, p0.x)+" ");
+					dos.write(String.format(e, p0.y)+" ");
+					dos.write(String.format(e, p0.z)+"\n");
+					dos.write("  vertex ");
+					dos.write(String.format(e, p1.x)+" ");
+					dos.write(String.format(e, p1.y)+" ");
+					dos.write(String.format(e, p1.z)+"\n");
+					dos.write("  vertex ");
+					dos.write(String.format(e, p2.x)+" ");
+					dos.write(String.format(e, p2.y)+" ");
+					dos.write(String.format(e, p2.z)+"\n");
+					dos.write(" endloop\n");
+					dos.write("endfacet");
+				}
+			}
+			dos.write("\n endsolid ");
+			dos.write(stl_filename);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Deprecated

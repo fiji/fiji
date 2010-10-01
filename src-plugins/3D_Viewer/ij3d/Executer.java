@@ -238,6 +238,10 @@ public class Executer {
 	public void saveAsWaveFront() {
 		MeshExporter.saveAsWaveFront(univ.getContents());
 	}
+	
+	public void saveAsAsciiSTL(){
+		MeshExporter.saveAsSTL(univ.getContents(), MeshExporter.ASCII);
+	}
 
 	public void loadView() {
 		OpenDialog sd = new OpenDialog(
