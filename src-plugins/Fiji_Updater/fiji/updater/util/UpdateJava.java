@@ -54,7 +54,7 @@ public class UpdateJava implements PlugIn {
 	protected Progress progress;
 
 	public UpdateJava() {
-		this(new IJProgress());
+		this(IJ.getInstance() != null ? new IJProgress() : new StderrProgress());
 		progress.setTitle("");
 	}
 
