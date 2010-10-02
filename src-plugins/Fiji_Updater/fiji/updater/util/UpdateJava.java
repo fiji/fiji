@@ -172,7 +172,8 @@ public class UpdateJava implements PlugIn {
 		if (url.startsWith("http://") || url.startsWith("https://")) try {
 			HttpURLConnection http = (HttpURLConnection)new URL(url).openConnection();
 			progress.addItem("Downloading " + url);
-			getOrSetCookies(http);
+			setCookies(http);
+			getCookies(http);
 			totalBytes = http.getContentLength();
 			currentBytes = 0;
 			return http.getInputStream();
@@ -195,10 +196,13 @@ public class UpdateJava implements PlugIn {
 		return callback.result;
 	}
 
-	protected void getOrSetCookies(HttpURLConnection http) {
+	protected void setCookies(HttpURLConnection http) {
 		if (cookie != null)
 			http.setRequestProperty("Cookie", cookie);
-		else {
+	}
+
+	protected void getCookies(HttpURLConnection http) {
+		if (cookie == null) {
 			List<String> cookies = http.getHeaderFields().get("Set-Cookie");
 			if (cookies != null && cookies.size() > 0) {
 				cookie = "";
@@ -422,8 +426,9 @@ public class UpdateJava implements PlugIn {
 			http.setDoInput(true);
 			http.setDoOutput(true);
 			http.setRequestProperty("Content-Length", "" + bytes.length);
+			setCookies(http);
 			OutputStream out = http.getOutputStream();
-			getOrSetCookies(http);
+			getCookies(http);
 			out.write(bytes);
 			out.close();
 
