@@ -242,6 +242,10 @@ public class Executer {
 	public void saveAsAsciiSTL(){
 		MeshExporter.saveAsSTL(univ.getContents(), MeshExporter.ASCII);
 	}
+	
+	public void saveAsBinarySTL(){
+		MeshExporter.saveAsSTL(univ.getContents(), MeshExporter.BINARY);
+	}
 
 	public void loadView() {
 		OpenDialog sd = new OpenDialog(

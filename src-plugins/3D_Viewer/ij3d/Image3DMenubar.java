@@ -53,6 +53,7 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 	private MenuItem exportObj;
 	private MenuItem exportDXF;
 	private MenuItem exportAsciiSTL;
+	private MenuItem exportBinarySTL;
 	private MenuItem smoothMesh;
 	private MenuItem scalebar;
 	private MenuItem smoothAllMeshes;
@@ -184,6 +185,10 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 		exportAsciiSTL = new MenuItem("STL (ASCII)");
 		exportAsciiSTL.addActionListener(this);
 		subMenu.add(exportAsciiSTL);
+		
+		exportBinarySTL = new MenuItem("STL (binary)");
+		exportBinarySTL.addActionListener(this);
+		subMenu.add(exportBinarySTL);
 
 		file.addSeparator();
 
@@ -576,7 +581,9 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 		else if (src == exportObj)
 			executer.saveAsWaveFront();
 		else if (src == exportAsciiSTL)
-			executer.saveAsAsciiSTL();		
+			executer.saveAsAsciiSTL();
+		else if (src == exportBinarySTL)
+			executer.saveAsBinarySTL();
 		else if (src == smoothMesh)
 			executer.smoothMesh(univ.getSelected());
 		else if (src == smoothAllMeshes)
