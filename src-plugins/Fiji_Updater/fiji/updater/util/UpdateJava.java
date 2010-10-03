@@ -69,7 +69,7 @@ public class UpdateJava implements PlugIn {
 		} catch (IOException e) {
 			progress.done();
 			e.printStackTrace();
-			IJ.error("Error downloading " + what + ": "
+			error("Error downloading " + what + ": "
 				+ (e instanceof UnknownHostException ? "unknown host " : "")
 				+ e.getMessage());
 		} catch (RuntimeException e) {
@@ -124,8 +124,22 @@ public class UpdateJava implements PlugIn {
 	}
 
 	public static void abort(String message) {
-		IJ.error(message);
+		error(message);
 		throw new RuntimeException(Macro.MACRO_CANCELED);
+	}
+
+	public static void log(String message) {
+		if (IJ.getInstance() != null)
+			IJ.log(message);
+		else
+			System.err.println(message);
+	}
+
+	public static void error(String message) {
+		if (IJ.getInstance() != null)
+			IJ.error(message);
+		else
+			System.err.println(message);
 	}
 
 	public File copyToTemp(String url) throws IOException {
@@ -584,13 +598,13 @@ public class UpdateJava implements PlugIn {
 			} catch (InterruptedException e) { /* ignore */ }
 			if (exitCode != 0) {
 				String cmd = joinArgs(cmdarray);
-				IJ.log("Command '" + cmd + "' failed.");
-				IJ.log("Error output:\n" + stderr.out);
-				IJ.log("Other output:\n" + stdout.out);
+				log("Command '" + cmd + "' failed.");
+				log("Error output:\n" + stderr.out);
+				log("Other output:\n" + stdout.out);
 				abort("Failed command:\n" + cmd);
 			}
 		} catch (IOException e) {
-			abort("I/O problem launching the command:\n" + joinArgs(cmdarray));
+			abort("I/O problem (" + e + ") launching the command:\n" + joinArgs(cmdarray));
 		}
 	}
 
