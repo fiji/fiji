@@ -340,7 +340,7 @@ CFLAGS(win64)=$CFLAGS $WINOPTS
 MACOPTS(osx10.3)=-I/System/Library/Frameworks/JavaVM.Framework/Headers \
 	-DMACOSX
 MACOPTS(osx10.4)=$MACOPTS(osx10.3) -mmacosx-version-min=10.3 -arch i386 -arch ppc
-MACOPTS(osx10.5)=$MACOPTS(osx10.4) -arch x86_64
+MACOPTS(osx10.5)=$MACOPTS(osx10.3) -mmacosx-version-min=10.4 -arch i386 -arch x86_64
 
 CFLAGS(linux)=$CFLAGS -DIPV6_MAYBE_BROKEN -fno-stack-protector
 CFLAGS(linux64)=$CFLAGS -DIPV6_MAYBE_BROKEN -fno-stack-protector
