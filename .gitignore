@@ -11,6 +11,8 @@
 /build/
 /make-targets
 /fiji.o
+/tmp.rc
+/tmp.o
 /fiji
 /fiji.exe
 /fiji-tiger

@@ -374,11 +374,9 @@ fiji-panther <- fiji.c
 all-cross[] <- cross-win32 cross-win64 cross-linux
 # cross-tiger does not work yet
 
-cross-win64[bin/cross-compiler.py win64 $CFLAGS(win64)] <- fiji.c
 cross-tiger[bin/chrooted-cross-compiler.sh tiger \
 	$CFLAGS(macosx) $LIBS(macosx)] <- fiji.c
-cross-*[bin/chrooted-cross-compiler.sh * \
-	$CFLAGS(*) $LIBS(*)] <- fiji.c
+cross-*[bin/cross-compiler.py * $CFLAGS(*) $LDFLAGS(*) $LIBS(*)] <- fiji.c
 
 # Precompiled stuff
 
