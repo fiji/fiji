@@ -54,6 +54,9 @@ public class Transform_Virtual_Stack_MT implements PlugIn
 	public static String outputDirectory="";
 	/** transforms directory **/
 	public static String transformsDirectory="";
+	/** interpolate? **/
+	public static boolean interpolate=true;
+   
 
 	//---------------------------------------------------------------------------------
 	/**
@@ -68,6 +71,7 @@ public class Transform_Virtual_Stack_MT implements PlugIn
 		gd.addDirectoryField("Source directory", sourceDirectory, 50);
 		gd.addDirectoryField("Output directory", outputDirectory, 50);
 		gd.addDirectoryField("Transforms directory", transformsDirectory, 50);
+		gd.addCheckbox( "interpolate", interpolate );
 		
 		gd.showDialog();
 		
@@ -78,6 +82,7 @@ public class Transform_Virtual_Stack_MT implements PlugIn
 		sourceDirectory = gd.getNextString();
 		outputDirectory = gd.getNextString();
 		transformsDirectory = gd.getNextString();
+		interpolate = gd.getNextBoolean();
 				
 
 		String source_dir = sourceDirectory;
@@ -169,7 +174,7 @@ public class Transform_Virtual_Stack_MT implements PlugIn
 		
 		// Create transformed images
 		IJ.showStatus("Calculating transformed images...");
-		if(Register_Virtual_Stack_MT.createResults(source_dir, src_names, target_dir, null, exe, transform) == false)
+		if(Register_Virtual_Stack_MT.createResults(source_dir, src_names, target_dir, null, exe, transform, interpolate) == false)
 		{
 			IJ.log("Error when creating transformed images");
 			exe.shutdownNow();
