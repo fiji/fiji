@@ -542,7 +542,7 @@ public class UpdateJava implements PlugIn {
 
 		String[] cmdarray = IJ.isWindows() ?
 			// TODO: use 8.3 path on Windows to avoid quoting
-			new String[] { exe.getPath(), "/s", "INSTALLDIR=" + parentDirectory.getAbsolutePath(), "STATIC=1" } :
+			new String[] { exe.getPath(), "/qr", "INSTALLDIR=" + parentDirectory.getAbsolutePath(), "STATIC=1" } :
 			new String[] { "sh", exe.getPath() };
 		launchProgram(cmdarray, parentDirectory, IJ.isWindows() ? null : "yes\n");
 
