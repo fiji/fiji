@@ -193,6 +193,7 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	jars/imagescience.jar \
 	plugins/TransformJ_.jar \
 	plugins/FeatureJ_.jar \
+	plugins/Stochastic_Denoise.jar \
 	plugins/RandomJ_.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS
