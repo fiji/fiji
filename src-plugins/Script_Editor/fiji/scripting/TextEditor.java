@@ -1079,13 +1079,13 @@ public class TextEditor extends JFrame implements ActionListener,
 						PrintWriter pw = new PrintWriter(po);
 						pw.write(text);
 						pw.flush(); // will lock and wait in some cases
+						try { po.close(); }
+						catch (Throwable tt) { tt.printStackTrace(); }
 					}
 				}.start();
 			} catch (Throwable t) {
 				t.printStackTrace();
 			} finally {
-				try { po.close(); }
-				catch (Throwable tt) { tt.printStackTrace(); }
 				// Re-enable when all text to send has been sent
 				editorPane.setEditable(true);
 			}
