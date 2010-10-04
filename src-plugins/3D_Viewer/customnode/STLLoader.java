@@ -50,6 +50,7 @@ public class STLLoader {
 	private Point3f normal; //to be used for file checking
 	private FileInputStream fis;
 	private int triangles;
+	private DecimalFormat decimalFormat = new DecimalFormat("0.0E0");
 
 	private void parse(String stlfile) throws IOException {
 		this.stlfile = stlfile;
@@ -92,28 +93,21 @@ public class STLLoader {
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
-		DecimalFormat df = new DecimalFormat("0.0E0");
 		meshes = new HashMap<String, CustomMesh>();
 		vertices = new ArrayList<Point3f>();
 		try {
 			while ((line = in.readLine()) != null) {
 				String[] numbers = line.trim().split("\\s+");
 				if (numbers[0].equals("facet") && numbers[1].equals("normal")) {
-					float x = df.parse(numbers[2].replaceFirst("\\+", ""))
-							.floatValue();
-					float y = df.parse(numbers[3].replaceFirst("\\+", ""))
-							.floatValue();
-					float z = df.parse(numbers[4].replaceFirst("\\+", ""))
-							.floatValue();
+					float x = parseFloat(numbers[2]);
+					float y = parseFloat(numbers[3]);
+					float z = parseFloat(numbers[4]);
 					normal = new Point3f(x, y, z);
 				}
 				if (numbers[0].equals("vertex")) {
-					float x = df.parse(numbers[1].replaceFirst("\\+", ""))
-							.floatValue();
-					float y = df.parse(numbers[2].replaceFirst("\\+", ""))
-							.floatValue();
-					float z = df.parse(numbers[3].replaceFirst("\\+", ""))
-							.floatValue();
+					float x = parseFloat(numbers[1]);
+					float y = parseFloat(numbers[2]);
+					float z = parseFloat(numbers[3]);
 					Point3f vertex = new Point3f(x, y, z);
 					vertices.add(vertex);
 				}
@@ -166,6 +160,10 @@ public class STLLoader {
 		meshes.put(name, cm);
 	}
 
+	private float parseFloat(String string) throws ParseException {
+	  	return decimalFormat.parse(string.replaceFirst("E\\+", "E")).floatValue();
+	}
+	
 	private float leBytesToFloat(byte b0, byte b1, byte b2, byte b3) {
 		return Float.intBitsToFloat((((b3 & 0xff) << 24) | ((b2 & 0xff) << 16)
 				| ((b1 & 0xff) << 8) | (b0 & 0xff)));
