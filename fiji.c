@@ -2890,7 +2890,7 @@ static void find_newest(struct string *relative_path, int max_depth, const char 
 	string_add_char(relative_path, '/');
 
 	string_append(relative_path, file);
-	if (file_exists(fiji_path(relative_path->buffer)) && is_native_library(relative_path->buffer)) {
+	if (file_exists(fiji_path(relative_path->buffer)) && is_native_library(fiji_path(relative_path->buffer))) {
 		string_set_length(relative_path, len);
 		if (!result->length || file_is_newer(fiji_path(relative_path->buffer), fiji_path(result->buffer)))
 			string_set(result, relative_path->buffer);
