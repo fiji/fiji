@@ -1057,10 +1057,11 @@ public class TextEditor extends JFrame implements ActionListener,
 				}
 			};
 			// Write into PipedOutputStream
-			// from the event dispatch thread
+			// from another Thread
 			try {
+				final String text;
 				if (selectionOnly) {
-					String text = editorPane.getSelectedText();
+					text = editorPane.getSelectedText();
 					if (text == null)
 						error("Selection required!");
 					else {
@@ -1070,10 +1071,16 @@ public class TextEditor extends JFrame implements ActionListener,
 						pw.flush();
 					}
 				} else {
-					PrintWriter pw = new PrintWriter(po);
-					pw.write(editorPane.getText());
-					pw.flush();
+					text = editorPane.getText();
 				}
+				new Thread() {
+					{ setPriority(Thread.NORM_PRIORITY); }
+					public void run() {
+						PrintWriter pw = new PrintWriter(po);
+						pw.write(text);
+						pw.flush(); // will lock and wait in some cases
+					}
+				}.start();
 			} catch (Throwable t) {
 				t.printStackTrace();
 			} finally {
