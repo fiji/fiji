@@ -7,6 +7,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
 
@@ -32,6 +33,9 @@ static void open_win_console();
 /* TODO: use dup2() and freopen() and a thread to handle the output */
 #else
 #define PATH_SEP ":"
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
 #endif
 
 #ifdef __linux__
@@ -2767,6 +2771,116 @@ static int launch_32bit_on_tiger(int argc, char **argv)
 }
 #endif
 
+/* check whether there a file is a native library */
+
+#ifdef __GNUC__
+#define MAYBE_UNUSED __attribute__ ((unused))
+#else
+#define MAYBE_UNUSED
+#endif
+
+static int read_exactly(int fd, unsigned char *buffer, int size)
+{
+	while (size > 0) {
+		int count = read(fd, buffer, size);
+		if (count < 0)
+			return 0;
+		buffer += count;
+		size -= count;
+	}
+	return 1;
+}
+
+/* returns bit-width (32, 64), or 0 if it is not a .dll */
+static int MAYBE_UNUSED is_dll(const char *path)
+{
+	int in;
+	unsigned char buffer[0x40];
+	unsigned char *p;
+	off_t offset;
+
+	if ((in = open(path, O_RDONLY | O_BINARY)) < 0)
+		return 0;
+
+	if (!read_exactly(in, buffer, sizeof(buffer)) ||
+			buffer[0] != 'M' || buffer[1] != 'Z') {
+		close(in);
+		return 0;
+	}
+
+	p = (unsigned char *)(buffer + 0x3c);
+	offset = p[0] | (p[1] << 8) | (p[2] << 16) | (p[2] << 24);
+	lseek(in, offset, SEEK_SET);
+	if (!read_exactly(in, buffer, 0x20) ||
+			buffer[0] != 'P' || buffer[1] != 'E' ||
+			buffer[2] != '\0' || buffer[3] != '\0') {
+		close(in);
+		return 0;
+	}
+
+	close(in);
+	if (buffer[0x17] & 0x20)
+		return (buffer[0x17] & 0x1) ? 32 : 64;
+	return 0;
+}
+
+static int MAYBE_UNUSED is_elf(const char *path)
+{
+	int in;
+	unsigned char buffer[0x40];
+
+	if ((in = open(path, O_RDONLY | O_BINARY)) < 0)
+		return 0;
+
+	if (!read_exactly(in, buffer, sizeof(buffer))) {
+		close(in);
+		return 0;
+	}
+
+	close(in);
+	if (buffer[0] == '\x7f' && buffer[1] == 'E' && buffer[2] == 'L' &&
+			buffer[3] == 'F')
+		return buffer[4] * 32;
+	return 0;
+}
+
+static int MAYBE_UNUSED is_dylib(const char *path)
+{
+	int in;
+	unsigned char buffer[0x40];
+
+	if ((in = open(path, O_RDONLY | O_BINARY)) < 0)
+		return 0;
+
+	if (!read_exactly(in, buffer, sizeof(buffer))) {
+		close(in);
+		return 0;
+	}
+
+	close(in);
+	if (buffer[0] == 0xca && buffer[1] == 0xfe && buffer[2] == 0xba &&
+			buffer[3] == 0xbe && buffer[4] == 0x00 &&
+			buffer[5] == 0x00 && buffer[6] == 0x00 &&
+			(buffer[7] >= 1 && buffer[7] < 20))
+		return 32 | 64; /* might be a fat one, containing both */
+	return 0;
+}
+
+static int is_native_library(const char *path)
+{
+#ifdef MACOSX
+	return is_dylib(path);
+#else
+	return
+#ifdef WIN32
+		is_dll(path)
+#else
+		is_elf(path)
+#endif
+		== sizeof(char *) * 8;
+#endif
+}
+
 static void find_newest(struct string *relative_path, int max_depth, const char *file, struct string *result)
 {
 	int len = relative_path->length;
@@ -2776,7 +2890,7 @@ static void find_newest(struct string *relative_path, int max_depth, const char 
 	string_add_char(relative_path, '/');
 
 	string_append(relative_path, file);
-	if (file_exists(fiji_path(relative_path->buffer))) {
+	if (file_exists(fiji_path(relative_path->buffer)) && is_native_library(relative_path->buffer)) {
 		string_set_length(relative_path, len);
 		if (!result->length || file_is_newer(fiji_path(relative_path->buffer), fiji_path(result->buffer)))
 			string_set(result, relative_path->buffer);
