@@ -22,12 +22,6 @@ public interface SpotSegmenter <T extends RealType<T>> extends Algorithm {
 	public void setImage(Image<T> image);
 	
 	/**
-	 * Set the estimated radius of the spot to segment. This value will be used 
-	 * to tune the segmenter properly. 
-	 */
-	public void setEstimatedRadius(float radius);
-	
-	/**
 	 * Set the calibration array that will be used to convert pixel coordinates 
 	 * in physical spot coordinates. 
 	 */
@@ -48,12 +42,5 @@ public interface SpotSegmenter <T extends RealType<T>> extends Algorithm {
 	 * Return the current {@link SegmenterSettings} suitable for this concrete implementation. 
 	 */
 	public SegmenterSettings getSettings();
-	
-	/**
-	 * Set the {@link SegmenterSettings} suitable for this concrete implementation. 
-	 */
-	public void setSettings(SegmenterSettings settings);
-	
-	
-	
+		
 }

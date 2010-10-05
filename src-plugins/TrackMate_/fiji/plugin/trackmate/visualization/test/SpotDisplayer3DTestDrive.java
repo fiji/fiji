@@ -99,7 +99,7 @@ public class SpotDisplayer3DTestDrive {
 		}
 		
 		System.out.println("Grabbing features...");
-		new FeatureFacade<UnsignedByteType>(img, img, 2*RADIUS, CALIBRATION).processFeature(Feature.MEAN_INTENSITY, spots);
+		new FeatureFacade<UnsignedByteType>(img, RADIUS, CALIBRATION).processFeature(Feature.MEAN_INTENSITY, spots);
 		for (Spot s : spots) 
 			System.out.println(s);
 

@@ -162,7 +162,7 @@ public class StartDialogPanel extends ActionListenablePanel {
 		if (null == settings)
 			settings = new Settings();
 		try {
-			settings.expectedDiameter = Float.parseFloat(jTextFieldExpectedBlobDiameter.getText());
+			settings.segmenterSettings.expectedRadius = Float.parseFloat(jTextFieldExpectedBlobDiameter.getText())/2;
 		} catch (NumberFormatException nfe) {}
 //		settings.useMedianFilter = jCheckBoxUseMedianFilter.isSelected();
 //		settings.allowEdgeMaxima = jCheckBoxAllowEdgeMaxima.isSelected();

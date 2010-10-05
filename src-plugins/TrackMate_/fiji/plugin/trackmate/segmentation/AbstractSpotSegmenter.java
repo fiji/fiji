@@ -14,21 +14,24 @@ import mpicbg.imglib.type.numeric.RealType;
  */
 public abstract class AbstractSpotSegmenter <T extends RealType<T>> implements SpotSegmenter<T> {
 
-	protected String baseErrorMessage = "";
+	/*
+	 * CCONSTRUCTORS
+	 */
+	
+	protected AbstractSpotSegmenter(SegmenterSettings segmenterSettings) {
+		this.settings = segmenterSettings;
+	}
+	
 	/*
 	 * PROTECTED FIELDS
 	 */
 	
-	
+	protected String baseErrorMessage = "";
 	
 	/**
 	 * The image to segment. Will not modified.
 	 */
 	protected Image<T> img;
-	/**
-	 * The estimated radius of the spot to segment. This parameter will be used to tune the segmenter. 
-	 */
-	protected float radius;
 	/** 
 	 * The calibration array to convert pixel coordinates in physical spot coordinates.
 	 * Negative or zero values ill generate an error.
@@ -49,7 +52,7 @@ public abstract class AbstractSpotSegmenter <T extends RealType<T>> implements S
 	protected String errorMessage = null;
 
 	/**
-	 * The settings for this segmenter. This should be cast to a suitable imeplementation.
+	 * The settings for this segmenter. Contains all parameters needed to perform segmentation.
 	 */
 	protected SegmenterSettings settings;
 	
@@ -67,7 +70,7 @@ public abstract class AbstractSpotSegmenter <T extends RealType<T>> implements S
 			errorMessage = baseErrorMessage + "Image must be 2D or 3D, got " + img.getNumDimensions() +"D.";
 			return false;
 		}
-		if (radius <= 0) {
+		if (settings.expectedRadius <= 0) {
 			errorMessage = baseErrorMessage + "Search diameter is negative or 0.";
 			return false;
 		}
@@ -84,11 +87,6 @@ public abstract class AbstractSpotSegmenter <T extends RealType<T>> implements S
 		return true;
 	};
 	
-	
-	@Override
-	public void setSettings(SegmenterSettings settings) {
-		this.settings = settings;
-	}
 	
 	@Override
 	public SegmenterSettings getSettings() {
@@ -118,15 +116,8 @@ public abstract class AbstractSpotSegmenter <T extends RealType<T>> implements S
 	}
 
 	@Override
-	public void setEstimatedRadius(float radius) {
-		this.radius = radius;
-	}
-
-	@Override
 	public String getErrorMessage() {
 		return errorMessage ;
 	}
-	
-
 	
 }

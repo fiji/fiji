@@ -31,20 +31,20 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 	 * CONSTRUCTORS
 	 */
 	
-	public BlobDescriptiveStatistics(Image<T> originalImage, float diameter, float[] calibration) {
+	public BlobDescriptiveStatistics(Image<T> originalImage, float radius, float[] calibration) {
 		this.img = originalImage;
 		if (img.getNumDimensions() == 3) {
-			this.cursor = new SphereCursor<T>(img, new float[3], diameter/2, calibration);
+			this.cursor = new SphereCursor<T>(img, new float[3], radius, calibration);
 			coords = new float[3];
 		} else { 
-			this.cursor = new DiscCursor<T>(img, new float[2], diameter/2, calibration);
+			this.cursor = new DiscCursor<T>(img, new float[2], radius, calibration);
 			coords = new float[2];
 		}
 		this.npixels = cursor.getNPixels();
 	}
 
-	public BlobDescriptiveStatistics(Image<T> originalImage, float diam) {
-		this(originalImage, diam, originalImage.getCalibration());
+	public BlobDescriptiveStatistics(Image<T> originalImage, float radius) {
+		this(originalImage, radius, originalImage.getCalibration());
 	}
 	
 	/*

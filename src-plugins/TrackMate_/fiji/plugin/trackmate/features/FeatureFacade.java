@@ -22,9 +22,8 @@ public class FeatureFacade <T extends RealType<T>> {
 	 */
 	
 	private Image<T> rawImage;
-	private Image<T> filteredImage;
 	private float[] calibration;
-	private float blobDiameter;
+	private float radius;
 	/** The number of radiuses to use in the {@link RadiusEstimator} feature analyzer. */
 	private int nDiameters = 10;
 	/** The contrast feature analyzer. */
@@ -35,21 +34,18 @@ public class FeatureFacade <T extends RealType<T>> {
 	private BlobMorphology<T> morphology;
 	/** The best radius feature estimator. */ 
 	private RadiusEstimator<T> radiusEstimator;
-	/** The LoG value estimator. */
-	private LoGValue<T> logValue;
 	/** Hold all the feature analyzers this facade deals with. */
 	private ArrayList<FeatureAnalyzer> featureAnalyzers;
 
-	public FeatureFacade(Image<T> rawImage, Image<T> filteredImage, float blobDiameter, float[] calibration) {
+	public FeatureFacade(Image<T> rawImage, float radius, float[] calibration) {
 		this.rawImage = rawImage;
-		this.filteredImage = filteredImage;
 		this.calibration = calibration;
-		this.blobDiameter = blobDiameter;
+		this.radius = radius;
 		initFeatureAnalyzer();
 	}
 	
-	public FeatureFacade(Image<T> rawImage, Image<T> filteredImage, float blobDiameter) {
-		this(rawImage, filteredImage, blobDiameter, rawImage.getCalibration());
+	public FeatureFacade(Image<T> rawImage, float radius) {
+		this(rawImage, radius, rawImage.getCalibration());
 	}
 	
 	/*
@@ -85,8 +81,6 @@ public class FeatureFacade <T extends RealType<T>> {
 		case STANDARD_DEVIATION:
 		case VARIANCE:
 			return descriptiveStatistics;
-		case LOG_VALUE:
-			return logValue;
 		}
 		return null;
 	}
@@ -141,21 +135,16 @@ public class FeatureFacade <T extends RealType<T>> {
 	 * called only once. 
 	 */
 	private void initFeatureAnalyzer() {
-		this.contrast = new BlobContrast<T>(rawImage, blobDiameter, calibration);
-		this.descriptiveStatistics = new BlobDescriptiveStatistics<T>(rawImage, blobDiameter, calibration);
-		this.morphology = new BlobMorphology<T>(rawImage, blobDiameter, calibration);
-		this.radiusEstimator = new RadiusEstimator<T>(rawImage, blobDiameter, nDiameters , calibration);
-		float[] downsamplingFactors = new float[filteredImage.getNumDimensions()];
-		for (int i = 0; i < downsamplingFactors.length; i++) 
-			downsamplingFactors[i] = (float) rawImage.getDimension(i) / filteredImage.getDimension(i);
-		this.logValue = new LoGValue<T>(filteredImage, downsamplingFactors, calibration);
+		this.contrast = new BlobContrast<T>(rawImage, radius, calibration);
+		this.descriptiveStatistics = new BlobDescriptiveStatistics<T>(rawImage, radius, calibration);
+		this.morphology = new BlobMorphology<T>(rawImage, radius, calibration);
+		this.radiusEstimator = new RadiusEstimator<T>(rawImage, radius, nDiameters , calibration);
 		
 		featureAnalyzers = new ArrayList<FeatureAnalyzer>();
 		featureAnalyzers.add(descriptiveStatistics);
 		featureAnalyzers.add(contrast);
 		featureAnalyzers.add(morphology);
 		featureAnalyzers.add(radiusEstimator);
-		featureAnalyzers.add(logValue);
 	}
 	
 	

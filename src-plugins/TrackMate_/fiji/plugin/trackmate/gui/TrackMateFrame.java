@@ -319,21 +319,21 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 							DEFAULT_THRESHOLD, 
 							new boolean[] {true, true, true});
 					// Render spots
-					displayer = new SpotDisplayer3D(universe, settings.expectedDiameter/2); 							
+					displayer = new SpotDisplayer3D(universe, settings.segmenterSettings.expectedRadius); 							
 					universe.addContentLater(imageContent);
 
 				} else {
 					final float[] calibration = new float[] {
 							(float) settings.imp.getCalibration().pixelWidth, 
 							(float) settings.imp.getCalibration().pixelHeight};
-					displayer = new SpotDisplayer2D(settings.imp, settings.expectedDiameter/2, calibration);
+					displayer = new SpotDisplayer2D(settings.imp, settings.segmenterSettings.expectedRadius, calibration);
 				}
 				displayer.setSpots(trackmate.getSpots());
 				displayer.render();
 				cardLayout.show(jPanelMain, THRESHOLD_GUI_KEY);
 				
 				thresholdGuiPanel.setSpots(trackmate.getSpots().values());
-				thresholdGuiPanel.addThresholdPanel(Feature.LOG_VALUE);
+				thresholdGuiPanel.addThresholdPanel(Feature.QUALITY);
 				thresholdGuiPanel.addChangeListener(new ChangeListener() {
 					@Override
 					public void stateChanged(ChangeEvent e) {

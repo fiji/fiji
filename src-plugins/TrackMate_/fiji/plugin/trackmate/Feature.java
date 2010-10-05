@@ -2,7 +2,7 @@ package fiji.plugin.trackmate;
 
 
 public enum Feature {
-	LOG_VALUE,
+	QUALITY,
 	CONTRAST,
 	ESTIMATED_DIAMETER,
 	MORPHOLOGY,
@@ -41,8 +41,8 @@ public enum Feature {
 			return "T";
 		case VARIANCE:
 			return "Variance";
-		case LOG_VALUE:
-			return "LoG Value";
+		case QUALITY:
+			return "Quality";
 		case CONTRAST:
 			return "Contrast";
 		case ESTIMATED_DIAMETER:

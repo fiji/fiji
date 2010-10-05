@@ -39,19 +39,18 @@ public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter
 	private Image<FloatType> gaussianKernel;
 	private StructuringElement strel;
 
+	private LogSegmenterSettings logsettings;
 
 	/*
 	 * CONSTRUCTORS
 	 */
 	
-	/**
-	 * Instantiate a new blank {@link LogSegmenter} with default settings.
-	 */
-	public LogSegmenter() {
-		settings = new LogSegmenterSettings();
-		baseErrorMessage = BASE_ERROR_MESSAGE;
+	public LogSegmenter(LogSegmenterSettings segmenterSettings) {
+		super(segmenterSettings);
+		this.baseErrorMessage = BASE_ERROR_MESSAGE;
+		this.logsettings = segmenterSettings;
 	}
-	
+
 	/*
 	 * PUBLIC METHODS
 	 */
@@ -69,38 +68,28 @@ public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter
 			createLaplacianKernel(); // instantiate laplacian kernel if needed
 			createGaussianKernel();
 			createSquareStrel();
+			float radius = settings.expectedRadius;
 			sigma = (float) (SMOOTH_FACTOR * 2 * radius / Math.sqrt(img.getNumDimensions())); // optimal sigma for LoG approach and dimensionality
 		}
 		this.spots = null;
 		this.intermediateImage = null;
 		this.img = image;
 	}
-		
+			
 	/*
 	 * ALGORITHM METHODS
 	 */
 
-	@Override
-	public boolean checkInput() {
-		boolean isOk = super.checkInput();		
-		if (!isOk)
-			return false;
-		if (!(settings instanceof LogSegmenterSettings)) {
-			errorMessage = baseErrorMessage + "Expected to have a LogSegmenterSettings as settings object, but got a " + settings.getClass().getSimpleName() + ".";
-			return false;
-		}
-		return true;
-	}
-
-	@Override
+		@Override
 	public boolean process() {
 		
 		/* 0 - Get settings
 		 */
-		LogSegmenterSettings lss = (LogSegmenterSettings) settings;
-		boolean useMedianFilter 	= lss.useMedianFilter;
-		boolean allowEdgeExtrema  	= lss.allowEdgeMaxima;
-		float threshold 			= lss.threshold;
+		
+		boolean useMedianFilter 	= logsettings.useMedianFilter;
+		boolean allowEdgeExtrema  	= logsettings.allowEdgeMaxima;
+		float threshold 			= settings.threshold;
+		float radius 				= settings.expectedRadius;
 		
 		/* 1 - 	Downsample to improve run time. The image is downsampled by the 
 		 * 		factor necessary to achieve a resulting blob size of about 10 pixels 

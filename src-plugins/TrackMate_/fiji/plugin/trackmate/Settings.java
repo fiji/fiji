@@ -1,6 +1,7 @@
 package fiji.plugin.trackmate;
 
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
+import fiji.plugin.trackmate.tracking.TrackerSettings;
 import ij.ImagePlus;
 
 /**
@@ -9,13 +10,10 @@ import ij.ImagePlus;
  */
 public class Settings {
 	
-	private static final float 		DEFAULT_EXPECTED_DIAMETER	= 6.5f;
 	
 			
 	/** The ImagePlus to operate on. */
 	public ImagePlus imp;
-	/** Stores the expected blob diameter in physical units. */
-	public float 	expectedDiameter = DEFAULT_EXPECTED_DIAMETER;
 	
 	public int tstart;
 	public int tend;
@@ -29,5 +27,6 @@ public class Settings {
 	
 	public static final Settings DEFAULT = new Settings();
 	
-	public SegmenterSettings segmenterSettings = null;
+	public SegmenterSettings segmenterSettings = new SegmenterSettings();
+	public TrackerSettings trackerSettings = new TrackerSettings();
 }

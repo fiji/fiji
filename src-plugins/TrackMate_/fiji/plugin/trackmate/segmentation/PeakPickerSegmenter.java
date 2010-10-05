@@ -4,9 +4,6 @@ import java.util.ArrayList;
 
 import mpicbg.imglib.algorithm.math.PickImagePeaks;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
-import mpicbg.imglib.cursor.LocalizableCursor;
-import mpicbg.imglib.image.Image;
-import mpicbg.imglib.type.logic.BitType;
 import mpicbg.imglib.type.numeric.RealType;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
@@ -22,10 +19,11 @@ public class PeakPickerSegmenter<T extends RealType<T>> extends AbstractSpotSegm
 	
 	
 	/*
-	 * CONSTRUCTOR
+	 * CONSTRUCTORS
 	 */
 	
-	public PeakPickerSegmenter() {
+	public PeakPickerSegmenter(SegmenterSettings segmenterSettings) {
+		super(segmenterSettings);
 		baseErrorMessage = BASE_ERROR_MESSAGE;
 	}
 	
@@ -33,15 +31,12 @@ public class PeakPickerSegmenter<T extends RealType<T>> extends AbstractSpotSegm
 	 * METHODS
 	 */
 	
-	@Override
-	public boolean checkInput() {
-		return super.checkInput();
-	}
 
 	@Override
 	public boolean process() {
 		
-		PickImagePeaks<T> peakPicker = new PickImagePeaks<T>(img);
+		float radius = settings.expectedRadius;
+		PickImagePeaks<T> peakPicker = new PickImagePeaks<T>(intermediateImage); // TODO
 		
 		double[] suppressionRadiuses = new double[img.getNumDimensions()];
 		for (int i = 0; i < img.getNumDimensions(); i++) 
@@ -54,28 +49,19 @@ public class PeakPickerSegmenter<T extends RealType<T>> extends AbstractSpotSegm
 		}
 		
 		// Create spots
+		LocalizableByDimCursor<T> cursor = intermediateImage.createLocalizableByDimCursor();
 		ArrayList<int[]> peaks = peakPicker.getPeakList();
 		spots.clear();
 		for(int[] peak : peaks) {
+			cursor.setPosition(peak);
+			if (cursor.getType().getRealFloat() < settings.threshold)
+				break; // because peaks are sorted, we can exit loop here
 			float[] coords = new float[3];
 			for (int i = 0; i < img.getNumDimensions(); i++) 
 				coords[i] = peak[i] * calibration[i];
 			Spot spot = new SpotImp(coords);
 			spots.add(spot);
 		}
-		
-		// Deal with intermediate image: return spot location as bit image
-		intermediateImage = img.createNewImage();
-		Image<BitType> bitImage = peakPicker.getResult();
-		LocalizableCursor<T> imgCursor = img.createLocalizableCursor();
-		LocalizableByDimCursor<BitType> bitCursor = bitImage.createLocalizableByDimCursor();
-		while(imgCursor.hasNext()) {
-			imgCursor.fwd();
-			bitCursor.setPosition(imgCursor);
-			imgCursor.getType().setReal(bitCursor.getType().getRealFloat());
-		}
-		imgCursor.close();
-		bitCursor.close();
 		
 		return true;
 	}

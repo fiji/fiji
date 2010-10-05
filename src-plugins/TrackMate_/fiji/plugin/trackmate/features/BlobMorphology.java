@@ -36,8 +36,8 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 	
 	/** The image to extract the Feature characteristics from. */
 	private Image<T> img;
-	/** The estimated diameter of the blob. */
-	private float diam;
+	/** The estimated radius of the blob. */
+	private float radius;
 	/** The Image calibration information. */
 	private float[] calibration;
 	/** Utility holder. */
@@ -48,20 +48,20 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 	 */
 	
 	
-	public BlobMorphology (Image<T> img, float diam, float[] calibration) {
+	public BlobMorphology (Image<T> img, float radius, float[] calibration) {
 		this.img = img;
-		this.diam = diam;
+		this.radius = radius;
 		this.calibration = calibration;
 		this.coords = new float[img.getNumDimensions()];
 	}
 	
 	
-	public BlobMorphology (Image<T> img, float diam) {
-		this(img, diam, img.getCalibration());
+	public BlobMorphology (Image<T> img, float radius) {
+		this(img, radius, img.getCalibration());
 	}
 	
 	
-	public BlobMorphology (Image<T> img, double diam, double[] calibration) {
+	public BlobMorphology (Image<T> img, double radius, double[] calibration) {
 		
 		// 1 - Convert double[] to float[]
 		float[] fCalibration = new float[3];
@@ -71,13 +71,13 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 		
 		// 2 - Construct
 		this.img = img;
-		this.diam = (float) diam;
+		this.radius = (float) radius;
 		this.calibration = fCalibration;
 		this.coords = new float[img.getNumDimensions()];
 	}
 	
-	public BlobMorphology (Image<T> img, double diam) {
-		this(img, (float) diam, img.getCalibration());
+	public BlobMorphology (Image<T> img, double radius) {
+		this(img, (float) radius, img.getCalibration());
 	}
 	
 	
@@ -97,7 +97,7 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 		for (int i = 0; i < coords.length; i++) 
 			coords[i] = spot.getFeature(Spot.POSITION_FEATURES[i]);
 		
-		final SphereCursor<T> cursor = new SphereCursor<T>(img, coords, diam/2);
+		final SphereCursor<T> cursor = new SphereCursor<T>(img, coords, radius);
 		double x, y, z;
 		double x2, y2, z2;
 		double mass, totalmass = 0;

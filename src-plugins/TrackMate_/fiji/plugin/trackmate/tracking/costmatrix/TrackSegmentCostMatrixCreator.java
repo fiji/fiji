@@ -8,6 +8,7 @@ import java.util.SortedSet;
 import Jama.Matrix;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.Utils;
+import fiji.plugin.trackmate.tracking.LAPUtils;
 import fiji.plugin.trackmate.tracking.LAPTracker.Settings;
 import fiji.plugin.trackmate.tracking.costfunction.GapClosingCostFunction;
 import fiji.plugin.trackmate.tracking.costfunction.MergingCostFunction;
@@ -85,6 +86,7 @@ import fiji.plugin.trackmate.tracking.costfunction.SplittingCostFunction;
 
 public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 
+	private static final boolean DEBUG = false;
 	/** The track segments. */
 	protected List<SortedSet<Spot>> trackSegments;
 	/** Holds the Spots in the middle of track segments (not at end or start). */
@@ -238,28 +240,20 @@ public class TrackSegmentCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 		topLeft.setMatrix(0, trackSegments.size() - 1, trackSegments.size(), numCols - 1, mergingScores);
 		topLeft.setMatrix(trackSegments.size(), numRows - 1, trackSegments.size(), numCols - 1, middle);
 		
+		if(DEBUG) {
+			System.out.println("-- DEBUG information from TrackSegmentCostMatrixCreator --");
+			System.out.println("Gap closing scores for "+trackSegments.size()+" segments:");
+			LAPUtils.echoMatrix(gapClosingScores.getArray());
+			System.out.println("Merging scores for "+trackSegments.size()+" segments and "+mergingMiddlePoints.size() +" merging points:");
+			LAPUtils.echoMatrix(mergingScores.getArray());
+			System.out.println("Splitting scores for "+splittingMiddlePoints.size()+" splitting points and "+trackSegments.size()+" segments:");
+			LAPUtils.echoMatrix(splittingScores.getArray());
+			System.out.println("Middle block:");
+			LAPUtils.echoMatrix(middle.getArray());
+		}
+		
 		return topLeft;
 	}
-
-	
-
-	
-	/** For debugging, use this to print a matrix where the max value
-	 * is NaN, and not Double.MAX_VALUE which makes displaying the matrix
-	 * impossible
-	 */
-//	private void printMatrix (Matrix m, String s) {
-//		Matrix n = m.copy();
-//		System.out.println(s);
-//		for (int i = 0; i < n.getRowDimension(); i++) {
-//			for (int j = 0; j < n.getColumnDimension(); j++) {
-//				if (n.get(i, j) == Double.MAX_VALUE) {
-//					n.set(i, j, Double.NaN);
-//				}
-//			}
-//		}
-//		n.print(4,2);
-//	}
 	
 	/**
 	 * Uses a gap closing cost function to fill in the gap closing costs sub-matrix.

@@ -12,7 +12,6 @@ import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
 import org.jgrapht.traverse.DepthFirstIterator;
 
-import Jama.Matrix;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
@@ -108,11 +107,11 @@ import fiji.plugin.trackmate.tracking.hungarian.HungarianAlgorithm;
  * @author Nicholas Perry
  */
 public class LAPTracker implements ObjectTracker {
-	
+
 	public static class Settings {
-		
+
 		public static final Settings DEFAULT = new Settings();
-		
+
 		// Default settings
 		private static final int MINIMUM_SEGMENT_LENGTH = 3; 
 		private static final double MAX_DIST_OBJECTS = 15.0d;
@@ -122,7 +121,7 @@ public class LAPTracker implements ObjectTracker {
 		private static final double MIN_INTENSITY_RATIO = 0.5d;
 		private static final double MAX_INTENSITY_RATIO = 4.0d;
 		private static final double CUTOFF_PERCENTILE = 0.9d;
-		
+
 		/** To throw out spurious segments, only include track segments with a length strictly larger
 		 * than this value. */
 		public int minSegmentLength = MINIMUM_SEGMENT_LENGTH;
@@ -144,8 +143,8 @@ public class LAPTracker implements ObjectTracker {
 		/** The percentile used to calculate d and b cutoffs in the paper. */
 		public double cutoffPercentile = CUTOFF_PERCENTILE;
 	}
-	
-		/** The cost matrix for linking individual objects (step 1), indexed by the first frame index. */
+
+	/** The cost matrix for linking individual objects (step 1), indexed by the first frame index. */
 	protected TreeMap<Integer, double[][]> linkingCosts;
 	/** The cost matrix for linking individual track segments (step 2). */
 	protected double[][] segmentCosts = null;
@@ -174,11 +173,12 @@ public class LAPTracker implements ObjectTracker {
 	protected int[] splittingMiddlePointsSegmentIndices;
 	/** The settings to use for this tracker. */
 	private Settings settings = Settings.DEFAULT;
-	
+
 	/** Stores the objects to track as a list of Spots per frame.  */
 	private TreeMap<Integer, List<Spot>> spots;
-	
+
 	private final static String BASE_ERROR_MESSAGE = "LAPTracker: ";
+	private static final boolean DEBUG = true;
 
 	private SimpleGraph<Spot, DefaultEdge> trackGraph = new SimpleGraph<Spot, DefaultEdge>(DefaultEdge.class);
 	/** 
@@ -191,14 +191,14 @@ public class LAPTracker implements ObjectTracker {
 	 * a cost matrix for segments in the step (2) of the algorithm.
 	 */
 	protected List<SortedSet<Spot>> trackSegments = null;
-	
+
 	private Logger logger = Logger.DEFAULT_LOGGER;
-	
-	
+
+
 	/*
 	 * CONSTRUCTORS
 	 */
-	
+
 	/** 
 	 * Default constructor.
 	 * 
@@ -219,7 +219,7 @@ public class LAPTracker implements ObjectTracker {
 	public LAPTracker (TreeMap<Integer, List<Spot>> spots, TreeMap<Integer, double[][]> linkingCosts) {
 		this(spots, linkingCosts, Settings.DEFAULT);
 	}
-	
+
 	public LAPTracker(TreeMap<Integer, List<Spot>> spots, Settings settings) {
 		this(spots, null, settings);
 	}
@@ -227,13 +227,13 @@ public class LAPTracker implements ObjectTracker {
 	public LAPTracker (TreeMap<Integer, List<Spot>> spots) {
 		this(spots, null, Settings.DEFAULT);
 	}
-	
+
 
 	/*
 	 * METHODS
 	 */
-	
-	
+
+
 	/**
 	 * Set the cost matrices used for step 1, linking objects into track segments.
 	 * <p>
@@ -245,8 +245,8 @@ public class LAPTracker implements ObjectTracker {
 	public void setLinkingCosts(TreeMap<Integer, double[][]> linkingCosts) {
 		this.linkingCosts = linkingCosts;
 	}
-	
-	
+
+
 	/**
 	 * Get the cost matrices used for step 1, linking objects into track segments.
 	 * @return The cost matrices, with one <code>double[][]</code> in the ArrayList for each frame t, t+1 pair.
@@ -254,8 +254,8 @@ public class LAPTracker implements ObjectTracker {
 	public TreeMap<Integer, double[][]> getLinkingCosts() {
 		return linkingCosts;
 	}
-	
-	
+
+
 	/**
 	 * Set the cost matrix used for step 2, linking track segments into final tracks.
 	 * @param segmentCosts The cost matrix, with structure matching figure 1c in the paper.
@@ -263,15 +263,15 @@ public class LAPTracker implements ObjectTracker {
 	public void setSegmentCosts(double[][] segmentCosts) {
 		this.segmentCosts = segmentCosts;
 	}
-	
+
 	/**
 	 * Set the logger used to echo log messages.
 	 */
 	public void setLogger(Logger logger) {
 		this.logger = logger;
 	}
-	
-	
+
+
 	/**
 	 * Get the cost matrix used for step 2, linking track segments into final tracks.
 	 * @return The cost matrix.
@@ -279,14 +279,14 @@ public class LAPTracker implements ObjectTracker {
 	public double[][] getSegmentCosts() {
 		return segmentCosts;
 	}
-	
-	
-	
+
+
+
 	@Override
 	public SimpleGraph<Spot,DefaultEdge> getTrackGraph() {
 		return trackGraph;
 	}
-	
+
 
 	/**
 	 * Returns the track segments computed from step (1).
@@ -297,7 +297,7 @@ public class LAPTracker implements ObjectTracker {
 		return trackSegments;
 	}
 
-	
+
 	@Override
 	public boolean checkInput() {
 		// Check that the objects list itself isn't null
@@ -305,13 +305,13 @@ public class LAPTracker implements ObjectTracker {
 			errorMessage = BASE_ERROR_MESSAGE + "The spot list is null.";
 			return false;
 		}
-		
+
 		// Check that the objects list contains inner collections.
 		if (spots.isEmpty()) {
 			errorMessage = BASE_ERROR_MESSAGE + "The spot list is empty.";
 			return false;
 		}
-		
+
 		// Check that at least one inner collection contains an object.
 		boolean empty = true;
 		for (int frame : spots.keySet()) {
@@ -324,47 +324,47 @@ public class LAPTracker implements ObjectTracker {
 			errorMessage = BASE_ERROR_MESSAGE + "The spot list is empty.";
 			return false;
 		}
-		
+
 		inputChecked = true;
 		return true;
 	}
 
-	
+
 	@Override
 	public String getErrorMessage() {
 		return errorMessage;
 	}
 
-	
+
 	/**
 	 * Use <b>only if the default cost matrices (from the paper) are to be used.</b>
 	 */
 	@Override
 	public boolean process() {
 		long tend, tstart;
-		
+
 		// Make sure checkInput() has been executed.
 		if (!inputChecked) {
 			errorMessage = BASE_ERROR_MESSAGE + "checkInput() must be executed before process().";
 			return false;
 		}
-		
-		
+
+
 		// Step 1 - Link objects into track segments
-		
+
 		// Create cost matrices
 		tstart = System.currentTimeMillis();
 		if (!createLinkingCostMatrices()) return false;
 		tend = System.currentTimeMillis();
 		logger.log(String.format("  Cost matrix for frame-to-frame linking created in %.1f s.\n", (tend-tstart)/1e3f));
-		
+
 		// Solve LAP
 		tstart = System.currentTimeMillis();
 		if (!linkObjectsToTrackSegments()) return false;
 		tend = System.currentTimeMillis();
 		logger.log(String.format("  Frame to frame LAP solved in %.1f s.\n", (tend-tstart)/1e3f));
-		
-		
+
+
 		// Step 2 - Link track segments into final tracks
 
 		// Create cost matrix
@@ -372,28 +372,17 @@ public class LAPTracker implements ObjectTracker {
 		if (!createTrackSegmentCostMatrix()) return false;
 		tend = System.currentTimeMillis();
 		logger.log(String.format("  Cost matrix for track segments created in %.1f s.\n", (tend-tstart)/1e3f));
-		
+
 		// Solve LAP
 		tstart = System.currentTimeMillis();
 		if (!linkTrackSegmentsToFinalTracks()) return false;
 		tend = System.currentTimeMillis();
 		logger.log(String.format("  Track segment LAP solved in %.1f s.\n", (tend-tstart)/1e3f));
-		
-		// Print step 2 cost matrix
-		Matrix debug = new Matrix(segmentCosts);
-		for (int i = 0; i < debug.getRowDimension(); i++) {
-			for (int j = 0; j < debug.getColumnDimension(); j++) {
-				if (Double.compare(Double.MAX_VALUE, debug.get(i,j)) == 0) {
-					debug.set(i, j, Double.NaN);
-				}
-			}
-		}
-		//debug.print(4,2);
-		
+
 		return true;
 	}
-	
-	
+
+
 	/**
 	 * Creates the cost matrices used to link objects (Step 1) for each frame pair.
 	 * Calling this method resets the {@link #linkingCosts} field, which stores these 
@@ -411,7 +400,7 @@ public class LAPTracker implements ObjectTracker {
 		int frame0 = frameIterator.next();
 		int frame1;
 		while(frameIterator.hasNext()) { // ascending order
-			
+
 			frame1 = frameIterator.next();
 			t0 = spots.get(frame0);
 			t1 = spots.get(frame1);
@@ -428,7 +417,7 @@ public class LAPTracker implements ObjectTracker {
 		return true;
 	}
 
-	
+
 
 
 	/**
@@ -446,8 +435,8 @@ public class LAPTracker implements ObjectTracker {
 		mergingMiddlePoints = segCosts.getMergingMiddlePoints();
 		return true;
 	}
-	
-	
+
+
 	/**
 	 * Creates the track segments computed from step 1.
 	 * @return True if execution completes successfully.
@@ -458,17 +447,17 @@ public class LAPTracker implements ObjectTracker {
 			errorMessage = "The linking cost matrix is null.";
 			return false;
 		}
-		
+
 		// Solve LAP
 		solveLAPForTrackSegments();
-		
+
 		// Compile LAP solutions into track segments
 		compileTrackSegments();
-		
+
 		return true;
 	}
-	
-	
+
+
 	/**
 	 * Creates the final tracks computed from step 2.
 	 * @see TrackSegmentCostMatrixCreator#getMiddlePoints()
@@ -476,13 +465,13 @@ public class LAPTracker implements ObjectTracker {
 	 * @return True if execution completes successfully, false otherwise.
 	 */
 	public boolean linkTrackSegmentsToFinalTracks() {
-		
+
 		// Check that there are track segments.
 		if (null == trackSegments || trackSegments.size() < 1) {
 			errorMessage = "There are no track segments to link.";
 			return false;
 		}
-		
+
 		// Check that the cost matrix for this step exists.
 		if (null == segmentCosts) {
 			errorMessage = "The segment cost matrix (step 2) does not exists.";
@@ -491,14 +480,14 @@ public class LAPTracker implements ObjectTracker {
 
 		// Solve LAP
 		int[][] finalTrackSolutions = solveLAPForFinalTracks();
-		
+
 		// Compile LAP solutions into final tracks
 		compileFinalTracks(finalTrackSolutions);
-		
+
 		return true;
 	}
 
-	
+
 	/**
 	 * Compute the optimal track segments using the cost matrix {@link LAPTracker#linkingCosts}.
 	 * Update the {@link #trackGraph} field.
@@ -513,12 +502,12 @@ public class LAPTracker implements ObjectTracker {
 		int frame0 = frameIterator.next();
 		int frame1;
 		while(frameIterator.hasNext()) { // ascending order
-			
+
 			double[][] costMatrix = linkingCosts.get(frame0);
 			AssignmentProblem problem = new AssignmentProblem(costMatrix);
 			int[][] solutions = problem.solve(solver);			
 			frame1 = frameIterator.next();			
-			
+
 			// Extend track segments using solutions: we update the graph edges
 			for (int i = 0; i < solutions.length; i++) {
 				int i0 = solutions[i][0];
@@ -532,14 +521,14 @@ public class LAPTracker implements ObjectTracker {
 					trackGraph.addEdge(s0, s1);
 				} // otherwise we do not create any connection
 			}
-			
+
 			// Next frame pair
 			frame0 = frame1;
 		}
 	}
-	
-	
-	
+
+
+
 
 	/**
 	 * Compute the optimal final track using the cost matrix 
@@ -552,8 +541,8 @@ public class LAPTracker implements ObjectTracker {
 		int[][] solutions = hung.solve(new HungarianAlgorithm());
 		return solutions;
 	}
-	
-	
+
+
 	/**
 	 * Uses DFS approach to create a List of track segments from the overall 
 	 * result of step 1
@@ -562,33 +551,32 @@ public class LAPTracker implements ObjectTracker {
 	 * into multiple explicit sets of Spots, sorted by their {@link Feature#POSITION_T}.
 	 */
 	private void compileTrackSegments() {
-		
+
 		trackSegments = new ArrayList<SortedSet<Spot>>();
-		
+
 		Collection<Spot> spotPool = new ArrayList<Spot>();
 		for(int frame : spots.keySet())
 			spotPool.addAll(spots.get(frame)); // frame info lost
-		
+
 		Spot source, current;
 		DepthFirstIterator<Spot, DefaultEdge> graphIterator;
 		SortedSet<Spot> trackSegment = null;
-		
+
 		while (!spotPool.isEmpty()) {
 			source = spotPool.iterator().next();
 			graphIterator = new DepthFirstIterator<Spot, DefaultEdge>(trackGraph, source); // restricted to connected components
 			trackSegment = new TreeSet<Spot>(Spot.frameComparator);
-			
+
 			while(graphIterator.hasNext()) {
 				current = graphIterator.next();
 				trackSegment.add(current);
 				spotPool.remove(current);
 			}
-			
+
 			trackSegments.add(trackSegment);
 		}
 	}
-	
-	
+
 	/**
 	 * Takes the solutions from the Hungarian algorithm, which are an int[][], and 
 	 * appropriately links the track segments. Before this method is called, the Spots in the
@@ -605,12 +593,14 @@ public class LAPTracker implements ObjectTracker {
 		final int numTrackSegments = trackSegments.size();
 		final int numMergingMiddlePoints = mergingMiddlePoints.size();
 		final int numSplittingMiddlePoints = splittingMiddlePoints.size();
-		
+
+		if(DEBUG) 
+			System.out.println("-- DEBUG information from LAPTracker --");
 		for (int[] solution : finalTrackSolutions) {
 			int i = solution[0];
 			int j = solution[1];
 			if (i < numTrackSegments) {
-				
+
 				// Case 1: Gap closing
 				if (j < numTrackSegments) {
 					SortedSet<Spot> segmentEnd = trackSegments.get(i);
@@ -618,59 +608,69 @@ public class LAPTracker implements ObjectTracker {
 					Spot end = segmentEnd.last();
 					Spot start = segmentStart.first();
 					trackGraph.addEdge(end, start);
+
+					if(DEBUG) 
+						System.out.println("Gap closing from segment "+i+" to segment "+j+".");
 				} 
-				
+
 				// Case 2: Merging
 				else if (j < (numTrackSegments + numMergingMiddlePoints)) {
 					SortedSet<Spot> segmentEnd = trackSegments.get(i);
 					Spot end =  segmentEnd.last();
 					Spot middle = mergingMiddlePoints.get(j - numTrackSegments);
 					trackGraph.addEdge(end, middle);
-				}
-			} else if (i < (numTrackSegments + numSplittingMiddlePoints)) {
-				
-				// Case 3: Splitting
-				if (j < numTrackSegments) {
-					SortedSet<Spot> segmentStart = trackSegments.get(j);
-					Spot start = segmentStart.first();
-					Spot mother = splittingMiddlePoints.get(i - numTrackSegments);
-					trackGraph.addEdge(start, mother);
+
+					if(DEBUG) {
+						SortedSet<Spot> track = null;
+						int indexTrack = 0;
+						int indexSpot = 0;
+						for(SortedSet<Spot> t : trackSegments)
+							if (t.contains(middle)) {
+								track = t;
+								for(Spot spot : track) {
+									if (spot == middle)
+										break;
+									else
+										indexSpot++;
+								}
+								break;
+							} else
+								indexTrack++;
+						System.out.println("Merging from segment "+i+" end to spot "+indexSpot+" in segment "+indexTrack+".");
+					}
+
+
+				} else if (i < (numTrackSegments + numSplittingMiddlePoints)) {
+
+					// Case 3: Splitting
+					if (j < numTrackSegments) {
+						SortedSet<Spot> segmentStart = trackSegments.get(j);
+						Spot start = segmentStart.first();
+						Spot mother = splittingMiddlePoints.get(i - numTrackSegments);
+						trackGraph.addEdge(start, mother);
+
+						if(DEBUG) {
+							SortedSet<Spot> track = null;
+							int indexTrack = 0;
+							int indexSpot = 0;
+							for(SortedSet<Spot> t : trackSegments)
+								if (t.contains(mother)) {
+									track = t;
+									for(Spot spot : track) {
+										if (spot == mother)
+											break;
+										else
+											indexSpot++;
+									}
+									break;
+								} else
+									indexTrack++;
+							System.out.println("Splitting from spot "+indexSpot+" in segment "+indexTrack+" to segment"+j+".");
+						}
+					}
 				}
 			}
 		}
-	}
-	
-	/*
-	 * STATIC METHODS - UTILS
-	 */
-	
-	@SuppressWarnings("unused")
-	private static final void echoMatrix(final double[][] m) {
-		int nlines = m.length;
-		int nrows = m[0].length;
-		double val;
-		System.out.print("L\\C\t");
-		for (int j = 0; j < nrows; j++) {
-			System.out.print(String.format("%7d: ", j));
-		}
-		System.out.println();
-		for (int i = 0; i < nlines; i++) {
-			System.out.print(i+":\t");
-			for (int j = 0; j < nrows; j++) {
-				val = m[i][j];
-				if (val > Double.MAX_VALUE/2)
-					System.out.print("     B   ");
-				else
-					System.out.print(String.format("%7.1f  ", val));
-			}
-			System.out.println();
-		}
-	}
-	
-	@SuppressWarnings("unused")
-	private static void echoSolutions(final int[][] solutions) {
-		for (int i = 0; i < solutions.length; i++)
-			System.out.println(String.format("%3d: %3d -> %3d", i, solutions[i][0], solutions[i][1]));
 	}
 }
 

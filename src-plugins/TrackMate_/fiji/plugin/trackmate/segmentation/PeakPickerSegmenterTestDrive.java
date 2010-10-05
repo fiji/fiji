@@ -58,10 +58,11 @@ public class PeakPickerSegmenterTestDrive {
 		cursor.close();
 
 		// Instantiate segmenter
-		SpotSegmenter<UnsignedByteType> segmenter = new PeakPickerSegmenter<UnsignedByteType>();
+		SegmenterSettings settings = new SegmenterSettings();
+		settings.expectedRadius = RADIUS;
+		SpotSegmenter<UnsignedByteType> segmenter = new PeakPickerSegmenter<UnsignedByteType>(settings);
 		segmenter.setImage(img);
 		segmenter.setCalibration(CALIBRATION);
-		segmenter.setEstimatedRadius(RADIUS);
 		
 		// Segment
 		long start = System.currentTimeMillis();

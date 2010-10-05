@@ -3,21 +3,18 @@ package fiji.plugin.trackmate;
 import fiji.plugin.trackmate.features.FeatureFacade;
 import fiji.plugin.trackmate.gui.TrackMateFrame;
 import fiji.plugin.trackmate.segmentation.LogSegmenter;
+import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 import fiji.plugin.trackmate.tracking.LAPTracker;
-import fiji.util.SplitString;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.plugin.PlugIn;
 
 import java.awt.Color;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.TreeMap;
 
 import javax.swing.SwingUtilities;
@@ -44,11 +41,6 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 	public static final String PLUGIN_NAME_STR = "Track Mate";
 	public static final String PLUGIN_NAME_VERSION = ".alpha";
 	
-	private static final String DIAMETER_KEY = "diameter";
-	private static final Map<String, String> optionStrings = new HashMap<String, String>();
-	static {
-		optionStrings.put(DIAMETER_KEY, 		""+Settings.DEFAULT.expectedDiameter);
-	}	
 	
 	/** Contain the segmentation result, un-filtered.*/
 	private TreeMap<Integer,List<Spot>> spots;
@@ -60,8 +52,21 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 	private Logger logger = Logger.DEFAULT_LOGGER;
 	private Settings settings = new Settings();
 	private List<FeatureThreshold> thresholds = new ArrayList<FeatureThreshold>();
-	private SpotSegmenter<T> segmenter = new LogSegmenter<T>();
+	private SpotSegmenter<T> segmenter;
 
+	/*
+	 * CONSTRUCTORS
+	 */
+	
+	public TrackMate_() {
+		
+	}
+	
+	public TrackMate_(Settings settings) {
+		this.settings = settings;
+	}
+	
+	
 	/*
 	 * RUN METHOD
 	 */
@@ -92,19 +97,6 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 				public void error(String message) { IJ.error("Spot_Tracker", message);}
 				public void setProgress(float val) {IJ.showProgress(val); }
 		};
-		
-		// Parse arg string for settings
-		try {
-			Map<String, String> options = SplitString.splitMacroOptions(arg);
-			for(String key : options.keySet())
-				for(String setting : optionStrings.keySet())
-					if (key.equals(setting))
-						optionStrings.put(key, options.get(key));
-		} catch (ParseException e) {
-			e.printStackTrace(logger);
-		}
-		
-		settings.expectedDiameter 	= Float.parseFloat(optionStrings.get(DIAMETER_KEY));
 		
 		// Run plugin on current image
 		ImagePlus imp = WindowManager.getCurrentImage();
@@ -209,14 +201,13 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 
 		/* 0 -- Initialize local variables */
 		final float[] calibration = new float[] {(float) imp.getCalibration().pixelWidth, (float) imp.getCalibration().pixelHeight, (float) imp.getCalibration().pixelDepth};
-		final float diam = settings.expectedDiameter;
-		segmenter.setEstimatedRadius(diam/2);
+
+		segmenter = SegmenterSettings.getSpotSegmenter(settings.segmenterSettings);
 		segmenter.setCalibration(calibration);
 		
 		// Since we can't get the NumericType out of imp, we assume it is a FloatType.
 		spots = new TreeMap<Integer, List<Spot>>();
 		List<Spot> spotsThisFrame;
-		Image<T> filteredImage;
 		
 		// For each frame...
 		for (int i = settings.tstart-1; i < settings.tend; i++) {
@@ -232,7 +223,6 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 			logger.setProgress((2*(i-settings.tstart)) / (2f * numFrames + 1));
 			segmenter.setImage(img);
 			if (segmenter.checkInput() && segmenter.process()) {
-				filteredImage = segmenter.getIntermediateImage();
 				spotsThisFrame = segmenter.getResult();
 				for (Spot spot : spotsThisFrame)
 					spot.putFeature(Feature.POSITION_T, i);
@@ -246,12 +236,9 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 			/* 3 - Extract features for the spot collection */
 			logger.log("Frame "+(i+1)+": Calculating features:\n");
 			logger.setProgress((2*(i-settings.tstart)+1) / (2f * numFrames + 1));
-			final FeatureFacade<T> featureCalculator = new FeatureFacade<T>(img, filteredImage, diam, calibration);
+			final FeatureFacade<T> featureCalculator = new FeatureFacade<T>(img, settings.segmenterSettings.expectedRadius, calibration);
 			logger.log("Frame "+(i+1)+":\tStatistics features\n");
-			featureCalculator.processFeature(Feature.MEAN_INTENSITY, spotsThisFrame);
-			logger.log("Frame "+(i+1)+":\tLoG feature\n");
-			featureCalculator.processFeature(Feature.LOG_VALUE, spotsThisFrame);
-			
+			featureCalculator.processFeature(Feature.MEAN_INTENSITY, spotsThisFrame);			
 		} // Finished looping over frames
 		logger.setProgress(1);
 				

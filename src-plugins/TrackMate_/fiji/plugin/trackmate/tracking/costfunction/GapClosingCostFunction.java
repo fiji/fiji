@@ -57,13 +57,13 @@ public class GapClosingCostFunction {
 				
 				seg1 = trackSegments.get(i);
 				seg2 = trackSegments.get(j);
-				end = seg1.last();				// get first Spot of seg1
+				end = seg1.last();				// get last Spot of seg1
 				start = seg2.first();			// get first Spot of seg2
-				tend = end.getFeature(Feature.POSITION_T);
+				tend = end.getFeature(Feature.POSITION_T); // we want at least tstart > tend
 				tstart = start.getFeature(Feature.POSITION_T);
 				
 				// Frame cutoff
-				if (Math.abs(tend-tstart) > timeCutoff || tend > tstart) {
+				if (tstart - tend > timeCutoff || tend >= tstart) {
 					m.set(i, j, blocked);
 					continue;
 				}

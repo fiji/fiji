@@ -13,15 +13,15 @@ public class BlobContrast <T extends RealType<T>> extends IndependentFeatureAnal
 	private static final Feature FEATURE = Feature.CONTRAST;
 	protected static final float RAD_PERCENTAGE = .2f;  
 	protected Image<T> img;
-	protected float diam;
+	protected float radius;
 	protected float[] calibration;
 	/** Utility holder. */
 	private float[] coords;
 	
 	
-	public BlobContrast(Image<T> originalImage, float diam, float[] calibration) {
+	public BlobContrast(Image<T> originalImage, float radius, float[] calibration) {
 		this.img = originalImage;
-		this.diam = diam;
+		this.radius = radius;
 		this.calibration = calibration;
 		this.coords = new float[3];
 	}
@@ -33,7 +33,7 @@ public class BlobContrast <T extends RealType<T>> extends IndependentFeatureAnal
 
 	@Override
 	public void process(Spot spot) {
-		float contrast = getContrast(spot, diam);
+		float contrast = getContrast(spot, radius);
 		spot.putFeature(FEATURE, Math.abs(contrast));
 	}
 	
@@ -43,15 +43,15 @@ public class BlobContrast <T extends RealType<T>> extends IndependentFeatureAnal
 	 * @param diameter  the diameter to search for is in physical units
 	 * @return
 	 */
-	protected float getContrast(final Spot spot, float diameter) {
+	protected float getContrast(final Spot spot, float radius) {
 		final DomainCursor<T> cursor;
 		if (img.getNumDimensions() == 3) 
-			cursor = new SphereCursor<T>(img, spot.getPosition(coords), diameter/2 * (1+RAD_PERCENTAGE), calibration);
+			cursor = new SphereCursor<T>(img, spot.getPosition(coords), radius * (1+RAD_PERCENTAGE), calibration);
 		else
-			cursor = new DiscCursor<T>(img, spot.getPosition(coords), diameter/2 * (1+RAD_PERCENTAGE), calibration);
+			cursor = new DiscCursor<T>(img, spot.getPosition(coords), radius * (1+RAD_PERCENTAGE), calibration);
 		int innerRingVolume = 0;
 		int outerRingVolume = 0 ;
-		float radius2 = diameter * diameter / 4;
+		float radius2 = radius * radius;
 		float innerRadius2 = radius2 * (1-RAD_PERCENTAGE) * (1-RAD_PERCENTAGE);
 		float innerTotalIntensity = 0;
 		float outerTotalIntensity = 0;

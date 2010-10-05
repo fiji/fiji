@@ -5,8 +5,8 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.features.FeatureFacade;
 import fiji.plugin.trackmate.gui.ThresholdGuiPanel;
-import fiji.plugin.trackmate.segmentation.LogSegmenter;
 import fiji.plugin.trackmate.segmentation.PeakPickerSegmenter;
+import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 import fiji.plugin.trackmate.visualization.SpotDisplayer2D;
 import ij.ImagePlus;
@@ -82,9 +82,10 @@ public class SpotDisplayer2DTestDrive {
 		imp.show();
 		System.out.println("Creating image done.");
 		
+		SegmenterSettings settings = new SegmenterSettings();
+		settings.expectedRadius = RADIUS;
 //		SpotSegmenter<UnsignedByteType> segmenter = new LogSegmenter<UnsignedByteType>();
-		SpotSegmenter<UnsignedByteType> segmenter = new PeakPickerSegmenter<UnsignedByteType>();
-		segmenter.setEstimatedRadius(RADIUS);
+		SpotSegmenter<UnsignedByteType> segmenter = new PeakPickerSegmenter<UnsignedByteType>(settings);
 		segmenter.setCalibration(CALIBRATION);
 		segmenter.setImage(img);
 		List<Spot> spots;
@@ -101,7 +102,7 @@ public class SpotDisplayer2DTestDrive {
 		allSpots.put(0, spots);
 		
 		System.out.println("Calculating features..");
-		FeatureFacade<UnsignedByteType> featureCalculator = new FeatureFacade<UnsignedByteType>(img, segmenter.getIntermediateImage(), 2*RADIUS, CALIBRATION);
+		FeatureFacade<UnsignedByteType> featureCalculator = new FeatureFacade<UnsignedByteType>(img, RADIUS, CALIBRATION);
 		featureCalculator.processFeature(Feature.MEAN_INTENSITY, spots);
 		System.out.println("Features done.");
 

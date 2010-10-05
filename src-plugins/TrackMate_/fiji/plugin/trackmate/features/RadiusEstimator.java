@@ -20,7 +20,7 @@ public class RadiusEstimator <T extends RealType<T>> extends IndependentFeatureA
 	/** The number of different diameters to try. */
 	private int nDiameters;
 	private Image<T> img;
-	private float diam;
+	private float radius;
 	private float[] calibration;
 	/** Utility holder. */
 	private float[] coords;
@@ -38,9 +38,9 @@ public class RadiusEstimator <T extends RealType<T>> extends IndependentFeatureA
 	 * @param nDiameters  the number of different diameter to compute
 	 * @param calibration  the spatial calibration array containing the pixel size in X, Y, Z
 	 */
-	public RadiusEstimator(Image<T> originalImage, float diameter, int nDiameters,  float[] calibration) {
+	public RadiusEstimator(Image<T> originalImage, float radius, int nDiameters,  float[] calibration) {
 		this.img = originalImage;
-		this.diam = diameter;
+		this.radius = radius;
 		this.nDiameters = nDiameters;
 		this.calibration = calibration;
 		this.coords = new float[img.getNumDimensions()];
@@ -59,7 +59,7 @@ public class RadiusEstimator <T extends RealType<T>> extends IndependentFeatureA
 			coords[i] = spot.getFeature(Spot.POSITION_FEATURES[i]);
 
 		// Get diameter array and radius squared
-		final float[] diameters = prepareDiameters(diam, nDiameters);
+		final float[] diameters = prepareDiameters(radius*2, nDiameters);
 		final float[] r2 = new float[nDiameters];
 		for (int i = 0; i < r2.length; i++) 
 			r2[i] = diameters[i] * diameters[i] / 4 ;

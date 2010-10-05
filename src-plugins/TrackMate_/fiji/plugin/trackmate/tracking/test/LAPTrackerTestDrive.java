@@ -11,6 +11,8 @@ import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeMap;
 
+import mpicbg.imglib.algorithm.math.MathLib;
+
 import org.jgrapht.alg.ConnectivityInspector;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.SimpleGraph;
@@ -19,6 +21,7 @@ import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.tracking.LAPTracker;
+import fiji.plugin.trackmate.tracking.LAPUtils;
 import fiji.plugin.trackmate.tracking.LAPTracker.Settings;
 import fiji.plugin.trackmate.tracking.costmatrix.LinkingCostMatrixCreator;
 import fiji.plugin.trackmate.tracking.costmatrix.TrackSegmentCostMatrixCreator;
@@ -123,19 +126,17 @@ public class LAPTrackerTestDrive {
 		LAPTracker lap;
 		if (!useCustomCostMatrices) {
 			lap = new LAPTracker(wrap);
-			if (!lap.checkInput() || !lap.process()) {
+			if (!lap.checkInput() || !lap.process())
 				System.out.println(lap.getErrorMessage());
-			}
 			
 			// Print out track segments
-//			ArrayList<ArrayList<Spot>> trackSegments = lap.getTrackSegments();
-//			for (ArrayList<Spot> trackSegment : trackSegments) {
-//				System.out.println("-*-*-*-*-* New Segment *-*-*-*-*-");
-//				for (Spot spot : trackSegment) {
-//					//System.out.println(spot.toString());
-//					System.out.println(MathLib.printCoordinates(spot.getCoordinates()) + ", Frame [" + spot.getFrame() + "]");
-//				}
-//			}
+			List<SortedSet<Spot>> trackSegments = lap.getTrackSegments();
+			for (SortedSet<Spot> trackSegment : trackSegments) {
+				System.out.println("\n-*-*-*-*-* New Segment *-*-*-*-*-");
+				for (Spot spot : trackSegment)
+					System.out.println(MathLib.printCoordinates(spot.getPosition(null)) + ", Frame [" + spot.getFeature(Feature.POSITION_T) + "]");	
+			}
+			
 		} else {
 			
 			lap = new LAPTracker(wrap);
@@ -193,13 +194,21 @@ public class LAPTrackerTestDrive {
 		int counter = 0;
 		for(Set<Spot> track : tracks) {
 			System.out.println("Track "+counter);
-			System.out.print("Spots in frames: ");
+			System.out.print("Spots in frames: \n");
 			for(Spot spot : track)
-				System.out.print(spot.getFeature(Feature.POSITION_T)+", ");
+				System.out.println(MathLib.printCoordinates(spot.getPosition(null)) + ", Frame [" + spot.getFeature(Feature.POSITION_T) + "]");
 			System.out.println();
 			counter++;
 		}
-	
+		
+		// 4 - Detailed info
+		System.out.println("Segment costs:");
+		LAPUtils.echoMatrix(lap.getSegmentCosts());
+		
+		System.out.println();
+		System.out.println("Fragment costs for 1st frame:");
+		LAPUtils.echoMatrix(lap.getLinkingCosts().get(0));
+		
 	}
 
 	@SuppressWarnings("unused")
