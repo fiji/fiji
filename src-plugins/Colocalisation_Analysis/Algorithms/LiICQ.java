@@ -8,12 +8,12 @@ import mpicbg.imglib.type.numeric.RealType;
  *
  * @param <T>
  */
-public class LiICQ<T extends RealType<T>> extends Algorithm {
+public class LiICQ<T extends RealType<T>> extends Algorithm<T> {
 	// the resulting ICQ value
 	double icqValue;
 
 	@Override
-	public void execute(DataContainer container)
+	public void execute(DataContainer<T> container)
 			throws MissingPreconditionException {
 		double mean1 = container.getMeanCh1();
 		double mean2 = container.getMeanCh2();
@@ -76,5 +76,11 @@ public class LiICQ<T extends RealType<T>> extends Algorithm {
 
 	public double getIcqValue() {
 		return icqValue;
+	}
+
+	@Override
+	public void processResults(ResultHandler<T> handler) {
+		super.processResults(handler);
+		handler.handleValue("Li's ICQ value", icqValue);
 	}
 }

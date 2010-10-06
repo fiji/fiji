@@ -15,7 +15,7 @@ import mpicbg.imglib.type.numeric.RealType;
  *
  * @param <T>
  */
-public class MandersCorrelation<T extends RealType<T>> extends Algorithm {
+public class MandersCorrelation<T extends RealType<T>> extends Algorithm<T> {
 	// Manders M1 and M2 value
 	double mandersM1, mandersM2;
 	// thresholded Manders M1 and M2 values
@@ -30,7 +30,7 @@ public class MandersCorrelation<T extends RealType<T>> extends Algorithm {
 	}
 
 	@Override
-	public void execute(DataContainer container)
+	public void execute(DataContainer<T> container)
 			throws MissingPreconditionException {
 		// get the two images for the calculation of Manders' values
 		Image<T> img1 = container.getSourceImage1();
@@ -157,6 +157,15 @@ public class MandersCorrelation<T extends RealType<T>> extends Algorithm {
 		results.m2 = m2Nominator / ch2Total;
 
 		return results;
+	}
+
+	@Override
+	public void processResults(ResultHandler<T> handler) {
+		super.processResults(handler);
+		handler.handleValue( "Manders M1 (no threshold)", mandersM1 );
+		handler.handleValue( "Manders M2 (no threshold)", mandersM2 );
+		handler.handleValue( "Manders M1 (threshold)", mandersThresholdedM1 );
+		handler.handleValue( "Manders M2 (threshold)", mandersThresholdedM2 );
 	}
 
 	public double getMandersM1() {

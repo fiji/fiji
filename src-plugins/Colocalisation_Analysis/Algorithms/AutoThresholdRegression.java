@@ -6,7 +6,7 @@ import mpicbg.imglib.type.numeric.RealType;
  * A class implementing the automatic finding of a threshold
  * used for Person colocalisation calculation.
  */
-public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm {
+public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm<T> {
 	/* the threshold for y-intercept to y-max to
 	 *  raise a warning about it being to high.
 	 */
@@ -23,7 +23,7 @@ public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm {
 	double bToYMaxRatio = 0.0;
 
 	@Override
-	public void execute(DataContainer container)
+	public void execute(DataContainer<T> container)
 			throws MissingPreconditionException {
 		// get the 2 images for the calculation of Pearson's
 		Image<T> img1 = container.getSourceImage1();
@@ -227,6 +227,16 @@ public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm {
 			addWarning("thresholds too low",
 				"The auto threshold method could not find a positive threshold.");
 		}
+	}
+
+	public void processResults(ResultHandler handler) {
+		super.processResults(handler);
+
+		handler.handleValue( "m (slope)", autoThresholdSlope , 2 );
+		handler.handleValue( "b (y-intercept)", autoThresholdIntercept, 2 );
+		handler.handleValue( "b to y-max ratio", bToYMaxRatio, 2 );
+		handler.handleValue( "Ch1 Max Threshold", ch1MaxThreshold.getRealDouble(), 2);
+		handler.handleValue( "Ch2 Max Threshold", ch2MaxThreshold.getRealDouble(), 2);
 	}
 
 	public double getBToYMaxRatio() {

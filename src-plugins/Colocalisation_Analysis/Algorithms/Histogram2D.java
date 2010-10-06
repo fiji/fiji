@@ -13,9 +13,9 @@ import mpicbg.imglib.container.array.ArrayContainerFactory;
 /**
  * Represents the creation of a 2D histogram between two images.
  * Channel 1 is set out in x direction, while channel 2 in y direction.
- * @param <T>
+ * @param <T> The source images value type
  */
-public class Histogram2D<T extends RealType<T>> extends Algorithm {
+public class Histogram2D<T extends RealType<T>> extends Algorithm<T> {
 
 	// The width of the scatter-plot
 	protected int xBins = 256;
@@ -67,7 +67,7 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 	 *
 	 * @return The minimum of what is seen as channel one.
 	 */
-	protected double getMinCh1(DataContainer container) {
+	protected double getMinCh1(DataContainer<T> container) {
 		return swapChannels ? container.getMinCh2() : container.getMinCh1();
 	}
 
@@ -78,7 +78,7 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 	 *
 	 * @return The minimum of what is seen as channel two.
 	 */
-	protected double getMinCh2(DataContainer container) {
+	protected double getMinCh2(DataContainer<T> container) {
 		return swapChannels ? container.getMinCh1() : container.getMinCh2();
 	}
 
@@ -89,7 +89,7 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 	 *
 	 * @return The maximum of what is seen as channel one.
 	 */
-	protected double getMaxCh1(DataContainer container) {
+	protected double getMaxCh1(DataContainer<T> container) {
 		return swapChannels ? container.getMaxCh2() : container.getMaxCh1();
 	}
 
@@ -100,7 +100,7 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 	 *
 	 * @return The maximum of what is seen as channel two.
 	 */
-	protected double getMaxCh2(DataContainer container) {
+	protected double getMaxCh2(DataContainer<T> container) {
 		return swapChannels ? container.getMaxCh1() : container.getMaxCh2();
 	}
 
@@ -111,7 +111,7 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 	 *
 	 * @return The image of what is seen as channel one.
 	 */
-	protected Image<T> getImageCh1(DataContainer container) {
+	protected Image<T> getImageCh1(DataContainer<T> container) {
 		return swapChannels ? container.getSourceImage2() : container.getSourceImage1();
 	}
 
@@ -122,7 +122,7 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 	 *
 	 * @return The image of what is seen as channel two.
 	 */
-	protected Image<T> getImageCh2(DataContainer container) {
+	protected Image<T> getImageCh2(DataContainer<T> container) {
 		return swapChannels ? container.getSourceImage1() : container.getSourceImage2();
 	}
 
@@ -148,11 +148,11 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 		return swapChannels ? ch1Label : ch2Label;
 	}
 
-	public void execute(DataContainer container) throws MissingPreconditionException {
+	public void execute(DataContainer<T> container) throws MissingPreconditionException {
 		generateHistogramData(container);
 	}
 
-	protected void generateHistogramData(DataContainer container) {
+	protected void generateHistogramData(DataContainer<T> container) {
 		double ch1BinWidth = getXBinWidth(container);
 		double ch2BinWidth = getYBinWidth(container);
 
@@ -245,12 +245,18 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 		return sb.toString();
 	}
 
+	public void processResults(ResultHandler<T> handler) {
+		super.processResults(handler);
+
+		handler.handleHistogram( this );
+	}
+
 	/**
 	 * Calculates the bin width of one bin in x/ch1 direction.
 	 * @param container The container with images to work on
 	 * @return The width of one bin in x direction
 	 */
-	protected double getXBinWidth(DataContainer container) {
+	protected double getXBinWidth(DataContainer<T> container) {
 		double ch1Max = getMaxCh1(container);
 		return (double) xBins / (double)(ch1Max + 1);
 	}
@@ -260,7 +266,7 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 	 * @param container The container with images to work on
 	 * @return The width of one bin in y direction
 	 */
-	protected double getYBinWidth(DataContainer container) {
+	protected double getYBinWidth(DataContainer<T> container) {
 		double ch2Max = getMaxCh2(container);
 		return (double) yBins / (double)(ch2Max + 1);
 	}
@@ -285,19 +291,19 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm {
 		return (yBins - 1) - (int)(ch2Val * ch2BinWidth);
 	}
 
-	protected double getXMin(DataContainer container) {
+	protected double getXMin(DataContainer<T> container) {
 		return 0;
 	}
 
-	protected double getXMax(DataContainer container) {
+	protected double getXMax(DataContainer<T> container) {
 		return swapChannels ? getMaxCh2(container) : getMaxCh1(container);
 	}
 
-	protected double getYMin(DataContainer container) {
+	protected double getYMin(DataContainer<T> container) {
 		return 0;
 	}
 
-	protected double getYMax(DataContainer container) {
+	protected double getYMax(DataContainer<T> container) {
 		return swapChannels ? getMaxCh1(container) : getMaxCh2(container);
 	}
 

@@ -55,7 +55,7 @@ import mpicbg.imglib.image.ImagePlusAdapter;
  * and offers features like the use of different LUTs.
  *
  */
-public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow implements Display, ItemListener, ActionListener, ClipboardOwner {
+public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow implements ResultHandler<T>, ItemListener, ActionListener, ClipboardOwner {
 	static final int WIN_WIDTH = 350;
 	static final int WIN_HEIGHT = 240;
 
@@ -66,8 +66,27 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 	protected Image<? extends RealType> currentlyDisplayedImageResult;
 
 	// a list of the available result images, no matter what specific kinds
-	protected List<Image<? extends RealType>> listOfImages = new ArrayList<Image<? extends RealType>>();
-	protected Map<Image<LongType>, Histogram2D<T>> mapOf2DHistograms = new HashMap<Image<LongType>, Histogram2D<T>>();
+	protected List<Image<? extends RealType>> listOfImages
+		= new ArrayList<Image<? extends RealType>>();
+	protected Map<Image<LongType>, Histogram2D<T>> mapOf2DHistograms
+		= new HashMap<Image<LongType>, Histogram2D<T>>();
+	// a list of warnings
+	protected List<Warning> warnings = new ArrayList<Warning>();
+	/* a small structure to keep decimal places information
+	 * with numbers along with a name.
+	 */
+	protected class ValueResult {
+		public String name;
+		public double number;
+		public int decimals;
+		public ValueResult( String name, double number, int decimals ) {
+			this.name = name;
+			this.number = number;
+			this.decimals = decimals;
+		}
+	}
+	// a list of named values, collected from algorithms
+	protected List<ValueResult> valueResults = new ArrayList<ValueResult>();
 
 	/* a map of images and corresponding LUTs. When an image is not in
 	 * there no LUT should be applied.
@@ -77,15 +96,19 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 	//make a cursor so we can get pixel values from the image
 	protected LocalizableByDimCursor<? extends RealType> pixelAccessCursor;
 
+
 	// GUI elements
 	JButton listButton, copyButton;
 	JCheckBox log;
+	/* The data container with general information about
+	 * source images
+	 */
+	DataContainer<T> dataContainer = null;
 
-	// during execution the data container is accessible
-	DataContainer dataContainer = null;
-
-	SingleWindowDisplay(){
+	SingleWindowDisplay(DataContainer<T> container){
 		super(NewImage.createFloatImage("Single Window Display", WIN_WIDTH, WIN_HEIGHT, 1, NewImage.FILL_WHITE));
+		// save a reference to the container
+		dataContainer = container;
 	}
 
 	public void setup() {
@@ -150,46 +173,45 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 		pack();
     }
 
-	public void display(DataContainer container) {
-		// save a reference to the container
-		dataContainer = container;
-		// see what images we have got
-		makeImageList();
+	public void process() {
+		// if wanted, display source images
+		if ( displayOriginalImages ) {
+			listOfImages.add( dataContainer.getSourceImage1() );
+			listOfImages.add( dataContainer.getSourceImage2() );
+		}
+		// create HTML table
+		makeHtmlText();
 		// set up the GUI
 		setup();
 		// display the first image available, if any
 		if (listOfImages.size() > 0) {
 			adjustDisplayedImage(listOfImages.get(0));
 		}
-
+		// show the GUI
 		this.show();
 	}
 
-	/**
-	 * Tests what image producing algorithms have been run and stores the
-	 * images in a list field.
-	 *
-	 * @param container The data container to get data from
-	 */
-	protected void makeImageList() {
-		if (dataContainer.getLiHistogramCh1() != null)
-			addHistogram2D( dataContainer.getLiHistogramCh1() );
-		if (dataContainer.getLiHistogramCh2() != null)
-			addHistogram2D( dataContainer.getLiHistogramCh2() );
-		if (dataContainer.getHistogram2D() != null)
-			addHistogram2D( dataContainer.getHistogram2D() );
-		if ( displayOriginalImages ) {
-			listOfImages.add( dataContainer.getSourceImage1() );
-			listOfImages.add( dataContainer.getSourceImage2() );
-		}
-
+	public void handleImage(Image<T> image) {
+		listOfImages.add( image );
 	}
 
-	protected void addHistogram2D (Histogram2D<T> histogram) {
+	public void handleHistogram(Histogram2D<T> histogram) {
 		listOfImages.add(histogram.getPlotImage());
 		mapOf2DHistograms.put(histogram.getPlotImage(), histogram);
 		// link the histogram to a LUT
 		listOfLUTs.put(histogram.getPlotImage(), "Fire");
+	}
+
+	public void handleWarning(Warning warning) {
+		warnings.add( warning );
+	}
+
+	public void handleValue(String name, double value) {
+		handleValue(name, value, 3);
+	}
+
+	public void handleValue(String name, double value, int decimals) {
+		valueResults.add( new ValueResult(name, value, decimals));
 	}
 
 	/**
@@ -220,10 +242,9 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 	 * @return The HTML source to display
 	 */
 	protected String makeHtmlText() {
-		// Set up an output stream we can print the table to.
-	    // This is easier than concatenating strings all the time.
-	    StringWriter sout = new StringWriter();
-	    PrintWriter out = new PrintWriter(sout);
+
+		StringWriter sout = new StringWriter();
+		PrintWriter out = new PrintWriter( sout );
 
 	    out.print("<html><head>");
 	    // add some style information
@@ -238,7 +259,6 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 	    out.print("</head>");
 
 	    // print out warnings, if any
-	    List<Warning> warnings = dataContainer.getWarnings();
 	    if ( warnings.size() > 0 ) {
 		    out.print("<H1 class=\"warn\">Warnings</H1>");
 		    // Print out the table
@@ -258,37 +278,8 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 	    out.print("<TABLE><TR>");
 	    out.print("<TH>Name</TH><TH>Result</TH></TR>");
 
-	    InputCheck inputCheck = dataContainer.getInputCheck();
-	    if (inputCheck != null) {
-		    printTableRow(out, "% zero-zero pixels", inputCheck.getZeroZeroPixelRatio());
-		    printTableRow(out, "% saturated ch1 pixels", inputCheck.getSaturatedRatioCh1());
-		    printTableRow(out, "% saturated ch2 pixels", inputCheck.getSaturatedRatioCh2());
-	    }
-
-	    AutoThresholdRegression autoThreshold = dataContainer.getAutoThreshold();
-	    if (autoThreshold != null) {
-		    printTableRow(out, "Auto threshold slope", autoThreshold.getAutoThresholdSlope());
-		    printTableRow(out, "Auto threshold intercept", autoThreshold.getAutoThresholdIntercept());
-	    }
-
-	    PearsonsCorrelation pearsons = dataContainer.getPearsonsCorrelation();
-	    if (pearsons != null) {
-		    printTableRow(out, "Pearson's R value (no threshold)", pearsons.getPearsonsCorrelationValue());
-		    printTableRow(out, "Pearson's R value (below threshold)", pearsons.getPearsonsCorrelationBelowThreshold());
-		    printTableRow(out, "Pearson's R value (above threshold)", pearsons.getPearsonsCorrelationAboveThreshold());
-	    }
-
-	    LiICQ liIcq = dataContainer.getLiICQ();
-	    if (liIcq != null) {
-		    printTableRow(out, "Li's ICQ value", liIcq.getIcqValue());
-	    }
-
-	    MandersCorrelation manders = dataContainer.getMandersCorrelation();
-	    if (manders != null) {
-		    printTableRow(out, "Manders M1 (no threshold)", manders.getMandersM1());
-		    printTableRow(out, "Manders M2 (no threshold)", manders.getMandersM2());
-		    printTableRow(out, "Manders M1 (threshold)", manders.getMandersThresholdedM1());
-		    printTableRow(out, "Manders M2 (threshold)", manders.getMandersThresholdedM2());
+	    for ( ValueResult vr : valueResults) {
+		    printTableRow(out, vr.name, vr.number, vr.decimals);
 	    }
 
 	    out.println("</TABLE>");
@@ -299,14 +290,11 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 	    printTableRow(out, "Min channel 1",  dataContainer.getMinCh1());
 	    printTableRow(out, "Max channel 1",  dataContainer.getMaxCh1());
 	    printTableRow(out, "Mean channel 1", dataContainer.getMeanCh1());
-	    printTableRow(out, "Min threshold channel 1", autoThreshold.getCh1MinThreshold().getRealDouble());
-	    printTableRow(out, "Max threshold channel 1", autoThreshold.getCh1MaxThreshold().getRealDouble());
 
 	    printTableRow(out, "Min channel 2", dataContainer.getMinCh2());
 	    printTableRow(out, "Max channel 2", dataContainer.getMaxCh2());
 	    printTableRow(out, "Mean channel 2", dataContainer.getMeanCh2());
-	    printTableRow(out, "Min threshold channel 2", autoThreshold.getCh2MinThreshold().getRealDouble());
-	    printTableRow(out, "Max threshold channel 2", autoThreshold.getCh2MaxThreshold().getRealDouble());
+
 	    out.println("</TABLE>");
 
 	    out.print("</html>");

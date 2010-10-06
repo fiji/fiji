@@ -160,7 +160,7 @@ public class DataContainer<T extends RealType<T>> {
 			new ArrayList<Warning>();
 
 		for (Algorithm a : algorithms) {
-			warnings.addAll(a.getWarningns());
+			warnings.addAll(a.getWarnings());
 		}
 
 		return warnings;

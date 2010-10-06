@@ -8,7 +8,7 @@ import mpicbg.imglib.type.numeric.RealType;
  * data. For instance is the percentage of zero-zero pixels
  * checked or how many pixels are saturated.
  */
-public class InputCheck<T extends RealType<T>> extends Algorithm {
+public class InputCheck<T extends RealType<T>> extends Algorithm<T> {
 	/* the maximum allowed ratio between zero-zero and
 	 * normal pixels
 	 */
@@ -25,7 +25,7 @@ public class InputCheck<T extends RealType<T>> extends Algorithm {
 	double saturatedRatioCh2;
 
 	@Override
-	public void execute(DataContainer container)
+	public void execute(DataContainer<T> container)
 			throws MissingPreconditionException {
 		// get the 2 images for the calculation of Pearson's
 		Image<T> img1 = container.getSourceImage1();
@@ -104,6 +104,14 @@ public class InputCheck<T extends RealType<T>> extends Algorithm {
 				"The ratio between saturated pixels and other pixels in channel two is larger "
 				+ IJ.d2s(maxSaturatedRatio, 2) + ". Maybe you should use a ROI.");
 		}
+	}
+
+	@Override
+	public void processResults(ResultHandler<T> handler) {
+		super.processResults(handler);
+		handler.handleValue("% zero-zero pixels", zeroZeroPixelRatio, 2);
+		handler.handleValue("% saturated ch1 pixels", saturatedRatioCh1, 2);
+		handler.handleValue("% saturated ch2 pixels", saturatedRatioCh2, 2);
 	}
 
 	public double getMaxZeroZeroRatio() {

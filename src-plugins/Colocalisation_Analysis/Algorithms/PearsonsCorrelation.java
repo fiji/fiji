@@ -10,7 +10,7 @@ import imglib.mpicbg.imglib.cursor.special.TwinValueRangeCursor;
  *
  * @param <T>
  */
-public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm {
+public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 
 	// Identifiers for choosing which implementation to use
 	enum Implementation {Classic, Fast};
@@ -40,7 +40,7 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm {
 		this(Implementation.Fast);
 	}
 
-	public void execute(DataContainer container) throws MissingPreconditionException {
+	public void execute(DataContainer<T> container) throws MissingPreconditionException {
 		if (theImplementation == Implementation.Classic)
 			pearsonsCorrelationValue = classicPearsons(container);
 		else {
@@ -48,7 +48,7 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm {
 		}
 	}
 
-	public double classicPearsons(DataContainer container) {
+	public double classicPearsons(DataContainer<T> container) {
 		// get the means from the DataContainer
 		double ch1Mean = container.getMeanCh1();
 		double ch2Mean = container.getMeanCh2();
@@ -85,7 +85,7 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm {
 		return pearsonDenominator / pearsonNumerator;
 	}
 
-	public void fastPearsons(DataContainer container) {
+	public void fastPearsons(DataContainer<T> container) {
 		// get the 2 images for the calculation of Pearson's
 		Image<T> img1 = container.getSourceImage1();
 		Image<T> img2 = container.getSourceImage2();
@@ -258,6 +258,15 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm {
 		double pearsonsR = pearsons1/(Math.sqrt(pearsons2*pearsons3));
 
 		return pearsonsR;
+	}
+
+	@Override
+	public void processResults(ResultHandler<T> handler) {
+		super.processResults(handler);
+
+		handler.handleValue("Pearson's R value (no threshold)", pearsonsCorrelationValue, 2);
+		handler.handleValue("Pearson's R value (below threshold)", pearsonsCorrelationValueBelowThr, 2);
+		handler.handleValue("Pearson's R value (above threshold)", pearsonsCorrelationValueAboveThr, 2);
 	}
 
 	public double getPearsonsCorrelationValue() {

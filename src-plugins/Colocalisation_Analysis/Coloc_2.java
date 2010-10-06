@@ -6,6 +6,7 @@ import java.io.File;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImagePlusAdapter;
 import mpicbg.imglib.type.numeric.RealType;
+import mpicbg.imglib.type.numeric.integer.LongType;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -61,38 +62,38 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		useRoi = (roi != null);
 
 		// create a new container for the selected images and channels
-		DataContainer container;
+		DataContainer<T> container;
 		if (useRoi) {
 			int roiOffset[] = new int[] {roi.x, roi.y};
 			int roiSize[] = new int[] {roi.width, roi.height};
-			container = new DataContainer(img1, img2, theImg1Channel, theImg2Channel,
+			container = new DataContainer<T>(img1, img2, theImg1Channel, theImg2Channel,
 					roiOffset, roiSize);
 		} else {
-			container = new DataContainer(img1, img2, theImg1Channel, theImg2Channel);
+			container = new DataContainer<T>(img1, img2, theImg1Channel, theImg2Channel);
 		}
 
 		// this list contains the algorithms that will be run when the user clicks ok
 		List<Algorithm> userSelectedJobs = new ArrayList<Algorithm>();
 
-		// add some preprocessing jobs:
+		// add some pre-processing jobs:
 		userSelectedJobs.add( container.setInputCheck(
-			new InputCheck()) );
+			new InputCheck<T>()) );
 		userSelectedJobs.add( container.setAutoThreshold(
-			new AutoThresholdRegression()) );
+			new AutoThresholdRegression<T>()) );
 
 		// add user selected algorithms
 		userSelectedJobs.add( container.setPearsonsCorrelation(
-			new PearsonsCorrelation(PearsonsCorrelation.Implementation.Fast) ) );
+			new PearsonsCorrelation<T>(PearsonsCorrelation.Implementation.Fast) ) );
 		userSelectedJobs.add( container.setLiHistogramCh1(
-			new LiHistogram2D("Li - Ch1", true)) );
+			new LiHistogram2D<T>("Li - Ch1", true)) );
 		userSelectedJobs.add( container.setLiHistogramCh2(
-			new LiHistogram2D("Li - Ch2", false)) );
+			new LiHistogram2D<T>("Li - Ch2", false)) );
 		userSelectedJobs.add( container.setLiICQ(
-			new LiICQ()) );
+			new LiICQ<T>()) );
 		userSelectedJobs.add( container.setMandersCorrelation(
 			new MandersCorrelation<T>()) );
 		userSelectedJobs.add( container.setHistogram2D(
-			new Histogram2D("hello")) );
+			new Histogram2D<T>("hello")) );
 
 		try {
 			for (Algorithm a : userSelectedJobs){
@@ -103,9 +104,16 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 			System.out.println("Exception occured in Algorithm preconditions: " + e.getMessage());
 		}
 
-		Display theResultDisplay = new SingleWindowDisplay();
-		//Display theResultDisplay = new EasyDisplay();
-		theResultDisplay.display(container);
+		// create a results handler
+		ResultHandler<T> resultHandler = new SingleWindowDisplay<T>(container);
+		//ResultHandler<T> resultHandler = new EasyDisplay<T>(container);
+
+		// let the algorithms feed their results to the handler
+		for (Algorithm a : userSelectedJobs){
+			a.processResults(resultHandler);
+		}
+		// do the actual results processing
+		resultHandler.process();
 	}
 
 	/**
