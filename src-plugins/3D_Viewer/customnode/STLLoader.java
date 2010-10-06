@@ -47,7 +47,7 @@ public class STLLoader {
 	private String name = null;
 	private String stlfile = null;
 	@SuppressWarnings("unused")
-	private Point3f normal; //to be used for file checking
+	private Point3f normal = new Point3f(0.0f, 0.0f, 0.0f); //to be used for file checking
 	private FileInputStream fis;
 	private int triangles;
 	private DecimalFormat decimalFormat = new DecimalFormat("0.0E0");
@@ -98,18 +98,16 @@ public class STLLoader {
 		try {
 			while ((line = in.readLine()) != null) {
 				String[] numbers = line.trim().split("\\s+");
-				if (numbers[0].equals("facet") && numbers[1].equals("normal")) {
-					float x = parseFloat(numbers[2]);
-					float y = parseFloat(numbers[3]);
-					float z = parseFloat(numbers[4]);
-					normal = new Point3f(x, y, z);
-				}
 				if (numbers[0].equals("vertex")) {
 					float x = parseFloat(numbers[1]);
 					float y = parseFloat(numbers[2]);
 					float z = parseFloat(numbers[3]);
 					Point3f vertex = new Point3f(x, y, z);
 					vertices.add(vertex);
+				} else if (numbers[0].equals("facet") && numbers[1].equals("normal")) {
+					normal.x = parseFloat(numbers[2]);
+					normal.y = parseFloat(numbers[3]);
+					normal.z = parseFloat(numbers[4]);
 				}
 			}
 			in.close();
@@ -134,10 +132,9 @@ public class STLLoader {
 				for (int tb = 0; tb < 50; tb++) {
 					tri[tb] = (byte) fis.read();
 				}
-				float nx = leBytesToFloat(tri[0], tri[1], tri[2], tri[3]);
-				float ny = leBytesToFloat(tri[4], tri[5], tri[6], tri[7]);
-				float nz = leBytesToFloat(tri[8], tri[9], tri[10], tri[11]);
-				normal = new Point3f(nx, ny, nz);
+				normal.x = leBytesToFloat(tri[0], tri[1], tri[2], tri[3]);
+				normal.y = leBytesToFloat(tri[4], tri[5], tri[6], tri[7]);
+				normal.z = leBytesToFloat(tri[8], tri[9], tri[10], tri[11]);
 				for (int i = 0; i < 3; i++) {
 					final int j = i * 12 + 12;
 					float px = leBytesToFloat(tri[j], tri[j + 1], tri[j + 2],
