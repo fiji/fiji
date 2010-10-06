@@ -16,8 +16,8 @@ public class EasyDisplay<T extends RealType<T>> implements ResultHandler<T> {
 	protected DataContainer container;
 
 	public EasyDisplay(DataContainer<T> container) {
-		int twWidth = 170;
-		int twHeight = 250;
+		final int twWidth = 170;
+		final int twHeight = 250;
 		//test if the results windows is already there, if so use it.
 		if (textWindow == null || !textWindow.isVisible())
 			textWindow = new TextWindow("Results",
