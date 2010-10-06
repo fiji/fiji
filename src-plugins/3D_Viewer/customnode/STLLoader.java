@@ -46,7 +46,6 @@ public class STLLoader {
 	private ArrayList<Point3f> vertices = new ArrayList<Point3f>();
 	private String name = null;
 	private String stlfile = null;
-	@SuppressWarnings("unused")
 	private Point3f normal = new Point3f(0.0f, 0.0f, 0.0f); //to be used for file checking
 	private FileInputStream fis;
 	private int triangles;
