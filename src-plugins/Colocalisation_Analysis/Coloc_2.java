@@ -82,8 +82,8 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 			new AutoThresholdRegression<T>()) );
 
 		// add user selected algorithms
-		userSelectedJobs.add(
-			new PearsonsCorrelation<T>(PearsonsCorrelation.Implementation.Fast) );
+		PearsonsCorrelation pc = new PearsonsCorrelation<T>(PearsonsCorrelation.Implementation.Fast);
+		userSelectedJobs.add( pc );
 		userSelectedJobs.add(
 			new LiHistogram2D<T>("Li - Ch1", true) );
 		userSelectedJobs.add(
@@ -95,7 +95,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		userSelectedJobs.add(
 			new Histogram2D<T>("hello") );
 		userSelectedJobs.add(
-			new CostesSignificanceTest(5) );
+			new CostesSignificanceTest(pc, 5, 10) );
 
 		try {
 			for (Algorithm a : userSelectedJobs){
@@ -107,8 +107,8 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		}
 
 		// create a results handler
-		ResultHandler<T> resultHandler = new SingleWindowDisplay<T>(container);
-		//ResultHandler<T> resultHandler = new EasyDisplay<T>(container);
+		//ResultHandler<T> resultHandler = new SingleWindowDisplay<T>(container);
+		ResultHandler<T> resultHandler = new EasyDisplay<T>(container);
 
 		// let the algorithms feed their results to the handler
 		for (Algorithm a : userSelectedJobs){
