@@ -73,7 +73,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		}
 
 		// this list contains the algorithms that will be run when the user clicks ok
-		List<Algorithm> userSelectedJobs = new ArrayList<Algorithm>();
+		List<Algorithm<T>> userSelectedJobs = new ArrayList<Algorithm<T>>();
 
 		// add some pre-processing jobs:
 		userSelectedJobs.add( container.setInputCheck(
@@ -82,18 +82,20 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 			new AutoThresholdRegression<T>()) );
 
 		// add user selected algorithms
-		userSelectedJobs.add( container.setPearsonsCorrelation(
-			new PearsonsCorrelation<T>(PearsonsCorrelation.Implementation.Fast) ) );
-		userSelectedJobs.add( container.setLiHistogramCh1(
-			new LiHistogram2D<T>("Li - Ch1", true)) );
-		userSelectedJobs.add( container.setLiHistogramCh2(
-			new LiHistogram2D<T>("Li - Ch2", false)) );
-		userSelectedJobs.add( container.setLiICQ(
-			new LiICQ<T>()) );
-		userSelectedJobs.add( container.setMandersCorrelation(
-			new MandersCorrelation<T>()) );
-		userSelectedJobs.add( container.setHistogram2D(
-			new Histogram2D<T>("hello")) );
+		userSelectedJobs.add(
+			new PearsonsCorrelation<T>(PearsonsCorrelation.Implementation.Fast) );
+		userSelectedJobs.add(
+			new LiHistogram2D<T>("Li - Ch1", true) );
+		userSelectedJobs.add(
+			new LiHistogram2D<T>("Li - Ch2", false) );
+		userSelectedJobs.add(
+			new LiICQ<T>() );
+		userSelectedJobs.add(
+			new MandersCorrelation<T>() );
+		userSelectedJobs.add(
+			new Histogram2D<T>("hello") );
+		userSelectedJobs.add(
+			new CostesSignificanceTest(5) );
 
 		try {
 			for (Algorithm a : userSelectedJobs){

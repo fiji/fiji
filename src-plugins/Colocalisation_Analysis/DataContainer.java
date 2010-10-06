@@ -30,17 +30,9 @@ public class DataContainer<T extends RealType<T>> {
 	// The channels of the source images that the result relate to
 	int ch1, ch2;
 
-	/* Supported algorithms
-	 * If they are null, they are seen as not executed
-	 */
 	InputCheck inputCheck = null;
 	AutoThresholdRegression autoThreshold = null;
-	PearsonsCorrelation pearsonsCorrelation = null;
-	LiHistogram2D liHistogramCh1 = null;
-	LiHistogram2D liHistogramCh2 = null;
-	LiICQ liICQ = null;
-	MandersCorrelation<T> mandersCorrelation = null;
-	Histogram2D histogram2D = null;
+
 	// a list that contains all added algorithms
 	List< Algorithm > algorithms = new ArrayList< Algorithm >();
 
@@ -138,41 +130,13 @@ public class DataContainer<T extends RealType<T>> {
 		return integralCh2;
 	}
 
-	// algorithm access
-
-	/**
-	 * Registers an algorithm with the class.
-	 */
-	protected Algorithm registerAlgorithm(Algorithm a) {
-		algorithms.add( a );
-		return a;
-	}
-
-	public List< Algorithm > getRegistredAlgorithms() {
-		return algorithms;
-	}
-
-	/**
-	 * Gets the accumulated warnings of the algorithms run.
-	 */
-	public List<Warning> getWarnings() {
-		List<Warning> warnings =
-			new ArrayList<Warning>();
-
-		for (Algorithm a : algorithms) {
-			warnings.addAll(a.getWarnings());
-		}
-
-		return warnings;
-	}
-
 	public InputCheck getInputCheck() {
 		return inputCheck;
 	}
 
 	public Algorithm setInputCheck(InputCheck inputCheck) {
 		this.inputCheck = inputCheck;
-		return registerAlgorithm( inputCheck );
+		return inputCheck;
 	}
 
 	public AutoThresholdRegression getAutoThreshold() {
@@ -181,60 +145,6 @@ public class DataContainer<T extends RealType<T>> {
 
 	public Algorithm setAutoThreshold(AutoThresholdRegression autoThreshold) {
 		this.autoThreshold = autoThreshold;
-		return registerAlgorithm( autoThreshold );
-	}
-
-	public PearsonsCorrelation getPearsonsCorrelation() {
-		return pearsonsCorrelation;
-	}
-
-	public Algorithm setPearsonsCorrelation(PearsonsCorrelation pearsonsCorrelation) {
-		this.pearsonsCorrelation = pearsonsCorrelation;
-		return registerAlgorithm( pearsonsCorrelation );
-	}
-
-	public LiHistogram2D getLiHistogramCh1() {
-		return liHistogramCh1;
-	}
-
-	public Algorithm setLiHistogramCh1(LiHistogram2D liHistogramCh1) {
-		this.liHistogramCh1 = liHistogramCh1;
-		return registerAlgorithm( liHistogramCh1 );
-	}
-
-	public LiHistogram2D getLiHistogramCh2() {
-		return liHistogramCh2;
-	}
-
-	public Algorithm setLiHistogramCh2(LiHistogram2D liHistogramCh2) {
-		this.liHistogramCh2 = liHistogramCh2;
-		return liHistogramCh2;
-	}
-
-	public LiICQ getLiICQ() {
-		return liICQ;
-	}
-
-	public Algorithm setLiICQ(LiICQ liICQ) {
-		this.liICQ = liICQ;
-		return registerAlgorithm( liICQ );
-	}
-
-	public MandersCorrelation<T> getMandersCorrelation() {
-		return mandersCorrelation;
-	}
-
-	public Algorithm setMandersCorrelation(MandersCorrelation<T> mandersCorrelation) {
-		this.mandersCorrelation = mandersCorrelation;
-		return registerAlgorithm( mandersCorrelation );
-	}
-
-	public Histogram2D getHistogram2D() {
-		return histogram2D;
-	}
-
-	public Algorithm setHistogram2D(Histogram2D histogram2D) {
-		this.histogram2D = histogram2D;
-		return registerAlgorithm( histogram2D );
+		return autoThreshold;
 	}
 }
