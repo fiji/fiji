@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 import mpicbg.imglib.algorithm.gauss.DifferenceOfGaussian;
 import mpicbg.imglib.algorithm.gauss.DifferenceOfGaussianPeak;
-import mpicbg.imglib.algorithm.gauss.DifferenceOfGaussianReal;
+import mpicbg.imglib.algorithm.gauss.DifferenceOfGaussianRealNI;
 import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyFactory;
 import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
@@ -50,12 +50,11 @@ public class DogSegmenter<T extends RealType<T>> extends AbstractSpotSegmenter<T
 		final OutOfBoundsStrategyFactory<FloatType> oobs2 = new OutOfBoundsStrategyMirrorFactory<FloatType>();
 		
 		float sigma1, sigma2, minPeakValue;
-		sigma1 = 2 * radius / (float) Math.sqrt(img.getNumDimensions());
-		sigma2 = 1.6f * sigma1;
+		sigma1 = 0.95f * radius / (float) Math.sqrt(img.getNumDimensions()); // in physical unit
+		sigma2 = 1.10f * sigma1;
 		minPeakValue = settings.threshold;
 		
-		// TODO: this must be changed because this assumes we get a isotropic calibration WHICH IS NOT THE CASE
-		final DifferenceOfGaussianReal<T, FloatType> dog = new DifferenceOfGaussianReal<T, FloatType>(img, imageFactory, oobs2, sigma1, sigma2, minPeakValue, 1.0);
+		final DifferenceOfGaussianRealNI<T, FloatType> dog = new DifferenceOfGaussianRealNI<T, FloatType>(img, imageFactory, oobs2, sigma1, sigma2, minPeakValue, 1.0, calibration);
 		// execute
 		if ( !dog.checkInput() || !dog.process() )
 		{
