@@ -1,3 +1,5 @@
+import java.util.EnumSet;
+
 import mpicbg.imglib.container.array.ArrayContainerFactory;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
@@ -37,7 +39,11 @@ public class LiHistogram2D<T extends RealType<T>> extends Histogram2D<T> {
 	}
 
 	public LiHistogram2D(String title, boolean swapChannels, boolean useCh1) {
-		super(title, swapChannels);
+		this(title, swapChannels, useCh1, EnumSet.of(DrawingFlags.Plot));
+	}
+
+	public LiHistogram2D(String title, boolean swapChannels, boolean useCh1, EnumSet<DrawingFlags> drawingSettings) {
+		super(title, swapChannels, drawingSettings);
 		this.useCh1 = useCh1;
 	}
 

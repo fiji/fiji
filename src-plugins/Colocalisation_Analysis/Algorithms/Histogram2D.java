@@ -1,3 +1,5 @@
+import java.util.EnumSet;
+
 import ij.IJ;
 import ij.measure.ResultsTable;
 import mpicbg.imglib.image.ImageFactory;
@@ -16,6 +18,10 @@ import mpicbg.imglib.container.array.ArrayContainerFactory;
  * @param <T> The source images value type
  */
 public class Histogram2D<T extends RealType<T>> extends Algorithm<T> {
+	// An enumeration of possible drawings
+	public enum DrawingFlags { Plot, RegressionLine, Axes }
+	// the drawing configuration
+	EnumSet<DrawingFlags> drawingSettings;
 
 	// The width of the scatter-plot
 	protected int xBins = 256;
@@ -50,6 +56,10 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm<T> {
 	}
 
 	public Histogram2D(String title, boolean swapChannels){
+		this(title, swapChannels, EnumSet.of( DrawingFlags.Plot, DrawingFlags.RegressionLine ));
+	}
+
+	public Histogram2D(String title, boolean swapChannels, EnumSet<DrawingFlags> drawingSettings){
 		this.title = title;
 		this.swapChannels = swapChannels;
 
@@ -58,6 +68,8 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm<T> {
 			this.xBins = this.yBins;
 			this.yBins = xBins;
 		}
+
+		this.drawingSettings = drawingSettings;
 	}
 
 	/**
@@ -347,5 +359,9 @@ public class Histogram2D<T extends RealType<T>> extends Algorithm<T> {
 
 	public String getTitle() {
 		return title;
+	}
+
+	public EnumSet<DrawingFlags> getDrawingSettings() {
+		return drawingSettings;
 	}
 }

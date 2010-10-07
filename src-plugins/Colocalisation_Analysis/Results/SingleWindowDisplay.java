@@ -436,13 +436,18 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 		// if it is the 2d histogram, we want to show the regression line
 		if (isHistogram(img)) {
 			Histogram2D histogram = mapOf2DHistograms.get(img);
-			AutoThresholdRegression autoThreshold = dataContainer.getAutoThreshold();
-			if (histogram != null && autoThreshold != null) {
-				if (img == histogram.getPlotImage()) {
-					drawLine(overlay, img,
-							autoThreshold.getAutoThresholdSlope(),
-							autoThreshold.getAutoThresholdIntercept());
-					overlayModified = true;
+			/* check if we should draw a regression line for the
+			 * current histogram.
+			 */
+			if ( histogram.getDrawingSettings().contains(Histogram2D.DrawingFlags.RegressionLine) ) {
+				AutoThresholdRegression autoThreshold = dataContainer.getAutoThreshold();
+				if (histogram != null && autoThreshold != null) {
+					if (img == histogram.getPlotImage()) {
+						drawLine(overlay, img,
+								autoThreshold.getAutoThresholdSlope(),
+								autoThreshold.getAutoThresholdIntercept());
+						overlayModified = true;
+					}
 				}
 			}
 		}
