@@ -196,6 +196,9 @@ public class StochasticDenoise<T extends RealType<T>> {
 				IJ.log("added to pixel: " + add + " (" + source + ")");
 				IJ.log("target value  : " + denoiseBuffer[index]);
 			}
+
+			// update last pixel value
+			lastValue = source;
 		};
 
 		// reset source cursor
