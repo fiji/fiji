@@ -122,6 +122,29 @@ public class InteractiveTracerCanvas extends TracerCanvas implements KeyListener
 
 			just_near_slices = ! just_near_slices;
 
+		} else if( keyChar == 'g' || keyChar == 'G' ) {
+
+			double [] p = new double[3];
+			tracerPlugin.findPointInStackPrecise( last_x_in_pane_precise, last_y_in_pane_precise, plane, p );
+
+			double largestDimension = tracerPlugin.getLargestDimension();
+
+			/* Find the nearest point on any path - we'll
+			   select that path... */
+
+			NearPoint np = pathAndFillManager.nearestPointOnAnyPath(p[0],p[1],p[2],largestDimension);
+			Path path = np.getPath();
+
+			/* FIXME: in fact shift-G for multiple
+			   selections doesn't work, since in ImageJ
+			   that's a shortcut for taking a screenshot.
+			   Holding down control doesn't work since
+			   that's already used to restrict the
+			   cross-hairs to the selected path.  Need to
+			   find some way around this ... */
+
+			tracerPlugin.selectPath( path, shift_down || control_down );
+
 		} else if( shift_pressed || join_modifier_pressed ) {
 
 			/* This case is just so that when someone

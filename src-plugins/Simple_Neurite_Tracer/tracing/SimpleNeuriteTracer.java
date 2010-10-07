@@ -41,6 +41,7 @@ import javax.vecmath.Point3f;
 import java.awt.*;
 import java.io.*;
 
+import java.util.HashSet;
 import java.util.Set;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -103,6 +104,12 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	public ImagePlus getImagePlus() {
 		return xy;
+	}
+
+	public double getLargestDimension() {
+		return Math.max( x_spacing * width,
+				 Math.max( y_spacing * height,
+					   z_spacing * depth ));
 	}
 
 	/* This overrides the method in ThreePanes... */
@@ -1325,6 +1332,25 @@ public class SimpleNeuriteTracer extends ThreePanes
 
 	public int getPaths3DDisplay( ) {
 		return this.paths3DDisplay;
+	}
+
+	public void selectPath( Path p, boolean addToExistingSelection ) {
+		HashSet pathsToSelect = new HashSet();
+		if( p.isFittedVersionOfAnotherPath() )
+			pathsToSelect.add(p.fittedVersionOf);
+		else
+			pathsToSelect.add(p);
+		if( addToExistingSelection ) {
+			pathsToSelect.addAll( resultsDialog.pw.getSelectedPaths() );
+		}
+		resultsDialog.pw.setSelectedPaths( pathsToSelect, this );
+	}
+
+	public Set<Path> getSelectedPaths() {
+		if( resultsDialog.pw != null ) {
+			return resultsDialog.pw.getSelectedPaths();
+		}
+		throw new RuntimeException("getSelectedPaths was called when resultsDialog.pw was null");
 	}
 
 }
