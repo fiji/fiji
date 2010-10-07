@@ -5,6 +5,14 @@ import java.awt.Insets;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+
+import java.util.Dictionary;
+import java.util.Hashtable;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import java.util.Dictionary;
 import java.util.Hashtable;
@@ -103,28 +111,38 @@ public class Stochastic_Denoise<T extends RealType<T>> implements PlugIn {
 	@SuppressWarnings("serial")
 	private class ConfigWindow extends JFrame {
 
+		// executor service to launch threads for the plugin methods and events
+		final ExecutorService exec = Executors.newFixedThreadPool(1);
+	
 		// action listener
 		private ActionListener actionListener = new ActionListener() {
 	
 			public void actionPerformed(final ActionEvent e) {
 
-				if(e.getSource() == applyButton) {
-						try {
-							applyButton.setEnabled(false);
+				// listen to the buttons on separate threads not to block
+				// the event dispatch thread
+				exec.submit(new Runnable() {
+					public void run() 
+					{
+						if(e.getSource() == applyButton) {
+							try {
+								applyButton.setEnabled(false);
 
-							// perform the denoising
-							stochasticDenoise.process(image, denoised);
+								// perform the denoising
+								stochasticDenoise.process(image, denoised);
 
-							// show the result
-							dns.show();
-							dns.updateAndDraw();
+								// show the result
+								dns.show();
+								dns.updateAndDraw();
 
-						} catch(Exception ex) {
-							ex.printStackTrace();
-						} finally {
-							applyButton.setEnabled(true);
+							} catch(Exception ex) {
+								ex.printStackTrace();
+							} finally {
+								applyButton.setEnabled(true);
+							}
 						}
-				}
+					}
+				});
 			}
 		};
 	
@@ -201,6 +219,15 @@ public class Stochastic_Denoise<T extends RealType<T>> implements PlugIn {
 
 			setDefaultCloseOperation(DISPOSE_ON_CLOSE);
 
+			addWindowListener(new WindowAdapter() {
+				public void windowClosing(WindowEvent e) {
+					exec.shutdownNow();
+					applyButton.removeActionListener(actionListener);
+					sigmaSlider.removeChangeListener(changeListener);
+					pathsSlider.removeChangeListener(changeListener);
+				}
+			});
+	
 			pack();
 			setVisible(true);
 		}
