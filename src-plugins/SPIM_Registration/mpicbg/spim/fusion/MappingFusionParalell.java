@@ -30,6 +30,7 @@ public class MappingFusionParalell extends SPIMImageFusion
 	{
 		super( viewStructure, referenceViewStructure, isolatedWeightenerFactories, combinedWeightenerFactories );				
 		
+		
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Reserving memory for fused image.");
 		
@@ -46,11 +47,27 @@ public class MappingFusionParalell extends SPIMImageFusion
 	}
 
 	@Override
-	public void fuseSPIMImages()
+	public void fuseSPIMImages( final int channelIndex )
 	{
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-			IOFunctions.println("Loading source images.");
-
+			IOFunctions.println("Loading source images (Channel " + channelIndex +  ").");
+		
+		//
+		// update views so that only the current channel is being fused
+		//
+		final ArrayList<ViewDataBeads> views = new ArrayList<ViewDataBeads>();
+		
+		for ( final ViewDataBeads view : viewStructure.getViews() )
+			if ( view.getChannelIndex() == channelIndex )
+				views.add( view );
+		
+		final int numViews = views.size();
+		
+		// clear the previous output image
+		if ( channelIndex > 0 )
+			for ( final FloatType type : fusedImage )
+				type.set( 0 );
+		
 		// load images 
 		for ( final ViewDataBeads view : views )
 			view.getImage();
@@ -93,7 +110,7 @@ public class MappingFusionParalell extends SPIMImageFusion
 		}
 		
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Computing output image.");
+			IOFunctions.println( "(" + new Date(System.currentTimeMillis()) + "): Computing output image (Channel " + channelIndex +  ").");
 
 		// cache the views, imageSizes and models that we use
 		final boolean useView[] = new boolean[ numViews ];
@@ -101,7 +118,7 @@ public class MappingFusionParalell extends SPIMImageFusion
 		
 		for ( int i = 0; i < numViews; ++i )
 		{
-			useView[ i ] = views.get( i ).getViewErrorStatistics().getNumConnectedViews() > 0 || views.get( i ).getViewStructure().getNumViews() == 1;
+			useView[ i ] = Math.max( views.get( i ).getViewErrorStatistics().getNumConnectedViews(), views.get( i ).getTile().getConnectedTiles().size() ) > 0 || views.get( i ).getViewStructure().getNumViews() == 1;
 			models[ i ] = views.get( i ).getTile().getModel(); 
 		}
 		
@@ -138,7 +155,7 @@ public class MappingFusionParalell extends SPIMImageFusion
 		        		
 		        		final CombinedPixelWeightener<?>[] combW = new CombinedPixelWeightener<?>[combinedWeightenerFactories.size()];
 		        		for (int i = 0; i < combW.length; i++)
-		        			combW[i] = combinedWeightenerFactories.get(i).createInstance( viewStructure );
+		        			combW[i] = combinedWeightenerFactories.get(i).createInstance( views );
 		            	
 						// get iterators for isolated weights
 		        		final LocalizableByDimCursor<FloatType> isoIterators[][] = new LocalizableByDimCursor[ isoW.length ][ numViews ];            		
@@ -276,7 +293,7 @@ public class MappingFusionParalell extends SPIMImageFusion
         SimpleMultiThreading.startAndJoin(threads);	
 
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Closing all input images.");
+			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Closing all input images (Channel " + channelIndex +  ").");
 
 		// unload images
 		for ( final ViewDataBeads view : views ) 
@@ -289,7 +306,7 @@ public class MappingFusionParalell extends SPIMImageFusion
 				isoW[i][view].close();
 				
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Done computing output image.");
+			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Done computing output image (Channel " + channelIndex +  ").");
 	}
 
 	@Override

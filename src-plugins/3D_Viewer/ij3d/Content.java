@@ -215,12 +215,10 @@ public class Content extends BranchGroup implements UniverseListener, ContentCon
 			c.showPointList(b);
 	}
 
-	// TODO only for current point, makes this sense?
 	public void loadPointList() {
 		getCurrent().loadPointList();
 	}
 
-	// TODO only for current point, makes this sense?
 	public void savePointList() {
 		getCurrent().savePointList();
 	}

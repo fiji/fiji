@@ -1,11 +1,13 @@
 package mpicbg.spim.fusion;
 
+import java.util.ArrayList;
+
 import mpicbg.spim.io.IOFunctions;
-import mpicbg.spim.registration.ViewStructure;
+import mpicbg.spim.registration.ViewDataBeads;
 
 public class BlendingFactory implements CombinedPixelWeightenerFactory<Blending>
 {
-	public Blending createInstance( ViewStructure viewStructure ) { return new Blending( viewStructure ); }
+	public Blending createInstance( ArrayList<ViewDataBeads> views ) { return new Blending( views ); }
 
 	public void printProperties()
 	{

@@ -253,7 +253,7 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 		updateGitDirectory();
 		setTitle();
 		if (file != null) {
-			setLanguageByExtension(getExtension(file.getName()));
+			setLanguageByFileName(file.getName());
 			fallBackBaseName = null;
 		}
 		fileLastModified = file == null || !file.exists() ? 0 :
@@ -291,11 +291,14 @@ public class EditorPane extends RSyntaxTextArea implements DocumentListener {
 		return dot < 0 ?  "" : fileName.substring(dot);
 	}
 
-	void setLanguageByExtension(String extension) {
-		setLanguage(Languages.get(extension));
+	protected void setLanguageByFileName(String name) {
+		if (name.equals("Fakefile") || name.endsWith("/Fakefile"))
+			setLanguage(Languages.fakefile);
+		else
+			setLanguage(Languages.get(getExtension(name)));
 	}
 
-	void setLanguage(Languages.Language language) {
+	protected void setLanguage(Languages.Language language) {
 		if (language == null)
 			language = Languages.get("");
 

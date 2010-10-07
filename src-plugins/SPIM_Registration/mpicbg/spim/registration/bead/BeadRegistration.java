@@ -6,6 +6,10 @@ import java.util.Collections;
 import java.util.Vector;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import javax.media.j3d.Transform3D;
+import javax.vecmath.Vector3d;
+
+import mpicbg.imglib.algorithm.math.MathLib;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.models.AffineModel3D;
 import mpicbg.models.IllDefinedDataPointsException;
@@ -275,7 +279,12 @@ public class BeadRegistration
 		for ( int viewIndexA = 0; viewIndexA < views.size() - 1; viewIndexA++ )
     		for ( int viewIndexB = viewIndexA + 1; viewIndexB < views.size(); viewIndexB++ )
     				comparePairs.add( new int[]{viewIndexA, viewIndexB} );
-							
+				
+		// if a rigid global optimization is wanted
+		//final ArrayList<Tile<RigidModel3D>> rigidTileList = new ArrayList<Tile<RigidModel3D>>();
+		//for ( ViewDataBeads view : viewStructure.getViews() )
+		//	rigidTileList.add( new Tile<RigidModel3D>( new RigidModel3D() ) );
+		
 		final AtomicInteger ai = new AtomicInteger(0);					
         Thread[] threads = SimpleMultiThreading.newThreads();
         final int numThreads = threads.length;
@@ -313,7 +322,9 @@ public class BeadRegistration
                     			correspondences = getCorrespondences( candidates, viewA, viewB, 3, viewStructure.getDebugLevel() );
 
                     		// add them to the tiles
-                    		addPointMatches( correspondences, viewA, viewB );	                    			                    		
+                    		addPointMatches( correspondences, viewA, viewB );	    
+                    		//Rigid:
+                    		//NucleiRegistration.addPointMatches( correspondences, rigidTileList.get( pair[0] ), rigidTileList.get( pair[1] ) );
                     	}
                 }
             });
@@ -328,6 +339,10 @@ public class BeadRegistration
 	        IOFunctions.println( "The total number of correspondence candidates was: " + errorStatistics.getNumCandidates() );
 	        IOFunctions.println( "The total number of true correspondences is: " + errorStatistics.getNumCorrespondences() );
         }
+        
+        //Rigid-body
+        //NucleiRegistration.optimizeTiles(rigidTileList);
+        //System.exit( 0 );
         
 		// 
 		// Now we optimize everything
@@ -400,6 +415,7 @@ public class BeadRegistration
 				tc.optimize( 10, 10000, 200, debugLevel );
 			
 			//tc.optimizeWithSketchTikZ( 10, 10000, 200, debugLevel );
+			//tc.optimizeWithSketchTikZNuclei( 10, 10000, 200, debugLevel );
 			
 			/*tc.optimizeWithErrorAnalysis( 10, 10000, 200, conf, showDetails );
 			ArrayList<Double> distances = tc.getDistances();
@@ -460,7 +476,12 @@ public class BeadRegistration
 				if ( debugLevel <= ViewStructure.DEBUG_MAIN )
 				{
 					IOFunctions.println( view + ":");
-					IOFunctions.println( "Transformation:\n"+ view.getTile().getModel() );					
+					IOFunctions.println( "Transformation:\n"+ view.getTile().getModel() );	
+					
+					Transform3D t = MathLib.getTransform3D( view.getTile().getModel() );
+					Vector3d s = new Vector3d();
+					t.getScale( s );
+					System.out.println( s );
 				}
 			}
 			else

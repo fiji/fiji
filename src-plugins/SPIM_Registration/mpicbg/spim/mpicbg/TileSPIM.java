@@ -6,6 +6,7 @@ import mpicbg.models.PointMatch;
 import mpicbg.models.Tile;
 import mpicbg.spim.registration.ViewDataBeads;
 import mpicbg.spim.registration.bead.Bead;
+import mpicbg.spim.registration.segmentation.Nucleus;
 
 public class TileSPIM extends Tile<AffineModel3D> 
 {
@@ -42,6 +43,28 @@ public class TileSPIM extends Tile<AffineModel3D>
 				final double dl = match.getDistance();
 				((Bead)match.getP1()).setDistance( (float)dl );
 				((Bead)match.getP2()).setDistance( (float)dl );				
+			}
+		}
+
+	}
+
+	/**
+	 * Apply the current {@link Model} to all local point coordinates.
+	 * Update {@link #cost} and {@link #distance}.
+	 *
+	 */
+	final public void updateWithNuclei()
+	{
+		// call the original method
+		update();
+		
+		if ( matches.size() > 0 )
+		{
+			for ( final PointMatch match : matches )
+			{
+				final double dl = match.getDistance();
+				((Nucleus)match.getP1()).setDistance( (float)dl );
+				((Nucleus)match.getP2()).setDistance( (float)dl );				
 			}
 		}
 

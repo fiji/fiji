@@ -1,6 +1,8 @@
 package mpicbg.spim.fusion;
 
-import mpicbg.spim.registration.ViewStructure;
+import java.util.ArrayList;
+
+import mpicbg.spim.registration.ViewDataBeads;
 
 public class Blending extends CombinedPixelWeightener<Blending>
 {
@@ -11,11 +13,11 @@ public class Blending extends CombinedPixelWeightener<Blending>
 	
 	final int[][] imageSizes;
 	
-	protected Blending( final ViewStructure viewStructure )
+	protected Blending( final ArrayList<ViewDataBeads> views )
 	{
-		super( viewStructure );
+		super( views );
 		
-		numViews = viewStructure.getNumViews();
+		numViews = views.size();
 		useView = new boolean[numViews];
 		weights = new float[numViews];
 		minDistance = new float[numViews];

@@ -48,7 +48,7 @@ fi
 
 # need to clone java submodule
 test -f "$JAVA_HOME/lib/tools.jar" || test -f "$JAVA_HOME/../lib/tools.jar" ||
-test -f java/"$java_submodule"/Home/lib/ext/vecmath.jar || {
+test -f "$CWD"/java/"$java_submodule"/Home/lib/ext/vecmath.jar || {
 	echo "No JDK found; cloning it"
 	JAVA_SUBMODULE=java/$java_submodule
 	git submodule init "$JAVA_SUBMODULE" && (
