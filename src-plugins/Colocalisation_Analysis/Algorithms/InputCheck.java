@@ -113,25 +113,4 @@ public class InputCheck<T extends RealType<T>> extends Algorithm<T> {
 		handler.handleValue("% saturated ch1 pixels", saturatedRatioCh1, 2);
 		handler.handleValue("% saturated ch2 pixels", saturatedRatioCh2, 2);
 	}
-
-	public double getMaxZeroZeroRatio() {
-		return maxZeroZeroRatio;
-	}
-
-	public double getMaxSaturatedRatio() {
-		return maxSaturatedRatio;
-	}
-
-	public double getZeroZeroPixelRatio() {
-		return zeroZeroPixelRatio;
-	}
-
-	public double getSaturatedRatioCh1() {
-		return saturatedRatioCh1;
-	}
-
-	public double getSaturatedRatioCh2() {
-		return saturatedRatioCh2;
-	}
-
 }

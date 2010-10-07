@@ -74,10 +74,6 @@ public class LiICQ<T extends RealType<T>> extends Algorithm<T> {
 		return ( (double) numPositiveProducts / (double) (numNegariveProducts + numPositiveProducts) ) - 0.5;
 	}
 
-	public double getIcqValue() {
-		return icqValue;
-	}
-
 	@Override
 	public void processResults(ResultHandler<T> handler) {
 		super.processResults(handler);

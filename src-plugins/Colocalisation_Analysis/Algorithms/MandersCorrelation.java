@@ -167,20 +167,4 @@ public class MandersCorrelation<T extends RealType<T>> extends Algorithm<T> {
 		handler.handleValue( "Manders M1 (threshold)", mandersThresholdedM1 );
 		handler.handleValue( "Manders M2 (threshold)", mandersThresholdedM2 );
 	}
-
-	public double getMandersM1() {
-		return mandersM1;
-	}
-
-	public double getMandersM2() {
-		return mandersM2;
-	}
-
-	public double getMandersThresholdedM1() {
-		return mandersThresholdedM1;
-	}
-
-	public double getMandersThresholdedM2() {
-		return mandersThresholdedM2;
-	}
 }
