@@ -89,6 +89,11 @@ public class InteractiveTracerCanvas extends TracerCanvas implements KeyListener
 		boolean shift_pressed = (keyCode == KeyEvent.VK_SHIFT);
 		boolean join_modifier_pressed = mac ? keyCode == KeyEvent.VK_ALT : keyCode == KeyEvent.VK_CONTROL;
 
+		int modifiers = e.getModifiersEx();
+		boolean shift_down = (modifiers & InputEvent.SHIFT_DOWN_MASK) > 0;
+		boolean control_down = (modifiers & InputEvent.CTRL_DOWN_MASK) > 0;
+		boolean alt_down = (modifiers & InputEvent.ALT_DOWN_MASK) > 0;
+
 		if (verbose) System.out.println("keyCode=" + keyCode + " (" + KeyEvent.getKeyText(keyCode)
 						+ ") keyChar=\"" + keyChar + "\" (" + (int)keyChar + ") "
 						+ KeyEvent.getKeyModifiersText(flags));
@@ -128,11 +133,6 @@ public class InteractiveTracerCanvas extends TracerCanvas implements KeyListener
 			tracerPlugin.mouseMovedTo( last_x_in_pane_precise, last_y_in_pane_precise, plane, shift_pressed, join_modifier_pressed );
 
 		}
-
-		int modifiers = e.getModifiersEx();
-		boolean shift_down = (modifiers & InputEvent.SHIFT_DOWN_MASK) > 0;
-		boolean control_down = (modifiers & InputEvent.CTRL_DOWN_MASK) > 0;
-		boolean alt_down = (modifiers & InputEvent.ALT_DOWN_MASK) > 0;
 
 		if( shift_down && (control_down || alt_down) && (keyCode == KeyEvent.VK_A) ) {
 			if( pathAndFillManager.anySelected() ) {
