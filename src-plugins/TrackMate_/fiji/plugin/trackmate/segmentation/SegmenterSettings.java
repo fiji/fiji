@@ -16,9 +16,33 @@ public class SegmenterSettings {
 	private static final float 		DEFAULT_EXPECTED_DIAMETER	= 10f;
 
 	public enum SegmenterType {
-		LOG_SEGMENTER,
 		PEAKPICKER_SEGMENTER,
+		LOG_SEGMENTER,
 		DOG_SEGMENTER;
+		
+		@Override
+		public String toString() {
+			switch(this) {
+			case LOG_SEGMENTER:
+				return "Downsample LoG segmenter";
+			case PEAKPICKER_SEGMENTER:
+				return "LoG segmenter";
+			case DOG_SEGMENTER:
+				return "DoG segmenter";
+			}
+			return null;
+		}
+
+		public SegmenterSettings createSettings() {
+			switch(this) {
+			case LOG_SEGMENTER:
+				return new LogSegmenterSettings();
+			case PEAKPICKER_SEGMENTER:
+			case DOG_SEGMENTER:
+				return new SegmenterSettings();
+			}
+			return null;
+		}
 	}
 	
 	/** The expected blob diameter in physical units. */

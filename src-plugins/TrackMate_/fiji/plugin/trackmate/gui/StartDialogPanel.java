@@ -8,6 +8,7 @@ import ij.WindowManager;
 import ij.gui.NewImage;
 import ij.gui.Roi;
 
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -16,14 +17,22 @@ import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import javax.swing.Action;
+import javax.swing.ComboBoxModel;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 
 import fiji.plugin.trackmate.Settings;
+import fiji.plugin.trackmate.segmentation.SegmenterSettings;
+import fiji.plugin.trackmate.segmentation.SegmenterSettings.SegmenterType;
+import fiji.plugin.trackmate.tracking.TrackerSettings;
+import fiji.plugin.trackmate.tracking.TrackerSettings.TrackerType;
 
 /**
 * This code was edited or generated using CloudGarden's Jigloo
@@ -48,16 +57,9 @@ public class StartDialogPanel extends ActionListenablePanel {
 		}
 	}
 	
-	
 
-	private static final long serialVersionUID = 1L;
-	private static final float DEFAULT_BLOB_DIAMETER  = 10;
-	private static final boolean DEFAULT_MEDIAN_FILTER = false;
-	private static final boolean DEFAULT_ALLOW_EDGE = false;
+	private static final String INFO_ICON = "images/information.png";
 	
-	private JLabel jLabelExpectedDiameter;
-	private JLabel jLabelBlobDiameterUnit;
-	private JLabel jLabelUseMdianFilter;
 	private JLabel jLabelCheckCalibration;
 	private JNumericTextField jTextFieldPixelWidth;
 	private JNumericTextField jTextFieldZStart;
@@ -86,20 +88,20 @@ public class StartDialogPanel extends ActionListenablePanel {
 	private JLabel jLabelVoxelDepth;
 	private JLabel jLabelPixelHeight;
 	private JLabel jLabelPixelWidth;
-	private JCheckBox jCheckBoxUseMedianFilter;
-	private JCheckBox jCheckBoxAllowEdgeMaxima;
-	private JLabel jLabelAllowEdgeMaxima;
 	private JLabel jLabelImageName;
-	private JNumericTextField jTextFieldExpectedBlobDiameter;
+	private JNumericTextField jTextFieldTimeInterval;
+	private GridBagLayout thisLayout;
+	private JLabel jLabelTimeInterval;
+	private JLabel jLabelUnits4;
 
 	private ImagePlus imp;
-	private JLabel jLabelTimeInterval;
-	private JNumericTextField jTextFieldTimeInterval;
-	private JLabel jLabelUnits4;
-	private GridBagLayout thisLayout;
-	private JLabel jLabelThresholdValue;
-	private JNumericTextField jTextFieldThresholdValue;
+	private JLabel jLabelSegmenterChoice;
+	private JLabel jLabelTrackerChoice;
+	private JComboBox jComboBoxSegmenterChoice;
+	private JComboBox jComboBoxTrackerChoice;
+	private JButton jButtonSegmenterInfo;
 
+	private JButton jButtonTrackerInfo;
 	
 	public StartDialogPanel() {
 		super();
@@ -125,12 +127,10 @@ public class StartDialogPanel extends ActionListenablePanel {
 		if (null == imp)
 			return;
 		jLabelImageName.setText(imp.getTitle());
-		jTextFieldThresholdValue.setText(String.format("%.1f", imp.getProcessor().getMinThreshold()));
 		jTextFieldPixelWidth.setText(String.format("%.1f", imp.getCalibration().pixelWidth));
 		jTextFieldPixelHeight.setText(String.format("%.1f", imp.getCalibration().pixelHeight));
 		jTextFieldVoxelDepth.setText(String.format("%.1f", imp.getCalibration().pixelDepth));
 		jTextFieldTimeInterval.setText(String.format("%.1f", imp.getCalibration().frameInterval));
-		jLabelBlobDiameterUnit.setText(imp.getCalibration().getUnit());
 		jLabelUnits1.setText(imp.getCalibration().getXUnit());
 		jLabelUnits2.setText(imp.getCalibration().getYUnit());
 		jLabelUnits3.setText(imp.getCalibration().getZUnit());
@@ -161,12 +161,6 @@ public class StartDialogPanel extends ActionListenablePanel {
 	public Settings updateSettings(Settings settings) {
 		if (null == settings)
 			settings = new Settings();
-		try {
-			settings.segmenterSettings.expectedRadius = Float.parseFloat(jTextFieldExpectedBlobDiameter.getText())/2;
-			settings.segmenterSettings.threshold = Float.parseFloat(jTextFieldThresholdValue.getText());
-		} catch (NumberFormatException nfe) {}
-//		settings.useMedianFilter = jCheckBoxUseMedianFilter.isSelected();
-//		settings.allowEdgeMaxima = jCheckBoxAllowEdgeMaxima.isSelected();
 		settings.imp =  imp;
 		settings.tstart = Integer.parseInt(jTextFieldTStart.getText());
 		settings.tend 	= Integer.parseInt(jTextFieldTEnd.getText());
@@ -176,7 +170,13 @@ public class StartDialogPanel extends ActionListenablePanel {
 		settings.yend 	= Integer.parseInt(jTextFieldYEnd.getText());
 		settings.zstart = Integer.parseInt(jTextFieldZStart.getText());
 		settings.zend 	= Integer.parseInt(jTextFieldZEnd.getText());
-		
+		// Parse segmenter choice
+		SegmenterType segmenterChoice = SegmenterType.values()[jComboBoxSegmenterChoice.getSelectedIndex()];
+		settings.segmenterSettings = segmenterChoice.createSettings();
+		// Parse tracker choice
+		TrackerType trackerChoice = TrackerType.values()[jComboBoxTrackerChoice.getSelectedIndex()];
+		settings.trackerSettings = trackerChoice.createSettings();
+		// Hop!
 		return settings;
 	}
 	
@@ -200,58 +200,48 @@ public class StartDialogPanel extends ActionListenablePanel {
 				jLabelImageName.setHorizontalAlignment(SwingConstants.CENTER);
 			}
 			{
-				jLabelExpectedDiameter = new JLabel();
-				this.add(jLabelExpectedDiameter, new GridBagConstraints(0, 1, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
-				jLabelExpectedDiameter.setText("Expected blob diameter:");
-				jLabelExpectedDiameter.setFont(SMALL_FONT);
+				jLabelSegmenterChoice = new JLabel();
+				this.add(jLabelSegmenterChoice, new GridBagConstraints(0, 1, 3, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 10, 0, 10), 0, 0));
+				jLabelSegmenterChoice.setText("Select a segmenter:");
+				jLabelSegmenterChoice.setFont(FONT);
 			}
 			{
-				jTextFieldExpectedBlobDiameter = new JNumericTextField();
-				this.add(jTextFieldExpectedBlobDiameter, new GridBagConstraints(1, 1, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 10), 0, 0));
-				jTextFieldExpectedBlobDiameter.setText(String.format("%.1f", DEFAULT_BLOB_DIAMETER));
-				jTextFieldExpectedBlobDiameter.setFont(SMALL_FONT);
-				jTextFieldExpectedBlobDiameter.setSize(TEXTFIELD_DIMENSION);
+				String[] segmenterNames = new String[SegmenterSettings.SegmenterType.values().length];
+				for (int i = 0; i < segmenterNames.length; i++) 
+					segmenterNames[i] = SegmenterSettings.SegmenterType.values()[i].toString();
+				ComboBoxModel jComboBoxSegmenterModel = new DefaultComboBoxModel(segmenterNames);
+				jComboBoxSegmenterChoice = new JComboBox();
+				this.add(jComboBoxSegmenterChoice, new GridBagConstraints(0, 2, 2, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 10, 0, 10), 0, 0));
+				jComboBoxSegmenterChoice.setModel(jComboBoxSegmenterModel);
+				jComboBoxSegmenterChoice.setFont(FONT);
 			}
 			{
-				jLabelBlobDiameterUnit = new JLabel();
-				jLabelBlobDiameterUnit.setText("units");
-				jLabelBlobDiameterUnit.setFont(SMALL_FONT);
-				this.add(jLabelBlobDiameterUnit, new GridBagConstraints(2, 1, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
+				jButtonSegmenterInfo = new JButton();
+				this.add(jButtonSegmenterInfo, new GridBagConstraints(2, 2, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.CENTER, new Insets(0, 10, 0, 10), 0, 0));
+				jButtonSegmenterInfo.setIcon(new ImageIcon(getClass().getResource(INFO_ICON)));
+				jButtonSegmenterInfo.setPreferredSize(new Dimension(24, 24));
 			}
 			{
-				jLabelThresholdValue = new JLabel();
-				this.add(jLabelThresholdValue, new GridBagConstraints(0, 2, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
-				jLabelThresholdValue.setText("Threshold value for maxima: ");
-				jLabelThresholdValue.setFont(SMALL_FONT);
-				}
-			{
-				jTextFieldThresholdValue = new JNumericTextField();
-				this.add(jTextFieldThresholdValue, new GridBagConstraints(1, 2, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 10), 0, 0));
-				jTextFieldThresholdValue.setText("0");
-				jTextFieldThresholdValue.setFont(SMALL_FONT);
-				jTextFieldThresholdValue.setSize(TEXTFIELD_DIMENSION);
+				jLabelTrackerChoice = new JLabel();
+				this.add(jLabelTrackerChoice, new GridBagConstraints(0, 3, 3, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 10, 0, 10), 0, 0));
+				jLabelTrackerChoice.setText("Select a tracker:");
+				jLabelTrackerChoice.setFont(FONT);
 			}
 			{
-				jLabelUseMdianFilter = new JLabel();
-				this.add(jLabelUseMdianFilter, new GridBagConstraints(0, 3, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
-				jLabelUseMdianFilter.setText("Use median filter:");
-				jLabelUseMdianFilter.setFont(SMALL_FONT);
+				String[] trackerNames = new String[TrackerSettings.TrackerType.values().length];
+				for (int i = 0; i < trackerNames.length; i++) 
+					trackerNames[i] = TrackerSettings.TrackerType.values()[i].toString();
+				ComboBoxModel jComboBoxTrackerModel = new DefaultComboBoxModel(trackerNames);
+				jComboBoxTrackerChoice = new JComboBox();
+				this.add(jComboBoxTrackerChoice, new GridBagConstraints(0, 4, 2, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 10, 0, 10), 0, 0));
+				jComboBoxTrackerChoice.setModel(jComboBoxTrackerModel);
+				jComboBoxTrackerChoice.setFont(FONT);
 			}
 			{
-				jLabelAllowEdgeMaxima = new JLabel();
-				this.add(jLabelAllowEdgeMaxima, new GridBagConstraints(0, 4, 1, 1, 0.0, 0.0, GridBagConstraints.EAST, GridBagConstraints.NONE, new Insets(0, 0, 0, 10), 0, 0));
-				jLabelAllowEdgeMaxima.setText("Allow edge maxima:");
-				jLabelAllowEdgeMaxima.setFont(SMALL_FONT);
-			}
-			{
-				jCheckBoxAllowEdgeMaxima = new JCheckBox();
-				this.add(jCheckBoxAllowEdgeMaxima, new GridBagConstraints(1, 4, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-				jCheckBoxAllowEdgeMaxima.setSelected(DEFAULT_ALLOW_EDGE);
-			}
-			{
-				jCheckBoxUseMedianFilter = new JCheckBox();
-				this.add(jCheckBoxUseMedianFilter, new GridBagConstraints(1, 3, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
-				jCheckBoxUseMedianFilter.setSelected(DEFAULT_MEDIAN_FILTER);
+				jButtonTrackerInfo = new JButton();
+				this.add(jButtonTrackerInfo, new GridBagConstraints(2, 4, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.CENTER, new Insets(0, 10, 0, 10), 0, 0));
+				jButtonTrackerInfo.setIcon(new ImageIcon(getClass().getResource(INFO_ICON)));
+				jButtonTrackerInfo.setPreferredSize(new Dimension(24, 24));
 			}
 			{
 				jLabelCheckCalibration = new JLabel();
