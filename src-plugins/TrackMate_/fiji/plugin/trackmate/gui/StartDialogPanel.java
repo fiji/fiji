@@ -163,11 +163,11 @@ public class StartDialogPanel extends ActionListenablePanel {
 			settings = new Settings();
 		try {
 			settings.segmenterSettings.expectedRadius = Float.parseFloat(jTextFieldExpectedBlobDiameter.getText())/2;
+			settings.segmenterSettings.threshold = Float.parseFloat(jTextFieldThresholdValue.getText());
 		} catch (NumberFormatException nfe) {}
 //		settings.useMedianFilter = jCheckBoxUseMedianFilter.isSelected();
 //		settings.allowEdgeMaxima = jCheckBoxAllowEdgeMaxima.isSelected();
 		settings.imp =  imp;
-//		settings.threshold = Float.parseFloat(jTextFieldThresholdValue.getText());
 		settings.tstart = Integer.parseInt(jTextFieldTStart.getText());
 		settings.tend 	= Integer.parseInt(jTextFieldTEnd.getText());
 		settings.xstart = Integer.parseInt(jTextFieldXStart.getText());

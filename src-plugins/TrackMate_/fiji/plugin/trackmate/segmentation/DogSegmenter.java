@@ -50,8 +50,8 @@ public class DogSegmenter<T extends RealType<T>> extends AbstractSpotSegmenter<T
 		final OutOfBoundsStrategyFactory<FloatType> oobs2 = new OutOfBoundsStrategyMirrorFactory<FloatType>();
 		
 		float sigma1, sigma2, minPeakValue;
-		sigma1 = 0.95f * radius / (float) Math.sqrt(img.getNumDimensions()); // in physical unit
-		sigma2 = 1.10f * sigma1;
+		sigma1 = (float) (2 / (1+Math.sqrt(2)) *  radius); // / Math.sqrt(img.getNumDimensions())); // in physical unit
+		sigma2 = (float) (Math.sqrt(2) * sigma1);
 		minPeakValue = settings.threshold;
 		
 		final DifferenceOfGaussianRealNI<T, FloatType> dog = new DifferenceOfGaussianRealNI<T, FloatType>(img, imageFactory, oobs2, sigma1, sigma2, minPeakValue, 1.0, calibration);
@@ -76,7 +76,7 @@ public class DogSegmenter<T extends RealType<T>> extends AbstractSpotSegmenter<T
 			for (int i = 0; i < img.getNumDimensions(); i++) 
 				coords[i] = dogpeak.getPosition(i) * calibration[i];
 			Spot spot = new SpotImp(coords);
-			spot.putFeature(Feature.QUALITY, dogpeak.getValue().get());
+			spot.putFeature(Feature.QUALITY, -dogpeak.getValue().get());
 			spots.add(spot);
 		}
 		return true;

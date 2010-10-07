@@ -60,6 +60,7 @@ public class DogSegmenterTestDrive {
 		// Instantiate segmenter
 		SegmenterSettings settings = new SegmenterSettings();
 		settings.expectedRadius = RADIUS;
+		settings.threshold = 5;
 		SpotSegmenter<UnsignedByteType> segmenter = new DogSegmenter<UnsignedByteType>(settings);
 		segmenter.setImage(img);
 		segmenter.setCalibration(CALIBRATION);
@@ -74,6 +75,7 @@ public class DogSegmenterTestDrive {
 		long end = System.currentTimeMillis();
 		
 		// Display image
+		ij.ImageJ.main(args);
 		ImageJFunctions.copyToImagePlus(img).show();
 		
 		// Display results

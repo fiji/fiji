@@ -26,7 +26,7 @@ public class SegmenterSettings {
 	/** The pixel value under which any peak will be discarded from further analysis. */
 	public float 	threshold = 		0;
 	/** The segmenter type selected. */
-	public SegmenterType segmenterType = SegmenterType.DOG_SEGMENTER;
+	public SegmenterType segmenterType = SegmenterType.PEAKPICKER_SEGMENTER;
 	
 	
 	/*
