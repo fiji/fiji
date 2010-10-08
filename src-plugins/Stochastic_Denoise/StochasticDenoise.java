@@ -106,7 +106,7 @@ public class StochasticDenoise<T extends NumericType<T>> {
 			// TODO: handle more that 8-bit images
 			maxDistance2  = 255*255;
 		}
-		else if (sourceCursor.getType() instanceof RGBALegacyType) {
+		else if (RGBALegacyType.class.isInstance(sourceCursor.getType())) {
 
 			IJ.log("Image is an RGBA image");
 			numChannels   = 3;
@@ -115,7 +115,7 @@ public class StochasticDenoise<T extends NumericType<T>> {
 			// copy image data to source buffer
 			while (sourceCursor.hasNext()) {
 				sourceCursor.fwd();
-				int value = ((RGBALegacyType)sourceCursor.getType()).get();
+				int value = RGBALegacyType.class.cast(sourceCursor.getType()).get();
 				sourceBuffer[0][sourceCursor.getArrayIndex()] = RGBALegacyType.red(value);
 				sourceBuffer[1][sourceCursor.getArrayIndex()] = RGBALegacyType.green(value);
 				sourceBuffer[2][sourceCursor.getArrayIndex()] = RGBALegacyType.blue(value);
@@ -180,8 +180,8 @@ public class StochasticDenoise<T extends NumericType<T>> {
 
 			if (targetCursor.getType() instanceof RealType<?>)
 				((RealType<?>)targetCursor.getType()).setReal(denoiseBuffer[0][index]);
-			if (targetCursor.getType() instanceof RGBALegacyType)
-				((RGBALegacyType)targetCursor.getType()).set(
+			if (RGBALegacyType.class.isInstance(targetCursor.getType()))
+				RGBALegacyType.class.cast(targetCursor.getType()).set(
 					RGBALegacyType.rgba(denoiseBuffer[0][index],
 				                        denoiseBuffer[1][index],
 				                        denoiseBuffer[2][index],
