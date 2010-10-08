@@ -307,7 +307,7 @@ public class Kuwahara_LinearStructure_Filter_v3  implements PlugInFilter {
 		gd.addNumericField("Number_of_angles", 30, 0);
 		// must be ODD!! this is the length of the line along which the averaging takes place
 		gd.addNumericField("Line_length", 11, 0);
-		gd.addChoice("Criterion", criteria, criteria[1]);
+		gd.addChoice("Criterion", criteria, criteria[0]);
 		gd.addCheckbox("Show_kernels", false);
 		gd.showDialog();
 		if (gd.wasCanceled()) return false;
