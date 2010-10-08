@@ -122,14 +122,17 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 	
 	private static enum GuiState {
 		START,
+		TUNE_SEGMENTER,
 		SEGMENTING,
 		THRESHOLD_BLOBS,
+		TUNE_TRACKER,
 		TRACKING;
 	};
 	
 	private static final long serialVersionUID = 1L;
 
 	private static final String START_DIALOG_KEY = "Start";
+	private static final String TUNE_SEGMENTER_KEY = "TuneSegmenter";
 	private static final String THRESHOLD_GUI_KEY = "Threshold";
 	private static final String LOG_PANEL_KEY = "Log";
 	private static final String DISPLAYER_PANEL_KEY = "Displayer";
@@ -156,6 +159,8 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 	private JButton jButtonNext;
 	private JPanel jPanelButtons;
 	private JPanel jPanelMain;
+	private Settings settings;
+	private SegmenterSettingsPanel segmenterSettingsPanel;
 	
 	
 	{
@@ -195,6 +200,11 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 	private void next() {
 		switch(state) {
 			case START:
+				state = GuiState.TUNE_SEGMENTER;
+				execTuneSegmenter();
+				break;
+				
+			case TUNE_SEGMENTER:
 				execSegmentationStep();
 				state = GuiState.SEGMENTING;
 				break;
@@ -265,13 +275,26 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 
 	
 	/**
+	 * Create a new {@link SegmenterSettingsPanel}.
+	 */
+	private void execTuneSegmenter() {
+		settings = startDialogPanel.getSettings();
+		{
+			segmenterSettingsPanel = new SegmenterSettingsPanel(settings);
+			jPanelMain.add(segmenterSettingsPanel, TUNE_SEGMENTER_KEY);
+		}
+		cardLayout.show(jPanelMain, TUNE_SEGMENTER_KEY);
+	}
+	
+	
+	/**
 	 * Switch to the log panel, and execute the segmentation step, which will be delegated to 
 	 * the {@link TrackMate_} glue class in a new Thread.
 	 */
 	private void execSegmentationStep() {
 		cardLayout.show(jPanelMain, LOG_PANEL_KEY);
-		Settings settings = trackmate.getSettings();
-		startDialogPanel.updateSettings(settings);
+		settings = segmenterSettingsPanel.getSettings();
+		trackmate.setSettings(settings);
 		logger.log("Starting segmentation...\n", Logger.BLUE_COLOR);
 		new Thread("TrackMate segmentation thread") {					
 			public void run() {
@@ -505,7 +528,7 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 			pack();
 			this.setSize(300, 520);
 			{
-				startDialogPanel = new StartDialogPanel();
+				startDialogPanel = new StartDialogPanel(settings);
 				jPanelMain.add(startDialogPanel, START_DIALOG_KEY);
 			}
 			{

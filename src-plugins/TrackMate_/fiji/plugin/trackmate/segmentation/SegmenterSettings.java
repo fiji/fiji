@@ -76,6 +76,7 @@ public class SegmenterSettings {
 	public float 	threshold = 		0;
 	/** The segmenter type selected. */
 	public SegmenterType segmenterType = SegmenterType.PEAKPICKER_SEGMENTER;
+	public boolean useMedianFilter;
 	
 	
 	/*

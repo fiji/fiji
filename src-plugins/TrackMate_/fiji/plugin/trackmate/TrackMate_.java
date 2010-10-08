@@ -299,6 +299,11 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 		return settings;
 	}
 	
+	public void setSettings(Settings settings) {
+		this.settings = settings;
+	}
+	
+	
 	/*
 	 * STATIC METHODS
 	 */
@@ -352,6 +357,7 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 		}
 		return selectedSpots;
 	}
+
 	
 	
 }

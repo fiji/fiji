@@ -79,6 +79,8 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 		final float[] pixel_values = new float[npixels];
 		int n = 0;
 		
+		System.out.println("max: "+npixels);// DEBUG
+		
 		// Main loop
 		for (int i = 0; i < coords.length; i++)
 			coords[i] = spot.getFeature(Spot.POSITION_FEATURES[i]);
@@ -106,7 +108,8 @@ public class BlobDescriptiveStatistics <T extends RealType<T>> extends Independe
 	        M3 = M3 + term1 * delta_n * (n - 2) - 3 * delta_n * M2;
 	        M2 = M2 + term1;
 		}
-		
+		System.out.println("reached: "+n);// DEBUG
+
 		MathLib.quicksort(pixel_values, 0, npixels-1);
 		float median = pixel_values[npixels/2];
 		float min = pixel_values[0];

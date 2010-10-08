@@ -93,9 +93,13 @@ public class StartDialogPanel extends ActionListenablePanel {
 	private JButton jButtonSegmenterInfo;
 
 	private JButton jButtonTrackerInfo;
+	private Settings settings;
 	
-	public StartDialogPanel() {
+	public StartDialogPanel(Settings settings) {		
 		super();
+		if (null == settings)
+			settings = new Settings();
+		this.settings = settings;
 		initGUI();
 		refresh();
 	}
@@ -142,16 +146,13 @@ public class StartDialogPanel extends ActionListenablePanel {
 	
 	
 	/**
-	 * Update the settings object given with the parameters this panel allow to tune, 
-	 * namely {@link Settings#expectedDiameter}, {@link Settings#useMedianFilter} and
-	 * {@link Settings#allowEdgeMaxima}.
+	 * Update the settings object given with the parameters this panel allow to tune
+	 * this plugin.	
 	 * @param settings  the Settings to update. If <code>null</code>, a new default one
 	 * is created.
 	 * @return  the updated Settings
 	 */
-	public Settings updateSettings(Settings settings) {
-		if (null == settings)
-			settings = new Settings();
+	public Settings getSettings() {
 		settings.imp =  imp;
 		settings.tstart = Integer.parseInt(jTextFieldTStart.getText());
 		settings.tend 	= Integer.parseInt(jTextFieldTEnd.getText());
@@ -466,7 +467,7 @@ public class StartDialogPanel extends ActionListenablePanel {
 		imp.getCalibration().pixelWidth = 0.4;
 		imp.setRoi(new Roi(10, 20, 5, 60));
 		imp.show();
-		frame.getContentPane().add(new StartDialogPanel());
+		frame.getContentPane().add(new StartDialogPanel(null));
 		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		frame.pack();
 		frame.setVisible(true);
