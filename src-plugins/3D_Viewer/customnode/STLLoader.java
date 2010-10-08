@@ -157,7 +157,11 @@ public class STLLoader {
 	}
 
 	private float parseFloat(String string) throws ParseException {
-	  	return decimalFormat.parse(string.replaceFirst("E\\+", "E")).floatValue();
+		//E+05 -> E05, e+05 -> E05
+		string = string.replaceFirst("[eE]\\+", "E");
+		//E-05 -> E-05, e-05 -> E-05
+		string = string.replaceFirst("e\\-", "E-");
+	  	return decimalFormat.parse(string).floatValue();
 	}
 	
 	private float leBytesToFloat(byte b0, byte b1, byte b2, byte b3) {
