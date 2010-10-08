@@ -14,9 +14,6 @@ import java.util.Hashtable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import java.util.Dictionary;
-import java.util.Hashtable;
-
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -129,7 +126,10 @@ public class Stochastic_Denoise<T extends RealType<T>> implements PlugIn {
 								applyButton.setEnabled(false);
 
 								// perform the denoising
+								final long start = System.currentTimeMillis();
 								stochasticDenoise.process(image, denoised);
+								final long end = System.currentTimeMillis();
+								IJ.log("Denoising took " + (end-start) + "ms");
 
 								// show the result
 								dns.show();

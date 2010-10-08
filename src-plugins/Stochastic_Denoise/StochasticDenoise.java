@@ -21,13 +21,19 @@ public class StochasticDenoise<T extends NumericType<T>> {
 	private int   numDimensions;
 	private int   numNeighbors;
 
+	private final int MaxPathLength = Integer.MAX_VALUE;
+
 	private float[][] denoiseBuffer;
 
-	private final int MaxPathLength = Integer.MAX_VALUE;
+	private int[][] relativeNeighborPositions;
+
+	private float[] probabilities;
+	private int maxDistance2;
+	private int numMisses = 0;
+	private int numAccess = 0;
 
 	private final boolean debug = false;
 
-	private int[][] relativeNeighborPositions;
 	/**
 	 * Set all parameters of the algorithm.
 	 *
@@ -82,10 +88,12 @@ public class StochasticDenoise<T extends NumericType<T>> {
 			IJ.log("Image is a gray scale image");
 			// allocate denoise buffer
 			denoiseBuffer = new float[image.size()][1];
+			maxDistance2  = 255*255;
 		}
 		if (sourceCursor.getType() instanceof RGBALegacyType) {
 			IJ.log("Image is an RGBA image");
 			denoiseBuffer = new float[image.size()][3];
+			maxDistance2  = (255*255)*3;
 		}
 
 		if (debug) {
@@ -96,6 +104,10 @@ public class StochasticDenoise<T extends NumericType<T>> {
 			}
 			System.out.println("Starting denoising...");
 		}
+
+		// allocate hash table for probabilities
+		probabilities = new float[maxDistance2 + 1];
+		Arrays.fill(probabilities, -1.0f);
 
 		IJ.showProgress(0, image.size());
 
@@ -132,6 +144,9 @@ public class StochasticDenoise<T extends NumericType<T>> {
 			if (index % 50 == 0)
 				IJ.showProgress(index, image.size());
 		}
+
+		IJ.log("percentage of cache hits for probabilities: " + (float)(numAccess - numMisses)/numAccess);
+		IJ.log("size of hash table of probabilities: " + probabilities.length);
 	}
 
 	/**
@@ -315,16 +330,27 @@ public class StochasticDenoise<T extends NumericType<T>> {
 
 	private float neighborProbability(T initialValue, T lastValue, T neighborValue) {
 
-		float probInitial;
-		float probLast;
+		int dist2Initial = dist2(initialValue, neighborValue);
+		int dist2Last    = dist2(lastValue,    neighborValue);
+
+		float probInitial = probabilities[dist2Initial];
+		float probLast    = probabilities[dist2Last];
+
+		if (probInitial < 0.0f) {
+			probInitial = (float)Math.exp(-dist2Initial/(maxDistance2*2*variance)); 
+			probabilities[dist2Initial] = probInitial;
+			numMisses++;
+		}
+		if (probLast < 0.0f) {
+			probLast = (float)Math.exp(-dist2Last/(maxDistance2*2*variance)); 
+			probabilities[dist2Last] = probLast;
+			numMisses++;
+		}
+		numAccess += 2;
 
 		//System.out.println("initial value: " + initialValue);
 		//System.out.println("last value   : " + lastValue);
 		//System.out.println("neighborValue: " + neighborValue);
-
-		probInitial = (float)Math.exp(-Math.pow(dist(initialValue, neighborValue), 2)/(2*variance));
-		probLast    = (float)Math.exp(-Math.pow(dist(lastValue   , neighborValue), 2)/(2*variance));
-
 		//System.out.println("dist initial: " + dist(initialValue, neighborValue));
 		//System.out.println("dist last   : " + dist(lastValue   , neighborValue));
 		//System.out.println("prob initial: " + probInitial);
@@ -334,19 +360,20 @@ public class StochasticDenoise<T extends NumericType<T>> {
 		return probInitial*probLast;
 	}
 
-	private final float dist(T value1, T value2) {
-		if (value1 instanceof RealType<?>)
-			return (float)((((RealType<?>)value1).getRealFloat() - ((RealType<?>)value2).getRealFloat())/255.0);
-		else {
+	private final int dist2(T value1, T value2) {
+		if (value1 instanceof RealType<?>) {
+			int dist = (int)((RealType<?>)value1).getRealFloat() - (int)((RealType<?>)value2).getRealFloat();
+			return dist*dist;
 
+		} else {
 			int v1 = ((RGBALegacyType)value1).get();
 			int v2 = ((RGBALegacyType)value2).get();
 			//System.out.println("value1: " + v1);
 			//System.out.println("value2: " + v2);
-			return (float)Math.sqrt(
-				Math.pow(RGBALegacyType.red(v1)/255.0   - RGBALegacyType.red(v2)/255.0,   2.0) +
-				Math.pow(RGBALegacyType.green(v1)/255.0 - RGBALegacyType.green(v2)/255.0, 2.0) +
-				Math.pow(RGBALegacyType.blue(v1)/255.0  - RGBALegacyType.blue(v2)/255.0,  2.0));
+			int d1 = RGBALegacyType.red(v1)   - RGBALegacyType.red(v2);
+			int d2 = RGBALegacyType.green(v1) - RGBALegacyType.green(v2);
+			int d3 = RGBALegacyType.blue(v1)  - RGBALegacyType.blue(v2);
+			return d1*d1 + d2*d2 + d3*d3;
 		}
 	}
 }
