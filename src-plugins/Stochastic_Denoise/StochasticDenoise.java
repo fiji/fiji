@@ -16,7 +16,6 @@ public class StochasticDenoise<T extends NumericType<T>> {
 	private int   numSamples;
 	private float minProb;
 	private float variance;
-	private float normalizer;
 
 	private int[] dimensions;
 	private int   numDimensions;
@@ -41,8 +40,6 @@ public class StochasticDenoise<T extends NumericType<T>> {
 		this.numSamples = numSamples;
 		this.minProb    = minProb;
 		this.variance   = (float)Math.pow(sigma, 2);
-		//this.normalizer = 1.0f/((float)Math.sqrt(2*Math.PI*(variance/2.0f)));
-		this.normalizer = 1.0f/100.0f;
 	}
 
 	/**
@@ -266,6 +263,8 @@ public class StochasticDenoise<T extends NumericType<T>> {
 		int[]   centerPosition   = cursor.getPosition();
 		int[]   neighborPosition = new int[numDimensions];
 
+		float sum = 0.0f;
+
 		for (int i = 0; i < numNeighbors; i++) {
 
 			// get neighbor position
@@ -286,26 +285,27 @@ public class StochasticDenoise<T extends NumericType<T>> {
 			cursor.setPosition(neighborPosition);
 			T neighborValue  = cursor.getType();
 
-			probabilities[i]     = neighborProbability(initialValue, lastValue, neighborValue);
+			probabilities[i] = neighborProbability(initialValue, lastValue, neighborValue);
+			sum             += probabilities[i];
 		}
 
 		// reset cursor
 		cursor.setPosition(centerPosition);
+
+		// normalize probabilities to sum up to one
+		for (int i = 0; i < numNeighbors; i++)
+			probabilities[i] /= sum;
 
 		return probabilities;
 	}
 
 	private int sampleNeighbor(float[] probabilities) {
 
+		// draw a random number between 0 and 1
+		float rand = (float)Math.random();
+
 		float sumProbs = 0.0f;
-		for (float prob : probabilities)
-			sumProbs += prob;
-
-		// draw a random number between 0 and sum of all probabilities
-		float rand = (float)Math.random()*sumProbs;
-
-		sumProbs = 0.0f;
-		for (int i = 0; i < probabilities.length; i++) {
+		for (int i = 0; i < numNeighbors; i++) {
 			sumProbs += probabilities[i];
 			if (rand <= sumProbs)
 				return i;
@@ -331,8 +331,7 @@ public class StochasticDenoise<T extends NumericType<T>> {
 		//System.out.println("prob last   : " + probLast);
 		//System.out.println("normalizer  : " + normalizer);
 
-		//return normalizer*probInitial*probLast;
-		return normalizer*probInitial*probLast;
+		return probInitial*probLast;
 	}
 
 	private final float dist(T value1, T value2) {
