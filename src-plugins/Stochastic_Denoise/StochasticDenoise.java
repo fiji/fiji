@@ -20,12 +20,17 @@ public class StochasticDenoise<T extends NumericType<T>> {
 	private int[] dimensions;
 	private int   numDimensions;
 	private int   numNeighbors;
+	private int   numChannels;
 
 	private final int MaxPathLength = Integer.MAX_VALUE;
 
+	// buffer to accumulate the pixel values
 	private float[][] denoiseBuffer;
+	// buffer that contains the source image data (gray scale or rgb)
+	private int[][]   sourceBuffer;
 
-	private int[][] relativeNeighborPositions;
+	// buffer to contain the relative positions of neighbors
+	private int[][]   relativeNeighborPositions;
 
 	private float[] probabilities;
 	private int maxDistance2;
@@ -83,17 +88,45 @@ public class StochasticDenoise<T extends NumericType<T>> {
 		LocalizableByDimCursor<T> sourceCursor = image.createLocalizableByDimCursor();
 		LocalizableByDimCursor<T> targetCursor = denoised.createLocalizableByDimCursor();
 
-		// find suitable type for averaging
+		// setup buffers
 		if (sourceCursor.getType() instanceof RealType<?>) {
+
 			IJ.log("Image is a gray scale image");
-			// allocate denoise buffer
-			denoiseBuffer = new float[image.size()][1];
+			// allocate denoise and source buffer
+			numChannels   = 1;
+			denoiseBuffer = new float[numChannels][image.size()];
+			sourceBuffer  = new int[numChannels][image.size()];
+			// copy image data to source buffer
+			while (sourceCursor.hasNext()) {
+				sourceCursor.fwd();
+				sourceBuffer[0][sourceCursor.getArrayIndex()] =
+					(int)((RealType<?>)sourceCursor.getType()).getRealFloat();
+			}
+			sourceCursor.reset();
+			// TODO: handle more that 8-bit images
 			maxDistance2  = 255*255;
 		}
-		if (sourceCursor.getType() instanceof RGBALegacyType) {
+		else if (sourceCursor.getType() instanceof RGBALegacyType) {
+
 			IJ.log("Image is an RGBA image");
-			denoiseBuffer = new float[image.size()][3];
+			numChannels   = 3;
+			denoiseBuffer = new float[numChannels][image.size()];
+			sourceBuffer  = new int[numChannels][image.size()];
+			// copy image data to source buffer
+			while (sourceCursor.hasNext()) {
+				sourceCursor.fwd();
+				int value = ((RGBALegacyType)sourceCursor.getType()).get();
+				sourceBuffer[0][sourceCursor.getArrayIndex()] = RGBALegacyType.red(value);
+				sourceBuffer[1][sourceCursor.getArrayIndex()] = RGBALegacyType.green(value);
+				sourceBuffer[2][sourceCursor.getArrayIndex()] = RGBALegacyType.blue(value);
+			}
+			sourceCursor.reset();
+			// TODO: handle more that 8-bit images
 			maxDistance2  = (255*255)*3;
+		} else {
+
+			IJ.log("Image type " + sourceCursor.getType().getClass() + " not supported!");
+			return;
 		}
 
 		if (debug) {
@@ -109,8 +142,8 @@ public class StochasticDenoise<T extends NumericType<T>> {
 		probabilities = new float[maxDistance2 + 1];
 		Arrays.fill(probabilities, -1.0f);
 
+		// iterate over all pixels
 		IJ.showProgress(0, image.size());
-
 		while (sourceCursor.hasNext()) {
 			sourceCursor.fwd();
 			targetCursor.setPosition(sourceCursor);
@@ -122,20 +155,13 @@ public class StochasticDenoise<T extends NumericType<T>> {
 
 			// normalize the target pixel value
 			int index = targetCursor.getArrayIndex();
-
-			if (targetCursor.getType() instanceof RealType<?>)
-				((RealType<?>)targetCursor.getType()).setReal(denoiseBuffer[index][0]/sumWeights);
-			if (targetCursor.getType() instanceof RGBALegacyType)
-				((RGBALegacyType)targetCursor.getType()).set(
-					RGBALegacyType.rgba(denoiseBuffer[index][0]/sumWeights,
-				                        denoiseBuffer[index][1]/sumWeights,
-				                        denoiseBuffer[index][2]/sumWeights,
-				                        255.0f));
+			for (int c = 0; c < denoiseBuffer.length; c++)
+				denoiseBuffer[c][index] /= sumWeights;
 
 			if (debug) {
-				System.out.println("accum. value : " + denoiseBuffer[index]);
+				System.out.println("accum. value : " + denoiseBuffer[0][index]*sumWeights);
 				System.out.println("total weights: " + sumWeights);
-				System.out.println("final value  : " + denoiseBuffer[index][0]/sumWeights);
+				System.out.println("final value  : " + denoiseBuffer[0][index]);
 				System.out.println("final px value: " + targetCursor.getType().toString());
 
 				break;
@@ -145,8 +171,25 @@ public class StochasticDenoise<T extends NumericType<T>> {
 				IJ.showProgress(index, image.size());
 		}
 
+		// copy content of denoise buffer to target
+		targetCursor.reset();
+		while (targetCursor.hasNext()) {
+			targetCursor.fwd();
+
+			int index = targetCursor.getArrayIndex();
+
+			if (targetCursor.getType() instanceof RealType<?>)
+				((RealType<?>)targetCursor.getType()).setReal(denoiseBuffer[0][index]);
+			if (targetCursor.getType() instanceof RGBALegacyType)
+				((RGBALegacyType)targetCursor.getType()).set(
+					RGBALegacyType.rgba(denoiseBuffer[0][index],
+				                        denoiseBuffer[1][index],
+				                        denoiseBuffer[2][index],
+				                        255.0f));
+		}
+
 		IJ.log("percentage of cache hits for probabilities: " + (float)(numAccess - numMisses)/numAccess);
-		IJ.log("size of hash table of probabilities: " + probabilities.length);
+		IJ.log("size of hash table of probabilities       : " + probabilities.length);
 	}
 
 	/**
@@ -159,8 +202,8 @@ public class StochasticDenoise<T extends NumericType<T>> {
 	protected float randomWalk(LocalizableByDimCursor<T> sourceCursor,
 	                           LocalizableByDimCursor<T> targetCursor) {
 
-		T initialValue = sourceCursor.getType().clone();
-		T lastValue    = initialValue.clone();
+		int initialValueIndex = sourceCursor.getArrayIndex();
+		int lastValueIndex    = initialValueIndex;
 
 		float pathProbability = 1.0f;
 
@@ -173,8 +216,8 @@ public class StochasticDenoise<T extends NumericType<T>> {
 		for (int k = 0; k < MaxPathLength; k++) {
 			// get probabilities of going to neighbors
 			float[] probabilities = getNeighborProbabilities(sourceCursor,
-			                                                 initialValue,
-			                                                 lastValue);
+			                                                 initialValueIndex,
+			                                                 lastValueIndex);
 
 			if (debug) {
 				System.out.println("neighbor probs:");
@@ -227,33 +270,12 @@ public class StochasticDenoise<T extends NumericType<T>> {
 			}
 
 			// update target pixel value
-			float[] add;
-			if (sourceCursor.getType() instanceof RealType<?>) {
-				add    = new float[1];
-				add[0] = weight*((RealType<?>)sourceCursor.getType()).getRealFloat();
-			}
-			//if (sourceCursor.getType() instanceof RGBALegacyType) {
-			else {
-				add    = new float[3];
-				int value = ((RGBALegacyType)sourceCursor.getType()).get();
-				add[0] = weight*RGBALegacyType.red(value);
-				add[1] = weight*RGBALegacyType.green(value);
-				add[2] = weight*RGBALegacyType.blue(value);
-			}
-			int index  = targetCursor.getArrayIndex();
-			for (int b = 0; b < denoiseBuffer[index].length; b++)
-				denoiseBuffer[index][b] += add[b];
-
+			for (int c = 0; c < numChannels; c++)
+				denoiseBuffer[c][targetCursor.getArrayIndex()] +=
+					weight*sourceBuffer[c][sourceCursor.getArrayIndex()];
+			
 			// update last pixel value
-			lastValue = sourceCursor.getType().clone();
-
-			if (debug) {
-				System.out.println("added to pixel: " + add.toString());
-				System.out.println("target value  : " + denoiseBuffer[index]);
-			}
-
-			// update last pixel value
-			lastValue = sourceCursor.getType().clone();
+			lastValueIndex = sourceCursor.getArrayIndex();
 		};
 
 		// reset source cursor
@@ -272,7 +294,7 @@ public class StochasticDenoise<T extends NumericType<T>> {
 	 * @return An array of probabilities
 	 */
 	private float[] getNeighborProbabilities(LocalizableByDimCursor<T> cursor,
-											 T initialValue, T lastValue) {
+											 int initialValueIndex, int lastValueIndex) {
 
 		float[] probabilities    = new float[numNeighbors];
 		int[]   centerPosition   = cursor.getPosition();
@@ -298,7 +320,15 @@ public class StochasticDenoise<T extends NumericType<T>> {
 				continue;
 
 			cursor.setPosition(neighborPosition);
-			T neighborValue  = cursor.getType();
+			int index = cursor.getArrayIndex();
+			int[] initialValue  = new int[numChannels];
+			int[] lastValue     = new int[numChannels];
+			int[] neighborValue = new int[numChannels];
+			for (int c = 0; c < numChannels; c++) {
+				initialValue[c]  = sourceBuffer[c][initialValueIndex];
+				lastValue[c]     = sourceBuffer[c][lastValueIndex];
+				neighborValue[c] = sourceBuffer[c][index];
+			}
 
 			probabilities[i] = neighborProbability(initialValue, lastValue, neighborValue);
 			sum             += probabilities[i];
@@ -325,10 +355,10 @@ public class StochasticDenoise<T extends NumericType<T>> {
 			if (rand <= sumProbs)
 				return i;
 		}
-		return probabilities.length - 1;
+		return numNeighbors - 1;
 	}
 
-	private float neighborProbability(T initialValue, T lastValue, T neighborValue) {
+	private float neighborProbability(int[] initialValue, int[] lastValue, int[] neighborValue) {
 
 		int dist2Initial = dist2(initialValue, neighborValue);
 		int dist2Last    = dist2(lastValue,    neighborValue);
@@ -360,20 +390,11 @@ public class StochasticDenoise<T extends NumericType<T>> {
 		return probInitial*probLast;
 	}
 
-	private final int dist2(T value1, T value2) {
-		if (value1 instanceof RealType<?>) {
-			int dist = (int)((RealType<?>)value1).getRealFloat() - (int)((RealType<?>)value2).getRealFloat();
-			return dist*dist;
+	private final int dist2(int[] value1, int[] value2) {
 
-		} else {
-			int v1 = ((RGBALegacyType)value1).get();
-			int v2 = ((RGBALegacyType)value2).get();
-			//System.out.println("value1: " + v1);
-			//System.out.println("value2: " + v2);
-			int d1 = RGBALegacyType.red(v1)   - RGBALegacyType.red(v2);
-			int d2 = RGBALegacyType.green(v1) - RGBALegacyType.green(v2);
-			int d3 = RGBALegacyType.blue(v1)  - RGBALegacyType.blue(v2);
-			return d1*d1 + d2*d2 + d3*d3;
-		}
+		int dist2 = 0;
+		for (int c = 0; c < numChannels; c++)
+			dist2 += (value1[c] - value2[c])*(value1[c] - value2[c]);
+		return dist2;
 	}
 }
