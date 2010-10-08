@@ -13,7 +13,7 @@ import mpicbg.imglib.type.numeric.RealType;
  */
 public class SegmenterSettings {
 	
-	private static final float 		DEFAULT_EXPECTED_DIAMETER	= 10f;
+	private static final float DEFAULT_EXPECTED_DIAMETER	= 10f;
 
 	public enum SegmenterType {
 		PEAKPICKER_SEGMENTER,
@@ -40,6 +40,31 @@ public class SegmenterSettings {
 			case PEAKPICKER_SEGMENTER:
 			case DOG_SEGMENTER:
 				return new SegmenterSettings();
+			}
+			return null;
+		}
+
+		public String getInfoText() {
+			switch(this) {
+			case PEAKPICKER_SEGMENTER:
+				return "<html>" +
+						"This segmenter applies a LoG (Laplacian of Gaussian) filter <br>" +
+						"to the image, with a sigma suited to the blob estimated size.<br>" +
+						"Calculations are made in the Fourier space. The maxima in the <br>" +
+						"filtered image are searched for, and maxima too close from each <br>" +
+						"other are suppressed." +
+						"</html>";
+			case LOG_SEGMENTER:
+				return "<html>" +
+						"This segmenter is basically identical to the LoG segmenter, except <br>" +
+						"that images are downsampled before filtering, giving it a small <br>" +
+						"kick in speed." +
+						"</html>";
+			case DOG_SEGMENTER:
+				return "<html>" +
+						"This segmented is based on an approximation of the LoG operator <br>" +
+						"by differences of gaussian (DoG)." +
+						"</html>";
 			}
 			return null;
 		}

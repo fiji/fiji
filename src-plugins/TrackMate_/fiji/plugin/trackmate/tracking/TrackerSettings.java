@@ -25,7 +25,12 @@ public class TrackerSettings {
 		public String getInfoText() {
 			switch(this) {
 			case LAP_TRACKER:
-				return "<html>Hi all!<br>this is a help text.</html>";
+				return "<html>" +
+						"This tracker is based on the Linear Assignment Problem mathematical framework. <br>" +
+						"Its implementation is derived from the following paper: <br>" +
+						"<i>Robust single-particle tracking in live-cell time-lapse sequences</i> - <br>" +
+						"Jaqaman <i> et al.</i>, 2008, Nature Methods. <br>" +
+						" </html>";
 			}
 			
 			return null;

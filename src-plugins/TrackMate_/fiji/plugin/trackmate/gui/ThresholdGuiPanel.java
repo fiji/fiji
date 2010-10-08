@@ -22,6 +22,7 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
@@ -63,7 +64,8 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	private final ChangeEvent CHANGE_EVENT = new ChangeEvent(this);
 	
 	private static final long serialVersionUID = 1L;
-
+	private static final String ADD_ICON = "images/add.png";
+	private static final String REMOVE_ICON = "images/delete.png";
 	
 	private JLabel jLabelSetColorBy;
 	private JComboBox jComboBoxSetColorBy;
@@ -351,11 +353,11 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 						jPanelButtons.add(Box.createHorizontalStrut(5));
 						jButtonAddThreshold = new JButton();
 						jPanelButtons.add(jButtonAddThreshold);
-						jButtonAddThreshold.setText("+");
+						jButtonAddThreshold.setIcon(new ImageIcon(getClass().getResource(ADD_ICON)));
 						jButtonAddThreshold.setFont(SMALL_FONT);
-						jButtonAddThreshold.setPreferredSize(new java.awt.Dimension(21, 22));
-						jButtonAddThreshold.setSize(20, 15);
-						jButtonAddThreshold.setMinimumSize(new java.awt.Dimension(10, 10));
+						jButtonAddThreshold.setPreferredSize(new java.awt.Dimension(24, 24));
+						jButtonAddThreshold.setSize(24, 24);
+						jButtonAddThreshold.setMinimumSize(new java.awt.Dimension(24, 24));
 						jButtonAddThreshold.addActionListener(new ActionListener() {
 							public void actionPerformed(ActionEvent e) {
 								addThresholdPanel();
@@ -366,11 +368,11 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 						jPanelButtons.add(Box.createHorizontalStrut(5));
 						jButtonRemoveThreshold = new JButton();
 						jPanelButtons.add(jButtonRemoveThreshold);
-						jButtonRemoveThreshold.setText("-");
+						jButtonRemoveThreshold.setIcon(new ImageIcon(getClass().getResource(REMOVE_ICON)));
 						jButtonRemoveThreshold.setFont(SMALL_FONT);
-						jButtonRemoveThreshold.setPreferredSize(new java.awt.Dimension(21, 22));
-						jButtonRemoveThreshold.setSize(20, 15);
-						jButtonRemoveThreshold.setMinimumSize(new java.awt.Dimension(10, 10));
+						jButtonRemoveThreshold.setPreferredSize(new java.awt.Dimension(24, 24));
+						jButtonRemoveThreshold.setSize(24, 24);
+						jButtonRemoveThreshold.setMinimumSize(new java.awt.Dimension(24, 24));
 						jButtonRemoveThreshold.addActionListener(new ActionListener() {
 							public void actionPerformed(ActionEvent e) {
 								removeThresholdPanel();
