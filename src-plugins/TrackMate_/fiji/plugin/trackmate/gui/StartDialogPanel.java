@@ -34,19 +34,9 @@ import fiji.plugin.trackmate.segmentation.SegmenterSettings.SegmenterType;
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.tracking.TrackerSettings.TrackerType;
 
-/**
-* This code was edited or generated using CloudGarden's Jigloo
-* SWT/Swing GUI Builder, which is free for non-commercial
-* use. If Jigloo is being used commercially (ie, by a corporation,
-* company or business for any purpose whatever) then you
-* should purchase a license for each developer using Jigloo.
-* Please visit www.cloudgarden.com for details.
-* Use of Jigloo implies acceptance of these licensing terms.
-* A COMMERCIAL LICENSE HAS NOT BEEN PURCHASED FOR
-* THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
-* LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
-*/
 public class StartDialogPanel extends ActionListenablePanel {
+
+
 
 	{
 		//Set Look & Feel
@@ -58,6 +48,7 @@ public class StartDialogPanel extends ActionListenablePanel {
 	}
 	
 
+	private static final long serialVersionUID = -969185878762294241L;
 	private static final String INFO_ICON = "images/information.png";
 	
 	private JLabel jLabelCheckCalibration;
@@ -219,7 +210,16 @@ public class StartDialogPanel extends ActionListenablePanel {
 				jButtonSegmenterInfo = new JButton();
 				this.add(jButtonSegmenterInfo, new GridBagConstraints(2, 2, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.CENTER, new Insets(0, 10, 0, 10), 0, 0));
 				jButtonSegmenterInfo.setIcon(new ImageIcon(getClass().getResource(INFO_ICON)));
-				jButtonSegmenterInfo.setPreferredSize(new Dimension(24, 24));
+				jButtonSegmenterInfo.setPreferredSize(new Dimension(24, 24));				
+				jButtonSegmenterInfo.addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent e) {						
+						String text = SegmenterSettings.SegmenterType.values()[jComboBoxSegmenterChoice.getSelectedIndex()].getInfoText();
+						jButtonSegmenterInfo.setToolTipText(text);
+						Action toolTipAction = jButtonSegmenterInfo.getActionMap().get("postTip");						
+						ActionEvent postTip = new ActionEvent(jButtonSegmenterInfo, ActionEvent.ACTION_PERFORMED, "");
+						toolTipAction.actionPerformed( postTip );
+					}
+				});
 			}
 			{
 				jLabelTrackerChoice = new JLabel();
@@ -242,6 +242,15 @@ public class StartDialogPanel extends ActionListenablePanel {
 				this.add(jButtonTrackerInfo, new GridBagConstraints(2, 4, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.CENTER, new Insets(0, 10, 0, 10), 0, 0));
 				jButtonTrackerInfo.setIcon(new ImageIcon(getClass().getResource(INFO_ICON)));
 				jButtonTrackerInfo.setPreferredSize(new Dimension(24, 24));
+				jButtonTrackerInfo.addActionListener(new ActionListener() {
+					public void actionPerformed(ActionEvent e) {						
+						String text = TrackerSettings.TrackerType.values()[jComboBoxTrackerChoice.getSelectedIndex()].getInfoText();
+						jButtonTrackerInfo.setToolTipText(text);
+						Action toolTipAction = jButtonTrackerInfo.getActionMap().get("postTip");						
+						ActionEvent postTip = new ActionEvent(jButtonTrackerInfo, ActionEvent.ACTION_PERFORMED, "");
+						toolTipAction.actionPerformed( postTip );
+					}
+				});
 			}
 			{
 				jLabelCheckCalibration = new JLabel();
