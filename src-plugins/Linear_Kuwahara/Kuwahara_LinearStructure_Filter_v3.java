@@ -16,6 +16,7 @@ public class Kuwahara_LinearStructure_Filter_v3  implements PlugInFilter {
 
 	protected int imW, imH, kW, kH, nAngles, size;
 	protected boolean showKernels;
+	protected Criterion criterion;
 
 	public int setup(String arg, ImagePlus imp) {
 		if (imp==null)
@@ -98,6 +99,9 @@ public class Kuwahara_LinearStructure_Filter_v3  implements PlugInFilter {
 
 	public void filter(ImageProcessor ipData, ImageStack imsKernels) {
 
+		if (criterion == null)
+			criterion = new SigmaTimesCoefficientOfVariation();
+
 		int[][] im = new int[imW][imH];
 		int[][] imSquare= new int[imW][imH];
 
@@ -120,14 +124,14 @@ public class Kuwahara_LinearStructure_Filter_v3  implements PlugInFilter {
 		int[][] imSum = new int[imW][imH];
 		int[][] imSumOfSquares = new int[imW][imH];
 		float[][] value = new float[imW][imH];
-		float[][] criterium = new float[imW][imH];
+		float[][] criterion = new float[imW][imH];
 		float[][] result = new float[imW][imH];
 		float[][] resultTemp = new float[imW][imH];
-		float[][] resultCriterium = new float[imW][imH];
-		float[][] resultCriteriumTemp = new float[imW][imH];
+		float[][] resultCriterion = new float[imW][imH];
+		float[][] resultCriterionTemp = new float[imW][imH];
 
 		setFloatArray(result,0);
-		setFloatArray(resultCriterium,Float.MAX_VALUE);
+		setFloatArray(resultCriterion,Float.MAX_VALUE);
 
 		int nKernels = imsKernels.getSize();
 
@@ -136,9 +140,9 @@ public class Kuwahara_LinearStructure_Filter_v3  implements PlugInFilter {
 			short[] pixelsKernel = (short[]) imsKernels.getPixels(iKernel+1);
 			convolve2(im, imSquare, imSum, imSumOfSquares, pixelsKernel);
 			kernelSum=kernelSum(pixelsKernel);
-			calcCiteriumAndValue(imSum, imSumOfSquares, kernelSum, value, criterium);
-			KuwaharaGM(value, criterium, pixelsKernel, resultTemp, resultCriteriumTemp);
-			setResultAndCriterium(result, resultTemp, resultCriterium, resultCriteriumTemp);
+			this.criterion.run(imSum, imSumOfSquares, kernelSum, value, criterion);
+			KuwaharaGM(value, criterion, pixelsKernel, resultTemp, resultCriterionTemp);
+			setResultAndCriterion(result, resultTemp, resultCriterion, resultCriterionTemp);
 		}
 
 		// put the result into the image
@@ -190,10 +194,10 @@ public class Kuwahara_LinearStructure_Filter_v3  implements PlugInFilter {
 
 
 	// Generalised and Modified Kuwahara filter
-	// - the criterium value that was used for selection is stored in "resultCriterium"
+	// - the criterion value that was used for selection is stored in "resultCriterion"
 	// - this allows to compare the result with further, other Kuwahara filters
 
-	void KuwaharaGM(float[][] value, float[][] criterium, short[] pixelsKernel, float[][] result, float[][] resultCriterium) {
+	void KuwaharaGM(float[][] value, float[][] criterion, short[] pixelsKernel, float[][] result, float[][] resultCriterion) {
 		int x1min,x1max,y1min,y1max;
 		int x2min,x2max,y2min,y2max;
 
@@ -213,9 +217,9 @@ public class Kuwahara_LinearStructure_Filter_v3  implements PlugInFilter {
 				min = Float.MAX_VALUE; x1minPos = x1; y1minPos = y1;
 				for (int y2=y2min; y2<=y2max; y2++) {
 					for (int x2=x2min; x2<=x2max; x2++) {
-						if( pixelsKernel[i++] > 0 ) {    // searches for minimal criterium along the lines in the kernels (=shifting)
-							if( criterium[x2][y2] < min) {
-								min=criterium[x2][y2];
+						if( pixelsKernel[i++] > 0 ) {    // searches for minimal criterion along the lines in the kernels (=shifting)
+							if( criterion[x2][y2] < min) {
+								min=criterion[x2][y2];
 								x1minPos=x2;
 								y1minPos=y2;
 								n++;
@@ -224,18 +228,18 @@ public class Kuwahara_LinearStructure_Filter_v3  implements PlugInFilter {
 					} // y2
 				} // x2
 				result[x1][y1]=value[x1minPos][y1minPos];
-				resultCriterium[x1][y1]=min;
+				resultCriterion[x1][y1]=min;
 			} // y1
 		} // x1
 	}
 
 
-	void setResultAndCriterium(float[][] result, float[][] resultTemp, float[][] resultCriterium, float[][] resultCriteriumTemp) {
+	void setResultAndCriterion(float[][] result, float[][] resultTemp, float[][] resultCriterion, float[][] resultCriterionTemp) {
 		for (int x1=kW; x1<imW-kW; x1++) {
 			for (int y1=kH; y1<imH-kH; y1++) {
-				if(resultCriteriumTemp[x1][y1] < resultCriterium[x1][y1]) {
-					resultCriterium[x1][y1]=resultCriteriumTemp[x1][y1];
-					//result[x1][y1]=100/resultCriteriumTemp[x1][y1]; // show how the criterium looks like
+				if(resultCriterionTemp[x1][y1] < resultCriterion[x1][y1]) {
+					resultCriterion[x1][y1]=resultCriterionTemp[x1][y1];
+					//result[x1][y1]=100/resultCriterionTemp[x1][y1]; // show how the criterion looks like
 					result[x1][y1]=resultTemp[x1][y1];
 				}
 			}
@@ -250,15 +254,35 @@ public class Kuwahara_LinearStructure_Filter_v3  implements PlugInFilter {
 		}
 	}
 
-	void calcCiteriumAndValue(int[][] imSum, int[][] imSumOfSquares, int kernelSum, float[][] value, float[][] criterium) {
-		for (int x1=0; x1<imW; x1++) {
-			for (int y1=0; y1<imH; y1++) {
-				value[x1][y1] = (float) imSum[x1][y1] / kernelSum;
-				// DIFFERENT CRITERIA
-				// criterium[x1][y1] = (float) ((imSumOfSquares[x1][y1]/kernelSum - value[x1][y1]*value[x1][y1]));
-				criterium[x1][y1]    = (float) ((imSumOfSquares[x1][y1]/kernelSum - value[x1][y1]*value[x1][y1]) /  (value[x1][y1]+0.0001));
-				// criterium[x1][y1] = (float) ((imSumOfSquares[x1][y1]/kernelSum - value[x1][y1]*value[x1][y1]) /  (value[x1][y1]*value[x1][y1]+0.0001));
+	protected abstract class Criterion {
+		public final void run(int[][] imSum, int[][] imSumOfSquares, int kernelSum, float[][] value, float[][] criterion) {
+			for (int x1=0; x1<imW; x1++) {
+				for (int y1=0; y1<imH; y1++) {
+					value[x1][y1] = (float) imSum[x1][y1] / kernelSum;
+					criterion[x1][y1] = getCriterion(imSumOfSquares[x1][y1] / kernelSum, value[x1][y1]);
+				}
 			}
+		}
+		
+		public abstract float getCriterion(float normalizedSumOfSquares, float value);
+	}
+
+	protected class Variance extends Criterion {
+		public final float getCriterion(float normalizedSumOfSquares, float value) {
+			return normalizedSumOfSquares - value * value;
+		}
+	}
+
+	protected class SigmaTimesCoefficientOfVariation extends Criterion {
+		public final float getCriterion(float normalizedSumOfSquares, float value) {
+			return (normalizedSumOfSquares - value * value) / (value + Float.MIN_VALUE);
+		}
+	}
+
+	protected class CoefficientOfVariation extends Criterion {
+		public final float getCriterion(float normalizedSumOfSquares, float value) {
+			// Since the result is interpreted qualitatively, we do not need to take the square root
+			return (normalizedSumOfSquares - value * value) / (value * value + Float.MIN_VALUE);
 		}
 	}
 
@@ -278,16 +302,36 @@ public class Kuwahara_LinearStructure_Filter_v3  implements PlugInFilter {
 	}
 
 	boolean showDialog() {
+		String[] criteria = {
+			"Variance",
+			"Variance / Mean",
+			"Variance / Mean^2"
+		};
 		GenericDialog gd = new GenericDialog("Kuwahara Filter");
 		// the higher the number, the better the results, but the slower
 		gd.addNumericField("Number_of_angles", 30, 0);
 		// must be ODD!! this is the length of the line along which the averaging takes place
 		gd.addNumericField("Line_length", 11, 0);
+		gd.addChoice("Criterion", criteria, criteria[1]);
 		gd.addCheckbox("Show_kernels", false);
 		gd.showDialog();
 		if (gd.wasCanceled()) return false;
 		nAngles = (int)gd.getNextNumber();
 		size = (int)gd.getNextNumber();
+		switch ((int)gd.getNextChoiceIndex()) {
+			case 0:
+				criterion = new Variance();
+				break;
+			case 1:
+				criterion = new SigmaTimesCoefficientOfVariation();
+				break;
+			case 2:
+				criterion = new CoefficientOfVariation();
+				break;
+			default:
+				IJ.error("Unknown criterion");
+				return false;
+		}
 		showKernels = gd.getNextBoolean();
 		if ((size % 2) == 0) {
 			IJ.error("Line length must be odd!");
