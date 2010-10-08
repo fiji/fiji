@@ -144,6 +144,7 @@ public class Kuwahara_LinearStructure_Filter_v3  implements PlugInFilter {
 				calculateCriterionVarianceDivMean2(imSum, imSumOfSquares, kernelSum, value, criterion);
 			KuwaharaGM(value, criterion, pixelsKernel, resultTemp, resultCriterionTemp);
 			setResultAndCriterion(result, resultTemp, resultCriterion, resultCriterionTemp);
+			IJ.showProgress(iKernel + 1, nKernels);
 		}
 
 		// put the result into the image
