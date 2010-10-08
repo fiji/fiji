@@ -105,8 +105,6 @@ public class Kuwahara_LinearStructure_Filter_v3  implements PlugInFilter {
 
 		ipData.resetMinAndMax();  // this is important because "ip.getMin();" returns the smallest displayed(!!) number.
 		int imMin = (int) ipData.getMin();
-		NumberFormat nf = NumberFormat.getInstance();
-		IJ.showStatus("image min = "+nf.format(imMin));
 
 		// subtract the minimum and
 		// store square and value of image in integer arrays
