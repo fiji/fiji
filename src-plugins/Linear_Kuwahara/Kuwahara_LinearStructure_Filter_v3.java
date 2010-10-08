@@ -5,7 +5,13 @@ import java.awt.*;
 import ij.plugin.filter.*;
 import java.text.NumberFormat;
 
-
+/**
+ * A version of the Kuwahara filter that uses linear kernels rather than square ones.
+ *
+ * This plugin is licensed under the GNU Public License v2 or later.
+ *
+ * @author Christian Tischer
+ */
 public class Kuwahara_LinearStructure_Filter_v3  implements PlugInFilter {
 	
 	static int imW, imH, kW, kH;
