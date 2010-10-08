@@ -14,9 +14,8 @@ import java.text.NumberFormat;
  */
 public class Kuwahara_LinearStructure_Filter_v3  implements PlugInFilter {
 
-	protected int imW, imH, kW, kH, nAngles, size;
+	protected int imW, imH, kW, kH, nAngles, size, criterionMethod = 1;
 	protected boolean showKernels;
-	protected Criterion criterion;
 
 	public int setup(String arg, ImagePlus imp) {
 		if (imp==null)
@@ -99,9 +98,6 @@ public class Kuwahara_LinearStructure_Filter_v3  implements PlugInFilter {
 
 	public void filter(ImageProcessor ipData, ImageStack imsKernels) {
 
-		if (criterion == null)
-			criterion = new SigmaTimesCoefficientOfVariation();
-
 		int[][] im = new int[imW][imH];
 		int[][] imSquare= new int[imW][imH];
 
@@ -140,7 +136,12 @@ public class Kuwahara_LinearStructure_Filter_v3  implements PlugInFilter {
 			short[] pixelsKernel = (short[]) imsKernels.getPixels(iKernel+1);
 			convolve2(im, imSquare, imSum, imSumOfSquares, pixelsKernel);
 			kernelSum=kernelSum(pixelsKernel);
-			this.criterion.run(imSum, imSumOfSquares, kernelSum, value, criterion);
+			if (criterionMethod == 0)
+				calculateCriterionVariance(imSum, imSumOfSquares, kernelSum, value, criterion);
+			else if (criterionMethod == 1)
+				calculateCriterionVarianceDivMean(imSum, imSumOfSquares, kernelSum, value, criterion);
+			else if (criterionMethod == 2)
+				calculateCriterionVarianceDivMean2(imSum, imSumOfSquares, kernelSum, value, criterion);
 			KuwaharaGM(value, criterion, pixelsKernel, resultTemp, resultCriterionTemp);
 			setResultAndCriterion(result, resultTemp, resultCriterion, resultCriterionTemp);
 		}
@@ -254,35 +255,30 @@ public class Kuwahara_LinearStructure_Filter_v3  implements PlugInFilter {
 		}
 	}
 
-	protected abstract class Criterion {
-		public final void run(int[][] imSum, int[][] imSumOfSquares, int kernelSum, float[][] value, float[][] criterion) {
-			for (int x1=0; x1<imW; x1++) {
-				for (int y1=0; y1<imH; y1++) {
-					value[x1][y1] = (float) imSum[x1][y1] / kernelSum;
-					criterion[x1][y1] = getCriterion(imSumOfSquares[x1][y1] / kernelSum, value[x1][y1]);
-				}
+	public final void calculateCriterionVariance(int[][] imSum, int[][] imSumOfSquares, int kernelSum, float[][] value, float[][] criterion) {
+		for (int x1=0; x1<imW; x1++) {
+			for (int y1=0; y1<imH; y1++) {
+				value[x1][y1] = (float) imSum[x1][y1] / kernelSum;
+				criterion[x1][y1] = imSumOfSquares[x1][y1] / kernelSum - value[x1][y1] * value[x1][y1];
 			}
 		}
-		
-		public abstract float getCriterion(float normalizedSumOfSquares, float value);
 	}
 
-	protected class Variance extends Criterion {
-		public final float getCriterion(float normalizedSumOfSquares, float value) {
-			return normalizedSumOfSquares - value * value;
+	public final void calculateCriterionVarianceDivMean(int[][] imSum, int[][] imSumOfSquares, int kernelSum, float[][] value, float[][] criterion) {
+		for (int x1=0; x1<imW; x1++) {
+			for (int y1=0; y1<imH; y1++) {
+				value[x1][y1] = (float) imSum[x1][y1] / kernelSum;
+				criterion[x1][y1] = (imSumOfSquares[x1][y1] / kernelSum - value[x1][y1] * value[x1][y1]) / (value[x1][y1] + Float.MIN_VALUE);
+			}
 		}
 	}
 
-	protected class SigmaTimesCoefficientOfVariation extends Criterion {
-		public final float getCriterion(float normalizedSumOfSquares, float value) {
-			return (normalizedSumOfSquares - value * value) / (value + Float.MIN_VALUE);
-		}
-	}
-
-	protected class CoefficientOfVariation extends Criterion {
-		public final float getCriterion(float normalizedSumOfSquares, float value) {
-			// Since the result is interpreted qualitatively, we do not need to take the square root
-			return (normalizedSumOfSquares - value * value) / (value * value + Float.MIN_VALUE);
+	public final void calculateCriterionVarianceDivMean2(int[][] imSum, int[][] imSumOfSquares, int kernelSum, float[][] value, float[][] criterion) {
+		for (int x1=0; x1<imW; x1++) {
+			for (int y1=0; y1<imH; y1++) {
+				value[x1][y1] = (float) imSum[x1][y1] / kernelSum;
+				criterion[x1][y1] = (imSumOfSquares[x1][y1] / kernelSum - value[x1][y1] * value[x1][y1]) / (value[x1][y1] * value[x1][y1] + Float.MIN_VALUE);
+			}
 		}
 	}
 
@@ -318,20 +314,7 @@ public class Kuwahara_LinearStructure_Filter_v3  implements PlugInFilter {
 		if (gd.wasCanceled()) return false;
 		nAngles = (int)gd.getNextNumber();
 		size = (int)gd.getNextNumber();
-		switch ((int)gd.getNextChoiceIndex()) {
-			case 0:
-				criterion = new Variance();
-				break;
-			case 1:
-				criterion = new SigmaTimesCoefficientOfVariation();
-				break;
-			case 2:
-				criterion = new CoefficientOfVariation();
-				break;
-			default:
-				IJ.error("Unknown criterion");
-				return false;
-		}
+		criterionMethod = gd.getNextChoiceIndex();
 		showKernels = gd.getNextBoolean();
 		if ((size % 2) == 0) {
 			IJ.error("Line length must be odd!");
