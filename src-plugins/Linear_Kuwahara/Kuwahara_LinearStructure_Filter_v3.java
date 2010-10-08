@@ -14,23 +14,20 @@ import java.text.NumberFormat;
  */
 public class Kuwahara_LinearStructure_Filter_v3  implements PlugInFilter {
 	
-	static int imW, imH, kW, kH;
+	protected int imW, imH, kW, kH, nAngles, size;
+	protected boolean showKernels;
 	
 	public int setup(String arg, ImagePlus imp) {
 		if (imp==null)
 			return DONE;
-		//if (!showDialog())
-		//	return DONE;
-		return IJ.setupDialog(imp, DOES_ALL-DOES_32-DOES_RGB+SUPPORTS_MASKING);
+		return DOES_8G | DOES_16 | DOES_32 | SUPPORTS_MASKING;
 	}
 
 
 	public void run(ImageProcessor ipData) {
 		
-		// *********CHANGE VALUES HERE******************
-		int nAngles = 30; // the higher the number, the better the results, but the slower
-		int size = 17;  // must be ODD!! this is the length of the line along which the averaging takes place
-		// **************************		
+		if (!showDialog())
+			return;
 
 		imW = ipData.getWidth();
 		imH = ipData.getHeight();		
@@ -90,9 +87,10 @@ public class Kuwahara_LinearStructure_Filter_v3  implements PlugInFilter {
 		}
 		
 		// display kernels (just for checking)
-		ImagePlus impKernel = new ImagePlus("Kernels", imsKernel);
-		impKernel.show();
-		impKernel.updateAndDraw();
+		if (showKernels) {
+			ImagePlus impKernel = new ImagePlus("Kernels", imsKernel);
+			impKernel.show();
+		}
 		
 		return imsKernel; // bascially a pointer array to 'rotLineStack' 
 	}
@@ -279,16 +277,24 @@ public class Kuwahara_LinearStructure_Filter_v3  implements PlugInFilter {
 				
 	}
 
-//	boolean showDialog() {
-//		GenericDialog gd = new GenericDialog("Kuwahara Filter");
-//		gd.addNumericField("Sampling window width (must be odd):", size, 0, 3, "");
-//		gd.showDialog();
-//		if (gd.wasCanceled()) return false;
-//		size = (int) gd.getNextNumber();
-//		if ((size&1)!=1) size--;
-//		if (size<3) size = 3;
-//		return true;
-//	}
+	boolean showDialog() {
+		GenericDialog gd = new GenericDialog("Kuwahara Filter");
+		// the higher the number, the better the results, but the slower
+		gd.addNumericField("Number_of_angles", 30, 0);
+		// must be ODD!! this is the length of the line along which the averaging takes place
+		gd.addNumericField("Line_length", 11, 0);
+		gd.addCheckbox("Show_kernels", false);
+		gd.showDialog();
+		if (gd.wasCanceled()) return false;
+		nAngles = (int)gd.getNextNumber();
+		size = (int)gd.getNextNumber();
+		showKernels = gd.getNextBoolean();
+		if ((size % 2) == 0) {
+			IJ.error("Line length must be odd!");
+			return false;
+		}
+		return true;
+	}
 
 }	
 
