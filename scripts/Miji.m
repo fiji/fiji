@@ -1,5 +1,11 @@
+function Miji(open_imagej)
 %% This script sets up the classpath to Fiji and starts MIJ
 %% Author: Jacques Pecreaux
+
+if nargin < 1
+	open_imagej = true;
+end
+
 cwd = pwd;
 %%
 cd (fileparts(mfilename('fullpath')));
@@ -29,8 +35,12 @@ end
 %%
 javaaddpath(path_, '-end');
 %%
-cd ..;
-disp([sprintf('\n') sprintf('\n') 'Use MIJ.exit to end the session' sprintf('\n') sprintf('\n')]);
-MIJ.start(pwd);
+
+if open_imagej
+  cd ..;
+  disp([sprintf('\n') sprintf('\n') 'Use MIJ.exit to end the session' sprintf('\n') sprintf('\n')]);
+  MIJ.start(pwd);
+end
+
 %%
 cd(cwd);
