@@ -1,3 +1,5 @@
+%% This script sets up the classpath to Fiji and starts MIJ
+%% Author: Jacques Pecreaux
 cwd = pwd;
 %%
 cd (fileparts(mfilename('fullpath')));
