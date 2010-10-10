@@ -22,6 +22,15 @@ public class StochasticDenoise<T extends NumericType<T>> {
 	private int   numNeighbors;
 	private int   numChannels;
 
+	// TODO: have these variables for each thread
+	private int[]   initialPosition;
+	private float[] neighborProbs;
+	private int[]   centerPosition;
+	private int[]   neighborPosition;
+	private int[]   initialValue;
+	private int[]   lastValue;
+	private int[]   neighborValue;
+
 	private final int MaxPathLength = Integer.MAX_VALUE;
 
 	// buffer to accumulate the pixel values
@@ -46,7 +55,7 @@ public class StochasticDenoise<T extends NumericType<T>> {
 	 * @param minProb    The minimal allowed probability of a path
 	 * @param sigma      The standard deviation for the probability function
 	 */
-	public void setParameters(int numSamples, float minProb, float sigma) {
+	public final void setParameters(int numSamples, float minProb, float sigma) {
 
 		this.numSamples = numSamples;
 		this.minProb    = minProb;
@@ -59,11 +68,11 @@ public class StochasticDenoise<T extends NumericType<T>> {
 	 * @param image    The noisy input image
 	 * @param denoised The denoised ouput image
 	 */
-	public void process(Image<T> image, Image<T> denoised) {
+	public final void process(Image<T> image, Image<T> denoised) {
 
-		dimensions    = image.getDimensions();
-		numDimensions = dimensions.length;
-		numNeighbors  = (int)Math.pow(3, numDimensions) - 1;
+		dimensions      = image.getDimensions();
+		numDimensions   = dimensions.length;
+		numNeighbors    = (int)Math.pow(3, numDimensions) - 1;
 
 		// create relative neighbor positions
 		relativeNeighborPositions = new int[numNeighbors][numDimensions];
@@ -138,6 +147,14 @@ public class StochasticDenoise<T extends NumericType<T>> {
 			System.out.println("Starting denoising...");
 		}
 
+		initialPosition  = new int[numDimensions];
+		centerPosition   = new int[numDimensions];
+		neighborProbs    = new float[numNeighbors];
+		neighborPosition = new int[numDimensions];
+		initialValue     = new int[numChannels];
+		lastValue        = new int[numChannels];
+		neighborValue    = new int[numChannels];
+
 		// allocate hash table for probabilities
 		probabilities = new float[maxDistance2 + 1];
 		Arrays.fill(probabilities, -1.0f);
@@ -170,6 +187,7 @@ public class StochasticDenoise<T extends NumericType<T>> {
 			if (index % 50 == 0)
 				IJ.showProgress(index, image.size());
 		}
+		IJ.showProgress(1.0);
 
 		// copy content of denoise buffer to target
 		targetCursor.reset();
@@ -199,40 +217,45 @@ public class StochasticDenoise<T extends NumericType<T>> {
 	 * @param targetCursor The output pixel cursor
 	 * @return the sum of the weights used to mix the target pixel value
 	 */
-	protected float randomWalk(LocalizableByDimCursor<T> sourceCursor,
-	                           LocalizableByDimCursor<T> targetCursor) {
+	protected final float randomWalk(LocalizableByDimCursor<T> sourceCursor,
+	                                 LocalizableByDimCursor<T> targetCursor) {
 
 		int initialValueIndex = sourceCursor.getArrayIndex();
 		int lastValueIndex    = initialValueIndex;
+
+		for (int c = 0; c < numChannels; c++)
+			initialValue[c]  = sourceBuffer[c][initialValueIndex];
 
 		float pathProbability = 1.0f;
 
 		int   pathLength = 0;
 		float sumWeights = 0.0f;
 
-		int[] initialPosition = new int[numDimensions];
 		sourceCursor.getPosition(initialPosition);
 
+
 		for (int k = 0; k < MaxPathLength; k++) {
+
+			for (int c = 0; c < numChannels; c++)
+				lastValue[c]     = sourceBuffer[c][lastValueIndex];
+
 			// get probabilities of going to neighbors
-			float[] probabilities = getNeighborProbabilities(sourceCursor,
-			                                                 initialValueIndex,
-			                                                 lastValueIndex);
+			getNeighborProbabilities(sourceCursor);
 
 			if (debug) {
 				System.out.println("neighbor probs:");
 				for (int i = 0; i < numNeighbors; i++)
-					System.out.println("" + probabilities[i]);
+					System.out.println("" + neighborProbs[i]);
 			}
 
 			// sample a neighbor pixel
-			int newNeighbor = sampleNeighbor(probabilities);
+			int newNeighbor = sampleNeighbor();
 
 			if (debug)
 				System.out.println("new neighbor: " + newNeighbor);
 
 			// update path probability
-			pathProbability *= probabilities[newNeighbor];
+			pathProbability *= neighborProbs[newNeighbor];
 
 			if (debug)
 				System.out.println("path prob: " + pathProbability + " (minimum " + minProb + ")");
@@ -262,6 +285,7 @@ public class StochasticDenoise<T extends NumericType<T>> {
 			}
 
 			// calculate weight
+			// TODO: use log likelihood for computation
 			float weight = (float)Math.pow(pathProbability, 1.0/pathLength);
 			sumWeights  += weight;
 
@@ -270,12 +294,14 @@ public class StochasticDenoise<T extends NumericType<T>> {
 			}
 
 			// update target pixel value
+			int targetIndex = targetCursor.getArrayIndex();
+			int sourceIndex = sourceCursor.getArrayIndex();
 			for (int c = 0; c < numChannels; c++)
-				denoiseBuffer[c][targetCursor.getArrayIndex()] +=
-					weight*sourceBuffer[c][sourceCursor.getArrayIndex()];
+				denoiseBuffer[c][targetIndex] +=
+					weight*sourceBuffer[c][sourceIndex];
 			
 			// update last pixel value
-			lastValueIndex = sourceCursor.getArrayIndex();
+			lastValueIndex = sourceIndex;
 		};
 
 		// reset source cursor
@@ -291,14 +317,10 @@ public class StochasticDenoise<T extends NumericType<T>> {
 	 * @param cursor The current end point of the path
 	 * @param initialValue The value of the first pixel in the path
 	 * @param lastValue    The value of the last pixel in the path
-	 * @return An array of probabilities
 	 */
-	private float[] getNeighborProbabilities(LocalizableByDimCursor<T> cursor,
-											 int initialValueIndex, int lastValueIndex) {
+	private final void getNeighborProbabilities(LocalizableByDimCursor<T> cursor) {
 
-		float[] probabilities    = new float[numNeighbors];
-		int[]   centerPosition   = cursor.getPosition();
-		int[]   neighborPosition = new int[numDimensions];
+		cursor.getPosition(centerPosition);
 
 		float sum = 0.0f;
 
@@ -312,7 +334,7 @@ public class StochasticDenoise<T extends NumericType<T>> {
 			boolean donext = false;
 			for (int d = 0; d < numDimensions; d++) {
 				if (neighborPosition[d] < 0 || neighborPosition[d] >= dimensions[d]) {
-					probabilities[i] = 0.0f;
+					neighborProbs[i] = 0.0f;
 					donext = true;
 				}
 			}
@@ -321,17 +343,11 @@ public class StochasticDenoise<T extends NumericType<T>> {
 
 			cursor.setPosition(neighborPosition);
 			int index = cursor.getArrayIndex();
-			int[] initialValue  = new int[numChannels];
-			int[] lastValue     = new int[numChannels];
-			int[] neighborValue = new int[numChannels];
-			for (int c = 0; c < numChannels; c++) {
-				initialValue[c]  = sourceBuffer[c][initialValueIndex];
-				lastValue[c]     = sourceBuffer[c][lastValueIndex];
+			for (int c = 0; c < numChannels; c++)
 				neighborValue[c] = sourceBuffer[c][index];
-			}
 
-			probabilities[i] = neighborProbability(initialValue, lastValue, neighborValue);
-			sum             += probabilities[i];
+			neighborProbs[i] = neighborProbability(initialValue, lastValue, neighborValue);
+			sum             += neighborProbs[i];
 		}
 
 		// reset cursor
@@ -339,26 +355,24 @@ public class StochasticDenoise<T extends NumericType<T>> {
 
 		// normalize probabilities to sum up to one
 		for (int i = 0; i < numNeighbors; i++)
-			probabilities[i] /= sum;
-
-		return probabilities;
+			neighborProbs[i] /= sum;
 	}
 
-	private int sampleNeighbor(float[] probabilities) {
+	private final int sampleNeighbor() {
 
 		// draw a random number between 0 and 1
 		float rand = (float)Math.random();
 
 		float sumProbs = 0.0f;
 		for (int i = 0; i < numNeighbors; i++) {
-			sumProbs += probabilities[i];
+			sumProbs += neighborProbs[i];
 			if (rand <= sumProbs)
 				return i;
 		}
 		return numNeighbors - 1;
 	}
 
-	private float neighborProbability(int[] initialValue, int[] lastValue, int[] neighborValue) {
+	private final float neighborProbability(int[] initialValue, int[] lastValue, int[] neighborValue) {
 
 		int dist2Initial = dist2(initialValue, neighborValue);
 		int dist2Last    = dist2(lastValue,    neighborValue);
