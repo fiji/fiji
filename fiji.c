@@ -686,6 +686,15 @@ static int is_ipv6_broken(void)
 #define JNI_CREATEVM "JNI_CreateJavaVM"
 #endif
 
+static int is_slash(char c)
+{
+#ifdef WIN32
+	if (c == '\\')
+		return 1;
+#endif
+	return c == '/';
+}
+
 const char *fiji_dir;
 
 static const char *fiji_path(const char *relative_path)
@@ -695,9 +704,11 @@ static const char *fiji_path(const char *relative_path)
 
 	counter = ((counter + 1) % (sizeof(string) / sizeof(string[0])));
 	if (!string[counter])
-		string[counter] = string_initf("%s/%s", fiji_dir, relative_path);
+		string[counter] = string_initf("%s%s%s", fiji_dir,
+			is_slash(*relative_path) ? "" : "/", relative_path);
 	else
-		string_setf(string[counter], "%s/%s", fiji_dir, relative_path);
+		string_setf(string[counter], "%s%s%s", fiji_dir,
+			is_slash(*relative_path) ? "" : "/", relative_path);
 	return string[counter]->buffer;
 }
 
@@ -754,15 +765,6 @@ static size_t mystrlcpy(char *dest, const char *src, size_t size)
 		dest[len] = '\0';
 	}
 	return ret;
-}
-
-static int is_slash(char c)
-{
-#ifdef WIN32
-	if (c == '\\')
-		return 1;
-#endif
-	return c == '/';
 }
 
 const char *last_slash(const char *path)
