@@ -201,6 +201,8 @@ def validate(target_folder):
 
 def run():
   imp = IJ.getImage()
+  if imp is None:
+    return
   if not imp.isHyperStack():
     print "Not a hyper stack!"
     return
