@@ -244,7 +244,7 @@ jars/commons-math.jar <- commons-math/
 # From source
 libs[] <- jars/test-fiji.jar jars/zs.jar jars/VIB-lib.jar jars/Jama-1.0.2.jar \
 	jars/fiji-scripting.jar jars/fiji-lib.jar jars/jep.jar \
-	jars/pal-optimization.jar jars/MacOSX_Updater_Fix.jar
+	jars/pal-optimization.jar jars/Updater_Fix.jar
 
 plugins/Record_Screen.jar <- src-plugins/Record_Screen/ src-plugins/Record_Screen/**/*
 
@@ -319,7 +319,7 @@ src-plugins/VIB-lib/math3d/Eigensystem2x2Float.java[src-plugins/VIB-lib/sed.py $
 MAINCLASS(jars/test-fiji.jar)=fiji.Tests
 CLASSPATH(jars/test-fiji.jar)=jars/junit-4.5.jar
 
-MAINCLASS(jars/MacOSX_Updater_Fix.jar)=fiji.updater.Fix
+MAINCLASS(jars/Updater_Fix.jar)=fiji.updater.Fix
 
 # the default rules
 
