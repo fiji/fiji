@@ -14,7 +14,7 @@ import mpicbg.imglib.type.numeric.RealType;
 public class StochasticDenoise<T extends NumericType<T>> {
 
 	private int   numSamples;
-	private float minProb;
+	private float minLogProb;
 	private float variance;
 
 	private int[] dimensions;
@@ -23,6 +23,7 @@ public class StochasticDenoise<T extends NumericType<T>> {
 	private int   numChannels;
 
 	private float[] neighborProbs; // thread local
+	private float[] neighborLogProbs; // thread local
 	int             localNeighborIndex; // thread local
 	int             localInitialValueIndex; // thread local
 	int             localLastValueIndex; // thread local
@@ -47,6 +48,7 @@ public class StochasticDenoise<T extends NumericType<T>> {
 	private int[][]   localNeighborRelativePositions;
 
 	private float[] probabilities;
+	private float[] logProbabilities;
 	private int maxDistance2;
 	private int numMisses = 0;
 	private int numAccess = 0;
@@ -69,7 +71,7 @@ public class StochasticDenoise<T extends NumericType<T>> {
 	public final void setParameters(int numSamples, float minProb, float sigma) {
 
 		this.numSamples = numSamples;
-		this.minProb    = minProb;
+		this.minLogProb = (float)Math.log(minProb);
 		this.variance   = (float)Math.pow(sigma, 2);
 	}
 
@@ -81,11 +83,13 @@ public class StochasticDenoise<T extends NumericType<T>> {
 	 */
 	public final void process(Image<T> image, Image<T> denoised) {
 
-		dimensions      = image.getDimensions();
-		numDimensions   = dimensions.length;
-		numNeighbors    = (int)Math.pow(3, numDimensions) - 1;
+		dimensions        = image.getDimensions();
+		numDimensions     = dimensions.length;
+		numNeighbors      = (int)Math.pow(3, numDimensions) - 1;
+		neighborProbs     = new float[numNeighbors];
+		neighborLogProbs  = new float[numNeighbors];
 		// TODO: find this value automatically
-		windowWidth       = 51;
+		windowWidth       = 9;
 		windowSize        = (int)Math.pow(windowWidth, numDimensions);
 		windowDimensions  = new int[numDimensions];
 		Arrays.fill(windowDimensions, windowWidth);
@@ -173,11 +177,9 @@ public class StochasticDenoise<T extends NumericType<T>> {
 			System.out.println();
 		}
 
-		// allocate reusable variables
-		neighborProbs    = new float[numNeighbors];
-
 		// allocate hash table for probabilities
-		probabilities = new float[maxDistance2 + 1];
+		probabilities    = new float[maxDistance2 + 1];
+		logProbabilities = new float[maxDistance2 + 1];
 		Arrays.fill(probabilities, -1.0f);
 
 		int sourceIndex;
@@ -352,7 +354,7 @@ public class StochasticDenoise<T extends NumericType<T>> {
 		for (int d = 0; d < numDimensions; d++)
 			localSourcePosition[d] = windowDimensions[d]/2;
 
-		float pathProbability = 1.0f;
+		float logPathProbability = 0.0f;
 
 		int   pathLength = 0;
 		float sumWeights = 0.0f;
@@ -374,14 +376,14 @@ public class StochasticDenoise<T extends NumericType<T>> {
 			if (debug)
 				System.out.println("new neighbor: " + newNeighbor);
 
-			// update path probability
-			pathProbability *= neighborProbs[newNeighbor];
+			// update log path probability
+			logPathProbability += neighborLogProbs[newNeighbor];
 
 			if (debug)
-				System.out.println("path prob: " + pathProbability + " (minimum " + minProb + ")");
+				System.out.println("path prob: " + Math.exp(logPathProbability) + " (minimum " + Math.exp(minLogProb) + ")");
 
 			// abort if the path is getting too unlikely
-			if (pathProbability < minProb)
+			if (logPathProbability < minLogProb)
 				break;
 
 			pathLength++;
@@ -403,8 +405,7 @@ public class StochasticDenoise<T extends NumericType<T>> {
 			}
 
 			// calculate weight
-			// TODO: use log likelihood for computation
-			float weight = (float)Math.pow(pathProbability, 1.0/pathLength);
+			float weight = (float)Math.exp(logPathProbability/pathLength);
 			sumWeights  += weight;
 
 			if (debug) {
@@ -427,7 +428,8 @@ public class StochasticDenoise<T extends NumericType<T>> {
 	 * Calculates the probabilities for each neighbor pixel to continue the
 	 * path.
 	 *
-	 * @param cursor The current end point of the path
+	 * @param localSourceIndex The current end point of the path
+	 * @param localSourcePosition The current end point of the path
 	 */
 	private final void getNeighborProbabilities(int localSourceIndex, int[] localSourcePosition) {
 
@@ -441,23 +443,29 @@ public class StochasticDenoise<T extends NumericType<T>> {
 			// don't walk out of the window
 			if (!canAdd(localSourcePosition, localNeighborRelativePositions[i], windowDimensions)) {
 				localMisses++;
-				neighborProbs[i] = 0.0f;
+				neighborProbs[i]    = 0.0f;
+				neighborLogProbs[i] = -100.0f; // any value...
 				continue;
 			}
 
 			// don't walk out of the image
 			if (localSourceBuffer[localNeighborIndex][0] < 0) {
 				neighborProbs[i] = 0.0f;
+				neighborLogProbs[i] = -100.0f; // any value...
 				continue;
 			}
 
-			neighborProbs[i] = neighborProbability();
-			sum             += neighborProbs[i];
+			computeNeighborProbability(i);
+
+			sum += neighborProbs[i];
 		}
 
 		// normalize probabilities to sum up to one
-		for (int i = 0; i < numNeighbors; i++)
-			neighborProbs[i] /= sum;
+		float logSum = (float)Math.log(sum);
+		for (int i = 0; i < numNeighbors; i++) {
+			neighborProbs[i]    /= sum;
+			neighborLogProbs[i] -= logSum;
+		}
 	}
 
 	private final int sampleNeighbor() {
@@ -471,24 +479,33 @@ public class StochasticDenoise<T extends NumericType<T>> {
 			if (rand <= sumProbs)
 				return i;
 		}
+		System.out.println("Whoops.");
+		System.out.println("rand: " + rand);
+		System.out.println("sumProbs: " + sumProbs);
 		return numNeighbors - 1;
 	}
 
-	private final float neighborProbability() {
+	private final void computeNeighborProbability(int neighbor) {
 
 		int dist2Initial = dist2(localSourceBuffer[localInitialValueIndex], localSourceBuffer[localNeighborIndex]);
 		int dist2Last    = dist2(localSourceBuffer[localLastValueIndex],    localSourceBuffer[localNeighborIndex]);
 
-		float probInitial = probabilities[dist2Initial];
-		float probLast    = probabilities[dist2Last];
+		float probInitial    = probabilities[dist2Initial];
+		float probLast       = probabilities[dist2Last];
+		float logProbInitial = logProbabilities[dist2Initial];
+		float logProbLast    = logProbabilities[dist2Last];
 
 		if (probInitial < 0.0f) {
-			probInitial = (float)Math.exp(-dist2Initial/(maxDistance2*2*variance)); 
+			logProbInitial = -dist2Initial/(maxDistance2*2*variance);
+			logProbabilities[dist2Initial] = logProbInitial;
+			probInitial = (float)Math.exp(logProbInitial); 
 			probabilities[dist2Initial] = probInitial;
 			numMisses++;
 		}
 		if (probLast < 0.0f) {
-			probLast = (float)Math.exp(-dist2Last/(maxDistance2*2*variance)); 
+			logProbLast = -dist2Last/(maxDistance2*2*variance);
+			logProbabilities[dist2Last] = logProbLast;
+			probLast = (float)Math.exp(logProbLast); 
 			probabilities[dist2Last] = probLast;
 			numMisses++;
 		}
@@ -503,7 +520,8 @@ public class StochasticDenoise<T extends NumericType<T>> {
 		//System.out.println("prob last   : " + probLast);
 		//System.out.println("normalizer  : " + normalizer);
 
-		return probInitial*probLast;
+		neighborProbs[neighbor]    = probInitial*probLast;
+		neighborLogProbs[neighbor] = logProbInitial + logProbLast;
 	}
 
 	private final int dist2(int[] value1, int[] value2) {
