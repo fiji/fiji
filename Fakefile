@@ -194,7 +194,8 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/TransformJ_.jar \
 	plugins/FeatureJ_.jar \
 	plugins/RandomJ_.jar \
-	plugins/Linear_Kuwahara.jar
+	plugins/Linear_Kuwahara.jar \
+	plugins/Jython_Scripts.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS
 
@@ -299,6 +300,11 @@ CLASSPATH(plugins/SPIM_Registration.jar)=$JAVA3D_JARS:jars/imglib.jar:jars/mpicb
 CLASSPATH(plugins/Bug_Submitter.jar)=plugins/Fiji_Updater.jar
 CLASSPATH(plugins/TopoJ_.jar)=jars/Jama-1.0.2.jar
 CLASSPATH(jars/imagescience.jar)=plugins/Image_5D.jar
+CLASSPATH(plugins/Jython_Scripts.jar)=plugins/Jython_Interpreter.jar
+plugins/Jython_Scripts.jar <- \
+	src-plugins/Jython_Scripts/**/*java \
+	src-plugins/Jython_Scripts/scripts/*py \
+	src-plugins/Jython_Scripts/plugins.config
 
 # pre-Java5 generics ;-)
 
