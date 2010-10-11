@@ -756,6 +756,15 @@ static size_t mystrlcpy(char *dest, const char *src, size_t size)
 	return ret;
 }
 
+static int is_slash(char c)
+{
+#ifdef WIN32
+	if (c == '\\')
+		return 1;
+#endif
+	return c == '/';
+}
+
 const char *last_slash(const char *path)
 {
 	const char *slash = strrchr(path, '/');
@@ -1226,25 +1235,47 @@ static int dir_exists(const char *path)
 	return 0;
 }
 
+static int mkdir_recursively(struct string *buffer)
+{
+	int slash = buffer->length - 1, save_length;
+	char save_char;
+	while (slash > 0 && !is_slash(buffer->buffer[slash]))
+		slash--;
+	while (slash > 0 && is_slash(buffer->buffer[slash - 1]))
+		slash--;
+	if (slash <= 0)
+		return -1;
+	save_char = buffer->buffer[slash];
+	save_length = buffer->length;
+	buffer->buffer[slash] = '\0';
+	buffer->length = slash;
+	if (!dir_exists(buffer->buffer)) {
+		int result = mkdir_recursively(buffer);
+		if (result)
+			return result;
+	}
+	buffer->buffer[slash] = save_char;
+	buffer->length = save_length;
+	return mkdir(buffer->buffer, 0777);
+}
+
+/*
+   Ensures that a directory exists in the manner of "mkdir -p", creating
+   components with file mode 777 (& umask) where they do not exist.
+   Returns 0 on success, or the return code of mkdir in the case of
+   failure.
+*/
 static int mkdir_p(const char *path)
 {
-	const char *slash;
+	int result;
 	struct string *buffer;
 	if (dir_exists(path))
 		return 0;
 
 	buffer = string_copy(path);
-	for (;;) {
-		int result;
-		slash = last_slash(buffer->buffer);
-		if (!slash)
-			return -1;
-		string_set_length(buffer, slash - buffer->buffer);
-		result = mkdir(buffer->buffer, 0777);
-		if (result)
-			return result;
-	}
-	return 0;
+	result = mkdir_recursively(buffer);
+	string_release(buffer);
+	return result;
 }
 
 static void add_java_home_to_path(void)
