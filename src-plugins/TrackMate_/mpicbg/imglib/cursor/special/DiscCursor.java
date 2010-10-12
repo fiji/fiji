@@ -168,7 +168,7 @@ public final class DiscCursor <T extends RealType<T>>  extends DomainCursor<T> {
 		int local_rx;
 
 		pixel_count += 2 * local_rxs[0] + 1;
-		for (int i = 1; i <= size/calibration[1]; i++) {
+		for (int i = 1; i <= Math.round(size/calibration[1]); i++) {
 			local_rx = local_rxs[i];
 			pixel_count += 2 * (2 * local_rx + 1); // Twice because we mirror
 		}
@@ -245,7 +245,7 @@ public final class DiscCursor <T extends RealType<T>>  extends DomainCursor<T> {
 			position[1] = - position[1];
 			cursor.setPosition(origin[1] + position[1], 1);
 			cursor.setPosition(origin[0] - rx, 0);
-			if (position[1] <= - size/calibration[1])
+			if (position[1] <= - Math.round(size/calibration[1]))
 				allDone  = true;
 			else 
 				nextState = CursorState.INCREMENT_Y;
