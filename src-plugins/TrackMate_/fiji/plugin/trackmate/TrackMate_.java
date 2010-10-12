@@ -232,13 +232,7 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 				logger.error(segmenter.getErrorMessage());
 				return;
 			}
-			
-			/* 3 - Extract features for the spot collection */
-			logger.log("Frame "+(i+1)+": Calculating features:\n");
-			logger.setProgress((2*(i-settings.tstart)+1) / (2f * numFrames + 1));
-			final FeatureFacade<T> featureCalculator = new FeatureFacade<T>(img, settings.segmenterSettings.expectedRadius, calibration);
-			logger.log("Frame "+(i+1)+":\tStatistics features\n");
-			featureCalculator.processFeature(Feature.MEAN_INTENSITY, spotsThisFrame);			
+						
 		} // Finished looping over frames
 		logger.setProgress(1);
 				
