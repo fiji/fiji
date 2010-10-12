@@ -2,11 +2,10 @@
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;
-import ij.WindowManager;
 
 import ij.gui.GenericDialog;
 
-import ij.plugin.PlugIn;
+import ij.plugin.filter.PlugInFilter;
 
 import ij.process.ImageProcessor;
 
@@ -35,7 +34,7 @@ import mpicbg.imglib.type.numeric.RealType;
  * @author Jan Funke <jan.funke@inf.tu-dresden.de>
  * @version 0.1
  */
-public class Stochastic_Denoise<T extends RealType<T>> implements PlugIn {
+public class Stochastic_Denoise<T extends RealType<T>> implements PlugInFilter {
 
 	// the image to process
 	private Image<T> image;
@@ -67,16 +66,30 @@ public class Stochastic_Denoise<T extends RealType<T>> implements PlugIn {
 	// parameter of the probability function
 	private double sigma = SIGMA_INIT;
 
-	public void run(String arg) {
+	/**
+	 * This method gets called by ImageJ / Fiji to determine
+	 * whether the current image is of an appropriate type.
+	 *
+	 * @param arg can be specified in plugins.config
+	 * @param img is the currently opened image
+	 */
+	public int setup(String arg, ImagePlus imp) {
+
+		this.imp = imp;
+
+		return DOES_8G | DOES_8C | DOES_RGB | NO_CHANGES;
+	}
+
+	public void run(ImageProcessor ip) {
 
 		IJ.log("Starting plugin Stochastic Denoise");
 
 		// read image
-		imp   = WindowManager.getCurrentImage();
-		if (imp == null) {
-			IJ.showMessage("Please open an image first.");
-			return;
-		}
+		//imp = WindowManager.getCurrentImage();
+		//if (imp == null) {
+			//IJ.showMessage("Please open an image first.");
+			//return;
+		//}
 
 		// ask for parameters
 		GenericDialog gd = new GenericDialog("Settings");
