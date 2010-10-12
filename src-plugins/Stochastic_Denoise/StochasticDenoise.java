@@ -26,8 +26,8 @@ public class StochasticDenoise<T extends NumericType<T>> {
 	private int   numChannels;
 
 	// list of threads for parallel execution
-	private ArrayList<DenoiseThread> threads;
-	private int                      numThreads;
+	private ArrayList<DenoiseThread<?>> threads;
+	private int                         numThreads;
 
 	// the maximum length of a random walk path
 	private final int MaxPathLength = Integer.MAX_VALUE;
@@ -57,14 +57,16 @@ public class StochasticDenoise<T extends NumericType<T>> {
 	// the maximum squared distance between two pixels
 	private int maxDistance2;
 
-	private class DenoiseThread extends Thread {
+	public abstract class DenoiseThread<C extends LocalizableByDimCursor<?>> extends Thread {
+
+		protected abstract void write(double[] data, C type);
 
 		// access to the source and target data
 		private int sourceIndex;
 		private int targetIndex;
 		private int[] sourcePosition;
-		private LocalizableByDimCursor<T> sourceCursor;
-		private LocalizableByDimCursor<T> targetCursor;
+		private C sourceCursor;
+		private C targetCursor;
 	
 		private double[] neighborProbs;
 		private double[] neighborLogProbs;
@@ -82,8 +84,8 @@ public class StochasticDenoise<T extends NumericType<T>> {
 		// the number of this thread
 		private int threadNum;
 
-		public void init(LocalizableByDimCursor<T> sourceCursor,
-		                 LocalizableByDimCursor<T> targetCursor,
+		public void init(C sourceCursor,
+		                 C targetCursor,
 		                 int threadNum) {
 
 			neighborProbs     = new double[numNeighbors];
@@ -136,14 +138,7 @@ public class StochasticDenoise<T extends NumericType<T>> {
 							localWeightBuffer[i]*localSourceBuffer[i][c]/sumWeights;
 	
 				// copy content of denoise buffer to target
-				if (targetCursor.getType() instanceof RealType<?>)
-					((RealType<?>)targetCursor.getType()).setReal(denoisedPixel[0]);
-				if (RGBALegacyType.class.isInstance(targetCursor.getType()))
-					RGBALegacyType.class.cast(targetCursor.getType()).set(
-						RGBALegacyType.rgba(denoisedPixel[0],
-						                    denoisedPixel[1],
-						                    denoisedPixel[2],
-						                    255.0));
+				write(denoisedPixel, targetCursor);
 	
 				if (threadNum == 0 && sourceIndex % 500 == 0)
 					IJ.showProgress(sourceIndex, imageSize);
@@ -157,9 +152,8 @@ public class StochasticDenoise<T extends NumericType<T>> {
 				}
 	
 			}
-	
 		}
-	
+
 		/**
 		 * Perform the random walk and assign the target pixel values on the fly.
 		 *
@@ -308,6 +302,20 @@ public class StochasticDenoise<T extends NumericType<T>> {
 		}
 	}
 
+	private final class RealDenoiseThread<C extends RealType<C>> extends DenoiseThread<LocalizableByDimCursor<C>> {
+
+		protected final void write(double[] data, final LocalizableByDimCursor<C> cursor) {
+			cursor.getType().setReal(data[0]);
+		}
+	}
+
+	private final class RGBDenoiseThread extends DenoiseThread<LocalizableByDimCursor<RGBALegacyType>> {
+
+		protected final void write(double[] data, final LocalizableByDimCursor<RGBALegacyType> cursor) {
+			cursor.getType().set(RGBALegacyType.rgba(data[0], data[1], data[2], 255.0));
+		}
+	}
+
 	private class OffsetsPostions {
 
 		public int[]   offsets;
@@ -334,6 +342,7 @@ public class StochasticDenoise<T extends NumericType<T>> {
 	 * @param image    The noisy input image
 	 * @param denoised The denoised ouput image
 	 */
+	@SuppressWarnings("unchecked")
 	public final void process(Image<T> image, Image<T> denoised) {
 
 		imageSize         = image.size();
@@ -367,6 +376,26 @@ public class StochasticDenoise<T extends NumericType<T>> {
 			}
 			// TODO: handle more that 8-bit images
 			maxDistance2  = 255*255;
+
+			// setup threads
+			numThreads = Runtime.getRuntime().availableProcessors() + 1;
+			threads    = new ArrayList<DenoiseThread<?>>(numThreads);
+			for (int t = 0; t < numThreads; t++) {
+
+				LocalizableByDimCursor<T> threadSourceCursor = image.createLocalizableByDimCursor();
+				LocalizableByDimCursor<T> threadTargetCursor = denoised.createLocalizableByDimCursor();
+
+				// set cursors to first pixel for respective thread
+				for (int i = 0; i <= t; i++) {
+					threadSourceCursor.fwd();
+					threadTargetCursor.fwd();
+				}
+
+				RealDenoiseThread thread = new RealDenoiseThread();
+				thread.init((LocalizableByDimCursor<RGBALegacyType>)threadSourceCursor,
+				            (LocalizableByDimCursor<RGBALegacyType>)threadTargetCursor, t);
+				threads.add(thread);
+			}
 		}
 		else if (RGBALegacyType.class.isInstance(sourceCursor.getType())) {
 
@@ -386,30 +415,30 @@ public class StochasticDenoise<T extends NumericType<T>> {
 			}
 			// TODO: handle more that 8-bit images
 			maxDistance2  = (255*255)*3;
+
+			// setup threads
+			numThreads = Runtime.getRuntime().availableProcessors() + 1;
+			threads    = new ArrayList<DenoiseThread<?>>(numThreads);
+			for (int t = 0; t < numThreads; t++) {
+
+				LocalizableByDimCursor<T> threadSourceCursor = image.createLocalizableByDimCursor();
+				LocalizableByDimCursor<T> threadTargetCursor = denoised.createLocalizableByDimCursor();
+
+				// set cursors to first pixel for respective thread
+				for (int i = 0; i <= t; i++) {
+					threadSourceCursor.fwd();
+					threadTargetCursor.fwd();
+				}
+
+				RGBDenoiseThread thread = new RGBDenoiseThread();
+				thread.init((LocalizableByDimCursor<RGBALegacyType>)threadSourceCursor,
+				            (LocalizableByDimCursor<RGBALegacyType>)threadTargetCursor, t);
+				threads.add(thread);
+			}
 		} else {
 
 			IJ.log("Image type " + sourceCursor.getType().getClass() + " not supported!");
 			return;
-		}
-
-		// setup threads
-		numThreads = Runtime.getRuntime().availableProcessors() + 1;
-		threads    = new ArrayList<DenoiseThread>(numThreads);
-		for (int t = 0; t < numThreads; t++) {
-
-			DenoiseThread thread = new DenoiseThread();
-			threads.add(thread);
-
-			LocalizableByDimCursor<T> threadSourceCursor = image.createLocalizableByDimCursor();
-			LocalizableByDimCursor<T> threadTargetCursor = denoised.createLocalizableByDimCursor();
-
-			// set cursors to first pixel for respective thread
-			for (int i = 0; i <= t; i++) {
-				threadSourceCursor.fwd();
-				threadTargetCursor.fwd();
-			}
-
-			thread.init(threadSourceCursor, threadTargetCursor, t);
 		}
 
 		// create neighbor offsets within local window
