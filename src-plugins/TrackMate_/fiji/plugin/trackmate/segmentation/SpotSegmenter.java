@@ -2,6 +2,7 @@ package fiji.plugin.trackmate.segmentation;
 
 import java.util.List;
 
+import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import mpicbg.imglib.algorithm.Algorithm;
 import mpicbg.imglib.image.Image;
@@ -28,9 +29,18 @@ public interface SpotSegmenter <T extends RealType<T>> extends Algorithm {
 	public void setCalibration(float[] calibration);
 	
 	/**
-	 * Return a list of Spot resulting from the segmentation process 
+	 * Return a list of Spot resulting from the segmentation process. The spot coordinates will be
+	 * calculated with respect to the top-left-lower corner of the given image.
 	 */
 	public List<Spot> getResult();
+
+	/**
+	 * Return a new copy of the list of Spot resulting from the segmentation process. The spot coordinates will be
+	 * translated assuming the given image was cropped using the {@link Settings} given: they will
+	 * be relative to the top-left-lower corner of the raw image <b>before</b> it was cropped.
+	 */
+	public List<Spot> getResult(Settings settings);
+
 	
 	/**
 	 * Return the intermediate image used to get Spot locations.

@@ -2,6 +2,8 @@ package fiji.plugin.trackmate;
 
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.gui.Roi;
+import ij.process.ImageProcessor;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -22,14 +24,20 @@ public class Utils {
 	 * @param iFrame  the frame number to extract, 0-based
 	 * @return  a 3D or 2D {@link Image} with the single time-point required 
 	 */
-	public static <T extends RealType<T>> Image<T> getSingleFrameAsImage(ImagePlus imp, int iFrame) {
-		ImageStack frame = imp.createEmptyStack();
+	public static <T extends RealType<T>> Image<T> getSingleFrameAsImage(ImagePlus imp, int iFrame, Settings settings) {
 		ImageStack stack = imp.getImageStack();
+		ImageStack frame = new ImageStack(settings.xend-settings.xstart, settings.yend-settings.ystart, stack.getColorModel());
 		int numSlices = imp.getNSlices();
 		
 		// ...create the slice by combining the ImageProcessors, one for each Z in the stack.
-		for (int j = 1; j <= numSlices; j++) 
-			frame.addSlice(Integer.toString(j + (iFrame * numSlices)), stack.getProcessor(j + (iFrame * numSlices)));
+		ImageProcessor ip, croppedIp;
+		Roi cropRoi = new Roi(settings.xstart-1, settings.ystart-1, settings.xend-settings.xstart, settings.yend-settings.ystart);
+		for (int j = settings.zstart; j <= settings.zend; j++) {
+			ip = stack.getProcessor(j + (iFrame * numSlices));
+			ip .setRoi(cropRoi);
+			croppedIp = ip.crop();
+			frame.addSlice(Integer.toString(j + (iFrame * numSlices)), croppedIp);
+		}
 		
 		ImagePlus ipSingleFrame = new ImagePlus(imp.getShortTitle()+"-Frame_" + Integer.toString(iFrame + 1), frame);
 		return ImagePlusAdapter.wrap(ipSingleFrame);

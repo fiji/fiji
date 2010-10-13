@@ -81,4 +81,11 @@ public interface Spot {
 	 * This number should be unique.
 	 */
 	public int ID();
+
+	/**
+	 * Return a new copy of this spot object. The new spot will have the same feature values that of this spot, 
+	 * and the same {@link #ID()}. Because the {@link #ID()} can be used for indexing purpose in
+	 * other classes of this package, keeping a spot and its clone in the same collection can be hazardous. 
+	 */
+	public Spot clone();
 }

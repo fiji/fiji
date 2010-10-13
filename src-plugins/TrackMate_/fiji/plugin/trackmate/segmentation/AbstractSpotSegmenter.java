@@ -3,6 +3,8 @@ package fiji.plugin.trackmate.segmentation;
 import java.util.ArrayList;
 import java.util.List;
 
+import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
@@ -101,6 +103,28 @@ public abstract class AbstractSpotSegmenter <T extends RealType<T>> implements S
 	@Override
 	public List<Spot> getResult() {
 		return spots;
+	}
+	
+	@Override
+	public List<Spot> getResult(Settings settings) {
+		ArrayList<Spot> translatedSpots = new ArrayList<Spot>(spots.size());
+		Spot newSpot;
+		float dx = (settings.xstart-1)*calibration[0];
+		float dy = (settings.ystart-1)*calibration[1];
+		float dz = (settings.zstart-1)*calibration[2];
+		float[] dval = new float[] {dx, dy, dz};
+		Feature[] features = new Feature[] {Feature.POSITION_X, Feature.POSITION_Y, Feature.POSITION_Z}; 
+		Float val;
+		for(Spot spot : spots) {
+			newSpot = spot.clone();
+			for (int i = 0; i < features.length; i++) {
+				val = newSpot.getFeature(features[i]);
+				if (null != val)
+					newSpot.putFeature(features[i], val+dval[i]);
+			}
+			translatedSpots.add(newSpot);
+		}
+		return translatedSpots;
 	}
 	
 	@Override

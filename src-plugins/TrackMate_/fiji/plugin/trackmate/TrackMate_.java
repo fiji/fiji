@@ -215,7 +215,7 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 		for (int i = settings.tstart-1; i < settings.tend; i++) {
 			
 			/* 1 - Prepare stack for use with Imglib. */
-			Image<T> img = Utils.getSingleFrameAsImage(imp, i);
+			Image<T> img = Utils.getSingleFrameAsImage(imp, i, settings); // will be cropped according to settings
 			
 			/* 2 Segment it */
 
@@ -223,10 +223,10 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 			logger.setProgress((2*(i-settings.tstart)) / (2f * numFrames + 1));
 			segmenter.setImage(img);
 			if (segmenter.checkInput() && segmenter.process()) {
-				spotsThisFrame = segmenter.getResult();
+				spotsThisFrame = segmenter.getResult(settings);
 				for (Spot spot : spotsThisFrame)
 					spot.putFeature(Feature.POSITION_T, i);
-				spots.put(i-settings.tstart+1, spotsThisFrame);
+				spots.put(i, spotsThisFrame);
 				logger.setStatus("Frame "+(i+1)+": found "+spotsThisFrame.size()+" spots.");
 				spotFound += spotsThisFrame.size();
 			} else {

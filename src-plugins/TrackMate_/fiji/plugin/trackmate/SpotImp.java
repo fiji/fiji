@@ -49,9 +49,33 @@ public class SpotImp implements Spot {
 		this(coordinates, null);
 	}
 	
+	/**
+	 * Private blank constructor used to {@link #clone()} a spot, without messing up with the {@link #IDcounter}.
+	 */
+	private SpotImp() {
+	}
+	
 	/*
 	 * PUBLIC METHODS
 	 */
+	
+	@Override
+	public Spot clone() {
+		SpotImp newSpot = new SpotImp();
+		// Deal with features
+		Float val;
+		for(Feature key : features.keySet()) {
+			val = features.get(key);
+			if (null != val)
+				val = new Float(val);
+			newSpot.putFeature(key, val);
+		}
+		// Deal with ID
+		newSpot.ID = ID;
+		// Deal with name
+		newSpot.name = name;
+		return newSpot;
+	};
 	
 	/**
 	 * Convenience method that returns the X, Y and optionally Z feature in a float array.
