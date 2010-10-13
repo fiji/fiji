@@ -20,6 +20,28 @@ public interface TmXmlKeys {
 	public static final String ROOT_ELEMENT_KEY 					= "TrakMate";
 	
 	/*
+	 * SETTINGS elements
+	 */
+	
+	public static final String SETTINGS_ELEMENT_KEY 				= "Settings";
+	public static final String SETTINGS_XSTART_ATTRIBUTE_NAME 		= "xstart";
+	public static final String SETTINGS_YSTART_ATTRIBUTE_NAME 		= "ystart";
+	public static final String SETTINGS_ZSTART_ATTRIBUTE_NAME 		= "zstart";
+	public static final String SETTINGS_TSTART_ATTRIBUTE_NAME 		= "tstart";
+	public static final String SETTINGS_XEND_ATTRIBUTE_NAME 		= "xend";
+	public static final String SETTINGS_YEND_ATTRIBUTE_NAME 		= "yend";
+	public static final String SETTINGS_ZEND_ATTRIBUTE_NAME 		= "zend";
+	public static final String SETTINGS_TEND_ATTRIBUTE_NAME 		= "tend";
+
+	public static final String SEGMENTER_SETTINGS_ELEMENT_KEY 						= "SegmenterSettings";
+	public static final String SEGMENTER_SETTINGS_SEGMENTER_TYPE_ATTRIBUTE_NAME 	= "segmentertype";
+	public static final String SEGMENTER_SETTINGS_EXPECTED_RADIUS_ATTRIBUTE_NAME 	= "expectedradius";
+	public static final String SEGMENTER_SETTINGS_UNITS_ATTRIBUTE_NAME 				= "units";
+	public static final String SEGMENTER_SETTINGS_THRESHOLD_ATTRIBUTE_NAME 			= "threshold";
+	public static final String SEGMENTER_SETTINGS_USE_MEDIAN_ATTRIBUTE_NAME			= "usemedianfilter";
+
+	
+	/*
 	 * IMAGE element
 	 */
 	

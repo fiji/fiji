@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 
+import mpicbg.imglib.type.numeric.RealType;
+
 import org.jdom.Attribute;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -25,6 +27,7 @@ import fiji.plugin.trackmate.FeatureThreshold;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMate_;
+import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 
 public class TmXmlWriter implements TmXmlKeys {
 	
@@ -32,13 +35,13 @@ public class TmXmlWriter implements TmXmlKeys {
 	 * FIELD
 	 */
 	
-	private TrackMate_ trackmate;
+	private TrackMate_<? extends RealType<?>> trackmate;
 
 	/*
 	 * CONSTRUCTOR
 	 */
 	
-	public TmXmlWriter(TrackMate_ trackmate) {
+	public TmXmlWriter(TrackMate_<? extends RealType<?>> trackmate) {
 		this.trackmate = trackmate;
 	}
 
@@ -51,6 +54,7 @@ public class TmXmlWriter implements TmXmlKeys {
 		Element root = new Element(ROOT_ELEMENT_KEY);
 		// Gather data
 		root = echoImageInfo(root);
+		root = echoSettings(root);
 		root = echoThresholds(root);
 		root = echoSpotSelection(root);
 		root = echoTracks(root);
@@ -67,6 +71,32 @@ public class TmXmlWriter implements TmXmlKeys {
 	/*
 	 * PRIVATE METHODS
 	 */
+	
+	private Element echoSettings(Element root) {
+		
+		Settings settings = trackmate.getSettings();
+		Element settingsElement = new Element(SETTINGS_ELEMENT_KEY);
+		settingsElement.setAttribute(SETTINGS_XSTART_ATTRIBUTE_NAME, ""+settings.xstart);
+		settingsElement.setAttribute(SETTINGS_XEND_ATTRIBUTE_NAME, ""+settings.xend);
+		settingsElement.setAttribute(SETTINGS_YSTART_ATTRIBUTE_NAME, ""+settings.ystart);
+		settingsElement.setAttribute(SETTINGS_YEND_ATTRIBUTE_NAME, ""+settings.yend);
+		settingsElement.setAttribute(SETTINGS_ZSTART_ATTRIBUTE_NAME, ""+settings.zstart);
+		settingsElement.setAttribute(SETTINGS_ZEND_ATTRIBUTE_NAME, ""+settings.zend);
+		settingsElement.setAttribute(SETTINGS_TSTART_ATTRIBUTE_NAME, ""+settings.tstart);
+		settingsElement.setAttribute(SETTINGS_TEND_ATTRIBUTE_NAME, ""+settings.tend);
+		root.addContent(settingsElement);
+		
+		SegmenterSettings segSettings = settings.segmenterSettings;
+		Element segSettingsElement = new Element(SEGMENTER_SETTINGS_ELEMENT_KEY);
+		segSettingsElement.setAttribute(SEGMENTER_SETTINGS_SEGMENTER_TYPE_ATTRIBUTE_NAME, 		segSettings.segmenterType.name());
+		segSettingsElement.setAttribute(SEGMENTER_SETTINGS_EXPECTED_RADIUS_ATTRIBUTE_NAME, 		""+segSettings.expectedRadius);
+		segSettingsElement.setAttribute(SEGMENTER_SETTINGS_UNITS_ATTRIBUTE_NAME, 				segSettings.spaceUnits);
+		segSettingsElement.setAttribute(SEGMENTER_SETTINGS_THRESHOLD_ATTRIBUTE_NAME, 			""+segSettings.threshold);
+		segSettingsElement.setAttribute(SEGMENTER_SETTINGS_UNITS_ATTRIBUTE_NAME, 				""+segSettings.useMedianFilter);
+		root.addContent(segSettingsElement);
+		
+		return root;
+	}
 	
 	
 	private Element echoTracks(Element root) {
