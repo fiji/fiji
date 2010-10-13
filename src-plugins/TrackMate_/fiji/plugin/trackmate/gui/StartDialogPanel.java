@@ -165,6 +165,7 @@ public class StartDialogPanel extends ActionListenablePanel {
 		// Parse segmenter choice
 		SegmenterType segmenterChoice = SegmenterType.values()[jComboBoxSegmenterChoice.getSelectedIndex()];
 		settings.segmenterSettings = segmenterChoice.createSettings();
+		settings.segmenterSettings.spaceUnits = imp.getCalibration().getUnit();
 		// Parse tracker choice
 		TrackerType trackerChoice = TrackerType.values()[jComboBoxTrackerChoice.getSelectedIndex()];
 		settings.trackerSettings = trackerChoice.createSettings();

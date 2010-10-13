@@ -188,6 +188,7 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 				updater.quit();
 			}
 		});
+		state = GuiState.START;
 	}
 	
 	public TrackMateFrame() {
@@ -200,6 +201,7 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 	private void next() {
 		switch(state) {
 			case START:
+				jButtonPrevious.setEnabled(true);
 				state = GuiState.TUNE_SEGMENTER;
 				execTuneSegmenter();
 				break;
@@ -230,6 +232,30 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 	 * Called when the "<<" is pressed.
 	 */
 	private void previous() {		
+		switch(state) {
+					
+		case TUNE_SEGMENTER:
+			cardLayout.show(jPanelMain, START_DIALOG_KEY);
+			jButtonPrevious.setEnabled(false);
+			state = GuiState.START;
+			break;
+			
+		case SEGMENTING:
+			cardLayout.show(jPanelMain, TUNE_SEGMENTER_KEY);
+			state = GuiState.TUNE_SEGMENTER;
+			break;
+			
+		case THRESHOLD_BLOBS:
+			cardLayout.show(jPanelMain, LOG_PANEL_KEY);
+			state = GuiState.SEGMENTING;
+			break;
+			
+		case TRACKING:
+			cardLayout.show(jPanelMain, THRESHOLD_GUI_KEY);
+			state =GuiState.THRESHOLD_BLOBS; 
+			break;
+			
+	}
 	}
 	
 	/**
@@ -296,6 +322,9 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 		settings = segmenterSettingsPanel.getSettings();
 		trackmate.setSettings(settings);
 		logger.log("Starting segmentation...\n", Logger.BLUE_COLOR);
+		logger.log("with settings:\n");
+		logger.log(settings.toString());
+		logger.log(settings.segmenterSettings.toString());
 		new Thread("TrackMate segmentation thread") {					
 			public void run() {
 				long start = System.currentTimeMillis();

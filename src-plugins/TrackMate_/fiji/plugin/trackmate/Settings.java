@@ -29,4 +29,15 @@ public class Settings {
 	
 	public SegmenterSettings segmenterSettings = new SegmenterSettings();
 	public TrackerSettings trackerSettings = new TrackerSettings();
+	
+	@Override
+	public String toString() {
+		String str = "For image: "+imp.getShortTitle()+'\n';
+		str += String.format("  X = %4d - %4d\n", xstart, xend);
+		str += String.format("  Y = %4d - %4d\n", ystart, yend);
+		str += String.format("  Z = %4d - %4d\n", zstart, zend);
+		str += String.format("  T = %4d - %4d\n", tstart, tend);
+		return str;
+	}
+	
 }

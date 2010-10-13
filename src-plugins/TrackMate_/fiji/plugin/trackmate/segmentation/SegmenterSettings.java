@@ -35,11 +35,18 @@ public class SegmenterSettings {
 
 		public SegmenterSettings createSettings() {
 			switch(this) {
-			case LOG_SEGMENTER:
-				return new LogSegmenterSettings();
+			case LOG_SEGMENTER: {
+				LogSegmenterSettings s =  new LogSegmenterSettings();
+				s.segmenterType = LOG_SEGMENTER;
+				return s;
+			}
 			case PEAKPICKER_SEGMENTER:
-			case DOG_SEGMENTER:
-				return new SegmenterSettings();
+			case DOG_SEGMENTER: 
+			{
+				SegmenterSettings s = new SegmenterSettings();
+				s.segmenterType = this;
+				return s;
+			}
 			}
 			return null;
 		}
@@ -76,7 +83,10 @@ public class SegmenterSettings {
 	public float 	threshold = 		0;
 	/** The segmenter type selected. */
 	public SegmenterType segmenterType = SegmenterType.PEAKPICKER_SEGMENTER;
+	/** If true, a median filter will be applied before segmenting. */
 	public boolean useMedianFilter;
+	/** The physical units for {@link #expectedRadius}. */
+	public String spaceUnits= "";
 	
 	
 	/*
@@ -93,6 +103,15 @@ public class SegmenterSettings {
 			return new DogSegmenter<T>(settings);
 		}
 		return null;
+	}
+	
+	@Override
+	public String toString() {
+		String 	str = "Segmenter: "+ segmenterType.toString()+'\n';
+		str += String.format("  Expected radius: %.1f %s\n", expectedRadius, spaceUnits);
+		str += String.format("  Threshold: %.1f\n", threshold);
+		str += "  Median filter: "+useMedianFilter+'\n';
+		return str;
 	}
 	
 }
