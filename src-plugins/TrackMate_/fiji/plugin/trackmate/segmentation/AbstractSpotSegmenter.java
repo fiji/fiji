@@ -6,7 +6,12 @@ import java.util.List;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.Spot;
+import mpicbg.imglib.algorithm.roi.MedianFilter;
+import mpicbg.imglib.algorithm.roi.StructuringElement;
+import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.image.Image;
+import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
+import mpicbg.imglib.type.logic.BitType;
 import mpicbg.imglib.type.numeric.RealType;
 
 /**
@@ -57,6 +62,8 @@ public abstract class AbstractSpotSegmenter <T extends RealType<T>> implements S
 	 * The settings for this segmenter. Contains all parameters needed to perform segmentation.
 	 */
 	protected SegmenterSettings settings;
+
+	private StructuringElement strel;
 	
 	/*
 	 * SPOTSEGMENTER METHODS
@@ -132,6 +139,8 @@ public abstract class AbstractSpotSegmenter <T extends RealType<T>> implements S
 		this.spots = new ArrayList<Spot>();
 		this.intermediateImage = null;
 		this.img = image;
+		if (settings.useMedianFilter)
+			createSquareStrel();
 	}
 		
 	@Override
@@ -142,6 +151,47 @@ public abstract class AbstractSpotSegmenter <T extends RealType<T>> implements S
 	@Override
 	public String getErrorMessage() {
 		return errorMessage ;
+	}
+	
+	
+	/*
+	 * PROTECTED METHODS
+	 */
+	
+	/**
+	 * Apply a median filter to the {@link #intermediateImage} field, which gets updated.
+	 */
+	protected boolean applyMedianFilter() {
+		final MedianFilter<T> medFilt = new MedianFilter<T>(intermediateImage, strel, new OutOfBoundsStrategyMirrorFactory<T>()); 
+		if (!medFilt.process()) {
+			errorMessage = baseErrorMessage + "Failed in applying median filter";
+			return false;
+		}
+		intermediateImage = medFilt.getResult(); 
+		return true;
+	}
+	
+	/*
+	 * PRIVATE METHODS
+	 */
+	
+	/**
+	 * Creates the structuring element that will be used if the user request to have
+	 * a median filter applied.
+	 */
+	private void createSquareStrel() {
+		int numDim = img.getNumDimensions();
+		// Need to figure out the dimensionality of the image in order to create a StructuringElement of the correct dimensionality (StructuringElement needs to have same dimensionality as the image):
+		if (numDim == 3) {  // 3D case
+			strel = new StructuringElement(new int[]{3, 3, 1}, "3D Square");  // unoptimized shape for 3D case. Note here that we manually are making this shape (not using a class method). This code is courtesy of Larry Lindsey
+			Cursor<BitType> c = strel.createCursor();  // in this case, the shape is manually made, so we have to manually set it, too.
+			while (c.hasNext()) { 
+			    c.fwd(); 
+			    c.getType().setOne(); 
+			} 
+			c.close(); 
+		} else if (numDim == 2)  			// 2D case
+			strel = StructuringElement.createCube(2, 3);  // unoptimized shape
 	}
 	
 }

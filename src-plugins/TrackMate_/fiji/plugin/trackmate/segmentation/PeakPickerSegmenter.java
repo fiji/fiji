@@ -41,11 +41,17 @@ public class PeakPickerSegmenter<T extends RealType<T>> extends AbstractSpotSegm
 	@Override
 	public boolean process() {
 		
+		// Deal with median filter:
+		intermediateImage = img;
+		if (settings.useMedianFilter)
+			if (!applyMedianFilter())
+				return false;
+		
 		float radius = settings.expectedRadius;
 		float sigma = (float) (radius / Math.sqrt(img.getNumDimensions())); // optimal sigma for LoG approach and dimensionality
 		ImageFactory<FloatType> factory = new ImageFactory<FloatType>(new FloatType(), new ArrayContainerFactory());
 		Image<FloatType> gaussianKernel = FourierConvolution.getGaussianKernel(factory, sigma, img.getNumDimensions());
-		final FourierConvolution<T, FloatType> fConvGauss = new FourierConvolution<T, FloatType>(img, gaussianKernel);
+		final FourierConvolution<T, FloatType> fConvGauss = new FourierConvolution<T, FloatType>(intermediateImage, gaussianKernel);
 		if (!fConvGauss.checkInput() || !fConvGauss.process()) {
 			errorMessage = baseErrorMessage + "Fourier convolution with Gaussian failed:\n" + fConvGauss.getErrorMessage() ;
 			return false;

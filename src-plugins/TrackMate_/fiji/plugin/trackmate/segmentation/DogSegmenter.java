@@ -42,6 +42,12 @@ public class DogSegmenter<T extends RealType<T>> extends AbstractSpotSegmenter<T
 	@Override
 	public boolean process() {
 		
+		// Deal with median filter:
+		intermediateImage = img;
+		if (settings.useMedianFilter)
+			if (!applyMedianFilter())
+				return false;
+		
 		float radius = settings.expectedRadius;
 		// first we need an image factory for FloatType
 		final ImageFactory<FloatType> imageFactory = new ImageFactory<FloatType>( new FloatType(), img.getContainerFactory() );
@@ -54,7 +60,7 @@ public class DogSegmenter<T extends RealType<T>> extends AbstractSpotSegmenter<T
 		sigma2 = (float) (Math.sqrt(2) * sigma1);
 		minPeakValue = settings.threshold;
 		
-		final DifferenceOfGaussianRealNI<T, FloatType> dog = new DifferenceOfGaussianRealNI<T, FloatType>(img, imageFactory, oobs2, sigma1, sigma2, minPeakValue, 1.0, calibration);
+		final DifferenceOfGaussianRealNI<T, FloatType> dog = new DifferenceOfGaussianRealNI<T, FloatType>(intermediateImage, imageFactory, oobs2, sigma1, sigma2, minPeakValue, 1.0, calibration);
 		// execute
 		if ( !dog.checkInput() || !dog.process() )
 		{

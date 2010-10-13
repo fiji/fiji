@@ -8,17 +8,13 @@ import mpicbg.imglib.algorithm.extremafinder.RegionalExtremaFactory;
 import mpicbg.imglib.algorithm.extremafinder.RegionalExtremaFinder;
 import mpicbg.imglib.algorithm.fft.FourierConvolution;
 import mpicbg.imglib.algorithm.gauss.DownSample;
-import mpicbg.imglib.algorithm.roi.MedianFilter;
-import mpicbg.imglib.algorithm.roi.StructuringElement;
 import mpicbg.imglib.container.array.ArrayContainerFactory;
-import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
-import mpicbg.imglib.outofbounds.OutOfBoundsStrategyMirrorFactory;
-import mpicbg.imglib.type.logic.BitType;
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.real.FloatType;
+import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
 
@@ -37,8 +33,6 @@ public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter
 	private float sigma;
 	private Image<FloatType> laplacianKernel;
 	private Image<FloatType> gaussianKernel;
-	private StructuringElement strel;
-
 	private LogSegmenterSettings logsettings;
 
 	/*
@@ -61,19 +55,17 @@ public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter
 	 */
 	@Override
 	public void setImage(Image<T> image) {
+		if (image == null)
+			return;
 		if  ( (null == img ) || (img.getNumDimensions() != image.getNumDimensions()) ) {
-			if (image == null)
-				return;
-			this.img = image;
+			super.setImage(image);
 			createLaplacianKernel(); // instantiate laplacian kernel if needed
 			createGaussianKernel();
-			createSquareStrel();
 			float radius = settings.expectedRadius;
 			sigma = (float) (SMOOTH_FACTOR * 2 * radius / Math.sqrt(img.getNumDimensions())); // optimal sigma for LoG approach and dimensionality
+		} else {
+			super.setImage(image);
 		}
-		this.spots = null;
-		this.intermediateImage = null;
-		this.img = image;
 	}
 			
 	/*
@@ -86,8 +78,8 @@ public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter
 		/* 0 - Get settings
 		 */
 		
-		boolean useMedianFilter 	= logsettings.useMedianFilter;
 		boolean allowEdgeExtrema  	= logsettings.allowEdgeMaxima;
+		boolean useMedianFilter 	= settings.useMedianFilter;
 		float threshold 			= settings.threshold;
 		float radius 				= settings.expectedRadius;
 		
@@ -112,14 +104,9 @@ public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter
 		/* 2 - 	Apply a median filter, to get rid of salt and pepper noise which could be 
 		 * 		mistaken for maxima in the algorithm (only applied if requested by user explicitly) */
 		
-		if (useMedianFilter) {
-			final MedianFilter<T> medFilt = new MedianFilter<T>(intermediateImage, strel, new OutOfBoundsStrategyMirrorFactory<T>()); 
-			if (!medFilt.process()) {
-				errorMessage = baseErrorMessage + "Failed in applying median filter";
+		if (useMedianFilter) 
+			if (!applyMedianFilter()) 
 				return false;
-			}
-			intermediateImage = medFilt.getResult(); 
-		}
 		
 		/* 3 - 	Apply the LoG filter - current homemade implementation  */
 		
@@ -143,15 +130,29 @@ public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter
 		final RegionalExtremaFinder<T> findExtrema = extremaFactory.createRegionalMaximaFinder(true);
 		findExtrema.allowEdgeExtrema(allowEdgeExtrema);
 		T thresh = img.createType();
-		thresh .setReal(threshold);
+		thresh.setReal(threshold);
 		findExtrema.setThreshold(thresh);
 		if (!findExtrema.checkInput() || !findExtrema.process()) { 
-			errorMessage = baseErrorMessage + "Extrema Finder failed:\n" + findExtrema.getErrorMessage();
+			errorMessage = baseErrorMessage + "Extrema finder failed:\n" + findExtrema.getErrorMessage();
 			return false;
 		}
 		final List<float[]> centeredExtrema = findExtrema.getRegionalExtremaCenters(false);
 		
+		/* 4.5 - Grab extrema value to work as a quality feature. */
+		final List<Float> extremaValues = new ArrayList<Float>(centeredExtrema.size());
+		int[] roundCoords = new int[centeredExtrema.get(0).length];
+		LocalizableByDimCursor<T> cursor = intermediateImage.createLocalizableByDimCursor();
+		for (float[] coords : centeredExtrema) {
+			for (int i = 0; i < roundCoords.length; i++)
+				roundCoords[i] = Math.round(coords[i]);
+			cursor.setPosition(roundCoords);
+			extremaValues.add(cursor.getType().getRealFloat());
+		}
+		
 		spots = convertToSpots(centeredExtrema, calibration, downsampleFactors);
+		for (int i = 0; i < spots.size(); i++)
+			spots.get(i).putFeature(Feature.QUALITY, extremaValues.get(i));
+		
 		return true;
 	}
 	
@@ -178,21 +179,6 @@ public class LogSegmenter <T extends RealType<T> > extends AbstractSpotSegmenter
 	private void createGaussianKernel() {
 		ImageFactory<FloatType> factory = new ImageFactory<FloatType>(new FloatType(), new ArrayContainerFactory());
 		gaussianKernel = FourierConvolution.getGaussianKernel(factory, sigma, img.getNumDimensions());
-	}
-	
-	private void createSquareStrel() {
-		int numDim = img.getNumDimensions();
-		// Need to figure out the dimensionality of the image in order to create a StructuringElement of the correct dimensionality (StructuringElement needs to have same dimensionality as the image):
-		if (numDim == 3) {  // 3D case
-			strel = new StructuringElement(new int[]{3, 3, 1}, "3D Square");  // unoptimized shape for 3D case. Note here that we manually are making this shape (not using a class method). This code is courtesy of Larry Lindsey
-			Cursor<BitType> c = strel.createCursor();  // in this case, the shape is manually made, so we have to manually set it, too.
-			while (c.hasNext()) { 
-			    c.fwd(); 
-			    c.getType().setOne(); 
-			} 
-			c.close(); 
-		} else if (numDim == 2)  			// 2D case
-			strel = StructuringElement.createCube(2, 3);  // unoptimized shape
 	}
 	
 	/*
