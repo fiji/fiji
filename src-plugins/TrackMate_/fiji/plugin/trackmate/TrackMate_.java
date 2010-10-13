@@ -96,6 +96,7 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 				public void log(String message, Color color) {IJ.showStatus(message);}
 				public void error(String message) { IJ.error("Spot_Tracker", message);}
 				public void setProgress(float val) {IJ.showProgress(val); }
+				public void setStatus(String status) {IJ.showStatus(status);}
 		};
 		
 		// Run plugin on current image
@@ -210,16 +211,15 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 		List<Spot> spotsThisFrame;
 		
 		// For each frame...
+		int spotFound = 0;
 		for (int i = settings.tstart-1; i < settings.tend; i++) {
 			
 			/* 1 - Prepare stack for use with Imglib. */
-			
-			logger.log("Frame "+(i+1)+": Converting to ImgLib...\n");
 			Image<T> img = Utils.getSingleFrameAsImage(imp, i);
 			
 			/* 2 Segment it */
 
-			logger.log("Frame "+(i+1)+": Segmenting...\n");
+			logger.setStatus("Frame "+(i+1)+": Segmenting...");
 			logger.setProgress((2*(i-settings.tstart)) / (2f * numFrames + 1));
 			segmenter.setImage(img);
 			if (segmenter.checkInput() && segmenter.process()) {
@@ -227,15 +227,17 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 				for (Spot spot : spotsThisFrame)
 					spot.putFeature(Feature.POSITION_T, i);
 				spots.put(i-settings.tstart+1, spotsThisFrame);
-				logger.log("Frame "+(i+1)+": found "+spotsThisFrame.size()+" spots.\n");
+				logger.setStatus("Frame "+(i+1)+": found "+spotsThisFrame.size()+" spots.");
+				spotFound += spotsThisFrame.size();
 			} else {
 				logger.error(segmenter.getErrorMessage());
 				return;
 			}
 						
 		} // Finished looping over frames
+		logger.log("Found "+spotFound+" spots.\n");
 		logger.setProgress(1);
-				
+		logger.setStatus("");
 		return;
 	}
 	

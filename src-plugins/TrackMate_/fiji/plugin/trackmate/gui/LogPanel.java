@@ -80,12 +80,15 @@ public class LogPanel extends ActionListenablePanel {
 						jTextPaneLog.setCharacterAttributes(aset, false);
 						jTextPaneLog.replaceSelection(message);
 						jTextPaneLog.setEditable(false); // Ugly ugly
-
 					}
 				});
-
 			}
 
+			@Override
+			public void setStatus(String status) {
+				jProgressBar.setString(status);
+			}
+			
 			@Override
 			public void setProgress(float val) {
 				if (val < 0) val =0;
@@ -125,6 +128,8 @@ public class LogPanel extends ActionListenablePanel {
 					jProgressBar = new JProgressBar();
 					jPanelProgressBar.add(jProgressBar, BorderLayout.CENTER);
 					jProgressBar.setPreferredSize(new java.awt.Dimension(270, 20));
+					jProgressBar.setStringPainted(true);
+					jProgressBar.setFont(SMALL_FONT);
 				}
 			}
 			{

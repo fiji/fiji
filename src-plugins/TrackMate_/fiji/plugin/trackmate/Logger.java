@@ -62,13 +62,18 @@ public abstract class Logger extends PrintWriter {
 	 */
 	public abstract void setProgress(float val);
 	
+	/**
+	 * Set the status to be displayed by this logger.
+	 */
+	public abstract void setStatus(String status);
 	
 	
 	
 	
 	/**
 	 * This {@link Logger} simply outputs to the standard output and standard error.
-	 * The {@link #setProgress(float)} method is ignored.
+	 * The {@link #setProgress(float)} method is ignored, the {@link #setStatus(String)} is 
+	 * sent to the console.
 	 */
 	public static Logger DEFAULT_LOGGER = new Logger() {
 
@@ -83,6 +88,10 @@ public abstract class Logger extends PrintWriter {
 		@Override
 		public void setProgress(float val) {}
 		
+		@Override
+		public void setStatus(String status) {
+			System.out.println(status);
+		}
 	};
 	
 	
