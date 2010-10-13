@@ -404,6 +404,7 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 	 */
 	private static final ImagePlus[] makeImageForViewer(final Settings settings) {
 		final ImagePlus origImp = settings.imp;
+		origImp.killRoi();
 		final ImagePlus imp;
 		
 		if (origImp.getType() == ImagePlus.GRAY8)
