@@ -74,9 +74,8 @@ public class UpdateJava implements PlugIn {
 				+ e.getMessage());
 		} catch (RuntimeException e) {
 			progress.done();
-			if (e.getMessage() == Macro.MACRO_CANCELED && !IJ.macroRunning())
-				return;
-			throw e;
+			if (e.getMessage() != Macro.MACRO_CANCELED)
+				abort(e.getMessage());
 		}
 	}
 
@@ -96,7 +95,9 @@ public class UpdateJava implements PlugIn {
 			url = getLink(Pattern.compile(" *jre-.*[^m]\\." + ext + " *"), form.submit(), form.url);
 		}
 		else {
-			form = getForm("post", form.url);
+			try {
+				form = getForm("post", form.url);
+			} catch (RuntimeException e) { /* ignore */ }
 			form.variables.put(form.ids.get("dnld_platform"), platform);
 			// avoid matching *-rpm.bin
 			url = getLink(Pattern.compile(" *jdk-.*[^m]\\." + ext + " *"), form.submit(), form.url);
@@ -395,7 +396,7 @@ public class UpdateJava implements PlugIn {
 				if (submitLabel.equals(list.get(i).submitLabel))
 					return list.get(i);
 			if (list.size() == 0)
-				abort("Could not find form of method '" + method + "' in " + url);
+				throw new RuntimeException("Could not find form of method '" + method + "' in " + url);
 			return list.get(0);
 		} catch (IOException e) {
 			abort("Could not fetch " + url);
