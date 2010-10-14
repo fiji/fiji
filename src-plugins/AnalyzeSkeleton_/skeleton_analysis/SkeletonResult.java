@@ -67,6 +67,12 @@ public class SkeletonResult
 	/** list of slab coordinates in the entire image */
 	ArrayList <Point> listOfStartingSlabVoxels = null;
 
+	// Shortest path variables
+	/** list of longest shortest paths from the skeletons in the image */
+	ArrayList <Double> shortestPathList;
+	/** shortest path start position array */
+	double[][] spStartPosition;
+
 	/** array of graphs (one per tree) */
 	private Graph[] graph = null;
 
@@ -152,6 +158,14 @@ public class SkeletonResult
 	{
 		this.listOfStartingSlabVoxels = listOfStartingSlabVoxels;
 	}
+	public void setShortestPathList(ArrayList <Double> shortestPathList)
+	{
+		this.shortestPathList = shortestPathList;
+	}
+	public void setSpStartPosition(double[][] spStartPosition)
+	{
+		this.spStartPosition = spStartPosition;
+	}
 
 
 	public void setGraph(Graph[] graph)
@@ -236,6 +250,16 @@ public class SkeletonResult
 	public ArrayList <Point> getListOfStartingSlabVoxels()
 	{
 		return listOfStartingSlabVoxels;
+	}
+
+	public ArrayList <Double> getShortestPathList()
+	{
+		return shortestPathList;
+	}
+
+	public double[][] getSpStartPosition()
+	{
+		return spStartPosition;
 	}
 
 
