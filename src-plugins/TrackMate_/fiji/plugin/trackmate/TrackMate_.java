@@ -2,7 +2,6 @@ package fiji.plugin.trackmate;
 
 import fiji.plugin.trackmate.features.FeatureFacade;
 import fiji.plugin.trackmate.gui.TrackMateFrame;
-import fiji.plugin.trackmate.segmentation.LogSegmenter;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
 import fiji.plugin.trackmate.tracking.LAPTracker;
@@ -19,7 +18,6 @@ import java.util.TreeMap;
 
 import javax.swing.SwingUtilities;
 
-import mpicbg.imglib.algorithm.roi.MedianFilter;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
 
@@ -137,6 +135,10 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 	
 	/**
 	 * Execute the thresholding part.
+ 	 *<p> 
+	 * Because of the presence of noise, it is possible that some of the regional maxima found in the segmenting step have
+	 * identified noise, rather than objects of interest. A thresholding operation based on the calculated features in this 
+	 * step should allow to rule them out.
 	 * <p>
 	 * This method simply takes all the segmented spots, and store in the field {@link #selectedSpots}
 	 * the spots whose features satisfy all of the thresholds entered with the method {@link #addThreshold(FeatureThreshold)}
@@ -151,45 +153,10 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 	 * Execute the segmentation part.
 	 * <p>
 	 * This method looks for bright blobs: bright object of approximately spherical shape, whose expected 
-	 * diameter is given in argument. The following steps are applied:
-	 * 
-	 * <ol>
-	 * 
-	 * <li>An optional median filter is applied to reduce salt-and-pepper noise in hopes
-	 * of false-positive reduction (the user specifies whether to run a median filter). See {@link MedianFilter}.</li>
-	 *
-	 * <li>The image is down-sampled in order to: [a] reduce the processing time of the other pre-processing
-	 * techniques; and [b] reduce the scale of the bright objects to be a uniform diameter in
-	 * all dimensions. Thus, each dimension is scaled separately to reduce the diameter in that dimension
-	 * to the uniform diameter, if possible, since it is possible the original diameter
-	 * is less than the desired diameter to start, in which case no down-sampling is performed in that dimension.</li>
-	 * 
-	 * <li>The newly down-sized, and optionally median filtered, image is then convolved with a Gaussian kernel,
-	 * with <code>sigma = expected diameter / sqrt(ndim)</code>. Using this <code>sigma</code>, the Gaussian kernel is about the size of our objects (nuclei)
-	 * in volume, and therefore will (hopefully) make the center of the nuclei the brightest pixel in the convolved 
-	 * image, while at the same time further eliminating noise. The convolution itself is performed using the Fourier Transform
-	 * approach to convolution, which resulted in a faster computation.</li>
-	 * 
-	 * <li>The image is then convoluted with a modified Laplacian kernel (again, via a Fourier Transform). The kernel is modified
-	 * such that the center matrix cell is actually positive, and the surrounding cells are negative. The result of this
-	 * modification is an image where the brightest regions in the input image are also the brightest regions in the output image.
-	 * The purpose of this convolution is to accentuate the areas on the image where the bright pixels are "flowing," which should
-	 * represent object centers following the Gaussian convolution.</li>
-	 * 
-	 * <li>Finally, the entire, newly processed image is searched for regional maxima, which are defined as pixels (or groups of equally-valued
-	 * intensity pixels) that are strictly brighter than their adjacent neighbors. Following the pre-processing steps above,
-	 * these regional maxima likely represent the center of the objects we would like to find and track.
-	 * See {@link LogSegmenter}.
-	 * </li>
-	 * 
-	 * <li> This gives us a collection of spots, which at this stage simply wrap a physical center location. Features are then
-	 * calculated for each spot, using their location, the raw image, and the filtered image. See the {@link FeatureFacade} class
-	 * for details. 
-	 * </ol>
-	 * 
-	 * Because of the presence of noise, it is possible that some of the regional maxima found in the previous step have
-	 * identified noise, rather than objects of interest. A thresholding operation based on the calculated features in this 
-	 * step should allow to rule them out.
+	 * diameter is given in argument. The method used for segmentation depends on the {@link SpotSegmenter} 
+	 * chosen, and set in {@link #settings};
+	 * <p>
+	 * This gives us a collection of spots, which at this stage simply wrap a physical center location. 
 	 */
 	public void execSegmentation() {
 		final ImagePlus imp = settings.imp;
@@ -206,7 +173,6 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 		segmenter = SegmenterSettings.getSpotSegmenter(settings.segmenterSettings);
 		segmenter.setCalibration(calibration);
 		
-		// Since we can't get the NumericType out of imp, we assume it is a FloatType.
 		spots = new TreeMap<Integer, List<Spot>>();
 		List<Spot> spotsThisFrame;
 		
@@ -227,7 +193,6 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 				for (Spot spot : spotsThisFrame)
 					spot.putFeature(Feature.POSITION_T, i);
 				spots.put(i, spotsThisFrame);
-				logger.setStatus("Frame "+(i+1)+": found "+spotsThisFrame.size()+" spots.");
 				spotFound += spotsThisFrame.size();
 			} else {
 				logger.error(segmenter.getErrorMessage());
@@ -240,6 +205,37 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 		logger.setStatus("");
 		return;
 	}
+	
+	/**
+	 * Calculate features for all segmented spots.
+	 * <p>
+	 * Features are calculated for each spot, using their location, and the raw image. See the {@link FeatureFacade} class
+	 * for details. 
+	 */
+	public void computeFeatures() {
+		int numFrames = settings.tend - settings.tstart + 1;
+		List<Spot> spotsThisFrame;
+		FeatureFacade<T> featureCalculator;
+		
+		for (int i = settings.tstart-1; i < settings.tend; i++) {
+			
+			/* 1 - Prepare stack for use with Imglib. */
+			Image<T> img = Utils.getSingleFrameAsImage(settings.imp, i, settings); // will be cropped according to settings
+			
+			/* 2 - Compute features. */
+			logger.setProgress((2*(i-settings.tstart)) / (2f * numFrames + 1));
+			logger.setStatus("Frame "+(i+1)+": Calculating features...");
+			featureCalculator = new FeatureFacade<T>(img, settings.segmenterSettings.expectedRadius);
+			spotsThisFrame = spots.get(i);
+			featureCalculator.processAllFeatures(spotsThisFrame);
+						
+		} // Finished looping over frames
+		logger.setProgress(1);
+		logger.setStatus("");
+		return;
+	}
+
+	
 	
 	/*
 	 * GETTERS / SETTERS
@@ -298,7 +294,14 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 	public void setSettings(Settings settings) {
 		this.settings = settings;
 	}
-	
+
+	/**
+	 * Overwrite the {@link #spots} field, resulting from segmentation.
+	 */
+	public void setSpots(TreeMap<Integer, List<Spot>> spots) {
+		this.spots = spots;
+	}
+
 	
 	/*
 	 * STATIC METHODS
@@ -353,6 +356,8 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 		}
 		return selectedSpots;
 	}
+
+
 
 	
 	

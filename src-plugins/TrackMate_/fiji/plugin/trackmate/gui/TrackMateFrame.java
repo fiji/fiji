@@ -20,6 +20,11 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.EnumMap;
+import java.util.List;
+import java.util.TreeMap;
 
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -32,10 +37,11 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 import mpicbg.imglib.type.numeric.RealType;
 import mpicbg.imglib.type.numeric.integer.UnsignedByteType;
-
 import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.FeatureThreshold;
 import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Settings;
+import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.TrackMate_;
 import fiji.plugin.trackmate.io.TmXmlWriter;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
@@ -124,6 +130,8 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 		START,
 		TUNE_SEGMENTER,
 		SEGMENTING,
+		INITIAL_THRESHOLDING,
+		CALCULATE_FEATURES, 
 		THRESHOLD_BLOBS,
 		TUNE_TRACKER,
 		TRACKING;
@@ -133,6 +141,7 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 
 	private static final String START_DIALOG_KEY = "Start";
 	private static final String TUNE_SEGMENTER_KEY = "TuneSegmenter";
+	private static final String INITIAL_THRESHOLDING_KEY = "InitialThresholding";
 	private static final String THRESHOLD_GUI_KEY = "Threshold";
 	private static final String LOG_PANEL_KEY = "Log";
 	private static final String DISPLAYER_PANEL_KEY = "Displayer";
@@ -161,6 +170,7 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 	private JPanel jPanelMain;
 	private Settings settings;
 	private SegmenterSettingsPanel segmenterSettingsPanel;
+	private InitThresholdPanel initThresholdingPanel;
 	
 	
 	{
@@ -212,6 +222,16 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 				break;
 				
 			case SEGMENTING:
+				execInitThresholdingStep();
+				state = GuiState.INITIAL_THRESHOLDING;
+				break;
+				
+			case INITIAL_THRESHOLDING:
+				execCalculateFeatures();
+				state = GuiState.CALCULATE_FEATURES;
+				break;
+				
+			case CALCULATE_FEATURES:
 				execThresholdingStep();
 				state = GuiState.THRESHOLD_BLOBS;
 				break;
@@ -245,9 +265,19 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 			state = GuiState.TUNE_SEGMENTER;
 			break;
 			
-		case THRESHOLD_BLOBS:
+		case INITIAL_THRESHOLDING:
 			cardLayout.show(jPanelMain, LOG_PANEL_KEY);
 			state = GuiState.SEGMENTING;
+			break;
+			
+		case CALCULATE_FEATURES:
+			cardLayout.show(jPanelMain, INITIAL_THRESHOLDING_KEY);
+			state = GuiState.INITIAL_THRESHOLDING;
+			break;
+			
+		case THRESHOLD_BLOBS:
+			cardLayout.show(jPanelMain, INITIAL_THRESHOLDING_KEY);
+			state = GuiState.INITIAL_THRESHOLDING;
 			break;
 			
 		case TRACKING:
@@ -305,10 +335,10 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 	 */
 	private void execTuneSegmenter() {
 		settings = startDialogPanel.getSettings();
-		{
-			segmenterSettingsPanel = new SegmenterSettingsPanel(settings);
-			jPanelMain.add(segmenterSettingsPanel, TUNE_SEGMENTER_KEY);
-		}
+		if (null != segmenterSettingsPanel)
+			jPanelMain.remove(segmenterSettingsPanel);
+		segmenterSettingsPanel = new SegmenterSettingsPanel(settings);
+		jPanelMain.add(segmenterSettingsPanel, TUNE_SEGMENTER_KEY);
 		cardLayout.show(jPanelMain, TUNE_SEGMENTER_KEY);
 	}
 	
@@ -344,8 +374,56 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 		}.start();
 	}
 	
+	
 	/**
-	 * Collect the segmentation result, render it in another thread, the switch to the thresholding panel. 
+	 * Collect the segmentation result, and threshold it without rendering spots. 
+	 */
+	private void execInitThresholdingStep() {
+		// Grab the quality feature value
+		EnumMap<Feature, double[]> features = new EnumMap<Feature, double[]>(Feature.class);
+		Collection<List<Spot>> clspots = trackmate.getSpots().values();
+		int spotNumber = 0;
+		for(Collection<? extends Spot> collection : clspots)
+			spotNumber += collection.size();
+		double[] values = new double[spotNumber];
+		int index = 0;
+		double val;
+		for(Collection<? extends Spot> collection : clspots) {
+			for (Spot spot : collection) {
+				val = spot.getFeature(Feature.QUALITY);
+				values[index] = val;
+				index++;
+			}
+		}
+		features.put(Feature.QUALITY, values);
+		
+		if (null != initThresholdingPanel)
+			jPanelMain.remove(initThresholdingPanel);
+		initThresholdingPanel = new InitThresholdPanel(features);
+		jPanelMain.add(initThresholdingPanel, INITIAL_THRESHOLDING_KEY);
+		cardLayout.show(jPanelMain, INITIAL_THRESHOLDING_KEY);
+	}
+	
+	/**
+	 * Collect the initial segmentation result, compute all features.
+	 */
+	private void execCalculateFeatures() {
+		cardLayout.show(jPanelMain, LOG_PANEL_KEY);
+		logger.log("Calculating features...\n",Logger.BLUE_COLOR);
+		// Collect initial thresholding result
+		FeatureThreshold ft = initThresholdingPanel.getFeatureThreshold();
+		List<FeatureThreshold> featureThresholds = new ArrayList<FeatureThreshold>(1);
+		featureThresholds.add(ft);
+		TreeMap<Integer, List<Spot>> spots = TrackMate_.thresholdSpots(trackmate.getSpots(), featureThresholds);
+		trackmate.setSpots(spots);
+		
+		// Calculate features
+		trackmate.computeFeatures();		
+		logger.log("Calculating features done.\n", Logger.BLUE_COLOR);
+	}
+	
+	/**
+	 * Render spots in another thread, then switch to the thresholding panel. 
 	 */
 	private void execThresholdingStep() {
 		// Launch renderer

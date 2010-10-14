@@ -55,7 +55,7 @@ public class ThresholdPanel <K extends Enum<K>>  extends javax.swing.JPanel {
 	private static final long serialVersionUID = 1L;
 	private static final String DATA_SERIES_NAME = "Data";
 	private final ChangeEvent CHANGE_EVENT = new ChangeEvent(this);
-	private JComboBox jComboBoxFeature;
+	JComboBox jComboBoxFeature;
 	private ChartPanel chartPanel;
 	private JButton jButtonAutoThreshold;
 	private JRadioButton jRadioButtonBelow;
