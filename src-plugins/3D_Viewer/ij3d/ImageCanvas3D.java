@@ -20,7 +20,6 @@ import java.util.Map;
 import java.util.HashMap;
 
 import ij.process.ByteProcessor;
-import ij.gui.Toolbar;
 import ij.gui.ImageCanvas;
 import ij.ImagePlus;
 import ij.gui.Roi;
@@ -34,6 +33,7 @@ public class ImageCanvas3D extends Canvas3D implements KeyListener {
 	private ImageCanvas roiImageCanvas;
 	private Map<Integer, Long> pressed, released; 
 	private Background background;
+	private UIAdapter ui;
 	final private ExecutorService exec = Executors.newSingleThreadExecutor();
 
 	protected void flush() {
@@ -53,16 +53,16 @@ public class ImageCanvas3D extends Canvas3D implements KeyListener {
 		}
 	}
 
-	public ImageCanvas3D(int width,int height) {
+	public ImageCanvas3D(int width, int height, UIAdapter uia) {
 		super(SimpleUniverse.getPreferredConfiguration());
+		this.ui = uia;
 		setPreferredSize(new Dimension(width, height));
 		ByteProcessor ip = new ByteProcessor(width, height);
 		roiImagePlus = new RoiImagePlus("RoiImage", ip); 
 		roiImageCanvas = new ImageCanvas(roiImagePlus) {
 			/* prevent ROI to enlarge/move on mouse click */
 			public void mousePressed(MouseEvent e) {
-				int id = Toolbar.getToolId();
-				if(id != Toolbar.MAGNIFIER && id != Toolbar.POINT)
+				if(!ui.isMagnifierTool() && !ui.isPointTool())
 					super.mousePressed(e);
 			}
 		};
@@ -87,19 +87,10 @@ public class ImageCanvas3D extends Canvas3D implements KeyListener {
 		render();
 	}
 
-	private boolean isSelectionTool() {
-		 int tool = Toolbar.getToolId();
-		 return tool == Toolbar.RECTANGLE || tool == Toolbar.OVAL 
-		 	|| tool == Toolbar.POLYGON || tool == Toolbar.FREEROI
-			|| tool == Toolbar.LINE || tool == Toolbar.POLYLINE
-			|| tool == Toolbar.FREELINE || tool == Toolbar.POINT
-			|| tool == Toolbar.WAND;
-	}
-
 	private void addListeners() {
 		addMouseMotionListener(new MouseMotionAdapter() {
 			public void mouseDragged(MouseEvent e) {
-				if(isSelectionTool())
+				if(ui.isRoiTool())
 					exec.submit(new Runnable() { public void run() {
 						postRender();
 					}});
@@ -107,19 +98,19 @@ public class ImageCanvas3D extends Canvas3D implements KeyListener {
 		});
 		addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
-				if(isSelectionTool())
+				if(ui.isRoiTool())
 					exec.submit(new Runnable() { public void run() {
 						render();
 					}});
 			}
 			public void mouseReleased(MouseEvent e) {
-				if(isSelectionTool())
+				if(ui.isRoiTool())
 					exec.submit(new Runnable() { public void run() {
 						render();
 					}});
 			}
 			public void mousePressed(MouseEvent e) {
-				if(!isSelectionTool())
+				if(!ui.isRoiTool())
 					roiImagePlus.killRoi();
 			}
 		});
