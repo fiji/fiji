@@ -392,8 +392,8 @@ public class StochasticDenoise<T extends NumericType<T>> {
 				}
 
 				RealDenoiseThread thread = new RealDenoiseThread();
-				thread.init((LocalizableByDimCursor<RGBALegacyType>)threadSourceCursor,
-				            (LocalizableByDimCursor<RGBALegacyType>)threadTargetCursor, t);
+				thread.init((LocalizableByDimCursor<RGBALegacyType>)(Object)threadSourceCursor,
+				            (LocalizableByDimCursor<RGBALegacyType>)(Object)threadTargetCursor, t);
 				threads.add(thread);
 			}
 		}
@@ -431,8 +431,8 @@ public class StochasticDenoise<T extends NumericType<T>> {
 				}
 
 				RGBDenoiseThread thread = new RGBDenoiseThread();
-				thread.init((LocalizableByDimCursor<RGBALegacyType>)threadSourceCursor,
-				            (LocalizableByDimCursor<RGBALegacyType>)threadTargetCursor, t);
+				thread.init((LocalizableByDimCursor<RGBALegacyType>)(Object)threadSourceCursor,
+				            (LocalizableByDimCursor<RGBALegacyType>)(Object)threadTargetCursor, t);
 				threads.add(thread);
 			}
 		} else {
