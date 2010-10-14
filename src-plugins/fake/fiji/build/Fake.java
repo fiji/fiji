@@ -2946,8 +2946,9 @@ public class Fake {
 
 	public boolean isAbsolutePath(String path) {
 		boolean isWindows = getPlatform().startsWith("win");
-		return (isWindows && path.length() > 1 && path.charAt(1) == ':')
-			|| (!isWindows && path.startsWith("/"));
+		if (isWindows)
+			return path.length() > 1 && path.charAt(1) == ':';
+		return path.startsWith("/");
 	}
 
 	public String makePath(File cwd, String path) {

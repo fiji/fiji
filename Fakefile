@@ -194,7 +194,8 @@ PLUGIN_TARGETS=plugins/Jython_Interpreter.jar \
 	plugins/TransformJ_.jar \
 	plugins/FeatureJ_.jar \
 	plugins/RandomJ_.jar \
-	plugins/Linear_Kuwahara.jar
+	plugins/Linear_Kuwahara.jar \
+	plugins/Jython_Scripts.jar
 
 all <- fiji $SUBMODULE_TARGETS $PLUGIN_TARGETS
 
@@ -243,7 +244,7 @@ jars/commons-math.jar <- commons-math/
 # From source
 libs[] <- jars/test-fiji.jar jars/zs.jar jars/VIB-lib.jar jars/Jama-1.0.2.jar \
 	jars/fiji-scripting.jar jars/fiji-lib.jar jars/jep.jar \
-	jars/pal-optimization.jar jars/MacOSX_Updater_Fix.jar
+	jars/pal-optimization.jar jars/Updater_Fix.jar
 
 plugins/Record_Screen.jar <- src-plugins/Record_Screen/ src-plugins/Record_Screen/**/*
 
@@ -299,6 +300,11 @@ CLASSPATH(plugins/SPIM_Registration.jar)=$JAVA3D_JARS:jars/imglib.jar:jars/mpicb
 CLASSPATH(plugins/Bug_Submitter.jar)=plugins/Fiji_Updater.jar
 CLASSPATH(plugins/TopoJ_.jar)=jars/Jama-1.0.2.jar
 CLASSPATH(jars/imagescience.jar)=plugins/Image_5D.jar
+CLASSPATH(plugins/Jython_Scripts.jar)=plugins/Jython_Interpreter.jar
+plugins/Jython_Scripts.jar <- \
+	src-plugins/Jython_Scripts/**/*java \
+	src-plugins/Jython_Scripts/scripts/*py \
+	src-plugins/Jython_Scripts/plugins.config
 
 # pre-Java5 generics ;-)
 
@@ -313,7 +319,7 @@ src-plugins/VIB-lib/math3d/Eigensystem2x2Float.java[src-plugins/VIB-lib/sed.py $
 MAINCLASS(jars/test-fiji.jar)=fiji.Tests
 CLASSPATH(jars/test-fiji.jar)=jars/junit-4.5.jar
 
-MAINCLASS(jars/MacOSX_Updater_Fix.jar)=fiji.updater.Fix
+MAINCLASS(jars/Updater_Fix.jar)=fiji.updater.Fix
 
 # the default rules
 

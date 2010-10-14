@@ -6,7 +6,6 @@ import ij.IJ;
 import ij.WindowManager;
 import ij.ImagePlus;
 import ij.text.TextWindow;
-import ij.gui.Toolbar;
 
 import java.text.DecimalFormat;
 
@@ -106,7 +105,7 @@ public class RegistrationMenubar extends MenuBar implements ActionListener,
 		univ.clearSelection();
 		univ.setStatus("");
 		univ.getPointListDialog().removeExtraPanel();
-		Toolbar.getInstance().setTool(Toolbar.HAND);
+		univ.ui.setHandTool();
 	}
 
 	private void hideAll() {
@@ -121,7 +120,7 @@ public class RegistrationMenubar extends MenuBar implements ActionListener,
 		content.setVisible(true);
 		content.displayAs(Content.ORTHO);
 		content.showPointList(true);
-		Toolbar.getInstance().setTool(Toolbar.POINT);
+		univ.ui.setPointTool();
 		univ.select(content);
 
 		univ.setStatus("Select landmarks in " + content.getName() +
@@ -235,7 +234,7 @@ public class RegistrationMenubar extends MenuBar implements ActionListener,
 		model.setLocked(true);
 
 		univ.clearSelection();
-		Toolbar.getInstance().setTool(Toolbar.HAND);
+		univ.ui.setHandTool();
 
 		IJ.showMessage("Contents are locked to prevent\n" +
 			"accidental transformations");
