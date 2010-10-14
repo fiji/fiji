@@ -3,6 +3,7 @@ package fiji.plugin.trackmate.features;
 import java.util.Arrays;
 
 import mpicbg.imglib.container.array.ArrayContainerFactory;
+import mpicbg.imglib.cursor.special.DiscCursor;
 import mpicbg.imglib.cursor.special.SphereCursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.image.ImageFactory;
@@ -96,90 +97,173 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 	public void process(Spot spot) {
 		for (int i = 0; i < coords.length; i++) 
 			coords[i] = spot.getFeature(Spot.POSITION_FEATURES[i]);
-		
-		final SphereCursor<T> cursor = new SphereCursor<T>(img, coords, radius);
-		double x, y, z;
-		double x2, y2, z2;
-		double mass, totalmass = 0;
-		double Ixx = 0, Iyy = 0, Izz = 0, Ixy = 0, Ixz = 0, Iyz = 0;
-		int[] position = cursor.createPositionArray();
 
-		while (cursor.hasNext()) {
-			cursor.fwd();
-			mass = cursor.getType().getRealDouble();
-			cursor.getRelativePosition(position);
-			x = position[0] / calibration[0];
-			y = position[1] / calibration[1];
-			z = position[2] / calibration[2];
-			totalmass += mass;
-			x2 = x*x;
-			y2 = y*y;
-			z2 = z*z;
-			Ixx += mass*(y2+z2);
-			Iyy += mass*(x2+z2);
-			Izz += mass*(x2+y2);
-			Ixy -= mass*x*y;
-			Ixz -= mass*x*z;
-			Iyz -= mass*y*z;
-		}
-		cursor.close();
-		
-		Matrix mat = new Matrix( new double[][] { 
-				{ Ixx, Ixy, Ixz },
-				{ Ixy, Iyy, Iyz },
-				{ Ixz, Iyz, Izz } } );
-		mat.timesEquals(1/totalmass);
-		EigenvalueDecomposition eigdec = mat.eig();
-		double[] eigenvalues = eigdec.getRealEigenvalues();
-		Matrix eigenvectors = eigdec.getV();
-		
-		double I1 = eigenvalues[0];
-		double I2 = eigenvalues[1];
-		double I3 = eigenvalues[2];
-		double a = Math.sqrt( 2.5 *(I2+I3-I1) );
-		double b = Math.sqrt( 2.5 *(I3+I1-I2) );
-		double c = Math.sqrt( 2.5 *(I1+I2-I3) );
-		double[] semiaxes = new double[] {a, b, c};
-		
-		// Sort semi-axes by ascendent order and get the sorting index
-		double[] semiaxes_ordered = semiaxes.clone();
-		Arrays.sort(semiaxes_ordered);
-		int[] order = new int[3];
-		for (int i = 0; i < semiaxes_ordered.length; i++) 
-			for (int j = 0; j < semiaxes.length; j++) 
-				if (semiaxes_ordered[i] == semiaxes[j])
-					order[i] = j;
-		
-		// Get the sorted eigenvalues
-		double[][] uvectors = new double[3][3];
-		for (int i = 0; i < eigenvalues.length; i++) {
-			uvectors[i][0] = eigenvectors.get(0, order[i]);
-			uvectors[i][1] = eigenvectors.get(1, order[i]);
-			uvectors[i][2] = eigenvectors.get(2, order[i]);
-		}
+		if (img.getNumDimensions() == 3) {
+
+			// 3D case
 			
-		// Store in the Spot object
-		double theta, phi;
-		for (int i = 0; i < uvectors.length; i++) {
-			theta = Math.acos( uvectors[i][2] / Math.sqrt(
-					uvectors[i][0]*uvectors[i][0] +
-					uvectors[i][1]*uvectors[i][1] +
-					uvectors[i][2]*uvectors[i][2]) );
-			phi = Math.atan2(uvectors[i][1], uvectors[i][0]);
-			if (phi < - Math.PI/2 ) 
-				phi += Math.PI; // For an ellipsoid we care only for the angles in [-pi/2 , pi/2]
-			if (phi > Math.PI/2 ) 
-				phi -= Math.PI; 
+			final SphereCursor<T> cursor = new SphereCursor<T>(img, coords, radius, calibration);
+			double x, y, z;
+			double x2, y2, z2;
+			double mass, totalmass = 0;
+			double Ixx = 0, Iyy = 0, Izz = 0, Ixy = 0, Ixz = 0, Iyz = 0;
+			int[] position = cursor.createPositionArray();
+
+			while (cursor.hasNext()) {
+				cursor.fwd();
+				mass = cursor.getType().getRealDouble();
+				cursor.getRelativePosition(position);
+				x = position[0] * calibration[0];
+				y = position[1] * calibration[1];
+				z = position[2] * calibration[2];
+				totalmass += mass;
+				x2 = x*x;
+				y2 = y*y;
+				z2 = z*z;
+				Ixx += mass*(y2+z2);
+				Iyy += mass*(x2+z2);
+				Izz += mass*(x2+y2);
+				Ixy -= mass*x*y;
+				Ixz -= mass*x*z;
+				Iyz -= mass*y*z;
+			}
+			cursor.close();
+
+			Matrix mat = new Matrix( new double[][] { 
+					{ Ixx, Ixy, Ixz },
+					{ Ixy, Iyy, Iyz },
+					{ Ixz, Iyz, Izz } } );
+			mat.timesEquals(1/totalmass);
+			EigenvalueDecomposition eigdec = mat.eig();
+			double[] eigenvalues = eigdec.getRealEigenvalues();
+			Matrix eigenvectors = eigdec.getV();
+
+			double I1 = eigenvalues[0];
+			double I2 = eigenvalues[1];
+			double I3 = eigenvalues[2];
+			double a = Math.sqrt( 2.5 *(I2+I3-I1) );
+			double b = Math.sqrt( 2.5 *(I3+I1-I2) );
+			double c = Math.sqrt( 2.5 *(I1+I2-I3) );
+			double[] semiaxes = new double[] {a, b, c};
+
+			// Sort semi-axes by ascendent order and get the sorting index
+			double[] semiaxes_ordered = semiaxes.clone();
+			Arrays.sort(semiaxes_ordered);
+			int[] order = new int[3];
+			for (int i = 0; i < semiaxes_ordered.length; i++) 
+				for (int j = 0; j < semiaxes.length; j++) 
+					if (semiaxes_ordered[i] == semiaxes[j])
+						order[i] = j;
+
+			// Get the sorted eigenvalues
+			double[][] uvectors = new double[3][3];
+			for (int i = 0; i < eigenvalues.length; i++) {
+				uvectors[i][0] = eigenvectors.get(0, order[i]);
+				uvectors[i][1] = eigenvectors.get(1, order[i]);
+				uvectors[i][2] = eigenvectors.get(2, order[i]);
+			}
+
+			// Store in the Spot object
+			double theta, phi;
+			for (int i = 0; i < uvectors.length; i++) {
+				theta = Math.acos( uvectors[i][2] / Math.sqrt(
+						uvectors[i][0]*uvectors[i][0] +
+						uvectors[i][1]*uvectors[i][1] +
+						uvectors[i][2]*uvectors[i][2]) );
+				phi = Math.atan2(uvectors[i][1], uvectors[i][0]);
+				if (phi < - Math.PI/2 ) 
+					phi += Math.PI; // For an ellipsoid we care only for the angles in [-pi/2 , pi/2]
+				if (phi > Math.PI/2 ) 
+					phi -= Math.PI; 
+
+				// Store in descending order
+				spot.putFeature(featurelist_sa[i], (float) semiaxes_ordered[i]);
+				spot.putFeature(featurelist_phi[i], (float) phi);
+				spot.putFeature(featurelist_theta[i], (float) theta);
+			}
+
+			// Store the Spot morphology (needs to be outside the above loop)
+			spot.putFeature(Feature.MORPHOLOGY, estimateMorphology(semiaxes));
 			
-			// Store in descending order
-			spot.putFeature(featurelist_sa[i], (float) semiaxes_ordered[i]);
-			spot.putFeature(featurelist_phi[i], (float) phi);
-			spot.putFeature(featurelist_theta[i], (float) theta);
+		} else if (img.getNumDimensions() == 2) {
+			
+			// 2D case
+			
+			final DiscCursor<T> cursor = new DiscCursor<T>(img, coords, radius, calibration);
+			double x, y;
+			double x2, y2;
+			double mass, totalmass = 0;
+			double Ixx = 0, Iyy = 0, Ixy = 0;
+			int[] position = cursor.createPositionArray();
+
+			while (cursor.hasNext()) {
+				cursor.fwd();
+				mass = cursor.getType().getRealDouble();
+				cursor.getRelativePosition(position);
+				x = position[0] * calibration[0];
+				y = position[1] * calibration[1];
+				totalmass += mass;
+				x2 = x*x;
+				y2 = y*y;
+				Ixx += mass*(y2);
+				Iyy += mass*(x2);
+				Ixy -= mass*x*y;
+			}
+			cursor.close();
+
+			Matrix mat = new Matrix( new double[][] { 
+					{ Ixx, Ixy},
+					{ Ixy, Iyy} } );
+			mat.timesEquals(1/totalmass);
+			EigenvalueDecomposition eigdec = mat.eig();
+			double[] eigenvalues = eigdec.getRealEigenvalues();
+			Matrix eigenvectors = eigdec.getV();
+
+			double I1 = eigenvalues[0];
+			double I2 = eigenvalues[1];
+			double a = Math.sqrt( 4 * I1 );
+			double b = Math.sqrt( 4 * I2 );
+			double[] semiaxes = new double[] {a, b};
+
+			// Sort semi-axes by ascendent order and get the sorting index
+			double[] semiaxes_ordered = semiaxes.clone();
+			Arrays.sort(semiaxes_ordered);
+			int[] order = new int[2];
+			for (int i = 0; i < semiaxes_ordered.length; i++) 
+				for (int j = 0; j < semiaxes.length; j++) 
+					if (semiaxes_ordered[i] == semiaxes[j])
+						order[i] = j;
+
+			// Get the sorted eigenvalues
+			double[][] uvectors = new double[2][2];
+			for (int i = 0; i < eigenvalues.length; i++) {
+				uvectors[i][0] = eigenvectors.get(0, order[i]);
+				uvectors[i][1] = eigenvectors.get(1, order[i]);
+			}
+
+			// Store in the Spot object
+			double theta, phi;
+			for (int i = 0; i < uvectors.length; i++) {
+				theta = 0;
+				phi = Math.atan2(uvectors[i][1], uvectors[i][0]);
+				if (phi < - Math.PI/2 ) 
+					phi += Math.PI; // For an ellipsoid we care only for the angles in [-pi/2 , pi/2]
+				if (phi > Math.PI/2 ) 
+					phi -= Math.PI; 
+
+				// Store in descending order
+				spot.putFeature(featurelist_sa[i], (float) semiaxes_ordered[i]);
+				spot.putFeature(featurelist_phi[i], (float) phi);
+				spot.putFeature(featurelist_theta[i], (float) theta);
+			}
+			spot.putFeature(featurelist_sa[2], 0);
+			spot.putFeature(featurelist_phi[2], 0);
+			spot.putFeature(featurelist_theta[2], 0);
+
+			// Store the Spot morphology (needs to be outside the above loop)
+			spot.putFeature(Feature.MORPHOLOGY, estimateMorphology(semiaxes));
+			
 		}
-		
-		// Store the Spot morphology (needs to be outside the above loop)
-		spot.putFeature(Feature.MORPHOLOGY, estimateMorphology(semiaxes));
-		
 	}
 	
 	
@@ -210,14 +294,77 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 	
 	public static void main(String[] args) {
 
-//		/* Testing estimateMorphology(); make 'public static' first */
-//		double[] sa = new double[] {11.9, 10.0, 10.0};
-//		int shape = BlobMorphology.estimateMorphology(sa);
-//		if (shape == ELLIPSOID) {
-//			System.out.println("Ellipsoid");
-//		} else {
-//			System.out.println("Spherical");
-//		}
+		// TEST 2D case
+
+		// Parameters
+		int size_x = 200;
+		int size_y = 200;
+		
+		float a = 10;
+		float b = 5;
+		float phi_r = (float) Math.toRadians(30);
+
+		float max_radius = Math.max(a, b);
+		float[] calibration = new float[] {1, 1};
+		
+		// Create blank image
+		Image<UnsignedByteType> img = new ImageFactory<UnsignedByteType>(
+				new UnsignedByteType(),
+				new ArrayContainerFactory()
+			).createImage(new int[] {200, 200});
+		final byte on = (byte) 255;
+		
+		// Create an ellipse 
+		long start = System.currentTimeMillis();
+		System.out.println(String.format("Creating an ellipse with a = %.1f, b = %.1f", a, b));
+		System.out.println(String.format("phi = %.1f", Math.toDegrees(phi_r)));
+		float[] center = new float[] { size_x/2, size_y/2, 0 };
+		DiscCursor<UnsignedByteType> sc = new DiscCursor<UnsignedByteType>(img, center, max_radius, calibration);
+		double r2, phi, term;
+		double cosphi, sinphi;
+		while (sc.hasNext()) {
+			sc.fwd();
+			r2 = sc.getDistanceSquared();
+			phi = sc.getPhi();
+			cosphi = Math.cos(phi-phi_r);
+			sinphi = Math.sin(phi-phi_r);
+			term = r2*cosphi*cosphi/a/a +
+				r2*sinphi*sinphi/b/b; 
+			if (term <= 1) 
+				sc.getType().set(on);
+		}
+		sc.close();
+		long end = System.currentTimeMillis();
+		System.out.println("Ellipse creation done in " + (end-start) + " ms.");
+		System.out.println();
+		
+		ij.ImageJ.main(args);
+		img.getDisplay().setMinMax();
+		ImageJFunctions.copyToImagePlus(img).show();
+		
+		start = System.currentTimeMillis();
+		BlobMorphology<UnsignedByteType> bm = new BlobMorphology<UnsignedByteType>(img, 2*max_radius, calibration);
+		SpotImp spot = new SpotImp(center);
+		bm.process(spot);
+		end = System.currentTimeMillis();
+		System.out.println("Blob morphology analyzed in " + (end-start) + " ms.");
+		float phiv, thetav, lv;
+		for (int j = 0; j < 2; j++) {
+			lv = spot.getFeature(featurelist_sa[j]);
+			phiv = spot.getFeature(featurelist_phi[j]);
+			thetav = spot.getFeature(featurelist_theta[j]);
+			System.out.println(String.format("For axis of semi-length %.1f, orientation is phi = %.1f°, theta = %.1f°",
+					lv, Math.toDegrees(phiv), Math.toDegrees(thetav)));
+		}
+		System.out.println(spot);
+	
+		
+		
+		
+		
+		// TEST 3D case
+		
+		/*
 		
 		// Parameters
 		int size_x = 200;
@@ -287,6 +434,8 @@ public class BlobMorphology <T extends RealType<T>> extends IndependentFeatureAn
 					lv, Math.toDegrees(phiv), Math.toDegrees(thetav)));
 		}
 		System.out.println(spot);
+		
+		*/
 	}
 
 }
