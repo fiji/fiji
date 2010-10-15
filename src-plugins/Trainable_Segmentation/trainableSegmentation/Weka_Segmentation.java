@@ -265,6 +265,8 @@ public class Weka_Segmentation implements PlugIn
 	/** flag to set the resampling of the training data in order to guarantee the same number of instances per class */
 	private boolean homogenizeClasses = false;
 	
+	public static final double SIMPLE_POINT_THRESHOLD = 0;
+	
 	/**
 	 * Basic constructor for graphical user interface use
 	 */
@@ -4281,8 +4283,19 @@ public class Weka_Segmentation implements PlugIn
 			final ImageProcessor slice = labels.getImageStack().getProcessor(z);			
 			for(int y=0; y<height; y++)
 				for(int x=0; x<width; x++, n++)
-					data.get(n).setClassValue(slice.getPixel(x, y) > 0 ? classIndex1 : classIndex2);
-					
+				{
+					final double newValue = slice.getPixel(x, y) > 0 ? classIndex1 : classIndex2;
+					/*
+					// reward matching with previous value...
+					if(data.get(n).classValue() == newValue)
+					{
+						double weight = data.get(n).weight();
+						data.get(n).setWeight(++weight);	
+					}
+					*/
+					data.get(n).setClassValue(newValue);
+				}
+
 		}
 		/*
 		if(null !=  mismatches)
@@ -4311,10 +4324,10 @@ public class Weka_Segmentation implements PlugIn
 	{
 		if(null == this.trainHeader)
 			return -1;
-		
+		/*
 		if(this.classifier instanceof FastRandomForest)
 			return ((FastRandomForest)classifier).measureOutOfBagError();
-		
+		*/
 		double error = -1;
 		try {
 			final Evaluation evaluation = new Evaluation(this.loadedTrainingData);
@@ -4327,6 +4340,97 @@ public class Weka_Segmentation implements PlugIn
 		}
 		
 		return error;
+	}
+	
+	/**
+	 * Get test error of current classifier on a specific image and its binary labels
+	 * 
+	 * @param image input image
+	 * @param labels binary labels
+	 * @param whiteClassIndex index of the white class
+	 * @param blackClassIndex index of the black class
+	 * @return pixel classification error
+	 */
+	public double getTestError(
+			ImagePlus image, 
+			ImagePlus labels, 
+			int whiteClassIndex, 
+			int blackClassIndex)
+	{
+		IJ.showStatus("Creating features for test image...");
+		IJ.log("Creating features for test image " + image.getTitle() +  "...");
+		
+
+		// Set proper class names (skip empty list ones)
+		ArrayList<String> classNames = new ArrayList<String>();
+		if( null == loadedClassNames )
+		{
+			for(int i = 0; i < numOfClasses; i++)
+				if(examples[i].size() > 0)
+					classNames.add(classLabels[i]);
+		}
+		else
+			classNames = loadedClassNames;
+				
+		
+		// Apply labels
+		final int height = image.getHeight();
+		final int width = image.getWidth();
+		final int depth = image.getStackSize();
+					
+		Instances testData = null;
+		
+		for(int z=1; z <= depth; z++)
+		{
+			final ImagePlus testSlice = new ImagePlus(image.getImageStack().getSliceLabel(z), image.getImageStack().getProcessor(z).convertToByte(true));
+			// Create feature stack for test image
+			IJ.showStatus("Creating features for test image...");
+			IJ.log("Creating features for test image " + z +  "...");
+			final FeatureStack testImageFeatures = new FeatureStack(testSlice);
+			// Use the same features as the current classifier
+			testImageFeatures.setEnableFeatures(featureStack.getEnableFeatures());
+			testImageFeatures.setMaximumSigma(maximumSigma);
+			testImageFeatures.setMinimumSigma(minimumSigma);
+			testImageFeatures.setMembranePatchSize(membranePatchSize);
+			testImageFeatures.setMembraneSize(membraneThickness);
+			testImageFeatures.updateFeaturesMT();
+			filterFeatureStackByList(this.featureNames, testImageFeatures);
+			
+			final Instances data = testImageFeatures.createInstances(classNames);
+			data.setClassIndex(data.numAttributes()-1);
+			IJ.log("Assigning classes based on the labels...");
+			
+			final ImageProcessor slice = labels.getImageStack().getProcessor(z);
+			for(int n=0, y=0; y<height; y++)
+				for(int x=0; x<width; x++, n++)
+				{
+					final double newValue = slice.getPixel(x, y) > 0 ? whiteClassIndex : blackClassIndex;
+					data.get(n).setClassValue(newValue);
+				}
+			
+			if(null == testData)
+				testData = data;
+			else
+			{
+				for(int i=0; i<data.numInstances(); i++)
+					testData.add( data.get(i) );
+			}
+		}
+		
+		IJ.log("Evaluating test data...");
+		
+		double error = -1;
+		try {
+			final Evaluation evaluation = new Evaluation(testData);
+			evaluation.evaluateModel(classifier, testData);
+			IJ.log(evaluation.toSummaryString());
+			error = evaluation.errorRate();
+		} catch (Exception e) {
+			
+			e.printStackTrace();
+		}
+		
+		return error;		
 	}
 	
 	
@@ -4655,6 +4759,8 @@ public class Weka_Segmentation implements PlugIn
 				final int x = (int) p.x;
 				final int y = (int) p.y;
 				
+				if(p.z < SIMPLE_POINT_THRESHOLD)
+					continue;
 
 				double[] val = new double[]{
 						sourceRealPix[ (x-1) + (y-1) * (width+2) ],
