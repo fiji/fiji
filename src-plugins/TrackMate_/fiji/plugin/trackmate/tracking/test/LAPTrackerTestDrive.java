@@ -25,6 +25,8 @@ import fiji.plugin.trackmate.tracking.LAPUtils;
 import fiji.plugin.trackmate.tracking.LAPTracker.Settings;
 import fiji.plugin.trackmate.tracking.costmatrix.LinkingCostMatrixCreator;
 import fiji.plugin.trackmate.tracking.costmatrix.TrackSegmentCostMatrixCreator;
+import fiji.plugin.trackmate.visualization.SpotDisplayer;
+import fiji.plugin.trackmate.visualization.SpotDisplayer2D;
 
 public class LAPTrackerTestDrive {
 	
@@ -38,89 +40,35 @@ public class LAPTrackerTestDrive {
 	public static void main(String args[]) {
 		
 		final boolean useCustomCostMatrices = false;
+		final int tmax = 5; // nframes
+		
 		
 		// 1 - Set up test spots
-		ArrayList<Spot> t0 = new ArrayList<Spot>();
-		ArrayList<Spot> t1 = new ArrayList<Spot>();
-		ArrayList<Spot> t2 = new ArrayList<Spot>();
-		ArrayList<Spot> t3 = new ArrayList<Spot>();
-		ArrayList<Spot> t4 = new ArrayList<Spot>();
-		ArrayList<Spot> t5 = new ArrayList<Spot>();
-
-		t0.add(new SpotImp(new float[] {0,0,0}));
-		t0.add(new SpotImp(new float[] {1,1,1}));
-		t0.add(new SpotImp(new float[] {2,2,2}));
-		t0.add(new SpotImp(new float[] {3,3,3}));
-		t0.add(new SpotImp(new float[] {4,4,4}));
-		t0.add(new SpotImp(new float[] {5,5,5}));
-		
-		t0.get(0).putFeature(Feature.MEAN_INTENSITY, 100);
-		t0.get(1).putFeature(Feature.MEAN_INTENSITY, 200);
-		t0.get(2).putFeature(Feature.MEAN_INTENSITY, 300);
-		t0.get(3).putFeature(Feature.MEAN_INTENSITY, 400);
-		t0.get(4).putFeature(Feature.MEAN_INTENSITY, 500);
-		t0.get(5).putFeature(Feature.MEAN_INTENSITY, 600);
-		
-		t1.add(new SpotImp(new float[] {1.5f,1.5f,1.5f}));
-		t1.add(new SpotImp(new float[] {2.5f,2.5f,2.5f}));
-		t1.add(new SpotImp(new float[] {3.5f,3.5f,3.5f}));
-		t1.add(new SpotImp(new float[] {4.5f,4.5f,4.5f}));
-		
-		t1.get(0).putFeature(Feature.MEAN_INTENSITY, 200);
-		t1.get(1).putFeature(Feature.MEAN_INTENSITY, 300);
-		t1.get(2).putFeature(Feature.MEAN_INTENSITY, 400);
-		t1.get(3).putFeature(Feature.MEAN_INTENSITY, 500);
-		
-		t2.add(new SpotImp(new float[] {1.5f,1.5f,1.5f}));
-		t2.add(new SpotImp(new float[] {2.5f,2.5f,2.5f}));
-		t2.add(new SpotImp(new float[] {3.5f,3.5f,3.5f}));
-		t2.add(new SpotImp(new float[] {4.5f,4.5f,4.5f}));
-		t2.add(new SpotImp(new float[] {10f,10f,10f}));
-		
-		t2.get(0).putFeature(Feature.MEAN_INTENSITY, 200);
-		t2.get(1).putFeature(Feature.MEAN_INTENSITY, 300);
-		t2.get(2).putFeature(Feature.MEAN_INTENSITY, 400);
-		t2.get(3).putFeature(Feature.MEAN_INTENSITY, 500);
-		t2.get(4).putFeature(Feature.MEAN_INTENSITY, 100);
-		
-		t3.add(new SpotImp(new float[] {2.6f,2.6f,2.6f}));
-		t3.add(new SpotImp(new float[] {2.4f,2.4f,2.4f}));
-		
-		t3.get(0).putFeature(Feature.MEAN_INTENSITY, 300);
-		t3.get(1).putFeature(Feature.MEAN_INTENSITY, 300);
-		
-		t4.add(new SpotImp(new float[] {2.8f,2.8f,2.8f}));
-		t4.add(new SpotImp(new float[] {2.2f,2.2f,2.2f}));
-		
-		t4.get(0).putFeature(Feature.MEAN_INTENSITY, 300);
-		t4.get(1).putFeature(Feature.MEAN_INTENSITY, 300);
-		
-		t5.add(new SpotImp(new float[] {2.8f,2.8f,2.8f}));
-		t5.add(new SpotImp(new float[] {2.2f,2.2f,2.2f}));
-		
-		t5.get(0).putFeature(Feature.MEAN_INTENSITY, 300);
-		t5.get(1).putFeature(Feature.MEAN_INTENSITY, 300);
-	
 		TreeMap<Integer, List<Spot>> wrap = new TreeMap<Integer, List<Spot>>();
-		wrap.put(0, t0);
-		wrap.put(1, t1);
-		wrap.put(2, t2);
-		wrap.put(3, t3);
-		wrap.put(4, t4);
-		wrap.put(5, t5);
+		for (int i = 0; i < tmax; i++) 
+			wrap.put(i, new ArrayList<Spot>());
+
+		// first track
+		for (int i = 0; i < tmax; i++)
+			wrap.get(i).add(new SpotImp(new float[] { ZOOM_FACTOR*(1+i), ZOOM_FACTOR*(1+i), 0 } ));
+		// second track
+		for (int i = 2; i < tmax; i++)
+			wrap.get(i).add(new SpotImp(new float[] { ZOOM_FACTOR*(100+i), ZOOM_FACTOR*(1+i), 0 } ));
 		
 		int count = 0;
 		Set<Integer> frames = wrap.keySet();
 		for (int frame : frames) {
 			Collection<Spot> spots = wrap.get(frame);
-			for (Spot spot : spots)
+			for (Spot spot : spots) {
 				spot.putFeature(Feature.POSITION_T, frame);
+				spot.putFeature(Feature.MEAN_INTENSITY, 200);
+			}
 			count++;
 		}
 		
-//		ij.ImageJ.main(args);
-//		ij.ImagePlus imp = createImpFrom(wrap);
-//		imp.show();
+		ij.ImageJ.main(args);
+		ij.ImagePlus imp = createImpFrom(wrap);
+		imp.show();
 		
 		// 2 - Track the test spots
 		LAPTracker lap;
@@ -209,9 +157,15 @@ public class LAPTrackerTestDrive {
 		System.out.println("Fragment costs for 1st frame:");
 		LAPUtils.echoMatrix(lap.getLinkingCosts().get(0));
 		
+		// 5 - Display tracks
+		SpotDisplayer2D sd2d = new SpotDisplayer2D(imp, 2, new float[] {1, 1});
+		sd2d.setSpots(wrap);
+		sd2d.render();
+		sd2d.setSpotsToShow(wrap);
+		sd2d.setTrackGraph(graph);
+		sd2d.setDisplayTrackMode(SpotDisplayer.TrackDisplayMode.ALL_WHOLE_TRACKS, 1);
 	}
 
-	@SuppressWarnings("unused")
 	private static ImagePlus createImpFrom(TreeMap<Integer, List<Spot>> wrap) {
 		List<Spot> pool = new ArrayList<Spot>();
 		for(int frame : wrap.keySet()) 
@@ -231,16 +185,16 @@ public class LAPTrackerTestDrive {
 			if (t > maxFrame) maxFrame = t;
 		}
 		
-		int width = (int) (Math.ceil(xmax+1) * ZOOM_FACTOR);
-		int height = (int) (Math.ceil(ymax+1) * ZOOM_FACTOR);
-		ImagePlus imp = NewImage.createShortImage("LAPT-test", width, height, maxFrame+1, NewImage.FILL_BLACK);
-		
+		int width = (int) (Math.ceil(xmax+1) );
+		int height = (int) (Math.ceil(ymax+1) );
+		ImagePlus imp = NewImage.createByteImage("LAPT-test", width, height, maxFrame+1, NewImage.FILL_BLACK);
+		imp.setDimensions(1, 1, maxFrame+1);
 		int frame, ix, iy, value;
 		ImageProcessor ip;
 		for (Spot spot : pool) {
 			frame = spot.getFeature(Feature.POSITION_T).intValue();
-			ix = Math.round(ZOOM_FACTOR * spot.getFeature(Feature.POSITION_X));
-			iy = Math.round(ZOOM_FACTOR * spot.getFeature(Feature.POSITION_Y));
+			ix = Math.round( spot.getFeature(Feature.POSITION_X));
+			iy = Math.round( spot.getFeature(Feature.POSITION_Y));
 			value = Math.round(spot.getFeature(Feature.MEAN_INTENSITY));
 			ip = imp.getImageStack().getProcessor(1+frame);
 			ip.set(ix, iy, value);
