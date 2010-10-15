@@ -1096,6 +1096,22 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 	}// end method showResults
 
 	/**
+	 * Returns one of the two result images in an ImageStack object.
+	 *
+	 * @param longestShortestPath Get the tagged longest shortest paths instead of the standard tagged image
+	 *
+	 * @return The results image with a tagged skeleton 
+	 */
+	public ImageStack getResultImage(boolean longestShortestPath)
+	{
+		if (longestShortestPath) {
+			return this.shortPathImage;
+		}
+		return this.taggedImage;
+	}
+
+
+	/**
 	 * Returns the analysis results in a SkeletonResult object.
 	 * <p>
 	 *
