@@ -12,8 +12,12 @@ import java.util.concurrent.ExecutionException;
 import javax.vecmath.Color3f;
 import javax.vecmath.Point4f;
 
+import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.SimpleGraph;
+
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.visualization.test.TrackDisplayNode;
 
 public class SpotDisplayer3D extends SpotDisplayer {
 	
@@ -48,6 +52,12 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	public void refresh() { 
 		for(int key : spotsToShow.keySet())
 			blobs.get(key).setVisible(spotsToShow.get(key)); // NPE if a spot from #spotsToShow does not belong to #spots 
+	}
+	
+	@Override
+	public void setTrackGraph(SimpleGraph<Spot, DefaultEdge> trackGraph) {
+		super.setTrackGraph(trackGraph);
+		makeTrackContent();
 	}
 	
 
@@ -98,24 +108,22 @@ public class SpotDisplayer3D extends SpotDisplayer {
 		}
 	}
 
-
-//	@Override
-//	public final void refresh(final Feature[] features, double[] thresholds, boolean[] isAboves) {
-//		TreeMap<Integer, List<Spot>> allNodesToShow = threshold(features, thresholds, isAboves);
-//		for(int key : allNodesToShow.keySet())
-//			blobs.get(key).setVisible(allNodesToShow.get(key));
-//	}	
-//
-//	@Override
-//	public void resetTresholds() {
-//		for(int key : blobs.keySet())
-//			blobs.get(key).setVisible(true);
-//	}
 	
 	
 	/*
 	 * PRIVATE METHODS
 	 */
+	
+	private Content makeTrackContent() {
+//		TODO
+//		TrackDisplayNode trackContent = new TrackDisplayNode(trackGraph, spots, tracks, colors, radius/4);		
+//		return new Content("Tracks", trackContent);
+		return null;
+	}
+
+
+	
+	
 	
 	private Content makeContent() {
 		
