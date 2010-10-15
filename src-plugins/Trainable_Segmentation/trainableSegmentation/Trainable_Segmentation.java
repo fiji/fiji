@@ -1080,7 +1080,7 @@ public class Trainable_Segmentation implements PlugIn
 
 		IJ.log("Classifying whole image...");
 
-		classifiedImage = applyClassifier(wholeImageData, trainingImage.getWidth(), trainingImage.getHeight(), true);
+		classifiedImage = applyClassifier(wholeImageData, trainingImage.getWidth(), trainingImage.getHeight(), Runtime.getRuntime().availableProcessors());
 
 		IJ.log("Finished segmentation of whole image.");
 		
@@ -1132,37 +1132,32 @@ public class Trainable_Segmentation implements PlugIn
 	 * @param data set of instances
 	 * @param w image width
 	 * @param h image height
-	 * @param parallelise parallise application
+	 * @param numThreads number of threads to create
 	 * @param prob create a multi-channel probability image
 	 * @return result image
 	 */
 	public ImagePlus applyClassifier(final Instances data,
-	                                 int w, int h,
-	                                 boolean parallelise)
+	                                 final int w, final int h,
+	                                 final int numThreads)
 	{
+		IJ.log("Applying classifier in " + numThreads + " threads...");
 		IJ.showStatus("Classifying image...");
 						
 		final long start = System.currentTimeMillis();
 
-		final int numOfProcessors;
-		if (parallelise) {
-			numOfProcessors = Runtime.getRuntime().availableProcessors();
-		} else {
-			numOfProcessors = 1;
-		}
-		final ExecutorService exe = Executors.newFixedThreadPool(numOfProcessors);
-		final double[][] results = new double[numOfProcessors][];
-		final Instances[] partialData = new Instances[numOfProcessors];
-		final int partialSize = data.numInstances() / numOfProcessors;
-		Future<double[]> fu[] = new Future[numOfProcessors];
+		final ExecutorService exe = Executors.newFixedThreadPool(numThreads);
+		final double[][] results = new double[numThreads][];
+		final Instances[] partialData = new Instances[numThreads];
+		final int partialSize = data.numInstances() / numThreads;
+		Future<double[]> fu[] = new Future[numThreads];
 		
 		final AtomicInteger counter = new AtomicInteger();
 		
 		//IJ.log("Dividing dataset into subsets for parallel execution...");
 		
-		for(int i = 0; i<numOfProcessors; i++)
+		for(int i = 0; i<numThreads; i++)
 		{
-			if(i == numOfProcessors-1)
+			if(i == numThreads-1)
 				partialData[i] = new Instances(data, i*partialSize, data.numInstances()-i*partialSize);
 			else
 				partialData[i] = new Instances(data, i*partialSize, partialSize);
@@ -1180,7 +1175,7 @@ public class Trainable_Segmentation implements PlugIn
 		//IJ.log("Waiting for jobs...");
 		
 		// Join threads
-		for(int i = 0; i<numOfProcessors; i++)
+		for(int i = 0; i<numThreads; i++)
 		{
 			try {
 				results[i] = fu[i].get();
@@ -1205,7 +1200,7 @@ public class Trainable_Segmentation implements PlugIn
 		
 		// Create final array
 		double[] classificationResult = new double[data.numInstances()];
-		for(int i = 0; i<numOfProcessors; i++)
+		for(int i = 0; i<numThreads; i++)
 			System.arraycopy(results[i], 0, classificationResult, i*partialSize, results[i].length);
 			
 		
@@ -1227,36 +1222,30 @@ public class Trainable_Segmentation implements PlugIn
 	 * @param data set of instances
 	 * @param w image width
 	 * @param h image height
-	 * @param parallelise parallise application
+	 * @param numThreads number of threads to be used
 	 * @return result image
 	 */
 	public ImagePlus[] getClassifierDistribution(final Instances data,
 	                                             int w, int h,
-	                                             boolean parallelise)
+	                                             final int numThreads)
 	{
-		IJ.showStatus("Calculating probability distribution for image...");
-						
+		IJ.log("Calculating probability distribution in " + numThreads + " threads...");
+
 		final long start = System.currentTimeMillis();
 
-		final int numOfProcessors;
-		if (parallelise) {
-			numOfProcessors = Runtime.getRuntime().availableProcessors();
-		} else {
-			numOfProcessors = 1;
-		}
-		final ExecutorService exe = Executors.newFixedThreadPool(numOfProcessors);
-		final double[][][] results = new double[numOfProcessors][][];
-		final Instances[] partialData = new Instances[numOfProcessors];
-		final int partialSize = data.numInstances() / numOfProcessors;
-		Future<double[][]> fu[] = new Future[numOfProcessors];
+		final ExecutorService exe = Executors.newFixedThreadPool(numThreads);
+		final double[][][] results = new double[numThreads][][];
+		final Instances[] partialData = new Instances[numThreads];
+		final int partialSize = data.numInstances() / numThreads;
+		Future<double[][]> fu[] = new Future[numThreads];
 		
 		final AtomicInteger counter = new AtomicInteger();
 		
 		//IJ.log("Dividing dataset into subsets for parallel execution...");
 		
-		for(int i = 0; i<numOfProcessors; i++)
+		for(int i = 0; i<numThreads; i++)
 		{
-			if(i == numOfProcessors-1)
+			if(i == numThreads-1)
 				partialData[i] = new Instances(data, i*partialSize, data.numInstances()-i*partialSize);
 			else
 				partialData[i] = new Instances(data, i*partialSize, partialSize);
@@ -1274,7 +1263,7 @@ public class Trainable_Segmentation implements PlugIn
 		//IJ.log("Waiting for jobs...");
 		
 		// Join threads
-		for(int i = 0; i<numOfProcessors; i++)
+		for(int i = 0; i<numThreads; i++)
 		{
 			try {
 				results[i] = fu[i].get();
@@ -1300,7 +1289,7 @@ public class Trainable_Segmentation implements PlugIn
 		// Create final array
 		double[][] probDistribution = new double[numOfClasses][data.numInstances()];
 		for (int c = 0; c < numOfClasses; c++)
-			for (int i = 0; i < numOfProcessors; i++)
+			for (int i = 0; i < numThreads; i++)
 				System.arraycopy(results[i][c], 0, probDistribution[c], i*partialSize, results[i][c].length);
 			
 		
@@ -1522,18 +1511,20 @@ public class Trainable_Segmentation implements PlugIn
 
 			final int     numThread;
 			final int     numProcessors;
+			final int     numFurtherThreads;
 			final File[]  imageFiles;
 			final boolean storeResults;
 			final boolean showResults;
 
-			public ImageProcessingThread(int numThread, int numProcessors,
+			public ImageProcessingThread(int numThread, int numProcessors, int numFurtherThreads,
 			                             File[] imageFiles,
 			                             boolean storeResults, boolean showResults) {
-				this.numThread     = numThread;
-				this.numProcessors = numProcessors;
-				this.imageFiles    = imageFiles;
-				this.storeResults  = storeResults;
-				this.showResults   = showResults;
+				this.numThread         = numThread;
+				this.numProcessors     = numProcessors;
+				this.numFurtherThreads = numFurtherThreads;
+				this.imageFiles        = imageFiles;
+				this.storeResults      = storeResults;
+				this.showResults       = showResults;
 			}
 
 			public void run() {
@@ -1546,7 +1537,7 @@ public class Trainable_Segmentation implements PlugIn
 
 					IJ.log("Processing image " + file.getName() + " in thread " + numThread);
 
-					ImagePlus segmentation = applyClassifierToTestImage(testImage, false);
+					ImagePlus segmentation = applyClassifierToTestImage(testImage, numFurtherThreads);
 
 					if (showResults) {
 						segmentation.show();
@@ -1562,10 +1553,12 @@ public class Trainable_Segmentation implements PlugIn
 			}
 		}
 
+		final int numFurtherThreads = Math.max(1, (numProcessors - imageFiles.length)/imageFiles.length + 1);
+
 		// start threads
 		for (int i = 0; i < numProcessors; i++) {
 
-			threads[i] = new ImageProcessingThread(i, numProcessors, imageFiles, storeResults, showResults);
+			threads[i] = new ImageProcessingThread(i, numProcessors, numFurtherThreads, imageFiles, storeResults, showResults);
 			threads[i].start();
 		}
 
@@ -1626,18 +1619,20 @@ public class Trainable_Segmentation implements PlugIn
 
 			final int     numThread;
 			final int     numProcessors;
+			final int     numFurtherThreads;
 			final File[]  imageFiles;
 			final boolean storeResults;
 			final boolean showResults;
 
-			public ImageProcessingThread(int numThread, int numProcessors,
+			public ImageProcessingThread(int numThread, int numProcessors, int numFurtherThreads,
 			                             File[] imageFiles,
 			                             boolean storeResults, boolean showResults) {
-				this.numThread     = numThread;
-				this.numProcessors = numProcessors;
-				this.imageFiles    = imageFiles;
-				this.storeResults  = storeResults;
-				this.showResults   = showResults;
+				this.numThread         = numThread;
+				this.numProcessors     = numProcessors;
+				this.numFurtherThreads = numFurtherThreads;
+				this.imageFiles        = imageFiles;
+				this.storeResults      = storeResults;
+				this.showResults       = showResults;
 			}
 
 			public void run() {
@@ -1650,7 +1645,7 @@ public class Trainable_Segmentation implements PlugIn
 
 					IJ.log("Processing image " + file.getName() + " in thread " + numThread);
 
-					ImagePlus probImage = createProbImgFromTestData(testImage, false);
+					ImagePlus probImage = createProbImgFromTestData(testImage, numFurtherThreads);
 
 					if (showResults) {
 						probImage.show();
@@ -1666,10 +1661,12 @@ public class Trainable_Segmentation implements PlugIn
 			}
 		}
 
+		final int numFurtherThreads = Math.max(1, (numProcessors - imageFiles.length)/imageFiles.length + 1);
+
 		// start threads
 		for (int i = 0; i < numProcessors; i++) {
 
-			threads[i] = new ImageProcessingThread(i, numProcessors, imageFiles, storeResults, showResults);
+			threads[i] = new ImageProcessingThread(i, numProcessors, numFurtherThreads, imageFiles, storeResults, showResults);
 			threads[i].start();
 		}
 
@@ -1689,8 +1686,9 @@ public class Trainable_Segmentation implements PlugIn
 	 * @param testImage test image (2D single image or stack)
 	 * @return result image (classification)
 	 */
-	public ImagePlus applyClassifierToTestImage(ImagePlus testImage, boolean parallelise)
+	public ImagePlus applyClassifierToTestImage(final ImagePlus testImage, final int numThreads)
 	{		
+		IJ.log("Processing slices of " + testImage.getTitle() + " in " + numThreads + " threads...");
 		// Set proper class names (skip empty list ones)
 		ArrayList<String> classNames = new ArrayList<String>();
 		if( null == loadedClassNames )
@@ -1702,27 +1700,80 @@ public class Trainable_Segmentation implements PlugIn
 		else
 			classNames = loadedClassNames;
 		
-		final ImageStack classified = new ImageStack(testImage.getWidth(), testImage.getHeight());
+		final ImagePlus[] classifiedSlices = new ImagePlus[testImage.getStackSize()];
 		
-		for(int i=1; i<=testImage.getStackSize(); i++)
-		{
-			final ImagePlus testSlice = new ImagePlus(testImage.getImageStack().getSliceLabel(i), testImage.getImageStack().getProcessor(i).convertToByte(true));
-			// Create feature stack for test image
-			IJ.showStatus("Creating features for test image...");
-			IJ.log("Creating features for test image " + i +  "...");
-			final FeatureStack testImageFeatures = new FeatureStack(testSlice);
-			// Use the same features as the current classifier
-			testImageFeatures.setEnableFeatures(featureStack.getEnableFeatures());
-			testImageFeatures.updateFeatures();
+		class ApplyClassifierThread extends Thread {
 
-			final Instances testData = testImageFeatures.createInstances(classNames);
-			testData.setClassIndex(testData.numAttributes() - 1);
+			final int startSlice;
+			final int numSlices;
+			final int numFurtherThreads;
+			final ArrayList<String> classNames;
 
-			final ImagePlus testClassImage = applyClassifier(testData, testSlice.getWidth(), testSlice.getHeight(), parallelise);
-			testClassImage.setTitle("classified_" + testSlice.getTitle());
-			testClassImage.setProcessor(testClassImage.getProcessor().convertToByte(true).duplicate());
-			classified.addSlice(testClassImage.getTitle(), testClassImage.getProcessor());
+			public ApplyClassifierThread(int startSlice, int numSlices, int numFurtherThreads, ArrayList<String> classNames) {
+
+				this.startSlice        = startSlice;
+				this.numSlices         = numSlices;
+				this.numFurtherThreads = numFurtherThreads;
+				this.classNames        = classNames;
+			}
+
+			public void run() {
+
+				for (int i = startSlice; i < startSlice + numSlices; i++)
+				{
+					final ImagePlus testSlice = new ImagePlus(testImage.getImageStack().getSliceLabel(i), testImage.getImageStack().getProcessor(i).convertToByte(true));
+					// Create feature stack for test image
+					IJ.showStatus("Creating features...");
+					IJ.log("Creating features for slice " + i +  "...");
+					final FeatureStack testImageFeatures = new FeatureStack(testSlice);
+					// Use the same features as the current classifier
+					testImageFeatures.setEnableFeatures(featureStack.getEnableFeatures());
+					testImageFeatures.updateFeatures();
+
+					final Instances testData = testImageFeatures.createInstances(classNames);
+					testData.setClassIndex(testData.numAttributes() - 1);
+
+					final ImagePlus testClassImage = applyClassifier(testData, testSlice.getWidth(), testSlice.getHeight(), numFurtherThreads);
+					testClassImage.setTitle("classified_" + testSlice.getTitle());
+					testClassImage.setProcessor(testClassImage.getProcessor().convertToByte(true).duplicate());
+					classifiedSlices[i-1] = testClassImage;
+				}
+			}
+
 		}
+
+		final int numFurtherThreads = Math.max(1, (numThreads - testImage.getStackSize())/testImage.getStackSize() + 1);
+
+		final ApplyClassifierThread[] threads = new ApplyClassifierThread[numThreads];
+		for (int i = 0; i < numThreads; i++) {
+
+			int startSlice = i*testImage.getStackSize()/numThreads + 1;
+			int numSlices;
+			
+			if (i < numThreads - 1)
+				numSlices = testImage.getStackSize()/numThreads;
+			else // last thread
+				numSlices = testImage.getStackSize() - (numThreads - 1)*(testImage.getStackSize()/numThreads);
+
+			threads[i] = new ApplyClassifierThread(startSlice, numSlices, numFurtherThreads, classNames);
+
+			threads[i].start();
+		}
+
+		// create classified image
+		final ImageStack classified = new ImageStack(testImage.getWidth(), testImage.getHeight());
+
+		// join threads
+		for(Thread thread : threads)
+			try {
+				thread.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+
+		// assamble classified image
+		for (int i = 0; i < testImage.getStackSize(); i++)
+			classified.addSlice(classifiedSlices[i].getTitle(), classifiedSlices[i].getProcessor());
 		
 		return new ImagePlus("Classification result", classified);
 	}
@@ -1731,10 +1782,12 @@ public class Trainable_Segmentation implements PlugIn
 	 * Create multi-channel probability distribution image from image
 	 * 
 	 * @param testImage test image (2D single image or stack)
+	 * @param numThreads number of threads to be used
 	 * @return result image (probability distribution)
 	 */
-	public ImagePlus createProbImgFromTestData(ImagePlus testImage, boolean parallelise)
+	public ImagePlus createProbImgFromTestData(final ImagePlus testImage, final int numThreads)
 	{		
+		IJ.log("Processing slices of " + testImage.getTitle() + " in " + numThreads + " threads...");
 		// Set proper class names (skip empty list ones)
 		ArrayList<String> classNames = new ArrayList<String>();
 		if( null == loadedClassNames )
@@ -1746,31 +1799,85 @@ public class Trainable_Segmentation implements PlugIn
 		else
 			classNames = loadedClassNames;
 
+
+		final int numFurtherThreads = Math.max(1, (numThreads - testImage.getStackSize())/testImage.getStackSize() + 1);
+
+		final ImagePlus[] probSlices = new ImagePlus[testImage.getStackSize()*numOfClasses];
+		
+		class ProbImageThread extends Thread {
+
+			final int startSlice;
+			final int numSlices;
+			final int numFurtherThreads;
+			final ArrayList<String> classNames;
+
+			public ProbImageThread(int startSlice, int numSlices, int numFurtherThreads, ArrayList<String> classNames) {
+
+				this.startSlice        = startSlice;
+				this.numSlices         = numSlices;
+				this.numFurtherThreads = numFurtherThreads;
+				this.classNames        = classNames;
+			}
+
+			public void run() {
+
+				for (int i = startSlice; i < startSlice + numSlices; i++)
+				{
+					final ImagePlus testSlice = new ImagePlus(testImage.getImageStack().getSliceLabel(i),
+					                                          testImage.getImageStack().getProcessor(i).convertToByte(true));
+					// Create feature stack for test image
+					IJ.showStatus("Creating features for test image...");
+					IJ.log("Creating features for test image " + i +  "...");
+					final FeatureStack testImageFeatures = new FeatureStack(testSlice);
+					// Use the same features as the current classifier
+					testImageFeatures.setEnableFeatures(featureStack.getEnableFeatures());
+					testImageFeatures.updateFeatures();
+	
+					final Instances testData = testImageFeatures.createInstances(classNames);
+					testData.setClassIndex(testData.numAttributes() - 1);
+	
+					final ImagePlus[] testClassImages = getClassifierDistribution(testData,
+					                                                              testSlice.getWidth(), testSlice.getHeight(),
+					                                                              numFurtherThreads);
+	
+					for (int c = 0; c < numOfClasses; c++)
+						probSlices[(i-1)*numOfClasses + c] = testClassImages[c];
+				}
+			}
+
+		}
+
+		final ProbImageThread[] threads = new ProbImageThread[numThreads];
+
+		for (int i = 0; i < numThreads; i++) {
+
+			int startSlice = i*testImage.getStackSize()/numThreads + 1;
+			int numSlices;
+			
+			if (i < numThreads - 1)
+				numSlices = testImage.getStackSize()/numThreads;
+			else // last thread
+				numSlices = testImage.getStackSize() - (numThreads - 1)*(testImage.getStackSize()/numThreads);
+
+			threads[i] = new ProbImageThread(startSlice, numSlices, numFurtherThreads, classNames);
+
+			threads[i].start();
+		}
+
+		// create probability image
 		final ImageStack probStack = new ImageStack(testImage.getWidth(), testImage.getHeight());
 
-		for(int i=1; i<=testImage.getStackSize(); i++)
-		{
-			final ImagePlus testSlice = new ImagePlus(testImage.getImageStack().getSliceLabel(i),
-			                                          testImage.getImageStack().getProcessor(i).convertToByte(true));
-			// Create feature stack for test image
-			IJ.showStatus("Creating features for test image...");
-			IJ.log("Creating features for test image " + i +  "...");
-			final FeatureStack testImageFeatures = new FeatureStack(testSlice);
-			// Use the same features as the current classifier
-			testImageFeatures.setEnableFeatures(featureStack.getEnableFeatures());
-			testImageFeatures.updateFeatures();
-
-			final Instances testData = testImageFeatures.createInstances(classNames);
-			testData.setClassIndex(testData.numAttributes() - 1);
-
-			final ImagePlus[] testClassImages = getClassifierDistribution(testData,
-			                                                              testSlice.getWidth(), testSlice.getHeight(),
-			                                                              parallelise);
-
-			for (int c = 0; c < numOfClasses; c++)
-				probStack.addSlice(null,
-				                   testClassImages[c].getProcessor().convertToByte(true).duplicate());
+		// join all threads
+		for (Thread thread : threads) {
+			try {
+				thread.join();
+			} catch (InterruptedException e) {}
 		}
+
+		// assamble probability image
+		for (int i = 0; i < testImage.getStackSize()*numOfClasses; i++)
+			probStack.addSlice(probSlices[i].getTitle(), probSlices[i].getProcessor().convertToByte(true).duplicate());
+
 
 		ImagePlus probImage = new ImagePlus("Class probability image", probStack);
 		probImage.setDimensions(numOfClasses,
