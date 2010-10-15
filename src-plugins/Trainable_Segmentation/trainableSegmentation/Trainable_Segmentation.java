@@ -1743,18 +1743,17 @@ public class Trainable_Segmentation implements PlugIn
 		}
 
 		final int numFurtherThreads = Math.max(1, (numThreads - testImage.getStackSize())/testImage.getStackSize() + 1);
-
 		final ApplyClassifierThread[] threads = new ApplyClassifierThread[numThreads];
+
+		int numSlices  = testImage.getStackSize()/numThreads;
 		for (int i = 0; i < numThreads; i++) {
 
-			int startSlice = i*testImage.getStackSize()/numThreads + 1;
-			int numSlices;
-			
-			if (i < numThreads - 1)
-				numSlices = testImage.getStackSize()/numThreads;
-			else // last thread
+			int startSlice = i*numSlices + 1;
+			// last thread takes all the remaining slices
+			if (i == numThreads - 1)
 				numSlices = testImage.getStackSize() - (numThreads - 1)*(testImage.getStackSize()/numThreads);
 
+			IJ.log("Starting thread " + i + " processing " + numSlices + " slices, starting with " + startSlice);
 			threads[i] = new ApplyClassifierThread(startSlice, numSlices, numFurtherThreads, classNames);
 
 			threads[i].start();
@@ -1849,16 +1848,15 @@ public class Trainable_Segmentation implements PlugIn
 
 		final ProbImageThread[] threads = new ProbImageThread[numThreads];
 
+		int numSlices  = testImage.getStackSize()/numThreads;
 		for (int i = 0; i < numThreads; i++) {
 
-			int startSlice = i*testImage.getStackSize()/numThreads + 1;
-			int numSlices;
-			
-			if (i < numThreads - 1)
-				numSlices = testImage.getStackSize()/numThreads;
-			else // last thread
+			int startSlice = i*numSlices + 1;
+			// last thread takes all the remaining slices
+			if (i == numThreads - 1)
 				numSlices = testImage.getStackSize() - (numThreads - 1)*(testImage.getStackSize()/numThreads);
 
+			IJ.log("Starting thread " + i + " processing " + numSlices + " slices, starting with " + startSlice);
 			threads[i] = new ProbImageThread(startSlice, numSlices, numFurtherThreads, classNames);
 
 			threads[i].start();
