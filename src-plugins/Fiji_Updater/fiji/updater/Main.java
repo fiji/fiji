@@ -190,7 +190,7 @@ public class Main {
 			+ "Commands:\n"
 			+ "\t--list [<files>]\n"
 			+ "\t--list-current [<files>]\n"
-			+ "\t--update [<files>]"
+			+ "\t--update [<files>]\n"
 			+ "\t--update-java");
 	}
 

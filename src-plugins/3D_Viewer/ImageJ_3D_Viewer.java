@@ -4,6 +4,11 @@ import ij3d.ImageJ3DViewer;
 
 public class ImageJ_3D_Viewer implements PlugIn {
 
+	public static void main(String[] args) {
+		if(checkJava3D())
+			new ImageJ3DViewer().run("");
+	}
+
 	public void run(String args) {
 		if(checkJava3D())
 			new ImageJ3DViewer().run(args);

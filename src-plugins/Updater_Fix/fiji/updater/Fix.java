@@ -12,31 +12,35 @@ import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileFilter;
 
 public class Fix {
+	protected static boolean isMac = System.getProperty("os.name").startsWith("Mac");
+
 	protected static File validate(String appDirectory) {
-		File result = new File(appDirectory, "Contents/MacOS");
+		File result = isMac ? new File(appDirectory, "Contents/MacOS") : new File(appDirectory);
 		return result.isDirectory() ? result : null;
 	}
 
 	protected static File getFijiPath() {
 		File result = null;
-		try {
-			BinaryPList dock = BinaryPList.readDock();
-			result = validate(dock.getPersistentAppURL("Fiji"));
-		} catch (IOException e) {
-			/* ignore */
-		}
+		if (isMac) {
+			try {
+				BinaryPList dock = BinaryPList.readDock();
+				result = validate(dock.getPersistentAppURL("Fiji"));
+			} catch (IOException e) {
+				/* ignore */
+			}
 
-		if (result == null)
-			result = validate(System.getenv("HOME") + "/Desktop/Fiji.app");
-		if (result == null)
-			result = validate(System.getenv("HOME") + "/Applications/Fiji.app");
-		if (result == null)
-			result = validate("/Applications/Fiji.app");
-		if (result == null) {
-			String[] list = new File("/Applications/").list();
-			for (String item : list != null ? list : new String[0])
-				if ((result = validate("/Applications/" + item)) != null)
-					break;
+			if (result == null)
+				result = validate(System.getenv("HOME") + "/Desktop/Fiji.app");
+			if (result == null)
+				result = validate(System.getenv("HOME") + "/Applications/Fiji.app");
+			if (result == null)
+				result = validate("/Applications/Fiji.app");
+			if (result == null) {
+				String[] list = new File("/Applications/").list();
+				for (String item : list != null ? list : new String[0])
+					if ((result = validate("/Applications/" + item)) != null)
+						break;
+			}
 		}
 		while (result == null) {
 			JFileChooser chooser = new JFileChooser();
@@ -136,6 +140,26 @@ public class Fix {
 		return result.toString();
 	}
 
+	protected static boolean moveContentsRecursively(File source, File target) {
+		boolean result = true;
+		if (!target.exists())
+			target.mkdirs();
+		for (String path : source.list()) {
+			File file = new File(source, path);
+			File targetFile = new File(target, path);
+			if (file.isDirectory())
+				result = moveContentsRecursively(file, targetFile) && result;
+			else {
+				if (targetFile.exists())
+					targetFile.delete();
+				result = file.renameTo(targetFile) && result;
+			}
+		}
+		if (!source.delete())
+			result = false;
+		return result;
+	}
+
 	protected static boolean makeExecutable(File workingDirectory, String fileName1, String fileName2) {
 		return quietExec(workingDirectory, "chmod", "a+x", fileName1, fileName2);
 	}
@@ -147,11 +171,17 @@ public class Fix {
 			return;
 		}
 		File appDirectory = fijiPath;
+		File update = new File(appDirectory, "update");
+		if (update.exists())
+			if (!moveContentsRecursively(update, appDirectory))
+				JOptionPane.showMessageDialog(null, "Error: please remove " + update.getAbsolutePath());
 		if (appDirectory.getName().equals("MacOS"))
 			appDirectory = appDirectory.getParentFile();
 		if (appDirectory.getName().equals("Contents"))
 			appDirectory = appDirectory.getParentFile();
-		if (makeExecutable(fijiPath, "fiji-tiger", "fiji-macosx"))
+		if (!isMac)
+			JOptionPane.showMessageDialog(null, "Processed " + appDirectory, "Done", JOptionPane.INFORMATION_MESSAGE);
+		else if (makeExecutable(fijiPath, "fiji-tiger", "fiji-macosx"))
 			JOptionPane.showMessageDialog(null, "Fixed " + appDirectory, "Success", JOptionPane.INFORMATION_MESSAGE);
 		else
 			JOptionPane.showMessageDialog(null, "Could not make " + appDirectory + " executable", "Error", JOptionPane.INFORMATION_MESSAGE);
