@@ -136,7 +136,7 @@ public class TrackDisplayNode extends ContentNode {
 		}
 		
 		switchMask = new BitSet(index);
-		switchMask.set(0, index-1, true); // all visible
+		switchMask.set(0, index, true); // all visible
 		trackSwitch.setChildMask(switchMask);
 		removeAllChildren();
 		addChild(trackSwitch);
@@ -188,9 +188,9 @@ public class TrackDisplayNode extends ContentNode {
 
 	@Override
 	public void getMax(Tuple3d max) {
-		double xmax = Float.NEGATIVE_INFINITY;
-		double ymax = Float.NEGATIVE_INFINITY;
-		double zmax = Float.NEGATIVE_INFINITY;
+		double xmax = Double.NEGATIVE_INFINITY;
+		double ymax = Double.NEGATIVE_INFINITY;
+		double zmax = Double.NEGATIVE_INFINITY;
 		for (Spot spot : graph.vertexSet()) {
 			if (xmax < spot.getFeature(Feature.POSITION_X) + radius)
 				xmax = spot.getFeature(Feature.POSITION_X) + radius;
@@ -207,9 +207,9 @@ public class TrackDisplayNode extends ContentNode {
 
 	@Override
 	public void getMin(Tuple3d min) {
-		double xmin = Float.POSITIVE_INFINITY;
-		double ymin = Float.POSITIVE_INFINITY;
-		double zmin = Float.POSITIVE_INFINITY;
+		double xmin = Double.POSITIVE_INFINITY;
+		double ymin = Double.POSITIVE_INFINITY;
+		double zmin = Double.POSITIVE_INFINITY;
 		for (Spot spot : graph.vertexSet()) {
 			if (xmin > spot.getFeature(Feature.POSITION_X) - radius)
 				xmin = spot.getFeature(Feature.POSITION_X) - radius;

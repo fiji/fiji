@@ -56,8 +56,8 @@ public class SpotGroupNodeTestDrive {
 		
 		ij.ImageJ.main(args);
 		Image3DUniverse universe = new Image3DUniverse();
-		universe.addContentLater(c);
 		universe.show();
+		universe.addContentLater(c);
 		
 		for (fiji.plugin.trackmate.SpotImp key : centers.keySet()) {
 			sg.setVisible(key, false);

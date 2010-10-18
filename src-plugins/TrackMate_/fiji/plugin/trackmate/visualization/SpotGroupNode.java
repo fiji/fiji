@@ -131,7 +131,7 @@ public class SpotGroupNode <K> extends ContentNode {
 			index++;
 		}
 		switchMask = new BitSet(centers.size());
-		switchMask.set(0, centers.size()-1, true);
+		switchMask.set(0, centers.size(), true);
 		spotSwitch.setChildMask(switchMask);
 		removeAllChildren();
 		addChild(spotSwitch);

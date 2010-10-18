@@ -148,16 +148,16 @@ public class SpotDisplayer3D extends SpotDisplayer {
 		}
 		
 		// Prepare tracks instant
-		TrackDisplayNode trackContent = new TrackDisplayNode(trackGraph, spots, tracks, colors, radius/4);
+		TrackDisplayNode trackNode = new TrackDisplayNode(trackGraph, spots, tracks, colors, radius/4);
 		
 		// Pass tracks instant to all instants
 		TreeMap<Integer, ContentInstant> instants = new TreeMap<Integer,ContentInstant>();
-		for(int key : spots.keySet()) { 
-			ContentInstant trackCI = new ContentInstant("Tracks_frame_"+key);
-			trackCI.display(trackContent);
-			instants.put(key, trackCI);
-		}
-		return new Content(TRACK_CONTENT_NAME, instants);
+		ContentInstant trackCI = new ContentInstant("Tracks_all_frames");
+		trackCI.display(trackNode);
+		instants.put(0, trackCI);
+		Content tc = new Content(TRACK_CONTENT_NAME, instants);
+//		tc.setShowAllTimepoints(true);
+		return tc;
 	}
 
 
