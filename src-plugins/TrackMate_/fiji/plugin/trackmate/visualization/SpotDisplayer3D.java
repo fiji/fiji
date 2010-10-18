@@ -32,6 +32,8 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	public SpotDisplayer3D(Image3DUniverse universe, final float radius) {
 		this.radius = radius;
 		this.universe = universe;
+		universe.getCurrentTimepoint();
+		
 	}
 	
 	public SpotDisplayer3D(Image3DUniverse universe) {
@@ -45,30 +47,28 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	
 	public void setSpots(java.util.TreeMap<Integer,java.util.List<Spot>> spots) {
 		super.setSpots(spots);
-		spotContent = makeContent();
+		spotContent = makeSpotContent();
 	};
 	
-	/*
-	 * PUBLIC METHODS
-	 */
 	
 	@Override
 	public void setDisplayTrackMode(TrackDisplayMode mode, int displayDepth) {
 		super.setDisplayTrackMode(mode, displayDepth);
-		if (trackDisplayMode != TrackDisplayMode.DO_NOT_DISPLAY) {
-			if (null != trackContent) {
-				universe.removeContent(TRACK_CONTENT_NAME);
-				try {
-					trackContent = universe.addContentLater(trackContent).get();
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (ExecutionException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
+		if (null == trackContent) 
+			return;
+			
+		switch (trackDisplayMode) {
+		
+		case DO_NOT_DISPLAY:
+			trackContent.setVisible(false);
+			break;
+			
+		case ALL_WHOLE_TRACKS:
+			trackContent.setVisible(true);
+			break;
+		
 		}
+		
 	}
 	
 	public void refresh() { 
@@ -80,6 +80,13 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	public void setTrackGraph(SimpleGraph<Spot, DefaultEdge> trackGraph) {
 		super.setTrackGraph(trackGraph);
 		trackContent = makeTrackContent();
+		try {
+			trackContent = universe.addContentLater(trackContent).get();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			e.printStackTrace();
+		}
 	}
 	
 
@@ -140,15 +147,18 @@ public class SpotDisplayer3D extends SpotDisplayer {
 		// Prepare track color
 		HashMap<Set<Spot>, Color4f> colors = new HashMap<Set<Spot>, Color4f>();
 		float value;
+		Color4f color;
 		int index = 0;
 		for(Set<Spot> track : tracks) {
 			value = (float) index / tracks.size();
-			colors.put(track, new Color4f(colorMap.getPaint(value)));
+			color = new Color4f(colorMap.getPaint(value));
+			color.w = 0f;
+			colors.put(track, color);
 			index++;
 		}
 		
 		// Prepare tracks instant
-		TrackDisplayNode trackNode = new TrackDisplayNode(trackGraph, spots, tracks, colors, radius/4);
+		TrackDisplayNode trackNode = new TrackDisplayNode(trackGraph, spots, tracks, colors, radius/10);
 		
 		// Pass tracks instant to all instants
 		TreeMap<Integer, ContentInstant> instants = new TreeMap<Integer,ContentInstant>();
@@ -156,15 +166,12 @@ public class SpotDisplayer3D extends SpotDisplayer {
 		trackCI.display(trackNode);
 		instants.put(0, trackCI);
 		Content tc = new Content(TRACK_CONTENT_NAME, instants);
-//		tc.setShowAllTimepoints(true);
+		tc.setShowAllTimepoints(true);
 		return tc;
 	}
 
-
 	
-	
-	
-	private Content makeContent() {
+	private Content makeSpotContent() {
 		
 		blobs = new TreeMap<Integer, SpotGroupNode<Spot>>();
 		List<Spot> spotsThisFrame; 

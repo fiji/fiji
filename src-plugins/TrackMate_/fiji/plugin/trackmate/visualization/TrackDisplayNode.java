@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import javax.media.j3d.Geometry;
+import javax.media.j3d.LineArray;
 import javax.media.j3d.Switch;
 import javax.media.j3d.View;
 import javax.vecmath.Color3f;
