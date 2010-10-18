@@ -186,7 +186,7 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 			/* 2 Segment it */
 
 			logger.setStatus("Frame "+(i+1)+": Segmenting...");
-			logger.setProgress((2*(i-settings.tstart)) / (2f * numFrames + 1));
+			logger.setProgress((i-settings.tstart) / (float)numFrames );
 			segmenter.setImage(img);
 			if (segmenter.checkInput() && segmenter.process()) {
 				spotsThisFrame = segmenter.getResult(settings);

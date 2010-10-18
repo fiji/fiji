@@ -1,4 +1,4 @@
-package fiji.plugin.trackmate.visualization.test;
+package fiji.plugin.trackmate.visualization;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
@@ -96,6 +96,7 @@ public class TrackDisplayNode extends ContentNode {
 		for(int frame : spots.keySet()) 
 			frameIndices.put(frame, new ArrayList<Integer>());
 		
+		meshes = new HashMap<Integer, CustomTriangleMesh>();
 		
 		int index = 0;
 		int frame;
@@ -112,10 +113,13 @@ public class TrackDisplayNode extends ContentNode {
 						break;
 					}
 				
-				// Create a tube from this spot to its targets
-				allEdges = graph.outgoingEdgesOf(source);
+				// Create a tube from this spot to its targets - next in time
+				allEdges = graph.edgesOf(source);
 				for(DefaultEdge edge : allEdges) {
 					target = graph.getEdgeTarget(edge);
+					// Skip spots that are previous in time
+					if (target.diffTo(source, Feature.POSITION_T) <= 0)
+						continue;
 					mesh = makeMesh(source, target, colors.get(track));
 					// Add the tube to the content
 					trackSwitch.addChild(mesh);

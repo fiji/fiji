@@ -6,10 +6,12 @@ import ij3d.Image3DUniverse;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutionException;
 
 import javax.vecmath.Color3f;
+import javax.vecmath.Color4f;
 import javax.vecmath.Point4f;
 
 import org.jgrapht.graph.DefaultEdge;
@@ -17,12 +19,13 @@ import org.jgrapht.graph.SimpleGraph;
 
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.visualization.test.TrackDisplayNode;
 
 public class SpotDisplayer3D extends SpotDisplayer {
 	
+	private static final String TRACK_CONTENT_NAME = "Tracks";
 	private TreeMap<Integer, SpotGroupNode<Spot>> blobs;	
 	private Content spotContent;
+	private Content trackContent;
 	private final Image3DUniverse universe;
 	
 	
@@ -49,6 +52,25 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	 * PUBLIC METHODS
 	 */
 	
+	@Override
+	public void setDisplayTrackMode(TrackDisplayMode mode, int displayDepth) {
+		super.setDisplayTrackMode(mode, displayDepth);
+		if (trackDisplayMode != TrackDisplayMode.DO_NOT_DISPLAY) {
+			if (null != trackContent) {
+				universe.removeContent(TRACK_CONTENT_NAME);
+				try {
+					trackContent = universe.addContentLater(trackContent).get();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (ExecutionException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	
 	public void refresh() { 
 		for(int key : spotsToShow.keySet())
 			blobs.get(key).setVisible(spotsToShow.get(key)); // NPE if a spot from #spotsToShow does not belong to #spots 
@@ -57,7 +79,7 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	@Override
 	public void setTrackGraph(SimpleGraph<Spot, DefaultEdge> trackGraph) {
 		super.setTrackGraph(trackGraph);
-		makeTrackContent();
+		trackContent = makeTrackContent();
 	}
 	
 
@@ -115,10 +137,27 @@ public class SpotDisplayer3D extends SpotDisplayer {
 	 */
 	
 	private Content makeTrackContent() {
-//		TODO
-//		TrackDisplayNode trackContent = new TrackDisplayNode(trackGraph, spots, tracks, colors, radius/4);		
-//		return new Content("Tracks", trackContent);
-		return null;
+		// Prepare track color
+		HashMap<Set<Spot>, Color4f> colors = new HashMap<Set<Spot>, Color4f>();
+		float value;
+		int index = 0;
+		for(Set<Spot> track : tracks) {
+			value = (float) index / tracks.size();
+			colors.put(track, new Color4f(colorMap.getPaint(value)));
+			index++;
+		}
+		
+		// Prepare tracks instant
+		TrackDisplayNode trackContent = new TrackDisplayNode(trackGraph, spots, tracks, colors, radius/4);
+		
+		// Pass tracks instant to all instants
+		TreeMap<Integer, ContentInstant> instants = new TreeMap<Integer,ContentInstant>();
+		for(int key : spots.keySet()) { 
+			ContentInstant trackCI = new ContentInstant("Tracks_frame_"+key);
+			trackCI.display(trackContent);
+			instants.put(key, trackCI);
+		}
+		return new Content(TRACK_CONTENT_NAME, instants);
 	}
 
 
