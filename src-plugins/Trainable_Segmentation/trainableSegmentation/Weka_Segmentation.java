@@ -3877,7 +3877,7 @@ public class Weka_Segmentation implements PlugIn
 			// Train classifier with current ground truth
 			trainClassifier();
 			
-			double newError = getTrainingError();
+			double newError = getTrainingError(true);
 			
 			IJ.log("BLOTC iteration " + iter + ": training error = " + newError);
 			
@@ -4124,7 +4124,7 @@ public class Weka_Segmentation implements PlugIn
 			// Train classifier with current ground truth
 			seg.trainClassifier();
 			
-			double newError = seg.getTrainingError();
+			double newError = seg.getTrainingError(true);
 			
 			IJ.log("BLOTC iteration " + iter + ": training error = " + newError);
 			
@@ -4318,21 +4318,20 @@ public class Weka_Segmentation implements PlugIn
 	/**
 	 * Get training error (from loaded data).
 	 * If the classifier is a FastRandomForest then it uses the out of bag error.
+	 * @param verbose option to display evaluation information in the log window
 	 * @return classifier error on the training data set.
 	 */
-	public double getTrainingError()
+	public double getTrainingError(boolean verbose)
 	{
 		if(null == this.trainHeader)
 			return -1;
-		/*
-		if(this.classifier instanceof FastRandomForest)
-			return ((FastRandomForest)classifier).measureOutOfBagError();
-		*/
+
 		double error = -1;
 		try {
 			final Evaluation evaluation = new Evaluation(this.loadedTrainingData);
 			evaluation.evaluateModel(classifier, this.loadedTrainingData);
-			IJ.log(evaluation.toSummaryString());
+			if(verbose)
+				IJ.log(evaluation.toSummaryString("\n=== Training set evaluation ===\n", false));
 			error = evaluation.errorRate();
 		} catch (Exception e) {
 			
@@ -4349,16 +4348,19 @@ public class Weka_Segmentation implements PlugIn
 	 * @param labels binary labels
 	 * @param whiteClassIndex index of the white class
 	 * @param blackClassIndex index of the black class
+	 * @param verbose option to display evaluation information in the log window
 	 * @return pixel classification error
 	 */
 	public double getTestError(
 			ImagePlus image, 
 			ImagePlus labels, 
 			int whiteClassIndex, 
-			int blackClassIndex)
+			int blackClassIndex,
+			boolean verbose)
 	{
 		IJ.showStatus("Creating features for test image...");
-		IJ.log("Creating features for test image " + image.getTitle() +  "...");
+		if(verbose)
+			IJ.log("Creating features for test image " + image.getTitle() +  "...");
 		
 
 		// Set proper class names (skip empty list ones)
@@ -4385,7 +4387,8 @@ public class Weka_Segmentation implements PlugIn
 			final ImagePlus testSlice = new ImagePlus(image.getImageStack().getSliceLabel(z), image.getImageStack().getProcessor(z).convertToByte(true));
 			// Create feature stack for test image
 			IJ.showStatus("Creating features for test image...");
-			IJ.log("Creating features for test image " + z +  "...");
+			if(verbose)
+				IJ.log("Creating features for test image " + z +  "...");
 			final FeatureStack testImageFeatures = new FeatureStack(testSlice);
 			// Use the same features as the current classifier
 			testImageFeatures.setEnableFeatures(featureStack.getEnableFeatures());
@@ -4398,7 +4401,8 @@ public class Weka_Segmentation implements PlugIn
 			
 			final Instances data = testImageFeatures.createInstances(classNames);
 			data.setClassIndex(data.numAttributes()-1);
-			IJ.log("Assigning classes based on the labels...");
+			if(verbose)
+				IJ.log("Assigning classes based on the labels...");
 			
 			final ImageProcessor slice = labels.getImageStack().getProcessor(z);
 			for(int n=0, y=0; y<height; y++)
@@ -4416,14 +4420,19 @@ public class Weka_Segmentation implements PlugIn
 					testData.add( data.get(i) );
 			}
 		}
-		
-		IJ.log("Evaluating test data...");
+		if(verbose)
+			IJ.log("Evaluating test data...");
 		
 		double error = -1;
 		try {
 			final Evaluation evaluation = new Evaluation(testData);
 			evaluation.evaluateModel(classifier, testData);
-			IJ.log(evaluation.toSummaryString());
+			if(verbose)
+			{
+				IJ.log(evaluation.toSummaryString("\n=== Test data evaluation ===\n", false));
+				IJ.log(evaluation.toClassDetailsString());
+				IJ.log(evaluation.toMatrixString());
+			}
 			error = evaluation.errorRate();
 		} catch (Exception e) {
 			
