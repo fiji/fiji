@@ -4,7 +4,7 @@ import java.util.List;
 
 import Jama.Matrix;
 import fiji.plugin.trackmate.Spot;
-import fiji.plugin.trackmate.tracking.LAPTracker.Settings;
+import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.tracking.costfunction.LinkingCostFunction;
 
 /**
@@ -29,22 +29,24 @@ public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	protected final List<Spot> t1;
 	/** The total number of Spots in time frames t and t+1. */
 	protected int numSpots;
-	/** User supplied settings for creating the cost matrix. */
-	protected Settings settings;
 	
-	/**
-	 * 
-	 * @param t0 The spots in frame t
-	 * @param t1 The spots in frame t+1
+	/*
+	 * CONSTRUCTOR
 	 */
-	public LinkingCostMatrixCreator(final List<Spot> t0, final List<Spot> t1, final Settings settings) {
+	
+	
+	public LinkingCostMatrixCreator(final List<Spot> t0, final List<Spot> t1, final TrackerSettings settings) {
+		super(settings);
 		this.t0 = t0;
 		this.t1 = t1;
 		this.numSpots = t0.size() + t1.size();
 		this.costs = new Matrix(numSpots, numSpots);
-		this.settings = settings;
 	}
 
+	/*
+	 * METHODS
+	 */
+	
 	@Override
 	public boolean checkInput() {
 		if (numSpots == 0) {
@@ -66,7 +68,7 @@ public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 		
 		// 1 - Fill in quadrants
 		Matrix topLeft = getLinkingCostSubMatrix();
-		final double cutoff = settings.altLinkingCostFactor * getMaxScore(topLeft);
+		final double cutoff = settings.alternativeObjectLinkingCostFactor * getMaxScore(topLeft);
 		Matrix topRight = getAlternativeScores(t0.size(), cutoff);
 		Matrix bottomLeft = getAlternativeScores(t1.size(), cutoff);
 		Matrix bottomRight = getLowerRight(topLeft, cutoff);
@@ -111,7 +113,7 @@ public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 		
 		for (int i = 0; i < m.getRowDimension(); i++) {
 			for (int j = 0; j < m.getColumnDimension(); j++) {
-				if (m.get(i, j) > max && m.get(i, j) < BLOCKED) {
+				if (m.get(i, j) > max && m.get(i, j) < settings.blockingValue) {
 					max = m.get(i, j);
 				}
 			}
@@ -124,7 +126,7 @@ public class LinkingCostMatrixCreator extends LAPTrackerCostMatrixCreator {
 	 * Creates a sub-matrix which holds the linking scores between objects, and returns it.
 	 */
 	private Matrix getLinkingCostSubMatrix() {
-		LinkingCostFunction linkingCosts = new LinkingCostFunction(settings.maxDistObjects, BLOCKED);
+		LinkingCostFunction linkingCosts = new LinkingCostFunction(settings);
 		return linkingCosts.getCostFunction(t0, t1);
 	}
 }

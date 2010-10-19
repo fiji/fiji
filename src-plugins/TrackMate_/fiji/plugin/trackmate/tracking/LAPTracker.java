@@ -108,42 +108,6 @@ import fiji.plugin.trackmate.tracking.hungarian.HungarianAlgorithm;
  */
 public class LAPTracker implements ObjectTracker {
 
-	public static class Settings {
-
-		public static final Settings DEFAULT = new Settings();
-
-		// Default settings
-		private static final int MINIMUM_SEGMENT_LENGTH = 3; 
-		private static final double MAX_DIST_OBJECTS = 15.0d;
-		private static final double ALTERNATIVE_OBJECT_LINKING_COST_FACTOR = 1.05d;
-		private static final double MAX_DIST_SEGMENTS = 15.0d;
-		private static final int GAP_CLOSING_TIME_WINDOW = 4;
-		private static final double MIN_INTENSITY_RATIO = 0.5d;
-		private static final double MAX_INTENSITY_RATIO = 4.0d;
-		private static final double CUTOFF_PERCENTILE = 0.9d;
-
-		/** To throw out spurious segments, only include track segments with a length strictly larger
-		 * than this value. */
-		public int minSegmentLength = MINIMUM_SEGMENT_LENGTH;
-		/** The maximum distance away two Spots in consecutive frames can be in order 
-		 * to be linked. (Step 1 threshold) */
-		public double maxDistObjects = MAX_DIST_OBJECTS;
-		/** The maximum distance away two Segments can be in order 
-		 * to be linked. (Step 2 threshold) */
-		public double maxDistSegments = MAX_DIST_SEGMENTS;
-		/** The factor used to create d and b in the paper, the alternative costs to linking
-		 * objects. */
-		public double altLinkingCostFactor = ALTERNATIVE_OBJECT_LINKING_COST_FACTOR;
-		/** The maximum number of frames apart two segments can be 'gap closed.' */
-		public int gapClosingTimeWindow = GAP_CLOSING_TIME_WINDOW;
-		/** The minimum allowable intensity ratio for merging and splitting. */
-		public double minIntensityRatio = MIN_INTENSITY_RATIO;
-		/** The maximum allowable intensity ratio for merging and splitting. */
-		public double maxIntensityRatio = MAX_INTENSITY_RATIO;
-		/** The percentile used to calculate d and b cutoffs in the paper. */
-		public double cutoffPercentile = CUTOFF_PERCENTILE;
-	}
-
 	/** The cost matrix for linking individual objects (step 1), indexed by the first frame index. */
 	protected TreeMap<Integer, double[][]> linkingCosts;
 	/** The cost matrix for linking individual track segments (step 2). */
@@ -172,7 +136,7 @@ public class LAPTracker implements ObjectTracker {
 	 * the track segment index that the middle point belongs to. */
 	protected int[] splittingMiddlePointsSegmentIndices;
 	/** The settings to use for this tracker. */
-	private Settings settings = Settings.DEFAULT;
+	private TrackerSettings settings = null;
 
 	/** Stores the objects to track as a list of Spots per frame.  */
 	private TreeMap<Integer, List<Spot>> spots;
@@ -206,7 +170,7 @@ public class LAPTracker implements ObjectTracker {
 	 * @param linkingCosts The cost matrix for step 1, linking objects, specified for every frame.
 	 * @param settings The settings to use for this tracker.
 	 */
-	public LAPTracker (TreeMap<Integer, List<Spot>> spots, TreeMap<Integer, double[][]> linkingCosts, Settings settings) {
+	public LAPTracker (TreeMap<Integer, List<Spot>> spots, TreeMap<Integer, double[][]> linkingCosts, TrackerSettings settings) {
 		this.spots = spots;
 		this.linkingCosts = linkingCosts;
 		this.settings = settings;
@@ -217,15 +181,15 @@ public class LAPTracker implements ObjectTracker {
 	}
 
 	public LAPTracker (TreeMap<Integer, List<Spot>> spots, TreeMap<Integer, double[][]> linkingCosts) {
-		this(spots, linkingCosts, Settings.DEFAULT);
+		this(spots, linkingCosts, new TrackerSettings());
 	}
 
-	public LAPTracker(TreeMap<Integer, List<Spot>> spots, Settings settings) {
+	public LAPTracker(TreeMap<Integer, List<Spot>> spots, TrackerSettings settings) {
 		this(spots, null, settings);
 	}
 
 	public LAPTracker (TreeMap<Integer, List<Spot>> spots) {
-		this(spots, null, Settings.DEFAULT);
+		this(spots, null, new TrackerSettings());
 	}
 
 

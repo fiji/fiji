@@ -100,6 +100,9 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 		// Run plugin on current image
 		ImagePlus imp = WindowManager.getCurrentImage();
 		settings.imp = imp;
+		settings.segmenterSettings.spaceUnits = imp.getCalibration().getUnit();
+		settings.trackerSettings.spaceUnits = imp.getCalibration().getUnit();
+		settings.trackerSettings.timeUnits = imp.getCalibration().getTimeUnit();
 		
 		// Segment
 		execSegmentation();
@@ -241,11 +244,6 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 	 * GETTERS / SETTERS
 	 */
 	
-	public void setSegmenter(SpotSegmenter<T> segmenter) {
-		this.segmenter = segmenter;
-	}
-	
-
 	public SimpleGraph<Spot,DefaultEdge> getTrackGraph() {
 		return trackGraph;
 	}

@@ -22,7 +22,7 @@ import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.SpotImp;
 import fiji.plugin.trackmate.tracking.LAPTracker;
 import fiji.plugin.trackmate.tracking.LAPUtils;
-import fiji.plugin.trackmate.tracking.LAPTracker.Settings;
+import fiji.plugin.trackmate.tracking.TrackerSettings;
 import fiji.plugin.trackmate.tracking.costmatrix.LinkingCostMatrixCreator;
 import fiji.plugin.trackmate.tracking.costmatrix.TrackSegmentCostMatrixCreator;
 import fiji.plugin.trackmate.visualization.SpotDisplayer;
@@ -91,7 +91,7 @@ public class LAPTrackerTestDrive {
 			
 			// Get linking costs
 			TreeMap<Integer, double[][]> linkingCosts = new TreeMap<Integer, double[][]>();
-			Settings settings = new Settings();
+			TrackerSettings settings = new TrackerSettings();
 			for (int frame : wrap.keySet()) {
 				List<Spot> x = wrap.get(frame);
 				List<Spot> y = wrap.get(frame+1); // unsafe

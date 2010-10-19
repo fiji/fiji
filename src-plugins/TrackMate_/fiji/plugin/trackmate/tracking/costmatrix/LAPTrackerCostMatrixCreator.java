@@ -1,5 +1,6 @@
 package fiji.plugin.trackmate.tracking.costmatrix;
 
+import fiji.plugin.trackmate.tracking.TrackerSettings;
 import Jama.Matrix;
 
 /**
@@ -12,15 +13,23 @@ import Jama.Matrix;
  */
 public abstract class LAPTrackerCostMatrixCreator implements CostMatrixCreator {
 
-	/** Used to prevent this assignment from being made during Hungarian Algorithm. */
-	public static final double BLOCKED = Double.MAX_VALUE;
-	
 	/** The cost matrix created by the class. */
 	protected Matrix costs;
 	/** Stores a message describing an error incurred during use of the class. */
 	protected String errorMessage;
 	/** Stores whether the user has run checkInput() or not. */
 	protected boolean inputChecked = false;
+	/** The settings to comply to create a cost matrix. */
+	protected  TrackerSettings settings;
+	
+	/*
+	 * CONSTRUCTOR
+	 */
+	
+	protected LAPTrackerCostMatrixCreator(TrackerSettings settings) {
+		this.settings = settings;
+	}
+	
 	
 	
 	@Override
@@ -48,7 +57,7 @@ public abstract class LAPTrackerCostMatrixCreator implements CostMatrixCreator {
 		lowerRight = lowerRight.transpose();
 		for (int i = 0; i < lowerRight.getRowDimension(); i++) {
 			for (int j = 0; j < lowerRight.getColumnDimension(); j++) {
-				if (lowerRight.get(i, j) < BLOCKED) {
+				if (lowerRight.get(i, j) < settings.blockingValue) {
 					lowerRight.set(i, j, cutoff);
 				}
 			}
@@ -63,7 +72,7 @@ public abstract class LAPTrackerCostMatrixCreator implements CostMatrixCreator {
 	 * the diagonal that runs from top left to bottom right.
 	 */
 	protected Matrix getAlternativeScores(int n, double cutoff) {
-		final Matrix alternativeScores = new Matrix(n, n, BLOCKED);
+		final Matrix alternativeScores = new Matrix(n, n, settings.blockingValue);
 		
 		// Set the cutoff along the diagonal (top left to bottom right)
 		for (int i = 0; i < alternativeScores.getRowDimension(); i++) {

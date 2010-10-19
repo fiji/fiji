@@ -169,11 +169,11 @@ public class StartDialogPanel extends ActionListenablePanel {
 		// Parse tracker choice
 		TrackerType trackerChoice = TrackerType.values()[jComboBoxTrackerChoice.getSelectedIndex()];
 		settings.trackerSettings = trackerChoice.createSettings();
+		settings.trackerSettings.spaceUnits = imp.getCalibration().getUnit();
+		settings.trackerSettings.timeUnits = imp.getCalibration().getTimeUnit();
 		// Hop!
 		return settings;
 	}
-	
-
 	
 	
 	private void initGUI() {

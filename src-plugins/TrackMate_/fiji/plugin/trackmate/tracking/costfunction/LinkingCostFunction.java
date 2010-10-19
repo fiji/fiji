@@ -3,6 +3,7 @@ package fiji.plugin.trackmate.tracking.costfunction;
 import java.util.List;
 import Jama.Matrix;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 /**
  * <p>Linking cost function used with {@link LAPTracker}.
@@ -28,9 +29,9 @@ public class LinkingCostFunction implements CostFunctions {
 	/** The value to use to block an assignment in the cost matrix. */
 	protected double blocked;
 	
-	public LinkingCostFunction(double maxDist, double blocked) {
-		this.maxDist = maxDist;
-		this.blocked = blocked;
+	public LinkingCostFunction(TrackerSettings settings) {
+		this.maxDist = settings.linkingDistanceCutOff;
+		this.blocked = settings.blockingValue;
 	}
 	
 	@Override

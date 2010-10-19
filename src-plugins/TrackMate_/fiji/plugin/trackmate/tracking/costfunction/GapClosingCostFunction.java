@@ -1,11 +1,13 @@
 package fiji.plugin.trackmate.tracking.costfunction;
 
 import java.util.List;
+import java.util.Map;
 import java.util.SortedSet;
 
 import Jama.Matrix;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 /**
  * <p>Gap closing cost function used with {@link LAPTracker}.
@@ -30,18 +32,21 @@ public class GapClosingCostFunction {
 	protected double timeCutoff, maxDist;
 	/** The value to use to block an assignment in the cost matrix. */
 	protected double blocked;
+	/** Thresholds for the feature ratios. */
+	protected Map<Feature, Double> featureCutoffs;
 	
-	public GapClosingCostFunction(double timeCutoff, double maxDist, double blocked) {
-		this.timeCutoff = timeCutoff;
-		this.maxDist = maxDist;
-		this.blocked = blocked;
+	public GapClosingCostFunction(TrackerSettings settings) {
+		this.timeCutoff 		= settings.gapClosingTimeCutoff;
+		this.maxDist 			= settings.gapClosingDistanceCutoff;
+		this.blocked 			= settings.blockingValue;
+		this.featureCutoffs		= settings.gapClosingFeatureCutoffs;
 	}
 	
 	public Matrix getCostFunction(List<SortedSet<Spot>> trackSegments) {
 		SortedSet<Spot> seg1, seg2;
 		Spot end, start;
 		float tend, tstart;
-		double d2;
+		double d2, s, iRatio;
 		int n = trackSegments.size();
 		final Matrix m = new Matrix(n, n);
 		
@@ -74,9 +79,26 @@ public class GapClosingCostFunction {
 					m.set(i, j, blocked);
 					continue;
 				}
+
+				// Initial cost
+				s = d2;
+
+				// Update cost with feature costs
+				for (Feature feature : featureCutoffs.keySet()) {
+
+					// Larger than 0, equals 0 is the 2 intensities are the same
+					iRatio = start.normalizeDiffTo(end, feature);
+					if (iRatio > featureCutoffs.get(feature)) {
+						s = blocked;
+						break;
+					}
+
+					// Set score
+					s *= (1 + iRatio);
+				}
 				
 				// Set score
-				m.set(i, j, d2);
+				m.set(i, j, s);
 			}
 		}
 		

@@ -1,11 +1,13 @@
 package fiji.plugin.trackmate.tracking.costfunction;
 
 import java.util.List;
+import java.util.Map;
 import java.util.SortedSet;
 
 import Jama.Matrix;
 import fiji.plugin.trackmate.Feature;
 import fiji.plugin.trackmate.Spot;
+import fiji.plugin.trackmate.tracking.TrackerSettings;
 
 /**
  * <p>Splitting cost function used with {@link LAPTracker}.
@@ -38,15 +40,25 @@ public class SplittingCostFunction {
 	protected double maxDist;
 	/** The value used to block an assignment in the cost matrix. */
 	protected double blocked;
-	/** Thresholds for the intensity ratios. */
-	protected double maxIntensityRatio;
+	/** Thresholds for the feature ratios. */
+	protected Map<Feature, Double> featureCutoffs;
 	
-	public SplittingCostFunction(double maxDist, double timeCutoff, double blocked, double maxIntensityRatio) {
-		this.maxDist = maxDist;
-		this.timeCutoff = timeCutoff;
-		this.blocked = blocked;
-		this.maxIntensityRatio = maxIntensityRatio;
+	/*
+	 * CONSTRUCTOR
+	 */
+	
+	
+	public SplittingCostFunction(TrackerSettings settings) {
+		this.maxDist 			= settings.splittingDistanceCutoff;
+		this.timeCutoff 		= settings.splittingTimeCutoff;
+		this.blocked 			= settings.blockingValue;
+		this.featureCutoffs 	= settings.splittingFeatureCutoffs;
 	}
+	
+	/*
+	 * METHODS
+	 */
+	
 	
 	public Matrix getCostFunction(final List<SortedSet<Spot>> trackSegments, final List<Spot> middlePoints) {
 		double iRatio, d2, s;
@@ -75,17 +87,22 @@ public class SplittingCostFunction {
 					continue;
 				}
 
-				// Larger than 0, equals 0 is the 2 intensities are the same
-				iRatio = start.normalizeDiffTo(middle, Feature.MEAN_INTENSITY);
-					
-				// Intensity threshold -  must be within mix and max intensity thresholds
-				if (iRatio > maxIntensityRatio) {
-					m.set(i, j, blocked);
-					continue;
-				}
+				// Initial cost
+				s = d2;
 
-				// Set score
-				s = d2 * (1 + iRatio);
+				// Update cost with feature costs
+				for (Feature feature : featureCutoffs.keySet()) {
+
+					// Larger than 0, equals 0 is the 2 intensities are the same
+					iRatio = start.normalizeDiffTo(middle, feature);
+					if (iRatio > featureCutoffs.get(feature)) {
+						s = blocked;
+						break;
+					}
+
+					// Set score
+					s *= (1 + iRatio);
+				}
 				
 				m.set(i, j, s);
 			}
