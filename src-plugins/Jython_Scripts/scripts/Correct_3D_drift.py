@@ -141,12 +141,12 @@ def create_registered_hyperstack(imp, target_folder, channel):
   stack = imp.getStack()
   for frame in range(1, imp.getNFrames()+1):
     shift = shifts[frame-1]
-    fr = "_t" + zero_pad(frame, frame_digits)
+    fr = "t" + zero_pad(frame, frame_digits)
     # Pad with mpty slices before reaching the first slice
     for s in range(shift.z):
       ss = "_z" + zero_pad(s + 1, slice_digits) # slices start at 1
       for ch in range(1, imp.getNChannels()+1):
-        name = "c" + zero_pad(ch, channel_digits) + ss + fr + ".tif"
+        name = fr + ss + "_c" + zero_pad(ch, channel_digits) +".tif"
         names.append(name)
         FileSaver(ImagePlus("", empty)).saveAsTiff(target_folder + "/" + name)
     # Add all proper slices
@@ -156,14 +156,14 @@ def create_registered_hyperstack(imp, target_folder, channel):
          ip = stack.getProcessor(imp.getStackIndex(ch, s, frame))
          ip2 = ip.createProcessor(width, height) # potentially larger
          ip2.insert(ip, shift.x, shift.y)
-         name = "c" + zero_pad(ch, channel_digits) + ss + fr + ".tif"
+         name = fr + ss + "_c" + zero_pad(ch, channel_digits) +".tif"
          names.append(name)
          FileSaver(ImagePlus("", ip2)).saveAsTiff(target_folder + "/" + name)
     # Pad the end
     for s in range(shift.z + imp.getNSlices(), slices):
       ss = "_z" + zero_pad(s + 1, slice_digits)
       for ch in range(1, imp.getNChannels()+1):
-        name = "c" + zero_pad(ch, channel_digits) + ss + fr + ".tif"
+        name = fr + ss + "_c" + zero_pad(ch, channel_digits) +".tif"
         names.append(name)
         FileSaver(ImagePlus("", empty)).saveAsTiff(target_folder + "/" + name)
   
