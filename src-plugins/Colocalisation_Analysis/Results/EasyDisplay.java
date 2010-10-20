@@ -3,6 +3,7 @@ import java.util.Iterator;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.text.TextWindow;
+import mpicbg.imglib.algorithm.math.ImageStatistics;
 import mpicbg.imglib.image.display.imagej.ImageJFunctions;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
@@ -34,6 +35,9 @@ public class EasyDisplay<T extends RealType<T>> implements ResultHandler<T> {
 
 	public void handleImage(Image<T> image) {
 		ImagePlus imp = ImageJFunctions.displayAsVirtualStack( image );
+		// set the display range
+		double max = ImageStatistics.getImageMax( image ).getRealDouble();
+		imp.setDisplayRange(0.0, max);
 		imp.show();
 	}
 
