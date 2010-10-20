@@ -2,9 +2,8 @@ package fiji.plugin.trackmate;
 
 import fiji.plugin.trackmate.features.FeatureFacade;
 import fiji.plugin.trackmate.gui.TrackMateFrame;
-import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 import fiji.plugin.trackmate.segmentation.SpotSegmenter;
-import fiji.plugin.trackmate.tracking.LAPTracker;
+import fiji.plugin.trackmate.tracking.SpotTracker;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
@@ -123,7 +122,7 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 	 */
 	public void execTracking() {
 		logger.log("Starting tracking.\n", Logger.BLUE_COLOR);
-		LAPTracker tracker = new LAPTracker(selectedSpots);
+		SpotTracker tracker = settings.getSpotTracker(selectedSpots);
 		tracker.setLogger(logger);
 		long start = System.currentTimeMillis();
 		if (tracker.checkInput() && tracker.process()) {
@@ -149,7 +148,6 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 	 */
 	public void execThresholding() {
 		selectedSpots = thresholdSpots(spots, thresholds);
-		
 	}
 	
 	/** 
@@ -173,7 +171,7 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 		/* 0 -- Initialize local variables */
 		final float[] calibration = new float[] {(float) imp.getCalibration().pixelWidth, (float) imp.getCalibration().pixelHeight, (float) imp.getCalibration().pixelDepth};
 
-		segmenter = SegmenterSettings.getSpotSegmenter(settings.segmenterSettings);
+		segmenter = settings.getSpotSegmenter();
 		segmenter.setCalibration(calibration);
 		
 		spots = new TreeMap<Integer, List<Spot>>();

@@ -21,21 +21,8 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 
-import fiji.plugin.trackmate.Settings;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 
-/**
-* This code was edited or generated using CloudGarden's Jigloo
-* SWT/Swing GUI Builder, which is free for non-commercial
-* use. If Jigloo is being used commercially (ie, by a corporation,
-* company or business for any purpose whatever) then you
-* should purchase a license for each developer using Jigloo.
-* Please visit www.cloudgarden.com for details.
-* Use of Jigloo implies acceptance of these licensing terms.
-* A COMMERCIAL LICENSE HAS NOT BEEN PURCHASED FOR
-* THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
-* LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
-*/
 public class SegmenterSettingsPanel extends javax.swing.JPanel {
 	private static final long serialVersionUID = 3220742915219642676L;
 	private JLabel jLabel1;
@@ -48,7 +35,7 @@ public class SegmenterSettingsPanel extends javax.swing.JPanel {
 	private JCheckBox jCheckBoxMedianFilter;
 	private JLabel jLabelBlobDiameterUnit;
 	private JTextField jTextFieldBlobDiameter;
-	private Settings settings;
+	private SegmenterSettings settings;
 
 	{
 		//Set Look & Feel
@@ -60,10 +47,10 @@ public class SegmenterSettingsPanel extends javax.swing.JPanel {
 	}
 	
 	
-	public SegmenterSettingsPanel(Settings settings) {
+	public SegmenterSettingsPanel(SegmenterSettings settings) {
 		super();
 		if (null == settings)
-			settings = new Settings();
+			settings = new SegmenterSettings();
 		this.settings = settings;
 		initGUI();
 	}
@@ -76,10 +63,10 @@ public class SegmenterSettingsPanel extends javax.swing.JPanel {
 	 * {@link SegmenterSettings#threshold}.
 	 * @return  the updated Settings
 	 */
-	public Settings getSettings() {
-		settings.segmenterSettings.expectedRadius = Float.parseFloat(jTextFieldBlobDiameter.getText())/2;
-		settings.segmenterSettings.threshold = Float.parseFloat(jTextFieldThreshold.getText());
-		settings.segmenterSettings.useMedianFilter = jCheckBoxMedianFilter.isSelected();
+	public SegmenterSettings getSettings() {
+		settings.expectedRadius = Float.parseFloat(jTextFieldBlobDiameter.getText())/2;
+		settings.threshold = Float.parseFloat(jTextFieldThreshold.getText());
+		settings.useMedianFilter = jCheckBoxMedianFilter.isSelected();
 		return settings;
 	}
 	
@@ -116,7 +103,7 @@ public class SegmenterSettingsPanel extends javax.swing.JPanel {
 			{
 				jLabelSegmenterName = new JLabel();
 				this.add(jLabelSegmenterName, new GridBagConstraints(0, 1, 3, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.NONE, new Insets(10, 0, 0, 0), 0, 0));
-				jLabelSegmenterName.setText(settings.segmenterSettings.segmenterType.toString());
+				jLabelSegmenterName.setText(settings.segmenterType.toString());
 				jLabelSegmenterName.setFont(FONT.deriveFont(Font.BOLD));
 			}
 			{
@@ -136,7 +123,7 @@ public class SegmenterSettingsPanel extends javax.swing.JPanel {
 			{
 				jLabelBlobDiameterUnit = new JLabel();
 				this.add(jLabelBlobDiameterUnit, new GridBagConstraints(2, 3, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 5, 0, 0), 0, 0));
-				jLabelBlobDiameterUnit.setText(settings.imp.getCalibration().getUnits());
+				jLabelBlobDiameterUnit.setText(settings.spaceUnits);
 				jLabelBlobDiameterUnit.setFont(FONT);
 			}
 			{
@@ -148,7 +135,7 @@ public class SegmenterSettingsPanel extends javax.swing.JPanel {
 			{
 				jLabelHelpText = new JLabel();
 				this.add(jLabelHelpText, new GridBagConstraints(0, 2, 3, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(10, 10, 10, 10), 0, 0));
-				jLabelHelpText.setText(settings.segmenterSettings.segmenterType.getInfoText().replace("<br>", "").replace("<html>", "<html><p align=\"justify\">"));
+				jLabelHelpText.setText(settings.segmenterType.getInfoText().replace("<br>", "").replace("<html>", "<html><p align=\"justify\">"));
 				
 				jLabelHelpText.setFont(FONT.deriveFont(Font.ITALIC));
 			}
@@ -191,7 +178,7 @@ public class SegmenterSettingsPanel extends javax.swing.JPanel {
 	*/
 	public static void main(String[] args) {
 		JFrame frame = new JFrame();
-		frame.getContentPane().add(new SegmenterSettingsPanel(new Settings()));
+		frame.getContentPane().add(new SegmenterSettingsPanel(new SegmenterSettings()));
 		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		frame.pack();
 		frame.setVisible(true);

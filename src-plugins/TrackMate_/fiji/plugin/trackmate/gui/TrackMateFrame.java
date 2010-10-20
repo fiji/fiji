@@ -170,6 +170,7 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 	private JPanel jPanelMain;
 	private Settings settings;
 	private SegmenterSettingsPanel segmenterSettingsPanel;
+	private TrackerSettingsPanel trackerSettingsPanel;
 	private InitThresholdPanel initThresholdingPanel;
 	
 	
@@ -237,10 +238,15 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 				break;
 				
 			case THRESHOLD_BLOBS:
+				state = GuiState.TUNE_TRACKER;
+				execTuneTracker();
+				break;
+				
+			case TUNE_TRACKER:
 				execTrackingStep();
 				state = GuiState.TRACKING;
 				break;
-				
+								
 			case TRACKING:
 				cardLayout.show(jPanelMain, DISPLAYER_PANEL_KEY);
 				break;
@@ -337,9 +343,15 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 		settings = startDialogPanel.getSettings();
 		if (null != segmenterSettingsPanel)
 			jPanelMain.remove(segmenterSettingsPanel);
-		segmenterSettingsPanel = new SegmenterSettingsPanel(settings);
+		segmenterSettingsPanel = settings.createSegmenterSettingsPanel();
 		jPanelMain.add(segmenterSettingsPanel, TUNE_SEGMENTER_KEY);
 		cardLayout.show(jPanelMain, TUNE_SEGMENTER_KEY);
+	}
+	
+	private void execTuneTracker() {
+		if (null != trackerSettingsPanel)
+			jPanelMain.remove(trackerSettingsPanel);
+		trackerSettingsPanel = settings.createTrackerSettingsPanel();
 	}
 	
 	
@@ -349,7 +361,7 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 	 */
 	private void execSegmentationStep() {
 		cardLayout.show(jPanelMain, LOG_PANEL_KEY);
-		settings = segmenterSettingsPanel.getSettings();
+		settings.segmenterSettings = segmenterSettingsPanel.getSettings();
 		trackmate.setSettings(settings);
 		logger.log("Starting segmentation...\n", Logger.BLUE_COLOR);
 		logger.log("with settings:\n");

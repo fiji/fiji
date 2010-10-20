@@ -9,24 +9,13 @@ import javax.swing.WindowConstants;
 
 import fiji.plugin.trackmate.tracking.TrackerSettings;
 
-/**
-* This code was edited or generated using CloudGarden's Jigloo
-* SWT/Swing GUI Builder, which is free for non-commercial
-* use. If Jigloo is being used commercially (ie, by a corporation,
-* company or business for any purpose whatever) then you
-* should purchase a license for each developer using Jigloo.
-* Please visit www.cloudgarden.com for details.
-* Use of Jigloo implies acceptance of these licensing terms.
-* A COMMERCIAL LICENSE HAS NOT BEEN PURCHASED FOR
-* THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
-* LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
-*/
+
 public class TrackerSettingsPanel extends javax.swing.JPanel {
 
 	private static final long serialVersionUID = -2536527408461090418L;
 	
 	private TrackerSettings settings;
-	private JPanelSegmenterSettingsMain jPanelMain;
+	private JPanelTrackerSettingsMain jPanelMain;
 	private JScrollPane jScrollPaneMain;
 
 	{
@@ -38,13 +27,33 @@ public class TrackerSettingsPanel extends javax.swing.JPanel {
 		}
 	}
 	
-
+	/*
+	 * CONSTRUCTOR
+	 */
 	
 	public TrackerSettingsPanel(TrackerSettings settings) {
 		super();
 		this.settings = settings;
 		initGUI();
 	}
+	
+	/*
+	 * PUBLIC METHODS
+	 */
+	
+	/**
+	 * Update the {@link Settings} object given at the creation of this panel with the
+	 * settings entered by the user on this panel. Only the {@link Settings#trackerSettings} field
+	 * and sub-fields will be updated here.
+	 */
+	public TrackerSettings getSettings() {
+		return jPanelMain.getSettings();
+	}
+	
+	/*
+	 * PRIVATE METHODS
+	 */
+	
 	
 	private void initGUI() {
 		try {
@@ -56,8 +65,9 @@ public class TrackerSettingsPanel extends javax.swing.JPanel {
 				this.add(jScrollPaneMain, BorderLayout.CENTER);
 				jScrollPaneMain.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
 				jScrollPaneMain.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+				jScrollPaneMain.getVerticalScrollBar().setUnitIncrement(24);
 				{
-					jPanelMain = new JPanelSegmenterSettingsMain(settings);
+					jPanelMain = new JPanelTrackerSettingsMain(settings);
 					jScrollPaneMain.setViewportView(jPanelMain);
 				}
 			}

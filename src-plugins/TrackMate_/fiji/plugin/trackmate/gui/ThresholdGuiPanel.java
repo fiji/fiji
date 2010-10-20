@@ -56,6 +56,7 @@ import static fiji.plugin.trackmate.gui.TrackMateFrame.SMALL_FONT;
 */
 public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeListener {
 	
+	private static final long serialVersionUID = 1307749013344373051L;
 	/**
 	 * This action is fired when the feature to color in the "Set color by feature"
 	 * JComboBox is changed.
@@ -63,7 +64,6 @@ public class ThresholdGuiPanel extends ActionListenablePanel implements ChangeLi
 	public final ActionEvent COLOR_FEATURE_CHANGED = new ActionEvent(this, 1, "ColorFeatureChanged");
 	private final ChangeEvent CHANGE_EVENT = new ChangeEvent(this);
 	
-	private static final long serialVersionUID = 1L;
 	private static final String ADD_ICON = "images/add.png";
 	private static final String REMOVE_ICON = "images/delete.png";
 	

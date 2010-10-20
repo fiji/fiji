@@ -29,14 +29,8 @@ import javax.swing.SwingConstants;
 import javax.swing.WindowConstants;
 
 import fiji.plugin.trackmate.Settings;
-import fiji.plugin.trackmate.segmentation.SegmenterSettings;
-import fiji.plugin.trackmate.segmentation.SegmenterSettings.SegmenterType;
-import fiji.plugin.trackmate.tracking.TrackerSettings;
-import fiji.plugin.trackmate.tracking.TrackerSettings.TrackerType;
 
 public class StartDialogPanel extends ActionListenablePanel {
-
-
 
 	{
 		//Set Look & Feel
@@ -163,12 +157,14 @@ public class StartDialogPanel extends ActionListenablePanel {
 		settings.zstart = Integer.parseInt(jTextFieldZStart.getText());
 		settings.zend 	= Integer.parseInt(jTextFieldZEnd.getText());
 		// Parse segmenter choice
-		SegmenterType segmenterChoice = SegmenterType.values()[jComboBoxSegmenterChoice.getSelectedIndex()];
+		Settings.SegmenterType segmenterChoice = Settings.SegmenterType.values()[jComboBoxSegmenterChoice.getSelectedIndex()];
 		settings.segmenterSettings = segmenterChoice.createSettings();
+		settings.segmenterSettings.segmenterType = segmenterChoice;
 		settings.segmenterSettings.spaceUnits = imp.getCalibration().getUnit();
 		// Parse tracker choice
-		TrackerType trackerChoice = TrackerType.values()[jComboBoxTrackerChoice.getSelectedIndex()];
+		Settings.TrackerType trackerChoice = Settings.TrackerType.values()[jComboBoxTrackerChoice.getSelectedIndex()];
 		settings.trackerSettings = trackerChoice.createSettings();
+		settings.trackerSettings.trackerType = trackerChoice;
 		settings.trackerSettings.spaceUnits = imp.getCalibration().getUnit();
 		settings.trackerSettings.timeUnits = imp.getCalibration().getTimeUnit();
 		// Hop!
@@ -199,9 +195,9 @@ public class StartDialogPanel extends ActionListenablePanel {
 				jLabelSegmenterChoice.setFont(FONT);
 			}
 			{
-				String[] segmenterNames = new String[SegmenterSettings.SegmenterType.values().length];
+				String[] segmenterNames = new String[Settings.SegmenterType.values().length];
 				for (int i = 0; i < segmenterNames.length; i++) 
-					segmenterNames[i] = SegmenterSettings.SegmenterType.values()[i].toString();
+					segmenterNames[i] = Settings.SegmenterType.values()[i].toString();
 				ComboBoxModel jComboBoxSegmenterModel = new DefaultComboBoxModel(segmenterNames);
 				jComboBoxSegmenterChoice = new JComboBox();
 				this.add(jComboBoxSegmenterChoice, new GridBagConstraints(0, 2, 2, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 10, 0, 10), 0, 0));
@@ -215,7 +211,7 @@ public class StartDialogPanel extends ActionListenablePanel {
 				jButtonSegmenterInfo.setPreferredSize(new Dimension(24, 24));				
 				jButtonSegmenterInfo.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {						
-						String text = SegmenterSettings.SegmenterType.values()[jComboBoxSegmenterChoice.getSelectedIndex()].getInfoText();
+						String text = Settings.SegmenterType.values()[jComboBoxSegmenterChoice.getSelectedIndex()].getInfoText();
 						jButtonSegmenterInfo.setToolTipText(text);
 						Action toolTipAction = jButtonSegmenterInfo.getActionMap().get("postTip");						
 						ActionEvent postTip = new ActionEvent(jButtonSegmenterInfo, ActionEvent.ACTION_PERFORMED, "");
@@ -230,9 +226,9 @@ public class StartDialogPanel extends ActionListenablePanel {
 				jLabelTrackerChoice.setFont(FONT);
 			}
 			{
-				String[] trackerNames = new String[TrackerSettings.TrackerType.values().length];
+				String[] trackerNames = new String[Settings.TrackerType.values().length];
 				for (int i = 0; i < trackerNames.length; i++) 
-					trackerNames[i] = TrackerSettings.TrackerType.values()[i].toString();
+					trackerNames[i] = Settings.TrackerType.values()[i].toString();
 				ComboBoxModel jComboBoxTrackerModel = new DefaultComboBoxModel(trackerNames);
 				jComboBoxTrackerChoice = new JComboBox();
 				this.add(jComboBoxTrackerChoice, new GridBagConstraints(0, 4, 2, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 10, 0, 10), 0, 0));
@@ -246,7 +242,7 @@ public class StartDialogPanel extends ActionListenablePanel {
 				jButtonTrackerInfo.setPreferredSize(new Dimension(24, 24));
 				jButtonTrackerInfo.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {						
-						String text = TrackerSettings.TrackerType.values()[jComboBoxTrackerChoice.getSelectedIndex()].getInfoText();
+						String text = Settings.TrackerType.values()[jComboBoxTrackerChoice.getSelectedIndex()].getInfoText();
 						jButtonTrackerInfo.setToolTipText(text);
 						Action toolTipAction = jButtonTrackerInfo.getActionMap().get("postTip");						
 						ActionEvent postTip = new ActionEvent(jButtonTrackerInfo, ActionEvent.ACTION_PERFORMED, "");

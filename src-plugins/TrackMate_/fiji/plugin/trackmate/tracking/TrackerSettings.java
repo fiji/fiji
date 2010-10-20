@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import fiji.plugin.trackmate.Feature;
+import fiji.plugin.trackmate.Settings.TrackerType;
 
 public class TrackerSettings {
 	
@@ -37,8 +38,8 @@ public class TrackerSettings {
 	private static final double 	DEFAULT_ALTERNATIVE_OBJECT_LINKING_COST_FACTOR = 1.05d;
 	private static final double 	DEFAULT_CUTOFF_PERCENTILE 				= 0.9d;
 	
-	/** The tracker to use. */
-	public TrackerType trackerType				= TrackerType.LAP_TRACKER;
+	/** The tracker type this settings object is for. This field is here just for reference. */
+	public TrackerType trackerType;
 	
 	/** Max time difference over which particle linking is allowed.	 */
 	public double linkingDistanceCutOff 		= DEFAULT_LINKING_DISTANCE_CUTOFF;
@@ -99,39 +100,5 @@ public class TrackerSettings {
 	
 	
 
-	public enum TrackerType {
-		LAP_TRACKER;
-		
-		@Override
-		public String toString() {
-			switch(this) {
-			case LAP_TRACKER:
-				return "LAP tracker";
-			}
-			return null;
-		}
 
-		public TrackerSettings createSettings() {
-			switch(this) {
-			case LAP_TRACKER:
-				return new TrackerSettings();			
-			}
-			return null;
-		}
-
-		public String getInfoText() {
-			switch(this) {
-			case LAP_TRACKER:
-				return "<html>" +
-						"This tracker is based on the Linear Assignment Problem mathematical framework. <br>" +
-						"Its implementation is derived from the following paper: <br>" +
-						"<i>Robust single-particle tracking in live-cell time-lapse sequences</i> - <br>" +
-						"Jaqaman <i> et al.</i>, 2008, Nature Methods. <br>" +
-						" </html>";
-			}
-			
-			return null;
-		}
-	}
-	
 }

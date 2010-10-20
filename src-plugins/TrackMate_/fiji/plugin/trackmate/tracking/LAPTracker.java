@@ -9,11 +9,9 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.SimpleGraph;
 import org.jgrapht.traverse.DepthFirstIterator;
 
 import fiji.plugin.trackmate.Feature;
-import fiji.plugin.trackmate.Logger;
 import fiji.plugin.trackmate.Spot;
 import fiji.plugin.trackmate.tracking.costmatrix.LinkingCostMatrixCreator;
 import fiji.plugin.trackmate.tracking.costmatrix.TrackSegmentCostMatrixCreator;
@@ -106,7 +104,7 @@ import fiji.plugin.trackmate.tracking.hungarian.HungarianAlgorithm;
  * 
  * @author Nicholas Perry
  */
-public class LAPTracker implements ObjectTracker {
+public class LAPTracker extends AbstractSpotTracker {
 
 	/** The cost matrix for linking individual objects (step 1), indexed by the first frame index. */
 	protected TreeMap<Integer, double[][]> linkingCosts;
@@ -114,8 +112,6 @@ public class LAPTracker implements ObjectTracker {
 	protected double[][] segmentCosts = null;
 	/** Stores the objects to track as a list of Spots per frame.  */
 
-	/** Stores a message describing an error incurred during use of the class. */
-	protected String errorMessage;
 	/** Stores whether the user has run checkInput() or not. */
 	protected boolean inputChecked = false;
 	/** Stores whether the default cost matrices from the paper should be used,
@@ -135,29 +131,12 @@ public class LAPTracker implements ObjectTracker {
 	/** Each index corresponds to a Spot in middleSplittingPoints, and holds
 	 * the track segment index that the middle point belongs to. */
 	protected int[] splittingMiddlePointsSegmentIndices;
-	/** The settings to use for this tracker. */
-	private TrackerSettings settings = null;
-
-	/** Stores the objects to track as a list of Spots per frame.  */
-	private TreeMap<Integer, List<Spot>> spots;
-
+	
+	
 	private final static String BASE_ERROR_MESSAGE = "LAPTracker: ";
 	private static final boolean DEBUG = true;
 
-	private SimpleGraph<Spot, DefaultEdge> trackGraph = new SimpleGraph<Spot, DefaultEdge>(DefaultEdge.class);
-	/** 
-	 * Store the track segments computed during step (1) of the algorithm. 
-	 * <p>
-	 * In individual segments, spots are put in a {@link SortedSet} so that
-	 * they are retrieved by frame order when iterated over.
-	 * <p>
-	 * The segments are put in a list, for we need to have them indexed to build
-	 * a cost matrix for segments in the step (2) of the algorithm.
-	 */
-	protected List<SortedSet<Spot>> trackSegments = null;
-
-	private Logger logger = Logger.DEFAULT_LOGGER;
-
+	
 
 	/*
 	 * CONSTRUCTORS
@@ -171,9 +150,9 @@ public class LAPTracker implements ObjectTracker {
 	 * @param settings The settings to use for this tracker.
 	 */
 	public LAPTracker (TreeMap<Integer, List<Spot>> spots, TreeMap<Integer, double[][]> linkingCosts, TrackerSettings settings) {
+		super(settings);
 		this.spots = spots;
 		this.linkingCosts = linkingCosts;
-		this.settings = settings;
 		// Add all spots to the graph
 		for(int frame : spots.keySet())
 			for(Spot spot : spots.get(frame))
@@ -228,13 +207,7 @@ public class LAPTracker implements ObjectTracker {
 		this.segmentCosts = segmentCosts;
 	}
 
-	/**
-	 * Set the logger used to echo log messages.
-	 */
-	public void setLogger(Logger logger) {
-		this.logger = logger;
-	}
-
+	
 
 	/**
 	 * Get the cost matrix used for step 2, linking track segments into final tracks.
@@ -243,14 +216,6 @@ public class LAPTracker implements ObjectTracker {
 	public double[][] getSegmentCosts() {
 		return segmentCosts;
 	}
-
-
-
-	@Override
-	public SimpleGraph<Spot,DefaultEdge> getTrackGraph() {
-		return trackGraph;
-	}
-
 
 	/**
 	 * Returns the track segments computed from step (1).
