@@ -626,7 +626,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		{
 			displayTagImage(taggedImage);
 		}
-		
+
 		// Mark trees
 		ImageStack treeIS = markTrees(taggedImage);
 		
