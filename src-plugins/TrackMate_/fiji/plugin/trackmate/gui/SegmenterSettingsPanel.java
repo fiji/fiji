@@ -21,6 +21,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 
+import fiji.plugin.trackmate.Settings.SegmenterType;
 import fiji.plugin.trackmate.segmentation.SegmenterSettings;
 
 public class SegmenterSettingsPanel extends javax.swing.JPanel {
@@ -117,14 +118,14 @@ public class SegmenterSettingsPanel extends javax.swing.JPanel {
 				jTextFieldBlobDiameter = new JNumericTextField();
 				jTextFieldBlobDiameter.setSize(TEXTFIELD_DIMENSION);
 				this.add(jTextFieldBlobDiameter, new GridBagConstraints(1, 3, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.HORIZONTAL, new Insets(0, 0, 0, 0), 0, 0));
-				jTextFieldBlobDiameter.setText("10");
 				jTextFieldBlobDiameter.setFont(FONT);
+				jTextFieldBlobDiameter.setText("10");
 			}
 			{
 				jLabelBlobDiameterUnit = new JLabel();
 				this.add(jLabelBlobDiameterUnit, new GridBagConstraints(2, 3, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 5, 0, 0), 0, 0));
-				jLabelBlobDiameterUnit.setText(settings.spaceUnits);
 				jLabelBlobDiameterUnit.setFont(FONT);
+				jLabelBlobDiameterUnit.setText(settings.spaceUnits);
 			}
 			{
 				jCheckBoxMedianFilter = new JCheckBox();
@@ -136,7 +137,6 @@ public class SegmenterSettingsPanel extends javax.swing.JPanel {
 				jLabelHelpText = new JLabel();
 				this.add(jLabelHelpText, new GridBagConstraints(0, 2, 3, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(10, 10, 10, 10), 0, 0));
 				jLabelHelpText.setText(settings.segmenterType.getInfoText().replace("<br>", "").replace("<html>", "<html><p align=\"justify\">"));
-				
 				jLabelHelpText.setFont(FONT.deriveFont(Font.ITALIC));
 			}
 			{
@@ -178,7 +178,9 @@ public class SegmenterSettingsPanel extends javax.swing.JPanel {
 	*/
 	public static void main(String[] args) {
 		JFrame frame = new JFrame();
-		frame.getContentPane().add(new SegmenterSettingsPanel(new SegmenterSettings()));
+		SegmenterSettings s = new SegmenterSettings();
+		s.segmenterType = SegmenterType.PEAKPICKER_SEGMENTER;
+		frame.getContentPane().add(new SegmenterSettingsPanel(s));
 		frame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		frame.pack();
 		frame.setVisible(true);

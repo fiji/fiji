@@ -4,7 +4,9 @@ import java.util.List;
 import java.util.TreeMap;
 
 import mpicbg.imglib.type.numeric.RealType;
+import fiji.plugin.trackmate.gui.LAPTrackerSettingsPanel;
 import fiji.plugin.trackmate.gui.SegmenterSettingsPanel;
+import fiji.plugin.trackmate.gui.SimpleLAPTrackerSettingsPanel;
 import fiji.plugin.trackmate.gui.TrackerSettingsPanel;
 import fiji.plugin.trackmate.segmentation.DogSegmenter;
 import fiji.plugin.trackmate.segmentation.LogSegmenter;
@@ -108,11 +110,14 @@ public class Settings {
 	
 	
 	public enum TrackerType {
+		SIMPLE_LAP_TRACKER,
 		LAP_TRACKER;
 		
 		@Override
 		public String toString() {
 			switch(this) {
+			case SIMPLE_LAP_TRACKER:
+				return "Simple LAP tracker";
 			case LAP_TRACKER:
 				return "LAP tracker";
 			}
@@ -125,7 +130,12 @@ public class Settings {
 		public TrackerSettings createSettings() {
 			switch(this) {
 			case LAP_TRACKER:
-				return new TrackerSettings();			
+				return new TrackerSettings();
+			case SIMPLE_LAP_TRACKER:
+				TrackerSettings ts = new TrackerSettings();
+				ts.allowMerging = false;
+				ts.allowSplitting = false;
+				return ts;
 			}
 			return null;
 		}
@@ -139,6 +149,13 @@ public class Settings {
 						"<i>Robust single-particle tracking in live-cell time-lapse sequences</i> - <br>" +
 						"Jaqaman <i> et al.</i>, 2008, Nature Methods. <br>" +
 						" </html>";
+			case SIMPLE_LAP_TRACKER:
+				return "<html>" +
+					"This tracker is identical to the LAP tracker present in this plugin, except that it <br>" +
+					"proposes fewer tuning options. Namely, only gap closing is allowed, based solely on <br>" +
+					"a distance and time condition. Track splitting and merging are not allowed, resulting <br>" +
+					"in having non-branching tracks." +
+				" </html>";
 			}
 			
 			return null;
@@ -176,6 +193,7 @@ public class Settings {
 	public SpotTracker getSpotTracker(TreeMap<Integer, List<Spot>> spots) {
 		switch(trackerType) {
 		case LAP_TRACKER:
+		case SIMPLE_LAP_TRACKER:
 			return new LAPTracker(spots, trackerSettings);
 		}
 		return null;
@@ -213,7 +231,9 @@ public class Settings {
 	public TrackerSettingsPanel createTrackerSettingsPanel() {
 		switch (trackerType) {
 		case LAP_TRACKER:
-			return new TrackerSettingsPanel(trackerSettings);
+			return new LAPTrackerSettingsPanel(trackerSettings);
+		case SIMPLE_LAP_TRACKER:
+			return new SimpleLAPTrackerSettingsPanel(trackerSettings);
 		}
 		return null;
 	}

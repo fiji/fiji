@@ -121,18 +121,12 @@ public class TrackMate_ <T extends RealType<T>> implements PlugIn {
 	 * Tracks can be accessed when the tracking is over using the {@link #getTracks()} method.
 	 */
 	public void execTracking() {
-		logger.log("Starting tracking.\n", Logger.BLUE_COLOR);
 		SpotTracker tracker = settings.getSpotTracker(selectedSpots);
 		tracker.setLogger(logger);
-		long start = System.currentTimeMillis();
-		if (tracker.checkInput() && tracker.process()) {
-			long end = System.currentTimeMillis();
-			logger.log(String.format("Tracking done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);
+		if (tracker.checkInput() && tracker.process())
 			trackGraph = tracker.getTrackGraph();
-		}
-		else {
+		else
 			logger.error("Problem occured in tracking:\n"+tracker.getErrorMessage());
-		}
 	}
 	
 	/**

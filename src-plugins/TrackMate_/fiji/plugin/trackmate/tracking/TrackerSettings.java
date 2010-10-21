@@ -93,12 +93,58 @@ public class TrackerSettings {
 	public String toString() {
 		String 	str = "Tracker: "+ trackerType.toString()+'\n';
 		
-		str += "  Linking costs:\n";
-		str += String.format("    distance cutoff: %.1f", linkingDistanceCutOff);
+		str += "  Linking conditions:\n";
+		str += String.format("    - distance cutoff: %.1f\n", linkingDistanceCutOff);
+		str += echoFeatureCuttofs(linkingFeatureCutoffs);
+		
+		if (allowGapClosing) {
+			str += "  Gap-closing conditions:\n";
+			str += String.format("    - distance cutoff: %.1f\n", gapClosingDistanceCutoff);
+			str += String.format("    - max frame interval: %.1f\n", gapClosingTimeCutoff);
+			str += echoFeatureCuttofs(gapClosingFeatureCutoffs);
+		} else {
+			str += "  Gap-closing not allowed.\n";
+		}
+		
+		if (allowSplitting) {
+			str += "  Track splitting conditions:\n";
+			str += String.format("    - distance cutoff: %.1f\n", splittingDistanceCutoff);
+			str += String.format("    - max frame interval: %.1f\n", splittingTimeCutoff);
+			str += echoFeatureCuttofs(splittingFeatureCutoffs);
+		} else {
+			str += "  Track splitting not allowed.\n";
+		}
+		
+		if (allowMerging) {
+			str += "  Track merging conditions:\n";
+			str += String.format("    - distance cutoff: %.1f\n", mergingDistanceCutoff);
+			str += String.format("    - max frame interval: %.1f\n", mergingTimeCutoff);
+			str += echoFeatureCuttofs(mergingFeatureCutoffs);
+		} else {
+			str += "  Track merging not allowed.\n";
+		}
+		
 		return str;
 	}
 	
 	
+	/*
+	 * PRIVATE METHODS
+	 */
+	
+	private static String echoFeatureCuttofs(final Map<Feature, Double> featureCutoffs) {
+		String str = "";
+		if (featureCutoffs.isEmpty()) 
+			str += "    - no feature condidions\n";
+		else {
+			str += "    - with feature conditions:\n";
+			for (Feature feature : featureCutoffs.keySet()) {
+				str += "      - "+feature.toString() + ": ratio = " + String.format("%.1f", featureCutoffs.get(feature)) + '\n';
+			}
+		}
+		return str;
+		
+	}
 
 
 }

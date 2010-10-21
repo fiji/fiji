@@ -50,18 +50,6 @@ import fiji.plugin.trackmate.visualization.SpotDisplayer3D;
 import fiji.plugin.trackmate.visualization.SpotDisplayer.TrackDisplayMode;
 
 
-/**
-* This code was edited or generated using CloudGarden's Jigloo
-* SWT/Swing GUI Builder, which is free for non-commercial
-* use. If Jigloo is being used commercially (ie, by a corporation,
-* company or business for any purpose whatever) then you
-* should purchase a license for each developer using Jigloo.
-* Please visit www.cloudgarden.com for details.
-* Use of Jigloo implies acceptance of these licensing terms.
-* A COMMERCIAL LICENSE HAS NOT BEEN PURCHASED FOR
-* THIS MACHINE, SO JIGLOO OR THIS CODE CANNOT BE USED
-* LEGALLY FOR ANY CORPORATE OR COMMERCIAL PURPOSE.
-*/
 public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 
 	
@@ -139,12 +127,13 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 	
 	private static final long serialVersionUID = 1L;
 
-	private static final String START_DIALOG_KEY = "Start";
-	private static final String TUNE_SEGMENTER_KEY = "TuneSegmenter";
-	private static final String INITIAL_THRESHOLDING_KEY = "InitialThresholding";
-	private static final String THRESHOLD_GUI_KEY = "Threshold";
-	private static final String LOG_PANEL_KEY = "Log";
-	private static final String DISPLAYER_PANEL_KEY = "Displayer";
+	private static final String START_DIALOG_KEY 			= "StartPanel";
+	private static final String TUNE_SEGMENTER_KEY 			= "TuneSegmenterPanel";
+	private static final String INITIAL_THRESHOLDING_KEY 	= "InitialThresholdingPanel";
+	private static final String THRESHOLD_GUI_KEY 			= "ThresholdPanel";
+	private static final String TUNE_TRACKER_KEY			= "TuneTrackerPanel";
+	private static final String LOG_PANEL_KEY 				= "LogPanel";
+	private static final String DISPLAYER_PANEL_KEY 		= "DisplayerPanel";
 	
 	private static final int DEFAULT_RESAMPLING_FACTOR = 3; // for the 3d viewer
 	private static final int DEFAULT_THRESHOLD = 50; // for the 3d viewer
@@ -238,11 +227,20 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 				break;
 				
 			case THRESHOLD_BLOBS:
-				state = GuiState.TUNE_TRACKER;
+				// Execute thresholding
+				trackmate.setFeatureThresholds(thresholdGuiPanel.getFeatureThresholds());
+				trackmate.execThresholding();
+				displayer.setSpotsToShow(trackmate.getSelectedSpots());
+				// Show tracker config panel 
 				execTuneTracker();
+				state = GuiState.TUNE_TRACKER;
 				break;
 				
 			case TUNE_TRACKER:
+				// Get settings from tuning panel and pass them to trackmate
+				settings.trackerSettings = trackerSettingsPanel.getSettings();
+				trackmate.setSettings(settings);
+				// Track
 				execTrackingStep();
 				state = GuiState.TRACKING;
 				break;
@@ -352,6 +350,8 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 		if (null != trackerSettingsPanel)
 			jPanelMain.remove(trackerSettingsPanel);
 		trackerSettingsPanel = settings.createTrackerSettingsPanel();
+		jPanelMain.add(trackerSettingsPanel, TUNE_TRACKER_KEY);
+		cardLayout.show(jPanelMain, TUNE_TRACKER_KEY);
 	}
 	
 	
@@ -500,19 +500,20 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 	private void execTrackingStep() {
 		cardLayout.show(jPanelMain, LOG_PANEL_KEY);
 		jButtonNext.setEnabled(false);
+		logger.log("Starting tracking...\n", Logger.BLUE_COLOR);
+		logger.log("with settings:\n");
+		logger.log(settings.trackerSettings.toString());
 		new Thread("TrackMate tracking thread") {					
 			public void run() {
-				// Threshold
-				trackmate.setFeatureThresholds(thresholdGuiPanel.getFeatureThresholds());
-				trackmate.execThresholding();
-				displayer.setSpotsToShow(trackmate.getSelectedSpots());
-				// Track
+				long start = System.currentTimeMillis();
 				trackmate.execTracking();
 				displayer.setTrackGraph(trackmate.getTrackGraph());
 				displayer.setDisplayTrackMode(TrackDisplayMode.ALL_WHOLE_TRACKS, 20);
 				updater.doUpdate();
 				// Re-enable the GUI
 				jButtonNext.setEnabled(true);
+				long end = System.currentTimeMillis();
+				logger.log(String.format("Tracking done in %.1f s.\n", (end-start)/1e3f), Logger.BLUE_COLOR);
 			}
 		}.start();
 	}
