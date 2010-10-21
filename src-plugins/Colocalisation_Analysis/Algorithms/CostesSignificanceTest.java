@@ -180,7 +180,7 @@ public class CostesSignificanceTest<T extends RealType<T>> extends Algorithm<T> 
 			}
 
 			// calculate correlation value...
-			double pValue = PearsonsCorrelation.fastPearsons( smoothedShuffledImage, img2);
+			double pValue = pearsonsCorrelation.calculatePearsons( smoothedShuffledImage, img2);
 			// ...and add it to the results list
 			shuffledPearsonsResults.add( pValue );
 		}
