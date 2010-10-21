@@ -1,4 +1,5 @@
 import ij.IJ;
+import mpicbg.imglib.algorithm.math.ImageStatistics;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
@@ -50,28 +51,49 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 
 	public double classicPearsons(DataContainer<T> container)
 			throws MissingPreconditionException {
+		// get the 2 images for the calculation of Pearson's
+		Image<T> img1 = container.getSourceImage1();
+		Image<T> img2 = container.getSourceImage2();
 		// get the means from the DataContainer
 		double ch1Mean = container.getMeanCh1();
 		double ch2Mean = container.getMeanCh2();
 
-		// Do the Classic version of the Pearson's Correlation as per Manders/Costes articles.
+		return classicPearsons(img1, img2, ch1Mean, ch2Mean);
+	}
 
-		// get the 2 images for the calculation of Pearson's
-		Image<T> img1 = container.getSourceImage1();
-		Image<T> img2 = container.getSourceImage2();
+	public <S extends RealType<S>> double calculatePearsons(Image<S> img1, Image<S> img2)
+			throws MissingPreconditionException {
+		if (theImplementation == Implementation.Classic) {
+			/* since we need the means and apparently don't have them
+			 * calculate them.
+			 */
+			double mean1 = ImageStatistics.getImageMean(img1);
+			double mean2 = ImageStatistics.getImageMean(img2);
+			// do the actual calculation
+			return pearsonsCorrelationValue = classicPearsons(img1, img2, mean1, mean2);
+		} else {
+			return fastPearsons(img1, img2);
+		}
+	}
 
+	/**
+	 * Do the Classic version of the Pearson's Correlation as per Manders/Costes articles.
+	 */
+	public static <S extends RealType<S>> double classicPearsons(Image<S> img1, Image<S> img2,
+			double ch1Mean, double ch2Mean)
+				throws MissingPreconditionException {
 		// get the cursors for iterating through pixels in images
-		Cursor<T> cursor1 = img1.createCursor();
-		Cursor<T> cursor2 = img2.createCursor();
+		Cursor<S> cursor1 = img1.createCursor();
+		Cursor<S> cursor2 = img2.createCursor();
 		double pearsonDenominator = 0;
 		double ch1diffSquaredSum = 0;
 		double ch2diffSquaredSum = 0;
 		while (cursor1.hasNext() && cursor2.hasNext()) {
 			cursor1.fwd();
 			cursor2.fwd();
-			T type1 = cursor1.getType();
+			S type1 = cursor1.getType();
 			double ch1diff = type1.getRealDouble() - ch1Mean;
-			T type2 = cursor2.getType();
+			S type2 = cursor2.getType();
 			double ch2diff = type2.getRealDouble() - ch2Mean;
 			pearsonDenominator += ch1diff*ch2diff;
 			ch1diffSquaredSum += (ch1diff*ch1diff);
