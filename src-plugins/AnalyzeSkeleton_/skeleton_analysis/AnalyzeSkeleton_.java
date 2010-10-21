@@ -637,7 +637,7 @@ public class AnalyzeSkeleton_ implements PlugInFilter
 		// Divide groups of end-points and junction voxels
 		if(this.numOfTrees > 1)
 			divideVoxelsByTrees(treeIS);
-		else
+		if(this.numOfTrees == 1)
 		{
 			if(debug)
 				IJ.log("list of end points size = " + this.listOfEndPoints.size());
