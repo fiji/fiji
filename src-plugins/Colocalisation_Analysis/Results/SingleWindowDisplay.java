@@ -109,6 +109,8 @@ public class SingleWindowDisplay<T extends RealType<T>> extends ImageWindow impl
 		super(NewImage.createFloatImage("Single Window Display", WIN_WIDTH, WIN_HEIGHT, 1, NewImage.FILL_WHITE));
 		// save a reference to the container
 		dataContainer = container;
+		// don't show ourself on instantiation
+		this.setVisible(false);
 	}
 
 	public void setup() {
