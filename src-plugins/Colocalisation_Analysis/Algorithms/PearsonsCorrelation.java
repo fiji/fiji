@@ -48,7 +48,8 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 		}
 	}
 
-	public double classicPearsons(DataContainer<T> container) {
+	public double classicPearsons(DataContainer<T> container)
+			throws MissingPreconditionException {
 		// get the means from the DataContainer
 		double ch1Mean = container.getMeanCh1();
 		double ch2Mean = container.getMeanCh2();
@@ -82,10 +83,15 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 		cursor1.close();
 		cursor2.close();
 
-		return pearsonDenominator / pearsonNumerator;
+		double pearsonsR = pearsonDenominator / pearsonNumerator;
+
+		checkForSanity(pearsonsR);
+
+		return pearsonsR;
 	}
 
-	public void fastPearsons(DataContainer<T> container) {
+	public void fastPearsons(DataContainer<T> container)
+			throws MissingPreconditionException {
 		// get the 2 images for the calculation of Pearson's
 		Image<T> img1 = container.getSourceImage1();
 		Image<T> img2 = container.getSourceImage2();
@@ -103,7 +109,8 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 		}
 	}
 
-	public static <T extends RealType<T>> double fastPearsons(Image<T> img1, Image<T> img2) {
+	public static <T extends RealType<T>> double fastPearsons(Image<T> img1, Image<T> img2)
+			throws MissingPreconditionException {
 		// get the cursors for iterating through pixels in images
 		Cursor<T> cursor1 = img1.createCursor();
 		Cursor<T> cursor2 = img2.createCursor();
@@ -138,6 +145,8 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 		double pearsons3 = sum2squared - (sum2 * sum2 * invN);
 		double pearsonsR = pearsons1 / (Math.sqrt(pearsons2 * pearsons3));
 
+		checkForSanity(pearsonsR);
+
 		return pearsonsR;
 	}
 
@@ -156,7 +165,8 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 	 * @return Person's R value
 	 */
 	public static <T extends RealType<T>> double fastPearsons(Image<T> img1, Image<T> img2,
-			double ch1ThreshMax, double ch2ThreshMax, boolean aboveThr) {
+			double ch1ThreshMax, double ch2ThreshMax, boolean aboveThr)
+				throws MissingPreconditionException {
 		// get the cursors for iterating through pixels in images
 		Cursor<T> cursor1 = img1.createCursor();
 		Cursor<T> cursor2 = img2.createCursor();
@@ -214,6 +224,8 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 		double pearsons3 = sum2squared - (sum2 * sum2 * invN);
 		double pearsonsR = pearsons1/(Math.sqrt(pearsons2*pearsons3));
 
+		checkForSanity(pearsonsR);
+
 		return pearsonsR;
 	}
 
@@ -229,7 +241,8 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 	 * @param cursor The cursor that defines the walk over both images.
 	 * @return Person's R value
 	 */
-	public static <T extends RealType<T>> double fastPearsons(TwinValueRangeCursor<T> cursor) {
+	public static <T extends RealType<T>> double fastPearsons(TwinValueRangeCursor<T> cursor)
+			throws MissingPreconditionException {
 		double sum1 = 0.0, sum2 = 0.0, sumProduct1_2 = 0.0, sum1squared= 0.0, sum2squared = 0.0;
 		// the total amount of pixels that have been taken into consideration
 		int N = 0;
@@ -257,7 +270,35 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 		double pearsons3 = sum2squared - (sum2 * sum2 * invN);
 		double pearsonsR = pearsons1/(Math.sqrt(pearsons2*pearsons3));
 
+		checkForSanity(pearsonsR);
+
 		return pearsonsR;
+	}
+
+	/**
+	 * Does a sanity check for calculated Pearsons values. Wrong
+	 * values can happen for fast and classic implementation.
+	 *
+	 * @param val The value to check.
+	 */
+	private static void checkForSanity(double value) throws MissingPreconditionException {
+		if ( Double.isNaN(value) || Double.isInfinite(value)) {
+			/* For the _fast_ implementation this could happen:
+			 *   Infinity could happen if only the numerator is 0, i.e.:
+			 *     sum1squared == sum1 * sum1 * invN
+			 *   and
+			 *     sum2squared == sum2 * sum2 * invN
+			 *   If the denominator is also zero, one will get NaN, i.e:
+			 *     sumProduct1_2 == sum1 * sum2 * invN
+			 *
+			 * For the classic implementation it could happen, too:
+			 *   Infinity happens if one channels sum of value-mean-differences
+			 *   is zero. If it is negative for one image you will get NaN.
+			 *   Additionally, if is zero for both channels at once you
+			 *   could get NaN. NaN
+			 */
+			throw new MissingPreconditionException("A numerical problem occured: the input data is unsuitable for this algorithm. Possibly too few pixels.");
+		}
 	}
 
 	@Override
