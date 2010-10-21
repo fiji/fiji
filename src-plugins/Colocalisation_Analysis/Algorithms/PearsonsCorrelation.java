@@ -119,10 +119,10 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 			double ch2 = type2.getRealDouble();
 
 			sum1 += ch1;
+			sum2 += ch2;
 			sumProduct1_2 += (ch1 * ch2);
 			sum1squared += (ch1 * ch1);
-			sum2squared += (ch2 *ch2);
-			sum2 += ch2;
+			sum2squared += (ch2 * ch2);
 			N++;
 		}
 
