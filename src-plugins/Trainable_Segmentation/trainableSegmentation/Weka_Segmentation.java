@@ -1305,6 +1305,16 @@ public class Weka_Segmentation implements PlugIn
 	}
 	
 	/**
+	 * Set flag to homogenize classes before training
+	 * 
+	 * @param homogenizeClasses true to resample the classes before training
+	 */
+	public void setHomogenizeClasses(boolean homogenizeClasses)
+	{
+		this.homogenizeClasses = homogenizeClasses;
+	}
+	
+	/**
 	 * Apply current classifier to current training image
 	 */
 	public void applyClassifier()
@@ -4430,7 +4440,7 @@ public class Weka_Segmentation implements PlugIn
 			if(verbose)
 			{
 				IJ.log(evaluation.toSummaryString("\n=== Test data evaluation ===\n", false));
-				IJ.log(evaluation.toClassDetailsString());
+				IJ.log(evaluation.toClassDetailsString() + "\n");
 				IJ.log(evaluation.toMatrixString());
 			}
 			error = evaluation.errorRate();
