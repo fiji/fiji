@@ -72,6 +72,10 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 			container = new DataContainer<T>(img1, img2, theImg1Channel, theImg2Channel);
 		}
 
+		// create a results handler
+		ResultHandler<T> resultHandler = new SingleWindowDisplay<T>(container);
+		//ResultHandler<T> resultHandler = new EasyDisplay<T>(container);
+
 		// this list contains the algorithms that will be run when the user clicks ok
 		List<Algorithm<T>> userSelectedJobs = new ArrayList<Algorithm<T>>();
 
@@ -82,7 +86,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 			new AutoThresholdRegression<T>()) );
 
 		// add user selected algorithms
-		PearsonsCorrelation pc = new PearsonsCorrelation<T>(PearsonsCorrelation.Implementation.Fast);
+		PearsonsCorrelation pc = new PearsonsCorrelation<T>(PearsonsCorrelation.Implementation.Classic);
 		userSelectedJobs.add( pc );
 		userSelectedJobs.add(
 			new LiHistogram2D<T>("Li - Ch1", true) );
@@ -95,20 +99,20 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		userSelectedJobs.add(
 			new Histogram2D<T>("hello") );
 		userSelectedJobs.add(
-			new CostesSignificanceTest(pc, 5, 10) );
+			new CostesSignificanceTest(pc, 3, 100) );
 
-		try {
-			for (Algorithm a : userSelectedJobs){
+
+		for (Algorithm a : userSelectedJobs){
+			try {
 				a.execute(container);
 			}
+			catch (MissingPreconditionException e){
+				String aName = a.getClass().getName();
+				System.out.println("MissingPreconditionException occured in " + aName + " algorithm: " + e.getMessage());
+				resultHandler.handleWarning(
+						new Warning( "Probem with input data", aName + " - " + e.getMessage() ) );
+			}
 		}
-		catch (MissingPreconditionException e){
-			System.out.println("Exception occured in Algorithm preconditions: " + e.getMessage());
-		}
-
-		// create a results handler
-		//ResultHandler<T> resultHandler = new SingleWindowDisplay<T>(container);
-		ResultHandler<T> resultHandler = new EasyDisplay<T>(container);
 
 		// let the algorithms feed their results to the handler
 		for (Algorithm a : userSelectedJobs){
