@@ -132,7 +132,7 @@ public class InteractiveTracerCanvas extends TracerCanvas implements KeyListener
 			double [] p = new double[3];
 			tracerPlugin.findPointInStackPrecise( last_x_in_pane_precise, last_y_in_pane_precise, plane, p );
 
-			double largestDimension = tracerPlugin.getLargestDimension();
+			double diagonalLength = tracerPlugin.getStackDiagonalLength();
 
 			/* Find the nearest point on any path - we'll
 			   select that path... */
@@ -140,10 +140,10 @@ public class InteractiveTracerCanvas extends TracerCanvas implements KeyListener
 			NearPoint np = pathAndFillManager.nearestPointOnAnyPath( p[0] * tracerPlugin.x_spacing,
 										 p[1] * tracerPlugin.y_spacing,
 										 p[2] * tracerPlugin.z_spacing,
-										 largestDimension);
+										 diagonalLength);
 
 			if( np == null ) {
-				IJ.error("BUG: No nearby path was found within "+largestDimension+" of the pointer");
+				IJ.error("BUG: No nearby path was found within "+diagonalLength+" of the pointer");
 				return;
 			}
 
