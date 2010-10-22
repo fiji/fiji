@@ -58,7 +58,8 @@ public class Main {
 			ParserConfigurationException, SAXException {
 		plugins = PluginCollection.getInstance();
 		progress = new StderrProgress();
-		new XMLFileReader(new GZIPInputStream(in), 0);
+		XMLFileReader reader = new XMLFileReader(plugins);
+		reader.read(new GZIPInputStream(in), 0);
 	}
 
 	public void checksum() {

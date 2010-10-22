@@ -41,22 +41,20 @@ public class XMLFileReader extends DefaultHandler {
 	private PluginObject current;
 	private String currentTag, body;
 
-	public XMLFileReader(String path, long previousLastModified)
-			throws ParserConfigurationException, IOException,
-				SAXException {
-		initialize(new InputSource(path), previousLastModified);
+	public XMLFileReader(PluginCollection plugins) {
+		this.plugins = plugins;
+	}
+	
+	public void read(String path, long previousLastModified) throws ParserConfigurationException, IOException, SAXException {
+		read(new InputSource(path), previousLastModified);
 	}
 
-	public XMLFileReader(InputStream in, long previousLastModified)
-			throws ParserConfigurationException, IOException,
-			       SAXException {
-		initialize(new InputSource(in), previousLastModified);
+	public void read(InputStream in, long previousLastModified) throws ParserConfigurationException, IOException, SAXException {
+		read(new InputSource(in), previousLastModified);
 	}
 
-	private void initialize(InputSource inputSource,
-			long previousLastModified)
-			throws ParserConfigurationException, SAXException,
-			       IOException {
+	private void read(InputSource inputSource, long previousLastModified)
+			throws ParserConfigurationException, SAXException, IOException {
 		File dbXml = new File(Util.prefix(Updater.XML_COMPRESSED));
 		newTimestamp =
 			// lastModified is a Unix epoch, we need a timestamp
@@ -76,7 +74,6 @@ public class XMLFileReader extends DefaultHandler {
 	}
 
 	public void startDocument () {
-		plugins = PluginCollection.getInstance();
 		body = "";
 	}
 
@@ -135,7 +132,11 @@ public class XMLFileReader extends DefaultHandler {
 					PluginObject.Action.INSTALL :
 					PluginObject.Action.NEW);
 			}
-			plugins.add(current);
+			PluginObject plugin = plugins.getPlugin(current.filename);
+			if (plugin == null)
+				plugins.add(current);
+			else
+				plugin.merge(current);
 			current = null;
 		}
 		body = "";

@@ -65,7 +65,8 @@ public class Updater implements PlugIn {
 			downloader.start();
 			// TODO: it is a parser, not a reader.  And it should
 			// be a static method.
-			new XMLFileReader(downloader.getInputStream(),
+			XMLFileReader reader = new XMLFileReader(plugins);
+			reader.read(downloader.getInputStream(),
 				downloader.getPreviousLastModified());
 		} catch (Canceled e) {
 			downloader.done();
