@@ -124,6 +124,11 @@ public class InteractiveTracerCanvas extends TracerCanvas implements KeyListener
 
 		} else if( keyChar == 'g' || keyChar == 'G' ) {
 
+			if( pathAndFillManager.size() == 0 ) {
+				IJ.error("There are no paths yet, so you can't select one with 'g'");
+				return;
+			}
+
 			double [] p = new double[3];
 			tracerPlugin.findPointInStackPrecise( last_x_in_pane_precise, last_y_in_pane_precise, plane, p );
 
@@ -132,7 +137,16 @@ public class InteractiveTracerCanvas extends TracerCanvas implements KeyListener
 			/* Find the nearest point on any path - we'll
 			   select that path... */
 
-			NearPoint np = pathAndFillManager.nearestPointOnAnyPath(p[0],p[1],p[2],largestDimension);
+			NearPoint np = pathAndFillManager.nearestPointOnAnyPath( p[0] * tracerPlugin.x_spacing,
+										 p[1] * tracerPlugin.y_spacing,
+										 p[2] * tracerPlugin.z_spacing,
+										 largestDimension);
+
+			if( np == null ) {
+				IJ.error("BUG: No nearby path was found within "+largestDimension+" of the pointer");
+				return;
+			}
+
 			Path path = np.getPath();
 
 			/* FIXME: in fact shift-G for multiple
