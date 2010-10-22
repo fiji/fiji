@@ -29,7 +29,7 @@ files = [stripPrecompiled(file) for file in argv[1:]]
 Updater.MAIN_URL = 'file:' + updateDirectory
 downloader = XMLFileDownloader()
 downloader.start()
-plugins = PluginCollection.getInstance()
+plugins = PluginCollection()
 reader = XMLFileReader(plugins).read(downloader.getInputStream(), 0)
 
 progress = StderrProgress()

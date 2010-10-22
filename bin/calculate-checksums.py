@@ -9,13 +9,13 @@ from java.lang.System import getProperty
 
 dbPath = getProperty('fiji.dir') + '/db.xml.gz'
 
+plugins = PluginCollection()
 progress = StderrProgress()
-checksummer = Checksummer(progress)
+checksummer = Checksummer(plugins, progress)
 if len(argv) > 1:
 	checksummer.updateFromLocal(argv[1:])
 else:
 	checksummer.updateFromLocal()
-plugins = PluginCollection.getInstance()
 plugins.sort()
 for plugin in plugins:
 	print plugin, plugin.current.checksum

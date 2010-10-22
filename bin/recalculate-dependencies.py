@@ -10,7 +10,7 @@ from java.lang.System import getProperty
 from java.util.zip import GZIPInputStream
 
 dbPath = getProperty('fiji.dir') + '/db.xml.gz'
-plugins = PluginCollection.getInstance()
+plugins = PluginCollection()
 XMLFileReader(plugins).read(GZIPInputStream(FileInputStream(dbPath)), 0)
 
 for plugin in plugins:
