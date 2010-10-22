@@ -226,14 +226,14 @@ misc/headless.jar <- jars/javac.jar ImageJA/
 CLASSPATH(plugins/mpicbg_.jar)=jars/mpicbg.jar
 plugins/mpicbg_.jar <- mpicbg/
 jars/mpicbg.jar <- mpicbg/
-
-jars/imglib.jar <- jars/mpicbg.jar imglib/imglib/src/main/java/**/*.java
-CLASSPATH(jars/imglib-algorithms.jar)=jars/edu_mines_jtk.jar:jars/Jama-1.0.2.jar:$JAVA3D_JARS
-jars/imglib-algorithms.jar <- jars/imglib.jar jars/mpicbg.jar imglib/imglib-algorithms/src/main/java/**/*.java
-CLASSPATH(jars/imglib-ij.jar)=jars/edu_mines_jtk.jar:jars/Jama-1.0.2.jar:$JAVA3D_JARS
-jars/imglib-ij.jar <- jars/imglib.jar jars/imglib-algorithms.jar jars/mpicbg.jar imglib/imglib-ij/src/main/java/**/*.java
-CLASSPATH(jars/imglib-io.jar)=jars/edu_mines_jtk.jar:jars/Jama-1.0.2.jar:$JAVA3D_JARS:plugins/loci_tools.jar
-jars/imglib-io.jar <- jars/imglib.jar jars/imglib-ij.jar plugins/loci_tools.jar imglib/imglib-io/src/main/java/**/*.java
+CLASSPATH(jars/imglib.jar)=jars/mpicbg.jar
+jars/imglib.jar <- imglib/
+CLASSPATH(jars/imglib-ij.jar)=jars/ij.jar:jars/imglib.jar
+jars/imglib-ij.jar <- imglib/
+CLASSPATH(jars/imglib-io.jar)=plugins/loci_tools.jar:jars/imglib.jar
+jars/imglib-io.jar <- imglib/
+CLASSPATH(jars/imglib-algorithms.jar)=jars/Jama-1.0.2.jar:jars/imglib.jar
+jars/imglib-algorithms.jar <- imglib/
 
 jars/clojure.jar <- clojure/
 plugins/loci_tools.jar <- bio-formats/
