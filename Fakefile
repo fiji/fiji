@@ -109,6 +109,9 @@ SUBMODULE_TARGETS=\
 	jars/weka.jar \
 	jars/jython.jar \
 	jars/imglib.jar \
+	jars/imglib-algorithms.jar \
+	jars/imglib-ij.jar \
+	jars/imglib-io.jar \
 	jars/mpicbg.jar \
 	jars/commons-math.jar
 
@@ -223,14 +226,21 @@ misc/headless.jar <- jars/javac.jar ImageJA/
 CLASSPATH(plugins/mpicbg_.jar)=jars/mpicbg.jar
 plugins/mpicbg_.jar <- mpicbg/
 jars/mpicbg.jar <- mpicbg/
-CLASSPATH(jars/imglib.jar)=jars/mpicbg.jar:$JAVA3D_JARS
-jars/imglib.jar <- plugins/loci_tools.jar imglib/
+
+jars/imglib.jar <- jars/mpicbg.jar imglib/imglib/src/main/java/**/*.java
+CLASSPATH(jars/imglib-algorithms.jar)=jars/edu_mines_jtk.jar:jars/Jama-1.0.2.jar:$JAVA3D_JARS
+jars/imglib-algorithms.jar <- jars/imglib.jar jars/mpicbg.jar imglib/imglib-algorithms/src/main/java/**/*.java
+CLASSPATH(jars/imglib-ij.jar)=jars/edu_mines_jtk.jar:jars/Jama-1.0.2.jar:$JAVA3D_JARS
+jars/imglib-ij.jar <- jars/imglib.jar jars/imglib-algorithms.jar jars/mpicbg.jar imglib/imglib-ij/src/main/java/**/*.java
+CLASSPATH(jars/imglib-io.jar)=jars/edu_mines_jtk.jar:jars/Jama-1.0.2.jar:$JAVA3D_JARS:plugins/loci_tools.jar
+jars/imglib-io.jar <- jars/imglib.jar jars/imglib-ij.jar plugins/loci_tools.jar imglib/imglib-io/src/main/java/**/*.java
+
 jars/clojure.jar <- clojure/
 plugins/loci_tools.jar <- bio-formats/
 CLASSPATH(jars/VectorString.jar)=jars/Jama-1.0.2.jar:$JAVA3D_JARS
 jars/VectorString.jar <- TrakEM2/
-CLASSPATH(plugins/TrakEM2_.jar)=plugins/VIB_.jar:jars/mpicbg.jar:plugins/loci_tools.jar:plugins/bUnwarpJ_.jar:plugins/level_sets.jar:plugins/Fiji_Plugins.jar:jars/Jama-1.0.2.jar:jars/imglib.jar:plugins/Simple_Neurite_Tracer.jar:plugins/3D_Viewer.jar:$JAVA3D_JARS
-plugins/TrakEM2_.jar <- jars/ij.jar plugins/VIB_.jar jars/mpicbg.jar plugins/bUnwarpJ_.jar plugins/level_sets.jar plugins/Fiji_Plugins.jar jars/imglib.jar jars/VectorString.jar TrakEM2/
+CLASSPATH(plugins/TrakEM2_.jar)=plugins/VIB_.jar:jars/mpicbg.jar:plugins/loci_tools.jar:plugins/bUnwarpJ_.jar:plugins/level_sets.jar:plugins/Fiji_Plugins.jar:jars/Jama-1.0.2.jar:jars/imglib.jar:jars/imglib-algorithms.jar:jars/imglib-ij.jar:plugins/Simple_Neurite_Tracer.jar:plugins/3D_Viewer.jar:$JAVA3D_JARS
+plugins/TrakEM2_.jar <- jars/ij.jar plugins/VIB_.jar jars/mpicbg.jar plugins/bUnwarpJ_.jar plugins/level_sets.jar plugins/Fiji_Plugins.jar jars/imglib.jar jars/imglib-algorithms.jar jars/imglib-ij.jar jars/VectorString.jar TrakEM2/
 plugins/ij-ImageIO_.jar <- ij-plugins/
 jars/jacl.jar <- tcljava/
 jars/batik.jar <- batik/
@@ -434,6 +444,9 @@ precompiled/autocomplete.jar <- jars/autocomplete.jar
 precompiled/weka.jar <- jars/weka.jar
 precompiled/jython.jar <- jars/jython.jar
 precompiled/imglib.jar <- jars/imglib.jar
+precompiled/imglib-algorithms.jar <- jars/imglib-algorithms.jar
+precompiled/imglib-ij.jar <- jars/imglib-ij.jar
+precompiled/imglib-io.jar <- jars/imglib-io.jar
 precompiled/commons-math.jar <- jars/commons-math.jar
 precompiled/* <- plugins/*
 

@@ -122,6 +122,9 @@
 /jars/VectorString.jar
 /jars/fiji-lib.jar
 /jars/imglib.jar
+/jars/imglib-algorithms.jar
+/jars/imglib-ij.jar
+/jars/imglib-io.jar
 /jars/jep.jar
 /plugins/Siox_Segmentation.jar
 /plugins/Directionality_.jar
