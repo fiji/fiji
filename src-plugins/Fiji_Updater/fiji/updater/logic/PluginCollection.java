@@ -19,13 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class PluginCollection extends ArrayList<PluginObject> {
-	protected PluginCollection() { }
-	protected static PluginCollection instance;
-	public static PluginCollection getInstance() {
-		if (instance == null)
-			instance = new PluginCollection();
-		return instance;
-	}
+	public PluginCollection() { }
 
 	static DependencyAnalyzer dependencyAnalyzer;
 
@@ -400,13 +394,13 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		PluginObject updater = getPlugin("plugins/Fiji_Updater.jar");
 		if (updater != null &&
 				updater.getStatus() == Status.UPDATEABLE) {
-			updater.setAction(Action.UPDATE);
+			updater.setAction(this, Action.UPDATE);
 			return;
 		}
 		for (PluginObject plugin : updateable(evenForcedUpdates)) {
 			if (Util.isDeveloper && Util.isLauncher(plugin.filename))
 				continue;
-			plugin.setFirstValidAction(new Action[] {
+			plugin.setFirstValidAction(this, new Action[] {
 				Action.UPDATE, Action.UNINSTALL, Action.INSTALL
 			});
 		}
@@ -416,7 +410,7 @@ public class PluginCollection extends ArrayList<PluginObject> {
 				if (launcher == null)
 					continue; // the regression test triggers this
 				if (launcher.getStatus() == Status.NOT_INSTALLED)
-					launcher.setAction(Action.INSTALL);
+					launcher.setAction(this, Action.INSTALL);
 			}
 	}
 

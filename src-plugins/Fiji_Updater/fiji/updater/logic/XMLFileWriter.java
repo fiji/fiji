@@ -26,6 +26,7 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.AttributesImpl;
 
 public class XMLFileWriter {
+	protected PluginCollection plugins;
 	protected TransformerHandler handler;
 	protected final String XALAN_INDENT_AMOUNT =
 		"{http://xml.apache.org/xslt}" + "indent-amount";
@@ -51,17 +52,19 @@ public class XMLFileWriter {
 		+ "<!ATTLIST previous-version timestamp CDATA #REQUIRED>\n"
 		+ "<!ATTLIST previous-version checksum CDATA #REQUIRED>]>\n";
 
-	protected XMLFileWriter() {} // only instantiate from write()
+	public XMLFileWriter(PluginCollection plugins) {
+		this.plugins = plugins;
+	}
 
-	public static void writeAndValidate(String path) throws SAXException,
+	public static void writeAndValidate(PluginCollection plugins, String path) throws SAXException,
 			TransformerConfigurationException, IOException,
 			ParserConfigurationException {
-		XMLFileWriter writer = new XMLFileWriter();
+		XMLFileWriter writer = new XMLFileWriter(plugins);
 		writer.write(new FileOutputStream(path));
 		writer.validate(new FileInputStream(path));
 	}
 
-	protected void write(OutputStream out) throws SAXException,
+	public void write(OutputStream out) throws SAXException,
 			TransformerConfigurationException, IOException,
 			ParserConfigurationException {
 		createHandler(out);
@@ -69,8 +72,7 @@ public class XMLFileWriter {
 		handler.startDocument();
 		AttributesImpl attr = new AttributesImpl();
 		handler.startElement("", "", "pluginRecords", attr);
-		for (PluginObject plugin :
-				PluginCollection.getInstance().fijiPlugins()) {
+		for (PluginObject plugin : plugins.fijiPlugins()) {
 			attr.clear();
 			setAttribute(attr, "filename", plugin.filename);
 			handler.startElement("", "", "plugin", attr);

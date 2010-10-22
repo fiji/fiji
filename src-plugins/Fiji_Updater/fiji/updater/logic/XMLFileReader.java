@@ -128,7 +128,7 @@ public class XMLFileReader extends DefaultHandler {
 				current.setStatus(Status.OBSOLETE_UNINSTALLED);
 			else if (current.isNewerThan(newTimestamp)) {
 				current.setStatus(Status.NEW);
-				current.setAction(current.isForThisPlatform() ?
+				current.setAction(plugins, current.isForThisPlatform() ?
 					PluginObject.Action.INSTALL :
 					PluginObject.Action.NEW);
 			}

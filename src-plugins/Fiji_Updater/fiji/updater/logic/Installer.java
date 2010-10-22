@@ -15,7 +15,10 @@ import java.util.Iterator;
 import java.util.List;
 
 public class Installer extends Downloader {
-	public Installer(Progress progress) {
+	protected PluginCollection plugins;
+
+	public Installer(PluginCollection plugins, Progress progress) {
+		this.plugins = plugins;
 		addProgress(progress);
 		addProgress(new VerifyFiles());
 	}
@@ -49,8 +52,6 @@ public class Installer extends Downloader {
 	}
 
 	public synchronized void start() throws IOException {
-		PluginCollection plugins = PluginCollection.getInstance();
-
 		// mark for removal
 		for (PluginObject plugin : plugins.toUninstall()) try {
 			plugin.stageForUninstall();

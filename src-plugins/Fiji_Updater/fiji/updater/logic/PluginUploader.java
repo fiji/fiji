@@ -38,6 +38,7 @@ import java.util.Map;
  *   (i.e.: XML file)
  */
 public class PluginUploader {
+	protected PluginCollection plugins;
 	protected FileUploader uploader;
 
 	// checking race condition:
@@ -48,7 +49,8 @@ public class PluginUploader {
 	String backup, compressed, text;
 
 	// TODO: add a button to check for new db.xml.gz, and merge if necessary
-	public PluginUploader(long xmlLastModified) {
+	public PluginUploader(PluginCollection plugins, long xmlLastModified) {
+		this.plugins = plugins;
 		this.xmlLastModified = xmlLastModified;
 		backup = Util.prefix(Updater.XML_BACKUP);
 		compressed = Util.prefix(Updater.XML_COMPRESSED);
@@ -79,8 +81,7 @@ public class PluginUploader {
 		List<String> locks = new ArrayList<String>();
 		files.add(new UploadableFile(compressed,
 					Updater.XML_LOCK, "C0444"));
-		for (PluginObject plugin :
-				PluginCollection.getInstance().toUpload())
+		for (PluginObject plugin : plugins.toUpload())
 			files.add(new UploadableFile(plugin));
 
 		files.add(new UploadableFile(text,
@@ -118,7 +119,7 @@ public class PluginUploader {
 			}
 		}
 
-		XMLFileWriter.writeAndValidate(backup);
+		XMLFileWriter.writeAndValidate(plugins, backup);
 		// TODO: only save _compressed_ backup, and not as db.bak!
 		compress(backup, compressed);
 		((UploadableFile)files.get(0)).updateFilesize();
@@ -141,8 +142,7 @@ public class PluginUploader {
 	// TODO: in-memory only, please
 	protected void saveTextFile(String path) throws FileNotFoundException {
 		PrintStream out = new PrintStream(path);
-		for (PluginObject plugin :
-				PluginCollection.getInstance().forCurrentTXT())
+		for (PluginObject plugin : plugins.forCurrentTXT())
 			out.println(plugin.getFilename() + " "
 					+ plugin.getTimestamp() + " "
 					+ plugin.getChecksum());

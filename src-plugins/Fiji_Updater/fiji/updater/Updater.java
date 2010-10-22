@@ -50,13 +50,13 @@ public class Updater implements PlugIn {
 		if (errorIfDebian())
 			return;
 
-		final UpdaterFrame main = new UpdaterFrame();
+		final PluginCollection plugins = new PluginCollection();
+		final UpdaterFrame main = new UpdaterFrame(plugins);
 		main.setLocationRelativeTo(IJ.getInstance());
 		main.setEasyMode(true);
 		main.setVisible(true);
 		WindowManager.addWindow(main);
 
-		PluginCollection plugins = PluginCollection.getInstance();
 		plugins.removeAll(plugins);
 		Progress progress = main.getProgress("Starting up...");
 		XMLFileDownloader downloader = new XMLFileDownloader();
@@ -90,7 +90,7 @@ public class Updater implements PlugIn {
 		}
 
 		progress = main.getProgress("Matching with local files...");
-		Checksummer checksummer = new Checksummer(progress);
+		Checksummer checksummer = new Checksummer(plugins, progress);
 		try {
 			if (debug)
 				checksummer.done();

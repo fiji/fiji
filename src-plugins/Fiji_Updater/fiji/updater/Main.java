@@ -56,7 +56,7 @@ public class Main {
 
 	public Main(InputStream in) throws IOException,
 			ParserConfigurationException, SAXException {
-		plugins = PluginCollection.getInstance();
+		plugins = new PluginCollection();
 		progress = new StderrProgress();
 		XMLFileReader reader = new XMLFileReader(plugins);
 		reader.read(new GZIPInputStream(in), 0);
@@ -67,7 +67,7 @@ public class Main {
 	}
 
 	public void checksum(List<String> files) {
-		Checksummer checksummer = new Checksummer(progress);
+		Checksummer checksummer = new Checksummer(plugins, progress);
 		if (files != null && files.size() > 0)
 			checksummer.updateFromLocal(files);
 		else

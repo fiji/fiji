@@ -282,14 +282,12 @@ public class PluginObject {
 		action = status.getNoAction();
 	}
 
-	public void setAction(Action action) {
+	public void setAction(PluginCollection plugins, Action action) {
 		if (!status.isValid(action))
 			throw new Error("Invalid action requested for plugin "
 					+ filename + "(" + action
 					+ ", " + status + ")");
 		if (action == Action.UPLOAD) {
-			PluginCollection plugins =
-				PluginCollection.getInstance();
 			Iterable<String> dependencies =
 				plugins.analyzeDependencies(this);
 			if (dependencies != null)
@@ -299,10 +297,10 @@ public class PluginObject {
 		this.action = action;
 	}
 
-	public boolean setFirstValidAction(Action[] actions) {
+	public boolean setFirstValidAction(PluginCollection plugins, Action[] actions) {
 		for (Action action : actions)
 			if (status.isValid(action)) {
-				setAction(action);
+				setAction(plugins, action);
 				return true;
 			}
 		return false;

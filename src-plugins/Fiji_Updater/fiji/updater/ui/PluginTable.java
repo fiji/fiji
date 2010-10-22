@@ -36,10 +36,13 @@ import javax.swing.table.TableColumn;
  * This class' role is to be in charge of how the Table should be displayed
  */
 public class PluginTable extends JTable {
+	protected PluginCollection plugins;
 	private PluginTableModel pluginTableModel;
 	protected Font plain, bold;
 
 	public PluginTable(PluginCollection plugins) {
+		this.plugins = plugins;
+
 		//Set appearance of table
 		setShowGrid(false);
 		setIntercellSpacing(new Dimension(0,0));
@@ -104,6 +107,10 @@ public class PluginTable extends JTable {
 		col2.setPreferredWidth(col2Width);
 		col2.setMinWidth(col2Width);
 		col2.setResizable(true);
+	}
+
+	public PluginCollection getAllPlugins() {
+		return plugins;
 	}
 
 	public void setPlugins(Iterable<PluginObject> plugins) {
@@ -194,7 +201,7 @@ public class PluginTable extends JTable {
 			if (column == 1) {
 				Action action = (Action)value;
 				if (getPlugin(row).getStatus().isValid(action))
-					getPlugin(row).setAction(action);
+					getPlugin(row).setAction(plugins, action);
 				fireRowChanged(row);
 			}
 		}

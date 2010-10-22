@@ -44,15 +44,15 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 	int conflicts;
 	boolean forUpload, wasCanceled;
 
-	public ResolveDependencies(Frame owner) {
-		this(owner, false);
+	public ResolveDependencies(Frame owner, PluginCollection plugins) {
+		this(owner, plugins, false);
 	}
 
-	public ResolveDependencies(Frame owner, boolean forUpload) {
+	public ResolveDependencies(Frame owner, PluginCollection plugins, boolean forUpload) {
 		super(owner, "Resolve dependencies");
 
 		this.forUpload = forUpload;
-		plugins = PluginCollection.getInstance();
+		this.plugins = plugins;
 
 		rootPanel = SwingTools.verticalPanel();
 		setContentPane(rootPanel);
@@ -103,7 +103,7 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 			if (!ok.isEnabled())
 				return;
 			for (PluginObject plugin : automatic)
-				plugin.setFirstValidAction(new Action[] {
+				plugin.setFirstValidAction(plugins, new Action[] {
 					Action.INSTALL, Action.UPDATE,
 					Action.UNINSTALL
 				});
@@ -361,7 +361,7 @@ public class ResolveDependencies extends JDialog implements ActionListener {
 					if (action == null)
 						plugin.setNoAction();
 					else
-						plugin.setAction(action);
+						plugin.setAction(ResolveDependencies.this.plugins, action);
 				listIssues();
 			}
 		});

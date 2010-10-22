@@ -86,10 +86,10 @@ public class UpdaterFrame extends JFrame
 	private JButton btnUpload;
 	boolean canUpload;
 
-	public UpdaterFrame() {
+	public UpdaterFrame(PluginCollection plugins) {
 		super("Fiji Updater");
 
-		plugins = PluginCollection.getInstance();
+		this.plugins = plugins;
 
 		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		addWindowListener(new WindowAdapter() {
@@ -369,7 +369,7 @@ public class UpdaterFrame extends JFrame
 		}
 
 		protected boolean setAction(PluginObject plugin) {
-			return plugin.setFirstValidAction(new Action[] {
+			return plugin.setFirstValidAction(plugins, new Action[] {
 					action, otherAction
 			});
 		}
@@ -419,7 +419,7 @@ public class UpdaterFrame extends JFrame
 	}
 
 	public void applyChanges() {
-		ResolveDependencies resolver = new ResolveDependencies(this);
+		ResolveDependencies resolver = new ResolveDependencies(this, plugins);
 		if (!resolver.resolve())
 			return;
 		new Thread() {
@@ -476,15 +476,14 @@ public class UpdaterFrame extends JFrame
 
 	public void install() {
 		Installer installer =
-			new Installer(getProgress("Installing..."));
+			new Installer(plugins, getProgress("Installing..."));
 		try {
 			PluginCollection uninstalled = PluginCollection
 				.clone(plugins.toUninstall());
 			installer.start();
 			for (PluginObject plugin : uninstalled)
 				if (!plugin.isFiji())
-					PluginCollection.getInstance()
-						.remove(plugin);
+					plugins.remove(plugin);
 				else
 					plugin.setStatus(plugin.isObsolete() ?
 						Status.OBSOLETE_UNINSTALLED :
@@ -626,7 +625,7 @@ public class UpdaterFrame extends JFrame
 
 	protected void upload() {
 		ResolveDependencies resolver =
-			new ResolveDependencies(this, true);
+			new ResolveDependencies(this, plugins, true);
 		if (!resolver.resolve())
 			return;
 
@@ -636,7 +635,7 @@ public class UpdaterFrame extends JFrame
 			return;
 		}
 
-		PluginUploader uploader = new PluginUploader(xmlLastModified);
+		PluginUploader uploader = new PluginUploader(plugins, xmlLastModified);
 
 		try {
 			if (!interactiveSshLogin(uploader))
