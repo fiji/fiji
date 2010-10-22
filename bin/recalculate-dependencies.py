@@ -10,9 +10,8 @@ from java.lang.System import getProperty
 from java.util.zip import GZIPInputStream
 
 dbPath = getProperty('fiji.dir') + '/db.xml.gz'
-XMLFileReader(GZIPInputStream(FileInputStream(dbPath)), 0)
-
 plugins = PluginCollection.getInstance()
+XMLFileReader(plugins).read(GZIPInputStream(FileInputStream(dbPath)), 0)
 
 for plugin in plugins:
 	if plugin.current == None or not plugin.filename.endswith('.jar'):

@@ -92,7 +92,7 @@ if (bsh.args.length == 0)
 
 fijiDir = System.getProperty("fiji.dir");
 dbPath = fijiDir + "/db.xml.gz";
-new XMLFileReader(new GZIPInputStream(new FileInputStream(dbPath)), 0);
+new XMLFileReader(PluginCollection.getInstance()).read(new GZIPInputStream(new FileInputStream(dbPath)), 0);
 
 plugins = PluginCollection.getInstance();
 

@@ -29,11 +29,11 @@ files = [stripPrecompiled(file) for file in argv[1:]]
 Updater.MAIN_URL = 'file:' + updateDirectory
 downloader = XMLFileDownloader()
 downloader.start()
-reader = XMLFileReader(downloader.getInputStream(), 0)
+plugins = PluginCollection.getInstance()
+reader = XMLFileReader(plugins).read(downloader.getInputStream(), 0)
 
 progress = StderrProgress()
 checksummer = Checksummer(progress)
-plugins = PluginCollection.getInstance()
 if len(files) == 0:
 	checksummer.updateFromLocal()
 else:
