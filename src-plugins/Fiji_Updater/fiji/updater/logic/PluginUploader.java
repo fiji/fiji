@@ -113,7 +113,9 @@ public class PluginUploader {
 			}
 		}
 
-		XMLFileWriter.writeAndValidate(plugins, backup);
+		XMLFileWriter writer = new XMLFileWriter(plugins);
+		writer.validate();
+		writer.write(new FileOutputStream(backup));
 		// TODO: only save _compressed_ backup, and not as db.bak!
 		compress(backup, compressed);
 		((UploadableFile)files.get(0)).updateFilesize();

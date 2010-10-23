@@ -1,5 +1,7 @@
 package fiji.updater.logic;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -56,12 +58,13 @@ public class XMLFileWriter {
 		this.plugins = plugins;
 	}
 
-	public static void writeAndValidate(PluginCollection plugins, String path) throws SAXException,
+	public void validate() throws SAXException,
 			TransformerConfigurationException, IOException,
 			ParserConfigurationException {
-		XMLFileWriter writer = new XMLFileWriter(plugins);
-		writer.write(new FileOutputStream(path));
-		writer.validate(new FileInputStream(path));
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		write(out);
+		ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
+		validate(in);
 	}
 
 	public void write(OutputStream out) throws SAXException,
