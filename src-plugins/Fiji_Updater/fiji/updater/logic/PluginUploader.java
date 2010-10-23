@@ -6,17 +6,18 @@ import fiji.updater.Updater;
 
 import fiji.updater.logic.FileUploader.SourceFile;
 
-import fiji.updater.util.Compressor;
 import fiji.updater.util.Progress;
 import fiji.updater.util.Util;
 
 import ij.IJ;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
 
 import java.net.URL;
@@ -71,6 +72,26 @@ public class PluginUploader {
 		}
 	}
 
+	protected class DbXmlFile implements SourceFile {
+		public byte[] bytes;
+
+		public String getFilename() {
+			return compressed;
+		}
+		
+		public String getPermissions() {
+			return "C0444";
+		}
+
+		public long getFilesize() {
+			return bytes.length;
+		}
+
+		public InputStream getInputStream() {
+			return new ByteArrayInputStream(bytes);
+		}
+	}
+
 	public void upload(Progress progress) throws Exception  {
 		uploader.addProgress(progress);
 		uploader.addProgress(new VerifyTimestamp());
@@ -78,8 +99,7 @@ public class PluginUploader {
 		// TODO: rename "UpdateSource" to "Transferable", reuse!
 		files = new ArrayList<SourceFile>();
 		List<String> locks = new ArrayList<String>();
-		files.add(new UploadableFile(compressed,
-					Updater.XML_LOCK, "C0444"));
+		files.add(new DbXmlFile());
 		for (PluginObject plugin : plugins.toUpload())
 			files.add(new UploadableFile(plugin));
 
@@ -115,21 +135,9 @@ public class PluginUploader {
 
 		XMLFileWriter writer = new XMLFileWriter(plugins);
 		writer.validate();
-		writer.write(new FileOutputStream(backup));
-		// TODO: only save _compressed_ backup, and not as db.bak!
-		compress(backup, compressed);
-		((UploadableFile)files.get(0)).updateFilesize();
+		((DbXmlFile)files.get(0)).bytes = writer.toCompressedByteArray();
 
 		uploader.calculateTotalSize(files);
-	}
-
-	protected void compress(String uncompressed, String compressed)
-			throws IOException {
-		FileOutputStream out = new FileOutputStream(compressed);
-		FileInputStream in = new FileInputStream(uncompressed);
-		Compressor.compressAndSave(Compressor.readStream(in), out);
-		out.close();
-		in.close();
 	}
 
 	/*

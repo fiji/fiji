@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import java.util.zip.GZIPOutputStream;
+
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -58,12 +60,26 @@ public class XMLFileWriter {
 		this.plugins = plugins;
 	}
 
-	public void validate() throws SAXException,
+	public byte[] toByteArray() throws SAXException,
 			TransformerConfigurationException, IOException,
 			ParserConfigurationException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		write(out);
-		ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
+		return out.toByteArray();
+	}
+		
+	public byte[] toCompressedByteArray() throws SAXException,
+			TransformerConfigurationException, IOException,
+			ParserConfigurationException {
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		write(new GZIPOutputStream(out));
+		return out.toByteArray();
+	}
+		
+	public void validate() throws SAXException,
+			TransformerConfigurationException, IOException,
+			ParserConfigurationException {
+		ByteArrayInputStream in = new ByteArrayInputStream(toByteArray());
 		validate(in);
 	}
 
