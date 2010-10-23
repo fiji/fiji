@@ -83,7 +83,8 @@ public class SSHFileUploader extends FileUploader {
 		try {
 			uploadFiles(sources);
 		} catch (Canceled cancel) {
-			setCommand("rm " + uploadDir + Updater.XML_LOCK);
+			for (String lock : locks)
+				setCommand("rm " + uploadDir + lock + ".lock");
 			out.close();
 			channel.disconnect();
 			throw cancel;
