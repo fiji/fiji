@@ -6,9 +6,10 @@ import fiji.updater.logic.PluginObject.Action;
 import fiji.updater.logic.PluginObject.Status;
 
 import fiji.updater.util.DependencyAnalyzer;
-
 import fiji.updater.util.Util;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 
 import java.util.ArrayList;
@@ -22,6 +23,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+import java.util.zip.GZIPOutputStream;
+
+import javax.xml.parsers.ParserConfigurationException;
+
+import javax.xml.transform.TransformerConfigurationException;
+
+import org.xml.sax.SAXException;
+
 public class PluginCollection extends ArrayList<PluginObject> {
 	public static class UpdateSite {
 		public final String url;
@@ -30,6 +39,14 @@ public class PluginCollection extends ArrayList<PluginObject> {
 		public UpdateSite(String url, long timestamp) {
 			this.url = url;
 			this.timestamp = timestamp;
+		}
+
+		public boolean isLastModified(long lastModified) {
+			return timestamp == Long.parseLong(Util.timestamp(lastModified));
+		}
+
+		public void setLastModified(long lastModified) {
+			timestamp = Long.parseLong(Util.timestamp(lastModified));
 		}
 	}
 
@@ -52,6 +69,14 @@ public class PluginCollection extends ArrayList<PluginObject> {
 
 	public Collection<String> getUpdateSiteNames() {
 		return updateSites.keySet();
+	}
+
+	public void read() throws IOException, ParserConfigurationException, SAXException {
+		new XMLFileReader(this).read(new File(Util.prefix(Updater.XML_COMPRESSED)));
+	}
+
+	public void write() throws IOException, SAXException, TransformerConfigurationException, ParserConfigurationException {
+		new XMLFileWriter(this).write(new GZIPOutputStream(new FileOutputStream(Util.prefix(Updater.XML_COMPRESSED))), true);
 	}
 
 	protected static DependencyAnalyzer dependencyAnalyzer;

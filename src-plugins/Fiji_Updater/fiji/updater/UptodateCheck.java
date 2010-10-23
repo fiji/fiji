@@ -1,5 +1,8 @@
 package fiji.updater;
 
+import fiji.updater.logic.PluginCollection;
+import fiji.updater.logic.PluginCollection.UpdateSite;
+
 import fiji.updater.util.Util;
 
 import ij.IJ;
@@ -68,12 +71,20 @@ public class UptodateCheck implements PlugIn {
 			return "Your Fiji is read-only!";
 		if (!haveNetworkConnection())
 			return "No network connection available!";
-		localLastModified = getLocalLastModified();
-		if (isDbXmlGzUpToDate(localLastModified)) {
-			setLatestNag(-1);
-			return "Up-to-date";
-		}
-		return null;
+		PluginCollection plugins = new PluginCollection();
+		try {
+			plugins.read();
+			for (String name : plugins.getUpdateSiteNames()) {
+				UpdateSite updateSite = plugins.getUpdateSite(name);
+				long lastModified = getLastModified(updateSite.url + Updater.XML_COMPRESSED);
+				if (lastModified < 0)
+					continue; // assume network is down
+				if (!updateSite.isLastModified(lastModified))
+					return null;
+			}
+		} catch (Exception e) { /* ignore */ }
+		setLatestNag(-1);
+		return "Up-to-date";
 	}
 
 	public static long now() {
@@ -111,11 +122,6 @@ public class UptodateCheck implements PlugIn {
 		return new File(url).canWrite();
 	}
 
-	public static long getLocalLastModified() {
-		File dbXmlGz = new File(Util.prefix(Updater.XML_COMPRESSED));
-		return dbXmlGz.exists() ? dbXmlGz.lastModified() : 0;
-	}
-
 	public static boolean haveNetworkConnection() {
 		try {
 			Enumeration<NetworkInterface> ifaces =
@@ -132,20 +138,19 @@ public class UptodateCheck implements PlugIn {
 		return false;
 	}
 
-	public static boolean isDbXmlGzUpToDate(long local) {
+	public static long getLastModified(String url) {
 		try {
-			URLConnection connection = new URL(Updater.MAIN_URL
-				+ Updater.XML_COMPRESSED).openConnection();
+			URLConnection connection = new URL(url).openConnection();
 			if (connection instanceof HttpURLConnection)
 				((HttpURLConnection)connection)
 					.setRequestMethod("HEAD");
 			connection.setUseCaches(false);
 			long lastModified = connection.getLastModified();
 			connection.getInputStream().close();
-			return lastModified == local;
+			return lastModified;
 		} catch (Exception e) {
 			// assume no network; so let's pretend everything's ok.
-			return true;
+			return -1;
 		}
 	}
 

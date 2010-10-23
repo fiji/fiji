@@ -5,6 +5,7 @@ import fiji.updater.Updater;
 import fiji.updater.logic.Installer;
 import fiji.updater.logic.PluginCollection;
 import fiji.updater.logic.PluginCollection.DependencyMap;
+import fiji.updater.logic.PluginCollection.UpdateSite;
 import fiji.updater.logic.PluginObject;
 import fiji.updater.logic.PluginObject.Action;
 import fiji.updater.logic.PluginObject.Status;
@@ -70,7 +71,6 @@ import javax.swing.event.ListSelectionListener;
 public class UpdaterFrame extends JFrame
 		implements TableModelListener, ListSelectionListener {
 	PluginCollection plugins;
-	protected long xmlLastModified;
 
 	private JFrame loadedFrame;
 	private JTextField txtSearch;
@@ -589,14 +589,8 @@ public class UpdaterFrame extends JFrame
 		pluginsChanged();
 	}
 
-	public long getLastModified() {
-		return xmlLastModified;
-	}
-
-	// setLastModified() is guaranteed to be called after Checksummer ran
-	public void setLastModified(long lastModified) {
-		xmlLastModified = lastModified;
-
+	// checkWritable() is guaranteed to be called after Checksummer ran
+	public void checkWritable() {
 		String list = null;
 		for (PluginObject plugin : plugins) {
 			File file = new File(Util.prefix(plugin.getFilename()));
@@ -635,7 +629,8 @@ public class UpdaterFrame extends JFrame
 			return;
 		}
 
-		PluginUploader uploader = new PluginUploader(plugins, xmlLastModified);
+		UpdateSite updateSite = plugins.getUpdateSite("");
+		PluginUploader uploader = new PluginUploader(plugins, updateSite);
 
 		try {
 			if (!interactiveSshLogin(uploader))
@@ -653,7 +648,6 @@ public class UpdaterFrame extends JFrame
 				}
 			updatePluginsTable();
 			canUpload = false;
-			xmlLastModified = uploader.newLastModified;
 			enableUploadOrNot();
 		} catch (Canceled e) {
 			// TODO: teach uploader to remove the lock file

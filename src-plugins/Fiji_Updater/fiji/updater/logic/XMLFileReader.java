@@ -18,6 +18,8 @@ import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 
+import java.util.zip.GZIPInputStream;
+
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -68,7 +70,7 @@ public class XMLFileReader extends DefaultHandler {
 	}
 
 	public void read(File file) throws ParserConfigurationException, IOException, SAXException {
-		read(null, new FileInputStream(file), 0);
+		read(null, new GZIPInputStream(new FileInputStream(file)), 0);
 	}
 
 	// timestamp is the timestamp (not the Unix epoch) we last saw updates from this site

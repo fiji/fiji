@@ -46,15 +46,18 @@ public class PluginUploader {
 
 	// checking race condition:
 	// if somebody else updated in the meantime, complain loudly.
-	protected long xmlLastModified;
-	public long newLastModified;
+	protected UpdateSite site;
 	List<SourceFile> files;
 	String compressed;
 
 	// TODO: add a button to check for new db.xml.gz, and merge if necessary
-	public PluginUploader(PluginCollection plugins, long xmlLastModified) {
+	public PluginUploader(PluginCollection plugins, String updateSite) {
+		this(plugins, plugins.getUpdateSite(updateSite));
+	}
+
+	public PluginUploader(PluginCollection plugins, UpdateSite updateSite) {
 		this.plugins = plugins;
-		this.xmlLastModified = xmlLastModified;
+		site = updateSite;
 		compressed = Util.prefix(Updater.XML_COMPRESSED);
 	}
 
@@ -109,7 +112,7 @@ public class PluginUploader {
 
 		uploader.upload(files, locks);
 
-		newLastModified = getCurrentLastModified();
+		site.setLastModified(getCurrentLastModified());
 	}
 
 	protected void updateUploadTimestamp(long timestamp)
@@ -149,7 +152,7 @@ public class PluginUploader {
 	 *   of all files to be uploaded, so that local time skews do not
 	 *   harm
 	 */
-	class VerifyTimestamp implements Progress {
+	protected class VerifyTimestamp implements Progress {
 		public void addItem(Object item) {
 			if (item != files.get(0))
 				return;
@@ -174,8 +177,7 @@ public class PluginUploader {
 
 	protected long getCurrentLastModified() {
 		try {
-			URLConnection connection = new URL(Updater.MAIN_URL
-				+ Updater.XML_COMPRESSED).openConnection();
+			URLConnection connection = new URL(site.url + Updater.XML_COMPRESSED).openConnection();
 			connection.setUseCaches(false);
 			long lastModified = connection.getLastModified();
 			connection.getInputStream().close();
@@ -188,7 +190,7 @@ public class PluginUploader {
 	}
 
 	protected void verifyTimestamp() {
-		if (xmlLastModified != getCurrentLastModified())
+		if (!site.isLastModified(getCurrentLastModified()))
 			throw new RuntimeException("db.xml.gz was "
 				+ "changed in the meantime");
 	}

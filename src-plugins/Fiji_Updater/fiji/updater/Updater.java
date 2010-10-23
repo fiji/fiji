@@ -55,17 +55,11 @@ public class Updater implements PlugIn {
 		main.setVisible(true);
 		WindowManager.addWindow(main);
 
-		plugins.removeAll(plugins);
 		Progress progress = main.getProgress("Starting up...");
-		XMLFileDownloader downloader = new XMLFileDownloader();
+		XMLFileDownloader downloader = new XMLFileDownloader(plugins);
 		downloader.addProgress(progress);
 		try {
 			downloader.start();
-			// TODO: it is a parser, not a reader.  And it should
-			// be a static method.
-			XMLFileReader reader = new XMLFileReader(plugins);
-			reader.read("", downloader.getInputStream(),
-				downloader.getPreviousLastModified());
 		} catch (Canceled e) {
 			downloader.done();
 			main.dispose();
@@ -73,8 +67,6 @@ public class Updater implements PlugIn {
 			return;
 		} catch (Exception e) {
 			e.printStackTrace();
-			new File(Util.prefix(XML_COMPRESSED))
-					.deleteOnExit();
 			downloader.done();
 			main.dispose();
 			String message;
@@ -122,7 +114,6 @@ public class Updater implements PlugIn {
 				main.info("Your Fiji is up to date!");
 		}
 
-		main.setLastModified(downloader.getXMLLastModified());
 		main.updatePluginsTable();
 	}
 
