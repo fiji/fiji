@@ -1855,6 +1855,8 @@ static void __attribute__((__noreturn__)) usage(void)
 		"\tedit the given file in the script editor\n"
 		"\n"
 		"Options to run programs other than ImageJ:\n"
+		"--update\n"
+		"\tstart the command-line version of the Fiji updater\n"
 		"--jdb\n"
 		"\tstart in JDB, the Java debugger\n"
 		"--jython\n"
@@ -2151,6 +2153,10 @@ static int start_ij(void)
 			string_addf_path_list(class_path, "%s", arg->buffer);
 			main_class = "fiji.JarLauncher";
 			add_option_string(&options, arg, 1);
+		}
+		else if (!strcmp(main_argv[i], "--update")) {
+			string_append_path_list(class_path, fiji_path("plugins/Fiji_Updater.jar"));
+			main_class = "fiji.updater.Main";
 		}
 		else if (handle_one_option(&i, "--class-path", arg) ||
 				handle_one_option(&i, "--classpath", arg) ||
