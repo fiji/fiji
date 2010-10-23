@@ -36,7 +36,6 @@ public class Updater implements PlugIn {
 	public static final String XML_LOCK = "db.xml.gz.lock";
 	public static final String XML_COMPRESSED = "db.xml.gz";
 	public static final String XML_FILENAME = "db.xml";
-	public static final String XML_BACKUP = "db.bak";
 
 	// Key names for ij.Prefs for saved values
 	// Note: ij.Prefs is only saved during shutdown of Fiji

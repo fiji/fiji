@@ -6,6 +6,8 @@ import fiji.updater.Updater;
 
 import fiji.updater.logic.FileUploader.SourceFile;
 
+import fiji.updater.logic.PluginCollection.UpdateSite;
+
 import fiji.updater.util.Progress;
 import fiji.updater.util.Util;
 
@@ -47,13 +49,12 @@ public class PluginUploader {
 	protected long xmlLastModified;
 	public long newLastModified;
 	List<SourceFile> files;
-	String backup, compressed;
+	String compressed;
 
 	// TODO: add a button to check for new db.xml.gz, and merge if necessary
 	public PluginUploader(PluginCollection plugins, long xmlLastModified) {
 		this.plugins = plugins;
 		this.xmlLastModified = xmlLastModified;
-		backup = Util.prefix(Updater.XML_BACKUP);
 		compressed = Util.prefix(Updater.XML_COMPRESSED);
 	}
 
@@ -108,8 +109,6 @@ public class PluginUploader {
 
 		uploader.upload(files, locks);
 
-		// No errors thrown -> just remove temporary files
-		new File(backup).delete();
 		newLastModified = getCurrentLastModified();
 	}
 
