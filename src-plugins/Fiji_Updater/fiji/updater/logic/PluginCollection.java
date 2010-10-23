@@ -1,5 +1,7 @@
 package fiji.updater.logic;
 
+import fiji.updater.Updater;
+
 import fiji.updater.logic.PluginObject.Action;
 import fiji.updater.logic.PluginObject.Status;
 
@@ -10,6 +12,7 @@ import fiji.updater.util.Util;
 import java.io.IOException;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -17,11 +20,41 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 public class PluginCollection extends ArrayList<PluginObject> {
-	public PluginCollection() { }
+	public static class UpdateSite {
+		public final String url;
+		public long timestamp;
 
-	static DependencyAnalyzer dependencyAnalyzer;
+		public UpdateSite(String url, long timestamp) {
+			this.url = url;
+			this.timestamp = timestamp;
+		}
+	}
+
+	protected Map<String, UpdateSite> updateSites;
+
+	public PluginCollection() {
+		updateSites = new TreeMap<String, UpdateSite>();
+		addUpdateSite("", Updater.MAIN_URL, Util.getTimestamp(Updater.XML_COMPRESSED));
+	}
+
+	public void addUpdateSite(String name, String url, long timestamp) {
+		if (!url.endsWith("/"))
+			url += "/";
+		updateSites.put(name, new UpdateSite(url, timestamp));
+	}
+
+	public UpdateSite getUpdateSite(String name) {
+		return updateSites.get(name);
+	}
+
+	public Collection<String> getUpdateSiteNames() {
+		return updateSites.keySet();
+	}
+
+	protected static DependencyAnalyzer dependencyAnalyzer;
 
 	public interface Filter {
 		boolean matches(PluginObject plugin);

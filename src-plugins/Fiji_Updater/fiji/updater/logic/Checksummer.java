@@ -140,10 +140,10 @@ public class Checksummer extends Progressable {
 				throw new RuntimeException("Tried to remove "
 					+ path + ", which is not known to Fiji");
 			if (fijiRoot == null)
-				plugin = new PluginObject(path, checksum,
+				plugin = new PluginObject(null, path, checksum,
 						timestamp, Status.NOT_FIJI);
 			else {
-				plugin = new PluginObject(path, null, 0,
+				plugin = new PluginObject(null, path, null, 0,
 						Status.OBSOLETE);
 				plugin.addPreviousVersion(checksum, timestamp);
 				// for re-upload

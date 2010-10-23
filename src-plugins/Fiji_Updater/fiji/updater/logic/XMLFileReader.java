@@ -2,6 +2,8 @@ package fiji.updater.logic;
 
 import fiji.updater.Updater;
 
+import fiji.updater.logic.PluginCollection.UpdateSite;
+
 import fiji.updater.logic.PluginObject.Status;
 
 import fiji.updater.util.Util;
@@ -9,8 +11,12 @@ import fiji.updater.util.Util;
 import ij.Prefs;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+
+import java.net.URL;
+import java.net.URLConnection;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -34,6 +40,9 @@ import org.xml.sax.helpers.DefaultHandler;
 public class XMLFileReader extends DefaultHandler {
 	private PluginCollection plugins;
 
+	// this is the name of the update site ("" is the main site, null means we read the local db.xml.gz)
+	protected String updateSite;
+
 	// every plugin newer than this was not seen by the user yet
 	protected long newTimestamp;
 
@@ -45,25 +54,33 @@ public class XMLFileReader extends DefaultHandler {
 		this.plugins = plugins;
 	}
 	
-	public void read(String path, long previousLastModified) throws ParserConfigurationException, IOException, SAXException {
-		read(new InputSource(path), previousLastModified);
+	public void read(String updateSite) throws ParserConfigurationException, IOException, SAXException {
+		UpdateSite site = plugins.getUpdateSite(updateSite);
+		if (site == null)
+			throw new IOException("Unknown update site: " + site);
+		URL url = new URL(site.url + Updater.XML_COMPRESSED);
+		URLConnection connection = url.openConnection();
+		long lastModified = connection.getLastModified();
+		read(updateSite, new GZIPInputStream(connection.getInputStream()), site.timestamp);
+
+		// lastModified is a Unix epoch, we need a timestamp
+		site.timestamp = Long.parseLong(Util.timestamp(lastModified));
 	}
 
-	public void read(InputStream in, long previousLastModified) throws ParserConfigurationException, IOException, SAXException {
-		read(new InputSource(in), previousLastModified);
+	public void read(File file) throws ParserConfigurationException, IOException, SAXException {
+		read(null, new FileInputStream(file), 0);
 	}
 
-	private void read(InputSource inputSource, long previousLastModified)
-			throws ParserConfigurationException, SAXException, IOException {
-		File dbXml = new File(Util.prefix(Updater.XML_COMPRESSED));
-		newTimestamp =
-			// lastModified is a Unix epoch, we need a timestamp
-			Long.parseLong(Util.timestamp(previousLastModified));
+	// timestamp is the timestamp (not the Unix epoch) we last saw updates from this site
+	public void read(String updateSite, InputStream in, long timestamp) throws ParserConfigurationException, IOException, SAXException {
+		this.updateSite = updateSite;
+		newTimestamp = timestamp;
 
+		InputSource inputSource = new InputSource(in);
 		SAXParserFactory factory = SAXParserFactory.newInstance();
 		factory.setNamespaceAware(true);
 
-		//commented out per postel's law
+		// commented-out as per Postel's law
 		//factory.setValidating(true);
 
 		SAXParser parser = factory.newSAXParser();
@@ -86,9 +103,16 @@ public class XMLFileReader extends DefaultHandler {
 		else
 			currentTag = name;
 
-		if (currentTag.equals("plugin"))
-			current = new PluginObject(atts.getValue("filename"),
+		if (currentTag.equals("plugin")) {
+			String updateSite = this.updateSite;
+			if (updateSite == null) {
+				updateSite = atts.getValue("update-site");
+				if (updateSite == null)
+					updateSite = "";
+			}
+			current = new PluginObject(updateSite, atts.getValue("filename"),
 				null, 0, Status.NOT_INSTALLED);
+		}
 		else if (currentTag.equals("previous-version"))
 			current.addPreviousVersion(atts.getValue("checksum"),
 				getLong(atts, "timestamp"));
@@ -104,6 +128,9 @@ public class XMLFileReader extends DefaultHandler {
 				getLong(atts, "timestamp"),
 				overrides != null && overrides.equals("true"));
 		}
+		else if (updateSite == null && currentTag.equals("update-site"))
+			plugins.addUpdateSite(atts.getValue("name"),
+				atts.getValue("url"), Long.parseLong(atts.getValue("timestamp")));
 	}
 
 	public void endElement(String uri, String name, String qName) {

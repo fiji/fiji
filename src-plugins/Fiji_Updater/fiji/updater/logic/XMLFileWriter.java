@@ -1,5 +1,7 @@
 package fiji.updater.logic;
 
+import fiji.updater.logic.PluginCollection.UpdateSite;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
@@ -35,7 +37,9 @@ public class XMLFileWriter {
 	protected final String XALAN_INDENT_AMOUNT =
 		"{http://xml.apache.org/xslt}" + "indent-amount";
 	protected final static String dtd =
-		"<!DOCTYPE pluginRecords [\n"
+		"<!DOCTYPE update-sites? pluginRecords [\n"
+		+ "<!ELEMENT update-sites (update-site*)>\n"
+		+ "<!ELEMENT update-site (name, url, timestamp)>\n"
 		+ "<!ELEMENT pluginRecords (plugin*)>\n"
 		+ "<!ELEMENT plugin (platform*, category*, version?, previous-version*)>\n"
 		+ "<!ELEMENT version (description?, dependency*, link*, author*)>\n"
@@ -60,37 +64,51 @@ public class XMLFileWriter {
 		this.plugins = plugins;
 	}
 
-	public byte[] toByteArray() throws SAXException,
+	public byte[] toByteArray(boolean local) throws SAXException,
 			TransformerConfigurationException, IOException,
 			ParserConfigurationException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		write(out);
+		write(out, local);
 		return out.toByteArray();
 	}
 		
-	public byte[] toCompressedByteArray() throws SAXException,
+	public byte[] toCompressedByteArray(boolean local) throws SAXException,
 			TransformerConfigurationException, IOException,
 			ParserConfigurationException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		write(new GZIPOutputStream(out));
+		write(new GZIPOutputStream(out), local);
 		return out.toByteArray();
 	}
 		
-	public void validate() throws SAXException,
+	public void validate(boolean local) throws SAXException,
 			TransformerConfigurationException, IOException,
 			ParserConfigurationException {
-		ByteArrayInputStream in = new ByteArrayInputStream(toByteArray());
+		ByteArrayInputStream in = new ByteArrayInputStream(toByteArray(local));
 		validate(in);
 	}
 
-	public void write(OutputStream out) throws SAXException,
+	public void write(OutputStream out, boolean local) throws SAXException,
 			TransformerConfigurationException, IOException,
 			ParserConfigurationException {
 		createHandler(out);
 
 		handler.startDocument();
 		AttributesImpl attr = new AttributesImpl();
+
 		handler.startElement("", "", "pluginRecords", attr);
+		if (local) {
+			handler.startElement("", "", "update-sites", attr);
+			for (String name : plugins.getUpdateSiteNames()) {
+				attr.clear();
+				UpdateSite site = plugins.getUpdateSite(name);
+				setAttribute(attr, "name", name);
+				setAttribute(attr, "url", site.url);
+				setAttribute(attr, "timestamp", "" + site.timestamp);
+				writeSimpleTag("update-site", null, attr);
+			}
+			handler.endElement("", "", "update-sites");
+		}
+
 		for (PluginObject plugin : plugins.fijiPlugins()) {
 			attr.clear();
 			setAttribute(attr, "filename", plugin.filename);
@@ -145,6 +163,7 @@ public class XMLFileWriter {
                 }
                 handler.endElement("", "", "pluginRecords");
                 handler.endDocument();
+                out.flush();
                 out.close();
         }
 

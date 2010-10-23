@@ -134,8 +134,8 @@ public class PluginUploader {
 		}
 
 		XMLFileWriter writer = new XMLFileWriter(plugins);
-		writer.validate();
-		((DbXmlFile)files.get(0)).bytes = writer.toCompressedByteArray();
+		writer.validate(false);
+		((DbXmlFile)files.get(0)).bytes = writer.toCompressedByteArray(false);
 
 		uploader.calculateTotalSize(files);
 	}

@@ -59,7 +59,7 @@ public class Main {
 		plugins = new PluginCollection();
 		progress = new StderrProgress();
 		XMLFileReader reader = new XMLFileReader(plugins);
-		reader.read(new GZIPInputStream(in), 0);
+		reader.read("", new GZIPInputStream(in), 0);
 	}
 
 	public void checksum() {

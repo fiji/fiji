@@ -101,7 +101,7 @@ public class PluginObject {
 
 	private Status status;
 	private Action action;
-	public String filename, description, newChecksum;
+	public String updateSite, filename, description, newChecksum;
 	public Version current;
 	public Map<Version, Object> previous;
 	public long filesize, newTimestamp;
@@ -110,8 +110,9 @@ public class PluginObject {
 	protected Map<String, Dependency> dependencies;
 	protected Map<String, Object> links, authors, platforms, categories;
 
-	public PluginObject(String filename, String checksum, long timestamp,
+	public PluginObject(String updateSite, String filename, String checksum, long timestamp,
 			Status status) {
+		this.updateSite = updateSite == null ? "" : updateSite;
 		this.filename = filename;
 		if (checksum != null)
 			current = new Version(checksum, timestamp);
