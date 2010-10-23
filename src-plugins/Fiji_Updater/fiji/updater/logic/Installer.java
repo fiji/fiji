@@ -74,8 +74,7 @@ public class Installer extends Downloader {
 				orig.renameTo(old);
 			}
 
-			String url = Updater.MAIN_URL + name.replace(" ", "%20")
-				+ "-" + plugin.getTimestamp();
+			String url = plugins.getURL(plugin);
 			Download file = new Download(plugin, url, saveTo);
 			list.add(file);
 		}

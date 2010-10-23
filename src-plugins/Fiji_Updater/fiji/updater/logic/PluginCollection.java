@@ -472,6 +472,14 @@ public class PluginCollection extends ArrayList<PluginObject> {
 			}
 	}
 
+	public String getURL(PluginObject plugin) {
+		String siteName = plugin.updateSite;
+		if (siteName == null)
+			siteName = "";
+		UpdateSite site = getUpdateSite(siteName);
+		return site.url + plugin.filename.replace(" ", "%20") + "-" + plugin.getTimestamp();
+	}
+
 	public static class DependencyMap
 			extends HashMap<PluginObject, PluginCollection> {
 		// returns true when the map did not have the dependency before

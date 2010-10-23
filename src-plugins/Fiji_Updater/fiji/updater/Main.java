@@ -2,31 +2,25 @@ package fiji.updater;
 
 import fiji.updater.logic.Checksummer;
 import fiji.updater.logic.PluginCollection;
+import fiji.updater.logic.PluginCollection.UpdateSite;
 import fiji.updater.logic.PluginObject;
+
 import fiji.updater.logic.PluginObject.Status;
-import fiji.updater.logic.XMLFileReader;
-import fiji.updater.logic.XMLFileWriter;
+
+import fiji.updater.logic.XMLFileDownloader;
 
 import fiji.updater.util.Downloader;
+import fiji.updater.util.Progress;
 import fiji.updater.util.StderrProgress;
 import fiji.updater.util.UpdateJava;
-import fiji.updater.util.Util;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-
-import java.net.MalformedURLException;
-import java.net.URL;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import java.util.zip.GZIPInputStream;
 
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -37,29 +31,15 @@ import org.xml.sax.SAXException;
  */
 public class Main {
 	protected PluginCollection plugins;
-	protected StderrProgress progress;
+	protected Progress progress;
 
-	public Main() throws IOException, MalformedURLException,
-			ParserConfigurationException, SAXException {
-		this(new URL(Updater.MAIN_URL + Updater.XML_COMPRESSED));
-	}
-
-	public Main(URL url) throws IOException,
-			ParserConfigurationException, SAXException {
-		this(url.openStream());
-	}
-
-	public Main(File file) throws FileNotFoundException,IOException,
-			ParserConfigurationException, SAXException {
-		this(new FileInputStream(file));
-	}
-
-	public Main(InputStream in) throws IOException,
-			ParserConfigurationException, SAXException {
+	public Main() throws IOException, ParserConfigurationException, SAXException {
 		plugins = new PluginCollection();
+		plugins.read();
 		progress = new StderrProgress();
-		XMLFileReader reader = new XMLFileReader(plugins);
-		reader.read("", new GZIPInputStream(in), 0);
+		XMLFileDownloader downloader = new XMLFileDownloader(plugins);
+		downloader.addProgress(progress);
+		downloader.start();
 	}
 
 	public void checksum() {
@@ -117,8 +97,7 @@ public class Main {
 		}
 
 		public String getURL() {
-			return Updater.MAIN_URL + plugin.filename + "-"
-				+ plugin.getTimestamp();
+			return plugins.getURL(plugin);
 		}
 
 		public long getFilesize() {
@@ -165,17 +144,14 @@ public class Main {
 			}
 	}
 
-	protected static Main instance;
-
 	public static Main getInstance() {
-		if (instance == null) try {
-			instance = new Main();
+		try {
+			return new Main();
 		} catch (Exception e) {
 			System.err.println("Could not parse db.xml.gz: "
 				+ e.getMessage());
 			throw new RuntimeException(e);
 		}
-		return instance;
 	}
 
 	public static List<String> makeList(String[] list, int start) {
