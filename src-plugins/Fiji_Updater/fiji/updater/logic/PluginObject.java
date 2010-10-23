@@ -23,6 +23,10 @@ public class PluginObject {
 			this.checksum = checksum;
 			this.timestamp = timestamp;
 		}
+
+		public boolean equals(Version other) {
+			return timestamp == other.timestamp && checksum.equals(other.checksum);
+		}
 	}
 
 	public static enum Action {
@@ -126,6 +130,31 @@ public class PluginObject {
 		if (status == Status.NOT_FIJI)
 			filesize = Util.getFilesize(filename);
 		setNoAction();
+	}
+
+	public void merge(PluginObject upstream) {
+		for (Version previous : upstream.previous.keySet())
+			addPreviousVersion(previous.checksum, previous.timestamp);
+		if (updateSite == null || updateSite.equals(upstream.updateSite)) {
+			updateSite = upstream.updateSite;
+			description = upstream.description;
+			dependencies = upstream.dependencies;
+			authors = upstream.authors;
+			platforms = upstream.platforms;
+			categories = upstream.categories;
+			links = upstream.links;
+			filesize = upstream.filesize;
+			if (current != null && !upstream.hasPreviousVersion(current.checksum))
+				addPreviousVersion(current.checksum, current.timestamp);
+			current = upstream.current;
+			status = upstream.status;
+			action = upstream.action;
+		}
+		else {
+			Version other = upstream.current;
+			if (other != null && !hasPreviousVersion(other.checksum))
+				addPreviousVersion(other.checksum, other.timestamp);
+		}
 	}
 
 	public boolean hasPreviousVersion(String checksum) {
