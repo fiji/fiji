@@ -46,7 +46,7 @@ public class PluginUploader {
 	protected long xmlLastModified;
 	public long newLastModified;
 	List<SourceFile> files;
-	String backup, compressed, text;
+	String backup, compressed;
 
 	// TODO: add a button to check for new db.xml.gz, and merge if necessary
 	public PluginUploader(PluginCollection plugins, long xmlLastModified) {
@@ -54,7 +54,6 @@ public class PluginUploader {
 		this.xmlLastModified = xmlLastModified;
 		backup = Util.prefix(Updater.XML_BACKUP);
 		compressed = Util.prefix(Updater.XML_COMPRESSED);
-		text = Util.prefix(Updater.TXT_FILENAME);
 	}
 
 	public void setUploader(FileUploader uploader) {
@@ -84,10 +83,6 @@ public class PluginUploader {
 		for (PluginObject plugin : plugins.toUpload())
 			files.add(new UploadableFile(plugin));
 
-		files.add(new UploadableFile(text,
-			Updater.TXT_FILENAME + ".lock", "C0644"));
-
-		locks.add(Updater.TXT_FILENAME);
 		// must be last lock
 		locks.add(Updater.XML_COMPRESSED);
 
@@ -95,7 +90,6 @@ public class PluginUploader {
 
 		// No errors thrown -> just remove temporary files
 		new File(backup).delete();
-		new File(Util.prefix(Updater.TXT_FILENAME)).delete();
 		newLastModified = getCurrentLastModified();
 	}
 
@@ -123,9 +117,6 @@ public class PluginUploader {
 		// TODO: only save _compressed_ backup, and not as db.bak!
 		compress(backup, compressed);
 		((UploadableFile)files.get(0)).updateFilesize();
-		// TODO: do no save text file at all!
-		saveTextFile(text);
-		((UploadableFile)files.get(files.size() - 1)).updateFilesize();
 
 		uploader.calculateTotalSize(files);
 	}
@@ -137,16 +128,6 @@ public class PluginUploader {
 		Compressor.compressAndSave(Compressor.readStream(in), out);
 		out.close();
 		in.close();
-	}
-
-	// TODO: in-memory only, please
-	protected void saveTextFile(String path) throws FileNotFoundException {
-		PrintStream out = new PrintStream(path);
-		for (PluginObject plugin : plugins.forCurrentTXT())
-			out.println(plugin.getFilename() + " "
-					+ plugin.getTimestamp() + " "
-					+ plugin.getChecksum());
-		out.close();
 	}
 
 	/*

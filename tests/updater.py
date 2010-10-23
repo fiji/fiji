@@ -49,7 +49,7 @@ def die(message):
 	exit(1)
 
 # check that there are exactly the right number of files
-extra = ['db.xml.gz', 'db.xml.gz.old', 'current.txt', 'jars', 'plugins']
+extra = ['db.xml.gz', 'db.xml.gz.old', 'jars', 'plugins']
 if len(uploadables) + len(extra) != sum([len(listdir(tmpWebRoot + dir)) for
 		dir in ['.', 'plugins', 'jars']]):
 	die('Wrong number of files')
@@ -130,13 +130,6 @@ if launchProgram(['./fiji', '-Dpython.cachedir.skip=true', '--',
 		'--jython', fijiDir + 'bin/update-fiji.py',
 		'--upload-to', tmpWebRoot] + uploadables, tmpRoot) != 0:
 	exit(1)
-
-f = open(tmpWebRoot + 'current.txt', 'r')
-txt = ''.join(f.readlines())
-f.close()
-
-if txt.find('obsolete') >= 0:
-	die('Obsolete files were added to current.txt')
 
 remove(macros + 'updateable.ijm')
 rename(macros + 'outoftheway.ijm', macros + 'updateable.ijm')
