@@ -59,6 +59,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 import java.awt.AlphaComposite;
+import java.awt.BorderLayout;
 import java.awt.Checkbox;
 import java.awt.Color;
 import java.awt.Component;
@@ -103,6 +104,7 @@ import java.io.OutputStreamWriter;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
@@ -115,9 +117,12 @@ import weka.attributeSelection.BestFirst;
 import weka.attributeSelection.CfsSubsetEval;
 import weka.classifiers.AbstractClassifier;
 import weka.classifiers.Evaluation;
+import weka.classifiers.evaluation.EvaluationUtils;
+import weka.classifiers.evaluation.ThresholdCurve;
 import weka.classifiers.pmml.consumer.PMMLClassifier;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
+import weka.core.FastVector;
 import weka.core.Instances;
 import weka.core.OptionHandler;
 import weka.core.SerializationHelper;
@@ -131,6 +136,8 @@ import weka.gui.GUIChooser;
 import weka.gui.GenericObjectEditor;
 import weka.gui.PropertyDialog;
 import weka.gui.explorer.ClassifierPanel;
+import weka.gui.visualize.PlotData2D;
+import weka.gui.visualize.ThresholdVisualizePanel;
 import fiji.util.gui.GenericDialogPlus;
 import fiji.util.gui.OverlayedImageCanvas;
 import hr.irb.fastRandomForest.FastRandomForest;
@@ -171,6 +178,8 @@ public class Weka_Segmentation implements PlugIn
 	private Instances wholeImageData;
 	/** set of instances from loaded data (previously saved segmentation) */
 	private Instances loadedTrainingData = null;
+	/** set of instances from the user's traces */
+	private Instances traceTrainingData = null;
 	/** current classifier */
 	private AbstractClassifier classifier = null;
 	/** train header */
@@ -191,6 +200,8 @@ public class Weka_Segmentation implements PlugIn
 	JButton resultButton;
 	/** get probability maps button */
 	JButton probabilityButton;
+	/** plot result button */	
+	JButton plotButton;
 	/** new image button */
 	JButton newImageButton;
 	/** apply classifier button */
@@ -310,6 +321,10 @@ public class Weka_Segmentation implements PlugIn
 		probabilityButton.setToolTipText("Generate current probability maps");
 		probabilityButton.setEnabled(false);
 		
+		plotButton = new JButton("Plot result");
+		plotButton.setToolTipText("Plot result based on different metrics");
+		plotButton.setEnabled(false);
+		
 		newImageButton = new JButton("New image");
 		newImageButton.setToolTipText("Load a new image to segment");
 		
@@ -390,6 +405,9 @@ public class Weka_Segmentation implements PlugIn
 					}
 					else if(e.getSource() == probabilityButton){
 						showProbabilityImage();
+					}
+					else if(e.getSource() == plotButton){
+						plotResult();
 					}
 					else if(e.getSource() == newImageButton){
 						loadNewImage();
@@ -609,6 +627,7 @@ public class Weka_Segmentation implements PlugIn
 			overlayButton.addActionListener(listener);
 			resultButton.addActionListener(listener);
 			probabilityButton.addActionListener(listener);
+			plotButton.addActionListener(listener);
 			newImageButton.addActionListener(listener);
 			applyButton.addActionListener(listener);
 			loadClassifierButton.addActionListener(listener);
@@ -639,6 +658,8 @@ public class Weka_Segmentation implements PlugIn
 			trainingJPanel.add(resultButton, trainingConstraints);
 			trainingConstraints.gridy++;
 			trainingJPanel.add(probabilityButton, trainingConstraints);
+			trainingConstraints.gridy++;
+			trainingJPanel.add(plotButton, trainingConstraints);
 			trainingConstraints.gridy++;
 			trainingJPanel.add(newImageButton, trainingConstraints);
 			trainingConstraints.gridy++;
@@ -743,6 +764,7 @@ public class Weka_Segmentation implements PlugIn
 					overlayButton.removeActionListener(listener);
 					resultButton.removeActionListener(listener);
 					probabilityButton.removeActionListener(listener);
+					plotButton.removeActionListener(listener);
 					newImageButton.removeActionListener(listener);
 					applyButton.removeActionListener(listener);
 					loadClassifierButton.removeActionListener(listener);
@@ -891,6 +913,7 @@ public class Weka_Segmentation implements PlugIn
 			overlayButton.setEnabled(s);
 			resultButton.setEnabled(s);
 			probabilityButton.setEnabled(s);
+			plotButton.setEnabled(s);
 			newImageButton.setEnabled(s);
 			applyButton.setEnabled(s);
 			loadClassifierButton.setEnabled(s);
@@ -926,6 +949,7 @@ public class Weka_Segmentation implements PlugIn
 			saveClassifierButton.setEnabled(classifierExists);
 			overlayButton.setEnabled(resultExists);
 			resultButton.setEnabled(resultExists);
+			plotButton.setEnabled(resultExists);
 			
 			probabilityButton.setEnabled(classifierExists);
 
@@ -1249,7 +1273,7 @@ public class Weka_Segmentation implements PlugIn
 		else 
 		{
 			final long start = System.currentTimeMillis();
-			data = createTrainingInstances();
+			traceTrainingData = data = createTrainingInstances();
 			final long end = System.currentTimeMillis();
 			IJ.log("Creating training data took: " + (end-start) + "ms");			
 		}
@@ -1596,7 +1620,20 @@ public class Weka_Segmentation implements PlugIn
 		IJ.showStatus("Done.");
 		IJ.log("Done");
 	}
-	
+	/**
+	 * Plot the current result 
+	 */
+	void plotResult()
+	{
+		IJ.showStatus("Evaluating current data...");
+		IJ.log("Evaluating current data...");
+		this.setButtonsEnabled(false);
+		final Instances data = null == traceTrainingData ? loadedTrainingData : traceTrainingData;
+		displayGraphs(data, classifier);
+		this.updateButtonsEnabling();
+		IJ.showStatus("Done.");
+		IJ.log("Done");
+	}	
 	/**
 	 * Apply classifier to test data
 	 */
@@ -1624,7 +1661,9 @@ public class Weka_Segmentation implements PlugIn
 
 		if (imageFiles.length >= 3) {
 
-			int decision = JOptionPane.showConfirmDialog(null, "You decided to process three or more image files. Do you want the results to be stored on the disk instead of opening them in Fiji?", "Save results?", JOptionPane.YES_NO_OPTION);
+			int decision = JOptionPane.showConfirmDialog(null, "You decided to process three or more image " +
+					"files. Do you want the results to be stored on the disk instead of opening them in Fiji?", 
+					"Save results?", JOptionPane.YES_NO_OPTION);
 
 			if (decision == JOptionPane.YES_OPTION) {
 				// ask for the directory to store the results
@@ -3772,8 +3811,286 @@ public class Weka_Segmentation implements PlugIn
 	{
 		this.tempFolder = tempFolder;
 	}
+
 	
-	// BLOTC methods
+	/**
+	 * Homogenize number of instances per class
+	 * 
+	 * @param data input set of instances
+	 * @return resampled set of instances
+	 */
+	public static Instances homogenizeTrainingData(Instances data)
+	{
+		final Resample filter = new Resample();
+		Instances filteredIns = null;
+		filter.setBiasToUniformClass(1.0);
+		try {
+			filter.setInputFormat(data);
+			filter.setNoReplacement(false);
+			filter.setSampleSizePercent(100);
+			filteredIns = Filter.useFilter(data, filter);			
+		} catch (Exception e) {
+			IJ.log("Error when resampling input data!");
+			e.printStackTrace();
+		}
+		return filteredIns;
+		
+	}
+
+	/**
+	 * Homogenize number of instances per class (in the loaded training data) 
+	 */
+	public void homogenizeTrainingData()
+	{
+		final Resample filter = new Resample();
+		Instances filteredIns = null;
+		filter.setBiasToUniformClass(1.0);
+		try {
+			filter.setInputFormat(this.loadedTrainingData);
+			filter.setNoReplacement(false);
+			filter.setSampleSizePercent(100);
+			filteredIns = Filter.useFilter(this.loadedTrainingData, filter);			
+		} catch (Exception e) {
+			IJ.log("Error when resampling input data!");
+			e.printStackTrace();
+		}
+		this.loadedTrainingData = filteredIns;		
+	}	
+	
+	/**
+	 * Select attributes of current data by BestFirst search.
+	 * The data is reduced to the selected attributes (features).
+	 * 
+	 * @return false if the current dataset is empty
+	 */
+	public boolean selectAttributes()
+	{
+		if(null == loadedTrainingData)
+		{
+			IJ.error("There is no data so select attributes from.");
+			return false;		
+		}
+		// Select attributes by BestFirst
+		loadedTrainingData = selectAttributes(loadedTrainingData);
+		// Update list of features to use
+		this.featureNames = new ArrayList<String>();
+		IJ.log("Selected attributes:");
+		for(int i = 0; i < loadedTrainingData.numAttributes(); i++)
+		{
+			this.featureNames.add(loadedTrainingData.attribute(i).name());
+			IJ.log((i+1) + ": " + this.featureNames.get(i));
+		}
+		
+		// force data (ARFF) update
+		this.updateWholeData = true;
+		
+		return true;
+	}
+	
+	/**
+	 * Select attributes using BestFirst search to reduce 
+	 * the number of parameters per instance of a dataset
+	 * 
+	 * @param data input set of instances
+	 * @return resampled set of instances
+	 */
+	public static Instances selectAttributes(Instances data)
+	{
+		final AttributeSelection filter = new AttributeSelection();
+		Instances filteredIns = null;
+		// Evaluator
+		final CfsSubsetEval evaluator = new CfsSubsetEval();
+		evaluator.setMissingSeparate(true);
+		// Assign evaluator to filter
+		filter.setEvaluator(evaluator);
+		// Search strategy: best first (default values)
+		final BestFirst search = new BestFirst();
+		filter.setSearch(search);
+		// Apply filter
+		try {
+			filter.setInputFormat(data);
+		
+			filteredIns = Filter.useFilter(data, filter);			
+		} catch (Exception e) {
+			IJ.log("Error when resampling input data with selected attributes!");
+			e.printStackTrace();
+		}
+		return filteredIns;
+		
+	}
+
+	/**
+	 * Get training error (from loaded data).
+	 * 
+	 * @param verbose option to display evaluation information in the log window
+	 * @return classifier error on the training data set.
+	 */
+	public double getTrainingError(boolean verbose)
+	{
+		if(null == this.trainHeader)
+			return -1;
+
+		double error = -1;
+		try {
+			final Evaluation evaluation = new Evaluation(this.loadedTrainingData);
+			evaluation.evaluateModel(classifier, this.loadedTrainingData);
+			if(verbose)
+				IJ.log(evaluation.toSummaryString("\n=== Training set evaluation ===\n", false));
+			error = evaluation.errorRate();
+		} catch (Exception e) {
+			
+			e.printStackTrace();
+		}
+		
+		return error;
+	}
+	
+	/**
+	 * Get test error of current classifier on a specific image and its binary labels
+	 * 
+	 * @param image input image
+	 * @param labels binary labels
+	 * @param whiteClassIndex index of the white class
+	 * @param blackClassIndex index of the black class
+	 * @param verbose option to display evaluation information in the log window
+	 * @return pixel classification error
+	 */
+	public double getTestError(
+			ImagePlus image, 
+			ImagePlus labels, 
+			int whiteClassIndex, 
+			int blackClassIndex,
+			boolean verbose)
+	{
+		IJ.showStatus("Creating features for test image...");
+		if(verbose)
+			IJ.log("Creating features for test image " + image.getTitle() +  "...");
+		
+
+		// Set proper class names (skip empty list ones)
+		ArrayList<String> classNames = new ArrayList<String>();
+		if( null == loadedClassNames )
+		{
+			for(int i = 0; i < numOfClasses; i++)
+				if(examples[i].size() > 0)
+					classNames.add(classLabels[i]);
+		}
+		else
+			classNames = loadedClassNames;
+				
+		
+		// Apply labels
+		final int height = image.getHeight();
+		final int width = image.getWidth();
+		final int depth = image.getStackSize();
+					
+		Instances testData = null;
+		
+		for(int z=1; z <= depth; z++)
+		{
+			final ImagePlus testSlice = new ImagePlus(image.getImageStack().getSliceLabel(z), image.getImageStack().getProcessor(z).convertToByte(true));
+			// Create feature stack for test image
+			IJ.showStatus("Creating features for test image...");
+			if(verbose)
+				IJ.log("Creating features for test image " + z +  "...");
+			final FeatureStack testImageFeatures = new FeatureStack(testSlice);
+			// Use the same features as the current classifier
+			testImageFeatures.setEnableFeatures(featureStack.getEnableFeatures());
+			testImageFeatures.setMaximumSigma(maximumSigma);
+			testImageFeatures.setMinimumSigma(minimumSigma);
+			testImageFeatures.setMembranePatchSize(membranePatchSize);
+			testImageFeatures.setMembraneSize(membraneThickness);
+			testImageFeatures.updateFeaturesMT();
+			filterFeatureStackByList(this.featureNames, testImageFeatures);
+			
+			final Instances data = testImageFeatures.createInstances(classNames);
+			data.setClassIndex(data.numAttributes()-1);
+			if(verbose)
+				IJ.log("Assigning classes based on the labels...");
+			
+			final ImageProcessor slice = labels.getImageStack().getProcessor(z);
+			for(int n=0, y=0; y<height; y++)
+				for(int x=0; x<width; x++, n++)
+				{
+					final double newValue = slice.getPixel(x, y) > 0 ? whiteClassIndex : blackClassIndex;
+					data.get(n).setClassValue(newValue);
+				}
+			
+			if(null == testData)
+				testData = data;
+			else
+			{
+				for(int i=0; i<data.numInstances(); i++)
+					testData.add( data.get(i) );
+			}
+		}
+		if(verbose)
+			IJ.log("Evaluating test data...");
+		
+		double error = -1;
+		try {
+			final Evaluation evaluation = new Evaluation(testData);
+			evaluation.evaluateModel(classifier, testData);
+			if(verbose)
+			{
+				IJ.log(evaluation.toSummaryString("\n=== Test data evaluation ===\n", false));
+				IJ.log(evaluation.toClassDetailsString() + "\n");
+				IJ.log(evaluation.toMatrixString());
+			}
+			error = evaluation.errorRate();
+		} catch (Exception e) {
+			
+			e.printStackTrace();
+		}
+		
+		return error;		
+	}
+	
+	/**
+	 * Display the threshold curve window (for precision/recall, ROC, etc.).
+	 * 
+	 * @param data input instances
+	 * @param classifier classifier to evaluate
+	 */
+	public void displayGraphs(Instances data, AbstractClassifier classifier)
+	{	
+		ThresholdCurve tc = new ThresholdCurve();
+		
+		FastVector predictions = null;
+		try {
+			final EvaluationUtils eu = new EvaluationUtils();
+			predictions = eu.getTestPredictions(classifier, data);
+		} catch (Exception e) {
+			IJ.log("Error while evaluating data!");
+			e.printStackTrace();
+			return;
+		}
+				
+		Instances result = tc.getCurve(predictions);
+		ThresholdVisualizePanel vmc = new ThresholdVisualizePanel();
+		vmc.setName(result.relationName() + " (display only)");
+		PlotData2D tempd = new PlotData2D(result);  
+		tempd.setPlotName(result.relationName());
+		tempd.addInstanceNumberAttribute();
+		try {
+			vmc.addPlot(tempd);
+		} catch (Exception e) {
+			IJ.log("Error while adding plot to visualization panel!");		
+			e.printStackTrace();
+			return;
+		}
+		String plotName = vmc.getName(); 
+		JFrame jf = new JFrame("Weka Classifier Visualize: "+plotName);
+		jf.setSize(500,400);
+		jf.getContentPane().setLayout(new BorderLayout());
+		jf.getContentPane().add(vmc, BorderLayout.CENTER);
+		jf.setVisible(true);
+	}	
+	
+	// **********************
+	// BLOTC-related  methods
+	// **********************
+	
 	/**
 	 * Train a FastRandomForest classifier using BLOTC:
 	 * Boundary Learning by Optimization with Topological Constraints
@@ -3945,111 +4262,6 @@ public class Weka_Segmentation implements PlugIn
 		return warpedLabels;
 	}
 	
-	/**
-	 * Homogenize number of instances per class
-	 * 
-	 * @param data input set of instances
-	 * @return resampled set of instances
-	 */
-	public static Instances homogenizeTrainingData(Instances data)
-	{
-		final Resample filter = new Resample();
-		Instances filteredIns = null;
-		filter.setBiasToUniformClass(1.0);
-		try {
-			filter.setInputFormat(data);
-			filter.setNoReplacement(false);
-			filter.setSampleSizePercent(100);
-			filteredIns = Filter.useFilter(data, filter);			
-		} catch (Exception e) {
-			IJ.log("Error when resampling input data!");
-			e.printStackTrace();
-		}
-		return filteredIns;
-		
-	}
-
-	/**
-	 * Homogenize number of instances per class (in the loaded training data) 
-	 */
-	public void homogenizeTrainingData()
-	{
-		final Resample filter = new Resample();
-		Instances filteredIns = null;
-		filter.setBiasToUniformClass(1.0);
-		try {
-			filter.setInputFormat(this.loadedTrainingData);
-			filter.setNoReplacement(false);
-			filter.setSampleSizePercent(100);
-			filteredIns = Filter.useFilter(this.loadedTrainingData, filter);			
-		} catch (Exception e) {
-			IJ.log("Error when resampling input data!");
-			e.printStackTrace();
-		}
-		this.loadedTrainingData = filteredIns;		
-	}	
-	
-	/**
-	 * Select attributes of current data by BestFirst search.
-	 * The data is reduced to the selected attributes (features).
-	 * 
-	 * @return false if the current dataset is empty
-	 */
-	public boolean selectAttributes()
-	{
-		if(null == loadedTrainingData)
-		{
-			IJ.error("There is no data so select attributes from.");
-			return false;		
-		}
-		// Select attributes by BestFirst
-		loadedTrainingData = selectAttributes(loadedTrainingData);
-		// Update list of features to use
-		this.featureNames = new ArrayList<String>();
-		IJ.log("Selected attributes:");
-		for(int i = 0; i < loadedTrainingData.numAttributes(); i++)
-		{
-			this.featureNames.add(loadedTrainingData.attribute(i).name());
-			IJ.log((i+1) + ": " + this.featureNames.get(i));
-		}
-		
-		// force data (ARFF) update
-		this.updateWholeData = true;
-		
-		return true;
-	}
-	
-	/**
-	 * Select attributes using BestFirst search to reduce 
-	 * the number of parameters per instance of a dataset
-	 * 
-	 * @param data input set of instances
-	 * @return resampled set of instances
-	 */
-	public static Instances selectAttributes(Instances data)
-	{
-		final AttributeSelection filter = new AttributeSelection();
-		Instances filteredIns = null;
-		// Evaluator
-		final CfsSubsetEval evaluator = new CfsSubsetEval();
-		evaluator.setMissingSeparate(true);
-		// Assign evaluator to filter
-		filter.setEvaluator(evaluator);
-		// Search strategy: best first (default values)
-		final BestFirst search = new BestFirst();
-		filter.setSearch(search);
-		// Apply filter
-		try {
-			filter.setInputFormat(data);
-		
-			filteredIns = Filter.useFilter(data, filter);			
-		} catch (Exception e) {
-			IJ.log("Error when resampling input data with selected attributes!");
-			e.printStackTrace();
-		}
-		return filteredIns;
-		
-	}
 	
 	
 	/**
@@ -4325,133 +4537,6 @@ public class Weka_Segmentation implements PlugIn
 	}
 	
 
-	/**
-	 * Get training error (from loaded data).
-	 * If the classifier is a FastRandomForest then it uses the out of bag error.
-	 * @param verbose option to display evaluation information in the log window
-	 * @return classifier error on the training data set.
-	 */
-	public double getTrainingError(boolean verbose)
-	{
-		if(null == this.trainHeader)
-			return -1;
-
-		double error = -1;
-		try {
-			final Evaluation evaluation = new Evaluation(this.loadedTrainingData);
-			evaluation.evaluateModel(classifier, this.loadedTrainingData);
-			if(verbose)
-				IJ.log(evaluation.toSummaryString("\n=== Training set evaluation ===\n", false));
-			error = evaluation.errorRate();
-		} catch (Exception e) {
-			
-			e.printStackTrace();
-		}
-		
-		return error;
-	}
-	
-	/**
-	 * Get test error of current classifier on a specific image and its binary labels
-	 * 
-	 * @param image input image
-	 * @param labels binary labels
-	 * @param whiteClassIndex index of the white class
-	 * @param blackClassIndex index of the black class
-	 * @param verbose option to display evaluation information in the log window
-	 * @return pixel classification error
-	 */
-	public double getTestError(
-			ImagePlus image, 
-			ImagePlus labels, 
-			int whiteClassIndex, 
-			int blackClassIndex,
-			boolean verbose)
-	{
-		IJ.showStatus("Creating features for test image...");
-		if(verbose)
-			IJ.log("Creating features for test image " + image.getTitle() +  "...");
-		
-
-		// Set proper class names (skip empty list ones)
-		ArrayList<String> classNames = new ArrayList<String>();
-		if( null == loadedClassNames )
-		{
-			for(int i = 0; i < numOfClasses; i++)
-				if(examples[i].size() > 0)
-					classNames.add(classLabels[i]);
-		}
-		else
-			classNames = loadedClassNames;
-				
-		
-		// Apply labels
-		final int height = image.getHeight();
-		final int width = image.getWidth();
-		final int depth = image.getStackSize();
-					
-		Instances testData = null;
-		
-		for(int z=1; z <= depth; z++)
-		{
-			final ImagePlus testSlice = new ImagePlus(image.getImageStack().getSliceLabel(z), image.getImageStack().getProcessor(z).convertToByte(true));
-			// Create feature stack for test image
-			IJ.showStatus("Creating features for test image...");
-			if(verbose)
-				IJ.log("Creating features for test image " + z +  "...");
-			final FeatureStack testImageFeatures = new FeatureStack(testSlice);
-			// Use the same features as the current classifier
-			testImageFeatures.setEnableFeatures(featureStack.getEnableFeatures());
-			testImageFeatures.setMaximumSigma(maximumSigma);
-			testImageFeatures.setMinimumSigma(minimumSigma);
-			testImageFeatures.setMembranePatchSize(membranePatchSize);
-			testImageFeatures.setMembraneSize(membraneThickness);
-			testImageFeatures.updateFeaturesMT();
-			filterFeatureStackByList(this.featureNames, testImageFeatures);
-			
-			final Instances data = testImageFeatures.createInstances(classNames);
-			data.setClassIndex(data.numAttributes()-1);
-			if(verbose)
-				IJ.log("Assigning classes based on the labels...");
-			
-			final ImageProcessor slice = labels.getImageStack().getProcessor(z);
-			for(int n=0, y=0; y<height; y++)
-				for(int x=0; x<width; x++, n++)
-				{
-					final double newValue = slice.getPixel(x, y) > 0 ? whiteClassIndex : blackClassIndex;
-					data.get(n).setClassValue(newValue);
-				}
-			
-			if(null == testData)
-				testData = data;
-			else
-			{
-				for(int i=0; i<data.numInstances(); i++)
-					testData.add( data.get(i) );
-			}
-		}
-		if(verbose)
-			IJ.log("Evaluating test data...");
-		
-		double error = -1;
-		try {
-			final Evaluation evaluation = new Evaluation(testData);
-			evaluation.evaluateModel(classifier, testData);
-			if(verbose)
-			{
-				IJ.log(evaluation.toSummaryString("\n=== Test data evaluation ===\n", false));
-				IJ.log(evaluation.toClassDetailsString() + "\n");
-				IJ.log(evaluation.toMatrixString());
-			}
-			error = evaluation.errorRate();
-		} catch (Exception e) {
-			
-			e.printStackTrace();
-		}
-		
-		return error;		
-	}
-	
 	
 	/**
 	 * Calculate warping error
