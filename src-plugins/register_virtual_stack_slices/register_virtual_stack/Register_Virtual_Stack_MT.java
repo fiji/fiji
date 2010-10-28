@@ -395,12 +395,18 @@ public class Register_Virtual_Stack_MT implements PlugIn
 
 		/**
 		 * Implemented transformation models for choice
-	 	*  0=TRANSLATION, 1=RIGID, 2=SIMILARITY, 3=AFFINE, 4=ELASTIC, 5=MOVING_LEAST_SQUARES
+		 *  0=TRANSLATION, 1=RIGID, 2=SIMILARITY, 3=AFFINE, 4=ELASTIC, 5=MOVING_LEAST_SQUARES
 		 */
 		public static int registrationModelIndex = Register_Virtual_Stack_MT.RIGID;
+		
+		/**
+		 * Interpolate?
+		 */
+		public static boolean interpolate = true;
                 
 		/** bUnwarpJ parameters for consistent elastic registration */
-        public bunwarpj.Param elastic_param = new bunwarpj.Param();        
+        public bunwarpj.Param elastic_param = new bunwarpj.Param();
+        
         
         //---------------------------------------------------------------------------------
         /**
@@ -429,6 +435,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 
 			gd.addMessage("Registration:");
 			gd.addChoice( "Registration_model:", registrationModelStrings, registrationModelStrings[ registrationModelIndex ] ); // rigid
+			gd.addCheckbox( "interpolate", interpolate );
 
 			gd.showDialog();
 
@@ -450,6 +457,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			featuresModelIndex = gd.getNextChoiceIndex();
 
 			registrationModelIndex = gd.getNextChoiceIndex();
+			interpolate = gd.getNextBoolean();
                       
 			// Show bUnwarpJ parameters if elastic registration
 			if (registrationModelIndex == Register_Virtual_Stack_MT.ELASTIC)
@@ -641,7 +649,14 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			}
 			// Create final images.
 			IJ.showStatus("Calculating final images...");
-			if( !createResults(source_dir, sorted_file_names, target_dir, save_dir, exe, transform) )
+			if( !createResults(
+					source_dir,
+					sorted_file_names,
+					target_dir,
+					save_dir,
+					exe,
+					transform,
+					Param.interpolate) )
 			{
 				IJ.log("Error when creating target images");
 				return;
@@ -878,7 +893,8 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			final String target_dir,
 			final String save_dir,
 			final ExecutorService exe,
-			final CoordinateTransform[] transform) 
+			final CoordinateTransform[] transform,
+			final boolean interpolate) 
 	{
 		
 		final ImagePlus first = IJ.openImage(source_dir + sorted_file_names[0]);
@@ -895,7 +911,16 @@ public class Register_Virtual_Stack_MT implements PlugIn
 		ArrayList<Future<Boolean>> save_job = new ArrayList <Future<Boolean>>();
 		for (int i=0; i<sorted_file_names.length; i++) 
 		{
-			save_job.add(exe.submit(applyTransformAndSave(source_dir, sorted_file_names[i], target_dir, transform[i], bounds, i)));
+			save_job.add(
+					exe.submit(
+							applyTransformAndSave(
+									source_dir,
+									sorted_file_names[i],
+									target_dir,
+									transform[i],
+									bounds,
+									interpolate,
+									i)));
 		}
 
 
@@ -1470,6 +1495,7 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			final String target_dir, 
 			final CoordinateTransform transform,
 			final Rectangle[] bounds,
+			final boolean interpolate,
 			final int i) 
 	{
 		return new Callable<Boolean>() {
@@ -1482,7 +1508,8 @@ public class Register_Virtual_Stack_MT implements PlugIn
 							
 				// Create interpolated deformed image with black background
 				imp2.getProcessor().setValue(0);
-				imp2.setProcessor(imp2.getTitle(), mapping.createMappedImageInterpolated(imp2.getProcessor()));						
+				final ImageProcessor ip2 = interpolate ? mapping.createMappedImageInterpolated(imp2.getProcessor()) : mapping.createMappedImage(imp2.getProcessor()); 
+				imp2.setProcessor(imp2.getTitle(), ip2);
 				
 				//imp2.show();
 
@@ -1714,11 +1741,13 @@ public class Register_Virtual_Stack_MT implements PlugIn
 			imp2mask.setProcessor(imp2mask.getTitle(), new ByteProcessor(imp2.getWidth(), imp2.getHeight()));
 			imp2mask.getProcessor().setValue(255);
 			imp2mask.getProcessor().fill();
-			imp2mask.setProcessor(imp2mask.getTitle(), mapping.createMappedImageInterpolated(imp2mask.getProcessor() ) );
+			final ImageProcessor ip2mask = Param.interpolate ? mapping.createMappedImageInterpolated(imp2mask.getProcessor() ) : mapping.createMappedImage(imp2mask.getProcessor() );
+			imp2mask.setProcessor(imp2mask.getTitle(), ip2mask );
 		}
 		// Create interpolated deformed image with black background
 		imp2.getProcessor().setValue(0);
-		imp2.setProcessor(imp2.getTitle(), mapping.createMappedImageInterpolated(imp2.getProcessor()));						
+		final ImageProcessor ip2 = Param.interpolate ? mapping.createMappedImageInterpolated(imp2.getProcessor() ) : mapping.createMappedImage(imp2.getProcessor() );
+		imp2.setProcessor(imp2.getTitle(), ip2);						
 		
 		// Accumulate bounding boxes, so in the end they can be reopened and re-saved with an enlarged canvas.
 		final Rectangle currentBounds = mesh.getBoundingBox();

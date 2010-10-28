@@ -152,6 +152,7 @@ public class Fake {
 		String jythonJar = pythonHome + "/jython.jar";
 		if (!new File(jythonJar).exists())
 			jythonJar = fijiHome + "/precompiled/jython.jar";
+		getClassLoader(fijiHome + "/jars/jna.jar");
 		getClassLoader(jythonJar);
 	}
 
@@ -1767,6 +1768,10 @@ public class Fake {
 					String program) {
 				super(target, prerequisites);
 				this.program = program;
+				int space = program.indexOf(' ');
+				String argv0 = space < 0 ? program : program.substring(0, space);
+				if (argv0.endsWith(".py") && allRules.containsKey("jars/jython.jar"))
+					prerequisites.add("jars/jython.jar");
 			}
 
 			boolean checkUpToDate() {
@@ -2941,8 +2946,9 @@ public class Fake {
 
 	public boolean isAbsolutePath(String path) {
 		boolean isWindows = getPlatform().startsWith("win");
-		return (isWindows && path.length() > 1 && path.charAt(1) == ':')
-			|| (!isWindows && path.startsWith("/"));
+		if (isWindows)
+			return path.length() > 1 && path.charAt(1) == ':';
+		return path.startsWith("/");
 	}
 
 	public String makePath(File cwd, String path) {

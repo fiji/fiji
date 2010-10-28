@@ -11,6 +11,8 @@
 /build/
 /make-targets
 /fiji.o
+/tmp.rc
+/tmp.o
 /fiji
 /fiji.exe
 /fiji-tiger
@@ -120,6 +122,9 @@
 /jars/VectorString.jar
 /jars/fiji-lib.jar
 /jars/imglib.jar
+/jars/imglib-algorithms.jar
+/jars/imglib-ij.jar
+/jars/imglib-io.jar
 /jars/jep.jar
 /plugins/Siox_Segmentation.jar
 /plugins/Directionality_.jar
@@ -197,3 +202,4 @@
 /plugins/TransformJ_.jar
 /plugins/FeatureJ_.jar
 /plugins/RandomJ_.jar
+/plugins/Linear_Kuwahara.jar

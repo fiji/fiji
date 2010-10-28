@@ -107,6 +107,10 @@ public class NearPoint implements Comparable {
 	private double distanceSquared;
 	private Double cachedDistanceToPathNearPoint;
 
+	public Path getPath() {
+		return path;
+	}
+
 	public int compareTo( Object other ) {
 		double d = distanceSquared;
 		double od = ((NearPoint)other).distanceSquared;
