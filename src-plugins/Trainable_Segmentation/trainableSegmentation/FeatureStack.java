@@ -2,8 +2,8 @@ package trainableSegmentation;
 /** 
  * This class is intended for the Trainable_Segmentation plugin. It creates and holds
  * different feature images for the classification. Possible filters include:
- * - Gaussianblur
- * - Gradientmagnitude
+ * - Gaussian blur
+ * - Gradient magnitude
  * - Hessian
  * - Difference of Gaussian
  * - Orientation filter to detect membranes and then its projection
@@ -192,9 +192,9 @@ public class FeatureStack
 		wholeStack.addSlice(availableFeatures[GAUSSIAN] + "_" + sigma, ip);
 	}
 	/**
-	 * Calculate gaussian filter concurrently
+	 * Calculate Gaussian filter concurrently
 	 * @param originalImage original input image
-	 * @param sigma gaussian sigma
+	 * @param sigma Gaussian sigma
 	 * @return result image
 	 */
 	public Callable<ImagePlus> getGaussianBlur(
