@@ -161,6 +161,7 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 	private SegmenterSettingsPanel segmenterSettingsPanel;
 	private TrackerSettingsPanel trackerSettingsPanel;
 	private InitThresholdPanel initThresholdingPanel;
+	private TreeMap<Integer, List<Spot>> rawSpots;
 	
 	
 	{
@@ -212,6 +213,9 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 				break;
 				
 			case SEGMENTING:
+				// Save the raw spot collection for later 
+				rawSpots = trackmate.getSpots();
+				// Make the initial threshold
 				execInitThresholdingStep();
 				state = GuiState.INITIAL_THRESHOLDING;
 				break;
@@ -275,6 +279,9 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 			break;
 			
 		case CALCULATE_FEATURES:
+			// Restore the raw result in the trackmate
+			trackmate.setSpots(rawSpots);
+			// Display initial thresholding panel
 			cardLayout.show(jPanelMain, INITIAL_THRESHOLDING_KEY);
 			state = GuiState.INITIAL_THRESHOLDING;
 			break;
@@ -284,9 +291,14 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 			state = GuiState.INITIAL_THRESHOLDING;
 			break;
 			
-		case TRACKING:
+		case TUNE_TRACKER:
 			cardLayout.show(jPanelMain, THRESHOLD_GUI_KEY);
 			state =GuiState.THRESHOLD_BLOBS; 
+			break;
+			
+		case TRACKING:
+			cardLayout.show(jPanelMain, TUNE_TRACKER_KEY);
+			state = GuiState.TUNE_TRACKER;
 			break;
 			
 	}
@@ -417,7 +429,8 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 	}
 	
 	/**
-	 * Collect the initial segmentation result, compute all features.
+	 * Collect the raw result, threshold by the quality value set in the init. threshold panel, 
+	 * and then compute all features.
 	 */
 	private void execCalculateFeatures() {
 		cardLayout.show(jPanelMain, LOG_PANEL_KEY);
@@ -426,9 +439,8 @@ public class TrackMateFrame <T extends RealType<T>> extends javax.swing.JFrame {
 		FeatureThreshold ft = initThresholdingPanel.getFeatureThreshold();
 		List<FeatureThreshold> featureThresholds = new ArrayList<FeatureThreshold>(1);
 		featureThresholds.add(ft);
-		TreeMap<Integer, List<Spot>> spots = TrackMate_.thresholdSpots(trackmate.getSpots(), featureThresholds);
-		trackmate.setSpots(spots);
-		
+		TreeMap<Integer, List<Spot>> spots = TrackMate_.thresholdSpots(rawSpots, featureThresholds); // operate on the RAW segmentation result
+		trackmate.setSpots(spots); // Here we OVERRIDE the raw results by this initially segmented collection
 		// Calculate features
 		trackmate.computeFeatures();		
 		logger.log("Calculating features done.\n", Logger.BLUE_COLOR);
