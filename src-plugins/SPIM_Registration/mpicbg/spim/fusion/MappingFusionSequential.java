@@ -7,6 +7,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.vecmath.Point3f;
 
 import mpicbg.imglib.algorithm.math.MathLib;
+import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
@@ -64,17 +65,48 @@ public class MappingFusionSequential extends SPIMImageFusion
 	}
 
 	@Override
-	public void fuseSPIMImages()
+	public void fuseSPIMImages( final int channelIndex )
 	{
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
 			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Unloading source images.");
-
+		
 		// unload images 
-		for ( final ViewDataBeads view : views )
+		for ( final ViewDataBeads view : viewStructure.getViews() )
 			view.closeImage();
+		
+		// clear the previous output image
+		if ( channelIndex > 0 )
+		{
+			final Cursor<FloatType> iteratorFused = fusedImage.createCursor();
+			final Cursor<FloatType> iteratorWeights = weights.createCursor();
+			
+			// compute final image
+			while ( iteratorFused.hasNext() )
+			{
+				iteratorFused.fwd();
+				iteratorWeights.fwd();
 				
+				iteratorFused.getType().set( 0 );
+				iteratorWeights.getType().set( 0 );
+			}
+			
+			iteratorFused.close();
+			iteratorWeights.close();			
+		}
+		
+		//
+		// update views so that only the current channel is being fused
+		//
+		final ArrayList<ViewDataBeads> views = new ArrayList<ViewDataBeads>();
+		
+		for ( final ViewDataBeads view : viewStructure.getViews() )
+			if ( view.getChannelIndex() == channelIndex )
+				views.add( view );
+		
+		final int numViews = views.size();
+						
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Computing output image.");
+			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Computing output image (Channel " + channelIndex +  ").");
 
 		// cache the views, imageSizes and models that we use
 		final boolean useView[] = new boolean[ numViews ];
@@ -82,15 +114,13 @@ public class MappingFusionSequential extends SPIMImageFusion
 		
 		for ( int i = 0; i < numViews; ++i )
 		{
-			useView[ i ] = views.get( i ).getViewErrorStatistics().getNumConnectedViews() > 0 || views.get( i ).getViewStructure().getNumViews() == 1;
+			useView[ i ] = Math.max( views.get( i ).getViewErrorStatistics().getNumConnectedViews(), views.get( i ).getTile().getConnectedTiles().size() ) > 0 || views.get( i ).getViewStructure().getNumViews() == 1;
 			models[ i ] = views.get( i ).getTile().getModel(); 
 		}
 		
 		final int[][] imageSizes = new int[numViews][];		
 		for ( int i = 0; i < numViews; ++i )
 			imageSizes[ i ] = views.get( i ).getImageSize();
-		
-		final int numViews = viewStructure.getNumViews();
 				
 		// iterate over input images
 		for (int v = 0; v < numViews; v += numParalellStacks )
@@ -102,7 +132,7 @@ public class MappingFusionSequential extends SPIMImageFusion
 			final ArrayList<ViewDataBeads> processViews = new ArrayList<ViewDataBeads>();
 			
 			for ( int viewIndex = viewIndexStart; viewIndex < viewIndexEnd; ++viewIndex )
-				processViews.add( viewStructure.getViews().get( viewIndex ) );
+				processViews.add( views.get( viewIndex ) );
 			
 			final int startView, endView;
 			if (combinedWeightenerFactories.size() > 0)
@@ -155,7 +185,7 @@ public class MappingFusionSequential extends SPIMImageFusion
 		                	
 							for (int view = viewIndexStart; view < viewIndexEnd; view++)
 								if ( view % numThreads == myNumber)
-									isoW[i][view] = isolatedWeightenerFactories.get(i).createInstance( views.get( view) );
+									isoW[i][view] = isolatedWeightenerFactories.get(i).createInstance( views.get( view ) );
 		                }
 		            });
 				
@@ -190,7 +220,7 @@ public class MappingFusionSequential extends SPIMImageFusion
 			        		
 			        		final CombinedPixelWeightener<?>[] combW = new CombinedPixelWeightener<?>[combinedWeightenerFactories.size()];
 			        		for (int i = 0; i < combW.length; i++)
-			        			combW[i] = combinedWeightenerFactories.get(i).createInstance( viewStructure );
+			        			combW[i] = combinedWeightenerFactories.get(i).createInstance( views );
 			            	
 							// get iterators for isolated weights
 			        		final LocalizableByDimCursor<FloatType> isoIterators[][] = new LocalizableByDimCursor[ isoW.length ][ numViews ];            		
@@ -345,10 +375,10 @@ public class MappingFusionSequential extends SPIMImageFusion
 		}// input images
 				
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-			IOFunctions.println("Computing final output image.");
+			IOFunctions.println("Computing final output image (Channel " + channelIndex +  ").");
 
-		final LocalizableCursor<FloatType> iteratorFused = fusedImage.createLocalizableCursor();
-		final LocalizableCursor<FloatType> iteratorWeights = weights.createLocalizableCursor();
+		final Cursor<FloatType> iteratorFused = fusedImage.createCursor();
+		final Cursor<FloatType> iteratorWeights = weights.createCursor();
 		
 		// compute final image
 		while (iteratorFused.hasNext())
@@ -358,15 +388,14 @@ public class MappingFusionSequential extends SPIMImageFusion
 			final float weight = iteratorWeights.getType().get();
 			
 			if (weight > 0)
-				iteratorFused.getType().set( iteratorFused.getType().get()/weight ); 
+				iteratorFused.getType().set( iteratorFused.getType().get()/weight );
 		}
 		
 		iteratorFused.close();
 		iteratorWeights.close();
-		weights.close();
 
 		if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_MAIN )
-			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Done computing output image.");
+			IOFunctions.println("(" + new Date(System.currentTimeMillis()) + "): Done computing output image (Channel " + channelIndex +  ").");
 	}
 
 	@Override

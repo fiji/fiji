@@ -78,6 +78,16 @@ public class Jython_Interpreter extends AbstractInterpreter {
 		println("... done.");
 	}
 
+	@Override
+	protected void windowClosing() {
+		super.windowClosing();
+		try {
+			if (null != pi) pi.cleanup();
+		} catch (Throwable t) {
+			t.printStackTrace();
+		}
+	}
+
 	/** Evaluate python code. */
 	protected Object eval(String text) {
 		pi.exec(text);

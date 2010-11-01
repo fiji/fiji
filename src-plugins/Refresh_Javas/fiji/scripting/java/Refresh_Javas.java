@@ -9,6 +9,8 @@ import ij.ImagePlus;
 import ij.Macro;
 import ij.Menus;
 
+import ij.gui.GenericDialog;
+
 import ij.io.PluginClassLoader;
 
 import ij.text.TextWindow;
@@ -29,6 +31,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import java.net.MalformedURLException;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This plugin looks for Java sources in plugins/ and turns them into
@@ -62,17 +67,24 @@ public class Refresh_Javas extends RefreshScripts {
 
 	/** Compile and optionally run an ImageJ plugin */
 	public void compileAndRun(String path, boolean compileOnly) {
+		boolean isFakefile = path.endsWith("/Fakefile");
 		String c = path;
-		if (c.endsWith(".java")) {
+		if (c.endsWith(".java") || isFakefile) {
 			try {
-				String[] result = fake(path);
+				String[] result = isFakefile ?
+					fake(new FileInputStream(path), new File(path).getParentFile(), null, null) :
+					fake(path);
 				if (result != null) {
 					if (!compileOnly)
 						runPlugin(result[1], result[0], true);
 					return;
 				}
+				if (isFakefile) {
+					err.write(("Could not compile " + path + "\n").getBytes());
+					return;
+				}
 			} catch (Fake.FakeException e) {
-				try {
+				if (!e.getMessage().equals("Canceled")) try {
 					err.write(e.getMessage().getBytes());
 				} catch (IOException e2) {
 					e.printStackTrace();
@@ -155,34 +167,65 @@ public class Refresh_Javas extends RefreshScripts {
 		if (name.endsWith(".java"))
 			name = name.substring(0, name.length() - 5);
 
-		Fake fake = new Fake();
-		fake.out = new PrintStream(out);
-		fake.err = new PrintStream(err);
-		Fake.Parser parser = null;
 		String fakefile = fijiDir + "/Fakefile";
 		if (new File(fakefile).exists()) try {
-			parser = fake.parse(new FileInputStream(fakefile),
-					new File(fijiDir));
-			parser.parseRules(null);
+			String[] result = fake(new FileInputStream(fakefile), new File(fijiDir), name, target);
+			if (result != null)
+				return result;
+			result = fake(new FileInputStream(fakefile), new File(fijiDir), name, "jars/" + base + ".jar");
+			if (result != null)
+				return result;
 		} catch (FileNotFoundException e) {
 			e.printStackTrace(new PrintStream(err));
 		}
-		if (parser != null && parser.getRule(target) == null)
-			target = "jars/" + base + ".jar";
-		if (parser == null || parser.getRule(target) == null) {
-			String rule = "all <- " + target + "\n"
-				+ "\n"
-				+ target + " <- src-plugins/" + base
-					+ "/**/*.java\n";
-			parser = fake.parse(new StringBufferInputStream(rule),
-					new File(fijiDir));
-			parser.parseRules(null);
+		String rule = "all <- " + target + "\n"
+			+ "\n"
+			+ target + " <- src-plugins/" + base + "/**/*.java\n";
+		return fake(new StringBufferInputStream(rule), new File(fijiDir), name, target);
+	}
+
+	/* returns the class name and .jar on success, null otherwise */
+	public String[] fake(InputStream fakefile, File dir, String name, String target) throws Fake.FakeException {
+		return fake(fakefile, dir, name, target, false);
+	}
+
+	/* returns the class name and .jar on success, null otherwise */
+	public String[] fake(InputStream fakefile, File dir, String name, String target, boolean includeSource) throws Fake.FakeException {
+		Fake fake = new Fake();
+		fake.out = new PrintStream(out);
+		fake.err = new PrintStream(err);
+		Fake.Parser parser = fake.parse(fakefile, dir);
+		parser.parseRules(null);
+
+		if (target == null) {
+                        List<String> targets = new ArrayList<String>();
+                        for (String key : parser.getAllRules().keySet())
+                                if (parser.getRule(key).getClass().getName().endsWith("$CompileJar"))
+                                        targets.add(key);
+                        if (targets.size() == 0)
+                                throw new Fake.FakeException("No .jar targets found");
+                        if (targets.size() == 1)
+                                target = targets.get(0);
+                        else {
+                                String[] array = targets.toArray(new String[targets.size()]);
+                                GenericDialog gd = new GenericDialog("Target");
+                                gd.addChoice("Target", array, array[0]);
+                                gd.showDialog();
+                                if (gd.wasCanceled())
+                                        throw new Fake.FakeException("Canceled");
+                                target = gd.getNextChoice();
+                        }
 		}
+
+		if (parser.getRule(target) == null)
+			return null;
 		parser.setVariable("debug", "true");
 		parser.setVariable("buildDir", "build");
+		if (includeSource)
+			parser.setVariable("includeSource(" + target + ")", "true");
 		parser.getRule(target).make();
 
-		return new String[] { name, target };
+		return new String[] { name, new File(dir, target).getAbsolutePath() };
 	}
 
 	static Method javac;
@@ -252,7 +295,9 @@ public class Refresh_Javas extends RefreshScripts {
 	void runPlugin(String path, String className, boolean newClassLoader)
 			throws Exception {
 		PlugInExecutor executor = new PlugInExecutor(path);
-		try {
+		if (className == null)
+			executor.runOneOf(path, newClassLoader);
+		else try {
 			executor.tryRun(className, "", newClassLoader);
 		} catch (NoSuchMethodException e) {
 			executor.runOneOf(path, newClassLoader);
