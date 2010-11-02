@@ -29,27 +29,6 @@ public class Blending extends CombinedPixelWeightener<Blending>
 	}
 
 	@Override
-	public void updateWeights( final int[][] loc )
-	{
-		// check which location are inside its respective view
-		int num = 0;
-		for (int view = 0; view < numViews; view++)
-		{			
-			if (loc[ view ][ 0 ] >= 0 && loc[ view ][ 1 ] >= 0 && loc[ view ][ 2 ] >= 0 && 
-				loc[ view ][ 0 ] < imageSizes[ view ][ 0 ] && 
-				loc[ view ][ 1 ] < imageSizes[ view ][ 1 ] && 
-				loc[ view ][ 2 ] < imageSizes[ view ][ 2 ])
-			{
-				useView[view] = true;
-				++num;
-			}
-		}	
-		
-		// compute the linear weights
-		computeLinearWeights(num, loc, useView);
-	}
-
-	@Override
 	public void updateWeights(final float[][] loc, final boolean[] useView)
 	{
 		// check which location are inside its respective view
@@ -78,7 +57,7 @@ public class Blending extends CombinedPixelWeightener<Blending>
 	@Override
 	public float getWeight(final int view) { return weights[view]; }
 	
-	final private void computeLinearWeights(final int num, final int[][] loc, final boolean[] useView)
+	final private void computeLinearWeights( final int num, final int[][] loc, final boolean[] useView )
 	{
 		if (num <= 1)
 		{
@@ -143,7 +122,7 @@ public class Blending extends CombinedPixelWeightener<Blending>
 		}
 	}
 
-	final private void computeLinearWeights(final int num, final float[][] loc, final boolean[] useView)
+	final private void computeLinearWeights( final int num, final float[][] loc, final boolean[] useView )
 	{
 		if (num <= 1)
 		{

@@ -30,10 +30,11 @@ public class PreviewRegistration
 			}
 		}
 
+		/*
 		if ( list.size() > 0 )
 			ImageJFunctions.displayAsVirtualStack( list, ImageJFunctions.GRAY32, new int[]{0,1,2}, new int[3] ).show();
 		else
-			if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )
+			if ( viewStructure.getDebugLevel() <= ViewStructure.DEBUG_ERRORONLY )*/
 				IOFunctions.println("PreviewRegistration(): no view is connected to any other view, cannot display.");
 	}
 }

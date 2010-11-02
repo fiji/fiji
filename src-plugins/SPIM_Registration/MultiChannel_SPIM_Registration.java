@@ -49,7 +49,7 @@ public class MultiChannel_SPIM_Registration extends SPIMRegistrationAbstract
 	@Override
 	protected GenericDialogPlus createGenericDialogPlus()
 	{
-		final GenericDialogPlus gd = new GenericDialogPlus( "MulitChannel SPIM Registration" );
+		final GenericDialogPlus gd = new GenericDialogPlus( "MultiChannel SPIM Registration" );
 		
 		gd.addDirectoryField( "SPIM_Data_Directory", spimDataDirectoryStatic );
 		gd.addStringField( "Timepoints_to_process", timepointsStatic );

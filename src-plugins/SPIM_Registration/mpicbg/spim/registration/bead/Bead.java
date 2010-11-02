@@ -7,6 +7,7 @@ import javax.vecmath.Point3d;
 import javax.vecmath.Point3f;
 
 import mpicbg.imglib.algorithm.math.MathLib;
+import mpicbg.imglib.util.Util;
 import mpicbg.models.Point;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.registration.ViewDataBeads;
@@ -157,7 +158,7 @@ public class Bead extends Point
 	@Override
 	public String toString()
 	{
-		String desc = cloneString + "Bead " + getID() + " l"+ MathLib.printCoordinates( getL() ) + "; w"+ MathLib.printCoordinates( getW() );
+		String desc = cloneString + "Bead " + getID() + " l"+ Util.printCoordinates( getL() ) + "; w"+ Util.printCoordinates( getW() );
 		
 		if ( myView != null)
 			return desc + " of view " + myView;

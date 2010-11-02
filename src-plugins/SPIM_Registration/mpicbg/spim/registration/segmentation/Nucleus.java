@@ -3,11 +3,11 @@ package mpicbg.spim.registration.segmentation;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import fiji.util.node.Leaf;
-import mpicbg.imglib.algorithm.math.MathLib;
+import mpicbg.imglib.util.Util;
 import mpicbg.models.Point;
 import mpicbg.spim.io.IOFunctions;
 import mpicbg.spim.registration.ViewDataBeads;
+import fiji.util.node.Leaf;
 
 public class Nucleus extends Point implements Leaf<Nucleus>
 {
@@ -130,7 +130,7 @@ public class Nucleus extends Point implements Leaf<Nucleus>
 	@Override
 	public String toString()
 	{
-		String desc = "Nucleus " + getID() + " l"+ MathLib.printCoordinates( getL() ) + "; w"+ MathLib.printCoordinates( getW() );
+		String desc = "Nucleus " + getID() + " l"+ Util.printCoordinates( getL() ) + "; w"+ Util.printCoordinates( getW() );
 		
 		if ( myView != null)
 			return desc + " of view " + myView;

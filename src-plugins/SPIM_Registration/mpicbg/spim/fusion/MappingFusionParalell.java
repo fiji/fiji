@@ -6,7 +6,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.vecmath.Point3f;
 
-import mpicbg.imglib.algorithm.math.MathLib;
 import mpicbg.imglib.cursor.LocalizableByDimCursor;
 import mpicbg.imglib.cursor.LocalizableCursor;
 import mpicbg.imglib.image.Image;
@@ -14,6 +13,7 @@ import mpicbg.imglib.image.ImageFactory;
 import mpicbg.imglib.interpolation.Interpolator;
 import mpicbg.imglib.multithreading.SimpleMultiThreading;
 import mpicbg.imglib.type.numeric.real.FloatType;
+import mpicbg.imglib.util.Util;
 import mpicbg.models.AffineModel3D;
 import mpicbg.models.NoninvertibleModelException;
 import mpicbg.spim.io.IOFunctions;
@@ -165,6 +165,7 @@ public class MappingFusionParalell extends SPIMImageFusion
 		        		
 		    			final Point3f[] tmpCoordinates = new Point3f[ numViews ];
 		    			final int[][] loc = new int[ numViews ][ 3 ];
+		    			final float[][] locf = new float[ numViews ][ 3 ];
 		    			final boolean[] use = new boolean[ numViews ];
 		    			
 		    			for ( int i = 0; i < numViews; ++i )
@@ -201,10 +202,14 @@ public class MappingFusionParalell extends SPIMImageFusion
 		
 		    							mpicbg.spim.mpicbg.Java3d.applyInverseInPlace( models[i], tmpCoordinates[i], tmp );
 			
-		    							loc[i][0] = MathLib.round( tmpCoordinates[i].x );
-		    							loc[i][1] = MathLib.round( tmpCoordinates[i].y );
-		    							loc[i][2] = MathLib.round( tmpCoordinates[i].z );	
-		    							
+		    							loc[i][0] = Util.round( tmpCoordinates[i].x );
+		    							loc[i][1] = Util.round( tmpCoordinates[i].y );
+		    							loc[i][2] = Util.round( tmpCoordinates[i].z );	
+
+		    							locf[i][0] = tmpCoordinates[i].x;
+		    							locf[i][1] = tmpCoordinates[i].y;
+		    							locf[i][2] = tmpCoordinates[i].z;	
+
 		    							// do we hit the source image?
 										if ( loc[ i ][ 0 ] >= 0 && loc[ i ][ 1 ] >= 0 && loc[ i ][ 2 ] >= 0 && 
 											 loc[ i ][ 0 ] < imageSizes[ i ][ 0 ] && 
@@ -226,7 +231,7 @@ public class MappingFusionParalell extends SPIMImageFusion
 		    						// update combined weighteners
 									if (combW.length > 0)
 										for (final CombinedPixelWeightener<?> w : combW)
-											w.updateWeights(loc, use);
+											w.updateWeights(locf, use);
 		
 									countUse++;
 		
