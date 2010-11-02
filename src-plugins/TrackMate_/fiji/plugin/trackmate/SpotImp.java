@@ -1,7 +1,6 @@
 package fiji.plugin.trackmate;
 
 import java.util.EnumMap;
-
 import mpicbg.imglib.algorithm.math.MathLib;
 
 /**
@@ -47,6 +46,17 @@ public class SpotImp implements Spot {
 	
 	public SpotImp(float[] coordinates) {
 		this(coordinates, null);
+	}
+	
+	/**
+	 * Blank constructor meant to be used when loading a spot collection from a file. <b>Will</b> mess with
+	 * the {@link #IDcounter} field, so this constructor should not be used for normal spot creation. 
+	 * @param ID  the spot ID to set
+	 */
+	public SpotImp(int ID) {
+		this.ID = ID;
+		if (SpotImp.IDcounter <= ID)
+			SpotImp.IDcounter = ID+1;
 	}
 	
 	/**

@@ -211,7 +211,7 @@ public class TmXmlWriter implements TmXmlKeys {
 		List<Spot> spots;
 		
 		Element spotIDElement, frameSpotsElement;
-		Element spotCollection = new Element(SELECTED_SPOT_COLLECTION_ELEMENT_KEY);
+		Element spotCollection = new Element(SELECTED_SPOT_ELEMENT_KEY);
 		
 		for(int frame : selectedSpots.keySet()) {
 			
