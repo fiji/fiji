@@ -1516,8 +1516,6 @@ public class Trainable_Segmentation implements PlugIn
 		}
 		
 		gd.addMessage("General options:");
-		//FIXME normalization
-		//gd.addCheckbox("Normalize data", this.featureStack.isNormalized());
 		
 		gd.addMessage("Fast Random Forest settings:");
 		gd.addNumericField("Number of trees:", numOfTrees, 0);
@@ -1550,10 +1548,6 @@ public class Trainable_Segmentation implements PlugIn
 			if (newEnableFeatures[i] != oldEnableFeatures[i])
 				featuresChanged = true;
 		}
-		//FIXME normalization
-		// Normalization
-		//final boolean normalize = gd.getNextBoolean();
-		final boolean normalize = false;
 		
 		// Read fast random forest parameters and check if changed
 		final int newNumTrees = (int) gd.getNextNumber();
@@ -1606,10 +1600,9 @@ public class Trainable_Segmentation implements PlugIn
 			updateClassifier(newNumTrees, newRandomFeatures);
 		
 		// Update feature stack if necessary
-		if(featuresChanged || normalize != this.featureStack.isNormalized())
+		if(featuresChanged)
 		{
 			this.setButtonsEnabled(false);
-			this.featureStack.setNormalize(normalize);
 			this.featureStack.setEnableFeatures(newEnableFeatures);
 			this.featureStack.updateFeaturesMT();
 			this.setButtonsEnabled(true);
