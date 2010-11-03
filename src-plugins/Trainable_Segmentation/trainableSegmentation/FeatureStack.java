@@ -12,6 +12,7 @@ package trainableSegmentation;
  * - Minimum
  * - Maximum
  * - Anisotropic diffusion
+ * - Bilateral filter
  * 
  * filters to come:
  * - make use of color channels
@@ -53,6 +54,7 @@ import anisotropic_diffusion.Anisotropic_Diffusion_2D;
 
 import stitching.FloatArray2D;
 
+import vib.BilateralFilter;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instances;
@@ -71,7 +73,7 @@ import ij.plugin.filter.RankFilters;
 /**
  * This class stores the stacks of features that will be used during the trainable/weka segmentations.  
  */
-public class FeatureStack 
+public class FeatureStack
 {
 	/** original input image */
 	private ImagePlus originalImage = null;
@@ -108,18 +110,29 @@ public class FeatureStack
 	public static final int MEDIAN					=  9;
 	/** Anisotropic diffusion filter flag index */
 	public static final int ANISOTROPIC_DIFFUSION 	= 10;
+	/** Anisotropic diffusion filter flag index */
+	public static final int BILATERAL 				= 11;
+	/** Lipschitz filter flag index */
+	public static final int LIPSCHITZ 				= 12;
+	/** Minimum filter flag index */
+	public static final int BLUR_MINIMUM			= 13;
+	/** Maximum filter flag index */
+	public static final int BLUR_MAXIMUM			= 14;
 	/** names of available filters */
 	public static final String[] availableFeatures 
 		= new String[]{	"Gaussian_blur", "Sobel_filter", "Hessian", "Difference_of_gaussians", 
-					   	"Membrane_projections","Variance","Mean", "Minimum", "Maximum", "Median", "Anisotropic_diffusion"};
+					   	"Membrane_projections","Variance","Mean", "Minimum", "Maximum", "Median", 
+					   	"Anisotropic_diffusion", "Bilateral", "Lipschitz", "Blur_minimum", " Blur_maximum"};
 	/** flags of filters to be used */
-	private boolean[] enableFeatures = new boolean[]{true, true, true, true, true, false, false, false, false, false, false};
-	/** normalization flag */
-	private boolean normalize = false;
+	private boolean[] enableFeatures = new boolean[]{true, true, true, true, true, false, false, 
+													 false, false, false, false, false, false, false, false};
+	/** use neighborhood flag */
+	private boolean useNeighbors = false;
 	/** expected membrane thickness (in pixels) */
 	private int membraneSize = 1;	
 	/** size of the patch to use to enhance membranes (in pixels, NxN) */
 	private int membranePatchSize = 19;
+	
 	/**
 	 * Construct object to store stack of image features
 	 * @param image original image
@@ -168,6 +181,24 @@ public class FeatureStack
 	 */
 	public int getWidth(){
 		return wholeStack.getWidth();
+	}
+	
+	/**
+	 * 
+	 * @return
+	 */
+	public boolean useNeighborhood()
+	{
+		return this.useNeighbors;
+	}
+	
+	/**
+	 * 
+	 * @param useNeighbors
+	 */
+	public void setUseNeighbors( boolean useNeighbors)
+	{
+		this.useNeighbors = useNeighbors;
 	}
 	
 	/**
@@ -301,6 +332,58 @@ public class FeatureStack
 				final RankFilters filter = new RankFilters();
 				filter.rank(ip, radius, RankFilters.MIN);
 				return new ImagePlus (availableFeatures[MINIMUM]+ "_"  + radius, ip);
+			}
+		};
+	}
+	
+	/**
+	 * Get original image after Gaussian blur and minimum filtering (to be called from an ExecutorService)
+	 * 
+	 * @param originalImage input image
+	 * @param blurRadius filter radius for Gaussian blur
+	 * @param minRadius radius of minimum filter
+	 * @return filtered image
+	 */
+	public Callable<ImagePlus> getBlurMin(
+			final ImagePlus originalImage,
+			final float blurRadius,
+			final float minRadius)
+	{
+		return new Callable<ImagePlus>(){
+			public ImagePlus call(){
+		
+				final ImageProcessor ip = originalImage.getProcessor().duplicate();
+				GaussianBlur gs = new GaussianBlur();
+				gs.blur(ip, blurRadius);
+				final RankFilters filter = new RankFilters();
+				filter.rank(ip, minRadius, RankFilters.MIN);
+				return new ImagePlus (availableFeatures[BLUR_MINIMUM]+ "_"  + blurRadius + "_"  + minRadius, ip);
+			}
+		};
+	}
+	
+	/**
+	 * Get original image after Gaussian blur and maximum filtering (to be called from an ExecutorService)
+	 * 
+	 * @param originalImage input image
+	 * @param blurRadius filter radius for Gaussian blur
+	 * @param minRadius radius of maximum filter
+	 * @return filtered image
+	 */
+	public Callable<ImagePlus> getBlurMax(
+			final ImagePlus originalImage,
+			final float blurRadius,
+			final float maxRadius)
+	{
+		return new Callable<ImagePlus>(){
+			public ImagePlus call(){
+		
+				final ImageProcessor ip = originalImage.getProcessor().duplicate();
+				GaussianBlur gs = new GaussianBlur();
+				gs.blur(ip, blurRadius);
+				final RankFilters filter = new RankFilters();
+				filter.rank(ip, maxRadius, RankFilters.MAX);
+				return new ImagePlus (availableFeatures[BLUR_MAXIMUM]+ "_"  + blurRadius + "_"  + maxRadius, ip);
 			}
 		};
 	}
@@ -562,7 +645,12 @@ public class FeatureStack
 				//ImageProcessor ipRatio = new FloatProcessor(width, height);
 				ImageProcessor ipEig1 = new FloatProcessor(width, height);
 				ImageProcessor ipEig2 = new FloatProcessor(width, height);
-						
+				ImageProcessor ipOri = new FloatProcessor(width, height);
+				ImageProcessor ipSed = new FloatProcessor(width, height);
+				ImageProcessor ipNed = new FloatProcessor(width, height);
+					
+				final double t = Math.pow(1, 0.75);
+				
 				for (int x=0; x<width; x++){
 					for (int y=0; y<height; y++){
 						float s_xx = ip_xx.getf(x,y);
@@ -579,9 +667,28 @@ public class FeatureStack
 						// Ratio
 						//ipRatio.setf(x,y, (float)(trace*trace) / determinant);
 						// First eigenvalue
-						ipEig1.setf(x,y, (float) ( (s_xx+s_yy)/2.0 + Math.sqrt((4*s_xy*s_xy + (s_xx - s_yy)*(s_xx - s_yy)) / 2.0 ) ) );
+						ipEig1.setf(x,y, (float) ( trace/2.0 + Math.sqrt((4*s_xy*s_xy + (s_xx - s_yy)*(s_xx - s_yy)) / 2.0 ) ) );
 						// Second eigenvalue
-						ipEig2.setf(x,y, (float) ( (s_xx+s_yy)/2.0 - Math.sqrt((4*s_xy*s_xy + (s_xx - s_yy)*(s_xx - s_yy)) / 2.0 ) ) );
+						ipEig2.setf(x,y, (float) ( trace/2.0 - Math.sqrt((4*s_xy*s_xy + (s_xx - s_yy)*(s_xx - s_yy)) / 2.0 ) ) );
+						// Orientation
+						if (s_xy < 0.0) 
+						{
+							ipOri.setf(x, y, (float)(-0.5 * Math.acos((s_xx
+								- s_yy) / Math.sqrt(4.0 * s_xy
+								* s_xy + (s_xx - s_yy)
+								* (s_xx - s_yy)))) );
+						}
+						else 
+						{
+							ipOri.setf(x, y, (float)(0.5 * Math.acos((s_xx
+								- s_yy) / Math.sqrt(4.0 * s_xy
+								* s_xy + (s_xx - s_yy)
+								* (s_xx - s_yy)))) );
+						}
+						// Gamma-normalized square eigenvalue difference
+						ipSed.setf(x, y, (float) ( Math.pow(t,4) * trace*trace * ( (s_xx - s_yy)*(s_xx - s_yy) + 4*s_xy*s_xy ) ) );
+						// Square of Gamma-normalized eigenvalue difference
+						ipNed.setf(x, y, (float) ( Math.pow(t,2) * ( (s_xx - s_yy)*(s_xx - s_yy) + 4*s_xy*s_xy ) ) );
 					}
 				}
 				
@@ -592,6 +699,9 @@ public class FeatureStack
 				//hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Eignevalue_Ratio_"+sigma, ipRatio);
 				hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Eigenvalue_1_"+sigma, ipEig1);
 				hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Eigenvalue_2_"+sigma, ipEig2);
+				hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Orientation_"+sigma, ipOri);
+				hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Square_Eigenvalue_Difference_"+sigma, ipSed);
+				hessianStack.addSlice(availableFeatures[HESSIAN]+ "_Normalized_Eigenvalue_Difference_"+sigma, ipNed);
 				return new ImagePlus ("hessian stack", hessianStack);
 			}
 		};
@@ -741,8 +851,7 @@ public class FeatureStack
 						membranePatch.setf(x, y, 1f);
 					}
 				}
-
-				
+			
 				ImageStack is = new ImageStack(width, height);
 				ImageProcessor rotatedPatch;
 				
@@ -787,6 +896,7 @@ public class FeatureStack
 	 * @param nb_smoothings number of smoothings per iteration
 	 * @param a1 diffusion limiter along minimal variations
 	 * @param a2 diffusion limiter along maximal variations
+	 * @param edgeThreshold edge threshold
 	 * @return result image
 	 */
 	public Callable<ImagePlus> getAnisotropicDiffusion(
@@ -795,7 +905,8 @@ public class FeatureStack
 			final int saveSteps,
 			final int nb_smoothings,
 			final float a1,
-			final float a2)
+			final float a2,
+			final float edgeThreshold)
 	{
 		return new Callable<ImagePlus>(){
 			public ImagePlus call(){
@@ -809,28 +920,82 @@ public class FeatureStack
 				ad.setLimiterMinimalVariations(a1);
 				ad.setLimiterMaximalVariations(a2);
 				ad.setSmoothings(nb_smoothings);
+				ad.setEdgeThreshold(edgeThreshold);
 				
 				final ImagePlus result = ad.runTD(originalImage.getProcessor());
 				
 				
 				if(result.getImageStackSize() == 1)
 				{
-					return new ImagePlus (availableFeatures[ANISOTROPIC_DIFFUSION] + "_" + nb_iter + "_" + nb_smoothings + "_" + a1 + "_" + a2, result.getProcessor());
+					return new ImagePlus (availableFeatures[ANISOTROPIC_DIFFUSION] + "_" + nb_iter + "_" + nb_smoothings + "_" + a1 + "_" + a2 + "_" + edgeThreshold, result.getProcessor());
 				}
 				else
 				{
 					final ImageStack slices = result.getImageStack();
 					slices.deleteSlice(1); // delete original image
 					for(int i = 1; i <= slices.getSize() ; i++)
-						slices.setSliceLabel(availableFeatures[ANISOTROPIC_DIFFUSION] + "_" + (saveSteps * i) + "_" + nb_smoothings + "_" + a1 + "_" + a2, i);
+						slices.setSliceLabel(availableFeatures[ANISOTROPIC_DIFFUSION] + "_" + (saveSteps * i) + "_" + nb_smoothings + "_" + a1 + "_" + a2 +"_" + edgeThreshold, i);
 					
 					return new ImagePlus("Anisotropic diffusion", slices);
 				}
 				
- 
 			}
 		};
 	}
+
+	/**
+	 * Apply bilateral filter in a concurrent way (to be submitted in an ExecutorService)
+	 * 
+	 * @param originalImage input image
+	 * @param spatialRadius spatial radius
+	 * @param rangeRadius range radius	  
+	 * @return result image
+	 */
+	public Callable<ImagePlus> getBilateralFilter(
+			final ImagePlus originalImage,					
+			final double spatialRadius,
+			final double rangeRadius)
+	{
+		return new Callable<ImagePlus>(){
+			public ImagePlus call()
+			{							
+				//IJ.log("calling bilateral filter with spatiaRadius =" + spatialRadius + " and rangeRadius = " + rangeRadius);
+				final ImagePlus result = BilateralFilter.filter(
+						new ImagePlus("", originalImage.getProcessor().convertToByte(true)), spatialRadius, rangeRadius);								
+				
+				return new ImagePlus (availableFeatures[BILATERAL] + "_" + spatialRadius + "_" + rangeRadius, result.getProcessor().convertToFloat());								
+			}
+		};
+	}	
+	
+	
+	/**
+	 * Apply Lipschitz filter in a concurrent way (to be submitted in an ExecutorService)
+	 * 
+	 * @param originalImage input image
+ 
+	 * @return result image
+	 */
+	public Callable<ImagePlus> getLipschitzFilter(
+			final ImagePlus originalImage,					
+			final boolean downHat,
+			final boolean topHat,
+			final double slope)
+	{
+		return new Callable<ImagePlus>(){
+			public ImagePlus call()
+			{							
+				final Lipschitz_ filter = new Lipschitz_();
+				filter.setDownHat(downHat);
+				filter.setTopHat(topHat);
+				filter.m_Slope = slope;
+				
+				ImageProcessor result = originalImage.getProcessor().duplicate().convertToByte(true);
+				filter.Lipschitz2D(result);				
+				return new ImagePlus (availableFeatures[LIPSCHITZ] + "_" + downHat + "_" + topHat + "_" + slope, result.convertToFloat());								
+			}
+		};
+	}	
 	
 	
 	public void addTest()
@@ -885,25 +1050,33 @@ public class FeatureStack
 			attributes.add(new Attribute(attString));
 		}
 		
+		if(useNeighborhood())
+			for (int i=0; i<8; i++)
+			{	
+				IJ.log("Adding extra attribute original_neighbor_" + (i+1) + "...");
+				attributes.add(new Attribute(new String("original_neighbor_" + (i+1))));
+			}
+		
 		attributes.add(new Attribute("class", classes));
 		
 		Instances data =  new Instances("segment", attributes, width*height);
 		
-		Object[] pixelData = wholeStack.getImageArray();
+		//Object[] pixelData = wholeStack.getImageArray();
 		
 		for (int y=0; y<wholeStack.getHeight(); y++)
 		{
 			IJ.showProgress(y, wholeStack.getHeight());
 			for (int x=0; x<wholeStack.getWidth(); x++)
 			{
-				double[] values = new double[wholeStack.getSize()+1];
-				for (int z=1; z<=wholeStack.getSize(); z++)
-				{
-					values[z-1] = ((float[]) pixelData[z-1])[y*width+x];
+				//double[] values = new double[wholeStack.getSize()+1];
+				//for (int z=1; z<=wholeStack.getSize(); z++)
+				//{
+					//values[z-1] = ((float[]) pixelData[z-1])[y*width+x];
+					data.add(createInstance(x, y, 0));
 					//System.out.println("" + wholeStack.getProcessor(z).getPixelValue(x, y) + " * " + values[z-1]);
-				}
-				values[wholeStack.getSize()] = 0.0;
-				data.add(new DenseInstance(1.0, values));
+			//	}
+				//values[wholeStack.getSize()] = 0.0;
+				//data.add(new DenseInstance(1.0, values));
 			}
 		}
 		IJ.showProgress(1.0);
@@ -1018,14 +1191,7 @@ public class FeatureStack
 		// Membrane projections
 		if(enableFeatures[MEMBRANE])
 			this.addMembraneFeatures(19, 1);
-		
-		if(normalize)
-		{
-			IJ.showStatus("Normalizing stack...");
-			final ImagePlus imp = new ImagePlus("", this.wholeStack);
-			IJ.run(imp, "Enhance Contrast", "saturated=0.1 normalize_all");
-		}
-		
+			
 		IJ.showProgress(1.0);
 		IJ.showStatus("Features stack is updated now!");
 	}
@@ -1048,12 +1214,54 @@ public class FeatureStack
 			// Anisotropic Diffusion
 			if(enableFeatures[ANISOTROPIC_DIFFUSION])
 			{
-				for(int i = 1; i < 8; i += 3)
+				//for(int i = 1; i < 8; i += 3)
+				for (float i=minimumSigma; i<= maximumSigma; i *=2)
 					for(float j = 0.10f; j < 0.5f; j+= 0.25f)
-						futures.add(exe.submit( getAnisotropicDiffusion(originalImage, 20, 20, i, j, 0.9f) ) );
+					//for(float j = 0.10f; j <= 0.5f; j+= 0.2f)
+						//for(float k = 0.5f; k < 6f; k+= 1f)
+							futures.add(exe.submit( getAnisotropicDiffusion(originalImage, 20, 20,(int) i, j, 0.9f, (float) membraneSize) ) );
+							//futures.add(exe.submit( getAnisotropicDiffusion(originalImage, 20, 20, (int) i, j, 0.9f, k) ) );
 			}
-			for (float i=minimumSigma; i<= maximumSigma; i*=2)
+			
+			// Bilateral filter
+			if(enableFeatures[BILATERAL])			
 			{
+				for(double i = 5; i < 20; i *= 2)
+					for(double j = 50; j <= 100; j*= 2)
+						futures.add(exe.submit( getBilateralFilter(originalImage, i, j) ) );
+			}
+			
+			// Bilateral filter
+			if(enableFeatures[LIPSCHITZ])			
+			{
+				for(double i = 5; i < 30; i += 5)					
+					futures.add(exe.submit( getLipschitzFilter(originalImage, true, true, i) ) );
+			}
+			
+			float next = 1;
+			double scale = 0.5;			
+			
+			if(scale == 0.5)
+			{
+				// Sobel
+				if(enableFeatures[SOBEL])
+				{
+					futures.add(exe.submit( getGradient(originalImage, 0)) );
+				}
+				// Hessian
+				if(enableFeatures[HESSIAN])
+				{
+					futures.add(exe.submit( getHessian(originalImage, 0)) );
+				}
+			}
+			
+			for (float i=minimumSigma; i<= maximumSigma; i *=2)
+			{
+			//	if (scale == 1)
+			//		next *=2;
+			//	else
+			//		next = 0.75f;				
+				
 				// Gaussian blur
 				if(enableFeatures[GAUSSIAN])
 				{
@@ -1099,6 +1307,19 @@ public class FeatureStack
 					futures.add(exe.submit( getMax(originalImage, i)) );
 				}
 
+				// Min
+				if(enableFeatures[BLUR_MINIMUM])
+				{
+					for(float j = i/2; j<= i; j*=2)
+						futures.add(exe.submit( getBlurMin(originalImage, i, j)) );
+				}
+				// Max
+				if(enableFeatures[BLUR_MAXIMUM])
+				{
+					for(float j = i/2; j<= i; j*=2)
+						futures.add(exe.submit( getBlurMax(originalImage, i, j)) );
+				}
+				
 				// Median
 				if(enableFeatures[MEDIAN])
 				{
@@ -1130,17 +1351,11 @@ public class FeatureStack
 		catch(Exception ex)
 		{
 			IJ.log("Error when updating feature stack.");
+			ex.printStackTrace();
 		}
 		finally{
 			exe.shutdown();
-		}
-		
-		if(normalize)
-		{
-			IJ.showStatus("Normalizing stack...");
-			final ImagePlus imp = new ImagePlus("", this.wholeStack);
-			IJ.run(imp, "Enhance Contrast", "saturated=0.1 normalize_all");
-		}
+		}	
 		
 		IJ.showProgress(1.0);
 		IJ.showStatus("Features stack is updated now!");
@@ -1187,14 +1402,6 @@ public class FeatureStack
 	public boolean isEmpty()
 	{
 		return (null == this.wholeStack || this.wholeStack.getSize() < 2);
-	}
-
-	public void setNormalize(boolean normalize) {
-		this.normalize = normalize;
-	}
-
-	public boolean isNormalized() {
-		return normalize;
 	}
 	
 	/**
@@ -1243,4 +1450,63 @@ public class FeatureStack
 	{
 		this.maximumSigma = maxSigma;		
 	}
+	
+	/**
+	 * Create instance (feature vector) of a specific coordinate
+	 * 
+	 * @param x x- axis coordinate
+	 * @param y y- axis coordinate
+	 * @param classValue class value to be assigned
+	 * @return corresponding instance
+	 */
+	public DenseInstance createInstance(int x, int y, int classValue)
+	{
+		final int extra = useNeighbors ? 8 : 0;
+		
+		double[] values = new double[ getSize() + 1 + extra ];
+		int n = 0;
+		for (int z=1; z<=getSize(); z++, n++)
+		{
+			values[z-1] = getProcessor(z).getPixelValue(x, y);
+		}
+		
+		// Test: add neighbors of original image
+		if(useNeighbors)
+		{
+			for(int i=-1;  i < 2; i++)
+				for(int j = -1; j < 2; j++)
+				{
+					if(i==0 && j==0)
+						continue;				
+					values[n] = getPixelMirrorConditions(getProcessor(1), x+i, y+j);
+					n++;
+				}
+		}
+		// Assign class
+		values[values.length-1] = (double) classValue;
+		
+		return new DenseInstance(1.0, values);
+	}
+	
+	/**
+	 * 
+	 * @param ip
+	 * @param x
+	 * @param y
+	 * @return
+	 */
+	double getPixelMirrorConditions(ImageProcessor ip, int x, int y)
+	{
+		int x2 = x < 0 ? -x : x;
+		int y2 = y < 0 ? -y : y;
+		
+		if(x2 >= ip.getWidth())
+			x2 = 2 * (ip.getWidth() - 1) - x2;
+		
+		if(y2 >= ip.getHeight())
+			y2 = 2 * (ip.getHeight() - 1) - y2;
+		
+		return ip.getPixelValue(x2, y2);
+	}
+	
 }
