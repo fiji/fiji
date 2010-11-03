@@ -26,6 +26,7 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 	private MenuItem saveSession;
 	private MenuItem loadSession;
 	private MenuItem importObj;
+	private MenuItem importStl;
 	private MenuItem color;
 	private MenuItem bgColor;
 	private MenuItem channels;
@@ -52,6 +53,8 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 	private MenuItem exportTransformed;
 	private MenuItem exportObj;
 	private MenuItem exportDXF;
+	private MenuItem exportAsciiSTL;
+	private MenuItem exportBinarySTL;
 	private MenuItem smoothMesh;
 	private MenuItem scalebar;
 	private MenuItem smoothAllMeshes;
@@ -142,6 +145,10 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 		importObj = new MenuItem("Import WaveFront");
 		importObj.addActionListener(this);
 		file.add(importObj);
+		
+		importStl = new MenuItem("Import STL");
+		importStl.addActionListener(this);
+		file.add(importStl);
 
 		delete = new MenuItem("Delete");
 		delete.setEnabled(false);
@@ -179,6 +186,14 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 		exportDXF = new MenuItem("DXF");
 		exportDXF.addActionListener(this);
 		subMenu.add(exportDXF);
+		
+		exportAsciiSTL = new MenuItem("STL (ASCII)");
+		exportAsciiSTL.addActionListener(this);
+		subMenu.add(exportAsciiSTL);
+		
+		exportBinarySTL = new MenuItem("STL (binary)");
+		exportBinarySTL.addActionListener(this);
+		subMenu.add(exportBinarySTL);
 
 		file.addSeparator();
 
@@ -566,10 +581,16 @@ public class Image3DMenubar extends MenuBar implements ActionListener,
 			executer.loadSession();
 		else if (src == importObj)
 			executer.importWaveFront();
+		else if (src == importStl)
+			executer.importSTL();
 		else if (src == exportDXF)
 			executer.saveAsDXF();
 		else if (src == exportObj)
 			executer.saveAsWaveFront();
+		else if (src == exportAsciiSTL)
+			executer.saveAsAsciiSTL();
+		else if (src == exportBinarySTL)
+			executer.saveAsBinarySTL();
 		else if (src == smoothMesh)
 			executer.smoothMesh(univ.getSelected());
 		else if (src == smoothAllMeshes)

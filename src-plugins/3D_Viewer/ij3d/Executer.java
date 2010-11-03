@@ -231,12 +231,42 @@ public class Executer {
 			IJ.showMessage("Could not load the file:\n" + path);
 	}
 
+	public void importSTL() {
+		OpenDialog od = new OpenDialog("Select .stl file", OpenDialog.getDefaultDirectory(), null);
+		String filename = od.getFileName();
+		if (null == filename) return;
+		if (!filename.toLowerCase().endsWith(".stl")) {
+			IJ.showMessage("Must select an STL file!");
+			return;
+		}
+		String path = new StringBuilder(od.getDirectory()).append(filename).toString();
+		IJ.log("path: " + path);
+		Object ob;
+		try {
+			ob = univ.addContentLater(path);
+		} catch (Exception e) {
+			e.printStackTrace();
+			ob = null;
+		}
+		if (null == ob)
+			IJ.showMessage("Could not load the file:\n" + path);
+	}
+
+	
 	public void saveAsDXF() {
 		MeshExporter.saveAsDXF(univ.getContents());
 	}
 
 	public void saveAsWaveFront() {
 		MeshExporter.saveAsWaveFront(univ.getContents());
+	}
+	
+	public void saveAsAsciiSTL(){
+		MeshExporter.saveAsSTL(univ.getContents(), MeshExporter.ASCII);
+	}
+	
+	public void saveAsBinarySTL(){
+		MeshExporter.saveAsSTL(univ.getContents(), MeshExporter.BINARY);
 	}
 
 	public void loadView() {
