@@ -23,8 +23,6 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 
 	// Allowed types of ROI configuration
 	protected enum RoiConfiguration {None, Img1, Img2};
-    /* GUI related members */
-	protected final String[] roiLabels =  { "None","Channel 1", "Channel 2",};
 	// the ROI configuration to use
 	RoiConfiguration roiConfig = RoiConfiguration.None;
     // the ROI to use (null if none)
@@ -39,6 +37,20 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 	Image<T> img1, img2;
     // the channels of the amages to use
     int img1Channel = 1, img2Channel = 1;
+
+    /* The different algorithms this plugin provides.
+     * If a reference is null it will not get run.
+     */
+    PearsonsCorrelation pearsonsCorrelation = null;
+    LiHistogram2D<T> liHistogramCh1 = null;
+    LiHistogram2D<T> liHistogramCh2 = null;
+    LiICQ<T> liICQ = null;
+    MandersCorrelation<T> mandersCorrelation = null;
+    Histogram2D<T> histogram2D = null;
+    CostesSignificanceTest costesSignificance = null;
+
+    /* GUI related members */
+	String[] roiLabels =  { "None","Channel 1", "Channel 2",};
 
 	public void run(String arg0) {
         if (showDialog()) {
@@ -75,22 +87,15 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 			new AutoThresholdRegression<T>()) );
 
 		// add user selected algorithms
-		PearsonsCorrelation pc = new PearsonsCorrelation<T>(PearsonsCorrelation.Implementation.Classic);
-		userSelectedJobs.add( pc );
-		userSelectedJobs.add(
-			new LiHistogram2D<T>("Li - Ch1", true) );
-		userSelectedJobs.add(
-			new LiHistogram2D<T>("Li - Ch2", false) );
-		userSelectedJobs.add(
-			new LiICQ<T>() );
-		userSelectedJobs.add(
-			new MandersCorrelation<T>() );
-		userSelectedJobs.add(
-			new Histogram2D<T>("2D intensity histogram") );
-		userSelectedJobs.add(
-			new CostesSignificanceTest(pc, 3, 100) );
+	    addIfValid(pearsonsCorrelation, userSelectedJobs);
+	    addIfValid(liHistogramCh1, userSelectedJobs);
+	    addIfValid(liHistogramCh2, userSelectedJobs);
+	    addIfValid(liICQ, userSelectedJobs);
+	    addIfValid(mandersCorrelation, userSelectedJobs);
+	    addIfValid(histogram2D, userSelectedJobs);
+	    addIfValid(costesSignificance, userSelectedJobs);
 
-
+        // execute all algorithms
 		for (Algorithm a : userSelectedJobs){
 			try {
 				a.execute(container);
@@ -109,7 +114,6 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		}
 		// do the actual results processing
 		resultHandler.process();
-
     }
 
     public boolean showDialog() {
@@ -151,6 +155,16 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		gd.addChoice("Channel_2", titles, titles[index2]);
 		//gd.addChoice("Use ROI", roiLabels, roiLabels[indexRoi]);
 
+		// Add algorithm options
+		gd.addMessage("Algorithms:");
+		gd.addCheckbox("Pearson's Correlation", true);
+		gd.addCheckbox("Li Histogram Channel 1", true);
+		gd.addCheckbox("Li Histogram Channel 2", true);
+		gd.addCheckbox("Li ICQ", true);
+		gd.addCheckbox("Manders' Correlation", true);
+		gd.addCheckbox("2D Instensity Histogram", true);
+		gd.addCheckbox("Costes' Significance Test", true);
+
         // show the dialog, finally
         gd.showDialog();
         // do nothing if dialog has been canceled
@@ -175,7 +189,36 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 			roi = imp2.getRoi().getBounds();
 		}
 
+        // Parse algorithm options
+        if (gd.getNextBoolean())
+            pearsonsCorrelation = new PearsonsCorrelation<T>(PearsonsCorrelation.Implementation.Fast);
+        if (gd.getNextBoolean())
+			liHistogramCh1 = new LiHistogram2D<T>("Li - Ch1", true);
+        if (gd.getNextBoolean())
+			liHistogramCh2 = new LiHistogram2D<T>("Li - Ch2", false);
+        if (gd.getNextBoolean())
+			liICQ = new LiICQ<T>();
+        if (gd.getNextBoolean())
+			mandersCorrelation = new MandersCorrelation<T>();
+        if (gd.getNextBoolean())
+			histogram2D = new Histogram2D<T>("2D intensity histogram");
+        if (gd.getNextBoolean()) {
+            // check if we have already got a Pearson's correlation object
+            PearsonsCorrelation<T> pc = pearsonsCorrelation;
+            if ( pc == null)
+                pc = new PearsonsCorrelation<T>(PearsonsCorrelation.Implementation.Fast);
+			costesSignificance = new CostesSignificanceTest(pc, 3, 100);
+        }
+
         return true;
+    }
+
+    /**
+     * Adds the prolided Algorithm to the list if it is not null.
+     */
+    protected void addIfValid(Algorithm<T> a, List<Algorithm<T>> list) {
+        if (a != null)
+            list.add(a);
     }
 
 	/**
