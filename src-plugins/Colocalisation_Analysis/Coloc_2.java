@@ -35,10 +35,10 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 
 	// the images to work on
 	Image<T> img1, img2;
-    // the channels of the amages to use
+    // the channels of the images to use
     int img1Channel = 1, img2Channel = 1;
 
-    /* The different algorithms this plugin provides.
+    /* The different algorithms this plug-in provides.
      * If a reference is null it will not get run.
      */
     PearsonsCorrelation pearsonsCorrelation = null;
@@ -56,64 +56,6 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
         if (showDialog()) {
             colocalise(img1, img2);
         }
-    }
-
-    public void colocalise(Image<T> img1, Image<T> img2) {
-	    // indicates if a ROI should be used
-	boolean useRoi = (roi != null);
-
-		// create a new container for the selected images and channels
-		DataContainer<T> container;
-		if (useRoi) {
-			int roiOffset[] = new int[] {roi.x, roi.y};
-			int roiSize[] = new int[] {roi.width, roi.height};
-			container = new DataContainer<T>(img1, img2, img1Channel, img2Channel,
-					roiOffset, roiSize);
-		} else {
-			container = new DataContainer<T>(img1, img2, img1Channel, img2Channel);
-		}
-
-		// create a results handler
-		ResultHandler<T> resultHandler = new SingleWindowDisplay<T>(container);
-		//ResultHandler<T> resultHandler = new EasyDisplay<T>(container);
-
-		// this list contains the algorithms that will be run when the user clicks ok
-		List<Algorithm<T>> userSelectedJobs = new ArrayList<Algorithm<T>>();
-
-		// add some pre-processing jobs:
-		userSelectedJobs.add( container.setInputCheck(
-			new InputCheck<T>()) );
-		userSelectedJobs.add( container.setAutoThreshold(
-			new AutoThresholdRegression<T>()) );
-
-		// add user selected algorithms
-	    addIfValid(pearsonsCorrelation, userSelectedJobs);
-	    addIfValid(liHistogramCh1, userSelectedJobs);
-	    addIfValid(liHistogramCh2, userSelectedJobs);
-	    addIfValid(liICQ, userSelectedJobs);
-	    addIfValid(mandersCorrelation, userSelectedJobs);
-	    addIfValid(histogram2D, userSelectedJobs);
-	    addIfValid(costesSignificance, userSelectedJobs);
-
-        // execute all algorithms
-		for (Algorithm a : userSelectedJobs){
-			try {
-				a.execute(container);
-			}
-			catch (MissingPreconditionException e){
-				String aName = a.getClass().getName();
-				System.out.println("MissingPreconditionException occured in " + aName + " algorithm: " + e.getMessage());
-				resultHandler.handleWarning(
-						new Warning( "Probem with input data", aName + " - " + e.getMessage() ) );
-			}
-		}
-
-		// let the algorithms feed their results to the handler
-		for (Algorithm a : userSelectedJobs){
-			a.processResults(resultHandler);
-		}
-		// do the actual results processing
-		resultHandler.process();
     }
 
     public boolean showDialog() {
@@ -213,8 +155,66 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
         return true;
     }
 
+    public void colocalise(Image<T> img1, Image<T> img2) {
+	    // indicates if a ROI should be used
+	boolean useRoi = (roi != null);
+
+		// create a new container for the selected images and channels
+		DataContainer<T> container;
+		if (useRoi) {
+			int roiOffset[] = new int[] {roi.x, roi.y};
+			int roiSize[] = new int[] {roi.width, roi.height};
+			container = new DataContainer<T>(img1, img2, img1Channel, img2Channel,
+					roiOffset, roiSize);
+		} else {
+			container = new DataContainer<T>(img1, img2, img1Channel, img2Channel);
+		}
+
+		// create a results handler
+		ResultHandler<T> resultHandler = new SingleWindowDisplay<T>(container);
+		//ResultHandler<T> resultHandler = new EasyDisplay<T>(container);
+
+		// this list contains the algorithms that will be run when the user clicks ok
+		List<Algorithm<T>> userSelectedJobs = new ArrayList<Algorithm<T>>();
+
+		// add some pre-processing jobs:
+		userSelectedJobs.add( container.setInputCheck(
+			new InputCheck<T>()) );
+		userSelectedJobs.add( container.setAutoThreshold(
+			new AutoThresholdRegression<T>()) );
+
+		// add user selected algorithms
+	    addIfValid(pearsonsCorrelation, userSelectedJobs);
+	    addIfValid(liHistogramCh1, userSelectedJobs);
+	    addIfValid(liHistogramCh2, userSelectedJobs);
+	    addIfValid(liICQ, userSelectedJobs);
+	    addIfValid(mandersCorrelation, userSelectedJobs);
+	    addIfValid(histogram2D, userSelectedJobs);
+	    addIfValid(costesSignificance, userSelectedJobs);
+
+        // execute all algorithms
+		for (Algorithm a : userSelectedJobs){
+			try {
+				a.execute(container);
+			}
+			catch (MissingPreconditionException e){
+				String aName = a.getClass().getName();
+				System.out.println("MissingPreconditionException occured in " + aName + " algorithm: " + e.getMessage());
+				resultHandler.handleWarning(
+						new Warning( "Probem with input data", aName + " - " + e.getMessage() ) );
+			}
+		}
+
+		// let the algorithms feed their results to the handler
+		for (Algorithm a : userSelectedJobs){
+			a.processResults(resultHandler);
+		}
+		// do the actual results processing
+		resultHandler.process();
+    }
+
     /**
-     * Adds the prolided Algorithm to the list if it is not null.
+     * Adds the provided Algorithm to the list if it is not null.
      */
     protected void addIfValid(Algorithm<T> a, List<Algorithm<T>> list) {
         if (a != null)
