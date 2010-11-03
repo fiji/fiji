@@ -28,6 +28,8 @@ import fiji.plugin.trackmate.tracking.TrackerSettings;
  */
 public class GapClosingCostFunction {
 
+	/** If false, gap closing will be prohibited. */
+	private boolean allowed;
 	/** The time cutoff, and distance cutoff, respectively */
 	protected double timeCutoff, maxDist;
 	/** The value to use to block an assignment in the cost matrix. */
@@ -40,6 +42,7 @@ public class GapClosingCostFunction {
 		this.maxDist 			= settings.gapClosingDistanceCutoff;
 		this.blocked 			= settings.blockingValue;
 		this.featureCutoffs		= settings.gapClosingFeatureCutoffs;
+		this.allowed 			= settings.allowGapClosing;
 	}
 	
 	public Matrix getCostFunction(List<SortedSet<Spot>> trackSegments) {
@@ -49,10 +52,16 @@ public class GapClosingCostFunction {
 		double d2, s, iRatio;
 		int n = trackSegments.size();
 		final Matrix m = new Matrix(n, n);
+
+		// If we are not allow to make gap-closing, simply fill the matrix with blocking values.
+		if (!allowed) {
+			return new Matrix(n, n, blocked);
+		}
 		
 		// Set the gap closing scores for each segment start and end pair
 		for (int i = 0; i < n; i++) {
 			for (int j = 0; j < n; j++) {
+				
 				
 				// If i and j are the same track segment, block it
 				if (i == j) {

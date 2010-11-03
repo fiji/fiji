@@ -34,6 +34,8 @@ import fiji.plugin.trackmate.tracking.TrackerSettings;
  */
 public class MergingCostFunction {
 	
+	/** If false, gap closing will be prohibited. */
+	private boolean allowed;
 	/** The time cutoff */
 	protected double timeCutoff;
 	/** The distance threshold. */
@@ -48,6 +50,7 @@ public class MergingCostFunction {
 		this.timeCutoff 		= settings.mergingTimeCutoff;
 		this.blocked 			= settings.blockingValue;
 		this.featureCutoffs 	= settings.mergingFeatureCutoffs;
+		this.allowed 			= settings.allowMerging;
 	}
 	
 	public Matrix getCostFunction(List<SortedSet<Spot>> trackSegments, List<Spot> middlePoints) {
@@ -55,6 +58,11 @@ public class MergingCostFunction {
 		double iRatio, d2, s;
 		Spot end, middle;
 		float tend, tmiddle;
+		
+		// If we are not allow to make gap-closing, simply fill the matrix with blocking values.
+		if (!allowed) {
+			return new Matrix(trackSegments.size(), middlePoints.size(), blocked);
+		}
 		
 		for (int i = 0; i < trackSegments.size(); i++) {
 			end = trackSegments.get(i).last();

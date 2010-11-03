@@ -87,13 +87,13 @@ import fiji.plugin.trackmate.tracking.hungarian.HungarianAlgorithm;
  * 
  * <h2>How to use this class</h2>
  * 
- * <p>If using the default cost matrices/function, use the correct constructor,
- * and simply use {@link #process()}.
+ * <p>To use the default cost matrices/function, use the default constructor,
+ * and simply call {@link #process()}.
  * 
- * <p>If using your own cost matrices:
+ * <p>If you wish to using your specify your own cost matrices:
  * 
  *  <ol>
- *  <li>Use the correct constructor.</li>
+ *  <li>Instantiate this class normally.
  *	<li>Set the linking cost matrix using {@link #setLinkingCosts(ArrayList)}.</li>
  *	<li>Execute {@link #linkObjectsToTrackSegments()}.</li>
  *  <li>Get the track segments created using {@link #getTrackSegments()}.</li>
@@ -107,7 +107,7 @@ import fiji.plugin.trackmate.tracking.hungarian.HungarianAlgorithm;
 public class LAPTracker extends AbstractSpotTracker {
 
 	/** The cost matrix for linking individual objects (step 1), indexed by the first frame index. */
-	protected TreeMap<Integer, double[][]> linkingCosts;
+	protected TreeMap<Integer, double[][]> linkingCosts = null;
 	/** The cost matrix for linking individual track segments (step 2). */
 	protected double[][] segmentCosts = null;
 	/** Stores the objects to track as a list of Spots per frame.  */
@@ -149,26 +149,18 @@ public class LAPTracker extends AbstractSpotTracker {
 	 * @param linkingCosts The cost matrix for step 1, linking objects, specified for every frame.
 	 * @param settings The settings to use for this tracker.
 	 */
-	public LAPTracker (TreeMap<Integer, List<Spot>> spots, TreeMap<Integer, double[][]> linkingCosts, TrackerSettings settings) {
+	public LAPTracker (TreeMap<Integer, List<Spot>> spots, TrackerSettings settings) {
 		super(settings);
 		this.spots = spots;
-		this.linkingCosts = linkingCosts;
 		// Add all spots to the graph
 		for(int frame : spots.keySet())
 			for(Spot spot : spots.get(frame))
 				trackGraph.addVertex(spot);
 	}
 
-	public LAPTracker (TreeMap<Integer, List<Spot>> spots, TreeMap<Integer, double[][]> linkingCosts) {
-		this(spots, linkingCosts, new TrackerSettings());
-	}
-
-	public LAPTracker(TreeMap<Integer, List<Spot>> spots, TrackerSettings settings) {
-		this(spots, null, settings);
-	}
 
 	public LAPTracker (TreeMap<Integer, List<Spot>> spots) {
-		this(spots, null, new TrackerSettings());
+		this(spots, new TrackerSettings());
 	}
 
 
@@ -277,7 +269,6 @@ public class LAPTracker extends AbstractSpotTracker {
 			errorMessage = BASE_ERROR_MESSAGE + "checkInput() must be executed before process().";
 			return false;
 		}
-
 
 		// Step 1 - Link objects into track segments
 
