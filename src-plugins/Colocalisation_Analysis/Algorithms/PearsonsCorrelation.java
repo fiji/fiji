@@ -4,6 +4,7 @@ import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
 import imglib.mpicbg.imglib.cursor.special.TwinValueRangeCursor;
+import imglib.mpicbg.imglib.cursor.special.TwinValueRangeCursorFactory;
 
 /**
  * A class that represents the mean calculation of the two source
@@ -42,27 +43,58 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 	}
 
 	public void execute(DataContainer<T> container) throws MissingPreconditionException {
-		if (theImplementation == Implementation.Classic)
-			pearsonsCorrelationValue = classicPearsons(container);
-		else {
-			fastPearsons(container);
-		}
-	}
-
-	public double classicPearsons(DataContainer<T> container)
-			throws MissingPreconditionException {
 		// get the 2 images for the calculation of Pearson's
 		Image<T> img1 = container.getSourceImage1();
 		Image<T> img2 = container.getSourceImage2();
-		// get the means from the DataContainer
-		double ch1Mean = container.getMeanCh1();
-		double ch2Mean = container.getMeanCh2();
 
-		return classicPearsons(img1, img2, ch1Mean, ch2Mean);
+		// get the thresholds of the images
+		AutoThresholdRegression<T> autoThreshold = container.getAutoThreshold();
+		if (autoThreshold == null ) {
+			throw new MissingPreconditionException("Pearsons calculation need AutoThresholdRegression to be run before it.");
+		}
+		T threshold1 = 	autoThreshold.getCh1MaxThreshold();
+		T threshold2 = 	autoThreshold.getCh2MaxThreshold();
+
+		// create cursors to walk over the images
+		TwinValueRangeCursor<T> alwaysTrueCursor
+			= TwinValueRangeCursorFactory.generateAlwaysTrueCursor(img1, img2);
+		TwinValueRangeCursor<T> belowThresholdCursor
+			= TwinValueRangeCursorFactory.generateBelowThresholdCursor(img1, img2, threshold1, threshold2);
+		TwinValueRangeCursor<T> aboveThresholdCursor
+			= TwinValueRangeCursorFactory.generateAboveThresholdCursor(img1, img2, threshold1, threshold2);
+
+		if (theImplementation == Implementation.Classic) {
+			// get the means from the DataContainer
+			double ch1Mean = container.getMeanCh1();
+			double ch2Mean = container.getMeanCh2();
+
+			pearsonsCorrelationValue = classicPearsons(alwaysTrueCursor, ch1Mean, ch2Mean);
+			pearsonsCorrelationValueBelowThr = classicPearsons(belowThresholdCursor, ch1Mean, ch2Mean);
+			pearsonsCorrelationValueAboveThr = classicPearsons(aboveThresholdCursor, ch1Mean, ch2Mean);
+		}
+		else if (theImplementation == Implementation.Fast) {
+			pearsonsCorrelationValue = fastPearsons(alwaysTrueCursor);
+			pearsonsCorrelationValueBelowThr = fastPearsons(belowThresholdCursor);
+			pearsonsCorrelationValueAboveThr = fastPearsons(aboveThresholdCursor);
+		}
 	}
 
+	/**
+	 * Calculates Pearson's R value without any constraint in values, thus it uses no thresholds.
+	 * If additional data like the images mean is needed, it is calculated.
+	 *
+	 * @param <S> The images base type.
+	 * @param img1 The first image to walk over.
+	 * @param img2 The second image to walk over.
+	 * @return Pearson's R value.
+	 * @throws MissingPreconditionException
+	 */
 	public <S extends RealType<S>> double calculatePearsons(Image<S> img1, Image<S> img2)
 			throws MissingPreconditionException {
+		// create cursors to walk over the images
+		TwinValueRangeCursor<S> alwaysTrueCursor
+			= TwinValueRangeCursorFactory.generateAlwaysTrueCursor(img1, img2);
+
 		if (theImplementation == Implementation.Classic) {
 			/* since we need the means and apparently don't have them
 			 * calculate them.
@@ -70,181 +102,62 @@ public class PearsonsCorrelation<T extends RealType<T>> extends Algorithm<T> {
 			double mean1 = ImageStatistics.getImageMean(img1);
 			double mean2 = ImageStatistics.getImageMean(img2);
 			// do the actual calculation
-			return pearsonsCorrelationValue = classicPearsons(img1, img2, mean1, mean2);
+			return classicPearsons(alwaysTrueCursor, mean1, mean2);
 		} else {
-			return fastPearsons(img1, img2);
+			return fastPearsons(alwaysTrueCursor);
 		}
 	}
 
 	/**
-	 * Do the Classic version of the Pearson's Correlation as per Manders/Costes articles.
+	 * Calculates Pearson's R value with the possibility to constraint in values.
+	 * This could be useful of one wants to apply thresholds. You need to provide
+	 * the images means, albeit not used by all implementations.
+	 *
+	 * @param <S> The images base type.
+	 * @param cursor The cursor to walk over both images.
+	 * @return Pearson's R value.
+	 * @throws MissingPreconditionException
 	 */
-	public static <S extends RealType<S>> double classicPearsons(Image<S> img1, Image<S> img2,
-			double ch1Mean, double ch2Mean)
-				throws MissingPreconditionException {
-		// get the cursors for iterating through pixels in images
-		Cursor<S> cursor1 = img1.createCursor();
-		Cursor<S> cursor2 = img2.createCursor();
+	public <S extends RealType<S>> double calculatePearsons(TwinValueRangeCursor<S> cursor, double mean1, double mean2)
+			throws MissingPreconditionException {
+		if (theImplementation == Implementation.Classic) {
+			// do the actual calculation
+			return classicPearsons(cursor, mean1, mean2);
+		} else {
+			return fastPearsons(cursor);
+		}
+	}
+
+	/**
+	 * Calculates Person's R value by using a Classic implementation of the
+	 * algorithm. This method allows the specification of a TwinValueRangeCursor.
+	 * With such a cursor one for instance can combine different thresholding
+	 * conditions for each channel. The cursor is not closed in here.
+	 *
+	 * @param <T> The image base type
+	 * @param img1 Channel one
+	 * @param img2 Channel two
+	 * @param cursor The cursor that defines the walk over both images.
+	 * @return Person's R value
+	 */
+	public static <T extends RealType<T>> double classicPearsons(TwinValueRangeCursor<T> cursor, double meanCh1, double meanCh2)
+			throws MissingPreconditionException {
 		double pearsonDenominator = 0;
 		double ch1diffSquaredSum = 0;
 		double ch2diffSquaredSum = 0;
-		while (cursor1.hasNext() && cursor2.hasNext()) {
-			cursor1.fwd();
-			cursor2.fwd();
-			S type1 = cursor1.getType();
-			double ch1diff = type1.getRealDouble() - ch1Mean;
-			S type2 = cursor2.getType();
-			double ch2diff = type2.getRealDouble() - ch2Mean;
+		while (cursor.hasNext()) {
+			cursor.fwd();
+			T type1 = cursor.getChannel1Type();
+			double ch1diff = type1.getRealDouble() - meanCh1;
+			T type2 = cursor.getChannel2Type();
+			double ch2diff = type2.getRealDouble() - meanCh2;
 			pearsonDenominator += ch1diff*ch2diff;
 			ch1diffSquaredSum += (ch1diff*ch1diff);
 			ch2diffSquaredSum += (ch2diff*ch2diff);
 		}
 		double pearsonNumerator = Math.sqrt(ch1diffSquaredSum * ch2diffSquaredSum);
 
-		// close the cursors
-		cursor1.close();
-		cursor2.close();
-
 		double pearsonsR = pearsonDenominator / pearsonNumerator;
-
-		checkForSanity(pearsonsR);
-
-		return pearsonsR;
-	}
-
-	public void fastPearsons(DataContainer<T> container)
-			throws MissingPreconditionException {
-		// get the 2 images for the calculation of Pearson's
-		Image<T> img1 = container.getSourceImage1();
-		Image<T> img2 = container.getSourceImage2();
-
-		pearsonsCorrelationValue = fastPearsons(img1, img2);
-
-		AutoThresholdRegression<T> autoThreshold = container.getAutoThreshold();
-		if (autoThreshold != null ) {
-			pearsonsCorrelationValueBelowThr = fastPearsons(img1, img2,
-					autoThreshold.getCh1MaxThreshold().getRealDouble(),
-					autoThreshold.getCh2MaxThreshold().getRealDouble(), false);
-			pearsonsCorrelationValueAboveThr = fastPearsons(img1, img2,
-					autoThreshold.getCh1MaxThreshold().getRealDouble(),
-					autoThreshold.getCh2MaxThreshold().getRealDouble(), true);
-		}
-	}
-
-	public static <T extends RealType<T>> double fastPearsons(Image<T> img1, Image<T> img2)
-			throws MissingPreconditionException {
-		// get the cursors for iterating through pixels in images
-		Cursor<T> cursor1 = img1.createCursor();
-		Cursor<T> cursor2 = img2.createCursor();
-		double sum1 = 0.0, sum2 = 0.0, sumProduct1_2 = 0.0, sum1squared= 0.0, sum2squared = 0.0;
-		int N = 0;
-
-		while (cursor1.hasNext() && cursor2.hasNext()) {
-			cursor1.fwd();
-			cursor2.fwd();
-			T type1 = cursor1.getType();
-			double ch1 = type1.getRealDouble();
-			T type2 = cursor2.getType();
-			double ch2 = type2.getRealDouble();
-
-			sum1 += ch1;
-			sum2 += ch2;
-			sumProduct1_2 += (ch1 * ch2);
-			sum1squared += (ch1 * ch1);
-			sum2squared += (ch2 * ch2);
-			N++;
-		}
-
-		// close the cursors
-		cursor1.close();
-		cursor2.close();
-
-		// for faster computation, have the inverse of N available
-		double invN = 1.0 / N;
-
-		double pearsons1 = sumProduct1_2 - (sum1 * sum2 * invN);
-		double pearsons2 = sum1squared - (sum1 * sum1 * invN);
-		double pearsons3 = sum2squared - (sum2 * sum2 * invN);
-		double pearsonsR = pearsons1 / (Math.sqrt(pearsons2 * pearsons3));
-
-		checkForSanity(pearsonsR);
-
-		return pearsonsR;
-	}
-
-	/**
-	 * Calculates Person's R value by using a fast implementation of the
-	 * algorithm. This method allows the specification of upper limits for
-	 * the pixel values for each channel. One can also define if one wants
-	 * Pearson's correlation value above or below the threshold.
-	 *
-	 * @param <T> The image base type
-	 * @param img1 Channel one
-	 * @param img2 Channel two
-	 * @param ch1ThreshMax Upper limit of channel one
-	 * @param ch2ThreshMax Upper limit of channel two
-	 * @param aboveThr use pixels above (true) or below (false) threshold
-	 * @return Person's R value
-	 */
-	public static <T extends RealType<T>> double fastPearsons(Image<T> img1, Image<T> img2,
-			double ch1ThreshMax, double ch2ThreshMax, boolean aboveThr)
-				throws MissingPreconditionException {
-		// get the cursors for iterating through pixels in images
-		Cursor<T> cursor1 = img1.createCursor();
-		Cursor<T> cursor2 = img2.createCursor();
-		double sum1 = 0.0, sum2 = 0.0, sumProduct1_2 = 0.0, sum1squared= 0.0, sum2squared = 0.0;
-		// the total amount of pixels that have been taken into consideration
-		int N = 0;
-
-		if (aboveThr) {
-			while (cursor1.hasNext() && cursor2.hasNext()) {
-				cursor1.fwd();
-				cursor2.fwd();
-				T type1 = cursor1.getType();
-				double ch1 = type1.getRealDouble();
-				T type2 = cursor2.getType();
-				double ch2 = type2.getRealDouble();
-				// is either channel one or channel two within the limits?
-				if ( (ch1 > ch1ThreshMax) || (ch2 > ch2ThreshMax)) {
-					sum1 += ch1;
-					sumProduct1_2 += (ch1 * ch2);
-					sum1squared += (ch1 * ch1);
-					sum2squared += (ch2 *ch2);
-					sum2 += ch2;
-					N++;
-				}
-			}
-		} else {
-			while (cursor1.hasNext() && cursor2.hasNext()) {
-				cursor1.fwd();
-				cursor2.fwd();
-				T type1 = cursor1.getType();
-				double ch1 = type1.getRealDouble();
-				T type2 = cursor2.getType();
-				double ch2 = type2.getRealDouble();
-				// is either channel one or channel two within the limits?
-				if ( (ch1 < ch1ThreshMax) || (ch2 < ch2ThreshMax)) {
-					sum1 += ch1;
-					sumProduct1_2 += (ch1 * ch2);
-					sum1squared += (ch1 * ch1);
-					sum2squared += (ch2 *ch2);
-					sum2 += ch2;
-					N++;
-				}
-			}
-		}
-
-		// close the cursors
-		cursor1.close();
-		cursor2.close();
-
-		// for faster computation, have the inverse of N available
-		double invN = 1.0 / N;
-
-		double pearsons1 = sumProduct1_2 - (sum1 * sum2 * invN);
-		double pearsons2 = sum1squared - (sum1 * sum1 * invN);
-		double pearsons3 = sum2squared - (sum2 * sum2 * invN);
-		double pearsonsR = pearsons1/(Math.sqrt(pearsons2*pearsons3));
 
 		checkForSanity(pearsonsR);
 

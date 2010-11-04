@@ -1,3 +1,5 @@
+import imglib.mpicbg.imglib.cursor.special.TwinValueRangeCursor;
+import imglib.mpicbg.imglib.cursor.special.meta.BelowThresholdPredicate;
 import mpicbg.imglib.cursor.Cursor;
 import mpicbg.imglib.image.Image;
 import mpicbg.imglib.type.numeric.RealType;
@@ -135,16 +137,33 @@ public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm<T>
 		 * small enough.
 		 */
 		final double tolerance = 0.01;
+		// define some image type specific threshold variables
+		T threshold1 = img1.createType();
+		T threshold2 = img2.createType();
+		/* have a thresholded TwinValueRangeCursor of which
+		 * predicates thresholds can be altered.
+		 */
+		BelowThresholdPredicate<T> predicate1 = new BelowThresholdPredicate<T>(threshold1);
+		BelowThresholdPredicate<T> predicate2 = new BelowThresholdPredicate<T>(threshold2);
+		TwinValueRangeCursor<T> cursor = new TwinValueRangeCursor<T>(
+				img1.createCursor(), img2.createCursor(), predicate1, predicate2);
 
 		// do regression
 		while (!thresholdFound && iteration<maxIterations) {
-			ch1ThreshMax = Math.round(maxThreshold);
+			// calculate both thresholds
+			ch1ThreshMax = Math.round( maxThreshold );
 			ch2ThreshMax = Math.round( (ch1ThreshMax * m) + b );
+			// set the image type specific variables
+			threshold1.setReal( ch1ThreshMax );
+			threshold2.setReal( ch2ThreshMax );
+			// set the thresholds of the predicates
+			predicate1.setThreshold( threshold1 );
+			predicate2.setThreshold( threshold2 );
 
 			// backup last Person's R value
 			lastPersonsR = currentPersonsR;
 			// do persons calculation within the limits
-			currentPersonsR = PearsonsCorrelation.fastPearsons(img1, img2, ch1ThreshMax, ch2ThreshMax, false);
+			currentPersonsR = pearsonsCorrellation.calculatePearsons(cursor, ch1Mean, ch2Mean);
 
 			// indicates if we have actually found a real number
 			boolean badResult = Double.isNaN(currentPersonsR);
@@ -181,9 +200,15 @@ public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm<T>
 					maxThreshold = maxThreshold * 1.5;
 			}
 
+			// reset the cursor to reuse it
+			cursor.reset();
+
 			// increment iteration counter
 			iteration++;
 		}
+
+		// close the TwinValueRangeCursor, we don't need it anymore
+		cursor.close();
 
 		// remember the best threshold values
 		ch1ThreshMax = Math.round( ch1BestThreshold );
