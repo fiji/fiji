@@ -4,6 +4,7 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.measure.Calibration;
 import ij.IJ;
+import java.awt.image.IndexColorModel;
 import javax.vecmath.Point3d;
 
 /**
@@ -106,20 +107,22 @@ public class Volume {
 			case ImagePlus.GRAY8:
 			case ImagePlus.COLOR_256:
 				image = new ByteImage(imp);
+				IndexColorModel cm = (IndexColorModel)imp.
+					getProcessor().getCurrentColorModel();
+				for(int i = 0; i < 256; i++) {
+					rLUT[i] = cm.getRed(i);
+					gLUT[i] = cm.getGreen(i);
+					bLUT[i] = cm.getBlue(i);
+					aLUT[i] = (rLUT[i] + gLUT[i] + bLUT[i]) / 3;
+				}
 				break;
 			case ImagePlus.COLOR_RGB:
 				image = new IntImage(imp);
+				for(int i = 0; i < 256; i++)
+					rLUT[i] = gLUT[i] = bLUT[i] = aLUT[i] = i;
 				break;
 			default:
 				throw new IllegalArgumentException("Unsupported image type");
-		}
-
-		// TODO use color model of the image, if present
-		for(int i = 0; i < 256; i++) {
-			rLUT[i] = i;
-			gLUT[i] = i;
-			bLUT[i] = i;
-			aLUT[i] = Math.min(i, 100);
 		}
 
 		xDim = imp.getWidth();
@@ -192,6 +195,34 @@ public class Volume {
 	public boolean isAverage() {
 // 		return average;
 		return false;
+	}
+
+	/**
+	 * Copies the current color table into the given array.
+	 */
+	public void getRedLUT(int[] lut) {
+		System.arraycopy(rLUT, 0, lut, 0, rLUT.length);
+	}
+
+	/**
+	 * Copies the current color table into the given array.
+	 */
+	public void getGreenLUT(int[] lut) {
+		System.arraycopy(gLUT, 0, lut, 0, gLUT.length);
+	}
+
+	/**
+	 * Copies the current color table into the given array.
+	 */
+	public void getBlueLUT(int[] lut) {
+		System.arraycopy(bLUT, 0, lut, 0, bLUT.length);
+	}
+
+	/**
+	 * Copies the current color table into the given array.
+	 */
+	public void getAlphaLUT(int[] lut) {
+		System.arraycopy(aLUT, 0, lut, 0, aLUT.length);
 	}
 
 	/**

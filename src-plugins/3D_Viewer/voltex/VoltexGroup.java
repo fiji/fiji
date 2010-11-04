@@ -82,6 +82,15 @@ public class VoltexGroup extends ContentNode {
 			: NaiveResampler.resample(c.getImage(), c.getResamplingFactor());
 		renderer = new VolumeRenderer(imp, c.getColor(),
 				c.getTransparency(), c.getChannels());
+		int[] rLUT = new int[256];
+		int[] gLUT = new int[256];
+		int[] bLUT = new int[256];
+		int[] aLUT = new int[256];
+		renderer.volume.getRedLUT(rLUT);
+		renderer.volume.getGreenLUT(gLUT);
+		renderer.volume.getBlueLUT(bLUT);
+		renderer.volume.getAlphaLUT(aLUT);
+		c.setLUT(rLUT, gLUT, bLUT, aLUT);
 		renderer.fullReload();
 		calculateMinMaxCenterPoint();
 		addChild(renderer.getVolumeNode());
