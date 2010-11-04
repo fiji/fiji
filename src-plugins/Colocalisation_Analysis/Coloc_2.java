@@ -181,7 +181,7 @@ public class Coloc_2<T extends RealType<T>> implements PlugIn {
 		userSelectedJobs.add( container.setInputCheck(
 			new InputCheck<T>()) );
 		userSelectedJobs.add( container.setAutoThreshold(
-			new AutoThresholdRegression<T>()) );
+			new AutoThresholdRegression<T>(pearsonsCorrelation)) );
 
 		// add user selected algorithms
 	    addIfValid(pearsonsCorrelation, userSelectedJobs);

@@ -21,6 +21,12 @@ public class AutoThresholdRegression<T extends RealType<T>> extends Algorithm<T>
 	T ch1MinThreshold, ch1MaxThreshold, ch2MinThreshold, ch2MaxThreshold;
 	// additional information
 	double bToYMaxRatio = 0.0;
+	//This is the Pearson's correlation we will use for further calculations
+	PearsonsCorrelation pearsonsCorrellation;
+
+	public AutoThresholdRegression(PearsonsCorrelation pc){
+		pearsonsCorrellation = pc;
+	}
 
 	@Override
 	public void execute(DataContainer<T> container)
